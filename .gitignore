@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Vercel local linkage
+.vercel/
+
+# Test and coverage outputs
+coverage/
+test-results/
+playwright-report/
+
+# Supabase local runtime
+.supabase/
+supabase/.branches/
+supabase/.temp/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Imported source data and generated private exports
+data/import/
+data/private/
+*.secret.csv
+*.secret.json
+
+# Local logs and editor files
+*.log
+.codex-tmp/
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# TypeScript
+*.tsbuildinfo

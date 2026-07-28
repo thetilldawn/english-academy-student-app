@@ -1,0 +1,536 @@
+import "server-only";
+
+import {
+  createQuizQuestions,
+  type QuizVocabularyEntry,
+} from "@/lib/quiz/engine";
+import { getServiceSupabaseClient } from "@/lib/supabase/service";
+
+export type StudentAssignmentSummary = {
+  id: string;
+  title: string;
+  datasetTitle: string;
+  rangeStart: number;
+  rangeEnd: number;
+  questionCount: number;
+  timeLimitSeconds: number;
+  passingScore: number;
+  retakeAllowed: boolean;
+  lastAttemptId: string | null;
+  lastStatus: "in_progress" | "completed" | "expired" | null;
+  lastInitialScore: number | null;
+  canStart: boolean;
+};
+
+export type AttemptQuestionState = {
+  id: string;
+  orderIndex: number;
+  direction: "english_to_korean" | "korean_to_english";
+  prompt: string;
+  choices: string[];
+  initialChoiceIndex: number | null;
+  initialIsCorrect: boolean | null;
+  retryChoiceIndex: number | null;
+  retryIsCorrect: boolean | null;
+  revealedCorrectChoiceIndex: number | null;
+};
+
+export type AttemptState = {
+  id: string;
+  assignmentTitle: string;
+  status: "in_progress" | "completed" | "expired";
+  phase: "initial" | "retry" | "completed";
+  startedAt: string;
+  deadlineAt: string;
+  questions: AttemptQuestionState[];
+  currentQuestionId: string | null;
+};
+
+export type AttemptQuestionResult = {
+  id: string;
+  orderIndex: number;
+  direction: "english_to_korean" | "korean_to_english";
+  prompt: string;
+  correctAnswer: string;
+  initialChoice: string | null;
+  initialIsCorrect: boolean | null;
+  retryChoice: string | null;
+  retryIsCorrect: boolean | null;
+  headword: string;
+  primaryMeaning: string;
+};
+
+type AssignmentRow = {
+  id: string;
+  title: string;
+  dataset_id: string;
+  range_start: number;
+  range_end: number;
+  question_count: number;
+  english_to_korean_ratio: number;
+  time_limit_seconds: number;
+  passing_score: number;
+  retake_allowed: boolean;
+  status: "draft" | "active" | "closed";
+  available_from: string | null;
+  available_until: string | null;
+};
+
+type AttemptRow = {
+  id: string;
+  assignment_id: string;
+  status: "in_progress" | "completed" | "expired";
+  attempt_number: number;
+  started_at: string;
+  deadline_at: string;
+  initial_score: number | string | null;
+};
+
+type QuestionRow = {
+  id: string;
+  order_index: number;
+  direction: "english_to_korean" | "korean_to_english";
+  prompt: string;
+  choices: string[];
+  correct_choice_index: number;
+  initial_choice_index: number | null;
+  initial_is_correct: boolean | null;
+  retry_choice_index: number | null;
+  retry_is_correct: boolean | null;
+};
+
+type ResultQuestionRow = {
+  id: string;
+  order_index: number;
+  direction: "english_to_korean" | "korean_to_english";
+  prompt: string;
+  choices: unknown;
+  correct_choice_index: number;
+  initial_choice_index: number | null;
+  initial_is_correct: boolean | null;
+  retry_choice_index: number | null;
+  retry_is_correct: boolean | null;
+  vocab_entries:
+    | { headword: string; primary_meaning: string }
+    | Array<{ headword: string; primary_meaning: string }>
+    | null;
+};
+
+function mapResultQuestions(
+  rows: ResultQuestionRow[],
+): AttemptQuestionResult[] {
+  return rows.map((row) => {
+    const choices = Array.isArray(row.choices)
+      ? row.choices.filter(
+          (choice): choice is string => typeof choice === "string",
+        )
+      : [];
+    const vocabulary = Array.isArray(row.vocab_entries)
+      ? row.vocab_entries[0]
+      : row.vocab_entries;
+
+    return {
+      id: row.id,
+      orderIndex: row.order_index,
+      direction: row.direction,
+      prompt: row.prompt,
+      correctAnswer: choices[row.correct_choice_index] ?? "",
+      initialChoice:
+        row.initial_choice_index === null
+          ? null
+          : (choices[row.initial_choice_index] ?? null),
+      initialIsCorrect: row.initial_is_correct,
+      retryChoice:
+        row.retry_choice_index === null
+          ? null
+          : (choices[row.retry_choice_index] ?? null),
+      retryIsCorrect: row.retry_is_correct,
+      headword: vocabulary?.headword ?? "",
+      primaryMeaning: vocabulary?.primary_meaning ?? "",
+    };
+  });
+}
+
+export async function getAttemptQuestionResults(
+  attemptId: string,
+): Promise<AttemptQuestionResult[]> {
+  const supabase = getServiceSupabaseClient();
+  const { data, error } = await supabase
+    .from("quiz_questions")
+    .select(
+      "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, vocab_entries(headword, primary_meaning)",
+    )
+    .eq("attempt_id", attemptId)
+    .order("order_index");
+
+  if (error) {
+    throw new Error("문항 결과를 불러오지 못했습니다.");
+  }
+
+  return mapResultQuestions((data ?? []) as ResultQuestionRow[]);
+}
+
+export async function listStudentAssignments(
+  studentId: string,
+): Promise<StudentAssignmentSummary[]> {
+  const supabase = getServiceSupabaseClient();
+  const { data: linkData, error: linkError } = await supabase
+    .from("assignment_students")
+    .select("assignment_id")
+    .eq("student_id", studentId);
+
+  if (linkError || !linkData?.length) {
+    return [];
+  }
+
+  const assignmentIds = linkData.map((link) => link.assignment_id);
+  const [{ data: assignmentData }, { data: attemptData }] = await Promise.all([
+    supabase
+      .from("assignments")
+      .select(
+        "id, title, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, passing_score, retake_allowed, status, available_from, available_until",
+      )
+      .in("id", assignmentIds)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("quiz_attempts")
+      .select(
+        "id, assignment_id, status, attempt_number, started_at, deadline_at, initial_score",
+      )
+      .eq("student_id", studentId)
+      .in("assignment_id", assignmentIds)
+      .order("attempt_number", { ascending: false }),
+  ]);
+
+  const assignments = (assignmentData ?? []) as AssignmentRow[];
+  const attempts = (attemptData ?? []) as AttemptRow[];
+  const datasetIds = [...new Set(assignments.map((item) => item.dataset_id))];
+  const { data: datasetData } = await supabase
+    .from("vocab_datasets")
+    .select("id, title")
+    .in("id", datasetIds);
+  const datasetTitles = new Map(
+    (datasetData ?? []).map((dataset) => [dataset.id, dataset.title]),
+  );
+  const latestAttempts = new Map<string, AttemptRow>();
+  for (const attempt of attempts) {
+    if (!latestAttempts.has(attempt.assignment_id)) {
+      latestAttempts.set(attempt.assignment_id, attempt);
+    }
+  }
+
+  const now = Date.now();
+  return assignments.map((assignment) => {
+    const lastAttempt = latestAttempts.get(assignment.id);
+    const available =
+      assignment.status === "active" &&
+      (!assignment.available_from ||
+        new Date(assignment.available_from).getTime() <= now) &&
+      (!assignment.available_until ||
+        new Date(assignment.available_until).getTime() > now);
+    const canStart =
+      available &&
+      (!lastAttempt ||
+        lastAttempt.status === "expired" ||
+        assignment.retake_allowed);
+
+    return {
+      id: assignment.id,
+      title: assignment.title,
+      datasetTitle: datasetTitles.get(assignment.dataset_id) ?? "어휘",
+      rangeStart: assignment.range_start,
+      rangeEnd: assignment.range_end,
+      questionCount: assignment.question_count,
+      timeLimitSeconds: assignment.time_limit_seconds,
+      passingScore: assignment.passing_score,
+      retakeAllowed: assignment.retake_allowed,
+      lastAttemptId: lastAttempt?.id ?? null,
+      lastStatus: lastAttempt?.status ?? null,
+      lastInitialScore:
+        lastAttempt?.initial_score === null ||
+        lastAttempt?.initial_score === undefined
+          ? null
+          : Number(lastAttempt.initial_score),
+      canStart,
+    };
+  });
+}
+
+export async function startStudentAttempt(
+  studentId: string,
+  assignmentId: string,
+): Promise<string> {
+  const supabase = getServiceSupabaseClient();
+  const [{ data: assignmentData, error: assignmentError }, { data: linkData }] =
+    await Promise.all([
+      supabase
+        .from("assignments")
+        .select(
+          "id, title, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, passing_score, retake_allowed, status, available_from, available_until",
+        )
+        .eq("id", assignmentId)
+        .maybeSingle(),
+      supabase
+        .from("assignment_students")
+        .select("assignment_id")
+        .eq("assignment_id", assignmentId)
+        .eq("student_id", studentId)
+        .maybeSingle(),
+    ]);
+  const assignment = assignmentData as AssignmentRow | null;
+
+  if (assignmentError || !assignment || !linkData) {
+    throw new Error("배정된 시험을 찾지 못했습니다.");
+  }
+
+  const entryData: Array<{
+    id: number;
+    source_row: number;
+    headword: string;
+    headword_normalized: string;
+    primary_meaning: string;
+  }> = [];
+  const pageSize = 1000;
+  let offset = 0;
+
+  while (true) {
+    const { data: page, error: entryError } = await supabase
+      .from("vocab_entries")
+      .select(
+        "id, source_row, headword, headword_normalized, primary_meaning",
+      )
+      .eq("dataset_id", assignment.dataset_id)
+      .gte("source_row", assignment.range_start)
+      .lte("source_row", assignment.range_end)
+      .order("source_row")
+      .range(offset, offset + pageSize - 1);
+
+    if (entryError) {
+      throw new Error("시험 어휘를 불러오지 못했습니다.");
+    }
+
+    entryData.push(...(page ?? []));
+    if (!page || page.length < pageSize) break;
+    offset += pageSize;
+  }
+
+  const uniqueEntries = new Map<string, QuizVocabularyEntry>();
+  for (const entry of entryData) {
+    const key = entry.headword_normalized.normalize("NFC").toLocaleLowerCase(
+      "en-US",
+    );
+    if (!uniqueEntries.has(key)) {
+      uniqueEntries.set(key, {
+        id: entry.id,
+        headword: entry.headword,
+        primaryMeaning: entry.primary_meaning,
+      });
+    }
+  }
+
+  const questions = createQuizQuestions(
+    [...uniqueEntries.values()],
+    assignment.question_count,
+    assignment.english_to_korean_ratio,
+  );
+  const { data, error } = await supabase.rpc("create_quiz_attempt", {
+    p_student_id: studentId,
+    p_assignment_id: assignmentId,
+    p_questions: questions.map((question, index) => ({
+      vocab_entry_id: question.vocabEntryId,
+      order_index: index + 1,
+      direction: question.direction,
+      prompt: question.prompt,
+      choices: question.choices,
+      correct_choice_index: question.correctChoiceIndex,
+    })),
+  });
+
+  if (error || typeof data !== "string") {
+    throw new Error("시험을 시작하지 못했습니다.");
+  }
+
+  return data;
+}
+
+export async function getStudentAttempt(
+  studentId: string,
+  attemptId: string,
+): Promise<AttemptState | null> {
+  const supabase = getServiceSupabaseClient();
+  const { data: attemptData, error: attemptError } = await supabase
+    .from("quiz_attempts")
+    .select("id, assignment_id, status, started_at, deadline_at")
+    .eq("id", attemptId)
+    .eq("student_id", studentId)
+    .maybeSingle();
+
+  if (attemptError || !attemptData) {
+    return null;
+  }
+
+  if (
+    attemptData.status === "in_progress" &&
+    new Date(attemptData.deadline_at).getTime() <= Date.now()
+  ) {
+    await expireStudentAttempt(studentId, attemptId);
+    attemptData.status = "expired";
+  }
+
+  const [{ data: assignmentData }, { data: questionData }] =
+    await Promise.all([
+      supabase
+        .from("assignments")
+        .select("title")
+        .eq("id", attemptData.assignment_id)
+        .maybeSingle(),
+      supabase
+        .from("quiz_questions")
+        .select(
+          "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct",
+        )
+        .eq("attempt_id", attemptId)
+        .order("order_index"),
+    ]);
+
+  const rows = (questionData ?? []) as QuestionRow[];
+  const initialCurrent = rows.find(
+    (question) => question.initial_choice_index === null,
+  );
+  const retryCurrent = rows.find(
+    (question) =>
+      question.initial_is_correct === false &&
+      question.retry_choice_index === null,
+  );
+  const phase =
+    attemptData.status !== "in_progress"
+      ? "completed"
+      : initialCurrent
+        ? "initial"
+        : retryCurrent
+          ? "retry"
+          : "completed";
+  const currentQuestionId =
+    phase === "initial"
+      ? (initialCurrent?.id ?? null)
+      : phase === "retry"
+        ? (retryCurrent?.id ?? null)
+        : null;
+
+  return {
+    id: attemptData.id,
+    assignmentTitle: assignmentData?.title ?? "단어 시험",
+    status: attemptData.status,
+    phase,
+    startedAt: attemptData.started_at,
+    deadlineAt: attemptData.deadline_at,
+    currentQuestionId,
+    questions: rows.map((question) => {
+      const answered =
+        question.initial_choice_index !== null ||
+        question.retry_choice_index !== null;
+
+      return {
+        id: question.id,
+        orderIndex: question.order_index,
+        direction: question.direction,
+        prompt: question.prompt,
+        choices: question.choices,
+        initialChoiceIndex: question.initial_choice_index,
+        initialIsCorrect: question.initial_is_correct,
+        retryChoiceIndex: question.retry_choice_index,
+        retryIsCorrect: question.retry_is_correct,
+        revealedCorrectChoiceIndex: answered
+          ? question.correct_choice_index
+          : null,
+      };
+    }),
+  };
+}
+
+export async function expireStudentAttempt(
+  studentId: string,
+  attemptId: string,
+): Promise<void> {
+  const supabase = getServiceSupabaseClient();
+  const { error } = await supabase.rpc("expire_quiz_attempt", {
+    p_student_id: studentId,
+    p_attempt_id: attemptId,
+  });
+
+  if (error) {
+    throw new Error("시험 종료상태를 저장하지 못했습니다.");
+  }
+}
+
+export async function answerStudentQuestion(input: {
+  studentId: string;
+  attemptId: string;
+  questionId: string;
+  phase: "initial" | "retry";
+  choiceIndex: number;
+}) {
+  const supabase = getServiceSupabaseClient();
+  const { data, error } = await supabase.rpc("answer_quiz_question", {
+    p_student_id: input.studentId,
+    p_attempt_id: input.attemptId,
+    p_question_id: input.questionId,
+    p_phase: input.phase,
+    p_choice_index: input.choiceIndex,
+  });
+
+  if (error || !data) {
+    throw new Error("답안을 저장하지 못했습니다.");
+  }
+
+  return data as {
+    correct?: boolean;
+    correctChoiceIndex?: number;
+    completed?: boolean;
+    needsRetry?: boolean;
+    expired?: boolean;
+  };
+}
+
+export async function getAttemptResult(
+  studentId: string,
+  attemptId: string,
+) {
+  const supabase = getServiceSupabaseClient();
+  const { data, error } = await supabase
+    .from("quiz_attempts")
+    .select(
+      "id, assignment_id, status, attempt_number, question_count_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, elapsed_seconds, started_at, completed_at, assignments(title)",
+    )
+    .eq("id", attemptId)
+    .eq("student_id", studentId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+  const questions = await getAttemptQuestionResults(attemptId);
+
+  const assignment = Array.isArray(data.assignments)
+    ? data.assignments[0]
+    : data.assignments;
+
+  return {
+    id: data.id,
+    title: assignment?.title ?? "단어 시험",
+    status: data.status,
+    attemptNumber: data.attempt_number,
+    questionCount: data.question_count_snapshot,
+    initialCorrectCount: data.initial_correct_count,
+    retryCorrectCount: data.retry_correct_count,
+    unresolvedWrongCount: data.unresolved_wrong_count,
+    initialScore:
+      data.initial_score === null ? null : Number(data.initial_score),
+    finalScore: data.final_score === null ? null : Number(data.final_score),
+    passed: data.passed,
+    elapsedSeconds: data.elapsed_seconds,
+    startedAt: data.started_at,
+    completedAt: data.completed_at,
+    questions,
+  };
+}
