@@ -1,6 +1,6 @@
 import "server-only";
 
-import { getServerEnvironment } from "@/lib/env";
+import { getStudentCodeEnvironment } from "@/lib/env";
 import { requireAdmin } from "@/lib/auth/admin";
 import {
   decryptStudentCode,
@@ -36,6 +36,25 @@ export type DatasetSummary = {
   status: "pending_review" | "ready" | "retired";
   isActive: boolean;
 };
+
+export type DatasetOption = {
+  id: string;
+  title: string;
+  edition: string | null;
+};
+
+export class StudentCreationError extends Error {
+  constructor(
+    public readonly reason: "dataset_unavailable" | "database",
+  ) {
+    super(
+      reason === "dataset_unavailable"
+        ? "선택한 단어장을 사용할 수 없습니다."
+        : "학생과 접속코드를 만들지 못했습니다.",
+    );
+    this.name = "StudentCreationError";
+  }
+}
 
 export type AssignmentSummary = {
   id: string;
@@ -80,9 +99,16 @@ type StudentRow = {
   school_name: string | null;
   grade_label: string | null;
   current_vocab_book: string | null;
+  current_vocab_dataset_id: string | null;
   status: "active" | "blocked";
   code_generation: number;
   created_at: string;
+};
+
+type DatasetLabelRow = {
+  id: string;
+  title: string;
+  edition: string | null;
 };
 
 type StudentCodeRow = {
@@ -93,18 +119,22 @@ type StudentCodeRow = {
 export async function listStudents(): Promise<StudentSummary[]> {
   await requireAdmin();
   const supabase = await createServerSupabaseClient();
-  const [{ data: studentData, error: studentError }, { data: codeData }] =
-    await Promise.all([
-      supabase
-        .from("students")
-        .select(
-          "id, display_name, school_name, grade_label, current_vocab_book, status, code_generation, created_at",
-        )
-        .order("display_name"),
-      supabase.from("student_codes").select("student_id, status"),
-    ]);
+  const [
+    { data: studentData, error: studentError },
+    { data: codeData },
+    { data: datasetData, error: datasetError },
+  ] = await Promise.all([
+    supabase
+      .from("students")
+      .select(
+        "id, display_name, school_name, grade_label, current_vocab_book, current_vocab_dataset_id, status, code_generation, created_at",
+      )
+      .order("display_name"),
+    supabase.from("student_codes").select("student_id, status"),
+    supabase.from("vocab_datasets").select("id, title, edition"),
+  ]);
 
-  if (studentError) {
+  if (studentError || datasetError) {
     throw new Error("학생 목록을 불러오지 못했습니다.");
   }
 
@@ -114,13 +144,23 @@ export async function listStudents(): Promise<StudentSummary[]> {
       code.status,
     ]),
   );
+  const datasetById = new Map(
+    ((datasetData ?? []) as DatasetLabelRow[]).map((dataset) => [
+      dataset.id,
+      [dataset.title, dataset.edition].filter(Boolean).join(" · "),
+    ]),
+  );
 
   return ((studentData ?? []) as StudentRow[]).map((student) => ({
     id: student.id,
     displayName: student.display_name,
     schoolName: student.school_name,
     gradeLabel: student.grade_label,
-    currentVocabBook: student.current_vocab_book,
+    currentVocabBook:
+      (student.current_vocab_dataset_id
+        ? datasetById.get(student.current_vocab_dataset_id)
+        : null) ??
+      student.current_vocab_book,
     status: student.status,
     codeGeneration: student.code_generation,
     codeStatus: codeByStudent.get(student.id) ?? "missing",
@@ -132,22 +172,22 @@ export async function createStudent(input: {
   displayName: string;
   schoolName: string;
   gradeLabel: string;
-  currentVocabBook: string;
+  currentVocabDatasetId: string;
   note: string;
 }): Promise<{ studentId: string; code: string }> {
   await requireAdmin();
-  const environment = getServerEnvironment();
+  const environment = getStudentCodeEnvironment();
   const supabase = await createServerSupabaseClient();
   const code = generateStudentCode();
   const encrypted = encryptStudentCode(
     code,
     environment.STUDENT_CODE_ENCRYPTION_KEY,
   );
-  const { data, error } = await supabase.rpc("create_student_with_code", {
+  const { data, error } = await supabase.rpc("create_student_with_code_v2", {
     p_display_name: input.displayName,
     p_school_name: input.schoolName,
     p_grade_label: input.gradeLabel,
-    p_current_vocab_book: input.currentVocabBook,
+    p_current_vocab_dataset_id: input.currentVocabDatasetId,
     p_note: input.note,
     p_lookup_hmac: hashStudentCode(code, environment.STUDENT_CODE_PEPPER),
     p_encrypted_code: encrypted.encryptedCode,
@@ -157,7 +197,18 @@ export async function createStudent(input: {
 
   const result = Array.isArray(data) ? data[0] : data;
   if (error || !result?.student_id) {
-    throw new Error("학생과 접속코드를 만들지 못했습니다.");
+    console.error("[student-create] database operation failed", {
+      code: error?.code ?? "missing_result",
+      message: error?.message ?? "student_id was not returned",
+      hint: error?.hint ?? null,
+    });
+    if (
+      error?.message.includes("dataset_not_ready") ||
+      error?.message.includes("dataset_required")
+    ) {
+      throw new StudentCreationError("dataset_unavailable");
+    }
+    throw new StudentCreationError("database");
   }
 
   return {
@@ -168,7 +219,7 @@ export async function createStudent(input: {
 
 export async function revealStudentCode(studentId: string): Promise<string> {
   const admin = await requireAdmin();
-  const environment = getServerEnvironment();
+  const environment = getStudentCodeEnvironment();
   const supabase = getServiceSupabaseClient();
   const { data, error } = await supabase
     .from("student_codes")
@@ -203,7 +254,7 @@ export async function rotateStudentCode(
   studentId: string,
 ): Promise<string> {
   await requireAdmin();
-  const environment = getServerEnvironment();
+  const environment = getStudentCodeEnvironment();
   const supabase = await createServerSupabaseClient();
   const code = generateStudentCode();
   const encrypted = encryptStudentCode(
@@ -261,6 +312,27 @@ export async function listDatasets(): Promise<DatasetSummary[]> {
     rowCount: dataset.row_count,
     status: dataset.status,
     isActive: dataset.is_active,
+  }));
+}
+
+export async function listSelectableDatasets(): Promise<DatasetOption[]> {
+  await requireAdmin();
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("vocab_datasets")
+    .select("id, title, edition")
+    .eq("status", "ready")
+    .eq("is_active", true)
+    .order("title");
+
+  if (error) {
+    throw new Error("선택 가능한 단어장을 불러오지 못했습니다.");
+  }
+
+  return (data ?? []).map((dataset) => ({
+    id: dataset.id,
+    title: dataset.title,
+    edition: dataset.edition,
   }));
 }
 

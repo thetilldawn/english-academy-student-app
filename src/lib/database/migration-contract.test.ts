@@ -19,6 +19,18 @@ const studentProfileMigration = fs.readFileSync(
   ),
   "utf8",
 );
+const studentDatasetMigration = fs.readFileSync(
+  path.resolve(
+    "supabase/migrations/20260728222713_student_vocab_dataset_selection.sql",
+  ),
+  "utf8",
+);
+const studentDatasetEnforcementMigration = fs.readFileSync(
+  path.resolve(
+    "supabase/migrations/20260728223531_enforce_student_vocab_dataset_selection.sql",
+  ),
+  "utf8",
+);
 const config = fs.readFileSync(
   path.resolve("supabase/config.toml"),
   "utf8",
@@ -150,5 +162,59 @@ describe("database security contract", () => {
     expect(studentProfileMigration).toContain(
       "from public, anon;",
     );
+  });
+
+  it("현재 단어장을 검수 완료 데이터셋 FK로 선택하고 v2 RPC에서 재검증한다", () => {
+    expect(studentDatasetMigration).toContain(
+      "add column current_vocab_dataset_id uuid",
+    );
+    expect(studentDatasetMigration).toContain(
+      "constraint students_current_vocab_dataset_id_fkey",
+    );
+    expect(studentDatasetMigration).toContain("on delete restrict");
+    expect(studentDatasetMigration).toContain(
+      "create index students_current_vocab_dataset_idx",
+    );
+    expect(
+      studentDatasetMigration.match(
+        /create function (?:private|public)\.create_student_with_code_v2\(/g,
+      ),
+    ).toHaveLength(2);
+    expect(
+      studentDatasetMigration.match(
+        /p_current_vocab_dataset_id uuid/g,
+      ),
+    ).toHaveLength(2);
+    expect(studentDatasetMigration).toContain("status = 'ready'");
+    expect(studentDatasetMigration).toContain("and is_active");
+    expect(studentDatasetMigration).toContain(
+      "raise exception 'dataset_required'",
+    );
+    expect(studentDatasetMigration).toContain(
+      "raise exception 'dataset_not_ready'",
+    );
+    expect(studentDatasetMigration).toContain("security invoker");
+    expect(studentDatasetMigration).toContain(
+      "from public, anon;",
+    );
+  });
+
+  it("구형 생성 경로를 닫고 현재 단어장 선택을 DB 필수값으로 만든다", () => {
+    expect(studentDatasetEnforcementMigration).toContain(
+      "students_without_current_vocab_dataset",
+    );
+    expect(studentDatasetEnforcementMigration).toContain(
+      "alter column current_vocab_dataset_id set not null",
+    );
+    expect(
+      studentDatasetEnforcementMigration.match(
+        /drop function public\.create_student_with_code\(/g,
+      ),
+    ).toHaveLength(2);
+    expect(
+      studentDatasetEnforcementMigration.match(
+        /drop function private\.create_student_with_code\(/g,
+      ),
+    ).toHaveLength(2);
   });
 });

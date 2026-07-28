@@ -2,7 +2,7 @@ import "server-only";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-import { getServerEnvironment } from "@/lib/env";
+import { getServiceEnvironment } from "@/lib/env";
 
 let serviceClient: SupabaseClient | undefined;
 
@@ -11,7 +11,7 @@ export function getServiceSupabaseClient(): SupabaseClient {
     return serviceClient;
   }
 
-  const environment = getServerEnvironment();
+  const environment = getServiceEnvironment();
   serviceClient = createClient(
     environment.NEXT_PUBLIC_SUPABASE_URL,
     environment.SUPABASE_SECRET_KEY,

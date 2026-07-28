@@ -49,7 +49,7 @@ describe("responsive navigation contract", () => {
     expect(adminLogin).not.toContain("router.refresh()");
   });
 
-  it("학생 생성 폼은 필수·선택과 현재 단어장을 구분한다", () => {
+  it("학생 생성 폼은 검수 완료 단어장을 선택하게 한다", () => {
     const studentManager = source(
       "src/components/student-manager.tsx",
     );
@@ -57,17 +57,20 @@ describe("responsive navigation contract", () => {
 
     expect(studentManager).toContain('data-kind="required"');
     expect(studentManager).toContain("필수");
-    expect(studentManager.match(/>선택</g)).toHaveLength(4);
-    expect(studentManager).toContain('name="currentVocabBook"');
+    expect(studentManager).toContain('name="currentVocabDatasetId"');
     expect(studentManager).toContain(
-      "currentVocabBook: form.get(\"currentVocabBook\")",
+      'currentVocabDatasetId: form.get("currentVocabDatasetId")',
     );
+    expect(studentManager).toContain("datasets.map");
+    expect(studentManager).toContain("선택 가능한 단어장이 없습니다");
+    expect(studentManager).not.toContain('name="currentVocabBook"');
     expect(studentManager).toContain(
       'student.currentVocabBook ?? "미입력"',
     );
     expect(adminService).toContain(
-      "p_current_vocab_book: input.currentVocabBook",
+      "p_current_vocab_dataset_id: input.currentVocabDatasetId",
     );
+    expect(adminService).toContain('"create_student_with_code_v2"');
   });
 
   it("관리자 세 화면폭 메뉴와 시험 집중 셸을 유지한다", () => {

@@ -20,18 +20,27 @@ type StudentItem = {
   codeStatus: "active" | "blocked" | "missing";
 };
 
+type DatasetOption = {
+  id: string;
+  title: string;
+  edition: string | null;
+};
+
 type ApiResponse = {
   code?: string;
   error?: string;
 };
 
 export function StudentManager({
+  datasets,
   students,
 }: {
+  datasets: DatasetOption[];
   students: StudentItem[];
 }) {
   const router = useRouter();
   const [error, setError] = useState("");
+  const [createError, setCreateError] = useState("");
   const [busyKey, setBusyKey] = useState("");
   const [shownCode, setShownCode] = useState<{
     code: string;
@@ -84,7 +93,12 @@ export function StudentManager({
     options?: RequestInit,
   ): Promise<ApiResponse> {
     const response = await fetch(url, options);
-    const payload = (await response.json()) as ApiResponse;
+    let payload: ApiResponse = {};
+    try {
+      payload = (await response.json()) as ApiResponse;
+    } catch {
+      // 프록시 오류처럼 JSON이 아닌 응답은 아래의 안전한 기본 문구로 처리한다.
+    }
     if (!response.ok) {
       throw new Error(payload.error ?? "요청을 처리하지 못했습니다.");
     }
@@ -96,6 +110,7 @@ export function StudentManager({
     if (!beginAction("create")) {
       return;
     }
+    setCreateError("");
 
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
@@ -108,7 +123,7 @@ export function StudentManager({
           displayName: form.get("displayName"),
           schoolName: form.get("schoolName"),
           gradeLabel: form.get("gradeLabel"),
-          currentVocabBook: form.get("currentVocabBook"),
+          currentVocabDatasetId: form.get("currentVocabDatasetId"),
           note: form.get("note"),
         }),
       });
@@ -122,7 +137,7 @@ export function StudentManager({
       formElement.reset();
       router.refresh();
     } catch (requestError) {
-      setError(
+      setCreateError(
         requestError instanceof Error
           ? requestError.message
           : "학생을 만들지 못했습니다.",
@@ -478,7 +493,11 @@ export function StudentManager({
               <p className="auth-description">
                 실명 대신 수업에서 구분할 이름만 적어도 됩니다.
               </p>
-              <form className="form-stack" onSubmit={createStudent}>
+              <form
+                aria-busy={busyKey === "create"}
+                className="form-stack"
+                onSubmit={createStudent}
+              >
                 <label className="field">
                   <span className="field-label-row">
                     <span className="field-label">학생 이름</span>
@@ -523,15 +542,36 @@ export function StudentManager({
                 <label className="field">
                   <span className="field-label-row">
                     <span className="field-label">현재 단어장</span>
-                    <span className="field-requirement">선택</span>
+                    <span
+                      className="field-requirement"
+                      data-kind="required"
+                    >
+                      필수
+                    </span>
                   </span>
-                  <input
-                    name="currentVocabBook"
-                    maxLength={160}
-                    placeholder="예: 능률 VOCA 어원편 2025개정"
-                  />
+                  <select
+                    defaultValue=""
+                    disabled={datasets.length === 0}
+                    name="currentVocabDatasetId"
+                    required
+                  >
+                    <option disabled value="">
+                      {datasets.length === 0
+                        ? "선택 가능한 단어장이 없습니다"
+                        : "단어장 선택"}
+                    </option>
+                    {datasets.map((dataset) => (
+                      <option key={dataset.id} value={dataset.id}>
+                        {[dataset.title, dataset.edition]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </option>
+                    ))}
+                  </select>
                   <span className="field-help">
-                    학생이 지금 학습 중인 단어장 이름
+                    {datasets.length === 0
+                      ? "검수 완료된 단어장이 등록되면 여기에 표시됩니다."
+                      : "검수 완료되어 시험에 사용할 수 있는 단어장만 표시됩니다."}
                   </span>
                 </label>
                 <label className="field">
@@ -545,9 +585,14 @@ export function StudentManager({
                     placeholder="선택 사항"
                   />
                 </label>
+                {createError && (
+                  <div className="notice notice-error" role="alert">
+                    {createError}
+                  </div>
+                )}
                 <button
                   className="button button-primary"
-                  disabled={busyKey !== ""}
+                  disabled={busyKey !== "" || datasets.length === 0}
                   type="submit"
                 >
                   {busyKey === "create"

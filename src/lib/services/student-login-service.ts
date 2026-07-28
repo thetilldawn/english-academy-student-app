@@ -5,7 +5,7 @@ import {
   LOGIN_MAX_FAILURES_PER_IP,
   LOGIN_WINDOW_MINUTES,
 } from "@/lib/constants";
-import { getServerEnvironment } from "@/lib/env";
+import { getStudentLoginEnvironment } from "@/lib/env";
 import {
   hashLoginIp,
   hashStudentCode,
@@ -30,7 +30,7 @@ export async function authenticateStudentCode(
   request: Request,
   code: string,
 ): Promise<StudentLoginResult> {
-  const environment = getServerEnvironment();
+  const environment = getStudentLoginEnvironment();
   const normalizedCode = normalizeStudentCode(code);
   const codeHash = hashStudentCode(
     normalizedCode,

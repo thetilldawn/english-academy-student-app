@@ -1,14 +1,20 @@
 import type { Metadata } from "next";
 
 import { StudentManager } from "@/components/student-manager";
-import { listStudents } from "@/lib/services/admin-service";
+import {
+  listSelectableDatasets,
+  listStudents,
+} from "@/lib/services/admin-service";
 
 export const metadata: Metadata = {
   title: "학생과 접속코드",
 };
 
 export default async function StudentsPage() {
-  const students = await listStudents();
+  const [students, datasets] = await Promise.all([
+    listStudents(),
+    listSelectableDatasets(),
+  ]);
 
   return (
     <>
@@ -22,7 +28,7 @@ export default async function StudentsPage() {
           </p>
         </div>
       </div>
-      <StudentManager students={students} />
+      <StudentManager datasets={datasets} students={students} />
     </>
   );
 }

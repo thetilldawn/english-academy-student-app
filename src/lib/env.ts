@@ -9,7 +9,15 @@ const publicEnvironmentSchema = z.object({
 const base64Key = z.string().refine(
   (value) => {
     try {
-      return Buffer.from(value, "base64").length === 32;
+      if (!/^[A-Za-z0-9+/]{43}=$/.test(value)) {
+        return false;
+      }
+
+      const decoded = Buffer.from(value, "base64");
+      return (
+        decoded.length === 32 &&
+        decoded.toString("base64") === value
+      );
     } catch {
       return false;
     }
@@ -26,6 +34,24 @@ const serverEnvironmentSchema = publicEnvironmentSchema.extend({
   APP_ORIGIN: z.url().optional(),
 });
 
+const serviceEnvironmentSchema = publicEnvironmentSchema.extend({
+  SUPABASE_SECRET_KEY: z.string().min(20),
+});
+
+const studentCodeEnvironmentSchema = z.object({
+  STUDENT_CODE_PEPPER: base64Key,
+  STUDENT_CODE_ENCRYPTION_KEY: base64Key,
+});
+
+const studentLoginEnvironmentSchema = z.object({
+  STUDENT_CODE_PEPPER: base64Key,
+  LOGIN_IP_PEPPER: base64Key,
+});
+
+const studentSessionEnvironmentSchema = z.object({
+  STUDENT_SESSION_PEPPER: base64Key,
+});
+
 export class AppConfigurationError extends Error {
   constructor(message = "앱 환경변수 설정이 완료되지 않았습니다.") {
     super(message);
@@ -33,18 +59,45 @@ export class AppConfigurationError extends Error {
   }
 }
 
+function parseEnvironment<T extends z.ZodType>(
+  schema: T,
+  label: string,
+): z.infer<T> {
+  const result = schema.safeParse(process.env);
+
+  if (!result.success) {
+    throw new AppConfigurationError(
+      `${label} 설정이 올바르지 않습니다: ${result.error.issues
+        .map((issue) => issue.path.join("."))
+        .join(", ")}`,
+    );
+  }
+
+  return result.data;
+}
+
 export function hasSupabaseEnvironment(): boolean {
   return publicEnvironmentSchema.safeParse(process.env).success;
 }
 
 export function getPublicEnvironment() {
-  const result = publicEnvironmentSchema.safeParse(process.env);
+  return parseEnvironment(publicEnvironmentSchema, "공개 데이터 연결");
+}
 
-  if (!result.success) {
-    throw new AppConfigurationError();
-  }
+export function getServiceEnvironment() {
+  return parseEnvironment(serviceEnvironmentSchema, "서버 데이터 연결");
+}
 
-  return result.data;
+export function getStudentCodeEnvironment() {
+  return parseEnvironment(studentCodeEnvironmentSchema, "학생코드 보안");
+}
+
+export function getStudentLoginEnvironment() {
+  return parseEnvironment(studentLoginEnvironmentSchema, "학생 인증 보안");
+}
+
+export function getStudentSessionEnvironment() {
+  return parseEnvironment(studentSessionEnvironmentSchema, "학생 세션 보안");
 }
 
 export function getServerEnvironment() {

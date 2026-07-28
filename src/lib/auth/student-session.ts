@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 
 import { STUDENT_SESSION_MAX_AGE_SECONDS } from "@/lib/constants";
-import { getServerEnvironment } from "@/lib/env";
+import { getStudentSessionEnvironment } from "@/lib/env";
 import {
   generateStudentSessionToken,
   getStudentCookieName,
@@ -43,7 +43,7 @@ type StudentRow = {
 export async function validateStudentSessionToken(
   token: string,
 ): Promise<StudentSession | null> {
-  const environment = getServerEnvironment();
+  const environment = getStudentSessionEnvironment();
   const tokenHash = hashStudentSessionToken(
     token,
     environment.STUDENT_SESSION_PEPPER,
@@ -122,7 +122,7 @@ export async function issueStudentSession(input: {
   codeGeneration: number;
   userAgentHash: string | null;
 }): Promise<string> {
-  const environment = getServerEnvironment();
+  const environment = getStudentSessionEnvironment();
   const token = generateStudentSessionToken();
   const tokenHash = hashStudentSessionToken(
     token,
@@ -162,7 +162,7 @@ export async function revokeCurrentStudentSession(
   const token = cookieStore.get(getStudentCookieName())?.value;
 
   if (token) {
-    const environment = getServerEnvironment();
+    const environment = getStudentSessionEnvironment();
     const tokenHash = hashStudentSessionToken(
       token,
       environment.STUDENT_SESSION_PEPPER,
