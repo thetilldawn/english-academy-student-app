@@ -14,6 +14,7 @@ type StudentItem = {
   displayName: string;
   schoolName: string | null;
   gradeLabel: string | null;
+  currentVocabBook: string | null;
   status: "active" | "blocked";
   codeGeneration: number;
   codeStatus: "active" | "blocked" | "missing";
@@ -64,6 +65,20 @@ export function StudentManager({
     setShownCode(null);
   }
 
+  function beginAction(key: string) {
+    if (busyKey !== "") {
+      return false;
+    }
+
+    setError("");
+    setBusyKey(key);
+    return true;
+  }
+
+  function finishAction() {
+    setBusyKey("");
+  }
+
   async function request(
     url: string,
     options?: RequestInit,
@@ -78,8 +93,10 @@ export function StudentManager({
 
   async function createStudent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError("");
-    setBusyKey("create");
+    if (!beginAction("create")) {
+      return;
+    }
+
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
 
@@ -91,6 +108,7 @@ export function StudentManager({
           displayName: form.get("displayName"),
           schoolName: form.get("schoolName"),
           gradeLabel: form.get("gradeLabel"),
+          currentVocabBook: form.get("currentVocabBook"),
           note: form.get("note"),
         }),
       });
@@ -110,13 +128,15 @@ export function StudentManager({
           : "학생을 만들지 못했습니다.",
       );
     } finally {
-      setBusyKey("");
+      finishAction();
     }
   }
 
   async function reveal(student: StudentItem) {
-    setError("");
-    setBusyKey(`reveal:${student.id}`);
+    if (!beginAction(`reveal:${student.id}`)) {
+      return;
+    }
+
     try {
       const payload = await request(
         `/api/admin/students/${student.id}/code`,
@@ -135,7 +155,7 @@ export function StudentManager({
           : "접속코드를 불러오지 못했습니다.",
       );
     } finally {
-      setBusyKey("");
+      finishAction();
     }
   }
 
@@ -145,8 +165,10 @@ export function StudentManager({
     );
     if (!accepted) return;
 
-    setError("");
-    setBusyKey(`rotate:${student.id}`);
+    if (!beginAction(`rotate:${student.id}`)) {
+      return;
+    }
+
     try {
       const payload = await request(
         `/api/admin/students/${student.id}/code/rotate`,
@@ -167,7 +189,7 @@ export function StudentManager({
           : "접속코드를 바꾸지 못했습니다.",
       );
     } finally {
-      setBusyKey("");
+      finishAction();
     }
   }
 
@@ -177,8 +199,10 @@ export function StudentManager({
     );
     if (!accepted) return;
 
-    setError("");
-    setBusyKey(`block:${student.id}`);
+    if (!beginAction(`block:${student.id}`)) {
+      return;
+    }
+
     try {
       await request(`/api/admin/students/${student.id}/status`, {
         method: "PATCH",
@@ -193,7 +217,7 @@ export function StudentManager({
           : "접속을 차단하지 못했습니다.",
       );
     } finally {
-      setBusyKey("");
+      finishAction();
     }
   }
 
@@ -296,6 +320,10 @@ export function StudentManager({
                           <p className="list-title">
                             {student.displayName}
                           </p>
+                          <p className="list-meta student-book-meta">
+                            현재 단어장 ·{" "}
+                            {student.currentVocabBook ?? "미입력"}
+                          </p>
                           <p className="list-meta">
                             코드 {student.codeGeneration}차
                           </p>
@@ -385,6 +413,12 @@ export function StudentManager({
                       .filter(Boolean)
                       .join(" · ") || "학교·학년 미입력"}
                   </p>
+                  <p className="student-book-line">
+                    <span>현재 단어장</span>
+                    <strong>
+                      {selectedStudent.currentVocabBook ?? "미입력"}
+                    </strong>
+                  </p>
                 </div>
                 <span
                   className={`status-pill status-${selectedStudent.status}`}
@@ -446,7 +480,15 @@ export function StudentManager({
               </p>
               <form className="form-stack" onSubmit={createStudent}>
                 <label className="field">
-                  <span className="field-label">학생 이름</span>
+                  <span className="field-label-row">
+                    <span className="field-label">학생 이름</span>
+                    <span
+                      className="field-requirement"
+                      data-kind="required"
+                    >
+                      필수
+                    </span>
+                  </span>
                   <input
                     name="displayName"
                     required
@@ -456,15 +498,21 @@ export function StudentManager({
                 </label>
                 <div className="form-grid-2">
                   <label className="field">
-                    <span className="field-label">학교</span>
+                    <span className="field-label-row">
+                      <span className="field-label">학교</span>
+                      <span className="field-requirement">선택</span>
+                    </span>
                     <input
                       name="schoolName"
                       maxLength={120}
-                      placeholder="선택"
+                      placeholder="예: 심석고등학교"
                     />
                   </label>
                   <label className="field">
-                    <span className="field-label">학년</span>
+                    <span className="field-label-row">
+                      <span className="field-label">학년</span>
+                      <span className="field-requirement">선택</span>
+                    </span>
                     <input
                       name="gradeLabel"
                       maxLength={40}
@@ -473,7 +521,24 @@ export function StudentManager({
                   </label>
                 </div>
                 <label className="field">
-                  <span className="field-label">관리 메모</span>
+                  <span className="field-label-row">
+                    <span className="field-label">현재 단어장</span>
+                    <span className="field-requirement">선택</span>
+                  </span>
+                  <input
+                    name="currentVocabBook"
+                    maxLength={160}
+                    placeholder="예: 능률 VOCA 어원편 2025개정"
+                  />
+                  <span className="field-help">
+                    학생이 지금 학습 중인 단어장 이름
+                  </span>
+                </label>
+                <label className="field">
+                  <span className="field-label-row">
+                    <span className="field-label">관리 메모</span>
+                    <span className="field-requirement">선택</span>
+                  </span>
                   <textarea
                     name="note"
                     maxLength={2000}
@@ -482,7 +547,7 @@ export function StudentManager({
                 </label>
                 <button
                   className="button button-primary"
-                  disabled={busyKey === "create"}
+                  disabled={busyKey !== ""}
                   type="submit"
                 >
                   {busyKey === "create"

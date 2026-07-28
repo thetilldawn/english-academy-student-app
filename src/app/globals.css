@@ -336,6 +336,27 @@ textarea:focus-visible {
   font-weight: 750;
 }
 
+.field-label-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.field-requirement {
+  padding: 2px 7px;
+  border-radius: 999px;
+  color: var(--muted);
+  background: #eceee9;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.field-requirement[data-kind="required"] {
+  color: var(--green-dark);
+  background: var(--green-soft);
+}
+
 .field-help {
   color: var(--muted);
   font-size: 12px;
@@ -434,12 +455,20 @@ textarea {
   height: 54px;
   display: grid;
   place-items: center;
+  overflow: hidden;
   border: 1px solid #cfd5cd;
   border-radius: 10px;
   color: var(--ink);
   background: white;
-  font-size: clamp(17px, 4.5vw, 22px);
+  font-family:
+    ui-monospace,
+    "SFMono-Regular",
+    Consolas,
+    "Liberation Mono",
+    monospace;
+  font-size: clamp(16px, 4vw, 20px);
   font-weight: 850;
+  line-height: 1;
   text-transform: uppercase;
   transition:
     border-color 140ms ease,
@@ -467,6 +496,11 @@ textarea {
 .segmented-code-control[data-invalid="true"] .segmented-code-slot {
   border-color: #d99b95;
   background: #fffafa;
+}
+
+.segmented-code-control[data-invalid="true"][data-full="true"]:focus-within
+  .segmented-code-slot:last-child {
+  box-shadow: 0 0 0 3px rgba(162, 61, 56, 0.18);
 }
 
 .segmented-code-native:disabled + .segmented-code-groups {
@@ -1537,6 +1571,24 @@ tr:last-child td {
   border-color: rgba(17, 116, 88, 0.34);
 }
 
+.student-book-line {
+  display: grid;
+  gap: 2px;
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.student-book-meta {
+  overflow-wrap: anywhere;
+}
+
+.student-book-line strong {
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 14px;
+}
+
 .student-actions-disclosure > summary {
   list-style: none;
 }
@@ -1881,6 +1933,10 @@ tr:last-child td {
     position: sticky;
     top: 24px;
     grid-area: add;
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+    padding: 2px 4px 16px 2px;
+    scrollbar-gutter: stable;
   }
 
   .student-action-panel,
@@ -2223,7 +2279,7 @@ tr:last-child td {
   .segmented-code-slot {
     height: 48px;
     border-radius: 8px;
-    font-size: 17px;
+    font-size: 16px;
   }
 }
 

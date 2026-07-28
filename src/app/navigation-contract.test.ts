@@ -19,6 +19,8 @@ describe("responsive navigation contract", () => {
     expect(loginForm).toContain('"인증 중…" : "인증"');
     expect(loginForm).toContain('"segmented-code-slot"');
     expect(loginForm).toContain("STUDENT_CODE_LENGTH");
+    expect(loginForm).toContain("aria-errormessage");
+    expect(loginForm).toContain('window.location.replace("/student")');
     expect(loginForm).not.toContain("하이픈은 빼고");
     expect(codePage).toContain('redirect("/")');
   });
@@ -43,7 +45,29 @@ describe("responsive navigation contract", () => {
     expect(adminLogout).toContain('router.replace("/admin/login")');
     expect(adminLogin).toContain('"로그인 중…" : "관리자 로그인"');
     expect(adminLogin).toContain("requestInFlight.current");
+    expect(adminLogin).toContain('window.location.replace("/admin")');
     expect(adminLogin).not.toContain("router.refresh()");
+  });
+
+  it("학생 생성 폼은 필수·선택과 현재 단어장을 구분한다", () => {
+    const studentManager = source(
+      "src/components/student-manager.tsx",
+    );
+    const adminService = source("src/lib/services/admin-service.ts");
+
+    expect(studentManager).toContain('data-kind="required"');
+    expect(studentManager).toContain("필수");
+    expect(studentManager.match(/>선택</g)).toHaveLength(4);
+    expect(studentManager).toContain('name="currentVocabBook"');
+    expect(studentManager).toContain(
+      "currentVocabBook: form.get(\"currentVocabBook\")",
+    );
+    expect(studentManager).toContain(
+      'student.currentVocabBook ?? "미입력"',
+    );
+    expect(adminService).toContain(
+      "p_current_vocab_book: input.currentVocabBook",
+    );
   });
 
   it("관리자 세 화면폭 메뉴와 시험 집중 셸을 유지한다", () => {

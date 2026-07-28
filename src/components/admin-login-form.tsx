@@ -1,14 +1,12 @@
 "use client";
 
 import { useRef, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 
 type ErrorResponse = {
   error?: string;
 };
 
 export function AdminLoginForm() {
-  const router = useRouter();
   const requestInFlight = useRef(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -25,6 +23,12 @@ export function AdminLoginForm() {
     setSubmitting(true);
 
     const form = new FormData(event.currentTarget);
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(
+      () => controller.abort(),
+      15_000,
+    );
+
     try {
       const response = await fetch("/api/admin/session", {
         method: "POST",
@@ -33,6 +37,7 @@ export function AdminLoginForm() {
           email: form.get("email"),
           password: form.get("password"),
         }),
+        signal: controller.signal,
       });
       const payload = (await response.json()) as ErrorResponse;
 
@@ -43,11 +48,17 @@ export function AdminLoginForm() {
         return;
       }
 
-      router.replace("/admin");
+      window.location.replace("/admin");
     } catch {
-      setError("연결을 확인한 뒤 다시 시도해주세요.");
+      setError(
+        controller.signal.aborted
+          ? "응답이 늦어지고 있습니다. 다시 시도해주세요."
+          : "연결을 확인한 뒤 다시 시도해주세요.",
+      );
       requestInFlight.current = false;
       setSubmitting(false);
+    } finally {
+      window.clearTimeout(timeoutId);
     }
   }
 

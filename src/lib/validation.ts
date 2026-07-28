@@ -23,6 +23,7 @@ export const createStudentSchema = z.object({
   displayName: z.string().trim().min(1).max(80),
   schoolName: z.string().trim().max(120).default(""),
   gradeLabel: z.string().trim().max(40).default(""),
+  currentVocabBook: z.string().trim().max(160).default(""),
   note: z.string().trim().max(2000).default(""),
 });
 

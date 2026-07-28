@@ -7,7 +7,6 @@ import {
   type ChangeEvent,
   type FormEvent,
 } from "react";
-import { useRouter } from "next/navigation";
 
 import {
   normalizeStudentCodeInput,
@@ -21,7 +20,6 @@ type LoginResponse = {
 const CODE_SLOT_GROUPS = [0, 1, 2] as const;
 
 export function StudentLoginForm() {
-  const router = useRouter();
   const codeInputRef = useRef<HTMLInputElement>(null);
   const requestInFlight = useRef(false);
   const [code, setCode] = useState("");
@@ -61,11 +59,18 @@ export function StudentLoginForm() {
     setError("");
     setSubmitting(true);
 
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(
+      () => controller.abort(),
+      15_000,
+    );
+
     try {
       const response = await fetch("/api/student/session", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ code }),
+        signal: controller.signal,
       });
       const payload = (await response.json()) as LoginResponse;
 
@@ -76,11 +81,17 @@ export function StudentLoginForm() {
         return;
       }
 
-      router.replace("/student");
+      window.location.replace("/student");
     } catch {
-      setError("연결을 확인한 뒤 다시 시도해주세요.");
+      setError(
+        controller.signal.aborted
+          ? "응답이 늦어지고 있습니다. 다시 시도해주세요."
+          : "연결을 확인한 뒤 다시 시도해주세요.",
+      );
       requestInFlight.current = false;
       setSubmitting(false);
+    } finally {
+      window.clearTimeout(timeoutId);
     }
   }
 
@@ -96,11 +107,15 @@ export function StudentLoginForm() {
         </label>
         <div
           className="segmented-code-control"
+          data-full={code.length === STUDENT_CODE_LENGTH}
           data-invalid={Boolean(error)}
         >
           <input
             ref={codeInputRef}
             aria-describedby="student-code-help"
+            aria-errormessage={
+              error ? "student-code-error" : undefined
+            }
             aria-invalid={Boolean(error)}
             className="segmented-code-native"
             disabled={submitting}
@@ -113,7 +128,6 @@ export function StudentLoginForm() {
             autoCorrect="off"
             enterKeyHint="go"
             maxLength={32}
-            required
             spellCheck={false}
             value={code}
             onChange={handleCodeChange}
@@ -124,7 +138,9 @@ export function StudentLoginForm() {
           <div
             aria-hidden="true"
             className="segmented-code-groups"
-            data-complete={code.length === STUDENT_CODE_LENGTH}
+            data-complete={
+              code.length === STUDENT_CODE_LENGTH && !error
+            }
           >
             {CODE_SLOT_GROUPS.map((groupIndex) => (
               <Fragment key={groupIndex}>
@@ -164,7 +180,11 @@ export function StudentLoginForm() {
         </span>
       </div>
       {error && (
-        <div className="notice notice-error" role="alert">
+        <div
+          className="notice notice-error"
+          id="student-code-error"
+          role="alert"
+        >
           {error}
         </div>
       )}

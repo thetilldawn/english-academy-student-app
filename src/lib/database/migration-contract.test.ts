@@ -13,6 +13,12 @@ const hardeningMigration = fs.readFileSync(
   ),
   "utf8",
 );
+const studentProfileMigration = fs.readFileSync(
+  path.resolve(
+    "supabase/migrations/20260728213110_add_student_current_vocab_book.sql",
+  ),
+  "utf8",
+);
 const config = fs.readFileSync(
   path.resolve("supabase/config.toml"),
   "utf8",
@@ -117,5 +123,32 @@ describe("database security contract", () => {
   it("로컬 Supabase 공개 회원가입을 끈다", () => {
     expect(config.match(/enable_signup = false/g)).toHaveLength(3);
     expect(config).not.toContain("enable_signup = true");
+  });
+
+  it("현재 단어장을 nullable 프로필 값으로 저장하고 새 RPC로 받는다", () => {
+    expect(studentProfileMigration).toContain(
+      "add column current_vocab_book text",
+    );
+    expect(studentProfileMigration).toContain(
+      "students_current_vocab_book_length_check",
+    );
+    expect(studentProfileMigration).toContain(
+      "or char_length(trim(current_vocab_book)) between 1 and 160",
+    );
+    expect(
+      studentProfileMigration.match(
+        /create function (?:private|public)\.create_student_with_code\(/g,
+      ),
+    ).toHaveLength(2);
+    expect(
+      studentProfileMigration.match(/p_current_vocab_book text/g),
+    ).toHaveLength(2);
+    expect(studentProfileMigration).toContain(
+      "nullif(trim(p_current_vocab_book), '')",
+    );
+    expect(studentProfileMigration).toContain("security invoker");
+    expect(studentProfileMigration).toContain(
+      "from public, anon;",
+    );
   });
 });

@@ -20,6 +20,7 @@ export type StudentSummary = {
   displayName: string;
   schoolName: string | null;
   gradeLabel: string | null;
+  currentVocabBook: string | null;
   status: "active" | "blocked";
   codeGeneration: number;
   codeStatus: "active" | "blocked" | "missing";
@@ -78,6 +79,7 @@ type StudentRow = {
   display_name: string;
   school_name: string | null;
   grade_label: string | null;
+  current_vocab_book: string | null;
   status: "active" | "blocked";
   code_generation: number;
   created_at: string;
@@ -96,7 +98,7 @@ export async function listStudents(): Promise<StudentSummary[]> {
       supabase
         .from("students")
         .select(
-          "id, display_name, school_name, grade_label, status, code_generation, created_at",
+          "id, display_name, school_name, grade_label, current_vocab_book, status, code_generation, created_at",
         )
         .order("display_name"),
       supabase.from("student_codes").select("student_id, status"),
@@ -118,6 +120,7 @@ export async function listStudents(): Promise<StudentSummary[]> {
     displayName: student.display_name,
     schoolName: student.school_name,
     gradeLabel: student.grade_label,
+    currentVocabBook: student.current_vocab_book,
     status: student.status,
     codeGeneration: student.code_generation,
     codeStatus: codeByStudent.get(student.id) ?? "missing",
@@ -129,6 +132,7 @@ export async function createStudent(input: {
   displayName: string;
   schoolName: string;
   gradeLabel: string;
+  currentVocabBook: string;
   note: string;
 }): Promise<{ studentId: string; code: string }> {
   await requireAdmin();
@@ -143,6 +147,7 @@ export async function createStudent(input: {
     p_display_name: input.displayName,
     p_school_name: input.schoolName,
     p_grade_label: input.gradeLabel,
+    p_current_vocab_book: input.currentVocabBook,
     p_note: input.note,
     p_lookup_hmac: hashStudentCode(code, environment.STUDENT_CODE_PEPPER),
     p_encrypted_code: encrypted.encryptedCode,
