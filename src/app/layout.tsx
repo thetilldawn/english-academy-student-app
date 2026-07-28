@@ -26,7 +26,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body>{children}</body>
+      <body>
+        <a className="skip-link" href="#main-content">
+          본문 바로가기
+        </a>
+        {children}
+      </body>
     </html>
   );
 }

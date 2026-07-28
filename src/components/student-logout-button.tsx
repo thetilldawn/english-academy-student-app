@@ -19,7 +19,7 @@ export function StudentLogoutButton() {
         setError("접속 종료 실패");
         return;
       }
-      router.replace("/code");
+      router.replace("/");
       router.refresh();
     } catch {
       setError("접속 종료 실패");
@@ -38,7 +38,11 @@ export function StudentLogoutButton() {
       >
         {submitting ? "종료 중…" : "접속 종료"}
       </button>
-      {error && <span className="inline-error">{error}</span>}
+      {error && (
+        <span className="inline-error" role="alert">
+          {error}
+        </span>
+      )}
     </div>
   );
 }

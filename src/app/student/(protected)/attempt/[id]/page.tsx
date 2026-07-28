@@ -26,7 +26,7 @@ export default async function AttemptPage({
   }
 
   return (
-    <main className="quiz-shell">
+    <main className="quiz-shell" id="main-content">
       <QuizPlayer initialAttempt={attempt} />
     </main>
   );

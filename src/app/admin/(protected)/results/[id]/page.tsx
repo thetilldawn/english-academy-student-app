@@ -51,83 +51,118 @@ export default async function AdminResultDetailPage({
         </Link>
       </div>
 
-      <section className="grid grid-3">
-        <article className="card metric">
-          <span className="metric-value">
-            {result.initialScore ?? "-"}
-            {result.initialScore !== null && <small>점</small>}
-          </span>
-          <span className="metric-label">첫 점수</span>
-        </article>
-        <article className="card metric">
-          <span className="metric-value">
-            {result.finalScore ?? "-"}
-            {result.finalScore !== null && <small>점</small>}
-          </span>
-          <span className="metric-label">재풀이 후 점수</span>
-        </article>
-        <article className="card metric">
-          <span className="metric-value">
-            {result.unresolvedWrongCount ?? "-"}
-          </span>
-          <span className="metric-label">
-            미해결 · {formatElapsed(result.elapsedSeconds)}
-          </span>
-        </article>
-      </section>
+      <div className="attempt-detail-layout">
+        <aside aria-label="응시 요약" className="card attempt-summary">
+          <h2>응시 요약</h2>
+          <dl>
+            <div>
+              <dt>첫 점수</dt>
+              <dd>
+                {result.initialScore === null
+                  ? "-"
+                  : `${result.initialScore}점`}
+              </dd>
+            </div>
+            <div>
+              <dt>재풀이 후</dt>
+              <dd>
+                {result.finalScore === null ? "-" : `${result.finalScore}점`}
+              </dd>
+            </div>
+            <div>
+              <dt>미해결</dt>
+              <dd>{result.unresolvedWrongCount ?? "-"}개</dd>
+            </div>
+            <div>
+              <dt>응시 시간</dt>
+              <dd>{formatElapsed(result.elapsedSeconds)}</dd>
+            </div>
+          </dl>
+          <Link className="button button-quiet" href="/admin/results">
+            결과 목록으로
+          </Link>
+        </aside>
 
-      <section className="section">
-        <div className="section-heading">
-          <h2>첫 풀이 오답과 재풀이</h2>
-          <span className="detail-chip">{wrongQuestions.length}문항</span>
-        </div>
-        {wrongQuestions.length === 0 ? (
-          <div className="empty-state">첫 풀이에서 모두 맞혔습니다.</div>
-        ) : (
-          <div className="result-question-list">
-            {wrongQuestions.map((question) => (
-              <article className="card result-question" key={question.id}>
-                <div className="title-with-status">
-                  <div>
-                    <p className="eyebrow">문항 {question.orderIndex}</p>
-                    <h3>{question.headword || question.prompt}</h3>
-                  </div>
-                  <span
-                    className={`status-pill ${
-                      question.retryIsCorrect
-                        ? "status-completed"
-                        : "status-expired"
-                    }`}
-                  >
-                    {retryLabel(
-                      question.initialIsCorrect,
-                      question.retryIsCorrect,
-                    )}
-                  </span>
-                </div>
-                <dl className="answer-detail">
-                  <div>
-                    <dt>문제</dt>
-                    <dd>{question.prompt}</dd>
-                  </div>
-                  <div>
-                    <dt>첫 선택</dt>
-                    <dd>{question.initialChoice ?? "선택 안 함"}</dd>
-                  </div>
-                  <div>
-                    <dt>재풀이</dt>
-                    <dd>{question.retryChoice ?? "선택 안 함"}</dd>
-                  </div>
-                  <div>
-                    <dt>정답</dt>
-                    <dd>{question.correctAnswer}</dd>
-                  </div>
-                </dl>
-              </article>
-            ))}
+        <section
+          aria-labelledby="answer-flow-heading"
+          className="attempt-flow-section"
+        >
+          <div className="section-heading">
+            <h2 id="answer-flow-heading">첫 선택부터 재풀이까지</h2>
+            <span className="detail-chip">
+              {wrongQuestions.length}문항
+            </span>
           </div>
-        )}
-      </section>
+
+          {wrongQuestions.length === 0 ? (
+            <div className="empty-state">
+              첫 풀이에서 모두 맞혔습니다.
+            </div>
+          ) : (
+            <div className="attempt-flow-list">
+              {wrongQuestions.map((question) => {
+                const resolved = question.retryIsCorrect === true;
+
+                return (
+                  <article className="card attempt-flow-card" key={question.id}>
+                    <div className="title-with-status">
+                      <div>
+                        <p className="eyebrow">문항 {question.orderIndex}</p>
+                        <h3>{question.headword || question.prompt}</h3>
+                      </div>
+                      <span
+                        className={`status-pill ${
+                          resolved
+                            ? "status-completed"
+                            : "status-expired"
+                        }`}
+                      >
+                        {retryLabel(
+                          question.initialIsCorrect,
+                          question.retryIsCorrect,
+                        )}
+                      </span>
+                    </div>
+
+                    <p className="attempt-prompt">{question.prompt}</p>
+                    <div className="answer-flow">
+                      <div className="flow-step flow-step-wrong">
+                        <span>첫 선택</span>
+                        <strong>
+                          {question.initialChoice ?? "선택 안 함"}
+                        </strong>
+                      </div>
+                      <span className="flow-arrow" aria-hidden="true">
+                        →
+                      </span>
+                      <div
+                        className={[
+                          "flow-step",
+                          resolved
+                            ? "flow-step-correct"
+                            : "flow-step-wrong",
+                        ].join(" ")}
+                      >
+                        <span>재풀이</span>
+                        <strong>
+                          {question.retryChoice ?? "선택 안 함"}
+                        </strong>
+                      </div>
+                      <span className="flow-arrow" aria-hidden="true">
+                        →
+                      </span>
+                      <div className="flow-step flow-step-answer">
+                        <span>정답</span>
+                        <strong>{question.correctAnswer}</strong>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </div>
     </>
   );
 }

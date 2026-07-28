@@ -38,7 +38,11 @@ export function AdminLogoutButton() {
       >
         {submitting ? "종료 중…" : "로그아웃"}
       </button>
-      {error && <span className="inline-error">{error}</span>}
+      {error && (
+        <span className="inline-error" role="alert">
+          {error}
+        </span>
+      )}
     </div>
   );
 }

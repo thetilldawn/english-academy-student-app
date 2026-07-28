@@ -111,7 +111,7 @@ export async function requireStudentSession(): Promise<StudentSession> {
   const session = await getStudentSession();
 
   if (!session) {
-    redirect("/code");
+    redirect("/");
   }
 
   return session;

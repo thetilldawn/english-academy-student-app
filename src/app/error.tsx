@@ -7,7 +7,7 @@ export default function ErrorPage({
   reset: () => void;
 }) {
   return (
-    <main className="auth-shell">
+    <main className="auth-shell" id="main-content">
       <section className="auth-card">
         <p className="eyebrow">잠시 문제가 생겼어요</p>
         <h1>화면을 불러오지 못했습니다</h1>

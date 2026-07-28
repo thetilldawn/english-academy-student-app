@@ -71,7 +71,7 @@ export function StudentLoginForm() {
         disabled={submitting}
         type="submit"
       >
-        {submitting ? "확인 중…" : "학습실 입장"}
+        {submitting ? "인증 중…" : "인증"}
       </button>
     </form>
   );

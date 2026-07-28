@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function AdminLoginPage() {
   return (
-    <main className="auth-shell">
+    <main className="auth-shell" id="main-content">
       <section className="auth-card">
         <p className="eyebrow">TEACHER ADMIN</p>
         <h1>관리자 로그인</h1>
@@ -18,7 +18,7 @@ export default function AdminLoginPage() {
         </p>
         <AdminLoginForm />
         <Link className="back-link" href="/">
-          ← 첫 화면으로
+          ← 학생 인증 화면
         </Link>
       </section>
     </main>

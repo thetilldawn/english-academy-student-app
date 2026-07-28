@@ -16,7 +16,7 @@ export default async function ResultsPage() {
       <div className="page-heading">
         <div>
           <p className="eyebrow">RESULTS</p>
-          <h1>시험 결과</h1>
+          <h1 id="results-heading">시험 결과</h1>
           <p>첫 점수와 재풀이 후 점수를 나눠 확인합니다.</p>
         </div>
       </div>
@@ -24,18 +24,30 @@ export default async function ResultsPage() {
       {attempts.length === 0 ? (
         <div className="empty-state">아직 응시 기록이 없습니다.</div>
       ) : (
-        <div className="table-wrap">
-          <table>
+        <>
+          <p className="table-scroll-hint">
+            표를 좌우로 움직이면 모든 결과 항목을 확인할 수 있습니다.
+          </p>
+          <div
+            aria-labelledby="results-heading"
+            className="table-wrap results-table-wrap"
+            role="region"
+            tabIndex={0}
+          >
+          <table className="results-table">
+            <caption className="sr-only">
+              학생별 단어시험 응시 결과
+            </caption>
             <thead>
               <tr>
-                <th>학생</th>
-                <th>시험</th>
-                <th>회차</th>
-                <th>상태</th>
-                <th>첫 점수</th>
-                <th>재풀이 후</th>
-                <th>통과</th>
-                <th>시작</th>
+                <th scope="col">학생</th>
+                <th scope="col">시험</th>
+                <th scope="col">회차</th>
+                <th scope="col">상태</th>
+                <th scope="col">첫 점수</th>
+                <th scope="col">재풀이 후</th>
+                <th scope="col">통과</th>
+                <th scope="col">시작</th>
               </tr>
             </thead>
             <tbody>
@@ -84,7 +96,8 @@ export default async function ResultsPage() {
               ))}
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </>
   );

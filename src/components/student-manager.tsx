@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { useRouter } from "next/navigation";
 
 type StudentItem = {
@@ -31,6 +37,32 @@ export function StudentManager({
     label: string;
   } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [selectedStudentId, setSelectedStudentId] = useState(
+    students[0]?.id ?? "",
+  );
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    if (
+      shownCode &&
+      dialogRef.current &&
+      !dialogRef.current.open
+    ) {
+      dialogRef.current.showModal();
+    }
+  }, [shownCode]);
+
+  function openCodeDialog(code: string, label: string) {
+    setShownCode({ code, label });
+  }
+
+  function closeCodeDialog() {
+    dialogRef.current?.close();
+  }
+
+  function finishClosingCodeDialog() {
+    setShownCode(null);
+  }
 
   async function request(
     url: string,
@@ -65,10 +97,10 @@ export function StudentManager({
       if (!payload.code) {
         throw new Error("새 접속코드를 받지 못했습니다.");
       }
-      setShownCode({
-        code: payload.code,
-        label: `${String(form.get("displayName"))} 새 접속코드`,
-      });
+      openCodeDialog(
+        payload.code,
+        `${String(form.get("displayName"))} 새 접속코드`,
+      );
       formElement.reset();
       router.refresh();
     } catch (requestError) {
@@ -92,10 +124,10 @@ export function StudentManager({
       if (!payload.code) {
         throw new Error("접속코드를 받지 못했습니다.");
       }
-      setShownCode({
-        code: payload.code,
-        label: `${student.displayName} 접속코드`,
-      });
+      openCodeDialog(
+        payload.code,
+        `${student.displayName} 접속코드`,
+      );
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -123,10 +155,10 @@ export function StudentManager({
       if (!payload.code) {
         throw new Error("새 접속코드를 받지 못했습니다.");
       }
-      setShownCode({
-        code: payload.code,
-        label: `${student.displayName} 새 접속코드`,
-      });
+      openCodeDialog(
+        payload.code,
+        `${student.displayName} 새 접속코드`,
+      );
       router.refresh();
     } catch (requestError) {
       setError(
@@ -172,179 +204,327 @@ export function StudentManager({
     window.setTimeout(() => setCopied(false), 1500);
   }
 
+  const groupedStudents = useMemo(() => {
+    const groups = new Map<
+      string,
+      { label: string; students: StudentItem[] }
+    >();
+
+    for (const student of students) {
+      const school = student.schoolName?.trim() || "학교 미입력";
+      const grade = student.gradeLabel?.trim() || "학년 미입력";
+      const key = `${school}\u0000${grade}`;
+      const group = groups.get(key) ?? {
+        label: `${school} · ${grade}`,
+        students: [],
+      };
+      group.students.push(student);
+      groups.set(key, group);
+    }
+
+    return Array.from(groups.values());
+  }, [students]);
+  const selectedStudent =
+    students.find((student) => student.id === selectedStudentId) ??
+    students[0] ??
+    null;
+
   return (
     <>
-      <div className="split-panel">
-        <section className="card sticky-panel">
-          <h2>학생 추가</h2>
-          <p className="auth-description">
-            실명 대신 수업에서 구분할 이름만 적어도 됩니다.
-          </p>
-          <form className="form-stack" onSubmit={createStudent}>
-            <label className="field">
-              <span className="field-label">학생 이름</span>
-              <input
-                name="displayName"
-                required
-                maxLength={80}
-                placeholder="예: 김하늘"
-              />
-            </label>
-            <div className="form-grid-2">
-              <label className="field">
-                <span className="field-label">학교</span>
-                <input
-                  name="schoolName"
-                  maxLength={120}
-                  placeholder="선택"
-                />
-              </label>
-              <label className="field">
-                <span className="field-label">학년</span>
-                <input
-                  name="gradeLabel"
-                  maxLength={40}
-                  placeholder="예: 고1"
-                />
-              </label>
-            </div>
-            <label className="field">
-              <span className="field-label">관리 메모</span>
-              <textarea
-                name="note"
-                maxLength={2000}
-                placeholder="선택 사항"
-              />
-            </label>
-            {error && (
-              <div className="notice notice-error" role="alert">
-                {error}
-              </div>
-            )}
-            <button
-              className="button button-primary"
-              disabled={busyKey === "create"}
-              type="submit"
-            >
-              {busyKey === "create" ? "만드는 중…" : "학생과 코드 만들기"}
-            </button>
-          </form>
-        </section>
+      <div className="manager-toolbar">
+        <div>
+          <h2>등록 학생</h2>
+          <p className="list-meta">학교와 학년별로 묶어 관리합니다.</p>
+        </div>
+        <span className="detail-chip">{students.length}명</span>
+      </div>
 
-        <section>
-          <div className="section-heading">
-            <h2>등록 학생</h2>
-            <span className="detail-chip">{students.length}명</span>
-          </div>
-          {students.length === 0 ? (
+      {error && (
+        <div className="notice notice-error section" role="alert">
+          {error}
+        </div>
+      )}
+
+      <div className="student-admin-workspace">
+        {groupedStudents.length > 0 && (
+          <aside
+            aria-label="학교·학년 그룹"
+            className="card student-group-index"
+          >
+            <strong>학교·학년</strong>
+            <nav>
+              {groupedStudents.map((group, index) => (
+                <a
+                  href={`#student-group-${index}`}
+                  key={group.label}
+                >
+                  <span>{group.label}</span>
+                  <small>{group.students.length}명</small>
+                </a>
+              ))}
+            </nav>
+          </aside>
+        )}
+
+        <section className="student-group-pane">
+          {groupedStudents.length === 0 ? (
             <div className="empty-state">
               아직 등록된 학생이 없습니다.
             </div>
           ) : (
-            <div className="list">
-              {students.map((student) => (
-                <article className="list-row" key={student.id}>
-                  <div className="list-primary">
-                    <div className="title-with-status">
-                      <p className="list-title">{student.displayName}</p>
-                      <span
-                        className={`status-pill status-${student.status}`}
-                      >
-                        {student.status === "active" ? "접속 가능" : "차단됨"}
-                      </span>
-                    </div>
-                    <p className="list-meta">
-                      {[student.schoolName, student.gradeLabel]
-                        .filter(Boolean)
-                        .join(" · ") || "학교·학년 미입력"}
-                      {" · "}
-                      코드 {student.codeGeneration}차
-                    </p>
-                  </div>
-                  <div className="inline-actions">
-                    {student.status === "active" && (
-                      <>
-                        <button
-                          className="button button-quiet button-small"
-                          disabled={busyKey !== ""}
-                          onClick={() => reveal(student)}
-                          type="button"
+            groupedStudents.map((group, groupIndex) => (
+              <section
+                className="student-group-section"
+                id={`student-group-${groupIndex}`}
+                key={group.label}
+              >
+                <div className="section-heading">
+                  <h3>{group.label}</h3>
+                  <span className="detail-chip">
+                    {group.students.length}명
+                  </span>
+                </div>
+                <div className="student-card-grid">
+                  {group.students.map((student) => (
+                    <article
+                      className="card student-card"
+                      data-selected={student.id === selectedStudent?.id}
+                      key={student.id}
+                    >
+                      <div className="title-with-status">
+                        <div>
+                          <p className="list-title">
+                            {student.displayName}
+                          </p>
+                          <p className="list-meta">
+                            코드 {student.codeGeneration}차
+                          </p>
+                        </div>
+                        <span
+                          className={`status-pill status-${student.status}`}
                         >
-                          코드 보기
-                        </button>
-                        <button
-                          className="button button-secondary button-small"
-                          disabled={busyKey !== ""}
-                          onClick={() => rotate(student)}
-                          type="button"
-                        >
-                          코드 교체
-                        </button>
-                        <button
-                          className="button button-danger button-small"
-                          disabled={busyKey !== ""}
-                          onClick={() => block(student)}
-                          type="button"
-                        >
-                          접속 차단
-                        </button>
-                      </>
-                    )}
-                    {student.status === "blocked" && (
+                          {student.status === "active"
+                            ? "접속 가능"
+                            : "차단됨"}
+                        </span>
+                      </div>
                       <button
-                        className="button button-primary button-small"
-                        disabled={busyKey !== ""}
-                        onClick={() => rotate(student)}
+                        className="button button-quiet button-small student-select-button"
+                        onClick={() => setSelectedStudentId(student.id)}
                         type="button"
                       >
-                        새 코드로 재개
+                        {student.id === selectedStudent?.id
+                          ? "선택됨"
+                          : "관리 선택"}
                       </button>
-                    )}
-                  </div>
-                </article>
-              ))}
-            </div>
+                      <details className="student-actions-disclosure">
+                        <summary className="button button-quiet button-small">
+                          관리
+                        </summary>
+                        <div className="inline-actions student-card-actions">
+                          {student.status === "active" && (
+                            <>
+                              <button
+                                className="button button-quiet button-small"
+                                disabled={busyKey !== ""}
+                                onClick={() => reveal(student)}
+                                type="button"
+                              >
+                                코드 보기
+                              </button>
+                              <button
+                                className="button button-secondary button-small"
+                                disabled={busyKey !== ""}
+                                onClick={() => rotate(student)}
+                                type="button"
+                              >
+                                코드 교체
+                              </button>
+                              <button
+                                className="button button-danger button-small"
+                                disabled={busyKey !== ""}
+                                onClick={() => block(student)}
+                                type="button"
+                              >
+                                접속 차단
+                              </button>
+                            </>
+                          )}
+                          {student.status === "blocked" && (
+                            <button
+                              className="button button-primary button-small"
+                              disabled={busyKey !== ""}
+                              onClick={() => rotate(student)}
+                              type="button"
+                            >
+                              새 코드로 재개
+                            </button>
+                          )}
+                        </div>
+                      </details>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            ))
           )}
         </section>
+
+        <aside className="student-action-pane">
+          {selectedStudent && (
+            <section className="card student-action-panel">
+              <div className="title-with-status">
+                <div>
+                  <p className="eyebrow">선택 학생 작업</p>
+                  <h3>{selectedStudent.displayName}</h3>
+                  <p className="list-meta">
+                    {[
+                      selectedStudent.schoolName,
+                      selectedStudent.gradeLabel,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ") || "학교·학년 미입력"}
+                  </p>
+                </div>
+                <span
+                  className={`status-pill status-${selectedStudent.status}`}
+                >
+                  {selectedStudent.status === "active"
+                    ? "접속 가능"
+                    : "차단됨"}
+                </span>
+              </div>
+              <div className="form-stack section">
+                {selectedStudent.status === "active" ? (
+                  <>
+                    <button
+                      className="button button-quiet"
+                      disabled={busyKey !== ""}
+                      onClick={() => reveal(selectedStudent)}
+                      type="button"
+                    >
+                      코드 보기
+                    </button>
+                    <button
+                      className="button button-secondary"
+                      disabled={busyKey !== ""}
+                      onClick={() => rotate(selectedStudent)}
+                      type="button"
+                    >
+                      코드 교체
+                    </button>
+                    <button
+                      className="button button-danger"
+                      disabled={busyKey !== ""}
+                      onClick={() => block(selectedStudent)}
+                      type="button"
+                    >
+                      접속 차단
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className="button button-primary"
+                    disabled={busyKey !== ""}
+                    onClick={() => rotate(selectedStudent)}
+                    type="button"
+                  >
+                    새 코드로 재개
+                  </button>
+                )}
+              </div>
+            </section>
+          )}
+
+          <details className="card student-create-disclosure">
+            <summary className="button button-primary">
+              학생 추가
+            </summary>
+            <div className="student-create-content">
+              <p className="auth-description">
+                실명 대신 수업에서 구분할 이름만 적어도 됩니다.
+              </p>
+              <form className="form-stack" onSubmit={createStudent}>
+                <label className="field">
+                  <span className="field-label">학생 이름</span>
+                  <input
+                    name="displayName"
+                    required
+                    maxLength={80}
+                    placeholder="예: 김하늘"
+                  />
+                </label>
+                <div className="form-grid-2">
+                  <label className="field">
+                    <span className="field-label">학교</span>
+                    <input
+                      name="schoolName"
+                      maxLength={120}
+                      placeholder="선택"
+                    />
+                  </label>
+                  <label className="field">
+                    <span className="field-label">학년</span>
+                    <input
+                      name="gradeLabel"
+                      maxLength={40}
+                      placeholder="예: 고1"
+                    />
+                  </label>
+                </div>
+                <label className="field">
+                  <span className="field-label">관리 메모</span>
+                  <textarea
+                    name="note"
+                    maxLength={2000}
+                    placeholder="선택 사항"
+                  />
+                </label>
+                <button
+                  className="button button-primary"
+                  disabled={busyKey === "create"}
+                  type="submit"
+                >
+                  {busyKey === "create"
+                    ? "만드는 중…"
+                    : "학생과 코드 만들기"}
+                </button>
+              </form>
+            </div>
+          </details>
+        </aside>
       </div>
 
       {shownCode && (
-        <div
-          className="dialog-backdrop"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setShownCode(null);
-          }}
+        <dialog
+          aria-labelledby="student-code-title"
+          className="dialog"
+          onClose={finishClosingCodeDialog}
+          ref={dialogRef}
         >
-          <section
-            aria-labelledby="student-code-title"
-            aria-modal="true"
-            className="dialog"
-            role="dialog"
-          >
-            <h2 id="student-code-title">{shownCode.label}</h2>
-            <p className="auth-description">
-              학생에게 이 코드만 전달하세요.
-            </p>
-            <div className="dialog-code">{shownCode.code}</div>
-            <div className="inline-actions">
-              <button
-                className="button button-primary"
-                onClick={copyCode}
-                type="button"
-              >
-                {copied ? "복사됨" : "코드 복사"}
-              </button>
-              <button
-                className="button button-quiet"
-                onClick={() => setShownCode(null)}
-                type="button"
-              >
-                닫기
-              </button>
-            </div>
-          </section>
-        </div>
+          <h2 id="student-code-title">{shownCode.label}</h2>
+          <p className="auth-description">
+            학생에게 이 코드만 전달하세요.
+          </p>
+          <div className="dialog-code">{shownCode.code}</div>
+          <div className="inline-actions">
+            <button
+              autoFocus
+              className="button button-primary"
+              onClick={copyCode}
+              type="button"
+            >
+              {copied ? "복사됨" : "코드 복사"}
+            </button>
+            <button
+              className="button button-quiet"
+              onClick={closeCodeDialog}
+              type="button"
+            >
+              닫기
+            </button>
+          </div>
+        </dialog>
       )}
     </>
   );

@@ -71,7 +71,10 @@ export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
   const [answerCorrect, setAnswerCorrect] = useState<boolean | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [timeWarning, setTimeWarning] = useState("");
   const expireStarted = useRef(false);
+  const timeWarningAnnounced = useRef(false);
+  const promptRef = useRef<HTMLHeadingElement>(null);
 
   const currentQuestion = useMemo(
     () =>
@@ -142,6 +145,17 @@ export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
     }
   }, [attempt.status, expireAttempt, remaining]);
 
+  useEffect(() => {
+    if (
+      remaining > 0 &&
+      remaining <= 30 &&
+      !timeWarningAnnounced.current
+    ) {
+      timeWarningAnnounced.current = true;
+      setTimeWarning("남은 시간이 30초입니다.");
+    }
+  }, [remaining]);
+
   const submitChoice = useCallback(
     async (choiceIndex: number) => {
       if (!currentQuestion || submitting || answerCorrect !== null) return;
@@ -205,7 +219,7 @@ export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
           } finally {
             setSubmitting(false);
           }
-        }, 650);
+        }, 800);
       } catch (requestError) {
         setSelectedChoice(null);
         setCorrectChoice(null);
@@ -240,6 +254,10 @@ export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [submitChoice]);
+
+  useEffect(() => {
+    promptRef.current?.focus();
+  }, [currentQuestion?.id]);
 
   if (!currentQuestion) {
     return (
@@ -288,9 +306,20 @@ export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
           ? "알맞은 뜻을 고르세요"
           : "알맞은 영어 단어를 고르세요"}
       </p>
-      <div className="quiz-prompt">{currentQuestion.prompt}</div>
+      <h1
+        className="quiz-prompt"
+        id="quiz-prompt"
+        ref={promptRef}
+        tabIndex={-1}
+      >
+        {currentQuestion.prompt}
+      </h1>
 
-      <div className="choice-list">
+      <div
+        aria-labelledby="quiz-prompt"
+        className="choice-list"
+        role="group"
+      >
         {currentQuestion.choices.map((choice, index) => {
           const classNames = ["choice"];
           if (correctChoice === index) classNames.push("choice-correct");
@@ -318,7 +347,8 @@ export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
       </div>
 
       <div
-        aria-live="polite"
+        aria-atomic="true"
+        aria-live="assertive"
         className={[
           "feedback",
           answerCorrect === true ? "feedback-correct" : "",
@@ -326,14 +356,22 @@ export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
         ]
           .filter(Boolean)
           .join(" ")}
+        role="alert"
       >
         {answerCorrect === true && "정답입니다."}
         {answerCorrect === false &&
           (attempt.phase === "initial"
             ? "오답입니다. 첫 풀이 뒤 한 번 더 나옵니다."
             : "다시 확인할 단어로 남겼습니다.")}
-        {error}
       </div>
+      {error && (
+        <div className="inline-error quiz-error" role="alert">
+          {error}
+        </div>
+      )}
+      <span aria-live="assertive" className="sr-only" role="status">
+        {timeWarning}
+      </span>
       <p className="keyboard-hint">키보드 1~4로도 빠르게 선택할 수 있습니다.</p>
     </section>
   );
