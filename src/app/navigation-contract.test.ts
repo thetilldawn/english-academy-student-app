@@ -17,6 +17,9 @@ describe("responsive navigation contract", () => {
     expect(homePage).toContain('href="/admin/login"');
     expect(homePage).not.toContain('href="/code"');
     expect(loginForm).toContain('"인증 중…" : "인증"');
+    expect(loginForm).toContain('"segmented-code-slot"');
+    expect(loginForm).toContain("STUDENT_CODE_LENGTH");
+    expect(loginForm).not.toContain("하이픈은 빼고");
     expect(codePage).toContain('redirect("/")');
   });
 
@@ -34,9 +37,13 @@ describe("responsive navigation contract", () => {
   it("관리자 로그인은 독립 경로를 유지한다", () => {
     const adminSession = source("src/lib/auth/admin.ts");
     const adminLogout = source("src/components/admin-logout-button.tsx");
+    const adminLogin = source("src/components/admin-login-form.tsx");
 
     expect(adminSession).toContain('redirect("/admin/login")');
     expect(adminLogout).toContain('router.replace("/admin/login")');
+    expect(adminLogin).toContain('"로그인 중…" : "관리자 로그인"');
+    expect(adminLogin).toContain("requestInFlight.current");
+    expect(adminLogin).not.toContain("router.refresh()");
   });
 
   it("관리자 세 화면폭 메뉴와 시험 집중 셸을 유지한다", () => {

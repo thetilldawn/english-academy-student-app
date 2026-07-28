@@ -1,66 +1,168 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import {
+  Fragment,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import { useRouter } from "next/navigation";
+
+import {
+  normalizeStudentCodeInput,
+  STUDENT_CODE_LENGTH,
+} from "@/lib/auth/student-code-input";
 
 type LoginResponse = {
   error?: string;
 };
 
+const CODE_SLOT_GROUPS = [0, 1, 2] as const;
+
 export function StudentLoginForm() {
   const router = useRouter();
+  const codeInputRef = useRef<HTMLInputElement>(null);
+  const requestInFlight = useRef(false);
+  const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  function handleCodeChange(event: ChangeEvent<HTMLInputElement>) {
+    setCode(normalizeStudentCodeInput(event.currentTarget.value));
+    setError("");
+  }
+
+  function moveCaretToEnd() {
+    const input = codeInputRef.current;
+    if (!input) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      input.setSelectionRange(input.value.length, input.value.length);
+    });
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (requestInFlight.current) {
+      return;
+    }
+
+    if (code.length !== STUDENT_CODE_LENGTH) {
+      setError("접속코드 12자리를 모두 입력해주세요.");
+      codeInputRef.current?.focus();
+      return;
+    }
+
+    requestInFlight.current = true;
     setError("");
     setSubmitting(true);
-    const form = new FormData(event.currentTarget);
 
     try {
       const response = await fetch("/api/student/session", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ code: form.get("code") }),
+        body: JSON.stringify({ code }),
       });
       const payload = (await response.json()) as LoginResponse;
 
       if (!response.ok) {
         setError(payload.error ?? "접속코드를 확인해주세요.");
+        requestInFlight.current = false;
+        setSubmitting(false);
         return;
       }
 
       router.replace("/student");
-      router.refresh();
     } catch {
       setError("연결을 확인한 뒤 다시 시도해주세요.");
-    } finally {
+      requestInFlight.current = false;
       setSubmitting(false);
     }
   }
 
   return (
-    <form className="form-stack" onSubmit={handleSubmit}>
-      <label className="field">
-        <span className="field-label">학생 접속코드</span>
-        <input
-          className="code-input"
-          name="code"
-          type="text"
-          inputMode="text"
-          autoCapitalize="characters"
-          autoComplete="one-time-code"
-          placeholder="ABCD-EFGH-IJKL"
-          minLength={6}
-          maxLength={32}
-          required
-          autoFocus
-        />
-        <span className="field-help">
-          하이픈은 빼고 입력해도 됩니다.
+    <form
+      aria-busy={submitting}
+      className="form-stack"
+      onSubmit={handleSubmit}
+    >
+      <div className="field">
+        <label className="field-label" htmlFor="student-access-code">
+          학생 접속코드
+        </label>
+        <div
+          className="segmented-code-control"
+          data-invalid={Boolean(error)}
+        >
+          <input
+            ref={codeInputRef}
+            aria-describedby="student-code-help"
+            aria-invalid={Boolean(error)}
+            className="segmented-code-native"
+            disabled={submitting}
+            id="student-access-code"
+            name="code"
+            type="text"
+            inputMode="text"
+            autoCapitalize="characters"
+            autoComplete="one-time-code"
+            autoCorrect="off"
+            enterKeyHint="go"
+            maxLength={32}
+            required
+            spellCheck={false}
+            value={code}
+            onChange={handleCodeChange}
+            onClick={moveCaretToEnd}
+            onFocus={moveCaretToEnd}
+            autoFocus
+          />
+          <div
+            aria-hidden="true"
+            className="segmented-code-groups"
+            data-complete={code.length === STUDENT_CODE_LENGTH}
+          >
+            {CODE_SLOT_GROUPS.map((groupIndex) => (
+              <Fragment key={groupIndex}>
+                {groupIndex > 0 && (
+                  <span className="segmented-code-separator">–</span>
+                )}
+                <div className="segmented-code-group">
+                  {Array.from({ length: 4 }, (_, slotIndex) => {
+                    const index = groupIndex * 4 + slotIndex;
+                    const character = code[index] ?? "";
+                    const active =
+                      code.length < STUDENT_CODE_LENGTH &&
+                      index === code.length;
+
+                    return (
+                      <span
+                        className={[
+                          "segmented-code-slot",
+                          character ? "segmented-code-slot-filled" : "",
+                          active ? "segmented-code-slot-active" : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                        key={index}
+                      >
+                        {character}
+                      </span>
+                    );
+                  })}
+                </div>
+              </Fragment>
+            ))}
+          </div>
+        </div>
+        <span className="field-help" id="student-code-help">
+          선생님에게 받은 12자리 코드를 입력하세요.
         </span>
-      </label>
+      </div>
       {error && (
         <div className="notice notice-error" role="alert">
           {error}
@@ -71,8 +173,14 @@ export function StudentLoginForm() {
         disabled={submitting}
         type="submit"
       >
+        {submitting ? (
+          <span aria-hidden="true" className="button-spinner" />
+        ) : null}
         {submitting ? "인증 중…" : "인증"}
       </button>
+      <span aria-live="polite" className="sr-only" role="status">
+        {submitting ? "학생 정보를 확인하고 있습니다." : ""}
+      </span>
     </form>
   );
 }

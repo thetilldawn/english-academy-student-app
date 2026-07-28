@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 type ErrorResponse = {
@@ -9,11 +9,18 @@ type ErrorResponse = {
 
 export function AdminLoginForm() {
   const router = useRouter();
+  const requestInFlight = useRef(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (requestInFlight.current) {
+      return;
+    }
+
+    requestInFlight.current = true;
     setError("");
     setSubmitting(true);
 
@@ -31,23 +38,29 @@ export function AdminLoginForm() {
 
       if (!response.ok) {
         setError(payload.error ?? "로그인하지 못했습니다.");
+        requestInFlight.current = false;
+        setSubmitting(false);
         return;
       }
 
       router.replace("/admin");
-      router.refresh();
     } catch {
       setError("연결을 확인한 뒤 다시 시도해주세요.");
-    } finally {
+      requestInFlight.current = false;
       setSubmitting(false);
     }
   }
 
   return (
-    <form className="form-stack" onSubmit={handleSubmit}>
+    <form
+      aria-busy={submitting}
+      className="form-stack"
+      onSubmit={handleSubmit}
+    >
       <label className="field">
         <span className="field-label">관리자 이메일</span>
         <input
+          disabled={submitting}
           name="email"
           type="email"
           autoComplete="username"
@@ -58,6 +71,7 @@ export function AdminLoginForm() {
       <label className="field">
         <span className="field-label">비밀번호</span>
         <input
+          disabled={submitting}
           name="password"
           type="password"
           autoComplete="current-password"
@@ -76,8 +90,14 @@ export function AdminLoginForm() {
         disabled={submitting}
         type="submit"
       >
-        {submitting ? "확인 중…" : "관리자 로그인"}
+        {submitting ? (
+          <span aria-hidden="true" className="button-spinner" />
+        ) : null}
+        {submitting ? "로그인 중…" : "관리자 로그인"}
       </button>
+      <span aria-live="polite" className="sr-only" role="status">
+        {submitting ? "관리자 확인 후 화면을 여는 중입니다." : ""}
+      </span>
     </form>
   );
 }
