@@ -10,6 +10,7 @@ import {
 } from "@/lib/admin/history";
 import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
+import { finalizeStudentMissedAssignments } from "@/lib/services/missed-assignment-service";
 import { finalizeStaleQuizAttempts } from "@/lib/services/stale-attempt-service";
 
 export type StudentAssignmentSummary = {
@@ -219,18 +220,27 @@ export async function getAttemptQuestionResults(
 export async function listStudentAssignments(
   studentId: string,
 ): Promise<StudentAssignmentSummary[]> {
+  const [, missedFinalization] = await Promise.all([
+    finalizeStaleQuizAttempts(),
+    finalizeStudentMissedAssignments(studentId),
+  ]);
+  if (missedFinalization.batchLimitReached) {
+    console.warn("[missed-assignment] student batch limit reached");
+  }
   const supabase = getServiceSupabaseClient();
   const { data: linkData, error: linkError } = await supabase
     .from("assignment_students")
-    .select("assignment_id")
+    .select("assignment_id, missed_at")
     .eq("student_id", studentId);
 
   if (linkError || !linkData?.length) {
     return [];
   }
 
-  await finalizeStaleQuizAttempts();
   const assignmentIds = linkData.map((link) => link.assignment_id);
+  const missedAtByAssignment = new Map(
+    linkData.map((link) => [link.assignment_id, link.missed_at]),
+  );
   const [{ data: assignmentData }, { data: attemptData }] = await Promise.all([
     supabase
       .from("assignments")
@@ -311,10 +321,13 @@ export async function listStudentAssignments(
     const availableUntilTime = assignment.available_until
       ? Date.parse(assignment.available_until)
       : Number.NaN;
+    const missedAt =
+      missedAtByAssignment.get(assignment.id) ?? null;
     const missed =
       !lastAttempt &&
-      !Number.isNaN(availableUntilTime) &&
-      availableUntilTime <= now;
+      (missedAt !== null ||
+        (!Number.isNaN(availableUntilTime) &&
+          availableUntilTime <= now));
     const available =
       assignment.status === "active" &&
       (!assignment.available_from ||
@@ -322,6 +335,7 @@ export async function listStudentAssignments(
       (!assignment.available_until ||
         new Date(assignment.available_until).getTime() > now);
     const canStart =
+      !missed &&
       available &&
       (!lastAttempt ||
         lastAttempt.status === "expired" ||
@@ -375,14 +389,19 @@ export async function startStudentAttempt(
         .maybeSingle(),
       supabase
         .from("assignment_students")
-        .select("assignment_id")
+        .select("assignment_id, missed_at")
         .eq("assignment_id", assignmentId)
         .eq("student_id", studentId)
         .maybeSingle(),
     ]);
   const assignment = assignmentData as AssignmentRow | null;
 
-  if (assignmentError || !assignment || !linkData) {
+  if (
+    assignmentError ||
+    !assignment ||
+    !linkData ||
+    linkData.missed_at !== null
+  ) {
     throw new Error("배정된 시험을 찾지 못했습니다.");
   }
 

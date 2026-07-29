@@ -43,6 +43,7 @@ function history(
     questionOrderMode: "random",
     availableUntil: null,
     assignedAt: "2026-07-28T00:00:00.000Z",
+    missedAt: null,
     attemptNumber: 1,
     status: "completed",
     phase: "completed",

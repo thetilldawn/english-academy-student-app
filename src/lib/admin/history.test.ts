@@ -30,6 +30,7 @@ const assignment: AssignmentHistorySource = {
   questionOrderMode: "random",
   availableUntil: null,
   assignedAt: "2026-07-29T00:00:00.000Z",
+  missedAt: null,
 };
 
 function attempt(
@@ -82,7 +83,7 @@ describe("buildAssignmentHistory", () => {
     expect(item.status).toBe("not_started");
   });
 
-  it("마감과 같은 시각부터 무응시 배정을 미응시로 본다", () => {
+  it("마감과 같은 시각에는 영속 확정 전에도 미응시로 표시한다", () => {
     const deadline = "2026-07-31T00:00:00.000Z";
     const [item] = buildAssignmentHistory(
       [{ ...assignment, availableUntil: deadline }],
@@ -93,6 +94,47 @@ describe("buildAssignmentHistory", () => {
     expect(item.status).toBe("missed");
     expect(item.activityAt).toBe(deadline);
     expect(item.attemptId).toBeNull();
+    expect(item.id).toBe(
+      `assignment:${assignment.assignmentId}:${assignment.studentId}`,
+    );
+  });
+
+  it("저장된 마감 시각으로 미응시 이력을 만든다", () => {
+    const deadline = "2026-07-31T00:00:00.000Z";
+    const [item] = buildAssignmentHistory(
+      [
+        {
+          ...assignment,
+          availableUntil: deadline,
+          missedAt: deadline,
+        },
+      ],
+      [],
+    );
+
+    expect(item.status).toBe("missed");
+    expect(item.activityAt).toBe(deadline);
+    expect(item.id).toBe(
+      `assignment:${assignment.assignmentId}:${assignment.studentId}`,
+    );
+  });
+
+  it("저장된 미응시는 마감이 연장되어도 기존 이력을 유지한다", () => {
+    const missedAt = "2026-07-31T00:00:00.000Z";
+    const [item] = buildAssignmentHistory(
+      [
+        {
+          ...assignment,
+          availableUntil: "2026-08-02T00:00:00.000Z",
+          missedAt,
+        },
+      ],
+      [],
+      Date.parse("2026-08-01T00:00:00.000Z"),
+    );
+
+    expect(item.status).toBe("missed");
+    expect(item.activityAt).toBe(missedAt);
   });
 
   it("같은 배정의 실제 응시가 있으면 가짜 응시 전·미응시를 만들지 않는다", () => {

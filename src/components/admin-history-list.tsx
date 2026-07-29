@@ -89,8 +89,7 @@ export function AdminHistoryList({
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const detailRequestRef = useRef<AbortController | null>(null);
-  const [selected, setSelected] =
-    useState<AssignmentHistorySummary | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<AttemptDetail | null>(null);
   const [detailError, setDetailError] = useState("");
   const [detailLoading, setDetailLoading] = useState(false);
@@ -100,6 +99,11 @@ export function AdminHistoryList({
   const [statusFilter, setStatusFilter] = useState<
     "all" | AssignmentActivityStatus
   >("all");
+  const selected = useMemo(
+    () =>
+      items.find((item) => item.id === selectedId) ?? null,
+    [items, selectedId],
+  );
 
   const filteredItems = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("ko-KR");
@@ -137,7 +141,7 @@ export function AdminHistoryList({
 
   function openHistory(item: AssignmentHistorySummary) {
     detailRequestRef.current?.abort();
-    setSelected(item);
+    setSelectedId(item.id);
     setDetail(null);
     setDetailError("");
     setSelectedDeadlineRemaining(
@@ -294,7 +298,7 @@ export function AdminHistoryList({
           onClick={closeOnBackdrop}
           onClose={() => {
             detailRequestRef.current?.abort();
-            setSelected(null);
+            setSelectedId(null);
             setDetail(null);
             setDetailError("");
             setSelectedDeadlineRemaining(null);

@@ -42,4 +42,17 @@ describe("admin assignment history query contract", () => {
       'assignment.assignmentPurpose !== "review"',
     );
   });
+
+  it("persists missed assignment state across admin and student queries", () => {
+    expect(source).toContain("missed_at,");
+    expect(source).toContain("missedAt: row.missed_at");
+    expect(quizSource).toContain(
+      "finalizeStudentMissedAssignments(studentId)",
+    );
+    expect(quizSource).toContain(
+      '.select("assignment_id, missed_at")',
+    );
+    expect(quizSource).toContain("missedAtByAssignment");
+    expect(quizSource).toContain("!missed &&");
+  });
 });

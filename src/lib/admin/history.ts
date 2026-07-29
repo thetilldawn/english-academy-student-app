@@ -29,6 +29,7 @@ export type AssignmentHistorySource = {
   questionOrderMode: "fixed" | "random";
   availableUntil: string | null;
   assignedAt: string;
+  missedAt: string | null;
 };
 
 export type AttemptHistorySource = {
@@ -142,20 +143,20 @@ export function buildAssignmentHistory(
         ? Date.parse(assignment.availableUntil)
         : Number.NaN;
       const missed =
-        !Number.isNaN(availableUntil) && availableUntil <= now;
+        assignment.missedAt !== null ||
+        (!Number.isNaN(availableUntil) && availableUntil <= now);
       history.push({
         ...assignment,
-        id: `${missed ? "missed" : "not-started"}:${
-          assignment.assignmentId
-        }:${assignment.studentId}`,
+        id: `assignment:${assignment.assignmentId}:${assignment.studentId}`,
         attemptId: null,
         attemptNumber: null,
         status: missed ? "missed" : "not_started",
         phase: null,
-        activityAt:
-          missed && assignment.availableUntil
-            ? assignment.availableUntil
-            : assignment.assignedAt,
+        activityAt: missed
+          ? (assignment.missedAt ??
+            assignment.availableUntil ??
+            assignment.assignedAt)
+          : assignment.assignedAt,
         initialCorrectCount: null,
         retryCorrectCount: null,
         unresolvedWrongCount: null,

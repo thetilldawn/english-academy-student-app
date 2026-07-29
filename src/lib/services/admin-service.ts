@@ -519,6 +519,7 @@ type HistoryAssignmentStudentRow = {
   assignment_id: string;
   student_id: string;
   assigned_at: string;
+  missed_at: string | null;
   student: HistoryStudentRelation | HistoryStudentRelation[] | null;
   assignment:
     | HistoryAssignmentRelation
@@ -567,6 +568,7 @@ export async function listAssignmentHistory(): Promise<
           assignment_id,
           student_id,
           assigned_at,
+          missed_at,
           student:students(display_name, school_name, grade_label),
           assignment:assignments(
             id,
@@ -675,6 +677,7 @@ export async function listAssignmentHistory(): Promise<
         questionOrderMode: assignment.question_order_mode,
         availableUntil: assignment.available_until,
         assignedAt: row.assigned_at,
+        missedAt: row.missed_at,
       },
     ];
   });
