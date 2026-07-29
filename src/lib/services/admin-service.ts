@@ -644,6 +644,10 @@ export async function createAssignment(input: {
     headword_normalized: string;
     primary_meaning: string;
   }> = [];
+  const eligibleDirectionsByEntry = new Map<
+    number,
+    Set<"english_to_korean" | "korean_to_english">
+  >();
   const pageSize = 1000;
 
   for (let offset = 0; ; offset += pageSize) {
@@ -664,17 +668,50 @@ export async function createAssignment(input: {
     if (!page || page.length < pageSize) break;
   }
 
+  for (let offset = 0; ; offset += pageSize) {
+    const { data: page, error: eligibilityError } = await supabase
+      .from("vocab_entry_quiz_eligibility")
+      .select("vocab_entry_id, quiz_mode")
+      .eq("dataset_id", input.datasetId)
+      .eq("status", "eligible")
+      .order("vocab_entry_id")
+      .order("quiz_mode")
+      .range(offset, offset + pageSize - 1);
+
+    if (eligibilityError) {
+      throw new Error("단어시험 사용 가능 상태를 불러오지 못했습니다.");
+    }
+    for (const row of page ?? []) {
+      const directions =
+        eligibleDirectionsByEntry.get(row.vocab_entry_id) ??
+        new Set<"english_to_korean" | "korean_to_english">();
+      directions.add(
+        row.quiz_mode === "book_meaning_en_to_ko"
+          ? "english_to_korean"
+          : "korean_to_english",
+      );
+      eligibleDirectionsByEntry.set(row.vocab_entry_id, directions);
+    }
+    if (!page || page.length < pageSize) break;
+  }
+
   const uniqueEntries = new Map<string, QuizVocabularyEntry>();
   const sourceOrderById = new Map<number, number>();
   for (const entry of entryData) {
+    const eligibleDirections = [
+      ...(eligibleDirectionsByEntry.get(entry.id) ?? []),
+    ];
+    if (eligibleDirections.length === 0) continue;
     const key = entry.headword_normalized
-      .normalize("NFC")
-      .toLocaleLowerCase("en-US");
+      .normalize("NFKC")
+      .toLocaleLowerCase("en-US")
+      .replaceAll("*", "");
     if (!uniqueEntries.has(key)) {
       uniqueEntries.set(key, {
         id: entry.id,
         headword: entry.headword,
         primaryMeaning: entry.primary_meaning,
+        eligibleDirections,
       });
       sourceOrderById.set(entry.id, entry.source_row);
     }
@@ -701,7 +738,7 @@ export async function createAssignment(input: {
     .filter(Boolean)
     .join(" · ");
   const { data, error } = await supabase.rpc(
-    "create_assignment_with_question_bank",
+    "create_assignment_with_question_bank_v2",
     {
       p_title: input.title || generatedTitle,
       p_dataset_id: input.datasetId,
@@ -716,9 +753,7 @@ export async function createAssignment(input: {
         vocab_entry_id: question.vocabEntryId,
         base_order_index: index + 1,
         direction: question.direction,
-        prompt: question.prompt,
-        choices: question.choices,
-        correct_choice_index: question.correctChoiceIndex,
+        choice_vocab_entry_ids: question.choiceVocabEntryIds,
       })),
     },
   );

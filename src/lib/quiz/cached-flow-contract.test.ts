@@ -17,9 +17,16 @@ describe("DAY 문제은행 응시 계약", () => {
     expect(manager).toContain("무작위");
     expect(manager).toContain("DAY 순서");
     expect(adminService).toContain(
-      '"create_assignment_with_question_bank"',
+      '"create_assignment_with_question_bank_v2"',
     );
     expect(adminService).toContain("base_order_index");
+    expect(adminService).toContain("choice_vocab_entry_ids");
+    expect(adminService).not.toContain(
+      "correct_choice_index: question.correctChoiceIndex",
+    );
+    expect(adminService).toContain(
+      '.from("vocab_entry_quiz_eligibility")',
+    );
   });
 
   it("새 시도는 문제를 다시 만들지 않고 문제은행에서 복사한다", () => {
@@ -30,6 +37,9 @@ describe("DAY 문제은행 응시 계약", () => {
     );
     expect(quizService).toContain(
       'assignment.range_basis === "units"',
+    );
+    expect(quizService).toContain(
+      "assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey",
     );
   });
 

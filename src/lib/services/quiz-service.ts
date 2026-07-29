@@ -115,13 +115,25 @@ type ResultQuestionRow = {
   initial_is_correct: boolean | null;
   retry_choice_index: number | null;
   retry_is_correct: boolean | null;
+  assignment_question:
+    | {
+        headword_snapshot: string | null;
+        primary_meaning_snapshot: string | null;
+        provenance_status: "legacy_backfill" | "verified_v2";
+      }
+    | Array<{
+        headword_snapshot: string | null;
+        primary_meaning_snapshot: string | null;
+        provenance_status: "legacy_backfill" | "verified_v2";
+      }>
+    | null;
   vocab_entries:
     | { headword: string; primary_meaning: string }
     | Array<{ headword: string; primary_meaning: string }>
     | null;
 };
 
-function mapResultQuestions(
+export function mapResultQuestions(
   rows: ResultQuestionRow[],
 ): AttemptQuestionResult[] {
   return rows.map((row) => {
@@ -133,6 +145,13 @@ function mapResultQuestions(
     const vocabulary = Array.isArray(row.vocab_entries)
       ? row.vocab_entries[0]
       : row.vocab_entries;
+    const bankQuestion = Array.isArray(row.assignment_question)
+      ? row.assignment_question[0]
+      : row.assignment_question;
+    const verifiedSnapshot =
+      bankQuestion?.provenance_status === "verified_v2"
+        ? bankQuestion
+        : null;
 
     return {
       id: row.id,
@@ -150,8 +169,14 @@ function mapResultQuestions(
           ? null
           : (choices[row.retry_choice_index] ?? null),
       retryIsCorrect: row.retry_is_correct,
-      headword: vocabulary?.headword ?? "",
-      primaryMeaning: vocabulary?.primary_meaning ?? "",
+      headword:
+        verifiedSnapshot?.headword_snapshot ??
+        vocabulary?.headword ??
+        "",
+      primaryMeaning:
+        verifiedSnapshot?.primary_meaning_snapshot ??
+        vocabulary?.primary_meaning ??
+        "",
     };
   });
 }
@@ -163,7 +188,7 @@ export async function getAttemptQuestionResults(
   const { data, error } = await supabase
     .from("quiz_questions")
     .select(
-      "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, vocab_entries(headword, primary_meaning)",
+      "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(headword_snapshot, primary_meaning_snapshot, provenance_status), vocab_entries(headword, primary_meaning)",
     )
     .eq("attempt_id", attemptId)
     .order("order_index");

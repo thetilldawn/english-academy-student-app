@@ -46,8 +46,39 @@ describe("createQuizQuestions", () => {
     for (const question of questions) {
       expect(question.choices).toHaveLength(4);
       expect(new Set(question.choices)).toHaveLength(4);
+      expect(question.choiceVocabEntryIds).toHaveLength(4);
+      expect(new Set(question.choiceVocabEntryIds)).toHaveLength(4);
+      expect(
+        question.choiceVocabEntryIds.filter(
+          (entryId) => entryId === question.vocabEntryId,
+        ),
+      ).toHaveLength(1);
+      expect(
+        question.choiceVocabEntryIds[question.correctChoiceIndex],
+      ).toBe(question.vocabEntryId);
       expect(question.correctChoiceIndex).toBeGreaterThanOrEqual(0);
       expect(question.correctChoiceIndex).toBeLessThan(4);
+    }
+  });
+
+  it("보기 문자열과 보기 단어 ID의 순서를 항상 맞춘다", () => {
+    const byId = new Map(entries.map((entry) => [entry.id, entry]));
+    const questions = createQuizQuestions(
+      entries,
+      10,
+      50,
+      seededRandom(5),
+    );
+
+    for (const question of questions) {
+      expect(
+        question.choiceVocabEntryIds.map((entryId) => {
+          const entry = byId.get(entryId);
+          return question.direction === "english_to_korean"
+            ? entry?.primaryMeaning
+            : entry?.headword;
+        }),
+      ).toEqual(question.choices);
     }
   });
 
@@ -85,6 +116,50 @@ describe("createQuizQuestions", () => {
           question.prompt === "공통 뜻",
       ),
     ).toBe(false);
+  });
+
+  it("DB가 허용한 방향으로만 각 단어를 출제한다", () => {
+    const directionEntries = entries.map((entry, index) => ({
+      ...entry,
+      eligibleDirections:
+        index < 6
+          ? (["english_to_korean"] as const)
+          : (["korean_to_english"] as const),
+    }));
+    const questions = createQuizQuestions(
+      directionEntries,
+      8,
+      50,
+      seededRandom(17),
+    );
+    const directionById = new Map(
+      directionEntries.map((entry) => [
+        entry.id,
+        entry.eligibleDirections[0],
+      ]),
+    );
+
+    for (const question of questions) {
+      expect(directionById.get(question.vocabEntryId)).toBe(
+        question.direction,
+      );
+    }
+  });
+
+  it("요청 방향의 검증된 단어가 부족하면 시험지를 만들지 않는다", () => {
+    const englishOnly = entries.map((entry) => ({
+      ...entry,
+      eligibleDirections: ["english_to_korean"] as const,
+    }));
+
+    expect(() =>
+      createQuizQuestions(
+        englishOnly,
+        8,
+        50,
+        seededRandom(19),
+      ),
+    ).toThrow("문제 방향별로 검증된 단어가 부족합니다.");
   });
 });
 

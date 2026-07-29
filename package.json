@@ -20,7 +20,11 @@
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "secrets:generate": "tsx scripts/generate-secrets.ts",
-    "import:vocab": "tsx scripts/import-vocabulary.ts"
+    "import:vocab": "tsx scripts/import-vocabulary.ts",
+    "build:vocab-link": "tsx scripts/build-vocab-link-package.ts",
+    "verify:vocab-link": "tsx scripts/verify-vocab-link-package.ts",
+    "import:word-index": "tsx scripts/import-word-index.ts",
+    "import:vocab-link": "tsx scripts/import-vocab-link-package.ts"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.3",
