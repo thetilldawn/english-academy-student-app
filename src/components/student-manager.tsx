@@ -1,19 +1,23 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
   useTransition,
   type FormEvent,
+  type KeyboardEvent,
   type MouseEvent,
 } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
+import type { StudentWrongWordHistory } from "@/lib/admin/wrong-word-history";
 import { formatKoreanDateTime } from "@/lib/format";
+import { StudentWrongWordPanel } from "@/components/student-wrong-word-panel";
 
 type StudentItem = {
   id: string;
@@ -71,6 +75,11 @@ type ApiResponse = {
   error?: string;
 };
 
+type WrongHistoryCacheEntry = {
+  history: StudentWrongWordHistory;
+  loadedAt: number;
+};
+
 function activityStatusText(status: ProgressItem["latestStatus"]) {
   if (status === "not_started") return "응시 전";
   if (status === "missed") return "미응시 마감";
@@ -112,9 +121,12 @@ export function StudentManager({
   const [selectedStudentId, setSelectedStudentId] = useState(
     initialStudent?.id ?? "",
   );
-  const [activeTab, setActiveTab] = useState<"history" | "manage">(
-    "history",
-  );
+  const [activeTab, setActiveTab] = useState<
+    "history" | "wrong" | "manage"
+  >("history");
+  const [wrongHistoryByStudent, setWrongHistoryByStudent] = useState<
+    Record<string, WrongHistoryCacheEntry>
+  >({});
   const selectedStudent =
     students.find((student) => student.id === selectedStudentId) ?? null;
   const selectedProgress =
@@ -161,11 +173,57 @@ export function StudentManager({
 
   function selectStudent(
     student: StudentItem,
-    tab: "history" | "manage" = "history",
+    tab: "history" | "wrong" | "manage" = "history",
   ) {
     setSelectedStudentId(student.id);
     setActiveTab(tab);
     setProfileDatasetId(student.currentVocabDatasetId ?? "");
+  }
+
+  const cacheWrongWordHistory = useCallback(
+    (studentId: string, history: StudentWrongWordHistory) => {
+      setWrongHistoryByStudent((current) => ({
+        ...current,
+        [studentId]: {
+          history,
+          loadedAt: Date.now(),
+        },
+      }));
+    },
+    [],
+  );
+
+  function moveDialogTabFocus(
+    event: KeyboardEvent<HTMLButtonElement>,
+  ) {
+    if (
+      !["ArrowLeft", "ArrowRight", "Home", "End"].includes(
+        event.key,
+      )
+    ) {
+      return;
+    }
+    const tabs = Array.from(
+      event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>(
+        '[role="tab"]',
+      ) ?? [],
+    );
+    if (tabs.length === 0) return;
+    event.preventDefault();
+    const currentIndex = Math.max(
+      tabs.indexOf(event.currentTarget),
+      0,
+    );
+    const nextIndex =
+      event.key === "Home"
+        ? 0
+        : event.key === "End"
+          ? tabs.length - 1
+          : event.key === "ArrowRight"
+            ? (currentIndex + 1) % tabs.length
+            : (currentIndex - 1 + tabs.length) % tabs.length;
+    tabs[nextIndex].focus();
+    tabs[nextIndex].click();
   }
 
   function beginAction(key: string) {
@@ -671,19 +729,46 @@ export function StudentManager({
             </button>
           </div>
 
-          <div aria-label="학생 상세 메뉴" className="dialog-tabs">
+          <div
+            aria-label="학생 상세 메뉴"
+            className="dialog-tabs"
+            role="tablist"
+          >
             <button
-              aria-pressed={activeTab === "history"}
+              aria-controls="student-history-panel"
+              aria-selected={activeTab === "history"}
               className="dialog-tab"
+              id="student-history-tab"
+              onKeyDown={moveDialogTabFocus}
               onClick={() => setActiveTab("history")}
+              role="tab"
+              tabIndex={activeTab === "history" ? 0 : -1}
               type="button"
             >
               내역
             </button>
             <button
-              aria-pressed={activeTab === "manage"}
+              aria-controls="student-wrong-panel"
+              aria-selected={activeTab === "wrong"}
               className="dialog-tab"
+              id="student-wrong-tab"
+              onKeyDown={moveDialogTabFocus}
+              onClick={() => setActiveTab("wrong")}
+              role="tab"
+              tabIndex={activeTab === "wrong" ? 0 : -1}
+              type="button"
+            >
+              오답
+            </button>
+            <button
+              aria-controls="student-manage-panel"
+              aria-selected={activeTab === "manage"}
+              className="dialog-tab"
+              id="student-manage-tab"
+              onKeyDown={moveDialogTabFocus}
               onClick={() => setActiveTab("manage")}
+              role="tab"
+              tabIndex={activeTab === "manage" ? 0 : -1}
               type="button"
             >
               관리
@@ -691,7 +776,12 @@ export function StudentManager({
           </div>
 
           {activeTab === "history" ? (
-            <section className="student-dialog-panel">
+            <section
+              aria-labelledby="student-history-tab"
+              className="student-dialog-panel"
+              id="student-history-panel"
+              role="tabpanel"
+            >
               <div className="student-progress-grid">
                 <div>
                   <span>최근 시험</span>
@@ -760,8 +850,34 @@ export function StudentManager({
                 )}
               </div>
             </section>
+          ) : activeTab === "wrong" ? (
+            <div
+              aria-labelledby="student-wrong-tab"
+              id="student-wrong-panel"
+              role="tabpanel"
+            >
+              <StudentWrongWordPanel
+                active
+                cachedAt={
+                  wrongHistoryByStudent[selectedStudent.id]?.loadedAt ??
+                  null
+                }
+                cachedHistory={
+                  wrongHistoryByStudent[selectedStudent.id]?.history ??
+                  null
+                }
+                key={selectedStudent.id}
+                onLoaded={cacheWrongWordHistory}
+                studentId={selectedStudent.id}
+              />
+            </div>
           ) : (
-            <section className="student-dialog-panel">
+            <section
+              aria-labelledby="student-manage-tab"
+              className="student-dialog-panel"
+              id="student-manage-panel"
+              role="tabpanel"
+            >
               <div className="student-management-summary">
                 <div>
                   <span>현재 단어장</span>

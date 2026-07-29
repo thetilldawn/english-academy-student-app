@@ -1,0 +1,278 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  buildStudentWrongWordHistory,
+  emptyStudentWrongWordHistory,
+  type WrongAttemptSource,
+  type WrongEntrySource,
+  type WrongEventSource,
+  type WrongQuestionSource,
+} from "@/lib/admin/wrong-word-history";
+
+const attempts: WrongAttemptSource[] = [
+  {
+    id: "attempt-1",
+    assignmentTitle: "DAY 1",
+    attemptNumber: 1,
+    status: "completed",
+    completedAt: "2026-07-29T01:00:00Z",
+  },
+  {
+    id: "attempt-2",
+    assignmentTitle: "DAY 2",
+    attemptNumber: 1,
+    status: "expired",
+    completedAt: "2026-07-30T01:00:00Z",
+  },
+];
+
+const entries: WrongEntrySource[] = [
+  {
+    id: 11,
+    datasetId: "dataset-a",
+    datasetLabel: "능률 VOCA · 2025개정",
+    headword: "alpha",
+    primaryMeaning: "알파",
+  },
+  {
+    id: 12,
+    datasetId: "dataset-a",
+    datasetLabel: "능률 VOCA · 2025개정",
+    headword: "alpha",
+    primaryMeaning: "알파",
+  },
+  {
+    id: 13,
+    datasetId: "dataset-a",
+    datasetLabel: "능률 VOCA · 2025개정",
+    headword: "beta",
+    primaryMeaning: "베타",
+  },
+];
+
+const questions: WrongQuestionSource[] = [
+  {
+    id: "question-1",
+    vocabEntryId: 11,
+    initialIsCorrect: false,
+    retryIsCorrect: true,
+    headword: "alpha",
+    primaryMeaning: "첫 뜻",
+    provenanceStatus: "verified_v2",
+  },
+  {
+    id: "question-2",
+    vocabEntryId: 12,
+    initialIsCorrect: false,
+    retryIsCorrect: false,
+    headword: "alpha",
+    primaryMeaning: "둘째 뜻",
+    provenanceStatus: "verified_v2",
+  },
+  {
+    id: "question-3",
+    vocabEntryId: 13,
+    initialIsCorrect: false,
+    retryIsCorrect: null,
+    headword: "beta",
+    primaryMeaning: "베타",
+    provenanceStatus: "legacy_backfill",
+  },
+];
+
+const events: WrongEventSource[] = [
+  {
+    attemptId: "attempt-1",
+    questionId: "question-1",
+    datasetId: "dataset-a",
+    vocabEntryId: 11,
+    canonicalLexemeId: "lexeme-alpha",
+    stage: "initial",
+    wrongAt: "2026-07-29T00:10:00Z",
+  },
+  {
+    attemptId: "attempt-2",
+    questionId: "question-2",
+    datasetId: "dataset-a",
+    vocabEntryId: 12,
+    canonicalLexemeId: "lexeme-alpha",
+    stage: "initial",
+    wrongAt: "2026-07-30T00:10:00Z",
+  },
+  {
+    attemptId: "attempt-2",
+    questionId: "question-2",
+    datasetId: "dataset-a",
+    vocabEntryId: 12,
+    canonicalLexemeId: "lexeme-alpha",
+    stage: "retry",
+    wrongAt: "2026-07-30T00:20:00Z",
+  },
+  {
+    attemptId: "attempt-2",
+    questionId: "question-3",
+    datasetId: "dataset-a",
+    vocabEntryId: 13,
+    canonicalLexemeId: null,
+    stage: "initial",
+    wrongAt: "2026-07-30T00:30:00Z",
+  },
+];
+
+describe("buildStudentWrongWordHistory", () => {
+  it("groups canonical occurrences but preserves exact source occurrences", () => {
+    const result = buildStudentWrongWordHistory({
+      attempts,
+      entries,
+      events,
+      questions,
+    });
+
+    expect(result.wrongEventCount).toBe(4);
+    expect(result.uniqueWordCount).toBe(2);
+    expect(result.onceWrongWordCount).toBe(1);
+    expect(result.repeatedWrongWordCount).toBe(1);
+    expect(result.words[0]).toMatchObject({
+      key: "canonical:lexeme-alpha",
+      wrongCount: 3,
+      wrongLevel: 2,
+      latestAttemptId: "attempt-2",
+      latestOutcome: "wrong_again",
+    });
+    expect(result.words[0].occurrences).toHaveLength(2);
+    expect(
+      result.words[0].occurrences.map((item) => item.vocabEntryId),
+    ).toEqual([12, 11]);
+    expect(result.words[1]).toMatchObject({
+      key: "entry:dataset-a:13",
+      wrongCount: 1,
+      wrongLevel: 1,
+      latestOutcome: "retry_unanswered",
+    });
+  });
+
+  it("builds per-attempt words without treating retry unanswered as a second wrong", () => {
+    const result = buildStudentWrongWordHistory({
+      attempts,
+      entries,
+      events,
+      questions,
+    });
+
+    expect(result.attempts).toHaveLength(2);
+    expect(result.attempts[0]).toMatchObject({
+      attemptId: "attempt-2",
+      status: "expired",
+      wrongEventCount: 3,
+    });
+    expect(result.attempts[0].words).toEqual([
+      expect.objectContaining({
+        vocabEntryId: 12,
+        wrongCount: 2,
+        outcome: "wrong_again",
+      }),
+      expect.objectContaining({
+        vocabEntryId: 13,
+        wrongCount: 1,
+        outcome: "retry_unanswered",
+      }),
+    ]);
+    expect(result.attempts[1].words[0]).toMatchObject({
+      wrongCount: 1,
+      outcome: "recovered_on_retry",
+    });
+  });
+
+  it("ignores incomplete relation rows instead of inventing labels", () => {
+    const result = buildStudentWrongWordHistory({
+      attempts,
+      entries,
+      questions,
+      events: [
+        ...events,
+        {
+          attemptId: "missing-attempt",
+          questionId: "question-1",
+          datasetId: "dataset-a",
+          vocabEntryId: 11,
+          canonicalLexemeId: null,
+          stage: "initial",
+          wrongAt: "2026-08-01T00:00:00Z",
+        },
+      ],
+    });
+
+    expect(result.wrongEventCount).toBe(4);
+  });
+
+  it("returns a stable empty response", () => {
+    expect(emptyStudentWrongWordHistory()).toEqual({
+      wrongEventCount: 0,
+      uniqueWordCount: 0,
+      onceWrongWordCount: 0,
+      repeatedWrongWordCount: 0,
+      words: [],
+      attempts: [],
+    });
+  });
+
+  it("keeps the conservative 400-event response below four megabytes", () => {
+    const eventCount = 400;
+    const longHeadword = "가".repeat(160);
+    const longMeaning = "뜻".repeat(500);
+    const longDatasetLabel = "단어장".repeat(100);
+    const largeAttempts: WrongAttemptSource[] = [];
+    const largeEntries: WrongEntrySource[] = [];
+    const largeQuestions: WrongQuestionSource[] = [];
+    const largeEvents: WrongEventSource[] = [];
+
+    for (let index = 0; index < eventCount; index += 1) {
+      const attemptId = `attempt-${index}`;
+      const questionId = `question-${index}`;
+      const vocabEntryId = index + 1;
+      largeAttempts.push({
+        id: attemptId,
+        assignmentTitle: "시험".repeat(80),
+        attemptNumber: 1,
+        status: "completed",
+        completedAt: "2026-07-30T00:00:00Z",
+      });
+      largeEntries.push({
+        id: vocabEntryId,
+        datasetId: "dataset-large",
+        datasetLabel: longDatasetLabel,
+        headword: longHeadword,
+        primaryMeaning: longMeaning,
+      });
+      largeQuestions.push({
+        id: questionId,
+        vocabEntryId,
+        initialIsCorrect: false,
+        retryIsCorrect: true,
+        headword: longHeadword,
+        primaryMeaning: longMeaning,
+        provenanceStatus: "verified_v2",
+      });
+      largeEvents.push({
+        attemptId,
+        questionId,
+        datasetId: "dataset-large",
+        vocabEntryId,
+        canonicalLexemeId: `lexeme-${index}`,
+        stage: "initial",
+        wrongAt: "2026-07-30T00:00:00Z",
+      });
+    }
+
+    const result = buildStudentWrongWordHistory({
+      attempts: largeAttempts,
+      entries: largeEntries,
+      events: largeEvents,
+      questions: largeQuestions,
+    });
+
+    expect(Buffer.byteLength(JSON.stringify({ history: result }))).toBeLessThan(
+      4_000_000,
+    );
+  });
+});
