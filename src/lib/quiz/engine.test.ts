@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   calculateQuizScore,
+  createMixedQuizQuestions,
   createQuizQuestions,
   createTargetedQuizQuestions,
   type QuizVocabularyEntry,
@@ -349,6 +350,591 @@ describe("createTargetedQuizQuestions", () => {
         seededRandom(67),
       ),
     ).toThrow("0, 50, 100");
+  });
+});
+
+describe("createMixedQuizQuestions", () => {
+  it.each([0, 50, 100] as const)(
+    "전체 문항의 영→한 비율을 %i%%로 정확히 맞추고 오답을 꼬리에 보존한다",
+    (ratio) => {
+      const required = entries.slice(0, 2);
+      const primary = entries.slice(2, 10);
+      const questions = createMixedQuizQuestions(
+        required,
+        primary,
+        entries,
+        6,
+        ratio,
+        seededRandom(ratio + 71),
+      );
+
+      expect(questions).toHaveLength(6);
+      expect(
+        questions
+          .slice(-required.length)
+          .map((question) => question.vocabEntryId),
+      ).toEqual(required.map((entry) => entry.id));
+      expect(
+        questions
+          .slice(0, -required.length)
+          .every((question) =>
+            primary.some(
+              (entry) => entry.id === question.vocabEntryId,
+            ),
+          ),
+      ).toBe(true);
+      expect(
+        questions.filter(
+          (question) =>
+            question.direction === "english_to_korean",
+        ),
+      ).toHaveLength(Math.round(questions.length * (ratio / 100)));
+    },
+  );
+
+  it("오답의 강제 방향을 지키면서 전체 50:50을 만든다", () => {
+    const candidates = entries.map((entry, index) => ({
+      ...entry,
+      eligibleDirections:
+        index === 0
+          ? (["english_to_korean"] as const)
+          : index === 1
+            ? (["korean_to_english"] as const)
+            : ([
+                "english_to_korean",
+                "korean_to_english",
+              ] as const),
+    }));
+    const questions = createMixedQuizQuestions(
+      candidates.slice(0, 2),
+      candidates.slice(2),
+      candidates,
+      6,
+      50,
+      seededRandom(79),
+    );
+
+    expect(questions.at(-2)?.direction).toBe(
+      "english_to_korean",
+    );
+    expect(questions.at(-1)?.direction).toBe(
+      "korean_to_english",
+    );
+    expect(
+      questions.filter(
+        (question) =>
+          question.direction === "english_to_korean",
+      ),
+    ).toHaveLength(3);
+  });
+
+  it("같은 canonical의 방향별 occurrence 중 하나만 골라 가능한 비율을 만든다", () => {
+    const candidates: QuizVocabularyEntry[] = [
+      {
+        ...entries[0],
+        canonicalKey: "required",
+      },
+      {
+        ...entries[1],
+        canonicalKey: "flexible",
+        eligibleDirections: ["english_to_korean"],
+      },
+      {
+        ...entries[2],
+        canonicalKey: "flexible",
+        eligibleDirections: ["korean_to_english"],
+      },
+      {
+        ...entries[3],
+        canonicalKey: "english-only",
+        eligibleDirections: ["english_to_korean"],
+      },
+      {
+        ...entries[4],
+        canonicalKey: "korean-only",
+        eligibleDirections: ["korean_to_english"],
+      },
+      ...entries.slice(5).map((entry) => ({
+        ...entry,
+        canonicalKey: `candidate-${entry.id}`,
+      })),
+    ];
+    const questions = createMixedQuizQuestions(
+      [candidates[0]],
+      candidates.slice(1, 5),
+      candidates,
+      4,
+      50,
+      seededRandom(83),
+    );
+    const targetIds = questions.map(
+      (question) => question.vocabEntryId,
+    );
+
+    expect(
+      targetIds.filter((id) => id === 2 || id === 3),
+    ).toHaveLength(1);
+    expect(
+      questions.filter(
+        (question) =>
+          question.direction === "english_to_korean",
+      ),
+    ).toHaveLength(2);
+  });
+
+  it("보기는 주 DAY 밖의 전체 단어장 후보도 사용한다", () => {
+    const candidates = entries.slice(0, 4);
+    const required = [candidates[0]];
+    const primary = candidates.slice(1);
+    const questions = createMixedQuizQuestions(
+      required,
+      primary,
+      candidates,
+      4,
+      100,
+      seededRandom(89),
+    );
+
+    expect(
+      questions
+        .slice(0, 3)
+        .every((question) =>
+          question.choiceVocabEntryIds.includes(required[0].id),
+        ),
+    ).toBe(true);
+  });
+
+  it("전체 단어장에서 한글 뜻이 중복되면 한→영 가능 후보로 계산하지 않는다", () => {
+    const candidates = entries.map((entry) => ({ ...entry }));
+    candidates[0].eligibleDirections = ["korean_to_english"];
+    candidates[1].primaryMeaning = "중복 뜻";
+    candidates[8].primaryMeaning = "중복 뜻";
+
+    expect(() =>
+      createMixedQuizQuestions(
+        [candidates[0]],
+        candidates.slice(1, 4),
+        candidates,
+        4,
+        0,
+        seededRandom(97),
+      ),
+    ).toThrow("검증 단어가 부족합니다.");
+  });
+
+  it("강제 방향으로 전체 비율을 만들 수 없으면 중단한다", () => {
+    const candidates = entries.map((entry) => ({
+      ...entry,
+      eligibleDirections: ["english_to_korean"] as const,
+    }));
+
+    expect(() =>
+      createMixedQuizQuestions(
+        candidates.slice(0, 2),
+        candidates.slice(2),
+        candidates,
+        4,
+        0,
+        seededRandom(101),
+      ),
+    ).toThrow("요청 비율을 만들 수 없습니다.");
+  });
+
+  it("오답과 겹치는 ID·canonical 후보는 주 DAY 일반 문항에서 제외한다", () => {
+    const candidates = entries.map((entry) => ({
+      ...entry,
+      canonicalKey: `canonical-${entry.id}`,
+    }));
+
+    const idOverlap = createMixedQuizQuestions(
+      [candidates[0]],
+      [candidates[0], ...candidates.slice(2, 5)],
+      candidates,
+      4,
+      100,
+      seededRandom(103),
+    );
+    expect(
+      idOverlap.filter(
+        (question) => question.vocabEntryId === candidates[0].id,
+      ),
+    ).toHaveLength(1);
+    expect(idOverlap.at(-1)?.vocabEntryId).toBe(candidates[0].id);
+
+    const canonicalOverlapCandidates = [
+      candidates[0],
+      {
+        ...candidates[1],
+        canonicalKey: candidates[0].canonicalKey,
+      },
+      ...candidates.slice(2),
+    ];
+    const canonicalOverlap = createMixedQuizQuestions(
+      [canonicalOverlapCandidates[0]],
+      canonicalOverlapCandidates.slice(1, 5),
+      canonicalOverlapCandidates,
+      4,
+      100,
+      seededRandom(107),
+    );
+    expect(
+      canonicalOverlap.some(
+        (question) =>
+          question.vocabEntryId ===
+          canonicalOverlapCandidates[1].id,
+      ),
+    ).toBe(false);
+    expect(canonicalOverlap.at(-1)?.vocabEntryId).toBe(
+      canonicalOverlapCandidates[0].id,
+    );
+  });
+
+  it("ID 중복·범위 밖 대상·canonical 중복 오답을 거절한다", () => {
+    const canonicalCandidates = entries.map((entry) => ({
+      ...entry,
+      canonicalKey: `canonical-${entry.id}`,
+    }));
+
+    expect(() =>
+      createMixedQuizQuestions(
+        [canonicalCandidates[0], canonicalCandidates[0]],
+        canonicalCandidates.slice(2),
+        canonicalCandidates,
+        4,
+        100,
+        seededRandom(109),
+      ),
+    ).toThrow("오답 대상 ID가 중복되었습니다.");
+
+    const sameCanonicalRequired = [
+      canonicalCandidates[0],
+      {
+        ...canonicalCandidates[1],
+        canonicalKey: canonicalCandidates[0].canonicalKey,
+      },
+      ...canonicalCandidates.slice(2),
+    ];
+    expect(() =>
+      createMixedQuizQuestions(
+        [
+          sameCanonicalRequired[0],
+          sameCanonicalRequired[1],
+        ],
+        sameCanonicalRequired.slice(2),
+        sameCanonicalRequired,
+        4,
+        100,
+        seededRandom(113),
+      ),
+    ).toThrow("오답 대상 표제어가 중복되었습니다.");
+
+    expect(() =>
+      createMixedQuizQuestions(
+        [
+          {
+            id: 999,
+            headword: "outside",
+            primaryMeaning: "범위 밖",
+          },
+        ],
+        canonicalCandidates.slice(1, 5),
+        canonicalCandidates,
+        4,
+        100,
+        seededRandom(127),
+      ),
+    ).toThrow("전체 보기 후보에 없습니다.");
+
+    expect(() =>
+      createMixedQuizQuestions(
+        [canonicalCandidates[0]],
+        [
+          canonicalCandidates[1],
+          canonicalCandidates[1],
+          ...canonicalCandidates.slice(2, 4),
+        ],
+        canonicalCandidates,
+        4,
+        100,
+        seededRandom(131),
+      ),
+    ).toThrow("후보 단어 ID가 중복되었습니다.");
+
+    expect(() =>
+      createMixedQuizQuestions(
+        [canonicalCandidates[0]],
+        canonicalCandidates.slice(1, 5),
+        [
+          canonicalCandidates[0],
+          canonicalCandidates[0],
+          ...canonicalCandidates.slice(1),
+        ],
+        4,
+        100,
+        seededRandom(137),
+      ),
+    ).toThrow("전체 보기 후보 단어 ID가 중복되었습니다.");
+  });
+
+  it("문항 수 경계와 unique canonical 부족을 거절한다", () => {
+    expect(() =>
+      createMixedQuizQuestions(
+        entries.slice(0, 4),
+        entries.slice(4),
+        entries,
+        4,
+        50,
+        seededRandom(139),
+      ),
+    ).toThrow("새 DAY 문항이 더해져야 합니다.");
+    expect(() =>
+      createMixedQuizQuestions(
+        [entries[0]],
+        entries.slice(1),
+        entries,
+        3,
+        50,
+        seededRandom(149),
+      ),
+    ).toThrow("4~500");
+    expect(() =>
+      createMixedQuizQuestions(
+        [entries[0]],
+        entries.slice(1),
+        entries,
+        501,
+        50,
+        seededRandom(151),
+      ),
+    ).toThrow("4~500");
+
+    const duplicateCanonical = entries.map((entry, index) => ({
+      ...entry,
+      canonicalKey:
+        index === 0 ? "required" : "same-primary",
+    }));
+    expect(() =>
+      createMixedQuizQuestions(
+        [duplicateCanonical[0]],
+        duplicateCanonical.slice(1),
+        duplicateCanonical,
+        4,
+        50,
+        seededRandom(157),
+      ),
+    ).toThrow("검증 단어가 부족합니다.");
+  });
+
+  it("작은 B/F/E/K 조합 전수에서 완전탐색 가능 여부와 일치한다", () => {
+    type Capability = "B" | "F" | "E" | "K";
+    const requiredVariants: Capability[][] = [
+      ["E"],
+      ["K"],
+      ["B"],
+      ["E", "K"],
+      ["E", "B"],
+      ["K", "B"],
+      ["E", "E"],
+      ["K", "K"],
+      ["B", "B"],
+      ["E", "K", "B"],
+    ];
+    const ratios = [0, 50, 100] as const;
+    let scenario = 0;
+
+    const isFeasible = (
+      required: readonly Capability[],
+      groups: readonly Capability[],
+      generalCount: number,
+      ratio: 0 | 50 | 100,
+    ) => {
+      const total = required.length + generalCount;
+      const expectedEnglish = Math.round(total * (ratio / 100));
+      const expectedKorean = total - expectedEnglish;
+      const subsetCount = 2 ** groups.length;
+
+      for (let mask = 0; mask < subsetCount; mask += 1) {
+        const selected = groups.filter(
+          (_, index) => (mask & (1 << index)) !== 0,
+        );
+        if (selected.length !== generalCount) continue;
+
+        const combined = [...required, ...selected];
+        const forcedEnglish = combined.filter(
+          (capability) => capability === "E",
+        ).length;
+        const forcedKorean = combined.filter(
+          (capability) => capability === "K",
+        ).length;
+        const flexible = combined.length - forcedEnglish - forcedKorean;
+        if (
+          forcedEnglish <= expectedEnglish &&
+          forcedKorean <= expectedKorean &&
+          expectedEnglish -
+            forcedEnglish +
+            (expectedKorean - forcedKorean) ===
+            flexible
+        ) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    for (let bothCount = 0; bothCount <= 2; bothCount += 1) {
+      for (
+        let flexibleCount = 0;
+        flexibleCount <= 2;
+        flexibleCount += 1
+      ) {
+        for (
+          let englishCount = 0;
+          englishCount <= 2;
+          englishCount += 1
+        ) {
+          for (
+            let koreanCount = 0;
+            koreanCount <= 2;
+            koreanCount += 1
+          ) {
+            const groupCapabilities: Capability[] = [
+              ...Array<Capability>(bothCount).fill("B"),
+              ...Array<Capability>(flexibleCount).fill("F"),
+              ...Array<Capability>(englishCount).fill("E"),
+              ...Array<Capability>(koreanCount).fill("K"),
+            ];
+            for (const requiredCapabilities of requiredVariants) {
+              const minimumGeneral = Math.max(
+                1,
+                4 - requiredCapabilities.length,
+              );
+              const maximumGeneral = Math.min(
+                3,
+                groupCapabilities.length,
+              );
+              for (
+                let generalCount = minimumGeneral;
+                generalCount <= maximumGeneral;
+                generalCount += 1
+              ) {
+                for (const ratio of ratios) {
+                  scenario += 1;
+                  let nextId = 1;
+                  const makeEntry = (
+                    capability: Exclude<Capability, "F">,
+                    canonicalKey: string,
+                  ): QuizVocabularyEntry => {
+                    const id = nextId;
+                    nextId += 1;
+                    return {
+                      id,
+                      headword: `scenario-${scenario}-word-${id}`,
+                      primaryMeaning: `scenario-${scenario}-뜻-${id}`,
+                      canonicalKey,
+                      eligibleDirections:
+                        capability === "B"
+                          ? [
+                              "english_to_korean",
+                              "korean_to_english",
+                            ]
+                          : capability === "E"
+                            ? ["english_to_korean"]
+                            : ["korean_to_english"],
+                    };
+                  };
+
+                  const required = requiredCapabilities.map(
+                    (capability, index) =>
+                      makeEntry(
+                        capability === "F" ? "B" : capability,
+                        `required-${index}`,
+                      ),
+                  );
+                  const primary: QuizVocabularyEntry[] = [];
+                  groupCapabilities.forEach(
+                    (capability, index) => {
+                      const canonicalKey = `primary-${index}`;
+                      if (capability === "F") {
+                        primary.push(
+                          makeEntry("E", canonicalKey),
+                          makeEntry("K", canonicalKey),
+                        );
+                      } else {
+                        primary.push(
+                          makeEntry(capability, canonicalKey),
+                        );
+                      }
+                    },
+                  );
+                  const distractors = Array.from(
+                    { length: 4 },
+                    (_, index) =>
+                      makeEntry("B", `distractor-${index}`),
+                  );
+                  const allCandidates = [
+                    ...required,
+                    ...primary,
+                    ...distractors,
+                  ];
+
+                  let succeeded = true;
+                  try {
+                    createMixedQuizQuestions(
+                      required,
+                      primary,
+                      allCandidates,
+                      required.length + generalCount,
+                      ratio,
+                      seededRandom(scenario),
+                    );
+                  } catch {
+                    succeeded = false;
+                  }
+
+                  expect(
+                    succeeded,
+                    JSON.stringify({
+                      requiredCapabilities,
+                      groupCapabilities,
+                      generalCount,
+                      ratio,
+                    }),
+                  ).toBe(
+                    isFeasible(
+                      requiredCapabilities,
+                      groupCapabilities,
+                      generalCount,
+                      ratio,
+                    ),
+                  );
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+
+  it("같은 seed와 입력이면 문제·순서·선지가 모두 같다", () => {
+    const first = createMixedQuizQuestions(
+      entries.slice(0, 2),
+      entries.slice(2),
+      entries,
+      7,
+      50,
+      seededRandom(163),
+    );
+    const second = createMixedQuizQuestions(
+      entries.slice(0, 2),
+      entries.slice(2),
+      entries,
+      7,
+      50,
+      seededRandom(163),
+    );
+
+    expect(second).toEqual(first);
   });
 });
 

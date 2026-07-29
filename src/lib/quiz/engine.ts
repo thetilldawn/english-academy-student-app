@@ -56,6 +56,40 @@ function canUseDirection(
   );
 }
 
+function buildDirectionalCandidateSets(
+  candidates: readonly QuizVocabularyEntry[],
+) {
+  const englishCandidates = candidates.filter((entry) =>
+    canUseDirection(entry, "english_to_korean"),
+  );
+  const koreanDirectionCandidates = candidates.filter((entry) =>
+    canUseDirection(entry, "korean_to_english"),
+  );
+  const meaningCounts = new Map<string, number>();
+  for (const entry of koreanDirectionCandidates) {
+    const meaningKey = normalizeChoice(entry.primaryMeaning);
+    meaningCounts.set(
+      meaningKey,
+      (meaningCounts.get(meaningKey) ?? 0) + 1,
+    );
+  }
+  const koreanCandidates = koreanDirectionCandidates.filter(
+    (entry) =>
+      meaningCounts.get(normalizeChoice(entry.primaryMeaning)) === 1,
+  );
+
+  return {
+    englishCandidates,
+    koreanCandidates,
+    englishCandidateIds: new Set(
+      englishCandidates.map((entry) => entry.id),
+    ),
+    koreanCandidateIds: new Set(
+      koreanCandidates.map((entry) => entry.id),
+    ),
+  };
+}
+
 function shuffle<T>(items: readonly T[], random: RandomSource): T[] {
   const result = [...items];
 
@@ -319,30 +353,12 @@ export function createTargetedQuizQuestions(
     );
   }
 
-  const englishCandidates = candidates.filter((entry) =>
-    canUseDirection(entry, "english_to_korean"),
-  );
-  const koreanDirectionCandidates = candidates.filter((entry) =>
-    canUseDirection(entry, "korean_to_english"),
-  );
-  const meaningCounts = new Map<string, number>();
-  for (const entry of koreanDirectionCandidates) {
-    const meaningKey = normalizeChoice(entry.primaryMeaning);
-    meaningCounts.set(
-      meaningKey,
-      (meaningCounts.get(meaningKey) ?? 0) + 1,
-    );
-  }
-  const koreanCandidates = koreanDirectionCandidates.filter(
-    (entry) =>
-      meaningCounts.get(normalizeChoice(entry.primaryMeaning)) === 1,
-  );
-  const englishCandidateIds = new Set(
-    englishCandidates.map((entry) => entry.id),
-  );
-  const koreanCandidateIds = new Set(
-    koreanCandidates.map((entry) => entry.id),
-  );
+  const {
+    englishCandidates,
+    koreanCandidates,
+    englishCandidateIds,
+    koreanCandidateIds,
+  } = buildDirectionalCandidateSets(candidates);
   const englishOnly = trustedTargets.filter(
     (entry) =>
       englishCandidateIds.has(entry.id) &&
@@ -431,6 +447,292 @@ export function createTargetedQuizQuestions(
       correctChoiceIndex,
     };
   });
+}
+
+export function createMixedQuizQuestions(
+  requiredTargets: readonly QuizVocabularyEntry[],
+  primaryCandidates: readonly QuizVocabularyEntry[],
+  allCandidates: readonly QuizVocabularyEntry[],
+  totalQuestionCount: number,
+  englishToKoreanRatio: 0 | 50 | 100,
+  random: RandomSource = secureRandom,
+): QuizQuestionDraft[] {
+  if (
+    !Number.isInteger(totalQuestionCount) ||
+    totalQuestionCount < 4 ||
+    totalQuestionCount > 500
+  ) {
+    throw new Error("혼합 시험 문항 수는 4~500개여야 합니다.");
+  }
+  if (
+    requiredTargets.length < 1 ||
+    requiredTargets.length > 400 ||
+    requiredTargets.length >= totalQuestionCount
+  ) {
+    throw new Error(
+      "혼합 시험은 오답보다 새 DAY 문항이 더해져야 합니다.",
+    );
+  }
+  if (![0, 50, 100].includes(englishToKoreanRatio)) {
+    throw new Error(
+      "혼합 시험 문항 방향 비율은 0, 50, 100 중 하나여야 합니다.",
+    );
+  }
+
+  const candidateById = new Map<number, QuizVocabularyEntry>();
+  for (const candidate of allCandidates) {
+    if (candidateById.has(candidate.id)) {
+      throw new Error("전체 보기 후보 단어 ID가 중복되었습니다.");
+    }
+    candidateById.set(candidate.id, candidate);
+  }
+
+  const trustTargets = (
+    targets: readonly QuizVocabularyEntry[],
+    missingMessage: string,
+  ) =>
+    targets.map((target) => {
+      const candidate = candidateById.get(target.id);
+      if (!candidate) {
+        throw new Error(missingMessage);
+      }
+      return candidate;
+    });
+
+  if (
+    new Set(requiredTargets.map((entry) => entry.id)).size !==
+    requiredTargets.length
+  ) {
+    throw new Error("혼합 시험 오답 대상 ID가 중복되었습니다.");
+  }
+  const trustedRequired = trustTargets(
+    requiredTargets,
+    "혼합 시험 오답 대상이 전체 보기 후보에 없습니다.",
+  );
+  const requiredIds = new Set(
+    trustedRequired.map((entry) => entry.id),
+  );
+  const requiredIdentities = new Set(
+    trustedRequired.map(canonicalIdentity),
+  );
+  if (requiredIdentities.size !== trustedRequired.length) {
+    throw new Error("혼합 시험 오답 대상 표제어가 중복되었습니다.");
+  }
+
+  if (
+    new Set(primaryCandidates.map((entry) => entry.id)).size !==
+    primaryCandidates.length
+  ) {
+    throw new Error("선택한 DAY의 후보 단어 ID가 중복되었습니다.");
+  }
+  const trustedPrimary = trustTargets(
+    primaryCandidates,
+    "선택한 DAY의 단어가 전체 보기 후보에 없습니다.",
+  );
+  const availablePrimary = trustedPrimary.filter(
+    (entry) =>
+      !requiredIds.has(entry.id) &&
+      !requiredIdentities.has(canonicalIdentity(entry)),
+  );
+
+  const {
+    englishCandidateIds,
+    koreanCandidateIds,
+  } = buildDirectionalCandidateSets(allCandidates);
+  const classify = (entry: QuizVocabularyEntry) => {
+    const english = englishCandidateIds.has(entry.id);
+    const korean = koreanCandidateIds.has(entry.id);
+    if (english && korean) return "both" as const;
+    if (english) return "english" as const;
+    if (korean) return "korean" as const;
+    return "none" as const;
+  };
+
+  const requiredClasses = trustedRequired.map(classify);
+  if (requiredClasses.includes("none")) {
+    throw new Error(
+      "혼합 시험 오답 대상에 출제 가능한 방향이 없는 단어가 있습니다.",
+    );
+  }
+
+  type PrimaryCanonicalGroup = {
+    both?: QuizVocabularyEntry;
+    english?: QuizVocabularyEntry;
+    korean?: QuizVocabularyEntry;
+  };
+  const primaryGroups = new Map<string, PrimaryCanonicalGroup>();
+  for (const entry of shuffle(availablePrimary, random)) {
+    const identity = canonicalIdentity(entry);
+    const directionClass = classify(entry);
+    if (directionClass === "none") continue;
+
+    const group = primaryGroups.get(identity) ?? {};
+    if (directionClass === "both" && !group.both) {
+      group.both = entry;
+    } else if (
+      directionClass === "english" &&
+      !group.english
+    ) {
+      group.english = entry;
+    } else if (
+      directionClass === "korean" &&
+      !group.korean
+    ) {
+      group.korean = entry;
+    }
+    primaryGroups.set(identity, group);
+  }
+
+  const bothGroups = shuffle(
+    [...primaryGroups.values()].filter((group) => group.both),
+    random,
+  );
+  const flexibleGroups = shuffle(
+    [...primaryGroups.values()].filter(
+      (group) =>
+        !group.both && group.english && group.korean,
+    ),
+    random,
+  );
+  const englishOnlyGroups = shuffle(
+    [...primaryGroups.values()].filter(
+      (group) =>
+        !group.both && group.english && !group.korean,
+    ),
+    random,
+  );
+  const koreanOnlyGroups = shuffle(
+    [...primaryGroups.values()].filter(
+      (group) =>
+        !group.both && !group.english && group.korean,
+    ),
+    random,
+  );
+  const generalQuestionCount =
+    totalQuestionCount - trustedRequired.length;
+  const expectedEnglishCount = Math.round(
+    totalQuestionCount * (englishToKoreanRatio / 100),
+  );
+  const expectedKoreanCount =
+    totalQuestionCount - expectedEnglishCount;
+  const requiredEnglishOnlyCount = requiredClasses.filter(
+    (direction) => direction === "english",
+  ).length;
+  const requiredKoreanOnlyCount = requiredClasses.filter(
+    (direction) => direction === "korean",
+  ).length;
+  const availableGeneralEnglish =
+    expectedEnglishCount - requiredEnglishOnlyCount;
+  const availableGeneralKorean =
+    expectedKoreanCount - requiredKoreanOnlyCount;
+
+  if (
+    availableGeneralEnglish < 0 ||
+    availableGeneralKorean < 0
+  ) {
+    throw new Error(
+      "혼합 대상의 검증된 출제 방향으로 요청 비율을 만들 수 없습니다.",
+    );
+  }
+
+  const selectedBothCount = Math.min(
+    bothGroups.length,
+    generalQuestionCount,
+  );
+  const selectedFlexibleCount = Math.min(
+    flexibleGroups.length,
+    generalQuestionCount - selectedBothCount,
+  );
+  const fixedQuestionCount =
+    generalQuestionCount -
+    selectedBothCount -
+    selectedFlexibleCount;
+  let selectedEnglishOnlyCount: number | null = null;
+  let selectedKoreanOnlyCount = 0;
+  let flexibleEnglishCount = 0;
+  const maximumEnglishOnly = Math.min(
+    englishOnlyGroups.length,
+    fixedQuestionCount,
+  );
+
+  for (
+    let englishOnlyCount = maximumEnglishOnly;
+    englishOnlyCount >= 0;
+    englishOnlyCount -= 1
+  ) {
+    const koreanOnlyCount =
+      fixedQuestionCount - englishOnlyCount;
+    if (koreanOnlyCount > koreanOnlyGroups.length) continue;
+
+    const minimumFlexibleEnglish = Math.max(
+      0,
+      selectedFlexibleCount -
+        (availableGeneralKorean - koreanOnlyCount),
+    );
+    const maximumFlexibleEnglish = Math.min(
+      selectedFlexibleCount,
+      availableGeneralEnglish - englishOnlyCount,
+    );
+    if (
+      minimumFlexibleEnglish > maximumFlexibleEnglish ||
+      maximumFlexibleEnglish < 0
+    ) {
+      continue;
+    }
+
+    selectedEnglishOnlyCount = englishOnlyCount;
+    selectedKoreanOnlyCount = koreanOnlyCount;
+    flexibleEnglishCount = maximumFlexibleEnglish;
+    break;
+  }
+
+  if (selectedEnglishOnlyCount === null) {
+    throw new Error(
+      "선택한 DAY에서 오답과 함께 출제할 검증 단어가 부족합니다.",
+    );
+  }
+
+  const selectedGeneral = shuffle(
+    [
+      ...bothGroups
+        .slice(0, selectedBothCount)
+        .map((group) => group.both!),
+      ...flexibleGroups
+        .slice(0, selectedFlexibleCount)
+        .map((group, index) =>
+          index < flexibleEnglishCount
+            ? group.english!
+            : group.korean!,
+        ),
+      ...englishOnlyGroups
+        .slice(0, selectedEnglishOnlyCount)
+        .map((group) => group.english!),
+      ...koreanOnlyGroups
+        .slice(0, selectedKoreanOnlyCount)
+        .map((group) => group.korean!),
+    ],
+    random,
+  );
+  const questions = createTargetedQuizQuestions(
+    [...selectedGeneral, ...trustedRequired],
+    allCandidates,
+    englishToKoreanRatio,
+    random,
+  );
+
+  if (
+    questions.length !== totalQuestionCount ||
+    questions
+      .slice(-trustedRequired.length)
+      .some(
+        (question, index) =>
+          question.vocabEntryId !== trustedRequired[index]?.id,
+      )
+  ) {
+    throw new Error("혼합 시험 문제 순서 검증에 실패했습니다.");
+  }
+
+  return questions;
 }
 
 export function calculateQuizScore(
