@@ -2,6 +2,7 @@ import type {
   AssignmentActivityStatus,
   AssignmentHistorySummary,
 } from "@/lib/admin/history";
+import { assignmentScopeLabel } from "@/lib/admin/history";
 
 export type StudentProgressSummary = {
   studentId: string;
@@ -41,12 +42,6 @@ type ProgressUnit = {
   label: string;
   sortIndex: number;
 };
-
-function rangeLabel(labels: string[]) {
-  if (labels.length === 0) return null;
-  if (labels.length === 1) return labels[0];
-  return `${labels[0]}~${labels.at(-1)}`;
-}
 
 function activityTime(item: AssignmentHistorySummary) {
   const parsed = Date.parse(item.activityAt);
@@ -95,7 +90,10 @@ export function buildStudentProgress(
     }
 
     const student = studentById.get(item.studentId);
-    if (student?.currentVocabDatasetId === item.datasetId) {
+    if (
+      student?.currentVocabDatasetId === item.datasetId &&
+      item.assignmentPurpose !== "review"
+    ) {
       const currentRecommendation =
         latestCurrentDatasetByStudent.get(item.studentId);
       if (
@@ -126,16 +124,16 @@ export function buildStudentProgress(
       recommendedUnit ? "first" : null;
 
     if (latestCurrent && datasetUnits.length > 0) {
-      if (latestCurrent.unitIds.length === 0) {
+      if (latestCurrent.primaryUnitIds.length === 0) {
         recommendedUnit = null;
         recommendationReason = "manual";
       } else {
-        const firstUnit = latestCurrent.unitIds[0]
+        const firstUnit = latestCurrent.primaryUnitIds[0]
           ? datasetUnits.find(
-              (unit) => unit.id === latestCurrent.unitIds[0],
+              (unit) => unit.id === latestCurrent.primaryUnitIds[0],
             ) ?? datasetUnits[0]!
           : datasetUnits[0];
-        const lastUnitId = latestCurrent.unitIds.at(-1);
+        const lastUnitId = latestCurrent.primaryUnitIds.at(-1);
         const lastIndex = lastUnitId
           ? datasetUnits.findIndex((unit) => unit.id === lastUnitId)
           : -1;
@@ -172,7 +170,7 @@ export function buildStudentProgress(
       latestInitialScore: latest?.initialScore ?? null,
       latestFinalScore: latest?.finalScore ?? null,
       latestPassed: latest?.passed ?? null,
-      latestUnitLabel: latest ? rangeLabel(latest.unitLabels) : null,
+      latestUnitLabel: latest ? assignmentScopeLabel(latest) : null,
       latestAttemptNumber: latest?.attemptNumber ?? null,
       latestStartedAt: latest?.startedAt ?? null,
       latestCompletedAt: latest?.completedAt ?? null,

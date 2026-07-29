@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  assignmentOrderLabel,
+  assignmentScopeLabel,
   buildAssignmentHistory,
   type AssignmentHistorySource,
   type AttemptHistorySource,
@@ -10,6 +12,7 @@ const assignment: AssignmentHistorySource = {
   assignmentId: "assignment-1",
   assignmentTitle: "능률 VOCA DAY 01",
   assignmentStatus: "active",
+  assignmentPurpose: "regular",
   studentId: "student-1",
   studentName: "테스트 학생",
   schoolName: "테스트고등학교",
@@ -18,6 +21,8 @@ const assignment: AssignmentHistorySource = {
   datasetTitle: "능률 VOCA 어원편 · 2025개정",
   unitIds: ["unit-1"],
   unitLabels: ["DAY 01"],
+  primaryUnitIds: ["unit-1"],
+  primaryUnitLabels: ["DAY 01"],
   questionCount: 10,
   englishToKoreanRatio: 50,
   timeLimitSeconds: 300,
@@ -174,5 +179,38 @@ describe("buildAssignmentHistory", () => {
 
     expect(item.status).toBe("in_progress");
     expect(item.phase).toBe("review");
+  });
+});
+
+describe("assignmentScopeLabel", () => {
+  it("오답 재시험은 내부 지원 DAY 대신 선택 문항 수를 표시한다", () => {
+    expect(
+      assignmentScopeLabel({
+        assignmentPurpose: "review",
+        unitLabels: ["DAY 01", "DAY 02", "DAY 03"],
+        primaryUnitLabels: [],
+        questionCount: 3,
+      }),
+    ).toBe("오답 재시험 · 3문항");
+  });
+
+  it("혼합 시험은 주 DAY 범위와 오답 포함 여부를 표시한다", () => {
+    expect(
+      assignmentScopeLabel({
+        assignmentPurpose: "mixed",
+        unitLabels: ["DAY 01", "DAY 02", "DAY 03", "DAY 04", "DAY 05"],
+        primaryUnitLabels: ["DAY 05"],
+        questionCount: 10,
+      }),
+    ).toBe("DAY 05 · 오답 포함");
+  });
+
+  it("고정 순서는 시험 목적에 맞는 표현을 사용한다", () => {
+    expect(assignmentOrderLabel("regular", "fixed")).toBe("DAY 순서");
+    expect(assignmentOrderLabel("review", "fixed")).toBe("선택 순서");
+    expect(assignmentOrderLabel("mixed", "fixed")).toBe("배정 순서");
+    expect(assignmentOrderLabel("mixed", "random")).toBe(
+      "무작위 순서",
+    );
   });
 });

@@ -5,10 +5,13 @@ export type AssignmentActivityStatus =
   | "completed"
   | "expired";
 
+export type AssignmentPurpose = "regular" | "review" | "mixed";
+
 export type AssignmentHistorySource = {
   assignmentId: string;
   assignmentTitle: string;
   assignmentStatus: "draft" | "active" | "closed";
+  assignmentPurpose: AssignmentPurpose;
   studentId: string;
   studentName: string;
   schoolName: string | null;
@@ -17,6 +20,8 @@ export type AssignmentHistorySource = {
   datasetTitle: string;
   unitIds: string[];
   unitLabels: string[];
+  primaryUnitIds: string[];
+  primaryUnitLabels: string[];
   questionCount: number;
   englishToKoreanRatio: number;
   timeLimitSeconds: number;
@@ -67,6 +72,45 @@ export type AssignmentHistorySummary = AssignmentHistorySource & {
 
 function pairKey(assignmentId: string, studentId: string) {
   return `${assignmentId}\u0000${studentId}`;
+}
+
+function unitRangeLabel(labels: string[]) {
+  if (labels.length === 0) return "범위 정보 없음";
+  if (labels.length === 1) return labels[0];
+  return `${labels[0]}~${labels.at(-1)}`;
+}
+
+export function assignmentScopeLabel(
+  item: Pick<
+    AssignmentHistorySource,
+    | "assignmentPurpose"
+    | "primaryUnitLabels"
+    | "unitLabels"
+    | "questionCount"
+  >,
+) {
+  if (item.assignmentPurpose === "review") {
+    return `오답 재시험 · ${item.questionCount}문항`;
+  }
+
+  const primaryLabels =
+    item.primaryUnitLabels.length > 0
+      ? item.primaryUnitLabels
+      : item.unitLabels;
+  const label = unitRangeLabel(primaryLabels);
+  return item.assignmentPurpose === "mixed"
+    ? `${label} · 오답 포함`
+    : label;
+}
+
+export function assignmentOrderLabel(
+  assignmentPurpose: AssignmentPurpose,
+  questionOrderMode: "fixed" | "random",
+) {
+  if (questionOrderMode === "random") return "무작위 순서";
+  if (assignmentPurpose === "review") return "선택 순서";
+  if (assignmentPurpose === "mixed") return "배정 순서";
+  return "DAY 순서";
 }
 
 export function buildAssignmentHistory(

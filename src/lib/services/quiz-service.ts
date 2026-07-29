@@ -4,6 +4,10 @@ import {
   createQuizQuestions,
   type QuizVocabularyEntry,
 } from "@/lib/quiz/engine";
+import {
+  assignmentScopeLabel,
+  type AssignmentPurpose,
+} from "@/lib/admin/history";
 import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import { finalizeStaleQuizAttempts } from "@/lib/services/stale-attempt-service";
@@ -12,9 +16,8 @@ export type StudentAssignmentSummary = {
   id: string;
   title: string;
   datasetTitle: string;
-  unitLabels: string[];
-  rangeStart: number;
-  rangeEnd: number;
+  assignmentPurpose: AssignmentPurpose;
+  scopeLabel: string;
   questionCount: number;
   questionOrderMode: "fixed" | "random";
   timeLimitSeconds: number;
@@ -71,6 +74,7 @@ export type AttemptQuestionResult = {
 type AssignmentRow = {
   id: string;
   title: string;
+  assignment_purpose: AssignmentPurpose;
   dataset_id: string;
   range_start: number;
   range_end: number;
@@ -227,7 +231,7 @@ export async function listStudentAssignments(
     supabase
       .from("assignments")
       .select(
-        "id, title, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, passing_score, retake_allowed, range_basis, question_bank_version, question_order_mode, status, available_from, available_until",
+        "id, title, assignment_purpose, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, passing_score, retake_allowed, range_basis, question_bank_version, question_order_mode, status, available_from, available_until",
       )
       .in("id", assignmentIds)
       .order("created_at", { ascending: false }),
@@ -254,7 +258,9 @@ export async function listStudentAssignments(
       .in("id", datasetIds),
     supabase
       .from("assignment_units")
-      .select("assignment_id, position, vocab_units(unit_label)")
+      .select(
+        "assignment_id, position, is_primary, vocab_units(unit_label)",
+      )
       .in("assignment_id", assignmentIds)
       .order("position"),
   ]);
@@ -262,6 +268,7 @@ export async function listStudentAssignments(
     (datasetData ?? []).map((dataset) => [dataset.id, dataset.title]),
   );
   const unitLabelsByAssignment = new Map<string, string[]>();
+  const primaryUnitLabelsByAssignment = new Map<string, string[]>();
   for (const link of assignmentUnitData ?? []) {
     const relatedUnit = Array.isArray(link.vocab_units)
       ? link.vocab_units[0]
@@ -269,6 +276,15 @@ export async function listStudentAssignments(
     const labels = unitLabelsByAssignment.get(link.assignment_id) ?? [];
     if (relatedUnit?.unit_label) labels.push(relatedUnit.unit_label);
     unitLabelsByAssignment.set(link.assignment_id, labels);
+    if (link.is_primary && relatedUnit?.unit_label) {
+      const primaryLabels =
+        primaryUnitLabelsByAssignment.get(link.assignment_id) ?? [];
+      primaryLabels.push(relatedUnit.unit_label);
+      primaryUnitLabelsByAssignment.set(
+        link.assignment_id,
+        primaryLabels,
+      );
+    }
   }
   const latestAttempts = new Map<string, AttemptRow>();
   for (const attempt of attempts) {
@@ -279,6 +295,14 @@ export async function listStudentAssignments(
 
   const now = Date.now();
   return assignments.map((assignment) => {
+    const unitLabels =
+      unitLabelsByAssignment.get(assignment.id) ?? [];
+    const primaryUnitLabels =
+      primaryUnitLabelsByAssignment.get(assignment.id) ?? [];
+    const fallbackUnitLabels =
+      unitLabels.length > 0
+        ? unitLabels
+        : [`${assignment.range_start}~${assignment.range_end}번`];
     const lastAttempt = latestAttempts.get(assignment.id);
     const availableUntilTime = assignment.available_until
       ? Date.parse(assignment.available_until)
@@ -303,9 +327,13 @@ export async function listStudentAssignments(
       id: assignment.id,
       title: assignment.title,
       datasetTitle: datasetTitles.get(assignment.dataset_id) ?? "어휘",
-      unitLabels: unitLabelsByAssignment.get(assignment.id) ?? [],
-      rangeStart: assignment.range_start,
-      rangeEnd: assignment.range_end,
+      assignmentPurpose: assignment.assignment_purpose,
+      scopeLabel: assignmentScopeLabel({
+        assignmentPurpose: assignment.assignment_purpose,
+        unitLabels: fallbackUnitLabels,
+        primaryUnitLabels,
+        questionCount: assignment.question_count,
+      }),
       questionCount: assignment.question_count,
       questionOrderMode: assignment.question_order_mode,
       timeLimitSeconds: assignment.time_limit_seconds,
@@ -337,7 +365,7 @@ export async function startStudentAttempt(
       supabase
         .from("assignments")
         .select(
-          "id, title, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, passing_score, retake_allowed, range_basis, question_bank_version, question_order_mode, status, available_from, available_until",
+          "id, title, assignment_purpose, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, passing_score, retake_allowed, range_basis, question_bank_version, question_order_mode, status, available_from, available_until",
         )
         .eq("id", assignmentId)
         .maybeSingle(),

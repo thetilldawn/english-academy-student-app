@@ -14,7 +14,10 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import type { AssignmentHistorySummary } from "@/lib/admin/history";
+import {
+  assignmentScopeLabel,
+  type AssignmentHistorySummary,
+} from "@/lib/admin/history";
 import type { StudentWrongWordHistory } from "@/lib/admin/wrong-word-history";
 import { formatKoreanDateTime } from "@/lib/format";
 import { StudentWrongWordPanel } from "@/components/student-wrong-word-panel";
@@ -826,6 +829,8 @@ export function StudentManager({
                       <div>
                         <strong>{item.assignmentTitle}</strong>
                         <span>
+                          {assignmentScopeLabel(item)}
+                          {" · "}
                           {activityStatusText(item.status)}
                           {" · "}
                           {formatKoreanDateTime(item.activityAt)}

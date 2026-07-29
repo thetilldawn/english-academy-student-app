@@ -446,6 +446,7 @@ type HistoryUnitRelation = {
 
 type HistoryAssignmentUnitRelation = {
   position: number;
+  is_primary: boolean;
   unit: HistoryUnitRelation | HistoryUnitRelation[] | null;
 };
 
@@ -453,6 +454,7 @@ type HistoryAssignmentRelation = {
   id: string;
   title: string;
   status: "draft" | "active" | "closed";
+  assignment_purpose: "regular" | "review" | "mixed";
   dataset_id: string;
   range_start: number;
   range_end: number;
@@ -524,6 +526,7 @@ export async function listAssignmentHistory(): Promise<
             id,
             title,
             status,
+            assignment_purpose,
             dataset_id,
             range_start,
             range_end,
@@ -537,6 +540,7 @@ export async function listAssignmentHistory(): Promise<
             dataset:vocab_datasets(title, edition),
             assignment_units(
               position,
+              is_primary,
               unit:vocab_units(id, unit_label)
             )
           )
@@ -573,18 +577,31 @@ export async function listAssignmentHistory(): Promise<
     if (!student || !assignment) return [];
 
     const dataset = oneRelation(assignment.dataset);
-    const orderedUnits = (assignment.assignment_units ?? [])
+    const orderedUnitLinks = (assignment.assignment_units ?? [])
       .toSorted((left, right) => left.position - right.position)
       .flatMap((link) => {
         const unit = oneRelation(link.unit);
-        return unit ? [unit] : [];
+        return unit
+          ? [{ unit, isPrimary: link.is_primary }]
+          : [];
       });
+    const orderedUnits = orderedUnitLinks.map((link) => link.unit);
+    const primaryUnits = orderedUnitLinks
+      .filter((link) => link.isPrimary)
+      .map((link) => link.unit);
+    const legacyUnitLabels =
+      assignment.range_basis === "source_rows"
+        ? [
+            `원본 행 ${assignment.range_start.toLocaleString()}~${assignment.range_end.toLocaleString()}`,
+          ]
+        : [];
 
     return [
       {
         assignmentId: row.assignment_id,
         assignmentTitle: assignment.title,
         assignmentStatus: assignment.status,
+        assignmentPurpose: assignment.assignment_purpose,
         studentId: row.student_id,
         studentName: student.display_name,
         schoolName: student.school_name,
@@ -597,10 +614,13 @@ export async function listAssignmentHistory(): Promise<
         unitLabels:
           orderedUnits.length > 0
             ? orderedUnits.map((unit) => unit.unit_label)
-            : assignment.range_basis === "source_rows"
-              ? [
-                  `원본 행 ${assignment.range_start.toLocaleString()}~${assignment.range_end.toLocaleString()}`,
-                ]
+            : legacyUnitLabels,
+        primaryUnitIds: primaryUnits.map((unit) => unit.id),
+        primaryUnitLabels:
+          primaryUnits.length > 0
+            ? primaryUnits.map((unit) => unit.unit_label)
+            : assignment.assignment_purpose === "regular"
+              ? legacyUnitLabels
               : [],
         questionCount: assignment.question_count,
         englishToKoreanRatio: assignment.english_to_korean_ratio,

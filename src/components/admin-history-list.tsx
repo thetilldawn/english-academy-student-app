@@ -13,6 +13,10 @@ import type {
   AssignmentActivityStatus,
   AssignmentHistorySummary,
 } from "@/lib/admin/history";
+import {
+  assignmentOrderLabel,
+  assignmentScopeLabel,
+} from "@/lib/admin/history";
 import { DeadlineCountdown } from "@/components/deadline-countdown";
 import {
   currentTimeMilliseconds,
@@ -59,12 +63,6 @@ function statusLabel(item: AssignmentHistorySummary) {
 
 function scoreText(score: number | null) {
   return score === null ? "-" : `${score}점`;
-}
-
-function unitRangeLabel(labels: string[]) {
-  if (labels.length === 0) return "범위 정보 없음";
-  if (labels.length === 1) return labels[0];
-  return `${labels[0]}~${labels.at(-1)}`;
 }
 
 function directionLabel(ratio: number) {
@@ -254,6 +252,7 @@ export function AdminHistoryList({
                   <strong>{item.studentName}</strong>
                   <span>{item.assignmentTitle}</span>
                   <small>
+                    {assignmentScopeLabel(item)} ·{" "}
                     {item.status === "missed"
                       ? `마감 ${formatKoreanDateTime(
                           item.availableUntil,
@@ -355,7 +354,7 @@ export function AdminHistoryList({
             </div>
             <div>
               <dt>범위</dt>
-              <dd>{unitRangeLabel(selected.unitLabels)}</dd>
+              <dd>{assignmentScopeLabel(selected)}</dd>
             </div>
             <div>
               <dt>조건</dt>
@@ -369,9 +368,10 @@ export function AdminHistoryList({
               <dt>출제·순서</dt>
               <dd>
                 {directionLabel(selected.englishToKoreanRatio)} ·{" "}
-                {selected.questionOrderMode === "random"
-                  ? "무작위"
-                  : "DAY 순서"}
+                {assignmentOrderLabel(
+                  selected.assignmentPurpose,
+                  selected.questionOrderMode,
+                )}
               </dd>
             </div>
             <div>

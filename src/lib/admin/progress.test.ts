@@ -8,18 +8,12 @@ const student = {
   currentVocabDatasetId: "dataset-current",
 };
 const units = [
-  {
-    id: "unit-1",
+  ...Array.from({ length: 7 }, (_, index) => ({
+    id: `unit-${index + 1}`,
     datasetId: "dataset-current",
-    label: "DAY 01",
-    sortIndex: 1,
-  },
-  {
-    id: "unit-2",
-    datasetId: "dataset-current",
-    label: "DAY 02",
-    sortIndex: 2,
-  },
+    label: `DAY ${String(index + 1).padStart(2, "0")}`,
+    sortIndex: index + 1,
+  })),
 ];
 
 function history(
@@ -31,6 +25,7 @@ function history(
     assignmentId: "assignment-1",
     assignmentTitle: "DAY 01 시험",
     assignmentStatus: "active",
+    assignmentPurpose: "regular",
     studentId: student.id,
     studentName: "테스트 학생",
     schoolName: null,
@@ -39,6 +34,8 @@ function history(
     datasetTitle: "능률 VOCA",
     unitIds: ["unit-1"],
     unitLabels: ["DAY 01"],
+    primaryUnitIds: ["unit-1"],
+    primaryUnitLabels: ["DAY 01"],
     questionCount: 10,
     englishToKoreanRatio: 50,
     timeLimitSeconds: 300,
@@ -233,6 +230,8 @@ describe("buildStudentProgress", () => {
         history({
           unitIds: [],
           unitLabels: ["원본 행 1~20"],
+          primaryUnitIds: [],
+          primaryUnitLabels: ["원본 행 1~20"],
         }),
       ],
     );
@@ -240,5 +239,149 @@ describe("buildStudentProgress", () => {
     expect(progress.recommendationReason).toBe("manual");
     expect(progress.recommendedUnitId).toBeNull();
     expect(progress.recommendedUnitLabel).toBeNull();
+  });
+
+  it("최근 오답 재시험은 표시하되 정규 DAY 다음 추천은 유지한다", () => {
+    const [progress] = buildStudentProgress(
+      [student],
+      units,
+      [
+        history({
+          id: "review",
+          attemptId: "review",
+          assignmentTitle: "오답 재시험",
+          assignmentPurpose: "review",
+          unitIds: ["unit-1"],
+          unitLabels: ["DAY 01"],
+          primaryUnitIds: [],
+          primaryUnitLabels: [],
+          questionCount: 3,
+          activityAt: "2026-07-30T00:00:00.000Z",
+        }),
+        history(),
+      ],
+    );
+
+    expect(progress.latestAssignmentTitle).toBe("오답 재시험");
+    expect(progress.latestUnitLabel).toBe("오답 재시험 · 3문항");
+    expect(progress.recommendedUnitLabel).toBe("DAY 02");
+    expect(progress.recommendationReason).toBe("next");
+  });
+
+  it("응시 전·진행 중 오답 재시험도 정규 배정 추천을 덮지 않는다", () => {
+    const [progress] = buildStudentProgress(
+      [student],
+      units,
+      [
+        history({
+          id: "review",
+          attemptId: "review",
+          assignmentPurpose: "review",
+          primaryUnitIds: [],
+          primaryUnitLabels: [],
+          status: "in_progress",
+          passed: null,
+          completedAt: null,
+          activityAt: "2026-07-31T00:00:00.000Z",
+        }),
+        history({
+          id: "regular-pending",
+          attemptId: null,
+          attemptNumber: null,
+          status: "not_started",
+          initialScore: null,
+          finalScore: null,
+          passed: null,
+          startedAt: null,
+          completedAt: null,
+        }),
+      ],
+    );
+
+    expect(progress.latestStatus).toBe("in_progress");
+    expect(progress.recommendationReason).toBe("assigned");
+    expect(progress.recommendedUnitLabel).toBe("DAY 01");
+  });
+
+  it("오답 재시험 기록만 있으면 현재 단어장의 첫 DAY를 추천한다", () => {
+    const [progress] = buildStudentProgress(
+      [student],
+      units,
+      [
+        history({
+          assignmentPurpose: "review",
+          primaryUnitIds: [],
+          primaryUnitLabels: [],
+        }),
+      ],
+    );
+
+    expect(progress.recommendationReason).toBe("first");
+    expect(progress.recommendedUnitLabel).toBe("DAY 01");
+  });
+
+  it("혼합 시험 실패 시 지원 범위가 아닌 주 DAY부터 다시 추천한다", () => {
+    const [progress] = buildStudentProgress(
+      [student],
+      units,
+      [
+        history({
+          assignmentPurpose: "mixed",
+          unitIds: ["unit-1", "unit-2", "unit-3", "unit-4", "unit-5"],
+          unitLabels: [
+            "DAY 01",
+            "DAY 02",
+            "DAY 03",
+            "DAY 04",
+            "DAY 05",
+          ],
+          primaryUnitIds: ["unit-5"],
+          primaryUnitLabels: ["DAY 05"],
+          initialScore: 50,
+          finalScore: 50,
+          passed: false,
+        }),
+      ],
+    );
+
+    expect(progress.latestUnitLabel).toBe("DAY 05 · 오답 포함");
+    expect(progress.recommendationReason).toBe("repeat");
+    expect(progress.recommendedUnitLabel).toBe("DAY 05");
+  });
+
+  it("혼합 시험 통과 시 마지막 주 DAY 다음을 추천한다", () => {
+    const [progress] = buildStudentProgress(
+      [student],
+      units,
+      [
+        history({
+          assignmentPurpose: "mixed",
+          unitIds: [
+            "unit-1",
+            "unit-2",
+            "unit-3",
+            "unit-4",
+            "unit-5",
+            "unit-6",
+          ],
+          unitLabels: [
+            "DAY 01",
+            "DAY 02",
+            "DAY 03",
+            "DAY 04",
+            "DAY 05",
+            "DAY 06",
+          ],
+          primaryUnitIds: ["unit-5", "unit-6"],
+          primaryUnitLabels: ["DAY 05", "DAY 06"],
+        }),
+      ],
+    );
+
+    expect(progress.latestUnitLabel).toBe(
+      "DAY 05~DAY 06 · 오답 포함",
+    );
+    expect(progress.recommendationReason).toBe("next");
+    expect(progress.recommendedUnitLabel).toBe("DAY 07");
   });
 });

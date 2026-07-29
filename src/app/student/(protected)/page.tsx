@@ -8,6 +8,7 @@ import {
   currentTimeMilliseconds,
   secondsUntil,
 } from "@/lib/deadline";
+import { assignmentOrderLabel } from "@/lib/admin/history";
 import { formatKoreanDateTime } from "@/lib/format";
 import { listStudentAssignments } from "@/lib/services/quiz-service";
 
@@ -78,15 +79,13 @@ function AssignmentCard({
 
       <div className="assignment-details">
         <span className="detail-chip">
-          {assignment.unitLabels.length === 0
-            ? `${assignment.rangeStart}~${assignment.rangeEnd}번`
-            : assignment.unitLabels.length === 1
-              ? assignment.unitLabels[0]
-              : `${assignment.unitLabels[0]}~${assignment.unitLabels.at(-1)}`}
+          {assignment.scopeLabel}
         </span>
-        <span className="detail-chip">
-          {assignment.questionCount}문항
-        </span>
+        {assignment.assignmentPurpose !== "review" && (
+          <span className="detail-chip">
+            {assignment.questionCount}문항
+          </span>
+        )}
         <span className="detail-chip">
           {Math.ceil(assignment.timeLimitSeconds / 60)}분
         </span>
@@ -94,9 +93,10 @@ function AssignmentCard({
           {assignment.passingScore}점 통과
         </span>
         <span className="detail-chip">
-          {assignment.questionOrderMode === "random"
-            ? "무작위 순서"
-            : "DAY 순서"}
+          {assignmentOrderLabel(
+            assignment.assignmentPurpose,
+            assignment.questionOrderMode,
+          )}
         </span>
       </div>
 
