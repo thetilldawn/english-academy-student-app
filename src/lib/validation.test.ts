@@ -4,6 +4,7 @@ import {
   createReviewAssignmentDraftSchema,
   createStudentSchema,
   exactReviewAssignmentSchema,
+  mixedAssignmentSchema,
   updateStudentVocabSchema,
 } from "@/lib/validation";
 
@@ -187,6 +188,123 @@ describe("정확 오답 재시험 배정 입력 계약", () => {
       exactReviewAssignmentSchema.parse({
         ...validInput,
         timeLimitSeconds: 29,
+      }),
+    ).toThrow();
+  });
+});
+
+describe("DAY+오답 혼합 시험 입력 계약", () => {
+  const studentId =
+    "11111111-1111-4111-8111-111111111111";
+  const datasetId =
+    "22222222-2222-4222-8222-222222222222";
+  const unitId =
+    "33333333-3333-4333-8333-333333333333";
+  const validInput = {
+    studentId,
+    datasetId,
+    primaryUnitIds: [unitId],
+    reviewLevels: [1, 2] as const,
+    reviewLimit: 3,
+    totalQuestionCount: 10,
+    title: "",
+    englishToKoreanRatio: 50 as const,
+    timeLimitSeconds: 300,
+    passingScore: 80,
+    questionOrderMode: "random" as const,
+    availableUntil: null,
+  };
+
+  it("단일학생·주 DAY·오답 단계와 시험 조건만 받는다", () => {
+    expect(mixedAssignmentSchema.parse(validInput)).toEqual(
+      validInput,
+    );
+    expect(
+      mixedAssignmentSchema.parse({
+        ...validInput,
+        availableUntil: "2026-08-01T10:00:00+09:00",
+      }).availableUntil,
+    ).toBe("2026-08-01T10:00:00+09:00");
+  });
+
+  it.each([
+    ["queueIds", [studentId]],
+    ["selectedQueueIds", [studentId]],
+    ["reviewQueueIds", [studentId]],
+    ["questions", []],
+    ["questionDrafts", []],
+    ["supportUnitIds", [unitId]],
+    ["unitIds", [unitId]],
+    ["studentIds", [studentId]],
+    ["assignmentPurpose", "mixed"],
+    ["reviewDraftId", studentId],
+  ])("서버 전용 필드 %s 주입을 거절한다", (key, value) => {
+    expect(() =>
+      mixedAssignmentSchema.parse({
+        ...validInput,
+        [key]: value,
+      }),
+    ).toThrow();
+  });
+
+  it("중복과 범위 밖 조건을 거절한다", () => {
+    expect(() =>
+      mixedAssignmentSchema.parse({
+        ...validInput,
+        primaryUnitIds: [unitId, unitId],
+      }),
+    ).toThrow();
+    expect(() =>
+      mixedAssignmentSchema.parse({
+        ...validInput,
+        reviewLevels: [1, 1],
+      }),
+    ).toThrow();
+    expect(() =>
+      mixedAssignmentSchema.parse({
+        ...validInput,
+        reviewLevels: [3],
+      }),
+    ).toThrow();
+    expect(() =>
+      mixedAssignmentSchema.parse({
+        ...validInput,
+        reviewLimit: 401,
+      }),
+    ).toThrow();
+  });
+
+  it("오답 상한이 총 문항보다 커도 실제 오답 수는 서버 조회에 맡긴다", () => {
+    expect(
+      mixedAssignmentSchema.parse({
+        ...validInput,
+        reviewLimit: 20,
+        totalQuestionCount: 10,
+      }),
+    ).toMatchObject({
+      reviewLimit: 20,
+      totalQuestionCount: 10,
+    });
+  });
+
+  it("숫자 문자열과 offset 없는 마감시각을 강제 변환하지 않는다", () => {
+    for (const field of [
+      "reviewLimit",
+      "totalQuestionCount",
+      "timeLimitSeconds",
+      "passingScore",
+    ] as const) {
+      expect(() =>
+        mixedAssignmentSchema.parse({
+          ...validInput,
+          [field]: String(validInput[field]),
+        }),
+      ).toThrow();
+    }
+    expect(() =>
+      mixedAssignmentSchema.parse({
+        ...validInput,
+        availableUntil: "2026-08-01T10:00:00",
       }),
     ).toThrow();
   });

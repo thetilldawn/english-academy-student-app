@@ -100,6 +100,58 @@ export const exactReviewAssignmentSchema = z
   })
   .strict();
 
+const mixedReviewLevelSchema = z.union([
+  z.literal(1),
+  z.literal(2),
+]);
+
+export const mixedAssignmentSchema = z
+  .object({
+    studentId: z.uuid(),
+    datasetId: z.uuid(),
+    primaryUnitIds: z.array(z.uuid()).min(1).max(500),
+    reviewLevels: z.array(mixedReviewLevelSchema).min(1).max(2),
+    reviewLimit: z.number().int().min(1).max(400),
+    totalQuestionCount: z.number().int().min(4).max(500),
+    title: z.string().trim().max(160).default(""),
+    englishToKoreanRatio: z.union([
+      z.literal(0),
+      z.literal(50),
+      z.literal(100),
+    ]),
+    timeLimitSeconds: z.number().int().min(30).max(10800),
+    passingScore: z.number().int().min(0).max(100),
+    questionOrderMode: z.enum(["fixed", "random"]).default("random"),
+    availableUntil: z.iso.datetime({ offset: true }).nullable(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (
+      new Set(value.primaryUnitIds).size !==
+      value.primaryUnitIds.length
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["primaryUnitIds"],
+        message: "같은 DAY를 두 번 선택할 수 없습니다.",
+      });
+    }
+    if (
+      new Set(value.reviewLevels).size !==
+      value.reviewLevels.length
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["reviewLevels"],
+        message: "같은 오답 단계를 두 번 선택할 수 없습니다.",
+      });
+    }
+  });
+
+export type MixedAssignmentInput = z.infer<
+  typeof mixedAssignmentSchema
+>;
+
 export const answerSchema = z.object({
   questionId: z.uuid(),
   phase: z.enum(["initial", "retry"]),
