@@ -18,6 +18,33 @@ describe("wrong-word admin UI contract", () => {
     expect(route).toContain("getStudentWrongWordHistory(id, admin)");
   });
 
+  it("queues only selected question ids through the authenticated admin session", () => {
+    const route = source(
+      "src/app/api/admin/students/[id]/wrong-words/route.ts",
+    );
+    const service = source(
+      "src/lib/services/wrong-word-service.ts",
+    );
+    const validation = source("src/lib/validation.ts");
+    expect(route).toContain("isSameOriginRequest(request)");
+    expect(route).toContain("parseJson(request, queueWrongWordsSchema)");
+    expect(route).toContain(
+      "queueStudentWrongWords(\n      id,\n      input.questionIds,\n      admin,",
+    );
+    expect(service).toContain("createServerSupabaseClient()");
+    expect(service).toContain(
+      '"queue_student_vocab_review_words"',
+    );
+    expect(service).toContain("p_question_ids: questionIds");
+    expect(validation).toContain(
+      "export const queueWrongWordsSchema",
+    );
+    expect(validation).toContain(
+      "new Set(value.questionIds).size === value.questionIds.length",
+    );
+    expect(validation).toContain(".strict()");
+  });
+
   it("loads wrong words only inside the student detail tab", () => {
     const manager = source("src/components/student-manager.tsx");
     const panel = source(
@@ -36,6 +63,19 @@ describe("wrong-word admin UI contract", () => {
     expect(panel).toContain("tabIndex=");
     expect(manager).toContain("moveDialogTabFocus");
     expect(panel).toContain("누적 2회 이상");
+    expect(panel).toContain('type="checkbox"');
+    expect(panel).toContain("pendingReviewKeys");
+    expect(panel).toContain("wrongWordReviewIdentity(");
+    expect(panel).toContain(
+      "occurrence.datasetId === datasetFilter",
+    );
+    expect(panel).toContain("occurrence.latestQuestionId");
+    expect(panel).toContain('method: "POST"');
+    expect(panel).toContain("다음 시험에 추가");
+    expect(panel).toContain('aria-live="polite"');
+    expect(panel).toContain("refreshAfterRequestRef");
+    expect(panel).toContain("loading || queueing");
+    expect(panel).not.toContain("router.refresh");
   });
 
   it("pages event history below the PostgREST row limit", () => {
@@ -46,7 +86,11 @@ describe("wrong-word admin UI contract", () => {
     expect(service).toContain("WRONG_EVENT_PAGE_SIZE = 200");
     expect(service).toContain('.order("id", { ascending: false })');
     expect(service).toContain('query = query.lt("id", beforeId)');
-    expect(service).not.toContain(".limit(MAX_WRONG_EVENTS + 1)");
+    expect(service).toContain(".limit(pageLimit)");
+    expect(service).toContain(
+      '.from("student_vocab_review_queue")',
+    );
+    expect(service).toContain(".limit(MAX_WRONG_EVENTS + 1)");
   });
 
   it("exposes only the clamped prior wrong level to the quiz client", () => {

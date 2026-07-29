@@ -3,6 +3,8 @@ import "server-only";
 import {
   emptyStudentWrongWordHistory,
   buildStudentWrongWordHistory,
+  wrongWordReviewIdentity,
+  type PendingWrongWordReview,
   type StudentWrongWordHistory,
   type WrongAttemptSource,
   type WrongEntrySource,
@@ -15,6 +17,7 @@ import {
 } from "@/lib/auth/admin";
 import { finalizeStaleQuizAttempts } from "@/lib/services/stale-attempt-service";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 // Aggregate and per-attempt views intentionally duplicate labels. Keep a
 // conservative response-size ceiling until cursor-paged history is added.
@@ -70,6 +73,28 @@ type EntryRow = {
   primary_meaning: string;
   dataset: DatasetRelation | DatasetRelation[] | null;
 };
+
+type PendingReviewRow = {
+  id: string;
+  dataset_id: string;
+  vocab_entry_id: number;
+  canonical_lexeme_id_snapshot: string | null;
+  source_question_id: string;
+  reason_level: 1 | 2;
+  queued_at: string;
+};
+
+export class WrongWordQueueError extends Error {
+  constructor(
+    public readonly reason:
+      | "forbidden"
+      | "invalid_selection"
+      | "database",
+  ) {
+    super("오답 단어를 다음 시험 대기열에 추가하지 못했습니다.");
+    this.name = "WrongWordQueueError";
+  }
+}
 
 function oneRelation<T>(value: T | T[] | null): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : value;
@@ -137,8 +162,48 @@ export async function getStudentWrongWordHistory(
       "오답 이력이 현재 조회 한도를 넘었습니다. 기간별 조회가 필요합니다.",
     );
   }
+  const { data: pendingReviewData, error: pendingReviewError } =
+    await supabase
+      .from("student_vocab_review_queue")
+      .select(
+        "id, dataset_id, vocab_entry_id, canonical_lexeme_id_snapshot, source_question_id, reason_level, queued_at",
+      )
+      .eq("student_id", studentId)
+      .eq("status", "pending")
+      .order("queued_at", { ascending: false })
+      .limit(MAX_WRONG_EVENTS + 1);
+  if (pendingReviewError) {
+    throw new Error("오답 복습 대기열을 불러오지 못했습니다.");
+  }
+  if ((pendingReviewData?.length ?? 0) > MAX_WRONG_EVENTS) {
+    throw new Error(
+      "오답 복습 대기열이 현재 조회 한도를 넘었습니다. 먼저 시험으로 배정해 주세요.",
+    );
+  }
+  const pendingReviews = (
+    (pendingReviewData ?? []) as PendingReviewRow[]
+  ).map(
+    (row): PendingWrongWordReview => ({
+      queueId: row.id,
+      key: wrongWordReviewIdentity(
+        row.dataset_id,
+        row.vocab_entry_id,
+        row.canonical_lexeme_id_snapshot,
+      ),
+      datasetId: row.dataset_id,
+      vocabEntryId: row.vocab_entry_id,
+      canonicalLexemeId: row.canonical_lexeme_id_snapshot,
+      sourceQuestionId: row.source_question_id,
+      reasonLevel: row.reason_level,
+      queuedAt: row.queued_at,
+    }),
+  );
   if (eventRows.length === 0) {
-    return emptyStudentWrongWordHistory();
+    return {
+      ...emptyStudentWrongWordHistory(),
+      pendingReviewCount: pendingReviews.length,
+      pendingReviews,
+    };
   }
 
   const attemptIds = unique(
@@ -251,10 +316,58 @@ export async function getStudentWrongWordHistory(
     }),
   );
 
-  return buildStudentWrongWordHistory({
-    attempts,
-    entries,
-    events,
-    questions,
-  });
+  return {
+    ...buildStudentWrongWordHistory({
+      attempts,
+      entries,
+      events,
+      questions,
+    }),
+    pendingReviewCount: pendingReviews.length,
+    pendingReviews,
+  };
+}
+
+export async function queueStudentWrongWords(
+  studentId: string,
+  questionIds: string[],
+  authenticatedAdmin?: AdminContext,
+): Promise<string[]> {
+  if (!authenticatedAdmin) {
+    await requireAdmin();
+  }
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase.rpc(
+    "queue_student_vocab_review_words",
+    {
+      p_student_id: studentId,
+      p_question_ids: questionIds,
+    },
+  );
+
+  if (error || !Array.isArray(data)) {
+    console.error("[wrong-word-queue] database operation failed", {
+      code: error?.code ?? "missing_result",
+      message: error?.message ?? "queue ids were not returned",
+      hint: error?.hint ?? null,
+    });
+    throw new WrongWordQueueError(
+      error?.code === "42501"
+        ? "forbidden"
+        : ["22023", "P0002", "23503", "23505"].includes(
+              error?.code ?? "",
+            )
+          ? "invalid_selection"
+          : "database",
+    );
+  }
+
+  if (
+    data.length === 0 ||
+    data.some((queueId) => typeof queueId !== "string")
+  ) {
+    throw new WrongWordQueueError("database");
+  }
+
+  return data as string[];
 }

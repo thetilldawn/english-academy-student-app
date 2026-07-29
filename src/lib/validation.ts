@@ -36,6 +36,20 @@ export const updateStudentVocabSchema = z.object({
     .transform((value) => value || null),
 });
 
+export const queueWrongWordsSchema = z
+  .object({
+    questionIds: z.array(z.uuid()).min(1).max(400),
+  })
+  .strict()
+  .refine(
+    (value) =>
+      new Set(value.questionIds).size === value.questionIds.length,
+    {
+      message: "같은 오답 단어를 두 번 선택할 수 없습니다.",
+      path: ["questionIds"],
+    },
+  );
+
 export const assignmentSchema = z
   .object({
     title: z.string().trim().max(160).default(""),

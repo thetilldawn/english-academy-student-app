@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildStudentWrongWordHistory,
   emptyStudentWrongWordHistory,
+  wrongWordReviewIdentity,
   type WrongAttemptSource,
   type WrongEntrySource,
   type WrongEventSource,
@@ -137,18 +138,42 @@ describe("buildStudentWrongWordHistory", () => {
       wrongCount: 3,
       wrongLevel: 2,
       latestAttemptId: "attempt-2",
+      latestQuestionId: "question-2",
+      latestDatasetId: "dataset-a",
+      latestVocabEntryId: 12,
       latestOutcome: "wrong_again",
     });
     expect(result.words[0].occurrences).toHaveLength(2);
     expect(
       result.words[0].occurrences.map((item) => item.vocabEntryId),
     ).toEqual([12, 11]);
+    expect(
+      result.words[0].occurrences.map(
+        (item) => item.latestQuestionId,
+      ),
+    ).toEqual(["question-2", "question-1"]);
     expect(result.words[1]).toMatchObject({
       key: "entry:dataset-a:13",
       wrongCount: 1,
       wrongLevel: 1,
       latestOutcome: "retry_unanswered",
     });
+  });
+
+  it("keeps the review queue identity scoped to its dataset", () => {
+    expect(
+      wrongWordReviewIdentity(
+        "dataset-a",
+        11,
+        "lexeme-alpha",
+      ),
+    ).not.toBe(
+      wrongWordReviewIdentity(
+        "dataset-b",
+        21,
+        "lexeme-alpha",
+      ),
+    );
   });
 
   it("builds per-attempt words without treating retry unanswered as a second wrong", () => {
@@ -211,8 +236,35 @@ describe("buildStudentWrongWordHistory", () => {
       uniqueWordCount: 0,
       onceWrongWordCount: 0,
       repeatedWrongWordCount: 0,
+      pendingReviewCount: 0,
+      pendingReviews: [],
       words: [],
       attempts: [],
+    });
+  });
+
+  it("keeps the first newest event as the representative when timestamps tie", () => {
+    const result = buildStudentWrongWordHistory({
+      attempts,
+      entries,
+      questions,
+      events: [
+        {
+          ...events[1],
+          wrongAt: "2026-07-30T00:20:00Z",
+        },
+        {
+          ...events[0],
+          wrongAt: "2026-07-30T00:20:00Z",
+        },
+      ],
+    });
+
+    expect(result.words[0]).toMatchObject({
+      latestQuestionId: "question-2",
+      latestDatasetId: "dataset-a",
+      latestVocabEntryId: 12,
+      latestOutcome: "wrong_again",
     });
   });
 
@@ -271,8 +323,26 @@ describe("buildStudentWrongWordHistory", () => {
       questions: largeQuestions,
     });
 
-    expect(Buffer.byteLength(JSON.stringify({ history: result }))).toBeLessThan(
-      4_000_000,
-    );
+    const history = {
+      ...result,
+      pendingReviewCount: eventCount,
+      pendingReviews: Array.from(
+        { length: eventCount },
+        (_, index) => ({
+          queueId: `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
+          key: `canonical:00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
+          datasetId: "00000000-0000-4000-8000-000000000001",
+          vocabEntryId: index + 1,
+          canonicalLexemeId: `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
+          sourceQuestionId: `00000000-0000-4000-8001-${String(index).padStart(12, "0")}`,
+          reasonLevel: (index % 2 === 0 ? 1 : 2) as 1 | 2,
+          queuedAt: "2026-07-30T00:00:00Z",
+        }),
+      ),
+    };
+
+    expect(
+      Buffer.byteLength(JSON.stringify({ history })),
+    ).toBeLessThan(4_000_000);
   });
 });

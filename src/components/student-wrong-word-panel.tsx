@@ -8,9 +8,11 @@ import {
   type KeyboardEvent,
 } from "react";
 
-import type {
-  StudentWrongWordHistory,
-  WrongWordOutcome,
+import {
+  wrongWordReviewIdentity,
+  type WrongWordAggregate,
+  type StudentWrongWordHistory,
+  type WrongWordOutcome,
 } from "@/lib/admin/wrong-word-history";
 import { formatKoreanDateTime } from "@/lib/format";
 
@@ -37,6 +39,31 @@ function matchesQuery(
     .includes(keyword);
 }
 
+function selectionTarget(
+  word: WrongWordAggregate,
+  datasetId: string,
+) {
+  const occurrence = datasetId
+    ? word.occurrences.find(
+        (candidate) => candidate.datasetId === datasetId,
+      )
+    : word.occurrences.find(
+        (candidate) =>
+          candidate.datasetId === word.latestDatasetId &&
+          candidate.vocabEntryId === word.latestVocabEntryId,
+      );
+  const selectedOccurrence = occurrence ?? word.occurrences[0];
+  if (!selectedOccurrence) return null;
+  return {
+    questionId: selectedOccurrence.latestQuestionId,
+    reviewKey: wrongWordReviewIdentity(
+      selectedOccurrence.datasetId,
+      selectedOccurrence.vocabEntryId,
+      word.canonicalLexemeId,
+    ),
+  };
+}
+
 export function StudentWrongWordPanel({
   active,
   cachedAt,
@@ -55,6 +82,7 @@ export function StudentWrongWordPanel({
 }) {
   const [loading, setLoading] = useState(false);
   const requestingRef = useRef(false);
+  const refreshAfterRequestRef = useRef(false);
   const [error, setError] = useState("");
   const [requestVersion, setRequestVersion] = useState(0);
   const [forceRefresh, setForceRefresh] = useState(false);
@@ -63,6 +91,12 @@ export function StudentWrongWordPanel({
     useState<LevelFilter>("all");
   const [datasetFilter, setDatasetFilter] = useState("");
   const [query, setQuery] = useState("");
+  const [selectedQuestionIds, setSelectedQuestionIds] = useState<
+    string[]
+  >([]);
+  const [queueing, setQueueing] = useState(false);
+  const [queueError, setQueueError] = useState("");
+  const [queueNotice, setQueueNotice] = useState("");
 
   useEffect(() => {
     const cacheIsFresh =
@@ -109,7 +143,14 @@ export function StudentWrongWordPanel({
       })
       .finally(() => {
         requestingRef.current = false;
-        if (!controller.signal.aborted) setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+          if (refreshAfterRequestRef.current) {
+            refreshAfterRequestRef.current = false;
+            setForceRefresh(true);
+            setRequestVersion((value) => value + 1);
+          }
+        }
       });
 
     return () => {
@@ -127,7 +168,10 @@ export function StudentWrongWordPanel({
   ]);
 
   function refreshHistory() {
-    if (requestingRef.current) return;
+    if (requestingRef.current) {
+      refreshAfterRequestRef.current = true;
+      return;
+    }
     setForceRefresh(true);
     setRequestVersion((value) => value + 1);
   }
@@ -166,17 +210,33 @@ export function StudentWrongWordPanel({
   }
 
   const datasetOptions = useMemo(
+    () => {
+      const labelById = new Map<string, string>();
+      for (const word of cachedHistory?.words ?? []) {
+        for (const occurrence of word.occurrences) {
+          if (!labelById.has(occurrence.datasetId)) {
+            labelById.set(
+              occurrence.datasetId,
+              occurrence.datasetLabel,
+            );
+          }
+        }
+      }
+      return [...labelById.entries()]
+        .map(([id, label]) => ({ id, label }))
+        .toSorted((left, right) =>
+          left.label.localeCompare(right.label, "ko-KR"),
+        );
+    },
+    [cachedHistory],
+  );
+
+  const pendingReviewKeys = useMemo(
     () =>
-      Array.from(
-        new Set(
-          (cachedHistory?.words ?? []).flatMap((word) =>
-            word.occurrences.map(
-              (occurrence) => occurrence.datasetLabel,
-            ),
-          ),
+      new Set(
+        (cachedHistory?.pendingReviews ?? []).map(
+          (review) => review.key,
         ),
-      ).toSorted((left, right) =>
-        left.localeCompare(right, "ko-KR"),
       ),
     [cachedHistory],
   );
@@ -192,7 +252,7 @@ export function StudentWrongWordPanel({
           !datasetFilter ||
           word.occurrences.some(
             (occurrence) =>
-              occurrence.datasetLabel === datasetFilter,
+              occurrence.datasetId === datasetFilter,
           );
         return (
           levelMatches &&
@@ -208,6 +268,127 @@ export function StudentWrongWordPanel({
       }),
     [cachedHistory, datasetFilter, levelFilter, query],
   );
+
+  const selectableFilteredQuestionIds = useMemo(
+    () =>
+      filteredWords.flatMap((word) => {
+        const target = selectionTarget(word, datasetFilter);
+        return target && !pendingReviewKeys.has(target.reviewKey)
+          ? [target.questionId]
+          : [];
+      }),
+    [datasetFilter, filteredWords, pendingReviewKeys],
+  );
+  const selectableQuestionIdSet = useMemo(
+    () =>
+      new Set(
+        (cachedHistory?.words ?? []).flatMap((word) =>
+          word.occurrences.flatMap((occurrence) => {
+            const reviewKey = wrongWordReviewIdentity(
+              occurrence.datasetId,
+              occurrence.vocabEntryId,
+              word.canonicalLexemeId,
+            );
+            return pendingReviewKeys.has(reviewKey)
+              ? []
+              : [occurrence.latestQuestionId];
+          }),
+        ),
+      ),
+    [cachedHistory, pendingReviewKeys],
+  );
+  const validSelectedQuestionIds = useMemo(
+    () =>
+      selectedQuestionIds.filter((questionId) =>
+        selectableQuestionIdSet.has(questionId),
+      ),
+    [selectableQuestionIdSet, selectedQuestionIds],
+  );
+  const allVisibleSelected =
+    selectableFilteredQuestionIds.length > 0 &&
+    selectableFilteredQuestionIds.every((questionId) =>
+      validSelectedQuestionIds.includes(questionId),
+    );
+
+  function toggleQuestion(questionId: string) {
+    if (requestingRef.current || queueing) return;
+    setSelectedQuestionIds((current) =>
+      validSelectedQuestionIds.includes(questionId)
+        ? current.filter((value) => value !== questionId)
+        : [...current, questionId],
+    );
+    setQueueError("");
+    setQueueNotice("");
+  }
+
+  function toggleVisibleQuestions() {
+    if (requestingRef.current || queueing) return;
+    const visible = new Set(selectableFilteredQuestionIds);
+    setSelectedQuestionIds(
+      allVisibleSelected
+        ? validSelectedQuestionIds.filter(
+            (questionId) => !visible.has(questionId),
+          )
+        : [
+            ...new Set([
+              ...validSelectedQuestionIds,
+              ...selectableFilteredQuestionIds,
+            ]),
+          ],
+    );
+    setQueueError("");
+    setQueueNotice("");
+  }
+
+  async function queueSelectedWords() {
+    if (
+      loading ||
+      requestingRef.current ||
+      queueing ||
+      validSelectedQuestionIds.length === 0
+    ) {
+      return;
+    }
+    setQueueing(true);
+    setQueueError("");
+    setQueueNotice("");
+
+    try {
+      const response = await fetch(
+        `/api/admin/students/${studentId}/wrong-words`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            questionIds: validSelectedQuestionIds,
+          }),
+        },
+      );
+      const payload = (await response.json()) as {
+        queueIds?: string[];
+        error?: string;
+      };
+      if (!response.ok || !payload.queueIds) {
+        throw new Error(
+          payload.error ??
+            "오답 단어를 다음 시험 대기열에 추가하지 못했습니다.",
+        );
+      }
+      setQueueNotice(
+        `${payload.queueIds.length}개 단어를 다음 시험 대기열에 추가했습니다.`,
+      );
+      setSelectedQuestionIds([]);
+      refreshHistory();
+    } catch (requestError) {
+      setQueueError(
+        requestError instanceof Error
+          ? requestError.message
+          : "오답 단어를 다음 시험 대기열에 추가하지 못했습니다.",
+      );
+    } finally {
+      setQueueing(false);
+    }
+  }
 
   if (loading && !cachedHistory) {
     return (
@@ -255,7 +436,7 @@ export function StudentWrongWordPanel({
         </span>
         <button
           className="button button-quiet button-small"
-          disabled={loading}
+          disabled={loading || queueing}
           onClick={refreshHistory}
           type="button"
         >
@@ -283,6 +464,10 @@ export function StudentWrongWordPanel({
         <div>
           <span>누적 2회 이상</span>
           <strong>{cachedHistory.repeatedWrongWordCount}개</strong>
+        </div>
+        <div>
+          <span>다음 시험 대기</span>
+          <strong>{cachedHistory.pendingReviewCount}개</strong>
         </div>
       </div>
 
@@ -345,8 +530,8 @@ export function StudentWrongWordPanel({
               >
                 <option value="">전체 단어장</option>
                 {datasetOptions.map((dataset) => (
-                  <option key={dataset} value={dataset}>
-                    {dataset}
+                  <option key={dataset.id} value={dataset.id}>
+                    {dataset.label}
                   </option>
                 ))}
               </select>
@@ -374,6 +559,54 @@ export function StudentWrongWordPanel({
               </button>
             ))}
           </div>
+          <div className="wrong-word-selection-bar">
+            <button
+              className="button button-quiet button-small"
+              disabled={
+                queueing ||
+                loading ||
+                selectableFilteredQuestionIds.length === 0
+              }
+              onClick={toggleVisibleQuestions}
+              type="button"
+            >
+              {allVisibleSelected ? "보이는 선택 해제" : "보이는 단어 선택"}
+            </button>
+            <span aria-live="polite">
+              {validSelectedQuestionIds.length}개 선택
+            </span>
+            <button
+              aria-busy={queueing}
+              className="button button-primary button-small"
+              disabled={
+                loading ||
+                queueing ||
+                validSelectedQuestionIds.length === 0
+              }
+              onClick={queueSelectedWords}
+              type="button"
+            >
+              {queueing ? "추가하는 중…" : "다음 시험에 추가"}
+            </button>
+          </div>
+          <p className="wrong-word-selection-help">
+            선택한 단어는 다음 새 단어시험을 배정할 때 포함할 목록에
+            저장됩니다.
+          </p>
+          {queueError && (
+            <div className="notice notice-error" role="alert">
+              {queueError}
+            </div>
+          )}
+          {queueNotice && (
+            <div
+              aria-live="polite"
+              className="notice notice-success"
+              role="status"
+            >
+              {queueNotice}
+            </div>
+          )}
 
           {filteredWords.length === 0 ? (
             <div className="empty-state">
@@ -381,8 +614,39 @@ export function StudentWrongWordPanel({
             </div>
           ) : (
             <div className="wrong-word-list">
-              {filteredWords.map((word) => (
-                <article className="wrong-word-row" key={word.key}>
+              {filteredWords.map((word) => {
+                const target = selectionTarget(word, datasetFilter);
+                const pending = target
+                  ? pendingReviewKeys.has(target.reviewKey)
+                  : false;
+                const selected = target
+                  ? validSelectedQuestionIds.includes(
+                      target.questionId,
+                    )
+                  : false;
+                return (
+                <article
+                  className="wrong-word-row"
+                  data-selected={selected || undefined}
+                  key={word.key}
+                >
+                  <label className="wrong-word-checkbox">
+                    <input
+                      checked={pending || selected}
+                      disabled={
+                        !target || pending || loading || queueing
+                      }
+                      onChange={() => {
+                        if (target) {
+                          toggleQuestion(target.questionId);
+                        }
+                      }}
+                      type="checkbox"
+                    />
+                    <span className="sr-only">
+                      {word.headword} 다음 시험에 추가
+                    </span>
+                  </label>
                   <div className="wrong-word-copy">
                     <strong>{word.headword}</strong>
                     <span>{word.primaryMeaning}</span>
@@ -399,6 +663,11 @@ export function StudentWrongWordPanel({
                     </small>
                   </div>
                   <div className="wrong-word-meta">
+                    {pending && (
+                      <span className="status-pill status-completed">
+                        추가됨
+                      </span>
+                    )}
                     <span
                       className={`status-pill wrong-level-${word.wrongLevel}`}
                     >
@@ -412,7 +681,8 @@ export function StudentWrongWordPanel({
                     </small>
                   </div>
                 </article>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

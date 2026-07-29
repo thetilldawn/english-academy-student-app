@@ -44,6 +44,7 @@ export type WrongWordOutcome =
 export type WrongWordOccurrence = {
   datasetId: string;
   vocabEntryId: number;
+  latestQuestionId: string;
   datasetLabel: string;
   headword: string;
   primaryMeaning: string;
@@ -61,8 +62,22 @@ export type WrongWordAggregate = {
   wrongLevel: 1 | 2;
   lastWrongAt: string;
   latestAttemptId: string;
+  latestQuestionId: string;
+  latestDatasetId: string;
+  latestVocabEntryId: number;
   latestOutcome: WrongWordOutcome;
   occurrences: WrongWordOccurrence[];
+};
+
+export type PendingWrongWordReview = {
+  queueId: string;
+  key: string;
+  datasetId: string;
+  vocabEntryId: number;
+  canonicalLexemeId: string | null;
+  sourceQuestionId: string;
+  reasonLevel: 1 | 2;
+  queuedAt: string;
 };
 
 export type WrongAttemptWord = {
@@ -92,6 +107,8 @@ export type StudentWrongWordHistory = {
   uniqueWordCount: number;
   onceWrongWordCount: number;
   repeatedWrongWordCount: number;
+  pendingReviewCount: number;
+  pendingReviews: PendingWrongWordReview[];
   words: WrongWordAggregate[];
   attempts: WrongAttemptSummary[];
 };
@@ -110,8 +127,14 @@ function wordIdentity(event: WrongEventSource) {
     : `entry:${event.datasetId}:${event.vocabEntryId}`;
 }
 
-function latestIso(left: string, right: string) {
-  return Date.parse(left) >= Date.parse(right) ? left : right;
+export function wrongWordReviewIdentity(
+  datasetId: string,
+  vocabEntryId: number,
+  canonicalLexemeId: string | null,
+) {
+  return canonicalLexemeId
+    ? `canonical:${datasetId}:${canonicalLexemeId}`
+    : `entry:${datasetId}:${vocabEntryId}`;
 }
 
 export function buildStudentWrongWordHistory({
@@ -146,6 +169,9 @@ export function buildStudentWrongWordHistory({
       wrongCount: number;
       lastWrongAt: string;
       latestAttemptId: string;
+      latestQuestionId: string;
+      latestDatasetId: string;
+      latestVocabEntryId: number;
       latestOutcome: WrongWordOutcome;
       occurrenceByEntryId: Map<number, WrongWordOccurrence>;
     }
@@ -160,6 +186,7 @@ export function buildStudentWrongWordHistory({
       current?.occurrenceByEntryId.get(event.vocabEntryId) ?? {
         datasetId: event.datasetId,
         vocabEntryId: event.vocabEntryId,
+        latestQuestionId: event.questionId,
         datasetLabel: entry.datasetLabel,
         headword: question.headword || entry.headword,
         primaryMeaning:
@@ -169,10 +196,13 @@ export function buildStudentWrongWordHistory({
         lastWrongAt: event.wrongAt,
       };
     occurrence.wrongCount += 1;
-    occurrence.lastWrongAt = latestIso(
-      occurrence.lastWrongAt,
-      event.wrongAt,
-    );
+    if (
+      Date.parse(event.wrongAt) >
+      Date.parse(occurrence.lastWrongAt)
+    ) {
+      occurrence.lastWrongAt = event.wrongAt;
+      occurrence.latestQuestionId = event.questionId;
+    }
 
     if (!current) {
       aggregateByKey.set(key, {
@@ -180,6 +210,9 @@ export function buildStudentWrongWordHistory({
         wrongCount: 1,
         lastWrongAt: event.wrongAt,
         latestAttemptId: event.attemptId,
+        latestQuestionId: event.questionId,
+        latestDatasetId: event.datasetId,
+        latestVocabEntryId: event.vocabEntryId,
         latestOutcome: latestOutcome(question),
         occurrenceByEntryId: new Map([
           [event.vocabEntryId, occurrence],
@@ -190,9 +223,12 @@ export function buildStudentWrongWordHistory({
 
     current.wrongCount += 1;
     current.occurrenceByEntryId.set(event.vocabEntryId, occurrence);
-    if (Date.parse(event.wrongAt) >= Date.parse(current.lastWrongAt)) {
+    if (Date.parse(event.wrongAt) > Date.parse(current.lastWrongAt)) {
       current.lastWrongAt = event.wrongAt;
       current.latestAttemptId = event.attemptId;
+      current.latestQuestionId = event.questionId;
+      current.latestDatasetId = event.datasetId;
+      current.latestVocabEntryId = event.vocabEntryId;
       current.latestOutcome = latestOutcome(question);
     }
   }
@@ -215,6 +251,9 @@ export function buildStudentWrongWordHistory({
         wrongLevel: aggregate.wrongCount >= 2 ? 2 : 1,
         lastWrongAt: aggregate.lastWrongAt,
         latestAttemptId: aggregate.latestAttemptId,
+        latestQuestionId: aggregate.latestQuestionId,
+        latestDatasetId: aggregate.latestDatasetId,
+        latestVocabEntryId: aggregate.latestVocabEntryId,
         latestOutcome: aggregate.latestOutcome,
         occurrences,
       };
@@ -297,6 +336,8 @@ export function buildStudentWrongWordHistory({
     repeatedWrongWordCount: words.filter(
       (word) => word.wrongLevel === 2,
     ).length,
+    pendingReviewCount: 0,
+    pendingReviews: [],
     words,
     attempts: attemptSummaries,
   };
@@ -308,6 +349,8 @@ export function emptyStudentWrongWordHistory(): StudentWrongWordHistory {
     uniqueWordCount: 0,
     onceWrongWordCount: 0,
     repeatedWrongWordCount: 0,
+    pendingReviewCount: 0,
+    pendingReviews: [],
     words: [],
     attempts: [],
   };
