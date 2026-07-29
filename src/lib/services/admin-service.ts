@@ -32,10 +32,16 @@ import {
   type AssignmentHistorySummary,
   type AttemptHistorySource,
 } from "@/lib/admin/history";
+import {
+  parseStudentPendingReviewSummaries,
+  type PendingReviewSummaryRow,
+  type StudentPendingReviewSummary,
+} from "@/lib/admin/review-queue-summary";
 
 export { buildStudentProgress } from "@/lib/admin/progress";
 export type { StudentProgressSummary } from "@/lib/admin/progress";
 export type { AssignmentHistorySummary } from "@/lib/admin/history";
+export type { StudentPendingReviewSummary } from "@/lib/admin/review-queue-summary";
 
 export type StudentSummary = {
   id: string;
@@ -426,6 +432,46 @@ export async function listVocabUnits(): Promise<VocabUnitSummary[]> {
     sortIndex: unit.sort_index,
     entryCount: unit.entry_count,
   }));
+}
+
+export async function listStudentPendingReviewSummaries(): Promise<
+  StudentPendingReviewSummary[]
+> {
+  await requireAdmin();
+  const supabase = await createServerSupabaseClient();
+  const summaries: StudentPendingReviewSummary[] = [];
+  const pageSize = 500;
+  let afterStudentId: string | null = null;
+  let afterDatasetId: string | null = null;
+
+  for (;;) {
+    const { data, error } = await supabase.rpc(
+      "list_student_vocab_review_queue_summaries",
+      {
+        p_after_student_id: afterStudentId,
+        p_after_dataset_id: afterDatasetId,
+        p_limit: pageSize,
+      },
+    );
+
+    if (error || !Array.isArray(data)) {
+      throw new Error("학생별 오답 대기 수를 불러오지 못했습니다.");
+    }
+    const page = parseStudentPendingReviewSummaries(
+      data as PendingReviewSummaryRow[],
+    );
+    summaries.push(...page);
+    if (page.length < pageSize) break;
+
+    const last = page.at(-1);
+    if (!last) {
+      throw new Error("오답 대기 목록 커서를 확인하지 못했습니다.");
+    }
+    afterStudentId = last.studentId;
+    afterDatasetId = last.datasetId;
+  }
+
+  return summaries;
 }
 
 type HistoryStudentRelation = {

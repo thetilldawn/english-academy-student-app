@@ -516,6 +516,7 @@ describe.sequential("final review-assignment database schema", () => {
       private_core: string | null;
       public_mixed: string | null;
       exact_v4: string | null;
+      public_review_summary: string | null;
     }>(`
       select
         to_regprocedure(
@@ -526,20 +527,26 @@ describe.sequential("final review-assignment database schema", () => {
         )::text as public_mixed,
         to_regprocedure(
           'public.create_exact_review_assignment_v4(uuid,text,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,jsonb)'
-        )::text as exact_v4;
+        )::text as exact_v4,
+        to_regprocedure(
+          'public.list_student_vocab_review_queue_summaries(uuid,uuid,integer)'
+        )::text as public_review_summary;
     `);
 
     expect(signatures.rows[0]?.private_core).not.toBeNull();
     expect(signatures.rows[0]?.public_mixed).not.toBeNull();
     expect(signatures.rows[0]?.exact_v4).not.toBeNull();
+    expect(signatures.rows[0]?.public_review_summary).not.toBeNull();
 
     const privileges = await database.query<{
       authenticated_core: boolean;
       authenticated_private_mixed: boolean;
       authenticated_public_mixed: boolean;
       authenticated_public_exact: boolean;
+      authenticated_public_review_summary: boolean;
       anon_public_mixed: boolean;
       anon_public_exact: boolean;
+      anon_public_review_summary: boolean;
     }>(`
       select
         has_function_privilege(
@@ -563,6 +570,11 @@ describe.sequential("final review-assignment database schema", () => {
           'execute'
         ) as authenticated_public_exact,
         has_function_privilege(
+          'authenticated',
+          'public.list_student_vocab_review_queue_summaries(uuid,uuid,integer)',
+          'execute'
+        ) as authenticated_public_review_summary,
+        has_function_privilege(
           'anon',
           'public.create_mixed_review_assignment_v5(uuid,uuid,smallint[],integer,uuid[],text,uuid[],smallint,integer,smallint,public.question_order_mode,timestamp with time zone,jsonb)',
           'execute'
@@ -571,7 +583,12 @@ describe.sequential("final review-assignment database schema", () => {
           'anon',
           'public.create_exact_review_assignment_v4(uuid,text,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,jsonb)',
           'execute'
-        ) as anon_public_exact;
+        ) as anon_public_exact,
+        has_function_privilege(
+          'anon',
+          'public.list_student_vocab_review_queue_summaries(uuid,uuid,integer)',
+          'execute'
+        ) as anon_public_review_summary;
     `);
 
     expect(privileges.rows[0]).toEqual({
@@ -579,8 +596,10 @@ describe.sequential("final review-assignment database schema", () => {
       authenticated_private_mixed: true,
       authenticated_public_mixed: true,
       authenticated_public_exact: true,
+      authenticated_public_review_summary: true,
       anon_public_mixed: false,
       anon_public_exact: false,
+      anon_public_review_summary: false,
     });
   });
 
@@ -928,5 +947,131 @@ describe.sequential("final review-assignment database schema", () => {
       review_consumed: 2,
       mixed_selected: 1,
     });
+  });
+
+  it("aggregates pending and reserved counts without exposing them to anon", async () => {
+    await database.exec(`
+      set session_replication_role = replica;
+      insert into public.student_vocab_review_queue (
+        id,
+        student_id,
+        dataset_id,
+        vocab_entry_id,
+        source_attempt_id,
+        source_question_id,
+        reason_level,
+        status,
+        queued_by,
+        queued_at
+      )
+      values
+        (
+          '00000000-0000-4000-8000-000000000305',
+          '${ids.student}',
+          '${ids.dataset}',
+          1,
+          '00000000-0000-4000-8000-000000000505',
+          '00000000-0000-4000-8000-000000000605',
+          1,
+          'pending',
+          '${ids.admin}',
+          '2026-01-05T00:00:00Z'
+        ),
+        (
+          '00000000-0000-4000-8000-000000000306',
+          '${ids.student}',
+          '${ids.dataset}',
+          2,
+          '00000000-0000-4000-8000-000000000506',
+          '00000000-0000-4000-8000-000000000606',
+          2,
+          'pending',
+          '${ids.admin}',
+          '2026-01-06T00:00:00Z'
+        ),
+        (
+          '00000000-0000-4000-8000-000000000307',
+          '00000000-0000-4000-8000-000000000007',
+          '00000000-0000-4000-8000-000000000008',
+          99,
+          '00000000-0000-4000-8000-000000000507',
+          '00000000-0000-4000-8000-000000000607',
+          2,
+          'pending',
+          '${ids.admin}',
+          '2026-01-07T00:00:00Z'
+        );
+      set session_replication_role = origin;
+    `);
+
+    await database.exec("set role anon;");
+    await expectPostgresError(
+      database.query(
+        "select * from public.list_student_vocab_review_queue_summaries();",
+      ),
+      "42501",
+      "permission denied",
+    );
+    await database.exec("reset role; set role authenticated;");
+    const summaries = await database.query<{
+      student_id: string;
+      dataset_id: string;
+      pending_level_1_count: number;
+      pending_level_2_count: number;
+      reserved_level_1_count: number;
+      reserved_level_2_count: number;
+    }>(`
+      select *
+      from public.list_student_vocab_review_queue_summaries()
+      where student_id = '${ids.student}'
+        and dataset_id = '${ids.dataset}';
+    `);
+
+    const firstPage = await database.query<{
+      student_id: string;
+      dataset_id: string;
+    }>(`
+      select student_id, dataset_id
+      from public.list_student_vocab_review_queue_summaries(
+        null,
+        null,
+        1
+      );
+    `);
+    const secondPage = await database.query<{
+      student_id: string;
+      dataset_id: string;
+    }>(`
+      select student_id, dataset_id
+      from public.list_student_vocab_review_queue_summaries(
+        '${ids.student}',
+        '${ids.dataset}',
+        1
+      );
+    `);
+    await database.exec("reset role;");
+
+    expect(summaries.rows).toEqual([
+      {
+        student_id: ids.student,
+        dataset_id: ids.dataset,
+        pending_level_1_count: 2,
+        pending_level_2_count: 1,
+        reserved_level_1_count: 1,
+        reserved_level_2_count: 0,
+      },
+    ]);
+    expect(firstPage.rows).toEqual([
+      {
+        student_id: ids.student,
+        dataset_id: ids.dataset,
+      },
+    ]);
+    expect(secondPage.rows).toEqual([
+      {
+        student_id: "00000000-0000-4000-8000-000000000007",
+        dataset_id: "00000000-0000-4000-8000-000000000008",
+      },
+    ]);
   });
 });
