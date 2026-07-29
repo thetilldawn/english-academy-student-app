@@ -8,6 +8,7 @@ import {
   useTransition,
   type FormEvent,
   type MouseEvent,
+  type SyntheticEvent,
 } from "react";
 import { useRouter } from "next/navigation";
 
@@ -15,6 +16,21 @@ import {
   currentTimeMilliseconds,
   koreanDateTimeLocalToIso,
 } from "@/lib/deadline";
+import {
+  buildAssignmentSubmission,
+  defaultReviewLevels,
+  toggleReviewLevel,
+  type ReviewLevel,
+} from "@/lib/admin/assignment-submission";
+import {
+  availableReviewCount,
+  emptyPendingReviewCounts,
+  indexStudentPendingReviewSummaries,
+  pendingReviewCount,
+  pendingReviewSummaryKey,
+  reservedReviewCount,
+  type StudentPendingReviewSummary,
+} from "@/lib/admin/review-queue-summary";
 
 type DatasetItem = {
   id: string;
@@ -82,6 +98,10 @@ type ErrorResponse = {
   error?: string;
 };
 
+type ReviewStudentFilter = "all" | "pending" | "repeated";
+
+const DEFAULT_REVIEW_LIMIT = 5;
+
 function directionLabel(ratio: number) {
   if (ratio === 100) return "영어 → 뜻";
   if (ratio === 0) return "뜻 → 영어";
@@ -132,16 +152,19 @@ export function AssignmentManager({
   students,
   units,
   progress,
+  pendingReviewSummaries,
   initialStudentId = "",
 }: {
   datasets: DatasetItem[];
   students: StudentItem[];
   units: UnitItem[];
   progress: ProgressItem[];
+  pendingReviewSummaries: StudentPendingReviewSummary[];
   initialStudentId?: string;
 }) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const requestInFlightRef = useRef(false);
   const readyDatasets = useMemo(
     () =>
       datasets.filter(
@@ -156,6 +179,11 @@ export function AssignmentManager({
   const progressByStudent = useMemo(
     () => new Map(progress.map((item) => [item.studentId, item])),
     [progress],
+  );
+  const pendingReviewIndex = useMemo(
+    () =>
+      indexStudentPendingReviewSummaries(pendingReviewSummaries),
+    [pendingReviewSummaries],
   );
   const initialStudent =
     activeStudents.find((student) => student.id === initialStudentId) ??
@@ -179,6 +207,8 @@ export function AssignmentManager({
   const [query, setQuery] = useState("");
   const [schoolFilter, setSchoolFilter] = useState("");
   const [gradeFilter, setGradeFilter] = useState("");
+  const [reviewFilter, setReviewFilter] =
+    useState<ReviewStudentFilter>("all");
   const [studentId, setStudentId] = useState(initialStudent?.id ?? "");
   const [datasetId, setDatasetId] = useState(initialDatasetId);
   const [startUnitId, setStartUnitId] = useState(initialRecommendedUnitId);
@@ -192,6 +222,14 @@ export function AssignmentManager({
   const [passingScore, setPassingScore] = useState(80);
   const [availableUntilLocal, setAvailableUntilLocal] = useState("");
   const [customTitle, setCustomTitle] = useState("");
+  const [includePendingReview, setIncludePendingReview] =
+    useState(false);
+  const [reviewLevels, setReviewLevels] = useState<ReviewLevel[]>(
+    defaultReviewLevels,
+  );
+  const [reviewLimit, setReviewLimit] = useState(
+    DEFAULT_REVIEW_LIMIT,
+  );
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -204,6 +242,35 @@ export function AssignmentManager({
     : null;
   const selectedDataset =
     readyDatasets.find((dataset) => dataset.id === datasetId) ?? null;
+  const selectedReviewCounts =
+    selectedStudent && datasetId
+      ? (pendingReviewIndex.byStudentDataset.get(
+          pendingReviewSummaryKey(selectedStudent.id, datasetId),
+        ) ?? emptyPendingReviewCounts())
+      : emptyPendingReviewCounts();
+  const selectedPendingReviewCount = pendingReviewCount(
+    selectedReviewCounts,
+  );
+  const selectedReservedReviewCount = reservedReviewCount(
+    selectedReviewCounts,
+  );
+  const selectedAvailableReviewCount = availableReviewCount(
+    selectedReviewCounts,
+    reviewLevels,
+  );
+  const selectedAvailableReviewTotal = availableReviewCount(
+    selectedReviewCounts,
+  );
+  const availableReviewLevel1Count =
+    selectedReviewCounts.pendingLevel1Count -
+    selectedReviewCounts.reservedLevel1Count;
+  const availableReviewLevel2Count =
+    selectedReviewCounts.pendingLevel2Count -
+    selectedReviewCounts.reservedLevel2Count;
+  const plannedReviewCount = Math.min(
+    Math.max(reviewLimit, 0),
+    selectedAvailableReviewCount,
+  );
   const datasetUnits = useMemo(
     () =>
       units
@@ -239,20 +306,34 @@ export function AssignmentManager({
     selectedDataset?.title,
     selectedDataset?.edition,
     unitRangeLabel(selectedUnitLabels),
+    includePendingReview
+      ? `오답 최대 ${plannedReviewCount}개 포함`
+      : null,
   ]
     .filter(Boolean)
     .join(" · ");
   const finalTitle = customTitle.trim() || generatedTitle;
   const timeLimitSeconds = timeLimitMinutes * 60;
+  const mixedSelectionInvalid =
+    includePendingReview &&
+    (reviewLevels.length === 0 ||
+      reviewLimit < 1 ||
+      reviewLimit > 400 ||
+      plannedReviewCount < 1 ||
+      plannedReviewCount >= questionCount);
   const cannotCreate =
     !studentId ||
     !datasetId ||
     !selectedDataset ||
     selectedUnits.length === 0 ||
     questionCount < 4 ||
-    questionCount > availableWordCount ||
+    questionCount > 500 ||
+    (!includePendingReview &&
+      questionCount > availableWordCount) ||
+    mixedSelectionInvalid ||
     timeLimitSeconds < 30 ||
     timeLimitSeconds > 10800 ||
+    Boolean(success) ||
     submitting ||
     refreshPending;
 
@@ -293,16 +374,48 @@ export function AssignmentManager({
       return (
         (!keyword || searchText.includes(keyword)) &&
         (!schoolFilter || student.schoolName === schoolFilter) &&
-        (!gradeFilter || student.gradeLabel === gradeFilter)
+        (!gradeFilter || student.gradeLabel === gradeFilter) &&
+        (() => {
+          if (reviewFilter === "all") return true;
+          if (!student.currentVocabDatasetId) return false;
+          const reviewCounts =
+            pendingReviewIndex.byStudentDataset.get(
+              pendingReviewSummaryKey(
+                student.id,
+                student.currentVocabDatasetId,
+              ),
+            ) ?? emptyPendingReviewCounts();
+          if (reviewFilter === "repeated") {
+            return reviewCounts.pendingLevel2Count > 0;
+          }
+          return pendingReviewCount(reviewCounts) > 0;
+        })()
       );
     });
-  }, [activeStudents, gradeFilter, query, schoolFilter]);
+  }, [
+    activeStudents,
+    gradeFilter,
+    pendingReviewIndex,
+    query,
+    reviewFilter,
+    schoolFilter,
+  ]);
 
   useEffect(() => {
     if (selectedStudent && !dialogRef.current?.open) {
       dialogRef.current?.showModal();
     }
   }, [selectedStudent]);
+
+  function resetScopedControls() {
+    setIncludePendingReview(false);
+    setReviewLevels(defaultReviewLevels());
+    setReviewLimit(DEFAULT_REVIEW_LIMIT);
+    setAvailableUntilLocal("");
+    setCustomTitle("");
+    setError("");
+    setSuccess("");
+  }
 
   function selectStudent(nextStudentId: string) {
     const student = activeStudents.find(
@@ -327,10 +440,7 @@ export function AssignmentManager({
     setDatasetId(nextDatasetId);
     setStartUnitId(nextRecommendedUnitId);
     setEndUnitId(nextRecommendedUnitId);
-    setAvailableUntilLocal("");
-    setCustomTitle("");
-    setError("");
-    setSuccess("");
+    resetScopedControls();
   }
 
   function selectDataset(nextDatasetId: string) {
@@ -341,6 +451,7 @@ export function AssignmentManager({
     setDatasetId(nextDatasetId);
     setStartUnitId(nextRecommendedUnitId);
     setEndUnitId(nextRecommendedUnitId);
+    resetScopedControls();
   }
 
   function selectStartUnit(nextStartId: string) {
@@ -357,15 +468,44 @@ export function AssignmentManager({
   }
 
   function closeDialog() {
+    if (submitting) return;
     dialogRef.current?.close();
   }
 
   function closeDialogOnBackdrop(event: MouseEvent<HTMLDialogElement>) {
-    if (event.target === event.currentTarget) closeDialog();
+    if (!submitting && event.target === event.currentTarget) {
+      closeDialog();
+    }
+  }
+
+  function handleDialogClose() {
+    setStudentId("");
+    resetScopedControls();
+  }
+
+  function handleDialogCancel(
+    event: SyntheticEvent<HTMLDialogElement>,
+  ) {
+    if (submitting) event.preventDefault();
+  }
+
+  function changeReviewLevel(level: ReviewLevel) {
+    setReviewLevels((current) =>
+      toggleReviewLevel(current, level),
+    );
+    setError("");
+    setSuccess("");
+  }
+
+  function changeIncludePendingReview(checked: boolean) {
+    setIncludePendingReview(checked);
+    setError("");
+    setSuccess("");
   }
 
   async function submitAssignment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (requestInFlightRef.current) return;
     setError("");
     setSuccess("");
     const availableUntil = availableUntilLocal
@@ -379,35 +519,53 @@ export function AssignmentManager({
       setError("응시 시작 마감은 현재보다 뒤의 한국시간으로 정해주세요.");
       return;
     }
+    requestInFlightRef.current = true;
     setSubmitting(true);
 
     try {
-      const response = await fetch("/api/admin/assignments", {
+      const commonSubmission = {
+        studentId,
+        datasetId,
+        primaryUnitIds: selectedUnits.map((unit) => unit.id),
+        title: customTitle,
+        questionCount,
+        englishToKoreanRatio: directionRatio,
+        timeLimitSeconds,
+        passingScore,
+        questionOrderMode,
+        availableUntil,
+      };
+      const submission = includePendingReview
+        ? buildAssignmentSubmission({
+            ...commonSubmission,
+            includePendingReview: true,
+            reviewLevels,
+            reviewLimit,
+          })
+        : buildAssignmentSubmission({
+            ...commonSubmission,
+            includePendingReview: false,
+          });
+      const response = await fetch(submission.endpoint, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          title: customTitle,
-          datasetId,
-          unitIds: selectedUnits.map((unit) => unit.id),
-          questionCount,
-          englishToKoreanRatio: directionRatio,
-          timeLimitSeconds,
-          passingScore,
-          questionOrderMode,
-          availableUntil,
-          studentIds: [studentId],
-        }),
+        body: JSON.stringify(submission.body),
       });
       const payload = (await response.json()) as ErrorResponse;
 
       if (!response.ok) {
+        if (response.status === 409) {
+          startRefreshTransition(() => router.refresh());
+        }
         throw new Error(
           payload.error ?? "단어 시험을 배정하지 못했습니다.",
         );
       }
 
       setSuccess(
-        `${selectedStudent?.displayName ?? "학생"}에게 배정했습니다.`,
+        includePendingReview
+          ? `${selectedStudent?.displayName ?? "학생"}에게 DAY+오답 시험을 배정했습니다.`
+          : `${selectedStudent?.displayName ?? "학생"}에게 배정했습니다.`,
       );
       setAvailableUntilLocal("");
       setCustomTitle("");
@@ -419,6 +577,7 @@ export function AssignmentManager({
           : "단어 시험을 배정하지 못했습니다.",
       );
     } finally {
+      requestInFlightRef.current = false;
       setSubmitting(false);
     }
   }
@@ -456,7 +615,9 @@ export function AssignmentManager({
         <section className="assignment-student-browser">
           <div className="manager-toolbar">
             <div>
-              <h2>단어 시험 배정</h2>
+              <h2 className="assignment-list-heading">
+                학생 선택
+              </h2>
               <p className="list-meta">
                 학생을 찾은 뒤 최근 범위와 다음 DAY를 확인하고
                 배정합니다.
@@ -505,6 +666,29 @@ export function AssignmentManager({
                 ))}
               </select>
             </label>
+            <div
+              aria-label="오답 대기 필터"
+              className="filter-chip-row assignment-review-filter-row"
+              role="group"
+            >
+              {(
+                [
+                  ["all", "전체"],
+                  ["pending", "현재 단어장 오답 있음"],
+                  ["repeated", "두 번 이상 틀린 단어 있음"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  aria-pressed={reviewFilter === value}
+                  className="filter-chip"
+                  key={value}
+                  onClick={() => setReviewFilter(value)}
+                  type="button"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {readyDatasets.length === 0 && (
@@ -523,6 +707,19 @@ export function AssignmentManager({
               {filteredStudents.map((student) => {
                 const studentProgress =
                   progressByStudent.get(student.id) ?? null;
+                const studentReviewCounts =
+                  student.currentVocabDatasetId
+                    ? (pendingReviewIndex.byStudentDataset.get(
+                        pendingReviewSummaryKey(
+                          student.id,
+                          student.currentVocabDatasetId,
+                        ),
+                      ) ?? emptyPendingReviewCounts())
+                    : emptyPendingReviewCounts();
+                const studentPendingReviewCount =
+                  pendingReviewCount(studentReviewCounts);
+                const studentAvailableReviewCount =
+                  availableReviewCount(studentReviewCounts);
                 return (
                   <button
                     className="card assignment-student-row"
@@ -543,6 +740,10 @@ export function AssignmentManager({
                       <strong>
                         {student.currentVocabBook ?? "미선택"}
                       </strong>
+                      <span className="assignment-student-review-summary">
+                        오답 대기 {studentPendingReviewCount}개 · 혼합
+                        가능 {studentAvailableReviewCount}개
+                      </span>
                     </span>
                     <span className="assignment-student-recent">
                       <small>최근 시험</small>
@@ -585,8 +786,9 @@ export function AssignmentManager({
         <dialog
           aria-labelledby="assignment-dialog-title"
           className="dialog dialog-extra-wide assignment-dialog"
+          onCancel={handleDialogCancel}
           onClick={closeDialogOnBackdrop}
-          onClose={() => setStudentId("")}
+          onClose={handleDialogClose}
           ref={dialogRef}
         >
           <div className="dialog-heading">
@@ -608,6 +810,7 @@ export function AssignmentManager({
             <button
               aria-label="닫기"
               className="button button-quiet button-small"
+              disabled={submitting}
               onClick={closeDialog}
               type="button"
             >
@@ -630,6 +833,15 @@ export function AssignmentManager({
             <strong>
               추천 · {recommendationLabel(selectedProgress)}
             </strong>
+            <span>
+              대기 오답 · 한 번 {selectedReviewCounts.pendingLevel1Count}
+              개 · 두 번 이상{" "}
+              {selectedReviewCounts.pendingLevel2Count}개
+            </span>
+            <span>
+              혼합 가능 {selectedAvailableReviewTotal}개 · 재시험 초안
+              예약 {selectedReservedReviewCount}개
+            </span>
           </div>
 
           <form
@@ -637,6 +849,32 @@ export function AssignmentManager({
             className="assignment-modal-form"
             onSubmit={submitAssignment}
           >
+            {success ? (
+              <section
+                className="assignment-success-panel"
+                role="status"
+              >
+                <strong>{success}</strong>
+                <p>
+                  저장이 끝났습니다. 최신 오답 대기 수는 화면에
+                  반영했습니다.
+                </p>
+                <button
+                  className="button button-primary"
+                  onClick={closeDialog}
+                  type="button"
+                >
+                  닫기
+                </button>
+              </section>
+            ) : (
+              <fieldset
+                className="assignment-modal-fieldset"
+                disabled={submitting || refreshPending}
+              >
+                <legend className="sr-only">
+                  단어 시험 배정 조건
+                </legend>
             <section className="assignment-step">
               <div className="assignment-step-heading">
                 <span>1</span>
@@ -714,6 +952,100 @@ export function AssignmentManager({
                 {unitRangeLabel(selectedUnitLabels)} · 원본{" "}
                 {availableWordCount.toLocaleString()}개
               </p>
+              <fieldset className="assignment-review-options">
+                <legend>오답 대기 포함</legend>
+                <label className="assignment-review-switch">
+                  <input
+                    aria-describedby="pending-review-help"
+                    checked={includePendingReview}
+                    disabled={
+                      selectedAvailableReviewTotal === 0 &&
+                      !includePendingReview
+                    }
+                    onChange={(event) =>
+                      changeIncludePendingReview(event.target.checked)
+                    }
+                    type="checkbox"
+                  />
+                  <span>
+                    <strong>DAY에 대기 오답 함께 배정</strong>
+                    <small>
+                      기본은 꺼짐이며, 켠 경우에도 새 DAY 문항을 한
+                      개 이상 포함합니다.
+                    </small>
+                  </span>
+                </label>
+                <p className="field-help" id="pending-review-help">
+                  현재 단어장 대기 {selectedPendingReviewCount}개 중
+                  혼합 가능 {selectedAvailableReviewTotal}개
+                  {selectedReservedReviewCount > 0
+                    ? ` · 재시험 초안 예약 ${selectedReservedReviewCount}개 제외`
+                    : ""}
+                </p>
+                {includePendingReview && (
+                  <div className="assignment-review-controls">
+                    <div
+                      aria-label="포함할 오답 단계"
+                      className="filter-chip-row"
+                      role="group"
+                    >
+                      <button
+                        aria-pressed={reviewLevels.includes(1)}
+                        className="filter-chip"
+                        onClick={() => changeReviewLevel(1)}
+                        type="button"
+                      >
+                        한 번 틀림 · 가능{" "}
+                        {availableReviewLevel1Count}개
+                      </button>
+                      <button
+                        aria-pressed={reviewLevels.includes(2)}
+                        className="filter-chip"
+                        onClick={() => changeReviewLevel(2)}
+                        type="button"
+                      >
+                        두 번 이상 틀림 · 가능{" "}
+                        {availableReviewLevel2Count}개
+                      </button>
+                    </div>
+                    <div className="form-grid-2">
+                      <label className="field">
+                        <span className="field-label">
+                          오답 최대 포함 수
+                        </span>
+                        <input
+                          max={400}
+                          min={1}
+                          onChange={(event) => {
+                            setReviewLimit(
+                              Number(event.target.value),
+                            );
+                            setError("");
+                            setSuccess("");
+                          }}
+                          required
+                          type="number"
+                          value={reviewLimit}
+                        />
+                      </label>
+                      <div
+                        aria-live="polite"
+                        className="assignment-review-preview"
+                      >
+                        <small>현재 조건 예상</small>
+                        <strong>
+                          오답 최대 {plannedReviewCount}개 · 총{" "}
+                          {questionCount}문항
+                        </strong>
+                        <small>
+                          새 DAY 후보 수는 출제 가능 상태·중복·전체
+                          대기 오답을 제외해 배정할 때 최종 확인합니다.
+                        </small>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </fieldset>
             </section>
 
             <section className="assignment-step">
@@ -767,9 +1099,15 @@ export function AssignmentManager({
               </div>
               <div className="form-grid-3">
                 <label className="field">
-                  <span className="field-label">문항 수</span>
+                  <span className="field-label">
+                    {includePendingReview ? "총 문항 수" : "문항 수"}
+                  </span>
                   <input
-                    max={Math.min(availableWordCount || 500, 500)}
+                    max={
+                      includePendingReview
+                        ? 500
+                        : Math.min(availableWordCount || 500, 500)
+                    }
                     min={4}
                     onChange={(event) =>
                       setQuestionCount(Number(event.target.value))
@@ -846,9 +1184,11 @@ export function AssignmentManager({
                 </span>
                 <input
                   maxLength={160}
-                  onChange={(event) =>
-                    setCustomTitle(event.target.value)
-                  }
+                  onChange={(event) => {
+                    setCustomTitle(event.target.value);
+                    setError("");
+                    setSuccess("");
+                  }}
                   placeholder={generatedTitle || "자동 시험 이름"}
                   value={customTitle}
                 />
@@ -879,9 +1219,17 @@ export function AssignmentManager({
                     </dd>
                   </div>
                   <div>
+                    <dt>구성</dt>
+                    <dd>
+                      {includePendingReview
+                        ? `DAY + 오답 최대 ${plannedReviewCount}개`
+                        : "DAY"}
+                    </dd>
+                  </div>
+                  <div>
                     <dt>조건</dt>
                     <dd>
-                      {questionCount}문항 · {timeLimitMinutes}분 ·{" "}
+                      총 {questionCount}문항 · {timeLimitMinutes}분 ·{" "}
                       {passingScore}점
                     </dd>
                   </div>
@@ -895,13 +1243,36 @@ export function AssignmentManager({
                   </div>
                 </dl>
               </div>
-              {questionCount > availableWordCount && (
+              {!success &&
+                !includePendingReview &&
+                questionCount > availableWordCount && (
                 <div className="notice notice-error" role="alert">
                   선택 범위의 단어 수보다 문항 수가 많습니다.
                 </div>
               )}
-              {(timeLimitSeconds < 30 ||
-                timeLimitSeconds > 10800) && (
+              {!success &&
+                includePendingReview &&
+                selectedAvailableReviewCount === 0 && (
+                  <div className="notice notice-error" role="alert">
+                    선택한 오답 단계에 혼합 가능한 단어가 없습니다.
+                  </div>
+                )}
+              {!success &&
+                includePendingReview &&
+                plannedReviewCount >= questionCount && (
+                  <div className="notice notice-error" role="alert">
+                    총 문항에는 새 DAY 단어가 한 개 이상 필요합니다.
+                  </div>
+                )}
+              {!success &&
+                (questionCount < 4 || questionCount > 500) && (
+                <div className="notice notice-error" role="alert">
+                  총 문항 수는 4개 이상 500개 이하여야 합니다.
+                </div>
+              )}
+              {!success &&
+                (timeLimitSeconds < 30 ||
+                  timeLimitSeconds > 10800) && (
                 <div className="notice notice-error" role="alert">
                   계산된 단계별 제한 시간은 30초 이상 180분 이하여야
                   합니다.
@@ -910,11 +1281,6 @@ export function AssignmentManager({
               {error && (
                 <div className="notice notice-error" role="alert">
                   {error}
-                </div>
-              )}
-              {success && (
-                <div className="notice notice-success" role="status">
-                  {success}
                 </div>
               )}
               <button
@@ -926,9 +1292,13 @@ export function AssignmentManager({
                   ? "배정하는 중…"
                   : refreshPending
                     ? "화면에 반영하는 중…"
-                    : "이 학생에게 배정"}
+                    : includePendingReview
+                      ? "이 학생에게 DAY+오답 배정"
+                      : "이 학생에게 배정"}
               </button>
             </section>
+              </fieldset>
+            )}
           </form>
         </dialog>
       )}

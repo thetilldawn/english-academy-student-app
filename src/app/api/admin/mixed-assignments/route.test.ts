@@ -94,6 +94,22 @@ describe("POST /api/admin/mixed-assignments", () => {
     );
   });
 
+  it("오답 상한이 총 문항보다 커도 실제 선택 수 판단을 서비스에 맡긴다", async () => {
+    const input = {
+      ...validInput,
+      reviewLimit: 20,
+      totalQuestionCount: 10,
+    };
+
+    const response = await POST(request(input));
+
+    expect(response.status).toBe(201);
+    expect(mocks.createMixedAssignment).toHaveBeenCalledWith(
+      input,
+      { userId: "admin-id" },
+    );
+  });
+
   it("다른 origin·비로그인·strict parse 실패를 차단한다", async () => {
     expect(
       (

@@ -1966,11 +1966,23 @@ tr:last-child td {
   gap: 14px;
 }
 
+.assignment-list-heading {
+  display: block;
+  margin: 0 0 4px;
+  color: var(--ink);
+  font-size: 18px;
+}
+
 .assignment-student-filters {
   display: grid;
   grid-template-columns: minmax(260px, 1fr) repeat(2, minmax(150px, 0.3fr));
   gap: 12px;
   padding: 16px;
+}
+
+.assignment-review-filter-row {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
 }
 
 .assignment-student-list {
@@ -2027,6 +2039,11 @@ tr:last-child td {
   white-space: nowrap;
 }
 
+.assignment-student-review-summary {
+  color: var(--green-dark) !important;
+  font-weight: 750;
+}
+
 .assignment-dialog {
   overscroll-behavior: contain;
 }
@@ -2047,11 +2064,107 @@ tr:last-child td {
   color: var(--green-dark);
 }
 
+.assignment-review-options {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+}
+
+.assignment-review-options legend {
+  padding: 0 6px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.assignment-review-switch {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.assignment-review-switch input {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  margin-top: 2px;
+  accent-color: var(--green);
+}
+
+.assignment-review-switch > span {
+  display: grid;
+  gap: 3px;
+}
+
+.assignment-review-switch small {
+  color: var(--muted);
+}
+
+.assignment-review-controls {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.assignment-review-controls .filter-chip-row {
+  margin-bottom: 0;
+}
+
+.assignment-review-preview {
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--green-soft);
+}
+
+.assignment-review-preview small {
+  color: var(--muted);
+}
+
+.assignment-review-preview strong {
+  color: var(--green-dark);
+}
+
 .assignment-modal-form {
+  display: block;
+}
+
+.assignment-success-panel {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--green);
+  border-radius: 14px;
+  background: var(--green-soft);
+}
+
+.assignment-success-panel p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.assignment-modal-fieldset {
+  min-width: 0;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   align-items: start;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.assignment-modal-fieldset > .assignment-step {
+  grid-column: auto;
 }
 
 .assignment-modal-form .assignment-review-step {
@@ -2732,7 +2845,7 @@ tr:last-child td {
   }
 
   .assignment-student-filters,
-  .assignment-modal-form,
+  .assignment-modal-fieldset,
   .history-filters {
     grid-template-columns: 1fr;
   }
