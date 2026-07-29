@@ -44,6 +44,7 @@ function history(
     timeLimitSeconds: 300,
     passingScore: 80,
     questionOrderMode: "random",
+    availableUntil: null,
     assignedAt: "2026-07-28T00:00:00.000Z",
     attemptNumber: 1,
     status: "completed",
@@ -116,6 +117,32 @@ describe("buildStudentProgress", () => {
 
     expect(progress.latestStatus).toBe("not_started");
     expect(progress.recommendationReason).toBe("assigned");
+    expect(progress.recommendedUnitLabel).toBe("DAY 01");
+  });
+
+  it("마감 미응시는 같은 범위를 다시 배정하도록 추천한다", () => {
+    const [progress] = buildStudentProgress(
+      [student],
+      units,
+      [
+        history({
+          id: "missed",
+          attemptId: null,
+          attemptNumber: null,
+          status: "missed",
+          availableUntil: "2026-07-31T00:00:00.000Z",
+          activityAt: "2026-07-31T00:00:00.000Z",
+          initialScore: null,
+          finalScore: null,
+          passed: null,
+          startedAt: null,
+          completedAt: null,
+        }),
+      ],
+    );
+
+    expect(progress.latestStatus).toBe("missed");
+    expect(progress.recommendationReason).toBe("repeat");
     expect(progress.recommendedUnitLabel).toBe("DAY 01");
   });
 

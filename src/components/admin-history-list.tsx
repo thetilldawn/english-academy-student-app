@@ -13,6 +13,11 @@ import type {
   AssignmentActivityStatus,
   AssignmentHistorySummary,
 } from "@/lib/admin/history";
+import { DeadlineCountdown } from "@/components/deadline-countdown";
+import {
+  currentTimeMilliseconds,
+  secondsUntil,
+} from "@/lib/deadline";
 import { formatKoreanDateTime } from "@/lib/format";
 
 type AttemptQuestion = {
@@ -39,7 +44,8 @@ type DetailResponse = {
 };
 
 const STATUS_LABELS: Record<AssignmentActivityStatus, string> = {
-  not_started: "미응시",
+  not_started: "응시 전",
+  missed: "미응시 마감",
   in_progress: "응시 중",
   completed: "완료",
   expired: "시간 종료",
@@ -90,6 +96,8 @@ export function AdminHistoryList({
   const [detail, setDetail] = useState<AttemptDetail | null>(null);
   const [detailError, setDetailError] = useState("");
   const [detailLoading, setDetailLoading] = useState(false);
+  const [selectedDeadlineRemaining, setSelectedDeadlineRemaining] =
+    useState<number | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | AssignmentActivityStatus
@@ -134,6 +142,9 @@ export function AdminHistoryList({
     setSelected(item);
     setDetail(null);
     setDetailError("");
+    setSelectedDeadlineRemaining(
+      secondsUntil(item.availableUntil, currentTimeMilliseconds()),
+    );
 
     if (!item.attemptId) {
       setDetailLoading(false);
@@ -213,7 +224,8 @@ export function AdminHistoryList({
               value={statusFilter}
             >
               <option value="all">전체</option>
-              <option value="not_started">미응시</option>
+              <option value="not_started">응시 전</option>
+              <option value="missed">미응시 마감</option>
               <option value="in_progress">응시 중</option>
               <option value="completed">완료</option>
               <option value="expired">시간 종료</option>
@@ -242,10 +254,17 @@ export function AdminHistoryList({
                   <strong>{item.studentName}</strong>
                   <span>{item.assignmentTitle}</span>
                   <small>
-                    {item.status === "not_started" ? "배정" : "시작"}{" "}
-                    {formatKoreanDateTime(
-                      item.startedAt ?? item.assignedAt,
-                    )}
+                    {item.status === "missed"
+                      ? `마감 ${formatKoreanDateTime(
+                          item.availableUntil,
+                        )}`
+                      : item.status === "not_started"
+                        ? `배정 ${formatKoreanDateTime(
+                            item.assignedAt,
+                          )}`
+                        : `시작 ${formatKoreanDateTime(
+                            item.startedAt,
+                          )}`}
                   </small>
                 </span>
                 <span className="history-score-pair">
@@ -279,6 +298,7 @@ export function AdminHistoryList({
             setSelected(null);
             setDetail(null);
             setDetailError("");
+            setSelectedDeadlineRemaining(null);
           }}
           ref={dialogRef}
         >
@@ -313,13 +333,16 @@ export function AdminHistoryList({
             </div>
             <div>
               <span>
-                {selected.status === "not_started"
+                {selected.status === "not_started" ||
+                selected.status === "missed"
                   ? "배정 상태"
                   : "다시 볼 단어"}
               </span>
               <strong>
                 {selected.status === "not_started"
-                  ? "아직 시작 전"
+                  ? "응시 전"
+                  : selected.status === "missed"
+                    ? "마감까지 시작 안 함"
                   : `${selected.unresolvedWrongCount ?? "-"}개`}
               </strong>
             </div>
@@ -354,6 +377,26 @@ export function AdminHistoryList({
             <div>
               <dt>배정</dt>
               <dd>{formatKoreanDateTime(selected.assignedAt)}</dd>
+            </div>
+            <div>
+              <dt>응시 시작 마감</dt>
+              <dd>
+                {formatKoreanDateTime(selected.availableUntil)}
+                {selected.status === "not_started" &&
+                  selected.availableUntil &&
+                  selectedDeadlineRemaining !== null && (
+                    <>
+                      {" · "}
+                      <DeadlineCountdown
+                        deadlineAt={selected.availableUntil}
+                        initialRemainingSeconds={
+                          selectedDeadlineRemaining
+                        }
+                        refreshOnExpire
+                      />
+                    </>
+                  )}
+              </dd>
             </div>
             <div>
               <dt>종료</dt>

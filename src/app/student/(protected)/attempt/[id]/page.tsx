@@ -3,6 +3,10 @@ import { notFound, redirect } from "next/navigation";
 
 import { QuizPlayer } from "@/components/quiz-player";
 import { requireStudentSession } from "@/lib/auth/student-session";
+import {
+  currentTimeMilliseconds,
+  secondsUntil,
+} from "@/lib/deadline";
 import { getStudentAttempt } from "@/lib/services/quiz-service";
 
 export const metadata: Metadata = {
@@ -31,7 +35,15 @@ export default async function AttemptPage({
 
   return (
     <main className="quiz-shell" id="main-content">
-      <QuizPlayer initialAttempt={attempt} />
+      <QuizPlayer
+        initialAttempt={attempt}
+        initialRemainingSeconds={
+          secondsUntil(
+            attempt.deadlineAt,
+            currentTimeMilliseconds(),
+          ) ?? 0
+        }
+      />
     </main>
   );
 }

@@ -6,6 +6,7 @@ import {
 } from "@/lib/quiz/engine";
 import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
+import { finalizeStaleQuizAttempts } from "@/lib/services/stale-attempt-service";
 
 export type StudentAssignmentSummary = {
   id: string;
@@ -23,6 +24,8 @@ export type StudentAssignmentSummary = {
   lastStatus: "in_progress" | "completed" | "expired" | null;
   lastPhase: AttemptState["phase"] | null;
   lastInitialScore: number | null;
+  availableUntil: string | null;
+  missed: boolean;
   canStart: boolean;
 };
 
@@ -216,6 +219,7 @@ export async function listStudentAssignments(
     return [];
   }
 
+  await finalizeStaleQuizAttempts();
   const assignmentIds = linkData.map((link) => link.assignment_id);
   const [{ data: assignmentData }, { data: attemptData }] = await Promise.all([
     supabase
@@ -274,6 +278,13 @@ export async function listStudentAssignments(
   const now = Date.now();
   return assignments.map((assignment) => {
     const lastAttempt = latestAttempts.get(assignment.id);
+    const availableUntilTime = assignment.available_until
+      ? Date.parse(assignment.available_until)
+      : Number.NaN;
+    const missed =
+      !lastAttempt &&
+      !Number.isNaN(availableUntilTime) &&
+      availableUntilTime <= now;
     const available =
       assignment.status === "active" &&
       (!assignment.available_from ||
@@ -306,6 +317,8 @@ export async function listStudentAssignments(
         lastAttempt?.initial_score === undefined
           ? null
           : Number(lastAttempt.initial_score),
+      availableUntil: assignment.available_until,
+      missed,
       canStart,
     };
   });
@@ -315,6 +328,7 @@ export async function startStudentAttempt(
   studentId: string,
   assignmentId: string,
 ): Promise<string> {
+  await finalizeStaleQuizAttempts();
   const supabase = getServiceSupabaseClient();
   const [{ data: assignmentData, error: assignmentError }, { data: linkData }] =
     await Promise.all([
@@ -338,6 +352,19 @@ export async function startStudentAttempt(
     throw new Error("배정된 시험을 찾지 못했습니다.");
   }
 
+  const { data: existingAttempt, error: existingAttemptError } =
+    await supabase
+      .from("quiz_attempts")
+      .select("id")
+      .eq("student_id", studentId)
+      .eq("assignment_id", assignmentId)
+      .eq("status", "in_progress")
+      .maybeSingle();
+  if (existingAttemptError) {
+    throw new Error("진행 중인 시험을 확인하지 못했습니다.");
+  }
+  if (existingAttempt) return existingAttempt.id;
+
   if (
     assignment.range_basis === "units" &&
     assignment.question_bank_version !== null
@@ -351,6 +378,14 @@ export async function startStudentAttempt(
     );
 
     if (error || typeof data !== "string") {
+      const { data: recoveredAttempt } = await supabase
+        .from("quiz_attempts")
+        .select("id")
+        .eq("student_id", studentId)
+        .eq("assignment_id", assignmentId)
+        .eq("status", "in_progress")
+        .maybeSingle();
+      if (recoveredAttempt) return recoveredAttempt.id;
       throw new Error("시험을 시작하지 못했습니다.");
     }
 
@@ -421,6 +456,14 @@ export async function startStudentAttempt(
   });
 
   if (error || typeof data !== "string") {
+    const { data: recoveredAttempt } = await supabase
+      .from("quiz_attempts")
+      .select("id")
+      .eq("student_id", studentId)
+      .eq("assignment_id", assignmentId)
+      .eq("status", "in_progress")
+      .maybeSingle();
+    if (recoveredAttempt) return recoveredAttempt.id;
     throw new Error("시험을 시작하지 못했습니다.");
   }
 

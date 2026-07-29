@@ -14,6 +14,10 @@ import {
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import {
+  finalizeQuizAttemptIfStale,
+  finalizeStaleQuizAttempts,
+} from "@/lib/services/stale-attempt-service";
+import {
   getAttemptQuestionResults,
   type AttemptQuestionResult,
 } from "@/lib/services/quiz-service";
@@ -99,6 +103,7 @@ export type AssignmentSummary = {
   timeLimitSeconds: number;
   passingScore: number;
   questionOrderMode: "fixed" | "random";
+  availableUntil: string | null;
   studentCount: number;
   createdAt: string;
 };
@@ -457,6 +462,7 @@ type HistoryAssignmentRelation = {
   time_limit_seconds: number;
   passing_score: number;
   question_order_mode: "fixed" | "random";
+  available_until: string | null;
   dataset: HistoryDatasetRelation | HistoryDatasetRelation[] | null;
   assignment_units: HistoryAssignmentUnitRelation[] | null;
 };
@@ -500,6 +506,7 @@ export async function listAssignmentHistory(): Promise<
   AssignmentHistorySummary[]
 > {
   await requireAdmin();
+  await finalizeStaleQuizAttempts();
   const supabase = await createServerSupabaseClient();
   const [
     { data: assignmentStudentData, error: assignmentStudentError },
@@ -526,6 +533,7 @@ export async function listAssignmentHistory(): Promise<
             time_limit_seconds,
             passing_score,
             question_order_mode,
+            available_until,
             dataset:vocab_datasets(title, edition),
             assignment_units(
               position,
@@ -599,6 +607,7 @@ export async function listAssignmentHistory(): Promise<
         timeLimitSeconds: assignment.time_limit_seconds,
         passingScore: assignment.passing_score,
         questionOrderMode: assignment.question_order_mode,
+        availableUntil: assignment.available_until,
         assignedAt: row.assigned_at,
       },
     ];
@@ -645,6 +654,7 @@ export async function createAssignment(input: {
   timeLimitSeconds: number;
   passingScore: number;
   questionOrderMode: "fixed" | "random";
+  availableUntil: string | null;
   studentIds: string[];
 }): Promise<string> {
   await requireAdmin();
@@ -783,7 +793,7 @@ export async function createAssignment(input: {
     .filter(Boolean)
     .join(" · ");
   const { data, error } = await supabase.rpc(
-    "create_assignment_with_question_bank_v2",
+    "create_assignment_with_question_bank_v3",
     {
       p_title: input.title || generatedTitle,
       p_dataset_id: input.datasetId,
@@ -793,6 +803,7 @@ export async function createAssignment(input: {
       p_time_limit_seconds: input.timeLimitSeconds,
       p_passing_score: input.passingScore,
       p_question_order_mode: input.questionOrderMode,
+      p_available_until: input.availableUntil,
       p_student_ids: input.studentIds,
       p_questions: questionDrafts.map((question, index) => ({
         vocab_entry_id: question.vocabEntryId,
@@ -823,7 +834,7 @@ export async function listAssignments(): Promise<AssignmentSummary[]> {
     supabase
       .from("assignments")
       .select(
-        "id, title, status, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, passing_score, question_order_mode, created_at",
+        "id, title, status, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, passing_score, question_order_mode, available_until, created_at",
       )
       .order("created_at", { ascending: false }),
     supabase.from("assignment_students").select("assignment_id"),
@@ -884,6 +895,7 @@ export async function listAssignments(): Promise<AssignmentSummary[]> {
     timeLimitSeconds: assignment.time_limit_seconds,
     passingScore: assignment.passing_score,
     questionOrderMode: assignment.question_order_mode,
+    availableUntil: assignment.available_until,
     studentCount: studentCounts.get(assignment.id) ?? 0,
     createdAt: assignment.created_at,
   }));
@@ -891,6 +903,7 @@ export async function listAssignments(): Promise<AssignmentSummary[]> {
 
 export async function listAttempts(): Promise<AttemptSummary[]> {
   await requireAdmin();
+  await finalizeStaleQuizAttempts();
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("quiz_attempts")
@@ -941,6 +954,7 @@ export async function getAdminAttemptDetail(
   if (!authenticatedAdmin) {
     await requireAdmin();
   }
+  await finalizeQuizAttemptIfStale(attemptId);
   const supabase = getServiceSupabaseClient();
   const [{ data, error }, questions] = await Promise.all([
     supabase

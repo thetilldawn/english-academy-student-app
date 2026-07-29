@@ -50,6 +50,10 @@ export const assignmentSchema = z
     timeLimitSeconds: z.coerce.number().int().min(30).max(10800),
     passingScore: z.coerce.number().int().min(0).max(100),
     questionOrderMode: z.enum(["fixed", "random"]).default("random"),
+    availableUntil: z
+      .union([z.iso.datetime({ offset: true }), z.literal(""), z.null()])
+      .optional()
+      .transform((value) => value || null),
     studentIds: z.array(z.uuid()).min(1),
   })
   .refine(

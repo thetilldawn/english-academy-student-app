@@ -9,6 +9,11 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 
+import {
+  currentTimeMilliseconds,
+  secondsUntil,
+} from "@/lib/deadline";
+
 type Question = {
   id: string;
   orderIndex: number;
@@ -53,25 +58,22 @@ type AttemptResponse = {
   error?: string;
 };
 
-function secondsUntil(deadlineAt: string) {
-  return Math.max(
-    0,
-    Math.ceil((new Date(deadlineAt).getTime() - Date.now()) / 1000),
-  );
-}
-
 function formatTime(seconds: number) {
   const minutes = Math.floor(seconds / 60);
   const remainder = seconds % 60;
   return `${minutes}:${String(remainder).padStart(2, "0")}`;
 }
 
-export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
+export function QuizPlayer({
+  initialAttempt,
+  initialRemainingSeconds,
+}: {
+  initialAttempt: Attempt;
+  initialRemainingSeconds: number;
+}) {
   const router = useRouter();
   const [attempt, setAttempt] = useState(initialAttempt);
-  const [remaining, setRemaining] = useState(() =>
-    secondsUntil(initialAttempt.deadlineAt),
-  );
+  const [remaining, setRemaining] = useState(initialRemainingSeconds);
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
   const [correctChoice, setCorrectChoice] = useState<number | null>(null);
   const [answerCorrect, setAnswerCorrect] = useState<boolean | null>(null);
@@ -144,8 +146,16 @@ export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
         return true;
       }
 
+      expireStarted.current = false;
+      timeWarningAnnounced.current = false;
+      setTimeWarning("");
       setAttempt(payload.attempt);
-      setRemaining(secondsUntil(payload.attempt.deadlineAt));
+      setRemaining(
+        secondsUntil(
+          payload.attempt.deadlineAt,
+          currentTimeMilliseconds(),
+        ) ?? 0,
+      );
       setSelectedChoice(null);
       setCorrectChoice(null);
       setAnswerCorrect(null);
@@ -157,10 +167,31 @@ export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
   }, [attempt.id, router]);
 
   useEffect(() => {
+    expireStarted.current = false;
+    timeWarningAnnounced.current = false;
+    const updateRemaining = () => {
+      setRemaining(
+        secondsUntil(
+          attempt.deadlineAt,
+          currentTimeMilliseconds(),
+        ) ?? 0,
+      );
+    };
     const timer = window.setInterval(() => {
-      setRemaining(secondsUntil(attempt.deadlineAt));
+      updateRemaining();
     }, 500);
-    return () => window.clearInterval(timer);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") updateRemaining();
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange,
+      );
+    };
   }, [attempt.deadlineAt]);
 
   useEffect(() => {

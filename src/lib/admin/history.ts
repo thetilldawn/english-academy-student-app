@@ -1,5 +1,6 @@
 export type AssignmentActivityStatus =
   | "not_started"
+  | "missed"
   | "in_progress"
   | "completed"
   | "expired";
@@ -21,6 +22,7 @@ export type AssignmentHistorySource = {
   timeLimitSeconds: number;
   passingScore: number;
   questionOrderMode: "fixed" | "random";
+  availableUntil: string | null;
   assignedAt: string;
 };
 
@@ -29,7 +31,7 @@ export type AttemptHistorySource = {
   assignmentId: string;
   studentId: string;
   attemptNumber: number;
-  status: Exclude<AssignmentActivityStatus, "not_started">;
+  status: Exclude<AssignmentActivityStatus, "not_started" | "missed">;
   phase: "initial" | "review" | "retry" | "completed";
   questionCount: number;
   timeLimitSeconds: number;
@@ -92,14 +94,24 @@ export function buildAssignmentHistory(
       ) ?? [];
 
     if (matchingAttempts.length === 0) {
+      const availableUntil = assignment.availableUntil
+        ? Date.parse(assignment.availableUntil)
+        : Number.NaN;
+      const missed =
+        !Number.isNaN(availableUntil) && availableUntil <= now;
       history.push({
         ...assignment,
-        id: `not-started:${assignment.assignmentId}:${assignment.studentId}`,
+        id: `${missed ? "missed" : "not-started"}:${
+          assignment.assignmentId
+        }:${assignment.studentId}`,
         attemptId: null,
         attemptNumber: null,
-        status: "not_started",
+        status: missed ? "missed" : "not_started",
         phase: null,
-        activityAt: assignment.assignedAt,
+        activityAt:
+          missed && assignment.availableUntil
+            ? assignment.availableUntil
+            : assignment.assignedAt,
         initialCorrectCount: null,
         retryCorrectCount: null,
         unresolvedWrongCount: null,

@@ -23,6 +23,7 @@ const assignment: AssignmentHistorySource = {
   timeLimitSeconds: 300,
   passingScore: 80,
   questionOrderMode: "random",
+  availableUntil: null,
   assignedAt: "2026-07-29T00:00:00.000Z",
 };
 
@@ -53,7 +54,7 @@ function attempt(
 }
 
 describe("buildAssignmentHistory", () => {
-  it("배정만 있고 응시가 없으면 미응시 이력을 만든다", () => {
+  it("마감이 없고 응시도 없으면 응시 전 이력을 만든다", () => {
     const [item] = buildAssignmentHistory([assignment], []);
 
     expect(item.status).toBe("not_started");
@@ -61,9 +62,42 @@ describe("buildAssignmentHistory", () => {
     expect(item.activityAt).toBe(assignment.assignedAt);
   });
 
-  it("같은 배정의 실제 응시가 있으면 가짜 미응시를 만들지 않는다", () => {
+  it("마감 전이며 응시가 없으면 응시 전 상태를 유지한다", () => {
+    const [item] = buildAssignmentHistory(
+      [
+        {
+          ...assignment,
+          availableUntil: "2026-07-31T00:00:00.000Z",
+        },
+      ],
+      [],
+      Date.parse("2026-07-30T23:59:59.999Z"),
+    );
+
+    expect(item.status).toBe("not_started");
+  });
+
+  it("마감과 같은 시각부터 무응시 배정을 미응시로 본다", () => {
+    const deadline = "2026-07-31T00:00:00.000Z";
+    const [item] = buildAssignmentHistory(
+      [{ ...assignment, availableUntil: deadline }],
+      [],
+      Date.parse(deadline),
+    );
+
+    expect(item.status).toBe("missed");
+    expect(item.activityAt).toBe(deadline);
+    expect(item.attemptId).toBeNull();
+  });
+
+  it("같은 배정의 실제 응시가 있으면 가짜 응시 전·미응시를 만들지 않는다", () => {
     const result = buildAssignmentHistory(
-      [assignment],
+      [
+        {
+          ...assignment,
+          availableUntil: "2026-07-29T00:30:00.000Z",
+        },
+      ],
       [
         attempt(),
         attempt({
@@ -75,7 +109,12 @@ describe("buildAssignmentHistory", () => {
     );
 
     expect(result).toHaveLength(2);
-    expect(result.every((item) => item.status !== "not_started")).toBe(true);
+    expect(
+      result.every(
+        (item) =>
+          item.status !== "not_started" && item.status !== "missed",
+      ),
+    ).toBe(true);
     expect(result.map((item) => item.attemptNumber)).toEqual([2, 1]);
   });
 

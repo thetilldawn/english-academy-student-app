@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { DeadlineCountdown } from "@/components/deadline-countdown";
 import { StartAttemptButton } from "@/components/start-attempt-button";
 import { requireStudentSession } from "@/lib/auth/student-session";
+import {
+  currentTimeMilliseconds,
+  secondsUntil,
+} from "@/lib/deadline";
+import { formatKoreanDateTime } from "@/lib/format";
 import { listStudentAssignments } from "@/lib/services/quiz-service";
 
 export const metadata: Metadata = {
@@ -16,7 +22,9 @@ type StudentAssignment = Awaited<
 function statusText(
   status: "in_progress" | "completed" | "expired" | null,
   phase: StudentAssignment["lastPhase"],
+  missed: boolean,
 ) {
+  if (missed) return "미응시 마감";
   if (status === "in_progress" && phase === "review") {
     return "첫 시험 결과";
   }
@@ -33,6 +41,11 @@ function AssignmentCard({
   assignment: StudentAssignment;
   featured?: boolean;
 }) {
+  const initialDeadlineRemaining = secondsUntil(
+    assignment.availableUntil,
+    currentTimeMilliseconds(),
+  );
+
   return (
     <article
       className={[
@@ -50,10 +63,16 @@ function AssignmentCard({
         </div>
         <span
           className={`status-pill status-${
-            assignment.lastStatus ?? "draft"
+            assignment.missed
+              ? "missed"
+              : (assignment.lastStatus ?? "draft")
           }`}
         >
-          {statusText(assignment.lastStatus, assignment.lastPhase)}
+          {statusText(
+            assignment.lastStatus,
+            assignment.lastPhase,
+            assignment.missed,
+          )}
         </span>
       </div>
 
@@ -86,6 +105,24 @@ function AssignmentCard({
           최근 첫 시험 점수 <strong>{assignment.lastInitialScore}점</strong>
         </p>
       )}
+
+      {assignment.availableUntil &&
+        assignment.lastStatus === null &&
+        initialDeadlineRemaining !== null && (
+          <div className="assignment-deadline">
+            <span>
+              응시 시작 마감{" "}
+              <strong>
+                {formatKoreanDateTime(assignment.availableUntil)}
+              </strong>
+            </span>
+            <DeadlineCountdown
+              deadlineAt={assignment.availableUntil}
+              initialRemainingSeconds={initialDeadlineRemaining}
+              refreshOnExpire={!assignment.missed}
+            />
+          </div>
+        )}
 
       <div className="inline-actions assignment-actions">
         {assignment.lastStatus === "in_progress" &&
@@ -161,6 +198,8 @@ export default async function StudentDashboardPage() {
   const primaryHeading =
     primaryAssignment?.lastPhase === "review"
       ? "첫 시험 결과"
+      : primaryAssignment?.missed
+        ? "마감된 시험"
       : primaryAssignment?.lastStatus === "in_progress" ||
     primaryAssignment?.canStart
       ? "지금 할 시험"

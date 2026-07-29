@@ -39,6 +39,7 @@ type ProgressItem = {
   latestAssignmentTitle: string | null;
   latestStatus:
     | "not_started"
+    | "missed"
     | "in_progress"
     | "completed"
     | "expired"
@@ -71,7 +72,8 @@ type ApiResponse = {
 };
 
 function activityStatusText(status: ProgressItem["latestStatus"]) {
-  if (status === "not_started") return "미응시";
+  if (status === "not_started") return "응시 전";
+  if (status === "missed") return "미응시 마감";
   if (status === "in_progress") return "응시 중";
   if (status === "completed") return "완료";
   if (status === "expired") return "시간 종료";
@@ -734,13 +736,9 @@ export function StudentManager({
                       <div>
                         <strong>{item.assignmentTitle}</strong>
                         <span>
-                          {item.status === "not_started"
-                            ? "미응시"
-                            : activityStatusText(item.status)}
+                          {activityStatusText(item.status)}
                           {" · "}
-                          {formatKoreanDateTime(
-                            item.startedAt ?? item.assignedAt,
-                          )}
+                          {formatKoreanDateTime(item.activityAt)}
                         </span>
                       </div>
                       <div className="student-history-actions">

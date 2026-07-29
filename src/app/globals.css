@@ -772,7 +772,8 @@ textarea {
 }
 
 .status-blocked,
-.status-expired {
+.status-expired,
+.status-missed {
   color: var(--red);
   background: var(--red-soft);
 }
@@ -1021,6 +1022,29 @@ textarea {
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
+}
+
+.assignment-deadline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: var(--muted);
+  background: #f3f4ef;
+  font-size: 13px;
+}
+
+.deadline-countdown {
+  color: var(--green-dark);
+  font-variant-numeric: tabular-nums;
+  font-weight: 850;
+}
+
+.deadline-expired {
+  color: var(--red);
 }
 
 .detail-chip {

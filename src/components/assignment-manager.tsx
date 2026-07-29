@@ -11,6 +11,11 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 
+import {
+  currentTimeMilliseconds,
+  koreanDateTimeLocalToIso,
+} from "@/lib/deadline";
+
 type DatasetItem = {
   id: string;
   title: string;
@@ -46,6 +51,7 @@ type ProgressItem = {
   latestAssignmentTitle: string | null;
   latestStatus:
     | "not_started"
+    | "missed"
     | "in_progress"
     | "completed"
     | "expired"
@@ -89,7 +95,8 @@ function unitRangeLabel(labels: string[]) {
 }
 
 function statusLabel(status: ProgressItem["latestStatus"]) {
-  if (status === "not_started") return "미응시";
+  if (status === "not_started") return "응시 전";
+  if (status === "missed") return "미응시 마감";
   if (status === "in_progress") return "응시 중";
   if (status === "completed") return "완료";
   if (status === "expired") return "시간 종료";
@@ -183,6 +190,7 @@ export function AssignmentManager({
   >("random");
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(5);
   const [passingScore, setPassingScore] = useState(80);
+  const [availableUntilLocal, setAvailableUntilLocal] = useState("");
   const [customTitle, setCustomTitle] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -319,6 +327,7 @@ export function AssignmentManager({
     setDatasetId(nextDatasetId);
     setStartUnitId(nextRecommendedUnitId);
     setEndUnitId(nextRecommendedUnitId);
+    setAvailableUntilLocal("");
     setCustomTitle("");
     setError("");
     setSuccess("");
@@ -359,6 +368,17 @@ export function AssignmentManager({
     event.preventDefault();
     setError("");
     setSuccess("");
+    const availableUntil = availableUntilLocal
+      ? koreanDateTimeLocalToIso(availableUntilLocal)
+      : null;
+    if (
+      availableUntilLocal &&
+      (!availableUntil ||
+        Date.parse(availableUntil) <= currentTimeMilliseconds())
+    ) {
+      setError("응시 시작 마감은 현재보다 뒤의 한국시간으로 정해주세요.");
+      return;
+    }
     setSubmitting(true);
 
     try {
@@ -374,6 +394,7 @@ export function AssignmentManager({
           timeLimitSeconds,
           passingScore,
           questionOrderMode,
+          availableUntil,
           studentIds: [studentId],
         }),
       });
@@ -388,6 +409,7 @@ export function AssignmentManager({
       setSuccess(
         `${selectedStudent?.displayName ?? "학생"}에게 배정했습니다.`,
       );
+      setAvailableUntilLocal("");
       setCustomTitle("");
       startRefreshTransition(() => router.refresh());
     } catch (requestError) {
@@ -790,6 +812,24 @@ export function AssignmentManager({
                   />
                 </label>
               </div>
+              <label className="field">
+                <span className="field-label">
+                  응시 시작 마감 · 선택 · 한국시간
+                </span>
+                <input
+                  onChange={(event) =>
+                    setAvailableUntilLocal(event.target.value)
+                  }
+                  step={60}
+                  type="datetime-local"
+                  value={availableUntilLocal}
+                />
+                <span className="field-help">
+                  이 시각까지 시험을 시작하지 않으면 미응시로
+                  기록됩니다. 이미 시작한 시험은 단계별 제한시간을
+                  따릅니다.
+                </span>
+              </label>
             </section>
 
             <section className="assignment-step assignment-review-step">
@@ -843,6 +883,14 @@ export function AssignmentManager({
                     <dd>
                       {questionCount}문항 · {timeLimitMinutes}분 ·{" "}
                       {passingScore}점
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>응시 시작 마감</dt>
+                    <dd>
+                      {availableUntilLocal
+                        ? `${availableUntilLocal.replace("T", " ")} · 한국시간`
+                        : "마감 없음"}
                     </dd>
                   </div>
                 </dl>

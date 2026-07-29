@@ -49,6 +49,12 @@ const explicitRetryReviewMigration = fs.readFileSync(
   ),
   "utf8",
 );
+const assignmentDeadlineMigration = fs.readFileSync(
+  path.resolve(
+    "supabase/migrations/20260730103000_add_assignment_deadlines_and_stale_finalizer.sql",
+  ),
+  "utf8",
+);
 const config = fs.readFileSync(
   path.resolve("supabase/config.toml"),
   "utf8",
@@ -346,6 +352,24 @@ describe("database security contract", () => {
     );
     expect(explicitRetryReviewMigration).not.toContain(
       "security definer",
+    );
+  });
+
+  it("마감 시험을 제한 배치와 건별 경로에서 확정하고 API 스키마를 갱신한다", () => {
+    expect(assignmentDeadlineMigration).toContain(
+      "create function public.finalize_stale_quiz_attempts(",
+    );
+    expect(assignmentDeadlineMigration).toContain(
+      "for update skip locked",
+    );
+    expect(assignmentDeadlineMigration).toContain(
+      "create function public.finalize_quiz_attempt_if_stale(",
+    );
+    expect(assignmentDeadlineMigration).toContain(
+      "grant execute on function public.finalize_quiz_attempt_if_stale(uuid)",
+    );
+    expect(assignmentDeadlineMigration).toContain(
+      "notify pgrst, 'reload schema'",
     );
   });
 });

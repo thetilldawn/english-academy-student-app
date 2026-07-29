@@ -17,8 +17,9 @@ describe("DAY 문제은행 응시 계약", () => {
     expect(manager).toContain("무작위");
     expect(manager).toContain("DAY 순서");
     expect(adminService).toContain(
-      '"create_assignment_with_question_bank_v2"',
+      '"create_assignment_with_question_bank_v3"',
     );
+    expect(adminService).toContain("p_available_until");
     expect(adminService).toContain("base_order_index");
     expect(adminService).toContain("choice_vocab_entry_ids");
     expect(adminService).not.toContain(
