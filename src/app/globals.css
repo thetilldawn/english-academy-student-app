@@ -1158,6 +1158,42 @@ textarea {
   font-weight: 750;
 }
 
+.quiz-prior-wrong {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 auto 10px;
+  color: var(--orange);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.quiz-prior-wrong-repeated {
+  color: var(--red);
+}
+
+.quiz-prior-wrong-marks {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.quiz-prior-wrong-marks i {
+  width: 20px;
+  height: 20px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  color: white;
+  background: var(--orange);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.quiz-prior-wrong-repeated .quiz-prior-wrong-marks i {
+  background: var(--red);
+}
+
 .quiz-prompt {
   min-height: 88px;
   display: grid;
@@ -1168,6 +1204,16 @@ textarea {
   letter-spacing: -0.04em;
   text-align: center;
   word-break: keep-all;
+}
+
+.quiz-prompt-prior-wrong {
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--orange-soft);
+}
+
+.quiz-prompt-prior-wrong-repeated {
+  background: var(--red-soft);
 }
 
 .choice-list {

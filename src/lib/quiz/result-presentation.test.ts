@@ -9,12 +9,48 @@ describe("getResultQuestionPresentation", () => {
   it("한글→영어 결과에서 문제는 한글, 정답은 영어로 분리한다", () => {
     expect(
       getResultQuestionPresentation({
-        prompt: "현재의",
+        direction: "korean_to_english",
+        prompt: "current",
         correctAnswer: "current",
+        headword: "current",
+        primaryMeaning: "현재의",
+        provenanceStatus: "verified_v2",
       }),
     ).toEqual({
       prompt: "현재의",
       correctAnswer: "current",
+    });
+  });
+
+  it("영어→한글 결과는 단어와 뜻을 올바른 방향으로 표시한다", () => {
+    expect(
+      getResultQuestionPresentation({
+        direction: "english_to_korean",
+        prompt: "현재의",
+        correctAnswer: "현재의",
+        headword: "current",
+        primaryMeaning: "현재의",
+        provenanceStatus: "verified_v2",
+      }),
+    ).toEqual({
+      prompt: "current",
+      correctAnswer: "현재의",
+    });
+  });
+
+  it("레거시는 현재 단어행과 달라도 당시 문제 표시를 유지한다", () => {
+    expect(
+      getResultQuestionPresentation({
+        direction: "korean_to_english",
+        prompt: "당시 뜻",
+        correctAnswer: "old-headword",
+        headword: "current",
+        primaryMeaning: "현재 뜻",
+        provenanceStatus: "legacy_backfill",
+      }),
+    ).toEqual({
+      prompt: "당시 뜻",
+      correctAnswer: "old-headword",
     });
   });
 });

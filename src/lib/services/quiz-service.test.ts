@@ -41,6 +41,7 @@ describe("mapResultQuestions", () => {
 
     expect(result.headword).toBe("snapshot");
     expect(result.primaryMeaning).toBe("당시 뜻");
+    expect(result.provenanceStatus).toBe("verified_v2");
     expect(result.correctAnswer).toBe("현재 뜻");
     expect(result.initialChoice).toBe("보기 2");
     expect(result.retryChoice).toBe("현재 뜻");
@@ -51,6 +52,7 @@ describe("mapResultQuestions", () => {
 
     expect(result.headword).toBe("current");
     expect(result.primaryMeaning).toBe("현재 뜻");
+    expect(result.provenanceStatus).toBe("legacy_backfill");
   });
 
   it("검증되지 않은 레거시 backfill은 현재 단어 행을 우선한다", () => {
@@ -66,5 +68,6 @@ describe("mapResultQuestions", () => {
 
     expect(result.headword).toBe("current");
     expect(result.primaryMeaning).toBe("현재 뜻");
+    expect(result.provenanceStatus).toBe("legacy_backfill");
   });
 });

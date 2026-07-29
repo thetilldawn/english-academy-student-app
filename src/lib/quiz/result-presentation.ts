@@ -1,6 +1,10 @@
 export type ResultQuestionPresentationInput = {
+  direction: "english_to_korean" | "korean_to_english";
   prompt: string;
   correctAnswer: string;
+  headword: string;
+  primaryMeaning: string;
+  provenanceStatus: "legacy_backfill" | "verified_v2";
 };
 
 export type ResultQuestionMetricInput = {
@@ -11,6 +15,24 @@ export type ResultQuestionMetricInput = {
 export function getResultQuestionPresentation(
   question: ResultQuestionPresentationInput,
 ) {
+  const headword = question.headword.trim();
+  const primaryMeaning = question.primaryMeaning.trim();
+  if (
+    question.provenanceStatus === "verified_v2" &&
+    headword &&
+    primaryMeaning
+  ) {
+    return question.direction === "english_to_korean"
+      ? {
+          prompt: headword,
+          correctAnswer: primaryMeaning,
+        }
+      : {
+          prompt: primaryMeaning,
+          correctAnswer: headword,
+        };
+  }
+
   return {
     prompt: question.prompt,
     correctAnswer: question.correctAnswer,

@@ -69,6 +69,7 @@ export type AttemptQuestionResult = {
   retryIsCorrect: boolean | null;
   headword: string;
   primaryMeaning: string;
+  provenanceStatus: "legacy_backfill" | "verified_v2";
 };
 
 type AssignmentRow = {
@@ -189,6 +190,9 @@ export function mapResultQuestions(
         verifiedSnapshot?.primary_meaning_snapshot ??
         vocabulary?.primary_meaning ??
         "",
+      provenanceStatus: verifiedSnapshot
+        ? "verified_v2"
+        : "legacy_backfill",
     };
   });
 }

@@ -13,6 +13,10 @@ import {
   currentTimeMilliseconds,
   secondsUntil,
 } from "@/lib/deadline";
+import { getPriorWrongIndicator } from "@/lib/quiz/prior-wrong";
+
+const CORRECT_FEEDBACK_DELAY_MS = 100;
+const WRONG_FEEDBACK_DELAY_MS = 220;
 
 type Question = {
   id: string;
@@ -111,6 +115,9 @@ export function QuizPlayer({
     phaseQuestions.length === 0
       ? 100
       : Math.round((completedInPhase / phaseQuestions.length) * 100);
+  const priorWrongIndicator = currentQuestion
+    ? getPriorWrongIndicator(currentQuestion.priorWrongLevel)
+    : null;
 
   const expireAttempt = useCallback(async () => {
     if (expireStarted.current) return;
@@ -121,7 +128,6 @@ export function QuizPlayer({
       });
     } finally {
       router.replace(`/student/result/${attempt.id}`);
-      router.refresh();
     }
   }, [attempt.id, router]);
 
@@ -143,7 +149,6 @@ export function QuizPlayer({
       ) {
         setSubmitting(false);
         router.replace(`/student/result/${attempt.id}`);
-        router.refresh();
         return true;
       }
 
@@ -248,7 +253,6 @@ export function QuizPlayer({
         }
         if (payload.expired) {
           router.replace(`/student/result/${attempt.id}`);
-          router.refresh();
           return;
         }
 
@@ -260,17 +264,17 @@ export function QuizPlayer({
         );
 
         const answeredPhase = attempt.phase;
-        const feedbackDelay = payload.correct ? 220 : 420;
+        const feedbackDelay = payload.correct
+          ? CORRECT_FEEDBACK_DELAY_MS
+          : WRONG_FEEDBACK_DELAY_MS;
         window.setTimeout(() => {
           if (payload.completed) {
             router.replace(`/student/result/${attempt.id}`);
-            router.refresh();
             return;
           }
 
           if (payload.needsRetry && answeredPhase === "initial") {
             router.replace(`/student/result/${attempt.id}`);
-            router.refresh();
             return;
           }
 
@@ -410,8 +414,42 @@ export function QuizPlayer({
           ? "알맞은 뜻을 고르세요"
           : "알맞은 영어 단어를 고르세요"}
       </p>
+      {priorWrongIndicator && (
+        <div
+          className={[
+            "quiz-prior-wrong",
+            priorWrongIndicator.markerCount === 2
+              ? "quiz-prior-wrong-repeated"
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          id="quiz-prior-wrong"
+        >
+          <span aria-hidden="true" className="quiz-prior-wrong-marks">
+            {Array.from(
+              { length: priorWrongIndicator.markerCount },
+              (_, index) => (
+                <i key={index}>!</i>
+              ),
+            )}
+          </span>
+          <span>{priorWrongIndicator.label}</span>
+        </div>
+      )}
       <h1
-        className="quiz-prompt"
+        aria-describedby={
+          priorWrongIndicator ? "quiz-prior-wrong" : undefined
+        }
+        className={[
+          "quiz-prompt",
+          priorWrongIndicator ? "quiz-prompt-prior-wrong" : "",
+          priorWrongIndicator?.markerCount === 2
+            ? "quiz-prompt-prior-wrong-repeated"
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
         id="quiz-prompt"
         ref={promptRef}
         tabIndex={-1}
