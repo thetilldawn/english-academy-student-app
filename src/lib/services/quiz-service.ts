@@ -39,6 +39,7 @@ export type AttemptQuestionState = {
   initialIsCorrect: boolean | null;
   retryChoiceIndex: number | null;
   retryIsCorrect: boolean | null;
+  priorWrongLevel: 0 | 1 | 2;
   revealedCorrectChoiceIndex: number | null;
 };
 
@@ -108,6 +109,7 @@ type QuestionRow = {
   initial_is_correct: boolean | null;
   retry_choice_index: number | null;
   retry_is_correct: boolean | null;
+  prior_wrong_count: number;
 };
 
 type ResultQuestionRow = {
@@ -506,7 +508,7 @@ export async function getStudentAttempt(
       supabase
         .from("quiz_questions")
         .select(
-          "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct",
+          "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, prior_wrong_count",
         )
         .eq("attempt_id", attemptId)
         .order("order_index"),
@@ -555,6 +557,12 @@ export async function getStudentAttempt(
         initialIsCorrect: question.initial_is_correct,
         retryChoiceIndex: question.retry_choice_index,
         retryIsCorrect: question.retry_is_correct,
+        priorWrongLevel:
+          question.prior_wrong_count >= 2
+            ? 2
+            : question.prior_wrong_count === 1
+              ? 1
+              : 0,
         revealedCorrectChoiceIndex: answered
           ? question.correct_choice_index
           : null,

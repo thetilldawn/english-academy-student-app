@@ -24,6 +24,7 @@ type Question = {
   initialIsCorrect: boolean | null;
   retryChoiceIndex: number | null;
   retryIsCorrect: boolean | null;
+  priorWrongLevel: 0 | 1 | 2;
   revealedCorrectChoiceIndex: number | null;
 };
 
