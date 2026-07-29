@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   calculateQuizScore,
   createQuizQuestions,
+  createTargetedQuizQuestions,
   type QuizVocabularyEntry,
 } from "@/lib/quiz/engine";
 
@@ -160,6 +161,194 @@ describe("createQuizQuestions", () => {
         seededRandom(19),
       ),
     ).toThrow("문제 방향별로 검증된 단어가 부족합니다.");
+  });
+});
+
+describe("createTargetedQuizQuestions", () => {
+  it.each([1, 2, 3])(
+    "복습 대상 %i개를 빠짐없이 출제하고 각 문항은 4지선다로 만든다",
+    (targetCount) => {
+      const targets = entries.slice(0, targetCount);
+      const questions = createTargetedQuizQuestions(
+        targets,
+        entries,
+        50,
+        seededRandom(targetCount),
+      );
+
+      expect(questions).toHaveLength(targetCount);
+      expect(
+        new Set(questions.map((question) => question.vocabEntryId)),
+      ).toEqual(new Set(targets.map((entry) => entry.id)));
+      expect(
+        questions.filter(
+          (question) =>
+            question.direction === "english_to_korean",
+        ),
+      ).toHaveLength(Math.round(targetCount * 0.5));
+
+      for (const question of questions) {
+        expect(question.choices).toHaveLength(4);
+        expect(new Set(question.choices)).toHaveLength(4);
+        expect(question.choiceVocabEntryIds).toHaveLength(4);
+        expect(new Set(question.choiceVocabEntryIds)).toHaveLength(4);
+        expect(
+          question.choiceVocabEntryIds[
+            question.correctChoiceIndex
+          ],
+        ).toBe(question.vocabEntryId);
+      }
+    },
+  );
+
+  it("대상 단어의 검증 방향을 지키면서 요청 비율을 맞춘다", () => {
+    const candidates = entries.map((entry, index) => ({
+      ...entry,
+      eligibleDirections:
+        index === 0
+          ? (["english_to_korean"] as const)
+          : index === 1
+            ? (["korean_to_english"] as const)
+            : ([
+                "english_to_korean",
+                "korean_to_english",
+              ] as const),
+    }));
+    const questions = createTargetedQuizQuestions(
+      candidates.slice(0, 4),
+      candidates,
+      50,
+      seededRandom(31),
+    );
+    const directionById = new Map(
+      questions.map((question) => [
+        question.vocabEntryId,
+        question.direction,
+      ]),
+    );
+
+    expect(directionById.get(1)).toBe("english_to_korean");
+    expect(directionById.get(2)).toBe("korean_to_english");
+    expect(
+      questions.filter(
+        (question) =>
+          question.direction === "english_to_korean",
+      ),
+    ).toHaveLength(2);
+  });
+
+  it("검증 방향으로 요청 비율을 만들 수 없으면 중단한다", () => {
+    const englishOnly = entries.map((entry) => ({
+      ...entry,
+      eligibleDirections: ["english_to_korean"] as const,
+    }));
+
+    expect(() =>
+      createTargetedQuizQuestions(
+        englishOnly.slice(0, 2),
+        englishOnly,
+        0,
+        seededRandom(37),
+      ),
+    ).toThrow("요청 비율을 만들 수 없습니다.");
+  });
+
+  it("중복 대상과 후보 범위 밖 대상을 거부한다", () => {
+    expect(() =>
+      createTargetedQuizQuestions(
+        [entries[0], entries[0]],
+        entries,
+        100,
+        seededRandom(41),
+      ),
+    ).toThrow("같은 표제어를 겹치지 않고 1~500개");
+
+    expect(() =>
+      createTargetedQuizQuestions(
+        [
+          {
+            id: 999,
+            headword: "outside",
+            primaryMeaning: "범위 밖",
+          },
+        ],
+        entries,
+        100,
+        seededRandom(43),
+      ),
+    ).toThrow("보기 후보 범위에 없습니다.");
+  });
+
+  it("보기 후보가 부족하면 대상이 한 개여도 시험을 만들지 않는다", () => {
+    expect(() =>
+      createTargetedQuizQuestions(
+        [entries[0]],
+        entries.slice(0, 3),
+        100,
+        seededRandom(47),
+      ),
+    ).toThrow("서로 다른 4지선다 보기를 만들 어휘가 부족합니다.");
+  });
+
+  it("입력한 대상 순서를 보존해 고정 순서 문제은행을 만들 수 있다", () => {
+    const targets = [entries[2], entries[0], entries[1]];
+    const questions = createTargetedQuizQuestions(
+      targets,
+      entries,
+      50,
+      seededRandom(53),
+    );
+
+    expect(questions.map((question) => question.vocabEntryId)).toEqual(
+      targets.map((entry) => entry.id),
+    );
+  });
+
+  it("같은 canonical 단어를 대상이나 오답 보기에 중복 사용하지 않는다", () => {
+    const candidates: QuizVocabularyEntry[] = [
+      { ...entries[0], canonicalKey: "same-word" },
+      {
+        ...entries[1],
+        headword: "alternate spelling",
+        primaryMeaning: "다른 표기",
+        canonicalKey: "same-word",
+      },
+      ...entries.slice(2).map((entry) => ({
+        ...entry,
+        canonicalKey: `word-${entry.id}`,
+      })),
+    ];
+
+    expect(() =>
+      createTargetedQuizQuestions(
+        candidates.slice(0, 2).map((entry, index) => ({
+          ...entry,
+          canonicalKey: `untrusted-${index}`,
+        })),
+        candidates,
+        50,
+        seededRandom(59),
+      ),
+    ).toThrow("같은 표제어를 겹치지 않고 1~500개");
+
+    const [question] = createTargetedQuizQuestions(
+      [candidates[0]],
+      candidates,
+      100,
+      seededRandom(61),
+    );
+    expect(question.choiceVocabEntryIds).not.toContain(candidates[1].id);
+  });
+
+  it("복습 시험 방향 비율은 화면 계약인 0, 50, 100만 허용한다", () => {
+    expect(() =>
+      createTargetedQuizQuestions(
+        entries.slice(0, 4),
+        entries,
+        25,
+        seededRandom(67),
+      ),
+    ).toThrow("0, 50, 100");
   });
 });
 
