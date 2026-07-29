@@ -53,15 +53,18 @@ describe("exact review assignment app contract", () => {
     const service = source(
       "src/lib/services/review-assignment-service.ts",
     );
-    expect(service).toContain("RELATION_PAGE_SIZE = 1000");
-    expect(service).toContain('.from("vocab_entries")');
-    expect(service).toContain(
+    const loader = source(
+      "src/lib/services/eligible-vocabulary-service.ts",
+    );
+    expect(loader).toContain(
+      "ELIGIBLE_VOCABULARY_PAGE_SIZE = 1000",
+    );
+    expect(loader).toContain('.from("vocab_entries")');
+    expect(loader).toContain(
       '.from("vocab_entry_quiz_eligibility")',
     );
-    expect(service).toContain('.eq("status", "eligible")');
-    expect(service).toContain("canonicalKey:");
-    expect(service).toContain("eligibleDirections:");
-    expect(service).toContain("canonicalKeys.size > 1");
+    expect(loader).toContain('.eq("status", "eligible")');
+    expect(service).toContain("loadEligibleVocabularyDataset(");
     expect(service).toContain("createTargetedQuizQuestions(");
     expect(service).toContain(
       '"create_exact_review_assignment_v4"',

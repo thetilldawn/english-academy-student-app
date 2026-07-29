@@ -9,14 +9,12 @@ import {
 } from "@/lib/auth/admin";
 import {
   createTargetedQuizQuestions,
-  type QuizDirection,
-  type QuizVocabularyEntry,
 } from "@/lib/quiz/engine";
+import { loadEligibleVocabularyDataset } from "@/lib/services/eligible-vocabulary-service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 
 const REVIEW_DRAFT_FINALIZE_LIMIT = 400;
-const RELATION_PAGE_SIZE = 1000;
 const ID_FILTER_CHUNK_SIZE = 80;
 const MAX_ASSIGNMENT_TITLE_LENGTH = 160;
 const REVIEW_TITLE_SUFFIX = " · 오답 재시험";
@@ -37,21 +35,6 @@ type DraftItemRow = {
 type ReviewQueueRow = {
   id: string;
   vocab_entry_id: number;
-};
-
-type VocabularyEntryRow = {
-  id: number;
-  source_row: number;
-  headword: string;
-  primary_meaning: string;
-};
-
-type EligibilityRow = {
-  vocab_entry_id: number;
-  quiz_mode:
-    | "book_meaning_en_to_ko"
-    | "book_meaning_ko_to_en";
-  canonical_lexeme_id: string | null;
 };
 
 type ReviewDraftContext = {
@@ -247,94 +230,6 @@ export async function getReviewAssignmentDraftSummary(
   return (await loadReviewDraftContext(supabase, reviewDraftId))?.summary ?? null;
 }
 
-async function loadReviewVocabulary(
-  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
-  datasetId: string,
-) {
-  const [entries, eligibilityRows] = await Promise.all([
-    (async () => {
-      const rows: VocabularyEntryRow[] = [];
-      for (let offset = 0; ; offset += RELATION_PAGE_SIZE) {
-        const { data, error } = await supabase
-          .from("vocab_entries")
-          .select("id, source_row, headword, primary_meaning")
-          .eq("dataset_id", datasetId)
-          .order("source_row")
-          .range(offset, offset + RELATION_PAGE_SIZE - 1);
-        if (error) {
-          throw new Error("단어장의 어휘를 불러오지 못했습니다.");
-        }
-        rows.push(...((data ?? []) as VocabularyEntryRow[]));
-        if (!data || data.length < RELATION_PAGE_SIZE) break;
-      }
-      return rows;
-    })(),
-    (async () => {
-      const rows: EligibilityRow[] = [];
-      for (let offset = 0; ; offset += RELATION_PAGE_SIZE) {
-        const { data, error } = await supabase
-          .from("vocab_entry_quiz_eligibility")
-          .select("vocab_entry_id, quiz_mode, canonical_lexeme_id")
-          .eq("dataset_id", datasetId)
-          .eq("status", "eligible")
-          .order("vocab_entry_id")
-          .order("quiz_mode")
-          .range(offset, offset + RELATION_PAGE_SIZE - 1);
-        if (error) {
-          throw new Error(
-            "출제 가능한 어휘 정보를 불러오지 못했습니다.",
-          );
-        }
-        rows.push(...((data ?? []) as EligibilityRow[]));
-        if (!data || data.length < RELATION_PAGE_SIZE) break;
-      }
-      return rows;
-    })(),
-  ]);
-
-  const eligibilityByEntry = new Map<
-    number,
-    {
-      canonicalKeys: Set<string>;
-      directions: Set<QuizDirection>;
-    }
-  >();
-  for (const row of eligibilityRows) {
-    const current = eligibilityByEntry.get(row.vocab_entry_id) ?? {
-      canonicalKeys: new Set<string>(),
-      directions: new Set<QuizDirection>(),
-    };
-    current.directions.add(
-      row.quiz_mode === "book_meaning_en_to_ko"
-        ? "english_to_korean"
-        : "korean_to_english",
-    );
-    if (row.canonical_lexeme_id) {
-      current.canonicalKeys.add(row.canonical_lexeme_id);
-    }
-    eligibilityByEntry.set(row.vocab_entry_id, current);
-  }
-
-  const candidates: QuizVocabularyEntry[] = [];
-  for (const entry of entries) {
-    const eligibility = eligibilityByEntry.get(entry.id);
-    if (!eligibility || eligibility.directions.size === 0) continue;
-    if (eligibility.canonicalKeys.size > 1) {
-      throw new Error(
-        "한 단어의 출제 방향별 표준 표제어 연결이 서로 다릅니다.",
-      );
-    }
-    candidates.push({
-      id: entry.id,
-      headword: entry.headword,
-      primaryMeaning: entry.primary_meaning,
-      canonicalKey: [...eligibility.canonicalKeys][0] ?? null,
-      eligibleDirections: [...eligibility.directions],
-    });
-  }
-  return candidates;
-}
-
 export async function createExactReviewAssignment(
   input: ExactReviewAssignmentInput,
   authenticatedAdmin?: AdminContext,
@@ -358,7 +253,7 @@ export async function createExactReviewAssignment(
     throw new ReviewAssignmentError("unavailable");
   }
 
-  const candidates = await loadReviewVocabulary(
+  const candidates = await loadEligibleVocabularyDataset(
     supabase,
     context.summary.datasetId,
   );
