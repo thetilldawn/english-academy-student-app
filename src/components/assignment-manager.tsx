@@ -758,7 +758,9 @@ export function AssignmentManager({
                   />
                 </label>
                 <label className="field">
-                  <span className="field-label">전체 시험 시간(분)</span>
+                  <span className="field-label">
+                    시험 단계별 제한 시간(분)
+                  </span>
                   <input
                     max={180}
                     min={1}
@@ -769,6 +771,10 @@ export function AssignmentManager({
                     type="number"
                     value={timeLimitMinutes}
                   />
+                  <span className="field-help">
+                    첫 시험과 재시험을 시작할 때 각각 같은 시간이
+                    주어집니다.
+                  </span>
                 </label>
                 <label className="field">
                   <span className="field-label">통과 점수</span>
@@ -849,7 +855,7 @@ export function AssignmentManager({
               {(timeLimitSeconds < 30 ||
                 timeLimitSeconds > 10800) && (
                 <div className="notice notice-error" role="alert">
-                  계산된 전체 시험 시간은 30초 이상 180분 이하여야
+                  계산된 단계별 제한 시간은 30초 이상 180분 이하여야
                   합니다.
                 </div>
               )}

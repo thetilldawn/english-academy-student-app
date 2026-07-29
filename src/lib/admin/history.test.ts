@@ -35,6 +35,7 @@ function attempt(
     studentId: assignment.studentId,
     attemptNumber: 1,
     status: "completed",
+    phase: "completed",
     questionCount: 10,
     timeLimitSeconds: 240,
     passingScore: 85,
@@ -110,5 +111,29 @@ describe("buildAssignmentHistory", () => {
     );
 
     expect(item.status).toBe("expired");
+  });
+
+  it("첫 시험 결과 검토 단계는 과거 제한시간이 지나도 진행 상태다", () => {
+    const [item] = buildAssignmentHistory(
+      [assignment],
+      [
+        attempt({
+          status: "in_progress",
+          phase: "review",
+          initialCorrectCount: null,
+          retryCorrectCount: null,
+          unresolvedWrongCount: null,
+          initialScore: null,
+          finalScore: null,
+          passed: null,
+          completedAt: null,
+          deadlineAt: "2026-07-29T01:02:00.000Z",
+        }),
+      ],
+      Date.parse("2026-07-29T01:03:00.000Z"),
+    );
+
+    expect(item.status).toBe("in_progress");
+    expect(item.phase).toBe("review");
   });
 });

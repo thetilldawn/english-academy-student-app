@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { StartRetryButton } from "@/components/start-retry-button";
 import { requireStudentSession } from "@/lib/auth/student-session";
 import { formatElapsed } from "@/lib/format";
+import { getResultQuestionPresentation } from "@/lib/quiz/result-presentation";
 import { getAttemptResult } from "@/lib/services/quiz-service";
 
 export const metadata: Metadata = {
@@ -16,28 +18,37 @@ type ResultQuestion = NonNullable<
 
 function QuestionReviewCard({
   question,
+  reviewPending,
 }: {
   question: ResultQuestion;
+  reviewPending: boolean;
 }) {
   const resolved = question.retryIsCorrect === true;
+  const presentation = getResultQuestionPresentation(question);
 
   return (
     <article className="card result-question">
       <div className="title-with-status">
         <div>
           <p className="eyebrow">문항 {question.orderIndex}</p>
-          <h3>{question.headword || question.prompt}</h3>
+          <h3>{presentation.prompt}</h3>
         </div>
         <span
           className={`status-pill ${
-            resolved ? "status-completed" : "status-expired"
+            resolved
+              ? "status-completed"
+              : reviewPending
+                ? "status-in_progress"
+                : "status-expired"
           }`}
         >
           {resolved
             ? "다시 맞힘"
             : question.retryIsCorrect === false
               ? "다시 틀림"
-              : "미완료"}
+              : reviewPending
+                ? "재시험 전"
+                : "미완료"}
         </span>
       </div>
       <dl className="answer-detail answer-detail-3">
@@ -47,11 +58,14 @@ function QuestionReviewCard({
         </div>
         <div>
           <dt>재시험</dt>
-          <dd>{question.retryChoice ?? "선택 안 함"}</dd>
+          <dd>
+            {question.retryChoice ??
+              (reviewPending ? "재시험 전" : "선택 안 함")}
+          </dd>
         </div>
         <div>
           <dt>정답</dt>
-          <dd>{question.correctAnswer}</dd>
+          <dd>{presentation.correctAnswer}</dd>
         </div>
       </dl>
     </article>
@@ -70,7 +84,9 @@ export default async function StudentResultPage({
   const result = await getAttemptResult(session.studentId, id);
 
   if (!result) notFound();
-  if (result.status === "in_progress") {
+  const reviewPending =
+    result.status === "in_progress" && result.phase === "review";
+  if (result.status === "in_progress" && !reviewPending) {
     redirect(`/student/attempt/${result.id}`);
   }
 
@@ -100,11 +116,19 @@ export default async function StudentResultPage({
       >
         <div>
           <p className="eyebrow">
-            {expired ? "TIME ENDED" : result.passed ? "PASSED" : "COMPLETED"}
+            {reviewPending
+              ? "FIRST TEST RESULT"
+              : expired
+                ? "TIME ENDED"
+                : result.passed
+                  ? "PASSED"
+                  : "COMPLETED"}
           </p>
           <h1>{result.title}</h1>
           <p>
-            {expired
+            {reviewPending
+              ? "틀린 단어를 확인한 뒤 재시험을 시작할 수 있습니다."
+              : expired
               ? "제한시간이 끝났습니다."
               : result.passed
                 ? "통과했습니다."
@@ -122,14 +146,18 @@ export default async function StudentResultPage({
           className="result-review"
         >
           <div className="section-heading">
-            <h2 id="unresolved-heading">다시 볼 단어</h2>
+            <h2 id="unresolved-heading">
+              {reviewPending ? "한 번 틀린 단어" : "다시 볼 단어"}
+            </h2>
             <span className="detail-chip">
               {unresolvedQuestions.length}개
             </span>
           </div>
           {unresolvedQuestions.length === 0 ? (
             <div className="empty-state">
-              다시 확인할 단어가 남지 않았습니다.
+              {reviewPending
+                ? "첫 시험에서 틀린 단어가 없습니다."
+                : "다시 확인할 단어가 남지 않았습니다."}
             </div>
           ) : (
             <div className="result-question-list">
@@ -137,6 +165,7 @@ export default async function StudentResultPage({
                 <QuestionReviewCard
                   key={question.id}
                   question={question}
+                  reviewPending={reviewPending}
                 />
               ))}
             </div>
@@ -153,11 +182,15 @@ export default async function StudentResultPage({
               </strong>
             </div>
             <div>
-              <span>한 번 틀린 단어</span>
-              <strong>{result.retryCorrectCount ?? "-"}</strong>
+              <span>재시험 정답</span>
+              <strong>
+                {reviewPending ? "-" : (result.retryCorrectCount ?? "-")}
+              </strong>
             </div>
             <div>
-              <span>다시 볼 단어</span>
+              <span>
+                {reviewPending ? "재시험 대상 단어" : "다시 볼 단어"}
+              </span>
               <strong>{result.unresolvedWrongCount ?? "-"}</strong>
             </div>
           </section>
@@ -166,7 +199,9 @@ export default async function StudentResultPage({
             <div>
               <span>재시험 후 점수</span>
               <strong>
-                {result.finalScore === null ? "-" : `${result.finalScore}점`}
+                {reviewPending || result.finalScore === null
+                  ? "-"
+                  : `${result.finalScore}점`}
               </strong>
             </div>
             <div>
@@ -179,7 +214,13 @@ export default async function StudentResultPage({
             </div>
           </section>
 
-          <Link className="button button-primary" href="/student">
+          {reviewPending && <StartRetryButton attemptId={result.id} />}
+          <Link
+            className={`button ${
+              reviewPending ? "button-quiet" : "button-primary"
+            }`}
+            href="/student"
+          >
             내 시험으로 돌아가기
           </Link>
         </aside>
@@ -195,7 +236,11 @@ export default async function StudentResultPage({
           </div>
           <div className="result-question-list result-question-grid">
             {resolvedQuestions.map((question) => (
-              <QuestionReviewCard key={question.id} question={question} />
+              <QuestionReviewCard
+                key={question.id}
+                question={question}
+                reviewPending={false}
+              />
             ))}
           </div>
         </section>

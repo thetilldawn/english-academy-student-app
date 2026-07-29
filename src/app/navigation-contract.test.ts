@@ -166,4 +166,38 @@ describe("responsive navigation contract", () => {
     expect(historyList).toContain("미응시");
     expect(historyList).toContain("/api/admin/attempts/");
   });
+
+  it("첫 시험 뒤 결과를 먼저 보여주고 학생이 재시험을 시작한다", () => {
+    const quizPlayer = source("src/components/quiz-player.tsx");
+    const resultPage = source(
+      "src/app/student/(protected)/result/[id]/page.tsx",
+    );
+    const retryButton = source(
+      "src/components/start-retry-button.tsx",
+    );
+    const retryRoute = source(
+      "src/app/api/student/attempts/[id]/retry/route.ts",
+    );
+    const studentHome = source(
+      "src/app/student/(protected)/page.tsx",
+    );
+
+    expect(quizPlayer).toContain(
+      'payload.needsRetry && answeredPhase === "initial"',
+    );
+    expect(resultPage).toContain(
+      'result.status === "in_progress" && result.phase === "review"',
+    );
+    expect(resultPage).toContain("<StartRetryButton");
+    expect(retryButton).toContain('"재시험 준비 중…" : "재시험 시작"');
+    expect(retryRoute).toContain("isSameOriginRequest(request)");
+    expect(retryRoute).toContain("startStudentRetry");
+    expect(studentHome).toContain('assignment.lastPhase === "review"');
+    expect(studentHome).toContain(
+      "결과 확인·재시험 선택",
+    );
+    expect(studentHome).toContain(
+      "href={`/student/result/${assignment.lastAttemptId}`}",
+    );
+  });
 });

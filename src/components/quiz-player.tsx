@@ -26,7 +26,7 @@ type Attempt = {
   id: string;
   assignmentTitle: string;
   status: "in_progress" | "completed" | "expired";
-  phase: "initial" | "retry" | "completed";
+  phase: "initial" | "review" | "retry" | "completed";
   startedAt: string;
   deadlineAt: string;
   questions: Question[];
@@ -135,6 +135,7 @@ export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
 
       if (
         payload.attempt.status !== "in_progress" ||
+        payload.attempt.phase === "review" ||
         payload.attempt.phase === "completed"
       ) {
         setSubmitting(false);
@@ -230,6 +231,12 @@ export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
         const feedbackDelay = payload.correct ? 220 : 420;
         window.setTimeout(() => {
           if (payload.completed) {
+            router.replace(`/student/result/${attempt.id}`);
+            router.refresh();
+            return;
+          }
+
+          if (payload.needsRetry && answeredPhase === "initial") {
             router.replace(`/student/result/${attempt.id}`);
             router.refresh();
             return;
@@ -426,7 +433,7 @@ export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
         {answerCorrect === true && "정답입니다."}
         {answerCorrect === false &&
           (attempt.phase === "initial"
-            ? "오답입니다. 첫 시험 뒤 재시험에 한 번 더 나옵니다."
+            ? "오답입니다. 첫 시험 결과에서 다시 확인할 수 있습니다."
             : "다시 확인할 단어로 남겼습니다.")}
       </div>
       {error && (

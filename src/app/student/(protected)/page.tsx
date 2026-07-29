@@ -13,7 +13,13 @@ type StudentAssignment = Awaited<
   ReturnType<typeof listStudentAssignments>
 >[number];
 
-function statusText(status: "in_progress" | "completed" | "expired" | null) {
+function statusText(
+  status: "in_progress" | "completed" | "expired" | null,
+  phase: StudentAssignment["lastPhase"],
+) {
+  if (status === "in_progress" && phase === "review") {
+    return "첫 시험 결과";
+  }
   if (status === "in_progress") return "풀던 시험";
   if (status === "completed") return "완료";
   if (status === "expired") return "시간 종료";
@@ -47,7 +53,7 @@ function AssignmentCard({
             assignment.lastStatus ?? "draft"
           }`}
         >
-          {statusText(assignment.lastStatus)}
+          {statusText(assignment.lastStatus, assignment.lastPhase)}
         </span>
       </div>
 
@@ -83,6 +89,17 @@ function AssignmentCard({
 
       <div className="inline-actions assignment-actions">
         {assignment.lastStatus === "in_progress" &&
+          assignment.lastPhase === "review" &&
+          assignment.lastAttemptId && (
+            <Link
+              className="button button-primary"
+              href={`/student/result/${assignment.lastAttemptId}`}
+            >
+              결과 확인·재시험 선택
+            </Link>
+          )}
+        {assignment.lastStatus === "in_progress" &&
+          assignment.lastPhase !== "review" &&
           assignment.lastAttemptId && (
             <Link
               className="button button-primary"
@@ -142,7 +159,9 @@ export default async function StudentDashboardPage() {
       )
     : [];
   const primaryHeading =
-    primaryAssignment?.lastStatus === "in_progress" ||
+    primaryAssignment?.lastPhase === "review"
+      ? "첫 시험 결과"
+      : primaryAssignment?.lastStatus === "in_progress" ||
     primaryAssignment?.canStart
       ? "지금 할 시험"
       : "최근 시험";

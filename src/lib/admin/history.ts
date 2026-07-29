@@ -30,6 +30,7 @@ export type AttemptHistorySource = {
   studentId: string;
   attemptNumber: number;
   status: Exclude<AssignmentActivityStatus, "not_started">;
+  phase: "initial" | "review" | "retry" | "completed";
   questionCount: number;
   timeLimitSeconds: number;
   passingScore: number;
@@ -49,6 +50,7 @@ export type AssignmentHistorySummary = AssignmentHistorySource & {
   attemptId: string | null;
   attemptNumber: number | null;
   status: AssignmentActivityStatus;
+  phase: AttemptHistorySource["phase"] | null;
   activityAt: string;
   initialCorrectCount: number | null;
   retryCorrectCount: number | null;
@@ -96,6 +98,7 @@ export function buildAssignmentHistory(
         attemptId: null,
         attemptNumber: null,
         status: "not_started",
+        phase: null,
         activityAt: assignment.assignedAt,
         initialCorrectCount: null,
         retryCorrectCount: null,
@@ -114,6 +117,7 @@ export function buildAssignmentHistory(
       const deadline = Date.parse(attempt.deadlineAt);
       const effectiveStatus =
         attempt.status === "in_progress" &&
+        attempt.phase !== "review" &&
         !Number.isNaN(deadline) &&
         deadline <= now
           ? "expired"
@@ -124,6 +128,7 @@ export function buildAssignmentHistory(
         attemptId: attempt.id,
         attemptNumber: attempt.attemptNumber,
         status: effectiveStatus,
+        phase: attempt.phase,
         activityAt: attempt.startedAt,
         questionCount: attempt.questionCount,
         timeLimitSeconds: attempt.timeLimitSeconds,

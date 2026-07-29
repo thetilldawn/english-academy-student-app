@@ -43,6 +43,12 @@ const studentVocabManagementMigration = fs.readFileSync(
   ),
   "utf8",
 );
+const explicitRetryReviewMigration = fs.readFileSync(
+  path.resolve(
+    "supabase/migrations/20260729153508_add_explicit_quiz_retry_review_phase.sql",
+  ),
+  "utf8",
+);
 const config = fs.readFileSync(
   path.resolve("supabase/config.toml"),
   "utf8",
@@ -298,6 +304,48 @@ describe("database security contract", () => {
     expect(studentVocabManagementMigration).toContain("security invoker");
     expect(studentVocabManagementMigration).toContain(
       "from public, anon;",
+    );
+  });
+
+  it("첫 시험 결과 검토 뒤에만 별도 제한시간으로 재시험을 연다", () => {
+    expect(explicitRetryReviewMigration).toContain(
+      "create type public.attempt_phase as enum",
+    );
+    expect(explicitRetryReviewMigration).toContain(
+      "'initial',\n  'review',\n  'retry',\n  'completed'",
+    );
+    expect(explicitRetryReviewMigration).toContain(
+      "create function public.start_quiz_retry(",
+    );
+    expect(explicitRetryReviewMigration).toContain(
+      "attempt_row.phase <> 'review'",
+    );
+    expect(explicitRetryReviewMigration).toContain(
+      "retry_deadline := retry_start_time",
+    );
+    expect(explicitRetryReviewMigration).toContain(
+      "'needsRetry', review_required",
+    );
+    expect(explicitRetryReviewMigration).toContain(
+      "deadline_at = 'infinity'::timestamptz",
+    );
+    expect(explicitRetryReviewMigration).toContain(
+      "initial_correct_count = initial_correct",
+    );
+    expect(explicitRetryReviewMigration).toContain(
+      "unresolved_wrong_count = initial_wrong - retry_correct",
+    );
+    expect(explicitRetryReviewMigration).toContain(
+      "attempt_row.phase = 'review'",
+    );
+    expect(explicitRetryReviewMigration).toContain(
+      "from public, anon, authenticated;",
+    );
+    expect(explicitRetryReviewMigration).toContain(
+      ") to service_role;",
+    );
+    expect(explicitRetryReviewMigration).not.toContain(
+      "security definer",
     );
   });
 });

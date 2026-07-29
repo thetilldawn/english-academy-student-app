@@ -6,6 +6,7 @@ import {
   formatElapsed,
   formatKoreanDateTime,
 } from "@/lib/format";
+import { getResultQuestionPresentation } from "@/lib/quiz/result-presentation";
 import { getAdminAttemptDetail } from "@/lib/services/admin-service";
 
 export const metadata: Metadata = {
@@ -15,10 +16,12 @@ export const metadata: Metadata = {
 function retryLabel(
   initialIsCorrect: boolean | null,
   retryIsCorrect: boolean | null,
+  reviewPending: boolean,
 ) {
   if (initialIsCorrect === true) return "첫 시험 정답";
   if (retryIsCorrect === true) return "한 번 틀린 단어";
   if (retryIsCorrect === false) return "다시 볼 단어";
+  if (reviewPending) return "재시험 전";
   return "미완료";
 }
 
@@ -30,6 +33,8 @@ export default async function AdminResultDetailPage({
   const { id } = await params;
   const result = await getAdminAttemptDetail(id);
   if (!result) notFound();
+  const reviewPending =
+    result.status === "in_progress" && result.phase === "review";
 
   const wrongQuestions = result.questions.filter(
     (question) => question.initialIsCorrect !== true,
@@ -102,29 +107,33 @@ export default async function AdminResultDetailPage({
             <div className="attempt-flow-list">
               {wrongQuestions.map((question) => {
                 const resolved = question.retryIsCorrect === true;
+                const presentation =
+                  getResultQuestionPresentation(question);
 
                 return (
                   <article className="card attempt-flow-card" key={question.id}>
                     <div className="title-with-status">
                       <div>
                         <p className="eyebrow">문항 {question.orderIndex}</p>
-                        <h3>{question.headword || question.prompt}</h3>
+                        <h3>{presentation.prompt}</h3>
                       </div>
                       <span
                         className={`status-pill ${
                           resolved
                             ? "status-completed"
-                            : "status-expired"
+                            : reviewPending
+                              ? "status-in_progress"
+                              : "status-expired"
                         }`}
                       >
                         {retryLabel(
                           question.initialIsCorrect,
                           question.retryIsCorrect,
+                          reviewPending,
                         )}
                       </span>
                     </div>
 
-                    <p className="attempt-prompt">{question.prompt}</p>
                     <div className="answer-flow">
                       <div className="flow-step flow-step-wrong">
                         <span>첫 선택</span>
@@ -145,7 +154,8 @@ export default async function AdminResultDetailPage({
                       >
                         <span>재시험</span>
                         <strong>
-                          {question.retryChoice ?? "선택 안 함"}
+                          {question.retryChoice ??
+                            (reviewPending ? "재시험 전" : "선택 안 함")}
                         </strong>
                       </div>
                       <span className="flow-arrow" aria-hidden="true">
@@ -153,7 +163,7 @@ export default async function AdminResultDetailPage({
                       </span>
                       <div className="flow-step flow-step-answer">
                         <span>정답</span>
-                        <strong>{question.correctAnswer}</strong>
+                        <strong>{presentation.correctAnswer}</strong>
                       </div>
                     </div>
                   </article>

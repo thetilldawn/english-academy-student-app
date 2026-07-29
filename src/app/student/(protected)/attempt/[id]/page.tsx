@@ -21,7 +21,11 @@ export default async function AttemptPage({
   const attempt = await getStudentAttempt(session.studentId, id);
 
   if (!attempt) notFound();
-  if (attempt.status !== "in_progress" || attempt.phase === "completed") {
+  if (
+    attempt.status !== "in_progress" ||
+    attempt.phase === "review" ||
+    attempt.phase === "completed"
+  ) {
     redirect(`/student/result/${attempt.id}`);
   }
 

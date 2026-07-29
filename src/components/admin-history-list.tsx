@@ -45,6 +45,12 @@ const STATUS_LABELS: Record<AssignmentActivityStatus, string> = {
   expired: "시간 종료",
 };
 
+function statusLabel(item: AssignmentHistorySummary) {
+  return item.status === "in_progress" && item.phase === "review"
+    ? "첫 시험 결과"
+    : STATUS_LABELS[item.status];
+}
+
 function scoreText(score: number | null) {
   return score === null ? "-" : `${score}점`;
 }
@@ -255,7 +261,7 @@ export function AdminHistoryList({
                 <span
                   className={`status-pill status-${item.status}`}
                 >
-                  {STATUS_LABELS[item.status]}
+                  {statusLabel(item)}
                 </span>
               </button>
             </li>
@@ -295,7 +301,7 @@ export function AdminHistoryList({
           <div className="history-dialog-scores">
             <div>
               <span>상태</span>
-              <strong>{STATUS_LABELS[selected.status]}</strong>
+              <strong>{statusLabel(selected)}</strong>
             </div>
             <div>
               <span>첫 시험 점수</span>
@@ -389,9 +395,7 @@ export function AdminHistoryList({
                 <ul>
                   {wrongQuestions.slice(0, 8).map((question) => (
                     <li key={question.id}>
-                      <strong>
-                        {question.headword || question.prompt}
-                      </strong>
+                      <strong>{question.prompt}</strong>
                       <span>
                         {question.initialChoice ?? "선택 안 함"} →{" "}
                         {question.correctAnswer}

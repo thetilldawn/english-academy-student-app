@@ -17,6 +17,7 @@ import {
   getAttemptQuestionResults,
   type AttemptQuestionResult,
 } from "@/lib/services/quiz-service";
+import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
 import {
   createQuizQuestions,
   type QuizVocabularyEntry,
@@ -108,6 +109,7 @@ export type AttemptSummary = {
   assignmentTitle: string;
   attemptNumber: number;
   status: "in_progress" | "completed" | "expired";
+  phase: "initial" | "review" | "retry" | "completed";
   initialScore: number | null;
   finalScore: number | null;
   passed: boolean | null;
@@ -476,6 +478,7 @@ type HistoryAttemptRow = {
   student_id: string;
   attempt_number: number;
   status: "in_progress" | "completed" | "expired";
+  phase: "initial" | "review" | "retry" | "completed";
   question_count_snapshot: number;
   time_limit_seconds_snapshot: number;
   passing_score_snapshot: number;
@@ -536,7 +539,7 @@ export async function listAssignmentHistory(): Promise<
     supabase
       .from("quiz_attempts")
       .select(
-        "id, assignment_id, student_id, attempt_number, status, question_count_snapshot, time_limit_seconds_snapshot, passing_score_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, started_at, deadline_at, completed_at",
+        "id, assignment_id, student_id, attempt_number, status, phase, question_count_snapshot, time_limit_seconds_snapshot, passing_score_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, started_at, deadline_at, completed_at",
       )
       .order("started_at", { ascending: false })
       .limit(HISTORY_ATTEMPT_LIMIT + 1),
@@ -610,6 +613,7 @@ export async function listAssignmentHistory(): Promise<
       studentId: attempt.student_id,
       attemptNumber: attempt.attempt_number,
       status: attempt.status,
+      phase: attempt.phase,
       questionCount: attempt.question_count_snapshot,
       timeLimitSeconds: attempt.time_limit_seconds_snapshot,
       passingScore: attempt.passing_score_snapshot,
@@ -891,7 +895,7 @@ export async function listAttempts(): Promise<AttemptSummary[]> {
   const { data, error } = await supabase
     .from("quiz_attempts")
     .select(
-      "id, attempt_number, status, question_count_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, started_at, completed_at, students(display_name), assignments(title)",
+      "id, attempt_number, status, phase, question_count_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, started_at, completed_at, students(display_name), assignments(title)",
     )
     .order("started_at", { ascending: false })
     .limit(200);
@@ -914,6 +918,7 @@ export async function listAttempts(): Promise<AttemptSummary[]> {
       assignmentTitle: assignment?.title ?? "알 수 없음",
       attemptNumber: attempt.attempt_number,
       status: attempt.status,
+      phase: attempt.phase,
       initialScore:
         attempt.initial_score === null ? null : Number(attempt.initial_score),
       finalScore:
@@ -941,7 +946,7 @@ export async function getAdminAttemptDetail(
     supabase
       .from("quiz_attempts")
       .select(
-        "id, attempt_number, status, question_count_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, elapsed_seconds, started_at, completed_at, students(display_name), assignments(title)",
+        "id, attempt_number, status, phase, question_count_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, elapsed_seconds, started_at, initial_completed_at, completed_at, students(display_name), assignments(title)",
       )
       .eq("id", attemptId)
       .maybeSingle(),
@@ -958,6 +963,22 @@ export async function getAdminAttemptDetail(
   const assignment = Array.isArray(data.assignments)
     ? data.assignments[0]
     : data.assignments;
+  const reviewing =
+    data.status === "in_progress" && data.phase === "review";
+  const reviewMetrics = reviewing
+    ? deriveAttemptQuestionMetrics(questions)
+    : null;
+  const reviewElapsedSeconds =
+    reviewing && data.initial_completed_at
+      ? Math.max(
+          0,
+          Math.floor(
+            (new Date(data.initial_completed_at).getTime() -
+              new Date(data.started_at).getTime()) /
+              1000,
+          ),
+        )
+      : null;
 
   return {
     id: data.id,
@@ -965,17 +986,23 @@ export async function getAdminAttemptDetail(
     assignmentTitle: assignment?.title ?? "알 수 없음",
     attemptNumber: data.attempt_number,
     status: data.status,
+    phase: data.phase,
     initialScore:
-      data.initial_score === null ? null : Number(data.initial_score),
+      reviewMetrics?.initialScore ??
+      (data.initial_score === null ? null : Number(data.initial_score)),
     finalScore: data.final_score === null ? null : Number(data.final_score),
     passed: data.passed,
     startedAt: data.started_at,
     completedAt: data.completed_at,
     questionCount: data.question_count_snapshot,
-    initialCorrectCount: data.initial_correct_count,
-    retryCorrectCount: data.retry_correct_count,
-    unresolvedWrongCount: data.unresolved_wrong_count,
-    elapsedSeconds: data.elapsed_seconds,
+    initialCorrectCount:
+      reviewMetrics?.initialCorrectCount ?? data.initial_correct_count,
+    retryCorrectCount:
+      reviewMetrics?.retryCorrectCount ?? data.retry_correct_count,
+    unresolvedWrongCount:
+      reviewMetrics?.unresolvedWrongCount ??
+      data.unresolved_wrong_count,
+    elapsedSeconds: reviewElapsedSeconds ?? data.elapsed_seconds,
     questions,
   };
 }

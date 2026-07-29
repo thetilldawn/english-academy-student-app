@@ -4,6 +4,7 @@ import {
   createQuizQuestions,
   type QuizVocabularyEntry,
 } from "@/lib/quiz/engine";
+import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 
 export type StudentAssignmentSummary = {
@@ -20,6 +21,7 @@ export type StudentAssignmentSummary = {
   retakeAllowed: boolean;
   lastAttemptId: string | null;
   lastStatus: "in_progress" | "completed" | "expired" | null;
+  lastPhase: AttemptState["phase"] | null;
   lastInitialScore: number | null;
   canStart: boolean;
 };
@@ -41,7 +43,7 @@ export type AttemptState = {
   id: string;
   assignmentTitle: string;
   status: "in_progress" | "completed" | "expired";
-  phase: "initial" | "retry" | "completed";
+  phase: "initial" | "review" | "retry" | "completed";
   startedAt: string;
   deadlineAt: string;
   questions: AttemptQuestionState[];
@@ -85,6 +87,7 @@ type AttemptRow = {
   id: string;
   assignment_id: string;
   status: "in_progress" | "completed" | "expired";
+  phase: "initial" | "review" | "retry" | "completed";
   attempt_number: number;
   started_at: string;
   deadline_at: string;
@@ -225,7 +228,7 @@ export async function listStudentAssignments(
     supabase
       .from("quiz_attempts")
       .select(
-        "id, assignment_id, status, attempt_number, started_at, deadline_at, initial_score",
+        "id, assignment_id, status, phase, attempt_number, started_at, deadline_at, initial_score",
       )
       .eq("student_id", studentId)
       .in("assignment_id", assignmentIds)
@@ -297,6 +300,7 @@ export async function listStudentAssignments(
       retakeAllowed: assignment.retake_allowed,
       lastAttemptId: lastAttempt?.id ?? null,
       lastStatus: lastAttempt?.status ?? null,
+      lastPhase: lastAttempt?.phase ?? null,
       lastInitialScore:
         lastAttempt?.initial_score === null ||
         lastAttempt?.initial_score === undefined
@@ -430,7 +434,7 @@ export async function getStudentAttempt(
   const supabase = getServiceSupabaseClient();
   const { data: attemptData, error: attemptError } = await supabase
     .from("quiz_attempts")
-    .select("id, assignment_id, status, started_at, deadline_at")
+    .select("id, assignment_id, status, phase, started_at, deadline_at")
     .eq("id", attemptId)
     .eq("student_id", studentId)
     .maybeSingle();
@@ -441,10 +445,12 @@ export async function getStudentAttempt(
 
   if (
     attemptData.status === "in_progress" &&
+    attemptData.phase !== "review" &&
     new Date(attemptData.deadline_at).getTime() <= Date.now()
   ) {
     await expireStudentAttempt(studentId, attemptId);
     attemptData.status = "expired";
+    attemptData.phase = "completed";
   }
 
   const [{ data: assignmentData }, { data: questionData }] =
@@ -472,14 +478,10 @@ export async function getStudentAttempt(
       question.initial_is_correct === false &&
       question.retry_choice_index === null,
   );
-  const phase =
+  const phase: AttemptState["phase"] =
     attemptData.status !== "in_progress"
       ? "completed"
-      : initialCurrent
-        ? "initial"
-        : retryCurrent
-          ? "retry"
-          : "completed";
+      : attemptData.phase;
   const currentQuestionId =
     phase === "initial"
       ? (initialCurrent?.id ?? null)
@@ -533,6 +535,27 @@ export async function expireStudentAttempt(
   }
 }
 
+export async function startStudentRetry(
+  studentId: string,
+  attemptId: string,
+) {
+  const supabase = getServiceSupabaseClient();
+  const { data, error } = await supabase.rpc("start_quiz_retry", {
+    p_student_id: studentId,
+    p_attempt_id: attemptId,
+  });
+
+  if (error || !data) {
+    throw new Error("재시험을 시작하지 못했습니다.");
+  }
+
+  return data as {
+    phase: "retry";
+    nextQuestionId: string;
+    deadlineAt: string;
+  };
+}
+
 export async function answerStudentQuestion(input: {
   studentId: string;
   attemptId: string;
@@ -576,7 +599,7 @@ export async function getAttemptResult(
   const { data, error } = await supabase
     .from("quiz_attempts")
     .select(
-      "id, assignment_id, status, attempt_number, question_count_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, elapsed_seconds, started_at, completed_at, assignments(title)",
+      "id, assignment_id, status, phase, attempt_number, question_count_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, elapsed_seconds, started_at, initial_completed_at, completed_at, assignments(title)",
     )
     .eq("id", attemptId)
     .eq("student_id", studentId)
@@ -590,22 +613,45 @@ export async function getAttemptResult(
   const assignment = Array.isArray(data.assignments)
     ? data.assignments[0]
     : data.assignments;
+  const reviewing =
+    data.status === "in_progress" && data.phase === "review";
+  const reviewMetrics = reviewing
+    ? deriveAttemptQuestionMetrics(questions)
+    : null;
+  const reviewElapsedSeconds =
+    reviewing && data.initial_completed_at
+      ? Math.max(
+          0,
+          Math.floor(
+            (new Date(data.initial_completed_at).getTime() -
+              new Date(data.started_at).getTime()) /
+              1000,
+          ),
+        )
+      : null;
 
   return {
     id: data.id,
     title: assignment?.title ?? "단어 시험",
     status: data.status,
+    phase: data.phase as AttemptState["phase"],
     attemptNumber: data.attempt_number,
     questionCount: data.question_count_snapshot,
-    initialCorrectCount: data.initial_correct_count,
-    retryCorrectCount: data.retry_correct_count,
-    unresolvedWrongCount: data.unresolved_wrong_count,
+    initialCorrectCount:
+      reviewMetrics?.initialCorrectCount ?? data.initial_correct_count,
+    retryCorrectCount:
+      reviewMetrics?.retryCorrectCount ?? data.retry_correct_count,
+    unresolvedWrongCount:
+      reviewMetrics?.unresolvedWrongCount ??
+      data.unresolved_wrong_count,
     initialScore:
-      data.initial_score === null ? null : Number(data.initial_score),
+      reviewMetrics?.initialScore ??
+      (data.initial_score === null ? null : Number(data.initial_score)),
     finalScore: data.final_score === null ? null : Number(data.final_score),
     passed: data.passed,
-    elapsedSeconds: data.elapsed_seconds,
+    elapsedSeconds: reviewElapsedSeconds ?? data.elapsed_seconds,
     startedAt: data.started_at,
+    initialCompletedAt: data.initial_completed_at,
     completedAt: data.completed_at,
     questions,
   };

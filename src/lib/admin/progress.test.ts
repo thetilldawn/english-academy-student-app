@@ -47,6 +47,7 @@ function history(
     assignedAt: "2026-07-28T00:00:00.000Z",
     attemptNumber: 1,
     status: "completed",
+    phase: "completed",
     activityAt: "2026-07-29T00:00:00.000Z",
     initialCorrectCount: 8,
     retryCorrectCount: 2,
@@ -168,6 +169,31 @@ describe("buildStudentProgress", () => {
     );
 
     expect(progress.latestStatus).toBe("not_started");
+    expect(progress.recommendationReason).toBe("resume");
+    expect(progress.recommendedUnitLabel).toBe("DAY 01");
+  });
+
+  it("첫 시험 검토 중에는 첫 점수를 유지하고 같은 시험을 이어서 추천한다", () => {
+    const [progress] = buildStudentProgress(
+      [student],
+      units,
+      [
+        history({
+          status: "in_progress",
+          phase: "review",
+          initialCorrectCount: 5,
+          retryCorrectCount: 0,
+          unresolvedWrongCount: 5,
+          initialScore: 50,
+          finalScore: null,
+          passed: null,
+          completedAt: null,
+        }),
+      ],
+    );
+
+    expect(progress.latestInitialScore).toBe(50);
+    expect(progress.latestFinalScore).toBeNull();
     expect(progress.recommendationReason).toBe("resume");
     expect(progress.recommendedUnitLabel).toBe("DAY 01");
   });
