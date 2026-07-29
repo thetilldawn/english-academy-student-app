@@ -57,10 +57,40 @@ describe("normalizeVocabularyImport", () => {
     const result = normalizeVocabularyImport(validInput);
 
     expect(result.entries).toHaveLength(5);
+    expect(result.units).toEqual([
+      {
+        unitLabel: "DAY 01",
+        normalizedLabel: "day 01",
+        unitKind: "day",
+        unitNumber: 1,
+        sortIndex: 1,
+        entryCount: 4,
+      },
+      {
+        unitLabel: "DAY 02",
+        normalizedLabel: "day 02",
+        unitKind: "day",
+        unitNumber: 2,
+        sortIndex: 2,
+        entryCount: 1,
+      },
+    ]);
+    expect(result.entries[0]).toMatchObject({
+      unitLabel: "DAY 01",
+      positionInUnit: 1,
+      entryType: "표",
+    });
+    expect(result.entries[4]).toMatchObject({
+      unitLabel: "DAY 02",
+      positionInUnit: 1,
+      entryType: "복",
+    });
     expect(result.entries[0].meanings).toEqual(["진보, 발전", "진행"]);
     expect(result.entries[0].rowSha256).toMatch(/^[A-F0-9]{64}$/);
     expect(result.audit).toMatchObject({
       rowCount: 5,
+      unitCount: 2,
+      dayUnitCount: 2,
       uniqueHeadwordCount: 4,
       duplicateHeadwordGroups: 1,
       repeatedHeadwordRows: 1,

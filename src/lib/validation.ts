@@ -23,32 +23,40 @@ export const createStudentSchema = z.object({
   displayName: z.string().trim().min(1).max(80),
   schoolName: z.string().trim().max(120).default(""),
   gradeLabel: z.string().trim().max(40).default(""),
-  currentVocabDatasetId: z.uuid(),
+  currentVocabDatasetId: z
+    .union([z.uuid(), z.literal(""), z.null()])
+    .optional()
+    .transform((value) => value || null),
   note: z.string().trim().max(2000).default(""),
+});
+
+export const updateStudentVocabSchema = z.object({
+  currentVocabDatasetId: z
+    .union([z.uuid(), z.literal(""), z.null()])
+    .transform((value) => value || null),
 });
 
 export const assignmentSchema = z
   .object({
-    title: z.string().trim().min(1).max(160),
+    title: z.string().trim().max(160).default(""),
     datasetId: z.uuid(),
-    rangeStart: z.coerce.number().int().min(1),
-    rangeEnd: z.coerce.number().int().min(1),
+    unitIds: z.array(z.uuid()).min(1),
     questionCount: z.coerce.number().int().min(4).max(500),
+    englishToKoreanRatio: z.union([
+      z.literal(0),
+      z.literal(50),
+      z.literal(100),
+    ]),
     timeLimitSeconds: z.coerce.number().int().min(30).max(10800),
     passingScore: z.coerce.number().int().min(0).max(100),
-    retakeAllowed: z.boolean().default(false),
+    questionOrderMode: z.enum(["fixed", "random"]).default("random"),
     studentIds: z.array(z.uuid()).min(1),
   })
-  .refine((value) => value.rangeEnd >= value.rangeStart, {
-    message: "끝 번호는 시작 번호보다 작을 수 없습니다.",
-    path: ["rangeEnd"],
-  })
   .refine(
-    (value) =>
-      value.questionCount <= value.rangeEnd - value.rangeStart + 1,
+    (value) => new Set(value.unitIds).size === value.unitIds.length,
     {
-      message: "문항 수가 선택 범위보다 많습니다.",
-      path: ["questionCount"],
+      message: "같은 DAY를 두 번 선택할 수 없습니다.",
+      path: ["unitIds"],
     },
   );
 

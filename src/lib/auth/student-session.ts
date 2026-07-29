@@ -29,6 +29,7 @@ type SessionRow = {
   code_generation: number;
   expires_at: string;
   revoked_at: string | null;
+  students: StudentRow | StudentRow[] | null;
 };
 
 type StudentRow = {
@@ -52,7 +53,9 @@ export async function validateStudentSessionToken(
 
   const { data: sessionData, error: sessionError } = await supabase
     .from("student_sessions")
-    .select("id, student_id, code_generation, expires_at, revoked_at")
+    .select(
+      "id, student_id, code_generation, expires_at, revoked_at, students!inner(id, display_name, school_name, grade_label, status, code_generation)",
+    )
     .eq("token_hash", tokenHash)
     .maybeSingle();
   const session = sessionData as SessionRow | null;
@@ -66,17 +69,11 @@ export async function validateStudentSessionToken(
     return null;
   }
 
-  const { data: studentData, error: studentError } = await supabase
-    .from("students")
-    .select(
-      "id, display_name, school_name, grade_label, status, code_generation",
-    )
-    .eq("id", session.student_id)
-    .maybeSingle();
-  const student = studentData as StudentRow | null;
+  const student = Array.isArray(session.students)
+    ? session.students[0]
+    : session.students;
 
   if (
-    studentError ||
     !student ||
     student.status !== "active" ||
     student.code_generation !== session.code_generation

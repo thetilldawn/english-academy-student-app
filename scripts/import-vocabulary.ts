@@ -127,6 +127,31 @@ async function main() {
     datasetId = data.id;
   }
 
+  const { data: unitData, error: unitError } = await supabase
+    .from("vocab_units")
+    .upsert(
+      normalized.units.map((unit) => ({
+        dataset_id: datasetId,
+        unit_label: unit.unitLabel,
+        normalized_label: unit.normalizedLabel,
+        unit_kind: unit.unitKind,
+        unit_number: unit.unitNumber,
+        sort_index: unit.sortIndex,
+        entry_count: unit.entryCount,
+      })),
+      { onConflict: "dataset_id,normalized_label" },
+    )
+    .select("id, normalized_label");
+
+  if (unitError || unitData?.length !== normalized.units.length) {
+    throw new Error(
+      `단원 가져오기 실패: ${unitError?.message ?? "단원 수 불일치"}`,
+    );
+  }
+
+  const unitIdByLabel = new Map(
+    unitData.map((unit) => [unit.normalized_label, unit.id]),
+  );
   const batchSize = 400;
   for (
     let offset = 0;
@@ -135,16 +160,26 @@ async function main() {
   ) {
     const rows = normalized.entries
       .slice(offset, offset + batchSize)
-      .map((entry) => ({
-        dataset_id: datasetId,
-        source_row: entry.sourceRow,
-        headword: entry.headword,
-        headword_normalized: entry.headwordNormalized,
-        meanings: entry.meanings,
-        primary_meaning: entry.primaryMeaning,
-        source_ref: entry.sourceRef,
-        row_sha256: entry.rowSha256,
-      }));
+      .map((entry) => {
+        const unitId = unitIdByLabel.get(entry.unitNormalizedLabel);
+        if (!unitId) {
+          throw new Error(`단원 연결 실패: ${entry.unitLabel}`);
+        }
+
+        return {
+          dataset_id: datasetId,
+          unit_id: unitId,
+          position_in_unit: entry.positionInUnit,
+          entry_type: entry.entryType,
+          source_row: entry.sourceRow,
+          headword: entry.headword,
+          headword_normalized: entry.headwordNormalized,
+          meanings: entry.meanings,
+          primary_meaning: entry.primaryMeaning,
+          source_ref: entry.sourceRef,
+          row_sha256: entry.rowSha256,
+        };
+      });
     const { error } = await supabase.from("vocab_entries").upsert(rows, {
       onConflict: "dataset_id,source_row",
     });

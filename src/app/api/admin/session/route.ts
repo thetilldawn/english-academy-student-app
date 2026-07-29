@@ -2,6 +2,7 @@ import { getAdminContext } from "@/lib/auth/admin";
 import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { adminLoginSchema } from "@/lib/validation";
+import { revokeCurrentStudentSession } from "@/lib/auth/student-session";
 
 export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
@@ -27,6 +28,7 @@ export async function POST(request: Request) {
       return jsonError("승인된 관리자 계정이 아닙니다.", 403);
     }
 
+    await revokeCurrentStudentSession("admin_login");
     return Response.json({ admin });
   } catch {
     return jsonError("관리자 로그인을 처리하지 못했습니다.", 503);

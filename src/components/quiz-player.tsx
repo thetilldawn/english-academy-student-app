@@ -39,6 +39,12 @@ type AnswerResponse = {
   completed?: boolean;
   needsRetry?: boolean;
   expired?: boolean;
+  nextQuestionId?: string | null;
+  nextPhase?: "initial" | "retry" | null;
+  initialAnsweredCount?: number;
+  initialQuestionCount?: number;
+  retryAnsweredCount?: number;
+  retryQuestionCount?: number;
   error?: string;
 };
 
@@ -103,19 +109,6 @@ export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
       ? 100
       : Math.round((completedInPhase / phaseQuestions.length) * 100);
 
-  const refreshAttempt = useCallback(async () => {
-    const response = await fetch(`/api/student/attempts/${attempt.id}`, {
-      cache: "no-store",
-    });
-    const payload = (await response.json()) as AttemptResponse;
-    if (!response.ok || !payload.attempt) {
-      throw new Error(payload.error ?? "시험 상태를 불러오지 못했습니다.");
-    }
-    setAttempt(payload.attempt);
-    setRemaining(secondsUntil(payload.attempt.deadlineAt));
-    return payload.attempt;
-  }, [attempt.id]);
-
   const expireAttempt = useCallback(async () => {
     if (expireStarted.current) return;
     expireStarted.current = true;
@@ -126,6 +119,39 @@ export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
     } finally {
       router.replace(`/student/result/${attempt.id}`);
       router.refresh();
+    }
+  }, [attempt.id, router]);
+
+  const recoverAttempt = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `/api/student/attempts/${attempt.id}`,
+        { cache: "no-store" },
+      );
+      const payload = (await response.json()) as AttemptResponse;
+      if (!response.ok || !payload.attempt) {
+        return false;
+      }
+
+      if (
+        payload.attempt.status !== "in_progress" ||
+        payload.attempt.phase === "completed"
+      ) {
+        setSubmitting(false);
+        router.replace(`/student/result/${attempt.id}`);
+        router.refresh();
+        return true;
+      }
+
+      setAttempt(payload.attempt);
+      setRemaining(secondsUntil(payload.attempt.deadlineAt));
+      setSelectedChoice(null);
+      setCorrectChoice(null);
+      setAnswerCorrect(null);
+      setSubmitting(false);
+      return true;
+    } catch {
+      return false;
     }
   }, [attempt.id, router]);
 
@@ -163,6 +189,12 @@ export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
       setSubmitting(true);
       setError("");
       setSelectedChoice(choiceIndex);
+      let recoveryAttempted = false;
+      const tryRecover = async () => {
+        if (recoveryAttempted) return false;
+        recoveryAttempted = true;
+        return recoverAttempt();
+      };
       try {
         const response = await fetch(
           `/api/student/attempts/${attempt.id}/answers`,
@@ -178,6 +210,7 @@ export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
         );
         const payload = (await response.json()) as AnswerResponse;
         if (!response.ok) {
+          if (await tryRecover()) return;
           throw new Error(payload.error ?? "답안을 저장하지 못했습니다.");
         }
         if (payload.expired) {
@@ -193,34 +226,66 @@ export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
             : null,
         );
 
-        window.setTimeout(async () => {
+        const answeredPhase = attempt.phase;
+        const feedbackDelay = payload.correct ? 220 : 420;
+        window.setTimeout(() => {
           if (payload.completed) {
             router.replace(`/student/result/${attempt.id}`);
             router.refresh();
             return;
           }
 
-          try {
-            const nextAttempt = await refreshAttempt();
-            if (nextAttempt.status !== "in_progress") {
-              router.replace(`/student/result/${attempt.id}`);
-              router.refresh();
-              return;
-            }
-            setSelectedChoice(null);
-            setCorrectChoice(null);
-            setAnswerCorrect(null);
-          } catch (refreshError) {
-            setError(
-              refreshError instanceof Error
-                ? refreshError.message
-                : "다음 문제를 불러오지 못했습니다.",
-            );
-          } finally {
-            setSubmitting(false);
+          if (!payload.nextQuestionId || !payload.nextPhase) {
+            void tryRecover().then((recovered) => {
+              if (recovered) return;
+              setError(
+                "다음 문제 상태를 확인하지 못했습니다. 페이지를 새로고침해주세요.",
+              );
+              setSubmitting(false);
+            });
+            return;
           }
-        }, 800);
+
+          setAttempt((current) => ({
+            ...current,
+            phase: payload.nextPhase ?? current.phase,
+            currentQuestionId:
+              payload.nextQuestionId ?? current.currentQuestionId,
+            questions: current.questions.map((question) =>
+              question.id === currentQuestion.id
+                ? {
+                    ...question,
+                    initialChoiceIndex:
+                      answeredPhase === "initial"
+                        ? choiceIndex
+                        : question.initialChoiceIndex,
+                    initialIsCorrect:
+                      answeredPhase === "initial"
+                        ? Boolean(payload.correct)
+                        : question.initialIsCorrect,
+                    retryChoiceIndex:
+                      answeredPhase === "retry"
+                        ? choiceIndex
+                        : question.retryChoiceIndex,
+                    retryIsCorrect:
+                      answeredPhase === "retry"
+                        ? Boolean(payload.correct)
+                        : question.retryIsCorrect,
+                    revealedCorrectChoiceIndex:
+                      typeof payload.correctChoiceIndex === "number"
+                        ? payload.correctChoiceIndex
+                        : question.revealedCorrectChoiceIndex,
+                  }
+                : question,
+            ),
+          }));
+          setSelectedChoice(null);
+          setCorrectChoice(null);
+          setAnswerCorrect(null);
+          setSubmitting(false);
+        }, feedbackDelay);
       } catch (requestError) {
+        if (await tryRecover()) return;
         setSelectedChoice(null);
         setCorrectChoice(null);
         setAnswerCorrect(null);
@@ -237,7 +302,7 @@ export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
       attempt.id,
       attempt.phase,
       currentQuestion,
-      refreshAttempt,
+      recoverAttempt,
       router,
       submitting,
     ],
@@ -274,7 +339,7 @@ export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
       <div className="quiz-topline">
         <div>
           <p className="quiz-phase">
-            {attempt.phase === "retry" ? "오답 다시 풀기" : "첫 풀이"}
+            {attempt.phase === "retry" ? "재시험" : "첫 시험"}
           </p>
           <strong>{attempt.assignmentTitle}</strong>
         </div>
@@ -299,7 +364,7 @@ export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
 
       <p className="quiz-direction">
         {attempt.phase === "retry"
-          ? `다시 풀기 ${completedInPhase + 1}/${phaseQuestions.length}`
+          ? `재시험 ${completedInPhase + 1}/${phaseQuestions.length}`
           : `${currentQuestion.orderIndex}/${attempt.questions.length}`}
         {" · "}
         {currentQuestion.direction === "english_to_korean"
@@ -361,7 +426,7 @@ export function QuizPlayer({ initialAttempt }: { initialAttempt: Attempt }) {
         {answerCorrect === true && "정답입니다."}
         {answerCorrect === false &&
           (attempt.phase === "initial"
-            ? "오답입니다. 첫 풀이 뒤 한 번 더 나옵니다."
+            ? "오답입니다. 첫 시험 뒤 재시험에 한 번 더 나옵니다."
             : "다시 확인할 단어로 남겼습니다.")}
       </div>
       {error && (

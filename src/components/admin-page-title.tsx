@@ -3,10 +3,10 @@
 import { usePathname } from "next/navigation";
 
 const PAGE_TITLES = [
-  { prefix: "/admin/results", title: "시험 결과" },
-  { prefix: "/admin/assignments", title: "단어시험 배정" },
-  { prefix: "/admin/students", title: "학생·접속코드" },
-  { prefix: "/admin", title: "수업 현황" },
+  { prefix: "/admin/results", title: "내역" },
+  { prefix: "/admin/assignments", title: "시험 관리" },
+  { prefix: "/admin/students", title: "학생 관리" },
+  { prefix: "/admin", title: "Overview" },
 ] as const;
 
 export function AdminPageTitle() {

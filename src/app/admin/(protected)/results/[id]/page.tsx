@@ -16,9 +16,9 @@ function retryLabel(
   initialIsCorrect: boolean | null,
   retryIsCorrect: boolean | null,
 ) {
-  if (initialIsCorrect === true) return "첫 풀이 정답";
-  if (retryIsCorrect === true) return "재풀이 정답";
-  if (retryIsCorrect === false) return "재풀이 오답";
+  if (initialIsCorrect === true) return "첫 시험 정답";
+  if (retryIsCorrect === true) return "한 번 틀린 단어";
+  if (retryIsCorrect === false) return "다시 볼 단어";
   return "미완료";
 }
 
@@ -56,7 +56,7 @@ export default async function AdminResultDetailPage({
           <h2>응시 요약</h2>
           <dl>
             <div>
-              <dt>첫 점수</dt>
+              <dt>첫 시험 점수</dt>
               <dd>
                 {result.initialScore === null
                   ? "-"
@@ -64,7 +64,7 @@ export default async function AdminResultDetailPage({
               </dd>
             </div>
             <div>
-              <dt>재풀이 후</dt>
+              <dt>최종 점수</dt>
               <dd>
                 {result.finalScore === null ? "-" : `${result.finalScore}점`}
               </dd>
@@ -88,7 +88,7 @@ export default async function AdminResultDetailPage({
           className="attempt-flow-section"
         >
           <div className="section-heading">
-            <h2 id="answer-flow-heading">첫 선택부터 재풀이까지</h2>
+            <h2 id="answer-flow-heading">첫 시험부터 재시험까지</h2>
             <span className="detail-chip">
               {wrongQuestions.length}문항
             </span>
@@ -96,7 +96,7 @@ export default async function AdminResultDetailPage({
 
           {wrongQuestions.length === 0 ? (
             <div className="empty-state">
-              첫 풀이에서 모두 맞혔습니다.
+              첫 시험에서 모두 맞혔습니다.
             </div>
           ) : (
             <div className="attempt-flow-list">
@@ -143,7 +143,7 @@ export default async function AdminResultDetailPage({
                             : "flow-step-wrong",
                         ].join(" ")}
                       >
-                        <span>재풀이</span>
+                        <span>재시험</span>
                         <strong>
                           {question.retryChoice ?? "선택 안 함"}
                         </strong>

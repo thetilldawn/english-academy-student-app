@@ -46,7 +46,7 @@ function QuestionReviewCard({
           <dd>{question.initialChoice ?? "선택 안 함"}</dd>
         </div>
         <div>
-          <dt>재풀이</dt>
+          <dt>재시험</dt>
           <dd>{question.retryChoice ?? "선택 안 함"}</dd>
         </div>
         <div>
@@ -146,14 +146,14 @@ export default async function StudentResultPage({
         <aside aria-label="시험 결과 요약" className="result-sidebar">
           <section className="card result-metric-list">
             <div>
-              <span>첫 풀이 정답</span>
+              <span>첫 시험 정답</span>
               <strong>
                 {result.initialCorrectCount ?? "-"}
                 <small>/{result.questionCount}</small>
               </strong>
             </div>
             <div>
-              <span>다시 맞힌 단어</span>
+              <span>한 번 틀린 단어</span>
               <strong>{result.retryCorrectCount ?? "-"}</strong>
             </div>
             <div>
@@ -164,7 +164,7 @@ export default async function StudentResultPage({
 
           <section className="card result-summary result-summary-stacked">
             <div>
-              <span>재풀이 후 점수</span>
+              <span>재시험 후 점수</span>
               <strong>
                 {result.finalScore === null ? "-" : `${result.finalScore}점`}
               </strong>
@@ -188,7 +188,7 @@ export default async function StudentResultPage({
       {resolvedQuestions.length > 0 && (
         <section aria-labelledby="resolved-heading" className="section">
           <div className="section-heading">
-            <h2 id="resolved-heading">다시 맞힌 단어</h2>
+            <h2 id="resolved-heading">한 번 틀린 단어</h2>
             <span className="detail-chip">
               {resolvedQuestions.length}개
             </span>

@@ -4,10 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const adminNavigationItems = [
-  { href: "/admin", label: "현황" },
-  { href: "/admin/students", label: "학생·코드" },
-  { href: "/admin/assignments", label: "시험 배정" },
-  { href: "/admin/results", label: "결과" },
+  { href: "/admin", label: "Overview" },
+  { href: "/admin/students", label: "학생 관리" },
+  { href: "/admin/assignments", label: "시험 관리" },
+  { href: "/admin/results", label: "내역" },
 ] as const;
 
 function isActivePath(pathname: string, href: string) {

@@ -37,6 +37,12 @@ export type VocabularyImportFile = z.infer<
 
 export type NormalizedVocabularyEntry = {
   sourceRow: number;
+  unitLabel: string;
+  unitNormalizedLabel: string;
+  unitKind: "day" | "supplement";
+  unitNumber: number | null;
+  positionInUnit: number;
+  entryType: string;
   headword: string;
   headwordNormalized: string;
   meanings: string[];
@@ -45,8 +51,19 @@ export type NormalizedVocabularyEntry = {
   rowSha256: string;
 };
 
+export type NormalizedVocabularyUnit = {
+  unitLabel: string;
+  normalizedLabel: string;
+  unitKind: "day" | "supplement";
+  unitNumber: number | null;
+  sortIndex: number;
+  entryCount: number;
+};
+
 export type VocabularyImportAudit = {
   rowCount: number;
+  unitCount: number;
+  dayUnitCount: number;
   uniqueHeadwordCount: number;
   duplicateHeadwordGroups: number;
   repeatedHeadwordRows: number;
@@ -78,8 +95,26 @@ function splitMeanings(meaningText: string): string[] {
   return values.length > 0 ? values : [normalizeText(meaningText)];
 }
 
+function parseUnit(unit: string): {
+  unitLabel: string;
+  normalizedLabel: string;
+  unitKind: "day" | "supplement";
+  unitNumber: number | null;
+} {
+  const unitLabel = normalizeText(unit);
+  const dayMatch = /^DAY\s*([0-9]+)$/i.exec(unitLabel);
+
+  return {
+    unitLabel,
+    normalizedLabel: normalizeKey(unitLabel),
+    unitKind: dayMatch ? "day" : "supplement",
+    unitNumber: dayMatch ? Number(dayMatch[1]) : null,
+  };
+}
+
 export function normalizeVocabularyImport(input: unknown): {
   file: VocabularyImportFile;
+  units: NormalizedVocabularyUnit[];
   entries: NormalizedVocabularyEntry[];
   audit: VocabularyImportAudit;
 } {
@@ -102,18 +137,42 @@ export function normalizeVocabularyImport(input: unknown): {
     }
   }
 
+  const unitPositions = new Map<string, number>();
+  const unitsByLabel = new Map<string, NormalizedVocabularyUnit>();
   const entries = orderedRows.map((row) => {
+    const unit = parseUnit(row.unit);
+    const positionInUnit =
+      (unitPositions.get(unit.normalizedLabel) ?? 0) + 1;
+    unitPositions.set(unit.normalizedLabel, positionInUnit);
+    const existingUnit = unitsByLabel.get(unit.normalizedLabel);
+    if (existingUnit) {
+      existingUnit.entryCount += 1;
+    } else {
+      unitsByLabel.set(unit.normalizedLabel, {
+        unitLabel: unit.unitLabel,
+        normalizedLabel: unit.normalizedLabel,
+        unitKind: unit.unitKind,
+        unitNumber: unit.unitNumber,
+        sortIndex: unitsByLabel.size + 1,
+        entryCount: 1,
+      });
+    }
+
     const headword = normalizeText(row.headword);
     const meaningText = normalizeText(row.meaningText);
     return {
       sourceRow: row.sourceRow,
+      unitLabel: unit.unitLabel,
+      unitNormalizedLabel: unit.normalizedLabel,
+      unitKind: unit.unitKind,
+      unitNumber: unit.unitNumber,
+      positionInUnit,
+      entryType: normalizeText(row.entryType),
       headword,
       headwordNormalized: normalizeKey(headword),
       meanings: splitMeanings(meaningText),
       primaryMeaning: meaningText,
-      sourceRef: `${normalizeText(row.unit)} · ${normalizeText(
-        row.entryType,
-      )}`,
+      sourceRef: `${unit.unitLabel} · ${normalizeText(row.entryType)}`,
       rowSha256: hashRow([
         file.dataset.datasetKey,
         row.sourceRow,
@@ -148,6 +207,10 @@ export function normalizeVocabularyImport(input: unknown): {
   );
   const audit: VocabularyImportAudit = {
     rowCount: entries.length,
+    unitCount: unitsByLabel.size,
+    dayUnitCount: [...unitsByLabel.values()].filter(
+      (unit) => unit.unitKind === "day",
+    ).length,
     uniqueHeadwordCount: headwordCounts.size,
     duplicateHeadwordGroups: duplicateGroups.length,
     repeatedHeadwordRows: duplicateGroups.reduce(
@@ -168,5 +231,10 @@ export function normalizeVocabularyImport(input: unknown): {
     throw new Error("4지선다를 만들 서로 다른 단어와 뜻이 부족합니다.");
   }
 
-  return { file, entries, audit };
+  return {
+    file,
+    units: [...unitsByLabel.values()],
+    entries,
+    audit,
+  };
 }

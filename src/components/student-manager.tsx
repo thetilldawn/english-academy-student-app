@@ -7,6 +7,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 type StudentItem = {
@@ -15,6 +16,7 @@ type StudentItem = {
   schoolName: string | null;
   gradeLabel: string | null;
   currentVocabBook: string | null;
+  currentVocabDatasetId: string | null;
   status: "active" | "blocked";
   codeGeneration: number;
   codeStatus: "active" | "blocked" | "missing";
@@ -26,6 +28,26 @@ type DatasetOption = {
   edition: string | null;
 };
 
+type ProgressItem = {
+  studentId: string;
+  latestAttemptId: string | null;
+  latestAssignmentTitle: string | null;
+  latestStatus: "in_progress" | "completed" | "expired" | null;
+  latestScore: number | null;
+  latestPassed: boolean | null;
+  latestUnitLabel: string | null;
+  recommendedDatasetId: string | null;
+  recommendedUnitId: string | null;
+  recommendedUnitLabel: string | null;
+  recommendationReason:
+    | "first"
+    | "next"
+    | "repeat"
+    | "resume"
+    | "complete"
+    | null;
+};
+
 type ApiResponse = {
   code?: string;
   error?: string;
@@ -33,9 +55,11 @@ type ApiResponse = {
 
 export function StudentManager({
   datasets,
+  progress,
   students,
 }: {
   datasets: DatasetOption[];
+  progress: ProgressItem[];
   students: StudentItem[];
 }) {
   const router = useRouter();
@@ -49,6 +73,16 @@ export function StudentManager({
   const [copied, setCopied] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState(
     students[0]?.id ?? "",
+  );
+  const selectedStudent =
+    students.find((student) => student.id === selectedStudentId) ??
+    students[0] ??
+    null;
+  const selectedProgress =
+    progress.find((item) => item.studentId === selectedStudent?.id) ??
+    null;
+  const [profileDatasetId, setProfileDatasetId] = useState(
+    selectedStudent?.currentVocabDatasetId ?? "",
   );
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -72,6 +106,11 @@ export function StudentManager({
 
   function finishClosingCodeDialog() {
     setShownCode(null);
+  }
+
+  function selectStudent(student: StudentItem) {
+    setSelectedStudentId(student.id);
+    setProfileDatasetId(student.currentVocabDatasetId ?? "");
   }
 
   function beginAction(key: string) {
@@ -141,6 +180,37 @@ export function StudentManager({
         requestError instanceof Error
           ? requestError.message
           : "학생을 만들지 못했습니다.",
+      );
+    } finally {
+      finishAction();
+    }
+  }
+
+  async function saveCurrentDataset() {
+    if (
+      !selectedStudent ||
+      !beginAction(`vocab:${selectedStudent.id}`)
+    ) {
+      return;
+    }
+
+    try {
+      await request(
+        `/api/admin/students/${selectedStudent.id}/vocab`,
+        {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            currentVocabDatasetId: profileDatasetId,
+          }),
+        },
+      );
+      router.refresh();
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "현재 단어장을 바꾸지 못했습니다.",
       );
     } finally {
       finishAction();
@@ -243,6 +313,36 @@ export function StudentManager({
     window.setTimeout(() => setCopied(false), 1500);
   }
 
+  async function shareCode() {
+    if (!shownCode) return;
+    const message = [
+      shownCode.label,
+      `접속 주소: ${window.location.origin}`,
+      `접속 코드: ${shownCode.code}`,
+    ].join("\n");
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shownCode.label,
+          text: message,
+        });
+        return;
+      } catch (shareError) {
+        if (
+          shareError instanceof DOMException &&
+          shareError.name === "AbortError"
+        ) {
+          return;
+        }
+      }
+    }
+
+    await navigator.clipboard.writeText(message);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  }
+
   const groupedStudents = useMemo(() => {
     const groups = new Map<
       string,
@@ -263,11 +363,10 @@ export function StudentManager({
 
     return Array.from(groups.values());
   }, [students]);
-  const selectedStudent =
-    students.find((student) => student.id === selectedStudentId) ??
-    students[0] ??
-    null;
-
+  const progressByStudent = useMemo(
+    () => new Map(progress.map((item) => [item.studentId, item])),
+    [progress],
+  );
   return (
     <>
       <div className="manager-toolbar">
@@ -342,6 +441,15 @@ export function StudentManager({
                           <p className="list-meta">
                             코드 {student.codeGeneration}차
                           </p>
+                          <p className="list-meta">
+                            다음 ·{" "}
+                            {progressByStudent.get(student.id)
+                              ?.recommendationReason === "complete"
+                              ? "현재 단어장 완료"
+                              : progressByStudent.get(student.id)
+                                    ?.recommendedUnitLabel ??
+                                "단어장 선택 필요"}
+                          </p>
                         </div>
                         <span
                           className={`status-pill status-${student.status}`}
@@ -353,7 +461,7 @@ export function StudentManager({
                       </div>
                       <button
                         className="button button-quiet button-small student-select-button"
-                        onClick={() => setSelectedStudentId(student.id)}
+                        onClick={() => selectStudent(student)}
                         type="button"
                       >
                         {student.id === selectedStudent?.id
@@ -367,6 +475,12 @@ export function StudentManager({
                         <div className="inline-actions student-card-actions">
                           {student.status === "active" && (
                             <>
+                              <Link
+                                className="button button-primary button-small"
+                                href={`/admin/assignments?student=${student.id}`}
+                              >
+                                시험 배정
+                              </Link>
                               <button
                                 className="button button-quiet button-small"
                                 disabled={busyKey !== ""}
@@ -443,9 +557,84 @@ export function StudentManager({
                     : "차단됨"}
                 </span>
               </div>
+              <div className="student-progress-grid">
+                <div>
+                  <span>최근 시험</span>
+                  <strong>
+                    {selectedProgress?.latestAssignmentTitle ??
+                      "응시 기록 없음"}
+                  </strong>
+                  <small>
+                    {selectedProgress?.latestScore === null ||
+                    selectedProgress?.latestScore === undefined
+                      ? "점수 없음"
+                      : `${selectedProgress.latestScore}점`}
+                    {selectedProgress?.latestUnitLabel
+                      ? ` · ${selectedProgress.latestUnitLabel}`
+                      : ""}
+                  </small>
+                </div>
+                <div>
+                  <span>다음 추천</span>
+                  <strong>
+                    {selectedProgress?.recommendationReason ===
+                    "complete"
+                      ? "현재 단어장 완료"
+                      : selectedProgress?.recommendedUnitLabel ??
+                        "단어장 선택 필요"}
+                  </strong>
+                  <small>
+                    {selectedProgress?.recommendationReason ===
+                    "repeat"
+                      ? "통과 전 같은 범위를 다시 배정"
+                      : selectedProgress?.recommendationReason ===
+                          "resume"
+                        ? "진행 중인 시험 범위"
+                        : "시험 이력을 기준으로 계산"}
+                  </small>
+                </div>
+              </div>
+              <div className="student-book-form">
+                <label className="field">
+                  <span className="field-label">현재 단어장 변경</span>
+                  <select
+                    onChange={(event) =>
+                      setProfileDatasetId(event.target.value)
+                    }
+                    value={profileDatasetId}
+                  >
+                    <option value="">나중에 선택</option>
+                    {datasets.map((dataset) => (
+                      <option key={dataset.id} value={dataset.id}>
+                        {[dataset.title, dataset.edition]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  className="button button-secondary"
+                  disabled={
+                    busyKey !== "" ||
+                    profileDatasetId ===
+                      (selectedStudent.currentVocabDatasetId ?? "")
+                  }
+                  onClick={saveCurrentDataset}
+                  type="button"
+                >
+                  현재 단어장 저장
+                </button>
+              </div>
               <div className="form-stack section">
                 {selectedStudent.status === "active" ? (
                   <>
+                    <Link
+                      className="button button-primary"
+                      href={`/admin/assignments?student=${selectedStudent.id}`}
+                    >
+                      단어 시험 배정
+                    </Link>
                     <button
                       className="button button-quiet"
                       disabled={busyKey !== ""}
@@ -542,24 +731,13 @@ export function StudentManager({
                 <label className="field">
                   <span className="field-label-row">
                     <span className="field-label">현재 단어장</span>
-                    <span
-                      className="field-requirement"
-                      data-kind="required"
-                    >
-                      필수
-                    </span>
+                    <span className="field-requirement">선택</span>
                   </span>
                   <select
                     defaultValue=""
-                    disabled={datasets.length === 0}
                     name="currentVocabDatasetId"
-                    required
                   >
-                    <option disabled value="">
-                      {datasets.length === 0
-                        ? "선택 가능한 단어장이 없습니다"
-                        : "단어장 선택"}
-                    </option>
+                    <option value="">나중에 선택</option>
                     {datasets.map((dataset) => (
                       <option key={dataset.id} value={dataset.id}>
                         {[dataset.title, dataset.edition]
@@ -570,8 +748,8 @@ export function StudentManager({
                   </select>
                   <span className="field-help">
                     {datasets.length === 0
-                      ? "검수 완료된 단어장이 등록되면 여기에 표시됩니다."
-                      : "검수 완료되어 시험에 사용할 수 있는 단어장만 표시됩니다."}
+                      ? "단어장 없이 학생과 코드부터 만들 수 있습니다."
+                      : "아직 정하지 않았다면 나중에 시험 배정에서 선택할 수 있습니다."}
                   </span>
                 </label>
                 <label className="field">
@@ -592,7 +770,7 @@ export function StudentManager({
                 )}
                 <button
                   className="button button-primary"
-                  disabled={busyKey !== "" || datasets.length === 0}
+                  disabled={busyKey !== ""}
                   type="submit"
                 >
                   {busyKey === "create"
@@ -621,6 +799,13 @@ export function StudentManager({
             <button
               autoFocus
               className="button button-primary"
+              onClick={() => void shareCode()}
+              type="button"
+            >
+              코드 보내기
+            </button>
+            <button
+              className="button button-secondary"
               onClick={copyCode}
               type="button"
             >

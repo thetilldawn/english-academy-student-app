@@ -1,0 +1,51 @@
+import fs from "node:fs";
+import path from "node:path";
+
+import { describe, expect, it } from "vitest";
+
+function source(relativePath: string) {
+  return fs.readFileSync(path.resolve(relativePath), "utf8");
+}
+
+describe("DAY 문제은행 응시 계약", () => {
+  it("새 배정은 DAY와 고정 문제은행을 사용한다", () => {
+    const manager = source("src/components/assignment-manager.tsx");
+    const adminService = source("src/lib/services/admin-service.ts");
+
+    expect(manager).toContain("시작 DAY");
+    expect(manager).toContain("끝 DAY");
+    expect(manager).toContain("무작위");
+    expect(manager).toContain("DAY 순서");
+    expect(adminService).toContain(
+      '"create_assignment_with_question_bank"',
+    );
+    expect(adminService).toContain("base_order_index");
+  });
+
+  it("새 시도는 문제를 다시 만들지 않고 문제은행에서 복사한다", () => {
+    const quizService = source("src/lib/services/quiz-service.ts");
+
+    expect(quizService).toContain(
+      '"create_quiz_attempt_from_bank"',
+    );
+    expect(quizService).toContain(
+      'assignment.range_basis === "units"',
+    );
+  });
+
+  it("정상 답안 뒤에는 재조회하지 않고 오류 때만 한 번 복구한다", () => {
+    const player = source("src/components/quiz-player.tsx");
+
+    expect(player).toContain("payload.nextQuestionId");
+    expect(player).toContain("payload.nextPhase");
+    expect(player).not.toContain("refreshAttempt");
+    expect(player).not.toContain("}, 800)");
+    expect(player).toContain("const recoverAttempt");
+    expect(player).toContain("if (await tryRecover()) return");
+    expect(
+      player.match(
+        /fetch\(\s*`\/api\/student\/attempts\/\$\{attempt\.id\}`/g,
+      ),
+    ).toHaveLength(1);
+  });
+});

@@ -1,8 +1,16 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { StudentLoginForm } from "@/components/student-login-form";
+import { getStudentSession } from "@/lib/auth/student-session";
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  if (await getStudentSession()) {
+    redirect("/student");
+  }
+
   return (
     <main className="landing-shell" id="main-content">
       <section className="landing-card">

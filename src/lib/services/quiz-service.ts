@@ -10,9 +10,11 @@ export type StudentAssignmentSummary = {
   id: string;
   title: string;
   datasetTitle: string;
+  unitLabels: string[];
   rangeStart: number;
   rangeEnd: number;
   questionCount: number;
+  questionOrderMode: "fixed" | "random";
   timeLimitSeconds: number;
   passingScore: number;
   retakeAllowed: boolean;
@@ -71,6 +73,9 @@ type AssignmentRow = {
   time_limit_seconds: number;
   passing_score: number;
   retake_allowed: boolean;
+  range_basis: "source_rows" | "units";
+  question_bank_version: number | null;
+  question_order_mode: "fixed" | "random";
   status: "draft" | "active" | "closed";
   available_from: string | null;
   available_until: string | null;
@@ -188,7 +193,7 @@ export async function listStudentAssignments(
     supabase
       .from("assignments")
       .select(
-        "id, title, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, passing_score, retake_allowed, status, available_from, available_until",
+        "id, title, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, passing_score, retake_allowed, range_basis, question_bank_version, question_order_mode, status, available_from, available_until",
       )
       .in("id", assignmentIds)
       .order("created_at", { ascending: false }),
@@ -205,13 +210,32 @@ export async function listStudentAssignments(
   const assignments = (assignmentData ?? []) as AssignmentRow[];
   const attempts = (attemptData ?? []) as AttemptRow[];
   const datasetIds = [...new Set(assignments.map((item) => item.dataset_id))];
-  const { data: datasetData } = await supabase
-    .from("vocab_datasets")
-    .select("id, title")
-    .in("id", datasetIds);
+  const [
+    { data: datasetData },
+    { data: assignmentUnitData },
+  ] = await Promise.all([
+    supabase
+      .from("vocab_datasets")
+      .select("id, title")
+      .in("id", datasetIds),
+    supabase
+      .from("assignment_units")
+      .select("assignment_id, position, vocab_units(unit_label)")
+      .in("assignment_id", assignmentIds)
+      .order("position"),
+  ]);
   const datasetTitles = new Map(
     (datasetData ?? []).map((dataset) => [dataset.id, dataset.title]),
   );
+  const unitLabelsByAssignment = new Map<string, string[]>();
+  for (const link of assignmentUnitData ?? []) {
+    const relatedUnit = Array.isArray(link.vocab_units)
+      ? link.vocab_units[0]
+      : link.vocab_units;
+    const labels = unitLabelsByAssignment.get(link.assignment_id) ?? [];
+    if (relatedUnit?.unit_label) labels.push(relatedUnit.unit_label);
+    unitLabelsByAssignment.set(link.assignment_id, labels);
+  }
   const latestAttempts = new Map<string, AttemptRow>();
   for (const attempt of attempts) {
     if (!latestAttempts.has(attempt.assignment_id)) {
@@ -238,9 +262,11 @@ export async function listStudentAssignments(
       id: assignment.id,
       title: assignment.title,
       datasetTitle: datasetTitles.get(assignment.dataset_id) ?? "어휘",
+      unitLabels: unitLabelsByAssignment.get(assignment.id) ?? [],
       rangeStart: assignment.range_start,
       rangeEnd: assignment.range_end,
       questionCount: assignment.question_count,
+      questionOrderMode: assignment.question_order_mode,
       timeLimitSeconds: assignment.time_limit_seconds,
       passingScore: assignment.passing_score,
       retakeAllowed: assignment.retake_allowed,
@@ -266,7 +292,7 @@ export async function startStudentAttempt(
       supabase
         .from("assignments")
         .select(
-          "id, title, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, passing_score, retake_allowed, status, available_from, available_until",
+          "id, title, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, passing_score, retake_allowed, range_basis, question_bank_version, question_order_mode, status, available_from, available_until",
         )
         .eq("id", assignmentId)
         .maybeSingle(),
@@ -281,6 +307,25 @@ export async function startStudentAttempt(
 
   if (assignmentError || !assignment || !linkData) {
     throw new Error("배정된 시험을 찾지 못했습니다.");
+  }
+
+  if (
+    assignment.range_basis === "units" &&
+    assignment.question_bank_version !== null
+  ) {
+    const { data, error } = await supabase.rpc(
+      "create_quiz_attempt_from_bank",
+      {
+        p_student_id: studentId,
+        p_assignment_id: assignmentId,
+      },
+    );
+
+    if (error || typeof data !== "string") {
+      throw new Error("시험을 시작하지 못했습니다.");
+    }
+
+    return data;
   }
 
   const entryData: Array<{
@@ -489,6 +534,12 @@ export async function answerStudentQuestion(input: {
     completed?: boolean;
     needsRetry?: boolean;
     expired?: boolean;
+    nextQuestionId?: string | null;
+    nextPhase?: "initial" | "retry" | null;
+    initialAnsweredCount?: number;
+    initialQuestionCount?: number;
+    retryAnsweredCount?: number;
+    retryQuestionCount?: number;
   };
 }
 

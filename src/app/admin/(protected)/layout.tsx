@@ -4,12 +4,18 @@ import { AdminNavigation } from "@/components/admin-navigation";
 import { AdminLogoutButton } from "@/components/admin-logout-button";
 import { AdminPageTitle } from "@/components/admin-page-title";
 import { requireAdmin } from "@/lib/auth/admin";
+import { getStudentSession } from "@/lib/auth/student-session";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminProtectedLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const student = await getStudentSession();
+  if (student) {
+    redirect("/student");
+  }
   const admin = await requireAdmin();
 
   return (

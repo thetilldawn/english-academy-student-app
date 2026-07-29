@@ -6,7 +6,7 @@ import { requireStudentSession } from "@/lib/auth/student-session";
 import { getStudentAttempt } from "@/lib/services/quiz-service";
 
 export const metadata: Metadata = {
-  title: "단어시험",
+  title: "단어 시험",
 };
 
 export default async function AttemptPage({

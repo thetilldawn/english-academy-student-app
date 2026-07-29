@@ -4,30 +4,42 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 const migrationPath = path.resolve(
-  "supabase/migrations/20260728134932_initial_student_app_mvp.sql",
+  "supabase/migrations/20260728162905_initial_student_app_mvp.sql",
 );
 const migration = fs.readFileSync(migrationPath, "utf8");
 const hardeningMigration = fs.readFileSync(
   path.resolve(
-    "supabase/migrations/20260728170000_harden_admin_rpc_wrappers.sql",
+    "supabase/migrations/20260728163337_harden_admin_rpc_wrappers.sql",
   ),
   "utf8",
 );
 const studentProfileMigration = fs.readFileSync(
   path.resolve(
-    "supabase/migrations/20260728213110_add_student_current_vocab_book.sql",
+    "supabase/migrations/20260728213700_add_student_current_vocab_book.sql",
   ),
   "utf8",
 );
 const studentDatasetMigration = fs.readFileSync(
   path.resolve(
-    "supabase/migrations/20260728222713_student_vocab_dataset_selection.sql",
+    "supabase/migrations/20260728223108_student_vocab_dataset_selection.sql",
   ),
   "utf8",
 );
 const studentDatasetEnforcementMigration = fs.readFileSync(
   path.resolve(
-    "supabase/migrations/20260728223531_enforce_student_vocab_dataset_selection.sql",
+    "supabase/migrations/20260728224138_enforce_student_vocab_dataset_selection.sql",
+  ),
+  "utf8",
+);
+const cachedDayAssignmentMigration = fs.readFileSync(
+  path.resolve(
+    "supabase/migrations/20260729005637_add_cached_day_assignment_flow.sql",
+  ),
+  "utf8",
+);
+const studentVocabManagementMigration = fs.readFileSync(
+  path.resolve(
+    "supabase/migrations/20260729012405_manage_student_vocab_dataset.sql",
   ),
   "utf8",
 );
@@ -199,7 +211,7 @@ describe("database security contract", () => {
     );
   });
 
-  it("구형 생성 경로를 닫고 현재 단어장 선택을 DB 필수값으로 만든다", () => {
+  it("구형 생성 경로를 닫았던 과거 필수화 이력을 유지한다", () => {
     expect(studentDatasetEnforcementMigration).toContain(
       "students_without_current_vocab_dataset",
     );
@@ -216,5 +228,76 @@ describe("database security contract", () => {
         /drop function private\.create_student_with_code\(/g,
       ),
     ).toHaveLength(2);
+  });
+
+  it("현재 단어장을 다시 선택 사항으로 열고 준비된 데이터셋은 검증한다", () => {
+    expect(cachedDayAssignmentMigration).toContain(
+      "alter column current_vocab_dataset_id drop not null",
+    );
+    expect(cachedDayAssignmentMigration).toContain(
+      "if p_current_vocab_dataset_id is not null then",
+    );
+    expect(cachedDayAssignmentMigration).toContain(
+      "raise exception 'dataset_not_ready'",
+    );
+  });
+
+  it("DAY와 배정 문제은행에 RLS·외래키·순서 제약을 둔다", () => {
+    for (const table of [
+      "vocab_units",
+      "assignment_units",
+      "assignment_questions",
+    ]) {
+      expect(cachedDayAssignmentMigration).toContain(
+        `alter table public.${table} enable row level security;`,
+      );
+      expect(cachedDayAssignmentMigration).toContain(
+        `grant all on table public.${table} to service_role;`,
+      );
+    }
+    expect(cachedDayAssignmentMigration).toContain(
+      "unique (assignment_id, base_order_index)",
+    );
+    expect(cachedDayAssignmentMigration).toContain(
+      "unique (assignment_id, vocab_entry_id)",
+    );
+    expect(cachedDayAssignmentMigration).toContain(
+      "quiz_questions_attempt_bank_question_unique",
+    );
+  });
+
+  it("문제은행 시도는 문항을 재생성하지 않고 순서만 저장한다", () => {
+    expect(cachedDayAssignmentMigration).toContain(
+      "create function public.create_quiz_attempt_from_bank(",
+    );
+    expect(cachedDayAssignmentMigration).toContain(
+      "from public.assignment_questions as question",
+    );
+    expect(cachedDayAssignmentMigration).toContain(
+      "assignment_row.question_order_mode = 'random'",
+    );
+    expect(cachedDayAssignmentMigration).toContain(
+      "'nextQuestionId', next_question_id",
+    );
+    expect(cachedDayAssignmentMigration).toContain(
+      "'nextPhase', next_phase",
+    );
+  });
+
+  it("현재 단어장은 관리자 RPC로만 변경하고 준비 상태를 재검증한다", () => {
+    expect(studentVocabManagementMigration).toContain(
+      "create function private.set_student_current_vocab_dataset(",
+    );
+    expect(studentVocabManagementMigration).toContain(
+      "create function public.set_student_current_vocab_dataset(",
+    );
+    expect(studentVocabManagementMigration).toContain(
+      "status = 'ready'",
+    );
+    expect(studentVocabManagementMigration).toContain("and is_active");
+    expect(studentVocabManagementMigration).toContain("security invoker");
+    expect(studentVocabManagementMigration).toContain(
+      "from public, anon;",
+    );
   });
 });

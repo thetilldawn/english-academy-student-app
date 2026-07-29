@@ -1409,12 +1409,21 @@ tr:last-child td {
 
 .activity-row {
   position: relative;
+  border-bottom: 1px solid #eceee9;
+}
+
+.activity-link {
   display: grid;
   grid-template-columns: 14px minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
   padding: 13px 0;
-  border-bottom: 1px solid #eceee9;
+  color: inherit;
+  border-radius: 10px;
+}
+
+.activity-link:hover {
+  background: var(--canvas);
 }
 
 .activity-row:last-child {
@@ -1445,6 +1454,16 @@ tr:last-child td {
 
 .activity-copy small {
   font-size: 11px;
+}
+
+.selection-summary {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--green-dark);
+  background: var(--green-soft);
+  font-size: 13px;
+  font-weight: 750;
 }
 
 .quick-metrics {
@@ -1491,7 +1510,7 @@ tr:last-child td {
 
 .student-action-panel,
 .student-select-button {
-  display: none;
+  display: block;
 }
 
 .student-create-disclosure {
@@ -1589,6 +1608,39 @@ tr:last-child td {
   font-size: 14px;
 }
 
+.student-progress-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.student-progress-grid > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--canvas);
+}
+
+.student-progress-grid span,
+.student-progress-grid small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.student-progress-grid strong {
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+
+.student-book-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
 .student-actions-disclosure > summary {
   list-style: none;
 }
@@ -1664,7 +1716,7 @@ tr:last-child td {
   position: sticky;
   top: 24px;
   grid-column: 2;
-  grid-row: 1 / span 3;
+  grid-row: 1 / -1;
 }
 
 .assignment-review-summary {
@@ -1711,8 +1763,51 @@ tr:last-child td {
   overscroll-behavior-x: contain;
 }
 
+.results-card-list {
+  display: none;
+}
+
+.result-history-card {
+  color: inherit;
+}
+
+.result-history-card .title-with-status > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.result-history-card .title-with-status span:not(.status-pill),
+.result-history-card > small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.result-history-card dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.result-history-card dl > div {
+  padding: 9px;
+  border-radius: 9px;
+  background: var(--canvas);
+}
+
+.result-history-card dt {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.result-history-card dd {
+  margin: 3px 0 0;
+  font-weight: 850;
+}
+
 .results-table {
-  min-width: 860px;
+  min-width: 1100px;
   border-collapse: separate;
   border-spacing: 0;
 }
@@ -1914,15 +2009,12 @@ tr:last-child td {
   }
 
   .student-admin-workspace {
-    grid-template-columns: 190px minmax(0, 1fr) 300px;
-    grid-template-areas: "groups students add";
+    grid-template-columns: minmax(0, 1fr) 340px;
+    grid-template-areas: "students add";
   }
 
   .student-group-index {
-    position: sticky;
-    top: 24px;
-    grid-area: groups;
-    display: block;
+    display: none;
   }
 
   .student-group-pane {
@@ -1976,7 +2068,17 @@ tr:last-child td {
   }
 
   .student-action-pane {
-    order: -1;
+    order: initial;
+  }
+
+  .results-card-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .results-table-wrap,
+  .table-scroll-hint {
+    display: none;
   }
 
   .assignment-form {
@@ -2107,12 +2209,13 @@ tr:last-child td {
   .student-assignment-grid,
   .result-question-grid,
   .assignment-history-grid,
-  .student-card-grid {
+  .student-card-grid,
+  .student-progress-grid {
     grid-template-columns: 1fr;
   }
 
   .student-action-pane {
-    order: -1;
+    order: initial;
   }
 
   .student-group-index {
@@ -2134,8 +2237,14 @@ tr:last-child td {
     grid-template-columns: 1fr;
   }
 
+  .results-card-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .results-table-wrap,
   .table-scroll-hint {
-    display: block;
+    display: none;
   }
 
   .results-table th:first-child,

@@ -14,6 +14,10 @@ import {
   getAttemptQuestionResults,
   type AttemptQuestionResult,
 } from "@/lib/services/quiz-service";
+import {
+  createQuizQuestions,
+  type QuizVocabularyEntry,
+} from "@/lib/quiz/engine";
 
 export type StudentSummary = {
   id: string;
@@ -21,6 +25,7 @@ export type StudentSummary = {
   schoolName: string | null;
   gradeLabel: string | null;
   currentVocabBook: string | null;
+  currentVocabDatasetId: string | null;
   status: "active" | "blocked";
   codeGeneration: number;
   codeStatus: "active" | "blocked" | "missing";
@@ -43,6 +48,36 @@ export type DatasetOption = {
   edition: string | null;
 };
 
+export type VocabUnitSummary = {
+  id: string;
+  datasetId: string;
+  label: string;
+  kind: "day" | "supplement";
+  number: number | null;
+  sortIndex: number;
+  entryCount: number;
+};
+
+export type StudentProgressSummary = {
+  studentId: string;
+  latestAttemptId: string | null;
+  latestAssignmentTitle: string | null;
+  latestStatus: "in_progress" | "completed" | "expired" | null;
+  latestScore: number | null;
+  latestPassed: boolean | null;
+  latestUnitLabel: string | null;
+  recommendedDatasetId: string | null;
+  recommendedUnitId: string | null;
+  recommendedUnitLabel: string | null;
+  recommendationReason:
+    | "first"
+    | "next"
+    | "repeat"
+    | "resume"
+    | "complete"
+    | null;
+};
+
 export class StudentCreationError extends Error {
   constructor(
     public readonly reason: "dataset_unavailable" | "database",
@@ -61,12 +96,15 @@ export type AssignmentSummary = {
   title: string;
   status: "draft" | "active" | "closed";
   datasetId: string;
+  datasetTitle: string;
+  unitLabels: string[];
   rangeStart: number;
   rangeEnd: number;
   questionCount: number;
+  englishToKoreanRatio: number;
   timeLimitSeconds: number;
   passingScore: number;
-  retakeAllowed: boolean;
+  questionOrderMode: "fixed" | "random";
   studentCount: number;
   createdAt: string;
 };
@@ -80,6 +118,10 @@ export type AttemptSummary = {
   initialScore: number | null;
   finalScore: number | null;
   passed: boolean | null;
+  questionCount: number;
+  initialCorrectCount: number | null;
+  retryCorrectCount: number | null;
+  unresolvedWrongCount: number | null;
   startedAt: string;
   completedAt: string | null;
 };
@@ -161,6 +203,7 @@ export async function listStudents(): Promise<StudentSummary[]> {
         ? datasetById.get(student.current_vocab_dataset_id)
         : null) ??
       student.current_vocab_book,
+    currentVocabDatasetId: student.current_vocab_dataset_id,
     status: student.status,
     codeGeneration: student.code_generation,
     codeStatus: codeByStudent.get(student.id) ?? "missing",
@@ -172,7 +215,7 @@ export async function createStudent(input: {
   displayName: string;
   schoolName: string;
   gradeLabel: string;
-  currentVocabDatasetId: string;
+  currentVocabDatasetId: string | null;
   note: string;
 }): Promise<{ studentId: string; code: string }> {
   await requireAdmin();
@@ -215,6 +258,25 @@ export async function createStudent(input: {
     studentId: result.student_id,
     code,
   };
+}
+
+export async function setStudentCurrentDataset(
+  studentId: string,
+  datasetId: string | null,
+): Promise<void> {
+  await requireAdmin();
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase.rpc(
+    "set_student_current_vocab_dataset",
+    {
+      p_student_id: studentId,
+      p_dataset_id: datasetId,
+    },
+  );
+
+  if (error) {
+    throw new Error("학생의 현재 단어장을 바꾸지 못했습니다.");
+  }
 }
 
 export async function revealStudentCode(studentId: string): Promise<string> {
@@ -336,31 +398,328 @@ export async function listSelectableDatasets(): Promise<DatasetOption[]> {
   }));
 }
 
+export async function listVocabUnits(): Promise<VocabUnitSummary[]> {
+  await requireAdmin();
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("vocab_units")
+    .select(
+      "id, dataset_id, unit_label, unit_kind, unit_number, sort_index, entry_count",
+    )
+    .order("dataset_id")
+    .order("sort_index");
+
+  if (error) {
+    throw new Error("단어장 DAY 목록을 불러오지 못했습니다.");
+  }
+
+  return (data ?? []).map((unit) => ({
+    id: unit.id,
+    datasetId: unit.dataset_id,
+    label: unit.unit_label,
+    kind: unit.unit_kind,
+    number: unit.unit_number,
+    sortIndex: unit.sort_index,
+    entryCount: unit.entry_count,
+  }));
+}
+
+export async function listStudentProgress(
+  students: StudentSummary[],
+  units: VocabUnitSummary[],
+): Promise<StudentProgressSummary[]> {
+  await requireAdmin();
+  const supabase = await createServerSupabaseClient();
+  const [
+    { data: attemptData, error: attemptError },
+    { data: assignmentData, error: assignmentError },
+    { data: assignmentUnitData, error: assignmentUnitError },
+  ] = await Promise.all([
+    supabase
+      .from("quiz_attempts")
+      .select(
+        "id, student_id, assignment_id, status, initial_score, final_score, passed, started_at",
+      )
+      .order("started_at", { ascending: false })
+      .limit(1000),
+    supabase.from("assignments").select("id, dataset_id, title"),
+    supabase
+      .from("assignment_units")
+      .select("assignment_id, unit_id, position")
+      .order("position"),
+  ]);
+
+  if (attemptError || assignmentError || assignmentUnitError) {
+    throw new Error("학생별 단어 시험 진도를 불러오지 못했습니다.");
+  }
+
+  type ProgressAttemptRow = {
+    id: string;
+    student_id: string;
+    assignment_id: string;
+    status: "in_progress" | "completed" | "expired";
+    initial_score: number | string | null;
+    final_score: number | string | null;
+    passed: boolean | null;
+    started_at: string;
+  };
+  type ProgressAssignmentRow = {
+    id: string;
+    dataset_id: string;
+    title: string;
+  };
+  type ProgressAssignmentUnitRow = {
+    assignment_id: string;
+    unit_id: string;
+    position: number;
+  };
+
+  const studentById = new Map(
+    students.map((student) => [student.id, student]),
+  );
+  const assignmentById = new Map(
+    ((assignmentData ?? []) as ProgressAssignmentRow[]).map(
+      (assignment) => [assignment.id, assignment],
+    ),
+  );
+  const unitById = new Map(units.map((unit) => [unit.id, unit]));
+  const unitLinksByAssignment = new Map<
+    string,
+    ProgressAssignmentUnitRow[]
+  >();
+  for (const link of (assignmentUnitData ??
+    []) as ProgressAssignmentUnitRow[]) {
+    const links = unitLinksByAssignment.get(link.assignment_id) ?? [];
+    links.push(link);
+    unitLinksByAssignment.set(link.assignment_id, links);
+  }
+  for (const links of unitLinksByAssignment.values()) {
+    links.sort((left, right) => left.position - right.position);
+  }
+
+  const latestAttemptByStudent = new Map<string, ProgressAttemptRow>();
+  for (const attempt of (attemptData ?? []) as ProgressAttemptRow[]) {
+    if (latestAttemptByStudent.has(attempt.student_id)) continue;
+    const student = studentById.get(attempt.student_id);
+    const assignment = assignmentById.get(attempt.assignment_id);
+    if (!student || !assignment) continue;
+    if (
+      student.currentVocabDatasetId &&
+      assignment.dataset_id !== student.currentVocabDatasetId
+    ) {
+      continue;
+    }
+    latestAttemptByStudent.set(attempt.student_id, attempt);
+  }
+
+  return students.map((student) => {
+    const latestAttempt = latestAttemptByStudent.get(student.id) ?? null;
+    const latestAssignment = latestAttempt
+      ? assignmentById.get(latestAttempt.assignment_id) ?? null
+      : null;
+    const latestUnitLinks = latestAttempt
+      ? unitLinksByAssignment.get(latestAttempt.assignment_id) ?? []
+      : [];
+    const latestUnits = latestUnitLinks
+      .map((link) => unitById.get(link.unit_id))
+      .filter((unit): unit is VocabUnitSummary => Boolean(unit));
+    const latestUnitLabel =
+      latestUnits.length === 0
+        ? null
+        : latestUnits.length === 1
+          ? latestUnits[0].label
+          : `${latestUnits[0].label}~${latestUnits.at(-1)?.label}`;
+    const datasetUnits = student.currentVocabDatasetId
+      ? units
+          .filter(
+            (unit) =>
+              unit.datasetId === student.currentVocabDatasetId,
+          )
+          .sort((left, right) => left.sortIndex - right.sortIndex)
+      : [];
+
+    let recommendedUnit: VocabUnitSummary | null =
+      datasetUnits[0] ?? null;
+    let recommendationReason:
+      | StudentProgressSummary["recommendationReason"] =
+      recommendedUnit ? "first" : null;
+
+    if (latestAttempt && latestAssignment && datasetUnits.length > 0) {
+      const firstLatestUnit = latestUnits[0] ?? null;
+      const lastLatestUnit = latestUnits.at(-1) ?? null;
+      if (latestAttempt.status === "in_progress") {
+        recommendedUnit = firstLatestUnit ?? datasetUnits[0];
+        recommendationReason = "resume";
+      } else if (
+        latestAttempt.status === "completed" &&
+        latestAttempt.passed === true
+      ) {
+        if (lastLatestUnit) {
+          const lastIndex = datasetUnits.findIndex(
+            (unit) => unit.id === lastLatestUnit.id,
+          );
+          recommendedUnit =
+            lastIndex >= 0
+              ? (datasetUnits[lastIndex + 1] ?? null)
+              : null;
+          recommendationReason = recommendedUnit ? "next" : "complete";
+        } else {
+          recommendedUnit = datasetUnits[0];
+          recommendationReason = "first";
+        }
+      } else {
+        recommendedUnit = firstLatestUnit ?? datasetUnits[0];
+        recommendationReason = "repeat";
+      }
+    }
+
+    const rawScore =
+      latestAttempt?.final_score ?? latestAttempt?.initial_score ?? null;
+    return {
+      studentId: student.id,
+      latestAttemptId: latestAttempt?.id ?? null,
+      latestAssignmentTitle: latestAssignment?.title ?? null,
+      latestStatus: latestAttempt?.status ?? null,
+      latestScore: rawScore === null ? null : Number(rawScore),
+      latestPassed: latestAttempt?.passed ?? null,
+      latestUnitLabel,
+      recommendedDatasetId: student.currentVocabDatasetId,
+      recommendedUnitId: recommendedUnit?.id ?? null,
+      recommendedUnitLabel: recommendedUnit?.label ?? null,
+      recommendationReason,
+    };
+  });
+}
+
 export async function createAssignment(input: {
   title: string;
   datasetId: string;
-  rangeStart: number;
-  rangeEnd: number;
+  unitIds: string[];
   questionCount: number;
+  englishToKoreanRatio: 0 | 50 | 100;
   timeLimitSeconds: number;
   passingScore: number;
-  retakeAllowed: boolean;
+  questionOrderMode: "fixed" | "random";
   studentIds: string[];
 }): Promise<string> {
   await requireAdmin();
   const supabase = await createServerSupabaseClient();
+  const [
+    { data: dataset, error: datasetError },
+    { data: unitData, error: unitError },
+  ] = await Promise.all([
+    supabase
+      .from("vocab_datasets")
+      .select("id, title, edition")
+      .eq("id", input.datasetId)
+      .eq("status", "ready")
+      .eq("is_active", true)
+      .maybeSingle(),
+    supabase
+      .from("vocab_units")
+      .select("id, unit_label, sort_index")
+      .eq("dataset_id", input.datasetId)
+      .in("id", input.unitIds)
+      .order("sort_index"),
+  ]);
+
+  if (
+    datasetError ||
+    unitError ||
+    !dataset ||
+    !unitData ||
+    unitData.length !== input.unitIds.length
+  ) {
+    throw new Error("선택한 단어장과 DAY를 사용할 수 없습니다.");
+  }
+
+  const sortedUnits = [...unitData].sort(
+    (left, right) => left.sort_index - right.sort_index,
+  );
+  const orderedUnitIds = sortedUnits.map((unit) => unit.id);
+  const entryData: Array<{
+    id: number;
+    source_row: number;
+    headword: string;
+    headword_normalized: string;
+    primary_meaning: string;
+  }> = [];
+  const pageSize = 1000;
+
+  for (let offset = 0; ; offset += pageSize) {
+    const { data: page, error: entryError } = await supabase
+      .from("vocab_entries")
+      .select(
+        "id, source_row, headword, headword_normalized, primary_meaning",
+      )
+      .eq("dataset_id", input.datasetId)
+      .in("unit_id", orderedUnitIds)
+      .order("source_row")
+      .range(offset, offset + pageSize - 1);
+
+    if (entryError) {
+      throw new Error("선택한 DAY의 단어를 불러오지 못했습니다.");
+    }
+    entryData.push(...(page ?? []));
+    if (!page || page.length < pageSize) break;
+  }
+
+  const uniqueEntries = new Map<string, QuizVocabularyEntry>();
+  const sourceOrderById = new Map<number, number>();
+  for (const entry of entryData) {
+    const key = entry.headword_normalized
+      .normalize("NFC")
+      .toLocaleLowerCase("en-US");
+    if (!uniqueEntries.has(key)) {
+      uniqueEntries.set(key, {
+        id: entry.id,
+        headword: entry.headword,
+        primaryMeaning: entry.primary_meaning,
+      });
+      sourceOrderById.set(entry.id, entry.source_row);
+    }
+  }
+
+  const questionDrafts = createQuizQuestions(
+    [...uniqueEntries.values()],
+    input.questionCount,
+    input.englishToKoreanRatio,
+  ).sort(
+    (left, right) =>
+      (sourceOrderById.get(left.vocabEntryId) ?? 0) -
+      (sourceOrderById.get(right.vocabEntryId) ?? 0),
+  );
+  const unitRangeLabel =
+    sortedUnits.length === 1
+      ? sortedUnits[0].unit_label
+      : `${sortedUnits[0].unit_label}~${sortedUnits.at(-1)?.unit_label}`;
+  const generatedTitle = [
+    dataset.title,
+    dataset.edition,
+    unitRangeLabel,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   const { data, error } = await supabase.rpc(
-    "create_assignment_with_students",
+    "create_assignment_with_question_bank",
     {
-      p_title: input.title,
+      p_title: input.title || generatedTitle,
       p_dataset_id: input.datasetId,
-      p_range_start: input.rangeStart,
-      p_range_end: input.rangeEnd,
+      p_unit_ids: orderedUnitIds,
       p_question_count: input.questionCount,
+      p_english_to_korean_ratio: input.englishToKoreanRatio,
       p_time_limit_seconds: input.timeLimitSeconds,
       p_passing_score: input.passingScore,
-      p_retake_allowed: input.retakeAllowed,
+      p_question_order_mode: input.questionOrderMode,
       p_student_ids: input.studentIds,
+      p_questions: questionDrafts.map((question, index) => ({
+        vocab_entry_id: question.vocabEntryId,
+        base_order_index: index + 1,
+        direction: question.direction,
+        prompt: question.prompt,
+        choices: question.choices,
+        correct_choice_index: question.correctChoiceIndex,
+      })),
     },
   );
 
@@ -374,18 +733,35 @@ export async function createAssignment(input: {
 export async function listAssignments(): Promise<AssignmentSummary[]> {
   await requireAdmin();
   const supabase = await createServerSupabaseClient();
-  const [{ data, error }, { data: assignmentStudentData }] =
-    await Promise.all([
-      supabase
-        .from("assignments")
-        .select(
-          "id, title, status, dataset_id, range_start, range_end, question_count, time_limit_seconds, passing_score, retake_allowed, created_at",
-        )
-        .order("created_at", { ascending: false }),
-      supabase.from("assignment_students").select("assignment_id"),
-    ]);
+  const [
+    { data, error },
+    { data: assignmentStudentData, error: studentLinkError },
+    { data: assignmentUnitData, error: unitLinkError },
+    { data: unitData, error: unitError },
+    { data: datasetData, error: datasetError },
+  ] = await Promise.all([
+    supabase
+      .from("assignments")
+      .select(
+        "id, title, status, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, passing_score, question_order_mode, created_at",
+      )
+      .order("created_at", { ascending: false }),
+    supabase.from("assignment_students").select("assignment_id"),
+    supabase
+      .from("assignment_units")
+      .select("assignment_id, unit_id, position")
+      .order("position"),
+    supabase.from("vocab_units").select("id, unit_label"),
+    supabase.from("vocab_datasets").select("id, title, edition"),
+  ]);
 
-  if (error) {
+  if (
+    error ||
+    studentLinkError ||
+    unitLinkError ||
+    unitError ||
+    datasetError
+  ) {
     throw new Error("시험 배정 목록을 불러오지 못했습니다.");
   }
 
@@ -396,18 +772,38 @@ export async function listAssignments(): Promise<AssignmentSummary[]> {
       (studentCounts.get(row.assignment_id) ?? 0) + 1,
     );
   }
+  const unitLabelById = new Map(
+    (unitData ?? []).map((unit) => [unit.id, unit.unit_label]),
+  );
+  const unitLabelsByAssignment = new Map<string, string[]>();
+  for (const link of assignmentUnitData ?? []) {
+    const labels = unitLabelsByAssignment.get(link.assignment_id) ?? [];
+    const label = unitLabelById.get(link.unit_id);
+    if (label) labels.push(label);
+    unitLabelsByAssignment.set(link.assignment_id, labels);
+  }
+  const datasetTitleById = new Map(
+    (datasetData ?? []).map((dataset) => [
+      dataset.id,
+      [dataset.title, dataset.edition].filter(Boolean).join(" · "),
+    ]),
+  );
 
   return (data ?? []).map((assignment) => ({
     id: assignment.id,
     title: assignment.title,
     status: assignment.status,
     datasetId: assignment.dataset_id,
+    datasetTitle:
+      datasetTitleById.get(assignment.dataset_id) ?? "단어장",
+    unitLabels: unitLabelsByAssignment.get(assignment.id) ?? [],
     rangeStart: assignment.range_start,
     rangeEnd: assignment.range_end,
     questionCount: assignment.question_count,
+    englishToKoreanRatio: assignment.english_to_korean_ratio,
     timeLimitSeconds: assignment.time_limit_seconds,
     passingScore: assignment.passing_score,
-    retakeAllowed: assignment.retake_allowed,
+    questionOrderMode: assignment.question_order_mode,
     studentCount: studentCounts.get(assignment.id) ?? 0,
     createdAt: assignment.created_at,
   }));
@@ -419,7 +815,7 @@ export async function listAttempts(): Promise<AttemptSummary[]> {
   const { data, error } = await supabase
     .from("quiz_attempts")
     .select(
-      "id, attempt_number, status, initial_score, final_score, passed, started_at, completed_at, students(display_name), assignments(title)",
+      "id, attempt_number, status, question_count_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, started_at, completed_at, students(display_name), assignments(title)",
     )
     .order("started_at", { ascending: false })
     .limit(200);
@@ -447,6 +843,10 @@ export async function listAttempts(): Promise<AttemptSummary[]> {
       finalScore:
         attempt.final_score === null ? null : Number(attempt.final_score),
       passed: attempt.passed,
+      questionCount: attempt.question_count_snapshot,
+      initialCorrectCount: attempt.initial_correct_count,
+      retryCorrectCount: attempt.retry_correct_count,
+      unresolvedWrongCount: attempt.unresolved_wrong_count,
       startedAt: attempt.started_at,
       completedAt: attempt.completed_at,
     };

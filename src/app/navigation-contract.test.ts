@@ -14,6 +14,7 @@ describe("responsive navigation contract", () => {
     const loginForm = source("src/components/student-login-form.tsx");
 
     expect(homePage).toContain("<StudentLoginForm />");
+    expect(homePage).toContain('redirect("/student")');
     expect(homePage).toContain('href="/admin/login"');
     expect(homePage).not.toContain('href="/code"');
     expect(loginForm).toContain('"인증 중…" : "인증"');
@@ -36,6 +37,28 @@ describe("responsive navigation contract", () => {
     expect(studentLogout).toContain('router.replace("/")');
   });
 
+  it("학생·관리자 쿠키가 겹쳐도 역할 전환이 순환하지 않는다", () => {
+    const studentSessionRoute = source(
+      "src/app/api/student/session/route.ts",
+    );
+    const studentLayout = source(
+      "src/app/student/(protected)/layout.tsx",
+    );
+
+    expect(studentSessionRoute).toContain(
+      "const { error: signOutError } = await supabase.auth.signOut()",
+    );
+    expect(studentSessionRoute).toContain(
+      'revokeCurrentStudentSession("admin_signout_failed")',
+    );
+    expect(studentLayout).toContain(
+      "const student = await getStudentSession()",
+    );
+    expect(studentLayout).toContain(
+      "if (!student && (await getAdminContext()))",
+    );
+  });
+
   it("관리자 로그인은 독립 경로를 유지한다", () => {
     const adminSession = source("src/lib/auth/admin.ts");
     const adminLogout = source("src/components/admin-logout-button.tsx");
@@ -49,7 +72,7 @@ describe("responsive navigation contract", () => {
     expect(adminLogin).not.toContain("router.refresh()");
   });
 
-  it("학생 생성 폼은 검수 완료 단어장을 선택하게 한다", () => {
+  it("학생 생성 폼은 단어장을 선택 사항으로 둔다", () => {
     const studentManager = source(
       "src/components/student-manager.tsx",
     );
@@ -62,7 +85,13 @@ describe("responsive navigation contract", () => {
       'currentVocabDatasetId: form.get("currentVocabDatasetId")',
     );
     expect(studentManager).toContain("datasets.map");
-    expect(studentManager).toContain("선택 가능한 단어장이 없습니다");
+    expect(studentManager).toContain("나중에 선택");
+    expect(studentManager).toContain(
+      "단어장 없이 학생과 코드부터 만들 수 있습니다.",
+    );
+    expect(studentManager).not.toContain(
+      'disabled={busyKey !== "" || datasets.length === 0}',
+    );
     expect(studentManager).not.toContain('name="currentVocabBook"');
     expect(studentManager).toContain(
       'student.currentVocabBook ?? "미입력"',

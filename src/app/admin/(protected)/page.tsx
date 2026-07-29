@@ -10,7 +10,7 @@ import {
 } from "@/lib/services/admin-service";
 
 export const metadata: Metadata = {
-  title: "관리 현황",
+  title: "Overview",
 };
 
 function attemptStatusText(status: "in_progress" | "completed" | "expired") {
@@ -48,11 +48,11 @@ export default async function AdminDashboardPage() {
       <div className="page-heading admin-dashboard-heading">
         <div>
           <p className="eyebrow">OVERVIEW</p>
-          <h1>수업 현황</h1>
-          <p>최근 응시 흐름과 지금 확인할 수치를 함께 봅니다.</p>
+          <h1>Overview</h1>
+          <p>최근 시험 결과와 지금 관리할 항목을 한 화면에서 봅니다.</p>
         </div>
         <Link className="button button-primary" href="/admin/assignments">
-          새 시험 배정
+          단어 시험 배정
         </Link>
       </div>
 
@@ -62,9 +62,9 @@ export default async function AdminDashboardPage() {
           className="card admin-activity-panel"
         >
           <div className="section-heading">
-            <h2 id="recent-activity-heading">최근 응시 흐름</h2>
+            <h2 id="recent-activity-heading">최근 응시</h2>
             <Link className="nav-link" href="/admin/results">
-              전체 결과 →
+              전체 내역 →
             </Link>
           </div>
           {attempts.length === 0 ? (
@@ -73,19 +73,41 @@ export default async function AdminDashboardPage() {
             <ol className="activity-list">
               {attempts.slice(0, 8).map((attempt) => (
                 <li className="activity-row" key={attempt.id}>
-                  <span className="activity-marker" aria-hidden="true" />
-                  <span className="activity-copy">
-                    <strong>{attempt.studentName}</strong>
-                    <span>{attempt.assignmentTitle}</span>
-                    <small>{formatKoreanDateTime(attempt.startedAt)}</small>
-                  </span>
-                  <span
-                    className={`status-pill status-${attempt.status}`}
+                  <Link
+                    className="activity-link"
+                    href={`/admin/results/${attempt.id}`}
                   >
-                    {attempt.status === "completed"
-                      ? `${attempt.initialScore ?? "-"}점`
-                      : attemptStatusText(attempt.status)}
-                  </span>
+                    <span className="activity-marker" aria-hidden="true" />
+                    <span className="activity-copy">
+                      <strong>{attempt.studentName}</strong>
+                      <span>{attempt.assignmentTitle}</span>
+                      <small>
+                        시작 {formatKoreanDateTime(attempt.startedAt)}
+                        {attempt.completedAt
+                          ? ` · 종료 ${formatKoreanDateTime(
+                              attempt.completedAt,
+                            )}`
+                          : ""}
+                      </small>
+                      {attempt.initialCorrectCount !== null && (
+                        <small>
+                          첫 시험 정답 {attempt.initialCorrectCount}/
+                          {attempt.questionCount}
+                          {" · "}한 번 틀린 단어{" "}
+                          {attempt.retryCorrectCount ?? 0}
+                          {" · "}다시 볼 단어{" "}
+                          {attempt.unresolvedWrongCount ?? 0}
+                        </small>
+                      )}
+                    </span>
+                    <span
+                      className={`status-pill status-${attempt.status}`}
+                    >
+                      {attempt.status === "completed"
+                        ? `${attempt.initialScore ?? "-"}점`
+                        : attemptStatusText(attempt.status)}
+                    </span>
+                  </Link>
                 </li>
               ))}
             </ol>
@@ -97,7 +119,7 @@ export default async function AdminDashboardPage() {
           className="admin-quick-panel"
         >
           <div className="section-heading">
-            <h2 id="quick-overview-heading">빠른 확인</h2>
+            <h2 id="quick-overview-heading">관리 요약</h2>
           </div>
           <div className="quick-metrics">
             <article className="card metric">

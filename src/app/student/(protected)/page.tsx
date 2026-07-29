@@ -6,7 +6,7 @@ import { requireStudentSession } from "@/lib/auth/student-session";
 import { listStudentAssignments } from "@/lib/services/quiz-service";
 
 export const metadata: Metadata = {
-  title: "내 단어시험",
+  title: "내 단어 시험",
 };
 
 type StudentAssignment = Awaited<
@@ -53,7 +53,11 @@ function AssignmentCard({
 
       <div className="assignment-details">
         <span className="detail-chip">
-          {assignment.rangeStart}~{assignment.rangeEnd}번
+          {assignment.unitLabels.length === 0
+            ? `${assignment.rangeStart}~${assignment.rangeEnd}번`
+            : assignment.unitLabels.length === 1
+              ? assignment.unitLabels[0]
+              : `${assignment.unitLabels[0]}~${assignment.unitLabels.at(-1)}`}
         </span>
         <span className="detail-chip">
           {assignment.questionCount}문항
@@ -64,11 +68,16 @@ function AssignmentCard({
         <span className="detail-chip">
           {assignment.passingScore}점 통과
         </span>
+        <span className="detail-chip">
+          {assignment.questionOrderMode === "random"
+            ? "무작위 순서"
+            : "DAY 순서"}
+        </span>
       </div>
 
       {assignment.lastInitialScore !== null && (
         <p className="last-score">
-          최근 첫 점수 <strong>{assignment.lastInitialScore}점</strong>
+          최근 첫 시험 점수 <strong>{assignment.lastInitialScore}점</strong>
         </p>
       )}
 
@@ -143,7 +152,7 @@ export default async function StudentDashboardPage() {
       <div className="page-heading student-page-heading">
         <div>
           <p className="eyebrow">MY ASSIGNMENTS</p>
-          <h1>{session.displayName}의 단어시험</h1>
+          <h1>{session.displayName}의 단어 시험</h1>
         </div>
       </div>
 
