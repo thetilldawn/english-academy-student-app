@@ -49,7 +49,35 @@ async function createFinalSchemaDatabase() {
     create role authenticated nologin;
     create role service_role nologin;
     create schema auth;
+    create schema cron;
     create schema extensions;
+    create table cron.job (
+      jobid bigint generated always as identity primary key,
+      jobname text not null unique,
+      schedule text not null,
+      command text not null
+    );
+    create function cron.schedule(
+      p_jobname text,
+      p_schedule text,
+      p_command text
+    )
+    returns bigint
+    language plpgsql
+    as $$
+    declare
+      scheduled_job_id bigint;
+    begin
+      insert into cron.job (jobname, schedule, command)
+      values (p_jobname, p_schedule, p_command)
+      on conflict (jobname) do update
+      set
+        schedule = excluded.schedule,
+        command = excluded.command
+      returning jobid into scheduled_job_id;
+      return scheduled_job_id;
+    end;
+    $$;
     create table auth.users (
       id uuid primary key
     );
@@ -78,7 +106,13 @@ async function createFinalSchemaDatabase() {
   `);
 
   for (const migrationPath of migrationPaths) {
-    await database.exec(fs.readFileSync(migrationPath, "utf8"));
+    const migration = fs
+      .readFileSync(migrationPath, "utf8")
+      .replace(
+        "create extension if not exists pg_cron;",
+        "",
+      );
+    await database.exec(migration);
   }
 
   return database;
@@ -508,7 +542,7 @@ describe.sequential("final review-assignment database schema", () => {
   }, 30_000);
 
   afterAll(async () => {
-    await database.close();
+    await database?.close();
   });
 
   it("applies every migration and exposes only the intended mixed RPC", async () => {
