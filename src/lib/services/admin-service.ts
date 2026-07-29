@@ -1,7 +1,10 @@
 import "server-only";
 
 import { getStudentCodeEnvironment } from "@/lib/env";
-import { requireAdmin } from "@/lib/auth/admin";
+import {
+  requireAdmin,
+  type AdminContext,
+} from "@/lib/auth/admin";
 import {
   decryptStudentCode,
   encryptStudentCode,
@@ -18,6 +21,16 @@ import {
   createQuizQuestions,
   type QuizVocabularyEntry,
 } from "@/lib/quiz/engine";
+import {
+  buildAssignmentHistory,
+  type AssignmentHistorySource,
+  type AssignmentHistorySummary,
+  type AttemptHistorySource,
+} from "@/lib/admin/history";
+
+export { buildStudentProgress } from "@/lib/admin/progress";
+export type { StudentProgressSummary } from "@/lib/admin/progress";
+export type { AssignmentHistorySummary } from "@/lib/admin/history";
 
 export type StudentSummary = {
   id: string;
@@ -56,26 +69,6 @@ export type VocabUnitSummary = {
   number: number | null;
   sortIndex: number;
   entryCount: number;
-};
-
-export type StudentProgressSummary = {
-  studentId: string;
-  latestAttemptId: string | null;
-  latestAssignmentTitle: string | null;
-  latestStatus: "in_progress" | "completed" | "expired" | null;
-  latestScore: number | null;
-  latestPassed: boolean | null;
-  latestUnitLabel: string | null;
-  recommendedDatasetId: string | null;
-  recommendedUnitId: string | null;
-  recommendedUnitLabel: string | null;
-  recommendationReason:
-    | "first"
-    | "next"
-    | "repeat"
-    | "resume"
-    | "complete"
-    | null;
 };
 
 export class StudentCreationError extends Error {
@@ -157,6 +150,10 @@ type StudentCodeRow = {
   student_id: string;
   status: "active" | "blocked";
 };
+
+function oneRelation<T>(value: T | T[] | null): T | null {
+  return Array.isArray(value) ? (value[0] ?? null) : value;
+}
 
 export async function listStudents(): Promise<StudentSummary[]> {
   await requireAdmin();
@@ -424,171 +421,215 @@ export async function listVocabUnits(): Promise<VocabUnitSummary[]> {
   }));
 }
 
-export async function listStudentProgress(
-  students: StudentSummary[],
-  units: VocabUnitSummary[],
-): Promise<StudentProgressSummary[]> {
+type HistoryStudentRelation = {
+  display_name: string;
+  school_name: string | null;
+  grade_label: string | null;
+};
+
+type HistoryDatasetRelation = {
+  title: string;
+  edition: string | null;
+};
+
+type HistoryUnitRelation = {
+  id: string;
+  unit_label: string;
+};
+
+type HistoryAssignmentUnitRelation = {
+  position: number;
+  unit: HistoryUnitRelation | HistoryUnitRelation[] | null;
+};
+
+type HistoryAssignmentRelation = {
+  id: string;
+  title: string;
+  status: "draft" | "active" | "closed";
+  dataset_id: string;
+  range_start: number;
+  range_end: number;
+  range_basis: "source_rows" | "units";
+  question_count: number;
+  english_to_korean_ratio: number;
+  time_limit_seconds: number;
+  passing_score: number;
+  question_order_mode: "fixed" | "random";
+  dataset: HistoryDatasetRelation | HistoryDatasetRelation[] | null;
+  assignment_units: HistoryAssignmentUnitRelation[] | null;
+};
+
+type HistoryAssignmentStudentRow = {
+  assignment_id: string;
+  student_id: string;
+  assigned_at: string;
+  student: HistoryStudentRelation | HistoryStudentRelation[] | null;
+  assignment:
+    | HistoryAssignmentRelation
+    | HistoryAssignmentRelation[]
+    | null;
+};
+
+type HistoryAttemptRow = {
+  id: string;
+  assignment_id: string;
+  student_id: string;
+  attempt_number: number;
+  status: "in_progress" | "completed" | "expired";
+  question_count_snapshot: number;
+  time_limit_seconds_snapshot: number;
+  passing_score_snapshot: number;
+  initial_correct_count: number | null;
+  retry_correct_count: number | null;
+  unresolved_wrong_count: number | null;
+  initial_score: number | string | null;
+  final_score: number | string | null;
+  passed: boolean | null;
+  started_at: string;
+  deadline_at: string;
+  completed_at: string | null;
+};
+
+const HISTORY_ASSIGNMENT_LIMIT = 1000;
+const HISTORY_ATTEMPT_LIMIT = 2000;
+
+export async function listAssignmentHistory(): Promise<
+  AssignmentHistorySummary[]
+> {
   await requireAdmin();
   const supabase = await createServerSupabaseClient();
   const [
+    { data: assignmentStudentData, error: assignmentStudentError },
     { data: attemptData, error: attemptError },
-    { data: assignmentData, error: assignmentError },
-    { data: assignmentUnitData, error: assignmentUnitError },
   ] = await Promise.all([
+    supabase
+      .from("assignment_students")
+      .select(
+        `
+          assignment_id,
+          student_id,
+          assigned_at,
+          student:students(display_name, school_name, grade_label),
+          assignment:assignments(
+            id,
+            title,
+            status,
+            dataset_id,
+            range_start,
+            range_end,
+            range_basis,
+            question_count,
+            english_to_korean_ratio,
+            time_limit_seconds,
+            passing_score,
+            question_order_mode,
+            dataset:vocab_datasets(title, edition),
+            assignment_units(
+              position,
+              unit:vocab_units(id, unit_label)
+            )
+          )
+        `,
+      )
+      .order("assigned_at", { ascending: false })
+      .limit(HISTORY_ASSIGNMENT_LIMIT + 1),
     supabase
       .from("quiz_attempts")
       .select(
-        "id, student_id, assignment_id, status, initial_score, final_score, passed, started_at",
+        "id, assignment_id, student_id, attempt_number, status, question_count_snapshot, time_limit_seconds_snapshot, passing_score_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, started_at, deadline_at, completed_at",
       )
       .order("started_at", { ascending: false })
-      .limit(1000),
-    supabase.from("assignments").select("id, dataset_id, title"),
-    supabase
-      .from("assignment_units")
-      .select("assignment_id, unit_id, position")
-      .order("position"),
+      .limit(HISTORY_ATTEMPT_LIMIT + 1),
   ]);
 
-  if (attemptError || assignmentError || assignmentUnitError) {
-    throw new Error("학생별 단어 시험 진도를 불러오지 못했습니다.");
+  if (assignmentStudentError || attemptError) {
+    throw new Error("시험 배정과 응시 내역을 불러오지 못했습니다.");
+  }
+  if (
+    (assignmentStudentData?.length ?? 0) > HISTORY_ASSIGNMENT_LIMIT ||
+    (attemptData?.length ?? 0) > HISTORY_ATTEMPT_LIMIT
+  ) {
+    throw new Error(
+      "시험 내역이 현재 조회 한도를 넘었습니다. 페이지 조회로 전환해야 합니다.",
+    );
   }
 
-  type ProgressAttemptRow = {
-    id: string;
-    student_id: string;
-    assignment_id: string;
-    status: "in_progress" | "completed" | "expired";
-    initial_score: number | string | null;
-    final_score: number | string | null;
-    passed: boolean | null;
-    started_at: string;
-  };
-  type ProgressAssignmentRow = {
-    id: string;
-    dataset_id: string;
-    title: string;
-  };
-  type ProgressAssignmentUnitRow = {
-    assignment_id: string;
-    unit_id: string;
-    position: number;
-  };
+  const assignmentSources = (
+    (assignmentStudentData ?? []) as HistoryAssignmentStudentRow[]
+  ).flatMap((row): AssignmentHistorySource[] => {
+    const student = oneRelation(row.student);
+    const assignment = oneRelation(row.assignment);
+    if (!student || !assignment) return [];
 
-  const studentById = new Map(
-    students.map((student) => [student.id, student]),
-  );
-  const assignmentById = new Map(
-    ((assignmentData ?? []) as ProgressAssignmentRow[]).map(
-      (assignment) => [assignment.id, assignment],
-    ),
-  );
-  const unitById = new Map(units.map((unit) => [unit.id, unit]));
-  const unitLinksByAssignment = new Map<
-    string,
-    ProgressAssignmentUnitRow[]
-  >();
-  for (const link of (assignmentUnitData ??
-    []) as ProgressAssignmentUnitRow[]) {
-    const links = unitLinksByAssignment.get(link.assignment_id) ?? [];
-    links.push(link);
-    unitLinksByAssignment.set(link.assignment_id, links);
-  }
-  for (const links of unitLinksByAssignment.values()) {
-    links.sort((left, right) => left.position - right.position);
-  }
+    const dataset = oneRelation(assignment.dataset);
+    const orderedUnits = (assignment.assignment_units ?? [])
+      .toSorted((left, right) => left.position - right.position)
+      .flatMap((link) => {
+        const unit = oneRelation(link.unit);
+        return unit ? [unit] : [];
+      });
 
-  const latestAttemptByStudent = new Map<string, ProgressAttemptRow>();
-  for (const attempt of (attemptData ?? []) as ProgressAttemptRow[]) {
-    if (latestAttemptByStudent.has(attempt.student_id)) continue;
-    const student = studentById.get(attempt.student_id);
-    const assignment = assignmentById.get(attempt.assignment_id);
-    if (!student || !assignment) continue;
-    if (
-      student.currentVocabDatasetId &&
-      assignment.dataset_id !== student.currentVocabDatasetId
-    ) {
-      continue;
-    }
-    latestAttemptByStudent.set(attempt.student_id, attempt);
-  }
-
-  return students.map((student) => {
-    const latestAttempt = latestAttemptByStudent.get(student.id) ?? null;
-    const latestAssignment = latestAttempt
-      ? assignmentById.get(latestAttempt.assignment_id) ?? null
-      : null;
-    const latestUnitLinks = latestAttempt
-      ? unitLinksByAssignment.get(latestAttempt.assignment_id) ?? []
-      : [];
-    const latestUnits = latestUnitLinks
-      .map((link) => unitById.get(link.unit_id))
-      .filter((unit): unit is VocabUnitSummary => Boolean(unit));
-    const latestUnitLabel =
-      latestUnits.length === 0
-        ? null
-        : latestUnits.length === 1
-          ? latestUnits[0].label
-          : `${latestUnits[0].label}~${latestUnits.at(-1)?.label}`;
-    const datasetUnits = student.currentVocabDatasetId
-      ? units
-          .filter(
-            (unit) =>
-              unit.datasetId === student.currentVocabDatasetId,
-          )
-          .sort((left, right) => left.sortIndex - right.sortIndex)
-      : [];
-
-    let recommendedUnit: VocabUnitSummary | null =
-      datasetUnits[0] ?? null;
-    let recommendationReason:
-      | StudentProgressSummary["recommendationReason"] =
-      recommendedUnit ? "first" : null;
-
-    if (latestAttempt && latestAssignment && datasetUnits.length > 0) {
-      const firstLatestUnit = latestUnits[0] ?? null;
-      const lastLatestUnit = latestUnits.at(-1) ?? null;
-      if (latestAttempt.status === "in_progress") {
-        recommendedUnit = firstLatestUnit ?? datasetUnits[0];
-        recommendationReason = "resume";
-      } else if (
-        latestAttempt.status === "completed" &&
-        latestAttempt.passed === true
-      ) {
-        if (lastLatestUnit) {
-          const lastIndex = datasetUnits.findIndex(
-            (unit) => unit.id === lastLatestUnit.id,
-          );
-          recommendedUnit =
-            lastIndex >= 0
-              ? (datasetUnits[lastIndex + 1] ?? null)
-              : null;
-          recommendationReason = recommendedUnit ? "next" : "complete";
-        } else {
-          recommendedUnit = datasetUnits[0];
-          recommendationReason = "first";
-        }
-      } else {
-        recommendedUnit = firstLatestUnit ?? datasetUnits[0];
-        recommendationReason = "repeat";
-      }
-    }
-
-    const rawScore =
-      latestAttempt?.final_score ?? latestAttempt?.initial_score ?? null;
-    return {
-      studentId: student.id,
-      latestAttemptId: latestAttempt?.id ?? null,
-      latestAssignmentTitle: latestAssignment?.title ?? null,
-      latestStatus: latestAttempt?.status ?? null,
-      latestScore: rawScore === null ? null : Number(rawScore),
-      latestPassed: latestAttempt?.passed ?? null,
-      latestUnitLabel,
-      recommendedDatasetId: student.currentVocabDatasetId,
-      recommendedUnitId: recommendedUnit?.id ?? null,
-      recommendedUnitLabel: recommendedUnit?.label ?? null,
-      recommendationReason,
-    };
+    return [
+      {
+        assignmentId: row.assignment_id,
+        assignmentTitle: assignment.title,
+        assignmentStatus: assignment.status,
+        studentId: row.student_id,
+        studentName: student.display_name,
+        schoolName: student.school_name,
+        gradeLabel: student.grade_label,
+        datasetId: assignment.dataset_id,
+        datasetTitle:
+          [dataset?.title, dataset?.edition].filter(Boolean).join(" · ") ||
+          "단어장",
+        unitIds: orderedUnits.map((unit) => unit.id),
+        unitLabels:
+          orderedUnits.length > 0
+            ? orderedUnits.map((unit) => unit.unit_label)
+            : assignment.range_basis === "source_rows"
+              ? [
+                  `원본 행 ${assignment.range_start.toLocaleString()}~${assignment.range_end.toLocaleString()}`,
+                ]
+              : [],
+        questionCount: assignment.question_count,
+        englishToKoreanRatio: assignment.english_to_korean_ratio,
+        timeLimitSeconds: assignment.time_limit_seconds,
+        passingScore: assignment.passing_score,
+        questionOrderMode: assignment.question_order_mode,
+        assignedAt: row.assigned_at,
+      },
+    ];
   });
+
+  const attemptSources = (
+    (attemptData ?? []) as HistoryAttemptRow[]
+  ).map(
+    (attempt): AttemptHistorySource => ({
+      id: attempt.id,
+      assignmentId: attempt.assignment_id,
+      studentId: attempt.student_id,
+      attemptNumber: attempt.attempt_number,
+      status: attempt.status,
+      questionCount: attempt.question_count_snapshot,
+      timeLimitSeconds: attempt.time_limit_seconds_snapshot,
+      passingScore: attempt.passing_score_snapshot,
+      initialCorrectCount: attempt.initial_correct_count,
+      retryCorrectCount: attempt.retry_correct_count,
+      unresolvedWrongCount: attempt.unresolved_wrong_count,
+      initialScore:
+        attempt.initial_score === null
+          ? null
+          : Number(attempt.initial_score),
+      finalScore:
+        attempt.final_score === null ? null : Number(attempt.final_score),
+      passed: attempt.passed,
+      startedAt: attempt.started_at,
+      deadlineAt: attempt.deadline_at,
+      completedAt: attempt.completed_at,
+    }),
+  );
+
+  return buildAssignmentHistory(assignmentSources, attemptSources);
 }
 
 export async function createAssignment(input: {
@@ -890,16 +931,22 @@ export async function listAttempts(): Promise<AttemptSummary[]> {
 
 export async function getAdminAttemptDetail(
   attemptId: string,
+  authenticatedAdmin?: AdminContext,
 ): Promise<AdminAttemptDetail | null> {
-  await requireAdmin();
+  if (!authenticatedAdmin) {
+    await requireAdmin();
+  }
   const supabase = getServiceSupabaseClient();
-  const { data, error } = await supabase
-    .from("quiz_attempts")
-    .select(
-      "id, attempt_number, status, question_count_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, elapsed_seconds, started_at, completed_at, students(display_name), assignments(title)",
-    )
-    .eq("id", attemptId)
-    .maybeSingle();
+  const [{ data, error }, questions] = await Promise.all([
+    supabase
+      .from("quiz_attempts")
+      .select(
+        "id, attempt_number, status, question_count_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, elapsed_seconds, started_at, completed_at, students(display_name), assignments(title)",
+      )
+      .eq("id", attemptId)
+      .maybeSingle(),
+    getAttemptQuestionResults(attemptId),
+  ]);
 
   if (error || !data) {
     return null;
@@ -929,6 +976,6 @@ export async function getAdminAttemptDetail(
     retryCorrectCount: data.retry_correct_count,
     unresolvedWrongCount: data.unresolved_wrong_count,
     elapsedSeconds: data.elapsed_seconds,
-    questions: await getAttemptQuestionResults(attemptId),
+    questions,
   };
 }

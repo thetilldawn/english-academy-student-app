@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 
 import { StudentManager } from "@/components/student-manager";
 import {
+  buildStudentProgress,
+  listAssignmentHistory,
   listSelectableDatasets,
-  listStudentProgress,
   listStudents,
   listVocabUnits,
 } from "@/lib/services/admin-service";
@@ -12,17 +13,29 @@ export const metadata: Metadata = {
   title: "학생 관리",
 };
 
-export default async function StudentsPage() {
-  const [students, datasets, units] = await Promise.all([
+export default async function StudentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ student?: string }>;
+}) {
+  const [
+    { student: initialStudentId = "" },
+    students,
+    datasets,
+    units,
+    history,
+  ] = await Promise.all([
+    searchParams,
     listStudents(),
     listSelectableDatasets(),
     listVocabUnits(),
+    listAssignmentHistory(),
   ]);
-  const progress = await listStudentProgress(students, units);
+  const progress = buildStudentProgress(students, units, history);
 
   return (
     <>
-      <div className="page-heading">
+      <div className="page-heading admin-page-heading">
         <div>
           <p className="eyebrow">STUDENT MANAGEMENT</p>
           <h1>학생 관리</h1>
@@ -34,6 +47,8 @@ export default async function StudentsPage() {
       </div>
       <StudentManager
         datasets={datasets}
+        history={history}
+        initialStudentId={initialStudentId}
         progress={progress}
         students={students}
       />

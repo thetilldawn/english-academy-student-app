@@ -7,8 +7,6 @@ import { requireAdmin } from "@/lib/auth/admin";
 import { getStudentSession } from "@/lib/auth/student-session";
 import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-
 export default async function AdminProtectedLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {

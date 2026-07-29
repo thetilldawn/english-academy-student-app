@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 
 const adminNavigationItems = [
@@ -13,6 +13,17 @@ const adminNavigationItems = [
 function isActivePath(pathname: string, href: string) {
   if (href === "/admin") return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function NavigationPendingIndicator() {
+  const { pending } = useLinkStatus();
+
+  return pending ? (
+    <span
+      aria-hidden="true"
+      className="admin-nav-pending button-spinner"
+    />
+  ) : null;
 }
 
 export function AdminNavigation({
@@ -36,7 +47,8 @@ export function AdminNavigation({
             href={item.href}
             key={item.href}
           >
-            {item.label}
+            <span>{item.label}</span>
+            <NavigationPendingIndicator />
           </Link>
         );
       })}

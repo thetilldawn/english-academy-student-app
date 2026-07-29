@@ -104,14 +104,66 @@ describe("responsive navigation contract", () => {
 
   it("관리자 세 화면폭 메뉴와 시험 집중 셸을 유지한다", () => {
     const adminLayout = source("src/app/admin/(protected)/layout.tsx");
+    const adminLoading = source(
+      "src/app/admin/(protected)/loading.tsx",
+    );
     const studentShell = source("src/components/student-shell.tsx");
 
     expect(adminLayout).toContain('className="admin-sidebar-nav"');
     expect(adminLayout).toContain('className="admin-tablet-nav"');
     expect(adminLayout).toContain('className="admin-mobile-nav"');
+    expect(adminLayout).not.toContain(
+      'export const dynamic = "force-dynamic"',
+    );
+    expect(adminLoading).toContain('className="admin-route-loading"');
     expect(studentShell).toContain(
       'pathname.startsWith("/student/attempt/")',
     );
     expect(studentShell).toContain("!focusedAttempt");
+  });
+
+  it("관리 화면은 목록에서 모달로 이어지고 중복 작업판을 두지 않는다", () => {
+    const studentManager = source(
+      "src/components/student-manager.tsx",
+    );
+    const assignmentManager = source(
+      "src/components/assignment-manager.tsx",
+    );
+
+    expect(studentManager).toContain('className="dialog-tabs"');
+    expect(studentManager).toContain("내역");
+    expect(studentManager).toContain("관리");
+    expect(studentManager).not.toContain("student-action-pane");
+    expect(studentManager).not.toContain(
+      'className="student-actions-disclosure"',
+    );
+    expect(assignmentManager).toContain(
+      'aria-pressed={testTab === "vocab"}',
+    );
+    expect(assignmentManager).toContain("단어 시험");
+    expect(assignmentManager).toContain("다른 시험");
+    expect(assignmentManager).toContain('type="search"');
+    expect(assignmentManager).toContain(
+      'className="dialog dialog-extra-wide assignment-dialog"',
+    );
+  });
+
+  it("오버뷰와 내역은 미응시를 포함한 공통 이력을 사용한다", () => {
+    const overview = source("src/app/admin/(protected)/page.tsx");
+    const results = source(
+      "src/app/admin/(protected)/results/page.tsx",
+    );
+    const historyList = source(
+      "src/components/admin-history-list.tsx",
+    );
+
+    expect(overview).toContain("listAssignmentHistory");
+    expect(overview).not.toContain("listAttempts");
+    expect(overview).not.toContain("listAssignments");
+    expect(results).toContain("listAssignmentHistory");
+    expect(historyList).toContain("첫 시험");
+    expect(historyList).toContain("최종");
+    expect(historyList).toContain("미응시");
+    expect(historyList).toContain("/api/admin/attempts/");
   });
 });
