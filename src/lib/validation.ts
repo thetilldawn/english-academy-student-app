@@ -50,6 +50,9 @@ export const queueWrongWordsSchema = z
     },
   );
 
+export const createReviewAssignmentDraftSchema =
+  queueWrongWordsSchema;
+
 export const assignmentSchema = z
   .object({
     title: z.string().trim().max(160).default(""),

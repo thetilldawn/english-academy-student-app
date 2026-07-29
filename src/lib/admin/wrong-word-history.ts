@@ -78,6 +78,7 @@ export type PendingWrongWordReview = {
   sourceQuestionId: string;
   reasonLevel: 1 | 2;
   queuedAt: string;
+  reviewDraftId: string | null;
 };
 
 export type WrongAttemptWord = {

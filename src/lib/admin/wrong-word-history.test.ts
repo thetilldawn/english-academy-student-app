@@ -337,6 +337,7 @@ describe("buildStudentWrongWordHistory", () => {
           sourceQuestionId: `00000000-0000-4000-8001-${String(index).padStart(12, "0")}`,
           reasonLevel: (index % 2 === 0 ? 1 : 2) as 1 | 2,
           queuedAt: "2026-07-30T00:00:00Z",
+          reviewDraftId: null,
         }),
       ),
     };

@@ -30,7 +30,14 @@ export async function GET(
     if (!history) {
       return jsonError("학생을 찾지 못했습니다.", 404);
     }
-    return Response.json({ history });
+    return Response.json(
+      { history },
+      {
+        headers: {
+          "Cache-Control": "private, no-store",
+        },
+      },
+    );
   } catch {
     return jsonError("오답 단어 이력을 불러오지 못했습니다.", 500);
   }

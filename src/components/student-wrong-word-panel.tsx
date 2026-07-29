@@ -7,6 +7,7 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
+import { useRouter } from "next/navigation";
 
 import {
   wrongWordReviewIdentity,
@@ -55,6 +56,7 @@ function selectionTarget(
   const selectedOccurrence = occurrence ?? word.occurrences[0];
   if (!selectedOccurrence) return null;
   return {
+    datasetId: selectedOccurrence.datasetId,
     questionId: selectedOccurrence.latestQuestionId,
     reviewKey: wrongWordReviewIdentity(
       selectedOccurrence.datasetId,
@@ -80,6 +82,7 @@ export function StudentWrongWordPanel({
   ) => void;
   studentId: string;
 }) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const requestingRef = useRef(false);
   const refreshAfterRequestRef = useRef(false);
@@ -95,6 +98,7 @@ export function StudentWrongWordPanel({
     string[]
   >([]);
   const [queueing, setQueueing] = useState(false);
+  const [drafting, setDrafting] = useState(false);
   const [queueError, setQueueError] = useState("");
   const [queueNotice, setQueueNotice] = useState("");
 
@@ -230,6 +234,16 @@ export function StudentWrongWordPanel({
     },
     [cachedHistory],
   );
+  const datasetLabelById = useMemo(
+    () =>
+      new Map(
+        datasetOptions.map((dataset) => [
+          dataset.id,
+          dataset.label,
+        ]),
+      ),
+    [datasetOptions],
+  );
 
   const pendingReviewKeys = useMemo(
     () =>
@@ -240,6 +254,47 @@ export function StudentWrongWordPanel({
       ),
     [cachedHistory],
   );
+  const pendingReviewActions = useMemo(() => {
+    const activeDrafts = new Map<
+      string,
+      {
+        datasetId: string;
+        draftId: string;
+        questionIds: string[];
+      }
+    >();
+    const availableByDataset = new Map<
+      string,
+      {
+        datasetId: string;
+        questionIds: string[];
+      }
+    >();
+
+    for (const review of cachedHistory?.pendingReviews ?? []) {
+      if (review.reviewDraftId) {
+        const current = activeDrafts.get(review.reviewDraftId) ?? {
+          datasetId: review.datasetId,
+          draftId: review.reviewDraftId,
+          questionIds: [],
+        };
+        current.questionIds.push(review.sourceQuestionId);
+        activeDrafts.set(review.reviewDraftId, current);
+        continue;
+      }
+      const current = availableByDataset.get(review.datasetId) ?? {
+        datasetId: review.datasetId,
+        questionIds: [],
+      };
+      current.questionIds.push(review.sourceQuestionId);
+      availableByDataset.set(review.datasetId, current);
+    }
+
+    return {
+      activeDrafts: [...activeDrafts.values()],
+      availableByDataset: [...availableByDataset.values()],
+    };
+  }, [cachedHistory]);
 
   const filteredWords = useMemo(
     () =>
@@ -304,6 +359,21 @@ export function StudentWrongWordPanel({
       ),
     [selectableQuestionIdSet, selectedQuestionIds],
   );
+  const selectedDatasetIds = useMemo(() => {
+    const selected = new Set(validSelectedQuestionIds);
+    return new Set(
+      (cachedHistory?.words ?? []).flatMap((word) =>
+        word.occurrences
+          .filter((occurrence) =>
+            selected.has(occurrence.latestQuestionId),
+          )
+          .map((occurrence) => occurrence.datasetId),
+      ),
+    );
+  }, [cachedHistory, validSelectedQuestionIds]);
+  const canCreateReviewDraft =
+    validSelectedQuestionIds.length > 0 &&
+    selectedDatasetIds.size === 1;
   const allVisibleSelected =
     selectableFilteredQuestionIds.length > 0 &&
     selectableFilteredQuestionIds.every((questionId) =>
@@ -311,7 +381,7 @@ export function StudentWrongWordPanel({
     );
 
   function toggleQuestion(questionId: string) {
-    if (requestingRef.current || queueing) return;
+    if (requestingRef.current || queueing || drafting) return;
     setSelectedQuestionIds((current) =>
       validSelectedQuestionIds.includes(questionId)
         ? current.filter((value) => value !== questionId)
@@ -322,7 +392,7 @@ export function StudentWrongWordPanel({
   }
 
   function toggleVisibleQuestions() {
-    if (requestingRef.current || queueing) return;
+    if (requestingRef.current || queueing || drafting) return;
     const visible = new Set(selectableFilteredQuestionIds);
     setSelectedQuestionIds(
       allVisibleSelected
@@ -345,6 +415,7 @@ export function StudentWrongWordPanel({
       loading ||
       requestingRef.current ||
       queueing ||
+      drafting ||
       validSelectedQuestionIds.length === 0
     ) {
       return;
@@ -387,6 +458,56 @@ export function StudentWrongWordPanel({
       );
     } finally {
       setQueueing(false);
+    }
+  }
+
+  async function createReviewAssignmentDraft(
+    questionIds: string[] = validSelectedQuestionIds,
+  ) {
+    if (
+      loading ||
+      requestingRef.current ||
+      queueing ||
+      drafting ||
+      questionIds.length === 0
+    ) {
+      return;
+    }
+    setDrafting(true);
+    setQueueError("");
+    setQueueNotice("");
+
+    try {
+      const response = await fetch(
+        `/api/admin/students/${studentId}/review-assignment-drafts`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            questionIds,
+          }),
+        },
+      );
+      const payload = (await response.json()) as {
+        reviewDraftId?: string;
+        error?: string;
+      };
+      if (!response.ok || !payload.reviewDraftId) {
+        throw new Error(
+          payload.error ??
+            "재시험 배정을 준비하지 못했습니다.",
+        );
+      }
+      router.push(
+        `/admin/assignments?reviewDraft=${encodeURIComponent(payload.reviewDraftId)}`,
+      );
+    } catch (requestError) {
+      setQueueError(
+        requestError instanceof Error
+          ? requestError.message
+          : "재시험 배정을 준비하지 못했습니다.",
+      );
+      setDrafting(false);
     }
   }
 
@@ -436,7 +557,7 @@ export function StudentWrongWordPanel({
         </span>
         <button
           className="button button-quiet button-small"
-          disabled={loading || queueing}
+          disabled={loading || queueing || drafting}
           onClick={refreshHistory}
           type="button"
         >
@@ -470,6 +591,40 @@ export function StudentWrongWordPanel({
           <strong>{cachedHistory.pendingReviewCount}개</strong>
         </div>
       </div>
+      {(pendingReviewActions.activeDrafts.length > 0 ||
+        pendingReviewActions.availableByDataset.length > 0) && (
+        <div className="wrong-word-selection-bar">
+          {pendingReviewActions.activeDrafts.map((draft) => (
+            <button
+              className="button button-secondary button-small"
+              disabled={loading || queueing || drafting}
+              key={draft.draftId}
+              onClick={() =>
+                router.push(
+                  `/admin/assignments?reviewDraft=${encodeURIComponent(draft.draftId)}`,
+                )
+              }
+              type="button"
+            >
+              {`${datasetLabelById.get(draft.datasetId) ?? "단어장"} · 재시험 배정 계속 (${draft.questionIds.length}개)`}
+            </button>
+          ))}
+          {pendingReviewActions.availableByDataset.map((group) => (
+            <button
+              aria-busy={drafting}
+              className="button button-quiet button-small"
+              disabled={loading || queueing || drafting}
+              key={group.datasetId}
+              onClick={() =>
+                void createReviewAssignmentDraft(group.questionIds)
+              }
+              type="button"
+            >
+              {`${datasetLabelById.get(group.datasetId) ?? "단어장"} · 대기 단어 ${group.questionIds.length}개 재시험 배정`}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div
         aria-label="오답 보기 방식"
@@ -523,9 +678,12 @@ export function StudentWrongWordPanel({
             <label className="field">
               <span className="field-label">단어장</span>
               <select
-                onChange={(event) =>
-                  setDatasetFilter(event.target.value)
-                }
+                onChange={(event) => {
+                  setDatasetFilter(event.target.value);
+                  setSelectedQuestionIds([]);
+                  setQueueError("");
+                  setQueueNotice("");
+                }}
                 value={datasetFilter}
               >
                 <option value="">전체 단어장</option>
@@ -564,6 +722,7 @@ export function StudentWrongWordPanel({
               className="button button-quiet button-small"
               disabled={
                 queueing ||
+                drafting ||
                 loading ||
                 selectableFilteredQuestionIds.length === 0
               }
@@ -581,6 +740,7 @@ export function StudentWrongWordPanel({
               disabled={
                 loading ||
                 queueing ||
+                drafting ||
                 validSelectedQuestionIds.length === 0
               }
               onClick={queueSelectedWords}
@@ -588,11 +748,33 @@ export function StudentWrongWordPanel({
             >
               {queueing ? "추가하는 중…" : "다음 시험에 추가"}
             </button>
+            <button
+              aria-busy={drafting}
+              className="button button-secondary button-small"
+              disabled={
+                loading ||
+                queueing ||
+                drafting ||
+                !canCreateReviewDraft
+              }
+              onClick={() => void createReviewAssignmentDraft()}
+              type="button"
+            >
+              {drafting
+                ? "재시험 준비 중…"
+                : `선택 ${validSelectedQuestionIds.length}개 재시험 배정`}
+            </button>
           </div>
           <p className="wrong-word-selection-help">
-            선택한 단어는 다음 새 단어시험을 배정할 때 포함할 목록에
-            저장됩니다.
+            다음 시험에 포함하거나 선택한 단어만 바로 재시험으로
+            배정할 수 있습니다.
           </p>
+          {validSelectedQuestionIds.length > 0 &&
+            selectedDatasetIds.size > 1 && (
+              <p className="wrong-word-selection-help" role="status">
+                재시험 배정은 한 단어장씩 선택해 주세요.
+              </p>
+            )}
           {queueError && (
             <div className="notice notice-error" role="alert">
               {queueError}
@@ -634,7 +816,11 @@ export function StudentWrongWordPanel({
                     <input
                       checked={pending || selected}
                       disabled={
-                        !target || pending || loading || queueing
+                        !target ||
+                        pending ||
+                        loading ||
+                        queueing ||
+                        drafting
                       }
                       onChange={() => {
                         if (target) {
@@ -644,7 +830,7 @@ export function StudentWrongWordPanel({
                       type="checkbox"
                     />
                     <span className="sr-only">
-                      {word.headword} 다음 시험에 추가
+                      {word.headword} 오답 단어 선택
                     </span>
                   </label>
                   <div className="wrong-word-copy">

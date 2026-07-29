@@ -16,6 +16,7 @@ describe("wrong-word admin UI contract", () => {
     expect(route).toContain("getAdminContext()");
     expect(route).toContain("z.uuid()");
     expect(route).toContain("getStudentWrongWordHistory(id, admin)");
+    expect(route).toContain('"Cache-Control": "private, no-store"');
   });
 
   it("queues only selected question ids through the authenticated admin session", () => {
@@ -43,6 +44,57 @@ describe("wrong-word admin UI contract", () => {
       "new Set(value.questionIds).size === value.questionIds.length",
     );
     expect(validation).toContain(".strict()");
+  });
+
+  it("creates a durable same-dataset review draft before navigation", () => {
+    const route = source(
+      "src/app/api/admin/students/[id]/review-assignment-drafts/route.ts",
+    );
+    const service = source(
+      "src/lib/services/wrong-word-service.ts",
+    );
+    const validation = source("src/lib/validation.ts");
+    const panel = source(
+      "src/components/student-wrong-word-panel.tsx",
+    );
+
+    expect(route).toContain("isSameOriginRequest(request)");
+    expect(route).toContain("getAdminContext()");
+    expect(route).toContain(
+      "parseJson(request, createReviewAssignmentDraftSchema)",
+    );
+    expect(route).toContain(
+      "createStudentReviewAssignmentDraft(",
+    );
+    expect(route).toContain('"Cache-Control": "private, no-store"');
+    expect(service).toContain(
+      '"create_student_vocab_review_assignment_draft"',
+    );
+    expect(service).toContain(
+      '"finalize_expired_review_assignment_drafts"',
+    );
+    expect(service).toContain("reserved_review_draft_id");
+    expect(service).toContain("p_student_id: studentId");
+    expect(service).toContain("p_question_ids: questionIds");
+    expect(validation).toContain(
+      "export const createReviewAssignmentDraftSchema",
+    );
+    expect(panel).toContain("selectedDatasetIds.size === 1");
+    expect(panel).toContain(
+      "선택 ${validSelectedQuestionIds.length}개 재시험 배정",
+    );
+    expect(panel).toContain("/review-assignment-drafts");
+    expect(panel).toContain("재시험 배정 계속");
+    expect(panel).toContain(
+      "createReviewAssignmentDraft(group.questionIds)",
+    );
+    expect(panel).toContain(
+      "/admin/assignments?reviewDraft=${encodeURIComponent(payload.reviewDraftId)}",
+    );
+    expect(panel).not.toContain(
+      "/admin/assignments?questionIds=",
+    );
+    expect(panel).not.toContain("/admin/assignments?student=");
   });
 
   it("loads wrong words only inside the student detail tab", () => {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createReviewAssignmentDraftSchema,
   createStudentSchema,
   updateStudentVocabSchema,
 } from "@/lib/validation";
@@ -69,6 +70,61 @@ describe("학생 정보 입력 계약", () => {
     expect(() =>
       updateStudentVocabSchema.parse({
         currentVocabDatasetId: "직접 입력 단어장",
+      }),
+    ).toThrow();
+  });
+});
+
+describe("오답 재시험 초안 입력 계약", () => {
+  const questionId =
+    "11111111-1111-4111-8111-111111111111";
+
+  it("중복 없는 UUID 1개부터 400개까지만 허용한다", () => {
+    expect(
+      createReviewAssignmentDraftSchema.parse({
+        questionIds: [questionId],
+      }),
+    ).toEqual({ questionIds: [questionId] });
+
+    const questionIds = Array.from(
+      { length: 400 },
+      (_, index) =>
+        `11111111-1111-4111-8111-${String(index).padStart(12, "0")}`,
+    );
+    expect(
+      createReviewAssignmentDraftSchema.parse({ questionIds })
+        .questionIds,
+    ).toHaveLength(400);
+  });
+
+  it("빈 배열·401개·중복·비 UUID·추가 필드를 거부한다", () => {
+    const validIds = Array.from(
+      { length: 401 },
+      (_, index) =>
+        `11111111-1111-4111-8111-${String(index).padStart(12, "0")}`,
+    );
+    expect(() =>
+      createReviewAssignmentDraftSchema.parse({ questionIds: [] }),
+    ).toThrow();
+    expect(() =>
+      createReviewAssignmentDraftSchema.parse({
+        questionIds: validIds,
+      }),
+    ).toThrow();
+    expect(() =>
+      createReviewAssignmentDraftSchema.parse({
+        questionIds: [questionId, questionId],
+      }),
+    ).toThrow();
+    expect(() =>
+      createReviewAssignmentDraftSchema.parse({
+        questionIds: ["question-1"],
+      }),
+    ).toThrow();
+    expect(() =>
+      createReviewAssignmentDraftSchema.parse({
+        questionIds: [questionId],
+        datasetId: questionId,
       }),
     ).toThrow();
   });

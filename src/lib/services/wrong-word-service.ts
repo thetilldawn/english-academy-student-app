@@ -1,5 +1,7 @@
 import "server-only";
 
+import { z } from "zod";
+
 import {
   emptyStudentWrongWordHistory,
   buildStudentWrongWordHistory,
@@ -24,6 +26,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 const MAX_WRONG_EVENTS = 400;
 const WRONG_EVENT_PAGE_SIZE = 200;
 const RELATION_CHUNK_SIZE = 200;
+const REVIEW_DRAFT_FINALIZE_LIMIT = 400;
 
 type WrongEventRow = {
   id: number | string;
@@ -82,6 +85,7 @@ type PendingReviewRow = {
   source_question_id: string;
   reason_level: 1 | 2;
   queued_at: string;
+  reserved_review_draft_id: string | null;
 };
 
 export class WrongWordQueueError extends Error {
@@ -93,6 +97,19 @@ export class WrongWordQueueError extends Error {
   ) {
     super("오답 단어를 다음 시험 대기열에 추가하지 못했습니다.");
     this.name = "WrongWordQueueError";
+  }
+}
+
+export class ReviewAssignmentDraftError extends Error {
+  constructor(
+    public readonly reason:
+      | "forbidden"
+      | "invalid_selection"
+      | "conflict"
+      | "database",
+  ) {
+    super("오답 재시험 배정 준비에 실패했습니다.");
+    this.name = "ReviewAssignmentDraftError";
   }
 }
 
@@ -112,6 +129,29 @@ function chunks<T>(values: readonly T[]) {
   return result;
 }
 
+async function finalizeExpiredReviewAssignmentDrafts(
+  studentId: string,
+) {
+  const supabase = getServiceSupabaseClient();
+  const { data, error } = await supabase.rpc(
+    "finalize_expired_review_assignment_drafts",
+    {
+      p_student_id: studentId,
+      p_limit: REVIEW_DRAFT_FINALIZE_LIMIT,
+    },
+  );
+  const finalizedCount =
+    typeof data === "number" ? data : Number(data);
+  if (
+    error ||
+    !Number.isSafeInteger(finalizedCount) ||
+    finalizedCount < 0
+  ) {
+    throw new Error("만료된 오답 재시험 초안을 정리하지 못했습니다.");
+  }
+  return finalizedCount;
+}
+
 export async function getStudentWrongWordHistory(
   studentId: string,
   authenticatedAdmin?: AdminContext,
@@ -128,6 +168,7 @@ export async function getStudentWrongWordHistory(
     .maybeSingle();
 
   if (studentError || !student) return null;
+  await finalizeExpiredReviewAssignmentDrafts(studentId);
   const eventRows: WrongEventRow[] = [];
   let beforeId: number | string | null = null;
 
@@ -166,7 +207,7 @@ export async function getStudentWrongWordHistory(
     await supabase
       .from("student_vocab_review_queue")
       .select(
-        "id, dataset_id, vocab_entry_id, canonical_lexeme_id_snapshot, source_question_id, reason_level, queued_at",
+        "id, dataset_id, vocab_entry_id, canonical_lexeme_id_snapshot, source_question_id, reason_level, queued_at, reserved_review_draft_id",
       )
       .eq("student_id", studentId)
       .eq("status", "pending")
@@ -196,6 +237,7 @@ export async function getStudentWrongWordHistory(
       sourceQuestionId: row.source_question_id,
       reasonLevel: row.reason_level,
       queuedAt: row.queued_at,
+      reviewDraftId: row.reserved_review_draft_id,
     }),
   );
   if (eventRows.length === 0) {
@@ -370,4 +412,47 @@ export async function queueStudentWrongWords(
   }
 
   return data as string[];
+}
+
+export async function createStudentReviewAssignmentDraft(
+  studentId: string,
+  questionIds: string[],
+  authenticatedAdmin?: AdminContext,
+): Promise<string> {
+  if (!authenticatedAdmin) {
+    await requireAdmin();
+  }
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase.rpc(
+    "create_student_vocab_review_assignment_draft",
+    {
+      p_student_id: studentId,
+      p_question_ids: questionIds,
+    },
+  );
+
+  if (error) {
+    console.error("[review-assignment-draft] database operation failed", {
+      code: error.code,
+      message: error.message,
+      hint: error.hint ?? null,
+    });
+    throw new ReviewAssignmentDraftError(
+      error.code === "42501"
+        ? "forbidden"
+        : error.code === "40001"
+          ? "conflict"
+          : ["22023", "P0002", "23503", "23505"].includes(
+                error.code,
+              )
+            ? "invalid_selection"
+            : "database",
+    );
+  }
+
+  if (!z.uuid().safeParse(data).success) {
+    throw new ReviewAssignmentDraftError("database");
+  }
+
+  return data as string;
 }
