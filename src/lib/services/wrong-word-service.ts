@@ -18,6 +18,7 @@ import {
   type AdminContext,
 } from "@/lib/auth/admin";
 import { finalizeStaleQuizAttempts } from "@/lib/services/stale-attempt-service";
+import { finalizeExpiredReviewAssignmentDrafts } from "@/lib/services/review-assignment-service";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -26,7 +27,6 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 const MAX_WRONG_EVENTS = 400;
 const WRONG_EVENT_PAGE_SIZE = 200;
 const RELATION_CHUNK_SIZE = 200;
-const REVIEW_DRAFT_FINALIZE_LIMIT = 400;
 
 type WrongEventRow = {
   id: number | string;
@@ -127,29 +127,6 @@ function chunks<T>(values: readonly T[]) {
     result.push(values.slice(index, index + RELATION_CHUNK_SIZE));
   }
   return result;
-}
-
-async function finalizeExpiredReviewAssignmentDrafts(
-  studentId: string,
-) {
-  const supabase = getServiceSupabaseClient();
-  const { data, error } = await supabase.rpc(
-    "finalize_expired_review_assignment_drafts",
-    {
-      p_student_id: studentId,
-      p_limit: REVIEW_DRAFT_FINALIZE_LIMIT,
-    },
-  );
-  const finalizedCount =
-    typeof data === "number" ? data : Number(data);
-  if (
-    error ||
-    !Number.isSafeInteger(finalizedCount) ||
-    finalizedCount < 0
-  ) {
-    throw new Error("만료된 오답 재시험 초안을 정리하지 못했습니다.");
-  }
-  return finalizedCount;
 }
 
 export async function getStudentWrongWordHistory(

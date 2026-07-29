@@ -53,6 +53,9 @@ describe("wrong-word admin UI contract", () => {
     const service = source(
       "src/lib/services/wrong-word-service.ts",
     );
+    const reviewService = source(
+      "src/lib/services/review-assignment-service.ts",
+    );
     const validation = source("src/lib/validation.ts");
     const panel = source(
       "src/components/student-wrong-word-panel.tsx",
@@ -70,7 +73,7 @@ describe("wrong-word admin UI contract", () => {
     expect(service).toContain(
       '"create_student_vocab_review_assignment_draft"',
     );
-    expect(service).toContain(
+    expect(reviewService).toContain(
       '"finalize_expired_review_assignment_drafts"',
     );
     expect(service).toContain("reserved_review_draft_id");

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   createReviewAssignmentDraftSchema,
   createStudentSchema,
+  exactReviewAssignmentSchema,
   updateStudentVocabSchema,
 } from "@/lib/validation";
 
@@ -125,6 +126,67 @@ describe("오답 재시험 초안 입력 계약", () => {
       createReviewAssignmentDraftSchema.parse({
         questionIds: [questionId],
         datasetId: questionId,
+      }),
+    ).toThrow();
+  });
+});
+
+describe("정확 오답 재시험 배정 입력 계약", () => {
+  const reviewDraftId =
+    "11111111-1111-4111-8111-111111111111";
+  const validInput = {
+    reviewDraftId,
+    title: "",
+    englishToKoreanRatio: 50 as const,
+    timeLimitSeconds: 300,
+    passingScore: 80,
+    questionOrderMode: "random" as const,
+    availableUntil: null,
+  };
+
+  it("초안 UUID와 시험 조건만 엄격하게 받는다", () => {
+    expect(exactReviewAssignmentSchema.parse(validInput)).toEqual(
+      validInput,
+    );
+    for (const ratio of [0, 50, 100] as const) {
+      expect(
+        exactReviewAssignmentSchema.parse({
+          ...validInput,
+          englishToKoreanRatio: ratio,
+        }).englishToKoreanRatio,
+      ).toBe(ratio);
+    }
+  });
+
+  it("DAY·학생·문항 ID 주입과 범위 밖 조건을 거부한다", () => {
+    expect(() =>
+      exactReviewAssignmentSchema.parse({
+        ...validInput,
+        studentIds: [reviewDraftId],
+      }),
+    ).toThrow();
+    expect(() =>
+      exactReviewAssignmentSchema.parse({
+        ...validInput,
+        questionIds: [reviewDraftId],
+      }),
+    ).toThrow();
+    expect(() =>
+      exactReviewAssignmentSchema.parse({
+        ...validInput,
+        unitIds: [reviewDraftId],
+      }),
+    ).toThrow();
+    expect(() =>
+      exactReviewAssignmentSchema.parse({
+        ...validInput,
+        englishToKoreanRatio: 25,
+      }),
+    ).toThrow();
+    expect(() =>
+      exactReviewAssignmentSchema.parse({
+        ...validInput,
+        timeLimitSeconds: 29,
       }),
     ).toThrow();
   });

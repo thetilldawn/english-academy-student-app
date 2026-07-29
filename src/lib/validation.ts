@@ -81,6 +81,25 @@ export const assignmentSchema = z
     },
   );
 
+export const exactReviewAssignmentSchema = z
+  .object({
+    reviewDraftId: z.uuid(),
+    title: z.string().trim().max(160).default(""),
+    englishToKoreanRatio: z.union([
+      z.literal(0),
+      z.literal(50),
+      z.literal(100),
+    ]),
+    timeLimitSeconds: z.coerce.number().int().min(30).max(10800),
+    passingScore: z.coerce.number().int().min(0).max(100),
+    questionOrderMode: z.enum(["fixed", "random"]).default("random"),
+    availableUntil: z
+      .union([z.iso.datetime({ offset: true }), z.literal(""), z.null()])
+      .optional()
+      .transform((value) => value || null),
+  })
+  .strict();
+
 export const answerSchema = z.object({
   questionId: z.uuid(),
   phase: z.enum(["initial", "retry"]),
