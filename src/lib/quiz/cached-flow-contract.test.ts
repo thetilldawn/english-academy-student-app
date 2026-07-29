@@ -28,6 +28,7 @@ describe("DAY 문제은행 응시 계약", () => {
     expect(adminService).toContain(
       '.from("vocab_entry_quiz_eligibility")',
     );
+    expect(adminService).toContain('.eq("status", "eligible")');
   });
 
   it("새 시도는 문제를 다시 만들지 않고 문제은행에서 복사한다", () => {
