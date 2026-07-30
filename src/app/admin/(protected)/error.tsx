@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import { getErrorReference } from "@/lib/observability/error-reference";
+
 export default function AdminError({
   error,
   reset,
@@ -9,9 +11,17 @@ export default function AdminError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const errorReference = getErrorReference(error);
+
   useEffect(() => {
-    console.error(error);
-  }, [error]);
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "client.admin_error_boundary",
+        errorId: errorReference,
+      }),
+    );
+  }, [errorReference]);
 
   return (
     <section className="card admin-error-state" role="alert">
@@ -20,6 +30,11 @@ export default function AdminError({
       <p>
         자료는 변경되지 않았습니다. 잠시 뒤 다시 불러와 주세요.
       </p>
+      {errorReference ? (
+        <p className="error-reference">
+          오류번호 <code>{errorReference}</code>
+        </p>
+      ) : null}
       <button
         className="button button-primary"
         onClick={reset}

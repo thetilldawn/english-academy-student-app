@@ -1,19 +1,41 @@
 "use client";
 
+import { useEffect } from "react";
+
+import { getErrorReference } from "@/lib/observability/error-reference";
+
 export default function ErrorPage({
+  error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const errorReference = getErrorReference(error);
+
+  useEffect(() => {
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "client.root_error_boundary",
+        errorId: errorReference,
+      }),
+    );
+  }, [errorReference]);
+
   return (
     <main className="auth-shell" id="main-content">
-      <section className="auth-card">
-        <p className="eyebrow">잠시 문제가 생겼어요</p>
+      <section className="auth-card" role="alert">
+        <p className="eyebrow">오류</p>
         <h1>화면을 불러오지 못했습니다</h1>
         <p className="auth-description">
-          입력한 내용은 다시 확인할 수 있습니다. 잠시 뒤 재시도해주세요.
+          잠시 뒤 다시 시도해 주세요.
         </p>
+        {errorReference ? (
+          <p className="error-reference">
+            오류번호 <code>{errorReference}</code>
+          </p>
+        ) : null}
         <button className="button button-primary" onClick={reset} type="button">
           다시 시도
         </button>

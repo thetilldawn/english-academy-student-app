@@ -321,6 +321,15 @@ textarea:focus-visible {
   color: var(--muted);
 }
 
+.error-reference {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.error-reference code {
+  user-select: all;
+}
+
 .form-stack {
   display: grid;
   gap: 16px;

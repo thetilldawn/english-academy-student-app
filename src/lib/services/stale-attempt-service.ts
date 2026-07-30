@@ -1,5 +1,6 @@
 import "server-only";
 
+import { ServerOperationError } from "@/lib/observability/server-log";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 
 const STALE_BATCH_SIZE = 1000;
@@ -8,7 +9,13 @@ const STALE_MAX_BATCHES_PER_REQUEST = 3;
 function parseFinalizedCount(value: unknown) {
   const count = typeof value === "number" ? value : Number(value);
   if (!Number.isSafeInteger(count) || count < 0) {
-    throw new Error("시간이 지난 시험의 처리 결과를 확인하지 못했습니다.");
+    throw new ServerOperationError(
+      "시간이 지난 시험의 처리 결과를 확인하지 못했습니다.",
+      {
+        operation: "quiz.stale.finalize",
+        code: "STALE_ATTEMPT_INVALID_RESULT",
+      },
+    );
   }
   return count;
 }
@@ -28,7 +35,14 @@ export async function finalizeStaleQuizAttempts() {
     );
 
     if (error) {
-      throw new Error("시간이 지난 시험을 확정하지 못했습니다.");
+      throw new ServerOperationError(
+        "시간이 지난 시험을 확정하지 못했습니다.",
+        {
+          operation: "quiz.stale.finalize",
+          code: "STALE_ATTEMPT_FINALIZE_FAILED",
+          cause: error,
+        },
+      );
     }
 
     const currentBatchCount = parseFinalizedCount(data);
@@ -54,8 +68,25 @@ export async function finalizeQuizAttemptIfStale(attemptId: string) {
     { p_attempt_id: attemptId },
   );
 
-  if (error || typeof data !== "boolean") {
-    throw new Error("시간이 지난 시험을 확정하지 못했습니다.");
+  if (error) {
+    throw new ServerOperationError(
+      "시간이 지난 시험을 확정하지 못했습니다.",
+      {
+        operation: "quiz.stale.finalize_one",
+        code: "STALE_ATTEMPT_FINALIZE_ONE_FAILED",
+        cause: error,
+      },
+    );
+  }
+
+  if (typeof data !== "boolean") {
+    throw new ServerOperationError(
+      "시간이 지난 시험의 처리 결과를 확인하지 못했습니다.",
+      {
+        operation: "quiz.stale.finalize_one",
+        code: "STALE_ATTEMPT_INVALID_RESULT",
+      },
+    );
   }
 
   return data;
