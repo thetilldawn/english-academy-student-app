@@ -12,6 +12,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 
+import { HelpTip } from "@/components/help-tip";
 import {
   currentTimeMilliseconds,
   koreanDateTimeLocalToIso,
@@ -22,6 +23,11 @@ import {
   toggleReviewLevel,
   type ReviewLevel,
 } from "@/lib/admin/assignment-submission";
+import {
+  questionOrderLabel,
+  type QuestionOrderMode,
+  type TimingMode,
+} from "@/lib/admin/assignment-settings";
 import {
   availableReviewCount,
   emptyPendingReviewCounts,
@@ -86,6 +92,9 @@ type ProgressItem = {
   latestAttemptNumber: number | null;
   latestStartedAt: string | null;
   latestCompletedAt: string | null;
+  latestCompletedAssignmentTitle: string | null;
+  latestCompletedInitialScore: number | null;
+  latestCompletedFinalScore: number | null;
   recommendedDatasetId: string | null;
   recommendedUnitId: string | null;
   recommendedUnitLabel: string | null;
@@ -151,6 +160,29 @@ function recommendationLabel(progress: ProgressItem | null) {
     return "과거 시험의 DAY 범위 직접 확인";
   }
   return progress.recommendedUnitLabel ?? "첫 DAY 선택";
+}
+
+function recommendationReasonLabel(progress: ProgressItem | null) {
+  if (!progress) return "현재 단어장을 먼저 선택하세요.";
+  if (progress.recommendationReason === "assigned") {
+    return "이미 배정했지만 아직 시작하지 않은 범위입니다.";
+  }
+  if (progress.recommendationReason === "resume") {
+    return "진행 중인 시험을 이어서 완료해야 합니다.";
+  }
+  if (progress.recommendationReason === "repeat") {
+    return "최근 결과가 통과 기준에 못 미쳐 같은 범위를 권합니다.";
+  }
+  if (progress.recommendationReason === "next") {
+    return "최근 범위를 통과해 다음 범위를 권합니다.";
+  }
+  if (progress.recommendationReason === "first") {
+    return "현재 단어장의 첫 범위부터 시작합니다.";
+  }
+  if (progress.recommendationReason === "complete") {
+    return "현재 단어장의 마지막 범위까지 통과했습니다.";
+  }
+  return "과거 자료에 범위 연결이 없어 직접 확인이 필요합니다.";
 }
 
 export function AssignmentManager({
@@ -230,10 +262,12 @@ export function AssignmentManager({
   const [endUnitId, setEndUnitId] = useState(initialRecommendedUnitId);
   const [questionCount, setQuestionCount] = useState(20);
   const [directionRatio, setDirectionRatio] = useState<0 | 50 | 100>(50);
-  const [questionOrderMode, setQuestionOrderMode] = useState<
-    "fixed" | "random"
-  >("random");
+  const [questionOrderMode, setQuestionOrderMode] =
+    useState<QuestionOrderMode>("random");
+  const [timingMode, setTimingMode] = useState<TimingMode>("total");
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(5);
+  const [questionTimeLimitSeconds, setQuestionTimeLimitSeconds] =
+    useState(20);
   const [passingScore, setPassingScore] = useState(80);
   const [availableUntilLocal, setAvailableUntilLocal] = useState("");
   const [customTitle, setCustomTitle] = useState("");
@@ -312,6 +346,10 @@ export function AssignmentManager({
     startIndex < 0 || endIndex < startIndex
       ? []
       : datasetUnits.slice(startIndex, endIndex + 1);
+  const usesDayLabels =
+    datasetUnits.length > 0 &&
+    datasetUnits.every((unit) => unit.kind === "day");
+  const unitTerm = usesDayLabels ? "DAY" : "단원";
   const availableWordCount = selectedUnits.reduce(
     (total, unit) => total + unit.entryCount,
     0,
@@ -328,7 +366,8 @@ export function AssignmentManager({
     .filter(Boolean)
     .join(" · ");
   const finalTitle = customTitle.trim() || generatedTitle;
-  const timeLimitSeconds = timeLimitMinutes * 60;
+  const timeLimitSeconds =
+    timingMode === "total" ? timeLimitMinutes * 60 : 10800;
   const mixedSelectionInvalid =
     includePendingReview &&
     (reviewLevels.length === 0 ||
@@ -346,8 +385,11 @@ export function AssignmentManager({
     (!includePendingReview &&
       questionCount > availableWordCount) ||
     mixedSelectionInvalid ||
-    timeLimitSeconds < 30 ||
-    timeLimitSeconds > 10800 ||
+    (timingMode === "total" &&
+      (timeLimitSeconds < 30 || timeLimitSeconds > 10800)) ||
+    (timingMode === "per_question" &&
+      (questionTimeLimitSeconds < 5 ||
+        questionTimeLimitSeconds > 600)) ||
     Boolean(success) ||
     submitting ||
     refreshPending;
@@ -546,6 +588,11 @@ export function AssignmentManager({
         questionCount,
         englishToKoreanRatio: directionRatio,
         timeLimitSeconds,
+        timingMode,
+        questionTimeLimitSeconds:
+          timingMode === "per_question"
+            ? questionTimeLimitSeconds
+            : null,
         passingScore,
         questionOrderMode,
         availableUntil,
@@ -761,7 +808,7 @@ export function AssignmentManager({
                       </span>
                     </span>
                     <span className="assignment-student-recent">
-                      <small>최근 시험</small>
+                      <small>최근 배정·진행</small>
                       <strong>
                         {studentProgress?.latestAssignmentTitle ??
                           "기록 없음"}
@@ -779,12 +826,25 @@ export function AssignmentManager({
                           studentProgress?.latestFinalScore,
                         )}
                       </span>
+                      <small>
+                        최근 완료 ·{" "}
+                        {studentProgress?.latestCompletedAssignmentTitle ??
+                          "기록 없음"}
+                        {studentProgress?.latestCompletedAssignmentTitle
+                          ? ` · 최종 ${scoreLabel(
+                              studentProgress.latestCompletedFinalScore,
+                            )}`
+                          : ""}
+                      </small>
                     </span>
                     <span className="assignment-student-next">
                       <small>다음 배정</small>
                       <strong>
                         {recommendationLabel(studentProgress)}
                       </strong>
+                      <span>
+                        {recommendationReasonLabel(studentProgress)}
+                      </span>
                     </span>
                     <span className="button button-primary button-small">
                       배정
@@ -849,6 +909,19 @@ export function AssignmentManager({
               추천 · {recommendationLabel(selectedProgress)}
             </strong>
             <span>
+              추천 이유 · {recommendationReasonLabel(selectedProgress)}
+            </span>
+            <span>
+              최근 완료 ·{" "}
+              {selectedProgress?.latestCompletedAssignmentTitle ??
+                "기록 없음"}
+              {selectedProgress?.latestCompletedAssignmentTitle
+                ? ` · 최종 ${scoreLabel(
+                    selectedProgress.latestCompletedFinalScore,
+                  )}`
+                : ""}
+            </span>
+            <span>
               대기 오답 · 한 번 {selectedReviewCounts.pendingLevel1Count}
               개 · 두 번 이상{" "}
               {selectedReviewCounts.pendingLevel2Count}개
@@ -894,8 +967,12 @@ export function AssignmentManager({
               <div className="assignment-step-heading">
                 <span>1</span>
                 <div>
-                  <h3>단어장과 DAY</h3>
-                  <p>학생이 실제로 외울 DAY 범위를 정합니다.</p>
+                  <h3>
+                    단어장과 {unitTerm}
+                    <HelpTip label={`단어장과 ${unitTerm} 도움말`}>
+                      {`학생이 실제로 외울 ${unitTerm} 범위를 정합니다.`}
+                    </HelpTip>
+                  </h3>
                 </div>
               </div>
               <label className="field">
@@ -921,7 +998,7 @@ export function AssignmentManager({
               </label>
               <div className="form-grid-2">
                 <label className="field">
-                  <span className="field-label">시작 DAY</span>
+                  <span className="field-label">시작 {unitTerm}</span>
                   <select
                     onChange={(event) =>
                       selectStartUnit(event.target.value)
@@ -930,7 +1007,7 @@ export function AssignmentManager({
                     value={effectiveStartUnitId}
                   >
                     <option disabled value="">
-                      시작 DAY 선택
+                      시작 {unitTerm} 선택
                     </option>
                     {datasetUnits.map((unit) => (
                       <option key={unit.id} value={unit.id}>
@@ -940,7 +1017,7 @@ export function AssignmentManager({
                   </select>
                 </label>
                 <label className="field">
-                  <span className="field-label">끝 DAY</span>
+                  <span className="field-label">끝 {unitTerm}</span>
                   <select
                     onChange={(event) =>
                       setEndUnitId(event.target.value)
@@ -949,7 +1026,7 @@ export function AssignmentManager({
                     value={effectiveEndUnitId}
                   >
                     <option disabled value="">
-                      끝 DAY 선택
+                      끝 {unitTerm} 선택
                     </option>
                     {datasetUnits.map((unit, index) => (
                       <option
@@ -983,9 +1060,9 @@ export function AssignmentManager({
                     type="checkbox"
                   />
                   <span>
-                    <strong>DAY에 대기 오답 함께 배정</strong>
+                    <strong>{unitTerm}에 대기 오답 함께 배정</strong>
                     <small>
-                      기본은 꺼짐이며, 켠 경우에도 새 DAY 문항을 한
+                      기본은 꺼짐이며, 켠 경우에도 새 {unitTerm} 문항을 한
                       개 이상 포함합니다.
                     </small>
                   </span>
@@ -1053,7 +1130,7 @@ export function AssignmentManager({
                           {questionCount}문항
                         </strong>
                         <small>
-                          새 DAY 후보 수는 출제 가능 상태·중복·전체
+                          새 {unitTerm} 후보 수는 출제 가능 상태·중복·전체
                           대기 오답을 제외해 배정할 때 최종 확인합니다.
                         </small>
                       </div>
@@ -1067,8 +1144,12 @@ export function AssignmentManager({
               <div className="assignment-step-heading">
                 <span>2</span>
                 <div>
-                  <h3>문제 조건</h3>
-                  <p>방향·순서·시간과 통과 기준을 정합니다.</p>
+                  <h3>
+                    문제 조건
+                    <HelpTip label="문제 조건 도움말">
+                      방향·순서·시간과 통과 기준을 정합니다.
+                    </HelpTip>
+                  </h3>
                 </div>
               </div>
               <div className="form-grid-2">
@@ -1098,18 +1179,15 @@ export function AssignmentManager({
                   <select
                     onChange={(event) =>
                       setQuestionOrderMode(
-                        event.target.value as "fixed" | "random",
+                        event.target.value as QuestionOrderMode,
                       )
                     }
                     value={questionOrderMode}
                   >
+                    <option value="ascending">오름차순</option>
+                    <option value="descending">내림차순</option>
                     <option value="random">무작위</option>
-                    <option value="fixed">DAY 순서</option>
                   </select>
-                  <span className="field-help">
-                    문제와 보기는 미리 만들고 학생별 문항 순서만
-                    바뀝니다.
-                  </span>
                 </label>
               </div>
               <div className="form-grid-3">
@@ -1132,24 +1210,61 @@ export function AssignmentManager({
                     value={questionCount}
                   />
                 </label>
+                <fieldset className="field timing-mode-field">
+                  <legend className="field-label">
+                    시간 제한 방식
+                    <HelpTip label="시간 제한 방식 도움말">
+                      전체 시험 시간 또는 문제당 시간 중 하나만 적용합니다.
+                    </HelpTip>
+                  </legend>
+                  <div className="segmented-control">
+                    <button
+                      aria-pressed={timingMode === "total"}
+                      onClick={() => setTimingMode("total")}
+                      type="button"
+                    >
+                      전체 시험
+                    </button>
+                    <button
+                      aria-pressed={timingMode === "per_question"}
+                      onClick={() => setTimingMode("per_question")}
+                      type="button"
+                    >
+                      문제당
+                    </button>
+                  </div>
+                </fieldset>
                 <label className="field">
                   <span className="field-label">
-                    시험 단계별 제한 시간(분)
+                    {timingMode === "total"
+                      ? "전체 시험 시간(분)"
+                      : "문제당 시간(초)"}
                   </span>
-                  <input
-                    max={180}
-                    min={1}
-                    onChange={(event) =>
-                      setTimeLimitMinutes(Number(event.target.value))
-                    }
-                    required
-                    type="number"
-                    value={timeLimitMinutes}
-                  />
-                  <span className="field-help">
-                    첫 시험과 재시험을 시작할 때 각각 같은 시간이
-                    주어집니다.
-                  </span>
+                  {timingMode === "total" ? (
+                    <input
+                      max={180}
+                      min={1}
+                      onChange={(event) =>
+                        setTimeLimitMinutes(Number(event.target.value))
+                      }
+                      required
+                      type="number"
+                      value={timeLimitMinutes}
+                    />
+                  ) : (
+                    <input
+                      max={600}
+                      min={5}
+                      onChange={(event) =>
+                        setQuestionTimeLimitSeconds(
+                          Number(event.target.value),
+                        )
+                      }
+                      required
+                      type="number"
+                      value={questionTimeLimitSeconds}
+                    />
+                  )}
                 </label>
                 <label className="field">
                   <span className="field-label">통과 점수</span>
@@ -1179,7 +1294,7 @@ export function AssignmentManager({
                 />
                 <span className="field-help">
                   이 시각까지 시험을 시작하지 않으면 미응시로
-                  기록됩니다. 이미 시작한 시험은 단계별 제한시간을
+                  기록됩니다. 이미 시작한 시험은 선택한 시간 제한을
                   따릅니다.
                 </span>
               </label>
@@ -1189,8 +1304,12 @@ export function AssignmentManager({
               <div className="assignment-step-heading">
                 <span>3</span>
                 <div>
-                  <h3>확인하고 배정</h3>
-                  <p>시험 이름은 자동 생성하며 필요할 때만 바꿉니다.</p>
+                  <h3>
+                    확인하고 배정
+                    <HelpTip label="시험 이름 도움말">
+                      시험 이름은 자동 생성하며 필요할 때만 바꿉니다.
+                    </HelpTip>
+                  </h3>
                 </div>
               </div>
               <label className="field">
@@ -1228,23 +1347,25 @@ export function AssignmentManager({
                   <div>
                     <dt>순서</dt>
                     <dd>
-                      {questionOrderMode === "random"
-                        ? "무작위"
-                        : "DAY 순서"}
+                      {questionOrderLabel(questionOrderMode)}
                     </dd>
                   </div>
                   <div>
                     <dt>구성</dt>
                     <dd>
                       {includePendingReview
-                        ? `DAY + 오답 최대 ${plannedReviewCount}개`
-                        : "DAY"}
+                        ? `${unitTerm} + 오답 최대 ${plannedReviewCount}개`
+                        : unitTerm}
                     </dd>
                   </div>
                   <div>
                     <dt>조건</dt>
                     <dd>
-                      총 {questionCount}문항 · {timeLimitMinutes}분 ·{" "}
+                      총 {questionCount}문항 ·{" "}
+                      {timingMode === "total"
+                        ? `전체 ${timeLimitMinutes}분`
+                        : `문제당 ${questionTimeLimitSeconds}초`}{" "}
+                      ·{" "}
                       {passingScore}점
                     </dd>
                   </div>
@@ -1286,13 +1407,22 @@ export function AssignmentManager({
                 </div>
               )}
               {!success &&
+                timingMode === "total" &&
                 (timeLimitSeconds < 30 ||
                   timeLimitSeconds > 10800) && (
                 <div className="notice notice-error" role="alert">
-                  계산된 단계별 제한 시간은 30초 이상 180분 이하여야
+                  전체 시험 시간은 30초 이상 180분 이하여야
                   합니다.
                 </div>
               )}
+              {!success &&
+                timingMode === "per_question" &&
+                (questionTimeLimitSeconds < 5 ||
+                  questionTimeLimitSeconds > 600) && (
+                  <div className="notice notice-error" role="alert">
+                    문제당 시간은 5초 이상 600초 이하여야 합니다.
+                  </div>
+                )}
               {error && (
                 <div className="notice notice-error" role="alert">
                   {error}

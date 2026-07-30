@@ -26,7 +26,7 @@ export type AssignmentHistorySource = {
   englishToKoreanRatio: number;
   timeLimitSeconds: number;
   passingScore: number;
-  questionOrderMode: "fixed" | "random";
+  questionOrderMode: QuestionOrderMode;
   availableUntil: string | null;
   assignedAt: string;
   missedAt: string | null;
@@ -105,13 +105,12 @@ export function assignmentScopeLabel(
 }
 
 export function assignmentOrderLabel(
-  assignmentPurpose: AssignmentPurpose,
-  questionOrderMode: "fixed" | "random",
+  _assignmentPurpose: AssignmentPurpose,
+  questionOrderMode: QuestionOrderMode,
 ) {
   if (questionOrderMode === "random") return "무작위 순서";
-  if (assignmentPurpose === "review") return "선택 순서";
-  if (assignmentPurpose === "mixed") return "배정 순서";
-  return "DAY 순서";
+  if (questionOrderMode === "descending") return "내림차순";
+  return "오름차순";
 }
 
 export function buildAssignmentHistory(
@@ -208,3 +207,4 @@ export function buildAssignmentHistory(
       Date.parse(right.activityAt) - Date.parse(left.activityAt),
   );
 }
+import type { QuestionOrderMode } from "@/lib/admin/assignment-settings";

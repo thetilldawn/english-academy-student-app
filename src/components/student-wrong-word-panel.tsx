@@ -91,6 +91,9 @@ export function StudentWrongWordPanel({
   >([]);
   const [queueing, setQueueing] = useState(false);
   const [drafting, setDrafting] = useState(false);
+  const [cancellingDraftId, setCancellingDraftId] = useState<
+    string | null
+  >(null);
   const [queueError, setQueueError] = useState("");
   const [queueNotice, setQueueNotice] = useState("");
 
@@ -204,14 +207,19 @@ export function StudentWrongWordPanel({
     [datasetOptions],
   );
 
-  const pendingReviewKeys = useMemo(
+  const pendingReviewByKey = useMemo(
     () =>
-      new Set(
-        (cachedHistory?.pendingReviews ?? []).map(
-          (review) => review.key,
-        ),
+      new Map(
+        (cachedHistory?.pendingReviews ?? []).map((review) => [
+          review.key,
+          review,
+        ]),
       ),
     [cachedHistory],
+  );
+  const pendingReviewKeys = useMemo(
+    () => new Set(pendingReviewByKey.keys()),
+    [pendingReviewByKey],
   );
   const pendingReviewActions = useMemo(() => {
     const activeDrafts = new Map<
@@ -326,7 +334,14 @@ export function StudentWrongWordPanel({
     );
 
   function toggleQuestion(questionId: string) {
-    if (requestingRef.current || queueing || drafting) return;
+    if (
+      requestingRef.current ||
+      queueing ||
+      drafting ||
+      cancellingDraftId
+    ) {
+      return;
+    }
     setSelectedQuestionIds((current) =>
       validSelectedQuestionIds.includes(questionId)
         ? current.filter((value) => value !== questionId)
@@ -337,7 +352,14 @@ export function StudentWrongWordPanel({
   }
 
   function toggleVisibleQuestions() {
-    if (requestingRef.current || queueing || drafting) return;
+    if (
+      requestingRef.current ||
+      queueing ||
+      drafting ||
+      cancellingDraftId
+    ) {
+      return;
+    }
     setSelectedQuestionIds(
       allVisibleSelected ? [] : selectableFilteredQuestionIds,
     );
@@ -452,6 +474,54 @@ export function StudentWrongWordPanel({
     }
   }
 
+  async function cancelReviewAssignmentDraft(draftId: string) {
+    if (
+      loading ||
+      requestingRef.current ||
+      queueing ||
+      drafting ||
+      cancellingDraftId
+    ) {
+      return;
+    }
+
+    setCancellingDraftId(draftId);
+    setQueueError("");
+    setQueueNotice("");
+    try {
+      const response = await fetch(
+        `/api/admin/students/${studentId}/review-assignment-drafts/${draftId}`,
+        { method: "DELETE" },
+      );
+      const payload = (await response.json()) as {
+        status?: string;
+        queueDisposition?: string;
+        error?: string;
+      };
+      if (
+        !response.ok ||
+        payload.status !== "cancelled" ||
+        payload.queueDisposition !== "pending"
+      ) {
+        throw new Error(
+          payload.error ?? "재시험 준비를 취소하지 못했습니다.",
+        );
+      }
+      setQueueNotice(
+        "재시험 준비를 취소했습니다. 오답은 다음 일반 시험 대기에 남아 있습니다.",
+      );
+      refreshHistory();
+    } catch (requestError) {
+      setQueueError(
+        requestError instanceof Error
+          ? requestError.message
+          : "재시험 준비를 취소하지 못했습니다.",
+      );
+    } finally {
+      setCancellingDraftId(null);
+    }
+  }
+
   if (loading && !cachedHistory) {
     return (
       <section
@@ -494,7 +564,7 @@ export function StudentWrongWordPanel({
         <span>
           {loading
             ? "최신 오답 이력을 확인하는 중…"
-            : "완료되거나 시간 종료된 시험만 반영합니다."}
+            : "첫 시험 종료 직후부터 오답을 반영합니다."}
         </span>
         <button
           className="button button-quiet button-small"
@@ -536,19 +606,43 @@ export function StudentWrongWordPanel({
         pendingReviewActions.availableByDataset.length > 0) && (
         <div className="wrong-word-selection-bar">
           {pendingReviewActions.activeDrafts.map((draft) => (
-            <button
-              className="button button-secondary button-small"
-              disabled={loading || queueing || drafting}
-              key={draft.draftId}
-              onClick={() =>
-                router.push(
-                  `/admin/assignments?reviewDraft=${encodeURIComponent(draft.draftId)}`,
-                )
-              }
-              type="button"
-            >
-              {`${datasetLabelById.get(draft.datasetId) ?? "단어장"} · 재시험 배정 계속 (${draft.questionIds.length}개)`}
-            </button>
+            <div className="wrong-word-draft-actions" key={draft.draftId}>
+              <button
+                className="button button-secondary button-small"
+                disabled={
+                  loading ||
+                  queueing ||
+                  drafting ||
+                  Boolean(cancellingDraftId)
+                }
+                onClick={() =>
+                  router.push(
+                    `/admin/assignments?reviewDraft=${encodeURIComponent(draft.draftId)}`,
+                  )
+                }
+                type="button"
+              >
+                {`${datasetLabelById.get(draft.datasetId) ?? "단어장"} · 재시험 배정 계속 (${draft.questionIds.length}개)`}
+              </button>
+              <button
+                aria-busy={cancellingDraftId === draft.draftId}
+                className="button button-quiet button-small"
+                disabled={
+                  loading ||
+                  queueing ||
+                  drafting ||
+                  Boolean(cancellingDraftId)
+                }
+                onClick={() =>
+                  void cancelReviewAssignmentDraft(draft.draftId)
+                }
+                type="button"
+              >
+                {cancellingDraftId === draft.draftId
+                  ? "취소하는 중…"
+                  : "재시험 준비 취소"}
+              </button>
+            </div>
           ))}
           {pendingReviewActions.availableByDataset.map((group) => (
             <button
@@ -705,12 +799,13 @@ export function StudentWrongWordPanel({
               조건에 맞는 오답 단어가 없습니다.
             </div>
           ) : (
-            <div className="wrong-word-list">
+            <div className="wrong-word-list wrong-word-list-with-actions">
               {filteredWords.map((word) => {
                 const target = selectionTarget(word, datasetFilter);
-                const pending = target
-                  ? pendingReviewKeys.has(target.reviewKey)
-                  : false;
+                const pendingReview = target
+                  ? pendingReviewByKey.get(target.reviewKey)
+                  : undefined;
+                const pending = Boolean(pendingReview);
                 const selected = target
                   ? validSelectedQuestionIds.includes(
                       target.questionId,
@@ -761,7 +856,9 @@ export function StudentWrongWordPanel({
                   <div className="wrong-word-meta">
                     {pending && (
                       <span className="status-pill status-completed">
-                        추가됨
+                        {pendingReview?.reviewDraftId
+                          ? "재시험 초안 예약"
+                          : "다음 시험 대기"}
                       </span>
                     )}
                     <span

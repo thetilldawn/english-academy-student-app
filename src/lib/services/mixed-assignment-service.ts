@@ -311,5 +311,23 @@ export async function createMixedAssignment(
   if (!z.uuid().safeParse(data).success) {
     throw new MixedAssignmentError("database");
   }
+  const { error: deliveryError } = await supabase.rpc(
+    "configure_assignment_delivery_v1",
+    {
+      p_assignment_id: data,
+      p_timing_mode: input.timingMode ?? "total",
+      p_question_time_limit_seconds:
+        input.timingMode === "per_question"
+          ? (input.questionTimeLimitSeconds ?? null)
+          : null,
+    },
+  );
+  if (deliveryError) {
+    await supabase
+      .from("assignments")
+      .update({ status: "closed" })
+      .eq("id", data);
+    throw new MixedAssignmentError("database");
+  }
   return data as string;
 }

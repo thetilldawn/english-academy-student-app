@@ -17,6 +17,9 @@ export type StudentProgressSummary = {
   latestAttemptNumber: number | null;
   latestStartedAt: string | null;
   latestCompletedAt: string | null;
+  latestCompletedAssignmentTitle: string | null;
+  latestCompletedInitialScore: number | null;
+  latestCompletedFinalScore: number | null;
   recommendedDatasetId: string | null;
   recommendedUnitId: string | null;
   recommendedUnitLabel: string | null;
@@ -67,6 +70,10 @@ export function buildStudentProgress(
     string,
     AssignmentHistorySummary
   >();
+  const latestCompletedByStudent = new Map<
+    string,
+    AssignmentHistorySummary
+  >();
   const studentById = new Map(
     students.map((student) => [student.id, student]),
   );
@@ -87,6 +94,17 @@ export function buildStudentProgress(
       activityTime(item) > activityTime(currentLatest)
     ) {
       latestOverallByStudent.set(item.studentId, item);
+    }
+    if (item.status === "completed") {
+      const latestCompleted = latestCompletedByStudent.get(
+        item.studentId,
+      );
+      if (
+        !latestCompleted ||
+        activityTime(item) > activityTime(latestCompleted)
+      ) {
+        latestCompletedByStudent.set(item.studentId, item);
+      }
     }
 
     const student = studentById.get(item.studentId);
@@ -111,6 +129,8 @@ export function buildStudentProgress(
 
   return students.map((student) => {
     const latest = latestOverallByStudent.get(student.id) ?? null;
+    const latestCompleted =
+      latestCompletedByStudent.get(student.id) ?? null;
     const latestCurrent =
       latestCurrentDatasetByStudent.get(student.id) ?? null;
     const datasetUnits = student.currentVocabDatasetId
@@ -174,6 +194,12 @@ export function buildStudentProgress(
       latestAttemptNumber: latest?.attemptNumber ?? null,
       latestStartedAt: latest?.startedAt ?? null,
       latestCompletedAt: latest?.completedAt ?? null,
+      latestCompletedAssignmentTitle:
+        latestCompleted?.assignmentTitle ?? null,
+      latestCompletedInitialScore:
+        latestCompleted?.initialScore ?? null,
+      latestCompletedFinalScore:
+        latestCompleted?.finalScore ?? null,
       recommendedDatasetId: student.currentVocabDatasetId,
       recommendedUnitId: recommendedUnit?.id ?? null,
       recommendedUnitLabel: recommendedUnit?.label ?? null,

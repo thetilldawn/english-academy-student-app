@@ -1,3 +1,8 @@
+import type {
+  QuestionOrderMode,
+  TimingMode,
+} from "@/lib/admin/assignment-settings";
+
 export type ReviewLevel = 1 | 2;
 
 type CommonAssignmentInput = {
@@ -8,8 +13,10 @@ type CommonAssignmentInput = {
   questionCount: number;
   englishToKoreanRatio: 0 | 50 | 100;
   timeLimitSeconds: number;
+  timingMode?: TimingMode;
+  questionTimeLimitSeconds?: number | null;
   passingScore: number;
-  questionOrderMode: "fixed" | "random";
+  questionOrderMode: QuestionOrderMode;
   availableUntil: string | null;
 };
 
@@ -65,6 +72,15 @@ export function buildAssignmentSubmission(
         title: input.title,
         englishToKoreanRatio: input.englishToKoreanRatio,
         timeLimitSeconds: input.timeLimitSeconds,
+        ...(input.timingMode
+          ? {
+              timingMode: input.timingMode,
+              questionTimeLimitSeconds:
+                input.timingMode === "per_question"
+                  ? (input.questionTimeLimitSeconds ?? null)
+                  : null,
+            }
+          : {}),
         passingScore: input.passingScore,
         questionOrderMode: input.questionOrderMode,
         availableUntil: input.availableUntil,
@@ -81,6 +97,15 @@ export function buildAssignmentSubmission(
       questionCount: input.questionCount,
       englishToKoreanRatio: input.englishToKoreanRatio,
       timeLimitSeconds: input.timeLimitSeconds,
+      ...(input.timingMode
+        ? {
+            timingMode: input.timingMode,
+            questionTimeLimitSeconds:
+              input.timingMode === "per_question"
+                ? (input.questionTimeLimitSeconds ?? null)
+                : null,
+          }
+        : {}),
       passingScore: input.passingScore,
       questionOrderMode: input.questionOrderMode,
       availableUntil: input.availableUntil,

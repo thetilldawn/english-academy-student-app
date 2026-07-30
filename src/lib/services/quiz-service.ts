@@ -8,6 +8,10 @@ import {
   assignmentScopeLabel,
   type AssignmentPurpose,
 } from "@/lib/admin/history";
+import type {
+  QuestionOrderMode,
+  TimingMode,
+} from "@/lib/admin/assignment-settings";
 import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import { finalizeStudentMissedAssignments } from "@/lib/services/missed-assignment-service";
@@ -20,8 +24,10 @@ export type StudentAssignmentSummary = {
   assignmentPurpose: AssignmentPurpose;
   scopeLabel: string;
   questionCount: number;
-  questionOrderMode: "fixed" | "random";
+  questionOrderMode: QuestionOrderMode;
   timeLimitSeconds: number;
+  timingMode: TimingMode;
+  questionTimeLimitSeconds: number | null;
   passingScore: number;
   retakeAllowed: boolean;
   lastAttemptId: string | null;
@@ -44,6 +50,8 @@ export type AttemptQuestionState = {
   retryChoiceIndex: number | null;
   retryIsCorrect: boolean | null;
   priorWrongLevel: 0 | 1 | 2;
+  initialTimedOut: boolean;
+  retryTimedOut: boolean;
   revealedCorrectChoiceIndex: number | null;
 };
 
@@ -54,6 +62,9 @@ export type AttemptState = {
   phase: "initial" | "review" | "retry" | "completed";
   startedAt: string;
   deadlineAt: string;
+  timerDeadlineAt: string;
+  timingMode: TimingMode;
+  questionTimeLimitSeconds: number | null;
   questions: AttemptQuestionState[];
   currentQuestionId: string | null;
 };
@@ -87,7 +98,9 @@ type AssignmentRow = {
   retake_allowed: boolean;
   range_basis: "source_rows" | "units";
   question_bank_version: number | null;
-  question_order_mode: "fixed" | "random";
+  question_order_mode: QuestionOrderMode;
+  timing_mode: TimingMode;
+  question_time_limit_seconds: number | null;
   status: "draft" | "active" | "closed";
   available_from: string | null;
   available_until: string | null;
@@ -101,6 +114,7 @@ type AttemptRow = {
   attempt_number: number;
   started_at: string;
   deadline_at: string;
+  current_question_started_at: string;
   initial_score: number | string | null;
 };
 
@@ -115,6 +129,8 @@ type QuestionRow = {
   initial_is_correct: boolean | null;
   retry_choice_index: number | null;
   retry_is_correct: boolean | null;
+  initial_timed_out?: boolean;
+  retry_timed_out?: boolean;
   prior_wrong_count: number;
 };
 
@@ -129,6 +145,8 @@ type ResultQuestionRow = {
   initial_is_correct: boolean | null;
   retry_choice_index: number | null;
   retry_is_correct: boolean | null;
+  initial_timed_out?: boolean;
+  retry_timed_out?: boolean;
   assignment_question:
     | {
         headword_snapshot: string | null;
@@ -174,11 +192,13 @@ export function mapResultQuestions(
       prompt: row.prompt,
       correctAnswer: choices[row.correct_choice_index] ?? "",
       initialChoice:
+        Boolean(row.initial_timed_out) ||
         row.initial_choice_index === null
           ? null
           : (choices[row.initial_choice_index] ?? null),
       initialIsCorrect: row.initial_is_correct,
       retryChoice:
+        Boolean(row.retry_timed_out) ||
         row.retry_choice_index === null
           ? null
           : (choices[row.retry_choice_index] ?? null),
@@ -205,7 +225,7 @@ export async function getAttemptQuestionResults(
   const { data, error } = await supabase
     .from("quiz_questions")
     .select(
-      "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(headword_snapshot, primary_meaning_snapshot, provenance_status), vocab_entries(headword, primary_meaning)",
+      "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, initial_timed_out, retry_timed_out, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(headword_snapshot, primary_meaning_snapshot, provenance_status), vocab_entries(headword, primary_meaning)",
     )
     .eq("attempt_id", attemptId)
     .order("order_index");
@@ -245,7 +265,7 @@ export async function listStudentAssignments(
     supabase
       .from("assignments")
       .select(
-        "id, title, assignment_purpose, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, passing_score, retake_allowed, range_basis, question_bank_version, question_order_mode, status, available_from, available_until",
+        "id, title, assignment_purpose, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, timing_mode, question_time_limit_seconds, passing_score, retake_allowed, range_basis, question_bank_version, question_order_mode, status, available_from, available_until",
       )
       .in("id", assignmentIds)
       .order("created_at", { ascending: false }),
@@ -355,6 +375,9 @@ export async function listStudentAssignments(
       questionCount: assignment.question_count,
       questionOrderMode: assignment.question_order_mode,
       timeLimitSeconds: assignment.time_limit_seconds,
+      timingMode: assignment.timing_mode,
+      questionTimeLimitSeconds:
+        assignment.question_time_limit_seconds,
       passingScore: assignment.passing_score,
       retakeAllowed: assignment.retake_allowed,
       lastAttemptId: lastAttempt?.id ?? null,
@@ -383,7 +406,7 @@ export async function startStudentAttempt(
       supabase
         .from("assignments")
         .select(
-          "id, title, assignment_purpose, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, passing_score, retake_allowed, range_basis, question_bank_version, question_order_mode, status, available_from, available_until",
+          "id, title, assignment_purpose, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, timing_mode, question_time_limit_seconds, passing_score, retake_allowed, range_basis, question_bank_version, question_order_mode, status, available_from, available_until",
         )
         .eq("id", assignmentId)
         .maybeSingle(),
@@ -530,7 +553,9 @@ export async function getStudentAttempt(
   const supabase = getServiceSupabaseClient();
   const { data: attemptData, error: attemptError } = await supabase
     .from("quiz_attempts")
-    .select("id, assignment_id, status, phase, started_at, deadline_at")
+    .select(
+      "id, assignment_id, status, phase, started_at, deadline_at, current_question_started_at",
+    )
     .eq("id", attemptId)
     .eq("student_id", studentId)
     .maybeSingle();
@@ -553,13 +578,13 @@ export async function getStudentAttempt(
     await Promise.all([
       supabase
         .from("assignments")
-        .select("title")
+        .select("title, timing_mode, question_time_limit_seconds")
         .eq("id", attemptData.assignment_id)
         .maybeSingle(),
       supabase
         .from("quiz_questions")
         .select(
-          "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, prior_wrong_count",
+          "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, prior_wrong_count, initial_timed_out, retry_timed_out",
         )
         .eq("attempt_id", attemptId)
         .order("order_index"),
@@ -584,6 +609,17 @@ export async function getStudentAttempt(
       : phase === "retry"
         ? (retryCurrent?.id ?? null)
         : null;
+  const timingMode =
+    (assignmentData?.timing_mode as TimingMode | undefined) ?? "total";
+  const questionTimeLimitSeconds =
+    assignmentData?.question_time_limit_seconds ?? null;
+  const timerDeadlineAt =
+    timingMode === "per_question" && questionTimeLimitSeconds
+      ? new Date(
+          Date.parse(attemptData.current_question_started_at) +
+            questionTimeLimitSeconds * 1000,
+        ).toISOString()
+      : attemptData.deadline_at;
 
   return {
     id: attemptData.id,
@@ -592,6 +628,9 @@ export async function getStudentAttempt(
     phase,
     startedAt: attemptData.started_at,
     deadlineAt: attemptData.deadline_at,
+    timerDeadlineAt,
+    timingMode,
+    questionTimeLimitSeconds,
     currentQuestionId,
     questions: rows.map((question) => {
       const answered =
@@ -614,6 +653,8 @@ export async function getStudentAttempt(
             : question.prior_wrong_count === 1
               ? 1
               : 0,
+        initialTimedOut: Boolean(question.initial_timed_out),
+        retryTimedOut: Boolean(question.retry_timed_out),
         revealedCorrectChoiceIndex: answered
           ? question.correct_choice_index
           : null,
@@ -666,12 +707,13 @@ export async function answerStudentQuestion(input: {
   choiceIndex: number;
 }) {
   const supabase = getServiceSupabaseClient();
-  const { data, error } = await supabase.rpc("answer_quiz_question", {
+  const { data, error } = await supabase.rpc("answer_quiz_question_v2", {
     p_student_id: input.studentId,
     p_attempt_id: input.attemptId,
     p_question_id: input.questionId,
     p_phase: input.phase,
     p_choice_index: input.choiceIndex,
+    p_force_timeout: false,
   });
 
   if (error || !data) {
@@ -690,6 +732,42 @@ export async function answerStudentQuestion(input: {
     initialQuestionCount?: number;
     retryAnsweredCount?: number;
     retryQuestionCount?: number;
+    timedOut?: boolean;
+    questionDeadlineAt?: string | null;
+  };
+}
+
+export async function timeoutStudentQuestion(input: {
+  studentId: string;
+  attemptId: string;
+  questionId: string;
+  phase: "initial" | "retry";
+}) {
+  const supabase = getServiceSupabaseClient();
+  const { data, error } = await supabase.rpc(
+    "answer_quiz_question_v2",
+    {
+      p_student_id: input.studentId,
+      p_attempt_id: input.attemptId,
+      p_question_id: input.questionId,
+      p_phase: input.phase,
+      p_choice_index: 0,
+      p_force_timeout: true,
+    },
+  );
+  if (error || !data) {
+    throw new Error("시간 초과 상태를 저장하지 못했습니다.");
+  }
+  return data as {
+    correct?: boolean;
+    correctChoiceIndex?: number;
+    completed?: boolean;
+    needsRetry?: boolean;
+    expired?: boolean;
+    nextQuestionId?: string | null;
+    nextPhase?: "initial" | "retry" | null;
+    timedOut?: boolean;
+    questionDeadlineAt?: string | null;
   };
 }
 

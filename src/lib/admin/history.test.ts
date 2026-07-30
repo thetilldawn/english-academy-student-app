@@ -247,10 +247,10 @@ describe("assignmentScopeLabel", () => {
     ).toBe("DAY 05 · 오답 포함");
   });
 
-  it("고정 순서는 시험 목적에 맞는 표현을 사용한다", () => {
-    expect(assignmentOrderLabel("regular", "fixed")).toBe("DAY 순서");
-    expect(assignmentOrderLabel("review", "fixed")).toBe("선택 순서");
-    expect(assignmentOrderLabel("mixed", "fixed")).toBe("배정 순서");
+  it("문제 순서는 교재 유형과 무관하게 같은 표현을 사용한다", () => {
+    expect(assignmentOrderLabel("regular", "fixed")).toBe("오름차순");
+    expect(assignmentOrderLabel("review", "ascending")).toBe("오름차순");
+    expect(assignmentOrderLabel("mixed", "descending")).toBe("내림차순");
     expect(assignmentOrderLabel("mixed", "random")).toBe(
       "무작위 순서",
     );

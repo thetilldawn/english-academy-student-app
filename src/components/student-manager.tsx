@@ -20,6 +20,7 @@ import {
 } from "@/lib/admin/history";
 import type { StudentWrongWordHistory } from "@/lib/admin/wrong-word-history";
 import { formatKoreanDateTime } from "@/lib/format";
+import { sendKakaoText } from "@/lib/kakao-share";
 import { StudentWrongWordPanel } from "@/components/student-wrong-word-panel";
 
 type StudentItem = {
@@ -119,6 +120,7 @@ export function StudentManager({
     label: string;
   } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [shareNotice, setShareNotice] = useState("");
   const initialStudent =
     students.find((student) => student.id === initialStudentId) ?? null;
   const [selectedStudentId, setSelectedStudentId] = useState(
@@ -437,26 +439,22 @@ export function StudentManager({
       `접속 코드: ${shownCode.code}`,
     ].join("\n");
 
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: shownCode.label,
-          text: message,
-        });
-        return;
-      } catch (shareError) {
-        if (
-          shareError instanceof DOMException &&
-          shareError.name === "AbortError"
-        ) {
-          return;
-        }
-      }
+    const result = await sendKakaoText({
+      title: shownCode.label,
+      message,
+      url: window.location.origin,
+    });
+    if (result === "sent") {
+      setShareNotice("");
+      return;
     }
-
     await navigator.clipboard.writeText(message);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1500);
+    setShareNotice(
+      result === "unconfigured"
+        ? "카카오 설정 전이라 메시지를 복사했습니다."
+        : "카카오톡을 열지 못해 메시지를 복사했습니다.",
+    );
+    window.setTimeout(() => setShareNotice(""), 2500);
   }
 
   const groupedStudents = useMemo(() => {
@@ -1001,8 +999,13 @@ export function StudentManager({
               onClick={() => void shareCode()}
               type="button"
             >
-              코드 보내기
+              카카오톡으로 보내기
             </button>
+            {shareNotice && (
+              <span className="field-help" role="status">
+                {shareNotice}
+              </span>
+            )}
             <button
               className="button button-secondary"
               onClick={copyCode}

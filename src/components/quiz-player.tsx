@@ -29,6 +29,8 @@ type Question = {
   retryChoiceIndex: number | null;
   retryIsCorrect: boolean | null;
   priorWrongLevel: 0 | 1 | 2;
+  initialTimedOut: boolean;
+  retryTimedOut: boolean;
   revealedCorrectChoiceIndex: number | null;
 };
 
@@ -39,6 +41,9 @@ type Attempt = {
   phase: "initial" | "review" | "retry" | "completed";
   startedAt: string;
   deadlineAt: string;
+  timerDeadlineAt: string;
+  timingMode: "total" | "per_question";
+  questionTimeLimitSeconds: number | null;
   questions: Question[];
   currentQuestionId: string | null;
 };
@@ -55,6 +60,8 @@ type AnswerResponse = {
   initialQuestionCount?: number;
   retryAnsweredCount?: number;
   retryQuestionCount?: number;
+  timedOut?: boolean;
+  questionDeadlineAt?: string | null;
   error?: string;
 };
 
@@ -82,6 +89,7 @@ export function QuizPlayer({
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
   const [correctChoice, setCorrectChoice] = useState<number | null>(null);
   const [answerCorrect, setAnswerCorrect] = useState<boolean | null>(null);
+  const [answerTimedOut, setAnswerTimedOut] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [timeWarning, setTimeWarning] = useState("");
@@ -108,8 +116,8 @@ export function QuizPlayer({
   );
   const completedInPhase = phaseQuestions.filter((question) =>
     attempt.phase === "retry"
-      ? question.retryChoiceIndex !== null
-      : question.initialChoiceIndex !== null,
+      ? question.retryIsCorrect !== null
+      : question.initialIsCorrect !== null,
   ).length;
   const progress =
     phaseQuestions.length === 0
@@ -158,13 +166,14 @@ export function QuizPlayer({
       setAttempt(payload.attempt);
       setRemaining(
         secondsUntil(
-          payload.attempt.deadlineAt,
+          payload.attempt.timerDeadlineAt,
           currentTimeMilliseconds(),
         ) ?? 0,
       );
       setSelectedChoice(null);
       setCorrectChoice(null);
       setAnswerCorrect(null);
+      setAnswerTimedOut(false);
       setSubmitting(false);
       return true;
     } catch {
@@ -178,7 +187,7 @@ export function QuizPlayer({
     const updateRemaining = () => {
       setRemaining(
         secondsUntil(
-          attempt.deadlineAt,
+          attempt.timerDeadlineAt,
           currentTimeMilliseconds(),
         ) ?? 0,
       );
@@ -198,16 +207,7 @@ export function QuizPlayer({
         handleVisibilityChange,
       );
     };
-  }, [attempt.deadlineAt]);
-
-  useEffect(() => {
-    if (
-      remaining === 0 &&
-      attempt.status === "in_progress"
-    ) {
-      void expireAttempt();
-    }
-  }, [attempt.status, expireAttempt, remaining]);
+  }, [attempt.timerDeadlineAt]);
 
   useEffect(() => {
     if (
@@ -221,7 +221,7 @@ export function QuizPlayer({
   }, [remaining]);
 
   const submitChoice = useCallback(
-    async (choiceIndex: number) => {
+    async (choiceIndex: number | null) => {
       if (!currentQuestion || submitting || answerCorrect !== null) return;
 
       setSubmitting(true);
@@ -235,14 +235,16 @@ export function QuizPlayer({
       };
       try {
         const response = await fetch(
-          `/api/student/attempts/${attempt.id}/answers`,
+          `/api/student/attempts/${attempt.id}/${
+            choiceIndex === null ? "timeouts" : "answers"
+          }`,
           {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({
               questionId: currentQuestion.id,
               phase: attempt.phase,
-              choiceIndex,
+              ...(choiceIndex === null ? {} : { choiceIndex }),
             }),
           },
         );
@@ -257,6 +259,7 @@ export function QuizPlayer({
         }
 
         setAnswerCorrect(Boolean(payload.correct));
+        setAnswerTimedOut(Boolean(payload.timedOut));
         setCorrectChoice(
           typeof payload.correctChoiceIndex === "number"
             ? payload.correctChoiceIndex
@@ -292,6 +295,8 @@ export function QuizPlayer({
           setAttempt((current) => ({
             ...current,
             phase: payload.nextPhase ?? current.phase,
+            timerDeadlineAt:
+              payload.questionDeadlineAt ?? current.timerDeadlineAt,
             currentQuestionId:
               payload.nextQuestionId ?? current.currentQuestionId,
             questions: current.questions.map((question) =>
@@ -306,6 +311,10 @@ export function QuizPlayer({
                       answeredPhase === "initial"
                         ? Boolean(payload.correct)
                         : question.initialIsCorrect,
+                    initialTimedOut:
+                      answeredPhase === "initial"
+                        ? Boolean(payload.timedOut)
+                        : question.initialTimedOut,
                     retryChoiceIndex:
                       answeredPhase === "retry"
                         ? choiceIndex
@@ -314,6 +323,10 @@ export function QuizPlayer({
                       answeredPhase === "retry"
                         ? Boolean(payload.correct)
                         : question.retryIsCorrect,
+                    retryTimedOut:
+                      answeredPhase === "retry"
+                        ? Boolean(payload.timedOut)
+                        : question.retryTimedOut,
                     revealedCorrectChoiceIndex:
                       typeof payload.correctChoiceIndex === "number"
                         ? payload.correctChoiceIndex
@@ -325,13 +338,17 @@ export function QuizPlayer({
           setSelectedChoice(null);
           setCorrectChoice(null);
           setAnswerCorrect(null);
+          setAnswerTimedOut(false);
           setSubmitting(false);
+          timeWarningAnnounced.current = false;
+          setTimeWarning("");
         }, feedbackDelay);
       } catch (requestError) {
         if (await tryRecover()) return;
         setSelectedChoice(null);
         setCorrectChoice(null);
         setAnswerCorrect(null);
+        setAnswerTimedOut(false);
         setError(
           requestError instanceof Error
             ? requestError.message
@@ -350,6 +367,24 @@ export function QuizPlayer({
       submitting,
     ],
   );
+
+  useEffect(() => {
+    if (remaining !== 0 || attempt.status !== "in_progress") return;
+    const timer = window.setTimeout(() => {
+      if (attempt.timingMode === "per_question") {
+        void submitChoice(null);
+        return;
+      }
+      void expireAttempt();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [
+    attempt.status,
+    attempt.timingMode,
+    expireAttempt,
+    remaining,
+    submitChoice,
+  ]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -387,7 +422,11 @@ export function QuizPlayer({
           <strong>{attempt.assignmentTitle}</strong>
         </div>
         <span
-          aria-label={`남은 시간 ${formatTime(remaining)}`}
+          aria-label={`${
+            attempt.timingMode === "per_question"
+              ? "문제당 "
+              : ""
+          }남은 시간 ${formatTime(remaining)}`}
           className={`timer ${remaining <= 30 ? "timer-warning" : ""}`}
         >
           {formatTime(remaining)}
@@ -502,9 +541,11 @@ export function QuizPlayer({
       >
         {answerCorrect === true && "정답입니다."}
         {answerCorrect === false &&
-          (attempt.phase === "initial"
-            ? "오답입니다. 첫 시험 결과에서 다시 확인할 수 있습니다."
-            : "다시 확인할 단어로 남겼습니다.")}
+          (answerTimedOut
+            ? "시간 초과로 미응답 오답 처리했습니다."
+            : attempt.phase === "initial"
+              ? "오답입니다. 첫 시험 결과에서 다시 확인할 수 있습니다."
+              : "다시 확인할 단어로 남겼습니다.")}
       </div>
       {error && (
         <div className="inline-error quiz-error" role="alert">

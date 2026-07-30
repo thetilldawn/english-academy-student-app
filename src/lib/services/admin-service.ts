@@ -32,6 +32,10 @@ import {
   type AssignmentHistorySummary,
   type AttemptHistorySource,
 } from "@/lib/admin/history";
+import type {
+  QuestionOrderMode,
+  TimingMode,
+} from "@/lib/admin/assignment-settings";
 import {
   parseStudentPendingReviewSummaries,
   type PendingReviewSummaryRow,
@@ -114,7 +118,7 @@ export type AssignmentSummary = {
   englishToKoreanRatio: number;
   timeLimitSeconds: number;
   passingScore: number;
-  questionOrderMode: "fixed" | "random";
+  questionOrderMode: QuestionOrderMode;
   availableUntil: string | null;
   studentCount: number;
   createdAt: string;
@@ -554,7 +558,7 @@ type HistoryAssignmentRelation = {
   english_to_korean_ratio: number;
   time_limit_seconds: number;
   passing_score: number;
-  question_order_mode: "fixed" | "random";
+  question_order_mode: QuestionOrderMode;
   available_until: string | null;
   dataset: HistoryDatasetRelation | HistoryDatasetRelation[] | null;
   assignment_units: HistoryAssignmentUnitRelation[] | null;
@@ -766,8 +770,10 @@ export async function createAssignment(input: {
   questionCount: number;
   englishToKoreanRatio: 0 | 50 | 100;
   timeLimitSeconds: number;
+  timingMode?: TimingMode;
+  questionTimeLimitSeconds?: number | null;
   passingScore: number;
-  questionOrderMode: "fixed" | "random";
+  questionOrderMode: QuestionOrderMode;
   availableUntil: string | null;
   studentIds: string[];
 }): Promise<string> {
@@ -930,6 +936,25 @@ export async function createAssignment(input: {
 
   if (error || typeof data !== "string") {
     throw new Error("시험을 배정하지 못했습니다.");
+  }
+
+  const { error: deliveryError } = await supabase.rpc(
+    "configure_assignment_delivery_v1",
+    {
+      p_assignment_id: data,
+      p_timing_mode: input.timingMode ?? "total",
+      p_question_time_limit_seconds:
+        input.timingMode === "per_question"
+          ? (input.questionTimeLimitSeconds ?? null)
+          : null,
+    },
+  );
+  if (deliveryError) {
+    await supabase
+      .from("assignments")
+      .update({ status: "closed" })
+      .eq("id", data);
+    throw new Error("시험 시간 설정을 저장하지 못했습니다.");
   }
 
   return data;

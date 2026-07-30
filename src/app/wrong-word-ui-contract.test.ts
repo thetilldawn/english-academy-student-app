@@ -100,6 +100,44 @@ describe("wrong-word admin UI contract", () => {
     expect(panel).not.toContain("/admin/assignments?student=");
   });
 
+  it("cancels a pending review draft without removing words from the next-test queue", () => {
+    const route = source(
+      "src/app/api/admin/students/[id]/review-assignment-drafts/[draftId]/route.ts",
+    );
+    const service = source(
+      "src/lib/services/review-assignment-service.ts",
+    );
+    const panel = source(
+      "src/components/student-wrong-word-panel.tsx",
+    );
+    const dialog = source(
+      "src/components/review-assignment-dialog.tsx",
+    );
+    const css = source("src/app/globals.css");
+
+    expect(route).toContain("export async function DELETE(");
+    expect(route).toContain("isSameOriginRequest(request)");
+    expect(route).toContain("getAdminContext()");
+    expect(route.match(/z\.uuid\(\)/g)).toHaveLength(2);
+    expect(route).toContain(
+      "cancelStudentReviewAssignmentDraft(id, draftId, admin)",
+    );
+    expect(route).toContain('"Cache-Control": "private, no-store"');
+    expect(route).toContain('queueDisposition: "pending"');
+    expect(service).toContain(
+      '"cancel_student_vocab_review_assignment_draft"',
+    );
+    expect(panel).toContain('method: "DELETE"');
+    expect(panel).toContain("재시험 준비 취소");
+    expect(panel).toContain("다음 일반 시험 대기에 남아 있습니다");
+    expect(panel).toContain("재시험 초안 예약");
+    expect(panel).toContain("다음 시험 대기");
+    expect(dialog).toContain('method: "DELETE"');
+    expect(dialog).toContain("다음 시험 대기 유지");
+    expect(css).toContain(".wrong-word-list-with-actions");
+    expect(css).toContain("scroll-padding-bottom");
+  });
+
   it("loads wrong words only inside the student detail tab", () => {
     const manager = source("src/components/student-manager.tsx");
     const panel = source(

@@ -52,10 +52,20 @@ describe("mixed assignment admin UI contract", () => {
     expect(filteredStudents).not.toContain("pendingReviewIndex");
     expect(filteredStudents).not.toContain("pendingReviewCount(");
     expect(manager).toContain("오답 대기 포함");
-    expect(manager).toContain("DAY에 대기 오답 함께 배정");
+    expect(manager).toContain(
+      "<strong>{unitTerm}에 대기 오답 함께 배정</strong>",
+    );
+    expect(manager).toContain(
+      'const unitTerm = usesDayLabels ? "DAY" : "단원"',
+    );
     expect(manager).toContain("한 번 틀림 · 가능");
     expect(manager).toContain("두 번 이상 틀림 · 가능");
     expect(manager).toContain("오답 최대 포함 수");
+    expect(manager).toContain('value="ascending"');
+    expect(manager).toContain('value="descending"');
+    expect(manager).toContain('value="random"');
+    expect(manager).toContain('useState<TimingMode>("total")');
+    expect(manager).toContain("문제당 시간(초)");
     expect(manager).toContain(
       "const [includePendingReview, setIncludePendingReview] =",
     );

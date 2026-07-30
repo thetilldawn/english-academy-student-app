@@ -12,10 +12,11 @@ describe("DAY 문제은행 응시 계약", () => {
     const manager = source("src/components/assignment-manager.tsx");
     const adminService = source("src/lib/services/admin-service.ts");
 
-    expect(manager).toContain("시작 DAY");
-    expect(manager).toContain("끝 DAY");
+    expect(manager).toContain("시작 {unitTerm}");
+    expect(manager).toContain("끝 {unitTerm}");
     expect(manager).toContain("무작위");
-    expect(manager).toContain("DAY 순서");
+    expect(manager).toContain("오름차순");
+    expect(manager).toContain("내림차순");
     expect(adminService).toContain(
       '"create_assignment_with_question_bank_v3"',
     );

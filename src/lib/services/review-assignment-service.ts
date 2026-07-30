@@ -3,6 +3,10 @@ import "server-only";
 import { z } from "zod";
 
 import type { ReviewAssignmentDraftSummary } from "@/lib/admin/review-assignment";
+import type {
+  QuestionOrderMode,
+  TimingMode,
+} from "@/lib/admin/assignment-settings";
 import {
   requireAdmin,
   type AdminContext,
@@ -53,8 +57,10 @@ export type ExactReviewAssignmentInput = {
   title: string;
   englishToKoreanRatio: 0 | 50 | 100;
   timeLimitSeconds: number;
+  timingMode?: TimingMode;
+  questionTimeLimitSeconds?: number | null;
   passingScore: number;
-  questionOrderMode: "fixed" | "random";
+  questionOrderMode: QuestionOrderMode;
   availableUntil: string | null;
 };
 
@@ -71,6 +77,60 @@ export class ReviewAssignmentError extends Error {
     super(message);
     this.name = "ReviewAssignmentError";
   }
+}
+
+export class ReviewAssignmentDraftCancelError extends Error {
+  constructor(
+    public readonly reason:
+      | "forbidden"
+      | "not_found"
+      | "unavailable"
+      | "database",
+  ) {
+    super("오답 재시험 준비를 취소하지 못했습니다.");
+    this.name = "ReviewAssignmentDraftCancelError";
+  }
+}
+
+export async function cancelStudentReviewAssignmentDraft(
+  studentId: string,
+  reviewDraftId: string,
+  authenticatedAdmin?: AdminContext,
+) {
+  if (!authenticatedAdmin) {
+    await requireAdmin();
+  }
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase.rpc(
+    "cancel_student_vocab_review_assignment_draft",
+    {
+      p_student_id: studentId,
+      p_review_draft_id: reviewDraftId,
+    },
+  );
+
+  if (error) {
+    console.error("[review-assignment-draft-cancel] database operation failed", {
+      code: error.code,
+      message: error.message,
+      hint: error.hint ?? null,
+    });
+    throw new ReviewAssignmentDraftCancelError(
+      error.code === "42501"
+        ? "forbidden"
+        : error.code === "P0002"
+          ? "not_found"
+          : error.code === "40001"
+            ? "unavailable"
+            : "database",
+    );
+  }
+
+  if (data !== "cancelled") {
+    throw new ReviewAssignmentDraftCancelError("database");
+  }
+
+  return data;
 }
 
 export async function finalizeExpiredReviewAssignmentDrafts(
@@ -319,5 +379,24 @@ export async function createExactReviewAssignment(
   if (!z.uuid().safeParse(data).success) {
     throw new ReviewAssignmentError("database");
   }
-  return data as string;
+  const assignmentId = data as string;
+  const { error: deliveryError } = await supabase.rpc(
+    "configure_assignment_delivery_v1",
+    {
+      p_assignment_id: assignmentId,
+      p_timing_mode: input.timingMode ?? "total",
+      p_question_time_limit_seconds:
+        input.timingMode === "per_question"
+          ? (input.questionTimeLimitSeconds ?? null)
+          : null,
+    },
+  );
+  if (deliveryError) {
+    await supabase
+      .from("assignments")
+      .update({ status: "closed" })
+      .eq("id", assignmentId);
+    throw new ReviewAssignmentError("database");
+  }
+  return assignmentId;
 }

@@ -87,7 +87,11 @@ function AssignmentCard({
           </span>
         )}
         <span className="detail-chip">
-          {Math.ceil(assignment.timeLimitSeconds / 60)}분
+          {assignment.timingMode === "per_question"
+            ? `문제당 ${assignment.questionTimeLimitSeconds}초`
+            : `전체 ${Math.ceil(
+                assignment.timeLimitSeconds / 60,
+              )}분`}
         </span>
         <span className="detail-chip">
           {assignment.passingScore}점 통과

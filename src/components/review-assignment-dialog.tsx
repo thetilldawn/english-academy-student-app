@@ -9,7 +9,13 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 
+import { HelpTip } from "@/components/help-tip";
 import type { ReviewAssignmentDraftSummary } from "@/lib/admin/review-assignment";
+import {
+  questionOrderLabel,
+  type QuestionOrderMode,
+  type TimingMode,
+} from "@/lib/admin/assignment-settings";
 import {
   currentTimeMilliseconds,
   koreanDateTimeLocalToIso,
@@ -34,14 +40,17 @@ export function ReviewAssignmentDialog({
   const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [directionRatio, setDirectionRatio] = useState<0 | 50 | 100>(50);
-  const [questionOrderMode, setQuestionOrderMode] = useState<
-    "fixed" | "random"
-  >("random");
+  const [questionOrderMode, setQuestionOrderMode] =
+    useState<QuestionOrderMode>("random");
+  const [timingMode, setTimingMode] = useState<TimingMode>("total");
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(5);
+  const [questionTimeLimitSeconds, setQuestionTimeLimitSeconds] =
+    useState(20);
   const [passingScore, setPassingScore] = useState(80);
   const [availableUntilLocal, setAvailableUntilLocal] = useState("");
   const [customTitle, setCustomTitle] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -50,21 +59,59 @@ export function ReviewAssignmentDialog({
     }
   }, []);
 
-  const timeLimitSeconds = timeLimitMinutes * 60;
+  const timeLimitSeconds =
+    timingMode === "total" ? timeLimitMinutes * 60 : 10800;
   const cannotCreate =
     submitting ||
-    timeLimitSeconds < 30 ||
-    timeLimitSeconds > 10800 ||
+    (timingMode === "total" &&
+      (timeLimitSeconds < 30 || timeLimitSeconds > 10800)) ||
+    (timingMode === "per_question" &&
+      (questionTimeLimitSeconds < 5 ||
+        questionTimeLimitSeconds > 600)) ||
     Date.parse(draft.expiresAt) <= currentTimeMilliseconds();
 
   function leaveDraft() {
-    if (submitting) return;
+    if (submitting || cancelling) return;
     dialogRef.current?.close();
     router.replace("/admin/assignments");
   }
 
   function closeOnBackdrop(event: MouseEvent<HTMLDialogElement>) {
     if (event.target === event.currentTarget) leaveDraft();
+  }
+
+  async function cancelDraft() {
+    if (submitting || cancelling) return;
+    setCancelling(true);
+    setError("");
+    try {
+      const response = await fetch(
+        `/api/admin/students/${draft.studentId}/review-assignment-drafts/${draft.id}`,
+        { method: "DELETE" },
+      );
+      const payload = (await response.json()) as ErrorResponse & {
+        status?: string;
+        queueDisposition?: string;
+      };
+      if (
+        !response.ok ||
+        payload.status !== "cancelled" ||
+        payload.queueDisposition !== "pending"
+      ) {
+        throw new Error(
+          payload.error ?? "재시험 준비를 취소하지 못했습니다.",
+        );
+      }
+      router.replace("/admin/assignments");
+      router.refresh();
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "재시험 준비를 취소하지 못했습니다.",
+      );
+      setCancelling(false);
+    }
   }
 
   async function submitReviewAssignment(
@@ -94,6 +141,11 @@ export function ReviewAssignmentDialog({
           title: customTitle,
           englishToKoreanRatio: directionRatio,
           timeLimitSeconds,
+          timingMode,
+          questionTimeLimitSeconds:
+            timingMode === "per_question"
+              ? questionTimeLimitSeconds
+              : null,
           passingScore,
           questionOrderMode,
           availableUntil,
@@ -142,7 +194,7 @@ export function ReviewAssignmentDialog({
         <button
           aria-label="닫기"
           className="button button-quiet button-small"
-          disabled={submitting}
+          disabled={submitting || cancelling}
           onClick={leaveDraft}
           type="button"
         >
@@ -165,10 +217,12 @@ export function ReviewAssignmentDialog({
           <div className="assignment-step-heading">
             <span>1</span>
             <div>
-              <h3>고정된 재시험 대상</h3>
-              <p>
-                학생·단어장·문항 수는 선택한 오답으로 고정됩니다.
-              </p>
+              <h3>
+                고정된 재시험 대상
+                <HelpTip label="재시험 대상 도움말">
+                  학생·단어장·문항 수는 선택한 오답으로 고정됩니다.
+                </HelpTip>
+              </h3>
             </div>
           </div>
           <div className="assignment-review-summary">
@@ -193,8 +247,12 @@ export function ReviewAssignmentDialog({
           <div className="assignment-step-heading">
             <span>2</span>
             <div>
-              <h3>문제 조건</h3>
-              <p>출제 방향·순서·시간과 통과 기준을 정합니다.</p>
+              <h3>
+                문제 조건
+                <HelpTip label="문제 조건 도움말">
+                  출제 방향·순서·시간과 통과 기준을 정합니다.
+                </HelpTip>
+              </h3>
             </div>
           </div>
           <div className="form-grid-2">
@@ -218,35 +276,68 @@ export function ReviewAssignmentDialog({
               <select
                 onChange={(event) =>
                   setQuestionOrderMode(
-                    event.target.value as "fixed" | "random",
+                    event.target.value as QuestionOrderMode,
                   )
                 }
                 value={questionOrderMode}
               >
+                <option value="ascending">오름차순</option>
+                <option value="descending">내림차순</option>
                 <option value="random">무작위</option>
-                <option value="fixed">선택 순서</option>
               </select>
-              <span className="field-help">
-                문제와 보기는 한 번 만들고 학생이 볼 문항 순서만
-                설정합니다.
-              </span>
             </label>
           </div>
-          <div className="form-grid-2">
+          <div className="form-grid-3">
+            <fieldset className="field timing-mode-field">
+              <legend className="field-label">시간 제한 방식</legend>
+              <div className="segmented-control">
+                <button
+                  aria-pressed={timingMode === "total"}
+                  onClick={() => setTimingMode("total")}
+                  type="button"
+                >
+                  전체 시험
+                </button>
+                <button
+                  aria-pressed={timingMode === "per_question"}
+                  onClick={() => setTimingMode("per_question")}
+                  type="button"
+                >
+                  문제당
+                </button>
+              </div>
+            </fieldset>
             <label className="field">
               <span className="field-label">
-                시험 단계별 제한 시간(분)
+                {timingMode === "total"
+                  ? "전체 시험 시간(분)"
+                  : "문제당 시간(초)"}
               </span>
-              <input
-                max={180}
-                min={1}
-                onChange={(event) =>
-                  setTimeLimitMinutes(Number(event.target.value))
-                }
-                required
-                type="number"
-                value={timeLimitMinutes}
-              />
+              {timingMode === "total" ? (
+                <input
+                  max={180}
+                  min={1}
+                  onChange={(event) =>
+                    setTimeLimitMinutes(Number(event.target.value))
+                  }
+                  required
+                  type="number"
+                  value={timeLimitMinutes}
+                />
+              ) : (
+                <input
+                  max={600}
+                  min={5}
+                  onChange={(event) =>
+                    setQuestionTimeLimitSeconds(
+                      Number(event.target.value),
+                    )
+                  }
+                  required
+                  type="number"
+                  value={questionTimeLimitSeconds}
+                />
+              )}
             </label>
             <label className="field">
               <span className="field-label">통과 점수</span>
@@ -281,8 +372,12 @@ export function ReviewAssignmentDialog({
           <div className="assignment-step-heading">
             <span>3</span>
             <div>
-              <h3>확인하고 배정</h3>
-              <p>시험 이름은 자동 생성하며 필요할 때만 바꿉니다.</p>
+              <h3>
+                확인하고 배정
+                <HelpTip label="시험 이름 도움말">
+                  시험 이름은 자동 생성하며 필요할 때만 바꿉니다.
+                </HelpTip>
+              </h3>
             </div>
           </div>
           <label className="field">
@@ -304,15 +399,17 @@ export function ReviewAssignmentDialog({
               <div>
                 <dt>순서</dt>
                 <dd>
-                  {questionOrderMode === "random"
-                    ? "무작위"
-                    : "선택 순서"}
+                  {questionOrderLabel(questionOrderMode)}
                 </dd>
               </div>
               <div>
                 <dt>조건</dt>
                 <dd>
-                  {draft.questionCount}문항 · {timeLimitMinutes}분 ·{" "}
+                  {draft.questionCount}문항 ·{" "}
+                  {timingMode === "total"
+                    ? `전체 ${timeLimitMinutes}분`
+                    : `문제당 ${questionTimeLimitSeconds}초`}{" "}
+                  ·{" "}
                   {passingScore}점
                 </dd>
               </div>
@@ -331,13 +428,26 @@ export function ReviewAssignmentDialog({
               {error}
             </div>
           )}
-          <button
-            className="button button-primary button-large"
-            disabled={cannotCreate}
-            type="submit"
-          >
-            {submitting ? "배정하는 중…" : "오답 재시험 배정"}
-          </button>
+          <div className="dialog-actions">
+            <button
+              aria-busy={cancelling}
+              className="button button-quiet"
+              disabled={submitting || cancelling}
+              onClick={() => void cancelDraft()}
+              type="button"
+            >
+              {cancelling
+                ? "취소하는 중…"
+                : "재시험 준비 취소 · 다음 시험 대기 유지"}
+            </button>
+            <button
+              className="button button-primary button-large"
+              disabled={cannotCreate || cancelling}
+              type="submit"
+            >
+              {submitting ? "배정하는 중…" : "오답 재시험 배정"}
+            </button>
+          </div>
         </section>
       </form>
     </dialog>

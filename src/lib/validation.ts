@@ -1,5 +1,42 @@
 import { z } from "zod";
 
+import {
+  questionOrderModes,
+  timingModes,
+} from "@/lib/admin/assignment-settings";
+
+const timingSettingsSchema = z
+  .object({
+    timingMode: z.enum(timingModes).optional(),
+    questionTimeLimitSeconds: z
+      .number()
+      .int()
+      .min(5)
+      .max(600)
+      .nullable()
+      .optional(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (
+      (value.timingMode === "total" &&
+        value.questionTimeLimitSeconds !== null &&
+        value.questionTimeLimitSeconds !== undefined) ||
+      (value.timingMode === "per_question" &&
+        (value.questionTimeLimitSeconds === null ||
+          value.questionTimeLimitSeconds === undefined)) ||
+      (value.timingMode === undefined &&
+        value.questionTimeLimitSeconds !== null &&
+        value.questionTimeLimitSeconds !== undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["questionTimeLimitSeconds"],
+        message: "시간 제한 방식과 문제당 시간을 확인해주세요.",
+      });
+    }
+  });
+
 export const adminLoginSchema = z.object({
   email: z.email().max(254),
   password: z.string().min(8).max(200),
@@ -66,13 +103,14 @@ export const assignmentSchema = z
     ]),
     timeLimitSeconds: z.coerce.number().int().min(30).max(10800),
     passingScore: z.coerce.number().int().min(0).max(100),
-    questionOrderMode: z.enum(["fixed", "random"]).default("random"),
+    questionOrderMode: z.enum(questionOrderModes).default("random"),
     availableUntil: z
       .union([z.iso.datetime({ offset: true }), z.literal(""), z.null()])
       .optional()
       .transform((value) => value || null),
     studentIds: z.array(z.uuid()).min(1),
   })
+  .and(timingSettingsSchema)
   .refine(
     (value) => new Set(value.unitIds).size === value.unitIds.length,
     {
@@ -92,13 +130,14 @@ export const exactReviewAssignmentSchema = z
     ]),
     timeLimitSeconds: z.coerce.number().int().min(30).max(10800),
     passingScore: z.coerce.number().int().min(0).max(100),
-    questionOrderMode: z.enum(["fixed", "random"]).default("random"),
+    questionOrderMode: z.enum(questionOrderModes).default("random"),
     availableUntil: z
       .union([z.iso.datetime({ offset: true }), z.literal(""), z.null()])
       .optional()
       .transform((value) => value || null),
   })
-  .strict();
+  .strict()
+  .and(timingSettingsSchema);
 
 const mixedReviewLevelSchema = z.union([
   z.literal(1),
@@ -121,10 +160,11 @@ export const mixedAssignmentSchema = z
     ]),
     timeLimitSeconds: z.number().int().min(30).max(10800),
     passingScore: z.number().int().min(0).max(100),
-    questionOrderMode: z.enum(["fixed", "random"]).default("random"),
+    questionOrderMode: z.enum(questionOrderModes).default("random"),
     availableUntil: z.iso.datetime({ offset: true }).nullable(),
   })
   .strict()
+  .and(timingSettingsSchema)
   .superRefine((value, context) => {
     if (
       new Set(value.primaryUnitIds).size !==
@@ -156,4 +196,9 @@ export const answerSchema = z.object({
   questionId: z.uuid(),
   phase: z.enum(["initial", "retry"]),
   choiceIndex: z.number().int().min(0).max(3),
+});
+
+export const questionTimeoutSchema = z.object({
+  questionId: z.uuid(),
+  phase: z.enum(["initial", "retry"]),
 });

@@ -39,7 +39,7 @@ export default async function AttemptPage({
         initialAttempt={attempt}
         initialRemainingSeconds={
           secondsUntil(
-            attempt.deadlineAt,
+            attempt.timerDeadlineAt,
             currentTimeMilliseconds(),
           ) ?? 0
         }
