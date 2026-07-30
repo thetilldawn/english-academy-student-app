@@ -269,6 +269,7 @@ export async function listStudentAssignments(
         "id, title, assignment_purpose, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, timing_mode, question_time_limit_seconds, passing_score, retake_allowed, range_basis, question_bank_version, question_order_mode, status, available_from, available_until",
       )
       .in("id", assignmentIds)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false }),
     supabase
       .from("quiz_attempts")
@@ -410,6 +411,7 @@ export async function startStudentAttempt(
           "id, title, assignment_purpose, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, timing_mode, question_time_limit_seconds, passing_score, retake_allowed, range_basis, question_bank_version, question_order_mode, status, available_from, available_until",
         )
         .eq("id", assignmentId)
+        .is("deleted_at", null)
         .maybeSingle(),
       supabase
         .from("assignment_students")

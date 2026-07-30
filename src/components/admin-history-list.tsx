@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   useEffect,
   useMemo,
@@ -19,6 +18,7 @@ import {
   assignmentScopeLabel,
 } from "@/lib/admin/history";
 import { DeadlineCountdown } from "@/components/deadline-countdown";
+import { AdminHistoryActions } from "@/components/admin-history-actions";
 import {
   currentTimeMilliseconds,
   secondsUntil,
@@ -89,15 +89,12 @@ export function AdminHistoryList({
   compact?: boolean;
   showFilters?: boolean;
 }) {
-  const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const detailRequestRef = useRef<AbortController | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<AttemptDetail | null>(null);
   const [detailError, setDetailError] = useState("");
   const [detailLoading, setDetailLoading] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
-  const [cancelError, setCancelError] = useState("");
   const [selectedDeadlineRemaining, setSelectedDeadlineRemaining] =
     useState<number | null>(null);
   const [query, setQuery] = useState("");
@@ -149,7 +146,6 @@ export function AdminHistoryList({
     setSelectedId(item.id);
     setDetail(null);
     setDetailError("");
-    setCancelError("");
     setSelectedDeadlineRemaining(
       secondsUntil(item.availableUntil, currentTimeMilliseconds()),
     );
@@ -187,47 +183,6 @@ export function AdminHistoryList({
       .finally(() => {
         if (!controller.signal.aborted) setDetailLoading(false);
       });
-  }
-
-  async function cancelSelectedAssignment() {
-    if (
-      !selected ||
-      selected.status !== "not_started" ||
-      selected.attemptId ||
-      cancelling
-    ) {
-      return;
-    }
-    if (
-      !window.confirm(
-        `${selected.studentName} 학생의 이 배정을 취소할까요? 틀렸던 단어는 다음 시험 대기에 남습니다.`,
-      )
-    ) {
-      return;
-    }
-
-    setCancelling(true);
-    setCancelError("");
-    try {
-      const response = await fetch(
-        `/api/admin/assignments/${selected.assignmentId}/students/${selected.studentId}`,
-        { method: "DELETE" },
-      );
-      const payload = (await response.json()) as { error?: string };
-      if (!response.ok) {
-        throw new Error(payload.error ?? "배정을 취소하지 못했습니다.");
-      }
-      closeDialog();
-      router.refresh();
-    } catch (error) {
-      setCancelError(
-        error instanceof Error
-          ? error.message
-          : "배정을 취소하지 못했습니다.",
-      );
-    } finally {
-      setCancelling(false);
-    }
   }
 
   function closeDialog() {
@@ -477,11 +432,6 @@ export function AdminHistoryList({
               {detailError}
             </div>
           )}
-          {cancelError && (
-            <div className="notice notice-error" role="alert">
-              {cancelError}
-            </div>
-          )}
           {detail && (
             <section className="history-wrong-summary">
               <div className="section-heading">
@@ -527,18 +477,10 @@ export function AdminHistoryList({
           )}
 
           <div className="dialog-actions">
-            {selected.status === "not_started" &&
-              !selected.attemptId && (
-                <button
-                  aria-busy={cancelling}
-                  className="button button-secondary"
-                  disabled={cancelling}
-                  onClick={() => void cancelSelectedAssignment()}
-                  type="button"
-                >
-                  {cancelling ? "취소하는 중…" : "배정 취소"}
-                </button>
-              )}
+            <AdminHistoryActions
+              item={selected}
+              onMutated={closeDialog}
+            />
             {selected.attemptId && (
               <Link
                 className="button button-primary"
@@ -547,12 +489,14 @@ export function AdminHistoryList({
                 상세 내역 보기
               </Link>
             )}
-            <Link
-              className="button button-secondary"
-              href={`/admin/students?student=${selected.studentId}`}
-            >
-              학생 관리
-            </Link>
+            {!selected.studentDeleted && (
+              <Link
+                className="button button-secondary"
+                href={`/admin/students?student=${selected.studentId}`}
+              >
+                학생 관리
+              </Link>
+            )}
             <button
               className="button button-quiet"
               onClick={closeDialog}

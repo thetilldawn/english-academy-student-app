@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { z } from "zod";
 
+import { AssignmentManagementList } from "@/components/assignment-management-list";
 import { AssignmentManager } from "@/components/assignment-manager";
+import { AdminHistoryList } from "@/components/admin-history-list";
 import { ReviewAssignmentDialog } from "@/components/review-assignment-dialog";
 import {
   buildStudentProgress,
+  listAssignments,
   listAssignmentHistory,
   listDatasets,
   listStudentCurrentVocabWrongSummaries,
@@ -39,6 +42,7 @@ export default async function AssignmentsPage({
     datasets,
     students,
     units,
+    assignments,
     history,
     pendingReviewSummaries,
     currentVocabWrongSummaries,
@@ -47,6 +51,7 @@ export default async function AssignmentsPage({
     listDatasets(),
     listStudents(),
     listVocabUnits(),
+    listAssignments(),
     listAssignmentHistory(),
     listStudentPendingReviewSummaries(),
     listStudentCurrentVocabWrongSummaries(),
@@ -83,6 +88,35 @@ export default async function AssignmentsPage({
         currentVocabWrongSummaries={currentVocabWrongSummaries}
         initialStudentId={requestedReviewDraftId ? "" : initialStudentId}
       />
+      <section
+        aria-labelledby="assignment-management-list"
+        className="section"
+      >
+        <div className="section-heading">
+          <div>
+            <h2 id="assignment-management-list">시험별 관리</h2>
+            <p className="list-meta">
+              테스트로 만든 시험을 포함해 시험 전체를 한 번에
+              삭제합니다.
+            </p>
+          </div>
+        </div>
+        <AssignmentManagementList items={assignments} />
+      </section>
+      <section
+        aria-labelledby="assignment-management-history"
+        className="section"
+      >
+        <div className="section-heading">
+          <div>
+            <h2 id="assignment-management-history">배정 관리</h2>
+            <p className="list-meta">
+              학생별 배정 취소와 개별 내역 삭제를 관리합니다.
+            </p>
+          </div>
+        </div>
+        <AdminHistoryList items={history} showFilters />
+      </section>
       {reviewDraft && (
         <ReviewAssignmentDialog
           draft={reviewDraft}

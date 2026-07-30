@@ -22,6 +22,7 @@ import { buildStudentAccessUrl } from "@/lib/auth/student-code-input";
 import type { StudentWrongWordHistory } from "@/lib/admin/wrong-word-history";
 import { formatKoreanDateTime } from "@/lib/format";
 import { sendKakaoText } from "@/lib/kakao-share";
+import { AdminHistoryActions } from "@/components/admin-history-actions";
 import { StudentWrongWordPanel } from "@/components/student-wrong-word-panel";
 
 type StudentItem = {
@@ -423,6 +424,36 @@ export function StudentManager({
         requestError instanceof Error
           ? requestError.message
           : "접속을 차단하지 못했습니다.",
+      );
+    } finally {
+      finishAction();
+    }
+  }
+
+  async function deleteSelectedStudent() {
+    if (!selectedStudent) return;
+    const accepted = window.confirm(
+      `${selectedStudent.displayName} 학생을 삭제할까요? 학생의 접속은 즉시 차단되고 목록에서는 사라집니다. 진행 중인 시험은 종료 처리하며 기존 시험·성적은 보존되어 내역에는 '삭제됨'으로 표시됩니다.`,
+    );
+    if (
+      !accepted ||
+      !beginAction(`delete:${selectedStudent.id}`)
+    ) {
+      return;
+    }
+
+    try {
+      await request(`/api/admin/students/${selectedStudent.id}`, {
+        method: "DELETE",
+      });
+      closeStudentDialog();
+      setSelectedStudentId("");
+      startRefreshTransition(() => router.refresh());
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "학생을 삭제하지 못했습니다.",
       );
     } finally {
       finishAction();
@@ -856,6 +887,10 @@ export function StudentManager({
                             내역 보기
                           </Link>
                         )}
+                        <AdminHistoryActions
+                          item={item}
+                          size="small"
+                        />
                       </div>
                     </article>
                   ))
@@ -983,6 +1018,16 @@ export function StudentManager({
                     새 코드로 재개
                   </button>
                 )}
+                <button
+                  className="button button-danger"
+                  disabled={interactionBusy}
+                  onClick={() => void deleteSelectedStudent()}
+                  type="button"
+                >
+                  {busyKey === `delete:${selectedStudent.id}`
+                    ? "학생 삭제 중…"
+                    : "학생 삭제"}
+                </button>
               </div>
             </section>
           )}

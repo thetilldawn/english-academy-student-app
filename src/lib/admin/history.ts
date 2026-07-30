@@ -11,10 +11,12 @@ export type AssignmentPurpose = "regular" | "review" | "mixed";
 export type AssignmentHistorySource = {
   assignmentId: string;
   assignmentTitle: string;
+  assignmentDeleted: boolean;
   assignmentStatus: "draft" | "active" | "closed";
   assignmentPurpose: AssignmentPurpose;
   studentId: string;
   studentName: string;
+  studentDeleted: boolean;
   schoolName: string | null;
   gradeLabel: string | null;
   datasetId: string;

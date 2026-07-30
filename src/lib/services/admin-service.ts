@@ -211,6 +211,7 @@ export async function listStudents(): Promise<StudentSummary[]> {
       .select(
         "id, display_name, school_name, grade_label, current_vocab_book, current_vocab_dataset_id, status, code_generation, created_at",
       )
+      .is("deleted_at", null)
       .order("display_name"),
     supabase.from("student_codes").select("student_id, status"),
     supabase.from("vocab_datasets").select("id, title, edition"),
@@ -547,6 +548,7 @@ type HistoryStudentRelation = {
   display_name: string;
   school_name: string | null;
   grade_label: string | null;
+  deleted_at: string | null;
 };
 
 type HistoryDatasetRelation = {
@@ -568,6 +570,7 @@ type HistoryAssignmentUnitRelation = {
 type HistoryAssignmentRelation = {
   id: string;
   title: string;
+  deleted_at: string | null;
   status: "draft" | "active" | "closed";
   assignment_purpose: "regular" | "review" | "mixed";
   dataset_id: string;
@@ -619,20 +622,20 @@ type HistoryAttemptRow = {
   completed_at: string | null;
 };
 
-const HISTORY_ASSIGNMENT_LIMIT = 1000;
-const HISTORY_ATTEMPT_LIMIT = 2000;
+type HiddenHistoryEntryRow = {
+  assignment_id: string;
+  student_id: string;
+  attempt_id: string | null;
+};
 
-export async function listAssignmentHistory(): Promise<
-  AssignmentHistorySummary[]
-> {
-  await requireAdmin();
-  await finalizeStaleQuizAttempts();
-  const supabase = await createServerSupabaseClient();
-  const [
-    { data: assignmentStudentData, error: assignmentStudentError },
-    { data: attemptData, error: attemptError },
-  ] = await Promise.all([
-    supabase
+const HISTORY_PAGE_SIZE = 1000;
+
+async function listAssignmentHistorySourceRows(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+) {
+  const rows: HistoryAssignmentStudentRow[] = [];
+  for (let from = 0; ; from += HISTORY_PAGE_SIZE) {
+    const { data, error } = await supabase
       .from("assignment_students")
       .select(
         `
@@ -642,10 +645,11 @@ export async function listAssignmentHistory(): Promise<
           missed_at,
           cancelled_at,
           cancellation_reason,
-          student:students(display_name, school_name, grade_label),
+          student:students(display_name, school_name, grade_label, deleted_at),
           assignment:assignments(
             id,
             title,
+            deleted_at,
             status,
             assignment_purpose,
             dataset_id,
@@ -668,28 +672,92 @@ export async function listAssignmentHistory(): Promise<
         `,
       )
       .order("assigned_at", { ascending: false })
-      .limit(HISTORY_ASSIGNMENT_LIMIT + 1),
-    supabase
+      .order("assignment_id")
+      .order("student_id")
+      .range(from, from + HISTORY_PAGE_SIZE - 1);
+
+    if (error) {
+      return { data: null, error };
+    }
+    const page = (data ?? []) as HistoryAssignmentStudentRow[];
+    rows.push(...page);
+    if (page.length < HISTORY_PAGE_SIZE) {
+      return { data: rows, error: null };
+    }
+  }
+}
+
+async function listAttemptHistoryRows(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+) {
+  const rows: HistoryAttemptRow[] = [];
+  for (let from = 0; ; from += HISTORY_PAGE_SIZE) {
+    const { data, error } = await supabase
       .from("quiz_attempts")
       .select(
         "id, assignment_id, student_id, attempt_number, status, phase, question_count_snapshot, time_limit_seconds_snapshot, passing_score_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, started_at, deadline_at, completed_at",
       )
       .order("started_at", { ascending: false })
-      .limit(HISTORY_ATTEMPT_LIMIT + 1),
+      .order("id")
+      .range(from, from + HISTORY_PAGE_SIZE - 1);
+
+    if (error) {
+      return { data: null, error };
+    }
+    const page = (data ?? []) as HistoryAttemptRow[];
+    rows.push(...page);
+    if (page.length < HISTORY_PAGE_SIZE) {
+      return { data: rows, error: null };
+    }
+  }
+}
+
+async function listHiddenHistoryEntries(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+) {
+  const rows: HiddenHistoryEntryRow[] = [];
+  for (let from = 0; ; from += HISTORY_PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from("admin_history_hidden_entries")
+      .select("assignment_id, student_id, attempt_id")
+      .order("hidden_at", { ascending: false })
+      .order("id")
+      .range(from, from + HISTORY_PAGE_SIZE - 1);
+
+    if (error) {
+      return { data: null, error };
+    }
+    const page = (data ?? []) as HiddenHistoryEntryRow[];
+    rows.push(...page);
+    if (page.length < HISTORY_PAGE_SIZE) {
+      return { data: rows, error: null };
+    }
+  }
+}
+
+export async function listAssignmentHistory(): Promise<
+  AssignmentHistorySummary[]
+> {
+  await requireAdmin();
+  await finalizeStaleQuizAttempts();
+  const supabase = await createServerSupabaseClient();
+  const [
+    { data: assignmentStudentData, error: assignmentStudentError },
+    { data: attemptData, error: attemptError },
+    { data: hiddenHistoryData, error: hiddenHistoryError },
+  ] = await Promise.all([
+    listAssignmentHistorySourceRows(supabase),
+    listAttemptHistoryRows(supabase),
+    listHiddenHistoryEntries(supabase),
   ]);
 
-  if (assignmentStudentError || attemptError) {
+  if (
+    assignmentStudentError ||
+    attemptError ||
+    hiddenHistoryError
+  ) {
     throw new Error("시험 배정과 응시 내역을 불러오지 못했습니다.");
   }
-  if (
-    (assignmentStudentData?.length ?? 0) > HISTORY_ASSIGNMENT_LIMIT ||
-    (attemptData?.length ?? 0) > HISTORY_ATTEMPT_LIMIT
-  ) {
-    throw new Error(
-      "시험 내역이 현재 조회 한도를 넘었습니다. 페이지 조회로 전환해야 합니다.",
-    );
-  }
-
   const assignmentSources = (
     (assignmentStudentData ?? []) as HistoryAssignmentStudentRow[]
   ).flatMap((row): AssignmentHistorySource[] => {
@@ -720,13 +788,19 @@ export async function listAssignmentHistory(): Promise<
     return [
       {
         assignmentId: row.assignment_id,
-        assignmentTitle: assignment.title,
+        assignmentTitle:
+          assignment.deleted_at === null ? assignment.title : "삭제됨",
+        assignmentDeleted: assignment.deleted_at !== null,
         assignmentStatus: assignment.status,
         assignmentPurpose: assignment.assignment_purpose,
         studentId: row.student_id,
-        studentName: student.display_name,
-        schoolName: student.school_name,
-        gradeLabel: student.grade_label,
+        studentName:
+          student.deleted_at === null ? student.display_name : "삭제됨",
+        studentDeleted: student.deleted_at !== null,
+        schoolName:
+          student.deleted_at === null ? student.school_name : null,
+        gradeLabel:
+          student.deleted_at === null ? student.grade_label : null,
         datasetId: assignment.dataset_id,
         datasetTitle:
           [dataset?.title, dataset?.edition].filter(Boolean).join(" · ") ||
@@ -786,7 +860,30 @@ export async function listAssignmentHistory(): Promise<
     }),
   );
 
-  return buildAssignmentHistory(assignmentSources, attemptSources);
+  const hiddenAttempts = new Set<string>();
+  const hiddenRecipients = new Set<string>();
+  for (const hidden of (
+    (hiddenHistoryData ?? []) as HiddenHistoryEntryRow[]
+  )) {
+    if (hidden.attempt_id) {
+      hiddenAttempts.add(hidden.attempt_id);
+    } else {
+      hiddenRecipients.add(
+        `${hidden.assignment_id}\u0000${hidden.student_id}`,
+      );
+    }
+  }
+
+  return buildAssignmentHistory(
+    assignmentSources,
+    attemptSources,
+  ).filter((item) =>
+    item.attemptId
+      ? !hiddenAttempts.has(item.attemptId)
+      : !hiddenRecipients.has(
+          `${item.assignmentId}\u0000${item.studentId}`,
+        ),
+  );
 }
 
 export async function createAssignment(input: {
@@ -948,6 +1045,7 @@ export async function listAssignments(): Promise<AssignmentSummary[]> {
       .select(
         "id, title, status, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, passing_score, question_order_mode, available_until, created_at",
       )
+      .is("deleted_at", null)
       .order("created_at", { ascending: false }),
     supabase.from("assignment_students").select("assignment_id"),
     supabase
@@ -1020,7 +1118,7 @@ export async function listAttempts(): Promise<AttemptSummary[]> {
   const { data, error } = await supabase
     .from("quiz_attempts")
     .select(
-      "id, attempt_number, status, phase, question_count_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, started_at, completed_at, students(display_name), assignments(title)",
+      "id, attempt_number, status, phase, question_count_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, started_at, completed_at, students(display_name, deleted_at), assignments(title, deleted_at)",
     )
     .order("started_at", { ascending: false })
     .limit(200);
@@ -1039,8 +1137,18 @@ export async function listAttempts(): Promise<AttemptSummary[]> {
 
     return {
       id: attempt.id,
-      studentName: student?.display_name ?? "알 수 없음",
-      assignmentTitle: assignment?.title ?? "알 수 없음",
+      studentName:
+        !student
+          ? "알 수 없음"
+          : student.deleted_at === null
+            ? student.display_name
+            : "삭제됨",
+      assignmentTitle:
+        !assignment
+          ? "알 수 없음"
+          : assignment.deleted_at === null
+            ? assignment.title
+            : "삭제됨",
       attemptNumber: attempt.attempt_number,
       status: attempt.status,
       phase: attempt.phase,
@@ -1072,7 +1180,7 @@ export async function getAdminAttemptDetail(
     supabase
       .from("quiz_attempts")
       .select(
-        "id, attempt_number, status, phase, question_count_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, elapsed_seconds, started_at, initial_completed_at, completed_at, students(display_name), assignments(title)",
+        "id, attempt_number, status, phase, question_count_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, elapsed_seconds, started_at, initial_completed_at, completed_at, students(display_name, deleted_at), assignments(title, deleted_at)",
       )
       .eq("id", attemptId)
       .maybeSingle(),
@@ -1108,8 +1216,18 @@ export async function getAdminAttemptDetail(
 
   return {
     id: data.id,
-    studentName: student?.display_name ?? "알 수 없음",
-    assignmentTitle: assignment?.title ?? "알 수 없음",
+    studentName:
+      !student
+        ? "알 수 없음"
+        : student.deleted_at === null
+          ? student.display_name
+          : "삭제됨",
+    assignmentTitle:
+      !assignment
+        ? "알 수 없음"
+        : assignment.deleted_at === null
+          ? assignment.title
+          : "삭제됨",
     attemptNumber: data.attempt_number,
     status: data.status,
     phase: data.phase,

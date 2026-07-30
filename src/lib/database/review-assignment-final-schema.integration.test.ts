@@ -17,6 +17,12 @@ const lifecycleRollbackSql = fs.readFileSync(
   ),
   "utf8",
 );
+const adminDeletionRollbackSql = fs.readFileSync(
+  path.resolve(
+    "supabase/rollback/20260731010000_admin_deletion_controls.sql",
+  ),
+  "utf8",
+);
 
 const ids = {
   admin: "00000000-0000-4000-8000-000000000001",
@@ -2108,4 +2114,736 @@ describe.sequential("final review-assignment database schema", () => {
       },
     ]);
   });
+});
+
+describe.sequential("admin deletion controls", () => {
+  it("keeps the no-activity rollback executable", async () => {
+    const database = await createFinalSchemaDatabase();
+    try {
+      await database.exec(adminDeletionRollbackSql);
+      const state = await database.query<{
+        student_deleted_column: string | null;
+        assignment_deleted_column: string | null;
+        delete_student_rpc: string | null;
+        hidden_history_table: string | null;
+      }>(`
+        select
+          (
+            select column_name
+            from information_schema.columns
+            where table_schema = 'public'
+              and table_name = 'students'
+              and column_name = 'deleted_at'
+          ) as student_deleted_column,
+          (
+            select column_name
+            from information_schema.columns
+            where table_schema = 'public'
+              and table_name = 'assignments'
+              and column_name = 'deleted_at'
+          ) as assignment_deleted_column,
+          to_regprocedure(
+            'public.delete_student_v1(uuid)'
+          )::text as delete_student_rpc,
+          to_regclass(
+            'public.admin_history_hidden_entries'
+          )::text as hidden_history_table;
+      `);
+
+      expect(state.rows[0]).toEqual({
+        student_deleted_column: null,
+        assignment_deleted_column: null,
+        delete_student_rpc: null,
+        hidden_history_table: null,
+      });
+    } finally {
+      await database.close();
+    }
+  }, 30_000);
+
+  it("soft-deletes a student while preserving attempts and cancelling only unstarted delivery", async () => {
+    const database = await createFinalSchemaDatabase();
+    try {
+      await seedReviewAssignmentScenario(database);
+      const unstartedAssignment =
+        "00000000-0000-4000-8000-000000000701";
+      const startedAssignment =
+        "00000000-0000-4000-8000-000000000702";
+      const attemptId =
+        "00000000-0000-4000-8000-000000000703";
+      const initialAssignment =
+        "00000000-0000-4000-8000-000000000704";
+      const initialAttemptId =
+        "00000000-0000-4000-8000-000000000705";
+      const peerStudent =
+        "00000000-0000-4000-8000-000000000706";
+
+      await database.exec(`
+        insert into public.students (
+          id,
+          display_name,
+          status,
+          created_by
+        )
+        values (
+          '${peerStudent}',
+          'Peer student',
+          'active',
+          '${ids.admin}'
+        );
+
+        update public.students
+        set code_generation = 1
+        where id = '${ids.student}';
+
+        insert into public.student_codes (
+          student_id,
+          lookup_hmac,
+          encrypted_code,
+          encryption_iv,
+          encryption_tag,
+          code_generation
+        )
+        values (
+          '${ids.student}',
+          repeat('A', 64),
+          'encrypted',
+          'iv',
+          'tag',
+          1
+        );
+
+        insert into public.student_sessions (
+          student_id,
+          token_hash,
+          code_generation,
+          expires_at
+        )
+        values (
+          '${ids.student}',
+          repeat('B', 64),
+          1,
+          clock_timestamp() + interval '1 day'
+        );
+
+        insert into public.assignments (
+          id,
+          title,
+          dataset_id,
+          range_start,
+          range_end,
+          question_count,
+          english_to_korean_ratio,
+          time_limit_seconds,
+          passing_score,
+          status,
+          available_from,
+          created_by,
+          range_basis,
+          question_order_mode,
+          question_bank_version
+        )
+        values
+          (
+            '${unstartedAssignment}',
+            'Unstarted fixture',
+            '${ids.dataset}',
+            1,
+            1,
+            1,
+            100,
+            60,
+            80,
+            'active',
+            clock_timestamp(),
+            '${ids.admin}',
+            'units',
+            'fixed',
+            1
+          ),
+          (
+            '${startedAssignment}',
+            'Started fixture',
+            '${ids.dataset}',
+            1,
+            1,
+            1,
+            100,
+            60,
+            80,
+            'active',
+            clock_timestamp(),
+            '${ids.admin}',
+            'units',
+            'fixed',
+            1
+          ),
+          (
+            '${initialAssignment}',
+            'Initial attempt fixture',
+            '${ids.dataset}',
+            1,
+            1,
+            1,
+            100,
+            60,
+            80,
+            'active',
+            clock_timestamp(),
+            '${ids.admin}',
+            'units',
+            'fixed',
+            1
+          );
+
+        insert into public.assignment_units (
+          assignment_id,
+          dataset_id,
+          unit_id,
+          position,
+          is_primary
+        )
+        values
+          (
+            '${unstartedAssignment}',
+            '${ids.dataset}',
+            '${ids.units[0]}',
+            1,
+            true
+          ),
+          (
+            '${startedAssignment}',
+            '${ids.dataset}',
+            '${ids.units[0]}',
+            1,
+            true
+          ),
+          (
+            '${initialAssignment}',
+            '${ids.dataset}',
+            '${ids.units[0]}',
+            1,
+            true
+          );
+
+        insert into public.assignment_students (
+          assignment_id,
+          student_id,
+          assigned_by
+        )
+        values
+          (
+            '${unstartedAssignment}',
+            '${ids.student}',
+            '${ids.admin}'
+          ),
+          (
+            '${startedAssignment}',
+            '${ids.student}',
+            '${ids.admin}'
+          ),
+          (
+            '${initialAssignment}',
+            '${ids.student}',
+            '${ids.admin}'
+          ),
+          (
+            '${unstartedAssignment}',
+            '${peerStudent}',
+            '${ids.admin}'
+          );
+
+        insert into public.quiz_attempts (
+          id,
+          student_id,
+          assignment_id,
+          attempt_number,
+          status,
+          phase,
+          started_at,
+          deadline_at,
+          initial_completed_at,
+          question_count_snapshot,
+          time_limit_seconds_snapshot,
+          passing_score_snapshot,
+          passing_basis_snapshot,
+          initial_correct_count,
+          retry_correct_count,
+          unresolved_wrong_count,
+          initial_score,
+          elapsed_seconds
+        )
+        values (
+          '${attemptId}',
+          '${ids.student}',
+          '${startedAssignment}',
+          1,
+          'in_progress',
+          'review',
+          clock_timestamp(),
+          clock_timestamp() + interval '1 hour',
+          clock_timestamp(),
+          1,
+          60,
+          80,
+          'initial',
+          0,
+          0,
+          1,
+          0,
+          10
+        );
+
+        insert into public.quiz_attempts (
+          id,
+          student_id,
+          assignment_id,
+          attempt_number,
+          status,
+          phase,
+          started_at,
+          deadline_at,
+          question_count_snapshot,
+          time_limit_seconds_snapshot,
+          passing_score_snapshot,
+          passing_basis_snapshot
+        )
+        values (
+          '${initialAttemptId}',
+          '${ids.student}',
+          '${initialAssignment}',
+          1,
+          'in_progress',
+          'initial',
+          clock_timestamp(),
+          clock_timestamp() + interval '1 hour',
+          1,
+          60,
+          80,
+          'initial'
+        );
+
+        insert into public.quiz_questions (
+          attempt_id,
+          vocab_entry_id,
+          order_index,
+          direction,
+          prompt,
+          choices,
+          correct_choice_index
+        )
+        values (
+          '${initialAttemptId}',
+          1,
+          1,
+          'english_to_korean',
+          'alpha',
+          '["알파", "베타", "감마", "델타"]'::jsonb,
+          0
+        );
+
+        set role authenticated;
+        select public.delete_student_v1('${ids.student}');
+        reset role;
+      `);
+
+      const state = await database.query<{
+        deleted: boolean;
+        blocked: boolean;
+        code_count: number;
+        active_session_count: number;
+        unstarted_cancelled: boolean;
+        started_cancelled: boolean;
+        attempt_count: number;
+        attempt_status: string;
+        initial_attempt_status: string;
+        peer_cancelled: boolean;
+        shared_assignment_status: string;
+      }>(`
+        select
+          student.deleted_at is not null as deleted,
+          student.status = 'blocked' as blocked,
+          (
+            select count(*)::integer
+            from public.student_codes as code
+            where code.student_id = student.id
+          ) as code_count,
+          (
+            select count(*)::integer
+            from public.student_sessions as session
+            where session.student_id = student.id
+              and session.revoked_at is null
+          ) as active_session_count,
+          (
+            select link.cancelled_at is not null
+            from public.assignment_students as link
+            where link.assignment_id = '${unstartedAssignment}'
+              and link.student_id = student.id
+          ) as unstarted_cancelled,
+          (
+            select link.cancelled_at is not null
+            from public.assignment_students as link
+            where link.assignment_id = '${startedAssignment}'
+              and link.student_id = student.id
+          ) as started_cancelled,
+          (
+            select count(*)::integer
+            from public.quiz_attempts as attempt
+            where attempt.student_id = student.id
+              and attempt.id in (
+                '${attemptId}',
+                '${initialAttemptId}'
+              )
+          ) as attempt_count,
+          (
+            select attempt.status::text
+            from public.quiz_attempts as attempt
+            where attempt.id = '${attemptId}'
+          ) as attempt_status,
+          (
+            select attempt.status::text
+            from public.quiz_attempts as attempt
+            where attempt.id = '${initialAttemptId}'
+          ) as initial_attempt_status,
+          (
+            select link.cancelled_at is not null
+            from public.assignment_students as link
+            where link.assignment_id = '${unstartedAssignment}'
+              and link.student_id = '${peerStudent}'
+          ) as peer_cancelled,
+          (
+            select assignment.status::text
+            from public.assignments as assignment
+            where assignment.id = '${unstartedAssignment}'
+          ) as shared_assignment_status
+        from public.students as student
+        where student.id = '${ids.student}';
+      `);
+
+      expect(state.rows[0]).toEqual({
+        deleted: true,
+        blocked: true,
+        code_count: 0,
+        active_session_count: 0,
+        unstarted_cancelled: true,
+        started_cancelled: false,
+        attempt_count: 2,
+        attempt_status: "expired",
+        initial_attempt_status: "expired",
+        peer_cancelled: false,
+        shared_assignment_status: "active",
+      });
+
+      await expectPostgresError(
+        database.exec(`
+          update public.students
+          set display_name = 'Reactivated'
+          where id = '${ids.student}';
+        `),
+        "55000",
+        "deleted_student_is_immutable",
+      );
+      await expectPostgresError(
+        database.exec(`
+          delete from public.students
+          where id = '${ids.student}';
+        `),
+        "55000",
+        "student_physical_delete_forbidden",
+      );
+      await expectPostgresError(
+        database.exec(`
+          insert into public.quiz_attempts (
+            student_id,
+            assignment_id,
+            attempt_number,
+            status,
+            phase,
+            started_at,
+            deadline_at,
+            question_count_snapshot,
+            time_limit_seconds_snapshot,
+            passing_score_snapshot,
+            passing_basis_snapshot
+          )
+          values (
+            '${ids.student}',
+            '${startedAssignment}',
+            2,
+            'in_progress',
+            'initial',
+            clock_timestamp(),
+            clock_timestamp() + interval '1 hour',
+            1,
+            60,
+            80,
+            'initial'
+          );
+        `),
+        "22023",
+        "student_deleted",
+      );
+    } finally {
+      await database.close();
+    }
+  }, 30_000);
+
+  it("deletes an unstarted assignment, rejects an active attempt, and hides history idempotently", async () => {
+    const database = await createFinalSchemaDatabase();
+    try {
+      await seedReviewAssignmentScenario(database);
+      const deletableAssignment =
+        "00000000-0000-4000-8000-000000000711";
+      const activeAssignment =
+        "00000000-0000-4000-8000-000000000712";
+      const activeAttempt =
+        "00000000-0000-4000-8000-000000000713";
+
+      await database.exec(`
+        insert into public.assignments (
+          id,
+          title,
+          dataset_id,
+          range_start,
+          range_end,
+          question_count,
+          english_to_korean_ratio,
+          time_limit_seconds,
+          passing_score,
+          status,
+          available_from,
+          created_by,
+          range_basis,
+          question_order_mode,
+          question_bank_version
+        )
+        values
+          (
+            '${deletableAssignment}',
+            'Deletable fixture',
+            '${ids.dataset}',
+            1,
+            1,
+            1,
+            100,
+            60,
+            80,
+            'active',
+            clock_timestamp(),
+            '${ids.admin}',
+            'units',
+            'fixed',
+            1
+          ),
+          (
+            '${activeAssignment}',
+            'Active fixture',
+            '${ids.dataset}',
+            1,
+            1,
+            1,
+            100,
+            60,
+            80,
+            'active',
+            clock_timestamp(),
+            '${ids.admin}',
+            'units',
+            'fixed',
+            1
+          );
+
+        insert into public.assignment_units (
+          assignment_id,
+          dataset_id,
+          unit_id,
+          position,
+          is_primary
+        )
+        values
+          (
+            '${deletableAssignment}',
+            '${ids.dataset}',
+            '${ids.units[0]}',
+            1,
+            true
+          ),
+          (
+            '${activeAssignment}',
+            '${ids.dataset}',
+            '${ids.units[0]}',
+            1,
+            true
+          );
+
+        insert into public.assignment_students (
+          assignment_id,
+          student_id,
+          assigned_by
+        )
+        values
+          (
+            '${deletableAssignment}',
+            '${ids.student}',
+            '${ids.admin}'
+          ),
+          (
+            '${activeAssignment}',
+            '${ids.student}',
+            '${ids.admin}'
+          );
+
+        insert into public.quiz_attempts (
+          id,
+          student_id,
+          assignment_id,
+          attempt_number,
+          status,
+          phase,
+          started_at,
+          deadline_at,
+          question_count_snapshot,
+          time_limit_seconds_snapshot,
+          passing_score_snapshot,
+          passing_basis_snapshot
+        )
+        values (
+          '${activeAttempt}',
+          '${ids.student}',
+          '${activeAssignment}',
+          1,
+          'in_progress',
+          'initial',
+          clock_timestamp(),
+          clock_timestamp() + interval '1 hour',
+          1,
+          60,
+          80,
+          'initial'
+        );
+
+        set role authenticated;
+        select public.delete_assignment_v1(
+          '${deletableAssignment}',
+          'integration test'
+        );
+        select public.hide_admin_history_entry_v1(
+          '${deletableAssignment}',
+          '${ids.student}',
+          null
+        );
+        select public.hide_admin_history_entry_v1(
+          '${deletableAssignment}',
+          '${ids.student}',
+          null
+        );
+        reset role;
+      `);
+
+      const state = await database.query<{
+        deleted: boolean;
+        closed: boolean;
+        cancelled: boolean;
+        hidden_count: number;
+        hidden_audit_count: number;
+      }>(`
+        select
+          assignment.deleted_at is not null as deleted,
+          assignment.status = 'closed' as closed,
+          link.cancelled_at is not null as cancelled,
+          (
+            select count(*)::integer
+            from public.admin_history_hidden_entries as hidden
+            where hidden.assignment_id = assignment.id
+              and hidden.student_id = link.student_id
+              and hidden.attempt_id is null
+          ) as hidden_count,
+          (
+            select count(*)::integer
+            from public.audit_events as audit
+            where audit.event_type = 'admin.history.hidden'
+              and audit.details ->> 'assignmentId' = assignment.id::text
+          ) as hidden_audit_count
+        from public.assignments as assignment
+        join public.assignment_students as link
+          on link.assignment_id = assignment.id
+        where assignment.id = '${deletableAssignment}';
+      `);
+
+      expect(state.rows[0]).toEqual({
+        deleted: true,
+        closed: true,
+        cancelled: true,
+        hidden_count: 1,
+        hidden_audit_count: 1,
+      });
+
+      await expectPostgresError(
+        database.exec(`
+          delete from public.assignments
+          where id = '${deletableAssignment}';
+        `),
+        "55000",
+        "assignment_physical_delete_forbidden",
+      );
+      await expectPostgresError(
+        database.exec(`
+          insert into public.quiz_attempts (
+            student_id,
+            assignment_id,
+            attempt_number,
+            status,
+            phase,
+            started_at,
+            deadline_at,
+            question_count_snapshot,
+            time_limit_seconds_snapshot,
+            passing_score_snapshot,
+            passing_basis_snapshot
+          )
+          values (
+            '${ids.student}',
+            '${deletableAssignment}',
+            1,
+            'in_progress',
+            'initial',
+            clock_timestamp(),
+            clock_timestamp() + interval '1 hour',
+            1,
+            60,
+            80,
+            'initial'
+          );
+        `),
+        "22023",
+        "assignment_deleted",
+      );
+
+      await database.exec("set role authenticated;");
+      await expectPostgresError(
+        database.query(`
+          select public.hide_admin_history_entry_v1(
+            '${activeAssignment}',
+            '${ids.student}',
+            null
+          );
+        `),
+        "55000",
+        "history_entry_stale",
+      );
+      await expectPostgresError(
+        database.query(`
+          select public.delete_assignment_v1(
+            '${activeAssignment}',
+            'must fail'
+          );
+        `),
+        "55000",
+        "assignment_has_in_progress_attempt",
+      );
+      await database.exec("reset role;");
+    } finally {
+      await database.close();
+    }
+  }, 30_000);
 });

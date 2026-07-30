@@ -88,6 +88,9 @@ export function buildStudentProgress(
   }
 
   for (const item of history) {
+    if (item.assignmentDeleted) {
+      continue;
+    }
     const currentLatest = latestOverallByStudent.get(item.studentId);
     if (
       !currentLatest ||

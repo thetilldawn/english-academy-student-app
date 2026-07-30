@@ -24,10 +24,12 @@ function history(
     attemptId: "attempt-1",
     assignmentId: "assignment-1",
     assignmentTitle: "DAY 01 시험",
+    assignmentDeleted: false,
     assignmentStatus: "active",
     assignmentPurpose: "regular",
     studentId: student.id,
     studentName: "테스트 학생",
+    studentDeleted: false,
     schoolName: null,
     gradeLabel: null,
     datasetId: "dataset-current",
@@ -94,6 +96,25 @@ describe("buildStudentProgress", () => {
     );
 
     expect(progress.latestAssignmentTitle).toBe("다른 단어장 시험");
+    expect(progress.recommendedUnitLabel).toBe("DAY 02");
+  });
+
+  it("삭제된 테스트 시험은 최근 상태와 다음 DAY 추천에서 제외한다", () => {
+    const [progress] = buildStudentProgress(
+      [student],
+      units,
+      [
+        history({
+          id: "deleted-test",
+          assignmentDeleted: true,
+          assignmentTitle: "삭제됨",
+          activityAt: "2026-07-31T00:00:00.000Z",
+        }),
+        history(),
+      ],
+    );
+
+    expect(progress.latestAssignmentTitle).toBe("DAY 01 시험");
     expect(progress.recommendedUnitLabel).toBe("DAY 02");
   });
 

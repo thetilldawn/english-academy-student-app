@@ -11,10 +11,12 @@ import {
 const assignment: AssignmentHistorySource = {
   assignmentId: "assignment-1",
   assignmentTitle: "능률 VOCA DAY 01",
+  assignmentDeleted: false,
   assignmentStatus: "active",
   assignmentPurpose: "regular",
   studentId: "student-1",
   studentName: "테스트 학생",
+  studentDeleted: false,
   schoolName: "테스트고등학교",
   gradeLabel: "고1",
   datasetId: "dataset-1",
