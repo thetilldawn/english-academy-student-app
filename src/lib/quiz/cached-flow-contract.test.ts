@@ -11,6 +11,9 @@ describe("DAY 문제은행 응시 계약", () => {
   it("새 배정은 DAY와 고정 문제은행을 사용한다", () => {
     const manager = source("src/components/assignment-manager.tsx");
     const adminService = source("src/lib/services/admin-service.ts");
+    const eligibleLoader = source(
+      "src/lib/services/eligible-vocabulary-service.ts",
+    );
 
     expect(manager).toContain("시작 {unitTerm}");
     expect(manager).toContain("끝 {unitTerm}");
@@ -18,18 +21,22 @@ describe("DAY 문제은행 응시 계약", () => {
     expect(manager).toContain("오름차순");
     expect(manager).toContain("내림차순");
     expect(adminService).toContain(
-      '"create_assignment_with_question_bank_v3"',
+      '"create_assignment_with_delivery_v4"',
     );
+    expect(adminService).toContain(
+      "loadEligibleVocabularyDataset(",
+    );
+    expect(adminService).toContain("createMixedQuizQuestions(");
     expect(adminService).toContain("p_available_until");
     expect(adminService).toContain("base_order_index");
     expect(adminService).toContain("choice_vocab_entry_ids");
     expect(adminService).not.toContain(
       "correct_choice_index: question.correctChoiceIndex",
     );
-    expect(adminService).toContain(
+    expect(eligibleLoader).toContain(
       '.from("vocab_entry_quiz_eligibility")',
     );
-    expect(adminService).toContain('.eq("status", "eligible")');
+    expect(eligibleLoader).toContain('.eq("status", "eligible")');
   });
 
   it("새 시도는 문제를 다시 만들지 않고 문제은행에서 복사한다", () => {

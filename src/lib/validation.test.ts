@@ -81,7 +81,7 @@ describe("오답 재시험 초안 입력 계약", () => {
   const questionId =
     "11111111-1111-4111-8111-111111111111";
 
-  it("중복 없는 UUID 1개부터 400개까지만 허용한다", () => {
+  it("중복 없는 UUID 1개부터 500개까지만 허용한다", () => {
     expect(
       createReviewAssignmentDraftSchema.parse({
         questionIds: [questionId],
@@ -89,19 +89,19 @@ describe("오답 재시험 초안 입력 계약", () => {
     ).toEqual({ questionIds: [questionId] });
 
     const questionIds = Array.from(
-      { length: 400 },
+      { length: 500 },
       (_, index) =>
         `11111111-1111-4111-8111-${String(index).padStart(12, "0")}`,
     );
     expect(
       createReviewAssignmentDraftSchema.parse({ questionIds })
         .questionIds,
-    ).toHaveLength(400);
+    ).toHaveLength(500);
   });
 
-  it("빈 배열·401개·중복·비 UUID·추가 필드를 거부한다", () => {
+  it("빈 배열·501개·중복·비 UUID·추가 필드를 거부한다", () => {
     const validIds = Array.from(
-      { length: 401 },
+      { length: 501 },
       (_, index) =>
         `11111111-1111-4111-8111-${String(index).padStart(12, "0")}`,
     );
@@ -205,7 +205,6 @@ describe("DAY+오답 혼합 시험 입력 계약", () => {
     datasetId,
     primaryUnitIds: [unitId],
     reviewLevels: [1, 2] as const,
-    reviewLimit: 3,
     totalQuestionCount: 10,
     title: "",
     englishToKoreanRatio: 50 as const,
@@ -266,30 +265,10 @@ describe("DAY+오답 혼합 시험 입력 계약", () => {
         reviewLevels: [3],
       }),
     ).toThrow();
-    expect(() =>
-      mixedAssignmentSchema.parse({
-        ...validInput,
-        reviewLimit: 401,
-      }),
-    ).toThrow();
-  });
-
-  it("오답 상한이 총 문항보다 커도 실제 오답 수는 서버 조회에 맡긴다", () => {
-    expect(
-      mixedAssignmentSchema.parse({
-        ...validInput,
-        reviewLimit: 20,
-        totalQuestionCount: 10,
-      }),
-    ).toMatchObject({
-      reviewLimit: 20,
-      totalQuestionCount: 10,
-    });
   });
 
   it("숫자 문자열과 offset 없는 마감시각을 강제 변환하지 않는다", () => {
     for (const field of [
-      "reviewLimit",
       "totalQuestionCount",
       "timeLimitSeconds",
       "passingScore",

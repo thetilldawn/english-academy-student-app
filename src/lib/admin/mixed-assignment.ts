@@ -1,4 +1,8 @@
 import type { EligibleVocabularyEntry } from "@/lib/quiz/eligible-vocabulary";
+import {
+  normalizeQuizHeadword,
+  quizVocabularyIdentity,
+} from "@/lib/quiz/engine";
 
 export type MixedAssignmentUnit = {
   id: string;
@@ -9,6 +13,7 @@ export type MixedAssignmentUnit = {
 export type PendingReviewIdentity = {
   vocabEntryId: number;
   canonicalKey: string | null;
+  headword?: string;
 };
 
 export type MixedAssignmentFailureReason =
@@ -94,18 +99,23 @@ export function excludePendingReviewCandidates(
   const pendingEntryIds = new Set(
     pendingIdentities.map((identity) => identity.vocabEntryId),
   );
-  const pendingCanonicalKeys = new Set(
-    pendingIdentities.flatMap((identity) =>
-      identity.canonicalKey ? [identity.canonicalKey] : [],
-    ),
+  const pendingKeys = new Set(
+    pendingIdentities.map((identity) => {
+      if (identity.canonicalKey) {
+        return `canonical:${identity.canonicalKey}`;
+      }
+      const headwordKey = identity.headword
+        ? normalizeQuizHeadword(identity.headword)
+        : "";
+      return headwordKey
+        ? `headword:${headwordKey}`
+        : `entry:${identity.vocabEntryId}`;
+    }),
   );
 
   return candidates.filter(
     (candidate) =>
       !pendingEntryIds.has(candidate.id) &&
-      !(
-        candidate.canonicalKey &&
-        pendingCanonicalKeys.has(candidate.canonicalKey)
-      ),
+      !pendingKeys.has(quizVocabularyIdentity(candidate)),
   );
 }

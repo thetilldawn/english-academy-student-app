@@ -2,7 +2,10 @@ import { getAdminContext } from "@/lib/auth/admin";
 import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { adminLoginSchema } from "@/lib/validation";
-import { revokeCurrentStudentSession } from "@/lib/auth/student-session";
+
+const privateResponseHeaders = {
+  "Cache-Control": "private, no-store",
+};
 
 export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
@@ -24,12 +27,14 @@ export async function POST(request: Request) {
 
     const admin = await getAdminContext();
     if (!admin) {
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({ scope: "local" });
       return jsonError("승인된 관리자 계정이 아닙니다.", 403);
     }
 
-    await revokeCurrentStudentSession("admin_login");
-    return Response.json({ admin });
+    return Response.json(
+      { admin },
+      { headers: privateResponseHeaders },
+    );
   } catch {
     return jsonError("관리자 로그인을 처리하지 못했습니다.", 503);
   }
@@ -42,8 +47,11 @@ export async function DELETE(request: Request) {
 
   try {
     const supabase = await createServerSupabaseClient();
-    await supabase.auth.signOut();
-    return Response.json({ ok: true });
+    await supabase.auth.signOut({ scope: "local" });
+    return Response.json(
+      { ok: true },
+      { headers: privateResponseHeaders },
+    );
   } catch {
     return jsonError("로그아웃을 처리하지 못했습니다.", 503);
   }

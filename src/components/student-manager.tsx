@@ -18,6 +18,7 @@ import {
   assignmentScopeLabel,
   type AssignmentHistorySummary,
 } from "@/lib/admin/history";
+import { buildStudentAccessUrl } from "@/lib/auth/student-code-input";
 import type { StudentWrongWordHistory } from "@/lib/admin/wrong-word-history";
 import { formatKoreanDateTime } from "@/lib/format";
 import { sendKakaoText } from "@/lib/kakao-share";
@@ -47,6 +48,7 @@ type ProgressItem = {
   latestAssignmentTitle: string | null;
   latestStatus:
     | "not_started"
+    | "cancelled"
     | "missed"
     | "in_progress"
     | "completed"
@@ -86,6 +88,7 @@ type WrongHistoryCacheEntry = {
 
 function activityStatusText(status: ProgressItem["latestStatus"]) {
   if (status === "not_started") return "응시 전";
+  if (status === "cancelled") return "배정 취소";
   if (status === "missed") return "미응시 마감";
   if (status === "in_progress") return "응시 중";
   if (status === "completed") return "완료";
@@ -98,12 +101,14 @@ function scoreText(score: number | null | undefined) {
 }
 
 export function StudentManager({
+  appOrigin,
   datasets,
   history,
   initialStudentId = "",
   progress,
   students,
 }: {
+  appOrigin: string;
   datasets: DatasetOption[];
   history: AssignmentHistorySummary[];
   initialStudentId?: string;
@@ -433,16 +438,20 @@ export function StudentManager({
 
   async function shareCode() {
     if (!shownCode) return;
+    const studentAccessUrl = buildStudentAccessUrl(
+      appOrigin,
+      shownCode.code,
+    );
     const message = [
       shownCode.label,
-      `접속 주소: ${window.location.origin}`,
+      `접속 주소: ${studentAccessUrl}`,
       `접속 코드: ${shownCode.code}`,
     ].join("\n");
 
     const result = await sendKakaoText({
       title: shownCode.label,
       message,
-      url: window.location.origin,
+      url: studentAccessUrl,
     });
     if (result === "sent") {
       setShareNotice("");

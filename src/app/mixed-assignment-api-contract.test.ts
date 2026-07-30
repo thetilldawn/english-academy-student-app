@@ -44,11 +44,14 @@ describe("mixed assignment API contract", () => {
       "mixedAssignmentDatabaseErrorReason(error)",
     );
     expect(service).toContain(
-      "selectedQueueRows.length >= input.totalQuestionCount",
+      "input.totalQuestionCount < capacity.minimumQuestionCount",
     );
     expect(route).toContain('error.reason === "conflict"');
     expect(route).toContain("409");
-    expect(route).not.toContain("error.message");
+    expect(route).toContain("jsonError(error.message, 409)");
+    expect(route).toContain(
+      '"DAY+오답 시험을 배정하지 못했습니다. 잠시 후 다시 시도해 주세요."',
+    );
     expect(route).not.toContain("selectedQueueIds");
   });
 
@@ -66,13 +69,15 @@ describe("mixed assignment API contract", () => {
     );
     expect(service).toContain('.order("queued_at")');
     expect(service).toContain('.order("id")');
-    expect(service).toContain(".limit(input.reviewLimit)");
     expect(service).toContain(
-      "const selectedQueueIds = selectedQueueRows.map",
+      ".range(offset, offset + REVIEW_QUEUE_PAGE_SIZE - 1)",
+    );
+    expect(service).toContain(
+      "const selectedQueueIds = prepared.selectedQueueRows.map",
     );
     expect(service).toContain("createMixedQuizQuestions(");
     expect(service).toContain(
-      '"create_mixed_review_assignment_v5"',
+      '"create_mixed_review_assignment_v6"',
     );
     expect(service).toContain(
       "p_selected_queue_ids: selectedQueueIds",
@@ -86,16 +91,31 @@ describe("mixed assignment API contract", () => {
     expect(service).not.toContain("p_questions: input.");
   });
 
-  it("excludes every pending exact or canonical identity from general targets", () => {
+  it("excludes selected wrong identities and active assignments from general targets", () => {
     const service = source(
       "src/lib/services/mixed-assignment-service.ts",
     );
+    const activeAssignments = source(
+      "src/lib/services/active-review-assignment-service.ts",
+    );
 
     expect(service).toContain(
-      "loadAllPendingReviewIdentities(",
+      "excludePendingReviewCandidates(",
     );
     expect(service).toContain(
-      "excludePendingReviewCandidates(",
+      "loadActiveReviewAssignments(",
+    );
+    expect(activeAssignments).toContain(
+      '.from("assignment_review_targets")',
+    );
+    expect(activeAssignments).toContain(
+      '.from("assignment_students")',
+    );
+    expect(activeAssignments).toContain(
+      '.from("assignment_questions")',
+    );
+    expect(service).toContain(
+      "selectedReviewIdentities",
     );
     expect(service).toContain(
       "loadEligibleVocabularyDataset(supabase, input.datasetId)",

@@ -5,7 +5,10 @@ import {
 import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
 import { authenticateStudentCode } from "@/lib/services/student-login-service";
 import { studentCodeLoginSchema } from "@/lib/validation";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+
+const privateResponseHeaders = {
+  "Cache-Control": "private, no-store",
+};
 
 export async function GET() {
   const session = await getStudentSession();
@@ -37,16 +40,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const supabase = await createServerSupabaseClient();
-    const { error: signOutError } = await supabase.auth.signOut();
-    if (signOutError) {
-      await revokeCurrentStudentSession("admin_signout_failed");
-      return jsonError(
-        "관리자 접속을 종료한 뒤 다시 인증해주세요.",
-        503,
-      );
-    }
-    return Response.json({ student: { displayName: result.displayName } });
+    return Response.json(
+      { student: { displayName: result.displayName } },
+      { headers: privateResponseHeaders },
+    );
   } catch {
     return jsonError("학생 인증을 처리하지 못했습니다.", 503);
   }
@@ -58,5 +55,8 @@ export async function DELETE(request: Request) {
   }
 
   await revokeCurrentStudentSession();
-  return Response.json({ ok: true });
+  return Response.json(
+    { ok: true },
+    { headers: privateResponseHeaders },
+  );
 }

@@ -4,6 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 import { getPublicEnvironment } from "@/lib/env";
+import { adminAuthCookieOptions } from "@/lib/supabase/cookie-options";
 
 export async function createServerSupabaseClient() {
   const environment = getPublicEnvironment();
@@ -20,7 +21,14 @@ export async function createServerSupabaseClient() {
         setAll(cookiesToSet) {
           try {
             for (const cookie of cookiesToSet) {
-              cookieStore.set(cookie.name, cookie.value, cookie.options);
+              cookieStore.set(cookie.name, cookie.value, {
+                ...cookie.options,
+                ...adminAuthCookieOptions(),
+                maxAge:
+                  cookie.options.maxAge === 0
+                    ? 0
+                    : adminAuthCookieOptions().maxAge,
+              });
             }
           } catch {
             // Server Components cannot write response cookies. proxy.ts refreshes

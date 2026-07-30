@@ -2,6 +2,7 @@
 
 import {
   Fragment,
+  useEffect,
   useRef,
   useState,
   type ChangeEvent,
@@ -9,6 +10,7 @@ import {
 } from "react";
 
 import {
+  readStudentCodeHash,
   normalizeStudentCodeInput,
   STUDENT_CODE_LENGTH,
 } from "@/lib/auth/student-code-input";
@@ -25,6 +27,22 @@ export function StudentLoginForm() {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const sharedCode = readStudentCodeHash(window.location.hash);
+    if (window.location.hash) {
+      window.history.replaceState(
+        window.history.state,
+        "",
+        `${window.location.pathname}${window.location.search}`,
+      );
+    }
+    if (!sharedCode) return;
+    const frameId = window.requestAnimationFrame(() => {
+      setCode(sharedCode);
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, []);
 
   function handleCodeChange(event: ChangeEvent<HTMLInputElement>) {
     setCode(normalizeStudentCodeInput(event.currentTarget.value));

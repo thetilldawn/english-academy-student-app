@@ -110,7 +110,8 @@ export function buildStudentProgress(
     const student = studentById.get(item.studentId);
     if (
       student?.currentVocabDatasetId === item.datasetId &&
-      item.assignmentPurpose !== "review"
+      item.assignmentPurpose !== "review" &&
+      item.status !== "cancelled"
     ) {
       const currentRecommendation =
         latestCurrentDatasetByStudent.get(item.studentId);

@@ -1,6 +1,5 @@
 import { StudentShell } from "@/components/student-shell";
 import { getStudentSession } from "@/lib/auth/student-session";
-import { getAdminContext } from "@/lib/auth/admin";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -9,9 +8,6 @@ export default async function StudentProtectedLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const student = await getStudentSession();
-  if (!student && (await getAdminContext())) {
-    redirect("/admin");
-  }
   if (!student) {
     redirect("/");
   }

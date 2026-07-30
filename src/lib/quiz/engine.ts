@@ -38,12 +38,18 @@ function normalizeChoice(value: string): string {
   return value.normalize("NFKC").trim().toLocaleLowerCase("en-US");
 }
 
-function canonicalIdentity(entry: QuizVocabularyEntry): string {
+export function normalizeQuizHeadword(value: string): string {
+  return normalizeChoice(value).replaceAll("*", "");
+}
+
+export function quizVocabularyIdentity(
+  entry: QuizVocabularyEntry,
+): string {
   const canonicalKey = entry.canonicalKey?.trim();
 
   return canonicalKey
     ? `canonical:${canonicalKey}`
-    : `headword:${normalizeChoice(entry.headword).replaceAll("*", "")}`;
+    : `headword:${normalizeQuizHeadword(entry.headword)}`;
 }
 
 function canUseDirection(
@@ -111,7 +117,7 @@ function uniqueChoiceEntries(
 
   for (const entry of entries) {
     const displayKey = normalizeChoice(display(entry));
-    const identity = canonicalIdentity(entry);
+    const identity = quizVocabularyIdentity(entry);
     if (
       seenDisplays.has(displayKey) ||
       seenCanonicalIdentities.has(identity)
@@ -137,12 +143,12 @@ function createChoices(
   correctChoiceIndex: number;
 } {
   const correctKey = normalizeChoice(display(target));
-  const correctIdentity = canonicalIdentity(target);
+  const correctIdentity = quizVocabularyIdentity(target);
   const distractors = shuffle(
     uniqueChoiceEntries(candidates, display).filter(
       (candidate) =>
         candidate.id !== target.id &&
-        canonicalIdentity(candidate) !== correctIdentity &&
+        quizVocabularyIdentity(candidate) !== correctIdentity &&
         normalizeChoice(display(candidate)) !== correctKey,
     ),
     random,
@@ -345,7 +351,7 @@ export function createTargetedQuizQuestions(
     return candidate;
   });
   if (
-    new Set(trustedTargets.map(canonicalIdentity)).size !==
+    new Set(trustedTargets.map(quizVocabularyIdentity)).size !==
     trustedTargets.length
   ) {
     throw new Error(
@@ -464,13 +470,9 @@ export function createMixedQuizQuestions(
   ) {
     throw new Error("혼합 시험 문항 수는 4~500개여야 합니다.");
   }
-  if (
-    requiredTargets.length < 1 ||
-    requiredTargets.length > 400 ||
-    requiredTargets.length >= totalQuestionCount
-  ) {
+  if (requiredTargets.length > totalQuestionCount) {
     throw new Error(
-      "혼합 시험은 오답보다 새 DAY 문항이 더해져야 합니다.",
+      "혼합 시험의 오답 수가 총 문항 수보다 많습니다.",
     );
   }
   if (![0, 50, 100].includes(englishToKoreanRatio)) {
@@ -513,7 +515,7 @@ export function createMixedQuizQuestions(
     trustedRequired.map((entry) => entry.id),
   );
   const requiredIdentities = new Set(
-    trustedRequired.map(canonicalIdentity),
+    trustedRequired.map(quizVocabularyIdentity),
   );
   if (requiredIdentities.size !== trustedRequired.length) {
     throw new Error("혼합 시험 오답 대상 표제어가 중복되었습니다.");
@@ -532,7 +534,7 @@ export function createMixedQuizQuestions(
   const availablePrimary = trustedPrimary.filter(
     (entry) =>
       !requiredIds.has(entry.id) &&
-      !requiredIdentities.has(canonicalIdentity(entry)),
+      !requiredIdentities.has(quizVocabularyIdentity(entry)),
   );
 
   const {
@@ -562,7 +564,7 @@ export function createMixedQuizQuestions(
   };
   const primaryGroups = new Map<string, PrimaryCanonicalGroup>();
   for (const entry of shuffle(availablePrimary, random)) {
-    const identity = canonicalIdentity(entry);
+    const identity = quizVocabularyIdentity(entry);
     const directionClass = classify(entry);
     if (directionClass === "none") continue;
 
@@ -722,12 +724,13 @@ export function createMixedQuizQuestions(
 
   if (
     questions.length !== totalQuestionCount ||
-    questions
-      .slice(-trustedRequired.length)
-      .some(
-        (question, index) =>
-          question.vocabEntryId !== trustedRequired[index]?.id,
-      )
+    (trustedRequired.length > 0 &&
+      questions
+        .slice(-trustedRequired.length)
+        .some(
+          (question, index) =>
+            question.vocabEntryId !== trustedRequired[index]?.id,
+        ))
   ) {
     throw new Error("혼합 시험 문제 순서 검증에 실패했습니다.");
   }

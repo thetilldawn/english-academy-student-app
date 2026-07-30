@@ -46,61 +46,25 @@ describe("wrong-word admin UI contract", () => {
     expect(validation).toContain(".strict()");
   });
 
-  it("creates a durable same-dataset review draft before navigation", () => {
-    const route = source(
-      "src/app/api/admin/students/[id]/review-assignment-drafts/route.ts",
-    );
-    const service = source(
-      "src/lib/services/wrong-word-service.ts",
-    );
-    const reviewService = source(
-      "src/lib/services/review-assignment-service.ts",
-    );
-    const validation = source("src/lib/validation.ts");
+  it("queues selected words without creating a retest or navigating away", () => {
     const panel = source(
       "src/components/student-wrong-word-panel.tsx",
     );
 
-    expect(route).toContain("isSameOriginRequest(request)");
-    expect(route).toContain("getAdminContext()");
-    expect(route).toContain(
-      "parseJson(request, createReviewAssignmentDraftSchema)",
-    );
-    expect(route).toContain(
-      "createStudentReviewAssignmentDraft(",
-    );
-    expect(route).toContain('"Cache-Control": "private, no-store"');
-    expect(service).toContain(
-      '"create_student_vocab_review_assignment_draft"',
-    );
-    expect(reviewService).toContain(
-      '"finalize_expired_review_assignment_drafts"',
-    );
-    expect(service).toContain("reserved_review_draft_id");
-    expect(service).toContain("p_student_id: studentId");
-    expect(service).toContain("p_question_ids: questionIds");
-    expect(validation).toContain(
-      "export const createReviewAssignmentDraftSchema",
-    );
-    expect(panel).toContain("selectedDatasetIds.size === 1");
+    expect(panel).toContain("async function queueSelectedWords()");
     expect(panel).toContain(
-      "선택 ${validSelectedQuestionIds.length}개 재시험 배정",
+      "questionIds: validSelectedQuestionIds",
     );
-    expect(panel).toContain("/review-assignment-drafts");
-    expect(panel).toContain("재시험 배정 계속");
+    expect(panel).toContain("다음 시험에 추가");
+    expect(panel).toContain("refreshHistory()");
     expect(panel).toContain(
-      "createReviewAssignmentDraft(group.questionIds)",
+      'target.scheduling === "available"',
     );
-    expect(panel).toContain(
-      "/admin/assignments?reviewDraft=${encodeURIComponent(payload.reviewDraftId)}",
-    );
-    expect(panel).not.toContain(
-      "/admin/assignments?questionIds=",
-    );
-    expect(panel).not.toContain("/admin/assignments?student=");
+    expect(panel).not.toContain("createReviewAssignmentDraft(");
+    expect(panel).not.toContain("router.push(");
   });
 
-  it("cancels a pending review draft without removing words from the next-test queue", () => {
+  it("cleans up legacy pending drafts without removing queued words", () => {
     const route = source(
       "src/app/api/admin/students/[id]/review-assignment-drafts/[draftId]/route.ts",
     );
@@ -130,7 +94,7 @@ describe("wrong-word admin UI contract", () => {
     expect(panel).toContain('method: "DELETE"');
     expect(panel).toContain("재시험 준비 취소");
     expect(panel).toContain("다음 일반 시험 대기에 남아 있습니다");
-    expect(panel).toContain("재시험 초안 예약");
+    expect(panel).toContain("이전 방식으로 준비 중인 재시험");
     expect(panel).toContain("다음 시험 대기");
     expect(dialog).toContain('method: "DELETE"');
     expect(dialog).toContain("다음 시험 대기 유지");
@@ -155,12 +119,17 @@ describe("wrong-word admin UI contract", () => {
     expect(manager).toContain("moveDialogTabFocus");
     expect(panel).toContain("누적 2회 이상");
     expect(panel).toContain('type="checkbox"');
-    expect(panel).toContain("pendingReviewKeys");
-    expect(panel).toContain("wrongWordReviewIdentity(");
+    expect(panel).toContain('target?.scheduling === "queued"');
+    expect(panel).toContain('target?.scheduling === "assigned"');
+    expect(panel).toContain("다음 시험 대기");
+    expect(panel).toContain("배정 중");
+    expect(panel).toContain("해결됨");
     expect(panel).toContain(
       "occurrence.datasetId === datasetFilter",
     );
-    expect(panel).toContain("occurrence.latestQuestionId");
+    expect(panel).toContain(
+      "questionId: selectedOccurrence.latestQuestionId",
+    );
     expect(panel).toContain('method: "POST"');
     expect(panel).toContain("다음 시험에 추가");
     expect(panel).toContain('aria-live="polite"');
@@ -189,20 +158,30 @@ describe("wrong-word admin UI contract", () => {
     expect(panel.match(/resetSelectionFeedback\(\);/g)).toHaveLength(3);
   });
 
-  it("pages event history below the PostgREST row limit", () => {
+  it("pages all initial-wrong history without a fixed event ceiling", () => {
     const service = source(
       "src/lib/services/wrong-word-service.ts",
     );
-    expect(service).toContain("MAX_WRONG_EVENTS = 400");
-    expect(service).toContain("WRONG_EVENT_PAGE_SIZE = 200");
+    const activeAssignments = source(
+      "src/lib/services/active-review-assignment-service.ts",
+    );
+    expect(service).toContain("WRONG_EVENT_PAGE_SIZE = 500");
     expect(service).toContain('.order("id", { ascending: false })');
     expect(service).toContain('query = query.lt("id", beforeId)');
-    expect(service).toContain(".limit(pageLimit)");
+    expect(service).toContain(".limit(WRONG_EVENT_PAGE_SIZE)");
+    expect(service).toContain('.eq("wrong_stage", "initial")');
     expect(service).toContain(
       '.from("student_vocab_review_queue")',
     );
+    expect(service).toContain("loadActiveReviewAssignments(");
+    expect(activeAssignments).toContain(
+      '.from("assignment_review_targets")',
+    );
+    expect(activeAssignments).toContain(
+      '.from("assignment_questions")',
+    );
     expect(service).not.toContain('.from("quiz_attempts")');
-    expect(service).toContain(".limit(MAX_WRONG_EVENTS + 1)");
+    expect(service).not.toContain("MAX_WRONG_EVENTS");
   });
 
   it("exposes only the clamped prior wrong level to the quiz client", () => {

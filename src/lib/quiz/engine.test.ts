@@ -676,17 +676,19 @@ describe("createMixedQuizQuestions", () => {
     ).toThrow("전체 보기 후보 단어 ID가 중복되었습니다.");
   });
 
-  it("문항 수 경계와 unique canonical 부족을 거절한다", () => {
-    expect(() =>
-      createMixedQuizQuestions(
-        entries.slice(0, 4),
-        entries.slice(4),
-        entries,
-        4,
-        50,
-        seededRandom(139),
-      ),
-    ).toThrow("새 DAY 문항이 더해져야 합니다.");
+  it("오답만으로 합집합을 채우고 문항 수 경계와 unique canonical 부족을 거절한다", () => {
+    const reviewOnly = createMixedQuizQuestions(
+      entries.slice(0, 4),
+      entries.slice(4),
+      entries,
+      4,
+      50,
+      seededRandom(139),
+    );
+    expect(reviewOnly).toHaveLength(4);
+    expect(reviewOnly.map((question) => question.vocabEntryId)).toEqual(
+      entries.slice(0, 4).map((entry) => entry.id),
+    );
     expect(() =>
       createMixedQuizQuestions(
         [entries[0]],

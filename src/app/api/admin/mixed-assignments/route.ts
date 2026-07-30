@@ -43,16 +43,10 @@ export async function POST(request: Request) {
         error.reason === "conflict" ||
         error.reason === "unavailable"
       ) {
-        return jsonError(
-          "오답 대기 목록이 바뀌었습니다. 새로고침 후 다시 확인해 주세요.",
-          409,
-        );
+        return jsonError(error.message, 409);
       }
       if (error.reason === "invalid_selection") {
-        return jsonError(
-          "DAY·오답 범위와 출제 조건을 확인해 주세요.",
-          422,
-        );
+        return jsonError(error.message, 422);
       }
     }
     return jsonError(

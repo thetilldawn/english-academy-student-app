@@ -1,5 +1,6 @@
 export type AssignmentActivityStatus =
   | "not_started"
+  | "cancelled"
   | "missed"
   | "in_progress"
   | "completed"
@@ -30,6 +31,8 @@ export type AssignmentHistorySource = {
   availableUntil: string | null;
   assignedAt: string;
   missedAt: string | null;
+  cancelledAt: string | null;
+  cancellationReason: string | null;
 };
 
 export type AttemptHistorySource = {
@@ -37,7 +40,10 @@ export type AttemptHistorySource = {
   assignmentId: string;
   studentId: string;
   attemptNumber: number;
-  status: Exclude<AssignmentActivityStatus, "not_started" | "missed">;
+  status: Exclude<
+    AssignmentActivityStatus,
+    "not_started" | "cancelled" | "missed"
+  >;
   phase: "initial" | "review" | "retry" | "completed";
   questionCount: number;
   timeLimitSeconds: number;
@@ -144,18 +150,25 @@ export function buildAssignmentHistory(
       const missed =
         assignment.missedAt !== null ||
         (!Number.isNaN(availableUntil) && availableUntil <= now);
+      const cancelled = assignment.cancelledAt !== null;
       history.push({
         ...assignment,
         id: `assignment:${assignment.assignmentId}:${assignment.studentId}`,
         attemptId: null,
         attemptNumber: null,
-        status: missed ? "missed" : "not_started",
+        status: cancelled
+          ? "cancelled"
+          : missed
+            ? "missed"
+            : "not_started",
         phase: null,
-        activityAt: missed
-          ? (assignment.missedAt ??
-            assignment.availableUntil ??
-            assignment.assignedAt)
-          : assignment.assignedAt,
+        activityAt: cancelled
+          ? (assignment.cancelledAt ?? assignment.assignedAt)
+          : missed
+            ? (assignment.missedAt ??
+              assignment.availableUntil ??
+              assignment.assignedAt)
+            : assignment.assignedAt,
         initialCorrectCount: null,
         retryCorrectCount: null,
         unresolvedWrongCount: null,

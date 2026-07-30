@@ -79,6 +79,7 @@ type ProgressItem = {
   latestAssignmentTitle: string | null;
   latestStatus:
     | "not_started"
+    | "cancelled"
     | "missed"
     | "in_progress"
     | "completed"
@@ -113,9 +114,17 @@ type ErrorResponse = {
   error?: string;
 };
 
-type WrongWordStudentFilter = "all" | "wrong" | "repeated";
+type AssignmentCapacity = {
+  unitEligible: number;
+  wrongEligible: number;
+  overlap: number;
+  alreadyAssigned: number;
+  maximumQuestionCount: number;
+  recommendedQuestionCount: number;
+  minimumQuestionCount: number;
+};
 
-const DEFAULT_REVIEW_LIMIT = 5;
+type WrongWordStudentFilter = "all" | "wrong" | "repeated";
 
 function directionLabel(ratio: number) {
   if (ratio === 100) return "영어 → 뜻";
@@ -131,6 +140,7 @@ function unitRangeLabel(labels: string[]) {
 
 function statusLabel(status: ProgressItem["latestStatus"]) {
   if (status === "not_started") return "응시 전";
+  if (status === "cancelled") return "배정 취소";
   if (status === "missed") return "미응시 마감";
   if (status === "in_progress") return "응시 중";
   if (status === "completed") return "완료";
@@ -276,9 +286,15 @@ export function AssignmentManager({
   const [reviewLevels, setReviewLevels] = useState<ReviewLevel[]>(
     defaultReviewLevels,
   );
-  const [reviewLimit, setReviewLimit] = useState(
-    DEFAULT_REVIEW_LIMIT,
-  );
+  const [capacity, setCapacity] =
+    useState<AssignmentCapacity | null>(null);
+  const [capacityLoading, setCapacityLoading] = useState(false);
+  const [capacityError, setCapacityError] = useState("");
+  const [capacityRefreshVersion, setCapacityRefreshVersion] =
+    useState(0);
+  const [questionCountMode, setQuestionCountMode] = useState<
+    "auto" | "manual"
+  >("auto");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -303,10 +319,6 @@ export function AssignmentManager({
   const selectedReservedReviewCount = reservedReviewCount(
     selectedReviewCounts,
   );
-  const selectedAvailableReviewCount = availableReviewCount(
-    selectedReviewCounts,
-    reviewLevels,
-  );
   const selectedAvailableReviewTotal = availableReviewCount(
     selectedReviewCounts,
   );
@@ -316,10 +328,6 @@ export function AssignmentManager({
   const availableReviewLevel2Count =
     selectedReviewCounts.pendingLevel2Count -
     selectedReviewCounts.reservedLevel2Count;
-  const plannedReviewCount = Math.min(
-    Math.max(reviewLimit, 0),
-    selectedAvailableReviewCount,
-  );
   const datasetUnits = useMemo(
     () =>
       units
@@ -355,12 +363,16 @@ export function AssignmentManager({
     0,
   );
   const selectedUnitLabels = selectedUnits.map((unit) => unit.label);
+  const selectedUnitIdsKey = selectedUnits
+    .map((unit) => unit.id)
+    .join(",");
+  const reviewLevelsKey = reviewLevels.join(",");
   const generatedTitle = [
     selectedDataset?.title,
     selectedDataset?.edition,
     unitRangeLabel(selectedUnitLabels),
     includePendingReview
-      ? `오답 최대 ${plannedReviewCount}개 포함`
+      ? `틀렸던 단어 ${capacity?.wrongEligible ?? 0}개 포함`
       : null,
   ]
     .filter(Boolean)
@@ -368,13 +380,12 @@ export function AssignmentManager({
   const finalTitle = customTitle.trim() || generatedTitle;
   const timeLimitSeconds =
     timingMode === "total" ? timeLimitMinutes * 60 : 10800;
-  const mixedSelectionInvalid =
-    includePendingReview &&
-    (reviewLevels.length === 0 ||
-      reviewLimit < 1 ||
-      reviewLimit > 400 ||
-      plannedReviewCount < 1 ||
-      plannedReviewCount >= questionCount);
+  const capacityInvalid =
+    !capacity ||
+    capacity.maximumQuestionCount < 4 ||
+    questionCount < capacity.minimumQuestionCount ||
+    questionCount > capacity.maximumQuestionCount ||
+    (includePendingReview && capacity.wrongEligible < 1);
   const cannotCreate =
     !studentId ||
     !datasetId ||
@@ -382,9 +393,9 @@ export function AssignmentManager({
     selectedUnits.length === 0 ||
     questionCount < 4 ||
     questionCount > 500 ||
-    (!includePendingReview &&
-      questionCount > availableWordCount) ||
-    mixedSelectionInvalid ||
+    capacityInvalid ||
+    capacityLoading ||
+    Boolean(capacityError) ||
     (timingMode === "total" &&
       (timeLimitSeconds < 30 || timeLimitSeconds > 10800)) ||
     (timingMode === "per_question" &&
@@ -464,10 +475,87 @@ export function AssignmentManager({
     }
   }, [selectedStudent]);
 
+  useEffect(() => {
+    if (!studentId || !datasetId || !selectedUnitIdsKey) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => {
+      setCapacityLoading(true);
+      setCapacityError("");
+      void fetch("/api/admin/assignment-capacity", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          studentId,
+          datasetId,
+          primaryUnitIds: selectedUnitIdsKey.split(","),
+          includePendingReview,
+          reviewLevels,
+          englishToKoreanRatio: directionRatio,
+        }),
+        signal: controller.signal,
+      })
+        .then(async (response) => {
+          const payload = (await response.json()) as
+            | AssignmentCapacity
+            | ErrorResponse;
+          if (!response.ok || !("maximumQuestionCount" in payload)) {
+            throw new Error(
+              "error" in payload
+                ? payload.error
+                : "문항 수를 계산하지 못했습니다.",
+            );
+          }
+          setCapacity(payload);
+          setQuestionCount((current) => {
+            if (questionCountMode === "auto") {
+              return payload.recommendedQuestionCount || current;
+            }
+            return current > payload.maximumQuestionCount
+              ? payload.maximumQuestionCount
+              : current;
+          });
+        })
+        .catch((requestError: unknown) => {
+          if (controller.signal.aborted) return;
+          setCapacity(null);
+          setCapacityError(
+            requestError instanceof Error
+              ? requestError.message
+              : "문항 수를 계산하지 못했습니다.",
+          );
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) {
+            setCapacityLoading(false);
+          }
+        });
+    }, 120);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [
+    datasetId,
+    directionRatio,
+    includePendingReview,
+    questionCountMode,
+    reviewLevels,
+    reviewLevelsKey,
+    capacityRefreshVersion,
+    selectedUnitIdsKey,
+    studentId,
+  ]);
+
   function resetScopedControls() {
     setIncludePendingReview(false);
     setReviewLevels(defaultReviewLevels());
-    setReviewLimit(DEFAULT_REVIEW_LIMIT);
+    setQuestionCountMode("auto");
+    setCapacity(null);
+    setCapacityError("");
     setAvailableUntilLocal("");
     setCustomTitle("");
     setError("");
@@ -512,6 +600,7 @@ export function AssignmentManager({
   }
 
   function selectStartUnit(nextStartId: string) {
+    setQuestionCountMode("auto");
     setStartUnitId(nextStartId);
     const nextStartIndex = datasetUnits.findIndex(
       (unit) => unit.id === nextStartId,
@@ -547,6 +636,7 @@ export function AssignmentManager({
   }
 
   function changeReviewLevel(level: ReviewLevel) {
+    setQuestionCountMode("auto");
     setReviewLevels((current) =>
       toggleReviewLevel(current, level),
     );
@@ -555,6 +645,7 @@ export function AssignmentManager({
   }
 
   function changeIncludePendingReview(checked: boolean) {
+    setQuestionCountMode("auto");
     setIncludePendingReview(checked);
     setError("");
     setSuccess("");
@@ -602,7 +693,6 @@ export function AssignmentManager({
             ...commonSubmission,
             includePendingReview: true,
             reviewLevels,
-            reviewLimit,
           })
         : buildAssignmentSubmission({
             ...commonSubmission,
@@ -617,6 +707,7 @@ export function AssignmentManager({
 
       if (!response.ok) {
         if (response.status === 409) {
+          setCapacityRefreshVersion((version) => version + 1);
           startRefreshTransition(() => router.refresh());
         }
         throw new Error(
@@ -626,7 +717,7 @@ export function AssignmentManager({
 
       setSuccess(
         includePendingReview
-          ? `${selectedStudent?.displayName ?? "학생"}에게 DAY+오답 시험을 배정했습니다.`
+          ? `${selectedStudent?.displayName ?? "학생"}에게 틀렸던 단어를 포함해 배정했습니다.`
           : `${selectedStudent?.displayName ?? "학생"}에게 배정했습니다.`,
       );
       setAvailableUntilLocal("");
@@ -922,13 +1013,13 @@ export function AssignmentManager({
                 : ""}
             </span>
             <span>
-              대기 오답 · 한 번 {selectedReviewCounts.pendingLevel1Count}
+              틀렸던 단어 대기 · 한 번 {selectedReviewCounts.pendingLevel1Count}
               개 · 두 번 이상{" "}
               {selectedReviewCounts.pendingLevel2Count}개
             </span>
             <span>
-              혼합 가능 {selectedAvailableReviewTotal}개 · 재시험 초안
-              예약 {selectedReservedReviewCount}개
+              추가 가능 {selectedAvailableReviewTotal}개 · 이전 초안
+              {selectedReservedReviewCount}개
             </span>
           </div>
 
@@ -1019,9 +1110,10 @@ export function AssignmentManager({
                 <label className="field">
                   <span className="field-label">끝 {unitTerm}</span>
                   <select
-                    onChange={(event) =>
-                      setEndUnitId(event.target.value)
-                    }
+                    onChange={(event) => {
+                      setQuestionCountMode("auto");
+                      setEndUnitId(event.target.value);
+                    }}
                     required
                     value={effectiveEndUnitId}
                   >
@@ -1045,7 +1137,14 @@ export function AssignmentManager({
                 {availableWordCount.toLocaleString()}개
               </p>
               <fieldset className="assignment-review-options">
-                <legend>오답 대기 포함</legend>
+                <legend>
+                  틀렸던 단어 추가
+                  <HelpTip label="틀렸던 단어 추가 도움말">
+                    기본은 꺼짐입니다. 켜면 선택한 단계의 미해결 단어를
+                    모두 추가하며, 이미 다른 시험에 배정 중인 단어는
+                    자동으로 제외합니다.
+                  </HelpTip>
+                </legend>
                 <label className="assignment-review-switch">
                   <input
                     aria-describedby="pending-review-help"
@@ -1060,18 +1159,17 @@ export function AssignmentManager({
                     type="checkbox"
                   />
                   <span>
-                    <strong>{unitTerm}에 대기 오답 함께 배정</strong>
-                    <small>
-                      기본은 꺼짐이며, 켠 경우에도 새 {unitTerm} 문항을 한
-                      개 이상 포함합니다.
-                    </small>
+                    <strong>틀렸던 단어 추가</strong>
                   </span>
                 </label>
                 <p className="field-help" id="pending-review-help">
-                  현재 단어장 대기 {selectedPendingReviewCount}개 중
-                  혼합 가능 {selectedAvailableReviewTotal}개
+                  현재 단어장 대기 {selectedPendingReviewCount}개 ·
+                  추가 가능 {capacity?.wrongEligible ?? 0}개
+                  {(capacity?.alreadyAssigned ?? 0) > 0
+                    ? ` · 배정 중 ${capacity?.alreadyAssigned}개`
+                    : ""}
                   {selectedReservedReviewCount > 0
-                    ? ` · 재시험 초안 예약 ${selectedReservedReviewCount}개 제외`
+                    ? ` · 이전 초안 ${selectedReservedReviewCount}개 제외`
                     : ""}
                 </p>
                 {includePendingReview && (
@@ -1100,40 +1198,18 @@ export function AssignmentManager({
                         {availableReviewLevel2Count}개
                       </button>
                     </div>
-                    <div className="form-grid-2">
-                      <label className="field">
-                        <span className="field-label">
-                          오답 최대 포함 수
-                        </span>
-                        <input
-                          max={400}
-                          min={1}
-                          onChange={(event) => {
-                            setReviewLimit(
-                              Number(event.target.value),
-                            );
-                            setError("");
-                            setSuccess("");
-                          }}
-                          required
-                          type="number"
-                          value={reviewLimit}
-                        />
-                      </label>
-                      <div
-                        aria-live="polite"
-                        className="assignment-review-preview"
-                      >
-                        <small>현재 조건 예상</small>
-                        <strong>
-                          오답 최대 {plannedReviewCount}개 · 총{" "}
-                          {questionCount}문항
-                        </strong>
-                        <small>
-                          새 {unitTerm} 후보 수는 출제 가능 상태·중복·전체
-                          대기 오답을 제외해 배정할 때 최종 확인합니다.
-                        </small>
-                      </div>
+                    <div
+                      aria-live="polite"
+                      className="assignment-review-preview"
+                    >
+                      <small>현재 조건</small>
+                      <strong>
+                        틀렸던 단어 {capacity?.wrongEligible ?? 0}개 ·
+                        총 {questionCount}문항
+                      </strong>
+                      <small>
+                        선택 단계의 미해결 단어를 모두 포함합니다.
+                      </small>
                     </div>
                   </div>
                 )}
@@ -1156,11 +1232,12 @@ export function AssignmentManager({
                 <label className="field">
                   <span className="field-label">출제 방식</span>
                   <select
-                    onChange={(event) =>
+                    onChange={(event) => {
+                      setQuestionCountMode("auto");
                       setDirectionRatio(
                         Number(event.target.value) as 0 | 50 | 100,
-                      )
-                    }
+                      );
+                    }}
                     value={directionRatio}
                   >
                     <option value={100}>영어 → 뜻</option>
@@ -1196,19 +1273,34 @@ export function AssignmentManager({
                     {includePendingReview ? "총 문항 수" : "문항 수"}
                   </span>
                   <input
-                    max={
-                      includePendingReview
-                        ? 500
-                        : Math.min(availableWordCount || 500, 500)
-                    }
-                    min={4}
-                    onChange={(event) =>
-                      setQuestionCount(Number(event.target.value))
-                    }
+                    max={capacity?.maximumQuestionCount ?? 500}
+                    min={capacity?.minimumQuestionCount ?? 4}
+                    onChange={(event) => {
+                      setQuestionCountMode("manual");
+                      setQuestionCount(Number(event.target.value));
+                    }}
                     required
                     type="number"
                     value={questionCount}
                   />
+                  {questionCountMode === "manual" &&
+                    capacity &&
+                    capacity.recommendedQuestionCount !==
+                      questionCount && (
+                      <button
+                        className="button button-quiet button-small"
+                        onClick={() => {
+                          setQuestionCountMode("auto");
+                          setQuestionCount(
+                            capacity.recommendedQuestionCount,
+                          );
+                        }}
+                        type="button"
+                      >
+                        전체 {capacity.recommendedQuestionCount}개로
+                        되돌리기
+                      </button>
+                    )}
                 </label>
                 <fieldset className="field timing-mode-field">
                   <legend className="field-label">
@@ -1354,7 +1446,7 @@ export function AssignmentManager({
                     <dt>구성</dt>
                     <dd>
                       {includePendingReview
-                        ? `${unitTerm} + 오답 최대 ${plannedReviewCount}개`
+                        ? `${unitTerm} + 틀렸던 단어 ${capacity?.wrongEligible ?? 0}개`
                         : unitTerm}
                     </dd>
                   </div>
@@ -1379,25 +1471,42 @@ export function AssignmentManager({
                   </div>
                 </dl>
               </div>
-              {!success &&
-                !includePendingReview &&
-                questionCount > availableWordCount && (
+              {!success && capacityLoading && (
+                <div className="notice" role="status">
+                  실제 출제 가능한 문항 수를 계산하는 중입니다.
+                </div>
+              )}
+              {!success && capacityError && (
                 <div className="notice notice-error" role="alert">
-                  선택 범위의 단어 수보다 문항 수가 많습니다.
+                  {capacityError}
+                </div>
+              )}
+              {!success && capacity && (
+                <div className="notice" role="status">
+                  단원 후보 {capacity.unitEligible}개
+                  {includePendingReview
+                    ? ` + 틀렸던 단어 ${capacity.wrongEligible}개 - 중복 ${capacity.overlap}개`
+                    : ""}
+                  {" · "}실제 출제 가능 최대{" "}
+                  {capacity.maximumQuestionCount}문항
                 </div>
               )}
               {!success &&
                 includePendingReview &&
-                selectedAvailableReviewCount === 0 && (
+                capacity &&
+                capacity.wrongEligible === 0 && (
                   <div className="notice notice-error" role="alert">
-                    선택한 오답 단계에 혼합 가능한 단어가 없습니다.
+                    선택한 단계에 추가 가능한 틀렸던 단어가 없습니다.
                   </div>
                 )}
               {!success &&
-                includePendingReview &&
-                plannedReviewCount >= questionCount && (
+                capacity &&
+                (questionCount < capacity.minimumQuestionCount ||
+                  questionCount > capacity.maximumQuestionCount) && (
                   <div className="notice notice-error" role="alert">
-                    총 문항에는 새 DAY 단어가 한 개 이상 필요합니다.
+                    현재 조건에서는 {capacity.minimumQuestionCount}~
+                    {capacity.maximumQuestionCount}문항으로 배정할 수
+                    있습니다.
                   </div>
                 )}
               {!success &&
@@ -1438,7 +1547,7 @@ export function AssignmentManager({
                   : refreshPending
                     ? "화면에 반영하는 중…"
                     : includePendingReview
-                      ? "이 학생에게 DAY+오답 배정"
+                      ? "틀렸던 단어 포함해 배정"
                       : "이 학생에게 배정"}
               </button>
             </section>

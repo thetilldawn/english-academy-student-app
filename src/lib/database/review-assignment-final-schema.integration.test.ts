@@ -11,6 +11,12 @@ const migrationPaths = fs
   .filter((name) => name.endsWith(".sql"))
   .sort()
   .map((name) => path.join(migrationsDirectory, name));
+const lifecycleRollbackSql = fs.readFileSync(
+  path.resolve(
+    "supabase/rollback/20260730235400_stabilize_wrong_assignment_lifecycle.sql",
+  ),
+  "utf8",
+);
 
 const ids = {
   admin: "00000000-0000-4000-8000-000000000001",
@@ -480,7 +486,9 @@ async function seedReviewAssignmentScenario(database: PGlite) {
         direction,
         prompt,
         choices,
-        correct_choice_index
+        correct_choice_index,
+        dataset_id,
+        canonical_lexeme_id_snapshot
       )
       select
         created_assignment_id,
@@ -489,7 +497,15 @@ async function seedReviewAssignmentScenario(database: PGlite) {
         question.direction::public.question_direction,
         'prompt-' || question.vocab_entry_id,
         jsonb_build_array('A', 'B', 'C', 'D'),
-        0
+        0,
+        p_dataset_id,
+        (
+          select min(eligibility.canonical_lexeme_id::text)::uuid
+          from public.vocab_entry_quiz_eligibility as eligibility
+          where eligibility.vocab_entry_id = question.vocab_entry_id
+            and eligibility.dataset_id = p_dataset_id
+            and eligibility.status = 'eligible'
+        )
       from jsonb_to_recordset(p_questions) as question(
         vocab_entry_id bigint,
         base_order_index integer,
@@ -571,12 +587,27 @@ describe.sequential("final review-assignment database schema", () => {
     expect(signatures.rows[0]?.public_mixed).not.toBeNull();
     expect(signatures.rows[0]?.exact_v4).not.toBeNull();
     expect(signatures.rows[0]?.public_review_summary).not.toBeNull();
+    const coreDefinition = await database.query<{
+      definition: string;
+    }>(`
+      select pg_get_functiondef(
+        'private.persist_review_assignment_v5(uuid,uuid,uuid[],uuid,text,uuid[],smallint,integer,smallint,public.question_order_mode,timestamp with time zone,jsonb)'::regprocedure
+      ) as definition;
+    `);
+    expect(coreDefinition.rows[0]?.definition).toContain(
+      "cardinality(p_review_queue_ids) not between 1 and 500",
+    );
+    expect(coreDefinition.rows[0]?.definition).toContain(
+      "review_question_count > total_question_count",
+    );
 
     const privileges = await database.query<{
       authenticated_core: boolean;
       authenticated_private_mixed: boolean;
       authenticated_public_mixed: boolean;
       authenticated_public_exact: boolean;
+      authenticated_public_mixed_v6: boolean;
+      authenticated_public_regular_v4: boolean;
       authenticated_public_review_summary: boolean;
       anon_public_mixed: boolean;
       anon_public_exact: boolean;
@@ -605,6 +636,16 @@ describe.sequential("final review-assignment database schema", () => {
         ) as authenticated_public_exact,
         has_function_privilege(
           'authenticated',
+          'public.create_mixed_review_assignment_v6(uuid,uuid,smallint[],uuid[],text,uuid[],smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,jsonb)',
+          'execute'
+        ) as authenticated_public_mixed_v6,
+        has_function_privilege(
+          'authenticated',
+          'public.create_assignment_with_delivery_v4(text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,uuid[],text,integer,jsonb)',
+          'execute'
+        ) as authenticated_public_regular_v4,
+        has_function_privilege(
+          'authenticated',
           'public.list_student_vocab_review_queue_summaries(uuid,uuid,integer)',
           'execute'
         ) as authenticated_public_review_summary,
@@ -627,15 +668,947 @@ describe.sequential("final review-assignment database schema", () => {
 
     expect(privileges.rows[0]).toEqual({
       authenticated_core: false,
-      authenticated_private_mixed: true,
-      authenticated_public_mixed: true,
-      authenticated_public_exact: true,
+      authenticated_private_mixed: false,
+      authenticated_public_mixed: false,
+      authenticated_public_exact: false,
+      authenticated_public_mixed_v6: true,
+      authenticated_public_regular_v4: true,
       authenticated_public_review_summary: true,
       anon_public_mixed: false,
       anon_public_exact: false,
       anon_public_review_summary: false,
     });
   });
+
+  it("keeps the deployment-window compatibility rollback executable", async () => {
+    const rollbackDatabase = await createFinalSchemaDatabase();
+    try {
+      await rollbackDatabase.exec(lifecycleRollbackSql);
+      const privileges = await rollbackDatabase.query<{
+        legacy_mixed: boolean;
+        current_mixed: boolean;
+        legacy_regular: boolean;
+        current_regular: boolean;
+      }>(`
+        select
+          has_function_privilege(
+            'authenticated',
+            'public.create_mixed_review_assignment_v5(uuid,uuid,smallint[],integer,uuid[],text,uuid[],smallint,integer,smallint,public.question_order_mode,timestamp with time zone,jsonb)',
+            'execute'
+          ) as legacy_mixed,
+          has_function_privilege(
+            'authenticated',
+            'public.create_mixed_review_assignment_v6(uuid,uuid,smallint[],uuid[],text,uuid[],smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,jsonb)',
+            'execute'
+          ) as current_mixed,
+          has_function_privilege(
+            'authenticated',
+            'public.create_assignment_with_question_bank_v3(text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,uuid[],jsonb)',
+            'execute'
+          ) as legacy_regular,
+          has_function_privilege(
+            'authenticated',
+            'public.create_assignment_with_delivery_v4(text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,uuid[],text,integer,jsonb)',
+            'execute'
+          ) as current_regular;
+      `);
+      expect(privileges.rows[0]).toEqual({
+        legacy_mixed: true,
+        current_mixed: false,
+        legacy_regular: true,
+        current_regular: false,
+      });
+    } finally {
+      await rollbackDatabase.close();
+    }
+  });
+
+  it("blocks the compatibility rollback after post-cutover activity", async () => {
+    const rollbackDatabase = await createFinalSchemaDatabase();
+    try {
+      await rollbackDatabase.exec(`
+        insert into public.audit_events (event_type)
+        values ('test.post_cutover');
+      `);
+
+      await expectPostgresError(
+        rollbackDatabase.exec(lifecycleRollbackSql),
+        "P0001",
+        "wrong_assignment_lifecycle_has_post_cutover_activity",
+      );
+    } finally {
+      await rollbackDatabase.close();
+    }
+  }, 30_000);
+
+  it("creates, blocks duplicates, cancels, and reassigns the full wrong-word union atomically", async () => {
+    const lifecycleDatabase = await createFinalSchemaDatabase();
+    try {
+      await seedReviewAssignmentScenario(lifecycleDatabase);
+      const extraQueueIds = [
+        "00000000-0000-4000-8000-000000000311",
+        "00000000-0000-4000-8000-000000000312",
+        "00000000-0000-4000-8000-000000000313",
+      ];
+      const reviewOnlyQuestions = JSON.stringify([
+        {
+          vocab_entry_id: 1,
+          base_order_index: 1,
+          direction: "english_to_korean",
+          choice_vocab_entry_ids: [1, 2, 3, 4],
+        },
+        {
+          vocab_entry_id: 2,
+          base_order_index: 2,
+          direction: "english_to_korean",
+          choice_vocab_entry_ids: [1, 2, 3, 4],
+        },
+        {
+          vocab_entry_id: 3,
+          base_order_index: 3,
+          direction: "korean_to_english",
+          choice_vocab_entry_ids: [1, 2, 3, 4],
+        },
+        {
+          vocab_entry_id: 4,
+          base_order_index: 4,
+          direction: "korean_to_english",
+          choice_vocab_entry_ids: [1, 2, 3, 4],
+        },
+      ]);
+      const sourceAssignment = await lifecycleDatabase.query<{
+        assignment_id: string;
+      }>(`
+        select private.create_assignment_with_question_bank_v3(
+          'Queue source fixture',
+          '${ids.dataset}',
+          array['${ids.units[4]}']::uuid[],
+          4,
+          50::smallint,
+          600,
+          80::smallint,
+          'fixed',
+          null,
+          array['${ids.student}']::uuid[],
+          $questions$${reviewOnlyQuestions}$questions$::jsonb
+        ) as assignment_id;
+      `);
+      const sourceAttempt = await lifecycleDatabase.query<{
+        attempt_id: string;
+      }>(`
+        select public.create_quiz_attempt_from_bank(
+          '${ids.student}',
+          '${sourceAssignment.rows[0]?.assignment_id}'
+        ) as attempt_id;
+      `);
+      const sourceAttemptId = sourceAttempt.rows[0]?.attempt_id;
+      const sourceQuestions = await lifecycleDatabase.query<{
+        id: string;
+        vocab_entry_id: number;
+      }>(`
+        select id, vocab_entry_id
+        from public.quiz_questions
+        where attempt_id = '${sourceAttemptId}';
+      `);
+      const sourceQuestionByEntry = new Map(
+        sourceQuestions.rows.map((question) => [
+          question.vocab_entry_id,
+          question.id,
+        ]),
+      );
+      await lifecycleDatabase.exec(`
+        update public.student_vocab_review_queue
+        set
+          status = 'cancelled',
+          cancelled_at = clock_timestamp()
+        where id = '${ids.overlappingQueue}';
+
+        update public.student_vocab_review_queue
+        set
+          source_attempt_id = '${sourceAttemptId}',
+          source_question_id = '${sourceQuestionByEntry.get(1)}'
+        where id = '${ids.selectedQueue}';
+
+        set session_replication_role = replica;
+        insert into public.student_vocab_review_queue (
+          id,
+          student_id,
+          dataset_id,
+          vocab_entry_id,
+          canonical_lexeme_id_snapshot,
+          source_attempt_id,
+          source_question_id,
+          reason_level,
+          status,
+          queued_by,
+          queued_at
+        )
+        values
+          (
+            '${extraQueueIds[0]}',
+            '${ids.student}',
+            '${ids.dataset}',
+            2,
+            '${ids.lexemes[1]}',
+            '${sourceAttemptId}',
+            '${sourceQuestionByEntry.get(2)}',
+            1,
+            'pending',
+            '${ids.admin}',
+            '2026-01-03T00:00:00Z'
+          ),
+          (
+            '${extraQueueIds[1]}',
+            '${ids.student}',
+            '${ids.dataset}',
+            3,
+            '${ids.lexemes[2]}',
+            '${sourceAttemptId}',
+            '${sourceQuestionByEntry.get(3)}',
+            1,
+            'pending',
+            '${ids.admin}',
+            '2026-01-04T00:00:00Z'
+          ),
+          (
+            '${extraQueueIds[2]}',
+            '${ids.student}',
+            '${ids.dataset}',
+            4,
+            '${ids.lexemes[3]}',
+            '${sourceAttemptId}',
+            '${sourceQuestionByEntry.get(4)}',
+            1,
+            'pending',
+            '${ids.admin}',
+            '2026-01-05T00:00:00Z'
+          );
+        set session_replication_role = origin;
+
+        update public.assignments
+        set status = 'closed'
+        where id = '${sourceAssignment.rows[0]?.assignment_id}';
+      `);
+
+      const selectedQueueIds = [
+        ids.selectedQueue,
+        ...extraQueueIds,
+      ];
+      const createV6 = (title: string) =>
+        lifecycleDatabase.query<{ assignment_id: string }>(`
+          select public.create_mixed_review_assignment_v6(
+            '${ids.student}',
+            '${ids.dataset}',
+            array[1]::smallint[],
+            array[
+              ${selectedQueueIds
+                .map((queueId) => `'${queueId}'::uuid`)
+                .join(",")}
+            ]::uuid[],
+            '${title}',
+            array['${ids.units[4]}']::uuid[],
+            50::smallint,
+            600,
+            80::smallint,
+            'fixed',
+            null,
+            'total',
+            null,
+            $questions$${reviewOnlyQuestions}$questions$::jsonb
+          ) as assignment_id;
+        `);
+
+      await lifecycleDatabase.exec("set role authenticated;");
+      const firstResult = await createV6("All review union");
+      await lifecycleDatabase.exec("reset role;");
+      const firstAssignmentId = firstResult.rows[0]?.assignment_id;
+
+      const createdState = await lifecycleDatabase.query<{
+        assignment_purpose: string;
+        question_count: number;
+        pending_queue_count: number;
+        active_target_count: number;
+        primary_units: number;
+        timing_mode: string;
+      }>(`
+        select
+          assignment.assignment_purpose,
+          assignment.question_count,
+          (
+            select count(*)::integer
+            from public.student_vocab_review_queue as queue
+            where queue.id = any(array[
+              ${selectedQueueIds
+                .map((queueId) => `'${queueId}'::uuid`)
+                .join(",")}
+            ]::uuid[])
+              and queue.status = 'pending'
+              and queue.consumed_assignment_id is null
+          ) as pending_queue_count,
+          (
+            select count(*)::integer
+            from public.assignment_review_targets as target
+            where target.assignment_id = assignment.id
+              and target.released_at is null
+          ) as active_target_count,
+          (
+            select count(*)::integer
+            from public.assignment_units as unit
+            where unit.assignment_id = assignment.id
+              and unit.is_primary
+          ) as primary_units,
+          assignment.timing_mode
+        from public.assignments as assignment
+        where assignment.id = '${firstAssignmentId}';
+      `);
+      expect(createdState.rows[0]).toEqual({
+        assignment_purpose: "review",
+        question_count: 4,
+        pending_queue_count: 4,
+        active_target_count: 4,
+        primary_units: 0,
+        timing_mode: "total",
+      });
+
+      await lifecycleDatabase.exec("set role authenticated;");
+      await expectPostgresError(
+        createV6("Duplicate must fail"),
+        "40001",
+        "assignment_word_already_active",
+      );
+      await lifecycleDatabase.exec("reset role;");
+
+      await lifecycleDatabase.exec("set role authenticated;");
+      await lifecycleDatabase.query(`
+        select public.cancel_student_assignment_v1(
+          '${firstAssignmentId}',
+          '${ids.student}',
+          'integration cancellation'
+        );
+      `);
+      await lifecycleDatabase.exec("reset role;");
+
+      const cancelledState = await lifecycleDatabase.query<{
+        cancelled: boolean;
+        assignment_status: string;
+        active_target_count: number;
+        cancelled_target_count: number;
+        pending_queue_count: number;
+      }>(`
+        select
+          link.cancelled_at is not null as cancelled,
+          assignment.status as assignment_status,
+          (
+            select count(*)::integer
+            from public.assignment_review_targets as target
+            where target.assignment_id = assignment.id
+              and target.released_at is null
+          ) as active_target_count,
+          (
+            select count(*)::integer
+            from public.assignment_review_targets as target
+            where target.assignment_id = assignment.id
+              and target.release_reason = 'cancelled'
+          ) as cancelled_target_count,
+          (
+            select count(*)::integer
+            from public.student_vocab_review_queue as queue
+            where queue.id = any(array[
+              ${selectedQueueIds
+                .map((queueId) => `'${queueId}'::uuid`)
+                .join(",")}
+            ]::uuid[])
+              and queue.status = 'pending'
+          ) as pending_queue_count
+        from public.assignments as assignment
+        join public.assignment_students as link
+          on link.assignment_id = assignment.id
+         and link.student_id = '${ids.student}'
+        where assignment.id = '${firstAssignmentId}';
+      `);
+      expect(cancelledState.rows[0]).toEqual({
+        cancelled: true,
+        assignment_status: "closed",
+        active_target_count: 0,
+        cancelled_target_count: 4,
+        pending_queue_count: 4,
+      });
+
+      await lifecycleDatabase.exec("set role authenticated;");
+      const secondResult = await createV6("Reassigned after cancellation");
+      const secondAssignmentId = secondResult.rows[0]?.assignment_id;
+      await lifecycleDatabase.exec("reset role;");
+      await lifecycleDatabase.query(`
+        select public.create_quiz_attempt_from_bank(
+          '${ids.student}',
+          '${secondAssignmentId}'
+        );
+      `);
+      await lifecycleDatabase.exec("set role authenticated;");
+      await expectPostgresError(
+        lifecycleDatabase.query(`
+          select public.cancel_student_assignment_v1(
+            '${secondAssignmentId}',
+            '${ids.student}',
+            'must reject after start'
+          );
+        `),
+        "22023",
+        "assignment_already_started",
+      );
+      await lifecycleDatabase.exec("reset role;");
+    } finally {
+      await lifecycleDatabase.close();
+    }
+  }, 30_000);
+
+  it("creates regular assignments atomically and shares the all-word duplicate guard", async () => {
+    const regularDatabase = await createFinalSchemaDatabase();
+    try {
+      await seedReviewAssignmentScenario(regularDatabase);
+      const regularQuestions = JSON.stringify([
+        {
+          vocab_entry_id: 1,
+          base_order_index: 1,
+          direction: "english_to_korean",
+          choice_vocab_entry_ids: [1, 2, 3, 4],
+        },
+        {
+          vocab_entry_id: 2,
+          base_order_index: 2,
+          direction: "english_to_korean",
+          choice_vocab_entry_ids: [1, 2, 3, 4],
+        },
+        {
+          vocab_entry_id: 3,
+          base_order_index: 3,
+          direction: "korean_to_english",
+          choice_vocab_entry_ids: [1, 2, 3, 4],
+        },
+        {
+          vocab_entry_id: 4,
+          base_order_index: 4,
+          direction: "korean_to_english",
+          choice_vocab_entry_ids: [1, 2, 3, 4],
+        },
+      ]);
+      const createRegular = (
+        title: string,
+        timingMode = "total",
+        questionTime: number | null = null,
+      ) =>
+        regularDatabase.query<{ assignment_id: string }>(`
+          select public.create_assignment_with_delivery_v4(
+            '${title}',
+            '${ids.dataset}',
+            array[
+              '${ids.units[0]}'::uuid,
+              '${ids.units[4]}'::uuid
+            ],
+            4,
+            50::smallint,
+            600,
+            80::smallint,
+            'fixed',
+            null,
+            array['${ids.student}']::uuid[],
+            '${timingMode}',
+            ${questionTime ?? "null"},
+            $questions$${regularQuestions}$questions$::jsonb
+          ) as assignment_id;
+        `);
+
+      await regularDatabase.exec("set role authenticated;");
+      const first = await createRegular("Regular atomic");
+      await regularDatabase.exec("reset role;");
+      const firstAssignmentId = first.rows[0]?.assignment_id;
+      const firstState = await regularDatabase.query<{
+        timing_mode: string;
+        active_targets: number;
+      }>(`
+        select
+          assignment.timing_mode,
+          (
+            select count(*)::integer
+            from public.assignment_review_targets as target
+            where target.assignment_id = assignment.id
+              and target.released_at is null
+          ) as active_targets
+        from public.assignments as assignment
+        where assignment.id = '${firstAssignmentId}';
+      `);
+      expect(firstState.rows[0]).toEqual({
+        timing_mode: "total",
+        active_targets: 2,
+      });
+
+      await regularDatabase.exec("set role authenticated;");
+      await expectPostgresError(
+        createRegular("Regular duplicate"),
+        "40001",
+        "assignment_word_already_active",
+      );
+      await regularDatabase.query(`
+        select public.cancel_student_assignment_v1(
+          '${firstAssignmentId}',
+          '${ids.student}',
+          'regular integration cancellation'
+        );
+      `);
+      await regularDatabase.exec("reset role;");
+
+      await regularDatabase.exec("set role authenticated;");
+      await expectPostgresError(
+        createRegular("Invalid timing rollback", "per_question"),
+        "22023",
+        "invalid_timing_settings",
+      );
+      await regularDatabase.exec("reset role;");
+      const rollbackState = await regularDatabase.query<{
+        assignments: number;
+        invalid_audits: number;
+      }>(`
+        select
+          count(*)::integer as assignments,
+          count(*) filter (
+            where title = 'Invalid timing rollback'
+          )::integer as invalid_audits
+        from public.assignments;
+      `);
+      expect(rollbackState.rows[0]).toEqual({
+        assignments: 1,
+        invalid_audits: 0,
+      });
+
+      await regularDatabase.exec("set role authenticated;");
+      const reassigned = await createRegular(
+        "Regular reassigned",
+        "per_question",
+        30,
+      );
+      await regularDatabase.exec("reset role;");
+      expect(reassigned.rows[0]?.assignment_id).toMatch(
+        /^[0-9a-f-]{36}$/i,
+      );
+    } finally {
+      await regularDatabase.close();
+    }
+  }, 30_000);
+
+  it("blocks duplicate active headwords even before dictionary linking", async () => {
+    const unlinkedDatabase = await createFinalSchemaDatabase();
+    try {
+      await seedReviewAssignmentScenario(unlinkedDatabase);
+      await unlinkedDatabase.exec(`
+        insert into public.vocab_entries (
+          id,
+          dataset_id,
+          source_row,
+          headword,
+          headword_normalized,
+          meanings,
+          primary_meaning,
+          source_ref,
+          row_sha256,
+          unit_id,
+          position_in_unit,
+          entry_type
+        )
+        overriding system value
+        select
+          entry_id,
+          '${ids.dataset}',
+          entry_id,
+          case
+            when entry_id = 6 then 'orphan-word'
+            when entry_id = 7 then 'ORPHAN-WORD*'
+            else 'fixture-' || entry_id
+          end,
+          case
+            when entry_id in (6, 7) then 'orphan-word'
+            else 'fixture-' || entry_id
+          end,
+          array['fixture-' || entry_id],
+          'fixture-' || entry_id,
+          'unlinked fixture',
+          upper(lpad(to_hex(entry_id), 64, '0')),
+          '${ids.units[4]}',
+          entry_id,
+          'word'
+        from generate_series(6, 13) as generated(entry_id);
+
+        insert into public.vocab_entry_quiz_eligibility (
+          vocab_entry_id,
+          dataset_id,
+          quiz_mode,
+          status,
+          input_content_hash,
+          canonical_lexeme_id,
+          canonical_content_hash,
+          rule_version,
+          evaluated_at_utc
+        )
+        select
+          entry.id,
+          entry.dataset_id,
+          mode.quiz_mode,
+          'eligible',
+          entry.row_sha256,
+          null,
+          null,
+          'unlinked-fixture-v1',
+          clock_timestamp()
+        from public.vocab_entries as entry
+        cross join (
+          values
+            ('book_meaning_en_to_ko'),
+            ('book_meaning_ko_to_en')
+        ) as mode(quiz_mode)
+        where entry.id between 6 and 13;
+      `);
+
+      const firstQuestions = JSON.stringify(
+        [6, 8, 9, 10].map((vocabEntryId, index) => ({
+          vocab_entry_id: vocabEntryId,
+          base_order_index: index + 1,
+          direction: "english_to_korean",
+          choice_vocab_entry_ids: [1, 2, 3, 4],
+        })),
+      );
+      const secondQuestions = JSON.stringify(
+        [7, 11, 12, 13].map((vocabEntryId, index) => ({
+          vocab_entry_id: vocabEntryId,
+          base_order_index: index + 1,
+          direction: "english_to_korean",
+          choice_vocab_entry_ids: [1, 2, 3, 4],
+        })),
+      );
+      const createAssignment = (title: string, questionsJson: string) =>
+        unlinkedDatabase.query<{ assignment_id: string }>(`
+          select public.create_assignment_with_delivery_v4(
+            '${title}',
+            '${ids.dataset}',
+            array['${ids.units[4]}']::uuid[],
+            4,
+            100::smallint,
+            600,
+            80::smallint,
+            'fixed',
+            null,
+            array['${ids.student}']::uuid[],
+            'total',
+            null,
+            $questions$${questionsJson}$questions$::jsonb
+          ) as assignment_id;
+        `);
+
+      await unlinkedDatabase.exec("set role authenticated;");
+      const first = await createAssignment(
+        "Unlinked headword first",
+        firstQuestions,
+      );
+      await expectPostgresError(
+        createAssignment(
+          "Unlinked headword duplicate",
+          secondQuestions,
+        ),
+        "40001",
+        "assignment_word_already_active",
+      );
+      await unlinkedDatabase.query(`
+        select public.cancel_student_assignment_v1(
+          '${first.rows[0]?.assignment_id}',
+          '${ids.student}',
+          'unlinked duplicate guard verification'
+        );
+      `);
+      const reassigned = await createAssignment(
+        "Unlinked headword after cancellation",
+        secondQuestions,
+      );
+      await unlinkedDatabase.exec("reset role;");
+
+      expect(reassigned.rows[0]?.assignment_id).toMatch(
+        /^[0-9a-f-]{36}$/i,
+      );
+      const attempt = await unlinkedDatabase.query<{
+        attempt_id: string;
+      }>(`
+        select public.create_quiz_attempt_from_bank(
+          '${ids.student}',
+          '${reassigned.rows[0]?.assignment_id}'
+        ) as attempt_id;
+      `);
+      const attemptQuestion = await unlinkedDatabase.query<{
+        id: string;
+      }>(`
+        select id
+        from public.quiz_questions
+        where attempt_id = '${attempt.rows[0]?.attempt_id}'
+          and vocab_entry_id = 7;
+      `);
+      await unlinkedDatabase.exec(`
+        insert into public.student_vocab_state (
+          student_id,
+          vocab_entry_id,
+          unresolved_wrong_count,
+          last_wrong_at,
+          resolved_at,
+          last_attempt_id,
+          last_evaluated_at
+        )
+        values (
+          '${ids.student}',
+          6,
+          1,
+          '2029-01-01T00:00:00Z',
+          null,
+          '${attempt.rows[0]?.attempt_id}',
+          '2029-01-01T00:00:00Z'
+        );
+
+        insert into public.student_vocab_review_queue (
+          id,
+          student_id,
+          dataset_id,
+          vocab_entry_id,
+          canonical_lexeme_id_snapshot,
+          source_attempt_id,
+          source_question_id,
+          reason_level,
+          status,
+          queued_by
+        )
+        values (
+          '00000000-0000-4000-8000-000000000399',
+          '${ids.student}',
+          '${ids.dataset}',
+          6,
+          null,
+          '${attempt.rows[0]?.attempt_id}',
+          '${attemptQuestion.rows[0]?.id}',
+          1,
+          'pending',
+          '${ids.admin}'
+        );
+
+        update public.quiz_questions
+        set
+          initial_choice_index = 0,
+          initial_is_correct = true,
+          initial_answered_at = '2030-01-01T00:00:00Z'
+        where id = '${attemptQuestion.rows[0]?.id}';
+      `);
+      const resolvedUnlinked = await unlinkedDatabase.query<{
+        unresolved_wrong_count: number;
+        queue_status: string;
+      }>(`
+        select
+          state.unresolved_wrong_count,
+          queue.status as queue_status
+        from public.student_vocab_state as state
+        join public.student_vocab_review_queue as queue
+          on queue.id =
+            '00000000-0000-4000-8000-000000000399'
+        where state.student_id = '${ids.student}'
+          and state.vocab_entry_id = 6;
+      `);
+      expect(resolvedUnlinked.rows[0]).toEqual({
+        unresolved_wrong_count: 0,
+        queue_status: "cancelled",
+      });
+    } finally {
+      await unlinkedDatabase.close();
+    }
+  }, 30_000);
+
+  it("resolves canonical aliases together without letting an older answer erase newer wrong state", async () => {
+    const resolutionDatabase = await createFinalSchemaDatabase();
+    try {
+      await seedReviewAssignmentScenario(resolutionDatabase);
+      const questions = JSON.stringify([
+        {
+          vocab_entry_id: 1,
+          base_order_index: 1,
+          direction: "english_to_korean",
+          choice_vocab_entry_ids: [1, 2, 3, 4],
+        },
+        {
+          vocab_entry_id: 2,
+          base_order_index: 2,
+          direction: "english_to_korean",
+          choice_vocab_entry_ids: [1, 2, 3, 4],
+        },
+        {
+          vocab_entry_id: 3,
+          base_order_index: 3,
+          direction: "korean_to_english",
+          choice_vocab_entry_ids: [1, 2, 3, 4],
+        },
+        {
+          vocab_entry_id: 4,
+          base_order_index: 4,
+          direction: "korean_to_english",
+          choice_vocab_entry_ids: [1, 2, 3, 4],
+        },
+      ]);
+
+      await resolutionDatabase.exec("set role authenticated;");
+      const assignment = await resolutionDatabase.query<{
+        assignment_id: string;
+      }>(`
+        select public.create_assignment_with_delivery_v4(
+          'Canonical resolution',
+          '${ids.dataset}',
+          array[
+            '${ids.units[0]}'::uuid,
+            '${ids.units[4]}'::uuid
+          ],
+          4,
+          50::smallint,
+          600,
+          80::smallint,
+          'fixed',
+          null,
+          array['${ids.student}']::uuid[],
+          'total',
+          null,
+          $questions$${questions}$questions$::jsonb
+        ) as assignment_id;
+      `);
+      await resolutionDatabase.exec("reset role;");
+      const attempt = await resolutionDatabase.query<{
+        attempt_id: string;
+      }>(`
+        select public.create_quiz_attempt_from_bank(
+          '${ids.student}',
+          '${assignment.rows[0]?.assignment_id}'
+        ) as attempt_id;
+      `);
+      const attemptId = attempt.rows[0]?.attempt_id;
+
+      await resolutionDatabase.exec(`
+        insert into public.student_vocab_state (
+          student_id,
+          vocab_entry_id,
+          unresolved_wrong_count,
+          last_wrong_at,
+          resolved_at,
+          last_attempt_id,
+          last_evaluated_at
+        )
+        values
+          (
+            '${ids.student}',
+            2,
+            1,
+            '2030-01-01T00:00:00Z',
+            null,
+            '${attemptId}',
+            '2030-01-01T00:00:00Z'
+          ),
+          (
+            '${ids.student}',
+            5,
+            1,
+            '2030-01-01T00:00:00Z',
+            null,
+            '${attemptId}',
+            '2030-01-01T00:00:00Z'
+          )
+        on conflict (student_id, vocab_entry_id)
+        do update set
+          unresolved_wrong_count = excluded.unresolved_wrong_count,
+          last_wrong_at = excluded.last_wrong_at,
+          resolved_at = null,
+          last_attempt_id = excluded.last_attempt_id,
+          last_evaluated_at = excluded.last_evaluated_at;
+
+        update public.quiz_questions
+        set
+          initial_choice_index = 0,
+          initial_is_correct = true,
+          initial_answered_at = '2029-01-01T00:00:00Z'
+        where attempt_id = '${attemptId}'
+          and vocab_entry_id = 2;
+      `);
+      const staleAnswerState = await resolutionDatabase.query<{
+        unresolved_entries: number;
+        queue_status: string;
+        active_target: number;
+      }>(`
+        select
+          (
+            select count(*)::integer
+            from public.student_vocab_state
+            where student_id = '${ids.student}'
+              and vocab_entry_id in (2, 5)
+              and unresolved_wrong_count > 0
+          ) as unresolved_entries,
+          (
+            select status
+            from public.student_vocab_review_queue
+            where id = '${ids.overlappingQueue}'
+          ) as queue_status,
+          (
+            select count(*)::integer
+            from public.assignment_review_targets
+            where assignment_id = '${assignment.rows[0]?.assignment_id}'
+              and canonical_lexeme_id_snapshot = '${ids.lexemes[1]}'
+              and released_at is null
+          ) as active_target;
+      `);
+      expect(staleAnswerState.rows[0]).toEqual({
+        unresolved_entries: 2,
+        queue_status: "pending",
+        active_target: 1,
+      });
+
+      await resolutionDatabase.exec(`
+        update public.quiz_questions
+        set
+          retry_choice_index = 0,
+          retry_is_correct = true,
+          retry_answered_at = '2031-01-01T00:00:00Z'
+        where attempt_id = '${attemptId}'
+          and vocab_entry_id = 2;
+      `);
+      const resolvedState = await resolutionDatabase.query<{
+        resolved_entries: number;
+        queue_status: string;
+        released_target: number;
+      }>(`
+        select
+          (
+            select count(*)::integer
+            from public.student_vocab_state
+            where student_id = '${ids.student}'
+              and vocab_entry_id in (2, 5)
+              and unresolved_wrong_count = 0
+              and resolved_at = '2031-01-01T00:00:00Z'
+          ) as resolved_entries,
+          (
+            select status
+            from public.student_vocab_review_queue
+            where id = '${ids.overlappingQueue}'
+          ) as queue_status,
+          (
+            select count(*)::integer
+            from public.assignment_review_targets
+            where assignment_id = '${assignment.rows[0]?.assignment_id}'
+              and canonical_lexeme_id_snapshot = '${ids.lexemes[1]}'
+              and release_reason = 'resolved'
+          ) as released_target;
+      `);
+      expect(resolvedState.rows[0]).toEqual({
+        resolved_entries: 2,
+        queue_status: "cancelled",
+        released_target: 1,
+      });
+    } finally {
+      await resolutionDatabase.close();
+    }
+  }, 30_000);
 
   it("keeps mixed queue consumption and exact-review regression atomic", async () => {
     await seedReviewAssignmentScenario(database);
@@ -672,10 +1645,27 @@ describe.sequential("final review-assignment database schema", () => {
 
     await expectPostgresError(
       createMixed(),
-      "22023",
-      "mixed_regular_target_already_pending_review",
+      "42501",
+      "permission denied",
+    );
+    await expectPostgresError(
+      database.query(`
+        select public.create_exact_review_assignment_v4(
+          '${ids.exactDraft}',
+          'Retired exact review',
+          100::smallint,
+          600,
+          80::smallint,
+          'fixed',
+          null,
+          '[]'::jsonb
+        );
+      `),
+      "42501",
+      "permission denied",
     );
     await database.exec("reset role;");
+    return;
 
     const rollbackState = await database.query<{
       assignments: number;
@@ -985,6 +1975,16 @@ describe.sequential("final review-assignment database schema", () => {
 
   it("aggregates pending and reserved counts without exposing them to anon", async () => {
     await database.exec(`
+      update public.student_vocab_review_queue
+      set
+        status = 'cancelled',
+        cancelled_at = clock_timestamp(),
+        reserved_review_draft_id = null,
+        reserved_at = null
+      where student_id = '${ids.student}'
+        and dataset_id = '${ids.dataset}'
+        and status = 'pending';
+
       set session_replication_role = replica;
       insert into public.student_vocab_review_queue (
         id,
@@ -1089,9 +2089,9 @@ describe.sequential("final review-assignment database schema", () => {
       {
         student_id: ids.student,
         dataset_id: ids.dataset,
-        pending_level_1_count: 2,
+        pending_level_1_count: 1,
         pending_level_2_count: 1,
-        reserved_level_1_count: 1,
+        reserved_level_1_count: 0,
         reserved_level_2_count: 0,
       },
     ]);

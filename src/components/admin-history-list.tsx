@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   useEffect,
   useMemo,
@@ -49,6 +50,7 @@ type DetailResponse = {
 
 const STATUS_LABELS: Record<AssignmentActivityStatus, string> = {
   not_started: "응시 전",
+  cancelled: "배정 취소",
   missed: "미응시 마감",
   in_progress: "응시 중",
   completed: "완료",
@@ -87,12 +89,15 @@ export function AdminHistoryList({
   compact?: boolean;
   showFilters?: boolean;
 }) {
+  const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const detailRequestRef = useRef<AbortController | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<AttemptDetail | null>(null);
   const [detailError, setDetailError] = useState("");
   const [detailLoading, setDetailLoading] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState("");
   const [selectedDeadlineRemaining, setSelectedDeadlineRemaining] =
     useState<number | null>(null);
   const [query, setQuery] = useState("");
@@ -144,6 +149,7 @@ export function AdminHistoryList({
     setSelectedId(item.id);
     setDetail(null);
     setDetailError("");
+    setCancelError("");
     setSelectedDeadlineRemaining(
       secondsUntil(item.availableUntil, currentTimeMilliseconds()),
     );
@@ -181,6 +187,47 @@ export function AdminHistoryList({
       .finally(() => {
         if (!controller.signal.aborted) setDetailLoading(false);
       });
+  }
+
+  async function cancelSelectedAssignment() {
+    if (
+      !selected ||
+      selected.status !== "not_started" ||
+      selected.attemptId ||
+      cancelling
+    ) {
+      return;
+    }
+    if (
+      !window.confirm(
+        `${selected.studentName} 학생의 이 배정을 취소할까요? 틀렸던 단어는 다음 시험 대기에 남습니다.`,
+      )
+    ) {
+      return;
+    }
+
+    setCancelling(true);
+    setCancelError("");
+    try {
+      const response = await fetch(
+        `/api/admin/assignments/${selected.assignmentId}/students/${selected.studentId}`,
+        { method: "DELETE" },
+      );
+      const payload = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        throw new Error(payload.error ?? "배정을 취소하지 못했습니다.");
+      }
+      closeDialog();
+      router.refresh();
+    } catch (error) {
+      setCancelError(
+        error instanceof Error
+          ? error.message
+          : "배정을 취소하지 못했습니다.",
+      );
+    } finally {
+      setCancelling(false);
+    }
   }
 
   function closeDialog() {
@@ -227,6 +274,7 @@ export function AdminHistoryList({
             >
               <option value="all">전체</option>
               <option value="not_started">응시 전</option>
+              <option value="cancelled">배정 취소</option>
               <option value="missed">미응시 마감</option>
               <option value="in_progress">응시 중</option>
               <option value="completed">완료</option>
@@ -261,6 +309,10 @@ export function AdminHistoryList({
                       ? `마감 ${formatKoreanDateTime(
                           item.availableUntil,
                         )}`
+                      : item.status === "cancelled"
+                        ? `취소 ${formatKoreanDateTime(
+                            item.cancelledAt,
+                          )}`
                       : item.status === "not_started"
                         ? `배정 ${formatKoreanDateTime(
                             item.assignedAt,
@@ -337,7 +389,8 @@ export function AdminHistoryList({
             <div>
               <span>
                 {selected.status === "not_started" ||
-                selected.status === "missed"
+                selected.status === "missed" ||
+                selected.status === "cancelled"
                   ? "배정 상태"
                   : "다시 볼 단어"}
               </span>
@@ -346,6 +399,8 @@ export function AdminHistoryList({
                   ? "응시 전"
                   : selected.status === "missed"
                     ? "마감까지 시작 안 함"
+                    : selected.status === "cancelled"
+                      ? "관리자가 취소함"
                   : `${selected.unresolvedWrongCount ?? "-"}개`}
               </strong>
             </div>
@@ -422,6 +477,11 @@ export function AdminHistoryList({
               {detailError}
             </div>
           )}
+          {cancelError && (
+            <div className="notice notice-error" role="alert">
+              {cancelError}
+            </div>
+          )}
           {detail && (
             <section className="history-wrong-summary">
               <div className="section-heading">
@@ -467,6 +527,18 @@ export function AdminHistoryList({
           )}
 
           <div className="dialog-actions">
+            {selected.status === "not_started" &&
+              !selected.attemptId && (
+                <button
+                  aria-busy={cancelling}
+                  className="button button-secondary"
+                  disabled={cancelling}
+                  onClick={() => void cancelSelectedAssignment()}
+                  type="button"
+                >
+                  {cancelling ? "취소하는 중…" : "배정 취소"}
+                </button>
+              )}
             {selected.attemptId && (
               <Link
                 className="button button-primary"

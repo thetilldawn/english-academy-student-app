@@ -27,7 +27,6 @@ type RegularAssignmentInput = CommonAssignmentInput & {
 type MixedAssignmentInput = CommonAssignmentInput & {
   includePendingReview: true;
   reviewLevels: ReviewLevel[];
-  reviewLimit: number;
 };
 
 export type AssignmentSubmissionInput =
@@ -67,7 +66,6 @@ export function buildAssignmentSubmission(
         datasetId: input.datasetId,
         primaryUnitIds: [...input.primaryUnitIds],
         reviewLevels: [...input.reviewLevels],
-        reviewLimit: input.reviewLimit,
         totalQuestionCount: input.questionCount,
         title: input.title,
         englishToKoreanRatio: input.englishToKoreanRatio,

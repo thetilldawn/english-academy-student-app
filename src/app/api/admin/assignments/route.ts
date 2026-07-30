@@ -1,6 +1,7 @@
 import { getAdminContext } from "@/lib/auth/admin";
 import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
 import {
+  AssignmentCreationError,
   createAssignment,
   listAssignments,
 } from "@/lib/services/admin-service";
@@ -35,9 +36,17 @@ export async function POST(request: Request) {
   try {
     const assignmentId = await createAssignment(input);
     return Response.json({ assignmentId }, { status: 201 });
-  } catch {
+  } catch (error) {
+    if (error instanceof AssignmentCreationError) {
+      if (error.reason === "conflict") {
+        return jsonError(error.message, 409);
+      }
+      if (error.reason === "invalid_selection") {
+        return jsonError(error.message, 422);
+      }
+    }
     return jsonError(
-      "검수 완료된 어휘와 범위를 확인한 뒤 다시 시도해주세요.",
+      "시험을 배정하지 못했습니다. 잠시 후 다시 시도해 주세요.",
       503,
     );
   }

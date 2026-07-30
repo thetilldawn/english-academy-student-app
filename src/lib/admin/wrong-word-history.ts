@@ -1,3 +1,5 @@
+import { normalizeQuizHeadword } from "@/lib/quiz/engine";
+
 export type WrongStage = "initial" | "retry";
 
 export type WrongEventSource = {
@@ -25,6 +27,7 @@ export type WrongEntrySource = {
   datasetId: string;
   datasetLabel: string;
   headword: string;
+  headwordNormalized?: string;
   primaryMeaning: string;
 };
 
@@ -32,6 +35,32 @@ export type WrongWordOutcome =
   | "recovered_on_retry"
   | "wrong_again"
   | "retry_unanswered";
+
+export type WrongWordResolution = "unresolved" | "resolved";
+
+export type WrongWordScheduling =
+  | "available"
+  | "queued"
+  | "assigned"
+  | "none";
+
+export type WrongWordActiveAssignment = {
+  assignmentId: string;
+  title: string;
+  assignedAt: string;
+};
+
+export type WrongWordStateSource = {
+  vocabEntryId: number;
+  unresolvedWrongCount: number;
+  resolvedAt: string | null;
+  lastEvaluatedAt: string;
+};
+
+export type ActiveWrongWordAssignmentSource =
+  WrongWordActiveAssignment & {
+    key: string;
+  };
 
 export type WrongWordOccurrence = {
   datasetId: string;
@@ -43,6 +72,9 @@ export type WrongWordOccurrence = {
   provenanceStatus: "legacy_backfill" | "verified_v2";
   wrongCount: number;
   lastWrongAt: string;
+  resolution: WrongWordResolution;
+  scheduling: WrongWordScheduling;
+  activeAssignment: WrongWordActiveAssignment | null;
 };
 
 export type WrongWordAggregate = {
@@ -58,6 +90,9 @@ export type WrongWordAggregate = {
   latestDatasetId: string;
   latestVocabEntryId: number;
   latestOutcome: WrongWordOutcome;
+  resolution: WrongWordResolution;
+  scheduling: WrongWordScheduling;
+  activeAssignment: WrongWordActiveAssignment | null;
   occurrences: WrongWordOccurrence[];
 };
 
@@ -91,30 +126,50 @@ function latestOutcome(
   return "retry_unanswered";
 }
 
-function wordIdentity(event: WrongEventSource) {
+function wordIdentity(
+  event: WrongEventSource,
+  entry: WrongEntrySource,
+) {
+  const headwordKey = normalizeQuizHeadword(
+    entry.headwordNormalized ?? entry.headword,
+  );
   return event.canonicalLexemeId
     ? `canonical:${event.canonicalLexemeId}`
-    : `entry:${event.datasetId}:${event.vocabEntryId}`;
+    : headwordKey
+      ? `headword:${event.datasetId}:${headwordKey}`
+      : `entry:${event.datasetId}:${event.vocabEntryId}`;
 }
 
 export function wrongWordReviewIdentity(
   datasetId: string,
   vocabEntryId: number,
   canonicalLexemeId: string | null,
+  headword?: string | null,
 ) {
+  const headwordKey = headword
+    ? normalizeQuizHeadword(headword)
+    : "";
   return canonicalLexemeId
     ? `canonical:${datasetId}:${canonicalLexemeId}`
-    : `entry:${datasetId}:${vocabEntryId}`;
+    : headwordKey
+      ? `headword:${datasetId}:${headwordKey}`
+      : `entry:${datasetId}:${vocabEntryId}`;
 }
 
 export function buildStudentWrongWordHistory({
+  activeAssignments = [],
   entries,
   events,
+  pendingReviews = [],
   questions,
+  states = [],
 }: {
+  activeAssignments?: readonly ActiveWrongWordAssignmentSource[];
   entries: readonly WrongEntrySource[];
   events: readonly WrongEventSource[];
+  pendingReviews?: readonly PendingWrongWordReview[];
   questions: readonly WrongQuestionSource[];
+  states?: readonly WrongWordStateSource[];
 }): StudentWrongWordHistory {
   const entryById = new Map(entries.map((entry) => [entry.id, entry]));
   const questionById = new Map(
@@ -122,9 +177,38 @@ export function buildStudentWrongWordHistory({
   );
   const usableEvents = events.filter(
     (event) =>
+      event.stage === "initial" &&
       questionById.has(event.questionId) &&
       entryById.has(event.vocabEntryId),
   );
+  const latestStateByEntryId = new Map<number, WrongWordStateSource>();
+  for (const state of states) {
+    const current = latestStateByEntryId.get(state.vocabEntryId);
+    if (
+      !current ||
+      Date.parse(state.lastEvaluatedAt) >
+        Date.parse(current.lastEvaluatedAt)
+    ) {
+      latestStateByEntryId.set(state.vocabEntryId, state);
+    }
+  }
+  const pendingReviewByKey = new Map(
+    pendingReviews.map((review) => [review.key, review]),
+  );
+  const activeAssignmentByKey = new Map<
+    string,
+    ActiveWrongWordAssignmentSource
+  >();
+  for (const assignment of activeAssignments) {
+    const current = activeAssignmentByKey.get(assignment.key);
+    if (
+      !current ||
+      Date.parse(assignment.assignedAt) >
+        Date.parse(current.assignedAt)
+    ) {
+      activeAssignmentByKey.set(assignment.key, assignment);
+    }
+  }
 
   const aggregateByKey = new Map<
     string,
@@ -144,7 +228,7 @@ export function buildStudentWrongWordHistory({
   for (const event of usableEvents) {
     const question = questionById.get(event.questionId)!;
     const entry = entryById.get(event.vocabEntryId)!;
-    const key = wordIdentity(event);
+    const key = wordIdentity(event, entry);
     const current = aggregateByKey.get(key);
     const occurrence =
       current?.occurrenceByEntryId.get(event.vocabEntryId) ?? {
@@ -158,6 +242,9 @@ export function buildStudentWrongWordHistory({
         provenanceStatus: question.provenanceStatus,
         wrongCount: 0,
         lastWrongAt: event.wrongAt,
+        resolution: "unresolved" as const,
+        scheduling: "available" as const,
+        activeAssignment: null,
       };
     occurrence.wrongCount += 1;
     if (
@@ -200,12 +287,77 @@ export function buildStudentWrongWordHistory({
   const words = [...aggregateByKey.entries()]
     .map(([key, aggregate]): WrongWordAggregate => {
       const occurrences = [...aggregate.occurrenceByEntryId.values()]
+        .map((occurrence): WrongWordOccurrence => {
+          const state = latestStateByEntryId.get(
+            occurrence.vocabEntryId,
+          );
+          const occurrenceQuestion = questionById.get(
+            occurrence.latestQuestionId,
+          );
+          const resolution: WrongWordResolution = state
+            ? state.unresolvedWrongCount > 0 && !state.resolvedAt
+              ? "unresolved"
+              : "resolved"
+            : occurrenceQuestion &&
+                latestOutcome(occurrenceQuestion) ===
+                  "recovered_on_retry"
+              ? "resolved"
+              : "unresolved";
+          const reviewKey = wrongWordReviewIdentity(
+            occurrence.datasetId,
+            occurrence.vocabEntryId,
+            aggregate.canonicalLexemeId,
+            occurrence.headword,
+          );
+          const activeAssignment =
+            activeAssignmentByKey.get(reviewKey) ?? null;
+          const scheduling: WrongWordScheduling =
+            resolution === "resolved"
+              ? "none"
+              : activeAssignment
+                ? "assigned"
+                : pendingReviewByKey.has(reviewKey)
+                  ? "queued"
+                  : "available";
+          return {
+            ...occurrence,
+            resolution,
+            scheduling,
+            activeAssignment: activeAssignment
+              ? {
+                  assignmentId: activeAssignment.assignmentId,
+                  title: activeAssignment.title,
+                  assignedAt: activeAssignment.assignedAt,
+                }
+              : null,
+          };
+        })
         .toSorted(
           (left, right) =>
             Date.parse(right.lastWrongAt) -
             Date.parse(left.lastWrongAt),
         );
       const representative = occurrences[0];
+      const unresolvedOccurrence = occurrences.find(
+        (occurrence) => occurrence.resolution === "unresolved",
+      );
+      const assignedOccurrence = occurrences.find(
+        (occurrence) => occurrence.scheduling === "assigned",
+      );
+      const queuedOccurrence = occurrences.find(
+        (occurrence) => occurrence.scheduling === "queued",
+      );
+      const resolution: WrongWordResolution = unresolvedOccurrence
+        ? "unresolved"
+        : "resolved";
+      const scheduling: WrongWordScheduling =
+        resolution === "resolved"
+          ? "none"
+          : assignedOccurrence
+            ? "assigned"
+            : queuedOccurrence
+              ? "queued"
+              : "available";
       return {
         key,
         canonicalLexemeId: aggregate.canonicalLexemeId,
@@ -219,27 +371,38 @@ export function buildStudentWrongWordHistory({
         latestDatasetId: aggregate.latestDatasetId,
         latestVocabEntryId: aggregate.latestVocabEntryId,
         latestOutcome: aggregate.latestOutcome,
+        resolution,
+        scheduling,
+        activeAssignment:
+          assignedOccurrence?.activeAssignment ?? null,
         occurrences,
       };
     })
     .toSorted(
       (left, right) =>
+        Number(left.resolution === "resolved") -
+          Number(right.resolution === "resolved") ||
         right.wrongLevel - left.wrongLevel ||
         Date.parse(right.lastWrongAt) - Date.parse(left.lastWrongAt) ||
         left.headword.localeCompare(right.headword, "en"),
     );
 
+  const unresolvedWords = words.filter(
+    (word) => word.resolution === "unresolved",
+  );
   return {
     wrongEventCount: usableEvents.length,
-    uniqueWordCount: words.length,
-    onceWrongWordCount: words.filter(
+    uniqueWordCount: unresolvedWords.length,
+    onceWrongWordCount: unresolvedWords.filter(
       (word) => word.wrongLevel === 1,
     ).length,
-    repeatedWrongWordCount: words.filter(
+    repeatedWrongWordCount: unresolvedWords.filter(
       (word) => word.wrongLevel === 2,
     ).length,
-    pendingReviewCount: 0,
-    pendingReviews: [],
+    pendingReviewCount: words.filter(
+      (word) => word.scheduling === "queued",
+    ).length,
+    pendingReviews: [...pendingReviews],
     words,
   };
 }

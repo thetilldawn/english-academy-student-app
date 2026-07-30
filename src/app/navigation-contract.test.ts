@@ -37,26 +37,30 @@ describe("responsive navigation contract", () => {
     expect(studentLogout).toContain('router.replace("/")');
   });
 
-  it("학생·관리자 쿠키가 겹쳐도 역할 전환이 순환하지 않는다", () => {
+  it("학생·관리자 세션을 같은 브라우저에서 독립적으로 유지한다", () => {
     const studentSessionRoute = source(
       "src/app/api/student/session/route.ts",
     );
     const studentLayout = source(
       "src/app/student/(protected)/layout.tsx",
     );
-
-    expect(studentSessionRoute).toContain(
-      "const { error: signOutError } = await supabase.auth.signOut()",
+    const adminSessionRoute = source(
+      "src/app/api/admin/session/route.ts",
     );
-    expect(studentSessionRoute).toContain(
-      'revokeCurrentStudentSession("admin_signout_failed")',
+    const adminLayout = source(
+      "src/app/admin/(protected)/layout.tsx",
+    );
+
+    expect(studentSessionRoute).not.toContain("auth.signOut()");
+    expect(adminSessionRoute).not.toContain(
+      "revokeCurrentStudentSession",
     );
     expect(studentLayout).toContain(
       "const student = await getStudentSession()",
     );
-    expect(studentLayout).toContain(
-      "if (!student && (await getAdminContext()))",
-    );
+    expect(studentLayout).not.toContain("getAdminContext()");
+    expect(adminLayout).toContain("requireAdmin()");
+    expect(adminLayout).not.toContain("getStudentSession()");
   });
 
   it("관리자 로그인은 독립 경로를 유지한다", () => {

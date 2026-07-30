@@ -22,10 +22,12 @@ import {
   type AttemptQuestionResult,
 } from "@/lib/services/quiz-service";
 import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
+import { createMixedQuizQuestions } from "@/lib/quiz/engine";
 import {
-  createQuizQuestions,
-  type QuizVocabularyEntry,
-} from "@/lib/quiz/engine";
+  activeReviewIdentity,
+  loadActiveReviewAssignments,
+} from "@/lib/services/active-review-assignment-service";
+import { loadEligibleVocabularyDataset } from "@/lib/services/eligible-vocabulary-service";
 import {
   buildAssignmentHistory,
   type AssignmentHistorySource,
@@ -102,6 +104,24 @@ export class StudentCreationError extends Error {
         : "학생과 접속코드를 만들지 못했습니다.",
     );
     this.name = "StudentCreationError";
+  }
+}
+
+export class AssignmentCreationError extends Error {
+  constructor(
+    public readonly reason:
+      | "conflict"
+      | "invalid_selection"
+      | "database",
+  ) {
+    super(
+      reason === "conflict"
+        ? "다른 시험에 이미 포함된 단어가 있습니다. 새로 계산된 최대 문항 수를 확인해 주세요."
+        : reason === "invalid_selection"
+          ? "현재 출제 가능한 범위와 문항 수를 다시 확인해 주세요."
+          : "시험을 배정하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    );
+    this.name = "AssignmentCreationError";
   }
 }
 
@@ -569,6 +589,8 @@ type HistoryAssignmentStudentRow = {
   student_id: string;
   assigned_at: string;
   missed_at: string | null;
+  cancelled_at: string | null;
+  cancellation_reason: string | null;
   student: HistoryStudentRelation | HistoryStudentRelation[] | null;
   assignment:
     | HistoryAssignmentRelation
@@ -618,6 +640,8 @@ export async function listAssignmentHistory(): Promise<
           student_id,
           assigned_at,
           missed_at,
+          cancelled_at,
+          cancellation_reason,
           student:students(display_name, school_name, grade_label),
           assignment:assignments(
             id,
@@ -727,6 +751,8 @@ export async function listAssignmentHistory(): Promise<
         availableUntil: assignment.available_until,
         assignedAt: row.assigned_at,
         missedAt: row.missed_at,
+        cancelledAt: row.cancelled_at,
+        cancellationReason: row.cancellation_reason,
       },
     ];
   });
@@ -812,94 +838,42 @@ export async function createAssignment(input: {
     (left, right) => left.sort_index - right.sort_index,
   );
   const orderedUnitIds = sortedUnits.map((unit) => unit.id);
-  const entryData: Array<{
-    id: number;
-    source_row: number;
-    headword: string;
-    headword_normalized: string;
-    primary_meaning: string;
-  }> = [];
-  const eligibleDirectionsByEntry = new Map<
-    number,
-    Set<"english_to_korean" | "korean_to_english">
-  >();
-  const pageSize = 1000;
-
-  for (let offset = 0; ; offset += pageSize) {
-    const { data: page, error: entryError } = await supabase
-      .from("vocab_entries")
-      .select(
-        "id, source_row, headword, headword_normalized, primary_meaning",
-      )
-      .eq("dataset_id", input.datasetId)
-      .in("unit_id", orderedUnitIds)
-      .order("source_row")
-      .range(offset, offset + pageSize - 1);
-
-    if (entryError) {
-      throw new Error("선택한 DAY의 단어를 불러오지 못했습니다.");
-    }
-    entryData.push(...(page ?? []));
-    if (!page || page.length < pageSize) break;
-  }
-
-  for (let offset = 0; ; offset += pageSize) {
-    const { data: page, error: eligibilityError } = await supabase
-      .from("vocab_entry_quiz_eligibility")
-      .select("vocab_entry_id, quiz_mode")
-      .eq("dataset_id", input.datasetId)
-      .eq("status", "eligible")
-      .order("vocab_entry_id")
-      .order("quiz_mode")
-      .range(offset, offset + pageSize - 1);
-
-    if (eligibilityError) {
-      throw new Error("단어시험 사용 가능 상태를 불러오지 못했습니다.");
-    }
-    for (const row of page ?? []) {
-      const directions =
-        eligibleDirectionsByEntry.get(row.vocab_entry_id) ??
-        new Set<"english_to_korean" | "korean_to_english">();
-      directions.add(
-        row.quiz_mode === "book_meaning_en_to_ko"
-          ? "english_to_korean"
-          : "korean_to_english",
-      );
-      eligibleDirectionsByEntry.set(row.vocab_entry_id, directions);
-    }
-    if (!page || page.length < pageSize) break;
-  }
-
-  const uniqueEntries = new Map<string, QuizVocabularyEntry>();
-  const sourceOrderById = new Map<number, number>();
-  for (const entry of entryData) {
-    const eligibleDirections = [
-      ...(eligibleDirectionsByEntry.get(entry.id) ?? []),
-    ];
-    if (eligibleDirections.length === 0) continue;
-    const key = entry.headword_normalized
-      .normalize("NFKC")
-      .toLocaleLowerCase("en-US")
-      .replaceAll("*", "");
-    if (!uniqueEntries.has(key)) {
-      uniqueEntries.set(key, {
-        id: entry.id,
-        headword: entry.headword,
-        primaryMeaning: entry.primary_meaning,
-        eligibleDirections,
-      });
-      sourceOrderById.set(entry.id, entry.source_row);
-    }
-  }
-
-  const questionDrafts = createQuizQuestions(
-    [...uniqueEntries.values()],
+  const [allCandidates, activeAssignments] = await Promise.all([
+    loadEligibleVocabularyDataset(supabase, input.datasetId),
+    loadActiveReviewAssignments(
+      supabase,
+      input.studentIds,
+      input.datasetId,
+    ),
+  ]);
+  const unitIdSet = new Set(orderedUnitIds);
+  const primaryCandidates = allCandidates.filter(
+    (candidate) =>
+      unitIdSet.has(candidate.unitId) &&
+      !activeAssignments.identities.has(
+        activeReviewIdentity(
+          candidate.id,
+          candidate.canonicalKey,
+          candidate.headwordNormalized,
+        ),
+      ),
+  );
+  const sourceOrderByCandidateId = new Map(
+    allCandidates.map((candidate) => [
+      candidate.id,
+      candidate.sourceRow,
+    ]),
+  );
+  const questionDrafts = createMixedQuizQuestions(
+    [],
+    primaryCandidates,
+    allCandidates,
     input.questionCount,
     input.englishToKoreanRatio,
   ).sort(
     (left, right) =>
-      (sourceOrderById.get(left.vocabEntryId) ?? 0) -
-      (sourceOrderById.get(right.vocabEntryId) ?? 0),
+      (sourceOrderByCandidateId.get(left.vocabEntryId) ?? 0) -
+      (sourceOrderByCandidateId.get(right.vocabEntryId) ?? 0),
   );
   const unitRangeLabel =
     sortedUnits.length === 1
@@ -913,7 +887,7 @@ export async function createAssignment(input: {
     .filter(Boolean)
     .join(" · ");
   const { data, error } = await supabase.rpc(
-    "create_assignment_with_question_bank_v3",
+    "create_assignment_with_delivery_v4",
     {
       p_title: input.title || generatedTitle,
       p_dataset_id: input.datasetId,
@@ -925,6 +899,11 @@ export async function createAssignment(input: {
       p_question_order_mode: input.questionOrderMode,
       p_available_until: input.availableUntil,
       p_student_ids: input.studentIds,
+      p_timing_mode: input.timingMode ?? "total",
+      p_question_time_limit_seconds:
+        input.timingMode === "per_question"
+          ? (input.questionTimeLimitSeconds ?? null)
+          : null,
       p_questions: questionDrafts.map((question, index) => ({
         vocab_entry_id: question.vocabEntryId,
         base_order_index: index + 1,
@@ -935,26 +914,20 @@ export async function createAssignment(input: {
   );
 
   if (error || typeof data !== "string") {
-    throw new Error("시험을 배정하지 못했습니다.");
-  }
-
-  const { error: deliveryError } = await supabase.rpc(
-    "configure_assignment_delivery_v1",
-    {
-      p_assignment_id: data,
-      p_timing_mode: input.timingMode ?? "total",
-      p_question_time_limit_seconds:
-        input.timingMode === "per_question"
-          ? (input.questionTimeLimitSeconds ?? null)
-          : null,
-    },
-  );
-  if (deliveryError) {
-    await supabase
-      .from("assignments")
-      .update({ status: "closed" })
-      .eq("id", data);
-    throw new Error("시험 시간 설정을 저장하지 못했습니다.");
+    console.error("[regular-assignment] database operation failed", {
+      code: error?.code ?? "missing_result",
+      message: error?.message ?? "assignment id was not returned",
+      hint: error?.hint ?? null,
+    });
+    throw new AssignmentCreationError(
+      error?.code === "40001"
+        ? "conflict"
+        : ["21000", "22023", "23503", "23505"].includes(
+              error?.code ?? "",
+            )
+          ? "invalid_selection"
+          : "database",
+    );
   }
 
   return data;

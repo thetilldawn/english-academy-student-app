@@ -31,6 +31,8 @@ const assignment: AssignmentHistorySource = {
   availableUntil: null,
   assignedAt: "2026-07-29T00:00:00.000Z",
   missedAt: null,
+  cancelledAt: null,
+  cancellationReason: null,
 };
 
 function attempt(

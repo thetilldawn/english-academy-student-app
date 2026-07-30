@@ -250,8 +250,9 @@ export async function listStudentAssignments(
   const supabase = getServiceSupabaseClient();
   const { data: linkData, error: linkError } = await supabase
     .from("assignment_students")
-    .select("assignment_id, missed_at")
-    .eq("student_id", studentId);
+    .select("assignment_id, missed_at, cancelled_at")
+    .eq("student_id", studentId)
+    .is("cancelled_at", null);
 
   if (linkError || !linkData?.length) {
     return [];
@@ -412,7 +413,7 @@ export async function startStudentAttempt(
         .maybeSingle(),
       supabase
         .from("assignment_students")
-        .select("assignment_id, missed_at")
+        .select("assignment_id, missed_at, cancelled_at")
         .eq("assignment_id", assignmentId)
         .eq("student_id", studentId)
         .maybeSingle(),
@@ -423,7 +424,8 @@ export async function startStudentAttempt(
     assignmentError ||
     !assignment ||
     !linkData ||
-    linkData.missed_at !== null
+    linkData.missed_at !== null ||
+    linkData.cancelled_at !== null
   ) {
     throw new Error("배정된 시험을 찾지 못했습니다.");
   }

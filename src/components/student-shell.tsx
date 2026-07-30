@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 import { StudentLogoutButton } from "@/components/student-logout-button";
 
@@ -16,6 +17,15 @@ export function StudentShell({
 }) {
   const pathname = usePathname();
   const focusedAttempt = pathname.startsWith("/student/attempt/");
+
+  useEffect(() => {
+    if (!window.location.hash) return;
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${window.location.pathname}${window.location.search}`,
+    );
+  }, []);
 
   return (
     <div

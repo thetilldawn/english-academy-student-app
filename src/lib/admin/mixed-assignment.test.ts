@@ -83,6 +83,29 @@ describe("excludePendingReviewCandidates", () => {
       ]).map((entry) => entry.id),
     ).toEqual([2, 3]);
   });
+
+  it("canonical이 없으면 정규화된 표제어가 같은 항목도 제외한다", () => {
+    const duplicateBeta: EligibleVocabularyEntry = {
+      ...candidates[2],
+      id: 4,
+      sourceRow: 4,
+      headword: "BETA*",
+      headwordNormalized: "beta",
+    };
+
+    expect(
+      excludePendingReviewCandidates(
+        [...candidates, duplicateBeta],
+        [
+          {
+            vocabEntryId: 3,
+            canonicalKey: null,
+            headword: "beta",
+          },
+        ],
+      ).map((entry) => entry.id),
+    ).toEqual([1, 2]);
+  });
 });
 
 describe("mixedAssignmentDatabaseErrorReason", () => {

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { StudentManager } from "@/components/student-manager";
+import { getServerEnvironment } from "@/lib/env";
 import {
   buildStudentProgress,
   listAssignmentHistory,
@@ -32,6 +33,8 @@ export default async function StudentsPage({
     listAssignmentHistory(),
   ]);
   const progress = buildStudentProgress(students, units, history);
+  const appOrigin =
+    getServerEnvironment().APP_ORIGIN ?? "http://localhost:3000";
 
   return (
     <>
@@ -46,6 +49,7 @@ export default async function StudentsPage({
         </div>
       </div>
       <StudentManager
+        appOrigin={appOrigin}
         datasets={datasets}
         history={history}
         initialStudentId={initialStudentId}

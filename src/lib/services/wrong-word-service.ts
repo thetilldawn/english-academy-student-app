@@ -3,14 +3,15 @@ import "server-only";
 import { z } from "zod";
 
 import {
-  emptyStudentWrongWordHistory,
   buildStudentWrongWordHistory,
   wrongWordReviewIdentity,
   type PendingWrongWordReview,
+  type ActiveWrongWordAssignmentSource,
   type StudentWrongWordHistory,
   type WrongEntrySource,
   type WrongEventSource,
   type WrongQuestionSource,
+  type WrongWordStateSource,
 } from "@/lib/admin/wrong-word-history";
 import {
   requireAdmin,
@@ -18,12 +19,14 @@ import {
 } from "@/lib/auth/admin";
 import { finalizeStaleQuizAttempts } from "@/lib/services/stale-attempt-service";
 import { finalizeExpiredReviewAssignmentDrafts } from "@/lib/services/review-assignment-service";
+import {
+  loadActiveReviewAssignments,
+  type ActiveAssignmentWord,
+} from "@/lib/services/active-review-assignment-service";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-// Keep a conservative response-size ceiling until cursor-paged history is added.
-const MAX_WRONG_EVENTS = 400;
-const WRONG_EVENT_PAGE_SIZE = 200;
+const WRONG_EVENT_PAGE_SIZE = 500;
 const RELATION_CHUNK_SIZE = 200;
 
 type WrongEventRow = {
@@ -63,6 +66,7 @@ type EntryRow = {
   id: number;
   dataset_id: string;
   headword: string;
+  headword_normalized: string;
   primary_meaning: string;
   dataset: DatasetRelation | DatasetRelation[] | null;
 };
@@ -76,6 +80,13 @@ type PendingReviewRow = {
   reason_level: 1 | 2;
   queued_at: string;
   reserved_review_draft_id: string | null;
+};
+
+type VocabStateRow = {
+  vocab_entry_id: number;
+  unresolved_wrong_count: number;
+  resolved_at: string | null;
+  last_evaluated_at: string;
 };
 
 export class WrongWordQueueError extends Error {
@@ -139,19 +150,16 @@ export async function getStudentWrongWordHistory(
   const eventRows: WrongEventRow[] = [];
   let beforeId: number | string | null = null;
 
-  while (eventRows.length <= MAX_WRONG_EVENTS) {
-    const pageLimit = Math.min(
-      WRONG_EVENT_PAGE_SIZE,
-      MAX_WRONG_EVENTS + 1 - eventRows.length,
-    );
+  while (true) {
     let query = supabase
       .from("student_vocab_wrong_events")
       .select(
         "id, quiz_attempt_id, quiz_question_id, dataset_id, vocab_entry_id, canonical_lexeme_id_snapshot, wrong_stage, wrong_at",
       )
       .eq("student_id", studentId)
+      .eq("wrong_stage", "initial")
       .order("id", { ascending: false })
-      .limit(pageLimit);
+      .limit(WRONG_EVENT_PAGE_SIZE);
     if (beforeId !== null) {
       query = query.lt("id", beforeId);
     }
@@ -161,17 +169,13 @@ export async function getStudentWrongWordHistory(
     }
     const page = (data ?? []) as WrongEventRow[];
     eventRows.push(...page);
-    if (page.length < pageLimit) break;
+    if (page.length < WRONG_EVENT_PAGE_SIZE) break;
     beforeId = page.at(-1)?.id ?? null;
     if (beforeId === null) break;
   }
-  if (eventRows.length > MAX_WRONG_EVENTS) {
-    throw new Error(
-      "오답 이력이 현재 조회 한도를 넘었습니다. 기간별 조회가 필요합니다.",
-    );
-  }
-  const { data: pendingReviewData, error: pendingReviewError } =
-    await supabase
+  const pendingReviewRows: PendingReviewRow[] = [];
+  for (let offset = 0; ; offset += WRONG_EVENT_PAGE_SIZE) {
+    const { data, error } = await supabase
       .from("student_vocab_review_queue")
       .select(
         "id, dataset_id, vocab_entry_id, canonical_lexeme_id_snapshot, source_question_id, reason_level, queued_at, reserved_review_draft_id",
@@ -179,51 +183,41 @@ export async function getStudentWrongWordHistory(
       .eq("student_id", studentId)
       .eq("status", "pending")
       .order("queued_at", { ascending: false })
-      .limit(MAX_WRONG_EVENTS + 1);
-  if (pendingReviewError) {
-    throw new Error("오답 복습 대기열을 불러오지 못했습니다.");
+      .order("id")
+      .range(offset, offset + WRONG_EVENT_PAGE_SIZE - 1);
+    if (error) {
+      throw new Error("오답 복습 대기열을 불러오지 못했습니다.");
+    }
+    pendingReviewRows.push(...((data ?? []) as PendingReviewRow[]));
+    if (!data || data.length < WRONG_EVENT_PAGE_SIZE) break;
   }
-  if ((pendingReviewData?.length ?? 0) > MAX_WRONG_EVENTS) {
-    throw new Error(
-      "오답 복습 대기열이 현재 조회 한도를 넘었습니다. 먼저 시험으로 배정해 주세요.",
+  const activeAssignmentWords: ActiveAssignmentWord[] = [];
+  const activeDatasetIds = unique([
+    ...eventRows.map((event) => event.dataset_id),
+    ...pendingReviewRows.map((row) => row.dataset_id),
+  ]);
+  for (const datasetId of activeDatasetIds) {
+    const active = await loadActiveReviewAssignments(
+      supabase,
+      [studentId],
+      datasetId,
     );
-  }
-  const pendingReviews = (
-    (pendingReviewData ?? []) as PendingReviewRow[]
-  ).map(
-    (row): PendingWrongWordReview => ({
-      queueId: row.id,
-      key: wrongWordReviewIdentity(
-        row.dataset_id,
-        row.vocab_entry_id,
-        row.canonical_lexeme_id_snapshot,
-      ),
-      datasetId: row.dataset_id,
-      vocabEntryId: row.vocab_entry_id,
-      canonicalLexemeId: row.canonical_lexeme_id_snapshot,
-      sourceQuestionId: row.source_question_id,
-      reasonLevel: row.reason_level,
-      queuedAt: row.queued_at,
-      reviewDraftId: row.reserved_review_draft_id,
-    }),
-  );
-  if (eventRows.length === 0) {
-    return {
-      ...emptyStudentWrongWordHistory(),
-      pendingReviewCount: pendingReviews.length,
-      pendingReviews,
-    };
+    activeAssignmentWords.push(...active.words);
   }
 
   const questionIds = unique(
     eventRows.map((event) => event.quiz_question_id),
   );
   const vocabEntryIds = unique(
-    eventRows.map((event) => event.vocab_entry_id),
+    [
+      ...eventRows.map((event) => event.vocab_entry_id),
+      ...pendingReviewRows.map((row) => row.vocab_entry_id),
+      ...activeAssignmentWords.map((word) => word.vocabEntryId),
+    ],
   );
   const questionRows: QuestionRow[] = [];
   const entryRows: EntryRow[] = [];
-
+  const vocabStateRows: VocabStateRow[] = [];
   for (const idChunk of chunks(questionIds)) {
     const { data, error } = await supabase
       .from("quiz_questions")
@@ -239,11 +233,23 @@ export async function getStudentWrongWordHistory(
     const { data, error } = await supabase
       .from("vocab_entries")
       .select(
-        "id, dataset_id, headword, primary_meaning, dataset:vocab_datasets(title, edition)",
+        "id, dataset_id, headword, headword_normalized, primary_meaning, dataset:vocab_datasets(title, edition)",
       )
       .in("id", idChunk);
     if (error) throw new Error("오답 단어 정보를 불러오지 못했습니다.");
     entryRows.push(...((data ?? []) as EntryRow[]));
+
+    const { data: stateData, error: stateError } = await supabase
+      .from("student_vocab_state")
+      .select(
+        "vocab_entry_id, unresolved_wrong_count, resolved_at, last_evaluated_at",
+      )
+      .eq("student_id", studentId)
+      .in("vocab_entry_id", idChunk);
+    if (stateError) {
+      throw new Error("현재 오답 상태를 불러오지 못했습니다.");
+    }
+    vocabStateRows.push(...((stateData ?? []) as VocabStateRow[]));
   }
 
   const entryById = new Map(entryRows.map((entry) => [entry.id, entry]));
@@ -256,9 +262,28 @@ export async function getStudentWrongWordHistory(
         [dataset?.title, dataset?.edition].filter(Boolean).join(" · ") ||
         "단어장",
       headword: entry.headword,
+      headwordNormalized: entry.headword_normalized,
       primaryMeaning: entry.primary_meaning,
     };
   });
+  const pendingReviews = pendingReviewRows.map(
+    (row): PendingWrongWordReview => ({
+      queueId: row.id,
+      key: wrongWordReviewIdentity(
+        row.dataset_id,
+        row.vocab_entry_id,
+        row.canonical_lexeme_id_snapshot,
+        entryById.get(row.vocab_entry_id)?.headword_normalized,
+      ),
+      datasetId: row.dataset_id,
+      vocabEntryId: row.vocab_entry_id,
+      canonicalLexemeId: row.canonical_lexeme_id_snapshot,
+      sourceQuestionId: row.source_question_id,
+      reasonLevel: row.reason_level,
+      queuedAt: row.queued_at,
+      reviewDraftId: row.reserved_review_draft_id,
+    }),
+  );
   const questions = questionRows.flatMap(
     (question): WrongQuestionSource[] => {
       const entry = entryById.get(question.vocab_entry_id);
@@ -294,16 +319,36 @@ export async function getStudentWrongWordHistory(
       wrongAt: event.wrong_at,
     }),
   );
-
-  return {
-    ...buildStudentWrongWordHistory({
-      entries,
-      events,
-      questions,
+  const states = vocabStateRows.map(
+    (state): WrongWordStateSource => ({
+      vocabEntryId: state.vocab_entry_id,
+      unresolvedWrongCount: state.unresolved_wrong_count,
+      resolvedAt: state.resolved_at,
+      lastEvaluatedAt: state.last_evaluated_at,
     }),
-    pendingReviewCount: pendingReviews.length,
+  );
+  const activeAssignments = activeAssignmentWords.map(
+    (target): ActiveWrongWordAssignmentSource => ({
+      key: wrongWordReviewIdentity(
+        target.datasetId,
+        target.vocabEntryId,
+        target.canonicalLexemeId,
+        target.headwordNormalized,
+      ),
+      assignmentId: target.assignmentId,
+      title: target.title,
+      assignedAt: target.assignedAt,
+    }),
+  );
+
+  return buildStudentWrongWordHistory({
+    activeAssignments,
+    entries,
+    events,
     pendingReviews,
-  };
+    questions,
+    states,
+  });
 }
 
 export async function queueStudentWrongWords(

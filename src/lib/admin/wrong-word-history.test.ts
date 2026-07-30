@@ -110,13 +110,13 @@ describe("buildStudentWrongWordHistory", () => {
       questions,
     });
 
-    expect(result.wrongEventCount).toBe(4);
+    expect(result.wrongEventCount).toBe(3);
     expect(result.uniqueWordCount).toBe(2);
     expect(result.onceWrongWordCount).toBe(1);
     expect(result.repeatedWrongWordCount).toBe(1);
     expect(result.words[0]).toMatchObject({
       key: "canonical:lexeme-alpha",
-      wrongCount: 3,
+      wrongCount: 2,
       wrongLevel: 2,
       latestAttemptId: "attempt-2",
       latestQuestionId: "question-2",
@@ -134,7 +134,7 @@ describe("buildStudentWrongWordHistory", () => {
       ),
     ).toEqual(["question-2", "question-1"]);
     expect(result.words[1]).toMatchObject({
-      key: "entry:dataset-a:13",
+      key: "headword:dataset-a:beta",
       wrongCount: 1,
       wrongLevel: 1,
       latestOutcome: "retry_unanswered",
@@ -155,6 +155,59 @@ describe("buildStudentWrongWordHistory", () => {
         "lexeme-alpha",
       ),
     );
+  });
+
+  it("keeps a canonical word unresolved while any source occurrence is unresolved", () => {
+    const result = buildStudentWrongWordHistory({
+      entries,
+      events,
+      questions,
+      pendingReviews: [
+        {
+          queueId: "queue-alpha",
+          key: wrongWordReviewIdentity(
+            "dataset-a",
+            11,
+            "lexeme-alpha",
+          ),
+          datasetId: "dataset-a",
+          vocabEntryId: 11,
+          canonicalLexemeId: "lexeme-alpha",
+          sourceQuestionId: "question-1",
+          reasonLevel: 1,
+          queuedAt: "2026-07-30T01:00:00Z",
+          reviewDraftId: null,
+        },
+      ],
+      states: [
+        {
+          vocabEntryId: 11,
+          unresolvedWrongCount: 1,
+          resolvedAt: null,
+          lastEvaluatedAt: "2026-07-30T01:00:00Z",
+        },
+        {
+          vocabEntryId: 12,
+          unresolvedWrongCount: 0,
+          resolvedAt: "2026-07-30T02:00:00Z",
+          lastEvaluatedAt: "2026-07-30T02:00:00Z",
+        },
+        {
+          vocabEntryId: 13,
+          unresolvedWrongCount: 1,
+          resolvedAt: null,
+          lastEvaluatedAt: "2026-07-30T01:00:00Z",
+        },
+      ],
+    });
+
+    expect(result.words[0]).toMatchObject({
+      key: "canonical:lexeme-alpha",
+      resolution: "unresolved",
+      scheduling: "queued",
+    });
+    expect(result.uniqueWordCount).toBe(2);
+    expect(result.pendingReviewCount).toBe(1);
   });
 
   it("does not rebuild the removed per-attempt response payload", () => {
@@ -185,7 +238,7 @@ describe("buildStudentWrongWordHistory", () => {
       ],
     });
 
-    expect(result.wrongEventCount).toBe(4);
+    expect(result.wrongEventCount).toBe(3);
   });
 
   it("returns a stable empty response", () => {

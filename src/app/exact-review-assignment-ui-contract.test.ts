@@ -74,22 +74,15 @@ describe("exact review assignment app contract", () => {
     );
   });
 
-  it("keeps the review POST same-origin, authenticated, strict and private", () => {
+  it("retires the standalone review POST without weakening its request guards", () => {
     const route = source(
       "src/app/api/admin/review-assignments/route.ts",
     );
-    const validation = source("src/lib/validation.ts");
     expect(route).toContain("isSameOriginRequest(request)");
     expect(route).toContain("getAdminContext()");
-    expect(route).toContain(
-      "parseJson(request, exactReviewAssignmentSchema)",
-    );
-    expect(route).toContain("createExactReviewAssignment(input, admin)");
-    expect(route).toContain('"Cache-Control": "private, no-store"');
-    expect(validation).toContain(
-      "export const exactReviewAssignmentSchema",
-    );
-    expect(validation).toContain(".strict()");
+    expect(route).toContain("410");
+    expect(route).toContain("별도 오답 재시험 배정은 종료");
+    expect(route).not.toContain("createExactReviewAssignment");
   });
 
   it("locks student, dataset and question count while exposing only test conditions", () => {
