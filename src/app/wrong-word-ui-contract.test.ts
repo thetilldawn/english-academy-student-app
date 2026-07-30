@@ -112,10 +112,8 @@ describe("wrong-word admin UI contract", () => {
     );
     expect(panel).toContain('cache: "no-store"');
     expect(panel).toContain("AbortController");
-    expect(panel).toContain('role="tablist"');
     expect(panel).toContain("WRONG_HISTORY_CACHE_TTL_MS");
     expect(panel).toContain("새로고침");
-    expect(panel).toContain("tabIndex=");
     expect(manager).toContain("moveDialogTabFocus");
     expect(panel).toContain("누적 2회 이상");
     expect(panel).toContain('type="checkbox"');
@@ -133,6 +131,26 @@ describe("wrong-word admin UI contract", () => {
     expect(panel).not.toContain("router.refresh");
   });
 
+  it("keeps the wrong-word list single-view and clears hidden selections when filters change", () => {
+    const panel = source(
+      "src/components/student-wrong-word-panel.tsx",
+    );
+
+    expect(panel).not.toContain("type ViewMode");
+    expect(panel).not.toContain("wrong-word-attempt-tab");
+    expect(panel).not.toContain("wrong-word-attempt-panel");
+    expect(panel).not.toContain("moveViewTabFocus");
+    expect(panel).toContain(
+      "new Set(selectableFilteredQuestionIds)",
+    );
+    expect(panel).toContain(
+      "allVisibleSelected ? [] : selectableFilteredQuestionIds",
+    );
+    expect(panel).toContain("function resetSelectionFeedback()");
+    expect(panel).toContain("if (levelFilter === value)");
+    expect(panel.match(/resetSelectionFeedback\(\);/g)).toHaveLength(3);
+  });
+
   it("pages event history below the PostgREST row limit", () => {
     const service = source(
       "src/lib/services/wrong-word-service.ts",
@@ -145,6 +163,7 @@ describe("wrong-word admin UI contract", () => {
     expect(service).toContain(
       '.from("student_vocab_review_queue")',
     );
+    expect(service).not.toContain('.from("quiz_attempts")');
     expect(service).toContain(".limit(MAX_WRONG_EVENTS + 1)");
   });
 

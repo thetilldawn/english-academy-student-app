@@ -31,6 +31,12 @@ import {
   reservedReviewCount,
   type StudentPendingReviewSummary,
 } from "@/lib/admin/review-queue-summary";
+import {
+  currentVocabWrongSummaryKey,
+  emptyCurrentVocabWrongCounts,
+  indexStudentCurrentVocabWrongSummaries,
+  type StudentCurrentVocabWrongSummary,
+} from "@/lib/admin/wrong-history-summary";
 
 type DatasetItem = {
   id: string;
@@ -98,7 +104,7 @@ type ErrorResponse = {
   error?: string;
 };
 
-type ReviewStudentFilter = "all" | "pending" | "repeated";
+type WrongWordStudentFilter = "all" | "wrong" | "repeated";
 
 const DEFAULT_REVIEW_LIMIT = 5;
 
@@ -153,6 +159,7 @@ export function AssignmentManager({
   units,
   progress,
   pendingReviewSummaries,
+  currentVocabWrongSummaries,
   initialStudentId = "",
 }: {
   datasets: DatasetItem[];
@@ -160,6 +167,7 @@ export function AssignmentManager({
   units: UnitItem[];
   progress: ProgressItem[];
   pendingReviewSummaries: StudentPendingReviewSummary[];
+  currentVocabWrongSummaries: StudentCurrentVocabWrongSummary[];
   initialStudentId?: string;
 }) {
   const router = useRouter();
@@ -185,6 +193,13 @@ export function AssignmentManager({
       indexStudentPendingReviewSummaries(pendingReviewSummaries),
     [pendingReviewSummaries],
   );
+  const currentVocabWrongIndex = useMemo(
+    () =>
+      indexStudentCurrentVocabWrongSummaries(
+        currentVocabWrongSummaries,
+      ),
+    [currentVocabWrongSummaries],
+  );
   const initialStudent =
     activeStudents.find((student) => student.id === initialStudentId) ??
     null;
@@ -207,8 +222,8 @@ export function AssignmentManager({
   const [query, setQuery] = useState("");
   const [schoolFilter, setSchoolFilter] = useState("");
   const [gradeFilter, setGradeFilter] = useState("");
-  const [reviewFilter, setReviewFilter] =
-    useState<ReviewStudentFilter>("all");
+  const [wrongWordFilter, setWrongWordFilter] =
+    useState<WrongWordStudentFilter>("all");
   const [studentId, setStudentId] = useState(initialStudent?.id ?? "");
   const [datasetId, setDatasetId] = useState(initialDatasetId);
   const [startUnitId, setStartUnitId] = useState(initialRecommendedUnitId);
@@ -376,29 +391,29 @@ export function AssignmentManager({
         (!schoolFilter || student.schoolName === schoolFilter) &&
         (!gradeFilter || student.gradeLabel === gradeFilter) &&
         (() => {
-          if (reviewFilter === "all") return true;
+          if (wrongWordFilter === "all") return true;
           if (!student.currentVocabDatasetId) return false;
-          const reviewCounts =
-            pendingReviewIndex.byStudentDataset.get(
-              pendingReviewSummaryKey(
+          const wrongCounts =
+            currentVocabWrongIndex.byStudentDataset.get(
+              currentVocabWrongSummaryKey(
                 student.id,
                 student.currentVocabDatasetId,
               ),
-            ) ?? emptyPendingReviewCounts();
-          if (reviewFilter === "repeated") {
-            return reviewCounts.pendingLevel2Count > 0;
+            ) ?? emptyCurrentVocabWrongCounts();
+          if (wrongWordFilter === "repeated") {
+            return wrongCounts.repeatedWrongWordCount > 0;
           }
-          return pendingReviewCount(reviewCounts) > 0;
+          return wrongCounts.wrongWordCount > 0;
         })()
       );
     });
   }, [
     activeStudents,
+    currentVocabWrongIndex,
     gradeFilter,
-    pendingReviewIndex,
     query,
-    reviewFilter,
     schoolFilter,
+    wrongWordFilter,
   ]);
 
   useEffect(() => {
@@ -667,22 +682,22 @@ export function AssignmentManager({
               </select>
             </label>
             <div
-              aria-label="오답 대기 필터"
+              aria-label="현재 단어장 오답 이력 필터"
               className="filter-chip-row assignment-review-filter-row"
               role="group"
             >
               {(
                 [
                   ["all", "전체"],
-                  ["pending", "현재 단어장 오답 있음"],
+                  ["wrong", "현재 단어장 오답 있음"],
                   ["repeated", "두 번 이상 틀린 단어 있음"],
                 ] as const
               ).map(([value, label]) => (
                 <button
-                  aria-pressed={reviewFilter === value}
+                  aria-pressed={wrongWordFilter === value}
                   className="filter-chip"
                   key={value}
-                  onClick={() => setReviewFilter(value)}
+                  onClick={() => setWrongWordFilter(value)}
                   type="button"
                 >
                   {label}

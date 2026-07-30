@@ -134,7 +134,11 @@ export default async function AdminResultDetailPage({
                       </span>
                     </div>
 
-                    <div className="answer-flow">
+                    <div
+                      className={`answer-flow${
+                        resolved ? " answer-flow-resolved" : ""
+                      }`}
+                    >
                       <div className="flow-step flow-step-wrong">
                         <span>첫 선택</span>
                         <strong>
@@ -157,14 +161,23 @@ export default async function AdminResultDetailPage({
                           {question.retryChoice ??
                             (reviewPending ? "재시험 전" : "선택 안 함")}
                         </strong>
+                        {resolved && (
+                          <span className="sr-only">
+                            재시험에서 맞힘
+                          </span>
+                        )}
                       </div>
-                      <span className="flow-arrow" aria-hidden="true">
-                        →
-                      </span>
-                      <div className="flow-step flow-step-answer">
-                        <span>정답</span>
-                        <strong>{presentation.correctAnswer}</strong>
-                      </div>
+                      {!resolved && (
+                        <>
+                          <span className="flow-arrow" aria-hidden="true">
+                            →
+                          </span>
+                          <div className="flow-step flow-step-answer">
+                            <span>정답</span>
+                            <strong>{presentation.correctAnswer}</strong>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </article>
                 );

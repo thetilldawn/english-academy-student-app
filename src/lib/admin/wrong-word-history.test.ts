@@ -4,28 +4,10 @@ import {
   buildStudentWrongWordHistory,
   emptyStudentWrongWordHistory,
   wrongWordReviewIdentity,
-  type WrongAttemptSource,
   type WrongEntrySource,
   type WrongEventSource,
   type WrongQuestionSource,
 } from "@/lib/admin/wrong-word-history";
-
-const attempts: WrongAttemptSource[] = [
-  {
-    id: "attempt-1",
-    assignmentTitle: "DAY 1",
-    attemptNumber: 1,
-    status: "completed",
-    completedAt: "2026-07-29T01:00:00Z",
-  },
-  {
-    id: "attempt-2",
-    assignmentTitle: "DAY 2",
-    attemptNumber: 1,
-    status: "expired",
-    completedAt: "2026-07-30T01:00:00Z",
-  },
-];
 
 const entries: WrongEntrySource[] = [
   {
@@ -123,7 +105,6 @@ const events: WrongEventSource[] = [
 describe("buildStudentWrongWordHistory", () => {
   it("groups canonical occurrences but preserves exact source occurrences", () => {
     const result = buildStudentWrongWordHistory({
-      attempts,
       entries,
       events,
       questions,
@@ -176,48 +157,25 @@ describe("buildStudentWrongWordHistory", () => {
     );
   });
 
-  it("builds per-attempt words without treating retry unanswered as a second wrong", () => {
+  it("does not rebuild the removed per-attempt response payload", () => {
     const result = buildStudentWrongWordHistory({
-      attempts,
       entries,
       events,
       questions,
     });
 
-    expect(result.attempts).toHaveLength(2);
-    expect(result.attempts[0]).toMatchObject({
-      attemptId: "attempt-2",
-      status: "expired",
-      wrongEventCount: 3,
-    });
-    expect(result.attempts[0].words).toEqual([
-      expect.objectContaining({
-        vocabEntryId: 12,
-        wrongCount: 2,
-        outcome: "wrong_again",
-      }),
-      expect.objectContaining({
-        vocabEntryId: 13,
-        wrongCount: 1,
-        outcome: "retry_unanswered",
-      }),
-    ]);
-    expect(result.attempts[1].words[0]).toMatchObject({
-      wrongCount: 1,
-      outcome: "recovered_on_retry",
-    });
+    expect(result).not.toHaveProperty("attempts");
   });
 
   it("ignores incomplete relation rows instead of inventing labels", () => {
     const result = buildStudentWrongWordHistory({
-      attempts,
       entries,
       questions,
       events: [
         ...events,
         {
-          attemptId: "missing-attempt",
-          questionId: "question-1",
+          attemptId: "attempt-1",
+          questionId: "missing-question",
           datasetId: "dataset-a",
           vocabEntryId: 11,
           canonicalLexemeId: null,
@@ -239,13 +197,11 @@ describe("buildStudentWrongWordHistory", () => {
       pendingReviewCount: 0,
       pendingReviews: [],
       words: [],
-      attempts: [],
     });
   });
 
   it("keeps the first newest event as the representative when timestamps tie", () => {
     const result = buildStudentWrongWordHistory({
-      attempts,
       entries,
       questions,
       events: [
@@ -273,7 +229,6 @@ describe("buildStudentWrongWordHistory", () => {
     const longHeadword = "가".repeat(160);
     const longMeaning = "뜻".repeat(500);
     const longDatasetLabel = "단어장".repeat(100);
-    const largeAttempts: WrongAttemptSource[] = [];
     const largeEntries: WrongEntrySource[] = [];
     const largeQuestions: WrongQuestionSource[] = [];
     const largeEvents: WrongEventSource[] = [];
@@ -282,13 +237,6 @@ describe("buildStudentWrongWordHistory", () => {
       const attemptId = `attempt-${index}`;
       const questionId = `question-${index}`;
       const vocabEntryId = index + 1;
-      largeAttempts.push({
-        id: attemptId,
-        assignmentTitle: "시험".repeat(80),
-        attemptNumber: 1,
-        status: "completed",
-        completedAt: "2026-07-30T00:00:00Z",
-      });
       largeEntries.push({
         id: vocabEntryId,
         datasetId: "dataset-large",
@@ -317,7 +265,6 @@ describe("buildStudentWrongWordHistory", () => {
     }
 
     const result = buildStudentWrongWordHistory({
-      attempts: largeAttempts,
       entries: largeEntries,
       events: largeEvents,
       questions: largeQuestions,

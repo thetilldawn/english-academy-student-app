@@ -8,7 +8,7 @@ function source(relativePath: string) {
 }
 
 describe("mixed assignment admin UI contract", () => {
-  it("페이지가 pending 요약을 한 번 읽어 배정 화면에 전달한다", () => {
+  it("페이지가 대기열과 실제 오답 요약을 각각 한 번 읽어 전달한다", () => {
     const page = source(
       "src/app/admin/(protected)/assignments/page.tsx",
     );
@@ -20,13 +20,37 @@ describe("mixed assignment admin UI contract", () => {
     expect(page).toContain(
       "pendingReviewSummaries={pendingReviewSummaries}",
     );
+    expect(page).toContain(
+      "listStudentCurrentVocabWrongSummaries()",
+    );
+    expect(
+      page.match(/listStudentCurrentVocabWrongSummaries\(\)/g),
+    ).toHaveLength(1);
+    expect(page).toContain(
+      "currentVocabWrongSummaries={currentVocabWrongSummaries}",
+    );
   });
 
   it("목록 필터와 기본 OFF 혼합 설정을 노출한다", () => {
     const manager = source("src/components/assignment-manager.tsx");
+    const filteredStudents = manager.slice(
+      manager.indexOf("const filteredStudents"),
+      manager.indexOf("useEffect", manager.indexOf("const filteredStudents")),
+    );
 
     expect(manager).toContain("현재 단어장 오답 있음");
     expect(manager).toContain("두 번 이상 틀린 단어 있음");
+    expect(filteredStudents).toContain(
+      "currentVocabWrongIndex.byStudentDataset",
+    );
+    expect(filteredStudents).toContain(
+      "wrongCounts.wrongWordCount > 0",
+    );
+    expect(filteredStudents).toContain(
+      "wrongCounts.repeatedWrongWordCount > 0",
+    );
+    expect(filteredStudents).not.toContain("pendingReviewIndex");
+    expect(filteredStudents).not.toContain("pendingReviewCount(");
     expect(manager).toContain("오답 대기 포함");
     expect(manager).toContain("DAY에 대기 오답 함께 배정");
     expect(manager).toContain("한 번 틀림 · 가능");

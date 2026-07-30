@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type KeyboardEvent,
-} from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -17,7 +11,6 @@ import {
 } from "@/lib/admin/wrong-word-history";
 import { formatKoreanDateTime } from "@/lib/format";
 
-type ViewMode = "aggregate" | "attempts";
 type LevelFilter = "all" | "once" | "repeated";
 const WRONG_HISTORY_CACHE_TTL_MS = 30_000;
 
@@ -89,7 +82,6 @@ export function StudentWrongWordPanel({
   const [error, setError] = useState("");
   const [requestVersion, setRequestVersion] = useState(0);
   const [forceRefresh, setForceRefresh] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>("aggregate");
   const [levelFilter, setLevelFilter] =
     useState<LevelFilter>("all");
   const [datasetFilter, setDatasetFilter] = useState("");
@@ -178,39 +170,6 @@ export function StudentWrongWordPanel({
     }
     setForceRefresh(true);
     setRequestVersion((value) => value + 1);
-  }
-
-  function moveViewTabFocus(
-    event: KeyboardEvent<HTMLButtonElement>,
-  ) {
-    if (
-      !["ArrowLeft", "ArrowRight", "Home", "End"].includes(
-        event.key,
-      )
-    ) {
-      return;
-    }
-    const tabs = Array.from(
-      event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>(
-        '[role="tab"]',
-      ) ?? [],
-    );
-    if (tabs.length === 0) return;
-    event.preventDefault();
-    const currentIndex = Math.max(
-      tabs.indexOf(event.currentTarget),
-      0,
-    );
-    const nextIndex =
-      event.key === "Home"
-        ? 0
-        : event.key === "End"
-          ? tabs.length - 1
-          : event.key === "ArrowRight"
-            ? (currentIndex + 1) % tabs.length
-            : (currentIndex - 1 + tabs.length) % tabs.length;
-    tabs[nextIndex].focus();
-    tabs[nextIndex].click();
   }
 
   const datasetOptions = useMemo(
@@ -334,30 +293,16 @@ export function StudentWrongWordPanel({
       }),
     [datasetFilter, filteredWords, pendingReviewKeys],
   );
-  const selectableQuestionIdSet = useMemo(
-    () =>
-      new Set(
-        (cachedHistory?.words ?? []).flatMap((word) =>
-          word.occurrences.flatMap((occurrence) => {
-            const reviewKey = wrongWordReviewIdentity(
-              occurrence.datasetId,
-              occurrence.vocabEntryId,
-              word.canonicalLexemeId,
-            );
-            return pendingReviewKeys.has(reviewKey)
-              ? []
-              : [occurrence.latestQuestionId];
-          }),
-        ),
-      ),
-    [cachedHistory, pendingReviewKeys],
+  const selectableFilteredQuestionIdSet = useMemo(
+    () => new Set(selectableFilteredQuestionIds),
+    [selectableFilteredQuestionIds],
   );
   const validSelectedQuestionIds = useMemo(
     () =>
       selectedQuestionIds.filter((questionId) =>
-        selectableQuestionIdSet.has(questionId),
+        selectableFilteredQuestionIdSet.has(questionId),
       ),
-    [selectableQuestionIdSet, selectedQuestionIds],
+    [selectableFilteredQuestionIdSet, selectedQuestionIds],
   );
   const selectedDatasetIds = useMemo(() => {
     const selected = new Set(validSelectedQuestionIds);
@@ -393,19 +338,15 @@ export function StudentWrongWordPanel({
 
   function toggleVisibleQuestions() {
     if (requestingRef.current || queueing || drafting) return;
-    const visible = new Set(selectableFilteredQuestionIds);
     setSelectedQuestionIds(
-      allVisibleSelected
-        ? validSelectedQuestionIds.filter(
-            (questionId) => !visible.has(questionId),
-          )
-        : [
-            ...new Set([
-              ...validSelectedQuestionIds,
-              ...selectableFilteredQuestionIds,
-            ]),
-          ],
+      allVisibleSelected ? [] : selectableFilteredQuestionIds,
     );
+    setQueueError("");
+    setQueueNotice("");
+  }
+
+  function resetSelectionFeedback() {
+    setSelectedQuestionIds([]);
     setQueueError("");
     setQueueNotice("");
   }
@@ -626,50 +567,15 @@ export function StudentWrongWordPanel({
         </div>
       )}
 
-      <div
-        aria-label="오답 보기 방식"
-        className="dialog-tabs"
-        role="tablist"
-      >
-        <button
-          aria-controls="wrong-word-aggregate-panel"
-          aria-selected={viewMode === "aggregate"}
-          className="dialog-tab"
-          id="wrong-word-aggregate-tab"
-          onKeyDown={moveViewTabFocus}
-          onClick={() => setViewMode("aggregate")}
-          role="tab"
-          tabIndex={viewMode === "aggregate" ? 0 : -1}
-          type="button"
-        >
-          종합
-        </button>
-        <button
-          aria-controls="wrong-word-attempt-panel"
-          aria-selected={viewMode === "attempts"}
-          className="dialog-tab"
-          id="wrong-word-attempt-tab"
-          onKeyDown={moveViewTabFocus}
-          onClick={() => setViewMode("attempts")}
-          role="tab"
-          tabIndex={viewMode === "attempts" ? 0 : -1}
-          type="button"
-        >
-          시험별
-        </button>
-      </div>
-
-      {viewMode === "aggregate" ? (
-        <div
-          aria-labelledby="wrong-word-aggregate-tab"
-          id="wrong-word-aggregate-panel"
-          role="tabpanel"
-        >
+      <div id="wrong-word-aggregate-panel">
           <div className="wrong-word-filter-grid">
             <label className="field">
               <span className="field-label">단어 검색</span>
               <input
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  resetSelectionFeedback();
+                }}
                 placeholder="영어·뜻·단어장"
                 type="search"
                 value={query}
@@ -680,9 +586,7 @@ export function StudentWrongWordPanel({
               <select
                 onChange={(event) => {
                   setDatasetFilter(event.target.value);
-                  setSelectedQuestionIds([]);
-                  setQueueError("");
-                  setQueueNotice("");
+                  resetSelectionFeedback();
                 }}
                 value={datasetFilter}
               >
@@ -710,7 +614,13 @@ export function StudentWrongWordPanel({
                 aria-pressed={levelFilter === value}
                 className="filter-chip"
                 key={value}
-                onClick={() => setLevelFilter(value)}
+                onClick={() => {
+                  if (levelFilter === value) {
+                    return;
+                  }
+                  setLevelFilter(value);
+                  resetSelectionFeedback();
+                }}
                 type="button"
               >
                 {label}
@@ -871,58 +781,7 @@ export function StudentWrongWordPanel({
               })}
             </div>
           )}
-        </div>
-      ) : (
-        <div
-          aria-labelledby="wrong-word-attempt-tab"
-          id="wrong-word-attempt-panel"
-          role="tabpanel"
-        >
-          {cachedHistory.attempts.length === 0 ? (
-            <div className="empty-state">오답 시험이 없습니다.</div>
-          ) : (
-            <div className="wrong-attempt-list">
-              {cachedHistory.attempts.map((attempt) => (
-                <details
-                  className="wrong-attempt-row"
-                  key={attempt.attemptId}
-                >
-                  <summary>
-                    <span>
-                      <strong>{attempt.assignmentTitle}</strong>
-                      <small>
-                        {attempt.attemptNumber}회 ·{" "}
-                        {formatKoreanDateTime(attempt.completedAt)}
-                      </small>
-                    </span>
-                    <span>
-                      {attempt.words.length}개 단어 · 오답{" "}
-                      {attempt.wrongEventCount}회
-                    </span>
-                  </summary>
-                  <div className="wrong-attempt-words">
-                    {attempt.words.map((word) => (
-                      <div
-                        className="wrong-attempt-word"
-                        key={word.questionId}
-                      >
-                        <span>
-                          <strong>{word.headword}</strong>
-                          <small>{word.primaryMeaning}</small>
-                        </span>
-                        <span>
-                          {outcomeLabel(word.outcome)} ·{" "}
-                          {word.datasetLabel}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </details>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      </div>
     </section>
   );
 }

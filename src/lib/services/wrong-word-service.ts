@@ -8,7 +8,6 @@ import {
   wrongWordReviewIdentity,
   type PendingWrongWordReview,
   type StudentWrongWordHistory,
-  type WrongAttemptSource,
   type WrongEntrySource,
   type WrongEventSource,
   type WrongQuestionSource,
@@ -22,8 +21,7 @@ import { finalizeExpiredReviewAssignmentDrafts } from "@/lib/services/review-ass
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-// Aggregate and per-attempt views intentionally duplicate labels. Keep a
-// conservative response-size ceiling until cursor-paged history is added.
+// Keep a conservative response-size ceiling until cursor-paged history is added.
 const MAX_WRONG_EVENTS = 400;
 const WRONG_EVENT_PAGE_SIZE = 200;
 const RELATION_CHUNK_SIZE = 200;
@@ -37,14 +35,6 @@ type WrongEventRow = {
   canonical_lexeme_id_snapshot: string | null;
   wrong_stage: "initial" | "retry";
   wrong_at: string;
-};
-
-type AttemptRow = {
-  id: string;
-  attempt_number: number;
-  status: "completed" | "expired";
-  completed_at: string;
-  assignment: { title: string } | Array<{ title: string }> | null;
 };
 
 type QuestionSnapshot = {
@@ -225,29 +215,14 @@ export async function getStudentWrongWordHistory(
     };
   }
 
-  const attemptIds = unique(
-    eventRows.map((event) => event.quiz_attempt_id),
-  );
   const questionIds = unique(
     eventRows.map((event) => event.quiz_question_id),
   );
   const vocabEntryIds = unique(
     eventRows.map((event) => event.vocab_entry_id),
   );
-  const attemptRows: AttemptRow[] = [];
   const questionRows: QuestionRow[] = [];
   const entryRows: EntryRow[] = [];
-
-  for (const idChunk of chunks(attemptIds)) {
-    const { data, error } = await supabase
-      .from("quiz_attempts")
-      .select(
-        "id, attempt_number, status, completed_at, assignment:assignments(title)",
-      )
-      .in("id", idChunk);
-    if (error) throw new Error("오답 시험 이력을 불러오지 못했습니다.");
-    attemptRows.push(...((data ?? []) as AttemptRow[]));
-  }
 
   for (const idChunk of chunks(questionIds)) {
     const { data, error } = await supabase
@@ -272,21 +247,6 @@ export async function getStudentWrongWordHistory(
   }
 
   const entryById = new Map(entryRows.map((entry) => [entry.id, entry]));
-  const attempts = attemptRows.flatMap(
-    (attempt): WrongAttemptSource[] => {
-      const assignment = oneRelation(attempt.assignment);
-      if (!assignment || !attempt.completed_at) return [];
-      return [
-        {
-          id: attempt.id,
-          assignmentTitle: assignment.title,
-          attemptNumber: attempt.attempt_number,
-          status: attempt.status,
-          completedAt: attempt.completed_at,
-        },
-      ];
-    },
-  );
   const entries = entryRows.map((entry): WrongEntrySource => {
     const dataset = oneRelation(entry.dataset);
     return {
@@ -337,7 +297,6 @@ export async function getStudentWrongWordHistory(
 
   return {
     ...buildStudentWrongWordHistory({
-      attempts,
       entries,
       events,
       questions,

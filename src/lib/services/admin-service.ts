@@ -37,11 +37,17 @@ import {
   type PendingReviewSummaryRow,
   type StudentPendingReviewSummary,
 } from "@/lib/admin/review-queue-summary";
+import {
+  parseStudentCurrentVocabWrongSummaries,
+  type CurrentVocabWrongSummaryRow,
+  type StudentCurrentVocabWrongSummary,
+} from "@/lib/admin/wrong-history-summary";
 
 export { buildStudentProgress } from "@/lib/admin/progress";
 export type { StudentProgressSummary } from "@/lib/admin/progress";
 export type { AssignmentHistorySummary } from "@/lib/admin/history";
 export type { StudentPendingReviewSummary } from "@/lib/admin/review-queue-summary";
+export type { StudentCurrentVocabWrongSummary } from "@/lib/admin/wrong-history-summary";
 
 export type StudentSummary = {
   id: string;
@@ -469,6 +475,45 @@ export async function listStudentPendingReviewSummaries(): Promise<
     }
     afterStudentId = last.studentId;
     afterDatasetId = last.datasetId;
+  }
+
+  return summaries;
+}
+
+export async function listStudentCurrentVocabWrongSummaries(): Promise<
+  StudentCurrentVocabWrongSummary[]
+> {
+  await requireAdmin();
+  const supabase = await createServerSupabaseClient();
+  const summaries: StudentCurrentVocabWrongSummary[] = [];
+  const pageSize = 500;
+  let afterStudentId: string | null = null;
+
+  for (;;) {
+    const { data, error } = await supabase.rpc(
+      "list_student_current_vocab_wrong_summaries",
+      {
+        p_after_student_id: afterStudentId,
+        p_limit: pageSize,
+      },
+    );
+
+    if (error || !Array.isArray(data)) {
+      throw new Error(
+        "학생별 현재 단어장 오답을 불러오지 못했습니다.",
+      );
+    }
+    const page = parseStudentCurrentVocabWrongSummaries(
+      data as CurrentVocabWrongSummaryRow[],
+    );
+    summaries.push(...page);
+    if (page.length < pageSize) break;
+
+    const last = page.at(-1);
+    if (!last) {
+      throw new Error("현재 단어장 오답 목록 커서를 확인하지 못했습니다.");
+    }
+    afterStudentId = last.studentId;
   }
 
   return summaries;

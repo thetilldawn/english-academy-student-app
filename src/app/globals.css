@@ -241,6 +241,11 @@ textarea:focus-visible {
   background: var(--green-dark);
 }
 
+.assignment-launch-button {
+  min-inline-size: max-content;
+  white-space: nowrap;
+}
+
 .button-secondary {
   color: var(--green-dark);
   border-color: #b9d1c6;
@@ -2565,6 +2570,10 @@ tr:last-child td {
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
   gap: 8px;
   align-items: stretch;
+}
+
+.answer-flow-resolved {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
 }
 
 .flow-step {

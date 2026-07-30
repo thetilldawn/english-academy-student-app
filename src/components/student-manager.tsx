@@ -936,10 +936,10 @@ export function StudentManager({
                 {selectedStudent.status === "active" ? (
                   <>
                     <Link
-                      className="button button-primary"
+                      className="button button-primary assignment-launch-button"
                       href={`/admin/assignments?student=${selectedStudent.id}`}
                     >
-                      단어 시험 배정
+                      새 단어 시험 배정
                     </Link>
                     <button
                       className="button button-quiet"

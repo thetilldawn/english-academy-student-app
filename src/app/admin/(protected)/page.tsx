@@ -19,8 +19,11 @@ export default async function AdminDashboardPage() {
           <h1>Overview</h1>
           <p>최근 배정과 응시 여부, 첫 시험·최종 점수를 확인합니다.</p>
         </div>
-        <Link className="button button-primary" href="/admin/assignments">
-          단어 시험 배정
+        <Link
+          className="button button-primary assignment-launch-button"
+          href="/admin/assignments"
+        >
+          새 단어 시험 배정
         </Link>
       </div>
 

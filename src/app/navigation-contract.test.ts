@@ -146,6 +146,8 @@ describe("responsive navigation contract", () => {
     expect(assignmentManager).toContain(
       'className="dialog dialog-extra-wide assignment-dialog"',
     );
+    expect(studentManager).toContain("새 단어 시험 배정");
+    expect(studentManager).toContain("assignment-launch-button");
   });
 
   it("오버뷰와 내역은 미응시를 포함한 공통 이력을 사용한다", () => {

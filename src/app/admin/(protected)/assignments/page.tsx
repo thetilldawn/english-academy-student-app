@@ -7,6 +7,7 @@ import {
   buildStudentProgress,
   listAssignmentHistory,
   listDatasets,
+  listStudentCurrentVocabWrongSummaries,
   listStudentPendingReviewSummaries,
   listStudents,
   listVocabUnits,
@@ -40,6 +41,7 @@ export default async function AssignmentsPage({
     units,
     history,
     pendingReviewSummaries,
+    currentVocabWrongSummaries,
     reviewDraft,
   ] = await Promise.all([
     listDatasets(),
@@ -47,6 +49,7 @@ export default async function AssignmentsPage({
     listVocabUnits(),
     listAssignmentHistory(),
     listStudentPendingReviewSummaries(),
+    listStudentCurrentVocabWrongSummaries(),
     requestedReviewDraftId && validReviewDraftId
       ? getReviewAssignmentDraftSummary(requestedReviewDraftId)
       : Promise.resolve(null),
@@ -77,6 +80,7 @@ export default async function AssignmentsPage({
         units={units}
         progress={progress}
         pendingReviewSummaries={pendingReviewSummaries}
+        currentVocabWrongSummaries={currentVocabWrongSummaries}
         initialStudentId={requestedReviewDraftId ? "" : initialStudentId}
       />
       {reviewDraft && (

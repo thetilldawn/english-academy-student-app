@@ -20,14 +20,6 @@ export type WrongQuestionSource = {
   provenanceStatus: "legacy_backfill" | "verified_v2";
 };
 
-export type WrongAttemptSource = {
-  id: string;
-  assignmentTitle: string;
-  attemptNumber: number;
-  status: "completed" | "expired";
-  completedAt: string;
-};
-
 export type WrongEntrySource = {
   id: number;
   datasetId: string;
@@ -81,28 +73,6 @@ export type PendingWrongWordReview = {
   reviewDraftId: string | null;
 };
 
-export type WrongAttemptWord = {
-  questionId: string;
-  datasetId: string;
-  vocabEntryId: number;
-  datasetLabel: string;
-  headword: string;
-  primaryMeaning: string;
-  provenanceStatus: "legacy_backfill" | "verified_v2";
-  wrongCount: 1 | 2;
-  outcome: WrongWordOutcome;
-};
-
-export type WrongAttemptSummary = {
-  attemptId: string;
-  assignmentTitle: string;
-  attemptNumber: number;
-  status: "completed" | "expired";
-  completedAt: string;
-  wrongEventCount: number;
-  words: WrongAttemptWord[];
-};
-
 export type StudentWrongWordHistory = {
   wrongEventCount: number;
   uniqueWordCount: number;
@@ -111,7 +81,6 @@ export type StudentWrongWordHistory = {
   pendingReviewCount: number;
   pendingReviews: PendingWrongWordReview[];
   words: WrongWordAggregate[];
-  attempts: WrongAttemptSummary[];
 };
 
 function latestOutcome(
@@ -139,26 +108,20 @@ export function wrongWordReviewIdentity(
 }
 
 export function buildStudentWrongWordHistory({
-  attempts,
   entries,
   events,
   questions,
 }: {
-  attempts: readonly WrongAttemptSource[];
   entries: readonly WrongEntrySource[];
   events: readonly WrongEventSource[];
   questions: readonly WrongQuestionSource[];
 }): StudentWrongWordHistory {
-  const attemptById = new Map(
-    attempts.map((attempt) => [attempt.id, attempt]),
-  );
   const entryById = new Map(entries.map((entry) => [entry.id, entry]));
   const questionById = new Map(
     questions.map((question) => [question.id, question]),
   );
   const usableEvents = events.filter(
     (event) =>
-      attemptById.has(event.attemptId) &&
       questionById.has(event.questionId) &&
       entryById.has(event.vocabEntryId),
   );
@@ -266,68 +229,6 @@ export function buildStudentWrongWordHistory({
         left.headword.localeCompare(right.headword, "en"),
     );
 
-  const eventsByAttempt = new Map<string, WrongEventSource[]>();
-  for (const event of usableEvents) {
-    const current = eventsByAttempt.get(event.attemptId) ?? [];
-    current.push(event);
-    eventsByAttempt.set(event.attemptId, current);
-  }
-
-  const attemptSummaries = [...eventsByAttempt.entries()]
-    .flatMap(([attemptId, attemptEvents]): WrongAttemptSummary[] => {
-      const attempt = attemptById.get(attemptId);
-      if (!attempt) return [];
-      const eventsByQuestion = new Map<string, WrongEventSource[]>();
-      for (const event of attemptEvents) {
-        const current = eventsByQuestion.get(event.questionId) ?? [];
-        current.push(event);
-        eventsByQuestion.set(event.questionId, current);
-      }
-      const wordsForAttempt = [...eventsByQuestion.entries()]
-        .flatMap(([questionId, questionEvents]): WrongAttemptWord[] => {
-          const question = questionById.get(questionId);
-          const firstEvent = questionEvents[0];
-          const entry = firstEvent
-            ? entryById.get(firstEvent.vocabEntryId)
-            : null;
-          if (!question || !firstEvent || !entry) return [];
-          return [
-            {
-              questionId,
-              datasetId: firstEvent.datasetId,
-              vocabEntryId: firstEvent.vocabEntryId,
-              datasetLabel: entry.datasetLabel,
-              headword: question.headword || entry.headword,
-              primaryMeaning:
-                question.primaryMeaning || entry.primaryMeaning,
-              provenanceStatus: question.provenanceStatus,
-              wrongCount: questionEvents.length >= 2 ? 2 : 1,
-              outcome: latestOutcome(question),
-            },
-          ];
-        })
-        .toSorted(
-          (left, right) =>
-            right.wrongCount - left.wrongCount ||
-            left.headword.localeCompare(right.headword, "en"),
-        );
-      return [
-        {
-          attemptId,
-          assignmentTitle: attempt.assignmentTitle,
-          attemptNumber: attempt.attemptNumber,
-          status: attempt.status,
-          completedAt: attempt.completedAt,
-          wrongEventCount: attemptEvents.length,
-          words: wordsForAttempt,
-        },
-      ];
-    })
-    .toSorted(
-      (left, right) =>
-        Date.parse(right.completedAt) - Date.parse(left.completedAt),
-    );
-
   return {
     wrongEventCount: usableEvents.length,
     uniqueWordCount: words.length,
@@ -340,7 +241,6 @@ export function buildStudentWrongWordHistory({
     pendingReviewCount: 0,
     pendingReviews: [],
     words,
-    attempts: attemptSummaries,
   };
 }
 
@@ -353,6 +253,5 @@ export function emptyStudentWrongWordHistory(): StudentWrongWordHistory {
     pendingReviewCount: 0,
     pendingReviews: [],
     words: [],
-    attempts: [],
   };
 }
