@@ -2178,6 +2178,10 @@ tr:last-child td {
   font-size: 12px;
 }
 
+.assignment-student-row > .button.button-primary {
+  color: #fff;
+}
+
 .assignment-student-row strong {
   overflow: hidden;
   color: var(--ink);
