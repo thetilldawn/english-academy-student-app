@@ -15,8 +15,7 @@ import {
 } from "@/lib/deadline";
 import { getPriorWrongIndicator } from "@/lib/quiz/prior-wrong";
 
-const CORRECT_FEEDBACK_DELAY_MS = 100;
-const WRONG_FEEDBACK_DELAY_MS = 220;
+const ANSWER_FEEDBACK_DELAY_MS = 500;
 
 type Question = {
   id: string;
@@ -267,9 +266,6 @@ export function QuizPlayer({
         );
 
         const answeredPhase = attempt.phase;
-        const feedbackDelay = payload.correct
-          ? CORRECT_FEEDBACK_DELAY_MS
-          : WRONG_FEEDBACK_DELAY_MS;
         window.setTimeout(() => {
           if (payload.completed) {
             router.replace(`/student/result/${attempt.id}`);
@@ -342,7 +338,7 @@ export function QuizPlayer({
           setSubmitting(false);
           timeWarningAnnounced.current = false;
           setTimeWarning("");
-        }, feedbackDelay);
+        }, ANSWER_FEEDBACK_DELAY_MS);
       } catch (requestError) {
         if (await tryRecover()) return;
         setSelectedChoice(null);

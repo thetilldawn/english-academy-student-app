@@ -62,8 +62,7 @@ describe("DAY 문제은행 응시 계약", () => {
     expect(player).not.toContain("}, 800)");
     expect(player).toContain("const recoverAttempt");
     expect(player).toContain("if (await tryRecover()) return");
-    expect(player).toContain("CORRECT_FEEDBACK_DELAY_MS = 100");
-    expect(player).toContain("WRONG_FEEDBACK_DELAY_MS = 220");
+    expect(player).toContain("ANSWER_FEEDBACK_DELAY_MS = 500");
     expect(player).not.toContain("router.refresh()");
     expect(
       player.match(
