@@ -2168,9 +2168,13 @@ tr:last-child td {
 }
 
 .assignment-student-row small,
-.assignment-student-row span {
+.assignment-student-row span:not(.button) {
   color: var(--muted);
   font-size: 12px;
+}
+
+.assignment-student-row > .button.button-primary {
+  color: #fff;
 }
 
 .assignment-student-row strong {
