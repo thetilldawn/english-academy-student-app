@@ -964,7 +964,7 @@ export async function createAssignment(input: {
   const questionDrafts = createMixedQuizQuestions(
     [],
     primaryCandidates,
-    allCandidates,
+    primaryCandidates,
     input.questionCount,
     input.englishToKoreanRatio,
   ).sort(

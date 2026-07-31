@@ -313,6 +313,12 @@ export function AssignmentManager({
           pendingReviewSummaryKey(selectedStudent.id, datasetId),
         ) ?? emptyPendingReviewCounts())
       : emptyPendingReviewCounts();
+  const selectedCurrentWrongCounts =
+    selectedStudent && datasetId
+      ? (currentVocabWrongIndex.byStudentDataset.get(
+          currentVocabWrongSummaryKey(selectedStudent.id, datasetId),
+        ) ?? emptyCurrentVocabWrongCounts())
+      : emptyCurrentVocabWrongCounts();
   const selectedPendingReviewCount = pendingReviewCount(
     selectedReviewCounts,
   );
@@ -602,6 +608,8 @@ export function AssignmentManager({
   function selectStartUnit(nextStartId: string) {
     setQuestionCountMode("auto");
     setStartUnitId(nextStartId);
+    setError("");
+    setSuccess("");
     const nextStartIndex = datasetUnits.findIndex(
       (unit) => unit.id === nextStartId,
     );
@@ -1113,6 +1121,8 @@ export function AssignmentManager({
                     onChange={(event) => {
                       setQuestionCountMode("auto");
                       setEndUnitId(event.target.value);
+                      setError("");
+                      setSuccess("");
                     }}
                     required
                     value={effectiveEndUnitId}
@@ -1140,9 +1150,9 @@ export function AssignmentManager({
                 <legend>
                   틀렸던 단어 추가
                   <HelpTip label="틀렸던 단어 추가 도움말">
-                    기본은 꺼짐입니다. 켜면 선택한 단계의 미해결 단어를
-                    모두 추가하며, 이미 다른 시험에 배정 중인 단어는
-                    자동으로 제외합니다.
+                    기본은 꺼짐입니다. 학생 관리에서 다음 시험에
+                    추가해 둔 미해결 단어를 함께 출제합니다. 이미 다른
+                    시험에 배정 중인 단어는 자동으로 제외합니다.
                   </HelpTip>
                 </legend>
                 <label className="assignment-review-switch">
@@ -1163,7 +1173,8 @@ export function AssignmentManager({
                   </span>
                 </label>
                 <p className="field-help" id="pending-review-help">
-                  현재 단어장 대기 {selectedPendingReviewCount}개 ·
+                  현재 미해결 {selectedCurrentWrongCounts.wrongWordCount}개 ·
+                  다음 시험 대기 {selectedPendingReviewCount}개 ·
                   추가 가능 {capacity?.wrongEligible ?? 0}개
                   {(capacity?.alreadyAssigned ?? 0) > 0
                     ? ` · 배정 중 ${capacity?.alreadyAssigned}개`
@@ -1237,6 +1248,8 @@ export function AssignmentManager({
                       setDirectionRatio(
                         Number(event.target.value) as 0 | 50 | 100,
                       );
+                      setError("");
+                      setSuccess("");
                     }}
                     value={directionRatio}
                   >
@@ -1278,6 +1291,8 @@ export function AssignmentManager({
                     onChange={(event) => {
                       setQuestionCountMode("manual");
                       setQuestionCount(Number(event.target.value));
+                      setError("");
+                      setSuccess("");
                     }}
                     required
                     type="number"
@@ -1377,9 +1392,11 @@ export function AssignmentManager({
                   응시 시작 마감 · 선택 · 한국시간
                 </span>
                 <input
-                  onChange={(event) =>
-                    setAvailableUntilLocal(event.target.value)
-                  }
+                  onChange={(event) => {
+                    setAvailableUntilLocal(event.target.value);
+                    setError("");
+                    setSuccess("");
+                  }}
                   step={60}
                   type="datetime-local"
                   value={availableUntilLocal}

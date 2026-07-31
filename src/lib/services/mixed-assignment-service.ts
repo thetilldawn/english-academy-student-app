@@ -389,7 +389,7 @@ async function prepareAssignment(
       )
     : calculateRegularMaximum(
         primaryCandidates,
-        allCandidates,
+        primaryCandidates,
         input.englishToKoreanRatio,
       );
   const minimumQuestionCount = input.includePendingReview
