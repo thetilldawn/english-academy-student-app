@@ -2140,9 +2140,8 @@ tr:last-child td {
   display: grid;
   grid-template-columns:
     minmax(140px, 0.7fr)
-    minmax(150px, 0.9fr)
-    minmax(230px, 1.35fr)
-    minmax(150px, 0.8fr)
+    minmax(180px, 0.95fr)
+    minmax(260px, 1.45fr)
     auto;
   gap: 16px;
   align-items: center;
@@ -4450,7 +4449,6 @@ textarea {
 .assignment-student-identity,
 .assignment-student-book,
 .assignment-student-recent,
-.assignment-student-next,
 .assignment-management-copy {
   gap: 4px;
 }
@@ -4534,14 +4532,13 @@ textarea {
   }
 
   .assignment-student-book,
-  .assignment-student-recent,
-  .assignment-student-next {
+  .assignment-student-recent {
     padding-top: 6px;
     border-top: 1px solid var(--line);
   }
 
   .assignment-student-book,
-  .assignment-student-next {
+  .assignment-student-recent > .meta-tag-list {
     display: flex;
   }
 

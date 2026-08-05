@@ -908,7 +908,6 @@ export function AssignmentManager({
                       </MetaTagList>
                     </span>
                     <span className="assignment-student-recent">
-                      <small>최근 배정·진행</small>
                       <strong>
                         {studentProgress?.latestAssignmentTitle
                           ? assignmentDisplayTitleForUnits(
@@ -919,11 +918,15 @@ export function AssignmentManager({
                             )
                           : "기록 없음"}
                       </strong>
-                      {studentProgress?.latestUnitLabel ? (
-                        <MetaTagList>
+                      <MetaTagList>
+                        <MetaTag>최근 시험</MetaTag>
+                        {studentProgress?.latestUnitLabel ? (
                           <MetaTag>{studentProgress.latestUnitLabel}</MetaTag>
-                        </MetaTagList>
-                      ) : null}
+                        ) : null}
+                        <MetaTag tone="warning">
+                          다음 · {recommendationLabel(studentProgress)}
+                        </MetaTag>
+                      </MetaTagList>
                       <span className="assignment-student-score-line">
                         <AttemptStatusLabel
                           finalScore={studentProgress?.latestFinalScore}
@@ -942,13 +945,6 @@ export function AssignmentManager({
                           status={studentProgress?.latestStatus ?? null}
                         />
                       </span>
-                    </span>
-                    <span className="assignment-student-next">
-                      <MetaTagList>
-                        <MetaTag tone="warning">
-                          다음 · {recommendationLabel(studentProgress)}
-                        </MetaTag>
-                      </MetaTagList>
                     </span>
                     <span className="button button-primary button-small">
                       배정
