@@ -3672,11 +3672,12 @@ h3,
 }
 
 .status-passed,
-.status-active {
+.status-active,
+.status-completed {
   color: var(--pass);
 }
 
-.status-completed {
+.status-retried {
   color: var(--retry);
 }
 
@@ -3724,11 +3725,16 @@ h3,
 .admin-history-row[data-outcome="completed"],
 .student-card[data-exam-outcome="completed"],
 .student-history-row[data-exam-outcome="completed"] {
-  border-left-color: var(--retry-bar);
+  border-left-color: var(--pass);
 }
 
 .result-question:has(.status-correct) {
   border-left-color: var(--pass);
+}
+
+.assignment-card:has(.status-retried),
+.admin-history-row[data-outcome="retried"] {
+  border-left-color: var(--retry-bar);
 }
 
 .assignment-card:has(.status-missed),
@@ -4185,5 +4191,33 @@ textarea {
 
   .admin-history-row {
     grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .history-row-main {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
+  }
+
+  .history-row-main > strong,
+  .history-row-main > span,
+  .history-row-main > small {
+    grid-column: 1;
+  }
+
+  .history-row-main > span {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+  }
+
+  .admin-history-row > .status-pill {
+    align-self: end;
+    padding-bottom: 2px;
+  }
+
+  .admin-mobile-user-label {
+    display: none;
   }
 }

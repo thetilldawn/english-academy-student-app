@@ -22,6 +22,21 @@ export type AttemptScorePresentationInput = {
   retryStartedAt: string | null | undefined;
 };
 
+export type AttemptStatusPresentation = {
+  label:
+    | "응시 전"
+    | "배정 취소"
+    | "미응시 마감"
+    | "응시 중"
+    | "재시험 선택"
+    | "완료"
+    | "재시험 통과"
+    | "미통과"
+    | "시간 종료";
+  className: string;
+  outcome: string;
+};
+
 function scoreValue(score: number | null | undefined) {
   return score === null || score === undefined ? "-" : `${score}점`;
 }
@@ -81,11 +96,90 @@ export function buildAttemptScoreSlots(
 
   const finalScore = input.finalScore ?? input.initialScore;
   return [
-    null,
     {
       label: "최종",
       value: scoreValue(finalScore),
       tone: scoreTone(finalScore, input.passingScore),
     },
+    null,
   ];
+}
+
+export function buildAttemptStatusPresentation(
+  input: AttemptScorePresentationInput,
+): AttemptStatusPresentation {
+  if (input.status === "not_started" || input.status === null) {
+    return {
+      label: "응시 전",
+      className: "status-not_started",
+      outcome: "not_started",
+    };
+  }
+  if (input.status === "cancelled") {
+    return {
+      label: "배정 취소",
+      className: "status-cancelled",
+      outcome: "cancelled",
+    };
+  }
+  if (input.status === "missed") {
+    return {
+      label: "미응시 마감",
+      className: "status-missed",
+      outcome: "missed",
+    };
+  }
+  if (input.status === "in_progress") {
+    return input.phase === "review"
+      ? {
+          label: "재시험 선택",
+          className: "status-retried",
+          outcome: "review",
+        }
+      : {
+          label: "응시 중",
+          className: "status-in_progress",
+          outcome: "in_progress",
+        };
+  }
+
+  const finalScore = input.finalScore ?? input.initialScore;
+  if (
+    finalScore !== null &&
+    finalScore !== undefined &&
+    input.passingScore !== null &&
+    input.passingScore !== undefined
+  ) {
+    if (finalScore < input.passingScore) {
+      return {
+        label: "미통과",
+        className: "status-failed",
+        outcome: "failed",
+      };
+    }
+    if (input.retryStartedAt) {
+      return {
+        label: "재시험 통과",
+        className: "status-retried",
+        outcome: "retried",
+      };
+    }
+    return {
+      label: "완료",
+      className: "status-completed",
+      outcome: "completed",
+    };
+  }
+
+  return input.status === "expired"
+    ? {
+        label: "시간 종료",
+        className: "status-expired",
+        outcome: "expired",
+      }
+    : {
+        label: "완료",
+        className: "status-completed",
+        outcome: "completed",
+      };
 }

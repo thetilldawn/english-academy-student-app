@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  assignmentDisplayTitle,
   assignmentOrderLabel,
   assignmentScopeLabel,
   buildAssignmentHistory,
@@ -259,5 +260,24 @@ describe("assignmentScopeLabel", () => {
     expect(assignmentOrderLabel("mixed", "random")).toBe(
       "무작위 순서",
     );
+  });
+});
+
+describe("assignmentDisplayTitle", () => {
+  it("시험명에 반복된 DAY만 제거하고 원래 시험명은 보존한다", () => {
+    expect(
+      assignmentDisplayTitle({
+        assignmentTitle: "새 시험 · DAY 01",
+        unitLabels: ["DAY 01"],
+        primaryUnitLabels: ["DAY 01"],
+      }),
+    ).toBe("새 시험");
+    expect(
+      assignmentDisplayTitle({
+        assignmentTitle: "완료 · 다시 학습 필요",
+        unitLabels: ["DAY 01"],
+        primaryUnitLabels: ["DAY 01"],
+      }),
+    ).toBe("완료 · 다시 학습 필요");
   });
 });

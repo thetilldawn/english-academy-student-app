@@ -114,6 +114,24 @@ export function assignmentScopeLabel(
     : label;
 }
 
+export function assignmentDisplayTitle(
+  item: Pick<
+    AssignmentHistorySummary,
+    "assignmentTitle" | "primaryUnitLabels" | "unitLabels"
+  >,
+) {
+  const unitLabels = new Set([
+    ...item.unitLabels,
+    ...item.primaryUnitLabels,
+  ]);
+  const titleParts = item.assignmentTitle
+    .split("·")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const filtered = titleParts.filter((part) => !unitLabels.has(part));
+  return filtered.length > 0 ? filtered.join(" · ") : item.assignmentTitle;
+}
+
 export function assignmentOrderLabel(
   _assignmentPurpose: AssignmentPurpose,
   questionOrderMode: QuestionOrderMode,

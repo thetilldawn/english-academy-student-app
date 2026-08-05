@@ -14,12 +14,14 @@ import type {
   AssignmentHistorySummary,
 } from "@/lib/admin/history";
 import {
+  assignmentDisplayTitle,
   assignmentOrderLabel,
   assignmentScopeLabel,
 } from "@/lib/admin/history";
 import { DeadlineCountdown } from "@/components/deadline-countdown";
 import { AdminHistoryActions } from "@/components/admin-history-actions";
 import { AttemptScoreSummary } from "@/components/attempt-score-summary";
+import { buildAttemptStatusPresentation } from "@/lib/ui/attempt-score-presentation";
 import {
   currentTimeMilliseconds,
   secondsUntil,
@@ -49,26 +51,15 @@ type DetailResponse = {
   error?: string;
 };
 
-const STATUS_LABELS: Record<AssignmentActivityStatus, string> = {
-  not_started: "응시 전",
-  cancelled: "배정 취소",
-  missed: "미응시 마감",
-  in_progress: "응시 중",
-  completed: "완료",
-  expired: "시간 종료",
-};
-
-function statusLabel(item: AssignmentHistorySummary) {
-  return item.status === "in_progress" && item.phase === "review"
-    ? "첫 시험 결과"
-    : STATUS_LABELS[item.status];
-}
-
-function statusToneClass(item: AssignmentHistorySummary) {
-  if (item.status === "completed") {
-    return item.passed === false ? "status-failed" : "status-completed";
-  }
-  return `status-${item.status}`;
+function statusPresentation(item: AssignmentHistorySummary) {
+  return buildAttemptStatusPresentation({
+    status: item.status,
+    phase: item.phase,
+    initialScore: item.initialScore,
+    finalScore: item.finalScore,
+    passingScore: item.passingScore,
+    retryStartedAt: item.retryStartedAt,
+  });
 }
 
 function directionLabel(ratio: number) {
@@ -255,20 +246,14 @@ export function AdminHistoryList({
             <li key={item.id}>
               <button
                 className="admin-history-row"
-                data-outcome={
-                  item.status === "completed"
-                    ? item.passed === false
-                      ? "failed"
-                      : "completed"
-                    : item.status
-                }
+                data-outcome={statusPresentation(item).outcome}
                 data-compact={compact}
                 onClick={() => openHistory(item)}
                 type="button"
               >
                 <span className="history-row-main">
                   <strong>{item.studentName}</strong>
-                  <span>{item.assignmentTitle}</span>
+                  <span>{assignmentDisplayTitle(item)}</span>
                   <small>
                     {assignmentScopeLabel(item)} ·{" "}
                     {item.status === "missed"
@@ -298,9 +283,9 @@ export function AdminHistoryList({
                   status={item.status}
                 />
                 <span
-                  className={`status-pill ${statusToneClass(item)}`}
+                  className={`status-pill ${statusPresentation(item).className}`}
                 >
-                  {statusLabel(item)}
+                  {statusPresentation(item).label}
                 </span>
               </button>
             </li>
@@ -341,7 +326,7 @@ export function AdminHistoryList({
           <div className="history-dialog-scores">
             <div>
               <span>상태</span>
-              <strong>{statusLabel(selected)}</strong>
+              <strong>{statusPresentation(selected).label}</strong>
             </div>
             <div className="history-dialog-score-card">
               <span>점수</span>

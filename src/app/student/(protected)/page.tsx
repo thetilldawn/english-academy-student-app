@@ -12,6 +12,7 @@ import {
 import { assignmentOrderLabel } from "@/lib/admin/history";
 import { formatKoreanDateTime } from "@/lib/format";
 import { listStudentAssignments } from "@/lib/services/quiz-service";
+import { buildAttemptStatusPresentation } from "@/lib/ui/attempt-score-presentation";
 
 export const metadata: Metadata = {
   title: "내 단어 시험",
@@ -21,29 +22,15 @@ type StudentAssignment = Awaited<
   ReturnType<typeof listStudentAssignments>
 >[number];
 
-function statusText(
-  status: "in_progress" | "completed" | "expired" | null,
-  phase: StudentAssignment["lastPhase"],
-  missed: boolean,
-) {
-  if (missed) return "미응시 마감";
-  if (status === "in_progress" && phase === "review") {
-    return "첫 시험 결과";
-  }
-  if (status === "in_progress") return "풀던 시험";
-  if (status === "completed") return "완료";
-  if (status === "expired") return "시간 종료";
-  return "새 시험";
-}
-
-function statusClass(assignment: StudentAssignment) {
-  if (assignment.missed) return "status-missed";
-  if (assignment.lastStatus === "completed") {
-    return assignment.lastPassed === false
-      ? "status-failed"
-      : "status-completed";
-  }
-  return `status-${assignment.lastStatus ?? "draft"}`;
+function statusPresentation(assignment: StudentAssignment) {
+  return buildAttemptStatusPresentation({
+    status: assignment.missed ? "missed" : assignment.lastStatus,
+    phase: assignment.lastPhase,
+    initialScore: assignment.lastInitialScore,
+    finalScore: assignment.lastFinalScore,
+    passingScore: assignment.passingScore,
+    retryStartedAt: assignment.lastRetryStartedAt,
+  });
 }
 
 function AssignmentCard({
@@ -74,13 +61,9 @@ function AssignmentCard({
           <h3>{assignment.title}</h3>
         </div>
         <span
-          className={`status-pill ${statusClass(assignment)}`}
+          className={`status-pill ${statusPresentation(assignment).className}`}
         >
-          {statusText(
-            assignment.lastStatus,
-            assignment.lastPhase,
-            assignment.missed,
-          )}
+          {statusPresentation(assignment).label}
         </span>
       </div>
 

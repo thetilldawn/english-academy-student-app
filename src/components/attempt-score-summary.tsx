@@ -1,5 +1,6 @@
 import {
   buildAttemptScoreSlots,
+  buildAttemptStatusPresentation,
   type AttemptScorePresentationInput,
 } from "@/lib/ui/attempt-score-presentation";
 
@@ -32,6 +33,22 @@ export function AttemptScoreSummary({
           />
         ),
       )}
+    </span>
+  );
+}
+
+export function AttemptStatusLabel({
+  className = "",
+  ...input
+}: AttemptScorePresentationInput & { className?: string }) {
+  const presentation = buildAttemptStatusPresentation(input);
+  return (
+    <span
+      className={["attempt-status-label", presentation.className, className]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {presentation.label}
     </span>
   );
 }

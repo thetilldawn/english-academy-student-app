@@ -13,7 +13,10 @@ import {
 import { useRouter } from "next/navigation";
 
 import { HelpTip } from "@/components/help-tip";
-import { AttemptScoreSummary } from "@/components/attempt-score-summary";
+import {
+  AttemptScoreSummary,
+  AttemptStatusLabel,
+} from "@/components/attempt-score-summary";
 import {
   currentTimeMilliseconds,
   koreanDateTimeLocalToIso,
@@ -140,16 +143,6 @@ function unitRangeLabel(labels: string[]) {
   if (labels.length === 0) return "범위 미선택";
   if (labels.length === 1) return labels[0];
   return `${labels[0]}~${labels.at(-1)}`;
-}
-
-function statusLabel(status: ProgressItem["latestStatus"]) {
-  if (status === "not_started") return "응시 전";
-  if (status === "cancelled") return "배정 취소";
-  if (status === "missed") return "미응시 마감";
-  if (status === "in_progress") return "응시 중";
-  if (status === "completed") return "완료";
-  if (status === "expired") return "시간 종료";
-  return "시험 기록 없음";
 }
 
 function scoreLabel(score: number | null | undefined) {
@@ -917,9 +910,14 @@ export function AssignmentManager({
                           "기록 없음"}
                       </strong>
                       <span className="assignment-student-score-line">
-                        {statusLabel(
-                          studentProgress?.latestStatus ?? null,
-                        )}
+                        <AttemptStatusLabel
+                          finalScore={studentProgress?.latestFinalScore}
+                          initialScore={studentProgress?.latestInitialScore}
+                          passingScore={studentProgress?.latestPassingScore}
+                          phase={studentProgress?.latestPhase ?? null}
+                          retryStartedAt={studentProgress?.latestRetryStartedAt}
+                          status={studentProgress?.latestStatus ?? null}
+                        />
                         <AttemptScoreSummary
                           finalScore={studentProgress?.latestFinalScore}
                           initialScore={studentProgress?.latestInitialScore}
@@ -1002,7 +1000,14 @@ export function AssignmentManager({
               {selectedProgress?.latestAssignmentTitle ?? "기록 없음"}
             </span>
             <span className="assignment-dialog-score-line">
-              {statusLabel(selectedProgress?.latestStatus ?? null)}
+              <AttemptStatusLabel
+                finalScore={selectedProgress?.latestFinalScore}
+                initialScore={selectedProgress?.latestInitialScore}
+                passingScore={selectedProgress?.latestPassingScore}
+                phase={selectedProgress?.latestPhase ?? null}
+                retryStartedAt={selectedProgress?.latestRetryStartedAt}
+                status={selectedProgress?.latestStatus ?? null}
+              />
               <AttemptScoreSummary
                 finalScore={selectedProgress?.latestFinalScore}
                 initialScore={selectedProgress?.latestInitialScore}
