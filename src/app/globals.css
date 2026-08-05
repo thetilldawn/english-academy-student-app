@@ -3796,7 +3796,8 @@ h3,
 }
 
 .attempt-score-summary {
-  min-width: 132px;
+  width: 132px;
+  max-width: 100%;
   display: grid;
   grid-template-columns: repeat(2, minmax(58px, 1fr));
   gap: 8px;
