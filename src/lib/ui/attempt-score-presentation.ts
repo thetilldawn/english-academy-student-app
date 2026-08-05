@@ -62,7 +62,7 @@ export function buildAttemptScoreSlots(
 
   if (input.initialScore === null || input.initialScore === undefined) {
     const tone = input.status === "expired" ? "fail" : "neutral";
-    return [null, { label: "점수", value: "-", tone }];
+    return [{ label: "점수", value: "-", tone }, null];
   }
 
   if (input.retryStartedAt) {

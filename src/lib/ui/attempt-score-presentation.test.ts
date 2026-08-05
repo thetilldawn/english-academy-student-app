@@ -110,4 +110,17 @@ describe("buildAttemptScoreSlots", () => {
       })[0],
     ).toEqual({ label: "첫 시험", value: "미응시", tone: "fail" });
   });
+
+  it("점수가 없는 취소 배정도 첫 번째 점수 칸에 맞춘다", () => {
+    expect(
+      buildAttemptScoreSlots({
+        status: "cancelled",
+        phase: null,
+        initialScore: null,
+        finalScore: null,
+        passingScore: 80,
+        retryStartedAt: null,
+      }),
+    ).toEqual([{ label: "점수", value: "-", tone: "neutral" }, null]);
+  });
 });
