@@ -59,6 +59,7 @@ function history(
     finalScore: 100,
     passed: true,
     startedAt: "2026-07-29T00:00:00.000Z",
+    retryStartedAt: "2026-07-29T00:03:00.000Z",
     deadlineAt: "2026-07-29T00:10:00.000Z",
     completedAt: "2026-07-29T00:05:00.000Z",
     ...overrides,

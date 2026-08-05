@@ -162,13 +162,17 @@ describe("responsive navigation contract", () => {
     const historyList = source(
       "src/components/admin-history-list.tsx",
     );
+    const scorePresentation = source(
+      "src/lib/ui/attempt-score-presentation.ts",
+    );
 
     expect(overview).toContain("listAssignmentHistory");
     expect(overview).not.toContain("listAttempts");
     expect(overview).not.toContain("listAssignments");
     expect(results).toContain("listAssignmentHistory");
     expect(historyList).toContain("첫 시험");
-    expect(historyList).toContain("최종");
+    expect(scorePresentation).toContain('label: "최종"');
+    expect(scorePresentation).toContain('label: "재시험"');
     expect(historyList).toContain("미응시");
     expect(historyList).toContain("/api/admin/attempts/");
   });

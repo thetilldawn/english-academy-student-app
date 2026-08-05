@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { DeadlineCountdown } from "@/components/deadline-countdown";
 import { StartAttemptButton } from "@/components/start-attempt-button";
+import { AttemptScoreSummary } from "@/components/attempt-score-summary";
 import { requireStudentSession } from "@/lib/auth/student-session";
 import {
   currentTimeMilliseconds,
@@ -35,6 +36,16 @@ function statusText(
   return "새 시험";
 }
 
+function statusClass(assignment: StudentAssignment) {
+  if (assignment.missed) return "status-missed";
+  if (assignment.lastStatus === "completed") {
+    return assignment.lastPassed === false
+      ? "status-failed"
+      : "status-completed";
+  }
+  return `status-${assignment.lastStatus ?? "draft"}`;
+}
+
 function AssignmentCard({
   assignment,
   featured = false,
@@ -63,11 +74,7 @@ function AssignmentCard({
           <h3>{assignment.title}</h3>
         </div>
         <span
-          className={`status-pill status-${
-            assignment.missed
-              ? "missed"
-              : (assignment.lastStatus ?? "draft")
-          }`}
+          className={`status-pill ${statusClass(assignment)}`}
         >
           {statusText(
             assignment.lastStatus,
@@ -106,10 +113,16 @@ function AssignmentCard({
         </span>
       </div>
 
-      {assignment.lastInitialScore !== null && (
-        <p className="last-score">
-          최근 첫 시험 점수 <strong>{assignment.lastInitialScore}점</strong>
-        </p>
+      {(assignment.lastInitialScore !== null || assignment.missed) && (
+        <AttemptScoreSummary
+          className="last-score"
+          finalScore={assignment.lastFinalScore}
+          initialScore={assignment.lastInitialScore}
+          passingScore={assignment.passingScore}
+          phase={assignment.lastPhase}
+          retryStartedAt={assignment.lastRetryStartedAt}
+          status={assignment.missed ? "missed" : assignment.lastStatus}
+        />
       )}
 
       {assignment.availableUntil &&

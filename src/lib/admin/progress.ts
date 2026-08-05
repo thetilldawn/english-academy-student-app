@@ -9,9 +9,12 @@ export type StudentProgressSummary = {
   latestAttemptId: string | null;
   latestAssignmentTitle: string | null;
   latestStatus: AssignmentActivityStatus | null;
+  latestPhase: AssignmentHistorySummary["phase"];
   latestScore: number | null;
   latestInitialScore: number | null;
   latestFinalScore: number | null;
+  latestPassingScore: number | null;
+  latestRetryStartedAt: string | null;
   latestPassed: boolean | null;
   latestUnitLabel: string | null;
   latestAttemptNumber: number | null;
@@ -189,10 +192,13 @@ export function buildStudentProgress(
       latestAttemptId: latest?.attemptId ?? null,
       latestAssignmentTitle: latest?.assignmentTitle ?? null,
       latestStatus: latest?.status ?? null,
+      latestPhase: latest?.phase ?? null,
       latestScore:
         latest?.finalScore ?? latest?.initialScore ?? null,
       latestInitialScore: latest?.initialScore ?? null,
       latestFinalScore: latest?.finalScore ?? null,
+      latestPassingScore: latest?.passingScore ?? null,
+      latestRetryStartedAt: latest?.retryStartedAt ?? null,
       latestPassed: latest?.passed ?? null,
       latestUnitLabel: latest ? assignmentScopeLabel(latest) : null,
       latestAttemptNumber: latest?.attemptNumber ?? null,

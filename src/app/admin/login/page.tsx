@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { AdminLoginForm } from "@/components/admin-login-form";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export const metadata: Metadata = {
   title: "관리자 로그인",
@@ -11,6 +12,7 @@ export default function AdminLoginPage() {
   return (
     <main className="auth-shell" id="main-content">
       <section className="auth-card">
+        <ThemeToggle className="theme-toggle-auth" />
         <p className="eyebrow">TEACHER ADMIN</p>
         <h1>관리자 로그인</h1>
         <p className="auth-description">

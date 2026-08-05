@@ -57,6 +57,7 @@ function attempt(
     finalScore: 100,
     passed: true,
     startedAt: "2026-07-29T01:00:00.000Z",
+    retryStartedAt: "2026-07-29T01:03:00.000Z",
     deadlineAt: "2026-07-29T01:10:00.000Z",
     completedAt: "2026-07-29T01:05:00.000Z",
     ...overrides,

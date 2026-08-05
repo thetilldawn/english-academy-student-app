@@ -19,6 +19,7 @@ import {
 } from "@/lib/admin/history";
 import { DeadlineCountdown } from "@/components/deadline-countdown";
 import { AdminHistoryActions } from "@/components/admin-history-actions";
+import { AttemptScoreSummary } from "@/components/attempt-score-summary";
 import {
   currentTimeMilliseconds,
   secondsUntil,
@@ -63,8 +64,11 @@ function statusLabel(item: AssignmentHistorySummary) {
     : STATUS_LABELS[item.status];
 }
 
-function scoreText(score: number | null) {
-  return score === null ? "-" : `${score}점`;
+function statusToneClass(item: AssignmentHistorySummary) {
+  if (item.status === "completed") {
+    return item.passed === false ? "status-failed" : "status-completed";
+  }
+  return `status-${item.status}`;
 }
 
 function directionLabel(ratio: number) {
@@ -251,6 +255,13 @@ export function AdminHistoryList({
             <li key={item.id}>
               <button
                 className="admin-history-row"
+                data-outcome={
+                  item.status === "completed"
+                    ? item.passed === false
+                      ? "failed"
+                      : "completed"
+                    : item.status
+                }
                 data-compact={compact}
                 onClick={() => openHistory(item)}
                 type="button"
@@ -277,18 +288,17 @@ export function AdminHistoryList({
                           )}`}
                   </small>
                 </span>
-                <span className="history-score-pair">
-                  <span>
-                    첫 시험
-                    <strong>{scoreText(item.initialScore)}</strong>
-                  </span>
-                  <span>
-                    최종
-                    <strong>{scoreText(item.finalScore)}</strong>
-                  </span>
-                </span>
+                <AttemptScoreSummary
+                  className="history-score-pair"
+                  finalScore={item.finalScore}
+                  initialScore={item.initialScore}
+                  passingScore={item.passingScore}
+                  phase={item.phase}
+                  retryStartedAt={item.retryStartedAt}
+                  status={item.status}
+                />
                 <span
-                  className={`status-pill status-${item.status}`}
+                  className={`status-pill ${statusToneClass(item)}`}
                 >
                   {statusLabel(item)}
                 </span>
@@ -333,13 +343,16 @@ export function AdminHistoryList({
               <span>상태</span>
               <strong>{statusLabel(selected)}</strong>
             </div>
-            <div>
-              <span>첫 시험 점수</span>
-              <strong>{scoreText(selected.initialScore)}</strong>
-            </div>
-            <div>
-              <span>재시험 반영 점수</span>
-              <strong>{scoreText(selected.finalScore)}</strong>
+            <div className="history-dialog-score-card">
+              <span>점수</span>
+              <AttemptScoreSummary
+                finalScore={selected.finalScore}
+                initialScore={selected.initialScore}
+                passingScore={selected.passingScore}
+                phase={selected.phase}
+                retryStartedAt={selected.retryStartedAt}
+                status={selected.status}
+              />
             </div>
             <div>
               <span>

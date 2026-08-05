@@ -618,6 +618,7 @@ type HistoryAttemptRow = {
   final_score: number | string | null;
   passed: boolean | null;
   started_at: string;
+  retry_started_at: string | null;
   deadline_at: string;
   completed_at: string | null;
 };
@@ -695,7 +696,7 @@ async function listAttemptHistoryRows(
     const { data, error } = await supabase
       .from("quiz_attempts")
       .select(
-        "id, assignment_id, student_id, attempt_number, status, phase, question_count_snapshot, time_limit_seconds_snapshot, passing_score_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, started_at, deadline_at, completed_at",
+        "id, assignment_id, student_id, attempt_number, status, phase, question_count_snapshot, time_limit_seconds_snapshot, passing_score_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, started_at, retry_started_at, deadline_at, completed_at",
       )
       .order("started_at", { ascending: false })
       .order("id")
@@ -855,6 +856,7 @@ export async function listAssignmentHistory(): Promise<
         attempt.final_score === null ? null : Number(attempt.final_score),
       passed: attempt.passed,
       startedAt: attempt.started_at,
+      retryStartedAt: attempt.retry_started_at,
       deadlineAt: attempt.deadline_at,
       completedAt: attempt.completed_at,
     }),

@@ -24,6 +24,7 @@ import { formatKoreanDateTime } from "@/lib/format";
 import { sendKakaoText } from "@/lib/kakao-share";
 import { AdminHistoryActions } from "@/components/admin-history-actions";
 import { StudentWrongWordPanel } from "@/components/student-wrong-word-panel";
+import { AttemptScoreSummary } from "@/components/attempt-score-summary";
 
 type StudentItem = {
   id: string;
@@ -55,9 +56,12 @@ type ProgressItem = {
     | "completed"
     | "expired"
     | null;
+  latestPhase: "initial" | "review" | "retry" | "completed" | null;
   latestScore: number | null;
   latestInitialScore: number | null;
   latestFinalScore: number | null;
+  latestPassingScore: number | null;
+  latestRetryStartedAt: string | null;
   latestPassed: boolean | null;
   latestUnitLabel: string | null;
   latestAttemptNumber: number | null;
@@ -95,10 +99,6 @@ function activityStatusText(status: ProgressItem["latestStatus"]) {
   if (status === "completed") return "완료";
   if (status === "expired") return "시간 종료";
   return "시험 기록 없음";
-}
-
-function scoreText(score: number | null | undefined) {
-  return score === null || score === undefined ? "-" : `${score}점`;
 }
 
 export function StudentManager({
@@ -679,6 +679,13 @@ export function StudentManager({
                   return (
                     <button
                       className="card student-card student-card-button"
+                      data-exam-outcome={
+                        studentProgress?.latestStatus === "completed"
+                          ? studentProgress.latestPassed === false
+                            ? "failed"
+                            : "completed"
+                          : (studentProgress?.latestStatus ?? "none")
+                      }
                       key={student.id}
                       onClick={() => selectStudent(student)}
                       type="button"
@@ -707,14 +714,18 @@ export function StudentManager({
                           {studentProgress?.latestAssignmentTitle ??
                             "시험 기록 없음"}
                         </span>
-                        <span>
+                        <span className="student-card-score-line">
                           {activityStatusText(
                             studentProgress?.latestStatus ?? null,
                           )}
-                          {" · "}첫{" "}
-                          {scoreText(studentProgress?.latestInitialScore)}
-                          {" · "}최종{" "}
-                          {scoreText(studentProgress?.latestFinalScore)}
+                          <AttemptScoreSummary
+                            finalScore={studentProgress?.latestFinalScore}
+                            initialScore={studentProgress?.latestInitialScore}
+                            passingScore={studentProgress?.latestPassingScore}
+                            phase={studentProgress?.latestPhase ?? null}
+                            retryStartedAt={studentProgress?.latestRetryStartedAt}
+                            status={studentProgress?.latestStatus ?? null}
+                          />
                         </span>
                         <span>
                           다음 ·{" "}
@@ -841,11 +852,15 @@ export function StudentManager({
                 </div>
                 <div>
                   <span>점수</span>
-                  <strong>
-                    첫 {scoreText(selectedProgress?.latestInitialScore)}
-                    {" · "}최종{" "}
-                    {scoreText(selectedProgress?.latestFinalScore)}
-                  </strong>
+                  <AttemptScoreSummary
+                    className="student-progress-score"
+                    finalScore={selectedProgress?.latestFinalScore}
+                    initialScore={selectedProgress?.latestInitialScore}
+                    passingScore={selectedProgress?.latestPassingScore}
+                    phase={selectedProgress?.latestPhase ?? null}
+                    retryStartedAt={selectedProgress?.latestRetryStartedAt}
+                    status={selectedProgress?.latestStatus ?? null}
+                  />
                   <small>
                     {selectedProgress?.latestCompletedAt
                       ? formatKoreanDateTime(
@@ -863,7 +878,17 @@ export function StudentManager({
                   </div>
                 ) : (
                   selectedStudentHistory.map((item) => (
-                    <article className="student-history-row" key={item.id}>
+                    <article
+                      className="student-history-row"
+                      data-exam-outcome={
+                        item.status === "completed"
+                          ? item.passed === false
+                            ? "failed"
+                            : "completed"
+                          : item.status
+                      }
+                      key={item.id}
+                    >
                       <div>
                         <strong>{item.assignmentTitle}</strong>
                         <span>
@@ -875,10 +900,14 @@ export function StudentManager({
                         </span>
                       </div>
                       <div className="student-history-actions">
-                        <span>
-                          첫 {scoreText(item.initialScore)}
-                          {" · "}최종 {scoreText(item.finalScore)}
-                        </span>
+                        <AttemptScoreSummary
+                          finalScore={item.finalScore}
+                          initialScore={item.initialScore}
+                          passingScore={item.passingScore}
+                          phase={item.phase}
+                          retryStartedAt={item.retryStartedAt}
+                          status={item.status}
+                        />
                         {item.attemptId && (
                           <Link
                             className="button button-quiet button-small"

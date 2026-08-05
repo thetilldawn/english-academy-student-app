@@ -57,6 +57,7 @@ export type AttemptHistorySource = {
   finalScore: number | null;
   passed: boolean | null;
   startedAt: string;
+  retryStartedAt: string | null;
   deadlineAt: string;
   completedAt: string | null;
 };
@@ -75,6 +76,7 @@ export type AssignmentHistorySummary = AssignmentHistorySource & {
   finalScore: number | null;
   passed: boolean | null;
   startedAt: string | null;
+  retryStartedAt: string | null;
   deadlineAt: string | null;
   completedAt: string | null;
 };
@@ -178,6 +180,7 @@ export function buildAssignmentHistory(
         finalScore: null,
         passed: null,
         startedAt: null,
+        retryStartedAt: null,
         deadlineAt: null,
         completedAt: null,
       });
@@ -211,6 +214,7 @@ export function buildAssignmentHistory(
         finalScore: attempt.finalScore,
         passed: attempt.passed,
         startedAt: attempt.startedAt,
+        retryStartedAt: attempt.retryStartedAt,
         deadlineAt: attempt.deadlineAt,
         completedAt: attempt.completedAt,
       });

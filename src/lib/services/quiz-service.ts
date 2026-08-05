@@ -34,6 +34,9 @@ export type StudentAssignmentSummary = {
   lastStatus: "in_progress" | "completed" | "expired" | null;
   lastPhase: AttemptState["phase"] | null;
   lastInitialScore: number | null;
+  lastFinalScore: number | null;
+  lastPassed: boolean | null;
+  lastRetryStartedAt: string | null;
   availableUntil: string | null;
   missed: boolean;
   canStart: boolean;
@@ -116,6 +119,9 @@ type AttemptRow = {
   deadline_at: string;
   current_question_started_at: string;
   initial_score: number | string | null;
+  final_score: number | string | null;
+  passed: boolean | null;
+  retry_started_at: string | null;
 };
 
 type QuestionRow = {
@@ -274,7 +280,7 @@ export async function listStudentAssignments(
     supabase
       .from("quiz_attempts")
       .select(
-        "id, assignment_id, status, phase, attempt_number, started_at, deadline_at, initial_score",
+        "id, assignment_id, status, phase, attempt_number, started_at, retry_started_at, deadline_at, initial_score, final_score, passed",
       )
       .eq("student_id", studentId)
       .in("assignment_id", assignmentIds)
@@ -390,6 +396,13 @@ export async function listStudentAssignments(
         lastAttempt?.initial_score === undefined
           ? null
           : Number(lastAttempt.initial_score),
+      lastFinalScore:
+        lastAttempt?.final_score === null ||
+        lastAttempt?.final_score === undefined
+          ? null
+          : Number(lastAttempt.final_score),
+      lastPassed: lastAttempt?.passed ?? null,
+      lastRetryStartedAt: lastAttempt?.retry_started_at ?? null,
       availableUntil: assignment.available_until,
       missed,
       canStart,

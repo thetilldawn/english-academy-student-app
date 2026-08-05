@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { StudentLoginForm } from "@/components/student-login-form";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { getStudentSession } from "@/lib/auth/student-session";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,7 @@ export default async function HomePage() {
   return (
     <main className="landing-shell" id="main-content">
       <section className="landing-card">
+        <ThemeToggle className="theme-toggle-auth" />
         <div className="brand-lockup">
           <span className="brand-mark" aria-hidden="true">
             E

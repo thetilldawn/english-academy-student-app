@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 import { StudentLogoutButton } from "@/components/student-logout-button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function StudentShell({
   children,
@@ -47,6 +48,7 @@ export function StudentShell({
               <span>영어 학습실</span>
             </Link>
             <div className="topbar-actions">
+              <ThemeToggle />
               <span className="user-label student-user-label">
                 {displayName}
                 {gradeLabel ? ` · ${gradeLabel}` : ""}

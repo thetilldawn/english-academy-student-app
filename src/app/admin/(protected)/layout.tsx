@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AdminNavigation } from "@/components/admin-navigation";
 import { AdminLogoutButton } from "@/components/admin-logout-button";
 import { AdminPageTitle } from "@/components/admin-page-title";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { requireAdmin } from "@/lib/auth/admin";
 
 export default async function AdminProtectedLayout({
@@ -24,6 +25,7 @@ export default async function AdminProtectedLayout({
           label="PC 관리 메뉴"
         />
         <div className="admin-sidebar-footer">
+          <ThemeToggle />
           <span className="user-label">{admin.displayName}</span>
           <AdminLogoutButton />
         </div>
@@ -44,6 +46,7 @@ export default async function AdminProtectedLayout({
               label="태블릿 관리 메뉴"
             />
             <div className="topbar-actions">
+              <ThemeToggle />
               <span className="user-label admin-topbar-user">
                 {admin.displayName}
               </span>

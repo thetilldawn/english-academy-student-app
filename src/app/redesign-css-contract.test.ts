@@ -10,7 +10,10 @@ const css = fs.readFileSync(
 
 describe("redesign CSS contract", () => {
   it("keeps literal colors inside token blocks", () => {
-    const withoutTokenBlocks = css.replace(/:root\s*\{[\s\S]*?\}/g, "");
+    const withoutTokenBlocks = css.replace(
+      /:root[^\{]*\{[\s\S]*?\}/g,
+      "",
+    );
     expect(withoutTokenBlocks).not.toMatch(/#[0-9a-f]{3,8}\b/i);
   });
 
@@ -23,10 +26,30 @@ describe("redesign CSS contract", () => {
     expect(values.size).toBeLessThanOrEqual(5);
   });
 
-  it("does not restore decorative effects", () => {
+  it("limits blur to the responsive navigation surfaces", () => {
     expect(css).not.toMatch(
-      /(?:linear-gradient|radial-gradient|backdrop-filter|box-shadow)\s*:/,
+      /(?:linear-gradient|radial-gradient|box-shadow)\s*:/,
     );
+    const withoutNavigationBlur = css.replace(
+      /\.admin-sidebar,\s*\.admin-topbar,\s*\.topbar,\s*\.admin-mobile-nav\s*\{[\s\S]*?\}/,
+      "",
+    );
+    expect(withoutNavigationBlur).not.toMatch(/backdrop-filter\s*:/);
+  });
+
+  it("uses a calm color transition without lifting buttons", () => {
+    expect(css).toContain("--motion-standard: 250ms ease-in-out;");
+    expect(css).not.toMatch(
+      /\.button:hover[^\{]*\{[^\}]*transform\s*:/,
+    );
+    expect(css).not.toMatch(
+      /\.student-card-button:hover[^\{]*\{[^\}]*transform\s*:/,
+    );
+  });
+
+  it("supports an explicit dark theme and switch", () => {
+    expect(css).toMatch(/:root\[data-theme="dark"\]/);
+    expect(css).toMatch(/\.theme-toggle\s*\{/);
   });
 
   it("uses only the approved font weights", () => {

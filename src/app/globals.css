@@ -16,6 +16,9 @@
   --no-bg: #f8e7e3;
   --no-line: #d5a79e;
   --no-ink: #a63b2f;
+  --ink-hover: #3d3a34;
+  --nav-glass: rgba(252, 251, 247, 0.84);
+  --motion-standard: 250ms ease-in-out;
   --radius-small: 4px;
   --radius: 8px;
   --radius-card: 14px;
@@ -193,12 +196,10 @@ p {
   cursor: pointer;
   font-weight: 700;
   transition:
-    transform 160ms ease,
-    background 160ms ease;
-}
-
-.button:hover:not(:disabled) {
-  transform: translateY(-1px);
+    color var(--motion-standard),
+    border-color var(--motion-standard),
+    background-color var(--motion-standard),
+    opacity var(--motion-standard);
 }
 
 .button:focus-visible,
@@ -208,7 +209,7 @@ summary:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid transparent;
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
@@ -239,7 +240,7 @@ textarea:focus-visible {
 }
 
 .button-primary:hover:not(:disabled) {
-  background: var(--ink);
+  background: var(--ink-hover);
 }
 
 .assignment-launch-button {
@@ -253,9 +254,19 @@ textarea:focus-visible {
   background: var(--surface);
 }
 
+.button-secondary:hover:not(:disabled),
+.button-quiet:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--surface);
+}
+
 .button-danger {
   color: var(--fail);
   border-color: var(--no-line);
+  background: var(--no-bg);
+}
+
+.button-danger:hover:not(:disabled) {
   background: var(--no-bg);
 }
 
@@ -418,7 +429,7 @@ textarea {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   color: var(--ink);
-  background: white;
+  background: var(--card);
 }
 
 textarea {
@@ -473,7 +484,7 @@ textarea {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   color: var(--ink);
-  background: white;
+  background: var(--card);
   font-family:
     ui-monospace,
     "SFMono-Regular",
@@ -819,7 +830,7 @@ textarea {
   padding: 16px 18px;
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
-  background: white;
+  background: var(--card);
 }
 
 .list-primary {
@@ -886,7 +897,7 @@ textarea {
   padding: 8px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: white;
+  background: var(--card);
 }
 
 .checkbox-row {
@@ -919,7 +930,7 @@ textarea {
 
 .standalone-checkbox {
   border: 1px solid var(--line);
-  background: white;
+  background: var(--card);
 }
 
 .dialog {
@@ -999,7 +1010,7 @@ textarea {
 .dialog-tab[aria-pressed="true"],
 .management-tab[aria-pressed="true"] {
   color: var(--ink);
-  background: white;
+  background: var(--card);
 }
 
 .dialog-loading {
@@ -1237,7 +1248,7 @@ textarea {
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
   color: var(--ink);
-  background: white;
+  background: var(--card);
   cursor: pointer;
   font-weight: 700;
   word-break: keep-all;
@@ -1387,7 +1398,7 @@ textarea {
   overflow-x: auto;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: white;
+  background: var(--card);
 }
 
 table {
@@ -1761,7 +1772,7 @@ tr:last-child td {
 
 .student-card-button:hover {
   border-color: transparent;
-  transform: translateY(-1px);
+  background: var(--surface);
 }
 
 .student-card-button > span,
@@ -1818,7 +1829,7 @@ tr:last-child td {
   padding: 12px 14px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: white;
+  background: var(--card);
 }
 
 .student-history-row > div:first-child,
@@ -1925,7 +1936,7 @@ tr:last-child td {
   padding: 18px;
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
-  background: white;
+  background: var(--card);
 }
 
 .assignment-step-heading {
@@ -1969,7 +1980,7 @@ tr:last-child td {
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-card);
   color: var(--muted);
-  background: white;
+  background: var(--card);
   font-size: 12px;
   font-weight: 700;
   cursor: help;
@@ -1985,7 +1996,7 @@ tr:last-child td {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   color: var(--ink);
-  background: white;
+  background: var(--card);
   font-size: 12px;
   font-weight: 600;
   line-height: 1.45;
@@ -2405,7 +2416,7 @@ tr:last-child td {
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
   color: inherit;
-  background: white;
+  background: var(--card);
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -2612,7 +2623,7 @@ tr:last-child td {
   max-width: 96px;
   overflow: hidden;
   text-overflow: ellipsis;
-  background: white;
+  background: var(--card);
 }
 
 .results-table th:nth-child(2),
@@ -2625,7 +2636,7 @@ tr:last-child td {
   max-width: 190px;
   overflow: hidden;
   text-overflow: ellipsis;
-  background: white;
+  background: var(--card);
 }
 
 .results-table th:first-child,
@@ -3610,9 +3621,8 @@ h3,
 }
 
 .button-primary:hover:not(:disabled) {
-  background: var(--ink);
+  background: var(--ink-hover);
   color: var(--paper);
-  transform: none;
 }
 
 .button-secondary,
@@ -3661,10 +3671,13 @@ h3,
   white-space: nowrap;
 }
 
-.status-completed,
 .status-passed,
 .status-active {
   color: var(--pass);
+}
+
+.status-completed {
+  color: var(--retry);
 }
 
 .status-missed,
@@ -3695,19 +3708,43 @@ h3,
   background: transparent;
 }
 
+.student-card-button,
+.admin-history-row,
+.choice,
+.admin-nav-link,
+.nav-link {
+  transition:
+    color var(--motion-standard),
+    border-color var(--motion-standard),
+    background-color var(--motion-standard);
+}
+
 .assignment-card:has(.status-completed),
-.student-card:has(.status-active),
 .result-question:has(.status-correct),
-.admin-history-row:has(.status-completed) {
+.admin-history-row[data-outcome="completed"],
+.student-card[data-exam-outcome="completed"],
+.student-history-row[data-exam-outcome="completed"] {
+  border-left-color: var(--retry-bar);
+}
+
+.result-question:has(.status-correct) {
   border-left-color: var(--pass);
 }
 
 .assignment-card:has(.status-missed),
 .assignment-card:has(.status-expired),
+.assignment-card:has(.status-failed),
 .result-question:has(.status-wrong),
 .wrong-word-row:has(.wrong-level-2),
 .admin-history-row:has(.status-missed),
-.admin-history-row:has(.status-failed) {
+.admin-history-row:has(.status-failed),
+.admin-history-row[data-outcome="failed"],
+.student-card[data-exam-outcome="failed"],
+.student-card[data-exam-outcome="missed"],
+.student-card[data-exam-outcome="expired"],
+.student-history-row[data-exam-outcome="failed"],
+.student-history-row[data-exam-outcome="missed"],
+.student-history-row[data-exam-outcome="expired"] {
   border-left-color: var(--fail);
 }
 
@@ -3758,9 +3795,154 @@ h3,
   font-variant-numeric: tabular-nums;
 }
 
-.last-score strong,
-.history-score-pair strong {
-  color: var(--retry);
+.attempt-score-summary {
+  min-width: 132px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(58px, 1fr));
+  gap: 8px;
+  align-items: center;
+}
+
+.attempt-score-slot {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+  color: var(--muted);
+  font-family: var(--font-en);
+  font-variant-numeric: tabular-nums;
+}
+
+.attempt-score-slot small {
+  color: var(--muted);
+  font-family: var(--font-kr);
+  font-size: 10px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.attempt-score-slot strong {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.attempt-score-slot.score-pass strong {
+  color: var(--pass);
+}
+
+.attempt-score-slot.score-fail strong {
+  color: var(--fail);
+}
+
+.attempt-score-slot-empty {
+  visibility: hidden;
+}
+
+.history-score-pair {
+  width: 132px;
+}
+
+.admin-history-row {
+  grid-template-columns: minmax(220px, 1fr) 132px 72px;
+}
+
+.history-dialog-score-card {
+  grid-column: span 2;
+}
+
+.history-dialog-score-card .attempt-score-summary {
+  margin-top: 3px;
+}
+
+.student-card-score-line,
+.assignment-student-score-line,
+.assignment-dialog-score-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.student-progress-score {
+  margin-top: 3px;
+}
+
+.admin-sidebar,
+.admin-topbar,
+.topbar,
+.admin-mobile-nav {
+  background: var(--nav-glass);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.admin-topbar,
+.topbar {
+  border-bottom-color: var(--line);
+}
+
+.theme-toggle {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 7px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  transition:
+    color var(--motion-standard),
+    background-color var(--motion-standard);
+}
+
+.theme-toggle:hover {
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.theme-toggle-track {
+  width: 34px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: var(--radius-card);
+  background: var(--line);
+  transition: background-color var(--motion-standard);
+}
+
+.theme-toggle-thumb {
+  width: 14px;
+  height: 14px;
+  display: block;
+  border-radius: var(--radius-card);
+  background: var(--card);
+  transform: translateX(0);
+  transition: transform var(--motion-standard);
+}
+
+.theme-toggle[aria-checked="true"] .theme-toggle-track {
+  background: var(--retry);
+}
+
+.theme-toggle[aria-checked="true"] .theme-toggle-thumb {
+  transform: translateX(16px);
+}
+
+.landing-card,
+.auth-card {
+  position: relative;
+}
+
+.theme-toggle-auth {
+  position: absolute;
+  top: 14px;
+  right: 14px;
 }
 
 .choice-list {
@@ -3936,8 +4118,30 @@ textarea {
   width: min(100%, 900px);
 }
 
+:root[data-theme="dark"] {
+  --paper: #232220;
+  --card: #2c2a27;
+  --surface: #302e2b;
+  --line: #38362f;
+  --ink: #edebe7;
+  --muted: #b0ada6;
+  --dim: #85827b;
+  --pass: #66ce86;
+  --retry: #edbe58;
+  --retry-bar: #edbe58;
+  --fail: #ff7a6e;
+  --ok-bg: #25382a;
+  --ok-line: #456f4d;
+  --ok-ink: #7fdd9a;
+  --no-bg: #3c2724;
+  --no-line: #78453e;
+  --no-ink: #ff948a;
+  --ink-hover: #f6f4ef;
+  --nav-glass: rgba(35, 34, 32, 0.84);
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --paper: #232220;
     --card: #2c2a27;
     --surface: #302e2b;
@@ -3955,6 +4159,8 @@ textarea {
     --no-bg: #3c2724;
     --no-line: #78453e;
     --no-ink: #ff948a;
+    --ink-hover: #f6f4ef;
+    --nav-glass: rgba(35, 34, 32, 0.84);
   }
 }
 
@@ -3966,5 +4172,17 @@ textarea {
   .choice-list {
     display: flex;
     grid-template-columns: none;
+  }
+
+  .theme-toggle-label {
+    display: none;
+  }
+
+  .theme-toggle {
+    padding-inline: 4px;
+  }
+
+  .admin-history-row {
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 }
