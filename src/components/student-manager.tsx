@@ -112,6 +112,18 @@ function progressStatusPresentation(progress: ProgressItem | null | undefined) {
   });
 }
 
+function studentRecommendationLabel(
+  progress: ProgressItem | null | undefined,
+) {
+  if (progress?.recommendationReason === "complete") {
+    return "현재 단어장 완료";
+  }
+  if (progress?.recommendationReason === "manual") {
+    return "DAY 범위 확인 필요";
+  }
+  return progress?.recommendedUnitLabel ?? "단어장 선택 필요";
+}
+
 export function StudentManager({
   appOrigin,
   datasets,
@@ -716,6 +728,9 @@ export function StudentManager({
                               ? "접속 가능"
                               : "차단됨"}
                           </MetaTag>
+                          <MetaTag tone="warning">
+                            다음 · {studentRecommendationLabel(studentProgress)}
+                          </MetaTag>
                         </MetaTagList>
                       </span>
                       <span className="student-card-summary">
@@ -754,19 +769,6 @@ export function StudentManager({
                               status={studentProgress?.latestStatus ?? null}
                             />
                           </span>
-                        </span>
-                        <span className="student-card-next">
-                          <small>다음 배정</small>
-                          <strong>
-                            {studentProgress?.recommendationReason ===
-                            "complete"
-                              ? "현재 단어장 완료"
-                              : studentProgress?.recommendationReason ===
-                                  "manual"
-                                ? "DAY 범위 확인 필요"
-                                : studentProgress?.recommendedUnitLabel ??
-                                  "단어장 선택 필요"}
-                          </strong>
                         </span>
                       </span>
                     </button>

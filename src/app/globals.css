@@ -4368,8 +4368,7 @@ textarea {
   gap: 8px;
 }
 
-.student-card-section,
-.student-card-next {
+.student-card-section {
   min-width: 0;
   display: grid;
   gap: 3px;
@@ -4384,25 +4383,18 @@ textarea {
 }
 
 .student-card-section-heading small,
-.student-card-next small,
 .card-time-meta {
   color: var(--muted);
   font-size: 10.5px;
   font-weight: 400;
 }
 
-.student-card-section > strong,
-.student-card-next > strong {
+.student-card-section > strong {
   overflow: hidden;
   color: var(--ink);
   font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.student-card-next {
-  padding-top: 7px;
-  border-top: 1px solid var(--line);
 }
 
 .student-card-score-line,
@@ -4461,6 +4453,14 @@ textarea {
 .assignment-student-next,
 .assignment-management-copy {
   gap: 4px;
+}
+
+.student-card .attempt-score-slot,
+.assignment-student-row .attempt-score-slot,
+.admin-history-row .attempt-score-slot {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
 }
 
 .assignment-student-row > .button {
@@ -4538,6 +4538,11 @@ textarea {
   .assignment-student-next {
     padding-top: 6px;
     border-top: 1px solid var(--line);
+  }
+
+  .assignment-student-book,
+  .assignment-student-next {
+    display: flex;
   }
 
   .assignment-student-row > .button {

@@ -895,11 +895,10 @@ export function AssignmentManager({
                       </MetaTagList>
                     </span>
                     <span className="assignment-student-book">
-                      <small>현재 단어장</small>
-                      <strong>
-                        {student.currentVocabBook ?? "미선택"}
-                      </strong>
                       <MetaTagList>
+                        <MetaTag>
+                          단어장 · {student.currentVocabBook ?? "미선택"}
+                        </MetaTag>
                         <MetaTag>
                           오답 대기 {studentPendingReviewCount}개
                         </MetaTag>
@@ -945,10 +944,11 @@ export function AssignmentManager({
                       </span>
                     </span>
                     <span className="assignment-student-next">
-                      <small>다음 배정</small>
-                      <strong>
-                        {recommendationLabel(studentProgress)}
-                      </strong>
+                      <MetaTagList>
+                        <MetaTag tone="warning">
+                          다음 · {recommendationLabel(studentProgress)}
+                        </MetaTag>
+                      </MetaTagList>
                     </span>
                     <span className="button button-primary button-small">
                       배정
