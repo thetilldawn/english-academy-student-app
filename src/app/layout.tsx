@@ -1,6 +1,21 @@
 import type { Metadata, Viewport } from "next";
+import { Gowun_Batang, Source_Serif_4 } from "next/font/google";
 
 import "@/app/globals.css";
+
+const serifKr = Gowun_Batang({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-serif-kr",
+  display: "swap",
+});
+
+const serifEn = Source_Serif_4({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  variable: "--font-serif-en",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -15,8 +30,11 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  colorScheme: "light",
-  themeColor: "#f4f1ea",
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fcfbf7" },
+    { media: "(prefers-color-scheme: dark)", color: "#232220" },
+  ],
 };
 
 export default function RootLayout({
@@ -26,7 +44,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body>
+      <body className={`${serifKr.variable} ${serifEn.variable}`}>
         <a className="skip-link" href="#main-content">
           본문 바로가기
         </a>

@@ -1494,6 +1494,17 @@ describe.sequential("final review-assignment database schema", () => {
       const attemptId = attempt.rows[0]?.attempt_id;
 
       await resolutionDatabase.exec(`
+        update public.student_vocab_review_queue
+        set
+          source_attempt_id = '${attemptId}',
+          source_question_id = (
+            select id
+            from public.quiz_questions
+            where attempt_id = '${attemptId}'
+              and vocab_entry_id = 2
+          )
+        where id = '${ids.overlappingQueue}';
+
         insert into public.student_vocab_state (
           student_id,
           vocab_entry_id,

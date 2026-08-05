@@ -83,18 +83,20 @@ function AssignmentCard({
         </span>
         {assignment.assignmentPurpose !== "review" && (
           <span className="detail-chip">
-            {assignment.questionCount}문항
+            <strong>{assignment.questionCount}</strong>문항
           </span>
         )}
         <span className="detail-chip">
           {assignment.timingMode === "per_question"
-            ? `문제당 ${assignment.questionTimeLimitSeconds}초`
-            : `전체 ${Math.ceil(
-                assignment.timeLimitSeconds / 60,
-              )}분`}
+            ? <>
+                문제당 <strong>{assignment.questionTimeLimitSeconds}</strong>초
+              </>
+            : <>
+                전체 <strong>{Math.ceil(assignment.timeLimitSeconds / 60)}</strong>분
+              </>}
         </span>
         <span className="detail-chip">
-          {assignment.passingScore}점 통과
+          <strong>{assignment.passingScore}</strong>점 통과
         </span>
         <span className="detail-chip">
           {assignmentOrderLabel(
@@ -241,7 +243,7 @@ export default async function StudentDashboardPage() {
               <div className="section-heading">
                 <h2 id="other-assignments-heading">다른 시험</h2>
                 <span className="detail-chip">
-                  {otherAssignments.length}건
+                  <strong>{otherAssignments.length}</strong>건
                 </span>
               </div>
               <div className="student-assignment-grid">

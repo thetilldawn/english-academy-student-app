@@ -441,13 +441,16 @@ export function QuizPlayer({
       </div>
 
       <p className="quiz-direction">
-        {attempt.phase === "retry"
-          ? `재시험 ${completedInPhase + 1}/${phaseQuestions.length}`
-          : `${currentQuestion.orderIndex}/${attempt.questions.length}`}
-        {" · "}
-        {currentQuestion.direction === "english_to_korean"
-          ? "알맞은 뜻을 고르세요"
-          : "알맞은 영어 단어를 고르세요"}
+        <span>
+          {attempt.phase === "retry"
+            ? `재시험 ${completedInPhase + 1}/${phaseQuestions.length}`
+            : `${currentQuestion.orderIndex}/${attempt.questions.length}`}
+        </span>
+        <span className="sr-only">
+          {currentQuestion.direction === "english_to_korean"
+            ? "알맞은 뜻을 고르세요"
+            : "알맞은 영어 단어를 고르세요"}
+        </span>
       </p>
       {priorWrongIndicator && (
         <div
@@ -478,6 +481,9 @@ export function QuizPlayer({
         }
         className={[
           "quiz-prompt",
+          currentQuestion.direction === "korean_to_english"
+            ? "quiz-prompt--ko"
+            : "",
           priorWrongIndicator ? "quiz-prompt-prior-wrong" : "",
           priorWrongIndicator?.markerCount === 2
             ? "quiz-prompt-prior-wrong-repeated"
@@ -499,6 +505,9 @@ export function QuizPlayer({
       >
         {currentQuestion.choices.map((choice, index) => {
           const classNames = ["choice"];
+          if (currentQuestion.direction === "korean_to_english") {
+            classNames.push("choice--en");
+          }
           if (correctChoice === index) classNames.push("choice-correct");
           if (
             selectedChoice === index &&
