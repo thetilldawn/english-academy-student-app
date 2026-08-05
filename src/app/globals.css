@@ -4221,3 +4221,354 @@ textarea {
     display: none;
   }
 }
+
+/* Admin metadata tags and content-driven density */
+.meta-tag-list {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  overflow: visible;
+  white-space: normal;
+}
+
+.meta-tag {
+  min-width: 0;
+  min-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  color: var(--muted);
+  font-family: var(--font-kr);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.meta-tag[data-tone="positive"] {
+  border-color: color-mix(in srgb, var(--pass) 30%, var(--line));
+  background: color-mix(in srgb, var(--pass) 9%, transparent);
+  color: var(--pass);
+}
+
+.meta-tag[data-tone="warning"] {
+  border-color: color-mix(in srgb, var(--retry) 34%, var(--line));
+  background: color-mix(in srgb, var(--retry) 10%, transparent);
+  color: var(--retry);
+}
+
+.meta-tag[data-tone="danger"] {
+  border-color: color-mix(in srgb, var(--fail) 32%, var(--line));
+  background: color-mix(in srgb, var(--fail) 9%, transparent);
+  color: var(--fail);
+}
+
+.status-pill,
+.attempt-status-label {
+  width: max-content;
+  min-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  font-size: 10.5px;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.admin-content .manager-toolbar,
+.admin-content .section-heading {
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.admin-content .manager-toolbar h2,
+.admin-content .assignment-list-heading,
+.admin-content > .section .section-heading h2 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.student-group-section .section-heading h3 {
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.admin-content > .section {
+  margin-top: 20px;
+}
+
+.student-group-pane {
+  gap: 16px;
+}
+
+.student-create-disclosure {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.student-create-disclosure > summary {
+  width: 100%;
+}
+
+.student-create-content {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: var(--card);
+}
+
+.student-card-grid,
+.assignment-student-list,
+.assignment-management-panel,
+.assignment-management-list,
+.admin-history-list,
+.student-history-list {
+  gap: 8px;
+}
+
+.student-card,
+.assignment-student-row,
+.assignment-management-item,
+.admin-history-row,
+.student-history-row {
+  min-height: 0;
+  padding: 10px 12px;
+  gap: 10px;
+}
+
+.student-card {
+  gap: 8px;
+}
+
+.student-card-heading {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.student-card-heading > .meta-tag-list {
+  align-items: flex-start;
+}
+
+.student-card-summary {
+  gap: 8px;
+}
+
+.student-card-section,
+.student-card-next {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.student-card-section-heading {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.student-card-section-heading small,
+.student-card-next small,
+.card-time-meta {
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 400;
+}
+
+.student-card-section > strong,
+.student-card-next > strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.student-card-next {
+  padding-top: 7px;
+  border-top: 1px solid var(--line);
+}
+
+.student-card-score-line,
+.assignment-student-score-line,
+.assignment-dialog-score-line {
+  gap: 8px;
+}
+
+.student-dialog-panel {
+  padding-top: 12px;
+}
+
+.student-history-row > div:first-child {
+  gap: 4px;
+}
+
+.student-history-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.assignment-student-browser {
+  gap: 10px;
+}
+
+.assignment-student-browser > .manager-toolbar {
+  margin-bottom: 0;
+}
+
+.management-tabs {
+  margin-bottom: 12px;
+}
+
+.assignment-student-filters,
+.history-filters {
+  align-items: end;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.assignment-student-filters {
+  padding: 10px 12px;
+}
+
+.assignment-student-row {
+  gap: 12px;
+  align-items: start;
+}
+
+.assignment-student-identity,
+.assignment-student-book,
+.assignment-student-recent,
+.assignment-student-next,
+.assignment-management-copy {
+  gap: 4px;
+}
+
+.assignment-student-row > .button {
+  align-self: center;
+}
+
+.assignment-management-item {
+  align-items: flex-start;
+}
+
+.assignment-management-title {
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.admin-history-row {
+  gap: 10px;
+}
+
+.history-row-main {
+  gap: 3px 10px;
+}
+
+.history-row-main > .meta-tag-list,
+.history-row-main > .card-time-meta {
+  grid-column: 1 / -1;
+}
+
+.history-row-main > .meta-tag-list {
+  margin-top: 1px;
+}
+
+.empty-state,
+.test-type-placeholder {
+  min-height: 0;
+}
+
+.admin-content .empty-state {
+  padding: 20px 16px;
+}
+
+@media (max-width: 767px) {
+  .admin-content .manager-toolbar,
+  .admin-content .section-heading {
+    align-items: center;
+  }
+
+  .student-card,
+  .assignment-student-row,
+  .assignment-management-item,
+  .admin-history-row,
+  .student-history-row {
+    padding: 9px 10px;
+  }
+
+  .student-card-heading > .meta-tag-list {
+    max-width: 100%;
+  }
+
+  .student-card-score-line {
+    align-items: flex-end;
+  }
+
+  .student-history-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .assignment-student-row {
+    gap: 8px 10px;
+  }
+
+  .assignment-student-book,
+  .assignment-student-recent,
+  .assignment-student-next {
+    padding-top: 6px;
+    border-top: 1px solid var(--line);
+  }
+
+  .assignment-student-row > .button {
+    align-self: start;
+  }
+
+  .assignment-management-item > .button {
+    width: 100%;
+  }
+
+  .admin-history-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 7px 8px;
+  }
+
+  .history-row-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .history-row-main > strong,
+  .history-row-main > span,
+  .history-row-main > small {
+    grid-column: 1;
+  }
+
+  .history-row-main > .meta-tag-list {
+    display: flex;
+  }
+
+  .admin-history-row > .status-pill {
+    align-self: end;
+    padding: 2px 6px;
+  }
+}

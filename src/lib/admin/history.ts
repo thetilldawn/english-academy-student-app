@@ -91,6 +91,29 @@ function unitRangeLabel(labels: string[]) {
   return `${labels[0]}~${labels.at(-1)}`;
 }
 
+export function assignmentTypeLabel(
+  assignmentPurpose: AssignmentPurpose,
+) {
+  if (assignmentPurpose === "review") return "오답 재시험";
+  if (assignmentPurpose === "mixed") return "틀린 단어 포함";
+  return "일반 시험";
+}
+
+export function assignmentUnitRangeLabel(
+  item: Pick<
+    AssignmentHistorySource,
+    "assignmentPurpose" | "primaryUnitLabels" | "unitLabels"
+  >,
+) {
+  const labels =
+    item.assignmentPurpose === "review"
+      ? item.unitLabels
+      : item.primaryUnitLabels.length > 0
+        ? item.primaryUnitLabels
+        : item.unitLabels;
+  return unitRangeLabel(labels);
+}
+
 export function assignmentScopeLabel(
   item: Pick<
     AssignmentHistorySource,
@@ -104,11 +127,7 @@ export function assignmentScopeLabel(
     return `오답 재시험 · ${item.questionCount}문항`;
   }
 
-  const primaryLabels =
-    item.primaryUnitLabels.length > 0
-      ? item.primaryUnitLabels
-      : item.unitLabels;
-  const label = unitRangeLabel(primaryLabels);
+  const label = assignmentUnitRangeLabel(item);
   return item.assignmentPurpose === "mixed"
     ? `${label} · 오답 포함`
     : label;
@@ -120,16 +139,23 @@ export function assignmentDisplayTitle(
     "assignmentTitle" | "primaryUnitLabels" | "unitLabels"
   >,
 ) {
-  const unitLabels = new Set([
+  return assignmentDisplayTitleForUnits(item.assignmentTitle, [
     ...item.unitLabels,
     ...item.primaryUnitLabels,
   ]);
-  const titleParts = item.assignmentTitle
+}
+
+export function assignmentDisplayTitleForUnits(
+  assignmentTitle: string,
+  unitLabels: string[],
+) {
+  const unitLabelSet = new Set(unitLabels);
+  const titleParts = assignmentTitle
     .split("·")
     .map((part) => part.trim())
     .filter(Boolean);
-  const filtered = titleParts.filter((part) => !unitLabels.has(part));
-  return filtered.length > 0 ? filtered.join(" · ") : item.assignmentTitle;
+  const filtered = titleParts.filter((part) => !unitLabelSet.has(part));
+  return filtered.length > 0 ? filtered.join(" · ") : assignmentTitle;
 }
 
 export function assignmentOrderLabel(

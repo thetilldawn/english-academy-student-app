@@ -17,6 +17,8 @@ import {
   AttemptScoreSummary,
   AttemptStatusLabel,
 } from "@/components/attempt-score-summary";
+import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
+import { assignmentDisplayTitleForUnits } from "@/lib/admin/history";
 import {
   currentTimeMilliseconds,
   koreanDateTimeLocalToIso,
@@ -887,28 +889,42 @@ export function AssignmentManager({
                   >
                     <span className="assignment-student-identity">
                       <strong>{student.displayName}</strong>
-                      <span>
-                        {[student.schoolName, student.gradeLabel]
-                          .filter(Boolean)
-                          .join(" · ") || "학교·학년 미입력"}
-                      </span>
+                      <MetaTagList>
+                        <MetaTag>{student.schoolName ?? "학교 미입력"}</MetaTag>
+                        <MetaTag>{student.gradeLabel ?? "학년 미입력"}</MetaTag>
+                      </MetaTagList>
                     </span>
                     <span className="assignment-student-book">
                       <small>현재 단어장</small>
                       <strong>
                         {student.currentVocabBook ?? "미선택"}
                       </strong>
-                      <span className="assignment-student-review-summary">
-                        오답 대기 {studentPendingReviewCount}개 · 혼합
-                        가능 {studentAvailableReviewCount}개
-                      </span>
+                      <MetaTagList>
+                        <MetaTag>
+                          오답 대기 {studentPendingReviewCount}개
+                        </MetaTag>
+                        <MetaTag>
+                          혼합 가능 {studentAvailableReviewCount}개
+                        </MetaTag>
+                      </MetaTagList>
                     </span>
                     <span className="assignment-student-recent">
                       <small>최근 배정·진행</small>
                       <strong>
-                        {studentProgress?.latestAssignmentTitle ??
-                          "기록 없음"}
+                        {studentProgress?.latestAssignmentTitle
+                          ? assignmentDisplayTitleForUnits(
+                              studentProgress.latestAssignmentTitle,
+                              studentProgress.latestUnitLabel
+                                ? [studentProgress.latestUnitLabel]
+                                : [],
+                            )
+                          : "기록 없음"}
                       </strong>
+                      {studentProgress?.latestUnitLabel ? (
+                        <MetaTagList>
+                          <MetaTag>{studentProgress.latestUnitLabel}</MetaTag>
+                        </MetaTagList>
+                      ) : null}
                       <span className="assignment-student-score-line">
                         <AttemptStatusLabel
                           finalScore={studentProgress?.latestFinalScore}
@@ -927,25 +943,12 @@ export function AssignmentManager({
                           status={studentProgress?.latestStatus ?? null}
                         />
                       </span>
-                      <small>
-                        최근 완료 ·{" "}
-                        {studentProgress?.latestCompletedAssignmentTitle ??
-                          "기록 없음"}
-                        {studentProgress?.latestCompletedAssignmentTitle
-                          ? ` · 최종 ${scoreLabel(
-                              studentProgress.latestCompletedFinalScore,
-                            )}`
-                          : ""}
-                      </small>
                     </span>
                     <span className="assignment-student-next">
                       <small>다음 배정</small>
                       <strong>
                         {recommendationLabel(studentProgress)}
                       </strong>
-                      <span>
-                        {recommendationReasonLabel(studentProgress)}
-                      </span>
                     </span>
                     <span className="button button-primary button-small">
                       배정

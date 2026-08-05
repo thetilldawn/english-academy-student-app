@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
+import { assignmentDisplayTitle } from "@/lib/admin/history";
 import type { AssignmentSummary } from "@/lib/services/admin-service";
 
 type ErrorResponse = {
@@ -81,17 +83,25 @@ export function AssignmentManagementList({
           <article className="card assignment-management-item" key={item.id}>
             <div className="assignment-management-copy">
               <div className="assignment-management-title">
-                <strong>{item.title}</strong>
-                <span className="status-pill">
+                <strong>
+                  {assignmentDisplayTitle({
+                    assignmentTitle: item.title,
+                    primaryUnitLabels: item.unitLabels,
+                    unitLabels: item.unitLabels,
+                  })}
+                </strong>
+                <MetaTag
+                  tone={item.status === "active" ? "warning" : "neutral"}
+                >
                   {statusLabel(item.status)}
-                </span>
+                </MetaTag>
               </div>
-              <span>
-                {item.datasetTitle} · {assignmentRangeLabel(item)}
-              </span>
-              <small>
-                {item.questionCount}문항 · 학생 {item.studentCount}명
-              </small>
+              <MetaTagList>
+                <MetaTag>{item.datasetTitle}</MetaTag>
+                <MetaTag>{assignmentRangeLabel(item)}</MetaTag>
+                <MetaTag>{item.questionCount}문항</MetaTag>
+                <MetaTag>학생 {item.studentCount}명</MetaTag>
+              </MetaTagList>
             </div>
             <button
               aria-busy={busyId === item.id}

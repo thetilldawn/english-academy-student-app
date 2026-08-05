@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   assignmentDisplayTitle,
+  assignmentDisplayTitleForUnits,
   assignmentOrderLabel,
   assignmentScopeLabel,
+  assignmentTypeLabel,
+  assignmentUnitRangeLabel,
   buildAssignmentHistory,
   type AssignmentHistorySource,
   type AttemptHistorySource,
@@ -231,6 +234,19 @@ describe("buildAssignmentHistory", () => {
 });
 
 describe("assignmentScopeLabel", () => {
+  it("시험 유형과 단원 범위를 태그용 라벨로 분리한다", () => {
+    expect(assignmentTypeLabel("regular")).toBe("일반 시험");
+    expect(assignmentTypeLabel("mixed")).toBe("틀린 단어 포함");
+    expect(assignmentTypeLabel("review")).toBe("오답 재시험");
+    expect(
+      assignmentUnitRangeLabel({
+        assignmentPurpose: "mixed",
+        unitLabels: ["DAY 01", "DAY 02", "DAY 09"],
+        primaryUnitLabels: ["DAY 01", "DAY 02"],
+      }),
+    ).toBe("DAY 01~DAY 02");
+  });
+
   it("오답 재시험은 내부 지원 DAY 대신 선택 문항 수를 표시한다", () => {
     expect(
       assignmentScopeLabel({
@@ -279,5 +295,8 @@ describe("assignmentDisplayTitle", () => {
         primaryUnitLabels: ["DAY 01"],
       }),
     ).toBe("완료 · 다시 학습 필요");
+    expect(
+      assignmentDisplayTitleForUnits("새 시험 · DAY 01", ["DAY 01"]),
+    ).toBe("새 시험");
   });
 });

@@ -15,7 +15,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import {
-  assignmentScopeLabel,
+  assignmentDisplayTitle,
+  assignmentDisplayTitleForUnits,
   type AssignmentHistorySummary,
 } from "@/lib/admin/history";
 import { buildStudentAccessUrl } from "@/lib/auth/student-code-input";
@@ -28,6 +29,11 @@ import {
   AttemptScoreSummary,
   AttemptStatusLabel,
 } from "@/components/attempt-score-summary";
+import {
+  AssignmentMetaTags,
+  MetaTag,
+  MetaTagList,
+} from "@/components/admin-meta-tags";
 import { buildAttemptStatusPresentation } from "@/lib/ui/attempt-score-presentation";
 
 type StudentItem = {
@@ -691,58 +697,76 @@ export function StudentManager({
                       onClick={() => selectStudent(student)}
                       type="button"
                     >
-                      <span className="title-with-status">
-                        <span>
-                          <strong className="list-title">
-                            {student.displayName}
-                          </strong>
-                          <span className="list-meta student-book-meta">
-                            현재 단어장 ·{" "}
-                            {student.currentVocabBook ?? "미입력"}
-                          </span>
-                        </span>
-                        <span
-                          className={`status-pill status-${student.status}`}
-                        >
-                          {student.status === "active"
-                            ? "접속 가능"
-                            : "차단됨"}
-                        </span>
+                      <span className="student-card-heading">
+                        <strong className="list-title">
+                          {student.displayName}
+                        </strong>
+                        <MetaTagList>
+                          <MetaTag>
+                            단어장 · {student.currentVocabBook ?? "미입력"}
+                          </MetaTag>
+                          <MetaTag
+                            tone={
+                              student.status === "active"
+                                ? "positive"
+                                : "danger"
+                            }
+                          >
+                            {student.status === "active"
+                              ? "접속 가능"
+                              : "차단됨"}
+                          </MetaTag>
+                        </MetaTagList>
                       </span>
                       <span className="student-card-summary">
-                        <span>
-                          최근 ·{" "}
-                          {studentProgress?.latestAssignmentTitle ??
-                            "시험 기록 없음"}
+                        <span className="student-card-section">
+                          <span className="student-card-section-heading">
+                            <small>최근 시험</small>
+                            {studentProgress?.latestUnitLabel ? (
+                              <MetaTag>{studentProgress.latestUnitLabel}</MetaTag>
+                            ) : null}
+                          </span>
+                          <strong>
+                            {studentProgress?.latestAssignmentTitle
+                              ? assignmentDisplayTitleForUnits(
+                                  studentProgress.latestAssignmentTitle,
+                                  studentProgress.latestUnitLabel
+                                    ? [studentProgress.latestUnitLabel]
+                                    : [],
+                                )
+                              : "시험 기록 없음"}
+                          </strong>
+                          <span className="student-card-score-line">
+                            <AttemptStatusLabel
+                              finalScore={studentProgress?.latestFinalScore}
+                              initialScore={studentProgress?.latestInitialScore}
+                              passingScore={studentProgress?.latestPassingScore}
+                              phase={studentProgress?.latestPhase ?? null}
+                              retryStartedAt={studentProgress?.latestRetryStartedAt}
+                              status={studentProgress?.latestStatus ?? null}
+                            />
+                            <AttemptScoreSummary
+                              finalScore={studentProgress?.latestFinalScore}
+                              initialScore={studentProgress?.latestInitialScore}
+                              passingScore={studentProgress?.latestPassingScore}
+                              phase={studentProgress?.latestPhase ?? null}
+                              retryStartedAt={studentProgress?.latestRetryStartedAt}
+                              status={studentProgress?.latestStatus ?? null}
+                            />
+                          </span>
                         </span>
-                        <span className="student-card-score-line">
-                          <AttemptStatusLabel
-                            finalScore={studentProgress?.latestFinalScore}
-                            initialScore={studentProgress?.latestInitialScore}
-                            passingScore={studentProgress?.latestPassingScore}
-                            phase={studentProgress?.latestPhase ?? null}
-                            retryStartedAt={studentProgress?.latestRetryStartedAt}
-                            status={studentProgress?.latestStatus ?? null}
-                          />
-                          <AttemptScoreSummary
-                            finalScore={studentProgress?.latestFinalScore}
-                            initialScore={studentProgress?.latestInitialScore}
-                            passingScore={studentProgress?.latestPassingScore}
-                            phase={studentProgress?.latestPhase ?? null}
-                            retryStartedAt={studentProgress?.latestRetryStartedAt}
-                            status={studentProgress?.latestStatus ?? null}
-                          />
-                        </span>
-                        <span>
-                          다음 ·{" "}
-                          {studentProgress?.recommendationReason ===
-                          "complete"
-                            ? "현재 단어장 완료"
-                            : studentProgress?.recommendationReason ===
-                                "manual"
-                              ? "DAY 범위 확인 필요"
-                            : studentProgress?.recommendedUnitLabel ??
-                              "단어장 선택 필요"}
+                        <span className="student-card-next">
+                          <small>다음 배정</small>
+                          <strong>
+                            {studentProgress?.recommendationReason ===
+                            "complete"
+                              ? "현재 단어장 완료"
+                              : studentProgress?.recommendationReason ===
+                                  "manual"
+                                ? "DAY 범위 확인 필요"
+                                : studentProgress?.recommendedUnitLabel ??
+                                  "단어장 선택 필요"}
+                          </strong>
                         </span>
                       </span>
                     </button>
@@ -897,23 +921,21 @@ export function StudentManager({
                       key={item.id}
                     >
                       <div>
-                        <strong>{item.assignmentTitle}</strong>
-                        <span>
-                          {assignmentScopeLabel(item)}
-                          {" · "}
-                          {buildAttemptStatusPresentation({
-                            status: item.status,
-                            phase: item.phase,
-                            initialScore: item.initialScore,
-                            finalScore: item.finalScore,
-                            passingScore: item.passingScore,
-                            retryStartedAt: item.retryStartedAt,
-                          }).label}
-                          {" · "}
+                        <strong>{assignmentDisplayTitle(item)}</strong>
+                        <AssignmentMetaTags {...item} />
+                        <small className="card-time-meta">
                           {formatKoreanDateTime(item.activityAt)}
-                        </span>
+                        </small>
                       </div>
                       <div className="student-history-actions">
+                        <AttemptStatusLabel
+                          finalScore={item.finalScore}
+                          initialScore={item.initialScore}
+                          passingScore={item.passingScore}
+                          phase={item.phase}
+                          retryStartedAt={item.retryStartedAt}
+                          status={item.status}
+                        />
                         <AttemptScoreSummary
                           finalScore={item.finalScore}
                           initialScore={item.initialScore}

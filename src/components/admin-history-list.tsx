@@ -20,7 +20,11 @@ import {
 } from "@/lib/admin/history";
 import { DeadlineCountdown } from "@/components/deadline-countdown";
 import { AdminHistoryActions } from "@/components/admin-history-actions";
-import { AttemptScoreSummary } from "@/components/attempt-score-summary";
+import {
+  AttemptScoreSummary,
+  AttemptStatusLabel,
+} from "@/components/attempt-score-summary";
+import { AssignmentMetaTags } from "@/components/admin-meta-tags";
 import { buildAttemptStatusPresentation } from "@/lib/ui/attempt-score-presentation";
 import {
   currentTimeMilliseconds,
@@ -254,8 +258,8 @@ export function AdminHistoryList({
                 <span className="history-row-main">
                   <strong>{item.studentName}</strong>
                   <span>{assignmentDisplayTitle(item)}</span>
-                  <small>
-                    {assignmentScopeLabel(item)} ·{" "}
+                  <AssignmentMetaTags {...item} />
+                  <small className="card-time-meta">
                     {item.status === "missed"
                       ? `마감 ${formatKoreanDateTime(
                           item.availableUntil,
@@ -282,11 +286,14 @@ export function AdminHistoryList({
                   retryStartedAt={item.retryStartedAt}
                   status={item.status}
                 />
-                <span
-                  className={`status-pill ${statusPresentation(item).className}`}
-                >
-                  {statusPresentation(item).label}
-                </span>
+                <AttemptStatusLabel
+                  finalScore={item.finalScore}
+                  initialScore={item.initialScore}
+                  passingScore={item.passingScore}
+                  phase={item.phase}
+                  retryStartedAt={item.retryStartedAt}
+                  status={item.status}
+                />
               </button>
             </li>
           ))}

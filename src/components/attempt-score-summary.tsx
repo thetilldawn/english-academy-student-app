@@ -44,7 +44,12 @@ export function AttemptStatusLabel({
   const presentation = buildAttemptStatusPresentation(input);
   return (
     <span
-      className={["attempt-status-label", presentation.className, className]
+      className={[
+        "status-pill",
+        "attempt-status-label",
+        presentation.className,
+        className,
+      ]
         .filter(Boolean)
         .join(" ")}
     >
