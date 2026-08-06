@@ -883,6 +883,7 @@ export function AssignmentManager({
                 return (
                   <button
                     className="card assignment-student-row"
+                    disabled={readyDatasets.length === 0}
                     key={student.id}
                     onClick={() => selectStudent(student.id)}
                     type="button"
@@ -947,7 +948,7 @@ export function AssignmentManager({
                       </span>
                     </span>
                     <span className="button button-primary button-small">
-                      배정
+                      {readyDatasets.length === 0 ? "검토 중" : "배정"}
                     </span>
                   </button>
                 );
