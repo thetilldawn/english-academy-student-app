@@ -73,6 +73,14 @@ export const updateStudentVocabSchema = z.object({
     .transform((value) => value || null),
 });
 
+export const updateStudentProfileSchema = z
+  .object({
+    displayName: z.string().trim().min(1).max(80),
+    schoolName: z.string().trim().max(120),
+    gradeLabel: z.string().trim().max(40),
+  })
+  .strict();
+
 export const queueWrongWordsSchema = z
   .object({
     questionIds: z.array(z.uuid()).min(1).max(500),

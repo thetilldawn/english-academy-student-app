@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 const adminNavigationItems = [
   { href: "/admin", label: "Overview" },
   { href: "/admin/students", label: "학생 관리" },
-  { href: "/admin/assignments", label: "시험 관리" },
+  { href: "/admin/assignments", label: "학습 관리" },
   { href: "/admin/results", label: "내역" },
 ] as const;
 

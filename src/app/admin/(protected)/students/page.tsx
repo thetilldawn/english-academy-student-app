@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 
+import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
 import { StudentManager } from "@/components/student-manager";
 import { getServerEnvironment } from "@/lib/env";
 import {
   buildStudentProgress,
   listAssignmentHistory,
+  listDatasets,
   listSelectableDatasets,
+  listStudentCurrentVocabWrongSummaries,
+  listStudentPendingReviewSummaries,
   listStudents,
   listVocabUnits,
 } from "@/lib/services/admin-service";
@@ -23,14 +27,20 @@ export default async function StudentsPage({
     { student: initialStudentId = "" },
     students,
     datasets,
+    assignmentDatasets,
     units,
     history,
+    pendingReviewSummaries,
+    currentVocabWrongSummaries,
   ] = await Promise.all([
     searchParams,
     listStudents(),
     listSelectableDatasets(),
+    listDatasets(),
     listVocabUnits(),
     listAssignmentHistory(),
+    listStudentPendingReviewSummaries(),
+    listStudentCurrentVocabWrongSummaries(),
   ]);
   const progress = buildStudentProgress(students, units, history);
   const appOrigin =
@@ -38,21 +48,16 @@ export default async function StudentsPage({
 
   return (
     <>
-      <div className="page-heading admin-page-heading">
-        <div>
-          <p className="eyebrow">STUDENT MANAGEMENT</p>
-          <h1>학생 관리</h1>
-          <p>
-            학생의 현재 단어장과 시험을 관리하고, 접속 코드를
-            보내거나 즉시 차단합니다.
-          </p>
-        </div>
-      </div>
+      <AdminBreadcrumb current="학생 관리" />
       <StudentManager
         appOrigin={appOrigin}
+        assignmentDatasets={assignmentDatasets}
+        assignmentUnits={units}
+        currentVocabWrongSummaries={currentVocabWrongSummaries}
         datasets={datasets}
         history={history}
         initialStudentId={initialStudentId}
+        pendingReviewSummaries={pendingReviewSummaries}
         progress={progress}
         students={students}
       />

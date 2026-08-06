@@ -38,8 +38,8 @@ describe("mixed assignment admin UI contract", () => {
       manager.indexOf("useEffect", manager.indexOf("const filteredStudents")),
     );
 
-    expect(manager).toContain("현재 단어장 오답 있음");
-    expect(manager).toContain("두 번 이상 틀린 단어 있음");
+    expect(manager).toContain("오답 있음");
+    expect(manager).toContain("2회 이상 오답");
     expect(filteredStudents).toContain(
       "currentVocabWrongIndex.byStudentDataset",
     );
@@ -75,9 +75,7 @@ describe("mixed assignment admin UI contract", () => {
     );
     expect(manager).toContain("useState(false)");
     expect(manager).not.toContain("<h2>단어 시험 배정</h2>");
-    expect(manager).toContain(
-      '<h2 className="assignment-list-heading">',
-    );
+    expect(manager).toContain('className="learning-search-panel"');
   });
 
   it("학생·단어장·닫기에서 종속 상태를 초기화하고 제출 중 닫기를 막는다", () => {

@@ -18,7 +18,17 @@ import {
   AttemptStatusLabel,
 } from "@/components/attempt-score-summary";
 import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
-import { assignmentDisplayTitleForUnits } from "@/lib/admin/history";
+import { StudentLearningActivityList } from "@/components/student-learning-activity-list";
+import {
+  assignmentDisplayTitle,
+  type AssignmentHistorySummary,
+} from "@/lib/admin/history";
+import {
+  compareLearningActivities,
+  learningActivityBucket,
+  studentLearningActivityIndex,
+} from "@/lib/admin/learning-activity";
+import { formatKoreanDateTime } from "@/lib/format";
 import {
   currentTimeMilliseconds,
   koreanDateTimeLocalToIso,
@@ -50,7 +60,7 @@ import {
   type StudentCurrentVocabWrongSummary,
 } from "@/lib/admin/wrong-history-summary";
 
-type DatasetItem = {
+export type AssignmentDatasetItem = {
   id: string;
   title: string;
   edition: string | null;
@@ -59,7 +69,7 @@ type DatasetItem = {
   isActive: boolean;
 };
 
-type StudentItem = {
+export type AssignmentStudentItem = {
   id: string;
   displayName: string;
   schoolName: string | null;
@@ -69,7 +79,7 @@ type StudentItem = {
   status: "active" | "blocked";
 };
 
-type UnitItem = {
+export type AssignmentUnitItem = {
   id: string;
   datasetId: string;
   label: string;
@@ -79,7 +89,7 @@ type UnitItem = {
   entryCount: number;
 };
 
-type ProgressItem = {
+export type AssignmentProgressItem = {
   studentId: string;
   latestAttemptId: string | null;
   latestAssignmentTitle: string | null;
@@ -133,7 +143,7 @@ type AssignmentCapacity = {
   minimumQuestionCount: number;
 };
 
-type WrongWordStudentFilter = "all" | "wrong" | "repeated";
+type WrongWordStudentFilter = "all" | "wrong" | "repeated" | "retry";
 
 function directionLabel(ratio: number) {
   if (ratio === 100) return "영어 → 뜻";
@@ -147,11 +157,7 @@ function unitRangeLabel(labels: string[]) {
   return `${labels[0]}~${labels.at(-1)}`;
 }
 
-function scoreLabel(score: number | null | undefined) {
-  return score === null || score === undefined ? "-" : `${score}점`;
-}
-
-function recommendationLabel(progress: ProgressItem | null) {
+function recommendationLabel(progress: AssignmentProgressItem | null) {
   if (!progress) return "단어장 선택 필요";
   if (progress.recommendationReason === "complete") {
     return "현재 단어장 완료";
@@ -171,7 +177,7 @@ function recommendationLabel(progress: ProgressItem | null) {
   return progress.recommendedUnitLabel ?? "첫 DAY 선택";
 }
 
-function recommendationReasonLabel(progress: ProgressItem | null) {
+function recommendationReasonLabel(progress: AssignmentProgressItem | null) {
   if (!progress) return "현재 단어장을 먼저 선택하세요.";
   if (progress.recommendationReason === "assigned") {
     return "이미 배정했지만 아직 시작하지 않은 범위입니다.";
@@ -201,15 +207,23 @@ export function AssignmentManager({
   progress,
   pendingReviewSummaries,
   currentVocabWrongSummaries,
+  history,
   initialStudentId = "",
+  initialDialogView = "overview",
+  launcherOnly = false,
+  onLauncherClose,
 }: {
-  datasets: DatasetItem[];
-  students: StudentItem[];
-  units: UnitItem[];
-  progress: ProgressItem[];
+  datasets: AssignmentDatasetItem[];
+  students: AssignmentStudentItem[];
+  units: AssignmentUnitItem[];
+  progress: AssignmentProgressItem[];
   pendingReviewSummaries: StudentPendingReviewSummary[];
   currentVocabWrongSummaries: StudentCurrentVocabWrongSummary[];
+  history: AssignmentHistorySummary[];
   initialStudentId?: string;
+  initialDialogView?: "overview" | "assign";
+  launcherOnly?: boolean;
+  onLauncherClose?: () => void;
 }) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -241,6 +255,10 @@ export function AssignmentManager({
       ),
     [currentVocabWrongSummaries],
   );
+  const activitiesByStudent = useMemo(
+    () => studentLearningActivityIndex(history),
+    [history],
+  );
   const initialStudent =
     activeStudents.find((student) => student.id === initialStudentId) ??
     null;
@@ -263,8 +281,12 @@ export function AssignmentManager({
   const [query, setQuery] = useState("");
   const [schoolFilter, setSchoolFilter] = useState("");
   const [gradeFilter, setGradeFilter] = useState("");
+  const [wordbookFilter, setWordbookFilter] = useState("");
   const [wrongWordFilter, setWrongWordFilter] =
     useState<WrongWordStudentFilter>("all");
+  const [dialogView, setDialogView] = useState<"overview" | "assign">(
+    initialDialogView,
+  );
   const [studentId, setStudentId] = useState(initialStudent?.id ?? "");
   const [datasetId, setDatasetId] = useState(initialDatasetId);
   const [startUnitId, setStartUnitId] = useState(initialRecommendedUnitId);
@@ -304,6 +326,9 @@ export function AssignmentManager({
   const selectedProgress = selectedStudent
     ? (progressByStudent.get(selectedStudent.id) ?? null)
     : null;
+  const selectedActivities = selectedStudent
+    ? (activitiesByStudent.get(selectedStudent.id) ?? [])
+    : [];
   const selectedDataset =
     readyDatasets.find((dataset) => dataset.id === datasetId) ?? null;
   const selectedReviewCounts =
@@ -432,6 +457,17 @@ export function AssignmentManager({
       ).toSorted(),
     [activeStudents],
   );
+  const wordbookOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          activeStudents
+            .map((student) => student.currentVocabBook?.trim())
+            .filter((value): value is string => Boolean(value)),
+        ),
+      ).toSorted(),
+    [activeStudents],
+  );
   const filteredStudents = useMemo(() => {
     const keyword = query.trim().toLocaleLowerCase("ko-KR");
     return activeStudents.filter((student) => {
@@ -448,8 +484,14 @@ export function AssignmentManager({
         (!keyword || searchText.includes(keyword)) &&
         (!schoolFilter || student.schoolName === schoolFilter) &&
         (!gradeFilter || student.gradeLabel === gradeFilter) &&
+        (!wordbookFilter || student.currentVocabBook === wordbookFilter) &&
         (() => {
           if (wrongWordFilter === "all") return true;
+          if (wrongWordFilter === "retry") {
+            return (activitiesByStudent.get(student.id) ?? []).some(
+              (item) => learningActivityBucket(item) === "needs_attention",
+            );
+          }
           if (!student.currentVocabDatasetId) return false;
           const wrongCounts =
             currentVocabWrongIndex.byStudentDataset.get(
@@ -464,13 +506,30 @@ export function AssignmentManager({
           return wrongCounts.wrongWordCount > 0;
         })()
       );
+    }).toSorted((left, right) => {
+      const leftActivity = activitiesByStudent.get(left.id)?.[0] ?? null;
+      const rightActivity = activitiesByStudent.get(right.id)?.[0] ?? null;
+      if (leftActivity && rightActivity) {
+        const activityOrder = compareLearningActivities(
+          leftActivity,
+          rightActivity,
+        );
+        if (activityOrder !== 0) return activityOrder;
+      } else if (leftActivity) {
+        return -1;
+      } else if (rightActivity) {
+        return 1;
+      }
+      return left.displayName.localeCompare(right.displayName, "ko-KR");
     });
   }, [
     activeStudents,
+    activitiesByStudent,
     currentVocabWrongIndex,
     gradeFilter,
     query,
     schoolFilter,
+    wordbookFilter,
     wrongWordFilter,
   ]);
 
@@ -587,6 +646,7 @@ export function AssignmentManager({
         : "";
 
     setStudentId(nextStudentId);
+    setDialogView("overview");
     setDatasetId(nextDatasetId);
     setStartUnitId(nextRecommendedUnitId);
     setEndUnitId(nextRecommendedUnitId);
@@ -633,7 +693,9 @@ export function AssignmentManager({
 
   function handleDialogClose() {
     setStudentId("");
+    setDialogView("overview");
     resetScopedControls();
+    onLauncherClose?.();
   }
 
   function handleDialogCancel(
@@ -744,6 +806,8 @@ export function AssignmentManager({
 
   return (
     <>
+      {!launcherOnly ? (
+        <>
       <div
         aria-label="시험 종류"
         className="management-tabs"
@@ -754,7 +818,7 @@ export function AssignmentManager({
           onClick={() => setTestTab("vocab")}
           type="button"
         >
-          단어 시험
+          단어
         </button>
         <button
           aria-pressed={testTab === "other"}
@@ -762,92 +826,157 @@ export function AssignmentManager({
           onClick={() => setTestTab("other")}
           type="button"
         >
-          다른 시험
+          다른 학습
         </button>
       </div>
 
       {testTab === "other" ? (
         <section className="empty-state test-type-placeholder">
-          다른 유형의 시험은 워크북 문제 구조가 확정되면 이 탭에
-          추가합니다.
+          지문·해석·문법·모의고사 학습 구조가 확정되면 이곳에서
+          관리합니다.
         </section>
       ) : (
         <section className="assignment-student-browser">
-          <div className="manager-toolbar">
-            <div>
-              <h2 className="assignment-list-heading">
-                학생 선택
-              </h2>
-              <p className="list-meta">
-                학생을 찾은 뒤 최근 범위와 다음 DAY를 확인하고
-                배정합니다.
-              </p>
-            </div>
-            <span className="detail-chip">
-              {filteredStudents.length}명
-            </span>
-          </div>
-
-          <div className="card assignment-student-filters">
-            <label className="field assignment-search-field">
-              <span className="field-label">학생 검색</span>
+          <div className="learning-search-panel">
+            <label className="learning-search-field">
+              <span aria-hidden="true" className="learning-search-icon">
+                <svg viewBox="0 0 24 24">
+                  <circle cx="11" cy="11" r="6" />
+                  <path d="m16 16 4 4" />
+                </svg>
+              </span>
+              <span className="sr-only">학생 및 학습 자료 검색</span>
               <input
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="이름·학교·학년·단어장"
+                placeholder="이름·학교·학년·단어장 검색"
                 type="search"
                 value={query}
               />
             </label>
-            <label className="field">
-              <span className="field-label">학교</span>
-              <select
-                onChange={(event) => setSchoolFilter(event.target.value)}
-                value={schoolFilter}
-              >
-                <option value="">전체 학교</option>
-                {schoolOptions.map((school) => (
-                  <option key={school} value={school}>
-                    {school}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              <span className="field-label">학년</span>
-              <select
-                onChange={(event) => setGradeFilter(event.target.value)}
-                value={gradeFilter}
-              >
-                <option value="">전체 학년</option>
-                {gradeOptions.map((grade) => (
-                  <option key={grade} value={grade}>
-                    {grade}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div
-              aria-label="현재 단어장 오답 이력 필터"
-              className="filter-chip-row assignment-review-filter-row"
-              role="group"
-            >
-              {(
-                [
-                  ["all", "전체"],
-                  ["wrong", "현재 단어장 오답 있음"],
-                  ["repeated", "두 번 이상 틀린 단어 있음"],
-                ] as const
-              ).map(([value, label]) => (
+            <details className="learning-filter-disclosure">
+              <summary>
+                <span>필터</span>
+                <span className="detail-chip">
+                  {
+                    [schoolFilter, gradeFilter, wordbookFilter].filter(Boolean)
+                      .length + (wrongWordFilter === "all" ? 0 : 1)
+                  }
+                </span>
+              </summary>
+              <div className="learning-filter-groups">
+                <fieldset>
+                  <legend>오답 유무</legend>
+                  <div className="filter-chip-row">
+                    {(
+                      [
+                        ["all", "전체"],
+                        ["wrong", "오답 있음"],
+                        ["repeated", "2회 이상 오답"],
+                        ["retry", "재시험 필요"],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <button
+                        aria-pressed={wrongWordFilter === value}
+                        className="filter-chip"
+                        key={value}
+                        onClick={() => setWrongWordFilter(value)}
+                        type="button"
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+                <fieldset>
+                  <legend>학교별</legend>
+                  <div className="filter-chip-row">
+                    {schoolOptions.map((school) => (
+                      <button
+                        aria-pressed={schoolFilter === school}
+                        className="filter-chip"
+                        key={school}
+                        onClick={() =>
+                          setSchoolFilter((current) =>
+                            current === school ? "" : school,
+                          )
+                        }
+                        type="button"
+                      >
+                        {school}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+                <fieldset>
+                  <legend>학년별</legend>
+                  <div className="filter-chip-row">
+                    {gradeOptions.map((grade) => (
+                      <button
+                        aria-pressed={gradeFilter === grade}
+                        className="filter-chip"
+                        key={grade}
+                        onClick={() =>
+                          setGradeFilter((current) =>
+                            current === grade ? "" : grade,
+                          )
+                        }
+                        type="button"
+                      >
+                        {grade}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+                <fieldset>
+                  <legend>단어장별</legend>
+                  <div className="filter-chip-row">
+                    {wordbookOptions.map((wordbook) => (
+                      <button
+                        aria-pressed={wordbookFilter === wordbook}
+                        className="filter-chip"
+                        key={wordbook}
+                        onClick={() =>
+                          setWordbookFilter((current) =>
+                            current === wordbook ? "" : wordbook,
+                          )
+                        }
+                        type="button"
+                      >
+                        {wordbook}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
                 <button
-                  aria-pressed={wrongWordFilter === value}
-                  className="filter-chip"
-                  key={value}
-                  onClick={() => setWrongWordFilter(value)}
+                  className="button button-quiet button-small"
+                  onClick={() => {
+                    setSchoolFilter("");
+                    setGradeFilter("");
+                    setWordbookFilter("");
+                    setWrongWordFilter("all");
+                  }}
                   type="button"
                 >
-                  {label}
+                  필터 초기화
                 </button>
-              ))}
+              </div>
+            </details>
+            <div className="learning-filter-summary">
+              <MetaTagList>
+                {schoolFilter ? <MetaTag>{schoolFilter}</MetaTag> : null}
+                {gradeFilter ? <MetaTag>{gradeFilter}</MetaTag> : null}
+                {wordbookFilter ? <MetaTag>{wordbookFilter}</MetaTag> : null}
+                {wrongWordFilter !== "all" ? (
+                  <MetaTag tone="warning">
+                    {wrongWordFilter === "wrong"
+                      ? "오답 있음"
+                      : wrongWordFilter === "repeated"
+                        ? "2회 이상 오답"
+                        : "재시험 필요"}
+                  </MetaTag>
+                ) : null}
+              </MetaTagList>
+              <strong>{filteredStudents.length}명</strong>
             </div>
           </div>
 
@@ -867,6 +996,9 @@ export function AssignmentManager({
               {filteredStudents.map((student) => {
                 const studentProgress =
                   progressByStudent.get(student.id) ?? null;
+                const studentActivities =
+                  activitiesByStudent.get(student.id) ?? [];
+                const nextActivity = studentActivities[0] ?? null;
                 const studentReviewCounts =
                   student.currentVocabDatasetId
                     ? (pendingReviewIndex.byStudentDataset.get(
@@ -883,7 +1015,6 @@ export function AssignmentManager({
                 return (
                   <button
                     className="card assignment-student-row"
-                    disabled={readyDatasets.length === 0}
                     key={student.id}
                     onClick={() => selectStudent(student.id)}
                     type="button"
@@ -898,57 +1029,63 @@ export function AssignmentManager({
                     <span className="assignment-student-book">
                       <MetaTagList>
                         <MetaTag>
-                          단어장 · {student.currentVocabBook ?? "미선택"}
+                          {student.currentVocabBook ?? "단어장 미선택"}
                         </MetaTag>
-                        <MetaTag>
-                          오답 대기 {studentPendingReviewCount}개
-                        </MetaTag>
-                        <MetaTag>
-                          혼합 가능 {studentAvailableReviewCount}개
-                        </MetaTag>
+                        {studentPendingReviewCount > 0 ? (
+                          <MetaTag tone="warning">
+                            오답 대기 {studentPendingReviewCount}개
+                          </MetaTag>
+                        ) : null}
+                        {studentAvailableReviewCount > 0 ? (
+                          <MetaTag>
+                            추가 가능 {studentAvailableReviewCount}개
+                          </MetaTag>
+                        ) : null}
                       </MetaTagList>
                     </span>
                     <span className="assignment-student-recent">
                       <strong>
-                        {studentProgress?.latestAssignmentTitle
-                          ? assignmentDisplayTitleForUnits(
-                              studentProgress.latestAssignmentTitle,
-                              studentProgress.latestUnitLabel
-                                ? [studentProgress.latestUnitLabel]
-                                : [],
-                            )
-                          : "기록 없음"}
+                        {nextActivity
+                          ? assignmentDisplayTitle(nextActivity)
+                          : "배정된 학습 없음"}
                       </strong>
                       <MetaTagList>
-                        <MetaTag>최근 시험</MetaTag>
-                        {studentProgress?.latestUnitLabel ? (
-                          <MetaTag>{studentProgress.latestUnitLabel}</MetaTag>
-                        ) : null}
                         <MetaTag tone="warning">
-                          다음 · {recommendationLabel(studentProgress)}
+                          다음 {recommendationLabel(studentProgress)}
                         </MetaTag>
                       </MetaTagList>
+                      <small>
+                        {nextActivity?.status === "not_started"
+                          ? nextActivity.availableUntil
+                            ? `마감 ${formatKoreanDateTime(nextActivity.availableUntil)}`
+                            : `배정 ${formatKoreanDateTime(nextActivity.assignedAt)} · 마감 없음`
+                          : nextActivity?.completedAt
+                            ? `종료 ${formatKoreanDateTime(nextActivity.completedAt)}`
+                            : nextActivity?.activityAt
+                              ? formatKoreanDateTime(nextActivity.activityAt)
+                              : "최근 기록 없음"}
+                      </small>
                       <span className="assignment-student-score-line">
                         <AttemptStatusLabel
-                          finalScore={studentProgress?.latestFinalScore}
-                          initialScore={studentProgress?.latestInitialScore}
-                          passingScore={studentProgress?.latestPassingScore}
-                          phase={studentProgress?.latestPhase ?? null}
-                          retryStartedAt={studentProgress?.latestRetryStartedAt}
-                          status={studentProgress?.latestStatus ?? null}
+                          finalScore={nextActivity?.finalScore}
+                          initialScore={nextActivity?.initialScore}
+                          passingScore={nextActivity?.passingScore}
+                          phase={nextActivity?.phase ?? null}
+                          retryStartedAt={nextActivity?.retryStartedAt}
+                          status={nextActivity?.status ?? null}
                         />
                         <AttemptScoreSummary
-                          finalScore={studentProgress?.latestFinalScore}
-                          initialScore={studentProgress?.latestInitialScore}
-                          passingScore={studentProgress?.latestPassingScore}
-                          phase={studentProgress?.latestPhase ?? null}
-                          retryStartedAt={studentProgress?.latestRetryStartedAt}
-                          status={studentProgress?.latestStatus ?? null}
+                          finalScore={nextActivity?.finalScore}
+                          initialScore={nextActivity?.initialScore}
+                          passingScore={nextActivity?.passingScore}
+                          phase={nextActivity?.phase ?? null}
+                          retryStartedAt={nextActivity?.retryStartedAt}
+                          status={nextActivity?.status ?? null}
                         />
                       </span>
                     </span>
                     <span className="button button-primary button-small">
-                      {readyDatasets.length === 0 ? "검토 중" : "배정"}
+                      보기
                     </span>
                   </button>
                 );
@@ -957,6 +1094,8 @@ export function AssignmentManager({
           )}
         </section>
       )}
+        </>
+      ) : null}
 
       {selectedStudent && (
         <dialog
@@ -967,21 +1106,33 @@ export function AssignmentManager({
           onClose={handleDialogClose}
           ref={dialogRef}
         >
-          <div className="dialog-heading">
-            <div>
-              <p className="eyebrow">단어 시험 배정</p>
-              <h2 id="assignment-dialog-title">
-                {selectedStudent.displayName}
-              </h2>
-              <p>
-                {[
-                  selectedStudent.schoolName,
-                  selectedStudent.gradeLabel,
-                  selectedStudent.currentVocabBook,
-                ]
-                  .filter(Boolean)
-                  .join(" · ") || "학생 정보 미입력"}
-              </p>
+          <div className="dialog-heading learning-dialog-heading">
+            <div className="learning-dialog-title-row">
+              {dialogView === "assign" ? (
+                <button
+                  aria-label="학습 관리로 돌아가기"
+                  className="button button-quiet button-icon learning-dialog-back"
+                  disabled={submitting}
+                  onClick={() => setDialogView("overview")}
+                  type="button"
+                >
+                  ←
+                </button>
+              ) : null}
+              <div>
+                <h2 id="assignment-dialog-title">
+                  {dialogView === "assign"
+                    ? "단어 학습 배정"
+                    : selectedStudent.displayName}
+                </h2>
+                <p>
+                  {dialogView === "assign"
+                    ? selectedStudent.displayName
+                    : [selectedStudent.schoolName, selectedStudent.gradeLabel]
+                        .filter(Boolean)
+                        .join(" · ") || "학생 정보 미입력"}
+                </p>
+              </div>
             </div>
             <button
               aria-label="닫기"
@@ -993,56 +1144,72 @@ export function AssignmentManager({
               닫기
             </button>
           </div>
-
-          <div className="assignment-dialog-context">
-            <span>
-              최근 시험 ·{" "}
-              {selectedProgress?.latestAssignmentTitle ?? "기록 없음"}
-            </span>
-            <span className="assignment-dialog-score-line">
-              <AttemptStatusLabel
-                finalScore={selectedProgress?.latestFinalScore}
-                initialScore={selectedProgress?.latestInitialScore}
-                passingScore={selectedProgress?.latestPassingScore}
-                phase={selectedProgress?.latestPhase ?? null}
-                retryStartedAt={selectedProgress?.latestRetryStartedAt}
-                status={selectedProgress?.latestStatus ?? null}
-              />
-              <AttemptScoreSummary
-                finalScore={selectedProgress?.latestFinalScore}
-                initialScore={selectedProgress?.latestInitialScore}
-                passingScore={selectedProgress?.latestPassingScore}
-                phase={selectedProgress?.latestPhase ?? null}
-                retryStartedAt={selectedProgress?.latestRetryStartedAt}
-                status={selectedProgress?.latestStatus ?? null}
-              />
-            </span>
-            <strong>
-              추천 · {recommendationLabel(selectedProgress)}
-            </strong>
-            <span>
-              추천 이유 · {recommendationReasonLabel(selectedProgress)}
-            </span>
-            <span>
-              최근 완료 ·{" "}
-              {selectedProgress?.latestCompletedAssignmentTitle ??
-                "기록 없음"}
-              {selectedProgress?.latestCompletedAssignmentTitle
-                ? ` · 최종 ${scoreLabel(
-                    selectedProgress.latestCompletedFinalScore,
-                  )}`
-                : ""}
-            </span>
-            <span>
-              틀렸던 단어 대기 · 한 번 {selectedReviewCounts.pendingLevel1Count}
-              개 · 두 번 이상{" "}
-              {selectedReviewCounts.pendingLevel2Count}개
-            </span>
-            <span>
-              추가 가능 {selectedAvailableReviewTotal}개 · 이전 초안
-              {selectedReservedReviewCount}개
-            </span>
-          </div>
+          <div className="learning-dialog-body">
+            {dialogView === "overview" ? (
+              <section className="student-learning-overview">
+                <div className="student-learning-source-row">
+                  <div>
+                    <span>주 단어장</span>
+                    <strong>
+                      {selectedStudent.currentVocabBook ?? "미선택"}
+                    </strong>
+                  </div>
+                  <button
+                    aria-label="단어 학습 배정 열기"
+                    className="learning-add-button"
+                    disabled={readyDatasets.length === 0}
+                    onClick={() => setDialogView("assign")}
+                    type="button"
+                  >
+                    +
+                  </button>
+                </div>
+                <div className="student-learning-tags">
+                  <MetaTagList>
+                    <MetaTag tone="warning">
+                      다음 {recommendationLabel(selectedProgress)}
+                    </MetaTag>
+                    <MetaTag>
+                      미해결 {selectedCurrentWrongCounts.wrongWordCount}개
+                    </MetaTag>
+                    <MetaTag>
+                      다음 시험 대기 {selectedPendingReviewCount}개
+                    </MetaTag>
+                  </MetaTagList>
+                  <HelpTip label="다음 범위 추천 이유">
+                    {recommendationReasonLabel(selectedProgress)}
+                  </HelpTip>
+                </div>
+                {readyDatasets.length === 0 ? (
+                  <div className="notice notice-warm">
+                    승인된 단어장이 없어 새 시험 배정은 잠겨 있습니다.
+                    기존 배정과 내역은 계속 관리할 수 있습니다.
+                  </div>
+                ) : null}
+                <div className="learning-section-heading">
+                  <h3>배정 및 최근 내역</h3>
+                  <span>{selectedActivities.length}개</span>
+                </div>
+                <StudentLearningActivityList items={selectedActivities} />
+              </section>
+            ) : (
+              <>
+                <div className="assignment-dialog-context">
+                  <MetaTagList>
+                    <MetaTag>
+                      {selectedStudent.currentVocabBook ?? "단어장 미선택"}
+                    </MetaTag>
+                    <MetaTag tone="warning">
+                      다음 {recommendationLabel(selectedProgress)}
+                    </MetaTag>
+                    <MetaTag>
+                      오답 대기 {selectedPendingReviewCount}개
+                    </MetaTag>
+                  </MetaTagList>
+                  <HelpTip label="다음 범위 추천 이유">
+                    {recommendationReasonLabel(selectedProgress)}
+                  </HelpTip>
+                </div>
 
           <form
             aria-busy={submitting}
@@ -1584,6 +1751,9 @@ export function AssignmentManager({
               </fieldset>
             )}
           </form>
+              </>
+            )}
+          </div>
         </dialog>
       )}
     </>

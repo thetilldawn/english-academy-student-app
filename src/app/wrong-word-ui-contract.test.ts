@@ -107,8 +107,9 @@ describe("wrong-word admin UI contract", () => {
     const panel = source(
       "src/components/student-wrong-word-panel.tsx",
     );
-    expect(manager).toContain('"history" | "wrong" | "manage"');
+    expect(manager).toContain('"learning" | "account" | "history"');
     expect(manager).toContain("<StudentWrongWordPanel");
+    expect(manager).toContain("단어 학습 관리");
     expect(panel).toContain(
       "/api/admin/students/${studentId}/wrong-words",
     );

@@ -5,6 +5,7 @@ import {
   createStudentSchema,
   exactReviewAssignmentSchema,
   mixedAssignmentSchema,
+  updateStudentProfileSchema,
   updateStudentVocabSchema,
 } from "@/lib/validation";
 
@@ -72,6 +73,27 @@ describe("학생 정보 입력 계약", () => {
     expect(() =>
       updateStudentVocabSchema.parse({
         currentVocabDatasetId: "직접 입력 단어장",
+      }),
+    ).toThrow();
+  });
+
+  it("계정 설정은 이름·학교·학년만 허용하고 공백을 정리한다", () => {
+    expect(
+      updateStudentProfileSchema.parse({
+        displayName: "  테스트 학생  ",
+        schoolName: "  미리보고  ",
+        gradeLabel: "  고3  ",
+      }),
+    ).toEqual({
+      displayName: "테스트 학생",
+      schoolName: "미리보고",
+      gradeLabel: "고3",
+    });
+    expect(() =>
+      updateStudentProfileSchema.parse({
+        displayName: "",
+        schoolName: "",
+        gradeLabel: "",
       }),
     ).toThrow();
   });

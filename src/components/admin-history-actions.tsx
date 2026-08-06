@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
 
-type ActionKey = "cancel" | "delete-assignment" | "delete-history";
+type ActionKey = "cancel" | "delete-history";
 
 type ErrorResponse = {
   error?: string;
@@ -87,52 +87,36 @@ export function AdminHistoryActions({
               {busyAction === "cancel" ? "취소 중…" : "배정 취소"}
             </button>
           )}
-        {!item.assignmentDeleted && (
+        {(["cancelled", "missed", "completed", "expired"] as const).includes(
+          item.status as "cancelled" | "missed" | "completed" | "expired",
+        ) && (
           <button
-            aria-busy={busyAction === "delete-assignment"}
-            className={`button button-danger${sizeClass}`}
+            aria-busy={busyAction === "delete-history"}
+            className={`button button-quiet${sizeClass}`}
             disabled={busyAction !== null}
             onClick={() =>
               void run(
-                "delete-assignment",
-                `"${item.assignmentTitle}" 시험을 삭제할까요? 학생 화면에서는 사라지고, 기존 성적은 보존되어 내역에 '삭제됨'으로 표시됩니다.`,
-                `/api/admin/assignments/${item.assignmentId}`,
-                { method: "DELETE" },
+                "delete-history",
+                "이 항목만 내역 목록에서 삭제할까요? 시험 결과와 오답 기록 원본은 안전하게 보존됩니다.",
+                "/api/admin/history",
+                {
+                  method: "DELETE",
+                  headers: { "content-type": "application/json" },
+                  body: JSON.stringify({
+                    assignmentId: item.assignmentId,
+                    studentId: item.studentId,
+                    attemptId: item.attemptId,
+                  }),
+                },
               )
             }
             type="button"
           >
-            {busyAction === "delete-assignment"
+            {busyAction === "delete-history"
               ? "삭제 중…"
-              : "시험 전체 삭제"}
+              : "내역 삭제"}
           </button>
         )}
-        <button
-          aria-busy={busyAction === "delete-history"}
-          className={`button button-quiet${sizeClass}`}
-          disabled={busyAction !== null}
-          onClick={() =>
-            void run(
-              "delete-history",
-              "이 항목만 내역 목록에서 삭제할까요? 시험 결과와 오답 기록 원본은 안전하게 보존됩니다.",
-              "/api/admin/history",
-              {
-                method: "DELETE",
-                headers: { "content-type": "application/json" },
-                body: JSON.stringify({
-                  assignmentId: item.assignmentId,
-                  studentId: item.studentId,
-                  attemptId: item.attemptId,
-                }),
-              },
-            )
-          }
-          type="button"
-        >
-          {busyAction === "delete-history"
-            ? "삭제 중…"
-            : "내역 삭제"}
-        </button>
       </div>
       {error && (
         <span className="inline-error" role="alert">

@@ -21,19 +21,18 @@ describe("admin deletion UI contract", () => {
     const assignmentPage = source(
       "src/app/admin/(protected)/assignments/page.tsx",
     );
-    const assignmentManagement = source(
-      "src/components/assignment-management-list.tsx",
+    const learningActivityList = source(
+      "src/components/student-learning-activity-list.tsx",
     );
 
     expect(historyList).toContain("<AdminHistoryActions");
     expect(historyActions).toContain("배정 취소");
-    expect(historyActions).toContain("시험 전체 삭제");
+    expect(historyActions).not.toContain("시험 전체 삭제");
     expect(historyActions).toContain("내역 삭제");
     expect(studentManager).toContain("학생 삭제");
-    expect(studentManager).toContain("<AdminHistoryActions");
-    expect(assignmentPage).toContain("listAssignments()");
-    expect(assignmentPage).toContain("<AssignmentManagementList");
-    expect(assignmentManagement).toContain("시험 전체 삭제");
+    expect(learningActivityList).toContain("<AdminHistoryActions");
+    expect(assignmentPage).not.toContain("listAssignments()");
+    expect(assignmentPage).not.toContain("<AssignmentManagementList");
   });
 
   it("삭제된 학생·시험은 목록에서 빠지고 과거 내역은 삭제됨으로 남는다", () => {

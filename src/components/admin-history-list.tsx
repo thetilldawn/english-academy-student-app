@@ -18,6 +18,7 @@ import {
   assignmentOrderLabel,
   assignmentScopeLabel,
 } from "@/lib/admin/history";
+import { compareLearningActivities } from "@/lib/admin/learning-activity";
 import { DeadlineCountdown } from "@/components/deadline-countdown";
 import { AdminHistoryActions } from "@/components/admin-history-actions";
 import {
@@ -126,7 +127,7 @@ export function AdminHistoryList({
           .toLocaleLowerCase("ko-KR")
           .includes(normalizedQuery);
       return matchesStatus && matchesQuery;
-    });
+    }).toSorted(compareLearningActivities);
   }, [items, query, statusFilter]);
 
   useEffect(() => {

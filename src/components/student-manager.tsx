@@ -11,30 +11,35 @@ import {
   type KeyboardEvent,
   type MouseEvent,
 } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import {
-  assignmentDisplayTitle,
   assignmentDisplayTitleForUnits,
   type AssignmentHistorySummary,
 } from "@/lib/admin/history";
 import { buildStudentAccessUrl } from "@/lib/auth/student-code-input";
 import type { StudentWrongWordHistory } from "@/lib/admin/wrong-word-history";
-import { formatKoreanDateTime } from "@/lib/format";
 import { sendKakaoText } from "@/lib/kakao-share";
-import { AdminHistoryActions } from "@/components/admin-history-actions";
 import { StudentWrongWordPanel } from "@/components/student-wrong-word-panel";
+import { StudentLearningActivityList } from "@/components/student-learning-activity-list";
+import {
+  AssignmentManager,
+  type AssignmentDatasetItem,
+  type AssignmentUnitItem,
+} from "@/components/assignment-manager";
 import {
   AttemptScoreSummary,
   AttemptStatusLabel,
 } from "@/components/attempt-score-summary";
-import {
-  AssignmentMetaTags,
-  MetaTag,
-  MetaTagList,
-} from "@/components/admin-meta-tags";
+import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
 import { buildAttemptStatusPresentation } from "@/lib/ui/attempt-score-presentation";
+import {
+  compareLearningActivities,
+  learningActivityBucket,
+  studentLearningActivityIndex,
+} from "@/lib/admin/learning-activity";
+import type { StudentPendingReviewSummary } from "@/lib/admin/review-queue-summary";
+import type { StudentCurrentVocabWrongSummary } from "@/lib/admin/wrong-history-summary";
 
 type StudentItem = {
   id: string;
@@ -77,6 +82,9 @@ type ProgressItem = {
   latestAttemptNumber: number | null;
   latestStartedAt: string | null;
   latestCompletedAt: string | null;
+  latestCompletedAssignmentTitle: string | null;
+  latestCompletedInitialScore: number | null;
+  latestCompletedFinalScore: number | null;
   recommendedDatasetId: string | null;
   recommendedUnitId: string | null;
   recommendedUnitLabel: string | null;
@@ -126,16 +134,24 @@ function studentRecommendationLabel(
 
 export function StudentManager({
   appOrigin,
+  assignmentDatasets,
+  assignmentUnits,
+  currentVocabWrongSummaries,
   datasets,
   history,
   initialStudentId = "",
+  pendingReviewSummaries,
   progress,
   students,
 }: {
   appOrigin: string;
+  assignmentDatasets: AssignmentDatasetItem[];
+  assignmentUnits: AssignmentUnitItem[];
+  currentVocabWrongSummaries: StudentCurrentVocabWrongSummary[];
   datasets: DatasetOption[];
   history: AssignmentHistorySummary[];
   initialStudentId?: string;
+  pendingReviewSummaries: StudentPendingReviewSummary[];
   progress: ProgressItem[];
   students: StudentItem[];
 }) {
@@ -156,18 +172,35 @@ export function StudentManager({
     initialStudent?.id ?? "",
   );
   const [activeTab, setActiveTab] = useState<
-    "history" | "wrong" | "manage"
-  >("history");
+    "learning" | "account" | "history"
+  >("learning");
+  const [learningView, setLearningView] = useState<
+    "summary" | "vocab" | "passage"
+  >("summary");
+  const [assignmentStudentId, setAssignmentStudentId] = useState("");
+  const [query, setQuery] = useState("");
+  const [schoolFilter, setSchoolFilter] = useState("");
+  const [gradeFilter, setGradeFilter] = useState("");
+  const [wordbookFilter, setWordbookFilter] = useState("");
+  const [learningFilter, setLearningFilter] = useState<
+    "all" | "open" | "attention"
+  >("all");
   const [wrongHistoryByStudent, setWrongHistoryByStudent] = useState<
     Record<string, WrongHistoryCacheEntry>
   >({});
   const selectedStudent =
     students.find((student) => student.id === selectedStudentId) ?? null;
-  const selectedProgress =
-    progress.find((item) => item.studentId === selectedStudent?.id) ??
-    null;
   const [profileDatasetId, setProfileDatasetId] = useState(
     selectedStudent?.currentVocabDatasetId ?? "",
+  );
+  const [profileDisplayName, setProfileDisplayName] = useState(
+    selectedStudent?.displayName ?? "",
+  );
+  const [profileSchoolName, setProfileSchoolName] = useState(
+    selectedStudent?.schoolName ?? "",
+  );
+  const [profileGradeLabel, setProfileGradeLabel] = useState(
+    selectedStudent?.gradeLabel ?? "",
   );
   const studentDialogRef = useRef<HTMLDialogElement>(null);
   const codeDialogRef = useRef<HTMLDialogElement>(null);
@@ -207,11 +240,15 @@ export function StudentManager({
 
   function selectStudent(
     student: StudentItem,
-    tab: "history" | "wrong" | "manage" = "history",
+    tab: "learning" | "account" | "history" = "learning",
   ) {
     setSelectedStudentId(student.id);
     setActiveTab(tab);
+    setLearningView("summary");
     setProfileDatasetId(student.currentVocabDatasetId ?? "");
+    setProfileDisplayName(student.displayName);
+    setProfileSchoolName(student.schoolName ?? "");
+    setProfileGradeLabel(student.gradeLabel ?? "");
   }
 
   const cacheWrongWordHistory = useCallback(
@@ -358,6 +395,38 @@ export function StudentManager({
         requestError instanceof Error
           ? requestError.message
           : "현재 단어장을 바꾸지 못했습니다.",
+      );
+    } finally {
+      finishAction();
+    }
+  }
+
+  async function saveStudentProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (
+      !selectedStudent ||
+      !profileDisplayName.trim() ||
+      !beginAction(`profile:${selectedStudent.id}`)
+    ) {
+      return;
+    }
+
+    try {
+      await request(`/api/admin/students/${selectedStudent.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          displayName: profileDisplayName,
+          schoolName: profileSchoolName,
+          gradeLabel: profileGradeLabel,
+        }),
+      });
+      startRefreshTransition(() => router.refresh());
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "학생 정보를 저장하지 못했습니다.",
       );
     } finally {
       finishAction();
@@ -520,26 +589,100 @@ export function StudentManager({
     window.setTimeout(() => setShareNotice(""), 2500);
   }
 
-  const groupedStudents = useMemo(() => {
-    const groups = new Map<
-      string,
-      { label: string; students: StudentItem[] }
-    >();
-
-    for (const student of students) {
-      const school = student.schoolName?.trim() || "학교 미입력";
-      const grade = student.gradeLabel?.trim() || "학년 미입력";
-      const key = `${school}\u0000${grade}`;
-      const group = groups.get(key) ?? {
-        label: `${school} · ${grade}`,
-        students: [],
-      };
-      group.students.push(student);
-      groups.set(key, group);
-    }
-
-    return Array.from(groups.values());
-  }, [students]);
+  const activitiesByStudent = useMemo(
+    () => studentLearningActivityIndex(history),
+    [history],
+  );
+  const schoolOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          students
+            .map((student) => student.schoolName?.trim())
+            .filter((value): value is string => Boolean(value)),
+        ),
+      ).toSorted(),
+    [students],
+  );
+  const gradeOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          students
+            .map((student) => student.gradeLabel?.trim())
+            .filter((value): value is string => Boolean(value)),
+        ),
+      ).toSorted(),
+    [students],
+  );
+  const wordbookOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          students
+            .map((student) => student.currentVocabBook?.trim())
+            .filter((value): value is string => Boolean(value)),
+        ),
+      ).toSorted(),
+    [students],
+  );
+  const filteredStudents = useMemo(() => {
+    const keyword = query.trim().toLocaleLowerCase("ko-KR");
+    return students.filter((student) => {
+      const text = [
+        student.displayName,
+        student.schoolName,
+        student.gradeLabel,
+        student.currentVocabBook,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLocaleLowerCase("ko-KR");
+      const activities = activitiesByStudent.get(student.id) ?? [];
+      const matchesLearning =
+        learningFilter === "all" ||
+        (learningFilter === "open" &&
+          activities.some((item) =>
+            ["open_without_deadline", "open_with_deadline", "in_progress"].includes(
+              learningActivityBucket(item),
+            ),
+          )) ||
+        (learningFilter === "attention" &&
+          activities.some(
+            (item) => learningActivityBucket(item) === "needs_attention",
+          ));
+      return (
+        (!keyword || text.includes(keyword)) &&
+        (!schoolFilter || student.schoolName === schoolFilter) &&
+        (!gradeFilter || student.gradeLabel === gradeFilter) &&
+        (!wordbookFilter || student.currentVocabBook === wordbookFilter) &&
+        matchesLearning
+      );
+    }).toSorted((left, right) => {
+      const leftActivity = activitiesByStudent.get(left.id)?.[0] ?? null;
+      const rightActivity = activitiesByStudent.get(right.id)?.[0] ?? null;
+      if (leftActivity && rightActivity) {
+        const activityOrder = compareLearningActivities(
+          leftActivity,
+          rightActivity,
+        );
+        if (activityOrder !== 0) return activityOrder;
+      } else if (leftActivity) {
+        return -1;
+      } else if (rightActivity) {
+        return 1;
+      }
+      return left.displayName.localeCompare(right.displayName, "ko-KR");
+    });
+  }, [
+    activitiesByStudent,
+    gradeFilter,
+    learningFilter,
+    query,
+    schoolFilter,
+    students,
+    wordbookFilter,
+  ]);
   const progressByStudent = useMemo(
     () => new Map(progress.map((item) => [item.studentId, item])),
     [progress],
@@ -564,16 +707,6 @@ export function StudentManager({
 
   return (
     <>
-      <div className="manager-toolbar">
-        <div>
-          <h2>등록 학생</h2>
-          <p className="list-meta">
-            학생을 누르면 내역과 관리 메뉴가 열립니다.
-          </p>
-        </div>
-        <span className="detail-chip">{students.length}명</span>
-      </div>
-
       {error && (
         <div className="notice notice-error section" role="alert">
           {error}
@@ -684,20 +817,150 @@ export function StudentManager({
         </div>
       </details>
 
-      <section className="student-group-pane">
-        {groupedStudents.length === 0 ? (
-          <div className="empty-state">아직 등록된 학생이 없습니다.</div>
-        ) : (
-          groupedStudents.map((group) => (
-            <section className="student-group-section" key={group.label}>
-              <div className="section-heading">
-                <h3>{group.label}</h3>
-                <span className="detail-chip">
-                  {group.students.length}명
-                </span>
+      <div className="learning-search-panel student-search-panel">
+        <label className="learning-search-field">
+          <span aria-hidden="true" className="learning-search-icon">
+            <svg viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="6" />
+              <path d="m16 16 4 4" />
+            </svg>
+          </span>
+          <span className="sr-only">학생 및 학습 자료 검색</span>
+          <input
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="이름·학교·학년·단어장 검색"
+            type="search"
+            value={query}
+          />
+        </label>
+        <details className="learning-filter-disclosure">
+          <summary>
+            <span>필터</span>
+            <span className="detail-chip">
+              {
+                [schoolFilter, gradeFilter, wordbookFilter].filter(Boolean)
+                  .length + (learningFilter === "all" ? 0 : 1)
+              }
+            </span>
+          </summary>
+          <div className="learning-filter-groups">
+            <fieldset>
+              <legend>학습 상태</legend>
+              <div className="filter-chip-row">
+                {(
+                  [
+                    ["all", "전체"],
+                    ["open", "진행할 학습 있음"],
+                    ["attention", "확인 필요"],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    aria-pressed={learningFilter === value}
+                    className="filter-chip"
+                    key={value}
+                    onClick={() => setLearningFilter(value)}
+                    type="button"
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
-              <div className="student-card-grid">
-                {group.students.map((student) => {
+            </fieldset>
+            <fieldset>
+              <legend>학교별</legend>
+              <div className="filter-chip-row">
+                {schoolOptions.map((school) => (
+                  <button
+                    aria-pressed={schoolFilter === school}
+                    className="filter-chip"
+                    key={school}
+                    onClick={() =>
+                      setSchoolFilter((current) =>
+                        current === school ? "" : school,
+                      )
+                    }
+                    type="button"
+                  >
+                    {school}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend>학년별</legend>
+              <div className="filter-chip-row">
+                {gradeOptions.map((grade) => (
+                  <button
+                    aria-pressed={gradeFilter === grade}
+                    className="filter-chip"
+                    key={grade}
+                    onClick={() =>
+                      setGradeFilter((current) =>
+                        current === grade ? "" : grade,
+                      )
+                    }
+                    type="button"
+                  >
+                    {grade}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend>단어장별</legend>
+              <div className="filter-chip-row">
+                {wordbookOptions.map((wordbook) => (
+                  <button
+                    aria-pressed={wordbookFilter === wordbook}
+                    className="filter-chip"
+                    key={wordbook}
+                    onClick={() =>
+                      setWordbookFilter((current) =>
+                        current === wordbook ? "" : wordbook,
+                      )
+                    }
+                    type="button"
+                  >
+                    {wordbook}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+            <button
+              className="button button-quiet button-small"
+              onClick={() => {
+                setSchoolFilter("");
+                setGradeFilter("");
+                setWordbookFilter("");
+                setLearningFilter("all");
+              }}
+              type="button"
+            >
+              필터 초기화
+            </button>
+          </div>
+        </details>
+        <div className="learning-filter-summary">
+          <MetaTagList>
+            {schoolFilter ? <MetaTag>{schoolFilter}</MetaTag> : null}
+            {gradeFilter ? <MetaTag>{gradeFilter}</MetaTag> : null}
+            {wordbookFilter ? <MetaTag>{wordbookFilter}</MetaTag> : null}
+            {learningFilter !== "all" ? (
+              <MetaTag tone="warning">
+                {learningFilter === "open" ? "진행할 학습 있음" : "확인 필요"}
+              </MetaTag>
+            ) : null}
+          </MetaTagList>
+          <strong>{filteredStudents.length}명</strong>
+        </div>
+      </div>
+
+      <section className="student-group-pane">
+        {filteredStudents.length === 0 ? (
+          <div className="empty-state">조건에 맞는 학생이 없습니다.</div>
+        ) : (
+          <div className="student-card-grid">
+                {filteredStudents.map((student) => {
                   const studentProgress = progressByStudent.get(student.id);
                   return (
                     <button
@@ -715,7 +978,13 @@ export function StudentManager({
                         </strong>
                         <MetaTagList>
                           <MetaTag>
-                            단어장 · {student.currentVocabBook ?? "미입력"}
+                            {student.schoolName ?? "학교 미입력"}
+                          </MetaTag>
+                          <MetaTag>
+                            {student.gradeLabel ?? "학년 미입력"}
+                          </MetaTag>
+                          <MetaTag>
+                            {student.currentVocabBook ?? "단어장 미입력"}
                           </MetaTag>
                           <MetaTag
                             tone={
@@ -775,8 +1044,6 @@ export function StudentManager({
                   );
                 })}
               </div>
-            </section>
-          ))
         )}
       </section>
 
@@ -785,12 +1052,14 @@ export function StudentManager({
           aria-labelledby="student-detail-title"
           className="dialog dialog-wide student-detail-dialog"
           onClick={closeStudentDialogOnBackdrop}
-          onClose={() => setSelectedStudentId("")}
+          onClose={() => {
+            setSelectedStudentId("");
+            setLearningView("summary");
+          }}
           ref={studentDialogRef}
         >
           <div className="dialog-heading">
             <div>
-              <p className="eyebrow">학생</p>
               <h2 id="student-detail-title">
                 {selectedStudent.displayName}
               </h2>
@@ -819,6 +1088,35 @@ export function StudentManager({
             role="tablist"
           >
             <button
+              aria-controls="student-learning-panel"
+              aria-selected={activeTab === "learning"}
+              className="dialog-tab"
+              id="student-learning-tab"
+              onKeyDown={moveDialogTabFocus}
+              onClick={() => {
+                setActiveTab("learning");
+                setLearningView("summary");
+              }}
+              role="tab"
+              tabIndex={activeTab === "learning" ? 0 : -1}
+              type="button"
+            >
+              학습 관리
+            </button>
+            <button
+              aria-controls="student-account-panel"
+              aria-selected={activeTab === "account"}
+              className="dialog-tab"
+              id="student-account-tab"
+              onKeyDown={moveDialogTabFocus}
+              onClick={() => setActiveTab("account")}
+              role="tab"
+              tabIndex={activeTab === "account" ? 0 : -1}
+              type="button"
+            >
+              계정 설정
+            </button>
+            <button
               aria-controls="student-history-panel"
               aria-selected={activeTab === "history"}
               className="dialog-tab"
@@ -831,275 +1129,318 @@ export function StudentManager({
             >
               내역
             </button>
-            <button
-              aria-controls="student-wrong-panel"
-              aria-selected={activeTab === "wrong"}
-              className="dialog-tab"
-              id="student-wrong-tab"
-              onKeyDown={moveDialogTabFocus}
-              onClick={() => setActiveTab("wrong")}
-              role="tab"
-              tabIndex={activeTab === "wrong" ? 0 : -1}
-              type="button"
-            >
-              오답
-            </button>
-            <button
-              aria-controls="student-manage-panel"
-              aria-selected={activeTab === "manage"}
-              className="dialog-tab"
-              id="student-manage-tab"
-              onKeyDown={moveDialogTabFocus}
-              onClick={() => setActiveTab("manage")}
-              role="tab"
-              tabIndex={activeTab === "manage" ? 0 : -1}
-              type="button"
-            >
-              관리
-            </button>
           </div>
 
-          {activeTab === "history" ? (
-            <section
-              aria-labelledby="student-history-tab"
-              className="student-dialog-panel"
-              id="student-history-panel"
-              role="tabpanel"
-            >
-              <div className="student-progress-grid">
-                <div>
-                  <span>최근 시험</span>
-                  <strong>
-                    {selectedProgress?.latestAssignmentTitle ??
-                      "시험 기록 없음"}
-                  </strong>
-                  <small>
-                    {progressStatusPresentation(selectedProgress).label}
-                    {selectedProgress?.latestUnitLabel
-                      ? ` · ${selectedProgress.latestUnitLabel}`
-                      : ""}
-                  </small>
-                </div>
-                <div>
-                  <span>점수</span>
-                  <AttemptScoreSummary
-                    className="student-progress-score"
-                    finalScore={selectedProgress?.latestFinalScore}
-                    initialScore={selectedProgress?.latestInitialScore}
-                    passingScore={selectedProgress?.latestPassingScore}
-                    phase={selectedProgress?.latestPhase ?? null}
-                    retryStartedAt={selectedProgress?.latestRetryStartedAt}
-                    status={selectedProgress?.latestStatus ?? null}
-                  />
-                  <small>
-                    {selectedProgress?.latestCompletedAt
-                      ? formatKoreanDateTime(
-                          selectedProgress.latestCompletedAt,
-                        )
-                      : "완료 시각 없음"}
-                  </small>
-                </div>
-              </div>
-
-              <div className="student-history-list">
-                {selectedStudentHistory.length === 0 ? (
-                  <div className="empty-state">
-                    배정된 시험이 없습니다.
-                  </div>
-                ) : (
-                  selectedStudentHistory.map((item) => (
-                    <article
-                      className="student-history-row"
-                      data-exam-outcome={
-                        buildAttemptStatusPresentation({
-                          status: item.status,
-                          phase: item.phase,
-                          initialScore: item.initialScore,
-                          finalScore: item.finalScore,
-                          passingScore: item.passingScore,
-                          retryStartedAt: item.retryStartedAt,
-                        }).outcome
-                      }
-                      key={item.id}
-                    >
-                      <div>
-                        <strong>{assignmentDisplayTitle(item)}</strong>
-                        <AssignmentMetaTags {...item} />
-                        <small className="card-time-meta">
-                          {formatKoreanDateTime(item.activityAt)}
-                        </small>
-                      </div>
-                      <div className="student-history-actions">
-                        <AttemptStatusLabel
-                          finalScore={item.finalScore}
-                          initialScore={item.initialScore}
-                          passingScore={item.passingScore}
-                          phase={item.phase}
-                          retryStartedAt={item.retryStartedAt}
-                          status={item.status}
-                        />
-                        <AttemptScoreSummary
-                          finalScore={item.finalScore}
-                          initialScore={item.initialScore}
-                          passingScore={item.passingScore}
-                          phase={item.phase}
-                          retryStartedAt={item.retryStartedAt}
-                          status={item.status}
-                        />
-                        {item.attemptId && (
-                          <Link
-                            className="button button-quiet button-small"
-                            href={`/admin/results/${item.attemptId}`}
-                          >
-                            내역 보기
-                          </Link>
-                        )}
-                        <AdminHistoryActions
-                          item={item}
-                          size="small"
-                        />
-                      </div>
-                    </article>
-                  ))
-                )}
-              </div>
-            </section>
-          ) : activeTab === "wrong" ? (
-            <div
-              aria-labelledby="student-wrong-tab"
-              id="student-wrong-panel"
-              role="tabpanel"
-            >
-              <StudentWrongWordPanel
-                active
-                cachedAt={
-                  wrongHistoryByStudent[selectedStudent.id]?.loadedAt ??
-                  null
-                }
-                cachedHistory={
-                  wrongHistoryByStudent[selectedStudent.id]?.history ??
-                  null
-                }
-                key={selectedStudent.id}
-                onLoaded={cacheWrongWordHistory}
-                studentId={selectedStudent.id}
-              />
-            </div>
-          ) : (
-            <section
-              aria-labelledby="student-manage-tab"
-              className="student-dialog-panel"
-              id="student-manage-panel"
-              role="tabpanel"
-            >
-              <div className="student-management-summary">
-                <div>
-                  <span>현재 단어장</span>
-                  <strong>
-                    {selectedStudent.currentVocabBook ?? "미입력"}
-                  </strong>
-                </div>
-                <span
-                  className={`status-pill status-${selectedStudent.status}`}
-                >
-                  {selectedStudent.status === "active"
-                    ? "접속 가능"
-                    : "차단됨"}
-                </span>
-              </div>
-
-              <div className="student-book-form">
-                <label className="field">
-                  <span className="field-label">현재 단어장 변경</span>
-                  <select
-                    onChange={(event) =>
-                      setProfileDatasetId(event.target.value)
-                    }
-                    value={profileDatasetId}
-                  >
-                    <option value="">나중에 선택</option>
-                    {datasets.map((dataset) => (
-                      <option key={dataset.id} value={dataset.id}>
-                        {[dataset.title, dataset.edition]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button
-                  className="button button-secondary"
-                  disabled={
-                    interactionBusy ||
-                    profileDatasetId ===
-                      (selectedStudent.currentVocabDatasetId ?? "")
-                  }
-                  onClick={saveCurrentDataset}
-                  type="button"
-                >
-                  현재 단어장 저장
-                </button>
-              </div>
-
-              <div className="dialog-actions">
-                {selectedStudent.status === "active" ? (
+          <div className="student-dialog-scroll-region">
+            {activeTab === "learning" ? (
+              <section
+                aria-labelledby="student-learning-tab"
+                className="student-dialog-panel"
+                id="student-learning-panel"
+                role="tabpanel"
+              >
+                {learningView === "summary" ? (
                   <>
-                    <Link
-                      className="button button-primary assignment-launch-button"
-                      href={`/admin/assignments?student=${selectedStudent.id}`}
-                    >
-                      새 단어 시험 배정
-                    </Link>
+                    <div className="student-learning-source-row">
+                      <div>
+                        <span>주 단어장</span>
+                        <strong>
+                          {selectedStudent.currentVocabBook ?? "미선택"}
+                        </strong>
+                      </div>
+                      <button
+                        aria-label="단어 학습 관리 열기"
+                        className="learning-add-button"
+                        onClick={() => setLearningView("vocab")}
+                        type="button"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <div className="student-book-form compact-learning-form">
+                      <label className="field">
+                        <span className="field-label">주 단어장 변경</span>
+                        <select
+                          onChange={(event) =>
+                            setProfileDatasetId(event.target.value)
+                          }
+                          value={profileDatasetId}
+                        >
+                          <option value="">나중에 선택</option>
+                          {datasets.map((dataset) => (
+                            <option key={dataset.id} value={dataset.id}>
+                              {[dataset.title, dataset.edition]
+                                .filter(Boolean)
+                                .join(" · ")}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <button
+                        className="button button-secondary"
+                        disabled={
+                          interactionBusy ||
+                          profileDatasetId ===
+                            (selectedStudent.currentVocabDatasetId ?? "")
+                        }
+                        onClick={saveCurrentDataset}
+                        type="button"
+                      >
+                        저장
+                      </button>
+                    </div>
+                    <div className="student-learning-launch-grid">
+                      <button
+                        className="student-learning-launch"
+                        onClick={() => setLearningView("vocab")}
+                        type="button"
+                      >
+                        <span>단어</span>
+                        <strong>범위·오답·배정 관리</strong>
+                        <span aria-hidden="true">→</span>
+                      </button>
+                      <button
+                        className="student-learning-launch"
+                        onClick={() => setLearningView("passage")}
+                        type="button"
+                      >
+                        <span>지문</span>
+                        <strong>교과서·부교재·모의고사</strong>
+                        <span aria-hidden="true">→</span>
+                      </button>
+                    </div>
+                    <div className="learning-section-heading">
+                      <h3>최근 숙제·시험</h3>
+                      <span>{selectedStudentHistory.length}개</span>
+                    </div>
+                    <StudentLearningActivityList
+                      initialLimit={5}
+                      items={selectedStudentHistory}
+                    />
+                  </>
+                ) : (
+                  <div className="student-learning-subview">
+                    <div className="student-learning-subview-heading">
+                      <button
+                        aria-label="학습 관리로 돌아가기"
+                        className="button button-quiet button-icon"
+                        onClick={() => setLearningView("summary")}
+                        type="button"
+                      >
+                        ←
+                      </button>
+                      <div>
+                        <h3>
+                          {learningView === "vocab"
+                            ? "단어 학습 관리"
+                            : "지문 학습 관리"}
+                        </h3>
+                        <p>{selectedStudent.displayName}</p>
+                      </div>
+                    </div>
+                    {learningView === "vocab" ? (
+                      <>
+                        <div className="student-inline-assignment-action">
+                          <div>
+                            <strong>다음 단어 시험</strong>
+                            <span>
+                              현재 단어장과 추천 범위를 불러와 이 창에서 바로
+                              배정합니다.
+                            </span>
+                          </div>
+                          <button
+                            className="button button-primary"
+                            disabled={assignmentDatasets.length === 0}
+                            onClick={() =>
+                              setAssignmentStudentId(selectedStudent.id)
+                            }
+                            type="button"
+                          >
+                            배정하기
+                          </button>
+                        </div>
+                        <StudentWrongWordPanel
+                          active
+                          cachedAt={
+                            wrongHistoryByStudent[selectedStudent.id]?.loadedAt ??
+                            null
+                          }
+                          cachedHistory={
+                            wrongHistoryByStudent[selectedStudent.id]?.history ??
+                            null
+                          }
+                          key={selectedStudent.id}
+                          onLoaded={cacheWrongWordHistory}
+                          studentId={selectedStudent.id}
+                        />
+                      </>
+                    ) : (
+                      <div className="empty-state">
+                        교과서·부교재·모의고사 범위 계약이 확정되면 이곳에서
+                        지문 학습을 배정합니다.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </section>
+            ) : activeTab === "account" ? (
+              <section
+                aria-labelledby="student-account-tab"
+                className="student-dialog-panel"
+                id="student-account-panel"
+                role="tabpanel"
+              >
+                <form
+                  className="student-profile-form"
+                  onSubmit={saveStudentProfile}
+                >
+                  <div className="form-grid-2">
+                    <label className="field">
+                      <span className="field-label">이름</span>
+                      <input
+                        maxLength={80}
+                        onChange={(event) =>
+                          setProfileDisplayName(event.target.value)
+                        }
+                        required
+                        value={profileDisplayName}
+                      />
+                    </label>
+                    <label className="field">
+                      <span className="field-label">학교</span>
+                      <input
+                        maxLength={120}
+                        onChange={(event) =>
+                          setProfileSchoolName(event.target.value)
+                        }
+                        value={profileSchoolName}
+                      />
+                    </label>
+                    <label className="field">
+                      <span className="field-label">학년</span>
+                      <input
+                        maxLength={40}
+                        onChange={(event) =>
+                          setProfileGradeLabel(event.target.value)
+                        }
+                        value={profileGradeLabel}
+                      />
+                    </label>
+                  </div>
+                  <button
+                    className="button button-secondary"
+                    disabled={
+                      interactionBusy ||
+                      !profileDisplayName.trim() ||
+                      (profileDisplayName === selectedStudent.displayName &&
+                        profileSchoolName ===
+                          (selectedStudent.schoolName ?? "") &&
+                        profileGradeLabel ===
+                          (selectedStudent.gradeLabel ?? ""))
+                    }
+                    type="submit"
+                  >
+                    {busyKey === `profile:${selectedStudent.id}`
+                      ? "저장 중…"
+                      : "학생 정보 저장"}
+                  </button>
+                </form>
+                <div className="student-management-summary">
+                  <div>
+                    <span>계정 상태</span>
+                    <strong>{selectedStudent.displayName}</strong>
+                  </div>
+                  <span
+                    className={`status-pill status-${selectedStudent.status}`}
+                  >
+                    {selectedStudent.status === "active"
+                      ? "접속 가능"
+                      : "차단됨"}
+                  </span>
+                </div>
+                <div className="dialog-actions account-actions">
+                  {selectedStudent.status === "active" ? (
+                    <>
+                      <button
+                        className="button button-quiet"
+                        disabled={interactionBusy}
+                        onClick={() => reveal(selectedStudent)}
+                        type="button"
+                      >
+                        코드 보기
+                      </button>
+                      <button
+                        className="button button-secondary"
+                        disabled={interactionBusy}
+                        onClick={() => rotate(selectedStudent)}
+                        type="button"
+                      >
+                        코드 교체
+                      </button>
+                      <button
+                        className="button button-danger"
+                        disabled={interactionBusy}
+                        onClick={() => block(selectedStudent)}
+                        type="button"
+                      >
+                        접속 차단
+                      </button>
+                    </>
+                  ) : (
                     <button
-                      className="button button-quiet"
-                      disabled={interactionBusy}
-                      onClick={() => reveal(selectedStudent)}
-                      type="button"
-                    >
-                      코드 보기
-                    </button>
-                    <button
-                      className="button button-secondary"
+                      className="button button-primary"
                       disabled={interactionBusy}
                       onClick={() => rotate(selectedStudent)}
                       type="button"
                     >
-                      코드 교체
+                      새 코드로 재개
                     </button>
-                    <button
-                      className="button button-danger"
-                      disabled={interactionBusy}
-                      onClick={() => block(selectedStudent)}
-                      type="button"
-                    >
-                      접속 차단
-                    </button>
-                  </>
-                ) : (
+                  )}
                   <button
-                    className="button button-primary"
+                    className="button button-danger"
                     disabled={interactionBusy}
-                    onClick={() => rotate(selectedStudent)}
+                    onClick={() => void deleteSelectedStudent()}
                     type="button"
                   >
-                    새 코드로 재개
+                    {busyKey === `delete:${selectedStudent.id}`
+                      ? "학생 삭제 중…"
+                      : "학생 삭제"}
                   </button>
-                )}
-                <button
-                  className="button button-danger"
-                  disabled={interactionBusy}
-                  onClick={() => void deleteSelectedStudent()}
-                  type="button"
-                >
-                  {busyKey === `delete:${selectedStudent.id}`
-                    ? "학생 삭제 중…"
-                    : "학생 삭제"}
-                </button>
-              </div>
-            </section>
-          )}
+                </div>
+              </section>
+            ) : (
+              <section
+                aria-labelledby="student-history-tab"
+                className="student-dialog-panel"
+                id="student-history-panel"
+                role="tabpanel"
+              >
+                <StudentLearningActivityList
+                  initialLimit={5}
+                  items={selectedStudentHistory}
+                />
+              </section>
+            )}
+          </div>
         </dialog>
       )}
+
+      {assignmentStudentId ? (
+        <AssignmentManager
+          currentVocabWrongSummaries={currentVocabWrongSummaries}
+          datasets={assignmentDatasets}
+          history={history}
+          initialDialogView="assign"
+          initialStudentId={assignmentStudentId}
+          key={assignmentStudentId}
+          launcherOnly
+          onLauncherClose={() => setAssignmentStudentId("")}
+          pendingReviewSummaries={pendingReviewSummaries}
+          progress={progress}
+          students={students}
+          units={assignmentUnits}
+        />
+      ) : null}
 
       {shownCode && (
         <dialog

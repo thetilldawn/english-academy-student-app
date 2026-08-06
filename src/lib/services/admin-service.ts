@@ -334,6 +334,52 @@ export async function setStudentCurrentDataset(
   }
 }
 
+export async function updateStudentProfile(
+  studentId: string,
+  input: {
+    displayName: string;
+    schoolName: string;
+    gradeLabel: string;
+  },
+  admin: AdminContext,
+): Promise<void> {
+  const supabase = getServiceSupabaseClient();
+  const { data: updatedStudent, error: updateError } = await supabase
+    .from("students")
+    .update({
+      display_name: input.displayName,
+      school_name: input.schoolName || null,
+      grade_label: input.gradeLabel || null,
+    })
+    .eq("id", studentId)
+    .is("deleted_at", null)
+    .select("id")
+    .maybeSingle();
+
+  if (updateError || !updatedStudent) {
+    throw new Error("student_profile_update_failed");
+  }
+
+  const { error: auditError } = await supabase.from("audit_events").insert({
+    event_type: "student.profile_updated",
+    actor_admin_id: admin.userId,
+    student_id: studentId,
+    details: {
+      display_name: input.displayName,
+      school_name: input.schoolName || null,
+      grade_label: input.gradeLabel || null,
+    },
+  });
+
+  if (auditError) {
+    console.error("[student-profile] audit insert failed", {
+      code: auditError.code,
+      message: auditError.message,
+      studentId,
+    });
+  }
+}
+
 export async function revealStudentCode(studentId: string): Promise<string> {
   const admin = await requireAdmin();
   const environment = getStudentCodeEnvironment();

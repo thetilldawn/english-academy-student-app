@@ -98,7 +98,7 @@ describe("responsive navigation contract", () => {
     );
     expect(studentManager).not.toContain('name="currentVocabBook"');
     expect(studentManager).toContain(
-      'student.currentVocabBook ?? "미입력"',
+      'student.currentVocabBook ?? "단어장 미입력"',
     );
     expect(adminService).toContain(
       "p_current_vocab_dataset_id: input.currentVocabDatasetId",
@@ -136,7 +136,7 @@ describe("responsive navigation contract", () => {
 
     expect(studentManager).toContain('className="dialog-tabs"');
     expect(studentManager).toContain("내역");
-    expect(studentManager).toContain("관리");
+    expect(studentManager).toContain("계정 설정");
     expect(studentManager).not.toContain("student-action-pane");
     expect(studentManager).not.toContain(
       'className="student-actions-disclosure"',
@@ -144,14 +144,15 @@ describe("responsive navigation contract", () => {
     expect(assignmentManager).toContain(
       'aria-pressed={testTab === "vocab"}',
     );
-    expect(assignmentManager).toContain("단어 시험");
-    expect(assignmentManager).toContain("다른 시험");
+    expect(assignmentManager).toContain("단어");
+    expect(assignmentManager).toContain("다른 학습");
     expect(assignmentManager).toContain('type="search"');
     expect(assignmentManager).toContain(
       'className="dialog dialog-extra-wide assignment-dialog"',
     );
-    expect(studentManager).toContain("새 단어 시험 배정");
-    expect(studentManager).toContain("assignment-launch-button");
+    expect(studentManager).toContain("다음 단어 시험");
+    expect(studentManager).toContain("student-inline-assignment-action");
+    expect(studentManager).toContain("launcherOnly");
   });
 
   it("오버뷰와 내역은 미응시를 포함한 공통 이력을 사용한다", () => {
