@@ -5,11 +5,13 @@ import { AssignmentManagementList } from "@/components/assignment-management-lis
 import { AssignmentManager } from "@/components/assignment-manager";
 import { AdminHistoryList } from "@/components/admin-history-list";
 import { ReviewAssignmentDialog } from "@/components/review-assignment-dialog";
+import { ReviewDatasetPanel } from "@/components/review-dataset-panel";
 import {
   buildStudentProgress,
   listAssignments,
   listAssignmentHistory,
   listDatasets,
+  listReviewDatasets,
   listStudentCurrentVocabWrongSummaries,
   listStudentPendingReviewSummaries,
   listStudents,
@@ -47,6 +49,7 @@ export default async function AssignmentsPage({
     pendingReviewSummaries,
     currentVocabWrongSummaries,
     reviewDraft,
+    reviewDatasets,
   ] = await Promise.all([
     listDatasets(),
     listStudents(),
@@ -58,6 +61,7 @@ export default async function AssignmentsPage({
     requestedReviewDraftId && validReviewDraftId
       ? getReviewAssignmentDraftSummary(requestedReviewDraftId)
       : Promise.resolve(null),
+    listReviewDatasets(),
   ]);
   const progress = buildStudentProgress(students, units, history);
 
@@ -79,6 +83,7 @@ export default async function AssignmentsPage({
           관리의 오답 탭에서 다시 선택해 주세요.
         </div>
       )}
+      <ReviewDatasetPanel datasets={reviewDatasets} />
       <AssignmentManager
         datasets={datasets}
         students={students}

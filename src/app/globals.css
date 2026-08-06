@@ -4269,6 +4269,93 @@ textarea {
   color: var(--fail);
 }
 
+.review-dataset-list {
+  display: grid;
+  gap: 10px;
+}
+
+.review-dataset-card {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.review-dataset-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.review-dataset-heading h3,
+.review-dataset-heading p,
+.review-dataset-gate,
+.review-entry-list {
+  margin: 0;
+}
+
+.review-dataset-heading h3 {
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.review-dataset-heading p,
+.review-dataset-gate {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.review-dataset-gate {
+  margin-top: 6px;
+}
+
+.review-entry-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 18px;
+  margin-top: 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.review-entry-list li {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 24px minmax(90px, 0.8fr) minmax(0, 1.2fr);
+  align-items: baseline;
+  gap: 7px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+}
+
+.review-entry-list strong,
+.review-entry-list span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.review-entry-list strong {
+  font-family: var(--font-en);
+  font-size: 14px;
+}
+
+.review-entry-number {
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 720px) {
+  .review-entry-list {
+    grid-template-columns: 1fr;
+  }
+
+  .review-entry-list li {
+    grid-template-columns: 24px minmax(88px, 0.8fr) minmax(0, 1.2fr);
+  }
+}
+
 .status-pill,
 .attempt-status-label {
   width: max-content;

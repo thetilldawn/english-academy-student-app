@@ -78,6 +78,20 @@ export type DatasetSummary = {
   isActive: boolean;
 };
 
+export type ReviewDatasetSummary = {
+  id: string;
+  title: string;
+  edition: string | null;
+  rowCount: number;
+  visibleEntryCount: number;
+  entries: {
+    id: number;
+    sourceRow: number;
+    headword: string;
+    primaryMeaning: string;
+  }[];
+};
+
 export type DatasetOption = {
   id: string;
   title: string;
@@ -416,6 +430,64 @@ export async function listDatasets(): Promise<DatasetSummary[]> {
     status: dataset.status,
     isActive: dataset.is_active,
   }));
+}
+
+const REVIEW_DATASET_LIMIT = 3;
+const REVIEW_ENTRY_LIMIT_PER_DATASET = 12;
+
+export async function listReviewDatasets(): Promise<
+  ReviewDatasetSummary[]
+> {
+  await requireAdmin();
+  const supabase = await createServerSupabaseClient();
+  const { data: datasets, error: datasetError } = await supabase
+    .from("vocab_datasets")
+    .select("id, title, edition, row_count")
+    .eq("status", "pending_review")
+    .eq("is_active", true)
+    .order("imported_at", { ascending: false })
+    .limit(REVIEW_DATASET_LIMIT);
+
+  if (datasetError) {
+    throw new Error("검토 중인 단어장을 불러오지 못했습니다.");
+  }
+  if (!datasets || datasets.length === 0) return [];
+
+  const datasetIds = datasets.map((dataset) => dataset.id);
+  const { data: entries, error: entryError } = await supabase
+    .from("vocab_entries")
+    .select("id, dataset_id, source_row, headword, primary_meaning")
+    .in("dataset_id", datasetIds)
+    .order("dataset_id")
+    .order("source_row");
+
+  if (entryError) {
+    throw new Error("검토 중인 단어를 불러오지 못했습니다.");
+  }
+
+  return datasets.map((dataset) => {
+    const datasetEntries = (entries ?? []).filter(
+      (entry) => entry.dataset_id === dataset.id,
+    );
+    return {
+      id: dataset.id,
+      title: dataset.title,
+      edition: dataset.edition,
+      rowCount: dataset.row_count,
+      visibleEntryCount: Math.min(
+        datasetEntries.length,
+        REVIEW_ENTRY_LIMIT_PER_DATASET,
+      ),
+      entries: datasetEntries
+        .slice(0, REVIEW_ENTRY_LIMIT_PER_DATASET)
+        .map((entry) => ({
+          id: entry.id,
+          sourceRow: entry.source_row,
+          headword: entry.headword,
+          primaryMeaning: entry.primary_meaning,
+        })),
+    };
+  });
 }
 
 export async function listSelectableDatasets(): Promise<DatasetOption[]> {
