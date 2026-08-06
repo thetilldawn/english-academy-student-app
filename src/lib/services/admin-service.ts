@@ -68,6 +68,22 @@ export type StudentSummary = {
   createdAt: string;
 };
 
+export type StudentLearningSourceSummary = {
+  id: string;
+  studentId: string;
+  sourceType:
+    | "primary_vocab"
+    | "exam_vocab"
+    | "textbook"
+    | "supplement"
+    | "mock_exam"
+    | "passage";
+  vocabDatasetId: string | null;
+  displayLabel: string;
+  rangeMetadata: Record<string, unknown>;
+  sortOrder: number;
+};
+
 export type DatasetSummary = {
   id: string;
   datasetKey: string;
@@ -263,6 +279,39 @@ export async function listStudents(): Promise<StudentSummary[]> {
     codeGeneration: student.code_generation,
     codeStatus: codeByStudent.get(student.id) ?? "missing",
     createdAt: student.created_at,
+  }));
+}
+
+export async function listStudentLearningSources(): Promise<
+  StudentLearningSourceSummary[]
+> {
+  await requireAdmin();
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("student_learning_sources")
+    .select(
+      "id, student_id, source_type, vocab_dataset_id, display_label, range_metadata, sort_order",
+    )
+    .eq("active", true)
+    .order("sort_order")
+    .order("created_at");
+  if (error) {
+    throw new Error("학생 학습 자료를 불러오지 못했습니다.");
+  }
+  return (data ?? []).map((source) => ({
+    id: source.id as string,
+    studentId: source.student_id as string,
+    sourceType:
+      source.source_type as StudentLearningSourceSummary["sourceType"],
+    vocabDatasetId: (source.vocab_dataset_id as string | null) ?? null,
+    displayLabel: source.display_label as string,
+    rangeMetadata:
+      source.range_metadata &&
+      typeof source.range_metadata === "object" &&
+      !Array.isArray(source.range_metadata)
+        ? (source.range_metadata as Record<string, unknown>)
+        : {},
+    sortOrder: source.sort_order as number,
   }));
 }
 
@@ -1006,7 +1055,7 @@ export async function listAssignmentHistory(): Promise<
   );
 }
 
-export async function createAssignment(input: {
+export type RegularAssignmentInput = {
   title: string;
   datasetId: string;
   unitIds: string[];
@@ -1019,8 +1068,36 @@ export async function createAssignment(input: {
   questionOrderMode: QuestionOrderMode;
   availableUntil: string | null;
   studentIds: string[];
-}): Promise<string> {
-  await requireAdmin();
+};
+
+export type PreparedRegularAssignment = {
+  title: string;
+  datasetId: string;
+  unitIds: string[];
+  questionCount: number;
+  englishToKoreanRatio: 0 | 50 | 100;
+  timeLimitSeconds: number;
+  timingMode: TimingMode;
+  questionTimeLimitSeconds: number | null;
+  passingScore: number;
+  questionOrderMode: QuestionOrderMode;
+  availableUntil: string | null;
+  studentIds: string[];
+  questions: {
+    vocab_entry_id: number;
+    base_order_index: number;
+    direction: "english_to_korean" | "korean_to_english";
+    choice_vocab_entry_ids: number[];
+  }[];
+};
+
+export async function prepareRegularAssignment(
+  input: RegularAssignmentInput,
+  authenticatedAdmin?: AdminContext,
+): Promise<PreparedRegularAssignment> {
+  if (!authenticatedAdmin) {
+    await requireAdmin();
+  }
   const supabase = await createServerSupabaseClient();
   const [
     { data: dataset, error: datasetError },
@@ -1103,30 +1180,58 @@ export async function createAssignment(input: {
   ]
     .filter(Boolean)
     .join(" · ");
+
+  return {
+    title: input.title || generatedTitle,
+    datasetId: input.datasetId,
+    unitIds: orderedUnitIds,
+    questionCount: input.questionCount,
+    englishToKoreanRatio: input.englishToKoreanRatio,
+    timeLimitSeconds: input.timeLimitSeconds,
+    timingMode: input.timingMode ?? "total",
+    questionTimeLimitSeconds:
+      input.timingMode === "per_question"
+        ? (input.questionTimeLimitSeconds ?? null)
+        : null,
+    passingScore: input.passingScore,
+    questionOrderMode: input.questionOrderMode,
+    availableUntil: input.availableUntil,
+    studentIds: input.studentIds,
+    questions: questionDrafts.map((question, index) => ({
+      vocab_entry_id: question.vocabEntryId,
+      base_order_index: index + 1,
+      direction: question.direction,
+      choice_vocab_entry_ids: question.choiceVocabEntryIds,
+    })),
+  };
+}
+
+export async function createAssignment(
+  input: RegularAssignmentInput,
+): Promise<string> {
+  const authenticatedAdmin = await requireAdmin();
+  const prepared = await prepareRegularAssignment(
+    input,
+    authenticatedAdmin,
+  );
+  const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc(
     "create_assignment_with_delivery_v4",
     {
-      p_title: input.title || generatedTitle,
-      p_dataset_id: input.datasetId,
-      p_unit_ids: orderedUnitIds,
-      p_question_count: input.questionCount,
-      p_english_to_korean_ratio: input.englishToKoreanRatio,
-      p_time_limit_seconds: input.timeLimitSeconds,
-      p_passing_score: input.passingScore,
-      p_question_order_mode: input.questionOrderMode,
-      p_available_until: input.availableUntil,
-      p_student_ids: input.studentIds,
-      p_timing_mode: input.timingMode ?? "total",
+      p_title: prepared.title,
+      p_dataset_id: prepared.datasetId,
+      p_unit_ids: prepared.unitIds,
+      p_question_count: prepared.questionCount,
+      p_english_to_korean_ratio: prepared.englishToKoreanRatio,
+      p_time_limit_seconds: prepared.timeLimitSeconds,
+      p_passing_score: prepared.passingScore,
+      p_question_order_mode: prepared.questionOrderMode,
+      p_available_until: prepared.availableUntil,
+      p_student_ids: prepared.studentIds,
+      p_timing_mode: prepared.timingMode,
       p_question_time_limit_seconds:
-        input.timingMode === "per_question"
-          ? (input.questionTimeLimitSeconds ?? null)
-          : null,
-      p_questions: questionDrafts.map((question, index) => ({
-        vocab_entry_id: question.vocabEntryId,
-        base_order_index: index + 1,
-        direction: question.direction,
-        choice_vocab_entry_ids: question.choiceVocabEntryIds,
-      })),
+        prepared.questionTimeLimitSeconds,
+      p_questions: prepared.questions,
     },
   );
 

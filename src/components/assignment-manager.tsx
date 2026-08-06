@@ -13,6 +13,7 @@ import {
 import { useRouter } from "next/navigation";
 
 import { HelpTip } from "@/components/help-tip";
+import { BulkAssignmentDialog } from "@/components/bulk-assignment-dialog";
 import {
   AttemptScoreSummary,
   AttemptStatusLabel,
@@ -87,6 +88,22 @@ export type AssignmentUnitItem = {
   number: number | null;
   sortIndex: number;
   entryCount: number;
+};
+
+export type AssignmentLearningSourceItem = {
+  id: string;
+  studentId: string;
+  sourceType:
+    | "primary_vocab"
+    | "exam_vocab"
+    | "textbook"
+    | "supplement"
+    | "mock_exam"
+    | "passage";
+  vocabDatasetId: string | null;
+  displayLabel: string;
+  rangeMetadata: Record<string, unknown>;
+  sortOrder: number;
 };
 
 export type AssignmentProgressItem = {
@@ -207,6 +224,7 @@ export function AssignmentManager({
   progress,
   pendingReviewSummaries,
   currentVocabWrongSummaries,
+  learningSources = [],
   history,
   initialStudentId = "",
   initialDialogView = "overview",
@@ -219,6 +237,7 @@ export function AssignmentManager({
   progress: AssignmentProgressItem[];
   pendingReviewSummaries: StudentPendingReviewSummary[];
   currentVocabWrongSummaries: StudentCurrentVocabWrongSummary[];
+  learningSources?: AssignmentLearningSourceItem[];
   history: AssignmentHistorySummary[];
   initialStudentId?: string;
   initialDialogView?: "overview" | "assign";
@@ -259,6 +278,15 @@ export function AssignmentManager({
     () => studentLearningActivityIndex(history),
     [history],
   );
+  const learningSourcesByStudent = useMemo(() => {
+    const index = new Map<string, AssignmentLearningSourceItem[]>();
+    for (const source of learningSources) {
+      const current = index.get(source.studentId) ?? [];
+      current.push(source);
+      index.set(source.studentId, current);
+    }
+    return index;
+  }, [learningSources]);
   const initialStudent =
     activeStudents.find((student) => student.id === initialStudentId) ??
     null;
@@ -284,6 +312,12 @@ export function AssignmentManager({
   const [wordbookFilter, setWordbookFilter] = useState("");
   const [wrongWordFilter, setWrongWordFilter] =
     useState<WrongWordStudentFilter>("all");
+  const [selectedBulkStudentIds, setSelectedBulkStudentIds] = useState<
+    string[]
+  >([]);
+  const [bulkMode, setBulkMode] = useState<
+    "next" | "with_wrong" | null
+  >(null);
   const [dialogView, setDialogView] = useState<"overview" | "assign">(
     initialDialogView,
   );
@@ -328,6 +362,9 @@ export function AssignmentManager({
     : null;
   const selectedActivities = selectedStudent
     ? (activitiesByStudent.get(selectedStudent.id) ?? [])
+    : [];
+  const selectedLearningSources = selectedStudent
+    ? (learningSourcesByStudent.get(selectedStudent.id) ?? [])
     : [];
   const selectedDataset =
     readyDatasets.find((dataset) => dataset.id === datasetId) ?? null;
@@ -532,6 +569,42 @@ export function AssignmentManager({
     wordbookFilter,
     wrongWordFilter,
   ]);
+  const selectedBulkStudents = useMemo(
+    () =>
+      selectedBulkStudentIds.flatMap((selectedId) => {
+        const student = activeStudents.find(
+          (candidate) => candidate.id === selectedId,
+        );
+        return student ? [student] : [];
+      }),
+    [activeStudents, selectedBulkStudentIds],
+  );
+  const allFilteredStudentsSelected =
+    filteredStudents.length > 0 &&
+    filteredStudents.every((student) =>
+      selectedBulkStudentIds.includes(student.id),
+    );
+
+  function toggleBulkStudent(nextStudentId: string) {
+    setSelectedBulkStudentIds((current) => {
+      if (current.includes(nextStudentId)) {
+        return current.filter((studentId) => studentId !== nextStudentId);
+      }
+      return current.length >= 30 ? current : [...current, nextStudentId];
+    });
+  }
+
+  function toggleFilteredStudents() {
+    const filteredIds = new Set(
+      filteredStudents.map((student) => student.id),
+    );
+    setSelectedBulkStudentIds((current) => {
+      if (allFilteredStudentsSelected) {
+        return current.filter((studentId) => !filteredIds.has(studentId));
+      }
+      return Array.from(new Set([...current, ...filteredIds])).slice(0, 30);
+    });
+  }
 
   useEffect(() => {
     if (selectedStudent && !dialogRef.current?.open) {
@@ -980,6 +1053,49 @@ export function AssignmentManager({
             </div>
           </div>
 
+          <div className="bulk-selection-bar">
+            <div className="bulk-selection-summary">
+              <strong>{selectedBulkStudentIds.length}명 선택</strong>
+              <small>최대 30명</small>
+              <button
+                className="button button-quiet button-small"
+                onClick={toggleFilteredStudents}
+                type="button"
+              >
+                {allFilteredStudentsSelected
+                  ? "현재 목록 선택 해제"
+                  : `현재 목록 ${filteredStudents.length}명 선택`}
+              </button>
+              {selectedBulkStudentIds.length > 0 ? (
+                <button
+                  className="button button-quiet button-small"
+                  onClick={() => setSelectedBulkStudentIds([])}
+                  type="button"
+                >
+                  전체 해제
+                </button>
+              ) : null}
+            </div>
+            <div className="bulk-selection-actions">
+              <button
+                className="button button-secondary button-small"
+                disabled={selectedBulkStudentIds.length === 0}
+                onClick={() => setBulkMode("with_wrong")}
+                type="button"
+              >
+                틀린 단어 포함
+              </button>
+              <button
+                className="button button-primary button-small"
+                disabled={selectedBulkStudentIds.length === 0}
+                onClick={() => setBulkMode("next")}
+                type="button"
+              >
+                다음 범위 일괄 배정
+              </button>
+            </div>
+          </div>
+
           {readyDatasets.length === 0 && (
             <div className="notice notice-warm">
               검수가 끝난 단어장이 없어 아직 시험을 배정할 수
@@ -1013,12 +1129,18 @@ export function AssignmentManager({
                 const studentAvailableReviewCount =
                   availableReviewCount(studentReviewCounts);
                 return (
-                  <button
+                  <article
                     className="card assignment-student-row"
                     key={student.id}
-                    onClick={() => selectStudent(student.id)}
-                    type="button"
                   >
+                    <label className="assignment-student-select">
+                      <input
+                        aria-label={`${student.displayName} 일괄 배정 선택`}
+                        checked={selectedBulkStudentIds.includes(student.id)}
+                        onChange={() => toggleBulkStudent(student.id)}
+                        type="checkbox"
+                      />
+                    </label>
                     <span className="assignment-student-identity">
                       <strong>{student.displayName}</strong>
                       <MetaTagList>
@@ -1084,10 +1206,14 @@ export function AssignmentManager({
                         />
                       </span>
                     </span>
-                    <span className="button button-primary button-small">
+                    <button
+                      className="button button-primary button-small"
+                      onClick={() => selectStudent(student.id)}
+                      type="button"
+                    >
                       보기
-                    </span>
-                  </button>
+                    </button>
+                  </article>
                 );
               })}
             </div>
@@ -1095,6 +1221,18 @@ export function AssignmentManager({
         </section>
       )}
         </>
+      ) : null}
+
+      {bulkMode && selectedBulkStudents.length > 0 ? (
+        <BulkAssignmentDialog
+          includePendingReview={bulkMode === "with_wrong"}
+          onClose={() => setBulkMode(null)}
+          onSuccess={() => {
+            setSelectedBulkStudentIds([]);
+            startRefreshTransition(() => router.refresh());
+          }}
+          students={selectedBulkStudents}
+        />
       ) : null}
 
       {selectedStudent && (
@@ -1164,6 +1302,24 @@ export function AssignmentManager({
                     +
                   </button>
                 </div>
+                {selectedLearningSources.length > 0 ? (
+                  <div className="student-learning-tags">
+                    <MetaTagList>
+                      {selectedLearningSources.map((source) => (
+                        <MetaTag
+                          key={source.id}
+                          tone={
+                            source.sourceType === "exam_vocab"
+                              ? "warning"
+                              : "neutral"
+                          }
+                        >
+                          {source.displayLabel}
+                        </MetaTag>
+                      ))}
+                    </MetaTagList>
+                  </div>
+                ) : null}
                 <div className="student-learning-tags">
                   <MetaTagList>
                     <MetaTag tone="warning">

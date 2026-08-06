@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  bulkAssignmentPreviewSchema,
+  bulkAssignmentSchema,
   createReviewAssignmentDraftSchema,
   createStudentSchema,
   exactReviewAssignmentSchema,
@@ -8,6 +10,69 @@ import {
   updateStudentProfileSchema,
   updateStudentVocabSchema,
 } from "@/lib/validation";
+
+describe("일괄 단어 시험 입력 계약", () => {
+  const studentIds = [
+    "11111111-1111-4111-8111-111111111111",
+    "22222222-2222-4222-8222-222222222222",
+  ];
+
+  it("서로 다른 학생 1~30명만 미리보기 대상으로 받는다", () => {
+    expect(
+      bulkAssignmentPreviewSchema.parse({
+        studentIds,
+        includePendingReview: false,
+        reviewLevels: [1, 2],
+        englishToKoreanRatio: 50,
+      }).studentIds,
+    ).toEqual(studentIds);
+    expect(() =>
+      bulkAssignmentPreviewSchema.parse({
+        studentIds: [studentIds[0], studentIds[0]],
+        includePendingReview: false,
+        reviewLevels: [1, 2],
+        englishToKoreanRatio: 50,
+      }),
+    ).toThrow("같은 학생을 두 번 선택할 수 없습니다.");
+    expect(() =>
+      bulkAssignmentPreviewSchema.parse({
+        studentIds: Array.from({ length: 31 }, (_, index) =>
+          `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
+        ),
+        includePendingReview: false,
+        reviewLevels: [1, 2],
+        englishToKoreanRatio: 50,
+      }),
+    ).toThrow();
+  });
+
+  it("전체 시간과 문제당 시간을 동시에 저장하지 않는다", () => {
+    const base = {
+      studentIds,
+      includePendingReview: true,
+      reviewLevels: [1, 2] as const,
+      englishToKoreanRatio: 50 as const,
+      timeLimitSeconds: 300,
+      passingScore: 80,
+      questionOrderMode: "random" as const,
+      availableUntil: null,
+    };
+    expect(
+      bulkAssignmentSchema.parse({
+        ...base,
+        timingMode: "total",
+        questionTimeLimitSeconds: null,
+      }).timingMode,
+    ).toBe("total");
+    expect(() =>
+      bulkAssignmentSchema.parse({
+        ...base,
+        timingMode: "total",
+        questionTimeLimitSeconds: 20,
+      }),
+    ).toThrow("시간 제한 방식과 문제당 시간을 확인해주세요.");
+  });
+});
 
 describe("학생 정보 입력 계약", () => {
   const datasetId = "11111111-1111-4111-8111-111111111111";

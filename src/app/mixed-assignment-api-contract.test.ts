@@ -80,10 +80,10 @@ describe("mixed assignment API contract", () => {
       '"create_mixed_review_assignment_v6"',
     );
     expect(service).toContain(
-      "p_selected_queue_ids: selectedQueueIds",
+      "p_selected_queue_ids: prepared.selectedQueueIds",
     );
     expect(service).toContain(
-      "p_questions: questionDrafts.map",
+      "p_questions: prepared.questions",
     );
     expect(service).not.toContain(
       "p_selected_queue_ids: input.",

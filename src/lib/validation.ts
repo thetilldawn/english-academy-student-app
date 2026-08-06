@@ -152,6 +152,77 @@ const mixedReviewLevelSchema = z.union([
   z.literal(2),
 ]);
 
+const bulkAssignmentSelectionFields = {
+  studentIds: z.array(z.uuid()).min(1).max(30),
+  includePendingReview: z.boolean(),
+  reviewLevels: z.array(mixedReviewLevelSchema).min(1).max(2),
+  englishToKoreanRatio: z.union([
+    z.literal(0),
+    z.literal(50),
+    z.literal(100),
+  ]),
+} as const;
+
+function validateBulkAssignmentSelection(
+  value: {
+    studentIds: string[];
+    reviewLevels: (1 | 2)[];
+  },
+  context: z.RefinementCtx,
+) {
+  if (new Set(value.studentIds).size !== value.studentIds.length) {
+    context.addIssue({
+      code: "custom",
+      path: ["studentIds"],
+      message: "같은 학생을 두 번 선택할 수 없습니다.",
+    });
+  }
+  if (new Set(value.reviewLevels).size !== value.reviewLevels.length) {
+    context.addIssue({
+      code: "custom",
+      path: ["reviewLevels"],
+      message: "같은 오답 단계를 두 번 선택할 수 없습니다.",
+    });
+  }
+}
+
+export const bulkAssignmentPreviewSchema = z
+  .object(bulkAssignmentSelectionFields)
+  .strict()
+  .superRefine(validateBulkAssignmentSelection);
+
+export const bulkAssignmentSchema = z
+  .object({
+    ...bulkAssignmentSelectionFields,
+    timeLimitSeconds: z.number().int().min(30).max(10800),
+    passingScore: z.number().int().min(0).max(100),
+    questionOrderMode: z.enum(questionOrderModes).default("random"),
+    availableUntil: z.iso.datetime({ offset: true }).nullable(),
+    timingMode: z.enum(timingModes),
+    questionTimeLimitSeconds: z
+      .number()
+      .int()
+      .min(5)
+      .max(600)
+      .nullable(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    validateBulkAssignmentSelection(value, context);
+    if (
+      (value.timingMode === "total" &&
+        value.questionTimeLimitSeconds !== null) ||
+      (value.timingMode === "per_question" &&
+        value.questionTimeLimitSeconds === null)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["questionTimeLimitSeconds"],
+        message: "시간 제한 방식과 문제당 시간을 확인해주세요.",
+      });
+    }
+  });
+
 const mixedAssignmentSelectionSchema = z
   .object({
     studentId: z.uuid(),
@@ -305,6 +376,14 @@ export type MixedAssignmentPreviewInput = z.infer<
 
 export type AssignmentCapacityInput = z.infer<
   typeof assignmentCapacitySchema
+>;
+
+export type BulkAssignmentPreviewInput = z.infer<
+  typeof bulkAssignmentPreviewSchema
+>;
+
+export type BulkAssignmentInput = z.infer<
+  typeof bulkAssignmentSchema
 >;
 
 export const answerSchema = z.object({

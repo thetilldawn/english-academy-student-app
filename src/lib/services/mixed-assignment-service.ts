@@ -433,10 +433,32 @@ export async function calculateAssignmentCapacity(
   return prepared.capacity;
 }
 
-export async function createMixedAssignment(
+export type PreparedMixedAssignmentBatch = {
+  studentId: string;
+  datasetId: string;
+  reviewLevels: (1 | 2)[];
+  selectedQueueIds: string[];
+  title: string;
+  primaryUnitIds: string[];
+  englishToKoreanRatio: 0 | 50 | 100;
+  timeLimitSeconds: number;
+  passingScore: number;
+  questionOrderMode: MixedAssignmentInput["questionOrderMode"];
+  availableUntil: string | null;
+  timingMode: MixedAssignmentInput["timingMode"];
+  questionTimeLimitSeconds: number | null;
+  questions: {
+    vocab_entry_id: number;
+    base_order_index: number;
+    direction: "english_to_korean" | "korean_to_english";
+    choice_vocab_entry_ids: number[];
+  }[];
+};
+
+export async function prepareMixedAssignmentBatch(
   input: MixedAssignmentInput,
   authenticatedAdmin?: AdminContext,
-): Promise<string> {
+): Promise<PreparedMixedAssignmentBatch> {
   if (
     input.availableUntil &&
     Date.parse(input.availableUntil) <= Date.now()
@@ -501,40 +523,67 @@ export async function createMixedAssignment(
   const selectedQueueIds = prepared.selectedQueueRows.map(
     (queue) => queue.id,
   );
-  const { data, error } = await prepared.supabase.rpc(
+
+  return {
+    studentId: input.studentId,
+    datasetId: input.datasetId,
+    reviewLevels,
+    selectedQueueIds,
+    title:
+      input.title ||
+      generatedMixedTitle(
+        prepared.dataset.title,
+        prepared.dataset.edition,
+        prepared.primaryUnits,
+        prepared.selectedQueueRows.length,
+      ),
+    primaryUnitIds: prepared.primaryUnits.map((unit) => unit.id),
+    englishToKoreanRatio: input.englishToKoreanRatio,
+    timeLimitSeconds: input.timeLimitSeconds,
+    passingScore: input.passingScore,
+    questionOrderMode: input.questionOrderMode,
+    availableUntil: input.availableUntil,
+    timingMode: input.timingMode ?? "total",
+    questionTimeLimitSeconds:
+      input.timingMode === "per_question"
+        ? (input.questionTimeLimitSeconds ?? null)
+        : null,
+    questions: questionDrafts.map((question, index) => ({
+      vocab_entry_id: question.vocabEntryId,
+      base_order_index: index + 1,
+      direction: question.direction,
+      choice_vocab_entry_ids: question.choiceVocabEntryIds,
+    })),
+  };
+}
+
+export async function createMixedAssignment(
+  input: MixedAssignmentInput,
+  authenticatedAdmin?: AdminContext,
+): Promise<string> {
+  const prepared = await prepareMixedAssignmentBatch(
+    input,
+    authenticatedAdmin,
+  );
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase.rpc(
     "create_mixed_review_assignment_v6",
     {
-      p_student_id: input.studentId,
-      p_dataset_id: input.datasetId,
-      p_review_levels: reviewLevels,
-      p_selected_queue_ids: selectedQueueIds,
-      p_title:
-        input.title ||
-        generatedMixedTitle(
-          prepared.dataset.title,
-          prepared.dataset.edition,
-          prepared.primaryUnits,
-          prepared.selectedQueueRows.length,
-        ),
-      p_primary_unit_ids: prepared.primaryUnits.map(
-        (unit) => unit.id,
-      ),
-      p_english_to_korean_ratio: input.englishToKoreanRatio,
-      p_time_limit_seconds: input.timeLimitSeconds,
-      p_passing_score: input.passingScore,
-      p_question_order_mode: input.questionOrderMode,
-      p_available_until: input.availableUntil,
-      p_timing_mode: input.timingMode ?? "total",
+      p_student_id: prepared.studentId,
+      p_dataset_id: prepared.datasetId,
+      p_review_levels: prepared.reviewLevels,
+      p_selected_queue_ids: prepared.selectedQueueIds,
+      p_title: prepared.title,
+      p_primary_unit_ids: prepared.primaryUnitIds,
+      p_english_to_korean_ratio: prepared.englishToKoreanRatio,
+      p_time_limit_seconds: prepared.timeLimitSeconds,
+      p_passing_score: prepared.passingScore,
+      p_question_order_mode: prepared.questionOrderMode,
+      p_available_until: prepared.availableUntil,
+      p_timing_mode: prepared.timingMode,
       p_question_time_limit_seconds:
-        input.timingMode === "per_question"
-          ? (input.questionTimeLimitSeconds ?? null)
-          : null,
-      p_questions: questionDrafts.map((question, index) => ({
-        vocab_entry_id: question.vocabEntryId,
-        base_order_index: index + 1,
-        direction: question.direction,
-        choice_vocab_entry_ids: question.choiceVocabEntryIds,
-      })),
+        prepared.questionTimeLimitSeconds,
+      p_questions: prepared.questions,
     },
   );
 

@@ -30,6 +30,163 @@
   --font-en: var(--font-serif-en), Georgia, serif;
 }
 
+/* Atomic bulk vocabulary assignment */
+.bulk-selection-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  background: var(--card);
+}
+
+.bulk-selection-summary,
+.bulk-selection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.bulk-selection-summary > strong {
+  min-width: 58px;
+  font-size: 12px;
+}
+
+.assignment-student-row {
+  grid-template-columns:
+    28px
+    minmax(130px, 0.65fr)
+    minmax(180px, 0.9fr)
+    minmax(260px, 1.4fr)
+    auto;
+  cursor: default;
+}
+
+.assignment-student-select {
+  display: grid;
+  place-items: center;
+  align-self: center;
+}
+
+.assignment-student-select input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--ink);
+  cursor: pointer;
+}
+
+.bulk-assignment-dialog[open] {
+  height: min(780px, calc(100dvh - 32px));
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  padding: 0;
+  overflow: hidden;
+}
+
+.bulk-assignment-form {
+  min-height: 0;
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  overflow: auto;
+}
+
+.bulk-assignment-settings {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.bulk-review-levels {
+  min-width: 0;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+}
+
+.bulk-review-levels legend {
+  padding: 0 5px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.bulk-preview-section {
+  min-height: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.bulk-preview-list {
+  display: grid;
+  gap: 6px;
+}
+
+.bulk-preview-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(120px, 0.35fr) minmax(0, 1fr);
+  gap: 5px 12px;
+  align-items: center;
+  padding: 9px 10px;
+  border-left: 3px solid var(--line);
+  background: var(--surface);
+}
+
+.bulk-preview-row > small {
+  grid-column: 2;
+  color: var(--danger);
+}
+
+@media (max-width: 767px) {
+  .bulk-selection-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .bulk-selection-actions .button {
+    flex: 1 1 140px;
+  }
+
+  .assignment-student-row {
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+  }
+
+  .assignment-student-select {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
+    padding-top: 2px;
+  }
+
+  .assignment-student-identity {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .assignment-student-book,
+  .assignment-student-recent {
+    grid-column: 2 / -1;
+  }
+
+  .assignment-student-row > .button {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .bulk-assignment-settings,
+  .bulk-preview-row {
+    grid-template-columns: 1fr;
+  }
+
+  .bulk-preview-row > small {
+    grid-column: 1;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -5153,5 +5310,41 @@ textarea {
   .admin-history-row > .status-pill {
     align-self: end;
     padding: 2px 6px;
+  }
+}
+
+/* Keep bulk-selection columns after the management-layout overrides. */
+.assignment-student-row {
+  grid-template-columns:
+    28px
+    minmax(130px, 0.65fr)
+    minmax(180px, 0.9fr)
+    minmax(260px, 1.4fr)
+    auto;
+}
+
+@media (max-width: 767px) {
+  .assignment-student-row {
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+  }
+
+  .assignment-student-select {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .assignment-student-identity {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .assignment-student-book,
+  .assignment-student-recent {
+    grid-column: 2 / -1;
+  }
+
+  .assignment-student-row > .button {
+    grid-column: 3;
+    grid-row: 1;
   }
 }
