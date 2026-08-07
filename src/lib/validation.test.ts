@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  assignmentReplacementPreviewSchema,
+  assignmentReplacementSchema,
   bulkAssignmentPreviewSchema,
   bulkAssignmentSchema,
   createReviewAssignmentDraftSchema,
@@ -10,6 +12,65 @@ import {
   updateStudentProfileSchema,
   updateStudentVocabSchema,
 } from "@/lib/validation";
+
+describe("학생별 배정 수정 입력 계약", () => {
+  const id = "11111111-1111-4111-8111-111111111111";
+  const replacement = {
+    idempotencyKey: "22222222-2222-4222-8222-222222222222",
+    title: "오답 1문항 수정",
+    datasetId: id,
+    primaryUnitIds: [id],
+    includePendingReview: true,
+    reviewLevels: [1] as const,
+    questionCount: 1,
+    englishToKoreanRatio: 100 as const,
+    timeLimitSeconds: 300,
+    timingMode: "total" as const,
+    questionTimeLimitSeconds: null,
+    passingScore: 80,
+    questionOrderMode: "random" as const,
+    availableUntil: null,
+  };
+
+  it("정확 오답 재시험 1문항을 허용하고 0문항은 거부한다", () => {
+    expect(assignmentReplacementSchema.parse(replacement).questionCount).toBe(
+      1,
+    );
+    expect(() =>
+      assignmentReplacementSchema.parse({
+        ...replacement,
+        questionCount: 0,
+      }),
+    ).toThrow();
+  });
+
+  it("오답 추가를 끄면 빈 단계 배열을 허용하고 켜면 거부한다", () => {
+    const preview = {
+      studentId: id,
+      datasetId: id,
+      primaryUnitIds: [id],
+      includePendingReview: false,
+      reviewLevels: [],
+      englishToKoreanRatio: 100 as const,
+    };
+    expect(
+      assignmentReplacementPreviewSchema.parse(preview).reviewLevels,
+    ).toEqual([]);
+    expect(
+      assignmentReplacementSchema.parse({
+        ...replacement,
+        includePendingReview: false,
+        reviewLevels: [],
+      }).reviewLevels,
+    ).toEqual([]);
+    expect(() =>
+      assignmentReplacementPreviewSchema.parse({
+        ...preview,
+        includePendingReview: true,
+      }),
+    ).toThrow("포함할 오답 단계를 하나 이상 선택해 주세요.");
+  });
+});
 
 describe("일괄 단어 시험 입력 계약", () => {
   const studentIds = [

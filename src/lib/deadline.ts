@@ -40,6 +40,26 @@ export function koreanDateTimeLocalToIso(value: string): string | null {
   return new Date(utcMilliseconds).toISOString();
 }
 
+export function isoToKoreanDateTimeLocal(value: string | null): string {
+  if (!value) return "";
+  const milliseconds = Date.parse(value);
+  if (Number.isNaN(milliseconds)) return "";
+  const koreaWallClock = new Date(
+    milliseconds + KOREA_OFFSET_HOURS * 60 * 60 * 1000,
+  );
+  const year = koreaWallClock.getUTCFullYear();
+  const month = (koreaWallClock.getUTCMonth() + 1)
+    .toString()
+    .padStart(2, "0");
+  const day = koreaWallClock.getUTCDate().toString().padStart(2, "0");
+  const hour = koreaWallClock.getUTCHours().toString().padStart(2, "0");
+  const minute = koreaWallClock
+    .getUTCMinutes()
+    .toString()
+    .padStart(2, "0");
+  return `${year}-${month}-${day}T${hour}:${minute}`;
+}
+
 export function secondsUntil(
   deadlineAt: string | null,
   nowMilliseconds: number,

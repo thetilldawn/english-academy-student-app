@@ -32,7 +32,7 @@ import type {
 
 const REVIEW_QUEUE_PAGE_SIZE = 1000;
 const MAX_ASSIGNMENT_TITLE_LENGTH = 160;
-const MAX_MIXED_REVIEW_WORDS = 500;
+const MAX_MIXED_REVIEW_WORDS = 400;
 const CAPACITY_RANDOM = () => 0.5;
 
 type ServerSupabaseClient = Awaited<
@@ -226,6 +226,10 @@ function generatedMixedTitle(
 async function prepareAssignment(
   input: AssignmentCapacityInput,
   authenticatedAdmin?: AdminContext,
+  exclusion?: {
+    assignmentId: string;
+    studentId: string;
+  },
 ): Promise<PreparedAssignment> {
   if (!authenticatedAdmin) {
     await requireAdmin();
@@ -258,7 +262,9 @@ async function prepareAssignment(
       .select("id, unit_label, sort_index")
       .eq("dataset_id", input.datasetId)
       .order("sort_index"),
-    loadEligibleVocabularyDataset(supabase, input.datasetId),
+    loadEligibleVocabularyDataset(supabase, input.datasetId, {
+      includeExamUseProjection: !input.includePendingReview,
+    }),
     input.includePendingReview
       ? loadReviewQueueRows(
           supabase,
@@ -271,6 +277,7 @@ async function prepareAssignment(
       supabase,
       [input.studentId],
       input.datasetId,
+      exclusion,
     ),
   ]);
 
@@ -428,8 +435,16 @@ async function prepareAssignment(
 export async function calculateAssignmentCapacity(
   input: AssignmentCapacityInput,
   authenticatedAdmin?: AdminContext,
+  exclusion?: {
+    assignmentId: string;
+    studentId: string;
+  },
 ) {
-  const prepared = await prepareAssignment(input, authenticatedAdmin);
+  const prepared = await prepareAssignment(
+    input,
+    authenticatedAdmin,
+    exclusion,
+  );
   return prepared.capacity;
 }
 
@@ -445,7 +460,7 @@ export type PreparedMixedAssignmentBatch = {
   passingScore: number;
   questionOrderMode: MixedAssignmentInput["questionOrderMode"];
   availableUntil: string | null;
-  timingMode: MixedAssignmentInput["timingMode"];
+  timingMode: "total" | "per_question";
   questionTimeLimitSeconds: number | null;
   questions: {
     vocab_entry_id: number;
@@ -458,6 +473,10 @@ export type PreparedMixedAssignmentBatch = {
 export async function prepareMixedAssignmentBatch(
   input: MixedAssignmentInput,
   authenticatedAdmin?: AdminContext,
+  exclusion?: {
+    assignmentId: string;
+    studentId: string;
+  },
 ): Promise<PreparedMixedAssignmentBatch> {
   if (
     input.availableUntil &&
@@ -479,6 +498,7 @@ export async function prepareMixedAssignmentBatch(
       englishToKoreanRatio: input.englishToKoreanRatio,
     },
     authenticatedAdmin,
+    exclusion,
   );
   const { capacity } = prepared;
   if (prepared.selectedQueueRows.length === 0) {

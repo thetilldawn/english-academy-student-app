@@ -615,9 +615,14 @@ describe.sequential("final review-assignment database schema", () => {
       authenticated_public_mixed_v6: boolean;
       authenticated_public_regular_v4: boolean;
       authenticated_public_review_summary: boolean;
+      authenticated_replace_v2: boolean;
+      authenticated_replace_v1: boolean;
+      service_replace_v1: boolean;
+      authenticated_replacement_ledger_select: boolean;
       anon_public_mixed: boolean;
       anon_public_exact: boolean;
       anon_public_review_summary: boolean;
+      anon_replace_v2: boolean;
     }>(`
       select
         has_function_privilege(
@@ -656,6 +661,26 @@ describe.sequential("final review-assignment database schema", () => {
           'execute'
         ) as authenticated_public_review_summary,
         has_function_privilege(
+          'authenticated',
+          'public.replace_student_assignment_v2(uuid,uuid,uuid,text,text,text,text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,smallint[],uuid[],jsonb)',
+          'execute'
+        ) as authenticated_replace_v2,
+        has_function_privilege(
+          'authenticated',
+          'public.replace_student_assignment_v1(uuid,uuid,uuid,text,text,text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,smallint[],uuid[],jsonb)',
+          'execute'
+        ) as authenticated_replace_v1,
+        has_function_privilege(
+          'service_role',
+          'public.replace_student_assignment_v1(uuid,uuid,uuid,text,text,text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,smallint[],uuid[],jsonb)',
+          'execute'
+        ) as service_replace_v1,
+        has_table_privilege(
+          'authenticated',
+          'private.assignment_replacement_requests',
+          'select'
+        ) as authenticated_replacement_ledger_select,
+        has_function_privilege(
           'anon',
           'public.create_mixed_review_assignment_v5(uuid,uuid,smallint[],integer,uuid[],text,uuid[],smallint,integer,smallint,public.question_order_mode,timestamp with time zone,jsonb)',
           'execute'
@@ -669,7 +694,12 @@ describe.sequential("final review-assignment database schema", () => {
           'anon',
           'public.list_student_vocab_review_queue_summaries(uuid,uuid,integer)',
           'execute'
-        ) as anon_public_review_summary;
+        ) as anon_public_review_summary,
+        has_function_privilege(
+          'anon',
+          'public.replace_student_assignment_v2(uuid,uuid,uuid,text,text,text,text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,smallint[],uuid[],jsonb)',
+          'execute'
+        ) as anon_replace_v2;
     `);
 
     expect(privileges.rows[0]).toEqual({
@@ -680,9 +710,14 @@ describe.sequential("final review-assignment database schema", () => {
       authenticated_public_mixed_v6: true,
       authenticated_public_regular_v4: true,
       authenticated_public_review_summary: true,
+      authenticated_replace_v2: true,
+      authenticated_replace_v1: false,
+      service_replace_v1: false,
+      authenticated_replacement_ledger_select: false,
       anon_public_mixed: false,
       anon_public_exact: false,
       anon_public_review_summary: false,
+      anon_replace_v2: false,
     });
   });
 
@@ -2857,4 +2892,966 @@ describe.sequential("admin deletion controls", () => {
       await database.close();
     }
   }, 30_000);
+
+  it("preserves mixed targets for metadata edits and rolls the full lifecycle back on failure", async () => {
+    const mixedReplacementDatabase = await createFinalSchemaDatabase();
+    const replacementKey = "00000000-0000-4000-8000-000000000811";
+    const rollbackKey = "00000000-0000-4000-8000-000000000812";
+    try {
+      await seedReviewAssignmentScenario(mixedReplacementDatabase);
+      await mixedReplacementDatabase.exec(`
+        update public.student_vocab_review_queue
+        set status = 'cancelled', cancelled_at = clock_timestamp()
+        where id = '${ids.overlappingQueue}';
+      `);
+      const queueSource = await mixedReplacementDatabase.query<{
+        assignment_id: string;
+      }>(`
+        select private.create_assignment_with_question_bank_v3(
+          'Mixed queue source', '${ids.dataset}',
+          array['${ids.units[4]}'::uuid], 4, 100::smallint, 600,
+          80::smallint, 'fixed', null, array['${ids.student}'::uuid],
+          $questions$${mixedQuestions}$questions$::jsonb
+        ) as assignment_id;
+      `);
+      const queueSourceAssignmentId = queueSource.rows[0]!.assignment_id;
+      const queueAttempt = await mixedReplacementDatabase.query<{
+        attempt_id: string;
+      }>(`
+        select public.create_quiz_attempt_from_bank(
+          '${ids.student}', '${queueSourceAssignmentId}'
+        ) as attempt_id;
+      `);
+      const queueQuestion = await mixedReplacementDatabase.query<{
+        id: string;
+      }>(`
+        select id from public.quiz_questions
+        where attempt_id = '${queueAttempt.rows[0]!.attempt_id}'
+          and vocab_entry_id = 1;
+      `);
+      await mixedReplacementDatabase.exec(`
+        update public.student_vocab_review_queue
+        set
+          source_attempt_id = '${queueAttempt.rows[0]!.attempt_id}',
+          source_question_id = '${queueQuestion.rows[0]!.id}'
+        where id = '${ids.selectedQueue}';
+        update public.assignments
+        set status = 'closed'
+        where id = '${queueSourceAssignmentId}';
+        set role authenticated;
+      `);
+      const source = await mixedReplacementDatabase.query<{
+        assignment_id: string;
+      }>(`
+        select public.create_mixed_review_assignment_v6(
+          '${ids.student}', '${ids.dataset}', array[1]::smallint[],
+          array['${ids.selectedQueue}'::uuid], 'Mixed source',
+          array['${ids.units[4]}'::uuid], 100::smallint, 600,
+          80::smallint, 'fixed', null, 'total', null,
+          $questions$${mixedQuestions}$questions$::jsonb
+        ) as assignment_id;
+      `);
+      const sourceAssignmentId = source.rows[0]!.assignment_id;
+
+      const replacement = await mixedReplacementDatabase.query<{
+        result: {
+          replacementAssignmentId: string;
+          replacementPurpose: string;
+        };
+      }>(`
+        select public.replace_student_assignment_v2(
+          '${sourceAssignmentId}', '${ids.student}', '${replacementKey}',
+          repeat('b', 64), 'mixed', 'preserve', 'Mixed renamed',
+          '${ids.dataset}', array['${ids.units[4]}'::uuid], 4,
+          100::smallint, 600, 80::smallint, 'fixed', null,
+          'total', null, array[1]::smallint[],
+          array['${ids.selectedQueue}'::uuid],
+          $questions$${mixedQuestions}$questions$::jsonb
+        ) as result;
+      `);
+      await mixedReplacementDatabase.exec("reset role;");
+      const replacementAssignmentId =
+        replacement.rows[0]!.result.replacementAssignmentId;
+      expect(replacement.rows[0]!.result.replacementPurpose).toBe(
+        "mixed",
+      );
+
+      const state = await mixedReplacementDatabase.query<{
+        source_cancelled: boolean;
+        source_released_targets: number;
+        replacement_active_targets: number;
+        queue_status: string;
+        queue_consumed_assignment: string | null;
+        before_queues: unknown;
+        after_queues: unknown;
+        before_hash: string;
+        after_hash: string;
+      }>(`
+        select
+          (
+            select cancelled_at is not null
+            from public.assignment_students
+            where assignment_id = '${sourceAssignmentId}'
+              and student_id = '${ids.student}'
+          ) as source_cancelled,
+          (
+            select count(*)::integer
+            from public.assignment_review_targets
+            where assignment_id = '${sourceAssignmentId}'
+              and released_at is not null
+          ) as source_released_targets,
+          (
+            select count(*)::integer
+            from public.assignment_review_targets
+            where assignment_id = '${replacementAssignmentId}'
+              and released_at is null
+          ) as replacement_active_targets,
+          queue.status as queue_status,
+          queue.consumed_assignment_id::text as queue_consumed_assignment,
+          audit.details -> 'before' -> 'reviewQueueIds' as before_queues,
+          audit.details -> 'after' -> 'reviewQueueIds' as after_queues,
+          audit.details -> 'before' ->> 'questionBankSha256' as before_hash,
+          audit.details -> 'after' ->> 'questionBankSha256' as after_hash
+        from public.student_vocab_review_queue as queue
+        join public.audit_events as audit
+          on audit.event_type = 'assignment.student.replaced'
+         and audit.details ->> 'sourceAssignmentId' = '${sourceAssignmentId}'
+        where queue.id = '${ids.selectedQueue}';
+      `);
+      expect(state.rows[0]).toMatchObject({
+        source_cancelled: true,
+        source_released_targets: 1,
+        replacement_active_targets: 1,
+        queue_status: "pending",
+        queue_consumed_assignment: null,
+        before_queues: [ids.selectedQueue],
+        after_queues: [ids.selectedQueue],
+      });
+      expect(state.rows[0]!.before_hash).toBe(state.rows[0]!.after_hash);
+
+      const invalidQuestions = JSON.stringify(
+        JSON.parse(mixedQuestions).map(
+          (question: Record<string, unknown>) => ({
+            ...question,
+            base_order_index: 1,
+          }),
+        ),
+      );
+      await mixedReplacementDatabase.exec("set role authenticated;");
+      await expectPostgresError(
+        mixedReplacementDatabase.query(`
+          select public.replace_student_assignment_v2(
+            '${replacementAssignmentId}', '${ids.student}', '${rollbackKey}',
+            repeat('c', 64), 'mixed', 'recalculate', 'Must roll back',
+            '${ids.dataset}', array['${ids.units[4]}'::uuid], 4,
+            100::smallint, 600, 80::smallint, 'fixed', null,
+            'total', null, array[1]::smallint[],
+            array['${ids.selectedQueue}'::uuid],
+            $questions$${invalidQuestions}$questions$::jsonb
+          );
+        `),
+        "22023",
+        "invalid_review_question_plan",
+      );
+      await mixedReplacementDatabase.exec("reset role;");
+
+      const rollback = await mixedReplacementDatabase.query<{
+        source_cancelled: boolean;
+        active_targets: number;
+        queue_status: string;
+        ledger_count: number;
+        audit_count: number;
+      }>(`
+        select
+          link.cancelled_at is not null as source_cancelled,
+          (
+            select count(*)::integer
+            from public.assignment_review_targets
+            where assignment_id = '${replacementAssignmentId}'
+              and released_at is null
+          ) as active_targets,
+          (
+            select status from public.student_vocab_review_queue
+            where id = '${ids.selectedQueue}'
+          ) as queue_status,
+          (
+            select count(*)::integer
+            from private.assignment_replacement_requests
+            where idempotency_key = '${rollbackKey}'
+          ) as ledger_count,
+          (
+            select count(*)::integer from public.audit_events
+            where event_type = 'assignment.student.replaced'
+              and details ->> 'sourceAssignmentId' = '${replacementAssignmentId}'
+          ) as audit_count
+        from public.assignment_students as link
+        where link.assignment_id = '${replacementAssignmentId}'
+          and link.student_id = '${ids.student}';
+      `);
+      expect(rollback.rows[0]).toEqual({
+        source_cancelled: false,
+        active_targets: 1,
+        queue_status: "pending",
+        ledger_count: 0,
+        audit_count: 0,
+      });
+
+      const allReviewKey =
+        "00000000-0000-4000-8000-000000000813";
+      const oneReviewQuestion = JSON.stringify([
+        {
+          vocab_entry_id: 1,
+          base_order_index: 1,
+          direction: "english_to_korean",
+          choice_vocab_entry_ids: [1, 2, 3, 4],
+        },
+      ]);
+      await mixedReplacementDatabase.exec("set role authenticated;");
+      const allReview = await mixedReplacementDatabase.query<{
+        result: {
+          replacementAssignmentId: string;
+          replacementPurpose: string;
+        };
+      }>(`
+        select public.replace_student_assignment_v2(
+          '${replacementAssignmentId}', '${ids.student}', '${allReviewKey}',
+          repeat('e', 64), 'mixed', 'recalculate', 'Only wrong word',
+          '${ids.dataset}', array['${ids.units[4]}'::uuid], 1,
+          100::smallint, 600, 80::smallint, 'fixed', null,
+          'total', null, array[1]::smallint[],
+          array['${ids.selectedQueue}'::uuid],
+          $questions$${oneReviewQuestion}$questions$::jsonb
+        ) as result;
+      `);
+      await mixedReplacementDatabase.exec("reset role;");
+      expect(allReview.rows[0]!.result.replacementPurpose).toBe(
+        "review",
+      );
+      const allReviewState = await mixedReplacementDatabase.query<{
+        question_count: number;
+        primary_units: number;
+        active_targets: number;
+      }>(`
+        select
+          assignment.question_count,
+          (
+            select count(*)::integer from public.assignment_units
+            where assignment_id = assignment.id and is_primary
+          ) as primary_units,
+          (
+            select count(*)::integer from public.assignment_review_targets
+            where assignment_id = assignment.id and released_at is null
+          ) as active_targets
+        from public.assignments as assignment
+        where assignment.id = '${allReview.rows[0]!.result.replacementAssignmentId}';
+      `);
+      expect(allReviewState.rows[0]).toEqual({
+        question_count: 1,
+        primary_units: 0,
+        active_targets: 1,
+      });
+    } finally {
+      await mixedReplacementDatabase.close();
+    }
+  }, 40_000);
+
+  it("replaces exact-review assignments with 1, 2, and 3 targets without losing their queue snapshot", async () => {
+    const exactReplacementDatabase = await createFinalSchemaDatabase();
+    const queueIds = [
+      "00000000-0000-4000-8000-000000000321",
+      "00000000-0000-4000-8000-000000000322",
+      "00000000-0000-4000-8000-000000000323",
+    ];
+    try {
+      await seedReviewAssignmentScenario(exactReplacementDatabase);
+      await exactReplacementDatabase.exec(`
+        update public.student_vocab_review_queue
+        set status = 'cancelled', cancelled_at = clock_timestamp()
+        where student_id = '${ids.student}';
+      `);
+
+      const queueSource = await exactReplacementDatabase.query<{
+        assignment_id: string;
+      }>(`
+        select private.create_assignment_with_question_bank_v3(
+          'Exact queue source',
+          '${ids.dataset}',
+          array[
+            '${ids.units[0]}'::uuid,
+            '${ids.units[1]}'::uuid,
+            '${ids.units[2]}'::uuid,
+            '${ids.units[3]}'::uuid,
+            '${ids.units[4]}'::uuid
+          ],
+          4,
+          100::smallint,
+          600,
+          80::smallint,
+          'fixed',
+          null,
+          array['${ids.student}'::uuid],
+          $questions$${mixedQuestions}$questions$::jsonb
+        ) as assignment_id;
+      `);
+      const queueSourceAssignmentId =
+        queueSource.rows[0]!.assignment_id;
+      const queueSourceAttempt = await exactReplacementDatabase.query<{
+        attempt_id: string;
+      }>(`
+        select public.create_quiz_attempt_from_bank(
+          '${ids.student}',
+          '${queueSourceAssignmentId}'
+        ) as attempt_id;
+      `);
+      const queueSourceAttemptId = queueSourceAttempt.rows[0]!.attempt_id;
+      const queueSourceQuestions = await exactReplacementDatabase.query<{
+        id: string;
+        vocab_entry_id: number;
+      }>(`
+        select id, vocab_entry_id
+        from public.quiz_questions
+        where attempt_id = '${queueSourceAttemptId}';
+      `);
+      const sourceQuestionByEntry = new Map(
+        queueSourceQuestions.rows.map((question) => [
+          question.vocab_entry_id,
+          question.id,
+        ]),
+      );
+
+      await exactReplacementDatabase.exec(`
+        insert into public.student_vocab_review_queue (
+          id, student_id, dataset_id, vocab_entry_id,
+          canonical_lexeme_id_snapshot, source_attempt_id,
+          source_question_id, reason_level, status, queued_by, queued_at
+        )
+        values
+          (
+            '${queueIds[0]}', '${ids.student}', '${ids.dataset}', 1,
+            '${ids.lexemes[0]}',
+            '${queueSourceAttemptId}',
+            '${sourceQuestionByEntry.get(1)}',
+            1, 'pending', '${ids.admin}', '2026-01-11T00:00:00Z'
+          ),
+          (
+            '${queueIds[1]}', '${ids.student}', '${ids.dataset}', 2,
+            '${ids.lexemes[1]}',
+            '${queueSourceAttemptId}',
+            '${sourceQuestionByEntry.get(2)}',
+            1, 'pending', '${ids.admin}', '2026-01-12T00:00:00Z'
+          ),
+          (
+            '${queueIds[2]}', '${ids.student}', '${ids.dataset}', 3,
+            '${ids.lexemes[2]}',
+            '${queueSourceAttemptId}',
+            '${sourceQuestionByEntry.get(3)}',
+            1, 'pending', '${ids.admin}', '2026-01-13T00:00:00Z'
+          );
+
+        update public.assignments
+        set status = 'closed'
+        where id = '${queueSourceAssignmentId}';
+      `);
+
+      for (const targetCount of [1, 2, 3]) {
+        const draftId = `00000000-0000-4000-8000-00000000042${targetCount}`;
+        const replacementKey =
+          `00000000-0000-4000-8000-00000000082${targetCount}`;
+        const selectedQueueIds = queueIds.slice(0, targetCount);
+        const questions = JSON.stringify(
+          selectedQueueIds.map((_, index) => ({
+            vocab_entry_id: index + 1,
+            base_order_index: index + 1,
+            direction: "english_to_korean",
+            choice_vocab_entry_ids: [1, 2, 3, 4],
+          })),
+        );
+        const queueSql = selectedQueueIds
+          .map((queueId) => `'${queueId}'::uuid`)
+          .join(",");
+
+        await exactReplacementDatabase.exec(`
+          insert into public.student_vocab_review_assignment_drafts (
+            id, student_id, dataset_id, status, created_by, expires_at
+          )
+          values (
+            '${draftId}', '${ids.student}', '${ids.dataset}', 'pending',
+            '${ids.admin}', clock_timestamp() + interval '1 hour'
+          );
+
+          update public.student_vocab_review_queue
+          set
+            reserved_review_draft_id = '${draftId}',
+            reserved_at = clock_timestamp()
+          where id = any(array[${queueSql}]::uuid[]);
+
+          insert into public.student_vocab_review_assignment_draft_items (
+            draft_id, queue_id, position
+          )
+          select '${draftId}', selected.queue_id, selected.position::integer
+          from unnest(array[${queueSql}]::uuid[]) with ordinality
+            as selected(queue_id, position);
+        `);
+
+        const source = await exactReplacementDatabase.query<{
+          assignment_id: string;
+        }>(`
+          select private.create_exact_review_assignment_v4(
+            '${draftId}', 'Exact source ${targetCount}', 100::smallint,
+            600, 80::smallint, 'fixed', null,
+            $questions$${questions}$questions$::jsonb
+          ) as assignment_id;
+        `);
+        const sourceAssignmentId = source.rows[0]!.assignment_id;
+
+        await exactReplacementDatabase.exec(`
+          insert into public.assignment_review_targets (
+            assignment_id,
+            student_id,
+            review_queue_id,
+            assignment_question_id,
+            dataset_id,
+            vocab_entry_id,
+            canonical_lexeme_id_snapshot
+          )
+          select
+            '${sourceAssignmentId}',
+            '${ids.student}',
+            queue.id,
+            question.id,
+            queue.dataset_id,
+            queue.vocab_entry_id,
+            queue.canonical_lexeme_id_snapshot
+          from unnest(array[${queueSql}]::uuid[]) with ordinality
+            as selected(queue_id, position)
+          join public.student_vocab_review_queue as queue
+            on queue.id = selected.queue_id
+          join public.assignment_questions as question
+            on question.assignment_id = '${sourceAssignmentId}'
+            and question.vocab_entry_id = queue.vocab_entry_id
+          order by selected.position;
+
+          update public.student_vocab_review_queue
+          set
+            status = 'pending',
+            consumed_assignment_id = null,
+            consumed_at = null
+          where id = any(array[${queueSql}]::uuid[])
+            and consumed_assignment_id = '${sourceAssignmentId}';
+
+          select private.link_pending_review_targets_v1(
+            '${sourceAssignmentId}',
+            array['${ids.student}'::uuid]
+          );
+          select private.configure_assignment_delivery_v1(
+            '${sourceAssignmentId}',
+            'total',
+            null
+          );
+        `);
+
+        await exactReplacementDatabase.exec("set role authenticated;");
+        const replacement = await exactReplacementDatabase.query<{
+          result: {
+            replacementAssignmentId: string;
+            replacementPurpose: string;
+          };
+        }>(`
+          select public.replace_student_assignment_v2(
+            '${sourceAssignmentId}', '${ids.student}', '${replacementKey}',
+            repeat('d', 64), 'review', 'preserve',
+            'Exact replacement ${targetCount}', '${ids.dataset}',
+            array[]::uuid[], ${targetCount}, 100::smallint, 600,
+            80::smallint, 'fixed', null, 'total', null,
+            array[1]::smallint[], array[${queueSql}]::uuid[],
+            $questions$${questions}$questions$::jsonb
+          ) as result;
+        `);
+        await exactReplacementDatabase.exec("reset role;");
+        const replacementAssignmentId =
+          replacement.rows[0]!.result.replacementAssignmentId;
+        expect(replacement.rows[0]!.result.replacementPurpose).toBe(
+          "review",
+        );
+
+        const state = await exactReplacementDatabase.query<{
+          source_cancelled: boolean;
+          replacement_question_count: number;
+          replacement_primary_units: number;
+          source_active_targets: number;
+          replacement_active_targets: number;
+          pending_queues: number;
+          before_queues: unknown;
+          after_queues: unknown;
+        }>(`
+          select
+            (
+              select cancelled_at is not null
+              from public.assignment_students
+              where assignment_id = '${sourceAssignmentId}'
+                and student_id = '${ids.student}'
+            ) as source_cancelled,
+            (
+              select question_count from public.assignments
+              where id = '${replacementAssignmentId}'
+            ) as replacement_question_count,
+            (
+              select count(*)::integer from public.assignment_units
+              where assignment_id = '${replacementAssignmentId}'
+                and is_primary
+            ) as replacement_primary_units,
+            (
+              select count(*)::integer from public.assignment_review_targets
+              where assignment_id = '${sourceAssignmentId}'
+                and released_at is null
+            ) as source_active_targets,
+            (
+              select count(*)::integer from public.assignment_review_targets
+              where assignment_id = '${replacementAssignmentId}'
+                and released_at is null
+            ) as replacement_active_targets,
+            (
+              select count(*)::integer
+              from public.student_vocab_review_queue
+              where id = any(array[${queueSql}]::uuid[])
+                and status = 'pending'
+                and consumed_assignment_id is null
+            ) as pending_queues,
+            audit.details -> 'before' -> 'reviewQueueIds' as before_queues,
+            audit.details -> 'after' -> 'reviewQueueIds' as after_queues
+          from public.audit_events as audit
+          where audit.event_type = 'assignment.student.replaced'
+            and audit.details ->> 'sourceAssignmentId' = '${sourceAssignmentId}';
+        `);
+        expect(state.rows[0]).toEqual({
+          source_cancelled: true,
+          replacement_question_count: targetCount,
+          replacement_primary_units: 0,
+          source_active_targets: 0,
+          replacement_active_targets: targetCount,
+          pending_queues: targetCount,
+          before_queues: selectedQueueIds,
+          after_queues: selectedQueueIds,
+        });
+
+        await exactReplacementDatabase.exec("set role authenticated;");
+        await exactReplacementDatabase.query(`
+          select public.cancel_student_assignment_v1(
+            '${replacementAssignmentId}', '${ids.student}',
+            'next exact replacement fixture'
+          );
+        `);
+        await exactReplacementDatabase.exec("reset role;");
+      }
+    } finally {
+      await exactReplacementDatabase.close();
+    }
+  }, 45_000);
+
+  it("replaces only one shared recipient, retries idempotently, and rolls back a failed replacement", async () => {
+    const replacementDatabase = await createFinalSchemaDatabase();
+    const secondStudent = "00000000-0000-4000-8000-000000000702";
+    const rollbackStudent = "00000000-0000-4000-8000-000000000703";
+    const replacementKey = "00000000-0000-4000-8000-000000000801";
+    const rollbackKey = "00000000-0000-4000-8000-000000000802";
+    try {
+      await seedReviewAssignmentScenario(replacementDatabase);
+      await replacementDatabase.exec(`
+        insert into public.students (
+          id,
+          display_name,
+          status,
+          created_by
+        )
+        values
+          (
+            '${secondStudent}',
+            'Shared recipient',
+            'active',
+            '${ids.admin}'
+          ),
+          (
+            '${rollbackStudent}',
+            'Rollback recipient',
+            'active',
+            '${ids.admin}'
+          );
+      `);
+
+      await replacementDatabase.exec("set role authenticated;");
+      const source = await replacementDatabase.query<{ id: string }>(`
+        select public.create_assignment_with_delivery_v5(
+          'Shared source',
+          '${ids.dataset}',
+          array[
+            '${ids.units[0]}'::uuid,
+            '${ids.units[1]}'::uuid,
+            '${ids.units[2]}'::uuid,
+            '${ids.units[3]}'::uuid,
+            '${ids.units[4]}'::uuid
+          ],
+          4,
+          100::smallint,
+          300,
+          80::smallint,
+          'ascending',
+          null,
+          array['${ids.student}'::uuid, '${secondStudent}'::uuid],
+          'total',
+          null,
+          '${mixedQuestions}'::jsonb
+        ) as id;
+      `);
+      const sourceAssignmentId = source.rows[0]!.id;
+
+      await replacementDatabase.exec(`
+        create temporary table replacement_deadline_fixture (
+          deadline timestamptz not null
+        );
+        insert into replacement_deadline_fixture (deadline)
+        values (clock_timestamp() + interval '3 seconds');
+      `);
+
+      const replaced = await replacementDatabase.query<{
+        result: {
+          replacementAssignmentId: string;
+          idempotent: boolean;
+        };
+      }>(`
+        select public.replace_student_assignment_v2(
+          '${sourceAssignmentId}',
+          '${ids.student}',
+          '${replacementKey}',
+          repeat('a', 64),
+          'regular',
+          'none',
+          'Shared replacement',
+          '${ids.dataset}',
+          array[
+            '${ids.units[0]}'::uuid,
+            '${ids.units[1]}'::uuid,
+            '${ids.units[2]}'::uuid,
+            '${ids.units[3]}'::uuid,
+            '${ids.units[4]}'::uuid
+          ],
+          4,
+          100::smallint,
+          300,
+          80::smallint,
+          'descending',
+          (select deadline from replacement_deadline_fixture),
+          'total',
+          null,
+          array[]::smallint[],
+          array[]::uuid[],
+          '${mixedQuestions}'::jsonb
+        ) as result;
+      `);
+      const replacementAssignmentId =
+        replaced.rows[0]!.result.replacementAssignmentId;
+      expect(replaced.rows[0]!.result.idempotent).toBe(false);
+      await replacementDatabase.exec("reset role;");
+
+      const sharedState = await replacementDatabase.query<{
+        source_question_count: number;
+        source_selected_cancelled: boolean;
+        source_other_cancelled: boolean;
+        replacement_recipient_count: number;
+        replacement_question_count: number;
+        source_questions: unknown;
+        replacement_questions: unknown;
+        ledger_count: number;
+        replacement_audit_count: number;
+      }>(`
+        select
+          (
+            select count(*)::integer
+            from public.assignment_questions
+            where assignment_id = '${sourceAssignmentId}'
+          ) as source_question_count,
+          (
+            select cancelled_at is not null
+            from public.assignment_students
+            where assignment_id = '${sourceAssignmentId}'
+              and student_id = '${ids.student}'
+          ) as source_selected_cancelled,
+          (
+            select cancelled_at is not null
+            from public.assignment_students
+            where assignment_id = '${sourceAssignmentId}'
+              and student_id = '${secondStudent}'
+          ) as source_other_cancelled,
+          (
+            select count(*)::integer
+            from public.assignment_students
+            where assignment_id = '${replacementAssignmentId}'
+              and student_id = '${ids.student}'
+              and cancelled_at is null
+          ) as replacement_recipient_count,
+          (
+            select count(*)::integer
+            from public.assignment_questions
+            where assignment_id = '${replacementAssignmentId}'
+          ) as replacement_question_count,
+          (
+            select jsonb_agg(
+              jsonb_build_object(
+                'vocab_entry_id', question.vocab_entry_id,
+                'base_order_index', question.base_order_index,
+                'direction', question.direction,
+                'choice_vocab_entry_ids', question.choice_vocab_entry_ids
+              )
+              order by question.base_order_index
+            )
+            from public.assignment_questions as question
+            where question.assignment_id = '${sourceAssignmentId}'
+          ) as source_questions,
+          (
+            select jsonb_agg(
+              jsonb_build_object(
+                'vocab_entry_id', question.vocab_entry_id,
+                'base_order_index', question.base_order_index,
+                'direction', question.direction,
+                'choice_vocab_entry_ids', question.choice_vocab_entry_ids
+              )
+              order by question.base_order_index
+            )
+            from public.assignment_questions as question
+            where question.assignment_id = '${replacementAssignmentId}'
+          ) as replacement_questions,
+          (
+            select count(*)::integer
+            from private.assignment_replacement_requests
+            where idempotency_key = '${replacementKey}'
+          ) as ledger_count,
+          (
+            select count(*)::integer
+            from public.audit_events
+            where event_type = 'assignment.student.replaced'
+              and details ->> 'sourceAssignmentId' = '${sourceAssignmentId}'
+          ) as replacement_audit_count;
+      `);
+      expect(sharedState.rows[0]!.source_questions).toEqual(
+        sharedState.rows[0]!.replacement_questions,
+      );
+      expect(sharedState.rows[0]).toMatchObject({
+        source_question_count: 4,
+        source_selected_cancelled: true,
+        source_other_cancelled: false,
+        replacement_recipient_count: 1,
+        replacement_question_count: 4,
+        ledger_count: 1,
+        replacement_audit_count: 1,
+      });
+
+      const otherRecipientAttempt = await replacementDatabase.query<{
+        attempt_id: string;
+      }>(`
+        select public.create_quiz_attempt_from_bank(
+          '${secondStudent}',
+          '${sourceAssignmentId}'
+        ) as attempt_id;
+      `);
+      expect(otherRecipientAttempt.rows[0]?.attempt_id).toMatch(
+        /^[0-9a-f-]{36}$/i,
+      );
+
+      await replacementDatabase.exec(`
+        update public.students
+        set status = 'blocked'
+        where id = '${ids.student}';
+        select pg_sleep(3.1);
+      `);
+      await replacementDatabase.exec("set role authenticated;");
+      const retried = await replacementDatabase.query<{
+        result: {
+          replacementAssignmentId: string;
+          idempotent: boolean;
+        };
+      }>(`
+        select public.replace_student_assignment_v2(
+          '${sourceAssignmentId}',
+          '${ids.student}',
+          '${replacementKey}',
+          repeat('a', 64),
+          'regular',
+          'none',
+          'Shared replacement',
+          '${ids.dataset}',
+          array[
+            '${ids.units[0]}'::uuid,
+            '${ids.units[1]}'::uuid,
+            '${ids.units[2]}'::uuid,
+            '${ids.units[3]}'::uuid,
+            '${ids.units[4]}'::uuid
+          ],
+          4,
+          100::smallint,
+          300,
+          80::smallint,
+          'descending',
+          (select deadline from replacement_deadline_fixture),
+          'total',
+          null,
+          array[]::smallint[],
+          array[]::uuid[],
+          '${mixedQuestions}'::jsonb
+        ) as result;
+      `);
+      expect(retried.rows[0]!.result).toMatchObject({
+        replacementAssignmentId,
+        idempotent: true,
+      });
+      await replacementDatabase.exec(`
+        reset role;
+        update public.students
+        set status = 'active'
+        where id = '${ids.student}';
+        set role authenticated;
+      `);
+      await expectPostgresError(
+        replacementDatabase.query(`
+          select public.replace_student_assignment_v2(
+            '${sourceAssignmentId}',
+            '${ids.student}',
+            '${replacementKey}',
+            repeat('a', 64),
+            'regular',
+            'none',
+            'Shared replacement',
+            '${ids.dataset}',
+            array['${ids.units[0]}'::uuid],
+            4,
+            100::smallint,
+            300,
+            80::smallint,
+            'descending',
+            (select deadline from replacement_deadline_fixture),
+            'total',
+            null,
+            array[]::smallint[],
+            array[]::uuid[],
+            '${mixedQuestions}'::jsonb
+          );
+        `),
+        "23505",
+        "idempotency_key_reused",
+      );
+      await expectPostgresError(
+        replacementDatabase.query(`
+          select public.get_student_assignment_replacement_result_v1(
+            '${sourceAssignmentId}',
+            '${ids.student}',
+            '${replacementKey}',
+            repeat('b', 64)
+          );
+        `),
+        "23505",
+        "idempotency_key_reused",
+      );
+
+      const rollbackSource = await replacementDatabase.query<{
+        id: string;
+      }>(`
+        select public.create_assignment_with_delivery_v5(
+          'Rollback source',
+          '${ids.dataset}',
+          array[
+            '${ids.units[0]}'::uuid,
+            '${ids.units[1]}'::uuid,
+            '${ids.units[2]}'::uuid,
+            '${ids.units[3]}'::uuid,
+            '${ids.units[4]}'::uuid
+          ],
+          4,
+          100::smallint,
+          300,
+          80::smallint,
+          'ascending',
+          null,
+          array['${rollbackStudent}'::uuid],
+          'total',
+          null,
+          '${mixedQuestions}'::jsonb
+        ) as id;
+      `);
+      const rollbackSourceId = rollbackSource.rows[0]!.id;
+      const invalidQuestions = JSON.stringify([
+        ...JSON.parse(mixedQuestions).slice(0, 1),
+        ...JSON.parse(mixedQuestions)
+          .slice(1)
+          .map((question: Record<string, unknown>) => ({
+            ...question,
+            base_order_index: 1,
+          })),
+      ]);
+
+      await expectPostgresError(
+        replacementDatabase.query(`
+          select public.replace_student_assignment_v2(
+            '${rollbackSourceId}',
+            '${rollbackStudent}',
+            '${rollbackKey}',
+            repeat('c', 64),
+            'regular',
+            'none',
+            'Must roll back',
+            '${ids.dataset}',
+            array[
+              '${ids.units[0]}'::uuid,
+              '${ids.units[1]}'::uuid,
+              '${ids.units[2]}'::uuid,
+              '${ids.units[3]}'::uuid,
+              '${ids.units[4]}'::uuid
+            ],
+            4,
+            100::smallint,
+            300,
+            80::smallint,
+            'ascending',
+            null,
+            'total',
+            null,
+            array[]::smallint[],
+            array[]::uuid[],
+            '${invalidQuestions}'::jsonb
+          );
+        `),
+        "23505",
+        "assignment_questions_assignment_id_base_order_index_key",
+      );
+
+      await replacementDatabase.exec("reset role;");
+      const rollbackState = await replacementDatabase.query<{
+        cancelled: boolean;
+        ledger_count: number;
+        audit_count: number;
+      }>(`
+        select
+          link.cancelled_at is not null as cancelled,
+          (
+            select count(*)::integer
+            from private.assignment_replacement_requests
+            where idempotency_key = '${rollbackKey}'
+          ) as ledger_count,
+          (
+            select count(*)::integer
+            from public.audit_events
+            where event_type = 'assignment.student.replaced'
+              and details ->> 'sourceAssignmentId' = '${rollbackSourceId}'
+          ) as audit_count
+        from public.assignment_students as link
+        where link.assignment_id = '${rollbackSourceId}'
+          and link.student_id = '${rollbackStudent}';
+      `);
+      expect(rollbackState.rows[0]).toEqual({
+        cancelled: false,
+        ledger_count: 0,
+        audit_count: 0,
+      });
+      await replacementDatabase.exec("reset role;");
+    } finally {
+      await replacementDatabase.close();
+    }
+  }, 40_000);
 });

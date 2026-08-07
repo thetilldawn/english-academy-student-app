@@ -56,11 +56,13 @@ export function StudentLearningActivityList({
   filtersEnabled = false,
   initialLimit = 5,
   items,
+  onEditAssignment,
 }: {
   emptyLabel?: string;
   filtersEnabled?: boolean;
   initialLimit?: number;
   items: AssignmentHistorySummary[];
+  onEditAssignment?: (item: AssignmentHistorySummary) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [detailItemId, setDetailItemId] = useState("");
@@ -184,6 +186,7 @@ export function StudentLearningActivityList({
               </div>
               <AdminHistoryActions
                 item={item}
+                onEdit={onEditAssignment}
                 onViewDetail={() => setDetailItemId(item.id)}
                 size="small"
               />

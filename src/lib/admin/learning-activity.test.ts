@@ -25,6 +25,7 @@ function activity(
     studentId: "student-1",
     studentName: "테스트 학생",
     studentDeleted: false,
+    studentStatus: "active",
     schoolName: "테스트고",
     gradeLabel: "고3",
     datasetId: "dataset-1",

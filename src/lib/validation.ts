@@ -268,7 +268,7 @@ export const assignmentCapacitySchema = z
     datasetId: z.uuid(),
     primaryUnitIds: z.array(z.uuid()).min(1).max(500),
     includePendingReview: z.boolean(),
-    reviewLevels: z.array(mixedReviewLevelSchema).min(1).max(2),
+    reviewLevels: z.array(mixedReviewLevelSchema).max(2),
     englishToKoreanRatio: z.union([
       z.literal(0),
       z.literal(50),
@@ -277,6 +277,13 @@ export const assignmentCapacitySchema = z
   })
   .strict()
   .superRefine((value, context) => {
+    if (value.includePendingReview && value.reviewLevels.length === 0) {
+      context.addIssue({
+        code: "custom",
+        path: ["reviewLevels"],
+        message: "포함할 오답 단계를 하나 이상 선택해 주세요.",
+      });
+    }
     if (
       new Set(value.primaryUnitIds).size !==
       value.primaryUnitIds.length
@@ -295,6 +302,77 @@ export const assignmentCapacitySchema = z
         code: "custom",
         path: ["reviewLevels"],
         message: "같은 오답 단계를 두 번 선택할 수 없습니다.",
+      });
+    }
+  });
+
+export const assignmentReplacementPreviewSchema =
+  assignmentCapacitySchema;
+
+export const assignmentReplacementSchema = z
+  .object({
+    idempotencyKey: z.uuid(),
+    title: z.string().trim().min(1).max(160),
+    datasetId: z.uuid(),
+    primaryUnitIds: z.array(z.uuid()).min(1).max(500),
+    includePendingReview: z.boolean(),
+    reviewLevels: z.array(mixedReviewLevelSchema).max(2),
+    questionCount: z.number().int().min(1).max(500),
+    englishToKoreanRatio: z.union([
+      z.literal(0),
+      z.literal(50),
+      z.literal(100),
+    ]),
+    timeLimitSeconds: z.number().int().min(30).max(10800),
+    timingMode: z.enum(timingModes),
+    questionTimeLimitSeconds: z
+      .number()
+      .int()
+      .min(5)
+      .max(600)
+      .nullable(),
+    passingScore: z.number().int().min(0).max(100),
+    questionOrderMode: z.enum(questionOrderModes),
+    availableUntil: z.iso.datetime({ offset: true }).nullable(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (value.includePendingReview && value.reviewLevels.length === 0) {
+      context.addIssue({
+        code: "custom",
+        path: ["reviewLevels"],
+        message: "포함할 오답 단계를 하나 이상 선택해 주세요.",
+      });
+    }
+    if (
+      new Set(value.primaryUnitIds).size !==
+      value.primaryUnitIds.length
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["primaryUnitIds"],
+        message: "같은 DAY를 두 번 선택할 수 없습니다.",
+      });
+    }
+    if (
+      new Set(value.reviewLevels).size !== value.reviewLevels.length
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["reviewLevels"],
+        message: "같은 오답 단계를 두 번 선택할 수 없습니다.",
+      });
+    }
+    if (
+      (value.timingMode === "total" &&
+        value.questionTimeLimitSeconds !== null) ||
+      (value.timingMode === "per_question" &&
+        value.questionTimeLimitSeconds === null)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["questionTimeLimitSeconds"],
+        message: "시간 제한 방식과 문제당 시간을 확인해주세요.",
       });
     }
   });

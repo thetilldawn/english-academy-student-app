@@ -17,6 +17,7 @@ export type AssignmentHistorySource = {
   studentId: string;
   studentName: string;
   studentDeleted: boolean;
+  studentStatus: "active" | "blocked";
   schoolName: string | null;
   gradeLabel: string | null;
   datasetId: string;

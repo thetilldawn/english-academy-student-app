@@ -188,6 +188,10 @@ export function StudentManager({
   const [learningSourceLabel, setLearningSourceLabel] = useState("");
   const [assignmentDatasetId, setAssignmentDatasetId] = useState("");
   const [assignmentStudentId, setAssignmentStudentId] = useState("");
+  const [assignmentEditTarget, setAssignmentEditTarget] = useState<{
+    assignmentId: string;
+    studentId: string;
+  } | null>(null);
   const [query, setQuery] = useState("");
   const [schoolFilter, setSchoolFilter] = useState("");
   const [gradeFilter, setGradeFilter] = useState("");
@@ -1290,6 +1294,14 @@ export function StudentManager({
                     <StudentLearningActivityList
                       initialLimit={5}
                       items={selectedStudentHistory}
+                      onEditAssignment={(item) => {
+                        setAssignmentDatasetId(item.datasetId);
+                        setAssignmentStudentId(item.studentId);
+                        setAssignmentEditTarget({
+                          assignmentId: item.assignmentId,
+                          studentId: item.studentId,
+                        });
+                      }}
                     />
                   </div>
                 ) : (
@@ -1341,6 +1353,7 @@ export function StudentManager({
                                   selectedStudent.currentVocabDatasetId ||
                                   "",
                               );
+                              setAssignmentEditTarget(null);
                               setAssignmentStudentId(selectedStudent.id);
                             }}
                             type="button"
@@ -1509,6 +1522,14 @@ export function StudentManager({
                   filtersEnabled
                   initialLimit={5}
                   items={selectedStudentHistory}
+                  onEditAssignment={(item) => {
+                    setAssignmentDatasetId(item.datasetId);
+                    setAssignmentStudentId(item.studentId);
+                    setAssignmentEditTarget({
+                      assignmentId: item.assignmentId,
+                      studentId: item.studentId,
+                    });
+                  }}
                 />
               </section>
             )}
@@ -1523,11 +1544,15 @@ export function StudentManager({
           history={history}
           initialDatasetId={assignmentDatasetId}
           initialDialogView="assign"
+          initialEditTarget={assignmentEditTarget}
           initialStudentId={assignmentStudentId}
-          key={`${assignmentStudentId}:${assignmentDatasetId}`}
+          key={`${assignmentStudentId}:${assignmentDatasetId}:${assignmentEditTarget?.assignmentId ?? "new"}`}
           launcherOnly
           learningSources={learningSources}
-          onLauncherClose={() => setAssignmentStudentId("")}
+          onLauncherClose={() => {
+            setAssignmentStudentId("");
+            setAssignmentEditTarget(null);
+          }}
           pendingReviewSummaries={pendingReviewSummaries}
           progress={progress}
           students={students}

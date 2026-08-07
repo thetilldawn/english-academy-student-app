@@ -118,7 +118,10 @@ describe("mixed assignment API contract", () => {
       "selectedReviewIdentities",
     );
     expect(service).toContain(
-      "loadEligibleVocabularyDataset(supabase, input.datasetId)",
+      "loadEligibleVocabularyDataset(supabase, input.datasetId, {",
+    );
+    expect(service).toContain(
+      "includeExamUseProjection: !input.includePendingReview",
     );
   });
 });

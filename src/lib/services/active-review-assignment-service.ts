@@ -16,6 +16,17 @@ type AssignmentStudentRow = {
   assigned_at: string;
 };
 
+type AssignmentReviewTargetRow = {
+  assignment_id: string;
+  student_id: string;
+  review_queue_id: string;
+};
+
+export type ActiveAssignmentExclusion = {
+  assignmentId: string;
+  studentId: string;
+};
+
 type AssignmentRow = {
   id: string;
   title: string;
@@ -78,6 +89,7 @@ export async function loadActiveReviewAssignments(
   supabase: ServerSupabaseClient,
   studentIds: readonly string[],
   datasetId: string,
+  exclusion?: ActiveAssignmentExclusion,
 ) {
   const queueIds = new Set<string>();
   const identities = new Set<string>();
@@ -89,18 +101,22 @@ export async function loadActiveReviewAssignments(
 
   for (const studentId of uniqueStudentIds) {
     for (let offset = 0; ; offset += PAGE_SIZE) {
-      const { data, error } = await supabase
+      let query = supabase
         .from("assignment_review_targets")
-        .select("review_queue_id")
+        .select("assignment_id, student_id, review_queue_id")
         .eq("student_id", studentId)
         .eq("dataset_id", datasetId)
         .is("released_at", null)
         .order("id")
         .range(offset, offset + PAGE_SIZE - 1);
+      if (exclusion?.studentId === studentId) {
+        query = query.neq("assignment_id", exclusion.assignmentId);
+      }
+      const { data, error } = await query;
       if (error) {
         throw new Error("배정 중인 오답 정보를 확인하지 못했습니다.");
       }
-      for (const row of data ?? []) {
+      for (const row of (data ?? []) as AssignmentReviewTargetRow[]) {
         queueIds.add(row.review_queue_id);
       }
       if (!data || data.length < PAGE_SIZE) break;
@@ -113,7 +129,7 @@ export async function loadActiveReviewAssignments(
     ID_CHUNK_SIZE,
   )) {
     for (let offset = 0; ; offset += PAGE_SIZE) {
-      const { data, error } = await supabase
+      let query = supabase
         .from("assignment_students")
         .select("assignment_id, student_id, assigned_at")
         .in("student_id", studentIdChunk)
@@ -122,6 +138,15 @@ export async function loadActiveReviewAssignments(
         .order("assignment_id")
         .order("student_id")
         .range(offset, offset + PAGE_SIZE - 1);
+      if (
+        exclusion &&
+        studentIdChunk.includes(exclusion.studentId)
+      ) {
+        query = query.or(
+          `assignment_id.neq.${exclusion.assignmentId},student_id.neq.${exclusion.studentId}`,
+        );
+      }
+      const { data, error } = await query;
       if (error) {
         throw new Error("배정 중인 시험 단어를 확인하지 못했습니다.");
       }

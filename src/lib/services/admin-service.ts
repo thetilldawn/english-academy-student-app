@@ -713,6 +713,7 @@ export async function listStudentCurrentVocabWrongSummaries(): Promise<
 
 type HistoryStudentRelation = {
   display_name: string;
+  status: "active" | "blocked";
   school_name: string | null;
   grade_label: string | null;
   deleted_at: string | null;
@@ -813,7 +814,7 @@ async function listAssignmentHistorySourceRows(
           missed_at,
           cancelled_at,
           cancellation_reason,
-          student:students(display_name, school_name, grade_label, deleted_at),
+          student:students(display_name, status, school_name, grade_label, deleted_at),
           assignment:assignments(
             id,
             title,
@@ -965,6 +966,7 @@ export async function listAssignmentHistory(): Promise<
         studentName:
           student.deleted_at === null ? student.display_name : "삭제됨",
         studentDeleted: student.deleted_at !== null,
+        studentStatus: student.status,
         schoolName:
           student.deleted_at === null ? student.school_name : null,
         gradeLabel:
@@ -1094,6 +1096,10 @@ export type PreparedRegularAssignment = {
 export async function prepareRegularAssignment(
   input: RegularAssignmentInput,
   authenticatedAdmin?: AdminContext,
+  exclusion?: {
+    assignmentId: string;
+    studentId: string;
+  },
 ): Promise<PreparedRegularAssignment> {
   if (!authenticatedAdmin) {
     await requireAdmin();
@@ -1140,6 +1146,7 @@ export async function prepareRegularAssignment(
       supabase,
       input.studentIds,
       input.datasetId,
+      exclusion,
     ),
   ]);
   const unitIdSet = new Set(orderedUnitIds);

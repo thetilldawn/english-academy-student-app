@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
+import { isStudentAssignmentEditable } from "@/lib/admin/assignment-edit";
 
 type ActionKey = "cancel" | "delete-history";
 
@@ -27,12 +28,14 @@ async function mutate(url: string, options: RequestInit) {
 
 export function AdminHistoryActions({
   item,
+  onEdit,
   onMutated,
   onViewDetail,
   showDetailLink = true,
   size = "regular",
 }: {
   item: AssignmentHistorySummary;
+  onEdit?: (item: AssignmentHistorySummary) => void;
   onMutated?: () => void;
   onViewDetail?: () => void;
   showDetailLink?: boolean;
@@ -92,6 +95,17 @@ export function AdminHistoryActions({
                 </Link>
               )
           : null}
+        {onEdit && isStudentAssignmentEditable(item) && (
+          <button
+            aria-label={`${item.studentName} · ${item.assignmentTitle} 배정 수정`}
+            className={`button button-secondary${sizeClass}`}
+            disabled={busyAction !== null}
+            onClick={() => onEdit(item)}
+            type="button"
+          >
+            수정
+          </button>
+        )}
         {item.status === "not_started" &&
           !item.attemptId &&
           !item.assignmentDeleted && (

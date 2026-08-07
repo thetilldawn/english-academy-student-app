@@ -88,9 +88,8 @@ describe("mixed assignment admin UI contract", () => {
     expect(manager).toContain("onCancel={handleDialogCancel}");
     expect(manager).toContain("if (submitting) event.preventDefault()");
     expect(manager).toContain("disabled={submitting}");
-    expect(manager).toContain(
-      "disabled={submitting || refreshPending}",
-    );
+    expect(manager).toContain("refreshPending ||");
+    expect(manager).toContain("editLoading ||");
     expect(manager).toContain("if (requestInFlightRef.current) return");
     expect(manager).toContain("requestInFlightRef.current = true");
     expect(manager).toContain("requestInFlightRef.current = false");

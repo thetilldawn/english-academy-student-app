@@ -26,6 +26,11 @@ import {
   type AssignmentHistorySummary,
 } from "@/lib/admin/history";
 import {
+  assignmentEditChangeKeys,
+  type AssignmentEditChangeKey,
+  type AssignmentEditDraft,
+} from "@/lib/admin/assignment-edit";
+import {
   activityNeedsRetry,
   compareLearningActivities,
   learningActivityEffectiveAt,
@@ -34,6 +39,7 @@ import {
 import { formatKoreanDateTime } from "@/lib/format";
 import {
   currentTimeMilliseconds,
+  isoToKoreanDateTimeLocal,
   koreanDateTimeLocalToIso,
 } from "@/lib/deadline";
 import {
@@ -177,6 +183,76 @@ function unitRangeLabel(labels: string[]) {
   return `${labels[0]}~${labels.at(-1)}`;
 }
 
+function studentAssignmentUrl(
+  assignmentId: string,
+  studentId: string,
+) {
+  return `/api/admin/assignments/${assignmentId}/students/${studentId}`;
+}
+
+const editChangeLabels: Record<AssignmentEditChangeKey, string> = {
+  title: "시험 이름",
+  dataset: "단어장",
+  range: "범위",
+  questionCount: "문항 수",
+  direction: "출제 방식",
+  order: "문제 순서",
+  timing: "시간 제한",
+  passingScore: "통과 점수",
+  deadline: "응시 시작 마감",
+  review: "틀렸던 단어",
+};
+
+type EditComparable = Omit<
+  AssignmentEditDraft,
+  "assignmentId" | "studentId" | "studentName" | "purpose"
+>;
+
+function editValueLabel(
+  key: AssignmentEditChangeKey,
+  value: EditComparable,
+  datasets: readonly AssignmentDatasetItem[],
+  units: readonly AssignmentUnitItem[],
+) {
+  if (key === "title") return value.title;
+  if (key === "dataset") {
+    const dataset = datasets.find((item) => item.id === value.datasetId);
+    return dataset
+      ? [dataset.title, dataset.edition].filter(Boolean).join(" · ")
+      : "사용할 수 없는 단어장";
+  }
+  if (key === "range") {
+    return unitRangeLabel(
+      value.primaryUnitIds.map(
+        (unitId) =>
+          units.find((unit) => unit.id === unitId)?.label ?? "알 수 없음",
+      ),
+    );
+  }
+  if (key === "questionCount") return `${value.questionCount}문항`;
+  if (key === "direction") {
+    return directionLabel(value.englishToKoreanRatio);
+  }
+  if (key === "order") {
+    return questionOrderLabel(value.questionOrderMode);
+  }
+  if (key === "timing") {
+    return value.timingMode === "per_question"
+      ? `문제당 ${value.questionTimeLimitSeconds ?? 0}초`
+      : `전체 ${value.timeLimitSeconds / 60}분`;
+  }
+  if (key === "passingScore") return `${value.passingScore}점`;
+  if (key === "deadline") {
+    return value.availableUntil
+      ? formatKoreanDateTime(value.availableUntil)
+      : "마감 없음";
+  }
+  if (!value.includePendingReview) return "추가 안 함";
+  return value.reviewLevels
+    .map((level) => (level === 1 ? "한 번 틀림" : "두 번 이상 틀림"))
+    .join(" · ");
+}
+
 function recommendationLabel(progress: AssignmentProgressItem | null) {
   if (!progress) return "단어장 선택 필요";
   if (progress.recommendationReason === "complete") {
@@ -230,6 +306,7 @@ export function AssignmentManager({
   learningSources = [],
   history,
   initialDatasetId = "",
+  initialEditTarget = null,
   initialStudentId = "",
   initialDialogView = "overview",
   launcherOnly = false,
@@ -244,6 +321,10 @@ export function AssignmentManager({
   learningSources?: AssignmentLearningSourceItem[];
   history: AssignmentHistorySummary[];
   initialDatasetId?: string;
+  initialEditTarget?: {
+    assignmentId: string;
+    studentId: string;
+  } | null;
   initialStudentId?: string;
   initialDialogView?: "overview" | "assign";
   launcherOnly?: boolean;
@@ -252,6 +333,10 @@ export function AssignmentManager({
   const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const requestInFlightRef = useRef(false);
+  const editIdempotencyRef = useRef<{
+    fingerprint: string;
+    key: string;
+  } | null>(null);
   const readyDatasets = useMemo(
     () =>
       datasets.filter(
@@ -328,6 +413,12 @@ export function AssignmentManager({
   >(null);
   const [dialogView, setDialogView] = useState<"overview" | "assign">(
     initialDialogView,
+  );
+  const [editTarget, setEditTarget] = useState(initialEditTarget);
+  const [editDraft, setEditDraft] =
+    useState<AssignmentEditDraft | null>(null);
+  const [editLoading, setEditLoading] = useState(
+    initialEditTarget !== null,
   );
   const [studentId, setStudentId] = useState(initialStudent?.id ?? "");
   const [datasetId, setDatasetId] = useState(resolvedInitialDatasetId);
@@ -457,9 +548,58 @@ export function AssignmentManager({
   const finalTitle = customTitle.trim() || generatedTitle;
   const timeLimitSeconds =
     timingMode === "total" ? timeLimitMinutes * 60 : 10800;
+  const normalizedAvailableUntil = availableUntilLocal
+    ? koreanDateTimeLocalToIso(availableUntilLocal)
+    : null;
+  const currentEditValues = editDraft
+    ? {
+        title: finalTitle.trim(),
+        datasetId,
+        primaryUnitIds: selectedUnits.map((unit) => unit.id),
+        questionCount,
+        englishToKoreanRatio: directionRatio,
+        timeLimitSeconds,
+        timingMode,
+        questionTimeLimitSeconds:
+          timingMode === "per_question"
+            ? questionTimeLimitSeconds
+            : null,
+        passingScore,
+        questionOrderMode,
+        availableUntil: normalizedAvailableUntil,
+        includePendingReview,
+        reviewLevels: [...reviewLevels].toSorted(),
+      }
+    : null;
+  const editChanges =
+    editDraft && currentEditValues
+      ? assignmentEditChangeKeys(editDraft, currentEditValues)
+      : [];
+  const editComparisons =
+    editDraft && currentEditValues
+      ? editChanges.map((key) => ({
+          key,
+          label: editChangeLabels[key],
+          before: editValueLabel(key, editDraft, datasets, units),
+          after: editValueLabel(
+            key,
+            currentEditValues,
+            datasets,
+            units,
+          ),
+        }))
+      : [];
+  const editRebuildsQuestions = editChanges.some((change) =>
+    ["dataset", "range", "questionCount", "direction", "review"].includes(
+      change,
+    ),
+  );
+  const minimumAllowedQuestionCount =
+    editDraft?.purpose === "review" ? 1 : 4;
+  const exactReviewEdit = editDraft?.purpose === "review";
   const capacityInvalid =
     !capacity ||
-    capacity.maximumQuestionCount < 4 ||
+    capacity.maximumQuestionCount < minimumAllowedQuestionCount ||
     questionCount < capacity.minimumQuestionCount ||
     questionCount > capacity.maximumQuestionCount ||
     (includePendingReview && capacity.wrongEligible < 1);
@@ -468,11 +608,14 @@ export function AssignmentManager({
     !datasetId ||
     !selectedDataset ||
     selectedUnits.length === 0 ||
-    questionCount < 4 ||
+    questionCount < minimumAllowedQuestionCount ||
     questionCount > 500 ||
     capacityInvalid ||
     capacityLoading ||
     Boolean(capacityError) ||
+    editLoading ||
+    (editTarget !== null &&
+      (editDraft === null || editChanges.length === 0)) ||
     (timingMode === "total" &&
       (timeLimitSeconds < 30 || timeLimitSeconds > 10800)) ||
     (timingMode === "per_question" &&
@@ -635,7 +778,100 @@ export function AssignmentManager({
   }, [selectedStudent]);
 
   useEffect(() => {
-    if (!studentId || !datasetId || !selectedUnitIdsKey) {
+    if (!editTarget) return;
+    const controller = new AbortController();
+    void fetch(
+      studentAssignmentUrl(
+        editTarget.assignmentId,
+        editTarget.studentId,
+      ),
+      {
+        cache: "no-store",
+        signal: controller.signal,
+      },
+    )
+      .then(async (response) => {
+        const payload = (await response.json()) as
+          | AssignmentEditDraft
+          | ErrorResponse;
+        if (!response.ok || !("assignmentId" in payload)) {
+          throw new Error(
+            "error" in payload
+              ? payload.error
+              : "수정할 배정 정보를 불러오지 못했습니다.",
+          );
+        }
+        if (
+          payload.assignmentId !== editTarget.assignmentId ||
+          payload.studentId !== editTarget.studentId
+        ) {
+          throw new Error("수정할 배정 정보가 일치하지 않습니다.");
+        }
+        const deadlineLocal = isoToKoreanDateTimeLocal(
+          payload.availableUntil,
+        );
+        const normalizedDraft: AssignmentEditDraft = {
+          ...payload,
+          questionOrderMode:
+            payload.questionOrderMode === "fixed"
+              ? "ascending"
+              : payload.questionOrderMode,
+          availableUntil: deadlineLocal
+            ? koreanDateTimeLocalToIso(deadlineLocal)
+            : null,
+        };
+        setEditDraft(normalizedDraft);
+        setDatasetId(payload.datasetId);
+        setStartUnitId(payload.primaryUnitIds[0] ?? "");
+        setEndUnitId(payload.primaryUnitIds.at(-1) ?? "");
+        setQuestionCount(payload.questionCount);
+        setQuestionCountMode("manual");
+        setDirectionRatio(payload.englishToKoreanRatio);
+        setQuestionOrderMode(
+          payload.questionOrderMode === "fixed"
+            ? "ascending"
+            : payload.questionOrderMode,
+        );
+        setTimingMode(payload.timingMode);
+        setTimeLimitMinutes(payload.timeLimitSeconds / 60);
+        setQuestionTimeLimitSeconds(
+          payload.questionTimeLimitSeconds ?? 20,
+        );
+        setPassingScore(payload.passingScore);
+        setAvailableUntilLocal(deadlineLocal);
+        setCustomTitle(payload.title);
+        setIncludePendingReview(payload.includePendingReview);
+        setReviewLevels(
+          payload.reviewLevels.length > 0
+            ? payload.reviewLevels
+            : defaultReviewLevels(),
+        );
+        setCapacity(null);
+        setCapacityError("");
+        editIdempotencyRef.current = null;
+      })
+      .catch((requestError: unknown) => {
+        if (controller.signal.aborted) return;
+        setError(
+          requestError instanceof Error
+            ? requestError.message
+            : "수정할 배정 정보를 불러오지 못했습니다.",
+        );
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setEditLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [editTarget]);
+
+  useEffect(() => {
+    if (
+      !studentId ||
+      !datasetId ||
+      !selectedUnitIdsKey ||
+      (editTarget !== null && editDraft === null)
+    ) {
       return;
     }
 
@@ -643,7 +879,14 @@ export function AssignmentManager({
     const timeoutId = window.setTimeout(() => {
       setCapacityLoading(true);
       setCapacityError("");
-      void fetch("/api/admin/assignment-capacity", {
+      void fetch(
+        editTarget
+          ? studentAssignmentUrl(
+              editTarget.assignmentId,
+              editTarget.studentId,
+            )
+          : "/api/admin/assignment-capacity",
+        {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -672,6 +915,7 @@ export function AssignmentManager({
             if (questionCountMode === "auto") {
               return payload.recommendedQuestionCount || current;
             }
+            if (editTarget) return current;
             return current > payload.maximumQuestionCount
               ? payload.maximumQuestionCount
               : current;
@@ -707,6 +951,8 @@ export function AssignmentManager({
     capacityRefreshVersion,
     selectedUnitIdsKey,
     studentId,
+    editTarget,
+    editDraft,
   ]);
 
   function resetScopedControls() {
@@ -725,6 +971,10 @@ export function AssignmentManager({
     nextStudentId: string,
     nextView: "overview" | "assign" = "overview",
   ) {
+    setEditTarget(null);
+    setEditDraft(null);
+    setEditLoading(false);
+    editIdempotencyRef.current = null;
     const student = activeStudents.find(
       (candidate) => candidate.id === nextStudentId,
     );
@@ -759,7 +1009,30 @@ export function AssignmentManager({
     setDatasetId(nextDatasetId);
     setStartUnitId(nextRecommendedUnitId);
     setEndUnitId(nextRecommendedUnitId);
+    if (editTarget) {
+      setQuestionCountMode("manual");
+      setCapacity(null);
+      setCapacityError("");
+      setError("");
+      setSuccess("");
+      editIdempotencyRef.current = null;
+      return;
+    }
     resetScopedControls();
+  }
+
+  function beginEdit(item: AssignmentHistorySummary) {
+    setStudentId(item.studentId);
+    setDialogView("assign");
+    setEditTarget({
+      assignmentId: item.assignmentId,
+      studentId: item.studentId,
+    });
+    setEditDraft(null);
+    setEditLoading(true);
+    setError("");
+    setSuccess("");
+    editIdempotencyRef.current = null;
   }
 
   function selectStartUnit(nextStartId: string) {
@@ -792,6 +1065,10 @@ export function AssignmentManager({
   function handleDialogClose() {
     setStudentId("");
     setDialogView("overview");
+    setEditTarget(null);
+    setEditDraft(null);
+    setEditLoading(false);
+    editIdempotencyRef.current = null;
     resetScopedControls();
     onLauncherClose?.();
   }
@@ -842,7 +1119,7 @@ export function AssignmentManager({
         studentId,
         datasetId,
         primaryUnitIds: selectedUnits.map((unit) => unit.id),
-        title: customTitle,
+        title: editTarget ? finalTitle : customTitle,
         questionCount,
         englishToKoreanRatio: directionRatio,
         timeLimitSeconds,
@@ -855,21 +1132,67 @@ export function AssignmentManager({
         questionOrderMode,
         availableUntil,
       };
-      const submission = includePendingReview
-        ? buildAssignmentSubmission({
-            ...commonSubmission,
-            includePendingReview: true,
-            reviewLevels,
-          })
-        : buildAssignmentSubmission({
-            ...commonSubmission,
-            includePendingReview: false,
-          });
-      const response = await fetch(submission.endpoint, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(submission.body),
-      });
+      let response: Response;
+      if (editTarget) {
+        const replacementBody = {
+          title: finalTitle,
+          datasetId,
+          primaryUnitIds: commonSubmission.primaryUnitIds,
+          includePendingReview,
+          reviewLevels,
+          questionCount,
+          englishToKoreanRatio: directionRatio,
+          timeLimitSeconds,
+          timingMode,
+          questionTimeLimitSeconds:
+            timingMode === "per_question"
+              ? questionTimeLimitSeconds
+              : null,
+          passingScore,
+          questionOrderMode,
+          availableUntil,
+        };
+        const fingerprint = JSON.stringify(replacementBody);
+        if (
+          !editIdempotencyRef.current ||
+          editIdempotencyRef.current.fingerprint !== fingerprint
+        ) {
+          editIdempotencyRef.current = {
+            fingerprint,
+            key: crypto.randomUUID(),
+          };
+        }
+        response = await fetch(
+          studentAssignmentUrl(
+            editTarget.assignmentId,
+            editTarget.studentId,
+          ),
+          {
+            method: "PUT",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              idempotencyKey: editIdempotencyRef.current.key,
+              ...replacementBody,
+            }),
+          },
+        );
+      } else {
+        const submission = includePendingReview
+          ? buildAssignmentSubmission({
+              ...commonSubmission,
+              includePendingReview: true,
+              reviewLevels,
+            })
+          : buildAssignmentSubmission({
+              ...commonSubmission,
+              includePendingReview: false,
+            });
+        response = await fetch(submission.endpoint, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(submission.body),
+        });
+      }
       const payload = (await response.json()) as ErrorResponse;
 
       if (!response.ok) {
@@ -883,12 +1206,16 @@ export function AssignmentManager({
       }
 
       setSuccess(
-        includePendingReview
+        editTarget
+          ? `${selectedStudent?.displayName ?? "학생"}의 미응시 배정을 수정했습니다.`
+          : includePendingReview
           ? `${selectedStudent?.displayName ?? "학생"}에게 틀렸던 단어를 포함해 배정했습니다.`
           : `${selectedStudent?.displayName ?? "학생"}에게 배정했습니다.`,
       );
-      setAvailableUntilLocal("");
-      setCustomTitle("");
+      if (!editTarget) {
+        setAvailableUntilLocal("");
+        setCustomTitle("");
+      }
       startRefreshTransition(() => router.refresh());
     } catch (requestError) {
       setError(
@@ -1271,7 +1598,11 @@ export function AssignmentManager({
                         {nextActivity ? "보기" : "배정"}
                       </button>
                       {nextActivity ? (
-                        <AdminHistoryActions item={nextActivity} size="small" />
+                        <AdminHistoryActions
+                          item={nextActivity}
+                          onEdit={beginEdit}
+                          size="small"
+                        />
                       ) : null}
                     </div>
                   </article>
@@ -1321,6 +1652,13 @@ export function AssignmentManager({
                       closeDialog();
                       return;
                     }
+                    if (editTarget) {
+                      setEditTarget(null);
+                      setEditDraft(null);
+                      setEditLoading(false);
+                      editIdempotencyRef.current = null;
+                      resetScopedControls();
+                    }
                     setDialogView("overview");
                   }}
                   type="button"
@@ -1331,12 +1669,16 @@ export function AssignmentManager({
               <div>
                 <h2 id="assignment-dialog-title">
                   {dialogView === "assign"
-                    ? "단어 학습 배정"
+                    ? editTarget
+                      ? "배정 수정"
+                      : "단어 학습 배정"
                     : selectedStudent.displayName}
                 </h2>
                 <p>
                   {dialogView === "assign"
-                    ? selectedStudent.displayName
+                    ? editTarget
+                      ? `${selectedStudent.displayName} · 응시 시작 전`
+                      : selectedStudent.displayName
                     : [selectedStudent.schoolName, selectedStudent.gradeLabel]
                         .filter(Boolean)
                         .join(" · ") || "학생 정보 미입력"}
@@ -1418,7 +1760,10 @@ export function AssignmentManager({
                   <h3>배정 및 최근 내역</h3>
                   <span>{selectedActivities.length}개</span>
                 </div>
-                <StudentLearningActivityList items={selectedActivities} />
+                <StudentLearningActivityList
+                  items={selectedActivities}
+                  onEditAssignment={beginEdit}
+                />
               </section>
             ) : (
               <>
@@ -1438,6 +1783,12 @@ export function AssignmentManager({
                     {recommendationReasonLabel(selectedProgress)}
                   </HelpTip>
                 </div>
+
+                {editLoading ? (
+                  <div className="notice" role="status">
+                    기존 배정 조건을 불러오는 중입니다.
+                  </div>
+                ) : null}
 
           <form
             aria-busy={submitting}
@@ -1465,7 +1816,12 @@ export function AssignmentManager({
             ) : (
               <fieldset
                 className="assignment-modal-fieldset"
-                disabled={submitting || refreshPending}
+                disabled={
+                  submitting ||
+                  refreshPending ||
+                  editLoading ||
+                  (editTarget !== null && editDraft === null)
+                }
               >
                 <legend className="sr-only">
                   단어 시험 배정 조건
@@ -1482,9 +1838,16 @@ export function AssignmentManager({
                   </h3>
                 </div>
               </div>
+              {exactReviewEdit ? (
+                <div className="notice">
+                  오답 재시험은 대상 단어를 그대로 유지합니다. 단어장·범위·문항
+                  수·오답 단계는 잠겨 있고, 나머지 시험 조건만 바꿀 수 있습니다.
+                </div>
+              ) : null}
               <label className="field">
                 <span className="field-label">단어장</span>
                 <select
+                  disabled={exactReviewEdit}
                   onChange={(event) =>
                     selectDataset(event.target.value)
                   }
@@ -1507,6 +1870,7 @@ export function AssignmentManager({
                 <label className="field">
                   <span className="field-label">시작 {unitTerm}</span>
                   <select
+                    disabled={exactReviewEdit}
                     onChange={(event) =>
                       selectStartUnit(event.target.value)
                     }
@@ -1526,6 +1890,7 @@ export function AssignmentManager({
                 <label className="field">
                   <span className="field-label">끝 {unitTerm}</span>
                   <select
+                    disabled={exactReviewEdit}
                     onChange={(event) => {
                       setQuestionCountMode("auto");
                       setEndUnitId(event.target.value);
@@ -1568,8 +1933,9 @@ export function AssignmentManager({
                     aria-describedby="pending-review-help"
                     checked={includePendingReview}
                     disabled={
-                      selectedAvailableReviewTotal === 0 &&
-                      !includePendingReview
+                      exactReviewEdit ||
+                      (selectedAvailableReviewTotal === 0 &&
+                        !includePendingReview)
                     }
                     onChange={(event) =>
                       changeIncludePendingReview(event.target.checked)
@@ -1601,6 +1967,7 @@ export function AssignmentManager({
                       <button
                         aria-pressed={reviewLevels.includes(1)}
                         className="filter-chip"
+                        disabled={exactReviewEdit}
                         onClick={() => changeReviewLevel(1)}
                         type="button"
                       >
@@ -1610,6 +1977,7 @@ export function AssignmentManager({
                       <button
                         aria-pressed={reviewLevels.includes(2)}
                         className="filter-chip"
+                        disabled={exactReviewEdit}
                         onClick={() => changeReviewLevel(2)}
                         type="button"
                       >
@@ -1695,7 +2063,10 @@ export function AssignmentManager({
                   </span>
                   <input
                     max={capacity?.maximumQuestionCount ?? 500}
-                    min={capacity?.minimumQuestionCount ?? 4}
+                    min={
+                      capacity?.minimumQuestionCount ??
+                      minimumAllowedQuestionCount
+                    }
                     onChange={(event) => {
                       setQuestionCountMode("manual");
                       setQuestionCount(Number(event.target.value));
@@ -1704,6 +2075,7 @@ export function AssignmentManager({
                     }}
                     required
                     type="number"
+                    readOnly={exactReviewEdit}
                     value={questionCount}
                   />
                   {questionCountMode === "manual" &&
@@ -1758,11 +2130,12 @@ export function AssignmentManager({
                   {timingMode === "total" ? (
                     <input
                       max={180}
-                      min={1}
+                      min={0.5}
                       onChange={(event) =>
                         setTimeLimitMinutes(Number(event.target.value))
                       }
                       required
+                      step={0.5}
                       type="number"
                       value={timeLimitMinutes}
                     />
@@ -1896,6 +2269,44 @@ export function AssignmentManager({
                   </div>
                 </dl>
               </div>
+              {editDraft ? (
+                <section
+                  aria-label="배정 변경 비교"
+                  className="assignment-edit-comparison"
+                >
+                  <div className="assignment-edit-comparison-heading">
+                    <strong>변경 전·후</strong>
+                    <span>{editComparisons.length}개 변경</span>
+                  </div>
+                  {editComparisons.length > 0 ? (
+                    <dl>
+                      {editComparisons.map((comparison) => (
+                        <div key={comparison.key}>
+                          <dt>{comparison.label}</dt>
+                          <dd>
+                            <span>
+                              <span className="sr-only">변경 전: </span>
+                              {comparison.before}
+                            </span>
+                            <span aria-hidden="true">→</span>
+                            <strong>
+                              <span className="sr-only">변경 후: </span>
+                              {comparison.after}
+                            </strong>
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : (
+                    <p>아직 바뀐 조건이 없습니다.</p>
+                  )}
+                  {editRebuildsQuestions ? (
+                    <p className="field-help">
+                      범위·문항 구성 변경으로 문제와 선택지를 다시 구성합니다.
+                    </p>
+                  ) : null}
+                </section>
+              ) : null}
               {!success && capacityLoading && (
                 <div className="notice" role="status">
                   실제 출제 가능한 문항 수를 계산하는 중입니다.
@@ -1935,9 +2346,11 @@ export function AssignmentManager({
                   </div>
                 )}
               {!success &&
-                (questionCount < 4 || questionCount > 500) && (
-                <div className="notice notice-error" role="alert">
-                  총 문항 수는 4개 이상 500개 이하여야 합니다.
+                (questionCount < minimumAllowedQuestionCount ||
+                  questionCount > 500) && (
+                  <div className="notice notice-error" role="alert">
+                  총 문항 수는 {minimumAllowedQuestionCount}개 이상
+                  500개 이하여야 합니다.
                 </div>
               )}
               {!success &&
@@ -1968,10 +2381,16 @@ export function AssignmentManager({
                 type="submit"
               >
                 {submitting
-                  ? "배정하는 중…"
+                  ? editTarget
+                    ? "수정하는 중…"
+                    : "배정하는 중…"
                   : refreshPending
                     ? "화면에 반영하는 중…"
-                    : includePendingReview
+                    : editTarget
+                      ? editComparisons.length > 0
+                        ? "변경 내용 저장"
+                        : "변경 없음"
+                      : includePendingReview
                       ? "틀렸던 단어 포함해 배정"
                       : "이 학생에게 배정"}
               </button>

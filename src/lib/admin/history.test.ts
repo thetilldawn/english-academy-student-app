@@ -21,6 +21,7 @@ const assignment: AssignmentHistorySource = {
   studentId: "student-1",
   studentName: "테스트 학생",
   studentDeleted: false,
+  studentStatus: "active",
   schoolName: "테스트고등학교",
   gradeLabel: "고1",
   datasetId: "dataset-1",

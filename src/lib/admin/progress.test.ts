@@ -30,6 +30,7 @@ function history(
     studentId: student.id,
     studentName: "테스트 학생",
     studentDeleted: false,
+    studentStatus: "active",
     schoolName: null,
     gradeLabel: null,
     datasetId: "dataset-current",
