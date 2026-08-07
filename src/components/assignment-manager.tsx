@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 
 import { HelpTip } from "@/components/help-tip";
 import { BulkAssignmentDialog } from "@/components/bulk-assignment-dialog";
+import { AdminHistoryActions } from "@/components/admin-history-actions";
 import {
   AttemptScoreSummary,
   AttemptStatusLabel,
@@ -25,8 +26,9 @@ import {
   type AssignmentHistorySummary,
 } from "@/lib/admin/history";
 import {
+  activityNeedsRetry,
   compareLearningActivities,
-  learningActivityBucket,
+  learningActivityEffectiveAt,
   studentLearningActivityIndex,
 } from "@/lib/admin/learning-activity";
 import { formatKoreanDateTime } from "@/lib/format";
@@ -60,6 +62,7 @@ import {
   indexStudentCurrentVocabWrongSummaries,
   type StudentCurrentVocabWrongSummary,
 } from "@/lib/admin/wrong-history-summary";
+import { learningSourceTypeLabel } from "@/lib/admin/learning-sources";
 
 export type AssignmentDatasetItem = {
   id: string;
@@ -226,6 +229,7 @@ export function AssignmentManager({
   currentVocabWrongSummaries,
   learningSources = [],
   history,
+  initialDatasetId = "",
   initialStudentId = "",
   initialDialogView = "overview",
   launcherOnly = false,
@@ -239,6 +243,7 @@ export function AssignmentManager({
   currentVocabWrongSummaries: StudentCurrentVocabWrongSummary[];
   learningSources?: AssignmentLearningSourceItem[];
   history: AssignmentHistorySummary[];
+  initialDatasetId?: string;
   initialStudentId?: string;
   initialDialogView?: "overview" | "assign";
   launcherOnly?: boolean;
@@ -295,13 +300,16 @@ export function AssignmentManager({
   )
     ? initialStudent?.currentVocabDatasetId
     : null;
-  const initialDatasetId =
-    initialStudentDatasetId ?? readyDatasets[0]?.id ?? "";
+  const resolvedInitialDatasetId = readyDatasets.some(
+    (dataset) => dataset.id === initialDatasetId,
+  )
+    ? initialDatasetId
+    : initialStudentDatasetId ?? readyDatasets[0]?.id ?? "";
   const initialProgress = initialStudent
     ? (progressByStudent.get(initialStudent.id) ?? null)
     : null;
   const initialRecommendedUnitId =
-    initialProgress?.recommendedDatasetId === initialDatasetId
+    initialProgress?.recommendedDatasetId === resolvedInitialDatasetId
       ? (initialProgress.recommendedUnitId ?? "")
       : "";
 
@@ -322,7 +330,7 @@ export function AssignmentManager({
     initialDialogView,
   );
   const [studentId, setStudentId] = useState(initialStudent?.id ?? "");
-  const [datasetId, setDatasetId] = useState(initialDatasetId);
+  const [datasetId, setDatasetId] = useState(resolvedInitialDatasetId);
   const [startUnitId, setStartUnitId] = useState(initialRecommendedUnitId);
   const [endUnitId, setEndUnitId] = useState(initialRecommendedUnitId);
   const [questionCount, setQuestionCount] = useState(20);
@@ -364,7 +372,9 @@ export function AssignmentManager({
     ? (activitiesByStudent.get(selectedStudent.id) ?? [])
     : [];
   const selectedLearningSources = selectedStudent
-    ? (learningSourcesByStudent.get(selectedStudent.id) ?? [])
+    ? (learningSourcesByStudent.get(selectedStudent.id) ?? []).filter(
+        (source) => source.sourceType !== "primary_vocab",
+      )
     : [];
   const selectedDataset =
     readyDatasets.find((dataset) => dataset.id === datasetId) ?? null;
@@ -498,12 +508,16 @@ export function AssignmentManager({
     () =>
       Array.from(
         new Set(
-          activeStudents
-            .map((student) => student.currentVocabBook?.trim())
+          [
+            ...activeStudents.map((student) =>
+              student.currentVocabBook?.trim(),
+            ),
+            ...learningSources.map((source) => source.displayLabel.trim()),
+          ]
             .filter((value): value is string => Boolean(value)),
         ),
       ).toSorted(),
-    [activeStudents],
+    [activeStudents, learningSources],
   );
   const filteredStudents = useMemo(() => {
     const keyword = query.trim().toLocaleLowerCase("ko-KR");
@@ -513,6 +527,9 @@ export function AssignmentManager({
         student.schoolName,
         student.gradeLabel,
         student.currentVocabBook,
+        ...(learningSourcesByStudent.get(student.id) ?? []).map(
+          (source) => source.displayLabel,
+        ),
       ]
         .filter(Boolean)
         .join(" ")
@@ -521,12 +538,16 @@ export function AssignmentManager({
         (!keyword || searchText.includes(keyword)) &&
         (!schoolFilter || student.schoolName === schoolFilter) &&
         (!gradeFilter || student.gradeLabel === gradeFilter) &&
-        (!wordbookFilter || student.currentVocabBook === wordbookFilter) &&
+        (!wordbookFilter ||
+          student.currentVocabBook === wordbookFilter ||
+          (learningSourcesByStudent.get(student.id) ?? []).some(
+            (source) => source.displayLabel === wordbookFilter,
+          )) &&
         (() => {
           if (wrongWordFilter === "all") return true;
           if (wrongWordFilter === "retry") {
             return (activitiesByStudent.get(student.id) ?? []).some(
-              (item) => learningActivityBucket(item) === "needs_attention",
+              activityNeedsRetry,
             );
           }
           if (!student.currentVocabDatasetId) return false;
@@ -564,6 +585,7 @@ export function AssignmentManager({
     activitiesByStudent,
     currentVocabWrongIndex,
     gradeFilter,
+    learningSourcesByStudent,
     query,
     schoolFilter,
     wordbookFilter,
@@ -699,7 +721,10 @@ export function AssignmentManager({
     setSuccess("");
   }
 
-  function selectStudent(nextStudentId: string) {
+  function selectStudent(
+    nextStudentId: string,
+    nextView: "overview" | "assign" = "overview",
+  ) {
     const student = activeStudents.find(
       (candidate) => candidate.id === nextStudentId,
     );
@@ -719,7 +744,7 @@ export function AssignmentManager({
         : "";
 
     setStudentId(nextStudentId);
-    setDialogView("overview");
+    setDialogView(nextView);
     setDatasetId(nextDatasetId);
     setStartUnitId(nextRecommendedUnitId);
     setEndUnitId(nextRecommendedUnitId);
@@ -1020,18 +1045,6 @@ export function AssignmentManager({
                     ))}
                   </div>
                 </fieldset>
-                <button
-                  className="button button-quiet button-small"
-                  onClick={() => {
-                    setSchoolFilter("");
-                    setGradeFilter("");
-                    setWordbookFilter("");
-                    setWrongWordFilter("all");
-                  }}
-                  type="button"
-                >
-                  필터 초기화
-                </button>
               </div>
             </details>
             <div className="learning-filter-summary">
@@ -1049,7 +1062,27 @@ export function AssignmentManager({
                   </MetaTag>
                 ) : null}
               </MetaTagList>
-              <strong>{filteredStudents.length}명</strong>
+              <div className="learning-filter-summary-actions">
+                <strong>{filteredStudents.length}명</strong>
+                <button
+                  className="button button-quiet button-small"
+                  disabled={
+                    !schoolFilter &&
+                    !gradeFilter &&
+                    !wordbookFilter &&
+                    wrongWordFilter === "all"
+                  }
+                  onClick={() => {
+                    setSchoolFilter("");
+                    setGradeFilter("");
+                    setWordbookFilter("");
+                    setWrongWordFilter("all");
+                  }}
+                  type="button"
+                >
+                  초기화
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1115,6 +1148,13 @@ export function AssignmentManager({
                 const studentActivities =
                   activitiesByStudent.get(student.id) ?? [];
                 const nextActivity = studentActivities[0] ?? null;
+                const studentLearningSources = (
+                  learningSourcesByStudent.get(student.id) ?? []
+                ).filter(
+                  (source) =>
+                    source.sourceType !== "primary_vocab" &&
+                    source.displayLabel !== student.currentVocabBook,
+                );
                 const studentReviewCounts =
                   student.currentVocabDatasetId
                     ? (pendingReviewIndex.byStudentDataset.get(
@@ -1153,6 +1193,15 @@ export function AssignmentManager({
                         <MetaTag>
                           {student.currentVocabBook ?? "단어장 미선택"}
                         </MetaTag>
+                        {studentLearningSources.slice(0, 2).map((source) => (
+                          <MetaTag key={source.id}>
+                            {learningSourceTypeLabel(source.sourceType)} ·{" "}
+                            {source.displayLabel}
+                          </MetaTag>
+                        ))}
+                        {studentLearningSources.length > 2 ? (
+                          <MetaTag>+{studentLearningSources.length - 2}</MetaTag>
+                        ) : null}
                         {studentPendingReviewCount > 0 ? (
                           <MetaTag tone="warning">
                             오답 대기 {studentPendingReviewCount}개
@@ -1183,8 +1232,10 @@ export function AssignmentManager({
                             : `배정 ${formatKoreanDateTime(nextActivity.assignedAt)} · 마감 없음`
                           : nextActivity?.completedAt
                             ? `종료 ${formatKoreanDateTime(nextActivity.completedAt)}`
-                            : nextActivity?.activityAt
-                              ? formatKoreanDateTime(nextActivity.activityAt)
+                            : nextActivity
+                              ? `${nextActivity.status === "expired" ? "시간 종료 " : ""}${formatKoreanDateTime(
+                                  learningActivityEffectiveAt(nextActivity),
+                                )}`
                               : "최근 기록 없음"}
                       </small>
                       <span className="assignment-student-score-line">
@@ -1206,13 +1257,23 @@ export function AssignmentManager({
                         />
                       </span>
                     </span>
-                    <button
-                      className="button button-primary button-small"
-                      onClick={() => selectStudent(student.id)}
-                      type="button"
-                    >
-                      보기
-                    </button>
+                    <div className="assignment-student-actions">
+                      <button
+                        className="button button-primary button-small"
+                        onClick={() =>
+                          selectStudent(
+                            student.id,
+                            nextActivity ? "overview" : "assign",
+                          )
+                        }
+                        type="button"
+                      >
+                        {nextActivity ? "보기" : "배정"}
+                      </button>
+                      {nextActivity ? (
+                        <AdminHistoryActions item={nextActivity} size="small" />
+                      ) : null}
+                    </div>
                   </article>
                 );
               })}
@@ -1248,10 +1309,20 @@ export function AssignmentManager({
             <div className="learning-dialog-title-row">
               {dialogView === "assign" ? (
                 <button
-                  aria-label="학습 관리로 돌아가기"
+                  aria-label={
+                    launcherOnly
+                      ? "학생 학습 관리로 돌아가기"
+                      : "학습 관리로 돌아가기"
+                  }
                   className="button button-quiet button-icon learning-dialog-back"
                   disabled={submitting}
-                  onClick={() => setDialogView("overview")}
+                  onClick={() => {
+                    if (launcherOnly) {
+                      closeDialog();
+                      return;
+                    }
+                    setDialogView("overview");
+                  }}
                   type="button"
                 >
                   ←
@@ -1314,6 +1385,7 @@ export function AssignmentManager({
                               : "neutral"
                           }
                         >
+                          {learningSourceTypeLabel(source.sourceType)} ·{" "}
                           {source.displayLabel}
                         </MetaTag>
                       ))}

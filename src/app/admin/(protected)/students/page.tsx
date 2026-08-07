@@ -9,6 +9,7 @@ import {
   listDatasets,
   listSelectableDatasets,
   listStudentCurrentVocabWrongSummaries,
+  listStudentLearningSources,
   listStudentPendingReviewSummaries,
   listStudents,
   listVocabUnits,
@@ -32,6 +33,7 @@ export default async function StudentsPage({
     history,
     pendingReviewSummaries,
     currentVocabWrongSummaries,
+    learningSources,
   ] = await Promise.all([
     searchParams,
     listStudents(),
@@ -41,6 +43,7 @@ export default async function StudentsPage({
     listAssignmentHistory(),
     listStudentPendingReviewSummaries(),
     listStudentCurrentVocabWrongSummaries(),
+    listStudentLearningSources(),
   ]);
   const progress = buildStudentProgress(students, units, history);
   const appOrigin =
@@ -57,6 +60,7 @@ export default async function StudentsPage({
         datasets={datasets}
         history={history}
         initialStudentId={initialStudentId}
+        learningSources={learningSources}
         pendingReviewSummaries={pendingReviewSummaries}
         progress={progress}
         students={students}

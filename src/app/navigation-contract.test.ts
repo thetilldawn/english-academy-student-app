@@ -97,9 +97,8 @@ describe("responsive navigation contract", () => {
       'disabled={busyKey !== "" || datasets.length === 0}',
     );
     expect(studentManager).not.toContain('name="currentVocabBook"');
-    expect(studentManager).toContain(
-      'student.currentVocabBook ?? "단어장 미입력"',
-    );
+    expect(studentManager).toContain("student.currentVocabBook,");
+    expect(studentManager).toContain("학습 자료 미입력");
     expect(adminService).toContain(
       "p_current_vocab_dataset_id: input.currentVocabDatasetId",
     );
@@ -163,6 +162,9 @@ describe("responsive navigation contract", () => {
     const historyList = source(
       "src/components/admin-history-list.tsx",
     );
+    const overviewGroups = source(
+      "src/components/overview-action-groups.tsx",
+    );
     const scorePresentation = source(
       "src/lib/ui/attempt-score-presentation.ts",
     );
@@ -176,6 +178,12 @@ describe("responsive navigation contract", () => {
     expect(scorePresentation).toContain('label: "재시험"');
     expect(historyList).toContain("미응시");
     expect(historyList).toContain("/api/admin/attempts/");
+    expect(overview).toContain("<OverviewActionGroups");
+    expect(overviewGroups).toContain("onSelectStudent={setSelectedStudentId}");
+    expect(overviewGroups).toContain("launcherOnly");
+    expect(overviewGroups).not.toContain("slice(0, 8)");
+    expect(overviewGroups).toContain("{section.items.length}건");
+    expect(historyList).toContain("남은 오답");
   });
 
   it("첫 시험 뒤 결과를 먼저 보여주고 학생이 재시험을 시작한다", () => {

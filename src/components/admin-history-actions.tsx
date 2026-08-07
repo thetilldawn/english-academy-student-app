@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -27,10 +28,14 @@ async function mutate(url: string, options: RequestInit) {
 export function AdminHistoryActions({
   item,
   onMutated,
+  onViewDetail,
+  showDetailLink = true,
   size = "regular",
 }: {
   item: AssignmentHistorySummary;
   onMutated?: () => void;
+  onViewDetail?: () => void;
+  showDetailLink?: boolean;
   size?: "regular" | "small";
 }) {
   const router = useRouter();
@@ -67,6 +72,26 @@ export function AdminHistoryActions({
   return (
     <div className="history-action-stack">
       <div className="history-action-group">
+        {showDetailLink && item.attemptId
+          ? onViewDetail
+            ? (
+                <button
+                  className={`button button-secondary${sizeClass}`}
+                  onClick={onViewDetail}
+                  type="button"
+                >
+                  내역 보기
+                </button>
+              )
+            : (
+                <Link
+                  className={`button button-secondary${sizeClass}`}
+                  href={`/admin/results/${item.attemptId}`}
+                >
+                  내역 보기
+                </Link>
+              )
+          : null}
         {item.status === "not_started" &&
           !item.attemptId &&
           !item.assignmentDeleted && (

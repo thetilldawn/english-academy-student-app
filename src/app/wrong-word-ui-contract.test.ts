@@ -110,6 +110,7 @@ describe("wrong-word admin UI contract", () => {
     expect(manager).toContain('"learning" | "account" | "history"');
     expect(manager).toContain("<StudentWrongWordPanel");
     expect(manager).toContain("단어 학습 관리");
+    expect(manager).toContain("initialDatasetId={learningSourceDatasetId}");
     expect(panel).toContain(
       "/api/admin/students/${studentId}/wrong-words",
     );
@@ -117,6 +118,7 @@ describe("wrong-word admin UI contract", () => {
     expect(panel).toContain("AbortController");
     expect(panel).toContain("WRONG_HISTORY_CACHE_TTL_MS");
     expect(panel).toContain("새로고침");
+    expect(panel).toContain("useState(initialDatasetId)");
     expect(manager).toContain("moveDialogTabFocus");
     expect(panel).toContain("누적 2회 이상");
     expect(panel).toContain('type="checkbox"');

@@ -80,18 +80,64 @@ function elapsedText(seconds: number | null) {
   return `${minutes}분 ${remainder}초`;
 }
 
+function activityTimeText(
+  item: AssignmentHistorySummary,
+  compact: boolean,
+) {
+  if (item.status === "missed") {
+    return `마감 ${formatKoreanDateTime(
+      item.availableUntil ?? item.missedAt,
+    )}`;
+  }
+  if (item.status === "cancelled") {
+    return `취소 ${formatKoreanDateTime(item.cancelledAt)}`;
+  }
+  if (item.status === "not_started") {
+    return item.availableUntil
+      ? `마감 ${formatKoreanDateTime(item.availableUntil)}`
+      : `배정 ${formatKoreanDateTime(item.assignedAt)}`;
+  }
+  if (item.status === "in_progress") {
+    return `시작 ${formatKoreanDateTime(item.startedAt)}`;
+  }
+
+  const finishedAt =
+    item.status === "expired"
+      ? item.deadlineAt ?? item.activityAt
+      : item.completedAt ?? item.activityAt;
+  const wrongSummary =
+    compact &&
+    (item.status === "expired" ||
+      (item.status === "completed" &&
+        statusPresentation(item).outcome === "failed")) &&
+    item.unresolvedWrongCount !== null
+      ? ` · 남은 오답 ${item.unresolvedWrongCount}개`
+      : "";
+  return `종료 ${formatKoreanDateTime(finishedAt)}${wrongSummary}`;
+}
+
 export function AdminHistoryList({
   items,
   compact = false,
+  initialItemId = "",
+  launcherOnly = false,
+  onLauncherClose,
+  onSelectStudent,
   showFilters = false,
 }: {
   items: AssignmentHistorySummary[];
   compact?: boolean;
+  initialItemId?: string;
+  launcherOnly?: boolean;
+  onLauncherClose?: () => void;
+  onSelectStudent?: (studentId: string) => void;
   showFilters?: boolean;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const detailRequestRef = useRef<AbortController | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(
+    initialItemId || null,
+  );
   const [detail, setDetail] = useState<AttemptDetail | null>(null);
   const [detailError, setDetailError] = useState("");
   const [detailLoading, setDetailLoading] = useState(false);
@@ -204,8 +250,10 @@ export function AdminHistoryList({
 
   return (
     <>
-      {showFilters && (
-        <div className="history-filters">
+      {!launcherOnly ? (
+        <>
+          {showFilters && (
+            <div className="history-filters">
           <label className="field">
             <span className="field-label">학생·시험 검색</span>
             <input
@@ -236,70 +284,64 @@ export function AdminHistoryList({
               <option value="expired">시간 종료</option>
             </select>
           </label>
-        </div>
-      )}
+            </div>
+          )}
 
-      {filteredItems.length === 0 ? (
-        <div className="empty-state">
-          {items.length === 0
-            ? "아직 배정된 시험이 없습니다."
-            : "조건에 맞는 내역이 없습니다."}
-        </div>
-      ) : (
-        <ol className="admin-history-list">
-          {filteredItems.map((item) => (
-            <li key={item.id}>
-              <button
-                className="admin-history-row"
-                data-outcome={statusPresentation(item).outcome}
-                data-compact={compact}
-                onClick={() => openHistory(item)}
-                type="button"
-              >
-                <span className="history-row-main">
-                  <strong>{item.studentName}</strong>
-                  <span>{assignmentDisplayTitle(item)}</span>
-                  <AssignmentMetaTags {...item} />
-                  <small className="card-time-meta">
-                    {item.status === "missed"
-                      ? `마감 ${formatKoreanDateTime(
-                          item.availableUntil,
-                        )}`
-                      : item.status === "cancelled"
-                        ? `취소 ${formatKoreanDateTime(
-                            item.cancelledAt,
-                          )}`
-                      : item.status === "not_started"
-                        ? `배정 ${formatKoreanDateTime(
-                            item.assignedAt,
-                          )}`
-                        : `시작 ${formatKoreanDateTime(
-                            item.startedAt,
-                          )}`}
-                  </small>
-                </span>
-                <AttemptScoreSummary
-                  className="history-score-pair"
-                  finalScore={item.finalScore}
-                  initialScore={item.initialScore}
-                  passingScore={item.passingScore}
-                  phase={item.phase}
-                  retryStartedAt={item.retryStartedAt}
-                  status={item.status}
-                />
-                <AttemptStatusLabel
-                  finalScore={item.finalScore}
-                  initialScore={item.initialScore}
-                  passingScore={item.passingScore}
-                  phase={item.phase}
-                  retryStartedAt={item.retryStartedAt}
-                  status={item.status}
-                />
-              </button>
-            </li>
-          ))}
-        </ol>
-      )}
+          {filteredItems.length === 0 ? (
+            <div className="empty-state">
+              {items.length === 0
+                ? "아직 배정된 시험이 없습니다."
+                : "조건에 맞는 내역이 없습니다."}
+            </div>
+          ) : (
+            <ol className="admin-history-list">
+              {filteredItems.map((item) => (
+                <li key={item.id}>
+                  <button
+                    className="admin-history-row"
+                    data-outcome={statusPresentation(item).outcome}
+                    data-compact={compact}
+                    onClick={() => {
+                      if (onSelectStudent && !item.studentDeleted) {
+                        onSelectStudent(item.studentId);
+                        return;
+                      }
+                      openHistory(item);
+                    }}
+                    type="button"
+                  >
+                    <span className="history-row-main">
+                      <strong>{item.studentName}</strong>
+                      <span>{assignmentDisplayTitle(item)}</span>
+                      <AssignmentMetaTags {...item} />
+                      <small className="card-time-meta">
+                        {activityTimeText(item, compact)}
+                      </small>
+                    </span>
+                    <AttemptScoreSummary
+                      className="history-score-pair"
+                      finalScore={item.finalScore}
+                      initialScore={item.initialScore}
+                      passingScore={item.passingScore}
+                      phase={item.phase}
+                      retryStartedAt={item.retryStartedAt}
+                      status={item.status}
+                    />
+                    <AttemptStatusLabel
+                      finalScore={item.finalScore}
+                      initialScore={item.initialScore}
+                      passingScore={item.passingScore}
+                      phase={item.phase}
+                      retryStartedAt={item.retryStartedAt}
+                      status={item.status}
+                    />
+                  </button>
+                </li>
+              ))}
+            </ol>
+          )}
+        </>
+      ) : null}
 
       {selected && (
         <dialog
@@ -312,6 +354,7 @@ export function AdminHistoryList({
             setDetail(null);
             setDetailError("");
             setSelectedDeadlineRemaining(null);
+            onLauncherClose?.();
           }}
           ref={dialogRef}
         >
@@ -486,6 +529,7 @@ export function AdminHistoryList({
             <AdminHistoryActions
               item={selected}
               onMutated={closeDialog}
+              showDetailLink={false}
             />
             {selected.attemptId && (
               <Link

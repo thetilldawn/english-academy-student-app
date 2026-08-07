@@ -79,12 +79,14 @@ export function StudentWrongWordPanel({
   active,
   cachedAt,
   cachedHistory,
+  initialDatasetId = "",
   onLoaded,
   studentId,
 }: {
   active: boolean;
   cachedAt: number | null;
   cachedHistory: StudentWrongWordHistory | null;
+  initialDatasetId?: string;
   onLoaded: (
     studentId: string,
     history: StudentWrongWordHistory,
@@ -99,7 +101,7 @@ export function StudentWrongWordPanel({
   const [forceRefresh, setForceRefresh] = useState(false);
   const [levelFilter, setLevelFilter] =
     useState<LevelFilter>("all");
-  const [datasetFilter, setDatasetFilter] = useState("");
+  const [datasetFilter, setDatasetFilter] = useState(initialDatasetId);
   const [query, setQuery] = useState("");
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<
     string[]
