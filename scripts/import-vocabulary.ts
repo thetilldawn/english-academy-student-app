@@ -3,7 +3,10 @@ import path from "node:path";
 
 import { createClient } from "@supabase/supabase-js";
 
-import { normalizeVocabularyImport } from "@/lib/vocab/import-contract";
+import {
+  assertVocabularyImportApplyAllowed,
+  normalizeVocabularyImport,
+} from "@/lib/vocab/import-contract";
 
 type CliOptions = {
   file: string;
@@ -63,6 +66,8 @@ async function main() {
     );
     return;
   }
+
+  assertVocabularyImportApplyAllowed(normalized.file, options.markReady);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const secretKey = process.env.SUPABASE_SECRET_KEY;

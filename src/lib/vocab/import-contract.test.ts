@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { normalizeVocabularyImport } from "@/lib/vocab/import-contract";
+import {
+  assertVocabularyImportApplyAllowed,
+  normalizeVocabularyImport,
+} from "@/lib/vocab/import-contract";
 
 const validInput = {
   schemaVersion: 1,
@@ -117,5 +120,40 @@ describe("normalizeVocabularyImport", () => {
         ),
       }),
     ).toThrow("원본 행 번호");
+  });
+
+  it("candidate import 정책은 dry-run 파싱은 허용하고 apply는 차단한다", () => {
+    const result = normalizeVocabularyImport({
+      ...validInput,
+      importPolicy: {
+        status: "candidate",
+        applyAllowed: false,
+        reason: "검수 전 후보",
+      },
+    });
+
+    expect(result.file.importPolicy).toEqual({
+      status: "candidate",
+      applyAllowed: false,
+      reason: "검수 전 후보",
+    });
+    expect(() => assertVocabularyImportApplyAllowed(result.file)).toThrow(
+      "앱 적용이 차단된 데이터",
+    );
+  });
+
+  it("approved 정책만 ready 적용을 허용한다", () => {
+    const result = normalizeVocabularyImport({
+      ...validInput,
+      importPolicy: {
+        status: "approved",
+        applyAllowed: true,
+        reason: "독립 검수 완료",
+      },
+    });
+
+    expect(() =>
+      assertVocabularyImportApplyAllowed(result.file, true),
+    ).not.toThrow();
   });
 });

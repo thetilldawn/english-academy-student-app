@@ -238,19 +238,20 @@ async function main() {
     normalized.file.dataset.sourceSha256.toLowerCase(),
   ].join("|");
   const sourceId = stableWordIndexId("source", sourceKey);
+  const sourceMetadata = normalized.file.dataset.sourceMetadata;
   const source = {
     source_id: sourceId,
     source_key: sourceKey,
-    source_type: "wordbook",
+    source_type: sourceMetadata?.sourceType ?? "wordbook",
     title: normalized.file.dataset.title,
-    publisher: "NE능률",
+    publisher: sourceMetadata?.publisher ?? null,
     edition: normalized.file.dataset.edition,
-    curriculum_revision: "2025개정",
+    curriculum_revision: sourceMetadata?.curriculumRevision ?? null,
     volume: null,
     school_name: null,
-    grade_code: "고등",
-    academic_year: null,
-    semester: null,
+    grade_code: sourceMetadata?.gradeCode ?? null,
+    academic_year: sourceMetadata?.academicYear ?? null,
+    semester: sourceMetadata?.semester ?? null,
     source_relative_path: normalized.file.dataset.sourceLabel,
     source_sha256:
       normalized.file.dataset.sourceSha256.toLowerCase(),

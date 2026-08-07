@@ -15,8 +15,20 @@ const importRowSchema = z.object({
   meaningText: z.string().trim().min(1).max(2000),
 });
 
+const vocabularyImportPolicySchema = z
+  .object({
+    status: z.enum(["candidate", "approved"]),
+    applyAllowed: z.boolean(),
+    reason: z.string().trim().min(1).max(300),
+  })
+  .refine(
+    (policy) => policy.status !== "candidate" || !policy.applyAllowed,
+    "후보 데이터는 앱 적용을 허용할 수 없습니다.",
+  );
+
 export const vocabularyImportFileSchema = z.object({
   schemaVersion: z.literal(1),
+  importPolicy: vocabularyImportPolicySchema.optional(),
   dataset: z.object({
     datasetKey: z
       .string()
@@ -26,6 +38,22 @@ export const vocabularyImportFileSchema = z.object({
     sourceLabel: z.string().trim().min(1).max(200),
     sourceSha256: sha256Schema,
     sourceSheet: z.string().trim().min(1).max(160),
+    sourceMetadata: z
+      .object({
+        sourceType: z.string().trim().min(1).max(80).default("wordbook"),
+        publisher: z.string().trim().min(1).max(160).nullable().default(null),
+        curriculumRevision: z
+          .string()
+          .trim()
+          .min(1)
+          .max(80)
+          .nullable()
+          .default(null),
+        gradeCode: z.string().trim().min(1).max(40).nullable().default(null),
+        academicYear: z.number().int().min(1900).max(2200).nullable().default(null),
+        semester: z.number().int().min(1).max(2).nullable().default(null),
+      })
+      .optional(),
     expectedRows: z.number().int().positive(),
   }),
   rows: z.array(importRowSchema).min(4),
@@ -71,6 +99,19 @@ export type VocabularyImportAudit = {
   firstSourceRow: number;
   lastSourceRow: number;
 };
+
+export function assertVocabularyImportApplyAllowed(
+  file: VocabularyImportFile,
+  markReady = false,
+) {
+  const policy = file.importPolicy;
+  if (policy?.applyAllowed === false) {
+    throw new Error(`앱 적용이 차단된 데이터입니다: ${policy.reason}`);
+  }
+  if (markReady && policy && policy.status !== "approved") {
+    throw new Error("승인되지 않은 데이터는 ready 상태로 적용할 수 없습니다.");
+  }
+}
 
 function normalizeText(value: string) {
   return value.normalize("NFC").trim().replace(/\s+/g, " ");

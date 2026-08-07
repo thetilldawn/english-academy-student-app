@@ -6,6 +6,7 @@ import { loadEnvConfig } from "@next/env";
 import { createClient } from "@supabase/supabase-js";
 
 import { sha256 } from "@/lib/vocab/canonical-linkage";
+import { resolveBookMeaningCapability } from "@/lib/vocab/vocab-link-import-policy";
 
 type ImportMode = "sample" | "table" | "status" | "finalize";
 type ImportTable =
@@ -579,26 +580,36 @@ async function main() {
     },
   );
 
+  const englishToKoreanCapability = resolveBookMeaningCapability(
+    manifest.counts.quizEligibility.englishToKoreanEligible,
+    manifest.counts.quizEligibility.englishToKoreanReviewRequired,
+    "duplicate_headword_meaning_conflict_excluded",
+  );
+  const koreanToEnglishCapability = resolveBookMeaningCapability(
+    manifest.counts.quizEligibility.koreanToEnglishEligible,
+    manifest.counts.quizEligibility.koreanToEnglishReviewRequired,
+    "duplicate_prompt_answer_conflict_excluded",
+  );
   const capabilities: ImportRow[] = [
     {
       dataset_id: dataset.id,
       quiz_mode: "book_meaning_en_to_ko",
-      status: "limited",
+      status: englishToKoreanCapability.status,
       eligible_entry_count:
         manifest.counts.quizEligibility.englishToKoreanEligible,
       excluded_entry_count:
         manifest.counts.quizEligibility.englishToKoreanReviewRequired,
-      reason_code: "duplicate_headword_meaning_conflict_excluded",
+      reason_code: englishToKoreanCapability.reasonCode,
     },
     {
       dataset_id: dataset.id,
       quiz_mode: "book_meaning_ko_to_en",
-      status: "limited",
+      status: koreanToEnglishCapability.status,
       eligible_entry_count:
         manifest.counts.quizEligibility.koreanToEnglishEligible,
       excluded_entry_count:
         manifest.counts.quizEligibility.koreanToEnglishReviewRequired,
-      reason_code: "duplicate_prompt_answer_conflict_excluded",
+      reason_code: koreanToEnglishCapability.reasonCode,
     },
     ...[
       "canonical_definition_to_headword",
@@ -645,7 +656,11 @@ async function main() {
     expectedCounts.vocab_entry_link === manifest.dataset.expectedRows &&
       expectedCounts.vocab_entry_quiz_eligibility ===
         manifest.dataset.expectedRows * 2 &&
-      expectedCounts.vocab_entry_mapping_candidate === 2 &&
+      expectedCounts.vocab_entry_mapping_candidate ===
+        packageLinks.reduce(
+          (count, link) => count + link.nonWordCandidates.length,
+          0,
+        ) &&
       expectedCounts.vocab_dataset_capabilities === 6,
     "예상 연결 건수가 승인된 명세와 다릅니다.",
   );
