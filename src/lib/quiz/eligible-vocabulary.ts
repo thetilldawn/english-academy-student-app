@@ -18,6 +18,7 @@ export type VocabularyEligibilitySourceRow = {
     | "book_meaning_en_to_ko"
     | "book_meaning_ko_to_en";
   canonical_lexeme_id: string | null;
+  canonical_dictionary_id?: string | null;
 };
 
 export type EligibleVocabularyEntry = QuizVocabularyEntry & {
@@ -42,6 +43,7 @@ export function mergeEligibleVocabularyRows(
     number,
     {
       canonicalKeys: Set<string>;
+      dictionaryKeys: Set<string>;
       directions: Set<QuizDirection>;
       modes: Set<VocabularyEligibilitySourceRow["quiz_mode"]>;
     }
@@ -49,6 +51,7 @@ export function mergeEligibleVocabularyRows(
   for (const row of eligibilityRows) {
     const current = eligibilityByEntry.get(row.vocab_entry_id) ?? {
       canonicalKeys: new Set<string>(),
+      dictionaryKeys: new Set<string>(),
       directions: new Set<QuizDirection>(),
       modes: new Set<VocabularyEligibilitySourceRow["quiz_mode"]>(),
     };
@@ -64,6 +67,9 @@ export function mergeEligibleVocabularyRows(
     if (row.canonical_lexeme_id) {
       current.canonicalKeys.add(row.canonical_lexeme_id);
     }
+    if (row.canonical_dictionary_id) {
+      current.dictionaryKeys.add(row.canonical_dictionary_id);
+    }
     eligibilityByEntry.set(row.vocab_entry_id, current);
   }
 
@@ -76,6 +82,11 @@ export function mergeEligibleVocabularyRows(
         "한 단어의 출제 방향별 표준 표제어 연결이 서로 다릅니다.",
       );
     }
+    if (eligibility.dictionaryKeys.size > 1) {
+      throw new Error(
+        "한 단어의 출제 방향별 단어사전 ID가 서로 다릅니다.",
+      );
+    }
     candidates.push({
       id: entry.id,
       unitId: entry.unit_id,
@@ -83,7 +94,10 @@ export function mergeEligibleVocabularyRows(
       headword: entry.headword,
       headwordNormalized: entry.headword_normalized,
       primaryMeaning: entry.primary_meaning,
-      canonicalKey: [...eligibility.canonicalKeys][0] ?? null,
+      canonicalKey:
+        [...eligibility.dictionaryKeys][0] ??
+        [...eligibility.canonicalKeys][0] ??
+        null,
       eligibleDirections: [...eligibility.directions],
     });
   }

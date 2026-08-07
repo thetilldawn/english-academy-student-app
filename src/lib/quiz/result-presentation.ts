@@ -1,10 +1,15 @@
+import {
+  isTrustedQuestionSnapshot,
+  type QuestionProvenanceStatus,
+} from "@/lib/quiz/question-provenance";
+
 export type ResultQuestionPresentationInput = {
   direction: "english_to_korean" | "korean_to_english";
   prompt: string;
   correctAnswer: string;
   headword: string;
   primaryMeaning: string;
-  provenanceStatus: "legacy_backfill" | "verified_v2";
+  provenanceStatus: QuestionProvenanceStatus;
 };
 
 export type ResultQuestionMetricInput = {
@@ -18,7 +23,7 @@ export function getResultQuestionPresentation(
   const headword = question.headword.trim();
   const primaryMeaning = question.primaryMeaning.trim();
   if (
-    question.provenanceStatus === "verified_v2" &&
+    isTrustedQuestionSnapshot(question.provenanceStatus) &&
     headword &&
     primaryMeaning
   ) {

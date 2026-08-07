@@ -9,6 +9,10 @@ import type { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const ELIGIBLE_VOCABULARY_PAGE_SIZE = 1000;
 
+type EligibleVocabularyLoadOptions = {
+  includeExamUseProjection?: boolean;
+};
+
 type ServerSupabaseClient = Awaited<
   ReturnType<typeof createServerSupabaseClient>
 >;
@@ -16,6 +20,7 @@ type ServerSupabaseClient = Awaited<
 export async function loadEligibleVocabularyDataset(
   supabase: ServerSupabaseClient,
   datasetId: string,
+  options: EligibleVocabularyLoadOptions = {},
 ) {
   const [entries, eligibilityRows] = await Promise.all([
     (async () => {
@@ -50,6 +55,21 @@ export async function loadEligibleVocabularyDataset(
       return rows;
     })(),
     (async () => {
+      if (options.includeExamUseProjection) {
+        const { data, error } = await supabase.rpc(
+          "list_active_exam_use_eligibility_v1",
+          { p_dataset_id: datasetId },
+        );
+        if (error) {
+          throw new Error(
+            "검토된 단어사전 출제 정보를 불러오지 못했습니다.",
+          );
+        }
+        if (data && data.length > 0) {
+          return data as VocabularyEligibilitySourceRow[];
+        }
+      }
+
       const rows: VocabularyEligibilitySourceRow[] = [];
       for (
         let offset = 0;

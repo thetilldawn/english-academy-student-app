@@ -1399,6 +1399,13 @@ textarea {
   gap: 12px;
 }
 
+.choice-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 8px;
+}
+
 .choice {
   min-height: 74px;
   padding: 14px 16px;
@@ -4610,6 +4617,8 @@ h3,
 }
 
 .choice {
+  display: flex;
+  align-items: center;
   min-height: 54px;
   justify-content: flex-start;
   border: 1px solid var(--line);
@@ -4620,6 +4629,76 @@ h3,
   font-size: 15px;
   font-weight: 700;
   text-align: left;
+  width: 100%;
+}
+
+.choice-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.choice-pronunciation,
+.quiz-pronunciation {
+  color: var(--muted);
+  font-family: var(--font-kr);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.quiz-prompt-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.quiz-prompt-row .quiz-prompt {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  margin-inline: 0;
+}
+
+.pronunciation-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted);
+  transition:
+    background-color 0.25s ease-in-out,
+    border-color 0.25s ease-in-out,
+    color 0.25s ease-in-out;
+}
+
+.pronunciation-button:hover:not(:disabled),
+.pronunciation-button:focus-visible {
+  border-color: var(--ink);
+  background: var(--card);
+  color: var(--ink);
+}
+
+.pronunciation-button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.pronunciation-button--prompt {
+  width: 42px;
+  height: 42px;
+}
+
+.pronunciation-button--choice {
+  width: 46px;
+  min-height: 54px;
 }
 
 .choice--en {

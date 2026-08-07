@@ -101,6 +101,19 @@ describe("mergeEligibleVocabularyRows", () => {
     ).toThrow("표준 표제어 연결이 서로 다릅니다.");
   });
 
+  it("text 단어사전 ID를 legacy UUID보다 canonical key로 우선한다", () => {
+    const [candidate] = mergeEligibleVocabularyRows(entries, [
+      {
+        vocab_entry_id: 1,
+        quiz_mode: "book_meaning_en_to_ko",
+        canonical_lexeme_id: "00000000-0000-4000-8000-000000000001",
+        canonical_dictionary_id: "word:observe",
+      },
+    ]);
+
+    expect(candidate.canonicalKey).toBe("word:observe");
+  });
+
   it("중복 entry ID와 중복 quiz mode를 거절한다", () => {
     expect(() =>
       mergeEligibleVocabularyRows([entries[0], entries[0]], []),

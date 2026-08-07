@@ -25,7 +25,8 @@
     "build:vocab-link": "tsx scripts/build-vocab-link-package.ts",
     "verify:vocab-link": "tsx scripts/verify-vocab-link-package.ts",
     "import:word-index": "tsx scripts/import-word-index.ts",
-    "import:vocab-link": "tsx scripts/import-vocab-link-package.ts"
+    "import:vocab-link": "tsx scripts/import-vocab-link-package.ts",
+    "import:exam-use": "tsx scripts/import-exam-use-package.ts"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.3",

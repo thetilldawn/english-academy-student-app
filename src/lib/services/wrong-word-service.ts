@@ -3,6 +3,11 @@ import "server-only";
 import { z } from "zod";
 
 import {
+  isTrustedQuestionSnapshot,
+  type QuestionProvenanceStatus,
+} from "@/lib/quiz/question-provenance";
+
+import {
   buildStudentWrongWordHistory,
   wrongWordReviewIdentity,
   type PendingWrongWordReview,
@@ -43,7 +48,17 @@ type WrongEventRow = {
 type QuestionSnapshot = {
   headword_snapshot: string | null;
   primary_meaning_snapshot: string | null;
-  provenance_status: "legacy_backfill" | "verified_v2";
+  provenance_status: QuestionProvenanceStatus;
+  exam_use_snapshot?:
+    | ExamUseQuestionSnapshot
+    | ExamUseQuestionSnapshot[]
+    | null;
+};
+
+type ExamUseQuestionSnapshot = {
+  headword_snapshot: string;
+  primary_meaning_snapshot: string;
+  provenance_status: "reviewed_for_preview_v1";
 };
 
 type QuestionRow = {
@@ -222,7 +237,7 @@ export async function getStudentWrongWordHistory(
     const { data, error } = await supabase
       .from("quiz_questions")
       .select(
-        "id, vocab_entry_id, initial_is_correct, retry_is_correct, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(headword_snapshot, primary_meaning_snapshot, provenance_status)",
+        "id, vocab_entry_id, initial_is_correct, retry_is_correct, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(headword_snapshot, primary_meaning_snapshot, provenance_status, exam_use_snapshot:assignment_question_exam_use_snapshot!assignment_question_exam_use_snapshot_question_fkey(headword_snapshot, primary_meaning_snapshot, provenance_status))",
       )
       .in("id", idChunk);
     if (error) throw new Error("오답 문항 이력을 불러오지 못했습니다.");
@@ -289,7 +304,17 @@ export async function getStudentWrongWordHistory(
       const entry = entryById.get(question.vocab_entry_id);
       if (!entry) return [];
       const snapshot = oneRelation(question.assignment_question);
-      const verified = snapshot?.provenance_status === "verified_v2";
+      const examUseSnapshot = oneRelation(
+        snapshot?.exam_use_snapshot ?? null,
+      );
+      const reviewedExamUseSnapshot =
+        examUseSnapshot?.provenance_status ===
+        "reviewed_for_preview_v1"
+          ? examUseSnapshot
+          : null;
+      const verified = isTrustedQuestionSnapshot(
+        snapshot?.provenance_status,
+      );
       return [
         {
           id: question.id,
@@ -297,13 +322,17 @@ export async function getStudentWrongWordHistory(
           initialIsCorrect: question.initial_is_correct,
           retryIsCorrect: question.retry_is_correct,
           headword:
+            reviewedExamUseSnapshot?.headword_snapshot ??
             (verified ? snapshot.headword_snapshot : null) ??
             entry.headword,
           primaryMeaning:
+            reviewedExamUseSnapshot?.primary_meaning_snapshot ??
             (verified ? snapshot.primary_meaning_snapshot : null) ??
             entry.primary_meaning,
           provenanceStatus:
-            snapshot?.provenance_status ?? "legacy_backfill",
+            reviewedExamUseSnapshot?.provenance_status ??
+            snapshot?.provenance_status ??
+            "legacy_backfill",
         },
       ];
     },

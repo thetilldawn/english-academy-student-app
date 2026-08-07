@@ -53,6 +53,19 @@ describe("getResultQuestionPresentation", () => {
       correctAnswer: "old-headword",
     });
   });
+
+  it("Preview 검토본은 배정 당시 문맥 뜻을 양방향에 사용한다", () => {
+    expect(
+      getResultQuestionPresentation({
+        direction: "korean_to_english",
+        prompt: "현재 prompt",
+        correctAnswer: "현재 정답",
+        headword: "observe",
+        primaryMeaning: "준수하다",
+        provenanceStatus: "reviewed_for_preview_v1",
+      }),
+    ).toEqual({ prompt: "준수하다", correctAnswer: "observe" });
+  });
 });
 
 describe("deriveAttemptQuestionMetrics", () => {

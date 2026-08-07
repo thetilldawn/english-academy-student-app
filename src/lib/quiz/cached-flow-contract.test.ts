@@ -21,7 +21,7 @@ describe("DAY 문제은행 응시 계약", () => {
     expect(manager).toContain("오름차순");
     expect(manager).toContain("내림차순");
     expect(adminService).toContain(
-      '"create_assignment_with_delivery_v4"',
+      '"create_assignment_with_delivery_v5"',
     );
     expect(adminService).toContain(
       "loadEligibleVocabularyDataset(",

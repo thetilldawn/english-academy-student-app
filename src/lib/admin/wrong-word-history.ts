@@ -19,7 +19,7 @@ export type WrongQuestionSource = {
   retryIsCorrect: boolean | null;
   headword: string;
   primaryMeaning: string;
-  provenanceStatus: "legacy_backfill" | "verified_v2";
+  provenanceStatus: QuestionProvenanceStatus;
 };
 
 export type WrongEntrySource = {
@@ -69,7 +69,7 @@ export type WrongWordOccurrence = {
   datasetLabel: string;
   headword: string;
   primaryMeaning: string;
-  provenanceStatus: "legacy_backfill" | "verified_v2";
+  provenanceStatus: QuestionProvenanceStatus;
   wrongCount: number;
   lastWrongAt: string;
   resolution: WrongWordResolution;
@@ -418,3 +418,4 @@ export function emptyStudentWrongWordHistory(): StudentWrongWordHistory {
     words: [],
   };
 }
+import type { QuestionProvenanceStatus } from "@/lib/quiz/question-provenance";

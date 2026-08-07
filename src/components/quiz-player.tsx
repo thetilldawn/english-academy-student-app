@@ -14,6 +14,10 @@ import {
   secondsUntil,
 } from "@/lib/deadline";
 import { getPriorWrongIndicator } from "@/lib/quiz/prior-wrong";
+import {
+  allChoiceAudioAvailable,
+  type QuizPronunciation,
+} from "@/lib/quiz/pronunciation-snapshot";
 
 const ANSWER_FEEDBACK_DELAY_MS = 500;
 
@@ -23,6 +27,8 @@ type Question = {
   direction: "english_to_korean" | "korean_to_english";
   prompt: string;
   choices: string[];
+  pronunciation: QuizPronunciation;
+  choicePronunciations: QuizPronunciation[];
   initialChoiceIndex: number | null;
   initialIsCorrect: boolean | null;
   retryChoiceIndex: number | null;
@@ -75,6 +81,29 @@ function formatTime(seconds: number) {
   return `${minutes}:${String(remainder).padStart(2, "0")}`;
 }
 
+function SpeakerIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="none"
+      height="18"
+      viewBox="0 0 24 24"
+      width="18"
+    >
+      <path
+        d="M5 9v6h4l5 4V5L9 9H5Z"
+        fill="currentColor"
+      />
+      <path
+        d="M17 8.5a5 5 0 0 1 0 7M19.5 6a8.5 8.5 0 0 1 0 12"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
 export function QuizPlayer({
   initialAttempt,
   initialRemainingSeconds,
@@ -95,6 +124,8 @@ export function QuizPlayer({
   const expireStarted = useRef(false);
   const timeWarningAnnounced = useRef(false);
   const promptRef = useRef<HTMLHeadingElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const autoPlayedQuestions = useRef(new Set<string>());
 
   const currentQuestion = useMemo(
     () =>
@@ -125,6 +156,48 @@ export function QuizPlayer({
   const priorWrongIndicator = currentQuestion
     ? getPriorWrongIndicator(currentQuestion.priorWrongLevel)
     : null;
+  const choiceAudioEnabled = currentQuestion
+    ? allChoiceAudioAvailable(currentQuestion.choicePronunciations)
+    : false;
+
+  const playAudio = useCallback((audioUrl: string | null) => {
+    if (!audioUrl) return;
+    const audio = audioRef.current ?? new Audio();
+    audioRef.current = audio;
+    audio.pause();
+    audio.currentTime = 0;
+    audio.src = audioUrl;
+    void audio.play().catch(() => {
+      // Browser autoplay can be blocked. Audio is optional and must never
+      // interrupt answer persistence or the server-owned timer.
+    });
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      audioRef.current?.pause();
+      audioRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (
+      !currentQuestion ||
+      currentQuestion.direction !== "english_to_korean" ||
+      !currentQuestion.pronunciation.available
+    ) {
+      return;
+    }
+    const playKey = `${attempt.id}:${attempt.phase}:${currentQuestion.id}`;
+    if (autoPlayedQuestions.current.has(playKey)) return;
+    autoPlayedQuestions.current.add(playKey);
+    playAudio(currentQuestion.pronunciation.audioUrl);
+  }, [
+    attempt.id,
+    attempt.phase,
+    currentQuestion,
+    playAudio,
+  ]);
 
   const expireAttempt = useCallback(async () => {
     if (expireStarted.current) return;
@@ -475,28 +548,49 @@ export function QuizPlayer({
           <span>{priorWrongIndicator.label}</span>
         </div>
       )}
-      <h1
-        aria-describedby={
-          priorWrongIndicator ? "quiz-prior-wrong" : undefined
-        }
-        className={[
-          "quiz-prompt",
-          currentQuestion.direction === "korean_to_english"
-            ? "quiz-prompt--ko"
-            : "",
-          priorWrongIndicator ? "quiz-prompt-prior-wrong" : "",
-          priorWrongIndicator?.markerCount === 2
-            ? "quiz-prompt-prior-wrong-repeated"
-            : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-        id="quiz-prompt"
-        ref={promptRef}
-        tabIndex={-1}
-      >
-        {currentQuestion.prompt}
-      </h1>
+      <div className="quiz-prompt-row">
+        <h1
+          aria-describedby={
+            priorWrongIndicator ? "quiz-prior-wrong" : undefined
+          }
+          className={[
+            "quiz-prompt",
+            currentQuestion.direction === "korean_to_english"
+              ? "quiz-prompt--ko"
+              : "",
+            priorWrongIndicator ? "quiz-prompt-prior-wrong" : "",
+            priorWrongIndicator?.markerCount === 2
+              ? "quiz-prompt-prior-wrong-repeated"
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          id="quiz-prompt"
+          ref={promptRef}
+          tabIndex={-1}
+        >
+          <span>{currentQuestion.prompt}</span>
+          {currentQuestion.direction === "english_to_korean" &&
+            currentQuestion.pronunciation.displayKo && (
+              <small className="quiz-pronunciation">
+                {currentQuestion.pronunciation.displayKo}
+              </small>
+            )}
+        </h1>
+        {currentQuestion.direction === "english_to_korean" &&
+          currentQuestion.pronunciation.available && (
+            <button
+              aria-label={`${currentQuestion.prompt} 발음 듣기`}
+              className="pronunciation-button pronunciation-button--prompt"
+              onClick={() =>
+                playAudio(currentQuestion.pronunciation.audioUrl)
+              }
+              type="button"
+            >
+              <SpeakerIcon />
+            </button>
+          )}
+      </div>
 
       <div
         aria-labelledby="quiz-prompt"
@@ -517,17 +611,52 @@ export function QuizPlayer({
             classNames.push("choice-wrong");
           }
 
+          const choicePronunciation =
+            currentQuestion.choicePronunciations[index];
           return (
-            <button
-              className={classNames.join(" ")}
-              disabled={submitting || answerCorrect !== null}
+            <div
+              className="choice-row"
               key={`${currentQuestion.id}:${index}`}
-              onClick={() => void submitChoice(index)}
-              type="button"
             >
-              <span className="choice-number">{index + 1}</span>
-              {choice}
-            </button>
+              <button
+                className={classNames.join(" ")}
+                disabled={submitting || answerCorrect !== null}
+                onClick={() => {
+                  if (choiceAudioEnabled) {
+                    playAudio(choicePronunciation?.audioUrl ?? null);
+                  }
+                  void submitChoice(index);
+                }}
+                type="button"
+              >
+                <span className="choice-number">{index + 1}</span>
+                <span className="choice-copy">
+                  <span>{choice}</span>
+                  {currentQuestion.direction === "korean_to_english" &&
+                    choicePronunciation?.displayKo && (
+                      <small className="choice-pronunciation">
+                        {choicePronunciation.displayKo}
+                      </small>
+                    )}
+                </span>
+              </button>
+              {currentQuestion.direction === "korean_to_english" &&
+                choiceAudioEnabled && (
+                  <button
+                    aria-label={`${choice} 발음 듣기`}
+                    className="pronunciation-button pronunciation-button--choice"
+                    disabled={submitting || answerCorrect !== null}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      playAudio(choicePronunciation?.audioUrl ?? null);
+                    }}
+                    type="button"
+                  >
+                    <SpeakerIcon />
+                  </button>
+                )}
+            </div>
           );
         })}
       </div>

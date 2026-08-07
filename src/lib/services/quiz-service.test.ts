@@ -55,6 +55,30 @@ describe("mapResultQuestions", () => {
     expect(result.provenanceStatus).toBe("legacy_backfill");
   });
 
+  it("Preview 검토본도 배정 당시 문맥 뜻 스냅샷을 표시한다", () => {
+    const [result] = mapResultQuestions([
+      resultRow({
+        assignment_question: {
+          headword_snapshot: "untrusted base",
+          primary_meaning_snapshot: "검증 전 뜻",
+          provenance_status: "legacy_backfill",
+          exam_use_snapshot: {
+            headword_snapshot: "observe",
+            primary_meaning_snapshot: "준수하다",
+            display_pronunciation_ko_snapshot: "업저브",
+            pronunciation_snapshot: {},
+            choice_dictionary_snapshots: [],
+            provenance_status: "reviewed_for_preview_v1",
+          },
+        },
+      }),
+    ]);
+
+    expect(result.headword).toBe("observe");
+    expect(result.primaryMeaning).toBe("준수하다");
+    expect(result.provenanceStatus).toBe("reviewed_for_preview_v1");
+  });
+
   it("검증되지 않은 레거시 backfill은 현재 단어 행을 우선한다", () => {
     const [result] = mapResultQuestions([
       resultRow({

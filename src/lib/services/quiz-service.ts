@@ -13,6 +13,16 @@ import type {
   TimingMode,
 } from "@/lib/admin/assignment-settings";
 import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
+import {
+  parseChoicePronunciations,
+  parseTargetPronunciation,
+  unavailablePronunciation,
+  type QuizPronunciation,
+} from "@/lib/quiz/pronunciation-snapshot";
+import {
+  isTrustedQuestionSnapshot,
+  type QuestionProvenanceStatus,
+} from "@/lib/quiz/question-provenance";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import { finalizeStudentMissedAssignments } from "@/lib/services/missed-assignment-service";
 import { finalizeStaleQuizAttempts } from "@/lib/services/stale-attempt-service";
@@ -48,6 +58,8 @@ export type AttemptQuestionState = {
   direction: "english_to_korean" | "korean_to_english";
   prompt: string;
   choices: string[];
+  pronunciation: QuizPronunciation;
+  choicePronunciations: QuizPronunciation[];
   initialChoiceIndex: number | null;
   initialIsCorrect: boolean | null;
   retryChoiceIndex: number | null;
@@ -84,7 +96,7 @@ export type AttemptQuestionResult = {
   retryIsCorrect: boolean | null;
   headword: string;
   primaryMeaning: string;
-  provenanceStatus: "legacy_backfill" | "verified_v2";
+  provenanceStatus: QuestionProvenanceStatus;
 };
 
 type AssignmentRow = {
@@ -138,6 +150,29 @@ type QuestionRow = {
   initial_timed_out?: boolean;
   retry_timed_out?: boolean;
   prior_wrong_count: number;
+  assignment_question:
+    | AssignmentQuestionSnapshot
+    | AssignmentQuestionSnapshot[]
+    | null;
+};
+
+type AssignmentQuestionSnapshot = {
+  headword_snapshot: string | null;
+  primary_meaning_snapshot: string | null;
+  provenance_status: QuestionProvenanceStatus;
+  exam_use_snapshot?:
+    | ExamUseQuestionSnapshot
+    | ExamUseQuestionSnapshot[]
+    | null;
+};
+
+type ExamUseQuestionSnapshot = {
+  headword_snapshot: string;
+  primary_meaning_snapshot: string;
+  display_pronunciation_ko_snapshot: string | null;
+  pronunciation_snapshot: unknown;
+  choice_dictionary_snapshots: unknown;
+  provenance_status: "reviewed_for_preview_v1";
 };
 
 type ResultQuestionRow = {
@@ -154,22 +189,27 @@ type ResultQuestionRow = {
   initial_timed_out?: boolean;
   retry_timed_out?: boolean;
   assignment_question:
-    | {
-        headword_snapshot: string | null;
-        primary_meaning_snapshot: string | null;
-        provenance_status: "legacy_backfill" | "verified_v2";
-      }
-    | Array<{
-        headword_snapshot: string | null;
-        primary_meaning_snapshot: string | null;
-        provenance_status: "legacy_backfill" | "verified_v2";
-      }>
+    | AssignmentQuestionSnapshot
+    | AssignmentQuestionSnapshot[]
     | null;
   vocab_entries:
     | { headword: string; primary_meaning: string }
     | Array<{ headword: string; primary_meaning: string }>
     | null;
 };
+
+function oneRelation<T>(value: T | T[] | null): T | null {
+  return Array.isArray(value) ? (value[0] ?? null) : value;
+}
+
+function reviewedExamUseSnapshot(
+  question: AssignmentQuestionSnapshot | null,
+): ExamUseQuestionSnapshot | null {
+  const snapshot = oneRelation(question?.exam_use_snapshot ?? null);
+  return snapshot?.provenance_status === "reviewed_for_preview_v1"
+    ? snapshot
+    : null;
+}
 
 export function mapResultQuestions(
   rows: ResultQuestionRow[],
@@ -183,13 +223,13 @@ export function mapResultQuestions(
     const vocabulary = Array.isArray(row.vocab_entries)
       ? row.vocab_entries[0]
       : row.vocab_entries;
-    const bankQuestion = Array.isArray(row.assignment_question)
-      ? row.assignment_question[0]
-      : row.assignment_question;
-    const verifiedSnapshot =
-      bankQuestion?.provenance_status === "verified_v2"
-        ? bankQuestion
-        : null;
+    const bankQuestion = oneRelation(row.assignment_question);
+    const examUseSnapshot = reviewedExamUseSnapshot(bankQuestion);
+    const verifiedSnapshot = isTrustedQuestionSnapshot(
+      bankQuestion?.provenance_status,
+    )
+      ? bankQuestion
+      : null;
 
     return {
       id: row.id,
@@ -210,16 +250,18 @@ export function mapResultQuestions(
           : (choices[row.retry_choice_index] ?? null),
       retryIsCorrect: row.retry_is_correct,
       headword:
+        examUseSnapshot?.headword_snapshot ??
         verifiedSnapshot?.headword_snapshot ??
         vocabulary?.headword ??
         "",
       primaryMeaning:
+        examUseSnapshot?.primary_meaning_snapshot ??
         verifiedSnapshot?.primary_meaning_snapshot ??
         vocabulary?.primary_meaning ??
         "",
-      provenanceStatus: verifiedSnapshot
-        ? "verified_v2"
-        : "legacy_backfill",
+      provenanceStatus:
+        examUseSnapshot?.provenance_status ??
+        verifiedSnapshot?.provenance_status ?? "legacy_backfill",
     };
   });
 }
@@ -231,7 +273,7 @@ export async function getAttemptQuestionResults(
   const { data, error } = await supabase
     .from("quiz_questions")
     .select(
-      "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, initial_timed_out, retry_timed_out, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(headword_snapshot, primary_meaning_snapshot, provenance_status), vocab_entries(headword, primary_meaning)",
+      "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, initial_timed_out, retry_timed_out, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(headword_snapshot, primary_meaning_snapshot, provenance_status, exam_use_snapshot:assignment_question_exam_use_snapshot!assignment_question_exam_use_snapshot_question_fkey(headword_snapshot, primary_meaning_snapshot, display_pronunciation_ko_snapshot, pronunciation_snapshot, choice_dictionary_snapshots, provenance_status)), vocab_entries(headword, primary_meaning)",
     )
     .eq("attempt_id", attemptId)
     .order("order_index");
@@ -601,7 +643,7 @@ export async function getStudentAttempt(
       supabase
         .from("quiz_questions")
         .select(
-          "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, prior_wrong_count, initial_timed_out, retry_timed_out",
+          "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, prior_wrong_count, initial_timed_out, retry_timed_out, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(headword_snapshot, primary_meaning_snapshot, provenance_status, exam_use_snapshot:assignment_question_exam_use_snapshot!assignment_question_exam_use_snapshot_question_fkey(headword_snapshot, primary_meaning_snapshot, display_pronunciation_ko_snapshot, pronunciation_snapshot, choice_dictionary_snapshots, provenance_status))",
         )
         .eq("attempt_id", attemptId)
         .order("order_index"),
@@ -653,6 +695,20 @@ export async function getStudentAttempt(
       const answered =
         question.initial_choice_index !== null ||
         question.retry_choice_index !== null;
+      const bankQuestion = oneRelation(question.assignment_question);
+      const examUseSnapshot = reviewedExamUseSnapshot(bankQuestion);
+      const pronunciation = examUseSnapshot
+        ? parseTargetPronunciation(
+            examUseSnapshot.pronunciation_snapshot,
+            examUseSnapshot.display_pronunciation_ko_snapshot,
+          )
+        : unavailablePronunciation();
+      const choicePronunciations = examUseSnapshot
+        ? parseChoicePronunciations(
+            examUseSnapshot.choice_dictionary_snapshots,
+            question.choices,
+          )
+        : question.choices.map(() => unavailablePronunciation());
 
       return {
         id: question.id,
@@ -660,6 +716,8 @@ export async function getStudentAttempt(
         direction: question.direction,
         prompt: question.prompt,
         choices: question.choices,
+        pronunciation,
+        choicePronunciations,
         initialChoiceIndex: question.initial_choice_index,
         initialIsCorrect: question.initial_is_correct,
         retryChoiceIndex: question.retry_choice_index,

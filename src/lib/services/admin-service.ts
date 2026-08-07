@@ -1133,7 +1133,9 @@ export async function prepareRegularAssignment(
   );
   const orderedUnitIds = sortedUnits.map((unit) => unit.id);
   const [allCandidates, activeAssignments] = await Promise.all([
-    loadEligibleVocabularyDataset(supabase, input.datasetId),
+    loadEligibleVocabularyDataset(supabase, input.datasetId, {
+      includeExamUseProjection: true,
+    }),
     loadActiveReviewAssignments(
       supabase,
       input.studentIds,
@@ -1216,7 +1218,7 @@ export async function createAssignment(
   );
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc(
-    "create_assignment_with_delivery_v4",
+    "create_assignment_with_delivery_v5",
     {
       p_title: prepared.title,
       p_dataset_id: prepared.datasetId,
