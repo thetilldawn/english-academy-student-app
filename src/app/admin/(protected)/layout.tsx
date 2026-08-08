@@ -25,7 +25,6 @@ export default async function AdminProtectedLayout({
           label="PC 관리 메뉴"
         />
         <div className="admin-sidebar-footer">
-          <ThemeToggle />
           <span className="user-label">{admin.displayName}</span>
           <AdminLogoutButton />
         </div>
@@ -49,9 +48,6 @@ export default async function AdminProtectedLayout({
               <ThemeToggle />
               <span className="user-label admin-topbar-user">
                 {admin.displayName}
-              </span>
-              <span className="user-label admin-mobile-user-label">
-                관리자
               </span>
               <AdminLogoutButton />
             </div>

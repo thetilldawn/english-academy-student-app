@@ -37,19 +37,20 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
   }
 
   const dark = theme === "dark";
+  const actionLabel = dark ? "라이트 모드로 전환" : "다크 모드로 전환";
   return (
     <button
       aria-checked={dark}
-      aria-label="다크 모드"
+      aria-label="화면 테마"
       className={["theme-toggle", className].filter(Boolean).join(" ")}
       onClick={toggleTheme}
       role="switch"
+      title={actionLabel}
       type="button"
     >
       <span aria-hidden="true" className="theme-toggle-track">
         <span className="theme-toggle-thumb" />
       </span>
-      <span className="theme-toggle-label">다크</span>
     </button>
   );
 }

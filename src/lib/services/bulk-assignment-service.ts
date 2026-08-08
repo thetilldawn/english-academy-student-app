@@ -24,6 +24,7 @@ import type {
   BulkAssignmentInput,
   BulkAssignmentPreviewInput,
 } from "@/lib/validation";
+import { datasetDisplayLabel } from "@/lib/ui/dataset-display";
 
 export type BulkAssignmentPreviewItem = {
   studentId: string;
@@ -83,10 +84,6 @@ function unavailableReason(
   return null;
 }
 
-function datasetLabel(title: string, edition: string | null) {
-  return [title, edition].filter(Boolean).join(" · ");
-}
-
 export async function previewBulkAssignments(
   input: BulkAssignmentPreviewInput,
   authenticatedAdmin?: AdminContext,
@@ -126,7 +123,7 @@ export async function previewBulkAssignments(
         studentName: student?.displayName ?? "확인할 수 없는 학생",
         datasetId: progress?.recommendedDatasetId ?? null,
         datasetLabel: dataset
-          ? datasetLabel(dataset.title, dataset.edition)
+          ? datasetDisplayLabel(dataset.title, dataset.edition)
           : null,
         unitId: progress?.recommendedUnitId ?? null,
         unitLabel: progress?.recommendedUnitLabel ?? null,

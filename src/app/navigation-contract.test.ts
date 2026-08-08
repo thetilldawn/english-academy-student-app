@@ -98,7 +98,7 @@ describe("responsive navigation contract", () => {
     );
     expect(studentManager).not.toContain('name="currentVocabBook"');
     expect(studentManager).toContain("student.currentVocabBook,");
-    expect(studentManager).toContain("학습 자료 미입력");
+    expect(studentManager).toContain("단어장 미선택");
     expect(adminService).toContain(
       "p_current_vocab_dataset_id: input.currentVocabDatasetId",
     );
@@ -116,6 +116,9 @@ describe("responsive navigation contract", () => {
     expect(adminLayout).toContain('className="admin-sidebar-nav"');
     expect(adminLayout).toContain('className="admin-tablet-nav"');
     expect(adminLayout).toContain('className="admin-mobile-nav"');
+    expect(adminLayout.match(/\{admin\.displayName\}/g)).toHaveLength(2);
+    expect(adminLayout).not.toContain("admin-mobile-user-label");
+    expect(adminLayout).not.toContain(">관리자<");
     expect(adminPageTitle).toContain(
       '{ prefix: "/admin/assignments", title: "학습 관리" }',
     );
@@ -128,6 +131,17 @@ describe("responsive navigation contract", () => {
       'pathname.startsWith("/student/attempt/")',
     );
     expect(studentShell).toContain("!focusedAttempt");
+  });
+
+  it("관리자 테마 스위치는 상태에 맞는 접근성 이름만 표시한다", () => {
+    const themeToggle = source("src/components/theme-toggle.tsx");
+
+    expect(themeToggle).toContain('"라이트 모드로 전환"');
+    expect(themeToggle).toContain('"다크 모드로 전환"');
+    expect(themeToggle).toContain('aria-label="화면 테마"');
+    expect(themeToggle).toContain("title={actionLabel}");
+    expect(themeToggle).not.toContain("theme-toggle-label");
+    expect(themeToggle).not.toContain(">다크<");
   });
 
   it("관리 화면은 목록에서 모달로 이어지고 중복 작업판을 두지 않는다", () => {

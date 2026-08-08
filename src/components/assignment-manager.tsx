@@ -68,6 +68,7 @@ import {
   type StudentCurrentVocabWrongSummary,
 } from "@/lib/admin/wrong-history-summary";
 import { learningSourceTypeLabel } from "@/lib/admin/learning-sources";
+import { datasetDisplayLabel } from "@/lib/ui/dataset-display";
 
 export type AssignmentDatasetItem = {
   id: string;
@@ -217,7 +218,7 @@ function editValueLabel(
   if (key === "dataset") {
     const dataset = datasets.find((item) => item.id === value.datasetId);
     return dataset
-      ? [dataset.title, dataset.edition].filter(Boolean).join(" · ")
+      ? datasetDisplayLabel(dataset.title, dataset.edition)
       : "사용할 수 없는 단어장";
   }
   if (key === "range") {
@@ -1861,9 +1862,7 @@ export function AssignmentManager({
                   </option>
                   {readyDatasets.map((dataset) => (
                     <option key={dataset.id} value={dataset.id}>
-                      {[dataset.title, dataset.edition]
-                        .filter(Boolean)
-                        .join(" · ")}
+                      {datasetDisplayLabel(dataset.title, dataset.edition)}
                     </option>
                   ))}
                 </select>

@@ -24,6 +24,10 @@ import {
 import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
 import { createMixedQuizQuestions } from "@/lib/quiz/engine";
 import {
+  datasetDisplayLabel,
+  storedDatasetDisplayLabel,
+} from "@/lib/ui/dataset-display";
+import {
   activeReviewIdentity,
   loadActiveReviewAssignments,
 } from "@/lib/services/active-review-assignment-service";
@@ -260,7 +264,7 @@ export async function listStudents(): Promise<StudentSummary[]> {
   const datasetById = new Map(
     ((datasetData ?? []) as DatasetLabelRow[]).map((dataset) => [
       dataset.id,
-      [dataset.title, dataset.edition].filter(Boolean).join(" · "),
+      datasetDisplayLabel(dataset.title, dataset.edition),
     ]),
   );
 
@@ -273,7 +277,9 @@ export async function listStudents(): Promise<StudentSummary[]> {
       (student.current_vocab_dataset_id
         ? datasetById.get(student.current_vocab_dataset_id)
         : null) ??
-      student.current_vocab_book,
+      (student.current_vocab_book
+        ? storedDatasetDisplayLabel(student.current_vocab_book)
+        : null),
     currentVocabDatasetId: student.current_vocab_dataset_id,
     status: student.status,
     codeGeneration: student.code_generation,
@@ -304,7 +310,7 @@ export async function listStudentLearningSources(): Promise<
     sourceType:
       source.source_type as StudentLearningSourceSummary["sourceType"],
     vocabDatasetId: (source.vocab_dataset_id as string | null) ?? null,
-    displayLabel: source.display_label as string,
+    displayLabel: storedDatasetDisplayLabel(source.display_label as string),
     rangeMetadata:
       source.range_metadata &&
       typeof source.range_metadata === "object" &&
@@ -972,9 +978,9 @@ export async function listAssignmentHistory(): Promise<
         gradeLabel:
           student.deleted_at === null ? student.grade_label : null,
         datasetId: assignment.dataset_id,
-        datasetTitle:
-          [dataset?.title, dataset?.edition].filter(Boolean).join(" · ") ||
-          "단어장",
+        datasetTitle: dataset
+          ? datasetDisplayLabel(dataset.title, dataset.edition)
+          : "단어장",
         unitIds: orderedUnits.map((unit) => unit.id),
         unitLabels:
           orderedUnits.length > 0
@@ -1183,12 +1189,9 @@ export async function prepareRegularAssignment(
       ? sortedUnits[0].unit_label
       : `${sortedUnits[0].unit_label}~${sortedUnits.at(-1)?.unit_label}`;
   const generatedTitle = [
-    dataset.title,
-    dataset.edition,
+    datasetDisplayLabel(dataset.title, dataset.edition),
     unitRangeLabel,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  ].join(" · ");
 
   return {
     title: input.title || generatedTitle,
@@ -1320,7 +1323,7 @@ export async function listAssignments(): Promise<AssignmentSummary[]> {
   const datasetTitleById = new Map(
     (datasetData ?? []).map((dataset) => [
       dataset.id,
-      [dataset.title, dataset.edition].filter(Boolean).join(" · "),
+      datasetDisplayLabel(dataset.title, dataset.edition),
     ]),
   );
 

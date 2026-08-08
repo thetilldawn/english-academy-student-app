@@ -34,6 +34,7 @@ import {
 } from "@/components/attempt-score-summary";
 import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
 import { buildAttemptStatusPresentation } from "@/lib/ui/attempt-score-presentation";
+import { datasetDisplayLabel } from "@/lib/ui/dataset-display";
 import {
   activityNeedsRetry,
   compareLearningActivities,
@@ -825,9 +826,7 @@ export function StudentManager({
                 <option value="">나중에 선택</option>
                 {datasets.map((dataset) => (
                   <option key={dataset.id} value={dataset.id}>
-                    {[dataset.title, dataset.edition]
-                      .filter(Boolean)
-                      .join(" · ")}
+                    {datasetDisplayLabel(dataset.title, dataset.edition)}
                   </option>
                 ))}
               </select>
@@ -1036,29 +1035,16 @@ export function StudentManager({
                     passingScore: priorityActivity?.passingScore,
                     retryStartedAt: priorityActivity?.retryStartedAt,
                   });
-                  const sourceTags = [
-                    student.currentVocabBook
-                      ? {
-                          key: `primary-${student.id}`,
-                          label: `주 단어장 · ${student.currentVocabBook}`,
-                        }
-                      : null,
-                    ...(learningSourcesByStudent.get(student.id) ?? [])
-                      .filter(
-                        (source) => source.sourceType !== "primary_vocab",
-                      )
-                      .map((source) => ({
-                        key: source.id,
-                        label: `${learningSourceTypeLabel(source.sourceType)} · ${source.displayLabel}`,
-                      })),
-                  ].filter(
-                    (
-                      source,
-                    ): source is {
-                      key: string;
-                      label: string;
-                    } => source !== null,
-                  );
+                  const supplementalSources = (
+                    learningSourcesByStudent.get(student.id) ?? []
+                  )
+                    .filter((source) => source.sourceType !== "primary_vocab")
+                    .map((source) => ({
+                      key: source.id,
+                      label: `${learningSourceTypeLabel(source.sourceType)} · ${source.displayLabel}`,
+                    }));
+                  const primarySourceLabel =
+                    student.currentVocabBook ?? "단어장 미선택";
                   return (
                     <button
                       className="card student-card student-card-button"
@@ -1073,7 +1059,7 @@ export function StudentManager({
                     >
                       <span className="student-card-heading">
                         <span className="student-card-title-row">
-                          <strong className="list-title">
+                          <strong className="student-card-name">
                             {student.displayName}
                           </strong>
                           <MetaTag
@@ -1096,28 +1082,45 @@ export function StudentManager({
                             {student.gradeLabel ?? "학년 미입력"}
                           </MetaTag>
                         </MetaTagList>
-                        <MetaTagList className="student-card-source-tags">
-                          {sourceTags.slice(0, 2).map((source) => (
-                            <MetaTag key={source.key}>{source.label}</MetaTag>
-                          ))}
-                          {sourceTags.length === 0 ? (
-                            <MetaTag>학습 자료 미입력</MetaTag>
-                          ) : null}
-                          {sourceTags.length > 2 ? (
-                            <MetaTag>+{sourceTags.length - 2}</MetaTag>
-                          ) : null}
-                        </MetaTagList>
-                        <span className="student-card-next-row">
+                      </span>
+                      <span className="student-card-details">
+                        <span className="student-card-info-row">
+                          <small>주 단어장</small>
+                          <strong
+                            className="student-card-primary-source"
+                            title={primarySourceLabel}
+                          >
+                            {primarySourceLabel}
+                          </strong>
+                        </span>
+                        {supplementalSources.length > 0 ? (
+                          <span className="student-card-info-row">
+                            <small>학습 자료</small>
+                            <MetaTagList className="student-card-source-tags">
+                              {supplementalSources
+                                .slice(0, 2)
+                                .map((source) => (
+                                  <MetaTag key={source.key}>
+                                    {source.label}
+                                  </MetaTag>
+                                ))}
+                              {supplementalSources.length > 2 ? (
+                                <MetaTag>
+                                  +{supplementalSources.length - 2}
+                                </MetaTag>
+                              ) : null}
+                            </MetaTagList>
+                          </span>
+                        ) : null}
+                        <span className="student-card-info-row">
                           <small>다음 범위</small>
                           <MetaTag tone="warning">
                             {studentRecommendationLabel(studentProgress)}
                           </MetaTag>
                         </span>
-                      </span>
-                      <span className="student-card-summary">
-                        <span className="student-card-section">
-                          <span className="student-card-section-heading">
-                            <small>우선 확인</small>
+                        <span className="student-card-info-row">
+                          <small>우선 확인</small>
+                          <span className="student-card-priority">
                             {priorityActivity?.primaryUnitLabels[0] ??
                             priorityActivity?.unitLabels[0] ? (
                               <MetaTag>
@@ -1125,7 +1128,6 @@ export function StudentManager({
                                   priorityActivity?.unitLabels[0]}
                               </MetaTag>
                             ) : null}
-                          </span>
                           <strong>
                             {priorityActivity
                               ? assignmentDisplayTitle(priorityActivity)
@@ -1151,6 +1153,7 @@ export function StudentManager({
                               />
                             </span>
                           ) : null}
+                          </span>
                         </span>
                       </span>
                     </button>
@@ -1292,9 +1295,10 @@ export function StudentManager({
                           <option value="">나중에 선택</option>
                           {datasets.map((dataset) => (
                             <option key={dataset.id} value={dataset.id}>
-                              {[dataset.title, dataset.edition]
-                                .filter(Boolean)
-                                .join(" · ")}
+                              {datasetDisplayLabel(
+                                dataset.title,
+                                dataset.edition,
+                              )}
                             </option>
                           ))}
                         </select>

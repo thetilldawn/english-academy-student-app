@@ -29,6 +29,7 @@ import type {
   AssignmentCapacityInput,
   MixedAssignmentInput,
 } from "@/lib/validation";
+import { datasetDisplayLabel } from "@/lib/ui/dataset-display";
 
 const REVIEW_QUEUE_PAGE_SIZE = 1000;
 const MAX_ASSIGNMENT_TITLE_LENGTH = 160;
@@ -212,8 +213,7 @@ function generatedMixedTitle(
       ? units[0].unitLabel
       : `${units[0].unitLabel}~${units.at(-1)?.unitLabel}`;
   return [
-    datasetTitle,
-    datasetEdition,
+    datasetDisplayLabel(datasetTitle, datasetEdition),
     unitRange,
     `틀렸던 단어 ${reviewCount}개 포함`,
   ]

@@ -17,6 +17,7 @@ import {
 import { loadEligibleVocabularyDataset } from "@/lib/services/eligible-vocabulary-service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
+import { datasetDisplayLabel } from "@/lib/ui/dataset-display";
 
 const REVIEW_DRAFT_FINALIZE_LIMIT = 400;
 const ID_FILTER_CHUNK_SIZE = 80;
@@ -259,9 +260,7 @@ async function loadReviewDraftContext(
     throw new Error("오답 재시험 대상 단어가 올바르지 않습니다.");
   }
 
-  const datasetLabel = [dataset.title, dataset.edition]
-    .filter(Boolean)
-    .join(" · ");
+  const datasetLabel = datasetDisplayLabel(dataset.title, dataset.edition);
   return {
     summary: {
       id: draft.id,

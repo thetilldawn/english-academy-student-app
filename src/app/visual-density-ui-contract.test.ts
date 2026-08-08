@@ -23,10 +23,13 @@ describe("admin visual density contract", () => {
     const studentManager = source("src/components/student-manager.tsx");
 
     expect(studentManager).toContain("student-card-profile-tags");
+    expect(studentManager).toContain("student-card-primary-source");
+    expect(studentManager).toContain("student-card-info-row");
     expect(studentManager).toContain("student-card-source-tags");
-    expect(studentManager).toContain("student-card-next-row");
     expect(studentManager).toContain("learningSourceTypeLabel");
-    expect(studentManager).toContain("sourceTags.slice(0, 2)");
+    expect(studentManager).toContain("supplementalSources");
+    expect(studentManager).not.toContain("student-card-next-row");
+    expect(studentManager).not.toContain("주 단어장 ·");
   });
 
   it("keeps one action in summary rows and moves mutations into detail", () => {

@@ -74,6 +74,20 @@ describe("redesign CSS contract", () => {
     expect([...weights].sort()).toEqual([400, 600, 700]);
   });
 
+  it("keeps the management UI on one Korean sans-serif hierarchy", () => {
+    const rootLayout = fs.readFileSync(
+      path.resolve("src/app/layout.tsx"),
+      "utf8",
+    );
+
+    expect(css).toContain("--font-krs: var(--font-kr);");
+    expect(css).toMatch(
+      /\.student-card-name\s*\{[\s\S]*?font-family:\s*var\(--font-kr\);/,
+    );
+    expect(rootLayout).not.toContain("Gowun_Batang");
+    expect(rootLayout).not.toContain("--font-serif-kr");
+  });
+
   it("renders quiz choices as one vertical column", () => {
     expect(css).toMatch(
       /\.choice-list\s*\{[\s\S]*?display:\s*flex;[\s\S]*?flex-direction:\s*column;/,
@@ -92,6 +106,18 @@ describe("redesign CSS contract", () => {
     );
     expect(css).toContain(
       "width: min(900px, calc(100% - 24px));",
+    );
+  });
+
+  it("uses one aligned student-card row contract without dividers", () => {
+    expect(css).toMatch(
+      /\.student-card-info-row\s*\{[\s\S]*?grid-template-columns:\s*68px minmax\(0, 1fr\);/,
+    );
+    expect(css).not.toMatch(
+      /\.student-card-source-tags\s*\{[^}]*border-top\s*:/,
+    );
+    expect(css).not.toMatch(
+      /@media \(max-width: 580px\)\s*\{[^}]*student-card-title-row/,
     );
   });
 });
