@@ -474,11 +474,17 @@ export function AssignmentManager({
   const [questionCountMode, setQuestionCountMode] = useState<
     "auto" | "manual"
   >("auto");
+  const questionCountModeRef = useRef<"auto" | "manual">("auto");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [toast, setToast] = useState<AppToastMessage | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [refreshPending, startRefreshTransition] = useTransition();
+
+  function changeQuestionCountMode(mode: "auto" | "manual") {
+    questionCountModeRef.current = mode;
+    setQuestionCountMode(mode);
+  }
 
   const selectedStudent =
     activeStudents.find((student) => student.id === studentId) ?? null;
@@ -859,7 +865,7 @@ export function AssignmentManager({
         setStartUnitId(payload.primaryUnitIds[0] ?? "");
         setEndUnitId(payload.primaryUnitIds.at(-1) ?? "");
         setQuestionCount(payload.questionCount);
-        setQuestionCountMode("manual");
+        changeQuestionCountMode("manual");
         setDirectionRatio(payload.englishToKoreanRatio);
         setQuestionOrderMode(
           payload.questionOrderMode === "fixed"
@@ -948,7 +954,7 @@ export function AssignmentManager({
           setCapacity(payload);
           setQuestionCount((current) => {
             if (
-              questionCountMode === "auto" &&
+              questionCountModeRef.current === "auto" &&
               payload.recommendedQuestionCount >=
                 minimumAllowedQuestionCount
             ) {
@@ -982,7 +988,6 @@ export function AssignmentManager({
     directionRatio,
     includePendingReview,
     minimumAllowedQuestionCount,
-    questionCountMode,
     reviewLevels,
     reviewLevelsKey,
     reviewScope,
@@ -997,7 +1002,7 @@ export function AssignmentManager({
     setIncludePendingReview(false);
     setReviewScope("dataset");
     setReviewLevels(defaultReviewLevels());
-    setQuestionCountMode("auto");
+    changeQuestionCountMode("auto");
     setCapacity(null);
     setCapacityError("");
     setAvailableUntilLocal("");
@@ -1049,7 +1054,7 @@ export function AssignmentManager({
     setStartUnitId(nextRecommendedUnitId);
     setEndUnitId(nextRecommendedUnitId);
     if (editTarget) {
-      setQuestionCountMode("manual");
+      changeQuestionCountMode("manual");
       setCapacity(null);
       setCapacityError("");
       setError("");
@@ -1076,7 +1081,7 @@ export function AssignmentManager({
   }
 
   function selectStartUnit(nextStartId: string) {
-    setQuestionCountMode("auto");
+    changeQuestionCountMode("auto");
     setCapacity(null);
     setCapacityError("");
     setStartUnitId(nextStartId);
@@ -1122,7 +1127,7 @@ export function AssignmentManager({
   }
 
   function changeReviewLevel(level: ReviewLevel) {
-    setQuestionCountMode("auto");
+    changeQuestionCountMode("auto");
     setCapacity(null);
     setCapacityError("");
     setReviewLevels((current) =>
@@ -1133,7 +1138,7 @@ export function AssignmentManager({
   }
 
   function changeIncludePendingReview(checked: boolean) {
-    setQuestionCountMode("auto");
+    changeQuestionCountMode("auto");
     setCapacity(null);
     setCapacityError("");
     setIncludePendingReview(checked);
@@ -1959,7 +1964,7 @@ export function AssignmentManager({
                   <select
                     disabled={exactReviewEdit}
                     onChange={(event) => {
-                      setQuestionCountMode("auto");
+                      changeQuestionCountMode("auto");
                       setCapacity(null);
                       setCapacityError("");
                       setEndUnitId(event.target.value);
@@ -2064,7 +2069,7 @@ export function AssignmentManager({
                           disabled={editTarget !== null}
                           onClick={() => {
                             setReviewScope("dataset");
-                            setQuestionCountMode("auto");
+                            changeQuestionCountMode("auto");
                             setCapacity(null);
                             setCapacityError("");
                             setError("");
@@ -2078,7 +2083,7 @@ export function AssignmentManager({
                           disabled={editTarget !== null}
                           onClick={() => {
                             setReviewScope("selection");
-                            setQuestionCountMode("auto");
+                            changeQuestionCountMode("auto");
                             setCapacity(null);
                             setCapacityError("");
                             setError("");
@@ -2139,7 +2144,7 @@ export function AssignmentManager({
                   </span>
                   <select
                     onChange={(event) => {
-                      setQuestionCountMode("auto");
+                      changeQuestionCountMode("auto");
                       setCapacity(null);
                       setCapacityError("");
                       setDirectionRatio(
@@ -2204,7 +2209,7 @@ export function AssignmentManager({
                       minimumAllowedQuestionCount
                     }
                     onChange={(event) => {
-                      setQuestionCountMode("manual");
+                      changeQuestionCountMode("manual");
                       setQuestionCount(Number(event.target.value));
                       setError("");
                       setSuccess("");
@@ -2223,7 +2228,7 @@ export function AssignmentManager({
                       <button
                         className="button button-quiet button-small"
                         onClick={() => {
-                          setQuestionCountMode("auto");
+                          changeQuestionCountMode("auto");
                           setQuestionCount(
                             capacity.recommendedQuestionCount,
                           );

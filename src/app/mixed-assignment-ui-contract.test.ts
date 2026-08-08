@@ -70,6 +70,10 @@ describe("mixed assignment admin UI contract", () => {
     expect(manager).toContain('value="descending"');
     expect(manager).toContain('value="random"');
     expect(manager).toContain('useState<TimingMode>("total")');
+    expect(manager).toContain(
+      'questionCountModeRef.current === "auto"',
+    );
+    expect(manager).toContain('changeQuestionCountMode("manual")');
     expect(copy).toContain('perQuestionTime: "문제당 시간(초)"');
     expect(manager).toContain(
       "const [includePendingReview, setIncludePendingReview] =",
