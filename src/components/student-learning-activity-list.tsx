@@ -163,7 +163,7 @@ export function StudentLearningActivityList({
             <li className="learning-activity-row" key={item.id}>
               <div className="learning-activity-main">
                 <strong>{assignmentDisplayTitle(item)}</strong>
-                <AssignmentMetaTags {...item} />
+                <AssignmentMetaTags {...item} compact />
                 <small>{activityTimeLabel(item)}</small>
               </div>
               <div className="learning-activity-result">
@@ -189,6 +189,7 @@ export function StudentLearningActivityList({
                 onEdit={onEditAssignment}
                 onViewDetail={() => setDetailItemId(item.id)}
                 size="small"
+                summaryOnly
               />
             </li>
           ))}

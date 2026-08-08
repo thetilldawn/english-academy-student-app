@@ -48,6 +48,7 @@ import {
 } from "@/lib/admin/wrong-history-summary";
 import {
   learningSourceLabelsForStudent,
+  learningSourceTypeLabel,
   type StudentLearningSourceItem,
 } from "@/lib/admin/learning-sources";
 
@@ -1035,46 +1036,46 @@ export function StudentManager({
                     passingScore: priorityActivity?.passingScore,
                     retryStartedAt: priorityActivity?.retryStartedAt,
                   });
-                  const sourceLabels = Array.from(
-                    new Set([
-                      student.currentVocabBook,
-                      ...(learningSourcesByStudent.get(student.id) ?? [])
-                        .filter(
-                          (source) => source.sourceType !== "primary_vocab",
-                        )
-                        .map((source) => source.displayLabel),
-                    ].filter((value): value is string => Boolean(value))),
+                  const sourceTags = [
+                    student.currentVocabBook
+                      ? {
+                          key: `primary-${student.id}`,
+                          label: `주 단어장 · ${student.currentVocabBook}`,
+                        }
+                      : null,
+                    ...(learningSourcesByStudent.get(student.id) ?? [])
+                      .filter(
+                        (source) => source.sourceType !== "primary_vocab",
+                      )
+                      .map((source) => ({
+                        key: source.id,
+                        label: `${learningSourceTypeLabel(source.sourceType)} · ${source.displayLabel}`,
+                      })),
+                  ].filter(
+                    (
+                      source,
+                    ): source is {
+                      key: string;
+                      label: string;
+                    } => source !== null,
                   );
                   return (
                     <button
                       className="card student-card student-card-button"
                       data-exam-outcome={
-                        priorityPresentation.outcome
+                        priorityActivity
+                          ? priorityPresentation.outcome
+                          : undefined
                       }
                       key={student.id}
                       onClick={() => selectStudent(student)}
                       type="button"
                     >
                       <span className="student-card-heading">
-                        <strong className="list-title">
-                          {student.displayName}
-                        </strong>
-                        <MetaTagList>
-                          <MetaTag>
-                            {student.schoolName ?? "학교 미입력"}
-                          </MetaTag>
-                          <MetaTag>
-                            {student.gradeLabel ?? "학년 미입력"}
-                          </MetaTag>
-                          {sourceLabels.slice(0, 3).map((label) => (
-                            <MetaTag key={label}>{label}</MetaTag>
-                          ))}
-                          {sourceLabels.length === 0 ? (
-                            <MetaTag>학습 자료 미입력</MetaTag>
-                          ) : null}
-                          {sourceLabels.length > 3 ? (
-                            <MetaTag>+{sourceLabels.length - 3}</MetaTag>
-                          ) : null}
+                        <span className="student-card-title-row">
+                          <strong className="list-title">
+                            {student.displayName}
+                          </strong>
                           <MetaTag
                             tone={
                               student.status === "active"
@@ -1086,10 +1087,32 @@ export function StudentManager({
                               ? "접속 가능"
                               : "차단됨"}
                           </MetaTag>
-                          <MetaTag tone="warning">
-                            다음 · {studentRecommendationLabel(studentProgress)}
+                        </span>
+                        <MetaTagList className="student-card-profile-tags">
+                          <MetaTag>
+                            {student.schoolName ?? "학교 미입력"}
+                          </MetaTag>
+                          <MetaTag>
+                            {student.gradeLabel ?? "학년 미입력"}
                           </MetaTag>
                         </MetaTagList>
+                        <MetaTagList className="student-card-source-tags">
+                          {sourceTags.slice(0, 2).map((source) => (
+                            <MetaTag key={source.key}>{source.label}</MetaTag>
+                          ))}
+                          {sourceTags.length === 0 ? (
+                            <MetaTag>학습 자료 미입력</MetaTag>
+                          ) : null}
+                          {sourceTags.length > 2 ? (
+                            <MetaTag>+{sourceTags.length - 2}</MetaTag>
+                          ) : null}
+                        </MetaTagList>
+                        <span className="student-card-next-row">
+                          <small>다음 범위</small>
+                          <MetaTag tone="warning">
+                            {studentRecommendationLabel(studentProgress)}
+                          </MetaTag>
+                        </span>
                       </span>
                       <span className="student-card-summary">
                         <span className="student-card-section">
@@ -1106,26 +1129,28 @@ export function StudentManager({
                           <strong>
                             {priorityActivity
                               ? assignmentDisplayTitle(priorityActivity)
-                              : "시험 기록 없음"}
+                              : "학습 기록 없음"}
                           </strong>
-                          <span className="student-card-score-line">
-                            <AttemptStatusLabel
-                              finalScore={priorityActivity?.finalScore}
-                              initialScore={priorityActivity?.initialScore}
-                              passingScore={priorityActivity?.passingScore}
-                              phase={priorityActivity?.phase ?? null}
-                              retryStartedAt={priorityActivity?.retryStartedAt}
-                              status={priorityActivity?.status ?? null}
-                            />
-                            <AttemptScoreSummary
-                              finalScore={priorityActivity?.finalScore}
-                              initialScore={priorityActivity?.initialScore}
-                              passingScore={priorityActivity?.passingScore}
-                              phase={priorityActivity?.phase ?? null}
-                              retryStartedAt={priorityActivity?.retryStartedAt}
-                              status={priorityActivity?.status ?? null}
-                            />
-                          </span>
+                          {priorityActivity ? (
+                            <span className="student-card-score-line">
+                              <AttemptStatusLabel
+                                finalScore={priorityActivity.finalScore}
+                                initialScore={priorityActivity.initialScore}
+                                passingScore={priorityActivity.passingScore}
+                                phase={priorityActivity.phase}
+                                retryStartedAt={priorityActivity.retryStartedAt}
+                                status={priorityActivity.status}
+                              />
+                              <AttemptScoreSummary
+                                finalScore={priorityActivity.finalScore}
+                                initialScore={priorityActivity.initialScore}
+                                passingScore={priorityActivity.passingScore}
+                                phase={priorityActivity.phase}
+                                retryStartedAt={priorityActivity.retryStartedAt}
+                                status={priorityActivity.status}
+                              />
+                            </span>
+                          ) : null}
                         </span>
                       </span>
                     </button>

@@ -33,6 +33,7 @@ export function AdminHistoryActions({
   onViewDetail,
   showDetailLink = true,
   size = "regular",
+  summaryOnly = false,
 }: {
   item: AssignmentHistorySummary;
   onEdit?: (item: AssignmentHistorySummary) => void;
@@ -40,6 +41,7 @@ export function AdminHistoryActions({
   onViewDetail?: () => void;
   showDetailLink?: boolean;
   size?: "regular" | "small";
+  summaryOnly?: boolean;
 }) {
   const router = useRouter();
   const [busyAction, setBusyAction] = useState<ActionKey | null>(null);
@@ -70,6 +72,40 @@ export function AdminHistoryActions({
     } finally {
       setBusyAction(null);
     }
+  }
+
+  if (summaryOnly) {
+    return (
+      <div className="history-action-stack">
+        <div className="history-action-group">
+          {onViewDetail ? (
+            <button
+              className={`button button-secondary${sizeClass}`}
+              onClick={onViewDetail}
+              type="button"
+            >
+              보기
+            </button>
+          ) : showDetailLink && item.attemptId ? (
+            <Link
+              className={`button button-secondary${sizeClass}`}
+              href={`/admin/results/${item.attemptId}`}
+            >
+              보기
+            </Link>
+          ) : onEdit && isStudentAssignmentEditable(item) ? (
+            <button
+              aria-label={`${item.studentName} · ${item.assignmentTitle} 배정 수정`}
+              className={`button button-secondary${sizeClass}`}
+              onClick={() => onEdit(item)}
+              type="button"
+            >
+              수정
+            </button>
+          ) : null}
+        </div>
+      </div>
+    );
   }
 
   return (

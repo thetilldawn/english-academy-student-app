@@ -39,11 +39,24 @@ describe("redesign CSS contract", () => {
 
   it("uses a calm color transition without lifting buttons", () => {
     expect(css).toContain("--motion-standard: 250ms ease-in-out;");
-    expect(css).not.toMatch(
-      /\.button:hover[^\{]*\{[^\}]*transform\s*:/,
+    expect(css).toContain("--motion-complex: 300ms ease-in-out;");
+    expect(css).toContain(
+      "animation: learning-view-forward var(--motion-complex) both;",
     );
-    expect(css).not.toMatch(
-      /\.student-card-button:hover[^\{]*\{[^\}]*transform\s*:/,
+    expect(css).not.toMatch(/\b(?:120|140|240)ms\b|\b0\.25s\b/);
+
+    const interactiveHoverBodies = [
+      ...css.matchAll(/([^{}]+:hover[^{}]*)\{([^{}]*)\}/g),
+    ]
+      .filter((match) =>
+        /button|choice|nav-link|learning-launch|filter-chip|student-card/.test(
+          match[1],
+        ),
+      )
+      .map((match) => match[2])
+      .join("\n");
+    expect(interactiveHoverBodies).not.toMatch(
+      /(?:transform|translate|top|right|bottom|left|width|height|margin|padding)\s*:/,
     );
   });
 
@@ -64,6 +77,21 @@ describe("redesign CSS contract", () => {
   it("renders quiz choices as one vertical column", () => {
     expect(css).toMatch(
       /\.choice-list\s*\{[\s\S]*?display:\s*flex;[\s\S]*?flex-direction:\s*column;/,
+    );
+  });
+
+  it("keeps responsive cards content-sized and student gutters visible", () => {
+    expect(css).toMatch(
+      /\.student-card-grid\s*\{[\s\S]*?align-items:\s*start;/,
+    );
+    expect(css).toMatch(
+      /\.assignment-management-list\s*\{[\s\S]*?align-items:\s*start;/,
+    );
+    expect(css).toContain(
+      "width: min(900px, calc(100% - 36px));",
+    );
+    expect(css).toContain(
+      "width: min(900px, calc(100% - 24px));",
     );
   });
 });

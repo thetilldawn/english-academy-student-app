@@ -38,6 +38,7 @@ export function MetaTag({
 
 export function AssignmentMetaTags({
   assignmentPurpose,
+  compact = false,
   primaryUnitLabels,
   questionCount,
   unitLabels,
@@ -47,7 +48,7 @@ export function AssignmentMetaTags({
   | "primaryUnitLabels"
   | "questionCount"
   | "unitLabels"
->) {
+> & { compact?: boolean }) {
   return (
     <MetaTagList className="assignment-meta-tags">
       <MetaTag>{assignmentTypeLabel(assignmentPurpose)}</MetaTag>
@@ -58,7 +59,7 @@ export function AssignmentMetaTags({
           unitLabels,
         })}
       </MetaTag>
-      <MetaTag>{questionCount}문항</MetaTag>
+      {!compact ? <MetaTag>{questionCount}문항</MetaTag> : null}
     </MetaTagList>
   );
 }

@@ -19,6 +19,7 @@
   --ink-hover: #3d3a34;
   --nav-glass: rgba(252, 251, 247, 0.84);
   --motion-standard: 250ms ease-in-out;
+  --motion-complex: 300ms ease-in-out;
   --radius-small: 4px;
   --radius: 8px;
   --radius-card: 14px;
@@ -653,8 +654,8 @@ textarea {
   line-height: 1;
   text-transform: uppercase;
   transition:
-    border-color 140ms ease,
-    background 140ms ease;
+    border-color var(--motion-standard),
+    background-color var(--motion-standard);
 }
 
 .segmented-code-slot-filled {
@@ -1325,7 +1326,7 @@ textarea {
   height: 100%;
   border-radius: var(--radius-card);
   background: var(--ink);
-  transition: width 240ms ease;
+  transition: width var(--motion-standard);
 }
 
 .quiz-direction {
@@ -1632,6 +1633,7 @@ tr:last-child td {
 .assignment-history-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
   gap: 14px;
 }
 
@@ -1917,6 +1919,7 @@ tr:last-child td {
 .student-card-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
   gap: 12px;
 }
 
@@ -2167,7 +2170,9 @@ tr:last-child td {
   opacity: 0;
   pointer-events: none;
   transform: translate(-50%, 4px);
-  transition: opacity 120ms ease, transform 120ms ease;
+  transition:
+    opacity var(--motion-standard),
+    transform var(--motion-standard);
 }
 
 .help-tip:hover .help-tip-content,
@@ -2557,6 +2562,7 @@ tr:last-child td {
 
 .assignment-management-list {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
 }
 
 .assignment-management-item {
@@ -4447,7 +4453,9 @@ h3,
 }
 
 .assignment-card:has(.status-retried),
-.admin-history-row[data-outcome="retried"] {
+.admin-history-row[data-outcome="retried"],
+.student-card[data-exam-outcome="retried"],
+.student-history-row[data-exam-outcome="retried"] {
   border-left-color: var(--retry-bar);
 }
 
@@ -4731,9 +4739,9 @@ h3,
   background: var(--surface);
   color: var(--muted);
   transition:
-    background-color 0.25s ease-in-out,
-    border-color 0.25s ease-in-out,
-    color 0.25s ease-in-out;
+    background-color var(--motion-standard),
+    border-color var(--motion-standard),
+    color var(--motion-standard);
 }
 
 .pronunciation-button:hover:not(:disabled),
@@ -4908,7 +4916,7 @@ textarea {
 }
 
 .content.student-content {
-  width: min(100%, 900px);
+  width: min(900px, calc(100% - 36px));
 }
 
 :root[data-theme="dark"] {
@@ -5237,6 +5245,41 @@ textarea {
   align-items: flex-start;
 }
 
+.student-card-title-row,
+.student-card-next-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.student-card-title-row > strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.student-card-profile-tags,
+.student-card-source-tags {
+  min-width: 0;
+}
+
+.student-card-source-tags {
+  padding-top: 5px;
+  border-top: 1px solid var(--line);
+}
+
+.student-card-next-row > small {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.student-card-next-row .meta-tag {
+  justify-content: flex-end;
+  text-align: right;
+}
+
 .student-card-summary {
   gap: 8px;
 }
@@ -5333,6 +5376,10 @@ textarea {
   display: flex;
   align-items: baseline;
   gap: 3px;
+}
+
+.admin-history-row[data-compact="true"] {
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .assignment-student-row > .button {
@@ -5526,11 +5573,11 @@ textarea {
 }
 
 .student-learning-view-summary {
-  animation: learning-view-back var(--motion-standard) both;
+  animation: learning-view-back var(--motion-complex) both;
 }
 
 .student-learning-view-detail {
-  animation: learning-view-forward var(--motion-standard) both;
+  animation: learning-view-forward var(--motion-complex) both;
 }
 
 @keyframes learning-view-forward {
@@ -5658,5 +5705,16 @@ textarea {
   .student-learning-view-summary,
   .student-learning-view-detail {
     animation: none;
+  }
+}
+
+@media (max-width: 580px) {
+  .content.student-content {
+    width: min(900px, calc(100% - 24px));
+  }
+
+  .student-card-title-row,
+  .student-card-next-row {
+    align-items: flex-start;
   }
 }

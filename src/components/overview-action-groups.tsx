@@ -14,7 +14,6 @@ type StudentManagerBaseProps = Omit<
 type OverviewSection = {
   id: string;
   title: string;
-  description: string;
   items: AssignmentHistorySummary[];
 };
 
@@ -37,10 +36,7 @@ export function OverviewActionGroups({
             key={section.id}
           >
             <div className="section-heading">
-              <div>
-                <h2 id={`overview-${section.id}`}>{section.title}</h2>
-                <p className="list-meta">{section.description}</p>
-              </div>
+              <h2 id={`overview-${section.id}`}>{section.title}</h2>
               <span className="detail-chip">{section.items.length}건</span>
             </div>
             <AdminHistoryList

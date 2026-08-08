@@ -9,10 +9,7 @@ import {
   type MouseEvent,
 } from "react";
 
-import type {
-  AssignmentActivityStatus,
-  AssignmentHistorySummary,
-} from "@/lib/admin/history";
+import type { AssignmentHistorySummary } from "@/lib/admin/history";
 import {
   assignmentDisplayTitle,
   assignmentOrderLabel,
@@ -56,6 +53,14 @@ type DetailResponse = {
   error?: string;
 };
 
+type HistoryStatusFilter =
+  | "all"
+  | "open"
+  | "needs_attention"
+  | "completed"
+  | "retried"
+  | "archived";
+
 function statusPresentation(item: AssignmentHistorySummary) {
   return buildAttemptStatusPresentation({
     status: item.status,
@@ -65,6 +70,29 @@ function statusPresentation(item: AssignmentHistorySummary) {
     passingScore: item.passingScore,
     retryStartedAt: item.retryStartedAt,
   });
+}
+
+function historyStatusFilterValue(
+  item: AssignmentHistorySummary,
+): Exclude<HistoryStatusFilter, "all"> {
+  if (
+    item.assignmentDeleted ||
+    item.studentDeleted ||
+    item.status === "cancelled"
+  ) {
+    return "archived";
+  }
+  if (item.status === "not_started" || item.status === "in_progress") {
+    const outcome = statusPresentation(item).outcome;
+    if (outcome === "failed") return "needs_attention";
+    if (outcome === "retried") return "retried";
+    return "open";
+  }
+  const outcome = statusPresentation(item).outcome;
+  if (["failed", "missed", "expired"].includes(outcome)) {
+    return "needs_attention";
+  }
+  return outcome === "retried" ? "retried" : "completed";
 }
 
 function directionLabel(ratio: number) {
@@ -144,9 +172,8 @@ export function AdminHistoryList({
   const [selectedDeadlineRemaining, setSelectedDeadlineRemaining] =
     useState<number | null>(null);
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<
-    "all" | AssignmentActivityStatus
-  >("all");
+  const [statusFilter, setStatusFilter] =
+    useState<HistoryStatusFilter>("all");
   const selected = useMemo(
     () =>
       items.find((item) => item.id === selectedId) ?? null,
@@ -157,7 +184,8 @@ export function AdminHistoryList({
     const normalizedQuery = query.trim().toLocaleLowerCase("ko-KR");
     return items.filter((item) => {
       const matchesStatus =
-        statusFilter === "all" || item.status === statusFilter;
+        statusFilter === "all" ||
+        historyStatusFilterValue(item) === statusFilter;
       const matchesQuery =
         normalizedQuery.length === 0 ||
         [
@@ -267,21 +295,16 @@ export function AdminHistoryList({
             <span className="field-label">상태</span>
             <select
               onChange={(event) =>
-                setStatusFilter(
-                  event.target.value as
-                    | "all"
-                    | AssignmentActivityStatus,
-                )
+                  setStatusFilter(event.target.value as HistoryStatusFilter)
               }
               value={statusFilter}
             >
               <option value="all">전체</option>
-              <option value="not_started">응시 전</option>
-              <option value="cancelled">배정 취소</option>
-              <option value="missed">미응시 마감</option>
-              <option value="in_progress">응시 중</option>
-              <option value="completed">완료</option>
-              <option value="expired">시간 종료</option>
+              <option value="open">응시 전·응시 중</option>
+              <option value="needs_attention">미통과·미응시</option>
+              <option value="completed">첫 시험 완료</option>
+              <option value="retried">재시험</option>
+              <option value="archived">취소·삭제</option>
             </select>
           </label>
             </div>
@@ -290,7 +313,7 @@ export function AdminHistoryList({
           {filteredItems.length === 0 ? (
             <div className="empty-state">
               {items.length === 0
-                ? "아직 배정된 시험이 없습니다."
+                ? "배정된 학습이 없습니다."
                 : "조건에 맞는 내역이 없습니다."}
             </div>
           ) : (
@@ -313,28 +336,35 @@ export function AdminHistoryList({
                     <span className="history-row-main">
                       <strong>{item.studentName}</strong>
                       <span>{assignmentDisplayTitle(item)}</span>
-                      <AssignmentMetaTags {...item} />
+                      <AssignmentMetaTags {...item} compact={compact} />
                       <small className="card-time-meta">
                         {activityTimeText(item, compact)}
                       </small>
                     </span>
-                    <AttemptScoreSummary
-                      className="history-score-pair"
-                      finalScore={item.finalScore}
-                      initialScore={item.initialScore}
-                      passingScore={item.passingScore}
-                      phase={item.phase}
-                      retryStartedAt={item.retryStartedAt}
-                      status={item.status}
-                    />
-                    <AttemptStatusLabel
-                      finalScore={item.finalScore}
-                      initialScore={item.initialScore}
-                      passingScore={item.passingScore}
-                      phase={item.phase}
-                      retryStartedAt={item.retryStartedAt}
-                      status={item.status}
-                    />
+                    {!compact ||
+                    item.initialScore !== null ||
+                    item.status === "missed" ||
+                    item.status === "expired" ? (
+                      <AttemptScoreSummary
+                        className="history-score-pair"
+                        finalScore={item.finalScore}
+                        initialScore={item.initialScore}
+                        passingScore={item.passingScore}
+                        phase={item.phase}
+                        retryStartedAt={item.retryStartedAt}
+                        status={item.status}
+                      />
+                    ) : null}
+                    {!compact ? (
+                      <AttemptStatusLabel
+                        finalScore={item.finalScore}
+                        initialScore={item.initialScore}
+                        passingScore={item.passingScore}
+                        phase={item.phase}
+                        retryStartedAt={item.retryStartedAt}
+                        status={item.status}
+                      />
+                    ) : null}
                   </button>
                 </li>
               ))}
@@ -360,7 +390,7 @@ export function AdminHistoryList({
         >
           <div className="dialog-heading">
             <div>
-              <p className="eyebrow">시험 내역</p>
+              <p className="eyebrow">학습 내역</p>
               <h2 id="history-dialog-title">{selected.studentName}</h2>
               <p>{selected.assignmentTitle}</p>
             </div>
@@ -390,24 +420,14 @@ export function AdminHistoryList({
                 status={selected.status}
               />
             </div>
-            <div>
-              <span>
-                {selected.status === "not_started" ||
-                selected.status === "missed" ||
-                selected.status === "cancelled"
-                  ? "배정 상태"
-                  : "다시 볼 단어"}
-              </span>
-              <strong>
-                {selected.status === "not_started"
-                  ? "응시 전"
-                  : selected.status === "missed"
-                    ? "마감까지 시작 안 함"
-                    : selected.status === "cancelled"
-                      ? "관리자가 취소함"
-                  : `${selected.unresolvedWrongCount ?? "-"}개`}
-              </strong>
-            </div>
+            {!(["not_started", "missed", "cancelled"] as const).includes(
+              selected.status as "not_started" | "missed" | "cancelled",
+            ) ? (
+              <div>
+                <span>다시 볼 단어</span>
+                <strong>{selected.unresolvedWrongCount ?? "-"}개</strong>
+              </div>
+            ) : null}
           </div>
 
           <dl className="history-dialog-details">

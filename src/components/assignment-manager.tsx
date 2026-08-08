@@ -14,7 +14,6 @@ import { useRouter } from "next/navigation";
 
 import { HelpTip } from "@/components/help-tip";
 import { BulkAssignmentDialog } from "@/components/bulk-assignment-dialog";
-import { AdminHistoryActions } from "@/components/admin-history-actions";
 import {
   AttemptScoreSummary,
   AttemptStatusLabel,
@@ -1495,6 +1494,15 @@ export function AssignmentManager({
                   pendingReviewCount(studentReviewCounts);
                 const studentAvailableReviewCount =
                   availableReviewCount(studentReviewCounts);
+                const recommendedRange = recommendationLabel(studentProgress);
+                const currentActivityRange =
+                  nextActivity?.primaryUnitLabels[0] ??
+                  nextActivity?.unitLabels[0] ??
+                  null;
+                const showRecommendation =
+                  !nextActivity ||
+                  !currentActivityRange ||
+                  currentActivityRange !== recommendedRange;
                 return (
                   <article
                     className="card assignment-student-row"
@@ -1529,15 +1537,12 @@ export function AssignmentManager({
                         {studentLearningSources.length > 2 ? (
                           <MetaTag>+{studentLearningSources.length - 2}</MetaTag>
                         ) : null}
-                        {studentPendingReviewCount > 0 ? (
-                          <MetaTag tone="warning">
-                            오답 대기 {studentPendingReviewCount}개
-                          </MetaTag>
-                        ) : null}
                         {studentAvailableReviewCount > 0 ? (
-                          <MetaTag>
-                            추가 가능 {studentAvailableReviewCount}개
+                          <MetaTag tone="warning">
+                            틀린 단어 {studentAvailableReviewCount}개 추가 가능
                           </MetaTag>
+                        ) : studentPendingReviewCount > 0 ? (
+                          <MetaTag>틀린 단어 배정 중</MetaTag>
                         ) : null}
                       </MetaTagList>
                     </span>
@@ -1547,42 +1552,46 @@ export function AssignmentManager({
                           ? assignmentDisplayTitle(nextActivity)
                           : "배정된 학습 없음"}
                       </strong>
-                      <MetaTagList>
-                        <MetaTag tone="warning">
-                          다음 {recommendationLabel(studentProgress)}
-                        </MetaTag>
-                      </MetaTagList>
-                      <small>
-                        {nextActivity?.status === "not_started"
-                          ? nextActivity.availableUntil
-                            ? `마감 ${formatKoreanDateTime(nextActivity.availableUntil)}`
-                            : `배정 ${formatKoreanDateTime(nextActivity.assignedAt)} · 마감 없음`
-                          : nextActivity?.completedAt
-                            ? `종료 ${formatKoreanDateTime(nextActivity.completedAt)}`
-                            : nextActivity
-                              ? `${nextActivity.status === "expired" ? "시간 종료 " : ""}${formatKoreanDateTime(
-                                  learningActivityEffectiveAt(nextActivity),
-                                )}`
-                              : "최근 기록 없음"}
-                      </small>
-                      <span className="assignment-student-score-line">
-                        <AttemptStatusLabel
-                          finalScore={nextActivity?.finalScore}
-                          initialScore={nextActivity?.initialScore}
-                          passingScore={nextActivity?.passingScore}
-                          phase={nextActivity?.phase ?? null}
-                          retryStartedAt={nextActivity?.retryStartedAt}
-                          status={nextActivity?.status ?? null}
-                        />
-                        <AttemptScoreSummary
-                          finalScore={nextActivity?.finalScore}
-                          initialScore={nextActivity?.initialScore}
-                          passingScore={nextActivity?.passingScore}
-                          phase={nextActivity?.phase ?? null}
-                          retryStartedAt={nextActivity?.retryStartedAt}
-                          status={nextActivity?.status ?? null}
-                        />
-                      </span>
+                      {showRecommendation ? (
+                        <MetaTagList>
+                          <MetaTag tone="warning">
+                            추천 범위 · {recommendedRange}
+                          </MetaTag>
+                        </MetaTagList>
+                      ) : null}
+                      {nextActivity ? (
+                        <>
+                          <small>
+                            {nextActivity.status === "not_started"
+                              ? nextActivity.availableUntil
+                                ? `마감 ${formatKoreanDateTime(nextActivity.availableUntil)}`
+                                : `배정 ${formatKoreanDateTime(nextActivity.assignedAt)} · 마감 없음`
+                              : nextActivity.completedAt
+                                ? `종료 ${formatKoreanDateTime(nextActivity.completedAt)}`
+                                : `${nextActivity.status === "expired" ? "시간 종료 " : ""}${formatKoreanDateTime(
+                                    learningActivityEffectiveAt(nextActivity),
+                                  )}`}
+                          </small>
+                          <span className="assignment-student-score-line">
+                            <AttemptStatusLabel
+                              finalScore={nextActivity.finalScore}
+                              initialScore={nextActivity.initialScore}
+                              passingScore={nextActivity.passingScore}
+                              phase={nextActivity.phase}
+                              retryStartedAt={nextActivity.retryStartedAt}
+                              status={nextActivity.status}
+                            />
+                            <AttemptScoreSummary
+                              finalScore={nextActivity.finalScore}
+                              initialScore={nextActivity.initialScore}
+                              passingScore={nextActivity.passingScore}
+                              phase={nextActivity.phase}
+                              retryStartedAt={nextActivity.retryStartedAt}
+                              status={nextActivity.status}
+                            />
+                          </span>
+                        </>
+                      ) : null}
                     </span>
                     <div className="assignment-student-actions">
                       <button
@@ -1597,13 +1606,6 @@ export function AssignmentManager({
                       >
                         {nextActivity ? "보기" : "배정"}
                       </button>
-                      {nextActivity ? (
-                        <AdminHistoryActions
-                          item={nextActivity}
-                          onEdit={beginEdit}
-                          size="small"
-                        />
-                      ) : null}
                     </div>
                   </article>
                 );

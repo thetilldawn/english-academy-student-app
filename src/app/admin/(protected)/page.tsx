@@ -48,25 +48,21 @@ export default async function AdminDashboardPage() {
     {
       id: "missed",
       title: "미응시 마감",
-      description: "마감까지 시작하지 않은 학습",
       items: groups.missed,
     },
     {
       id: "failed",
       title: "미통과·재시험 필요",
-      description: "통과 기준에 도달하지 못한 학습",
       items: groups.failed,
     },
     {
       id: "due-soon",
       title: "곧 마감",
-      description: "가까운 마감부터",
       items: groups.dueSoon,
     },
     {
       id: "no-deadline",
       title: "마감 없음",
-      description: "오래 배정된 학습부터",
       items: groups.noDeadline,
     },
   ].filter((section) => section.items.length > 0);

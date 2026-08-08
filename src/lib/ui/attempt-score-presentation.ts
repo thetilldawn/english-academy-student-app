@@ -26,11 +26,9 @@ export type AttemptStatusPresentation = {
   label:
     | "응시 전"
     | "배정 취소"
-    | "미응시 마감"
     | "응시 중"
-    | "재시험 선택"
+    | "재시험"
     | "완료"
-    | "재시험 통과"
     | "미통과"
     | "시간 종료";
   className: string;
@@ -124,17 +122,24 @@ export function buildAttemptStatusPresentation(
   }
   if (input.status === "missed") {
     return {
-      label: "미응시 마감",
-      className: "status-missed",
+      label: "미통과",
+      className: "status-failed",
       outcome: "missed",
     };
   }
   if (input.status === "in_progress") {
-    return input.phase === "review"
+    if (input.phase === "review") {
+      return {
+        label: "미통과",
+        className: "status-failed",
+        outcome: "failed",
+      };
+    }
+    return input.phase === "retry" || Boolean(input.retryStartedAt)
       ? {
-          label: "재시험 선택",
+          label: "재시험",
           className: "status-retried",
-          outcome: "review",
+          outcome: "retried",
         }
       : {
           label: "응시 중",
@@ -159,7 +164,7 @@ export function buildAttemptStatusPresentation(
     }
     if (input.retryStartedAt) {
       return {
-        label: "재시험 통과",
+        label: "재시험",
         className: "status-retried",
         outcome: "retried",
       };

@@ -54,7 +54,7 @@ describe("buildAttemptScoreSlots", () => {
     });
   });
 
-  it("기준점수에 도달한 재시험은 재시험 통과로 구분한다", () => {
+  it("실제로 시작한 재시험은 결과와 무관하게 재시험으로 구분한다", () => {
     expect(
       buildAttemptStatusPresentation({
         status: "completed",
@@ -65,7 +65,56 @@ describe("buildAttemptScoreSlots", () => {
         retryStartedAt: "2026-08-06T01:00:00.000Z",
       }),
     ).toMatchObject({
-      label: "재시험 통과",
+      label: "재시험",
+      className: "status-retried",
+      outcome: "retried",
+    });
+  });
+
+  it("미응시와 재시험 선택 전 미달은 미통과로 표시한다", () => {
+    expect(
+      buildAttemptStatusPresentation({
+        status: "missed",
+        phase: null,
+        initialScore: null,
+        finalScore: null,
+        passingScore: 80,
+        retryStartedAt: null,
+      }),
+    ).toMatchObject({
+      label: "미통과",
+      className: "status-failed",
+      outcome: "missed",
+    });
+
+    expect(
+      buildAttemptStatusPresentation({
+        status: "in_progress",
+        phase: "review",
+        initialScore: 50,
+        finalScore: 50,
+        passingScore: 80,
+        retryStartedAt: null,
+      }),
+    ).toMatchObject({
+      label: "미통과",
+      className: "status-failed",
+      outcome: "failed",
+    });
+  });
+
+  it("진행 중인 실제 재시험도 재시험으로 표시한다", () => {
+    expect(
+      buildAttemptStatusPresentation({
+        status: "in_progress",
+        phase: "retry",
+        initialScore: 50,
+        finalScore: 50,
+        passingScore: 80,
+        retryStartedAt: "2026-08-06T01:00:00.000Z",
+      }),
+    ).toMatchObject({
+      label: "재시험",
       className: "status-retried",
       outcome: "retried",
     });
