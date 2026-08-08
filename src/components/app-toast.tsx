@@ -26,21 +26,17 @@ export function AppToast({
     return () => window.clearTimeout(timeoutId);
   }, [message, onDismiss]);
 
-  useEffect(() => {
-    if (message) return;
-    const toast = toastRef.current;
-    if (toast?.matches(":popover-open")) toast.hidePopover();
-  }, [message]);
+  if (!message) return null;
 
   return (
     <div
       className="app-toast"
-      data-tone={message?.tone ?? "success"}
+      data-tone={message.tone ?? "success"}
       popover="manual"
       ref={toastRef}
-      role={message?.tone === "error" ? "alert" : "status"}
+      role={message.tone === "error" ? "alert" : "status"}
     >
-      <span>{message?.text ?? ""}</span>
+      <span>{message.text}</span>
       <button
         aria-label={commonText.closeNotification}
         className="app-toast-close"
