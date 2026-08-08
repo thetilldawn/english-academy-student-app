@@ -110,11 +110,16 @@ describe("responsive navigation contract", () => {
     const adminLoading = source(
       "src/app/admin/(protected)/loading.tsx",
     );
+    const adminPageTitle = source("src/components/admin-page-title.tsx");
     const studentShell = source("src/components/student-shell.tsx");
 
     expect(adminLayout).toContain('className="admin-sidebar-nav"');
     expect(adminLayout).toContain('className="admin-tablet-nav"');
     expect(adminLayout).toContain('className="admin-mobile-nav"');
+    expect(adminPageTitle).toContain(
+      '{ prefix: "/admin/assignments", title: "학습 관리" }',
+    );
+    expect(adminPageTitle).not.toContain('title: "시험 관리"');
     expect(adminLayout).not.toContain(
       'export const dynamic = "force-dynamic"',
     );
