@@ -166,6 +166,52 @@ describe("createQuizQuestions", () => {
 });
 
 describe("createTargetedQuizQuestions", () => {
+  it("품사·형태가 비슷한 후보를 쉬운 무관 후보보다 먼저 고른다", () => {
+    const target: QuizVocabularyEntry = {
+      id: 101,
+      headword: "decide",
+      primaryMeaning: "결정하다",
+      recordType: "word",
+    };
+    const similar: QuizVocabularyEntry[] = [
+      {
+        id: 102,
+        headword: "choose",
+        primaryMeaning: "선택하다",
+        recordType: "word",
+      },
+      {
+        id: 103,
+        headword: "solve",
+        primaryMeaning: "해결하다",
+        recordType: "word",
+      },
+      {
+        id: 104,
+        headword: "prefer",
+        primaryMeaning: "선호하다",
+        recordType: "word",
+      },
+    ];
+    const unrelated: QuizVocabularyEntry = {
+      id: 105,
+      headword: "in spite of",
+      primaryMeaning: "~에도 불구하고",
+      recordType: "expression",
+    };
+
+    const [question] = createTargetedQuizQuestions(
+      [target],
+      [target, ...similar, unrelated],
+      100,
+      seededRandom(29),
+    );
+
+    expect(new Set(question.choiceVocabEntryIds)).toEqual(
+      new Set([target.id, ...similar.map((entry) => entry.id)]),
+    );
+  });
+
   it.each([1, 2, 3])(
     "복습 대상 %i개를 빠짐없이 출제하고 각 문항은 4지선다로 만든다",
     (targetCount) => {

@@ -13,7 +13,12 @@ import { HelpTip } from "@/components/help-tip";
 import { adminStudentsText } from "@/content/ko/admin-students";
 import { formatContentText } from "@/content/format";
 import { SelectField } from "@/components/ui-select";
-import { Button, buttonClassNames } from "@/components/ui-button";
+import { Button } from "@/components/ui-button";
+import {
+  readingCurriculumStageLabel,
+  readingCurriculumStages,
+  type ReadingCurriculumStage,
+} from "@/lib/admin/reading-curriculum";
 
 type LevelFilter = "all" | "once" | "repeated";
 type SelectionPurpose = "next_exam" | "worksheet";
@@ -107,6 +112,9 @@ export function StudentWrongWordPanel({
   cachedAt,
   cachedHistory,
   initialDatasetId = "",
+  initialCurriculumStage = "undecided",
+  initialReadingContextSyncStatus = "not_synced",
+  onContextUpdated,
   onLoaded,
   studentId,
 }: {
@@ -114,6 +122,13 @@ export function StudentWrongWordPanel({
   cachedAt: number | null;
   cachedHistory: StudentWrongWordHistory | null;
   initialDatasetId?: string;
+  initialCurriculumStage?: ReadingCurriculumStage;
+  initialReadingContextSyncStatus?:
+    | "not_synced"
+    | "not_configured"
+    | "synced"
+    | "failed";
+  onContextUpdated?: () => void;
   onLoaded: (
     studentId: string,
     history: StudentWrongWordHistory,
@@ -140,8 +155,10 @@ export function StudentWrongWordPanel({
   const [queueing, setQueueing] = useState(false);
   const [worksheetRequesting, setWorksheetRequesting] =
     useState(false);
-  const [worksheetExportUrl, setWorksheetExportUrl] =
-    useState("");
+  const [readingCurriculumStage, setReadingCurriculumStage] =
+    useState<ReadingCurriculumStage>(initialCurriculumStage);
+  const [readingContextSyncStatus, setReadingContextSyncStatus] =
+    useState(initialReadingContextSyncStatus);
   const [cancellingDraftId, setCancellingDraftId] = useState<
     string | null
   >(null);
@@ -394,7 +411,6 @@ export function StudentWrongWordPanel({
           ? [...current, questionId]
           : current,
     );
-    setWorksheetExportUrl("");
   }
 
   function toggleVisibleQuestions() {
@@ -415,13 +431,11 @@ export function StudentWrongWordPanel({
     setWorksheetSelectedQuestionIds(
       allVisibleSelected ? [] : activeSelectableQuestionIds,
     );
-    setWorksheetExportUrl("");
   }
 
   function resetSelectionFeedback() {
     setSelectedQuestionIds([]);
     setWorksheetSelectedQuestionIds([]);
-    setWorksheetExportUrl("");
   }
 
   async function queueSelectedWords() {
@@ -490,7 +504,6 @@ export function StudentWrongWordPanel({
     }
 
     setWorksheetRequesting(true);
-    setWorksheetExportUrl("");
 
     try {
       const response = await fetch(
@@ -500,6 +513,7 @@ export function StudentWrongWordPanel({
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             questionIds: validWorksheetSelectedQuestionIds,
+            curriculumStage: readingCurriculumStage,
           }),
         },
       );
@@ -508,29 +522,52 @@ export function StudentWrongWordPanel({
           itemCount: number;
           reused: boolean;
         };
-        exportUrl?: string;
+        sync?: {
+          status: "not_configured" | "synced" | "unchanged" | "failed";
+          errorCode?: string;
+        };
         error?: string;
       };
-      if (!response.ok || !payload.request || !payload.exportUrl) {
+      if (!response.ok || !payload.request || !payload.sync) {
         throw new Error(
           payload.error ??
             adminStudentsText.learning.wrongWordsPanel.worksheetError,
         );
       }
 
-      toast.success(
-        payload.request.reused
-          ? formatContentText(
-              adminStudentsText.learning.wrongWordsPanel.worksheetDuplicate,
-              { count: payload.request.itemCount },
-            )
-          : formatContentText(
-              adminStudentsText.learning.wrongWordsPanel.worksheetSuccess,
-              { count: payload.request.itemCount },
-            ),
+      setReadingContextSyncStatus(
+        payload.sync.status === "unchanged"
+          ? "synced"
+          : payload.sync.status,
       );
-      setWorksheetSelectedQuestionIds([]);
-      setWorksheetExportUrl(payload.exportUrl);
+      onContextUpdated?.();
+      if (payload.sync.status === "synced") {
+        toast.success(
+          formatContentText(
+            adminStudentsText.learning.wrongWordsPanel.worksheetSuccess,
+            { count: payload.request.itemCount },
+          ),
+        );
+      } else if (payload.sync.status === "unchanged") {
+        toast.info(
+          adminStudentsText.learning.wrongWordsPanel.worksheetUnchanged,
+        );
+      } else if (payload.sync.status === "not_configured") {
+        toast.warning(
+          adminStudentsText.learning.wrongWordsPanel
+            .worksheetDriveNotConfigured,
+        );
+      } else {
+        toast.error(
+          adminStudentsText.learning.wrongWordsPanel.worksheetDriveFailed,
+        );
+      }
+      if (
+        payload.sync.status === "synced" ||
+        payload.sync.status === "unchanged"
+      ) {
+        setWorksheetSelectedQuestionIds([]);
+      }
     } catch (requestError) {
       toast.error(
         requestError instanceof Error
@@ -862,6 +899,30 @@ export function StudentWrongWordPanel({
             </HelpTip>
           </div>
           <div className="wrong-word-selection-bar">
+            {selectionPurpose === "worksheet" && (
+              <label className="field wrong-word-curriculum-field">
+                <span className="field-label">
+                  {
+                    adminStudentsText.learning.wrongWordsPanel
+                      .readingCurriculum
+                  }
+                </span>
+                <SelectField
+                  onChange={(event) =>
+                    setReadingCurriculumStage(
+                      event.target.value as ReadingCurriculumStage,
+                    )
+                  }
+                  value={readingCurriculumStage}
+                >
+                  {readingCurriculumStages.map((stage) => (
+                    <option key={stage} value={stage}>
+                      {readingCurriculumStageLabel(stage)}
+                    </option>
+                  ))}
+                </SelectField>
+              </label>
+            )}
             <Button
               disabled={
                 queueing ||
@@ -877,7 +938,10 @@ export function StudentWrongWordPanel({
                 ? adminStudentsText.learning.wrongWordsPanel.clearVisible
                 : adminStudentsText.learning.wrongWordsPanel.selectVisible}
             </Button>
-            <span aria-live="polite">
+            <span
+              aria-live="polite"
+              className="wrong-word-selected-count"
+            >
               {formatContentText(
                 adminStudentsText.learning.wrongWordsPanel.selectedCount,
                 { count: activeSelectedQuestionIds.length },
@@ -922,20 +986,17 @@ export function StudentWrongWordPanel({
                 </Button>
               )}
             </div>
+            {selectionPurpose === "worksheet" && (
+              <span
+                className={`status-pill reading-context-status status-${readingContextSyncStatus}`}
+              >
+                {
+                  adminStudentsText.learning.wrongWordsPanel
+                    .readingContextStatus[readingContextSyncStatus]
+                }
+              </span>
+            )}
           </div>
-          {worksheetExportUrl && (
-            <a
-              className={buttonClassNames({
-                className: "wrong-word-export-link",
-                size: "small",
-                variant: "quiet",
-              })}
-              download
-              href={worksheetExportUrl}
-            >
-              {adminStudentsText.learning.wrongWordsPanel.downloadJson}
-            </a>
-          )}
 
           {filteredWords.length === 0 ? (
             <div className="empty-state">

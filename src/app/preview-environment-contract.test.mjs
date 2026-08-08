@@ -35,6 +35,20 @@ describe("Preview Supabase safety guard", () => {
     ).toThrow(/ref mismatch/);
   });
 
+  it("blocks a mismatched Preview Drive folder when Drive sync is enabled", () => {
+    expect(() =>
+      assertPreviewEnvironment({
+        VERCEL_ENV: "preview",
+        PREVIEW_EXPECTED_SUPABASE_PROJECT_REF: "wojxpruvbjzbhrpmsbuy",
+        NEXT_PUBLIC_SUPABASE_URL:
+          "https://wojxpruvbjzbhrpmsbuy.supabase.co",
+        GOOGLE_DRIVE_ENABLED: "true",
+        GOOGLE_DRIVE_STUDENT_ROOT_FOLDER_ID: "production-folder",
+        PREVIEW_EXPECTED_GOOGLE_DRIVE_FOLDER_ID: "preview-folder",
+      }),
+    ).toThrow(/Drive student folder/);
+  });
+
   it("does not alter Production builds", () => {
     expect(() =>
       assertPreviewEnvironment({

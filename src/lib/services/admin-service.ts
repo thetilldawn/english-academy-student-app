@@ -28,7 +28,7 @@ import {
   storedDatasetDisplayLabel,
 } from "@/lib/ui/dataset-display";
 import {
-  activeReviewIdentity,
+  activeReviewIdentities,
   loadActiveReviewAssignments,
 } from "@/lib/services/active-review-assignment-service";
 import { loadEligibleVocabularyDataset } from "@/lib/services/eligible-vocabulary-service";
@@ -67,6 +67,7 @@ import {
   type DatasetMaterialKind,
   type VocabUnitType,
 } from "@/lib/admin/dataset-catalog";
+import type { ReadingCurriculumStage } from "@/lib/admin/reading-curriculum";
 
 export { buildStudentProgress } from "@/lib/admin/progress";
 export type { StudentProgressSummary } from "@/lib/admin/progress";
@@ -81,6 +82,12 @@ export type StudentSummary = {
   gradeLabel: string | null;
   currentVocabBook: string | null;
   currentVocabDatasetId: string | null;
+  readingCurriculumStage: ReadingCurriculumStage;
+  readingContextSyncStatus:
+    | "not_synced"
+    | "not_configured"
+    | "synced"
+    | "failed";
   status: "active" | "blocked";
   codeGeneration: number;
   codeStatus: "active" | "blocked" | "expired" | "missing";
@@ -272,6 +279,12 @@ type StudentRow = {
   grade_label: string | null;
   current_vocab_book: string | null;
   current_vocab_dataset_id: string | null;
+  reading_curriculum_stage: ReadingCurriculumStage;
+  reading_context_sync_status:
+    | "not_synced"
+    | "not_configured"
+    | "synced"
+    | "failed";
   status: "active" | "blocked";
   code_generation: number;
   created_at: string;
@@ -305,7 +318,7 @@ export async function listStudents(): Promise<StudentSummary[]> {
     supabase
       .from("students")
       .select(
-        "id, display_name, school_name, grade_label, current_vocab_book, current_vocab_dataset_id, status, code_generation, created_at",
+        "id, display_name, school_name, grade_label, current_vocab_book, current_vocab_dataset_id, reading_curriculum_stage, reading_context_sync_status, status, code_generation, created_at",
       )
       .is("deleted_at", null)
       .order("display_name"),
@@ -353,6 +366,8 @@ export async function listStudents(): Promise<StudentSummary[]> {
         ? storedDatasetDisplayLabel(student.current_vocab_book)
         : null),
     currentVocabDatasetId: student.current_vocab_dataset_id,
+    readingCurriculumStage: student.reading_curriculum_stage,
+    readingContextSyncStatus: student.reading_context_sync_status,
     status: student.status,
     codeGeneration: student.code_generation,
     codeStatus: codeByStudent.get(student.id) ?? "missing",
@@ -1365,13 +1380,11 @@ export async function prepareRegularAssignment(
   const primaryCandidates = allCandidates.filter(
     (candidate) =>
       unitIdSet.has(candidate.unitId) &&
-      !activeAssignments.identities.has(
-        activeReviewIdentity(
+      !activeReviewIdentities(
           candidate.id,
           candidate.canonicalKey,
           candidate.headwordNormalized,
-        ),
-      ),
+        ).some((identity) => activeAssignments.identities.has(identity)),
   );
   const sourceOrderByCandidateId = new Map(
     allCandidates.map((candidate) => [

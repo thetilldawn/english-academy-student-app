@@ -62,7 +62,7 @@ export const adminStudentsText = {
     nextExamWrongWordHelp:
       "아직 추가 가능한 오답만 다음 단어 시험 대기에 보냅니다.",
     worksheetWrongWordHelp:
-      "대기·배정 중인 오답도 한 번에 50개까지 별도 자료 요청에 담습니다.",
+      "선택한 오답을 한 번에 50개까지 학생의 학교·학년·해석 진도와 함께 앱에 저장하고, 연결된 비공개 Google Drive의 AI 입력 파일을 직접 업데이트합니다.",
     wrongHistoryRefreshHelp:
       "첫 시험이 끝나는 즉시 오답 이력과 현재 오답 단어를 반영합니다.",
     activitySections: {
@@ -146,9 +146,14 @@ export const adminStudentsText = {
       queueError: "오답 단어를 다음 시험 대기열에 추가하지 못했습니다.",
       queueSuccess: "{count}개 단어를 다음 시험 대기열에 추가했습니다.",
       worksheetError: "해석 시험지 요청을 저장하지 못했습니다.",
+      worksheetDriveNotConfigured:
+        "범위는 앱에 저장했습니다. Google Drive 연결 후 같은 버튼을 다시 눌러 동기화해 주세요.",
+      worksheetDriveFailed:
+        "범위는 앱에 저장했지만 Google Drive 업데이트에 실패했습니다. 다시 시도해 주세요.",
+      worksheetUnchanged: "이미 같은 해석 시험지 범위가 동기화되어 있습니다.",
       worksheetDuplicate:
         "{count}개 단어의 같은 요청이 이미 저장되어 있습니다.",
-      worksheetSuccess: "{count}개 단어를 해석 시험지 요청함에 담았습니다.",
+      worksheetSuccess: "{count}개 단어의 해석 시험지 범위를 Drive에 업데이트했습니다.",
       cancelDraftError: "재시험 준비를 취소하지 못했습니다.",
       cancelDraftSuccess:
         "재시험 준비를 취소했습니다. 오답은 다음 단어 시험 대기에 남아 있습니다.",
@@ -184,13 +189,20 @@ export const adminStudentsText = {
       repeated: "누적 2회 이상",
       purposeAria: "오답 단어 작업",
       nextExam: "다음 시험",
-      worksheet: "해석 시험지",
+      worksheet: "해석 시험지 범위",
       purposeHelpAria: "오답 단어 작업 도움말",
       clearVisible: "보이는 선택 해제",
       selectVisible: "보이는 단어 선택",
       selectedCount: "{count}개 선택",
       worksheetPending: "담는 중…",
-      addToWorksheet: "해석 시험지에 담기",
+      addToWorksheet: "해석 시험지 범위 업데이트",
+      readingCurriculum: "배운 해석 범위",
+      readingContextStatus: {
+        not_synced: "업데이트 전",
+        not_configured: "Drive 연결 필요",
+        synced: "Drive 업데이트됨",
+        failed: "Drive 업데이트 실패",
+      },
       queuePending: "추가하는 중…",
       addToNextExam: "다음 시험에 추가",
       downloadJson: "익명 기준본 JSON 받기",

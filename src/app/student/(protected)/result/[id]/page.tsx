@@ -20,64 +20,49 @@ type ResultQuestion = NonNullable<
 
 function QuestionReviewCard({
   question,
-  reviewPending,
 }: {
   question: ResultQuestion;
-  reviewPending: boolean;
 }) {
-  const resolved = question.retryIsCorrect === true;
   const presentation = getResultQuestionPresentation(question);
+  const wrongLevel = question.wrongCount >= 2 ? 2 : 1;
+  const answerClassNames = ["choice", "choice-correct", "result-correct-answer"];
+  const answerLength = Array.from(presentation.correctAnswer).length;
+
+  if (question.direction === "korean_to_english") {
+    answerClassNames.push("choice--en");
+  }
+  if (answerLength >= 54) {
+    answerClassNames.push("choice--very-long");
+  } else if (answerLength >= 30) {
+    answerClassNames.push("choice--long");
+  }
 
   return (
-    <article className="card result-question">
-      <div className="title-with-status">
-        <div>
-          <p className="eyebrow">
-            {formatContentText(studentAppText.result.question.number, {
-              number: question.orderIndex,
-            })}
-          </p>
-          <h3>{presentation.prompt}</h3>
-        </div>
-        <span
-          className={`status-pill ${
-            resolved
-              ? "status-completed"
-              : reviewPending
-                ? "status-in_progress"
-                : "status-expired"
-          }`}
-        >
-          {resolved
-            ? studentAppText.result.question.retryCorrect
-            : question.retryIsCorrect === false
-              ? studentAppText.result.question.retryWrong
-              : reviewPending
-                ? studentAppText.result.question.retryPending
-                : studentAppText.result.question.incomplete}
-        </span>
+    <article className="card result-question" data-wrong-level={wrongLevel}>
+      <div>
+        <p className="eyebrow">
+          {formatContentText(studentAppText.result.question.number, {
+            number: question.orderIndex,
+          })}
+        </p>
+        <h3>{presentation.prompt}</h3>
       </div>
-      <dl className="answer-detail answer-detail-3">
-        <div>
-          <dt>{studentAppText.result.question.initialChoice}</dt>
-          <dd>
-            {question.initialChoice ?? studentAppText.result.question.noChoice}
-          </dd>
+      <div className="result-answer">
+        <span className="result-answer-label">
+          {studentAppText.result.question.answer}
+        </span>
+        <div className={answerClassNames.join(" ")}>
+          <span aria-hidden="true" className="choice-number">
+            {question.correctChoiceIndex + 1}
+          </span>
+          <span className="choice-copy">
+            <span>{presentation.correctAnswer}</span>
+            <small aria-hidden="true" className="choice-pronunciation">
+              {"\u00a0"}
+            </small>
+          </span>
         </div>
-        <div>
-          <dt>{studentAppText.result.question.retry}</dt>
-          <dd>
-            {question.retryChoice ??
-              (reviewPending
-                ? studentAppText.result.question.retryPending
-                : studentAppText.result.question.noChoice)}
-          </dd>
-        </div>
-        <div>
-          <dt>{studentAppText.result.question.answer}</dt>
-          <dd>{presentation.correctAnswer}</dd>
-        </div>
-      </dl>
+      </div>
     </article>
   );
 }
@@ -102,7 +87,7 @@ export default async function StudentResultPage({
 
   const expired = result.status === "expired";
   const wrongQuestions = result.questions.filter(
-    (question) => question.initialIsCorrect !== true,
+    (question) => question.initialIsCorrect === false,
   );
   const unresolvedQuestions = wrongQuestions.filter(
     (question) => question.retryIsCorrect !== true,
@@ -180,11 +165,7 @@ export default async function StudentResultPage({
           ) : (
             <div className="result-question-list">
               {unresolvedQuestions.map((question) => (
-                <QuestionReviewCard
-                  key={question.id}
-                  question={question}
-                  reviewPending={reviewPending}
-                />
+                <QuestionReviewCard key={question.id} question={question} />
               ))}
             </div>
           )}
@@ -267,11 +248,7 @@ export default async function StudentResultPage({
           </div>
           <div className="result-question-list result-question-grid">
             {resolvedQuestions.map((question) => (
-              <QuestionReviewCard
-                key={question.id}
-                question={question}
-                reviewPending={false}
-              />
+              <QuestionReviewCard key={question.id} question={question} />
             ))}
           </div>
         </section>

@@ -37,6 +37,18 @@ export function assertPreviewEnvironment(environment = process.env) {
       `Preview build blocked: Supabase ref mismatch (expected ${expectedRef}, received ${actualRef ?? "invalid URL"}).`,
     );
   }
+
+  if (environment.GOOGLE_DRIVE_ENABLED === "true") {
+    const actualDriveFolder =
+      environment.GOOGLE_DRIVE_STUDENT_ROOT_FOLDER_ID;
+    const expectedDriveFolder =
+      environment.PREVIEW_EXPECTED_GOOGLE_DRIVE_FOLDER_ID;
+    if (!expectedDriveFolder || actualDriveFolder !== expectedDriveFolder) {
+      throw new Error(
+        "Preview build blocked: Google Drive student folder is not the approved Preview folder.",
+      );
+    }
+  }
 }
 
 assertPreviewEnvironment();

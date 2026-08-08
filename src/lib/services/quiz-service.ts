@@ -107,10 +107,12 @@ export type AttemptQuestionResult = {
   direction: "english_to_korean" | "korean_to_english";
   prompt: string;
   correctAnswer: string;
+  correctChoiceIndex: number;
   initialChoice: string | null;
   initialIsCorrect: boolean | null;
   retryChoice: string | null;
   retryIsCorrect: boolean | null;
+  wrongCount: number;
   headword: string;
   primaryMeaning: string;
   provenanceStatus: QuestionProvenanceStatus;
@@ -206,6 +208,7 @@ type ResultQuestionRow = {
   initial_is_correct: boolean | null;
   retry_choice_index: number | null;
   retry_is_correct: boolean | null;
+  prior_wrong_count: number;
   initial_timed_out?: boolean;
   retry_timed_out?: boolean;
   assignment_question:
@@ -257,6 +260,7 @@ export function mapResultQuestions(
       direction: row.direction,
       prompt: row.prompt,
       correctAnswer: choices[row.correct_choice_index] ?? "",
+      correctChoiceIndex: row.correct_choice_index,
       initialChoice:
         Boolean(row.initial_timed_out) ||
         row.initial_choice_index === null
@@ -269,6 +273,9 @@ export function mapResultQuestions(
           ? null
           : (choices[row.retry_choice_index] ?? null),
       retryIsCorrect: row.retry_is_correct,
+      wrongCount:
+        Math.max(0, row.prior_wrong_count) +
+        (row.initial_is_correct === false ? 1 : 0),
       headword:
         examUseSnapshot?.headword_snapshot ??
         verifiedSnapshot?.headword_snapshot ??
@@ -293,7 +300,7 @@ export async function getAttemptQuestionResults(
   const { data, error } = await supabase
     .from("quiz_questions")
     .select(
-      "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, initial_timed_out, retry_timed_out, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(headword_snapshot, primary_meaning_snapshot, provenance_status, exam_use_snapshot:assignment_question_exam_use_snapshot!assignment_question_exam_use_snapshot_question_fkey(headword_snapshot, primary_meaning_snapshot, display_pronunciation_ko_snapshot, pronunciation_snapshot, choice_dictionary_snapshots, provenance_status)), vocab_entries(headword, primary_meaning)",
+      "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, prior_wrong_count, initial_timed_out, retry_timed_out, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(headword_snapshot, primary_meaning_snapshot, provenance_status, exam_use_snapshot:assignment_question_exam_use_snapshot!assignment_question_exam_use_snapshot_question_fkey(headword_snapshot, primary_meaning_snapshot, display_pronunciation_ko_snapshot, pronunciation_snapshot, choice_dictionary_snapshots, provenance_status)), vocab_entries(headword, primary_meaning)",
     )
     .eq("attempt_id", attemptId)
     .order("order_index");

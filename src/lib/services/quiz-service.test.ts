@@ -18,6 +18,7 @@ function resultRow(
     initial_is_correct: false,
     retry_choice_index: 0,
     retry_is_correct: true,
+    prior_wrong_count: 0,
     assignment_question: null,
     vocab_entries: {
       headword: "current",
@@ -53,6 +54,7 @@ describe("mapResultQuestions", () => {
     expect(result.headword).toBe("current");
     expect(result.primaryMeaning).toBe("현재 뜻");
     expect(result.provenanceStatus).toBe("legacy_backfill");
+    expect(result.correctChoiceIndex).toBe(0);
   });
 
   it("Preview 검토본도 배정 당시 문맥 뜻 스냅샷을 표시한다", () => {
@@ -93,5 +95,33 @@ describe("mapResultQuestions", () => {
     expect(result.headword).toBe("current");
     expect(result.primaryMeaning).toBe("현재 뜻");
     expect(result.provenanceStatus).toBe("legacy_backfill");
+  });
+
+  it("counts prior initial-test misses plus the current miss", () => {
+    const [result] = mapResultQuestions([
+      resultRow({ prior_wrong_count: 1, initial_is_correct: false }),
+    ]);
+
+    expect(result.wrongCount).toBe(2);
+  });
+
+  it("shows one wrong for the first initial miss", () => {
+    const [result] = mapResultQuestions([
+      resultRow({ prior_wrong_count: 0, initial_is_correct: false }),
+    ]);
+
+    expect(result.wrongCount).toBe(1);
+  });
+
+  it("does not add another wrong for a failed retry in the same test", () => {
+    const [result] = mapResultQuestions([
+      resultRow({
+        prior_wrong_count: 0,
+        initial_is_correct: false,
+        retry_is_correct: false,
+      }),
+    ]);
+
+    expect(result.wrongCount).toBe(1);
   });
 });

@@ -77,10 +77,13 @@ describe("mixed assignment API contract", () => {
     );
     expect(service).toContain("createMixedQuizQuestions(");
     expect(service).toContain(
-      '"create_mixed_review_assignment_v6"',
+      '"create_mixed_review_assignment_v7"',
     );
     expect(service).toContain(
       "p_selected_queue_ids: prepared.selectedQueueIds",
+    );
+    expect(service).toContain(
+      "p_review_scope: prepared.reviewScope",
     );
     expect(service).toContain(
       "p_questions: prepared.questions",
@@ -114,6 +117,7 @@ describe("mixed assignment API contract", () => {
     expect(activeAssignments).toContain(
       '.from("assignment_questions")',
     );
+    expect(activeAssignments).toContain("activeReviewIdentities(");
     expect(service).toContain(
       "selectedReviewIdentities",
     );

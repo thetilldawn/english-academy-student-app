@@ -78,6 +78,26 @@ export function activeReviewIdentity(
     : `entry:${vocabEntryId}`;
 }
 
+export function activeReviewIdentities(
+  vocabEntryId: number,
+  canonicalLexemeId: string | null | undefined,
+  headwordNormalized?: string | null,
+) {
+  const result = new Set<string>([
+    activeReviewIdentity(
+      vocabEntryId,
+      canonicalLexemeId,
+      headwordNormalized,
+    ),
+  ]);
+  const headwordKey = headwordNormalized
+    ? normalizeQuizHeadword(headwordNormalized)
+    : "";
+  if (headwordKey) result.add(`headword:${headwordKey}`);
+  result.add(`entry:${vocabEntryId}`);
+  return [...result];
+}
+
 /**
  * Loads every word held by an unstarted or in-progress assignment.
  *
@@ -254,13 +274,13 @@ export async function loadActiveReviewAssignments(
     if (!assignment) continue;
     for (const question of
       questionsByAssignment.get(link.assignment_id) ?? []) {
-      identities.add(
-        activeReviewIdentity(
+      for (const identity of activeReviewIdentities(
           question.vocab_entry_id,
           question.canonical_lexeme_id_snapshot,
           question.headword_normalized_snapshot,
-        ),
-      );
+        )) {
+        identities.add(identity);
+      }
       words.push({
         studentId: link.student_id,
         assignmentId: link.assignment_id,

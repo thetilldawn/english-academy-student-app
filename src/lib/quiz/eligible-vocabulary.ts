@@ -98,6 +98,15 @@ export function mergeEligibleVocabularyRows(
         [...eligibility.dictionaryKeys][0] ??
         [...eligibility.canonicalKeys][0] ??
         null,
+      recordType: (() => {
+        const dictionaryId = [...eligibility.dictionaryKeys][0];
+        const prefix = dictionaryId?.split(":", 1)[0];
+        return prefix === "word" ||
+          prefix === "root_affix" ||
+          prefix === "expression"
+          ? prefix
+          : null;
+      })(),
       eligibleDirections: [...eligibility.directions],
     });
   }

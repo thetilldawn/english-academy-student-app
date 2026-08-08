@@ -7,8 +7,11 @@ export type QuizVocabularyEntry = {
   headword: string;
   primaryMeaning: string;
   canonicalKey?: string | null;
+  recordType?: "word" | "root_affix" | "expression" | null;
   eligibleDirections?: readonly QuizDirection[];
 };
+
+export const DISTRACTOR_POLICY_VERSION = "shape-v1";
 
 export type QuizQuestionDraft = {
   vocabEntryId: number;
@@ -132,6 +135,72 @@ function uniqueChoiceEntries(
   return result;
 }
 
+function inferredRecordType(entry: QuizVocabularyEntry) {
+  if (entry.recordType) return entry.recordType;
+  const dictionaryPrefix = entry.canonicalKey?.split(":", 1)[0];
+  if (
+    dictionaryPrefix === "word" ||
+    dictionaryPrefix === "root_affix" ||
+    dictionaryPrefix === "expression"
+  ) {
+    return dictionaryPrefix;
+  }
+  return /\s|[/]/.test(entry.headword.trim())
+    ? "expression"
+    : "word";
+}
+
+function meaningShape(value: string) {
+  const normalized = normalizeChoice(value).replace(/[.,;:!?]/g, "");
+  if (/^[~～]|\b것\b|\b수\b/.test(normalized)) return "phrase";
+  if (/(하다|되다|이다|있다|없다|나다|주다|오다|가다|보다)$/.test(normalized)) {
+    return "predicate";
+  }
+  if (/(한|적인|스러운|없는|있는)$/.test(normalized)) return "modifier";
+  return "nominal";
+}
+
+function headwordShape(value: string) {
+  const normalized = normalizeQuizHeadword(value);
+  const tokenCount = normalized.split(/[\s/-]+/).filter(Boolean).length;
+  if (tokenCount >= 2) return "multiword";
+  if (normalized.endsWith("ly")) return "adverb_like";
+  if (/(tion|sion|ment|ness|ity|ance|ence|ism|ship)$/.test(normalized)) {
+    return "noun_like";
+  }
+  if (/(ive|ous|ful|less|able|ible|al|ic|ary)$/.test(normalized)) {
+    return "adjective_like";
+  }
+  return "single";
+}
+
+function distractorSimilarityScore(
+  target: QuizVocabularyEntry,
+  candidate: QuizVocabularyEntry,
+  display: (entry: QuizVocabularyEntry) => string,
+) {
+  let score = 0;
+  if (inferredRecordType(target) === inferredRecordType(candidate)) {
+    score += 80;
+  }
+  if (meaningShape(target.primaryMeaning) === meaningShape(candidate.primaryMeaning)) {
+    score += 36;
+  }
+  if (headwordShape(target.headword) === headwordShape(candidate.headword)) {
+    score += 22;
+  }
+  const displayLengthDelta = Math.abs(
+    Array.from(display(target)).length - Array.from(display(candidate)).length,
+  );
+  score += Math.max(0, 18 - displayLengthDelta);
+  const meaningLengthDelta = Math.abs(
+    Array.from(target.primaryMeaning).length -
+      Array.from(candidate.primaryMeaning).length,
+  );
+  score += Math.max(0, 10 - meaningLengthDelta);
+  return score;
+}
+
 function createChoices(
   target: QuizVocabularyEntry,
   candidates: readonly QuizVocabularyEntry[],
@@ -152,7 +221,14 @@ function createChoices(
         normalizeChoice(display(candidate)) !== correctKey,
     ),
     random,
-  ).slice(0, 3);
+  )
+    .map((candidate) => ({
+      candidate,
+      score: distractorSimilarityScore(target, candidate, display),
+    }))
+    .sort((left, right) => right.score - left.score)
+    .slice(0, 3)
+    .map(({ candidate }) => candidate);
 
   if (distractors.length !== 3) {
     throw new Error("서로 다른 4지선다 보기를 만들 어휘가 부족합니다.");

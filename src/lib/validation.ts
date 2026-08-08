@@ -4,6 +4,7 @@ import {
   questionOrderModes,
   timingModes,
 } from "@/lib/admin/assignment-settings";
+import { readingCurriculumStages } from "@/lib/admin/reading-curriculum";
 
 const timingSettingsSchema = z
   .object({
@@ -98,6 +99,7 @@ export const queueWrongWordsSchema = z
 export const createWrongWordWorksheetRequestSchema = z
   .object({
     questionIds: z.array(z.uuid()).min(1).max(50),
+    curriculumStage: z.enum(readingCurriculumStages),
   })
   .strict()
   .refine(

@@ -53,6 +53,7 @@ describe("mergeEligibleVocabularyRows", () => {
         headword: "alpha",
         headwordNormalized: "alpha",
         primaryMeaning: "알파",
+        recordType: null,
         canonicalKey: "canonical-1",
         eligibleDirections: [
           "english_to_korean",
@@ -66,6 +67,7 @@ describe("mergeEligibleVocabularyRows", () => {
         headword: "beta",
         headwordNormalized: "beta",
         primaryMeaning: "베타",
+        recordType: null,
         canonicalKey: "canonical-2",
         eligibleDirections: ["korean_to_english"],
       },

@@ -21,15 +21,22 @@ describe("오답 해석 시험지 요청 입력 계약", () => {
     expect(
       createWrongWordWorksheetRequestSchema.parse({
         questionIds: [questionId],
+        curriculumStage: "undecided",
       }),
-    ).toEqual({ questionIds: [questionId] });
+    ).toEqual({
+      questionIds: [questionId],
+      curriculumStage: "undecided",
+    });
     const questionIds = Array.from(
       { length: 50 },
       (_, index) =>
         `11111111-1111-4111-8111-${String(index).padStart(12, "0")}`,
     );
     expect(
-      createWrongWordWorksheetRequestSchema.parse({ questionIds })
+      createWrongWordWorksheetRequestSchema.parse({
+        questionIds,
+        curriculumStage: "undecided",
+      })
         .questionIds,
     ).toHaveLength(50);
   });
@@ -41,19 +48,27 @@ describe("오답 해석 시험지 요청 입력 계약", () => {
         `11111111-1111-4111-8111-${String(index).padStart(12, "0")}`,
     );
     expect(() =>
-      createWrongWordWorksheetRequestSchema.parse({ questionIds: [] }),
+      createWrongWordWorksheetRequestSchema.parse({
+        questionIds: [],
+        curriculumStage: "undecided",
+      }),
     ).toThrow();
     expect(() =>
-      createWrongWordWorksheetRequestSchema.parse({ questionIds }),
+      createWrongWordWorksheetRequestSchema.parse({
+        questionIds,
+        curriculumStage: "undecided",
+      }),
     ).toThrow();
     expect(() =>
       createWrongWordWorksheetRequestSchema.parse({
         questionIds: [questionId, questionId],
+        curriculumStage: "undecided",
       }),
     ).toThrow("같은 오답 단어를 두 번 선택할 수 없습니다.");
     expect(() =>
       createWrongWordWorksheetRequestSchema.parse({
         questionIds: [questionId],
+        curriculumStage: "undecided",
         studentName: "노출 금지",
       }),
     ).toThrow();

@@ -597,7 +597,7 @@ export function QuizPlayer({
                 studentAppText.attempt.pronunciationAria,
                 { word: currentQuestion.prompt },
               )}
-              className="pronunciation-button pronunciation-button--prompt"
+              className="pronunciation-button pronunciation-button--prompt pronunciation-button--choice"
               onClick={() =>
                 playAudio(currentQuestion.pronunciation.audioUrl)
               }
@@ -606,6 +606,15 @@ export function QuizPlayer({
               <SpeakerIcon />
             </button>
           )}
+        {! (
+          currentQuestion.direction === "english_to_korean" &&
+          currentQuestion.pronunciation.available
+        ) && (
+          <span
+            aria-hidden="true"
+            className="choice-audio-placeholder pronunciation-button--choice"
+          />
+        )}
       </div>
 
       <div
@@ -617,6 +626,11 @@ export function QuizPlayer({
           const classNames = ["choice"];
           if (currentQuestion.direction === "korean_to_english") {
             classNames.push("choice--en");
+          }
+          if (Array.from(choice).length >= 54) {
+            classNames.push("choice--very-long");
+          } else if (Array.from(choice).length >= 30) {
+            classNames.push("choice--long");
           }
           if (correctChoice === index) classNames.push("choice-correct");
           if (
@@ -648,12 +662,20 @@ export function QuizPlayer({
                 <span className="choice-number">{index + 1}</span>
                 <span className="choice-copy">
                   <span>{choice}</span>
-                  {currentQuestion.direction === "korean_to_english" &&
-                    choicePronunciation?.displayKo && (
-                      <small className="choice-pronunciation">
-                        {choicePronunciation.displayKo}
-                      </small>
-                    )}
+                  <small
+                    aria-hidden={
+                      !(
+                        currentQuestion.direction === "korean_to_english" &&
+                        choicePronunciation?.displayKo
+                      )
+                    }
+                    className="choice-pronunciation"
+                  >
+                    {currentQuestion.direction === "korean_to_english" &&
+                    choicePronunciation?.displayKo
+                      ? choicePronunciation.displayKo
+                      : "\u00a0"}
+                  </small>
                 </span>
               </button>
               {currentQuestion.direction === "korean_to_english" &&
@@ -675,6 +697,15 @@ export function QuizPlayer({
                     <SpeakerIcon />
                   </button>
                 )}
+              {! (
+                currentQuestion.direction === "korean_to_english" &&
+                choiceAudioEnabled
+              ) && (
+                <span
+                  aria-hidden="true"
+                  className="choice-audio-placeholder pronunciation-button--choice"
+                />
+              )}
             </div>
           );
         })}

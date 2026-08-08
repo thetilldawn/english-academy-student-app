@@ -52,6 +52,20 @@ const studentSessionEnvironmentSchema = z.object({
   STUDENT_SESSION_PEPPER: base64Key,
 });
 
+const googleDriveEnvironmentSchema = z.object({
+  GOOGLE_DRIVE_ENABLED: z.literal("true"),
+  GOOGLE_DRIVE_OAUTH_CLIENT_ID: z.string().min(20),
+  GOOGLE_DRIVE_OAUTH_CLIENT_SECRET: z.string().min(10),
+  GOOGLE_DRIVE_OAUTH_REFRESH_TOKEN: z.string().min(20),
+  GOOGLE_DRIVE_STUDENT_ROOT_FOLDER_ID: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]{10,200}$/),
+  PREVIEW_EXPECTED_GOOGLE_DRIVE_FOLDER_ID: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]{10,200}$/)
+    .optional(),
+});
+
 export class AppConfigurationError extends Error {
   constructor(message = "앱 환경변수 설정이 완료되지 않았습니다.") {
     super(message);
@@ -98,6 +112,26 @@ export function getStudentLoginEnvironment() {
 
 export function getStudentSessionEnvironment() {
   return parseEnvironment(studentSessionEnvironmentSchema, "학생 세션 보안");
+}
+
+export function getGoogleDriveEnvironment() {
+  if (process.env.GOOGLE_DRIVE_ENABLED !== "true") {
+    return null;
+  }
+  const environment = parseEnvironment(
+    googleDriveEnvironmentSchema,
+    "학생 해석 시험지 Drive 연결",
+  );
+  if (
+    process.env.VERCEL_ENV === "preview" &&
+    environment.PREVIEW_EXPECTED_GOOGLE_DRIVE_FOLDER_ID !==
+      environment.GOOGLE_DRIVE_STUDENT_ROOT_FOLDER_ID
+  ) {
+    throw new AppConfigurationError(
+      "Preview의 학생기록 Drive 폴더가 안전하게 분리되지 않았습니다.",
+    );
+  }
+  return environment;
 }
 
 export function getServerEnvironment() {

@@ -9,6 +9,12 @@ const migration = fs.readFileSync(
   ),
   "utf8",
 );
+const examUseBulkMigration = fs.readFileSync(
+  path.resolve(
+    "supabase/migrations/20260808194824_fix_exam_use_bulk_assignments.sql",
+  ),
+  "utf8",
+);
 
 describe("일괄 배정과 학습 자료 DB 계약", () => {
   it("학습 자료 연결 테이블을 RLS와 명시적 권한으로 보호한다", () => {
@@ -71,6 +77,32 @@ describe("일괄 배정과 학습 자료 DB 계약", () => {
     );
     expect(migration).toContain(
       "revoke all on function public.create_bulk_vocab_assignments_v1(jsonb)\n  from public, anon;",
+    );
+  });
+
+  it("exam-use 단어장의 일반·오답 포함 일괄 배정을 최신 저장기로 분기한다", () => {
+    expect(examUseBulkMigration).toContain(
+      "create function private.create_bulk_vocab_assignments_v2(",
+    );
+    expect(examUseBulkMigration).toContain(
+      "private.create_assignment_with_delivery_v5(",
+    );
+    expect(examUseBulkMigration).toContain(
+      "private.create_mixed_review_assignment_v7(",
+    );
+    expect(examUseBulkMigration).toContain("p_review_scope text");
+    expect(examUseBulkMigration).toContain(
+      "exam_occurrence.exam_use_status = 'reviewed_for_preview'",
+    );
+    expect(examUseBulkMigration).toContain(
+      "identity.dictionary_id = active.dictionary_id",
+    );
+    expect(examUseBulkMigration).toContain(
+      "assignment_review_target_insert_mismatch",
+    );
+    expect(examUseBulkMigration).toContain("set search_path = ''");
+    expect(examUseBulkMigration).toContain(
+      "revoke all on function public.create_bulk_vocab_assignments_v2(jsonb)",
     );
   });
 });

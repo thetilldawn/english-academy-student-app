@@ -22,7 +22,7 @@ import {
   quizVocabularyIdentity,
 } from "@/lib/quiz/engine";
 import {
-  activeReviewIdentity,
+  activeReviewIdentities,
   loadActiveReviewAssignments,
 } from "@/lib/services/active-review-assignment-service";
 import { loadEligibleVocabularyDataset } from "@/lib/services/eligible-vocabulary-service";
@@ -35,7 +35,7 @@ import type {
 
 const REVIEW_QUEUE_PAGE_SIZE = 1000;
 const MAX_ASSIGNMENT_TITLE_LENGTH = 160;
-const MAX_MIXED_REVIEW_WORDS = 400;
+const MAX_MIXED_REVIEW_WORDS = 500;
 const CAPACITY_RANDOM = () => 0.5;
 
 type ServerSupabaseClient = Awaited<
@@ -102,14 +102,31 @@ function entryIdentity(entry: EligibleVocabularyEntry) {
   return quizVocabularyIdentity(entry);
 }
 
-function queueIdentity(
+function queueIdentities(
   queue: ReviewQueueRow,
   candidate?: EligibleVocabularyEntry,
 ) {
-  if (candidate) return quizVocabularyIdentity(candidate);
-  return queue.canonical_lexeme_id_snapshot
-    ? `canonical:${queue.canonical_lexeme_id_snapshot}`
-    : `entry:${queue.vocab_entry_id}`;
+  if (candidate) {
+    return activeReviewIdentities(
+      candidate.id,
+      candidate.canonicalKey,
+      candidate.headwordNormalized,
+    );
+  }
+  return activeReviewIdentities(
+    queue.vocab_entry_id,
+    queue.canonical_lexeme_id_snapshot,
+  );
+}
+
+function isActiveQueue(
+  identities: ReadonlySet<string>,
+  queue: ReviewQueueRow,
+  candidate?: EligibleVocabularyEntry,
+) {
+  return queueIdentities(queue, candidate).some((identity) =>
+    identities.has(identity),
+  );
 }
 
 function uniqueIdentityCount(
@@ -325,16 +342,13 @@ async function prepareAssignment(
     const candidate = candidateById.get(row.vocab_entry_id);
     return (
       !activeReviewAssignments.queueIds.has(row.id) &&
-      !activeReviewAssignments.identities.has(
-        queueIdentity(row, candidate),
-      )
+      !isActiveQueue(activeReviewAssignments.identities, row, candidate)
     );
   });
   const selectedByIdentity = new Map<string, ReviewQueueRow>();
   for (const row of availableQueueRows) {
-    const identity = queueIdentity(
-      row,
-      candidateById.get(row.vocab_entry_id),
+    const identity = quizVocabularyIdentity(
+      candidateById.get(row.vocab_entry_id)!,
     );
     if (!selectedByIdentity.has(identity)) {
       selectedByIdentity.set(identity, row);
@@ -379,13 +393,13 @@ async function prepareAssignment(
   const unitCandidates = allCandidates.filter(
     (candidate) =>
       primaryUnitIdSet.has(candidate.unitId) &&
-      !activeReviewAssignments.identities.has(
-        activeReviewIdentity(
+      !activeReviewIdentities(
           candidate.id,
           candidate.canonicalKey,
           candidate.headwordNormalized,
+        ).some((identity) =>
+          activeReviewAssignments.identities.has(identity),
         ),
-      ),
   );
   const selectedReviewIdentities: PendingReviewIdentity[] =
     selectedQueueRows.map((queue, index) => ({
@@ -426,11 +440,10 @@ async function prepareAssignment(
     overlap,
     alreadyAssigned: scopedQueueRows.filter((row) =>
       activeReviewAssignments.queueIds.has(row.id) ||
-      activeReviewAssignments.identities.has(
-        queueIdentity(
-          row,
-          candidateById.get(row.vocab_entry_id),
-        ),
+      isActiveQueue(
+        activeReviewAssignments.identities,
+        row,
+        candidateById.get(row.vocab_entry_id),
       ),
     ).length,
     maximumQuestionCount,
@@ -470,6 +483,7 @@ export type PreparedMixedAssignmentBatch = {
   studentId: string;
   datasetId: string;
   reviewLevels: (1 | 2)[];
+  reviewScope: "dataset" | "selection";
   selectedQueueIds: string[];
   title: string;
   primaryUnitIds: string[];
@@ -572,6 +586,7 @@ export async function prepareMixedAssignmentBatch(
     studentId: input.studentId,
     datasetId: input.datasetId,
     reviewLevels,
+    reviewScope: input.reviewScope ?? "dataset",
     selectedQueueIds,
     title:
       input.title ||
@@ -610,11 +625,12 @@ export async function createMixedAssignment(
   );
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc(
-    "create_mixed_review_assignment_v6",
+    "create_mixed_review_assignment_v7",
     {
       p_student_id: prepared.studentId,
       p_dataset_id: prepared.datasetId,
       p_review_levels: prepared.reviewLevels,
+      p_review_scope: prepared.reviewScope,
       p_selected_queue_ids: prepared.selectedQueueIds,
       p_title: prepared.title,
       p_primary_unit_ids: prepared.primaryUnitIds,

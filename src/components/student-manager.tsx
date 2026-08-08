@@ -67,6 +67,7 @@ import {
   type StudentLearningSourceItem,
 } from "@/lib/admin/learning-sources";
 import type { StudentVocabBookHistory } from "@/lib/admin/student-vocab-book-history";
+import type { ReadingCurriculumStage } from "@/lib/admin/reading-curriculum";
 
 type StudentItem = {
   id: string;
@@ -75,6 +76,12 @@ type StudentItem = {
   gradeLabel: string | null;
   currentVocabBook: string | null;
   currentVocabDatasetId: string | null;
+  readingCurriculumStage: ReadingCurriculumStage;
+  readingContextSyncStatus:
+    | "not_synced"
+    | "not_configured"
+    | "synced"
+    | "failed";
   status: "active" | "blocked";
   codeGeneration: number;
   codeStatus: "active" | "blocked" | "expired" | "missing";
@@ -1577,7 +1584,16 @@ export function StudentManager({
                             null
                           }
                           initialDatasetId={learningSourceDatasetId}
+                          initialCurriculumStage={
+                            selectedStudent.readingCurriculumStage
+                          }
+                          initialReadingContextSyncStatus={
+                            selectedStudent.readingContextSyncStatus
+                          }
                           key={`${selectedStudent.id}:${learningSourceDatasetId}`}
+                          onContextUpdated={() => {
+                            startRefreshTransition(() => router.refresh());
+                          }}
                           onLoaded={cacheWrongWordHistory}
                           studentId={selectedStudent.id}
                         />
