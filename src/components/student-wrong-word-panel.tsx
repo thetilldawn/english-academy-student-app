@@ -10,6 +10,7 @@ import {
 import { formatKoreanDateTime } from "@/lib/format";
 
 type LevelFilter = "all" | "once" | "repeated";
+type SelectionPurpose = "next_exam" | "worksheet";
 const WRONG_HISTORY_CACHE_TTL_MS = 30_000;
 
 function outcomeLabel(outcome: WrongWordOutcome) {
@@ -75,6 +76,25 @@ function selectionTarget(
   };
 }
 
+function worksheetSelectionTarget(
+  word: WrongWordAggregate,
+  datasetId: string,
+) {
+  const candidates = datasetId
+    ? word.occurrences.filter(
+        (candidate) => candidate.datasetId === datasetId,
+      )
+    : word.occurrences;
+  const occurrence = candidates.find(
+    (candidate) => candidate.resolution === "unresolved",
+  );
+  if (!occurrence) return null;
+  return {
+    questionId: occurrence.latestQuestionId,
+    resolution: occurrence.resolution,
+  };
+}
+
 export function StudentWrongWordPanel({
   active,
   cachedAt,
@@ -106,12 +126,22 @@ export function StudentWrongWordPanel({
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<
     string[]
   >([]);
+  const [worksheetSelectedQuestionIds, setWorksheetSelectedQuestionIds] =
+    useState<string[]>([]);
+  const [selectionPurpose, setSelectionPurpose] =
+    useState<SelectionPurpose>("next_exam");
   const [queueing, setQueueing] = useState(false);
+  const [worksheetRequesting, setWorksheetRequesting] =
+    useState(false);
+  const [worksheetExportUrl, setWorksheetExportUrl] =
+    useState("");
   const [cancellingDraftId, setCancellingDraftId] = useState<
     string | null
   >(null);
   const [queueError, setQueueError] = useState("");
   const [queueNotice, setQueueNotice] = useState("");
+  const [worksheetError, setWorksheetError] = useState("");
+  const [worksheetNotice, setWorksheetNotice] = useState("");
 
   useEffect(() => {
     const cacheIsFresh =
@@ -300,48 +330,106 @@ export function StudentWrongWordPanel({
       ),
     [selectableFilteredQuestionIdSet, selectedQuestionIds],
   );
+  const worksheetSelectableFilteredQuestionIds = useMemo(
+    () =>
+      filteredWords.flatMap((word) => {
+        const target = worksheetSelectionTarget(word, datasetFilter);
+        return target ? [target.questionId] : [];
+      }),
+    [datasetFilter, filteredWords],
+  );
+  const worksheetSelectableFilteredQuestionIdSet = useMemo(
+    () => new Set(worksheetSelectableFilteredQuestionIds),
+    [worksheetSelectableFilteredQuestionIds],
+  );
+  const validWorksheetSelectedQuestionIds = useMemo(
+    () =>
+      worksheetSelectedQuestionIds.filter((questionId) =>
+        worksheetSelectableFilteredQuestionIdSet.has(questionId),
+      ),
+    [
+      worksheetSelectableFilteredQuestionIdSet,
+      worksheetSelectedQuestionIds,
+    ],
+  );
+  const activeSelectableQuestionIds =
+    selectionPurpose === "next_exam"
+      ? selectableFilteredQuestionIds
+      : worksheetSelectableFilteredQuestionIds.slice(0, 50);
+  const activeSelectedQuestionIds =
+    selectionPurpose === "next_exam"
+      ? validSelectedQuestionIds
+      : validWorksheetSelectedQuestionIds;
   const allVisibleSelected =
-    selectableFilteredQuestionIds.length > 0 &&
-    selectableFilteredQuestionIds.every((questionId) =>
-      validSelectedQuestionIds.includes(questionId),
+    activeSelectableQuestionIds.length > 0 &&
+    activeSelectableQuestionIds.every((questionId) =>
+      activeSelectedQuestionIds.includes(questionId),
     );
 
   function toggleQuestion(questionId: string) {
     if (
       requestingRef.current ||
       queueing ||
+      worksheetRequesting ||
       cancellingDraftId
     ) {
       return;
     }
-    setSelectedQuestionIds((current) =>
+    if (selectionPurpose === "next_exam") {
+      setSelectedQuestionIds((current) =>
+        current.includes(questionId)
+          ? current.filter((value) => value !== questionId)
+          : [...current, questionId],
+      );
+      setQueueError("");
+      setQueueNotice("");
+      return;
+    }
+    setWorksheetSelectedQuestionIds((current) =>
       current.includes(questionId)
         ? current.filter((value) => value !== questionId)
-        : [...current, questionId],
+        : current.length < 50
+          ? [...current, questionId]
+          : current,
     );
-    setQueueError("");
-    setQueueNotice("");
+    setWorksheetError("");
+    setWorksheetNotice("");
+    setWorksheetExportUrl("");
   }
 
   function toggleVisibleQuestions() {
     if (
       requestingRef.current ||
       queueing ||
+      worksheetRequesting ||
       cancellingDraftId
     ) {
       return;
     }
-    setSelectedQuestionIds(
-      allVisibleSelected ? [] : selectableFilteredQuestionIds,
+    if (selectionPurpose === "next_exam") {
+      setSelectedQuestionIds(
+        allVisibleSelected ? [] : selectableFilteredQuestionIds,
+      );
+      setQueueError("");
+      setQueueNotice("");
+      return;
+    }
+    setWorksheetSelectedQuestionIds(
+      allVisibleSelected ? [] : activeSelectableQuestionIds,
     );
-    setQueueError("");
-    setQueueNotice("");
+    setWorksheetError("");
+    setWorksheetNotice("");
+    setWorksheetExportUrl("");
   }
 
   function resetSelectionFeedback() {
     setSelectedQuestionIds([]);
+    setWorksheetSelectedQuestionIds([]);
     setQueueError("");
     setQueueNotice("");
+    setWorksheetError("");
+    setWorksheetNotice("");
+    setWorksheetExportUrl("");
   }
 
   async function queueSelectedWords() {
@@ -349,7 +437,9 @@ export function StudentWrongWordPanel({
       loading ||
       requestingRef.current ||
       queueing ||
-      validSelectedQuestionIds.length === 0
+      worksheetRequesting ||
+      validWorksheetSelectedQuestionIds.length === 0 ||
+      validWorksheetSelectedQuestionIds.length > 50
     ) {
       return;
     }
@@ -395,11 +485,71 @@ export function StudentWrongWordPanel({
     }
   }
 
+  async function createWorksheetRequest() {
+    if (
+      loading ||
+      requestingRef.current ||
+      queueing ||
+      worksheetRequesting ||
+      validSelectedQuestionIds.length === 0
+    ) {
+      return;
+    }
+
+    setWorksheetRequesting(true);
+    setWorksheetError("");
+    setWorksheetNotice("");
+    setWorksheetExportUrl("");
+
+    try {
+      const response = await fetch(
+        `/api/admin/students/${studentId}/worksheet-requests`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            questionIds: validWorksheetSelectedQuestionIds,
+          }),
+        },
+      );
+      const payload = (await response.json()) as {
+        request?: {
+          itemCount: number;
+          reused: boolean;
+        };
+        exportUrl?: string;
+        error?: string;
+      };
+      if (!response.ok || !payload.request || !payload.exportUrl) {
+        throw new Error(
+          payload.error ?? "해석 시험지 요청을 저장하지 못했습니다.",
+        );
+      }
+
+      setWorksheetNotice(
+        payload.request.reused
+          ? `${payload.request.itemCount}개 단어의 같은 요청이 이미 저장되어 있습니다.`
+          : `${payload.request.itemCount}개 단어를 해석 시험지 요청함에 담았습니다.`,
+      );
+      setWorksheetSelectedQuestionIds([]);
+      setWorksheetExportUrl(payload.exportUrl);
+    } catch (requestError) {
+      setWorksheetError(
+        requestError instanceof Error
+          ? requestError.message
+          : "해석 시험지 요청을 저장하지 못했습니다.",
+      );
+    } finally {
+      setWorksheetRequesting(false);
+    }
+  }
+
   async function cancelReviewAssignmentDraft(draftId: string) {
     if (
       loading ||
       requestingRef.current ||
       queueing ||
+      worksheetRequesting ||
       cancellingDraftId
     ) {
       return;
@@ -488,7 +638,7 @@ export function StudentWrongWordPanel({
         </span>
         <button
           className="button button-quiet button-small"
-          disabled={loading || queueing}
+          disabled={loading || queueing || worksheetRequesting}
           onClick={refreshHistory}
           type="button"
         >
@@ -539,6 +689,7 @@ export function StudentWrongWordPanel({
                 disabled={
                   loading ||
                   queueing ||
+                  worksheetRequesting ||
                   Boolean(cancellingDraftId)
                 }
                 onClick={() =>
@@ -615,13 +766,36 @@ export function StudentWrongWordPanel({
               </button>
             ))}
           </div>
+          <div
+            aria-label="오답 단어 작업"
+            className="filter-chip-row wrong-word-purpose-row"
+            role="group"
+          >
+            {(
+              [
+                ["next_exam", "다음 시험"],
+                ["worksheet", "해석 시험지"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                aria-pressed={selectionPurpose === value}
+                className="filter-chip"
+                key={value}
+                onClick={() => setSelectionPurpose(value)}
+                type="button"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <div className="wrong-word-selection-bar">
             <button
               className="button button-quiet button-small"
               disabled={
                 queueing ||
+                worksheetRequesting ||
                 loading ||
-                selectableFilteredQuestionIds.length === 0
+                activeSelectableQuestionIds.length === 0
               }
               onClick={toggleVisibleQuestions}
               type="button"
@@ -629,24 +803,49 @@ export function StudentWrongWordPanel({
               {allVisibleSelected ? "보이는 선택 해제" : "보이는 단어 선택"}
             </button>
             <span aria-live="polite">
-              {validSelectedQuestionIds.length}개 선택
+              {activeSelectedQuestionIds.length}개 선택
             </span>
-            <button
-              aria-busy={queueing}
-              className="button button-primary button-small"
-              disabled={
-                loading ||
-                queueing ||
-                validSelectedQuestionIds.length === 0
-              }
-              onClick={queueSelectedWords}
-              type="button"
-            >
-              {queueing ? "추가하는 중…" : "다음 시험에 추가"}
-            </button>
+            <div className="wrong-word-selection-actions">
+              {selectionPurpose === "worksheet" ? (
+                <button
+                  aria-busy={worksheetRequesting}
+                  className="button button-secondary button-small"
+                  disabled={
+                    loading ||
+                    queueing ||
+                    worksheetRequesting ||
+                    validWorksheetSelectedQuestionIds.length === 0 ||
+                    validWorksheetSelectedQuestionIds.length > 50
+                  }
+                  onClick={createWorksheetRequest}
+                  type="button"
+                >
+                  {worksheetRequesting
+                    ? "담는 중…"
+                    : "해석 시험지에 담기"}
+                </button>
+              ) : (
+                <button
+                  aria-busy={queueing}
+                  className="button button-primary button-small"
+                  disabled={
+                    loading ||
+                    queueing ||
+                    worksheetRequesting ||
+                    validSelectedQuestionIds.length === 0
+                  }
+                  onClick={queueSelectedWords}
+                  type="button"
+                >
+                  {queueing ? "추가하는 중…" : "다음 시험에 추가"}
+                </button>
+              )}
+            </div>
           </div>
           <p className="wrong-word-selection-help">
-            선택한 단어는 다음 일반 시험에 추가할 수 있습니다.
+            {selectionPurpose === "worksheet"
+              ? "대기·배정 중인 오답도 한 번에 50개까지 별도 자료 요청에 담습니다."
+              : "아직 추가 가능한 오답만 다음 일반 시험 대기에 보냅니다."}
           </p>
           {queueError && (
             <div className="notice notice-error" role="alert">
@@ -662,6 +861,29 @@ export function StudentWrongWordPanel({
               {queueNotice}
             </div>
           )}
+          {worksheetError && (
+            <div className="notice notice-error" role="alert">
+              {worksheetError}
+            </div>
+          )}
+          {worksheetNotice && (
+            <div
+              aria-live="polite"
+              className="notice notice-success"
+              role="status"
+            >
+              {worksheetNotice}
+            </div>
+          )}
+          {worksheetExportUrl && (
+            <a
+              className="button button-quiet button-small wrong-word-export-link"
+              download
+              href={worksheetExportUrl}
+            >
+              익명 기준본 JSON 받기
+            </a>
+          )}
 
           {filteredWords.length === 0 ? (
             <div className="empty-state">
@@ -670,10 +892,18 @@ export function StudentWrongWordPanel({
           ) : (
             <div className="wrong-word-list wrong-word-list-with-actions">
               {filteredWords.map((word) => {
-                const target = selectionTarget(word, datasetFilter);
-                const selected = target
-                  ? validSelectedQuestionIds.includes(
-                      target.questionId,
+                const nextExamTarget = selectionTarget(word, datasetFilter);
+                const worksheetTarget = worksheetSelectionTarget(
+                  word,
+                  datasetFilter,
+                );
+                const activeTarget =
+                  selectionPurpose === "next_exam"
+                    ? nextExamTarget
+                    : worksheetTarget;
+                const selected = activeTarget
+                  ? activeSelectedQuestionIds.includes(
+                      activeTarget.questionId,
                     )
                   : false;
                 return (
@@ -684,27 +914,31 @@ export function StudentWrongWordPanel({
                 >
                   <label className="wrong-word-checkbox">
                     <input
-                      checked={
-                        selected ||
-                        target?.scheduling === "queued" ||
-                        target?.scheduling === "assigned"
-                      }
+                      checked={selected}
                       disabled={
-                        !target ||
-                        target.resolution === "resolved" ||
-                        target.scheduling !== "available" ||
+                        !activeTarget ||
+                        activeTarget.resolution === "resolved" ||
+                        (selectionPurpose === "next_exam" &&
+                          nextExamTarget?.scheduling !== "available") ||
+                        (selectionPurpose === "worksheet" &&
+                          !selected &&
+                          validWorksheetSelectedQuestionIds.length >= 50) ||
                         loading ||
-                        queueing
+                        queueing ||
+                        worksheetRequesting
                       }
                       onChange={() => {
-                        if (target) {
-                          toggleQuestion(target.questionId);
+                        if (activeTarget) {
+                          toggleQuestion(activeTarget.questionId);
                         }
                       }}
                       type="checkbox"
                     />
                     <span className="sr-only">
-                      {word.headword} 오답 단어 선택
+                      {word.headword}을(를){" "}
+                      {selectionPurpose === "worksheet"
+                        ? "해석 시험지에 담기"
+                        : "다음 시험에 추가"}
                     </span>
                   </label>
                   <div className="wrong-word-copy">
@@ -725,17 +959,17 @@ export function StudentWrongWordPanel({
                   <div className="wrong-word-meta">
                     <span
                       className={`status-pill ${
-                        target?.scheduling === "assigned" ||
-                        target?.scheduling === "queued"
+                        nextExamTarget?.scheduling === "assigned" ||
+                        nextExamTarget?.scheduling === "queued"
                           ? "status-completed"
                           : ""
                       }`}
                     >
-                      {target?.resolution === "resolved"
+                      {nextExamTarget?.resolution === "resolved"
                         ? "해결됨"
-                        : target?.scheduling === "assigned"
+                        : nextExamTarget?.scheduling === "assigned"
                           ? "배정 중"
-                          : target?.scheduling === "queued"
+                          : nextExamTarget?.scheduling === "queued"
                             ? "다음 시험 대기"
                             : "추가 가능"}
                     </span>
@@ -750,8 +984,8 @@ export function StudentWrongWordPanel({
                     <small>
                       {formatKoreanDateTime(word.lastWrongAt)}
                     </small>
-                    {target?.activeAssignment && (
-                      <small>{target.activeAssignment.title}</small>
+                    {nextExamTarget?.activeAssignment && (
+                      <small>{nextExamTarget.activeAssignment.title}</small>
                     )}
                   </div>
                 </article>

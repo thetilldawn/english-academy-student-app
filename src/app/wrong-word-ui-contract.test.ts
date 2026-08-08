@@ -50,13 +50,18 @@ describe("wrong-word admin UI contract", () => {
     const panel = source(
       "src/components/student-wrong-word-panel.tsx",
     );
+    const queueFunction = panel.slice(
+      panel.indexOf("async function queueSelectedWords()"),
+      panel.indexOf("async function createWorksheetRequest()"),
+    );
 
     expect(panel).toContain("async function queueSelectedWords()");
-    expect(panel).toContain(
+    expect(queueFunction).toContain(
       "questionIds: validSelectedQuestionIds",
     );
+    expect(queueFunction).toContain("refreshHistory()");
+    expect(queueFunction).not.toContain("worksheetSelectedQuestionIds");
     expect(panel).toContain("다음 시험에 추가");
-    expect(panel).toContain("refreshHistory()");
     expect(panel).toContain(
       'target.scheduling === "available"',
     );
@@ -122,8 +127,12 @@ describe("wrong-word admin UI contract", () => {
     expect(manager).toContain("moveDialogTabFocus");
     expect(panel).toContain("누적 2회 이상");
     expect(panel).toContain('type="checkbox"');
-    expect(panel).toContain('target?.scheduling === "queued"');
-    expect(panel).toContain('target?.scheduling === "assigned"');
+    expect(panel).toContain(
+      'nextExamTarget?.scheduling === "queued"',
+    );
+    expect(panel).toContain(
+      'nextExamTarget?.scheduling === "assigned"',
+    );
     expect(panel).toContain("다음 시험 대기");
     expect(panel).toContain("배정 중");
     expect(panel).toContain("해결됨");
@@ -139,6 +148,44 @@ describe("wrong-word admin UI contract", () => {
     expect(panel).toContain("refreshAfterRequestRef");
     expect(panel).toContain("loading || queueing");
     expect(panel).not.toContain("router.refresh");
+  });
+
+  it("keeps worksheet selection independent and exports a private anonymous packet", () => {
+    const panel = source(
+      "src/components/student-wrong-word-panel.tsx",
+    );
+    const requestRoute = source(
+      "src/app/api/admin/students/[id]/worksheet-requests/route.ts",
+    );
+    const exportRoute = source(
+      "src/app/api/admin/worksheet-requests/[id]/export/route.ts",
+    );
+    const worksheetFunction = panel.slice(
+      panel.indexOf("async function createWorksheetRequest()"),
+      panel.indexOf("async function cancelReviewAssignmentDraft("),
+    );
+
+    expect(panel).toContain('type SelectionPurpose = "next_exam" | "worksheet"');
+    expect(panel).toContain("worksheetSelectedQuestionIds");
+    expect(panel).toContain("validWorksheetSelectedQuestionIds");
+    expect(panel).toContain("worksheetSelectionTarget(");
+    expect(panel).toContain('aria-label="오답 단어 작업"');
+    expect(panel).toContain("한 번에 50개까지");
+    expect(worksheetFunction).toContain(
+      "questionIds: validWorksheetSelectedQuestionIds",
+    );
+    expect(worksheetFunction).not.toContain("refreshHistory()");
+    expect(worksheetFunction).not.toContain("setSelectedQuestionIds(");
+    expect(requestRoute).toContain('export const dynamic = "force-dynamic"');
+    expect(requestRoute).toContain("isSameOriginRequest(request)");
+    expect(requestRoute).toContain("getAdminContext()");
+    expect(requestRoute).toContain(
+      "parseJson(request, createWrongWordWorksheetRequestSchema)",
+    );
+    expect(requestRoute).toContain('"Cache-Control": "private, no-store"');
+    expect(exportRoute).toContain('"Content-Disposition"');
+    expect(exportRoute).toContain('"X-Content-Type-Options": "nosniff"');
+    expect(exportRoute).toContain('"Cache-Control": "private, no-store"');
   });
 
   it("keeps the wrong-word list single-view and clears hidden selections when filters change", () => {

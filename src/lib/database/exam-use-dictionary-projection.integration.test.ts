@@ -177,6 +177,7 @@ describe.sequential("exam-use dictionary projection", () => {
   let unitId = "";
   let entryIds: number[] = [];
   let assignmentId = "";
+  let attemptId = "";
 
   beforeAll(async () => {
     database = await createFinalSchemaDatabase();
@@ -394,6 +395,7 @@ describe.sequential("exam-use dictionary projection", () => {
         '${assignmentId}'
       ) as id;
     `);
+    attemptId = attempt.rows[0]!.id;
     const attemptState = await database.query<{
       status: string;
       phase: string;
@@ -426,5 +428,154 @@ describe.sequential("exam-use dictionary projection", () => {
       question_count: 4,
       snapshot_join_count: 4,
     });
+  });
+
+  it("오답 해석 자료 요청을 occurrence 근거와 함께 멱등 저장·내보낸다", async () => {
+    const questions = await database.query<{
+      id: string;
+      correct_choice_index: number;
+      vocab_entry_id: number;
+    }>(`
+      select id, correct_choice_index, vocab_entry_id
+      from public.quiz_questions
+      where attempt_id = '${attemptId}'
+      order by order_index;
+    `);
+
+    for (const question of questions.rows) {
+      await database.query(
+        `select public.answer_quiz_question_v2(
+          $1::uuid,
+          $2::uuid,
+          $3::uuid,
+          'initial',
+          $4::smallint,
+          false
+        )`,
+        [
+          ids.student,
+          attemptId,
+          question.id,
+          (question.correct_choice_index + 1) % 4,
+        ],
+      );
+    }
+    await database.query(
+      "select public.start_quiz_retry($1::uuid, $2::uuid)",
+      [ids.student, attemptId],
+    );
+    for (const question of questions.rows) {
+      await database.query(
+        `select public.answer_quiz_question_v2(
+          $1::uuid,
+          $2::uuid,
+          $3::uuid,
+          'retry',
+          $4::smallint,
+          false
+        )`,
+        [
+          ids.student,
+          attemptId,
+          question.id,
+          (question.correct_choice_index + 1) % 4,
+        ],
+      );
+    }
+
+    const selectedIds = questions.rows.slice(0, 2).map((row) => row.id);
+    await database.exec("set role authenticated;");
+    const first = await database.query<{
+      request_id: string;
+      item_count: number;
+      content_sha256: string;
+      reused: boolean;
+    }>(
+      `select * from public.create_wrong_word_worksheet_request_v1(
+        $1::uuid,
+        $2::uuid[]
+      )`,
+      [ids.student, selectedIds],
+    );
+    expect(first.rows[0]).toMatchObject({
+      item_count: 2,
+      reused: false,
+    });
+
+    await database.exec("reset role;");
+    await database.query(
+      `update public.student_vocab_state
+       set unresolved_wrong_count = unresolved_wrong_count + 1,
+           last_wrong_at = clock_timestamp()
+       where student_id = $1::uuid
+         and vocab_entry_id = $2`,
+      [ids.student, questions.rows[0]!.vocab_entry_id],
+    );
+    await database.exec("set role authenticated;");
+    const second = await database.query<{
+      request_id: string;
+      item_count: number;
+      content_sha256: string;
+      reused: boolean;
+    }>(
+      `select * from public.create_wrong_word_worksheet_request_v1(
+        $1::uuid,
+        $2::uuid[]
+      )`,
+      [ids.student, [...selectedIds].reverse()],
+    );
+    expect(second.rows[0]).toEqual({
+      ...first.rows[0],
+      reused: true,
+    });
+
+    const exported = await database.query<{ payload: Record<string, unknown> }>(
+      `select public.export_wrong_word_worksheet_request_v1(
+        $1::uuid
+      ) as payload`,
+      [first.rows[0]!.request_id],
+    );
+    const payload = exported.rows[0]!.payload as {
+      request_id: string;
+      student_id: string;
+      item_count: number;
+      items: Array<{
+        position: number;
+        dictionary_id: string;
+        occurrence_id: string;
+        generation_status: string;
+      }>;
+      target_profile: {
+        school_name: string | null;
+        grade_label: string | null;
+      };
+    };
+    expect(payload).toMatchObject({
+      request_id: first.rows[0]!.request_id,
+      student_id: ids.student,
+      item_count: 2,
+    });
+    expect(payload.items.map((item) => item.position)).toEqual([1, 2]);
+    expect(
+      payload.items.every(
+        (item) =>
+          item.dictionary_id.startsWith("word:") &&
+          item.occurrence_id.startsWith("occ:") &&
+          item.generation_status === "ready",
+      ),
+    ).toBe(true);
+    expect(JSON.stringify(payload)).not.toContain("Preview student");
+
+    const audit = await database.query<{ event_type: string }>(`
+      select event_type
+      from public.audit_events
+      where details ->> 'requestId' = '${first.rows[0]!.request_id}'
+      order by id;
+    `);
+    expect(audit.rows.map((row) => row.event_type)).toEqual([
+      "worksheet.wrong_word.queued",
+      "worksheet.wrong_word.exported",
+    ]);
+    await database.exec("reset role;");
   });
 });

@@ -4147,6 +4147,16 @@ tr:last-child td {
   white-space: nowrap;
 }
 
+.wrong-word-selection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.wrong-word-export-link {
+  width: fit-content;
+}
+
 .wrong-word-draft-actions {
   display: flex;
   flex-wrap: wrap;
@@ -4260,6 +4270,14 @@ tr:last-child td {
     order: -1;
     width: 100%;
     margin: 0;
+  }
+
+  .wrong-word-selection-actions {
+    width: 100%;
+  }
+
+  .wrong-word-selection-actions .button {
+    flex: 1 1 10rem;
   }
 
   .wrong-attempt-row summary {

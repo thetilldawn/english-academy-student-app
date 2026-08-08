@@ -6,12 +6,59 @@ import {
   bulkAssignmentPreviewSchema,
   bulkAssignmentSchema,
   createReviewAssignmentDraftSchema,
+  createWrongWordWorksheetRequestSchema,
   createStudentSchema,
   exactReviewAssignmentSchema,
   mixedAssignmentSchema,
   updateStudentProfileSchema,
   updateStudentVocabSchema,
 } from "@/lib/validation";
+
+describe("오답 해석 시험지 요청 입력 계약", () => {
+  const questionId = "11111111-1111-4111-8111-111111111111";
+
+  it("중복 없는 UUID를 한 번에 1개부터 50개까지만 받는다", () => {
+    expect(
+      createWrongWordWorksheetRequestSchema.parse({
+        questionIds: [questionId],
+      }),
+    ).toEqual({ questionIds: [questionId] });
+    const questionIds = Array.from(
+      { length: 50 },
+      (_, index) =>
+        `11111111-1111-4111-8111-${String(index).padStart(12, "0")}`,
+    );
+    expect(
+      createWrongWordWorksheetRequestSchema.parse({ questionIds })
+        .questionIds,
+    ).toHaveLength(50);
+  });
+
+  it("빈 배열·51개·중복·추가 필드를 거부한다", () => {
+    const questionIds = Array.from(
+      { length: 51 },
+      (_, index) =>
+        `11111111-1111-4111-8111-${String(index).padStart(12, "0")}`,
+    );
+    expect(() =>
+      createWrongWordWorksheetRequestSchema.parse({ questionIds: [] }),
+    ).toThrow();
+    expect(() =>
+      createWrongWordWorksheetRequestSchema.parse({ questionIds }),
+    ).toThrow();
+    expect(() =>
+      createWrongWordWorksheetRequestSchema.parse({
+        questionIds: [questionId, questionId],
+      }),
+    ).toThrow("같은 오답 단어를 두 번 선택할 수 없습니다.");
+    expect(() =>
+      createWrongWordWorksheetRequestSchema.parse({
+        questionIds: [questionId],
+        studentName: "노출 금지",
+      }),
+    ).toThrow();
+  });
+});
 
 describe("학생별 배정 수정 입력 계약", () => {
   const id = "11111111-1111-4111-8111-111111111111";
