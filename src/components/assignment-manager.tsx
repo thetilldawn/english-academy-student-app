@@ -2180,15 +2180,18 @@ export function AssignmentManager({
                 </label>
               </div>
               <div className="assignment-condition-grid">
-                <label className="field">
+                <div className="field">
                   <span className="field-label">
-                    {includePendingReview
-                      ? adminLearningText.assignmentModal.conditions
-                          .totalQuestionCount
-                      : adminLearningText.assignmentModal.conditions
-                          .questionCount}
+                    <label htmlFor="assignment-question-count">
+                      {includePendingReview
+                        ? adminLearningText.assignmentModal.conditions
+                            .totalQuestionCount
+                        : adminLearningText.assignmentModal.conditions
+                            .questionCount}
+                    </label>
                   </span>
                   <input
+                    id="assignment-question-count"
                     max={
                       capacity &&
                       capacity.maximumQuestionCount >=
@@ -2231,7 +2234,7 @@ export function AssignmentManager({
                         되돌리기
                       </button>
                     )}
-                </label>
+                </div>
                 <fieldset className="field timing-mode-field">
                   <legend className="field-label label-with-help">
                     {adminLearningText.assignmentModal.conditions.timingMode}

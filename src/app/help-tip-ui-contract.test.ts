@@ -42,5 +42,11 @@ describe("공통 도움말 UI 계약", () => {
     expect(sources.join("\n")).toContain(
       'id="assignment-available-until"',
     );
+    expect(sources.join("\n")).toContain(
+      'htmlFor="assignment-question-count"',
+    );
+    expect(sources.join("\n")).toContain(
+      'id="assignment-question-count"',
+    );
   });
 });
