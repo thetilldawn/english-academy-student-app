@@ -156,4 +156,107 @@ describe("normalizeVocabularyImport", () => {
       assertVocabularyImportApplyAllowed(result.file, true),
     ).not.toThrow();
   });
+
+  it("v2는 단어장과 단원을 구조화된 catalog로 연결한다", () => {
+    const rows = validInput.rows.map((row, index) => ({
+      sourceRow: row.sourceRow,
+      entryType: row.entryType,
+      headword: row.headword,
+      meaningText: row.meaningText,
+      unitKey: index < 4 ? "mock-03-41-42" : "csat-41-42",
+    }));
+    const result = normalizeVocabularyImport({
+      schemaVersion: 2,
+      importPolicy: {
+        status: "approved",
+        applyAllowed: true,
+        reason: "검수 완료",
+      },
+      dataset: {
+        ...validInput.dataset,
+        catalog: {
+          displayName: "고3 모의고사 · 장문독해",
+          catalogGroup: "high_mock",
+          materialKind: "exam_collection",
+          gradeCode: "g12",
+          publisher: "exam4you",
+          seriesTitle: "장문독해",
+          academicYear: 2025,
+          curriculumRevision: null,
+          editionLabel: null,
+          isAssignable: true,
+          sortIndex: 10,
+        },
+      },
+      units: [
+        {
+          unitKey: "mock-03-41-42",
+          label: "2025-03 서울교육청 41-42",
+          catalogGroup: "high_mock",
+          unitType: "exam_scope",
+          displayName: "3월 서울교육청 41-42",
+          academicYear: 2025,
+          examMonth: 3,
+          agency: "서울교육청",
+          itemRange: "41-42",
+          sortIndex: 1,
+        },
+        {
+          unitKey: "csat-41-42",
+          label: "2025-11 대수능 41-42",
+          catalogGroup: "csat",
+          unitType: "exam_scope",
+          displayName: "대수능 41-42",
+          academicYear: 2025,
+          examMonth: 11,
+          agency: "한국교육과정평가원",
+          itemRange: "41-42",
+          sortIndex: 2,
+        },
+      ],
+      rows,
+    });
+
+    expect(result.file.schemaVersion).toBe(2);
+    expect(result.units.map((unit) => unit.catalog?.catalogGroup)).toEqual([
+      "high_mock",
+      "csat",
+    ]);
+    expect(result.entries.at(-1)?.unitLabel).toBe(
+      "2025-11 대수능 41-42",
+    );
+  });
+
+  it("v2 row가 정의되지 않은 unitKey를 참조하면 중단한다", () => {
+    expect(() =>
+      normalizeVocabularyImport({
+        schemaVersion: 2,
+        dataset: {
+          ...validInput.dataset,
+          catalog: {
+            displayName: "샘플",
+            catalogGroup: "high",
+            materialKind: "wordbook",
+          },
+        },
+        units: [
+          {
+            unitKey: "day-01",
+            label: "DAY 01",
+            catalogGroup: "high",
+            unitType: "day",
+            displayName: "DAY 01",
+            sortIndex: 1,
+          },
+        ],
+        rows: validInput.rows.map((row) => ({
+          sourceRow: row.sourceRow,
+          entryType: row.entryType,
+          headword: row.headword,
+          meaningText: row.meaningText,
+          unitKey: "missing",
+        })),
+      }),
+    ).toThrow("정의되지 않은 unitKey");
+  });
 });

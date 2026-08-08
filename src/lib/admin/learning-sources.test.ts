@@ -46,7 +46,7 @@ describe("learning sources", () => {
   });
 
   it("자료 유형을 학생용 짧은 이름으로 바꾼다", () => {
-    expect(learningSourceTypeLabel("primary_vocab")).toBe("주 단어장");
+    expect(learningSourceTypeLabel("primary_vocab")).toBe("최근 단어장");
     expect(learningSourceTypeLabel("exam_vocab")).toBe("시험 대비");
     expect(learningSourceTypeLabel("mock_exam")).toBe("모의고사");
   });

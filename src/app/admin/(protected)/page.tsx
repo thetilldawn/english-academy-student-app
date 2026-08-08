@@ -6,7 +6,7 @@ import { overviewActivityGroups } from "@/lib/admin/learning-activity";
 import { getServerEnvironment } from "@/lib/env";
 import {
   buildStudentProgress,
-  listAssignmentHistory,
+  listAssignmentHistoryBundle,
   listDatasets,
   listSelectableDatasets,
   listStudentCurrentVocabWrongSummaries,
@@ -15,6 +15,7 @@ import {
   listStudents,
   listVocabUnits,
 } from "@/lib/services/admin-service";
+import { buildStudentVocabBookHistory } from "@/lib/admin/student-vocab-book-history";
 
 export const metadata: Metadata = {
   title: "Overview",
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
 
 export default async function AdminDashboardPage() {
   const [
-    history,
+    historyBundle,
     students,
     datasets,
     assignmentDatasets,
@@ -31,7 +32,7 @@ export default async function AdminDashboardPage() {
     currentVocabWrongSummaries,
     learningSources,
   ] = await Promise.all([
-    listAssignmentHistory(),
+    listAssignmentHistoryBundle(),
     listStudents(),
     listSelectableDatasets(),
     listDatasets(),
@@ -40,6 +41,11 @@ export default async function AdminDashboardPage() {
     listStudentCurrentVocabWrongSummaries(),
     listStudentLearningSources(),
   ]);
+  const history = historyBundle.history;
+  const vocabBookHistory = buildStudentVocabBookHistory(
+    historyBundle.completeHistory,
+    new Map(units.map((unit) => [unit.id, unit.displayName])),
+  );
   const progress = buildStudentProgress(students, units, history);
   const appOrigin =
     getServerEnvironment().APP_ORIGIN ?? "http://localhost:3000";
@@ -88,6 +94,7 @@ export default async function AdminDashboardPage() {
             pendingReviewSummaries,
             progress,
             students,
+            vocabBookHistory,
           }}
         />
       )}

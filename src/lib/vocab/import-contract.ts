@@ -7,12 +7,77 @@ const sha256Schema = z
   .regex(/^[A-F0-9]{64}$/)
   .transform((value) => value.toUpperCase());
 
-const importRowSchema = z.object({
+const importRowV1Schema = z.object({
   sourceRow: z.number().int().positive(),
   unit: z.string().trim().min(1).max(160),
   entryType: z.string().trim().min(1).max(80),
   headword: z.string().trim().min(1).max(160),
   meaningText: z.string().trim().min(1).max(2000),
+});
+
+const importRowV2Schema = z.object({
+  sourceRow: z.number().int().positive(),
+  unitKey: z.string().trim().min(1).max(120),
+  entryType: z.string().trim().min(1).max(80),
+  headword: z.string().trim().min(1).max(160),
+  meaningText: z.string().trim().min(1).max(2000),
+});
+
+const catalogGroupSchema = z.enum([
+  "middle",
+  "high",
+  "high_mock",
+  "csat",
+]);
+
+const materialKindSchema = z.enum([
+  "textbook",
+  "wordbook",
+  "exam_collection",
+  "exam_prep",
+  "supplement",
+]);
+
+const unitTypeSchema = z.enum([
+  "day",
+  "lesson",
+  "chapter",
+  "exam_scope",
+  "passage_type",
+  "supplement",
+]);
+
+const datasetCatalogSchema = z.object({
+  displayName: z.string().trim().min(1).max(200),
+  catalogGroup: catalogGroupSchema,
+  materialKind: materialKindSchema,
+  gradeCode: z.string().trim().min(1).max(24).nullable().default(null),
+  publisher: z.string().trim().min(1).max(120).nullable().default(null),
+  seriesTitle: z.string().trim().min(1).max(160).nullable().default(null),
+  academicYear: z.number().int().min(2000).max(2100).nullable().default(null),
+  curriculumRevision: z
+    .string()
+    .trim()
+    .min(1)
+    .max(40)
+    .nullable()
+    .default(null),
+  editionLabel: z.string().trim().min(1).max(80).nullable().default(null),
+  isAssignable: z.boolean().default(false),
+  sortIndex: z.number().int().nonnegative().default(0),
+});
+
+const unitCatalogSchema = z.object({
+  unitKey: z.string().trim().min(1).max(120),
+  label: z.string().trim().min(1).max(160),
+  catalogGroup: catalogGroupSchema,
+  unitType: unitTypeSchema,
+  displayName: z.string().trim().min(1).max(200),
+  academicYear: z.number().int().min(2000).max(2100).nullable().default(null),
+  examMonth: z.number().int().min(1).max(12).nullable().default(null),
+  agency: z.string().trim().min(1).max(120).nullable().default(null),
+  itemRange: z.string().trim().min(1).max(80).nullable().default(null),
+  sortIndex: z.number().int().positive(),
 });
 
 const vocabularyImportPolicySchema = z
@@ -26,38 +91,95 @@ const vocabularyImportPolicySchema = z
     "후보 데이터는 앱 적용을 허용할 수 없습니다.",
   );
 
-export const vocabularyImportFileSchema = z.object({
+const datasetBaseSchema = z.object({
+  datasetKey: z
+    .string()
+    .regex(/^[a-z0-9][a-z0-9-]{2,79}$/),
+  title: z.string().trim().min(1).max(160),
+  edition: z.string().trim().min(1).max(80),
+  sourceLabel: z.string().trim().min(1).max(200),
+  sourceSha256: sha256Schema,
+  sourceSheet: z.string().trim().min(1).max(160),
+  sourceMetadata: z
+    .object({
+      sourceType: z.string().trim().min(1).max(80).default("wordbook"),
+      publisher: z.string().trim().min(1).max(160).nullable().default(null),
+      curriculumRevision: z
+        .string()
+        .trim()
+        .min(1)
+        .max(80)
+        .nullable()
+        .default(null),
+      gradeCode: z.string().trim().min(1).max(40).nullable().default(null),
+      academicYear: z.number().int().min(1900).max(2200).nullable().default(null),
+      semester: z.number().int().min(1).max(2).nullable().default(null),
+    })
+    .optional(),
+  expectedRows: z.number().int().positive(),
+});
+
+const vocabularyImportV1Schema = z.object({
   schemaVersion: z.literal(1),
   importPolicy: vocabularyImportPolicySchema.optional(),
-  dataset: z.object({
-    datasetKey: z
-      .string()
-      .regex(/^[a-z0-9][a-z0-9-]{2,79}$/),
-    title: z.string().trim().min(1).max(160),
-    edition: z.string().trim().min(1).max(80),
-    sourceLabel: z.string().trim().min(1).max(200),
-    sourceSha256: sha256Schema,
-    sourceSheet: z.string().trim().min(1).max(160),
-    sourceMetadata: z
-      .object({
-        sourceType: z.string().trim().min(1).max(80).default("wordbook"),
-        publisher: z.string().trim().min(1).max(160).nullable().default(null),
-        curriculumRevision: z
-          .string()
-          .trim()
-          .min(1)
-          .max(80)
-          .nullable()
-          .default(null),
-        gradeCode: z.string().trim().min(1).max(40).nullable().default(null),
-        academicYear: z.number().int().min(1900).max(2200).nullable().default(null),
-        semester: z.number().int().min(1).max(2).nullable().default(null),
-      })
-      .optional(),
-    expectedRows: z.number().int().positive(),
-  }),
-  rows: z.array(importRowSchema).min(4),
+  dataset: datasetBaseSchema,
+  rows: z.array(importRowV1Schema).min(4),
 });
+
+const vocabularyImportV2Schema = z
+  .object({
+    schemaVersion: z.literal(2),
+    importPolicy: vocabularyImportPolicySchema.optional(),
+    dataset: datasetBaseSchema.extend({ catalog: datasetCatalogSchema }),
+    units: z.array(unitCatalogSchema).min(1),
+    rows: z.array(importRowV2Schema).min(4),
+  })
+  .superRefine((file, context) => {
+    const unitKeys = new Set<string>();
+    const unitLabels = new Set<string>();
+    const unitSortIndexes = new Set<number>();
+    for (const unit of file.units) {
+      if (unitKeys.has(unit.unitKey)) {
+        context.addIssue({
+          code: "custom",
+          message: `unitKey가 중복되었습니다: ${unit.unitKey}`,
+        });
+      }
+      unitKeys.add(unit.unitKey);
+      const normalizedLabel = unit.label
+        .normalize("NFC")
+        .trim()
+        .replace(/\s+/g, " ")
+        .toLocaleLowerCase("en-US");
+      if (unitLabels.has(normalizedLabel)) {
+        context.addIssue({
+          code: "custom",
+          message: `단원 label이 중복되었습니다: ${unit.label}`,
+        });
+      }
+      unitLabels.add(normalizedLabel);
+      if (unitSortIndexes.has(unit.sortIndex)) {
+        context.addIssue({
+          code: "custom",
+          message: `단원 sortIndex가 중복되었습니다: ${unit.sortIndex}`,
+        });
+      }
+      unitSortIndexes.add(unit.sortIndex);
+    }
+    for (const row of file.rows) {
+      if (!unitKeys.has(row.unitKey)) {
+        context.addIssue({
+          code: "custom",
+          message: `정의되지 않은 unitKey입니다: ${row.unitKey}`,
+        });
+      }
+    }
+  });
+
+export const vocabularyImportFileSchema = z.discriminatedUnion(
+  "schemaVersion",
+  [vocabularyImportV1Schema, vocabularyImportV2Schema],
+);
 
 export type VocabularyImportFile = z.infer<
   typeof vocabularyImportFileSchema
@@ -86,6 +208,7 @@ export type NormalizedVocabularyUnit = {
   unitNumber: number | null;
   sortIndex: number;
   entryCount: number;
+  catalog?: z.infer<typeof unitCatalogSchema>;
 };
 
 export type VocabularyImportAudit = {
@@ -178,10 +301,23 @@ export function normalizeVocabularyImport(input: unknown): {
     }
   }
 
+  const unitCatalogByKey =
+    file.schemaVersion === 2
+      ? new Map(file.units.map((unit) => [unit.unitKey, unit]))
+      : null;
   const unitPositions = new Map<string, number>();
   const unitsByLabel = new Map<string, NormalizedVocabularyUnit>();
   const entries = orderedRows.map((row) => {
-    const unit = parseUnit(row.unit);
+    const unitCatalog =
+      "unitKey" in row
+        ? unitCatalogByKey?.get(row.unitKey)
+        : undefined;
+    if ("unitKey" in row && !unitCatalog) {
+      throw new Error(`정의되지 않은 unitKey입니다: ${row.unitKey}`);
+    }
+    const rowUnitLabel =
+      "unit" in row ? row.unit : unitCatalog!.label;
+    const unit = parseUnit(rowUnitLabel);
     const positionInUnit =
       (unitPositions.get(unit.normalizedLabel) ?? 0) + 1;
     unitPositions.set(unit.normalizedLabel, positionInUnit);
@@ -192,10 +328,12 @@ export function normalizeVocabularyImport(input: unknown): {
       unitsByLabel.set(unit.normalizedLabel, {
         unitLabel: unit.unitLabel,
         normalizedLabel: unit.normalizedLabel,
-        unitKind: unit.unitKind,
+        unitKind:
+          unitCatalog?.unitType === "day" ? "day" : unit.unitKind,
         unitNumber: unit.unitNumber,
-        sortIndex: unitsByLabel.size + 1,
+        sortIndex: unitCatalog?.sortIndex ?? unitsByLabel.size + 1,
         entryCount: 1,
+        ...(unitCatalog ? { catalog: unitCatalog } : {}),
       });
     }
 
@@ -217,7 +355,7 @@ export function normalizeVocabularyImport(input: unknown): {
       rowSha256: hashRow([
         file.dataset.datasetKey,
         row.sourceRow,
-        normalizeText(row.unit),
+        normalizeText(rowUnitLabel),
         normalizeText(row.entryType),
         headword,
         meaningText,
@@ -274,7 +412,9 @@ export function normalizeVocabularyImport(input: unknown): {
 
   return {
     file,
-    units: [...unitsByLabel.values()],
+    units: [...unitsByLabel.values()].toSorted(
+      (left, right) => left.sortIndex - right.sortIndex,
+    ),
     entries,
     audit,
   };

@@ -52,6 +52,15 @@ import {
   type CurrentVocabWrongSummaryRow,
   type StudentCurrentVocabWrongSummary,
 } from "@/lib/admin/wrong-history-summary";
+import {
+  cataloguedDatasetDisplayLabel,
+  compareCataloguedDatasets,
+  type CataloguedDataset,
+  type CataloguedUnit,
+  type DatasetCatalogGroup,
+  type DatasetMaterialKind,
+  type VocabUnitType,
+} from "@/lib/admin/dataset-catalog";
 
 export { buildStudentProgress } from "@/lib/admin/progress";
 export type { StudentProgressSummary } from "@/lib/admin/progress";
@@ -88,11 +97,8 @@ export type StudentLearningSourceSummary = {
   sortOrder: number;
 };
 
-export type DatasetSummary = {
-  id: string;
+export type DatasetSummary = CataloguedDataset & {
   datasetKey: string;
-  title: string;
-  edition: string | null;
   rowCount: number;
   status: "pending_review" | "ready" | "retired";
   isActive: boolean;
@@ -112,13 +118,9 @@ export type ReviewDatasetSummary = {
   }[];
 };
 
-export type DatasetOption = {
-  id: string;
-  title: string;
-  edition: string | null;
-};
+export type DatasetOption = CataloguedDataset;
 
-export type VocabUnitSummary = {
+export type VocabUnitSummary = CataloguedUnit & {
   id: string;
   datasetId: string;
   label: string;
@@ -127,6 +129,57 @@ export type VocabUnitSummary = {
   sortIndex: number;
   entryCount: number;
 };
+
+type DatasetCatalogRow = {
+  dataset_id: string;
+  display_name: string;
+  catalog_group: DatasetCatalogGroup;
+  material_kind: DatasetMaterialKind;
+  grade_code: string | null;
+  publisher: string | null;
+  series_title: string | null;
+  academic_year: number | null;
+  curriculum_revision: string | null;
+  edition_label: string | null;
+  is_assignable: boolean;
+  sort_index: number;
+};
+
+type UnitCatalogRow = {
+  unit_id: string;
+  catalog_group: DatasetCatalogGroup;
+  unit_type: VocabUnitType;
+  display_name: string;
+  academic_year: number | null;
+  exam_month: number | null;
+  agency: string | null;
+  item_range: string | null;
+  sort_index: number;
+};
+
+function cataloguedDataset(
+  dataset: { id: string; title: string; edition: string | null },
+  catalog: DatasetCatalogRow | undefined,
+): CataloguedDataset {
+  return {
+    id: dataset.id,
+    title: dataset.title,
+    edition: dataset.edition,
+    displayName:
+      catalog?.display_name ??
+      datasetDisplayLabel(dataset.title, dataset.edition),
+    catalogGroup: catalog?.catalog_group ?? "high",
+    materialKind: catalog?.material_kind ?? null,
+    gradeCode: catalog?.grade_code ?? null,
+    publisher: catalog?.publisher ?? null,
+    seriesTitle: catalog?.series_title ?? null,
+    academicYear: catalog?.academic_year ?? null,
+    curriculumRevision: catalog?.curriculum_revision ?? null,
+    editionLabel: catalog?.edition_label ?? null,
+    isAssignable: catalog?.is_assignable ?? true,
+    catalogSortIndex: catalog?.sort_index ?? 1000,
+  };
+}
 
 export class StudentCreationError extends Error {
   constructor(
@@ -239,6 +292,7 @@ export async function listStudents(): Promise<StudentSummary[]> {
     { data: studentData, error: studentError },
     { data: codeData },
     { data: datasetData, error: datasetError },
+    catalogByDatasetId,
   ] = await Promise.all([
     supabase
       .from("students")
@@ -249,6 +303,7 @@ export async function listStudents(): Promise<StudentSummary[]> {
       .order("display_name"),
     supabase.from("student_codes").select("student_id, status"),
     supabase.from("vocab_datasets").select("id, title, edition"),
+    loadDatasetCatalogMap(supabase),
   ]);
 
   if (studentError || datasetError) {
@@ -264,7 +319,12 @@ export async function listStudents(): Promise<StudentSummary[]> {
   const datasetById = new Map(
     ((datasetData ?? []) as DatasetLabelRow[]).map((dataset) => [
       dataset.id,
-      datasetDisplayLabel(dataset.title, dataset.edition),
+      cataloguedDatasetDisplayLabel(
+        cataloguedDataset(
+          dataset,
+          catalogByDatasetId.get(dataset.id),
+        ),
+      ),
     ]),
   );
 
@@ -293,24 +353,46 @@ export async function listStudentLearningSources(): Promise<
 > {
   await requireAdmin();
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase
-    .from("student_learning_sources")
-    .select(
-      "id, student_id, source_type, vocab_dataset_id, display_label, range_metadata, sort_order",
-    )
-    .eq("active", true)
-    .order("sort_order")
-    .order("created_at");
-  if (error) {
+  const [
+    { data, error },
+    { data: datasetData, error: datasetError },
+    catalogByDatasetId,
+  ] = await Promise.all([
+    supabase
+      .from("student_learning_sources")
+      .select(
+        "id, student_id, source_type, vocab_dataset_id, display_label, range_metadata, sort_order",
+      )
+      .eq("active", true)
+      .order("sort_order")
+      .order("created_at"),
+    supabase.from("vocab_datasets").select("id, title, edition"),
+    loadDatasetCatalogMap(supabase),
+  ]);
+  if (error || datasetError) {
     throw new Error("학생 학습 자료를 불러오지 못했습니다.");
   }
+  const datasetById = new Map(
+    ((datasetData ?? []) as DatasetLabelRow[]).map((dataset) => [
+      dataset.id,
+      cataloguedDatasetDisplayLabel(
+        cataloguedDataset(
+          dataset,
+          catalogByDatasetId.get(dataset.id),
+        ),
+      ),
+    ]),
+  );
   return (data ?? []).map((source) => ({
     id: source.id as string,
     studentId: source.student_id as string,
     sourceType:
       source.source_type as StudentLearningSourceSummary["sourceType"],
     vocabDatasetId: (source.vocab_dataset_id as string | null) ?? null,
-    displayLabel: storedDatasetDisplayLabel(source.display_label as string),
+    displayLabel:
+      ((source.vocab_dataset_id as string | null) &&
+        datasetById.get(source.vocab_dataset_id as string)) ||
+      storedDatasetDisplayLabel(source.display_label as string),
     rangeMetadata:
       source.range_metadata &&
       typeof source.range_metadata === "object" &&
@@ -510,27 +592,54 @@ export async function setStudentStatus(
   }
 }
 
+async function loadDatasetCatalogMap(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+) {
+  const { data, error } = await supabase
+    .from("vocab_dataset_catalog")
+    .select(
+      "dataset_id, display_name, catalog_group, material_kind, grade_code, publisher, series_title, academic_year, curriculum_revision, edition_label, is_assignable, sort_index",
+    );
+
+  if (error) {
+    throw new Error("단어장 분류 정보를 불러오지 못했습니다.");
+  }
+
+  return new Map(
+    ((data ?? []) as DatasetCatalogRow[]).map((catalog) => [
+      catalog.dataset_id,
+      catalog,
+    ]),
+  );
+}
+
 export async function listDatasets(): Promise<DatasetSummary[]> {
   await requireAdmin();
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase
-    .from("vocab_datasets")
-    .select("id, dataset_key, title, edition, row_count, status, is_active")
-    .order("title");
+  const [catalogByDatasetId, { data, error }] = await Promise.all([
+    loadDatasetCatalogMap(supabase),
+    supabase
+      .from("vocab_datasets")
+      .select("id, dataset_key, title, edition, row_count, status, is_active")
+      .order("title"),
+  ]);
 
   if (error) {
     throw new Error("어휘 데이터셋을 불러오지 못했습니다.");
   }
 
-  return (data ?? []).map((dataset) => ({
-    id: dataset.id,
-    datasetKey: dataset.dataset_key,
-    title: dataset.title,
-    edition: dataset.edition,
-    rowCount: dataset.row_count,
-    status: dataset.status,
-    isActive: dataset.is_active,
-  }));
+  return (data ?? [])
+    .map((dataset) => ({
+      ...cataloguedDataset(
+        dataset,
+        catalogByDatasetId.get(dataset.id),
+      ),
+      datasetKey: dataset.dataset_key,
+      rowCount: dataset.row_count,
+      status: dataset.status,
+      isActive: dataset.is_active,
+    }))
+    .toSorted(compareCataloguedDatasets);
 }
 
 const REVIEW_DATASET_LIMIT = 3;
@@ -594,48 +703,83 @@ export async function listReviewDatasets(): Promise<
 export async function listSelectableDatasets(): Promise<DatasetOption[]> {
   await requireAdmin();
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase
-    .from("vocab_datasets")
-    .select("id, title, edition")
-    .eq("status", "ready")
-    .eq("is_active", true)
-    .order("title");
+  const [catalogByDatasetId, { data, error }] = await Promise.all([
+    loadDatasetCatalogMap(supabase),
+    supabase
+      .from("vocab_datasets")
+      .select("id, title, edition")
+      .eq("status", "ready")
+      .eq("is_active", true)
+      .order("title"),
+  ]);
 
   if (error) {
     throw new Error("선택 가능한 단어장을 불러오지 못했습니다.");
   }
 
-  return (data ?? []).map((dataset) => ({
-    id: dataset.id,
-    title: dataset.title,
-    edition: dataset.edition,
-  }));
+  return (data ?? [])
+    .map((dataset) =>
+      cataloguedDataset(
+        dataset,
+        catalogByDatasetId.get(dataset.id),
+      ),
+    )
+    .filter((dataset) => dataset.isAssignable)
+    .toSorted(compareCataloguedDatasets);
 }
 
 export async function listVocabUnits(): Promise<VocabUnitSummary[]> {
   await requireAdmin();
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase
-    .from("vocab_units")
-    .select(
-      "id, dataset_id, unit_label, unit_kind, unit_number, sort_index, entry_count",
-    )
-    .order("dataset_id")
-    .order("sort_index");
+  const [
+    { data, error },
+    { data: catalogData, error: catalogError },
+  ] = await Promise.all([
+    supabase
+      .from("vocab_units")
+      .select(
+        "id, dataset_id, unit_label, unit_kind, unit_number, sort_index, entry_count",
+      )
+      .order("dataset_id")
+      .order("sort_index"),
+    supabase
+      .from("vocab_unit_catalog")
+      .select(
+        "unit_id, catalog_group, unit_type, display_name, academic_year, exam_month, agency, item_range, sort_index",
+      ),
+  ]);
 
-  if (error) {
+  if (error || catalogError) {
     throw new Error("단어장 DAY 목록을 불러오지 못했습니다.");
   }
 
-  return (data ?? []).map((unit) => ({
-    id: unit.id,
-    datasetId: unit.dataset_id,
-    label: unit.unit_label,
-    kind: unit.unit_kind,
-    number: unit.unit_number,
-    sortIndex: unit.sort_index,
-    entryCount: unit.entry_count,
-  }));
+  const catalogByUnitId = new Map(
+    ((catalogData ?? []) as UnitCatalogRow[]).map((catalog) => [
+      catalog.unit_id,
+      catalog,
+    ]),
+  );
+
+  return (data ?? []).map((unit) => {
+    const catalog = catalogByUnitId.get(unit.id);
+    return {
+      id: unit.id,
+      datasetId: unit.dataset_id,
+      label: unit.unit_label,
+      kind: unit.unit_kind,
+      number: unit.unit_number,
+      sortIndex: unit.sort_index,
+      entryCount: unit.entry_count,
+      catalogGroup: catalog?.catalog_group ?? null,
+      unitType: catalog?.unit_type ?? null,
+      displayName: catalog?.display_name ?? unit.unit_label,
+      academicYear: catalog?.academic_year ?? null,
+      examMonth: catalog?.exam_month ?? null,
+      agency: catalog?.agency ?? null,
+      itemRange: catalog?.item_range ?? null,
+      catalogSortIndex: catalog?.sort_index ?? unit.sort_index,
+    };
+  });
 }
 
 export async function listStudentPendingReviewSummaries(): Promise<
@@ -910,9 +1054,10 @@ async function listHiddenHistoryEntries(
   }
 }
 
-export async function listAssignmentHistory(): Promise<
-  AssignmentHistorySummary[]
-> {
+export async function listAssignmentHistoryBundle(): Promise<{
+  history: AssignmentHistorySummary[];
+  completeHistory: AssignmentHistorySummary[];
+}> {
   await requireAdmin();
   await finalizeStaleQuizAttempts();
   const supabase = await createServerSupabaseClient();
@@ -1051,16 +1196,27 @@ export async function listAssignmentHistory(): Promise<
     }
   }
 
-  return buildAssignmentHistory(
+  const completeHistory = buildAssignmentHistory(
     assignmentSources,
     attemptSources,
-  ).filter((item) =>
-    item.attemptId
-      ? !hiddenAttempts.has(item.attemptId)
-      : !hiddenRecipients.has(
-          `${item.assignmentId}\u0000${item.studentId}`,
-        ),
   );
+
+  return {
+    completeHistory,
+    history: completeHistory.filter((item) =>
+      item.attemptId
+        ? !hiddenAttempts.has(item.attemptId)
+        : !hiddenRecipients.has(
+            `${item.assignmentId}\u0000${item.studentId}`,
+          ),
+    ),
+  };
+}
+
+export async function listAssignmentHistory(): Promise<
+  AssignmentHistorySummary[]
+> {
+  return (await listAssignmentHistoryBundle()).history;
 }
 
 export type RegularAssignmentInput = {

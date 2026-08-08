@@ -14,6 +14,7 @@ import {
   listVocabUnits,
   prepareRegularAssignment,
 } from "@/lib/services/admin-service";
+import { cataloguedDatasetDisplayLabel } from "@/lib/admin/dataset-catalog";
 import {
   calculateAssignmentCapacity,
   MixedAssignmentError,
@@ -24,7 +25,6 @@ import type {
   BulkAssignmentInput,
   BulkAssignmentPreviewInput,
 } from "@/lib/validation";
-import { datasetDisplayLabel } from "@/lib/ui/dataset-display";
 
 export type BulkAssignmentPreviewItem = {
   studentId: string;
@@ -112,18 +112,23 @@ export async function previewBulkAssignments(
     input.studentIds.map(async (studentId) => {
       const student = studentById.get(studentId);
       const progress = progressByStudent.get(studentId);
-      const blockedReason = progress
+      const progressBlockedReason = progress
         ? unavailableReason(progress.recommendationReason)
         : null;
       const dataset = progress?.recommendedDatasetId
         ? datasetById.get(progress.recommendedDatasetId)
         : null;
+      const blockedReason =
+        progressBlockedReason ??
+        (dataset && !dataset.isAssignable
+          ? "최근 단어장을 신규 배정 가능한 자료로 바꿔 주세요."
+          : null);
       const base = {
         studentId,
         studentName: student?.displayName ?? "확인할 수 없는 학생",
         datasetId: progress?.recommendedDatasetId ?? null,
         datasetLabel: dataset
-          ? datasetDisplayLabel(dataset.title, dataset.edition)
+          ? cataloguedDatasetDisplayLabel(dataset)
           : null,
         unitId: progress?.recommendedUnitId ?? null,
         unitLabel: progress?.recommendedUnitLabel ?? null,

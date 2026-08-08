@@ -117,6 +117,12 @@ async function main() {
         metadata: {
           schemaVersion: normalized.file.schemaVersion,
           sourceSheet: normalized.file.dataset.sourceSheet,
+          sourceMetadata:
+            normalized.file.dataset.sourceMetadata ?? null,
+          catalog:
+            normalized.file.schemaVersion === 2
+              ? normalized.file.dataset.catalog
+              : null,
           duplicateHeadwordGroups:
             normalized.audit.duplicateHeadwordGroups,
           repeatedHeadwordRows: normalized.audit.repeatedHeadwordRows,
@@ -130,6 +136,33 @@ async function main() {
       throw new Error(`데이터셋 생성 실패: ${error?.message ?? "unknown"}`);
     }
     datasetId = data.id;
+  }
+
+  if (normalized.file.schemaVersion === 2) {
+    const catalog = normalized.file.dataset.catalog;
+    const { error } = await supabase
+      .from("vocab_dataset_catalog")
+      .upsert({
+        dataset_id: datasetId,
+        display_name: catalog.displayName,
+        catalog_group: catalog.catalogGroup,
+        material_kind: catalog.materialKind,
+        grade_code: catalog.gradeCode,
+        publisher: catalog.publisher,
+        series_title: catalog.seriesTitle,
+        academic_year: catalog.academicYear,
+        curriculum_revision: catalog.curriculumRevision,
+        edition_label: catalog.editionLabel,
+        is_assignable: options.markReady && catalog.isAssignable,
+        sort_index: catalog.sortIndex,
+        metadata: {
+          importSchemaVersion: normalized.file.schemaVersion,
+          sourceSheet: normalized.file.dataset.sourceSheet,
+        },
+      }, { onConflict: "dataset_id" });
+    if (error) {
+      throw new Error(`단어장 분류 저장 실패: ${error.message}`);
+    }
   }
 
   const { data: unitData, error: unitError } = await supabase
@@ -157,6 +190,36 @@ async function main() {
   const unitIdByLabel = new Map(
     unitData.map((unit) => [unit.normalized_label, unit.id]),
   );
+  if (normalized.file.schemaVersion === 2) {
+    const catalogRows = normalized.units.map((unit) => {
+      const catalog = unit.catalog;
+      const unitId = unitIdByLabel.get(unit.normalizedLabel);
+      if (!catalog || !unitId) {
+        throw new Error(`단원 분류 연결 실패: ${unit.unitLabel}`);
+      }
+      return {
+        unit_id: unitId,
+        catalog_group: catalog.catalogGroup,
+        unit_type: catalog.unitType,
+        display_name: catalog.displayName,
+        unit_code: catalog.unitKey,
+        academic_year: catalog.academicYear,
+        exam_month: catalog.examMonth,
+        agency: catalog.agency,
+        item_range: catalog.itemRange,
+        sort_index: catalog.sortIndex,
+        metadata: {
+          sourceUnitLabel: catalog.label,
+        },
+      };
+    });
+    const { error } = await supabase
+      .from("vocab_unit_catalog")
+      .upsert(catalogRows, { onConflict: "unit_id" });
+    if (error) {
+      throw new Error(`단원 분류 저장 실패: ${error.message}`);
+    }
+  }
   const batchSize = 400;
   for (
     let offset = 0;

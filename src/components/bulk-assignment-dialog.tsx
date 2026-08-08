@@ -11,6 +11,7 @@ import {
 } from "react";
 
 import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
+import { Button } from "@/components/ui-button";
 import type {
   QuestionOrderMode,
   TimingMode,
@@ -222,24 +223,24 @@ export function BulkAssignmentDialog({
           </h2>
           <p>{students.length}명 · 학생별 다음 범위와 최대 문항 수 자동 적용</p>
         </div>
-        <button
+        <Button
           aria-label="닫기"
-          className="button button-quiet button-small"
           disabled={submitting}
           onClick={close}
-          type="button"
+          size="small"
+          variant="quiet"
         >
           닫기
-        </button>
+        </Button>
       </div>
 
       {success ? (
         <section className="assignment-success-panel" role="status">
           <strong>{success}</strong>
           <p>선택한 학생의 배정이 한 번에 저장되었습니다.</p>
-          <button className="button button-primary" onClick={close} type="button">
+          <Button onClick={close} variant="primary">
             닫기
-          </button>
+          </Button>
         </section>
       ) : (
         <form className="bulk-assignment-form" onSubmit={submit}>
@@ -405,16 +406,14 @@ export function BulkAssignmentDialog({
 
           {error ? <div className="form-error" role="alert">{error}</div> : null}
           <div className="dialog-actions">
-            <button
-              className="button button-quiet"
+            <Button
               disabled={submitting}
               onClick={close}
-              type="button"
+              variant="quiet"
             >
               취소
-            </button>
-            <button
-              className="button button-primary"
+            </Button>
+            <Button
               disabled={
                 submitting ||
                 previewLoading ||
@@ -423,9 +422,10 @@ export function BulkAssignmentDialog({
                 preview.assignableCount !== students.length
               }
               type="submit"
+              variant="primary"
             >
               {submitting ? "전체 저장 중…" : `${students.length}명에게 배정`}
-            </button>
+            </Button>
           </div>
         </form>
       )}

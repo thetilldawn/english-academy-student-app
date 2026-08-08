@@ -17,7 +17,7 @@ export type StudentLearningSourceItem = {
 };
 
 const sourceTypeLabels: Record<StudentLearningSourceType, string> = {
-  primary_vocab: "주 단어장",
+  primary_vocab: "최근 단어장",
   exam_vocab: "시험 대비",
   textbook: "교과서",
   supplement: "부교재",

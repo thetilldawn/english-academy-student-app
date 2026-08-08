@@ -23,6 +23,7 @@ import { sendKakaoText } from "@/lib/kakao-share";
 import { StudentWrongWordPanel } from "@/components/student-wrong-word-panel";
 import { StudentLearningActivityList } from "@/components/student-learning-activity-list";
 import { StudentLearningSourceList } from "@/components/student-learning-source-list";
+import { StudentVocabBookHistoryList } from "@/components/student-vocab-book-history-list";
 import {
   AssignmentManager,
   type AssignmentDatasetItem,
@@ -33,8 +34,13 @@ import {
   AttemptStatusLabel,
 } from "@/components/attempt-score-summary";
 import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
+import { Button } from "@/components/ui-button";
 import { buildAttemptStatusPresentation } from "@/lib/ui/attempt-score-presentation";
-import { datasetDisplayLabel } from "@/lib/ui/dataset-display";
+import {
+  cataloguedDatasetDisplayLabel,
+  groupCataloguedDatasets,
+  type CataloguedDataset,
+} from "@/lib/admin/dataset-catalog";
 import {
   activityNeedsRetry,
   compareLearningActivities,
@@ -52,6 +58,7 @@ import {
   learningSourceTypeLabel,
   type StudentLearningSourceItem,
 } from "@/lib/admin/learning-sources";
+import type { StudentVocabBookHistory } from "@/lib/admin/student-vocab-book-history";
 
 type StudentItem = {
   id: string;
@@ -65,11 +72,7 @@ type StudentItem = {
   codeStatus: "active" | "blocked" | "missing";
 };
 
-type DatasetOption = {
-  id: string;
-  title: string;
-  edition: string | null;
-};
+type DatasetOption = CataloguedDataset;
 
 type ProgressItem = {
   studentId: string;
@@ -149,6 +152,7 @@ export function StudentManager({
   pendingReviewSummaries,
   progress,
   students,
+  vocabBookHistory,
 }: {
   appOrigin: string;
   assignmentDatasets: AssignmentDatasetItem[];
@@ -163,6 +167,7 @@ export function StudentManager({
   pendingReviewSummaries: StudentPendingReviewSummary[];
   progress: ProgressItem[];
   students: StudentItem[];
+  vocabBookHistory: StudentVocabBookHistory[];
 }) {
   const router = useRouter();
   const [error, setError] = useState("");
@@ -220,6 +225,10 @@ export function StudentManager({
   const studentDialogRef = useRef<HTMLDialogElement>(null);
   const codeDialogRef = useRef<HTMLDialogElement>(null);
   const interactionBusy = busyKey !== "" || refreshPending;
+  const datasetGroups = useMemo(
+    () => groupCataloguedDatasets(datasets),
+    [datasets],
+  );
 
   useEffect(() => {
     if (
@@ -744,6 +753,15 @@ export function StudentManager({
         : [],
     [history, selectedStudent],
   );
+  const selectedStudentVocabBookHistory = useMemo(
+    () =>
+      selectedStudent
+        ? vocabBookHistory.filter(
+            (item) => item.studentId === selectedStudent.id,
+          )
+        : [],
+    [selectedStudent, vocabBookHistory],
+  );
 
   function closeStudentDialog() {
     studentDialogRef.current?.close();
@@ -819,15 +837,19 @@ export function StudentManager({
             </div>
             <label className="field">
               <span className="field-label-row">
-                <span className="field-label">현재 단어장</span>
+                <span className="field-label">시작 단어장</span>
                 <span className="field-requirement">선택</span>
               </span>
               <select defaultValue="" name="currentVocabDatasetId">
                 <option value="">나중에 선택</option>
-                {datasets.map((dataset) => (
-                  <option key={dataset.id} value={dataset.id}>
-                    {datasetDisplayLabel(dataset.title, dataset.edition)}
-                  </option>
+                {datasetGroups.map((group) => (
+                  <optgroup key={group.group} label={group.label}>
+                    {group.datasets.map((dataset) => (
+                      <option key={dataset.id} value={dataset.id}>
+                        {cataloguedDatasetDisplayLabel(dataset)}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
               <span className="field-help">
@@ -1085,7 +1107,7 @@ export function StudentManager({
                       </span>
                       <span className="student-card-details">
                         <span className="student-card-info-row">
-                          <small>주 단어장</small>
+                          <small>최근 단어장</small>
                           <strong
                             className="student-card-primary-source"
                             title={primarySourceLabel}
@@ -1193,14 +1215,14 @@ export function StudentManager({
                   .join(" · ") || "학교·학년 미입력"}
               </p>
             </div>
-            <button
+            <Button
               aria-label="닫기"
-              className="button button-quiet button-small"
               onClick={closeStudentDialog}
-              type="button"
+              size="small"
+              variant="quiet"
             >
               닫기
-            </button>
+            </Button>
           </div>
 
           <div
@@ -1263,6 +1285,7 @@ export function StudentManager({
                 aria-labelledby="student-learning-tab"
                 className="student-dialog-panel"
                 id="student-learning-panel"
+                key="learning"
                 role="tabpanel"
               >
                 {learningView === "summary" ? (
@@ -1285,7 +1308,7 @@ export function StudentManager({
                     />
                     <div className="student-book-form compact-learning-form">
                       <label className="field">
-                        <span className="field-label">주 단어장 변경</span>
+                        <span className="field-label">최근 단어장 변경</span>
                         <select
                           onChange={(event) =>
                             setProfileDatasetId(event.target.value)
@@ -1293,29 +1316,45 @@ export function StudentManager({
                           value={profileDatasetId}
                         >
                           <option value="">나중에 선택</option>
-                          {datasets.map((dataset) => (
-                            <option key={dataset.id} value={dataset.id}>
-                              {datasetDisplayLabel(
-                                dataset.title,
-                                dataset.edition,
-                              )}
+                          {profileDatasetId &&
+                          !datasets.some(
+                            (dataset) => dataset.id === profileDatasetId,
+                          ) ? (
+                            <option disabled value={profileDatasetId}>
+                              {selectedStudent.currentVocabBook ??
+                                "이전 단어장"} · 신규 배정 종료
                             </option>
+                          ) : null}
+                          {datasetGroups.map((group) => (
+                            <optgroup key={group.group} label={group.label}>
+                              {group.datasets.map((dataset) => (
+                                <option key={dataset.id} value={dataset.id}>
+                                  {cataloguedDatasetDisplayLabel(dataset)}
+                                </option>
+                              ))}
+                            </optgroup>
                           ))}
                         </select>
                       </label>
-                      <button
-                        className="button button-secondary"
+                      <Button
                         disabled={
                           interactionBusy ||
                           profileDatasetId ===
                             (selectedStudent.currentVocabDatasetId ?? "")
                         }
                         onClick={saveCurrentDataset}
-                        type="button"
+                        variant="secondary"
                       >
                         저장
-                      </button>
+                      </Button>
                     </div>
+                    <StudentVocabBookHistoryList
+                      currentDatasetId={
+                        selectedStudent.currentVocabDatasetId
+                      }
+                      datasets={assignmentDatasets}
+                      items={selectedStudentVocabBookHistory}
+                    />
                     <div className="learning-section-heading">
                       <h3>최근 숙제·시험</h3>
                       <span>{selectedStudentHistory.length}개</span>
@@ -1339,14 +1378,14 @@ export function StudentManager({
                     key={learningView}
                   >
                     <div className="student-learning-subview-heading">
-                      <button
+                      <Button
                         aria-label="학습 관리로 돌아가기"
-                        className="button button-quiet button-icon"
                         onClick={() => setLearningView("summary")}
-                        type="button"
+                        size="icon"
+                        variant="quiet"
                       >
                         ←
-                      </button>
+                      </Button>
                       <div>
                         <h3>
                           {learningView === "vocab"
@@ -1373,8 +1412,7 @@ export function StudentManager({
                               배정합니다.
                             </span>
                           </div>
-                          <button
-                            className="button button-primary"
+                          <Button
                             disabled={assignmentDatasets.length === 0}
                             onClick={() => {
                               setAssignmentDatasetId(
@@ -1385,10 +1423,10 @@ export function StudentManager({
                               setAssignmentEditTarget(null);
                               setAssignmentStudentId(selectedStudent.id);
                             }}
-                            type="button"
+                            variant="primary"
                           >
                             배정하기
-                          </button>
+                          </Button>
                         </div>
                         <StudentWrongWordPanel
                           active
@@ -1420,6 +1458,7 @@ export function StudentManager({
                 aria-labelledby="student-account-tab"
                 className="student-dialog-panel"
                 id="student-account-panel"
+                key="account"
                 role="tabpanel"
               >
                 <form
@@ -1545,6 +1584,7 @@ export function StudentManager({
                 aria-labelledby="student-history-tab"
                 className="student-dialog-panel"
                 id="student-history-panel"
+                key="history"
                 role="tabpanel"
               >
                 <StudentLearningActivityList

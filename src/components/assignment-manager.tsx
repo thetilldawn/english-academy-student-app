@@ -68,12 +68,15 @@ import {
   type StudentCurrentVocabWrongSummary,
 } from "@/lib/admin/wrong-history-summary";
 import { learningSourceTypeLabel } from "@/lib/admin/learning-sources";
-import { datasetDisplayLabel } from "@/lib/ui/dataset-display";
+import {
+  cataloguedDatasetDisplayLabel,
+  groupCataloguedDatasets,
+  groupCataloguedUnits,
+  type CataloguedDataset,
+  type CataloguedUnit,
+} from "@/lib/admin/dataset-catalog";
 
-export type AssignmentDatasetItem = {
-  id: string;
-  title: string;
-  edition: string | null;
+export type AssignmentDatasetItem = CataloguedDataset & {
   rowCount: number;
   status: "pending_review" | "ready" | "retired";
   isActive: boolean;
@@ -89,7 +92,7 @@ export type AssignmentStudentItem = {
   status: "active" | "blocked";
 };
 
-export type AssignmentUnitItem = {
+export type AssignmentUnitItem = CataloguedUnit & {
   id: string;
   datasetId: string;
   label: string;
@@ -218,7 +221,7 @@ function editValueLabel(
   if (key === "dataset") {
     const dataset = datasets.find((item) => item.id === value.datasetId);
     return dataset
-      ? datasetDisplayLabel(dataset.title, dataset.edition)
+      ? cataloguedDatasetDisplayLabel(dataset)
       : "사용할 수 없는 단어장";
   }
   if (key === "range") {
@@ -340,9 +343,16 @@ export function AssignmentManager({
   const readyDatasets = useMemo(
     () =>
       datasets.filter(
-        (dataset) => dataset.status === "ready" && dataset.isActive,
+        (dataset) =>
+          dataset.status === "ready" &&
+          dataset.isActive &&
+          dataset.isAssignable,
       ),
     [datasets],
+  );
+  const readyDatasetGroups = useMemo(
+    () => groupCataloguedDatasets(readyDatasets),
+    [readyDatasets],
   );
   const activeStudents = useMemo(
     () => students.filter((student) => student.status === "active"),
@@ -467,6 +477,8 @@ export function AssignmentManager({
         (source) => source.sourceType !== "primary_vocab",
       )
     : [];
+  const selectedDatasetRecord =
+    datasets.find((dataset) => dataset.id === datasetId) ?? null;
   const selectedDataset =
     readyDatasets.find((dataset) => dataset.id === datasetId) ?? null;
   const selectedReviewCounts =
@@ -503,6 +515,14 @@ export function AssignmentManager({
         .toSorted((left, right) => left.sortIndex - right.sortIndex),
     [datasetId, units],
   );
+  const datasetUnitGroups = useMemo(
+    () => groupCataloguedUnits(datasetUnits),
+    [datasetUnits],
+  );
+  const datasetUnitIndex = useMemo(
+    () => new Map(datasetUnits.map((unit, index) => [unit.id, index])),
+    [datasetUnits],
+  );
   const needsManualUnitSelection =
     selectedProgress?.recommendationReason === "manual" &&
     selectedProgress.recommendedDatasetId === datasetId;
@@ -530,14 +550,15 @@ export function AssignmentManager({
     (total, unit) => total + unit.entryCount,
     0,
   );
-  const selectedUnitLabels = selectedUnits.map((unit) => unit.label);
+  const selectedUnitLabels = selectedUnits.map((unit) => unit.displayName);
   const selectedUnitIdsKey = selectedUnits
     .map((unit) => unit.id)
     .join(",");
   const reviewLevelsKey = reviewLevels.join(",");
   const generatedTitle = [
-    selectedDataset?.title,
-    selectedDataset?.edition,
+    selectedDataset
+      ? cataloguedDatasetDisplayLabel(selectedDataset)
+      : null,
     unitRangeLabel(selectedUnitLabels),
     includePendingReview
       ? `틀렸던 단어 ${capacity?.wrongEligible ?? 0}개 포함`
@@ -1860,10 +1881,24 @@ export function AssignmentManager({
                   <option disabled value="">
                     단어장 선택
                   </option>
-                  {readyDatasets.map((dataset) => (
-                    <option key={dataset.id} value={dataset.id}>
-                      {datasetDisplayLabel(dataset.title, dataset.edition)}
+                  {datasetId &&
+                  !readyDatasets.some(
+                    (dataset) => dataset.id === datasetId,
+                  ) ? (
+                    <option disabled value={datasetId}>
+                      {selectedDatasetRecord
+                        ? cataloguedDatasetDisplayLabel(selectedDatasetRecord)
+                        : "이전 단어장"} · 신규 배정 종료
                     </option>
+                  ) : null}
+                  {readyDatasetGroups.map((group) => (
+                    <optgroup key={group.group} label={group.label}>
+                      {group.datasets.map((dataset) => (
+                        <option key={dataset.id} value={dataset.id}>
+                          {cataloguedDatasetDisplayLabel(dataset)}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
               </label>
@@ -1881,10 +1916,17 @@ export function AssignmentManager({
                     <option disabled value="">
                       시작 {unitTerm} 선택
                     </option>
-                    {datasetUnits.map((unit) => (
-                      <option key={unit.id} value={unit.id}>
-                        {unit.label} · {unit.entryCount}개
-                      </option>
+                    {datasetUnitGroups.map((group) => (
+                      <optgroup
+                        key={group.group ?? "range"}
+                        label={group.label ?? "범위"}
+                      >
+                        {group.units.map((unit) => (
+                          <option key={unit.id} value={unit.id}>
+                            {unit.displayName} · {unit.entryCount}개
+                          </option>
+                        ))}
+                      </optgroup>
                     ))}
                   </select>
                 </label>
@@ -1904,14 +1946,24 @@ export function AssignmentManager({
                     <option disabled value="">
                       끝 {unitTerm} 선택
                     </option>
-                    {datasetUnits.map((unit, index) => (
-                      <option
-                        disabled={index < Math.max(startIndex, 0)}
-                        key={unit.id}
-                        value={unit.id}
+                    {datasetUnitGroups.map((group) => (
+                      <optgroup
+                        key={group.group ?? "range"}
+                        label={group.label ?? "범위"}
                       >
-                        {unit.label} · {unit.entryCount}개
-                      </option>
+                        {group.units.map((unit) => (
+                          <option
+                            disabled={
+                              (datasetUnitIndex.get(unit.id) ?? -1) <
+                              Math.max(startIndex, 0)
+                            }
+                            key={unit.id}
+                            value={unit.id}
+                          >
+                            {unit.displayName} · {unit.entryCount}개
+                          </option>
+                        ))}
+                      </optgroup>
                     ))}
                   </select>
                 </label>
