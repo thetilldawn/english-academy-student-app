@@ -613,9 +613,15 @@ describe.sequential("final review-assignment database schema", () => {
       authenticated_public_mixed: boolean;
       authenticated_public_exact: boolean;
       authenticated_public_mixed_v6: boolean;
+      authenticated_public_mixed_v8: boolean;
       authenticated_public_regular_v4: boolean;
+      authenticated_public_regular_v6: boolean;
+      authenticated_public_bulk_v1: boolean;
+      authenticated_public_bulk_v3: boolean;
+      authenticated_public_identity_v1: boolean;
       authenticated_public_review_summary: boolean;
       authenticated_replace_v2: boolean;
+      authenticated_replace_v3: boolean;
       authenticated_replace_v1: boolean;
       service_replace_v1: boolean;
       authenticated_replacement_ledger_select: boolean;
@@ -652,9 +658,34 @@ describe.sequential("final review-assignment database schema", () => {
         ) as authenticated_public_mixed_v6,
         has_function_privilege(
           'authenticated',
+          'public.create_mixed_review_assignment_v8(uuid,uuid,smallint[],text,uuid[],text,uuid[],smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,jsonb)',
+          'execute'
+        ) as authenticated_public_mixed_v8,
+        has_function_privilege(
+          'authenticated',
           'public.create_assignment_with_delivery_v4(text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,uuid[],text,integer,jsonb)',
           'execute'
         ) as authenticated_public_regular_v4,
+        has_function_privilege(
+          'authenticated',
+          'public.create_assignment_with_delivery_v6(text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,uuid[],text,integer,jsonb)',
+          'execute'
+        ) as authenticated_public_regular_v6,
+        has_function_privilege(
+          'authenticated',
+          'public.create_bulk_vocab_assignments_v1(jsonb)',
+          'execute'
+        ) as authenticated_public_bulk_v1,
+        has_function_privilege(
+          'authenticated',
+          'public.create_bulk_vocab_assignments_v3(jsonb)',
+          'execute'
+        ) as authenticated_public_bulk_v3,
+        has_function_privilege(
+          'authenticated',
+          'public.list_assignment_question_dictionary_identities_v1(uuid[],uuid)',
+          'execute'
+        ) as authenticated_public_identity_v1,
         has_function_privilege(
           'authenticated',
           'public.list_student_vocab_review_queue_summaries(uuid,uuid,integer)',
@@ -665,6 +696,11 @@ describe.sequential("final review-assignment database schema", () => {
           'public.replace_student_assignment_v2(uuid,uuid,uuid,text,text,text,text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,smallint[],uuid[],jsonb)',
           'execute'
         ) as authenticated_replace_v2,
+        has_function_privilege(
+          'authenticated',
+          'public.replace_student_assignment_v3(uuid,uuid,uuid,text,text,text,text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,smallint[],uuid[],jsonb)',
+          'execute'
+        ) as authenticated_replace_v3,
         has_function_privilege(
           'authenticated',
           'public.replace_student_assignment_v1(uuid,uuid,uuid,text,text,text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,smallint[],uuid[],jsonb)',
@@ -707,10 +743,16 @@ describe.sequential("final review-assignment database schema", () => {
       authenticated_private_mixed: false,
       authenticated_public_mixed: false,
       authenticated_public_exact: false,
-      authenticated_public_mixed_v6: true,
-      authenticated_public_regular_v4: true,
+      authenticated_public_mixed_v6: false,
+      authenticated_public_mixed_v8: true,
+      authenticated_public_regular_v4: false,
+      authenticated_public_regular_v6: true,
+      authenticated_public_bulk_v1: false,
+      authenticated_public_bulk_v3: true,
+      authenticated_public_identity_v1: true,
       authenticated_public_review_summary: true,
-      authenticated_replace_v2: true,
+      authenticated_replace_v2: false,
+      authenticated_replace_v3: true,
       authenticated_replace_v1: false,
       service_replace_v1: false,
       authenticated_replacement_ledger_select: false,
@@ -937,17 +979,18 @@ describe.sequential("final review-assignment database schema", () => {
       ];
       const createV6 = (title: string) =>
         lifecycleDatabase.query<{ assignment_id: string }>(`
-          select public.create_mixed_review_assignment_v6(
+          select public.create_mixed_review_assignment_v8(
             '${ids.student}',
             '${ids.dataset}',
             array[1]::smallint[],
+            'dataset',
             array[
               ${selectedQueueIds
                 .map((queueId) => `'${queueId}'::uuid`)
                 .join(",")}
             ]::uuid[],
             '${title}',
-            array['${ids.units[4]}']::uuid[],
+            array[]::uuid[],
             50::smallint,
             600,
             80::smallint,
@@ -1015,7 +1058,7 @@ describe.sequential("final review-assignment database schema", () => {
       await expectPostgresError(
         createV6("Duplicate must fail"),
         "40001",
-        "assignment_word_already_active",
+        "mixed_review_queue_snapshot_changed",
       );
       await lifecycleDatabase.exec("reset role;");
 
@@ -1139,7 +1182,7 @@ describe.sequential("final review-assignment database schema", () => {
         questionTime: number | null = null,
       ) =>
         regularDatabase.query<{ assignment_id: string }>(`
-          select public.create_assignment_with_delivery_v4(
+          select public.create_assignment_with_delivery_v6(
             '${title}',
             '${ids.dataset}',
             array[
@@ -1326,7 +1369,7 @@ describe.sequential("final review-assignment database schema", () => {
       );
       const createAssignment = (title: string, questionsJson: string) =>
         unlinkedDatabase.query<{ assignment_id: string }>(`
-          select public.create_assignment_with_delivery_v4(
+          select public.create_assignment_with_delivery_v6(
             '${title}',
             '${ids.dataset}',
             array['${ids.units[4]}']::uuid[],
@@ -1498,7 +1541,7 @@ describe.sequential("final review-assignment database schema", () => {
       const assignment = await resolutionDatabase.query<{
         assignment_id: string;
       }>(`
-        select public.create_assignment_with_delivery_v4(
+        select public.create_assignment_with_delivery_v6(
           'Canonical resolution',
           '${ids.dataset}',
           array[
@@ -2943,8 +2986,9 @@ describe.sequential("admin deletion controls", () => {
       const source = await mixedReplacementDatabase.query<{
         assignment_id: string;
       }>(`
-        select public.create_mixed_review_assignment_v6(
+        select public.create_mixed_review_assignment_v8(
           '${ids.student}', '${ids.dataset}', array[1]::smallint[],
+          'dataset',
           array['${ids.selectedQueue}'::uuid], 'Mixed source',
           array['${ids.units[4]}'::uuid], 100::smallint, 600,
           80::smallint, 'fixed', null, 'total', null,
@@ -2959,7 +3003,7 @@ describe.sequential("admin deletion controls", () => {
           replacementPurpose: string;
         };
       }>(`
-        select public.replace_student_assignment_v2(
+        select public.replace_student_assignment_v3(
           '${sourceAssignmentId}', '${ids.student}', '${replacementKey}',
           repeat('b', 64), 'mixed', 'preserve', 'Mixed renamed',
           '${ids.dataset}', array['${ids.units[4]}'::uuid], 4,
@@ -3040,7 +3084,7 @@ describe.sequential("admin deletion controls", () => {
       await mixedReplacementDatabase.exec("set role authenticated;");
       await expectPostgresError(
         mixedReplacementDatabase.query(`
-          select public.replace_student_assignment_v2(
+          select public.replace_student_assignment_v3(
             '${replacementAssignmentId}', '${ids.student}', '${rollbackKey}',
             repeat('c', 64), 'mixed', 'recalculate', 'Must roll back',
             '${ids.dataset}', array['${ids.units[4]}'::uuid], 4,
@@ -3113,7 +3157,7 @@ describe.sequential("admin deletion controls", () => {
           replacementPurpose: string;
         };
       }>(`
-        select public.replace_student_assignment_v2(
+        select public.replace_student_assignment_v3(
           '${replacementAssignmentId}', '${ids.student}', '${allReviewKey}',
           repeat('e', 64), 'mixed', 'recalculate', 'Only wrong word',
           '${ids.dataset}', array['${ids.units[4]}'::uuid], 1,
@@ -3357,7 +3401,7 @@ describe.sequential("admin deletion controls", () => {
             replacementPurpose: string;
           };
         }>(`
-          select public.replace_student_assignment_v2(
+          select public.replace_student_assignment_v3(
             '${sourceAssignmentId}', '${ids.student}', '${replacementKey}',
             repeat('d', 64), 'review', 'preserve',
             'Exact replacement ${targetCount}', '${ids.dataset}',
@@ -3480,7 +3524,7 @@ describe.sequential("admin deletion controls", () => {
 
       await replacementDatabase.exec("set role authenticated;");
       const source = await replacementDatabase.query<{ id: string }>(`
-        select public.create_assignment_with_delivery_v5(
+        select public.create_assignment_with_delivery_v6(
           'Shared source',
           '${ids.dataset}',
           array[
@@ -3518,7 +3562,7 @@ describe.sequential("admin deletion controls", () => {
           idempotent: boolean;
         };
       }>(`
-        select public.replace_student_assignment_v2(
+        select public.replace_student_assignment_v3(
           '${sourceAssignmentId}',
           '${ids.student}',
           '${replacementKey}',
@@ -3669,7 +3713,7 @@ describe.sequential("admin deletion controls", () => {
           idempotent: boolean;
         };
       }>(`
-        select public.replace_student_assignment_v2(
+        select public.replace_student_assignment_v3(
           '${sourceAssignmentId}',
           '${ids.student}',
           '${replacementKey}',
@@ -3711,7 +3755,7 @@ describe.sequential("admin deletion controls", () => {
       `);
       await expectPostgresError(
         replacementDatabase.query(`
-          select public.replace_student_assignment_v2(
+          select public.replace_student_assignment_v3(
             '${sourceAssignmentId}',
             '${ids.student}',
             '${replacementKey}',
@@ -3753,7 +3797,7 @@ describe.sequential("admin deletion controls", () => {
       const rollbackSource = await replacementDatabase.query<{
         id: string;
       }>(`
-        select public.create_assignment_with_delivery_v5(
+        select public.create_assignment_with_delivery_v6(
           'Rollback source',
           '${ids.dataset}',
           array[
@@ -3788,7 +3832,7 @@ describe.sequential("admin deletion controls", () => {
 
       await expectPostgresError(
         replacementDatabase.query(`
-          select public.replace_student_assignment_v2(
+          select public.replace_student_assignment_v3(
             '${rollbackSourceId}',
             '${rollbackStudent}',
             '${rollbackKey}',

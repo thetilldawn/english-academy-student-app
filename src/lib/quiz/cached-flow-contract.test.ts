@@ -24,7 +24,7 @@ describe("DAY 문제은행 응시 계약", () => {
     expect(copy).toContain('start: "시작 {unit}"');
     expect(copy).toContain('end: "끝 {unit}"');
     expect(adminService).toContain(
-      '"create_assignment_with_delivery_v5"',
+      '"create_assignment_with_delivery_v6"',
     );
     expect(adminService).toContain(
       "loadEligibleVocabularyDataset(",

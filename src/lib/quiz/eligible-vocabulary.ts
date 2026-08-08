@@ -25,6 +25,8 @@ export type EligibleVocabularyEntry = QuizVocabularyEntry & {
   unitId: string;
   sourceRow: number;
   headwordNormalized: string;
+  canonicalDictionaryId: string | null;
+  canonicalLexemeId: string | null;
 };
 
 export function mergeEligibleVocabularyRows(
@@ -87,6 +89,8 @@ export function mergeEligibleVocabularyRows(
         "한 단어의 출제 방향별 단어사전 ID가 서로 다릅니다.",
       );
     }
+    const canonicalDictionaryId = [...eligibility.dictionaryKeys][0] ?? null;
+    const canonicalLexemeId = [...eligibility.canonicalKeys][0] ?? null;
     candidates.push({
       id: entry.id,
       unitId: entry.unit_id,
@@ -94,10 +98,9 @@ export function mergeEligibleVocabularyRows(
       headword: entry.headword,
       headwordNormalized: entry.headword_normalized,
       primaryMeaning: entry.primary_meaning,
-      canonicalKey:
-        [...eligibility.dictionaryKeys][0] ??
-        [...eligibility.canonicalKeys][0] ??
-        null,
+      canonicalDictionaryId,
+      canonicalLexemeId,
+      canonicalKey: canonicalDictionaryId ?? canonicalLexemeId,
       recordType: (() => {
         const dictionaryId = [...eligibility.dictionaryKeys][0];
         const prefix = dictionaryId?.split(":", 1)[0];

@@ -45,6 +45,12 @@ type AssignmentQuestionRow = {
   headword_normalized_snapshot: string | null;
 };
 
+type AssignmentDictionaryIdentityRow = {
+  assignment_id: string;
+  vocab_entry_id: number;
+  canonical_dictionary_id: string;
+};
+
 export type ActiveAssignmentWord = {
   studentId: string;
   assignmentId: string;
@@ -52,6 +58,7 @@ export type ActiveAssignmentWord = {
   assignedAt: string;
   datasetId: string;
   vocabEntryId: number;
+  canonicalDictionaryId: string | null;
   canonicalLexemeId: string | null;
   headwordNormalized: string | null;
 };
@@ -68,7 +75,11 @@ export function activeReviewIdentity(
   vocabEntryId: number,
   canonicalLexemeId: string | null | undefined,
   headwordNormalized?: string | null,
+  canonicalDictionaryId?: string | null,
 ) {
+  if (canonicalDictionaryId) {
+    return `dictionary:${canonicalDictionaryId}`;
+  }
   if (canonicalLexemeId) return `canonical:${canonicalLexemeId}`;
   const headwordKey = headwordNormalized
     ? normalizeQuizHeadword(headwordNormalized)
@@ -82,14 +93,22 @@ export function activeReviewIdentities(
   vocabEntryId: number,
   canonicalLexemeId: string | null | undefined,
   headwordNormalized?: string | null,
+  canonicalDictionaryId?: string | null,
 ) {
   const result = new Set<string>([
     activeReviewIdentity(
       vocabEntryId,
       canonicalLexemeId,
       headwordNormalized,
+      canonicalDictionaryId,
     ),
   ]);
+  if (canonicalDictionaryId) {
+    result.add(`dictionary:${canonicalDictionaryId}`);
+  }
+  if (canonicalLexemeId) {
+    result.add(`canonical:${canonicalLexemeId}`);
+  }
   const headwordKey = headwordNormalized
     ? normalizeQuizHeadword(headwordNormalized)
     : "";
@@ -233,6 +252,7 @@ export async function loadActiveReviewAssignments(
   ];
 
   const questionRows: AssignmentQuestionRow[] = [];
+  const dictionaryIdentityRows: AssignmentDictionaryIdentityRow[] = [];
   for (const assignmentIdChunk of chunks(
     activeAssignmentIds,
     ID_CHUNK_SIZE,
@@ -256,7 +276,28 @@ export async function loadActiveReviewAssignments(
       );
       if (!data || data.length < PAGE_SIZE) break;
     }
+    const { data: identityData, error: identityError } =
+      await supabase.rpc(
+        "list_assignment_question_dictionary_identities_v1",
+        {
+          p_assignment_ids: assignmentIdChunk,
+          p_dataset_id: datasetId,
+        },
+      );
+    if (identityError) {
+      throw new Error("배정 중인 시험 단어를 확인하지 못했습니다.");
+    }
+    dictionaryIdentityRows.push(
+      ...((identityData ?? []) as AssignmentDictionaryIdentityRow[]),
+    );
   }
+
+  const dictionaryIdentityByQuestion = new Map(
+    dictionaryIdentityRows.map((row) => [
+      `${row.assignment_id}:${row.vocab_entry_id}`,
+      row.canonical_dictionary_id,
+    ]),
+  );
 
   const questionsByAssignment = new Map<
     string,
@@ -274,10 +315,15 @@ export async function loadActiveReviewAssignments(
     if (!assignment) continue;
     for (const question of
       questionsByAssignment.get(link.assignment_id) ?? []) {
+      const canonicalDictionaryId =
+        dictionaryIdentityByQuestion.get(
+          `${question.assignment_id}:${question.vocab_entry_id}`,
+        ) ?? null;
       for (const identity of activeReviewIdentities(
           question.vocab_entry_id,
           question.canonical_lexeme_id_snapshot,
           question.headword_normalized_snapshot,
+          canonicalDictionaryId,
         )) {
         identities.add(identity);
       }
@@ -288,6 +334,7 @@ export async function loadActiveReviewAssignments(
         assignedAt: link.assigned_at,
         datasetId,
         vocabEntryId: question.vocab_entry_id,
+        canonicalDictionaryId,
         canonicalLexemeId:
           question.canonical_lexeme_id_snapshot,
         headwordNormalized:

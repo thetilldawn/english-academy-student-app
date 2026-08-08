@@ -40,6 +40,7 @@ type WrongEventRow = {
   quiz_question_id: string;
   dataset_id: string;
   vocab_entry_id: number;
+  canonical_dictionary_id_snapshot: string | null;
   canonical_lexeme_id_snapshot: string | null;
   wrong_stage: "initial" | "retry";
   wrong_at: string;
@@ -90,6 +91,7 @@ type PendingReviewRow = {
   id: string;
   dataset_id: string;
   vocab_entry_id: number;
+  canonical_dictionary_id_snapshot: string | null;
   canonical_lexeme_id_snapshot: string | null;
   source_question_id: string;
   reason_level: 1 | 2;
@@ -99,6 +101,7 @@ type PendingReviewRow = {
 
 type VocabStateRow = {
   vocab_entry_id: number;
+  canonical_dictionary_id_snapshot: string | null;
   unresolved_wrong_count: number;
   resolved_at: string | null;
   last_evaluated_at: string;
@@ -169,7 +172,7 @@ export async function getStudentWrongWordHistory(
     let query = supabase
       .from("student_vocab_wrong_events")
       .select(
-        "id, quiz_attempt_id, quiz_question_id, dataset_id, vocab_entry_id, canonical_lexeme_id_snapshot, wrong_stage, wrong_at",
+        "id, quiz_attempt_id, quiz_question_id, dataset_id, vocab_entry_id, canonical_dictionary_id_snapshot, canonical_lexeme_id_snapshot, wrong_stage, wrong_at",
       )
       .eq("student_id", studentId)
       .eq("wrong_stage", "initial")
@@ -193,7 +196,7 @@ export async function getStudentWrongWordHistory(
     const { data, error } = await supabase
       .from("student_vocab_review_queue")
       .select(
-        "id, dataset_id, vocab_entry_id, canonical_lexeme_id_snapshot, source_question_id, reason_level, queued_at, reserved_review_draft_id",
+        "id, dataset_id, vocab_entry_id, canonical_dictionary_id_snapshot, canonical_lexeme_id_snapshot, source_question_id, reason_level, queued_at, reserved_review_draft_id",
       )
       .eq("student_id", studentId)
       .eq("status", "pending")
@@ -257,7 +260,7 @@ export async function getStudentWrongWordHistory(
     const { data: stateData, error: stateError } = await supabase
       .from("student_vocab_state")
       .select(
-        "vocab_entry_id, unresolved_wrong_count, resolved_at, last_evaluated_at",
+        "vocab_entry_id, canonical_dictionary_id_snapshot, unresolved_wrong_count, resolved_at, last_evaluated_at",
       )
       .eq("student_id", studentId)
       .in("vocab_entry_id", idChunk);
@@ -289,9 +292,11 @@ export async function getStudentWrongWordHistory(
         row.vocab_entry_id,
         row.canonical_lexeme_id_snapshot,
         entryById.get(row.vocab_entry_id)?.headword_normalized,
+        row.canonical_dictionary_id_snapshot,
       ),
       datasetId: row.dataset_id,
       vocabEntryId: row.vocab_entry_id,
+      canonicalDictionaryId: row.canonical_dictionary_id_snapshot,
       canonicalLexemeId: row.canonical_lexeme_id_snapshot,
       sourceQuestionId: row.source_question_id,
       reasonLevel: row.reason_level,
@@ -343,6 +348,8 @@ export async function getStudentWrongWordHistory(
       questionId: event.quiz_question_id,
       datasetId: event.dataset_id,
       vocabEntryId: event.vocab_entry_id,
+      canonicalDictionaryId:
+        event.canonical_dictionary_id_snapshot,
       canonicalLexemeId: event.canonical_lexeme_id_snapshot,
       stage: event.wrong_stage,
       wrongAt: event.wrong_at,
@@ -363,6 +370,7 @@ export async function getStudentWrongWordHistory(
         target.vocabEntryId,
         target.canonicalLexemeId,
         target.headwordNormalized,
+        target.canonicalDictionaryId,
       ),
       assignmentId: target.assignmentId,
       title: target.title,

@@ -7,6 +7,7 @@ export type WrongEventSource = {
   questionId: string;
   datasetId: string;
   vocabEntryId: number;
+  canonicalDictionaryId: string | null;
   canonicalLexemeId: string | null;
   stage: WrongStage;
   wrongAt: string;
@@ -79,6 +80,7 @@ export type WrongWordOccurrence = {
 
 export type WrongWordAggregate = {
   key: string;
+  canonicalDictionaryId: string | null;
   canonicalLexemeId: string | null;
   headword: string;
   primaryMeaning: string;
@@ -101,6 +103,7 @@ export type PendingWrongWordReview = {
   key: string;
   datasetId: string;
   vocabEntryId: number;
+  canonicalDictionaryId: string | null;
   canonicalLexemeId: string | null;
   sourceQuestionId: string;
   reasonLevel: 1 | 2;
@@ -133,8 +136,10 @@ function wordIdentity(
   const headwordKey = normalizeQuizHeadword(
     entry.headwordNormalized ?? entry.headword,
   );
-  return event.canonicalLexemeId
-    ? `canonical:${event.canonicalLexemeId}`
+  return event.canonicalDictionaryId
+    ? `dictionary:${event.canonicalDictionaryId}`
+    : event.canonicalLexemeId
+      ? `canonical:${event.canonicalLexemeId}`
     : headwordKey
       ? `headword:${event.datasetId}:${headwordKey}`
       : `entry:${event.datasetId}:${event.vocabEntryId}`;
@@ -145,12 +150,15 @@ export function wrongWordReviewIdentity(
   vocabEntryId: number,
   canonicalLexemeId: string | null,
   headword?: string | null,
+  canonicalDictionaryId?: string | null,
 ) {
   const headwordKey = headword
     ? normalizeQuizHeadword(headword)
     : "";
-  return canonicalLexemeId
-    ? `canonical:${datasetId}:${canonicalLexemeId}`
+  return canonicalDictionaryId
+    ? `dictionary:${datasetId}:${canonicalDictionaryId}`
+    : canonicalLexemeId
+      ? `canonical:${datasetId}:${canonicalLexemeId}`
     : headwordKey
       ? `headword:${datasetId}:${headwordKey}`
       : `entry:${datasetId}:${vocabEntryId}`;
@@ -213,6 +221,7 @@ export function buildStudentWrongWordHistory({
   const aggregateByKey = new Map<
     string,
     {
+      canonicalDictionaryId: string | null;
       canonicalLexemeId: string | null;
       wrongCount: number;
       lastWrongAt: string;
@@ -257,6 +266,7 @@ export function buildStudentWrongWordHistory({
 
     if (!current) {
       aggregateByKey.set(key, {
+        canonicalDictionaryId: event.canonicalDictionaryId,
         canonicalLexemeId: event.canonicalLexemeId,
         wrongCount: 1,
         lastWrongAt: event.wrongAt,
@@ -308,6 +318,7 @@ export function buildStudentWrongWordHistory({
             occurrence.vocabEntryId,
             aggregate.canonicalLexemeId,
             occurrence.headword,
+            aggregate.canonicalDictionaryId,
           );
           const activeAssignment =
             activeAssignmentByKey.get(reviewKey) ?? null;
@@ -360,6 +371,7 @@ export function buildStudentWrongWordHistory({
               : "available";
       return {
         key,
+        canonicalDictionaryId: aggregate.canonicalDictionaryId,
         canonicalLexemeId: aggregate.canonicalLexemeId,
         headword: representative.headword,
         primaryMeaning: representative.primaryMeaning,

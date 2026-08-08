@@ -1382,8 +1382,9 @@ export async function prepareRegularAssignment(
       unitIdSet.has(candidate.unitId) &&
       !activeReviewIdentities(
           candidate.id,
-          candidate.canonicalKey,
+          candidate.canonicalLexemeId,
           candidate.headwordNormalized,
+          candidate.canonicalDictionaryId,
         ).some((identity) => activeAssignments.identities.has(identity)),
   );
   const sourceOrderByCandidateId = new Map(
@@ -1454,7 +1455,7 @@ export async function createAssignment(
   );
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc(
-    "create_assignment_with_delivery_v5",
+    "create_assignment_with_delivery_v6",
     {
       p_title: prepared.title,
       p_dataset_id: prepared.datasetId,

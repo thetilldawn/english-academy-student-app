@@ -401,7 +401,7 @@ export async function createBulkAssignments(
 
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc(
-    "create_bulk_vocab_assignments_v2",
+    "create_bulk_vocab_assignments_v3",
     { p_batches: batches },
   );
   if (error) {

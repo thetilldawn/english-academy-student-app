@@ -77,7 +77,7 @@ describe("mixed assignment API contract", () => {
     );
     expect(service).toContain("createMixedQuizQuestions(");
     expect(service).toContain(
-      '"create_mixed_review_assignment_v7"',
+      '"create_mixed_review_assignment_v8"',
     );
     expect(service).toContain(
       "p_selected_queue_ids: prepared.selectedQueueIds",
@@ -128,7 +128,7 @@ describe("mixed assignment API contract", () => {
       "includeExamUseProjection: true",
     );
     expect(service).toContain('const reviewScope = input.reviewScope ?? "dataset"');
-    expect(service).toContain("isCandidateInReviewScope(");
+    expect(service).toContain("resolvePendingReviewCandidate(");
     expect(service).toContain("primaryUnitIdSet,");
     expect(service).toContain(
       "eligibleReviewRows.map((row) => row.reason_level)",

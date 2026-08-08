@@ -5,9 +5,9 @@ import { z } from "zod";
 import {
   excludePendingReviewCandidates,
   countEligibleReviewLevels,
-  isCandidateInReviewScope,
   mixedAssignmentDatabaseErrorReason,
   orderContiguousPrimaryUnits,
+  resolvePendingReviewCandidate,
   type MixedAssignmentFailureReason,
   type MixedAssignmentUnit,
   type PendingReviewIdentity,
@@ -46,6 +46,7 @@ type ReviewQueueRow = {
   id: string;
   vocab_entry_id: number;
   canonical_lexeme_id_snapshot: string | null;
+  canonical_dictionary_id_snapshot: string | null;
   reason_level: 1 | 2;
   queued_at: string;
   reserved_review_draft_id: string | null;
@@ -109,13 +110,16 @@ function queueIdentities(
   if (candidate) {
     return activeReviewIdentities(
       candidate.id,
-      candidate.canonicalKey,
+      candidate.canonicalLexemeId,
       candidate.headwordNormalized,
+      candidate.canonicalDictionaryId,
     );
   }
   return activeReviewIdentities(
     queue.vocab_entry_id,
     queue.canonical_lexeme_id_snapshot,
+    undefined,
+    queue.canonical_dictionary_id_snapshot,
   );
 }
 
@@ -149,7 +153,7 @@ async function loadReviewQueueRows(
     const { data, error } = await supabase
       .from("student_vocab_review_queue")
       .select(
-        "id, vocab_entry_id, canonical_lexeme_id_snapshot, reason_level, queued_at, reserved_review_draft_id",
+        "id, vocab_entry_id, canonical_lexeme_id_snapshot, canonical_dictionary_id_snapshot, reason_level, queued_at, reserved_review_draft_id",
       )
       .eq("student_id", studentId)
       .eq("dataset_id", datasetId)
@@ -321,25 +325,30 @@ async function prepareAssignment(
     throw new MixedAssignmentError("invalid_selection");
   }
 
-  const candidateById = new Map(
-    allCandidates.map((candidate) => [candidate.id, candidate]),
-  );
   const primaryUnitIdSet = new Set(
     primaryUnits.map((unit) => unit.id),
   );
+  const candidateByQueueId = new Map<
+    string,
+    EligibleVocabularyEntry
+  >();
   const scopedQueueRows = queueRows.filter((row) => {
-    const candidate = candidateById.get(row.vocab_entry_id);
-    return (
-      candidate !== undefined &&
-      isCandidateInReviewScope(
-        reviewScope,
-        candidate.unitId,
-        primaryUnitIdSet,
-      )
+    const candidate = resolvePendingReviewCandidate(
+      allCandidates,
+      {
+        vocabEntryId: row.vocab_entry_id,
+        canonicalDictionaryId:
+          row.canonical_dictionary_id_snapshot,
+        canonicalLexemeId: row.canonical_lexeme_id_snapshot,
+      },
+      reviewScope,
+      primaryUnitIdSet,
     );
+    if (candidate) candidateByQueueId.set(row.id, candidate);
+    return candidate !== undefined;
   });
   const availableQueueRows = scopedQueueRows.filter((row) => {
-    const candidate = candidateById.get(row.vocab_entry_id);
+    const candidate = candidateByQueueId.get(row.id);
     return (
       !activeReviewAssignments.queueIds.has(row.id) &&
       !isActiveQueue(activeReviewAssignments.identities, row, candidate)
@@ -348,7 +357,7 @@ async function prepareAssignment(
   const selectedByIdentity = new Map<string, ReviewQueueRow>();
   for (const row of availableQueueRows) {
     const identity = quizVocabularyIdentity(
-      candidateById.get(row.vocab_entry_id)!,
+      candidateByQueueId.get(row.id)!,
     );
     if (!selectedByIdentity.has(identity)) {
       selectedByIdentity.set(identity, row);
@@ -359,7 +368,7 @@ async function prepareAssignment(
     .filter((row) => reviewLevels.includes(row.reason_level))
     .slice(0, MAX_MIXED_REVIEW_WORDS);
   const eligibleReviewTargets = eligibleReviewRows.flatMap((queue) => {
-    const candidate = candidateById.get(queue.vocab_entry_id);
+    const candidate = candidateByQueueId.get(queue.id);
     return candidate ? [candidate] : [];
   });
   if (eligibleReviewTargets.length !== eligibleReviewRows.length) {
@@ -373,7 +382,11 @@ async function prepareAssignment(
       const candidate = eligibleReviewTargets[index];
       return (
         queue.canonical_lexeme_id_snapshot !== null &&
-        queue.canonical_lexeme_id_snapshot !== candidate?.canonicalKey
+        queue.canonical_lexeme_id_snapshot !== candidate?.canonicalLexemeId
+      ) || (
+        queue.canonical_dictionary_id_snapshot !== null &&
+        queue.canonical_dictionary_id_snapshot !==
+          candidate?.canonicalDictionaryId
       );
     })
   ) {
@@ -395,16 +408,17 @@ async function prepareAssignment(
       primaryUnitIdSet.has(candidate.unitId) &&
       !activeReviewIdentities(
           candidate.id,
-          candidate.canonicalKey,
+          candidate.canonicalLexemeId,
           candidate.headwordNormalized,
+          candidate.canonicalDictionaryId,
         ).some((identity) =>
           activeReviewAssignments.identities.has(identity),
         ),
   );
   const selectedReviewIdentities: PendingReviewIdentity[] =
-    selectedQueueRows.map((queue, index) => ({
-      vocabEntryId: queue.vocab_entry_id,
-      canonicalKey: queue.canonical_lexeme_id_snapshot,
+    selectedQueueRows.map((_queue, index) => ({
+      vocabEntryId: reviewTargets[index].id,
+      canonicalKey: reviewTargets[index]?.canonicalKey ?? null,
       headword: reviewTargets[index]?.headword,
     }));
   const primaryCandidates = input.includePendingReview
@@ -443,7 +457,7 @@ async function prepareAssignment(
       isActiveQueue(
         activeReviewAssignments.identities,
         row,
-        candidateById.get(row.vocab_entry_id),
+        candidateByQueueId.get(row.id),
       ),
     ).length,
     maximumQuestionCount,
@@ -625,7 +639,7 @@ export async function createMixedAssignment(
   );
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc(
-    "create_mixed_review_assignment_v7",
+    "create_mixed_review_assignment_v8",
     {
       p_student_id: prepared.studentId,
       p_dataset_id: prepared.datasetId,

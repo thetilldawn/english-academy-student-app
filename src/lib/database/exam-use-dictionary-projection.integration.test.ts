@@ -323,7 +323,7 @@ describe.sequential("exam-use dictionary projection", () => {
     ).size).toBe(4);
 
     const assignment = await database.query<{ id: string }>(
-      `select public.create_assignment_with_delivery_v5(
+      `select public.create_assignment_with_delivery_v6(
         $1, $2::uuid, array[$3::uuid], 4, 50::smallint, 60,
         80::smallint,
         'fixed'::public.question_order_mode,
@@ -577,5 +577,589 @@ describe.sequential("exam-use dictionary projection", () => {
       "worksheet.wrong_word.exported",
     ]);
     await database.exec("reset role;");
+  });
+
+  it("creates an exact four-word review assignment from dictionary snapshots", async () => {
+    const sourceQuestions = await database.query<{
+      id: string;
+      vocab_entry_id: number;
+    }>(`
+      select id, vocab_entry_id
+      from public.quiz_questions
+      where attempt_id = '${attemptId}'
+      order by order_index;
+    `);
+    const questionIds = sourceQuestions.rows.map((row) => row.id);
+
+    await database.exec("set role authenticated;");
+    const queued = await database.query<{ queue_ids: string[] }>(
+      `select public.queue_student_vocab_review_words(
+        $1::uuid,
+        $2::uuid[]
+      ) as queue_ids`,
+      [ids.student, questionIds],
+    );
+    await database.exec("reset role;");
+
+    const queueIds = queued.rows[0]!.queue_ids;
+    expect(queueIds).toHaveLength(4);
+    const queueEntries = await database.query<{
+      id: string;
+      vocab_entry_id: number;
+      canonical_dictionary_id_snapshot: string;
+    }>(
+      `select
+        queue.id,
+        queue.vocab_entry_id,
+        queue.canonical_dictionary_id_snapshot
+       from public.student_vocab_review_queue as queue
+       where queue.id = any($1::uuid[])
+       order by array_position($1::uuid[], queue.id)`,
+      [queueIds],
+    );
+    expect(
+      queueEntries.rows.every((row) =>
+        row.canonical_dictionary_id_snapshot.startsWith("word:"),
+      ),
+    ).toBe(true);
+
+    const questions = queueEntries.rows.map((queue, index) => ({
+      vocab_entry_id: queue.vocab_entry_id,
+      base_order_index: index + 1,
+      direction:
+        index < 2 ? "english_to_korean" : "korean_to_english",
+      choice_vocab_entry_ids: entryIds,
+    }));
+    const exact = await database.query<{ assignment_id: string }>(
+      `select private.create_exact_review_assignment_v5(
+        $1::uuid,
+        $2::uuid,
+        $3::uuid[],
+        'Dictionary exact review',
+        50::smallint,
+        60,
+        80::smallint,
+        'fixed'::public.question_order_mode,
+        clock_timestamp() + interval '1 day',
+        'total',
+        null,
+        $4::jsonb
+      ) as assignment_id`,
+      [ids.student, datasetId, queueIds, JSON.stringify(questions)],
+    );
+    const exactAssignmentId = exact.rows[0]!.assignment_id;
+
+    const exactState = await database.query<{
+      assignment_purpose: string;
+      target_count: number;
+      dictionary_target_count: number;
+      pending_queue_count: number;
+      snapshot_count: number;
+    }>(`
+      select
+        assignment.assignment_purpose,
+        (select count(*)::integer
+          from public.assignment_review_targets as target
+          where target.assignment_id = assignment.id
+            and target.student_id = '${ids.student}'
+            and target.released_at is null) as target_count,
+        (select count(*)::integer
+          from public.assignment_review_targets as target
+          where target.assignment_id = assignment.id
+            and target.student_id = '${ids.student}'
+            and target.released_at is null
+            and target.canonical_dictionary_id_snapshot is not null)
+          as dictionary_target_count,
+        (select count(*)::integer
+          from public.student_vocab_review_queue as queue
+          where queue.id = any(array[
+            ${queueIds.map((id) => `'${id}'::uuid`).join(",")}
+          ]::uuid[])
+            and queue.status = 'pending') as pending_queue_count,
+        (select count(*)::integer
+          from public.assignment_question_exam_use_snapshot as snapshot
+          where snapshot.assignment_id = assignment.id
+            and snapshot.release_id = '${releaseId}') as snapshot_count
+      from public.assignments as assignment
+      where assignment.id = '${exactAssignmentId}';
+    `);
+    expect(exactState.rows[0]).toEqual({
+      assignment_purpose: "review",
+      target_count: 4,
+      dictionary_target_count: 4,
+      pending_queue_count: 4,
+      snapshot_count: 4,
+    });
+  });
+
+  it("remaps historical queues to the active release through the public mixed RPC", async () => {
+    const exactAssignment = await database.query<{ id: string }>(`
+      select id
+      from public.assignments
+      where title = 'Dictionary exact review'
+      order by created_at desc
+      limit 1;
+    `);
+    expect(exactAssignment.rows[0]?.id).toMatch(/^[0-9a-f-]{36}$/i);
+
+    await database.exec("set role authenticated;");
+    await database.query(
+      `select public.cancel_student_assignment_v1(
+        $1::uuid,
+        $2::uuid,
+        'active release remap fixture'
+      )`,
+      [exactAssignment.rows[0]!.id, ids.student],
+    );
+    await database.exec("reset role;");
+
+    const remapUnitId = "00000000-0000-4000-8000-000000009101";
+    const remapReleaseId = "00000000-0000-4000-8000-000000009102";
+    await database.exec(`
+      insert into public.vocab_units (
+        id,
+        dataset_id,
+        unit_label,
+        normalized_label,
+        unit_kind,
+        unit_number,
+        sort_index,
+        entry_count
+      )
+      values (
+        '${remapUnitId}',
+        '${datasetId}',
+        '2025-02 장문독해',
+        '2025-02 장문독해',
+        'supplement',
+        null,
+        2,
+        4
+      );
+
+      insert into public.vocab_entries (
+        dataset_id,
+        source_row,
+        headword,
+        headword_normalized,
+        pronunciation_ko,
+        meanings,
+        primary_meaning,
+        english_definition,
+        example_en,
+        example_ko,
+        source_ref,
+        row_sha256,
+        unit_id,
+        position_in_unit,
+        entry_type
+      )
+      select
+        entry.dataset_id,
+        entry.source_row + 100,
+        entry.headword,
+        entry.headword_normalized,
+        entry.pronunciation_ko,
+        entry.meanings,
+        entry.primary_meaning,
+        entry.english_definition,
+        entry.example_en,
+        entry.example_ko,
+        '2025-02 장문독해 · word',
+        upper(lpad(to_hex(entry.source_row + 100), 64, 'f')),
+        '${remapUnitId}',
+        entry.position_in_unit,
+        entry.entry_type
+      from public.vocab_entries as entry
+      where entry.id = any(array[
+        ${entryIds.map((id) => `${id}::bigint`).join(",")}
+      ]::bigint[]);
+
+      update word_index.app_exam_use_release
+      set status = 'retired',
+          retired_at_utc = clock_timestamp()
+      where release_id = '${releaseId}';
+
+      insert into word_index.app_exam_use_release (
+        release_id,
+        release_key,
+        dataset_id,
+        dataset_key,
+        schema_version,
+        package_version,
+        source_sha256,
+        candidate_dictionary_version,
+        manifest_content_hash,
+        exam_review_ledger_sha256,
+        wordbook_id,
+        title,
+        target_environment,
+        common_dictionary_release_allowed,
+        exam_use_import_allowed,
+        expected_occurrence_count,
+        expected_dictionary_count,
+        expected_included_count,
+        status,
+        package_json
+      )
+      values (
+        '${remapReleaseId}',
+        'integration-exam-use-v1:remap',
+        '${datasetId}',
+        'integration-exam-use-v1',
+        '1.0',
+        repeat('9', 64),
+        repeat('8', 64),
+        repeat('7', 64),
+        repeat('6', 64),
+        repeat('5', 64),
+        'integration-wordbook',
+        '통합 테스트용 가짜 단어장 새 릴리스',
+        'preview',
+        false,
+        true,
+        4,
+        4,
+        4,
+        'loading',
+        '{}'::jsonb
+      );
+
+      insert into word_index.app_exam_use_occurrence (
+        release_id,
+        dataset_id,
+        source_row,
+        vocab_entry_id,
+        unit_id,
+        position_in_unit,
+        dictionary_id,
+        legacy_ids,
+        sense_id,
+        pronunciation_variant_id,
+        display_headword,
+        display_gloss_ko,
+        display_pronunciation_ko,
+        display_pronunciation_review_status,
+        audio_status,
+        audio_url,
+        sound_audio,
+        raw_response_sha256,
+        listening_enabled,
+        occurrence_id,
+        occurrence_content_hash,
+        package_entry_content_hash,
+        exam_review_id,
+        exam_input_hash,
+        exam_use_status,
+        context_evidence_status,
+        context_evidence,
+        source_projection_row_sha256,
+        source_entry_id,
+        source_entry_sha256,
+        include_in_exam,
+        manual_review_flags,
+        audio_json,
+        package_entry_json
+      )
+      select
+        '${remapReleaseId}',
+        occurrence.dataset_id,
+        occurrence.source_row + 100,
+        current_entry.id,
+        '${remapUnitId}',
+        occurrence.position_in_unit,
+        occurrence.dictionary_id,
+        occurrence.legacy_ids,
+        occurrence.sense_id,
+        occurrence.pronunciation_variant_id,
+        occurrence.display_headword,
+        occurrence.display_gloss_ko,
+        occurrence.display_pronunciation_ko,
+        occurrence.display_pronunciation_review_status,
+        occurrence.audio_status,
+        occurrence.audio_url,
+        occurrence.sound_audio,
+        occurrence.raw_response_sha256,
+        occurrence.listening_enabled,
+        'occ:integration-remap-' || occurrence.source_row,
+        occurrence.occurrence_content_hash,
+        occurrence.package_entry_content_hash,
+        'exam-review:integration-remap-' || occurrence.source_row,
+        occurrence.exam_input_hash,
+        occurrence.exam_use_status,
+        occurrence.context_evidence_status,
+        occurrence.context_evidence,
+        occurrence.source_projection_row_sha256,
+        'entry-integration-remap-' || occurrence.source_row,
+        occurrence.source_entry_sha256,
+        occurrence.include_in_exam,
+        occurrence.manual_review_flags,
+        occurrence.audio_json,
+        occurrence.package_entry_json
+      from word_index.app_exam_use_occurrence as occurrence
+      join public.vocab_entries as current_entry
+        on current_entry.dataset_id = occurrence.dataset_id
+       and current_entry.source_row = occurrence.source_row + 100
+      where occurrence.release_id = '${releaseId}';
+
+      update word_index.app_exam_use_release
+      set status = 'active',
+          activated_at_utc = clock_timestamp()
+      where release_id = '${remapReleaseId}';
+
+      update public.vocab_datasets
+      set metadata = jsonb_set(
+        metadata,
+        '{packageVersion}',
+        to_jsonb(repeat('9', 64))
+      )
+      where id = '${datasetId}';
+    `);
+
+    const candidates = await database.query<{
+      queue_id: string;
+      reason_level: number;
+      dictionary_id: string;
+      historical_entry_id: number;
+      current_entry_id: number;
+    }>(`
+      select
+        queue.id as queue_id,
+        queue.reason_level,
+        queue.canonical_dictionary_id_snapshot as dictionary_id,
+        queue.vocab_entry_id as historical_entry_id,
+        occurrence.vocab_entry_id as current_entry_id
+      from public.student_vocab_review_queue as queue
+      join word_index.app_exam_use_occurrence as occurrence
+        on occurrence.release_id = '${remapReleaseId}'
+       and occurrence.dataset_id = queue.dataset_id
+       and occurrence.dictionary_id = queue.canonical_dictionary_id_snapshot
+       and occurrence.include_in_exam
+       and occurrence.exam_use_status = 'reviewed_for_preview'
+      where queue.student_id = '${ids.student}'
+        and queue.dataset_id = '${datasetId}'
+        and queue.status = 'pending'
+      order by queue.reason_level desc, queue.queued_at, queue.id;
+    `);
+    expect(candidates.rows).toHaveLength(4);
+    expect(
+      candidates.rows.every(
+        (candidate) =>
+          candidate.historical_entry_id !== candidate.current_entry_id,
+      ),
+    ).toBe(true);
+
+    const queueIds = candidates.rows.map((candidate) => candidate.queue_id);
+    const currentEntryIds = candidates.rows.map(
+      (candidate) => candidate.current_entry_id,
+    );
+    const reviewLevels = [
+      ...new Set(candidates.rows.map((candidate) => candidate.reason_level)),
+    ];
+    const questions = candidates.rows.map((candidate, index) => ({
+      vocab_entry_id: candidate.current_entry_id,
+      base_order_index: index + 1,
+      direction:
+        index < 2 ? "english_to_korean" : "korean_to_english",
+      choice_vocab_entry_ids: currentEntryIds,
+    }));
+
+    await database.exec("set role authenticated;");
+    const mixed = await database.query<{ assignment_id: string }>(
+      `select public.create_mixed_review_assignment_v8(
+        $1::uuid,
+        $2::uuid,
+        $3::smallint[],
+        'dataset',
+        $4::uuid[],
+        'Dictionary release remap',
+        array[]::uuid[],
+        50::smallint,
+        60,
+        80::smallint,
+        'fixed'::public.question_order_mode,
+        null,
+        'total',
+        null,
+        $5::jsonb
+      ) as assignment_id`,
+      [
+        ids.student,
+        datasetId,
+        reviewLevels,
+        queueIds,
+        JSON.stringify(questions),
+      ],
+    );
+    const identities = await database.query<{
+      assignment_id: string;
+      vocab_entry_id: number;
+      canonical_dictionary_id: string;
+    }>(
+      `select *
+       from public.list_assignment_question_dictionary_identities_v1(
+         array[$1::uuid],
+         $2::uuid
+       )`,
+      [mixed.rows[0]!.assignment_id, datasetId],
+    );
+    await database.exec("reset role;");
+
+    expect(identities.rows).toHaveLength(4);
+    expect(
+      new Set(identities.rows.map((identity) => identity.vocab_entry_id)),
+    ).toEqual(new Set(currentEntryIds));
+    expect(
+      new Set(
+        identities.rows.map((identity) => identity.canonical_dictionary_id),
+      ),
+    ).toEqual(new Set(candidates.rows.map((candidate) => candidate.dictionary_id)));
+
+    const remappedState = await database.query<{
+      assignment_purpose: string;
+      active_target_count: number;
+      historical_target_count: number;
+      active_release_snapshot_count: number;
+    }>(`
+      select
+        assignment.assignment_purpose,
+        (
+          select count(*)::integer
+          from public.assignment_review_targets as target
+          where target.assignment_id = assignment.id
+            and target.student_id = '${ids.student}'
+            and target.released_at is null
+        ) as active_target_count,
+        (
+          select count(*)::integer
+          from public.assignment_review_targets as target
+          join public.student_vocab_review_queue as queue
+            on queue.id = target.review_queue_id
+          where target.assignment_id = assignment.id
+            and target.student_id = '${ids.student}'
+            and target.vocab_entry_id <> queue.vocab_entry_id
+        ) as historical_target_count,
+        (
+          select count(*)::integer
+          from public.assignment_question_exam_use_snapshot as snapshot
+          where snapshot.assignment_id = assignment.id
+            and snapshot.release_id = '${remapReleaseId}'
+        ) as active_release_snapshot_count
+      from public.assignments as assignment
+      where assignment.id = '${mixed.rows[0]!.assignment_id}';
+    `);
+    expect(remappedState.rows[0]).toEqual({
+      assignment_purpose: "review",
+      active_target_count: 4,
+      historical_target_count: 4,
+      active_release_snapshot_count: 4,
+    });
+  });
+
+  it("creates a release-aware regular assignment through the public bulk RPC", async () => {
+    const remapAssignment = await database.query<{ id: string }>(`
+      select id
+      from public.assignments
+      where title = 'Dictionary release remap'
+      order by created_at desc
+      limit 1;
+    `);
+    const remapRelease = await database.query<{
+      release_id: string;
+      unit_id: string;
+      vocab_entry_id: number;
+    }>(`
+      select
+        occurrence.release_id,
+        occurrence.unit_id,
+        occurrence.vocab_entry_id
+      from word_index.app_exam_use_occurrence as occurrence
+      join word_index.app_exam_use_release as release
+        on release.release_id = occurrence.release_id
+       and release.status = 'active'
+      where occurrence.dataset_id = '${datasetId}'
+        and occurrence.include_in_exam
+        and occurrence.exam_use_status = 'reviewed_for_preview'
+      order by occurrence.source_row;
+    `);
+    expect(remapRelease.rows).toHaveLength(4);
+
+    const currentEntryIds = remapRelease.rows.map(
+      (occurrence) => occurrence.vocab_entry_id,
+    );
+    const questions = currentEntryIds.map((entryId, index) => ({
+      vocab_entry_id: entryId,
+      base_order_index: index + 1,
+      direction:
+        index < 2 ? "english_to_korean" : "korean_to_english",
+      choice_vocab_entry_ids: currentEntryIds,
+    }));
+    const batches = [
+      {
+        kind: "regular",
+        student_id: ids.student,
+        title: "Dictionary bulk regular",
+        dataset_id: datasetId,
+        unit_ids: [remapRelease.rows[0]!.unit_id],
+        question_count: 4,
+        english_to_korean_ratio: 50,
+        time_limit_seconds: 60,
+        passing_score: 80,
+        question_order_mode: "fixed",
+        available_until: null,
+        timing_mode: "total",
+        question_time_limit_seconds: null,
+        questions,
+      },
+    ];
+
+    await database.exec("set role authenticated;");
+    await database.query(
+      `select public.cancel_student_assignment_v1(
+        $1::uuid,
+        $2::uuid,
+        'bulk assignment fixture'
+      )`,
+      [remapAssignment.rows[0]!.id, ids.student],
+    );
+    const bulk = await database.query<{
+      result: Array<{ student_id: string; assignment_id: string }>;
+    }>(
+      `select public.create_bulk_vocab_assignments_v3($1::jsonb) as result`,
+      [JSON.stringify(batches)],
+    );
+    await database.exec("reset role;");
+
+    expect(bulk.rows[0]!.result).toHaveLength(1);
+    expect(bulk.rows[0]!.result[0]?.student_id).toBe(ids.student);
+    const bulkAssignmentId = bulk.rows[0]!.result[0]!.assignment_id;
+    const bulkState = await database.query<{
+      question_count: number;
+      recipient_count: number;
+      snapshot_count: number;
+    }>(`
+      select
+        assignment.question_count,
+        (
+          select count(*)::integer
+          from public.assignment_students as recipient
+          where recipient.assignment_id = assignment.id
+            and recipient.student_id = '${ids.student}'
+            and recipient.cancelled_at is null
+        ) as recipient_count,
+        (
+          select count(*)::integer
+          from public.assignment_question_exam_use_snapshot as snapshot
+          where snapshot.assignment_id = assignment.id
+            and snapshot.release_id = '${remapRelease.rows[0]!.release_id}'
+        ) as snapshot_count
+      from public.assignments as assignment
+      where assignment.id = '${bulkAssignmentId}';
+    `);
+    expect(bulkState.rows[0]).toEqual({
+      question_count: 4,
+      recipient_count: 1,
+      snapshot_count: 4,
+    });
   });
 });

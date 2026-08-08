@@ -6,6 +6,7 @@ import {
   isCandidateInReviewScope,
   mixedAssignmentDatabaseErrorReason,
   orderContiguousPrimaryUnits,
+  resolvePendingReviewCandidate,
 } from "@/lib/admin/mixed-assignment";
 import type { EligibleVocabularyEntry } from "@/lib/quiz/eligible-vocabulary";
 
@@ -68,6 +69,8 @@ describe("excludePendingReviewCandidates", () => {
       headword: "alpha",
       headwordNormalized: "alpha",
       primaryMeaning: "알파",
+      canonicalDictionaryId: null,
+      canonicalLexemeId: "canonical-a",
       canonicalKey: "canonical-a",
       eligibleDirections: ["english_to_korean"],
     },
@@ -78,6 +81,8 @@ describe("excludePendingReviewCandidates", () => {
       headword: "alpha variant",
       headwordNormalized: "alpha variant",
       primaryMeaning: "알파 변형",
+      canonicalDictionaryId: null,
+      canonicalLexemeId: "canonical-a",
       canonicalKey: "canonical-a",
       eligibleDirections: ["korean_to_english"],
     },
@@ -88,6 +93,8 @@ describe("excludePendingReviewCandidates", () => {
       headword: "beta",
       headwordNormalized: "beta",
       primaryMeaning: "베타",
+      canonicalDictionaryId: null,
+      canonicalLexemeId: null,
       canonicalKey: null,
       eligibleDirections: ["english_to_korean"],
     },
@@ -131,6 +138,77 @@ describe("excludePendingReviewCandidates", () => {
         ],
       ).map((entry) => entry.id),
     ).toEqual([1, 2]);
+  });
+});
+
+describe("resolvePendingReviewCandidate", () => {
+  const candidates: EligibleVocabularyEntry[] = [
+    {
+      id: 20,
+      unitId: "day-2",
+      sourceRow: 20,
+      headword: "observe",
+      headwordNormalized: "observe",
+      primaryMeaning: "준수하다",
+      canonicalDictionaryId: "word:observe",
+      canonicalLexemeId: null,
+      canonicalKey: "word:observe",
+      recordType: "word",
+      eligibleDirections: ["english_to_korean"],
+    },
+    {
+      id: 10,
+      unitId: "day-1",
+      sourceRow: 10,
+      headword: "observe",
+      headwordNormalized: "observe",
+      primaryMeaning: "관찰하다",
+      canonicalDictionaryId: "word:observe",
+      canonicalLexemeId: null,
+      canonicalKey: "word:observe",
+      recordType: "word",
+      eligibleDirections: ["english_to_korean"],
+    },
+  ];
+
+  it("keeps the dictionary identity when the current release uses another occurrence", () => {
+    const pending = {
+      vocabEntryId: 999,
+      canonicalDictionaryId: "word:observe",
+      canonicalLexemeId: null,
+    };
+
+    expect(
+      resolvePendingReviewCandidate(
+        candidates,
+        pending,
+        "dataset",
+        new Set(),
+      )?.id,
+    ).toBe(10);
+    expect(
+      resolvePendingReviewCandidate(
+        candidates,
+        pending,
+        "selection",
+        new Set(["day-2"]),
+      )?.id,
+    ).toBe(20);
+  });
+
+  it("does not let an entry fallback override conflicting dictionary IDs", () => {
+    expect(
+      resolvePendingReviewCandidate(
+        candidates,
+        {
+          vocabEntryId: 10,
+          canonicalDictionaryId: "word:different",
+          canonicalLexemeId: null,
+        },
+        "dataset",
+        new Set(),
+      ),
+    ).toBeUndefined();
   });
 });
 
