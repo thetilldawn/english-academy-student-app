@@ -121,7 +121,13 @@ describe("mixed assignment API contract", () => {
       "loadEligibleVocabularyDataset(supabase, input.datasetId, {",
     );
     expect(service).toContain(
-      "includeExamUseProjection: !input.includePendingReview",
+      "includeExamUseProjection: true",
+    );
+    expect(service).toContain('const reviewScope = input.reviewScope ?? "dataset"');
+    expect(service).toContain("isCandidateInReviewScope(");
+    expect(service).toContain("primaryUnitIdSet,");
+    expect(service).toContain(
+      "eligibleReviewRows.map((row) => row.reason_level)",
     );
   });
 });

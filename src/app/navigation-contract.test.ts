@@ -12,12 +12,16 @@ describe("responsive navigation contract", () => {
     const homePage = source("src/app/page.tsx");
     const codePage = source("src/app/code/page.tsx");
     const loginForm = source("src/components/student-login-form.tsx");
+    const studentCopy = source("src/content/ko/student-app.ts");
 
     expect(homePage).toContain("<StudentLoginForm />");
     expect(homePage).toContain('redirect("/student")');
     expect(homePage).toContain('href="/admin/login"');
     expect(homePage).not.toContain('href="/code"');
-    expect(loginForm).toContain('"인증 중…" : "인증"');
+    expect(loginForm).toContain("studentAppText.login.submitting");
+    expect(loginForm).toContain("studentAppText.login.submit");
+    expect(studentCopy).toContain('submitting: "인증 중…"');
+    expect(studentCopy).toContain('submit: "인증"');
     expect(loginForm).toContain('"segmented-code-slot"');
     expect(loginForm).toContain("STUDENT_CODE_LENGTH");
     expect(loginForm).toContain("aria-errormessage");
@@ -80,16 +84,22 @@ describe("responsive navigation contract", () => {
     const studentManager = source(
       "src/components/student-manager.tsx",
     );
+    const studentCopy = source("src/content/ko/admin-students.ts");
     const adminService = source("src/lib/services/admin-service.ts");
 
     expect(studentManager).toContain('data-kind="required"');
-    expect(studentManager).toContain("필수");
+    expect(studentManager).toContain(
+      "adminStudentsText.createStudent.required",
+    );
+    expect(studentCopy).toContain('required: "필수"');
     expect(studentManager).toContain('name="currentVocabDatasetId"');
     expect(studentManager).toContain(
       'currentVocabDatasetId: form.get("currentVocabDatasetId")',
     );
     expect(studentManager).toContain("datasets.map");
-    expect(studentManager).toContain("나중에 선택");
+    expect(studentManager).toContain(
+      "adminStudentsText.createStudent.chooseLater",
+    );
     expect(studentManager).toContain(
       "단어장 없이 학생과 코드부터 만들 수 있습니다.",
     );
@@ -111,6 +121,7 @@ describe("responsive navigation contract", () => {
       "src/app/admin/(protected)/loading.tsx",
     );
     const adminPageTitle = source("src/components/admin-page-title.tsx");
+    const adminCopy = source("src/content/ko/admin-shell.ts");
     const studentShell = source("src/components/student-shell.tsx");
 
     expect(adminLayout).toContain('className="admin-sidebar-nav"');
@@ -120,8 +131,9 @@ describe("responsive navigation contract", () => {
     expect(adminLayout).not.toContain("admin-mobile-user-label");
     expect(adminLayout).not.toContain(">관리자<");
     expect(adminPageTitle).toContain(
-      '{ prefix: "/admin/assignments", title: "학습 관리" }',
+      "adminShellText.pageTitles.learning",
     );
+    expect(adminCopy).toContain('learning: "학습 관리"');
     expect(adminPageTitle).not.toContain('title: "시험 관리"');
     expect(adminLayout).not.toContain(
       'export const dynamic = "force-dynamic"',
@@ -151,10 +163,14 @@ describe("responsive navigation contract", () => {
     const assignmentManager = source(
       "src/components/assignment-manager.tsx",
     );
+    const studentCopy = source("src/content/ko/admin-students.ts");
+    const learningCopy = source("src/content/ko/admin-learning.ts");
 
     expect(studentManager).toContain('className="dialog-tabs"');
-    expect(studentManager).toContain("내역");
-    expect(studentManager).toContain("계정 설정");
+    expect(studentManager).toContain("adminStudentsText.detailTabs.history");
+    expect(studentManager).toContain("adminStudentsText.detailTabs.account");
+    expect(studentCopy).toContain('history: "내역"');
+    expect(studentCopy).toContain('account: "계정 설정"');
     expect(studentManager).not.toContain("student-action-pane");
     expect(studentManager).not.toContain(
       'className="student-actions-disclosure"',
@@ -162,13 +178,20 @@ describe("responsive navigation contract", () => {
     expect(assignmentManager).toContain(
       'aria-pressed={testTab === "vocab"}',
     );
-    expect(assignmentManager).toContain("단어");
-    expect(assignmentManager).toContain("다른 학습");
+    expect(assignmentManager).toContain(
+      "adminLearningText.page.vocabularyTab",
+    );
+    expect(assignmentManager).toContain(
+      "adminLearningText.page.otherLearningTab",
+    );
+    expect(learningCopy).toContain('otherLearningTab: "다른 학습"');
     expect(assignmentManager).toContain('type="search"');
     expect(assignmentManager).toContain(
       'className="dialog dialog-extra-wide assignment-dialog"',
     );
-    expect(studentManager).toContain("다음 단어 시험");
+    expect(studentManager).toContain(
+      "adminStudentsText.learning.nextVocabularyTitle",
+    );
     expect(studentManager).toContain("student-inline-assignment-action");
     expect(studentManager).toContain("launcherOnly");
   });
@@ -184,6 +207,8 @@ describe("responsive navigation contract", () => {
     const overviewGroups = source(
       "src/components/overview-action-groups.tsx",
     );
+    const historyCopy = source("src/content/ko/admin-history.ts");
+    const overviewCopy = source("src/content/ko/admin-overview.ts");
     const scorePresentation = source(
       "src/lib/ui/attempt-score-presentation.ts",
     );
@@ -192,16 +217,18 @@ describe("responsive navigation contract", () => {
     expect(overview).not.toContain("listAttempts");
     expect(overview).not.toContain("listAssignments");
     expect(results).toContain("listAssignmentHistory");
-    expect(historyList).toContain("첫 시험");
+    expect(historyList).toContain("adminHistoryText.filters.statusOptions");
+    expect(historyCopy).toContain('completed: "첫 시험 완료"');
     expect(scorePresentation).toContain('label: "최종"');
     expect(scorePresentation).toContain('label: "재시험"');
-    expect(historyList).toContain("미응시");
+    expect(historyCopy).toContain('needsAttention: "미통과·미응시"');
     expect(historyList).toContain("/api/admin/attempts/");
     expect(overview).toContain("<OverviewActionGroups");
     expect(overviewGroups).toContain("onSelectStudent={setSelectedStudentId}");
     expect(overviewGroups).toContain("launcherOnly");
     expect(overviewGroups).not.toContain("slice(0, 8)");
-    expect(overviewGroups).toContain("{section.items.length}건");
+    expect(overviewGroups).toContain("adminOverviewText.countSuffix");
+    expect(overviewCopy).toContain('countSuffix: "건"');
     expect(historyList).toContain("남은 오답");
   });
 
@@ -219,6 +246,7 @@ describe("responsive navigation contract", () => {
     const studentHome = source(
       "src/app/student/(protected)/page.tsx",
     );
+    const studentCopy = source("src/content/ko/student-app.ts");
 
     expect(quizPlayer).toContain(
       'payload.needsRetry && answeredPhase === "initial"',
@@ -231,9 +259,8 @@ describe("responsive navigation contract", () => {
     expect(retryRoute).toContain("isSameOriginRequest(request)");
     expect(retryRoute).toContain("startStudentRetry");
     expect(studentHome).toContain('assignment.lastPhase === "review"');
-    expect(studentHome).toContain(
-      "결과 확인·재시험 선택",
-    );
+    expect(studentHome).toContain("studentAppText.dashboard.resultAndRetry");
+    expect(studentCopy).toContain('resultAndRetry: "결과 확인·재시험 선택"');
     expect(studentHome).toContain(
       "href={`/student/result/${assignment.lastAttemptId}`}",
     );

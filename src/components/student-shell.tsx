@@ -6,6 +6,7 @@ import { useEffect } from "react";
 
 import { StudentLogoutButton } from "@/components/student-logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { studentAppText } from "@/content/ko/student-app";
 
 export function StudentShell({
   children,
@@ -45,7 +46,7 @@ export function StudentShell({
               <span className="mini-brand-mark" aria-hidden="true">
                 E
               </span>
-              <span>영어 학습실</span>
+              <span>{studentAppText.shell.brand}</span>
             </Link>
             <div className="topbar-actions">
               <ThemeToggle />

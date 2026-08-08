@@ -89,7 +89,11 @@ describe("exact review assignment app contract", () => {
     const dialog = source(
       "src/components/review-assignment-dialog.tsx",
     );
-    expect(dialog).toContain("고정된 재시험 대상");
+    const copy = source("src/content/ko/admin-learning.ts");
+    expect(dialog).toContain(
+      "adminLearningText.reviewAssignmentModal.fixedTargetTitle",
+    );
+    expect(copy).toContain('fixedTargetTitle: "고정된 재시험 대상"');
     expect(dialog).toContain("draft.studentName");
     expect(dialog).toContain("draft.datasetLabel");
     expect(dialog).toContain("draft.questionCount");

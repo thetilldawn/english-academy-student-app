@@ -28,6 +28,22 @@ export type MixedAssignmentDatabaseError = {
   message: string;
 };
 
+export function isCandidateInReviewScope(
+  scope: "dataset" | "selection",
+  candidateUnitId: string,
+  selectedUnitIds: ReadonlySet<string>,
+) {
+  return scope === "dataset" || selectedUnitIds.has(candidateUnitId);
+}
+
+export function countEligibleReviewLevels(
+  levels: readonly (1 | 2)[],
+) {
+  const level1 = levels.filter((level) => level === 1).length;
+  const level2 = levels.filter((level) => level === 2).length;
+  return { total: level1 + level2, level1, level2 };
+}
+
 export function mixedAssignmentDatabaseErrorReason(
   error: MixedAssignmentDatabaseError,
 ): MixedAssignmentFailureReason {

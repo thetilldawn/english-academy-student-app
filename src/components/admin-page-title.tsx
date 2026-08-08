@@ -2,11 +2,13 @@
 
 import { usePathname } from "next/navigation";
 
+import { adminShellText } from "@/content/ko/admin-shell";
+
 const PAGE_TITLES = [
-  { prefix: "/admin/results", title: "내역" },
-  { prefix: "/admin/assignments", title: "학습 관리" },
-  { prefix: "/admin/students", title: "학생 관리" },
-  { prefix: "/admin", title: "Overview" },
+  { prefix: "/admin/results", title: adminShellText.pageTitles.history },
+  { prefix: "/admin/assignments", title: adminShellText.pageTitles.learning },
+  { prefix: "/admin/students", title: adminShellText.pageTitles.students },
+  { prefix: "/admin", title: adminShellText.pageTitles.overview },
 ] as const;
 
 export function AdminPageTitle() {

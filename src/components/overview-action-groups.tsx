@@ -4,6 +4,7 @@ import { useState, type ComponentProps } from "react";
 
 import { AdminHistoryList } from "@/components/admin-history-list";
 import { StudentManager } from "@/components/student-manager";
+import { adminOverviewText } from "@/content/ko/admin-overview";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
 
 type StudentManagerBaseProps = Omit<
@@ -37,7 +38,9 @@ export function OverviewActionGroups({
           >
             <div className="section-heading">
               <h2 id={`overview-${section.id}`}>{section.title}</h2>
-              <span className="detail-chip">{section.items.length}건</span>
+              <span className="detail-chip">
+                {section.items.length}{adminOverviewText.countSuffix}
+              </span>
             </div>
             <AdminHistoryList
               compact

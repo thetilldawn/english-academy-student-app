@@ -4,6 +4,7 @@ import { AdminNavigation } from "@/components/admin-navigation";
 import { AdminLogoutButton } from "@/components/admin-logout-button";
 import { AdminPageTitle } from "@/components/admin-page-title";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { adminShellText } from "@/content/ko/admin-shell";
 import { requireAdmin } from "@/lib/auth/admin";
 
 export default async function AdminProtectedLayout({
@@ -18,11 +19,11 @@ export default async function AdminProtectedLayout({
           <span className="mini-brand-mark" aria-hidden="true">
             E
           </span>
-          <span>영어 학습실 관리</span>
+          <span>{adminShellText.brand}</span>
         </Link>
         <AdminNavigation
           className="admin-sidebar-nav"
-          label="PC 관리 메뉴"
+          label={adminShellText.navigation.pcAriaLabel}
         />
         <div className="admin-sidebar-footer">
           <span className="user-label">{admin.displayName}</span>
@@ -37,12 +38,12 @@ export default async function AdminProtectedLayout({
               <span className="mini-brand-mark" aria-hidden="true">
                 E
               </span>
-              <span>영어 학습실 관리</span>
+              <span>{adminShellText.brand}</span>
             </Link>
             <AdminPageTitle />
             <AdminNavigation
               className="admin-tablet-nav"
-              label="태블릿 관리 메뉴"
+              label={adminShellText.navigation.tabletAriaLabel}
             />
             <div className="topbar-actions">
               <ThemeToggle />
@@ -59,7 +60,7 @@ export default async function AdminProtectedLayout({
         </main>
         <AdminNavigation
           className="admin-mobile-nav"
-          label="모바일 관리 메뉴"
+          label={adminShellText.navigation.mobileAriaLabel}
         />
       </div>
     </div>

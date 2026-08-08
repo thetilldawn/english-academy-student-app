@@ -51,6 +51,7 @@ describe("buildAssignmentSubmission", () => {
       ...commonInput,
       includePendingReview: true,
       reviewLevels: [1, 2],
+      reviewScope: "selection",
     });
 
     expect(submission).toStrictEqual({
@@ -60,6 +61,7 @@ describe("buildAssignmentSubmission", () => {
         datasetId: commonInput.datasetId,
         primaryUnitIds: commonInput.primaryUnitIds,
         reviewLevels: [1, 2],
+        reviewScope: "selection",
         totalQuestionCount: 10,
         title: "",
         englishToKoreanRatio: 50,

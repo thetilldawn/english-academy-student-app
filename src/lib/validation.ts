@@ -166,6 +166,8 @@ const mixedReviewLevelSchema = z.union([
   z.literal(2),
 ]);
 
+const reviewScopeSchema = z.enum(["dataset", "selection"]);
+
 const bulkAssignmentSelectionFields = {
   studentIds: z.array(z.uuid()).min(1).max(30),
   includePendingReview: z.boolean(),
@@ -243,6 +245,7 @@ const mixedAssignmentSelectionSchema = z
     datasetId: z.uuid(),
     primaryUnitIds: z.array(z.uuid()).min(1).max(500),
     reviewLevels: z.array(mixedReviewLevelSchema).min(1).max(2),
+    reviewScope: reviewScopeSchema.optional(),
     englishToKoreanRatio: z.union([
       z.literal(0),
       z.literal(50),
@@ -283,6 +286,7 @@ export const assignmentCapacitySchema = z
     primaryUnitIds: z.array(z.uuid()).min(1).max(500),
     includePendingReview: z.boolean(),
     reviewLevels: z.array(mixedReviewLevelSchema).max(2),
+    reviewScope: reviewScopeSchema.optional(),
     englishToKoreanRatio: z.union([
       z.literal(0),
       z.literal(50),
@@ -397,6 +401,7 @@ export const mixedAssignmentSchema = z
     datasetId: z.uuid(),
     primaryUnitIds: z.array(z.uuid()).min(1).max(500),
     reviewLevels: z.array(mixedReviewLevelSchema).min(1).max(2),
+    reviewScope: reviewScopeSchema.optional(),
     englishToKoreanRatio: z.union([
       z.literal(0),
       z.literal(50),

@@ -9,6 +9,8 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 
+import { HelpTip } from "@/components/help-tip";
+import { studentAppText } from "@/content/ko/student-app";
 import {
   currentTimeMilliseconds,
   secondsUntil,
@@ -514,10 +516,13 @@ export function QuizPlayer({
       </div>
 
       <p className="quiz-direction">
-        <span>
+        <span className="label-with-help">
           {attempt.phase === "retry"
             ? `재시험 ${completedInPhase + 1}/${phaseQuestions.length}`
             : `${currentQuestion.orderIndex}/${attempt.questions.length}`}
+          <HelpTip label={studentAppText.attempt.keyboardShortcutAria}>
+            {studentAppText.attempt.keyboardShortcutHelp}
+          </HelpTip>
         </span>
         <span className="sr-only">
           {currentQuestion.direction === "english_to_korean"
@@ -689,7 +694,6 @@ export function QuizPlayer({
       <span aria-live="assertive" className="sr-only" role="status">
         {timeWarning}
       </span>
-      <p className="keyboard-hint">키보드 1~4로도 빠르게 선택할 수 있습니다.</p>
     </section>
   );
 }

@@ -1,4 +1,6 @@
 import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
+import { HelpTip } from "@/components/help-tip";
+import { adminLearningText } from "@/content/ko/admin-learning";
 import type { ReviewDatasetSummary } from "@/lib/services/admin-service";
 
 export function ReviewDatasetPanel({
@@ -14,13 +16,12 @@ export function ReviewDatasetPanel({
       className="section review-dataset-section"
     >
       <div className="section-heading">
-        <div>
-          <h2 id="review-dataset-heading">단어장 검토</h2>
-          <p className="list-meta">
-            사전 연결 전 원문 내용을 확인하는 자료입니다. 시험에는
-            배정되지 않습니다.
-          </p>
-        </div>
+        <h2 className="label-with-help" id="review-dataset-heading">
+          {adminLearningText.reviewDatasetPanel.title}
+          <HelpTip label="단어장 검토 도움말">
+            {adminLearningText.reviewDatasetPanel.help}
+          </HelpTip>
+        </h2>
       </div>
       <div className="review-dataset-list">
         {datasets.map((dataset) => {

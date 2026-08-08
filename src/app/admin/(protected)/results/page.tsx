@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 
 import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
 import { AdminHistoryList } from "@/components/admin-history-list";
+import { adminHistoryText } from "@/content/ko/admin-history";
 import { listAssignmentHistory } from "@/lib/services/admin-service";
 
 export const metadata: Metadata = {
-  title: "내역",
+  title: adminHistoryText.page.title,
 };
 
 export default async function ResultsPage() {
@@ -13,7 +14,7 @@ export default async function ResultsPage() {
 
   return (
     <>
-      <AdminBreadcrumb current="내역" />
+      <AdminBreadcrumb current={adminHistoryText.page.title} />
       <AdminHistoryList items={history} showFilters />
     </>
   );

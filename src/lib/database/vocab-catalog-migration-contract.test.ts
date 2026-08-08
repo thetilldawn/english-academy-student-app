@@ -9,6 +9,12 @@ const migration = fs.readFileSync(
   ),
   "utf8",
 );
+const readinessFix = fs.readFileSync(
+  path.resolve(
+    "supabase/migrations/20260808130404_fix_assignable_exam_use_dataset.sql",
+  ),
+  "utf8",
+);
 
 describe("vocabulary catalog migration", () => {
   it("adds dataset and unit projections without replacing source IDs", () => {
@@ -28,6 +34,18 @@ describe("vocabulary catalog migration", () => {
     expect(migration).toContain("is_assignable boolean not null default true");
     expect(migration).toContain(
       "dataset.dataset_key = 'g12-long-reading-2025-exam-ready-v1'",
+    );
+  });
+
+  it("exposes the dataset that owns the active exam-use release", () => {
+    expect(readinessFix).toContain(
+      "when 'g12-long-reading-2025-exam-scope-v1' then true",
+    );
+    expect(readinessFix).toContain(
+      "'g12-long-reading-2025-exam-ready-v1'",
+    );
+    expect(readinessFix).not.toMatch(
+      /'[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'/i,
     );
   });
 

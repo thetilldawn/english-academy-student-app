@@ -4,6 +4,8 @@ import { z } from "zod";
 
 import {
   excludePendingReviewCandidates,
+  countEligibleReviewLevels,
+  isCandidateInReviewScope,
   mixedAssignmentDatabaseErrorReason,
   orderContiguousPrimaryUnits,
   type MixedAssignmentFailureReason,
@@ -66,6 +68,8 @@ type DatasetRow = {
 export type AssignmentCapacity = {
   unitEligible: number;
   wrongEligible: number;
+  wrongLevel1Eligible: number;
+  wrongLevel2Eligible: number;
   overlap: number;
   alreadyAssigned: number;
   maximumQuestionCount: number;
@@ -118,7 +122,6 @@ async function loadReviewQueueRows(
   supabase: ServerSupabaseClient,
   studentId: string,
   datasetId: string,
-  reviewLevels: readonly (1 | 2)[],
 ) {
   const rows: ReviewQueueRow[] = [];
   for (
@@ -135,7 +138,6 @@ async function loadReviewQueueRows(
       .eq("dataset_id", datasetId)
       .eq("status", "pending")
       .is("reserved_review_draft_id", null)
-      .in("reason_level", [...reviewLevels])
       .order("reason_level", { ascending: false })
       .order("queued_at")
       .order("id")
@@ -239,6 +241,7 @@ async function prepareAssignment(
   const reviewLevels = [...input.reviewLevels].sort(
     (left, right) => left - right,
   );
+  const reviewScope = input.reviewScope ?? "dataset";
   const [
     { data: student, error: studentError },
     { data: datasetData, error: datasetError },
@@ -263,16 +266,9 @@ async function prepareAssignment(
       .eq("dataset_id", input.datasetId)
       .order("sort_index"),
     loadEligibleVocabularyDataset(supabase, input.datasetId, {
-      includeExamUseProjection: !input.includePendingReview,
+      includeExamUseProjection: true,
     }),
-    input.includePendingReview
-      ? loadReviewQueueRows(
-          supabase,
-          input.studentId,
-          input.datasetId,
-          reviewLevels,
-        )
-      : Promise.resolve([]),
+    loadReviewQueueRows(supabase, input.studentId, input.datasetId),
     loadActiveReviewAssignments(
       supabase,
       [input.studentId],
@@ -312,7 +308,21 @@ async function prepareAssignment(
   const candidateById = new Map(
     allCandidates.map((candidate) => [candidate.id, candidate]),
   );
-  const availableQueueRows = queueRows.filter((row) => {
+  const primaryUnitIdSet = new Set(
+    primaryUnits.map((unit) => unit.id),
+  );
+  const scopedQueueRows = queueRows.filter((row) => {
+    const candidate = candidateById.get(row.vocab_entry_id);
+    return (
+      candidate !== undefined &&
+      isCandidateInReviewScope(
+        reviewScope,
+        candidate.unitId,
+        primaryUnitIdSet,
+      )
+    );
+  });
+  const availableQueueRows = scopedQueueRows.filter((row) => {
     const candidate = candidateById.get(row.vocab_entry_id);
     return (
       !activeReviewAssignments.queueIds.has(row.id) &&
@@ -331,23 +341,23 @@ async function prepareAssignment(
       selectedByIdentity.set(identity, row);
     }
   }
-  const selectedQueueRows = [...selectedByIdentity.values()].slice(
-    0,
-    MAX_MIXED_REVIEW_WORDS,
-  );
-  const reviewTargets = selectedQueueRows.flatMap((queue) => {
+  const availableUniqueQueueRows = [...selectedByIdentity.values()];
+  const eligibleReviewRows = availableUniqueQueueRows
+    .filter((row) => reviewLevels.includes(row.reason_level))
+    .slice(0, MAX_MIXED_REVIEW_WORDS);
+  const eligibleReviewTargets = eligibleReviewRows.flatMap((queue) => {
     const candidate = candidateById.get(queue.vocab_entry_id);
     return candidate ? [candidate] : [];
   });
-  if (reviewTargets.length !== selectedQueueRows.length) {
+  if (eligibleReviewTargets.length !== eligibleReviewRows.length) {
     throw new MixedAssignmentError(
       "invalid_selection",
       "틀렸던 단어 중 현재 출제할 수 없는 항목이 있습니다.",
     );
   }
   if (
-    selectedQueueRows.some((queue, index) => {
-      const candidate = reviewTargets[index];
+    eligibleReviewRows.some((queue, index) => {
+      const candidate = eligibleReviewTargets[index];
       return (
         queue.canonical_lexeme_id_snapshot !== null &&
         queue.canonical_lexeme_id_snapshot !== candidate?.canonicalKey
@@ -357,9 +367,16 @@ async function prepareAssignment(
     throw new MixedAssignmentError("conflict");
   }
 
-  const primaryUnitIdSet = new Set(
-    primaryUnits.map((unit) => unit.id),
+  const selectedQueueRows = input.includePendingReview
+    ? eligibleReviewRows
+    : [];
+  const reviewTargets = input.includePendingReview
+    ? eligibleReviewTargets
+    : [];
+  const reviewLevelCounts = countEligibleReviewLevels(
+    eligibleReviewRows.map((row) => row.reason_level),
   );
+
   const unitCandidates = allCandidates.filter(
     (candidate) =>
       primaryUnitIdSet.has(candidate.unitId) &&
@@ -404,9 +421,11 @@ async function prepareAssignment(
     : 4;
   const capacity: AssignmentCapacity = {
     unitEligible: uniqueIdentityCount(unitCandidates),
-    wrongEligible: reviewTargets.length,
+    wrongEligible: eligibleReviewTargets.length,
+    wrongLevel1Eligible: reviewLevelCounts.level1,
+    wrongLevel2Eligible: reviewLevelCounts.level2,
     overlap,
-    alreadyAssigned: queueRows.filter((row) =>
+    alreadyAssigned: scopedQueueRows.filter((row) =>
       activeReviewAssignments.queueIds.has(row.id) ||
       activeReviewAssignments.identities.has(
         queueIdentity(
@@ -484,7 +503,7 @@ export async function prepareMixedAssignmentBatch(
   ) {
     throw new MixedAssignmentError(
       "invalid_selection",
-      "응시 시작 마감은 현재보다 뒤로 정해 주세요.",
+      "응시 마감 시간은 현재보다 뒤로 정해 주세요.",
     );
   }
 
@@ -495,6 +514,7 @@ export async function prepareMixedAssignmentBatch(
       primaryUnitIds: input.primaryUnitIds,
       includePendingReview: true,
       reviewLevels: input.reviewLevels,
+      reviewScope: input.reviewScope,
       englishToKoreanRatio: input.englishToKoreanRatio,
     },
     authenticatedAdmin,
@@ -515,9 +535,9 @@ export async function prepareMixedAssignmentBatch(
   ) {
     throw new MixedAssignmentError(
       "invalid_selection",
-      capacity.maximumQuestionCount > 0
+      capacity.maximumQuestionCount >= capacity.minimumQuestionCount
         ? `현재 조건에서는 ${capacity.minimumQuestionCount}~${capacity.maximumQuestionCount}문항으로 배정할 수 있습니다.`
-        : "현재 범위와 출제 방향으로 만들 수 있는 시험이 없습니다.",
+        : "선택한 단어장 범위는 아직 시험 배정 준비가 끝나지 않았습니다.",
     );
   }
 

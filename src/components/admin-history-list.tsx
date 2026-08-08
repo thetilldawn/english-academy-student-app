@@ -23,6 +23,7 @@ import {
   AttemptStatusLabel,
 } from "@/components/attempt-score-summary";
 import { AssignmentMetaTags } from "@/components/admin-meta-tags";
+import { adminHistoryText } from "@/content/ko/admin-history";
 import { buildAttemptStatusPresentation } from "@/lib/ui/attempt-score-presentation";
 import {
   currentTimeMilliseconds,
@@ -283,28 +284,44 @@ export function AdminHistoryList({
           {showFilters && (
             <div className="history-filters">
           <label className="field">
-            <span className="field-label">학생·시험 검색</span>
+            <span className="field-label">
+              {adminHistoryText.filters.searchLabel}
+            </span>
             <input
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="학생, 학교, 시험, DAY"
+              placeholder={adminHistoryText.filters.searchPlaceholder}
               type="search"
               value={query}
             />
           </label>
           <label className="field">
-            <span className="field-label">상태</span>
+            <span className="field-label">
+              {adminHistoryText.filters.statusLabel}
+            </span>
             <select
               onChange={(event) =>
                   setStatusFilter(event.target.value as HistoryStatusFilter)
               }
               value={statusFilter}
             >
-              <option value="all">전체</option>
-              <option value="open">응시 전·응시 중</option>
-              <option value="needs_attention">미통과·미응시</option>
-              <option value="completed">첫 시험 완료</option>
-              <option value="retried">재시험</option>
-              <option value="archived">취소·삭제</option>
+              <option value="all">
+                {adminHistoryText.filters.statusOptions.all}
+              </option>
+              <option value="open">
+                {adminHistoryText.filters.statusOptions.open}
+              </option>
+              <option value="needs_attention">
+                {adminHistoryText.filters.statusOptions.needsAttention}
+              </option>
+              <option value="completed">
+                {adminHistoryText.filters.statusOptions.completed}
+              </option>
+              <option value="retried">
+                {adminHistoryText.filters.statusOptions.retried}
+              </option>
+              <option value="archived">
+                {adminHistoryText.filters.statusOptions.archived}
+              </option>
             </select>
           </label>
             </div>
@@ -313,8 +330,8 @@ export function AdminHistoryList({
           {filteredItems.length === 0 ? (
             <div className="empty-state">
               {items.length === 0
-                ? "배정된 학습이 없습니다."
-                : "조건에 맞는 내역이 없습니다."}
+                ? adminHistoryText.emptyState.noAssignments
+                : adminHistoryText.emptyState.noMatches}
             </div>
           ) : (
             <ol className="admin-history-list">
@@ -390,27 +407,29 @@ export function AdminHistoryList({
         >
           <div className="dialog-heading">
             <div>
-              <p className="eyebrow">학습 내역</p>
+              <p className="eyebrow">
+                {adminHistoryText.detailModal.eyebrow}
+              </p>
               <h2 id="history-dialog-title">{selected.studentName}</h2>
               <p>{selected.assignmentTitle}</p>
             </div>
             <button
-              aria-label="닫기"
+              aria-label={adminHistoryText.detailModal.close}
               className="button button-quiet button-small"
               onClick={closeDialog}
               type="button"
             >
-              닫기
+              {adminHistoryText.detailModal.close}
             </button>
           </div>
 
           <div className="history-dialog-scores">
             <div>
-              <span>상태</span>
+              <span>{adminHistoryText.detailModal.status}</span>
               <strong>{statusPresentation(selected).label}</strong>
             </div>
             <div className="history-dialog-score-card">
-              <span>점수</span>
+              <span>{adminHistoryText.detailModal.score}</span>
               <AttemptScoreSummary
                 finalScore={selected.finalScore}
                 initialScore={selected.initialScore}
@@ -424,7 +443,7 @@ export function AdminHistoryList({
               selected.status as "not_started" | "missed" | "cancelled",
             ) ? (
               <div>
-                <span>다시 볼 단어</span>
+                <span>{adminHistoryText.detailModal.unresolvedWords}</span>
                 <strong>{selected.unresolvedWrongCount ?? "-"}개</strong>
               </div>
             ) : null}
@@ -432,15 +451,15 @@ export function AdminHistoryList({
 
           <dl className="history-dialog-details">
             <div>
-              <dt>단어장</dt>
+              <dt>{adminHistoryText.detailModal.dataset}</dt>
               <dd>{selected.datasetTitle}</dd>
             </div>
             <div>
-              <dt>범위</dt>
+              <dt>{adminHistoryText.detailModal.range}</dt>
               <dd>{assignmentScopeLabel(selected)}</dd>
             </div>
             <div>
-              <dt>조건</dt>
+              <dt>{adminHistoryText.detailModal.conditions}</dt>
               <dd>
                 {selected.questionCount}문항 ·{" "}
                 {Math.ceil(selected.timeLimitSeconds / 60)}분 ·{" "}
@@ -448,7 +467,7 @@ export function AdminHistoryList({
               </dd>
             </div>
             <div>
-              <dt>출제·순서</dt>
+              <dt>{adminHistoryText.detailModal.directionAndOrder}</dt>
               <dd>
                 {directionLabel(selected.englishToKoreanRatio)} ·{" "}
                 {assignmentOrderLabel(
@@ -458,11 +477,11 @@ export function AdminHistoryList({
               </dd>
             </div>
             <div>
-              <dt>배정</dt>
+              <dt>{adminHistoryText.detailModal.assignedAt}</dt>
               <dd>{formatKoreanDateTime(selected.assignedAt)}</dd>
             </div>
             <div>
-              <dt>응시 시작 마감</dt>
+              <dt>{adminHistoryText.detailModal.startDeadline}</dt>
               <dd>
                 {formatKoreanDateTime(selected.availableUntil)}
                 {selected.status === "not_started" &&
@@ -482,7 +501,7 @@ export function AdminHistoryList({
               </dd>
             </div>
             <div>
-              <dt>종료</dt>
+              <dt>{adminHistoryText.detailModal.finishedAt}</dt>
               <dd>
                 {selected.completedAt
                   ? formatKoreanDateTime(selected.completedAt)
@@ -493,7 +512,7 @@ export function AdminHistoryList({
 
           {detailLoading && (
             <div className="dialog-loading" role="status">
-              응시 문항을 불러오는 중…
+              {adminHistoryText.detailModal.loadingQuestions}
             </div>
           )}
           {detailError && (
@@ -504,7 +523,7 @@ export function AdminHistoryList({
           {detail && (
             <section className="history-wrong-summary">
               <div className="section-heading">
-                <h3>문항 요약</h3>
+                <h3>{adminHistoryText.detailModal.questionSummary}</h3>
                 <span className="detail-chip">
                   오답 {wrongQuestions.length}개 · 미응답{" "}
                   {unansweredQuestions.length}개 ·{" "}
@@ -515,7 +534,7 @@ export function AdminHistoryList({
                 <p className="list-meta">
                   {unansweredQuestions.length > 0
                     ? `아직 답하지 않은 문항이 ${unansweredQuestions.length}개 있습니다.`
-                    : "첫 시험에서 모두 맞았습니다."}
+                    : adminHistoryText.detailModal.allCorrect}
                 </p>
               ) : (
                 <ul>
@@ -523,14 +542,15 @@ export function AdminHistoryList({
                     <li key={question.id}>
                       <strong>{question.prompt}</strong>
                       <span>
-                        {question.initialChoice ?? "선택 안 함"} →{" "}
+                        {question.initialChoice ??
+                          adminHistoryText.detailModal.unansweredChoice} →{" "}
                         {question.correctAnswer}
                         {" · "}
                         {question.retryIsCorrect === true
-                          ? "재시험 정답"
+                          ? adminHistoryText.detailModal.retryCorrect
                           : question.retryIsCorrect === false
-                            ? "재시험 오답"
-                            : "재시험 없음"}
+                            ? adminHistoryText.detailModal.retryWrong
+                            : adminHistoryText.detailModal.noRetry}
                       </span>
                     </li>
                   ))}
@@ -538,8 +558,7 @@ export function AdminHistoryList({
               )}
               {wrongQuestions.length > 8 && (
                 <p className="list-meta">
-                  처음 8개만 표시합니다. 전체 문항은 상세 내역에서
-                  확인할 수 있습니다.
+                  {adminHistoryText.detailModal.truncatedHelp}
                 </p>
               )}
             </section>
@@ -556,7 +575,7 @@ export function AdminHistoryList({
                 className="button button-primary"
                 href={`/admin/results/${selected.attemptId}`}
               >
-                상세 내역 보기
+                {adminHistoryText.detailModal.openDetail}
               </Link>
             )}
             {!selected.studentDeleted && (
@@ -564,7 +583,7 @@ export function AdminHistoryList({
                 className="button button-secondary"
                 href={`/admin/students?student=${selected.studentId}`}
               >
-                학생 관리
+                {adminHistoryText.detailModal.openStudent}
               </Link>
             )}
             <button
@@ -572,7 +591,7 @@ export function AdminHistoryList({
               onClick={closeDialog}
               type="button"
             >
-              닫기
+              {adminHistoryText.detailModal.close}
             </button>
           </div>
         </dialog>

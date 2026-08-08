@@ -599,7 +599,7 @@ async function prepareExactReviewQuestions(
   const candidates = await loadEligibleVocabularyDataset(
     supabase,
     source.draft.datasetId,
-    { includeExamUseProjection: false },
+    { includeExamUseProjection: true },
   );
   const candidateById = new Map(
     candidates.map((candidate) => [candidate.id, candidate]),
@@ -679,6 +679,12 @@ export async function calculateStudentAssignmentReplacementCapacity(
     return {
       unitEligible: 0,
       wrongEligible: count,
+      wrongLevel1Eligible: source.draft.reviewLevels.includes(1)
+        ? count
+        : 0,
+      wrongLevel2Eligible: source.draft.reviewLevels.includes(2)
+        ? count
+        : 0,
       overlap: 0,
       alreadyAssigned: 0,
       maximumQuestionCount: count,

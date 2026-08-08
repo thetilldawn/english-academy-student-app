@@ -82,6 +82,7 @@ describe("wrong-word admin UI contract", () => {
     const dialog = source(
       "src/components/review-assignment-dialog.tsx",
     );
+    const copy = source("src/content/ko/admin-learning.ts");
     const css = source("src/app/globals.css");
 
     expect(route).toContain("export async function DELETE(");
@@ -102,7 +103,10 @@ describe("wrong-word admin UI contract", () => {
     expect(panel).toContain("이전 방식으로 준비 중인 재시험");
     expect(panel).toContain("다음 시험 대기");
     expect(dialog).toContain('method: "DELETE"');
-    expect(dialog).toContain("다음 시험 대기 유지");
+    expect(dialog).toContain(
+      "adminLearningText.reviewAssignmentModal.cancelDraft",
+    );
+    expect(copy).toContain("다음 시험 대기 유지");
     expect(css).toContain(".wrong-word-list-with-actions");
     expect(css).toContain("scroll-padding-bottom");
   });
@@ -154,6 +158,7 @@ describe("wrong-word admin UI contract", () => {
     const panel = source(
       "src/components/student-wrong-word-panel.tsx",
     );
+    const copy = source("src/content/ko/admin-students.ts");
     const requestRoute = source(
       "src/app/api/admin/students/[id]/worksheet-requests/route.ts",
     );
@@ -170,7 +175,10 @@ describe("wrong-word admin UI contract", () => {
     expect(panel).toContain("validWorksheetSelectedQuestionIds");
     expect(panel).toContain("worksheetSelectionTarget(");
     expect(panel).toContain('aria-label="오답 단어 작업"');
-    expect(panel).toContain("한 번에 50개까지");
+    expect(copy).toContain("한 번에 50개까지");
+    expect(panel).toContain(
+      "adminStudentsText.learning.worksheetWrongWordHelp",
+    );
     expect(worksheetFunction).toContain(
       "questionIds: validWorksheetSelectedQuestionIds",
     );

@@ -13,6 +13,10 @@ import {
 import { useRouter } from "next/navigation";
 
 import { HelpTip } from "@/components/help-tip";
+import {
+  AppToast,
+  type AppToastMessage,
+} from "@/components/app-toast";
 import { BulkAssignmentDialog } from "@/components/bulk-assignment-dialog";
 import {
   AttemptScoreSummary,
@@ -46,6 +50,7 @@ import {
   defaultReviewLevels,
   toggleReviewLevel,
   type ReviewLevel,
+  type ReviewScope,
 } from "@/lib/admin/assignment-submission";
 import {
   questionOrderLabel,
@@ -58,7 +63,6 @@ import {
   indexStudentPendingReviewSummaries,
   pendingReviewCount,
   pendingReviewSummaryKey,
-  reservedReviewCount,
   type StudentPendingReviewSummary,
 } from "@/lib/admin/review-queue-summary";
 import {
@@ -75,6 +79,7 @@ import {
   type CataloguedDataset,
   type CataloguedUnit,
 } from "@/lib/admin/dataset-catalog";
+import { adminLearningText } from "@/content/ko/admin-learning";
 
 export type AssignmentDatasetItem = CataloguedDataset & {
   rowCount: number;
@@ -165,6 +170,8 @@ type ErrorResponse = {
 type AssignmentCapacity = {
   unitEligible: number;
   wrongEligible: number;
+  wrongLevel1Eligible: number;
+  wrongLevel2Eligible: number;
   overlap: number;
   alreadyAssigned: number;
   maximumQuestionCount: number;
@@ -202,7 +209,7 @@ const editChangeLabels: Record<AssignmentEditChangeKey, string> = {
   order: "문제 순서",
   timing: "시간 제한",
   passingScore: "통과 점수",
-  deadline: "응시 시작 마감",
+  deadline: adminLearningText.assignmentModal.deadline.label,
   review: "틀렸던 단어",
 };
 
@@ -257,46 +264,51 @@ function editValueLabel(
 }
 
 function recommendationLabel(progress: AssignmentProgressItem | null) {
-  if (!progress) return "단어장 선택 필요";
+  if (!progress) return adminLearningText.recommendation.needsWordbook;
   if (progress.recommendationReason === "complete") {
-    return "현재 단어장 완료";
+    return adminLearningText.recommendation.complete;
   }
   if (progress.recommendationReason === "assigned") {
-    return `${progress.recommendedUnitLabel ?? "배정 범위"} 미응시`;
+    return `${progress.recommendedUnitLabel ?? adminLearningText.recommendation.assignedFallback} 미응시`;
   }
   if (progress.recommendationReason === "resume") {
-    return `${progress.recommendedUnitLabel ?? "최근 범위"} 이어서`;
+    return `${progress.recommendedUnitLabel ?? adminLearningText.recommendation.recentFallback} 이어서`;
   }
   if (progress.recommendationReason === "repeat") {
-    return `${progress.recommendedUnitLabel ?? "최근 범위"} 다시 배정`;
+    return `${progress.recommendedUnitLabel ?? adminLearningText.recommendation.recentFallback} 다시 배정`;
   }
   if (progress.recommendationReason === "manual") {
-    return "과거 시험의 DAY 범위 직접 확인";
+    return adminLearningText.recommendation.manual;
   }
-  return progress.recommendedUnitLabel ?? "첫 DAY 선택";
+  return (
+    progress.recommendedUnitLabel ??
+    adminLearningText.recommendation.firstFallback
+  );
 }
 
 function recommendationReasonLabel(progress: AssignmentProgressItem | null) {
-  if (!progress) return "현재 단어장을 먼저 선택하세요.";
+  if (!progress) {
+    return adminLearningText.recommendation.reasons.needsWordbook;
+  }
   if (progress.recommendationReason === "assigned") {
-    return "이미 배정했지만 아직 시작하지 않은 범위입니다.";
+    return adminLearningText.recommendation.reasons.assigned;
   }
   if (progress.recommendationReason === "resume") {
-    return "진행 중인 시험을 이어서 완료해야 합니다.";
+    return adminLearningText.recommendation.reasons.resume;
   }
   if (progress.recommendationReason === "repeat") {
-    return "최근 결과가 통과 기준에 못 미쳐 같은 범위를 권합니다.";
+    return adminLearningText.recommendation.reasons.repeat;
   }
   if (progress.recommendationReason === "next") {
-    return "최근 범위를 통과해 다음 범위를 권합니다.";
+    return adminLearningText.recommendation.reasons.next;
   }
   if (progress.recommendationReason === "first") {
-    return "현재 단어장의 첫 범위부터 시작합니다.";
+    return adminLearningText.recommendation.reasons.first;
   }
   if (progress.recommendationReason === "complete") {
-    return "현재 단어장의 마지막 범위까지 통과했습니다.";
+    return adminLearningText.recommendation.reasons.complete;
   }
-  return "과거 자료에 범위 연결이 없어 직접 확인이 필요합니다.";
+  return adminLearningText.recommendation.reasons.manual;
 }
 
 export function AssignmentManager({
@@ -336,6 +348,7 @@ export function AssignmentManager({
   const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const requestInFlightRef = useRef(false);
+  const toastIdRef = useRef(0);
   const editIdempotencyRef = useRef<{
     fingerprint: string;
     key: string;
@@ -447,6 +460,8 @@ export function AssignmentManager({
   const [customTitle, setCustomTitle] = useState("");
   const [includePendingReview, setIncludePendingReview] =
     useState(false);
+  const [reviewScope, setReviewScope] =
+    useState<ReviewScope>("dataset");
   const [reviewLevels, setReviewLevels] = useState<ReviewLevel[]>(
     defaultReviewLevels,
   );
@@ -461,6 +476,7 @@ export function AssignmentManager({
   >("auto");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [toast, setToast] = useState<AppToastMessage | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [refreshPending, startRefreshTransition] = useTransition();
 
@@ -494,9 +510,6 @@ export function AssignmentManager({
         ) ?? emptyCurrentVocabWrongCounts())
       : emptyCurrentVocabWrongCounts();
   const selectedPendingReviewCount = pendingReviewCount(
-    selectedReviewCounts,
-  );
-  const selectedReservedReviewCount = reservedReviewCount(
     selectedReviewCounts,
   );
   const selectedAvailableReviewTotal = availableReviewCount(
@@ -916,6 +929,7 @@ export function AssignmentManager({
           primaryUnitIds: selectedUnitIdsKey.split(","),
           includePendingReview,
           reviewLevels,
+          reviewScope,
           englishToKoreanRatio: directionRatio,
         }),
         signal: controller.signal,
@@ -933,13 +947,14 @@ export function AssignmentManager({
           }
           setCapacity(payload);
           setQuestionCount((current) => {
-            if (questionCountMode === "auto") {
-              return payload.recommendedQuestionCount || current;
+            if (
+              questionCountMode === "auto" &&
+              payload.recommendedQuestionCount >=
+                minimumAllowedQuestionCount
+            ) {
+              return payload.recommendedQuestionCount;
             }
-            if (editTarget) return current;
-            return current > payload.maximumQuestionCount
-              ? payload.maximumQuestionCount
-              : current;
+            return current;
           });
         })
         .catch((requestError: unknown) => {
@@ -966,9 +981,11 @@ export function AssignmentManager({
     datasetId,
     directionRatio,
     includePendingReview,
+    minimumAllowedQuestionCount,
     questionCountMode,
     reviewLevels,
     reviewLevelsKey,
+    reviewScope,
     capacityRefreshVersion,
     selectedUnitIdsKey,
     studentId,
@@ -978,6 +995,7 @@ export function AssignmentManager({
 
   function resetScopedControls() {
     setIncludePendingReview(false);
+    setReviewScope("dataset");
     setReviewLevels(defaultReviewLevels());
     setQuestionCountMode("auto");
     setCapacity(null);
@@ -1051,6 +1069,7 @@ export function AssignmentManager({
     });
     setEditDraft(null);
     setEditLoading(true);
+    setReviewScope("dataset");
     setError("");
     setSuccess("");
     editIdempotencyRef.current = null;
@@ -1058,6 +1077,8 @@ export function AssignmentManager({
 
   function selectStartUnit(nextStartId: string) {
     setQuestionCountMode("auto");
+    setCapacity(null);
+    setCapacityError("");
     setStartUnitId(nextStartId);
     setError("");
     setSuccess("");
@@ -1102,6 +1123,8 @@ export function AssignmentManager({
 
   function changeReviewLevel(level: ReviewLevel) {
     setQuestionCountMode("auto");
+    setCapacity(null);
+    setCapacityError("");
     setReviewLevels((current) =>
       toggleReviewLevel(current, level),
     );
@@ -1111,7 +1134,10 @@ export function AssignmentManager({
 
   function changeIncludePendingReview(checked: boolean) {
     setQuestionCountMode("auto");
+    setCapacity(null);
+    setCapacityError("");
     setIncludePendingReview(checked);
+    if (!checked) setReviewScope("dataset");
     setError("");
     setSuccess("");
   }
@@ -1129,7 +1155,7 @@ export function AssignmentManager({
       (!availableUntil ||
         Date.parse(availableUntil) <= currentTimeMilliseconds())
     ) {
-      setError("응시 시작 마감은 현재보다 뒤의 한국시간으로 정해주세요.");
+      setError(adminLearningText.assignmentModal.deadline.invalid);
       return;
     }
     requestInFlightRef.current = true;
@@ -1203,6 +1229,7 @@ export function AssignmentManager({
               ...commonSubmission,
               includePendingReview: true,
               reviewLevels,
+              reviewScope,
             })
           : buildAssignmentSubmission({
               ...commonSubmission,
@@ -1226,18 +1253,21 @@ export function AssignmentManager({
         );
       }
 
-      setSuccess(
+      const successMessage =
         editTarget
           ? `${selectedStudent?.displayName ?? "학생"}의 미응시 배정을 수정했습니다.`
           : includePendingReview
           ? `${selectedStudent?.displayName ?? "학생"}에게 틀렸던 단어를 포함해 배정했습니다.`
-          : `${selectedStudent?.displayName ?? "학생"}에게 배정했습니다.`,
-      );
+          : `${selectedStudent?.displayName ?? "학생"}에게 배정했습니다.`;
+      setSuccess(successMessage);
+      toastIdRef.current += 1;
+      setToast({ id: toastIdRef.current, text: successMessage });
       if (!editTarget) {
         setAvailableUntilLocal("");
         setCustomTitle("");
       }
       startRefreshTransition(() => router.refresh());
+      dialogRef.current?.close();
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -1264,7 +1294,7 @@ export function AssignmentManager({
           onClick={() => setTestTab("vocab")}
           type="button"
         >
-          단어
+          {adminLearningText.page.vocabularyTab}
         </button>
         <button
           aria-pressed={testTab === "other"}
@@ -1272,14 +1302,13 @@ export function AssignmentManager({
           onClick={() => setTestTab("other")}
           type="button"
         >
-          다른 학습
+          {adminLearningText.page.otherLearningTab}
         </button>
       </div>
 
       {testTab === "other" ? (
         <section className="empty-state test-type-placeholder">
-          지문·해석·문법·모의고사 학습 구조가 확정되면 이곳에서
-          관리합니다.
+          {adminLearningText.page.otherLearningEmpty}
         </section>
       ) : (
         <section className="assignment-student-browser">
@@ -1291,17 +1320,19 @@ export function AssignmentManager({
                   <path d="m16 16 4 4" />
                 </svg>
               </span>
-              <span className="sr-only">학생 및 학습 자료 검색</span>
+              <span className="sr-only">
+                {adminLearningText.page.searchAriaLabel}
+              </span>
               <input
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="이름·학교·학년·단어장 검색"
+                placeholder={adminLearningText.page.searchPlaceholder}
                 type="search"
                 value={query}
               />
             </label>
             <details className="learning-filter-disclosure">
               <summary>
-                <span>필터</span>
+                <span>{adminLearningText.page.filterButton}</span>
                 <span className="detail-chip">
                   {
                     [schoolFilter, gradeFilter, wordbookFilter].filter(Boolean)
@@ -1428,7 +1459,7 @@ export function AssignmentManager({
                   }}
                   type="button"
                 >
-                  초기화
+                  {adminLearningText.page.resetFilters}
                 </button>
               </div>
             </div>
@@ -1486,7 +1517,7 @@ export function AssignmentManager({
 
           {filteredStudents.length === 0 ? (
             <div className="empty-state">
-              조건에 맞는 접속 가능 학생이 없습니다.
+              {adminLearningText.page.noStudents}
             </div>
           ) : (
             <div className="assignment-student-list">
@@ -1645,11 +1676,21 @@ export function AssignmentManager({
           onClose={() => setBulkMode(null)}
           onSuccess={() => {
             setSelectedBulkStudentIds([]);
+            toastIdRef.current += 1;
+            setToast({
+              id: toastIdRef.current,
+              text: "선택한 학생들의 단어 시험을 배정했습니다.",
+            });
             startRefreshTransition(() => router.refresh());
           }}
           students={selectedBulkStudents}
         />
       ) : null}
+
+      <AppToast
+        message={toast}
+        onDismiss={() => setToast(null)}
+      />
 
       {selectedStudent && (
         <dialog
@@ -1694,8 +1735,8 @@ export function AssignmentManager({
                 <h2 id="assignment-dialog-title">
                   {dialogView === "assign"
                     ? editTarget
-                      ? "배정 수정"
-                      : "단어 학습 배정"
+                      ? adminLearningText.assignmentModal.header.editTitle
+                      : adminLearningText.assignmentModal.header.createTitle
                     : selectedStudent.displayName}
                 </h2>
                 <p>
@@ -1716,7 +1757,7 @@ export function AssignmentManager({
               onClick={closeDialog}
               type="button"
             >
-              닫기
+              {adminLearningText.assignmentModal.header.close}
             </button>
           </div>
           <div className="learning-dialog-body">
@@ -1819,26 +1860,7 @@ export function AssignmentManager({
             className="assignment-modal-form"
             onSubmit={submitAssignment}
           >
-            {success ? (
-              <section
-                className="assignment-success-panel"
-                role="status"
-              >
-                <strong>{success}</strong>
-                <p>
-                  저장이 끝났습니다. 최신 오답 대기 수는 화면에
-                  반영했습니다.
-                </p>
-                <button
-                  className="button button-primary"
-                  onClick={closeDialog}
-                  type="button"
-                >
-                  닫기
-                </button>
-              </section>
-            ) : (
-              <fieldset
+            <fieldset
                 className="assignment-modal-fieldset"
                 disabled={
                   submitting ||
@@ -1855,9 +1877,9 @@ export function AssignmentManager({
                 <span>1</span>
                 <div>
                   <h3>
-                    단어장과 {unitTerm}
+                    {adminLearningText.assignmentModal.range.title}
                     <HelpTip label={`단어장과 ${unitTerm} 도움말`}>
-                      {`학생이 실제로 외울 ${unitTerm} 범위를 정합니다.`}
+                      {adminLearningText.assignmentModal.range.help}
                     </HelpTip>
                   </h3>
                 </div>
@@ -1869,7 +1891,9 @@ export function AssignmentManager({
                 </div>
               ) : null}
               <label className="field">
-                <span className="field-label">단어장</span>
+                <span className="field-label">
+                  {adminLearningText.assignmentModal.range.wordbook}
+                </span>
                 <select
                   disabled={exactReviewEdit}
                   onChange={(event) =>
@@ -1879,7 +1903,7 @@ export function AssignmentManager({
                   value={datasetId}
                 >
                   <option disabled value="">
-                    단어장 선택
+                    {adminLearningText.assignmentModal.range.selectWordbook}
                   </option>
                   {datasetId &&
                   !readyDatasets.some(
@@ -1936,6 +1960,8 @@ export function AssignmentManager({
                     disabled={exactReviewEdit}
                     onChange={(event) => {
                       setQuestionCountMode("auto");
+                      setCapacity(null);
+                      setCapacityError("");
                       setEndUnitId(event.target.value);
                       setError("");
                       setSuccess("");
@@ -1972,46 +1998,97 @@ export function AssignmentManager({
                 {unitRangeLabel(selectedUnitLabels)} · 원본{" "}
                 {availableWordCount.toLocaleString()}개
               </p>
-              <fieldset className="assignment-review-options">
-                <legend>
-                  틀렸던 단어 추가
-                  <HelpTip label="틀렸던 단어 추가 도움말">
-                    기본은 꺼짐입니다. 학생 관리에서 다음 시험에
-                    추가해 둔 미해결 단어를 함께 출제합니다. 이미 다른
-                    시험에 배정 중인 단어는 자동으로 제외합니다.
+              <fieldset
+                aria-label={adminLearningText.assignmentModal.wrongWords.title}
+                className="assignment-review-options"
+              >
+                <div className="assignment-review-toggle-row">
+                  <label className="assignment-review-switch">
+                    <input
+                      checked={includePendingReview}
+                      disabled={exactReviewEdit}
+                      onChange={(event) =>
+                        changeIncludePendingReview(event.target.checked)
+                      }
+                      type="checkbox"
+                    />
+                    <strong>
+                      {adminLearningText.assignmentModal.wrongWords.title}
+                    </strong>
+                  </label>
+                  <HelpTip
+                    label={`${adminLearningText.assignmentModal.wrongWords.title} 도움말`}
+                  >
+                    {adminLearningText.assignmentModal.wrongWords.help}
                   </HelpTip>
-                </legend>
-                <label className="assignment-review-switch">
-                  <input
-                    aria-describedby="pending-review-help"
-                    checked={includePendingReview}
-                    disabled={
-                      exactReviewEdit ||
-                      (selectedAvailableReviewTotal === 0 &&
-                        !includePendingReview)
-                    }
-                    onChange={(event) =>
-                      changeIncludePendingReview(event.target.checked)
-                    }
-                    type="checkbox"
-                  />
+                </div>
+                <div
+                  aria-live="polite"
+                  className="assignment-review-counts"
+                >
                   <span>
-                    <strong>틀렸던 단어 추가</strong>
+                    {adminLearningText.assignmentModal.wrongWords.total}{" "}
+                    {capacity
+                      ? capacity.wrongLevel1Eligible +
+                        capacity.wrongLevel2Eligible
+                      : selectedAvailableReviewTotal}
+                    개
                   </span>
-                </label>
-                <p className="field-help" id="pending-review-help">
-                  현재 미해결 {selectedCurrentWrongCounts.wrongWordCount}개 ·
-                  다음 시험 대기 {selectedPendingReviewCount}개 ·
-                  추가 가능 {capacity?.wrongEligible ?? 0}개
-                  {(capacity?.alreadyAssigned ?? 0) > 0
-                    ? ` · 배정 중 ${capacity?.alreadyAssigned}개`
-                    : ""}
-                  {selectedReservedReviewCount > 0
-                    ? ` · 이전 초안 ${selectedReservedReviewCount}개 제외`
-                    : ""}
-                </p>
+                  <span>
+                    {adminLearningText.assignmentModal.wrongWords.once}{" "}
+                    {capacity?.wrongLevel1Eligible ??
+                      availableReviewLevel1Count}
+                    개
+                  </span>
+                  <span>
+                    {adminLearningText.assignmentModal.wrongWords.repeated}{" "}
+                    {capacity?.wrongLevel2Eligible ??
+                      availableReviewLevel2Count}
+                    개
+                  </span>
+                </div>
                 {includePendingReview && (
                   <div className="assignment-review-controls">
+                    <fieldset className="field timing-mode-field">
+                      <legend className="field-label label-with-help">
+                        {adminLearningText.assignmentModal.wrongWords.scopeLabel}
+                        <HelpTip
+                          label={`${adminLearningText.assignmentModal.wrongWords.scopeLabel} 도움말`}
+                        >
+                          {adminLearningText.assignmentModal.wrongWords.scopeHelp}
+                        </HelpTip>
+                      </legend>
+                      <div className="segmented-control">
+                        <button
+                          aria-pressed={reviewScope === "dataset"}
+                          disabled={editTarget !== null}
+                          onClick={() => {
+                            setReviewScope("dataset");
+                            setQuestionCountMode("auto");
+                            setCapacity(null);
+                            setCapacityError("");
+                            setError("");
+                          }}
+                          type="button"
+                        >
+                          {adminLearningText.assignmentModal.wrongWords.scopeAll}
+                        </button>
+                        <button
+                          aria-pressed={reviewScope === "selection"}
+                          disabled={editTarget !== null}
+                          onClick={() => {
+                            setReviewScope("selection");
+                            setQuestionCountMode("auto");
+                            setCapacity(null);
+                            setCapacityError("");
+                            setError("");
+                          }}
+                          type="button"
+                        >
+                          {adminLearningText.assignmentModal.wrongWords.scopeCurrent}
+                        </button>
+                      </div>
+                    </fieldset>
                     <div
                       aria-label="포함할 오답 단계"
                       className="filter-chip-row"
@@ -2024,8 +2101,7 @@ export function AssignmentManager({
                         onClick={() => changeReviewLevel(1)}
                         type="button"
                       >
-                        한 번 틀림 · 가능{" "}
-                        {availableReviewLevel1Count}개
+                        {adminLearningText.assignmentModal.wrongWords.once}
                       </button>
                       <button
                         aria-pressed={reviewLevels.includes(2)}
@@ -2034,22 +2110,8 @@ export function AssignmentManager({
                         onClick={() => changeReviewLevel(2)}
                         type="button"
                       >
-                        두 번 이상 틀림 · 가능{" "}
-                        {availableReviewLevel2Count}개
+                        {adminLearningText.assignmentModal.wrongWords.repeated}
                       </button>
-                    </div>
-                    <div
-                      aria-live="polite"
-                      className="assignment-review-preview"
-                    >
-                      <small>현재 조건</small>
-                      <strong>
-                        틀렸던 단어 {capacity?.wrongEligible ?? 0}개 ·
-                        총 {questionCount}문항
-                      </strong>
-                      <small>
-                        선택 단계의 미해결 단어를 모두 포함합니다.
-                      </small>
                     </div>
                   </div>
                 )}
@@ -2061,19 +2123,25 @@ export function AssignmentManager({
                 <span>2</span>
                 <div>
                   <h3>
-                    문제 조건
-                    <HelpTip label="문제 조건 도움말">
-                      방향·순서·시간과 통과 기준을 정합니다.
+                    {adminLearningText.assignmentModal.conditions.title}
+                    <HelpTip
+                      label={`${adminLearningText.assignmentModal.conditions.title} 도움말`}
+                    >
+                      {adminLearningText.assignmentModal.conditions.help}
                     </HelpTip>
                   </h3>
                 </div>
               </div>
               <div className="form-grid-2">
                 <label className="field">
-                  <span className="field-label">출제 방식</span>
+                  <span className="field-label">
+                    {adminLearningText.assignmentModal.conditions.direction}
+                  </span>
                   <select
                     onChange={(event) => {
                       setQuestionCountMode("auto");
+                      setCapacity(null);
+                      setCapacityError("");
                       setDirectionRatio(
                         Number(event.target.value) as 0 | 50 | 100,
                       );
@@ -2094,7 +2162,9 @@ export function AssignmentManager({
                   </select>
                 </label>
                 <label className="field">
-                  <span className="field-label">문제 순서</span>
+                  <span className="field-label">
+                    {adminLearningText.assignmentModal.conditions.order}
+                  </span>
                   <select
                     onChange={(event) =>
                       setQuestionOrderMode(
@@ -2109,13 +2179,23 @@ export function AssignmentManager({
                   </select>
                 </label>
               </div>
-              <div className="form-grid-3">
+              <div className="assignment-condition-grid">
                 <label className="field">
                   <span className="field-label">
-                    {includePendingReview ? "총 문항 수" : "문항 수"}
+                    {includePendingReview
+                      ? adminLearningText.assignmentModal.conditions
+                          .totalQuestionCount
+                      : adminLearningText.assignmentModal.conditions
+                          .questionCount}
                   </span>
                   <input
-                    max={capacity?.maximumQuestionCount ?? 500}
+                    max={
+                      capacity &&
+                      capacity.maximumQuestionCount >=
+                        minimumAllowedQuestionCount
+                        ? capacity.maximumQuestionCount
+                        : 500
+                    }
                     min={
                       capacity?.minimumQuestionCount ??
                       minimumAllowedQuestionCount
@@ -2133,6 +2213,8 @@ export function AssignmentManager({
                   />
                   {questionCountMode === "manual" &&
                     capacity &&
+                    capacity.recommendedQuestionCount >=
+                      minimumAllowedQuestionCount &&
                     capacity.recommendedQuestionCount !==
                       questionCount && (
                       <button
@@ -2151,10 +2233,12 @@ export function AssignmentManager({
                     )}
                 </label>
                 <fieldset className="field timing-mode-field">
-                  <legend className="field-label">
-                    시간 제한 방식
-                    <HelpTip label="시간 제한 방식 도움말">
-                      전체 시험 시간 또는 문제당 시간 중 하나만 적용합니다.
+                  <legend className="field-label label-with-help">
+                    {adminLearningText.assignmentModal.conditions.timingMode}
+                    <HelpTip
+                      label={`${adminLearningText.assignmentModal.conditions.timingMode} 도움말`}
+                    >
+                      {adminLearningText.assignmentModal.conditions.timingHelp}
                     </HelpTip>
                   </legend>
                   <div className="segmented-control">
@@ -2177,8 +2261,9 @@ export function AssignmentManager({
                 <label className="field">
                   <span className="field-label">
                     {timingMode === "total"
-                      ? "전체 시험 시간(분)"
-                      : "문제당 시간(초)"}
+                      ? adminLearningText.assignmentModal.conditions.totalTime
+                      : adminLearningText.assignmentModal.conditions
+                          .perQuestionTime}
                   </span>
                   {timingMode === "total" ? (
                     <input
@@ -2208,7 +2293,9 @@ export function AssignmentManager({
                   )}
                 </label>
                 <label className="field">
-                  <span className="field-label">통과 점수</span>
+                  <span className="field-label">
+                    {adminLearningText.assignmentModal.conditions.passingScore}
+                  </span>
                   <input
                     max={100}
                     min={0}
@@ -2221,11 +2308,19 @@ export function AssignmentManager({
                   />
                 </label>
               </div>
-              <label className="field">
-                <span className="field-label">
-                  응시 시작 마감 · 선택 · 한국시간
+              <div className="field">
+                <span className="field-label label-with-help">
+                  <label htmlFor="assignment-available-until">
+                    {adminLearningText.assignmentModal.deadline.label}
+                  </label>
+                  <HelpTip
+                    label={`${adminLearningText.assignmentModal.deadline.label} 도움말`}
+                  >
+                    {adminLearningText.assignmentModal.deadline.help}
+                  </HelpTip>
                 </span>
                 <input
+                  id="assignment-available-until"
                   onChange={(event) => {
                     setAvailableUntilLocal(event.target.value);
                     setError("");
@@ -2235,92 +2330,33 @@ export function AssignmentManager({
                   type="datetime-local"
                   value={availableUntilLocal}
                 />
-                <span className="field-help">
-                  이 시각까지 시험을 시작하지 않으면 미응시로
-                  기록됩니다. 이미 시작한 시험은 선택한 시간 제한을
-                  따릅니다.
-                </span>
-              </label>
+              </div>
             </section>
 
-            <section className="assignment-step assignment-review-step">
-              <div className="assignment-step-heading">
-                <span>3</span>
-                <div>
-                  <h3>
-                    확인하고 배정
-                    <HelpTip label="시험 이름 도움말">
-                      시험 이름은 자동 생성하며 필요할 때만 바꿉니다.
-                    </HelpTip>
-                  </h3>
-                </div>
-              </div>
-              <label className="field">
-                <span className="field-label">
-                  시험 이름 변경 · 선택
+            <section className="assignment-submit-panel">
+              <div className="field">
+                <span className="field-label label-with-help">
+                  <label htmlFor="assignment-custom-title">
+                    {adminLearningText.assignmentModal.submit.optionalTitle}
+                  </label>
+                  <HelpTip label="시험 이름 도움말">
+                    {adminLearningText.assignmentModal.submit.titleHelp}
+                  </HelpTip>
                 </span>
                 <input
+                  id="assignment-custom-title"
                   maxLength={160}
                   onChange={(event) => {
                     setCustomTitle(event.target.value);
                     setError("");
                     setSuccess("");
                   }}
-                  placeholder={generatedTitle || "자동 시험 이름"}
+                  placeholder={
+                    generatedTitle ||
+                    adminLearningText.assignmentModal.submit.autoTitle
+                  }
                   value={customTitle}
                 />
-              </label>
-              <div className="assignment-review-summary">
-                <strong>
-                  {finalTitle || "시험 범위를 선택해주세요."}
-                </strong>
-                <dl>
-                  <div>
-                    <dt>학생</dt>
-                    <dd>{selectedStudent.displayName}</dd>
-                  </div>
-                  <div>
-                    <dt>범위</dt>
-                    <dd>{unitRangeLabel(selectedUnitLabels)}</dd>
-                  </div>
-                  <div>
-                    <dt>출제</dt>
-                    <dd>{directionLabel(directionRatio)}</dd>
-                  </div>
-                  <div>
-                    <dt>순서</dt>
-                    <dd>
-                      {questionOrderLabel(questionOrderMode)}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>구성</dt>
-                    <dd>
-                      {includePendingReview
-                        ? `${unitTerm} + 틀렸던 단어 ${capacity?.wrongEligible ?? 0}개`
-                        : unitTerm}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>조건</dt>
-                    <dd>
-                      총 {questionCount}문항 ·{" "}
-                      {timingMode === "total"
-                        ? `전체 ${timeLimitMinutes}분`
-                        : `문제당 ${questionTimeLimitSeconds}초`}{" "}
-                      ·{" "}
-                      {passingScore}점
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>응시 시작 마감</dt>
-                    <dd>
-                      {availableUntilLocal
-                        ? `${availableUntilLocal.replace("T", " ")} · 한국시간`
-                        : "마감 없음"}
-                    </dd>
-                  </div>
-                </dl>
               </div>
               {editDraft ? (
                 <section
@@ -2328,7 +2364,14 @@ export function AssignmentManager({
                   className="assignment-edit-comparison"
                 >
                   <div className="assignment-edit-comparison-heading">
-                    <strong>변경 전·후</strong>
+                    <strong className="label-with-help">
+                      {adminLearningText.assignmentModal.edit.comparisonTitle}
+                      {editRebuildsQuestions ? (
+                        <HelpTip label="문항 재구성 도움말">
+                          {adminLearningText.assignmentModal.edit.rebuildQuestionsHelp}
+                        </HelpTip>
+                      ) : null}
+                    </strong>
                     <span>{editComparisons.length}개 변경</span>
                   </div>
                   {editComparisons.length > 0 ? (
@@ -2351,33 +2394,18 @@ export function AssignmentManager({
                       ))}
                     </dl>
                   ) : (
-                    <p>아직 바뀐 조건이 없습니다.</p>
+                    <p>{adminLearningText.assignmentModal.edit.unchanged}</p>
                   )}
-                  {editRebuildsQuestions ? (
-                    <p className="field-help">
-                      범위·문항 구성 변경으로 문제와 선택지를 다시 구성합니다.
-                    </p>
-                  ) : null}
                 </section>
               ) : null}
               {!success && capacityLoading && (
-                <div className="notice" role="status">
-                  실제 출제 가능한 문항 수를 계산하는 중입니다.
-                </div>
+                <span className="sr-only" role="status">
+                  {adminLearningText.assignmentModal.errors.capacityLoading}
+                </span>
               )}
               {!success && capacityError && (
                 <div className="notice notice-error" role="alert">
                   {capacityError}
-                </div>
-              )}
-              {!success && capacity && (
-                <div className="notice" role="status">
-                  단원 후보 {capacity.unitEligible}개
-                  {includePendingReview
-                    ? ` + 틀렸던 단어 ${capacity.wrongEligible}개 - 중복 ${capacity.overlap}개`
-                    : ""}
-                  {" · "}실제 출제 가능 최대{" "}
-                  {capacity.maximumQuestionCount}문항
                 </div>
               )}
               {!success &&
@@ -2385,25 +2413,43 @@ export function AssignmentManager({
                 capacity &&
                 capacity.wrongEligible === 0 && (
                   <div className="notice notice-error" role="alert">
-                    선택한 단계에 추가 가능한 틀렸던 단어가 없습니다.
+                    {adminLearningText.assignmentModal.wrongWords.noEligible}
                   </div>
                 )}
               {!success &&
                 capacity &&
-                (questionCount < capacity.minimumQuestionCount ||
-                  questionCount > capacity.maximumQuestionCount) && (
+                capacity.maximumQuestionCount <
+                  capacity.minimumQuestionCount && (
                   <div className="notice notice-error" role="alert">
-                    현재 조건에서는 {capacity.minimumQuestionCount}~
-                    {capacity.maximumQuestionCount}문항으로 배정할 수
-                    있습니다.
+                    {adminLearningText.assignmentModal.errors.unavailableDataset}
+                  </div>
+                )}
+              {!success &&
+                capacity &&
+                capacity.maximumQuestionCount >=
+                  capacity.minimumQuestionCount &&
+                questionCount > capacity.maximumQuestionCount && (
+                  <div className="notice notice-error" role="alert">
+                    현재 최대 {capacity.maximumQuestionCount}문항입니다. 문항
+                    수를 {capacity.maximumQuestionCount}개 이하로 줄여주세요.
+                  </div>
+                )}
+              {!success &&
+                capacity &&
+                capacity.maximumQuestionCount >=
+                  capacity.minimumQuestionCount &&
+                questionCount < capacity.minimumQuestionCount && (
+                  <div className="notice notice-error" role="alert">
+                    현재 조건에는 최소 {capacity.minimumQuestionCount}문항이
+                    필요합니다. 문항 수를 늘려주세요.
                   </div>
                 )}
               {!success &&
                 (questionCount < minimumAllowedQuestionCount ||
                   questionCount > 500) && (
                   <div className="notice notice-error" role="alert">
-                  총 문항 수는 {minimumAllowedQuestionCount}개 이상
-                  500개 이하여야 합니다.
+                  총 문항 수는 {minimumAllowedQuestionCount}개 이상 500개
+                  이하여야 합니다.
                 </div>
               )}
               {!success &&
@@ -2435,21 +2481,20 @@ export function AssignmentManager({
               >
                 {submitting
                   ? editTarget
-                    ? "수정하는 중…"
-                    : "배정하는 중…"
+                    ? adminLearningText.assignmentModal.submit.saving
+                    : adminLearningText.assignmentModal.submit.assigning
                   : refreshPending
-                    ? "화면에 반영하는 중…"
+                    ? adminLearningText.assignmentModal.submit.refreshing
                     : editTarget
                       ? editComparisons.length > 0
-                        ? "변경 내용 저장"
-                        : "변경 없음"
+                        ? adminLearningText.assignmentModal.submit.saveChanges
+                        : adminLearningText.assignmentModal.submit.noChanges
                       : includePendingReview
-                      ? "틀렸던 단어 포함해 배정"
-                      : "이 학생에게 배정"}
+                      ? adminLearningText.assignmentModal.submit.assignWithWrong
+                      : adminLearningText.assignmentModal.submit.assign}
               </button>
             </section>
-              </fieldset>
-            )}
+            </fieldset>
           </form>
               </>
             )}

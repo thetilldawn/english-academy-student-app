@@ -4,6 +4,7 @@ import { z } from "zod";
 import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
 import { AssignmentManager } from "@/components/assignment-manager";
 import { ReviewAssignmentDialog } from "@/components/review-assignment-dialog";
+import { adminLearningText } from "@/content/ko/admin-learning";
 import {
   buildStudentProgress,
   listAssignmentHistory,
@@ -17,7 +18,7 @@ import {
 import { getReviewAssignmentDraftSummary } from "@/lib/services/review-assignment-service";
 
 export const metadata: Metadata = {
-  title: "학습 관리",
+  title: adminLearningText.page.title,
 };
 export const dynamic = "force-dynamic";
 
@@ -62,7 +63,10 @@ export default async function AssignmentsPage({
 
   return (
     <>
-      <AdminBreadcrumb current="단어" section="학습 관리" />
+      <AdminBreadcrumb
+        current={adminLearningText.page.vocabularyTab}
+        section={adminLearningText.page.title}
+      />
       {requestedReviewDraftId && !reviewDraft && (
         <div className="notice notice-warm" role="status">
           재시험 초안이 만료되었거나 이미 사용되었습니다. 학생

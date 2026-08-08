@@ -11,7 +11,9 @@ import {
 } from "react";
 
 import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
+import { HelpTip } from "@/components/help-tip";
 import { Button } from "@/components/ui-button";
+import { adminLearningText } from "@/content/ko/admin-learning";
 import type {
   QuestionOrderMode,
   TimingMode,
@@ -69,7 +71,6 @@ export function BulkAssignmentDialog({
   const [previewLoading, setPreviewLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const studentIdsKey = useMemo(
     () => students.map((student) => student.id).join(","),
     [students],
@@ -161,7 +162,7 @@ export function BulkAssignmentDialog({
       availableUntilLocal &&
       (!availableUntil || Date.parse(availableUntil) <= currentTimeMilliseconds())
     ) {
-      setError("응시 시작 마감은 현재보다 뒤의 한국시간으로 정해주세요.");
+      setError(adminLearningText.assignmentModal.deadline.invalid);
       return;
     }
     setSubmitting(true);
@@ -192,8 +193,8 @@ export function BulkAssignmentDialog({
       if (!response.ok) {
         throw new Error(payload.error ?? "일괄 배정을 저장하지 못했습니다.");
       }
-      setSuccess(`${students.length}명에게 시험을 모두 배정했습니다.`);
       onSuccess();
+      dialogRef.current?.close();
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -216,34 +217,28 @@ export function BulkAssignmentDialog({
     >
       <div className="dialog-heading learning-dialog-heading">
         <div>
-          <h2 id="bulk-assignment-title">
+          <h2 className="label-with-help" id="bulk-assignment-title">
             {includePendingReview
-              ? "틀린 단어 포함 일괄 배정"
-              : "다음 범위 일괄 배정"}
+              ? adminLearningText.bulkAssignmentModal.withWrongTitle
+              : adminLearningText.bulkAssignmentModal.nextTitle}
+            <HelpTip label="자동 범위 계산 도움말">
+              {adminLearningText.bulkAssignmentModal.autoRangeHelp}
+            </HelpTip>
           </h2>
-          <p>{students.length}명 · 학생별 다음 범위와 최대 문항 수 자동 적용</p>
+          <p>{students.length}명</p>
         </div>
         <Button
-          aria-label="닫기"
+          aria-label={adminLearningText.bulkAssignmentModal.close}
           disabled={submitting}
           onClick={close}
           size="small"
           variant="quiet"
         >
-          닫기
+          {adminLearningText.bulkAssignmentModal.close}
         </Button>
       </div>
 
-      {success ? (
-        <section className="assignment-success-panel" role="status">
-          <strong>{success}</strong>
-          <p>선택한 학생의 배정이 한 번에 저장되었습니다.</p>
-          <Button onClick={close} variant="primary">
-            닫기
-          </Button>
-        </section>
-      ) : (
-        <form className="bulk-assignment-form" onSubmit={submit}>
+      <form className="bulk-assignment-form" onSubmit={submit}>
           <section className="bulk-assignment-settings">
             <label className="field">
               <span className="field-label">출제 방식</span>
@@ -287,7 +282,12 @@ export function BulkAssignmentDialog({
               />
             </label>
             <fieldset className="field timing-mode-field">
-              <legend className="field-label">시간 제한</legend>
+              <legend className="field-label label-with-help">
+                {adminLearningText.assignmentModal.conditions.timingMode}
+                <HelpTip label="시간 제한 방식 도움말">
+                  {adminLearningText.assignmentModal.conditions.timingHelp}
+                </HelpTip>
+              </legend>
               <div className="segmented-control">
                 <button
                   aria-pressed={timingMode === "total"}
@@ -325,14 +325,22 @@ export function BulkAssignmentDialog({
                 }
               />
             </label>
-            <label className="field">
-              <span className="field-label">응시 시작 마감 · 한국시간</span>
+            <div className="field">
+              <span className="field-label label-with-help">
+                <label htmlFor="bulk-assignment-available-until">
+                  {adminLearningText.assignmentModal.deadline.label}
+                </label>
+                <HelpTip label="응시 마감 시간 설정 도움말">
+                  {adminLearningText.bulkAssignmentModal.deadlineHelp}
+                </HelpTip>
+              </span>
               <input
+                id="bulk-assignment-available-until"
                 onChange={(event) => setAvailableUntilLocal(event.target.value)}
                 type="datetime-local"
                 value={availableUntilLocal}
               />
-            </label>
+            </div>
           </section>
 
           {includePendingReview ? (
@@ -361,16 +369,18 @@ export function BulkAssignmentDialog({
 
           <section className="bulk-preview-section" aria-busy={previewLoading}>
             <div className="learning-section-heading">
-              <h3>학생별 배정 미리보기</h3>
+              <h3 className="label-with-help">
+                {adminLearningText.bulkAssignmentModal.previewTitle}
+                <HelpTip label="일괄 배정 저장 방식 도움말">
+                  {adminLearningText.bulkAssignmentModal.atomicHelp}
+                </HelpTip>
+              </h3>
               <span>
                 {previewLoading
                   ? "계산 중"
                   : `${preview?.assignableCount ?? 0}명 가능 · ${preview?.blockedCount ?? 0}명 확인 필요`}
               </span>
             </div>
-            <p className="field-help">
-              한 학생이라도 저장 조건이 맞지 않으면 아무 학생에게도 배정하지 않습니다.
-            </p>
             <div className="bulk-preview-list">
               {(preview?.items ?? students.map((student) => ({
                 studentId: student.id,
@@ -411,7 +421,7 @@ export function BulkAssignmentDialog({
               onClick={close}
               variant="quiet"
             >
-              취소
+              {adminLearningText.bulkAssignmentModal.cancel}
             </Button>
             <Button
               disabled={
@@ -427,8 +437,7 @@ export function BulkAssignmentDialog({
               {submitting ? "전체 저장 중…" : `${students.length}명에게 배정`}
             </Button>
           </div>
-        </form>
-      )}
+      </form>
     </dialog>
   );
 }

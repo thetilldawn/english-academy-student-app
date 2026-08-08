@@ -200,13 +200,14 @@ export class AssignmentCreationError extends Error {
       | "conflict"
       | "invalid_selection"
       | "database",
+    message?: string,
   ) {
     super(
-      reason === "conflict"
+      message ?? (reason === "conflict"
         ? "다른 시험에 이미 포함된 단어가 있습니다. 새로 계산된 최대 문항 수를 확인해 주세요."
         : reason === "invalid_selection"
           ? "현재 출제 가능한 범위와 문항 수를 다시 확인해 주세요."
-          : "시험을 배정하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+          : "시험을 배정하지 못했습니다. 잠시 후 다시 시도해 주세요."),
     );
     this.name = "AssignmentCreationError";
   }
@@ -1329,13 +1330,22 @@ export async function prepareRegularAssignment(
       candidate.sourceRow,
     ]),
   );
-  const questionDrafts = createMixedQuizQuestions(
-    [],
-    primaryCandidates,
-    primaryCandidates,
-    input.questionCount,
-    input.englishToKoreanRatio,
-  ).sort(
+  let questionDrafts: ReturnType<typeof createMixedQuizQuestions>;
+  try {
+    questionDrafts = createMixedQuizQuestions(
+      [],
+      primaryCandidates,
+      primaryCandidates,
+      input.questionCount,
+      input.englishToKoreanRatio,
+    );
+  } catch {
+    throw new AssignmentCreationError(
+      "invalid_selection",
+      `선택한 범위에서는 ${input.questionCount}문항을 만들 수 없습니다. 문항 수를 줄이거나 출제 방식을 바꿔주세요.`,
+    );
+  }
+  questionDrafts.sort(
     (left, right) =>
       (sourceOrderByCandidateId.get(left.vocabEntryId) ?? 0) -
       (sourceOrderByCandidateId.get(right.vocabEntryId) ?? 0),

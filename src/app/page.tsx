@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { StudentLoginForm } from "@/components/student-login-form";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { studentAppText } from "@/content/ko/student-app";
 import { getStudentSession } from "@/lib/auth/student-session";
 
 export const dynamic = "force-dynamic";
@@ -21,15 +22,15 @@ export default async function HomePage() {
             E
           </span>
           <div>
-            <p className="eyebrow">ENGLISH STUDY ROOM</p>
-            <h1>영어 학습실</h1>
+            <p className="eyebrow">{studentAppText.landing.eyebrow}</p>
+            <h1>{studentAppText.landing.title}</h1>
           </div>
         </div>
 
         <div className="landing-auth">
           <StudentLoginForm />
           <Link className="landing-admin-link" href="/admin/login">
-            관리자 페이지 →
+            {studentAppText.landing.adminLink}
           </Link>
         </div>
       </section>

@@ -14,6 +14,7 @@ import {
   normalizeStudentCodeInput,
   STUDENT_CODE_LENGTH,
 } from "@/lib/auth/student-code-input";
+import { studentAppText } from "@/content/ko/student-app";
 
 type LoginResponse = {
   error?: string;
@@ -121,7 +122,7 @@ export function StudentLoginForm() {
     >
       <div className="field">
         <label className="field-label" htmlFor="student-access-code">
-          학생 접속코드
+          {studentAppText.login.codeLabel}
         </label>
         <div
           className="segmented-code-control"
@@ -194,7 +195,7 @@ export function StudentLoginForm() {
           </div>
         </div>
         <span className="field-help" id="student-code-help">
-          선생님에게 받은 12자리 코드를 입력하세요.
+          {studentAppText.login.codeHelp}
         </span>
       </div>
       {error && (
@@ -214,10 +215,12 @@ export function StudentLoginForm() {
         {submitting ? (
           <span aria-hidden="true" className="button-spinner" />
         ) : null}
-        {submitting ? "인증 중…" : "인증"}
+        {submitting
+          ? studentAppText.login.submitting
+          : studentAppText.login.submit}
       </button>
       <span aria-live="polite" className="sr-only" role="status">
-        {submitting ? "학생 정보를 확인하고 있습니다." : ""}
+        {submitting ? studentAppText.login.loading : ""}
       </span>
     </form>
   );

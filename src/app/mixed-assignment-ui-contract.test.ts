@@ -33,6 +33,7 @@ describe("mixed assignment admin UI contract", () => {
 
   it("목록 필터와 기본 OFF 혼합 설정을 노출한다", () => {
     const manager = source("src/components/assignment-manager.tsx");
+    const copy = source("src/content/ko/admin-learning.ts");
     const filteredStudents = manager.slice(
       manager.indexOf("const filteredStudents"),
       manager.indexOf("useEffect", manager.indexOf("const filteredStudents")),
@@ -51,31 +52,33 @@ describe("mixed assignment admin UI contract", () => {
     );
     expect(filteredStudents).not.toContain("pendingReviewIndex");
     expect(filteredStudents).not.toContain("pendingReviewCount(");
-    expect(manager).toContain("틀렸던 단어 추가");
+    expect(copy).toContain('title: "틀렸던 단어 추가"');
     expect(manager).toContain(
-      "<strong>틀렸던 단어 추가</strong>",
+      "adminLearningText.assignmentModal.wrongWords.title",
     );
     expect(manager).toContain(
       'const unitTerm = usesDayLabels ? "DAY" : "단원"',
     );
-    expect(manager).toContain("한 번 틀림 · 가능");
-    expect(manager).toContain("두 번 이상 틀림 · 가능");
+    expect(manager).toContain('useState<ReviewScope>("dataset")');
+    expect(manager).toContain('setReviewScope("selection")');
+    expect(manager).toContain("capacity.wrongLevel1Eligible");
+    expect(manager).toContain("capacity.wrongLevel2Eligible");
     expect(manager).not.toContain("reviewLimit");
-    expect(manager).toContain("실제 출제 가능 최대");
-    expect(manager).toContain(
-      "{capacity.maximumQuestionCount}문항",
-    );
+    expect(manager).not.toContain("실제 출제 가능 최대");
+    expect(manager).not.toContain("단원 후보");
     expect(manager).toContain('value="ascending"');
     expect(manager).toContain('value="descending"');
     expect(manager).toContain('value="random"');
     expect(manager).toContain('useState<TimingMode>("total")');
-    expect(manager).toContain("문제당 시간(초)");
+    expect(copy).toContain('perQuestionTime: "문제당 시간(초)"');
     expect(manager).toContain(
       "const [includePendingReview, setIncludePendingReview] =",
     );
     expect(manager).toContain("useState(false)");
     expect(manager).not.toContain("<h2>단어 시험 배정</h2>");
     expect(manager).toContain('className="learning-search-panel"');
+    expect(manager).not.toContain("확인하고 배정");
+    expect(manager).toContain('className="assignment-submit-panel"');
   });
 
   it("학생·단어장·닫기에서 종속 상태를 초기화하고 제출 중 닫기를 막는다", () => {
@@ -93,16 +96,16 @@ describe("mixed assignment admin UI contract", () => {
     expect(manager).toContain("if (requestInFlightRef.current) return");
     expect(manager).toContain("requestInFlightRef.current = true");
     expect(manager).toContain("requestInFlightRef.current = false");
-    expect(manager).toContain(
-      "selectedAvailableReviewTotal === 0 &&",
-    );
-    expect(manager).toContain("!includePendingReview");
-    expect(manager).toContain(
+    expect(manager).toContain("disabled={exactReviewEdit}");
+    expect(manager).toContain('if (!checked) setReviewScope("dataset")');
+    expect(manager).toContain('setReviewScope("dataset")');
+    expect(manager).toContain('setReviewScope("selection")');
+    expect(manager).toContain("setCapacity(null)");
+    expect(manager).not.toContain(
       'className="assignment-success-panel"',
     );
-    expect(manager).toContain(
-      "최신 오답 대기 수는 화면에",
-    );
+    expect(manager).toContain("<AppToast");
+    expect(manager).toContain("dialogRef.current?.close()");
   });
 
   it("일반·혼합 payload를 순수 builder로 분기하고 서버 전용값을 노출하지 않는다", () => {

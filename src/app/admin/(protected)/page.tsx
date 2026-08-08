@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
 import { OverviewActionGroups } from "@/components/overview-action-groups";
+import { adminOverviewText } from "@/content/ko/admin-overview";
 import { overviewActivityGroups } from "@/lib/admin/learning-activity";
 import { getServerEnvironment } from "@/lib/env";
 import {
@@ -18,7 +19,7 @@ import {
 import { buildStudentVocabBookHistory } from "@/lib/admin/student-vocab-book-history";
 
 export const metadata: Metadata = {
-  title: "Overview",
+  title: adminOverviewText.page.title,
 };
 
 export default async function AdminDashboardPage() {
@@ -53,32 +54,32 @@ export default async function AdminDashboardPage() {
   const sections = [
     {
       id: "missed",
-      title: "미응시 마감",
+      title: adminOverviewText.sections.missed,
       items: groups.missed,
     },
     {
       id: "failed",
-      title: "미통과·재시험 필요",
+      title: adminOverviewText.sections.failed,
       items: groups.failed,
     },
     {
       id: "due-soon",
-      title: "곧 마감",
+      title: adminOverviewText.sections.dueSoon,
       items: groups.dueSoon,
     },
     {
       id: "no-deadline",
-      title: "마감 없음",
+      title: adminOverviewText.sections.noDeadline,
       items: groups.noDeadline,
     },
   ].filter((section) => section.items.length > 0);
 
   return (
     <>
-      <AdminBreadcrumb current="Overview" />
+      <AdminBreadcrumb current={adminOverviewText.page.title} />
       {sections.length === 0 ? (
         <div className="empty-state overview-clear-state">
-          지금 확인할 미응시·미통과·대기 학습이 없습니다.
+          {adminOverviewText.emptyState}
         </div>
       ) : (
         <OverviewActionGroups

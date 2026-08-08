@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  countEligibleReviewLevels,
   excludePendingReviewCandidates,
+  isCandidateInReviewScope,
   mixedAssignmentDatabaseErrorReason,
   orderContiguousPrimaryUnits,
 } from "@/lib/admin/mixed-assignment";
@@ -30,6 +32,30 @@ describe("orderContiguousPrimaryUnits", () => {
     expect(() =>
       orderContiguousPrimaryUnits(units, ["day-1", "day-3"]),
     ).toThrow("연속된 범위");
+  });
+});
+
+describe("review scope and count", () => {
+  const selectedUnits = new Set(["day-2"]);
+
+  it("전체는 같은 단어장 전체, 현재 범위는 선택 단원만 포함한다", () => {
+    expect(
+      isCandidateInReviewScope("dataset", "day-1", selectedUnits),
+    ).toBe(true);
+    expect(
+      isCandidateInReviewScope("selection", "day-1", selectedUnits),
+    ).toBe(false);
+    expect(
+      isCandidateInReviewScope("selection", "day-2", selectedUnits),
+    ).toBe(true);
+  });
+
+  it("추가 가능한 고유 행의 전체·1회·2회 이상 수를 나눈다", () => {
+    expect(countEligibleReviewLevels([2, 1, 2, 1, 1])).toEqual({
+      total: 5,
+      level1: 3,
+      level2: 2,
+    });
   });
 });
 

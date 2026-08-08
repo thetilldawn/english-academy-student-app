@@ -1,3 +1,5 @@
+import { adminShellText } from "@/content/ko/admin-shell";
+
 export function AdminBreadcrumb({
   current,
   section,
@@ -6,7 +8,10 @@ export function AdminBreadcrumb({
   section?: string;
 }) {
   return (
-    <nav aria-label="현재 위치" className="admin-breadcrumb">
+    <nav
+      aria-label={adminShellText.breadcrumb.ariaLabel}
+      className="admin-breadcrumb"
+    >
       {section ? <span>{section}</span> : null}
       {section ? <span aria-hidden="true">/</span> : null}
       <strong aria-current="page">{current}</strong>

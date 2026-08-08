@@ -24,6 +24,8 @@ import { StudentWrongWordPanel } from "@/components/student-wrong-word-panel";
 import { StudentLearningActivityList } from "@/components/student-learning-activity-list";
 import { StudentLearningSourceList } from "@/components/student-learning-source-list";
 import { StudentVocabBookHistoryList } from "@/components/student-vocab-book-history-list";
+import { HelpTip } from "@/components/help-tip";
+import { adminStudentsText } from "@/content/ko/admin-students";
 import {
   AssignmentManager,
   type AssignmentDatasetItem,
@@ -130,12 +132,15 @@ function studentRecommendationLabel(
   progress: ProgressItem | null | undefined,
 ) {
   if (progress?.recommendationReason === "complete") {
-    return "현재 단어장 완료";
+    return adminStudentsText.recommendation.complete;
   }
   if (progress?.recommendationReason === "manual") {
-    return "DAY 범위 확인 필요";
+    return adminStudentsText.recommendation.manual;
   }
-  return progress?.recommendedUnitLabel ?? "단어장 선택 필요";
+  return (
+    progress?.recommendedUnitLabel ??
+    adminStudentsText.recommendation.needsWordbook
+  );
 }
 
 export function StudentManager({
@@ -784,64 +789,94 @@ export function StudentManager({
           )}
 
           <details className="card student-create-disclosure">
-        <summary className="button button-primary">학생 추가</summary>
+        <summary className="button button-primary">
+          {adminStudentsText.createStudent.open}
+        </summary>
         <div className="student-create-content">
-          <p className="auth-description">
-            실명 대신 수업에서 구분할 이름만 적어도 됩니다.
-          </p>
           <form
             aria-busy={busyKey === "create" || refreshPending}
             className="form-stack"
             onSubmit={createStudent}
           >
-            <label className="field">
+            <div className="field">
               <span className="field-label-row">
-                <span className="field-label">학생 이름</span>
+                <span className="field-label label-with-help">
+                  <label htmlFor="create-student-display-name">
+                    {adminStudentsText.createStudent.nameLabel}
+                  </label>
+                  <HelpTip label="학생 이름 도움말">
+                    {adminStudentsText.createStudent.nameHelp}
+                  </HelpTip>
+                </span>
                 <span
                   className="field-requirement"
                   data-kind="required"
                 >
-                  필수
+                  {adminStudentsText.createStudent.required}
                 </span>
               </span>
               <input
+                id="create-student-display-name"
                 maxLength={80}
                 name="displayName"
-                placeholder="예: 김하늘"
+                placeholder={adminStudentsText.createStudent.namePlaceholder}
                 required
               />
-            </label>
+            </div>
             <div className="form-grid-2">
               <label className="field">
                 <span className="field-label-row">
-                  <span className="field-label">학교</span>
-                  <span className="field-requirement">선택</span>
+                  <span className="field-label">
+                    {adminStudentsText.createStudent.schoolLabel}
+                  </span>
+                  <span className="field-requirement">
+                    {adminStudentsText.createStudent.optional}
+                  </span>
                 </span>
                 <input
                   maxLength={120}
                   name="schoolName"
-                  placeholder="예: 심석고등학교"
+                  placeholder={adminStudentsText.createStudent.schoolPlaceholder}
                 />
               </label>
               <label className="field">
                 <span className="field-label-row">
-                  <span className="field-label">학년</span>
-                  <span className="field-requirement">선택</span>
+                  <span className="field-label">
+                    {adminStudentsText.createStudent.gradeLabel}
+                  </span>
+                  <span className="field-requirement">
+                    {adminStudentsText.createStudent.optional}
+                  </span>
                 </span>
                 <input
                   maxLength={40}
                   name="gradeLabel"
-                  placeholder="예: 고1"
+                  placeholder={adminStudentsText.createStudent.gradePlaceholder}
                 />
               </label>
             </div>
-            <label className="field">
+            <div className="field">
               <span className="field-label-row">
-                <span className="field-label">시작 단어장</span>
-                <span className="field-requirement">선택</span>
+                <span className="field-label label-with-help">
+                  <label htmlFor="create-student-vocab-dataset">
+                    {adminStudentsText.createStudent.startingWordbookLabel}
+                  </label>
+                  <HelpTip label="시작 단어장 도움말">
+                    {adminStudentsText.createStudent.startingWordbookHelp}
+                  </HelpTip>
+                </span>
+                <span className="field-requirement">
+                  {adminStudentsText.createStudent.optional}
+                </span>
               </span>
-              <select defaultValue="" name="currentVocabDatasetId">
-                <option value="">나중에 선택</option>
+              <select
+                defaultValue=""
+                id="create-student-vocab-dataset"
+                name="currentVocabDatasetId"
+              >
+                <option value="">
+                  {adminStudentsText.createStudent.chooseLater}
+                </option>
                 {datasetGroups.map((group) => (
                   <optgroup key={group.group} label={group.label}>
                     {group.datasets.map((dataset) => (
@@ -852,21 +887,25 @@ export function StudentManager({
                   </optgroup>
                 ))}
               </select>
-              <span className="field-help">
-                {datasets.length === 0
-                  ? "단어장 없이 학생과 코드부터 만들 수 있습니다."
-                  : "아직 정하지 않았다면 나중에 선택할 수 있습니다."}
-              </span>
-            </label>
+              {datasets.length === 0 ? (
+                <span className="field-help">
+                  단어장 없이 학생과 코드부터 만들 수 있습니다.
+                </span>
+              ) : null}
+            </div>
             <label className="field">
               <span className="field-label-row">
-                <span className="field-label">관리 메모</span>
-                <span className="field-requirement">선택</span>
+                <span className="field-label">
+                  {adminStudentsText.createStudent.memoLabel}
+                </span>
+                <span className="field-requirement">
+                  {adminStudentsText.createStudent.optional}
+                </span>
               </span>
               <textarea
                 maxLength={2000}
                 name="note"
-                placeholder="선택 사항"
+                placeholder={adminStudentsText.createStudent.memoPlaceholder}
               />
             </label>
             {createError && (
@@ -880,10 +919,10 @@ export function StudentManager({
               type="submit"
             >
               {busyKey === "create"
-                ? "만드는 중…"
+                ? adminStudentsText.createStudent.submitting
                 : refreshPending
-                  ? "화면에 반영하는 중…"
-                  : "학생과 코드 만들기"}
+                  ? adminStudentsText.createStudent.refreshing
+                  : adminStudentsText.createStudent.submit}
             </button>
           </form>
         </div>
@@ -897,17 +936,19 @@ export function StudentManager({
               <path d="m16 16 4 4" />
             </svg>
           </span>
-          <span className="sr-only">학생 및 학습 자료 검색</span>
+          <span className="sr-only">
+            {adminStudentsText.page.searchAriaLabel}
+          </span>
           <input
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="이름·학교·학년·단어장 검색"
+            placeholder={adminStudentsText.page.searchPlaceholder}
             type="search"
             value={query}
           />
         </label>
         <details className="learning-filter-disclosure">
           <summary>
-            <span>필터</span>
+            <span>{adminStudentsText.page.filterButton}</span>
             <span className="detail-chip">
               {
                 [schoolFilter, gradeFilter, wordbookFilter].filter(Boolean)
@@ -1034,7 +1075,7 @@ export function StudentManager({
               }}
               type="button"
             >
-              초기화
+              {adminStudentsText.page.resetFilters}
             </button>
           </div>
         </div>
@@ -1042,7 +1083,7 @@ export function StudentManager({
 
       <section className="student-group-pane">
         {filteredStudents.length === 0 ? (
-          <div className="empty-state">조건에 맞는 학생이 없습니다.</div>
+          <div className="empty-state">{adminStudentsText.page.noMatches}</div>
         ) : (
           <div className="student-card-grid">
                 {filteredStudents.map((student) => {
@@ -1244,7 +1285,7 @@ export function StudentManager({
               tabIndex={activeTab === "learning" ? 0 : -1}
               type="button"
             >
-              학습 관리
+              {adminStudentsText.detailTabs.learning}
             </button>
             <button
               aria-controls="student-account-panel"
@@ -1257,7 +1298,7 @@ export function StudentManager({
               tabIndex={activeTab === "account" ? 0 : -1}
               type="button"
             >
-              계정 설정
+              {adminStudentsText.detailTabs.account}
             </button>
             <button
               aria-controls="student-history-panel"
@@ -1270,7 +1311,7 @@ export function StudentManager({
               tabIndex={activeTab === "history" ? 0 : -1}
               type="button"
             >
-              내역
+              {adminStudentsText.detailTabs.history}
             </button>
           </div>
 
@@ -1406,11 +1447,12 @@ export function StudentManager({
                       <>
                         <div className="student-inline-assignment-action">
                           <div>
-                            <strong>다음 단어 시험</strong>
-                            <span>
-                              선택한 단어장과 추천 범위를 불러와 이 창에서 바로
-                              배정합니다.
-                            </span>
+                            <strong className="label-with-help">
+                              {adminStudentsText.learning.nextVocabularyTitle}
+                              <HelpTip label="다음 단어 시험 도움말">
+                                {adminStudentsText.learning.nextVocabularyHelp}
+                              </HelpTip>
+                            </strong>
                           </div>
                           <Button
                             disabled={assignmentDatasets.length === 0}
@@ -1425,7 +1467,7 @@ export function StudentManager({
                             }}
                             variant="primary"
                           >
-                            배정하기
+                            {adminStudentsText.learning.assign}
                           </Button>
                         </div>
                         <StudentWrongWordPanel
@@ -1638,7 +1680,7 @@ export function StudentManager({
         >
           <h2 id="student-code-title">{shownCode.label}</h2>
           <p className="auth-description">
-            학생에게 이 코드만 전달하세요.
+            {adminStudentsText.codeModal.instruction}
           </p>
           <div className="dialog-code">{shownCode.code}</div>
           <div className="inline-actions">
@@ -1648,7 +1690,7 @@ export function StudentManager({
               onClick={() => void shareCode()}
               type="button"
             >
-              카카오톡으로 보내기
+              {adminStudentsText.codeModal.sendKakao}
             </button>
             {shareNotice && (
               <span className="field-help" role="status">
@@ -1660,14 +1702,16 @@ export function StudentManager({
               onClick={copyCode}
               type="button"
             >
-              {copied ? "복사됨" : "코드 복사"}
+              {copied
+                ? adminStudentsText.codeModal.copied
+                : adminStudentsText.codeModal.copy}
             </button>
             <button
               className="button button-quiet"
               onClick={closeCodeDialog}
               type="button"
             >
-              닫기
+              {adminStudentsText.codeModal.close}
             </button>
           </div>
         </dialog>

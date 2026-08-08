@@ -10,9 +10,9 @@ import {
 import { useRouter } from "next/navigation";
 
 import { HelpTip } from "@/components/help-tip";
+import { adminLearningText } from "@/content/ko/admin-learning";
 import type { ReviewAssignmentDraftSummary } from "@/lib/admin/review-assignment";
 import {
-  questionOrderLabel,
   type QuestionOrderMode,
   type TimingMode,
 } from "@/lib/admin/assignment-settings";
@@ -25,12 +25,6 @@ import { formatKoreanDateTime } from "@/lib/format";
 type ErrorResponse = {
   error?: string;
 };
-
-function directionLabel(ratio: 0 | 50 | 100) {
-  if (ratio === 100) return "영어 → 뜻";
-  if (ratio === 0) return "뜻 → 영어";
-  return "영어 ↔ 뜻 혼합";
-}
 
 export function ReviewAssignmentDialog({
   draft,
@@ -127,7 +121,7 @@ export function ReviewAssignmentDialog({
       (!availableUntil ||
         Date.parse(availableUntil) <= currentTimeMilliseconds())
     ) {
-      setError("응시 시작 마감은 현재보다 뒤의 한국시간으로 정해주세요.");
+      setError(adminLearningText.assignmentModal.deadline.invalid);
       return;
     }
 
@@ -181,7 +175,9 @@ export function ReviewAssignmentDialog({
     >
       <div className="dialog-heading">
         <div>
-          <p className="eyebrow">오답 재시험 배정</p>
+          <p className="eyebrow">
+            {adminLearningText.reviewAssignmentModal.eyebrow}
+          </p>
           <h2 id="review-assignment-dialog-title">
             {draft.studentName}
           </h2>
@@ -218,9 +214,9 @@ export function ReviewAssignmentDialog({
             <span>1</span>
             <div>
               <h3>
-                고정된 재시험 대상
+                {adminLearningText.reviewAssignmentModal.fixedTargetTitle}
                 <HelpTip label="재시험 대상 도움말">
-                  학생·단어장·문항 수는 선택한 오답으로 고정됩니다.
+                  {adminLearningText.reviewAssignmentModal.fixedTargetHelp}
                 </HelpTip>
               </h3>
             </div>
@@ -248,9 +244,9 @@ export function ReviewAssignmentDialog({
             <span>2</span>
             <div>
               <h3>
-                문제 조건
+                {adminLearningText.reviewAssignmentModal.conditionsTitle}
                 <HelpTip label="문제 조건 도움말">
-                  출제 방향·순서·시간과 통과 기준을 정합니다.
+                  {adminLearningText.reviewAssignmentModal.conditionsHelp}
                 </HelpTip>
               </h3>
             </div>
@@ -287,9 +283,14 @@ export function ReviewAssignmentDialog({
               </select>
             </label>
           </div>
-          <div className="form-grid-3">
+          <div className="assignment-condition-grid">
             <fieldset className="field timing-mode-field">
-              <legend className="field-label">시간 제한 방식</legend>
+              <legend className="field-label label-with-help">
+                시간 제한 방식
+                <HelpTip label="시간 제한 방식 도움말">
+                  {adminLearningText.assignmentModal.conditions.timingHelp}
+                </HelpTip>
+              </legend>
               <div className="segmented-control">
                 <button
                   aria-pressed={timingMode === "total"}
@@ -353,11 +354,17 @@ export function ReviewAssignmentDialog({
               />
             </label>
           </div>
-          <label className="field">
-            <span className="field-label">
-              응시 시작 마감 · 선택 · 한국시간
+          <div className="field">
+            <span className="field-label label-with-help">
+              <label htmlFor="review-assignment-available-until">
+                {adminLearningText.assignmentModal.deadline.label}
+              </label>
+              <HelpTip label="응시 마감 시간 설정 도움말">
+                {adminLearningText.reviewAssignmentModal.deadlineHelp}
+              </HelpTip>
             </span>
             <input
+              id="review-assignment-available-until"
               onChange={(event) =>
                 setAvailableUntilLocal(event.target.value)
               }
@@ -365,63 +372,26 @@ export function ReviewAssignmentDialog({
               type="datetime-local"
               value={availableUntilLocal}
             />
-          </label>
+          </div>
         </section>
 
-        <section className="assignment-step assignment-review-step">
-          <div className="assignment-step-heading">
-            <span>3</span>
-            <div>
-              <h3>
-                확인하고 배정
-                <HelpTip label="시험 이름 도움말">
-                  시험 이름은 자동 생성하며 필요할 때만 바꿉니다.
-                </HelpTip>
-              </h3>
-            </div>
-          </div>
-          <label className="field">
-            <span className="field-label">시험 이름 변경 · 선택</span>
+        <section className="assignment-submit-panel">
+          <div className="field">
+            <span className="field-label label-with-help">
+              <label htmlFor="review-assignment-custom-title">
+                {adminLearningText.assignmentModal.submit.optionalTitle}
+              </label>
+              <HelpTip label="시험 이름 도움말">
+                {adminLearningText.reviewAssignmentModal.titleHelp}
+              </HelpTip>
+            </span>
             <input
+              id="review-assignment-custom-title"
               maxLength={160}
               onChange={(event) => setCustomTitle(event.target.value)}
               placeholder={draft.generatedTitle}
               value={customTitle}
             />
-          </label>
-          <div className="assignment-review-summary">
-            <strong>{customTitle.trim() || draft.generatedTitle}</strong>
-            <dl>
-              <div>
-                <dt>출제</dt>
-                <dd>{directionLabel(directionRatio)}</dd>
-              </div>
-              <div>
-                <dt>순서</dt>
-                <dd>
-                  {questionOrderLabel(questionOrderMode)}
-                </dd>
-              </div>
-              <div>
-                <dt>조건</dt>
-                <dd>
-                  {draft.questionCount}문항 ·{" "}
-                  {timingMode === "total"
-                    ? `전체 ${timeLimitMinutes}분`
-                    : `문제당 ${questionTimeLimitSeconds}초`}{" "}
-                  ·{" "}
-                  {passingScore}점
-                </dd>
-              </div>
-              <div>
-                <dt>응시 시작 마감</dt>
-                <dd>
-                  {availableUntilLocal
-                    ? `${availableUntilLocal.replace("T", " ")} · 한국시간`
-                    : "마감 없음"}
-                </dd>
-              </div>
-            </dl>
           </div>
           {error && (
             <div className="notice notice-error" role="alert">
@@ -437,15 +407,17 @@ export function ReviewAssignmentDialog({
               type="button"
             >
               {cancelling
-                ? "취소하는 중…"
-                : "재시험 준비 취소 · 다음 시험 대기 유지"}
+                ? adminLearningText.reviewAssignmentModal.cancelingDraft
+                : adminLearningText.reviewAssignmentModal.cancelDraft}
             </button>
             <button
               className="button button-primary button-large"
               disabled={cannotCreate || cancelling}
               type="submit"
             >
-              {submitting ? "배정하는 중…" : "오답 재시험 배정"}
+              {submitting
+                ? adminLearningText.reviewAssignmentModal.assigning
+                : adminLearningText.reviewAssignmentModal.assign}
             </button>
           </div>
         </section>

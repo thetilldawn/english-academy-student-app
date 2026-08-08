@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
 import { StudentManager } from "@/components/student-manager";
+import { adminStudentsText } from "@/content/ko/admin-students";
 import { getServerEnvironment } from "@/lib/env";
 import {
   buildStudentProgress,
@@ -17,7 +18,7 @@ import {
 import { buildStudentVocabBookHistory } from "@/lib/admin/student-vocab-book-history";
 
 export const metadata: Metadata = {
-  title: "학생 관리",
+  title: adminStudentsText.page.title,
 };
 
 export default async function StudentsPage({
@@ -57,7 +58,7 @@ export default async function StudentsPage({
 
   return (
     <>
-      <AdminBreadcrumb current="학생 관리" />
+      <AdminBreadcrumb current={adminStudentsText.page.title} />
       <StudentManager
         appOrigin={appOrigin}
         assignmentDatasets={assignmentDatasets}

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { adminShellText } from "@/content/ko/admin-shell";
+
 export function AdminLogoutButton() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -36,7 +38,9 @@ export function AdminLogoutButton() {
         onClick={logout}
         type="button"
       >
-        {submitting ? "종료 중…" : "로그아웃"}
+        {submitting
+          ? adminShellText.logout.pending
+          : adminShellText.logout.idle}
       </button>
       {error && (
         <span className="inline-error" role="alert">

@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { AdminLoginForm } from "@/components/admin-login-form";
+import { HelpTip } from "@/components/help-tip";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { adminShellText } from "@/content/ko/admin-shell";
 
 export const metadata: Metadata = {
-  title: "관리자 로그인",
+  title: adminShellText.login.title,
 };
 
 export default function AdminLoginPage() {
@@ -13,14 +15,16 @@ export default function AdminLoginPage() {
     <main className="auth-shell" id="main-content">
       <section className="auth-card">
         <ThemeToggle className="theme-toggle-auth" />
-        <p className="eyebrow">TEACHER ADMIN</p>
-        <h1>관리자 로그인</h1>
-        <p className="auth-description">
-          직접 만든 관리자 계정으로만 들어갈 수 있습니다.
-        </p>
+        <p className="eyebrow">{adminShellText.login.eyebrow}</p>
+        <h1 className="label-with-help">
+          {adminShellText.login.title}
+          <HelpTip label={`${adminShellText.login.title} 도움말`}>
+            {adminShellText.login.accountScopeHelp}
+          </HelpTip>
+        </h1>
         <AdminLoginForm />
         <Link className="back-link" href="/">
-          ← 학생 인증 화면
+          {adminShellText.login.backToStudent}
         </Link>
       </section>
     </main>

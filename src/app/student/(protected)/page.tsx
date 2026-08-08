@@ -4,6 +4,7 @@ import Link from "next/link";
 import { DeadlineCountdown } from "@/components/deadline-countdown";
 import { StartAttemptButton } from "@/components/start-attempt-button";
 import { AttemptScoreSummary } from "@/components/attempt-score-summary";
+import { studentAppText } from "@/content/ko/student-app";
 import { requireStudentSession } from "@/lib/auth/student-session";
 import {
   currentTimeMilliseconds,
@@ -15,7 +16,7 @@ import { listStudentAssignments } from "@/lib/services/quiz-service";
 import { buildAttemptStatusPresentation } from "@/lib/ui/attempt-score-presentation";
 
 export const metadata: Metadata = {
-  title: "내 단어 시험",
+  title: studentAppText.dashboard.metadataTitle,
 };
 
 type StudentAssignment = Awaited<
@@ -113,7 +114,7 @@ function AssignmentCard({
         initialDeadlineRemaining !== null && (
           <div className="assignment-deadline">
             <span>
-              응시 시작 마감{" "}
+              {studentAppText.dashboard.deadline}{" "}
               <strong>
                 {formatKoreanDateTime(assignment.availableUntil)}
               </strong>
@@ -134,7 +135,7 @@ function AssignmentCard({
               className="button button-primary"
               href={`/student/result/${assignment.lastAttemptId}`}
             >
-              결과 확인·재시험 선택
+              {studentAppText.dashboard.resultAndRetry}
             </Link>
           )}
         {assignment.lastStatus === "in_progress" &&
@@ -144,7 +145,7 @@ function AssignmentCard({
               className="button button-primary"
               href={`/student/attempt/${assignment.lastAttemptId}`}
             >
-              이어 풀기
+              {studentAppText.dashboard.resume}
             </Link>
           )}
         {assignment.lastStatus === "completed" &&
@@ -153,7 +154,7 @@ function AssignmentCard({
               className="button button-secondary"
               href={`/student/result/${assignment.lastAttemptId}`}
             >
-              결과 보기
+              {studentAppText.dashboard.result}
             </Link>
           )}
         {assignment.lastStatus === "expired" &&
@@ -162,7 +163,7 @@ function AssignmentCard({
               className="button button-quiet"
               href={`/student/result/${assignment.lastAttemptId}`}
             >
-              종료 결과
+              {studentAppText.dashboard.expiredResult}
             </Link>
           )}
         {assignment.canStart &&
@@ -199,28 +200,30 @@ export default async function StudentDashboardPage() {
     : [];
   const primaryHeading =
     primaryAssignment?.lastPhase === "review"
-      ? "첫 시험 결과"
+      ? studentAppText.dashboard.firstResult
       : primaryAssignment?.missed
-        ? "마감된 시험"
+        ? studentAppText.dashboard.expired
       : primaryAssignment?.lastStatus === "in_progress" ||
     primaryAssignment?.canStart
-      ? "지금 할 시험"
-      : "최근 시험";
+      ? studentAppText.dashboard.current
+      : studentAppText.dashboard.recent;
 
   return (
     <main className="content student-content" id="main-content">
       <div className="page-heading student-page-heading">
         <div>
-          <p className="eyebrow">MY ASSIGNMENTS</p>
-          <h1>{session.displayName}의 단어 시험</h1>
+          <p className="eyebrow">{studentAppText.dashboard.eyebrow}</p>
+          <h1>
+            {session.displayName}{studentAppText.dashboard.titleSuffix}
+          </h1>
         </div>
       </div>
 
       {!primaryAssignment ? (
         <div className="empty-state">
-          아직 배정된 시험이 없습니다.
+          {studentAppText.dashboard.emptyTitle}
           <br />
-          선생님이 시험을 배정하면 이곳에 표시됩니다.
+          {studentAppText.dashboard.emptyHelp}
         </div>
       ) : (
         <>
@@ -237,7 +240,9 @@ export default async function StudentDashboardPage() {
               className="section"
             >
               <div className="section-heading">
-                <h2 id="other-assignments-heading">다른 시험</h2>
+                <h2 id="other-assignments-heading">
+                  {studentAppText.dashboard.others}
+                </h2>
                 <span className="detail-chip">
                   <strong>{otherAssignments.length}</strong>건
                 </span>

@@ -4,6 +4,7 @@ import type {
 } from "@/lib/admin/assignment-settings";
 
 export type ReviewLevel = 1 | 2;
+export type ReviewScope = "dataset" | "selection";
 
 type CommonAssignmentInput = {
   studentId: string;
@@ -27,6 +28,7 @@ type RegularAssignmentInput = CommonAssignmentInput & {
 type MixedAssignmentInput = CommonAssignmentInput & {
   includePendingReview: true;
   reviewLevels: ReviewLevel[];
+  reviewScope?: ReviewScope;
 };
 
 export type AssignmentSubmissionInput =
@@ -66,6 +68,7 @@ export function buildAssignmentSubmission(
         datasetId: input.datasetId,
         primaryUnitIds: [...input.primaryUnitIds],
         reviewLevels: [...input.reviewLevels],
+        reviewScope: input.reviewScope ?? "dataset",
         totalQuestionCount: input.questionCount,
         title: input.title,
         englishToKoreanRatio: input.englishToKoreanRatio,

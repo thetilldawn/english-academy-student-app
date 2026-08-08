@@ -8,6 +8,8 @@ import {
   type WrongWordOutcome,
 } from "@/lib/admin/wrong-word-history";
 import { formatKoreanDateTime } from "@/lib/format";
+import { HelpTip } from "@/components/help-tip";
+import { adminStudentsText } from "@/content/ko/admin-students";
 
 type LevelFilter = "all" | "once" | "repeated";
 type SelectionPurpose = "next_exam" | "worksheet";
@@ -631,11 +633,16 @@ export function StudentWrongWordPanel({
   return (
     <section className="student-dialog-panel wrong-word-panel">
       <div className="wrong-word-refresh-row">
-        <span>
-          {loading
-            ? "최신 오답 이력을 확인하는 중…"
-            : "첫 시험 종료 직후부터 오답을 반영합니다."}
-        </span>
+        {loading ? (
+          <span>최신 오답 이력을 확인하는 중…</span>
+        ) : (
+          <span className="label-with-help">
+            오답 반영 기준
+            <HelpTip label="오답 반영 기준 도움말">
+              {adminStudentsText.learning.wrongHistoryRefreshHelp}
+            </HelpTip>
+          </span>
+        )}
         <button
           className="button button-quiet button-small"
           disabled={loading || queueing || worksheetRequesting}
@@ -787,6 +794,11 @@ export function StudentWrongWordPanel({
                 {label}
               </button>
             ))}
+            <HelpTip label="오답 단어 작업 도움말">
+              {selectionPurpose === "worksheet"
+                ? adminStudentsText.learning.worksheetWrongWordHelp
+                : adminStudentsText.learning.nextExamWrongWordHelp}
+            </HelpTip>
           </div>
           <div className="wrong-word-selection-bar">
             <button
@@ -842,11 +854,6 @@ export function StudentWrongWordPanel({
               )}
             </div>
           </div>
-          <p className="wrong-word-selection-help">
-            {selectionPurpose === "worksheet"
-              ? "대기·배정 중인 오답도 한 번에 50개까지 별도 자료 요청에 담습니다."
-              : "아직 추가 가능한 오답만 다음 일반 시험 대기에 보냅니다."}
-          </p>
           {queueError && (
             <div className="notice notice-error" role="alert">
               {queueError}

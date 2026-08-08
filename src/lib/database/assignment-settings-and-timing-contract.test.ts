@@ -81,8 +81,10 @@ describe("Kakao code sharing contract", () => {
   it("uses Kakao Talk SDK and keeps explicit message copy fallback", () => {
     const manager = source("src/components/student-manager.tsx");
     const kakao = source("src/lib/kakao-share.ts");
+    const copy = source("src/content/ko/admin-students.ts");
 
-    expect(manager).toContain("카카오톡으로 보내기");
+    expect(manager).toContain("adminStudentsText.codeModal.sendKakao");
+    expect(copy).toContain('sendKakao: "카카오톡으로 보내기"');
     expect(manager).not.toContain("navigator.share");
     expect(manager).toContain("navigator.clipboard.writeText(message)");
     expect(kakao).toContain("kakao.Share");

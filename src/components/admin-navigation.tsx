@@ -3,11 +3,13 @@
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 
+import { adminShellText } from "@/content/ko/admin-shell";
+
 const adminNavigationItems = [
-  { href: "/admin", label: "Overview" },
-  { href: "/admin/students", label: "학생 관리" },
-  { href: "/admin/assignments", label: "학습 관리" },
-  { href: "/admin/results", label: "내역" },
+  { href: "/admin", label: adminShellText.navigation.overview },
+  { href: "/admin/students", label: adminShellText.navigation.students },
+  { href: "/admin/assignments", label: adminShellText.navigation.learning },
+  { href: "/admin/results", label: adminShellText.navigation.history },
 ] as const;
 
 function isActivePath(pathname: string, href: string) {
