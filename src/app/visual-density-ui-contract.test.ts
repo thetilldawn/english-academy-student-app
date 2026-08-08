@@ -12,7 +12,7 @@ describe("admin visual density contract", () => {
     const studentManager = source("src/components/student-manager.tsx");
     const assignmentManager = source("src/components/assignment-manager.tsx");
 
-    expect(studentManager).toContain('"학습 기록 없음"');
+    expect(studentManager).toContain("adminStudentsText.card.noHistory");
     expect(studentManager).toContain("{priorityActivity ? (");
     expect(studentManager).not.toContain('"시험 기록 없음"');
     expect(assignmentManager).toContain("{nextActivity ? (");
@@ -48,11 +48,44 @@ describe("admin visual density contract", () => {
     const historyList = source("src/components/admin-history-list.tsx");
     const overview = source("src/components/overview-action-groups.tsx");
 
-    expect(historyList).toContain("historyStatusFilterValue");
+    expect(historyList).toContain("learningActivitySection(item)");
     expect(historyList).toContain('value="needs_attention"');
     expect(historyList).toContain('value="retried"');
     expect(historyList).toContain("compact={compact}");
-    expect(historyList).toContain("{!compact ? (");
+    expect(historyList).toContain("{!compact ||");
     expect(overview).not.toContain("section.description");
+  });
+
+  it("keeps student assignment inside one modal and uses shared sticky footers", () => {
+    const studentManager = source("src/components/student-manager.tsx");
+    const assignmentManager = source(
+      "src/components/assignment-manager.tsx",
+    );
+    const bulkDialog = source(
+      "src/components/bulk-assignment-dialog.tsx",
+    );
+    const reviewDialog = source(
+      "src/components/review-assignment-dialog.tsx",
+    );
+
+    expect(studentManager).toContain("embedded");
+    expect(studentManager).toContain("assignmentStudentId ? (");
+    expect(studentManager).not.toContain("studentDialogSuspendedRef");
+    expect(assignmentManager).toContain("<ModalFooter>");
+    expect(bulkDialog).toContain("<ModalFooter>");
+    expect(reviewDialog).toContain("<ModalFooter>");
+  });
+
+  it("loads Pretendard locally and limits serif typography to English words", () => {
+    const layout = source("src/app/layout.tsx");
+    const css = source("src/app/globals.css");
+
+    expect(layout).toContain(
+      'pretendard/dist/web/variable/pretendardvariable.css',
+    );
+    expect(css.match(/font-family: var\(--font-en\)/g)).toHaveLength(3);
+    expect(css).toContain(".choice--en");
+    expect(css).toContain(".quiz-prompt");
+    expect(css).toContain(".review-entry-list strong");
   });
 });

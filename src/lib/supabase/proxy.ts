@@ -30,10 +30,6 @@ export async function refreshAdminSession(request: NextRequest) {
             response.cookies.set(cookie.name, cookie.value, {
               ...cookie.options,
               ...adminAuthCookieOptions(),
-              maxAge:
-                cookie.options.maxAge === 0
-                  ? 0
-                  : adminAuthCookieOptions().maxAge,
             });
           }
           for (const [name, value] of Object.entries(responseHeaders)) {

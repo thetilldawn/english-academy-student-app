@@ -19,5 +19,7 @@
 - `admin-learning.ts`: 학습 관리와 각 배정 모달
 - `admin-history.ts`: 내역 목록과 상세 모달
 - `student-app.ts`: 학생 로그인·시험 목록·응시 화면
+- `notifications.ts`: 학생·관리자 일회성 알림
+- `../format.ts`: `{count}` 같은 자리표시자를 실제 값으로 바꾸는 함수
 
 문구를 바꿀 때 키 이름과 객체 구조는 유지하고 따옴표 안의 값만 수정합니다.

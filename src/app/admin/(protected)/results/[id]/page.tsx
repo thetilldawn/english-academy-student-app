@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ButtonLink } from "@/components/ui-button";
+import { formatContentText } from "@/content/format";
+import { adminHistoryText } from "@/content/ko/admin-history";
 import {
   formatElapsed,
   formatKoreanDateTime,
@@ -10,7 +12,7 @@ import { getResultQuestionPresentation } from "@/lib/quiz/result-presentation";
 import { getAdminAttemptDetail } from "@/lib/services/admin-service";
 
 export const metadata: Metadata = {
-  title: "응시 상세",
+  title: adminHistoryText.resultDetail.metadataTitle,
 };
 
 function retryLabel(
@@ -18,11 +20,12 @@ function retryLabel(
   retryIsCorrect: boolean | null,
   reviewPending: boolean,
 ) {
-  if (initialIsCorrect === true) return "첫 시험 정답";
-  if (retryIsCorrect === true) return "한 번 틀린 단어";
-  if (retryIsCorrect === false) return "다시 볼 단어";
-  if (reviewPending) return "재시험 전";
-  return "미완료";
+  const copy = adminHistoryText.resultDetail.status;
+  if (initialIsCorrect === true) return copy.initialCorrect;
+  if (retryIsCorrect === true) return copy.resolvedAfterRetry;
+  if (retryIsCorrect === false) return copy.unresolved;
+  if (reviewPending) return copy.retryPending;
+  return copy.incomplete;
 }
 
 export default async function AdminResultDetailPage({
@@ -44,48 +47,65 @@ export default async function AdminResultDetailPage({
     <>
       <div className="page-heading">
         <div>
-          <p className="eyebrow">ATTEMPT DETAIL</p>
+          <p className="eyebrow">{adminHistoryText.resultDetail.eyebrow}</p>
           <h1>{result.studentName}</h1>
           <p>
-            {result.assignmentTitle} · {result.attemptNumber}회 ·{" "}
+            {result.assignmentTitle} ·{" "}
+            {formatContentText(adminHistoryText.resultDetail.attemptNumber, {
+              count: result.attemptNumber,
+            })}{" "}
+            ·{" "}
             {formatKoreanDateTime(result.startedAt)}
           </p>
         </div>
-        <Link className="button button-quiet" href="/admin/results">
-          결과 목록
-        </Link>
+        <ButtonLink href="/admin/results" variant="quiet">
+          {adminHistoryText.resultDetail.backToResults}
+        </ButtonLink>
       </div>
 
       <div className="attempt-detail-layout">
-        <aside aria-label="응시 요약" className="card attempt-summary">
-          <h2>응시 요약</h2>
+        <aside
+          aria-label={adminHistoryText.resultDetail.summaryAria}
+          className="card attempt-summary"
+        >
+          <h2>{adminHistoryText.resultDetail.summaryTitle}</h2>
           <dl>
             <div>
-              <dt>첫 시험 점수</dt>
+              <dt>{adminHistoryText.resultDetail.initialScore}</dt>
               <dd>
                 {result.initialScore === null
                   ? "-"
-                  : `${result.initialScore}점`}
+                  : formatContentText(adminHistoryText.resultDetail.score, {
+                      score: result.initialScore,
+                    })}
               </dd>
             </div>
             <div>
-              <dt>최종 점수</dt>
+              <dt>{adminHistoryText.resultDetail.finalScore}</dt>
               <dd>
-                {result.finalScore === null ? "-" : `${result.finalScore}점`}
+                {result.finalScore === null
+                  ? "-"
+                  : formatContentText(adminHistoryText.resultDetail.score, {
+                      score: result.finalScore,
+                    })}
               </dd>
             </div>
             <div>
-              <dt>미해결</dt>
-              <dd>{result.unresolvedWrongCount ?? "-"}개</dd>
+              <dt>{adminHistoryText.resultDetail.unresolvedCount}</dt>
+              <dd>
+                {formatContentText(adminHistoryText.resultDetail.count, {
+                  count: result.unresolvedWrongCount ?? "-",
+                })}
+              </dd>
             </div>
             <div>
-              <dt>응시 시간</dt>
+              <dt>{adminHistoryText.resultDetail.elapsed}</dt>
               <dd>{formatElapsed(result.elapsedSeconds)}</dd>
             </div>
           </dl>
-          <Link className="button button-quiet" href="/admin/results">
-            결과 목록으로
-          </Link>
+          <ButtonLink href="/admin/results" variant="quiet">
+            {adminHistoryText.resultDetail.backToResultsLong}
+          </ButtonLink>
         </aside>
 
         <section
@@ -93,15 +113,20 @@ export default async function AdminResultDetailPage({
           className="attempt-flow-section"
         >
           <div className="section-heading">
-            <h2 id="answer-flow-heading">첫 시험부터 재시험까지</h2>
+            <h2 id="answer-flow-heading">
+              {adminHistoryText.resultDetail.flowTitle}
+            </h2>
             <span className="detail-chip">
-              {wrongQuestions.length}문항
+              {formatContentText(
+                adminHistoryText.resultDetail.questionCount,
+                { count: wrongQuestions.length },
+              )}
             </span>
           </div>
 
           {wrongQuestions.length === 0 ? (
             <div className="empty-state">
-              첫 시험에서 모두 맞혔습니다.
+              {adminHistoryText.resultDetail.allCorrect}
             </div>
           ) : (
             <div className="attempt-flow-list">
@@ -114,7 +139,12 @@ export default async function AdminResultDetailPage({
                   <article className="card attempt-flow-card" key={question.id}>
                     <div className="title-with-status">
                       <div>
-                        <p className="eyebrow">문항 {question.orderIndex}</p>
+                        <p className="eyebrow">
+                          {formatContentText(
+                            adminHistoryText.resultDetail.questionNumber,
+                            { number: question.orderIndex },
+                          )}
+                        </p>
                         <h3>{presentation.prompt}</h3>
                       </div>
                       <span
@@ -140,9 +170,10 @@ export default async function AdminResultDetailPage({
                       }`}
                     >
                       <div className="flow-step flow-step-wrong">
-                        <span>첫 선택</span>
+                        <span>{adminHistoryText.resultDetail.initialChoice}</span>
                         <strong>
-                          {question.initialChoice ?? "선택 안 함"}
+                          {question.initialChoice ??
+                            adminHistoryText.resultDetail.noChoice}
                         </strong>
                       </div>
                       <span className="flow-arrow" aria-hidden="true">
@@ -156,14 +187,16 @@ export default async function AdminResultDetailPage({
                             : "flow-step-wrong",
                         ].join(" ")}
                       >
-                        <span>재시험</span>
+                        <span>{adminHistoryText.resultDetail.retry}</span>
                         <strong>
                           {question.retryChoice ??
-                            (reviewPending ? "재시험 전" : "선택 안 함")}
+                            (reviewPending
+                              ? adminHistoryText.resultDetail.retryPending
+                              : adminHistoryText.resultDetail.noChoice)}
                         </strong>
                         {resolved && (
                           <span className="sr-only">
-                            재시험에서 맞힘
+                            {adminHistoryText.resultDetail.retryCorrectSr}
                           </span>
                         )}
                       </div>
@@ -173,7 +206,7 @@ export default async function AdminResultDetailPage({
                             →
                           </span>
                           <div className="flow-step flow-step-answer">
-                            <span>정답</span>
+                            <span>{adminHistoryText.resultDetail.answer}</span>
                             <strong>{presentation.correctAnswer}</strong>
                           </div>
                         </>

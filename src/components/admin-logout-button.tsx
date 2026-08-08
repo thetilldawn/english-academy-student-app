@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { adminShellText } from "@/content/ko/admin-shell";
+import { Button } from "@/components/ui-button";
 
 export function AdminLogoutButton() {
   const router = useRouter();
@@ -18,13 +19,13 @@ export function AdminLogoutButton() {
         method: "DELETE",
       });
       if (!response.ok) {
-        setError("로그아웃 실패");
+        setError(adminShellText.logout.error);
         return;
       }
       router.replace("/admin/login");
       router.refresh();
     } catch {
-      setError("로그아웃 실패");
+      setError(adminShellText.logout.error);
     } finally {
       setSubmitting(false);
     }
@@ -32,16 +33,16 @@ export function AdminLogoutButton() {
 
   return (
     <div className="action-stack">
-      <button
-        className="button button-quiet button-small"
+      <Button
         disabled={submitting}
         onClick={logout}
-        type="button"
+        size="small"
+        variant="quiet"
       >
         {submitting
           ? adminShellText.logout.pending
           : adminShellText.logout.idle}
-      </button>
+      </Button>
       {error && (
         <span className="inline-error" role="alert">
           {error}

@@ -7,6 +7,8 @@ import {
   formatRemainingSeconds,
   secondsUntil,
 } from "@/lib/deadline";
+import { formatContentText } from "@/content/format";
+import { studentAppText } from "@/content/ko/student-app";
 
 export function DeadlineCountdown({
   deadlineAt,
@@ -62,21 +64,21 @@ export function DeadlineCountdown({
       <span
         aria-label={
           expired
-            ? "응시 시작 마감이 지났습니다."
-            : `응시 시작 마감까지 ${formatRemainingSeconds(
-                remainingSeconds,
-              )} 남았습니다.`
+            ? studentAppText.actions.deadlinePassed
+            : formatContentText(studentAppText.actions.deadlineRemaining, {
+                time: formatRemainingSeconds(remainingSeconds),
+              })
         }
         aria-live="off"
         className={expired ? "deadline-countdown deadline-expired" : "deadline-countdown"}
         role="timer"
       >
         {expired
-          ? "마감됨"
+          ? studentAppText.actions.deadlineClosed
           : formatRemainingSeconds(remainingSeconds)}
       </span>
       <span aria-live="polite" className="sr-only" role="status">
-        {expired ? "응시 시작 마감이 지났습니다." : ""}
+        {expired ? studentAppText.actions.deadlinePassed : ""}
       </span>
     </>
   );

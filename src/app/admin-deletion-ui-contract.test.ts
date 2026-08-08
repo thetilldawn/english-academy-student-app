@@ -24,12 +24,17 @@ describe("admin deletion UI contract", () => {
     const learningActivityList = source(
       "src/components/student-learning-activity-list.tsx",
     );
+    const historyCopy = source("src/content/ko/admin-history.ts");
+    const studentCopy = source("src/content/ko/admin-students.ts");
 
     expect(historyList).toContain("<AdminHistoryActions");
-    expect(historyActions).toContain("배정 취소");
+    expect(historyActions).toContain("adminHistoryText.actions.cancel.action");
+    expect(historyCopy).toContain('action: "배정 취소"');
     expect(historyActions).not.toContain("시험 전체 삭제");
-    expect(historyActions).toContain("내역 삭제");
-    expect(studentManager).toContain("학생 삭제");
+    expect(historyActions).toContain("adminHistoryText.actions.delete.action");
+    expect(historyCopy).toContain('action: "내역 삭제"');
+    expect(studentManager).toContain("adminStudentsText.account.delete");
+    expect(studentCopy).toContain('delete: "학생 삭제"');
     expect(learningActivityList).toContain("<AdminHistoryActions");
     expect(assignmentPage).not.toContain("listAssignments()");
     expect(assignmentPage).not.toContain("<AssignmentManagementList");

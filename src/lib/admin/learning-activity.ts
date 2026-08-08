@@ -8,6 +8,31 @@ export type LearningActivityBucket =
   | "completed"
   | "archived";
 
+export type LearningActivitySection =
+  | "open"
+  | "needs_attention"
+  | "completed"
+  | "archived";
+
+export type LearningActivityOrderInput = {
+  status: AssignmentHistorySummary["status"];
+  phase?: AssignmentHistorySummary["phase"];
+  assignedAt: string | null;
+  availableUntil: string | null;
+  startedAt: string | null;
+  initialCompletedAt?: string | null;
+  completedAt: string | null;
+  missedAt: string | null;
+  cancelledAt?: string | null;
+  deadlineAt: string | null;
+  activityAt: string;
+  assignmentDeleted?: boolean;
+  passed?: boolean | null;
+  finalScore?: number | null;
+  passingScore: number;
+  unresolvedWrongCount?: number | null;
+};
+
 export type LearningHistoryPurposeFilter =
   | "all"
   | "regular"
@@ -27,9 +52,7 @@ function timestamp(value: string | null | undefined, fallback = 0) {
   return Number.isNaN(parsed) ? fallback : parsed;
 }
 
-export function learningActivityEffectiveAt(
-  item: AssignmentHistorySummary,
-) {
+export function learningActivityEffectiveAt(item: LearningActivityOrderInput) {
   if (item.status === "cancelled") {
     return item.cancelledAt ?? item.activityAt;
   }
@@ -43,77 +66,92 @@ export function learningActivityEffectiveAt(
     return item.completedAt ?? item.activityAt;
   }
   if (item.status === "in_progress") {
-    return item.startedAt ?? item.activityAt;
+    return item.phase === "review"
+      ? item.initialCompletedAt ?? item.startedAt ?? item.activityAt
+      : item.startedAt ?? item.activityAt;
   }
   return item.assignedAt ?? item.activityAt;
 }
 
-export function activityPassed(item: AssignmentHistorySummary) {
+export function activityPassed(item: LearningActivityOrderInput) {
   if (item.status !== "completed") return false;
-  if (item.finalScore === null) return item.passed === true;
+  if (item.finalScore == null) return item.passed === true;
   return item.finalScore >= item.passingScore;
 }
 
-export function activityNeedsRetry(item: AssignmentHistorySummary) {
+export function activityNeedsRetry(item: LearningActivityOrderInput) {
   const retryStatus =
     item.status === "expired" ||
     (item.status === "completed" && !activityPassed(item));
   return (
     retryStatus &&
-    (item.unresolvedWrongCount === null || item.unresolvedWrongCount > 0)
+    (item.unresolvedWrongCount == null || item.unresolvedWrongCount > 0)
   );
 }
 
 export function learningActivityBucket(
-  item: AssignmentHistorySummary,
+  item: LearningActivityOrderInput,
 ): LearningActivityBucket {
-  if (item.assignmentDeleted || item.status === "cancelled") {
-    return "archived";
-  }
+  const section = learningActivitySection(item);
+  if (section === "archived") return "archived";
+  if (section === "needs_attention") return "needs_attention";
+  if (section === "completed") return "completed";
   if (item.status === "not_started") {
     return item.availableUntil
       ? "open_with_deadline"
       : "open_without_deadline";
   }
-  if (item.status === "in_progress") return "in_progress";
+  return "in_progress";
+}
+
+export function learningActivitySection(
+  item: LearningActivityOrderInput,
+): LearningActivitySection {
+  if (item.assignmentDeleted || item.status === "cancelled") {
+    return "archived";
+  }
   if (
     item.status === "missed" ||
-    activityNeedsRetry(item)
+    item.status === "expired" ||
+    (item.status === "in_progress" && item.phase === "review") ||
+    (item.status === "completed" && !activityPassed(item))
   ) {
     return "needs_attention";
   }
-  return "completed";
+  if (item.status === "completed") return "completed";
+  return "open";
 }
 
-const bucketOrder: Record<LearningActivityBucket, number> = {
-  open_without_deadline: 0,
-  open_with_deadline: 1,
-  in_progress: 2,
-  needs_attention: 3,
-  completed: 4,
-  archived: 5,
+const sectionOrder: Record<LearningActivitySection, number> = {
+  open: 0,
+  needs_attention: 1,
+  completed: 2,
+  archived: 3,
 };
 
 export function compareLearningActivities(
-  left: AssignmentHistorySummary,
-  right: AssignmentHistorySummary,
+  left: LearningActivityOrderInput,
+  right: LearningActivityOrderInput,
 ) {
-  const leftBucket = learningActivityBucket(left);
-  const rightBucket = learningActivityBucket(right);
-  const bucketDifference = bucketOrder[leftBucket] - bucketOrder[rightBucket];
-  if (bucketDifference !== 0) return bucketDifference;
+  const leftSection = learningActivitySection(left);
+  const rightSection = learningActivitySection(right);
+  const sectionDifference =
+    sectionOrder[leftSection] - sectionOrder[rightSection];
+  if (sectionDifference !== 0) return sectionDifference;
 
-  if (leftBucket === "open_without_deadline") {
-    return timestamp(left.assignedAt) - timestamp(right.assignedAt);
-  }
-  if (leftBucket === "open_with_deadline") {
-    return (
+  if (leftSection === "open") {
+    const deadlinePresenceDifference =
+      Number(left.availableUntil !== null) -
+      Number(right.availableUntil !== null);
+    if (deadlinePresenceDifference !== 0) {
+      return deadlinePresenceDifference;
+    }
+    const deadlineDifference =
       timestamp(left.availableUntil, Number.MAX_SAFE_INTEGER) -
-      timestamp(right.availableUntil, Number.MAX_SAFE_INTEGER)
-    );
-  }
-  if (leftBucket === "in_progress") {
-    return timestamp(left.startedAt) - timestamp(right.startedAt);
+      timestamp(right.availableUntil, Number.MAX_SAFE_INTEGER);
+    return deadlineDifference !== 0
+      ? deadlineDifference
+      : timestamp(right.assignedAt) - timestamp(left.assignedAt);
   }
 
   const leftFinishedAt = learningActivityEffectiveAt(left);
@@ -142,19 +180,10 @@ export function matchesLearningHistoryFilters(
     return false;
   }
 
-  const bucket = learningActivityBucket(item);
-  if (
-    filters.status === "open" &&
-    !["open_without_deadline", "open_with_deadline", "in_progress"].includes(
-      bucket,
-    )
-  ) {
-    return false;
-  }
+  const section = learningActivitySection(item);
   if (
     filters.status !== "all" &&
-    filters.status !== "open" &&
-    bucket !== filters.status
+    section !== filters.status
   ) {
     return false;
   }
@@ -187,15 +216,14 @@ export function overviewActivityGroups(items: AssignmentHistorySummary[]) {
     ),
   );
   return {
-    missed: sorted.filter((item) => item.status === "missed"),
-    failed: sorted.filter(
-      (item) => activityNeedsRetry(item),
+    open: sorted.filter(
+      (item) => learningActivitySection(item) === "open",
     ),
-    dueSoon: sorted.filter(
-      (item) => item.status === "not_started" && item.availableUntil !== null,
+    needsAttention: sorted.filter(
+      (item) => learningActivitySection(item) === "needs_attention",
     ),
-    noDeadline: sorted.filter(
-      (item) => item.status === "not_started" && item.availableUntil === null,
+    completed: sorted.filter(
+      (item) => learningActivitySection(item) === "completed",
     ),
   };
 }

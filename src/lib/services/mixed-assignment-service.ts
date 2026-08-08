@@ -26,12 +26,12 @@ import {
   loadActiveReviewAssignments,
 } from "@/lib/services/active-review-assignment-service";
 import { loadEligibleVocabularyDataset } from "@/lib/services/eligible-vocabulary-service";
+import { loadDatasetDisplayLabel } from "@/lib/services/dataset-catalog-service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type {
   AssignmentCapacityInput,
   MixedAssignmentInput,
 } from "@/lib/validation";
-import { datasetDisplayLabel } from "@/lib/ui/dataset-display";
 
 const REVIEW_QUEUE_PAGE_SIZE = 1000;
 const MAX_ASSIGNMENT_TITLE_LENGTH = 160;
@@ -205,8 +205,7 @@ function calculateMixedMaximum(
 }
 
 function generatedMixedTitle(
-  datasetTitle: string,
-  datasetEdition: string | null,
+  datasetLabel: string,
   units: readonly MixedAssignmentUnit[],
   reviewCount: number,
 ) {
@@ -215,7 +214,7 @@ function generatedMixedTitle(
       ? units[0].unitLabel
       : `${units[0].unitLabel}~${units.at(-1)?.unitLabel}`;
   return [
-    datasetDisplayLabel(datasetTitle, datasetEdition),
+    datasetLabel,
     unitRange,
     `틀렸던 단어 ${reviewCount}개 포함`,
   ]
@@ -563,6 +562,11 @@ export async function prepareMixedAssignmentBatch(
   const selectedQueueIds = prepared.selectedQueueRows.map(
     (queue) => queue.id,
   );
+  const supabase = await createServerSupabaseClient();
+  const datasetLabel = await loadDatasetDisplayLabel(
+    supabase,
+    prepared.dataset,
+  );
 
   return {
     studentId: input.studentId,
@@ -572,8 +576,7 @@ export async function prepareMixedAssignmentBatch(
     title:
       input.title ||
       generatedMixedTitle(
-        prepared.dataset.title,
-        prepared.dataset.edition,
+        datasetLabel,
         prepared.primaryUnits,
         prepared.selectedQueueRows.length,
       ),

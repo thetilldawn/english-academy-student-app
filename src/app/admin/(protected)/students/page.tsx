@@ -48,6 +48,7 @@ export default async function StudentsPage({
     listStudentLearningSources(),
   ]);
   const history = historyBundle.history;
+  const currentHistory = historyBundle.currentHistory;
   const vocabBookHistory = buildStudentVocabBookHistory(
     historyBundle.completeHistory,
     new Map(units.map((unit) => [unit.id, unit.displayName])),
@@ -66,6 +67,7 @@ export default async function StudentsPage({
         currentVocabWrongSummaries={currentVocabWrongSummaries}
         datasets={datasets}
         history={history}
+        currentHistory={currentHistory}
         initialStudentId={initialStudentId}
         learningSources={learningSources}
         pendingReviewSummaries={pendingReviewSummaries}

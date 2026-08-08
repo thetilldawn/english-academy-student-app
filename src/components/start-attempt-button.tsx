@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui-button";
+import { studentAppText } from "@/content/ko/student-app";
 
 type StartResponse = {
   attemptId?: string;
@@ -30,13 +32,13 @@ export function StartAttemptButton({
       const payload = (await response.json()) as StartResponse;
 
       if (!response.ok || !payload.attemptId) {
-        setError(payload.error ?? "시험을 시작할 수 없습니다.");
+        setError(payload.error ?? studentAppText.actions.startError);
         return;
       }
 
       router.push(`/student/attempt/${payload.attemptId}`);
     } catch {
-      setError("연결을 확인한 뒤 다시 시도해주세요.");
+      setError(studentAppText.actions.networkError);
     } finally {
       setSubmitting(false);
     }
@@ -44,14 +46,15 @@ export function StartAttemptButton({
 
   return (
     <div className="action-stack">
-      <button
-        className="button button-primary"
+      <Button
         disabled={disabled || submitting}
         onClick={start}
-        type="button"
+        variant="primary"
       >
-        {submitting ? "시험 준비 중…" : "시험 시작"}
-      </button>
+        {submitting
+          ? studentAppText.actions.startPending
+          : studentAppText.actions.start}
+      </Button>
       {error && (
         <span className="inline-error" role="alert">
           {error}

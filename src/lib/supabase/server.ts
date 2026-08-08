@@ -24,10 +24,6 @@ export async function createServerSupabaseClient() {
               cookieStore.set(cookie.name, cookie.value, {
                 ...cookie.options,
                 ...adminAuthCookieOptions(),
-                maxAge:
-                  cookie.options.maxAge === 0
-                    ? 0
-                    : adminAuthCookieOptions().maxAge,
               });
             }
           } catch {

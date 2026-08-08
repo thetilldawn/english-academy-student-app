@@ -37,7 +37,7 @@ describe("student code security", () => {
     expect(hashStudentSessionToken(token, key)).toMatch(/^[A-F0-9]{64}$/);
   });
 
-  it("운영 쿠키는 180일·HttpOnly·SameSite=Lax를 사용한다", () => {
+  it("운영 쿠키는 60일·HttpOnly·SameSite=Lax를 사용한다", () => {
     const options = getStudentCookieOptions();
     expect(options.httpOnly).toBe(true);
     expect(options.sameSite).toBe("lax");

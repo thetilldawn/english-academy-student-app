@@ -15,6 +15,7 @@ import {
   STUDENT_CODE_LENGTH,
 } from "@/lib/auth/student-code-input";
 import { studentAppText } from "@/content/ko/student-app";
+import { Button } from "@/components/ui-button";
 
 type LoginResponse = {
   error?: string;
@@ -69,7 +70,7 @@ export function StudentLoginForm() {
     }
 
     if (code.length !== STUDENT_CODE_LENGTH) {
-      setError("접속코드 12자리를 모두 입력해주세요.");
+      setError(studentAppText.login.incompleteCode);
       codeInputRef.current?.focus();
       return;
     }
@@ -94,7 +95,7 @@ export function StudentLoginForm() {
       const payload = (await response.json()) as LoginResponse;
 
       if (!response.ok) {
-        setError(payload.error ?? "접속코드를 확인해주세요.");
+        setError(payload.error ?? studentAppText.login.invalidCode);
         requestInFlight.current = false;
         setSubmitting(false);
         return;
@@ -104,8 +105,8 @@ export function StudentLoginForm() {
     } catch {
       setError(
         controller.signal.aborted
-          ? "응답이 늦어지고 있습니다. 다시 시도해주세요."
-          : "연결을 확인한 뒤 다시 시도해주세요.",
+          ? studentAppText.login.timeout
+          : studentAppText.login.network,
       );
       requestInFlight.current = false;
       setSubmitting(false);
@@ -207,10 +208,11 @@ export function StudentLoginForm() {
           {error}
         </div>
       )}
-      <button
-        className="button button-primary button-large"
+      <Button
         disabled={submitting}
+        size="large"
         type="submit"
+        variant="primary"
       >
         {submitting ? (
           <span aria-hidden="true" className="button-spinner" />
@@ -218,7 +220,7 @@ export function StudentLoginForm() {
         {submitting
           ? studentAppText.login.submitting
           : studentAppText.login.submit}
-      </button>
+      </Button>
       <span aria-live="polite" className="sr-only" role="status">
         {submitting ? studentAppText.login.loading : ""}
       </span>

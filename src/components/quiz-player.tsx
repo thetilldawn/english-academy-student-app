@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 
 import { HelpTip } from "@/components/help-tip";
 import { studentAppText } from "@/content/ko/student-app";
+import { formatContentText } from "@/content/format";
 import {
   currentTimeMilliseconds,
   secondsUntil,
@@ -290,7 +291,7 @@ export function QuizPlayer({
       !timeWarningAnnounced.current
     ) {
       timeWarningAnnounced.current = true;
-      setTimeWarning("남은 시간이 30초입니다.");
+      setTimeWarning(studentAppText.attempt.timeWarning);
     }
   }, [remaining]);
 
@@ -325,7 +326,7 @@ export function QuizPlayer({
         const payload = (await response.json()) as AnswerResponse;
         if (!response.ok) {
           if (await tryRecover()) return;
-          throw new Error(payload.error ?? "답안을 저장하지 못했습니다.");
+          throw new Error(payload.error ?? studentAppText.attempt.saveError);
         }
         if (payload.expired) {
           router.replace(`/student/result/${attempt.id}`);
@@ -355,9 +356,7 @@ export function QuizPlayer({
           if (!payload.nextQuestionId || !payload.nextPhase) {
             void tryRecover().then((recovered) => {
               if (recovered) return;
-              setError(
-                "다음 문제 상태를 확인하지 못했습니다. 페이지를 새로고침해주세요.",
-              );
+              setError(studentAppText.attempt.stateError);
               setSubmitting(false);
             });
             return;
@@ -423,7 +422,7 @@ export function QuizPlayer({
         setError(
           requestError instanceof Error
             ? requestError.message
-            : "답안을 저장하지 못했습니다.",
+            : studentAppText.attempt.saveError,
         );
         setSubmitting(false);
       }
@@ -477,7 +476,7 @@ export function QuizPlayer({
     return (
       <section className="quiz-card">
         <div className="empty-state">
-          시험 상태를 정리하는 중입니다.
+          {studentAppText.attempt.finalizing}
         </div>
       </section>
     );
@@ -488,16 +487,20 @@ export function QuizPlayer({
       <div className="quiz-topline">
         <div>
           <p className="quiz-phase">
-            {attempt.phase === "retry" ? "재시험" : "첫 시험"}
+            {attempt.phase === "retry"
+              ? studentAppText.attempt.retryPhase
+              : studentAppText.attempt.initialPhase}
           </p>
           <strong>{attempt.assignmentTitle}</strong>
         </div>
         <span
-          aria-label={`${
-            attempt.timingMode === "per_question"
-              ? "문제당 "
-              : ""
-          }남은 시간 ${formatTime(remaining)}`}
+          aria-label={formatContentText(studentAppText.attempt.remaining, {
+            prefix:
+              attempt.timingMode === "per_question"
+                ? studentAppText.attempt.perQuestionPrefix
+                : "",
+            time: formatTime(remaining),
+          })}
           className={`timer ${remaining <= 30 ? "timer-warning" : ""}`}
         >
           {formatTime(remaining)}
@@ -505,7 +508,9 @@ export function QuizPlayer({
       </div>
 
       <div
-        aria-label={`진행률 ${progress}%`}
+        aria-label={formatContentText(studentAppText.attempt.progressAria, {
+          percent: progress,
+        })}
         aria-valuemax={100}
         aria-valuemin={0}
         aria-valuenow={progress}
@@ -518,7 +523,10 @@ export function QuizPlayer({
       <p className="quiz-direction">
         <span className="label-with-help">
           {attempt.phase === "retry"
-            ? `재시험 ${completedInPhase + 1}/${phaseQuestions.length}`
+            ? formatContentText(studentAppText.attempt.retryProgress, {
+                current: completedInPhase + 1,
+                total: phaseQuestions.length,
+              })
             : `${currentQuestion.orderIndex}/${attempt.questions.length}`}
           <HelpTip label={studentAppText.attempt.keyboardShortcutAria}>
             {studentAppText.attempt.keyboardShortcutHelp}
@@ -526,8 +534,8 @@ export function QuizPlayer({
         </span>
         <span className="sr-only">
           {currentQuestion.direction === "english_to_korean"
-            ? "알맞은 뜻을 고르세요"
-            : "알맞은 영어 단어를 고르세요"}
+            ? studentAppText.attempt.chooseMeaning
+            : studentAppText.attempt.chooseEnglish}
         </span>
       </p>
       {priorWrongIndicator && (
@@ -585,7 +593,10 @@ export function QuizPlayer({
         {currentQuestion.direction === "english_to_korean" &&
           currentQuestion.pronunciation.available && (
             <button
-              aria-label={`${currentQuestion.prompt} 발음 듣기`}
+              aria-label={formatContentText(
+                studentAppText.attempt.pronunciationAria,
+                { word: currentQuestion.prompt },
+              )}
               className="pronunciation-button pronunciation-button--prompt"
               onClick={() =>
                 playAudio(currentQuestion.pronunciation.audioUrl)
@@ -648,7 +659,10 @@ export function QuizPlayer({
               {currentQuestion.direction === "korean_to_english" &&
                 choiceAudioEnabled && (
                   <button
-                    aria-label={`${choice} 발음 듣기`}
+                    aria-label={formatContentText(
+                      studentAppText.attempt.pronunciationAria,
+                      { word: choice },
+                    )}
                     className="pronunciation-button pronunciation-button--choice"
                     disabled={submitting || answerCorrect !== null}
                     onClick={(event) => {
@@ -678,13 +692,13 @@ export function QuizPlayer({
           .join(" ")}
         role="alert"
       >
-        {answerCorrect === true && "정답입니다."}
+        {answerCorrect === true && studentAppText.attempt.correct}
         {answerCorrect === false &&
           (answerTimedOut
-            ? "시간 초과로 미응답 오답 처리했습니다."
+            ? studentAppText.attempt.timedOut
             : attempt.phase === "initial"
-              ? "오답입니다. 첫 시험 결과에서 다시 확인할 수 있습니다."
-              : "다시 확인할 단어로 남겼습니다.")}
+              ? studentAppText.attempt.wrongInitial
+              : studentAppText.attempt.wrongRetry)}
       </div>
       {error && (
         <div className="inline-error quiz-error" role="alert">

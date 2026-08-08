@@ -1,6 +1,7 @@
 import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
 import { HelpTip } from "@/components/help-tip";
 import { adminLearningText } from "@/content/ko/admin-learning";
+import { formatContentText } from "@/content/format";
 import type { ReviewDatasetSummary } from "@/lib/services/admin-service";
 
 export function ReviewDatasetPanel({
@@ -18,7 +19,7 @@ export function ReviewDatasetPanel({
       <div className="section-heading">
         <h2 className="label-with-help" id="review-dataset-heading">
           {adminLearningText.reviewDatasetPanel.title}
-          <HelpTip label="단어장 검토 도움말">
+          <HelpTip label={adminLearningText.reviewDatasetPanel.helpAria}>
             {adminLearningText.reviewDatasetPanel.help}
           </HelpTip>
         </h2>
@@ -37,12 +38,19 @@ export function ReviewDatasetPanel({
                   {dataset.edition && <p>{dataset.edition}</p>}
                 </div>
                 <MetaTagList>
-                  <MetaTag tone="warning">검토 전용</MetaTag>
-                  <MetaTag>{dataset.rowCount}개</MetaTag>
+                  <MetaTag tone="warning">
+                    {adminLearningText.reviewDatasetPanel.reviewOnly}
+                  </MetaTag>
+                  <MetaTag>
+                    {formatContentText(
+                      adminLearningText.reviewDatasetPanel.count,
+                      { count: dataset.rowCount },
+                    )}
+                  </MetaTag>
                 </MetaTagList>
               </div>
               <p className="review-dataset-gate">
-                원문 내용 검토 완료 · 단어 사전 연결 및 발음 승인 전
+                {adminLearningText.reviewDatasetPanel.status}
               </p>
               <ol className="review-entry-list">
                 {dataset.entries.map((entry) => (
@@ -56,7 +64,12 @@ export function ReviewDatasetPanel({
                 ))}
               </ol>
               {hiddenCount > 0 && (
-                <p className="list-meta">외 {hiddenCount}개는 다음 검토 묶음</p>
+                <p className="list-meta">
+                  {formatContentText(
+                    adminLearningText.reviewDatasetPanel.hidden,
+                    { count: hiddenCount },
+                  )}
+                </p>
               )}
             </article>
           );

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { QuizPlayer } from "@/components/quiz-player";
+import { studentAppText } from "@/content/ko/student-app";
 import { requireStudentSession } from "@/lib/auth/student-session";
 import {
   currentTimeMilliseconds,
@@ -10,7 +11,7 @@ import {
 import { getStudentAttempt } from "@/lib/services/quiz-service";
 
 export const metadata: Metadata = {
-  title: "단어 시험",
+  title: studentAppText.attempt.metadataTitle,
 };
 
 export default async function AttemptPage({

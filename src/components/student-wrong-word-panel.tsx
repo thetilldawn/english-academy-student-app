@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import {
   type WrongWordAggregate,
@@ -10,15 +11,19 @@ import {
 import { formatKoreanDateTime } from "@/lib/format";
 import { HelpTip } from "@/components/help-tip";
 import { adminStudentsText } from "@/content/ko/admin-students";
+import { formatContentText } from "@/content/format";
+import { SelectField } from "@/components/ui-select";
+import { Button, buttonClassNames } from "@/components/ui-button";
 
 type LevelFilter = "all" | "once" | "repeated";
 type SelectionPurpose = "next_exam" | "worksheet";
 const WRONG_HISTORY_CACHE_TTL_MS = 30_000;
 
 function outcomeLabel(outcome: WrongWordOutcome) {
-  if (outcome === "recovered_on_retry") return "재시험에서 정답";
-  if (outcome === "wrong_again") return "재시험에서도 오답";
-  return "재시험 미응답";
+  const copy = adminStudentsText.learning.wrongWordsPanel;
+  if (outcome === "recovered_on_retry") return copy.retryRecovered;
+  if (outcome === "wrong_again") return copy.retryWrong;
+  return copy.retryUnanswered;
 }
 
 function matchesQuery(
@@ -140,10 +145,6 @@ export function StudentWrongWordPanel({
   const [cancellingDraftId, setCancellingDraftId] = useState<
     string | null
   >(null);
-  const [queueError, setQueueError] = useState("");
-  const [queueNotice, setQueueNotice] = useState("");
-  const [worksheetError, setWorksheetError] = useState("");
-  const [worksheetNotice, setWorksheetNotice] = useState("");
 
   useEffect(() => {
     const cacheIsFresh =
@@ -173,7 +174,8 @@ export function StudentWrongWordPanel({
         };
         if (!response.ok || !payload.history) {
           throw new Error(
-            payload.error ?? "오답 단어를 불러오지 못했습니다.",
+            payload.error ??
+              adminStudentsText.learning.wrongWordsPanel.loadError,
           );
         }
         onLoaded(studentId, payload.history);
@@ -184,7 +186,7 @@ export function StudentWrongWordPanel({
         setError(
           requestError instanceof Error
             ? requestError.message
-            : "오답 단어를 불러오지 못했습니다.",
+            : adminStudentsText.learning.wrongWordsPanel.loadError,
         );
         setForceRefresh(false);
       })
@@ -383,8 +385,6 @@ export function StudentWrongWordPanel({
           ? current.filter((value) => value !== questionId)
           : [...current, questionId],
       );
-      setQueueError("");
-      setQueueNotice("");
       return;
     }
     setWorksheetSelectedQuestionIds((current) =>
@@ -394,8 +394,6 @@ export function StudentWrongWordPanel({
           ? [...current, questionId]
           : current,
     );
-    setWorksheetError("");
-    setWorksheetNotice("");
     setWorksheetExportUrl("");
   }
 
@@ -412,25 +410,17 @@ export function StudentWrongWordPanel({
       setSelectedQuestionIds(
         allVisibleSelected ? [] : selectableFilteredQuestionIds,
       );
-      setQueueError("");
-      setQueueNotice("");
       return;
     }
     setWorksheetSelectedQuestionIds(
       allVisibleSelected ? [] : activeSelectableQuestionIds,
     );
-    setWorksheetError("");
-    setWorksheetNotice("");
     setWorksheetExportUrl("");
   }
 
   function resetSelectionFeedback() {
     setSelectedQuestionIds([]);
     setWorksheetSelectedQuestionIds([]);
-    setQueueError("");
-    setQueueNotice("");
-    setWorksheetError("");
-    setWorksheetNotice("");
     setWorksheetExportUrl("");
   }
 
@@ -440,14 +430,11 @@ export function StudentWrongWordPanel({
       requestingRef.current ||
       queueing ||
       worksheetRequesting ||
-      validWorksheetSelectedQuestionIds.length === 0 ||
-      validWorksheetSelectedQuestionIds.length > 50
+      validSelectedQuestionIds.length === 0
     ) {
       return;
     }
     setQueueing(true);
-    setQueueError("");
-    setQueueNotice("");
 
     try {
       const response = await fetch(
@@ -467,19 +454,22 @@ export function StudentWrongWordPanel({
       if (!response.ok || !payload.queueIds) {
         throw new Error(
           payload.error ??
-            "오답 단어를 다음 시험 대기열에 추가하지 못했습니다.",
+            adminStudentsText.learning.wrongWordsPanel.queueError,
         );
       }
-      setQueueNotice(
-        `${payload.queueIds.length}개 단어를 다음 시험 대기열에 추가했습니다.`,
+      toast.success(
+        formatContentText(
+          adminStudentsText.learning.wrongWordsPanel.queueSuccess,
+          { count: payload.queueIds.length },
+        ),
       );
       setSelectedQuestionIds([]);
       refreshHistory();
     } catch (requestError) {
-      setQueueError(
+      toast.error(
         requestError instanceof Error
           ? requestError.message
-          : "오답 단어를 다음 시험 대기열에 추가하지 못했습니다.",
+          : adminStudentsText.learning.wrongWordsPanel.queueError,
       );
       refreshHistory();
     } finally {
@@ -493,14 +483,13 @@ export function StudentWrongWordPanel({
       requestingRef.current ||
       queueing ||
       worksheetRequesting ||
-      validSelectedQuestionIds.length === 0
+      validWorksheetSelectedQuestionIds.length === 0 ||
+      validWorksheetSelectedQuestionIds.length > 50
     ) {
       return;
     }
 
     setWorksheetRequesting(true);
-    setWorksheetError("");
-    setWorksheetNotice("");
     setWorksheetExportUrl("");
 
     try {
@@ -524,22 +513,29 @@ export function StudentWrongWordPanel({
       };
       if (!response.ok || !payload.request || !payload.exportUrl) {
         throw new Error(
-          payload.error ?? "해석 시험지 요청을 저장하지 못했습니다.",
+          payload.error ??
+            adminStudentsText.learning.wrongWordsPanel.worksheetError,
         );
       }
 
-      setWorksheetNotice(
+      toast.success(
         payload.request.reused
-          ? `${payload.request.itemCount}개 단어의 같은 요청이 이미 저장되어 있습니다.`
-          : `${payload.request.itemCount}개 단어를 해석 시험지 요청함에 담았습니다.`,
+          ? formatContentText(
+              adminStudentsText.learning.wrongWordsPanel.worksheetDuplicate,
+              { count: payload.request.itemCount },
+            )
+          : formatContentText(
+              adminStudentsText.learning.wrongWordsPanel.worksheetSuccess,
+              { count: payload.request.itemCount },
+            ),
       );
       setWorksheetSelectedQuestionIds([]);
       setWorksheetExportUrl(payload.exportUrl);
     } catch (requestError) {
-      setWorksheetError(
+      toast.error(
         requestError instanceof Error
           ? requestError.message
-          : "해석 시험지 요청을 저장하지 못했습니다.",
+          : adminStudentsText.learning.wrongWordsPanel.worksheetError,
       );
     } finally {
       setWorksheetRequesting(false);
@@ -558,8 +554,6 @@ export function StudentWrongWordPanel({
     }
 
     setCancellingDraftId(draftId);
-    setQueueError("");
-    setQueueNotice("");
     try {
       const response = await fetch(
         `/api/admin/students/${studentId}/review-assignment-drafts/${draftId}`,
@@ -576,18 +570,19 @@ export function StudentWrongWordPanel({
         payload.queueDisposition !== "pending"
       ) {
         throw new Error(
-          payload.error ?? "재시험 준비를 취소하지 못했습니다.",
+          payload.error ??
+            adminStudentsText.learning.wrongWordsPanel.cancelDraftError,
         );
       }
-      setQueueNotice(
-        "재시험 준비를 취소했습니다. 오답은 다음 일반 시험 대기에 남아 있습니다.",
+      toast.success(
+        adminStudentsText.learning.wrongWordsPanel.cancelDraftSuccess,
       );
       refreshHistory();
     } catch (requestError) {
-      setQueueError(
+      toast.error(
         requestError instanceof Error
           ? requestError.message
-          : "재시험 준비를 취소하지 못했습니다.",
+          : adminStudentsText.learning.wrongWordsPanel.cancelDraftError,
       );
     } finally {
       setCancellingDraftId(null);
@@ -600,7 +595,7 @@ export function StudentWrongWordPanel({
         aria-busy="true"
         className="student-dialog-panel empty-state"
       >
-        오답 단어를 불러오는 중…
+        {adminStudentsText.learning.wrongWordsPanel.loading}
       </section>
     );
   }
@@ -611,13 +606,11 @@ export function StudentWrongWordPanel({
         <div className="notice notice-error" role="alert">
           {error}
         </div>
-        <button
-          className="button button-secondary"
+        <Button
           onClick={refreshHistory}
-          type="button"
         >
-          다시 불러오기
-        </button>
+          {adminStudentsText.learning.wrongWordsPanel.retryLoad}
+        </Button>
       </section>
     );
   }
@@ -625,7 +618,7 @@ export function StudentWrongWordPanel({
   if (!cachedHistory) {
     return (
       <section className="student-dialog-panel empty-state">
-        오답 탭을 열면 이력을 불러옵니다.
+        {adminStudentsText.learning.wrongWordsPanel.openToLoad}
       </section>
     );
   }
@@ -634,23 +627,27 @@ export function StudentWrongWordPanel({
     <section className="student-dialog-panel wrong-word-panel">
       <div className="wrong-word-refresh-row">
         {loading ? (
-          <span>최신 오답 이력을 확인하는 중…</span>
+          <span>{adminStudentsText.learning.wrongWordsPanel.refreshing}</span>
         ) : (
           <span className="label-with-help">
-            오답 반영 기준
-            <HelpTip label="오답 반영 기준 도움말">
+            {adminStudentsText.learning.wrongWordsPanel.refreshBasis}
+            <HelpTip
+              label={
+                adminStudentsText.learning.wrongWordsPanel.refreshBasisHelpAria
+              }
+            >
               {adminStudentsText.learning.wrongHistoryRefreshHelp}
             </HelpTip>
           </span>
         )}
-        <button
-          className="button button-quiet button-small"
+        <Button
           disabled={loading || queueing || worksheetRequesting}
           onClick={refreshHistory}
-          type="button"
+          size="small"
+          variant="quiet"
         >
-          새로고침
-        </button>
+          {adminStudentsText.learning.wrongWordsPanel.refresh}
+        </Button>
       </div>
       {error && (
         <div className="notice notice-error" role="alert">
@@ -659,40 +656,78 @@ export function StudentWrongWordPanel({
       )}
       <div className="wrong-word-summary-grid">
         <div>
-          <span>누적 오답</span>
-          <strong>{cachedHistory.wrongEventCount}회</strong>
+          <span>{adminStudentsText.learning.wrongWordsPanel.summary.event}</span>
+          <strong>
+            {formatContentText(
+              adminStudentsText.learning.wrongWordsPanel.summary.times,
+              { count: cachedHistory.wrongEventCount },
+            )}
+          </strong>
         </div>
         <div>
-          <span>현재 오답 단어</span>
-          <strong>{cachedHistory.uniqueWordCount}개</strong>
+          <span>
+            {adminStudentsText.learning.wrongWordsPanel.summary.current}
+          </span>
+          <strong>
+            {formatContentText(
+              adminStudentsText.learning.wrongWordsPanel.summary.count,
+              { count: cachedHistory.uniqueWordCount },
+            )}
+          </strong>
         </div>
         <div>
-          <span>누적 1회</span>
-          <strong>{cachedHistory.onceWrongWordCount}개</strong>
+          <span>{adminStudentsText.learning.wrongWordsPanel.summary.once}</span>
+          <strong>
+            {formatContentText(
+              adminStudentsText.learning.wrongWordsPanel.summary.count,
+              { count: cachedHistory.onceWrongWordCount },
+            )}
+          </strong>
         </div>
         <div>
-          <span>누적 2회 이상</span>
-          <strong>{cachedHistory.repeatedWrongWordCount}개</strong>
+          <span>
+            {adminStudentsText.learning.wrongWordsPanel.summary.repeated}
+          </span>
+          <strong>
+            {formatContentText(
+              adminStudentsText.learning.wrongWordsPanel.summary.count,
+              { count: cachedHistory.repeatedWrongWordCount },
+            )}
+          </strong>
         </div>
         <div>
-          <span>다음 시험 대기</span>
-          <strong>{cachedHistory.pendingReviewCount}개</strong>
+          <span>
+            {adminStudentsText.learning.wrongWordsPanel.summary.pending}
+          </span>
+          <strong>
+            {formatContentText(
+              adminStudentsText.learning.wrongWordsPanel.summary.count,
+              { count: cachedHistory.pendingReviewCount },
+            )}
+          </strong>
         </div>
       </div>
       {pendingReviewActions.activeDrafts.length > 0 && (
         <div className="notice">
           <p>
-            이전 방식으로 준비 중인 재시험이 있습니다. 취소하면 단어는
-            다음 일반 시험 대기에 그대로 남습니다.
+            {adminStudentsText.learning.wrongWordsPanel.legacyDraftNotice}
           </p>
           {pendingReviewActions.activeDrafts.map((draft) => (
             <div className="wrong-word-draft-actions" key={draft.draftId}>
               <span>
-                {`${datasetLabelById.get(draft.datasetId) ?? "단어장"} · ${draft.questionIds.length}개`}
+                {formatContentText(
+                  adminStudentsText.learning.wrongWordsPanel.draftSummary,
+                  {
+                    dataset:
+                      datasetLabelById.get(draft.datasetId) ??
+                      adminStudentsText.learning.wrongWordsPanel
+                        .wordbookFallback,
+                    count: draft.questionIds.length,
+                  },
+                )}
               </span>
-              <button
+              <Button
                 aria-busy={cancellingDraftId === draft.draftId}
-                className="button button-quiet button-small"
                 disabled={
                   loading ||
                   queueing ||
@@ -702,12 +737,13 @@ export function StudentWrongWordPanel({
                 onClick={() =>
                   void cancelReviewAssignmentDraft(draft.draftId)
                 }
-                type="button"
+                size="small"
+                variant="quiet"
               >
                 {cancellingDraftId === draft.draftId
-                  ? "취소하는 중…"
-                  : "재시험 준비 취소"}
-              </button>
+                  ? adminStudentsText.learning.wrongWordsPanel.canceling
+                  : adminStudentsText.learning.wrongWordsPanel.cancelDraft}
+              </Button>
             </div>
           ))}
         </div>
@@ -716,47 +752,60 @@ export function StudentWrongWordPanel({
       <div id="wrong-word-aggregate-panel">
           <div className="wrong-word-filter-grid">
             <label className="field">
-              <span className="field-label">단어 검색</span>
+              <span className="field-label">
+                {adminStudentsText.learning.wrongWordsPanel.search}
+              </span>
               <input
                 onChange={(event) => {
                   setQuery(event.target.value);
                   resetSelectionFeedback();
                 }}
-                placeholder="영어·뜻·단어장"
+                placeholder={
+                  adminStudentsText.learning.wrongWordsPanel.searchPlaceholder
+                }
                 type="search"
                 value={query}
               />
             </label>
             <label className="field">
-              <span className="field-label">단어장</span>
-              <select
+              <span className="field-label">
+                {adminStudentsText.learning.wrongWordsPanel.wordbook}
+              </span>
+              <SelectField
                 onChange={(event) => {
                   setDatasetFilter(event.target.value);
                   resetSelectionFeedback();
                 }}
                 value={datasetFilter}
               >
-                <option value="">전체 단어장</option>
+                <option value="">
+                  {adminStudentsText.learning.wrongWordsPanel.allWordbooks}
+                </option>
                 {datasetOptions.map((dataset) => (
                   <option key={dataset.id} value={dataset.id}>
                     {dataset.label}
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </label>
           </div>
           <div
-            aria-label="오답 횟수 필터"
+            aria-label={
+              adminStudentsText.learning.wrongWordsPanel.levelFilterAria
+            }
             className="filter-chip-row"
           >
             {(
               [
-                ["all", "전체"],
-                ["once", "누적 1회"],
-                ["repeated", "누적 2회 이상"],
+                ["all", adminStudentsText.learning.wrongWordsPanel.all],
+                ["once", adminStudentsText.learning.wrongWordsPanel.once],
+                [
+                  "repeated",
+                  adminStudentsText.learning.wrongWordsPanel.repeated,
+                ],
               ] as const
             ).map(([value, label]) => (
-              <button
+              <Button
                 aria-pressed={levelFilter === value}
                 className="filter-chip"
                 key={value}
@@ -767,42 +816,53 @@ export function StudentWrongWordPanel({
                   setLevelFilter(value);
                   resetSelectionFeedback();
                 }}
-                type="button"
+                size="small"
+                variant="quiet"
               >
                 {label}
-              </button>
+              </Button>
             ))}
           </div>
           <div
-            aria-label="오답 단어 작업"
+            aria-label={adminStudentsText.learning.wrongWordsPanel.purposeAria}
             className="filter-chip-row wrong-word-purpose-row"
             role="group"
           >
             {(
               [
-                ["next_exam", "다음 시험"],
-                ["worksheet", "해석 시험지"],
+                [
+                  "next_exam",
+                  adminStudentsText.learning.wrongWordsPanel.nextExam,
+                ],
+                [
+                  "worksheet",
+                  adminStudentsText.learning.wrongWordsPanel.worksheet,
+                ],
               ] as const
             ).map(([value, label]) => (
-              <button
+              <Button
                 aria-pressed={selectionPurpose === value}
                 className="filter-chip"
                 key={value}
                 onClick={() => setSelectionPurpose(value)}
-                type="button"
+                size="small"
+                variant="quiet"
               >
                 {label}
-              </button>
+              </Button>
             ))}
-            <HelpTip label="오답 단어 작업 도움말">
+            <HelpTip
+              label={
+                adminStudentsText.learning.wrongWordsPanel.purposeHelpAria
+              }
+            >
               {selectionPurpose === "worksheet"
                 ? adminStudentsText.learning.worksheetWrongWordHelp
                 : adminStudentsText.learning.nextExamWrongWordHelp}
             </HelpTip>
           </div>
           <div className="wrong-word-selection-bar">
-            <button
-              className="button button-quiet button-small"
+            <Button
               disabled={
                 queueing ||
                 worksheetRequesting ||
@@ -810,18 +870,23 @@ export function StudentWrongWordPanel({
                 activeSelectableQuestionIds.length === 0
               }
               onClick={toggleVisibleQuestions}
-              type="button"
+              size="small"
+              variant="quiet"
             >
-              {allVisibleSelected ? "보이는 선택 해제" : "보이는 단어 선택"}
-            </button>
+              {allVisibleSelected
+                ? adminStudentsText.learning.wrongWordsPanel.clearVisible
+                : adminStudentsText.learning.wrongWordsPanel.selectVisible}
+            </Button>
             <span aria-live="polite">
-              {activeSelectedQuestionIds.length}개 선택
+              {formatContentText(
+                adminStudentsText.learning.wrongWordsPanel.selectedCount,
+                { count: activeSelectedQuestionIds.length },
+              )}
             </span>
             <div className="wrong-word-selection-actions">
               {selectionPurpose === "worksheet" ? (
-                <button
+                <Button
                   aria-busy={worksheetRequesting}
-                  className="button button-secondary button-small"
                   disabled={
                     loading ||
                     queueing ||
@@ -830,16 +895,17 @@ export function StudentWrongWordPanel({
                     validWorksheetSelectedQuestionIds.length > 50
                   }
                   onClick={createWorksheetRequest}
-                  type="button"
+                  size="small"
                 >
                   {worksheetRequesting
-                    ? "담는 중…"
-                    : "해석 시험지에 담기"}
-                </button>
+                    ? adminStudentsText.learning.wrongWordsPanel
+                        .worksheetPending
+                    : adminStudentsText.learning.wrongWordsPanel
+                        .addToWorksheet}
+                </Button>
               ) : (
-                <button
+                <Button
                   aria-busy={queueing}
-                  className="button button-primary button-small"
                   disabled={
                     loading ||
                     queueing ||
@@ -847,54 +913,33 @@ export function StudentWrongWordPanel({
                     validSelectedQuestionIds.length === 0
                   }
                   onClick={queueSelectedWords}
-                  type="button"
+                  size="small"
+                  variant="primary"
                 >
-                  {queueing ? "추가하는 중…" : "다음 시험에 추가"}
-                </button>
+                  {queueing
+                    ? adminStudentsText.learning.wrongWordsPanel.queuePending
+                    : adminStudentsText.learning.wrongWordsPanel.addToNextExam}
+                </Button>
               )}
             </div>
           </div>
-          {queueError && (
-            <div className="notice notice-error" role="alert">
-              {queueError}
-            </div>
-          )}
-          {queueNotice && (
-            <div
-              aria-live="polite"
-              className="notice notice-success"
-              role="status"
-            >
-              {queueNotice}
-            </div>
-          )}
-          {worksheetError && (
-            <div className="notice notice-error" role="alert">
-              {worksheetError}
-            </div>
-          )}
-          {worksheetNotice && (
-            <div
-              aria-live="polite"
-              className="notice notice-success"
-              role="status"
-            >
-              {worksheetNotice}
-            </div>
-          )}
           {worksheetExportUrl && (
             <a
-              className="button button-quiet button-small wrong-word-export-link"
+              className={buttonClassNames({
+                className: "wrong-word-export-link",
+                size: "small",
+                variant: "quiet",
+              })}
               download
               href={worksheetExportUrl}
             >
-              익명 기준본 JSON 받기
+              {adminStudentsText.learning.wrongWordsPanel.downloadJson}
             </a>
           )}
 
           {filteredWords.length === 0 ? (
             <div className="empty-state">
-              조건에 맞는 오답 단어가 없습니다.
+              {adminStudentsText.learning.wrongWordsPanel.empty}
             </div>
           ) : (
             <div className="wrong-word-list wrong-word-list-with-actions">
@@ -942,10 +987,18 @@ export function StudentWrongWordPanel({
                       type="checkbox"
                     />
                     <span className="sr-only">
-                      {word.headword}을(를){" "}
-                      {selectionPurpose === "worksheet"
-                        ? "해석 시험지에 담기"
-                        : "다음 시험에 추가"}
+                      {formatContentText(
+                        adminStudentsText.learning.wrongWordsPanel.wordAria,
+                        {
+                          word: word.headword,
+                          action:
+                            selectionPurpose === "worksheet"
+                              ? adminStudentsText.learning.wrongWordsPanel
+                                  .addToWorksheet
+                              : adminStudentsText.learning.wrongWordsPanel
+                                  .addToNextExam,
+                        },
+                      )}
                     </span>
                   </label>
                   <div className="wrong-word-copy">
@@ -973,19 +1026,24 @@ export function StudentWrongWordPanel({
                       }`}
                     >
                       {nextExamTarget?.resolution === "resolved"
-                        ? "해결됨"
+                        ? adminStudentsText.learning.wrongWordsPanel.resolved
                         : nextExamTarget?.scheduling === "assigned"
-                          ? "배정 중"
+                          ? adminStudentsText.learning.wrongWordsPanel.assigned
                           : nextExamTarget?.scheduling === "queued"
-                            ? "다음 시험 대기"
-                            : "추가 가능"}
+                            ? adminStudentsText.learning.wrongWordsPanel.pending
+                            : adminStudentsText.learning.wrongWordsPanel
+                                .available}
                     </span>
                     <span
                       className={`status-pill wrong-level-${word.wrongLevel}`}
                     >
                       {word.wrongLevel === 1
-                        ? "누적 1회"
-                        : `누적 ${word.wrongCount}회`}
+                        ? adminStudentsText.learning.wrongWordsPanel.once
+                        : formatContentText(
+                            adminStudentsText.learning.wrongWordsPanel
+                              .wrongCount,
+                            { count: word.wrongCount },
+                          )}
                     </span>
                     <span>{outcomeLabel(word.latestOutcome)}</span>
                     <small>

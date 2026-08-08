@@ -68,10 +68,14 @@ describe("assignment order and timing database contract", () => {
     const timeoutRoute = source(
       "src/app/api/student/attempts/[id]/timeouts/route.ts",
     );
+    const copy = source("src/content/ko/student-app.ts");
 
     expect(player).toContain("attempt.timerDeadlineAt");
     expect(player).toContain('choiceIndex === null ? "timeouts" : "answers"');
-    expect(player).toContain("시간 초과로 미응답 오답 처리했습니다.");
+    expect(player).toContain("studentAppText.attempt.timedOut");
+    expect(copy).toContain(
+      'timedOut: "시간 초과로 미응답 오답 처리했습니다."',
+    );
     expect(quizService).toContain('"answer_quiz_question_v2"');
     expect(timeoutRoute).toContain("timeoutStudentQuestion");
   });

@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { DeadlineCountdown } from "@/components/deadline-countdown";
 import { StartAttemptButton } from "@/components/start-attempt-button";
 import { AttemptScoreSummary } from "@/components/attempt-score-summary";
+import { ButtonLink } from "@/components/ui-button";
 import { studentAppText } from "@/content/ko/student-app";
+import { formatContentText } from "@/content/format";
 import { requireStudentSession } from "@/lib/auth/student-session";
 import {
   currentTimeMilliseconds,
   secondsUntil,
 } from "@/lib/deadline";
-import { assignmentOrderLabel } from "@/lib/admin/history";
+import {
+  assignmentOrderLabel,
+  assignmentTypeLabel,
+} from "@/lib/admin/history";
 import { formatKoreanDateTime } from "@/lib/format";
 import { listStudentAssignments } from "@/lib/services/quiz-service";
 import { buildAttemptStatusPresentation } from "@/lib/ui/attempt-score-presentation";
@@ -32,6 +36,46 @@ function statusPresentation(assignment: StudentAssignment) {
     passingScore: assignment.passingScore,
     retryStartedAt: assignment.lastRetryStartedAt,
   });
+}
+
+function assignmentTimeLabel(assignment: StudentAssignment) {
+  const copy = studentAppText.dashboard.time;
+  if (assignment.missed) {
+    return formatContentText(copy.missed, {
+      datetime: formatKoreanDateTime(
+        assignment.missedAt ?? assignment.availableUntil,
+      ),
+    });
+  }
+  if (assignment.lastStatus === "expired") {
+    return formatContentText(copy.expired, {
+      datetime: formatKoreanDateTime(assignment.lastDeadlineAt),
+    });
+  }
+  if (assignment.lastStatus === "completed") {
+    return formatContentText(copy.completed, {
+      datetime: formatKoreanDateTime(assignment.lastCompletedAt),
+    });
+  }
+  if (assignment.lastStatus === "in_progress") {
+    if (assignment.lastPhase === "review") {
+      return formatContentText(copy.failed, {
+        datetime: formatKoreanDateTime(
+          assignment.lastInitialCompletedAt ?? assignment.lastStartedAt,
+        ),
+      });
+    }
+    return formatContentText(copy.started, {
+      datetime: formatKoreanDateTime(assignment.lastStartedAt),
+    });
+  }
+  return assignment.availableUntil
+    ? formatContentText(copy.deadline, {
+        datetime: formatKoreanDateTime(assignment.availableUntil),
+      })
+    : formatContentText(copy.assignedWithoutDeadline, {
+        datetime: formatKoreanDateTime(assignment.assignedAt),
+      });
 }
 
 function AssignmentCard({
@@ -59,7 +103,7 @@ function AssignmentCard({
       <div className="title-with-status">
         <div>
           <p className="eyebrow">{assignment.datasetTitle}</p>
-          <h3>{assignment.title}</h3>
+          <h3>{assignment.displayTitle}</h3>
         </div>
         <span
           className={`status-pill ${statusPresentation(assignment).className}`}
@@ -70,24 +114,33 @@ function AssignmentCard({
 
       <div className="assignment-details">
         <span className="detail-chip">
+          {assignmentTypeLabel(assignment.assignmentPurpose)}
+        </span>
+        <span className="detail-chip">
           {assignment.scopeLabel}
         </span>
         {assignment.assignmentPurpose !== "review" && (
           <span className="detail-chip">
-            <strong>{assignment.questionCount}</strong>문항
+            {formatContentText(studentAppText.dashboard.meta.questionCount, {
+              count: assignment.questionCount,
+            })}
           </span>
         )}
         <span className="detail-chip">
-          {assignment.timingMode === "per_question"
-            ? <>
-                문제당 <strong>{assignment.questionTimeLimitSeconds}</strong>초
-              </>
-            : <>
-                전체 <strong>{Math.ceil(assignment.timeLimitSeconds / 60)}</strong>분
-              </>}
+            {assignment.timingMode === "per_question"
+              ? formatContentText(
+                  studentAppText.dashboard.meta.perQuestion,
+                  { seconds: assignment.questionTimeLimitSeconds ?? 0 },
+                )
+              : formatContentText(
+                  studentAppText.dashboard.meta.totalMinutes,
+                  { minutes: Math.ceil(assignment.timeLimitSeconds / 60) },
+                )}
         </span>
         <span className="detail-chip">
-          <strong>{assignment.passingScore}</strong>점 통과
+          {formatContentText(studentAppText.dashboard.meta.passingScore, {
+            score: assignment.passingScore,
+          })}
         </span>
         <span className="detail-chip">
           {assignmentOrderLabel(
@@ -96,6 +149,10 @@ function AssignmentCard({
           )}
         </span>
       </div>
+
+      <small className="card-time-meta">
+        {assignmentTimeLabel(assignment)}
+      </small>
 
       {(assignment.lastInitialScore !== null || assignment.missed) && (
         <AttemptScoreSummary
@@ -113,12 +170,6 @@ function AssignmentCard({
         assignment.lastStatus === null &&
         initialDeadlineRemaining !== null && (
           <div className="assignment-deadline">
-            <span>
-              {studentAppText.dashboard.deadline}{" "}
-              <strong>
-                {formatKoreanDateTime(assignment.availableUntil)}
-              </strong>
-            </span>
             <DeadlineCountdown
               deadlineAt={assignment.availableUntil}
               initialRemainingSeconds={initialDeadlineRemaining}
@@ -131,40 +182,38 @@ function AssignmentCard({
         {assignment.lastStatus === "in_progress" &&
           assignment.lastPhase === "review" &&
           assignment.lastAttemptId && (
-            <Link
-              className="button button-primary"
+            <ButtonLink
               href={`/student/result/${assignment.lastAttemptId}`}
             >
               {studentAppText.dashboard.resultAndRetry}
-            </Link>
+            </ButtonLink>
           )}
         {assignment.lastStatus === "in_progress" &&
           assignment.lastPhase !== "review" &&
           assignment.lastAttemptId && (
-            <Link
-              className="button button-primary"
+            <ButtonLink
               href={`/student/attempt/${assignment.lastAttemptId}`}
             >
               {studentAppText.dashboard.resume}
-            </Link>
+            </ButtonLink>
           )}
         {assignment.lastStatus === "completed" &&
           assignment.lastAttemptId && (
-            <Link
-              className="button button-secondary"
+            <ButtonLink
+              variant="secondary"
               href={`/student/result/${assignment.lastAttemptId}`}
             >
               {studentAppText.dashboard.result}
-            </Link>
+            </ButtonLink>
           )}
         {assignment.lastStatus === "expired" &&
           assignment.lastAttemptId && (
-            <Link
-              className="button button-quiet"
+            <ButtonLink
+              variant="quiet"
               href={`/student/result/${assignment.lastAttemptId}`}
             >
               {studentAppText.dashboard.expiredResult}
-            </Link>
+            </ButtonLink>
           )}
         {assignment.canStart &&
           assignment.lastStatus !== "in_progress" && (
@@ -175,38 +224,32 @@ function AssignmentCard({
   );
 }
 
-function selectPrimaryAssignment(assignments: StudentAssignment[]) {
-  return (
-    assignments.find(
-      (assignment) => assignment.lastStatus === "in_progress",
-    ) ??
-    assignments.find(
-      (assignment) =>
-        assignment.canStart && assignment.lastStatus !== "completed",
-    ) ??
-    assignments.find((assignment) => assignment.canStart) ??
-    assignments[0]
-  );
-}
-
 export default async function StudentDashboardPage() {
   const session = await requireStudentSession();
   const assignments = await listStudentAssignments(session.studentId);
-  const primaryAssignment = selectPrimaryAssignment(assignments);
-  const otherAssignments = primaryAssignment
-    ? assignments.filter(
-        (assignment) => assignment.id !== primaryAssignment.id,
-      )
-    : [];
-  const primaryHeading =
-    primaryAssignment?.lastPhase === "review"
-      ? studentAppText.dashboard.firstResult
-      : primaryAssignment?.missed
-        ? studentAppText.dashboard.expired
-      : primaryAssignment?.lastStatus === "in_progress" ||
-    primaryAssignment?.canStart
-      ? studentAppText.dashboard.current
-      : studentAppText.dashboard.recent;
+  const sections = [
+    {
+      id: "open",
+      title: studentAppText.dashboard.sections.open,
+      assignments: assignments.filter(
+        (assignment) => assignment.activitySection === "open",
+      ),
+    },
+    {
+      id: "needs-attention",
+      title: studentAppText.dashboard.sections.needsAttention,
+      assignments: assignments.filter(
+        (assignment) => assignment.activitySection === "needs_attention",
+      ),
+    },
+    {
+      id: "completed",
+      title: studentAppText.dashboard.sections.completed,
+      assignments: assignments.filter(
+        (assignment) => assignment.activitySection === "completed",
+      ),
+    },
+  ].filter((section) => section.assignments.length > 0);
 
   return (
     <main className="content student-content" id="main-content">
@@ -219,45 +262,42 @@ export default async function StudentDashboardPage() {
         </div>
       </div>
 
-      {!primaryAssignment ? (
+      {sections.length === 0 ? (
         <div className="empty-state">
           {studentAppText.dashboard.emptyTitle}
           <br />
           {studentAppText.dashboard.emptyHelp}
         </div>
       ) : (
-        <>
-          <section aria-labelledby="primary-assignment-heading">
-            <div className="section-heading">
-              <h2 id="primary-assignment-heading">{primaryHeading}</h2>
-            </div>
-            <AssignmentCard assignment={primaryAssignment} featured />
-          </section>
-
-          {otherAssignments.length > 0 && (
+        <div className="student-assignment-sections">
+          {sections.map((section, sectionIndex) => (
             <section
-              aria-labelledby="other-assignments-heading"
-              className="section"
+              aria-labelledby={`student-assignment-${section.id}`}
+              className={sectionIndex === 0 ? undefined : "section"}
+              key={section.id}
             >
               <div className="section-heading">
-                <h2 id="other-assignments-heading">
-                  {studentAppText.dashboard.others}
+                <h2 id={`student-assignment-${section.id}`}>
+                  {section.title}
                 </h2>
                 <span className="detail-chip">
-                  <strong>{otherAssignments.length}</strong>건
+                  {formatContentText(studentAppText.dashboard.meta.sectionCount, {
+                    count: section.assignments.length,
+                  })}
                 </span>
               </div>
               <div className="student-assignment-grid">
-                {otherAssignments.map((assignment) => (
+                {section.assignments.map((assignment, assignmentIndex) => (
                   <AssignmentCard
                     assignment={assignment}
+                    featured={sectionIndex === 0 && assignmentIndex === 0}
                     key={assignment.id}
                   />
                 ))}
               </div>
             </section>
-          )}
-        </>
+          ))}
+        </div>
       )}
     </main>
   );

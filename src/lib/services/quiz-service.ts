@@ -5,6 +5,7 @@ import {
   type QuizVocabularyEntry,
 } from "@/lib/quiz/engine";
 import {
+  assignmentDisplayTitleForUnits,
   assignmentScopeLabel,
   type AssignmentPurpose,
 } from "@/lib/admin/history";
@@ -24,12 +25,20 @@ import {
   type QuestionProvenanceStatus,
 } from "@/lib/quiz/question-provenance";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
+import {
+  compareLearningActivities,
+  learningActivitySection,
+  type LearningActivityOrderInput,
+  type LearningActivitySection,
+} from "@/lib/admin/learning-activity";
+import { loadDatasetDisplayLabelMap } from "@/lib/services/dataset-catalog-service";
 import { finalizeStudentMissedAssignments } from "@/lib/services/missed-assignment-service";
 import { finalizeStaleQuizAttempts } from "@/lib/services/stale-attempt-service";
 
 export type StudentAssignmentSummary = {
   id: string;
   title: string;
+  displayTitle: string;
   datasetTitle: string;
   assignmentPurpose: AssignmentPurpose;
   scopeLabel: string;
@@ -47,9 +56,17 @@ export type StudentAssignmentSummary = {
   lastFinalScore: number | null;
   lastPassed: boolean | null;
   lastRetryStartedAt: string | null;
+  lastStartedAt: string | null;
+  lastInitialCompletedAt: string | null;
+  lastCompletedAt: string | null;
+  lastDeadlineAt: string | null;
+  lastUnresolvedWrongCount: number | null;
+  assignedAt: string;
   availableUntil: string | null;
+  missedAt: string | null;
   missed: boolean;
   canStart: boolean;
+  activitySection: Exclude<LearningActivitySection, "archived">;
 };
 
 export type AttemptQuestionState = {
@@ -128,7 +145,10 @@ type AttemptRow = {
   phase: "initial" | "review" | "retry" | "completed";
   attempt_number: number;
   started_at: string;
+  initial_completed_at: string | null;
   deadline_at: string;
+  completed_at: string | null;
+  unresolved_wrong_count: number | null;
   current_question_started_at: string;
   initial_score: number | string | null;
   final_score: number | string | null;
@@ -298,7 +318,7 @@ export async function listStudentAssignments(
   const supabase = getServiceSupabaseClient();
   const { data: linkData, error: linkError } = await supabase
     .from("assignment_students")
-    .select("assignment_id, missed_at, cancelled_at")
+    .select("assignment_id, assigned_at, missed_at, cancelled_at")
     .eq("student_id", studentId)
     .is("cancelled_at", null);
 
@@ -309,6 +329,9 @@ export async function listStudentAssignments(
   const assignmentIds = linkData.map((link) => link.assignment_id);
   const missedAtByAssignment = new Map(
     linkData.map((link) => [link.assignment_id, link.missed_at]),
+  );
+  const assignedAtByAssignment = new Map(
+    linkData.map((link) => [link.assignment_id, link.assigned_at]),
   );
   const [{ data: assignmentData }, { data: attemptData }] = await Promise.all([
     supabase
@@ -322,7 +345,7 @@ export async function listStudentAssignments(
     supabase
       .from("quiz_attempts")
       .select(
-        "id, assignment_id, status, phase, attempt_number, started_at, retry_started_at, deadline_at, initial_score, final_score, passed",
+        "id, assignment_id, status, phase, attempt_number, started_at, initial_completed_at, retry_started_at, deadline_at, completed_at, unresolved_wrong_count, initial_score, final_score, passed",
       )
       .eq("student_id", studentId)
       .in("assignment_id", assignmentIds)
@@ -338,7 +361,7 @@ export async function listStudentAssignments(
   ] = await Promise.all([
     supabase
       .from("vocab_datasets")
-      .select("id, title")
+      .select("id, title, edition")
       .in("id", datasetIds),
     supabase
       .from("assignment_units")
@@ -348,8 +371,13 @@ export async function listStudentAssignments(
       .in("assignment_id", assignmentIds)
       .order("position"),
   ]);
-  const datasetTitles = new Map(
-    (datasetData ?? []).map((dataset) => [dataset.id, dataset.title]),
+  const datasetTitles = await loadDatasetDisplayLabelMap(
+    supabase,
+    (datasetData ?? []).map((dataset) => ({
+      id: dataset.id,
+      title: dataset.title,
+      edition: dataset.edition,
+    })),
   );
   const unitLabelsByAssignment = new Map<string, string[]>();
   const primaryUnitLabelsByAssignment = new Map<string, string[]>();
@@ -378,7 +406,7 @@ export async function listStudentAssignments(
   }
 
   const now = Date.now();
-  return assignments.map((assignment) => {
+  const summaries = assignments.map((assignment) => {
     const unitLabels =
       unitLabelsByAssignment.get(assignment.id) ?? [];
     const primaryUnitLabels =
@@ -410,10 +438,46 @@ export async function listStudentAssignments(
       (!lastAttempt ||
         lastAttempt.status === "expired" ||
         assignment.retake_allowed);
+    const assignedAt =
+      assignedAtByAssignment.get(assignment.id) ??
+      assignment.available_from ??
+      new Date(0).toISOString();
+    const orderInput: LearningActivityOrderInput = {
+      status: missed
+        ? ("missed" as const)
+        : (lastAttempt?.status ?? "not_started"),
+      phase: lastAttempt?.phase ?? null,
+      assignedAt,
+      availableUntil: assignment.available_until,
+      startedAt: lastAttempt?.started_at ?? null,
+      initialCompletedAt:
+        lastAttempt?.initial_completed_at ?? null,
+      completedAt: lastAttempt?.completed_at ?? null,
+      missedAt,
+      deadlineAt: lastAttempt?.deadline_at ?? null,
+      activityAt:
+        lastAttempt?.completed_at ??
+        lastAttempt?.started_at ??
+        missedAt ??
+        assignedAt,
+      passed: lastAttempt?.passed ?? null,
+      finalScore:
+        lastAttempt?.final_score === null ||
+        lastAttempt?.final_score === undefined
+          ? null
+          : Number(lastAttempt.final_score),
+      passingScore: assignment.passing_score,
+      unresolvedWrongCount:
+        lastAttempt?.unresolved_wrong_count ?? null,
+    };
 
     return {
       id: assignment.id,
       title: assignment.title,
+      displayTitle: assignmentDisplayTitleForUnits(
+        assignment.title,
+        [...fallbackUnitLabels, ...primaryUnitLabels],
+      ),
       datasetTitle: datasetTitles.get(assignment.dataset_id) ?? "어휘",
       assignmentPurpose: assignment.assignment_purpose,
       scopeLabel: assignmentScopeLabel({
@@ -445,11 +509,65 @@ export async function listStudentAssignments(
           : Number(lastAttempt.final_score),
       lastPassed: lastAttempt?.passed ?? null,
       lastRetryStartedAt: lastAttempt?.retry_started_at ?? null,
+      lastStartedAt: lastAttempt?.started_at ?? null,
+      lastInitialCompletedAt:
+        lastAttempt?.initial_completed_at ?? null,
+      lastCompletedAt: lastAttempt?.completed_at ?? null,
+      lastDeadlineAt: lastAttempt?.deadline_at ?? null,
+      lastUnresolvedWrongCount:
+        lastAttempt?.unresolved_wrong_count ?? null,
+      assignedAt,
       availableUntil: assignment.available_until,
+      missedAt,
       missed,
       canStart,
+      activitySection: learningActivitySection(orderInput) as Exclude<
+        LearningActivitySection,
+        "archived"
+      >,
     };
   });
+
+  return summaries.toSorted((left, right) =>
+    compareLearningActivities(
+      {
+        status: left.missed ? "missed" : (left.lastStatus ?? "not_started"),
+        phase: left.lastPhase,
+        assignedAt: left.assignedAt,
+        availableUntil: left.availableUntil,
+        startedAt: left.lastStartedAt,
+        initialCompletedAt: left.lastInitialCompletedAt,
+        completedAt: left.lastCompletedAt,
+        missedAt: left.missedAt,
+        deadlineAt: left.lastDeadlineAt,
+        activityAt:
+          left.lastCompletedAt ?? left.lastStartedAt ?? left.assignedAt,
+        passed: left.lastPassed,
+        finalScore: left.lastFinalScore,
+        passingScore: left.passingScore,
+        unresolvedWrongCount: left.lastUnresolvedWrongCount,
+      },
+      {
+        status: right.missed
+          ? "missed"
+          : (right.lastStatus ?? "not_started"),
+        phase: right.lastPhase,
+        assignedAt: right.assignedAt,
+        availableUntil: right.availableUntil,
+        startedAt: right.lastStartedAt,
+        initialCompletedAt: right.lastInitialCompletedAt,
+        completedAt: right.lastCompletedAt,
+        missedAt: right.missedAt,
+        deadlineAt: right.lastDeadlineAt,
+        activityAt:
+          right.lastCompletedAt ?? right.lastStartedAt ?? right.assignedAt,
+        passed: right.lastPassed,
+        finalScore: right.lastFinalScore,
+        passingScore: right.passingScore,
+        unresolvedWrongCount: right.lastUnresolvedWrongCount,
+      },
+    ),
+  );
 }
 
 export async function startStudentAttempt(

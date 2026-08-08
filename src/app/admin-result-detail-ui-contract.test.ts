@@ -20,7 +20,7 @@ describe("admin result detail answer flow", () => {
     expect(page).toContain(
       '<span className="sr-only">',
     );
-    expect(page).toContain("재시험에서 맞힘");
+    expect(page).toContain("adminHistoryText.resultDetail.retryCorrectSr");
     expect(page).toContain(
       "<strong>{presentation.correctAnswer}</strong>",
     );

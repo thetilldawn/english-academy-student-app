@@ -4,6 +4,7 @@ import { AdminNavigation } from "@/components/admin-navigation";
 import { AdminLogoutButton } from "@/components/admin-logout-button";
 import { AdminPageTitle } from "@/components/admin-page-title";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationBootstrap } from "@/components/notification-bootstrap";
 import { adminShellText } from "@/content/ko/admin-shell";
 import { requireAdmin } from "@/lib/auth/admin";
 
@@ -14,6 +15,7 @@ export default async function AdminProtectedLayout({
 
   return (
     <div className="admin-app-shell">
+      <NotificationBootstrap role="admin" />
       <aside className="admin-sidebar">
         <Link className="mini-brand admin-sidebar-brand" href="/admin">
           <span className="mini-brand-mark" aria-hidden="true">

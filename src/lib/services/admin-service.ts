@@ -33,11 +33,17 @@ import {
 } from "@/lib/services/active-review-assignment-service";
 import { loadEligibleVocabularyDataset } from "@/lib/services/eligible-vocabulary-service";
 import {
+  loadDatasetDisplayLabel,
+  loadDatasetDisplayLabelMap,
+} from "@/lib/services/dataset-catalog-service";
+import {
   buildAssignmentHistory,
+  projectCurrentAssignmentHistory,
   type AssignmentHistorySource,
   type AssignmentHistorySummary,
   type AttemptHistorySource,
 } from "@/lib/admin/history";
+import { learningActivitySection } from "@/lib/admin/learning-activity";
 import type {
   QuestionOrderMode,
   TimingMode,
@@ -77,7 +83,7 @@ export type StudentSummary = {
   currentVocabDatasetId: string | null;
   status: "active" | "blocked";
   codeGeneration: number;
-  codeStatus: "active" | "blocked" | "missing";
+  codeStatus: "active" | "blocked" | "expired" | "missing";
   createdAt: string;
 };
 
@@ -280,6 +286,7 @@ type DatasetLabelRow = {
 type StudentCodeRow = {
   student_id: string;
   status: "active" | "blocked";
+  expires_at: string | null;
 };
 
 function oneRelation<T>(value: T | T[] | null): T | null {
@@ -302,7 +309,7 @@ export async function listStudents(): Promise<StudentSummary[]> {
       )
       .is("deleted_at", null)
       .order("display_name"),
-    supabase.from("student_codes").select("student_id, status"),
+    supabase.from("student_codes").select("student_id, status, expires_at"),
     supabase.from("vocab_datasets").select("id, title, edition"),
     loadDatasetCatalogMap(supabase),
   ]);
@@ -314,7 +321,11 @@ export async function listStudents(): Promise<StudentSummary[]> {
   const codeByStudent = new Map(
     ((codeData ?? []) as StudentCodeRow[]).map((code) => [
       code.student_id,
-      code.status,
+      code.status === "active" &&
+      code.expires_at !== null &&
+      Date.parse(code.expires_at) <= Date.now()
+        ? ("expired" as const)
+        : code.status,
     ]),
   );
   const datasetById = new Map(
@@ -524,12 +535,18 @@ export async function revealStudentCode(studentId: string): Promise<string> {
   const supabase = getServiceSupabaseClient();
   const { data, error } = await supabase
     .from("student_codes")
-    .select("encrypted_code, encryption_iv, encryption_tag")
+    .select("encrypted_code, encryption_iv, encryption_tag, status, expires_at")
     .eq("student_id", studentId)
     .maybeSingle();
 
   if (error || !data) {
     throw new Error("학생코드를 불러오지 못했습니다.");
+  }
+  if (
+    data.status !== "active" ||
+    (data.expires_at !== null && Date.parse(data.expires_at) <= Date.now())
+  ) {
+    throw new Error("만료되었거나 차단된 코드입니다. 코드를 교체해 주세요.");
   }
 
   const { error: auditError } = await supabase.from("audit_events").insert({
@@ -937,6 +954,7 @@ type HistoryAttemptRow = {
   final_score: number | string | null;
   passed: boolean | null;
   started_at: string;
+  initial_completed_at: string | null;
   retry_started_at: string | null;
   deadline_at: string;
   completed_at: string | null;
@@ -1015,7 +1033,7 @@ async function listAttemptHistoryRows(
     const { data, error } = await supabase
       .from("quiz_attempts")
       .select(
-        "id, assignment_id, student_id, attempt_number, status, phase, question_count_snapshot, time_limit_seconds_snapshot, passing_score_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, started_at, retry_started_at, deadline_at, completed_at",
+        "id, assignment_id, student_id, attempt_number, status, phase, question_count_snapshot, time_limit_seconds_snapshot, passing_score_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, started_at, initial_completed_at, retry_started_at, deadline_at, completed_at",
       )
       .order("started_at", { ascending: false })
       .order("id")
@@ -1058,6 +1076,7 @@ async function listHiddenHistoryEntries(
 export async function listAssignmentHistoryBundle(): Promise<{
   history: AssignmentHistorySummary[];
   completeHistory: AssignmentHistorySummary[];
+  currentHistory: AssignmentHistorySummary[];
 }> {
   await requireAdmin();
   await finalizeStaleQuizAttempts();
@@ -1079,6 +1098,19 @@ export async function listAssignmentHistoryBundle(): Promise<{
   ) {
     throw new Error("시험 배정과 응시 내역을 불러오지 못했습니다.");
   }
+  const historyDatasets = (
+    (assignmentStudentData ?? []) as HistoryAssignmentStudentRow[]
+  ).flatMap((row) => {
+    const assignment = oneRelation(row.assignment);
+    const dataset = assignment ? oneRelation(assignment.dataset) : null;
+    return assignment && dataset
+      ? [{ id: assignment.dataset_id, ...dataset }]
+      : [];
+  });
+  const datasetLabelById = await loadDatasetDisplayLabelMap(
+    supabase,
+    historyDatasets,
+  );
   const assignmentSources = (
     (assignmentStudentData ?? []) as HistoryAssignmentStudentRow[]
   ).flatMap((row): AssignmentHistorySource[] => {
@@ -1124,9 +1156,11 @@ export async function listAssignmentHistoryBundle(): Promise<{
         gradeLabel:
           student.deleted_at === null ? student.grade_label : null,
         datasetId: assignment.dataset_id,
-        datasetTitle: dataset
-          ? datasetDisplayLabel(dataset.title, dataset.edition)
-          : "단어장",
+        datasetTitle:
+          datasetLabelById.get(assignment.dataset_id) ??
+          (dataset
+            ? datasetDisplayLabel(dataset.title, dataset.edition)
+            : "단어장"),
         unitIds: orderedUnits.map((unit) => unit.id),
         unitLabels:
           orderedUnits.length > 0
@@ -1177,6 +1211,7 @@ export async function listAssignmentHistoryBundle(): Promise<{
         attempt.final_score === null ? null : Number(attempt.final_score),
       passed: attempt.passed,
       startedAt: attempt.started_at,
+      initialCompletedAt: attempt.initial_completed_at,
       retryStartedAt: attempt.retry_started_at,
       deadlineAt: attempt.deadline_at,
       completedAt: attempt.completed_at,
@@ -1201,16 +1236,24 @@ export async function listAssignmentHistoryBundle(): Promise<{
     assignmentSources,
     attemptSources,
   );
+  const completeCurrentHistory = projectCurrentAssignmentHistory(
+    completeHistory,
+  );
+  const isVisibleHistoryItem = (item: AssignmentHistorySummary) =>
+    item.attemptId
+      ? !hiddenAttempts.has(item.attemptId)
+      : !hiddenRecipients.has(
+          `${item.assignmentId}\u0000${item.studentId}`,
+        );
 
   return {
     completeHistory,
-    history: completeHistory.filter((item) =>
-      item.attemptId
-        ? !hiddenAttempts.has(item.attemptId)
-        : !hiddenRecipients.has(
-            `${item.assignmentId}\u0000${item.studentId}`,
-          ),
+    currentHistory: completeCurrentHistory.filter(
+      (item) =>
+        isVisibleHistoryItem(item) &&
+        learningActivitySection(item) !== "archived",
     ),
+    history: completeHistory.filter(isVisibleHistoryItem),
   };
 }
 
@@ -1218,6 +1261,12 @@ export async function listAssignmentHistory(): Promise<
   AssignmentHistorySummary[]
 > {
   return (await listAssignmentHistoryBundle()).history;
+}
+
+export async function listCurrentAssignmentHistory(): Promise<
+  AssignmentHistorySummary[]
+> {
+  return (await listAssignmentHistoryBundle()).currentHistory;
 }
 
 export type RegularAssignmentInput = {
@@ -1354,10 +1403,8 @@ export async function prepareRegularAssignment(
     sortedUnits.length === 1
       ? sortedUnits[0].unit_label
       : `${sortedUnits[0].unit_label}~${sortedUnits.at(-1)?.unit_label}`;
-  const generatedTitle = [
-    datasetDisplayLabel(dataset.title, dataset.edition),
-    unitRangeLabel,
-  ].join(" · ");
+  const datasetLabel = await loadDatasetDisplayLabel(supabase, dataset);
+  const generatedTitle = [datasetLabel, unitRangeLabel].join(" · ");
 
   return {
     title: input.title || generatedTitle,
@@ -1486,11 +1533,9 @@ export async function listAssignments(): Promise<AssignmentSummary[]> {
     if (label) labels.push(label);
     unitLabelsByAssignment.set(link.assignment_id, labels);
   }
-  const datasetTitleById = new Map(
-    (datasetData ?? []).map((dataset) => [
-      dataset.id,
-      datasetDisplayLabel(dataset.title, dataset.edition),
-    ]),
+  const datasetTitleById = await loadDatasetDisplayLabelMap(
+    supabase,
+    datasetData ?? [],
   );
 
   return (data ?? []).map((assignment) => ({

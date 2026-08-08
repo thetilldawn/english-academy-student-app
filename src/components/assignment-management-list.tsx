@@ -2,8 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
+import { Button } from "@/components/ui-button";
+import { formatContentText } from "@/content/format";
+import { adminLearningText } from "@/content/ko/admin-learning";
 import { assignmentDisplayTitle } from "@/lib/admin/history";
 import type { AssignmentSummary } from "@/lib/services/admin-service";
 
@@ -12,16 +16,26 @@ type ErrorResponse = {
 };
 
 function statusLabel(status: AssignmentSummary["status"]) {
-  if (status === "active") return "배정 중";
-  if (status === "closed") return "마감";
-  return "준비 중";
+  if (status === "active") {
+    return adminLearningText.assignmentManagement.status.active;
+  }
+  if (status === "closed") {
+    return adminLearningText.assignmentManagement.status.closed;
+  }
+  return adminLearningText.assignmentManagement.status.draft;
 }
 
 function assignmentRangeLabel(item: AssignmentSummary) {
   if (item.unitLabels.length > 0) {
     return item.unitLabels.join(", ");
   }
-  return `원본 행 ${item.rangeStart.toLocaleString()}~${item.rangeEnd.toLocaleString()}`;
+  return formatContentText(
+    adminLearningText.assignmentManagement.originalRows,
+    {
+      start: item.rangeStart.toLocaleString(),
+      end: item.rangeEnd.toLocaleString(),
+    },
+  );
 }
 
 export function AssignmentManagementList({
@@ -31,20 +45,19 @@ export function AssignmentManagementList({
 }) {
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [error, setError] = useState("");
 
   async function deleteAssignment(item: AssignmentSummary) {
     if (
       busyId ||
-      !window.confirm(
-        `"${item.title}" 시험 전체를 삭제할까요?\n\n학생 화면에서는 사라지고, 이미 완료된 성적은 보존되어 내역에 '삭제됨'으로 표시됩니다. 진행 중인 응시가 있으면 삭제되지 않습니다.`,
-      )
+      !window.confirm(formatContentText(
+        adminLearningText.assignmentManagement.delete.confirm,
+        { title: item.title },
+      ))
     ) {
       return;
     }
 
     setBusyId(item.id);
-    setError("");
     try {
       const response = await fetch(`/api/admin/assignments/${item.id}`, {
         method: "DELETE",
@@ -53,14 +66,17 @@ export function AssignmentManagementList({
         .json()
         .catch(() => ({}))) as ErrorResponse;
       if (!response.ok) {
-        throw new Error(payload.error ?? "시험을 삭제하지 못했습니다.");
+        throw new Error(
+          payload.error ?? adminLearningText.assignmentManagement.delete.error,
+        );
       }
+      toast.success(adminLearningText.assignmentManagement.delete.success);
       router.refresh();
     } catch (requestError) {
-      setError(
+      toast.error(
         requestError instanceof Error
           ? requestError.message
-          : "시험을 삭제하지 못했습니다.",
+          : adminLearningText.assignmentManagement.delete.error,
       );
     } finally {
       setBusyId(null);
@@ -68,16 +84,15 @@ export function AssignmentManagementList({
   }
 
   if (items.length === 0) {
-    return <div className="empty-state">관리할 시험이 없습니다.</div>;
+    return (
+      <div className="empty-state">
+        {adminLearningText.assignmentManagement.empty}
+      </div>
+    );
   }
 
   return (
     <div className="assignment-management-panel">
-      {error && (
-        <div className="notice notice-error" role="alert">
-          {error}
-        </div>
-      )}
       <div className="assignment-management-list">
         {items.map((item) => (
           <article className="card assignment-management-item" key={item.id}>
@@ -99,19 +114,31 @@ export function AssignmentManagementList({
               <MetaTagList>
                 <MetaTag>{item.datasetTitle}</MetaTag>
                 <MetaTag>{assignmentRangeLabel(item)}</MetaTag>
-                <MetaTag>{item.questionCount}문항</MetaTag>
-                <MetaTag>학생 {item.studentCount}명</MetaTag>
+                <MetaTag>
+                  {formatContentText(
+                    adminLearningText.assignmentManagement.questionCount,
+                    { count: item.questionCount },
+                  )}
+                </MetaTag>
+                <MetaTag>
+                  {formatContentText(
+                    adminLearningText.assignmentManagement.studentCount,
+                    { count: item.studentCount },
+                  )}
+                </MetaTag>
               </MetaTagList>
             </div>
-            <button
+            <Button
               aria-busy={busyId === item.id}
-              className="button button-danger button-small"
               disabled={busyId !== null}
               onClick={() => void deleteAssignment(item)}
-              type="button"
+              size="small"
+              variant="danger"
             >
-              {busyId === item.id ? "삭제 중…" : "시험 전체 삭제"}
-            </button>
+              {busyId === item.id
+                ? adminLearningText.assignmentManagement.delete.pending
+                : adminLearningText.assignmentManagement.delete.action}
+            </Button>
           </article>
         ))}
       </div>

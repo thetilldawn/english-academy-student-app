@@ -2,7 +2,10 @@ import type { Metadata, Viewport } from "next";
 import { Source_Serif_4 } from "next/font/google";
 import Script from "next/script";
 
+import "pretendard/dist/web/variable/pretendardvariable.css";
 import "@/app/globals.css";
+import { AppToaster } from "@/components/app-toaster";
+import { commonText } from "@/content/ko/common";
 
 const serifEn = Source_Serif_4({
   subsets: ["latin"],
@@ -13,10 +16,10 @@ const serifEn = Source_Serif_4({
 
 export const metadata: Metadata = {
   title: {
-    default: "영어 학습실",
-    template: "%s | 영어 학습실",
+    default: commonText.app.title,
+    template: commonText.app.titleTemplate,
   },
-  description: "학생별 단어 시험과 오답을 관리하는 영어 학습 앱",
+  description: commonText.app.description,
   robots: {
     index: false,
     follow: false,
@@ -43,9 +46,10 @@ export default function RootLayout({
           {`try{var t=localStorage.getItem("english-academy-theme");if(t!=="light"&&t!=="dark"){t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t}catch(e){}`}
         </Script>
         <a className="skip-link" href="#main-content">
-          본문 바로가기
+          {commonText.app.skipToContent}
         </a>
         {children}
+        <AppToaster />
       </body>
     </html>
   );

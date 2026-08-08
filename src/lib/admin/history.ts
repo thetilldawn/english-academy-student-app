@@ -58,6 +58,7 @@ export type AttemptHistorySource = {
   finalScore: number | null;
   passed: boolean | null;
   startedAt: string;
+  initialCompletedAt?: string | null;
   retryStartedAt: string | null;
   deadlineAt: string;
   completedAt: string | null;
@@ -77,6 +78,7 @@ export type AssignmentHistorySummary = AssignmentHistorySource & {
   finalScore: number | null;
   passed: boolean | null;
   startedAt: string | null;
+  initialCompletedAt?: string | null;
   retryStartedAt: string | null;
   deadlineAt: string | null;
   completedAt: string | null;
@@ -97,7 +99,7 @@ export function assignmentTypeLabel(
 ) {
   if (assignmentPurpose === "review") return "오답 재시험";
   if (assignmentPurpose === "mixed") return "틀린 단어 포함";
-  return "일반 시험";
+  return "단어 시험";
 }
 
 export function assignmentUnitRangeLabel(
@@ -225,6 +227,7 @@ export function buildAssignmentHistory(
         finalScore: null,
         passed: null,
         startedAt: null,
+        initialCompletedAt: null,
         retryStartedAt: null,
         deadlineAt: null,
         completedAt: null,
@@ -259,6 +262,7 @@ export function buildAssignmentHistory(
         finalScore: attempt.finalScore,
         passed: attempt.passed,
         startedAt: attempt.startedAt,
+        initialCompletedAt: attempt.initialCompletedAt ?? null,
         retryStartedAt: attempt.retryStartedAt,
         deadlineAt: attempt.deadlineAt,
         completedAt: attempt.completedAt,
@@ -270,5 +274,33 @@ export function buildAssignmentHistory(
     (left, right) =>
       Date.parse(right.activityAt) - Date.parse(left.activityAt),
   );
+}
+
+export function projectCurrentAssignmentHistory(
+  items: AssignmentHistorySummary[],
+) {
+  const latestByRecipient = new Map<string, AssignmentHistorySummary>();
+  for (const item of items) {
+    const key = pairKey(item.assignmentId, item.studentId);
+    const current = latestByRecipient.get(key);
+    if (!current) {
+      latestByRecipient.set(key, item);
+      continue;
+    }
+    const attemptDifference =
+      (item.attemptNumber ?? -1) - (current.attemptNumber ?? -1);
+    const activityDifference =
+      Date.parse(item.activityAt) - Date.parse(current.activityAt);
+    if (
+      attemptDifference > 0 ||
+      (attemptDifference === 0 && activityDifference > 0) ||
+      (attemptDifference === 0 &&
+        activityDifference === 0 &&
+        item.id.localeCompare(current.id) > 0)
+    ) {
+      latestByRecipient.set(key, item);
+    }
+  }
+  return [...latestByRecipient.values()];
 }
 import type { QuestionOrderMode } from "@/lib/admin/assignment-settings";

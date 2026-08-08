@@ -14,12 +14,15 @@ describe("DAY 문제은행 응시 계약", () => {
     const eligibleLoader = source(
       "src/lib/services/eligible-vocabulary-service.ts",
     );
+    const copy = source("src/content/ko/admin-learning.ts");
 
-    expect(manager).toContain("시작 {unitTerm}");
-    expect(manager).toContain("끝 {unitTerm}");
-    expect(manager).toContain("무작위");
-    expect(manager).toContain("오름차순");
-    expect(manager).toContain("내림차순");
+    expect(manager).toContain("adminLearningText.assignmentModal.range.start");
+    expect(manager).toContain("adminLearningText.assignmentModal.range.end");
+    expect(manager).toContain("adminLearningText.controls.order.random");
+    expect(manager).toContain("adminLearningText.controls.order.ascending");
+    expect(manager).toContain("adminLearningText.controls.order.descending");
+    expect(copy).toContain('start: "시작 {unit}"');
+    expect(copy).toContain('end: "끝 {unit}"');
     expect(adminService).toContain(
       '"create_assignment_with_delivery_v5"',
     );

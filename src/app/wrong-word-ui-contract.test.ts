@@ -50,6 +50,7 @@ describe("wrong-word admin UI contract", () => {
     const panel = source(
       "src/components/student-wrong-word-panel.tsx",
     );
+    const copy = source("src/content/ko/admin-students.ts");
     const queueFunction = panel.slice(
       panel.indexOf("async function queueSelectedWords()"),
       panel.indexOf("async function createWorksheetRequest()"),
@@ -61,7 +62,10 @@ describe("wrong-word admin UI contract", () => {
     );
     expect(queueFunction).toContain("refreshHistory()");
     expect(queueFunction).not.toContain("worksheetSelectedQuestionIds");
-    expect(panel).toContain("다음 시험에 추가");
+    expect(panel).toContain(
+      "adminStudentsText.learning.wrongWordsPanel.addToNextExam",
+    );
+    expect(copy).toContain('addToNextExam: "다음 시험에 추가"');
     expect(panel).toContain(
       'target.scheduling === "available"',
     );
@@ -98,10 +102,18 @@ describe("wrong-word admin UI contract", () => {
       '"cancel_student_vocab_review_assignment_draft"',
     );
     expect(panel).toContain('method: "DELETE"');
-    expect(panel).toContain("재시험 준비 취소");
-    expect(panel).toContain("다음 일반 시험 대기에 남아 있습니다");
-    expect(panel).toContain("이전 방식으로 준비 중인 재시험");
-    expect(panel).toContain("다음 시험 대기");
+    expect(panel).toContain(
+      "adminStudentsText.learning.wrongWordsPanel.cancelDraft",
+    );
+    expect(panel).toContain(
+      "adminStudentsText.learning.wrongWordsPanel.cancelDraftSuccess",
+    );
+    expect(panel).toContain(
+      "adminStudentsText.learning.wrongWordsPanel.legacyDraftNotice",
+    );
+    expect(panel).toContain(
+      "adminStudentsText.learning.wrongWordsPanel.pending",
+    );
     expect(dialog).toContain('method: "DELETE"');
     expect(dialog).toContain(
       "adminLearningText.reviewAssignmentModal.cancelDraft",
@@ -118,7 +130,9 @@ describe("wrong-word admin UI contract", () => {
     );
     expect(manager).toContain('"learning" | "account" | "history"');
     expect(manager).toContain("<StudentWrongWordPanel");
-    expect(manager).toContain("단어 학습 관리");
+    expect(manager).toContain(
+      "adminStudentsText.learning.vocabularyManagement",
+    );
     expect(manager).toContain("initialDatasetId={learningSourceDatasetId}");
     expect(panel).toContain(
       "/api/admin/students/${studentId}/wrong-words",
@@ -126,10 +140,15 @@ describe("wrong-word admin UI contract", () => {
     expect(panel).toContain('cache: "no-store"');
     expect(panel).toContain("AbortController");
     expect(panel).toContain("WRONG_HISTORY_CACHE_TTL_MS");
-    expect(panel).toContain("새로고침");
+    expect(panel).toContain(
+      "adminStudentsText.learning.wrongWordsPanel.refresh",
+    );
     expect(panel).toContain("useState(initialDatasetId)");
-    expect(manager).toContain("moveDialogTabFocus");
-    expect(panel).toContain("누적 2회 이상");
+    expect(manager).toContain("<Tabs");
+    expect(manager).toContain("ariaLabel={adminStudentsText.detail.tabsAria}");
+    expect(panel).toContain(
+      "adminStudentsText.learning.wrongWordsPanel.repeated",
+    );
     expect(panel).toContain('type="checkbox"');
     expect(panel).toContain(
       'nextExamTarget?.scheduling === "queued"',
@@ -137,9 +156,15 @@ describe("wrong-word admin UI contract", () => {
     expect(panel).toContain(
       'nextExamTarget?.scheduling === "assigned"',
     );
-    expect(panel).toContain("다음 시험 대기");
-    expect(panel).toContain("배정 중");
-    expect(panel).toContain("해결됨");
+    expect(panel).toContain(
+      "adminStudentsText.learning.wrongWordsPanel.pending",
+    );
+    expect(panel).toContain(
+      "adminStudentsText.learning.wrongWordsPanel.assigned",
+    );
+    expect(panel).toContain(
+      "adminStudentsText.learning.wrongWordsPanel.resolved",
+    );
     expect(panel).toContain(
       "occurrence.datasetId === datasetFilter",
     );
@@ -147,7 +172,9 @@ describe("wrong-word admin UI contract", () => {
       "questionId: selectedOccurrence.latestQuestionId",
     );
     expect(panel).toContain('method: "POST"');
-    expect(panel).toContain("다음 시험에 추가");
+    expect(panel).toContain(
+      "adminStudentsText.learning.wrongWordsPanel.addToNextExam",
+    );
     expect(panel).toContain('aria-live="polite"');
     expect(panel).toContain("refreshAfterRequestRef");
     expect(panel).toContain("loading || queueing");
@@ -174,7 +201,9 @@ describe("wrong-word admin UI contract", () => {
     expect(panel).toContain("worksheetSelectedQuestionIds");
     expect(panel).toContain("validWorksheetSelectedQuestionIds");
     expect(panel).toContain("worksheetSelectionTarget(");
-    expect(panel).toContain('aria-label="오답 단어 작업"');
+    expect(panel).toContain(
+      "aria-label={adminStudentsText.learning.wrongWordsPanel.purposeAria}",
+    );
     expect(copy).toContain("한 번에 50개까지");
     expect(panel).toContain(
       "adminStudentsText.learning.worksheetWrongWordHelp",

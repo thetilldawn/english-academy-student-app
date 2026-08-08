@@ -8,16 +8,24 @@ export const studentAppText = {
 
   // 학생 로그인 > 접속코드 폼
   login: {
+    metadataTitle: "학생 접속",
     codeLabel: "학생 접속코드",
     codeHelp: "선생님에게 받은 12자리 코드를 입력하세요.",
     submit: "인증",
     submitting: "인증 중…",
     loading: "학생 정보를 확인하고 있습니다.",
+    incompleteCode: "접속코드 12자리를 모두 입력해주세요.",
+    invalidCode: "접속코드를 확인해주세요.",
+    timeout: "응답이 늦어지고 있습니다. 다시 시도해주세요.",
+    network: "연결을 확인한 뒤 다시 시도해주세요.",
   },
 
   // 학생 공통 셸 > 상단 브랜드
   shell: {
     brand: "영어 학습실",
+    logout: "접속 종료",
+    logoutPending: "종료 중…",
+    logoutError: "접속 종료 실패",
   },
 
   // 학생 시험 목록 > 페이지와 구역
@@ -30,6 +38,11 @@ export const studentAppText = {
     current: "지금 할 시험",
     recent: "최근 시험",
     others: "다른 시험",
+    sections: {
+      open: "응시할 시험",
+      needsAttention: "미응시 · 미통과",
+      completed: "완료",
+    },
     emptyTitle: "아직 배정된 시험이 없습니다.",
     emptyHelp: "선생님이 시험을 배정하면 이곳에 표시됩니다.",
     deadline: "응시 시작 마감",
@@ -37,11 +50,110 @@ export const studentAppText = {
     resume: "이어 풀기",
     result: "결과 보기",
     expiredResult: "종료 결과",
+    time: {
+      missed: "미응시 마감 {datetime}",
+      expired: "시간 종료 {datetime}",
+      completed: "완료 {datetime}",
+      failed: "미통과 {datetime}",
+      started: "시작 {datetime}",
+      deadline: "마감 {datetime}",
+      assignedWithoutDeadline: "배정 {datetime} · 마감 없음",
+    },
+    meta: {
+      questionCount: "{count}문항",
+      perQuestion: "문제당 {seconds}초",
+      totalMinutes: "전체 {minutes}분",
+      passingScore: "{score}점 통과",
+      sectionCount: "{count}건",
+    },
   },
 
   // 학생 시험 응시 화면 > 문제 도움말
   attempt: {
+    metadataTitle: "단어 시험",
     keyboardShortcutHelp: "키보드 1~4로도 빠르게 선택할 수 있습니다.",
     keyboardShortcutAria: "답 선택 단축키 도움말",
+    timeWarning: "남은 시간이 30초입니다.",
+    saveError: "답안을 저장하지 못했습니다.",
+    stateError:
+      "다음 문제 상태를 확인하지 못했습니다. 페이지를 새로고침해주세요.",
+    finalizing: "시험 상태를 정리하는 중입니다.",
+    retryPhase: "재시험",
+    initialPhase: "첫 시험",
+    perQuestionPrefix: "문제당 ",
+    remaining: "{prefix}남은 시간 {time}",
+    progressAria: "진행률 {percent}%",
+    retryProgress: "재시험 {current}/{total}",
+    chooseMeaning: "알맞은 뜻을 고르세요",
+    chooseEnglish: "알맞은 영어 단어를 고르세요",
+    pronunciationAria: "{word} 발음 듣기",
+    correct: "정답입니다.",
+    timedOut: "시간 초과로 미응답 오답 처리했습니다.",
+    wrongInitial: "오답입니다. 첫 시험 결과에서 다시 확인할 수 있습니다.",
+    wrongRetry: "다시 확인할 단어로 남겼습니다.",
+  },
+  // 학생 시험 결과 화면
+  result: {
+    metadataTitle: "시험 결과",
+    eyebrow: {
+      reviewPending: "FIRST TEST RESULT",
+      expired: "TIME ENDED",
+      passed: "PASSED",
+      completed: "COMPLETED",
+    },
+    question: {
+      number: "문항 {number}",
+      retryCorrect: "다시 맞힘",
+      retryWrong: "다시 틀림",
+      retryPending: "재시험 전",
+      incomplete: "미완료",
+      initialChoice: "첫 선택",
+      retry: "재시험",
+      answer: "정답",
+      noChoice: "선택 안 함",
+    },
+    message: {
+      retryReady: "틀린 단어를 확인한 뒤 재시험을 시작할 수 있습니다.",
+      expired: "제한시간이 끝났습니다.",
+      passed: "통과했습니다.",
+      failed: "통과점수에는 미치지 못했습니다.",
+    },
+    score: "{score}점",
+    count: "{count}개",
+    attemptCount: "{count}회",
+    sections: {
+      firstWrong: "한 번 틀린 단어",
+      unresolved: "다시 볼 단어",
+      resolved: "한 번 틀린 단어",
+    },
+    empty: {
+      noInitialWrong: "첫 시험에서 틀린 단어가 없습니다.",
+      noUnresolved: "다시 확인할 단어가 남지 않았습니다.",
+    },
+    summary: {
+      aria: "시험 결과 요약",
+      initialCorrect: "첫 시험 정답",
+      retryCorrect: "재시험 정답",
+      retryTarget: "재시험 대상 단어",
+      unresolved: "다시 볼 단어",
+      finalScore: "재시험 후 점수",
+      elapsed: "응시 시간",
+      attemptNumber: "응시 회차",
+    },
+    backToAssignments: "내 시험으로 돌아가기",
+  },
+  // 학생 시험 시작·재시험·마감 공통 동작
+  actions: {
+    start: "시험 시작",
+    startPending: "시험 준비 중…",
+    startError: "시험을 시작할 수 없습니다.",
+    retry: "재시험 시작",
+    retryPending: "재시험 준비 중…",
+    retryPreparing: "재시험을 준비하고 있습니다.",
+    retryError: "재시험을 시작하지 못했습니다.",
+    networkError: "연결을 확인한 뒤 다시 시도해주세요.",
+    deadlinePassed: "응시 시작 마감이 지났습니다.",
+    deadlineRemaining: "응시 시작 마감까지 {time} 남았습니다.",
+    deadlineClosed: "마감됨",
   },
 } as const;

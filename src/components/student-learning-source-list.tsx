@@ -5,6 +5,9 @@ import {
   learningSourceTypeLabel,
   type StudentLearningSourceItem,
 } from "@/lib/admin/learning-sources";
+import { Button } from "@/components/ui-button";
+import { formatContentText } from "@/content/format";
+import { adminStudentsText } from "@/content/ko/admin-students";
 
 type LearningView = "vocab" | "passage";
 
@@ -33,7 +36,9 @@ export function StudentLearningSourceList({
           studentId: "",
           sourceType: "primary_vocab" as const,
           vocabDatasetId: null,
-          displayLabel: fallbackPrimaryLabel ?? "미선택",
+          displayLabel:
+            fallbackPrimaryLabel ??
+            adminStudentsText.learning.source.fallbackPrimary,
           rangeMetadata: {},
           sortOrder: -1,
         },
@@ -53,14 +58,18 @@ export function StudentLearningSourceList({
               <strong>{source.displayLabel}</strong>
             </div>
             {onOpen ? (
-              <button
-                aria-label={`${learningSourceTypeLabel(source.sourceType)} 학습 관리 열기`}
+              <Button
+                aria-label={formatContentText(
+                  adminStudentsText.learning.source.openAria,
+                  { type: learningSourceTypeLabel(source.sourceType) },
+                )}
                 className="learning-add-button"
                 onClick={() => onOpen(view, source)}
-                type="button"
+                size="icon"
+                variant="quiet"
               >
                 +
-              </button>
+              </Button>
             ) : null}
           </div>
         );

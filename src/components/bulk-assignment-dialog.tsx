@@ -9,11 +9,20 @@ import {
   type MouseEvent,
   type SyntheticEvent,
 } from "react";
+import { toast } from "sonner";
 
 import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
 import { HelpTip } from "@/components/help-tip";
 import { Button } from "@/components/ui-button";
+import { SelectField } from "@/components/ui-select";
+import {
+  ModalBody,
+  ModalFooter,
+  ModalFrame,
+  ModalHeader,
+} from "@/components/ui-modal";
 import { adminLearningText } from "@/content/ko/admin-learning";
+import { formatContentText } from "@/content/format";
 import type {
   QuestionOrderMode,
   TimingMode,
@@ -101,7 +110,7 @@ export function BulkAssignmentDialog({
           throw new Error(
             "error" in payload && payload.error
               ? payload.error
-              : "학생별 다음 범위를 계산하지 못했습니다.",
+              : adminLearningText.bulkAssignmentModal.previewError,
           );
         }
         setPreview(payload);
@@ -112,7 +121,7 @@ export function BulkAssignmentDialog({
         setError(
           requestError instanceof Error
             ? requestError.message
-            : "학생별 다음 범위를 계산하지 못했습니다.",
+            : adminLearningText.bulkAssignmentModal.previewError,
         );
       })
       .finally(() => {
@@ -191,15 +200,17 @@ export function BulkAssignmentDialog({
         assignments?: unknown[];
       };
       if (!response.ok) {
-        throw new Error(payload.error ?? "일괄 배정을 저장하지 못했습니다.");
+        throw new Error(
+          payload.error ?? adminLearningText.bulkAssignmentModal.saveError,
+        );
       }
       onSuccess();
       dialogRef.current?.close();
     } catch (requestError) {
-      setError(
+      toast.error(
         requestError instanceof Error
           ? requestError.message
-          : "일괄 배정을 저장하지 못했습니다.",
+          : adminLearningText.bulkAssignmentModal.saveError,
       );
     } finally {
       setSubmitting(false);
@@ -207,42 +218,51 @@ export function BulkAssignmentDialog({
   }
 
   return (
-    <dialog
+    <ModalFrame
       aria-labelledby="bulk-assignment-title"
-      className="dialog dialog-extra-wide bulk-assignment-dialog"
+      className="dialog-extra-wide bulk-assignment-dialog"
       onCancel={cancel}
       onClick={closeOnBackdrop}
       onClose={onClose}
       ref={dialogRef}
     >
-      <div className="dialog-heading learning-dialog-heading">
+      <ModalHeader
+        closeLabel={adminLearningText.bulkAssignmentModal.close}
+        disabled={submitting}
+        onClose={close}
+      >
         <div>
           <h2 className="label-with-help" id="bulk-assignment-title">
             {includePendingReview
               ? adminLearningText.bulkAssignmentModal.withWrongTitle
               : adminLearningText.bulkAssignmentModal.nextTitle}
-            <HelpTip label="자동 범위 계산 도움말">
+            <HelpTip
+              label={adminLearningText.bulkAssignmentModal.autoRangeHelpAria}
+            >
               {adminLearningText.bulkAssignmentModal.autoRangeHelp}
             </HelpTip>
           </h2>
-          <p>{students.length}명</p>
+          <p>
+            {formatContentText(
+              adminLearningText.bulkAssignmentModal.studentCount,
+              { count: students.length },
+            )}
+          </p>
         </div>
-        <Button
-          aria-label={adminLearningText.bulkAssignmentModal.close}
-          disabled={submitting}
-          onClick={close}
-          size="small"
-          variant="quiet"
-        >
-          {adminLearningText.bulkAssignmentModal.close}
-        </Button>
-      </div>
+      </ModalHeader>
 
-      <form className="bulk-assignment-form" onSubmit={submit}>
+      <ModalBody>
+      <form
+        className="bulk-assignment-form"
+        id="bulk-assignment-form"
+        onSubmit={submit}
+      >
           <section className="bulk-assignment-settings">
             <label className="field">
-              <span className="field-label">출제 방식</span>
-              <select
+              <span className="field-label">
+                {adminLearningText.controls.direction.label}
+              </span>
+              <SelectField
                 onChange={(event) => {
                   setPreviewLoading(true);
                   setPreview(null);
@@ -253,26 +273,42 @@ export function BulkAssignmentDialog({
                 }}
                 value={directionRatio}
               >
-                <option value={100}>영어 → 뜻</option>
-                <option value={0}>뜻 → 영어</option>
-                <option value={50}>영어 ↔ 뜻 혼합</option>
-              </select>
+                <option value={100}>
+                  {adminLearningText.controls.direction.englishToMeaning}
+                </option>
+                <option value={0}>
+                  {adminLearningText.controls.direction.meaningToEnglish}
+                </option>
+                <option value={50}>
+                  {adminLearningText.controls.direction.mixed}
+                </option>
+              </SelectField>
             </label>
             <label className="field">
-              <span className="field-label">문제 순서</span>
-              <select
+              <span className="field-label">
+                {adminLearningText.controls.order.label}
+              </span>
+              <SelectField
                 onChange={(event) =>
                   setQuestionOrderMode(event.target.value as QuestionOrderMode)
                 }
                 value={questionOrderMode}
               >
-                <option value="ascending">오름차순</option>
-                <option value="descending">내림차순</option>
-                <option value="random">무작위</option>
-              </select>
+                <option value="ascending">
+                  {adminLearningText.controls.order.ascending}
+                </option>
+                <option value="descending">
+                  {adminLearningText.controls.order.descending}
+                </option>
+                <option value="random">
+                  {adminLearningText.controls.order.random}
+                </option>
+              </SelectField>
             </label>
             <label className="field">
-              <span className="field-label">통과 점수</span>
+              <span className="field-label">
+                {adminLearningText.controls.passingScore}
+              </span>
               <input
                 max={100}
                 min={0}
@@ -284,30 +320,30 @@ export function BulkAssignmentDialog({
             <fieldset className="field timing-mode-field">
               <legend className="field-label label-with-help">
                 {adminLearningText.assignmentModal.conditions.timingMode}
-                <HelpTip label="시간 제한 방식 도움말">
+                <HelpTip label={adminLearningText.controls.timing.helpAria}>
                   {adminLearningText.assignmentModal.conditions.timingHelp}
                 </HelpTip>
               </legend>
               <div className="segmented-control">
-                <button
+                <Button
                   aria-pressed={timingMode === "total"}
                   onClick={() => setTimingMode("total")}
-                  type="button"
                 >
-                  전체
-                </button>
-                <button
+                  {adminLearningText.controls.timing.totalShort}
+                </Button>
+                <Button
                   aria-pressed={timingMode === "per_question"}
                   onClick={() => setTimingMode("per_question")}
-                  type="button"
                 >
-                  문제당
-                </button>
+                  {adminLearningText.controls.timing.perQuestion}
+                </Button>
               </div>
             </fieldset>
             <label className="field">
               <span className="field-label">
-                {timingMode === "total" ? "전체 시간(분)" : "문제당 시간(초)"}
+                {timingMode === "total"
+                  ? adminLearningText.controls.timing.totalMinutes
+                  : adminLearningText.controls.timing.perQuestionSeconds}
               </span>
               <input
                 max={timingMode === "total" ? 180 : 600}
@@ -330,7 +366,7 @@ export function BulkAssignmentDialog({
                 <label htmlFor="bulk-assignment-available-until">
                   {adminLearningText.assignmentModal.deadline.label}
                 </label>
-                <HelpTip label="응시 마감 시간 설정 도움말">
+                <HelpTip label={adminLearningText.controls.deadlineHelpAria}>
                   {adminLearningText.bulkAssignmentModal.deadlineHelp}
                 </HelpTip>
               </span>
@@ -345,24 +381,28 @@ export function BulkAssignmentDialog({
 
           {includePendingReview ? (
             <fieldset className="bulk-review-levels">
-              <legend>포함할 오답</legend>
+              <legend>
+                {adminLearningText.bulkAssignmentModal.wrongWordsLegend}
+              </legend>
               <div className="filter-chip-row">
-                <button
+                <Button
                   aria-pressed={reviewLevels.includes(1)}
                   className="filter-chip"
                   onClick={() => toggleReviewLevel(1)}
-                  type="button"
+                  size="small"
+                  variant="quiet"
                 >
-                  한 번 틀림
-                </button>
-                <button
+                  {adminLearningText.bulkAssignmentModal.wrongOnce}
+                </Button>
+                <Button
                   aria-pressed={reviewLevels.includes(2)}
                   className="filter-chip"
                   onClick={() => toggleReviewLevel(2)}
-                  type="button"
+                  size="small"
+                  variant="quiet"
                 >
-                  두 번 이상 틀림
-                </button>
+                  {adminLearningText.bulkAssignmentModal.wrongRepeated}
+                </Button>
               </div>
             </fieldset>
           ) : null}
@@ -371,14 +411,22 @@ export function BulkAssignmentDialog({
             <div className="learning-section-heading">
               <h3 className="label-with-help">
                 {adminLearningText.bulkAssignmentModal.previewTitle}
-                <HelpTip label="일괄 배정 저장 방식 도움말">
+                <HelpTip
+                  label={adminLearningText.bulkAssignmentModal.atomicHelpAria}
+                >
                   {adminLearningText.bulkAssignmentModal.atomicHelp}
                 </HelpTip>
               </h3>
               <span>
                 {previewLoading
-                  ? "계산 중"
-                  : `${preview?.assignableCount ?? 0}명 가능 · ${preview?.blockedCount ?? 0}명 확인 필요`}
+                  ? adminLearningText.bulkAssignmentModal.calculating
+                  : formatContentText(
+                      adminLearningText.bulkAssignmentModal.previewSummary,
+                      {
+                        assignable: preview?.assignableCount ?? 0,
+                        blocked: preview?.blockedCount ?? 0,
+                      },
+                    )}
               </span>
             </div>
             <div className="bulk-preview-list">
@@ -397,15 +445,33 @@ export function BulkAssignmentDialog({
                 <article className="bulk-preview-row" key={item.studentId}>
                   <strong>{item.studentName}</strong>
                   <MetaTagList>
-                    <MetaTag>{item.datasetLabel ?? "단어장 확인 중"}</MetaTag>
-                    <MetaTag>{item.unitLabel ?? "범위 확인 중"}</MetaTag>
+                    <MetaTag>
+                      {item.datasetLabel ??
+                        adminLearningText.bulkAssignmentModal.datasetPending}
+                    </MetaTag>
+                    <MetaTag>
+                      {item.unitLabel ??
+                        adminLearningText.bulkAssignmentModal.rangePending}
+                    </MetaTag>
                     {item.available ? (
-                      <MetaTag tone="positive">{item.questionCount}문항</MetaTag>
+                      <MetaTag tone="positive">
+                        {formatContentText(
+                          adminLearningText.bulkAssignmentModal.questionCount,
+                          { count: item.questionCount },
+                        )}
+                      </MetaTag>
                     ) : (
-                      <MetaTag tone="danger">확인 필요</MetaTag>
+                      <MetaTag tone="danger">
+                        {adminLearningText.bulkAssignmentModal.needsReview}
+                      </MetaTag>
                     )}
                     {includePendingReview && item.wrongCount > 0 ? (
-                      <MetaTag tone="warning">오답 {item.wrongCount}개</MetaTag>
+                      <MetaTag tone="warning">
+                        {formatContentText(
+                          adminLearningText.bulkAssignmentModal.wrongCount,
+                          { count: item.wrongCount },
+                        )}
+                      </MetaTag>
                     ) : null}
                   </MetaTagList>
                   {item.error ? <small>{item.error}</small> : null}
@@ -415,29 +481,29 @@ export function BulkAssignmentDialog({
           </section>
 
           {error ? <div className="form-error" role="alert">{error}</div> : null}
-          <div className="dialog-actions">
-            <Button
-              disabled={submitting}
-              onClick={close}
-              variant="quiet"
-            >
-              {adminLearningText.bulkAssignmentModal.cancel}
-            </Button>
-            <Button
-              disabled={
-                submitting ||
-                previewLoading ||
-                !preview ||
-                preview.blockedCount > 0 ||
-                preview.assignableCount !== students.length
-              }
-              type="submit"
-              variant="primary"
-            >
-              {submitting ? "전체 저장 중…" : `${students.length}명에게 배정`}
-            </Button>
-          </div>
       </form>
-    </dialog>
+      </ModalBody>
+      <ModalFooter>
+        <Button
+          disabled={
+            submitting ||
+            previewLoading ||
+            !preview ||
+            preview.blockedCount > 0 ||
+            preview.assignableCount !== students.length
+          }
+          form="bulk-assignment-form"
+          type="submit"
+          variant="primary"
+        >
+          {submitting
+            ? adminLearningText.bulkAssignmentModal.submitting
+            : formatContentText(
+                adminLearningText.bulkAssignmentModal.submit,
+                { count: students.length },
+              )}
+        </Button>
+      </ModalFooter>
+    </ModalFrame>
   );
 }

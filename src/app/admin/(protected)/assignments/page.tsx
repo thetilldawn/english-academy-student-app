@@ -7,7 +7,7 @@ import { ReviewAssignmentDialog } from "@/components/review-assignment-dialog";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import {
   buildStudentProgress,
-  listAssignmentHistory,
+  listAssignmentHistoryBundle,
   listDatasets,
   listStudentCurrentVocabWrongSummaries,
   listStudentLearningSources,
@@ -42,7 +42,7 @@ export default async function AssignmentsPage({
     datasets,
     students,
     units,
-    history,
+    historyBundle,
     pendingReviewSummaries,
     currentVocabWrongSummaries,
     learningSources,
@@ -51,7 +51,7 @@ export default async function AssignmentsPage({
     listDatasets(),
     listStudents(),
     listVocabUnits(),
-    listAssignmentHistory(),
+    listAssignmentHistoryBundle(),
     listStudentPendingReviewSummaries(),
     listStudentCurrentVocabWrongSummaries(),
     listStudentLearningSources(),
@@ -59,7 +59,11 @@ export default async function AssignmentsPage({
       ? getReviewAssignmentDraftSummary(requestedReviewDraftId)
       : Promise.resolve(null),
   ]);
-  const progress = buildStudentProgress(students, units, history);
+  const progress = buildStudentProgress(
+    students,
+    units,
+    historyBundle.history,
+  );
 
   return (
     <>
@@ -69,8 +73,7 @@ export default async function AssignmentsPage({
       />
       {requestedReviewDraftId && !reviewDraft && (
         <div className="notice notice-warm" role="status">
-          재시험 초안이 만료되었거나 이미 사용되었습니다. 학생
-          관리의 오답 탭에서 다시 선택해 주세요.
+          {adminLearningText.page.expiredReviewDraft}
         </div>
       )}
       <AssignmentManager
@@ -81,7 +84,7 @@ export default async function AssignmentsPage({
         pendingReviewSummaries={pendingReviewSummaries}
         currentVocabWrongSummaries={currentVocabWrongSummaries}
         learningSources={learningSources}
-        history={history}
+        history={historyBundle.currentHistory}
         initialStudentId={requestedReviewDraftId ? "" : initialStudentId}
       />
       {reviewDraft && (

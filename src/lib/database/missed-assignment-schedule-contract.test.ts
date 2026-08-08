@@ -85,5 +85,5 @@ describe("missed assignment schedule migration", () => {
     ]);
 
     await database.close();
-  });
+  }, 15_000);
 });

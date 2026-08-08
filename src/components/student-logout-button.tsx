@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui-button";
+import { studentAppText } from "@/content/ko/student-app";
 
 export function StudentLogoutButton() {
   const router = useRouter();
@@ -16,13 +18,13 @@ export function StudentLogoutButton() {
         method: "DELETE",
       });
       if (!response.ok) {
-        setError("접속 종료 실패");
+        setError(studentAppText.shell.logoutError);
         return;
       }
       router.replace("/");
       router.refresh();
     } catch {
-      setError("접속 종료 실패");
+      setError(studentAppText.shell.logoutError);
     } finally {
       setSubmitting(false);
     }
@@ -30,14 +32,16 @@ export function StudentLogoutButton() {
 
   return (
     <div className="action-stack">
-      <button
-        className="button button-quiet button-small"
+      <Button
         disabled={submitting}
         onClick={logout}
-        type="button"
+        size="small"
+        variant="quiet"
       >
-        {submitting ? "종료 중…" : "접속 종료"}
-      </button>
+        {submitting
+          ? studentAppText.shell.logoutPending
+          : studentAppText.shell.logout}
+      </Button>
       {error && (
         <span className="inline-error" role="alert">
           {error}

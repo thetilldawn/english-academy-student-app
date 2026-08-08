@@ -14,7 +14,7 @@ describe("학습 관리 일괄 배정 UI 계약", () => {
       "const [selectedBulkStudentIds, setSelectedBulkStudentIds]",
     );
     expect(manager).toContain("useState<\n    string[]\n  >([])");
-    expect(manager).toContain("현재 목록 ${filteredStudents.length}명 선택");
+    expect(manager).toContain("adminLearningText.page.bulk.selectVisible");
     expect(manager).toContain("type=\"checkbox\"");
   });
 

@@ -6,6 +6,7 @@ import {
   activityPassed,
   learningActivityEffectiveAt,
   learningActivityBucket,
+  learningActivitySection,
   matchesLearningHistoryFilters,
   overviewActivityGroups,
   sortLearningActivities,
@@ -95,14 +96,29 @@ describe("learning activity ordering", () => {
     ]);
 
     expect(result.map((item) => item.id)).toEqual([
+      "in-progress",
       "no-deadline",
       "deadline-near",
       "deadline-later",
-      "in-progress",
       "failed",
       "passed",
       "cancelled",
     ]);
+  });
+
+  it("같은 마감이면 최근 배정을 먼저 둔다", () => {
+    const result = sortLearningActivities([
+      activity("older", {
+        availableUntil: "2026-08-10T00:00:00.000Z",
+        assignedAt: "2026-08-01T00:00:00.000Z",
+      }),
+      activity("newer", {
+        availableUntil: "2026-08-10T00:00:00.000Z",
+        assignedAt: "2026-08-02T00:00:00.000Z",
+      }),
+    ]);
+
+    expect(result.map((item) => item.id)).toEqual(["newer", "older"]);
   });
 
   it("derives completion from the displayed final score", () => {
@@ -167,6 +183,31 @@ describe("learning activity ordering", () => {
     ).toBe(true);
   });
 
+  it("검토 단계는 첫 시험 확정 시각으로 정렬한다", () => {
+    const review = activity("review", {
+      status: "in_progress",
+      phase: "review",
+      startedAt: "2026-08-01T00:00:00.000Z",
+      initialCompletedAt: "2026-08-08T00:00:00.000Z",
+    });
+
+    expect(learningActivityEffectiveAt(review)).toBe(
+      "2026-08-08T00:00:00.000Z",
+    );
+    expect(learningActivitySection(review)).toBe("needs_attention");
+  });
+
+  it("미통과 시험은 남은 오답이 0개여도 미통과 구역에 둔다", () => {
+    const failed = activity("failed-resolved", {
+      status: "completed",
+      finalScore: 70,
+      unresolvedWrongCount: 0,
+    });
+
+    expect(learningActivitySection(failed)).toBe("needs_attention");
+    expect(learningActivityBucket(failed)).toBe("needs_attention");
+  });
+
   it("filters history by type, status, and period together", () => {
     const failedReview = activity("failed-review", {
       assignmentPurpose: "review",
@@ -220,6 +261,11 @@ describe("learning activity ordering", () => {
         finalScore: 70,
         completedAt: "2026-08-07T00:00:00.000Z",
       }),
+      activity("passed", {
+        status: "completed",
+        finalScore: 100,
+        completedAt: "2026-08-06T00:00:00.000Z",
+      }),
       activity("deleted-assignment", {
         assignmentDeleted: true,
         status: "missed",
@@ -231,15 +277,16 @@ describe("learning activity ordering", () => {
       }),
     ]);
 
-    expect(groups.missed.map((item) => item.id)).toEqual(["missed"]);
-    expect(groups.failed.map((item) => item.id)).toEqual(["failed"]);
-    expect(groups.dueSoon.map((item) => item.id)).toEqual([
+    expect(groups.open.map((item) => item.id)).toEqual([
+      "no-deadline-new",
+      "no-deadline-old",
       "due-near",
       "due-later",
     ]);
-    expect(groups.noDeadline.map((item) => item.id)).toEqual([
-      "no-deadline-old",
-      "no-deadline-new",
+    expect(groups.needsAttention.map((item) => item.id)).toEqual([
+      "missed",
+      "failed",
     ]);
+    expect(groups.completed.map((item) => item.id)).toEqual(["passed"]);
   });
 });

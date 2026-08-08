@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { adminShellText } from "@/content/ko/admin-shell";
 
 type Theme = "light" | "dark";
 
@@ -37,11 +38,13 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
   }
 
   const dark = theme === "dark";
-  const actionLabel = dark ? "라이트 모드로 전환" : "다크 모드로 전환";
+  const actionLabel = dark
+    ? adminShellText.theme.toLight
+    : adminShellText.theme.toDark;
   return (
     <button
       aria-checked={dark}
-      aria-label="화면 테마"
+      aria-label={adminShellText.theme.ariaLabel}
       className={["theme-toggle", className].filter(Boolean).join(" ")}
       onClick={toggleTheme}
       role="switch"

@@ -1,9 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
+import { Button, ButtonLink } from "@/components/ui-button";
+import { formatContentText } from "@/content/format";
+import { adminHistoryText } from "@/content/ko/admin-history";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
 import { isStudentAssignmentEditable } from "@/lib/admin/assignment-edit";
 
@@ -22,7 +25,7 @@ async function mutate(url: string, options: RequestInit) {
     // 비정상 응답도 사용자가 다시 시도할 수 있는 공통 오류로 처리한다.
   }
   if (!response.ok) {
-    throw new Error(payload.error ?? "요청을 처리하지 못했습니다.");
+    throw new Error(payload.error ?? adminHistoryText.actions.genericError);
   }
 }
 
@@ -45,8 +48,7 @@ export function AdminHistoryActions({
 }) {
   const router = useRouter();
   const [busyAction, setBusyAction] = useState<ActionKey | null>(null);
-  const [error, setError] = useState("");
-  const sizeClass = size === "small" ? " button-small" : "";
+  const buttonSize = size === "small" ? "small" : "default";
 
   async function run(
     action: ActionKey,
@@ -58,16 +60,20 @@ export function AdminHistoryActions({
       return;
     }
     setBusyAction(action);
-    setError("");
     try {
       await mutate(url, options);
+      toast.success(
+        action === "cancel"
+          ? adminHistoryText.actions.cancelSuccess
+          : adminHistoryText.actions.deleteSuccess,
+      );
       onMutated?.();
       router.refresh();
     } catch (requestError) {
-      setError(
+      toast.error(
         requestError instanceof Error
           ? requestError.message
-          : "요청을 처리하지 못했습니다.",
+          : adminHistoryText.actions.genericError,
       );
     } finally {
       setBusyAction(null);
@@ -79,29 +85,30 @@ export function AdminHistoryActions({
       <div className="history-action-stack">
         <div className="history-action-group">
           {onViewDetail ? (
-            <button
-              className={`button button-secondary${sizeClass}`}
+            <Button
               onClick={onViewDetail}
-              type="button"
+              size={buttonSize}
             >
-              보기
-            </button>
+              {adminHistoryText.actions.view}
+            </Button>
           ) : showDetailLink && item.attemptId ? (
-            <Link
-              className={`button button-secondary${sizeClass}`}
+            <ButtonLink
               href={`/admin/results/${item.attemptId}`}
+              size={buttonSize}
             >
-              보기
-            </Link>
+              {adminHistoryText.actions.view}
+            </ButtonLink>
           ) : onEdit && isStudentAssignmentEditable(item) ? (
-            <button
-              aria-label={`${item.studentName} · ${item.assignmentTitle} 배정 수정`}
-              className={`button button-secondary${sizeClass}`}
+            <Button
+              aria-label={formatContentText(
+                adminHistoryText.actions.editAria,
+                { student: item.studentName, title: item.assignmentTitle },
+              )}
               onClick={() => onEdit(item)}
-              type="button"
+              size={buttonSize}
             >
-              수정
-            </button>
+              {adminHistoryText.actions.edit}
+            </Button>
           ) : null}
         </div>
       </div>
@@ -114,65 +121,69 @@ export function AdminHistoryActions({
         {showDetailLink && item.attemptId
           ? onViewDetail
             ? (
-                <button
-                  className={`button button-secondary${sizeClass}`}
+                <Button
                   onClick={onViewDetail}
-                  type="button"
+                  size={buttonSize}
                 >
-                  내역 보기
-                </button>
+                  {adminHistoryText.actions.viewHistory}
+                </Button>
               )
             : (
-                <Link
-                  className={`button button-secondary${sizeClass}`}
+                <ButtonLink
                   href={`/admin/results/${item.attemptId}`}
+                  size={buttonSize}
                 >
-                  내역 보기
-                </Link>
+                  {adminHistoryText.actions.viewHistory}
+                </ButtonLink>
               )
           : null}
         {onEdit && isStudentAssignmentEditable(item) && (
-          <button
-            aria-label={`${item.studentName} · ${item.assignmentTitle} 배정 수정`}
-            className={`button button-secondary${sizeClass}`}
+          <Button
+            aria-label={formatContentText(
+              adminHistoryText.actions.editAria,
+              { student: item.studentName, title: item.assignmentTitle },
+            )}
             disabled={busyAction !== null}
             onClick={() => onEdit(item)}
-            type="button"
+            size={buttonSize}
           >
-            수정
-          </button>
+            {adminHistoryText.actions.edit}
+          </Button>
         )}
         {item.status === "not_started" &&
           !item.attemptId &&
           !item.assignmentDeleted && (
-            <button
+            <Button
               aria-busy={busyAction === "cancel"}
-              className={`button button-secondary${sizeClass}`}
               disabled={busyAction !== null}
               onClick={() =>
                 void run(
                   "cancel",
-                  `${item.studentName} 학생의 이 배정만 취소할까요? 틀렸던 단어는 다음 시험 대기에 유지됩니다.`,
+                  formatContentText(
+                    adminHistoryText.actions.cancel.confirm,
+                    { student: item.studentName },
+                  ),
                   `/api/admin/assignments/${item.assignmentId}/students/${item.studentId}`,
                   { method: "DELETE" },
                 )
               }
-              type="button"
+              size={buttonSize}
             >
-              {busyAction === "cancel" ? "취소 중…" : "배정 취소"}
-            </button>
+              {busyAction === "cancel"
+                ? adminHistoryText.actions.cancel.pending
+                : adminHistoryText.actions.cancel.action}
+            </Button>
           )}
         {(["cancelled", "missed", "completed", "expired"] as const).includes(
           item.status as "cancelled" | "missed" | "completed" | "expired",
         ) && (
-          <button
+          <Button
             aria-busy={busyAction === "delete-history"}
-            className={`button button-quiet${sizeClass}`}
             disabled={busyAction !== null}
             onClick={() =>
               void run(
                 "delete-history",
-                "이 항목만 내역 목록에서 삭제할까요? 시험 결과와 오답 기록 원본은 안전하게 보존됩니다.",
+                adminHistoryText.actions.delete.confirm,
                 "/api/admin/history",
                 {
                   method: "DELETE",
@@ -185,19 +196,15 @@ export function AdminHistoryActions({
                 },
               )
             }
-            type="button"
+            size={buttonSize}
+            variant="quiet"
           >
             {busyAction === "delete-history"
-              ? "삭제 중…"
-              : "내역 삭제"}
-          </button>
+              ? adminHistoryText.actions.delete.pending
+              : adminHistoryText.actions.delete.action}
+          </Button>
         )}
       </div>
-      {error && (
-        <span className="inline-error" role="alert">
-          {error}
-        </span>
-      )}
     </div>
   );
 }

@@ -71,10 +71,14 @@ describe("responsive navigation contract", () => {
     const adminSession = source("src/lib/auth/admin.ts");
     const adminLogout = source("src/components/admin-logout-button.tsx");
     const adminLogin = source("src/components/admin-login-form.tsx");
+    const adminCopy = source("src/content/ko/admin-shell.ts");
 
     expect(adminSession).toContain('redirect("/admin/login")');
     expect(adminLogout).toContain('router.replace("/admin/login")');
-    expect(adminLogin).toContain('"로그인 중…" : "관리자 로그인"');
+    expect(adminLogin).toContain("adminShellText.login.submitting");
+    expect(adminLogin).toContain("adminShellText.login.submit");
+    expect(adminCopy).toContain('submitting: "로그인 중…"');
+    expect(adminCopy).toContain('submit: "관리자 로그인"');
     expect(adminLogin).toContain("requestInFlight.current");
     expect(adminLogin).toContain('window.location.replace("/admin")');
     expect(adminLogin).not.toContain("router.refresh()");
@@ -101,14 +105,14 @@ describe("responsive navigation contract", () => {
       "adminStudentsText.createStudent.chooseLater",
     );
     expect(studentManager).toContain(
-      "단어장 없이 학생과 코드부터 만들 수 있습니다.",
+      "adminStudentsText.createStudent.noWordbookNotice",
     );
     expect(studentManager).not.toContain(
       'disabled={busyKey !== "" || datasets.length === 0}',
     );
     expect(studentManager).not.toContain('name="currentVocabBook"');
     expect(studentManager).toContain("student.currentVocabBook,");
-    expect(studentManager).toContain("단어장 미선택");
+    expect(studentManager).toContain("adminStudentsText.card.wordbookMissing");
     expect(adminService).toContain(
       "p_current_vocab_dataset_id: input.currentVocabDatasetId",
     );
@@ -147,10 +151,14 @@ describe("responsive navigation contract", () => {
 
   it("관리자 테마 스위치는 상태에 맞는 접근성 이름만 표시한다", () => {
     const themeToggle = source("src/components/theme-toggle.tsx");
+    const adminCopy = source("src/content/ko/admin-shell.ts");
 
-    expect(themeToggle).toContain('"라이트 모드로 전환"');
-    expect(themeToggle).toContain('"다크 모드로 전환"');
-    expect(themeToggle).toContain('aria-label="화면 테마"');
+    expect(themeToggle).toContain("adminShellText.theme.toLight");
+    expect(themeToggle).toContain("adminShellText.theme.toDark");
+    expect(themeToggle).toContain("aria-label={adminShellText.theme.ariaLabel}");
+    expect(adminCopy).toContain('toLight: "라이트 모드로 전환"');
+    expect(adminCopy).toContain('toDark: "다크 모드로 전환"');
+    expect(adminCopy).toContain('ariaLabel: "화면 테마"');
     expect(themeToggle).toContain("title={actionLabel}");
     expect(themeToggle).not.toContain("theme-toggle-label");
     expect(themeToggle).not.toContain(">다크<");
@@ -175,8 +183,9 @@ describe("responsive navigation contract", () => {
     expect(studentManager).not.toContain(
       'className="student-actions-disclosure"',
     );
+    expect(assignmentManager).toContain("<Tabs");
     expect(assignmentManager).toContain(
-      'aria-pressed={testTab === "vocab"}',
+      "ariaLabel={adminLearningText.page.tabsAria}",
     );
     expect(assignmentManager).toContain(
       "adminLearningText.page.vocabularyTab",
@@ -187,7 +196,7 @@ describe("responsive navigation contract", () => {
     expect(learningCopy).toContain('otherLearningTab: "다른 학습"');
     expect(assignmentManager).toContain('type="search"');
     expect(assignmentManager).toContain(
-      'className="dialog dialog-extra-wide assignment-dialog"',
+      'className="dialog-extra-wide assignment-dialog"',
     );
     expect(studentManager).toContain(
       "adminStudentsText.learning.nextVocabularyTitle",
@@ -229,7 +238,7 @@ describe("responsive navigation contract", () => {
     expect(overviewGroups).not.toContain("slice(0, 8)");
     expect(overviewGroups).toContain("adminOverviewText.countSuffix");
     expect(overviewCopy).toContain('countSuffix: "건"');
-    expect(historyList).toContain("남은 오답");
+    expect(historyList).toContain("adminHistoryText.list.remainingWrong");
   });
 
   it("첫 시험 뒤 결과를 먼저 보여주고 학생이 재시험을 시작한다", () => {
@@ -255,7 +264,8 @@ describe("responsive navigation contract", () => {
       'result.status === "in_progress" && result.phase === "review"',
     );
     expect(resultPage).toContain("<StartRetryButton");
-    expect(retryButton).toContain('"재시험 준비 중…" : "재시험 시작"');
+    expect(retryButton).toContain("studentAppText.actions.retryPending");
+    expect(retryButton).toContain("studentAppText.actions.retry");
     expect(retryRoute).toContain("isSameOriginRequest(request)");
     expect(retryRoute).toContain("startStudentRetry");
     expect(studentHome).toContain('assignment.lastPhase === "review"');

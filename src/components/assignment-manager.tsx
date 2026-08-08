@@ -8,15 +8,14 @@ import {
   useTransition,
   type FormEvent,
   type MouseEvent,
+  type ReactNode,
+  type RefObject,
   type SyntheticEvent,
 } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { HelpTip } from "@/components/help-tip";
-import {
-  AppToast,
-  type AppToastMessage,
-} from "@/components/app-toast";
 import { BulkAssignmentDialog } from "@/components/bulk-assignment-dialog";
 import {
   AttemptScoreSummary,
@@ -26,6 +25,7 @@ import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
 import { StudentLearningActivityList } from "@/components/student-learning-activity-list";
 import {
   assignmentDisplayTitle,
+  projectCurrentAssignmentHistory,
   type AssignmentHistorySummary,
 } from "@/lib/admin/history";
 import {
@@ -80,6 +80,17 @@ import {
   type CataloguedUnit,
 } from "@/lib/admin/dataset-catalog";
 import { adminLearningText } from "@/content/ko/admin-learning";
+import { commonText } from "@/content/ko/common";
+import { formatContentText } from "@/content/format";
+import { Tabs } from "@/components/ui-tabs";
+import { SelectField } from "@/components/ui-select";
+import {
+  ModalBody,
+  ModalFooter,
+  ModalFrame,
+  ModalHeader,
+} from "@/components/ui-modal";
+import { Button } from "@/components/ui-button";
 
 export type AssignmentDatasetItem = CataloguedDataset & {
   rowCount: number;
@@ -122,6 +133,60 @@ export type AssignmentLearningSourceItem = {
   rangeMetadata: Record<string, unknown>;
   sortOrder: number;
 };
+
+function AssignmentDialogContainer({
+  children,
+  dialogRef,
+  embedded,
+  onCancel,
+  onClick,
+  onClose,
+}: {
+  children: ReactNode;
+  dialogRef: RefObject<HTMLDialogElement | null>;
+  embedded: boolean;
+  onCancel: (event: SyntheticEvent<HTMLDialogElement>) => void;
+  onClick: (event: MouseEvent<HTMLDialogElement>) => void;
+  onClose: () => void;
+}) {
+  if (embedded) {
+    return <>{children}</>;
+  }
+
+  return (
+    <ModalFrame
+      aria-labelledby="assignment-dialog-title"
+      className="dialog-extra-wide assignment-dialog"
+      onCancel={onCancel}
+      onClick={onClick}
+      onClose={onClose}
+      ref={dialogRef}
+    >
+      {children}
+    </ModalFrame>
+  );
+}
+
+function AssignmentDialogBody({
+  children,
+  embedded,
+}: {
+  children: ReactNode;
+  embedded: boolean;
+}) {
+  return (
+    <ModalBody
+      className={[
+        "learning-dialog-body",
+        embedded ? "assignment-embedded-body" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {children}
+    </ModalBody>
+  );
+}
 
 export type AssignmentProgressItem = {
   studentId: string;
@@ -181,14 +246,56 @@ type AssignmentCapacity = {
 
 type WrongWordStudentFilter = "all" | "wrong" | "repeated" | "retry";
 
+function studentCardActivityTime(item: AssignmentHistorySummary) {
+  const copy = adminLearningText.page.studentCard;
+  if (item.status === "not_started") {
+    return item.availableUntil
+      ? formatContentText(copy.deadline, {
+          datetime: formatKoreanDateTime(item.availableUntil),
+        })
+      : formatContentText(copy.assignedWithoutDeadline, {
+          datetime: formatKoreanDateTime(item.assignedAt),
+        });
+  }
+  if (item.status === "missed") {
+    return formatContentText(copy.missed, {
+      datetime: formatKoreanDateTime(learningActivityEffectiveAt(item)),
+    });
+  }
+  if (item.status === "in_progress" && item.phase === "review") {
+    return formatContentText(copy.failed, {
+      datetime: formatKoreanDateTime(learningActivityEffectiveAt(item)),
+    });
+  }
+  if (item.status === "expired") {
+    return formatContentText(copy.expired, {
+      datetime: formatKoreanDateTime(learningActivityEffectiveAt(item)),
+    });
+  }
+  if (item.completedAt) {
+    return formatContentText(copy.finished, {
+      datetime: formatKoreanDateTime(item.completedAt),
+    });
+  }
+  return formatContentText(copy.started, {
+    datetime: formatKoreanDateTime(learningActivityEffectiveAt(item)),
+  });
+}
+
 function directionLabel(ratio: number) {
-  if (ratio === 100) return "영어 → 뜻";
-  if (ratio === 0) return "뜻 → 영어";
-  return "영어 ↔ 뜻 혼합";
+  if (ratio === 100) {
+    return adminLearningText.controls.direction.englishToMeaning;
+  }
+  if (ratio === 0) {
+    return adminLearningText.controls.direction.meaningToEnglish;
+  }
+  return adminLearningText.controls.direction.mixed;
 }
 
 function unitRangeLabel(labels: string[]) {
-  if (labels.length === 0) return "범위 미선택";
+  if (labels.length === 0) {
+    return adminLearningText.assignmentModal.range.rangeMissing;
+  }
   if (labels.length === 1) return labels[0];
   return `${labels[0]}~${labels.at(-1)}`;
 }
@@ -201,16 +308,16 @@ function studentAssignmentUrl(
 }
 
 const editChangeLabels: Record<AssignmentEditChangeKey, string> = {
-  title: "시험 이름",
-  dataset: "단어장",
-  range: "범위",
-  questionCount: "문항 수",
-  direction: "출제 방식",
-  order: "문제 순서",
-  timing: "시간 제한",
-  passingScore: "통과 점수",
+  title: adminLearningText.assignmentModal.submit.optionalTitle,
+  dataset: adminLearningText.assignmentModal.range.wordbook,
+  range: adminLearningText.assignmentModal.range.groupFallback,
+  questionCount: adminLearningText.assignmentModal.conditions.questionCount,
+  direction: adminLearningText.controls.direction.label,
+  order: adminLearningText.controls.order.label,
+  timing: adminLearningText.controls.timing.label,
+  passingScore: adminLearningText.controls.passingScore,
   deadline: adminLearningText.assignmentModal.deadline.label,
-  review: "틀렸던 단어",
+  review: adminLearningText.assignmentModal.wrongWords.title,
 };
 
 type EditComparable = Omit<
@@ -229,17 +336,23 @@ function editValueLabel(
     const dataset = datasets.find((item) => item.id === value.datasetId);
     return dataset
       ? cataloguedDatasetDisplayLabel(dataset)
-      : "사용할 수 없는 단어장";
+      : adminLearningText.assignmentModal.range.unavailableWordbook;
   }
   if (key === "range") {
     return unitRangeLabel(
       value.primaryUnitIds.map(
         (unitId) =>
-          units.find((unit) => unit.id === unitId)?.label ?? "알 수 없음",
+          units.find((unit) => unit.id === unitId)?.label ??
+            adminLearningText.assignmentModal.range.unknownUnit,
       ),
     );
   }
-  if (key === "questionCount") return `${value.questionCount}문항`;
+  if (key === "questionCount") {
+    return formatContentText(
+      adminLearningText.assignmentModal.edit.questionCount,
+      { count: value.questionCount },
+    );
+  }
   if (key === "direction") {
     return directionLabel(value.englishToKoreanRatio);
   }
@@ -248,18 +361,34 @@ function editValueLabel(
   }
   if (key === "timing") {
     return value.timingMode === "per_question"
-      ? `문제당 ${value.questionTimeLimitSeconds ?? 0}초`
-      : `전체 ${value.timeLimitSeconds / 60}분`;
+      ? formatContentText(
+          adminLearningText.assignmentModal.edit.perQuestionTiming,
+          { seconds: value.questionTimeLimitSeconds ?? 0 },
+        )
+      : formatContentText(
+          adminLearningText.assignmentModal.edit.totalTiming,
+          { minutes: value.timeLimitSeconds / 60 },
+        );
   }
-  if (key === "passingScore") return `${value.passingScore}점`;
+  if (key === "passingScore") {
+    return formatContentText(adminLearningText.assignmentModal.edit.score, {
+      score: value.passingScore,
+    });
+  }
   if (key === "deadline") {
     return value.availableUntil
       ? formatKoreanDateTime(value.availableUntil)
-      : "마감 없음";
+      : adminLearningText.assignmentModal.edit.noDeadline;
   }
-  if (!value.includePendingReview) return "추가 안 함";
+  if (!value.includePendingReview) {
+    return adminLearningText.assignmentModal.edit.noWrongWords;
+  }
   return value.reviewLevels
-    .map((level) => (level === 1 ? "한 번 틀림" : "두 번 이상 틀림"))
+    .map((level) =>
+      level === 1
+        ? adminLearningText.bulkAssignmentModal.wrongOnce
+        : adminLearningText.bulkAssignmentModal.wrongRepeated,
+    )
     .join(" · ");
 }
 
@@ -269,13 +398,25 @@ function recommendationLabel(progress: AssignmentProgressItem | null) {
     return adminLearningText.recommendation.complete;
   }
   if (progress.recommendationReason === "assigned") {
-    return `${progress.recommendedUnitLabel ?? adminLearningText.recommendation.assignedFallback} 미응시`;
+    return formatContentText(adminLearningText.recommendation.labels.missed, {
+      range:
+        progress.recommendedUnitLabel ??
+        adminLearningText.recommendation.assignedFallback,
+    });
   }
   if (progress.recommendationReason === "resume") {
-    return `${progress.recommendedUnitLabel ?? adminLearningText.recommendation.recentFallback} 이어서`;
+    return formatContentText(adminLearningText.recommendation.labels.resume, {
+      range:
+        progress.recommendedUnitLabel ??
+        adminLearningText.recommendation.recentFallback,
+    });
   }
   if (progress.recommendationReason === "repeat") {
-    return `${progress.recommendedUnitLabel ?? adminLearningText.recommendation.recentFallback} 다시 배정`;
+    return formatContentText(adminLearningText.recommendation.labels.repeat, {
+      range:
+        progress.recommendedUnitLabel ??
+        adminLearningText.recommendation.recentFallback,
+    });
   }
   if (progress.recommendationReason === "manual") {
     return adminLearningText.recommendation.manual;
@@ -325,6 +466,7 @@ export function AssignmentManager({
   initialStudentId = "",
   initialDialogView = "overview",
   launcherOnly = false,
+  embedded = false,
   onLauncherClose,
 }: {
   datasets: AssignmentDatasetItem[];
@@ -343,12 +485,12 @@ export function AssignmentManager({
   initialStudentId?: string;
   initialDialogView?: "overview" | "assign";
   launcherOnly?: boolean;
+  embedded?: boolean;
   onLauncherClose?: () => void;
 }) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const requestInFlightRef = useRef(false);
-  const toastIdRef = useRef(0);
   const editIdempotencyRef = useRef<{
     fingerprint: string;
     key: string;
@@ -476,8 +618,6 @@ export function AssignmentManager({
   >("auto");
   const questionCountModeRef = useRef<"auto" | "manual">("auto");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [toast, setToast] = useState<AppToastMessage | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [refreshPending, startRefreshTransition] = useTransition();
 
@@ -491,9 +631,15 @@ export function AssignmentManager({
   const selectedProgress = selectedStudent
     ? (progressByStudent.get(selectedStudent.id) ?? null)
     : null;
-  const selectedActivities = selectedStudent
-    ? (activitiesByStudent.get(selectedStudent.id) ?? [])
-    : [];
+  const selectedActivities = useMemo(
+    () =>
+      selectedStudent
+        ? projectCurrentAssignmentHistory(
+            activitiesByStudent.get(selectedStudent.id) ?? [],
+          ).toSorted(compareLearningActivities)
+        : [],
+    [activitiesByStudent, selectedStudent],
+  );
   const selectedLearningSources = selectedStudent
     ? (learningSourcesByStudent.get(selectedStudent.id) ?? []).filter(
         (source) => source.sourceType !== "primary_vocab",
@@ -564,7 +710,9 @@ export function AssignmentManager({
   const usesDayLabels =
     datasetUnits.length > 0 &&
     datasetUnits.every((unit) => unit.kind === "day");
-  const unitTerm = usesDayLabels ? "DAY" : "단원";
+  const unitTerm = usesDayLabels
+    ? adminLearningText.assignmentModal.range.dayTerm
+    : adminLearningText.assignmentModal.range.unitTerm;
   const availableWordCount = selectedUnits.reduce(
     (total, unit) => total + unit.entryCount,
     0,
@@ -580,7 +728,10 @@ export function AssignmentManager({
       : null,
     unitRangeLabel(selectedUnitLabels),
     includePendingReview
-      ? `틀렸던 단어 ${capacity?.wrongEligible ?? 0}개 포함`
+      ? formatContentText(
+          adminLearningText.assignmentModal.overview.includedWrong,
+          { count: capacity?.wrongEligible ?? 0 },
+        )
       : null,
   ]
     .filter(Boolean)
@@ -661,7 +812,6 @@ export function AssignmentManager({
     (timingMode === "per_question" &&
       (questionTimeLimitSeconds < 5 ||
         questionTimeLimitSeconds > 600)) ||
-    Boolean(success) ||
     submitting ||
     refreshPending;
 
@@ -812,10 +962,10 @@ export function AssignmentManager({
   }
 
   useEffect(() => {
-    if (selectedStudent && !dialogRef.current?.open) {
+    if (!embedded && selectedStudent && !dialogRef.current?.open) {
       dialogRef.current?.showModal();
     }
-  }, [selectedStudent]);
+  }, [embedded, selectedStudent]);
 
   useEffect(() => {
     if (!editTarget) return;
@@ -838,14 +988,16 @@ export function AssignmentManager({
           throw new Error(
             "error" in payload
               ? payload.error
-              : "수정할 배정 정보를 불러오지 못했습니다.",
+              : adminLearningText.assignmentModal.errors.editLoad,
           );
         }
         if (
           payload.assignmentId !== editTarget.assignmentId ||
           payload.studentId !== editTarget.studentId
         ) {
-          throw new Error("수정할 배정 정보가 일치하지 않습니다.");
+          throw new Error(
+            adminLearningText.assignmentModal.errors.editMismatch,
+          );
         }
         const deadlineLocal = isoToKoreanDateTimeLocal(
           payload.availableUntil,
@@ -895,7 +1047,7 @@ export function AssignmentManager({
         setError(
           requestError instanceof Error
             ? requestError.message
-            : "수정할 배정 정보를 불러오지 못했습니다.",
+            : adminLearningText.assignmentModal.errors.editLoad,
         );
       })
       .finally(() => {
@@ -948,7 +1100,7 @@ export function AssignmentManager({
             throw new Error(
               "error" in payload
                 ? payload.error
-                : "문항 수를 계산하지 못했습니다.",
+                : adminLearningText.assignmentModal.errors.capacity,
             );
           }
           setCapacity(payload);
@@ -969,7 +1121,7 @@ export function AssignmentManager({
           setCapacityError(
             requestError instanceof Error
               ? requestError.message
-              : "문항 수를 계산하지 못했습니다.",
+              : adminLearningText.assignmentModal.errors.capacity,
           );
         })
         .finally(() => {
@@ -1008,7 +1160,6 @@ export function AssignmentManager({
     setAvailableUntilLocal("");
     setCustomTitle("");
     setError("");
-    setSuccess("");
   }
 
   function selectStudent(
@@ -1058,7 +1209,6 @@ export function AssignmentManager({
       setCapacity(null);
       setCapacityError("");
       setError("");
-      setSuccess("");
       editIdempotencyRef.current = null;
       return;
     }
@@ -1076,7 +1226,6 @@ export function AssignmentManager({
     setEditLoading(true);
     setReviewScope("dataset");
     setError("");
-    setSuccess("");
     editIdempotencyRef.current = null;
   }
 
@@ -1086,7 +1235,6 @@ export function AssignmentManager({
     setCapacityError("");
     setStartUnitId(nextStartId);
     setError("");
-    setSuccess("");
     const nextStartIndex = datasetUnits.findIndex(
       (unit) => unit.id === nextStartId,
     );
@@ -1100,6 +1248,10 @@ export function AssignmentManager({
 
   function closeDialog() {
     if (submitting) return;
+    if (embedded) {
+      handleDialogClose();
+      return;
+    }
     dialogRef.current?.close();
   }
 
@@ -1134,7 +1286,6 @@ export function AssignmentManager({
       toggleReviewLevel(current, level),
     );
     setError("");
-    setSuccess("");
   }
 
   function changeIncludePendingReview(checked: boolean) {
@@ -1144,14 +1295,12 @@ export function AssignmentManager({
     setIncludePendingReview(checked);
     if (!checked) setReviewScope("dataset");
     setError("");
-    setSuccess("");
   }
 
   async function submitAssignment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (requestInFlightRef.current) return;
     setError("");
-    setSuccess("");
     const availableUntil = availableUntilLocal
       ? koreanDateTimeLocalToIso(availableUntilLocal)
       : null;
@@ -1254,31 +1403,40 @@ export function AssignmentManager({
           startRefreshTransition(() => router.refresh());
         }
         throw new Error(
-          payload.error ?? "단어 시험을 배정하지 못했습니다.",
+          payload.error ?? adminLearningText.assignmentModal.errors.generic,
         );
       }
 
-      const successMessage =
-        editTarget
-          ? `${selectedStudent?.displayName ?? "학생"}의 미응시 배정을 수정했습니다.`
-          : includePendingReview
-          ? `${selectedStudent?.displayName ?? "학생"}에게 틀렸던 단어를 포함해 배정했습니다.`
-          : `${selectedStudent?.displayName ?? "학생"}에게 배정했습니다.`;
-      setSuccess(successMessage);
-      toastIdRef.current += 1;
-      setToast({ id: toastIdRef.current, text: successMessage });
+      const studentName =
+        selectedStudent?.displayName ??
+        adminLearningText.assignmentModal.success.studentFallback;
+      const successMessage = editTarget
+        ? formatContentText(
+            adminLearningText.assignmentModal.success.edited,
+            { student: studentName },
+          )
+        : includePendingReview
+          ? formatContentText(
+              adminLearningText.assignmentModal.success.assignedWithWrong,
+              { student: studentName },
+            )
+          : formatContentText(
+              adminLearningText.assignmentModal.success.assigned,
+              { student: studentName },
+            );
+      toast.success(successMessage);
       if (!editTarget) {
         setAvailableUntilLocal("");
         setCustomTitle("");
       }
       startRefreshTransition(() => router.refresh());
-      dialogRef.current?.close();
+      closeDialog();
     } catch (requestError) {
-      setError(
+      const message =
         requestError instanceof Error
           ? requestError.message
-          : "단어 시험을 배정하지 못했습니다.",
-      );
+          : adminLearningText.assignmentModal.errors.generic;
+      toast.error(message);
     } finally {
       requestInFlightRef.current = false;
       setSubmitting(false);
@@ -1289,34 +1447,39 @@ export function AssignmentManager({
     <>
       {!launcherOnly ? (
         <>
-      <div
-        aria-label="시험 종류"
+      <Tabs
+        ariaLabel={adminLearningText.page.tabsAria}
         className="management-tabs"
-      >
-        <button
-          aria-pressed={testTab === "vocab"}
-          className="management-tab"
-          onClick={() => setTestTab("vocab")}
-          type="button"
-        >
-          {adminLearningText.page.vocabularyTab}
-        </button>
-        <button
-          aria-pressed={testTab === "other"}
-          className="management-tab"
-          onClick={() => setTestTab("other")}
-          type="button"
-        >
-          {adminLearningText.page.otherLearningTab}
-        </button>
-      </div>
+        items={[
+          {
+            value: "vocab",
+            label: adminLearningText.page.vocabularyTab,
+            controls: "vocabulary-learning-panel",
+          },
+          {
+            value: "other",
+            label: adminLearningText.page.otherLearningTab,
+            controls: "other-learning-panel",
+          },
+        ]}
+        onChange={setTestTab}
+        value={testTab}
+      />
 
       {testTab === "other" ? (
-        <section className="empty-state test-type-placeholder">
+        <section
+          className="empty-state test-type-placeholder"
+          id="other-learning-panel"
+          role="tabpanel"
+        >
           {adminLearningText.page.otherLearningEmpty}
         </section>
       ) : (
-        <section className="assignment-student-browser">
+        <section
+          className="assignment-student-browser"
+          id="vocabulary-learning-panel"
+          role="tabpanel"
+        >
           <div className="learning-search-panel">
             <label className="learning-search-field">
               <span aria-hidden="true" className="learning-search-icon">
@@ -1347,33 +1510,34 @@ export function AssignmentManager({
               </summary>
               <div className="learning-filter-groups">
                 <fieldset>
-                  <legend>오답 유무</legend>
+                  <legend>{commonText.filters.wrongAvailability}</legend>
                   <div className="filter-chip-row">
                     {(
                       [
-                        ["all", "전체"],
-                        ["wrong", "오답 있음"],
-                        ["repeated", "2회 이상 오답"],
-                        ["retry", "재시험 필요"],
+                        ["all", commonText.filters.all],
+                        ["wrong", commonText.filters.hasWrong],
+                        ["repeated", commonText.filters.repeatedWrong],
+                        ["retry", commonText.filters.retryNeeded],
                       ] as const
                     ).map(([value, label]) => (
-                      <button
+                      <Button
                         aria-pressed={wrongWordFilter === value}
                         className="filter-chip"
                         key={value}
                         onClick={() => setWrongWordFilter(value)}
-                        type="button"
+                        size="small"
+                        variant="quiet"
                       >
                         {label}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </fieldset>
                 <fieldset>
-                  <legend>학교별</legend>
+                  <legend>{commonText.filters.bySchool}</legend>
                   <div className="filter-chip-row">
                     {schoolOptions.map((school) => (
-                      <button
+                      <Button
                         aria-pressed={schoolFilter === school}
                         className="filter-chip"
                         key={school}
@@ -1382,18 +1546,19 @@ export function AssignmentManager({
                             current === school ? "" : school,
                           )
                         }
-                        type="button"
+                        size="small"
+                        variant="quiet"
                       >
                         {school}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </fieldset>
                 <fieldset>
-                  <legend>학년별</legend>
+                  <legend>{commonText.filters.byGrade}</legend>
                   <div className="filter-chip-row">
                     {gradeOptions.map((grade) => (
-                      <button
+                      <Button
                         aria-pressed={gradeFilter === grade}
                         className="filter-chip"
                         key={grade}
@@ -1402,18 +1567,19 @@ export function AssignmentManager({
                             current === grade ? "" : grade,
                           )
                         }
-                        type="button"
+                        size="small"
+                        variant="quiet"
                       >
                         {grade}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </fieldset>
                 <fieldset>
-                  <legend>단어장별</legend>
+                  <legend>{commonText.filters.byWordbook}</legend>
                   <div className="filter-chip-row">
                     {wordbookOptions.map((wordbook) => (
-                      <button
+                      <Button
                         aria-pressed={wordbookFilter === wordbook}
                         className="filter-chip"
                         key={wordbook}
@@ -1422,10 +1588,11 @@ export function AssignmentManager({
                             current === wordbook ? "" : wordbook,
                           )
                         }
-                        type="button"
+                        size="small"
+                        variant="quiet"
                       >
                         {wordbook}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </fieldset>
@@ -1439,17 +1606,20 @@ export function AssignmentManager({
                 {wrongWordFilter !== "all" ? (
                   <MetaTag tone="warning">
                     {wrongWordFilter === "wrong"
-                      ? "오답 있음"
+                      ? commonText.filters.hasWrong
                       : wrongWordFilter === "repeated"
-                        ? "2회 이상 오답"
-                        : "재시험 필요"}
+                        ? commonText.filters.repeatedWrong
+                        : commonText.filters.retryNeeded}
                   </MetaTag>
                 ) : null}
               </MetaTagList>
               <div className="learning-filter-summary-actions">
-                <strong>{filteredStudents.length}명</strong>
-                <button
-                  className="button button-quiet button-small"
+                <strong>
+                  {formatContentText(commonText.filters.studentCount, {
+                    count: filteredStudents.length,
+                  })}
+                </strong>
+                <Button
                   disabled={
                     !schoolFilter &&
                     !gradeFilter &&
@@ -1462,61 +1632,67 @@ export function AssignmentManager({
                     setWordbookFilter("");
                     setWrongWordFilter("all");
                   }}
-                  type="button"
+                  size="small"
+                  variant="quiet"
                 >
                   {adminLearningText.page.resetFilters}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
 
           <div className="bulk-selection-bar">
             <div className="bulk-selection-summary">
-              <strong>{selectedBulkStudentIds.length}명 선택</strong>
-              <small>최대 30명</small>
-              <button
-                className="button button-quiet button-small"
+              <strong>
+                {formatContentText(adminLearningText.page.bulk.selectedCount, {
+                  count: selectedBulkStudentIds.length,
+                })}
+              </strong>
+              <small>{adminLearningText.page.bulk.maximum}</small>
+              <Button
                 onClick={toggleFilteredStudents}
-                type="button"
+                size="small"
+                variant="quiet"
               >
                 {allFilteredStudentsSelected
-                  ? "현재 목록 선택 해제"
-                  : `현재 목록 ${filteredStudents.length}명 선택`}
-              </button>
+                  ? adminLearningText.page.bulk.clearVisible
+                  : formatContentText(
+                      adminLearningText.page.bulk.selectVisible,
+                      { count: filteredStudents.length },
+                    )}
+              </Button>
               {selectedBulkStudentIds.length > 0 ? (
-                <button
-                  className="button button-quiet button-small"
+                <Button
                   onClick={() => setSelectedBulkStudentIds([])}
-                  type="button"
+                  size="small"
+                  variant="quiet"
                 >
-                  전체 해제
-                </button>
+                  {adminLearningText.page.bulk.clearAll}
+                </Button>
               ) : null}
             </div>
             <div className="bulk-selection-actions">
-              <button
-                className="button button-secondary button-small"
+              <Button
                 disabled={selectedBulkStudentIds.length === 0}
                 onClick={() => setBulkMode("with_wrong")}
-                type="button"
+                size="small"
               >
-                틀린 단어 포함
-              </button>
-              <button
-                className="button button-primary button-small"
+                {adminLearningText.page.bulk.includeWrong}
+              </Button>
+              <Button
                 disabled={selectedBulkStudentIds.length === 0}
                 onClick={() => setBulkMode("next")}
-                type="button"
+                size="small"
+                variant="primary"
               >
-                다음 범위 일괄 배정
-              </button>
+                {adminLearningText.page.bulk.assignNext}
+              </Button>
             </div>
           </div>
 
           {readyDatasets.length === 0 && (
             <div className="notice notice-warm">
-              검수가 끝난 단어장이 없어 아직 시험을 배정할 수
-              없습니다.
+              {adminLearningText.page.bulk.noReadyDatasets}
             </div>
           )}
 
@@ -1568,7 +1744,10 @@ export function AssignmentManager({
                   >
                     <label className="assignment-student-select">
                       <input
-                        aria-label={`${student.displayName} 일괄 배정 선택`}
+                        aria-label={formatContentText(
+                          adminLearningText.page.bulk.selectStudentAria,
+                          { student: student.displayName },
+                        )}
                         checked={selectedBulkStudentIds.includes(student.id)}
                         onChange={() => toggleBulkStudent(student.id)}
                         type="checkbox"
@@ -1577,14 +1756,21 @@ export function AssignmentManager({
                     <span className="assignment-student-identity">
                       <strong>{student.displayName}</strong>
                       <MetaTagList>
-                        <MetaTag>{student.schoolName ?? "학교 미입력"}</MetaTag>
-                        <MetaTag>{student.gradeLabel ?? "학년 미입력"}</MetaTag>
+                        <MetaTag>
+                          {student.schoolName ??
+                            adminLearningText.page.studentCard.schoolMissing}
+                        </MetaTag>
+                        <MetaTag>
+                          {student.gradeLabel ??
+                            adminLearningText.page.studentCard.gradeMissing}
+                        </MetaTag>
                       </MetaTagList>
                     </span>
                     <span className="assignment-student-book">
                       <MetaTagList>
                         <MetaTag>
-                          {student.currentVocabBook ?? "단어장 미선택"}
+                          {student.currentVocabBook ??
+                            adminLearningText.page.studentCard.wordbookMissing}
                         </MetaTag>
                         {studentLearningSources.slice(0, 2).map((source) => (
                           <MetaTag key={source.id}>
@@ -1597,10 +1783,15 @@ export function AssignmentManager({
                         ) : null}
                         {studentAvailableReviewCount > 0 ? (
                           <MetaTag tone="warning">
-                            틀린 단어 {studentAvailableReviewCount}개 추가 가능
+                            {formatContentText(
+                              adminLearningText.page.studentCard.wrongAvailable,
+                              { count: studentAvailableReviewCount },
+                            )}
                           </MetaTag>
                         ) : studentPendingReviewCount > 0 ? (
-                          <MetaTag>틀린 단어 배정 중</MetaTag>
+                          <MetaTag>
+                            {adminLearningText.page.studentCard.wrongAssigned}
+                          </MetaTag>
                         ) : null}
                       </MetaTagList>
                     </span>
@@ -1608,28 +1799,21 @@ export function AssignmentManager({
                       <strong>
                         {nextActivity
                           ? assignmentDisplayTitle(nextActivity)
-                          : "배정된 학습 없음"}
+                          : adminLearningText.page.studentCard.noActivity}
                       </strong>
                       {showRecommendation ? (
                         <MetaTagList>
                           <MetaTag tone="warning">
-                            추천 범위 · {recommendedRange}
+                            {formatContentText(
+                              adminLearningText.page.studentCard.recommendedRange,
+                              { range: recommendedRange },
+                            )}
                           </MetaTag>
                         </MetaTagList>
                       ) : null}
                       {nextActivity ? (
                         <>
-                          <small>
-                            {nextActivity.status === "not_started"
-                              ? nextActivity.availableUntil
-                                ? `마감 ${formatKoreanDateTime(nextActivity.availableUntil)}`
-                                : `배정 ${formatKoreanDateTime(nextActivity.assignedAt)} · 마감 없음`
-                              : nextActivity.completedAt
-                                ? `종료 ${formatKoreanDateTime(nextActivity.completedAt)}`
-                                : `${nextActivity.status === "expired" ? "시간 종료 " : ""}${formatKoreanDateTime(
-                                    learningActivityEffectiveAt(nextActivity),
-                                  )}`}
-                          </small>
+                          <small>{studentCardActivityTime(nextActivity)}</small>
                           <span className="assignment-student-score-line">
                             <AttemptStatusLabel
                               finalScore={nextActivity.finalScore}
@@ -1652,18 +1836,20 @@ export function AssignmentManager({
                       ) : null}
                     </span>
                     <div className="assignment-student-actions">
-                      <button
-                        className="button button-primary button-small"
+                      <Button
                         onClick={() =>
                           selectStudent(
                             student.id,
                             nextActivity ? "overview" : "assign",
                           )
                         }
-                        type="button"
+                        size="small"
+                        variant="primary"
                       >
-                        {nextActivity ? "보기" : "배정"}
-                      </button>
+                        {nextActivity
+                          ? adminLearningText.page.studentCard.view
+                          : adminLearningText.page.studentCard.assign}
+                      </Button>
                     </div>
                   </article>
                 );
@@ -1681,43 +1867,30 @@ export function AssignmentManager({
           onClose={() => setBulkMode(null)}
           onSuccess={() => {
             setSelectedBulkStudentIds([]);
-            toastIdRef.current += 1;
-            setToast({
-              id: toastIdRef.current,
-              text: "선택한 학생들의 단어 시험을 배정했습니다.",
-            });
+            toast.success(
+              formatContentText(adminLearningText.page.bulk.success, {
+                count: selectedBulkStudents.length,
+              }),
+            );
             startRefreshTransition(() => router.refresh());
           }}
           students={selectedBulkStudents}
         />
       ) : null}
 
-      <AppToast
-        message={toast}
-        onDismiss={() => setToast(null)}
-      />
-
       {selectedStudent && (
-        <dialog
-          aria-labelledby="assignment-dialog-title"
-          className="dialog dialog-extra-wide assignment-dialog"
+        <AssignmentDialogContainer
+          dialogRef={dialogRef}
+          embedded={embedded}
           onCancel={handleDialogCancel}
           onClick={closeDialogOnBackdrop}
           onClose={handleDialogClose}
-          ref={dialogRef}
         >
-          <div className="dialog-heading learning-dialog-heading">
-            <div className="learning-dialog-title-row">
-              {dialogView === "assign" ? (
-                <button
-                  aria-label={
-                    launcherOnly
-                      ? "학생 학습 관리로 돌아가기"
-                      : "학습 관리로 돌아가기"
-                  }
-                  className="button button-quiet button-icon learning-dialog-back"
-                  disabled={submitting}
-                  onClick={() => {
+          {!embedded ? <ModalHeader
+            disabled={submitting}
+            onBack={
+              dialogView === "assign"
+                ? () => {
                     if (launcherOnly) {
                       closeDialog();
                       return;
@@ -1730,12 +1903,11 @@ export function AssignmentManager({
                       resetScopedControls();
                     }
                     setDialogView("overview");
-                  }}
-                  type="button"
-                >
-                  ←
-                </button>
-              ) : null}
+                  }
+                : undefined
+            }
+            onClose={closeDialog}
+          >
               <div>
                 <h2 id="assignment-dialog-title">
                   {dialogView === "assign"
@@ -1747,43 +1919,45 @@ export function AssignmentManager({
                 <p>
                   {dialogView === "assign"
                     ? editTarget
-                      ? `${selectedStudent.displayName} · 응시 시작 전`
+                      ? formatContentText(
+                          adminLearningText.assignmentModal.overview.beforeStart,
+                          { student: selectedStudent.displayName },
+                        )
                       : selectedStudent.displayName
                     : [selectedStudent.schoolName, selectedStudent.gradeLabel]
                         .filter(Boolean)
-                        .join(" · ") || "학생 정보 미입력"}
+                        .join(" · ") ||
+                      adminLearningText.assignmentModal.overview
+                        .studentInfoMissing}
                 </p>
               </div>
-            </div>
-            <button
-              aria-label="닫기"
-              className="button button-quiet button-small"
-              disabled={submitting}
-              onClick={closeDialog}
-              type="button"
-            >
-              {adminLearningText.assignmentModal.header.close}
-            </button>
-          </div>
-          <div className="learning-dialog-body">
+          </ModalHeader> : null}
+          <AssignmentDialogBody embedded={embedded}>
             {dialogView === "overview" ? (
               <section className="student-learning-overview">
                 <div className="student-learning-source-row">
                   <div>
-                    <span>주 단어장</span>
+                    <span>
+                      {adminLearningText.assignmentModal.overview.recentWordbook}
+                    </span>
                     <strong>
-                      {selectedStudent.currentVocabBook ?? "미선택"}
+                      {selectedStudent.currentVocabBook ??
+                        adminLearningText.assignmentModal.overview.unselected}
                     </strong>
                   </div>
-                  <button
-                    aria-label="단어 학습 배정 열기"
+                  <Button
+                    aria-label={
+                      adminLearningText.assignmentModal.overview
+                        .openAssignmentAria
+                    }
                     className="learning-add-button"
                     disabled={readyDatasets.length === 0}
                     onClick={() => setDialogView("assign")}
-                    type="button"
+                    size="icon"
+                    variant="quiet"
                   >
                     +
-                  </button>
+                  </Button>
                 </div>
                 {selectedLearningSources.length > 0 ? (
                   <div className="student-learning-tags">
@@ -1807,28 +1981,50 @@ export function AssignmentManager({
                 <div className="student-learning-tags">
                   <MetaTagList>
                     <MetaTag tone="warning">
-                      다음 {recommendationLabel(selectedProgress)}
+                      {formatContentText(
+                        adminLearningText.assignmentModal.overview
+                          .nextRecommendation,
+                        { range: recommendationLabel(selectedProgress) },
+                      )}
                     </MetaTag>
                     <MetaTag>
-                      미해결 {selectedCurrentWrongCounts.wrongWordCount}개
+                      {formatContentText(
+                        adminLearningText.assignmentModal.overview
+                          .unresolvedWrong,
+                        { count: selectedCurrentWrongCounts.wrongWordCount },
+                      )}
                     </MetaTag>
                     <MetaTag>
-                      다음 시험 대기 {selectedPendingReviewCount}개
+                      {formatContentText(
+                        adminLearningText.assignmentModal.overview.pendingWrong,
+                        { count: selectedPendingReviewCount },
+                      )}
                     </MetaTag>
                   </MetaTagList>
-                  <HelpTip label="다음 범위 추천 이유">
+                  <HelpTip
+                    label={
+                      adminLearningText.assignmentModal.overview
+                        .recommendationHelpAria
+                    }
+                  >
                     {recommendationReasonLabel(selectedProgress)}
                   </HelpTip>
                 </div>
                 {readyDatasets.length === 0 ? (
                   <div className="notice notice-warm">
-                    승인된 단어장이 없어 새 시험 배정은 잠겨 있습니다.
-                    기존 배정과 내역은 계속 관리할 수 있습니다.
+                    {adminLearningText.assignmentModal.overview.noReadyDataset}
                   </div>
                 ) : null}
                 <div className="learning-section-heading">
-                  <h3>배정 및 최근 내역</h3>
-                  <span>{selectedActivities.length}개</span>
+                  <h3>
+                    {adminLearningText.assignmentModal.overview.recentActivity}
+                  </h3>
+                  <span>
+                    {formatContentText(
+                      adminLearningText.assignmentModal.overview.activityCount,
+                      { count: selectedActivities.length },
+                    )}
+                  </span>
                 </div>
                 <StudentLearningActivityList
                   items={selectedActivities}
@@ -1840,29 +2036,44 @@ export function AssignmentManager({
                 <div className="assignment-dialog-context">
                   <MetaTagList>
                     <MetaTag>
-                      {selectedStudent.currentVocabBook ?? "단어장 미선택"}
+                      {selectedStudent.currentVocabBook ??
+                        adminLearningText.page.studentCard.wordbookMissing}
                     </MetaTag>
                     <MetaTag tone="warning">
-                      다음 {recommendationLabel(selectedProgress)}
+                      {formatContentText(
+                        adminLearningText.assignmentModal.overview
+                          .nextRecommendation,
+                        { range: recommendationLabel(selectedProgress) },
+                      )}
                     </MetaTag>
                     <MetaTag>
-                      오답 대기 {selectedPendingReviewCount}개
+                      {formatContentText(
+                        adminLearningText.assignmentModal.overview
+                          .pendingWrongShort,
+                        { count: selectedPendingReviewCount },
+                      )}
                     </MetaTag>
                   </MetaTagList>
-                  <HelpTip label="다음 범위 추천 이유">
+                  <HelpTip
+                    label={
+                      adminLearningText.assignmentModal.overview
+                        .recommendationHelpAria
+                    }
+                  >
                     {recommendationReasonLabel(selectedProgress)}
                   </HelpTip>
                 </div>
 
                 {editLoading ? (
                   <div className="notice" role="status">
-                    기존 배정 조건을 불러오는 중입니다.
+                    {adminLearningText.assignmentModal.overview.loadingEdit}
                   </div>
                 ) : null}
 
           <form
             aria-busy={submitting}
             className="assignment-modal-form"
+            id="assignment-modal-form"
             onSubmit={submitAssignment}
           >
             <fieldset
@@ -1875,7 +2086,7 @@ export function AssignmentManager({
                 }
               >
                 <legend className="sr-only">
-                  단어 시험 배정 조건
+                  {adminLearningText.assignmentModal.overview.formAria}
                 </legend>
             <section className="assignment-step">
               <div className="assignment-step-heading">
@@ -1883,7 +2094,12 @@ export function AssignmentManager({
                 <div>
                   <h3>
                     {adminLearningText.assignmentModal.range.title}
-                    <HelpTip label={`단어장과 ${unitTerm} 도움말`}>
+                    <HelpTip
+                      label={formatContentText(
+                        adminLearningText.assignmentModal.range.helpAria,
+                        { unit: unitTerm },
+                      )}
+                    >
                       {adminLearningText.assignmentModal.range.help}
                     </HelpTip>
                   </h3>
@@ -1891,15 +2107,14 @@ export function AssignmentManager({
               </div>
               {exactReviewEdit ? (
                 <div className="notice">
-                  오답 재시험은 대상 단어를 그대로 유지합니다. 단어장·범위·문항
-                  수·오답 단계는 잠겨 있고, 나머지 시험 조건만 바꿀 수 있습니다.
+                  {adminLearningText.assignmentModal.edit.lockedReview}
                 </div>
               ) : null}
               <label className="field">
                 <span className="field-label">
                   {adminLearningText.assignmentModal.range.wordbook}
                 </span>
-                <select
+                <SelectField
                   disabled={exactReviewEdit}
                   onChange={(event) =>
                     selectDataset(event.target.value)
@@ -1917,7 +2132,9 @@ export function AssignmentManager({
                     <option disabled value={datasetId}>
                       {selectedDatasetRecord
                         ? cataloguedDatasetDisplayLabel(selectedDatasetRecord)
-                        : "이전 단어장"} · 신규 배정 종료
+                        : adminLearningText.assignmentModal.range
+                            .previousWordbook}{" "}
+                      · {adminLearningText.assignmentModal.range.assignmentClosed}
                     </option>
                   ) : null}
                   {readyDatasetGroups.map((group) => (
@@ -1929,12 +2146,17 @@ export function AssignmentManager({
                       ))}
                     </optgroup>
                   ))}
-                </select>
+                </SelectField>
               </label>
               <div className="form-grid-2">
                 <label className="field">
-                  <span className="field-label">시작 {unitTerm}</span>
-                  <select
+                  <span className="field-label">
+                    {formatContentText(
+                      adminLearningText.assignmentModal.range.start,
+                      { unit: unitTerm },
+                    )}
+                  </span>
+                  <SelectField
                     disabled={exactReviewEdit}
                     onChange={(event) =>
                       selectStartUnit(event.target.value)
@@ -1943,25 +2165,43 @@ export function AssignmentManager({
                     value={effectiveStartUnitId}
                   >
                     <option disabled value="">
-                      시작 {unitTerm} 선택
+                      {formatContentText(
+                        adminLearningText.assignmentModal.range.selectStart,
+                        { unit: unitTerm },
+                      )}
                     </option>
                     {datasetUnitGroups.map((group) => (
                       <optgroup
                         key={group.group ?? "range"}
-                        label={group.label ?? "범위"}
+                        label={
+                          group.label ??
+                          adminLearningText.assignmentModal.range.groupFallback
+                        }
                       >
                         {group.units.map((unit) => (
                           <option key={unit.id} value={unit.id}>
-                            {unit.displayName} · {unit.entryCount}개
+                            {formatContentText(
+                              adminLearningText.assignmentModal.range
+                                .unitEntryCount,
+                              {
+                                unit: unit.displayName,
+                                count: unit.entryCount,
+                              },
+                            )}
                           </option>
                         ))}
                       </optgroup>
                     ))}
-                  </select>
+                  </SelectField>
                 </label>
                 <label className="field">
-                  <span className="field-label">끝 {unitTerm}</span>
-                  <select
+                  <span className="field-label">
+                    {formatContentText(
+                      adminLearningText.assignmentModal.range.end,
+                      { unit: unitTerm },
+                    )}
+                  </span>
+                  <SelectField
                     disabled={exactReviewEdit}
                     onChange={(event) => {
                       changeQuestionCountMode("auto");
@@ -1969,18 +2209,23 @@ export function AssignmentManager({
                       setCapacityError("");
                       setEndUnitId(event.target.value);
                       setError("");
-                      setSuccess("");
                     }}
                     required
                     value={effectiveEndUnitId}
                   >
                     <option disabled value="">
-                      끝 {unitTerm} 선택
+                      {formatContentText(
+                        adminLearningText.assignmentModal.range.selectEnd,
+                        { unit: unitTerm },
+                      )}
                     </option>
                     {datasetUnitGroups.map((group) => (
                       <optgroup
                         key={group.group ?? "range"}
-                        label={group.label ?? "범위"}
+                        label={
+                          group.label ??
+                          adminLearningText.assignmentModal.range.groupFallback
+                        }
                       >
                         {group.units.map((unit) => (
                           <option
@@ -1991,17 +2236,29 @@ export function AssignmentManager({
                             key={unit.id}
                             value={unit.id}
                           >
-                            {unit.displayName} · {unit.entryCount}개
+                            {formatContentText(
+                              adminLearningText.assignmentModal.range
+                                .unitEntryCount,
+                              {
+                                unit: unit.displayName,
+                                count: unit.entryCount,
+                              },
+                            )}
                           </option>
                         ))}
                       </optgroup>
                     ))}
-                  </select>
+                  </SelectField>
                 </label>
               </div>
               <p className="selection-summary">
-                {unitRangeLabel(selectedUnitLabels)} · 원본{" "}
-                {availableWordCount.toLocaleString()}개
+                {formatContentText(
+                  adminLearningText.assignmentModal.range.sourceWordCount,
+                  {
+                    range: unitRangeLabel(selectedUnitLabels),
+                    count: availableWordCount.toLocaleString(),
+                  },
+                )}
               </p>
               <fieldset
                 aria-label={adminLearningText.assignmentModal.wrongWords.title}
@@ -2022,7 +2279,9 @@ export function AssignmentManager({
                     </strong>
                   </label>
                   <HelpTip
-                    label={`${adminLearningText.assignmentModal.wrongWords.title} 도움말`}
+                    label={
+                      adminLearningText.assignmentModal.wrongWords.helpAria
+                    }
                   >
                     {adminLearningText.assignmentModal.wrongWords.help}
                   </HelpTip>
@@ -2032,24 +2291,44 @@ export function AssignmentManager({
                   className="assignment-review-counts"
                 >
                   <span>
-                    {adminLearningText.assignmentModal.wrongWords.total}{" "}
-                    {capacity
-                      ? capacity.wrongLevel1Eligible +
-                        capacity.wrongLevel2Eligible
-                      : selectedAvailableReviewTotal}
-                    개
+                    {formatContentText(
+                      adminLearningText.assignmentModal.wrongWords
+                        .countSummary,
+                      {
+                        label:
+                          adminLearningText.assignmentModal.wrongWords.total,
+                        count: capacity
+                          ? capacity.wrongLevel1Eligible +
+                            capacity.wrongLevel2Eligible
+                          : selectedAvailableReviewTotal,
+                      },
+                    )}
                   </span>
                   <span>
-                    {adminLearningText.assignmentModal.wrongWords.once}{" "}
-                    {capacity?.wrongLevel1Eligible ??
-                      availableReviewLevel1Count}
-                    개
+                    {formatContentText(
+                      adminLearningText.assignmentModal.wrongWords
+                        .countSummary,
+                      {
+                        label:
+                          adminLearningText.assignmentModal.wrongWords.once,
+                        count:
+                          capacity?.wrongLevel1Eligible ??
+                          availableReviewLevel1Count,
+                      },
+                    )}
                   </span>
                   <span>
-                    {adminLearningText.assignmentModal.wrongWords.repeated}{" "}
-                    {capacity?.wrongLevel2Eligible ??
-                      availableReviewLevel2Count}
-                    개
+                    {formatContentText(
+                      adminLearningText.assignmentModal.wrongWords
+                        .countSummary,
+                      {
+                        label:
+                          adminLearningText.assignmentModal.wrongWords.repeated,
+                        count:
+                          capacity?.wrongLevel2Eligible ??
+                          availableReviewLevel2Count,
+                      },
+                    )}
                   </span>
                 </div>
                 {includePendingReview && (
@@ -2058,13 +2337,16 @@ export function AssignmentManager({
                       <legend className="field-label label-with-help">
                         {adminLearningText.assignmentModal.wrongWords.scopeLabel}
                         <HelpTip
-                          label={`${adminLearningText.assignmentModal.wrongWords.scopeLabel} 도움말`}
+                          label={
+                            adminLearningText.assignmentModal.wrongWords
+                              .scopeHelpAria
+                          }
                         >
                           {adminLearningText.assignmentModal.wrongWords.scopeHelp}
                         </HelpTip>
                       </legend>
                       <div className="segmented-control">
-                        <button
+                        <Button
                           aria-pressed={reviewScope === "dataset"}
                           disabled={editTarget !== null}
                           onClick={() => {
@@ -2074,11 +2356,10 @@ export function AssignmentManager({
                             setCapacityError("");
                             setError("");
                           }}
-                          type="button"
                         >
                           {adminLearningText.assignmentModal.wrongWords.scopeAll}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           aria-pressed={reviewScope === "selection"}
                           disabled={editTarget !== null}
                           onClick={() => {
@@ -2088,35 +2369,39 @@ export function AssignmentManager({
                             setCapacityError("");
                             setError("");
                           }}
-                          type="button"
                         >
                           {adminLearningText.assignmentModal.wrongWords.scopeCurrent}
-                        </button>
+                        </Button>
                       </div>
                     </fieldset>
                     <div
-                      aria-label="포함할 오답 단계"
+                      aria-label={
+                        adminLearningText.assignmentModal.wrongWords
+                          .levelGroupAria
+                      }
                       className="filter-chip-row"
                       role="group"
                     >
-                      <button
+                      <Button
                         aria-pressed={reviewLevels.includes(1)}
                         className="filter-chip"
                         disabled={exactReviewEdit}
                         onClick={() => changeReviewLevel(1)}
-                        type="button"
+                        size="small"
+                        variant="quiet"
                       >
                         {adminLearningText.assignmentModal.wrongWords.once}
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         aria-pressed={reviewLevels.includes(2)}
                         className="filter-chip"
                         disabled={exactReviewEdit}
                         onClick={() => changeReviewLevel(2)}
-                        type="button"
+                        size="small"
+                        variant="quiet"
                       >
                         {adminLearningText.assignmentModal.wrongWords.repeated}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -2130,7 +2415,9 @@ export function AssignmentManager({
                   <h3>
                     {adminLearningText.assignmentModal.conditions.title}
                     <HelpTip
-                      label={`${adminLearningText.assignmentModal.conditions.title} 도움말`}
+                      label={
+                        adminLearningText.assignmentModal.conditions.helpAria
+                      }
                     >
                       {adminLearningText.assignmentModal.conditions.help}
                     </HelpTip>
@@ -2142,7 +2429,7 @@ export function AssignmentManager({
                   <span className="field-label">
                     {adminLearningText.assignmentModal.conditions.direction}
                   </span>
-                  <select
+                  <SelectField
                     onChange={(event) => {
                       changeQuestionCountMode("auto");
                       setCapacity(null);
@@ -2151,26 +2438,33 @@ export function AssignmentManager({
                         Number(event.target.value) as 0 | 50 | 100,
                       );
                       setError("");
-                      setSuccess("");
                     }}
                     value={directionRatio}
                   >
-                    <option value={100}>영어 → 뜻</option>
-                    <option value={0}>뜻 → 영어</option>
-                    <option value={50}>영어 ↔ 뜻 혼합</option>
-                    <option disabled>
-                      영영풀이 → 영어 · 자료 준비 필요
+                    <option value={100}>
+                      {adminLearningText.controls.direction.englishToMeaning}
+                    </option>
+                    <option value={0}>
+                      {adminLearningText.controls.direction.meaningToEnglish}
+                    </option>
+                    <option value={50}>
+                      {adminLearningText.controls.direction.mixed}
                     </option>
                     <option disabled>
-                      예문 → 영어 · 자료 준비 필요
+                      {adminLearningText.assignmentModal.conditions
+                        .englishDefinitionDisabled}
                     </option>
-                  </select>
+                    <option disabled>
+                      {adminLearningText.assignmentModal.conditions
+                        .exampleDisabled}
+                    </option>
+                  </SelectField>
                 </label>
                 <label className="field">
                   <span className="field-label">
                     {adminLearningText.assignmentModal.conditions.order}
                   </span>
-                  <select
+                  <SelectField
                     onChange={(event) =>
                       setQuestionOrderMode(
                         event.target.value as QuestionOrderMode,
@@ -2178,10 +2472,16 @@ export function AssignmentManager({
                     }
                     value={questionOrderMode}
                   >
-                    <option value="ascending">오름차순</option>
-                    <option value="descending">내림차순</option>
-                    <option value="random">무작위</option>
-                  </select>
+                    <option value="ascending">
+                      {adminLearningText.controls.order.ascending}
+                    </option>
+                    <option value="descending">
+                      {adminLearningText.controls.order.descending}
+                    </option>
+                    <option value="random">
+                      {adminLearningText.controls.order.random}
+                    </option>
+                  </SelectField>
                 </label>
               </div>
               <div className="assignment-condition-grid">
@@ -2212,7 +2512,6 @@ export function AssignmentManager({
                       changeQuestionCountMode("manual");
                       setQuestionCount(Number(event.target.value));
                       setError("");
-                      setSuccess("");
                     }}
                     required
                     type="number"
@@ -2225,45 +2524,46 @@ export function AssignmentManager({
                       minimumAllowedQuestionCount &&
                     capacity.recommendedQuestionCount !==
                       questionCount && (
-                      <button
-                        className="button button-quiet button-small"
+                      <Button
                         onClick={() => {
                           changeQuestionCountMode("auto");
                           setQuestionCount(
                             capacity.recommendedQuestionCount,
                           );
                         }}
-                        type="button"
+                        size="small"
+                        variant="quiet"
                       >
-                        전체 {capacity.recommendedQuestionCount}개로
-                        되돌리기
-                      </button>
+                        {formatContentText(
+                          adminLearningText.assignmentModal.conditions
+                            .restoreRecommended,
+                          { count: capacity.recommendedQuestionCount },
+                        )}
+                      </Button>
                     )}
                 </div>
                 <fieldset className="field timing-mode-field">
                   <legend className="field-label label-with-help">
                     {adminLearningText.assignmentModal.conditions.timingMode}
                     <HelpTip
-                      label={`${adminLearningText.assignmentModal.conditions.timingMode} 도움말`}
+                      label={adminLearningText.controls.timing.helpAria}
                     >
                       {adminLearningText.assignmentModal.conditions.timingHelp}
                     </HelpTip>
                   </legend>
                   <div className="segmented-control">
-                    <button
+                    <Button
                       aria-pressed={timingMode === "total"}
                       onClick={() => setTimingMode("total")}
-                      type="button"
                     >
-                      전체 시험
-                    </button>
-                    <button
+                      {adminLearningText.controls.timing.total}
+                    </Button>
+                    <Button
                       aria-pressed={timingMode === "per_question"}
                       onClick={() => setTimingMode("per_question")}
-                      type="button"
                     >
-                      문제당
-                    </button>
+                      {adminLearningText.controls.timing.perQuestion}
+                    </Button>
                   </div>
                 </fieldset>
                 <label className="field">
@@ -2322,7 +2622,7 @@ export function AssignmentManager({
                     {adminLearningText.assignmentModal.deadline.label}
                   </label>
                   <HelpTip
-                    label={`${adminLearningText.assignmentModal.deadline.label} 도움말`}
+                    label={adminLearningText.assignmentModal.deadline.helpAria}
                   >
                     {adminLearningText.assignmentModal.deadline.help}
                   </HelpTip>
@@ -2332,7 +2632,6 @@ export function AssignmentManager({
                   onChange={(event) => {
                     setAvailableUntilLocal(event.target.value);
                     setError("");
-                    setSuccess("");
                   }}
                   step={60}
                   type="datetime-local"
@@ -2347,7 +2646,7 @@ export function AssignmentManager({
                   <label htmlFor="assignment-custom-title">
                     {adminLearningText.assignmentModal.submit.optionalTitle}
                   </label>
-                  <HelpTip label="시험 이름 도움말">
+                  <HelpTip label={adminLearningText.controls.titleHelpAria}>
                     {adminLearningText.assignmentModal.submit.titleHelp}
                   </HelpTip>
                 </span>
@@ -2357,7 +2656,6 @@ export function AssignmentManager({
                   onChange={(event) => {
                     setCustomTitle(event.target.value);
                     setError("");
-                    setSuccess("");
                   }}
                   placeholder={
                     generatedTitle ||
@@ -2368,19 +2666,31 @@ export function AssignmentManager({
               </div>
               {editDraft ? (
                 <section
-                  aria-label="배정 변경 비교"
+                  aria-label={
+                    adminLearningText.assignmentModal.edit.comparisonAria
+                  }
                   className="assignment-edit-comparison"
                 >
                   <div className="assignment-edit-comparison-heading">
                     <strong className="label-with-help">
                       {adminLearningText.assignmentModal.edit.comparisonTitle}
                       {editRebuildsQuestions ? (
-                        <HelpTip label="문항 재구성 도움말">
+                        <HelpTip
+                          label={
+                            adminLearningText.assignmentModal.edit
+                              .rebuildHelpAria
+                          }
+                        >
                           {adminLearningText.assignmentModal.edit.rebuildQuestionsHelp}
                         </HelpTip>
                       ) : null}
                     </strong>
-                    <span>{editComparisons.length}개 변경</span>
+                    <span>
+                      {formatContentText(
+                        adminLearningText.assignmentModal.edit.changedCount,
+                        { count: editComparisons.length },
+                      )}
+                    </span>
                   </div>
                   {editComparisons.length > 0 ? (
                     <dl>
@@ -2389,12 +2699,16 @@ export function AssignmentManager({
                           <dt>{comparison.label}</dt>
                           <dd>
                             <span>
-                              <span className="sr-only">변경 전: </span>
+                              <span className="sr-only">
+                                {adminLearningText.assignmentModal.edit.before}
+                              </span>
                               {comparison.before}
                             </span>
                             <span aria-hidden="true">→</span>
                             <strong>
-                              <span className="sr-only">변경 후: </span>
+                              <span className="sr-only">
+                                {adminLearningText.assignmentModal.edit.after}
+                              </span>
                               {comparison.after}
                             </strong>
                           </dd>
@@ -2406,75 +2720,73 @@ export function AssignmentManager({
                   )}
                 </section>
               ) : null}
-              {!success && capacityLoading && (
+              {capacityLoading && (
                 <span className="sr-only" role="status">
                   {adminLearningText.assignmentModal.errors.capacityLoading}
                 </span>
               )}
-              {!success && capacityError && (
+              {capacityError && (
                 <div className="notice notice-error" role="alert">
                   {capacityError}
                 </div>
               )}
-              {!success &&
-                includePendingReview &&
+              {includePendingReview &&
                 capacity &&
                 capacity.wrongEligible === 0 && (
                   <div className="notice notice-error" role="alert">
                     {adminLearningText.assignmentModal.wrongWords.noEligible}
                   </div>
                 )}
-              {!success &&
-                capacity &&
+              {capacity &&
                 capacity.maximumQuestionCount <
                   capacity.minimumQuestionCount && (
                   <div className="notice notice-error" role="alert">
                     {adminLearningText.assignmentModal.errors.unavailableDataset}
                   </div>
                 )}
-              {!success &&
-                capacity &&
+              {capacity &&
                 capacity.maximumQuestionCount >=
                   capacity.minimumQuestionCount &&
                 questionCount > capacity.maximumQuestionCount && (
                   <div className="notice notice-error" role="alert">
-                    현재 최대 {capacity.maximumQuestionCount}문항입니다. 문항
-                    수를 {capacity.maximumQuestionCount}개 이하로 줄여주세요.
+                    {formatContentText(
+                      adminLearningText.assignmentModal.errors.maximumDetail,
+                      { count: capacity.maximumQuestionCount },
+                    )}
                   </div>
                 )}
-              {!success &&
-                capacity &&
+              {capacity &&
                 capacity.maximumQuestionCount >=
                   capacity.minimumQuestionCount &&
                 questionCount < capacity.minimumQuestionCount && (
                   <div className="notice notice-error" role="alert">
-                    현재 조건에는 최소 {capacity.minimumQuestionCount}문항이
-                    필요합니다. 문항 수를 늘려주세요.
+                    {formatContentText(
+                      adminLearningText.assignmentModal.errors.minimumDetail,
+                      { count: capacity.minimumQuestionCount },
+                    )}
                   </div>
                 )}
-              {!success &&
-                (questionCount < minimumAllowedQuestionCount ||
+              {(questionCount < minimumAllowedQuestionCount ||
                   questionCount > 500) && (
                   <div className="notice notice-error" role="alert">
-                  총 문항 수는 {minimumAllowedQuestionCount}개 이상 500개
-                  이하여야 합니다.
+                  {formatContentText(
+                    adminLearningText.assignmentModal.errors.countDetail,
+                    { min: minimumAllowedQuestionCount },
+                  )}
                 </div>
               )}
-              {!success &&
-                timingMode === "total" &&
+              {timingMode === "total" &&
                 (timeLimitSeconds < 30 ||
                   timeLimitSeconds > 10800) && (
                 <div className="notice notice-error" role="alert">
-                  전체 시험 시간은 30초 이상 180분 이하여야
-                  합니다.
+                  {adminLearningText.assignmentModal.errors.totalTimeDetail}
                 </div>
               )}
-              {!success &&
-                timingMode === "per_question" &&
+              {timingMode === "per_question" &&
                 (questionTimeLimitSeconds < 5 ||
                   questionTimeLimitSeconds > 600) && (
                   <div className="notice notice-error" role="alert">
-                    문제당 시간은 5초 이상 600초 이하여야 합니다.
+                    {adminLearningText.assignmentModal.errors.perQuestionDetail}
                   </div>
                 )}
               {error && (
@@ -2482,10 +2794,20 @@ export function AssignmentManager({
                   {error}
                 </div>
               )}
-              <button
-                className="button button-primary button-large"
+            </section>
+            </fieldset>
+          </form>
+              </>
+            )}
+          </AssignmentDialogBody>
+          {dialogView === "assign" ? (
+            <ModalFooter>
+              <Button
                 disabled={cannotCreate}
+                form="assignment-modal-form"
+                size="large"
                 type="submit"
+                variant="primary"
               >
                 {submitting
                   ? editTarget
@@ -2498,16 +2820,12 @@ export function AssignmentManager({
                         ? adminLearningText.assignmentModal.submit.saveChanges
                         : adminLearningText.assignmentModal.submit.noChanges
                       : includePendingReview
-                      ? adminLearningText.assignmentModal.submit.assignWithWrong
-                      : adminLearningText.assignmentModal.submit.assign}
-              </button>
-            </section>
-            </fieldset>
-          </form>
-              </>
-            )}
-          </div>
-        </dialog>
+                        ? adminLearningText.assignmentModal.submit.assignWithWrong
+                        : adminLearningText.assignmentModal.submit.assign}
+              </Button>
+            </ModalFooter>
+          ) : null}
+        </AssignmentDialogContainer>
       )}
     </>
   );

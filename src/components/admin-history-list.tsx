@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   useEffect,
   useMemo,
@@ -15,7 +14,10 @@ import {
   assignmentOrderLabel,
   assignmentScopeLabel,
 } from "@/lib/admin/history";
-import { compareLearningActivities } from "@/lib/admin/learning-activity";
+import {
+  compareLearningActivities,
+  learningActivitySection,
+} from "@/lib/admin/learning-activity";
 import { DeadlineCountdown } from "@/components/deadline-countdown";
 import { AdminHistoryActions } from "@/components/admin-history-actions";
 import {
@@ -24,12 +26,16 @@ import {
 } from "@/components/attempt-score-summary";
 import { AssignmentMetaTags } from "@/components/admin-meta-tags";
 import { adminHistoryText } from "@/content/ko/admin-history";
+import { formatContentText } from "@/content/format";
 import { buildAttemptStatusPresentation } from "@/lib/ui/attempt-score-presentation";
 import {
   currentTimeMilliseconds,
   secondsUntil,
 } from "@/lib/deadline";
 import { formatKoreanDateTime } from "@/lib/format";
+import { SelectField } from "@/components/ui-select";
+import { ModalBody, ModalFrame, ModalHeader } from "@/components/ui-modal";
+import { ButtonLink } from "@/components/ui-button";
 
 type AttemptQuestion = {
   id: string;
@@ -73,40 +79,20 @@ function statusPresentation(item: AssignmentHistorySummary) {
   });
 }
 
-function historyStatusFilterValue(
-  item: AssignmentHistorySummary,
-): Exclude<HistoryStatusFilter, "all"> {
-  if (
-    item.assignmentDeleted ||
-    item.studentDeleted ||
-    item.status === "cancelled"
-  ) {
-    return "archived";
-  }
-  if (item.status === "not_started" || item.status === "in_progress") {
-    const outcome = statusPresentation(item).outcome;
-    if (outcome === "failed") return "needs_attention";
-    if (outcome === "retried") return "retried";
-    return "open";
-  }
-  const outcome = statusPresentation(item).outcome;
-  if (["failed", "missed", "expired"].includes(outcome)) {
-    return "needs_attention";
-  }
-  return outcome === "retried" ? "retried" : "completed";
-}
-
 function directionLabel(ratio: number) {
-  if (ratio === 100) return "영어 → 뜻";
-  if (ratio === 0) return "뜻 → 영어";
-  return "영어 ↔ 뜻 혼합";
+  if (ratio === 100) return adminHistoryText.list.direction.englishToMeaning;
+  if (ratio === 0) return adminHistoryText.list.direction.meaningToEnglish;
+  return adminHistoryText.list.direction.mixed;
 }
 
 function elapsedText(seconds: number | null) {
   if (seconds === null) return "-";
   const minutes = Math.floor(seconds / 60);
   const remainder = seconds % 60;
-  return `${minutes}분 ${remainder}초`;
+  return formatContentText(adminHistoryText.list.elapsed, {
+    minutes,
+    seconds: remainder,
+  });
 }
 
 function activityTimeText(
@@ -114,20 +100,35 @@ function activityTimeText(
   compact: boolean,
 ) {
   if (item.status === "missed") {
-    return `마감 ${formatKoreanDateTime(
-      item.availableUntil ?? item.missedAt,
-    )}`;
+    return formatContentText(adminHistoryText.list.deadline, {
+      datetime: formatKoreanDateTime(item.missedAt ?? item.availableUntil),
+    });
   }
   if (item.status === "cancelled") {
-    return `취소 ${formatKoreanDateTime(item.cancelledAt)}`;
+    return formatContentText(adminHistoryText.list.cancelled, {
+      datetime: formatKoreanDateTime(item.cancelledAt),
+    });
   }
   if (item.status === "not_started") {
     return item.availableUntil
-      ? `마감 ${formatKoreanDateTime(item.availableUntil)}`
-      : `배정 ${formatKoreanDateTime(item.assignedAt)}`;
+      ? formatContentText(adminHistoryText.list.deadline, {
+          datetime: formatKoreanDateTime(item.availableUntil),
+        })
+      : formatContentText(adminHistoryText.list.assigned, {
+          datetime: formatKoreanDateTime(item.assignedAt),
+        });
   }
   if (item.status === "in_progress") {
-    return `시작 ${formatKoreanDateTime(item.startedAt)}`;
+    if (item.phase === "review") {
+      return formatContentText(adminHistoryText.list.failed, {
+        datetime: formatKoreanDateTime(
+          item.initialCompletedAt ?? item.startedAt,
+        ),
+      });
+    }
+    return formatContentText(adminHistoryText.list.started, {
+      datetime: formatKoreanDateTime(item.startedAt),
+    });
   }
 
   const finishedAt =
@@ -140,9 +141,14 @@ function activityTimeText(
       (item.status === "completed" &&
         statusPresentation(item).outcome === "failed")) &&
     item.unresolvedWrongCount !== null
-      ? ` · 남은 오답 ${item.unresolvedWrongCount}개`
+      ? formatContentText(adminHistoryText.list.remainingWrong, {
+          count: item.unresolvedWrongCount,
+        })
       : "";
-  return `종료 ${formatKoreanDateTime(finishedAt)}${wrongSummary}`;
+  return formatContentText(adminHistoryText.list.finished, {
+    datetime: formatKoreanDateTime(finishedAt),
+    wrong: wrongSummary,
+  });
 }
 
 export function AdminHistoryList({
@@ -186,7 +192,9 @@ export function AdminHistoryList({
     return items.filter((item) => {
       const matchesStatus =
         statusFilter === "all" ||
-        historyStatusFilterValue(item) === statusFilter;
+        (statusFilter === "retried"
+          ? statusPresentation(item).outcome === "retried"
+          : learningActivitySection(item) === statusFilter);
       const matchesQuery =
         normalizedQuery.length === 0 ||
         [
@@ -240,7 +248,7 @@ export function AdminHistoryList({
         const payload = (await response.json()) as DetailResponse;
         if (!response.ok || !payload.result) {
           throw new Error(
-            payload.error ?? "응시 상세를 불러오지 못했습니다.",
+            payload.error ?? adminHistoryText.list.detailLoadError,
           );
         }
         setDetail(payload.result);
@@ -252,7 +260,7 @@ export function AdminHistoryList({
         setDetailError(
           error instanceof Error
             ? error.message
-            : "응시 상세를 불러오지 못했습니다.",
+            : adminHistoryText.list.detailLoadError,
         );
       })
       .finally(() => {
@@ -298,7 +306,7 @@ export function AdminHistoryList({
             <span className="field-label">
               {adminHistoryText.filters.statusLabel}
             </span>
-            <select
+            <SelectField
               onChange={(event) =>
                   setStatusFilter(event.target.value as HistoryStatusFilter)
               }
@@ -322,7 +330,7 @@ export function AdminHistoryList({
               <option value="archived">
                 {adminHistoryText.filters.statusOptions.archived}
               </option>
-            </select>
+            </SelectField>
           </label>
             </div>
           )}
@@ -372,16 +380,14 @@ export function AdminHistoryList({
                         status={item.status}
                       />
                     ) : null}
-                    {!compact ? (
-                      <AttemptStatusLabel
-                        finalScore={item.finalScore}
-                        initialScore={item.initialScore}
-                        passingScore={item.passingScore}
-                        phase={item.phase}
-                        retryStartedAt={item.retryStartedAt}
-                        status={item.status}
-                      />
-                    ) : null}
+                    <AttemptStatusLabel
+                      finalScore={item.finalScore}
+                      initialScore={item.initialScore}
+                      passingScore={item.passingScore}
+                      phase={item.phase}
+                      retryStartedAt={item.retryStartedAt}
+                      status={item.status}
+                    />
                   </button>
                 </li>
               ))}
@@ -391,9 +397,9 @@ export function AdminHistoryList({
       ) : null}
 
       {selected && (
-        <dialog
+        <ModalFrame
           aria-labelledby="history-dialog-title"
-          className="dialog dialog-wide history-dialog"
+          className="dialog-wide history-dialog"
           onClick={closeOnBackdrop}
           onClose={() => {
             detailRequestRef.current?.abort();
@@ -405,7 +411,10 @@ export function AdminHistoryList({
           }}
           ref={dialogRef}
         >
-          <div className="dialog-heading">
+          <ModalHeader
+            closeLabel={adminHistoryText.detailModal.close}
+            onClose={closeDialog}
+          >
             <div>
               <p className="eyebrow">
                 {adminHistoryText.detailModal.eyebrow}
@@ -413,15 +422,9 @@ export function AdminHistoryList({
               <h2 id="history-dialog-title">{selected.studentName}</h2>
               <p>{selected.assignmentTitle}</p>
             </div>
-            <button
-              aria-label={adminHistoryText.detailModal.close}
-              className="button button-quiet button-small"
-              onClick={closeDialog}
-              type="button"
-            >
-              {adminHistoryText.detailModal.close}
-            </button>
-          </div>
+          </ModalHeader>
+
+          <ModalBody>
 
           <div className="history-dialog-scores">
             <div>
@@ -444,7 +447,13 @@ export function AdminHistoryList({
             ) ? (
               <div>
                 <span>{adminHistoryText.detailModal.unresolvedWords}</span>
-                <strong>{selected.unresolvedWrongCount ?? "-"}개</strong>
+                <strong>
+                  {selected.unresolvedWrongCount === null
+                    ? "-"
+                    : formatContentText(adminHistoryText.list.count, {
+                        count: selected.unresolvedWrongCount,
+                      })}
+                </strong>
               </div>
             ) : null}
           </div>
@@ -461,9 +470,11 @@ export function AdminHistoryList({
             <div>
               <dt>{adminHistoryText.detailModal.conditions}</dt>
               <dd>
-                {selected.questionCount}문항 ·{" "}
-                {Math.ceil(selected.timeLimitSeconds / 60)}분 ·{" "}
-                {selected.passingScore}점
+                {formatContentText(adminHistoryText.list.conditions, {
+                  questions: selected.questionCount,
+                  minutes: Math.ceil(selected.timeLimitSeconds / 60),
+                  score: selected.passingScore,
+                })}
               </dd>
             </div>
             <div>
@@ -525,15 +536,20 @@ export function AdminHistoryList({
               <div className="section-heading">
                 <h3>{adminHistoryText.detailModal.questionSummary}</h3>
                 <span className="detail-chip">
-                  오답 {wrongQuestions.length}개 · 미응답{" "}
-                  {unansweredQuestions.length}개 ·{" "}
-                  {elapsedText(detail.elapsedSeconds)}
+                  {formatContentText(adminHistoryText.list.questionSummary, {
+                    wrong: wrongQuestions.length,
+                    unanswered: unansweredQuestions.length,
+                    elapsed: elapsedText(detail.elapsedSeconds),
+                  })}
                 </span>
               </div>
               {wrongQuestions.length === 0 ? (
                 <p className="list-meta">
                   {unansweredQuestions.length > 0
-                    ? `아직 답하지 않은 문항이 ${unansweredQuestions.length}개 있습니다.`
+                    ? formatContentText(
+                        adminHistoryText.list.unansweredNotice,
+                        { count: unansweredQuestions.length },
+                      )
                     : adminHistoryText.detailModal.allCorrect}
                 </p>
               ) : (
@@ -571,30 +587,23 @@ export function AdminHistoryList({
               showDetailLink={false}
             />
             {selected.attemptId && (
-              <Link
-                className="button button-primary"
+              <ButtonLink
                 href={`/admin/results/${selected.attemptId}`}
+                variant="primary"
               >
                 {adminHistoryText.detailModal.openDetail}
-              </Link>
+              </ButtonLink>
             )}
             {!selected.studentDeleted && (
-              <Link
-                className="button button-secondary"
+              <ButtonLink
                 href={`/admin/students?student=${selected.studentId}`}
               >
                 {adminHistoryText.detailModal.openStudent}
-              </Link>
+              </ButtonLink>
             )}
-            <button
-              className="button button-quiet"
-              onClick={closeDialog}
-              type="button"
-            >
-              {adminHistoryText.detailModal.close}
-            </button>
           </div>
-        </dialog>
+          </ModalBody>
+        </ModalFrame>
       )}
     </>
   );

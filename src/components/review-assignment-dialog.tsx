@@ -8,9 +8,11 @@ import {
   type MouseEvent,
 } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { HelpTip } from "@/components/help-tip";
 import { adminLearningText } from "@/content/ko/admin-learning";
+import { formatContentText } from "@/content/format";
 import type { ReviewAssignmentDraftSummary } from "@/lib/admin/review-assignment";
 import {
   type QuestionOrderMode,
@@ -21,6 +23,14 @@ import {
   koreanDateTimeLocalToIso,
 } from "@/lib/deadline";
 import { formatKoreanDateTime } from "@/lib/format";
+import { SelectField } from "@/components/ui-select";
+import {
+  ModalBody,
+  ModalFooter,
+  ModalFrame,
+  ModalHeader,
+} from "@/components/ui-modal";
+import { Button } from "@/components/ui-button";
 
 type ErrorResponse = {
   error?: string;
@@ -93,16 +103,17 @@ export function ReviewAssignmentDialog({
         payload.queueDisposition !== "pending"
       ) {
         throw new Error(
-          payload.error ?? "재시험 준비를 취소하지 못했습니다.",
+          payload.error ?? adminLearningText.reviewAssignmentModal.cancelError,
         );
       }
+      toast.success(adminLearningText.reviewAssignmentModal.cancelSuccess);
       router.replace("/admin/assignments");
       router.refresh();
     } catch (requestError) {
-      setError(
+      toast.error(
         requestError instanceof Error
           ? requestError.message
-          : "재시험 준비를 취소하지 못했습니다.",
+          : adminLearningText.reviewAssignmentModal.cancelError,
       );
       setCancelling(false);
     }
@@ -148,24 +159,25 @@ export function ReviewAssignmentDialog({
       const payload = (await response.json()) as ErrorResponse;
       if (!response.ok) {
         throw new Error(
-          payload.error ?? "오답 재시험을 배정하지 못했습니다.",
+          payload.error ?? adminLearningText.reviewAssignmentModal.assignError,
         );
       }
+      toast.success(adminLearningText.reviewAssignmentModal.assignSuccess);
       router.replace("/admin/assignments");
     } catch (requestError) {
-      setError(
+      toast.error(
         requestError instanceof Error
           ? requestError.message
-          : "오답 재시험을 배정하지 못했습니다.",
+          : adminLearningText.reviewAssignmentModal.assignError,
       );
       setSubmitting(false);
     }
   }
 
   return (
-    <dialog
+    <ModalFrame
       aria-labelledby="review-assignment-dialog-title"
-      className="dialog dialog-extra-wide assignment-dialog"
+      className="dialog-extra-wide assignment-dialog"
       onCancel={(event) => {
         event.preventDefault();
         leaveDraft();
@@ -173,7 +185,10 @@ export function ReviewAssignmentDialog({
       onClick={closeOnBackdrop}
       ref={dialogRef}
     >
-      <div className="dialog-heading">
+      <ModalHeader
+        disabled={submitting || cancelling}
+        onClose={leaveDraft}
+      >
         <div>
           <p className="eyebrow">
             {adminLearningText.reviewAssignmentModal.eyebrow}
@@ -184,28 +199,32 @@ export function ReviewAssignmentDialog({
           <p>
             {[draft.schoolName, draft.gradeLabel]
               .filter(Boolean)
-              .join(" · ") || "학교·학년 미입력"}
+              .join(" · ") ||
+              adminLearningText.reviewAssignmentModal.missingSchoolGrade}
           </p>
         </div>
-        <button
-          aria-label="닫기"
-          className="button button-quiet button-small"
-          disabled={submitting || cancelling}
-          onClick={leaveDraft}
-          type="button"
-        >
-          닫기
-        </button>
-      </div>
+      </ModalHeader>
 
+      <ModalBody>
       <div className="assignment-dialog-context">
         <strong>{draft.datasetLabel}</strong>
-        <span>선택한 오답 {draft.questionCount}개</span>
-        <span>초안 만료 · {formatKoreanDateTime(draft.expiresAt)}</span>
+        <span>
+          {formatContentText(
+            adminLearningText.reviewAssignmentModal.selectedWrongCount,
+            { count: draft.questionCount },
+          )}
+        </span>
+        <span>
+          {formatContentText(
+            adminLearningText.reviewAssignmentModal.expiresAt,
+            { datetime: formatKoreanDateTime(draft.expiresAt) },
+          )}
+        </span>
       </div>
 
       <form
         aria-busy={submitting}
+        id="review-assignment-form"
         className="assignment-modal-form"
         onSubmit={submitReviewAssignment}
       >
@@ -215,7 +234,9 @@ export function ReviewAssignmentDialog({
             <div>
               <h3>
                 {adminLearningText.reviewAssignmentModal.fixedTargetTitle}
-                <HelpTip label="재시험 대상 도움말">
+                <HelpTip
+                  label={adminLearningText.reviewAssignmentModal.targetHelpAria}
+                >
                   {adminLearningText.reviewAssignmentModal.fixedTargetHelp}
                 </HelpTip>
               </h3>
@@ -224,16 +245,23 @@ export function ReviewAssignmentDialog({
           <div className="assignment-review-summary">
             <dl>
               <div>
-                <dt>학생</dt>
+                <dt>{adminLearningText.reviewAssignmentModal.student}</dt>
                 <dd>{draft.studentName}</dd>
               </div>
               <div>
-                <dt>단어장</dt>
+                <dt>{adminLearningText.reviewAssignmentModal.dataset}</dt>
                 <dd>{draft.datasetLabel}</dd>
               </div>
               <div>
-                <dt>문항 수</dt>
-                <dd>{draft.questionCount}문항</dd>
+                <dt>
+                  {adminLearningText.reviewAssignmentModal.questionCountLabel}
+                </dt>
+                <dd>
+                  {formatContentText(
+                    adminLearningText.reviewAssignmentModal.questionCount,
+                    { count: draft.questionCount },
+                  )}
+                </dd>
               </div>
             </dl>
           </div>
@@ -245,7 +273,11 @@ export function ReviewAssignmentDialog({
             <div>
               <h3>
                 {adminLearningText.reviewAssignmentModal.conditionsTitle}
-                <HelpTip label="문제 조건 도움말">
+                <HelpTip
+                  label={
+                    adminLearningText.reviewAssignmentModal.conditionsHelpAria
+                  }
+                >
                   {adminLearningText.reviewAssignmentModal.conditionsHelp}
                 </HelpTip>
               </h3>
@@ -253,8 +285,10 @@ export function ReviewAssignmentDialog({
           </div>
           <div className="form-grid-2">
             <label className="field">
-              <span className="field-label">출제 방식</span>
-              <select
+              <span className="field-label">
+                {adminLearningText.controls.direction.label}
+              </span>
+              <SelectField
                 onChange={(event) =>
                   setDirectionRatio(
                     Number(event.target.value) as 0 | 50 | 100,
@@ -262,14 +296,22 @@ export function ReviewAssignmentDialog({
                 }
                 value={directionRatio}
               >
-                <option value={100}>영어 → 뜻</option>
-                <option value={0}>뜻 → 영어</option>
-                <option value={50}>영어 ↔ 뜻 혼합</option>
-              </select>
+                <option value={100}>
+                  {adminLearningText.controls.direction.englishToMeaning}
+                </option>
+                <option value={0}>
+                  {adminLearningText.controls.direction.meaningToEnglish}
+                </option>
+                <option value={50}>
+                  {adminLearningText.controls.direction.mixed}
+                </option>
+              </SelectField>
             </label>
             <label className="field">
-              <span className="field-label">문제 순서</span>
-              <select
+              <span className="field-label">
+                {adminLearningText.controls.order.label}
+              </span>
+              <SelectField
                 onChange={(event) =>
                   setQuestionOrderMode(
                     event.target.value as QuestionOrderMode,
@@ -277,42 +319,46 @@ export function ReviewAssignmentDialog({
                 }
                 value={questionOrderMode}
               >
-                <option value="ascending">오름차순</option>
-                <option value="descending">내림차순</option>
-                <option value="random">무작위</option>
-              </select>
+                <option value="ascending">
+                  {adminLearningText.controls.order.ascending}
+                </option>
+                <option value="descending">
+                  {adminLearningText.controls.order.descending}
+                </option>
+                <option value="random">
+                  {adminLearningText.controls.order.random}
+                </option>
+              </SelectField>
             </label>
           </div>
           <div className="assignment-condition-grid">
             <fieldset className="field timing-mode-field">
               <legend className="field-label label-with-help">
-                시간 제한 방식
-                <HelpTip label="시간 제한 방식 도움말">
+                {adminLearningText.controls.timing.label}
+                <HelpTip label={adminLearningText.controls.timing.helpAria}>
                   {adminLearningText.assignmentModal.conditions.timingHelp}
                 </HelpTip>
               </legend>
               <div className="segmented-control">
-                <button
+                <Button
                   aria-pressed={timingMode === "total"}
                   onClick={() => setTimingMode("total")}
-                  type="button"
                 >
-                  전체 시험
-                </button>
-                <button
+                  {adminLearningText.controls.timing.total}
+                </Button>
+                <Button
                   aria-pressed={timingMode === "per_question"}
                   onClick={() => setTimingMode("per_question")}
-                  type="button"
                 >
-                  문제당
-                </button>
+                  {adminLearningText.controls.timing.perQuestion}
+                </Button>
               </div>
             </fieldset>
             <label className="field">
               <span className="field-label">
                 {timingMode === "total"
-                  ? "전체 시험 시간(분)"
-                  : "문제당 시간(초)"}
+                  ? adminLearningText.controls.timing.totalExamMinutes
+                  : adminLearningText.controls.timing.perQuestionSeconds}
               </span>
               {timingMode === "total" ? (
                 <input
@@ -341,7 +387,9 @@ export function ReviewAssignmentDialog({
               )}
             </label>
             <label className="field">
-              <span className="field-label">통과 점수</span>
+              <span className="field-label">
+                {adminLearningText.controls.passingScore}
+              </span>
               <input
                 max={100}
                 min={0}
@@ -359,7 +407,7 @@ export function ReviewAssignmentDialog({
               <label htmlFor="review-assignment-available-until">
                 {adminLearningText.assignmentModal.deadline.label}
               </label>
-              <HelpTip label="응시 마감 시간 설정 도움말">
+              <HelpTip label={adminLearningText.controls.deadlineHelpAria}>
                 {adminLearningText.reviewAssignmentModal.deadlineHelp}
               </HelpTip>
             </span>
@@ -381,7 +429,7 @@ export function ReviewAssignmentDialog({
               <label htmlFor="review-assignment-custom-title">
                 {adminLearningText.assignmentModal.submit.optionalTitle}
               </label>
-              <HelpTip label="시험 이름 도움말">
+              <HelpTip label={adminLearningText.controls.titleHelpAria}>
                 {adminLearningText.reviewAssignmentModal.titleHelp}
               </HelpTip>
             </span>
@@ -398,30 +446,32 @@ export function ReviewAssignmentDialog({
               {error}
             </div>
           )}
-          <div className="dialog-actions">
-            <button
-              aria-busy={cancelling}
-              className="button button-quiet"
-              disabled={submitting || cancelling}
-              onClick={() => void cancelDraft()}
-              type="button"
-            >
-              {cancelling
-                ? adminLearningText.reviewAssignmentModal.cancelingDraft
-                : adminLearningText.reviewAssignmentModal.cancelDraft}
-            </button>
-            <button
-              className="button button-primary button-large"
-              disabled={cannotCreate || cancelling}
-              type="submit"
-            >
-              {submitting
-                ? adminLearningText.reviewAssignmentModal.assigning
-                : adminLearningText.reviewAssignmentModal.assign}
-            </button>
-          </div>
         </section>
       </form>
-    </dialog>
+      </ModalBody>
+      <ModalFooter>
+        <Button
+          aria-busy={cancelling}
+          disabled={submitting || cancelling}
+          onClick={() => void cancelDraft()}
+          variant="quiet"
+        >
+          {cancelling
+            ? adminLearningText.reviewAssignmentModal.cancelingDraft
+            : adminLearningText.reviewAssignmentModal.cancelDraft}
+        </Button>
+        <Button
+          disabled={cannotCreate || cancelling}
+          form="review-assignment-form"
+          size="large"
+          type="submit"
+          variant="primary"
+        >
+          {submitting
+            ? adminLearningText.reviewAssignmentModal.assigning
+            : adminLearningText.reviewAssignmentModal.assign}
+        </Button>
+      </ModalFooter>
+    </ModalFrame>
   );
 }

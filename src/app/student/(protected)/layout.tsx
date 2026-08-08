@@ -1,4 +1,5 @@
 import { StudentShell } from "@/components/student-shell";
+import { NotificationBootstrap } from "@/components/notification-bootstrap";
 import { getStudentSession } from "@/lib/auth/student-session";
 import { redirect } from "next/navigation";
 
@@ -13,11 +14,14 @@ export default async function StudentProtectedLayout({
   }
 
   return (
-    <StudentShell
-      displayName={student.displayName}
-      gradeLabel={student.gradeLabel}
-    >
-      {children}
-    </StudentShell>
+    <>
+      <NotificationBootstrap role="student" />
+      <StudentShell
+        displayName={student.displayName}
+        gradeLabel={student.gradeLabel}
+      >
+        {children}
+      </StudentShell>
+    </>
   );
 }

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { studentAppText } from "@/content/ko/student-app";
 
 export const metadata: Metadata = {
-  title: "학생 접속",
+  title: studentAppText.login.metadataTitle,
 };
 
 export default function StudentCodePage() {

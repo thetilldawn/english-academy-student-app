@@ -8,10 +8,10 @@ import {
   useState,
   useTransition,
   type FormEvent,
-  type KeyboardEvent,
   type MouseEvent,
 } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import {
   assignmentDisplayTitle,
@@ -25,7 +25,10 @@ import { StudentLearningActivityList } from "@/components/student-learning-activ
 import { StudentLearningSourceList } from "@/components/student-learning-source-list";
 import { StudentVocabBookHistoryList } from "@/components/student-vocab-book-history-list";
 import { HelpTip } from "@/components/help-tip";
+import { adminLearningText } from "@/content/ko/admin-learning";
 import { adminStudentsText } from "@/content/ko/admin-students";
+import { commonText } from "@/content/ko/common";
+import { formatContentText } from "@/content/format";
 import {
   AssignmentManager,
   type AssignmentDatasetItem,
@@ -36,7 +39,10 @@ import {
   AttemptStatusLabel,
 } from "@/components/attempt-score-summary";
 import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
-import { Button } from "@/components/ui-button";
+import { Button, buttonClassNames } from "@/components/ui-button";
+import { Tabs } from "@/components/ui-tabs";
+import { ModalBody, ModalFrame, ModalHeader } from "@/components/ui-modal";
+import { SelectField } from "@/components/ui-select";
 import { buildAttemptStatusPresentation } from "@/lib/ui/attempt-score-presentation";
 import {
   cataloguedDatasetDisplayLabel,
@@ -71,7 +77,7 @@ type StudentItem = {
   currentVocabDatasetId: string | null;
   status: "active" | "blocked";
   codeGeneration: number;
-  codeStatus: "active" | "blocked" | "missing";
+  codeStatus: "active" | "blocked" | "expired" | "missing";
 };
 
 type DatasetOption = CataloguedDataset;
@@ -149,6 +155,7 @@ export function StudentManager({
   assignmentUnits,
   currentVocabWrongSummaries,
   datasets,
+  currentHistory,
   history,
   initialStudentId = "",
   launcherOnly = false,
@@ -164,6 +171,7 @@ export function StudentManager({
   assignmentUnits: AssignmentUnitItem[];
   currentVocabWrongSummaries: StudentCurrentVocabWrongSummary[];
   datasets: DatasetOption[];
+  currentHistory: AssignmentHistorySummary[];
   history: AssignmentHistorySummary[];
   initialStudentId?: string;
   launcherOnly?: boolean;
@@ -184,7 +192,6 @@ export function StudentManager({
     label: string;
   } | null>(null);
   const [copied, setCopied] = useState(false);
-  const [shareNotice, setShareNotice] = useState("");
   const initialStudent =
     students.find((student) => student.id === initialStudentId) ?? null;
   const [selectedStudentId, setSelectedStudentId] = useState(
@@ -263,6 +270,19 @@ export function StudentManager({
     codeDialogRef.current?.close();
   }
 
+  function openStudentAssignment(input: {
+    datasetId: string;
+    studentId: string;
+    editTarget: {
+      assignmentId: string;
+      studentId: string;
+    } | null;
+  }) {
+    setAssignmentDatasetId(input.datasetId);
+    setAssignmentEditTarget(input.editTarget);
+    setAssignmentStudentId(input.studentId);
+  }
+
   function finishClosingCodeDialog() {
     setShownCode(null);
   }
@@ -295,39 +315,6 @@ export function StudentManager({
     [],
   );
 
-  function moveDialogTabFocus(
-    event: KeyboardEvent<HTMLButtonElement>,
-  ) {
-    if (
-      !["ArrowLeft", "ArrowRight", "Home", "End"].includes(
-        event.key,
-      )
-    ) {
-      return;
-    }
-    const tabs = Array.from(
-      event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>(
-        '[role="tab"]',
-      ) ?? [],
-    );
-    if (tabs.length === 0) return;
-    event.preventDefault();
-    const currentIndex = Math.max(
-      tabs.indexOf(event.currentTarget),
-      0,
-    );
-    const nextIndex =
-      event.key === "Home"
-        ? 0
-        : event.key === "End"
-          ? tabs.length - 1
-          : event.key === "ArrowRight"
-            ? (currentIndex + 1) % tabs.length
-            : (currentIndex - 1 + tabs.length) % tabs.length;
-    tabs[nextIndex].focus();
-    tabs[nextIndex].click();
-  }
-
   function beginAction(key: string) {
     if (interactionBusy) {
       return false;
@@ -354,7 +341,9 @@ export function StudentManager({
       // 프록시 오류처럼 JSON이 아닌 응답은 아래의 안전한 기본 문구로 처리한다.
     }
     if (!response.ok) {
-      throw new Error(payload.error ?? "요청을 처리하지 못했습니다.");
+      throw new Error(
+        payload.error ?? adminStudentsText.codeModal.genericRequestError,
+      );
     }
     return payload;
   }
@@ -382,20 +371,24 @@ export function StudentManager({
         }),
       });
       if (!payload.code) {
-        throw new Error("새 접속코드를 받지 못했습니다.");
+        throw new Error(adminStudentsText.createStudent.noCodeError);
       }
       openCodeDialog(
         payload.code,
-        `${String(form.get("displayName"))} 새 접속코드`,
+        formatContentText(adminStudentsText.createStudent.codeTitle, {
+          student: String(form.get("displayName")),
+        }),
       );
+      toast.success(adminStudentsText.createStudent.success);
       formElement.reset();
       startRefreshTransition(() => router.refresh());
     } catch (requestError) {
-      setCreateError(
+      const message =
         requestError instanceof Error
           ? requestError.message
-          : "학생을 만들지 못했습니다.",
-      );
+          : adminStudentsText.createStudent.error;
+      setCreateError(message);
+      toast.error(message);
     } finally {
       finishAction();
     }
@@ -420,12 +413,13 @@ export function StudentManager({
           }),
         },
       );
+      toast.success(adminStudentsText.account.wordbookSuccess);
       startRefreshTransition(() => router.refresh());
     } catch (requestError) {
-      setError(
+      toast.error(
         requestError instanceof Error
           ? requestError.message
-          : "현재 단어장을 바꾸지 못했습니다.",
+          : adminStudentsText.account.wordbookError,
       );
     } finally {
       finishAction();
@@ -452,12 +446,13 @@ export function StudentManager({
           gradeLabel: profileGradeLabel,
         }),
       });
+      toast.success(adminStudentsText.account.profileSuccess);
       startRefreshTransition(() => router.refresh());
     } catch (requestError) {
-      setError(
+      toast.error(
         requestError instanceof Error
           ? requestError.message
-          : "학생 정보를 저장하지 못했습니다.",
+          : adminStudentsText.account.profileError,
       );
     } finally {
       finishAction();
@@ -474,17 +469,19 @@ export function StudentManager({
         `/api/admin/students/${student.id}/code`,
       );
       if (!payload.code) {
-        throw new Error("접속코드를 받지 못했습니다.");
+        throw new Error(adminStudentsText.codeModal.missingCodeError);
       }
       openCodeDialog(
         payload.code,
-        `${student.displayName} 접속코드`,
+        formatContentText(adminStudentsText.codeModal.revealTitle, {
+          student: student.displayName,
+        }),
       );
     } catch (requestError) {
-      setError(
+      toast.error(
         requestError instanceof Error
           ? requestError.message
-          : "접속코드를 불러오지 못했습니다.",
+          : adminStudentsText.codeModal.revealError,
       );
     } finally {
       finishAction();
@@ -493,7 +490,9 @@ export function StudentManager({
 
   async function rotate(student: StudentItem) {
     const accepted = window.confirm(
-      `${student.displayName} 학생의 기존 접속을 모두 끊고 새 코드를 발급할까요?`,
+      formatContentText(adminStudentsText.account.rotateConfirm, {
+        student: student.displayName,
+      }),
     );
     if (!accepted) return;
 
@@ -507,18 +506,21 @@ export function StudentManager({
         { method: "POST" },
       );
       if (!payload.code) {
-        throw new Error("새 접속코드를 받지 못했습니다.");
+        throw new Error(adminStudentsText.createStudent.noCodeError);
       }
       openCodeDialog(
         payload.code,
-        `${student.displayName} 새 접속코드`,
+        formatContentText(adminStudentsText.codeModal.rotateTitle, {
+          student: student.displayName,
+        }),
       );
+      toast.success(adminStudentsText.account.rotateSuccess);
       startRefreshTransition(() => router.refresh());
     } catch (requestError) {
-      setError(
+      toast.error(
         requestError instanceof Error
           ? requestError.message
-          : "접속코드를 바꾸지 못했습니다.",
+          : adminStudentsText.account.rotateError,
       );
     } finally {
       finishAction();
@@ -527,7 +529,9 @@ export function StudentManager({
 
   async function block(student: StudentItem) {
     const accepted = window.confirm(
-      `${student.displayName} 학생의 코드와 현재 접속을 바로 차단할까요?`,
+      formatContentText(adminStudentsText.account.blockConfirm, {
+        student: student.displayName,
+      }),
     );
     if (!accepted) return;
 
@@ -541,12 +545,13 @@ export function StudentManager({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ status: "blocked" }),
       });
+      toast.success(adminStudentsText.account.blockSuccess);
       startRefreshTransition(() => router.refresh());
     } catch (requestError) {
-      setError(
+      toast.error(
         requestError instanceof Error
           ? requestError.message
-          : "접속을 차단하지 못했습니다.",
+          : adminStudentsText.account.blockError,
       );
     } finally {
       finishAction();
@@ -556,7 +561,9 @@ export function StudentManager({
   async function deleteSelectedStudent() {
     if (!selectedStudent) return;
     const accepted = window.confirm(
-      `${selectedStudent.displayName} 학생을 삭제할까요? 학생의 접속은 즉시 차단되고 목록에서는 사라집니다. 진행 중인 시험은 종료 처리하며 기존 시험·성적은 보존되어 내역에는 '삭제됨'으로 표시됩니다.`,
+      formatContentText(adminStudentsText.account.deleteConfirm, {
+        student: selectedStudent.displayName,
+      }),
     );
     if (
       !accepted ||
@@ -571,12 +578,13 @@ export function StudentManager({
       });
       closeStudentDialog();
       setSelectedStudentId("");
+      toast.success(adminStudentsText.account.deleteSuccess);
       startRefreshTransition(() => router.refresh());
     } catch (requestError) {
-      setError(
+      toast.error(
         requestError instanceof Error
           ? requestError.message
-          : "학생을 삭제하지 못했습니다.",
+          : adminStudentsText.account.deleteError,
       );
     } finally {
       finishAction();
@@ -585,9 +593,14 @@ export function StudentManager({
 
   async function copyCode() {
     if (!shownCode) return;
-    await navigator.clipboard.writeText(shownCode.code);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1500);
+    try {
+      await navigator.clipboard.writeText(shownCode.code);
+      setCopied(true);
+      toast.success(adminStudentsText.codeModal.copySuccess);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error(adminStudentsText.codeModal.copyFailure);
+    }
   }
 
   async function shareCode() {
@@ -598,31 +611,38 @@ export function StudentManager({
     );
     const message = [
       shownCode.label,
-      `접속 주소: ${studentAccessUrl}`,
-      `접속 코드: ${shownCode.code}`,
+      formatContentText(adminStudentsText.codeModal.addressLine, {
+        url: studentAccessUrl,
+      }),
+      formatContentText(adminStudentsText.codeModal.codeLine, {
+        code: shownCode.code,
+      }),
     ].join("\n");
 
-    const result = await sendKakaoText({
-      title: shownCode.label,
-      message,
-      url: studentAccessUrl,
-    });
-    if (result === "sent") {
-      setShareNotice("");
-      return;
+    try {
+      const result = await sendKakaoText({
+        title: shownCode.label,
+        message,
+        url: studentAccessUrl,
+      });
+      if (result === "sent") {
+        toast.success(adminStudentsText.codeModal.kakaoOpened);
+        return;
+      }
+      await navigator.clipboard.writeText(message);
+      toast.success(
+        result === "unconfigured"
+          ? adminStudentsText.codeModal.kakaoFallbackUnconfigured
+          : adminStudentsText.codeModal.kakaoFallbackFailed,
+      );
+    } catch {
+      toast.error(adminStudentsText.codeModal.kakaoFallbackCopyFailure);
     }
-    await navigator.clipboard.writeText(message);
-    setShareNotice(
-      result === "unconfigured"
-        ? "카카오 설정 전이라 메시지를 복사했습니다."
-        : "카카오톡을 열지 못해 메시지를 복사했습니다.",
-    );
-    window.setTimeout(() => setShareNotice(""), 2500);
   }
 
   const activitiesByStudent = useMemo(
-    () => studentLearningActivityIndex(history),
-    [history],
+    () => studentLearningActivityIndex(currentHistory),
+    [currentHistory],
   );
   const currentVocabWrongIndex = useMemo(
     () =>
@@ -758,6 +778,15 @@ export function StudentManager({
         : [],
     [history, selectedStudent],
   );
+  const selectedStudentCurrentHistory = useMemo(
+    () =>
+      selectedStudent
+        ? currentHistory.filter(
+            (item) => item.studentId === selectedStudent.id,
+          )
+        : [],
+    [currentHistory, selectedStudent],
+  );
   const selectedStudentVocabBookHistory = useMemo(
     () =>
       selectedStudent
@@ -789,7 +818,7 @@ export function StudentManager({
           )}
 
           <details className="card student-create-disclosure">
-        <summary className="button button-primary">
+        <summary className={buttonClassNames({ variant: "primary" })}>
           {adminStudentsText.createStudent.open}
         </summary>
         <div className="student-create-content">
@@ -804,7 +833,7 @@ export function StudentManager({
                   <label htmlFor="create-student-display-name">
                     {adminStudentsText.createStudent.nameLabel}
                   </label>
-                  <HelpTip label="학생 이름 도움말">
+                  <HelpTip label={adminStudentsText.createStudent.nameHelpAria}>
                     {adminStudentsText.createStudent.nameHelp}
                   </HelpTip>
                 </span>
@@ -861,7 +890,11 @@ export function StudentManager({
                   <label htmlFor="create-student-vocab-dataset">
                     {adminStudentsText.createStudent.startingWordbookLabel}
                   </label>
-                  <HelpTip label="시작 단어장 도움말">
+                  <HelpTip
+                    label={
+                      adminStudentsText.createStudent.startingWordbookHelpAria
+                    }
+                  >
                     {adminStudentsText.createStudent.startingWordbookHelp}
                   </HelpTip>
                 </span>
@@ -869,7 +902,7 @@ export function StudentManager({
                   {adminStudentsText.createStudent.optional}
                 </span>
               </span>
-              <select
+              <SelectField
                 defaultValue=""
                 id="create-student-vocab-dataset"
                 name="currentVocabDatasetId"
@@ -886,10 +919,10 @@ export function StudentManager({
                     ))}
                   </optgroup>
                 ))}
-              </select>
+              </SelectField>
               {datasets.length === 0 ? (
                 <span className="field-help">
-                  단어장 없이 학생과 코드부터 만들 수 있습니다.
+                  {adminStudentsText.createStudent.noWordbookNotice}
                 </span>
               ) : null}
             </div>
@@ -913,17 +946,17 @@ export function StudentManager({
                 {createError}
               </div>
             )}
-            <button
-              className="button button-primary"
+            <Button
               disabled={interactionBusy}
               type="submit"
+              variant="primary"
             >
               {busyKey === "create"
                 ? adminStudentsText.createStudent.submitting
                 : refreshPending
                   ? adminStudentsText.createStudent.refreshing
                   : adminStudentsText.createStudent.submit}
-            </button>
+            </Button>
           </form>
         </div>
       </details>
@@ -958,33 +991,34 @@ export function StudentManager({
           </summary>
           <div className="learning-filter-groups">
             <fieldset>
-              <legend>오답 유무</legend>
+              <legend>{commonText.filters.wrongAvailability}</legend>
               <div className="filter-chip-row">
                 {(
                   [
-                    ["all", "전체"],
-                    ["wrong", "오답 있음"],
-                    ["repeated", "2회 이상 오답"],
-                    ["retry", "재시험 필요"],
+                    ["all", commonText.filters.all],
+                    ["wrong", commonText.filters.hasWrong],
+                    ["repeated", commonText.filters.repeatedWrong],
+                    ["retry", commonText.filters.retryNeeded],
                   ] as const
                 ).map(([value, label]) => (
-                  <button
+                  <Button
                     aria-pressed={wrongWordFilter === value}
                     className="filter-chip"
                     key={value}
                     onClick={() => setWrongWordFilter(value)}
-                    type="button"
+                    size="small"
+                    variant="quiet"
                   >
                     {label}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </fieldset>
             <fieldset>
-              <legend>학교별</legend>
+              <legend>{commonText.filters.bySchool}</legend>
               <div className="filter-chip-row">
                 {schoolOptions.map((school) => (
-                  <button
+                  <Button
                     aria-pressed={schoolFilter === school}
                     className="filter-chip"
                     key={school}
@@ -993,18 +1027,19 @@ export function StudentManager({
                         current === school ? "" : school,
                       )
                     }
-                    type="button"
+                    size="small"
+                    variant="quiet"
                   >
                     {school}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </fieldset>
             <fieldset>
-              <legend>학년별</legend>
+              <legend>{commonText.filters.byGrade}</legend>
               <div className="filter-chip-row">
                 {gradeOptions.map((grade) => (
-                  <button
+                  <Button
                     aria-pressed={gradeFilter === grade}
                     className="filter-chip"
                     key={grade}
@@ -1013,18 +1048,19 @@ export function StudentManager({
                         current === grade ? "" : grade,
                       )
                     }
-                    type="button"
+                    size="small"
+                    variant="quiet"
                   >
                     {grade}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </fieldset>
             <fieldset>
-              <legend>단어장별</legend>
+              <legend>{commonText.filters.byWordbook}</legend>
               <div className="filter-chip-row">
                 {wordbookOptions.map((wordbook) => (
-                  <button
+                  <Button
                     aria-pressed={wordbookFilter === wordbook}
                     className="filter-chip"
                     key={wordbook}
@@ -1033,10 +1069,11 @@ export function StudentManager({
                         current === wordbook ? "" : wordbook,
                       )
                     }
-                    type="button"
+                    size="small"
+                    variant="quiet"
                   >
                     {wordbook}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </fieldset>
@@ -1050,17 +1087,20 @@ export function StudentManager({
             {wrongWordFilter !== "all" ? (
               <MetaTag tone="warning">
                 {wrongWordFilter === "wrong"
-                  ? "오답 있음"
+                  ? commonText.filters.hasWrong
                   : wrongWordFilter === "repeated"
-                    ? "2회 이상 오답"
-                    : "재시험 필요"}
+                    ? commonText.filters.repeatedWrong
+                    : commonText.filters.retryNeeded}
               </MetaTag>
             ) : null}
           </MetaTagList>
           <div className="learning-filter-summary-actions">
-            <strong>{filteredStudents.length}명</strong>
-            <button
-              className="button button-quiet button-small"
+            <strong>
+              {formatContentText(commonText.filters.studentCount, {
+                count: filteredStudents.length,
+              })}
+            </strong>
+            <Button
               disabled={
                 !schoolFilter &&
                 !gradeFilter &&
@@ -1073,10 +1113,11 @@ export function StudentManager({
                 setWordbookFilter("");
                 setWrongWordFilter("all");
               }}
-              type="button"
+              size="small"
+              variant="quiet"
             >
               {adminStudentsText.page.resetFilters}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -1107,7 +1148,8 @@ export function StudentManager({
                       label: `${learningSourceTypeLabel(source.sourceType)} · ${source.displayLabel}`,
                     }));
                   const primarySourceLabel =
-                    student.currentVocabBook ?? "단어장 미선택";
+                    student.currentVocabBook ??
+                    adminStudentsText.card.wordbookMissing;
                   return (
                     <button
                       className="card student-card student-card-button"
@@ -1133,22 +1175,29 @@ export function StudentManager({
                             }
                           >
                             {student.status === "active"
-                              ? "접속 가능"
-                              : "차단됨"}
+                              ? adminStudentsText.card.active
+                              : adminStudentsText.card.blocked}
                           </MetaTag>
+                          {student.codeStatus === "expired" ? (
+                            <MetaTag tone="danger">
+                              {adminStudentsText.card.codeExpired}
+                            </MetaTag>
+                          ) : null}
                         </span>
                         <MetaTagList className="student-card-profile-tags">
                           <MetaTag>
-                            {student.schoolName ?? "학교 미입력"}
+                            {student.schoolName ??
+                              adminStudentsText.card.schoolMissing}
                           </MetaTag>
                           <MetaTag>
-                            {student.gradeLabel ?? "학년 미입력"}
+                            {student.gradeLabel ??
+                              adminStudentsText.card.gradeMissing}
                           </MetaTag>
                         </MetaTagList>
                       </span>
                       <span className="student-card-details">
                         <span className="student-card-info-row">
-                          <small>최근 단어장</small>
+                          <small>{adminStudentsText.card.recentWordbook}</small>
                           <strong
                             className="student-card-primary-source"
                             title={primarySourceLabel}
@@ -1158,7 +1207,9 @@ export function StudentManager({
                         </span>
                         {supplementalSources.length > 0 ? (
                           <span className="student-card-info-row">
-                            <small>학습 자료</small>
+                            <small>
+                              {adminStudentsText.card.learningMaterials}
+                            </small>
                             <MetaTagList className="student-card-source-tags">
                               {supplementalSources
                                 .slice(0, 2)
@@ -1176,13 +1227,13 @@ export function StudentManager({
                           </span>
                         ) : null}
                         <span className="student-card-info-row">
-                          <small>다음 범위</small>
+                          <small>{adminStudentsText.card.nextRange}</small>
                           <MetaTag tone="warning">
                             {studentRecommendationLabel(studentProgress)}
                           </MetaTag>
                         </span>
                         <span className="student-card-info-row">
-                          <small>우선 확인</small>
+                          <small>{adminStudentsText.card.priority}</small>
                           <span className="student-card-priority">
                             {priorityActivity?.primaryUnitLabels[0] ??
                             priorityActivity?.unitLabels[0] ? (
@@ -1194,7 +1245,7 @@ export function StudentManager({
                           <strong>
                             {priorityActivity
                               ? assignmentDisplayTitle(priorityActivity)
-                              : "학습 기록 없음"}
+                              : adminStudentsText.card.noHistory}
                           </strong>
                           {priorityActivity ? (
                             <span className="student-card-score-line">
@@ -1229,11 +1280,22 @@ export function StudentManager({
       ) : null}
 
       {selectedStudent && (
-        <dialog
+        <ModalFrame
           aria-labelledby="student-detail-title"
-          className="dialog dialog-wide student-detail-dialog"
+          className={[
+            "dialog-wide",
+            "student-detail-dialog",
+            assignmentStudentId
+              ? "student-detail-dialog--assignment"
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           onClick={closeStudentDialogOnBackdrop}
           onClose={() => {
+            setAssignmentStudentId("");
+            setAssignmentDatasetId("");
+            setAssignmentEditTarget(null);
             setSelectedStudentId("");
             setLearningView("summary");
             setLearningSourceDatasetId("");
@@ -1242,80 +1304,96 @@ export function StudentManager({
           }}
           ref={studentDialogRef}
         >
-          <div className="dialog-heading">
+          <ModalHeader
+            onBack={
+              assignmentStudentId
+                ? () => {
+                    setAssignmentStudentId("");
+                    setAssignmentDatasetId("");
+                    setAssignmentEditTarget(null);
+                  }
+                : undefined
+            }
+            onClose={closeStudentDialog}
+          >
             <div>
               <h2 id="student-detail-title">
-                {selectedStudent.displayName}
+                {assignmentStudentId
+                  ? assignmentEditTarget
+                    ? adminLearningText.assignmentModal.header.editTitle
+                    : adminLearningText.assignmentModal.header.createTitle
+                  : selectedStudent.displayName}
               </h2>
               <p>
-                {[
-                  selectedStudent.schoolName,
-                  selectedStudent.gradeLabel,
-                ]
-                  .filter(Boolean)
-                  .join(" · ") || "학교·학년 미입력"}
+                {assignmentStudentId
+                  ? selectedStudent.displayName
+                  : [
+                      selectedStudent.schoolName,
+                      selectedStudent.gradeLabel,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ") ||
+                    adminStudentsText.detail.missingSchoolGrade}
               </p>
             </div>
-            <Button
-              aria-label="닫기"
-              onClick={closeStudentDialog}
-              size="small"
-              variant="quiet"
-            >
-              닫기
-            </Button>
-          </div>
+          </ModalHeader>
 
-          <div
-            aria-label="학생 상세 메뉴"
+          {!assignmentStudentId ? <Tabs
+            ariaLabel={adminStudentsText.detail.tabsAria}
             className="dialog-tabs"
-            role="tablist"
-          >
-            <button
-              aria-controls="student-learning-panel"
-              aria-selected={activeTab === "learning"}
-              className="dialog-tab"
-              id="student-learning-tab"
-              onKeyDown={moveDialogTabFocus}
-              onClick={() => {
-                setActiveTab("learning");
-                setLearningView("summary");
-              }}
-              role="tab"
-              tabIndex={activeTab === "learning" ? 0 : -1}
-              type="button"
-            >
-              {adminStudentsText.detailTabs.learning}
-            </button>
-            <button
-              aria-controls="student-account-panel"
-              aria-selected={activeTab === "account"}
-              className="dialog-tab"
-              id="student-account-tab"
-              onKeyDown={moveDialogTabFocus}
-              onClick={() => setActiveTab("account")}
-              role="tab"
-              tabIndex={activeTab === "account" ? 0 : -1}
-              type="button"
-            >
-              {adminStudentsText.detailTabs.account}
-            </button>
-            <button
-              aria-controls="student-history-panel"
-              aria-selected={activeTab === "history"}
-              className="dialog-tab"
-              id="student-history-tab"
-              onKeyDown={moveDialogTabFocus}
-              onClick={() => setActiveTab("history")}
-              role="tab"
-              tabIndex={activeTab === "history" ? 0 : -1}
-              type="button"
-            >
-              {adminStudentsText.detailTabs.history}
-            </button>
-          </div>
+            items={[
+              {
+                value: "learning",
+                label: adminStudentsText.detailTabs.learning,
+                controls: "student-learning-panel",
+                id: "student-learning-tab",
+              },
+              {
+                value: "account",
+                label: adminStudentsText.detailTabs.account,
+                controls: "student-account-panel",
+                id: "student-account-tab",
+              },
+              {
+                value: "history",
+                label: adminStudentsText.detailTabs.history,
+                controls: "student-history-panel",
+                id: "student-history-tab",
+              },
+            ]}
+            onChange={(tab) => {
+              setActiveTab(tab);
+              if (tab === "learning") setLearningView("summary");
+            }}
+            value={activeTab}
+          /> : null}
 
-          <div className="student-dialog-scroll-region">
+          {assignmentStudentId ? (
+            <AssignmentManager
+                currentVocabWrongSummaries={currentVocabWrongSummaries}
+                datasets={assignmentDatasets}
+                embedded
+                history={currentHistory}
+                initialDatasetId={assignmentDatasetId}
+                initialDialogView="assign"
+                initialEditTarget={assignmentEditTarget}
+                initialStudentId={assignmentStudentId}
+                key={`${assignmentStudentId}:${assignmentDatasetId}:${assignmentEditTarget?.assignmentId ?? "new"}`}
+                launcherOnly
+                learningSources={learningSources}
+                onLauncherClose={() => {
+                  setAssignmentStudentId("");
+                  setAssignmentDatasetId("");
+                  setAssignmentEditTarget(null);
+                }}
+                pendingReviewSummaries={pendingReviewSummaries}
+                progress={progress}
+                students={students}
+                units={assignmentUnits}
+            />
+          ) : (
+            <ModalBody className="student-dialog-scroll-region">
+              <>
             {launcherOnly && error ? (
               <div className="notice notice-error" role="alert">
                 {error}
@@ -1349,21 +1427,26 @@ export function StudentManager({
                     />
                     <div className="student-book-form compact-learning-form">
                       <label className="field">
-                        <span className="field-label">최근 단어장 변경</span>
-                        <select
+                        <span className="field-label">
+                          {adminStudentsText.learning.recentWordbookChange}
+                        </span>
+                        <SelectField
                           onChange={(event) =>
                             setProfileDatasetId(event.target.value)
                           }
                           value={profileDatasetId}
                         >
-                          <option value="">나중에 선택</option>
+                          <option value="">
+                            {adminStudentsText.learning.chooseLater}
+                          </option>
                           {profileDatasetId &&
                           !datasets.some(
                             (dataset) => dataset.id === profileDatasetId,
                           ) ? (
                             <option disabled value={profileDatasetId}>
                               {selectedStudent.currentVocabBook ??
-                                "이전 단어장"} · 신규 배정 종료
+                                adminStudentsText.learning.previousWordbook}{" "}
+                              · {adminStudentsText.learning.assignmentClosed}
                             </option>
                           ) : null}
                           {datasetGroups.map((group) => (
@@ -1375,7 +1458,7 @@ export function StudentManager({
                               ))}
                             </optgroup>
                           ))}
-                        </select>
+                        </SelectField>
                       </label>
                       <Button
                         disabled={
@@ -1386,7 +1469,7 @@ export function StudentManager({
                         onClick={saveCurrentDataset}
                         variant="secondary"
                       >
-                        저장
+                        {adminStudentsText.learning.save}
                       </Button>
                     </div>
                     <StudentVocabBookHistoryList
@@ -1397,18 +1480,25 @@ export function StudentManager({
                       items={selectedStudentVocabBookHistory}
                     />
                     <div className="learning-section-heading">
-                      <h3>최근 숙제·시험</h3>
-                      <span>{selectedStudentHistory.length}개</span>
+                      <h3>{adminStudentsText.learning.recentActivity}</h3>
+                      <span>
+                        {formatContentText(
+                          adminStudentsText.learning.activityCount,
+                          { count: selectedStudentCurrentHistory.length },
+                        )}
+                      </span>
                     </div>
                     <StudentLearningActivityList
                       initialLimit={5}
-                      items={selectedStudentHistory}
+                      items={selectedStudentCurrentHistory}
                       onEditAssignment={(item) => {
-                        setAssignmentDatasetId(item.datasetId);
-                        setAssignmentStudentId(item.studentId);
-                        setAssignmentEditTarget({
-                          assignmentId: item.assignmentId,
+                        openStudentAssignment({
+                          datasetId: item.datasetId,
                           studentId: item.studentId,
+                          editTarget: {
+                            assignmentId: item.assignmentId,
+                            studentId: item.studentId,
+                          },
                         });
                       }}
                     />
@@ -1420,7 +1510,7 @@ export function StudentManager({
                   >
                     <div className="student-learning-subview-heading">
                       <Button
-                        aria-label="학습 관리로 돌아가기"
+                        aria-label={adminStudentsText.learning.backAria}
                         onClick={() => setLearningView("summary")}
                         size="icon"
                         variant="quiet"
@@ -1430,8 +1520,8 @@ export function StudentManager({
                       <div>
                         <h3>
                           {learningView === "vocab"
-                            ? "단어 학습 관리"
-                            : "지문 학습 관리"}
+                            ? adminStudentsText.learning.vocabularyManagement
+                            : adminStudentsText.learning.passageManagement}
                         </h3>
                         <p>
                           {[
@@ -1449,7 +1539,12 @@ export function StudentManager({
                           <div>
                             <strong className="label-with-help">
                               {adminStudentsText.learning.nextVocabularyTitle}
-                              <HelpTip label="다음 단어 시험 도움말">
+                              <HelpTip
+                                label={
+                                  adminStudentsText.learning
+                                    .nextVocabularyHelpAria
+                                }
+                              >
                                 {adminStudentsText.learning.nextVocabularyHelp}
                               </HelpTip>
                             </strong>
@@ -1457,13 +1552,14 @@ export function StudentManager({
                           <Button
                             disabled={assignmentDatasets.length === 0}
                             onClick={() => {
-                              setAssignmentDatasetId(
-                                learningSourceDatasetId ||
+                              openStudentAssignment({
+                                datasetId:
+                                  learningSourceDatasetId ||
                                   selectedStudent.currentVocabDatasetId ||
                                   "",
-                              );
-                              setAssignmentEditTarget(null);
-                              setAssignmentStudentId(selectedStudent.id);
+                                studentId: selectedStudent.id,
+                                editTarget: null,
+                              });
                             }}
                             variant="primary"
                           >
@@ -1488,8 +1584,7 @@ export function StudentManager({
                       </>
                     ) : (
                       <div className="empty-state">
-                        교과서·부교재·모의고사 범위 계약이 확정되면 이곳에서
-                        지문 학습을 배정합니다.
+                        {adminStudentsText.learning.passagePending}
                       </div>
                     )}
                   </div>
@@ -1509,7 +1604,9 @@ export function StudentManager({
                 >
                   <div className="form-grid-2">
                     <label className="field">
-                      <span className="field-label">이름</span>
+                      <span className="field-label">
+                        {adminStudentsText.account.name}
+                      </span>
                       <input
                         maxLength={80}
                         onChange={(event) =>
@@ -1520,7 +1617,9 @@ export function StudentManager({
                       />
                     </label>
                     <label className="field">
-                      <span className="field-label">학교</span>
+                      <span className="field-label">
+                        {adminStudentsText.account.school}
+                      </span>
                       <input
                         maxLength={120}
                         onChange={(event) =>
@@ -1530,7 +1629,9 @@ export function StudentManager({
                       />
                     </label>
                     <label className="field">
-                      <span className="field-label">학년</span>
+                      <span className="field-label">
+                        {adminStudentsText.account.grade}
+                      </span>
                       <input
                         maxLength={40}
                         onChange={(event) =>
@@ -1540,8 +1641,7 @@ export function StudentManager({
                       />
                     </label>
                   </div>
-                  <button
-                    className="button button-secondary"
+                  <Button
                     disabled={
                       interactionBusy ||
                       !profileDisplayName.trim() ||
@@ -1554,71 +1654,72 @@ export function StudentManager({
                     type="submit"
                   >
                     {busyKey === `profile:${selectedStudent.id}`
-                      ? "저장 중…"
-                      : "학생 정보 저장"}
-                  </button>
+                      ? adminStudentsText.account.savePending
+                      : adminStudentsText.account.save}
+                  </Button>
                 </form>
                 <div className="student-management-summary">
                   <div>
-                    <span>계정 상태</span>
+                    <span>{adminStudentsText.account.status}</span>
                     <strong>{selectedStudent.displayName}</strong>
                   </div>
                   <span
                     className={`status-pill status-${selectedStudent.status}`}
                   >
                     {selectedStudent.status === "active"
-                      ? "접속 가능"
-                      : "차단됨"}
+                      ? adminStudentsText.account.active
+                      : adminStudentsText.account.blocked}
                   </span>
                 </div>
+                {selectedStudent.codeStatus === "expired" ? (
+                  <div className="notice notice-error" role="status">
+                    {adminStudentsText.account.expiredNotice}
+                  </div>
+                ) : null}
                 <div className="dialog-actions account-actions">
                   {selectedStudent.status === "active" ? (
                     <>
-                      <button
-                        className="button button-quiet"
-                        disabled={interactionBusy}
-                        onClick={() => reveal(selectedStudent)}
-                        type="button"
-                      >
-                        코드 보기
-                      </button>
-                      <button
-                        className="button button-secondary"
+                      {selectedStudent.codeStatus === "active" ? (
+                        <Button
+                          disabled={interactionBusy}
+                          onClick={() => reveal(selectedStudent)}
+                          variant="quiet"
+                        >
+                          {adminStudentsText.account.viewCode}
+                        </Button>
+                      ) : null}
+                      <Button
                         disabled={interactionBusy}
                         onClick={() => rotate(selectedStudent)}
-                        type="button"
                       >
-                        코드 교체
-                      </button>
-                      <button
-                        className="button button-danger"
+                        {adminStudentsText.account.rotateCode}
+                      </Button>
+                      <Button
                         disabled={interactionBusy}
                         onClick={() => block(selectedStudent)}
-                        type="button"
+                        variant="danger"
                       >
-                        접속 차단
-                      </button>
+                        {adminStudentsText.account.block}
+                      </Button>
                     </>
                   ) : (
-                    <button
-                      className="button button-primary"
+                    <Button
                       disabled={interactionBusy}
                       onClick={() => rotate(selectedStudent)}
-                      type="button"
+                      variant="primary"
                     >
-                      새 코드로 재개
-                    </button>
+                      {adminStudentsText.account.resume}
+                    </Button>
                   )}
-                  <button
-                    className="button button-danger"
+                  <Button
                     disabled={interactionBusy}
                     onClick={() => void deleteSelectedStudent()}
-                    type="button"
+                    variant="danger"
                   >
                     {busyKey === `delete:${selectedStudent.id}`
-                      ? "학생 삭제 중…"
-                      : "학생 삭제"}
-                  </button>
+                      ? adminStudentsText.account.deletePending
+                      : adminStudentsText.account.delete}
+                  </Button>
                 </div>
               </section>
             ) : (
@@ -1634,87 +1735,52 @@ export function StudentManager({
                   initialLimit={5}
                   items={selectedStudentHistory}
                   onEditAssignment={(item) => {
-                    setAssignmentDatasetId(item.datasetId);
-                    setAssignmentStudentId(item.studentId);
-                    setAssignmentEditTarget({
-                      assignmentId: item.assignmentId,
+                    openStudentAssignment({
+                      datasetId: item.datasetId,
                       studentId: item.studentId,
+                      editTarget: {
+                        assignmentId: item.assignmentId,
+                        studentId: item.studentId,
+                      },
                     });
                   }}
                 />
               </section>
             )}
-          </div>
-        </dialog>
+              </>
+            </ModalBody>
+          )}
+        </ModalFrame>
       )}
 
-      {assignmentStudentId ? (
-        <AssignmentManager
-          currentVocabWrongSummaries={currentVocabWrongSummaries}
-          datasets={assignmentDatasets}
-          history={history}
-          initialDatasetId={assignmentDatasetId}
-          initialDialogView="assign"
-          initialEditTarget={assignmentEditTarget}
-          initialStudentId={assignmentStudentId}
-          key={`${assignmentStudentId}:${assignmentDatasetId}:${assignmentEditTarget?.assignmentId ?? "new"}`}
-          launcherOnly
-          learningSources={learningSources}
-          onLauncherClose={() => {
-            setAssignmentStudentId("");
-            setAssignmentEditTarget(null);
-          }}
-          pendingReviewSummaries={pendingReviewSummaries}
-          progress={progress}
-          students={students}
-          units={assignmentUnits}
-        />
-      ) : null}
-
       {shownCode && (
-        <dialog
+        <ModalFrame
           aria-labelledby="student-code-title"
-          className="dialog"
+          className="student-code-dialog"
           onClose={finishClosingCodeDialog}
           ref={codeDialogRef}
         >
-          <h2 id="student-code-title">{shownCode.label}</h2>
-          <p className="auth-description">
-            {adminStudentsText.codeModal.instruction}
-          </p>
-          <div className="dialog-code">{shownCode.code}</div>
-          <div className="inline-actions">
-            <button
-              autoFocus
-              className="button button-primary"
-              onClick={() => void shareCode()}
-              type="button"
-            >
-              {adminStudentsText.codeModal.sendKakao}
-            </button>
-            {shareNotice && (
-              <span className="field-help" role="status">
-                {shareNotice}
-              </span>
-            )}
-            <button
-              className="button button-secondary"
-              onClick={copyCode}
-              type="button"
-            >
-              {copied
-                ? adminStudentsText.codeModal.copied
-                : adminStudentsText.codeModal.copy}
-            </button>
-            <button
-              className="button button-quiet"
-              onClick={closeCodeDialog}
-              type="button"
-            >
-              {adminStudentsText.codeModal.close}
-            </button>
-          </div>
-        </dialog>
+          <ModalHeader onClose={closeCodeDialog}>
+            <h2 id="student-code-title">{shownCode.label}</h2>
+          </ModalHeader>
+          <ModalBody className="student-code-dialog-body">
+            <div className="dialog-code">{shownCode.code}</div>
+            <div className="student-code-actions">
+              <Button
+                autoFocus
+                onClick={() => void shareCode()}
+                variant="primary"
+              >
+                {adminStudentsText.codeModal.sendKakao}
+              </Button>
+              <Button onClick={copyCode}>
+                {copied
+                  ? adminStudentsText.codeModal.copied
+                  : adminStudentsText.codeModal.copy}
+              </Button>
+            </div>
+          </ModalBody>
+        </ModalFrame>
       )}
     </>
   );

@@ -5,17 +5,31 @@ import {
 } from "@/lib/admin/dataset-catalog";
 import type { StudentVocabBookHistory } from "@/lib/admin/student-vocab-book-history";
 import { formatKoreanDateTime } from "@/lib/format";
+import { formatContentText } from "@/content/format";
+import { adminStudentsText } from "@/content/ko/admin-students";
 
 function statusPresentation(item: StudentVocabBookHistory) {
   if (item.lastStatus === "in_progress") {
-    return { label: "진행 중", tone: "warning" as const };
+    return {
+      label: adminStudentsText.learning.wordbookHistory.inProgress,
+      tone: "warning" as const,
+    };
   }
   if (item.lastStatus === "expired") {
-    return { label: "시간 종료", tone: "danger" as const };
+    return {
+      label: adminStudentsText.learning.wordbookHistory.expired,
+      tone: "danger" as const,
+    };
   }
   return item.lastPassed
-    ? { label: "통과", tone: "positive" as const }
-    : { label: "미통과", tone: "danger" as const };
+    ? {
+        label: adminStudentsText.learning.wordbookHistory.passed,
+        tone: "positive" as const,
+      }
+    : {
+        label: adminStudentsText.learning.wordbookHistory.failed,
+        tone: "danger" as const,
+      };
 }
 
 export function StudentVocabBookHistoryList({
@@ -32,12 +46,16 @@ export function StudentVocabBookHistoryList({
   return (
     <section className="student-vocab-history">
       <div className="learning-section-heading">
-        <h3>학습한 단어장</h3>
-        <span>{items.length}개</span>
+        <h3>{adminStudentsText.learning.wordbookHistory.title}</h3>
+        <span>
+          {formatContentText(adminStudentsText.learning.wordbookHistory.count, {
+            count: items.length,
+          })}
+        </span>
       </div>
       {items.length === 0 ? (
         <div className="empty-state student-vocab-history-empty">
-          아직 실제로 응시한 단어장이 없습니다.
+          {adminStudentsText.learning.wordbookHistory.empty}
         </div>
       ) : (
         <ol className="student-vocab-history-list">
@@ -58,7 +76,11 @@ export function StudentVocabBookHistoryList({
                       : item.datasetTitle}
                   </strong>
                   <MetaTagList>
-                    {isCurrent ? <MetaTag>최근 단어장</MetaTag> : null}
+                    {isCurrent ? (
+                      <MetaTag>
+                        {adminStudentsText.learning.wordbookHistory.recent}
+                      </MetaTag>
+                    ) : null}
                     <MetaTag tone={presentation.tone}>
                       {presentation.label}
                     </MetaTag>
@@ -66,16 +88,21 @@ export function StudentVocabBookHistoryList({
                 </div>
                 <dl className="student-vocab-history-facts">
                   <div>
-                    <dt>마지막 범위</dt>
+                    <dt>{adminStudentsText.learning.wordbookHistory.lastRange}</dt>
                     <dd>{item.lastScopeLabel}</dd>
                   </div>
                   <div>
-                    <dt>최근 학습</dt>
+                    <dt>{adminStudentsText.learning.wordbookHistory.recentStudy}</dt>
                     <dd>{formatKoreanDateTime(item.lastActivityAt)}</dd>
                   </div>
                   <div>
-                    <dt>응시</dt>
-                    <dd>{item.attemptCount}회</dd>
+                    <dt>{adminStudentsText.learning.wordbookHistory.attempts}</dt>
+                    <dd>
+                      {formatContentText(
+                        adminStudentsText.learning.wordbookHistory.attemptCount,
+                        { count: item.attemptCount },
+                      )}
+                    </dd>
                   </div>
                 </dl>
               </li>

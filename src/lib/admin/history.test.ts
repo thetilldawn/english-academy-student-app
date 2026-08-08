@@ -8,6 +8,7 @@ import {
   assignmentTypeLabel,
   assignmentUnitRangeLabel,
   buildAssignmentHistory,
+  projectCurrentAssignmentHistory,
   type AssignmentHistorySource,
   type AttemptHistorySource,
 } from "@/lib/admin/history";
@@ -236,7 +237,7 @@ describe("buildAssignmentHistory", () => {
 
 describe("assignmentScopeLabel", () => {
   it("시험 유형과 단원 범위를 태그용 라벨로 분리한다", () => {
-    expect(assignmentTypeLabel("regular")).toBe("일반 시험");
+    expect(assignmentTypeLabel("regular")).toBe("단어 시험");
     expect(assignmentTypeLabel("mixed")).toBe("틀린 단어 포함");
     expect(assignmentTypeLabel("review")).toBe("오답 재시험");
     expect(
@@ -299,5 +300,78 @@ describe("assignmentDisplayTitle", () => {
     expect(
       assignmentDisplayTitleForUnits("새 시험 · DAY 01", ["DAY 01"]),
     ).toBe("새 시험");
+  });
+});
+
+describe("projectCurrentAssignmentHistory", () => {
+  it("같은 학생의 같은 배정은 가장 최신 시도 하나만 남긴다", () => {
+    const history = buildAssignmentHistory(
+      [assignment],
+      [
+        attempt({
+          id: "attempt-1",
+          attemptNumber: 1,
+          finalScore: 70,
+          passed: false,
+        }),
+        attempt({
+          id: "attempt-2",
+          attemptNumber: 2,
+          finalScore: 100,
+          passed: true,
+          startedAt: "2026-07-30T01:00:00.000Z",
+          completedAt: "2026-07-30T01:05:00.000Z",
+        }),
+      ],
+    );
+
+    expect(history).toHaveLength(2);
+    expect(projectCurrentAssignmentHistory(history).map((item) => item.id)).toEqual([
+      "attempt-2",
+    ]);
+  });
+
+  it("서로 다른 배정은 같은 학생이어도 각각 유지한다", () => {
+    const first = buildAssignmentHistory([assignment], [attempt()]);
+    const secondAssignment = {
+      ...assignment,
+      assignmentId: "assignment-2",
+      assignmentTitle: "두 번째 시험",
+    };
+    const second = buildAssignmentHistory(
+      [secondAssignment],
+      [
+        attempt({
+          id: "attempt-other",
+          assignmentId: "assignment-2",
+        }),
+      ],
+    );
+
+    expect(projectCurrentAssignmentHistory([...first, ...second])).toHaveLength(2);
+  });
+
+  it("최신 내역을 숨기면 과거 실패 시도가 현재 상태로 부활하지 않는다", () => {
+    const history = buildAssignmentHistory(
+      [assignment],
+      [
+        attempt({
+          id: "attempt-1",
+          attemptNumber: 1,
+          finalScore: 70,
+          passed: false,
+        }),
+        attempt({
+          id: "attempt-2",
+          attemptNumber: 2,
+          startedAt: "2026-07-30T01:00:00.000Z",
+        }),
+      ],
+    );
+    const currentBeforeHiddenFilter = projectCurrentAssignmentHistory(history);
+
+    expect(
+      currentBeforeHiddenFilter.filter((item) => item.id !== "attempt-2"),
+    ).toEqual([]);
   });
 });

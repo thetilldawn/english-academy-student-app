@@ -23,7 +23,9 @@ describe("assignment edit UI contract", () => {
     expect(manager).toContain("function beginEdit(");
     expect(manager).toContain('method: "PUT"');
     expect(manager).toContain("assignmentEditChangeKeys(");
-    expect(manager).toContain('aria-label="배정 변경 비교"');
+    expect(manager).toContain(
+      "adminLearningText.assignmentModal.edit.comparisonAria",
+    );
   });
 
   it("편집 자기 자신만 capacity 중복 잠금에서 제외한다", () => {

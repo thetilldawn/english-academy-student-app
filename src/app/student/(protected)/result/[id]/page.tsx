@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { StartRetryButton } from "@/components/start-retry-button";
+import { ButtonLink } from "@/components/ui-button";
+import { formatContentText } from "@/content/format";
+import { studentAppText } from "@/content/ko/student-app";
 import { requireStudentSession } from "@/lib/auth/student-session";
 import { formatElapsed } from "@/lib/format";
 import { getResultQuestionPresentation } from "@/lib/quiz/result-presentation";
 import { getAttemptResult } from "@/lib/services/quiz-service";
 
 export const metadata: Metadata = {
-  title: "시험 결과",
+  title: studentAppText.result.metadataTitle,
 };
 
 type ResultQuestion = NonNullable<
@@ -30,7 +32,11 @@ function QuestionReviewCard({
     <article className="card result-question">
       <div className="title-with-status">
         <div>
-          <p className="eyebrow">문항 {question.orderIndex}</p>
+          <p className="eyebrow">
+            {formatContentText(studentAppText.result.question.number, {
+              number: question.orderIndex,
+            })}
+          </p>
           <h3>{presentation.prompt}</h3>
         </div>
         <span
@@ -43,28 +49,32 @@ function QuestionReviewCard({
           }`}
         >
           {resolved
-            ? "다시 맞힘"
+            ? studentAppText.result.question.retryCorrect
             : question.retryIsCorrect === false
-              ? "다시 틀림"
+              ? studentAppText.result.question.retryWrong
               : reviewPending
-                ? "재시험 전"
-                : "미완료"}
+                ? studentAppText.result.question.retryPending
+                : studentAppText.result.question.incomplete}
         </span>
       </div>
       <dl className="answer-detail answer-detail-3">
         <div>
-          <dt>첫 선택</dt>
-          <dd>{question.initialChoice ?? "선택 안 함"}</dd>
-        </div>
-        <div>
-          <dt>재시험</dt>
+          <dt>{studentAppText.result.question.initialChoice}</dt>
           <dd>
-            {question.retryChoice ??
-              (reviewPending ? "재시험 전" : "선택 안 함")}
+            {question.initialChoice ?? studentAppText.result.question.noChoice}
           </dd>
         </div>
         <div>
-          <dt>정답</dt>
+          <dt>{studentAppText.result.question.retry}</dt>
+          <dd>
+            {question.retryChoice ??
+              (reviewPending
+                ? studentAppText.result.question.retryPending
+                : studentAppText.result.question.noChoice)}
+          </dd>
+        </div>
+        <div>
+          <dt>{studentAppText.result.question.answer}</dt>
           <dd>{presentation.correctAnswer}</dd>
         </div>
       </dl>
@@ -117,26 +127,30 @@ export default async function StudentResultPage({
         <div>
           <p className="eyebrow">
             {reviewPending
-              ? "FIRST TEST RESULT"
+              ? studentAppText.result.eyebrow.reviewPending
               : expired
-                ? "TIME ENDED"
+                ? studentAppText.result.eyebrow.expired
                 : result.passed
-                  ? "PASSED"
-                  : "COMPLETED"}
+                  ? studentAppText.result.eyebrow.passed
+                  : studentAppText.result.eyebrow.completed}
           </p>
           <h1>{result.title}</h1>
           <p>
             {reviewPending
-              ? "틀린 단어를 확인한 뒤 재시험을 시작할 수 있습니다."
+              ? studentAppText.result.message.retryReady
               : expired
-              ? "제한시간이 끝났습니다."
+              ? studentAppText.result.message.expired
               : result.passed
-                ? "통과했습니다."
-                : "통과점수에는 미치지 못했습니다."}
+                ? studentAppText.result.message.passed
+                : studentAppText.result.message.failed}
           </p>
         </div>
         <strong>
-          {result.initialScore === null ? "-" : `${result.initialScore}점`}
+          {result.initialScore === null
+            ? "-"
+            : formatContentText(studentAppText.result.score, {
+                score: result.initialScore,
+              })}
         </strong>
       </section>
 
@@ -147,17 +161,21 @@ export default async function StudentResultPage({
         >
           <div className="section-heading">
             <h2 id="unresolved-heading">
-              {reviewPending ? "한 번 틀린 단어" : "다시 볼 단어"}
+              {reviewPending
+                ? studentAppText.result.sections.firstWrong
+                : studentAppText.result.sections.unresolved}
             </h2>
             <span className="detail-chip">
-              {unresolvedQuestions.length}개
+              {formatContentText(studentAppText.result.count, {
+                count: unresolvedQuestions.length,
+              })}
             </span>
           </div>
           {unresolvedQuestions.length === 0 ? (
             <div className="empty-state">
               {reviewPending
-                ? "첫 시험에서 틀린 단어가 없습니다."
-                : "다시 확인할 단어가 남지 않았습니다."}
+                ? studentAppText.result.empty.noInitialWrong
+                : studentAppText.result.empty.noUnresolved}
             </div>
           ) : (
             <div className="result-question-list">
@@ -172,24 +190,29 @@ export default async function StudentResultPage({
           )}
         </section>
 
-        <aside aria-label="시험 결과 요약" className="result-sidebar">
+        <aside
+          aria-label={studentAppText.result.summary.aria}
+          className="result-sidebar"
+        >
           <section className="card result-metric-list">
             <div>
-              <span>첫 시험 정답</span>
+              <span>{studentAppText.result.summary.initialCorrect}</span>
               <strong>
                 {result.initialCorrectCount ?? "-"}
                 <small>/{result.questionCount}</small>
               </strong>
             </div>
             <div>
-              <span>재시험 정답</span>
+              <span>{studentAppText.result.summary.retryCorrect}</span>
               <strong>
                 {reviewPending ? "-" : (result.retryCorrectCount ?? "-")}
               </strong>
             </div>
             <div>
               <span>
-                {reviewPending ? "재시험 대상 단어" : "다시 볼 단어"}
+                {reviewPending
+                  ? studentAppText.result.summary.retryTarget
+                  : studentAppText.result.summary.unresolved}
               </span>
               <strong>{result.unresolvedWrongCount ?? "-"}</strong>
             </div>
@@ -197,41 +220,49 @@ export default async function StudentResultPage({
 
           <section className="card result-summary result-summary-stacked">
             <div>
-              <span>재시험 후 점수</span>
+              <span>{studentAppText.result.summary.finalScore}</span>
               <strong>
                 {reviewPending || result.finalScore === null
                   ? "-"
-                  : `${result.finalScore}점`}
+                  : formatContentText(studentAppText.result.score, {
+                      score: result.finalScore,
+                    })}
               </strong>
             </div>
             <div>
-              <span>응시 시간</span>
+              <span>{studentAppText.result.summary.elapsed}</span>
               <strong>{formatElapsed(result.elapsedSeconds)}</strong>
             </div>
             <div>
-              <span>응시 회차</span>
-              <strong>{result.attemptNumber}회</strong>
+              <span>{studentAppText.result.summary.attemptNumber}</span>
+              <strong>
+                {formatContentText(studentAppText.result.attemptCount, {
+                  count: result.attemptNumber,
+                })}
+              </strong>
             </div>
           </section>
 
           {reviewPending && <StartRetryButton attemptId={result.id} />}
-          <Link
-            className={`button ${
-              reviewPending ? "button-quiet" : "button-primary"
-            }`}
+          <ButtonLink
             href="/student"
+            variant={reviewPending ? "quiet" : "primary"}
           >
-            내 시험으로 돌아가기
-          </Link>
+            {studentAppText.result.backToAssignments}
+          </ButtonLink>
         </aside>
       </div>
 
       {resolvedQuestions.length > 0 && (
         <section aria-labelledby="resolved-heading" className="section">
           <div className="section-heading">
-            <h2 id="resolved-heading">한 번 틀린 단어</h2>
+            <h2 id="resolved-heading">
+              {studentAppText.result.sections.resolved}
+            </h2>
             <span className="detail-chip">
-              {resolvedQuestions.length}개
+              {formatContentText(studentAppText.result.count, {
+                count: resolvedQuestions.length,
+              })}
             </span>
           </div>
           <div className="result-question-list result-question-grid">

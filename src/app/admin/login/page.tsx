@@ -18,7 +18,7 @@ export default function AdminLoginPage() {
         <p className="eyebrow">{adminShellText.login.eyebrow}</p>
         <h1 className="label-with-help">
           {adminShellText.login.title}
-          <HelpTip label={`${adminShellText.login.title} 도움말`}>
+          <HelpTip label={adminShellText.login.helpAria}>
             {adminShellText.login.accountScopeHelp}
           </HelpTip>
         </h1>

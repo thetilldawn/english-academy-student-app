@@ -15,44 +15,64 @@ import {
 } from "@/lib/admin/history";
 import {
   learningActivityEffectiveAt,
+  learningActivitySection,
   matchesLearningHistoryFilters,
   sortLearningActivities,
+  type LearningActivitySection,
   type LearningHistoryPurposeFilter,
   type LearningHistoryStatusFilter,
 } from "@/lib/admin/learning-activity";
+import { adminStudentsText } from "@/content/ko/admin-students";
+import { formatContentText } from "@/content/format";
 import { formatKoreanDateTime } from "@/lib/format";
+import { SelectField } from "@/components/ui-select";
+import { Button } from "@/components/ui-button";
 
 function activityTimeLabel(item: AssignmentHistorySummary) {
+  const copy = adminStudentsText.learning.activityList.time;
   if (item.status === "not_started") {
     return item.availableUntil
-      ? `마감 ${formatKoreanDateTime(item.availableUntil)}`
-      : `배정 ${formatKoreanDateTime(item.assignedAt)} · 마감 없음`;
+      ? formatContentText(copy.deadline, {
+          datetime: formatKoreanDateTime(item.availableUntil),
+        })
+      : formatContentText(copy.assignedWithoutDeadline, {
+          datetime: formatKoreanDateTime(item.assignedAt),
+        });
   }
   if (item.status === "cancelled") {
-    return `취소 ${formatKoreanDateTime(
-      learningActivityEffectiveAt(item),
-    )}`;
+    return formatContentText(copy.cancelled, {
+      datetime: formatKoreanDateTime(learningActivityEffectiveAt(item)),
+    });
   }
   if (item.status === "missed") {
-    return `미응시 마감 ${formatKoreanDateTime(
-      learningActivityEffectiveAt(item),
-    )}`;
+    return formatContentText(copy.missed, {
+      datetime: formatKoreanDateTime(learningActivityEffectiveAt(item)),
+    });
   }
   if (item.status === "expired") {
-    return `시간 종료 ${formatKoreanDateTime(
-      learningActivityEffectiveAt(item),
-    )}`;
+    return formatContentText(copy.expired, {
+      datetime: formatKoreanDateTime(learningActivityEffectiveAt(item)),
+    });
   }
   if (item.completedAt) {
-    return `종료 ${formatKoreanDateTime(item.completedAt)}`;
+    return formatContentText(copy.finished, {
+      datetime: formatKoreanDateTime(item.completedAt),
+    });
   }
-  return `시작 ${formatKoreanDateTime(
-    learningActivityEffectiveAt(item),
-  )}`;
+  if (item.status === "in_progress" && item.phase === "review") {
+    return formatContentText(copy.failed, {
+      datetime: formatKoreanDateTime(
+        item.initialCompletedAt ?? item.startedAt,
+      ),
+    });
+  }
+  return formatContentText(copy.started, {
+    datetime: formatKoreanDateTime(learningActivityEffectiveAt(item)),
+  });
 }
 
 export function StudentLearningActivityList({
-  emptyLabel = "배정되거나 완료된 학습이 없습니다.",
+  emptyLabel = adminStudentsText.learning.activityList.empty,
   filtersEnabled = false,
   initialLimit = 5,
   items,
@@ -79,16 +99,56 @@ export function StudentLearningActivityList({
     const since =
       periodDays === null ? null : filterNow - periodDays * 86_400_000;
     return sortLearningActivities(
-      items.filter((item) =>
-        matchesLearningHistoryFilters(item, {
-          purpose: purposeFilter,
-          status: statusFilter,
-          since,
-        }),
+      items.filter(
+        (item) =>
+          (filtersEnabled ||
+            learningActivitySection(item) !== "archived") &&
+          matchesLearningHistoryFilters(item, {
+            purpose: purposeFilter,
+            status: statusFilter,
+            since,
+          }),
       ),
     );
-  }, [filterNow, items, periodFilter, purposeFilter, statusFilter]);
+  }, [
+    filterNow,
+    filtersEnabled,
+    items,
+    periodFilter,
+    purposeFilter,
+    statusFilter,
+  ]);
   const visible = expanded ? sorted : sorted.slice(0, initialLimit);
+  const sectionDefinitions: Array<{
+    id: LearningActivitySection;
+    label: string;
+  }> = [
+    { id: "open", label: adminStudentsText.learning.activitySections.open },
+    {
+      id: "needs_attention",
+      label: adminStudentsText.learning.activitySections.needsAttention,
+    },
+    {
+      id: "completed",
+      label: adminStudentsText.learning.activitySections.completed,
+    },
+    ...(filtersEnabled
+      ? [
+          {
+            id: "archived" as const,
+            label: adminStudentsText.learning.activitySections.archived,
+          },
+        ]
+      : []),
+  ];
+  const visibleSections = sectionDefinitions
+    .map((section) => ({
+      ...section,
+      items: visible.filter(
+        (item) => learningActivitySection(item) === section.id,
+      ),
+    }))
+    .filter((section) => section.items.length > 0);
 
   if (!filtersEnabled && sorted.length === 0) {
     return <div className="empty-state learning-activity-empty">{emptyLabel}</div>;
@@ -98,10 +158,13 @@ export function StudentLearningActivityList({
     <>
       <div className="learning-activity-region">
       {filtersEnabled ? (
-        <div aria-label="학습 내역 필터" className="learning-activity-filters">
+        <div
+          aria-label={adminStudentsText.learning.activityList.filterAria}
+          className="learning-activity-filters"
+        >
           <label>
-            <span>유형</span>
-            <select
+            <span>{adminStudentsText.learning.activityList.filters.type}</span>
+            <SelectField
               onChange={(event) => {
                 setPurposeFilter(
                   event.target.value as LearningHistoryPurposeFilter,
@@ -110,15 +173,15 @@ export function StudentLearningActivityList({
               }}
               value={purposeFilter}
             >
-              <option value="all">전체 유형</option>
-              <option value="regular">일반 시험</option>
-              <option value="mixed">틀린 단어 포함</option>
-              <option value="review">오답 재시험</option>
-            </select>
+              <option value="all">{adminStudentsText.learning.activityList.filters.allTypes}</option>
+              <option value="regular">{adminStudentsText.learning.activityList.filters.regular}</option>
+              <option value="mixed">{adminStudentsText.learning.activityList.filters.mixed}</option>
+              <option value="review">{adminStudentsText.learning.activityList.filters.review}</option>
+            </SelectField>
           </label>
           <label>
-            <span>상태</span>
-            <select
+            <span>{adminStudentsText.learning.activityList.filters.status}</span>
+            <SelectField
               onChange={(event) => {
                 setStatusFilter(
                   event.target.value as LearningHistoryStatusFilter,
@@ -127,16 +190,16 @@ export function StudentLearningActivityList({
               }}
               value={statusFilter}
             >
-              <option value="all">전체 상태</option>
-              <option value="open">진행 전·진행 중</option>
-              <option value="needs_attention">미응시·미통과</option>
-              <option value="completed">통과 완료</option>
-              <option value="archived">취소·삭제</option>
-            </select>
+              <option value="all">{adminStudentsText.learning.activityList.filters.allStatuses}</option>
+              <option value="open">{adminStudentsText.learning.activityList.filters.open}</option>
+              <option value="needs_attention">{adminStudentsText.learning.activityList.filters.needsAttention}</option>
+              <option value="completed">{adminStudentsText.learning.activityList.filters.completed}</option>
+              <option value="archived">{adminStudentsText.learning.activityList.filters.archived}</option>
+            </SelectField>
           </label>
           <label>
-            <span>기간</span>
-            <select
+            <span>{adminStudentsText.learning.activityList.filters.period}</span>
+            <SelectField
               onChange={(event) => {
                 setPeriodFilter(
                   event.target.value as "all" | "30" | "90" | "365",
@@ -145,67 +208,96 @@ export function StudentLearningActivityList({
               }}
               value={periodFilter}
             >
-              <option value="all">전체 기간</option>
-              <option value="30">최근 30일</option>
-              <option value="90">최근 90일</option>
-              <option value="365">최근 1년</option>
-            </select>
+              <option value="all">{adminStudentsText.learning.activityList.filters.allPeriods}</option>
+              <option value="30">{adminStudentsText.learning.activityList.filters.recent30}</option>
+              <option value="90">{adminStudentsText.learning.activityList.filters.recent90}</option>
+              <option value="365">{adminStudentsText.learning.activityList.filters.recentYear}</option>
+            </SelectField>
           </label>
         </div>
       ) : null}
       {sorted.length === 0 ? (
         <div className="empty-state learning-activity-empty">
-          {filtersEnabled ? "선택한 조건의 내역이 없습니다." : emptyLabel}
+          {filtersEnabled
+            ? adminStudentsText.learning.activityList.noMatches
+            : emptyLabel}
         </div>
       ) : (
-        <ol className="learning-activity-list">
-          {visible.map((item) => (
-            <li className="learning-activity-row" key={item.id}>
-              <div className="learning-activity-main">
-                <strong>{assignmentDisplayTitle(item)}</strong>
-                <AssignmentMetaTags {...item} compact />
-                <small>{activityTimeLabel(item)}</small>
+        <div className="learning-activity-sections">
+          {visibleSections.map((section) => (
+            <section
+              aria-labelledby={`learning-activity-${section.id}`}
+              className="learning-activity-section"
+              key={section.id}
+            >
+              <div className="learning-section-heading">
+                <h4 id={`learning-activity-${section.id}`}>
+                  {section.label}
+                </h4>
+                <span>
+                  {formatContentText(
+                    adminStudentsText.learning.activityList.count,
+                    { count: section.items.length },
+                  )}
+                </span>
               </div>
-              <div className="learning-activity-result">
-                <AttemptScoreSummary
-                  finalScore={item.finalScore}
-                  initialScore={item.initialScore}
-                  passingScore={item.passingScore}
-                  phase={item.phase}
-                  retryStartedAt={item.retryStartedAt}
-                  status={item.status}
-                />
-                <AttemptStatusLabel
-                  finalScore={item.finalScore}
-                  initialScore={item.initialScore}
-                  passingScore={item.passingScore}
-                  phase={item.phase}
-                  retryStartedAt={item.retryStartedAt}
-                  status={item.status}
-                />
-              </div>
-              <AdminHistoryActions
-                item={item}
-                onEdit={onEditAssignment}
-                onViewDetail={() => setDetailItemId(item.id)}
-                size="small"
-                summaryOnly
-              />
-            </li>
+              <ol className="learning-activity-list">
+                {section.items.map((item) => (
+                  <li className="learning-activity-row" key={item.id}>
+                    <div className="learning-activity-main">
+                      <strong>{assignmentDisplayTitle(item)}</strong>
+                      <AssignmentMetaTags {...item} compact />
+                      <small>{activityTimeLabel(item)}</small>
+                    </div>
+                    <div className="learning-activity-result">
+                      <AttemptScoreSummary
+                        finalScore={item.finalScore}
+                        initialScore={item.initialScore}
+                        passingScore={item.passingScore}
+                        phase={item.phase}
+                        retryStartedAt={item.retryStartedAt}
+                        status={item.status}
+                      />
+                      <AttemptStatusLabel
+                        finalScore={item.finalScore}
+                        initialScore={item.initialScore}
+                        passingScore={item.passingScore}
+                        phase={item.phase}
+                        retryStartedAt={item.retryStartedAt}
+                        status={item.status}
+                      />
+                    </div>
+                    <AdminHistoryActions
+                      item={item}
+                      onEdit={onEditAssignment}
+                      onViewDetail={() => setDetailItemId(item.id)}
+                      size="small"
+                      summaryOnly
+                    />
+                  </li>
+                ))}
+              </ol>
+            </section>
           ))}
-        </ol>
+        </div>
       )}
       {sorted.length > initialLimit && (
-        <button
+        <Button
           aria-expanded={expanded}
-          className="button button-quiet learning-activity-expand"
+          className="learning-activity-expand"
           onClick={() => setExpanded((current) => !current)}
-          type="button"
+          variant="quiet"
         >
           {expanded
-            ? `최근 ${initialLimit}개만 보기`
-            : `전체 ${sorted.length}개 보기`}
-        </button>
+            ? formatContentText(
+                adminStudentsText.learning.activityList.recentOnly,
+                { count: initialLimit },
+              )
+            : formatContentText(
+                adminStudentsText.learning.activityList.showAll,
+                { count: sorted.length },
+              )}
+        </Button>
       )}
       </div>
       {detailItemId ? (

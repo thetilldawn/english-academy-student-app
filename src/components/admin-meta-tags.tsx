@@ -5,6 +5,8 @@ import {
   assignmentUnitRangeLabel,
   type AssignmentHistorySource,
 } from "@/lib/admin/history";
+import { formatContentText } from "@/content/format";
+import { adminHistoryText } from "@/content/ko/admin-history";
 
 type MetaTagTone = "neutral" | "positive" | "warning" | "danger";
 
@@ -59,7 +61,13 @@ export function AssignmentMetaTags({
           unitLabels,
         })}
       </MetaTag>
-      {!compact ? <MetaTag>{questionCount}문항</MetaTag> : null}
+      {!compact ? (
+        <MetaTag>
+          {formatContentText(adminHistoryText.list.questionCount, {
+            count: questionCount,
+          })}
+        </MetaTag>
+      ) : null}
     </MetaTagList>
   );
 }

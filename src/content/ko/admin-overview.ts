@@ -6,14 +6,13 @@ export const adminOverviewText = {
 
   // Overview > 우선 확인 목록 구역
   sections: {
-    missed: "미응시 마감",
-    failed: "미통과·재시험 필요",
-    dueSoon: "곧 마감",
-    noDeadline: "마감 없음",
+    open: "응시할 시험",
+    needsAttention: "미응시 · 미통과",
+    completed: "완료",
   },
 
   // Overview > 확인할 학습이 없을 때
-  emptyState: "지금 확인할 미응시·미통과·대기 학습이 없습니다.",
+  emptyState: "표시할 시험이 없습니다.",
 
   // Overview > 구역별 항목 수 뒤에 붙는 단위
   countSuffix: "건",

@@ -43,6 +43,7 @@ export default async function AdminDashboardPage() {
     listStudentLearningSources(),
   ]);
   const history = historyBundle.history;
+  const currentHistory = historyBundle.currentHistory;
   const vocabBookHistory = buildStudentVocabBookHistory(
     historyBundle.completeHistory,
     new Map(units.map((unit) => [unit.id, unit.displayName])),
@@ -50,27 +51,22 @@ export default async function AdminDashboardPage() {
   const progress = buildStudentProgress(students, units, history);
   const appOrigin =
     getServerEnvironment().APP_ORIGIN ?? "http://localhost:3000";
-  const groups = overviewActivityGroups(history);
+  const groups = overviewActivityGroups(currentHistory);
   const sections = [
     {
-      id: "missed",
-      title: adminOverviewText.sections.missed,
-      items: groups.missed,
+      id: "open",
+      title: adminOverviewText.sections.open,
+      items: groups.open,
     },
     {
-      id: "failed",
-      title: adminOverviewText.sections.failed,
-      items: groups.failed,
+      id: "needs-attention",
+      title: adminOverviewText.sections.needsAttention,
+      items: groups.needsAttention,
     },
     {
-      id: "due-soon",
-      title: adminOverviewText.sections.dueSoon,
-      items: groups.dueSoon,
-    },
-    {
-      id: "no-deadline",
-      title: adminOverviewText.sections.noDeadline,
-      items: groups.noDeadline,
+      id: "completed",
+      title: adminOverviewText.sections.completed,
+      items: groups.completed,
     },
   ].filter((section) => section.items.length > 0);
 
@@ -91,6 +87,7 @@ export default async function AdminDashboardPage() {
             currentVocabWrongSummaries,
             datasets,
             history,
+            currentHistory,
             learningSources,
             pendingReviewSummaries,
             progress,

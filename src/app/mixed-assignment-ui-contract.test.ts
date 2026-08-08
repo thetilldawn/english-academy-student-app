@@ -34,13 +34,16 @@ describe("mixed assignment admin UI contract", () => {
   it("목록 필터와 기본 OFF 혼합 설정을 노출한다", () => {
     const manager = source("src/components/assignment-manager.tsx");
     const copy = source("src/content/ko/admin-learning.ts");
+    const commonCopy = source("src/content/ko/common.ts");
     const filteredStudents = manager.slice(
       manager.indexOf("const filteredStudents"),
       manager.indexOf("useEffect", manager.indexOf("const filteredStudents")),
     );
 
-    expect(manager).toContain("오답 있음");
-    expect(manager).toContain("2회 이상 오답");
+    expect(manager).toContain("commonText.filters.hasWrong");
+    expect(manager).toContain("commonText.filters.repeatedWrong");
+    expect(commonCopy).toContain('hasWrong: "오답 있음"');
+    expect(commonCopy).toContain('repeatedWrong: "2회 이상 오답"');
     expect(filteredStudents).toContain(
       "currentVocabWrongIndex.byStudentDataset",
     );
@@ -56,9 +59,8 @@ describe("mixed assignment admin UI contract", () => {
     expect(manager).toContain(
       "adminLearningText.assignmentModal.wrongWords.title",
     );
-    expect(manager).toContain(
-      'const unitTerm = usesDayLabels ? "DAY" : "단원"',
-    );
+    expect(manager).toContain("adminLearningText.assignmentModal.range.dayTerm");
+    expect(manager).toContain("adminLearningText.assignmentModal.range.unitTerm");
     expect(manager).toContain('useState<ReviewScope>("dataset")');
     expect(manager).toContain('setReviewScope("selection")');
     expect(manager).toContain("capacity.wrongLevel1Eligible");
@@ -108,7 +110,9 @@ describe("mixed assignment admin UI contract", () => {
     expect(manager).not.toContain(
       'className="assignment-success-panel"',
     );
-    expect(manager).toContain("<AppToast");
+    expect(manager).toContain('from "sonner"');
+    expect(manager).toContain("toast.success");
+    expect(manager).not.toContain("<AppToast");
     expect(manager).toContain("dialogRef.current?.close()");
   });
 

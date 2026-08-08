@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef, useState, type FormEvent } from "react";
+import { Button } from "@/components/ui-button";
+import { adminShellText } from "@/content/ko/admin-shell";
 
 type ErrorResponse = {
   error?: string;
@@ -42,7 +44,7 @@ export function AdminLoginForm() {
       const payload = (await response.json()) as ErrorResponse;
 
       if (!response.ok) {
-        setError(payload.error ?? "로그인하지 못했습니다.");
+        setError(payload.error ?? adminShellText.login.error);
         requestInFlight.current = false;
         setSubmitting(false);
         return;
@@ -52,8 +54,8 @@ export function AdminLoginForm() {
     } catch {
       setError(
         controller.signal.aborted
-          ? "응답이 늦어지고 있습니다. 다시 시도해주세요."
-          : "연결을 확인한 뒤 다시 시도해주세요.",
+          ? adminShellText.login.timeout
+          : adminShellText.login.network,
       );
       requestInFlight.current = false;
       setSubmitting(false);
@@ -69,7 +71,7 @@ export function AdminLoginForm() {
       onSubmit={handleSubmit}
     >
       <label className="field">
-        <span className="field-label">관리자 이메일</span>
+        <span className="field-label">{adminShellText.login.email}</span>
         <input
           disabled={submitting}
           name="email"
@@ -80,7 +82,7 @@ export function AdminLoginForm() {
         />
       </label>
       <label className="field">
-        <span className="field-label">비밀번호</span>
+        <span className="field-label">{adminShellText.login.password}</span>
         <input
           disabled={submitting}
           name="password"
@@ -96,18 +98,21 @@ export function AdminLoginForm() {
           {error}
         </div>
       )}
-      <button
-        className="button button-primary button-large"
+      <Button
         disabled={submitting}
+        size="large"
         type="submit"
+        variant="primary"
       >
         {submitting ? (
           <span aria-hidden="true" className="button-spinner" />
         ) : null}
-        {submitting ? "로그인 중…" : "관리자 로그인"}
-      </button>
+        {submitting
+          ? adminShellText.login.submitting
+          : adminShellText.login.submit}
+      </Button>
       <span aria-live="polite" className="sr-only" role="status">
-        {submitting ? "관리자 확인 후 화면을 여는 중입니다." : ""}
+        {submitting ? adminShellText.login.opening : ""}
       </span>
     </form>
   );

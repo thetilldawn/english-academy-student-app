@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui-button";
+import { studentAppText } from "@/content/ko/student-app";
 
 export function StartRetryButton({ attemptId }: { attemptId: string }) {
   const router = useRouter();
@@ -26,7 +28,7 @@ export function StartRetryButton({ attemptId }: { attemptId: string }) {
 
       if (!response.ok || payload.retry?.phase !== "retry") {
         throw new Error(
-          payload.error ?? "재시험을 시작하지 못했습니다.",
+          payload.error ?? studentAppText.actions.retryError,
         );
       }
 
@@ -35,7 +37,7 @@ export function StartRetryButton({ attemptId }: { attemptId: string }) {
       setError(
         startError instanceof Error
           ? startError.message
-          : "재시험을 시작하지 못했습니다.",
+          : studentAppText.actions.retryError,
       );
       setPending(false);
     }
@@ -43,23 +45,24 @@ export function StartRetryButton({ attemptId }: { attemptId: string }) {
 
   return (
     <div className="action-stack">
-      <button
+      <Button
         aria-busy={pending}
-        className="button button-primary"
         disabled={pending}
         onClick={() => void startRetry()}
-        type="button"
+        variant="primary"
       >
         {pending && <span aria-hidden="true" className="button-spinner" />}
-        {pending ? "재시험 준비 중…" : "재시험 시작"}
-      </button>
+        {pending
+          ? studentAppText.actions.retryPending
+          : studentAppText.actions.retry}
+      </Button>
       {error && (
         <div className="inline-error quiz-error" role="alert">
           {error}
         </div>
       )}
       <span aria-live="polite" className="sr-only" role="status">
-        {pending ? "재시험을 준비하고 있습니다." : ""}
+        {pending ? studentAppText.actions.retryPreparing : ""}
       </span>
     </div>
   );

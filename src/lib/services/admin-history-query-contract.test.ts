@@ -50,10 +50,11 @@ describe("admin assignment history query contract", () => {
       "finalizeStudentMissedAssignments(studentId)",
     );
     expect(quizSource).toContain(
-      '.select("assignment_id, missed_at, cancelled_at")',
+      '.select("assignment_id, assigned_at, missed_at, cancelled_at")',
     );
     expect(quizSource).toContain('.is("cancelled_at", null)');
     expect(quizSource).toContain("missedAtByAssignment");
+    expect(quizSource).toContain("missedAt: left.missedAt");
     expect(quizSource).toContain("!missed &&");
   });
 });
