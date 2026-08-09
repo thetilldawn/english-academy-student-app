@@ -16,6 +16,7 @@ import {
   currentTimeMilliseconds,
   secondsUntil,
 } from "@/lib/deadline";
+import type { QuizDirection } from "@/lib/quiz/engine";
 import { getPriorWrongIndicator } from "@/lib/quiz/prior-wrong";
 import {
   allChoiceAudioAvailable,
@@ -27,7 +28,7 @@ const ANSWER_FEEDBACK_DELAY_MS = 500;
 type Question = {
   id: string;
   orderIndex: number;
-  direction: "english_to_korean" | "korean_to_english";
+  direction: QuizDirection;
   prompt: string;
   choices: string[];
   pronunciation: QuizPronunciation;
@@ -159,9 +160,15 @@ export function QuizPlayer({
   const priorWrongIndicator = currentQuestion
     ? getPriorWrongIndicator(currentQuestion.priorWrongLevel)
     : null;
-  const choiceAudioEnabled = currentQuestion
-    ? allChoiceAudioAvailable(currentQuestion.choicePronunciations)
-    : false;
+  const promptUsesPronunciation =
+    currentQuestion?.direction === "english_to_korean";
+  const choicesUsePronunciation =
+    currentQuestion?.direction === "korean_to_english";
+  const choiceAudioEnabled = Boolean(
+    currentQuestion &&
+      choicesUsePronunciation &&
+      allChoiceAudioAvailable(currentQuestion.choicePronunciations),
+  );
 
   const playAudio = useCallback((audioUrl: string | null) => {
     if (!audioUrl) return;
@@ -561,7 +568,16 @@ export function QuizPlayer({
           <span>{priorWrongIndicator.label}</span>
         </div>
       )}
-      <div className="quiz-prompt-row">
+      <div
+        className={[
+          "quiz-prompt-row",
+          promptUsesPronunciation
+            ? "quiz-prompt-row--with-pronunciation"
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
         <h1
           aria-describedby={
             priorWrongIndicator ? "quiz-prior-wrong" : undefined
@@ -590,7 +606,7 @@ export function QuizPlayer({
               </small>
             )}
         </h1>
-        {currentQuestion.direction === "english_to_korean" &&
+        {promptUsesPronunciation &&
           currentQuestion.pronunciation.available && (
             <button
               aria-label={formatContentText(
@@ -606,10 +622,8 @@ export function QuizPlayer({
               <SpeakerIcon />
             </button>
           )}
-        {! (
-          currentQuestion.direction === "english_to_korean" &&
-          currentQuestion.pronunciation.available
-        ) && (
+        {promptUsesPronunciation &&
+          !currentQuestion.pronunciation.available && (
           <span
             aria-hidden="true"
             className="choice-audio-placeholder pronunciation-button--choice"
@@ -645,7 +659,14 @@ export function QuizPlayer({
             currentQuestion.choicePronunciations[index];
           return (
             <div
-              className="choice-row"
+              className={[
+                "choice-row",
+                choicesUsePronunciation
+                  ? "choice-row--with-pronunciation"
+                  : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
               key={`${currentQuestion.id}:${index}`}
             >
               <button
@@ -660,47 +681,46 @@ export function QuizPlayer({
                 type="button"
               >
                 <span className="choice-number">{index + 1}</span>
-                <span className="choice-copy">
+                <span
+                  className={[
+                    "choice-copy",
+                    choicesUsePronunciation
+                      ? ""
+                      : "choice-copy--without-pronunciation",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
                   <span>{choice}</span>
-                  <small
-                    aria-hidden={
-                      !(
-                        currentQuestion.direction === "korean_to_english" &&
-                        choicePronunciation?.displayKo
-                      )
-                    }
-                    className="choice-pronunciation"
-                  >
-                    {currentQuestion.direction === "korean_to_english" &&
-                    choicePronunciation?.displayKo
-                      ? choicePronunciation.displayKo
-                      : "\u00a0"}
-                  </small>
+                  {choicesUsePronunciation ? (
+                    <small
+                      aria-hidden={!choicePronunciation?.displayKo}
+                      className="choice-pronunciation"
+                    >
+                      {choicePronunciation?.displayKo ?? "\u00a0"}
+                    </small>
+                  ) : null}
                 </span>
               </button>
-              {currentQuestion.direction === "korean_to_english" &&
-                choiceAudioEnabled && (
-                  <button
-                    aria-label={formatContentText(
-                      studentAppText.attempt.pronunciationAria,
-                      { word: choice },
-                    )}
-                    className="pronunciation-button pronunciation-button--choice"
-                    disabled={submitting || answerCorrect !== null}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      playAudio(choicePronunciation?.audioUrl ?? null);
-                    }}
-                    type="button"
-                  >
-                    <SpeakerIcon />
-                  </button>
-                )}
-              {! (
-                currentQuestion.direction === "korean_to_english" &&
-                choiceAudioEnabled
-              ) && (
+              {choicesUsePronunciation && choiceAudioEnabled && (
+                <button
+                  aria-label={formatContentText(
+                    studentAppText.attempt.pronunciationAria,
+                    { word: choice },
+                  )}
+                  className="pronunciation-button pronunciation-button--choice"
+                  disabled={submitting || answerCorrect !== null}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    playAudio(choicePronunciation?.audioUrl ?? null);
+                  }}
+                  type="button"
+                >
+                  <SpeakerIcon />
+                </button>
+              )}
+              {choicesUsePronunciation && !choiceAudioEnabled && (
                 <span
                   aria-hidden="true"
                   className="choice-audio-placeholder pronunciation-button--choice"

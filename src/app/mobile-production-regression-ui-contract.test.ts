@@ -9,6 +9,7 @@ function source(relativePath: string) {
 
 describe("mobile production regression UI contract", () => {
   const css = source("src/app/globals.css");
+  const quizPlayer = source("src/components/quiz-player.tsx");
   const studentManager = source("src/components/student-manager.tsx");
   const studentPage = source("src/app/student/(protected)/page.tsx");
 
@@ -55,6 +56,33 @@ describe("mobile production regression UI contract", () => {
     );
     expect(css).toMatch(
       /\.student-code-dialog-body \.dialog-code\s*\{[^}]*margin:\s*0;/,
+    );
+  });
+
+  it("reserves pronunciation columns only where the visible text is English", () => {
+    expect(quizPlayer).toContain(
+      'currentQuestion?.direction === "english_to_korean"',
+    );
+    expect(quizPlayer).toContain(
+      'currentQuestion?.direction === "korean_to_english"',
+    );
+    expect(quizPlayer).toContain("choicesUsePronunciation &&");
+    expect(quizPlayer).toContain("choice-copy--without-pronunciation");
+    expect(quizPlayer).toContain(
+      'import type { QuizDirection } from "@/lib/quiz/engine";',
+    );
+
+    expect(css).toMatch(
+      /\.quiz-prompt-row\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/,
+    );
+    expect(css).toMatch(
+      /\.quiz-prompt-row--with-pronunciation\s*\{[^}]*grid-template-columns:\s*46px minmax\(0, 1fr\) 46px;/,
+    );
+    expect(css).toMatch(
+      /\.choice-row\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/,
+    );
+    expect(css).toMatch(
+      /\.choice-row--with-pronunciation\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 46px;/,
     );
   });
 });

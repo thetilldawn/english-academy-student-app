@@ -4776,10 +4776,10 @@ h3,
   color: var(--no-bg);
 }
 
-/* Student quiz geometry stays fixed while prompt direction and text length change. */
+/* Only visible English content reserves a stable pronunciation column. */
 .quiz-prompt-row {
   display: grid;
-  grid-template-columns: 46px minmax(0, 1fr) 46px;
+  grid-template-columns: minmax(0, 1fr);
   width: 100%;
   margin-bottom: 28px;
   gap: 10px;
@@ -4787,19 +4787,32 @@ h3,
 }
 
 .quiz-prompt-row::before {
+  display: none;
   width: 46px;
   height: 1px;
   content: "";
 }
 
 .quiz-prompt-row .quiz-prompt {
-  grid-column: 2;
+  grid-column: 1;
   width: 100%;
   margin: 0;
 }
 
-.quiz-prompt-row > .pronunciation-button--choice,
-.quiz-prompt-row > .choice-audio-placeholder {
+.quiz-prompt-row--with-pronunciation {
+  grid-template-columns: 46px minmax(0, 1fr) 46px;
+}
+
+.quiz-prompt-row--with-pronunciation::before {
+  display: block;
+}
+
+.quiz-prompt-row--with-pronunciation .quiz-prompt {
+  grid-column: 2;
+}
+
+.quiz-prompt-row--with-pronunciation > .pronunciation-button--choice,
+.quiz-prompt-row--with-pronunciation > .choice-audio-placeholder {
   grid-column: 3;
 }
 
@@ -4810,9 +4823,13 @@ h3,
 }
 
 .choice-row {
-  grid-template-columns: minmax(0, 1fr) 46px;
+  grid-template-columns: minmax(0, 1fr);
   height: 76px;
   align-items: stretch;
+}
+
+.choice-row--with-pronunciation {
+  grid-template-columns: minmax(0, 1fr) 46px;
 }
 
 .choice-row .choice {
@@ -4827,6 +4844,10 @@ h3,
   grid-template-rows: minmax(0, 1fr) 16px;
   align-items: center;
   gap: 1px;
+}
+
+.choice-copy--without-pronunciation {
+  grid-template-rows: minmax(0, 1fr);
 }
 
 .choice-copy > span:first-child {
