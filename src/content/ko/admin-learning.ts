@@ -153,6 +153,14 @@ export const adminLearningText = {
       groupFallback: "범위",
       unitEntryCount: "{unit} · {count}개",
       sourceWordCount: "{range} · 원본 {count}개",
+      eligibleWordCount: "출제 검토 통과 {count}개",
+      sourceExcluded: "검토·중복 {count}개 제외",
+      activeAssignmentExcluded: "다른 시험과 중복 {count}개 제외",
+      questionPlanExcluded: "출제 방식 조건 {count}개 제외",
+      maximumQuestionCount: "현재 최대 {count}문항",
+      activeAssignmentHelpAria: "다른 시험 중복 제외 도움말",
+      activeAssignmentHelp:
+        "미응시 또는 진행 중인 시험에 이미 들어간 동일 단어는 중복 배정하지 않습니다. 기존 배정을 취소하거나 완료한 뒤 다시 사용할 수 있습니다.",
       activeAssignmentSelectionRequired:
         "미응시·진행 중 시험의 범위는 새 시험에 다시 자동 선택하지 않습니다. 새로 배정할 범위를 직접 선택해 주세요.",
     },

@@ -243,6 +243,9 @@ type ErrorResponse = {
 };
 
 type AssignmentCapacity = {
+  eligibleBeforeActiveAssignment: number;
+  activeAssignmentExcluded: number;
+  questionPlanExcluded: number;
   unitEligible: number;
   wrongEligible: number;
   wrongLevel1Eligible: number;
@@ -1139,6 +1142,12 @@ export function AssignmentManager({
     setError("");
   }
 
+  function resetUntouchedEditTitle() {
+    if (editTarget && editDraft && customTitle === editDraft.title) {
+      setCustomTitle("");
+    }
+  }
+
   function selectStudent(
     nextStudentId: string,
     nextView: "overview" | "assign" = "overview",
@@ -1181,6 +1190,7 @@ export function AssignmentManager({
     setDatasetId(nextDatasetId);
     setStartUnitId(nextRecommendedUnitId);
     setEndUnitId(nextRecommendedUnitId);
+    resetUntouchedEditTitle();
     if (editTarget) {
       changeQuestionCountMode("manual");
       setCapacity(null);
@@ -1211,6 +1221,7 @@ export function AssignmentManager({
     setCapacity(null);
     setCapacityError("");
     setStartUnitId(nextStartId);
+    resetUntouchedEditTitle();
     setError("");
   }
 
@@ -2181,6 +2192,7 @@ export function AssignmentManager({
                       setCapacity(null);
                       setCapacityError("");
                       setEndUnitId(event.target.value);
+                      resetUntouchedEditTitle();
                       setError("");
                     }}
                     required
@@ -2226,6 +2238,85 @@ export function AssignmentManager({
                   },
                 )}
               </p>
+              {capacity && !exactReviewEdit ? (
+                <p
+                  aria-live="polite"
+                  className="selection-capacity-summary"
+                >
+                  <span>
+                    {formatContentText(
+                      adminLearningText.assignmentModal.range
+                        .eligibleWordCount,
+                      {
+                        count:
+                          capacity.eligibleBeforeActiveAssignment.toLocaleString(),
+                      },
+                    )}
+                  </span>
+                  {availableWordCount >
+                  capacity.eligibleBeforeActiveAssignment ? (
+                    <span>
+                      {formatContentText(
+                        adminLearningText.assignmentModal.range
+                          .sourceExcluded,
+                        {
+                          count: (
+                            availableWordCount -
+                            capacity.eligibleBeforeActiveAssignment
+                          ).toLocaleString(),
+                        },
+                      )}
+                    </span>
+                  ) : null}
+                  {capacity.activeAssignmentExcluded > 0 ? (
+                    <span>
+                      {formatContentText(
+                        adminLearningText.assignmentModal.range
+                          .activeAssignmentExcluded,
+                        {
+                          count:
+                            capacity.activeAssignmentExcluded.toLocaleString(),
+                        },
+                      )}
+                    </span>
+                  ) : null}
+                  {capacity.questionPlanExcluded > 0 ? (
+                    <span>
+                      {formatContentText(
+                        adminLearningText.assignmentModal.range
+                          .questionPlanExcluded,
+                        {
+                          count:
+                            capacity.questionPlanExcluded.toLocaleString(),
+                        },
+                      )}
+                    </span>
+                  ) : null}
+                  <strong>
+                    {formatContentText(
+                      adminLearningText.assignmentModal.range
+                        .maximumQuestionCount,
+                      {
+                        count:
+                          capacity.maximumQuestionCount.toLocaleString(),
+                      },
+                    )}
+                  </strong>
+                  {capacity.activeAssignmentExcluded > 0 ? (
+                    <HelpTip
+                      label={
+                        adminLearningText.assignmentModal.range
+                          .activeAssignmentHelpAria
+                      }
+                    >
+                      {
+                        adminLearningText.assignmentModal.range
+                          .activeAssignmentHelp
+                      }
+                    </HelpTip>
+                  ) : null}
+                </p>
+              ) : null}
               <fieldset
                 aria-label={adminLearningText.assignmentModal.wrongWords.title}
                 className="assignment-review-options"

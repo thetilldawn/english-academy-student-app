@@ -1442,6 +1442,12 @@ export async function prepareRegularAssignment(
       candidate.sourceRow,
     ]),
   );
+  const unitIdByCandidateId = new Map(
+    allCandidates.map((candidate) => [candidate.id, candidate.unitId]),
+  );
+  const unitPositionById = new Map(
+    orderedUnitIds.map((unitId, index) => [unitId, index]),
+  );
   let questionDrafts: ReturnType<typeof createMixedQuizQuestions>;
   try {
     questionDrafts = createMixedQuizQuestions(
@@ -1459,8 +1465,14 @@ export async function prepareRegularAssignment(
   }
   questionDrafts.sort(
     (left, right) =>
+      (unitPositionById.get(
+        unitIdByCandidateId.get(left.vocabEntryId) ?? "",
+      ) ?? Number.MAX_SAFE_INTEGER) -
+        (unitPositionById.get(
+          unitIdByCandidateId.get(right.vocabEntryId) ?? "",
+        ) ?? Number.MAX_SAFE_INTEGER) ||
       (sourceOrderByCandidateId.get(left.vocabEntryId) ?? 0) -
-      (sourceOrderByCandidateId.get(right.vocabEntryId) ?? 0),
+        (sourceOrderByCandidateId.get(right.vocabEntryId) ?? 0),
   );
   const unitRangeLabel =
     orderedUnits.length === 1

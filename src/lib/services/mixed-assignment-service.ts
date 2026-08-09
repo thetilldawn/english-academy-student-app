@@ -69,6 +69,9 @@ type DatasetRow = {
 };
 
 export type AssignmentCapacity = {
+  eligibleBeforeActiveAssignment: number;
+  activeAssignmentExcluded: number;
+  questionPlanExcluded: number;
   unitEligible: number;
   wrongEligible: number;
   wrongLevel1Eligible: number;
@@ -385,9 +388,11 @@ async function prepareAssignment(
     eligibleReviewRows.map((row) => row.reason_level),
   );
 
-  const unitCandidates = allCandidates.filter(
+  const candidatesInSelectedUnits = allCandidates.filter(
+    (candidate) => primaryUnitIdSet.has(candidate.unitId),
+  );
+  const unitCandidates = candidatesInSelectedUnits.filter(
     (candidate) =>
-      primaryUnitIdSet.has(candidate.unitId) &&
       !activeReviewIdentities(
           candidate.id,
           candidate.canonicalLexemeId,
@@ -428,8 +433,24 @@ async function prepareAssignment(
   const minimumQuestionCount = input.includePendingReview
     ? Math.max(4, reviewTargets.length)
     : 4;
+  const eligibleBeforeActiveAssignment = uniqueIdentityCount(
+    candidatesInSelectedUnits,
+  );
+  const unitEligible = uniqueIdentityCount(unitCandidates);
+  const questionPoolCount = input.includePendingReview
+    ? reviewTargets.length + uniqueIdentityCount(primaryCandidates)
+    : unitEligible;
   const capacity: AssignmentCapacity = {
-    unitEligible: uniqueIdentityCount(unitCandidates),
+    eligibleBeforeActiveAssignment,
+    activeAssignmentExcluded: Math.max(
+      0,
+      eligibleBeforeActiveAssignment - unitEligible,
+    ),
+    questionPlanExcluded: Math.max(
+      0,
+      questionPoolCount - maximumQuestionCount,
+    ),
+    unitEligible,
     wrongEligible: eligibleReviewTargets.length,
     wrongLevel1Eligible: reviewLevelCounts.level1,
     wrongLevel2Eligible: reviewLevelCounts.level2,

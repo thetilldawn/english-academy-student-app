@@ -28,6 +28,19 @@ describe("regular assignment scope contract", () => {
     );
   });
 
+  it("orders the base question bank by the teacher's selected unit direction", () => {
+    const adminService = compact(
+      source("src/lib/services/admin-service.ts"),
+    );
+
+    expect(adminService).toContain(
+      "const unitPositionById = new Map( orderedUnitIds.map",
+    );
+    expect(adminService).toContain(
+      "unitPositionById.get( unitIdByCandidateId.get(left.vocabEntryId)",
+    );
+  });
+
   it("restores only previously selected unresolved review words", () => {
     const migration = source(
       "supabase/migrations/20260731020000_reopen_selected_unresolved_review_queue.sql",

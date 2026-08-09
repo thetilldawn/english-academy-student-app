@@ -150,4 +150,34 @@ describe("mixed assignment admin UI contract", () => {
       'response.status === 409 ? "/api/admin/assignments"',
     );
   });
+
+  it("원본 수와 실제 배정 가능 수가 달라지는 이유를 단계별로 표시한다", () => {
+    const manager = source("src/components/assignment-manager.tsx");
+    const service = source(
+      "src/lib/services/mixed-assignment-service.ts",
+    );
+    const copy = source("src/content/ko/admin-learning.ts");
+
+    expect(service).toContain("eligibleBeforeActiveAssignment");
+    expect(service).toContain("activeAssignmentExcluded");
+    expect(service).toContain("questionPlanExcluded");
+    expect(manager).toContain('className="selection-capacity-summary"');
+    expect(manager).toContain("capacity.activeAssignmentExcluded");
+    expect(copy).toContain('eligibleWordCount: "출제 검토 통과 {count}개"');
+    expect(copy).toContain(
+      'activeAssignmentExcluded: "다른 시험과 중복 {count}개 제외"',
+    );
+    expect(copy).toContain('maximumQuestionCount: "현재 최대 {count}문항"');
+  });
+
+  it("범위를 수정하면 손대지 않은 이전 자동 제목을 새 범위로 갱신한다", () => {
+    const manager = source("src/components/assignment-manager.tsx");
+
+    expect(manager).toContain("function resetUntouchedEditTitle()");
+    expect(
+      manager.match(/resetUntouchedEditTitle\(\);/g)?.length,
+    ).toBeGreaterThanOrEqual(3);
+    expect(manager).toContain("customTitle === editDraft.title");
+    expect(manager).toContain('setCustomTitle("")');
+  });
 });

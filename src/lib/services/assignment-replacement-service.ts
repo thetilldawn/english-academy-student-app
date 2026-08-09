@@ -677,6 +677,9 @@ export async function calculateStudentAssignmentReplacementCapacity(
             )
           ).length;
     return {
+      eligibleBeforeActiveAssignment: 0,
+      activeAssignmentExcluded: 0,
+      questionPlanExcluded: 0,
       unitEligible: 0,
       wrongEligible: count,
       wrongLevel1Eligible: source.draft.reviewLevels.includes(1)

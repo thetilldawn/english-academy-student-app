@@ -1707,6 +1707,22 @@ tr:last-child td {
   font-weight: 700;
 }
 
+.selection-capacity-summary {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: -2px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.selection-capacity-summary strong {
+  color: var(--ink);
+}
+
 .quick-metrics {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
