@@ -5,6 +5,7 @@ import {
   excludePendingReviewCandidates,
   isCandidateInReviewScope,
   mixedAssignmentDatabaseErrorReason,
+  mixedAssignmentPrimaryUnitIds,
   orderContiguousPrimaryUnits,
   resolvePendingReviewCandidate,
 } from "@/lib/admin/mixed-assignment";
@@ -57,6 +58,18 @@ describe("review scope and count", () => {
       level1: 3,
       level2: 2,
     });
+  });
+});
+
+describe("mixedAssignmentPrimaryUnitIds", () => {
+  it("오답만으로 문항을 채우면 일반 단원 범위를 RPC에 보내지 않는다", () => {
+    expect(mixedAssignmentPrimaryUnitIds(["day-9"], 7, 7)).toEqual([]);
+  });
+
+  it("일반 단어가 섞이면 선택한 단원 범위를 유지한다", () => {
+    expect(mixedAssignmentPrimaryUnitIds(["day-9"], 3, 10)).toEqual([
+      "day-9",
+    ]);
   });
 });
 

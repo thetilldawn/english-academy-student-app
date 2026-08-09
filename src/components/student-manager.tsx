@@ -1591,7 +1591,7 @@ export function StudentManager({
                             selectedStudent.readingContextSyncStatus
                           }
                           key={`${selectedStudent.id}:${learningSourceDatasetId}`}
-                          onContextUpdated={() => {
+                          onDataUpdated={() => {
                             startRefreshTransition(() => router.refresh());
                           }}
                           onLoaded={cacheWrongWordHistory}

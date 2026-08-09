@@ -97,6 +97,16 @@ export function countEligibleReviewLevels(
   return { total: level1 + level2, level1, level2 };
 }
 
+export function mixedAssignmentPrimaryUnitIds(
+  primaryUnitIds: readonly string[],
+  reviewQuestionCount: number,
+  totalQuestionCount: number,
+) {
+  return reviewQuestionCount === totalQuestionCount
+    ? []
+    : [...primaryUnitIds];
+}
+
 export function mixedAssignmentDatabaseErrorReason(
   error: MixedAssignmentDatabaseError,
 ): MixedAssignmentFailureReason {

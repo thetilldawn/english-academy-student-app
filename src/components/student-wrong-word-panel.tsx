@@ -114,7 +114,7 @@ export function StudentWrongWordPanel({
   initialDatasetId = "",
   initialCurriculumStage = "undecided",
   initialReadingContextSyncStatus = "not_synced",
-  onContextUpdated,
+  onDataUpdated,
   onLoaded,
   studentId,
 }: {
@@ -128,7 +128,7 @@ export function StudentWrongWordPanel({
     | "not_configured"
     | "synced"
     | "failed";
-  onContextUpdated?: () => void;
+  onDataUpdated?: () => void;
   onLoaded: (
     studentId: string,
     history: StudentWrongWordHistory,
@@ -479,6 +479,7 @@ export function StudentWrongWordPanel({
       );
       setSelectedQuestionIds([]);
       refreshHistory();
+      onDataUpdated?.();
     } catch (requestError) {
       toast.error(
         requestError instanceof Error
@@ -540,7 +541,7 @@ export function StudentWrongWordPanel({
           ? "synced"
           : payload.sync.status,
       );
-      onContextUpdated?.();
+      onDataUpdated?.();
       if (payload.sync.status === "synced") {
         toast.success(
           formatContentText(
@@ -615,6 +616,7 @@ export function StudentWrongWordPanel({
         adminStudentsText.learning.wrongWordsPanel.cancelDraftSuccess,
       );
       refreshHistory();
+      onDataUpdated?.();
     } catch (requestError) {
       toast.error(
         requestError instanceof Error
