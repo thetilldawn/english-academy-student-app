@@ -1,24 +1,21 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { useSelectedLayoutSegment } from "next/navigation";
 
 import { adminShellText } from "@/content/ko/admin-shell";
 
-const PAGE_TITLES = [
-  { prefix: "/admin/results", title: adminShellText.pageTitles.history },
-  { prefix: "/admin/assignments", title: adminShellText.pageTitles.learning },
-  { prefix: "/admin/students", title: adminShellText.pageTitles.students },
-  { prefix: "/admin", title: adminShellText.pageTitles.overview },
-] as const;
+const PAGE_TITLES = {
+  assignments: adminShellText.pageTitles.learning,
+  results: adminShellText.pageTitles.history,
+  students: adminShellText.pageTitles.students,
+} as const;
 
 export function AdminPageTitle() {
-  const pathname = usePathname();
-  const current =
-    PAGE_TITLES.find(({ prefix }) =>
-      prefix === "/admin"
-        ? pathname === prefix
-        : pathname.startsWith(prefix),
-    ) ?? PAGE_TITLES[PAGE_TITLES.length - 1];
+  const segment = useSelectedLayoutSegment();
+  const title =
+    segment && segment in PAGE_TITLES
+      ? PAGE_TITLES[segment as keyof typeof PAGE_TITLES]
+      : adminShellText.pageTitles.overview;
 
-  return <strong className="admin-mobile-page-title">{current.title}</strong>;
+  return <strong className="admin-mobile-page-title">{title}</strong>;
 }

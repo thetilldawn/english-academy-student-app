@@ -15,6 +15,9 @@ describe("admin deletion UI contract", () => {
     const historyList = source(
       "src/components/admin-history-list.tsx",
     );
+    const detailActions = source(
+      "src/components/history-detail-actions.tsx",
+    );
     const studentManager = source(
       "src/components/student-manager.tsx",
     );
@@ -27,7 +30,8 @@ describe("admin deletion UI contract", () => {
     const historyCopy = source("src/content/ko/admin-history.ts");
     const studentCopy = source("src/content/ko/admin-students.ts");
 
-    expect(historyList).toContain("<AdminHistoryActions");
+    expect(historyList).toContain("historyDetailHref(item)");
+    expect(detailActions).toContain("<AdminHistoryActions");
     expect(historyActions).toContain("adminHistoryText.actions.cancel.action");
     expect(historyCopy).toContain('action: "배정 취소"');
     expect(historyActions).not.toContain("시험 전체 삭제");
@@ -43,8 +47,8 @@ describe("admin deletion UI contract", () => {
   it("삭제된 학생·시험은 목록에서 빠지고 과거 내역은 삭제됨으로 남는다", () => {
     const adminService = source("src/lib/services/admin-service.ts");
     const quizService = source("src/lib/services/quiz-service.ts");
-    const historyList = source(
-      "src/components/admin-history-list.tsx",
+    const detailActions = source(
+      "src/components/history-detail-actions.tsx",
     );
 
     expect(adminService).toContain('.is("deleted_at", null)');
@@ -55,7 +59,16 @@ describe("admin deletion UI contract", () => {
       ".range(from, from + HISTORY_PAGE_SIZE - 1)",
     );
     expect(quizService).toContain('.is("deleted_at", null)');
-    expect(historyList).toContain("!selected.studentDeleted");
+    expect(detailActions).toContain("!item.studentDeleted");
+    expect(detailActions).toContain("refreshAfterMutation={false}");
+    expect(detailActions).toContain('window.addEventListener("popstate"');
+    expect(detailActions).toContain(
+      "window.requestAnimationFrame(() => router.refresh())",
+    );
+    expect(detailActions).toContain(
+      'window.location.replace("/admin/results")',
+    );
+    expect(detailActions).not.toContain("window.setTimeout");
   });
 
   it("태블릿·PC 상태 문구와 배정 버튼 글자색을 보존한다", () => {
@@ -67,8 +80,11 @@ describe("admin deletion UI contract", () => {
     expect(css).toMatch(
       /\.deadline-countdown\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?white-space:\s*nowrap;/,
     );
-    expect(css).toContain(
+    expect(css).not.toContain(
       ".assignment-student-row span:not(.button)",
+    );
+    expect(css).toMatch(
+      /\.status-badge\s*\{[\s\S]*?color:\s*var\(--status-fg\);[\s\S]*?white-space:\s*nowrap;/,
     );
     expect(css).toContain(
       ".student-management-summary span:not(.status-pill)",

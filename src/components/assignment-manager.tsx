@@ -17,12 +17,14 @@ import { toast } from "sonner";
 
 import { HelpTip } from "@/components/help-tip";
 import { BulkAssignmentDialog } from "@/components/bulk-assignment-dialog";
-import {
-  AttemptScoreSummary,
-  AttemptStatusLabel,
-} from "@/components/attempt-score-summary";
+import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
+import { AttemptScoreSummary } from "@/components/attempt-score-summary";
 import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
 import { StudentLearningActivityList } from "@/components/student-learning-activity-list";
+import {
+  ActivityRowContent,
+  SelectableListRow,
+} from "@/components/ui-list-row";
 import {
   assignmentDisplayTitle,
   projectCurrentAssignmentHistory,
@@ -36,7 +38,6 @@ import {
 import {
   activityNeedsRetry,
   compareLearningActivities,
-  learningActivityEffectiveAt,
   studentLearningActivityIndex,
 } from "@/lib/admin/learning-activity";
 import { formatKoreanDateTime } from "@/lib/format";
@@ -245,42 +246,6 @@ type AssignmentCapacity = {
 };
 
 type WrongWordStudentFilter = "all" | "wrong" | "repeated" | "retry";
-
-function studentCardActivityTime(item: AssignmentHistorySummary) {
-  const copy = adminLearningText.page.studentCard;
-  if (item.status === "not_started") {
-    return item.availableUntil
-      ? formatContentText(copy.deadline, {
-          datetime: formatKoreanDateTime(item.availableUntil),
-        })
-      : formatContentText(copy.assignedWithoutDeadline, {
-          datetime: formatKoreanDateTime(item.assignedAt),
-        });
-  }
-  if (item.status === "missed") {
-    return formatContentText(copy.missed, {
-      datetime: formatKoreanDateTime(learningActivityEffectiveAt(item)),
-    });
-  }
-  if (item.status === "in_progress" && item.phase === "review") {
-    return formatContentText(copy.failed, {
-      datetime: formatKoreanDateTime(learningActivityEffectiveAt(item)),
-    });
-  }
-  if (item.status === "expired") {
-    return formatContentText(copy.expired, {
-      datetime: formatKoreanDateTime(learningActivityEffectiveAt(item)),
-    });
-  }
-  if (item.completedAt) {
-    return formatContentText(copy.finished, {
-      datetime: formatKoreanDateTime(item.completedAt),
-    });
-  }
-  return formatContentText(copy.started, {
-    datetime: formatKoreanDateTime(learningActivityEffectiveAt(item)),
-  });
-}
 
 function directionLabel(ratio: number) {
   if (ratio === 100) {
@@ -1738,104 +1703,8 @@ export function AssignmentManager({
                   !currentActivityRange ||
                   currentActivityRange !== recommendedRange;
                 return (
-                  <article
-                    className="card assignment-student-row"
-                    key={student.id}
-                  >
-                    <label className="assignment-student-select">
-                      <input
-                        aria-label={formatContentText(
-                          adminLearningText.page.bulk.selectStudentAria,
-                          { student: student.displayName },
-                        )}
-                        checked={selectedBulkStudentIds.includes(student.id)}
-                        onChange={() => toggleBulkStudent(student.id)}
-                        type="checkbox"
-                      />
-                    </label>
-                    <span className="assignment-student-identity">
-                      <strong>{student.displayName}</strong>
-                      <MetaTagList>
-                        <MetaTag>
-                          {student.schoolName ??
-                            adminLearningText.page.studentCard.schoolMissing}
-                        </MetaTag>
-                        <MetaTag>
-                          {student.gradeLabel ??
-                            adminLearningText.page.studentCard.gradeMissing}
-                        </MetaTag>
-                      </MetaTagList>
-                    </span>
-                    <span className="assignment-student-book">
-                      <MetaTagList>
-                        <MetaTag>
-                          {student.currentVocabBook ??
-                            adminLearningText.page.studentCard.wordbookMissing}
-                        </MetaTag>
-                        {studentLearningSources.slice(0, 2).map((source) => (
-                          <MetaTag key={source.id}>
-                            {learningSourceTypeLabel(source.sourceType)} ·{" "}
-                            {source.displayLabel}
-                          </MetaTag>
-                        ))}
-                        {studentLearningSources.length > 2 ? (
-                          <MetaTag>+{studentLearningSources.length - 2}</MetaTag>
-                        ) : null}
-                        {studentAvailableReviewCount > 0 ? (
-                          <MetaTag tone="warning">
-                            {formatContentText(
-                              adminLearningText.page.studentCard.wrongAvailable,
-                              { count: studentAvailableReviewCount },
-                            )}
-                          </MetaTag>
-                        ) : studentPendingReviewCount > 0 ? (
-                          <MetaTag>
-                            {adminLearningText.page.studentCard.wrongAssigned}
-                          </MetaTag>
-                        ) : null}
-                      </MetaTagList>
-                    </span>
-                    <span className="assignment-student-recent">
-                      <strong>
-                        {nextActivity
-                          ? assignmentDisplayTitle(nextActivity)
-                          : adminLearningText.page.studentCard.noActivity}
-                      </strong>
-                      {showRecommendation ? (
-                        <MetaTagList>
-                          <MetaTag tone="warning">
-                            {formatContentText(
-                              adminLearningText.page.studentCard.recommendedRange,
-                              { range: recommendedRange },
-                            )}
-                          </MetaTag>
-                        </MetaTagList>
-                      ) : null}
-                      {nextActivity ? (
-                        <>
-                          <small>{studentCardActivityTime(nextActivity)}</small>
-                          <span className="assignment-student-score-line">
-                            <AttemptStatusLabel
-                              finalScore={nextActivity.finalScore}
-                              initialScore={nextActivity.initialScore}
-                              passingScore={nextActivity.passingScore}
-                              phase={nextActivity.phase}
-                              retryStartedAt={nextActivity.retryStartedAt}
-                              status={nextActivity.status}
-                            />
-                            <AttemptScoreSummary
-                              finalScore={nextActivity.finalScore}
-                              initialScore={nextActivity.initialScore}
-                              passingScore={nextActivity.passingScore}
-                              phase={nextActivity.phase}
-                              retryStartedAt={nextActivity.retryStartedAt}
-                              status={nextActivity.status}
-                            />
-                          </span>
-                        </>
-                      ) : null}
-                    </span>
-                    <div className="assignment-student-actions">
+                  <SelectableListRow
+                    actions={
                       <Button
                         onClick={() =>
                           selectStudent(
@@ -1850,8 +1719,99 @@ export function AssignmentManager({
                           ? adminLearningText.page.studentCard.view
                           : adminLearningText.page.studentCard.assign}
                       </Button>
-                    </div>
-                  </article>
+                    }
+                    ariaLabel={formatContentText(
+                      adminLearningText.page.bulk.selectStudentAria,
+                      { student: student.displayName },
+                    )}
+                    checked={selectedBulkStudentIds.includes(student.id)}
+                    checkboxId={`bulk-student-${student.id}`}
+                    className="card assignment-student-row"
+                    key={student.id}
+                    onToggle={() => toggleBulkStudent(student.id)}
+                  >
+                    <ActivityRowContent
+                      main={
+                        <>
+                          <span className="assignment-student-identity">
+                            <strong>{student.displayName}</strong>
+                            <MetaTagList>
+                              <MetaTag>
+                                {student.schoolName ??
+                                  adminLearningText.page.studentCard.schoolMissing}
+                              </MetaTag>
+                              <MetaTag>
+                                {student.gradeLabel ??
+                                  adminLearningText.page.studentCard.gradeMissing}
+                              </MetaTag>
+                            </MetaTagList>
+                          </span>
+                          <MetaTagList className="assignment-student-book">
+                            <MetaTag>
+                              {student.currentVocabBook ??
+                                adminLearningText.page.studentCard.wordbookMissing}
+                            </MetaTag>
+                            {studentLearningSources.slice(0, 2).map((source) => (
+                              <MetaTag key={source.id}>
+                                {learningSourceTypeLabel(source.sourceType)} ·{" "}
+                                {source.displayLabel}
+                              </MetaTag>
+                            ))}
+                            {studentLearningSources.length > 2 ? (
+                              <MetaTag>+{studentLearningSources.length - 2}</MetaTag>
+                            ) : null}
+                            {studentAvailableReviewCount > 0 ? (
+                              <MetaTag tone="warning">
+                                {formatContentText(
+                                  adminLearningText.page.studentCard.wrongAvailable,
+                                  { count: studentAvailableReviewCount },
+                                )}
+                              </MetaTag>
+                            ) : studentPendingReviewCount > 0 ? (
+                              <MetaTag>
+                                {adminLearningText.page.studentCard.wrongAssigned}
+                              </MetaTag>
+                            ) : null}
+                          </MetaTagList>
+                          <span className="assignment-student-recent">
+                            <strong>
+                              {nextActivity
+                                ? assignmentDisplayTitle(nextActivity)
+                                : adminLearningText.page.studentCard.noActivity}
+                            </strong>
+                          </span>
+                          {showRecommendation ? (
+                            <MetaTagList>
+                              <MetaTag tone="warning">
+                                {formatContentText(
+                                  adminLearningText.page.studentCard.recommendedRange,
+                                  { range: recommendedRange },
+                                )}
+                              </MetaTag>
+                            </MetaTagList>
+                          ) : null}
+                        </>
+                      }
+                      score={
+                        nextActivity ? (
+                          <AttemptScoreSummary
+                            compact
+                            finalScore={nextActivity.finalScore}
+                            initialScore={nextActivity.initialScore}
+                            passingScore={nextActivity.passingScore}
+                            phase={nextActivity.phase}
+                            retryStartedAt={nextActivity.retryStartedAt}
+                            status={nextActivity.status}
+                          />
+                        ) : undefined
+                      }
+                      timeline={
+                        nextActivity ? (
+                          <ActivityStatusTimeline item={nextActivity} />
+                        ) : null
+                      }
+                    />
+                  </SelectableListRow>
                 );
               })}
             </div>

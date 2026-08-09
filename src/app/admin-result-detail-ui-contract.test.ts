@@ -9,19 +9,19 @@ function source(relativePath: string) {
 
 describe("admin result detail answer flow", () => {
   it("does not repeat the correct answer after a successful retry", () => {
-    const page = source(
-      "src/app/admin/(protected)/results/[id]/page.tsx",
+    const detail = source(
+      "src/components/admin-history-detail.tsx",
     );
 
-    expect(page).toContain(
+    expect(detail).toContain(
       'resolved ? " answer-flow-resolved" : ""',
     );
-    expect(page).toContain("!resolved && (");
-    expect(page).toContain(
+    expect(detail).toContain("!resolved ? (");
+    expect(detail).toContain(
       '<span className="sr-only">',
     );
-    expect(page).toContain("adminHistoryText.resultDetail.retryCorrectSr");
-    expect(page).toContain(
+    expect(detail).toContain("adminHistoryText.resultDetail.retryCorrectSr");
+    expect(detail).toContain(
       "<strong>{presentation.correctAnswer}</strong>",
     );
   });

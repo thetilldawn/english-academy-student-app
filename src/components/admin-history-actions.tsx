@@ -8,6 +8,7 @@ import { Button, ButtonLink } from "@/components/ui-button";
 import { formatContentText } from "@/content/format";
 import { adminHistoryText } from "@/content/ko/admin-history";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
+import { historyDetailHref } from "@/lib/admin/history-route";
 import { isStudentAssignmentEditable } from "@/lib/admin/assignment-edit";
 
 type ActionKey = "cancel" | "delete-history";
@@ -34,6 +35,7 @@ export function AdminHistoryActions({
   onEdit,
   onMutated,
   onViewDetail,
+  refreshAfterMutation = true,
   showDetailLink = true,
   size = "regular",
   summaryOnly = false,
@@ -42,6 +44,7 @@ export function AdminHistoryActions({
   onEdit?: (item: AssignmentHistorySummary) => void;
   onMutated?: () => void;
   onViewDetail?: () => void;
+  refreshAfterMutation?: boolean;
   showDetailLink?: boolean;
   size?: "regular" | "small";
   summaryOnly?: boolean;
@@ -68,7 +71,7 @@ export function AdminHistoryActions({
           : adminHistoryText.actions.deleteSuccess,
       );
       onMutated?.();
-      router.refresh();
+      if (refreshAfterMutation) router.refresh();
     } catch (requestError) {
       toast.error(
         requestError instanceof Error
@@ -91,9 +94,9 @@ export function AdminHistoryActions({
             >
               {adminHistoryText.actions.view}
             </Button>
-          ) : showDetailLink && item.attemptId ? (
+          ) : showDetailLink ? (
             <ButtonLink
-              href={`/admin/results/${item.attemptId}`}
+              href={historyDetailHref(item)}
               size={buttonSize}
             >
               {adminHistoryText.actions.view}
@@ -118,7 +121,7 @@ export function AdminHistoryActions({
   return (
     <div className="history-action-stack">
       <div className="history-action-group">
-        {showDetailLink && item.attemptId
+        {showDetailLink
           ? onViewDetail
             ? (
                 <Button
@@ -130,7 +133,7 @@ export function AdminHistoryActions({
               )
             : (
                 <ButtonLink
-                  href={`/admin/results/${item.attemptId}`}
+                  href={historyDetailHref(item)}
                   size={buttonSize}
                 >
                   {adminHistoryText.actions.viewHistory}

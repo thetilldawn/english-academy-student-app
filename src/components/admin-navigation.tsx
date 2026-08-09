@@ -1,7 +1,7 @@
 "use client";
 
 import Link, { useLinkStatus } from "next/link";
-import { usePathname } from "next/navigation";
+import { useSelectedLayoutSegment } from "next/navigation";
 
 import { adminShellText } from "@/content/ko/admin-shell";
 
@@ -12,9 +12,9 @@ const adminNavigationItems = [
   { href: "/admin/results", label: adminShellText.navigation.history },
 ] as const;
 
-function isActivePath(pathname: string, href: string) {
-  if (href === "/admin") return pathname === href;
-  return pathname === href || pathname.startsWith(`${href}/`);
+function isActiveSegment(segment: string | null, href: string) {
+  if (href === "/admin") return segment === null;
+  return segment === href.slice("/admin/".length);
 }
 
 function NavigationPendingIndicator() {
@@ -35,12 +35,12 @@ export function AdminNavigation({
   className: string;
   label: string;
 }) {
-  const pathname = usePathname();
+  const segment = useSelectedLayoutSegment();
 
   return (
     <nav aria-label={label} className={className}>
       {adminNavigationItems.map((item) => {
-        const active = isActivePath(pathname, item.href);
+        const active = isActiveSegment(segment, item.href);
 
         return (
           <Link

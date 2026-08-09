@@ -2,19 +2,19 @@
 
 import { useMemo, useState } from "react";
 
+import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
 import { AdminHistoryActions } from "@/components/admin-history-actions";
-import { AdminHistoryList } from "@/components/admin-history-list";
 import { AssignmentMetaTags } from "@/components/admin-meta-tags";
+import { AttemptScoreSummary } from "@/components/attempt-score-summary";
 import {
-  AttemptScoreSummary,
-  AttemptStatusLabel,
-} from "@/components/attempt-score-summary";
+  ActivityRowContent,
+  OpenableListRow,
+} from "@/components/ui-list-row";
 import {
   assignmentDisplayTitle,
   type AssignmentHistorySummary,
 } from "@/lib/admin/history";
 import {
-  learningActivityEffectiveAt,
   learningActivitySection,
   matchesLearningHistoryFilters,
   sortLearningActivities,
@@ -24,52 +24,10 @@ import {
 } from "@/lib/admin/learning-activity";
 import { adminStudentsText } from "@/content/ko/admin-students";
 import { formatContentText } from "@/content/format";
-import { formatKoreanDateTime } from "@/lib/format";
+import { historyDetailHref } from "@/lib/admin/history-route";
+import { buildAttemptStatusPresentation } from "@/lib/ui/attempt-score-presentation";
 import { SelectField } from "@/components/ui-select";
 import { Button } from "@/components/ui-button";
-
-function activityTimeLabel(item: AssignmentHistorySummary) {
-  const copy = adminStudentsText.learning.activityList.time;
-  if (item.status === "not_started") {
-    return item.availableUntil
-      ? formatContentText(copy.deadline, {
-          datetime: formatKoreanDateTime(item.availableUntil),
-        })
-      : formatContentText(copy.assignedWithoutDeadline, {
-          datetime: formatKoreanDateTime(item.assignedAt),
-        });
-  }
-  if (item.status === "cancelled") {
-    return formatContentText(copy.cancelled, {
-      datetime: formatKoreanDateTime(learningActivityEffectiveAt(item)),
-    });
-  }
-  if (item.status === "missed") {
-    return formatContentText(copy.missed, {
-      datetime: formatKoreanDateTime(learningActivityEffectiveAt(item)),
-    });
-  }
-  if (item.status === "expired") {
-    return formatContentText(copy.expired, {
-      datetime: formatKoreanDateTime(learningActivityEffectiveAt(item)),
-    });
-  }
-  if (item.completedAt) {
-    return formatContentText(copy.finished, {
-      datetime: formatKoreanDateTime(item.completedAt),
-    });
-  }
-  if (item.status === "in_progress" && item.phase === "review") {
-    return formatContentText(copy.failed, {
-      datetime: formatKoreanDateTime(
-        item.initialCompletedAt ?? item.startedAt,
-      ),
-    });
-  }
-  return formatContentText(copy.started, {
-    datetime: formatKoreanDateTime(learningActivityEffectiveAt(item)),
-  });
-}
 
 export function StudentLearningActivityList({
   emptyLabel = adminStudentsText.learning.activityList.empty,
@@ -85,7 +43,6 @@ export function StudentLearningActivityList({
   onEditAssignment?: (item: AssignmentHistorySummary) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const [detailItemId, setDetailItemId] = useState("");
   const [filterNow] = useState(() => Date.now());
   const [purposeFilter, setPurposeFilter] =
     useState<LearningHistoryPurposeFilter>("all");
@@ -244,33 +201,36 @@ export function StudentLearningActivityList({
               <ol className="learning-activity-list">
                 {section.items.map((item) => (
                   <li className="learning-activity-row" key={item.id}>
-                    <div className="learning-activity-main">
-                      <strong>{assignmentDisplayTitle(item)}</strong>
-                      <AssignmentMetaTags {...item} compact />
-                      <small>{activityTimeLabel(item)}</small>
-                    </div>
-                    <div className="learning-activity-result">
-                      <AttemptScoreSummary
-                        finalScore={item.finalScore}
-                        initialScore={item.initialScore}
-                        passingScore={item.passingScore}
-                        phase={item.phase}
-                        retryStartedAt={item.retryStartedAt}
-                        status={item.status}
+                    <OpenableListRow
+                      ariaLabel={`${assignmentDisplayTitle(item)} 상세`}
+                      className={`learning-activity-open activity-outcome-${buildAttemptStatusPresentation(item).outcome}`}
+                      href={historyDetailHref(item)}
+                    >
+                      <ActivityRowContent
+                        main={
+                          <>
+                            <strong>{assignmentDisplayTitle(item)}</strong>
+                            <AssignmentMetaTags {...item} compact />
+                          </>
+                        }
+                        score={
+                          <AttemptScoreSummary
+                            compact
+                            finalScore={item.finalScore}
+                            initialScore={item.initialScore}
+                            passingScore={item.passingScore}
+                            phase={item.phase}
+                            retryStartedAt={item.retryStartedAt}
+                            status={item.status}
+                          />
+                        }
+                        timeline={<ActivityStatusTimeline item={item} />}
                       />
-                      <AttemptStatusLabel
-                        finalScore={item.finalScore}
-                        initialScore={item.initialScore}
-                        passingScore={item.passingScore}
-                        phase={item.phase}
-                        retryStartedAt={item.retryStartedAt}
-                        status={item.status}
-                      />
-                    </div>
+                    </OpenableListRow>
                     <AdminHistoryActions
                       item={item}
                       onEdit={onEditAssignment}
-                      onViewDetail={() => setDetailItemId(item.id)}
+                      showDetailLink={false}
                       size="small"
                       summaryOnly
                     />
@@ -300,15 +260,6 @@ export function StudentLearningActivityList({
         </Button>
       )}
       </div>
-      {detailItemId ? (
-        <AdminHistoryList
-          initialItemId={detailItemId}
-          items={items}
-          key={detailItemId}
-          launcherOnly
-          onLauncherClose={() => setDetailItemId("")}
-        />
-      ) : null}
     </>
   );
 }

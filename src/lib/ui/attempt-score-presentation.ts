@@ -1,3 +1,6 @@
+import { commonText } from "@/content/ko/common";
+import type { StatusTone } from "@/lib/ui/status";
+
 export type AttemptScoreTone = "neutral" | "pass" | "fail";
 
 export type AttemptScoreSlot = {
@@ -23,20 +26,18 @@ export type AttemptScorePresentationInput = {
 };
 
 export type AttemptStatusPresentation = {
-  label:
-    | "응시 전"
-    | "배정 취소"
-    | "응시 중"
-    | "재시험"
-    | "완료"
-    | "미통과"
-    | "시간 종료";
+  label: string;
+  tone: StatusTone;
   className: string;
   outcome: string;
 };
 
-function scoreValue(score: number | null | undefined) {
-  return score === null || score === undefined ? "-" : `${score}점`;
+function scoreValue(
+  score: number | null | undefined,
+  compact: boolean,
+) {
+  if (score === null || score === undefined) return "-";
+  return compact ? String(score) : `${score}점`;
 }
 
 function scoreTone(
@@ -50,8 +51,11 @@ function scoreTone(
 
 export function buildAttemptScoreSlots(
   input: AttemptScorePresentationInput,
+  options: { compact?: boolean } = {},
 ): [AttemptScoreSlot, AttemptScoreSlot] {
+  const compact = options.compact ?? false;
   if (input.status === "missed") {
+    if (compact) return [null, null];
     return [
       { label: "첫 시험", value: "미응시", tone: "fail" },
       null,
@@ -67,12 +71,12 @@ export function buildAttemptScoreSlots(
     return [
       {
         label: "첫 시험",
-        value: scoreValue(input.initialScore),
+        value: scoreValue(input.initialScore, compact),
         tone: scoreTone(input.initialScore, input.passingScore),
       },
       {
         label: "재시험",
-        value: scoreValue(input.finalScore ?? input.initialScore),
+        value: scoreValue(input.finalScore ?? input.initialScore, compact),
         tone: scoreTone(
           input.finalScore ?? input.initialScore,
           input.passingScore,
@@ -85,7 +89,7 @@ export function buildAttemptScoreSlots(
     return [
       {
         label: "첫 시험",
-        value: scoreValue(input.initialScore),
+        value: scoreValue(input.initialScore, compact),
         tone: scoreTone(input.initialScore, input.passingScore),
       },
       null,
@@ -96,7 +100,7 @@ export function buildAttemptScoreSlots(
   return [
     {
       label: "최종",
-      value: scoreValue(finalScore),
+      value: scoreValue(finalScore, compact),
       tone: scoreTone(finalScore, input.passingScore),
     },
     null,
@@ -108,21 +112,24 @@ export function buildAttemptStatusPresentation(
 ): AttemptStatusPresentation {
   if (input.status === "not_started" || input.status === null) {
     return {
-      label: "응시 전",
+      label: commonText.activityStatus.notStarted,
+      tone: "neutral",
       className: "status-not_started",
       outcome: "not_started",
     };
   }
   if (input.status === "cancelled") {
     return {
-      label: "배정 취소",
+      label: commonText.activityStatus.cancelled,
+      tone: "neutral",
       className: "status-cancelled",
       outcome: "cancelled",
     };
   }
   if (input.status === "missed") {
     return {
-      label: "미통과",
+      label: commonText.activityStatus.missed,
+      tone: "danger",
       className: "status-failed",
       outcome: "missed",
     };
@@ -130,19 +137,22 @@ export function buildAttemptStatusPresentation(
   if (input.status === "in_progress") {
     if (input.phase === "review") {
       return {
-        label: "미통과",
+        label: commonText.activityStatus.failed,
+        tone: "danger",
         className: "status-failed",
         outcome: "failed",
       };
     }
     return input.phase === "retry" || Boolean(input.retryStartedAt)
       ? {
-          label: "재시험",
+          label: commonText.activityStatus.retry,
+          tone: "warning",
           className: "status-retried",
           outcome: "retried",
         }
       : {
-          label: "응시 중",
+          label: commonText.activityStatus.inProgress,
+          tone: "neutral",
           className: "status-in_progress",
           outcome: "in_progress",
         };
@@ -157,20 +167,23 @@ export function buildAttemptStatusPresentation(
   ) {
     if (finalScore < input.passingScore) {
       return {
-        label: "미통과",
+        label: commonText.activityStatus.failed,
+        tone: "danger",
         className: "status-failed",
         outcome: "failed",
       };
     }
     if (input.retryStartedAt) {
       return {
-        label: "재시험",
+        label: commonText.activityStatus.completed,
+        tone: "warning",
         className: "status-retried",
         outcome: "retried",
       };
     }
     return {
-      label: "완료",
+      label: commonText.activityStatus.completed,
+      tone: "success",
       className: "status-completed",
       outcome: "completed",
     };
@@ -178,12 +191,14 @@ export function buildAttemptStatusPresentation(
 
   return input.status === "expired"
     ? {
-        label: "시간 종료",
-        className: "status-expired",
-        outcome: "expired",
+        label: commonText.activityStatus.failed,
+        tone: "danger",
+        className: "status-failed",
+        outcome: "failed",
       }
     : {
-        label: "완료",
+        label: commonText.activityStatus.completed,
+        tone: "success",
         className: "status-completed",
         outcome: "completed",
       };

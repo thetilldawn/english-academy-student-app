@@ -3,12 +3,18 @@ import {
   buildAttemptStatusPresentation,
   type AttemptScorePresentationInput,
 } from "@/lib/ui/attempt-score-presentation";
+import { StatusBadge } from "@/components/status-badge";
 
 export function AttemptScoreSummary({
   className = "",
+  compact = false,
   ...input
-}: AttemptScorePresentationInput & { className?: string }) {
-  const slots = buildAttemptScoreSlots(input);
+}: AttemptScorePresentationInput & {
+  className?: string;
+  compact?: boolean;
+}) {
+  const slots = buildAttemptScoreSlots(input, { compact });
+  if (slots.every((slot) => slot === null)) return null;
 
   return (
     <span
@@ -43,17 +49,17 @@ export function AttemptStatusLabel({
 }: AttemptScorePresentationInput & { className?: string }) {
   const presentation = buildAttemptStatusPresentation(input);
   return (
-    <span
+    <StatusBadge
       className={[
-        "status-pill",
         "attempt-status-label",
         presentation.className,
         className,
       ]
         .filter(Boolean)
         .join(" ")}
+      tone={presentation.tone}
     >
       {presentation.label}
-    </span>
+    </StatusBadge>
   );
 }

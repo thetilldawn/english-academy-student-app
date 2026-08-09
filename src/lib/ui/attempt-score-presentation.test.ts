@@ -6,6 +6,39 @@ import {
 } from "@/lib/ui/attempt-score-presentation";
 
 describe("buildAttemptScoreSlots", () => {
+  it.each([
+    {
+      name: "응시 전",
+      input: { status: "not_started", phase: null },
+      expected: { label: "응시 전", tone: "neutral" },
+    },
+    {
+      name: "배정 취소",
+      input: { status: "cancelled", phase: null },
+      expected: { label: "배정 취소", tone: "neutral" },
+    },
+    {
+      name: "첫 시험 진행 중",
+      input: { status: "in_progress", phase: "initial" },
+      expected: { label: "응시 중", tone: "neutral" },
+    },
+    {
+      name: "시간 종료",
+      input: { status: "expired", phase: "initial" },
+      expected: { label: "미통과", tone: "danger" },
+    },
+  ] as const)("$name 상태를 공통 문구와 색으로 표시한다", ({ input, expected }) => {
+    expect(
+      buildAttemptStatusPresentation({
+        ...input,
+        initialScore: null,
+        finalScore: null,
+        passingScore: 80,
+        retryStartedAt: null,
+      }),
+    ).toMatchObject(expected);
+  });
+
   it("한 번에 끝난 시험은 중복 점수 없이 최종만 표시한다", () => {
     expect(
       buildAttemptScoreSlots({
@@ -34,6 +67,7 @@ describe("buildAttemptScoreSlots", () => {
       }),
     ).toMatchObject({
       label: "완료",
+      tone: "success",
       className: "status-completed",
       outcome: "completed",
     });
@@ -49,12 +83,13 @@ describe("buildAttemptScoreSlots", () => {
       }),
     ).toMatchObject({
       label: "미통과",
+      tone: "danger",
       className: "status-failed",
       outcome: "failed",
     });
   });
 
-  it("실제로 시작한 재시험은 결과와 무관하게 재시험으로 구분한다", () => {
+  it("재시험에서 통과하면 노란 완료로 표시한다", () => {
     expect(
       buildAttemptStatusPresentation({
         status: "completed",
@@ -65,13 +100,14 @@ describe("buildAttemptScoreSlots", () => {
         retryStartedAt: "2026-08-06T01:00:00.000Z",
       }),
     ).toMatchObject({
-      label: "재시험",
+      label: "완료",
+      tone: "warning",
       className: "status-retried",
       outcome: "retried",
     });
   });
 
-  it("미응시와 재시험 선택 전 미달은 미통과로 표시한다", () => {
+  it("미응시는 미응시, 재시험 선택 전 미달은 미통과로 표시한다", () => {
     expect(
       buildAttemptStatusPresentation({
         status: "missed",
@@ -82,7 +118,8 @@ describe("buildAttemptScoreSlots", () => {
         retryStartedAt: null,
       }),
     ).toMatchObject({
-      label: "미통과",
+      label: "미응시",
+      tone: "danger",
       className: "status-failed",
       outcome: "missed",
     });
@@ -98,6 +135,7 @@ describe("buildAttemptScoreSlots", () => {
       }),
     ).toMatchObject({
       label: "미통과",
+      tone: "danger",
       className: "status-failed",
       outcome: "failed",
     });
@@ -115,6 +153,7 @@ describe("buildAttemptScoreSlots", () => {
       }),
     ).toMatchObject({
       label: "재시험",
+      tone: "warning",
       className: "status-retried",
       outcome: "retried",
     });
@@ -134,6 +173,22 @@ describe("buildAttemptScoreSlots", () => {
       { label: "첫 시험", value: "60점", tone: "fail" },
       { label: "재시험", value: "90점", tone: "pass" },
     ]);
+  });
+
+  it("목록용 점수는 점 단위를 생략한다", () => {
+    expect(
+      buildAttemptScoreSlots(
+        {
+          status: "completed",
+          phase: "completed",
+          initialScore: 77.5,
+          finalScore: 77.5,
+          passingScore: 80,
+          retryStartedAt: null,
+        },
+        { compact: true },
+      ),
+    ).toEqual([{ label: "최종", value: "77.5", tone: "fail" }, null]);
   });
 
   it("0점과 미응시는 실패 색상으로 표시한다", () => {

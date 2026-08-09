@@ -25,6 +25,8 @@ import { StudentLearningActivityList } from "@/components/student-learning-activ
 import { StudentLearningSourceList } from "@/components/student-learning-source-list";
 import { StudentVocabBookHistoryList } from "@/components/student-vocab-book-history-list";
 import { HelpTip } from "@/components/help-tip";
+import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
+import { StatusBadge } from "@/components/status-badge";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { adminStudentsText } from "@/content/ko/admin-students";
 import { commonText } from "@/content/ko/common";
@@ -34,10 +36,7 @@ import {
   type AssignmentDatasetItem,
   type AssignmentUnitItem,
 } from "@/components/assignment-manager";
-import {
-  AttemptScoreSummary,
-  AttemptStatusLabel,
-} from "@/components/attempt-score-summary";
+import { AttemptScoreSummary } from "@/components/attempt-score-summary";
 import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
 import { Button, buttonClassNames } from "@/components/ui-button";
 import { Tabs } from "@/components/ui-tabs";
@@ -1174,22 +1173,24 @@ export function StudentManager({
                           <strong className="student-card-name">
                             {student.displayName}
                           </strong>
-                          <MetaTag
-                            tone={
-                              student.status === "active"
-                                ? "positive"
-                                : "danger"
-                            }
-                          >
-                            {student.status === "active"
-                              ? adminStudentsText.card.active
-                              : adminStudentsText.card.blocked}
-                          </MetaTag>
-                          {student.codeStatus === "expired" ? (
-                            <MetaTag tone="danger">
-                              {adminStudentsText.card.codeExpired}
-                            </MetaTag>
-                          ) : null}
+                          <span className="student-card-account-statuses">
+                            <StatusBadge
+                              tone={
+                                student.status === "active"
+                                  ? "success"
+                                  : "danger"
+                              }
+                            >
+                              {student.status === "active"
+                                ? adminStudentsText.card.active
+                                : adminStudentsText.card.blocked}
+                            </StatusBadge>
+                            {student.codeStatus === "expired" ? (
+                              <StatusBadge tone="danger">
+                                {adminStudentsText.card.codeExpired}
+                              </StatusBadge>
+                            ) : null}
+                          </span>
                         </span>
                         <MetaTagList className="student-card-profile-tags">
                           <MetaTag>
@@ -1256,15 +1257,8 @@ export function StudentManager({
                           </strong>
                           {priorityActivity ? (
                             <span className="student-card-score-line">
-                              <AttemptStatusLabel
-                                finalScore={priorityActivity.finalScore}
-                                initialScore={priorityActivity.initialScore}
-                                passingScore={priorityActivity.passingScore}
-                                phase={priorityActivity.phase}
-                                retryStartedAt={priorityActivity.retryStartedAt}
-                                status={priorityActivity.status}
-                              />
                               <AttemptScoreSummary
+                                compact
                                 finalScore={priorityActivity.finalScore}
                                 initialScore={priorityActivity.initialScore}
                                 passingScore={priorityActivity.passingScore}
@@ -1272,6 +1266,7 @@ export function StudentManager({
                                 retryStartedAt={priorityActivity.retryStartedAt}
                                 status={priorityActivity.status}
                               />
+                              <ActivityStatusTimeline item={priorityActivity} />
                             </span>
                           ) : null}
                           </span>
@@ -1679,13 +1674,17 @@ export function StudentManager({
                     <span>{adminStudentsText.account.status}</span>
                     <strong>{selectedStudent.displayName}</strong>
                   </div>
-                  <span
-                    className={`status-pill status-${selectedStudent.status}`}
+                  <StatusBadge
+                    tone={
+                      selectedStudent.status === "active"
+                        ? "success"
+                        : "danger"
+                    }
                   >
                     {selectedStudent.status === "active"
                       ? adminStudentsText.account.active
                       : adminStudentsText.account.blocked}
-                  </span>
+                  </StatusBadge>
                 </div>
                 {selectedStudent.codeStatus === "expired" ? (
                   <div className="notice notice-error" role="status">

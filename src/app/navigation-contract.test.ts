@@ -218,6 +218,9 @@ describe("responsive navigation contract", () => {
     );
     const historyCopy = source("src/content/ko/admin-history.ts");
     const overviewCopy = source("src/content/ko/admin-overview.ts");
+    const interceptedDetail = source(
+      "src/app/admin/(protected)/@detail/(.)results/[entryKey]/page.tsx",
+    );
     const scorePresentation = source(
       "src/lib/ui/attempt-score-presentation.ts",
     );
@@ -231,14 +234,16 @@ describe("responsive navigation contract", () => {
     expect(scorePresentation).toContain('label: "최종"');
     expect(scorePresentation).toContain('label: "재시험"');
     expect(historyCopy).toContain('needsAttention: "미통과·미응시"');
-    expect(historyList).toContain("/api/admin/attempts/");
+    expect(historyList).toContain("historyDetailHref(item)");
+    expect(historyList).toContain("<ActivityStatusTimeline");
+    expect(interceptedDetail).toContain("getAdminHistoryDetail(entryKey)");
     expect(overview).toContain("<OverviewActionGroups");
     expect(overviewGroups).toContain("onSelectStudent={setSelectedStudentId}");
     expect(overviewGroups).toContain("launcherOnly");
     expect(overviewGroups).not.toContain("slice(0, 8)");
     expect(overviewGroups).toContain("adminOverviewText.countSuffix");
     expect(overviewCopy).toContain('countSuffix: "건"');
-    expect(historyList).toContain("adminHistoryText.list.remainingWrong");
+    expect(interceptedDetail).toContain("<RouteDetailDialog");
   });
 
   it("첫 시험 뒤 결과를 먼저 보여주고 학생이 재시험을 시작한다", () => {

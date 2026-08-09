@@ -15,7 +15,10 @@ describe("admin visual density contract", () => {
     expect(studentManager).toContain("adminStudentsText.card.noHistory");
     expect(studentManager).toContain("{priorityActivity ? (");
     expect(studentManager).not.toContain('"시험 기록 없음"');
-    expect(assignmentManager).toContain("{nextActivity ? (");
+    expect(assignmentManager).toContain("nextActivity ? (");
+    expect(assignmentManager).toContain(
+      "<ActivityStatusTimeline item={nextActivity} />",
+    );
     expect(assignmentManager).not.toContain('"최근 기록 없음"');
   });
 
@@ -52,7 +55,8 @@ describe("admin visual density contract", () => {
     expect(historyList).toContain('value="needs_attention"');
     expect(historyList).toContain('value="retried"');
     expect(historyList).toContain("compact={compact}");
-    expect(historyList).toContain("{!compact ||");
+    expect(historyList).toContain("!compact ||");
+    expect(historyList).toContain("compact\n            finalScore");
     expect(overview).not.toContain("section.description");
   });
 

@@ -44,6 +44,10 @@ import {
   type AttemptHistorySource,
 } from "@/lib/admin/history";
 import { learningActivitySection } from "@/lib/admin/learning-activity";
+import {
+  historyEntryKey,
+  parseHistoryEntryKey,
+} from "@/lib/admin/history-route";
 import type {
   QuestionOrderMode,
   TimingMode,
@@ -1282,6 +1286,38 @@ export async function listCurrentAssignmentHistory(): Promise<
   AssignmentHistorySummary[]
 > {
   return (await listAssignmentHistoryBundle()).currentHistory;
+}
+
+export type AdminHistoryDetail = {
+  summary: AssignmentHistorySummary;
+  attempt: AdminAttemptDetail | null;
+  canonicalKey: string;
+};
+
+export async function getAdminHistoryDetail(
+  entryKey: string,
+): Promise<AdminHistoryDetail | null> {
+  const parsed = parseHistoryEntryKey(entryKey);
+  if (!parsed) return null;
+
+  const { history } = await listAssignmentHistoryBundle();
+  const summary =
+    parsed.kind === "attempt"
+      ? history.find((item) => item.attemptId === parsed.attemptId)
+      : history.find(
+          (item) =>
+            item.assignmentId === parsed.assignmentId &&
+            item.studentId === parsed.studentId,
+        );
+  if (!summary) return null;
+
+  return {
+    summary,
+    attempt: summary.attemptId
+      ? await getAdminAttemptDetail(summary.attemptId)
+      : null,
+    canonicalKey: historyEntryKey(summary),
+  };
 }
 
 export type RegularAssignmentInput = {

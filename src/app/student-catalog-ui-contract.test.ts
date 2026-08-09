@@ -20,7 +20,10 @@ describe("student catalog and modal UI contract", () => {
       /\.student-detail-dialog > \.app-tabs\s*\{[^}]*border:\s*0;[^}]*border-radius:\s*0;/,
     );
     expect(css).toMatch(
-      /\.app-tab:hover,\s*\.app-tab\[aria-selected="true"\]\s*\{[^}]*color:\s*var\(--ink\);[^}]*background:\s*var\(--surface\);/,
+      /\.app-tab:hover\s*\{[^}]*color:\s*var\(--ink\);[^}]*background:\s*var\(--surface\);/,
+    );
+    expect(css).toMatch(
+      /\.app-tab\[aria-selected="true"\]\s*\{[^}]*background:\s*var\(--selection-active\);/,
     );
   });
 
@@ -87,11 +90,13 @@ describe("student catalog and modal UI contract", () => {
 
   it("학생 카드도 공통 시험 종류와 실제 미응시 시각을 사용한다", () => {
     const studentPage = source("src/app/student/(protected)/page.tsx");
-    const historyList = source("src/components/admin-history-list.tsx");
+    const timeline = source(
+      "src/lib/ui/learning-activity-presentation.ts",
+    );
 
     expect(studentPage).toContain(
       "assignmentTypeLabel(assignment.assignmentPurpose)",
     );
-    expect(historyList).toContain("item.missedAt ?? item.availableUntil");
+    expect(timeline).toContain("item.missedAt ?? item.availableUntil");
   });
 });

@@ -10,7 +10,11 @@ import { requireAdmin } from "@/lib/auth/admin";
 
 export default async function AdminProtectedLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+  detail,
+}: Readonly<{
+  children: React.ReactNode;
+  detail: React.ReactNode;
+}>) {
   const admin = await requireAdmin();
 
   return (
@@ -65,6 +69,7 @@ export default async function AdminProtectedLayout({
           label={adminShellText.navigation.mobileAriaLabel}
         />
       </div>
+      {detail}
     </div>
   );
 }

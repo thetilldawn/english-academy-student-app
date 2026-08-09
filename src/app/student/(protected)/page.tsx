@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
 import { DeadlineCountdown } from "@/components/deadline-countdown";
 import { StartAttemptButton } from "@/components/start-attempt-button";
 import { AttemptScoreSummary } from "@/components/attempt-score-summary";
@@ -15,9 +16,9 @@ import {
   assignmentOrderLabel,
   assignmentTypeLabel,
 } from "@/lib/admin/history";
-import { formatKoreanDateTime } from "@/lib/format";
 import { listStudentAssignments } from "@/lib/services/quiz-service";
 import { buildAttemptStatusPresentation } from "@/lib/ui/attempt-score-presentation";
+import type { ActivityTimelineInput } from "@/lib/ui/learning-activity-presentation";
 
 export const metadata: Metadata = {
   title: studentAppText.dashboard.metadataTitle,
@@ -27,55 +28,34 @@ type StudentAssignment = Awaited<
   ReturnType<typeof listStudentAssignments>
 >[number];
 
-function statusPresentation(assignment: StudentAssignment) {
-  return buildAttemptStatusPresentation({
-    status: assignment.missed ? "missed" : assignment.lastStatus,
+function assignmentTimeline(
+  assignment: StudentAssignment,
+): ActivityTimelineInput {
+  const status = assignment.missed
+    ? "missed"
+    : (assignment.lastStatus ?? "not_started");
+  return {
+    status,
     phase: assignment.lastPhase,
     initialScore: assignment.lastInitialScore,
     finalScore: assignment.lastFinalScore,
     passingScore: assignment.passingScore,
     retryStartedAt: assignment.lastRetryStartedAt,
-  });
-}
-
-function assignmentTimeLabel(assignment: StudentAssignment) {
-  const copy = studentAppText.dashboard.time;
-  if (assignment.missed) {
-    return formatContentText(copy.missed, {
-      datetime: formatKoreanDateTime(
-        assignment.missedAt ?? assignment.availableUntil,
-      ),
-    });
-  }
-  if (assignment.lastStatus === "expired") {
-    return formatContentText(copy.expired, {
-      datetime: formatKoreanDateTime(assignment.lastDeadlineAt),
-    });
-  }
-  if (assignment.lastStatus === "completed") {
-    return formatContentText(copy.completed, {
-      datetime: formatKoreanDateTime(assignment.lastCompletedAt),
-    });
-  }
-  if (assignment.lastStatus === "in_progress") {
-    if (assignment.lastPhase === "review") {
-      return formatContentText(copy.failed, {
-        datetime: formatKoreanDateTime(
-          assignment.lastInitialCompletedAt ?? assignment.lastStartedAt,
-        ),
-      });
-    }
-    return formatContentText(copy.started, {
-      datetime: formatKoreanDateTime(assignment.lastStartedAt),
-    });
-  }
-  return assignment.availableUntil
-    ? formatContentText(copy.deadline, {
-        datetime: formatKoreanDateTime(assignment.availableUntil),
-      })
-    : formatContentText(copy.assignedWithoutDeadline, {
-        datetime: formatKoreanDateTime(assignment.assignedAt),
-      });
+    assignedAt: assignment.assignedAt,
+    availableUntil: assignment.availableUntil,
+    cancelledAt: null,
+    missedAt: assignment.missedAt,
+    startedAt: assignment.lastStartedAt,
+    initialCompletedAt: assignment.lastInitialCompletedAt,
+    deadlineAt: assignment.lastDeadlineAt,
+    completedAt: assignment.lastCompletedAt,
+    activityAt:
+      assignment.lastCompletedAt ??
+      assignment.lastInitialCompletedAt ??
+      assignment.lastStartedAt ??
+      assignment.missedAt ??
+      assignment.assignedAt,
+  };
 }
 
 function AssignmentCard({
@@ -89,6 +69,8 @@ function AssignmentCard({
     assignment.availableUntil,
     currentTimeMilliseconds(),
   );
+  const timeline = assignmentTimeline(assignment);
+  const outcome = buildAttemptStatusPresentation(timeline).outcome;
 
   return (
     <article
@@ -99,17 +81,20 @@ function AssignmentCard({
       ]
         .filter(Boolean)
         .join(" ")}
+      data-exam-outcome={outcome}
     >
       <div className="title-with-status">
         <div>
           <p className="eyebrow">{assignment.datasetTitle}</p>
           <h3>{assignment.displayTitle}</h3>
         </div>
-        <span
-          className={`status-pill ${statusPresentation(assignment).className}`}
-        >
-          {statusPresentation(assignment).label}
-        </span>
+        <ActivityStatusTimeline
+          className="student-assignment-timeline"
+          item={timeline}
+          showDeadline={
+            !(assignment.availableUntil && assignment.lastStatus === null)
+          }
+        />
       </div>
 
       <div className="assignment-details">
@@ -150,13 +135,10 @@ function AssignmentCard({
         </span>
       </div>
 
-      <small className="card-time-meta">
-        {assignmentTimeLabel(assignment)}
-      </small>
-
       {(assignment.lastInitialScore !== null || assignment.missed) && (
         <AttemptScoreSummary
           className="last-score"
+          compact
           finalScore={assignment.lastFinalScore}
           initialScore={assignment.lastInitialScore}
           passingScore={assignment.passingScore}

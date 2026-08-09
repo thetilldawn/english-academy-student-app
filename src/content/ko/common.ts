@@ -25,6 +25,19 @@ export const commonText = {
     close: "닫기",
     back: "이전 화면으로 돌아가기",
   },
+  // 앱 공통 > 시험·계정 상태 뱃지와 시간 열
+  activityStatus: {
+    deadline: "마감",
+    assigned: "배정",
+    notStarted: "응시 전",
+    cancelled: "배정 취소",
+    missed: "미응시",
+    inProgress: "응시 중",
+    retry: "재시험",
+    completed: "완료",
+    failed: "미통과",
+    available: "접속 가능",
+  },
   // 학생·학습 관리 > 공통 검색 필터
   filters: {
     wrongAvailability: "오답 유무",
