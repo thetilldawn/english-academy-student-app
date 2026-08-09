@@ -20,6 +20,14 @@ type AssignmentReviewTargetRow = {
   assignment_id: string;
   student_id: string;
   review_queue_id: string;
+  vocab_entry_id: number;
+  canonical_lexeme_id_snapshot: string | null;
+  canonical_dictionary_id_snapshot: string | null;
+};
+
+type VocabularyHeadwordRow = {
+  id: number;
+  headword_normalized: string;
 };
 
 export type ActiveAssignmentExclusion = {
@@ -132,17 +140,21 @@ export async function loadActiveReviewAssignments(
 ) {
   const queueIds = new Set<string>();
   const identities = new Set<string>();
+  const reviewIdentities = new Set<string>();
+  const reviewTargetRows: AssignmentReviewTargetRow[] = [];
   const words: ActiveAssignmentWord[] = [];
   const uniqueStudentIds = [...new Set(studentIds)];
   if (uniqueStudentIds.length === 0) {
-    return { queueIds, identities, words };
+    return { queueIds, identities, reviewIdentities, words };
   }
 
   for (const studentId of uniqueStudentIds) {
     for (let offset = 0; ; offset += PAGE_SIZE) {
       let query = supabase
         .from("assignment_review_targets")
-        .select("assignment_id, student_id, review_queue_id")
+        .select(
+          "assignment_id, student_id, review_queue_id, vocab_entry_id, canonical_lexeme_id_snapshot, canonical_dictionary_id_snapshot",
+        )
         .eq("student_id", studentId)
         .eq("dataset_id", datasetId)
         .is("released_at", null)
@@ -157,8 +169,37 @@ export async function loadActiveReviewAssignments(
       }
       for (const row of (data ?? []) as AssignmentReviewTargetRow[]) {
         queueIds.add(row.review_queue_id);
+        reviewTargetRows.push(row);
       }
       if (!data || data.length < PAGE_SIZE) break;
+    }
+  }
+
+  const headwordByEntryId = new Map<number, string>();
+  const reviewEntryIds = [
+    ...new Set(reviewTargetRows.map((row) => row.vocab_entry_id)),
+  ];
+  for (const entryIdChunk of chunks(reviewEntryIds, ID_CHUNK_SIZE)) {
+    const { data, error } = await supabase
+      .from("vocab_entries")
+      .select("id, headword_normalized")
+      .eq("dataset_id", datasetId)
+      .in("id", entryIdChunk);
+    if (error) {
+      throw new Error("배정 중인 오답 정보를 확인하지 못했습니다.");
+    }
+    for (const row of (data ?? []) as VocabularyHeadwordRow[]) {
+      headwordByEntryId.set(row.id, row.headword_normalized);
+    }
+  }
+  for (const row of reviewTargetRows) {
+    for (const identity of activeReviewIdentities(
+      row.vocab_entry_id,
+      row.canonical_lexeme_id_snapshot,
+      headwordByEntryId.get(row.vocab_entry_id) ?? null,
+      row.canonical_dictionary_id_snapshot,
+    )) {
+      reviewIdentities.add(identity);
     }
   }
 
@@ -198,7 +239,7 @@ export async function loadActiveReviewAssignments(
     ...new Set(linkRows.map((row) => row.assignment_id)),
   ];
   if (assignmentIds.length === 0) {
-    return { queueIds, identities, words };
+    return { queueIds, identities, reviewIdentities, words };
   }
 
   const assignmentRows: AssignmentRow[] = [];
@@ -343,5 +384,5 @@ export async function loadActiveReviewAssignments(
     }
   }
 
-  return { queueIds, identities, words };
+  return { queueIds, identities, reviewIdentities, words };
 }

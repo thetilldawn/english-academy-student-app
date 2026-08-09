@@ -63,7 +63,9 @@ describe("exact review assignment app contract", () => {
     expect(loader).toContain(
       '.from("vocab_entry_quiz_eligibility")',
     );
-    expect(loader).toContain('.eq("status", "eligible")');
+    expect(loader).toContain(
+      '.in("status", ["eligible", "review_required"])',
+    );
     expect(service).toContain("loadEligibleVocabularyDataset(");
     expect(service).toContain("createTargetedQuizQuestions(");
     expect(service).toContain(

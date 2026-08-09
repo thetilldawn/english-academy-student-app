@@ -165,7 +165,7 @@ describe("mixed assignment admin UI contract", () => {
     expect(manager).toContain("capacity.activeAssignmentExcluded");
     expect(copy).toContain('eligibleWordCount: "출제 검토 통과 {count}개"');
     expect(copy).toContain(
-      'activeAssignmentExcluded: "다른 시험과 중복 {count}개 제외"',
+      'activeAssignmentExcluded: "오답 배정 중 {count}개 제외"',
     );
     expect(copy).toContain('maximumQuestionCount: "현재 최대 {count}문항"');
   });

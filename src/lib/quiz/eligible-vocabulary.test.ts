@@ -90,6 +90,27 @@ describe("mergeEligibleVocabularyRows", () => {
     ).toHaveLength(1);
   });
 
+  it("범위 안에서 다시 판정할 중복 경고만 런타임 후보로 유지한다", () => {
+    const candidates = mergeEligibleVocabularyRows(entries, [
+      {
+        vocab_entry_id: 1,
+        quiz_mode: "book_meaning_en_to_ko",
+        canonical_lexeme_id: "canonical-1",
+        status: "review_required",
+        reason_codes: ["DUPLICATE_HEADWORD_DIFFERENT_MEANING"],
+      },
+      {
+        vocab_entry_id: 2,
+        quiz_mode: "book_meaning_en_to_ko",
+        canonical_lexeme_id: "canonical-2",
+        status: "review_required",
+        reason_codes: ["UNRESOLVED_CANONICAL_LINK"],
+      },
+    ]);
+
+    expect(candidates.map((entry) => entry.id)).toEqual([1]);
+  });
+
   it("한 어휘의 방향별 canonical이 다르면 중단한다", () => {
     expect(() =>
       mergeEligibleVocabularyRows(entries, [

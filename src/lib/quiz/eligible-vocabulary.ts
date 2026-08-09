@@ -19,7 +19,28 @@ export type VocabularyEligibilitySourceRow = {
     | "book_meaning_ko_to_en";
   canonical_lexeme_id: string | null;
   canonical_dictionary_id?: string | null;
+  status?: "eligible" | "review_required" | "excluded";
+  reason_codes?: string[];
 };
+
+const RANGE_SCOPED_REVIEW_REASONS = new Set([
+  "DUPLICATE_HEADWORD_DIFFERENT_MEANING",
+  "DUPLICATE_PRIMARY_MEANING_DIFFERENT_HEADWORD",
+]);
+
+export function isRuntimeEligibleVocabularyRow(
+  row: VocabularyEligibilitySourceRow,
+) {
+  if (row.status === undefined) return true;
+  if (row.status === "eligible") return true;
+  return (
+    row.status === "review_required" &&
+    (row.reason_codes?.length ?? 0) > 0 &&
+    row.reason_codes!.every((reason) =>
+      RANGE_SCOPED_REVIEW_REASONS.has(reason),
+    )
+  );
+}
 
 export type EligibleVocabularyEntry = QuizVocabularyEntry & {
   unitId: string;
@@ -51,6 +72,7 @@ export function mergeEligibleVocabularyRows(
     }
   >();
   for (const row of eligibilityRows) {
+    if (!isRuntimeEligibleVocabularyRow(row)) continue;
     const current = eligibilityByEntry.get(row.vocab_entry_id) ?? {
       canonicalKeys: new Set<string>(),
       dictionaryKeys: new Set<string>(),

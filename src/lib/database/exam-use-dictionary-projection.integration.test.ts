@@ -114,6 +114,39 @@ function buildPackage() {
   return input;
 }
 
+function buildRepeatedOccurrencePackage() {
+  const packageEntries = [101, 102, 103, 104, 105].map(buildEntry);
+  packageEntries[1] = {
+    ...packageEntries[1],
+    dictionary_id: packageEntries[0]!.dictionary_id,
+    display_headword: packageEntries[0]!.display_headword,
+    display_gloss_ko: packageEntries[0]!.display_gloss_ko,
+  };
+  packageEntries[1]!.content_hash = computeExamUseEntryContentHash(
+    packageEntries[1]!,
+  );
+  const input: Record<string, unknown> = {
+    schema_version: "1.0",
+    package_type: "student-app-exam-use-wordbook",
+    target_environment: "preview",
+    common_dictionary_release_allowed: false,
+    exam_use_import_allowed: true,
+    package_version: "0".repeat(64),
+    dataset_key: "integration-repeated-occurrence-v1",
+    source_sha256: "5".repeat(64),
+    candidate_dictionary_version: "6".repeat(64),
+    manifest_content_hash: "7".repeat(64),
+    exam_review_ledger_sha256: "8".repeat(64),
+    wordbook_id: "integration-repeated-occurrence",
+    title: "중복 occurrence 통합 테스트 단어장",
+    generated_at_utc: "2026-08-10T00:00:00Z",
+    entries: packageEntries,
+  };
+  input.package_version = computeExamUsePackageVersion(input);
+  validateExamUsePackage(input);
+  return input;
+}
+
 async function createFinalSchemaDatabase() {
   const database = new PGlite({ extensions: { pgcrypto } });
   await database.exec(`
@@ -427,6 +460,122 @@ describe.sequential("exam-use dictionary projection", () => {
       phase: "initial",
       question_count: 4,
       snapshot_join_count: 4,
+    });
+  });
+
+  it("stores separate source occurrences that share one dictionary identity", async () => {
+    await database.exec("set role service_role;");
+    const imported = await database.query<{
+      result: { datasetId: string; releaseId: string };
+    }>(
+      "select public.import_app_exam_use_package_v1($1::jsonb) as result",
+      [JSON.stringify(buildRepeatedOccurrencePackage())],
+    );
+    await database.exec("reset role;");
+
+    const repeatedDatasetId = imported.rows[0]!.result.datasetId;
+    const repeatedReleaseId = imported.rows[0]!.result.releaseId;
+    const source = await database.query<{
+      vocab_entry_id: number;
+      unit_id: string;
+      dictionary_id: string;
+    }>(`
+      select
+        occurrence.vocab_entry_id,
+        occurrence.unit_id,
+        occurrence.dictionary_id
+      from word_index.app_exam_use_occurrence as occurrence
+      where occurrence.release_id = '${repeatedReleaseId}'
+      order by occurrence.source_row;
+    `);
+    expect(source.rows).toHaveLength(5);
+    expect(source.rows[0]?.dictionary_id).toBe(
+      source.rows[1]?.dictionary_id,
+    );
+    const repeatedEntryIds = source.rows.map((row) => row.vocab_entry_id);
+    const commonChoices = [
+      repeatedEntryIds[0],
+      repeatedEntryIds[2],
+      repeatedEntryIds[3],
+      repeatedEntryIds[4],
+    ];
+    const questionPlan = [
+      {
+        vocab_entry_id: repeatedEntryIds[0],
+        base_order_index: 1,
+        direction: "english_to_korean",
+        choice_vocab_entry_ids: commonChoices,
+      },
+      {
+        vocab_entry_id: repeatedEntryIds[1],
+        base_order_index: 2,
+        direction: "english_to_korean",
+        choice_vocab_entry_ids: [
+          repeatedEntryIds[1],
+          repeatedEntryIds[2],
+          repeatedEntryIds[3],
+          repeatedEntryIds[4],
+        ],
+      },
+      {
+        vocab_entry_id: repeatedEntryIds[2],
+        base_order_index: 3,
+        direction: "korean_to_english",
+        choice_vocab_entry_ids: commonChoices,
+      },
+      {
+        vocab_entry_id: repeatedEntryIds[3],
+        base_order_index: 4,
+        direction: "korean_to_english",
+        choice_vocab_entry_ids: commonChoices,
+      },
+    ];
+
+    await database.exec("set role authenticated;");
+    const assignment = await database.query<{ id: string }>(
+      `select public.create_assignment_with_delivery_v6(
+        'Repeated occurrence assignment',
+        $1::uuid,
+        array[$2::uuid],
+        4,
+        50::smallint,
+        60,
+        80::smallint,
+        'fixed'::public.question_order_mode,
+        clock_timestamp() + interval '1 day',
+        array[$3::uuid],
+        'total',
+        null,
+        $4::jsonb
+      ) as id`,
+      [
+        repeatedDatasetId,
+        source.rows[0]!.unit_id,
+        ids.student,
+        JSON.stringify(questionPlan),
+      ],
+    );
+    await database.exec("reset role;");
+
+    const state = await database.query<{
+      question_count: number;
+      snapshot_count: number;
+      distinct_dictionary_count: number;
+    }>(`
+      select
+        count(*)::integer as question_count,
+        count(snapshot.assignment_question_id)::integer as snapshot_count,
+        count(distinct snapshot.dictionary_id)::integer
+          as distinct_dictionary_count
+      from public.assignment_questions as question
+      join public.assignment_question_exam_use_snapshot as snapshot
+        on snapshot.assignment_question_id = question.id
+      where question.assignment_id = '${assignment.rows[0]!.id}';
+    `);
+    expect(state.rows[0]).toEqual({
+      question_count: 4,
+      snapshot_count: 4,
+      distinct_dictionary_count: 3,
     });
   });
 

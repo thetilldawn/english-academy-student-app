@@ -94,7 +94,7 @@ describe("mixed assignment API contract", () => {
     expect(service).not.toContain("p_questions: input.");
   });
 
-  it("excludes selected wrong identities and active assignments from general targets", () => {
+  it("keeps active assignment locks for wrong queues and excludes only active review targets from general rows", () => {
     const service = source(
       "src/lib/services/mixed-assignment-service.ts",
     );
@@ -118,6 +118,10 @@ describe("mixed assignment API contract", () => {
       '.from("assignment_questions")',
     );
     expect(activeAssignments).toContain("activeReviewIdentities(");
+    expect(activeAssignments).toContain("reviewIdentities");
+    expect(service).toContain(
+      "activeReviewAssignments.reviewIdentities.has(identity)",
+    );
     expect(service).toContain(
       "selectedReviewIdentities",
     );

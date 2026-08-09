@@ -27,11 +27,11 @@ import {
   datasetDisplayLabel,
   storedDatasetDisplayLabel,
 } from "@/lib/ui/dataset-display";
+import { loadEligibleVocabularyDataset } from "@/lib/services/eligible-vocabulary-service";
 import {
   activeReviewIdentities,
   loadActiveReviewAssignments,
 } from "@/lib/services/active-review-assignment-service";
-import { loadEligibleVocabularyDataset } from "@/lib/services/eligible-vocabulary-service";
 import {
   loadDatasetDisplayLabel,
   loadDatasetDisplayLabelMap,
@@ -1430,11 +1430,13 @@ export async function prepareRegularAssignment(
     (candidate) =>
       unitIdSet.has(candidate.unitId) &&
       !activeReviewIdentities(
-          candidate.id,
-          candidate.canonicalLexemeId,
-          candidate.headwordNormalized,
-          candidate.canonicalDictionaryId,
-        ).some((identity) => activeAssignments.identities.has(identity)),
+        candidate.id,
+        candidate.canonicalLexemeId,
+        candidate.headwordNormalized,
+        candidate.canonicalDictionaryId,
+      ).some((identity) =>
+        activeAssignments.reviewIdentities.has(identity),
+      ),
   );
   const sourceOrderByCandidateId = new Map(
     allCandidates.map((candidate) => [

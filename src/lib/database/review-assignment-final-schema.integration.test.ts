@@ -1271,7 +1271,7 @@ describe.sequential("final review-assignment database schema", () => {
     }
   }, 30_000);
 
-  it("creates regular assignments atomically and shares the all-word duplicate guard", async () => {
+  it("creates regular assignments atomically and keeps active wrong targets reserved", async () => {
     const regularDatabase = await createFinalSchemaDatabase();
     try {
       await seedReviewAssignmentScenario(regularDatabase);
@@ -1355,7 +1355,7 @@ describe.sequential("final review-assignment database schema", () => {
       await expectPostgresError(
         createRegular("Regular duplicate"),
         "40001",
-        "assignment_word_already_active",
+        "review_word_already_assigned",
       );
       await regularDatabase.query(`
         select public.cancel_student_assignment_v1(
@@ -1404,7 +1404,100 @@ describe.sequential("final review-assignment database schema", () => {
     }
   }, 30_000);
 
-  it("blocks duplicate active headwords even before dictionary linking", async () => {
+  it("links one pending queue to the first repeated source occurrence", async () => {
+    const occurrenceDatabase = await createFinalSchemaDatabase();
+    try {
+      await seedReviewAssignmentScenario(occurrenceDatabase);
+      const questions = JSON.stringify([
+        {
+          vocab_entry_id: 2,
+          base_order_index: 1,
+          direction: "english_to_korean",
+          choice_vocab_entry_ids: [1, 2, 3, 4],
+        },
+        {
+          vocab_entry_id: 5,
+          base_order_index: 2,
+          direction: "english_to_korean",
+          choice_vocab_entry_ids: [1, 3, 4, 5],
+        },
+        {
+          vocab_entry_id: 3,
+          base_order_index: 3,
+          direction: "korean_to_english",
+          choice_vocab_entry_ids: [1, 2, 3, 4],
+        },
+        {
+          vocab_entry_id: 4,
+          base_order_index: 4,
+          direction: "korean_to_english",
+          choice_vocab_entry_ids: [1, 2, 3, 4],
+        },
+      ]);
+
+      await occurrenceDatabase.exec("set role authenticated;");
+      const assignment = await occurrenceDatabase.query<{
+        assignment_id: string;
+      }>(`
+        select public.create_assignment_with_delivery_v6(
+          'Repeated source occurrence',
+          '${ids.dataset}',
+          array['${ids.units[4]}'::uuid],
+          4,
+          50::smallint,
+          600,
+          80::smallint,
+          'fixed',
+          null,
+          array['${ids.student}'::uuid],
+          'total',
+          null,
+          $questions$${questions}$questions$::jsonb
+        ) as assignment_id;
+      `);
+      await occurrenceDatabase.exec("reset role;");
+
+      const state = await occurrenceDatabase.query<{
+        question_count: number;
+        target_count: number;
+        target_vocab_entry_id: number;
+      }>(`
+        select
+          (
+            select count(*)::integer
+            from public.assignment_questions as question
+            where question.assignment_id = assignment.id
+          ) as question_count,
+          (
+            select count(*)::integer
+            from public.assignment_review_targets as target
+            where target.assignment_id = assignment.id
+              and target.student_id = '${ids.student}'
+              and target.review_queue_id = '${ids.overlappingQueue}'
+              and target.released_at is null
+          ) as target_count,
+          (
+            select target.vocab_entry_id
+            from public.assignment_review_targets as target
+            where target.assignment_id = assignment.id
+              and target.student_id = '${ids.student}'
+              and target.review_queue_id = '${ids.overlappingQueue}'
+              and target.released_at is null
+          ) as target_vocab_entry_id
+        from public.assignments as assignment
+        where assignment.id = '${assignment.rows[0]?.assignment_id}';
+      `);
+      expect(state.rows[0]).toEqual({
+        question_count: 4,
+        target_count: 1,
+        target_vocab_entry_id: 2,
+      });
+    } finally {
+      await occurrenceDatabase.close();
+    }
+  }, 30_000);
+
+  it("allows repeated regular headwords when they are not active wrong targets", async () => {
     const unlinkedDatabase = await createFinalSchemaDatabase();
     try {
       await seedReviewAssignmentScenario(unlinkedDatabase);
@@ -1516,28 +1609,16 @@ describe.sequential("final review-assignment database schema", () => {
         "Unlinked headword first",
         firstQuestions,
       );
-      await expectPostgresError(
-        createAssignment(
-          "Unlinked headword duplicate",
-          secondQuestions,
-        ),
-        "40001",
-        "assignment_word_already_active",
-      );
-      await unlinkedDatabase.query(`
-        select public.cancel_student_assignment_v1(
-          '${first.rows[0]?.assignment_id}',
-          '${ids.student}',
-          'unlinked duplicate guard verification'
-        );
-      `);
-      const reassigned = await createAssignment(
-        "Unlinked headword after cancellation",
+      const second = await createAssignment(
+        "Unlinked headword duplicate",
         secondQuestions,
       );
       await unlinkedDatabase.exec("reset role;");
 
-      expect(reassigned.rows[0]?.assignment_id).toMatch(
+      expect(first.rows[0]?.assignment_id).toMatch(
+        /^[0-9a-f-]{36}$/i,
+      );
+      expect(second.rows[0]?.assignment_id).toMatch(
         /^[0-9a-f-]{36}$/i,
       );
       const attempt = await unlinkedDatabase.query<{
@@ -1545,7 +1626,7 @@ describe.sequential("final review-assignment database schema", () => {
       }>(`
         select public.create_quiz_attempt_from_bank(
           '${ids.student}',
-          '${reassigned.rows[0]?.assignment_id}'
+          '${second.rows[0]?.assignment_id}'
         ) as attempt_id;
       `);
       const attemptQuestion = await unlinkedDatabase.query<{

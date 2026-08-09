@@ -155,7 +155,7 @@ export const adminLearningText = {
       sourceWordCount: "{range} · 원본 {count}개",
       eligibleWordCount: "출제 검토 통과 {count}개",
       sourceExcluded: "검토·중복 {count}개 제외",
-      activeAssignmentExcluded: "다른 시험과 중복 {count}개 제외",
+      activeAssignmentExcluded: "오답 배정 중 {count}개 제외",
       questionPlanExcluded: "출제 방식 조건 {count}개 제외",
       maximumQuestionCount: "현재 최대 {count}문항",
       activeAssignmentHelpAria: "다른 시험 중복 제외 도움말",

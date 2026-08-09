@@ -387,6 +387,62 @@ describe("createTargetedQuizQuestions", () => {
     expect(question.choiceVocabEntryIds).not.toContain(candidates[1].id);
   });
 
+  it("같은 문제 문구에 다른 답이 되는 후보는 보기에서 제외한다", () => {
+    const englishCandidates: QuizVocabularyEntry[] = [
+      {
+        id: 101,
+        headword: "observe",
+        primaryMeaning: "관찰하다",
+        canonicalKey: "word:observe-see",
+      },
+      {
+        id: 102,
+        headword: "observe",
+        primaryMeaning: "준수하다",
+        canonicalKey: "word:observe-follow",
+      },
+      ...entries.slice(2, 7).map((entry) => ({
+        ...entry,
+        id: entry.id + 100,
+        canonicalKey: `word:choice-${entry.id}`,
+      })),
+    ];
+    const [englishQuestion] = createTargetedQuizQuestions(
+      [englishCandidates[0]],
+      englishCandidates,
+      100,
+      seededRandom(63),
+    );
+    expect(englishQuestion.choiceVocabEntryIds).not.toContain(102);
+
+    const koreanCandidates: QuizVocabularyEntry[] = [
+      {
+        id: 201,
+        headword: "brief",
+        primaryMeaning: "짧은",
+        canonicalKey: "word:brief",
+      },
+      {
+        id: 202,
+        headword: "short",
+        primaryMeaning: "짧은",
+        canonicalKey: "word:short",
+      },
+      ...entries.slice(2, 7).map((entry) => ({
+        ...entry,
+        id: entry.id + 200,
+        canonicalKey: `word:korean-choice-${entry.id}`,
+      })),
+    ];
+    const [koreanQuestion] = createTargetedQuizQuestions(
+      [koreanCandidates[0]],
+      koreanCandidates,
+      0,
+      seededRandom(65),
+    );
+    expect(koreanQuestion.choiceVocabEntryIds).not.toContain(202);
+  });
+
   it("복습 시험 방향 비율은 화면 계약인 0, 50, 100만 허용한다", () => {
     expect(() =>
       createTargetedQuizQuestions(
@@ -550,22 +606,77 @@ describe("createMixedQuizQuestions", () => {
     ).toBe(true);
   });
 
-  it("전체 단어장에서 한글 뜻이 중복되면 한→영 가능 후보로 계산하지 않는다", () => {
+  it("선택한 출제 범위 밖의 같은 뜻은 한→영 대상을 막지 않는다", () => {
     const candidates = entries.map((entry) => ({ ...entry }));
     candidates[0].eligibleDirections = ["korean_to_english"];
     candidates[1].primaryMeaning = "중복 뜻";
     candidates[8].primaryMeaning = "중복 뜻";
 
-    expect(() =>
-      createMixedQuizQuestions(
-        [candidates[0]],
-        candidates.slice(1, 4),
-        candidates,
-        4,
-        0,
-        seededRandom(97),
+    const questions = createMixedQuizQuestions(
+      [candidates[0]],
+      candidates.slice(1, 4),
+      candidates,
+      4,
+      0,
+      seededRandom(97),
+    );
+
+    expect(questions).toHaveLength(4);
+    expect(
+      questions.every(
+        (question) => question.direction === "korean_to_english",
       ),
-    ).toThrow("검증 단어가 부족합니다.");
+    ).toBe(true);
+  });
+
+  it("같은 표제어가 다른 DAY 행에 반복돼도 원본 175행을 모두 출제한다", () => {
+    const sourceRows: QuizVocabularyEntry[] = Array.from(
+      { length: 175 },
+      (_, index) => ({
+        id: index + 1,
+        headword: `source-word-${index + 1}`,
+        primaryMeaning: `원본 뜻-${index + 1}`,
+        canonicalKey: `word:${index + 1}`,
+      }),
+    );
+    sourceRows[80] = {
+      ...sourceRows[80],
+      headword: "economics",
+      primaryMeaning: "경제학",
+      canonicalKey: "word:economics",
+    };
+    sourceRows[81] = {
+      ...sourceRows[81],
+      headword: "economics",
+      primaryMeaning: "경제학",
+      canonicalKey: "word:economics",
+    };
+    sourceRows[172] = {
+      ...sourceRows[172],
+      headword: "realize",
+      primaryMeaning: "깨닫다; 실현하다",
+      canonicalKey: "word:realize",
+    };
+    sourceRows[173] = {
+      ...sourceRows[173],
+      headword: "realize",
+      primaryMeaning: "깨닫다; 실현하다",
+      canonicalKey: "word:realize",
+    };
+
+    const questions = createMixedQuizQuestions(
+      [],
+      sourceRows,
+      sourceRows,
+      175,
+      50,
+      seededRandom(99),
+    );
+
+    expect(questions).toHaveLength(175);
+    expect(new Set(questions.map((question) => question.vocabEntryId))).toEqual(
+      new Set(sourceRows.map((entry) => entry.id)),
+    );
   });
 
   it("강제 방향으로 전체 비율을 만들 수 없으면 중단한다", () => {
@@ -770,7 +881,7 @@ describe("createMixedQuizQuestions", () => {
         50,
         seededRandom(157),
       ),
-    ).toThrow("검증 단어가 부족합니다.");
+    ).toThrow("서로 다른 4지선다 보기를 만들 어휘가 부족합니다.");
   });
 
   it("작은 B/F/E/K 조합 전수에서 완전탐색 가능 여부와 일치한다", () => {

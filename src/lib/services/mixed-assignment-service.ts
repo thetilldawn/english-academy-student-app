@@ -138,10 +138,10 @@ function isActiveQueue(
   );
 }
 
-function uniqueIdentityCount(
+function uniqueTargetCount(
   entries: readonly EligibleVocabularyEntry[],
 ) {
-  return new Set(entries.map(entryIdentity)).size;
+  return new Set(entries.map((entry) => entry.id)).size;
 }
 
 async function loadReviewQueueRows(
@@ -182,7 +182,7 @@ function calculateRegularMaximum(
   allCandidates: readonly EligibleVocabularyEntry[],
   ratio: 0 | 50 | 100,
 ) {
-  const upper = Math.min(500, uniqueIdentityCount(candidates));
+  const upper = Math.min(500, uniqueTargetCount(candidates));
   for (let count = upper; count >= 4; count -= 1) {
     try {
       createMixedQuizQuestions(
@@ -210,7 +210,7 @@ function calculateMixedMaximum(
   const minimum = Math.max(4, reviewTargets.length);
   const upper = Math.min(
     500,
-    reviewTargets.length + uniqueIdentityCount(primaryCandidates),
+    reviewTargets.length + uniqueTargetCount(primaryCandidates),
   );
   for (let count = upper; count >= minimum; count -= 1) {
     try {
@@ -394,13 +394,13 @@ async function prepareAssignment(
   const unitCandidates = candidatesInSelectedUnits.filter(
     (candidate) =>
       !activeReviewIdentities(
-          candidate.id,
-          candidate.canonicalLexemeId,
-          candidate.headwordNormalized,
-          candidate.canonicalDictionaryId,
-        ).some((identity) =>
-          activeReviewAssignments.identities.has(identity),
-        ),
+        candidate.id,
+        candidate.canonicalLexemeId,
+        candidate.headwordNormalized,
+        candidate.canonicalDictionaryId,
+      ).some((identity) =>
+        activeReviewAssignments.reviewIdentities.has(identity),
+      ),
   );
   const selectedReviewIdentities: PendingReviewIdentity[] =
     selectedQueueRows.map((_queue, index) => ({
@@ -433,12 +433,12 @@ async function prepareAssignment(
   const minimumQuestionCount = input.includePendingReview
     ? Math.max(4, reviewTargets.length)
     : 4;
-  const eligibleBeforeActiveAssignment = uniqueIdentityCount(
+  const eligibleBeforeActiveAssignment = uniqueTargetCount(
     candidatesInSelectedUnits,
   );
-  const unitEligible = uniqueIdentityCount(unitCandidates);
+  const unitEligible = uniqueTargetCount(unitCandidates);
   const questionPoolCount = input.includePendingReview
-    ? reviewTargets.length + uniqueIdentityCount(primaryCandidates)
+    ? reviewTargets.length + uniqueTargetCount(primaryCandidates)
     : unitEligible;
   const capacity: AssignmentCapacity = {
     eligibleBeforeActiveAssignment,

@@ -79,10 +79,10 @@ export async function loadEligibleVocabularyDataset(
         const { data, error } = await supabase
           .from("vocab_entry_quiz_eligibility")
           .select(
-            "vocab_entry_id, quiz_mode, canonical_lexeme_id",
+            "vocab_entry_id, quiz_mode, canonical_lexeme_id, status, reason_codes",
           )
           .eq("dataset_id", datasetId)
-          .eq("status", "eligible")
+          .in("status", ["eligible", "review_required"])
           .order("vocab_entry_id")
           .order("quiz_mode")
           .range(
