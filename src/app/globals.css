@@ -1348,17 +1348,6 @@ textarea {
   background: var(--no-bg);
 }
 
-.feedback {
-  min-height: 31px;
-  margin-top: 18px;
-  font-weight: 700;
-  text-align: center;
-}
-
-.feedback-wrong {
-  color: var(--fail);
-}
-
 .keyboard-hint {
   margin: 4px 0 0;
   color: var(--muted);

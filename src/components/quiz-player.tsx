@@ -497,6 +497,17 @@ export function QuizPlayer({
     );
   }
 
+  const answerAnnouncement =
+    answerCorrect === null
+      ? ""
+      : answerCorrect
+        ? studentAppText.attempt.correct
+        : answerTimedOut
+          ? studentAppText.attempt.timedOut
+          : attempt.phase === "initial"
+            ? studentAppText.attempt.wrongInitial
+            : studentAppText.attempt.wrongRetry;
+
   return (
     <section className="quiz-card">
       <div className="quiz-topline">
@@ -735,22 +746,13 @@ export function QuizPlayer({
         })}
       </div>
 
-      {answerCorrect === false ? (
-        <div
-          aria-atomic="true"
-          aria-live="assertive"
-          className="feedback feedback-wrong"
-          role="alert"
-        >
-          {answerTimedOut
-            ? studentAppText.attempt.timedOut
-            : attempt.phase === "initial"
-              ? studentAppText.attempt.wrongInitial
-              : studentAppText.attempt.wrongRetry}
-        </div>
-      ) : null}
-      <span aria-live="assertive" className="sr-only" role="status">
-        {answerCorrect === true ? studentAppText.attempt.correct : ""}
+      <span
+        aria-atomic="true"
+        aria-live="assertive"
+        className="sr-only"
+        role="status"
+      >
+        {answerAnnouncement}
       </span>
       {error && (
         <div className="inline-error quiz-error" role="alert">

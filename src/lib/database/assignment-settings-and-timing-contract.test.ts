@@ -77,6 +77,9 @@ describe("assignment order and timing database contract", () => {
     );
     expect(player).toContain('choiceIndex === null ? "timeouts" : "answers"');
     expect(player).toContain("studentAppText.attempt.timedOut");
+    expect(player).toContain("const answerAnnouncement =");
+    expect(player).toContain('className="sr-only"');
+    expect(player).not.toContain('className="feedback feedback-wrong"');
     expect(copy).toContain(
       'timedOut: "시간 초과로 미응답 오답 처리했습니다."',
     );

@@ -86,13 +86,14 @@ describe("mobile production regression UI contract", () => {
     );
   });
 
-  it("does not render decorative repeated-wrong prompt boxes or empty feedback", () => {
+  it("keeps answer feedback out of the visual layout", () => {
     expect(quizPlayer).not.toContain("quiz-prompt-prior-wrong");
-    expect(quizPlayer).toContain("{answerCorrect === false ? (");
+    expect(quizPlayer).toContain("const answerAnnouncement =");
+    expect(quizPlayer).toContain("{answerAnnouncement}");
+    expect(quizPlayer).not.toContain('className="feedback feedback-wrong"');
     expect(quizPlayer).not.toContain("feedback-correct");
-    expect(quizPlayer).toContain(
-      '{answerCorrect === true ? studentAppText.attempt.correct : ""}',
-    );
+    expect(css).not.toContain(".feedback {");
+    expect(css).not.toContain(".feedback-wrong");
     expect(css).not.toContain(".quiz-prompt-prior-wrong");
   });
 });
