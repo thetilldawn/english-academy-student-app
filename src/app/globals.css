@@ -4889,10 +4889,13 @@ h3,
   font-size: 14px;
 }
 
-.quiz-shell,
 .quiz-card {
   width: min(100%, 620px);
   max-width: 620px;
+}
+
+.quiz-topline {
+  align-items: flex-start;
 }
 
 .quiz-direction {
@@ -4915,16 +4918,23 @@ h3,
 }
 
 .timer {
+  min-width: 5ch;
+  flex: 0 0 auto;
   color: var(--ink);
   font-family: var(--font-kr);
   font-size: 26px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
 }
 
-.timer-warning,
-.quiz-card:has(.timer-warning) .progress-value {
+.timer-warning {
   color: var(--fail);
+  background: var(--no-bg);
+}
+
+.quiz-card:has(.timer-warning) .progress-value {
   background: var(--fail);
 }
 

@@ -71,6 +71,10 @@ describe("assignment order and timing database contract", () => {
     const copy = source("src/content/ko/student-app.ts");
 
     expect(player).toContain("attempt.timerDeadlineAt");
+    expect(player).toContain("const nextTimerDeadlineAt =");
+    expect(player).toMatch(
+      /setRemaining\(\s*secondsUntil\(\s*nextTimerDeadlineAt,/,
+    );
     expect(player).toContain('choiceIndex === null ? "timeouts" : "answers"');
     expect(player).toContain("studentAppText.attempt.timedOut");
     expect(copy).toContain(

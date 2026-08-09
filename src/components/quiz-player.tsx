@@ -369,11 +369,12 @@ export function QuizPlayer({
             return;
           }
 
+          const nextTimerDeadlineAt =
+            payload.questionDeadlineAt ?? attempt.timerDeadlineAt;
           setAttempt((current) => ({
             ...current,
             phase: payload.nextPhase ?? current.phase,
-            timerDeadlineAt:
-              payload.questionDeadlineAt ?? current.timerDeadlineAt,
+            timerDeadlineAt: nextTimerDeadlineAt,
             currentQuestionId:
               payload.nextQuestionId ?? current.currentQuestionId,
             questions: current.questions.map((question) =>
@@ -412,6 +413,12 @@ export function QuizPlayer({
                 : question,
             ),
           }));
+          setRemaining(
+            secondsUntil(
+              nextTimerDeadlineAt,
+              currentTimeMilliseconds(),
+            ) ?? 0,
+          );
           setSelectedChoice(null);
           setCorrectChoice(null);
           setAnswerCorrect(null);
@@ -438,6 +445,7 @@ export function QuizPlayer({
       answerCorrect,
       attempt.id,
       attempt.phase,
+      attempt.timerDeadlineAt,
       currentQuestion,
       recoverAttempt,
       router,

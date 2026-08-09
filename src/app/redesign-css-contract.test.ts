@@ -94,6 +94,27 @@ describe("redesign CSS contract", () => {
     );
   });
 
+  it("keeps the quiz timer readable and centers the card on the full viewport", () => {
+    expect(css).not.toMatch(
+      /\.quiz-shell,\s*\.quiz-card\s*\{[\s\S]*?max-width:\s*620px;/,
+    );
+    expect(css).toMatch(
+      /\.quiz-card\s*\{[\s\S]*?width:\s*min\(100%,\s*620px\);[\s\S]*?max-width:\s*620px;/,
+    );
+    expect(css).toMatch(
+      /\.timer\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?white-space:\s*nowrap;/,
+    );
+    expect(css).toMatch(
+      /\.timer-warning\s*\{[\s\S]*?color:\s*var\(--fail\);[\s\S]*?background:\s*var\(--no-bg\);/,
+    );
+    expect(css).toMatch(
+      /\.quiz-card:has\(\.timer-warning\) \.progress-value\s*\{[\s\S]*?background:\s*var\(--fail\);/,
+    );
+    expect(css).not.toMatch(
+      /\.timer-warning,\s*\.quiz-card:has\(\.timer-warning\) \.progress-value/,
+    );
+  });
+
   it("keeps responsive cards content-sized and student gutters visible", () => {
     expect(css).toMatch(
       /\.student-card-grid\s*\{[\s\S]*?align-items:\s*start;/,
