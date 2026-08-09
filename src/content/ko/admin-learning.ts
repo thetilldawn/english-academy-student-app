@@ -153,6 +153,8 @@ export const adminLearningText = {
       groupFallback: "범위",
       unitEntryCount: "{unit} · {count}개",
       sourceWordCount: "{range} · 원본 {count}개",
+      activeAssignmentSelectionRequired:
+        "미응시·진행 중 시험의 범위는 새 시험에 다시 자동 선택하지 않습니다. 새로 배정할 범위를 직접 선택해 주세요.",
     },
 
     // 모달 > 틀렸던 단어 추가
@@ -243,8 +245,8 @@ export const adminLearningText = {
     // 모달 > 문항 수 오류. 정상일 때는 표시하지 않습니다.
     errors: {
       capacityLoading: "배정 가능한 문항 수를 확인하는 중입니다.",
-      unavailableDataset:
-        "이 단어장은 아직 시험 배정 준비가 끝나지 않았습니다.",
+      rangeUnavailable:
+        "선택 범위에서 새 시험에 넣을 수 있는 단어가 {count}개뿐입니다. 미응시·진행 중 시험에 있는 단어는 중복 배정하지 않으므로 다른 범위를 선택해 주세요.",
       tooMany: "문항 수를 현재 배정 가능한 최대값 이하로 줄여주세요.",
       tooFew: "문항 수를 현재 필요한 최소값 이상으로 늘려주세요.",
       countRange: "총 문항 수는 4개 이상 500개 이하여야 합니다.",

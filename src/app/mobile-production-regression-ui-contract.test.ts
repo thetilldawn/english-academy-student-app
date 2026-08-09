@@ -85,4 +85,10 @@ describe("mobile production regression UI contract", () => {
       /\.choice-row--with-pronunciation\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 46px;/,
     );
   });
+
+  it("does not render decorative repeated-wrong prompt boxes or empty feedback", () => {
+    expect(quizPlayer).not.toContain("quiz-prompt-prior-wrong");
+    expect(quizPlayer).toContain("{answerCorrect !== null ? (");
+    expect(css).not.toContain(".quiz-prompt-prior-wrong");
+  });
 });

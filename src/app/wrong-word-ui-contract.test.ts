@@ -286,7 +286,7 @@ describe("wrong-word admin UI contract", () => {
     expect(quizService).not.toContain("priorWrongCount:");
     expect(quizPlayer).toContain("getPriorWrongIndicator");
     expect(quizPlayer).toContain("quiz-prior-wrong-marks");
-    expect(quizPlayer).toContain("quiz-prompt-prior-wrong");
+    expect(quizPlayer).not.toContain("quiz-prompt-prior-wrong");
     expect(quizPlayer).toContain("aria-describedby={");
     expect(quizPlayer).toContain('"quiz-prior-wrong"');
   });

@@ -72,6 +72,10 @@ import {
   indexStudentCurrentVocabWrongSummaries,
   type StudentCurrentVocabWrongSummary,
 } from "@/lib/admin/wrong-history-summary";
+import {
+  needsExplicitNewAssignmentRange,
+  newAssignmentDefaultUnitId,
+} from "@/lib/admin/new-assignment-range";
 import { learningSourceTypeLabel } from "@/lib/admin/learning-sources";
 import {
   cataloguedDatasetDisplayLabel,
@@ -523,10 +527,10 @@ export function AssignmentManager({
   const initialProgress = initialStudent
     ? (progressByStudent.get(initialStudent.id) ?? null)
     : null;
-  const initialRecommendedUnitId =
-    initialProgress?.recommendedDatasetId === resolvedInitialDatasetId
-      ? (initialProgress.recommendedUnitId ?? "")
-      : "";
+  const initialRecommendedUnitId = newAssignmentDefaultUnitId(
+    initialProgress,
+    resolvedInitialDatasetId,
+  );
 
   const [testTab, setTestTab] = useState<"vocab" | "other">("vocab");
   const [query, setQuery] = useState("");
@@ -653,15 +657,18 @@ export function AssignmentManager({
     () => new Map(datasetUnits.map((unit, index) => [unit.id, index])),
     [datasetUnits],
   );
-  const needsManualUnitSelection =
-    selectedProgress?.recommendationReason === "manual" &&
-    selectedProgress.recommendedDatasetId === datasetId;
+  const needsExplicitUnitSelection = needsExplicitNewAssignmentRange(
+    selectedProgress,
+    datasetId,
+  );
   const effectiveStartUnitId =
     startUnitId ||
-    (needsManualUnitSelection ? "" : datasetUnits[0]?.id) ||
+    (needsExplicitUnitSelection ? "" : datasetUnits[0]?.id) ||
     "";
   const effectiveEndUnitId =
-    endUnitId || effectiveStartUnitId || datasetUnits[0]?.id || "";
+    effectiveStartUnitId
+      ? endUnitId || effectiveStartUnitId
+      : "";
   const startIndex = datasetUnits.findIndex(
     (unit) => unit.id === effectiveStartUnitId,
   );
@@ -1071,13 +1078,22 @@ export function AssignmentManager({
           setCapacity(payload);
           setQuestionCount((current) => {
             if (
+              payload.maximumQuestionCount <
+              payload.minimumQuestionCount
+            ) {
+              return current;
+            }
+            if (
               questionCountModeRef.current === "auto" &&
               payload.recommendedQuestionCount >=
                 minimumAllowedQuestionCount
             ) {
               return payload.recommendedQuestionCount;
             }
-            return current;
+            return Math.min(
+              payload.maximumQuestionCount,
+              Math.max(payload.minimumQuestionCount, current),
+            );
           });
         })
         .catch((requestError: unknown) => {
@@ -1148,10 +1164,10 @@ export function AssignmentManager({
       readyDatasets[0]?.id ??
       "";
     const nextProgress = progressByStudent.get(nextStudentId) ?? null;
-    const nextRecommendedUnitId =
-      nextProgress?.recommendedDatasetId === nextDatasetId
-        ? (nextProgress.recommendedUnitId ?? "")
-        : "";
+    const nextRecommendedUnitId = newAssignmentDefaultUnitId(
+      nextProgress,
+      nextDatasetId,
+    );
 
     setStudentId(nextStudentId);
     setDialogView(nextView);
@@ -1162,10 +1178,10 @@ export function AssignmentManager({
   }
 
   function selectDataset(nextDatasetId: string) {
-    const nextRecommendedUnitId =
-      selectedProgress?.recommendedDatasetId === nextDatasetId
-        ? (selectedProgress.recommendedUnitId ?? "")
-        : "";
+    const nextRecommendedUnitId = newAssignmentDefaultUnitId(
+      selectedProgress,
+      nextDatasetId,
+    );
     setDatasetId(nextDatasetId);
     setStartUnitId(nextRecommendedUnitId);
     setEndUnitId(nextRecommendedUnitId);
@@ -2070,6 +2086,16 @@ export function AssignmentManager({
                   {adminLearningText.assignmentModal.edit.lockedReview}
                 </div>
               ) : null}
+              {!editTarget &&
+              needsExplicitUnitSelection &&
+              !startUnitId ? (
+                <div className="notice notice-warm">
+                  {
+                    adminLearningText.assignmentModal.range
+                      .activeAssignmentSelectionRequired
+                  }
+                </div>
+              ) : null}
               <label className="field">
                 <span className="field-label">
                   {adminLearningText.assignmentModal.range.wordbook}
@@ -2701,7 +2727,11 @@ export function AssignmentManager({
                 capacity.maximumQuestionCount <
                   capacity.minimumQuestionCount && (
                   <div className="notice notice-error" role="alert">
-                    {adminLearningText.assignmentModal.errors.unavailableDataset}
+                    {formatContentText(
+                      adminLearningText.assignmentModal.errors
+                        .rangeUnavailable,
+                      { count: capacity.maximumQuestionCount },
+                    )}
                   </div>
                 )}
               {capacity &&

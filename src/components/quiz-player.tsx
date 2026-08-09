@@ -587,10 +587,6 @@ export function QuizPlayer({
             currentQuestion.direction === "korean_to_english"
               ? "quiz-prompt--ko"
               : "",
-            priorWrongIndicator ? "quiz-prompt-prior-wrong" : "",
-            priorWrongIndicator?.markerCount === 2
-              ? "quiz-prompt-prior-wrong-repeated"
-              : "",
           ]
             .filter(Boolean)
             .join(" ")}
@@ -731,26 +727,25 @@ export function QuizPlayer({
         })}
       </div>
 
-      <div
-        aria-atomic="true"
-        aria-live="assertive"
-        className={[
-          "feedback",
-          answerCorrect === true ? "feedback-correct" : "",
-          answerCorrect === false ? "feedback-wrong" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-        role="alert"
-      >
-        {answerCorrect === true && studentAppText.attempt.correct}
-        {answerCorrect === false &&
-          (answerTimedOut
-            ? studentAppText.attempt.timedOut
-            : attempt.phase === "initial"
-              ? studentAppText.attempt.wrongInitial
-              : studentAppText.attempt.wrongRetry)}
-      </div>
+      {answerCorrect !== null ? (
+        <div
+          aria-atomic="true"
+          aria-live="assertive"
+          className={[
+            "feedback",
+            answerCorrect ? "feedback-correct" : "feedback-wrong",
+          ].join(" ")}
+          role="alert"
+        >
+          {answerCorrect
+            ? studentAppText.attempt.correct
+            : answerTimedOut
+              ? studentAppText.attempt.timedOut
+              : attempt.phase === "initial"
+                ? studentAppText.attempt.wrongInitial
+                : studentAppText.attempt.wrongRetry}
+        </div>
+      ) : null}
       {error && (
         <div className="inline-error quiz-error" role="alert">
           {error}

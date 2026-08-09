@@ -1290,16 +1290,6 @@ textarea {
   word-break: keep-all;
 }
 
-.quiz-prompt-prior-wrong {
-  padding: 12px;
-  border-radius: var(--radius-card);
-  background: var(--surface);
-}
-
-.quiz-prompt-prior-wrong-repeated {
-  background: var(--no-bg);
-}
-
 .choice-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
