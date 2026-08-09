@@ -107,6 +107,29 @@ export function mixedAssignmentPrimaryUnitIds(
     : [...primaryUnitIds];
 }
 
+export function mixedAssignmentGeneratedTitle(
+  datasetLabel: string,
+  units: readonly MixedAssignmentUnit[],
+  reviewQuestionCount: number,
+  totalQuestionCount: number,
+) {
+  if (reviewQuestionCount === totalQuestionCount) {
+    return `${datasetLabel} · 오답 재시험 · ${reviewQuestionCount}문항`;
+  }
+
+  const unitRange =
+    units.length === 1
+      ? units[0].unitLabel
+      : `${units[0].unitLabel}~${units.at(-1)?.unitLabel}`;
+  return [
+    datasetLabel,
+    unitRange,
+    `틀렸던 단어 ${reviewQuestionCount}개 포함`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 export function mixedAssignmentDatabaseErrorReason(
   error: MixedAssignmentDatabaseError,
 ): MixedAssignmentFailureReason {

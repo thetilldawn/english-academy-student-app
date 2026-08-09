@@ -44,6 +44,8 @@ export function NotificationBootstrap({
           `${notificationText.delivery.deadlineSoonPrefix} ${parsed.data.deadlineSoonCount}${notificationText.delivery.deadlineSoonSuffix}`,
         );
       }
+    } catch {
+      // 알림 확인 실패는 현재 화면의 핵심 동작을 막지 않는다.
     } finally {
       inFlight.current = false;
     }

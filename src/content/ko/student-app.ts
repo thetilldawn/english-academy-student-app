@@ -122,9 +122,9 @@ export const studentAppText = {
     count: "{count}개",
     attemptCount: "{count}회",
     sections: {
-      firstWrong: "한 번 틀린 단어",
+      firstWrong: "틀린 단어",
       unresolved: "다시 볼 단어",
-      resolved: "한 번 틀린 단어",
+      resolved: "해결한 단어",
     },
     empty: {
       noInitialWrong: "첫 시험에서 틀린 단어가 없습니다.",

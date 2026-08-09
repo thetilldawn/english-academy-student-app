@@ -30,6 +30,7 @@ describe("Sonner와 계정 단위 알림 UI 계약", () => {
     expect(studentLayout).toContain('<NotificationBootstrap role="student" />');
     expect(bootstrap).toContain("RECHECK_INTERVAL_MS");
     expect(bootstrap).toContain('document.visibilityState === "visible"');
+    expect(bootstrap).toContain("} catch {");
     expect(bootstrap).not.toContain("AbortController");
   });
 });

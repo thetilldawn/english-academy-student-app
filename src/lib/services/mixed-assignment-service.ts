@@ -6,6 +6,7 @@ import {
   excludePendingReviewCandidates,
   countEligibleReviewLevels,
   mixedAssignmentDatabaseErrorReason,
+  mixedAssignmentGeneratedTitle,
   mixedAssignmentPrimaryUnitIds,
   orderContiguousPrimaryUnits,
   resolvePendingReviewCandidate,
@@ -224,26 +225,6 @@ function calculateMixedMaximum(
     }
   }
   return 0;
-}
-
-function generatedMixedTitle(
-  datasetLabel: string,
-  units: readonly MixedAssignmentUnit[],
-  reviewCount: number,
-) {
-  const unitRange =
-    units.length === 1
-      ? units[0].unitLabel
-      : `${units[0].unitLabel}~${units.at(-1)?.unitLabel}`;
-  return [
-    datasetLabel,
-    unitRange,
-    `틀렸던 단어 ${reviewCount}개 포함`,
-  ]
-    .filter(Boolean)
-    .join(" · ")
-    .slice(0, MAX_ASSIGNMENT_TITLE_LENGTH)
-    .trimEnd();
 }
 
 async function prepareAssignment(
@@ -605,11 +586,14 @@ export async function prepareMixedAssignmentBatch(
     selectedQueueIds,
     title:
       input.title ||
-      generatedMixedTitle(
+      mixedAssignmentGeneratedTitle(
         datasetLabel,
         prepared.primaryUnits,
         prepared.selectedQueueRows.length,
-      ),
+        input.totalQuestionCount,
+      )
+        .slice(0, MAX_ASSIGNMENT_TITLE_LENGTH)
+        .trimEnd(),
     primaryUnitIds: mixedAssignmentPrimaryUnitIds(
       prepared.primaryUnits.map((unit) => unit.id),
       prepared.selectedQueueRows.length,

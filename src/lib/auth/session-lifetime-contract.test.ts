@@ -14,6 +14,9 @@ describe("학생 60일 rolling 세션과 독립 관리자 세션 계약", () => 
     const migration = source(
       "supabase/migrations/20260808180535_add_notification_receipts_and_rolling_sessions.sql",
     );
+    const idleTimeoutMigration = source(
+      "supabase/migrations/20260809103000_enforce_student_session_idle_timeout.sql",
+    );
 
     expect(constants).toContain("STUDENT_SESSION_DAYS = 60");
     expect(studentProxy).toContain('"refresh_student_session_v1"');
@@ -22,6 +25,12 @@ describe("학생 60일 rolling 세션과 독립 관리자 세션 계약", () => 
     expect(studentProxy).toMatch(/if \(error\) \{\s+return response;/);
     expect(studentProxy).toMatch(/if \(!refreshed\) \{\s+response\.cookies\.delete/);
     expect(migration).toContain("interval '60 days'");
+    expect(idleTimeoutMigration).toContain(
+      "expires_at > last_seen_at + interval '60 days'",
+    );
+    expect(idleTimeoutMigration).toContain(
+      "session.last_seen_at + interval '60 days' > clock_timestamp()",
+    );
   });
 
   it("학생 로그인·로그아웃 API에서는 proxy 갱신을 건너뛴다", () => {

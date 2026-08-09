@@ -51,22 +51,25 @@ export function AssignmentMetaTags({
   | "questionCount"
   | "unitLabels"
 > & { compact?: boolean }) {
-  return (
-    <MetaTagList className="assignment-meta-tags">
-      <MetaTag>{assignmentTypeLabel(assignmentPurpose)}</MetaTag>
-      <MetaTag>
-        {assignmentUnitRangeLabel({
+  const questionCountLabel = formatContentText(
+    adminHistoryText.list.questionCount,
+    { count: questionCount },
+  );
+  const rangeLabel =
+    assignmentPurpose === "review"
+      ? questionCountLabel
+      : assignmentUnitRangeLabel({
           assignmentPurpose,
           primaryUnitLabels,
           unitLabels,
-        })}
-      </MetaTag>
-      {!compact ? (
-        <MetaTag>
-          {formatContentText(adminHistoryText.list.questionCount, {
-            count: questionCount,
-          })}
-        </MetaTag>
+        });
+
+  return (
+    <MetaTagList className="assignment-meta-tags">
+      <MetaTag>{assignmentTypeLabel(assignmentPurpose)}</MetaTag>
+      <MetaTag>{rangeLabel}</MetaTag>
+      {!compact && assignmentPurpose !== "review" ? (
+        <MetaTag>{questionCountLabel}</MetaTag>
       ) : null}
     </MetaTagList>
   );

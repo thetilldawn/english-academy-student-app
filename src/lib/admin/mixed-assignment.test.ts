@@ -5,6 +5,7 @@ import {
   excludePendingReviewCandidates,
   isCandidateInReviewScope,
   mixedAssignmentDatabaseErrorReason,
+  mixedAssignmentGeneratedTitle,
   mixedAssignmentPrimaryUnitIds,
   orderContiguousPrimaryUnits,
   resolvePendingReviewCandidate,
@@ -70,6 +71,24 @@ describe("mixedAssignmentPrimaryUnitIds", () => {
     expect(mixedAssignmentPrimaryUnitIds(["day-9"], 3, 10)).toEqual([
       "day-9",
     ]);
+  });
+});
+
+describe("mixedAssignmentGeneratedTitle", () => {
+  const units = [
+    { id: "day-9", unitLabel: "DAY 09", sortIndex: 9 },
+  ];
+
+  it("오답만 배정하면 선택 DAY를 제목에 노출하지 않는다", () => {
+    expect(
+      mixedAssignmentGeneratedTitle("능률 VOCA", units, 7, 7),
+    ).toBe("능률 VOCA · 오답 재시험 · 7문항");
+  });
+
+  it("일반 단어가 섞이면 선택 범위와 오답 수를 유지한다", () => {
+    expect(
+      mixedAssignmentGeneratedTitle("능률 VOCA", units, 3, 10),
+    ).toBe("능률 VOCA · DAY 09 · 틀렸던 단어 3개 포함");
   });
 });
 
