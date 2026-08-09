@@ -155,6 +155,34 @@ function studentRecommendationLabel(
   );
 }
 
+function StudentCodeContent({
+  code,
+  copied,
+  onCopy,
+  onShare,
+}: {
+  code: string;
+  copied: boolean;
+  onCopy: () => void;
+  onShare: () => void;
+}) {
+  return (
+    <>
+      <div className="dialog-code">{code}</div>
+      <div className="student-code-actions">
+        <Button autoFocus onClick={onShare} variant="primary">
+          {adminStudentsText.codeModal.sendKakao}
+        </Button>
+        <Button onClick={onCopy}>
+          {copied
+            ? adminStudentsText.codeModal.copied
+            : adminStudentsText.codeModal.copy}
+        </Button>
+      </div>
+    </>
+  );
+}
+
 export function StudentManager({
   appOrigin,
   assignmentDatasets,
@@ -242,6 +270,7 @@ export function StudentManager({
   );
   const studentDialogRef = useRef<HTMLDialogElement>(null);
   const codeDialogRef = useRef<HTMLDialogElement>(null);
+  const copyResetTimerRef = useRef<number | null>(null);
   const interactionBusy = busyKey !== "" || refreshPending;
   const datasetGroups = useMemo(
     () => groupCataloguedDatasets(datasets),
@@ -251,12 +280,22 @@ export function StudentManager({
   useEffect(() => {
     if (
       shownCode &&
+      !selectedStudent &&
       codeDialogRef.current &&
       !codeDialogRef.current.open
     ) {
       codeDialogRef.current.showModal();
     }
-  }, [shownCode]);
+  }, [selectedStudent, shownCode]);
+
+  useEffect(
+    () => () => {
+      if (copyResetTimerRef.current !== null) {
+        window.clearTimeout(copyResetTimerRef.current);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     if (
@@ -269,11 +308,22 @@ export function StudentManager({
   }, [selectedStudent]);
 
   function openCodeDialog(code: string, label: string) {
+    if (copyResetTimerRef.current !== null) {
+      window.clearTimeout(copyResetTimerRef.current);
+      copyResetTimerRef.current = null;
+    }
+    setCopied(false);
     setShownCode({ code, label });
   }
 
   function closeCodeDialog() {
     codeDialogRef.current?.close();
+  }
+
+  function closeCodeDialogOnBackdrop(
+    event: MouseEvent<HTMLDialogElement>,
+  ) {
+    if (event.target === event.currentTarget) closeCodeDialog();
   }
 
   function openStudentAssignment(input: {
@@ -290,6 +340,11 @@ export function StudentManager({
   }
 
   function finishClosingCodeDialog() {
+    if (copyResetTimerRef.current !== null) {
+      window.clearTimeout(copyResetTimerRef.current);
+      copyResetTimerRef.current = null;
+    }
+    setCopied(false);
     setShownCode(null);
   }
 
@@ -477,6 +532,7 @@ export function StudentManager({
       if (!payload.code) {
         throw new Error(adminStudentsText.codeModal.missingCodeError);
       }
+      if (!studentDialogRef.current?.open) return;
       openCodeDialog(
         payload.code,
         formatContentText(adminStudentsText.codeModal.revealTitle, {
@@ -514,6 +570,7 @@ export function StudentManager({
       if (!payload.code) {
         throw new Error(adminStudentsText.createStudent.noCodeError);
       }
+      if (!studentDialogRef.current?.open) return;
       openCodeDialog(
         payload.code,
         formatContentText(adminStudentsText.codeModal.rotateTitle, {
@@ -603,7 +660,13 @@ export function StudentManager({
       await navigator.clipboard.writeText(shownCode.code);
       setCopied(true);
       toast.success(adminStudentsText.codeModal.copySuccess);
-      window.setTimeout(() => setCopied(false), 1500);
+      if (copyResetTimerRef.current !== null) {
+        window.clearTimeout(copyResetTimerRef.current);
+      }
+      copyResetTimerRef.current = window.setTimeout(() => {
+        setCopied(false);
+        copyResetTimerRef.current = null;
+      }, 1500);
     } catch {
       toast.error(adminStudentsText.codeModal.copyFailure);
     }
@@ -810,7 +873,12 @@ export function StudentManager({
   function closeStudentDialogOnBackdrop(
     event: MouseEvent<HTMLDialogElement>,
   ) {
-    if (event.target === event.currentTarget) closeStudentDialog();
+    if (event.target !== event.currentTarget) return;
+    if (shownCode) {
+      finishClosingCodeDialog();
+      return;
+    }
+    closeStudentDialog();
   }
 
   return (
@@ -1290,14 +1358,21 @@ export function StudentManager({
             assignmentStudentId
               ? "student-detail-dialog--assignment"
               : "",
+            shownCode ? "student-detail-dialog--code" : "",
           ]
             .filter(Boolean)
             .join(" ")}
           onClick={closeStudentDialogOnBackdrop}
+          onCancel={(event) => {
+            if (!shownCode) return;
+            event.preventDefault();
+            finishClosingCodeDialog();
+          }}
           onClose={() => {
             setAssignmentStudentId("");
             setAssignmentDatasetId("");
             setAssignmentEditTarget(null);
+            finishClosingCodeDialog();
             setSelectedStudentId("");
             setLearningView("summary");
             setLearningSourceDatasetId("");
@@ -1314,6 +1389,8 @@ export function StudentManager({
                     setAssignmentDatasetId("");
                     setAssignmentEditTarget(null);
                   }
+                : shownCode
+                  ? finishClosingCodeDialog
                 : undefined
             }
             onClose={closeStudentDialog}
@@ -1324,9 +1401,11 @@ export function StudentManager({
                   ? assignmentEditTarget
                     ? adminLearningText.assignmentModal.header.editTitle
                     : adminLearningText.assignmentModal.header.createTitle
+                  : shownCode
+                    ? shownCode.label
                   : selectedStudent.displayName}
               </h2>
-              <p>
+              {!shownCode ? <p>
                 {assignmentStudentId
                   ? selectedStudent.displayName
                   : [
@@ -1336,11 +1415,11 @@ export function StudentManager({
                       .filter(Boolean)
                       .join(" · ") ||
                     adminStudentsText.detail.missingSchoolGrade}
-              </p>
+              </p> : null}
             </div>
           </ModalHeader>
 
-          {!assignmentStudentId ? <Tabs
+          {!assignmentStudentId && !shownCode ? <Tabs
             ariaLabel={adminStudentsText.detail.tabsAria}
             className="dialog-tabs"
             items={[
@@ -1393,6 +1472,15 @@ export function StudentManager({
                 students={students}
                 units={assignmentUnits}
             />
+          ) : shownCode ? (
+            <ModalBody className="student-code-dialog-body student-code-inline-body">
+              <StudentCodeContent
+                code={shownCode.code}
+                copied={copied}
+                onCopy={() => void copyCode()}
+                onShare={() => void shareCode()}
+              />
+            </ModalBody>
           ) : (
             <ModalBody className="student-dialog-scroll-region">
               <>
@@ -1768,10 +1856,11 @@ export function StudentManager({
         </ModalFrame>
       )}
 
-      {shownCode && (
+      {shownCode && !selectedStudent && (
         <ModalFrame
           aria-labelledby="student-code-title"
           className="student-code-dialog"
+          onClick={closeCodeDialogOnBackdrop}
           onClose={finishClosingCodeDialog}
           ref={codeDialogRef}
         >
@@ -1779,21 +1868,12 @@ export function StudentManager({
             <h2 id="student-code-title">{shownCode.label}</h2>
           </ModalHeader>
           <ModalBody className="student-code-dialog-body">
-            <div className="dialog-code">{shownCode.code}</div>
-            <div className="student-code-actions">
-              <Button
-                autoFocus
-                onClick={() => void shareCode()}
-                variant="primary"
-              >
-                {adminStudentsText.codeModal.sendKakao}
-              </Button>
-              <Button onClick={copyCode}>
-                {copied
-                  ? adminStudentsText.codeModal.copied
-                  : adminStudentsText.codeModal.copy}
-              </Button>
-            </div>
+            <StudentCodeContent
+              code={shownCode.code}
+              copied={copied}
+              onCopy={() => void copyCode()}
+              onShare={() => void shareCode()}
+            />
           </ModalBody>
         </ModalFrame>
       )}

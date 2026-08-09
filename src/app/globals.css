@@ -6739,3 +6739,83 @@ select {
     transition: none;
   }
 }
+
+/* APP-20260809-08: mobile student lists, assignment tags, and code view */
+html:has(dialog[open]),
+body:has(dialog[open]) {
+  overflow: hidden;
+}
+
+.assignment-details.meta-tag-list {
+  width: 100%;
+  align-items: center;
+}
+
+.assignment-details .meta-tag {
+  min-height: 28px;
+  max-width: 100%;
+  padding: 5px 9px;
+  border: 0;
+  overflow: hidden;
+  background: var(--surface);
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.student-card-score-line > *,
+.student-card-score-line .activity-status-timeline-row,
+.student-card-score-line .activity-status-timeline-row time {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.modal-frame.student-detail-dialog--code[open] {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.student-code-inline-body {
+  width: min(100%, 520px);
+  align-self: start;
+  justify-self: center;
+}
+
+.student-code-dialog::backdrop {
+  background: rgb(17 17 15 / 58%);
+}
+
+.student-code-dialog-body {
+  overscroll-behavior: contain;
+}
+
+.student-code-dialog-body .dialog-code {
+  margin: 0;
+}
+
+@media (max-width: 960px) {
+  .student-card-score-line {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    justify-items: start;
+  }
+
+  .student-card-score-line .activity-status-timeline {
+    width: 100%;
+    justify-self: stretch;
+  }
+}
+
+@media (max-width: 767px) {
+  .student-code-dialog[open] {
+    width: calc(100vw - 20px);
+    max-height: calc(100dvh - 20px);
+  }
+
+  .student-code-dialog .modal-frame-header,
+  .student-code-dialog .modal-frame-body {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+}

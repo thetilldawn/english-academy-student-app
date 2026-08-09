@@ -4,6 +4,7 @@ import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
 import { DeadlineCountdown } from "@/components/deadline-countdown";
 import { StartAttemptButton } from "@/components/start-attempt-button";
 import { AttemptScoreSummary } from "@/components/attempt-score-summary";
+import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
 import { ButtonLink } from "@/components/ui-button";
 import { studentAppText } from "@/content/ko/student-app";
 import { formatContentText } from "@/content/format";
@@ -97,43 +98,43 @@ function AssignmentCard({
         />
       </div>
 
-      <div className="assignment-details">
-        <span className="detail-chip">
+      <MetaTagList className="assignment-details">
+        <MetaTag>
           {assignmentTypeLabel(assignment.assignmentPurpose)}
-        </span>
-        <span className="detail-chip">
+        </MetaTag>
+        <MetaTag>
           {assignment.scopeLabel}
-        </span>
+        </MetaTag>
         {assignment.assignmentPurpose !== "review" && (
-          <span className="detail-chip">
+          <MetaTag>
             {formatContentText(studentAppText.dashboard.meta.questionCount, {
               count: assignment.questionCount,
             })}
-          </span>
+          </MetaTag>
         )}
-        <span className="detail-chip">
-            {assignment.timingMode === "per_question"
-              ? formatContentText(
-                  studentAppText.dashboard.meta.perQuestion,
-                  { seconds: assignment.questionTimeLimitSeconds ?? 0 },
-                )
-              : formatContentText(
-                  studentAppText.dashboard.meta.totalMinutes,
-                  { minutes: Math.ceil(assignment.timeLimitSeconds / 60) },
-                )}
-        </span>
-        <span className="detail-chip">
+        <MetaTag>
+          {assignment.timingMode === "per_question"
+            ? formatContentText(
+                studentAppText.dashboard.meta.perQuestion,
+                { seconds: assignment.questionTimeLimitSeconds ?? 0 },
+              )
+            : formatContentText(
+                studentAppText.dashboard.meta.totalMinutes,
+                { minutes: Math.ceil(assignment.timeLimitSeconds / 60) },
+              )}
+        </MetaTag>
+        <MetaTag>
           {formatContentText(studentAppText.dashboard.meta.passingScore, {
             score: assignment.passingScore,
           })}
-        </span>
-        <span className="detail-chip">
+        </MetaTag>
+        <MetaTag>
           {assignmentOrderLabel(
             assignment.assignmentPurpose,
             assignment.questionOrderMode,
           )}
-        </span>
-      </div>
+        </MetaTag>
+      </MetaTagList>
 
       {(assignment.lastInitialScore !== null || assignment.missed) && (
         <AttemptScoreSummary
@@ -221,7 +222,9 @@ export default async function StudentDashboardPage() {
       id: "needs-attention",
       title: studentAppText.dashboard.sections.needsAttention,
       assignments: assignments.filter(
-        (assignment) => assignment.activitySection === "needs_attention",
+        (assignment) =>
+          !assignment.missed &&
+          assignment.activitySection === "needs_attention",
       ),
     },
     {
@@ -230,6 +233,11 @@ export default async function StudentDashboardPage() {
       assignments: assignments.filter(
         (assignment) => assignment.activitySection === "completed",
       ),
+    },
+    {
+      id: "deadline-closed",
+      title: studentAppText.dashboard.expired,
+      assignments: assignments.filter((assignment) => assignment.missed),
     },
   ].filter((section) => section.assignments.length > 0);
 
@@ -262,11 +270,11 @@ export default async function StudentDashboardPage() {
                 <h2 id={`student-assignment-${section.id}`}>
                   {section.title}
                 </h2>
-                <span className="detail-chip">
+                <MetaTag>
                   {formatContentText(studentAppText.dashboard.meta.sectionCount, {
                     count: section.assignments.length,
                   })}
-                </span>
+                </MetaTag>
               </div>
               <div className="student-assignment-grid">
                 {section.assignments.map((assignment, assignmentIndex) => (
