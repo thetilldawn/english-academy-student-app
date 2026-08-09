@@ -33,5 +33,24 @@ describe("redesign 무중단 배포 migration 계약", () => {
     expect(postdeploy).toContain(
       "revoke all on function public.create_mixed_review_assignment_v6(",
     );
+    expect(postdeploy).not.toContain(
+      "revoke all on function public.create_exact_review_assignment_v6(",
+    );
+
+    const rollback = source(
+      "supabase/rollback/20260809110000_retire_legacy_assignment_writers_after_redesign.sql",
+    );
+    expect(rollback).toContain(
+      "grant execute on function public.create_assignment_with_delivery_v4(",
+    );
+    expect(rollback).toContain(
+      "grant execute on function public.create_mixed_review_assignment_v6(",
+    );
+    expect(rollback).toContain(
+      "grant execute on function public.create_bulk_vocab_assignments_v1(jsonb)",
+    );
+    expect(rollback).not.toContain(
+      "grant execute on function public.create_exact_review_assignment_v4(",
+    );
   });
 });
