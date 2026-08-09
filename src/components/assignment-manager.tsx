@@ -77,6 +77,7 @@ import {
   newAssignmentDefaultUnitId,
 } from "@/lib/admin/new-assignment-range";
 import { learningSourceTypeLabel } from "@/lib/admin/learning-sources";
+import { selectInclusiveUnitRange } from "@/lib/admin/unit-range";
 import {
   cataloguedDatasetDisplayLabel,
   groupCataloguedDatasets,
@@ -222,6 +223,10 @@ export type AssignmentProgressItem = {
   recommendedDatasetId: string | null;
   recommendedUnitId: string | null;
   recommendedUnitLabel: string | null;
+  recommendedUnitIds: string[];
+  recommendedUnitLabels: string[];
+  recommendedDirection: 1 | -1;
+  recommendedRangeTruncated: boolean;
   recommendationReason:
     | "assigned"
     | "first"
@@ -653,10 +658,6 @@ export function AssignmentManager({
     () => groupCataloguedUnits(datasetUnits),
     [datasetUnits],
   );
-  const datasetUnitIndex = useMemo(
-    () => new Map(datasetUnits.map((unit, index) => [unit.id, index])),
-    [datasetUnits],
-  );
   const needsExplicitUnitSelection = needsExplicitNewAssignmentRange(
     selectedProgress,
     datasetId,
@@ -669,16 +670,11 @@ export function AssignmentManager({
     effectiveStartUnitId
       ? endUnitId || effectiveStartUnitId
       : "";
-  const startIndex = datasetUnits.findIndex(
-    (unit) => unit.id === effectiveStartUnitId,
+  const selectedUnits = selectInclusiveUnitRange(
+    datasetUnits,
+    effectiveStartUnitId,
+    effectiveEndUnitId,
   );
-  const endIndex = datasetUnits.findIndex(
-    (unit) => unit.id === effectiveEndUnitId,
-  );
-  const selectedUnits =
-    startIndex < 0 || endIndex < startIndex
-      ? []
-      : datasetUnits.slice(startIndex, endIndex + 1);
   const usesDayLabels =
     datasetUnits.length > 0 &&
     datasetUnits.every((unit) => unit.kind === "day");
@@ -1216,15 +1212,6 @@ export function AssignmentManager({
     setCapacityError("");
     setStartUnitId(nextStartId);
     setError("");
-    const nextStartIndex = datasetUnits.findIndex(
-      (unit) => unit.id === nextStartId,
-    );
-    const currentEndIndex = datasetUnits.findIndex(
-      (unit) => unit.id === effectiveEndUnitId,
-    );
-    if (currentEndIndex < nextStartIndex) {
-      setEndUnitId(nextStartId);
-    }
   }
 
   function closeDialog() {
@@ -2214,14 +2201,7 @@ export function AssignmentManager({
                         }
                       >
                         {group.units.map((unit) => (
-                          <option
-                            disabled={
-                              (datasetUnitIndex.get(unit.id) ?? -1) <
-                              Math.max(startIndex, 0)
-                            }
-                            key={unit.id}
-                            value={unit.id}
-                          >
+                          <option key={unit.id} value={unit.id}>
                             {formatContentText(
                               adminLearningText.assignmentModal.range
                                 .unitEntryCount,

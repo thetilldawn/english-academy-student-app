@@ -31,4 +31,15 @@ describe("학습 관리 일괄 배정 UI 계약", () => {
     expect(dialog).toContain("adminLearningText.bulkAssignmentModal.atomicHelp");
     expect(dialog).toContain("<HelpTip");
   });
+
+  it("한 DAY·이전 범위·다음 7 DAY를 같은 미리보기 계약으로 선택한다", () => {
+    const dialog = source("src/components/bulk-assignment-dialog.tsx");
+    const copy = source("src/content/ko/admin-learning.ts");
+    expect(dialog).toContain('useState<BulkAssignmentRangeMode>("previous_span")');
+    expect(dialog).toContain('<option value="single">');
+    expect(dialog).toContain('<option value="previous_span">');
+    expect(dialog).toContain('<option value="week_span">');
+    expect(dialog).toContain("rangeMode,");
+    expect(copy).toContain("다음 7 DAY · 시험 1개");
+  });
 });

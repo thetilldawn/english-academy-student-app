@@ -3,6 +3,10 @@ import type {
   AssignmentHistorySummary,
 } from "@/lib/admin/history";
 import { assignmentScopeLabel } from "@/lib/admin/history";
+import {
+  planNextUnitRange,
+  resolveOrderedContiguousUnits,
+} from "@/lib/admin/unit-range";
 
 export type StudentProgressSummary = {
   studentId: string;
@@ -26,6 +30,10 @@ export type StudentProgressSummary = {
   recommendedDatasetId: string | null;
   recommendedUnitId: string | null;
   recommendedUnitLabel: string | null;
+  recommendedUnitIds: string[];
+  recommendedUnitLabels: string[];
+  recommendedDirection: 1 | -1;
+  recommendedRangeTruncated: boolean;
   recommendationReason:
     | "first"
     | "assigned"
@@ -144,48 +152,71 @@ export function buildStudentProgress(
       ? (unitsByDataset.get(student.currentVocabDatasetId) ?? [])
       : [];
 
-    let recommendedUnit: ProgressUnit | null =
-      datasetUnits[0] ?? null;
+    let recommendedUnits: ProgressUnit[] = datasetUnits[0]
+      ? [datasetUnits[0]]
+      : [];
+    let recommendedDirection: 1 | -1 = 1;
+    let recommendedRangeTruncated = false;
     let recommendationReason:
       | StudentProgressSummary["recommendationReason"] =
-      recommendedUnit ? "first" : null;
+      recommendedUnits.length > 0 ? "first" : null;
 
     if (latestCurrent && datasetUnits.length > 0) {
       if (latestCurrent.primaryUnitIds.length === 0) {
-        recommendedUnit = null;
+        recommendedUnits = [];
         recommendationReason = "manual";
       } else {
-        const firstUnit = latestCurrent.primaryUnitIds[0]
-          ? datasetUnits.find(
-              (unit) => unit.id === latestCurrent.primaryUnitIds[0],
-            ) ?? datasetUnits[0]!
-          : datasetUnits[0];
-        const lastUnitId = latestCurrent.primaryUnitIds.at(-1);
-        const lastIndex = lastUnitId
-          ? datasetUnits.findIndex((unit) => unit.id === lastUnitId)
-          : -1;
+        let previousUnits: ProgressUnit[] = [];
+        try {
+          previousUnits = resolveOrderedContiguousUnits(
+            datasetUnits,
+            latestCurrent.primaryUnitIds,
+          );
+        } catch {
+          recommendedUnits = [];
+          recommendationReason = "manual";
+        }
 
-        if (latestCurrent.status === "not_started") {
-          recommendedUnit = firstUnit;
-          recommendationReason = "assigned";
-        } else if (latestCurrent.status === "in_progress") {
-          recommendedUnit = firstUnit;
-          recommendationReason = "resume";
-        } else if (
-          latestCurrent.status === "completed" &&
-          latestCurrent.passed === true
-        ) {
-          recommendedUnit =
-            lastIndex >= 0
-              ? (datasetUnits[lastIndex + 1] ?? null)
-              : null;
-          recommendationReason = recommendedUnit ? "next" : "complete";
-        } else {
-          recommendedUnit = firstUnit;
-          recommendationReason = "repeat";
+        if (previousUnits.length > 0) {
+          recommendedDirection =
+            previousUnits.length > 1 &&
+            previousUnits[1].sortIndex < previousUnits[0].sortIndex
+              ? -1
+              : 1;
+
+          if (latestCurrent.status === "not_started") {
+            recommendedUnits = previousUnits;
+            recommendationReason = "assigned";
+          } else if (latestCurrent.status === "in_progress") {
+            recommendedUnits = previousUnits;
+            recommendationReason = "resume";
+          } else if (
+            latestCurrent.status === "completed" &&
+            latestCurrent.passed === true
+          ) {
+            const nextRange = planNextUnitRange(
+              datasetUnits,
+              latestCurrent.primaryUnitIds,
+            );
+            recommendedUnits = nextRange?.units ?? [];
+            recommendedDirection = nextRange?.direction ?? recommendedDirection;
+            recommendedRangeTruncated = nextRange?.truncated ?? false;
+            recommendationReason =
+              recommendedUnits.length > 0 ? "next" : "complete";
+          } else {
+            recommendedUnits = previousUnits;
+            recommendationReason = "repeat";
+          }
         }
       }
     }
+
+    const recommendedUnitLabel =
+      recommendedUnits.length === 0
+        ? null
+        : recommendedUnits.length === 1
+          ? recommendedUnits[0].label
+          : `${recommendedUnits[0].label}~${recommendedUnits.at(-1)!.label}`;
 
     return {
       studentId: student.id,
@@ -211,8 +242,12 @@ export function buildStudentProgress(
       latestCompletedFinalScore:
         latestCompleted?.finalScore ?? null,
       recommendedDatasetId: student.currentVocabDatasetId,
-      recommendedUnitId: recommendedUnit?.id ?? null,
-      recommendedUnitLabel: recommendedUnit?.label ?? null,
+      recommendedUnitId: recommendedUnits[0]?.id ?? null,
+      recommendedUnitLabel,
+      recommendedUnitIds: recommendedUnits.map((unit) => unit.id),
+      recommendedUnitLabels: recommendedUnits.map((unit) => unit.label),
+      recommendedDirection,
+      recommendedRangeTruncated,
       recommendationReason,
     };
   });

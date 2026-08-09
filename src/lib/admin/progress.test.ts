@@ -409,5 +409,82 @@ describe("buildStudentProgress", () => {
     );
     expect(progress.recommendationReason).toBe("next");
     expect(progress.recommendedUnitLabel).toBe("DAY 07");
+    expect(progress.recommendedUnitIds).toEqual(["unit-7"]);
+    expect(progress.recommendedRangeTruncated).toBe(true);
+  });
+
+  it("이전 정방향 범위의 길이를 유지해 다음 범위를 추천한다", () => {
+    const extendedUnits = Array.from({ length: 12 }, (_, index) => ({
+      id: `unit-${index + 1}`,
+      datasetId: "dataset-current",
+      label: `DAY ${String(index + 1).padStart(2, "0")}`,
+      sortIndex: index + 1,
+    }));
+    const [progress] = buildStudentProgress(
+      [student],
+      extendedUnits,
+      [
+        history({
+          primaryUnitIds: ["unit-3", "unit-4", "unit-5", "unit-6"],
+          primaryUnitLabels: ["DAY 03", "DAY 04", "DAY 05", "DAY 06"],
+        }),
+      ],
+    );
+
+    expect(progress.recommendedUnitIds).toEqual([
+      "unit-7",
+      "unit-8",
+      "unit-9",
+      "unit-10",
+    ]);
+    expect(progress.recommendedUnitLabel).toBe("DAY 07~DAY 10");
+    expect(progress.recommendedDirection).toBe(1);
+  });
+
+  it("이전 역방향 범위의 길이와 방향을 유지해 다음 범위를 추천한다", () => {
+    const reverseUnits = Array.from({ length: 60 }, (_, index) => ({
+      id: `unit-${index + 1}`,
+      datasetId: "dataset-current",
+      label: `DAY ${String(index + 1).padStart(2, "0")}`,
+      sortIndex: index + 1,
+    }));
+    const [progress] = buildStudentProgress(
+      [student],
+      reverseUnits,
+      [
+        history({
+          primaryUnitIds: [
+            "unit-60",
+            "unit-59",
+            "unit-58",
+            "unit-57",
+            "unit-56",
+            "unit-55",
+            "unit-54",
+          ],
+          primaryUnitLabels: [
+            "DAY 60",
+            "DAY 59",
+            "DAY 58",
+            "DAY 57",
+            "DAY 56",
+            "DAY 55",
+            "DAY 54",
+          ],
+        }),
+      ],
+    );
+
+    expect(progress.recommendedUnitIds).toEqual([
+      "unit-53",
+      "unit-52",
+      "unit-51",
+      "unit-50",
+      "unit-49",
+      "unit-48",
+      "unit-47",
+    ]);
+    expect(progress.recommendedUnitLabel).toBe("DAY 53~DAY 47");
+    expect(progress.recommendedDirection).toBe(-1);
   });
 });

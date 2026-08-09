@@ -72,6 +72,7 @@ import {
   type VocabUnitType,
 } from "@/lib/admin/dataset-catalog";
 import type { ReadingCurriculumStage } from "@/lib/admin/reading-curriculum";
+import { resolveOrderedContiguousUnits } from "@/lib/admin/unit-range";
 
 export { buildStudentProgress } from "@/lib/admin/progress";
 export type { StudentProgressSummary } from "@/lib/admin/progress";
@@ -1397,10 +1398,22 @@ export async function prepareRegularAssignment(
     throw new Error("선택한 단어장과 DAY를 사용할 수 없습니다.");
   }
 
-  const sortedUnits = [...unitData].sort(
-    (left, right) => left.sort_index - right.sort_index,
-  );
-  const orderedUnitIds = sortedUnits.map((unit) => unit.id);
+  let orderedUnits: typeof unitData;
+  try {
+    orderedUnits = resolveOrderedContiguousUnits(
+      unitData.map((unit) => ({
+        ...unit,
+        sortIndex: unit.sort_index,
+      })),
+      input.unitIds,
+    );
+  } catch {
+    throw new AssignmentCreationError(
+      "invalid_selection",
+      "선택한 DAY는 한 방향으로 이어지는 연속 범위여야 합니다.",
+    );
+  }
+  const orderedUnitIds = orderedUnits.map((unit) => unit.id);
   const [allCandidates, activeAssignments] = await Promise.all([
     loadEligibleVocabularyDataset(supabase, input.datasetId, {
       includeExamUseProjection: true,
@@ -1450,9 +1463,9 @@ export async function prepareRegularAssignment(
       (sourceOrderByCandidateId.get(right.vocabEntryId) ?? 0),
   );
   const unitRangeLabel =
-    sortedUnits.length === 1
-      ? sortedUnits[0].unit_label
-      : `${sortedUnits[0].unit_label}~${sortedUnits.at(-1)?.unit_label}`;
+    orderedUnits.length === 1
+      ? orderedUnits[0].unit_label
+      : `${orderedUnits[0].unit_label}~${orderedUnits.at(-1)?.unit_label}`;
   const datasetLabel = await loadDatasetDisplayLabel(supabase, dataset);
   const generatedTitle = [datasetLabel, unitRangeLabel].join(" · ");
 

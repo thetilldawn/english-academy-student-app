@@ -4,6 +4,10 @@ import { z } from "zod";
 
 import { buildStudentProgress } from "@/lib/admin/progress";
 import {
+  resolveBulkAssignmentRange,
+  unitRangeLabel,
+} from "@/lib/admin/bulk-assignment-range";
+import {
   requireAdmin,
   type AdminContext,
 } from "@/lib/auth/admin";
@@ -34,6 +38,9 @@ export type BulkAssignmentPreviewItem = {
   datasetLabel: string | null;
   unitId: string | null;
   unitLabel: string | null;
+  unitIds: string[];
+  unitLabels: string[];
+  rangeTruncated: boolean;
   questionCount: number;
   wrongCount: number;
   error: string | null;
@@ -156,6 +163,12 @@ export async function previewBulkAssignments(
   const datasetById = new Map(
     datasets.map((dataset) => [dataset.id, dataset]),
   );
+  const unitsByDataset = new Map<string, typeof units>();
+  for (const unit of units) {
+    const datasetUnits = unitsByDataset.get(unit.datasetId) ?? [];
+    datasetUnits.push(unit);
+    unitsByDataset.set(unit.datasetId, datasetUnits);
+  }
   const progressByStudent = new Map(
     buildStudentProgress(students, units, history).map((item) => [
       item.studentId,
@@ -173,8 +186,28 @@ export async function previewBulkAssignments(
       const dataset = progress?.recommendedDatasetId
         ? datasetById.get(progress.recommendedDatasetId)
         : null;
+      let selectedUnits: typeof units = [];
+      let rangeTruncated = false;
+      let rangeError: string | null = null;
+      if (
+        progress?.recommendedDatasetId &&
+        progress.recommendedUnitIds.length > 0
+      ) {
+        try {
+          const resolvedRange = resolveBulkAssignmentRange(
+            unitsByDataset.get(progress.recommendedDatasetId) ?? [],
+            progress,
+            input.rangeMode,
+          );
+          selectedUnits = resolvedRange.units;
+          rangeTruncated = resolvedRange.truncated;
+        } catch {
+          rangeError = "학생의 다음 DAY 범위를 자동으로 확인할 수 없습니다.";
+        }
+      }
       const blockedReason =
         progressBlockedReason ??
+        rangeError ??
         (dataset && !dataset.isAssignable
           ? "최근 단어장을 신규 배정 가능한 자료로 바꿔 주세요."
           : null);
@@ -185,8 +218,11 @@ export async function previewBulkAssignments(
         datasetLabel: dataset
           ? cataloguedDatasetDisplayLabel(dataset)
           : null,
-        unitId: progress?.recommendedUnitId ?? null,
-        unitLabel: progress?.recommendedUnitLabel ?? null,
+        unitId: selectedUnits[0]?.id ?? null,
+        unitLabel: unitRangeLabel(selectedUnits),
+        unitIds: selectedUnits.map((unit) => unit.id),
+        unitLabels: selectedUnits.map((unit) => unit.label),
+        rangeTruncated,
       };
 
       if (!student || student.status !== "active") {
@@ -209,7 +245,7 @@ export async function previewBulkAssignments(
       }
       if (
         !progress?.recommendedDatasetId ||
-        !progress.recommendedUnitId ||
+        selectedUnits.length < 1 ||
         !dataset ||
         dataset.status !== "ready" ||
         !dataset.isActive
@@ -228,7 +264,7 @@ export async function previewBulkAssignments(
           {
             studentId,
             datasetId: progress.recommendedDatasetId,
-            primaryUnitIds: [progress.recommendedUnitId],
+            primaryUnitIds: selectedUnits.map((unit) => unit.id),
             includePendingReview: input.includePendingReview,
             reviewLevels: input.reviewLevels,
             englishToKoreanRatio: input.englishToKoreanRatio,
@@ -299,7 +335,11 @@ export async function createBulkAssignments(
   try {
     batches = await Promise.all(
       preview.items.map(async (item) => {
-        if (!item.datasetId || !item.unitId || item.questionCount < 1) {
+        if (
+          !item.datasetId ||
+          item.unitIds.length < 1 ||
+          item.questionCount < 1
+        ) {
           throw new BulkAssignmentError("invalid_selection");
         }
         if (input.includePendingReview) {
@@ -307,7 +347,7 @@ export async function createBulkAssignments(
             {
               studentId: item.studentId,
               datasetId: item.datasetId,
-              primaryUnitIds: [item.unitId],
+              primaryUnitIds: item.unitIds,
               reviewLevels: input.reviewLevels,
               englishToKoreanRatio: input.englishToKoreanRatio,
               totalQuestionCount: item.questionCount,
@@ -349,7 +389,7 @@ export async function createBulkAssignments(
           {
             title: "",
             datasetId: item.datasetId,
-            unitIds: [item.unitId],
+            unitIds: item.unitIds,
             questionCount: item.questionCount,
             englishToKoreanRatio: input.englishToKoreanRatio,
             timeLimitSeconds: input.timeLimitSeconds,
@@ -401,7 +441,7 @@ export async function createBulkAssignments(
 
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc(
-    "create_bulk_vocab_assignments_v3",
+    "create_bulk_vocab_assignments_v4",
     { p_batches: batches },
   );
   if (error) {

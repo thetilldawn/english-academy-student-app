@@ -19,10 +19,10 @@ describe("orderContiguousPrimaryUnits", () => {
     { id: "day-3", unitLabel: "DAY 03", sortIndex: 3 },
   ];
 
-  it("입력 순서와 무관하게 연속 DAY를 정렬한다", () => {
+  it("교사가 고른 연속 DAY의 방향을 그대로 유지한다", () => {
     expect(
       orderContiguousPrimaryUnits(units, ["day-2", "day-1"]),
-    ).toEqual(units.slice(0, 2));
+    ).toEqual([units[1], units[0]]);
   });
 
   it("중복·누락·비연속 DAY를 거절한다", () => {
@@ -34,7 +34,7 @@ describe("orderContiguousPrimaryUnits", () => {
     ).toThrow();
     expect(() =>
       orderContiguousPrimaryUnits(units, ["day-1", "day-3"]),
-    ).toThrow("연속된 범위");
+    ).toThrow("연속 범위");
   });
 });
 

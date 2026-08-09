@@ -117,6 +117,10 @@ type ProgressItem = {
   recommendedDatasetId: string | null;
   recommendedUnitId: string | null;
   recommendedUnitLabel: string | null;
+  recommendedUnitIds: string[];
+  recommendedUnitLabels: string[];
+  recommendedDirection: 1 | -1;
+  recommendedRangeTruncated: boolean;
   recommendationReason:
     | "first"
     | "assigned"

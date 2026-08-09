@@ -964,7 +964,7 @@ export async function replaceStudentAssignment(
   }
 
   const { data, error } = await supabase.rpc(
-    "replace_student_assignment_v3",
+    "replace_student_assignment_v4",
     {
       p_source_assignment_id: assignmentId,
       p_student_id: studentId,

@@ -147,6 +147,32 @@ describe("일괄 단어 시험 입력 계약", () => {
         includePendingReview: false,
         reviewLevels: [1, 2],
         englishToKoreanRatio: 50,
+      }),
+    ).toMatchObject({ studentIds, rangeMode: "single" });
+    expect(
+      bulkAssignmentPreviewSchema.parse({
+        studentIds,
+        rangeMode: "week_span",
+        includePendingReview: false,
+        reviewLevels: [1, 2],
+        englishToKoreanRatio: 50,
+      }).rangeMode,
+    ).toBe("week_span");
+    expect(() =>
+      bulkAssignmentPreviewSchema.parse({
+        studentIds,
+        rangeMode: "seven_assignments",
+        includePendingReview: false,
+        reviewLevels: [1, 2],
+        englishToKoreanRatio: 50,
+      }),
+    ).toThrow();
+    expect(
+      bulkAssignmentPreviewSchema.parse({
+        studentIds,
+        includePendingReview: false,
+        reviewLevels: [1, 2],
+        englishToKoreanRatio: 50,
       }).studentIds,
     ).toEqual(studentIds);
     expect(() =>

@@ -112,6 +112,10 @@
   gap: var(--space-3);
 }
 
+.bulk-range-mode-field {
+  grid-column: 1 / -1;
+}
+
 .bulk-review-levels {
   min-width: 0;
   margin: 0;

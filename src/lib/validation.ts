@@ -4,6 +4,7 @@ import {
   questionOrderModes,
   timingModes,
 } from "@/lib/admin/assignment-settings";
+import { bulkAssignmentRangeModes } from "@/lib/admin/bulk-assignment-range";
 import { readingCurriculumStages } from "@/lib/admin/reading-curriculum";
 
 const timingSettingsSchema = z
@@ -172,6 +173,7 @@ const reviewScopeSchema = z.enum(["dataset", "selection"]);
 
 const bulkAssignmentSelectionFields = {
   studentIds: z.array(z.uuid()).min(1).max(30),
+  rangeMode: z.enum(bulkAssignmentRangeModes).default("single"),
   includePendingReview: z.boolean(),
   reviewLevels: z.array(mixedReviewLevelSchema).min(1).max(2),
   englishToKoreanRatio: z.union([

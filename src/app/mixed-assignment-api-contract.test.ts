@@ -77,7 +77,7 @@ describe("mixed assignment API contract", () => {
     );
     expect(service).toContain("createMixedQuizQuestions(");
     expect(service).toContain(
-      '"create_mixed_review_assignment_v8"',
+      '"create_mixed_review_assignment_v9"',
     );
     expect(service).toContain(
       "p_selected_queue_ids: prepared.selectedQueueIds",

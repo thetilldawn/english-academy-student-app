@@ -326,7 +326,7 @@ export const adminLearningText = {
     previewTitle: "학생별 배정 미리보기",
     cancel: "취소",
     autoRangeHelp:
-      "학생별 다음 범위와 현재 배정 가능한 최대 문항 수를 자동으로 적용합니다.",
+      "학생별 최근 학습 기록과 선택한 범위 방식을 사용해 다음 DAY와 최대 문항 수를 계산합니다.",
     deadlineHelp:
       "이 시각까지 시험을 시작하지 않으면 미응시로 기록됩니다.",
     atomicHelp:
@@ -335,6 +335,16 @@ export const adminLearningText = {
     saveError: "일괄 배정을 저장하지 못했습니다.",
     autoRangeHelpAria: "자동 범위 계산 도움말",
     studentCount: "{count}명",
+    rangeMode: {
+      label: "배정 범위",
+      helpAria: "일괄 배정 범위 도움말",
+      help:
+        "이전 배정과 같은 범위는 최근 시험의 DAY 수와 방향을 유지합니다. 일주일치는 다음 7 DAY를 시험 하나로 묶으며, 단어장 끝에서는 남은 DAY까지만 적용합니다.",
+      single: "다음 DAY 1개",
+      previousSpan: "이전 배정과 같은 DAY 수",
+      weekSpan: "다음 7 DAY · 시험 1개",
+      remainingOnly: "단어장 끝까지",
+    },
     wrongWordsLegend: "포함할 오답",
     wrongOnce: "한 번 틀림",
     wrongRepeated: "두 번 이상 틀림",

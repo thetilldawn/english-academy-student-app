@@ -3,6 +3,7 @@ import {
   normalizeQuizHeadword,
   quizVocabularyIdentity,
 } from "@/lib/quiz/engine";
+import { resolveOrderedContiguousUnits } from "@/lib/admin/unit-range";
 
 export type MixedAssignmentUnit = {
   id: string;
@@ -161,37 +162,7 @@ export function orderContiguousPrimaryUnits(
   availableUnits: readonly MixedAssignmentUnit[],
   primaryUnitIds: readonly string[],
 ): MixedAssignmentUnit[] {
-  if (
-    primaryUnitIds.length < 1 ||
-    new Set(primaryUnitIds).size !== primaryUnitIds.length
-  ) {
-    throw new Error("주 DAY 선택이 올바르지 않습니다.");
-  }
-
-  const availableById = new Map(
-    availableUnits.map((unit) => [unit.id, unit]),
-  );
-  const selected = primaryUnitIds.flatMap((unitId) => {
-    const unit = availableById.get(unitId);
-    return unit ? [unit] : [];
-  });
-  if (selected.length !== primaryUnitIds.length) {
-    throw new Error("선택한 DAY를 사용할 수 없습니다.");
-  }
-
-  selected.sort(
-    (left, right) => left.sortIndex - right.sortIndex,
-  );
-  if (
-    selected.some(
-      (unit, index) =>
-        index > 0 &&
-        unit.sortIndex !== selected[index - 1].sortIndex + 1,
-    )
-  ) {
-    throw new Error("주 DAY는 연속된 범위여야 합니다.");
-  }
-  return selected;
+  return resolveOrderedContiguousUnits(availableUnits, primaryUnitIds);
 }
 
 export function excludePendingReviewCandidates(

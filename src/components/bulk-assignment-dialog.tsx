@@ -28,6 +28,7 @@ import type {
   TimingMode,
 } from "@/lib/admin/assignment-settings";
 import type { ReviewLevel } from "@/lib/admin/assignment-submission";
+import type { BulkAssignmentRangeMode } from "@/lib/admin/bulk-assignment-range";
 import {
   currentTimeMilliseconds,
   koreanDateTimeLocalToIso,
@@ -41,6 +42,9 @@ type BulkPreviewItem = {
   datasetLabel: string | null;
   unitId: string | null;
   unitLabel: string | null;
+  unitIds: string[];
+  unitLabels: string[];
+  rangeTruncated: boolean;
   questionCount: number;
   wrongCount: number;
   error: string | null;
@@ -66,6 +70,8 @@ export function BulkAssignmentDialog({
   onSuccess: () => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [rangeMode, setRangeMode] =
+    useState<BulkAssignmentRangeMode>("previous_span");
   const [directionRatio, setDirectionRatio] = useState<0 | 50 | 100>(50);
   const [reviewLevels, setReviewLevels] = useState<ReviewLevel[]>([1, 2]);
   const [questionOrderMode, setQuestionOrderMode] =
@@ -96,6 +102,7 @@ export function BulkAssignmentDialog({
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         studentIds: studentIdsKey.split(",").filter(Boolean),
+        rangeMode,
         includePendingReview,
         reviewLevels,
         englishToKoreanRatio: directionRatio,
@@ -131,6 +138,7 @@ export function BulkAssignmentDialog({
   }, [
     directionRatio,
     includePendingReview,
+    rangeMode,
     reviewLevels,
     studentIdsKey,
   ]);
@@ -181,6 +189,7 @@ export function BulkAssignmentDialog({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           studentIds: students.map((student) => student.id),
+          rangeMode,
           includePendingReview,
           reviewLevels,
           englishToKoreanRatio: directionRatio,
@@ -258,6 +267,42 @@ export function BulkAssignmentDialog({
         onSubmit={submit}
       >
           <section className="bulk-assignment-settings">
+            <label className="field bulk-range-mode-field">
+              <span className="field-label label-with-help">
+                {adminLearningText.bulkAssignmentModal.rangeMode.label}
+                <HelpTip
+                  label={
+                    adminLearningText.bulkAssignmentModal.rangeMode.helpAria
+                  }
+                >
+                  {adminLearningText.bulkAssignmentModal.rangeMode.help}
+                </HelpTip>
+              </span>
+              <SelectField
+                onChange={(event) => {
+                  setPreviewLoading(true);
+                  setPreview(null);
+                  setError("");
+                  setRangeMode(
+                    event.target.value as BulkAssignmentRangeMode,
+                  );
+                }}
+                value={rangeMode}
+              >
+                <option value="single">
+                  {adminLearningText.bulkAssignmentModal.rangeMode.single}
+                </option>
+                <option value="previous_span">
+                  {
+                    adminLearningText.bulkAssignmentModal.rangeMode
+                      .previousSpan
+                  }
+                </option>
+                <option value="week_span">
+                  {adminLearningText.bulkAssignmentModal.rangeMode.weekSpan}
+                </option>
+              </SelectField>
+            </label>
             <label className="field">
               <span className="field-label">
                 {adminLearningText.controls.direction.label}
@@ -438,6 +483,9 @@ export function BulkAssignmentDialog({
                 datasetLabel: null,
                 unitId: null,
                 unitLabel: null,
+                unitIds: [],
+                unitLabels: [],
+                rangeTruncated: false,
                 questionCount: 0,
                 wrongCount: 0,
                 error: null,
@@ -453,6 +501,14 @@ export function BulkAssignmentDialog({
                       {item.unitLabel ??
                         adminLearningText.bulkAssignmentModal.rangePending}
                     </MetaTag>
+                    {item.rangeTruncated ? (
+                      <MetaTag tone="warning">
+                        {
+                          adminLearningText.bulkAssignmentModal.rangeMode
+                            .remainingOnly
+                        }
+                      </MetaTag>
+                    ) : null}
                     {item.available ? (
                       <MetaTag tone="positive">
                         {formatContentText(

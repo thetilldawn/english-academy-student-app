@@ -614,14 +614,17 @@ describe.sequential("final review-assignment database schema", () => {
       authenticated_public_exact: boolean;
       authenticated_public_mixed_v6: boolean;
       authenticated_public_mixed_v8: boolean;
+      authenticated_public_mixed_v9: boolean;
       authenticated_public_regular_v4: boolean;
       authenticated_public_regular_v6: boolean;
       authenticated_public_bulk_v1: boolean;
       authenticated_public_bulk_v3: boolean;
+      authenticated_public_bulk_v4: boolean;
       authenticated_public_identity_v1: boolean;
       authenticated_public_review_summary: boolean;
       authenticated_replace_v2: boolean;
       authenticated_replace_v3: boolean;
+      authenticated_replace_v4: boolean;
       authenticated_replace_v1: boolean;
       service_replace_v1: boolean;
       authenticated_replacement_ledger_select: boolean;
@@ -629,6 +632,9 @@ describe.sequential("final review-assignment database schema", () => {
       anon_public_exact: boolean;
       anon_public_review_summary: boolean;
       anon_replace_v2: boolean;
+      anon_public_mixed_v9: boolean;
+      anon_public_bulk_v4: boolean;
+      anon_replace_v4: boolean;
     }>(`
       select
         has_function_privilege(
@@ -663,6 +669,11 @@ describe.sequential("final review-assignment database schema", () => {
         ) as authenticated_public_mixed_v8,
         has_function_privilege(
           'authenticated',
+          'public.create_mixed_review_assignment_v9(uuid,uuid,smallint[],text,uuid[],text,uuid[],smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,jsonb)',
+          'execute'
+        ) as authenticated_public_mixed_v9,
+        has_function_privilege(
+          'authenticated',
           'public.create_assignment_with_delivery_v4(text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,uuid[],text,integer,jsonb)',
           'execute'
         ) as authenticated_public_regular_v4,
@@ -683,6 +694,11 @@ describe.sequential("final review-assignment database schema", () => {
         ) as authenticated_public_bulk_v3,
         has_function_privilege(
           'authenticated',
+          'public.create_bulk_vocab_assignments_v4(jsonb)',
+          'execute'
+        ) as authenticated_public_bulk_v4,
+        has_function_privilege(
+          'authenticated',
           'public.list_assignment_question_dictionary_identities_v1(uuid[],uuid)',
           'execute'
         ) as authenticated_public_identity_v1,
@@ -701,6 +717,11 @@ describe.sequential("final review-assignment database schema", () => {
           'public.replace_student_assignment_v3(uuid,uuid,uuid,text,text,text,text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,smallint[],uuid[],jsonb)',
           'execute'
         ) as authenticated_replace_v3,
+        has_function_privilege(
+          'authenticated',
+          'public.replace_student_assignment_v4(uuid,uuid,uuid,text,text,text,text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,smallint[],uuid[],jsonb)',
+          'execute'
+        ) as authenticated_replace_v4,
         has_function_privilege(
           'authenticated',
           'public.replace_student_assignment_v1(uuid,uuid,uuid,text,text,text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,smallint[],uuid[],jsonb)',
@@ -735,7 +756,22 @@ describe.sequential("final review-assignment database schema", () => {
           'anon',
           'public.replace_student_assignment_v2(uuid,uuid,uuid,text,text,text,text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,smallint[],uuid[],jsonb)',
           'execute'
-        ) as anon_replace_v2;
+        ) as anon_replace_v2,
+        has_function_privilege(
+          'anon',
+          'public.create_mixed_review_assignment_v9(uuid,uuid,smallint[],text,uuid[],text,uuid[],smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,jsonb)',
+          'execute'
+        ) as anon_public_mixed_v9,
+        has_function_privilege(
+          'anon',
+          'public.create_bulk_vocab_assignments_v4(jsonb)',
+          'execute'
+        ) as anon_public_bulk_v4,
+        has_function_privilege(
+          'anon',
+          'public.replace_student_assignment_v4(uuid,uuid,uuid,text,text,text,text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,smallint[],uuid[],jsonb)',
+          'execute'
+        ) as anon_replace_v4;
     `);
 
     expect(privileges.rows[0]).toEqual({
@@ -745,14 +781,17 @@ describe.sequential("final review-assignment database schema", () => {
       authenticated_public_exact: false,
       authenticated_public_mixed_v6: false,
       authenticated_public_mixed_v8: true,
+      authenticated_public_mixed_v9: true,
       authenticated_public_regular_v4: false,
       authenticated_public_regular_v6: true,
       authenticated_public_bulk_v1: false,
       authenticated_public_bulk_v3: true,
+      authenticated_public_bulk_v4: true,
       authenticated_public_identity_v1: true,
       authenticated_public_review_summary: true,
       authenticated_replace_v2: false,
       authenticated_replace_v3: true,
+      authenticated_replace_v4: true,
       authenticated_replace_v1: false,
       service_replace_v1: false,
       authenticated_replacement_ledger_select: false,
@@ -760,8 +799,94 @@ describe.sequential("final review-assignment database schema", () => {
       anon_public_exact: false,
       anon_public_review_summary: false,
       anon_replace_v2: false,
+      anon_public_mixed_v9: false,
+      anon_public_bulk_v4: false,
+      anon_replace_v4: false,
     });
   });
+
+  it("validates and persists an explicitly descending DAY range", async () => {
+    const rangeDatabase = await createFinalSchemaDatabase();
+    try {
+      await seedReviewAssignmentScenario(rangeDatabase);
+      const created = await rangeDatabase.query<{ assignment_id: string }>(`
+        select private.create_assignment_with_question_bank_v3(
+          'Descending range fixture',
+          '${ids.dataset}',
+          array[
+            '${ids.units[0]}'::uuid,
+            '${ids.units[1]}'::uuid,
+            '${ids.units[2]}'::uuid,
+            '${ids.units[3]}'::uuid
+          ],
+          4,
+          50::smallint,
+          300,
+          80::smallint,
+          'fixed',
+          null,
+          array['${ids.student}'::uuid],
+          $questions$${mixedQuestions}$questions$::jsonb
+        ) as assignment_id;
+      `);
+      const assignmentId = created.rows[0]!.assignment_id;
+
+      const direction = await rangeDatabase.query<{ direction: number }>(`
+        select private.resolve_contiguous_unit_direction_v1(
+          '${ids.dataset}',
+          array[
+            '${ids.units[3]}'::uuid,
+            '${ids.units[2]}'::uuid,
+            '${ids.units[1]}'::uuid,
+            '${ids.units[0]}'::uuid
+          ]
+        )::integer as direction;
+      `);
+      expect(direction.rows[0]?.direction).toBe(-1);
+
+      await rangeDatabase.query(`
+        select private.align_assignment_unit_direction_v1(
+          '${assignmentId}',
+          '${ids.dataset}',
+          array[
+            '${ids.units[3]}'::uuid,
+            '${ids.units[2]}'::uuid,
+            '${ids.units[1]}'::uuid,
+            '${ids.units[0]}'::uuid
+          ]
+        );
+      `);
+      const persisted = await rangeDatabase.query<{ unit_ids: string[] }>(`
+        select array_agg(unit_id order by position) as unit_ids
+        from public.assignment_units
+        where assignment_id = '${assignmentId}'
+          and is_primary;
+      `);
+      expect(persisted.rows[0]?.unit_ids).toEqual([
+        ids.units[3],
+        ids.units[2],
+        ids.units[1],
+        ids.units[0],
+      ]);
+
+      await expectPostgresError(
+        rangeDatabase.query(`
+          select private.resolve_contiguous_unit_direction_v1(
+            '${ids.dataset}',
+            array[
+              '${ids.units[3]}'::uuid,
+              '${ids.units[1]}'::uuid,
+              '${ids.units[2]}'::uuid
+            ]
+          );
+        `),
+        "22023",
+        "assignment_unit_range_not_contiguous",
+      );
+    } finally {
+      await rangeDatabase.close();
+    }
+  }, 30_000);
 
   it("keeps the deployment-window compatibility rollback executable", async () => {
     const rollbackDatabase = await createFinalSchemaDatabase();
