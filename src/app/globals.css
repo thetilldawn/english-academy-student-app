@@ -1355,10 +1355,6 @@ textarea {
   text-align: center;
 }
 
-.feedback-correct {
-  color: var(--ink);
-}
-
 .feedback-wrong {
   color: var(--fail);
 }

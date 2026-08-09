@@ -52,6 +52,30 @@ function timestamp(value: string | null | undefined, fallback = 0) {
   return Number.isNaN(parsed) ? fallback : parsed;
 }
 
+function inProgressDeadline(item: LearningActivityOrderInput) {
+  if (item.status !== "in_progress") return null;
+  return item.phase === "review"
+    ? item.availableUntil
+    : item.deadlineAt ?? item.availableUntil;
+}
+
+function compareInProgressUrgency(
+  left: LearningActivityOrderInput,
+  right: LearningActivityOrderInput,
+) {
+  const leftInProgress = left.status === "in_progress";
+  const rightInProgress = right.status === "in_progress";
+  if (leftInProgress !== rightInProgress) {
+    return leftInProgress ? -1 : 1;
+  }
+  if (!leftInProgress) return 0;
+
+  const deadlineDifference =
+    timestamp(inProgressDeadline(left), Number.MAX_SAFE_INTEGER) -
+    timestamp(inProgressDeadline(right), Number.MAX_SAFE_INTEGER);
+  return deadlineDifference;
+}
+
 export function learningActivityEffectiveAt(item: LearningActivityOrderInput) {
   if (item.status === "cancelled") {
     return item.cancelledAt ?? item.activityAt;
@@ -138,6 +162,9 @@ export function compareLearningActivities(
   const sectionDifference =
     sectionOrder[leftSection] - sectionOrder[rightSection];
   if (sectionDifference !== 0) return sectionDifference;
+
+  const inProgressDifference = compareInProgressUrgency(left, right);
+  if (inProgressDifference !== 0) return inProgressDifference;
 
   if (leftSection === "open") {
     const deadlinePresenceDifference =

@@ -735,25 +735,23 @@ export function QuizPlayer({
         })}
       </div>
 
-      {answerCorrect !== null ? (
+      {answerCorrect === false ? (
         <div
           aria-atomic="true"
           aria-live="assertive"
-          className={[
-            "feedback",
-            answerCorrect ? "feedback-correct" : "feedback-wrong",
-          ].join(" ")}
+          className="feedback feedback-wrong"
           role="alert"
         >
-          {answerCorrect
-            ? studentAppText.attempt.correct
-            : answerTimedOut
-              ? studentAppText.attempt.timedOut
-              : attempt.phase === "initial"
-                ? studentAppText.attempt.wrongInitial
-                : studentAppText.attempt.wrongRetry}
+          {answerTimedOut
+            ? studentAppText.attempt.timedOut
+            : attempt.phase === "initial"
+              ? studentAppText.attempt.wrongInitial
+              : studentAppText.attempt.wrongRetry}
         </div>
       ) : null}
+      <span aria-live="assertive" className="sr-only" role="status">
+        {answerCorrect === true ? studentAppText.attempt.correct : ""}
+      </span>
       {error && (
         <div className="inline-error quiz-error" role="alert">
           {error}

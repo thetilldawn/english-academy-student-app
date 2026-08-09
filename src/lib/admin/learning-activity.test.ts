@@ -121,6 +121,52 @@ describe("learning activity ordering", () => {
     expect(result.map((item) => item.id)).toEqual(["newer", "older"]);
   });
 
+  it("이어 풀기와 재시험 대기는 가까운 진행 마감을 먼저 둔다", () => {
+    const resumable = sortLearningActivities([
+      activity("resume-later", {
+        status: "in_progress",
+        phase: "initial",
+        startedAt: "2026-08-08T00:00:00.000Z",
+        deadlineAt: "2026-08-09T03:00:00.000Z",
+      }),
+      activity("resume-near", {
+        status: "in_progress",
+        phase: "initial",
+        startedAt: "2026-08-08T00:00:00.000Z",
+        deadlineAt: "2026-08-09T01:00:00.000Z",
+      }),
+    ]);
+    const retryReady = sortLearningActivities([
+      activity("retry-later", {
+        status: "in_progress",
+        phase: "review",
+        initialCompletedAt: "2026-08-08T00:00:00.000Z",
+        availableUntil: "2026-08-09T03:00:00.000Z",
+      }),
+      activity("failed-newer", {
+        status: "completed",
+        finalScore: 70,
+        completedAt: "2026-08-08T04:00:00.000Z",
+      }),
+      activity("retry-near", {
+        status: "in_progress",
+        phase: "review",
+        initialCompletedAt: "2026-08-08T00:00:00.000Z",
+        availableUntil: "2026-08-09T01:00:00.000Z",
+      }),
+    ]);
+
+    expect(resumable.map((item) => item.id)).toEqual([
+      "resume-near",
+      "resume-later",
+    ]);
+    expect(retryReady.map((item) => item.id)).toEqual([
+      "retry-near",
+      "retry-later",
+      "failed-newer",
+    ]);
+  });
+
   it("derives completion from the displayed final score", () => {
     const stalePassedFlag = activity("stale", {
       status: "completed",
