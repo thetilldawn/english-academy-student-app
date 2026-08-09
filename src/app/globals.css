@@ -164,6 +164,35 @@
   color: var(--danger);
 }
 
+.bulk-preview-student-heading,
+.bulk-preview-session,
+.bulk-preview-session-list {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.bulk-preview-student-heading {
+  align-self: start;
+}
+
+.bulk-preview-session-list {
+  gap: var(--space-3);
+}
+
+.bulk-preview-session {
+  padding-block: 2px;
+}
+
+.bulk-preview-session + .bulk-preview-session {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+
+.bulk-preview-session > small {
+  color: var(--danger);
+}
+
 @media (max-width: 767px) {
   .bulk-selection-bar {
     align-items: stretch;

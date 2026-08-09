@@ -25,7 +25,7 @@ export const adminLearningText = {
       noReadyDatasets:
         "검수가 끝난 단어장이 없어 아직 시험을 배정할 수 없습니다.",
       selectStudentAria: "{student} 일괄 배정 선택",
-      success: "{count}명에게 단어 시험을 배정했습니다.",
+      success: "{studentCount}명에게 {assignmentCount}개 시험을 배정했습니다.",
     },
     studentCard: {
       schoolMissing: "학교 미입력",
@@ -328,17 +328,17 @@ export const adminLearningText = {
 
   // 학습 관리 > 학생 일괄 배정 모달 도움말
   bulkAssignmentModal: {
-    nextTitle: "다음 범위 일괄 배정",
-    withWrongTitle: "틀린 단어 포함 일괄 배정",
+    nextTitle: "날짜별 다회차 일괄 배정",
+    withWrongTitle: "틀린 단어 포함 다회차 일괄 배정",
     close: "닫기",
-    previewTitle: "학생별 배정 미리보기",
+    previewTitle: "학생별 회차 미리보기",
     cancel: "취소",
     autoRangeHelp:
-      "학생별 최근 학습 기록과 선택한 범위 방식을 사용해 다음 DAY와 최대 문항 수를 계산합니다.",
+      "학생별 다음 범위부터 회차당 DAY 수만큼 독립된 시험을 만듭니다. 이전 배정 범위를 선택하면 학생별 직전 DAY 수와 방향을 유지합니다.",
     deadlineHelp:
-      "이 시각까지 시험을 시작하지 않으면 미응시로 기록됩니다.",
+      "첫 시험의 마감을 정하면 나머지 시험도 배정 날짜와 같은 간격으로 마감이 이동합니다.",
     atomicHelp:
-      "한 학생이라도 저장 조건이 맞지 않으면 아무 학생에게도 배정하지 않습니다.",
+      "한 학생의 한 회차라도 저장 조건이 맞지 않으면 어떤 시험도 배정하지 않습니다.",
     previewError: "학생별 다음 범위를 계산하지 못했습니다.",
     saveError: "일괄 배정을 저장하지 못했습니다.",
     autoRangeHelpAria: "자동 범위 계산 도움말",
@@ -347,25 +347,36 @@ export const adminLearningText = {
       label: "배정 범위",
       helpAria: "일괄 배정 범위 도움말",
       help:
-        "이전 배정과 같은 범위는 최근 시험의 DAY 수와 방향을 유지합니다. 일주일치는 다음 7 DAY를 시험 하나로 묶으며, 단어장 끝에서는 남은 DAY까지만 적용합니다.",
-      single: "다음 DAY 1개",
+        "이전 배정과 같은 DAY 수는 학생별 직전 시험 범위와 정방향·역방향을 유지합니다. 직접 지정은 회차당 DAY 수를 모든 학생에게 같게 적용합니다.",
       previousSpan: "이전 배정과 같은 DAY 수",
-      weekSpan: "다음 7 DAY · 시험 1개",
+      fixedSpan: "회차당 DAY 수 직접 지정",
       remainingOnly: "단어장 끝까지",
     },
+    unitsPerSession: "회차당 DAY 수",
+    sessionCount: "시험 횟수",
+    firstAvailableDate: "첫 배정 날짜",
+    firstDateRequired: "첫 배정 날짜를 정해 주세요.",
+    dayInterval: "배정 간격(일)",
+    firstDeadline: "첫 시험 마감 · 선택",
+    firstDeadlineInvalid:
+      "첫 시험 마감은 첫 배정 날짜보다 뒤로 정해 주세요.",
+    sessionLabel: "{count}회차",
+    assignmentDateTag: "배정 {datetime}",
+    deadlineTag: "마감 {datetime}",
     wrongWordsLegend: "포함할 오답",
     wrongOnce: "한 번 틀림",
     wrongRepeated: "두 번 이상 틀림",
     atomicHelpAria: "일괄 배정 저장 방식 도움말",
     calculating: "계산 중",
-    previewSummary: "{assignable}명 가능 · {blocked}명 확인 필요",
+    previewSummary:
+      "{assignable}명 가능 · 학생당 {sessions}회 · {blocked}명 확인 필요",
     datasetPending: "단어장 확인 중",
     rangePending: "범위 확인 중",
     questionCount: "{count}문항",
     needsReview: "확인 필요",
     wrongCount: "오답 {count}개",
     submitting: "전체 저장 중…",
-    submit: "{count}명에게 배정",
+    submit: "{studentCount}명에게 {assignmentCount}개 시험 배정",
   },
 
   // 학습 관리 > 검토 전용 단어장 패널

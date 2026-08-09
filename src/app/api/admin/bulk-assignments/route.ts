@@ -12,7 +12,8 @@ export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
     return jsonError("허용되지 않은 요청입니다.", 403);
   }
-  if (!(await getAdminContext())) {
+  const admin = await getAdminContext();
+  if (!admin) {
     return jsonError("관리자 로그인이 필요합니다.", 401);
   }
   const input = await parseJson(request, bulkAssignmentSchema);
@@ -21,7 +22,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const assignments = await createBulkAssignments(input);
+    const assignments = await createBulkAssignments(input, admin);
     return Response.json(
       { assignments },
       {

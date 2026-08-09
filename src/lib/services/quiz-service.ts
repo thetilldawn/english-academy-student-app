@@ -446,8 +446,8 @@ export async function listStudentAssignments(
         lastAttempt.status === "expired" ||
         assignment.retake_allowed);
     const assignedAt =
-      assignedAtByAssignment.get(assignment.id) ??
       assignment.available_from ??
+      assignedAtByAssignment.get(assignment.id) ??
       new Date(0).toISOString();
     const orderInput: LearningActivityOrderInput = {
       status: missed

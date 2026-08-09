@@ -139,28 +139,38 @@ describe("일괄 단어 시험 입력 계약", () => {
     "11111111-1111-4111-8111-111111111111",
     "22222222-2222-4222-8222-222222222222",
   ];
+  const schedule = {
+    unitsPerSession: 3,
+    sessionCount: 5,
+    firstAvailableFrom: "2026-08-12T00:00:00.000Z",
+    dayInterval: 2,
+    firstAvailableUntil: "2026-08-12T12:00:00.000Z",
+  };
 
   it("서로 다른 학생 1~30명만 미리보기 대상으로 받는다", () => {
     expect(
       bulkAssignmentPreviewSchema.parse({
         studentIds,
+        ...schedule,
         includePendingReview: false,
         reviewLevels: [1, 2],
         englishToKoreanRatio: 50,
       }),
-    ).toMatchObject({ studentIds, rangeMode: "single" });
+    ).toMatchObject({ studentIds, rangeMode: "previous_span" });
     expect(
       bulkAssignmentPreviewSchema.parse({
         studentIds,
-        rangeMode: "week_span",
+        ...schedule,
+        rangeMode: "fixed_span",
         includePendingReview: false,
         reviewLevels: [1, 2],
         englishToKoreanRatio: 50,
       }).rangeMode,
-    ).toBe("week_span");
+    ).toBe("fixed_span");
     expect(() =>
       bulkAssignmentPreviewSchema.parse({
         studentIds,
+        ...schedule,
         rangeMode: "seven_assignments",
         includePendingReview: false,
         reviewLevels: [1, 2],
@@ -170,6 +180,7 @@ describe("일괄 단어 시험 입력 계약", () => {
     expect(
       bulkAssignmentPreviewSchema.parse({
         studentIds,
+        ...schedule,
         includePendingReview: false,
         reviewLevels: [1, 2],
         englishToKoreanRatio: 50,
@@ -178,6 +189,7 @@ describe("일괄 단어 시험 입력 계약", () => {
     expect(() =>
       bulkAssignmentPreviewSchema.parse({
         studentIds: [studentIds[0], studentIds[0]],
+        ...schedule,
         includePendingReview: false,
         reviewLevels: [1, 2],
         englishToKoreanRatio: 50,
@@ -188,6 +200,7 @@ describe("일괄 단어 시험 입력 계약", () => {
         studentIds: Array.from({ length: 31 }, (_, index) =>
           `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
         ),
+        ...schedule,
         includePendingReview: false,
         reviewLevels: [1, 2],
         englishToKoreanRatio: 50,
@@ -195,16 +208,40 @@ describe("일괄 단어 시험 입력 계약", () => {
     ).toThrow();
   });
 
+  it("회차당 DAY 수·시험 횟수·날짜 간격을 검증한다", () => {
+    expect(() =>
+      bulkAssignmentPreviewSchema.parse({
+        studentIds,
+        ...schedule,
+        sessionCount: 8,
+        includePendingReview: false,
+        reviewLevels: [1, 2],
+        englishToKoreanRatio: 50,
+      }),
+    ).toThrow();
+    expect(() =>
+      bulkAssignmentPreviewSchema.parse({
+        studentIds,
+        ...schedule,
+        firstAvailableUntil: "2026-08-11T12:00:00.000Z",
+        includePendingReview: false,
+        reviewLevels: [1, 2],
+        englishToKoreanRatio: 50,
+      }),
+    ).toThrow("첫 시험 마감은 첫 배정 시간보다 뒤로 정해 주세요.");
+  });
+
   it("전체 시간과 문제당 시간을 동시에 저장하지 않는다", () => {
     const base = {
       studentIds,
+      ...schedule,
+      idempotencyKey: "33333333-3333-4333-8333-333333333333",
       includePendingReview: true,
       reviewLevels: [1, 2] as const,
       englishToKoreanRatio: 50 as const,
       timeLimitSeconds: 300,
       passingScore: 80,
       questionOrderMode: "random" as const,
-      availableUntil: null,
     };
     expect(
       bulkAssignmentSchema.parse({

@@ -4,9 +4,8 @@ import {
 } from "@/lib/admin/unit-range";
 
 export const bulkAssignmentRangeModes = [
-  "single",
   "previous_span",
-  "week_span",
+  "fixed_span",
 ] as const;
 
 export type BulkAssignmentRangeMode =
@@ -17,50 +16,67 @@ export type BulkRangeProgress = {
   recommendedDirection: 1 | -1;
 };
 
-export type ResolvedBulkAssignmentRange<T extends OrderedUnit> = {
+export type ResolvedBulkAssignmentSession<T extends OrderedUnit> = {
+  sessionNumber: number;
   units: T[];
   requestedCount: number;
   truncated: boolean;
 };
 
-export function resolveBulkAssignmentRange<T extends OrderedUnit>(
+export type ResolvedBulkAssignmentSeries<T extends OrderedUnit> = {
+  direction: 1 | -1;
+  requestedCountPerSession: number;
+  sessions: ResolvedBulkAssignmentSession<T>[];
+  hasEmptySession: boolean;
+};
+
+export function resolveBulkAssignmentSeries<T extends OrderedUnit>(
   availableUnits: readonly T[],
   progress: BulkRangeProgress,
   mode: BulkAssignmentRangeMode,
-): ResolvedBulkAssignmentRange<T> {
+  unitsPerSession: number,
+  sessionCount: number,
+): ResolvedBulkAssignmentSeries<T> {
   const recommended = resolveOrderedContiguousUnits(
     availableUnits,
     progress.recommendedUnitIds,
   );
-  const requestedCount =
-    mode === "single"
-      ? 1
-      : mode === "week_span"
-        ? 7
-        : recommended.length;
+  const requestedCountPerSession =
+    mode === "previous_span" ? recommended.length : unitsPerSession;
   const direction =
-    mode === "previous_span"
-      ? recommended.length > 1 &&
-        recommended[1].sortIndex < recommended[0].sortIndex
-        ? -1
-        : progress.recommendedDirection
+    mode === "previous_span" &&
+    recommended.length > 1 &&
+    recommended[1].sortIndex < recommended[0].sortIndex
+      ? -1
       : progress.recommendedDirection;
   const unitBySortIndex = new Map(
     availableUnits.map((unit) => [unit.sortIndex, unit]),
   );
-  const units: T[] = [];
-  for (let offset = 0; offset < requestedCount; offset += 1) {
-    const unit = unitBySortIndex.get(
-      recommended[0].sortIndex + offset * direction,
-    );
-    if (!unit) break;
-    units.push(unit);
-  }
+  const firstSortIndex = recommended[0].sortIndex;
+  const sessions = Array.from({ length: sessionCount }, (_, index) => {
+    const units: T[] = [];
+    const sessionStart =
+      firstSortIndex + index * requestedCountPerSession * direction;
+    for (let offset = 0; offset < requestedCountPerSession; offset += 1) {
+      const unit = unitBySortIndex.get(
+        sessionStart + offset * direction,
+      );
+      if (!unit) break;
+      units.push(unit);
+    }
+    return {
+      sessionNumber: index + 1,
+      units,
+      requestedCount: requestedCountPerSession,
+      truncated: units.length > 0 && units.length < requestedCountPerSession,
+    };
+  });
 
   return {
-    units,
-    requestedCount,
-    truncated: units.length < requestedCount,
+    direction,
+    requestedCountPerSession,
+    sessions,
+    hasEmptySession: sessions.some((session) => session.units.length === 0),
   };
 }
 

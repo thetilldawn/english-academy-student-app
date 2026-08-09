@@ -173,7 +173,12 @@ const reviewScopeSchema = z.enum(["dataset", "selection"]);
 
 const bulkAssignmentSelectionFields = {
   studentIds: z.array(z.uuid()).min(1).max(30),
-  rangeMode: z.enum(bulkAssignmentRangeModes).default("single"),
+  rangeMode: z.enum(bulkAssignmentRangeModes).default("previous_span"),
+  unitsPerSession: z.number().int().min(1).max(30).default(1),
+  sessionCount: z.number().int().min(1).max(7).default(1),
+  firstAvailableFrom: z.iso.datetime({ offset: true }),
+  dayInterval: z.number().int().min(1).max(30).default(1),
+  firstAvailableUntil: z.iso.datetime({ offset: true }).nullable(),
   includePendingReview: z.boolean(),
   reviewLevels: z.array(mixedReviewLevelSchema).min(1).max(2),
   englishToKoreanRatio: z.union([
@@ -187,6 +192,8 @@ function validateBulkAssignmentSelection(
   value: {
     studentIds: string[];
     reviewLevels: (1 | 2)[];
+    firstAvailableFrom: string;
+    firstAvailableUntil: string | null;
   },
   context: z.RefinementCtx,
 ) {
@@ -204,6 +211,16 @@ function validateBulkAssignmentSelection(
       message: "같은 오답 단계를 두 번 선택할 수 없습니다.",
     });
   }
+  if (
+    value.firstAvailableUntil &&
+    Date.parse(value.firstAvailableUntil) <= Date.parse(value.firstAvailableFrom)
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["firstAvailableUntil"],
+      message: "첫 시험 마감은 첫 배정 시간보다 뒤로 정해 주세요.",
+    });
+  }
 }
 
 export const bulkAssignmentPreviewSchema = z
@@ -214,10 +231,10 @@ export const bulkAssignmentPreviewSchema = z
 export const bulkAssignmentSchema = z
   .object({
     ...bulkAssignmentSelectionFields,
+    idempotencyKey: z.uuid(),
     timeLimitSeconds: z.number().int().min(30).max(10800),
     passingScore: z.number().int().min(0).max(100),
     questionOrderMode: z.enum(questionOrderModes).default("random"),
-    availableUntil: z.iso.datetime({ offset: true }).nullable(),
     timingMode: z.enum(timingModes),
     questionTimeLimitSeconds: z
       .number()

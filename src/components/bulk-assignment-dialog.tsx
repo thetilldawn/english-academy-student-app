@@ -31,15 +31,14 @@ import type { ReviewLevel } from "@/lib/admin/assignment-submission";
 import type { BulkAssignmentRangeMode } from "@/lib/admin/bulk-assignment-range";
 import {
   currentTimeMilliseconds,
+  isoToKoreanDateTimeLocal,
   koreanDateTimeLocalToIso,
 } from "@/lib/deadline";
+import { formatKoreanDateTime } from "@/lib/format";
 
-type BulkPreviewItem = {
-  studentId: string;
-  studentName: string;
+type BulkPreviewSession = {
+  sessionNumber: number;
   available: boolean;
-  datasetId: string | null;
-  datasetLabel: string | null;
   unitId: string | null;
   unitLabel: string | null;
   unitIds: string[];
@@ -47,6 +46,18 @@ type BulkPreviewItem = {
   rangeTruncated: boolean;
   questionCount: number;
   wrongCount: number;
+  availableFrom: string;
+  availableUntil: string | null;
+  error: string | null;
+};
+
+type BulkPreviewItem = {
+  studentId: string;
+  studentName: string;
+  available: boolean;
+  datasetId: string | null;
+  datasetLabel: string | null;
+  sessions: BulkPreviewSession[];
   error: string | null;
 };
 
@@ -54,6 +65,7 @@ type BulkPreview = {
   items: BulkPreviewItem[];
   assignableCount: number;
   blockedCount: number;
+  assignmentCount: number;
 };
 
 type ErrorResponse = { error?: string };
@@ -67,11 +79,17 @@ export function BulkAssignmentDialog({
   includePendingReview: boolean;
   students: { id: string; displayName: string }[];
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (assignmentCount: number) => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [rangeMode, setRangeMode] =
     useState<BulkAssignmentRangeMode>("previous_span");
+  const [unitsPerSession, setUnitsPerSession] = useState(1);
+  const [sessionCount, setSessionCount] = useState(1);
+  const [firstAvailableDate, setFirstAvailableDate] = useState(() =>
+    isoToKoreanDateTimeLocal(new Date().toISOString()).slice(0, 10),
+  );
+  const [dayInterval, setDayInterval] = useState(1);
   const [directionRatio, setDirectionRatio] = useState<0 | 50 | 100>(50);
   const [reviewLevels, setReviewLevels] = useState<ReviewLevel[]>([1, 2]);
   const [questionOrderMode, setQuestionOrderMode] =
@@ -81,11 +99,12 @@ export function BulkAssignmentDialog({
   const [questionTimeLimitSeconds, setQuestionTimeLimitSeconds] =
     useState(20);
   const [passingScore, setPassingScore] = useState(80);
-  const [availableUntilLocal, setAvailableUntilLocal] = useState("");
+  const [firstAvailableUntilLocal, setFirstAvailableUntilLocal] = useState("");
   const [preview, setPreview] = useState<BulkPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const idempotencyKeyRef = useRef<string | null>(null);
   const studentIdsKey = useMemo(
     () => students.map((student) => student.id).join(","),
     [students],
@@ -95,7 +114,42 @@ export function BulkAssignmentDialog({
     dialogRef.current?.showModal();
   }, []);
 
+  const firstAvailableFrom = firstAvailableDate
+    ? koreanDateTimeLocalToIso(`${firstAvailableDate}T00:00`)
+    : null;
+  const firstAvailableUntil = firstAvailableUntilLocal
+    ? koreanDateTimeLocalToIso(firstAvailableUntilLocal)
+    : null;
+
   useEffect(() => {
+    idempotencyKeyRef.current = crypto.randomUUID();
+  }, [
+    dayInterval,
+    directionRatio,
+    firstAvailableDate,
+    firstAvailableUntilLocal,
+    includePendingReview,
+    passingScore,
+    questionOrderMode,
+    questionTimeLimitSeconds,
+    rangeMode,
+    reviewLevels,
+    sessionCount,
+    studentIdsKey,
+    timeLimitMinutes,
+    timingMode,
+    unitsPerSession,
+  ]);
+
+  useEffect(() => {
+    if (
+      !firstAvailableFrom ||
+      (firstAvailableUntilLocal &&
+        (!firstAvailableUntil ||
+          Date.parse(firstAvailableUntil) <= Date.parse(firstAvailableFrom)))
+    ) {
+      return;
+    }
     const controller = new AbortController();
     void fetch("/api/admin/bulk-assignments/preview", {
       method: "POST",
@@ -103,6 +157,11 @@ export function BulkAssignmentDialog({
       body: JSON.stringify({
         studentIds: studentIdsKey.split(",").filter(Boolean),
         rangeMode,
+        unitsPerSession,
+        sessionCount,
+        firstAvailableFrom,
+        dayInterval,
+        firstAvailableUntil,
         includePendingReview,
         reviewLevels,
         englishToKoreanRatio: directionRatio,
@@ -120,6 +179,7 @@ export function BulkAssignmentDialog({
               : adminLearningText.bulkAssignmentModal.previewError,
           );
         }
+        setError("");
         setPreview(payload);
       })
       .catch((requestError: unknown) => {
@@ -137,10 +197,16 @@ export function BulkAssignmentDialog({
     return () => controller.abort();
   }, [
     directionRatio,
+    dayInterval,
+    firstAvailableFrom,
+    firstAvailableUntil,
+    firstAvailableUntilLocal,
     includePendingReview,
     rangeMode,
     reviewLevels,
+    sessionCount,
     studentIdsKey,
+    unitsPerSession,
   ]);
 
   function close() {
@@ -172,14 +238,18 @@ export function BulkAssignmentDialog({
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    const availableUntil = availableUntilLocal
-      ? koreanDateTimeLocalToIso(availableUntilLocal)
-      : null;
     if (
-      availableUntilLocal &&
-      (!availableUntil || Date.parse(availableUntil) <= currentTimeMilliseconds())
+      !firstAvailableFrom ||
+      (firstAvailableUntilLocal &&
+        (!firstAvailableUntil ||
+          Date.parse(firstAvailableUntil) <= currentTimeMilliseconds() ||
+          Date.parse(firstAvailableUntil) <= Date.parse(firstAvailableFrom)))
     ) {
-      setError(adminLearningText.assignmentModal.deadline.invalid);
+      setError(
+        firstAvailableDate
+          ? adminLearningText.bulkAssignmentModal.firstDeadlineInvalid
+          : adminLearningText.bulkAssignmentModal.firstDateRequired,
+      );
       return;
     }
     setSubmitting(true);
@@ -190,6 +260,13 @@ export function BulkAssignmentDialog({
         body: JSON.stringify({
           studentIds: students.map((student) => student.id),
           rangeMode,
+          unitsPerSession,
+          sessionCount,
+          firstAvailableFrom,
+          dayInterval,
+          firstAvailableUntil,
+          idempotencyKey:
+            idempotencyKeyRef.current ?? crypto.randomUUID(),
           includePendingReview,
           reviewLevels,
           englishToKoreanRatio: directionRatio,
@@ -197,7 +274,6 @@ export function BulkAssignmentDialog({
             timingMode === "total" ? timeLimitMinutes * 60 : 10800,
           passingScore,
           questionOrderMode,
-          availableUntil,
           timingMode,
           questionTimeLimitSeconds:
             timingMode === "per_question"
@@ -213,7 +289,7 @@ export function BulkAssignmentDialog({
           payload.error ?? adminLearningText.bulkAssignmentModal.saveError,
         );
       }
-      onSuccess();
+      onSuccess(payload.assignments?.length ?? students.length * sessionCount);
       dialogRef.current?.close();
     } catch (requestError) {
       toast.error(
@@ -261,11 +337,11 @@ export function BulkAssignmentDialog({
       </ModalHeader>
 
       <ModalBody>
-      <form
-        className="bulk-assignment-form"
-        id="bulk-assignment-form"
-        onSubmit={submit}
-      >
+        <form
+          className="bulk-assignment-form"
+          id="bulk-assignment-form"
+          onSubmit={submit}
+        >
           <section className="bulk-assignment-settings">
             <label className="field bulk-range-mode-field">
               <span className="field-label label-with-help">
@@ -289,19 +365,104 @@ export function BulkAssignmentDialog({
                 }}
                 value={rangeMode}
               >
-                <option value="single">
-                  {adminLearningText.bulkAssignmentModal.rangeMode.single}
-                </option>
                 <option value="previous_span">
                   {
                     adminLearningText.bulkAssignmentModal.rangeMode
                       .previousSpan
                   }
                 </option>
-                <option value="week_span">
-                  {adminLearningText.bulkAssignmentModal.rangeMode.weekSpan}
+                <option value="fixed_span">
+                  {adminLearningText.bulkAssignmentModal.rangeMode.fixedSpan}
                 </option>
               </SelectField>
+            </label>
+            {rangeMode === "fixed_span" ? (
+              <label className="field">
+                <span className="field-label">
+                  {adminLearningText.bulkAssignmentModal.unitsPerSession}
+                </span>
+                <input
+                  max={30}
+                  min={1}
+                  onChange={(event) => {
+                    setPreviewLoading(true);
+                    setPreview(null);
+                    setError("");
+                    setUnitsPerSession(Number(event.target.value));
+                  }}
+                  type="number"
+                  value={unitsPerSession}
+                />
+              </label>
+            ) : null}
+            <label className="field">
+              <span className="field-label">
+                {adminLearningText.bulkAssignmentModal.sessionCount}
+              </span>
+              <input
+                max={7}
+                min={1}
+                onChange={(event) => {
+                  setPreviewLoading(true);
+                  setPreview(null);
+                  setError("");
+                  setSessionCount(Number(event.target.value));
+                }}
+                type="number"
+                value={sessionCount}
+              />
+            </label>
+            <label className="field">
+              <span className="field-label">
+                {adminLearningText.bulkAssignmentModal.firstAvailableDate}
+              </span>
+              <input
+                onChange={(event) => {
+                  const nextDate = event.target.value;
+                  const nextFrom = nextDate
+                    ? koreanDateTimeLocalToIso(`${nextDate}T00:00`)
+                    : null;
+                  setPreview(null);
+                  setFirstAvailableDate(nextDate);
+                  if (
+                    !nextFrom ||
+                    (firstAvailableUntil &&
+                      Date.parse(firstAvailableUntil) <= Date.parse(nextFrom))
+                  ) {
+                    setPreviewLoading(false);
+                    setError(
+                      nextDate
+                        ? adminLearningText.bulkAssignmentModal
+                            .firstDeadlineInvalid
+                        : adminLearningText.bulkAssignmentModal
+                            .firstDateRequired,
+                    );
+                  } else {
+                    setPreviewLoading(true);
+                    setError("");
+                  }
+                }}
+                required
+                type="date"
+                value={firstAvailableDate}
+              />
+            </label>
+            <label className="field">
+              <span className="field-label">
+                {adminLearningText.bulkAssignmentModal.dayInterval}
+              </span>
+              <input
+                max={30}
+                min={1}
+                onChange={(event) => {
+                  setPreviewLoading(true);
+                  setPreview(null);
+                  setError("");
+                  setDayInterval(Number(event.target.value));
+                }}
+                type="number"
+                value={dayInterval}
+              />
             </label>
             <label className="field">
               <span className="field-label">
@@ -408,18 +569,40 @@ export function BulkAssignmentDialog({
             </label>
             <div className="field">
               <span className="field-label label-with-help">
-                <label htmlFor="bulk-assignment-available-until">
-                  {adminLearningText.assignmentModal.deadline.label}
+                <label htmlFor="bulk-assignment-first-available-until">
+                  {adminLearningText.bulkAssignmentModal.firstDeadline}
                 </label>
                 <HelpTip label={adminLearningText.controls.deadlineHelpAria}>
                   {adminLearningText.bulkAssignmentModal.deadlineHelp}
                 </HelpTip>
               </span>
               <input
-                id="bulk-assignment-available-until"
-                onChange={(event) => setAvailableUntilLocal(event.target.value)}
+                id="bulk-assignment-first-available-until"
+                onChange={(event) => {
+                    const nextValue = event.target.value;
+                    const nextIso = nextValue
+                      ? koreanDateTimeLocalToIso(nextValue)
+                      : null;
+                    setPreview(null);
+                    setFirstAvailableUntilLocal(nextValue);
+                    if (
+                      nextValue &&
+                      (!nextIso ||
+                        !firstAvailableFrom ||
+                        Date.parse(nextIso) <= Date.parse(firstAvailableFrom))
+                    ) {
+                      setPreviewLoading(false);
+                      setError(
+                        adminLearningText.bulkAssignmentModal
+                          .firstDeadlineInvalid,
+                      );
+                    } else {
+                      setPreviewLoading(true);
+                      setError("");
+                    }
+                  }}
                 type="datetime-local"
-                value={availableUntilLocal}
+                value={firstAvailableUntilLocal}
               />
             </div>
           </section>
@@ -469,6 +652,7 @@ export function BulkAssignmentDialog({
                       adminLearningText.bulkAssignmentModal.previewSummary,
                       {
                         assignable: preview?.assignableCount ?? 0,
+                        sessions: sessionCount,
                         blocked: preview?.blockedCount ?? 0,
                       },
                     )}
@@ -481,55 +665,94 @@ export function BulkAssignmentDialog({
                 available: false,
                 datasetId: null,
                 datasetLabel: null,
-                unitId: null,
-                unitLabel: null,
-                unitIds: [],
-                unitLabels: [],
-                rangeTruncated: false,
-                questionCount: 0,
-                wrongCount: 0,
+                sessions: [],
                 error: null,
               }))).map((item) => (
                 <article className="bulk-preview-row" key={item.studentId}>
-                  <strong>{item.studentName}</strong>
-                  <MetaTagList>
+                  <div className="bulk-preview-student-heading">
+                    <strong>{item.studentName}</strong>
                     <MetaTag>
                       {item.datasetLabel ??
                         adminLearningText.bulkAssignmentModal.datasetPending}
                     </MetaTag>
-                    <MetaTag>
-                      {item.unitLabel ??
-                        adminLearningText.bulkAssignmentModal.rangePending}
-                    </MetaTag>
-                    {item.rangeTruncated ? (
-                      <MetaTag tone="warning">
-                        {
-                          adminLearningText.bulkAssignmentModal.rangeMode
-                            .remainingOnly
-                        }
-                      </MetaTag>
-                    ) : null}
-                    {item.available ? (
-                      <MetaTag tone="positive">
-                        {formatContentText(
-                          adminLearningText.bulkAssignmentModal.questionCount,
-                          { count: item.questionCount },
-                        )}
-                      </MetaTag>
-                    ) : (
-                      <MetaTag tone="danger">
-                        {adminLearningText.bulkAssignmentModal.needsReview}
-                      </MetaTag>
+                  </div>
+                  <div className="bulk-preview-session-list">
+                    {item.sessions.length > 0 ? item.sessions.map((session) => (
+                      <div
+                        className="bulk-preview-session"
+                        key={`${item.studentId}-${session.sessionNumber}`}
+                      >
+                        <strong>
+                          {formatContentText(
+                            adminLearningText.bulkAssignmentModal.sessionLabel,
+                            { count: session.sessionNumber },
+                          )}
+                        </strong>
+                        <MetaTagList>
+                          <MetaTag>
+                            {session.unitLabel ??
+                              adminLearningText.bulkAssignmentModal.rangePending}
+                          </MetaTag>
+                          <MetaTag>
+                            {formatContentText(
+                              adminLearningText.bulkAssignmentModal
+                                .assignmentDateTag,
+                              {
+                                datetime: formatKoreanDateTime(
+                                  session.availableFrom,
+                                ),
+                              },
+                            )}
+                          </MetaTag>
+                          {session.availableUntil ? (
+                            <MetaTag>
+                              {formatContentText(
+                                adminLearningText.bulkAssignmentModal.deadlineTag,
+                                {
+                                  datetime: formatKoreanDateTime(
+                                    session.availableUntil,
+                                  ),
+                                },
+                              )}
+                            </MetaTag>
+                          ) : null}
+                          {session.rangeTruncated ? (
+                            <MetaTag tone="warning">
+                              {
+                                adminLearningText.bulkAssignmentModal.rangeMode
+                                  .remainingOnly
+                              }
+                            </MetaTag>
+                          ) : null}
+                          {session.available ? (
+                            <MetaTag tone="positive">
+                              {formatContentText(
+                                adminLearningText.bulkAssignmentModal.questionCount,
+                                { count: session.questionCount },
+                              )}
+                            </MetaTag>
+                          ) : (
+                            <MetaTag tone="danger">
+                              {adminLearningText.bulkAssignmentModal.needsReview}
+                            </MetaTag>
+                          )}
+                          {includePendingReview && session.wrongCount > 0 ? (
+                            <MetaTag tone="warning">
+                              {formatContentText(
+                                adminLearningText.bulkAssignmentModal.wrongCount,
+                                { count: session.wrongCount },
+                              )}
+                            </MetaTag>
+                          ) : null}
+                        </MetaTagList>
+                        {session.error ? <small>{session.error}</small> : null}
+                      </div>
+                    )) : (
+                      <span>
+                        {adminLearningText.bulkAssignmentModal.rangePending}
+                      </span>
                     )}
-                    {includePendingReview && item.wrongCount > 0 ? (
-                      <MetaTag tone="warning">
-                        {formatContentText(
-                          adminLearningText.bulkAssignmentModal.wrongCount,
-                          { count: item.wrongCount },
-                        )}
-                      </MetaTag>
-                    ) : null}
-                  </MetaTagList>
+                  </div>
                   {item.error ? <small>{item.error}</small> : null}
                 </article>
               ))}
@@ -537,7 +760,7 @@ export function BulkAssignmentDialog({
           </section>
 
           {error ? <div className="form-error" role="alert">{error}</div> : null}
-      </form>
+        </form>
       </ModalBody>
       <ModalFooter>
         <Button
@@ -556,7 +779,11 @@ export function BulkAssignmentDialog({
             ? adminLearningText.bulkAssignmentModal.submitting
             : formatContentText(
                 adminLearningText.bulkAssignmentModal.submit,
-                { count: students.length },
+                {
+                  studentCount: students.length,
+                  assignmentCount:
+                    preview?.assignmentCount ?? students.length * sessionCount,
+                },
               )}
         </Button>
       </ModalFooter>

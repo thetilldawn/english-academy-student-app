@@ -1872,11 +1872,12 @@ export function AssignmentManager({
         <BulkAssignmentDialog
           includePendingReview={bulkMode === "with_wrong"}
           onClose={() => setBulkMode(null)}
-          onSuccess={() => {
+          onSuccess={(assignmentCount) => {
             setSelectedBulkStudentIds([]);
             toast.success(
               formatContentText(adminLearningText.page.bulk.success, {
-                count: selectedBulkStudents.length,
+                studentCount: selectedBulkStudents.length,
+                assignmentCount,
               }),
             );
             startRefreshTransition(() => router.refresh());

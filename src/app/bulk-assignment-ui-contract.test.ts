@@ -26,20 +26,27 @@ describe("학습 관리 일괄 배정 UI 계약", () => {
     );
     expect(dialog).toContain('fetch("/api/admin/bulk-assignments"');
     expect(copy).toContain(
-      "한 학생이라도 저장 조건이 맞지 않으면 아무 학생에게도 배정하지 않습니다.",
+      "한 학생의 한 회차라도 저장 조건이 맞지 않으면 어떤 시험도 배정하지 않습니다.",
     );
     expect(dialog).toContain("adminLearningText.bulkAssignmentModal.atomicHelp");
     expect(dialog).toContain("<HelpTip");
   });
 
-  it("한 DAY·이전 범위·다음 7 DAY를 같은 미리보기 계약으로 선택한다", () => {
+  it("이전 범위 또는 고정 DAY 수로 날짜별 독립 시험을 미리 본다", () => {
     const dialog = source("src/components/bulk-assignment-dialog.tsx");
     const copy = source("src/content/ko/admin-learning.ts");
     expect(dialog).toContain('useState<BulkAssignmentRangeMode>("previous_span")');
-    expect(dialog).toContain('<option value="single">');
     expect(dialog).toContain('<option value="previous_span">');
-    expect(dialog).toContain('<option value="week_span">');
+    expect(dialog).toContain('<option value="fixed_span">');
+    expect(dialog).toContain("unitsPerSession,");
+    expect(dialog).toContain("sessionCount,");
+    expect(dialog).toContain("firstAvailableFrom,");
+    expect(dialog).toContain("dayInterval,");
+    expect(dialog).toContain("firstAvailableUntil,");
+    expect(dialog).toContain("idempotencyKey:");
+    expect(dialog).toContain("item.sessions.map");
     expect(dialog).toContain("rangeMode,");
-    expect(copy).toContain("다음 7 DAY · 시험 1개");
+    expect(copy).toContain("회차당 DAY 수 직접 지정");
+    expect(copy).not.toContain("다음 7 DAY · 시험 1개");
   });
 });
