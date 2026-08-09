@@ -261,6 +261,12 @@ describe("wrong-word admin UI contract", () => {
       '.from("student_vocab_review_queue")',
     );
     expect(service).toContain("loadActiveReviewAssignments(");
+    expect(service).toContain(
+      "const authenticatedSupabase = await createServerSupabaseClient()",
+    );
+    expect(service).toContain(
+      "loadActiveReviewAssignments(\n      authenticatedSupabase,",
+    );
     expect(activeAssignments).toContain(
       '.from("assignment_review_targets")',
     );

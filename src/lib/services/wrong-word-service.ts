@@ -157,6 +157,7 @@ export async function getStudentWrongWordHistory(
   }
   await finalizeStaleQuizAttempts();
   const supabase = getServiceSupabaseClient();
+  const authenticatedSupabase = await createServerSupabaseClient();
   const { data: student, error: studentError } = await supabase
     .from("students")
     .select("id")
@@ -216,7 +217,7 @@ export async function getStudentWrongWordHistory(
   ]);
   for (const datasetId of activeDatasetIds) {
     const active = await loadActiveReviewAssignments(
-      supabase,
+      authenticatedSupabase,
       [studentId],
       datasetId,
     );
