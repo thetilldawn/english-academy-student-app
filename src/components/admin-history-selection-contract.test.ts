@@ -18,4 +18,17 @@ describe("admin history route detail contract", () => {
     expect(routeDialog).toContain("router.back()");
     expect(routeDialog).toContain("event.preventDefault()");
   });
+
+  it("학습 관리에서는 체크박스만 선택하고 카드 본문은 상세를 연다", () => {
+    const rows = source("src/components/ui-list-row.tsx");
+    const manager = source("src/components/assignment-manager.tsx");
+
+    expect(rows).toContain("aria-label={selectionAriaLabel}");
+    expect(rows).toContain("onChange={onToggle}");
+    expect(rows).toContain("href={href}");
+    expect(rows).not.toContain("onClick={onToggle}");
+    expect(rows).not.toContain('aria-hidden="true"');
+    expect(manager).toContain("href={");
+    expect(manager).toContain("historyDetailHref(nextActivity)");
+  });
 });

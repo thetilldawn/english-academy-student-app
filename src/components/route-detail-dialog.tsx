@@ -50,7 +50,7 @@ export function RouteDetailDialog({
       ref={dialogRef}
     >
       <ModalHeader
-        closeLabel={adminHistoryText.resultDetail.backToResults}
+        closeLabel={adminHistoryText.detailModal.close}
         onClose={close}
       >
         {heading}

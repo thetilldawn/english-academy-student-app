@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
 import { AssignmentMetaTags, MetaTag, MetaTagList } from "@/components/admin-meta-tags";
 import { AttemptScoreSummary } from "@/components/attempt-score-summary";
+import { CountBadge } from "@/components/count-badge";
 import { StatusBadge } from "@/components/status-badge";
 import { formatContentText } from "@/content/format";
 import { adminHistoryText } from "@/content/ko/admin-history";
@@ -50,11 +51,12 @@ export function AdminHistoryDetailHeading({
   titleId: string;
 }) {
   const { attempt, summary } = detail;
+  const displayTitle = assignmentDisplayTitle(summary);
 
   return (
     <div className="history-detail-heading-copy">
       <h1 id={titleId}>{summary.studentName}</h1>
-      <p>{assignmentDisplayTitle(summary)}</p>
+      {displayTitle ? <p>{displayTitle}</p> : null}
       <div className="history-detail-heading-tags">
         <AssignmentMetaTags {...summary} compact />
         <MetaTagList>
@@ -165,11 +167,11 @@ export function AdminHistoryDetailContent({
         <section aria-labelledby="answer-flow-heading" className="attempt-flow-section">
           <div className="section-heading">
             <h2 id="answer-flow-heading">{adminHistoryText.resultDetail.flowTitle}</h2>
-            <span className="detail-chip">
+            <CountBadge>
               {formatContentText(adminHistoryText.resultDetail.questionCount, {
                 count: wrongQuestions.length,
               })}
-            </span>
+            </CountBadge>
           </div>
 
           {wrongQuestions.length === 0 ? (

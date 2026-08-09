@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
+import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui-button";
 import { formatContentText } from "@/content/format";
 import { adminLearningText } from "@/content/ko/admin-learning";
@@ -98,18 +99,24 @@ export function AssignmentManagementList({
           <article className="card assignment-management-item" key={item.id}>
             <div className="assignment-management-copy">
               <div className="assignment-management-title">
-                <strong>
-                  {assignmentDisplayTitle({
+                {assignmentDisplayTitle({
+                  assignmentTitle: item.title,
+                  datasetTitle: item.datasetTitle,
+                  primaryUnitLabels: item.unitLabels,
+                  unitLabels: item.unitLabels,
+                }) ? (
+                  <strong>{assignmentDisplayTitle({
                     assignmentTitle: item.title,
+                    datasetTitle: item.datasetTitle,
                     primaryUnitLabels: item.unitLabels,
                     unitLabels: item.unitLabels,
-                  })}
-                </strong>
-                <MetaTag
+                  })}</strong>
+                ) : null}
+                <StatusBadge
                   tone={item.status === "active" ? "warning" : "neutral"}
                 >
                   {statusLabel(item.status)}
-                </MetaTag>
+                </StatusBadge>
               </div>
               <MetaTagList>
                 <MetaTag>{item.datasetTitle}</MetaTag>

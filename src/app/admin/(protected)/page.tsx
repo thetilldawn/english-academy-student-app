@@ -4,53 +4,15 @@ import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
 import { OverviewActionGroups } from "@/components/overview-action-groups";
 import { adminOverviewText } from "@/content/ko/admin-overview";
 import { overviewActivityGroups } from "@/lib/admin/learning-activity";
-import { getServerEnvironment } from "@/lib/env";
-import {
-  buildStudentProgress,
-  listAssignmentHistoryBundle,
-  listDatasets,
-  listSelectableDatasets,
-  listStudentCurrentVocabWrongSummaries,
-  listStudentLearningSources,
-  listStudentPendingReviewSummaries,
-  listStudents,
-  listVocabUnits,
-} from "@/lib/services/admin-service";
-import { buildStudentVocabBookHistory } from "@/lib/admin/student-vocab-book-history";
+import { listAssignmentHistoryBundle } from "@/lib/services/admin-service";
 
 export const metadata: Metadata = {
   title: adminOverviewText.page.title,
 };
 
 export default async function AdminDashboardPage() {
-  const [
-    historyBundle,
-    students,
-    datasets,
-    assignmentDatasets,
-    units,
-    pendingReviewSummaries,
-    currentVocabWrongSummaries,
-    learningSources,
-  ] = await Promise.all([
-    listAssignmentHistoryBundle(),
-    listStudents(),
-    listSelectableDatasets(),
-    listDatasets(),
-    listVocabUnits(),
-    listStudentPendingReviewSummaries(),
-    listStudentCurrentVocabWrongSummaries(),
-    listStudentLearningSources(),
-  ]);
-  const history = historyBundle.history;
+  const historyBundle = await listAssignmentHistoryBundle();
   const currentHistory = historyBundle.currentHistory;
-  const vocabBookHistory = buildStudentVocabBookHistory(
-    historyBundle.completeHistory,
-    new Map(units.map((unit) => [unit.id, unit.displayName])),
-  );
-  const progress = buildStudentProgress(students, units, history);
-  const appOrigin =
-    getServerEnvironment().APP_ORIGIN ?? "http://localhost:3000";
   const groups = overviewActivityGroups(currentHistory);
   const sections = [
     {
@@ -78,23 +40,7 @@ export default async function AdminDashboardPage() {
           {adminOverviewText.emptyState}
         </div>
       ) : (
-        <OverviewActionGroups
-          sections={sections}
-          studentManagerProps={{
-            appOrigin,
-            assignmentDatasets,
-            assignmentUnits: units,
-            currentVocabWrongSummaries,
-            datasets,
-            history,
-            currentHistory,
-            learningSources,
-            pendingReviewSummaries,
-            progress,
-            students,
-            vocabBookHistory,
-          }}
-        />
+        <OverviewActionGroups sections={sections} />
       )}
     </>
   );

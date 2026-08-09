@@ -286,6 +286,7 @@ describe("assignmentDisplayTitle", () => {
     expect(
       assignmentDisplayTitle({
         assignmentTitle: "새 시험 · DAY 01",
+        datasetTitle: "능률 VOCA",
         unitLabels: ["DAY 01"],
         primaryUnitLabels: ["DAY 01"],
       }),
@@ -293,6 +294,7 @@ describe("assignmentDisplayTitle", () => {
     expect(
       assignmentDisplayTitle({
         assignmentTitle: "완료 · 다시 학습 필요",
+        datasetTitle: "능률 VOCA",
         unitLabels: ["DAY 01"],
         primaryUnitLabels: ["DAY 01"],
       }),
@@ -300,6 +302,17 @@ describe("assignmentDisplayTitle", () => {
     expect(
       assignmentDisplayTitleForUnits("새 시험 · DAY 01", ["DAY 01"]),
     ).toBe("새 시험");
+  });
+
+  it("단어장·범위로 자동 생성된 제목은 태그와 중복 표시하지 않는다", () => {
+    expect(
+      assignmentDisplayTitle({
+        assignmentTitle: "능률 VOCA · DAY 03~DAY 05",
+        datasetTitle: "능률 VOCA",
+        unitLabels: ["DAY 03", "DAY 04", "DAY 05"],
+        primaryUnitLabels: ["DAY 03", "DAY 04", "DAY 05"],
+      }),
+    ).toBe("");
   });
 });
 

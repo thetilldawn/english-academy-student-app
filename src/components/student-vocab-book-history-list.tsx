@@ -1,4 +1,5 @@
 import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
+import { StatusBadge } from "@/components/status-badge";
 import {
   cataloguedDatasetDisplayLabel,
   type CataloguedDataset,
@@ -24,7 +25,7 @@ function statusPresentation(item: StudentVocabBookHistory) {
   return item.lastPassed
     ? {
         label: adminStudentsText.learning.wordbookHistory.passed,
-        tone: "positive" as const,
+        tone: "success" as const,
       }
     : {
         label: adminStudentsText.learning.wordbookHistory.failed,
@@ -81,9 +82,9 @@ export function StudentVocabBookHistoryList({
                         {adminStudentsText.learning.wordbookHistory.recent}
                       </MetaTag>
                     ) : null}
-                    <MetaTag tone={presentation.tone}>
+                    <StatusBadge tone={presentation.tone}>
                       {presentation.label}
-                    </MetaTag>
+                    </StatusBadge>
                   </MetaTagList>
                 </div>
                 <dl className="student-vocab-history-facts">

@@ -12,23 +12,21 @@ describe("mixed assignment admin UI contract", () => {
     const page = source(
       "src/app/admin/(protected)/assignments/page.tsx",
     );
+    const loader = source(
+      "src/lib/services/assignment-manager-data.ts",
+    );
 
-    expect(page).toContain("listStudentPendingReviewSummaries()");
+    expect(loader).toContain("listStudentPendingReviewSummaries()");
     expect(
-      page.match(/listStudentPendingReviewSummaries\(\)/g),
+      loader.match(/listStudentPendingReviewSummaries\(\)/g),
     ).toHaveLength(1);
-    expect(page).toContain(
-      "pendingReviewSummaries={pendingReviewSummaries}",
-    );
-    expect(page).toContain(
-      "listStudentCurrentVocabWrongSummaries()",
-    );
+    expect(loader).toContain("pendingReviewSummaries,");
+    expect(loader).toContain("listStudentCurrentVocabWrongSummaries()");
     expect(
-      page.match(/listStudentCurrentVocabWrongSummaries\(\)/g),
+      loader.match(/listStudentCurrentVocabWrongSummaries\(\)/g),
     ).toHaveLength(1);
-    expect(page).toContain(
-      "currentVocabWrongSummaries={currentVocabWrongSummaries}",
-    );
+    expect(loader).toContain("currentVocabWrongSummaries,");
+    expect(page).toContain("{...managerData}");
   });
 
   it("목록 필터와 기본 OFF 혼합 설정을 노출한다", () => {

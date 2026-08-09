@@ -478,14 +478,16 @@ export async function listStudentAssignments(
         lastAttempt?.unresolved_wrong_count ?? null,
     };
 
+    const datasetTitle = datasetTitles.get(assignment.dataset_id) ?? "어휘";
     return {
       id: assignment.id,
       title: assignment.title,
       displayTitle: assignmentDisplayTitleForUnits(
         assignment.title,
         [...fallbackUnitLabels, ...primaryUnitLabels],
+        datasetTitle,
       ),
-      datasetTitle: datasetTitles.get(assignment.dataset_id) ?? "어휘",
+      datasetTitle,
       assignmentPurpose: assignment.assignment_purpose,
       scopeLabel: assignmentScopeLabel({
         assignmentPurpose: assignment.assignment_purpose,

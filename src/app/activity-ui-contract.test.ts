@@ -44,8 +44,11 @@ describe("shared activity UI contract", () => {
     );
 
     expect(rows).toContain('type="checkbox"');
-    expect(rows).toContain('aria-pressed={checked}');
-    expect(rows).toContain('type="button"');
+    expect(rows).toContain("aria-label={selectionAriaLabel}");
+    expect(rows).toContain("onChange={onToggle}");
+    expect(rows).toContain("href={href}");
+    expect(rows).not.toContain("onClick={onToggle}");
+    expect(rows).not.toContain('aria-pressed={checked}');
     expect(rows).toContain("selectable-list-row-actions");
     expect(assignmentManager).toContain("onToggle={() => toggleBulkStudent");
     expect(assignmentManager).toContain(

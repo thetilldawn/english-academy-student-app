@@ -27,6 +27,7 @@ import { StudentVocabBookHistoryList } from "@/components/student-vocab-book-his
 import { HelpTip } from "@/components/help-tip";
 import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
 import { StatusBadge } from "@/components/status-badge";
+import { CountBadge } from "@/components/count-badge";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { adminStudentsText } from "@/content/ko/admin-students";
 import { commonText } from "@/content/ko/common";
@@ -1322,11 +1323,13 @@ export function StudentManager({
                                   priorityActivity?.unitLabels[0]}
                               </MetaTag>
                             ) : null}
-                          <strong>
-                            {priorityActivity
-                              ? assignmentDisplayTitle(priorityActivity)
-                              : adminStudentsText.card.noHistory}
-                          </strong>
+                          {priorityActivity ? (
+                            assignmentDisplayTitle(priorityActivity) ? (
+                              <strong>{assignmentDisplayTitle(priorityActivity)}</strong>
+                            ) : null
+                          ) : (
+                            <strong>{adminStudentsText.card.noHistory}</strong>
+                          )}
                           {priorityActivity ? (
                             <span className="student-card-score-line">
                               <AttemptScoreSummary
@@ -1575,26 +1578,16 @@ export function StudentManager({
                     />
                     <div className="learning-section-heading">
                       <h3>{adminStudentsText.learning.recentActivity}</h3>
-                      <span>
+                      <CountBadge>
                         {formatContentText(
                           adminStudentsText.learning.activityCount,
                           { count: selectedStudentCurrentHistory.length },
                         )}
-                      </span>
+                      </CountBadge>
                     </div>
                     <StudentLearningActivityList
                       initialLimit={5}
                       items={selectedStudentCurrentHistory}
-                      onEditAssignment={(item) => {
-                        openStudentAssignment({
-                          datasetId: item.datasetId,
-                          studentId: item.studentId,
-                          editTarget: {
-                            assignmentId: item.assignmentId,
-                            studentId: item.studentId,
-                          },
-                        });
-                      }}
                     />
                   </div>
                 ) : (
@@ -1841,16 +1834,6 @@ export function StudentManager({
                   filtersEnabled
                   initialLimit={5}
                   items={selectedStudentHistory}
-                  onEditAssignment={(item) => {
-                    openStudentAssignment({
-                      datasetId: item.datasetId,
-                      studentId: item.studentId,
-                      editTarget: {
-                        assignmentId: item.assignmentId,
-                        studentId: item.studentId,
-                      },
-                    });
-                  }}
                 />
               </section>
             )}

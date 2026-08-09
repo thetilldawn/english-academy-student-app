@@ -8,19 +8,21 @@ function source(relativePath: string) {
 }
 
 describe("assignment edit UI contract", () => {
-  it("학생 모달과 학습 관리가 같은 수정 action과 폼을 사용한다", () => {
-    const actions = source("src/components/admin-history-actions.tsx");
+  it("목록은 상세만 열고 미응시 배정 수정은 상세 안의 공통 폼을 사용한다", () => {
+    const detailActions = source("src/components/history-detail-actions.tsx");
     const activities = source(
       "src/components/student-learning-activity-list.tsx",
     );
-    const students = source("src/components/student-manager.tsx");
     const manager = source("src/components/assignment-manager.tsx");
 
-    expect(actions).toContain("isStudentAssignmentEditable(item)");
-    expect(actions).toContain("onEdit(item)");
-    expect(activities).toContain("onEdit={onEditAssignment}");
-    expect(students).toContain("initialEditTarget={assignmentEditTarget}");
-    expect(manager).toContain("function beginEdit(");
+    expect(activities).not.toContain("onEditAssignment");
+    expect(activities).not.toContain("<AdminHistoryActions");
+    expect(detailActions).toContain("isStudentAssignmentEditable(item)");
+    expect(detailActions).toContain("<AssignmentManager");
+    expect(detailActions).toContain('initialDialogView="assign"');
+    expect(detailActions).toContain("result.replacementAssignmentId");
+    expect(manager).not.toContain("function beginEdit(");
+    expect(manager).toContain("onAssignmentReplaced");
     expect(manager).toContain('method: "PUT"');
     expect(manager).toContain("assignmentEditChangeKeys(");
     expect(manager).toContain(

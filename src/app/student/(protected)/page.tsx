@@ -5,6 +5,7 @@ import { DeadlineCountdown } from "@/components/deadline-countdown";
 import { StartAttemptButton } from "@/components/start-attempt-button";
 import { AttemptScoreSummary } from "@/components/attempt-score-summary";
 import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
+import { CountBadge } from "@/components/count-badge";
 import { ButtonLink } from "@/components/ui-button";
 import { studentAppText } from "@/content/ko/student-app";
 import { formatContentText } from "@/content/format";
@@ -87,7 +88,7 @@ function AssignmentCard({
       <div className="title-with-status">
         <div>
           <p className="eyebrow">{assignment.datasetTitle}</p>
-          <h3>{assignment.displayTitle}</h3>
+          {assignment.displayTitle ? <h3>{assignment.displayTitle}</h3> : null}
         </div>
         <ActivityStatusTimeline
           className="student-assignment-timeline"
@@ -270,11 +271,11 @@ export default async function StudentDashboardPage() {
                 <h2 id={`student-assignment-${section.id}`}>
                   {section.title}
                 </h2>
-                <MetaTag>
+                <CountBadge>
                   {formatContentText(studentAppText.dashboard.meta.sectionCount, {
                     count: section.assignments.length,
                   })}
-                </MetaTag>
+                </CountBadge>
               </div>
               <div className="student-assignment-grid">
                 {section.assignments.map((assignment, assignmentIndex) => (

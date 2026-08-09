@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 
 import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
-import { AdminHistoryActions } from "@/components/admin-history-actions";
 import { AssignmentMetaTags } from "@/components/admin-meta-tags";
+import { CountBadge } from "@/components/count-badge";
 import { AttemptScoreSummary } from "@/components/attempt-score-summary";
 import {
   ActivityRowContent,
@@ -34,13 +34,11 @@ export function StudentLearningActivityList({
   filtersEnabled = false,
   initialLimit = 5,
   items,
-  onEditAssignment,
 }: {
   emptyLabel?: string;
   filtersEnabled?: boolean;
   initialLimit?: number;
   items: AssignmentHistorySummary[];
-  onEditAssignment?: (item: AssignmentHistorySummary) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [filterNow] = useState(() => Date.now());
@@ -191,25 +189,27 @@ export function StudentLearningActivityList({
                 <h4 id={`learning-activity-${section.id}`}>
                   {section.label}
                 </h4>
-                <span>
+                <CountBadge>
                   {formatContentText(
                     adminStudentsText.learning.activityList.count,
                     { count: section.items.length },
                   )}
-                </span>
+                </CountBadge>
               </div>
               <ol className="learning-activity-list">
                 {section.items.map((item) => (
                   <li className="learning-activity-row" key={item.id}>
                     <OpenableListRow
-                      ariaLabel={`${assignmentDisplayTitle(item)} 상세`}
+                      ariaLabel={`${assignmentDisplayTitle(item) || item.datasetTitle} 상세`}
                       className={`learning-activity-open activity-outcome-${buildAttemptStatusPresentation(item).outcome}`}
                       href={historyDetailHref(item)}
                     >
                       <ActivityRowContent
                         main={
                           <>
-                            <strong>{assignmentDisplayTitle(item)}</strong>
+                            {assignmentDisplayTitle(item) ? (
+                              <strong>{assignmentDisplayTitle(item)}</strong>
+                            ) : null}
                             <AssignmentMetaTags {...item} compact />
                           </>
                         }
@@ -227,13 +227,6 @@ export function StudentLearningActivityList({
                         timeline={<ActivityStatusTimeline item={item} />}
                       />
                     </OpenableListRow>
-                    <AdminHistoryActions
-                      item={item}
-                      onEdit={onEditAssignment}
-                      showDetailLink={false}
-                      size="small"
-                      summaryOnly
-                    />
                   </li>
                 ))}
               </ol>

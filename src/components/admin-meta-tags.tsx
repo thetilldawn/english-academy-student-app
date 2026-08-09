@@ -41,12 +41,14 @@ export function MetaTag({
 export function AssignmentMetaTags({
   assignmentPurpose,
   compact = false,
+  datasetTitle,
   primaryUnitLabels,
   questionCount,
   unitLabels,
 }: Pick<
   AssignmentHistorySource,
   | "assignmentPurpose"
+  | "datasetTitle"
   | "primaryUnitLabels"
   | "questionCount"
   | "unitLabels"
@@ -66,6 +68,7 @@ export function AssignmentMetaTags({
 
   return (
     <MetaTagList className="assignment-meta-tags">
+      <MetaTag>{datasetTitle}</MetaTag>
       <MetaTag>{assignmentTypeLabel(assignmentPurpose)}</MetaTag>
       <MetaTag>{rangeLabel}</MetaTag>
       {!compact && assignmentPurpose !== "review" ? (

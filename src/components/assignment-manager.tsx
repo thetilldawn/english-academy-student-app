@@ -19,7 +19,11 @@ import { HelpTip } from "@/components/help-tip";
 import { BulkAssignmentDialog } from "@/components/bulk-assignment-dialog";
 import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
 import { AttemptScoreSummary } from "@/components/attempt-score-summary";
-import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
+import {
+  AssignmentMetaTags,
+  MetaTag,
+  MetaTagList,
+} from "@/components/admin-meta-tags";
 import { StudentLearningActivityList } from "@/components/student-learning-activity-list";
 import {
   ActivityRowContent,
@@ -30,10 +34,12 @@ import {
   projectCurrentAssignmentHistory,
   type AssignmentHistorySummary,
 } from "@/lib/admin/history";
+import { historyDetailHref } from "@/lib/admin/history-route";
 import {
   assignmentEditChangeKeys,
   type AssignmentEditChangeKey,
   type AssignmentEditDraft,
+  type AssignmentReplacementResult,
 } from "@/lib/admin/assignment-edit";
 import {
   activityNeedsRetry,
@@ -96,7 +102,7 @@ import {
   ModalFrame,
   ModalHeader,
 } from "@/components/ui-modal";
-import { Button } from "@/components/ui-button";
+import { Button, ButtonLink } from "@/components/ui-button";
 
 export type AssignmentDatasetItem = CataloguedDataset & {
   rowCount: number;
@@ -444,6 +450,7 @@ export function AssignmentManager({
   initialDialogView = "overview",
   launcherOnly = false,
   embedded = false,
+  onAssignmentReplaced,
   onLauncherClose,
 }: {
   datasets: AssignmentDatasetItem[];
@@ -463,6 +470,7 @@ export function AssignmentManager({
   initialDialogView?: "overview" | "assign";
   launcherOnly?: boolean;
   embedded?: boolean;
+  onAssignmentReplaced?: (result: AssignmentReplacementResult) => void;
   onLauncherClose?: () => void;
 }) {
   const router = useRouter();
@@ -1202,20 +1210,6 @@ export function AssignmentManager({
     resetScopedControls();
   }
 
-  function beginEdit(item: AssignmentHistorySummary) {
-    setStudentId(item.studentId);
-    setDialogView("assign");
-    setEditTarget({
-      assignmentId: item.assignmentId,
-      studentId: item.studentId,
-    });
-    setEditDraft(null);
-    setEditLoading(true);
-    setReviewScope("dataset");
-    setError("");
-    editIdempotencyRef.current = null;
-  }
-
   function selectStartUnit(nextStartId: string) {
     changeQuestionCountMode("auto");
     setCapacity(null);
@@ -1374,7 +1368,8 @@ export function AssignmentManager({
           body: JSON.stringify(submission.body),
         });
       }
-      const payload = (await response.json()) as ErrorResponse;
+      const payload = (await response.json()) as ErrorResponse &
+        Partial<AssignmentReplacementResult>;
 
       if (!response.ok) {
         if (response.status === 409) {
@@ -1403,6 +1398,26 @@ export function AssignmentManager({
               adminLearningText.assignmentModal.success.assigned,
               { student: studentName },
             );
+      if (editTarget) {
+        if (
+          payload.status !== "replaced" ||
+          !payload.replacementAssignmentId ||
+          !payload.studentId ||
+          !payload.sourceAssignmentId ||
+          !payload.replacementPurpose ||
+          typeof payload.idempotent !== "boolean"
+        ) {
+          throw new Error(adminLearningText.assignmentModal.errors.generic);
+        }
+        onAssignmentReplaced?.({
+          status: payload.status,
+          replacementAssignmentId: payload.replacementAssignmentId,
+          studentId: payload.studentId,
+          sourceAssignmentId: payload.sourceAssignmentId,
+          replacementPurpose: payload.replacementPurpose,
+          idempotent: payload.idempotent,
+        });
+      }
       toast.success(successMessage);
       if (!editTarget) {
         setAvailableUntilLocal("");
@@ -1719,30 +1734,43 @@ export function AssignmentManager({
                 return (
                   <SelectableListRow
                     actions={
-                      <Button
-                        onClick={() =>
-                          selectStudent(
-                            student.id,
-                            nextActivity ? "overview" : "assign",
-                          )
-                        }
-                        size="small"
-                        variant="primary"
-                      >
-                        {nextActivity
-                          ? adminLearningText.page.studentCard.view
-                          : adminLearningText.page.studentCard.assign}
-                      </Button>
+                      nextActivity ? (
+                        <ButtonLink
+                          href={historyDetailHref(nextActivity)}
+                          size="small"
+                          variant="primary"
+                        >
+                          {adminLearningText.page.studentCard.view}
+                        </ButtonLink>
+                      ) : (
+                        <Button
+                          onClick={() => selectStudent(student.id, "assign")}
+                          size="small"
+                          variant="primary"
+                        >
+                          {adminLearningText.page.studentCard.assign}
+                        </Button>
+                      )
                     }
-                    ariaLabel={formatContentText(
-                      adminLearningText.page.bulk.selectStudentAria,
-                      { student: student.displayName },
-                    )}
                     checked={selectedBulkStudentIds.includes(student.id)}
                     checkboxId={`bulk-student-${student.id}`}
                     className="card assignment-student-row"
+                    href={
+                      nextActivity
+                        ? historyDetailHref(nextActivity)
+                        : undefined
+                    }
                     key={student.id}
+                    openAriaLabel={
+                      nextActivity
+                        ? `${student.displayName} ${assignmentDisplayTitle(nextActivity)} 상세`
+                        : undefined
+                    }
                     onToggle={() => toggleBulkStudent(student.id)}
+                    selectionAriaLabel={formatContentText(
+                      adminLearningText.page.bulk.selectStudentAria,
+                      { student: student.displayName },
+                    )}
                   >
                     <ActivityRowContent
                       main={
@@ -1788,11 +1816,16 @@ export function AssignmentManager({
                             ) : null}
                           </MetaTagList>
                           <span className="assignment-student-recent">
-                            <strong>
-                              {nextActivity
-                                ? assignmentDisplayTitle(nextActivity)
-                                : adminLearningText.page.studentCard.noActivity}
-                            </strong>
+                            {nextActivity ? (
+                              <>
+                                {assignmentDisplayTitle(nextActivity) ? (
+                                  <strong>{assignmentDisplayTitle(nextActivity)}</strong>
+                                ) : null}
+                                <AssignmentMetaTags {...nextActivity} compact />
+                              </>
+                            ) : (
+                              <strong>{adminLearningText.page.studentCard.noActivity}</strong>
+                            )}
                           </span>
                           {showRecommendation ? (
                             <MetaTagList>
@@ -2002,7 +2035,6 @@ export function AssignmentManager({
                 </div>
                 <StudentLearningActivityList
                   items={selectedActivities}
-                  onEditAssignment={beginEdit}
                 />
               </section>
             ) : (

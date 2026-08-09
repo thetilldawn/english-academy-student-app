@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { StartRetryButton } from "@/components/start-retry-button";
 import { ButtonLink } from "@/components/ui-button";
+import { CountBadge } from "@/components/count-badge";
 import { formatContentText } from "@/content/format";
 import { studentAppText } from "@/content/ko/student-app";
 import { requireStudentSession } from "@/lib/auth/student-session";
@@ -150,11 +151,11 @@ export default async function StudentResultPage({
                 ? studentAppText.result.sections.firstWrong
                 : studentAppText.result.sections.unresolved}
             </h2>
-            <span className="detail-chip">
+            <CountBadge>
               {formatContentText(studentAppText.result.count, {
                 count: unresolvedQuestions.length,
               })}
-            </span>
+            </CountBadge>
           </div>
           {unresolvedQuestions.length === 0 ? (
             <div className="empty-state">
@@ -240,11 +241,11 @@ export default async function StudentResultPage({
             <h2 id="resolved-heading">
               {studentAppText.result.sections.resolved}
             </h2>
-            <span className="detail-chip">
+            <CountBadge>
               {formatContentText(studentAppText.result.count, {
                 count: resolvedQuestions.length,
               })}
-            </span>
+            </CountBadge>
           </div>
           <div className="result-question-list result-question-grid">
             {resolvedQuestions.map((question) => (

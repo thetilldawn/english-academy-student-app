@@ -7,7 +7,9 @@ import {
 import { HistoryDetailActions } from "@/components/history-detail-actions";
 import { RouteDetailDialog } from "@/components/route-detail-dialog";
 import { historyDetailHref } from "@/lib/admin/history-route";
+import { isStudentAssignmentEditable } from "@/lib/admin/assignment-edit";
 import { getAdminHistoryDetail } from "@/lib/services/admin-service";
+import { loadAssignmentManagerData } from "@/lib/services/assignment-manager-data";
 
 export default async function InterceptedAdminResultDetailPage({
   params,
@@ -20,6 +22,9 @@ export default async function InterceptedAdminResultDetailPage({
   if (detail.canonicalKey !== entryKey) {
     redirect(historyDetailHref(detail.summary));
   }
+  const editorData = isStudentAssignmentEditable(detail.summary)
+    ? await loadAssignmentManagerData()
+    : null;
 
   return (
     <RouteDetailDialog
@@ -32,7 +37,11 @@ export default async function InterceptedAdminResultDetailPage({
     >
       <AdminHistoryDetailContent
         actions={
-          <HistoryDetailActions item={detail.summary} mode="overlay" />
+          <HistoryDetailActions
+            editorData={editorData}
+            item={detail.summary}
+            mode="overlay"
+          />
         }
         detail={detail}
       />

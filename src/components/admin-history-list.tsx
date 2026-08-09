@@ -41,15 +41,16 @@ function HistoryRowContent({
   compact: boolean;
   item: AssignmentHistorySummary;
 }) {
+  const displayTitle = assignmentDisplayTitle(item);
   return (
     <ActivityRowContent
       main={
         <>
           <span className="activity-row-title-line">
             <strong>{item.studentName}</strong>
-            <span className="activity-row-title">
-              {assignmentDisplayTitle(item)}
-            </span>
+            {displayTitle ? (
+              <span className="activity-row-title">{displayTitle}</span>
+            ) : null}
           </span>
           <AssignmentMetaTags {...item} compact />
         </>
@@ -78,12 +79,10 @@ function HistoryRowContent({
 export function AdminHistoryList({
   items,
   compact = false,
-  onSelectStudent,
   showFilters = false,
 }: {
   items: AssignmentHistorySummary[];
   compact?: boolean;
-  onSelectStudent?: (studentId: string) => void;
   showFilters?: boolean;
 }) {
   const [query, setQuery] = useState("");
@@ -175,28 +174,17 @@ export function AdminHistoryList({
       ) : (
         <ol className="admin-history-list">
           {filteredItems.map((item) => {
-            const content = <HistoryRowContent compact={compact} item={item} />;
             const outcome = statusPresentation(item).outcome;
 
             return (
               <li key={item.id}>
-                {onSelectStudent && !item.studentDeleted ? (
-                  <button
-                    className={`admin-history-row openable-list-row activity-outcome-${outcome}${compact ? " is-compact" : ""}`}
-                    onClick={() => onSelectStudent(item.studentId)}
-                    type="button"
-                  >
-                    {content}
-                  </button>
-                ) : (
-                  <OpenableListRow
-                    ariaLabel={`${item.studentName} ${assignmentDisplayTitle(item)}`}
-                    className={`admin-history-row activity-outcome-${outcome}${compact ? " is-compact" : ""}`}
-                    href={historyDetailHref(item)}
-                  >
-                    {content}
-                  </OpenableListRow>
-                )}
+                <OpenableListRow
+                  ariaLabel={`${item.studentName} ${assignmentDisplayTitle(item) || item.datasetTitle}`}
+                  className={`admin-history-row activity-outcome-${outcome}${compact ? " is-compact" : ""}`}
+                  href={historyDetailHref(item)}
+                >
+                  <HistoryRowContent compact={compact} item={item} />
+                </OpenableListRow>
               </li>
             );
           })}

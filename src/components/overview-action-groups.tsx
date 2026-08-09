@@ -1,16 +1,7 @@
-"use client";
-
-import { useState, type ComponentProps } from "react";
-
 import { AdminHistoryList } from "@/components/admin-history-list";
-import { StudentManager } from "@/components/student-manager";
+import { CountBadge } from "@/components/count-badge";
 import { adminOverviewText } from "@/content/ko/admin-overview";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
-
-type StudentManagerBaseProps = Omit<
-  ComponentProps<typeof StudentManager>,
-  "initialStudentId" | "launcherOnly" | "onLauncherClose"
->;
 
 type OverviewSection = {
   id: string;
@@ -20,46 +11,26 @@ type OverviewSection = {
 
 export function OverviewActionGroups({
   sections,
-  studentManagerProps,
 }: {
   sections: OverviewSection[];
-  studentManagerProps: StudentManagerBaseProps;
 }) {
-  const [selectedStudentId, setSelectedStudentId] = useState("");
-
   return (
-    <>
-      <div className="overview-action-groups">
-        {sections.map((section) => (
-          <section
-            aria-labelledby={`overview-${section.id}`}
-            className="overview-action-section"
-            key={section.id}
-          >
-            <div className="section-heading">
-              <h2 id={`overview-${section.id}`}>{section.title}</h2>
-              <span className="detail-chip">
-                {section.items.length}{adminOverviewText.countSuffix}
-              </span>
-            </div>
-            <AdminHistoryList
-              compact
-              items={section.items}
-              onSelectStudent={setSelectedStudentId}
-            />
-          </section>
-        ))}
-      </div>
-
-      {selectedStudentId ? (
-        <StudentManager
-          {...studentManagerProps}
-          initialStudentId={selectedStudentId}
-          key={selectedStudentId}
-          launcherOnly
-          onLauncherClose={() => setSelectedStudentId("")}
-        />
-      ) : null}
-    </>
+    <div className="overview-action-groups">
+      {sections.map((section) => (
+        <section
+          aria-labelledby={`overview-${section.id}`}
+          className="overview-action-section"
+          key={section.id}
+        >
+          <div className="section-heading">
+            <h2 id={`overview-${section.id}`}>{section.title}</h2>
+            <CountBadge>
+              {section.items.length}{adminOverviewText.countSuffix}
+            </CountBadge>
+          </div>
+          <AdminHistoryList compact items={section.items} />
+        </section>
+      ))}
+    </div>
   );
 }

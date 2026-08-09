@@ -43,7 +43,8 @@ describe("admin visual density contract", () => {
     const assignmentManager = source("src/components/assignment-manager.tsx");
 
     expect(actions).toContain("summaryOnly");
-    expect(activities).toContain("summaryOnly");
+    expect(activities).not.toContain("summaryOnly");
+    expect(activities).not.toContain("<AdminHistoryActions");
     expect(assignmentManager).not.toContain("<AdminHistoryActions");
   });
 

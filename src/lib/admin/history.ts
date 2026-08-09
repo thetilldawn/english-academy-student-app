@@ -139,26 +139,38 @@ export function assignmentScopeLabel(
 export function assignmentDisplayTitle(
   item: Pick<
     AssignmentHistorySummary,
-    "assignmentTitle" | "primaryUnitLabels" | "unitLabels"
+    "assignmentTitle" | "datasetTitle" | "primaryUnitLabels" | "unitLabels"
   >,
 ) {
-  return assignmentDisplayTitleForUnits(item.assignmentTitle, [
-    ...item.unitLabels,
-    ...item.primaryUnitLabels,
-  ]);
+  return assignmentDisplayTitleForUnits(
+    item.assignmentTitle,
+    [...item.unitLabels, ...item.primaryUnitLabels],
+    item.datasetTitle,
+  );
 }
 
 export function assignmentDisplayTitleForUnits(
   assignmentTitle: string,
   unitLabels: string[],
+  datasetTitle?: string,
 ) {
   const unitLabelSet = new Set(unitLabels);
+  if (unitLabels.length > 0) {
+    unitLabelSet.add(unitRangeLabel(unitLabels));
+  }
   const titleParts = assignmentTitle
     .split("·")
     .map((part) => part.trim())
     .filter(Boolean);
-  const filtered = titleParts.filter((part) => !unitLabelSet.has(part));
-  return filtered.length > 0 ? filtered.join(" · ") : assignmentTitle;
+  const filtered = titleParts.filter(
+    (part) =>
+      part !== datasetTitle &&
+      !unitLabelSet.has(part) &&
+      part !== "오답 재시험" &&
+      !/^\d+문항$/.test(part) &&
+      !/^틀렸던 단어 \d+개 포함$/.test(part),
+  );
+  return filtered.join(" · ");
 }
 
 export function assignmentOrderLabel(

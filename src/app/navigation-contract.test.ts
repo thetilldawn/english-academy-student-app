@@ -238,8 +238,9 @@ describe("responsive navigation contract", () => {
     expect(historyList).toContain("<ActivityStatusTimeline");
     expect(interceptedDetail).toContain("getAdminHistoryDetail(entryKey)");
     expect(overview).toContain("<OverviewActionGroups");
-    expect(overviewGroups).toContain("onSelectStudent={setSelectedStudentId}");
-    expect(overviewGroups).toContain("launcherOnly");
+    expect(overviewGroups).toContain("<AdminHistoryList compact items={section.items} />");
+    expect(overviewGroups).not.toContain("onSelectStudent");
+    expect(overviewGroups).not.toContain("StudentManager");
     expect(overviewGroups).not.toContain("slice(0, 8)");
     expect(overviewGroups).toContain("adminOverviewText.countSuffix");
     expect(overviewCopy).toContain('countSuffix: "건"');

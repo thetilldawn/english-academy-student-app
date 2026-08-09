@@ -6245,6 +6245,26 @@ select {
   white-space: nowrap;
 }
 
+.count-badge {
+  width: max-content;
+  min-height: 24px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  border: 0;
+  border-radius: var(--radius-small);
+  color: var(--status-fg);
+  background: var(--status-neutral-bg);
+  font-family: var(--font-kr);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+
 .status-badge[data-tone="success"] {
   background: var(--status-success-bg);
 }
@@ -6270,7 +6290,7 @@ select {
   display: flex;
   align-items: center;
   gap: 7px;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-size: 11px;
   line-height: 1.35;
   white-space: nowrap;
@@ -6278,7 +6298,7 @@ select {
 
 .activity-status-timeline-row time {
   min-width: 0;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
 
@@ -6436,6 +6456,7 @@ select {
   font: inherit;
   text-align: left;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .selectable-list-row-content:focus-visible {
@@ -6490,7 +6511,7 @@ select {
 .learning-activity-row {
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
   gap: 8px;
   padding: 0;
@@ -6532,10 +6553,6 @@ select {
 .learning-activity-open.activity-outcome-missed,
 .learning-activity-open.activity-outcome-expired {
   border-left-color: var(--status-danger-bg);
-}
-
-.learning-activity-row > .history-action-stack {
-  align-self: center;
 }
 
 .student-card-score-line {
@@ -6662,6 +6679,31 @@ select {
   justify-content: flex-end;
 }
 
+.history-detail-editor {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.history-detail-editor-heading {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  padding-block: 8px;
+  background: var(--card);
+}
+
+.history-detail-editor .assignment-embedded-body {
+  padding: 0;
+  overflow: visible;
+}
+
+.history-detail-editor .modal-frame-footer {
+  padding-inline: 0;
+}
+
 @media (max-width: 960px) {
   .activity-row-content,
   .admin-history-row.is-compact .activity-row-content,
@@ -6714,7 +6756,7 @@ select {
   }
 
   .learning-activity-row {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .selectable-list-row {
@@ -6744,6 +6786,45 @@ select {
   .route-detail-dialog[open] {
     width: calc(100vw - 16px);
     max-height: calc(100dvh - 16px);
+  }
+}
+
+:root[data-theme="dark"] .meta-tag,
+:root[data-theme="dark"] .meta-tag[data-tone] {
+  color: var(--status-fg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .meta-tag,
+  :root:not([data-theme]) .meta-tag[data-tone] {
+    color: var(--status-fg);
+  }
+}
+
+@media (min-width: 768px) {
+  .meta-tag,
+  .status-badge,
+  .count-badge,
+  .activity-status-timeline-row {
+    font-size: 12px;
+  }
+
+  .attempt-score-slot small {
+    font-size: 11px;
+  }
+
+  .attempt-score-slot strong {
+    font-size: 14px;
+  }
+
+  .student-card-info-row > small,
+  .card-time-meta {
+    font-size: 12px;
+  }
+
+  .student-card-primary-source,
+  .student-card-priority > strong {
+    font-size: 13px;
   }
 }
 

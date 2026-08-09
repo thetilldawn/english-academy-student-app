@@ -9,7 +9,9 @@ import { HistoryDetailActions } from "@/components/history-detail-actions";
 import { ButtonLink } from "@/components/ui-button";
 import { adminHistoryText } from "@/content/ko/admin-history";
 import { historyDetailHref } from "@/lib/admin/history-route";
+import { isStudentAssignmentEditable } from "@/lib/admin/assignment-edit";
 import { getAdminHistoryDetail } from "@/lib/services/admin-service";
+import { loadAssignmentManagerData } from "@/lib/services/assignment-manager-data";
 
 export const metadata: Metadata = {
   title: adminHistoryText.resultDetail.metadataTitle,
@@ -26,6 +28,9 @@ export default async function AdminResultDetailPage({
   if (detail.canonicalKey !== id) {
     redirect(historyDetailHref(detail.summary));
   }
+  const editorData = isStudentAssignmentEditable(detail.summary)
+    ? await loadAssignmentManagerData()
+    : null;
 
   return (
     <div className="history-detail-page">
@@ -39,7 +44,13 @@ export default async function AdminResultDetailPage({
         </ButtonLink>
       </header>
       <AdminHistoryDetailContent
-        actions={<HistoryDetailActions item={detail.summary} mode="page" />}
+        actions={
+          <HistoryDetailActions
+            editorData={editorData}
+            item={detail.summary}
+            mode="page"
+          />
+        }
         detail={detail}
       />
     </div>

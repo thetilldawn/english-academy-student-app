@@ -39,7 +39,8 @@ describe("admin deletion UI contract", () => {
     expect(historyCopy).toContain('action: "내역 삭제"');
     expect(studentManager).toContain("adminStudentsText.account.delete");
     expect(studentCopy).toContain('delete: "학생 삭제"');
-    expect(learningActivityList).toContain("<AdminHistoryActions");
+    expect(learningActivityList).not.toContain("<AdminHistoryActions");
+    expect(detailActions).toContain("isStudentAssignmentEditable(item)");
     expect(assignmentPage).not.toContain("listAssignments()");
     expect(assignmentPage).not.toContain("<AssignmentManagementList");
   });

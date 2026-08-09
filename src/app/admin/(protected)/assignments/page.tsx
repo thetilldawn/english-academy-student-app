@@ -6,15 +6,8 @@ import { AssignmentManager } from "@/components/assignment-manager";
 import { ReviewAssignmentDialog } from "@/components/review-assignment-dialog";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import {
-  buildStudentProgress,
-  listAssignmentHistoryBundle,
-  listDatasets,
-  listStudentCurrentVocabWrongSummaries,
-  listStudentLearningSources,
-  listStudentPendingReviewSummaries,
-  listStudents,
-  listVocabUnits,
-} from "@/lib/services/admin-service";
+  loadAssignmentManagerData,
+} from "@/lib/services/assignment-manager-data";
 import { getReviewAssignmentDraftSummary } from "@/lib/services/review-assignment-service";
 
 export const metadata: Metadata = {
@@ -38,32 +31,12 @@ export default async function AssignmentsPage({
   const validReviewDraftId = z
     .uuid()
     .safeParse(requestedReviewDraftId).success;
-  const [
-    datasets,
-    students,
-    units,
-    historyBundle,
-    pendingReviewSummaries,
-    currentVocabWrongSummaries,
-    learningSources,
-    reviewDraft,
-  ] = await Promise.all([
-    listDatasets(),
-    listStudents(),
-    listVocabUnits(),
-    listAssignmentHistoryBundle(),
-    listStudentPendingReviewSummaries(),
-    listStudentCurrentVocabWrongSummaries(),
-    listStudentLearningSources(),
+  const [managerData, reviewDraft] = await Promise.all([
+    loadAssignmentManagerData(),
     requestedReviewDraftId && validReviewDraftId
       ? getReviewAssignmentDraftSummary(requestedReviewDraftId)
       : Promise.resolve(null),
   ]);
-  const progress = buildStudentProgress(
-    students,
-    units,
-    historyBundle.history,
-  );
 
   return (
     <>
@@ -77,14 +50,7 @@ export default async function AssignmentsPage({
         </div>
       )}
       <AssignmentManager
-        datasets={datasets}
-        students={students}
-        units={units}
-        progress={progress}
-        pendingReviewSummaries={pendingReviewSummaries}
-        currentVocabWrongSummaries={currentVocabWrongSummaries}
-        learningSources={learningSources}
-        history={historyBundle.currentHistory}
+        {...managerData}
         initialStudentId={requestedReviewDraftId ? "" : initialStudentId}
       />
       {reviewDraft && (

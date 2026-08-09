@@ -44,22 +44,26 @@ export function OpenableListRow({
 
 export function SelectableListRow({
   actions,
-  ariaLabel,
   checked,
   checkboxId,
   children,
   className = "",
   disabled = false,
+  href,
+  openAriaLabel,
   onToggle,
+  selectionAriaLabel,
 }: {
-  actions: ReactNode;
-  ariaLabel: string;
+  actions?: ReactNode;
   checked: boolean;
   checkboxId: string;
   children: ReactNode;
   className?: string;
   disabled?: boolean;
+  href?: string;
+  openAriaLabel?: string;
   onToggle: () => void;
+  selectionAriaLabel: string;
 }) {
   return (
     <article
@@ -70,26 +74,29 @@ export function SelectableListRow({
     >
       <label className="selectable-list-row-checkbox" htmlFor={checkboxId}>
         <input
-          aria-hidden="true"
+          aria-label={selectionAriaLabel}
           checked={checked}
           disabled={disabled}
           id={checkboxId}
           onChange={onToggle}
-          tabIndex={-1}
           type="checkbox"
         />
       </label>
-      <button
-        aria-label={ariaLabel}
-        aria-pressed={checked}
-        className="selectable-list-row-content"
-        disabled={disabled}
-        onClick={onToggle}
-        type="button"
-      >
-        {children}
-      </button>
-      <span className="selectable-list-row-actions">{actions}</span>
+      {href ? (
+        <Link
+          aria-label={openAriaLabel}
+          className="selectable-list-row-content"
+          href={href}
+          scroll={false}
+        >
+          {children}
+        </Link>
+      ) : (
+        <span className="selectable-list-row-content">{children}</span>
+      )}
+      {actions ? (
+        <span className="selectable-list-row-actions">{actions}</span>
+      ) : null}
     </article>
   );
 }
