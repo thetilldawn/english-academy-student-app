@@ -157,12 +157,12 @@ describe("배정 요청 현행 계약 특성화", () => {
     expect(schedule).toStrictEqual([
       {
         sessionNumber: 1,
-        availableFrom: "2026-08-17T00:00:00.000Z",
+        availableFrom: "2026-08-16T15:00:00.000Z",
         availableUntil: "2026-08-17T12:00:00.000Z",
       },
       {
         sessionNumber: 2,
-        availableFrom: "2026-08-19T00:00:00.000Z",
+        availableFrom: "2026-08-18T15:00:00.000Z",
         availableUntil: "2026-08-19T12:00:00.000Z",
       },
     ]);

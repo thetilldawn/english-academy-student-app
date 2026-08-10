@@ -1,0 +1,344 @@
+import { koreanDateTimeLocalToIso } from "@/lib/deadline";
+import { assignmentReplacementFingerprintPayload } from "@/lib/admin/assignment-replacement-fingerprint";
+import type {
+  AssignmentCapacityInput,
+  AssignmentInput,
+  AssignmentReplacementInput,
+  BulkAssignmentInput,
+  BulkAssignmentPreviewInput,
+  MixedAssignmentInput,
+} from "@/lib/validation";
+
+import { assignmentRequestFingerprint } from "../domain/fingerprint";
+import type {
+  AssignmentDeadline,
+  BulkSeriesAssignmentDraft,
+  ExamSettings,
+  LegacyReviewRecoveryDraft,
+  ReviewPolicy,
+  ResolvedSingleAssignment,
+  SingleAssignmentDraft,
+} from "../domain/model";
+import {
+  assertValidAssignmentDraft,
+  assertValidBulkAssignmentSubmission,
+  assertValidBulkPreviewProjection,
+  assertValidSingleAssignmentSubmission,
+  assertValidSingleCapacityProjection,
+} from "../domain/validation";
+
+const PER_QUESTION_TOTAL_TIME_COMPATIBILITY_SECONDS = 10800;
+
+export type RegularAssignmentRequest = {
+  endpoint: "/api/admin/assignments";
+  method: "POST";
+  body: AssignmentInput;
+};
+
+export type MixedAssignmentRequest = {
+  endpoint: "/api/admin/mixed-assignments";
+  method: "POST";
+  body: MixedAssignmentInput;
+};
+
+export type AssignmentCapacityRequest = {
+  endpoint:
+    | "/api/admin/assignment-capacity"
+    | `/api/admin/assignments/${string}/students/${string}`;
+  method: "POST";
+  body: AssignmentCapacityInput;
+};
+
+export type AssignmentReplacementRequest = {
+  endpoint: `/api/admin/assignments/${string}/students/${string}`;
+  method: "PUT";
+  body: AssignmentReplacementInput;
+};
+
+export type BulkAssignmentPreviewRequest = {
+  endpoint: "/api/admin/bulk-assignments/preview";
+  method: "POST";
+  body: BulkAssignmentPreviewInput;
+};
+
+export type BulkAssignmentRequest = {
+  endpoint: "/api/admin/bulk-assignments";
+  method: "POST";
+  body: BulkAssignmentInput;
+};
+
+export type LegacyReviewCancelRequest = {
+  endpoint: `/api/admin/students/${string}/review-assignment-drafts/${string}`;
+  method: "DELETE";
+};
+
+export type AssignmentHttpRequest =
+  | RegularAssignmentRequest
+  | MixedAssignmentRequest
+  | AssignmentCapacityRequest
+  | AssignmentReplacementRequest
+  | BulkAssignmentPreviewRequest
+  | BulkAssignmentRequest
+  | LegacyReviewCancelRequest;
+
+function deadlineToIso(deadline: AssignmentDeadline): string | null {
+  if (deadline.mode === "none") return null;
+  const value = koreanDateTimeLocalToIso(deadline.koreanLocalDateTime);
+  if (!value) throw new Error("검증되지 않은 한국시간 마감입니다.");
+  return value;
+}
+
+function examSettingsToApi(exam: ExamSettings) {
+  if (exam.timing.mode === "total") {
+    return {
+      englishToKoreanRatio: exam.directionRatio,
+      timeLimitSeconds: exam.timing.totalSeconds,
+      timingMode: "total" as const,
+      questionTimeLimitSeconds: null,
+      passingScore: exam.passingScore,
+      questionOrderMode: exam.questionOrderMode,
+    };
+  }
+  return {
+    englishToKoreanRatio: exam.directionRatio,
+    timeLimitSeconds: PER_QUESTION_TOTAL_TIME_COMPATIBILITY_SECONDS,
+    timingMode: "per_question" as const,
+    questionTimeLimitSeconds: exam.timing.perQuestionSeconds,
+    passingScore: exam.passingScore,
+    questionOrderMode: exam.questionOrderMode,
+  };
+}
+
+function reviewPolicyToCapacityApi(review: ReviewPolicy) {
+  if (review.mode === "none") {
+    return {
+      includePendingReview: false,
+      reviewLevels: [...review.levels],
+      reviewScope: review.scope,
+    };
+  }
+  return {
+    includePendingReview: true,
+    reviewLevels: [...review.levels],
+    reviewScope: review.scope,
+  };
+}
+
+function reviewPolicyToReplacementApi(review: ReviewPolicy) {
+  if (review.mode === "none") {
+    return {
+      includePendingReview: false,
+      reviewLevels: [...review.levels],
+    };
+  }
+  return {
+    includePendingReview: true,
+    reviewLevels: [...review.levels],
+  };
+}
+
+function singleCapacityBody(draft: SingleAssignmentDraft) {
+  return {
+    studentId: draft.studentId,
+    datasetId: draft.range.datasetId,
+    primaryUnitIds: [...draft.range.orderedUnitIds],
+    ...reviewPolicyToCapacityApi(draft.review),
+    englishToKoreanRatio: draft.exam.directionRatio,
+  };
+}
+
+export function buildAssignmentCapacityRequest(
+  draft: SingleAssignmentDraft,
+): AssignmentCapacityRequest {
+  assertValidSingleCapacityProjection(draft);
+  if (draft.operation.mode === "create") {
+    return {
+      endpoint: "/api/admin/assignment-capacity",
+      method: "POST",
+      body: singleCapacityBody(draft),
+    };
+  }
+  return {
+    endpoint: `/api/admin/assignments/${draft.operation.assignmentId}/students/${draft.operation.targetStudentId}`,
+    method: "POST",
+    body: singleCapacityBody(draft),
+  };
+}
+
+function replacementBodyWithoutIdempotency(
+  draft: SingleAssignmentDraft,
+  resolved: ResolvedSingleAssignment,
+): Omit<AssignmentReplacementInput, "idempotencyKey"> {
+  return {
+    title: resolved.submissionTitle.trim(),
+    datasetId: draft.range.datasetId,
+    primaryUnitIds: [...draft.range.orderedUnitIds],
+    ...reviewPolicyToReplacementApi(draft.review),
+    questionCount: resolved.questionCount,
+    ...examSettingsToApi(draft.exam),
+    availableUntil: deadlineToIso(draft.deadline),
+  };
+}
+
+export function buildSingleAssignmentRequest(
+  draft: SingleAssignmentDraft,
+  resolved: ResolvedSingleAssignment,
+  options: { nowMilliseconds: number; idempotencyKey?: string },
+):
+  | RegularAssignmentRequest
+  | MixedAssignmentRequest
+  | AssignmentReplacementRequest {
+  assertValidSingleAssignmentSubmission(
+    draft,
+    resolved,
+    options.nowMilliseconds,
+  );
+
+  if (draft.operation.mode === "replace") {
+    if (!options.idempotencyKey) {
+      throw new Error("수정 요청에는 멱등키가 필요합니다.");
+    }
+    return {
+      endpoint: `/api/admin/assignments/${draft.operation.assignmentId}/students/${draft.operation.targetStudentId}`,
+      method: "PUT",
+      body: {
+        idempotencyKey: options.idempotencyKey,
+        ...replacementBodyWithoutIdempotency(draft, resolved),
+      },
+    };
+  }
+
+  const exam = examSettingsToApi(draft.exam);
+  const availableUntil = deadlineToIso(draft.deadline);
+
+  if (draft.review.mode === "pending") {
+    return {
+      endpoint: "/api/admin/mixed-assignments",
+      method: "POST",
+      body: {
+        studentId: draft.studentId,
+        datasetId: draft.range.datasetId,
+        primaryUnitIds: [...draft.range.orderedUnitIds],
+        reviewLevels: [...draft.review.levels],
+        reviewScope: draft.review.scope,
+        totalQuestionCount: resolved.questionCount,
+        title: resolved.submissionTitle,
+        ...exam,
+        availableUntil,
+      },
+    };
+  }
+
+  return {
+    endpoint: "/api/admin/assignments",
+    method: "POST",
+    body: {
+      title: resolved.submissionTitle,
+      datasetId: draft.range.datasetId,
+      unitIds: [...draft.range.orderedUnitIds],
+      questionCount: resolved.questionCount,
+      ...exam,
+      availableUntil,
+      studentIds: [draft.studentId],
+    },
+  };
+}
+
+function bulkSelectionBody(draft: BulkSeriesAssignmentDraft) {
+  const firstAvailableFrom = koreanDateTimeLocalToIso(
+    `${draft.firstAvailableDateKorean}T00:00`,
+  );
+  if (!firstAvailableFrom) {
+    throw new Error("검증되지 않은 한국시간 시작 시각입니다.");
+  }
+  return {
+    studentIds: [...draft.studentIds],
+    rangeMode: draft.range.mode,
+    unitsPerSession: draft.range.unitsPerSession,
+    sessionCount: draft.range.sessionCount,
+    firstAvailableFrom,
+    dayInterval: draft.dayInterval,
+    firstAvailableUntil: deadlineToIso(draft.firstDeadline),
+    includePendingReview: draft.review.mode === "pending",
+    reviewLevels: [...draft.review.levels],
+    englishToKoreanRatio: draft.exam.directionRatio,
+  };
+}
+
+export function buildBulkAssignmentPreviewRequest(
+  draft: BulkSeriesAssignmentDraft,
+): BulkAssignmentPreviewRequest {
+  assertValidBulkPreviewProjection(draft);
+  return {
+    endpoint: "/api/admin/bulk-assignments/preview",
+    method: "POST",
+    body: bulkSelectionBody(draft),
+  };
+}
+
+export function buildBulkAssignmentRequest(
+  draft: BulkSeriesAssignmentDraft,
+  idempotencyKey: string,
+  nowMilliseconds: number,
+): BulkAssignmentRequest {
+  assertValidBulkAssignmentSubmission(draft, nowMilliseconds);
+  if (!idempotencyKey) throw new Error("일괄 배정에는 멱등키가 필요합니다.");
+  return {
+    endpoint: "/api/admin/bulk-assignments",
+    method: "POST",
+    body: {
+      ...bulkSelectionBody(draft),
+      idempotencyKey,
+      ...examSettingsToApi(draft.exam),
+    },
+  };
+}
+
+export function bulkPreviewFingerprint(
+  draft: BulkSeriesAssignmentDraft,
+): string {
+  return assignmentRequestFingerprint(
+    buildBulkAssignmentPreviewRequest(draft).body,
+  );
+}
+
+export function bulkSubmissionFingerprint(
+  draft: BulkSeriesAssignmentDraft,
+): string {
+  const previewBody = buildBulkAssignmentPreviewRequest(draft).body;
+  return assignmentRequestFingerprint({
+    ...previewBody,
+    studentIds: [...draft.studentIds].toSorted(),
+    reviewLevels: [...draft.review.levels].toSorted(),
+    ...examSettingsToApi(draft.exam),
+  });
+}
+
+export function replacementSubmissionFingerprint(
+  draft: SingleAssignmentDraft,
+  resolved: ResolvedSingleAssignment,
+  nowMilliseconds: number,
+): string {
+  if (draft.operation.mode !== "replace") {
+    throw new Error("수정 draft만 fingerprint를 만들 수 있습니다.");
+  }
+  assertValidSingleAssignmentSubmission(draft, resolved, nowMilliseconds);
+  const body = replacementBodyWithoutIdempotency(draft, resolved);
+  return assignmentRequestFingerprint(
+    assignmentReplacementFingerprintPayload(
+      draft.operation.assignmentId,
+      draft.operation.targetStudentId,
+      body,
+    ),
+  );
+}
+
+export function buildLegacyReviewCancelRequest(
+  draft: LegacyReviewRecoveryDraft,
+): LegacyReviewCancelRequest {
+  assertValidAssignmentDraft(draft);
+  return {
+    endpoint: `/api/admin/students/${draft.studentId}/review-assignment-drafts/${draft.reviewDraftId}`,
+    method: "DELETE",
+  };
+}

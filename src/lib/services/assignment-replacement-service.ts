@@ -10,6 +10,7 @@ import {
   type AssignmentReplacementResult,
   type AssignmentReviewSnapshotMode,
 } from "@/lib/admin/assignment-edit";
+import { assignmentReplacementFingerprintPayload } from "@/lib/admin/assignment-replacement-fingerprint";
 import {
   requireAdmin,
   type AdminContext,
@@ -724,25 +725,13 @@ function replacementRequestSha256(
 ) {
   return createHash("sha256")
     .update(
-      JSON.stringify({
-        assignmentId,
-        studentId,
-        title: input.title.trim(),
-        datasetId: input.datasetId,
-        primaryUnitIds: input.primaryUnitIds,
-        includePendingReview: input.includePendingReview,
-        reviewLevels: input.includePendingReview
-          ? [...input.reviewLevels].toSorted()
-          : [],
-        questionCount: input.questionCount,
-        englishToKoreanRatio: input.englishToKoreanRatio,
-        timeLimitSeconds: input.timeLimitSeconds,
-        timingMode: input.timingMode,
-        questionTimeLimitSeconds: input.questionTimeLimitSeconds,
-        passingScore: input.passingScore,
-        questionOrderMode: input.questionOrderMode,
-        availableUntil: input.availableUntil,
-      }),
+      JSON.stringify(
+        assignmentReplacementFingerprintPayload(
+          assignmentId,
+          studentId,
+          input,
+        ),
+      ),
       "utf8",
     )
     .digest("hex");

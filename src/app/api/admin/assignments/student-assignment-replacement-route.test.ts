@@ -58,6 +58,7 @@ import {
   POST,
   PUT,
 } from "@/app/api/admin/assignments/[assignmentId]/students/[studentId]/route";
+import { hydrateSingleAssignmentDraftFromEditResponse } from "@/features/assignments/api/edit-draft-adapter";
 
 const assignmentId = "11111111-1111-4111-8111-111111111111";
 const studentId = "22222222-2222-4222-8222-222222222222";
@@ -91,6 +92,26 @@ const replacementInput = {
   passingScore: 80,
   questionOrderMode: "random",
   availableUntil: null,
+};
+
+const mixedEditDraftResponse = {
+  assignmentId,
+  studentId,
+  studentName: "검증 학생",
+  purpose: "mixed" as const,
+  title: "기존 혼합 시험",
+  datasetId,
+  primaryUnitIds: [unitId],
+  questionCount: 10,
+  englishToKoreanRatio: 50 as const,
+  timeLimitSeconds: 300,
+  timingMode: "total" as const,
+  questionTimeLimitSeconds: null,
+  passingScore: 80,
+  questionOrderMode: "random" as const,
+  availableUntil: "2026-08-18T12:00:00.000Z",
+  includePendingReview: true,
+  reviewLevels: [2] as (1 | 2)[],
 };
 
 function request(method: "GET" | "POST" | "PUT", body?: unknown) {
@@ -162,6 +183,36 @@ describe("student assignment replacement route", () => {
     expect(putResponse.headers.get("cache-control")).toBe(
       "private, no-store",
     );
+  });
+
+  it("GET의 전체 mixed 응답을 strict parser와 edit draft hydration까지 전달한다", async () => {
+    mocks.getStudentAssignmentEditDraft.mockResolvedValueOnce(
+      mixedEditDraftResponse,
+    );
+
+    const response = await GET(request("GET"), { params });
+    const draft = hydrateSingleAssignmentDraftFromEditResponse(
+      await response.json(),
+    );
+
+    expect(response.status).toBe(200);
+    expect(draft).toMatchObject({
+      operation: {
+        mode: "replace",
+        assignmentId,
+        targetStudentId: studentId,
+        sourcePurpose: "mixed",
+      },
+      studentId,
+      title: { mode: "source", value: "기존 혼합 시험" },
+      range: { datasetId, orderedUnitIds: [unitId] },
+      questionCount: { mode: "manual", value: 10 },
+      review: { mode: "pending", scope: "dataset", levels: [2] },
+      deadline: {
+        mode: "at",
+        koreanLocalDateTime: "2026-08-18T21:00",
+      },
+    });
   });
 
   it("다른 origin·비로그인·strict body를 차단한다", async () => {

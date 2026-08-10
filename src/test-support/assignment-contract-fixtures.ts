@@ -127,7 +127,7 @@ export const bulkPreviewContract = {
   rangeMode: "previous_span",
   unitsPerSession: 2,
   sessionCount: 2,
-  firstAvailableFrom: "2026-08-17T00:00:00.000Z",
+  firstAvailableFrom: "2026-08-16T15:00:00.000Z",
   dayInterval: 2,
   firstAvailableUntil: "2026-08-17T12:00:00.000Z",
   includePendingReview: true,

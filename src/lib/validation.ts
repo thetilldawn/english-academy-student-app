@@ -488,6 +488,12 @@ export type MixedAssignmentInput = z.infer<
   typeof mixedAssignmentSchema
 >;
 
+export type AssignmentInput = z.infer<typeof assignmentSchema>;
+
+export type AssignmentReplacementInput = z.infer<
+  typeof assignmentReplacementSchema
+>;
+
 export type MixedAssignmentPreviewInput = z.infer<
   typeof mixedAssignmentPreviewSchema
 >;
