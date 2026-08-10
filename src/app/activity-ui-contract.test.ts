@@ -54,6 +54,9 @@ describe("shared activity UI contract", () => {
     expect(assignmentManager).toContain(
       "adminLearningText.page.studentCard.view",
     );
+    expect(assignmentManager).toContain(
+      "adminLearningText.page.studentCard.newAssignment",
+    );
   });
 
   it("keeps every filled activity status readable with white text", () => {

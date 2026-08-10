@@ -73,6 +73,9 @@ import {
 } from "@/lib/admin/dataset-catalog";
 import type { ReadingCurriculumStage } from "@/lib/admin/reading-curriculum";
 import { resolveOrderedContiguousUnits } from "@/lib/admin/unit-range";
+import {
+  isAssignmentPersistenceInvariantFailure,
+} from "@/lib/admin/assignment-database-error";
 
 export { buildStudentProgress } from "@/lib/admin/progress";
 export type { StudentProgressSummary } from "@/lib/admin/progress";
@@ -1544,15 +1547,14 @@ export async function createAssignment(
       message: error?.message ?? "assignment id was not returned",
       hint: error?.hint ?? null,
     });
-    throw new AssignmentCreationError(
-      error?.code === "40001"
+    const reason = isAssignmentPersistenceInvariantFailure(error ?? {})
+      ? "database"
+      : error?.code === "40001"
         ? "conflict"
-        : ["21000", "22023", "23503", "23505"].includes(
-              error?.code ?? "",
-            )
+        : ["22023", "23503", "23505"].includes(error?.code ?? "")
           ? "invalid_selection"
-          : "database",
-    );
+          : "database";
+    throw new AssignmentCreationError(reason);
   }
 
   return data;

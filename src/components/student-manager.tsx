@@ -145,6 +145,28 @@ type WrongHistoryCacheEntry = {
 
 type WrongWordStudentFilter = "all" | "wrong" | "repeated" | "retry";
 
+function StudentVocabularyAssignmentAction({
+  disabled,
+  onAssign,
+}: {
+  disabled: boolean;
+  onAssign: () => void;
+}) {
+  return (
+    <div className="student-inline-assignment-action">
+      <strong className="label-with-help">
+        {adminStudentsText.learning.nextVocabularyTitle}
+        <HelpTip label={adminStudentsText.learning.nextVocabularyHelpAria}>
+          {adminStudentsText.learning.nextVocabularyHelp}
+        </HelpTip>
+      </strong>
+      <Button disabled={disabled} onClick={onAssign} variant="primary">
+        {adminStudentsText.learning.assign}
+      </Button>
+    </div>
+  );
+}
+
 function studentRecommendationLabel(
   progress: ProgressItem | null | undefined,
 ) {
@@ -1522,6 +1544,17 @@ export function StudentManager({
                         learningSourcesByStudent.get(selectedStudent.id) ?? []
                       }
                     />
+                    <StudentVocabularyAssignmentAction
+                      disabled={assignmentDatasets.length === 0}
+                      onAssign={() => {
+                        openStudentAssignment({
+                          datasetId:
+                            selectedStudent.currentVocabDatasetId ?? "",
+                          studentId: selectedStudent.id,
+                          editTarget: null,
+                        });
+                      }}
+                    />
                     <div className="student-book-form compact-learning-form">
                       <label className="field">
                         <span className="field-label">
@@ -1622,37 +1655,19 @@ export function StudentManager({
                     </div>
                     {learningView === "vocab" ? (
                       <>
-                        <div className="student-inline-assignment-action">
-                          <div>
-                            <strong className="label-with-help">
-                              {adminStudentsText.learning.nextVocabularyTitle}
-                              <HelpTip
-                                label={
-                                  adminStudentsText.learning
-                                    .nextVocabularyHelpAria
-                                }
-                              >
-                                {adminStudentsText.learning.nextVocabularyHelp}
-                              </HelpTip>
-                            </strong>
-                          </div>
-                          <Button
-                            disabled={assignmentDatasets.length === 0}
-                            onClick={() => {
-                              openStudentAssignment({
-                                datasetId:
-                                  learningSourceDatasetId ||
-                                  selectedStudent.currentVocabDatasetId ||
-                                  "",
-                                studentId: selectedStudent.id,
-                                editTarget: null,
-                              });
-                            }}
-                            variant="primary"
-                          >
-                            {adminStudentsText.learning.assign}
-                          </Button>
-                        </div>
+                        <StudentVocabularyAssignmentAction
+                          disabled={assignmentDatasets.length === 0}
+                          onAssign={() => {
+                            openStudentAssignment({
+                              datasetId:
+                                learningSourceDatasetId ||
+                                selectedStudent.currentVocabDatasetId ||
+                                "",
+                              studentId: selectedStudent.id,
+                              editTarget: null,
+                            });
+                          }}
+                        />
                         <StudentWrongWordPanel
                           active
                           cachedAt={

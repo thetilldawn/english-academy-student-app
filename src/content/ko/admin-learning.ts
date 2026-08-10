@@ -36,7 +36,7 @@ export const adminLearningText = {
       noActivity: "배정된 학습 없음",
       recommendedRange: "추천 범위 · {range}",
       view: "보기",
-      assign: "배정",
+      newAssignment: "새 단어 시험",
       deadline: "마감 {datetime}",
       assignedWithoutDeadline: "배정 {datetime} · 마감 없음",
       finished: "종료 {datetime}",

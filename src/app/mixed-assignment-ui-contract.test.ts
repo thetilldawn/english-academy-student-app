@@ -60,7 +60,8 @@ describe("mixed assignment admin UI contract", () => {
     expect(manager).toContain("adminLearningText.assignmentModal.range.dayTerm");
     expect(manager).toContain("adminLearningText.assignmentModal.range.unitTerm");
     expect(manager).toContain('useState<ReviewScope>("dataset")');
-    expect(manager).toContain('setReviewScope("selection")');
+    expect(manager).toContain('value: "selection"');
+    expect(manager).toContain("setReviewScope(scope)");
     expect(manager).toContain("capacity.wrongLevel1Eligible");
     expect(manager).toContain("capacity.wrongLevel2Eligible");
     expect(manager).not.toContain("reviewLimit");
@@ -103,7 +104,8 @@ describe("mixed assignment admin UI contract", () => {
     expect(manager).toContain("disabled={exactReviewEdit}");
     expect(manager).toContain('if (!checked) setReviewScope("dataset")');
     expect(manager).toContain('setReviewScope("dataset")');
-    expect(manager).toContain('setReviewScope("selection")');
+    expect(manager).toContain('value: "selection"');
+    expect(manager).toContain("setReviewScope(scope)");
     expect(manager).toContain("setCapacity(null)");
     expect(manager).not.toContain(
       'className="assignment-success-panel"',

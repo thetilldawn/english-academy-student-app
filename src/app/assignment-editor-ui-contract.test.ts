@@ -12,6 +12,7 @@ describe("assignment editor UI contract", () => {
   const shared = source("src/components/assignment-editor-ui.tsx");
   const single = source("src/components/assignment-manager.tsx");
   const bulk = source("src/components/bulk-assignment-dialog.tsx");
+  const review = source("src/components/review-assignment-dialog.tsx");
 
   it("uses one responsive settings and summary layout", () => {
     expect(shared).toContain("AssignmentEditorLayout");
@@ -45,5 +46,27 @@ describe("assignment editor UI contract", () => {
     expect(css).not.toContain(".assignment-student-next");
     expect(css).not.toContain("var(--danger)");
     expect(css).not.toContain("var(--surface-soft)");
+  });
+
+  it("uses one normally-flowing timing control in every assignment editor", () => {
+    expect(shared).toContain("AssignmentTimingModeField");
+    expect(shared).toContain("aria-labelledby={labelId}");
+    for (const editor of [single, bulk, review]) {
+      expect(editor).toContain("<AssignmentTimingModeField");
+      expect(editor).not.toContain(
+        '<fieldset className="field timing-mode-field">',
+      );
+    }
+  });
+
+  it("keeps a new vocabulary assignment action available after activity exists", () => {
+    const studentManager = source("src/components/student-manager.tsx");
+
+    expect(single).toContain("adminLearningText.page.studentCard.newAssignment");
+    expect(single).toContain('selectStudent(student.id, "assign")');
+    expect(
+      studentManager.match(/<StudentVocabularyAssignmentAction/g),
+    ).toHaveLength(2);
+    expect(studentManager).toContain("openStudentAssignment({");
   });
 });

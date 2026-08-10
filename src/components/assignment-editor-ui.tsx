@@ -1,4 +1,8 @@
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
+
+import { HelpTip } from "@/components/help-tip";
+import { Button } from "@/components/ui-button";
+import type { TimingMode } from "@/lib/admin/assignment-settings";
 
 function classNames(...values: Array<string | undefined>) {
   return values.filter(Boolean).join(" ");
@@ -91,6 +95,85 @@ export function AssignmentSessionRow({
       {error ? (
         <div className="assignment-session-row-error">{error}</div>
       ) : null}
+    </div>
+  );
+}
+
+export function AssignmentTimingModeField({
+  helpAriaLabel,
+  helpText,
+  label,
+  mode,
+  onChange,
+  perQuestionLabel,
+  totalLabel,
+}: {
+  helpAriaLabel: string;
+  helpText: ReactNode;
+  label: ReactNode;
+  mode: TimingMode;
+  onChange: (mode: TimingMode) => void;
+  perQuestionLabel: ReactNode;
+  totalLabel: ReactNode;
+}) {
+  return (
+    <AssignmentSegmentedField
+      helpAriaLabel={helpAriaLabel}
+      helpText={helpText}
+      label={label}
+      onChange={onChange}
+      options={[
+        { label: totalLabel, value: "total" },
+        { label: perQuestionLabel, value: "per_question" },
+      ]}
+      value={mode}
+    />
+  );
+}
+
+export function AssignmentSegmentedField<Value extends string>({
+  helpAriaLabel,
+  helpText,
+  label,
+  onChange,
+  options,
+  value,
+}: {
+  helpAriaLabel: string;
+  helpText: ReactNode;
+  label: ReactNode;
+  onChange: (value: Value) => void;
+  options: ReadonlyArray<{
+    disabled?: boolean;
+    label: ReactNode;
+    value: Value;
+  }>;
+  value: Value;
+}) {
+  const labelId = useId();
+
+  return (
+    <div className="field segmented-field">
+      <div className="field-label label-with-help" id={labelId}>
+        <span>{label}</span>
+        <HelpTip label={helpAriaLabel}>{helpText}</HelpTip>
+      </div>
+      <div
+        aria-labelledby={labelId}
+        className="segmented-control"
+        role="group"
+      >
+        {options.map((option) => (
+          <Button
+            aria-pressed={value === option.value}
+            disabled={option.disabled}
+            key={option.value}
+            onClick={() => onChange(option.value)}
+          >
+            {option.label}
+          </Button>
+        ))}
+      </div>
     </div>
   );
 }

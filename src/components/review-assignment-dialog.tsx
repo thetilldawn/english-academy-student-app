@@ -31,6 +31,7 @@ import {
   ModalHeader,
 } from "@/components/ui-modal";
 import { Button } from "@/components/ui-button";
+import { AssignmentTimingModeField } from "@/components/assignment-editor-ui";
 
 type ErrorResponse = {
   error?: string;
@@ -332,28 +333,19 @@ export function ReviewAssignmentDialog({
             </label>
           </div>
           <div className="assignment-condition-grid">
-            <fieldset className="field timing-mode-field">
-              <legend className="field-label label-with-help">
-                {adminLearningText.controls.timing.label}
-                <HelpTip label={adminLearningText.controls.timing.helpAria}>
-                  {adminLearningText.assignmentModal.conditions.timingHelp}
-                </HelpTip>
-              </legend>
-              <div className="segmented-control">
-                <Button
-                  aria-pressed={timingMode === "total"}
-                  onClick={() => setTimingMode("total")}
-                >
-                  {adminLearningText.controls.timing.total}
-                </Button>
-                <Button
-                  aria-pressed={timingMode === "per_question"}
-                  onClick={() => setTimingMode("per_question")}
-                >
-                  {adminLearningText.controls.timing.perQuestion}
-                </Button>
-              </div>
-            </fieldset>
+            <AssignmentTimingModeField
+              helpAriaLabel={adminLearningText.controls.timing.helpAria}
+              helpText={
+                adminLearningText.assignmentModal.conditions.timingHelp
+              }
+              label={adminLearningText.controls.timing.label}
+              mode={timingMode}
+              onChange={setTimingMode}
+              perQuestionLabel={
+                adminLearningText.controls.timing.perQuestion
+              }
+              totalLabel={adminLearningText.controls.timing.total}
+            />
             <label className="field">
               <span className="field-label">
                 {timingMode === "total"

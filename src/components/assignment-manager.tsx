@@ -108,6 +108,8 @@ import {
   AssignmentEditorSettings,
   AssignmentEditorSummary,
   AssignmentFieldGrid,
+  AssignmentSegmentedField,
+  AssignmentTimingModeField,
 } from "@/components/assignment-editor-ui";
 
 export type AssignmentDatasetItem = CataloguedDataset & {
@@ -1740,23 +1742,25 @@ export function AssignmentManager({
                 return (
                   <SelectableListRow
                     actions={
-                      nextActivity ? (
-                        <ButtonLink
-                          href={historyDetailHref(nextActivity)}
-                          size="small"
-                          variant="primary"
-                        >
-                          {adminLearningText.page.studentCard.view}
-                        </ButtonLink>
-                      ) : (
+                      <>
+                        {nextActivity ? (
+                          <ButtonLink
+                            href={historyDetailHref(nextActivity)}
+                            size="small"
+                            variant="primary"
+                          >
+                            {adminLearningText.page.studentCard.view}
+                          </ButtonLink>
+                        ) : null}
                         <Button
+                          disabled={readyDatasets.length === 0}
                           onClick={() => selectStudent(student.id, "assign")}
                           size="small"
-                          variant="primary"
+                          variant={nextActivity ? "secondary" : "primary"}
                         >
-                          {adminLearningText.page.studentCard.assign}
+                          {adminLearningText.page.studentCard.newAssignment}
                         </Button>
-                      )
+                      </>
                     }
                     checked={selectedBulkStudentIds.includes(student.id)}
                     checkboxId={`bulk-student-${student.id}`}
@@ -2431,47 +2435,42 @@ export function AssignmentManager({
                 </div>
                 {includePendingReview && (
                   <div className="assignment-review-controls">
-                    <fieldset className="field timing-mode-field">
-                      <legend className="field-label label-with-help">
-                        {adminLearningText.assignmentModal.wrongWords.scopeLabel}
-                        <HelpTip
-                          label={
+                    <AssignmentSegmentedField
+                      helpAriaLabel={
+                        adminLearningText.assignmentModal.wrongWords
+                          .scopeHelpAria
+                      }
+                      helpText={
+                        adminLearningText.assignmentModal.wrongWords.scopeHelp
+                      }
+                      label={
+                        adminLearningText.assignmentModal.wrongWords.scopeLabel
+                      }
+                      onChange={(scope) => {
+                        setReviewScope(scope);
+                        changeQuestionCountMode("auto");
+                        setCapacity(null);
+                        setCapacityError("");
+                        setError("");
+                      }}
+                      options={[
+                        {
+                          disabled: editTarget !== null,
+                          label:
                             adminLearningText.assignmentModal.wrongWords
-                              .scopeHelpAria
-                          }
-                        >
-                          {adminLearningText.assignmentModal.wrongWords.scopeHelp}
-                        </HelpTip>
-                      </legend>
-                      <div className="segmented-control">
-                        <Button
-                          aria-pressed={reviewScope === "dataset"}
-                          disabled={editTarget !== null}
-                          onClick={() => {
-                            setReviewScope("dataset");
-                            changeQuestionCountMode("auto");
-                            setCapacity(null);
-                            setCapacityError("");
-                            setError("");
-                          }}
-                        >
-                          {adminLearningText.assignmentModal.wrongWords.scopeAll}
-                        </Button>
-                        <Button
-                          aria-pressed={reviewScope === "selection"}
-                          disabled={editTarget !== null}
-                          onClick={() => {
-                            setReviewScope("selection");
-                            changeQuestionCountMode("auto");
-                            setCapacity(null);
-                            setCapacityError("");
-                            setError("");
-                          }}
-                        >
-                          {adminLearningText.assignmentModal.wrongWords.scopeCurrent}
-                        </Button>
-                      </div>
-                    </fieldset>
+                              .scopeAll,
+                          value: "dataset",
+                        },
+                        {
+                          disabled: editTarget !== null,
+                          label:
+                            adminLearningText.assignmentModal.wrongWords
+                              .scopeCurrent,
+                          value: "selection",
+                        },
+                      ]}
+                      value={reviewScope}
+                    />
                     <div
                       aria-label={
                         adminLearningText.assignmentModal.wrongWords
@@ -2640,30 +2639,21 @@ export function AssignmentManager({
                       </Button>
                     )}
                 </div>
-                <fieldset className="field timing-mode-field">
-                  <legend className="field-label label-with-help">
-                    {adminLearningText.assignmentModal.conditions.timingMode}
-                    <HelpTip
-                      label={adminLearningText.controls.timing.helpAria}
-                    >
-                      {adminLearningText.assignmentModal.conditions.timingHelp}
-                    </HelpTip>
-                  </legend>
-                  <div className="segmented-control">
-                    <Button
-                      aria-pressed={timingMode === "total"}
-                      onClick={() => setTimingMode("total")}
-                    >
-                      {adminLearningText.controls.timing.total}
-                    </Button>
-                    <Button
-                      aria-pressed={timingMode === "per_question"}
-                      onClick={() => setTimingMode("per_question")}
-                    >
-                      {adminLearningText.controls.timing.perQuestion}
-                    </Button>
-                  </div>
-                </fieldset>
+                <AssignmentTimingModeField
+                  helpAriaLabel={adminLearningText.controls.timing.helpAria}
+                  helpText={
+                    adminLearningText.assignmentModal.conditions.timingHelp
+                  }
+                  label={
+                    adminLearningText.assignmentModal.conditions.timingMode
+                  }
+                  mode={timingMode}
+                  onChange={setTimingMode}
+                  perQuestionLabel={
+                    adminLearningText.controls.timing.perQuestion
+                  }
+                  totalLabel={adminLearningText.controls.timing.total}
+                />
                 <label className="field">
                   <span className="field-label">
                     {timingMode === "total"

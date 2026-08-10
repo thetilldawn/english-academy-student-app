@@ -3,6 +3,9 @@ import "server-only";
 import { z } from "zod";
 
 import type { ReviewAssignmentDraftSummary } from "@/lib/admin/review-assignment";
+import {
+  isAssignmentPersistenceInvariantFailure,
+} from "@/lib/admin/assignment-database-error";
 import type {
   QuestionOrderMode,
   TimingMode,
@@ -363,17 +366,16 @@ export async function createExactReviewAssignment(
       message: error.message,
       hint: error.hint ?? null,
     });
-    throw new ReviewAssignmentError(
-      error.code === "42501"
+    const reason = isAssignmentPersistenceInvariantFailure(error)
+      ? "database"
+      : error.code === "42501"
         ? "forbidden"
         : error.code === "40001"
           ? "conflict"
-          : ["22023", "21000", "P0002", "23503", "23505"].includes(
-                error.code,
-              )
+          : ["22023", "P0002", "23503", "23505"].includes(error.code)
             ? "invalid_selection"
-            : "database",
-    );
+            : "database";
+    throw new ReviewAssignmentError(reason);
   }
   if (!z.uuid().safeParse(data).success) {
     throw new ReviewAssignmentError("database");

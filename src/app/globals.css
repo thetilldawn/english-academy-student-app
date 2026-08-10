@@ -2157,13 +2157,6 @@ tr:last-child td {
   white-space: normal;
 }
 
-.timing-mode-field {
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
 .segmented-control {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3569,10 +3562,8 @@ tr:last-child td {
   align-items: center;
 }
 
-.student-inline-assignment-action > div {
+.student-inline-assignment-action > strong {
   min-width: 0;
-  display: grid;
-  gap: 3px;
 }
 
 .student-inline-assignment-action span {
@@ -6368,6 +6359,8 @@ select {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .assignment-student-row {

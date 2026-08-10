@@ -10,6 +10,9 @@ import {
 } from "@/lib/admin/bulk-assignment-range";
 import { resolveBulkAssignmentSchedule } from "@/lib/admin/bulk-assignment-schedule";
 import { cataloguedDatasetDisplayLabel } from "@/lib/admin/dataset-catalog";
+import {
+  isAssignmentPersistenceInvariantFailure,
+} from "@/lib/admin/assignment-database-error";
 import { buildStudentProgress } from "@/lib/admin/progress";
 import {
   requireAdmin,
@@ -92,6 +95,9 @@ export class BulkAssignmentError extends Error {
 
 function bulkDatabaseError(error: { code?: string; message?: string }) {
   const message = error.message ?? "";
+  if (isAssignmentPersistenceInvariantFailure(error)) {
+    return new BulkAssignmentError("database");
+  }
   if (
     error.code === "40001" ||
     error.code === "23505" ||
@@ -137,7 +143,7 @@ function bulkDatabaseError(error: { code?: string; message?: string }) {
     );
   }
   return new BulkAssignmentError(
-    ["21000", "22023", "23503"].includes(error.code ?? "")
+    ["22023", "23503"].includes(error.code ?? "")
       ? "invalid_selection"
       : "database",
   );
