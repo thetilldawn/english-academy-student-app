@@ -1,0 +1,56 @@
+:root {
+  --paper: #fcfbf7;
+  --card: #ffffff;
+  --surface: #f1efe6;
+  --line: #dedcd1;
+  --ink: #1a1a18;
+  --muted: #66645d;
+  --dim: #a9a79c;
+  --pass: #1a6e33;
+  --retry: #b4820a;
+  --retry-bar: #f0c419;
+  --fail: #b23a2f;
+  --ok-bg: #e9f1e7;
+  --ok-line: #8cb189;
+  --ok-ink: #2c6437;
+  --no-bg: #f8e7e3;
+  --no-line: #d5a79e;
+  --no-ink: #a63b2f;
+  --ink-hover: #3d3a34;
+  --nav-glass: rgb(252 251 247 / 84%);
+  --text-primary: var(--ink);
+  --text-secondary: #5f5d55;
+  --selection-active: #e6e0d1;
+  --status-success-bg: #176b3a;
+  --status-warning-bg: #7a5700;
+  --status-danger-bg: #a3322b;
+  --status-neutral-bg: #575650;
+  --status-fg: #ffffff;
+  --motion-standard: 250ms ease-in-out;
+  --motion-complex: 300ms ease-in-out;
+  --control-height-small: 36px;
+  --control-height-default: 44px;
+  --control-height-large: 58px;
+  --control-height-icon: 36px;
+  --control-height-field: 46px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --radius-small: 4px;
+  --radius: 8px;
+  --radius-card: 14px;
+  --pad: 22px;
+  --gap-title: 18px;
+  --shadow: none;
+  --font-kr: "Pretendard Variable", Pretendard, -apple-system, system-ui, sans-serif;
+  --font-krs: var(--font-kr);
+  --font-en: var(--font-serif-en), Georgia, serif;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --pad: 18px;
+  }
+}

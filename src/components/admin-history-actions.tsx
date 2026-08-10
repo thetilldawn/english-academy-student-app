@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { Button, ButtonLink } from "@/components/ui-button";
+import { Button, ButtonLink } from "@/design-system/primitives/button/button";
 import { formatContentText } from "@/content/format";
 import { adminHistoryText } from "@/content/ko/admin-history";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";

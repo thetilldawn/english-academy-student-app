@@ -1,4 +1,4 @@
-import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
+import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 import { HelpTip } from "@/components/help-tip";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { formatContentText } from "@/content/format";

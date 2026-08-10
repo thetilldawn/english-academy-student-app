@@ -50,7 +50,9 @@ describe("assignment editor UI contract", () => {
 
   it("uses one normally-flowing timing control in every assignment editor", () => {
     expect(shared).toContain("AssignmentTimingModeField");
-    expect(shared).toContain("aria-labelledby={labelId}");
+    expect(shared).toContain("ariaLabelledBy={labelId}");
+    expect(shared).toContain("<SegmentedControl");
+    expect(shared).not.toContain('className="segmented-control"');
     for (const editor of [single, bulk, review]) {
       expect(editor).toContain("<AssignmentTimingModeField");
       expect(editor).not.toContain(

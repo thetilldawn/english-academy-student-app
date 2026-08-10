@@ -5,7 +5,7 @@ import {
   learningSourceTypeLabel,
   type StudentLearningSourceItem,
 } from "@/lib/admin/learning-sources";
-import { Button } from "@/components/ui-button";
+import { IconButton } from "@/design-system/primitives/button/button";
 import { formatContentText } from "@/content/format";
 import { adminStudentsText } from "@/content/ko/admin-students";
 
@@ -58,18 +58,17 @@ export function StudentLearningSourceList({
               <strong>{source.displayLabel}</strong>
             </div>
             {onOpen ? (
-              <Button
+              <IconButton
                 aria-label={formatContentText(
                   adminStudentsText.learning.source.openAria,
                   { type: learningSourceTypeLabel(source.sourceType) },
                 )}
                 className="learning-add-button"
                 onClick={() => onOpen(view, source)}
-                size="icon"
                 variant="quiet"
               >
                 +
-              </Button>
+              </IconButton>
             ) : null}
           </div>
         );

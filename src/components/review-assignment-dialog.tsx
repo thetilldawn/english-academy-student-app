@@ -23,15 +23,20 @@ import {
   koreanDateTimeLocalToIso,
 } from "@/lib/deadline";
 import { formatKoreanDateTime } from "@/lib/format";
-import { SelectField } from "@/components/ui-select";
 import {
   ModalBody,
   ModalFooter,
   ModalFrame,
   ModalHeader,
 } from "@/components/ui-modal";
-import { Button } from "@/components/ui-button";
+import { Button } from "@/design-system/primitives/button/button";
 import { AssignmentTimingModeField } from "@/components/assignment-editor-ui";
+import {
+  Field,
+  FieldLabel,
+  Input,
+  Select,
+} from "@/design-system/primitives/form/field";
 
 type ErrorResponse = {
   error?: string;
@@ -285,11 +290,11 @@ export function ReviewAssignmentDialog({
             </div>
           </div>
           <div className="form-grid-2">
-            <label className="field">
-              <span className="field-label">
+            <Field as="label" >
+              <FieldLabel as="span" >
                 {adminLearningText.controls.direction.label}
-              </span>
-              <SelectField
+              </FieldLabel>
+              <Select
                 onChange={(event) =>
                   setDirectionRatio(
                     Number(event.target.value) as 0 | 50 | 100,
@@ -306,13 +311,13 @@ export function ReviewAssignmentDialog({
                 <option value={50}>
                   {adminLearningText.controls.direction.mixed}
                 </option>
-              </SelectField>
-            </label>
-            <label className="field">
-              <span className="field-label">
+              </Select>
+            </Field>
+            <Field as="label" >
+              <FieldLabel as="span" >
                 {adminLearningText.controls.order.label}
-              </span>
-              <SelectField
+              </FieldLabel>
+              <Select
                 onChange={(event) =>
                   setQuestionOrderMode(
                     event.target.value as QuestionOrderMode,
@@ -329,8 +334,8 @@ export function ReviewAssignmentDialog({
                 <option value="random">
                   {adminLearningText.controls.order.random}
                 </option>
-              </SelectField>
-            </label>
+              </Select>
+            </Field>
           </div>
           <div className="assignment-condition-grid">
             <AssignmentTimingModeField
@@ -346,14 +351,14 @@ export function ReviewAssignmentDialog({
               }
               totalLabel={adminLearningText.controls.timing.total}
             />
-            <label className="field">
-              <span className="field-label">
+            <Field as="label" >
+              <FieldLabel as="span" >
                 {timingMode === "total"
                   ? adminLearningText.controls.timing.totalExamMinutes
                   : adminLearningText.controls.timing.perQuestionSeconds}
-              </span>
+              </FieldLabel>
               {timingMode === "total" ? (
-                <input
+                <Input
                   max={180}
                   min={1}
                   onChange={(event) =>
@@ -364,7 +369,7 @@ export function ReviewAssignmentDialog({
                   value={timeLimitMinutes}
                 />
               ) : (
-                <input
+                <Input
                   max={600}
                   min={5}
                   onChange={(event) =>
@@ -377,12 +382,12 @@ export function ReviewAssignmentDialog({
                   value={questionTimeLimitSeconds}
                 />
               )}
-            </label>
-            <label className="field">
-              <span className="field-label">
+            </Field>
+            <Field as="label" >
+              <FieldLabel as="span" >
                 {adminLearningText.controls.passingScore}
-              </span>
-              <input
+              </FieldLabel>
+              <Input
                 max={100}
                 min={0}
                 onChange={(event) =>
@@ -392,18 +397,18 @@ export function ReviewAssignmentDialog({
                 type="number"
                 value={passingScore}
               />
-            </label>
+            </Field>
           </div>
-          <div className="field">
-            <span className="field-label label-with-help">
+          <Field >
+            <FieldLabel as="span" className="label-with-help">
               <label htmlFor="review-assignment-available-until">
                 {adminLearningText.assignmentModal.deadline.label}
               </label>
               <HelpTip label={adminLearningText.controls.deadlineHelpAria}>
                 {adminLearningText.reviewAssignmentModal.deadlineHelp}
               </HelpTip>
-            </span>
-            <input
+            </FieldLabel>
+            <Input
               id="review-assignment-available-until"
               onChange={(event) =>
                 setAvailableUntilLocal(event.target.value)
@@ -412,27 +417,27 @@ export function ReviewAssignmentDialog({
               type="datetime-local"
               value={availableUntilLocal}
             />
-          </div>
+          </Field>
         </section>
 
         <section className="assignment-submit-panel">
-          <div className="field">
-            <span className="field-label label-with-help">
+          <Field >
+            <FieldLabel as="span" className="label-with-help">
               <label htmlFor="review-assignment-custom-title">
                 {adminLearningText.assignmentModal.submit.optionalTitle}
               </label>
               <HelpTip label={adminLearningText.controls.titleHelpAria}>
                 {adminLearningText.reviewAssignmentModal.titleHelp}
               </HelpTip>
-            </span>
-            <input
+            </FieldLabel>
+            <Input
               id="review-assignment-custom-title"
               maxLength={160}
               onChange={(event) => setCustomTitle(event.target.value)}
               placeholder={draft.generatedTitle}
               value={customTitle}
             />
-          </div>
+          </Field>
           {error && (
             <div className="notice notice-error" role="alert">
               {error}

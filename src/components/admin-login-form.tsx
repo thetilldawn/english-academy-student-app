@@ -1,8 +1,16 @@
 "use client";
 
 import { useRef, useState, type FormEvent } from "react";
-import { Button } from "@/components/ui-button";
+import {
+  Button,
+  ButtonSpinner,
+} from "@/design-system/primitives/button/button";
 import { adminShellText } from "@/content/ko/admin-shell";
+import {
+  Field,
+  FieldLabel,
+  Input,
+} from "@/design-system/primitives/form/field";
 
 type ErrorResponse = {
   error?: string;
@@ -70,9 +78,9 @@ export function AdminLoginForm() {
       className="form-stack"
       onSubmit={handleSubmit}
     >
-      <label className="field">
-        <span className="field-label">{adminShellText.login.email}</span>
-        <input
+      <Field as="label" >
+        <FieldLabel as="span" >{adminShellText.login.email}</FieldLabel>
+        <Input
           disabled={submitting}
           name="email"
           type="email"
@@ -80,10 +88,10 @@ export function AdminLoginForm() {
           required
           maxLength={254}
         />
-      </label>
-      <label className="field">
-        <span className="field-label">{adminShellText.login.password}</span>
-        <input
+      </Field>
+      <Field as="label" >
+        <FieldLabel as="span" >{adminShellText.login.password}</FieldLabel>
+        <Input
           disabled={submitting}
           name="password"
           type="password"
@@ -92,7 +100,7 @@ export function AdminLoginForm() {
           minLength={8}
           maxLength={200}
         />
-      </label>
+      </Field>
       {error && (
         <div className="notice notice-error" role="alert">
           {error}
@@ -105,7 +113,7 @@ export function AdminLoginForm() {
         variant="primary"
       >
         {submitting ? (
-          <span aria-hidden="true" className="button-spinner" />
+          <ButtonSpinner />
         ) : null}
         {submitting
           ? adminShellText.login.submitting

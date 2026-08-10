@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { StartRetryButton } from "@/components/start-retry-button";
-import { ButtonLink } from "@/components/ui-button";
-import { CountBadge } from "@/components/count-badge";
+import { ButtonLink } from "@/design-system/primitives/button/button";
+import { CountBadge } from "@/design-system/primitives/badge/badge";
 import { formatContentText } from "@/content/format";
 import { studentAppText } from "@/content/ko/student-app";
 import { requireStudentSession } from "@/lib/auth/student-session";

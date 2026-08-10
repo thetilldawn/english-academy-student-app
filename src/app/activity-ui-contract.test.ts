@@ -26,10 +26,10 @@ function contrast(left: string, right: string) {
 }
 
 describe("shared activity UI contract", () => {
-  it("keeps one base rule for each migrated legacy selector", () => {
+  it("removes migrated primitive selectors and keeps feature row authorities", () => {
     const css = source("src/app/globals.css");
 
-    expect(css.match(/^\.status-pill\s*\{/gm)).toHaveLength(1);
+    expect(css.match(/^\.status-pill\s*\{/gm) ?? []).toHaveLength(0);
     expect(css.match(/^\.assignment-student-row\s*\{/gm)).toHaveLength(1);
     expect(css.match(/^\.admin-history-row\s*\{/gm)).toHaveLength(1);
     expect(css).not.toContain(
@@ -43,7 +43,7 @@ describe("shared activity UI contract", () => {
       "src/components/assignment-manager.tsx",
     );
 
-    expect(rows).toContain('type="checkbox"');
+    expect(rows).toContain("<Checkbox");
     expect(rows).toContain("aria-label={selectionAriaLabel}");
     expect(rows).toContain("onChange={onToggle}");
     expect(rows).toContain("href={href}");
@@ -67,6 +67,10 @@ describe("shared activity UI contract", () => {
 
   it("keeps count badges white without muting every heading child", () => {
     const css = source("src/app/globals.css");
+    const badgeCss = source(
+      "src/design-system/primitives/badge/badge.module.css",
+    );
+    const tokens = source("src/styles/tokens.css");
     const assignmentManager = source(
       "src/components/assignment-manager.tsx",
     );
@@ -81,10 +85,11 @@ describe("shared activity UI contract", () => {
     expect(css).toMatch(
       /\.learning-section-summary\s*\{[^}]*color:\s*var\(--muted\);/,
     );
-    expect(css).toMatch(
-      /\.count-badge\s*\{[^}]*color:\s*var\(--status-fg\);/,
+    expect(css).not.toMatch(/\.count-badge\s*\{/);
+    expect(badgeCss).toMatch(
+      /\.status\s*\{[^}]*color:\s*var\(--status-fg\);/,
     );
-    expect(css).toContain("--status-fg: #ffffff;");
+    expect(tokens).toContain("--status-fg: #ffffff;");
     expect(assignmentManager).toContain(
       'className="learning-section-summary"',
     );

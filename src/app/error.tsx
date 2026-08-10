@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 
 import { getErrorReference } from "@/lib/observability/error-reference";
-import { Button } from "@/components/ui-button";
+import { Button } from "@/design-system/primitives/button/button";
 import { commonText } from "@/content/ko/common";
 
 export default function ErrorPage({

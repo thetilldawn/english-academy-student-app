@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui-button";
+import {
+  Button,
+  ButtonSpinner,
+} from "@/design-system/primitives/button/button";
 import { studentAppText } from "@/content/ko/student-app";
 
 export function StartRetryButton({ attemptId }: { attemptId: string }) {
@@ -51,7 +54,7 @@ export function StartRetryButton({ attemptId }: { attemptId: string }) {
         onClick={() => void startRetry()}
         variant="primary"
       >
-        {pending && <span aria-hidden="true" className="button-spinner" />}
+        {pending && <ButtonSpinner />}
         {pending
           ? studentAppText.actions.retryPending
           : studentAppText.actions.retry}

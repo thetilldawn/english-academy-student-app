@@ -1,10 +1,14 @@
 import type { ReactNode } from "react";
 
 import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
-import { AssignmentMetaTags, MetaTag, MetaTagList } from "@/components/admin-meta-tags";
+import { AssignmentMetaTags } from "@/components/assignment-meta-tags";
 import { AttemptScoreSummary } from "@/components/attempt-score-summary";
-import { CountBadge } from "@/components/count-badge";
-import { StatusBadge } from "@/components/status-badge";
+import {
+  CountBadge,
+  MetaTag,
+  MetaTagList,
+  StatusBadge,
+} from "@/design-system/primitives/badge/badge";
 import { formatContentText } from "@/content/format";
 import { adminHistoryText } from "@/content/ko/admin-history";
 import {

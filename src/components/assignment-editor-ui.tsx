@@ -1,8 +1,12 @@
 import { useId, type ReactNode } from "react";
 
 import { HelpTip } from "@/components/help-tip";
-import { Button } from "@/components/ui-button";
 import type { TimingMode } from "@/lib/admin/assignment-settings";
+import {
+  Field,
+  FieldLabel,
+} from "@/design-system/primitives/form/field";
+import { SegmentedControl } from "@/design-system/primitives/form/segmented-control";
 
 function classNames(...values: Array<string | undefined>) {
   return values.filter(Boolean).join(" ");
@@ -153,27 +157,17 @@ export function AssignmentSegmentedField<Value extends string>({
   const labelId = useId();
 
   return (
-    <div className="field segmented-field">
-      <div className="field-label label-with-help" id={labelId}>
+    <Field className="segmented-field">
+      <FieldLabel as="span" className="label-with-help" id={labelId}>
         <span>{label}</span>
         <HelpTip label={helpAriaLabel}>{helpText}</HelpTip>
-      </div>
-      <div
-        aria-labelledby={labelId}
-        className="segmented-control"
-        role="group"
-      >
-        {options.map((option) => (
-          <Button
-            aria-pressed={value === option.value}
-            disabled={option.disabled}
-            key={option.value}
-            onClick={() => onChange(option.value)}
-          >
-            {option.label}
-          </Button>
-        ))}
-      </div>
-    </div>
+      </FieldLabel>
+      <SegmentedControl
+        ariaLabelledBy={labelId}
+        onChange={onChange}
+        options={options}
+        value={value}
+      />
+    </Field>
   );
 }

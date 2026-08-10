@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 import { getErrorReference } from "@/lib/observability/error-reference";
 import { commonText } from "@/content/ko/common";
-import { Button } from "@/components/ui-button";
+import { Button } from "@/design-system/primitives/button/button";
 
 export default function GlobalError({
   error,

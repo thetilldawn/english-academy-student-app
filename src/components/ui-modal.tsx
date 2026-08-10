@@ -4,7 +4,10 @@ import {
   type ReactNode,
 } from "react";
 
-import { Button } from "@/components/ui-button";
+import {
+  Button,
+  IconButton,
+} from "@/design-system/primitives/button/button";
 import { commonText } from "@/content/ko/common";
 
 export const ModalFrame = forwardRef<
@@ -43,15 +46,14 @@ export function ModalHeader({
     <header className="modal-frame-header">
       <div className="modal-frame-title-row">
         {onBack ? (
-          <Button
+          <IconButton
             aria-label={backLabel ?? commonText.modal.back}
             disabled={disabled}
             onClick={onBack}
-            size="icon"
             variant="quiet"
           >
             ←
-          </Button>
+          </IconButton>
         ) : null}
         <div className="modal-frame-title">{children}</div>
       </div>

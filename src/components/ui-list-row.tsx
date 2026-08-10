@@ -1,5 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import {
+  Checkbox,
+} from "@/design-system/primitives/form/field";
 
 export function ActivityRowContent({
   main,
@@ -73,13 +76,12 @@ export function SelectableListRow({
       data-selected={checked}
     >
       <label className="selectable-list-row-checkbox" htmlFor={checkboxId}>
-        <input
+        <Checkbox
           aria-label={selectionAriaLabel}
           checked={checked}
           disabled={disabled}
           id={checkboxId}
           onChange={onToggle}
-          type="checkbox"
         />
       </label>
       {href ? (

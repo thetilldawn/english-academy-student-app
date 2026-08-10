@@ -1,0 +1,54 @@
+.root {
+  min-width: 0;
+  min-height: var(--control-height-field);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.option {
+  min-width: 0;
+  min-height: var(--control-height-field);
+  padding: 8px 12px;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    color var(--motion-standard),
+    background-color var(--motion-standard),
+    opacity var(--motion-standard);
+}
+
+.option:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--selection-active);
+}
+
+.option[aria-pressed="true"] {
+  color: var(--paper);
+  background: var(--ink);
+}
+
+.option:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+
+.option:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .option {
+    transition: none;
+  }
+}

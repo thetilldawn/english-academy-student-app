@@ -1,5 +1,7 @@
-import type { ReactNode } from "react";
-
+import {
+  MetaTag,
+  MetaTagList,
+} from "@/design-system/primitives/badge/badge";
 import {
   assignmentTypeLabel,
   assignmentUnitRangeLabel,
@@ -7,36 +9,6 @@ import {
 } from "@/lib/admin/history";
 import { formatContentText } from "@/content/format";
 import { adminHistoryText } from "@/content/ko/admin-history";
-
-type MetaTagTone = "neutral" | "positive" | "warning" | "danger";
-
-export function MetaTagList({
-  children,
-  className = "",
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <span className={["meta-tag-list", className].filter(Boolean).join(" ")}>
-      {children}
-    </span>
-  );
-}
-
-export function MetaTag({
-  children,
-  tone = "neutral",
-}: {
-  children: ReactNode;
-  tone?: MetaTagTone;
-}) {
-  return (
-    <span className="meta-tag" data-tone={tone}>
-      {children}
-    </span>
-  );
-}
 
 export function AssignmentMetaTags({
   assignmentPurpose,

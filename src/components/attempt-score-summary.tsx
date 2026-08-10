@@ -3,7 +3,7 @@ import {
   buildAttemptStatusPresentation,
   type AttemptScorePresentationInput,
 } from "@/lib/ui/attempt-score-presentation";
-import { StatusBadge } from "@/components/status-badge";
+import { StatusBadge } from "@/design-system/primitives/badge/badge";
 
 export function AttemptScoreSummary({
   className = "",
@@ -50,13 +50,11 @@ export function AttemptStatusLabel({
   const presentation = buildAttemptStatusPresentation(input);
   return (
     <StatusBadge
-      className={[
-        "attempt-status-label",
-        presentation.className,
-        className,
-      ]
+      className={["attempt-status-label", className]
         .filter(Boolean)
         .join(" ")}
+      data-outcome={presentation.outcome}
+      size="small"
       tone={presentation.tone}
     >
       {presentation.label}

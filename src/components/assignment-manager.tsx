@@ -19,11 +19,11 @@ import { HelpTip } from "@/components/help-tip";
 import { BulkAssignmentDialog } from "@/components/bulk-assignment-dialog";
 import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
 import { AttemptScoreSummary } from "@/components/attempt-score-summary";
+import { AssignmentMetaTags } from "@/components/assignment-meta-tags";
 import {
-  AssignmentMetaTags,
   MetaTag,
   MetaTagList,
-} from "@/components/admin-meta-tags";
+} from "@/design-system/primitives/badge/badge";
 import { StudentLearningActivityList } from "@/components/student-learning-activity-list";
 import {
   ActivityRowContent,
@@ -95,14 +95,17 @@ import { adminLearningText } from "@/content/ko/admin-learning";
 import { commonText } from "@/content/ko/common";
 import { formatContentText } from "@/content/format";
 import { Tabs } from "@/components/ui-tabs";
-import { SelectField } from "@/components/ui-select";
 import {
   ModalBody,
   ModalFooter,
   ModalFrame,
   ModalHeader,
 } from "@/components/ui-modal";
-import { Button, ButtonLink } from "@/components/ui-button";
+import {
+  Button,
+  ButtonLink,
+  IconButton,
+} from "@/design-system/primitives/button/button";
 import {
   AssignmentEditorLayout,
   AssignmentEditorSettings,
@@ -111,6 +114,13 @@ import {
   AssignmentSegmentedField,
   AssignmentTimingModeField,
 } from "@/components/assignment-editor-ui";
+import {
+  Checkbox,
+  Field,
+  FieldLabel,
+  Input,
+  Select,
+} from "@/design-system/primitives/form/field";
 
 export type AssignmentDatasetItem = CataloguedDataset & {
   rowCount: number;
@@ -1493,7 +1503,8 @@ export function AssignmentManager({
               <span className="sr-only">
                 {adminLearningText.page.searchAriaLabel}
               </span>
-              <input
+              <Input
+                leadingAdornment
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={adminLearningText.page.searchPlaceholder}
                 type="search"
@@ -1524,11 +1535,10 @@ export function AssignmentManager({
                     ).map(([value, label]) => (
                       <Button
                         aria-pressed={wrongWordFilter === value}
-                        className="filter-chip"
+                        variant="filter"
                         key={value}
                         onClick={() => setWrongWordFilter(value)}
                         size="small"
-                        variant="quiet"
                       >
                         {label}
                       </Button>
@@ -1541,7 +1551,7 @@ export function AssignmentManager({
                     {schoolOptions.map((school) => (
                       <Button
                         aria-pressed={schoolFilter === school}
-                        className="filter-chip"
+                        variant="filter"
                         key={school}
                         onClick={() =>
                           setSchoolFilter((current) =>
@@ -1549,7 +1559,6 @@ export function AssignmentManager({
                           )
                         }
                         size="small"
-                        variant="quiet"
                       >
                         {school}
                       </Button>
@@ -1562,7 +1571,7 @@ export function AssignmentManager({
                     {gradeOptions.map((grade) => (
                       <Button
                         aria-pressed={gradeFilter === grade}
-                        className="filter-chip"
+                        variant="filter"
                         key={grade}
                         onClick={() =>
                           setGradeFilter((current) =>
@@ -1570,7 +1579,6 @@ export function AssignmentManager({
                           )
                         }
                         size="small"
-                        variant="quiet"
                       >
                         {grade}
                       </Button>
@@ -1583,7 +1591,7 @@ export function AssignmentManager({
                     {wordbookOptions.map((wordbook) => (
                       <Button
                         aria-pressed={wordbookFilter === wordbook}
-                        className="filter-chip"
+                        variant="filter"
                         key={wordbook}
                         onClick={() =>
                           setWordbookFilter((current) =>
@@ -1591,7 +1599,6 @@ export function AssignmentManager({
                           )
                         }
                         size="small"
-                        variant="quiet"
                       >
                         {wordbook}
                       </Button>
@@ -1963,7 +1970,7 @@ export function AssignmentManager({
                         adminLearningText.assignmentModal.overview.unselected}
                     </strong>
                   </div>
-                  <Button
+                  <IconButton
                     aria-label={
                       adminLearningText.assignmentModal.overview
                         .openAssignmentAria
@@ -1971,11 +1978,10 @@ export function AssignmentManager({
                     className="learning-add-button"
                     disabled={readyDatasets.length === 0}
                     onClick={() => setDialogView("assign")}
-                    size="icon"
                     variant="quiet"
                   >
                     +
-                  </Button>
+                  </IconButton>
                 </div>
                 {selectedLearningSources.length > 0 ? (
                   <div className="student-learning-tags">
@@ -2139,11 +2145,11 @@ export function AssignmentManager({
                   }
                 </div>
               ) : null}
-              <label className="field">
-                <span className="field-label">
+              <Field as="label" >
+                <FieldLabel as="span" >
                   {adminLearningText.assignmentModal.range.wordbook}
-                </span>
-                <SelectField
+                </FieldLabel>
+                <Select
                   disabled={exactReviewEdit}
                   onChange={(event) =>
                     selectDataset(event.target.value)
@@ -2175,17 +2181,17 @@ export function AssignmentManager({
                       ))}
                     </optgroup>
                   ))}
-                </SelectField>
-              </label>
+                </Select>
+              </Field>
               <AssignmentFieldGrid>
-                <label className="field">
-                  <span className="field-label">
+                <Field as="label" >
+                  <FieldLabel as="span" >
                     {formatContentText(
                       adminLearningText.assignmentModal.range.start,
                       { unit: unitTerm },
                     )}
-                  </span>
-                  <SelectField
+                  </FieldLabel>
+                  <Select
                     disabled={exactReviewEdit}
                     onChange={(event) =>
                       selectStartUnit(event.target.value)
@@ -2221,16 +2227,16 @@ export function AssignmentManager({
                         ))}
                       </optgroup>
                     ))}
-                  </SelectField>
-                </label>
-                <label className="field">
-                  <span className="field-label">
+                  </Select>
+                </Field>
+                <Field as="label" >
+                  <FieldLabel as="span" >
                     {formatContentText(
                       adminLearningText.assignmentModal.range.end,
                       { unit: unitTerm },
                     )}
-                  </span>
-                  <SelectField
+                  </FieldLabel>
+                  <Select
                     disabled={exactReviewEdit}
                     onChange={(event) => {
                       changeQuestionCountMode("auto");
@@ -2271,8 +2277,8 @@ export function AssignmentManager({
                         ))}
                       </optgroup>
                     ))}
-                  </SelectField>
-                </label>
+                  </Select>
+                </Field>
               </AssignmentFieldGrid>
               <p className="selection-summary">
                 {formatContentText(
@@ -2368,13 +2374,12 @@ export function AssignmentManager({
               >
                 <div className="assignment-review-toggle-row">
                   <label className="assignment-review-switch">
-                    <input
+                    <Checkbox
                       checked={includePendingReview}
                       disabled={exactReviewEdit}
                       onChange={(event) =>
                         changeIncludePendingReview(event.target.checked)
                       }
-                      type="checkbox"
                     />
                     <strong>
                       {adminLearningText.assignmentModal.wrongWords.title}
@@ -2481,21 +2486,19 @@ export function AssignmentManager({
                     >
                       <Button
                         aria-pressed={reviewLevels.includes(1)}
-                        className="filter-chip"
+                        variant="filter"
                         disabled={exactReviewEdit}
                         onClick={() => changeReviewLevel(1)}
                         size="small"
-                        variant="quiet"
                       >
                         {adminLearningText.assignmentModal.wrongWords.once}
                       </Button>
                       <Button
                         aria-pressed={reviewLevels.includes(2)}
-                        className="filter-chip"
+                        variant="filter"
                         disabled={exactReviewEdit}
                         onClick={() => changeReviewLevel(2)}
                         size="small"
-                        variant="quiet"
                       >
                         {adminLearningText.assignmentModal.wrongWords.repeated}
                       </Button>
@@ -2522,11 +2525,11 @@ export function AssignmentManager({
                 </div>
               </div>
               <AssignmentFieldGrid>
-                <label className="field">
-                  <span className="field-label">
+                <Field as="label" >
+                  <FieldLabel as="span" >
                     {adminLearningText.assignmentModal.conditions.direction}
-                  </span>
-                  <SelectField
+                  </FieldLabel>
+                  <Select
                     onChange={(event) => {
                       changeQuestionCountMode("auto");
                       setCapacity(null);
@@ -2555,13 +2558,13 @@ export function AssignmentManager({
                       {adminLearningText.assignmentModal.conditions
                         .exampleDisabled}
                     </option>
-                  </SelectField>
-                </label>
-                <label className="field">
-                  <span className="field-label">
+                  </Select>
+                </Field>
+                <Field as="label" >
+                  <FieldLabel as="span" >
                     {adminLearningText.assignmentModal.conditions.order}
-                  </span>
-                  <SelectField
+                  </FieldLabel>
+                  <Select
                     onChange={(event) =>
                       setQuestionOrderMode(
                         event.target.value as QuestionOrderMode,
@@ -2578,12 +2581,12 @@ export function AssignmentManager({
                     <option value="random">
                       {adminLearningText.controls.order.random}
                     </option>
-                  </SelectField>
-                </label>
+                  </Select>
+                </Field>
               </AssignmentFieldGrid>
               <AssignmentFieldGrid>
-                <div className="field">
-                  <span className="field-label">
+                <Field >
+                  <FieldLabel as="span" >
                     <label htmlFor="assignment-question-count">
                       {includePendingReview
                         ? adminLearningText.assignmentModal.conditions
@@ -2591,8 +2594,8 @@ export function AssignmentManager({
                         : adminLearningText.assignmentModal.conditions
                             .questionCount}
                     </label>
-                  </span>
-                  <input
+                  </FieldLabel>
+                  <Input
                     id="assignment-question-count"
                     max={
                       capacity &&
@@ -2638,7 +2641,7 @@ export function AssignmentManager({
                         )}
                       </Button>
                     )}
-                </div>
+                </Field>
                 <AssignmentTimingModeField
                   helpAriaLabel={adminLearningText.controls.timing.helpAria}
                   helpText={
@@ -2654,15 +2657,15 @@ export function AssignmentManager({
                   }
                   totalLabel={adminLearningText.controls.timing.total}
                 />
-                <label className="field">
-                  <span className="field-label">
+                <Field as="label" >
+                  <FieldLabel as="span" >
                     {timingMode === "total"
                       ? adminLearningText.assignmentModal.conditions.totalTime
                       : adminLearningText.assignmentModal.conditions
                           .perQuestionTime}
-                  </span>
+                  </FieldLabel>
                   {timingMode === "total" ? (
-                    <input
+                    <Input
                       max={180}
                       min={0.5}
                       onChange={(event) =>
@@ -2674,7 +2677,7 @@ export function AssignmentManager({
                       value={timeLimitMinutes}
                     />
                   ) : (
-                    <input
+                    <Input
                       max={600}
                       min={5}
                       onChange={(event) =>
@@ -2687,12 +2690,12 @@ export function AssignmentManager({
                       value={questionTimeLimitSeconds}
                     />
                   )}
-                </label>
-                <label className="field">
-                  <span className="field-label">
+                </Field>
+                <Field as="label" >
+                  <FieldLabel as="span" >
                     {adminLearningText.assignmentModal.conditions.passingScore}
-                  </span>
-                  <input
+                  </FieldLabel>
+                  <Input
                     max={100}
                     min={0}
                     onChange={(event) =>
@@ -2702,10 +2705,10 @@ export function AssignmentManager({
                     type="number"
                     value={passingScore}
                   />
-                </label>
+                </Field>
               </AssignmentFieldGrid>
-              <div className="field">
-                <span className="field-label label-with-help">
+              <Field >
+                <FieldLabel as="span" className="label-with-help">
                   <label htmlFor="assignment-available-until">
                     {adminLearningText.assignmentModal.deadline.label}
                   </label>
@@ -2714,8 +2717,8 @@ export function AssignmentManager({
                   >
                     {adminLearningText.assignmentModal.deadline.help}
                   </HelpTip>
-                </span>
-                <input
+                </FieldLabel>
+                <Input
                   id="assignment-available-until"
                   onChange={(event) => {
                     setAvailableUntilLocal(event.target.value);
@@ -2725,19 +2728,19 @@ export function AssignmentManager({
                   type="datetime-local"
                   value={availableUntilLocal}
                 />
-              </div>
+              </Field>
             </section>
 
-            <div className="field">
-              <span className="field-label label-with-help">
+            <Field >
+              <FieldLabel as="span" className="label-with-help">
                 <label htmlFor="assignment-custom-title">
                   {adminLearningText.assignmentModal.submit.optionalTitle}
                 </label>
                 <HelpTip label={adminLearningText.controls.titleHelpAria}>
                   {adminLearningText.assignmentModal.submit.titleHelp}
                 </HelpTip>
-              </span>
-              <input
+              </FieldLabel>
+              <Input
                 id="assignment-custom-title"
                 maxLength={160}
                 onChange={(event) => {
@@ -2750,7 +2753,7 @@ export function AssignmentManager({
                 }
                 value={customTitle}
               />
-            </div>
+            </Field>
               </AssignmentEditorSettings>
 
               <AssignmentEditorSummary>

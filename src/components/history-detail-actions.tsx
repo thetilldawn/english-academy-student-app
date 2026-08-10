@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { AdminHistoryActions } from "@/components/admin-history-actions";
 import { AssignmentManager } from "@/components/assignment-manager";
-import { Button, ButtonLink } from "@/components/ui-button";
+import { Button, ButtonLink } from "@/design-system/primitives/button/button";
 import { adminHistoryText } from "@/content/ko/admin-history";
 import { isStudentAssignmentEditable } from "@/lib/admin/assignment-edit";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";

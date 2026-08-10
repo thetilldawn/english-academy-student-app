@@ -3,6 +3,9 @@ import localFont from "next/font/local";
 import Script from "next/script";
 
 import "pretendard/dist/web/variable/pretendardvariable.css";
+import "@/styles/tokens.css";
+import "@/styles/theme.css";
+import "@/styles/reset.css";
 import "@/app/globals.css";
 import { AppToaster } from "@/components/app-toaster";
 import { commonText } from "@/content/ko/common";

@@ -19,7 +19,7 @@ describe("공통 도움말 UI 계약", () => {
     expect(component).toContain("getBoundingClientRect()");
     expect(css).toContain(".help-tip-content[popover]");
     expect(css).toContain("border: 1px solid currentColor");
-    expect(css).toContain("border-radius: 50%");
+    expect(css).toContain("border-radius: 999px");
     expect(css).not.toContain("var(--line-strong)");
   });
 
@@ -31,11 +31,12 @@ describe("공통 도움말 UI 계약", () => {
       "src/components/student-manager.tsx",
     ].map(source);
 
-    for (const component of sources) {
-      expect(component).not.toMatch(
-        /<label className="field">[\s\S]{0,500}<HelpTip/,
-      );
-    }
+    expect(sources.join("\n")).not.toMatch(
+      /<Field as="label"[^>]*>[\s\S]{0,350}<HelpTip/,
+    );
+    expect(source("src/components/assignment-editor-ui.tsx")).toContain(
+      '<FieldLabel as="span" className="label-with-help" id={labelId}>',
+    );
     expect(sources.join("\n")).toContain(
       'htmlFor="assignment-available-until"',
     );

@@ -7,7 +7,10 @@ import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { Button } from "@/components/ui-button";
+import {
+  Button,
+  buttonRecipe,
+} from "@/design-system/primitives/button/button";
 import { Tabs } from "@/components/ui-tabs";
 
 afterEach(cleanup);
@@ -25,7 +28,9 @@ describe("component testing foundation", () => {
 
     const button = screen.getByRole("button", { name: "시험 배정" });
     expect(button).toHaveAttribute("type", "button");
-    expect(button).toHaveClass("button-primary", "button-large");
+    expect(button.className).toBe(
+      buttonRecipe({ size: "large", variant: "primary" }),
+    );
 
     await user.click(button);
     expect(onClick).toHaveBeenCalledOnce();

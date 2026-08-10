@@ -149,7 +149,7 @@ describe("wrong-word admin UI contract", () => {
     expect(panel).toContain(
       "adminStudentsText.learning.wrongWordsPanel.repeated",
     );
-    expect(panel).toContain('type="checkbox"');
+    expect(panel).toContain("<Checkbox");
     expect(panel).toContain(
       'nextExamTarget?.scheduling === "queued"',
     );

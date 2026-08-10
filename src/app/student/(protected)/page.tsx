@@ -4,9 +4,12 @@ import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
 import { DeadlineCountdown } from "@/components/deadline-countdown";
 import { StartAttemptButton } from "@/components/start-attempt-button";
 import { AttemptScoreSummary } from "@/components/attempt-score-summary";
-import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
-import { CountBadge } from "@/components/count-badge";
-import { ButtonLink } from "@/components/ui-button";
+import {
+  CountBadge,
+  MetaTag,
+  MetaTagList,
+} from "@/design-system/primitives/badge/badge";
+import { ButtonLink } from "@/design-system/primitives/button/button";
 import { studentAppText } from "@/content/ko/student-app";
 import { formatContentText } from "@/content/format";
 import { requireStudentSession } from "@/lib/auth/student-session";
@@ -99,21 +102,21 @@ function AssignmentCard({
         />
       </div>
 
-      <MetaTagList className="assignment-details">
-        <MetaTag>
+      <MetaTagList className="assignment-details" fullWidth>
+        <MetaTag overflow="truncate" size="large">
           {assignmentTypeLabel(assignment.assignmentPurpose)}
         </MetaTag>
-        <MetaTag>
+        <MetaTag overflow="truncate" size="large">
           {assignment.scopeLabel}
         </MetaTag>
         {assignment.assignmentPurpose !== "review" && (
-          <MetaTag>
+          <MetaTag overflow="truncate" size="large">
             {formatContentText(studentAppText.dashboard.meta.questionCount, {
               count: assignment.questionCount,
             })}
           </MetaTag>
         )}
-        <MetaTag>
+        <MetaTag overflow="truncate" size="large">
           {assignment.timingMode === "per_question"
             ? formatContentText(
                 studentAppText.dashboard.meta.perQuestion,
@@ -124,12 +127,12 @@ function AssignmentCard({
                 { minutes: Math.ceil(assignment.timeLimitSeconds / 60) },
               )}
         </MetaTag>
-        <MetaTag>
+        <MetaTag overflow="truncate" size="large">
           {formatContentText(studentAppText.dashboard.meta.passingScore, {
             score: assignment.passingScore,
           })}
         </MetaTag>
-        <MetaTag>
+        <MetaTag overflow="truncate" size="large">
           {assignmentOrderLabel(
             assignment.assignmentPurpose,
             assignment.questionOrderMode,

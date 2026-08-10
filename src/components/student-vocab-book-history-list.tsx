@@ -1,5 +1,8 @@
-import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
-import { StatusBadge } from "@/components/status-badge";
+import {
+  MetaTag,
+  MetaTagList,
+  StatusBadge,
+} from "@/design-system/primitives/badge/badge";
 import {
   cataloguedDatasetDisplayLabel,
   type CataloguedDataset,

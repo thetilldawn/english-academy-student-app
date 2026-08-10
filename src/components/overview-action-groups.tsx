@@ -1,5 +1,5 @@
 import { AdminHistoryList } from "@/components/admin-history-list";
-import { CountBadge } from "@/components/count-badge";
+import { CountBadge } from "@/design-system/primitives/badge/badge";
 import { adminOverviewText } from "@/content/ko/admin-overview";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
 

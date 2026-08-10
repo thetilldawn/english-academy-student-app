@@ -6,7 +6,7 @@ import {
   AdminHistoryDetailHeading,
 } from "@/components/admin-history-detail";
 import { HistoryDetailActions } from "@/components/history-detail-actions";
-import { ButtonLink } from "@/components/ui-button";
+import { ButtonLink } from "@/design-system/primitives/button/button";
 import { adminHistoryText } from "@/content/ko/admin-history";
 import { historyDetailHref } from "@/lib/admin/history-route";
 import { isStudentAssignmentEditable } from "@/lib/admin/assignment-edit";

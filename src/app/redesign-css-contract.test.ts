@@ -3,18 +3,34 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-const css = fs.readFileSync(
-  path.resolve("src/app/globals.css"),
-  "utf8",
-);
+function readCss(relativePath: string) {
+  return fs.readFileSync(path.resolve(relativePath), "utf8");
+}
+
+function moduleCssFiles(directory: string): string[] {
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const entryPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) return moduleCssFiles(entryPath);
+    return entry.name.endsWith(".module.css") ? [entryPath] : [];
+  });
+}
+
+const globalsCss = readCss("src/app/globals.css");
+const tokensCss = readCss("src/styles/tokens.css");
+const themeCss = readCss("src/styles/theme.css");
+const resetCss = readCss("src/styles/reset.css");
+const modulesCss = moduleCssFiles(path.resolve("src/design-system"))
+  .map((file) => fs.readFileSync(file, "utf8"))
+  .join("\n");
+const css = [globalsCss, modulesCss].join("\n");
 
 describe("redesign CSS contract", () => {
   it("keeps literal colors inside token blocks", () => {
-    const withoutTokenBlocks = css.replace(
-      /:root[^\{]*\{[\s\S]*?\}/g,
-      "",
+    expect([globalsCss, resetCss, modulesCss].join("\n")).not.toMatch(
+      /#[0-9a-f]{3,8}\b/i,
     );
-    expect(withoutTokenBlocks).not.toMatch(/#[0-9a-f]{3,8}\b/i);
+    expect(tokensCss).toMatch(/--paper:\s*#[0-9a-f]{6};/i);
+    expect(themeCss).toMatch(/:root\[data-theme="dark"\]/);
   });
 
   it("uses a compact radius scale", () => {
@@ -30,7 +46,7 @@ describe("redesign CSS contract", () => {
     expect(css).not.toMatch(
       /(?:linear-gradient|radial-gradient|box-shadow)\s*:/,
     );
-    const withoutNavigationBlur = css.replace(
+    const withoutNavigationBlur = globalsCss.replace(
       /\.admin-sidebar,\s*\.admin-topbar,\s*\.topbar,\s*\.admin-mobile-nav\s*\{[\s\S]*?\}/,
       "",
     );
@@ -38,9 +54,9 @@ describe("redesign CSS contract", () => {
   });
 
   it("uses a calm color transition without lifting buttons", () => {
-    expect(css).toContain("--motion-standard: 250ms ease-in-out;");
-    expect(css).toContain("--motion-complex: 300ms ease-in-out;");
-    expect(css).toContain(
+    expect(tokensCss).toContain("--motion-standard: 250ms ease-in-out;");
+    expect(tokensCss).toContain("--motion-complex: 300ms ease-in-out;");
+    expect(globalsCss).toContain(
       "animation: learning-view-forward var(--motion-complex) both;",
     );
     expect(css).not.toMatch(/\b(?:120|140|240)ms\b|\b0\.25s\b/);
@@ -61,8 +77,8 @@ describe("redesign CSS contract", () => {
   });
 
   it("supports an explicit dark theme and switch", () => {
-    expect(css).toMatch(/:root\[data-theme="dark"\]/);
-    expect(css).toMatch(/\.theme-toggle\s*\{/);
+    expect(themeCss).toMatch(/:root\[data-theme="dark"\]/);
+    expect(globalsCss).toMatch(/\.theme-toggle\s*\{/);
   });
 
   it("uses only the approved font weights", () => {
@@ -80,12 +96,25 @@ describe("redesign CSS contract", () => {
       "utf8",
     );
 
-    expect(css).toContain("--font-krs: var(--font-kr);");
-    expect(css).toMatch(
+    expect(tokensCss).toContain("--font-krs: var(--font-kr);");
+    expect(globalsCss).toMatch(
       /\.student-card-name\s*\{[\s\S]*?font-family:\s*var\(--font-kr\);/,
     );
     expect(rootLayout).not.toContain("Gowun_Batang");
     expect(rootLayout).not.toContain("--font-serif-kr");
+  });
+
+  it("loads foundation layers before application CSS", () => {
+    const rootLayout = readCss("src/app/layout.tsx");
+    const imports = [
+      'import "@/styles/tokens.css";',
+      'import "@/styles/theme.css";',
+      'import "@/styles/reset.css";',
+      'import "@/app/globals.css";',
+    ].map((statement) => rootLayout.indexOf(statement));
+
+    expect(imports.every((index) => index >= 0)).toBe(true);
+    expect(imports).toEqual([...imports].sort((left, right) => left - right));
   });
 
   it("renders quiz choices as one vertical column", () => {

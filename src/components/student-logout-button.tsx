@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui-button";
+import { Button } from "@/design-system/primitives/button/button";
 import { studentAppText } from "@/content/ko/student-app";
 
 export function StudentLogoutButton() {

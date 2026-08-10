@@ -12,13 +12,20 @@ import { formatKoreanDateTime } from "@/lib/format";
 import { HelpTip } from "@/components/help-tip";
 import { adminStudentsText } from "@/content/ko/admin-students";
 import { formatContentText } from "@/content/format";
-import { SelectField } from "@/components/ui-select";
-import { Button } from "@/components/ui-button";
+import { Button } from "@/design-system/primitives/button/button";
+import { StatusBadge } from "@/design-system/primitives/badge/badge";
 import {
   readingCurriculumStageLabel,
   readingCurriculumStages,
   type ReadingCurriculumStage,
 } from "@/lib/admin/reading-curriculum";
+import {
+  Checkbox,
+  Field,
+  FieldLabel,
+  Input,
+  Select,
+} from "@/design-system/primitives/form/field";
 
 type LevelFilter = "all" | "once" | "repeated";
 type SelectionPurpose = "next_exam" | "worksheet";
@@ -790,11 +797,11 @@ export function StudentWrongWordPanel({
 
       <div id="wrong-word-aggregate-panel">
           <div className="wrong-word-filter-grid">
-            <label className="field">
-              <span className="field-label">
+            <Field as="label" >
+              <FieldLabel as="span" >
                 {adminStudentsText.learning.wrongWordsPanel.search}
-              </span>
-              <input
+              </FieldLabel>
+              <Input
                 onChange={(event) => {
                   setQuery(event.target.value);
                   resetSelectionFeedback();
@@ -805,12 +812,12 @@ export function StudentWrongWordPanel({
                 type="search"
                 value={query}
               />
-            </label>
-            <label className="field">
-              <span className="field-label">
+            </Field>
+            <Field as="label" >
+              <FieldLabel as="span" >
                 {adminStudentsText.learning.wrongWordsPanel.wordbook}
-              </span>
-              <SelectField
+              </FieldLabel>
+              <Select
                 onChange={(event) => {
                   setDatasetFilter(event.target.value);
                   resetSelectionFeedback();
@@ -825,8 +832,8 @@ export function StudentWrongWordPanel({
                     {dataset.label}
                   </option>
                 ))}
-              </SelectField>
-            </label>
+              </Select>
+            </Field>
           </div>
           <div
             aria-label={
@@ -846,7 +853,7 @@ export function StudentWrongWordPanel({
             ).map(([value, label]) => (
               <Button
                 aria-pressed={levelFilter === value}
-                className="filter-chip"
+                variant="filter"
                 key={value}
                 onClick={() => {
                   if (levelFilter === value) {
@@ -856,7 +863,6 @@ export function StudentWrongWordPanel({
                   resetSelectionFeedback();
                 }}
                 size="small"
-                variant="quiet"
               >
                 {label}
               </Button>
@@ -881,11 +887,10 @@ export function StudentWrongWordPanel({
             ).map(([value, label]) => (
               <Button
                 aria-pressed={selectionPurpose === value}
-                className="filter-chip"
+                variant="filter"
                 key={value}
                 onClick={() => setSelectionPurpose(value)}
                 size="small"
-                variant="quiet"
               >
                 {label}
               </Button>
@@ -902,14 +907,14 @@ export function StudentWrongWordPanel({
           </div>
           <div className="wrong-word-selection-bar">
             {selectionPurpose === "worksheet" && (
-              <label className="field wrong-word-curriculum-field">
-                <span className="field-label">
+              <Field as="label" className="wrong-word-curriculum-field">
+                <FieldLabel as="span" >
                   {
                     adminStudentsText.learning.wrongWordsPanel
                       .readingCurriculum
                   }
-                </span>
-                <SelectField
+                </FieldLabel>
+                <Select
                   onChange={(event) =>
                     setReadingCurriculumStage(
                       event.target.value as ReadingCurriculumStage,
@@ -922,8 +927,8 @@ export function StudentWrongWordPanel({
                       {readingCurriculumStageLabel(stage)}
                     </option>
                   ))}
-                </SelectField>
-              </label>
+                </Select>
+              </Field>
             )}
             <Button
               disabled={
@@ -989,14 +994,21 @@ export function StudentWrongWordPanel({
               )}
             </div>
             {selectionPurpose === "worksheet" && (
-              <span
-                className={`status-pill reading-context-status status-${readingContextSyncStatus}`}
+              <StatusBadge
+                className="reading-context-status"
+                tone={
+                  readingContextSyncStatus === "synced"
+                    ? "success"
+                    : readingContextSyncStatus === "failed"
+                      ? "danger"
+                      : "neutral"
+                }
               >
                 {
                   adminStudentsText.learning.wrongWordsPanel
                     .readingContextStatus[readingContextSyncStatus]
                 }
-              </span>
+              </StatusBadge>
             )}
           </div>
 
@@ -1025,10 +1037,11 @@ export function StudentWrongWordPanel({
                 <article
                   className="wrong-word-row"
                   data-selected={selected || undefined}
+                  data-wrong-level={word.wrongLevel}
                   key={word.key}
                 >
                   <label className="wrong-word-checkbox">
-                    <input
+                    <Checkbox
                       checked={selected}
                       disabled={
                         !activeTarget ||
@@ -1047,7 +1060,6 @@ export function StudentWrongWordPanel({
                           toggleQuestion(activeTarget.questionId);
                         }
                       }}
-                      type="checkbox"
                     />
                     <span className="sr-only">
                       {formatContentText(
@@ -1080,13 +1092,14 @@ export function StudentWrongWordPanel({
                     </small>
                   </div>
                   <div className="wrong-word-meta">
-                    <span
-                      className={`status-pill ${
+                    <StatusBadge
+                      tone={
+                        nextExamTarget?.resolution === "resolved" ||
                         nextExamTarget?.scheduling === "assigned" ||
                         nextExamTarget?.scheduling === "queued"
-                          ? "status-completed"
-                          : ""
-                      }`}
+                          ? "success"
+                          : "neutral"
+                      }
                     >
                       {nextExamTarget?.resolution === "resolved"
                         ? adminStudentsText.learning.wrongWordsPanel.resolved
@@ -1096,9 +1109,9 @@ export function StudentWrongWordPanel({
                             ? adminStudentsText.learning.wrongWordsPanel.pending
                             : adminStudentsText.learning.wrongWordsPanel
                                 .available}
-                    </span>
-                    <span
-                      className={`status-pill wrong-level-${word.wrongLevel}`}
+                    </StatusBadge>
+                    <StatusBadge
+                      tone={word.wrongLevel === 1 ? "warning" : "danger"}
                     >
                       {word.wrongLevel === 1
                         ? adminStudentsText.learning.wrongWordsPanel.once
@@ -1107,7 +1120,7 @@ export function StudentWrongWordPanel({
                               .wrongCount,
                             { count: word.wrongCount },
                           )}
-                    </span>
+                    </StatusBadge>
                     <span>{outcomeLabel(word.latestOutcome)}</span>
                     <small>
                       {formatKoreanDateTime(word.lastWrongAt)}

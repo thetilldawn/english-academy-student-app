@@ -26,8 +26,12 @@ import { StudentLearningSourceList } from "@/components/student-learning-source-
 import { StudentVocabBookHistoryList } from "@/components/student-vocab-book-history-list";
 import { HelpTip } from "@/components/help-tip";
 import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
-import { StatusBadge } from "@/components/status-badge";
-import { CountBadge } from "@/components/count-badge";
+import {
+  CountBadge,
+  MetaTag,
+  MetaTagList,
+  StatusBadge,
+} from "@/design-system/primitives/badge/badge";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { adminStudentsText } from "@/content/ko/admin-students";
 import { commonText } from "@/content/ko/common";
@@ -38,11 +42,13 @@ import {
   type AssignmentUnitItem,
 } from "@/components/assignment-manager";
 import { AttemptScoreSummary } from "@/components/attempt-score-summary";
-import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
-import { Button, buttonClassNames } from "@/components/ui-button";
+import {
+  Button,
+  IconButton,
+  buttonRecipe,
+} from "@/design-system/primitives/button/button";
 import { Tabs } from "@/components/ui-tabs";
 import { ModalBody, ModalFrame, ModalHeader } from "@/components/ui-modal";
-import { SelectField } from "@/components/ui-select";
 import { buildAttemptStatusPresentation } from "@/lib/ui/attempt-score-presentation";
 import {
   cataloguedDatasetDisplayLabel,
@@ -68,6 +74,16 @@ import {
 } from "@/lib/admin/learning-sources";
 import type { StudentVocabBookHistory } from "@/lib/admin/student-vocab-book-history";
 import type { ReadingCurriculumStage } from "@/lib/admin/reading-curriculum";
+import {
+  Field,
+  FieldHelp,
+  FieldLabel,
+  FieldLabelRow,
+  FieldRequirement,
+  Input,
+  Select,
+  Textarea,
+} from "@/design-system/primitives/form/field";
 
 type StudentItem = {
   id: string;
@@ -919,7 +935,7 @@ export function StudentManager({
           )}
 
           <details className="card student-create-disclosure">
-        <summary className={buttonClassNames({ variant: "primary" })}>
+        <summary className={buttonRecipe({ variant: "primary" })}>
           {adminStudentsText.createStudent.open}
         </summary>
         <div className="student-create-content">
@@ -928,66 +944,63 @@ export function StudentManager({
             className="form-stack"
             onSubmit={createStudent}
           >
-            <div className="field">
-              <span className="field-label-row">
-                <span className="field-label label-with-help">
+            <Field >
+              <FieldLabelRow >
+                <FieldLabel as="span" className="label-with-help">
                   <label htmlFor="create-student-display-name">
                     {adminStudentsText.createStudent.nameLabel}
                   </label>
                   <HelpTip label={adminStudentsText.createStudent.nameHelpAria}>
                     {adminStudentsText.createStudent.nameHelp}
                   </HelpTip>
-                </span>
-                <span
-                  className="field-requirement"
-                  data-kind="required"
-                >
+                </FieldLabel>
+                <FieldRequirement data-kind="required">
                   {adminStudentsText.createStudent.required}
-                </span>
-              </span>
-              <input
+                </FieldRequirement>
+              </FieldLabelRow>
+              <Input
                 id="create-student-display-name"
                 maxLength={80}
                 name="displayName"
                 placeholder={adminStudentsText.createStudent.namePlaceholder}
                 required
               />
-            </div>
+            </Field>
             <div className="form-grid-2">
-              <label className="field">
-                <span className="field-label-row">
-                  <span className="field-label">
+              <Field as="label" >
+                <FieldLabelRow >
+                  <FieldLabel as="span" >
                     {adminStudentsText.createStudent.schoolLabel}
-                  </span>
-                  <span className="field-requirement">
+                  </FieldLabel>
+                  <FieldRequirement >
                     {adminStudentsText.createStudent.optional}
-                  </span>
-                </span>
-                <input
+                  </FieldRequirement>
+                </FieldLabelRow>
+                <Input
                   maxLength={120}
                   name="schoolName"
                   placeholder={adminStudentsText.createStudent.schoolPlaceholder}
                 />
-              </label>
-              <label className="field">
-                <span className="field-label-row">
-                  <span className="field-label">
+              </Field>
+              <Field as="label" >
+                <FieldLabelRow >
+                  <FieldLabel as="span" >
                     {adminStudentsText.createStudent.gradeLabel}
-                  </span>
-                  <span className="field-requirement">
+                  </FieldLabel>
+                  <FieldRequirement >
                     {adminStudentsText.createStudent.optional}
-                  </span>
-                </span>
-                <input
+                  </FieldRequirement>
+                </FieldLabelRow>
+                <Input
                   maxLength={40}
                   name="gradeLabel"
                   placeholder={adminStudentsText.createStudent.gradePlaceholder}
                 />
-              </label>
+              </Field>
             </div>
-            <div className="field">
-              <span className="field-label-row">
-                <span className="field-label label-with-help">
+            <Field >
+              <FieldLabelRow >
+                <FieldLabel as="span" className="label-with-help">
                   <label htmlFor="create-student-vocab-dataset">
                     {adminStudentsText.createStudent.startingWordbookLabel}
                   </label>
@@ -998,12 +1011,12 @@ export function StudentManager({
                   >
                     {adminStudentsText.createStudent.startingWordbookHelp}
                   </HelpTip>
-                </span>
-                <span className="field-requirement">
+                </FieldLabel>
+                <FieldRequirement >
                   {adminStudentsText.createStudent.optional}
-                </span>
-              </span>
-              <SelectField
+                </FieldRequirement>
+              </FieldLabelRow>
+              <Select
                 defaultValue=""
                 id="create-student-vocab-dataset"
                 name="currentVocabDatasetId"
@@ -1020,28 +1033,28 @@ export function StudentManager({
                     ))}
                   </optgroup>
                 ))}
-              </SelectField>
+              </Select>
               {datasets.length === 0 ? (
-                <span className="field-help">
+                <FieldHelp >
                   {adminStudentsText.createStudent.noWordbookNotice}
-                </span>
+                </FieldHelp>
               ) : null}
-            </div>
-            <label className="field">
-              <span className="field-label-row">
-                <span className="field-label">
+            </Field>
+            <Field as="label" >
+              <FieldLabelRow >
+                <FieldLabel as="span" >
                   {adminStudentsText.createStudent.memoLabel}
-                </span>
-                <span className="field-requirement">
+                </FieldLabel>
+                <FieldRequirement >
                   {adminStudentsText.createStudent.optional}
-                </span>
-              </span>
-              <textarea
+                </FieldRequirement>
+              </FieldLabelRow>
+              <Textarea
                 maxLength={2000}
                 name="note"
                 placeholder={adminStudentsText.createStudent.memoPlaceholder}
               />
-            </label>
+            </Field>
             {createError && (
               <div className="notice notice-error" role="alert">
                 {createError}
@@ -1073,7 +1086,8 @@ export function StudentManager({
           <span className="sr-only">
             {adminStudentsText.page.searchAriaLabel}
           </span>
-          <input
+          <Input
+            leadingAdornment
             onChange={(event) => setQuery(event.target.value)}
             placeholder={adminStudentsText.page.searchPlaceholder}
             type="search"
@@ -1104,11 +1118,10 @@ export function StudentManager({
                 ).map(([value, label]) => (
                   <Button
                     aria-pressed={wrongWordFilter === value}
-                    className="filter-chip"
+                    variant="filter"
                     key={value}
                     onClick={() => setWrongWordFilter(value)}
                     size="small"
-                    variant="quiet"
                   >
                     {label}
                   </Button>
@@ -1121,7 +1134,7 @@ export function StudentManager({
                 {schoolOptions.map((school) => (
                   <Button
                     aria-pressed={schoolFilter === school}
-                    className="filter-chip"
+                    variant="filter"
                     key={school}
                     onClick={() =>
                       setSchoolFilter((current) =>
@@ -1129,7 +1142,6 @@ export function StudentManager({
                       )
                     }
                     size="small"
-                    variant="quiet"
                   >
                     {school}
                   </Button>
@@ -1142,7 +1154,7 @@ export function StudentManager({
                 {gradeOptions.map((grade) => (
                   <Button
                     aria-pressed={gradeFilter === grade}
-                    className="filter-chip"
+                    variant="filter"
                     key={grade}
                     onClick={() =>
                       setGradeFilter((current) =>
@@ -1150,7 +1162,6 @@ export function StudentManager({
                       )
                     }
                     size="small"
-                    variant="quiet"
                   >
                     {grade}
                   </Button>
@@ -1163,7 +1174,7 @@ export function StudentManager({
                 {wordbookOptions.map((wordbook) => (
                   <Button
                     aria-pressed={wordbookFilter === wordbook}
-                    className="filter-chip"
+                    variant="filter"
                     key={wordbook}
                     onClick={() =>
                       setWordbookFilter((current) =>
@@ -1171,7 +1182,6 @@ export function StudentManager({
                       )
                     }
                     size="small"
-                    variant="quiet"
                   >
                     {wordbook}
                   </Button>
@@ -1556,11 +1566,11 @@ export function StudentManager({
                       }}
                     />
                     <div className="student-book-form compact-learning-form">
-                      <label className="field">
-                        <span className="field-label">
+                      <Field as="label" >
+                        <FieldLabel as="span" >
                           {adminStudentsText.learning.recentWordbookChange}
-                        </span>
-                        <SelectField
+                        </FieldLabel>
+                        <Select
                           onChange={(event) =>
                             setProfileDatasetId(event.target.value)
                           }
@@ -1588,8 +1598,8 @@ export function StudentManager({
                               ))}
                             </optgroup>
                           ))}
-                        </SelectField>
-                      </label>
+                        </Select>
+                      </Field>
                       <Button
                         disabled={
                           interactionBusy ||
@@ -1629,14 +1639,13 @@ export function StudentManager({
                     key={learningView}
                   >
                     <div className="student-learning-subview-heading">
-                      <Button
+                      <IconButton
                         aria-label={adminStudentsText.learning.backAria}
                         onClick={() => setLearningView("summary")}
-                        size="icon"
                         variant="quiet"
                       >
                         ←
-                      </Button>
+                      </IconButton>
                       <div>
                         <h3>
                           {learningView === "vocab"
@@ -1714,11 +1723,11 @@ export function StudentManager({
                   onSubmit={saveStudentProfile}
                 >
                   <div className="form-grid-2">
-                    <label className="field">
-                      <span className="field-label">
+                    <Field as="label" >
+                      <FieldLabel as="span" >
                         {adminStudentsText.account.name}
-                      </span>
-                      <input
+                      </FieldLabel>
+                      <Input
                         maxLength={80}
                         onChange={(event) =>
                           setProfileDisplayName(event.target.value)
@@ -1726,31 +1735,31 @@ export function StudentManager({
                         required
                         value={profileDisplayName}
                       />
-                    </label>
-                    <label className="field">
-                      <span className="field-label">
+                    </Field>
+                    <Field as="label" >
+                      <FieldLabel as="span" >
                         {adminStudentsText.account.school}
-                      </span>
-                      <input
+                      </FieldLabel>
+                      <Input
                         maxLength={120}
                         onChange={(event) =>
                           setProfileSchoolName(event.target.value)
                         }
                         value={profileSchoolName}
                       />
-                    </label>
-                    <label className="field">
-                      <span className="field-label">
+                    </Field>
+                    <Field as="label" >
+                      <FieldLabel as="span" >
                         {adminStudentsText.account.grade}
-                      </span>
-                      <input
+                      </FieldLabel>
+                      <Input
                         maxLength={40}
                         onChange={(event) =>
                           setProfileGradeLabel(event.target.value)
                         }
                         value={profileGradeLabel}
                       />
-                    </label>
+                    </Field>
                   </div>
                   <Button
                     disabled={

@@ -15,7 +15,16 @@ import {
   STUDENT_CODE_LENGTH,
 } from "@/lib/auth/student-code-input";
 import { studentAppText } from "@/content/ko/student-app";
-import { Button } from "@/components/ui-button";
+import {
+  Button,
+  ButtonSpinner,
+} from "@/design-system/primitives/button/button";
+import {
+  Field,
+  FieldHelp,
+  FieldLabel,
+  Input,
+} from "@/design-system/primitives/form/field";
 
 type LoginResponse = {
   error?: string;
@@ -121,17 +130,18 @@ export function StudentLoginForm() {
       className="form-stack"
       onSubmit={handleSubmit}
     >
-      <div className="field">
-        <label className="field-label" htmlFor="student-access-code">
+      <Field >
+        <FieldLabel  htmlFor="student-access-code">
           {studentAppText.login.codeLabel}
-        </label>
+        </FieldLabel>
         <div
           className="segmented-code-control"
           data-full={code.length === STUDENT_CODE_LENGTH}
           data-invalid={Boolean(error)}
         >
-          <input
+          <Input
             ref={codeInputRef}
+            appearance="unstyled"
             aria-describedby="student-code-help"
             aria-errormessage={
               error ? "student-code-error" : undefined
@@ -195,10 +205,10 @@ export function StudentLoginForm() {
             ))}
           </div>
         </div>
-        <span className="field-help" id="student-code-help">
+        <FieldHelp  id="student-code-help">
           {studentAppText.login.codeHelp}
-        </span>
-      </div>
+        </FieldHelp>
+      </Field>
       {error && (
         <div
           className="notice notice-error"
@@ -215,7 +225,7 @@ export function StudentLoginForm() {
         variant="primary"
       >
         {submitting ? (
-          <span aria-hidden="true" className="button-spinner" />
+          <ButtonSpinner />
         ) : null}
         {submitting
           ? studentAppText.login.submitting

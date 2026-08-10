@@ -98,7 +98,7 @@ const sectionMarkers = [
   "Admin metadata tags and content-driven density",
   "Student learning workspace completion",
   "Shared interactive UI contracts",
-  "APP-20260809-07: shared activity rows, statuses, and route detail",
+  "APP-20260809-07: shared activity rows and route detail",
   "APP-20260809-08: mobile student lists, assignment tags, and code view",
 ];
 const allowedTopLevelComments = new Set([
@@ -147,31 +147,31 @@ const cssMaximums = {
 const legacyComponents = [
   {
     path: "src/components/assignment-manager.tsx",
-    maxLines: 2987,
+    maxLines: 2991,
     maxFetchCalls: 4,
     maxUseStateCalls: 35,
   },
   {
     path: "src/components/bulk-assignment-dialog.tsx",
-    maxLines: 808,
+    maxLines: 816,
     maxFetchCalls: 2,
     maxUseStateCalls: 17,
   },
   {
     path: "src/components/review-assignment-dialog.tsx",
-    maxLines: 469,
+    maxLines: 474,
     maxFetchCalls: 2,
     maxUseStateCalls: 11,
   },
   {
     path: "src/components/student-manager.tsx",
-    maxLines: 1884,
+    maxLines: 1896,
     maxFetchCalls: 1,
     maxUseStateCalls: 23,
   },
   {
     path: "src/components/student-wrong-word-panel.tsx",
-    maxLines: 1127,
+    maxLines: 1141,
     maxFetchCalls: 4,
     maxUseStateCalls: 15,
   },
@@ -192,6 +192,35 @@ const primitiveNames = new Set([
   "activity-status-timeline.tsx",
 ]);
 const violations = [];
+
+const migratedPrimitiveSelectors = [
+  /^\.button(?:\b|[.:\s])/m,
+  /^\.field(?:\b|[.:\s])/m,
+  /^\.select-field(?:\b|[.:\s])/m,
+  /^\.segmented-control(?:\b|[.:\s])/m,
+  /^\.status-pill(?:\b|[.:\s])/m,
+  /^\.status-badge(?:\b|[.:\s])/m,
+  /^\.count-badge(?:\b|[.:\s])/m,
+  /^\.meta-tag(?:\b|[.:\s])/m,
+];
+
+for (const selector of migratedPrimitiveSelectors) {
+  if (selector.test(css)) {
+    violations.push(`globals.css retains migrated primitive selector ${selector}`);
+  }
+}
+
+for (const retiredPath of [
+  "src/components/ui-button.tsx",
+  "src/components/ui-select.tsx",
+  "src/components/status-badge.tsx",
+  "src/components/count-badge.tsx",
+  "src/components/admin-meta-tags.tsx",
+]) {
+  if (fs.existsSync(path.join(rootDirectory, retiredPath))) {
+    violations.push(`${retiredPath} should be retired after primitive migration`);
+  }
+}
 
 for (const [name, maximum] of Object.entries(cssMaximums)) {
   if (cssMetrics[name] > maximum) {

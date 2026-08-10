@@ -1,1 +1,1 @@
-export type StatusTone = "neutral" | "success" | "warning" | "danger";
+export type { StatusTone } from "@/design-system/primitives/badge/tone";

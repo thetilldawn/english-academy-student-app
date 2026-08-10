@@ -11,10 +11,9 @@ import {
 } from "react";
 import { toast } from "sonner";
 
-import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
+import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 import { HelpTip } from "@/components/help-tip";
-import { Button } from "@/components/ui-button";
-import { SelectField } from "@/components/ui-select";
+import { Button } from "@/design-system/primitives/button/button";
 import {
   ModalBody,
   ModalFooter,
@@ -43,6 +42,12 @@ import {
   AssignmentSessionRow,
   AssignmentTimingModeField,
 } from "@/components/assignment-editor-ui";
+import {
+  Field,
+  FieldLabel,
+  Input,
+  Select,
+} from "@/design-system/primitives/form/field";
 
 type BulkPreviewSession = {
   sessionNumber: number;
@@ -353,8 +358,12 @@ export function BulkAssignmentDialog({
           <AssignmentEditorLayout>
             <AssignmentEditorSettings>
           <AssignmentFieldGrid columns={3}>
-            <label className="field bulk-range-mode-field">
-              <span className="field-label label-with-help">
+            <Field className="bulk-range-mode-field">
+              <FieldLabel
+                as="span"
+                className="label-with-help"
+                id="bulk-range-mode-label"
+              >
                 {adminLearningText.bulkAssignmentModal.rangeMode.label}
                 <HelpTip
                   label={
@@ -363,8 +372,9 @@ export function BulkAssignmentDialog({
                 >
                   {adminLearningText.bulkAssignmentModal.rangeMode.help}
                 </HelpTip>
-              </span>
-              <SelectField
+              </FieldLabel>
+              <Select
+                aria-labelledby="bulk-range-mode-label"
                 onChange={(event) => {
                   setPreviewLoading(true);
                   setPreview(null);
@@ -384,14 +394,14 @@ export function BulkAssignmentDialog({
                 <option value="fixed_span">
                   {adminLearningText.bulkAssignmentModal.rangeMode.fixedSpan}
                 </option>
-              </SelectField>
-            </label>
+              </Select>
+            </Field>
             {rangeMode === "fixed_span" ? (
-              <label className="field">
-                <span className="field-label">
+              <Field as="label" >
+                <FieldLabel as="span" >
                   {adminLearningText.bulkAssignmentModal.unitsPerSession}
-                </span>
-                <input
+                </FieldLabel>
+                <Input
                   max={30}
                   min={1}
                   onChange={(event) => {
@@ -403,13 +413,13 @@ export function BulkAssignmentDialog({
                   type="number"
                   value={unitsPerSession}
                 />
-              </label>
+              </Field>
             ) : null}
-            <label className="field">
-              <span className="field-label">
+            <Field as="label" >
+              <FieldLabel as="span" >
                 {adminLearningText.bulkAssignmentModal.sessionCount}
-              </span>
-              <input
+              </FieldLabel>
+              <Input
                 max={7}
                 min={1}
                 onChange={(event) => {
@@ -421,12 +431,12 @@ export function BulkAssignmentDialog({
                 type="number"
                 value={sessionCount}
               />
-            </label>
-            <label className="field">
-              <span className="field-label">
+            </Field>
+            <Field as="label" >
+              <FieldLabel as="span" >
                 {adminLearningText.bulkAssignmentModal.firstAvailableDate}
-              </span>
-              <input
+              </FieldLabel>
+              <Input
                 onChange={(event) => {
                   const nextDate = event.target.value;
                   const nextFrom = nextDate
@@ -456,12 +466,12 @@ export function BulkAssignmentDialog({
                 type="date"
                 value={firstAvailableDate}
               />
-            </label>
-            <label className="field">
-              <span className="field-label">
+            </Field>
+            <Field as="label" >
+              <FieldLabel as="span" >
                 {adminLearningText.bulkAssignmentModal.dayInterval}
-              </span>
-              <input
+              </FieldLabel>
+              <Input
                 max={30}
                 min={1}
                 onChange={(event) => {
@@ -473,12 +483,12 @@ export function BulkAssignmentDialog({
                 type="number"
                 value={dayInterval}
               />
-            </label>
-            <label className="field">
-              <span className="field-label">
+            </Field>
+            <Field as="label" >
+              <FieldLabel as="span" >
                 {adminLearningText.controls.direction.label}
-              </span>
-              <SelectField
+              </FieldLabel>
+              <Select
                 onChange={(event) => {
                   setPreviewLoading(true);
                   setPreview(null);
@@ -498,13 +508,13 @@ export function BulkAssignmentDialog({
                 <option value={50}>
                   {adminLearningText.controls.direction.mixed}
                 </option>
-              </SelectField>
-            </label>
-            <label className="field">
-              <span className="field-label">
+              </Select>
+            </Field>
+            <Field as="label" >
+              <FieldLabel as="span" >
                 {adminLearningText.controls.order.label}
-              </span>
-              <SelectField
+              </FieldLabel>
+              <Select
                 onChange={(event) =>
                   setQuestionOrderMode(event.target.value as QuestionOrderMode)
                 }
@@ -519,20 +529,20 @@ export function BulkAssignmentDialog({
                 <option value="random">
                   {adminLearningText.controls.order.random}
                 </option>
-              </SelectField>
-            </label>
-            <label className="field">
-              <span className="field-label">
+              </Select>
+            </Field>
+            <Field as="label" >
+              <FieldLabel as="span" >
                 {adminLearningText.controls.passingScore}
-              </span>
-              <input
+              </FieldLabel>
+              <Input
                 max={100}
                 min={0}
                 onChange={(event) => setPassingScore(Number(event.target.value))}
                 type="number"
                 value={passingScore}
               />
-            </label>
+            </Field>
             <AssignmentTimingModeField
               helpAriaLabel={adminLearningText.controls.timing.helpAria}
               helpText={
@@ -548,13 +558,13 @@ export function BulkAssignmentDialog({
               }
               totalLabel={adminLearningText.controls.timing.totalShort}
             />
-            <label className="field">
-              <span className="field-label">
+            <Field as="label" >
+              <FieldLabel as="span" >
                 {timingMode === "total"
                   ? adminLearningText.controls.timing.totalMinutes
                   : adminLearningText.controls.timing.perQuestionSeconds}
-              </span>
-              <input
+              </FieldLabel>
+              <Input
                 max={timingMode === "total" ? 180 : 600}
                 min={timingMode === "total" ? 1 : 5}
                 onChange={(event) =>
@@ -569,17 +579,17 @@ export function BulkAssignmentDialog({
                     : questionTimeLimitSeconds
                 }
               />
-            </label>
-            <div className="field">
-              <span className="field-label label-with-help">
+            </Field>
+            <Field >
+              <FieldLabel as="span" className="label-with-help">
                 <label htmlFor="bulk-assignment-first-available-until">
                   {adminLearningText.bulkAssignmentModal.firstDeadline}
                 </label>
                 <HelpTip label={adminLearningText.controls.deadlineHelpAria}>
                   {adminLearningText.bulkAssignmentModal.deadlineHelp}
                 </HelpTip>
-              </span>
-              <input
+              </FieldLabel>
+              <Input
                 id="bulk-assignment-first-available-until"
                 onChange={(event) => {
                     const nextValue = event.target.value;
@@ -607,7 +617,7 @@ export function BulkAssignmentDialog({
                 type="datetime-local"
                 value={firstAvailableUntilLocal}
               />
-            </div>
+            </Field>
           </AssignmentFieldGrid>
 
           {includePendingReview ? (
@@ -618,19 +628,17 @@ export function BulkAssignmentDialog({
               <div className="filter-chip-row">
                 <Button
                   aria-pressed={reviewLevels.includes(1)}
-                  className="filter-chip"
+                  variant="filter"
                   onClick={() => toggleReviewLevel(1)}
                   size="small"
-                  variant="quiet"
                 >
                   {adminLearningText.bulkAssignmentModal.wrongOnce}
                 </Button>
                 <Button
                   aria-pressed={reviewLevels.includes(2)}
-                  className="filter-chip"
+                  variant="filter"
                   onClick={() => toggleReviewLevel(2)}
                   size="small"
-                  variant="quiet"
                 >
                   {adminLearningText.bulkAssignmentModal.wrongRepeated}
                 </Button>
@@ -726,7 +734,7 @@ export function BulkAssignmentDialog({
                               </MetaTag>
                             ) : null}
                             {session.available ? (
-                              <MetaTag tone="positive">
+                              <MetaTag tone="success">
                                 {formatContentText(
                                   adminLearningText.bulkAssignmentModal
                                     .questionCount,

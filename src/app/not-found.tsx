@@ -1,4 +1,4 @@
-import { ButtonLink } from "@/components/ui-button";
+import { ButtonLink } from "@/design-system/primitives/button/button";
 import { commonText } from "@/content/ko/common";
 
 export default function NotFoundPage() {

@@ -9,12 +9,21 @@ function source(relativePath: string) {
 
 describe("student catalog and modal UI contract", () => {
   const css = source("src/app/globals.css");
+  const resetCss = source("src/styles/reset.css");
+  const tokens = source("src/styles/tokens.css");
+  const buttonCss = source(
+    "src/design-system/primitives/button/button.module.css",
+  );
+  const badgeCss = source(
+    "src/design-system/primitives/badge/badge.module.css",
+  );
   const studentManager = source("src/components/student-manager.tsx");
   const bulkDialog = source("src/components/bulk-assignment-dialog.tsx");
 
   it("keeps card tags content-sized and marks the active tab", () => {
-    expect(css).toMatch(
-      /\.student-card-info-row > \.meta-tag\s*\{[^}]*width:\s*fit-content;[^}]*justify-self:\s*start;/,
+    expect(css).not.toMatch(/\.student-card-info-row > \.meta-tag/);
+    expect(badgeCss).toMatch(
+      /\.badge\s*\{[^}]*width:\s*max-content;[^}]*max-width:\s*100%;/,
     );
     expect(css).toMatch(
       /\.student-detail-dialog > \.app-tabs\s*\{[^}]*border:\s*0;[^}]*border-radius:\s*0;/,
@@ -29,7 +38,7 @@ describe("student catalog and modal UI contract", () => {
       css.match(/\.app-tab\[aria-selected="true"\]\s*\{[^}]*\}/)?.[0] ??
       "";
     expect(selectedTabRule).not.toContain("outline:");
-    expect(css).toMatch(
+    expect(resetCss).toMatch(
       /\[tabindex\]:focus-visible,[^}]*\{[^}]*outline:\s*2px solid var\(--ink\);/,
     );
   });
@@ -47,22 +56,24 @@ describe("student catalog and modal UI contract", () => {
   });
 
   it("uses one named button size contract and compact bulk spacing", () => {
-    expect(css).toContain("--control-height-small: 36px;");
-    expect(css).toContain("--control-height-default: 44px;");
-    expect(css).toContain("--control-height-large: 58px;");
-    expect(css).toContain("--control-height-icon: 36px;");
-    expect(css).toMatch(
-      /\.button\.button-small\s*\{[^}]*height:\s*var\(--control-height-small\);/,
+    expect(tokens).toContain("--control-height-small: 36px;");
+    expect(tokens).toContain("--control-height-default: 44px;");
+    expect(tokens).toContain("--control-height-large: 58px;");
+    expect(tokens).toContain("--control-height-icon: 36px;");
+    expect(buttonCss).toMatch(
+      /\.small\s*\{[^}]*height:\s*var\(--control-height-small\);/,
     );
-    expect(css).toMatch(
-      /\.button\.button-icon\s*\{[^}]*width:\s*var\(--control-height-icon\);/,
+    expect(buttonCss).toMatch(
+      /\.icon\s*\{[^}]*width:\s*var\(--control-height-icon\);/,
     );
     expect(css).toMatch(
       /\.bulk-assignment-form\s*\{[^}]*align-content:\s*start;[^}]*grid-auto-rows:\s*max-content;/,
     );
     expect(css).toMatch(/\.assignment-editor-layout\s*\{/);
     expect(bulkDialog).toContain("<AssignmentEditorLayout>");
-    expect(bulkDialog).toContain('import { Button } from "@/components/ui-button";');
+    expect(bulkDialog).toContain(
+      'from "@/design-system/primitives/button/button";',
+    );
     expect(bulkDialog).toContain("<ModalHeader");
     expect(source("src/components/ui-modal.tsx")).toContain('size="small"');
   });

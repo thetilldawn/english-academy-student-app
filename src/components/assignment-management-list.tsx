@@ -4,9 +4,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { MetaTag, MetaTagList } from "@/components/admin-meta-tags";
-import { StatusBadge } from "@/components/status-badge";
-import { Button } from "@/components/ui-button";
+import {
+  MetaTag,
+  MetaTagList,
+  StatusBadge,
+} from "@/design-system/primitives/badge/badge";
+import { Button } from "@/design-system/primitives/button/button";
 import { formatContentText } from "@/content/format";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { assignmentDisplayTitle } from "@/lib/admin/history";

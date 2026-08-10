@@ -1,4 +1,4 @@
-import { StatusBadge } from "@/components/status-badge";
+import { StatusBadge } from "@/design-system/primitives/badge/badge";
 import { formatKoreanActivityDateTime } from "@/lib/format";
 import {
   buildActivityStatusTimeline,

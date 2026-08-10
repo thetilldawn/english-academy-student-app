@@ -26,12 +26,17 @@ describe("mobile production regression UI contract", () => {
   });
 
   it("uses the shared tag component with one stable assignment tag height", () => {
-    expect(studentPage).toContain(
-      '<MetaTagList className="assignment-details">',
+    const badgeCss = source(
+      "src/design-system/primitives/badge/badge.module.css",
     );
+    expect(studentPage).toContain(
+      '<MetaTagList className="assignment-details" fullWidth>',
+    );
+    expect(studentPage).toContain('overflow="truncate" size="large"');
     expect(studentPage).not.toContain('className="detail-chip"');
-    expect(css).toMatch(
-      /\.assignment-details \.meta-tag\s*\{[^}]*min-height:\s*28px;[^}]*line-height:\s*1;/,
+    expect(css).not.toMatch(/\.assignment-details \.meta-tag/);
+    expect(badgeCss).toMatch(
+      /\.large\s*\{[^}]*min-height:\s*28px;/,
     );
   });
 

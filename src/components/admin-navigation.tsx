@@ -4,6 +4,7 @@ import Link, { useLinkStatus } from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
 
 import { adminShellText } from "@/content/ko/admin-shell";
+import { ButtonSpinner } from "@/design-system/primitives/button/button";
 
 const adminNavigationItems = [
   { href: "/admin", label: adminShellText.navigation.overview },
@@ -21,10 +22,9 @@ function NavigationPendingIndicator() {
   const { pending } = useLinkStatus();
 
   return pending ? (
-    <span
-      aria-hidden="true"
-      className="admin-nav-pending button-spinner"
-    />
+    <span className="admin-nav-pending">
+      <ButtonSpinner />
+    </span>
   ) : null;
 }
 

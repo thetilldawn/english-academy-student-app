@@ -3,13 +3,12 @@
 import { useMemo, useState } from "react";
 
 import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
-import { AssignmentMetaTags } from "@/components/admin-meta-tags";
+import { AssignmentMetaTags } from "@/components/assignment-meta-tags";
 import { AttemptScoreSummary } from "@/components/attempt-score-summary";
 import {
   ActivityRowContent,
   OpenableListRow,
 } from "@/components/ui-list-row";
-import { SelectField } from "@/components/ui-select";
 import { adminHistoryText } from "@/content/ko/admin-history";
 import {
   assignmentDisplayTitle,
@@ -21,6 +20,12 @@ import {
   learningActivitySection,
 } from "@/lib/admin/learning-activity";
 import { buildAttemptStatusPresentation } from "@/lib/ui/attempt-score-presentation";
+import {
+  Field,
+  FieldLabel,
+  Input,
+  Select,
+} from "@/design-system/primitives/form/field";
 
 type HistoryStatusFilter =
   | "all"
@@ -121,22 +126,22 @@ export function AdminHistoryList({
     <>
       {showFilters ? (
         <div className="history-filters">
-          <label className="field">
-            <span className="field-label">
+          <Field as="label" >
+            <FieldLabel as="span" >
               {adminHistoryText.filters.searchLabel}
-            </span>
-            <input
+            </FieldLabel>
+            <Input
               onChange={(event) => setQuery(event.target.value)}
               placeholder={adminHistoryText.filters.searchPlaceholder}
               type="search"
               value={query}
             />
-          </label>
-          <label className="field">
-            <span className="field-label">
+          </Field>
+          <Field as="label" >
+            <FieldLabel as="span" >
               {adminHistoryText.filters.statusLabel}
-            </span>
-            <SelectField
+            </FieldLabel>
+            <Select
               onChange={(event) =>
                 setStatusFilter(event.target.value as HistoryStatusFilter)
               }
@@ -160,8 +165,8 @@ export function AdminHistoryList({
               <option value="archived">
                 {adminHistoryText.filters.statusOptions.archived}
               </option>
-            </SelectField>
-          </label>
+            </Select>
+          </Field>
         </div>
       ) : null}
 

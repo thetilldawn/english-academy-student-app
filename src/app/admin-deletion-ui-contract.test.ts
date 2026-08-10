@@ -74,22 +74,24 @@ describe("admin deletion UI contract", () => {
 
   it("태블릿·PC 상태 문구와 배정 버튼 글자색을 보존한다", () => {
     const css = source("src/app/globals.css");
-
-    expect(css).toMatch(
-      /\.status-pill\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?white-space:\s*nowrap;/,
+    const badgeCss = source(
+      "src/design-system/primitives/badge/badge.module.css",
     );
+
+    expect(css).not.toMatch(/\.status-pill\s*\{/);
     expect(css).toMatch(
       /\.deadline-countdown\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?white-space:\s*nowrap;/,
     );
     expect(css).not.toContain(
       ".assignment-student-row span:not(.button)",
     );
-    expect(css).toMatch(
-      /\.status-badge\s*\{[\s\S]*?color:\s*var\(--status-fg\);[\s\S]*?white-space:\s*nowrap;/,
+    expect(badgeCss).toMatch(
+      /\.status\s*\{[\s\S]*?color:\s*var\(--status-fg\);[\s\S]*?white-space:\s*nowrap;/,
     );
     expect(css).toContain(
-      ".student-management-summary span:not(.status-pill)",
+      ".student-management-summary > div > span",
     );
+    expect(css).not.toContain("span:not(.status-pill)");
     expect(css).not.toContain(
       ".assignment-student-row span {\n  color:",
     );

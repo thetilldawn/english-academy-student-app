@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 
 import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
-import { AssignmentMetaTags } from "@/components/admin-meta-tags";
-import { CountBadge } from "@/components/count-badge";
+import { AssignmentMetaTags } from "@/components/assignment-meta-tags";
+import { CountBadge } from "@/design-system/primitives/badge/badge";
 import { AttemptScoreSummary } from "@/components/attempt-score-summary";
 import {
   ActivityRowContent,
@@ -26,8 +26,10 @@ import { adminStudentsText } from "@/content/ko/admin-students";
 import { formatContentText } from "@/content/format";
 import { historyDetailHref } from "@/lib/admin/history-route";
 import { buildAttemptStatusPresentation } from "@/lib/ui/attempt-score-presentation";
-import { SelectField } from "@/components/ui-select";
-import { Button } from "@/components/ui-button";
+import { Button } from "@/design-system/primitives/button/button";
+import {
+  Select,
+} from "@/design-system/primitives/form/field";
 
 export function StudentLearningActivityList({
   emptyLabel = adminStudentsText.learning.activityList.empty,
@@ -119,7 +121,7 @@ export function StudentLearningActivityList({
         >
           <label>
             <span>{adminStudentsText.learning.activityList.filters.type}</span>
-            <SelectField
+            <Select
               onChange={(event) => {
                 setPurposeFilter(
                   event.target.value as LearningHistoryPurposeFilter,
@@ -132,11 +134,11 @@ export function StudentLearningActivityList({
               <option value="regular">{adminStudentsText.learning.activityList.filters.regular}</option>
               <option value="mixed">{adminStudentsText.learning.activityList.filters.mixed}</option>
               <option value="review">{adminStudentsText.learning.activityList.filters.review}</option>
-            </SelectField>
+            </Select>
           </label>
           <label>
             <span>{adminStudentsText.learning.activityList.filters.status}</span>
-            <SelectField
+            <Select
               onChange={(event) => {
                 setStatusFilter(
                   event.target.value as LearningHistoryStatusFilter,
@@ -150,11 +152,11 @@ export function StudentLearningActivityList({
               <option value="needs_attention">{adminStudentsText.learning.activityList.filters.needsAttention}</option>
               <option value="completed">{adminStudentsText.learning.activityList.filters.completed}</option>
               <option value="archived">{adminStudentsText.learning.activityList.filters.archived}</option>
-            </SelectField>
+            </Select>
           </label>
           <label>
             <span>{adminStudentsText.learning.activityList.filters.period}</span>
-            <SelectField
+            <Select
               onChange={(event) => {
                 setPeriodFilter(
                   event.target.value as "all" | "30" | "90" | "365",
@@ -167,7 +169,7 @@ export function StudentLearningActivityList({
               <option value="30">{adminStudentsText.learning.activityList.filters.recent30}</option>
               <option value="90">{adminStudentsText.learning.activityList.filters.recent90}</option>
               <option value="365">{adminStudentsText.learning.activityList.filters.recentYear}</option>
-            </SelectField>
+            </Select>
           </label>
         </div>
       ) : null}

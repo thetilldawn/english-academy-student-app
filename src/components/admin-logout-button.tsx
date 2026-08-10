@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { adminShellText } from "@/content/ko/admin-shell";
-import { Button } from "@/components/ui-button";
+import { Button } from "@/design-system/primitives/button/button";
 
 export function AdminLogoutButton() {
   const router = useRouter();
