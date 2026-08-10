@@ -229,6 +229,17 @@ export const adminLearningText = {
       refreshing: "화면에 반영하는 중…",
     },
 
+    // 모달 > 우측 배정 요약
+    summary: {
+      title: "배정 요약",
+      wordbook: "단어장",
+      range: "범위",
+      questions: "문항",
+      timing: "시간",
+      passingScore: "통과 점수",
+      deadline: "마감",
+    },
+
     // 모달 > 미응시 배정 수정 비교
     edit: {
       comparisonTitle: "변경 전·후",

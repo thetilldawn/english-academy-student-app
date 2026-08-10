@@ -60,9 +60,8 @@ describe("student catalog and modal UI contract", () => {
     expect(css).toMatch(
       /\.bulk-assignment-form\s*\{[^}]*align-content:\s*start;[^}]*grid-auto-rows:\s*max-content;/,
     );
-    expect(css).toMatch(
-      /\.bulk-assignment-form > \.dialog-actions\s*\{[^}]*margin-top:\s*0;/,
-    );
+    expect(css).toMatch(/\.assignment-editor-layout\s*\{/);
+    expect(bulkDialog).toContain("<AssignmentEditorLayout>");
     expect(bulkDialog).toContain('import { Button } from "@/components/ui-button";');
     expect(bulkDialog).toContain("<ModalHeader");
     expect(source("src/components/ui-modal.tsx")).toContain('size="small"');

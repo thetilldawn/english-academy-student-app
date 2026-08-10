@@ -103,6 +103,12 @@ import {
   ModalHeader,
 } from "@/components/ui-modal";
 import { Button, ButtonLink } from "@/components/ui-button";
+import {
+  AssignmentEditorLayout,
+  AssignmentEditorSettings,
+  AssignmentEditorSummary,
+  AssignmentFieldGrid,
+} from "@/components/assignment-editor-ui";
 
 export type AssignmentDatasetItem = CataloguedDataset & {
   rowCount: number;
@@ -2095,6 +2101,8 @@ export function AssignmentManager({
                 <legend className="sr-only">
                   {adminLearningText.assignmentModal.overview.formAria}
                 </legend>
+            <AssignmentEditorLayout>
+              <AssignmentEditorSettings>
             <section className="assignment-step">
               <div className="assignment-step-heading">
                 <span>1</span>
@@ -2165,7 +2173,7 @@ export function AssignmentManager({
                   ))}
                 </SelectField>
               </label>
-              <div className="form-grid-2">
+              <AssignmentFieldGrid>
                 <label className="field">
                   <span className="field-label">
                     {formatContentText(
@@ -2261,7 +2269,7 @@ export function AssignmentManager({
                     ))}
                   </SelectField>
                 </label>
-              </div>
+              </AssignmentFieldGrid>
               <p className="selection-summary">
                 {formatContentText(
                   adminLearningText.assignmentModal.range.sourceWordCount,
@@ -2514,7 +2522,7 @@ export function AssignmentManager({
                   </h3>
                 </div>
               </div>
-              <div className="form-grid-2">
+              <AssignmentFieldGrid>
                 <label className="field">
                   <span className="field-label">
                     {adminLearningText.assignmentModal.conditions.direction}
@@ -2573,8 +2581,8 @@ export function AssignmentManager({
                     </option>
                   </SelectField>
                 </label>
-              </div>
-              <div className="assignment-condition-grid">
+              </AssignmentFieldGrid>
+              <AssignmentFieldGrid>
                 <div className="field">
                   <span className="field-label">
                     <label htmlFor="assignment-question-count">
@@ -2705,7 +2713,7 @@ export function AssignmentManager({
                     value={passingScore}
                   />
                 </label>
-              </div>
+              </AssignmentFieldGrid>
               <div className="field">
                 <span className="field-label label-with-help">
                   <label htmlFor="assignment-available-until">
@@ -2730,30 +2738,91 @@ export function AssignmentManager({
               </div>
             </section>
 
+            <div className="field">
+              <span className="field-label label-with-help">
+                <label htmlFor="assignment-custom-title">
+                  {adminLearningText.assignmentModal.submit.optionalTitle}
+                </label>
+                <HelpTip label={adminLearningText.controls.titleHelpAria}>
+                  {adminLearningText.assignmentModal.submit.titleHelp}
+                </HelpTip>
+              </span>
+              <input
+                id="assignment-custom-title"
+                maxLength={160}
+                onChange={(event) => {
+                  setCustomTitle(event.target.value);
+                  setError("");
+                }}
+                placeholder={
+                  generatedTitle ||
+                  adminLearningText.assignmentModal.submit.autoTitle
+                }
+                value={customTitle}
+              />
+            </div>
+              </AssignmentEditorSettings>
+
+              <AssignmentEditorSummary>
             <section className="assignment-submit-panel">
-              <div className="field">
-                <span className="field-label label-with-help">
-                  <label htmlFor="assignment-custom-title">
-                    {adminLearningText.assignmentModal.submit.optionalTitle}
-                  </label>
-                  <HelpTip label={adminLearningText.controls.titleHelpAria}>
-                    {adminLearningText.assignmentModal.submit.titleHelp}
-                  </HelpTip>
-                </span>
-                <input
-                  id="assignment-custom-title"
-                  maxLength={160}
-                  onChange={(event) => {
-                    setCustomTitle(event.target.value);
-                    setError("");
-                  }}
-                  placeholder={
-                    generatedTitle ||
-                    adminLearningText.assignmentModal.submit.autoTitle
-                  }
-                  value={customTitle}
-                />
-              </div>
+              <h3>{adminLearningText.assignmentModal.summary.title}</h3>
+              <dl className="assignment-summary-facts">
+                <div>
+                  <dt>{adminLearningText.assignmentModal.summary.wordbook}</dt>
+                  <dd>
+                    {selectedDatasetRecord
+                      ? cataloguedDatasetDisplayLabel(selectedDatasetRecord)
+                      : adminLearningText.assignmentModal.range.selectWordbook}
+                  </dd>
+                </div>
+                <div>
+                  <dt>{adminLearningText.assignmentModal.summary.range}</dt>
+                  <dd>{unitRangeLabel(selectedUnitLabels)}</dd>
+                </div>
+                <div>
+                  <dt>{adminLearningText.assignmentModal.summary.questions}</dt>
+                  <dd>
+                    {formatContentText(
+                      adminLearningText.assignmentModal.edit.questionCount,
+                      { count: questionCount },
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>{adminLearningText.assignmentModal.summary.timing}</dt>
+                  <dd>
+                    {timingMode === "total"
+                      ? formatContentText(
+                          adminLearningText.assignmentModal.edit.totalTiming,
+                          { minutes: timeLimitMinutes },
+                        )
+                      : formatContentText(
+                          adminLearningText.assignmentModal.edit
+                            .perQuestionTiming,
+                          { seconds: questionTimeLimitSeconds },
+                        )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>
+                    {adminLearningText.assignmentModal.summary.passingScore}
+                  </dt>
+                  <dd>
+                    {formatContentText(
+                      adminLearningText.assignmentModal.edit.score,
+                      { score: passingScore },
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>{adminLearningText.assignmentModal.summary.deadline}</dt>
+                  <dd>
+                    {normalizedAvailableUntil
+                      ? formatKoreanDateTime(normalizedAvailableUntil)
+                      : adminLearningText.assignmentModal.edit.noDeadline}
+                  </dd>
+                </div>
+              </dl>
               {editDraft ? (
                 <section
                   aria-label={
@@ -2889,6 +2958,8 @@ export function AssignmentManager({
                 </div>
               )}
             </section>
+              </AssignmentEditorSummary>
+            </AssignmentEditorLayout>
             </fieldset>
           </form>
               </>

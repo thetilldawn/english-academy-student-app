@@ -49,6 +49,103 @@
   --font-en: var(--font-serif-en), Georgia, serif;
 }
 
+/* Shared assignment editor layout */
+.assignment-editor-layout {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.44fr);
+  align-items: start;
+  gap: var(--space-5);
+}
+
+.assignment-editor-settings,
+.assignment-editor-summary {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+}
+
+.assignment-editor-summary {
+  position: sticky;
+  top: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+
+.assignment-field-grid {
+  min-width: 0;
+  display: grid;
+  align-items: start;
+  gap: var(--space-3);
+}
+
+.assignment-field-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.assignment-field-grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.assignment-session-row {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.assignment-session-row-heading,
+.assignment-session-row-details,
+.assignment-session-row-error {
+  min-width: 0;
+}
+
+.assignment-session-row-error {
+  color: var(--fail);
+}
+
+.assignment-editor-summary .assignment-submit-panel {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.assignment-submit-panel > h3 {
+  margin: 0;
+}
+
+.assignment-summary-facts {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.assignment-summary-facts > div {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+  padding: 9px 10px;
+  background: var(--card);
+}
+
+.assignment-summary-facts dt {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.assignment-summary-facts dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
 /* Atomic bulk vocabulary assignment */
 .bulk-selection-bar {
   display: flex;
@@ -73,20 +170,6 @@
   font-size: 12px;
 }
 
-.assignment-student-select {
-  display: grid;
-  place-items: center;
-  align-self: center;
-}
-
-.assignment-student-select input {
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  accent-color: var(--ink);
-  cursor: pointer;
-}
-
 .bulk-assignment-dialog[open] {
   height: min(780px, calc(100dvh - 32px));
   display: grid;
@@ -101,15 +184,6 @@
   align-content: start;
   grid-auto-rows: max-content;
   gap: var(--space-4);
-  padding: 18px;
-  overflow: auto;
-}
-
-.bulk-assignment-settings {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-items: start;
-  gap: var(--space-3);
 }
 
 .bulk-range-mode-field {
@@ -141,27 +215,19 @@
   gap: var(--space-2);
 }
 
-.bulk-assignment-form > .dialog-actions {
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--space-2);
-  margin-top: 0;
-}
-
 .bulk-preview-row {
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(120px, 0.35fr) minmax(0, 1fr);
-  gap: 5px 12px;
-  align-items: center;
-  padding: 9px 10px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+  padding: 10px 12px;
   border-left: 3px solid var(--line);
-  background: var(--surface);
+  background: var(--card);
 }
 
 .bulk-preview-row > small {
-  grid-column: 2;
-  color: var(--danger);
+  color: var(--fail);
 }
 
 .bulk-preview-student-heading,
@@ -189,8 +255,15 @@
   border-top: 1px solid var(--line);
 }
 
-.bulk-preview-session > small {
-  color: var(--danger);
+@media (max-width: 960px) {
+  .assignment-editor-layout,
+  .assignment-field-grid--3 {
+    grid-template-columns: 1fr;
+  }
+
+  .assignment-editor-summary {
+    position: static;
+  }
 }
 
 @media (max-width: 767px) {
@@ -203,39 +276,10 @@
     flex: 1 1 140px;
   }
 
-  .assignment-student-row {
-    grid-template-columns: 28px minmax(0, 1fr) auto;
-  }
-
-  .assignment-student-select {
-    grid-column: 1;
-    grid-row: 1;
-    align-self: start;
-    padding-top: 2px;
-  }
-
-  .assignment-student-identity {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .assignment-student-book,
-  .assignment-student-recent {
-    grid-column: 2 / -1;
-  }
-
-  .assignment-student-row > .button {
-    grid-column: 3;
-    grid-row: 1;
-  }
-
-  .bulk-assignment-settings,
+  .assignment-field-grid--2,
+  .assignment-summary-facts,
   .bulk-preview-row {
     grid-template-columns: 1fr;
-  }
-
-  .bulk-preview-row > small {
-    grid-column: 1;
   }
 }
 
@@ -2128,7 +2172,7 @@ tr:last-child td {
   height: var(--control-height-field);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--surface-soft);
+  background: var(--surface);
 }
 
 .segmented-control button {
@@ -2299,14 +2343,9 @@ tr:last-child td {
   background: var(--card);
 }
 
-.assignment-student-row > span {
-  min-width: 0;
-}
-
 .assignment-student-identity,
 .assignment-student-book,
-.assignment-student-recent,
-.assignment-student-next {
+.assignment-student-recent {
   display: grid;
   gap: 3px;
 }
@@ -2314,10 +2353,6 @@ tr:last-child td {
 .assignment-student-row small {
   color: var(--muted);
   font-size: 12px;
-}
-
-.assignment-student-row > .button.button-primary {
-  color: var(--card);
 }
 
 .assignment-student-row strong {
@@ -2437,7 +2472,6 @@ tr:last-child td {
 .assignment-submit-panel {
   min-width: 0;
   display: grid;
-  grid-column: 1 / -1;
   gap: 12px;
   padding: 16px 18px;
   border: 1px solid var(--line);
@@ -2491,17 +2525,10 @@ tr:last-child td {
 
 .assignment-modal-fieldset {
   min-width: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  align-items: start;
+  display: block;
   margin: 0;
   padding: 0;
   border: 0;
-}
-
-.assignment-modal-fieldset > .assignment-step {
-  grid-column: auto;
 }
 
 .assignment-modal-form .assignment-review-step {
@@ -3059,14 +3086,6 @@ tr:last-child td {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .assignment-student-row {
-    grid-template-columns: minmax(130px, 0.7fr) 1fr 1.2fr auto;
-  }
-
-  .assignment-student-next {
-    display: none;
-  }
-
   .student-action-pane {
     order: initial;
   }
@@ -3266,29 +3285,6 @@ tr:last-child td {
   .assignment-modal-fieldset,
   .history-filters {
     grid-template-columns: 1fr;
-  }
-
-  .assignment-student-row {
-    grid-template-columns: 1fr auto;
-    gap: 9px 12px;
-  }
-
-  .assignment-student-identity,
-  .assignment-student-book,
-  .assignment-student-recent,
-  .assignment-student-next {
-    grid-column: 1;
-  }
-
-  .assignment-student-row > .button {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .assignment-student-recent,
-  .assignment-student-next {
-    padding-top: 7px;
-    border-top: 1px solid var(--line);
   }
 
   .admin-history-row {
@@ -3807,17 +3803,6 @@ tr:last-child td {
 @media (max-width: 767px) {
   .admin-breadcrumb {
     margin-bottom: 10px;
-  }
-
-  .assignment-student-row {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .assignment-student-book,
-  .assignment-student-recent {
-    grid-column: 1 / -1;
-    padding-top: 5px;
-    border-top: 0;
   }
 
   .assignment-dialog[open],
@@ -5377,7 +5362,6 @@ textarea {
 }
 
 .student-card,
-.assignment-student-row,
 .assignment-management-item,
 .admin-history-row,
 .student-history-row {
@@ -5546,10 +5530,6 @@ textarea {
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
-.assignment-student-row > .button {
-  align-self: center;
-}
-
 .assignment-management-item {
   align-items: flex-start;
 }
@@ -5603,7 +5583,6 @@ textarea {
   }
 
   .student-card,
-  .assignment-student-row,
   .assignment-management-item,
   .admin-history-row,
   .student-history-row {
@@ -5621,25 +5600,6 @@ textarea {
   .student-history-actions {
     width: 100%;
     justify-content: flex-start;
-  }
-
-  .assignment-student-row {
-    gap: 8px 10px;
-  }
-
-  .assignment-student-book,
-  .assignment-student-recent {
-    padding-top: 6px;
-    border-top: 1px solid var(--line);
-  }
-
-  .assignment-student-book,
-  .assignment-student-recent > .meta-tag-list {
-    display: flex;
-  }
-
-  .assignment-student-row > .button {
-    align-self: start;
   }
 
   .assignment-management-item > .button {
@@ -5671,39 +5631,12 @@ textarea {
   }
 }
 
-@media (max-width: 767px) {
-  .assignment-student-row {
-    grid-template-columns: 28px minmax(0, 1fr) auto;
-  }
-
-  .assignment-student-select {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .assignment-student-identity {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .assignment-student-book,
-  .assignment-student-recent {
-    grid-column: 2 / -1;
-  }
-
-  .assignment-student-row > .button {
-    grid-column: 3;
-    grid-row: 1;
-  }
-}
-
 /* Student learning workspace completion */
 .student-detail-dialog.dialog-wide[open] {
   max-height: none;
 }
 
-.learning-filter-summary-actions,
-.assignment-student-actions {
+.learning-filter-summary-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -5715,15 +5648,6 @@ textarea {
   min-width: 36px;
   font-size: 12px;
   text-align: right;
-}
-
-.assignment-student-actions {
-  grid-column: 5;
-  align-self: center;
-}
-
-.assignment-student-actions .history-action-group {
-  justify-content: flex-end;
 }
 
 .student-learning-source-list,
@@ -5892,60 +5816,9 @@ textarea {
   gap: 7px;
 }
 
-@media (min-width: 768px) and (max-width: 1199px) {
-  .assignment-student-row {
-    grid-template-columns:
-      28px
-      minmax(120px, 0.7fr)
-      minmax(0, 1fr)
-      auto;
-  }
-
-  .assignment-student-select {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .assignment-student-identity {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .assignment-student-book {
-    grid-column: 3;
-    grid-row: 1;
-  }
-
-  .assignment-student-recent {
-    grid-column: 2 / 4;
-    grid-row: 2;
-  }
-
-  .assignment-student-actions {
-    grid-column: 4;
-    grid-row: 1 / 3;
-    align-self: start;
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-
 @media (max-width: 767px) {
   .bulk-selection-bar {
     bottom: calc(72px + env(safe-area-inset-bottom));
-  }
-
-  .assignment-student-actions {
-    grid-column: 3;
-    grid-row: 1;
-    align-self: start;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .assignment-student-book,
-  .assignment-student-recent {
-    border-top: 0;
   }
 
   .learning-activity-filters {
@@ -6750,6 +6623,16 @@ select {
 }
 
 @media (max-width: 767px) {
+  .modal-frame-body.learning-dialog-body {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .assignment-student-row {
+    gap: 8px 10px;
+    padding: 9px 10px;
+  }
+
   .activity-row-content,
   .admin-history-row.is-compact .activity-row-content,
   .assignment-student-row .activity-row-content {

@@ -35,6 +35,13 @@ import {
   koreanDateTimeLocalToIso,
 } from "@/lib/deadline";
 import { formatKoreanDateTime } from "@/lib/format";
+import {
+  AssignmentEditorLayout,
+  AssignmentEditorSettings,
+  AssignmentEditorSummary,
+  AssignmentFieldGrid,
+  AssignmentSessionRow,
+} from "@/components/assignment-editor-ui";
 
 type BulkPreviewSession = {
   sessionNumber: number;
@@ -342,7 +349,9 @@ export function BulkAssignmentDialog({
           id="bulk-assignment-form"
           onSubmit={submit}
         >
-          <section className="bulk-assignment-settings">
+          <AssignmentEditorLayout>
+            <AssignmentEditorSettings>
+          <AssignmentFieldGrid columns={3}>
             <label className="field bulk-range-mode-field">
               <span className="field-label label-with-help">
                 {adminLearningText.bulkAssignmentModal.rangeMode.label}
@@ -605,7 +614,7 @@ export function BulkAssignmentDialog({
                 value={firstAvailableUntilLocal}
               />
             </div>
-          </section>
+          </AssignmentFieldGrid>
 
           {includePendingReview ? (
             <fieldset className="bulk-review-levels">
@@ -634,8 +643,12 @@ export function BulkAssignmentDialog({
               </div>
             </fieldset>
           ) : null}
+            </AssignmentEditorSettings>
 
-          <section className="bulk-preview-section" aria-busy={previewLoading}>
+          <AssignmentEditorSummary
+            busy={previewLoading}
+            className="bulk-preview-section"
+          >
             <div className="learning-section-heading">
               <h3 className="label-with-help">
                 {adminLearningText.bulkAssignmentModal.previewTitle}
@@ -678,75 +691,80 @@ export function BulkAssignmentDialog({
                   </div>
                   <div className="bulk-preview-session-list">
                     {item.sessions.length > 0 ? item.sessions.map((session) => (
-                      <div
+                      <AssignmentSessionRow
                         className="bulk-preview-session"
-                        key={`${item.studentId}-${session.sessionNumber}`}
-                      >
-                        <strong>
-                          {formatContentText(
-                            adminLearningText.bulkAssignmentModal.sessionLabel,
-                            { count: session.sessionNumber },
-                          )}
-                        </strong>
-                        <MetaTagList>
-                          <MetaTag>
-                            {session.unitLabel ??
-                              adminLearningText.bulkAssignmentModal.rangePending}
-                          </MetaTag>
-                          <MetaTag>
-                            {formatContentText(
-                              adminLearningText.bulkAssignmentModal
-                                .assignmentDateTag,
-                              {
-                                datetime: formatKoreanDateTime(
-                                  session.availableFrom,
-                                ),
-                              },
-                            )}
-                          </MetaTag>
-                          {session.availableUntil ? (
+                        details={
+                          <MetaTagList>
+                            <MetaTag>
+                              {session.unitLabel ??
+                                adminLearningText.bulkAssignmentModal.rangePending}
+                            </MetaTag>
                             <MetaTag>
                               {formatContentText(
-                                adminLearningText.bulkAssignmentModal.deadlineTag,
+                                adminLearningText.bulkAssignmentModal
+                                  .assignmentDateTag,
                                 {
                                   datetime: formatKoreanDateTime(
-                                    session.availableUntil,
+                                    session.availableFrom,
                                   ),
                                 },
                               )}
                             </MetaTag>
-                          ) : null}
-                          {session.rangeTruncated ? (
-                            <MetaTag tone="warning">
-                              {
-                                adminLearningText.bulkAssignmentModal.rangeMode
-                                  .remainingOnly
-                              }
-                            </MetaTag>
-                          ) : null}
-                          {session.available ? (
-                            <MetaTag tone="positive">
-                              {formatContentText(
-                                adminLearningText.bulkAssignmentModal.questionCount,
-                                { count: session.questionCount },
-                              )}
-                            </MetaTag>
-                          ) : (
-                            <MetaTag tone="danger">
-                              {adminLearningText.bulkAssignmentModal.needsReview}
-                            </MetaTag>
-                          )}
-                          {includePendingReview && session.wrongCount > 0 ? (
-                            <MetaTag tone="warning">
-                              {formatContentText(
-                                adminLearningText.bulkAssignmentModal.wrongCount,
-                                { count: session.wrongCount },
-                              )}
-                            </MetaTag>
-                          ) : null}
-                        </MetaTagList>
-                        {session.error ? <small>{session.error}</small> : null}
-                      </div>
+                            {session.availableUntil ? (
+                              <MetaTag>
+                                {formatContentText(
+                                  adminLearningText.bulkAssignmentModal
+                                    .deadlineTag,
+                                  {
+                                    datetime: formatKoreanDateTime(
+                                      session.availableUntil,
+                                    ),
+                                  },
+                                )}
+                              </MetaTag>
+                            ) : null}
+                            {session.rangeTruncated ? (
+                              <MetaTag tone="warning">
+                                {
+                                  adminLearningText.bulkAssignmentModal.rangeMode
+                                    .remainingOnly
+                                }
+                              </MetaTag>
+                            ) : null}
+                            {session.available ? (
+                              <MetaTag tone="positive">
+                                {formatContentText(
+                                  adminLearningText.bulkAssignmentModal
+                                    .questionCount,
+                                  { count: session.questionCount },
+                                )}
+                              </MetaTag>
+                            ) : (
+                              <MetaTag tone="danger">
+                                {adminLearningText.bulkAssignmentModal.needsReview}
+                              </MetaTag>
+                            )}
+                            {includePendingReview && session.wrongCount > 0 ? (
+                              <MetaTag tone="warning">
+                                {formatContentText(
+                                  adminLearningText.bulkAssignmentModal.wrongCount,
+                                  { count: session.wrongCount },
+                                )}
+                              </MetaTag>
+                            ) : null}
+                          </MetaTagList>
+                        }
+                        error={session.error ? <small>{session.error}</small> : null}
+                        heading={
+                          <strong>
+                            {formatContentText(
+                              adminLearningText.bulkAssignmentModal.sessionLabel,
+                              { count: session.sessionNumber },
+                            )}
+                          </strong>
+                        }
+                        key={`${item.studentId}-${session.sessionNumber}`}
+                      />
                     )) : (
                       <span>
                         {adminLearningText.bulkAssignmentModal.rangePending}
@@ -757,9 +775,13 @@ export function BulkAssignmentDialog({
                 </article>
               ))}
             </div>
-          </section>
-
-          {error ? <div className="form-error" role="alert">{error}</div> : null}
+            {error ? (
+              <div className="form-error" role="alert">
+                {error}
+              </div>
+            ) : null}
+          </AssignmentEditorSummary>
+          </AssignmentEditorLayout>
         </form>
       </ModalBody>
       <ModalFooter>
