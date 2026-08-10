@@ -14,6 +14,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:component": "vitest run src/test-support/component-testing.smoke.test.tsx",
+    "test:e2e": "playwright test",
     "test:watch": "vitest",
     "verify:architecture": "node scripts/verify-ui-architecture.mjs",
     "verify": "npm run lint && npm run typecheck && npm run test && npm run verify:architecture && npm run build",
@@ -27,7 +29,9 @@
     "verify:vocab-link": "tsx scripts/verify-vocab-link-package.ts",
     "import:word-index": "tsx scripts/import-word-index.ts",
     "import:vocab-link": "tsx scripts/import-vocab-link-package.ts",
-    "import:exam-use": "tsx scripts/import-exam-use-package.ts"
+    "import:exam-use": "tsx scripts/import-exam-use-package.ts",
+    "fixture:ui:ensure": "tsx scripts/ui-test-fixture.ts ensure",
+    "fixture:ui:cleanup": "tsx scripts/ui-test-fixture.ts cleanup"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.3",
@@ -41,12 +45,18 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@electric-sql/pglite": "0.5.4",
+    "@playwright/test": "^1.62.1",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.3",
     "@types/node": "24.13.3",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "eslint": "9.39.5",
     "eslint-config-next": "16.2.12",
+    "jsdom": "^29.1.1",
     "supabase": "2.109.1",
     "tsx": "4.23.1",
     "typescript": "5.9.3",

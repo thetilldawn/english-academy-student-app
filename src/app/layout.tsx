@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Source_Serif_4 } from "next/font/google";
+import localFont from "next/font/local";
 import Script from "next/script";
 
 import "pretendard/dist/web/variable/pretendardvariable.css";
@@ -7,9 +7,10 @@ import "@/app/globals.css";
 import { AppToaster } from "@/components/app-toaster";
 import { commonText } from "@/content/ko/common";
 
-const serifEn = Source_Serif_4({
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
+const serifEn = localFont({
+  src: "./fonts/SourceSerif4Variable-Roman.ttf.woff2",
+  weight: "200 900",
+  style: "normal",
   variable: "--font-serif-en",
   display: "swap",
 });
