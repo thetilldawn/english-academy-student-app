@@ -1,0 +1,60 @@
+.root {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+}
+
+.dialog {
+  position: relative;
+  z-index: 3;
+  margin: 0;
+  padding: var(--space-1) 20px;
+  border-radius: 0;
+  background: var(--card);
+}
+
+.tab {
+  min-height: var(--control-height-default);
+  flex: 1 1 0;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: var(--radius-small);
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    color var(--motion-standard),
+    background-color var(--motion-standard);
+}
+
+.tab:hover {
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.tab[aria-selected="true"] {
+  color: var(--ink);
+  background: var(--selection-active);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (max-width: 767px) {
+  .dialog {
+    padding-inline: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab {
+    transition: none;
+  }
+}

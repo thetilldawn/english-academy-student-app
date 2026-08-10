@@ -9,7 +9,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 
-import { HelpTip } from "@/components/help-tip";
+import { HelpTip, inlineHelpClassName } from "@/design-system/primitives/tooltip/help-tip";
 import { studentAppText } from "@/content/ko/student-app";
 import { formatContentText } from "@/content/format";
 import {
@@ -547,7 +547,7 @@ export function QuizPlayer({
       </div>
 
       <p className="quiz-direction">
-        <span className="label-with-help">
+        <span className={inlineHelpClassName}>
           {attempt.phase === "retry"
             ? formatContentText(studentAppText.attempt.retryProgress, {
                 current: completedInPhase + 1,

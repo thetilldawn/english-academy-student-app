@@ -18,6 +18,7 @@ describe("한국어 UI 문구 카탈로그", () => {
     const manager = source("src/components/assignment-manager.tsx");
     const studentManager = source("src/components/student-manager.tsx");
     const navigation = source("src/components/admin-navigation.tsx");
+    const adminRoutes = source("src/lib/ui/admin-routes.ts");
     const history = source("src/components/admin-history-list.tsx");
     const studentLogin = source("src/components/student-login-form.tsx");
 
@@ -37,7 +38,8 @@ describe("한국어 UI 문구 카탈로그", () => {
     expect(studentManager).toContain(
       "adminStudentsText.createStudent.startingWordbookHelp",
     );
-    expect(navigation).toContain('from "@/content/ko/admin-shell"');
+    expect(navigation).toContain('from "@/lib/ui/admin-routes"');
+    expect(adminRoutes).toContain('from "@/content/ko/admin-shell"');
     expect(history).toContain('from "@/content/ko/admin-history"');
     expect(studentLogin).toContain('from "@/content/ko/student-app"');
   });

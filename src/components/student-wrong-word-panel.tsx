@@ -9,7 +9,7 @@ import {
   type WrongWordOutcome,
 } from "@/lib/admin/wrong-word-history";
 import { formatKoreanDateTime } from "@/lib/format";
-import { HelpTip } from "@/components/help-tip";
+import { HelpTip, inlineHelpClassName } from "@/design-system/primitives/tooltip/help-tip";
 import { adminStudentsText } from "@/content/ko/admin-students";
 import { formatContentText } from "@/content/format";
 import { Button } from "@/design-system/primitives/button/button";
@@ -675,7 +675,7 @@ export function StudentWrongWordPanel({
         {loading ? (
           <span>{adminStudentsText.learning.wrongWordsPanel.refreshing}</span>
         ) : (
-          <span className="label-with-help">
+          <span className={inlineHelpClassName}>
             {adminStudentsText.learning.wrongWordsPanel.refreshBasis}
             <HelpTip
               label={

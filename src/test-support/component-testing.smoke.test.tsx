@@ -11,7 +11,7 @@ import {
   Button,
   buttonRecipe,
 } from "@/design-system/primitives/button/button";
-import { Tabs } from "@/components/ui-tabs";
+import { Tabs } from "@/design-system/primitives/tabs/tabs";
 
 afterEach(cleanup);
 

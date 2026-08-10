@@ -18,6 +18,7 @@
   --no-ink: #a63b2f;
   --ink-hover: #3d3a34;
   --nav-glass: rgb(252 251 247 / 84%);
+  --dialog-backdrop: rgb(17 17 15 / 58%);
   --text-primary: var(--ink);
   --text-secondary: #5f5d55;
   --selection-active: #e6e0d1;

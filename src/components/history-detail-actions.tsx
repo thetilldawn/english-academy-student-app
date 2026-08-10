@@ -81,7 +81,7 @@ export function HistoryDetailActions({
   }
 
   return (
-    <div className="dialog-actions history-detail-actions">
+    <div className="action-row history-detail-actions">
       {editorData && isStudentAssignmentEditable(item) ? (
         <Button onClick={() => setEditing(true)}>
           {adminHistoryText.actions.edit}

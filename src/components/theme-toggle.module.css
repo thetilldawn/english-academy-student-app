@@ -1,0 +1,73 @@
+.root {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    color var(--motion-standard),
+    background-color var(--motion-standard);
+}
+
+.root:hover {
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.root:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.track {
+  width: 34px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: var(--radius-card);
+  background: var(--line);
+  transition: background-color var(--motion-standard);
+}
+
+.thumb {
+  width: 14px;
+  height: 14px;
+  display: block;
+  border-radius: var(--radius-card);
+  background: var(--card);
+  transform: translateX(0);
+  transition: transform var(--motion-standard);
+}
+
+.root[aria-checked="true"] .track {
+  background: var(--retry);
+}
+
+.root[aria-checked="true"] .thumb {
+  transform: translateX(16px);
+}
+
+.auth {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+}
+
+@media (max-width: 767px) {
+  .root {
+    padding-inline: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root,
+  .track,
+  .thumb {
+    transition: none;
+  }
+}

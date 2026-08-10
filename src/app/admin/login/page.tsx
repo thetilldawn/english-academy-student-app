@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { AdminLoginForm } from "@/components/admin-login-form";
-import { HelpTip } from "@/components/help-tip";
+import {
+  HelpTip,
+  inlineHelpClassName,
+} from "@/design-system/primitives/tooltip/help-tip";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { adminShellText } from "@/content/ko/admin-shell";
 
@@ -14,9 +17,9 @@ export default function AdminLoginPage() {
   return (
     <main className="auth-shell" id="main-content">
       <section className="auth-card">
-        <ThemeToggle className="theme-toggle-auth" />
+        <ThemeToggle placement="auth" />
         <p className="eyebrow">{adminShellText.login.eyebrow}</p>
-        <h1 className="label-with-help">
+        <h1 className={inlineHelpClassName}>
           {adminShellText.login.title}
           <HelpTip label={adminShellText.login.helpAria}>
             {adminShellText.login.accountScopeHelp}

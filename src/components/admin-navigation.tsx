@@ -3,53 +3,49 @@
 import Link, { useLinkStatus } from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
 
-import { adminShellText } from "@/content/ko/admin-shell";
 import { ButtonSpinner } from "@/design-system/primitives/button/button";
+import {
+  ADMIN_ROUTES,
+  type AdminNavigationVariant,
+} from "@/lib/ui/admin-routes";
 
-const adminNavigationItems = [
-  { href: "/admin", label: adminShellText.navigation.overview },
-  { href: "/admin/students", label: adminShellText.navigation.students },
-  { href: "/admin/assignments", label: adminShellText.navigation.learning },
-  { href: "/admin/results", label: adminShellText.navigation.history },
-] as const;
-
-function isActiveSegment(segment: string | null, href: string) {
-  if (href === "/admin") return segment === null;
-  return segment === href.slice("/admin/".length);
-}
+import styles from "./shell/admin-navigation.module.css";
 
 function NavigationPendingIndicator() {
   const { pending } = useLinkStatus();
 
-  return pending ? (
-    <span className="admin-nav-pending">
-      <ButtonSpinner />
+  return (
+    <span aria-hidden="true" className={styles.pending}>
+      {pending ? <ButtonSpinner /> : null}
     </span>
-  ) : null;
+  );
 }
 
 export function AdminNavigation({
-  className,
   label,
+  variant,
 }: {
-  className: string;
   label: string;
+  variant: AdminNavigationVariant;
 }) {
   const segment = useSelectedLayoutSegment();
 
   return (
-    <nav aria-label={label} className={className}>
-      {adminNavigationItems.map((item) => {
-        const active = isActiveSegment(segment, item.href);
+    <nav
+      aria-label={label}
+      className={[styles.root, styles[variant]].join(" ")}
+    >
+      {ADMIN_ROUTES.map((item) => {
+        const active = item.segment === segment;
 
         return (
           <Link
             aria-current={active ? "page" : undefined}
-            className="admin-nav-link"
+            className={styles.link}
             href={item.href}
             key={item.href}
           >
-            <span>{item.label}</span>
+            <span>{item.navLabel}</span>
             <NavigationPendingIndicator />
           </Link>
         );

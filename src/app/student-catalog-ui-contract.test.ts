@@ -17,6 +17,9 @@ describe("student catalog and modal UI contract", () => {
   const badgeCss = source(
     "src/design-system/primitives/badge/badge.module.css",
   );
+  const tabsCss = source(
+    "src/design-system/primitives/tabs/tabs.module.css",
+  );
   const studentManager = source("src/components/student-manager.tsx");
   const bulkDialog = source("src/components/bulk-assignment-dialog.tsx");
 
@@ -25,17 +28,17 @@ describe("student catalog and modal UI contract", () => {
     expect(badgeCss).toMatch(
       /\.badge\s*\{[^}]*width:\s*max-content;[^}]*max-width:\s*100%;/,
     );
-    expect(css).toMatch(
-      /\.student-detail-dialog > \.app-tabs\s*\{[^}]*border:\s*0;[^}]*border-radius:\s*0;/,
+    expect(tabsCss).toMatch(
+      /\.dialog\s*\{[^}]*border-radius:\s*0;[^}]*background:\s*var\(--card\);/,
     );
-    expect(css).toMatch(
-      /\.app-tab:hover\s*\{[^}]*color:\s*var\(--ink\);[^}]*background:\s*var\(--surface\);/,
+    expect(tabsCss).toMatch(
+      /\.tab:hover\s*\{[^}]*color:\s*var\(--ink\);[^}]*background:\s*var\(--surface\);/,
     );
-    expect(css).toMatch(
-      /\.app-tab\[aria-selected="true"\]\s*\{[^}]*background:\s*var\(--selection-active\);/,
+    expect(tabsCss).toMatch(
+      /\.tab\[aria-selected="true"\]\s*\{[^}]*background:\s*var\(--selection-active\);/,
     );
     const selectedTabRule =
-      css.match(/\.app-tab\[aria-selected="true"\]\s*\{[^}]*\}/)?.[0] ??
+      tabsCss.match(/\.tab\[aria-selected="true"\]\s*\{[^}]*\}/)?.[0] ??
       "";
     expect(selectedTabRule).not.toContain("outline:");
     expect(resetCss).toMatch(
@@ -74,8 +77,10 @@ describe("student catalog and modal UI contract", () => {
     expect(bulkDialog).toContain(
       'from "@/design-system/primitives/button/button";',
     );
-    expect(bulkDialog).toContain("<ModalHeader");
-    expect(source("src/components/ui-modal.tsx")).toContain('size="small"');
+    expect(bulkDialog).toContain("<DialogHeader");
+    expect(
+      source("src/design-system/primitives/dialog/dialog.tsx"),
+    ).toContain('size="small"');
   });
 
   it("uses structured groups and preserves learned wordbooks", () => {

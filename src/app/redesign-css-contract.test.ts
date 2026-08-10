@@ -19,7 +19,8 @@ const globalsCss = readCss("src/app/globals.css");
 const tokensCss = readCss("src/styles/tokens.css");
 const themeCss = readCss("src/styles/theme.css");
 const resetCss = readCss("src/styles/reset.css");
-const modulesCss = moduleCssFiles(path.resolve("src/design-system"))
+const moduleFiles = moduleCssFiles(path.resolve("src"));
+const modulesCss = moduleFiles
   .map((file) => fs.readFileSync(file, "utf8"))
   .join("\n");
 const css = [globalsCss, modulesCss].join("\n");
@@ -27,7 +28,7 @@ const css = [globalsCss, modulesCss].join("\n");
 describe("redesign CSS contract", () => {
   it("keeps literal colors inside token blocks", () => {
     expect([globalsCss, resetCss, modulesCss].join("\n")).not.toMatch(
-      /#[0-9a-f]{3,8}\b/i,
+      /#[0-9a-f]{3,8}\b|\b(?:rgb|hsl|oklch)\(/i,
     );
     expect(tokensCss).toMatch(/--paper:\s*#[0-9a-f]{6};/i);
     expect(themeCss).toMatch(/:root\[data-theme="dark"\]/);
@@ -46,11 +47,17 @@ describe("redesign CSS contract", () => {
     expect(css).not.toMatch(
       /(?:linear-gradient|radial-gradient|box-shadow)\s*:/,
     );
-    const withoutNavigationBlur = globalsCss.replace(
-      /\.admin-sidebar,\s*\.admin-topbar,\s*\.topbar,\s*\.admin-mobile-nav\s*\{[\s\S]*?\}/,
-      "",
-    );
-    expect(withoutNavigationBlur).not.toMatch(/backdrop-filter\s*:/);
+    const blurFiles = moduleFiles
+      .filter((file) =>
+        /backdrop-filter\s*:/.test(fs.readFileSync(file, "utf8")),
+      )
+      .map((file) => path.relative(path.resolve("src"), file).replaceAll("\\", "/"))
+      .sort();
+    expect(blurFiles).toEqual([
+      "components/shell/admin-navigation.module.css",
+      "components/shell/app-shell.module.css",
+    ]);
+    expect(globalsCss).not.toMatch(/backdrop-filter\s*:/);
   });
 
   it("uses a calm color transition without lifting buttons", () => {
@@ -64,11 +71,6 @@ describe("redesign CSS contract", () => {
     const interactiveHoverBodies = [
       ...css.matchAll(/([^{}]+:hover[^{}]*)\{([^{}]*)\}/g),
     ]
-      .filter((match) =>
-        /button|choice|nav-link|learning-launch|filter-chip|student-card/.test(
-          match[1],
-        ),
-      )
       .map((match) => match[2])
       .join("\n");
     expect(interactiveHoverBodies).not.toMatch(
@@ -78,7 +80,12 @@ describe("redesign CSS contract", () => {
 
   it("supports an explicit dark theme and switch", () => {
     expect(themeCss).toMatch(/:root\[data-theme="dark"\]/);
-    expect(globalsCss).toMatch(/\.theme-toggle\s*\{/);
+    expect(
+      readCss("src/components/theme-toggle.module.css"),
+    ).toMatch(/\.root\s*\{/);
+    expect(readCss("src/components/theme-toggle.tsx")).toContain(
+      'role="switch"',
+    );
   });
 
   it("uses only the approved font weights", () => {

@@ -8,6 +8,8 @@ import { NotificationBootstrap } from "@/components/notification-bootstrap";
 import { adminShellText } from "@/content/ko/admin-shell";
 import { requireAdmin } from "@/lib/auth/admin";
 
+import shellStyles from "@/components/shell/app-shell.module.css";
+
 export default async function AdminProtectedLayout({
   children,
   detail,
@@ -18,42 +20,50 @@ export default async function AdminProtectedLayout({
   const admin = await requireAdmin();
 
   return (
-    <div className="admin-app-shell">
+    <div className={shellStyles.adminAppShell}>
       <NotificationBootstrap role="admin" />
-      <aside className="admin-sidebar">
-        <Link className="mini-brand admin-sidebar-brand" href="/admin">
-          <span className="mini-brand-mark" aria-hidden="true">
+      <aside className={shellStyles.adminSidebar}>
+        <Link
+          className={[shellStyles.brand, shellStyles.adminSidebarBrand].join(" ")}
+          href="/admin"
+        >
+          <span className={shellStyles.brandMark} aria-hidden="true">
             E
           </span>
           <span>{adminShellText.brand}</span>
         </Link>
         <AdminNavigation
-          className="admin-sidebar-nav"
           label={adminShellText.navigation.pcAriaLabel}
+          variant="sidebar"
         />
-        <div className="admin-sidebar-footer">
-          <span className="user-label">{admin.displayName}</span>
+        <div className={shellStyles.adminSidebarFooter}>
+          <span className={shellStyles.userLabel}>{admin.displayName}</span>
           <AdminLogoutButton />
         </div>
       </aside>
 
-      <div className="admin-workspace">
-        <header className="admin-topbar">
-          <div className="admin-topbar-inner">
-            <Link className="mini-brand admin-tablet-brand" href="/admin">
-              <span className="mini-brand-mark" aria-hidden="true">
+      <div className={shellStyles.adminWorkspace}>
+        <header className={shellStyles.adminTopbar}>
+          <div className={shellStyles.adminTopbarInner}>
+            <Link
+              className={[shellStyles.brand, shellStyles.adminTabletBrand].join(" ")}
+              href="/admin"
+            >
+              <span className={shellStyles.brandMark} aria-hidden="true">
                 E
               </span>
               <span>{adminShellText.brand}</span>
             </Link>
             <AdminPageTitle />
             <AdminNavigation
-              className="admin-tablet-nav"
               label={adminShellText.navigation.tabletAriaLabel}
+              variant="tablet"
             />
-            <div className="topbar-actions">
+            <div className={shellStyles.topbarActions}>
               <ThemeToggle />
-              <span className="user-label admin-topbar-user">
+              <span
+                className={[shellStyles.userLabel, shellStyles.adminTopbarUser].join(" ")}
+              >
                 {admin.displayName}
               </span>
               <AdminLogoutButton />
@@ -61,12 +71,15 @@ export default async function AdminProtectedLayout({
           </div>
         </header>
 
-        <main className="content admin-content" id="main-content">
+        <main
+          className={["content", shellStyles.adminContent].join(" ")}
+          id="main-content"
+        >
           {children}
         </main>
         <AdminNavigation
-          className="admin-mobile-nav"
           label={adminShellText.navigation.mobileAriaLabel}
+          variant="mobile"
         />
       </div>
       {detail}

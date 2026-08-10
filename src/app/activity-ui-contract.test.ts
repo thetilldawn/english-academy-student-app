@@ -109,6 +109,7 @@ describe("shared activity UI contract", () => {
     expect(layout).toContain("{detail}");
     expect(navigation).toContain("useSelectedLayoutSegment");
     expect(routeDialog).toContain("router.back()");
-    expect(routeDialog).toContain("closeOnBackdrop");
+    expect(routeDialog).toContain("<DialogFrame");
+    expect(routeDialog).toContain("onRequestClose={close}");
   });
 });

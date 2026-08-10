@@ -1,5 +1,8 @@
 import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
-import { HelpTip } from "@/components/help-tip";
+import {
+  HelpTip,
+  inlineHelpClassName,
+} from "@/design-system/primitives/tooltip/help-tip";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { formatContentText } from "@/content/format";
 import type { ReviewDatasetSummary } from "@/lib/services/admin-service";
@@ -17,7 +20,7 @@ export function ReviewDatasetPanel({
       className="section review-dataset-section"
     >
       <div className="section-heading">
-        <h2 className="label-with-help" id="review-dataset-heading">
+        <h2 className={inlineHelpClassName} id="review-dataset-heading">
           {adminLearningText.reviewDatasetPanel.title}
           <HelpTip label={adminLearningText.reviewDatasetPanel.helpAria}>
             {adminLearningText.reviewDatasetPanel.help}

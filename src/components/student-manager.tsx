@@ -8,7 +8,6 @@ import {
   useState,
   useTransition,
   type FormEvent,
-  type MouseEvent,
 } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -24,7 +23,10 @@ import { StudentWrongWordPanel } from "@/components/student-wrong-word-panel";
 import { StudentLearningActivityList } from "@/components/student-learning-activity-list";
 import { StudentLearningSourceList } from "@/components/student-learning-source-list";
 import { StudentVocabBookHistoryList } from "@/components/student-vocab-book-history-list";
-import { HelpTip } from "@/components/help-tip";
+import {
+  HelpTip,
+  inlineHelpClassName,
+} from "@/design-system/primitives/tooltip/help-tip";
 import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
 import {
   CountBadge,
@@ -47,8 +49,13 @@ import {
   IconButton,
   buttonRecipe,
 } from "@/design-system/primitives/button/button";
-import { Tabs } from "@/components/ui-tabs";
-import { ModalBody, ModalFrame, ModalHeader } from "@/components/ui-modal";
+import { Tabs } from "@/design-system/primitives/tabs/tabs";
+import {
+  DialogBody,
+  DialogFrame,
+  DialogHeader,
+  type DialogCloseReason,
+} from "@/design-system/primitives/dialog/dialog";
 import { buildAttemptStatusPresentation } from "@/lib/ui/attempt-score-presentation";
 import {
   cataloguedDatasetDisplayLabel,
@@ -170,7 +177,7 @@ function StudentVocabularyAssignmentAction({
 }) {
   return (
     <div className="student-inline-assignment-action">
-      <strong className="label-with-help">
+      <strong className={inlineHelpClassName}>
         {adminStudentsText.learning.nextVocabularyTitle}
         <HelpTip label={adminStudentsText.learning.nextVocabularyHelpAria}>
           {adminStudentsText.learning.nextVocabularyHelp}
@@ -211,7 +218,7 @@ function StudentCodeContent({
 }) {
   return (
     <>
-      <div className="dialog-code">{code}</div>
+      <div className="student-code-value">{code}</div>
       <div className="student-code-actions">
         <Button autoFocus onClick={onShare} variant="primary">
           {adminStudentsText.codeModal.sendKakao}
@@ -311,25 +318,12 @@ export function StudentManager({
   const [profileGradeLabel, setProfileGradeLabel] = useState(
     selectedStudent?.gradeLabel ?? "",
   );
-  const studentDialogRef = useRef<HTMLDialogElement>(null);
-  const codeDialogRef = useRef<HTMLDialogElement>(null);
   const copyResetTimerRef = useRef<number | null>(null);
   const interactionBusy = busyKey !== "" || refreshPending;
   const datasetGroups = useMemo(
     () => groupCataloguedDatasets(datasets),
     [datasets],
   );
-
-  useEffect(() => {
-    if (
-      shownCode &&
-      !selectedStudent &&
-      codeDialogRef.current &&
-      !codeDialogRef.current.open
-    ) {
-      codeDialogRef.current.showModal();
-    }
-  }, [selectedStudent, shownCode]);
 
   useEffect(
     () => () => {
@@ -339,16 +333,6 @@ export function StudentManager({
     },
     [],
   );
-
-  useEffect(() => {
-    if (
-      selectedStudent &&
-      studentDialogRef.current &&
-      !studentDialogRef.current.open
-    ) {
-      studentDialogRef.current.showModal();
-    }
-  }, [selectedStudent]);
 
   function openCodeDialog(code: string, label: string) {
     if (copyResetTimerRef.current !== null) {
@@ -360,13 +344,7 @@ export function StudentManager({
   }
 
   function closeCodeDialog() {
-    codeDialogRef.current?.close();
-  }
-
-  function closeCodeDialogOnBackdrop(
-    event: MouseEvent<HTMLDialogElement>,
-  ) {
-    if (event.target === event.currentTarget) closeCodeDialog();
+    finishClosingCodeDialog();
   }
 
   function openStudentAssignment(input: {
@@ -575,7 +553,7 @@ export function StudentManager({
       if (!payload.code) {
         throw new Error(adminStudentsText.codeModal.missingCodeError);
       }
-      if (!studentDialogRef.current?.open) return;
+      if (selectedStudentId !== student.id) return;
       openCodeDialog(
         payload.code,
         formatContentText(adminStudentsText.codeModal.revealTitle, {
@@ -613,7 +591,7 @@ export function StudentManager({
       if (!payload.code) {
         throw new Error(adminStudentsText.createStudent.noCodeError);
       }
-      if (!studentDialogRef.current?.open) return;
+      if (selectedStudentId !== student.id) return;
       openCodeDialog(
         payload.code,
         formatContentText(adminStudentsText.codeModal.rotateTitle, {
@@ -910,14 +888,25 @@ export function StudentManager({
   );
 
   function closeStudentDialog() {
-    studentDialogRef.current?.close();
+    setAssignmentStudentId("");
+    setAssignmentDatasetId("");
+    setAssignmentEditTarget(null);
+    finishClosingCodeDialog();
+    setSelectedStudentId("");
+    setLearningView("summary");
+    setLearningSourceDatasetId("");
+    setLearningSourceLabel("");
+    onLauncherClose?.();
   }
 
-  function closeStudentDialogOnBackdrop(
-    event: MouseEvent<HTMLDialogElement>,
-  ) {
-    if (event.target !== event.currentTarget) return;
-    if (shownCode) {
+  function requestStudentDialogClose(reason: DialogCloseReason) {
+    if (reason !== "close-button" && assignmentStudentId) {
+      setAssignmentStudentId("");
+      setAssignmentDatasetId("");
+      setAssignmentEditTarget(null);
+      return;
+    }
+    if (reason !== "close-button" && shownCode) {
       finishClosingCodeDialog();
       return;
     }
@@ -946,7 +935,7 @@ export function StudentManager({
           >
             <Field >
               <FieldLabelRow >
-                <FieldLabel as="span" className="label-with-help">
+                <FieldLabel as="span" className={inlineHelpClassName}>
                   <label htmlFor="create-student-display-name">
                     {adminStudentsText.createStudent.nameLabel}
                   </label>
@@ -1000,7 +989,7 @@ export function StudentManager({
             </div>
             <Field >
               <FieldLabelRow >
-                <FieldLabel as="span" className="label-with-help">
+                <FieldLabel as="span" className={inlineHelpClassName}>
                   <label htmlFor="create-student-vocab-dataset">
                     {adminStudentsText.createStudent.startingWordbookLabel}
                   </label>
@@ -1389,38 +1378,17 @@ export function StudentManager({
       ) : null}
 
       {selectedStudent && (
-        <ModalFrame
+        <DialogFrame
           aria-labelledby="student-detail-title"
-          className={[
-            "dialog-wide",
-            "student-detail-dialog",
-            assignmentStudentId
-              ? "student-detail-dialog--assignment"
-              : "",
-            shownCode ? "student-detail-dialog--code" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          onClick={closeStudentDialogOnBackdrop}
-          onCancel={(event) => {
-            if (!shownCode) return;
-            event.preventDefault();
-            finishClosingCodeDialog();
-          }}
-          onClose={() => {
-            setAssignmentStudentId("");
-            setAssignmentDatasetId("");
-            setAssignmentEditTarget(null);
-            finishClosingCodeDialog();
-            setSelectedStudentId("");
-            setLearningView("summary");
-            setLearningSourceDatasetId("");
-            setLearningSourceLabel("");
-            onLauncherClose?.();
-          }}
-          ref={studentDialogRef}
+          fullScreenMobile
+          height="medium"
+          layout={assignmentStudentId ? "body-footer" : shownCode ? "body" : "tabs"}
+          onRequestClose={requestStudentDialogClose}
+          size="wide"
         >
-          <ModalHeader
+          <DialogHeader
+            backLabel={commonText.modal.back}
+            closeLabel={commonText.modal.close}
             onBack={
               assignmentStudentId
                 ? () => {
@@ -1432,7 +1400,6 @@ export function StudentManager({
                   ? finishClosingCodeDialog
                 : undefined
             }
-            onClose={closeStudentDialog}
           >
             <div>
               <h2 id="student-detail-title">
@@ -1456,11 +1423,10 @@ export function StudentManager({
                     adminStudentsText.detail.missingSchoolGrade}
               </p> : null}
             </div>
-          </ModalHeader>
+          </DialogHeader>
 
           {!assignmentStudentId && !shownCode ? <Tabs
             ariaLabel={adminStudentsText.detail.tabsAria}
-            className="dialog-tabs"
             items={[
               {
                 value: "learning",
@@ -1486,6 +1452,7 @@ export function StudentManager({
               if (tab === "learning") setLearningView("summary");
             }}
             value={activeTab}
+            variant="dialog"
           /> : null}
 
           {assignmentStudentId ? (
@@ -1512,16 +1479,16 @@ export function StudentManager({
                 units={assignmentUnits}
             />
           ) : shownCode ? (
-            <ModalBody className="student-code-dialog-body student-code-inline-body">
+            <DialogBody className="student-code-dialog-body student-code-inline-body">
               <StudentCodeContent
                 code={shownCode.code}
                 copied={copied}
                 onCopy={() => void copyCode()}
                 onShare={() => void shareCode()}
               />
-            </ModalBody>
+            </DialogBody>
           ) : (
-            <ModalBody className="student-dialog-scroll-region">
+            <DialogBody className="student-dialog-scroll-region">
               <>
             {launcherOnly && error ? (
               <div className="notice notice-error" role="alert">
@@ -1800,7 +1767,7 @@ export function StudentManager({
                     {adminStudentsText.account.expiredNotice}
                   </div>
                 ) : null}
-                <div className="dialog-actions account-actions">
+                <div className="action-row account-actions">
                   {selectedStudent.status === "active" ? (
                     <>
                       {selectedStudent.codeStatus === "active" ? (
@@ -1862,31 +1829,29 @@ export function StudentManager({
               </section>
             )}
               </>
-            </ModalBody>
+            </DialogBody>
           )}
-        </ModalFrame>
+        </DialogFrame>
       )}
 
       {shownCode && !selectedStudent && (
-        <ModalFrame
+        <DialogFrame
           aria-labelledby="student-code-title"
-          className="student-code-dialog"
-          onClick={closeCodeDialogOnBackdrop}
-          onClose={finishClosingCodeDialog}
-          ref={codeDialogRef}
+          onRequestClose={closeCodeDialog}
+          size="compact"
         >
-          <ModalHeader onClose={closeCodeDialog}>
+          <DialogHeader closeLabel={adminStudentsText.codeModal.close}>
             <h2 id="student-code-title">{shownCode.label}</h2>
-          </ModalHeader>
-          <ModalBody className="student-code-dialog-body">
+          </DialogHeader>
+          <DialogBody className="student-code-dialog-body">
             <StudentCodeContent
               code={shownCode.code}
               copied={copied}
               onCopy={() => void copyCode()}
               onShare={() => void shareCode()}
             />
-          </ModalBody>
-        </ModalFrame>
+          </DialogBody>
+        </DialogFrame>
       )}
     </>
   );

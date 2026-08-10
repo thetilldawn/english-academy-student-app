@@ -2,6 +2,8 @@
 
 import { useId, useRef, type KeyboardEvent } from "react";
 
+import styles from "./tabs.module.css";
+
 export type TabItem<Value extends string> = {
   value: Value;
   label: string;
@@ -15,20 +17,19 @@ export function Tabs<Value extends string>({
   items,
   onChange,
   value,
+  variant = "default",
 }: {
   ariaLabel: string;
   className?: string;
   items: readonly TabItem<Value>[];
   onChange: (value: Value) => void;
   value: Value;
+  variant?: "default" | "dialog";
 }) {
   const fallbackId = useId();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
-  function moveFocus(
-    event: KeyboardEvent<HTMLButtonElement>,
-    index: number,
-  ) {
+  function moveFocus(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
       return;
     }
@@ -49,7 +50,9 @@ export function Tabs<Value extends string>({
   return (
     <div
       aria-label={ariaLabel}
-      className={["app-tabs", className].filter(Boolean).join(" ")}
+      className={[styles.root, styles[variant], className]
+        .filter(Boolean)
+        .join(" ")}
       role="tablist"
     >
       {items.map((item, index) => {
@@ -58,7 +61,7 @@ export function Tabs<Value extends string>({
           <button
             aria-controls={item.controls}
             aria-selected={selected}
-            className="app-tab"
+            className={styles.tab}
             id={item.id ?? `${fallbackId}-${item.value}`}
             key={item.value}
             onClick={() => onChange(item.value)}

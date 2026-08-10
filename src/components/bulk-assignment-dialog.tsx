@@ -6,20 +6,21 @@ import {
   useRef,
   useState,
   type FormEvent,
-  type MouseEvent,
-  type SyntheticEvent,
 } from "react";
 import { toast } from "sonner";
 
 import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
-import { HelpTip } from "@/components/help-tip";
+import {
+  HelpTip,
+  inlineHelpClassName,
+} from "@/design-system/primitives/tooltip/help-tip";
 import { Button } from "@/design-system/primitives/button/button";
 import {
-  ModalBody,
-  ModalFooter,
-  ModalFrame,
-  ModalHeader,
-} from "@/components/ui-modal";
+  DialogBody,
+  DialogFooter,
+  DialogFrame,
+  DialogHeader,
+} from "@/design-system/primitives/dialog/dialog";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { formatContentText } from "@/content/format";
 import type {
@@ -94,7 +95,6 @@ export function BulkAssignmentDialog({
   onClose: () => void;
   onSuccess: (assignmentCount: number) => void;
 }) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const [rangeMode, setRangeMode] =
     useState<BulkAssignmentRangeMode>("previous_span");
   const [unitsPerSession, setUnitsPerSession] = useState(1);
@@ -122,10 +122,6 @@ export function BulkAssignmentDialog({
     () => students.map((student) => student.id).join(","),
     [students],
   );
-
-  useEffect(() => {
-    dialogRef.current?.showModal();
-  }, []);
 
   const firstAvailableFrom = firstAvailableDate
     ? koreanDateTimeLocalToIso(`${firstAvailableDate}T00:00`)
@@ -223,15 +219,7 @@ export function BulkAssignmentDialog({
   ]);
 
   function close() {
-    if (!submitting) dialogRef.current?.close();
-  }
-
-  function closeOnBackdrop(event: MouseEvent<HTMLDialogElement>) {
-    if (event.target === event.currentTarget) close();
-  }
-
-  function cancel(event: SyntheticEvent<HTMLDialogElement>) {
-    if (submitting) event.preventDefault();
+    if (!submitting) onClose();
   }
 
   function toggleReviewLevel(level: ReviewLevel) {
@@ -303,7 +291,7 @@ export function BulkAssignmentDialog({
         );
       }
       onSuccess(payload.assignments?.length ?? students.length * sessionCount);
-      dialogRef.current?.close();
+      onClose();
     } catch (requestError) {
       toast.error(
         requestError instanceof Error
@@ -316,21 +304,19 @@ export function BulkAssignmentDialog({
   }
 
   return (
-    <ModalFrame
+    <DialogFrame
       aria-labelledby="bulk-assignment-title"
-      className="dialog-extra-wide bulk-assignment-dialog"
-      onCancel={cancel}
-      onClick={closeOnBackdrop}
-      onClose={onClose}
-      ref={dialogRef}
+      closeDisabled={submitting}
+      height="large"
+      layout="body-footer"
+      onRequestClose={close}
+      size="extra-wide"
     >
-      <ModalHeader
+      <DialogHeader
         closeLabel={adminLearningText.bulkAssignmentModal.close}
-        disabled={submitting}
-        onClose={close}
       >
         <div>
-          <h2 className="label-with-help" id="bulk-assignment-title">
+          <h2 className={inlineHelpClassName} id="bulk-assignment-title">
             {includePendingReview
               ? adminLearningText.bulkAssignmentModal.withWrongTitle
               : adminLearningText.bulkAssignmentModal.nextTitle}
@@ -347,9 +333,9 @@ export function BulkAssignmentDialog({
             )}
           </p>
         </div>
-      </ModalHeader>
+      </DialogHeader>
 
-      <ModalBody>
+      <DialogBody>
         <form
           className="bulk-assignment-form"
           id="bulk-assignment-form"
@@ -361,7 +347,7 @@ export function BulkAssignmentDialog({
             <Field className="bulk-range-mode-field">
               <FieldLabel
                 as="span"
-                className="label-with-help"
+                className={inlineHelpClassName}
                 id="bulk-range-mode-label"
               >
                 {adminLearningText.bulkAssignmentModal.rangeMode.label}
@@ -581,7 +567,7 @@ export function BulkAssignmentDialog({
               />
             </Field>
             <Field >
-              <FieldLabel as="span" className="label-with-help">
+              <FieldLabel as="span" className={inlineHelpClassName}>
                 <label htmlFor="bulk-assignment-first-available-until">
                   {adminLearningText.bulkAssignmentModal.firstDeadline}
                 </label>
@@ -652,7 +638,7 @@ export function BulkAssignmentDialog({
             className="bulk-preview-section"
           >
             <div className="learning-section-heading">
-              <h3 className="label-with-help">
+              <h3 className={inlineHelpClassName}>
                 {adminLearningText.bulkAssignmentModal.previewTitle}
                 <HelpTip
                   label={adminLearningText.bulkAssignmentModal.atomicHelpAria}
@@ -785,8 +771,8 @@ export function BulkAssignmentDialog({
           </AssignmentEditorSummary>
           </AssignmentEditorLayout>
         </form>
-      </ModalBody>
-      <ModalFooter>
+      </DialogBody>
+      <DialogFooter>
         <Button
           disabled={
             submitting ||
@@ -810,7 +796,7 @@ export function BulkAssignmentDialog({
                 },
               )}
         </Button>
-      </ModalFooter>
-    </ModalFrame>
+      </DialogFooter>
+    </DialogFrame>
   );
 }

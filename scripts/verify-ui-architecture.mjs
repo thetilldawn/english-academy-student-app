@@ -9,6 +9,19 @@ function read(relativePath) {
   return fs.readFileSync(path.join(rootDirectory, relativePath), "utf8");
 }
 
+function filesUnder(relativeDirectory, predicate) {
+  const absoluteDirectory = path.join(rootDirectory, relativeDirectory);
+  return fs
+    .readdirSync(absoluteDirectory, { withFileTypes: true })
+    .flatMap((entry) => {
+      const relativePath = path
+        .join(relativeDirectory, entry.name)
+        .replaceAll("\\", "/");
+      if (entry.isDirectory()) return filesUnder(relativePath, predicate);
+      return predicate(relativePath) ? [relativePath] : [];
+    });
+}
+
 function lineCount(source) {
   return source.replace(/\r\n/g, "\n").replace(/\n$/, "").split("\n")
     .length;
@@ -185,12 +198,6 @@ const legacyComponents = [
 const legacyPaths = new Set(
   legacyComponents.map((contract) => contract.path),
 );
-const primitiveNames = new Set([
-  "status-badge.tsx",
-  "count-badge.tsx",
-  "help-tip.tsx",
-  "activity-status-timeline.tsx",
-]);
 const violations = [];
 
 const migratedPrimitiveSelectors = [
@@ -202,6 +209,13 @@ const migratedPrimitiveSelectors = [
   /^\.status-badge(?:\b|[.:\s])/m,
   /^\.count-badge(?:\b|[.:\s])/m,
   /^\.meta-tag(?:\b|[.:\s])/m,
+  /^\.app-tab(?:\b|[.:\s])/m,
+  /^\.management-tabs(?:\b|[.:\s])/m,
+  /^\.help-tip(?:\b|[.:\s])/m,
+  /^\.label-with-help(?:\b|[.:\s])/m,
+  /^\.modal-frame(?:\b|[.:\s])/m,
+  /^\.nav-links?(?:\b|[.:\s])/m,
+  /^\.theme-toggle(?:\b|[.:\s])/m,
 ];
 
 for (const selector of migratedPrimitiveSelectors) {
@@ -216,6 +230,9 @@ for (const retiredPath of [
   "src/components/status-badge.tsx",
   "src/components/count-badge.tsx",
   "src/components/admin-meta-tags.tsx",
+  "src/components/ui-modal.tsx",
+  "src/components/ui-tabs.tsx",
+  "src/components/help-tip.tsx",
 ]) {
   if (fs.existsSync(path.join(rootDirectory, retiredPath))) {
     violations.push(`${retiredPath} should be retired after primitive migration`);
@@ -258,19 +275,72 @@ for (const name of fs.readdirSync(componentDirectory)) {
   if (!legacyPaths.has(relativePath) && lineCount(source) > 500) {
     violations.push(`${relativePath} exceeds the 500 line ceiling`);
   }
-  if (name.startsWith("ui-") || primitiveNames.has(name)) {
-    for (const forbidden of [
-      /\bfetch\s*\(/,
-      /from ["']next\/navigation["']/,
-      /from ["']sonner["']/,
-      /from ["']@\/lib\/services/,
-      /["']\/api\//,
-    ]) {
-      if (forbidden.test(source)) {
-        violations.push(
-          `${relativePath} crosses the primitive dependency boundary (${forbidden})`,
-        );
-      }
+}
+
+const productionTsxPaths = filesUnder(
+  "src",
+  (relativePath) =>
+    relativePath.endsWith(".tsx") &&
+    !relativePath.endsWith(".test.tsx") &&
+    !relativePath.endsWith(".stories.tsx"),
+);
+const primitiveDirectoryPrefix = "src/design-system/primitives/";
+const dialogPrimitivePath = `${primitiveDirectoryPrefix}dialog/dialog.tsx`;
+const tabsPrimitivePath = `${primitiveDirectoryPrefix}tabs/tabs.tsx`;
+const tooltipPrimitivePath = `${primitiveDirectoryPrefix}tooltip/help-tip.tsx`;
+
+const centralizedApiContracts = [
+  {
+    allowedPath: dialogPrimitivePath,
+    label: "native dialog API",
+    pattern: /<dialog\b|\bshowModal\s*\(|\bHTMLDialogElement\b/,
+  },
+  {
+    allowedPath: tabsPrimitivePath,
+    label: "tab semantics",
+    pattern: /role=["']tab(?:list)?["']|\baria-selected\s*=/,
+  },
+  {
+    allowedPath: tooltipPrimitivePath,
+    label: "popover API",
+    pattern: /\bpopover\s*=|\bshowPopover\s*\(|\bhidePopover\s*\(/,
+  },
+];
+
+for (const relativePath of productionTsxPaths) {
+  const source = read(relativePath);
+  for (const contract of centralizedApiContracts) {
+    if (
+      relativePath !== contract.allowedPath &&
+      contract.pattern.test(source)
+    ) {
+      violations.push(
+        `${relativePath} uses ${contract.label} outside ${contract.allowedPath}`,
+      );
+    }
+  }
+  if (
+    /@\/components\/(?:ui-modal|ui-tabs|help-tip)/.test(source)
+  ) {
+    violations.push(`${relativePath} imports a retired overlay component`);
+  }
+}
+
+for (const relativePath of productionTsxPaths.filter((candidate) =>
+  candidate.startsWith(primitiveDirectoryPrefix),
+)) {
+  const source = read(relativePath);
+  for (const forbidden of [
+    /\bfetch\s*\(/,
+    /from ["']next\/navigation["']/,
+    /from ["']sonner["']/,
+    /from ["']@\/lib\/services/,
+    /["']\/api\//,
+  ]) {
+    if (forbidden.test(source)) {
+      violations.push(
+        `${relativePath} crosses the primitive dependency boundary (${forbidden})`,
+      );
     }
   }
 }

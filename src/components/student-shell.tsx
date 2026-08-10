@@ -8,6 +8,8 @@ import { StudentLogoutButton } from "@/components/student-logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { studentAppText } from "@/content/ko/student-app";
 
+import styles from "./shell/app-shell.module.css";
+
 export function StudentShell({
   children,
   displayName,
@@ -32,25 +34,27 @@ export function StudentShell({
   return (
     <div
       className={[
-        "app-shell",
-        "student-app-shell",
-        focusedAttempt ? "student-attempt-shell" : "",
+        styles.appShell,
+        styles.studentAppShell,
+        focusedAttempt ? styles.studentAttemptShell : "",
       ]
         .filter(Boolean)
         .join(" ")}
     >
       {!focusedAttempt && (
-        <header className="topbar student-topbar">
-          <div className="topbar-inner">
-            <Link className="mini-brand" href="/student">
-              <span className="mini-brand-mark" aria-hidden="true">
+        <header className={[styles.topbar, styles.studentTopbar].join(" ")}>
+          <div className={styles.topbarInner}>
+            <Link className={styles.brand} href="/student">
+              <span className={styles.brandMark} aria-hidden="true">
                 E
               </span>
               <span>{studentAppText.shell.brand}</span>
             </Link>
-            <div className="topbar-actions">
+            <div className={styles.topbarActions}>
               <ThemeToggle />
-              <span className="user-label student-user-label">
+              <span
+                className={[styles.userLabel, styles.studentUserLabel].join(" ")}
+              >
                 {displayName}
                 {gradeLabel ? ` · ${gradeLabel}` : ""}
               </span>

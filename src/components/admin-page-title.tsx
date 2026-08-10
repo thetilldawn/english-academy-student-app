@@ -2,20 +2,13 @@
 
 import { useSelectedLayoutSegment } from "next/navigation";
 
-import { adminShellText } from "@/content/ko/admin-shell";
+import { adminRouteForSegment } from "@/lib/ui/admin-routes";
 
-const PAGE_TITLES = {
-  assignments: adminShellText.pageTitles.learning,
-  results: adminShellText.pageTitles.history,
-  students: adminShellText.pageTitles.students,
-} as const;
+import styles from "./shell/app-shell.module.css";
 
 export function AdminPageTitle() {
   const segment = useSelectedLayoutSegment();
-  const title =
-    segment && segment in PAGE_TITLES
-      ? PAGE_TITLES[segment as keyof typeof PAGE_TITLES]
-      : adminShellText.pageTitles.overview;
+  const title = adminRouteForSegment(segment).pageTitle;
 
-  return <strong className="admin-mobile-page-title">{title}</strong>;
+  return <strong className={styles.adminMobilePageTitle}>{title}</strong>;
 }

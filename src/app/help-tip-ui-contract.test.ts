@@ -9,15 +9,20 @@ function source(relativePath: string) {
 
 describe("공통 도움말 UI 계약", () => {
   it("모달 클리핑을 피하는 top-layer popover와 접근성 연결을 사용한다", () => {
-    const component = source("src/components/help-tip.tsx");
-    const css = source("src/app/globals.css");
+    const component = source(
+      "src/design-system/primitives/tooltip/help-tip.tsx",
+    );
+    const css = source(
+      "src/design-system/primitives/tooltip/help-tip.module.css",
+    );
 
     expect(component).toContain('popover="auto"');
-    expect(component).toContain("aria-describedby={tooltipId}");
+    expect(component).toContain("aria-describedby={open ? tooltipId : undefined}");
     expect(component).toContain('role="tooltip"');
     expect(component).toContain("tooltip.showPopover()");
+    expect(component).toContain("tooltip.hidePopover()");
     expect(component).toContain("getBoundingClientRect()");
-    expect(css).toContain(".help-tip-content[popover]");
+    expect(css).toContain(".content[popover]");
     expect(css).toContain("border: 1px solid currentColor");
     expect(css).toContain("border-radius: 999px");
     expect(css).not.toContain("var(--line-strong)");
@@ -35,7 +40,7 @@ describe("공통 도움말 UI 계약", () => {
       /<Field as="label"[^>]*>[\s\S]{0,350}<HelpTip/,
     );
     expect(source("src/components/assignment-editor-ui.tsx")).toContain(
-      '<FieldLabel as="span" className="label-with-help" id={labelId}>',
+      '<FieldLabel as="span" className={inlineHelpClassName} id={labelId}>',
     );
     expect(sources.join("\n")).toContain(
       'htmlFor="assignment-available-until"',

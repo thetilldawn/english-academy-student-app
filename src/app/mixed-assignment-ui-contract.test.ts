@@ -93,9 +93,9 @@ describe("mixed assignment admin UI contract", () => {
     expect(
       manager.match(/resetScopedControls\(\);/g)?.length,
     ).toBeGreaterThanOrEqual(3);
-    expect(manager).toContain("onCancel={handleDialogCancel}");
-    expect(manager).toContain("if (submitting) event.preventDefault()");
-    expect(manager).toContain("disabled={submitting}");
+    expect(manager).toContain("closeDisabled={submitting}");
+    expect(manager).toContain("onRequestClose={closeDialog}");
+    expect(manager).toContain("if (submitting) return");
     expect(manager).toContain("refreshPending ||");
     expect(manager).toContain("editLoading ||");
     expect(manager).toContain("if (requestInFlightRef.current) return");
@@ -113,7 +113,7 @@ describe("mixed assignment admin UI contract", () => {
     expect(manager).toContain('from "sonner"');
     expect(manager).toContain("toast.success");
     expect(manager).not.toContain("<AppToast");
-    expect(manager).toContain("dialogRef.current?.close()");
+    expect(manager).not.toContain("dialogRef.current?.close()");
   });
 
   it("일반·혼합 payload를 순수 builder로 분기하고 서버 전용값을 노출하지 않는다", () => {

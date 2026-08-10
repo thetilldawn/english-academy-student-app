@@ -50,17 +50,20 @@ describe("mobile production regression UI contract", () => {
   });
 
   it("shows an existing student's code inside one modal level", () => {
+    expect(studentManager).toContain('<DialogFrame');
     expect(studentManager).toContain(
-      'shownCode ? "student-detail-dialog--code" : ""',
+      'onRequestClose={requestStudentDialogClose}',
     );
     expect(studentManager).toContain("shownCode && !selectedStudent");
     expect(studentManager).toContain("finishClosingCodeDialog");
-    expect(studentManager).toContain("onCancel={(event) => {");
-    expect(css).toMatch(
-      /\.modal-frame\.student-detail-dialog--code\[open\]\s*\{[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\);/,
+    expect(studentManager).toMatch(
+      /shownCode\s*\?\s*finishClosingCodeDialog/,
+    );
+    expect(studentManager).toContain(
+      '<DialogBody className="student-code-dialog-body student-code-inline-body">',
     );
     expect(css).toMatch(
-      /\.student-code-dialog-body \.dialog-code\s*\{[^}]*margin:\s*0;/,
+      /\.student-code-dialog-body \.student-code-value\s*\{[^}]*margin:\s*0;/,
     );
   });
 

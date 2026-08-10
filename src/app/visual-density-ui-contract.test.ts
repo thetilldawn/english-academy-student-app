@@ -76,9 +76,9 @@ describe("admin visual density contract", () => {
     expect(studentManager).toContain("embedded");
     expect(studentManager).toContain("assignmentStudentId ? (");
     expect(studentManager).not.toContain("studentDialogSuspendedRef");
-    expect(assignmentManager).toContain("<ModalFooter>");
-    expect(bulkDialog).toContain("<ModalFooter>");
-    expect(reviewDialog).toContain("<ModalFooter>");
+    expect(assignmentManager).toContain("<DialogFooter");
+    expect(bulkDialog).toContain("<DialogFooter>");
+    expect(reviewDialog).toContain("<DialogFooter>");
   });
 
   it("loads Pretendard locally and limits serif typography to English words", () => {

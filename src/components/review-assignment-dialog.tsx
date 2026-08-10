@@ -1,16 +1,13 @@
 "use client";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  type FormEvent,
-  type MouseEvent,
-} from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { HelpTip } from "@/components/help-tip";
+import {
+  HelpTip,
+  inlineHelpClassName,
+} from "@/design-system/primitives/tooltip/help-tip";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { formatContentText } from "@/content/format";
 import type { ReviewAssignmentDraftSummary } from "@/lib/admin/review-assignment";
@@ -24,11 +21,11 @@ import {
 } from "@/lib/deadline";
 import { formatKoreanDateTime } from "@/lib/format";
 import {
-  ModalBody,
-  ModalFooter,
-  ModalFrame,
-  ModalHeader,
-} from "@/components/ui-modal";
+  DialogBody,
+  DialogFooter,
+  DialogFrame,
+  DialogHeader,
+} from "@/design-system/primitives/dialog/dialog";
 import { Button } from "@/design-system/primitives/button/button";
 import { AssignmentTimingModeField } from "@/components/assignment-editor-ui";
 import {
@@ -48,7 +45,6 @@ export function ReviewAssignmentDialog({
   draft: ReviewAssignmentDraftSummary;
 }) {
   const router = useRouter();
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const [directionRatio, setDirectionRatio] = useState<0 | 50 | 100>(50);
   const [questionOrderMode, setQuestionOrderMode] =
     useState<QuestionOrderMode>("random");
@@ -63,12 +59,6 @@ export function ReviewAssignmentDialog({
   const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (dialogRef.current && !dialogRef.current.open) {
-      dialogRef.current.showModal();
-    }
-  }, []);
-
   const timeLimitSeconds =
     timingMode === "total" ? timeLimitMinutes * 60 : 10800;
   const cannotCreate =
@@ -82,12 +72,7 @@ export function ReviewAssignmentDialog({
 
   function leaveDraft() {
     if (submitting || cancelling) return;
-    dialogRef.current?.close();
     router.replace("/admin/assignments");
-  }
-
-  function closeOnBackdrop(event: MouseEvent<HTMLDialogElement>) {
-    if (event.target === event.currentTarget) leaveDraft();
   }
 
   async function cancelDraft() {
@@ -181,20 +166,16 @@ export function ReviewAssignmentDialog({
   }
 
   return (
-    <ModalFrame
+    <DialogFrame
       aria-labelledby="review-assignment-dialog-title"
-      className="dialog-extra-wide assignment-dialog"
-      onCancel={(event) => {
-        event.preventDefault();
-        leaveDraft();
-      }}
-      onClick={closeOnBackdrop}
-      ref={dialogRef}
+      closeDisabled={submitting || cancelling}
+      fullScreenMobile
+      height="large"
+      layout="body-footer"
+      onRequestClose={leaveDraft}
+      size="extra-wide"
     >
-      <ModalHeader
-        disabled={submitting || cancelling}
-        onClose={leaveDraft}
-      >
+      <DialogHeader closeLabel={adminLearningText.assignmentModal.header.close}>
         <div>
           <p className="eyebrow">
             {adminLearningText.reviewAssignmentModal.eyebrow}
@@ -209,9 +190,9 @@ export function ReviewAssignmentDialog({
               adminLearningText.reviewAssignmentModal.missingSchoolGrade}
           </p>
         </div>
-      </ModalHeader>
+      </DialogHeader>
 
-      <ModalBody>
+      <DialogBody>
       <div className="assignment-dialog-context">
         <strong>{draft.datasetLabel}</strong>
         <span>
@@ -400,7 +381,7 @@ export function ReviewAssignmentDialog({
             </Field>
           </div>
           <Field >
-            <FieldLabel as="span" className="label-with-help">
+            <FieldLabel as="span" className={inlineHelpClassName}>
               <label htmlFor="review-assignment-available-until">
                 {adminLearningText.assignmentModal.deadline.label}
               </label>
@@ -422,7 +403,7 @@ export function ReviewAssignmentDialog({
 
         <section className="assignment-submit-panel">
           <Field >
-            <FieldLabel as="span" className="label-with-help">
+            <FieldLabel as="span" className={inlineHelpClassName}>
               <label htmlFor="review-assignment-custom-title">
                 {adminLearningText.assignmentModal.submit.optionalTitle}
               </label>
@@ -445,8 +426,8 @@ export function ReviewAssignmentDialog({
           )}
         </section>
       </form>
-      </ModalBody>
-      <ModalFooter>
+      </DialogBody>
+      <DialogFooter>
         <Button
           aria-busy={cancelling}
           disabled={submitting || cancelling}
@@ -468,7 +449,7 @@ export function ReviewAssignmentDialog({
             ? adminLearningText.reviewAssignmentModal.assigning
             : adminLearningText.reviewAssignmentModal.assign}
         </Button>
-      </ModalFooter>
-    </ModalFrame>
+      </DialogFooter>
+    </DialogFrame>
   );
 }

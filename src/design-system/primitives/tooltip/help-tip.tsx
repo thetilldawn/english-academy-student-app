@@ -9,9 +9,57 @@ import {
   type ReactNode,
 } from "react";
 
+import styles from "./help-tip.module.css";
+
 const VIEWPORT_GAP = 8;
 const TOOLTIP_GAP = 7;
 const TOOLTIP_MAX_WIDTH = 280;
+
+export type TooltipPositionInput = {
+  tooltipHeight: number;
+  triggerBottom: number;
+  triggerLeft: number;
+  triggerTop: number;
+  triggerWidth: number;
+  viewportHeight: number;
+  viewportWidth: number;
+};
+
+export function computeTooltipPosition({
+  tooltipHeight,
+  triggerBottom,
+  triggerLeft,
+  triggerTop,
+  triggerWidth,
+  viewportHeight,
+  viewportWidth,
+}: TooltipPositionInput) {
+  const width = Math.max(
+    0,
+    Math.min(TOOLTIP_MAX_WIDTH, viewportWidth - VIEWPORT_GAP * 2),
+  );
+  const centeredLeft = triggerLeft + triggerWidth / 2 - width / 2;
+  const left = Math.min(
+    Math.max(centeredLeft, VIEWPORT_GAP),
+    viewportWidth - width - VIEWPORT_GAP,
+  );
+  const preferredTop = triggerTop - tooltipHeight - TOOLTIP_GAP;
+  const fallbackTop = Math.min(
+    triggerBottom + TOOLTIP_GAP,
+    viewportHeight - tooltipHeight - VIEWPORT_GAP,
+  );
+
+  return {
+    left: Math.max(left, VIEWPORT_GAP),
+    top: Math.max(
+      preferredTop >= VIEWPORT_GAP ? preferredTop : fallbackTop,
+      VIEWPORT_GAP,
+    ),
+    width,
+  };
+}
+
+export const inlineHelpClassName = styles.inline;
 
 export function HelpTip({
   label,
@@ -28,34 +76,22 @@ export function HelpTip({
   const positionTooltip = useCallback(() => {
     const trigger = triggerRef.current;
     const tooltip = tooltipRef.current;
-    if (!trigger || !tooltip || !tooltip.matches(":popover-open")) {
-      return;
-    }
+    if (!trigger || !tooltip || !tooltip.matches(":popover-open")) return;
 
     const triggerRect = trigger.getBoundingClientRect();
-    const width = Math.min(
-      TOOLTIP_MAX_WIDTH,
-      window.innerWidth - VIEWPORT_GAP * 2,
-    );
-    tooltip.style.width = `${width}px`;
-    const height = tooltip.offsetHeight;
-    const centeredLeft =
-      triggerRect.left + triggerRect.width / 2 - width / 2;
-    const left = Math.min(
-      Math.max(centeredLeft, VIEWPORT_GAP),
-      window.innerWidth - width - VIEWPORT_GAP,
-    );
-    const preferredTop = triggerRect.top - height - TOOLTIP_GAP;
-    const top =
-      preferredTop >= VIEWPORT_GAP
-        ? preferredTop
-        : Math.min(
-            triggerRect.bottom + TOOLTIP_GAP,
-            window.innerHeight - height - VIEWPORT_GAP,
-          );
+    const position = computeTooltipPosition({
+      tooltipHeight: tooltip.offsetHeight,
+      triggerBottom: triggerRect.bottom,
+      triggerLeft: triggerRect.left,
+      triggerTop: triggerRect.top,
+      triggerWidth: triggerRect.width,
+      viewportHeight: window.innerHeight,
+      viewportWidth: window.innerWidth,
+    });
 
-    tooltip.style.left = `${left}px`;
-    tooltip.style.top = `${Math.max(top, VIEWPORT_GAP)}px`;
+    tooltip.style.width = `${position.width}px`;
+    tooltip.style.left = `${position.left}px`;
+    tooltip.style.top = `${position.top}px`;
   }, []);
 
   const show = useCallback(() => {
@@ -83,15 +119,17 @@ export function HelpTip({
   }, [open, positionTooltip]);
 
   return (
-    <span className="help-tip">
+    <span className={styles.root}>
       <button
-        aria-describedby={tooltipId}
-        aria-expanded={open}
+        aria-describedby={open ? tooltipId : undefined}
         aria-label={label}
-        className="help-tip-button"
+        className={styles.trigger}
         onBlur={hide}
-        onClick={show}
+        onClick={() => (open ? hide() : show())}
         onFocus={show}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") hide();
+        }}
         onMouseEnter={show}
         onMouseLeave={() => {
           if (document.activeElement !== triggerRef.current) hide();
@@ -102,7 +140,7 @@ export function HelpTip({
         <span aria-hidden="true">?</span>
       </button>
       <span
-        className="help-tip-content"
+        className={styles.content}
         id={tooltipId}
         onToggle={(event) =>
           setOpen(event.currentTarget.matches(":popover-open"))

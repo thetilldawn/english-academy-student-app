@@ -3,6 +3,8 @@
 import { useSyncExternalStore } from "react";
 import { adminShellText } from "@/content/ko/admin-shell";
 
+import styles from "./theme-toggle.module.css";
+
 type Theme = "light" | "dark";
 
 const STORAGE_KEY = "english-academy-theme";
@@ -22,7 +24,11 @@ function subscribeTheme(listener: () => void) {
   };
 }
 
-export function ThemeToggle({ className = "" }: { className?: string }) {
+export function ThemeToggle({
+  placement = "inline",
+}: {
+  placement?: "auth" | "inline";
+}) {
   const theme = useSyncExternalStore(
     subscribeTheme,
     currentTheme,
@@ -45,14 +51,16 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     <button
       aria-checked={dark}
       aria-label={adminShellText.theme.ariaLabel}
-      className={["theme-toggle", className].filter(Boolean).join(" ")}
+      className={[styles.root, placement === "auth" ? styles.auth : ""]
+        .filter(Boolean)
+        .join(" ")}
       onClick={toggleTheme}
       role="switch"
       title={actionLabel}
       type="button"
     >
-      <span aria-hidden="true" className="theme-toggle-track">
-        <span className="theme-toggle-thumb" />
+      <span aria-hidden="true" className={styles.track}>
+        <span className={styles.thumb} />
       </span>
     </button>
   );

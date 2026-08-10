@@ -128,15 +128,16 @@ describe("responsive navigation contract", () => {
     const adminCopy = source("src/content/ko/admin-shell.ts");
     const studentShell = source("src/components/student-shell.tsx");
 
-    expect(adminLayout).toContain('className="admin-sidebar-nav"');
-    expect(adminLayout).toContain('className="admin-tablet-nav"');
-    expect(adminLayout).toContain('className="admin-mobile-nav"');
+    expect(adminLayout).toContain('variant="sidebar"');
+    expect(adminLayout).toContain('variant="tablet"');
+    expect(adminLayout).toContain('variant="mobile"');
+    expect(source("src/components/admin-navigation.tsx")).toContain(
+      "ADMIN_ROUTES.map",
+    );
     expect(adminLayout.match(/\{admin\.displayName\}/g)).toHaveLength(2);
     expect(adminLayout).not.toContain("admin-mobile-user-label");
     expect(adminLayout).not.toContain(">관리자<");
-    expect(adminPageTitle).toContain(
-      "adminShellText.pageTitles.learning",
-    );
+    expect(adminPageTitle).toContain("adminRouteForSegment(segment).pageTitle");
     expect(adminCopy).toContain('learning: "학습 관리"');
     expect(adminPageTitle).not.toContain('title: "시험 관리"');
     expect(adminLayout).not.toContain(
@@ -174,7 +175,7 @@ describe("responsive navigation contract", () => {
     const studentCopy = source("src/content/ko/admin-students.ts");
     const learningCopy = source("src/content/ko/admin-learning.ts");
 
-    expect(studentManager).toContain('className="dialog-tabs"');
+    expect(studentManager).toContain('variant="dialog"');
     expect(studentManager).toContain("adminStudentsText.detailTabs.history");
     expect(studentManager).toContain("adminStudentsText.detailTabs.account");
     expect(studentCopy).toContain('history: "내역"');
@@ -195,9 +196,7 @@ describe("responsive navigation contract", () => {
     );
     expect(learningCopy).toContain('otherLearningTab: "다른 학습"');
     expect(assignmentManager).toContain('type="search"');
-    expect(assignmentManager).toContain(
-      'className="dialog-extra-wide assignment-dialog"',
-    );
+    expect(assignmentManager).toContain('size="extra-wide"');
     expect(studentManager).toContain(
       "adminStudentsText.learning.nextVocabularyTitle",
     );

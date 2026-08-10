@@ -7,15 +7,15 @@ import {
   useState,
   useTransition,
   type FormEvent,
-  type MouseEvent,
   type ReactNode,
-  type RefObject,
-  type SyntheticEvent,
 } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { HelpTip } from "@/components/help-tip";
+import {
+  HelpTip,
+  inlineHelpClassName,
+} from "@/design-system/primitives/tooltip/help-tip";
 import { BulkAssignmentDialog } from "@/components/bulk-assignment-dialog";
 import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
 import { AttemptScoreSummary } from "@/components/attempt-score-summary";
@@ -94,13 +94,13 @@ import {
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { commonText } from "@/content/ko/common";
 import { formatContentText } from "@/content/format";
-import { Tabs } from "@/components/ui-tabs";
+import { Tabs } from "@/design-system/primitives/tabs/tabs";
 import {
-  ModalBody,
-  ModalFooter,
-  ModalFrame,
-  ModalHeader,
-} from "@/components/ui-modal";
+  DialogBody,
+  DialogFooter,
+  DialogFrame,
+  DialogHeader,
+} from "@/design-system/primitives/dialog/dialog";
 import {
   Button,
   ButtonLink,
@@ -121,6 +121,8 @@ import {
   Input,
   Select,
 } from "@/design-system/primitives/form/field";
+
+import styles from "./assignment-manager.module.css";
 
 export type AssignmentDatasetItem = CataloguedDataset & {
   rowCount: number;
@@ -166,34 +168,31 @@ export type AssignmentLearningSourceItem = {
 
 function AssignmentDialogContainer({
   children,
-  dialogRef,
+  closeDisabled,
   embedded,
-  onCancel,
-  onClick,
-  onClose,
+  onRequestClose,
 }: {
   children: ReactNode;
-  dialogRef: RefObject<HTMLDialogElement | null>;
+  closeDisabled: boolean;
   embedded: boolean;
-  onCancel: (event: SyntheticEvent<HTMLDialogElement>) => void;
-  onClick: (event: MouseEvent<HTMLDialogElement>) => void;
-  onClose: () => void;
+  onRequestClose: () => void;
 }) {
   if (embedded) {
     return <>{children}</>;
   }
 
   return (
-    <ModalFrame
+    <DialogFrame
       aria-labelledby="assignment-dialog-title"
-      className="dialog-extra-wide assignment-dialog"
-      onCancel={onCancel}
-      onClick={onClick}
-      onClose={onClose}
-      ref={dialogRef}
+      closeDisabled={closeDisabled}
+      fullScreenMobile
+      height="large"
+      layout="body-footer"
+      onRequestClose={onRequestClose}
+      size="extra-wide"
     >
       {children}
-    </ModalFrame>
+    </DialogFrame>
   );
 }
 
@@ -205,7 +204,7 @@ function AssignmentDialogBody({
   embedded: boolean;
 }) {
   return (
-    <ModalBody
+    <DialogBody
       className={[
         "learning-dialog-body",
         embedded ? "assignment-embedded-body" : "",
@@ -214,7 +213,7 @@ function AssignmentDialogBody({
         .join(" ")}
     >
       {children}
-    </ModalBody>
+    </DialogBody>
   );
 }
 
@@ -492,7 +491,6 @@ export function AssignmentManager({
   onLauncherClose?: () => void;
 }) {
   const router = useRouter();
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const requestInFlightRef = useRef(false);
   const editIdempotencyRef = useRef<{
     fingerprint: string;
@@ -959,12 +957,6 @@ export function AssignmentManager({
   }
 
   useEffect(() => {
-    if (!embedded && selectedStudent && !dialogRef.current?.open) {
-      dialogRef.current?.showModal();
-    }
-  }, [embedded, selectedStudent]);
-
-  useEffect(() => {
     if (!editTarget) return;
     const controller = new AbortController();
     void fetch(
@@ -1239,17 +1231,7 @@ export function AssignmentManager({
 
   function closeDialog() {
     if (submitting) return;
-    if (embedded) {
-      handleDialogClose();
-      return;
-    }
-    dialogRef.current?.close();
-  }
-
-  function closeDialogOnBackdrop(event: MouseEvent<HTMLDialogElement>) {
-    if (!submitting && event.target === event.currentTarget) {
-      closeDialog();
-    }
+    handleDialogClose();
   }
 
   function handleDialogClose() {
@@ -1261,12 +1243,6 @@ export function AssignmentManager({
     editIdempotencyRef.current = null;
     resetScopedControls();
     onLauncherClose?.();
-  }
-
-  function handleDialogCancel(
-    event: SyntheticEvent<HTMLDialogElement>,
-  ) {
-    if (submitting) event.preventDefault();
   }
 
   function changeReviewLevel(level: ReviewLevel) {
@@ -1461,17 +1437,19 @@ export function AssignmentManager({
         <>
       <Tabs
         ariaLabel={adminLearningText.page.tabsAria}
-        className="management-tabs"
+        className={styles.managementTabs}
         items={[
           {
             value: "vocab",
             label: adminLearningText.page.vocabularyTab,
             controls: "vocabulary-learning-panel",
+            id: "vocabulary-learning-tab",
           },
           {
             value: "other",
             label: adminLearningText.page.otherLearningTab,
             controls: "other-learning-panel",
+            id: "other-learning-tab",
           },
         ]}
         onChange={setTestTab}
@@ -1480,6 +1458,7 @@ export function AssignmentManager({
 
       {testTab === "other" ? (
         <section
+          aria-labelledby="other-learning-tab"
           className="empty-state test-type-placeholder"
           id="other-learning-panel"
           role="tabpanel"
@@ -1488,6 +1467,7 @@ export function AssignmentManager({
         </section>
       ) : (
         <section
+          aria-labelledby="vocabulary-learning-tab"
           className="assignment-student-browser"
           id="vocabulary-learning-panel"
           role="tabpanel"
@@ -1905,14 +1885,13 @@ export function AssignmentManager({
 
       {selectedStudent && (
         <AssignmentDialogContainer
-          dialogRef={dialogRef}
+          closeDisabled={submitting}
           embedded={embedded}
-          onCancel={handleDialogCancel}
-          onClick={closeDialogOnBackdrop}
-          onClose={handleDialogClose}
+          onRequestClose={closeDialog}
         >
-          {!embedded ? <ModalHeader
-            disabled={submitting}
+          {!embedded ? <DialogHeader
+            backLabel={commonText.modal.back}
+            closeLabel={commonText.modal.close}
             onBack={
               dialogView === "assign"
                 ? () => {
@@ -1931,7 +1910,6 @@ export function AssignmentManager({
                   }
                 : undefined
             }
-            onClose={closeDialog}
           >
               <div>
                 <h2 id="assignment-dialog-title">
@@ -1956,7 +1934,7 @@ export function AssignmentManager({
                         .studentInfoMissing}
                 </p>
               </div>
-          </ModalHeader> : null}
+          </DialogHeader> : null}
           <AssignmentDialogBody embedded={embedded}>
             {dialogView === "overview" ? (
               <section className="student-learning-overview">
@@ -2708,7 +2686,7 @@ export function AssignmentManager({
                 </Field>
               </AssignmentFieldGrid>
               <Field >
-                <FieldLabel as="span" className="label-with-help">
+                <FieldLabel as="span" className={inlineHelpClassName}>
                   <label htmlFor="assignment-available-until">
                     {adminLearningText.assignmentModal.deadline.label}
                   </label>
@@ -2732,7 +2710,7 @@ export function AssignmentManager({
             </section>
 
             <Field >
-              <FieldLabel as="span" className="label-with-help">
+              <FieldLabel as="span" className={inlineHelpClassName}>
                 <label htmlFor="assignment-custom-title">
                   {adminLearningText.assignmentModal.submit.optionalTitle}
                 </label>
@@ -2824,7 +2802,7 @@ export function AssignmentManager({
                   className="assignment-edit-comparison"
                 >
                   <div className="assignment-edit-comparison-heading">
-                    <strong className="label-with-help">
+                    <strong className={inlineHelpClassName}>
                       {adminLearningText.assignmentModal.edit.comparisonTitle}
                       {editRebuildsQuestions ? (
                         <HelpTip
@@ -2959,7 +2937,7 @@ export function AssignmentManager({
             )}
           </AssignmentDialogBody>
           {dialogView === "assign" ? (
-            <ModalFooter>
+            <DialogFooter className={embedded ? "assignment-embedded-footer" : ""}>
               <Button
                 disabled={cannotCreate}
                 form="assignment-modal-form"
@@ -2981,7 +2959,7 @@ export function AssignmentManager({
                         ? adminLearningText.assignmentModal.submit.assignWithWrong
                         : adminLearningText.assignmentModal.submit.assign}
               </Button>
-            </ModalFooter>
+            </DialogFooter>
           ) : null}
         </AssignmentDialogContainer>
       )}

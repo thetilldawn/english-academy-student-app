@@ -16,7 +16,8 @@ describe("admin history route detail contract", () => {
     expect(historyList).not.toContain("useRef<HTMLDialogElement>");
     expect(historyList).not.toContain("selectedId");
     expect(routeDialog).toContain("router.back()");
-    expect(routeDialog).toContain("event.preventDefault()");
+    expect(routeDialog).toContain("<DialogFrame");
+    expect(routeDialog).toContain("onRequestClose={close}");
   });
 
   it("학습 관리에서는 체크박스만 선택하고 카드 본문은 상세를 연다", () => {
