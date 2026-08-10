@@ -29,7 +29,7 @@ describe("DAY 문제은행 응시 계약", () => {
     expect(adminService).toContain(
       "loadEligibleVocabularyDataset(",
     );
-    expect(adminService).toContain("createMixedQuizQuestions(");
+    expect(adminService).toContain("buildAssignmentQuestionPlan({");
     expect(adminService).toContain("p_available_until");
     expect(adminService).toContain("base_order_index");
     expect(adminService).toContain("choice_vocab_entry_ids");

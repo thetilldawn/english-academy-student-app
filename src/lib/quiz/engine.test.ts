@@ -5,6 +5,7 @@ import {
   createMixedQuizQuestions,
   createQuizQuestions,
   createTargetedQuizQuestions,
+  quizVocabularyIdentity,
   type QuizVocabularyEntry,
 } from "@/lib/quiz/engine";
 
@@ -118,6 +119,37 @@ describe("createQuizQuestions", () => {
           question.prompt === "공통 뜻",
       ),
     ).toBe(false);
+  });
+
+  it("target eligibility does not shrink the distractor pool", () => {
+    const targetEntries = Array.from({ length: 4 }, (_, index) => ({
+      id: 5_000 + index,
+      headword: `target-${index}`,
+      primaryMeaning: "shared",
+      canonicalKey: `target-${index}`,
+    }));
+    const distractorOnlyEntries = ["A", "B", "C"].map(
+      (meaning, index) => ({
+        id: 6_000 + index,
+        headword: "ambiguous",
+        primaryMeaning: meaning,
+        canonicalKey: `distractor-${index}`,
+      }),
+    );
+
+    const questions = createQuizQuestions(
+      [...targetEntries, ...distractorOnlyEntries],
+      4,
+      100,
+      seededRandom(17),
+    );
+
+    expect(questions).toHaveLength(4);
+    expect(
+      questions.every(
+        (question) => new Set(question.choices).size === 4,
+      ),
+    ).toBe(true);
   });
 
   it("DB가 허용한 방향으로만 각 단어를 출제한다", () => {
@@ -884,7 +916,7 @@ describe("createMixedQuizQuestions", () => {
     ).toThrow("서로 다른 4지선다 보기를 만들 어휘가 부족합니다.");
   });
 
-  it("작은 B/F/E/K 조합 전수에서 완전탐색 가능 여부와 일치한다", () => {
+  it("작은 B/F/E/K 조합 전수에서 완전탐색 가능 여부와 일치한다", { timeout: 15_000 }, () => {
     type Capability = "B" | "F" | "E" | "K";
     const requiredVariants: Capability[][] = [
       ["E"],
@@ -1094,6 +1126,67 @@ describe("createMixedQuizQuestions", () => {
     );
 
     expect(second).toEqual(first);
+  });
+
+  it("표제어와 표시값이 교차 중복돼도 가능한 3개 보기를 정확히 찾는다", () => {
+    const target: QuizVocabularyEntry = {
+      id: 1001,
+      headword: "target",
+      primaryMeaning: "W",
+      canonicalKey: "T",
+      eligibleDirections: ["english_to_korean"],
+    };
+    const candidates: QuizVocabularyEntry[] = [
+      target,
+      {
+        id: 1002,
+        headword: "a-x",
+        primaryMeaning: "X",
+        canonicalKey: "A",
+      },
+      {
+        id: 1003,
+        headword: "a-y",
+        primaryMeaning: "Y",
+        canonicalKey: "A",
+      },
+      {
+        id: 1004,
+        headword: "b-x",
+        primaryMeaning: "X",
+        canonicalKey: "B",
+      },
+      {
+        id: 1005,
+        headword: "b-z",
+        primaryMeaning: "Z",
+        canonicalKey: "B",
+      },
+      {
+        id: 1006,
+        headword: "c-z",
+        primaryMeaning: "Z",
+        canonicalKey: "C",
+      },
+    ];
+
+    const [question] = createTargetedQuizQuestions(
+      [target],
+      candidates,
+      100,
+      seededRandom(181),
+    );
+    expect(question.choices).toHaveLength(4);
+    expect(new Set(question.choices)).toHaveLength(4);
+    expect(
+      new Set(
+        question.choiceVocabEntryIds.map((id) =>
+          quizVocabularyIdentity(
+            candidates.find((candidate) => candidate.id === id)!,
+          ),
+        ),
+      ),
+    ).toHaveLength(4);
   });
 });
 

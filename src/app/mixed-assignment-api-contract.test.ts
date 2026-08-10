@@ -75,7 +75,7 @@ describe("mixed assignment API contract", () => {
     expect(service).toContain(
       "const selectedQueueIds = prepared.selectedQueueRows.map",
     );
-    expect(service).toContain("createMixedQuizQuestions(");
+    expect(service).toContain("buildAssignmentQuestionPlan({");
     expect(service).toContain(
       '"create_mixed_review_assignment_v9"',
     );

@@ -22,7 +22,7 @@ import {
   type AttemptQuestionResult,
 } from "@/lib/services/quiz-service";
 import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
-import { createMixedQuizQuestions } from "@/lib/quiz/engine";
+import { buildAssignmentQuestionPlan } from "@/lib/assignment/question-planner";
 import {
   datasetDisplayLabel,
   storedDatasetDisplayLabel,
@@ -1450,19 +1450,20 @@ export async function prepareRegularAssignment(
   const unitPositionById = new Map(
     orderedUnitIds.map((unitId, index) => [unitId, index]),
   );
-  let questionDrafts: ReturnType<typeof createMixedQuizQuestions>;
+  let questionDrafts: ReturnType<typeof buildAssignmentQuestionPlan>;
   try {
-    questionDrafts = createMixedQuizQuestions(
-      [],
+    questionDrafts = buildAssignmentQuestionPlan({
       primaryCandidates,
-      primaryCandidates,
-      input.questionCount,
-      input.englishToKoreanRatio,
-    );
-  } catch {
+      allCandidates: primaryCandidates,
+      questionCount: input.questionCount,
+      englishToKoreanRatio: input.englishToKoreanRatio,
+    });
+  } catch (error) {
     throw new AssignmentCreationError(
       "invalid_selection",
-      `선택한 범위에서는 ${input.questionCount}문항을 만들 수 없습니다. 문항 수를 줄이거나 출제 방식을 바꿔주세요.`,
+      error instanceof Error
+        ? error.message
+        : `선택한 범위에서는 ${input.questionCount}문항을 만들 수 없습니다. 문항 수를 줄이거나 출제 방식을 바꿔주세요.`,
     );
   }
   questionDrafts.sort(

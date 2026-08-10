@@ -21,10 +21,10 @@ describe("regular assignment scope contract", () => {
     );
 
     expect(adminService).toContain(
-      "createMixedQuizQuestions( [], primaryCandidates, primaryCandidates,",
+      "buildAssignmentQuestionPlan({ primaryCandidates, allCandidates: primaryCandidates,",
     );
     expect(mixedService).toContain(
-      "calculateRegularMaximum( primaryCandidates, primaryCandidates,",
+      "calculateAssignmentQuestionRange({ primaryCandidates, allCandidates: primaryCandidates,",
     );
   });
 

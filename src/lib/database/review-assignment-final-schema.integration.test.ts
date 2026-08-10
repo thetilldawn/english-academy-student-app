@@ -1530,8 +1530,14 @@ describe.sequential("final review-assignment database schema", () => {
             when entry_id in (6, 7) then 'orphan-word'
             else 'fixture-' || entry_id
           end,
-          array['fixture-' || entry_id],
-          'fixture-' || entry_id,
+          array[case
+            when entry_id in (6, 7) then 'shared meaning'
+            else 'fixture-' || entry_id
+          end],
+          case
+            when entry_id in (6, 7) then 'shared meaning'
+            else 'fixture-' || entry_id
+          end,
           'unlinked fixture',
           upper(lpad(to_hex(entry_id), 64, '0')),
           '${ids.units[4]}',
@@ -1570,7 +1576,7 @@ describe.sequential("final review-assignment database schema", () => {
       `);
 
       const firstQuestions = JSON.stringify(
-        [6, 8, 9, 10].map((vocabEntryId, index) => ({
+        [6, 7, 8, 9].map((vocabEntryId, index) => ({
           vocab_entry_id: vocabEntryId,
           base_order_index: index + 1,
           direction: "english_to_korean",

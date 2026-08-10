@@ -20,9 +20,12 @@ import {
 } from "@/lib/auth/admin";
 import type { EligibleVocabularyEntry } from "@/lib/quiz/eligible-vocabulary";
 import {
-  createMixedQuizQuestions,
   quizVocabularyIdentity,
 } from "@/lib/quiz/engine";
+import {
+  buildAssignmentQuestionPlan,
+  calculateAssignmentQuestionRange,
+} from "@/lib/assignment/question-planner";
 import {
   activeReviewIdentities,
   loadActiveReviewAssignments,
@@ -38,7 +41,6 @@ import type {
 const REVIEW_QUEUE_PAGE_SIZE = 1000;
 const MAX_ASSIGNMENT_TITLE_LENGTH = 160;
 const MAX_MIXED_REVIEW_WORDS = 500;
-const CAPACITY_RANDOM = () => 0.5;
 
 type ServerSupabaseClient = Awaited<
   ReturnType<typeof createServerSupabaseClient>
@@ -175,59 +177,6 @@ async function loadReviewQueueRows(
     if (!data || data.length < REVIEW_QUEUE_PAGE_SIZE) break;
   }
   return rows;
-}
-
-function calculateRegularMaximum(
-  candidates: readonly EligibleVocabularyEntry[],
-  allCandidates: readonly EligibleVocabularyEntry[],
-  ratio: 0 | 50 | 100,
-) {
-  const upper = Math.min(500, uniqueTargetCount(candidates));
-  for (let count = upper; count >= 4; count -= 1) {
-    try {
-      createMixedQuizQuestions(
-        [],
-        candidates,
-        allCandidates,
-        count,
-        ratio,
-        CAPACITY_RANDOM,
-      );
-      return count;
-    } catch {
-      // Try the next smaller count. The same generator is used for creation.
-    }
-  }
-  return 0;
-}
-
-function calculateMixedMaximum(
-  reviewTargets: readonly EligibleVocabularyEntry[],
-  primaryCandidates: readonly EligibleVocabularyEntry[],
-  allCandidates: readonly EligibleVocabularyEntry[],
-  ratio: 0 | 50 | 100,
-) {
-  const minimum = Math.max(4, reviewTargets.length);
-  const upper = Math.min(
-    500,
-    reviewTargets.length + uniqueTargetCount(primaryCandidates),
-  );
-  for (let count = upper; count >= minimum; count -= 1) {
-    try {
-      createMixedQuizQuestions(
-        reviewTargets,
-        primaryCandidates,
-        allCandidates,
-        count,
-        ratio,
-        CAPACITY_RANDOM,
-      );
-      return count;
-    } catch {
-      // Try the next smaller count. The same generator is used for creation.
-    }
-  }
-  return 0;
 }
 
 async function prepareAssignment(
@@ -418,21 +367,22 @@ async function prepareAssignment(
   const overlap = reviewTargets.filter((target) =>
     unitIdentitySet.has(entryIdentity(target)),
   ).length;
-  const maximumQuestionCount = input.includePendingReview
-    ? calculateMixedMaximum(
-        reviewTargets,
+  const questionRange = input.includePendingReview
+    ? calculateAssignmentQuestionRange({
+        requiredTargets: reviewTargets,
         primaryCandidates,
         allCandidates,
-        input.englishToKoreanRatio,
-      )
-    : calculateRegularMaximum(
+        englishToKoreanRatio: input.englishToKoreanRatio,
+      })
+    : calculateAssignmentQuestionRange({
         primaryCandidates,
-        primaryCandidates,
-        input.englishToKoreanRatio,
-      );
-  const minimumQuestionCount = input.includePendingReview
-    ? Math.max(4, reviewTargets.length)
-    : 4;
+        allCandidates: primaryCandidates,
+        englishToKoreanRatio: input.englishToKoreanRatio,
+      });
+  const {
+    maximumQuestionCount,
+    minimumQuestionCount,
+  } = questionRange;
   const eligibleBeforeActiveAssignment = uniqueTargetCount(
     candidatesInSelectedUnits,
   );
@@ -573,17 +523,19 @@ export async function prepareMixedAssignmentBatch(
 
   let questionDrafts;
   try {
-    questionDrafts = createMixedQuizQuestions(
-      prepared.reviewTargets,
-      prepared.primaryCandidates,
-      prepared.allCandidates,
-      input.totalQuestionCount,
-      input.englishToKoreanRatio,
-    );
-  } catch {
+    questionDrafts = buildAssignmentQuestionPlan({
+      requiredTargets: prepared.reviewTargets,
+      primaryCandidates: prepared.primaryCandidates,
+      allCandidates: prepared.allCandidates,
+      questionCount: input.totalQuestionCount,
+      englishToKoreanRatio: input.englishToKoreanRatio,
+    });
+  } catch (error) {
     throw new MixedAssignmentError(
       "invalid_selection",
-      `현재 조건에서는 최대 ${capacity.maximumQuestionCount}문항까지 배정할 수 있습니다.`,
+      error instanceof Error
+        ? error.message
+        : `현재 조건에서는 최대 ${capacity.maximumQuestionCount}문항까지 배정할 수 있습니다.`,
     );
   }
 
