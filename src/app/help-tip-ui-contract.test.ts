@@ -31,8 +31,7 @@ describe("공통 도움말 UI 계약", () => {
   it("도움말 버튼과 입력 라벨을 별도 labelable 요소로 연결한다", () => {
     const sources = [
       "src/components/assignment-manager.tsx",
-      "src/components/bulk-assignment-dialog.tsx",
-      "src/components/review-assignment-dialog.tsx",
+      "src/features/assignments/ui/bulk-series-fields.tsx",
       "src/components/student-manager.tsx",
       "src/features/assignments/ui/assignment-settings-fields.tsx",
     ].map(source);

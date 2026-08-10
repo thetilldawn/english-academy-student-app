@@ -24,7 +24,9 @@ describe("student catalog and modal UI contract", () => {
     "src/design-system/primitives/tabs/tabs.module.css",
   );
   const studentManager = source("src/components/student-manager.tsx");
-  const bulkDialog = source("src/components/bulk-assignment-dialog.tsx");
+  const bulkDialog = source(
+    "src/features/assignments/ui/bulk-assignment-editor.tsx",
+  );
 
   it("keeps card tags content-sized and marks the active tab", () => {
     expect(css).not.toMatch(/\.student-card-info-row > \.meta-tag/);
@@ -72,9 +74,12 @@ describe("student catalog and modal UI contract", () => {
     expect(buttonCss).toMatch(
       /\.icon\s*\{[^}]*width:\s*var\(--control-height-icon\);/,
     );
-    expect(css).toMatch(
-      /\.bulk-assignment-form\s*\{[^}]*align-content:\s*start;[^}]*grid-auto-rows:\s*max-content;/,
-    );
+    expect(css).not.toContain(".bulk-assignment-form");
+    expect(
+      source(
+        "src/features/assignments/ui/bulk-assignment-editor.module.css",
+      ),
+    ).toContain(".form");
     expect(assignmentEditorCss).toMatch(/\.layout\s*\{/);
     expect(bulkDialog).toContain("<AssignmentEditorLayout>");
     expect(bulkDialog).toContain(

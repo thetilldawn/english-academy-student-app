@@ -3,8 +3,8 @@ import { z } from "zod";
 
 import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
 import { AssignmentManager } from "@/components/assignment-manager";
-import { ReviewAssignmentDialog } from "@/components/review-assignment-dialog";
 import { adminLearningText } from "@/content/ko/admin-learning";
+import { LegacyReviewRecovery } from "@/features/assignments/ui/legacy-review-recovery";
 import {
   loadAssignmentManagerData,
 } from "@/lib/services/assignment-manager-data";
@@ -19,13 +19,18 @@ export default async function AssignmentsPage({
   searchParams,
 }: {
   searchParams: Promise<{
-    student?: string | string[];
+    dataset?: string | string[];
     reviewDraft?: string | string[];
+    student?: string | string[];
+    view?: string | string[];
   }>;
 }) {
   const params = await searchParams;
+  const initialDatasetId =
+    typeof params.dataset === "string" ? params.dataset : "";
   const initialStudentId =
     typeof params.student === "string" ? params.student : "";
+  const initialDialogView = params.view === "assign" ? "assign" : "overview";
   const requestedReviewDraftId =
     typeof params.reviewDraft === "string" ? params.reviewDraft : "";
   const validReviewDraftId = z
@@ -51,13 +56,17 @@ export default async function AssignmentsPage({
       )}
       <AssignmentManager
         {...managerData}
+        initialDatasetId={initialDatasetId}
+        initialDialogView={initialDialogView}
         initialStudentId={requestedReviewDraftId ? "" : initialStudentId}
+        key={
+          requestedReviewDraftId
+            ? `legacy-review:${requestedReviewDraftId}`
+            : `assignment-manager:${initialStudentId}:${initialDatasetId}:${initialDialogView}`
+        }
       />
       {reviewDraft && (
-        <ReviewAssignmentDialog
-          draft={reviewDraft}
-          key={reviewDraft.id}
-        />
+        <LegacyReviewRecovery draft={reviewDraft} key={reviewDraft.id} />
       )}
     </>
   );

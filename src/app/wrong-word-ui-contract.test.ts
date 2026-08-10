@@ -83,8 +83,11 @@ describe("wrong-word admin UI contract", () => {
     const panel = source(
       "src/components/student-wrong-word-panel.tsx",
     );
-    const dialog = source(
-      "src/components/review-assignment-dialog.tsx",
+    const recovery = source(
+      "src/features/assignments/ui/legacy-review-recovery.tsx",
+    );
+    const recoveryController = source(
+      "src/features/assignments/controller/use-legacy-review-recovery.ts",
     );
     const copy = source("src/content/ko/admin-learning.ts");
     const css = source("src/app/globals.css");
@@ -114,11 +117,11 @@ describe("wrong-word admin UI contract", () => {
     expect(panel).toContain(
       "adminStudentsText.learning.wrongWordsPanel.pending",
     );
-    expect(dialog).toContain('method: "DELETE"');
-    expect(dialog).toContain(
+    expect(recoveryController).toContain("method: request.method");
+    expect(recovery).toContain(
       "adminLearningText.reviewAssignmentModal.cancelDraft",
     );
-    expect(copy).toContain("다음 시험 대기 유지");
+    expect(copy).toContain("다음 시험 대기로 되돌린");
     expect(css).toContain(".wrong-word-list-with-actions");
     expect(css).toContain("scroll-padding-bottom");
   });

@@ -144,13 +144,13 @@ const cssMetrics = {
 };
 
 const cssMaximums = {
-  lines: 5124,
-  styleRules: 827,
-  selectorContextKeys: 863,
-  duplicateContextKeys: 136,
-  duplicateExcess: 169,
-  styleDeclarations: 2308,
-  mediaBlocks: 24,
+  lines: 4819,
+  styleRules: 780,
+  selectorContextKeys: 816,
+  duplicateContextKeys: 132,
+  duplicateExcess: 165,
+  styleDeclarations: 2151,
+  mediaBlocks: 23,
   mediaConditions: 11,
   importantDeclarations: 1,
   trackedSectionMarkers: 6,
@@ -163,18 +163,6 @@ const legacyComponents = [
     maxLines: 1200,
     maxFetchCalls: 0,
     maxUseStateCalls: 12,
-  },
-  {
-    path: "src/components/bulk-assignment-dialog.tsx",
-    maxLines: 816,
-    maxFetchCalls: 2,
-    maxUseStateCalls: 17,
-  },
-  {
-    path: "src/components/review-assignment-dialog.tsx",
-    maxLines: 474,
-    maxFetchCalls: 2,
-    maxUseStateCalls: 11,
   },
   {
     path: "src/components/student-manager.tsx",
@@ -207,6 +195,18 @@ const assignmentFeatureContracts = [
     maxLines: 220,
     maxFetchCalls: 0,
     maxUseStateCalls: 0,
+  },
+  {
+    path: "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+    maxLines: 520,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 4,
+  },
+  {
+    path: "src/features/assignments/controller/use-legacy-review-recovery.ts",
+    maxLines: 120,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 2,
   },
   {
     path: "src/features/assignments/ui/single-assignment-editor.tsx",
@@ -245,6 +245,8 @@ for (const selector of migratedPrimitiveSelectors) {
 }
 
 for (const retiredPath of [
+  "src/components/bulk-assignment-dialog.tsx",
+  "src/components/review-assignment-dialog.tsx",
   "src/components/ui-button.tsx",
   "src/components/ui-select.tsx",
   "src/components/status-badge.tsx",
@@ -256,6 +258,19 @@ for (const retiredPath of [
 ]) {
   if (fs.existsSync(path.join(rootDirectory, retiredPath))) {
     violations.push(`${retiredPath} should be retired after primitive migration`);
+  }
+}
+
+for (const retiredSelector of [
+  ".bulk-assignment-form",
+  ".bulk-preview-row",
+  ".assignment-review-summary",
+  ".assignment-dialog-context",
+  ".assignment-condition-grid",
+  ".assignment-submit-panel",
+]) {
+  if (css.includes(retiredSelector)) {
+    violations.push(`globals.css retains retired assignment selector ${retiredSelector}`);
   }
 }
 
@@ -376,6 +391,11 @@ const centralizedApiContracts = [
 
 for (const relativePath of productionTsxPaths) {
   const source = read(relativePath);
+  if (source.includes("/api/admin/review-assignments")) {
+    violations.push(
+      `${relativePath} calls the retired standalone review assignment endpoint`,
+    );
+  }
   for (const contract of centralizedApiContracts) {
     if (
       relativePath !== contract.allowedPath &&

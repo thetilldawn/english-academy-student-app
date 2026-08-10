@@ -17,10 +17,12 @@ describe("exact review assignment app contract", () => {
     expect(page).toContain(
       "getReviewAssignmentDraftSummary(requestedReviewDraftId)",
     );
-    expect(page).toContain("<ReviewAssignmentDialog");
+    expect(page).toContain("<LegacyReviewRecovery");
     expect(page).toContain(
       'initialStudentId={requestedReviewDraftId ? "" : initialStudentId}',
     );
+    expect(page).toContain("initialDialogView={initialDialogView}");
+    expect(page).toContain("initialDatasetId={initialDatasetId}");
     expect(page).not.toContain("questionIds?:");
     expect(page).not.toContain("queueIds?:");
   });
@@ -87,25 +89,25 @@ describe("exact review assignment app contract", () => {
     expect(route).not.toContain("createExactReviewAssignment");
   });
 
-  it("locks student, dataset and question count while exposing only test conditions", () => {
+  it("returns the retired draft to pending before opening the common editor", () => {
     const dialog = source(
-      "src/components/review-assignment-dialog.tsx",
+      "src/features/assignments/ui/legacy-review-recovery.tsx",
+    );
+    const controller = source(
+      "src/features/assignments/controller/use-legacy-review-recovery.ts",
     );
     const copy = source("src/content/ko/admin-learning.ts");
-    expect(dialog).toContain(
-      "adminLearningText.reviewAssignmentModal.fixedTargetTitle",
-    );
-    expect(copy).toContain('fixedTargetTitle: "고정된 재시험 대상"');
+    expect(dialog).toContain("useLegacyReviewRecovery");
     expect(dialog).toContain("draft.studentName");
     expect(dialog).toContain("draft.datasetLabel");
     expect(dialog).toContain("draft.questionCount");
-    expect(dialog).toContain("englishToKoreanRatio");
-    expect(dialog).toContain("questionOrderMode");
-    expect(dialog).toContain("timeLimitSeconds");
-    expect(dialog).toContain("passingScore");
-    expect(dialog).toContain("availableUntil");
-    expect(dialog).not.toContain("unitIds");
-    expect(dialog).not.toContain("questionIds");
-    expect(dialog).toContain('router.replace("/admin/assignments")');
+    expect(dialog).toContain('view: "assign"');
+    expect(dialog).toContain("dataset: draft.datasetId");
+    expect(dialog).toContain("student: draft.studentId");
+    expect(controller).toContain("buildLegacyReviewCancelRequest");
+    expect(controller).toContain("parseLegacyReviewCancelResponse");
+    expect(controller).not.toContain("/api/admin/review-assignments");
+    expect(dialog).not.toContain("/api/admin/review-assignments");
+    expect(copy).toContain("대기 오답으로 돌리고 단어 시험 배정 열기");
   });
 });

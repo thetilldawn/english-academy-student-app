@@ -22,83 +22,6 @@
   font-size: 12px;
 }
 
-.bulk-assignment-form {
-  min-height: 0;
-  display: grid;
-  align-content: start;
-  grid-auto-rows: max-content;
-  gap: var(--space-4);
-}
-
-.bulk-range-mode-field {
-  grid-column: 1 / -1;
-}
-
-.bulk-review-levels {
-  min-width: 0;
-  margin: 0;
-  padding: 12px;
-  border: 1px solid var(--line);
-}
-
-.bulk-review-levels legend {
-  padding: 0 5px;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.bulk-preview-section {
-  min-height: 0;
-  display: grid;
-  gap: var(--space-3);
-}
-
-.bulk-preview-list {
-  display: grid;
-  gap: var(--space-2);
-}
-
-.bulk-preview-row {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-3);
-  align-items: start;
-  padding: 10px 12px;
-  border-left: 3px solid var(--line);
-  background: var(--card);
-}
-
-.bulk-preview-row > small {
-  color: var(--fail);
-}
-
-.bulk-preview-student-heading,
-.bulk-preview-session,
-.bulk-preview-session-list {
-  min-width: 0;
-  display: grid;
-  gap: var(--space-2);
-}
-
-.bulk-preview-student-heading {
-  align-self: start;
-}
-
-.bulk-preview-session-list {
-  gap: var(--space-3);
-}
-
-.bulk-preview-session {
-  padding-block: 2px;
-}
-
-.bulk-preview-session + .bulk-preview-session {
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--line);
-}
-
 @media (max-width: 767px) {
   .bulk-selection-bar {
     align-items: stretch;
@@ -107,10 +30,6 @@
 
   .bulk-selection-actions > * {
     flex: 1 1 140px;
-  }
-
-  .bulk-preview-row {
-    grid-template-columns: 1fr;
   }
 }
 
@@ -1525,118 +1444,6 @@ tr:last-child td {
   flex-wrap: wrap;
 }
 
-.assignment-workspace {
-  display: grid;
-  gap: 28px;
-}
-
-.assignment-builder {
-  min-width: 0;
-}
-
-.assignment-form {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.38fr);
-  gap: 14px 18px;
-  align-items: start;
-}
-
-.assignment-step {
-  min-width: 0;
-  display: grid;
-  grid-column: 1;
-  gap: 16px;
-  padding: 18px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  background: var(--card);
-}
-
-.assignment-step-heading {
-  display: flex;
-  align-items: flex-start;
-  gap: 11px;
-}
-
-.assignment-step-heading > span {
-  width: 28px;
-  height: 28px;
-  flex: none;
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius);
-  color: var(--paper);
-  background: var(--ink);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.assignment-step-heading h3 {
-  margin: 1px 0 2px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.assignment-step-heading p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.assignment-step-fields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.assignment-review-step {
-  position: sticky;
-  top: 24px;
-  grid-column: 2;
-  grid-row: 1 / -1;
-}
-
-.assignment-review-summary {
-  display: grid;
-  gap: 12px;
-  padding: 14px;
-  border-radius: var(--radius);
-  background: var(--surface);
-}
-
-.assignment-review-summary > strong {
-  color: var(--ink);
-  font-size: 17px;
-  overflow-wrap: anywhere;
-}
-
-.assignment-review-summary dl {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin: 0;
-}
-
-.assignment-review-summary dl > div {
-  padding: 9px;
-  border-radius: var(--radius);
-  background: transparent;
-}
-
-.assignment-review-summary dt {
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.assignment-review-summary dd {
-  margin: 3px 0 0;
-  color: var(--ink);
-  font-size: 15px;
-  font-weight: 700;
-}
-
 .assignment-student-browser {
   display: grid;
   gap: 14px;
@@ -1692,90 +1499,6 @@ tr:last-child td {
 .assignment-student-review-summary {
   color: var(--ink) !important;
   font-weight: 700;
-}
-
-.assignment-dialog-context {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px 16px;
-  margin-bottom: 16px;
-  padding: 12px 14px;
-  border-radius: var(--radius);
-  color: var(--muted);
-  background: var(--paper);
-  font-size: 12px;
-}
-
-.assignment-dialog-context strong {
-  color: var(--ink);
-}
-
-.assignment-condition-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  align-items: start;
-}
-
-.assignment-submit-panel {
-  min-width: 0;
-  display: grid;
-  gap: 12px;
-  padding: 16px 18px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  background: var(--card);
-  justify-items: start;
-}
-
-.assignment-review-preview {
-  display: grid;
-  align-content: center;
-  gap: 4px;
-  padding: 10px 12px;
-  border-radius: var(--radius);
-  background: var(--surface);
-}
-
-.assignment-review-preview small {
-  color: var(--muted);
-}
-
-.assignment-review-preview strong {
-  color: var(--ink);
-}
-
-.assignment-modal-form {
-  display: block;
-}
-
-.assignment-success-panel {
-  display: grid;
-  justify-items: start;
-  gap: 10px;
-  padding: 18px;
-  border: 1px solid var(--ink);
-  border-radius: var(--radius-card);
-  background: var(--surface);
-}
-
-.assignment-success-panel p {
-  margin: 0;
-  color: var(--muted);
-}
-
-.assignment-modal-fieldset {
-  min-width: 0;
-  display: block;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.assignment-modal-form .assignment-review-step {
-  position: static;
-  grid-column: 1 / -1;
-  grid-row: auto;
 }
 
 .test-type-placeholder {
@@ -2413,21 +2136,6 @@ tr:last-child td {
 
   .student-group-index {
     display: none;
-  }
-
-  .assignment-form {
-    grid-template-columns: 1fr;
-  }
-
-  .assignment-step,
-  .assignment-review-step {
-    position: static;
-    grid-column: 1;
-    grid-row: auto;
-  }
-
-  .assignment-step-fields {
-    grid-template-columns: 1fr;
   }
 
   .results-card-list {
@@ -3288,8 +2996,7 @@ h1,
 
 h2,
 h3,
-.section-heading,
-.assignment-step-heading {
+.section-heading {
   font-family: var(--font-krs);
   font-weight: 700;
 }
@@ -4218,18 +3925,6 @@ h3,
 .assignment-management-title {
   align-items: flex-start;
   gap: 6px;
-}
-
-@media (max-width: 767px) {
-  .assignment-condition-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .assignment-submit-panel {
-    padding: 14px;
-    justify-items: stretch;
-  }
-
 }
 
 .history-row-main {

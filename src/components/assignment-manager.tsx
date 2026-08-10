@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import {
   HelpTip,
 } from "@/design-system/primitives/tooltip/help-tip";
-import { BulkAssignmentDialog } from "@/components/bulk-assignment-dialog";
+import { BulkAssignmentEditor } from "@/features/assignments/ui/bulk-assignment-editor";
 import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
 import { AttemptScoreSummary } from "@/components/attempt-score-summary";
 import { AssignmentMetaTags } from "@/components/assignment-meta-tags";
@@ -975,7 +975,7 @@ export function AssignmentManager({
       ) : null}
 
       {bulkMode && selectedBulkStudents.length > 0 ? (
-        <BulkAssignmentDialog
+        <BulkAssignmentEditor
           includePendingReview={bulkMode === "with_wrong"}
           onClose={() => setBulkMode(null)}
           onSuccess={(assignmentCount) => {

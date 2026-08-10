@@ -1,0 +1,111 @@
+.form {
+  min-height: 0;
+}
+
+.fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.reviewFieldset {
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.reviewFieldset legend {
+  padding: 0 var(--space-1);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.reviewChoices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.previewSection {
+  max-height: min(66vh, 720px);
+  overflow: auto;
+}
+
+.previewHeading,
+.studentHeading {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.previewHeading h3,
+.studentHeading strong {
+  min-width: 0;
+  margin: 0;
+}
+
+.previewSummary {
+  flex: none;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.previewList,
+.sessionList {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.previewList {
+  margin-top: var(--space-3);
+}
+
+.previewRow {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-left: 3px solid var(--line-strong);
+  background: var(--surface-muted);
+}
+
+.sessionRow {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--line);
+}
+
+.sessionRow:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.pending,
+.message {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.message {
+  margin-top: var(--space-3);
+  color: var(--fail);
+}
+
+@media (max-width: 767px) {
+  .previewSection {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .previewHeading,
+  .studentHeading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

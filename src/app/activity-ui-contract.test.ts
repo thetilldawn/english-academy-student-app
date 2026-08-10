@@ -75,7 +75,7 @@ describe("shared activity UI contract", () => {
       "src/components/assignment-manager.tsx",
     );
     const bulkDialog = source(
-      "src/components/bulk-assignment-dialog.tsx",
+      "src/features/assignments/ui/bulk-series-preview.tsx",
     );
     const wordbookHistory = source(
       "src/components/student-vocab-book-history-list.tsx",
@@ -94,7 +94,7 @@ describe("shared activity UI contract", () => {
       'className="learning-section-summary"',
     );
     expect(bulkDialog).toContain(
-      'className="learning-section-summary"',
+      "className={styles.previewSummary}",
     );
     expect(wordbookHistory).toContain(
       'className="learning-section-summary"',

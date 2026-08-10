@@ -70,10 +70,10 @@ describe("admin visual density contract", () => {
       "src/features/assignments/ui/single-assignment-editor.tsx",
     );
     const bulkDialog = source(
-      "src/components/bulk-assignment-dialog.tsx",
+      "src/features/assignments/ui/bulk-assignment-editor.tsx",
     );
     const reviewDialog = source(
-      "src/components/review-assignment-dialog.tsx",
+      "src/features/assignments/ui/legacy-review-recovery.tsx",
     );
 
     expect(studentManager).toContain("embedded");

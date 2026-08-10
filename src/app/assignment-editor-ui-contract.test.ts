@@ -18,8 +18,12 @@ describe("assignment editor UI contract", () => {
     "src/features/assignments/ui/assignment-settings-fields.tsx",
   );
   const manager = source("src/components/assignment-manager.tsx");
-  const bulk = source("src/components/bulk-assignment-dialog.tsx");
-  const review = source("src/components/review-assignment-dialog.tsx");
+  const bulk = source(
+    "src/features/assignments/ui/bulk-assignment-editor.tsx",
+  );
+  const bulkExam = source(
+    "src/features/assignments/ui/bulk-exam-fields.tsx",
+  );
 
   it("uses one responsive settings and summary layout", () => {
     expect(shared).toContain("AssignmentEditorLayout");
@@ -40,11 +44,14 @@ describe("assignment editor UI contract", () => {
   });
 
   it("leaves modal scrolling and spacing to ModalBody", () => {
-    const bulkFormRule =
-      css.match(/\.bulk-assignment-form\s*\{[^}]*\}/)?.[0] ?? "";
-    expect(bulkFormRule).not.toContain("padding:");
-    expect(bulkFormRule).not.toContain("overflow:");
-    expect(css).not.toContain(".bulk-assignment-form > .dialog-actions");
+    const bulkCss = source(
+      "src/features/assignments/ui/bulk-assignment-editor.module.css",
+    );
+    expect(bulkCss).toMatch(/\.form\s*\{[^}]*min-height:\s*0;/);
+    expect(bulkCss.match(/\.form\s*\{[^}]*\}/)?.[0]).not.toContain(
+      "overflow:",
+    );
+    expect(css).not.toContain(".bulk-assignment-form");
   });
 
   it("does not retain dead student-row grid authorities", () => {
@@ -60,7 +67,7 @@ describe("assignment editor UI contract", () => {
     expect(shared).toContain("ariaLabelledBy={labelId}");
     expect(shared).toContain("<SegmentedControl");
     expect(shared).not.toContain('className="segmented-control"');
-    for (const editor of [singleSettings, bulk, review]) {
+    for (const editor of [singleSettings, bulkExam]) {
       expect(editor).toContain("<AssignmentTimingModeField");
       expect(editor).not.toContain(
         '<fieldset className="field timing-mode-field">',

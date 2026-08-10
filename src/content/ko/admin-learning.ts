@@ -308,33 +308,21 @@ export const adminLearningText = {
     },
   },
 
-  // 학습 관리 > 오답 재시험 배정 모달 도움말
+  // 학습 관리 > 구 오답 재시험 초안 복구 모달
   reviewAssignmentModal: {
-    eyebrow: "오답 재시험 배정",
-    fixedTargetTitle: "고정된 재시험 대상",
-    conditionsTitle: "문제 조건",
-    cancelDraft: "재시험 준비 취소 · 다음 시험 대기 유지",
-    cancelingDraft: "취소하는 중…",
-    assign: "오답 재시험 배정",
-    assigning: "배정하는 중…",
-    fixedTargetHelp: "학생·단어장·문항 수는 선택한 오답으로 고정됩니다.",
-    conditionsHelp: "출제 방향·순서·시간과 통과 기준을 정합니다.",
-    titleHelp: "시험 이름은 자동 생성하며 필요할 때만 바꿉니다.",
-    deadlineHelp:
-      "이 시각까지 시험을 시작하지 않으면 미응시로 기록됩니다.",
-    missingSchoolGrade: "학교·학년 미입력",
+    title: "이전 재시험 준비 복구",
+    recoveryHelp:
+      "별도 오답 재시험 방식은 종료되었습니다. 예약된 단어를 다음 시험 대기로 되돌린 뒤, 현재 단어 시험 배정에서 틀렸던 단어를 함께 추가할 수 있습니다.",
     selectedWrongCount: "선택한 오답 {count}개",
-    expiresAt: "초안 만료 · {datetime}",
-    targetHelpAria: "재시험 대상 도움말",
-    conditionsHelpAria: "문제 조건 도움말",
     student: "학생",
     dataset: "단어장",
-    questionCountLabel: "문항 수",
-    questionCount: "{count}문항",
+    expiresLabel: "초안 만료",
+    cancelDraft: "준비만 취소",
+    continueAssignment: "대기 오답으로 돌리고 단어 시험 배정 열기",
+    recovering: "복구하는 중…",
     cancelError: "재시험 준비를 취소하지 못했습니다.",
-    cancelSuccess: "재시험 준비를 취소했습니다.",
-    assignError: "오답 재시험을 배정하지 못했습니다.",
-    assignSuccess: "오답 재시험을 배정했습니다.",
+    cancelSuccess: "예약된 단어를 다음 시험 대기로 되돌렸습니다.",
+    continueSuccess: "대기 오답을 복구하고 단어 시험 배정을 열었습니다.",
   },
 
   // 학습 관리 > 학생 일괄 배정 모달 도움말
