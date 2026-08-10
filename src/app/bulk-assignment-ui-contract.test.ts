@@ -15,7 +15,8 @@ describe("학습 관리 일괄 배정 UI 계약", () => {
     );
     expect(manager).toMatch(/useState<\s*string\[\]\s*>\(\[\]\)/);
     expect(manager).toContain("adminLearningText.page.bulk.selectVisible");
-    expect(manager).toContain("<Checkbox");
+    expect(manager).toContain("<SelectableListRow");
+    expect(manager).toContain("onToggle={() => toggleBulkStudent(student.id)}");
   });
 
   it("미리보기와 저장은 일괄 배정 전용 API만 호출한다", () => {

@@ -8,125 +8,82 @@ function source(relativePath: string) {
 }
 
 describe("mixed assignment admin UI contract", () => {
-  it("페이지가 대기열과 실제 오답 요약을 각각 한 번 읽어 전달한다", () => {
-    const page = source(
-      "src/app/admin/(protected)/assignments/page.tsx",
-    );
-    const loader = source(
-      "src/lib/services/assignment-manager-data.ts",
-    );
+  it("loads pending-review and current-wrong summaries once", () => {
+    const page = source("src/app/admin/(protected)/assignments/page.tsx");
+    const loader = source("src/lib/services/assignment-manager-data.ts");
 
-    expect(loader).toContain("listStudentPendingReviewSummaries()");
-    expect(
-      loader.match(/listStudentPendingReviewSummaries\(\)/g),
-    ).toHaveLength(1);
+    expect(loader.match(/listStudentPendingReviewSummaries\(\)/g)).toHaveLength(1);
+    expect(loader.match(/listStudentCurrentVocabWrongSummaries\(\)/g)).toHaveLength(1);
     expect(loader).toContain("pendingReviewSummaries,");
-    expect(loader).toContain("listStudentCurrentVocabWrongSummaries()");
-    expect(
-      loader.match(/listStudentCurrentVocabWrongSummaries\(\)/g),
-    ).toHaveLength(1);
     expect(loader).toContain("currentVocabWrongSummaries,");
     expect(page).toContain("{...managerData}");
   });
 
-  it("목록 필터와 기본 OFF 혼합 설정을 노출한다", () => {
+  it("keeps filters in the manager and mixed controls in the single editor", () => {
     const manager = source("src/components/assignment-manager.tsx");
-    const copy = source("src/content/ko/admin-learning.ts");
-    const commonCopy = source("src/content/ko/common.ts");
-    const filteredStudents = manager.slice(
-      manager.indexOf("const filteredStudents"),
-      manager.indexOf("useEffect", manager.indexOf("const filteredStudents")),
+    const reviewFields = source(
+      "src/features/assignments/ui/assignment-review-fields.tsx",
     );
+    const settings = source(
+      "src/features/assignments/ui/assignment-settings-fields.tsx",
+    );
+    const controller = source(
+      "src/features/assignments/controller/use-assignment-controller.ts",
+    );
+    const copy = source("src/content/ko/admin-learning.ts");
 
     expect(manager).toContain("commonText.filters.hasWrong");
-    expect(manager).toContain("commonText.filters.repeatedWrong");
-    expect(commonCopy).toContain('hasWrong: "오답 있음"');
-    expect(commonCopy).toContain('repeatedWrong: "2회 이상 오답"');
-    expect(filteredStudents).toContain(
-      "currentVocabWrongIndex.byStudentDataset",
-    );
-    expect(filteredStudents).toContain(
-      "wrongCounts.wrongWordCount > 0",
-    );
-    expect(filteredStudents).toContain(
-      "wrongCounts.repeatedWrongWordCount > 0",
-    );
-    expect(filteredStudents).not.toContain("pendingReviewIndex");
-    expect(filteredStudents).not.toContain("pendingReviewCount(");
+    expect(manager).toContain("wrongCounts.repeatedWrongWordCount > 0");
+    expect(manager).toContain("<SingleAssignmentEditor");
+    expect(reviewFields).toContain('event.target.checked ? "pending" : "none"');
+    expect(reviewFields).toContain('value: "dataset"');
+    expect(reviewFields).toContain('value: "selection"');
+    expect(reviewFields).toContain("wrongLevel1Eligible");
+    expect(reviewFields).toContain("wrongLevel2Eligible");
+    expect(settings).toContain('value="ascending"');
+    expect(settings).toContain('value="descending"');
+    expect(settings).toContain('value="random"');
+    expect(controller).toContain('review: { mode: "none", scope: "dataset"');
     expect(copy).toContain('title: "틀렸던 단어 추가"');
-    expect(manager).toContain(
-      "adminLearningText.assignmentModal.wrongWords.title",
-    );
-    expect(manager).toContain("adminLearningText.assignmentModal.range.dayTerm");
-    expect(manager).toContain("adminLearningText.assignmentModal.range.unitTerm");
-    expect(manager).toContain('useState<ReviewScope>("dataset")');
-    expect(manager).toContain('value: "selection"');
-    expect(manager).toContain("setReviewScope(scope)");
-    expect(manager).toContain("capacity.wrongLevel1Eligible");
-    expect(manager).toContain("capacity.wrongLevel2Eligible");
-    expect(manager).not.toContain("reviewLimit");
-    expect(manager).not.toContain("실제 출제 가능 최대");
-    expect(manager).not.toContain("단원 후보");
-    expect(manager).toContain('value="ascending"');
-    expect(manager).toContain('value="descending"');
-    expect(manager).toContain('value="random"');
-    expect(manager).toContain('useState<TimingMode>("total")');
-    expect(manager).toContain(
-      'questionCountModeRef.current === "auto"',
-    );
-    expect(manager).toContain('changeQuestionCountMode("manual")');
     expect(copy).toContain('perQuestionTime: "문제당 시간(초)"');
-    expect(manager).toContain(
-      "const [includePendingReview, setIncludePendingReview] =",
-    );
-    expect(manager).toContain("useState(false)");
-    expect(manager).not.toContain("<h2>단어 시험 배정</h2>");
-    expect(manager).toContain('className="learning-search-panel"');
-    expect(manager).not.toContain("확인하고 배정");
-    expect(manager).toContain('className="assignment-submit-panel"');
   });
 
-  it("학생·단어장·닫기에서 종속 상태를 초기화하고 제출 중 닫기를 막는다", () => {
+  it("owns lifecycle and close protection in the controller boundary", () => {
     const manager = source("src/components/assignment-manager.tsx");
-
-    expect(manager).toContain("function resetScopedControls()");
-    expect(
-      manager.match(/resetScopedControls\(\);/g)?.length,
-    ).toBeGreaterThanOrEqual(3);
-    expect(manager).toContain("closeDisabled={submitting}");
-    expect(manager).toContain("onRequestClose={closeDialog}");
-    expect(manager).toContain("if (submitting) return");
-    expect(manager).toContain("refreshPending ||");
-    expect(manager).toContain("editLoading ||");
-    expect(manager).toContain("if (requestInFlightRef.current) return");
-    expect(manager).toContain("requestInFlightRef.current = true");
-    expect(manager).toContain("requestInFlightRef.current = false");
-    expect(manager).toContain("disabled={exactReviewEdit}");
-    expect(manager).toContain('if (!checked) setReviewScope("dataset")');
-    expect(manager).toContain('setReviewScope("dataset")');
-    expect(manager).toContain('value: "selection"');
-    expect(manager).toContain("setReviewScope(scope)");
-    expect(manager).toContain("setCapacity(null)");
-    expect(manager).not.toContain(
-      'className="assignment-success-panel"',
+    const controller = source(
+      "src/features/assignments/controller/use-assignment-controller.ts",
     );
-    expect(manager).toContain('from "sonner"');
-    expect(manager).toContain("toast.success");
-    expect(manager).not.toContain("<AppToast");
-    expect(manager).not.toContain("dialogRef.current?.close()");
+    const preview = source(
+      "src/features/assignments/controller/use-assignment-preview.ts",
+    );
+
+    expect(manager).toContain("closeDisabled={editorBusy}");
+    expect(manager).toContain("onBusyChange={setEditorBusy}");
+    expect(manager).not.toMatch(/\bfetch\s*\(/);
+    expect(controller).toContain("reduceAssignmentEditorState(");
+    expect(controller).toContain('state.submission.status === "idle"');
+    expect(controller).toContain(
+      "stateRef.current.submission.requestId !== requestId",
+    );
+    expect(preview).toContain("AbortController");
+    expect(preview).toContain("delayMs = 120");
   });
 
-  it("일반·혼합 payload를 순수 builder로 분기하고 서버 전용값을 노출하지 않는다", () => {
+  it("builds regular and mixed requests only through typed adapters", () => {
     const manager = source("src/components/assignment-manager.tsx");
-    const builder = source(
-      "src/lib/admin/assignment-submission.ts",
+    const adapters = source(
+      "src/features/assignments/api/request-adapters.ts",
+    );
+    const controller = source(
+      "src/features/assignments/controller/use-assignment-controller.ts",
     );
 
-    expect(manager).toContain("buildAssignmentSubmission({");
-    expect(builder).toContain('"/api/admin/assignments"');
-    expect(builder).toContain('"/api/admin/mixed-assignments"');
-    expect(builder).toContain("primaryUnitIds:");
-    expect(builder).toContain("totalQuestionCount:");
+    expect(controller).toContain("buildSingleAssignmentRequest(");
+    expect(adapters).toContain('endpoint: "/api/admin/assignments"');
+    expect(adapters).toContain('endpoint: "/api/admin/mixed-assignments"');
+    expect(adapters).toContain("primaryUnitIds:");
+    expect(adapters).toContain("totalQuestionCount:");
+    expect(manager).not.toMatch(/\bfetch\s*\(/);
     for (const forbiddenKey of [
       "selectedQueueIds",
       "reviewQueueIds",
@@ -134,50 +91,42 @@ describe("mixed assignment admin UI contract", () => {
       "canonicalLexemeIds",
       "vocabEntryIds",
     ]) {
-      expect(manager).not.toContain(forbiddenKey);
-      expect(builder).not.toContain(forbiddenKey);
+      expect(adapters).not.toContain(forbiddenKey);
     }
   });
 
-  it("409에서는 입력을 유지한 채 서버 요약만 새로고친다", () => {
-    const manager = source("src/components/assignment-manager.tsx");
-
-    expect(manager).toContain("if (response.status === 409)");
-    expect(manager).toContain(
-      "startRefreshTransition(() => router.refresh())",
+  it("keeps the draft and requests a fresh preview after 409", () => {
+    const controller = source(
+      "src/features/assignments/controller/use-assignment-controller.ts",
     );
-    expect(manager).not.toContain(
-      'response.status === 409 ? "/api/admin/assignments"',
-    );
+    expect(controller).toContain("response.status === 409");
+    expect(controller).toContain('type: "submission/conflicted"');
+    expect(controller).toContain("setPreviewRefreshVersion");
+    expect(controller).toContain("onConflict?.()");
   });
 
-  it("원본 수와 실제 배정 가능 수가 달라지는 이유를 단계별로 표시한다", () => {
-    const manager = source("src/components/assignment-manager.tsx");
-    const service = source(
-      "src/lib/services/mixed-assignment-service.ts",
+  it("shows capacity exclusions through a dedicated summary component", () => {
+    const summary = source(
+      "src/features/assignments/ui/assignment-capacity-summary.tsx",
     );
-    const copy = source("src/content/ko/admin-learning.ts");
+    const service = source("src/lib/services/mixed-assignment-service.ts");
 
     expect(service).toContain("eligibleBeforeActiveAssignment");
     expect(service).toContain("activeAssignmentExcluded");
     expect(service).toContain("questionPlanExcluded");
-    expect(manager).toContain('className="selection-capacity-summary"');
-    expect(manager).toContain("capacity.activeAssignmentExcluded");
-    expect(copy).toContain('eligibleWordCount: "출제 검토 통과 {count}개"');
-    expect(copy).toContain(
-      'activeAssignmentExcluded: "오답 배정 중 {count}개 제외"',
-    );
-    expect(copy).toContain('maximumQuestionCount: "현재 최대 {count}문항"');
+    expect(summary).toContain("capacity.activeAssignmentExcluded");
+    expect(summary).toContain("capacity.maximumQuestionCount");
   });
 
-  it("범위를 수정하면 손대지 않은 이전 자동 제목을 새 범위로 갱신한다", () => {
-    const manager = source("src/components/assignment-manager.tsx");
+  it("uses domain actions to restore automatic title and question count", () => {
+    const reducer = source("src/features/assignments/domain/single-draft.ts");
+    const controller = source(
+      "src/features/assignments/controller/use-assignment-controller.ts",
+    );
 
-    expect(manager).toContain("function resetUntouchedEditTitle()");
-    expect(
-      manager.match(/resetUntouchedEditTitle\(\);/g)?.length,
-    ).toBeGreaterThanOrEqual(3);
-    expect(manager).toContain("customTitle === editDraft.title");
-    expect(manager).toContain('setCustomTitle("")');
+    expect(reducer).toContain('type: "title/restoreAutomatic"');
+    expect(reducer).toContain('type: "questionCount/restoreAutomatic"');
+    expect(controller).toContain('value.trim()');
+    expect(controller).toContain('type: "title/restoreAutomatic"');
   });
 });

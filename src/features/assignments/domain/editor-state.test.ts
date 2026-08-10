@@ -180,7 +180,25 @@ describe("assignment editor reducer", () => {
     expect(changed.submission).toStrictEqual({ status: "idle" });
   });
 
-  it("atomically stores a preview and its reconciled draft at one new revision", () => {
+  it("preserves a compatible preview for draft-only presentation changes", () => {
+    const state = readyState();
+    const changedDraft: SingleAssignmentDraft = {
+      ...draft,
+      title: { mode: "custom", value: "새 제목" },
+    };
+    const changed = reduceAssignmentEditorState(state, {
+      type: "draft/replaced",
+      draft: changedDraft,
+      previewImpact: "preserve",
+    });
+
+    expect(changed.draft).toBe(changedDraft);
+    expect(changed.revision).toBe(state.revision);
+    expect(changed.preview).toBe(state.preview);
+    expect(changed.submission).toStrictEqual({ status: "idle" });
+  });
+
+  it("atomically stores a preview and reconciled non-projection fields", () => {
     const loading = reduceAssignmentEditorState(initialState(), {
       type: "preview/requested",
       revision: 0,
@@ -207,10 +225,10 @@ describe("assignment editor reducer", () => {
     });
 
     expect(reconciled.draft).toStrictEqual(reconciledDraft);
-    expect(reconciled.revision).toBe(1);
+    expect(reconciled.revision).toBe(0);
     expect(reconciled.preview).toStrictEqual({
       status: "ready",
-      revision: 1,
+      revision: 0,
       requestId: "capacity",
       fingerprint: "selection",
       value: { maximumQuestionCount: 35 },

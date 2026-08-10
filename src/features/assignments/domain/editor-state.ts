@@ -60,7 +60,11 @@ export type AssignmentEditorAction<
   Preview,
   Result,
 > =
-  | { type: "draft/replaced"; draft: Draft }
+  | {
+      type: "draft/replaced";
+      draft: Draft;
+      previewImpact?: "invalidate" | "preserve";
+    }
   | {
       type: "preview/requested";
       revision: number;
@@ -138,6 +142,13 @@ export function reduceAssignmentEditorState<
 ): AssignmentEditorState<Draft, Preview, Result> {
   if (action.type === "draft/replaced") {
     if (state.submission.status === "submitting") return state;
+    if (action.previewImpact === "preserve") {
+      return {
+        ...state,
+        draft: action.draft,
+        submission: { status: "idle" },
+      };
+    }
     return {
       draft: action.draft,
       revision: state.revision + 1,
@@ -182,15 +193,12 @@ export function reduceAssignmentEditorState<
         state.draft,
         action.reconciliation,
       );
-      const nextRevision =
-        reconciledDraft === state.draft ? state.revision : state.revision + 1;
       return {
         ...state,
         draft: reconciledDraft,
-        revision: nextRevision,
         preview: {
           status: "ready",
-          revision: nextRevision,
+          revision: state.revision,
           requestId: action.requestId,
           fingerprint: action.fingerprint,
           value: action.value,

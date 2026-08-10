@@ -16,6 +16,9 @@ describe("한국어 UI 문구 카탈로그", () => {
     const historyCopy = source("src/content/ko/admin-history.ts");
     const studentAppCopy = source("src/content/ko/student-app.ts");
     const manager = source("src/components/assignment-manager.tsx");
+    const assignmentSettings = source(
+      "src/features/assignments/ui/assignment-settings-fields.tsx",
+    );
     const studentManager = source("src/components/student-manager.tsx");
     const navigation = source("src/components/admin-navigation.tsx");
     const adminRoutes = source("src/lib/ui/admin-routes.ts");
@@ -32,7 +35,7 @@ describe("한국어 UI 문구 카탈로그", () => {
     expect(studentAppCopy).toContain("// 학생 첫 화면");
     expect(manager).toContain('from "@/content/ko/admin-learning"');
     expect(studentManager).toContain('from "@/content/ko/admin-students"');
-    expect(manager).toContain(
+    expect(assignmentSettings).toContain(
       "adminLearningText.assignmentModal.deadline.label",
     );
     expect(studentManager).toContain(

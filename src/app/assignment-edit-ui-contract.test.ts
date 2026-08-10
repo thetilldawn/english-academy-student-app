@@ -8,76 +8,70 @@ function source(relativePath: string) {
 }
 
 describe("assignment edit UI contract", () => {
-  it("목록은 상세만 열고 미응시 배정 수정은 상세 안의 공통 폼을 사용한다", () => {
+  it("opens the shared single editor from detail and delegates PUT to its controller", () => {
     const detailActions = source("src/components/history-detail-actions.tsx");
-    const activities = source(
-      "src/components/student-learning-activity-list.tsx",
-    );
+    const activities = source("src/components/student-learning-activity-list.tsx");
     const manager = source("src/components/assignment-manager.tsx");
+    const controller = source(
+      "src/features/assignments/controller/use-assignment-controller.ts",
+    );
+    const adapter = source("src/features/assignments/api/request-adapters.ts");
+    const comparison = source(
+      "src/features/assignments/ui/assignment-edit-comparison.tsx",
+    );
 
     expect(activities).not.toContain("onEditAssignment");
-    expect(activities).not.toContain("<AdminHistoryActions");
     expect(detailActions).toContain("isStudentAssignmentEditable(item)");
-    expect(detailActions).toContain("<AssignmentManager");
     expect(detailActions).toContain('initialDialogView="assign"');
-    expect(detailActions).toContain("result.replacementAssignmentId");
-    expect(manager).not.toContain("function beginEdit(");
-    expect(manager).toContain("onAssignmentReplaced");
-    expect(manager).toContain('method: "PUT"');
-    expect(manager).toContain("assignmentEditChangeKeys(");
-    expect(manager).toContain(
-      "adminLearningText.assignmentModal.edit.comparisonAria",
-    );
+    expect(manager).toContain("<SingleAssignmentEditor");
+    expect(controller).toContain("hydrateSingleAssignmentDraftFromEditResponse");
+    expect(adapter).toContain('method: "PUT"');
+    expect(comparison).toContain("comparisonAria");
   });
 
-  it("편집 자기 자신만 capacity 중복 잠금에서 제외한다", () => {
-    const manager = source("src/components/assignment-manager.tsx");
-    const active = source(
-      "src/lib/services/active-review-assignment-service.ts",
-    );
-    const service = source(
-      "src/lib/services/assignment-replacement-service.ts",
-    );
+  it("uses the replacement capacity endpoint so only the edited assignment is excluded", () => {
+    const adapter = source("src/features/assignments/api/request-adapters.ts");
+    const active = source("src/lib/services/active-review-assignment-service.ts");
+    const service = source("src/lib/services/assignment-replacement-service.ts");
 
-    expect(manager).toContain("studentAssignmentUrl(");
-    expect(active).toContain("exclusion?.studentId === studentId");
-    expect(active).toContain(
-      '`assignment_id.neq.${exclusion.assignmentId},student_id.neq.${exclusion.studentId}`',
+    expect(adapter).toContain(
+      "`/api/admin/assignments/${draft.operation.assignmentId}/students/${draft.operation.targetStudentId}`",
     );
-    expect(service).toContain("await requireEditableSourceContext(");
+    expect(active).toContain("exclusion?.studentId === studentId");
     expect(service).toContain("const exclusion = { assignmentId, studentId }");
   });
 
-  it("정확 오답 재시험은 1문항부터 허용하고 대상 구성은 잠근다", () => {
-    const manager = source("src/components/assignment-manager.tsx");
-    const service = source(
-      "src/lib/services/assignment-replacement-service.ts",
+  it("locks exact-review identity and count in the domain and UI", () => {
+    const reducer = source("src/features/assignments/domain/single-draft.ts");
+    const controller = source(
+      "src/features/assignments/controller/use-assignment-controller.ts",
     );
+    const range = source(
+      "src/features/assignments/ui/assignment-range-fields.tsx",
+    );
+    const settings = source(
+      "src/features/assignments/ui/assignment-settings-fields.tsx",
+    );
+    const service = source("src/lib/services/assignment-replacement-service.ts");
 
-    expect(manager).toContain(
-      'editDraft?.purpose === "review" ? 1 : 4',
-    );
-    expect(manager).toContain("const exactReviewEdit =");
-    expect(manager).toContain("disabled={exactReviewEdit}");
-    expect(manager).toContain("readOnly={exactReviewEdit}");
+    expect(controller).toContain("isExactReviewEdit");
+    expect(controller).toContain("? 1 : 4");
+    expect(reducer).toContain("isExactReviewReplacement(draft)");
+    expect(range).toContain("disabled={isExactReview}");
+    expect(settings).toContain("readOnly={isExactReview}");
     expect(service).toContain("assertExactReviewShape(source, input)");
-    expect(service).toContain(
-      'input.englishToKoreanRatio ===\n        source.draft.englishToKoreanRatio',
-    );
   });
 
-  it("동일 payload 재전송에 같은 idempotency key를 유지한다", () => {
-    const manager = source("src/components/assignment-manager.tsx");
-    const service = source(
-      "src/lib/services/assignment-replacement-service.ts",
+  it("reserves one idempotency key per replacement fingerprint", () => {
+    const controller = source(
+      "src/features/assignments/controller/use-assignment-controller.ts",
     );
+    const fingerprint = source("src/features/assignments/domain/fingerprint.ts");
+    const service = source("src/lib/services/assignment-replacement-service.ts");
 
-    expect(manager).toContain("editIdempotencyRef.current.fingerprint");
-    expect(manager).toContain("crypto.randomUUID()");
-    expect(service).toContain(
-      '"get_student_assignment_replacement_result_v1"',
-    );
-    expect(service.indexOf("get_student_assignment_replacement_result_v1"))
-      .toBeLessThan(service.indexOf("prepareMixedAssignmentBatch("));
+    expect(controller).toContain("replacementSubmissionFingerprint(");
+    expect(controller).toContain("reserveIdempotencyKey(");
+    expect(fingerprint).toContain("current?.fingerprint === fingerprint");
+    expect(service).toContain('"get_student_assignment_replacement_result_v1"');
   });
 });

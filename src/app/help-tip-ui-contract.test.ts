@@ -34,6 +34,7 @@ describe("공통 도움말 UI 계약", () => {
       "src/components/bulk-assignment-dialog.tsx",
       "src/components/review-assignment-dialog.tsx",
       "src/components/student-manager.tsx",
+      "src/features/assignments/ui/assignment-settings-fields.tsx",
     ].map(source);
 
     expect(sources.join("\n")).not.toMatch(
@@ -42,17 +43,9 @@ describe("공통 도움말 UI 계약", () => {
     expect(source("src/components/assignment-editor-ui.tsx")).toContain(
       '<FieldLabel as="span" className={inlineHelpClassName} id={labelId}>',
     );
-    expect(sources.join("\n")).toContain(
-      'htmlFor="assignment-available-until"',
-    );
-    expect(sources.join("\n")).toContain(
-      'id="assignment-available-until"',
-    );
-    expect(sources.join("\n")).toContain(
-      'htmlFor="assignment-question-count"',
-    );
-    expect(sources.join("\n")).toContain(
-      'id="assignment-question-count"',
-    );
+    expect(sources.join("\n")).toContain("htmlFor={deadlineId}");
+    expect(sources.join("\n")).toContain("id={deadlineId}");
+    expect(sources.join("\n")).toContain("htmlFor={questionCountId}");
+    expect(sources.join("\n")).toContain("id={questionCountId}");
   });
 });

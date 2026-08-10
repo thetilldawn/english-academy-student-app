@@ -14,6 +14,9 @@ describe("student catalog and modal UI contract", () => {
   const buttonCss = source(
     "src/design-system/primitives/button/button.module.css",
   );
+  const assignmentEditorCss = source(
+    "src/components/assignment-editor-ui.module.css",
+  );
   const badgeCss = source(
     "src/design-system/primitives/badge/badge.module.css",
   );
@@ -72,7 +75,7 @@ describe("student catalog and modal UI contract", () => {
     expect(css).toMatch(
       /\.bulk-assignment-form\s*\{[^}]*align-content:\s*start;[^}]*grid-auto-rows:\s*max-content;/,
     );
-    expect(css).toMatch(/\.assignment-editor-layout\s*\{/);
+    expect(assignmentEditorCss).toMatch(/\.layout\s*\{/);
     expect(bulkDialog).toContain("<AssignmentEditorLayout>");
     expect(bulkDialog).toContain(
       'from "@/design-system/primitives/button/button";',

@@ -35,6 +35,7 @@ import { InvalidAssignmentDraftError } from "../domain/validation";
 import { reduceSingleAssignmentDraft } from "../domain/single-draft";
 import {
   buildAssignmentCapacityRequest,
+  buildAssignmentEditDraftRequest,
   buildBulkAssignmentPreviewRequest,
   buildBulkAssignmentRequest,
   buildLegacyReviewCancelRequest,
@@ -644,6 +645,16 @@ describe("assignment request adapters", () => {
   });
 
   it("exposes a typed endpoint/body union and a bodyless legacy DELETE", () => {
+    const editDraft = buildAssignmentEditDraftRequest(
+      "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      assignmentContractIds.studentA,
+    );
+    expect(editDraft).toStrictEqual({
+      endpoint: `/api/admin/assignments/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/students/${assignmentContractIds.studentA}`,
+      method: "GET",
+    });
+    expectTypeOf(editDraft).toMatchTypeOf<AssignmentHttpRequest>();
+
     const regular = buildSingleAssignmentRequest(
       regularDraft,
       resolved(regularTotalContract.input.title, 12),

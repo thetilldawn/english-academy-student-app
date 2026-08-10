@@ -66,6 +66,9 @@ describe("admin visual density contract", () => {
     const assignmentManager = source(
       "src/components/assignment-manager.tsx",
     );
+    const singleEditor = source(
+      "src/features/assignments/ui/single-assignment-editor.tsx",
+    );
     const bulkDialog = source(
       "src/components/bulk-assignment-dialog.tsx",
     );
@@ -76,7 +79,8 @@ describe("admin visual density contract", () => {
     expect(studentManager).toContain("embedded");
     expect(studentManager).toContain("assignmentStudentId ? (");
     expect(studentManager).not.toContain("studentDialogSuspendedRef");
-    expect(assignmentManager).toContain("<DialogFooter");
+    expect(assignmentManager).toContain("<SingleAssignmentEditor");
+    expect(singleEditor).toContain("<DialogFooter");
     expect(bulkDialog).toContain("<DialogFooter>");
     expect(reviewDialog).toContain("<DialogFooter>");
   });

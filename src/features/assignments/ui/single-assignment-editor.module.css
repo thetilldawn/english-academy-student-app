@@ -1,0 +1,203 @@
+.form {
+  display: block;
+}
+
+.fieldset {
+  min-width: 0;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.embeddedBody {
+  padding: 0;
+  overflow: visible;
+}
+
+.embeddedFooter {
+  position: sticky;
+  bottom: 0;
+}
+
+.selectionSummary {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  color: var(--ink);
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.capacitySummary {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: -2px 0 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.capacitySummary strong {
+  color: var(--text-primary);
+}
+
+.reviewOptions {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.reviewToggleRow,
+.reviewSwitch,
+.reviewCounts {
+  display: flex;
+  align-items: center;
+}
+
+.reviewToggleRow {
+  gap: var(--space-1);
+}
+
+.reviewSwitch {
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.reviewCounts {
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.reviewCounts > span {
+  padding: 4px 7px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  color: var(--text-primary);
+  background: var(--card);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.reviewControls {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+
+.reviewLevelButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.summaryPanel {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.summaryPanel > h3 {
+  margin: 0;
+}
+
+.summaryFacts {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.summaryFacts > div {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+  padding: 9px 10px;
+  background: var(--card);
+}
+
+.summaryFacts dt {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.summaryFacts dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.editComparison {
+  display: grid;
+  gap: var(--space-2);
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.editComparisonHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.editComparisonHeading span,
+.editComparison > p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.editComparison dl {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.editComparison dl > div {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: start;
+}
+
+.editComparison dt {
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.editComparison dd {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.editComparison dd > span:first-child {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+
+@media (max-width: 767px) {
+  .summaryFacts {
+    grid-template-columns: 1fr;
+  }
+}

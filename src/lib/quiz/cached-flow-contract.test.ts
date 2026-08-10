@@ -9,18 +9,23 @@ function source(relativePath: string) {
 
 describe("DAY 문제은행 응시 계약", () => {
   it("새 배정은 DAY와 고정 문제은행을 사용한다", () => {
-    const manager = source("src/components/assignment-manager.tsx");
+    const rangeFields = source(
+      "src/features/assignments/ui/assignment-range-fields.tsx",
+    );
+    const settingsFields = source(
+      "src/features/assignments/ui/assignment-settings-fields.tsx",
+    );
     const adminService = source("src/lib/services/admin-service.ts");
     const eligibleLoader = source(
       "src/lib/services/eligible-vocabulary-service.ts",
     );
     const copy = source("src/content/ko/admin-learning.ts");
 
-    expect(manager).toContain("adminLearningText.assignmentModal.range.start");
-    expect(manager).toContain("adminLearningText.assignmentModal.range.end");
-    expect(manager).toContain("adminLearningText.controls.order.random");
-    expect(manager).toContain("adminLearningText.controls.order.ascending");
-    expect(manager).toContain("adminLearningText.controls.order.descending");
+    expect(rangeFields).toContain("adminLearningText.assignmentModal.range.start");
+    expect(rangeFields).toContain("adminLearningText.assignmentModal.range.end");
+    expect(settingsFields).toContain("adminLearningText.controls.order.random");
+    expect(settingsFields).toContain("adminLearningText.controls.order.ascending");
+    expect(settingsFields).toContain("adminLearningText.controls.order.descending");
     expect(copy).toContain('start: "시작 {unit}"');
     expect(copy).toContain('end: "끝 {unit}"');
     expect(adminService).toContain(

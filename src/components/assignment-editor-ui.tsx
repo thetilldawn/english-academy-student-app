@@ -11,6 +11,8 @@ import {
 } from "@/design-system/primitives/form/field";
 import { SegmentedControl } from "@/design-system/primitives/form/segmented-control";
 
+import styles from "./assignment-editor-ui.module.css";
+
 function classNames(...values: Array<string | undefined>) {
   return values.filter(Boolean).join(" ");
 }
@@ -23,7 +25,7 @@ export function AssignmentEditorLayout({
   className?: string;
 }) {
   return (
-    <div className={classNames("assignment-editor-layout", className)}>
+    <div className={classNames(styles.layout, className)}>
       {children}
     </div>
   );
@@ -37,7 +39,7 @@ export function AssignmentEditorSettings({
   className?: string;
 }) {
   return (
-    <div className={classNames("assignment-editor-settings", className)}>
+    <div className={classNames(styles.settings, className)}>
       {children}
     </div>
   );
@@ -55,7 +57,7 @@ export function AssignmentEditorSummary({
   return (
     <aside
       aria-busy={busy || undefined}
-      className={classNames("assignment-editor-summary", className)}
+      className={classNames(styles.summary, className)}
     >
       {children}
     </aside>
@@ -74,8 +76,8 @@ export function AssignmentFieldGrid({
   return (
     <div
       className={classNames(
-        "assignment-field-grid",
-        `assignment-field-grid--${columns}`,
+        styles.fieldGrid,
+        columns === 2 ? styles.fieldGridTwo : styles.fieldGridThree,
         className,
       )}
     >
@@ -96,11 +98,11 @@ export function AssignmentSessionRow({
   heading: ReactNode;
 }) {
   return (
-    <div className={classNames("assignment-session-row", className)}>
-      <div className="assignment-session-row-heading">{heading}</div>
-      <div className="assignment-session-row-details">{details}</div>
+    <div className={classNames(styles.sessionRow, className)}>
+      <div className={styles.sessionHeading}>{heading}</div>
+      <div className={styles.sessionDetails}>{details}</div>
       {error ? (
-        <div className="assignment-session-row-error">{error}</div>
+        <div className={styles.sessionError}>{error}</div>
       ) : null}
     </div>
   );
@@ -160,7 +162,7 @@ export function AssignmentSegmentedField<Value extends string>({
   const labelId = useId();
 
   return (
-    <Field className="segmented-field">
+    <Field className={styles.segmentedField}>
       <FieldLabel as="span" className={inlineHelpClassName} id={labelId}>
         <span>{label}</span>
         <HelpTip label={helpAriaLabel}>{helpText}</HelpTip>

@@ -55,6 +55,11 @@ export type AssignmentReplacementRequest = {
   body: AssignmentReplacementInput;
 };
 
+export type AssignmentEditDraftRequest = {
+  endpoint: `/api/admin/assignments/${string}/students/${string}`;
+  method: "GET";
+};
+
 export type BulkAssignmentPreviewRequest = {
   endpoint: "/api/admin/bulk-assignments/preview";
   method: "POST";
@@ -75,11 +80,22 @@ export type LegacyReviewCancelRequest = {
 export type AssignmentHttpRequest =
   | RegularAssignmentRequest
   | MixedAssignmentRequest
+  | AssignmentEditDraftRequest
   | AssignmentCapacityRequest
   | AssignmentReplacementRequest
   | BulkAssignmentPreviewRequest
   | BulkAssignmentRequest
   | LegacyReviewCancelRequest;
+
+export function buildAssignmentEditDraftRequest(
+  assignmentId: string,
+  studentId: string,
+): AssignmentEditDraftRequest {
+  return {
+    endpoint: `/api/admin/assignments/${assignmentId}/students/${studentId}`,
+    method: "GET",
+  };
+}
 
 function deadlineToIso(deadline: AssignmentDeadline): string | null {
   if (deadline.mode === "none") return null;
@@ -163,6 +179,14 @@ export function buildAssignmentCapacityRequest(
     method: "POST",
     body: singleCapacityBody(draft),
   };
+}
+
+export function assignmentCapacityFingerprint(
+  draft: SingleAssignmentDraft,
+): string {
+  return assignmentRequestFingerprint(
+    buildAssignmentCapacityRequest(draft).body,
+  );
 }
 
 function replacementBodyWithoutIdempotency(

@@ -144,25 +144,25 @@ const cssMetrics = {
 };
 
 const cssMaximums = {
-  lines: 6831,
-  styleRules: 1053,
-  selectorContextKeys: 1157,
-  duplicateContextKeys: 164,
-  duplicateExcess: 211,
-  styleDeclarations: 3199,
-  mediaBlocks: 29,
-  mediaConditions: 13,
+  lines: 5124,
+  styleRules: 827,
+  selectorContextKeys: 863,
+  duplicateContextKeys: 136,
+  duplicateExcess: 169,
+  styleDeclarations: 2308,
+  mediaBlocks: 24,
+  mediaConditions: 11,
   importantDeclarations: 1,
-  trackedSectionMarkers: 9,
+  trackedSectionMarkers: 6,
   untrackedTopLevelComments: 0,
 };
 
 const legacyComponents = [
   {
     path: "src/components/assignment-manager.tsx",
-    maxLines: 2991,
-    maxFetchCalls: 4,
-    maxUseStateCalls: 35,
+    maxLines: 1200,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 12,
   },
   {
     path: "src/components/bulk-assignment-dialog.tsx",
@@ -193,6 +193,26 @@ const legacyComponents = [
     maxLines: 767,
     maxFetchCalls: 3,
     maxUseStateCalls: 9,
+  },
+];
+const assignmentFeatureContracts = [
+  {
+    path: "src/features/assignments/controller/use-assignment-controller.ts",
+    maxLines: 700,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 5,
+  },
+  {
+    path: "src/features/assignments/controller/use-assignment-preview.ts",
+    maxLines: 220,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 0,
+  },
+  {
+    path: "src/features/assignments/ui/single-assignment-editor.tsx",
+    maxLines: 280,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 0,
   },
 ];
 const legacyPaths = new Set(
@@ -266,6 +286,53 @@ const componentMetrics = legacyComponents.map((contract) => {
   }
   return measured;
 });
+
+const assignmentFeatureMetrics = assignmentFeatureContracts.map((contract) => {
+  const source = read(contract.path);
+  const measured = {
+    path: contract.path,
+    lines: lineCount(source),
+    fetchCalls: count(source, /\bfetch\s*\(/g),
+    useStateCalls: count(source, /\buseState\s*(?:<|\()/g),
+  };
+  for (const [metric, maximum] of [
+    ["lines", contract.maxLines],
+    ["fetchCalls", contract.maxFetchCalls],
+    ["useStateCalls", contract.maxUseStateCalls],
+  ]) {
+    if (measured[metric] > maximum) {
+      violations.push(
+        `${contract.path} ${metric}: ${measured[metric]} > ${maximum}`,
+      );
+    }
+  }
+  return measured;
+});
+
+const assignmentManagerSource = read("src/components/assignment-manager.tsx");
+for (const forbidden of [
+  /\/api\/admin\/(?:assignment-capacity|assignments|mixed-assignments)/,
+  /features\/assignments\/api\/request-adapters/,
+]) {
+  if (forbidden.test(assignmentManagerSource)) {
+    violations.push(
+      `src/components/assignment-manager.tsx crossed the assignment editor boundary (${forbidden})`,
+    );
+  }
+}
+
+for (const relativePath of filesUnder(
+  "src/features/assignments/ui",
+  (candidate) => candidate.endsWith(".tsx") && !candidate.endsWith(".test.tsx"),
+)) {
+  const source = read(relativePath);
+  if (lineCount(source) > 300) {
+    violations.push(`${relativePath} exceeds the 300 line feature UI ceiling`);
+  }
+  if (/\bfetch\s*\(|["']\/api\//.test(source)) {
+    violations.push(`${relativePath} performs transport work inside feature UI`);
+  }
+}
 
 const componentDirectory = path.join(rootDirectory, "src/components");
 for (const name of fs.readdirSync(componentDirectory)) {
@@ -357,6 +424,7 @@ console.log(
       status: "ok",
       css: cssMetrics,
       legacyComponents: componentMetrics,
+      assignmentFeatures: assignmentFeatureMetrics,
     },
     null,
     2,
