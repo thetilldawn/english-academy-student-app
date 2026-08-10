@@ -62,6 +62,37 @@ describe("shared activity UI contract", () => {
     }
   });
 
+  it("keeps count badges white without muting every heading child", () => {
+    const css = source("src/app/globals.css");
+    const assignmentManager = source(
+      "src/components/assignment-manager.tsx",
+    );
+    const bulkDialog = source(
+      "src/components/bulk-assignment-dialog.tsx",
+    );
+    const wordbookHistory = source(
+      "src/components/student-vocab-book-history-list.tsx",
+    );
+
+    expect(css).not.toContain(".learning-section-heading span");
+    expect(css).toMatch(
+      /\.learning-section-summary\s*\{[^}]*color:\s*var\(--muted\);/,
+    );
+    expect(css).toMatch(
+      /\.count-badge\s*\{[^}]*color:\s*var\(--status-fg\);/,
+    );
+    expect(css).toContain("--status-fg: #ffffff;");
+    expect(assignmentManager).toContain(
+      'className="learning-section-summary"',
+    );
+    expect(bulkDialog).toContain(
+      'className="learning-section-summary"',
+    );
+    expect(wordbookHistory).toContain(
+      'className="learning-section-summary"',
+    );
+  });
+
   it("uses a sibling route dialog and preserves the background segment", () => {
     const layout = source("src/app/admin/(protected)/layout.tsx");
     const navigation = source("src/components/admin-navigation.tsx");

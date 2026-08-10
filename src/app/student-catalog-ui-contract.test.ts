@@ -25,6 +25,13 @@ describe("student catalog and modal UI contract", () => {
     expect(css).toMatch(
       /\.app-tab\[aria-selected="true"\]\s*\{[^}]*background:\s*var\(--selection-active\);/,
     );
+    const selectedTabRule =
+      css.match(/\.app-tab\[aria-selected="true"\]\s*\{[^}]*\}/)?.[0] ??
+      "";
+    expect(selectedTabRule).not.toContain("outline:");
+    expect(css).toMatch(
+      /\[tabindex\]:focus-visible,[^}]*\{[^}]*outline:\s*2px solid var\(--ink\);/,
+    );
   });
 
   it("animates every modal tab while respecting reduced motion", () => {

@@ -314,6 +314,29 @@ describe("assignmentDisplayTitle", () => {
       }),
     ).toBe("");
   });
+  it("removes only the exact full dataset prefix", () => {
+    expect(
+      assignmentDisplayTitleForUnits(
+        "능률 VOCA · 2026 개정 · DAY 03~DAY 05",
+        ["DAY 03", "DAY 04", "DAY 05"],
+        "능률 VOCA · 2026 개정",
+      ),
+    ).toBe("");
+    expect(
+      assignmentDisplayTitleForUnits(
+        "능률 VOCA 심화 · DAY 01",
+        ["DAY 01"],
+        "능률 VOCA",
+      ),
+    ).toBe("능률 VOCA 심화");
+    expect(
+      assignmentDisplayTitleForUnits(
+        "능률 VOCA · 구판 · DAY 01",
+        ["DAY 01"],
+        "능률 VOCA · 2026 개정",
+      ),
+    ).toBe("능률 VOCA · 구판");
+  });
 });
 
 describe("projectCurrentAssignmentHistory", () => {

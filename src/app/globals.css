@@ -3654,11 +3654,11 @@ tr:last-child td {
 
 .learning-section-heading h3,
 .learning-section-heading h4,
-.learning-section-heading span {
+.learning-section-summary {
   margin: 0;
 }
 
-.learning-section-heading span {
+.learning-section-summary {
   color: var(--muted);
   font-size: 11px;
 }
@@ -6133,8 +6133,6 @@ select {
 .app-tab[aria-selected="true"] {
   color: var(--ink);
   background: var(--selection-active);
-  outline: 1px solid var(--ink);
-  outline-offset: -1px;
 }
 
 .modal-frame-header {

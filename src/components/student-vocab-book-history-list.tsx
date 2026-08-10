@@ -48,7 +48,7 @@ export function StudentVocabBookHistoryList({
     <section className="student-vocab-history">
       <div className="learning-section-heading">
         <h3>{adminStudentsText.learning.wordbookHistory.title}</h3>
-        <span>
+        <span className="learning-section-summary">
           {formatContentText(adminStudentsText.learning.wordbookHistory.count, {
             count: items.length,
           })}

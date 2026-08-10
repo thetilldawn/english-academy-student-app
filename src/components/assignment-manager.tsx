@@ -2027,7 +2027,7 @@ export function AssignmentManager({
                   <h3>
                     {adminLearningText.assignmentModal.overview.recentActivity}
                   </h3>
-                  <span>
+                  <span className="learning-section-summary">
                     {formatContentText(
                       adminLearningText.assignmentModal.overview.activityCount,
                       { count: selectedActivities.length },

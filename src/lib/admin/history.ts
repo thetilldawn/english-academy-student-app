@@ -149,6 +149,21 @@ export function assignmentDisplayTitle(
   );
 }
 
+function stripDatasetTitlePrefix(
+  assignmentTitle: string,
+  datasetTitle?: string,
+) {
+  const title = assignmentTitle.trim();
+  const dataset = datasetTitle?.trim();
+  if (!dataset) return title;
+  if (title === dataset) return "";
+  if (!title.startsWith(dataset)) return title;
+
+  const remainder = title.slice(dataset.length);
+  const separator = remainder.match(/^\s*·\s*/u)?.[0];
+  return separator ? remainder.slice(separator.length) : title;
+}
+
 export function assignmentDisplayTitleForUnits(
   assignmentTitle: string,
   unitLabels: string[],
@@ -158,13 +173,15 @@ export function assignmentDisplayTitleForUnits(
   if (unitLabels.length > 0) {
     unitLabelSet.add(unitRangeLabel(unitLabels));
   }
-  const titleParts = assignmentTitle
+  const titleParts = stripDatasetTitlePrefix(
+    assignmentTitle,
+    datasetTitle,
+  )
     .split("·")
     .map((part) => part.trim())
     .filter(Boolean);
   const filtered = titleParts.filter(
     (part) =>
-      part !== datasetTitle &&
       !unitLabelSet.has(part) &&
       part !== "오답 재시험" &&
       !/^\d+문항$/.test(part) &&

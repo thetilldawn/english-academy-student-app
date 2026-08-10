@@ -645,7 +645,7 @@ export function BulkAssignmentDialog({
                   {adminLearningText.bulkAssignmentModal.atomicHelp}
                 </HelpTip>
               </h3>
-              <span>
+              <span className="learning-section-summary">
                 {previewLoading
                   ? adminLearningText.bulkAssignmentModal.calculating
                   : formatContentText(
