@@ -38,7 +38,7 @@ describe("activity row patterns", () => {
   it("renders a semantic navigable row with its visual state", () => {
     render(
       <NavigableRow
-        ariaLabel="윤서정 시험 상세"
+        ariaLabel="테스트 학생 시험 상세"
         href="/admin/results/attempt.1"
         tone="danger"
       >
@@ -46,11 +46,11 @@ describe("activity row patterns", () => {
       </NavigableRow>,
     );
 
-    expect(screen.getByRole("link", { name: "윤서정 시험 상세" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "테스트 학생 시험 상세" })).toHaveAttribute(
       "href",
       "/admin/results/attempt.1",
     );
-    expect(screen.getByRole("link", { name: "윤서정 시험 상세" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "테스트 학생 시험 상세" })).toHaveAttribute(
       "data-tone",
       "danger",
     );
@@ -66,13 +66,13 @@ describe("activity row patterns", () => {
         checked={false}
         checkboxId="student-1"
         onToggle={onToggle}
-        selectionAriaLabel="윤서정 선택"
+        selectionAriaLabel="테스트 학생 선택"
       >
-        윤서정
+        테스트 학생
       </SelectableRow>,
     );
 
-    const [checkbox, content] = screen.getAllByLabelText("윤서정 선택");
+    const [checkbox, content] = screen.getAllByLabelText("테스트 학생 선택");
     await user.click(checkbox);
     await user.click(content);
     content.focus();
