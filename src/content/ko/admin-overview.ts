@@ -6,7 +6,7 @@ export const adminOverviewText = {
 
   // Overview > 우선 확인 목록 구역
   sections: {
-    open: "응시할 시험",
+    open: "응시 전",
     needsAttention: "미응시 · 미통과",
     completed: "완료",
   },

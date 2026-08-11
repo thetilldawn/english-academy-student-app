@@ -4,6 +4,15 @@ export const adminHistoryText = {
     title: "내역",
   },
 
+  // 내역 페이지 > 날짜순 상태 구역
+  sections: {
+    open: "응시 전",
+    needsAttention: "미응시 · 미통과",
+    completed: "완료",
+    archived: "취소 · 삭제",
+    countSuffix: "건",
+  },
+
   // 내역 페이지 > 검색·상태 필터
   filters: {
     searchLabel: "학생·시험 검색",

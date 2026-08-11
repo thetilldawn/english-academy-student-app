@@ -10,14 +10,17 @@ import {
 } from "@/design-system/primitives/form/field";
 import { adminHistoryText } from "@/content/ko/admin-history";
 import {
-  compareLearningActivities,
+  adminHistoryActivityGroups,
   learningActivitySection,
 } from "@/features/history/domain/learning-activity";
 import { buildAttemptStatusPresentation } from "@/features/history/presentation/attempt-presentation";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
 import { EmptyState } from "@/design-system/patterns/feedback/feedback";
 
-import { HistoryRows } from "./history-rows";
+import {
+  HistorySectionGroups,
+  type HistorySection,
+} from "./history-section-groups";
 import styles from "./history-list.module.css";
 
 type HistoryStatusFilter =
@@ -39,32 +42,54 @@ export function AdminHistoryList({
   const [statusFilter, setStatusFilter] =
     useState<HistoryStatusFilter>("all");
 
-  const filteredItems = useMemo(() => {
+  const sections = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("ko-KR");
-    return items
-      .filter((item) => {
-        const matchesStatus =
-          statusFilter === "all" ||
-          (statusFilter === "retried"
-            ? buildAttemptStatusPresentation(item).outcome === "retried"
-            : learningActivitySection(item) === statusFilter);
-        const matchesQuery =
-          normalizedQuery.length === 0 ||
-          [
-            item.studentName,
-            item.schoolName,
-            item.gradeLabel,
-            item.assignmentTitle,
-            item.datasetTitle,
-            ...item.unitLabels,
-          ]
-            .filter(Boolean)
-            .join(" ")
-            .toLocaleLowerCase("ko-KR")
-            .includes(normalizedQuery);
-        return matchesStatus && matchesQuery;
-      })
-      .toSorted(compareLearningActivities);
+    const filteredItems = items.filter((item) => {
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "retried"
+          ? buildAttemptStatusPresentation(item).outcome === "retried"
+          : learningActivitySection(item) === statusFilter);
+      const matchesQuery =
+        normalizedQuery.length === 0 ||
+        [
+          item.studentName,
+          item.schoolName,
+          item.gradeLabel,
+          item.assignmentTitle,
+          item.datasetTitle,
+          ...item.unitLabels,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLocaleLowerCase("ko-KR")
+          .includes(normalizedQuery);
+      return matchesStatus && matchesQuery;
+    });
+    const groups = adminHistoryActivityGroups(filteredItems);
+    const groupedSections: HistorySection[] = [
+      {
+        id: "open",
+        title: adminHistoryText.sections.open,
+        items: groups.open,
+      },
+      {
+        id: "needs-attention",
+        title: adminHistoryText.sections.needsAttention,
+        items: groups.needsAttention,
+      },
+      {
+        id: "completed",
+        title: adminHistoryText.sections.completed,
+        items: groups.completed,
+      },
+      {
+        id: "archived",
+        title: adminHistoryText.sections.archived,
+        items: groups.archived,
+      },
+    ];
+    return groupedSections.filter((section) => section.items.length > 0);
   }, [items, query, statusFilter]);
 
   return (
@@ -115,14 +140,17 @@ export function AdminHistoryList({
         </div>
       ) : null}
 
-      {filteredItems.length === 0 ? (
+      {sections.length === 0 ? (
         <EmptyState>
           {items.length === 0
             ? adminHistoryText.emptyState.noAssignments
             : adminHistoryText.emptyState.noMatches}
         </EmptyState>
       ) : (
-        <HistoryRows items={filteredItems} />
+        <HistorySectionGroups
+          countSuffix={adminHistoryText.sections.countSuffix}
+          sections={sections}
+        />
       )}
     </>
   );

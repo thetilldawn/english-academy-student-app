@@ -15,6 +15,9 @@ describe("admin deletion UI contract", () => {
     const historyList = source(
       "src/features/history/ui/admin-history-list.tsx",
     );
+    const historySections = source(
+      "src/features/history/ui/history-section-groups.tsx",
+    );
     const historyRow = source(
       "src/features/history/ui/history-activity-row.tsx",
     );
@@ -33,7 +36,8 @@ describe("admin deletion UI contract", () => {
     const historyCopy = source("src/content/ko/admin-history.ts");
     const studentCopy = source("src/content/ko/admin-students.ts");
 
-    expect(historyList).toContain("<HistoryRows items={filteredItems}");
+    expect(historyList).toContain("<HistorySectionGroups");
+    expect(historySections).toContain("<HistoryRows");
     expect(historyRow).toContain("historyDetailHref(item)");
     expect(detailActions).toContain("<AdminHistoryActions");
     expect(historyActions).toContain("adminHistoryText.actions.cancel.action");

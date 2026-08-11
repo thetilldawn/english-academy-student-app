@@ -276,6 +276,43 @@ export function sortLearningActivities(items: AssignmentHistorySummary[]) {
   return items.toSorted(compareLearningActivities);
 }
 
+export function compareAdminHistoryRecency(
+  left: AssignmentHistorySummary,
+  right: AssignmentHistorySummary,
+) {
+  const dateDifference =
+    timestamp(deriveLearningActivityState(right).effectiveAt) -
+    timestamp(deriveLearningActivityState(left).effectiveAt);
+  return dateDifference !== 0
+    ? dateDifference
+    : left.id.localeCompare(right.id, "ko-KR");
+}
+
+export function adminHistoryActivityGroups(
+  items: readonly AssignmentHistorySummary[],
+) {
+  const groups = {
+    open: [] as AssignmentHistorySummary[],
+    needsAttention: [] as AssignmentHistorySummary[],
+    completed: [] as AssignmentHistorySummary[],
+    archived: [] as AssignmentHistorySummary[],
+  };
+
+  for (const item of items) {
+    const section = deriveLearningActivityState(item).section;
+    if (section === "open") groups.open.push(item);
+    if (section === "needs_attention") groups.needsAttention.push(item);
+    if (section === "completed") groups.completed.push(item);
+    if (section === "archived") groups.archived.push(item);
+  }
+
+  for (const group of Object.values(groups)) {
+    group.sort(compareAdminHistoryRecency);
+  }
+
+  return groups;
+}
+
 export function matchesLearningHistoryFilters(
   item: AssignmentHistorySummary,
   filters: {
@@ -317,19 +354,12 @@ export function studentLearningActivityIndex(
 }
 
 export function overviewActivityGroups(items: AssignmentHistorySummary[]) {
-  const sorted = sortLearningActivities(
+  const groups = adminHistoryActivityGroups(
     items.filter((item) => !item.assignmentDeleted && !item.studentDeleted),
   );
   return {
-    open: sorted.filter(
-      (item) => deriveLearningActivityState(item).section === "open",
-    ),
-    needsAttention: sorted.filter(
-      (item) =>
-        deriveLearningActivityState(item).section === "needs_attention",
-    ),
-    completed: sorted.filter(
-      (item) => deriveLearningActivityState(item).section === "completed",
-    ),
+    open: groups.open,
+    needsAttention: groups.needsAttention,
+    completed: groups.completed,
   };
 }

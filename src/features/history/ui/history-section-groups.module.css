@@ -1,0 +1,26 @@
+.groups {
+  display: grid;
+  gap: 32px;
+}
+
+.section {
+  min-width: 0;
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.heading h2 {
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .groups {
+    gap: 40px;
+  }
+}

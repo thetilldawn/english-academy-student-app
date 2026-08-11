@@ -4,6 +4,7 @@ import type { AssignmentHistorySummary } from "@/lib/admin/history";
 import {
   activityNeedsRetry,
   activityPassed,
+  adminHistoryActivityGroups,
   deriveLearningActivityState,
   learningActivityEffectiveAt,
   learningActivityBucket,
@@ -364,9 +365,11 @@ describe("learning activity ordering", () => {
         assignedAt: "2026-08-01T00:00:00.000Z",
       }),
       activity("due-later", {
+        assignedAt: "2026-08-04T00:00:00.000Z",
         availableUntil: "2026-08-10T00:00:00.000Z",
       }),
       activity("due-near", {
+        assignedAt: "2026-08-03T00:00:00.000Z",
         availableUntil: "2026-08-09T00:00:00.000Z",
       }),
       activity("missed", {
@@ -395,15 +398,71 @@ describe("learning activity ordering", () => {
     ]);
 
     expect(groups.open.map((item) => item.id)).toEqual([
+      "due-later",
+      "due-near",
       "no-deadline-new",
       "no-deadline-old",
-      "due-near",
-      "due-later",
     ]);
     expect(groups.needsAttention.map((item) => item.id)).toEqual([
       "missed",
       "failed",
     ]);
     expect(groups.completed.map((item) => item.id)).toEqual(["passed"]);
+  });
+
+  it("groups admin history by status and orders every group by newest activity date", () => {
+    const groups = adminHistoryActivityGroups([
+      activity("open-old", {
+        assignedAt: "2026-08-01T00:00:00.000Z",
+      }),
+      activity("open-new", {
+        assignedAt: "2026-08-08T00:00:00.000Z",
+      }),
+      activity("failed-old", {
+        completedAt: "2026-08-02T00:00:00.000Z",
+        finalScore: 50,
+        status: "completed",
+      }),
+      activity("failed-new", {
+        completedAt: "2026-08-09T00:00:00.000Z",
+        finalScore: 70,
+        status: "completed",
+      }),
+      activity("completed-old", {
+        completedAt: "2026-08-03T00:00:00.000Z",
+        finalScore: 90,
+        status: "completed",
+      }),
+      activity("completed-new", {
+        completedAt: "2026-08-10T00:00:00.000Z",
+        finalScore: 100,
+        status: "completed",
+      }),
+      activity("cancelled-old", {
+        cancelledAt: "2026-08-04T00:00:00.000Z",
+        status: "cancelled",
+      }),
+      activity("cancelled-new", {
+        cancelledAt: "2026-08-11T00:00:00.000Z",
+        status: "cancelled",
+      }),
+    ]);
+
+    expect(groups.open.map((item) => item.id)).toEqual([
+      "open-new",
+      "open-old",
+    ]);
+    expect(groups.needsAttention.map((item) => item.id)).toEqual([
+      "failed-new",
+      "failed-old",
+    ]);
+    expect(groups.completed.map((item) => item.id)).toEqual([
+      "completed-new",
+      "completed-old",
+    ]);
+    expect(groups.archived.map((item) => item.id)).toEqual([
+      "cancelled-new",
+      "cancelled-old",
+    ]);
   });
 });
