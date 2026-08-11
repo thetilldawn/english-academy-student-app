@@ -36,6 +36,13 @@ test("student and admin public login surfaces render and remain accessible", asy
   await expect(page.getByRole("button", { name: "인증" })).toHaveCSS("height", "58px");
   await expectNoSeriousAccessibilityViolations(page);
 
+  await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+  await page.reload();
+  await expect(page.getByRole("button", { name: "인증" })).toHaveCSS(
+    "transition-duration",
+    "0s",
+  );
+
   await page.getByRole("link", { name: "관리자 페이지 →" }).click();
   await expect(page).toHaveURL(/\/admin\/login$/);
   await expect(page.getByRole("heading", { name: "관리자 로그인", level: 1 })).toBeVisible();
