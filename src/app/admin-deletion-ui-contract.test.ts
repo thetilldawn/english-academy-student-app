@@ -78,6 +78,9 @@ describe("admin deletion UI contract", () => {
 
   it("태블릿·PC 상태 문구와 배정 버튼 글자색을 보존한다", () => {
     const css = source("src/app/globals.css");
+    const deadlineCss = source(
+      "src/features/student-dashboard/ui/deadline-countdown.module.css",
+    );
     const studentDetailCss = source(
       "src/features/students/ui/student-detail.module.css",
     );
@@ -86,8 +89,8 @@ describe("admin deletion UI contract", () => {
     );
 
     expect(css).not.toMatch(/\.status-pill\s*\{/);
-    expect(css).toMatch(
-      /\.deadline-countdown\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?white-space:\s*nowrap;/,
+    expect(deadlineCss).toMatch(
+      /\.timer\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?white-space:\s*nowrap;/,
     );
     expect(css).not.toContain(
       ".assignment-student-row span:not(.button)",

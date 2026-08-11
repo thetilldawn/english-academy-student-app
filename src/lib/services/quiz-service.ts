@@ -25,100 +25,12 @@ import {
   type QuestionProvenanceStatus,
 } from "@/lib/quiz/question-provenance";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
-import {
-  compareLearningActivities,
-  learningActivitySection,
-  type LearningActivityOrderInput,
-  type LearningActivitySection,
-} from "@/features/history/domain/learning-activity";
+import type { StudentAssignmentSummary } from "@/features/student-dashboard/model";
 import { loadDatasetDisplayLabelMap } from "@/lib/services/dataset-catalog-service";
 import { finalizeStudentMissedAssignments } from "@/lib/services/missed-assignment-service";
 import { finalizeStaleQuizAttempts } from "@/lib/services/stale-attempt-service";
 
-export type StudentAssignmentSummary = {
-  id: string;
-  title: string;
-  displayTitle: string;
-  datasetTitle: string;
-  assignmentPurpose: AssignmentPurpose;
-  scopeLabel: string;
-  questionCount: number;
-  questionOrderMode: QuestionOrderMode;
-  timeLimitSeconds: number;
-  timingMode: TimingMode;
-  questionTimeLimitSeconds: number | null;
-  passingScore: number;
-  retakeAllowed: boolean;
-  lastAttemptId: string | null;
-  lastStatus: "in_progress" | "completed" | "expired" | null;
-  lastPhase: AttemptState["phase"] | null;
-  lastInitialScore: number | null;
-  lastFinalScore: number | null;
-  lastPassed: boolean | null;
-  lastRetryStartedAt: string | null;
-  lastStartedAt: string | null;
-  lastInitialCompletedAt: string | null;
-  lastCompletedAt: string | null;
-  lastDeadlineAt: string | null;
-  lastUnresolvedWrongCount: number | null;
-  assignedAt: string;
-  availableUntil: string | null;
-  missedAt: string | null;
-  missed: boolean;
-  canStart: boolean;
-  activitySection: Exclude<LearningActivitySection, "archived">;
-};
-
-type StudentAssignmentActivitySource = Pick<
-  StudentAssignmentSummary,
-  | "assignedAt"
-  | "availableUntil"
-  | "lastCompletedAt"
-  | "lastDeadlineAt"
-  | "lastFinalScore"
-  | "lastInitialCompletedAt"
-  | "lastInitialScore"
-  | "lastPassed"
-  | "lastPhase"
-  | "lastRetryStartedAt"
-  | "lastStartedAt"
-  | "lastStatus"
-  | "lastUnresolvedWrongCount"
-  | "missed"
-  | "missedAt"
-  | "passingScore"
->;
-
-function studentAssignmentActivityInput(
-  assignment: StudentAssignmentActivitySource,
-): LearningActivityOrderInput {
-  return {
-    status: assignment.missed
-      ? "missed"
-      : (assignment.lastStatus ?? "not_started"),
-    phase: assignment.lastPhase,
-    assignedAt: assignment.assignedAt,
-    availableUntil: assignment.availableUntil,
-    startedAt: assignment.lastStartedAt,
-    initialCompletedAt: assignment.lastInitialCompletedAt,
-    retryStartedAt: assignment.lastRetryStartedAt,
-    completedAt: assignment.lastCompletedAt,
-    missedAt: assignment.missedAt,
-    deadlineAt: assignment.lastDeadlineAt,
-    activityAt:
-      assignment.lastCompletedAt ??
-      assignment.lastRetryStartedAt ??
-      assignment.lastInitialCompletedAt ??
-      assignment.lastStartedAt ??
-      assignment.missedAt ??
-      assignment.assignedAt,
-    passed: assignment.lastPassed,
-    initialScore: assignment.lastInitialScore,
-    finalScore: assignment.lastFinalScore,
-    passingScore: assignment.passingScore,
-    unresolvedWrongCount: assignment.lastUnresolvedWrongCount,
-  };
-}
+export type { StudentAssignmentSummary } from "@/features/student-dashboard/model";
 
 export type AttemptQuestionState = {
   id: string;
@@ -380,7 +292,10 @@ export async function listStudentAssignments(
     .eq("student_id", studentId)
     .is("cancelled_at", null);
 
-  if (linkError || !linkData?.length) {
+  if (linkError) {
+    throw new Error("배정된 시험 목록을 불러오지 못했습니다.");
+  }
+  if (!linkData?.length) {
     return [];
   }
 
@@ -391,7 +306,10 @@ export async function listStudentAssignments(
   const assignedAtByAssignment = new Map(
     linkData.map((link) => [link.assignment_id, link.assigned_at]),
   );
-  const [{ data: assignmentData }, { data: attemptData }] = await Promise.all([
+  const [
+    { data: assignmentData, error: assignmentError },
+    { data: attemptData, error: attemptError },
+  ] = await Promise.all([
     supabase
       .from("assignments")
       .select(
@@ -410,12 +328,17 @@ export async function listStudentAssignments(
       .order("attempt_number", { ascending: false }),
   ]);
 
+  if (assignmentError || attemptError) {
+    throw new Error("배정된 시험 상태를 불러오지 못했습니다.");
+  }
+  if (!assignmentData?.length) return [];
+
   const assignments = (assignmentData ?? []) as AssignmentRow[];
   const attempts = (attemptData ?? []) as AttemptRow[];
   const datasetIds = [...new Set(assignments.map((item) => item.dataset_id))];
   const [
-    { data: datasetData },
-    { data: assignmentUnitData },
+    { data: datasetData, error: datasetError },
+    { data: assignmentUnitData, error: assignmentUnitError },
   ] = await Promise.all([
     supabase
       .from("vocab_datasets")
@@ -429,6 +352,9 @@ export async function listStudentAssignments(
       .in("assignment_id", assignmentIds)
       .order("position"),
   ]);
+  if (datasetError || assignmentUnitError) {
+    throw new Error("시험 범위 정보를 불러오지 못했습니다.");
+  }
   const datasetTitles = await loadDatasetDisplayLabelMap(
     supabase,
     (datasetData ?? []).map((dataset) => ({
@@ -501,7 +427,7 @@ export async function listStudentAssignments(
       assignedAtByAssignment.get(assignment.id) ??
       new Date(0).toISOString();
     const datasetTitle = datasetTitles.get(assignment.dataset_id) ?? "어휘";
-    const summary: Omit<StudentAssignmentSummary, "activitySection"> = {
+    const summary: StudentAssignmentSummary = {
       id: assignment.id,
       title: assignment.title,
       displayTitle: assignmentDisplayTitleForUnits(
@@ -554,23 +480,10 @@ export async function listStudentAssignments(
       canStart,
     };
 
-    return {
-      ...summary,
-      activitySection: learningActivitySection(
-        studentAssignmentActivityInput(summary),
-      ) as Exclude<
-        LearningActivitySection,
-        "archived"
-      >,
-    };
+    return summary;
   });
 
-  return summaries.toSorted((left, right) =>
-    compareLearningActivities(
-      studentAssignmentActivityInput(left),
-      studentAssignmentActivityInput(right),
-    ),
-  );
+  return summaries;
 }
 
 export async function startStudentAttempt(

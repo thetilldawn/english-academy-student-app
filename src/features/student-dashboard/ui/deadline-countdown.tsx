@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
+import { formatContentText } from "@/content/format";
+import { studentAppText } from "@/content/ko/student-app";
 import {
   formatRemainingSeconds,
   secondsUntil,
 } from "@/lib/deadline";
-import { formatContentText } from "@/content/format";
-import { studentAppText } from "@/content/ko/student-app";
+
+import styles from "./deadline-countdown.module.css";
 
 export function DeadlineCountdown({
   deadlineAt,
@@ -70,14 +72,16 @@ export function DeadlineCountdown({
               })
         }
         aria-live="off"
-        className={expired ? "deadline-countdown deadline-expired" : "deadline-countdown"}
+        className={
+          expired ? `${styles.timer} ${styles.expired}` : styles.timer
+        }
         role="timer"
       >
         {expired
           ? studentAppText.actions.deadlineClosed
           : formatRemainingSeconds(remainingSeconds)}
       </span>
-      <span aria-live="polite" className="sr-only" role="status">
+      <span aria-live="polite" className={styles.srOnly} role="status">
         {expired ? studentAppText.actions.deadlinePassed : ""}
       </span>
     </>

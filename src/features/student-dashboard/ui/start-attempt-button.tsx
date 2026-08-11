@@ -1,14 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/design-system/primitives/button/button";
-import { studentAppText } from "@/content/ko/student-app";
+import { useState } from "react";
 
-type StartResponse = {
-  attemptId?: string;
-  error?: string;
-};
+import { studentAppText } from "@/content/ko/student-app";
+import { Button } from "@/design-system/primitives/button/button";
+
+import { requestStudentAttempt } from "../api/start-attempt";
+import styles from "./start-attempt-button.module.css";
 
 export function StartAttemptButton({
   assignmentId,
@@ -25,17 +24,11 @@ export function StartAttemptButton({
     setError("");
     setSubmitting(true);
     try {
-      const response = await fetch(
-        `/api/student/assignments/${assignmentId}/attempts`,
-        { method: "POST" },
-      );
-      const payload = (await response.json()) as StartResponse;
-
-      if (!response.ok || !payload.attemptId) {
+      const { ok, payload } = await requestStudentAttempt(assignmentId);
+      if (!ok || !payload.attemptId) {
         setError(payload.error ?? studentAppText.actions.startError);
         return;
       }
-
       router.push(`/student/attempt/${payload.attemptId}`);
     } catch {
       setError(studentAppText.actions.networkError);
@@ -45,7 +38,7 @@ export function StartAttemptButton({
   }
 
   return (
-    <div className="action-stack">
+    <div className={styles.stack}>
       <Button
         disabled={disabled || submitting}
         onClick={start}
@@ -55,11 +48,11 @@ export function StartAttemptButton({
           ? studentAppText.actions.startPending
           : studentAppText.actions.start}
       </Button>
-      {error && (
-        <span className="inline-error" role="alert">
+      {error ? (
+        <span className={styles.error} role="alert">
           {error}
         </span>
-      )}
+      ) : null}
     </div>
   );
 }

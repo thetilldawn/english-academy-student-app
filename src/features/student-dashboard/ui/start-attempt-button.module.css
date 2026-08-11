@@ -1,0 +1,17 @@
+.stack {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.stack > button {
+  width: 100%;
+}
+
+.error {
+  max-width: 32ch;
+  color: var(--status-danger-bg);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}

@@ -11,8 +11,16 @@ const quizSource = fs.readFileSync(
   path.resolve("src/lib/services/quiz-service.ts"),
   "utf8",
 );
-const studentPage = fs.readFileSync(
-  path.resolve("src/app/student/(protected)/page.tsx"),
+const studentCard = fs.readFileSync(
+  path.resolve(
+    "src/features/student-dashboard/ui/student-assignment-card.tsx",
+  ),
+  "utf8",
+);
+const studentDashboardDomain = fs.readFileSync(
+  path.resolve(
+    "src/features/student-dashboard/domain/student-assignment-sections.ts",
+  ),
   "utf8",
 );
 
@@ -36,9 +44,9 @@ describe("admin assignment history query contract", () => {
     );
     expect(quizSource).toContain("primaryUnitLabelsByAssignment");
     expect(quizSource).toContain("scopeLabel: assignmentScopeLabel");
-    expect(studentPage).toContain("{assignment.scopeLabel}");
-    expect(studentPage).toContain("assignmentOrderLabel(");
-    expect(studentPage).toContain(
+    expect(studentCard).toContain("{assignment.scopeLabel}");
+    expect(studentCard).toContain("assignmentOrderLabel(");
+    expect(studentCard).toContain(
       'assignment.assignmentPurpose !== "review"',
     );
   });
@@ -54,9 +62,26 @@ describe("admin assignment history query contract", () => {
     );
     expect(quizSource).toContain('.is("cancelled_at", null)');
     expect(quizSource).toContain("missedAtByAssignment");
-    expect(quizSource).toContain("missedAt: assignment.missedAt");
-    expect(quizSource).toContain("studentAssignmentActivityInput(left)");
-    expect(quizSource).toContain("studentAssignmentActivityInput(right)");
+    expect(studentDashboardDomain).toContain(
+      "missedAt: assignment.missedAt",
+    );
+    expect(studentDashboardDomain).toContain(
+      "studentAssignmentActivityInput(left)",
+    );
+    expect(studentDashboardDomain).toContain(
+      "studentAssignmentActivityInput(right)",
+    );
+    expect(studentDashboardDomain).toContain(
+      'state.kind === "missed"',
+    );
     expect(quizSource).toContain("!missed &&");
+  });
+
+  it("does not turn student assignment query failures into an empty dashboard", () => {
+    expect(quizSource).toContain("if (linkError) {");
+    expect(quizSource).toContain("if (assignmentError || attemptError) {");
+    expect(quizSource).toContain(
+      "if (datasetError || assignmentUnitError) {",
+    );
   });
 });

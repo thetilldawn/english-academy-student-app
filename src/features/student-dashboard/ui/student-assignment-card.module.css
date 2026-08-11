@@ -1,0 +1,128 @@
+.card {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+  padding: 18px;
+  border: 0;
+  border-left: 4px solid var(--dim);
+  border-radius: 0;
+  background: transparent;
+}
+
+.card[data-exam-outcome="completed"] {
+  border-left-color: var(--status-success-bg);
+}
+
+.card[data-exam-outcome="retried"] {
+  border-left-color: var(--status-warning-bg);
+}
+
+.card[data-exam-outcome="failed"],
+.card[data-exam-outcome="missed"],
+.card[data-exam-outcome="expired"] {
+  border-left-color: var(--status-danger-bg);
+}
+
+.titleRow {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: start;
+  gap: var(--space-3);
+}
+
+.titleCopy {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.dataset {
+  min-width: 0;
+  overflow: hidden;
+  margin: 0;
+  color: var(--text-secondary);
+  font-family: var(--font-kr);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.title {
+  min-width: 0;
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-krs);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.42;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.details {
+  min-width: 0;
+}
+
+.deadline {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  color: var(--text-secondary);
+  background: var(--surface);
+  font-size: 13px;
+}
+
+.actions {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+@media (max-width: 960px) {
+  .titleRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .dataset {
+    font-size: 12px;
+  }
+
+  .title {
+    font-size: 19px;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    gap: var(--space-3);
+    padding: 14px 12px;
+  }
+
+  .actions,
+  .actions > * {
+    width: 100%;
+  }
+
+  .actions > a {
+    justify-content: center;
+  }
+}

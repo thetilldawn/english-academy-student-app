@@ -548,42 +548,6 @@
   margin-top: 20px;
 }
 
-.assignment-card {
-  display: grid;
-  gap: 16px;
-}
-
-.assignment-details {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-}
-
-.assignment-deadline {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px 12px;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  border-radius: var(--radius);
-  color: var(--muted);
-  background: var(--card);
-  font-size: 13px;
-}
-
-.deadline-countdown {
-  flex: 0 0 auto;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.deadline-expired {
-  color: var(--fail);
-}
-
 .detail-chip {
   padding: 5px 9px;
   border-radius: var(--radius);
@@ -888,10 +852,6 @@
   font-size: 18px;
 }
 
-.student-content {
-  max-width: 980px;
-}
-
 .table-wrap {
   overflow-x: auto;
   border: 1px solid var(--line);
@@ -948,20 +908,6 @@ tr:last-child td {
   max-width: 900px;
 }
 
-.student-page-heading {
-  margin-bottom: 22px;
-}
-
-.assignment-card-featured {
-  border-color: var(--line);
-  background: transparent;
-}
-
-.assignment-card-featured .assignment-actions {
-  justify-content: flex-end;
-}
-
-.student-assignment-grid,
 .result-question-grid,
 .assignment-history-grid {
   display: grid;
@@ -1470,7 +1416,6 @@ tr:last-child td {
     align-self: flex-end;
   }
 
-  .student-assignment-grid,
   .result-question-grid,
   .assignment-history-grid,
   .assignment-management-list,
@@ -1513,14 +1458,10 @@ tr:last-child td {
     max-width: 132px;
   }
 
-  .assignment-actions,
-  .assignment-actions .action-stack,
   .admin-dashboard-heading {
     width: 100%;
   }
 
-  .assignment-actions,
-  .assignment-actions .action-stack,
   .admin-dashboard-heading {
     align-items: stretch;
   }
@@ -1863,7 +1804,6 @@ h3,
   font-weight: 700;
 }
 
-.assignment-card,
 .result-question {
   position: relative;
   border: 0;
@@ -1899,12 +1839,10 @@ h3,
   color: var(--fail);
 }
 
-.student-assignment-grid,
 .result-question-list {
   gap: 12px;
 }
 
-.assignment-card h3,
 .result-question h3 {
   font-family: var(--font-krs);
   font-size: 18px;
@@ -1936,7 +1874,6 @@ h3,
   margin-right: 0;
 }
 
-.assignment-card .eyebrow,
 .result-question .eyebrow,
 .list-meta {
   color: var(--muted);
@@ -2501,21 +2438,6 @@ h3,
   background: var(--no-bg);
 }
 
-/* APP-20260809-07: shared activity rows and route detail */
-.assignment-card[data-exam-outcome="completed"] {
-  border-left-color: var(--status-success-bg);
-}
-
-.assignment-card[data-exam-outcome="retried"] {
-  border-left-color: var(--status-warning-bg);
-}
-
-.assignment-card[data-exam-outcome="failed"],
-.assignment-card[data-exam-outcome="missed"],
-.assignment-card[data-exam-outcome="expired"] {
-  border-left-color: var(--status-danger-bg);
-}
-
 .history-detail-content,
 .history-detail-overview {
   min-width: 0;
@@ -2602,7 +2524,6 @@ h3,
   }
 }
 
-.assignment-card h3,
 .assignment-management-item-title {
   display: -webkit-box;
   overflow: hidden;

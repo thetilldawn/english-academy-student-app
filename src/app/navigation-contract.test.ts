@@ -271,8 +271,8 @@ describe("responsive navigation contract", () => {
     const retryRoute = source(
       "src/app/api/student/attempts/[id]/retry/route.ts",
     );
-    const studentHome = source(
-      "src/app/student/(protected)/page.tsx",
+    const studentCard = source(
+      "src/features/student-dashboard/ui/student-assignment-card.tsx",
     );
     const studentCopy = source("src/content/ko/student-app.ts");
 
@@ -287,10 +287,10 @@ describe("responsive navigation contract", () => {
     expect(retryButton).toContain("studentAppText.actions.retry");
     expect(retryRoute).toContain("isSameOriginRequest(request)");
     expect(retryRoute).toContain("startStudentRetry");
-    expect(studentHome).toContain('assignment.lastPhase === "review"');
-    expect(studentHome).toContain("studentAppText.dashboard.resultAndRetry");
+    expect(studentCard).toContain('assignment.lastPhase === "review"');
+    expect(studentCard).toContain("studentAppText.dashboard.resultAndRetry");
     expect(studentCopy).toContain('resultAndRetry: "결과 확인·재시험 선택"');
-    expect(studentHome).toContain(
+    expect(studentCard).toContain(
       "href={`/student/result/${assignment.lastAttemptId}`}",
     );
   });

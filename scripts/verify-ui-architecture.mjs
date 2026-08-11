@@ -144,16 +144,16 @@ const cssMetrics = {
 };
 
 const cssMaximums = {
-  lines: 2619,
-  styleRules: 416,
-  selectorContextKeys: 416,
-  duplicateContextKeys: 71,
-  duplicateExcess: 83,
-  styleDeclarations: 1219,
+  lines: 2540,
+  styleRules: 404,
+  selectorContextKeys: 397,
+  duplicateContextKeys: 65,
+  duplicateExcess: 77,
+  styleDeclarations: 1190,
   mediaBlocks: 14,
   mediaConditions: 6,
   importantDeclarations: 0,
-  trackedSectionMarkers: 5,
+  trackedSectionMarkers: 4,
   untrackedTopLevelComments: 0,
 };
 
@@ -235,6 +235,26 @@ const studentFeatureContracts = [
     maxUseStateCalls: 15,
   },
 ];
+const studentDashboardFeatureContracts = [
+  {
+    path: "src/features/student-dashboard/domain/student-assignment-sections.ts",
+    maxLines: 140,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 0,
+  },
+  {
+    path: "src/features/student-dashboard/ui/student-assignment-card.tsx",
+    maxLines: 240,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 0,
+  },
+  {
+    path: "src/features/student-dashboard/ui/student-dashboard.tsx",
+    maxLines: 110,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 0,
+  },
+];
 const legacyPaths = new Set(
   legacyComponents.map((contract) => contract.path),
 );
@@ -269,6 +289,8 @@ for (const retiredPath of [
   "src/components/student-learning-source-list.tsx",
   "src/components/student-vocab-book-history-list.tsx",
   "src/components/student-wrong-word-panel.tsx",
+  "src/components/deadline-countdown.tsx",
+  "src/components/start-attempt-button.tsx",
   "src/components/bulk-assignment-dialog.tsx",
   "src/components/review-assignment-dialog.tsx",
   "src/components/ui-button.tsx",
@@ -320,6 +342,23 @@ for (const retiredSelector of [
   if (css.includes(retiredSelector)) {
     violations.push(
       `globals.css retains migrated student selector ${retiredSelector}`,
+    );
+  }
+}
+
+for (const retiredSelector of [
+  ".student-page-heading",
+  ".student-assignment-grid",
+  ".assignment-card",
+  ".assignment-details",
+  ".assignment-deadline",
+  ".assignment-actions",
+  ".deadline-countdown",
+  ".deadline-expired",
+]) {
+  if (css.includes(retiredSelector)) {
+    violations.push(
+      `globals.css retains migrated student dashboard selector ${retiredSelector}`,
     );
   }
 }
@@ -445,6 +484,30 @@ const studentFeatureMetrics = studentFeatureContracts.map((contract) => {
   return measured;
 });
 
+const studentDashboardFeatureMetrics = studentDashboardFeatureContracts.map(
+  (contract) => {
+    const source = read(contract.path);
+    const measured = {
+      path: contract.path,
+      lines: lineCount(source),
+      fetchCalls: count(source, /\bfetch\s*\(/g),
+      useStateCalls: count(source, /\buseState\s*(?:<|\()/g),
+    };
+    for (const [metric, maximum] of [
+      ["lines", contract.maxLines],
+      ["fetchCalls", contract.maxFetchCalls],
+      ["useStateCalls", contract.maxUseStateCalls],
+    ]) {
+      if (measured[metric] > maximum) {
+        violations.push(
+          `${contract.path} ${metric}: ${measured[metric]} > ${maximum}`,
+        );
+      }
+    }
+    return measured;
+  },
+);
+
 for (const relativePath of filesUnder(
   "src/features/students/ui",
   (candidate) => candidate.endsWith(".tsx") && !candidate.endsWith(".test.tsx"),
@@ -467,6 +530,32 @@ for (const relativePath of filesUnder(
   ) {
     violations.push(`${relativePath} nests the retired manager boundary`);
   }
+}
+
+for (const relativePath of filesUnder(
+  "src/features/student-dashboard/ui",
+  (candidate) => candidate.endsWith(".tsx") && !candidate.endsWith(".test.tsx"),
+)) {
+  const source = read(relativePath);
+  if (lineCount(source) > 300) {
+    violations.push(`${relativePath} exceeds the 300 line feature UI ceiling`);
+  }
+  if (/\bfetch\s*\(|["']\/api\/|@\/lib\/services\//.test(source)) {
+    violations.push(`${relativePath} crosses the student dashboard UI boundary`);
+  }
+}
+
+const studentDashboardPageSource = read(
+  "src/app/student/(protected)/page.tsx",
+);
+if (
+  /function AssignmentCard|assignments\.filter|<article|activitySection/.test(
+    studentDashboardPageSource,
+  )
+) {
+  violations.push(
+    "student dashboard route retains feature classification or card rendering",
+  );
 }
 
 const assignmentManagerSource = read("src/components/assignment-manager.tsx");
@@ -591,6 +680,10 @@ const boundedCssModulePaths = [
     "src/features/students",
     (candidate) => candidate.endsWith(".module.css"),
   ),
+  ...filesUnder(
+    "src/features/student-dashboard",
+    (candidate) => candidate.endsWith(".module.css"),
+  ),
 ];
 
 for (const relativePath of boundedCssModulePaths) {
@@ -616,6 +709,7 @@ console.log(
       legacyComponents: componentMetrics,
       assignmentFeatures: assignmentFeatureMetrics,
       studentFeatures: studentFeatureMetrics,
+      studentDashboardFeatures: studentDashboardFeatureMetrics,
     },
     null,
     2,

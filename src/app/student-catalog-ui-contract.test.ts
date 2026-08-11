@@ -130,7 +130,9 @@ describe("student catalog and modal UI contract", () => {
   });
 
   it("학생 카드도 공통 시험 종류와 실제 미응시 시각을 사용한다", () => {
-    const studentPage = source("src/app/student/(protected)/page.tsx");
+    const studentCard = source(
+      "src/features/student-dashboard/ui/student-assignment-card.tsx",
+    );
     const timeline = source(
       "src/features/history/presentation/activity-presentation.ts",
     );
@@ -138,7 +140,7 @@ describe("student catalog and modal UI contract", () => {
       "src/features/history/domain/learning-activity.ts",
     );
 
-    expect(studentPage).toContain(
+    expect(studentCard).toContain(
       "assignmentTypeLabel(assignment.assignmentPurpose)",
     );
     expect(timeline).toContain("timestamp: state.statusAt");

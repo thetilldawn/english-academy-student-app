@@ -22,35 +22,6 @@ describe("mobile production regression UI contract", () => {
   const studentController = source(
     "src/features/students/controller/use-student-detail-controller.ts",
   );
-  const studentPage = source("src/app/student/(protected)/page.tsx");
-
-  it("puts missed deadlines in their own final section", () => {
-    const completedIndex = studentPage.indexOf('id: "completed"');
-    const deadlineClosedIndex = studentPage.indexOf('id: "deadline-closed"');
-
-    expect(studentPage).toContain("!assignment.missed &&");
-    expect(studentPage).toContain(
-      "assignments.filter((assignment) => assignment.missed)",
-    );
-    expect(completedIndex).toBeGreaterThan(-1);
-    expect(deadlineClosedIndex).toBeGreaterThan(completedIndex);
-  });
-
-  it("uses the shared tag component with one stable assignment tag height", () => {
-    const badgeCss = source(
-      "src/design-system/primitives/badge/badge.module.css",
-    );
-    expect(studentPage).toContain(
-      '<MetaTagList className="assignment-details" fullWidth>',
-    );
-    expect(studentPage).toContain('overflow="truncate" size="large"');
-    expect(studentPage).not.toContain('className="detail-chip"');
-    expect(css).not.toMatch(/\.assignment-details \.meta-tag/);
-    expect(badgeCss).toMatch(
-      /\.large\s*\{[^}]*min-height:\s*28px;/,
-    );
-  });
-
   it("stacks score and timeline before the student card can overflow", () => {
     expect(studentDirectory).toContain("hasAttemptScoreContent(");
     expect(studentDirectory).toContain('data-has-score={hasScore || undefined}');
