@@ -23,7 +23,15 @@ describe("student catalog and modal UI contract", () => {
   const tabsCss = source(
     "src/design-system/primitives/tabs/tabs.module.css",
   );
-  const studentManager = source("src/components/student-manager.tsx");
+  const studentDetail = source(
+    "src/features/students/ui/student-detail-dialog.tsx",
+  );
+  const studentDetailCss = source(
+    "src/features/students/ui/student-detail.module.css",
+  );
+  const studentLearning = source(
+    "src/features/students/ui/panels/student-learning-panel.tsx",
+  );
   const bulkDialog = source(
     "src/features/assignments/ui/bulk-assignment-editor.tsx",
   );
@@ -52,14 +60,14 @@ describe("student catalog and modal UI contract", () => {
   });
 
   it("animates every modal tab while respecting reduced motion", () => {
-    expect(studentManager).toContain('key="learning"');
-    expect(studentManager).toContain('key="account"');
-    expect(studentManager).toContain('key="history"');
-    expect(css).toContain(
-      "animation: student-tab-panel-in var(--motion-standard) both;",
+    expect(studentDetail).toContain('value: "learning"');
+    expect(studentDetail).toContain('value: "account"');
+    expect(studentDetail).toContain('value: "history"');
+    expect(studentDetailCss).toContain(
+      "animation: panel-in var(--motion-standard) both;",
     );
-    expect(css).toMatch(
-      /@media \(prefers-reduced-motion: reduce\)\s*\{[^}]*\.student-dialog-panel,/,
+    expect(studentDetailCss).toMatch(
+      /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.panel\s*\{[^}]*animation:\s*none;/,
     );
   });
 
@@ -93,11 +101,11 @@ describe("student catalog and modal UI contract", () => {
 
   it("uses structured groups and preserves learned wordbooks", () => {
     const copy = source("src/content/ko/admin-students.ts");
-    expect(studentManager).toContain("groupCataloguedDatasets");
-    expect(studentManager).toContain("<optgroup");
-    expect(studentManager).toContain("adminStudentsText.learning.recentWordbookChange");
-    expect(studentManager).toContain("StudentVocabBookHistoryList");
-    expect(source("src/components/student-vocab-book-history-list.tsx")).toContain(
+    expect(studentLearning).toContain("groupCataloguedDatasets");
+    expect(studentLearning).toContain("<optgroup");
+    expect(studentLearning).toContain("adminStudentsText.learning.recentWordbookChange");
+    expect(studentLearning).toContain("StudentVocabBookHistoryList");
+    expect(source("src/features/students/ui/panels/student-vocab-book-history-list.tsx")).toContain(
       "adminStudentsText.learning.wordbookHistory.title",
     );
     expect(copy).toContain('title: "학습한 단어장"');

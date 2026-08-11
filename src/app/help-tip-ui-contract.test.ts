@@ -32,7 +32,7 @@ describe("공통 도움말 UI 계약", () => {
     const sources = [
       "src/components/assignment-manager.tsx",
       "src/features/assignments/ui/bulk-series-fields.tsx",
-      "src/components/student-manager.tsx",
+      "src/features/students/ui/student-directory.tsx",
       "src/features/assignments/ui/assignment-settings-fields.tsx",
     ].map(source);
 

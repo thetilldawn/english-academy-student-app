@@ -48,7 +48,7 @@ describe("wrong-word admin UI contract", () => {
 
   it("queues selected words without creating a retest or navigating away", () => {
     const panel = source(
-      "src/components/student-wrong-word-panel.tsx",
+      "src/features/students/ui/panels/student-wrong-word-panel.tsx",
     );
     const copy = source("src/content/ko/admin-students.ts");
     const queueFunction = panel.slice(
@@ -57,9 +57,8 @@ describe("wrong-word admin UI contract", () => {
     );
 
     expect(panel).toContain("async function queueSelectedWords()");
-    expect(queueFunction).toContain(
-      "questionIds: validSelectedQuestionIds",
-    );
+    expect(queueFunction).toContain("queueStudentWrongWords(");
+    expect(queueFunction).toContain("validSelectedQuestionIds,");
     expect(queueFunction).toContain("refreshHistory()");
     expect(queueFunction).not.toContain("worksheetSelectedQuestionIds");
     expect(panel).toContain(
@@ -81,7 +80,10 @@ describe("wrong-word admin UI contract", () => {
       "src/lib/services/review-assignment-service.ts",
     );
     const panel = source(
-      "src/components/student-wrong-word-panel.tsx",
+      "src/features/students/ui/panels/student-wrong-word-panel.tsx",
+    );
+    const transport = source(
+      "src/features/students/api/wrong-word-transport.ts",
     );
     const recovery = source(
       "src/features/assignments/ui/legacy-review-recovery.tsx",
@@ -104,7 +106,7 @@ describe("wrong-word admin UI contract", () => {
     expect(service).toContain(
       '"cancel_student_vocab_review_assignment_draft"',
     );
-    expect(panel).toContain('method: "DELETE"');
+    expect(transport).toContain('{ method: "DELETE" }');
     expect(panel).toContain(
       "adminStudentsText.learning.wrongWordsPanel.cancelDraft",
     );
@@ -122,33 +124,45 @@ describe("wrong-word admin UI contract", () => {
       "adminLearningText.reviewAssignmentModal.cancelDraft",
     );
     expect(copy).toContain("다음 시험 대기로 되돌린");
-    expect(css).toContain(".wrong-word-list-with-actions");
-    expect(css).toContain("scroll-padding-bottom");
+    const panelCss = source(
+      "src/features/students/ui/panels/student-wrong-word-panel.module.css",
+    );
+    expect(css).not.toContain(".wrong-word-");
+    expect(panelCss).toContain("scroll-padding-bottom");
   });
 
   it("loads wrong words only inside the student detail tab", () => {
-    const manager = source("src/components/student-manager.tsx");
-    const panel = source(
-      "src/components/student-wrong-word-panel.tsx",
+    const detail = source(
+      "src/features/students/ui/student-detail-dialog.tsx",
     );
-    expect(manager).toContain('"learning" | "account" | "history"');
-    expect(manager).toContain("<StudentWrongWordPanel");
-    expect(manager).toContain(
+    const learning = source(
+      "src/features/students/ui/panels/student-learning-panel.tsx",
+    );
+    const panel = source(
+      "src/features/students/ui/panels/student-wrong-word-panel.tsx",
+    );
+    const transport = source(
+      "src/features/students/api/wrong-word-transport.ts",
+    );
+    expect(detail).toContain("<Tabs");
+    expect(detail).toContain("ariaLabel={adminStudentsText.detail.tabsAria}");
+    expect(learning).toContain('<StudentWrongWordPanel');
+    expect(learning).toContain('route.kind === "source"');
+    expect(learning).toContain('route.view === "vocab"');
+    expect(detail).toContain(
       "adminStudentsText.learning.vocabularyManagement",
     );
-    expect(manager).toContain("initialDatasetId={learningSourceDatasetId}");
-    expect(panel).toContain(
+    expect(learning).toContain("initialDatasetId={route.datasetId}");
+    expect(transport).toContain(
       "/api/admin/students/${studentId}/wrong-words",
     );
-    expect(panel).toContain('cache: "no-store"');
+    expect(transport).toContain('cache: "no-store"');
     expect(panel).toContain("AbortController");
     expect(panel).toContain("WRONG_HISTORY_CACHE_TTL_MS");
     expect(panel).toContain(
       "adminStudentsText.learning.wrongWordsPanel.refresh",
     );
     expect(panel).toContain("useState(initialDatasetId)");
-    expect(manager).toContain("<Tabs");
-    expect(manager).toContain("ariaLabel={adminStudentsText.detail.tabsAria}");
     expect(panel).toContain(
       "adminStudentsText.learning.wrongWordsPanel.repeated",
     );
@@ -174,7 +188,7 @@ describe("wrong-word admin UI contract", () => {
     expect(panel).toContain(
       "questionId: selectedOccurrence.latestQuestionId",
     );
-    expect(panel).toContain('method: "POST"');
+    expect(transport).toContain('method: "POST"');
     expect(panel).toContain(
       "adminStudentsText.learning.wrongWordsPanel.addToNextExam",
     );
@@ -186,7 +200,7 @@ describe("wrong-word admin UI contract", () => {
 
   it("keeps worksheet selection independent and exports a private anonymous packet", () => {
     const panel = source(
-      "src/components/student-wrong-word-panel.tsx",
+      "src/features/students/ui/panels/student-wrong-word-panel.tsx",
     );
     const copy = source("src/content/ko/admin-students.ts");
     const requestRoute = source(
@@ -230,7 +244,7 @@ describe("wrong-word admin UI contract", () => {
 
   it("keeps the wrong-word list single-view and clears hidden selections when filters change", () => {
     const panel = source(
-      "src/components/student-wrong-word-panel.tsx",
+      "src/features/students/ui/panels/student-wrong-word-panel.tsx",
     );
 
     expect(panel).not.toContain("type ViewMode");

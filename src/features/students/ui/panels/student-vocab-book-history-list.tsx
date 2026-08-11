@@ -12,6 +12,8 @@ import { formatKoreanDateTime } from "@/lib/format";
 import { formatContentText } from "@/content/format";
 import { adminStudentsText } from "@/content/ko/admin-students";
 
+import styles from "./student-vocab-book-history-list.module.css";
+
 function statusPresentation(item: StudentVocabBookHistory) {
   if (item.lastStatus === "in_progress") {
     return {
@@ -48,32 +50,32 @@ export function StudentVocabBookHistoryList({
   const datasetById = new Map(datasets.map((dataset) => [dataset.id, dataset]));
 
   return (
-    <section className="student-vocab-history">
-      <div className="learning-section-heading">
+    <section className={styles.section}>
+      <div className={styles.headingRow}>
         <h3>{adminStudentsText.learning.wordbookHistory.title}</h3>
-        <span className="learning-section-summary">
+        <span className={styles.summary}>
           {formatContentText(adminStudentsText.learning.wordbookHistory.count, {
             count: items.length,
           })}
         </span>
       </div>
       {items.length === 0 ? (
-        <div className="empty-state student-vocab-history-empty">
+        <div className={`empty-state ${styles.empty}`}>
           {adminStudentsText.learning.wordbookHistory.empty}
         </div>
       ) : (
-        <ol className="student-vocab-history-list">
+        <ol className={styles.list}>
           {items.map((item) => {
             const dataset = datasetById.get(item.datasetId);
             const presentation = statusPresentation(item);
             const isCurrent = item.datasetId === currentDatasetId;
             return (
               <li
-                className="student-vocab-history-row"
+                className={styles.row}
                 data-current={isCurrent || undefined}
                 key={item.datasetId}
               >
-                <div className="student-vocab-history-heading">
+                <div className={styles.itemHeading}>
                   <strong>
                     {dataset
                       ? cataloguedDatasetDisplayLabel(dataset)
@@ -90,7 +92,7 @@ export function StudentVocabBookHistoryList({
                     </StatusBadge>
                   </MetaTagList>
                 </div>
-                <dl className="student-vocab-history-facts">
+                <dl className={styles.facts}>
                   <div>
                     <dt>{adminStudentsText.learning.wordbookHistory.lastRange}</dt>
                     <dd>{item.lastScopeLabel}</dd>

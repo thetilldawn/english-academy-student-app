@@ -85,9 +85,13 @@ describe("responsive navigation contract", () => {
   });
 
   it("학생 생성 폼은 단어장을 선택 사항으로 둔다", () => {
-    const studentManager = source(
-      "src/components/student-manager.tsx",
+    const studentDirectory = source(
+      "src/features/students/ui/student-directory.tsx",
     );
+    const studentController = source(
+      "src/features/students/controller/use-student-detail-controller.ts",
+    );
+    const studentManager = `${studentDirectory}\n${studentController}`;
     const studentCopy = source("src/content/ko/admin-students.ts");
     const adminService = source("src/lib/services/admin-service.ts");
 
@@ -100,7 +104,7 @@ describe("responsive navigation contract", () => {
     expect(studentManager).toContain(
       'currentVocabDatasetId: form.get("currentVocabDatasetId")',
     );
-    expect(studentManager).toContain("datasets.map");
+    expect(studentManager).toContain("group.datasets.map");
     expect(studentManager).toContain(
       "adminStudentsText.createStudent.chooseLater",
     );
@@ -111,7 +115,7 @@ describe("responsive navigation contract", () => {
       'disabled={busyKey !== "" || datasets.length === 0}',
     );
     expect(studentManager).not.toContain('name="currentVocabBook"');
-    expect(studentManager).toContain("student.currentVocabBook,");
+    expect(studentManager).toContain("student.currentVocabBook ??");
     expect(studentManager).toContain("adminStudentsText.card.wordbookMissing");
     expect(adminService).toContain(
       "p_current_vocab_dataset_id: input.currentVocabDatasetId",
@@ -166,8 +170,14 @@ describe("responsive navigation contract", () => {
   });
 
   it("관리 화면은 목록에서 모달로 이어지고 중복 작업판을 두지 않는다", () => {
-    const studentManager = source(
-      "src/components/student-manager.tsx",
+    const studentDetail = source(
+      "src/features/students/ui/student-detail-dialog.tsx",
+    );
+    const studentLearning = source(
+      "src/features/students/ui/panels/student-learning-panel.tsx",
+    );
+    const studentAssignment = source(
+      "src/features/students/ui/panels/student-assignment-panel.tsx",
     );
     const assignmentManager = source(
       "src/components/assignment-manager.tsx",
@@ -175,13 +185,13 @@ describe("responsive navigation contract", () => {
     const studentCopy = source("src/content/ko/admin-students.ts");
     const learningCopy = source("src/content/ko/admin-learning.ts");
 
-    expect(studentManager).toContain('variant="dialog"');
-    expect(studentManager).toContain("adminStudentsText.detailTabs.history");
-    expect(studentManager).toContain("adminStudentsText.detailTabs.account");
+    expect(studentDetail).toContain('variant="dialog"');
+    expect(studentDetail).toContain("adminStudentsText.detailTabs.history");
+    expect(studentDetail).toContain("adminStudentsText.detailTabs.account");
     expect(studentCopy).toContain('history: "내역"');
     expect(studentCopy).toContain('account: "계정 설정"');
-    expect(studentManager).not.toContain("student-action-pane");
-    expect(studentManager).not.toContain(
+    expect(studentDetail).not.toContain("student-action-pane");
+    expect(studentDetail).not.toContain(
       'className="student-actions-disclosure"',
     );
     expect(assignmentManager).toContain("<Tabs");
@@ -197,11 +207,12 @@ describe("responsive navigation contract", () => {
     expect(learningCopy).toContain('otherLearningTab: "다른 학습"');
     expect(assignmentManager).toContain('type="search"');
     expect(assignmentManager).toContain('size="extra-wide"');
-    expect(studentManager).toContain(
+    expect(studentLearning).toContain(
       "adminStudentsText.learning.nextVocabularyTitle",
     );
-    expect(studentManager).toContain("student-inline-assignment-action");
-    expect(studentManager).toContain("launcherOnly");
+    expect(studentAssignment).toContain("<SingleAssignmentEditor");
+    expect(studentAssignment).not.toContain("AssignmentManager");
+    expect(studentAssignment).not.toContain("launcherOnly");
   });
 
   it("오버뷰와 내역은 미응시를 포함한 공통 이력을 사용한다", () => {

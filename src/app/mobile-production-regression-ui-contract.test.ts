@@ -10,7 +10,18 @@ function source(relativePath: string) {
 describe("mobile production regression UI contract", () => {
   const css = source("src/app/globals.css");
   const quizPlayer = source("src/components/quiz-player.tsx");
-  const studentManager = source("src/components/student-manager.tsx");
+  const studentDirectory = source(
+    "src/features/students/ui/student-directory.tsx",
+  );
+  const studentDirectoryCss = source(
+    "src/features/students/ui/student-directory.module.css",
+  );
+  const studentDetail = source(
+    "src/features/students/ui/student-detail-dialog.tsx",
+  );
+  const studentController = source(
+    "src/features/students/controller/use-student-detail-controller.ts",
+  );
   const studentPage = source("src/app/student/(protected)/page.tsx");
 
   it("puts missed deadlines in their own final section", () => {
@@ -41,34 +52,33 @@ describe("mobile production regression UI contract", () => {
   });
 
   it("stacks score and timeline before the student card can overflow", () => {
-    expect(css).toMatch(
-      /@media \(max-width: 960px\)[\s\S]*?\.student-card-score-line\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/,
+    expect(studentDirectory).toContain("hasAttemptScoreContent(");
+    expect(studentDirectory).toContain('data-has-score={hasScore || undefined}');
+    expect(studentDirectoryCss).toMatch(
+      /@media \(max-width: 767px\)[\s\S]*?\.scoreLine\[data-has-score="true"\]\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/,
     );
     const timelineCss = source(
       "src/design-system/patterns/activity-timeline/activity-timeline.module.css",
     );
-    expect(studentManager).toContain('align="end"');
+    expect(studentDirectory).toContain('align="end"');
     expect(timelineCss).toMatch(
       /\.timeline\[data-align="end"\]\s*\{[^}]*justify-items:\s*end;/,
     );
   });
 
   it("shows an existing student's code inside one modal level", () => {
-    expect(studentManager).toContain('<DialogFrame');
-    expect(studentManager).toContain(
-      'onRequestClose={requestStudentDialogClose}',
+    const codePanel = source(
+      "src/features/students/ui/panels/student-code-panel.tsx",
     );
-    expect(studentManager).toContain("shownCode && !selectedStudent");
-    expect(studentManager).toContain("finishClosingCodeDialog");
-    expect(studentManager).toMatch(
-      /shownCode\s*\?\s*finishClosingCodeDialog/,
+    expect(studentDetail.match(/<DialogFrame/g)).toHaveLength(1);
+    expect(studentDetail).toContain(
+      "onRequestClose={controller.actions.requestClose}",
     );
-    expect(studentManager).toContain(
-      '<DialogBody className="student-code-dialog-body student-code-inline-body">',
-    );
-    expect(css).toMatch(
-      /\.student-code-dialog-body \.student-code-value\s*\{[^}]*margin:\s*0;/,
-    );
+    expect(studentDetail).toContain('route.kind === "code"');
+    expect(studentDetail).toContain("<StudentCodePanel controller={controller} />");
+    expect(codePanel).not.toContain("<DialogFrame");
+    expect(studentController).toContain("returnTo: state.route");
+    expect(studentController).toContain("studentDetailBackRoute(state.route)");
   });
 
   it("reserves pronunciation columns only where the visible text is English", () => {

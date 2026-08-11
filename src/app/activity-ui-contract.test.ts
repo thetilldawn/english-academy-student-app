@@ -88,7 +88,10 @@ describe("shared activity UI contract", () => {
       "src/features/assignments/ui/bulk-series-preview.tsx",
     );
     const wordbookHistory = source(
-      "src/components/student-vocab-book-history-list.tsx",
+      "src/features/students/ui/panels/student-vocab-book-history-list.tsx",
+    );
+    const wordbookHistoryCss = source(
+      "src/features/students/ui/panels/student-vocab-book-history-list.module.css",
     );
 
     expect(css).not.toContain(".learning-section-heading span");
@@ -106,8 +109,9 @@ describe("shared activity UI contract", () => {
     expect(bulkDialog).toContain(
       "className={styles.previewSummary}",
     );
-    expect(wordbookHistory).toContain(
-      'className="learning-section-summary"',
+    expect(wordbookHistory).toContain("className={styles.summary}");
+    expect(wordbookHistoryCss).toMatch(
+      /\.summary\s*\{[^}]*color:\s*var\(--text-secondary\);/,
     );
   });
 

@@ -21,8 +21,8 @@ describe("admin deletion UI contract", () => {
     const detailActions = source(
       "src/components/history-detail-actions.tsx",
     );
-    const studentManager = source(
-      "src/components/student-manager.tsx",
+    const studentAccount = source(
+      "src/features/students/ui/panels/student-account-panel.tsx",
     );
     const assignmentPage = source(
       "src/app/admin/(protected)/assignments/page.tsx",
@@ -41,7 +41,7 @@ describe("admin deletion UI contract", () => {
     expect(historyActions).not.toContain("시험 전체 삭제");
     expect(historyActions).toContain("adminHistoryText.actions.delete.action");
     expect(historyCopy).toContain('action: "내역 삭제"');
-    expect(studentManager).toContain("adminStudentsText.account.delete");
+    expect(studentAccount).toContain("adminStudentsText.account.delete");
     expect(studentCopy).toContain('delete: "학생 삭제"');
     expect(learningActivityList).not.toContain("<AdminHistoryActions");
     expect(detailActions).toContain("isStudentAssignmentEditable(item)");
@@ -78,6 +78,9 @@ describe("admin deletion UI contract", () => {
 
   it("태블릿·PC 상태 문구와 배정 버튼 글자색을 보존한다", () => {
     const css = source("src/app/globals.css");
+    const studentDetailCss = source(
+      "src/features/students/ui/student-detail.module.css",
+    );
     const badgeCss = source(
       "src/design-system/primitives/badge/badge.module.css",
     );
@@ -92,8 +95,8 @@ describe("admin deletion UI contract", () => {
     expect(badgeCss).toMatch(
       /\.status\s*\{[\s\S]*?color:\s*var\(--status-fg\);[\s\S]*?white-space:\s*nowrap;/,
     );
-    expect(css).toContain(
-      ".student-management-summary > div > span",
+    expect(studentDetailCss).toMatch(
+      /\.managementSummary\s*>\s*div\s*>\s*span\s*\{[^}]*color:\s*var\(--text-secondary\);/,
     );
     expect(css).not.toContain("span:not(.status-pill)");
     expect(css).not.toContain(

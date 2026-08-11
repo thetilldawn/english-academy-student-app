@@ -9,12 +9,15 @@ function source(relativePath: string) {
 
 describe("admin visual density contract", () => {
   it("does not invent status and score rows when a student has no activity", () => {
-    const studentManager = source("src/components/student-manager.tsx");
+    const studentDirectory = source(
+      "src/features/students/ui/student-directory.tsx",
+    );
     const assignmentManager = source("src/components/assignment-manager.tsx");
 
-    expect(studentManager).toContain("adminStudentsText.card.noHistory");
-    expect(studentManager).toContain("{priorityActivity ? (");
-    expect(studentManager).not.toContain('"시험 기록 없음"');
+    expect(studentDirectory).toContain("adminStudentsText.card.noHistory");
+    expect(studentDirectory).toContain("{activity ? (");
+    expect(studentDirectory).toContain("{hasScore ? (");
+    expect(studentDirectory).not.toContain('"시험 기록 없음"');
     expect(assignmentManager).toContain("nextActivity ? (");
     expect(assignmentManager).toContain(
       "<ActivityStatusTimeline item={nextActivity} />",
@@ -23,16 +26,18 @@ describe("admin visual density contract", () => {
   });
 
   it("groups student context and learning sources instead of mixing tags", () => {
-    const studentManager = source("src/components/student-manager.tsx");
+    const studentDirectory = source(
+      "src/features/students/ui/student-directory.tsx",
+    );
 
-    expect(studentManager).toContain("student-card-profile-tags");
-    expect(studentManager).toContain("student-card-primary-source");
-    expect(studentManager).toContain("student-card-info-row");
-    expect(studentManager).toContain("student-card-source-tags");
-    expect(studentManager).toContain("learningSourceTypeLabel");
-    expect(studentManager).toContain("supplementalSources");
-    expect(studentManager).not.toContain("student-card-next-row");
-    expect(studentManager).not.toContain("주 단어장 ·");
+    expect(studentDirectory).toContain("styles.accountStatuses");
+    expect(studentDirectory).toContain("styles.primarySource");
+    expect(studentDirectory).toContain("styles.infoRow");
+    expect(studentDirectory).toContain("styles.sourceTags");
+    expect(studentDirectory).toContain("learningSourceTypeLabel");
+    expect(studentDirectory).toContain("supplemental");
+    expect(studentDirectory).not.toContain("student-card-next-row");
+    expect(studentDirectory).not.toContain("주 단어장 ·");
   });
 
   it("keeps one action in summary rows and moves mutations into detail", () => {
@@ -70,7 +75,12 @@ describe("admin visual density contract", () => {
   });
 
   it("keeps student assignment inside one modal and uses shared sticky footers", () => {
-    const studentManager = source("src/components/student-manager.tsx");
+    const studentDetail = source(
+      "src/features/students/ui/student-detail-dialog.tsx",
+    );
+    const studentAssignment = source(
+      "src/features/students/ui/panels/student-assignment-panel.tsx",
+    );
     const assignmentManager = source(
       "src/components/assignment-manager.tsx",
     );
@@ -84,9 +94,11 @@ describe("admin visual density contract", () => {
       "src/features/assignments/ui/legacy-review-recovery.tsx",
     );
 
-    expect(studentManager).toContain("embedded");
-    expect(studentManager).toContain("assignmentStudentId ? (");
-    expect(studentManager).not.toContain("studentDialogSuspendedRef");
+    expect(studentDetail).toContain("<StudentAssignmentPanel");
+    expect(studentAssignment).toContain("<SingleAssignmentEditor");
+    expect(studentAssignment).toContain("embedded");
+    expect(studentAssignment).not.toContain("AssignmentManager");
+    expect(studentAssignment).not.toContain("launcherOnly");
     expect(assignmentManager).toContain("<SingleAssignmentEditor");
     expect(singleEditor).toContain("<DialogFooter");
     expect(bulkDialog).toContain("<DialogFooter>");

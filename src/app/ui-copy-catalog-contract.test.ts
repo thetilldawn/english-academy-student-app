@@ -19,7 +19,15 @@ describe("한국어 UI 문구 카탈로그", () => {
     const assignmentSettings = source(
       "src/features/assignments/ui/assignment-settings-fields.tsx",
     );
-    const studentManager = source("src/components/student-manager.tsx");
+    const studentManager = [
+      "src/features/students/ui/student-directory.tsx",
+      "src/features/students/ui/student-detail-dialog.tsx",
+      "src/features/students/ui/panels/student-learning-panel.tsx",
+      "src/features/students/ui/panels/student-account-panel.tsx",
+      "src/features/students/ui/panels/student-code-panel.tsx",
+    ]
+      .map(source)
+      .join("\n");
     const navigation = source("src/components/admin-navigation.tsx");
     const adminRoutes = source("src/lib/ui/admin-routes.ts");
     const history = source(

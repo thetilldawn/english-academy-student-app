@@ -61,10 +61,13 @@ describe("redesign CSS contract", () => {
   });
 
   it("uses a calm color transition without lifting buttons", () => {
+    const studentDetailCss = readCss(
+      "src/features/students/ui/student-detail.module.css",
+    );
     expect(tokensCss).toContain("--motion-standard: 250ms ease-in-out;");
     expect(tokensCss).toContain("--motion-complex: 300ms ease-in-out;");
-    expect(globalsCss).toContain(
-      "animation: learning-view-forward var(--motion-complex) both;",
+    expect(studentDetailCss).toContain(
+      "animation: panel-in var(--motion-standard) both;",
     );
     expect(css).not.toMatch(/\b(?:120|140|240)ms\b|\b0\.25s\b/);
 
@@ -104,8 +107,10 @@ describe("redesign CSS contract", () => {
     );
 
     expect(tokensCss).toContain("--font-krs: var(--font-kr);");
-    expect(globalsCss).toMatch(
-      /\.student-card-name\s*\{[\s\S]*?font-family:\s*var\(--font-kr\);/,
+    expect(
+      readCss("src/features/students/ui/student-directory.module.css"),
+    ).toMatch(
+      /\.cardName\s*\{[\s\S]*?font-family:\s*var\(--font-kr\);/,
     );
     expect(rootLayout).not.toContain("Gowun_Batang");
     expect(rootLayout).not.toContain("--font-serif-kr");
@@ -152,8 +157,10 @@ describe("redesign CSS contract", () => {
   });
 
   it("keeps responsive cards content-sized and student gutters visible", () => {
-    expect(css).toMatch(
-      /\.student-card-grid\s*\{[\s\S]*?align-items:\s*start;/,
+    expect(
+      readCss("src/features/students/ui/student-directory.module.css"),
+    ).toMatch(
+      /\.cardGrid\s*\{[\s\S]*?align-items:\s*start;/,
     );
     expect(css).toMatch(
       /\.assignment-management-list\s*\{[\s\S]*?align-items:\s*start;/,
@@ -167,14 +174,17 @@ describe("redesign CSS contract", () => {
   });
 
   it("uses one aligned student-card row contract without dividers", () => {
-    expect(css).toMatch(
-      /\.student-card-info-row\s*\{[\s\S]*?grid-template-columns:\s*68px minmax\(0, 1fr\);/,
+    const studentDirectoryCss = readCss(
+      "src/features/students/ui/student-directory.module.css",
     );
-    expect(css).not.toMatch(
-      /\.student-card-source-tags\s*\{[^}]*border-top\s*:/,
+    expect(studentDirectoryCss).toMatch(
+      /\.infoRow\s*\{[\s\S]*?grid-template-columns:\s*76px minmax\(0, 1fr\);/,
     );
-    expect(css).not.toMatch(
-      /@media \(max-width: 580px\)\s*\{[^}]*student-card-title-row/,
+    expect(studentDirectoryCss).not.toMatch(
+      /\.sourceTags\s*\{[^}]*border-top\s*:/,
+    );
+    expect(studentDirectoryCss).not.toMatch(
+      /@media \(max-width: 580px\)\s*\{[^}]*cardTitleRow/,
     );
   });
 });

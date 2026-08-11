@@ -144,16 +144,16 @@ const cssMetrics = {
 };
 
 const cssMaximums = {
-  lines: 4819,
-  styleRules: 780,
-  selectorContextKeys: 816,
-  duplicateContextKeys: 132,
-  duplicateExcess: 165,
-  styleDeclarations: 2151,
-  mediaBlocks: 23,
-  mediaConditions: 11,
-  importantDeclarations: 1,
-  trackedSectionMarkers: 6,
+  lines: 2619,
+  styleRules: 416,
+  selectorContextKeys: 416,
+  duplicateContextKeys: 71,
+  duplicateExcess: 83,
+  styleDeclarations: 1219,
+  mediaBlocks: 14,
+  mediaConditions: 6,
+  importantDeclarations: 0,
+  trackedSectionMarkers: 5,
   untrackedTopLevelComments: 0,
 };
 
@@ -163,18 +163,6 @@ const legacyComponents = [
     maxLines: 1200,
     maxFetchCalls: 0,
     maxUseStateCalls: 12,
-  },
-  {
-    path: "src/components/student-manager.tsx",
-    maxLines: 1896,
-    maxFetchCalls: 1,
-    maxUseStateCalls: 23,
-  },
-  {
-    path: "src/components/student-wrong-word-panel.tsx",
-    maxLines: 1141,
-    maxFetchCalls: 4,
-    maxUseStateCalls: 15,
   },
   {
     path: "src/components/quiz-player.tsx",
@@ -215,6 +203,38 @@ const assignmentFeatureContracts = [
     maxUseStateCalls: 0,
   },
 ];
+const studentFeatureContracts = [
+  {
+    path: "src/features/students/controller/use-student-detail-controller.ts",
+    maxLines: 600,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 4,
+  },
+  {
+    path: "src/features/students/domain/student-directory.ts",
+    maxLines: 140,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 0,
+  },
+  {
+    path: "src/features/students/ui/student-directory.tsx",
+    maxLines: 600,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 1,
+  },
+  {
+    path: "src/features/students/ui/student-detail-dialog.tsx",
+    maxLines: 180,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 0,
+  },
+  {
+    path: "src/features/students/ui/panels/student-wrong-word-panel.tsx",
+    maxLines: 1120,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 15,
+  },
+];
 const legacyPaths = new Set(
   legacyComponents.map((contract) => contract.path),
 );
@@ -245,6 +265,10 @@ for (const selector of migratedPrimitiveSelectors) {
 }
 
 for (const retiredPath of [
+  "src/components/student-manager.tsx",
+  "src/components/student-learning-source-list.tsx",
+  "src/components/student-vocab-book-history-list.tsx",
+  "src/components/student-wrong-word-panel.tsx",
   "src/components/bulk-assignment-dialog.tsx",
   "src/components/review-assignment-dialog.tsx",
   "src/components/ui-button.tsx",
@@ -269,6 +293,34 @@ for (const retiredPath of [
 ]) {
   if (fs.existsSync(path.join(rootDirectory, retiredPath))) {
     violations.push(`${retiredPath} should be retired after primitive migration`);
+  }
+}
+
+for (const retiredSelector of [
+  ".student-admin-workspace",
+  ".student-action-",
+  ".student-select-button",
+  ".student-management-",
+  ".student-search-",
+  ".student-create-",
+  ".student-group-",
+  ".student-card",
+  ".student-dialog-",
+  ".student-book-",
+  ".student-progress-",
+  ".student-profile-",
+  ".student-inline-assignment-",
+  ".student-learning-",
+  ".student-vocab-",
+  ".student-code-",
+  ".wrong-word-",
+  ".wrong-attempt-",
+  ".reading-context-status",
+]) {
+  if (css.includes(retiredSelector)) {
+    violations.push(
+      `globals.css retains migrated student selector ${retiredSelector}`,
+    );
   }
 }
 
@@ -370,6 +422,52 @@ const assignmentFeatureMetrics = assignmentFeatureContracts.map((contract) => {
   }
   return measured;
 });
+
+const studentFeatureMetrics = studentFeatureContracts.map((contract) => {
+  const source = read(contract.path);
+  const measured = {
+    path: contract.path,
+    lines: lineCount(source),
+    fetchCalls: count(source, /\bfetch\s*\(/g),
+    useStateCalls: count(source, /\buseState\s*(?:<|\()/g),
+  };
+  for (const [metric, maximum] of [
+    ["lines", contract.maxLines],
+    ["fetchCalls", contract.maxFetchCalls],
+    ["useStateCalls", contract.maxUseStateCalls],
+  ]) {
+    if (measured[metric] > maximum) {
+      violations.push(
+        `${contract.path} ${metric}: ${measured[metric]} > ${maximum}`,
+      );
+    }
+  }
+  return measured;
+});
+
+for (const relativePath of filesUnder(
+  "src/features/students/ui",
+  (candidate) => candidate.endsWith(".tsx") && !candidate.endsWith(".test.tsx"),
+)) {
+  const source = read(relativePath);
+  if (
+    !relativePath.endsWith("student-directory.tsx") &&
+    !relativePath.endsWith("student-wrong-word-panel.tsx") &&
+    lineCount(source) > 300
+  ) {
+    violations.push(`${relativePath} exceeds the 300 line feature UI ceiling`);
+  }
+  if (/\bfetch\s*\(|["']\/api\//.test(source)) {
+    violations.push(`${relativePath} performs transport work inside feature UI`);
+  }
+  if (
+    /\bAssignmentManager\b|\blauncherOnly\b|@\/components\/assignment-manager/.test(
+      source,
+    )
+  ) {
+    violations.push(`${relativePath} nests the retired manager boundary`);
+  }
+}
 
 const assignmentManagerSource = read("src/components/assignment-manager.tsx");
 for (const forbidden of [
@@ -489,6 +587,10 @@ const boundedCssModulePaths = [
     "src/features/history",
     (candidate) => candidate.endsWith(".module.css"),
   ),
+  ...filesUnder(
+    "src/features/students",
+    (candidate) => candidate.endsWith(".module.css"),
+  ),
 ];
 
 for (const relativePath of boundedCssModulePaths) {
@@ -513,6 +615,7 @@ console.log(
       css: cssMetrics,
       legacyComponents: componentMetrics,
       assignmentFeatures: assignmentFeatureMetrics,
+      studentFeatures: studentFeatureMetrics,
     },
     null,
     2,

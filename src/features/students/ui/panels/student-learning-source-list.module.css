@@ -1,15 +1,9 @@
-.managementTabs {
-  max-width: 520px;
-  margin-bottom: 12px;
-}
-
-.studentOverview {
+.list {
   min-width: 0;
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
-
-.sourceRow {
+.row {
   min-width: 0;
   display: flex;
   align-items: center;
@@ -20,21 +14,22 @@
   background: var(--card);
 }
 
-.sourceRow > div {
+.row > div {
   min-width: 0;
   display: grid;
   gap: var(--space-1);
 }
 
-.sourceRow span,
-.sourceRow small {
+.row span,
+.row small {
   color: var(--text-secondary);
   font-size: 11px;
 }
 
-.sourceRow strong {
+.row strong {
   min-width: 0;
   overflow: hidden;
+  color: var(--text-primary);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -51,10 +46,14 @@
   background: var(--ink);
 }
 
-.learningTags {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
+.addButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@media (max-width: 359px) {
+  .row strong {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
 }

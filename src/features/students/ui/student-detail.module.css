@@ -1,0 +1,174 @@
+.headerCopy {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.headerCopy h2,
+.headerCopy p {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.headerCopy p {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.body,
+.codeBody {
+  min-width: 0;
+}
+
+.panel,
+.learningView {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.panel {
+  animation: panel-in var(--motion-standard) both;
+}
+
+.assignmentAction,
+.profileForm {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  background: var(--card);
+}
+
+.assignmentAction {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.assignmentAction > strong {
+  min-width: 0;
+}
+
+.profileForm {
+  justify-items: start;
+}
+
+.profileGrid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  align-items: end;
+}
+
+.wordbookForm {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.sectionHeading h3 {
+  margin: 0;
+}
+
+.managementSummary {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--paper);
+}
+
+.managementSummary > div {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.managementSummary > div > span {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.managementSummary strong {
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.accountActions {
+  justify-content: flex-start;
+}
+
+.codePanel {
+  min-width: 0;
+  width: min(100%, 520px);
+  display: grid;
+  align-self: start;
+  justify-self: center;
+  gap: var(--space-4);
+}
+
+.codeValue {
+  min-width: 0;
+  margin: 0;
+  padding: 18px;
+  border: 1px dashed var(--line);
+  color: var(--text-primary);
+  background: var(--surface);
+  font-size: clamp(22px, 6vw, 30px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.codeActions {
+  display: grid;
+  gap: var(--space-2);
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 768px) {
+  .codeActions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .assignmentAction,
+  .wordbookForm,
+  .profileGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
+  }
+}

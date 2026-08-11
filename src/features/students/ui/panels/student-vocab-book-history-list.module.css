@@ -1,0 +1,89 @@
+.section {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+.headingRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.headingRow h3,
+.summary {
+  margin: 0;
+}
+
+.summary {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.list {
+  max-height: 240px;
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.row {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-2);
+  padding: 10px 12px;
+  border-left: 3px solid var(--line);
+  background: var(--surface);
+}
+
+.row[data-current="true"] {
+  border-left-color: var(--pass);
+}
+
+.itemHeading {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.itemHeading > strong {
+  min-width: 0;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-2) var(--space-3);
+  margin: 0;
+}
+
+.facts > div {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.facts dt {
+  color: var(--text-secondary);
+  font-size: 10.5px;
+}
+
+.facts dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.empty {
+  padding-block: 12px;
+}

@@ -1,0 +1,220 @@
+.createDisclosure {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.createDisclosure > summary {
+  width: 100%;
+  list-style: none;
+}
+
+.createDisclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.createContent {
+  margin-top: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  background: var(--card);
+}
+
+.searchPanel {
+  margin-top: var(--space-3);
+}
+
+.filterSummaryActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.filterSummaryActions > strong {
+  min-width: 36px;
+  font-size: 12px;
+  text-align: right;
+}
+
+.groupPane,
+.cardGrid {
+  min-width: 0;
+  display: grid;
+  align-items: start;
+  gap: var(--space-3);
+}
+
+.groupPane {
+  margin-top: var(--space-4);
+}
+
+.card {
+  position: relative;
+  min-width: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(180px, 0.75fr) minmax(0, 1.25fr);
+  align-items: start;
+  gap: var(--space-4);
+  padding: 14px 16px;
+  border: 0;
+  border-left: 4px solid var(--dim);
+  border-radius: 0;
+  color: var(--text-primary);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    color var(--motion-standard),
+    border-color var(--motion-standard),
+    background-color var(--motion-standard);
+}
+
+.card:hover,
+.card:focus-visible {
+  background: var(--surface);
+}
+
+.card[data-exam-outcome="completed"] {
+  border-left-color: var(--status-success-bg);
+}
+
+.card[data-exam-outcome="retried"] {
+  border-left-color: var(--status-warning-bg);
+}
+
+.card[data-exam-outcome="failed"],
+.card[data-exam-outcome="missed"],
+.card[data-exam-outcome="expired"] {
+  border-left-color: var(--status-danger-bg);
+}
+
+.cardHeading,
+.cardDetails,
+.priority {
+  min-width: 0;
+  display: grid;
+}
+
+.cardHeading {
+  gap: var(--space-2);
+}
+
+.cardTitleRow {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.cardName {
+  min-width: 0;
+  flex: 1 1 160px;
+  color: var(--text-primary);
+  font-family: var(--font-kr);
+  font-size: 17px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.accountStatuses {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+}
+
+.cardDetails {
+  gap: var(--space-2);
+}
+
+.infoRow {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-2);
+}
+
+.infoRow > small {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.primarySource,
+.priority > strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-family: var(--font-kr);
+  font-size: 13px;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sourceTags {
+  min-width: 0;
+  justify-content: flex-start;
+}
+
+.priority {
+  justify-items: start;
+  gap: var(--space-1);
+}
+
+.scoreLine {
+  min-width: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  justify-items: start;
+  gap: var(--space-2);
+}
+
+.scoreLine[data-has-score="true"] {
+  grid-template-columns: minmax(80px, auto) minmax(0, 1fr);
+  align-items: center;
+}
+
+@media (max-width: 767px) {
+  .createContent {
+    padding: var(--space-3);
+  }
+
+  .card {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+    padding: 12px;
+  }
+
+  .infoRow {
+    grid-template-columns: 68px minmax(0, 1fr);
+  }
+
+  .scoreLine[data-has-score="true"] {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+@media (max-width: 359px) {
+  .infoRow {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+
+  .primarySource,
+  .priority > strong {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}

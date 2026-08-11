@@ -77,14 +77,16 @@ describe("assignment editor UI contract", () => {
   });
 
   it("keeps a new vocabulary assignment action available after activity exists", () => {
-    const studentManager = source("src/components/student-manager.tsx");
+    const studentLearning = source(
+      "src/features/students/ui/panels/student-learning-panel.tsx",
+    );
 
     expect(manager).toContain("adminLearningText.page.studentCard.newAssignment");
     expect(manager).toContain('selectStudent(student.id, "assign")');
     expect(
-      studentManager.match(/<StudentVocabularyAssignmentAction/g),
+      studentLearning.match(/<AssignmentAction/g),
     ).toHaveLength(2);
-    expect(studentManager).toContain("openStudentAssignment({");
+    expect(studentLearning).toContain("controller.actions.openAssignment(");
   });
 
   it("explains invalid assignment conditions instead of only disabling submit", () => {

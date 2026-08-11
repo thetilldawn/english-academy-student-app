@@ -27,6 +27,14 @@ import {
   Select,
 } from "@/design-system/primitives/form/field";
 
+import {
+  cancelStudentReviewDraft,
+  createStudentWorksheetRequest,
+  loadStudentWrongWords,
+  queueStudentWrongWords,
+} from "../../api/wrong-word-transport";
+import styles from "./student-wrong-word-panel.module.css";
+
 type LevelFilter = "all" | "once" | "repeated";
 type SelectionPurpose = "next_exam" | "worksheet";
 const WRONG_HISTORY_CACHE_TTL_MS = 30_000;
@@ -187,16 +195,9 @@ export function StudentWrongWordPanel({
     setLoading(true);
     setError("");
 
-    void fetch(`/api/admin/students/${studentId}/wrong-words`, {
-      cache: "no-store",
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        const payload = (await response.json()) as {
-          history?: StudentWrongWordHistory;
-          error?: string;
-        };
-        if (!response.ok || !payload.history) {
+    void loadStudentWrongWords(studentId, controller.signal)
+      .then((payload) => {
+        if (!payload.history) {
           throw new Error(
             payload.error ??
               adminStudentsText.learning.wrongWordsPanel.loadError,
@@ -458,21 +459,11 @@ export function StudentWrongWordPanel({
     setQueueing(true);
 
     try {
-      const response = await fetch(
-        `/api/admin/students/${studentId}/wrong-words`,
-        {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            questionIds: validSelectedQuestionIds,
-          }),
-        },
+      const payload = await queueStudentWrongWords(
+        studentId,
+        validSelectedQuestionIds,
       );
-      const payload = (await response.json()) as {
-        queueIds?: string[];
-        error?: string;
-      };
-      if (!response.ok || !payload.queueIds) {
+      if (!payload.queueIds) {
         throw new Error(
           payload.error ??
             adminStudentsText.learning.wrongWordsPanel.queueError,
@@ -514,29 +505,11 @@ export function StudentWrongWordPanel({
     setWorksheetRequesting(true);
 
     try {
-      const response = await fetch(
-        `/api/admin/students/${studentId}/worksheet-requests`,
-        {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            questionIds: validWorksheetSelectedQuestionIds,
-            curriculumStage: readingCurriculumStage,
-          }),
-        },
-      );
-      const payload = (await response.json()) as {
-        request?: {
-          itemCount: number;
-          reused: boolean;
-        };
-        sync?: {
-          status: "not_configured" | "synced" | "unchanged" | "failed";
-          errorCode?: string;
-        };
-        error?: string;
-      };
-      if (!response.ok || !payload.request || !payload.sync) {
+      const payload = await createStudentWorksheetRequest(studentId, {
+        questionIds: validWorksheetSelectedQuestionIds,
+        curriculumStage: readingCurriculumStage,
+      });
+      if (!payload.request || !payload.sync) {
         throw new Error(
           payload.error ??
             adminStudentsText.learning.wrongWordsPanel.worksheetError,
@@ -600,17 +573,8 @@ export function StudentWrongWordPanel({
 
     setCancellingDraftId(draftId);
     try {
-      const response = await fetch(
-        `/api/admin/students/${studentId}/review-assignment-drafts/${draftId}`,
-        { method: "DELETE" },
-      );
-      const payload = (await response.json()) as {
-        status?: string;
-        queueDisposition?: string;
-        error?: string;
-      };
+      const payload = await cancelStudentReviewDraft(studentId, draftId);
       if (
-        !response.ok ||
         payload.status !== "cancelled" ||
         payload.queueDisposition !== "pending"
       ) {
@@ -639,7 +603,7 @@ export function StudentWrongWordPanel({
     return (
       <section
         aria-busy="true"
-        className="student-dialog-panel empty-state"
+        className={`empty-state ${styles.panel}`}
       >
         {adminStudentsText.learning.wrongWordsPanel.loading}
       </section>
@@ -648,7 +612,7 @@ export function StudentWrongWordPanel({
 
   if (error && !cachedHistory) {
     return (
-      <section className="student-dialog-panel">
+      <section className={styles.panel}>
         <div className="notice notice-error" role="alert">
           {error}
         </div>
@@ -663,15 +627,15 @@ export function StudentWrongWordPanel({
 
   if (!cachedHistory) {
     return (
-      <section className="student-dialog-panel empty-state">
+      <section className={`empty-state ${styles.panel}`}>
         {adminStudentsText.learning.wrongWordsPanel.openToLoad}
       </section>
     );
   }
 
   return (
-    <section className="student-dialog-panel wrong-word-panel">
-      <div className="wrong-word-refresh-row">
+    <section className={styles.panel}>
+      <div className={styles.refreshRow}>
         {loading ? (
           <span>{adminStudentsText.learning.wrongWordsPanel.refreshing}</span>
         ) : (
@@ -700,7 +664,7 @@ export function StudentWrongWordPanel({
           {error}
         </div>
       )}
-      <div className="wrong-word-summary-grid">
+      <div className={styles.summaryGrid}>
         <div>
           <span>{adminStudentsText.learning.wrongWordsPanel.summary.event}</span>
           <strong>
@@ -759,7 +723,7 @@ export function StudentWrongWordPanel({
             {adminStudentsText.learning.wrongWordsPanel.legacyDraftNotice}
           </p>
           {pendingReviewActions.activeDrafts.map((draft) => (
-            <div className="wrong-word-draft-actions" key={draft.draftId}>
+            <div className={styles.draftActions} key={draft.draftId}>
               <span>
                 {formatContentText(
                   adminStudentsText.learning.wrongWordsPanel.draftSummary,
@@ -796,7 +760,7 @@ export function StudentWrongWordPanel({
       )}
 
       <div id="wrong-word-aggregate-panel">
-          <div className="wrong-word-filter-grid">
+          <div className={styles.filterGrid}>
             <Field as="label" >
               <FieldLabel as="span" >
                 {adminStudentsText.learning.wrongWordsPanel.search}
@@ -870,7 +834,7 @@ export function StudentWrongWordPanel({
           </div>
           <div
             aria-label={adminStudentsText.learning.wrongWordsPanel.purposeAria}
-            className="filter-chip-row wrong-word-purpose-row"
+            className="filter-chip-row"
             role="group"
           >
             {(
@@ -905,9 +869,9 @@ export function StudentWrongWordPanel({
                 : adminStudentsText.learning.nextExamWrongWordHelp}
             </HelpTip>
           </div>
-          <div className="wrong-word-selection-bar">
+          <div className={styles.selectionBar}>
             {selectionPurpose === "worksheet" && (
-              <Field as="label" className="wrong-word-curriculum-field">
+              <Field as="label" className={styles.curriculumField}>
                 <FieldLabel as="span" >
                   {
                     adminStudentsText.learning.wrongWordsPanel
@@ -947,14 +911,14 @@ export function StudentWrongWordPanel({
             </Button>
             <span
               aria-live="polite"
-              className="wrong-word-selected-count"
+              className={styles.selectedCount}
             >
               {formatContentText(
                 adminStudentsText.learning.wrongWordsPanel.selectedCount,
                 { count: activeSelectedQuestionIds.length },
               )}
             </span>
-            <div className="wrong-word-selection-actions">
+            <div className={styles.selectionActions}>
               {selectionPurpose === "worksheet" ? (
                 <Button
                   aria-busy={worksheetRequesting}
@@ -995,7 +959,7 @@ export function StudentWrongWordPanel({
             </div>
             {selectionPurpose === "worksheet" && (
               <StatusBadge
-                className="reading-context-status"
+                className={styles.readingContextStatus}
                 tone={
                   readingContextSyncStatus === "synced"
                     ? "success"
@@ -1017,7 +981,7 @@ export function StudentWrongWordPanel({
               {adminStudentsText.learning.wrongWordsPanel.empty}
             </div>
           ) : (
-            <div className="wrong-word-list wrong-word-list-with-actions">
+            <div className={styles.list}>
               {filteredWords.map((word) => {
                 const nextExamTarget = selectionTarget(word, datasetFilter);
                 const worksheetTarget = worksheetSelectionTarget(
@@ -1035,12 +999,12 @@ export function StudentWrongWordPanel({
                   : false;
                 return (
                 <article
-                  className="wrong-word-row"
+                  className={styles.row}
                   data-selected={selected || undefined}
                   data-wrong-level={word.wrongLevel}
                   key={word.key}
                 >
-                  <label className="wrong-word-checkbox">
+                  <label className={styles.checkbox}>
                     <Checkbox
                       checked={selected}
                       disabled={
@@ -1076,7 +1040,7 @@ export function StudentWrongWordPanel({
                       )}
                     </span>
                   </label>
-                  <div className="wrong-word-copy">
+                  <div className={styles.copy}>
                     <strong>{word.headword}</strong>
                     <span>{word.primaryMeaning}</span>
                     <small>
@@ -1091,7 +1055,7 @@ export function StudentWrongWordPanel({
                         .join(" · ")}
                     </small>
                   </div>
-                  <div className="wrong-word-meta">
+                  <div className={styles.meta}>
                     <StatusBadge
                       tone={
                         nextExamTarget?.resolution === "resolved" ||

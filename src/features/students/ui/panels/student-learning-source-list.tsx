@@ -9,6 +9,8 @@ import { IconButton } from "@/design-system/primitives/button/button";
 import { formatContentText } from "@/content/format";
 import { adminStudentsText } from "@/content/ko/admin-students";
 
+import styles from "./student-learning-source-list.module.css";
+
 type LearningView = "vocab" | "passage";
 
 export function StudentLearningSourceList({
@@ -46,13 +48,13 @@ export function StudentLearningSourceList({
       ];
 
   return (
-    <div className="student-learning-source-list">
+    <div className={styles.list}>
       {visibleSources.map((source) => {
         const view = isVocabularyLearningSource(source.sourceType)
           ? "vocab"
           : "passage";
         return (
-          <div className="student-learning-source-row" key={source.id}>
+          <div className={styles.row} key={source.id}>
             <div>
               <span>{learningSourceTypeLabel(source.sourceType)}</span>
               <strong>{source.displayLabel}</strong>
@@ -63,7 +65,7 @@ export function StudentLearningSourceList({
                   adminStudentsText.learning.source.openAria,
                   { type: learningSourceTypeLabel(source.sourceType) },
                 )}
-                className="learning-add-button"
+                className={styles.addButton}
                 onClick={() => onOpen(view, source)}
                 variant="quiet"
               >

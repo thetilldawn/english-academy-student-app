@@ -1,0 +1,578 @@
+"use client";
+
+import { useMemo, useState, type FormEvent } from "react";
+
+import { assignmentDisplayTitle } from "@/lib/admin/history";
+import { studentLearningActivityIndex } from "@/features/history/domain/learning-activity";
+import {
+  buildAttemptStatusPresentation,
+  hasAttemptScoreContent,
+} from "@/features/history/presentation/attempt-presentation";
+import { ActivityStatusTimeline } from "@/features/history/ui/activity-status-timeline";
+import { AttemptScoreSummary } from "@/features/history/ui/attempt-score-summary";
+import { HelpTip, inlineHelpClassName } from "@/design-system/primitives/tooltip/help-tip";
+import {
+  MetaTag,
+  MetaTagList,
+  StatusBadge,
+} from "@/design-system/primitives/badge/badge";
+import {
+  Button,
+  buttonRecipe,
+} from "@/design-system/primitives/button/button";
+import {
+  Field,
+  FieldHelp,
+  FieldLabel,
+  FieldLabelRow,
+  FieldRequirement,
+  Input,
+  Select,
+  Textarea,
+} from "@/design-system/primitives/form/field";
+import { adminStudentsText } from "@/content/ko/admin-students";
+import { commonText } from "@/content/ko/common";
+import { formatContentText } from "@/content/format";
+import {
+  cataloguedDatasetDisplayLabel,
+  groupCataloguedDatasets,
+} from "@/lib/admin/dataset-catalog";
+import { learningSourceTypeLabel } from "@/lib/admin/learning-sources";
+import {
+  indexStudentCurrentVocabWrongSummaries,
+} from "@/lib/admin/wrong-history-summary";
+
+import type { StudentDetailController } from "../controller/use-student-detail-controller";
+import {
+  filterAndSortStudents,
+  indexStudentLearningSources,
+  studentDirectoryFilterOptions,
+} from "../domain/student-directory";
+import type {
+  StudentDirectoryFilters,
+  StudentManagementData,
+} from "../model";
+import styles from "./student-directory.module.css";
+
+const initialFilters: StudentDirectoryFilters = {
+  grade: "",
+  query: "",
+  school: "",
+  wordbook: "",
+  wrong: "all",
+};
+
+function recommendationLabel(
+  progress: StudentManagementData["progress"][number] | null | undefined,
+) {
+  if (progress?.recommendationReason === "complete") {
+    return adminStudentsText.recommendation.complete;
+  }
+  if (progress?.recommendationReason === "manual") {
+    return adminStudentsText.recommendation.manual;
+  }
+  return (
+    progress?.recommendedUnitLabel ??
+    adminStudentsText.recommendation.needsWordbook
+  );
+}
+
+function StudentCreateForm({
+  controller,
+  data,
+}: {
+  controller: StudentDetailController;
+  data: StudentManagementData;
+}) {
+  const datasetGroups = useMemo(
+    () => groupCataloguedDatasets(data.datasets),
+    [data.datasets],
+  );
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void controller.actions.createFromForm(event.currentTarget);
+  }
+
+  return (
+    <details className={styles.createDisclosure}>
+      <summary className={buttonRecipe({ variant: "primary" })}>
+        {adminStudentsText.createStudent.open}
+      </summary>
+      <div className={styles.createContent}>
+        <form
+          aria-busy={controller.busyKey === "create"}
+          className="form-stack"
+          onSubmit={submit}
+        >
+          <Field>
+            <FieldLabelRow>
+              <FieldLabel as="span" className={inlineHelpClassName}>
+                <label htmlFor="create-student-display-name">
+                  {adminStudentsText.createStudent.nameLabel}
+                </label>
+                <HelpTip label={adminStudentsText.createStudent.nameHelpAria}>
+                  {adminStudentsText.createStudent.nameHelp}
+                </HelpTip>
+              </FieldLabel>
+              <FieldRequirement data-kind="required">
+                {adminStudentsText.createStudent.required}
+              </FieldRequirement>
+            </FieldLabelRow>
+            <Input
+              id="create-student-display-name"
+              maxLength={80}
+              name="displayName"
+              placeholder={adminStudentsText.createStudent.namePlaceholder}
+              required
+            />
+          </Field>
+          <div className="form-grid-2">
+            <Field as="label">
+              <FieldLabelRow>
+                <FieldLabel as="span">
+                  {adminStudentsText.createStudent.schoolLabel}
+                </FieldLabel>
+                <FieldRequirement>
+                  {adminStudentsText.createStudent.optional}
+                </FieldRequirement>
+              </FieldLabelRow>
+              <Input
+                maxLength={120}
+                name="schoolName"
+                placeholder={adminStudentsText.createStudent.schoolPlaceholder}
+              />
+            </Field>
+            <Field as="label">
+              <FieldLabelRow>
+                <FieldLabel as="span">
+                  {adminStudentsText.createStudent.gradeLabel}
+                </FieldLabel>
+                <FieldRequirement>
+                  {adminStudentsText.createStudent.optional}
+                </FieldRequirement>
+              </FieldLabelRow>
+              <Input
+                maxLength={40}
+                name="gradeLabel"
+                placeholder={adminStudentsText.createStudent.gradePlaceholder}
+              />
+            </Field>
+          </div>
+          <Field>
+            <FieldLabelRow>
+              <FieldLabel as="span" className={inlineHelpClassName}>
+                <label htmlFor="create-student-vocab-dataset">
+                  {adminStudentsText.createStudent.startingWordbookLabel}
+                </label>
+                <HelpTip
+                  label={adminStudentsText.createStudent.startingWordbookHelpAria}
+                >
+                  {adminStudentsText.createStudent.startingWordbookHelp}
+                </HelpTip>
+              </FieldLabel>
+              <FieldRequirement>
+                {adminStudentsText.createStudent.optional}
+              </FieldRequirement>
+            </FieldLabelRow>
+            <Select
+              defaultValue=""
+              id="create-student-vocab-dataset"
+              name="currentVocabDatasetId"
+            >
+              <option value="">
+                {adminStudentsText.createStudent.chooseLater}
+              </option>
+              {datasetGroups.map((group) => (
+                <optgroup key={group.group} label={group.label}>
+                  {group.datasets.map((dataset) => (
+                    <option key={dataset.id} value={dataset.id}>
+                      {cataloguedDatasetDisplayLabel(dataset)}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </Select>
+            {data.datasets.length === 0 ? (
+              <FieldHelp>
+                {adminStudentsText.createStudent.noWordbookNotice}
+              </FieldHelp>
+            ) : null}
+          </Field>
+          <Field as="label">
+            <FieldLabelRow>
+              <FieldLabel as="span">
+                {adminStudentsText.createStudent.memoLabel}
+              </FieldLabel>
+              <FieldRequirement>
+                {adminStudentsText.createStudent.optional}
+              </FieldRequirement>
+            </FieldLabelRow>
+            <Textarea
+              maxLength={2000}
+              name="note"
+              placeholder={adminStudentsText.createStudent.memoPlaceholder}
+            />
+          </Field>
+          {controller.createError ? (
+            <div className="notice notice-error" role="alert">
+              {controller.createError}
+            </div>
+          ) : null}
+          <Button
+            disabled={controller.interactionBusy}
+            type="submit"
+            variant="primary"
+          >
+            {controller.busyKey === "create"
+              ? adminStudentsText.createStudent.submitting
+              : adminStudentsText.createStudent.submit}
+          </Button>
+        </form>
+      </div>
+    </details>
+  );
+}
+
+function StudentDirectoryFilters({
+  filters,
+  onChange,
+  options,
+  resultCount,
+}: {
+  filters: StudentDirectoryFilters;
+  onChange: (next: StudentDirectoryFilters) => void;
+  options: ReturnType<typeof studentDirectoryFilterOptions>;
+  resultCount: number;
+}) {
+  const filterCount =
+    [filters.school, filters.grade, filters.wordbook].filter(Boolean).length +
+    (filters.wrong === "all" ? 0 : 1);
+  const wrongLabel =
+    filters.wrong === "wrong"
+      ? commonText.filters.hasWrong
+      : filters.wrong === "repeated"
+        ? commonText.filters.repeatedWrong
+        : commonText.filters.retryNeeded;
+
+  return (
+    <div className={`learning-search-panel ${styles.searchPanel}`}>
+      <label className="learning-search-field">
+        <span aria-hidden="true" className="learning-search-icon">
+          <svg viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="6" />
+            <path d="m16 16 4 4" />
+          </svg>
+        </span>
+        <span className="sr-only">
+          {adminStudentsText.page.searchAriaLabel}
+        </span>
+        <Input
+          leadingAdornment
+          onChange={(event) =>
+            onChange({ ...filters, query: event.target.value })
+          }
+          placeholder={adminStudentsText.page.searchPlaceholder}
+          type="search"
+          value={filters.query}
+        />
+      </label>
+      <details className="learning-filter-disclosure">
+        <summary>
+          <span>{adminStudentsText.page.filterButton}</span>
+          <span className="detail-chip">{filterCount}</span>
+        </summary>
+        <div className="learning-filter-groups">
+          <fieldset>
+            <legend>{commonText.filters.wrongAvailability}</legend>
+            <div className="filter-chip-row">
+              {(
+                [
+                  ["all", commonText.filters.all],
+                  ["wrong", commonText.filters.hasWrong],
+                  ["repeated", commonText.filters.repeatedWrong],
+                  ["retry", commonText.filters.retryNeeded],
+                ] as const
+              ).map(([value, label]) => (
+                <Button
+                  aria-pressed={filters.wrong === value}
+                  key={value}
+                  onClick={() => onChange({ ...filters, wrong: value })}
+                  size="small"
+                  variant="filter"
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+          </fieldset>
+          {(
+            [
+              ["school", commonText.filters.bySchool, options.schools],
+              ["grade", commonText.filters.byGrade, options.grades],
+              ["wordbook", commonText.filters.byWordbook, options.wordbooks],
+            ] as const
+          ).map(([field, label, values]) => (
+            <fieldset key={field}>
+              <legend>{label}</legend>
+              <div className="filter-chip-row">
+                {values.map((value) => (
+                  <Button
+                    aria-pressed={filters[field] === value}
+                    key={value}
+                    onClick={() =>
+                      onChange({
+                        ...filters,
+                        [field]: filters[field] === value ? "" : value,
+                      })
+                    }
+                    size="small"
+                    variant="filter"
+                  >
+                    {value}
+                  </Button>
+                ))}
+              </div>
+            </fieldset>
+          ))}
+        </div>
+      </details>
+      <div className="learning-filter-summary">
+        <MetaTagList>
+          {filters.school ? <MetaTag>{filters.school}</MetaTag> : null}
+          {filters.grade ? <MetaTag>{filters.grade}</MetaTag> : null}
+          {filters.wordbook ? <MetaTag>{filters.wordbook}</MetaTag> : null}
+          {filters.wrong !== "all" ? (
+            <MetaTag tone="warning">{wrongLabel}</MetaTag>
+          ) : null}
+        </MetaTagList>
+        <div className={styles.filterSummaryActions}>
+          <strong>
+            {formatContentText(commonText.filters.studentCount, {
+              count: resultCount,
+            })}
+          </strong>
+          <Button
+            disabled={filterCount === 0}
+            onClick={() => onChange({ ...initialFilters, query: filters.query })}
+            size="small"
+            variant="quiet"
+          >
+            {adminStudentsText.page.resetFilters}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function StudentDirectory({
+  controller,
+  data,
+}: {
+  controller: StudentDetailController;
+  data: StudentManagementData;
+}) {
+  const [filters, setFilters] = useState(initialFilters);
+  const activitiesByStudent = useMemo(
+    () => studentLearningActivityIndex(data.currentHistory),
+    [data.currentHistory],
+  );
+  const currentWrongIndex = useMemo(
+    () =>
+      indexStudentCurrentVocabWrongSummaries(
+        data.currentVocabWrongSummaries,
+      ),
+    [data.currentVocabWrongSummaries],
+  );
+  const learningSourcesByStudent = useMemo(
+    () => indexStudentLearningSources(data.learningSources),
+    [data.learningSources],
+  );
+  const filterOptions = useMemo(
+    () => studentDirectoryFilterOptions(data.students, data.learningSources),
+    [data.learningSources, data.students],
+  );
+  const students = useMemo(
+    () =>
+      filterAndSortStudents({
+        activitiesByStudent,
+        currentWrongIndex,
+        filters,
+        learningSourcesByStudent,
+        students: data.students,
+      }),
+    [
+      activitiesByStudent,
+      currentWrongIndex,
+      filters,
+      learningSourcesByStudent,
+      data.students,
+    ],
+  );
+  const progressByStudent = useMemo(
+    () => new Map(data.progress.map((item) => [item.studentId, item])),
+    [data.progress],
+  );
+
+  return (
+    <>
+      <StudentCreateForm controller={controller} data={data} />
+      <StudentDirectoryFilters
+        filters={filters}
+        onChange={setFilters}
+        options={filterOptions}
+        resultCount={students.length}
+      />
+      <section className={styles.groupPane}>
+        {students.length === 0 ? (
+          <div className="empty-state">{adminStudentsText.page.noMatches}</div>
+        ) : (
+          <div className={styles.cardGrid}>
+            {students.map((student) => {
+              const progress = progressByStudent.get(student.id);
+              const activity = activitiesByStudent.get(student.id)?.[0] ?? null;
+              const presentation = buildAttemptStatusPresentation({
+                finalScore: activity?.finalScore,
+                initialScore: activity?.initialScore,
+                passed: activity?.passed,
+                passingScore: activity?.passingScore,
+                phase: activity?.phase ?? null,
+                retryStartedAt: activity?.retryStartedAt,
+                status: activity?.status ?? null,
+              });
+              const hasScore = activity
+                ? hasAttemptScoreContent(
+                    {
+                      finalScore: activity.finalScore,
+                      initialScore: activity.initialScore,
+                      passed: activity.passed,
+                      passingScore: activity.passingScore,
+                      phase: activity.phase,
+                      retryStartedAt: activity.retryStartedAt,
+                      status: activity.status,
+                    },
+                    { compact: true },
+                  )
+                : false;
+              const supplemental = (
+                learningSourcesByStudent.get(student.id) ?? []
+              )
+                .filter((source) => source.sourceType !== "primary_vocab")
+                .map((source) => ({
+                  key: source.id,
+                  label: `${learningSourceTypeLabel(source.sourceType)} · ${source.displayLabel}`,
+                }));
+              const primary =
+                student.currentVocabBook ?? adminStudentsText.card.wordbookMissing;
+              const activityTitle = activity
+                ? assignmentDisplayTitle(activity)
+                : "";
+              return (
+                <button
+                  className={styles.card}
+                  data-exam-outcome={activity ? presentation.outcome : undefined}
+                  key={student.id}
+                  onClick={() => controller.actions.openStudent(student)}
+                  type="button"
+                >
+                  <span className={styles.cardHeading}>
+                    <span className={styles.cardTitleRow}>
+                      <strong className={styles.cardName}>
+                        {student.displayName}
+                      </strong>
+                      <span className={styles.accountStatuses}>
+                        <StatusBadge
+                          tone={student.status === "active" ? "success" : "danger"}
+                        >
+                          {student.status === "active"
+                            ? adminStudentsText.card.active
+                            : adminStudentsText.card.blocked}
+                        </StatusBadge>
+                        {student.codeStatus === "expired" ? (
+                          <StatusBadge tone="danger">
+                            {adminStudentsText.card.codeExpired}
+                          </StatusBadge>
+                        ) : null}
+                      </span>
+                    </span>
+                    <MetaTagList>
+                      <MetaTag>
+                        {student.schoolName ?? adminStudentsText.card.schoolMissing}
+                      </MetaTag>
+                      <MetaTag>
+                        {student.gradeLabel ?? adminStudentsText.card.gradeMissing}
+                      </MetaTag>
+                    </MetaTagList>
+                  </span>
+                  <span className={styles.cardDetails}>
+                    <span className={styles.infoRow}>
+                      <small>{adminStudentsText.card.recentWordbook}</small>
+                      <strong className={styles.primarySource} title={primary}>
+                        {primary}
+                      </strong>
+                    </span>
+                    {supplemental.length > 0 ? (
+                      <span className={styles.infoRow}>
+                        <small>{adminStudentsText.card.learningMaterials}</small>
+                        <MetaTagList className={styles.sourceTags}>
+                          {supplemental.slice(0, 2).map((source) => (
+                            <MetaTag key={source.key}>{source.label}</MetaTag>
+                          ))}
+                          {supplemental.length > 2 ? (
+                            <MetaTag>+{supplemental.length - 2}</MetaTag>
+                          ) : null}
+                        </MetaTagList>
+                      </span>
+                    ) : null}
+                    <span className={styles.infoRow}>
+                      <small>{adminStudentsText.card.nextRange}</small>
+                      <MetaTag tone="warning">
+                        {recommendationLabel(progress)}
+                      </MetaTag>
+                    </span>
+                    <span className={styles.infoRow}>
+                      <small>{adminStudentsText.card.priority}</small>
+                      <span className={styles.priority}>
+                        {activity?.primaryUnitLabels[0] ?? activity?.unitLabels[0] ? (
+                          <MetaTag>
+                            {activity?.primaryUnitLabels[0] ?? activity?.unitLabels[0]}
+                          </MetaTag>
+                        ) : null}
+                        {activityTitle ? (
+                          <strong>{activityTitle}</strong>
+                        ) : activity ? null : (
+                          <strong>{adminStudentsText.card.noHistory}</strong>
+                        )}
+                        {activity ? (
+                          <span
+                            className={styles.scoreLine}
+                            data-has-score={hasScore || undefined}
+                          >
+                            {hasScore ? (
+                              <AttemptScoreSummary
+                                compact
+                                finalScore={activity.finalScore}
+                                initialScore={activity.initialScore}
+                                passed={activity.passed}
+                                passingScore={activity.passingScore}
+                                phase={activity.phase}
+                                retryStartedAt={activity.retryStartedAt}
+                                status={activity.status}
+                              />
+                            ) : null}
+                            <ActivityStatusTimeline align="end" item={activity} />
+                          </span>
+                        ) : null}
+                      </span>
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    </>
+  );
+}

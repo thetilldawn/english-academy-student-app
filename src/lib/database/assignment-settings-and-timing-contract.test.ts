@@ -90,14 +90,19 @@ describe("assignment order and timing database contract", () => {
 
 describe("Kakao code sharing contract", () => {
   it("uses Kakao Talk SDK and keeps explicit message copy fallback", () => {
-    const manager = source("src/components/student-manager.tsx");
+    const codePanel = source(
+      "src/features/students/ui/panels/student-code-panel.tsx",
+    );
+    const controller = source(
+      "src/features/students/controller/use-student-detail-controller.ts",
+    );
     const kakao = source("src/lib/kakao-share.ts");
     const copy = source("src/content/ko/admin-students.ts");
 
-    expect(manager).toContain("adminStudentsText.codeModal.sendKakao");
+    expect(codePanel).toContain("adminStudentsText.codeModal.sendKakao");
     expect(copy).toContain('sendKakao: "카카오톡으로 보내기"');
-    expect(manager).not.toContain("navigator.share");
-    expect(manager).toContain("navigator.clipboard.writeText(message)");
+    expect(controller).not.toContain("navigator.share");
+    expect(controller).toContain("navigator.clipboard.writeText(message)");
     expect(kakao).toContain("kakao.Share");
     expect(kakao).toContain("NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY");
     expect(kakao).toContain("objectType: \"text\"");

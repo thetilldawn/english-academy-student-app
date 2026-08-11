@@ -1034,8 +1034,8 @@ export function AssignmentManager({
           </DialogHeader> : null}
           {dialogView === "overview" ? (
             <AssignmentDialogBody embedded={embedded}>
-              <section className="student-learning-overview">
-                <div className="student-learning-source-row">
+              <section className={styles.studentOverview}>
+                <div className={styles.sourceRow}>
                   <div>
                     <span>
                       {adminLearningText.assignmentModal.overview.recentWordbook}
@@ -1050,7 +1050,7 @@ export function AssignmentManager({
                       adminLearningText.assignmentModal.overview
                         .openAssignmentAria
                     }
-                    className="learning-add-button"
+                    className={styles.addButton}
                     disabled={readyDatasets.length === 0}
                     onClick={() => setDialogView("assign")}
                     variant="quiet"
@@ -1059,7 +1059,7 @@ export function AssignmentManager({
                   </IconButton>
                 </div>
                 {selectedLearningSources.length > 0 ? (
-                  <div className="student-learning-tags">
+                  <div className={styles.learningTags}>
                     <MetaTagList>
                       {selectedLearningSources.map((source) => (
                         <MetaTag
@@ -1077,7 +1077,7 @@ export function AssignmentManager({
                     </MetaTagList>
                   </div>
                 ) : null}
-                <div className="student-learning-tags">
+                <div className={styles.learningTags}>
                   <MetaTagList>
                     <MetaTag tone="warning">
                       {formatContentText(

@@ -310,8 +310,165 @@ type StudentCodeRow = {
   expires_at: string | null;
 };
 
+type DatasetSummaryRow = DatasetLabelRow & {
+  dataset_key: string;
+  row_count: number;
+  status: DatasetSummary["status"];
+  is_active: boolean;
+};
+
+type StudentLearningSourceRow = {
+  id: string;
+  student_id: string;
+  source_type: StudentLearningSourceSummary["sourceType"];
+  vocab_dataset_id: string | null;
+  display_label: string;
+  range_metadata: unknown;
+  sort_order: number;
+};
+
 function oneRelation<T>(value: T | T[] | null): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : value;
+}
+
+function datasetDisplayLabelMap(
+  datasets: readonly DatasetLabelRow[],
+  catalogByDatasetId: ReadonlyMap<string, DatasetCatalogRow>,
+) {
+  return new Map(
+    datasets.map((dataset) => [
+      dataset.id,
+      cataloguedDatasetDisplayLabel(
+        cataloguedDataset(dataset, catalogByDatasetId.get(dataset.id)),
+      ),
+    ]),
+  );
+}
+
+function mapStudentSummaries(
+  students: readonly StudentRow[],
+  codes: readonly StudentCodeRow[],
+  datasetLabelById: ReadonlyMap<string, string>,
+  now = Date.now(),
+): StudentSummary[] {
+  const codeByStudent = new Map(
+    codes.map((code) => [
+      code.student_id,
+      code.status === "active" &&
+      code.expires_at !== null &&
+      Date.parse(code.expires_at) <= now
+        ? ("expired" as const)
+        : code.status,
+    ]),
+  );
+
+  return students.map((student) => ({
+    id: student.id,
+    displayName: student.display_name,
+    schoolName: student.school_name,
+    gradeLabel: student.grade_label,
+    currentVocabBook:
+      (student.current_vocab_dataset_id
+        ? datasetLabelById.get(student.current_vocab_dataset_id)
+        : null) ??
+      (student.current_vocab_book
+        ? storedDatasetDisplayLabel(student.current_vocab_book)
+        : null),
+    currentVocabDatasetId: student.current_vocab_dataset_id,
+    readingCurriculumStage: student.reading_curriculum_stage,
+    readingContextSyncStatus: student.reading_context_sync_status,
+    status: student.status,
+    codeGeneration: student.code_generation,
+    codeStatus: codeByStudent.get(student.id) ?? "missing",
+    createdAt: student.created_at,
+  }));
+}
+
+function mapStudentLearningSourceSummaries(
+  sources: readonly StudentLearningSourceRow[],
+  datasetLabelById: ReadonlyMap<string, string>,
+): StudentLearningSourceSummary[] {
+  return sources.map((source) => ({
+    id: source.id,
+    studentId: source.student_id,
+    sourceType: source.source_type,
+    vocabDatasetId: source.vocab_dataset_id,
+    displayLabel:
+      (source.vocab_dataset_id &&
+        datasetLabelById.get(source.vocab_dataset_id)) ||
+      storedDatasetDisplayLabel(source.display_label),
+    rangeMetadata:
+      source.range_metadata &&
+      typeof source.range_metadata === "object" &&
+      !Array.isArray(source.range_metadata)
+        ? (source.range_metadata as Record<string, unknown>)
+        : {},
+    sortOrder: source.sort_order,
+  }));
+}
+
+function mapDatasetSummaries(
+  datasets: readonly DatasetSummaryRow[],
+  catalogByDatasetId: ReadonlyMap<string, DatasetCatalogRow>,
+): DatasetSummary[] {
+  return datasets
+    .map((dataset) => ({
+      ...cataloguedDataset(dataset, catalogByDatasetId.get(dataset.id)),
+      datasetKey: dataset.dataset_key,
+      rowCount: dataset.row_count,
+      status: dataset.status,
+      isActive: dataset.is_active,
+    }))
+    .toSorted(compareCataloguedDatasets);
+}
+
+export function toSelectableDatasetOptions(
+  datasets: readonly DatasetSummary[],
+): DatasetOption[] {
+  return datasets
+    .filter(
+      (dataset) =>
+        dataset.status === "ready" &&
+        dataset.isActive &&
+        dataset.isAssignable,
+    )
+    .map(toDatasetOption);
+}
+
+function toDatasetOption(dataset: CataloguedDataset): DatasetOption {
+  const {
+    id,
+    title,
+    edition,
+    displayName,
+    catalogGroup,
+    materialKind,
+    gradeCode,
+    publisher,
+    seriesTitle,
+    academicYear,
+    curriculumRevision,
+    editionLabel,
+    isAssignable,
+    catalogSortIndex,
+  } = dataset;
+
+  return {
+    id,
+    title,
+    edition,
+    displayName,
+    catalogGroup,
+    materialKind,
+    gradeCode,
+    publisher,
+    seriesTitle,
+    academicYear,
+    curriculumRevision,
+    editionLabel,
+    isAssignable,
+    catalogSortIndex,
+  };
 }
 
 export async function listStudents(): Promise<StudentSummary[]> {
@@ -339,48 +496,15 @@ export async function listStudents(): Promise<StudentSummary[]> {
     throw new Error("학생 목록을 불러오지 못했습니다.");
   }
 
-  const codeByStudent = new Map(
-    ((codeData ?? []) as StudentCodeRow[]).map((code) => [
-      code.student_id,
-      code.status === "active" &&
-      code.expires_at !== null &&
-      Date.parse(code.expires_at) <= Date.now()
-        ? ("expired" as const)
-        : code.status,
-    ]),
+  const datasetLabelById = datasetDisplayLabelMap(
+    (datasetData ?? []) as DatasetLabelRow[],
+    catalogByDatasetId,
   );
-  const datasetById = new Map(
-    ((datasetData ?? []) as DatasetLabelRow[]).map((dataset) => [
-      dataset.id,
-      cataloguedDatasetDisplayLabel(
-        cataloguedDataset(
-          dataset,
-          catalogByDatasetId.get(dataset.id),
-        ),
-      ),
-    ]),
+  return mapStudentSummaries(
+    (studentData ?? []) as StudentRow[],
+    (codeData ?? []) as StudentCodeRow[],
+    datasetLabelById,
   );
-
-  return ((studentData ?? []) as StudentRow[]).map((student) => ({
-    id: student.id,
-    displayName: student.display_name,
-    schoolName: student.school_name,
-    gradeLabel: student.grade_label,
-    currentVocabBook:
-      (student.current_vocab_dataset_id
-        ? datasetById.get(student.current_vocab_dataset_id)
-        : null) ??
-      (student.current_vocab_book
-        ? storedDatasetDisplayLabel(student.current_vocab_book)
-        : null),
-    currentVocabDatasetId: student.current_vocab_dataset_id,
-    readingCurriculumStage: student.reading_curriculum_stage,
-    readingContextSyncStatus: student.reading_context_sync_status,
-    status: student.status,
-    codeGeneration: student.code_generation,
-    codeStatus: codeByStudent.get(student.id) ?? "missing",
-    createdAt: student.created_at,
-  }));
 }
 
 export async function listStudentLearningSources(): Promise<
@@ -407,35 +531,103 @@ export async function listStudentLearningSources(): Promise<
   if (error || datasetError) {
     throw new Error("학생 학습 자료를 불러오지 못했습니다.");
   }
-  const datasetById = new Map(
-    ((datasetData ?? []) as DatasetLabelRow[]).map((dataset) => [
-      dataset.id,
-      cataloguedDatasetDisplayLabel(
-        cataloguedDataset(
-          dataset,
-          catalogByDatasetId.get(dataset.id),
-        ),
+  const datasetLabelById = datasetDisplayLabelMap(
+    (datasetData ?? []) as DatasetLabelRow[],
+    catalogByDatasetId,
+  );
+  return mapStudentLearningSourceSummaries(
+    (data ?? []) as StudentLearningSourceRow[],
+    datasetLabelById,
+  );
+}
+
+export async function loadStudentDirectoryBundle(): Promise<{
+  students: StudentSummary[];
+  allDatasets: DatasetSummary[];
+  selectableDatasets: DatasetOption[];
+  learningSources: StudentLearningSourceSummary[];
+}> {
+  await requireAdmin();
+  const supabase = await createServerSupabaseClient();
+  const [
+    studentResult,
+    codeResult,
+    learningSourceResult,
+    datasetResult,
+    catalogResult,
+  ] = await Promise.all([
+    supabase
+      .from("students")
+      .select(
+        "id, display_name, school_name, grade_label, current_vocab_book, current_vocab_dataset_id, reading_curriculum_stage, reading_context_sync_status, status, code_generation, created_at",
+      )
+      .is("deleted_at", null)
+      .order("display_name"),
+    supabase.from("student_codes").select("student_id, status, expires_at"),
+    supabase
+      .from("student_learning_sources")
+      .select(
+        "id, student_id, source_type, vocab_dataset_id, display_label, range_metadata, sort_order",
+      )
+      .eq("active", true)
+      .order("sort_order")
+      .order("created_at"),
+    supabase
+      .from("vocab_datasets")
+      .select("id, dataset_key, title, edition, row_count, status, is_active")
+      .order("title"),
+    supabase
+      .from("vocab_dataset_catalog")
+      .select(
+        "dataset_id, display_name, catalog_group, material_kind, grade_code, publisher, series_title, academic_year, curriculum_revision, edition_label, is_assignable, sort_index",
       ),
+  ]);
+
+  if (studentResult.error) {
+    throw new Error("학생 목록을 불러오지 못했습니다.");
+  }
+  if (codeResult.error) {
+    throw new Error("학생 접속 상태를 불러오지 못했습니다.");
+  }
+  if (learningSourceResult.error) {
+    throw new Error("학생 학습 자료를 불러오지 못했습니다.");
+  }
+  if (datasetResult.error) {
+    throw new Error("단어장 목록을 불러오지 못했습니다.");
+  }
+  if (catalogResult.error) {
+    throw new Error("단어장 분류 정보를 불러오지 못했습니다.");
+  }
+
+  const catalogByDatasetId = new Map(
+    ((catalogResult.data ?? []) as DatasetCatalogRow[]).map((catalog) => [
+      catalog.dataset_id,
+      catalog,
     ]),
   );
-  return (data ?? []).map((source) => ({
-    id: source.id as string,
-    studentId: source.student_id as string,
-    sourceType:
-      source.source_type as StudentLearningSourceSummary["sourceType"],
-    vocabDatasetId: (source.vocab_dataset_id as string | null) ?? null,
-    displayLabel:
-      ((source.vocab_dataset_id as string | null) &&
-        datasetById.get(source.vocab_dataset_id as string)) ||
-      storedDatasetDisplayLabel(source.display_label as string),
-    rangeMetadata:
-      source.range_metadata &&
-      typeof source.range_metadata === "object" &&
-      !Array.isArray(source.range_metadata)
-        ? (source.range_metadata as Record<string, unknown>)
-        : {},
-    sortOrder: source.sort_order as number,
-  }));
+  const datasetRows = (datasetResult.data ?? []) as DatasetSummaryRow[];
+  const allDatasets = mapDatasetSummaries(
+    datasetRows,
+    catalogByDatasetId,
+  );
+  const datasetLabelById = datasetDisplayLabelMap(
+    datasetRows,
+    catalogByDatasetId,
+  );
+
+  return {
+    students: mapStudentSummaries(
+      (studentResult.data ?? []) as StudentRow[],
+      (codeResult.data ?? []) as StudentCodeRow[],
+      datasetLabelById,
+    ),
+    allDatasets,
+    selectableDatasets: toSelectableDatasetOptions(allDatasets),
+    learningSources: mapStudentLearningSourceSummaries(
+      (learningSourceResult.data ?? []) as StudentLearningSourceRow[],
+      datasetLabelById,
+    ),
+  };
 }
 
 export async function createStudent(input: {
@@ -669,18 +861,10 @@ export async function listDatasets(): Promise<DatasetSummary[]> {
     throw new Error("어휘 데이터셋을 불러오지 못했습니다.");
   }
 
-  return (data ?? [])
-    .map((dataset) => ({
-      ...cataloguedDataset(
-        dataset,
-        catalogByDatasetId.get(dataset.id),
-      ),
-      datasetKey: dataset.dataset_key,
-      rowCount: dataset.row_count,
-      status: dataset.status,
-      isActive: dataset.is_active,
-    }))
-    .toSorted(compareCataloguedDatasets);
+  return mapDatasetSummaries(
+    (data ?? []) as DatasetSummaryRow[],
+    catalogByDatasetId,
+  );
 }
 
 const REVIEW_DATASET_LIMIT = 3;
@@ -760,12 +944,10 @@ export async function listSelectableDatasets(): Promise<DatasetOption[]> {
 
   return (data ?? [])
     .map((dataset) =>
-      cataloguedDataset(
-        dataset,
-        catalogByDatasetId.get(dataset.id),
-      ),
+      cataloguedDataset(dataset, catalogByDatasetId.get(dataset.id)),
     )
     .filter((dataset) => dataset.isAssignable)
+    .map(toDatasetOption)
     .toSorted(compareCataloguedDatasets);
 }
 
