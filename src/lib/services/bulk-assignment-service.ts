@@ -19,7 +19,7 @@ import {
   type AdminContext,
 } from "@/lib/auth/admin";
 import {
-  listAssignmentHistory,
+  listAssignmentHistoryBundle,
   listDatasets,
   listStudents,
   listVocabUnits,
@@ -184,11 +184,11 @@ export async function previewBulkAssignments(
   authenticatedAdmin?: AdminContext,
 ): Promise<BulkAssignmentPreview> {
   const admin = authenticatedAdmin ?? (await requireAdmin());
-  const [students, datasets, units, history] = await Promise.all([
+  const [students, datasets, units, historyBundle] = await Promise.all([
     listStudents(),
     listDatasets(),
     listVocabUnits(),
-    listAssignmentHistory(),
+    listAssignmentHistoryBundle(),
   ]);
   const studentById = new Map(
     students.map((student) => [student.id, student]),
@@ -203,10 +203,9 @@ export async function previewBulkAssignments(
     unitsByDataset.set(unit.datasetId, datasetUnits);
   }
   const progressByStudent = new Map(
-    buildStudentProgress(students, units, history).map((item) => [
-      item.studentId,
-      item,
-    ]),
+    buildStudentProgress(students, units, historyBundle.completeHistory).map(
+      (item) => [item.studentId, item],
+    ),
   );
   const schedule = resolveBulkAssignmentSchedule(input);
 

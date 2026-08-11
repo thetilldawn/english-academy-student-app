@@ -45,7 +45,7 @@ export async function loadStudentManagementData(): Promise<
     progress: buildStudentProgress(
       directory.students,
       assignmentUnits,
-      history,
+      historyBundle.completeHistory,
     ),
     students: directory.students,
     vocabBookHistory: buildStudentVocabBookHistory(

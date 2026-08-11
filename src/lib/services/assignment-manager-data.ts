@@ -33,7 +33,11 @@ export async function loadAssignmentManagerData() {
     students,
     units,
     history: historyBundle.currentHistory,
-    progress: buildStudentProgress(students, units, historyBundle.history),
+    progress: buildStudentProgress(
+      students,
+      units,
+      historyBundle.completeHistory,
+    ),
     pendingReviewSummaries,
     currentVocabWrongSummaries,
     learningSources,
