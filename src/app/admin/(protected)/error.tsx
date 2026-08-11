@@ -6,6 +6,7 @@ import { getErrorReference } from "@/lib/observability/error-reference";
 import { Button } from "@/design-system/primitives/button/button";
 import { commonText } from "@/content/ko/common";
 import { adminShellText } from "@/content/ko/admin-shell";
+import styles from "./route-state.module.css";
 
 export default function AdminError({
   error,
@@ -27,14 +28,14 @@ export default function AdminError({
   }, [errorReference]);
 
   return (
-    <section className="card admin-error-state" role="alert">
-      <p className="eyebrow">{commonText.errorBoundary.eyebrow}</p>
+    <section className={styles.error} role="alert">
+      <p className={styles.eyebrow}>{commonText.errorBoundary.eyebrow}</p>
       <h1>{commonText.errorBoundary.title}</h1>
       <p>
         {adminShellText.errorBoundary.safeDescription}
       </p>
       {errorReference ? (
-        <p className="error-reference">
+        <p className={styles.reference}>
           {commonText.errorBoundary.referenceLabel}{" "}
           <code>{errorReference}</code>
         </p>

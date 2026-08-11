@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { StudentLoginForm } from "@/components/student-login-form";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { studentAppText } from "@/content/ko/student-app";
+import styles from "@/design-system/patterns/auth/auth-layout.module.css";
 import { getStudentSession } from "@/lib/auth/student-session";
 
 export const dynamic = "force-dynamic";
@@ -14,22 +15,22 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="landing-shell" id="main-content">
-      <section className="landing-card">
+    <main className={styles.landingShell} id="main-content">
+      <section className={styles.landingCard}>
         <ThemeToggle placement="auth" />
-        <div className="brand-lockup">
-          <span className="brand-mark" aria-hidden="true">
+        <div className={styles.brandLockup}>
+          <span className={styles.brandMark} aria-hidden="true">
             E
           </span>
           <div>
-            <p className="eyebrow">{studentAppText.landing.eyebrow}</p>
+            <p className={styles.eyebrow}>{studentAppText.landing.eyebrow}</p>
             <h1>{studentAppText.landing.title}</h1>
           </div>
         </div>
 
-        <div className="landing-auth">
+        <div className={styles.landingAuth}>
           <StudentLoginForm />
-          <Link className="landing-admin-link" href="/admin/login">
+          <Link className={styles.adminLink} href="/admin/login">
             {studentAppText.landing.adminLink}
           </Link>
         </div>

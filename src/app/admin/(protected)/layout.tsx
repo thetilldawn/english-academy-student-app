@@ -61,18 +61,20 @@ export default async function AdminProtectedLayout({
             />
             <div className={shellStyles.topbarActions}>
               <ThemeToggle />
-              <span
-                className={[shellStyles.userLabel, shellStyles.adminTopbarUser].join(" ")}
-              >
-                {admin.displayName}
-              </span>
-              <AdminLogoutButton />
+              <div className={shellStyles.adminTopbarSession}>
+                <span
+                  className={[shellStyles.userLabel, shellStyles.adminTopbarUser].join(" ")}
+                >
+                  {admin.displayName}
+                </span>
+                <AdminLogoutButton />
+              </div>
             </div>
           </div>
         </header>
 
         <main
-          className={["content", shellStyles.adminContent].join(" ")}
+          className={shellStyles.adminContent}
           id="main-content"
         >
           {children}

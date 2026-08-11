@@ -1,6 +1,7 @@
 import { CountBadge } from "@/design-system/primitives/badge/badge";
 import { adminOverviewText } from "@/content/ko/admin-overview";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
+import { EmptyState } from "@/design-system/patterns/feedback/feedback";
 
 import { HistoryRows } from "./history-rows";
 import styles from "./overview-action-groups.module.css";
@@ -24,7 +25,7 @@ export function OverviewActionGroups({
           className={styles.section}
           key={section.id}
         >
-          <div className="section-heading">
+          <div className={styles.heading}>
             <h2 id={`overview-${section.id}`}>{section.title}</h2>
             <CountBadge>
               {section.items.length}
@@ -40,8 +41,8 @@ export function OverviewActionGroups({
 
 export function OverviewEmptyState() {
   return (
-    <div className={`empty-state ${styles.empty}`}>
+    <EmptyState className={styles.empty}>
       {adminOverviewText.emptyState}
-    </div>
+    </EmptyState>
   );
 }

@@ -10,6 +10,7 @@ import {
   Input,
 } from "@/design-system/primitives/form/field";
 import { adminStudentsText } from "@/content/ko/admin-students";
+import { Notice } from "@/design-system/patterns/feedback/feedback";
 
 import type { StudentDetailController } from "../../controller/use-student-detail-controller";
 import styles from "../student-detail.module.css";
@@ -107,11 +108,11 @@ export function StudentAccountPanel({
         </StatusBadge>
       </div>
       {student.codeStatus === "expired" ? (
-        <div className="notice notice-error" role="status">
+        <Notice role="status" tone="danger">
           {adminStudentsText.account.expiredNotice}
-        </div>
+        </Notice>
       ) : null}
-      <div className={`action-row ${styles.accountActions}`}>
+      <div className={styles.accountActions}>
         {student.status === "active" ? (
           <>
             {student.codeStatus === "active" ? (

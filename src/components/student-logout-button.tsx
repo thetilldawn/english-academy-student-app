@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/design-system/primitives/button/button";
+import { InlineError } from "@/design-system/patterns/feedback/feedback";
 import { studentAppText } from "@/content/ko/student-app";
+
+import styles from "./session-action.module.css";
 
 export function StudentLogoutButton() {
   const router = useRouter();
@@ -31,7 +34,7 @@ export function StudentLogoutButton() {
   }
 
   return (
-    <div className="action-stack">
+    <div className={styles.stack}>
       <Button
         disabled={submitting}
         onClick={logout}
@@ -42,11 +45,7 @@ export function StudentLogoutButton() {
           ? studentAppText.shell.logoutPending
           : studentAppText.shell.logout}
       </Button>
-      {error && (
-        <span className="inline-error" role="alert">
-          {error}
-        </span>
-      )}
+      {error ? <InlineError>{error}</InlineError> : null}
     </div>
   );
 }

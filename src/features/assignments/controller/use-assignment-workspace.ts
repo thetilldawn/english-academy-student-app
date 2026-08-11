@@ -1,0 +1,405 @@
+"use client";
+
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+
+import {
+  activityNeedsRetry,
+  compareLearningActivities,
+  studentLearningActivityIndex,
+} from "@/features/history/domain/learning-activity";
+import type { AssignmentHistorySummary } from "@/lib/admin/history";
+import { newAssignmentDefaultUnitId } from "@/lib/admin/new-assignment-range";
+import {
+  availableReviewCount,
+  emptyPendingReviewCounts,
+  indexStudentPendingReviewSummaries,
+  pendingReviewCount,
+  pendingReviewSummaryKey,
+} from "@/lib/admin/review-queue-summary";
+import type { AssignmentManagerData } from "@/lib/services/assignment-manager-data";
+import {
+  currentVocabWrongSummaryKey,
+  emptyCurrentVocabWrongCounts,
+  indexStudentCurrentVocabWrongSummaries,
+} from "@/lib/admin/wrong-history-summary";
+
+import type {
+  AssignmentLearningSourceItem,
+  AssignmentStudentItem,
+} from "../catalog-types";
+
+export type WrongWordStudentFilter = "all" | "wrong" | "repeated" | "retry";
+export type BulkAssignmentMode = "next" | "with_wrong";
+export type AssignmentDialogView = "overview" | "assign";
+
+export type AssignmentWorkspaceFilters = {
+  grade: string;
+  query: string;
+  school: string;
+  wordbook: string;
+  wrongWord: WrongWordStudentFilter;
+};
+
+export function useAssignmentWorkspace({
+  data,
+  initialDatasetId,
+  initialDialogView,
+  initialStudentId,
+}: {
+  data: AssignmentManagerData;
+  initialDatasetId: string;
+  initialDialogView: AssignmentDialogView;
+  initialStudentId: string;
+}) {
+  const router = useRouter();
+  const [, startRefreshTransition] = useTransition();
+  const readyDatasets = useMemo(
+    () =>
+      data.datasets.filter(
+        (dataset) =>
+          dataset.status === "ready" &&
+          dataset.isActive &&
+          dataset.isAssignable,
+      ),
+    [data.datasets],
+  );
+  const activeStudents = useMemo(
+    () => data.students.filter((student) => student.status === "active"),
+    [data.students],
+  );
+  const progressByStudent = useMemo(
+    () => new Map(data.progress.map((item) => [item.studentId, item])),
+    [data.progress],
+  );
+  const pendingReviewIndex = useMemo(
+    () => indexStudentPendingReviewSummaries(data.pendingReviewSummaries),
+    [data.pendingReviewSummaries],
+  );
+  const currentVocabWrongIndex = useMemo(
+    () => indexStudentCurrentVocabWrongSummaries(data.currentVocabWrongSummaries),
+    [data.currentVocabWrongSummaries],
+  );
+  const activitiesByStudent = useMemo(
+    () => studentLearningActivityIndex(data.history),
+    [data.history],
+  );
+  const learningSourcesByStudent = useMemo(() => {
+    const index = new Map<string, AssignmentLearningSourceItem[]>();
+    for (const source of data.learningSources) {
+      const current = index.get(source.studentId) ?? [];
+      current.push(source);
+      index.set(source.studentId, current);
+    }
+    return index;
+  }, [data.learningSources]);
+  const initialStudent =
+    activeStudents.find((student) => student.id === initialStudentId) ?? null;
+
+  const [testTab, setTestTab] = useState<"vocab" | "other">("vocab");
+  const [filters, setFilters] = useState<AssignmentWorkspaceFilters>({
+    grade: "",
+    query: "",
+    school: "",
+    wordbook: "",
+    wrongWord: "all",
+  });
+  const [selectedBulkStudentIds, setSelectedBulkStudentIds] = useState<string[]>([]);
+  const [bulkMode, setBulkMode] = useState<BulkAssignmentMode | null>(null);
+  const [dialogView, setDialogView] = useState<AssignmentDialogView>(
+    initialDialogView,
+  );
+  const [selectedStudentId, setSelectedStudentId] = useState(
+    initialStudent?.id ?? "",
+  );
+  const [editorBusy, setEditorBusy] = useState(false);
+
+  const schoolOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          activeStudents
+            .map((student) => student.schoolName?.trim())
+            .filter((value): value is string => Boolean(value)),
+        ),
+      ).toSorted(),
+    [activeStudents],
+  );
+  const gradeOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          activeStudents
+            .map((student) => student.gradeLabel?.trim())
+            .filter((value): value is string => Boolean(value)),
+        ),
+      ).toSorted(),
+    [activeStudents],
+  );
+  const wordbookOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          [
+            ...activeStudents.map((student) => student.currentVocabBook?.trim()),
+            ...data.learningSources.map((source) => source.displayLabel.trim()),
+          ].filter((value): value is string => Boolean(value)),
+        ),
+      ).toSorted(),
+    [activeStudents, data.learningSources],
+  );
+  const filteredStudents = useMemo(() => {
+    const keyword = filters.query.trim().toLocaleLowerCase("ko-KR");
+    return activeStudents
+      .filter((student) => {
+        const searchText = [
+          student.displayName,
+          student.schoolName,
+          student.gradeLabel,
+          student.currentVocabBook,
+          ...(learningSourcesByStudent.get(student.id) ?? []).map(
+            (source) => source.displayLabel,
+          ),
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLocaleLowerCase("ko-KR");
+        if (keyword && !searchText.includes(keyword)) return false;
+        if (filters.school && student.schoolName !== filters.school) return false;
+        if (filters.grade && student.gradeLabel !== filters.grade) return false;
+        if (
+          filters.wordbook &&
+          student.currentVocabBook !== filters.wordbook &&
+          !(learningSourcesByStudent.get(student.id) ?? []).some(
+            (source) => source.displayLabel === filters.wordbook,
+          )
+        ) {
+          return false;
+        }
+        if (filters.wrongWord === "all") return true;
+        if (filters.wrongWord === "retry") {
+          return (activitiesByStudent.get(student.id) ?? []).some(
+            activityNeedsRetry,
+          );
+        }
+        if (!student.currentVocabDatasetId) return false;
+        const wrongCounts =
+          currentVocabWrongIndex.byStudentDataset.get(
+            currentVocabWrongSummaryKey(
+              student.id,
+              student.currentVocabDatasetId,
+            ),
+          ) ?? emptyCurrentVocabWrongCounts();
+        return filters.wrongWord === "repeated"
+          ? wrongCounts.repeatedWrongWordCount > 0
+          : wrongCounts.wrongWordCount > 0;
+      })
+      .toSorted((left, right) => {
+        const leftActivity = activitiesByStudent.get(left.id)?.[0] ?? null;
+        const rightActivity = activitiesByStudent.get(right.id)?.[0] ?? null;
+        if (leftActivity && rightActivity) {
+          const order = compareLearningActivities(leftActivity, rightActivity);
+          if (order !== 0) return order;
+        } else if (leftActivity) {
+          return -1;
+        } else if (rightActivity) {
+          return 1;
+        }
+        return left.displayName.localeCompare(right.displayName, "ko-KR");
+      });
+  }, [
+    activeStudents,
+    activitiesByStudent,
+    currentVocabWrongIndex,
+    filters,
+    learningSourcesByStudent,
+  ]);
+  const selectedBulkStudents = useMemo(
+    () =>
+      selectedBulkStudentIds.flatMap((selectedId) => {
+        const student = activeStudents.find(
+          (candidate) => candidate.id === selectedId,
+        );
+        return student ? [student] : [];
+      }),
+    [activeStudents, selectedBulkStudentIds],
+  );
+  const allFilteredStudentsSelected =
+    filteredStudents.length > 0 &&
+    filteredStudents.every((student) =>
+      selectedBulkStudentIds.includes(student.id),
+    );
+  const selectedStudent =
+    activeStudents.find((student) => student.id === selectedStudentId) ?? null;
+  const selectedProgress = selectedStudent
+    ? (progressByStudent.get(selectedStudent.id) ?? null)
+    : null;
+  const selectedActivities = selectedStudent
+    ? (activitiesByStudent.get(selectedStudent.id) ?? [])
+    : [];
+  const selectedLearningSources = selectedStudent
+    ? (learningSourcesByStudent.get(selectedStudent.id) ?? []).filter(
+        (source) => source.sourceType !== "primary_vocab",
+      )
+    : [];
+  const selectedInitialDatasetId = selectedStudent
+    ? readyDatasets.some(
+        (dataset) =>
+          dataset.id === initialDatasetId && selectedStudent === initialStudent,
+      )
+      ? initialDatasetId
+      : readyDatasets.some(
+            (dataset) => dataset.id === selectedStudent.currentVocabDatasetId,
+          )
+        ? selectedStudent.currentVocabDatasetId!
+        : readyDatasets[0]?.id ?? ""
+    : "";
+  const selectedInitialUnitId = newAssignmentDefaultUnitId(
+    selectedProgress,
+    selectedInitialDatasetId,
+  );
+  const selectedReviewCounts =
+    selectedStudent && selectedInitialDatasetId
+      ? (pendingReviewIndex.byStudentDataset.get(
+          pendingReviewSummaryKey(
+            selectedStudent.id,
+            selectedInitialDatasetId,
+          ),
+        ) ?? emptyPendingReviewCounts())
+      : emptyPendingReviewCounts();
+  const selectedCurrentWrongCounts =
+    selectedStudent && selectedInitialDatasetId
+      ? (currentVocabWrongIndex.byStudentDataset.get(
+          currentVocabWrongSummaryKey(
+            selectedStudent.id,
+            selectedInitialDatasetId,
+          ),
+        ) ?? emptyCurrentVocabWrongCounts())
+      : emptyCurrentVocabWrongCounts();
+
+  function setFilter<Key extends keyof AssignmentWorkspaceFilters>(
+    key: Key,
+    value: AssignmentWorkspaceFilters[Key],
+  ) {
+    setFilters((current) => ({ ...current, [key]: value }));
+  }
+
+  function resetFilters() {
+    setFilters({ grade: "", query: "", school: "", wordbook: "", wrongWord: "all" });
+  }
+
+  function toggleBulkStudent(studentId: string) {
+    setSelectedBulkStudentIds((current) =>
+      current.includes(studentId)
+        ? current.filter((candidate) => candidate !== studentId)
+        : current.length >= 30
+          ? current
+          : [...current, studentId],
+    );
+  }
+
+  function toggleFilteredStudents() {
+    const filteredIds = new Set(filteredStudents.map((student) => student.id));
+    setSelectedBulkStudentIds((current) =>
+      allFilteredStudentsSelected
+        ? current.filter((studentId) => !filteredIds.has(studentId))
+        : Array.from(new Set([...current, ...filteredIds])).slice(0, 30),
+    );
+  }
+
+  function selectStudent(
+    studentId: string,
+    view: AssignmentDialogView = "overview",
+  ) {
+    setSelectedStudentId(studentId);
+    setDialogView(view);
+  }
+
+  function closeStudent() {
+    if (editorBusy) return;
+    setSelectedStudentId("");
+    setDialogView("overview");
+    setEditorBusy(false);
+  }
+
+  function refresh() {
+    startRefreshTransition(() => router.refresh());
+  }
+
+  return {
+    actions: {
+      clearBulkStudents: () => setSelectedBulkStudentIds([]),
+      closeStudent,
+      refresh,
+      resetFilters,
+      selectStudent,
+      setBulkMode,
+      setDialogView,
+      setEditorBusy,
+      setFilter,
+      setTestTab,
+      toggleBulkStudent,
+      toggleFilteredStudents,
+    },
+    activeStudents,
+    activitiesByStudent,
+    allFilteredStudentsSelected,
+    availableReviewLevel1:
+      selectedReviewCounts.pendingLevel1Count -
+      selectedReviewCounts.reservedLevel1Count,
+    availableReviewLevel2:
+      selectedReviewCounts.pendingLevel2Count -
+      selectedReviewCounts.reservedLevel2Count,
+    bulkMode,
+    data,
+    dialogView,
+    editorBusy,
+    filteredStudents,
+    filters,
+    gradeOptions,
+    learningSourcesByStudent,
+    pendingReviewIndex,
+    progressByStudent,
+    readyDatasets,
+    schoolOptions,
+    selectedActivities,
+    selectedBulkStudentIds,
+    selectedBulkStudents,
+    selectedCurrentWrongCounts,
+    selectedInitialDatasetId,
+    selectedInitialUnitId,
+    selectedLearningSources,
+    selectedPendingReviewCount: pendingReviewCount(selectedReviewCounts),
+    selectedProgress,
+    selectedStudent,
+    testTab,
+    wordbookOptions,
+    currentVocabWrongIndex,
+  };
+}
+
+export type AssignmentWorkspaceController = ReturnType<
+  typeof useAssignmentWorkspace
+>;
+
+export function studentPendingReviewCounts(
+  controller: AssignmentWorkspaceController,
+  student: AssignmentStudentItem,
+) {
+  const counts = student.currentVocabDatasetId
+    ? (controller.pendingReviewIndex.byStudentDataset.get(
+        pendingReviewSummaryKey(student.id, student.currentVocabDatasetId),
+      ) ?? emptyPendingReviewCounts())
+    : emptyPendingReviewCounts();
+  return {
+    available: availableReviewCount(counts),
+    pending: pendingReviewCount(counts),
+  };
+}
+
+export function studentActivities(
+  controller: AssignmentWorkspaceController,
+  studentId: string,
+): AssignmentHistorySummary[] {
+  return controller.activitiesByStudent.get(studentId) ?? [];
+}

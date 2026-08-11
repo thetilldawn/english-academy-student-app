@@ -15,6 +15,7 @@ import {
 } from "@/features/history/domain/learning-activity";
 import { buildAttemptStatusPresentation } from "@/features/history/presentation/attempt-presentation";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
+import { EmptyState } from "@/design-system/patterns/feedback/feedback";
 
 import { HistoryRows } from "./history-rows";
 import styles from "./history-list.module.css";
@@ -115,11 +116,11 @@ export function AdminHistoryList({
       ) : null}
 
       {filteredItems.length === 0 ? (
-        <div className="empty-state">
+        <EmptyState>
           {items.length === 0
             ? adminHistoryText.emptyState.noAssignments
             : adminHistoryText.emptyState.noMatches}
-        </div>
+        </EmptyState>
       ) : (
         <HistoryRows items={filteredItems} />
       )}

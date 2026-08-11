@@ -16,6 +16,7 @@ import {
   type LearningHistoryStatusFilter,
 } from "@/features/history/domain/learning-activity";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
+import { EmptyState } from "@/design-system/patterns/feedback/feedback";
 
 import { HistoryActivityRow } from "./history-activity-row";
 import styles from "./student-learning-activity-list.module.css";
@@ -98,7 +99,7 @@ export function StudentLearningActivityList({
     .filter((section) => section.items.length > 0);
 
   if (!filtersEnabled && sorted.length === 0) {
-    return <div className={`empty-state ${styles.empty}`}>{emptyLabel}</div>;
+    return <EmptyState className={styles.empty}>{emptyLabel}</EmptyState>;
   }
 
   return (
@@ -190,11 +191,11 @@ export function StudentLearningActivityList({
       ) : null}
 
       {sorted.length === 0 ? (
-        <div className={`empty-state ${styles.empty}`}>
+        <EmptyState className={styles.empty}>
           {filtersEnabled
             ? adminStudentsText.learning.activityList.noMatches
             : emptyLabel}
-        </div>
+        </EmptyState>
       ) : (
         <div className={styles.sections}>
           {visibleSections.map((section) => (

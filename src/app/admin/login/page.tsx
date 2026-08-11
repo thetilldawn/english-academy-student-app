@@ -8,6 +8,7 @@ import {
 } from "@/design-system/primitives/tooltip/help-tip";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { adminShellText } from "@/content/ko/admin-shell";
+import styles from "@/design-system/patterns/auth/auth-layout.module.css";
 
 export const metadata: Metadata = {
   title: adminShellText.login.title,
@@ -15,10 +16,10 @@ export const metadata: Metadata = {
 
 export default function AdminLoginPage() {
   return (
-    <main className="auth-shell" id="main-content">
-      <section className="auth-card">
+    <main className={styles.authShell} id="main-content">
+      <section className={styles.authCard}>
         <ThemeToggle placement="auth" />
-        <p className="eyebrow">{adminShellText.login.eyebrow}</p>
+        <p className={styles.eyebrow}>{adminShellText.login.eyebrow}</p>
         <h1 className={inlineHelpClassName}>
           {adminShellText.login.title}
           <HelpTip label={adminShellText.login.helpAria}>
@@ -26,7 +27,7 @@ export default function AdminLoginPage() {
           </HelpTip>
         </h1>
         <AdminLoginForm />
-        <Link className="back-link" href="/">
+        <Link className={styles.backLink} href="/">
           {adminShellText.login.backToStudent}
         </Link>
       </section>

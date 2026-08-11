@@ -2,8 +2,8 @@ import { notFound, redirect } from "next/navigation";
 
 import {
   AdminHistoryDetailContent,
-} from "@/components/admin-history-detail";
-import { HistoryDetailActions } from "@/components/history-detail-actions";
+} from "@/features/history/ui/admin-history-detail";
+import { HistoryDetailActions } from "@/features/history/ui/history-detail-actions";
 import { HistoryDetailHeader } from "@/features/history/ui/history-detail-header";
 import { RouteDetailDialog } from "@/features/history/ui/route-detail-dialog";
 import { historyDetailHref } from "@/lib/admin/history-route";

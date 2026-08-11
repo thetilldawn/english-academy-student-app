@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { z } from "zod";
 
 import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
-import { AssignmentManager } from "@/components/assignment-manager";
+import { Notice } from "@/design-system/patterns/feedback/feedback";
 import { adminLearningText } from "@/content/ko/admin-learning";
+import { AssignmentWorkspace } from "@/features/assignments/ui/assignment-workspace";
 import { LegacyReviewRecovery } from "@/features/assignments/ui/legacy-review-recovery";
 import {
   loadAssignmentManagerData,
@@ -50,19 +51,19 @@ export default async function AssignmentsPage({
         section={adminLearningText.page.title}
       />
       {requestedReviewDraftId && !reviewDraft && (
-        <div className="notice notice-warm" role="status">
+        <Notice role="status" tone="warning">
           {adminLearningText.page.expiredReviewDraft}
-        </div>
+        </Notice>
       )}
-      <AssignmentManager
-        {...managerData}
+      <AssignmentWorkspace
+        data={managerData}
         initialDatasetId={initialDatasetId}
         initialDialogView={initialDialogView}
         initialStudentId={requestedReviewDraftId ? "" : initialStudentId}
         key={
           requestedReviewDraftId
             ? `legacy-review:${requestedReviewDraftId}`
-            : `assignment-manager:${initialStudentId}:${initialDatasetId}:${initialDialogView}`
+            : `assignment-workspace:${initialStudentId}:${initialDatasetId}:${initialDialogView}`
         }
       />
       {reviewDraft && (

@@ -3,8 +3,8 @@ import { notFound, redirect } from "next/navigation";
 
 import {
   AdminHistoryDetailContent,
-} from "@/components/admin-history-detail";
-import { HistoryDetailActions } from "@/components/history-detail-actions";
+} from "@/features/history/ui/admin-history-detail";
+import { HistoryDetailActions } from "@/features/history/ui/history-detail-actions";
 import { ButtonLink } from "@/design-system/primitives/button/button";
 import { HistoryDetailPageHeader } from "@/features/history/ui/history-detail-header";
 import { adminHistoryText } from "@/content/ko/admin-history";
@@ -33,7 +33,7 @@ export default async function AdminResultDetailPage({
     : null;
 
   return (
-    <div className="history-detail-page">
+    <div>
       <HistoryDetailPageHeader
         actions={
           <ButtonLink href="/admin/results" variant="quiet">

@@ -1,5 +1,7 @@
 import { adminShellText } from "@/content/ko/admin-shell";
 
+import styles from "./admin-breadcrumb.module.css";
+
 export function AdminBreadcrumb({
   current,
   section,
@@ -10,7 +12,7 @@ export function AdminBreadcrumb({
   return (
     <nav
       aria-label={adminShellText.breadcrumb.ariaLabel}
-      className="admin-breadcrumb"
+      className={styles.breadcrumb}
     >
       {section ? <span>{section}</span> : null}
       {section ? <span aria-hidden="true">/</span> : null}

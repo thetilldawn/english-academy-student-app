@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+import { studentAppText } from "@/content/ko/student-app";
 import {
   Button,
   ButtonSpinner,
 } from "@/design-system/primitives/button/button";
-import { studentAppText } from "@/content/ko/student-app";
+
+import { requestAttemptRetry } from "../api/start-retry";
 import styles from "./start-retry-button.module.css";
 
 export function StartRetryButton({ attemptId }: { attemptId: string }) {
@@ -16,26 +19,11 @@ export function StartRetryButton({ attemptId }: { attemptId: string }) {
 
   async function startRetry() {
     if (pending) return;
-
     setPending(true);
     setError("");
 
     try {
-      const response = await fetch(
-        `/api/student/attempts/${attemptId}/retry`,
-        { method: "POST" },
-      );
-      const payload = (await response.json()) as {
-        retry?: { phase: "retry" };
-        error?: string;
-      };
-
-      if (!response.ok || payload.retry?.phase !== "retry") {
-        throw new Error(
-          payload.error ?? studentAppText.actions.retryError,
-        );
-      }
-
+      await requestAttemptRetry(attemptId);
       router.replace(`/student/attempt/${attemptId}`);
     } catch (startError) {
       setError(
@@ -48,23 +36,23 @@ export function StartRetryButton({ attemptId }: { attemptId: string }) {
   }
 
   return (
-    <div className="action-stack">
+    <div className={styles.stack}>
       <Button
         aria-busy={pending}
         disabled={pending}
         onClick={() => void startRetry()}
         variant="primary"
       >
-        {pending && <ButtonSpinner />}
+        {pending ? <ButtonSpinner /> : null}
         {pending
           ? studentAppText.actions.retryPending
           : studentAppText.actions.retry}
       </Button>
-      {error && (
+      {error ? (
         <div className={styles.error} role="alert">
           {error}
         </div>
-      )}
+      ) : null}
       <span aria-live="polite" className="sr-only" role="status">
         {pending ? studentAppText.actions.retryPreparing : ""}
       </span>

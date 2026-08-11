@@ -1,4 +1,5 @@
 import { adminLearningText } from "@/content/ko/admin-learning";
+import { Notice } from "@/design-system/patterns/feedback/feedback";
 import { formatContentText } from "@/content/format";
 import { cataloguedDatasetDisplayLabel } from "@/lib/admin/dataset-catalog";
 import { koreanDateTimeLocalToIso } from "@/lib/deadline";
@@ -135,9 +136,9 @@ export function AssignmentSummaryPanel({
       ]
         .filter((value, index, values) => value && values.indexOf(value) === index)
         .map((value) => (
-          <div className="notice notice-error" key={value} role="alert">
+          <Notice key={value} role="alert" tone="danger">
             {value}
-          </div>
+          </Notice>
         ))}
     </section>
   );

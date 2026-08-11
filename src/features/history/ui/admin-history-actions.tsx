@@ -4,12 +4,14 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { Button, ButtonLink } from "@/design-system/primitives/button/button";
 import { formatContentText } from "@/content/format";
 import { adminHistoryText } from "@/content/ko/admin-history";
+import { Button, ButtonLink } from "@/design-system/primitives/button/button";
+import { isStudentAssignmentEditable } from "@/lib/admin/assignment-edit";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
 import { historyDetailHref } from "@/lib/admin/history-route";
-import { isStudentAssignmentEditable } from "@/lib/admin/assignment-edit";
+
+import styles from "./admin-history-actions.module.css";
 
 type ActionKey = "cancel" | "delete-history";
 
@@ -59,9 +61,7 @@ export function AdminHistoryActions({
     url: string,
     options: RequestInit,
   ) {
-    if (busyAction || !window.confirm(confirmation)) {
-      return;
-    }
+    if (busyAction || !window.confirm(confirmation)) return;
     setBusyAction(action);
     try {
       await mutate(url, options);
@@ -85,20 +85,14 @@ export function AdminHistoryActions({
 
   if (summaryOnly) {
     return (
-      <div className="history-action-stack">
-        <div className="history-action-group">
+      <div className={styles.stack}>
+        <div className={styles.group}>
           {onViewDetail ? (
-            <Button
-              onClick={onViewDetail}
-              size={buttonSize}
-            >
+            <Button onClick={onViewDetail} size={buttonSize}>
               {adminHistoryText.actions.view}
             </Button>
           ) : showDetailLink ? (
-            <ButtonLink
-              href={historyDetailHref(item)}
-              size={buttonSize}
-            >
+            <ButtonLink href={historyDetailHref(item)} size={buttonSize}>
               {adminHistoryText.actions.view}
             </ButtonLink>
           ) : onEdit && isStudentAssignmentEditable(item) ? (
@@ -119,28 +113,22 @@ export function AdminHistoryActions({
   }
 
   return (
-    <div className="history-action-stack">
-      <div className="history-action-group">
+    <div className={styles.stack}>
+      <div className={styles.group}>
         {showDetailLink
           ? onViewDetail
             ? (
-                <Button
-                  onClick={onViewDetail}
-                  size={buttonSize}
-                >
+                <Button onClick={onViewDetail} size={buttonSize}>
                   {adminHistoryText.actions.viewHistory}
                 </Button>
               )
             : (
-                <ButtonLink
-                  href={historyDetailHref(item)}
-                  size={buttonSize}
-                >
+                <ButtonLink href={historyDetailHref(item)} size={buttonSize}>
                   {adminHistoryText.actions.viewHistory}
                 </ButtonLink>
               )
           : null}
-        {onEdit && isStudentAssignmentEditable(item) && (
+        {onEdit && isStudentAssignmentEditable(item) ? (
           <Button
             aria-label={formatContentText(
               adminHistoryText.actions.editAria,
@@ -152,34 +140,33 @@ export function AdminHistoryActions({
           >
             {adminHistoryText.actions.edit}
           </Button>
-        )}
+        ) : null}
         {item.status === "not_started" &&
-          !item.attemptId &&
-          !item.assignmentDeleted && (
-            <Button
-              aria-busy={busyAction === "cancel"}
-              disabled={busyAction !== null}
-              onClick={() =>
-                void run(
-                  "cancel",
-                  formatContentText(
-                    adminHistoryText.actions.cancel.confirm,
-                    { student: item.studentName },
-                  ),
-                  `/api/admin/assignments/${item.assignmentId}/students/${item.studentId}`,
-                  { method: "DELETE" },
-                )
-              }
-              size={buttonSize}
-            >
-              {busyAction === "cancel"
-                ? adminHistoryText.actions.cancel.pending
-                : adminHistoryText.actions.cancel.action}
-            </Button>
-          )}
+        !item.attemptId &&
+        !item.assignmentDeleted ? (
+          <Button
+            aria-busy={busyAction === "cancel"}
+            disabled={busyAction !== null}
+            onClick={() =>
+              void run(
+                "cancel",
+                formatContentText(adminHistoryText.actions.cancel.confirm, {
+                  student: item.studentName,
+                }),
+                `/api/admin/assignments/${item.assignmentId}/students/${item.studentId}`,
+                { method: "DELETE" },
+              )
+            }
+            size={buttonSize}
+          >
+            {busyAction === "cancel"
+              ? adminHistoryText.actions.cancel.pending
+              : adminHistoryText.actions.cancel.action}
+          </Button>
+        ) : null}
         {(["cancelled", "missed", "completed", "expired"] as const).includes(
           item.status as "cancelled" | "missed" | "completed" | "expired",
-        ) && (
+        ) ? (
           <Button
             aria-busy={busyAction === "delete-history"}
             disabled={busyAction !== null}
@@ -206,7 +193,7 @@ export function AdminHistoryActions({
               ? adminHistoryText.actions.delete.pending
               : adminHistoryText.actions.delete.action}
           </Button>
-        )}
+        ) : null}
       </div>
     </div>
   );

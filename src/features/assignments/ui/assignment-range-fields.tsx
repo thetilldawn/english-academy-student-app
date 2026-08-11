@@ -13,6 +13,7 @@ import {
 import { newAssignmentDefaultUnitId } from "@/lib/admin/new-assignment-range";
 import { selectInclusiveUnitRange } from "@/lib/admin/unit-range";
 import { AssignmentFieldGrid } from "@/components/assignment-editor-ui";
+import { Notice } from "@/design-system/patterns/feedback/feedback";
 
 import type {
   AssignmentDatasetItem,
@@ -97,9 +98,9 @@ export function AssignmentRangeFields({
   return (
     <>
       {isExactReview ? (
-        <div className="notice">
+        <Notice>
           {adminLearningText.assignmentModal.edit.lockedReview}
-        </div>
+        </Notice>
       ) : null}
       <Field as="label">
         <FieldLabel as="span">

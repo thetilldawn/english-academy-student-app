@@ -14,6 +14,9 @@ import { formatContentText } from "@/content/format";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { assignmentDisplayTitle } from "@/lib/admin/history";
 import type { AssignmentSummary } from "@/lib/services/admin-service";
+import { EmptyState } from "@/design-system/patterns/feedback/feedback";
+
+import styles from "./assignment-management-list.module.css";
 
 type ErrorResponse = {
   error?: string;
@@ -88,20 +91,16 @@ export function AssignmentManagementList({
   }
 
   if (items.length === 0) {
-    return (
-      <div className="empty-state">
-        {adminLearningText.assignmentManagement.empty}
-      </div>
-    );
+    return <EmptyState>{adminLearningText.assignmentManagement.empty}</EmptyState>;
   }
 
   return (
-    <div className="assignment-management-panel">
-      <div className="assignment-management-list">
+    <div className={styles.panel}>
+      <div className={styles.list}>
         {items.map((item) => (
-          <article className="card assignment-management-item" key={item.id}>
-            <div className="assignment-management-copy">
-              <div className="assignment-management-title">
+          <article className={styles.item} key={item.id}>
+            <div className={styles.copy}>
+              <div className={styles.title}>
                 {assignmentDisplayTitle({
                   assignmentTitle: item.title,
                   datasetTitle: item.datasetTitle,

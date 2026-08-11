@@ -1,5 +1,9 @@
+.stack {
+  display: grid;
+  gap: var(--space-2);
+}
+
 .error {
-  margin-top: 6px;
   color: var(--fail);
   font-size: 12px;
   text-align: center;

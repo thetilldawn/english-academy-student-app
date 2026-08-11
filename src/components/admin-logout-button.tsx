@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 
 import { adminShellText } from "@/content/ko/admin-shell";
 import { Button } from "@/design-system/primitives/button/button";
+import { InlineError } from "@/design-system/patterns/feedback/feedback";
+
+import styles from "./session-action.module.css";
 
 export function AdminLogoutButton() {
   const router = useRouter();
@@ -32,7 +35,7 @@ export function AdminLogoutButton() {
   }
 
   return (
-    <div className="action-stack">
+    <div className={styles.stack}>
       <Button
         disabled={submitting}
         onClick={logout}
@@ -43,11 +46,7 @@ export function AdminLogoutButton() {
           ? adminShellText.logout.pending
           : adminShellText.logout.idle}
       </Button>
-      {error && (
-        <span className="inline-error" role="alert">
-          {error}
-        </span>
-      )}
+      {error ? <InlineError>{error}</InlineError> : null}
     </div>
   );
 }

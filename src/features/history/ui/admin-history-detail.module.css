@@ -1,0 +1,182 @@
+.content,
+.overview {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-4);
+}
+
+.content {
+  container: history-detail / inline-size;
+}
+
+.scoreCard {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(220px, 1fr);
+  align-items: center;
+  gap: var(--space-4);
+  padding: 14px;
+  background: var(--surface);
+}
+
+.metadata,
+.summaryGrid {
+  min-width: 0;
+  display: grid;
+  margin: 0;
+}
+
+.metadata {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.metadata > div,
+.summaryGrid > div {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  padding: 12px;
+  background: var(--surface);
+}
+
+.metadata dt,
+.summaryGrid dt {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.metadata dd,
+.summaryGrid dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 700;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.summaryGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.empty {
+  margin: 0;
+  padding: 28px 20px;
+  border: 1px dashed var(--line);
+  color: var(--text-secondary);
+  background: var(--surface);
+  text-align: center;
+}
+
+.flowSection,
+.flowList {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.sectionHeading {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.sectionHeading h2 {
+  min-width: 0;
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-krs);
+  font-size: 21px;
+  line-height: 1.35;
+}
+
+.flowList {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.answerFlow {
+  min-width: 0;
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: var(--space-2);
+}
+
+.answerFlow[data-resolved="true"] {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+
+.wrongStep,
+.correctStep,
+.answerStep {
+  min-width: 0;
+  display: grid;
+  align-content: center;
+  gap: var(--space-1);
+  padding: 12px;
+}
+
+.wrongStep {
+  background: var(--no-bg);
+}
+
+.correctStep,
+.answerStep {
+  background: var(--surface);
+}
+
+.wrongStep > span,
+.correctStep > span,
+.answerStep > span {
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.wrongStep strong,
+.correctStep strong,
+.answerStep strong {
+  min-width: 0;
+  color: var(--text-primary);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.arrow {
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+@container history-detail (max-width: 760px) {
+  .scoreCard,
+  .metadata,
+  .summaryGrid,
+  .flowList {
+    grid-template-columns: 1fr;
+  }
+}
+
+@container history-detail (max-width: 560px) {
+  .answerFlow,
+  .answerFlow[data-resolved="true"] {
+    grid-template-columns: 1fr;
+  }
+
+  .arrow {
+    transform: rotate(90deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrow {
+    transition: none;
+  }
+}

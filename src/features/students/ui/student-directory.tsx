@@ -14,8 +14,13 @@ import { HelpTip, inlineHelpClassName } from "@/design-system/primitives/tooltip
 import {
   MetaTag,
   MetaTagList,
+  CountBadge,
   StatusBadge,
 } from "@/design-system/primitives/badge/badge";
+import {
+  EmptyState,
+  Notice,
+} from "@/design-system/patterns/feedback/feedback";
 import {
   Button,
   buttonRecipe,
@@ -102,7 +107,7 @@ function StudentCreateForm({
       <div className={styles.createContent}>
         <form
           aria-busy={controller.busyKey === "create"}
-          className="form-stack"
+          className={styles.formStack}
           onSubmit={submit}
         >
           <Field>
@@ -127,7 +132,7 @@ function StudentCreateForm({
               required
             />
           </Field>
-          <div className="form-grid-2">
+          <div className={styles.formGrid}>
             <Field as="label">
               <FieldLabelRow>
                 <FieldLabel as="span">
@@ -215,9 +220,9 @@ function StudentCreateForm({
             />
           </Field>
           {controller.createError ? (
-            <div className="notice notice-error" role="alert">
+            <Notice role="alert" tone="danger">
               {controller.createError}
-            </div>
+            </Notice>
           ) : null}
           <Button
             disabled={controller.interactionBusy}
@@ -256,9 +261,9 @@ function StudentDirectoryFilters({
         : commonText.filters.retryNeeded;
 
   return (
-    <div className={`learning-search-panel ${styles.searchPanel}`}>
-      <label className="learning-search-field">
-        <span aria-hidden="true" className="learning-search-icon">
+    <div className={styles.searchPanel}>
+      <label className={styles.searchField}>
+        <span aria-hidden="true" className={styles.searchIcon}>
           <svg viewBox="0 0 24 24">
             <circle cx="11" cy="11" r="6" />
             <path d="m16 16 4 4" />
@@ -277,15 +282,15 @@ function StudentDirectoryFilters({
           value={filters.query}
         />
       </label>
-      <details className="learning-filter-disclosure">
+      <details className={styles.filterDisclosure}>
         <summary>
           <span>{adminStudentsText.page.filterButton}</span>
-          <span className="detail-chip">{filterCount}</span>
+          <CountBadge>{filterCount}</CountBadge>
         </summary>
-        <div className="learning-filter-groups">
+        <div className={styles.filterGroups}>
           <fieldset>
             <legend>{commonText.filters.wrongAvailability}</legend>
-            <div className="filter-chip-row">
+            <div className={styles.filterChips}>
               {(
                 [
                   ["all", commonText.filters.all],
@@ -315,7 +320,7 @@ function StudentDirectoryFilters({
           ).map(([field, label, values]) => (
             <fieldset key={field}>
               <legend>{label}</legend>
-              <div className="filter-chip-row">
+              <div className={styles.filterChips}>
                 {values.map((value) => (
                   <Button
                     aria-pressed={filters[field] === value}
@@ -337,7 +342,7 @@ function StudentDirectoryFilters({
           ))}
         </div>
       </details>
-      <div className="learning-filter-summary">
+      <div className={styles.filterSummary}>
         <MetaTagList>
           {filters.school ? <MetaTag>{filters.school}</MetaTag> : null}
           {filters.grade ? <MetaTag>{filters.grade}</MetaTag> : null}
@@ -426,7 +431,7 @@ export function StudentDirectory({
       />
       <section className={styles.groupPane}>
         {students.length === 0 ? (
-          <div className="empty-state">{adminStudentsText.page.noMatches}</div>
+          <EmptyState>{adminStudentsText.page.noMatches}</EmptyState>
         ) : (
           <div className={styles.cardGrid}>
             {students.map((student) => {

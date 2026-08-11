@@ -11,6 +11,7 @@ import type { StudentVocabBookHistory } from "@/lib/admin/student-vocab-book-his
 import { formatKoreanDateTime } from "@/lib/format";
 import { formatContentText } from "@/content/format";
 import { adminStudentsText } from "@/content/ko/admin-students";
+import { EmptyState } from "@/design-system/patterns/feedback/feedback";
 
 import styles from "./student-vocab-book-history-list.module.css";
 
@@ -60,9 +61,9 @@ export function StudentVocabBookHistoryList({
         </span>
       </div>
       {items.length === 0 ? (
-        <div className={`empty-state ${styles.empty}`}>
+        <EmptyState className={styles.empty}>
           {adminStudentsText.learning.wordbookHistory.empty}
-        </div>
+        </EmptyState>
       ) : (
         <ol className={styles.list}>
           {items.map((item) => {

@@ -1,13 +1,12 @@
 import type { ReactNode } from "react";
 
-import { ActivityStatusTimeline } from "@/features/history/ui/activity-status-timeline";
-import { AttemptScoreSummary } from "@/features/history/ui/attempt-score-summary";
+import { formatContentText } from "@/content/format";
+import { adminHistoryText } from "@/content/ko/admin-history";
 import {
   CountBadge,
   StatusBadge,
 } from "@/design-system/primitives/badge/badge";
-import { formatContentText } from "@/content/format";
-import { adminHistoryText } from "@/content/ko/admin-history";
+import { AttemptQuestionCard } from "@/features/results/ui/attempt-question-card";
 import {
   assignmentOrderLabel,
   assignmentScopeLabel,
@@ -15,6 +14,10 @@ import {
 import { formatElapsed, formatKoreanDateTime } from "@/lib/format";
 import { getResultQuestionPresentation } from "@/lib/quiz/result-presentation";
 import type { AdminHistoryDetail } from "@/lib/services/admin-service";
+
+import { ActivityStatusTimeline } from "./activity-status-timeline";
+import { AttemptScoreSummary } from "./attempt-score-summary";
+import styles from "./admin-history-detail.module.css";
 
 function directionLabel(ratio: number) {
   if (ratio === 100) return adminHistoryText.list.direction.englishToMeaning;
@@ -54,12 +57,17 @@ export function AdminHistoryDetailContent({
   const reviewPending =
     attempt?.status === "in_progress" && attempt.phase === "review";
   const wrongQuestions =
-    attempt?.questions.filter((question) => question.initialIsCorrect !== true) ?? [];
+    attempt?.questions.filter(
+      (question) => question.initialIsCorrect !== true,
+    ) ?? [];
 
   return (
-    <div className="history-detail-content">
-      <section className="history-detail-overview" aria-label={adminHistoryText.resultDetail.summaryAria}>
-        <div className="history-detail-score-card">
+    <div className={styles.content}>
+      <section
+        aria-label={adminHistoryText.resultDetail.summaryAria}
+        className={styles.overview}
+      >
+        <div className={styles.scoreCard}>
           <AttemptScoreSummary
             finalScore={summary.finalScore}
             initialScore={summary.initialScore}
@@ -72,7 +80,7 @@ export function AdminHistoryDetailContent({
           <ActivityStatusTimeline item={summary} />
         </div>
 
-        <dl className="history-dialog-details history-detail-metadata">
+        <dl className={styles.metadata}>
           <div>
             <dt>{adminHistoryText.detailModal.dataset}</dt>
             <dd>{summary.datasetTitle}</dd>
@@ -94,7 +102,11 @@ export function AdminHistoryDetailContent({
           <div>
             <dt>{adminHistoryText.detailModal.directionAndOrder}</dt>
             <dd>
-              {directionLabel(summary.englishToKoreanRatio)} · {assignmentOrderLabel(summary.assignmentPurpose, summary.questionOrderMode)}
+              {directionLabel(summary.englishToKoreanRatio)} ·{" "}
+              {assignmentOrderLabel(
+                summary.assignmentPurpose,
+                summary.questionOrderMode,
+              )}
             </dd>
           </div>
           <div>
@@ -110,7 +122,7 @@ export function AdminHistoryDetailContent({
         </dl>
 
         {attempt ? (
-          <dl className="attempt-summary-grid">
+          <dl className={styles.summaryGrid}>
             <div>
               <dt>{adminHistoryText.resultDetail.unresolvedCount}</dt>
               <dd>
@@ -125,16 +137,21 @@ export function AdminHistoryDetailContent({
             </div>
           </dl>
         ) : (
-          <p className="empty-state history-detail-no-attempt">
+          <p className={styles.empty}>
             {adminHistoryText.resultDetail.noAttempt}
           </p>
         )}
       </section>
 
       {attempt ? (
-        <section aria-labelledby="answer-flow-heading" className="attempt-flow-section">
-          <div className="section-heading">
-            <h2 id="answer-flow-heading">{adminHistoryText.resultDetail.flowTitle}</h2>
+        <section
+          aria-labelledby="answer-flow-heading"
+          className={styles.flowSection}
+        >
+          <div className={styles.sectionHeading}>
+            <h2 id="answer-flow-heading">
+              {adminHistoryText.resultDetail.flowTitle}
+            </h2>
             <CountBadge>
               {formatContentText(adminHistoryText.resultDetail.questionCount, {
                 count: wrongQuestions.length,
@@ -143,9 +160,11 @@ export function AdminHistoryDetailContent({
           </div>
 
           {wrongQuestions.length === 0 ? (
-            <div className="empty-state">{adminHistoryText.resultDetail.allCorrect}</div>
+            <div className={styles.empty}>
+              {adminHistoryText.resultDetail.allCorrect}
+            </div>
           ) : (
-            <div className="attempt-flow-list">
+            <div className={styles.flowList}>
               {wrongQuestions.map((question) => {
                 const resolved = question.retryIsCorrect === true;
                 const presentation = getResultQuestionPresentation(question);
@@ -156,26 +175,41 @@ export function AdminHistoryDetailContent({
                 );
 
                 return (
-                  <article className="card attempt-flow-card" key={question.id}>
-                    <div className="title-with-status">
-                      <div>
-                        <p className="eyebrow">
-                          {formatContentText(adminHistoryText.resultDetail.questionNumber, {
-                            number: question.orderIndex,
-                          })}
-                        </p>
-                        <h3>{presentation.prompt}</h3>
+                  <AttemptQuestionCard
+                    eyebrow={formatContentText(
+                      adminHistoryText.resultDetail.questionNumber,
+                      { number: question.orderIndex },
+                    )}
+                    key={question.id}
+                    prompt={presentation.prompt}
+                    status={
+                      <StatusBadge tone={status.tone}>
+                        {status.label}
+                      </StatusBadge>
+                    }
+                    wrongLevel={question.wrongCount >= 2 ? 2 : 1}
+                  >
+                    <div
+                      className={styles.answerFlow}
+                      data-resolved={resolved || undefined}
+                    >
+                      <div className={styles.wrongStep}>
+                        <span>
+                          {adminHistoryText.resultDetail.initialChoice}
+                        </span>
+                        <strong>
+                          {question.initialChoice ??
+                            adminHistoryText.resultDetail.noChoice}
+                        </strong>
                       </div>
-                      <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
-                    </div>
-
-                    <div className={`answer-flow${resolved ? " answer-flow-resolved" : ""}`}>
-                      <div className="flow-step flow-step-wrong">
-                        <span>{adminHistoryText.resultDetail.initialChoice}</span>
-                        <strong>{question.initialChoice ?? adminHistoryText.resultDetail.noChoice}</strong>
-                      </div>
-                      <span className="flow-arrow" aria-hidden="true">→</span>
-                      <div className={`flow-step ${resolved ? "flow-step-correct" : "flow-step-wrong"}`}>
+                      <span aria-hidden="true" className={styles.arrow}>
+                        →
+                      </span>
+                      <div
+                        className={
+                          resolved ? styles.correctStep : styles.wrongStep
+                        }
+                      >
                         <span>{adminHistoryText.resultDetail.retry}</span>
                         <strong>
                           {question.retryChoice ??
@@ -191,15 +225,17 @@ export function AdminHistoryDetailContent({
                       </div>
                       {!resolved ? (
                         <>
-                          <span className="flow-arrow" aria-hidden="true">→</span>
-                          <div className="flow-step flow-step-answer">
+                          <span aria-hidden="true" className={styles.arrow}>
+                            →
+                          </span>
+                          <div className={styles.answerStep}>
                             <span>{adminHistoryText.resultDetail.answer}</span>
                             <strong>{presentation.correctAnswer}</strong>
                           </div>
                         </>
                       ) : null}
                     </div>
-                  </article>
+                  </AttemptQuestionCard>
                 );
               })}
             </div>

@@ -1,0 +1,85 @@
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+.codeControl {
+  position: relative;
+  min-width: 0;
+}
+
+.codeInput {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: text;
+}
+
+.codeGroups {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+}
+
+.codeGroup {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.codeSeparator {
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.codeSlot {
+  min-width: 0;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--ink);
+  background: var(--card);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: clamp(16px, 4vw, 20px);
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  transition:
+    border-color var(--motion-standard),
+    background-color var(--motion-standard);
+}
+
+.codeControl:focus-within .activeSlot {
+  border-color: var(--muted);
+}
+
+.codeControl:focus-within .codeGroups[data-complete="true"] .codeSlot {
+  border-color: var(--ink);
+}
+
+.codeControl[data-invalid="true"] .codeSlot {
+  border-color: var(--no-line);
+  background: var(--card);
+}
+
+.codeInput:disabled + .codeGroups {
+  opacity: 0.68;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .codeSlot {
+    transition: none;
+  }
+}

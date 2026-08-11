@@ -1,0 +1,120 @@
+.landingShell,
+.authShell {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+}
+
+.landingShell {
+  padding: 32px 20px;
+}
+
+.landingCard {
+  width: min(480px, calc(100vw - 40px));
+  padding: clamp(28px, 6vw, 56px);
+  border: 1px solid transparent;
+  border-radius: var(--radius-card);
+  background: transparent;
+}
+
+.brandLockup {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 30px;
+}
+
+.brandMark {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: var(--radius-card);
+  color: var(--paper);
+  background: var(--ink);
+  font-family: var(--font-kr);
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.brandLockup h1 {
+  margin: 2px 0 0;
+  font-size: clamp(31px, 6vw, 44px);
+  letter-spacing: -0.05em;
+  line-height: 1.08;
+}
+
+.eyebrow {
+  margin-bottom: 0;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+.landingAuth {
+  display: grid;
+  gap: 18px;
+}
+
+.adminLink,
+.backLink {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  transition: color var(--motion-standard);
+}
+
+.adminLink {
+  justify-self: start;
+}
+
+.backLink {
+  display: inline-block;
+  margin-top: 22px;
+}
+
+.adminLink:hover,
+.backLink:hover {
+  color: var(--ink);
+}
+
+.authShell {
+  padding: 24px;
+}
+
+.authCard {
+  width: min(440px, calc(100vw - 36px));
+  padding: 34px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-card);
+  background: var(--paper);
+}
+
+.authCard h1 {
+  margin-bottom: 8px;
+  font-size: 30px;
+  letter-spacing: -0.04em;
+}
+
+.description {
+  margin-bottom: 26px;
+  color: var(--text-secondary);
+}
+
+.errorReference {
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+}
+
+.errorReference code {
+  user-select: all;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adminLink,
+  .backLink {
+    transition: none;
+  }
+}

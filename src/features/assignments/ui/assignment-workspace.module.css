@@ -1,0 +1,274 @@
+.tabs {
+  max-width: 520px;
+  margin-bottom: var(--space-3);
+}
+
+.browser,
+.studentList,
+.searchPanel,
+.filterGroups,
+.studentOverview {
+  min-width: 0;
+  display: grid;
+}
+
+.browser {
+  gap: var(--space-3);
+}
+
+.studentList {
+  align-items: start;
+  gap: var(--space-2);
+}
+
+.placeholder,
+.empty,
+.notice {
+  min-height: 0;
+  padding: 32px 22px;
+  border: 1px solid var(--line);
+  color: var(--text-secondary);
+  background: var(--surface);
+  text-align: center;
+}
+
+.placeholder {
+  min-height: 190px;
+  display: grid;
+  place-items: center;
+}
+
+.notice {
+  padding: 14px 16px;
+  color: var(--status-warning-bg);
+  text-align: left;
+}
+
+.searchPanel {
+  gap: var(--space-2);
+}
+
+.searchField {
+  position: relative;
+  display: block;
+}
+
+.searchIcon {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 14px;
+  width: 18px;
+  height: 18px;
+  color: var(--text-secondary);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.searchIcon svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 1.8;
+}
+
+.filterDisclosure {
+  border: 1px solid var(--line);
+  background: var(--card);
+}
+
+.filterDisclosure > summary {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  color: var(--text-primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.filterGroups {
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-3) var(--space-3);
+  border-top: 1px solid var(--line);
+}
+
+.filterGroups fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 10px 0 0;
+  border: 0;
+}
+
+.filterGroups legend {
+  margin-bottom: 7px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.filterChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.filterSummary,
+.filterSummaryActions,
+.bulkBar,
+.bulkSummary,
+.bulkActions,
+.sourceRow,
+.learningTags,
+.sectionHeading {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.filterSummary {
+  min-height: 32px;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.filterSummaryActions,
+.bulkSummary,
+.bulkActions {
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.filterSummaryActions {
+  justify-content: flex-end;
+}
+
+.filterSummaryActions > strong {
+  min-width: 40px;
+  color: var(--text-primary);
+  font-size: 12px;
+  text-align: right;
+}
+
+.bulkBar {
+  position: sticky;
+  z-index: 12;
+  bottom: 12px;
+  order: 50;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.bulkSummary > strong {
+  min-width: 58px;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.bulkSummary > small {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.studentOverview {
+  gap: var(--space-3);
+}
+
+.overviewBody {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 14px 16px 18px;
+}
+
+.sourceRow {
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  background: var(--card);
+}
+
+.sourceRow > div {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.sourceRow span {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.sourceRow strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.addButton {
+  flex: none;
+  border-radius: 999px;
+  font-size: 22px;
+}
+
+.addButton:hover,
+.addButton:focus-visible {
+  color: var(--card);
+  background: var(--ink);
+}
+
+.learningTags {
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.sectionHeading {
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.sectionHeading h3,
+.sectionSummary {
+  margin: 0;
+}
+
+.sectionSummary {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+@media (max-width: 767px) {
+  .bulkBar {
+    bottom: calc(72px + env(safe-area-inset-bottom));
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .bulkActions > * {
+    flex: 1 1 140px;
+  }
+
+  .filterSummary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .searchIcon,
+  .bulkBar {
+    transition: none;
+  }
+}

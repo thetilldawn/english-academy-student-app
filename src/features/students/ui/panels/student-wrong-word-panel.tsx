@@ -15,6 +15,10 @@ import { formatContentText } from "@/content/format";
 import { Button } from "@/design-system/primitives/button/button";
 import { StatusBadge } from "@/design-system/primitives/badge/badge";
 import {
+  EmptyState,
+  Notice,
+} from "@/design-system/patterns/feedback/feedback";
+import {
   readingCurriculumStageLabel,
   readingCurriculumStages,
   type ReadingCurriculumStage,
@@ -603,7 +607,7 @@ export function StudentWrongWordPanel({
     return (
       <section
         aria-busy="true"
-        className={`empty-state ${styles.panel}`}
+        className={`${styles.emptyPanel} ${styles.panel}`}
       >
         {adminStudentsText.learning.wrongWordsPanel.loading}
       </section>
@@ -613,9 +617,9 @@ export function StudentWrongWordPanel({
   if (error && !cachedHistory) {
     return (
       <section className={styles.panel}>
-        <div className="notice notice-error" role="alert">
+        <Notice role="alert" tone="danger">
           {error}
-        </div>
+        </Notice>
         <Button
           onClick={refreshHistory}
         >
@@ -627,7 +631,7 @@ export function StudentWrongWordPanel({
 
   if (!cachedHistory) {
     return (
-      <section className={`empty-state ${styles.panel}`}>
+      <section className={`${styles.emptyPanel} ${styles.panel}`}>
         {adminStudentsText.learning.wrongWordsPanel.openToLoad}
       </section>
     );
@@ -659,11 +663,11 @@ export function StudentWrongWordPanel({
           {adminStudentsText.learning.wrongWordsPanel.refresh}
         </Button>
       </div>
-      {error && (
-        <div className="notice notice-error" role="alert">
+      {error ? (
+        <Notice role="alert" tone="danger">
           {error}
-        </div>
-      )}
+        </Notice>
+      ) : null}
       <div className={styles.summaryGrid}>
         <div>
           <span>{adminStudentsText.learning.wrongWordsPanel.summary.event}</span>
@@ -718,7 +722,7 @@ export function StudentWrongWordPanel({
         </div>
       </div>
       {pendingReviewActions.activeDrafts.length > 0 && (
-        <div className="notice">
+        <Notice>
           <p>
             {adminStudentsText.learning.wrongWordsPanel.legacyDraftNotice}
           </p>
@@ -756,7 +760,7 @@ export function StudentWrongWordPanel({
               </Button>
             </div>
           ))}
-        </div>
+        </Notice>
       )}
 
       <div id="wrong-word-aggregate-panel">
@@ -803,7 +807,7 @@ export function StudentWrongWordPanel({
             aria-label={
               adminStudentsText.learning.wrongWordsPanel.levelFilterAria
             }
-            className="filter-chip-row"
+            className={styles.filterChips}
           >
             {(
               [
@@ -834,7 +838,7 @@ export function StudentWrongWordPanel({
           </div>
           <div
             aria-label={adminStudentsText.learning.wrongWordsPanel.purposeAria}
-            className="filter-chip-row"
+            className={styles.filterChips}
             role="group"
           >
             {(
@@ -977,9 +981,9 @@ export function StudentWrongWordPanel({
           </div>
 
           {filteredWords.length === 0 ? (
-            <div className="empty-state">
+            <EmptyState>
               {adminStudentsText.learning.wrongWordsPanel.empty}
-            </div>
+            </EmptyState>
           ) : (
             <div className={styles.list}>
               {filteredWords.map((word) => {

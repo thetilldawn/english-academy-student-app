@@ -10,7 +10,7 @@ function source(relativePath: string) {
 describe("admin deletion UI contract", () => {
   it("오버뷰·학생 관리·시험 관리에서 같은 안전한 작업을 제공한다", () => {
     const historyActions = source(
-      "src/components/admin-history-actions.tsx",
+      "src/features/history/ui/admin-history-actions.tsx",
     );
     const historyList = source(
       "src/features/history/ui/admin-history-list.tsx",
@@ -19,7 +19,7 @@ describe("admin deletion UI contract", () => {
       "src/features/history/ui/history-activity-row.tsx",
     );
     const detailActions = source(
-      "src/components/history-detail-actions.tsx",
+      "src/features/history/ui/history-detail-actions.tsx",
     );
     const studentAccount = source(
       "src/features/students/ui/panels/student-account-panel.tsx",
@@ -53,7 +53,7 @@ describe("admin deletion UI contract", () => {
     const adminService = source("src/lib/services/admin-service.ts");
     const quizService = source("src/lib/services/quiz-service.ts");
     const detailActions = source(
-      "src/components/history-detail-actions.tsx",
+      "src/features/history/ui/history-detail-actions.tsx",
     );
 
     expect(adminService).toContain('.is("deleted_at", null)');

@@ -11,6 +11,9 @@ import {
   FieldLabel,
   Input,
 } from "@/design-system/primitives/form/field";
+import { Notice } from "@/design-system/patterns/feedback/feedback";
+
+import styles from "./login-form.module.css";
 
 type ErrorResponse = {
   error?: string;
@@ -75,7 +78,7 @@ export function AdminLoginForm() {
   return (
     <form
       aria-busy={submitting}
-      className="form-stack"
+      className={styles.form}
       onSubmit={handleSubmit}
     >
       <Field as="label" >
@@ -102,9 +105,9 @@ export function AdminLoginForm() {
         />
       </Field>
       {error && (
-        <div className="notice notice-error" role="alert">
+        <Notice role="alert" tone="danger">
           {error}
-        </div>
+        </Notice>
       )}
       <Button
         disabled={submitting}

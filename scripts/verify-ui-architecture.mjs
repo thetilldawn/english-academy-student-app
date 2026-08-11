@@ -144,28 +144,27 @@ const cssMetrics = {
 };
 
 const cssMaximums = {
-  lines: 2150,
-  styleRules: 343,
-  selectorContextKeys: 348,
-  duplicateContextKeys: 49,
-  duplicateExcess: 59,
-  styleDeclarations: 1001,
-  mediaBlocks: 12,
-  mediaConditions: 6,
+  lines: 1000,
+  styleRules: 12,
+  selectorContextKeys: 12,
+  duplicateContextKeys: 0,
+  duplicateExcess: 0,
+  styleDeclarations: 50,
+  mediaBlocks: 3,
+  mediaConditions: 3,
   importantDeclarations: 0,
-  trackedSectionMarkers: 4,
+  trackedSectionMarkers: 0,
   untrackedTopLevelComments: 0,
 };
 
-const legacyComponents = [
-  {
-    path: "src/components/assignment-manager.tsx",
-    maxLines: 1200,
-    maxFetchCalls: 0,
-    maxUseStateCalls: 12,
-  },
-];
+const legacyComponents = [];
 const assignmentFeatureContracts = [
+  {
+    path: "src/features/assignments/controller/use-assignment-workspace.ts",
+    maxLines: 430,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 7,
+  },
   {
     path: "src/features/assignments/controller/use-assignment-controller.ts",
     maxLines: 700,
@@ -297,6 +296,24 @@ const legacyPaths = new Set(
   legacyComponents.map((contract) => contract.path),
 );
 const violations = [];
+const allowedGlobalClasses = new Set([
+  "app-sonner-toast",
+  "app-sonner-toast-error",
+  "app-sonner-toast-success",
+  "skip-link",
+  "sr-only",
+]);
+
+cssRoot.walkRules((rule) => {
+  if (isKeyframeRule(rule)) return;
+  for (const match of rule.selector.matchAll(/\.([A-Za-z_][\w-]*)/g)) {
+    if (!allowedGlobalClasses.has(match[1])) {
+      violations.push(
+        `globals.css retains feature class selector .${match[1]}`,
+      );
+    }
+  }
+});
 
 const migratedPrimitiveSelectors = [
   /^\.button(?:\b|[.:\s])/m,
@@ -328,6 +345,11 @@ for (const retiredPath of [
   "src/components/student-learning-source-list.tsx",
   "src/components/student-vocab-book-history-list.tsx",
   "src/components/student-wrong-word-panel.tsx",
+  "src/components/assignment-manager.tsx",
+  "src/components/admin-history-actions.tsx",
+  "src/components/admin-history-detail.tsx",
+  "src/components/history-detail-actions.tsx",
+  "src/components/start-retry-button.tsx",
   "src/components/deadline-countdown.tsx",
   "src/components/start-attempt-button.tsx",
   "src/components/bulk-assignment-dialog.tsx",
@@ -649,6 +671,19 @@ for (const relativePath of filesUnder(
   }
 }
 
+for (const relativePath of filesUnder(
+  "src/features/results/ui",
+  (candidate) => candidate.endsWith(".tsx") && !candidate.endsWith(".test.tsx"),
+)) {
+  const source = read(relativePath);
+  if (lineCount(source) > 300) {
+    violations.push(`${relativePath} exceeds the 300 line feature UI ceiling`);
+  }
+  if (/\bfetch\s*\(|["']\/api\/|@\/lib\/services\//.test(source)) {
+    violations.push(`${relativePath} crosses the results UI boundary`);
+  }
+}
+
 const quizAttemptRouteSource = read(
   "src/app/student/(protected)/attempt/[id]/page.tsx",
 );
@@ -671,14 +706,16 @@ if (
   );
 }
 
-const assignmentManagerSource = read("src/components/assignment-manager.tsx");
+const assignmentWorkspaceSource = read(
+  "src/features/assignments/ui/assignment-workspace.tsx",
+);
 for (const forbidden of [
   /\/api\/admin\/(?:assignment-capacity|assignments|mixed-assignments)/,
   /features\/assignments\/api\/request-adapters/,
 ]) {
-  if (forbidden.test(assignmentManagerSource)) {
+  if (forbidden.test(assignmentWorkspaceSource)) {
     violations.push(
-      `src/components/assignment-manager.tsx crossed the assignment editor boundary (${forbidden})`,
+      `assignment workspace crossed the assignment editor boundary (${forbidden})`,
     );
   }
 }
@@ -799,6 +836,14 @@ const boundedCssModulePaths = [
   ),
   ...filesUnder(
     "src/features/quiz-player",
+    (candidate) => candidate.endsWith(".module.css"),
+  ),
+  ...filesUnder(
+    "src/features/assignments",
+    (candidate) => candidate.endsWith(".module.css"),
+  ),
+  ...filesUnder(
+    "src/features/results",
     (candidate) => candidate.endsWith(".module.css"),
   ),
 ];

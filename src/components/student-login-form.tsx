@@ -25,6 +25,9 @@ import {
   FieldLabel,
   Input,
 } from "@/design-system/primitives/form/field";
+import { Notice } from "@/design-system/patterns/feedback/feedback";
+
+import styles from "./login-form.module.css";
 
 type LoginResponse = {
   error?: string;
@@ -127,7 +130,7 @@ export function StudentLoginForm() {
   return (
     <form
       aria-busy={submitting}
-      className="form-stack"
+      className={styles.form}
       onSubmit={handleSubmit}
     >
       <Field >
@@ -135,7 +138,7 @@ export function StudentLoginForm() {
           {studentAppText.login.codeLabel}
         </FieldLabel>
         <div
-          className="segmented-code-control"
+          className={styles.codeControl}
           data-full={code.length === STUDENT_CODE_LENGTH}
           data-invalid={Boolean(error)}
         >
@@ -147,7 +150,7 @@ export function StudentLoginForm() {
               error ? "student-code-error" : undefined
             }
             aria-invalid={Boolean(error)}
-            className="segmented-code-native"
+            className={styles.codeInput}
             disabled={submitting}
             id="student-access-code"
             name="code"
@@ -167,7 +170,7 @@ export function StudentLoginForm() {
           />
           <div
             aria-hidden="true"
-            className="segmented-code-groups"
+            className={styles.codeGroups}
             data-complete={
               code.length === STUDENT_CODE_LENGTH && !error
             }
@@ -175,9 +178,9 @@ export function StudentLoginForm() {
             {CODE_SLOT_GROUPS.map((groupIndex) => (
               <Fragment key={groupIndex}>
                 {groupIndex > 0 && (
-                  <span className="segmented-code-separator">–</span>
+                  <span className={styles.codeSeparator}>–</span>
                 )}
-                <div className="segmented-code-group">
+                <div className={styles.codeGroup}>
                   {Array.from({ length: 4 }, (_, slotIndex) => {
                     const index = groupIndex * 4 + slotIndex;
                     const character = code[index] ?? "";
@@ -188,9 +191,8 @@ export function StudentLoginForm() {
                     return (
                       <span
                         className={[
-                          "segmented-code-slot",
-                          character ? "segmented-code-slot-filled" : "",
-                          active ? "segmented-code-slot-active" : "",
+                          styles.codeSlot,
+                          active ? styles.activeSlot : "",
                         ]
                           .filter(Boolean)
                           .join(" ")}
@@ -210,13 +212,13 @@ export function StudentLoginForm() {
         </FieldHelp>
       </Field>
       {error && (
-        <div
-          className="notice notice-error"
+        <Notice
           id="student-code-error"
           role="alert"
+          tone="danger"
         >
           {error}
-        </div>
+        </Notice>
       )}
       <Button
         disabled={submitting}

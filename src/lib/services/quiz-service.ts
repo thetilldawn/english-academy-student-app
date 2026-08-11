@@ -26,6 +26,10 @@ import {
 } from "@/lib/quiz/question-provenance";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import type { StudentAssignmentSummary } from "@/features/student-dashboard/model";
+import type {
+  AttemptResultQuestion,
+  StudentAttemptResult,
+} from "@/features/results/model";
 import { loadDatasetDisplayLabelMap } from "@/lib/services/dataset-catalog-service";
 import { finalizeStudentMissedAssignments } from "@/lib/services/missed-assignment-service";
 import { finalizeStaleQuizAttempts } from "@/lib/services/stale-attempt-service";
@@ -64,22 +68,7 @@ export type AttemptState = {
   currentQuestionId: string | null;
 };
 
-export type AttemptQuestionResult = {
-  id: string;
-  orderIndex: number;
-  direction: "english_to_korean" | "korean_to_english";
-  prompt: string;
-  correctAnswer: string;
-  correctChoiceIndex: number;
-  initialChoice: string | null;
-  initialIsCorrect: boolean | null;
-  retryChoice: string | null;
-  retryIsCorrect: boolean | null;
-  wrongCount: number;
-  headword: string;
-  primaryMeaning: string;
-  provenanceStatus: QuestionProvenanceStatus;
-};
+export type AttemptQuestionResult = AttemptResultQuestion;
 
 type AssignmentRow = {
   id: string;
@@ -898,7 +887,7 @@ export async function timeoutStudentQuestion(input: {
 export async function getAttemptResult(
   studentId: string,
   attemptId: string,
-) {
+): Promise<StudentAttemptResult | null> {
   const supabase = getServiceSupabaseClient();
   const { data, error } = await supabase
     .from("quiz_attempts")
@@ -937,7 +926,7 @@ export async function getAttemptResult(
   return {
     id: data.id,
     title: assignment?.title ?? "단어 시험",
-    status: data.status,
+    status: data.status as StudentAttemptResult["status"],
     phase: data.phase as AttemptState["phase"],
     attemptNumber: data.attempt_number,
     questionCount: data.question_count_snapshot,

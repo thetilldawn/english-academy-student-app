@@ -1,5 +1,8 @@
 import Link from "next/link";
-import type { ComponentPropsWithoutRef } from "react";
+import type {
+  ComponentPropsWithoutRef,
+  ComponentPropsWithRef,
+} from "react";
 
 import styles from "./button.module.css";
 
@@ -11,7 +14,7 @@ export type ButtonVariant =
   | "danger"
   | "filter";
 
-export type ButtonProps = ComponentPropsWithoutRef<"button"> & {
+export type ButtonProps = ComponentPropsWithRef<"button"> & {
   size?: ButtonSize;
   variant?: ButtonVariant;
 };

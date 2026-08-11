@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { getErrorReference } from "@/lib/observability/error-reference";
 import { Button } from "@/design-system/primitives/button/button";
 import { commonText } from "@/content/ko/common";
+import styles from "@/design-system/patterns/auth/auth-layout.module.css";
 
 export default function ErrorPage({
   error,
@@ -26,15 +27,15 @@ export default function ErrorPage({
   }, [errorReference]);
 
   return (
-    <main className="auth-shell" id="main-content">
-      <section className="auth-card" role="alert">
-        <p className="eyebrow">{commonText.errorBoundary.eyebrow}</p>
+    <main className={styles.authShell} id="main-content">
+      <section className={styles.authCard} role="alert">
+        <p className={styles.eyebrow}>{commonText.errorBoundary.eyebrow}</p>
         <h1>{commonText.errorBoundary.title}</h1>
-        <p className="auth-description">
+        <p className={styles.description}>
           {commonText.errorBoundary.description}
         </p>
         {errorReference ? (
-          <p className="error-reference">
+          <p className={styles.errorReference}>
             {commonText.errorBoundary.referenceLabel}{" "}
             <code>{errorReference}</code>
           </p>

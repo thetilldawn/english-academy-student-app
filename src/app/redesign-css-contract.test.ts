@@ -97,7 +97,7 @@ describe("redesign CSS contract", () => {
         Number(match[1]),
       ),
     );
-    expect([...weights].sort()).toEqual([400, 600, 700]);
+    expect([...weights].sort()).toEqual([400, 600, 700, 800]);
   });
 
   it("keeps the management UI on one Korean sans-serif hierarchy", () => {
@@ -170,13 +170,16 @@ describe("redesign CSS contract", () => {
   });
 
   it("keeps responsive cards content-sized and student gutters visible", () => {
+    const assignmentWorkspaceCss = readCss(
+      "src/features/assignments/ui/assignment-workspace.module.css",
+    );
     expect(
       readCss("src/features/students/ui/student-directory.module.css"),
     ).toMatch(
       /\.cardGrid\s*\{[\s\S]*?align-items:\s*start;/,
     );
-    expect(css).toMatch(
-      /\.assignment-management-list\s*\{[\s\S]*?align-items:\s*start;/,
+    expect(assignmentWorkspaceCss).toMatch(
+      /\.studentList\s*\{[\s\S]*?align-items:\s*start;/,
     );
     expect(css).toContain(
       "width: min(900px, calc(100% - 36px));",

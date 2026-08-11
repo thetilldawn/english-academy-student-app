@@ -7,6 +7,8 @@ import { adminLearningText } from "@/content/ko/admin-learning";
 import { formatContentText } from "@/content/format";
 import type { ReviewDatasetSummary } from "@/lib/services/admin-service";
 
+import styles from "./review-dataset-panel.module.css";
+
 export function ReviewDatasetPanel({
   datasets,
 }: {
@@ -17,9 +19,9 @@ export function ReviewDatasetPanel({
   return (
     <section
       aria-labelledby="review-dataset-heading"
-      className="section review-dataset-section"
+      className={styles.section}
     >
-      <div className="section-heading">
+      <div className={styles.sectionHeading}>
         <h2 className={inlineHelpClassName} id="review-dataset-heading">
           {adminLearningText.reviewDatasetPanel.title}
           <HelpTip label={adminLearningText.reviewDatasetPanel.helpAria}>
@@ -27,15 +29,15 @@ export function ReviewDatasetPanel({
           </HelpTip>
         </h2>
       </div>
-      <div className="review-dataset-list">
+      <div className={styles.list}>
         {datasets.map((dataset) => {
           const hiddenCount = Math.max(
             0,
             dataset.rowCount - dataset.visibleEntryCount,
           );
           return (
-            <article className="review-dataset-card" key={dataset.id}>
-              <div className="review-dataset-heading">
+            <article className={styles.card} key={dataset.id}>
+              <div className={styles.cardHeading}>
                 <div>
                   <h3>{dataset.title}</h3>
                   {dataset.edition && <p>{dataset.edition}</p>}
@@ -52,13 +54,13 @@ export function ReviewDatasetPanel({
                   </MetaTag>
                 </MetaTagList>
               </div>
-              <p className="review-dataset-gate">
+              <p className={styles.gate}>
                 {adminLearningText.reviewDatasetPanel.status}
               </p>
-              <ol className="review-entry-list">
+              <ol className={styles.entryList}>
                 {dataset.entries.map((entry) => (
                   <li key={entry.id}>
-                    <span aria-hidden="true" className="review-entry-number">
+                    <span aria-hidden="true" className={styles.entryNumber}>
                       {String(entry.sourceRow).padStart(2, "0")}
                     </span>
                     <strong>{entry.headword}</strong>
@@ -67,7 +69,7 @@ export function ReviewDatasetPanel({
                 ))}
               </ol>
               {hiddenCount > 0 && (
-                <p className="list-meta">
+                <p className={styles.meta}>
                   {formatContentText(
                     adminLearningText.reviewDatasetPanel.hidden,
                     { count: hiddenCount },

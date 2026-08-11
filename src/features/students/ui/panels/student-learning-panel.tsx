@@ -12,6 +12,7 @@ import {
 } from "@/design-system/primitives/form/field";
 import { HelpTip, inlineHelpClassName } from "@/design-system/primitives/tooltip/help-tip";
 import { adminStudentsText } from "@/content/ko/admin-students";
+import { EmptyState } from "@/design-system/patterns/feedback/feedback";
 import { formatContentText } from "@/content/format";
 import {
   cataloguedDatasetDisplayLabel,
@@ -107,9 +108,9 @@ export function StudentLearningPanel({
             />
           </>
         ) : (
-          <div className="empty-state">
+          <EmptyState>
             {adminStudentsText.learning.passagePending}
-          </div>
+          </EmptyState>
         )}
       </section>
     );

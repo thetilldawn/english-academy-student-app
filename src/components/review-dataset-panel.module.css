@@ -1,0 +1,96 @@
+.section,
+.list,
+.card,
+.entryList {
+  min-width: 0;
+  display: grid;
+}
+
+.section {
+  gap: var(--space-3);
+}
+
+.sectionHeading,
+.cardHeading {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.sectionHeading h2,
+.cardHeading h3,
+.cardHeading p {
+  margin: 0;
+}
+
+.sectionHeading h2,
+.cardHeading > div {
+  min-width: 0;
+}
+
+.list {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: var(--space-3);
+}
+
+.card {
+  align-content: start;
+  gap: var(--space-3);
+  padding: 16px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.cardHeading p,
+.gate,
+.meta {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.gate,
+.meta {
+  margin: 0;
+}
+
+.entryList {
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entryList li {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 28px minmax(80px, 0.7fr) minmax(0, 1.3fr);
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.entryList strong,
+.entryList li > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.entryNumber {
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 580px) {
+  .cardHeading,
+  .entryList li {
+    grid-template-columns: 1fr;
+  }
+
+  .cardHeading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

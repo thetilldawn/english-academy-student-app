@@ -15,6 +15,7 @@ import {
   DialogBody,
   DialogFooter,
 } from "@/design-system/primitives/dialog/dialog";
+import { Notice } from "@/design-system/patterns/feedback/feedback";
 import { cataloguedDatasetDisplayLabel } from "@/lib/admin/dataset-catalog";
 
 import type {
@@ -156,9 +157,9 @@ export function SingleAssignmentEditor({
         className={embedded ? styles.embeddedBody : undefined}
       >
         {controller.loadStatus === "loading" ? (
-          <div className="notice" role="status">
+          <Notice role="status">
             {adminLearningText.assignmentModal.overview.loadingEdit}
-          </div>
+          </Notice>
         ) : null}
         <form
           aria-busy={busy}
