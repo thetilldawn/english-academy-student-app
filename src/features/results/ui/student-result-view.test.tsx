@@ -131,4 +131,41 @@ describe("StudentResultView", () => {
     rerender(<StudentResultView result={result([question("q1")])} />);
     expect(screen.queryByRole("button", { name: "재시험 시작" })).not.toBeInTheDocument();
   });
+
+  it("uses the final score and retry outcome after a retry is completed", () => {
+    render(
+      <StudentResultView
+        result={
+          result(
+            [
+              question("q1", {
+                retryChoice: "meaning-q1",
+                retryIsCorrect: true,
+              }),
+            ],
+            {
+              initialScore: 25,
+              finalScore: 100,
+              initialCorrectCount: 1,
+              retryCorrectCount: 1,
+              unresolvedWrongCount: 0,
+              passed: false,
+            },
+          )
+        }
+      />,
+    );
+
+    const header = screen.getByRole("heading", { name: "DAY 01 단어 시험" }).closest("header");
+    expect(header).not.toBeNull();
+    expect(within(header as HTMLElement).getByText("100점")).toBeVisible();
+    expect(
+      within(header as HTMLElement).getByText(
+        "재시험에서 틀린 단어를 모두 해결했습니다.",
+      ),
+    ).toBeVisible();
+    expect(
+      within(header as HTMLElement).queryByText("통과점수에는 미치지 못했습니다."),
+    ).not.toBeInTheDocument();
+  });
 });

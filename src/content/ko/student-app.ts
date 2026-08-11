@@ -118,6 +118,8 @@ export const studentAppText = {
       expired: "제한시간이 끝났습니다.",
       passed: "통과했습니다.",
       failed: "통과점수에는 미치지 못했습니다.",
+      retryResolved: "재시험에서 틀린 단어를 모두 해결했습니다.",
+      retryRemaining: "재시험 후에도 다시 볼 단어가 남았습니다.",
     },
     score: "{score}점",
     count: "{count}개",

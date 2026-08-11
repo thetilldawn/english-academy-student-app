@@ -65,10 +65,12 @@ function QuestionReviewCard({
 
 function ResultHeader({
   expired,
+  hasRetryResult,
   result,
   reviewPending,
 }: {
   expired: boolean;
+  hasRetryResult: boolean;
   result: StudentAttemptResult;
   reviewPending: boolean;
 }) {
@@ -83,9 +85,16 @@ function ResultHeader({
     ? studentAppText.result.message.retryReady
     : expired
       ? studentAppText.result.message.expired
-      : result.passed
+      : hasRetryResult
+        ? result.unresolvedWrongCount === 0
+          ? studentAppText.result.message.retryResolved
+          : studentAppText.result.message.retryRemaining
+        : result.passed
         ? studentAppText.result.message.passed
         : studentAppText.result.message.failed;
+  const displayedScore = hasRetryResult
+    ? result.finalScore
+    : result.initialScore;
 
   return (
     <header className={styles.header} data-expired={expired || undefined}>
@@ -95,10 +104,10 @@ function ResultHeader({
         <p>{message}</p>
       </div>
       <strong className={styles.score}>
-        {result.initialScore === null
+        {displayedScore === null
           ? "-"
           : formatContentText(studentAppText.result.score, {
-              score: result.initialScore,
+              score: displayedScore,
             })}
       </strong>
     </header>
@@ -182,6 +191,9 @@ export function StudentResultView({ result }: { result: StudentAttemptResult }) 
   const resolvedQuestions = wrongQuestions.filter(
     (question) => question.retryIsCorrect === true,
   );
+  const hasRetryResult = wrongQuestions.some(
+    (question) => question.retryIsCorrect !== null,
+  );
 
   const unresolved = (
     <ResultSection
@@ -256,6 +268,7 @@ export function StudentResultView({ result }: { result: StudentAttemptResult }) 
       header={
         <ResultHeader
           expired={expired}
+          hasRetryResult={hasRetryResult}
           result={result}
           reviewPending={reviewPending}
         />
