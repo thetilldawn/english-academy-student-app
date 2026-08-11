@@ -30,7 +30,7 @@ import {
   learningActivitySection,
   type LearningActivityOrderInput,
   type LearningActivitySection,
-} from "@/lib/admin/learning-activity";
+} from "@/features/history/domain/learning-activity";
 import { loadDatasetDisplayLabelMap } from "@/lib/services/dataset-catalog-service";
 import { finalizeStudentMissedAssignments } from "@/lib/services/missed-assignment-service";
 import { finalizeStaleQuizAttempts } from "@/lib/services/stale-attempt-service";
@@ -68,6 +68,57 @@ export type StudentAssignmentSummary = {
   canStart: boolean;
   activitySection: Exclude<LearningActivitySection, "archived">;
 };
+
+type StudentAssignmentActivitySource = Pick<
+  StudentAssignmentSummary,
+  | "assignedAt"
+  | "availableUntil"
+  | "lastCompletedAt"
+  | "lastDeadlineAt"
+  | "lastFinalScore"
+  | "lastInitialCompletedAt"
+  | "lastInitialScore"
+  | "lastPassed"
+  | "lastPhase"
+  | "lastRetryStartedAt"
+  | "lastStartedAt"
+  | "lastStatus"
+  | "lastUnresolvedWrongCount"
+  | "missed"
+  | "missedAt"
+  | "passingScore"
+>;
+
+function studentAssignmentActivityInput(
+  assignment: StudentAssignmentActivitySource,
+): LearningActivityOrderInput {
+  return {
+    status: assignment.missed
+      ? "missed"
+      : (assignment.lastStatus ?? "not_started"),
+    phase: assignment.lastPhase,
+    assignedAt: assignment.assignedAt,
+    availableUntil: assignment.availableUntil,
+    startedAt: assignment.lastStartedAt,
+    initialCompletedAt: assignment.lastInitialCompletedAt,
+    retryStartedAt: assignment.lastRetryStartedAt,
+    completedAt: assignment.lastCompletedAt,
+    missedAt: assignment.missedAt,
+    deadlineAt: assignment.lastDeadlineAt,
+    activityAt:
+      assignment.lastCompletedAt ??
+      assignment.lastRetryStartedAt ??
+      assignment.lastInitialCompletedAt ??
+      assignment.lastStartedAt ??
+      assignment.missedAt ??
+      assignment.assignedAt,
+    passed: assignment.lastPassed,
+    initialScore: assignment.lastInitialScore,
+    finalScore: assignment.lastFinalScore,
+    passingScore: assignment.passingScore,
+    unresolvedWrongCount: assignment.lastUnresolvedWrongCount,
+  };
+}
 
 export type AttemptQuestionState = {
   id: string;
@@ -449,37 +500,8 @@ export async function listStudentAssignments(
       assignment.available_from ??
       assignedAtByAssignment.get(assignment.id) ??
       new Date(0).toISOString();
-    const orderInput: LearningActivityOrderInput = {
-      status: missed
-        ? ("missed" as const)
-        : (lastAttempt?.status ?? "not_started"),
-      phase: lastAttempt?.phase ?? null,
-      assignedAt,
-      availableUntil: assignment.available_until,
-      startedAt: lastAttempt?.started_at ?? null,
-      initialCompletedAt:
-        lastAttempt?.initial_completed_at ?? null,
-      completedAt: lastAttempt?.completed_at ?? null,
-      missedAt,
-      deadlineAt: lastAttempt?.deadline_at ?? null,
-      activityAt:
-        lastAttempt?.completed_at ??
-        lastAttempt?.started_at ??
-        missedAt ??
-        assignedAt,
-      passed: lastAttempt?.passed ?? null,
-      finalScore:
-        lastAttempt?.final_score === null ||
-        lastAttempt?.final_score === undefined
-          ? null
-          : Number(lastAttempt.final_score),
-      passingScore: assignment.passing_score,
-      unresolvedWrongCount:
-        lastAttempt?.unresolved_wrong_count ?? null,
-    };
-
     const datasetTitle = datasetTitles.get(assignment.dataset_id) ?? "어휘";
-    return {
+    const summary: Omit<StudentAssignmentSummary, "activitySection"> = {
       id: assignment.id,
       title: assignment.title,
       displayTitle: assignmentDisplayTitleForUnits(
@@ -530,7 +552,13 @@ export async function listStudentAssignments(
       missedAt,
       missed,
       canStart,
-      activitySection: learningActivitySection(orderInput) as Exclude<
+    };
+
+    return {
+      ...summary,
+      activitySection: learningActivitySection(
+        studentAssignmentActivityInput(summary),
+      ) as Exclude<
         LearningActivitySection,
         "archived"
       >,
@@ -539,42 +567,8 @@ export async function listStudentAssignments(
 
   return summaries.toSorted((left, right) =>
     compareLearningActivities(
-      {
-        status: left.missed ? "missed" : (left.lastStatus ?? "not_started"),
-        phase: left.lastPhase,
-        assignedAt: left.assignedAt,
-        availableUntil: left.availableUntil,
-        startedAt: left.lastStartedAt,
-        initialCompletedAt: left.lastInitialCompletedAt,
-        completedAt: left.lastCompletedAt,
-        missedAt: left.missedAt,
-        deadlineAt: left.lastDeadlineAt,
-        activityAt:
-          left.lastCompletedAt ?? left.lastStartedAt ?? left.assignedAt,
-        passed: left.lastPassed,
-        finalScore: left.lastFinalScore,
-        passingScore: left.passingScore,
-        unresolvedWrongCount: left.lastUnresolvedWrongCount,
-      },
-      {
-        status: right.missed
-          ? "missed"
-          : (right.lastStatus ?? "not_started"),
-        phase: right.lastPhase,
-        assignedAt: right.assignedAt,
-        availableUntil: right.availableUntil,
-        startedAt: right.lastStartedAt,
-        initialCompletedAt: right.lastInitialCompletedAt,
-        completedAt: right.lastCompletedAt,
-        missedAt: right.missedAt,
-        deadlineAt: right.lastDeadlineAt,
-        activityAt:
-          right.lastCompletedAt ?? right.lastStartedAt ?? right.assignedAt,
-        passed: right.lastPassed,
-        finalScore: right.lastFinalScore,
-        passingScore: right.passingScore,
-        unresolvedWrongCount: right.lastUnresolvedWrongCount,
-      },
+      studentAssignmentActivityInput(left),
+      studentAssignmentActivityInput(right),
     ),
   );
 }

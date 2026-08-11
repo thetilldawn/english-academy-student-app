@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   buildAttemptScoreSlots,
   buildAttemptStatusPresentation,
-} from "@/lib/ui/attempt-score-presentation";
+  hasAttemptScoreContent,
+} from "@/features/history/presentation/attempt-presentation";
 
 describe("buildAttemptScoreSlots", () => {
   it.each([
@@ -68,7 +69,6 @@ describe("buildAttemptScoreSlots", () => {
     ).toMatchObject({
       label: "완료",
       tone: "success",
-      className: "status-completed",
       outcome: "completed",
     });
 
@@ -84,7 +84,6 @@ describe("buildAttemptScoreSlots", () => {
     ).toMatchObject({
       label: "미통과",
       tone: "danger",
-      className: "status-failed",
       outcome: "failed",
     });
   });
@@ -102,7 +101,6 @@ describe("buildAttemptScoreSlots", () => {
     ).toMatchObject({
       label: "완료",
       tone: "warning",
-      className: "status-retried",
       outcome: "retried",
     });
   });
@@ -120,7 +118,6 @@ describe("buildAttemptScoreSlots", () => {
     ).toMatchObject({
       label: "미응시",
       tone: "danger",
-      className: "status-failed",
       outcome: "missed",
     });
 
@@ -136,7 +133,6 @@ describe("buildAttemptScoreSlots", () => {
     ).toMatchObject({
       label: "미통과",
       tone: "danger",
-      className: "status-failed",
       outcome: "failed",
     });
   });
@@ -154,7 +150,6 @@ describe("buildAttemptScoreSlots", () => {
     ).toMatchObject({
       label: "재시험",
       tone: "warning",
-      className: "status-retried",
       outcome: "retried",
     });
   });
@@ -226,5 +221,53 @@ describe("buildAttemptScoreSlots", () => {
         retryStartedAt: null,
       }),
     ).toEqual([{ label: "점수", value: "-", tone: "neutral" }, null]);
+  });
+
+  it("마감된 시험은 이전 고득점이 남아 있어도 실패 색상으로 표시한다", () => {
+    expect(
+      buildAttemptScoreSlots({
+        status: "expired",
+        phase: "completed",
+        initialScore: 100,
+        finalScore: 100,
+        passingScore: 80,
+        passed: true,
+        retryStartedAt: null,
+      })[0]?.tone,
+    ).toBe("fail");
+
+    expect(
+      buildAttemptScoreSlots({
+        status: "expired",
+        phase: "retry",
+        initialScore: 50,
+        finalScore: 100,
+        passingScore: 80,
+        passed: false,
+        retryStartedAt: "2026-08-09T01:00:00.000Z",
+      }).map((slot) => slot?.tone),
+    ).toEqual(["fail", "fail"]);
+  });
+
+  it("미응시에는 남아 있는 점수를 노출하지 않는다", () => {
+    const input = {
+      status: "missed" as const,
+      phase: "initial" as const,
+      initialScore: 100,
+      finalScore: 100,
+      passingScore: 80,
+      passed: true,
+      retryStartedAt: null,
+    };
+
+    expect(buildAttemptScoreSlots(input)).toEqual([
+      { label: "첫 시험", value: "미응시", tone: "fail" },
+      null,
+    ]);
+    expect(buildAttemptScoreSlots(input, { compact: true })).toEqual([
+      null,
+      null,
+    ]);
+    expect(hasAttemptScoreContent(input, { compact: true })).toBe(false);
   });
 });

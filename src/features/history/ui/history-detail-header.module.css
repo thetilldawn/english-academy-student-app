@@ -1,0 +1,11 @@
+.pageHeader {
+  position: sticky;
+  z-index: 3;
+  top: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding-block: 10px;
+  background: var(--paper);
+}

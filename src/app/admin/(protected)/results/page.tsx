@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
-import { AdminHistoryList } from "@/components/admin-history-list";
+import { AdminHistoryList } from "@/features/history/ui/admin-history-list";
 import { adminHistoryText } from "@/content/ko/admin-history";
 import { listAssignmentHistory } from "@/lib/services/admin-service";
 

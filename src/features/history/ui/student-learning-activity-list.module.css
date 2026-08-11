@@ -1,0 +1,68 @@
+.region,
+.sections,
+.section {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.sections {
+  gap: var(--space-4);
+}
+
+.section {
+  gap: 10px;
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: 2px;
+}
+
+.sectionHeading h4 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.list {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.filters label {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.filters label > span {
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.expand {
+  justify-self: start;
+}
+
+.empty {
+  padding: var(--space-4);
+}
+
+@media (max-width: 767px) {
+  .filters {
+    grid-template-columns: 1fr;
+  }
+}

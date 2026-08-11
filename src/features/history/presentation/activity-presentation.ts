@@ -1,13 +1,16 @@
 import { commonText } from "@/content/ko/common";
+import { deriveLearningActivityState } from "@/features/history/domain/learning-activity";
 import type { AssignmentActivityStatus } from "@/lib/admin/history";
+import type { StatusTone } from "@/lib/ui/status";
+
 import {
   buildAttemptStatusPresentation,
   type AttemptScorePresentationInput,
-} from "@/lib/ui/attempt-score-presentation";
-import type { StatusTone } from "@/lib/ui/status";
+} from "./attempt-presentation";
 
 export type ActivityTimelineInput = AttemptScorePresentationInput & {
   status: AssignmentActivityStatus;
+  passingScore: number;
   activityAt: string;
   assignedAt: string;
   availableUntil: string | null;
@@ -31,33 +34,11 @@ export type ActivityStatusTimelinePresentation = {
   status: ActivityTimelineRow;
 };
 
-function statusTimestamp(item: ActivityTimelineInput) {
-  if (item.status === "not_started") return null;
-  if (item.status === "cancelled") {
-    return item.cancelledAt ?? item.activityAt;
-  }
-  if (item.status === "missed") {
-    return item.missedAt ?? item.availableUntil ?? item.activityAt;
-  }
-  if (item.status === "expired") {
-    return item.deadlineAt ?? item.activityAt;
-  }
-  if (item.status === "completed") {
-    return item.completedAt ?? item.activityAt;
-  }
-  if (item.phase === "review") {
-    return item.initialCompletedAt ?? item.startedAt ?? item.activityAt;
-  }
-  if (item.phase === "retry") {
-    return item.retryStartedAt ?? item.startedAt ?? item.activityAt;
-  }
-  return item.startedAt ?? item.activityAt;
-}
-
 export function buildActivityStatusTimeline(
   item: ActivityTimelineInput,
 ): ActivityStatusTimelinePresentation {
   const status = buildAttemptStatusPresentation(item);
+  const state = deriveLearningActivityState(item);
   const cancelled = item.status === "cancelled";
 
   return {
@@ -81,7 +62,7 @@ export function buildActivityStatusTimeline(
       kind: "status",
       label: status.label,
       tone: status.tone,
-      timestamp: statusTimestamp(item),
+      timestamp: state.statusAt,
     },
   };
 }

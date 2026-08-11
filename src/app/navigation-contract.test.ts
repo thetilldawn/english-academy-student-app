@@ -210,10 +210,13 @@ describe("responsive navigation contract", () => {
       "src/app/admin/(protected)/results/page.tsx",
     );
     const historyList = source(
-      "src/components/admin-history-list.tsx",
+      "src/features/history/ui/admin-history-list.tsx",
     );
     const overviewGroups = source(
-      "src/components/overview-action-groups.tsx",
+      "src/features/history/ui/overview-action-groups.tsx",
+    );
+    const historyRow = source(
+      "src/features/history/ui/history-activity-row.tsx",
     );
     const historyCopy = source("src/content/ko/admin-history.ts");
     const overviewCopy = source("src/content/ko/admin-overview.ts");
@@ -221,7 +224,7 @@ describe("responsive navigation contract", () => {
       "src/app/admin/(protected)/@detail/(.)results/[entryKey]/page.tsx",
     );
     const scorePresentation = source(
-      "src/lib/ui/attempt-score-presentation.ts",
+      "src/features/history/presentation/attempt-presentation.ts",
     );
 
     expect(overview).toContain("listAssignmentHistory");
@@ -233,11 +236,11 @@ describe("responsive navigation contract", () => {
     expect(scorePresentation).toContain('label: "최종"');
     expect(scorePresentation).toContain('label: "재시험"');
     expect(historyCopy).toContain('needsAttention: "미통과·미응시"');
-    expect(historyList).toContain("historyDetailHref(item)");
-    expect(historyList).toContain("<ActivityStatusTimeline");
+    expect(historyRow).toContain("historyDetailHref(item)");
+    expect(historyRow).toContain("<ActivityStatusTimeline");
     expect(interceptedDetail).toContain("getAdminHistoryDetail(entryKey)");
     expect(overview).toContain("<OverviewActionGroups");
-    expect(overviewGroups).toContain("<AdminHistoryList compact items={section.items} />");
+    expect(overviewGroups).toContain("<HistoryRows compact items={section.items} />");
     expect(overviewGroups).not.toContain("onSelectStudent");
     expect(overviewGroups).not.toContain("StudentManager");
     expect(overviewGroups).not.toContain("slice(0, 8)");

@@ -13,7 +13,10 @@ describe("admin deletion UI contract", () => {
       "src/components/admin-history-actions.tsx",
     );
     const historyList = source(
-      "src/components/admin-history-list.tsx",
+      "src/features/history/ui/admin-history-list.tsx",
+    );
+    const historyRow = source(
+      "src/features/history/ui/history-activity-row.tsx",
     );
     const detailActions = source(
       "src/components/history-detail-actions.tsx",
@@ -25,12 +28,13 @@ describe("admin deletion UI contract", () => {
       "src/app/admin/(protected)/assignments/page.tsx",
     );
     const learningActivityList = source(
-      "src/components/student-learning-activity-list.tsx",
+      "src/features/history/ui/student-learning-activity-list.tsx",
     );
     const historyCopy = source("src/content/ko/admin-history.ts");
     const studentCopy = source("src/content/ko/admin-students.ts");
 
-    expect(historyList).toContain("historyDetailHref(item)");
+    expect(historyList).toContain("<HistoryRows items={filteredItems}");
+    expect(historyRow).toContain("historyDetailHref(item)");
     expect(detailActions).toContain("<AdminHistoryActions");
     expect(historyActions).toContain("adminHistoryText.actions.cancel.action");
     expect(historyCopy).toContain('action: "배정 취소"');

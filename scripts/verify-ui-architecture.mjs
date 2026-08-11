@@ -255,9 +255,56 @@ for (const retiredPath of [
   "src/components/ui-modal.tsx",
   "src/components/ui-tabs.tsx",
   "src/components/help-tip.tsx",
+  "src/components/activity-status-timeline.tsx",
+  "src/components/admin-history-list.tsx",
+  "src/components/assignment-meta-tags.tsx",
+  "src/components/attempt-score-summary.tsx",
+  "src/components/overview-action-groups.tsx",
+  "src/components/route-detail-dialog.tsx",
+  "src/components/student-learning-activity-list.tsx",
+  "src/components/ui-list-row.tsx",
+  "src/lib/admin/learning-activity.ts",
+  "src/lib/ui/attempt-score-presentation.ts",
+  "src/lib/ui/learning-activity-presentation.ts",
 ]) {
   if (fs.existsSync(path.join(rootDirectory, retiredPath))) {
     violations.push(`${retiredPath} should be retired after primitive migration`);
+  }
+}
+
+const retiredActivitySelectors = [
+  ".activity-status-timeline",
+  ".activity-row-",
+  ".openable-list-row",
+  ".selectable-list-row",
+  ".admin-history-row",
+  ".admin-history-list",
+  ".assignment-student-row",
+  ".assignment-student-identity",
+  ".assignment-student-book",
+  ".assignment-student-recent",
+  ".attempt-score-summary",
+  ".attempt-score-slot",
+  ".overview-action-groups",
+  ".overview-action-section",
+  ".overview-clear-state",
+  ".learning-activity-region",
+  ".learning-activity-sections",
+  ".learning-activity-section",
+  ".learning-activity-list",
+  ".learning-activity-row",
+  ".learning-activity-open",
+  ".learning-activity-filters",
+  ".history-detail-page-heading",
+  ".history-detail-heading-copy",
+  ".history-detail-heading-tags",
+];
+
+for (const retiredSelector of retiredActivitySelectors) {
+  if (css.includes(retiredSelector)) {
+    violations.push(
+      `globals.css retains migrated activity selector ${retiredSelector}`,
+    );
   }
 }
 
@@ -367,6 +414,7 @@ const productionTsxPaths = filesUnder(
     !relativePath.endsWith(".stories.tsx"),
 );
 const primitiveDirectoryPrefix = "src/design-system/primitives/";
+const designSystemDirectoryPrefix = "src/design-system/";
 const dialogPrimitivePath = `${primitiveDirectoryPrefix}dialog/dialog.tsx`;
 const tabsPrimitivePath = `${primitiveDirectoryPrefix}tabs/tabs.tsx`;
 const tooltipPrimitivePath = `${primitiveDirectoryPrefix}tooltip/help-tip.tsx`;
@@ -414,7 +462,7 @@ for (const relativePath of productionTsxPaths) {
 }
 
 for (const relativePath of productionTsxPaths.filter((candidate) =>
-  candidate.startsWith(primitiveDirectoryPrefix),
+  candidate.startsWith(designSystemDirectoryPrefix),
 )) {
   const source = read(relativePath);
   for (const forbidden of [
@@ -429,6 +477,26 @@ for (const relativePath of productionTsxPaths.filter((candidate) =>
         `${relativePath} crosses the primitive dependency boundary (${forbidden})`,
       );
     }
+  }
+}
+
+const boundedCssModulePaths = [
+  ...filesUnder(
+    "src/design-system",
+    (candidate) => candidate.endsWith(".module.css"),
+  ),
+  ...filesUnder(
+    "src/features/history",
+    (candidate) => candidate.endsWith(".module.css"),
+  ),
+];
+
+for (const relativePath of boundedCssModulePaths) {
+  const source = read(relativePath);
+  if (/:global\(|#[\da-f]{3,8}\b/i.test(source)) {
+    violations.push(
+      `${relativePath} bypasses design tokens or its CSS module boundary`,
+    );
   }
 }
 

@@ -10,7 +10,9 @@ function source(relativePath: string) {
 describe("assignment edit UI contract", () => {
   it("opens the shared single editor from detail and delegates PUT to its controller", () => {
     const detailActions = source("src/components/history-detail-actions.tsx");
-    const activities = source("src/components/student-learning-activity-list.tsx");
+    const activities = source(
+      "src/features/history/ui/student-learning-activity-list.tsx",
+    );
     const manager = source("src/components/assignment-manager.tsx");
     const controller = source(
       "src/features/assignments/controller/use-assignment-controller.ts",

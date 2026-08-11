@@ -1,0 +1,12 @@
+.groups {
+  display: grid;
+  gap: 18px;
+}
+
+.section {
+  min-width: 0;
+}
+
+.empty {
+  margin-top: var(--space-2);
+}

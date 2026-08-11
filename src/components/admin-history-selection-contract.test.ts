@@ -9,10 +9,18 @@ function source(relativePath: string) {
 
 describe("admin history route detail contract", () => {
   it("opens detail by address and closes only the intercepted layer", () => {
-    const historyList = source("src/components/admin-history-list.tsx");
-    const routeDialog = source("src/components/route-detail-dialog.tsx");
+    const historyList = source(
+      "src/features/history/ui/admin-history-list.tsx",
+    );
+    const routeDialog = source(
+      "src/features/history/ui/route-detail-dialog.tsx",
+    );
+    const historyRow = source(
+      "src/features/history/ui/history-activity-row.tsx",
+    );
 
-    expect(historyList).toContain("historyDetailHref(item)");
+    expect(historyList).toContain("<HistoryRows items={filteredItems}");
+    expect(historyRow).toContain("historyDetailHref(item)");
     expect(historyList).not.toContain("useRef<HTMLDialogElement>");
     expect(historyList).not.toContain("selectedId");
     expect(routeDialog).toContain("router.back()");
@@ -20,16 +28,17 @@ describe("admin history route detail contract", () => {
     expect(routeDialog).toContain("onRequestClose={close}");
   });
 
-  it("학습 관리에서는 체크박스만 선택하고 카드 본문은 상세를 연다", () => {
-    const rows = source("src/components/ui-list-row.tsx");
+  it("학습 관리에서는 체크박스와 본문을 선택에 쓰고 보기만 상세를 연다", () => {
+    const rows = source(
+      "src/design-system/patterns/activity-row/activity-row.tsx",
+    );
     const manager = source("src/components/assignment-manager.tsx");
 
     expect(rows).toContain("aria-label={selectionAriaLabel}");
     expect(rows).toContain("onChange={onToggle}");
-    expect(rows).toContain("href={href}");
-    expect(rows).not.toContain("onClick={onToggle}");
+    expect(rows).toContain("onClick={onToggle}");
     expect(rows).not.toContain('aria-hidden="true"');
-    expect(manager).toContain("href={");
+    expect(manager).toContain("<ButtonLink");
     expect(manager).toContain("historyDetailHref(nextActivity)");
   });
 });

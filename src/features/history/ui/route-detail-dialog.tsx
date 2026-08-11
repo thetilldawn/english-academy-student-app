@@ -1,11 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import {
-  useCallback,
-  useRef,
-  type ReactNode,
-} from "react";
+import { useCallback, useRef, type ReactNode } from "react";
 
 import {
   DialogBody,
@@ -36,12 +32,10 @@ export function RouteDetailDialog({
       onRequestClose={close}
       size="wide"
     >
-      <DialogHeader
-        closeLabel={adminHistoryText.detailModal.close}
-      >
+      <DialogHeader closeLabel={adminHistoryText.detailModal.close}>
         {heading}
       </DialogHeader>
-      <DialogBody className="history-detail-scroll-region">{children}</DialogBody>
+      <DialogBody>{children}</DialogBody>
     </DialogFrame>
   );
 }

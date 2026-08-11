@@ -1,4 +1,8 @@
 import { commonText } from "@/content/ko/common";
+import {
+  deriveLearningActivityState,
+  type LearningActivityOrderInput,
+} from "@/features/history/domain/learning-activity";
 import type { StatusTone } from "@/lib/ui/status";
 
 export type AttemptScoreTone = "neutral" | "pass" | "fail";
@@ -22,20 +26,26 @@ export type AttemptScorePresentationInput = {
   initialScore: number | null | undefined;
   finalScore: number | null | undefined;
   passingScore: number | null | undefined;
+  passed?: boolean | null | undefined;
   retryStartedAt: string | null | undefined;
 };
+
+export type AttemptOutcome =
+  | "cancelled"
+  | "completed"
+  | "failed"
+  | "in_progress"
+  | "missed"
+  | "not_started"
+  | "retried";
 
 export type AttemptStatusPresentation = {
   label: string;
   tone: StatusTone;
-  className: string;
-  outcome: string;
+  outcome: AttemptOutcome;
 };
 
-function scoreValue(
-  score: number | null | undefined,
-  compact: boolean,
-) {
+function scoreValue(score: number | null | undefined, compact: boolean) {
   if (score === null || score === undefined) return "-";
   return compact ? String(score) : `${score}점`;
 }
@@ -49,6 +59,14 @@ function scoreTone(
   return score >= passingScore ? "pass" : "fail";
 }
 
+function scoreToneForAttempt(
+  input: AttemptScorePresentationInput,
+  score: number | null | undefined,
+): AttemptScoreTone {
+  if (input.status === "expired" || input.status === "missed") return "fail";
+  return scoreTone(score, input.passingScore);
+}
+
 export function buildAttemptScoreSlots(
   input: AttemptScorePresentationInput,
   options: { compact?: boolean } = {},
@@ -56,10 +74,7 @@ export function buildAttemptScoreSlots(
   const compact = options.compact ?? false;
   if (input.status === "missed") {
     if (compact) return [null, null];
-    return [
-      { label: "첫 시험", value: "미응시", tone: "fail" },
-      null,
-    ];
+    return [{ label: "첫 시험", value: "미응시", tone: "fail" }, null];
   }
 
   if (input.initialScore === null || input.initialScore === undefined) {
@@ -72,15 +87,12 @@ export function buildAttemptScoreSlots(
       {
         label: "첫 시험",
         value: scoreValue(input.initialScore, compact),
-        tone: scoreTone(input.initialScore, input.passingScore),
+        tone: scoreToneForAttempt(input, input.initialScore),
       },
       {
         label: "재시험",
         value: scoreValue(input.finalScore ?? input.initialScore, compact),
-        tone: scoreTone(
-          input.finalScore ?? input.initialScore,
-          input.passingScore,
-        ),
+        tone: scoreToneForAttempt(input, input.finalScore ?? input.initialScore),
       },
     ];
   }
@@ -90,7 +102,7 @@ export function buildAttemptScoreSlots(
       {
         label: "첫 시험",
         value: scoreValue(input.initialScore, compact),
-        tone: scoreTone(input.initialScore, input.passingScore),
+        tone: scoreToneForAttempt(input, input.initialScore),
       },
       null,
     ];
@@ -101,105 +113,85 @@ export function buildAttemptScoreSlots(
     {
       label: "최종",
       value: scoreValue(finalScore, compact),
-      tone: scoreTone(finalScore, input.passingScore),
+      tone: scoreToneForAttempt(input, finalScore),
     },
     null,
   ];
 }
 
+export function hasAttemptScoreContent(
+  input: AttemptScorePresentationInput,
+  options: { compact?: boolean } = {},
+) {
+  return buildAttemptScoreSlots(input, options).some(Boolean);
+}
+
 export function buildAttemptStatusPresentation(
   input: AttemptScorePresentationInput,
 ): AttemptStatusPresentation {
-  if (input.status === "not_started" || input.status === null) {
-    return {
+  const state = deriveLearningActivityState({
+    activityAt: "",
+    assignedAt: null,
+    availableUntil: null,
+    cancelledAt: null,
+    completedAt: null,
+    deadlineAt: null,
+    finalScore: input.finalScore,
+    initialScore: input.initialScore,
+    missedAt: null,
+    passed: input.passed,
+    passingScore: input.passingScore ?? 0,
+    phase: input.phase,
+    retryStartedAt: input.retryStartedAt,
+    startedAt: null,
+    status: input.status,
+  } satisfies LearningActivityOrderInput);
+
+  const presentationByKind: Record<
+    typeof state.kind,
+    Omit<AttemptStatusPresentation, "outcome">
+  > = {
+    not_started: {
       label: commonText.activityStatus.notStarted,
       tone: "neutral",
-      className: "status-not_started",
-      outcome: "not_started",
-    };
-  }
-  if (input.status === "cancelled") {
-    return {
-      label: commonText.activityStatus.cancelled,
+    },
+    initial_in_progress: {
+      label: commonText.activityStatus.inProgress,
       tone: "neutral",
-      className: "status-cancelled",
-      outcome: "cancelled",
-    };
-  }
-  if (input.status === "missed") {
-    return {
+    },
+    review_pending: {
+      label: commonText.activityStatus.failed,
+      tone: "danger",
+    },
+    retry_in_progress: {
+      label: commonText.activityStatus.retry,
+      tone: "warning",
+    },
+    missed: {
       label: commonText.activityStatus.missed,
       tone: "danger",
-      className: "status-failed",
-      outcome: "missed",
-    };
-  }
-  if (input.status === "in_progress") {
-    if (input.phase === "review") {
-      return {
-        label: commonText.activityStatus.failed,
-        tone: "danger",
-        className: "status-failed",
-        outcome: "failed",
-      };
-    }
-    return input.phase === "retry" || Boolean(input.retryStartedAt)
-      ? {
-          label: commonText.activityStatus.retry,
-          tone: "warning",
-          className: "status-retried",
-          outcome: "retried",
-        }
-      : {
-          label: commonText.activityStatus.inProgress,
-          tone: "neutral",
-          className: "status-in_progress",
-          outcome: "in_progress",
-        };
-  }
-
-  const finalScore = input.finalScore ?? input.initialScore;
-  if (
-    finalScore !== null &&
-    finalScore !== undefined &&
-    input.passingScore !== null &&
-    input.passingScore !== undefined
-  ) {
-    if (finalScore < input.passingScore) {
-      return {
-        label: commonText.activityStatus.failed,
-        tone: "danger",
-        className: "status-failed",
-        outcome: "failed",
-      };
-    }
-    if (input.retryStartedAt) {
-      return {
-        label: commonText.activityStatus.completed,
-        tone: "warning",
-        className: "status-retried",
-        outcome: "retried",
-      };
-    }
-    return {
+    },
+    expired: {
+      label: commonText.activityStatus.failed,
+      tone: "danger",
+    },
+    failed: {
+      label: commonText.activityStatus.failed,
+      tone: "danger",
+    },
+    completed_first_try: {
       label: commonText.activityStatus.completed,
       tone: "success",
-      className: "status-completed",
-      outcome: "completed",
-    };
-  }
+    },
+    completed_after_retry: {
+      label: commonText.activityStatus.completed,
+      tone: "warning",
+    },
+    cancelled: {
+      label: commonText.activityStatus.cancelled,
+      tone: "neutral",
+    },
+  };
 
-  return input.status === "expired"
-    ? {
-        label: commonText.activityStatus.failed,
-        tone: "danger",
-        className: "status-failed",
-        outcome: "failed",
-      }
-    : {
-        label: commonText.activityStatus.completed,
-        tone: "success",
-        className: "status-completed",
-        outcome: "completed",
-      };
+  return { ...presentationByKind[state.kind], outcome: state.outcome };
 }

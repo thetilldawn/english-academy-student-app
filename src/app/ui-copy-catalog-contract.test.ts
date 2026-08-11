@@ -22,7 +22,9 @@ describe("한국어 UI 문구 카탈로그", () => {
     const studentManager = source("src/components/student-manager.tsx");
     const navigation = source("src/components/admin-navigation.tsx");
     const adminRoutes = source("src/lib/ui/admin-routes.ts");
-    const history = source("src/components/admin-history-list.tsx");
+    const history = source(
+      "src/features/history/ui/admin-history-list.tsx",
+    );
     const studentLogin = source("src/components/student-login-form.tsx");
 
     expect(learningCopy).toContain("// 학습 관리 > 학생별 단어 학습 배정 모달");

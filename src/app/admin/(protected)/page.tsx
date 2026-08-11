@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 
 import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
-import { OverviewActionGroups } from "@/components/overview-action-groups";
+import {
+  OverviewActionGroups,
+  OverviewEmptyState,
+} from "@/features/history/ui/overview-action-groups";
 import { adminOverviewText } from "@/content/ko/admin-overview";
-import { overviewActivityGroups } from "@/lib/admin/learning-activity";
+import { overviewActivityGroups } from "@/features/history/domain/learning-activity";
 import { listAssignmentHistoryBundle } from "@/lib/services/admin-service";
 
 export const metadata: Metadata = {
@@ -36,9 +39,7 @@ export default async function AdminDashboardPage() {
     <>
       <AdminBreadcrumb current={adminOverviewText.page.title} />
       {sections.length === 0 ? (
-        <div className="empty-state overview-clear-state">
-          {adminOverviewText.emptyState}
-        </div>
+        <OverviewEmptyState />
       ) : (
         <OverviewActionGroups sections={sections} />
       )}

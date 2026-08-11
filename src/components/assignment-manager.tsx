@@ -13,21 +13,21 @@ import {
   HelpTip,
 } from "@/design-system/primitives/tooltip/help-tip";
 import { BulkAssignmentEditor } from "@/features/assignments/ui/bulk-assignment-editor";
-import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
-import { AttemptScoreSummary } from "@/components/attempt-score-summary";
-import { AssignmentMetaTags } from "@/components/assignment-meta-tags";
+import {
+  ActivityRow,
+  SelectableRow,
+} from "@/design-system/patterns/activity-row/activity-row";
+import { ActivityStatusTimeline } from "@/features/history/ui/activity-status-timeline";
+import { AttemptScoreSummary } from "@/features/history/ui/attempt-score-summary";
+import { AssignmentMetaTags } from "@/features/history/ui/assignment-meta-tags";
+import { hasAttemptScoreContent } from "@/features/history/presentation/attempt-presentation";
 import {
   MetaTag,
   MetaTagList,
 } from "@/design-system/primitives/badge/badge";
-import { StudentLearningActivityList } from "@/components/student-learning-activity-list";
-import {
-  ActivityRowContent,
-  SelectableListRow,
-} from "@/components/ui-list-row";
+import { StudentLearningActivityList } from "@/features/history/ui/student-learning-activity-list";
 import {
   assignmentDisplayTitle,
-  projectCurrentAssignmentHistory,
   type AssignmentHistorySummary,
 } from "@/lib/admin/history";
 import { historyDetailHref } from "@/lib/admin/history-route";
@@ -36,7 +36,7 @@ import {
   activityNeedsRetry,
   compareLearningActivities,
   studentLearningActivityIndex,
-} from "@/lib/admin/learning-activity";
+} from "@/features/history/domain/learning-activity";
 import {
   availableReviewCount,
   emptyPendingReviewCounts,
@@ -78,6 +78,7 @@ import {
 import {
   SingleAssignmentEditor,
 } from "@/features/assignments/ui/single-assignment-editor";
+import learningRowStyles from "@/features/history/ui/learning-management-row.module.css";
 import type { SingleAssignmentResult } from "@/features/assignments/controller/use-assignment-controller";
 
 import styles from "./assignment-manager.module.css";
@@ -208,7 +209,7 @@ export function AssignmentManager({
   pendingReviewSummaries,
   currentVocabWrongSummaries,
   learningSources = [],
-  history,
+  history: currentHistory,
   initialDatasetId = "",
   initialEditTarget = null,
   initialStudentId = "",
@@ -225,6 +226,7 @@ export function AssignmentManager({
   pendingReviewSummaries: StudentPendingReviewSummary[];
   currentVocabWrongSummaries: StudentCurrentVocabWrongSummary[];
   learningSources?: AssignmentLearningSourceItem[];
+  /** 이미 최신 배정/학생 쌍으로 투영된 current history만 받는다. */
   history: AssignmentHistorySummary[];
   initialDatasetId?: string;
   initialEditTarget?: {
@@ -270,8 +272,8 @@ export function AssignmentManager({
     [currentVocabWrongSummaries],
   );
   const activitiesByStudent = useMemo(
-    () => studentLearningActivityIndex(history),
-    [history],
+    () => studentLearningActivityIndex(currentHistory),
+    [currentHistory],
   );
   const learningSourcesByStudent = useMemo(() => {
     const index = new Map<string, AssignmentLearningSourceItem[]>();
@@ -314,15 +316,9 @@ export function AssignmentManager({
   const selectedProgress = selectedStudent
     ? (progressByStudent.get(selectedStudent.id) ?? null)
     : null;
-  const selectedActivities = useMemo(
-    () =>
-      selectedStudent
-        ? projectCurrentAssignmentHistory(
-            activitiesByStudent.get(selectedStudent.id) ?? [],
-          ).toSorted(compareLearningActivities)
-        : [],
-    [activitiesByStudent, selectedStudent],
-  );
+  const selectedActivities = selectedStudent
+    ? (activitiesByStudent.get(selectedStudent.id) ?? [])
+    : [];
   const selectedLearningSources = selectedStudent
     ? (learningSourcesByStudent.get(selectedStudent.id) ?? []).filter(
         (source) => source.sourceType !== "primary_vocab",
@@ -806,6 +802,20 @@ export function AssignmentManager({
                 const studentActivities =
                   activitiesByStudent.get(student.id) ?? [];
                 const nextActivity = studentActivities[0] ?? null;
+                const nextScoreInput = nextActivity
+                  ? {
+                      finalScore: nextActivity.finalScore,
+                      initialScore: nextActivity.initialScore,
+                      passed: nextActivity.passed,
+                      passingScore: nextActivity.passingScore,
+                      phase: nextActivity.phase,
+                      retryStartedAt: nextActivity.retryStartedAt,
+                      status: nextActivity.status,
+                    }
+                  : null;
+                const hasNextScore =
+                  nextScoreInput !== null &&
+                  hasAttemptScoreContent(nextScoreInput, { compact: true });
                 const studentLearningSources = (
                   learningSourcesByStudent.get(student.id) ?? []
                 ).filter(
@@ -836,7 +846,7 @@ export function AssignmentManager({
                   !currentActivityRange ||
                   currentActivityRange !== recommendedRange;
                 return (
-                  <SelectableListRow
+                  <SelectableRow
                     actions={
                       <>
                         {nextActivity ? (
@@ -860,28 +870,17 @@ export function AssignmentManager({
                     }
                     checked={selectedBulkStudentIds.includes(student.id)}
                     checkboxId={`bulk-student-${student.id}`}
-                    className="card assignment-student-row"
-                    href={
-                      nextActivity
-                        ? historyDetailHref(nextActivity)
-                        : undefined
-                    }
                     key={student.id}
-                    openAriaLabel={
-                      nextActivity
-                        ? `${student.displayName} ${assignmentDisplayTitle(nextActivity)} 상세`
-                        : undefined
-                    }
                     onToggle={() => toggleBulkStudent(student.id)}
                     selectionAriaLabel={formatContentText(
                       adminLearningText.page.bulk.selectStudentAria,
                       { student: student.displayName },
                     )}
                   >
-                    <ActivityRowContent
+                    <ActivityRow
                       main={
                         <>
-                          <span className="assignment-student-identity">
+                          <span className={learningRowStyles.identity}>
                             <strong>{student.displayName}</strong>
                             <MetaTagList>
                               <MetaTag>
@@ -894,7 +893,7 @@ export function AssignmentManager({
                               </MetaTag>
                             </MetaTagList>
                           </span>
-                          <MetaTagList className="assignment-student-book">
+                          <MetaTagList className={learningRowStyles.book}>
                             <MetaTag>
                               {student.currentVocabBook ??
                                 adminLearningText.page.studentCard.wordbookMissing}
@@ -921,7 +920,7 @@ export function AssignmentManager({
                               </MetaTag>
                             ) : null}
                           </MetaTagList>
-                          <span className="assignment-student-recent">
+                          <span className={learningRowStyles.recent}>
                             {nextActivity ? (
                               <>
                                 {assignmentDisplayTitle(nextActivity) ? (
@@ -946,16 +945,8 @@ export function AssignmentManager({
                         </>
                       }
                       score={
-                        nextActivity ? (
-                          <AttemptScoreSummary
-                            compact
-                            finalScore={nextActivity.finalScore}
-                            initialScore={nextActivity.initialScore}
-                            passingScore={nextActivity.passingScore}
-                            phase={nextActivity.phase}
-                            retryStartedAt={nextActivity.retryStartedAt}
-                            status={nextActivity.status}
-                          />
+                        hasNextScore && nextScoreInput ? (
+                          <AttemptScoreSummary compact {...nextScoreInput} />
                         ) : undefined
                       }
                       timeline={
@@ -964,7 +955,7 @@ export function AssignmentManager({
                         ) : null
                       }
                     />
-                  </SelectableListRow>
+                  </SelectableRow>
                 );
               })}
             </div>

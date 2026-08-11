@@ -20,14 +20,14 @@ import { buildStudentAccessUrl } from "@/lib/auth/student-code-input";
 import type { StudentWrongWordHistory } from "@/lib/admin/wrong-word-history";
 import { sendKakaoText } from "@/lib/kakao-share";
 import { StudentWrongWordPanel } from "@/components/student-wrong-word-panel";
-import { StudentLearningActivityList } from "@/components/student-learning-activity-list";
+import { StudentLearningActivityList } from "@/features/history/ui/student-learning-activity-list";
 import { StudentLearningSourceList } from "@/components/student-learning-source-list";
 import { StudentVocabBookHistoryList } from "@/components/student-vocab-book-history-list";
 import {
   HelpTip,
   inlineHelpClassName,
 } from "@/design-system/primitives/tooltip/help-tip";
-import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
+import { ActivityStatusTimeline } from "@/features/history/ui/activity-status-timeline";
 import {
   CountBadge,
   MetaTag,
@@ -43,7 +43,7 @@ import {
   type AssignmentDatasetItem,
   type AssignmentUnitItem,
 } from "@/components/assignment-manager";
-import { AttemptScoreSummary } from "@/components/attempt-score-summary";
+import { AttemptScoreSummary } from "@/features/history/ui/attempt-score-summary";
 import {
   Button,
   IconButton,
@@ -56,7 +56,7 @@ import {
   DialogHeader,
   type DialogCloseReason,
 } from "@/design-system/primitives/dialog/dialog";
-import { buildAttemptStatusPresentation } from "@/lib/ui/attempt-score-presentation";
+import { buildAttemptStatusPresentation } from "@/features/history/presentation/attempt-presentation";
 import {
   cataloguedDatasetDisplayLabel,
   groupCataloguedDatasets,
@@ -66,7 +66,7 @@ import {
   activityNeedsRetry,
   compareLearningActivities,
   studentLearningActivityIndex,
-} from "@/lib/admin/learning-activity";
+} from "@/features/history/domain/learning-activity";
 import type { StudentPendingReviewSummary } from "@/lib/admin/review-queue-summary";
 import {
   currentVocabWrongSummaryKey,
@@ -1236,6 +1236,7 @@ export function StudentManager({
                     phase: priorityActivity?.phase ?? null,
                     initialScore: priorityActivity?.initialScore,
                     finalScore: priorityActivity?.finalScore,
+                    passed: priorityActivity?.passed,
                     passingScore: priorityActivity?.passingScore,
                     retryStartedAt: priorityActivity?.retryStartedAt,
                   });
@@ -1357,12 +1358,16 @@ export function StudentManager({
                                 compact
                                 finalScore={priorityActivity.finalScore}
                                 initialScore={priorityActivity.initialScore}
+                                passed={priorityActivity.passed}
                                 passingScore={priorityActivity.passingScore}
                                 phase={priorityActivity.phase}
                                 retryStartedAt={priorityActivity.retryStartedAt}
                                 status={priorityActivity.status}
                               />
-                              <ActivityStatusTimeline item={priorityActivity} />
+                              <ActivityStatusTimeline
+                                align="end"
+                                item={priorityActivity}
+                              />
                             </span>
                           ) : null}
                           </span>

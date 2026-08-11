@@ -43,7 +43,7 @@ import {
   type AssignmentHistorySummary,
   type AttemptHistorySource,
 } from "@/lib/admin/history";
-import { learningActivitySection } from "@/lib/admin/learning-activity";
+import { learningActivitySection } from "@/features/history/domain/learning-activity";
 import {
   historyEntryKey,
   parseHistoryEntryKey,

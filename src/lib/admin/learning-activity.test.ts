@@ -4,13 +4,14 @@ import type { AssignmentHistorySummary } from "@/lib/admin/history";
 import {
   activityNeedsRetry,
   activityPassed,
+  deriveLearningActivityState,
   learningActivityEffectiveAt,
   learningActivityBucket,
   learningActivitySection,
   matchesLearningHistoryFilters,
   overviewActivityGroups,
   sortLearningActivities,
-} from "@/lib/admin/learning-activity";
+} from "@/features/history/domain/learning-activity";
 
 function activity(
   id: string,
@@ -175,6 +176,76 @@ describe("learning activity ordering", () => {
     });
     expect(activityPassed(stalePassedFlag)).toBe(false);
     expect(learningActivityBucket(stalePassedFlag)).toBe("needs_attention");
+  });
+
+  it("uses the available score before the passed flag and requires evidence for completion", () => {
+    const initialOnlyFailure = activity("initial-only-failure", {
+      status: "completed",
+      initialScore: 70,
+      finalScore: null,
+      passed: true,
+    });
+    const passedWithoutScore = activity("passed-without-score", {
+      status: "completed",
+      initialScore: null,
+      finalScore: null,
+      passed: true,
+    });
+    const noCompletionEvidence = activity("no-completion-evidence", {
+      status: "completed",
+      initialScore: null,
+      finalScore: null,
+      passed: null,
+    });
+
+    expect(deriveLearningActivityState(initialOnlyFailure).kind).toBe("failed");
+    expect(deriveLearningActivityState(passedWithoutScore).kind).toBe(
+      "completed_first_try",
+    );
+    expect(deriveLearningActivityState(noCompletionEvidence).kind).toBe(
+      "failed",
+    );
+  });
+
+  it("keeps terminal status authoritative over a stale passing score", () => {
+    const expired = activity("expired-with-stale-score", {
+      status: "expired",
+      finalScore: 100,
+      passed: true,
+      deadlineAt: "2026-08-09T00:00:00.000Z",
+    });
+
+    expect(deriveLearningActivityState(expired)).toMatchObject({
+      kind: "expired",
+      outcome: "failed",
+      passed: false,
+      section: "needs_attention",
+      statusAt: "2026-08-09T00:00:00.000Z",
+    });
+  });
+
+  it("orders deadline-free retries by retry start time before unstarted work", () => {
+    const result = sortLearningActivities([
+      activity("unstarted", {
+        assignedAt: "2026-08-10T00:00:00.000Z",
+      }),
+      activity("retry-older", {
+        status: "in_progress",
+        phase: "retry",
+        retryStartedAt: "2026-08-08T00:00:00.000Z",
+      }),
+      activity("retry-newer", {
+        status: "in_progress",
+        phase: "retry",
+        retryStartedAt: "2026-08-09T00:00:00.000Z",
+      }),
+    ]);
+
+    expect(result.map((item) => item.id)).toEqual([
+      "retry-newer",
+      "retry-older",
+      "unstarted",
+    ]);
   });
 
   it("does not classify a missed assignment as a retry", () => {

@@ -38,7 +38,7 @@ describe("admin visual density contract", () => {
   it("keeps one action in summary rows and moves mutations into detail", () => {
     const actions = source("src/components/admin-history-actions.tsx");
     const activities = source(
-      "src/components/student-learning-activity-list.tsx",
+      "src/features/history/ui/student-learning-activity-list.tsx",
     );
     const assignmentManager = source("src/components/assignment-manager.tsx");
 
@@ -49,15 +49,23 @@ describe("admin visual density contract", () => {
   });
 
   it("filters history by the status people see and compacts overview rows", () => {
-    const historyList = source("src/components/admin-history-list.tsx");
-    const overview = source("src/components/overview-action-groups.tsx");
+    const historyList = source(
+      "src/features/history/ui/admin-history-list.tsx",
+    );
+    const historyRows = source("src/features/history/ui/history-rows.tsx");
+    const historyRow = source(
+      "src/features/history/ui/history-activity-row.tsx",
+    );
+    const overview = source(
+      "src/features/history/ui/overview-action-groups.tsx",
+    );
 
     expect(historyList).toContain("learningActivitySection(item)");
     expect(historyList).toContain('value="needs_attention"');
     expect(historyList).toContain('value="retried"');
-    expect(historyList).toContain("compact={compact}");
-    expect(historyList).toContain("!compact ||");
-    expect(historyList).toContain("compact\n            finalScore");
+    expect(historyRows).toContain('showScore={compact ? "meaningful" : "always"}');
+    expect(historyRow).toContain('showScore = "always"');
+    expect(overview).toContain("<HistoryRows compact items={section.items} />");
     expect(overview).not.toContain("section.description");
   });
 

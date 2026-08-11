@@ -54,7 +54,9 @@ describe("admin assignment history query contract", () => {
     );
     expect(quizSource).toContain('.is("cancelled_at", null)');
     expect(quizSource).toContain("missedAtByAssignment");
-    expect(quizSource).toContain("missedAt: left.missedAt");
+    expect(quizSource).toContain("missedAt: assignment.missedAt");
+    expect(quizSource).toContain("studentAssignmentActivityInput(left)");
+    expect(quizSource).toContain("studentAssignmentActivityInput(right)");
     expect(quizSource).toContain("!missed &&");
   });
 });

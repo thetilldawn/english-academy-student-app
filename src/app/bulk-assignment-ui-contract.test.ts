@@ -15,7 +15,7 @@ describe("학습 관리 일괄 배정 UI 계약", () => {
     );
     expect(manager).toMatch(/useState<\s*string\[\]\s*>\(\[\]\)/);
     expect(manager).toContain("adminLearningText.page.bulk.selectVisible");
-    expect(manager).toContain("<SelectableListRow");
+    expect(manager).toContain("<SelectableRow");
     expect(manager).toContain("onToggle={() => toggleBulkStudent(student.id)}");
   });
 

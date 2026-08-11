@@ -44,8 +44,12 @@ describe("mobile production regression UI contract", () => {
     expect(css).toMatch(
       /@media \(max-width: 960px\)[\s\S]*?\.student-card-score-line\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/,
     );
-    expect(css).toMatch(
-      /\.student-card-score-line \.activity-status-timeline\s*\{[^}]*width:\s*100%;[^}]*justify-self:\s*stretch;/,
+    const timelineCss = source(
+      "src/design-system/patterns/activity-timeline/activity-timeline.module.css",
+    );
+    expect(studentManager).toContain('align="end"');
+    expect(timelineCss).toMatch(
+      /\.timeline\[data-align="end"\]\s*\{[^}]*justify-items:\s*end;/,
     );
   });
 

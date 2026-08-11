@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
-import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
+import { ActivityStatusTimeline } from "@/features/history/ui/activity-status-timeline";
 import { DeadlineCountdown } from "@/components/deadline-countdown";
 import { StartAttemptButton } from "@/components/start-attempt-button";
-import { AttemptScoreSummary } from "@/components/attempt-score-summary";
+import { AttemptScoreSummary } from "@/features/history/ui/attempt-score-summary";
 import {
   CountBadge,
   MetaTag,
@@ -22,8 +22,8 @@ import {
   assignmentTypeLabel,
 } from "@/lib/admin/history";
 import { listStudentAssignments } from "@/lib/services/quiz-service";
-import { buildAttemptStatusPresentation } from "@/lib/ui/attempt-score-presentation";
-import type { ActivityTimelineInput } from "@/lib/ui/learning-activity-presentation";
+import { buildAttemptStatusPresentation } from "@/features/history/presentation/attempt-presentation";
+import type { ActivityTimelineInput } from "@/features/history/presentation/activity-presentation";
 
 export const metadata: Metadata = {
   title: studentAppText.dashboard.metadataTitle,
@@ -44,6 +44,7 @@ function assignmentTimeline(
     phase: assignment.lastPhase,
     initialScore: assignment.lastInitialScore,
     finalScore: assignment.lastFinalScore,
+    passed: assignment.lastPassed,
     passingScore: assignment.passingScore,
     retryStartedAt: assignment.lastRetryStartedAt,
     assignedAt: assignment.assignedAt,
@@ -94,7 +95,7 @@ function AssignmentCard({
           {assignment.displayTitle ? <h3>{assignment.displayTitle}</h3> : null}
         </div>
         <ActivityStatusTimeline
-          className="student-assignment-timeline"
+          align="end"
           item={timeline}
           showDeadline={
             !(assignment.availableUntil && assignment.lastStatus === null)
@@ -142,10 +143,10 @@ function AssignmentCard({
 
       {(assignment.lastInitialScore !== null || assignment.missed) && (
         <AttemptScoreSummary
-          className="last-score"
           compact
           finalScore={assignment.lastFinalScore}
           initialScore={assignment.lastInitialScore}
+          passed={assignment.lastPassed}
           passingScore={assignment.passingScore}
           phase={assignment.lastPhase}
           retryStartedAt={assignment.lastRetryStartedAt}

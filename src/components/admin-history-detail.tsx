@@ -1,18 +1,14 @@
 import type { ReactNode } from "react";
 
-import { ActivityStatusTimeline } from "@/components/activity-status-timeline";
-import { AssignmentMetaTags } from "@/components/assignment-meta-tags";
-import { AttemptScoreSummary } from "@/components/attempt-score-summary";
+import { ActivityStatusTimeline } from "@/features/history/ui/activity-status-timeline";
+import { AttemptScoreSummary } from "@/features/history/ui/attempt-score-summary";
 import {
   CountBadge,
-  MetaTag,
-  MetaTagList,
   StatusBadge,
 } from "@/design-system/primitives/badge/badge";
 import { formatContentText } from "@/content/format";
 import { adminHistoryText } from "@/content/ko/admin-history";
 import {
-  assignmentDisplayTitle,
   assignmentOrderLabel,
   assignmentScopeLabel,
 } from "@/lib/admin/history";
@@ -47,39 +43,6 @@ function questionStatus(
   return { label: copy.incomplete, tone: "danger" as const };
 }
 
-export function AdminHistoryDetailHeading({
-  detail,
-  titleId,
-}: {
-  detail: AdminHistoryDetail;
-  titleId: string;
-}) {
-  const { attempt, summary } = detail;
-  const displayTitle = assignmentDisplayTitle(summary);
-
-  return (
-    <div className="history-detail-heading-copy">
-      <h1 id={titleId}>{summary.studentName}</h1>
-      {displayTitle ? <p>{displayTitle}</p> : null}
-      <div className="history-detail-heading-tags">
-        <AssignmentMetaTags {...summary} compact />
-        <MetaTagList>
-          {attempt ? (
-            <MetaTag>
-              {formatContentText(adminHistoryText.resultDetail.attemptNumber, {
-                count: attempt.attemptNumber,
-              })}
-            </MetaTag>
-          ) : null}
-          {attempt?.startedAt ? (
-            <MetaTag>{formatKoreanDateTime(attempt.startedAt)}</MetaTag>
-          ) : null}
-        </MetaTagList>
-      </div>
-    </div>
-  );
-}
-
 export function AdminHistoryDetailContent({
   actions,
   detail,
@@ -100,6 +63,7 @@ export function AdminHistoryDetailContent({
           <AttemptScoreSummary
             finalScore={summary.finalScore}
             initialScore={summary.initialScore}
+            passed={summary.passed}
             passingScore={summary.passingScore}
             phase={summary.phase}
             retryStartedAt={summary.retryStartedAt}

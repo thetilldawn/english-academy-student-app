@@ -106,7 +106,7 @@ describe("student catalog and modal UI contract", () => {
   it("현재 목록에서는 취소·삭제를 빼고 전체 내역에서만 보존한다", () => {
     const service = source("src/lib/services/admin-service.ts");
     const activityList = source(
-      "src/components/student-learning-activity-list.tsx",
+      "src/features/history/ui/student-learning-activity-list.tsx",
     );
 
     expect(service).toContain(
@@ -115,18 +115,27 @@ describe("student catalog and modal UI contract", () => {
     expect(activityList).toContain(
       'learningActivitySection(item) !== "archived"',
     );
-    expect(activityList).toContain("...(filtersEnabled");
+    expect(activityList).toContain(
+      "filtersEnabled || learningActivitySection(item) !== \"archived\"",
+    );
+    expect(activityList).toContain('id: "archived" as const');
   });
 
   it("학생 카드도 공통 시험 종류와 실제 미응시 시각을 사용한다", () => {
     const studentPage = source("src/app/student/(protected)/page.tsx");
     const timeline = source(
-      "src/lib/ui/learning-activity-presentation.ts",
+      "src/features/history/presentation/activity-presentation.ts",
+    );
+    const activityDomain = source(
+      "src/features/history/domain/learning-activity.ts",
     );
 
     expect(studentPage).toContain(
       "assignmentTypeLabel(assignment.assignmentPurpose)",
     );
-    expect(timeline).toContain("item.missedAt ?? item.availableUntil");
+    expect(timeline).toContain("timestamp: state.statusAt");
+    expect(activityDomain).toContain(
+      "item.missedAt ?? item.availableUntil ?? item.activityAt",
+    );
   });
 });

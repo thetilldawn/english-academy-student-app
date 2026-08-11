@@ -5,7 +5,7 @@ import type {
 import {
   activityPassed,
   learningActivityEffectiveAt,
-} from "@/lib/admin/learning-activity";
+} from "@/features/history/domain/learning-activity";
 
 export type StudentVocabBookHistory = {
   studentId: string;

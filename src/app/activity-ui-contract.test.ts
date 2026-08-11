@@ -28,17 +28,28 @@ function contrast(left: string, right: string) {
 describe("shared activity UI contract", () => {
   it("removes migrated primitive selectors and keeps feature row authorities", () => {
     const css = source("src/app/globals.css");
+    const activityRowCss = source(
+      "src/design-system/patterns/activity-row/activity-row.module.css",
+    );
 
     expect(css.match(/^\.status-pill\s*\{/gm) ?? []).toHaveLength(0);
-    expect(css.match(/^\.assignment-student-row\s*\{/gm)).toHaveLength(1);
-    expect(css.match(/^\.admin-history-row\s*\{/gm)).toHaveLength(1);
+    expect(css.match(/^\.assignment-student-row\s*\{/gm) ?? []).toHaveLength(0);
+    expect(css.match(/^\.admin-history-row\s*\{/gm) ?? []).toHaveLength(0);
     expect(css).not.toContain(
       ".assignment-student-row span:not(.button)",
+    );
+    expect(activityRowCss).toContain(
+      '.content[data-has-score="false"][data-has-timeline="true"]',
+    );
+    expect(activityRowCss).toContain(
+      "grid-template-columns: minmax(0, 1fr) minmax(210px, auto)",
     );
   });
 
   it("separates a selectable row's checkbox, keyboard target, and actions", () => {
-    const rows = source("src/components/ui-list-row.tsx");
+    const rows = source(
+      "src/design-system/patterns/activity-row/activity-row.tsx",
+    );
     const assignmentManager = source(
       "src/components/assignment-manager.tsx",
     );
@@ -46,10 +57,9 @@ describe("shared activity UI contract", () => {
     expect(rows).toContain("<Checkbox");
     expect(rows).toContain("aria-label={selectionAriaLabel}");
     expect(rows).toContain("onChange={onToggle}");
-    expect(rows).toContain("href={href}");
-    expect(rows).not.toContain("onClick={onToggle}");
+    expect(rows).toContain("onClick={onToggle}");
     expect(rows).not.toContain('aria-pressed={checked}');
-    expect(rows).toContain("selectable-list-row-actions");
+    expect(rows).toContain("styles.actions");
     expect(assignmentManager).toContain("onToggle={() => toggleBulkStudent");
     expect(assignmentManager).toContain(
       "adminLearningText.page.studentCard.view",
@@ -104,7 +114,9 @@ describe("shared activity UI contract", () => {
   it("uses a sibling route dialog and preserves the background segment", () => {
     const layout = source("src/app/admin/(protected)/layout.tsx");
     const navigation = source("src/components/admin-navigation.tsx");
-    const routeDialog = source("src/components/route-detail-dialog.tsx");
+    const routeDialog = source(
+      "src/features/history/ui/route-detail-dialog.tsx",
+    );
 
     expect(layout).toContain("{detail}");
     expect(navigation).toContain("useSelectedLayoutSegment");

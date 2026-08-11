@@ -2,10 +2,10 @@ import { notFound, redirect } from "next/navigation";
 
 import {
   AdminHistoryDetailContent,
-  AdminHistoryDetailHeading,
 } from "@/components/admin-history-detail";
 import { HistoryDetailActions } from "@/components/history-detail-actions";
-import { RouteDetailDialog } from "@/components/route-detail-dialog";
+import { HistoryDetailHeader } from "@/features/history/ui/history-detail-header";
+import { RouteDetailDialog } from "@/features/history/ui/route-detail-dialog";
 import { historyDetailHref } from "@/lib/admin/history-route";
 import { isStudentAssignmentEditable } from "@/lib/admin/assignment-edit";
 import { getAdminHistoryDetail } from "@/lib/services/admin-service";
@@ -29,7 +29,7 @@ export default async function InterceptedAdminResultDetailPage({
   return (
     <RouteDetailDialog
       heading={
-        <AdminHistoryDetailHeading
+        <HistoryDetailHeader
           detail={detail}
           titleId="route-history-detail-title"
         />

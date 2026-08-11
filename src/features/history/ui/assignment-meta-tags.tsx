@@ -2,13 +2,13 @@ import {
   MetaTag,
   MetaTagList,
 } from "@/design-system/primitives/badge/badge";
+import { formatContentText } from "@/content/format";
+import { adminHistoryText } from "@/content/ko/admin-history";
 import {
   assignmentTypeLabel,
   assignmentUnitRangeLabel,
   type AssignmentHistorySource,
 } from "@/lib/admin/history";
-import { formatContentText } from "@/content/format";
-import { adminHistoryText } from "@/content/ko/admin-history";
 
 export function AssignmentMetaTags({
   assignmentPurpose,
@@ -39,7 +39,7 @@ export function AssignmentMetaTags({
         });
 
   return (
-    <MetaTagList className="assignment-meta-tags">
+    <MetaTagList>
       <MetaTag>{datasetTitle}</MetaTag>
       <MetaTag>{assignmentTypeLabel(assignmentPurpose)}</MetaTag>
       <MetaTag>{rangeLabel}</MetaTag>

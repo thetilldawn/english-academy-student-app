@@ -3,10 +3,10 @@ import { notFound, redirect } from "next/navigation";
 
 import {
   AdminHistoryDetailContent,
-  AdminHistoryDetailHeading,
 } from "@/components/admin-history-detail";
 import { HistoryDetailActions } from "@/components/history-detail-actions";
 import { ButtonLink } from "@/design-system/primitives/button/button";
+import { HistoryDetailPageHeader } from "@/features/history/ui/history-detail-header";
 import { adminHistoryText } from "@/content/ko/admin-history";
 import { historyDetailHref } from "@/lib/admin/history-route";
 import { isStudentAssignmentEditable } from "@/lib/admin/assignment-edit";
@@ -34,15 +34,15 @@ export default async function AdminResultDetailPage({
 
   return (
     <div className="history-detail-page">
-      <header className="page-heading history-detail-page-heading">
-        <AdminHistoryDetailHeading
-          detail={detail}
-          titleId="history-detail-page-title"
-        />
-        <ButtonLink href="/admin/results" variant="quiet">
-          {adminHistoryText.resultDetail.backToResults}
-        </ButtonLink>
-      </header>
+      <HistoryDetailPageHeader
+        actions={
+          <ButtonLink href="/admin/results" variant="quiet">
+            {adminHistoryText.resultDetail.backToResults}
+          </ButtonLink>
+        }
+        detail={detail}
+        titleId="history-detail-page-title"
+      />
       <AdminHistoryDetailContent
         actions={
           <HistoryDetailActions

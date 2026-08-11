@@ -1,0 +1,40 @@
+.titleLine {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(72px, 160px) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 10px;
+}
+
+.title,
+.titleLine > strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.titleLine > :only-child {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 767px) {
+  .titleLine {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
+  }
+
+  .titleLine > strong,
+  .title {
+    grid-column: 1;
+  }
+
+  .title {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+  }
+}

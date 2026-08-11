@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
-import { buildActivityStatusTimeline } from "@/lib/ui/learning-activity-presentation";
+import { buildActivityStatusTimeline } from "@/features/history/presentation/activity-presentation";
 
 function activity(
   overrides: Partial<AssignmentHistorySummary>,
