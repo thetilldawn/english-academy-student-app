@@ -2,58 +2,57 @@
 
 import { useCallback, useEffect, useRef } from "react";
 
+import { QuizAudioPlayer } from "./quiz-audio-player";
+
 export function useQuizAudio(input: {
   attemptId: string;
   phase: string;
+  playbackReady: boolean;
+  preloadAudioUrls: readonly string[];
   questionId: string | null;
   promptAudioUrl: string | null;
 }) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playerRef = useRef<QuizAudioPlayer | null>(null);
   const autoPlayedQuestions = useRef(new Set<string>());
-
-  const playAudio = useCallback((audioUrl: string | null) => {
-    if (!audioUrl) return;
-    const audio = audioRef.current ?? new Audio();
-    audioRef.current = audio;
-    audio.pause();
-    audio.currentTime = 0;
-    audio.src = audioUrl;
-    void audio.play().catch(() => {
-      // Optional audio must not interrupt answer persistence or server timing.
-    });
+  const player = useCallback(() => {
+    playerRef.current ??= new QuizAudioPlayer();
+    return playerRef.current;
   }, []);
-
-  const stopAudio = useCallback(() => {
-    audioRef.current?.pause();
-    if (audioRef.current) audioRef.current.currentTime = 0;
-  }, []);
+  const preloadKey = input.preloadAudioUrls.join("\u0000");
 
   useEffect(() => {
-    return () => {
-      stopAudio();
-      audioRef.current = null;
-    };
-  }, [stopAudio]);
+    player().preloadChoices(preloadKey ? preloadKey.split("\u0000") : []);
+    if (input.promptAudioUrl) player().preparePrompt(input.promptAudioUrl);
+    else player().stopPrompt();
+  }, [input.promptAudioUrl, player, preloadKey]);
+
+  useEffect(() => () => playerRef.current?.dispose(), []);
 
   useEffect(() => {
-    stopAudio();
-    if (!input.questionId || !input.promptAudioUrl) return;
-    const playKey = [
-      input.attemptId,
-      input.phase,
-      input.questionId,
-    ].join(":");
+    if (!input.playbackReady || !input.questionId || !input.promptAudioUrl)
+      return;
+    const playKey = [input.attemptId, input.phase, input.questionId].join(":");
     if (autoPlayedQuestions.current.has(playKey)) return;
-    autoPlayedQuestions.current.add(playKey);
-    playAudio(input.promptAudioUrl);
+    let current = true;
+    void player().play(input.promptAudioUrl, "prompt").then((result) => {
+      if (current && result === "started")
+        autoPlayedQuestions.current.add(playKey);
+    });
+    return () => {
+      current = false;
+    };
   }, [
     input.attemptId,
     input.phase,
+    input.playbackReady,
     input.promptAudioUrl,
     input.questionId,
-    playAudio,
-    stopAudio,
+    player,
   ]);
 
-  return playAudio;
+  return useCallback((audioUrl: string | null) => {
+    if (!audioUrl) return;
+    const purpose = audioUrl === input.promptAudioUrl ? "prompt" : "choice";
+    void player().play(audioUrl, purpose);
+  }, [input.promptAudioUrl, player]);
 }

@@ -43,15 +43,36 @@ const availablePronunciation = {
 
 const audioInstances: Array<{
   currentTime: number;
+  load: ReturnType<typeof vi.fn>;
   pause: ReturnType<typeof vi.fn>;
   play: ReturnType<typeof vi.fn>;
+  preload: string;
+  removeAttribute: ReturnType<typeof vi.fn>;
   src: string;
 }> = [];
 
+const audioPlayResults: Array<
+  "blocked" | "failed" | "pending" | "started"
+> = [];
+const pendingAudioPlays: Array<() => void> = [];
+
 class AudioStub {
   currentTime = 0;
+  load = vi.fn();
   pause = vi.fn();
-  play = vi.fn().mockResolvedValue(undefined);
+  play = vi.fn().mockImplementation(() => {
+    const result = audioPlayResults.shift() ?? "started";
+    if (result === "blocked")
+      return Promise.reject(new DOMException("blocked", "NotAllowedError"));
+    if (result === "failed") return Promise.reject(new Error("load failed"));
+    if (result === "pending")
+      return new Promise<void>((resolve) => pendingAudioPlays.push(resolve));
+    return Promise.resolve();
+  });
+  preload = "";
+  removeAttribute = vi.fn((name: string) => {
+    if (name === "src") this.src = "";
+  });
   src = "";
 
   constructor() {
@@ -134,6 +155,8 @@ beforeEach(() => {
   vi.useFakeTimers();
   vi.stubGlobal("Audio", AudioStub);
   audioInstances.length = 0;
+  audioPlayResults.length = 0;
+  pendingAudioPlays.length = 0;
   mocks.expire.mockReset();
   mocks.recover.mockReset();
   mocks.replace.mockReset();
@@ -250,12 +273,90 @@ describe("QuizPlayer", () => {
     expect(rowButtons).toHaveLength(2);
 
     fireEvent.click(rowButtons![1]);
-    expect(audioInstances[0]?.play).toHaveBeenCalledOnce();
+    const player = audioInstances.find((audio) =>
+      audio.play.mock.calls.length > 0
+    );
+    expect(player?.play).toHaveBeenCalledOnce();
     expect(mocks.submit).not.toHaveBeenCalled();
 
     fireEvent.click(rowButtons![0]);
-    expect(audioInstances[0]?.play).toHaveBeenCalledTimes(2);
+    expect(player?.play).toHaveBeenCalledTimes(2);
     expect(mocks.submit).toHaveBeenCalledOnce();
+  });
+
+  it("retries future prompt autoplay after a browser-blocked first prompt", async () => {
+    const audioAttempt = attempt();
+    for (const [index, current] of audioAttempt.questions.entries()) {
+      current.direction = "english_to_korean";
+      current.prompt = `english-${index + 1}`;
+      current.pronunciation = {
+        ...availablePronunciation,
+        audioUrl: `https://example.com/audio-${index + 1}.mp3`,
+      };
+      current.choices = ["하나", "둘", "셋", "넷"];
+    }
+    audioPlayResults.push("blocked", "started", "started");
+    mocks.submit.mockResolvedValue(
+      successfulTransport({
+        correct: true,
+        correctChoiceIndex: 0,
+        nextPhase: "initial",
+        nextQuestionId: "question-2",
+        questionDeadlineAt: "2099-01-01T00:00:10.000Z",
+        timerRemainingMilliseconds: 10_000,
+      }),
+    );
+
+    await renderReady(audioAttempt);
+    const player = audioInstances.find((audio) =>
+      audio.play.mock.calls.length > 0
+    );
+    expect(player?.play).toHaveBeenCalledOnce();
+
+    fireEvent.click(screen.getByRole("button", { name: /english-1 발음/ }));
+    expect(player?.play).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole("button", { name: /하나/ }));
+    await act(async () => Promise.resolve());
+    act(() => vi.advanceTimersByTime(500));
+    await act(async () => Promise.resolve());
+
+    expect(screen.getByText("english-2")).toBeInTheDocument();
+    expect(player?.play).toHaveBeenCalledTimes(3);
+  });
+
+  it("keeps selected English audio playing across the 500ms transition", async () => {
+    const audioAttempt = attempt();
+    for (const current of audioAttempt.questions) {
+      current.choicePronunciations = Array.from({ length: 4 }, (_, index) => ({
+        ...availablePronunciation,
+        audioUrl: `https://example.com/${current.id}-${index}.mp3`,
+      }));
+    }
+    mocks.submit.mockResolvedValue(
+      successfulTransport({
+        correct: true,
+        correctChoiceIndex: 0,
+        nextPhase: "initial",
+        nextQuestionId: "question-2",
+        questionDeadlineAt: "2099-01-01T00:00:10.000Z",
+        timerRemainingMilliseconds: 10_000,
+      }),
+    );
+    audioPlayResults.push("pending");
+
+    await renderReady(audioAttempt);
+    const firstRow = screen.getByRole("group").firstElementChild;
+    fireEvent.click(firstRow!.querySelectorAll("button")[0]);
+    const player = audioInstances.find((audio) =>
+      audio.play.mock.calls.length > 0
+    );
+    const pauseCount = player?.pause.mock.calls.length;
+    await act(async () => Promise.resolve());
+    act(() => vi.advanceTimersByTime(500));
+
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(player?.pause).toHaveBeenCalledTimes(pauseCount ?? 0);
+    pendingAudioPlays[0]?.();
   });
 
   it("announces a wrong answer without adding visible feedback copy", async () => {
@@ -282,6 +383,8 @@ describe("QuizPlayer", () => {
   it("locks answers until the initial server timer is conservatively synchronized", async () => {
     let resolveRecovery: (value: unknown) => void = () => {};
     const quizAttempt = attempt();
+    quizAttempt.questions[0].direction = "english_to_korean";
+    quizAttempt.questions[0].pronunciation = availablePronunciation;
     mocks.recover.mockReturnValue(
       new Promise((resolve) => {
         resolveRecovery = resolve;
@@ -299,6 +402,7 @@ describe("QuizPlayer", () => {
     });
     expect(screen.getByTestId("quiz-timer")).toHaveTextContent("--:--");
     expect(firstChoice).toBeDisabled();
+    expect(audioInstances[0]?.play).not.toHaveBeenCalled();
     fireEvent.keyDown(screen.getByRole("group").closest("section")!, {
       key: "1",
     });
@@ -320,6 +424,7 @@ describe("QuizPlayer", () => {
 
     expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:09");
     expect(firstChoice).toBeEnabled();
+    expect(audioInstances[0]?.play).toHaveBeenCalledOnce();
   });
 
   it("keeps answers locked and lets the student retry a failed initial synchronization", async () => {

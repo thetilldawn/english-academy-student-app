@@ -24,6 +24,7 @@ import {
   quizAnswerDisposition,
   quizAudioPresentation,
   quizPhaseQuestions,
+  quizPreloadAudioUrls,
 } from "../domain/quiz-session";
 import {
   createQuizPlayerState,
@@ -79,6 +80,8 @@ export function useQuizPlayerController(input: {
   const playAudio = useQuizAudio({
     attemptId: state.attempt.id,
     phase: state.attempt.phase,
+    playbackReady: state.timerSynchronized,
+    preloadAudioUrls: quizPreloadAudioUrls(state.attempt),
     questionId: currentQuestion?.id ?? null,
     promptAudioUrl: audioPresentation.promptAudioUrl,
   });

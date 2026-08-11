@@ -250,6 +250,12 @@ const studentDashboardFeatureContracts = [
 ];
 const quizPlayerFeatureContracts = [
   {
+    path: "src/features/quiz-player/controller/quiz-audio-player.ts",
+    maxLines: 110,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 0,
+  },
+  {
     path: "src/features/quiz-player/controller/use-initial-quiz-synchronization.ts",
     maxLines: 30,
     maxFetchCalls: 0,

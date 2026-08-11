@@ -61,6 +61,30 @@ export function quizAudioPresentation(
   return { promptAudioUrl, choiceAudioEnabled };
 }
 
+export function quizChoiceAudioUrls(question: QuizQuestion) {
+  return question.direction === "korean_to_english" &&
+    allChoiceAudioAvailable(question.choicePronunciations)
+    ? question.choicePronunciations.map(
+        (pronunciation) => pronunciation.audioUrl as string,
+      )
+    : [];
+}
+
+export function quizPreloadAudioUrls(attempt: QuizAttempt) {
+  const current = currentQuizQuestion(attempt);
+  if (!current) return [];
+  const urls = quizChoiceAudioUrls(current);
+  const phaseQuestions = quizPhaseQuestions(attempt);
+  const currentIndex = phaseQuestions.findIndex(
+    (question) => question.id === current.id,
+  );
+  const nextQuestion = phaseQuestions[currentIndex + 1];
+  const nextPromptUrl = nextQuestion
+    ? quizAudioPresentation(nextQuestion).promptAudioUrl
+    : null;
+  return nextPromptUrl ? [...new Set([...urls, nextPromptUrl])] : urls;
+}
+
 export type QuizChoiceLength = "default" | "long" | "very-long";
 
 export function quizChoiceLength(choice: string): QuizChoiceLength {

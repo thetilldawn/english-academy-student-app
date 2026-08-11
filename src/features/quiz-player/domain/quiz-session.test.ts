@@ -8,7 +8,9 @@ import {
   applyQuizAnswerTransition,
   quizAnswerDisposition,
   quizAudioPresentation,
+  quizChoiceAudioUrls,
   quizChoicesDensity,
+  quizPreloadAudioUrls,
   quizPromptDensity,
 } from "./quiz-session";
 
@@ -62,17 +64,15 @@ function attempt(): QuizAttempt {
 
 describe("quiz session domain", () => {
   it("enables audio only on the English side of each direction", () => {
-    const englishPrompt = quizAudioPresentation(
-      question("english_to_korean"),
-    );
+    const englishPromptQuestion = question("english_to_korean");
+    const englishPrompt = quizAudioPresentation(englishPromptQuestion);
     expect(englishPrompt).toEqual({
       choiceAudioEnabled: false,
       promptAudioUrl: availablePronunciation.audioUrl,
     });
 
-    const englishChoices = quizAudioPresentation(
-      question("korean_to_english"),
-    );
+    const englishChoiceQuestion = question("korean_to_english");
+    const englishChoices = quizAudioPresentation(englishChoiceQuestion);
     expect(englishChoices).toEqual({
       choiceAudioEnabled: true,
       promptAudioUrl: null,
@@ -84,6 +84,39 @@ describe("quiz session domain", () => {
       choiceAudioEnabled: false,
       promptAudioUrl: null,
     });
+    expect(quizChoiceAudioUrls(englishChoiceQuestion)).toEqual(
+      englishChoiceQuestion.choicePronunciations.map(
+        (pronunciation) => pronunciation.audioUrl,
+      ),
+    );
+    expect(quizChoiceAudioUrls(englishPromptQuestion)).toEqual([]);
+  });
+
+  it("preloads the current English choices and the next English prompt", () => {
+    const quizAttempt = attempt();
+    const current = question("korean_to_english");
+    const next = question("english_to_korean");
+    current.id = "question-1";
+    current.choicePronunciations = current.choicePronunciations.map(
+      (pronunciation, index) => ({
+        ...pronunciation,
+        audioUrl: `https://example.com/choice-${index}.mp3`,
+      }),
+    );
+    next.id = "question-2";
+    next.pronunciation = {
+      ...availablePronunciation,
+      audioUrl: "https://example.com/next.mp3",
+    };
+    quizAttempt.currentQuestionId = current.id;
+    quizAttempt.questions = [current, next];
+
+    expect(quizPreloadAudioUrls(quizAttempt)).toEqual([
+      ...current.choicePronunciations.map(
+        (pronunciation) => pronunciation.audioUrl,
+      ),
+      next.pronunciation.audioUrl,
+    ]);
   });
 
   it("uses one density derived from the longest of all four choices", () => {
