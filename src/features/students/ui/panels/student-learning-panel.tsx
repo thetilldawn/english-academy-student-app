@@ -78,11 +78,16 @@ export function StudentLearningPanel({
     [data.assignmentDatasets],
   );
   if (!student) return null;
+  const progress =
+    data.progress.find((item) => item.studentId === student.id) ?? null;
   const assignmentBlockedReason = controller.interactionBusy
     ? adminLearningText.assignmentModal.submit.blockedReason.processing
-    : hasReadyAssignmentDataset
-      ? null
-      : adminLearningText.assignmentModal.submit.blockedReason.noReadyDataset;
+    : !hasReadyAssignmentDataset
+      ? adminLearningText.assignmentModal.submit.blockedReason.noReadyDataset
+      : progress?.nextAssignmentBlockedReason === "scheduled"
+        ? adminLearningText.assignmentModal.submit.blockedReason
+            .scheduledAssignment
+        : null;
 
   const sources = data.learningSources.filter(
     (source) => source.studentId === student.id,

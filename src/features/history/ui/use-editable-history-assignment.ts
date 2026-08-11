@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import type { SingleAssignmentResult } from "@/features/assignments/controller/use-assignment-controller";
 import { assignmentSubmitBlockerLabel } from "@/features/assignments/presentation/assignment-submit-blocker";
-import type { SingleAssignmentSubmitPresentation } from "@/features/assignments/ui/single-assignment-editor";
+import type { SingleAssignmentSubmitPresentation } from "@/features/assignments/ui/single-assignment-editor.types";
 import { historyDetailHref } from "@/lib/admin/history-route";
 import type { AdminHistoryDetail } from "@/lib/services/admin-service";
 import type { AssignmentManagerData } from "@/lib/services/assignment-manager-data";

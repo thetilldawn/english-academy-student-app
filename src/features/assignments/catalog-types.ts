@@ -86,5 +86,18 @@ export type AssignmentProgressItem = {
   recommendedUnitIds: string[];
   recommendedUnitLabel: string | null;
   recommendedUnitLabels: string[];
+  nextAssignmentBlockedReason?: "scheduled" | null;
+  nextAssignmentDefaults?: {
+    availableUntil: string | null;
+    basisAssignmentId: string | null;
+    datasetId: string;
+    englishToKoreanRatio: number;
+    passingScore: number;
+    questionOrderMode: "ascending" | "descending" | "random";
+    questionTimeLimitSeconds: number | null;
+    timeLimitSeconds: number;
+    timingMode: "total" | "per_question";
+    unitIds: string[];
+  } | null;
   studentId: string;
 };

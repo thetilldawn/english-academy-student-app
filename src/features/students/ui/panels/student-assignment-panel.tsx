@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 
 import { SingleAssignmentEditor } from "@/features/assignments/ui/single-assignment-editor";
-import { newAssignmentDefaultUnitId } from "@/lib/admin/new-assignment-range";
 import {
   emptyPendingReviewCounts,
   indexStudentPendingReviewSummaries,
@@ -50,7 +49,6 @@ export function StudentAssignmentPanel({
       : readyDatasets[0]?.id ?? "";
   const progress =
     data.progress.find((item) => item.studentId === student.id) ?? null;
-  const initialUnitId = newAssignmentDefaultUnitId(progress, initialDatasetId);
   const reviewCounts = initialDatasetId
     ? (pendingIndex.byStudentDataset.get(
         pendingReviewSummaryKey(student.id, initialDatasetId),
@@ -68,7 +66,6 @@ export function StudentAssignmentPanel({
       datasets={data.assignmentDatasets}
       editTarget={null}
       initialDatasetId={initialDatasetId}
-      initialUnitId={initialUnitId}
       key={`${student.id}:${initialDatasetId}:create`}
       onBusyChange={controller.actions.setAssignmentBusy}
       onConflict={controller.actions.refreshData}

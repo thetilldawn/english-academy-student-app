@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { adminLearningText } from "@/content/ko/admin-learning";
+
 import type { SingleAssignmentSubmitBlocker } from "../domain/submit-blocker";
 import {
   assignmentSubmitBlockerLabel,
@@ -25,6 +27,8 @@ const blockers: readonly SingleAssignmentSubmitBlocker[] = [
   { code: "invalid", path: "exam.questionOrderMode" },
   { code: "invalid", path: "exam.passingScore" },
   { code: "invalid", path: "exam.timing" },
+  { code: "invalid", path: "exam.timing.totalSeconds" },
+  { code: "invalid", path: "exam.timing.perQuestionSeconds" },
   { code: "invalid", path: "deadline" },
   { code: "invalid", path: "questionCount" },
   { code: "invalid", path: "title" },
@@ -38,6 +42,14 @@ describe("assignment submit blocker labels", () => {
       expect(label).toBeTruthy();
       expect(label!.length).toBeLessThanOrEqual(10);
     }
+    expect(
+      adminLearningText.assignmentModal.submit.blockedReason.noReadyDataset
+        .length,
+    ).toBeLessThanOrEqual(10);
+    expect(
+      adminLearningText.assignmentModal.submit.blockedReason
+        .scheduledAssignment.length,
+    ).toBeLessThanOrEqual(10);
   });
 
   it("does not render a reason when submission is enabled", () => {

@@ -1121,8 +1121,11 @@ type HistoryAssignmentRelation = {
   question_count: number;
   english_to_korean_ratio: number;
   time_limit_seconds: number;
+  timing_mode: TimingMode;
+  question_time_limit_seconds: number | null;
   passing_score: number;
   question_order_mode: QuestionOrderMode;
+  available_from: string | null;
   available_until: string | null;
   dataset: HistoryDatasetRelation | HistoryDatasetRelation[] | null;
   assignment_units: HistoryAssignmentUnitRelation[] | null;
@@ -1202,8 +1205,11 @@ async function listAssignmentHistorySourceRows(
             question_count,
             english_to_korean_ratio,
             time_limit_seconds,
+            timing_mode,
+            question_time_limit_seconds,
             passing_score,
             question_order_mode,
+            available_from,
             available_until,
             dataset:vocab_datasets(title, edition),
             assignment_units(
@@ -1381,8 +1387,11 @@ export async function listAssignmentHistoryBundle(): Promise<{
         questionCount: assignment.question_count,
         englishToKoreanRatio: assignment.english_to_korean_ratio,
         timeLimitSeconds: assignment.time_limit_seconds,
+        timingMode: assignment.timing_mode,
+        questionTimeLimitSeconds: assignment.question_time_limit_seconds,
         passingScore: assignment.passing_score,
         questionOrderMode: assignment.question_order_mode,
+        availableFrom: assignment.available_from,
         availableUntil: assignment.available_until,
         assignedAt: row.assigned_at,
         missedAt: row.missed_at,

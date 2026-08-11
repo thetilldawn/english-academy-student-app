@@ -1,4 +1,4 @@
-import { newAssignmentDefaultUnitId } from "@/lib/admin/new-assignment-range";
+import { newAssignmentDefaultUnitIds } from "@/lib/admin/new-assignment-range";
 import {
   emptyPendingReviewCounts,
   indexStudentPendingReviewSummaries,
@@ -35,7 +35,7 @@ export function buildHistoryAssignmentEditorModel(
     editorData.progress.find(
       (candidate) => candidate.studentId === student.id,
     ) ?? null;
-  const preferredUnitId = item.primaryUnitIds.find((unitId) =>
+  const preferredUnitIds = item.primaryUnitIds.filter((unitId) =>
     editorData.units.some(
       (unit) => unit.id === unitId && unit.datasetId === initialDatasetId,
     ),
@@ -56,9 +56,10 @@ export function buildHistoryAssignmentEditorModel(
       reviewCounts.pendingLevel2Count - reviewCounts.reservedLevel2Count,
     datasets: editorData.datasets,
     initialDatasetId,
-    initialUnitId:
-      preferredUnitId ??
-      newAssignmentDefaultUnitId(progress, initialDatasetId),
+    initialUnitIds:
+      preferredUnitIds.length > 0
+        ? preferredUnitIds
+        : newAssignmentDefaultUnitIds(progress, initialDatasetId),
     progress,
     student,
     units: editorData.units,

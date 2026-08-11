@@ -55,6 +55,38 @@ function renderController(
 afterEach(() => vi.restoreAllMocks());
 
 describe("single assignment controller", () => {
+  it("creates a new draft from the complete inherited exam defaults", () => {
+    expect(
+      createInitialSingleAssignmentDraft({
+        datasetId: assignmentContractIds.dataset,
+        deadline: {
+          mode: "at",
+          koreanLocalDateTime: "2026-08-13T18:00",
+        },
+        exam: {
+          directionRatio: 100,
+          passingScore: 85,
+          questionOrderMode: "descending",
+          timing: { mode: "per_question", perQuestionSeconds: 12 },
+        },
+        orderedUnitIds: reverseUnitIds,
+        studentId: assignmentContractIds.studentA,
+      }),
+    ).toMatchObject({
+      deadline: {
+        mode: "at",
+        koreanLocalDateTime: "2026-08-13T18:00",
+      },
+      exam: {
+        directionRatio: 100,
+        passingScore: 85,
+        questionOrderMode: "descending",
+        timing: { mode: "per_question", perQuestionSeconds: 12 },
+      },
+      range: { orderedUnitIds: reverseUnitIds },
+    });
+  });
+
   it("aborts an obsolete capacity request and ignores its late response", async () => {
     let capacityRequestCount = 0;
     let firstSignal: AbortSignal | undefined;

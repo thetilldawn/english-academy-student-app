@@ -89,11 +89,20 @@ export type AssignmentSubmitOutcome =
   | { conflict: boolean; message: string; ok: false };
 
 export function createInitialSingleAssignmentDraft({
+  deadline = { mode: "none" },
   datasetId,
+  exam = {
+    directionRatio: 50,
+    passingScore: 80,
+    questionOrderMode: "random",
+    timing: { mode: "total", totalSeconds: 300 },
+  },
   orderedUnitIds,
   studentId,
 }: {
+  deadline?: AssignmentDeadline;
   datasetId: string;
+  exam?: SingleAssignmentDraft["exam"];
   orderedUnitIds: readonly string[];
   studentId: string;
 }): SingleAssignmentDraft {
@@ -104,13 +113,8 @@ export function createInitialSingleAssignmentDraft({
     title: { mode: "automatic" },
     range: { datasetId, orderedUnitIds: [...orderedUnitIds] },
     questionCount: { mode: "automatic", value: 20 },
-    exam: {
-      directionRatio: 50,
-      passingScore: 80,
-      questionOrderMode: "random",
-      timing: { mode: "total", totalSeconds: 300 },
-    },
-    deadline: { mode: "none" },
+    exam,
+    deadline,
     review: { mode: "none", scope: "dataset", levels: [1, 2] },
   };
 }

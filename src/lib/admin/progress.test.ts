@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
-import { buildStudentProgress } from "@/lib/admin/progress";
+import {
+  buildStudentProgress,
+  rollAssignmentDeadlineForward,
+} from "@/lib/admin/progress";
 
 const student = {
   id: "student-1",
@@ -42,8 +45,11 @@ function history(
     questionCount: 10,
     englishToKoreanRatio: 50,
     timeLimitSeconds: 300,
+    timingMode: "total",
+    questionTimeLimitSeconds: null,
     passingScore: 80,
     questionOrderMode: "random",
+    availableFrom: null,
     availableUntil: null,
     assignedAt: "2026-07-28T00:00:00.000Z",
     missedAt: null,
@@ -439,6 +445,12 @@ describe("buildStudentProgress", () => {
     ]);
     expect(progress.recommendedUnitLabel).toBe("DAY 07~DAY 10");
     expect(progress.recommendedDirection).toBe(1);
+    expect(progress.nextAssignmentDefaults?.unitIds).toEqual([
+      "unit-7",
+      "unit-8",
+      "unit-9",
+      "unit-10",
+    ]);
   });
 
   it("이전 역방향 범위의 길이와 방향을 유지해 다음 범위를 추천한다", () => {
@@ -486,5 +498,163 @@ describe("buildStudentProgress", () => {
     ]);
     expect(progress.recommendedUnitLabel).toBe("DAY 53~DAY 47");
     expect(progress.recommendedDirection).toBe(-1);
+    expect(progress.nextAssignmentDefaults?.unitIds).toEqual([
+      "unit-53",
+      "unit-52",
+      "unit-51",
+      "unit-50",
+      "unit-49",
+      "unit-48",
+      "unit-47",
+    ]);
+  });
+
+  it("이미 배정된 범위 다음 단원과 시험 설정·마감 간격을 다음 초안으로 만든다", () => {
+    const extendedUnits = Array.from({ length: 12 }, (_, index) => ({
+      id: `unit-${index + 1}`,
+      datasetId: "dataset-current",
+      label: `DAY ${String(index + 1).padStart(2, "0")}`,
+      sortIndex: index + 1,
+    }));
+    const now = Date.parse("2026-08-12T00:00:00.000Z");
+    const [progress] = buildStudentProgress(
+      [student],
+      extendedUnits,
+      [
+        history({
+          attemptId: null,
+          phase: null,
+          status: "not_started",
+          primaryUnitIds: ["unit-3", "unit-4", "unit-5", "unit-6"],
+          primaryUnitLabels: ["DAY 03", "DAY 04", "DAY 05", "DAY 06"],
+          englishToKoreanRatio: 100,
+          timingMode: "per_question",
+          questionTimeLimitSeconds: 12,
+          passingScore: 85,
+          questionOrderMode: "descending",
+          assignedAt: "2026-08-10T00:00:00.000Z",
+          availableUntil: "2026-08-11T00:00:00.000Z",
+        }),
+      ],
+      now,
+    );
+
+    expect(progress.recommendationReason).toBe("assigned");
+    expect(progress.recommendedUnitIds).toEqual([
+      "unit-3",
+      "unit-4",
+      "unit-5",
+      "unit-6",
+    ]);
+    expect(progress.nextAssignmentDefaults).toMatchObject({
+      availableUntil: "2026-08-13T00:00:00.000Z",
+      datasetId: "dataset-current",
+      englishToKoreanRatio: 100,
+      passingScore: 85,
+      questionOrderMode: "descending",
+      questionTimeLimitSeconds: 12,
+      timingMode: "per_question",
+      unitIds: ["unit-7", "unit-8", "unit-9", "unit-10"],
+    });
+  });
+
+  it("진행 중 시험 뒤에 예약 시험이 있으면 마지막 예약 범위 다음을 사용한다", () => {
+    const [progress] = buildStudentProgress(
+      [student],
+      units,
+      [
+        history({
+          id: "attempt-day-1",
+          assignmentId: "assignment-day-1",
+          status: "in_progress",
+          phase: "initial",
+          primaryUnitIds: ["unit-1"],
+          primaryUnitLabels: ["DAY 01"],
+          activityAt: "2026-08-11T02:00:00.000Z",
+          assignedAt: "2026-08-10T00:00:00.000Z",
+        }),
+        history({
+          id: "assignment-day-2:student-1",
+          assignmentId: "assignment-day-2",
+          attemptId: null,
+          attemptNumber: null,
+          status: "not_started",
+          phase: null,
+          passed: null,
+          primaryUnitIds: ["unit-2"],
+          primaryUnitLabels: ["DAY 02"],
+          activityAt: "2026-08-10T01:00:00.000Z",
+          assignedAt: "2026-08-10T01:00:00.000Z",
+          availableFrom: "2026-08-12T00:00:00.000Z",
+          questionTimeLimitSeconds: 15,
+          timingMode: "per_question",
+        }),
+      ],
+    );
+
+    expect(progress.recommendationReason).toBe("resume");
+    expect(progress.recommendedUnitIds).toEqual(["unit-1"]);
+    expect(progress.nextAssignmentDefaults).toMatchObject({
+      basisAssignmentId: "assignment-day-2",
+      questionTimeLimitSeconds: 15,
+      timingMode: "per_question",
+      unitIds: ["unit-3"],
+    });
+    expect(progress.nextAssignmentBlockedReason).toBe("scheduled");
+  });
+
+  it("같은 시각에 만든 예약 묶음은 가장 늦게 공개되는 회차 다음을 사용한다", () => {
+    const assignedAt = "2026-08-10T00:00:00.000Z";
+    const scheduled = [3, 1, 2].map((day) =>
+      history({
+        id: `assignment-day-${day}:student-1`,
+        assignmentId: `assignment-day-${day}`,
+        attemptId: null,
+        attemptNumber: null,
+        status: "not_started",
+        phase: null,
+        passed: null,
+        assignedAt,
+        activityAt: assignedAt,
+        availableFrom: `2026-08-${11 + day}T00:00:00.000Z`,
+        primaryUnitIds: [`unit-${day}`],
+        primaryUnitLabels: [`DAY 0${day}`],
+      }),
+    );
+
+    const [progress] = buildStudentProgress([student], units, scheduled);
+
+    expect(progress.nextAssignmentDefaults).toMatchObject({
+      basisAssignmentId: "assignment-day-3",
+      unitIds: ["unit-4"],
+    });
+  });
+
+  it("예약 시험은 공개 시각부터 마감까지의 간격만 상속한다", () => {
+    expect(
+      rollAssignmentDeadlineForward(
+        "2026-08-10T00:00:00.000Z",
+        "2026-08-15T03:00:00.000Z",
+        Date.parse("2026-08-20T00:00:00.000Z"),
+        "2026-08-15T00:00:00.000Z",
+      ),
+    ).toBe("2026-08-20T03:00:00.000Z");
+  });
+
+  it("마감이 없거나 기존 마감 간격이 잘못되면 새 마감을 만들지 않는다", () => {
+    expect(
+      rollAssignmentDeadlineForward(
+        "2026-08-11T00:00:00.000Z",
+        null,
+        Date.parse("2026-08-12T00:00:00.000Z"),
+      ),
+    ).toBeNull();
+    expect(
+      rollAssignmentDeadlineForward(
+        "2026-08-11T00:00:00.000Z",
+        "2026-08-10T00:00:00.000Z",
+        Date.parse("2026-08-12T00:00:00.000Z"),
+      ),
+    ).toBeNull();
   });
 });

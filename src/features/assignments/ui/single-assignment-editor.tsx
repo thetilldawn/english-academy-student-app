@@ -15,39 +15,26 @@ import {
   DialogFooter,
 } from "@/design-system/primitives/dialog/dialog";
 import { Notice } from "@/design-system/patterns/feedback/feedback";
-import { cataloguedDatasetDisplayLabel } from "@/lib/admin/dataset-catalog";
-
-import type {
-  AssignmentDatasetItem,
-  AssignmentProgressItem,
-  AssignmentStudentItem,
-  AssignmentUnitItem,
-} from "../catalog-types";
 import {
   createInitialSingleAssignmentDraft,
   useAssignmentController,
   type AssignmentControllerSource,
-  type SingleAssignmentResult,
 } from "../controller/use-assignment-controller";
 import type { SingleAssignmentDraft } from "../domain/model";
+import { buildAutomaticAssignmentTitle } from "../presentation/assignment-automatic-title";
 import {
   assignmentSubmitBlockerLabel,
   assignmentSubmitButtonLabel,
 } from "../presentation/assignment-submit-blocker";
-import { AssignmentRangeFields, assignmentUnitRangeLabel } from "./assignment-range-fields";
+import { newAssignmentDraftDefaults } from "../presentation/new-assignment-defaults";
+import { AssignmentRangeFields } from "./assignment-range-fields";
 import { AssignmentReviewFields } from "./assignment-review-fields";
 import { AssignmentSection } from "./assignment-section";
 import { AssignmentSettingsFields } from "./assignment-settings-fields";
 import { AssignmentSubmitAction } from "./assignment-submit-action";
 import { AssignmentSummaryPanel } from "./assignment-summary-panel";
+import type { SingleAssignmentEditorProps } from "./single-assignment-editor.types";
 import styles from "./single-assignment-editor.module.css";
-
-export type SingleAssignmentSubmitPresentation = {
-  blockedReason: string | null;
-  canSubmit: boolean;
-  formId: string;
-  label: string;
-};
 
 export function SingleAssignmentEditor({
   availableReviewLevel1,
@@ -56,7 +43,7 @@ export function SingleAssignmentEditor({
   editTarget,
   formId: suppliedFormId,
   initialDatasetId,
-  initialUnitId,
+  initialUnitIds,
   onBusyChange,
   onConflict,
   onSubmitPresentationChange,
@@ -66,36 +53,38 @@ export function SingleAssignmentEditor({
   student,
   submitPlacement = "footer",
   units,
-}: {
-  availableReviewLevel1: number;
-  availableReviewLevel2: number;
-  datasets: readonly AssignmentDatasetItem[];
-  editTarget: { assignmentId: string; studentId: string } | null;
-  formId?: string;
-  initialDatasetId: string;
-  initialUnitId: string;
-  onBusyChange?: (busy: boolean) => void;
-  onConflict?: () => void;
-  onSubmitPresentationChange?: (
-    presentation: SingleAssignmentSubmitPresentation,
-  ) => void;
-  onSucceeded: (result: SingleAssignmentResult) => void;
-  placement: "dialog" | "inline";
-  progress: AssignmentProgressItem | null;
-  student: AssignmentStudentItem;
-  submitPlacement?: "footer" | "external";
-  units: readonly AssignmentUnitItem[];
-}) {
+}: SingleAssignmentEditorProps) {
   const reactId = useId().replaceAll(":", "");
   const formId = suppliedFormId ?? `single-assignment-${reactId}`;
+  const firstDatasetUnitId = useMemo(
+    () =>
+      units
+        .filter((unit) => unit.datasetId === initialDatasetId)
+        .toSorted((left, right) => left.sortIndex - right.sortIndex)[0]?.id ??
+      "",
+    [initialDatasetId, units],
+  );
+  const createDefaults = useMemo(
+    () =>
+      newAssignmentDraftDefaults(
+        progress,
+        initialDatasetId,
+        firstDatasetUnitId,
+      ),
+    [firstDatasetUnitId, initialDatasetId, progress],
+  );
   const fallbackDraft = useMemo(
     () =>
       createInitialSingleAssignmentDraft({
         datasetId: initialDatasetId,
-        orderedUnitIds: initialUnitId ? [initialUnitId] : [],
+        deadline: createDefaults.deadline,
+        exam: createDefaults.exam,
+        orderedUnitIds: initialUnitIds
+          ? [...initialUnitIds]
+          : createDefaults.orderedUnitIds,
         studentId: student.id,
       }),
-    [initialDatasetId, initialUnitId, student.id],
+    [createDefaults, initialDatasetId, initialUnitIds, student.id],
   );
   const source = useMemo<AssignmentControllerSource>(
     () =>
@@ -110,28 +99,11 @@ export function SingleAssignmentEditor({
     [editTarget, fallbackDraft],
   );
   const automaticTitleForDraft = useCallback(
-    (draft: SingleAssignmentDraft, capacity: { wrongEligible: number } | null) => {
-      const dataset = datasets.find(
-        (candidate) => candidate.id === draft.range.datasetId,
-      );
-      const labels = draft.range.orderedUnitIds.map(
-        (unitId) =>
-          units.find((unit) => unit.id === unitId)?.displayName ??
-          adminLearningText.assignmentModal.range.unknownUnit,
-      );
-      return [
-        dataset ? cataloguedDatasetDisplayLabel(dataset) : null,
-        assignmentUnitRangeLabel(labels),
-        draft.review.mode === "pending"
-          ? formatContentText(
-              adminLearningText.assignmentModal.overview.includedWrong,
-              { count: capacity?.wrongEligible ?? 0 },
-            )
-          : null,
-      ]
-        .filter(Boolean)
-        .join(" · ");
-    },
+    (
+      draft: SingleAssignmentDraft,
+      capacity: { wrongEligible: number } | null,
+    ) =>
+      buildAutomaticAssignmentTitle(draft, capacity, datasets, units),
     [datasets, units],
   );
   const controller = useAssignmentController({
@@ -272,6 +244,7 @@ export function SingleAssignmentEditor({
             canSubmit={controller.canSubmit}
             formId={formId}
             label={submitLabel}
+            reasonLayout="remaining-center"
           />
         </DialogFooter>
       ) : null}

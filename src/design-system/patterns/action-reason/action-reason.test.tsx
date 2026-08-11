@@ -25,4 +25,17 @@ describe("ActionWithReason", () => {
     expect(reason).toHaveAttribute("aria-live", "polite");
     expect(reason).toHaveAttribute("title", "범위 선택");
   });
+
+  it("marks footer actions for remaining-space centering", () => {
+    const { container } = render(
+      <ActionWithReason layout="remaining-center" reason="시간 확인">
+        <button type="button">배정</button>
+      </ActionWithReason>,
+    );
+
+    expect(container.firstElementChild).toHaveAttribute(
+      "data-layout",
+      "remaining-center",
+    );
+  });
 });

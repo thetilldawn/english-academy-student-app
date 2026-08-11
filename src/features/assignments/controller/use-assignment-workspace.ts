@@ -9,7 +9,6 @@ import {
   studentLearningActivityIndex,
 } from "@/features/history/domain/learning-activity";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
-import { newAssignmentDefaultUnitId } from "@/lib/admin/new-assignment-range";
 import {
   availableReviewCount,
   emptyPendingReviewCounts,
@@ -254,10 +253,6 @@ export function useAssignmentWorkspace({
         ? selectedStudent.currentVocabDatasetId!
         : readyDatasets[0]?.id ?? ""
     : "";
-  const selectedInitialUnitId = newAssignmentDefaultUnitId(
-    selectedProgress,
-    selectedInitialDatasetId,
-  );
   const selectedReviewCounts =
     selectedStudent && selectedInitialDatasetId
       ? (pendingReviewIndex.byStudentDataset.get(
@@ -367,7 +362,6 @@ export function useAssignmentWorkspace({
     selectedBulkStudents,
     selectedCurrentWrongCounts,
     selectedInitialDatasetId,
-    selectedInitialUnitId,
     selectedLearningSources,
     selectedPendingReviewCount: pendingReviewCount(selectedReviewCounts),
     selectedProgress,

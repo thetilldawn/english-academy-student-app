@@ -28,6 +28,8 @@ export function AssignmentStudentDialog({
   const student = controller.selectedStudent;
   if (!student) return null;
   const assigning = controller.dialogView === "assign";
+  const assignmentScheduled =
+    controller.selectedProgress?.nextAssignmentBlockedReason === "scheduled";
 
   function handleSucceeded() {
     controller.actions.refresh();
@@ -81,7 +83,6 @@ export function AssignmentStudentDialog({
           editTarget={null}
           placement="dialog"
           initialDatasetId={controller.selectedInitialDatasetId}
-          initialUnitId={controller.selectedInitialUnitId}
           key={`${student.id}:${controller.selectedInitialDatasetId}:create`}
           onBusyChange={controller.actions.setEditorBusy}
           onConflict={controller.actions.refresh}
@@ -108,7 +109,9 @@ export function AssignmentStudentDialog({
                   adminLearningText.assignmentModal.overview.openAssignmentAria
                 }
                 className={styles.addButton}
-                disabled={controller.readyDatasets.length === 0}
+                disabled={
+                  controller.readyDatasets.length === 0 || assignmentScheduled
+                }
                 onClick={() => controller.actions.setDialogView("assign")}
                 variant="quiet"
               >
@@ -180,6 +183,14 @@ export function AssignmentStudentDialog({
             {controller.readyDatasets.length === 0 ? (
               <div className={styles.notice} role="status">
                 {adminLearningText.assignmentModal.overview.noReadyDataset}
+              </div>
+            ) : null}
+            {assignmentScheduled ? (
+              <div className={styles.notice} role="status">
+                {
+                  adminLearningText.assignmentModal.submit.blockedReason
+                    .scheduledAssignment
+                }
               </div>
             ) : null}
             <div className={styles.sectionHeading}>

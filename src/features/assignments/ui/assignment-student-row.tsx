@@ -53,6 +53,13 @@ export function AssignmentStudentRow({
       source.displayLabel !== student.currentVocabBook,
   );
   const reviewCounts = studentPendingReviewCounts(controller, student);
+  const assignmentBlockedReason =
+    controller.readyDatasets.length === 0
+      ? adminLearningText.assignmentModal.submit.blockedReason.noReadyDataset
+      : progress?.nextAssignmentBlockedReason === "scheduled"
+        ? adminLearningText.assignmentModal.submit.blockedReason
+            .scheduledAssignment
+        : null;
   const recommendedRange = assignmentRecommendationLabel(progress);
   const currentActivityRange =
     nextActivity?.primaryUnitLabels[0] ?? nextActivity?.unitLabels[0] ?? null;
@@ -75,15 +82,10 @@ export function AssignmentStudentRow({
             </ButtonLink>
           ) : null}
           <ActionWithReason
-            reason={
-              controller.readyDatasets.length === 0
-                ? adminLearningText.assignmentModal.submit.blockedReason
-                    .noReadyDataset
-                : null
-            }
+            reason={assignmentBlockedReason}
           >
             <Button
-              disabled={controller.readyDatasets.length === 0}
+              disabled={assignmentBlockedReason !== null}
               onClick={() =>
                 controller.actions.selectStudent(student.id, "assign")
               }

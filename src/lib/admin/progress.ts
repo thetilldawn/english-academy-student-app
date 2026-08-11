@@ -34,6 +34,8 @@ export type StudentProgressSummary = {
   recommendedUnitLabels: string[];
   recommendedDirection: 1 | -1;
   recommendedRangeTruncated: boolean;
+  nextAssignmentBlockedReason: "scheduled" | null;
+  nextAssignmentDefaults: StudentNextAssignmentDefaults | null;
   recommendationReason:
     | "first"
     | "assigned"
@@ -43,6 +45,19 @@ export type StudentProgressSummary = {
     | "complete"
     | "manual"
     | null;
+};
+
+export type StudentNextAssignmentDefaults = {
+  availableUntil: string | null;
+  basisAssignmentId: string | null;
+  datasetId: string;
+  englishToKoreanRatio: number;
+  passingScore: number;
+  questionOrderMode: "ascending" | "descending" | "random";
+  questionTimeLimitSeconds: number | null;
+  timeLimitSeconds: number;
+  timingMode: AssignmentHistorySummary["timingMode"];
+  unitIds: string[];
 };
 
 type ProgressStudent = {
@@ -68,10 +83,61 @@ function recommendationPriority(item: AssignmentHistorySummary) {
   return 1;
 }
 
+function assignmentSequenceTime(item: AssignmentHistorySummary) {
+  const availableFrom = item.availableFrom
+    ? Date.parse(item.availableFrom)
+    : Number.NaN;
+  if (Number.isFinite(availableFrom)) return availableFrom;
+  const assignedAt = Date.parse(item.assignedAt);
+  return Number.isFinite(assignedAt) ? assignedAt : 0;
+}
+
+function isLaterAssignment(
+  candidate: AssignmentHistorySummary,
+  current: AssignmentHistorySummary,
+) {
+  const candidateSequence = assignmentSequenceTime(candidate);
+  const currentSequence = assignmentSequenceTime(current);
+  if (candidateSequence !== currentSequence) {
+    return candidateSequence > currentSequence;
+  }
+
+  const candidateAssignedAt = Date.parse(candidate.assignedAt) || 0;
+  const currentAssignedAt = Date.parse(current.assignedAt) || 0;
+  if (candidateAssignedAt !== currentAssignedAt) {
+    return candidateAssignedAt > currentAssignedAt;
+  }
+  return candidate.assignmentId > current.assignmentId;
+}
+
+export function rollAssignmentDeadlineForward(
+  assignedAt: string,
+  availableUntil: string | null,
+  nowMilliseconds: number,
+  availableFrom: string | null = null,
+) {
+  if (!availableUntil) return null;
+  const assignedMilliseconds = Date.parse(availableFrom ?? assignedAt);
+  const deadlineMilliseconds = Date.parse(availableUntil);
+  const duration = deadlineMilliseconds - assignedMilliseconds;
+  if (
+    !Number.isFinite(assignedMilliseconds) ||
+    !Number.isFinite(deadlineMilliseconds) ||
+    duration <= 0
+  ) {
+    return null;
+  }
+  const nextDeadline = nowMilliseconds + duration;
+  return Number.isFinite(nextDeadline)
+    ? new Date(nextDeadline).toISOString()
+    : null;
+}
+
 export function buildStudentProgress(
   students: ProgressStudent[],
   units: ProgressUnit[],
   history: AssignmentHistorySummary[],
+  nowMilliseconds = Date.now(),
 ): StudentProgressSummary[] {
   const latestOverallByStudent = new Map<
     string,
@@ -82,6 +148,10 @@ export function buildStudentProgress(
     AssignmentHistorySummary
   >();
   const latestCompletedByStudent = new Map<
+    string,
+    AssignmentHistorySummary
+  >();
+  const nextAssignmentBasisByStudent = new Map<
     string,
     AssignmentHistorySummary
   >();
@@ -139,6 +209,11 @@ export function buildStudentProgress(
       ) {
         latestCurrentDatasetByStudent.set(item.studentId, item);
       }
+
+      const currentBasis = nextAssignmentBasisByStudent.get(item.studentId);
+      if (!currentBasis || isLaterAssignment(item, currentBasis)) {
+        nextAssignmentBasisByStudent.set(item.studentId, item);
+      }
     }
   }
 
@@ -148,6 +223,8 @@ export function buildStudentProgress(
       latestCompletedByStudent.get(student.id) ?? null;
     const latestCurrent =
       latestCurrentDatasetByStudent.get(student.id) ?? null;
+    const nextAssignmentBasis =
+      nextAssignmentBasisByStudent.get(student.id) ?? null;
     const datasetUnits = student.currentVocabDatasetId
       ? (unitsByDataset.get(student.currentVocabDatasetId) ?? [])
       : [];
@@ -217,6 +294,62 @@ export function buildStudentProgress(
         : recommendedUnits.length === 1
           ? recommendedUnits[0].label
           : `${recommendedUnits[0].label}~${recommendedUnits.at(-1)!.label}`;
+    let nextAssignmentUnits: ProgressUnit[] = datasetUnits[0]
+      ? [datasetUnits[0]]
+      : [];
+    if (nextAssignmentBasis && datasetUnits.length > 0) {
+      try {
+        const basisUnits = resolveOrderedContiguousUnits(
+          datasetUnits,
+          nextAssignmentBasis.primaryUnitIds,
+        );
+        const shouldRepeat =
+          nextAssignmentBasis.status === "missed" ||
+          nextAssignmentBasis.status === "expired" ||
+          (nextAssignmentBasis.status === "completed" &&
+            nextAssignmentBasis.passed !== true);
+        nextAssignmentUnits = shouldRepeat
+          ? basisUnits
+          : (planNextUnitRange(
+              datasetUnits,
+              nextAssignmentBasis.primaryUnitIds,
+            )?.units ?? []);
+      } catch {
+        nextAssignmentUnits = [];
+      }
+    }
+    const nextAssignmentDefaults =
+      student.currentVocabDatasetId && nextAssignmentUnits.length > 0
+        ? {
+            availableUntil: nextAssignmentBasis
+              ? rollAssignmentDeadlineForward(
+                  nextAssignmentBasis.assignedAt,
+                  nextAssignmentBasis.availableUntil,
+                  nowMilliseconds,
+                  nextAssignmentBasis.availableFrom,
+                )
+              : null,
+            basisAssignmentId: nextAssignmentBasis?.assignmentId ?? null,
+            datasetId: student.currentVocabDatasetId,
+            englishToKoreanRatio:
+              nextAssignmentBasis?.englishToKoreanRatio ?? 50,
+            passingScore: nextAssignmentBasis?.passingScore ?? 80,
+            questionOrderMode:
+              nextAssignmentBasis?.questionOrderMode === "fixed"
+                ? "ascending"
+                : (nextAssignmentBasis?.questionOrderMode ?? "random"),
+            questionTimeLimitSeconds:
+              nextAssignmentBasis?.questionTimeLimitSeconds ?? null,
+            timeLimitSeconds: nextAssignmentBasis?.timeLimitSeconds ?? 300,
+            timingMode: nextAssignmentBasis?.timingMode ?? "total",
+            unitIds: nextAssignmentUnits.map((unit) => unit.id),
+          }
+        : null;
+    const nextAssignmentBlockedReason =
+      nextAssignmentBasis?.availableFrom &&
+      Date.parse(nextAssignmentBasis.availableFrom) > nowMilliseconds
+        ? "scheduled"
+        : null;
 
     return {
       studentId: student.id,
@@ -248,6 +381,8 @@ export function buildStudentProgress(
       recommendedUnitLabels: recommendedUnits.map((unit) => unit.label),
       recommendedDirection,
       recommendedRangeTruncated,
+      nextAssignmentBlockedReason,
+      nextAssignmentDefaults,
       recommendationReason,
     };
   });

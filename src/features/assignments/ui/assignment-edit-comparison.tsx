@@ -9,7 +9,7 @@ import type { AssignmentDatasetItem, AssignmentUnitItem } from "../catalog-types
 import type { SingleAssignmentController } from "../controller/use-assignment-controller";
 import type { SingleAssignmentDraft } from "../domain/model";
 import { assignmentRequestFingerprint } from "../domain/fingerprint";
-import { assignmentUnitRangeLabel } from "./assignment-range-fields";
+import { assignmentUnitRangeLabel } from "../presentation/assignment-unit-range-label";
 import styles from "./single-assignment-editor.module.css";
 
 type ChangeKey =

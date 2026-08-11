@@ -29,8 +29,11 @@ export type AssignmentHistorySource = {
   questionCount: number;
   englishToKoreanRatio: number;
   timeLimitSeconds: number;
+  timingMode: TimingMode;
+  questionTimeLimitSeconds: number | null;
   passingScore: number;
   questionOrderMode: QuestionOrderMode;
+  availableFrom: string | null;
   availableUntil: string | null;
   assignedAt: string;
   missedAt: string | null;
@@ -332,4 +335,7 @@ export function projectCurrentAssignmentHistory(
   }
   return [...latestByRecipient.values()];
 }
-import type { QuestionOrderMode } from "@/lib/admin/assignment-settings";
+import type {
+  QuestionOrderMode,
+  TimingMode,
+} from "@/lib/admin/assignment-settings";

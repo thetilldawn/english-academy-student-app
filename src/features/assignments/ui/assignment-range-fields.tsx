@@ -10,7 +10,7 @@ import {
   groupCataloguedDatasets,
   groupCataloguedUnits,
 } from "@/lib/admin/dataset-catalog";
-import { newAssignmentDefaultUnitId } from "@/lib/admin/new-assignment-range";
+import { newAssignmentDefaultUnitIds } from "@/lib/admin/new-assignment-range";
 import { selectInclusiveUnitRange } from "@/lib/admin/unit-range";
 import { AssignmentFieldGrid } from "@/components/assignment-editor-ui";
 import { Notice } from "@/design-system/patterns/feedback/feedback";
@@ -21,16 +21,9 @@ import type {
   AssignmentUnitItem,
 } from "../catalog-types";
 import type { SingleAssignmentController } from "../controller/use-assignment-controller";
+import { assignmentUnitRangeLabel } from "../presentation/assignment-unit-range-label";
 import { AssignmentCapacitySummary } from "./assignment-capacity-summary";
 import styles from "./single-assignment-editor.module.css";
-
-export function assignmentUnitRangeLabel(labels: readonly string[]) {
-  if (labels.length === 0) {
-    return adminLearningText.assignmentModal.range.rangeMissing;
-  }
-  if (labels.length === 1) return labels[0];
-  return `${labels[0]}~${labels.at(-1)}`;
-}
 
 export function AssignmentRangeFields({
   controller,
@@ -79,11 +72,17 @@ export function AssignmentRangeFields({
     const nextUnits = units
       .filter((unit) => unit.datasetId === datasetId)
       .toSorted((left, right) => left.sortIndex - right.sortIndex);
-    const recommended = newAssignmentDefaultUnitId(progress, datasetId);
-    const firstUnitId = nextUnits.some((unit) => unit.id === recommended)
-      ? recommended
-      : nextUnits[0]?.id ?? "";
-    actions.changeRange(datasetId, firstUnitId ? [firstUnitId] : []);
+    const recommendedUnitIds = newAssignmentDefaultUnitIds(
+      progress,
+      datasetId,
+    ).filter((unitId) => nextUnits.some((unit) => unit.id === unitId));
+    const orderedUnitIds =
+      recommendedUnitIds.length > 0
+        ? recommendedUnitIds
+        : nextUnits[0]
+          ? [nextUnits[0].id]
+          : [];
+    actions.changeRange(datasetId, orderedUnitIds);
   }
 
   function changeBoundary(startId: string, endId: string) {

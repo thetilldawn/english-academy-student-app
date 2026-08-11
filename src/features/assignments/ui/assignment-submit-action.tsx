@@ -9,16 +9,18 @@ export function AssignmentSubmitAction({
   canSubmit,
   formId,
   label,
+  reasonLayout = "inline",
   size = "large",
 }: {
   blockedReason: string | null;
   canSubmit: boolean;
   formId: string;
   label: string;
+  reasonLayout?: "inline" | "remaining-center";
   size?: ButtonSize;
 }) {
   return (
-    <ActionWithReason reason={blockedReason}>
+    <ActionWithReason layout={reasonLayout} reason={blockedReason}>
       <Button
         disabled={!canSubmit}
         form={formId}

@@ -11,7 +11,7 @@ import type {
 } from "../catalog-types";
 import type { SingleAssignmentController } from "../controller/use-assignment-controller";
 import { AssignmentEditComparison } from "./assignment-edit-comparison";
-import { assignmentUnitRangeLabel } from "./assignment-range-fields";
+import { assignmentUnitRangeLabel } from "../presentation/assignment-unit-range-label";
 import styles from "./single-assignment-editor.module.css";
 
 export function AssignmentSummaryPanel({

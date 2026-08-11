@@ -11,6 +11,10 @@ function validationReason(path: string) {
   if (path === "exam.directionRatio") return reasons.direction;
   if (path === "exam.questionOrderMode") return reasons.order;
   if (path === "exam.passingScore") return reasons.score;
+  if (path === "exam.timing.totalSeconds") return reasons.totalTiming;
+  if (path === "exam.timing.perQuestionSeconds") {
+    return reasons.perQuestionTiming;
+  }
   if (path.startsWith("exam.timing")) return reasons.timing;
   if (path.startsWith("deadline")) return reasons.deadline;
   if (path === "questionCount") return reasons.questionCount;

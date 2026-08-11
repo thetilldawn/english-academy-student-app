@@ -33,6 +33,14 @@ describe("admin assignment history query contract", () => {
     );
     expect(source).toContain("primaryUnitIds:");
     expect(source).toContain("primaryUnitLabels:");
+    expect(source).toContain("timing_mode,");
+    expect(source).toContain("question_time_limit_seconds,");
+    expect(source).toContain("available_from,");
+    expect(source).toContain("timingMode: assignment.timing_mode");
+    expect(source).toContain(
+      "questionTimeLimitSeconds: assignment.question_time_limit_seconds",
+    );
+    expect(source).toContain("availableFrom: assignment.available_from");
   });
 
   it("학생 배정 목록도 시험 목적과 주 DAY만 표시한다", () => {

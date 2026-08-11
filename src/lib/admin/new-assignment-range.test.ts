@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   needsExplicitNewAssignmentRange,
   newAssignmentDefaultUnitId,
+  newAssignmentDefaultUnitIds,
   type AssignmentRangeRecommendation,
 } from "@/lib/admin/new-assignment-range";
 
@@ -45,5 +46,24 @@ describe("new assignment range defaults", () => {
     expect(
       newAssignmentDefaultUnitId(progress("next"), "dataset-2"),
     ).toBe("");
+  });
+
+  it("uses the complete next range even while the current exam is assigned", () => {
+    const assigned = {
+      ...progress("assigned"),
+      nextAssignmentDefaults: {
+        datasetId: "dataset-1",
+        unitIds: ["unit-9", "unit-10", "unit-11"],
+      },
+    };
+
+    expect(newAssignmentDefaultUnitIds(assigned, "dataset-1")).toEqual([
+      "unit-9",
+      "unit-10",
+      "unit-11",
+    ]);
+    expect(needsExplicitNewAssignmentRange(assigned, "dataset-1")).toBe(
+      false,
+    );
   });
 });

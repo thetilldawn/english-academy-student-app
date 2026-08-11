@@ -239,6 +239,7 @@ export const adminLearningText = {
         questionCountTooHigh: "문항 수 초과",
         noReviewWords: "추가 오답 없음",
         noReadyDataset: "단어장 없음",
+        scheduledAssignment: "예약 시험 있음",
         processing: "처리 중",
         validation: {
           student: "학생 확인",
@@ -249,6 +250,8 @@ export const adminLearningText = {
           order: "순서 확인",
           score: "점수 확인",
           timing: "시간 확인",
+          totalTiming: "30초~180분",
+          perQuestionTiming: "5초~600초",
           deadline: "마감 확인",
           questionCount: "문항 수 확인",
           title: "이름 확인",
