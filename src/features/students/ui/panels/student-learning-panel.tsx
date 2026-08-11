@@ -12,6 +12,8 @@ import {
 } from "@/design-system/primitives/form/field";
 import { HelpTip, inlineHelpClassName } from "@/design-system/primitives/tooltip/help-tip";
 import { adminStudentsText } from "@/content/ko/admin-students";
+import { adminLearningText } from "@/content/ko/admin-learning";
+import { ActionWithReason } from "@/design-system/patterns/action-reason/action-reason";
 import { EmptyState } from "@/design-system/patterns/feedback/feedback";
 import { formatContentText } from "@/content/format";
 import {
@@ -27,10 +29,10 @@ import { StudentWrongWordPanel } from "./student-wrong-word-panel";
 import styles from "../student-detail.module.css";
 
 function AssignmentAction({
-  disabled,
+  blockedReason,
   onAssign,
 }: {
-  disabled: boolean;
+  blockedReason: string | null;
   onAssign: () => void;
 }) {
   return (
@@ -41,9 +43,15 @@ function AssignmentAction({
           {adminStudentsText.learning.nextVocabularyHelp}
         </HelpTip>
       </strong>
-      <Button disabled={disabled} onClick={onAssign} variant="primary">
-        {adminStudentsText.learning.assign}
-      </Button>
+      <ActionWithReason reason={blockedReason}>
+        <Button
+          disabled={blockedReason !== null}
+          onClick={onAssign}
+          variant="primary"
+        >
+          {adminStudentsText.learning.assign}
+        </Button>
+      </ActionWithReason>
     </div>
   );
 }
@@ -59,7 +67,22 @@ export function StudentLearningPanel({
     () => groupCataloguedDatasets(data.datasets),
     [data.datasets],
   );
+  const hasReadyAssignmentDataset = useMemo(
+    () =>
+      data.assignmentDatasets.some(
+        (dataset) =>
+          dataset.status === "ready" &&
+          dataset.isActive &&
+          dataset.isAssignable,
+      ),
+    [data.assignmentDatasets],
+  );
   if (!student) return null;
+  const assignmentBlockedReason = controller.interactionBusy
+    ? adminLearningText.assignmentModal.submit.blockedReason.processing
+    : hasReadyAssignmentDataset
+      ? null
+      : adminLearningText.assignmentModal.submit.blockedReason.noReadyDataset;
 
   const sources = data.learningSources.filter(
     (source) => source.studentId === student.id,
@@ -78,10 +101,7 @@ export function StudentLearningPanel({
         {route.view === "vocab" ? (
           <>
             <AssignmentAction
-              disabled={
-                controller.interactionBusy ||
-                data.assignmentDatasets.length === 0
-              }
+              blockedReason={assignmentBlockedReason}
               onAssign={() =>
                 controller.actions.openAssignment(
                   route.datasetId || student.currentVocabDatasetId || "",
@@ -129,9 +149,7 @@ export function StudentLearningPanel({
         sources={sources}
       />
       <AssignmentAction
-        disabled={
-          controller.interactionBusy || data.assignmentDatasets.length === 0
-        }
+        blockedReason={assignmentBlockedReason}
         onAssign={() =>
           controller.actions.openAssignment(student.currentVocabDatasetId ?? "")
         }

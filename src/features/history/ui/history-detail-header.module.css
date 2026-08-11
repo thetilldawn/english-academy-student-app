@@ -9,3 +9,10 @@
   padding-block: 10px;
   background: var(--paper);
 }
+
+.pageActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}

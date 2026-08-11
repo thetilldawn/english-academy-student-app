@@ -6,32 +6,3 @@
   justify-content: flex-end;
   gap: var(--space-2);
 }
-
-.editor {
-  min-width: 0;
-  display: grid;
-  gap: var(--space-3);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--line);
-}
-
-.editorHeading {
-  position: sticky;
-  z-index: 2;
-  top: 0;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding-block: var(--space-2);
-  background: var(--paper);
-}
-
-.editorHeading h2 {
-  min-width: 0;
-  margin: 0;
-  color: var(--text-primary);
-  font-family: var(--font-krs);
-  font-size: 21px;
-}

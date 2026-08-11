@@ -1,11 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 
-import {
-  AdminHistoryDetailContent,
-} from "@/features/history/ui/admin-history-detail";
-import { HistoryDetailActions } from "@/features/history/ui/history-detail-actions";
-import { HistoryDetailHeader } from "@/features/history/ui/history-detail-header";
-import { RouteDetailDialog } from "@/features/history/ui/route-detail-dialog";
+import { EditableHistoryDetailDialog } from "@/features/history/ui/editable-history-detail-dialog";
 import { historyDetailHref } from "@/lib/admin/history-route";
 import { isStudentAssignmentEditable } from "@/lib/admin/assignment-edit";
 import { getAdminHistoryDetail } from "@/lib/services/admin-service";
@@ -26,25 +21,5 @@ export default async function InterceptedAdminResultDetailPage({
     ? await loadAssignmentManagerData()
     : null;
 
-  return (
-    <RouteDetailDialog
-      heading={
-        <HistoryDetailHeader
-          detail={detail}
-          titleId="route-history-detail-title"
-        />
-      }
-    >
-      <AdminHistoryDetailContent
-        actions={
-          <HistoryDetailActions
-            editorData={editorData}
-            item={detail.summary}
-            mode="overlay"
-          />
-        }
-        detail={detail}
-      />
-    </RouteDetailDialog>
-  );
+  return <EditableHistoryDetailDialog detail={detail} editorData={editorData} />;
 }

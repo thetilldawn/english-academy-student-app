@@ -10,7 +10,6 @@ import {
 } from "@/components/assignment-editor-ui";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { formatContentText } from "@/content/format";
-import { Button } from "@/design-system/primitives/button/button";
 import {
   DialogBody,
   DialogFooter,
@@ -31,44 +30,64 @@ import {
   type SingleAssignmentResult,
 } from "../controller/use-assignment-controller";
 import type { SingleAssignmentDraft } from "../domain/model";
+import {
+  assignmentSubmitBlockerLabel,
+  assignmentSubmitButtonLabel,
+} from "../presentation/assignment-submit-blocker";
 import { AssignmentRangeFields, assignmentUnitRangeLabel } from "./assignment-range-fields";
 import { AssignmentReviewFields } from "./assignment-review-fields";
 import { AssignmentSection } from "./assignment-section";
 import { AssignmentSettingsFields } from "./assignment-settings-fields";
+import { AssignmentSubmitAction } from "./assignment-submit-action";
 import { AssignmentSummaryPanel } from "./assignment-summary-panel";
 import styles from "./single-assignment-editor.module.css";
+
+export type SingleAssignmentSubmitPresentation = {
+  blockedReason: string | null;
+  canSubmit: boolean;
+  formId: string;
+  label: string;
+};
 
 export function SingleAssignmentEditor({
   availableReviewLevel1,
   availableReviewLevel2,
   datasets,
   editTarget,
-  embedded,
+  formId: suppliedFormId,
   initialDatasetId,
   initialUnitId,
   onBusyChange,
   onConflict,
+  onSubmitPresentationChange,
   onSucceeded,
+  placement,
   progress,
   student,
+  submitPlacement = "footer",
   units,
 }: {
   availableReviewLevel1: number;
   availableReviewLevel2: number;
   datasets: readonly AssignmentDatasetItem[];
   editTarget: { assignmentId: string; studentId: string } | null;
-  embedded: boolean;
+  formId?: string;
   initialDatasetId: string;
   initialUnitId: string;
   onBusyChange?: (busy: boolean) => void;
   onConflict?: () => void;
+  onSubmitPresentationChange?: (
+    presentation: SingleAssignmentSubmitPresentation,
+  ) => void;
   onSucceeded: (result: SingleAssignmentResult) => void;
+  placement: "dialog" | "inline";
   progress: AssignmentProgressItem | null;
   student: AssignmentStudentItem;
+  submitPlacement?: "footer" | "external";
   units: readonly AssignmentUnitItem[];
 }) {
   const reactId = useId().replaceAll(":", "");
-  const formId = `single-assignment-${reactId}`;
+  const formId = suppliedFormId ?? `single-assignment-${reactId}`;
   const fallbackDraft = useMemo(
     () =>
       createInitialSingleAssignmentDraft({
@@ -124,11 +143,33 @@ export function SingleAssignmentEditor({
     source,
   });
   const busy = controller.state.submission.status === "submitting";
+  const submitLabel = assignmentSubmitButtonLabel({
+    busy,
+    dirty: controller.dirty,
+    editing: editTarget !== null,
+    reviewMode: controller.state.draft.review.mode,
+  });
+  const blockedReason = assignmentSubmitBlockerLabel(controller.submitBlocker);
 
   useEffect(() => {
     onBusyChange?.(busy);
     return () => onBusyChange?.(false);
   }, [busy, onBusyChange]);
+
+  useEffect(() => {
+    onSubmitPresentationChange?.({
+      blockedReason,
+      canSubmit: controller.canSubmit,
+      formId,
+      label: submitLabel,
+    });
+  }, [
+    blockedReason,
+    controller.canSubmit,
+    formId,
+    onSubmitPresentationChange,
+    submitLabel,
+  ]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -154,7 +195,7 @@ export function SingleAssignmentEditor({
   return (
     <>
       <DialogBody
-        className={embedded ? styles.embeddedBody : undefined}
+        className={placement === "inline" ? styles.inlineBody : undefined}
       >
         {controller.loadStatus === "loading" ? (
           <Notice role="status">
@@ -222,27 +263,18 @@ export function SingleAssignmentEditor({
           </fieldset>
         </form>
       </DialogBody>
-      <DialogFooter className={embedded ? styles.embeddedFooter : undefined}>
-        <Button
-          disabled={!controller.canSubmit}
-          form={formId}
-          size="large"
-          type="submit"
-          variant="primary"
+      {submitPlacement === "footer" ? (
+        <DialogFooter
+          className={placement === "inline" ? styles.inlineFooter : undefined}
         >
-          {busy
-            ? editTarget
-              ? adminLearningText.assignmentModal.submit.saving
-              : adminLearningText.assignmentModal.submit.assigning
-            : editTarget
-              ? controller.dirty
-                ? adminLearningText.assignmentModal.submit.saveChanges
-                : adminLearningText.assignmentModal.submit.noChanges
-              : controller.state.draft.review.mode === "pending"
-                ? adminLearningText.assignmentModal.submit.assignWithWrong
-                : adminLearningText.assignmentModal.submit.assign}
-        </Button>
-      </DialogFooter>
+          <AssignmentSubmitAction
+            blockedReason={blockedReason}
+            canSubmit={controller.canSubmit}
+            formId={formId}
+            label={submitLabel}
+          />
+        </DialogFooter>
+      ) : null}
     </>
   );
 }

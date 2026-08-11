@@ -161,11 +161,13 @@ export const DialogFrame = forwardRef<HTMLDialogElement, DialogFrameProps>(
 );
 
 export function DialogHeader({
+  actions,
   backLabel,
   children,
   closeLabel,
   onBack,
 }: {
+  actions?: ReactNode;
   backLabel?: string;
   children: ReactNode;
   closeLabel: string;
@@ -188,15 +190,18 @@ export function DialogHeader({
         ) : null}
         <div className={styles.title}>{children}</div>
       </div>
-      <Button
-        aria-label={closeLabel}
-        disabled={closeDisabled}
-        onClick={() => requestClose("close-button")}
-        size="small"
-        variant="quiet"
-      >
-        {closeLabel}
-      </Button>
+      <div className={styles.headerActions}>
+        {actions}
+        <Button
+          aria-label={closeLabel}
+          disabled={closeDisabled}
+          onClick={() => requestClose("close-button")}
+          size="small"
+          variant="quiet"
+        >
+          {closeLabel}
+        </Button>
+      </div>
     </header>
   );
 }

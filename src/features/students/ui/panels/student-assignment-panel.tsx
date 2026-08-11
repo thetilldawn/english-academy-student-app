@@ -67,7 +67,6 @@ export function StudentAssignmentPanel({
       }
       datasets={data.assignmentDatasets}
       editTarget={null}
-      embedded
       initialDatasetId={initialDatasetId}
       initialUnitId={initialUnitId}
       key={`${student.id}:${initialDatasetId}:create`}
@@ -77,6 +76,7 @@ export function StudentAssignmentPanel({
         controller.actions.refreshData();
         controller.actions.backOneLevel();
       }}
+      placement="dialog"
       progress={progress}
       student={student}
       units={data.assignmentUnits}

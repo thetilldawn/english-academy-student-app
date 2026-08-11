@@ -79,7 +79,7 @@ export function AssignmentStudentDialog({
           availableReviewLevel2={controller.availableReviewLevel2}
           datasets={controller.data.datasets}
           editTarget={null}
-          embedded={false}
+          placement="dialog"
           initialDatasetId={controller.selectedInitialDatasetId}
           initialUnitId={controller.selectedInitialUnitId}
           key={`${student.id}:${controller.selectedInitialDatasetId}:create`}

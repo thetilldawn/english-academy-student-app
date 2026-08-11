@@ -552,6 +552,11 @@ describe("single assignment controller", () => {
       }),
     );
     await waitFor(() => expect(result.current.state.preview.status).toBe("ready"));
+    expect(result.current.canSubmit).toBe(false);
+    await act(async () => {
+      expect(await result.current.actions.submit()).toMatchObject({ ok: false });
+    });
+    expect(requests.filter((request) => request.method === "PUT")).toHaveLength(0);
 
     act(() => result.current.actions.changePassingScore(85));
     await waitFor(() => expect(result.current.canSubmit).toBe(true));

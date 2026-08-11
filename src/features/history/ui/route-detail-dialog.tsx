@@ -7,35 +7,52 @@ import {
   DialogBody,
   DialogFrame,
   DialogHeader,
+  type DialogLayout,
 } from "@/design-system/primitives/dialog/dialog";
 import { adminHistoryText } from "@/content/ko/admin-history";
 
 export function RouteDetailDialog({
   children,
+  closeDisabled = false,
+  contentMode = "body",
   heading,
+  headerActions,
+  layout = "body",
+  onRequestClose,
 }: {
   children: ReactNode;
+  closeDisabled?: boolean;
+  contentMode?: "body" | "structured";
   heading: ReactNode;
+  headerActions?: ReactNode;
+  layout?: DialogLayout;
+  onRequestClose?: () => void;
 }) {
   const router = useRouter();
   const closingRef = useRef(false);
 
-  const close = useCallback(() => {
+  const closeRoute = useCallback(() => {
     if (closingRef.current) return;
     closingRef.current = true;
     router.back();
   }, [router]);
+  const close = onRequestClose ?? closeRoute;
 
   return (
     <DialogFrame
       aria-labelledby="route-history-detail-title"
+      closeDisabled={closeDisabled}
+      layout={layout}
       onRequestClose={close}
       size="wide"
     >
-      <DialogHeader closeLabel={adminHistoryText.detailModal.close}>
+      <DialogHeader
+        actions={headerActions}
+        closeLabel={adminHistoryText.detailModal.close}
+      >
         {heading}
       </DialogHeader>
-      <DialogBody>{children}</DialogBody>
+      {contentMode === "structured" ? children : <DialogBody>{children}</DialogBody>}
     </DialogFrame>
   );
 }

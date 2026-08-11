@@ -1,12 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
-import {
-  AdminHistoryDetailContent,
-} from "@/features/history/ui/admin-history-detail";
-import { HistoryDetailActions } from "@/features/history/ui/history-detail-actions";
-import { ButtonLink } from "@/design-system/primitives/button/button";
-import { HistoryDetailPageHeader } from "@/features/history/ui/history-detail-header";
+import { EditableHistoryDetailPage } from "@/features/history/ui/editable-history-detail-page";
 import { adminHistoryText } from "@/content/ko/admin-history";
 import { historyDetailHref } from "@/lib/admin/history-route";
 import { isStudentAssignmentEditable } from "@/lib/admin/assignment-edit";
@@ -32,27 +27,5 @@ export default async function AdminResultDetailPage({
     ? await loadAssignmentManagerData()
     : null;
 
-  return (
-    <div>
-      <HistoryDetailPageHeader
-        actions={
-          <ButtonLink href="/admin/results" variant="quiet">
-            {adminHistoryText.resultDetail.backToResults}
-          </ButtonLink>
-        }
-        detail={detail}
-        titleId="history-detail-page-title"
-      />
-      <AdminHistoryDetailContent
-        actions={
-          <HistoryDetailActions
-            editorData={editorData}
-            item={detail.summary}
-            mode="page"
-          />
-        }
-        detail={detail}
-      />
-    </div>
-  );
+  return <EditableHistoryDetailPage detail={detail} editorData={editorData} />;
 }

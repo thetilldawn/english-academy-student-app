@@ -1,6 +1,7 @@
 import { formatContentText } from "@/content/format";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { ActivityRow, SelectableRow } from "@/design-system/patterns/activity-row/activity-row";
+import { ActionWithReason } from "@/design-system/patterns/action-reason/action-reason";
 import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 import { Button, ButtonLink } from "@/design-system/primitives/button/button";
 import { ActivityStatusTimeline } from "@/features/history/ui/activity-status-timeline";
@@ -73,14 +74,25 @@ export function AssignmentStudentRow({
               {adminLearningText.page.studentCard.view}
             </ButtonLink>
           ) : null}
-          <Button
-            disabled={controller.readyDatasets.length === 0}
-            onClick={() => controller.actions.selectStudent(student.id, "assign")}
-            size="small"
-            variant={nextActivity ? "secondary" : "primary"}
+          <ActionWithReason
+            reason={
+              controller.readyDatasets.length === 0
+                ? adminLearningText.assignmentModal.submit.blockedReason
+                    .noReadyDataset
+                : null
+            }
           >
-            {adminLearningText.page.studentCard.newAssignment}
-          </Button>
+            <Button
+              disabled={controller.readyDatasets.length === 0}
+              onClick={() =>
+                controller.actions.selectStudent(student.id, "assign")
+              }
+              size="small"
+              variant={nextActivity ? "secondary" : "primary"}
+            >
+              {adminLearningText.page.studentCard.newAssignment}
+            </Button>
+          </ActionWithReason>
         </>
       }
       checked={controller.selectedBulkStudentIds.includes(student.id)}

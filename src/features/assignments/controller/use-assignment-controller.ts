@@ -30,6 +30,7 @@ import {
   type AssignmentEditorAction,
   type AssignmentEditorState,
 } from "../domain/editor-state";
+import { deriveSingleAssignmentSubmitBlocker } from "../domain/submit-blocker";
 import {
   assignmentRequestFingerprint,
   reserveIdempotencyKey,
@@ -127,26 +128,6 @@ function safeCapacityFingerprint(draft: SingleAssignmentDraft) {
   } catch {
     return null;
   }
-}
-
-function capacityBlocksSubmission({
-  capacity,
-  draft,
-  minimumQuestionCount,
-  questionCount,
-}: {
-  capacity: AssignmentCapacityResponse | null;
-  draft: SingleAssignmentDraft;
-  minimumQuestionCount: number;
-  questionCount: number;
-}) {
-  return (
-    capacity === null ||
-    capacity.maximumQuestionCount < minimumQuestionCount ||
-    questionCount < capacity.minimumQuestionCount ||
-    questionCount > capacity.maximumQuestionCount ||
-    (draft.review.mode === "pending" && capacity.wrongEligible < 1)
-  );
 }
 
 export function useAssignmentController({
@@ -344,22 +325,22 @@ export function useAssignmentController({
   const capacityReadyForCurrentDraft =
     state.preview.status === "ready" &&
     state.preview.revision === state.revision;
-  const capacityInvalid = capacityBlocksSubmission({
+  const submitBlocker = deriveSingleAssignmentSubmitBlocker({
     capacity,
-    draft: state.draft,
+    capacityReadyForCurrentDraft,
+    dirty,
+    issues,
+    loadStatus,
     minimumQuestionCount,
     questionCount: resolved.questionCount,
+    previewStatus: state.preview.status,
+    reviewMode: state.draft.review.mode,
+    submissionStatus: state.submission.status,
   });
-  const canSubmit =
-    loadStatus === "ready" &&
-    issues.length === 0 &&
-    dirty &&
-    capacityReadyForCurrentDraft &&
-    !capacityInvalid &&
-    state.submission.status === "idle";
+  const canSubmit = submitBlocker === null;
 
   const submit = useCallback(async (): Promise<AssignmentSubmitOutcome> => {
-    const current = stateRef.current;
+    let current = stateRef.current;
     if (
       current.submission.status === "submitting" ||
       current.submission.status === "succeeded"
@@ -368,6 +349,7 @@ export function useAssignmentController({
     }
     if (current.submission.status !== "idle") {
       apply({ type: "submission/reset" });
+      current = stateRef.current;
     }
     const currentCapacity =
       current.preview.status === "ready" ? current.preview.value : null;
@@ -377,16 +359,30 @@ export function useAssignmentController({
     const currentMinimumQuestionCount = isExactReviewEdit(current.draft)
       ? 1
       : 4;
-    if (
-      current.preview.status !== "ready" ||
-      current.preview.revision !== current.revision ||
-      capacityBlocksSubmission({
-        capacity: currentCapacity,
-        draft: current.draft,
-        minimumQuestionCount: currentMinimumQuestionCount,
-        questionCount: currentResolved.questionCount,
-      })
-    ) {
+    const currentIssues = validateSingleAssignmentSubmission(
+      current.draft,
+      currentResolved,
+      clock(),
+    );
+    const currentDirty = baselineDraft
+      ? assignmentRequestFingerprint(current.draft) !==
+        assignmentRequestFingerprint(baselineDraft)
+      : true;
+    const currentBlocker = deriveSingleAssignmentSubmitBlocker({
+      capacity: currentCapacity,
+      capacityReadyForCurrentDraft:
+        current.preview.status === "ready" &&
+        current.preview.revision === current.revision,
+      dirty: currentDirty,
+      issues: currentIssues,
+      loadStatus,
+      minimumQuestionCount: currentMinimumQuestionCount,
+      previewStatus: current.preview.status,
+      questionCount: currentResolved.questionCount,
+      reviewMode: current.draft.review.mode,
+      submissionStatus: current.submission.status,
+    });
+    if (currentBlocker) {
       setMessage(capacityErrorMessage);
       return {
         conflict: false,
@@ -497,9 +493,11 @@ export function useAssignmentController({
   }, [
     apply,
     automaticTitleForDraft,
+    baselineDraft,
     capacityErrorMessage,
     clock,
     genericErrorMessage,
+    loadStatus,
     onConflict,
     transport,
   ]);
@@ -636,6 +634,7 @@ export function useAssignmentController({
     minimumQuestionCount,
     resolved,
     state,
+    submitBlocker,
   };
 }
 

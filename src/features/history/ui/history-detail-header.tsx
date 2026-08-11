@@ -57,9 +57,23 @@ export function HistoryDetailPageHeader({
   titleId: string;
 }) {
   return (
-    <header className={styles.pageHeader}>
+    <HistoryDetailPageHeaderFrame actions={actions}>
       <HistoryDetailHeader detail={detail} titleId={titleId} />
-      {actions}
+    </HistoryDetailPageHeaderFrame>
+  );
+}
+
+export function HistoryDetailPageHeaderFrame({
+  actions,
+  children,
+}: {
+  actions: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <header className={styles.pageHeader}>
+      {children}
+      <div className={styles.pageActions}>{actions}</div>
     </header>
   );
 }

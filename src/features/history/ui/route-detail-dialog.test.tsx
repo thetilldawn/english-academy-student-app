@@ -6,6 +6,8 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { adminHistoryText } from "@/content/ko/admin-history";
+
 import { RouteDetailDialog } from "./route-detail-dialog";
 
 const { back } = vi.hoisted(() => ({ back: vi.fn() }));
@@ -56,5 +58,29 @@ describe("RouteDetailDialog", () => {
     fireEvent.click(dialog);
 
     expect(back).toHaveBeenCalledOnce();
+  });
+
+  it("can keep the route open and delegate close to an editor state", async () => {
+    const user = userEvent.setup();
+    const closeEditor = vi.fn();
+    render(
+      <RouteDetailDialog
+        heading={<h2 id="route-history-detail-title">상세</h2>}
+        headerActions={<button type="button">변경 저장</button>}
+        onRequestClose={closeEditor}
+      >
+        편집 양식
+      </RouteDetailDialog>,
+    );
+
+    expect(screen.getByRole("button", { name: "변경 저장" })).toBeVisible();
+    await user.click(
+      screen.getByRole("button", {
+        name: adminHistoryText.detailModal.close,
+      }),
+    );
+
+    expect(closeEditor).toHaveBeenCalledOnce();
+    expect(back).not.toHaveBeenCalled();
   });
 });

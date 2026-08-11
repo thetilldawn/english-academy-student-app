@@ -2,8 +2,9 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { adminHistoryText } from "@/content/ko/admin-history";
@@ -14,10 +15,6 @@ import { HistoryDetailActions } from "./history-detail-actions";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ back: vi.fn(), refresh: vi.fn(), replace: vi.fn() }),
-}));
-
-vi.mock("@/features/assignments/ui/single-assignment-editor", () => ({
-  SingleAssignmentEditor: () => <div>편집 양식</div>,
 }));
 
 vi.mock("./admin-history-actions", () => ({
@@ -57,7 +54,7 @@ const editorData = {
   students: [
     {
       currentVocabDatasetId: "dataset-1",
-      displayName: "프리뷰 학생",
+      displayName: "미리보기 학생",
       id: "student-1",
     },
   ],
@@ -65,35 +62,26 @@ const editorData = {
 } as unknown as AssignmentManagerData;
 
 describe("history detail actions", () => {
-  it("moves focus into the editor and restores it when the editor closes", async () => {
+  it("delegates editing to the owning detail surface", async () => {
     const user = userEvent.setup();
+    const editButtonRef = createRef<HTMLButtonElement>();
+    const onEditRequested = vi.fn();
     render(
       <HistoryDetailActions
         editorData={editorData}
+        editButtonRef={editButtonRef}
         item={item}
         mode="overlay"
+        onEditRequested={onEditRequested}
       />,
     );
 
     const editButton = screen.getByRole("button", {
       name: adminHistoryText.actions.edit,
     });
+    expect(editButtonRef.current).toBe(editButton);
+
     await user.click(editButton);
-
-    const editorHeading = screen.getByRole("heading", {
-      name: adminHistoryText.actions.edit,
-    });
-    await waitFor(() => expect(editorHeading).toHaveFocus());
-
-    await user.click(
-      screen.getByRole("button", {
-        name: adminHistoryText.detailModal.close,
-      }),
-    );
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: adminHistoryText.actions.edit }),
-      ).toHaveFocus(),
-    );
+    expect(onEditRequested).toHaveBeenCalledOnce();
   });
 });

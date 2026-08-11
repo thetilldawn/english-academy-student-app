@@ -16,6 +16,15 @@ describe("student management feature boundary", () => {
   const assignment = source(
     "src/features/students/ui/panels/student-assignment-panel.tsx",
   );
+  const assignmentEditor = source(
+    "src/features/assignments/ui/single-assignment-editor.tsx",
+  );
+  const assignmentEditorCss = source(
+    "src/features/assignments/ui/single-assignment-editor.module.css",
+  );
+  const dialogCss = source(
+    "src/design-system/primitives/dialog/dialog.module.css",
+  );
   const wrongCss = source(
     "src/features/students/ui/panels/student-wrong-word-panel.module.css",
   );
@@ -27,6 +36,19 @@ describe("student management feature boundary", () => {
     expect(assignment).toContain("<SingleAssignmentEditor");
     expect(`${detail}\n${assignment}`).not.toMatch(
       /AssignmentManager|launcherOnly/,
+    );
+  });
+
+  it("keeps the mobile assignment form inside the shared scroll region", () => {
+    expect(assignment).toContain('placement="dialog"');
+    expect(assignmentEditor).toContain(
+      'className={placement === "inline" ? styles.inlineBody : undefined}',
+    );
+    expect(assignmentEditorCss).not.toMatch(
+      /\.dialogBody\s*\{[^}]*overflow:\s*visible/,
+    );
+    expect(dialogCss).toMatch(
+      /\.body\s*\{[^}]*min-height:\s*0;[^}]*overflow-y:\s*auto;/,
     );
   });
 

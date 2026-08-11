@@ -1,0 +1,226 @@
+// @vitest-environment jsdom
+
+import "@testing-library/jest-dom/vitest";
+
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { useEffect } from "react";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { adminHistoryText } from "@/content/ko/admin-history";
+import { adminLearningText } from "@/content/ko/admin-learning";
+import type { AdminHistoryDetail } from "@/lib/services/admin-service";
+import type { AssignmentManagerData } from "@/lib/services/assignment-manager-data";
+
+import { EditableHistoryDetailDialog } from "./editable-history-detail-dialog";
+
+const router = vi.hoisted(() => ({
+  back: vi.fn(),
+  refresh: vi.fn(),
+  replace: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
+
+vi.mock("./history-assignment-editor-model", () => ({
+  buildHistoryAssignmentEditorModel: () => ({ editor: true }),
+}));
+
+vi.mock("./history-detail-header", () => ({
+  HistoryDetailHeader: ({ titleId }: { titleId: string }) => (
+    <h2 id={titleId}>시험 상세</h2>
+  ),
+}));
+
+vi.mock("./admin-history-detail", () => ({
+  AdminHistoryDetailContent: ({ actions }: { actions: React.ReactNode }) => (
+    <>
+      <div>상세 본문</div>
+      {actions}
+    </>
+  ),
+}));
+
+vi.mock("./history-detail-actions", () => ({
+  HistoryDetailActions: ({
+    editButtonRef,
+    onEditRequested,
+  }: {
+    editButtonRef?: React.Ref<HTMLButtonElement>;
+    onEditRequested: () => void;
+  }) => (
+    <button onClick={onEditRequested} ref={editButtonRef}>
+      배정 수정 열기
+    </button>
+  ),
+}));
+
+vi.mock("@/features/assignments/ui/single-assignment-editor", () => ({
+  SingleAssignmentEditor: ({
+    formId,
+    onBusyChange,
+    onSubmitPresentationChange,
+    onSucceeded,
+  }: {
+    formId: string;
+    onBusyChange: (busy: boolean) => void;
+    onSubmitPresentationChange: (presentation: {
+      blockedReason: string;
+      canSubmit: boolean;
+      formId: string;
+      label: string;
+    }) => void;
+    onSucceeded: (result: {
+      idempotent: boolean;
+      replacementAssignmentId: string;
+      replacementPurpose: "regular";
+      sourceAssignmentId: string;
+      status: "replaced";
+      studentId: string;
+    }) => void;
+  }) => {
+    useEffect(() => {
+      onSubmitPresentationChange({
+        blockedReason: "범위 선택",
+        canSubmit: false,
+        formId,
+        label: "변경 저장",
+      });
+    }, [formId, onSubmitPresentationChange]);
+    return (
+      <form id={formId}>
+        편집 양식
+        <button onClick={() => onBusyChange(true)} type="button">
+          저장 시작
+        </button>
+        <button
+          onClick={() => {
+            onBusyChange(false);
+            onSucceeded({
+              idempotent: false,
+              replacementAssignmentId:
+                "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+              replacementPurpose: "regular",
+              sourceAssignmentId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+              status: "replaced",
+              studentId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+            });
+          }}
+          type="button"
+        >
+          저장 완료
+        </button>
+      </form>
+    );
+  },
+}));
+
+const originalShowModal = HTMLDialogElement.prototype.showModal;
+const originalClose = HTMLDialogElement.prototype.close;
+
+beforeEach(() => {
+  Object.values(router).forEach((mock) => mock.mockReset());
+  HTMLDialogElement.prototype.showModal = function showModal() {
+    this.setAttribute("open", "");
+  };
+  HTMLDialogElement.prototype.close = function close() {
+    this.removeAttribute("open");
+  };
+  vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+    callback(0);
+    return 1;
+  });
+  vi.stubGlobal("cancelAnimationFrame", vi.fn());
+});
+
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+afterAll(() => {
+  HTMLDialogElement.prototype.showModal = originalShowModal;
+  HTMLDialogElement.prototype.close = originalClose;
+});
+
+const detail = {
+  summary: {
+    assignmentId: "assignment-1",
+    studentId: "student-1",
+    studentName: "미리보기 학생",
+  },
+} as unknown as AdminHistoryDetail;
+
+function renderDialog() {
+  return render(
+    <EditableHistoryDetailDialog
+      detail={detail}
+      editorData={{} as AssignmentManagerData}
+    />,
+  );
+}
+
+describe("editable history detail dialog", () => {
+  it("replaces the detail body, reuses the header, and restores focus", async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    const editButton = screen.getByRole("button", { name: "배정 수정 열기" });
+    await user.click(editButton);
+
+    expect(screen.queryByText("상세 본문")).not.toBeInTheDocument();
+    expect(screen.getByText("편집 양식")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: adminLearningText.assignmentModal.header.editTitle,
+      }),
+    ).toHaveFocus();
+    expect(
+      screen.getByRole("button", {
+        name: adminLearningText.assignmentModal.submit.headerSaveChanges,
+      }),
+    ).toBeDisabled();
+    expect(screen.getByText("범위 선택")).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", {
+        name: adminHistoryText.detailModal.close,
+      }),
+    ).toHaveLength(1);
+
+    await user.click(
+      screen.getByRole("button", {
+        name: adminHistoryText.detailModal.close,
+      }),
+    );
+
+    expect(screen.getByText("상세 본문")).toBeInTheDocument();
+    expect(screen.queryByText("편집 양식")).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "배정 수정 열기" })).toHaveFocus(),
+    );
+    expect(router.back).not.toHaveBeenCalled();
+  });
+
+  it("blocks every close path while saving and restores the detail after success", async () => {
+    const user = userEvent.setup();
+    renderDialog();
+    await user.click(screen.getByRole("button", { name: "배정 수정 열기" }));
+    await user.click(screen.getByRole("button", { name: "저장 시작" }));
+
+    const dialog = screen.getByRole("dialog");
+    const closeButton = screen.getByRole("button", {
+      name: adminHistoryText.detailModal.close,
+    });
+    expect(closeButton).toBeDisabled();
+    fireEvent(dialog, new Event("cancel", { cancelable: true }));
+    fireEvent.click(dialog);
+    expect(screen.getByText("편집 양식")).toBeInTheDocument();
+    expect(router.back).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "저장 완료" }));
+
+    expect(screen.getByText("상세 본문")).toBeInTheDocument();
+    expect(router.replace).toHaveBeenCalledOnce();
+    expect(router.refresh).toHaveBeenCalledOnce();
+  });
+});

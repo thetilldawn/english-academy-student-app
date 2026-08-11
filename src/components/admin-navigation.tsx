@@ -1,25 +1,14 @@
 "use client";
 
-import Link, { useLinkStatus } from "next/link";
+import Link from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
 
-import { ButtonSpinner } from "@/design-system/primitives/button/button";
 import {
   ADMIN_ROUTES,
   type AdminNavigationVariant,
 } from "@/lib/ui/admin-routes";
 
 import styles from "./shell/admin-navigation.module.css";
-
-function NavigationPendingIndicator() {
-  const { pending } = useLinkStatus();
-
-  return (
-    <span aria-hidden="true" className={styles.pending}>
-      {pending ? <ButtonSpinner /> : null}
-    </span>
-  );
-}
 
 export function AdminNavigation({
   label,
@@ -46,7 +35,6 @@ export function AdminNavigation({
             key={item.href}
           >
             <span>{item.navLabel}</span>
-            <NavigationPendingIndicator />
           </Link>
         );
       })}
