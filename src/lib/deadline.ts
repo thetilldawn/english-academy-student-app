@@ -74,6 +74,17 @@ export function secondsUntil(
   );
 }
 
+export function millisecondsUntil(
+  deadlineAt: string | null,
+  nowMilliseconds: number,
+): number | null {
+  if (!deadlineAt) return null;
+  const deadlineMilliseconds = Date.parse(deadlineAt);
+  if (Number.isNaN(deadlineMilliseconds)) return null;
+
+  return Math.max(0, deadlineMilliseconds - nowMilliseconds);
+}
+
 export function formatRemainingSeconds(totalSeconds: number): string {
   const safeSeconds = Math.max(0, Math.floor(totalSeconds));
   const days = Math.floor(safeSeconds / 86400);

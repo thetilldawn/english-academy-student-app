@@ -64,19 +64,26 @@ describe("DAY 문제은행 응시 계약", () => {
   });
 
   it("정상 답안 뒤에는 재조회하지 않고 오류 때만 한 번 복구한다", () => {
-    const player = source("src/components/quiz-player.tsx");
+    const controller = source(
+      "src/features/quiz-player/controller/use-quiz-player-controller.ts",
+    );
+    const transport = source(
+      "src/features/quiz-player/api/quiz-attempt.ts",
+    );
+    const domain = source(
+      "src/features/quiz-player/domain/quiz-session.ts",
+    );
 
-    expect(player).toContain("payload.nextQuestionId");
-    expect(player).toContain("payload.nextPhase");
-    expect(player).not.toContain("refreshAttempt");
-    expect(player).not.toContain("}, 800)");
-    expect(player).toContain("const recoverAttempt");
-    expect(player).toContain("if (await tryRecover()) return");
-    expect(player).toContain("ANSWER_FEEDBACK_DELAY_MS = 500");
-    expect(player).not.toContain("router.refresh()");
+    expect(domain).toContain("payload.nextQuestionId");
+    expect(controller).not.toContain("refreshAttempt");
+    expect(controller).not.toContain("}, 800)");
+    expect(controller).toContain("const recoverFromServer");
+    expect(controller).toContain("if (await tryRecover()) return");
+    expect(domain).toContain("ANSWER_FEEDBACK_DELAY_MS = 500");
+    expect(controller).not.toContain("router.refresh()");
     expect(
-      player.match(
-        /fetch\(\s*`\/api\/student\/attempts\/\$\{attempt\.id\}`/g,
+      transport.match(
+        /fetch\(`\/api\/student\/attempts\/\$\{attemptId\}`/g,
       ),
     ).toHaveLength(1);
   });

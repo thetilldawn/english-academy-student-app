@@ -63,23 +63,38 @@ describe("assignment order and timing database contract", () => {
   });
 
   it("client uses the server deadline and sends timeout separately", () => {
-    const player = source("src/components/quiz-player.tsx");
+    const controller = source(
+      "src/features/quiz-player/controller/use-quiz-player-controller.ts",
+    );
+    const transport = source(
+      "src/features/quiz-player/api/quiz-attempt.ts",
+    );
+    const domain = source(
+      "src/features/quiz-player/domain/quiz-session.ts",
+    );
+    const frame = source(
+      "src/features/quiz-player/ui/quiz-frame.tsx",
+    );
+    const retryTimerMigration = source(
+      "supabase/migrations/20260811090000_reset_retry_question_timer.sql",
+    );
     const quizService = source("src/lib/services/quiz-service.ts");
     const timeoutRoute = source(
       "src/app/api/student/attempts/[id]/timeouts/route.ts",
     );
     const copy = source("src/content/ko/student-app.ts");
 
-    expect(player).toContain("attempt.timerDeadlineAt");
-    expect(player).toContain("const nextTimerDeadlineAt =");
-    expect(player).toMatch(
-      /setRemaining\(\s*secondsUntil\(\s*nextTimerDeadlineAt,/,
+    expect(controller).toContain("const nextTimerDeadlineAt =");
+    expect(controller).toContain("payload.timerRemainingMilliseconds");
+    expect(controller).toContain("resetClock(nextRemainingMilliseconds)");
+    expect(transport).toContain('input.choiceIndex === null ? "timeouts" : "answers"');
+    expect(domain).toContain("studentAppText.attempt.timedOut");
+    expect(controller).toContain("const answerAnnouncement =");
+    expect(frame).toContain('className="sr-only"');
+    expect(frame).not.toContain('className="feedback feedback-wrong"');
+    expect(retryTimerMigration).toContain(
+      "current_question_started_at = retry_start_time",
     );
-    expect(player).toContain('choiceIndex === null ? "timeouts" : "answers"');
-    expect(player).toContain("studentAppText.attempt.timedOut");
-    expect(player).toContain("const answerAnnouncement =");
-    expect(player).toContain('className="sr-only"');
-    expect(player).not.toContain('className="feedback feedback-wrong"');
     expect(copy).toContain(
       'timedOut: "시간 초과로 미응답 오답 처리했습니다."',
     );

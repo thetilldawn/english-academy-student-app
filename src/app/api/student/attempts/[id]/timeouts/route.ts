@@ -1,6 +1,10 @@
 import { z } from "zod";
 
 import { getStudentSession } from "@/lib/auth/student-session";
+import {
+  currentTimeMilliseconds,
+  millisecondsUntil,
+} from "@/lib/deadline";
 import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
 import { timeoutStudentQuestion } from "@/lib/services/quiz-service";
 import { questionTimeoutSchema } from "@/lib/validation";
@@ -28,7 +32,15 @@ export async function POST(
       questionId: input.questionId,
       phase: input.phase,
     });
-    return Response.json(result, {
+    return Response.json({
+      ...result,
+      timerRemainingMilliseconds: result.questionDeadlineAt
+        ? millisecondsUntil(
+            result.questionDeadlineAt,
+            currentTimeMilliseconds(),
+          )
+        : null,
+    }, {
       headers: { "Cache-Control": "private, no-store" },
     });
   } catch {

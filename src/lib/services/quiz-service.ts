@@ -653,9 +653,8 @@ export async function getStudentAttempt(
     .eq("student_id", studentId)
     .maybeSingle();
 
-  if (attemptError || !attemptData) {
-    return null;
-  }
+  if (attemptError) throw attemptError;
+  if (!attemptData) return null;
 
   if (
     attemptData.status === "in_progress" &&
@@ -667,7 +666,7 @@ export async function getStudentAttempt(
     attemptData.phase = "completed";
   }
 
-  const [{ data: assignmentData }, { data: questionData }] =
+  const [assignmentResult, questionResult] =
     await Promise.all([
       supabase
         .from("assignments")
@@ -682,6 +681,15 @@ export async function getStudentAttempt(
         .eq("attempt_id", attemptId)
         .order("order_index"),
     ]);
+
+  if (assignmentResult.error) throw assignmentResult.error;
+  if (questionResult.error) throw questionResult.error;
+  if (!assignmentResult.data) {
+    throw new Error("quiz_assignment_missing");
+  }
+
+  const assignmentData = assignmentResult.data;
+  const questionData = questionResult.data;
 
   const rows = (questionData ?? []) as QuestionRow[];
   const initialCurrent = rows.find(
@@ -702,6 +710,13 @@ export async function getStudentAttempt(
       : phase === "retry"
         ? (retryCurrent?.id ?? null)
         : null;
+  if (
+    attemptData.status === "in_progress" &&
+    (phase === "initial" || phase === "retry") &&
+    (!questionData || questionData.length === 0 || !currentQuestionId)
+  ) {
+    throw new Error("quiz_attempt_question_state_invalid");
+  }
   const timingMode =
     (assignmentData?.timing_mode as TimingMode | undefined) ?? "total";
   const questionTimeLimitSeconds =

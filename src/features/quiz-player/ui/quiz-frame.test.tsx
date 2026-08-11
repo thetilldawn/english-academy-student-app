@@ -1,0 +1,175 @@
+// @vitest-environment jsdom
+
+import "@testing-library/jest-dom/vitest";
+
+import { createRef } from "react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import type { QuizQuestion } from "../model";
+import { QuizFrame } from "./quiz-frame";
+
+const availablePronunciation = {
+  audioUrl: "https://example.com/audio.mp3",
+  available: true,
+  displayKo: "발음",
+  variantId: "test:1",
+} as const;
+
+function question(
+  direction: QuizQuestion["direction"],
+): QuizQuestion {
+  return {
+    choicePronunciations: Array.from(
+      { length: 4 },
+      () => availablePronunciation,
+    ),
+    choices:
+      direction === "english_to_korean"
+        ? ["뜻 하나", "뜻 둘", "뜻 셋", "뜻 넷"]
+        : ["alpha", "beta", "gamma", "delta"],
+    direction,
+    id: "question-1",
+    initialChoiceIndex: null,
+    initialIsCorrect: null,
+    initialTimedOut: false,
+    orderIndex: 1,
+    priorWrongLevel: 0,
+    prompt: direction === "english_to_korean" ? "outstanding" : "뛰어난",
+    pronunciation: availablePronunciation,
+    retryChoiceIndex: null,
+    retryIsCorrect: null,
+    retryTimedOut: false,
+    revealedCorrectChoiceIndex: null,
+  };
+}
+
+function renderFrame(
+  currentQuestion: QuizQuestion,
+  overrides: Partial<Parameters<typeof QuizFrame>[0]> = {},
+) {
+  const onChoose = vi.fn();
+  const onPlayAudio = vi.fn();
+  render(
+    <QuizFrame
+      answerAnnouncement=""
+      assignmentTitle="Vocabulary quiz"
+      choiceAudioEnabled={
+        currentQuestion.direction === "korean_to_english"
+      }
+      choiceDensity="default"
+      choiceFeedback={() => null}
+      completedInPhase={0}
+      currentQuestion={currentQuestion}
+      error=""
+      formattedRemaining="0:10"
+      onChoose={onChoose}
+      onPlayAudio={onPlayAudio}
+      onRetrySynchronization={vi.fn()}
+      phase="initial"
+      phaseQuestionCount={4}
+      priorWrongIndicator={null}
+      progress={0}
+      promptAudioUrl={
+        currentQuestion.direction === "english_to_korean"
+          ? availablePronunciation.audioUrl
+          : null
+      }
+      promptDensity="default"
+      promptRef={createRef<HTMLHeadingElement>()}
+      remainingSeconds={10}
+      submitting={false}
+      timerSynchronized
+      timeWarning=""
+      timingMode="per_question"
+      {...overrides}
+    />,
+  );
+  return { onChoose, onPlayAudio };
+}
+
+afterEach(cleanup);
+
+describe("QuizFrame", () => {
+  it("shows one prompt speaker and no Korean-choice speaker", () => {
+    renderFrame(question("english_to_korean"));
+
+    expect(
+      screen.getAllByRole("button").filter((button) =>
+        button.getAttribute("aria-label")?.includes("outstanding"),
+      ),
+    ).toHaveLength(1);
+    for (const meaning of ["뜻 하나", "뜻 둘", "뜻 셋", "뜻 넷"]) {
+      expect(screen.getByRole("button", { name: new RegExp(meaning) })).toBeVisible();
+    }
+  });
+
+  it("shows a speaker beside every English choice and none beside the Korean prompt", () => {
+    renderFrame(question("korean_to_english"));
+
+    expect(
+      screen.getAllByRole("button").filter((button) =>
+        ["alpha", "beta", "gamma", "delta"].some((word) =>
+          button.getAttribute("aria-label")?.includes(word),
+        ),
+      ),
+    ).toHaveLength(4);
+    expect(
+      screen.getAllByRole("button").some((button) =>
+        button.getAttribute("aria-label")?.includes("뛰어난"),
+      ),
+    ).toBe(false);
+  });
+
+  it("renders no empty audio column when approved audio is unavailable", () => {
+    const currentQuestion = question("english_to_korean");
+    currentQuestion.pronunciation = {
+      audioUrl: null,
+      available: false,
+      displayKo: null,
+      variantId: null,
+    };
+    renderFrame(currentQuestion, { promptAudioUrl: null });
+
+    expect(
+      screen
+        .getAllByRole("button")
+        .filter((button) => button.querySelector("svg")),
+    ).toHaveLength(0);
+  });
+
+  it("applies the same longest-choice density to all four answers", () => {
+    const currentQuestion = question("korean_to_english");
+    currentQuestion.choices[1] = "x".repeat(60);
+    renderFrame(currentQuestion, { choiceDensity: "very-long" });
+
+    const answerButtons = screen
+      .getByRole("group")
+      .querySelectorAll("button:first-child");
+    expect(answerButtons).toHaveLength(4);
+    for (const button of answerButtons) {
+      expect(button.className).toContain("very-long");
+    }
+  });
+
+  it("handles only valid unmodified number shortcuts inside the frame", () => {
+    const { onChoose } = renderFrame(question("english_to_korean"));
+    const frame = screen.getByRole("group").closest("section");
+    expect(frame).not.toBeNull();
+
+    fireEvent.keyDown(frame!, { key: "3" });
+    fireEvent.keyDown(frame!, { ctrlKey: true, key: "2" });
+    fireEvent.keyDown(frame!, { key: "8" });
+
+    expect(onChoose).toHaveBeenCalledOnce();
+    expect(onChoose).toHaveBeenCalledWith(2);
+  });
+
+  it("always renders a nonempty timer string", () => {
+    renderFrame(question("english_to_korean"), {
+      formattedRemaining: "0:00",
+      remainingSeconds: 0,
+    });
+    expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:00");
+  });
+});

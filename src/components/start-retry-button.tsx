@@ -7,6 +7,7 @@ import {
   ButtonSpinner,
 } from "@/design-system/primitives/button/button";
 import { studentAppText } from "@/content/ko/student-app";
+import styles from "./start-retry-button.module.css";
 
 export function StartRetryButton({ attemptId }: { attemptId: string }) {
   const router = useRouter();
@@ -60,7 +61,7 @@ export function StartRetryButton({ attemptId }: { attemptId: string }) {
           : studentAppText.actions.retry}
       </Button>
       {error && (
-        <div className="inline-error quiz-error" role="alert">
+        <div className={styles.error} role="alert">
           {error}
         </div>
       )}

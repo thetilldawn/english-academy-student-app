@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   formatRemainingSeconds,
   koreanDateTimeLocalToIso,
+  millisecondsUntil,
   secondsUntil,
 } from "@/lib/deadline";
 
@@ -45,6 +46,24 @@ describe("secondsUntil", () => {
   it("마감 없음과 잘못된 ISO는 계산하지 않는다", () => {
     expect(secondsUntil(null, Date.now())).toBeNull();
     expect(secondsUntil("not-a-date", Date.now())).toBeNull();
+  });
+});
+
+describe("millisecondsUntil", () => {
+  const deadline = "2026-07-31T15:00:00.000Z";
+
+  it("preserves the exact server deadline precision", () => {
+    const deadlineTime = Date.parse(deadline);
+    expect(millisecondsUntil(deadline, deadlineTime - 10_500)).toBe(
+      10_500,
+    );
+  });
+
+  it("clamps elapsed and invalid deadlines safely", () => {
+    const deadlineTime = Date.parse(deadline);
+    expect(millisecondsUntil(deadline, deadlineTime + 1)).toBe(0);
+    expect(millisecondsUntil(null, deadlineTime)).toBeNull();
+    expect(millisecondsUntil("not-a-date", deadlineTime)).toBeNull();
   });
 });
 

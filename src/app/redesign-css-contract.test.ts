@@ -130,29 +130,42 @@ describe("redesign CSS contract", () => {
   });
 
   it("renders quiz choices as one vertical column", () => {
-    expect(css).toMatch(
-      /\.choice-list\s*\{[\s\S]*?display:\s*flex;[\s\S]*?flex-direction:\s*column;/,
+    const quizFrameCss = readCss(
+      "src/features/quiz-player/ui/quiz-frame.module.css",
+    );
+    expect(quizFrameCss).toMatch(
+      /\.choiceList\s*\{[\s\S]*?display:\s*grid;/,
+    );
+    expect(quizFrameCss).not.toMatch(
+      /\.choiceList\s*\{[^}]*grid-template-columns:/,
     );
   });
 
   it("keeps the quiz timer readable and centers the card on the full viewport", () => {
-    expect(css).not.toMatch(
-      /\.quiz-shell,\s*\.quiz-card\s*\{[\s\S]*?max-width:\s*620px;/,
+    const frameCss = readCss(
+      "src/features/quiz-player/ui/quiz-frame.module.css",
     );
-    expect(css).toMatch(
-      /\.quiz-card\s*\{[\s\S]*?width:\s*min\(100%,\s*620px\);[\s\S]*?max-width:\s*620px;/,
+    const shellCss = readCss(
+      "src/features/quiz-player/ui/quiz-player.module.css",
     );
-    expect(css).toMatch(
-      /\.timer\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?white-space:\s*nowrap;/,
+    expect(globalsCss).not.toMatch(/\.quiz-(?:shell|card|prompt)/);
+    expect(frameCss).toMatch(
+      /\.frame\s*\{[\s\S]*?width:\s*min\(100%,\s*620px\);/,
     );
-    expect(css).toMatch(
-      /\.timer-warning\s*\{[\s\S]*?color:\s*var\(--fail\);[\s\S]*?background:\s*var\(--no-bg\);/,
+    expect(frameCss).toMatch(
+      /\.timer\s*\{[\s\S]*?flex:\s*none;[\s\S]*?white-space:\s*nowrap;/,
     );
-    expect(css).toMatch(
-      /\.quiz-card:has\(\.timer-warning\) \.progress-value\s*\{[\s\S]*?background:\s*var\(--fail\);/,
+    expect(frameCss).toMatch(
+      /\.timerWarning\s*\{[\s\S]*?background:\s*var\(--no-bg\);[\s\S]*?color:\s*var\(--fail\);/,
     );
-    expect(css).not.toMatch(
-      /\.timer-warning,\s*\.quiz-card:has\(\.timer-warning\) \.progress-value/,
+    expect(frameCss).toMatch(
+      /\.progressWarning \.progressValue\s*\{[\s\S]*?background:\s*var\(--fail\);/,
+    );
+    expect(shellCss).toMatch(
+      /\.shell\s*\{[\s\S]*?min-height:\s*100dvh;[\s\S]*?align-items:\s*start;/,
+    );
+    expect(shellCss).toMatch(
+      /@media \(min-width: 768px\)[\s\S]*?align-items:\s*center;/,
     );
   });
 

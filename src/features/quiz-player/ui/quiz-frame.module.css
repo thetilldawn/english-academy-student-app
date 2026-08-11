@@ -1,0 +1,232 @@
+.frame {
+  width: min(100%, 620px);
+  padding: clamp(20px, 4vw, 38px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--card);
+}
+
+.topline {
+  min-height: 76px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.heading {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.phase {
+  margin: 0;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-family: var(--font-kr);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.timer {
+  min-width: 5ch;
+  min-height: 54px;
+  display: grid;
+  flex: none;
+  place-items: center;
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-kr);
+  font-size: clamp(24px, 4vw, 30px);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+  transition:
+    background-color var(--motion-standard),
+    color var(--motion-standard);
+}
+
+.timerWarning {
+  background: var(--no-bg);
+  color: var(--fail);
+}
+
+.progressTrack {
+  height: 2px;
+  overflow: hidden;
+  margin-bottom: var(--space-5);
+  background: var(--line);
+}
+
+.progressValue {
+  height: 100%;
+  background: var(--ink);
+  transition: width var(--motion-standard);
+}
+
+.progressWarning .progressValue {
+  background: var(--fail);
+}
+
+.direction {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--font-kr);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.priorWrongSlot {
+  min-height: 34px;
+  display: grid;
+  place-items: center;
+}
+
+.priorWrong {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  color: var(--retry);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.priorWrongRepeated {
+  color: var(--fail);
+}
+
+.priorWrongMarks {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.priorWrongMarks i {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-card);
+  background: var(--retry);
+  color: var(--paper);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.priorWrongRepeated .priorWrongMarks i {
+  background: var(--fail);
+}
+
+.promptRow {
+  height: 150px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.promptWithAudio {
+  grid-template-columns: minmax(0, 1fr) 46px;
+}
+
+.prompt {
+  min-width: 0;
+  max-height: 142px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0;
+  overflow: hidden;
+  text-align: center;
+  word-break: keep-all;
+}
+
+.prompt:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 4px;
+}
+
+.promptEnglish {
+  overflow-wrap: anywhere;
+  word-break: normal;
+  font-family: var(--font-en);
+  font-size: clamp(32px, 10vw, 48px);
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  line-height: 1.15;
+}
+
+.promptKorean {
+  font-family: var(--font-krs);
+  font-size: clamp(29px, 6vw, 40px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.35;
+}
+
+.prompt-long.promptEnglish {
+  font-size: clamp(27px, 8vw, 42px);
+}
+
+.prompt-long.promptKorean {
+  font-size: clamp(25px, 5vw, 34px);
+}
+
+.prompt-very-long.promptEnglish {
+  font-size: clamp(22px, 6.5vw, 36px);
+}
+
+.prompt-very-long.promptKorean {
+  font-size: clamp(21px, 4.5vw, 30px);
+}
+
+.promptPronunciation {
+  color: var(--muted);
+  font-family: var(--font-kr);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.choiceList {
+  display: grid;
+  gap: var(--space-3);
+}
+
+@media (max-width: 580px) {
+  .frame {
+    padding: 20px 14px;
+  }
+
+  .topline {
+    gap: var(--space-3);
+  }
+
+  .promptRow {
+    height: 146px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timer,
+  .progressValue {
+    transition: none;
+  }
+}

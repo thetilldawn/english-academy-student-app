@@ -108,13 +108,18 @@ describe("admin visual density contract", () => {
   it("loads Pretendard locally and limits serif typography to English words", () => {
     const layout = source("src/app/layout.tsx");
     const css = source("src/app/globals.css");
+    const quizCss = source(
+      "src/features/quiz-player/ui/quiz-frame.module.css",
+    );
 
     expect(layout).toContain(
       'pretendard/dist/web/variable/pretendardvariable.css',
     );
-    expect(css.match(/font-family: var\(--font-en\)/g)).toHaveLength(3);
+    expect(css.match(/font-family: var\(--font-en\)/g)).toHaveLength(2);
     expect(css).toContain(".choice--en");
-    expect(css).toContain(".quiz-prompt");
+    expect(quizCss).toMatch(
+      /\.promptEnglish\s*\{[\s\S]*?font-family:\s*var\(--font-en\);/,
+    );
     expect(css).toContain(".review-entry-list strong");
   });
 });

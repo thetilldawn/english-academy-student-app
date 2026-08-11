@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
-import { QuizPlayer } from "@/components/quiz-player";
 import { studentAppText } from "@/content/ko/student-app";
+import { QuizPlayer } from "@/features/quiz-player/ui/quiz-player";
 import { requireStudentSession } from "@/lib/auth/student-session";
 import {
   currentTimeMilliseconds,
-  secondsUntil,
+  millisecondsUntil,
 } from "@/lib/deadline";
 import { getStudentAttempt } from "@/lib/services/quiz-service";
 
@@ -35,16 +35,14 @@ export default async function AttemptPage({
   }
 
   return (
-    <main className="quiz-shell" id="main-content">
-      <QuizPlayer
-        initialAttempt={attempt}
-        initialRemainingSeconds={
-          secondsUntil(
-            attempt.timerDeadlineAt,
-            currentTimeMilliseconds(),
-          ) ?? 0
-        }
-      />
-    </main>
+    <QuizPlayer
+      initialAttempt={attempt}
+      initialRemainingMilliseconds={
+        millisecondsUntil(
+          attempt.timerDeadlineAt,
+          currentTimeMilliseconds(),
+        ) ?? 0
+      }
+    />
   );
 }

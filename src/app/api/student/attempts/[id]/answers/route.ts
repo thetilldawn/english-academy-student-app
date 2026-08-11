@@ -1,6 +1,10 @@
 import { z } from "zod";
 
 import { getStudentSession } from "@/lib/auth/student-session";
+import {
+  currentTimeMilliseconds,
+  millisecondsUntil,
+} from "@/lib/deadline";
 import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
 import { answerStudentQuestion } from "@/lib/services/quiz-service";
 import { answerSchema } from "@/lib/validation";
@@ -34,7 +38,15 @@ export async function POST(
       phase: input.phase,
       choiceIndex: input.choiceIndex,
     });
-    return Response.json(result);
+    return Response.json({
+      ...result,
+      timerRemainingMilliseconds: result.questionDeadlineAt
+        ? millisecondsUntil(
+            result.questionDeadlineAt,
+            currentTimeMilliseconds(),
+          )
+        : null,
+    });
   } catch {
     return jsonError("답안을 저장하지 못했습니다.", 409);
   }

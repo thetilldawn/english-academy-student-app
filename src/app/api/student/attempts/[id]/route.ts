@@ -1,6 +1,10 @@
 import { z } from "zod";
 
 import { getStudentSession } from "@/lib/auth/student-session";
+import {
+  currentTimeMilliseconds,
+  millisecondsUntil,
+} from "@/lib/deadline";
 import { jsonError } from "@/lib/http";
 import { getStudentAttempt } from "@/lib/services/quiz-service";
 
@@ -23,5 +27,12 @@ export async function GET(
     return jsonError("시험을 찾지 못했습니다.", 404);
   }
 
-  return Response.json({ attempt });
+  return Response.json({
+    attempt,
+    timerRemainingMilliseconds:
+      millisecondsUntil(
+        attempt.timerDeadlineAt,
+        currentTimeMilliseconds(),
+      ) ?? 0,
+  });
 }

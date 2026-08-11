@@ -144,13 +144,13 @@ const cssMetrics = {
 };
 
 const cssMaximums = {
-  lines: 2540,
-  styleRules: 404,
-  selectorContextKeys: 397,
-  duplicateContextKeys: 65,
-  duplicateExcess: 77,
-  styleDeclarations: 1190,
-  mediaBlocks: 14,
+  lines: 2150,
+  styleRules: 343,
+  selectorContextKeys: 348,
+  duplicateContextKeys: 49,
+  duplicateExcess: 59,
+  styleDeclarations: 1001,
+  mediaBlocks: 12,
   mediaConditions: 6,
   importantDeclarations: 0,
   trackedSectionMarkers: 4,
@@ -163,12 +163,6 @@ const legacyComponents = [
     maxLines: 1200,
     maxFetchCalls: 0,
     maxUseStateCalls: 12,
-  },
-  {
-    path: "src/components/quiz-player.tsx",
-    maxLines: 767,
-    maxFetchCalls: 3,
-    maxUseStateCalls: 9,
   },
 ];
 const assignmentFeatureContracts = [
@@ -255,6 +249,50 @@ const studentDashboardFeatureContracts = [
     maxUseStateCalls: 0,
   },
 ];
+const quizPlayerFeatureContracts = [
+  {
+    path: "src/features/quiz-player/controller/use-initial-quiz-synchronization.ts",
+    maxLines: 30,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 0,
+  },
+  {
+    path: "src/features/quiz-player/controller/use-quiz-audio.ts",
+    maxLines: 60,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 0,
+  },
+  {
+    path: "src/features/quiz-player/controller/use-quiz-player-controller.ts",
+    maxLines: 380,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 0,
+  },
+  {
+    path: "src/features/quiz-player/controller/use-quiz-clock.ts",
+    maxLines: 70,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 0,
+  },
+  {
+    path: "src/features/quiz-player/controller/use-quiz-recovery.ts",
+    maxLines: 90,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 0,
+  },
+  {
+    path: "src/features/quiz-player/ui/quiz-player.tsx",
+    maxLines: 150,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 0,
+  },
+  {
+    path: "src/features/quiz-player/ui/quiz-frame.tsx",
+    maxLines: 300,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 0,
+  },
+];
 const legacyPaths = new Set(
   legacyComponents.map((contract) => contract.path),
 );
@@ -285,6 +323,7 @@ for (const selector of migratedPrimitiveSelectors) {
 }
 
 for (const retiredPath of [
+  "src/components/quiz-player.tsx",
   "src/components/student-manager.tsx",
   "src/components/student-learning-source-list.tsx",
   "src/components/student-vocab-book-history-list.tsx",
@@ -390,6 +429,31 @@ const retiredActivitySelectors = [
   ".history-detail-heading-copy",
   ".history-detail-heading-tags",
 ];
+
+for (const retiredSelector of [
+  ".quiz-shell",
+  ".quiz-card",
+  ".quiz-topline",
+  ".quiz-phase",
+  ".quiz-direction",
+  ".quiz-prior-wrong",
+  ".quiz-prompt",
+  ".quiz-prompt-row",
+  ".choice-row",
+  ".choice-list",
+  ".choice-audio-placeholder",
+  ".pronunciation-button",
+  ".timer-warning",
+  ".progress-track",
+  ".progress-value",
+  ".quiz-error",
+]) {
+  if (css.includes(retiredSelector)) {
+    violations.push(
+      `globals.css retains migrated quiz player selector ${retiredSelector}`,
+    );
+  }
+}
 
 for (const retiredSelector of retiredActivitySelectors) {
   if (css.includes(retiredSelector)) {
@@ -507,6 +571,29 @@ const studentDashboardFeatureMetrics = studentDashboardFeatureContracts.map(
     return measured;
   },
 );
+const quizPlayerFeatureMetrics = quizPlayerFeatureContracts.map(
+  (contract) => {
+    const source = read(contract.path);
+    const measured = {
+      path: contract.path,
+      lines: lineCount(source),
+      fetchCalls: count(source, /\bfetch\s*\(/g),
+      useStateCalls: count(source, /\buseState\s*(?:<|\()/g),
+    };
+    for (const [metric, maximum] of [
+      ["lines", contract.maxLines],
+      ["fetchCalls", contract.maxFetchCalls],
+      ["useStateCalls", contract.maxUseStateCalls],
+    ]) {
+      if (measured[metric] > maximum) {
+        violations.push(
+          `${contract.path} ${metric}: ${measured[metric]} > ${maximum}`,
+        );
+      }
+    }
+    return measured;
+  },
+);
 
 for (const relativePath of filesUnder(
   "src/features/students/ui",
@@ -543,6 +630,32 @@ for (const relativePath of filesUnder(
   if (/\bfetch\s*\(|["']\/api\/|@\/lib\/services\//.test(source)) {
     violations.push(`${relativePath} crosses the student dashboard UI boundary`);
   }
+}
+
+for (const relativePath of filesUnder(
+  "src/features/quiz-player/ui",
+  (candidate) => candidate.endsWith(".tsx") && !candidate.endsWith(".test.tsx"),
+)) {
+  const source = read(relativePath);
+  if (lineCount(source) > 300) {
+    violations.push(`${relativePath} exceeds the 300 line feature UI ceiling`);
+  }
+  if (
+    /\bfetch\s*\(|["']\/api\/|@\/lib\/services\/|from ["']next\/navigation["']/.test(
+      source,
+    )
+  ) {
+    violations.push(`${relativePath} crosses the quiz player UI boundary`);
+  }
+}
+
+const quizAttemptRouteSource = read(
+  "src/app/student/(protected)/attempt/[id]/page.tsx",
+);
+if (
+  /quiz-shell|quiz-card|<section|<button/.test(quizAttemptRouteSource)
+) {
+  violations.push("quiz attempt route retains feature markup or global styling");
 }
 
 const studentDashboardPageSource = read(
@@ -684,6 +797,10 @@ const boundedCssModulePaths = [
     "src/features/student-dashboard",
     (candidate) => candidate.endsWith(".module.css"),
   ),
+  ...filesUnder(
+    "src/features/quiz-player",
+    (candidate) => candidate.endsWith(".module.css"),
+  ),
 ];
 
 for (const relativePath of boundedCssModulePaths) {
@@ -710,6 +827,7 @@ console.log(
       assignmentFeatures: assignmentFeatureMetrics,
       studentFeatures: studentFeatureMetrics,
       studentDashboardFeatures: studentDashboardFeatureMetrics,
+      quizPlayerFeatures: quizPlayerFeatureMetrics,
     },
     null,
     2,

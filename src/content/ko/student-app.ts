@@ -76,7 +76,8 @@ export const studentAppText = {
     timeWarning: "남은 시간이 30초입니다.",
     saveError: "답안을 저장하지 못했습니다.",
     stateError:
-      "다음 문제 상태를 확인하지 못했습니다. 페이지를 새로고침해주세요.",
+      "시험 상태를 확인하지 못했습니다. 연결을 확인한 뒤 다시 시도해주세요.",
+    synchronizationRetry: "다시 시도",
     finalizing: "시험 상태를 정리하는 중입니다.",
     retryPhase: "재시험",
     initialPhase: "첫 시험",

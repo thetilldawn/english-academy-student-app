@@ -296,15 +296,20 @@ describe("wrong-word admin UI contract", () => {
 
   it("exposes only the clamped prior wrong level to the quiz client", () => {
     const quizService = source("src/lib/services/quiz-service.ts");
-    const quizPlayer = source("src/components/quiz-player.tsx");
+    const quizController = source(
+      "src/features/quiz-player/controller/use-quiz-player-controller.ts",
+    );
+    const quizFrame = source(
+      "src/features/quiz-player/ui/quiz-frame.tsx",
+    );
     expect(quizService).toContain("prior_wrong_count");
     expect(quizService).toContain("priorWrongLevel:");
     expect(quizService).toContain("question.prior_wrong_count >= 2");
     expect(quizService).not.toContain("priorWrongCount:");
-    expect(quizPlayer).toContain("getPriorWrongIndicator");
-    expect(quizPlayer).toContain("quiz-prior-wrong-marks");
-    expect(quizPlayer).not.toContain("quiz-prompt-prior-wrong");
-    expect(quizPlayer).toContain("aria-describedby={");
-    expect(quizPlayer).toContain('"quiz-prior-wrong"');
+    expect(quizController).toContain("getPriorWrongIndicator");
+    expect(quizFrame).toContain("styles.priorWrongMarks");
+    expect(quizFrame).not.toContain("quiz-prompt-prior-wrong");
+    expect(quizFrame).toContain("aria-describedby={");
+    expect(quizFrame).toContain('"quiz-prior-wrong"');
   });
 });

@@ -9,7 +9,18 @@ function source(relativePath: string) {
 
 describe("mobile production regression UI contract", () => {
   const css = source("src/app/globals.css");
-  const quizPlayer = source("src/components/quiz-player.tsx");
+  const quizDomain = source(
+    "src/features/quiz-player/domain/quiz-session.ts",
+  );
+  const quizFrame = source(
+    "src/features/quiz-player/ui/quiz-frame.tsx",
+  );
+  const quizFrameCss = source(
+    "src/features/quiz-player/ui/quiz-frame.module.css",
+  );
+  const quizChoiceCss = source(
+    "src/features/quiz-player/ui/quiz-choice.module.css",
+  );
   const studentDirectory = source(
     "src/features/students/ui/student-directory.tsx",
   );
@@ -53,40 +64,44 @@ describe("mobile production regression UI contract", () => {
   });
 
   it("reserves pronunciation columns only where the visible text is English", () => {
-    expect(quizPlayer).toContain(
-      'currentQuestion?.direction === "english_to_korean"',
+    expect(quizDomain).toContain(
+      'question.direction === "english_to_korean"',
     );
-    expect(quizPlayer).toContain(
-      'currentQuestion?.direction === "korean_to_english"',
+    expect(quizDomain).toContain(
+      'question.direction === "korean_to_english"',
     );
-    expect(quizPlayer).toContain("choicesUsePronunciation &&");
-    expect(quizPlayer).toContain("choice-copy--without-pronunciation");
-    expect(quizPlayer).toContain(
-      'import type { QuizDirection } from "@/lib/quiz/engine";',
+    expect(quizDomain).toContain("allChoiceAudioAvailable");
+    expect(quizFrame).not.toContain("placeholder");
+    expect(quizFrameCss).toMatch(
+      /\.promptRow\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/,
     );
-
-    expect(css).toMatch(
-      /\.quiz-prompt-row\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/,
+    expect(quizFrameCss).toMatch(
+      /\.promptWithAudio\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 46px;/,
     );
-    expect(css).toMatch(
-      /\.quiz-prompt-row--with-pronunciation\s*\{[^}]*grid-template-columns:\s*46px minmax\(0, 1fr\) 46px;/,
+    expect(quizChoiceCss).toMatch(
+      /\.row\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/,
     );
-    expect(css).toMatch(
-      /\.choice-row\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/,
-    );
-    expect(css).toMatch(
-      /\.choice-row--with-pronunciation\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 46px;/,
+    expect(quizChoiceCss).toMatch(
+      /\.withAudio\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 46px;/,
     );
   });
 
   it("keeps answer feedback out of the visual layout", () => {
-    expect(quizPlayer).not.toContain("quiz-prompt-prior-wrong");
-    expect(quizPlayer).toContain("const answerAnnouncement =");
-    expect(quizPlayer).toContain("{answerAnnouncement}");
-    expect(quizPlayer).not.toContain('className="feedback feedback-wrong"');
-    expect(quizPlayer).not.toContain("feedback-correct");
+    expect(quizFrame).toContain("{answerAnnouncement}");
+    expect(quizFrame).toContain('className="sr-only"');
+    expect(quizFrame).not.toContain("feedback-correct");
     expect(css).not.toContain(".feedback {");
     expect(css).not.toContain(".feedback-wrong");
     expect(css).not.toContain(".quiz-prompt-prior-wrong");
+    expect(css).not.toContain(".quiz-error");
+    expect(quizChoiceCss).toMatch(
+      /\.row\s*\{[^}]*height:\s*76px;/,
+    );
+    expect(quizChoiceCss).toMatch(
+      /\.choice\s*\{[^}]*height:\s*76px;/,
+    );
+    expect(quizChoiceCss).toMatch(
+      /@media \(max-width: 400px\)[\s\S]*?\.korean \.text\s*\{[^}]*-webkit-line-clamp:\s*3;/,
+    );
   });
 });

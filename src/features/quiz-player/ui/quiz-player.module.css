@@ -1,0 +1,27 @@
+.shell {
+  min-height: 100dvh;
+  display: grid;
+  align-items: start;
+  justify-items: center;
+  padding:
+    max(12px, env(safe-area-inset-top))
+    10px
+    max(14px, env(safe-area-inset-bottom));
+}
+
+.finalizing {
+  width: min(100%, 620px);
+  padding: var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  color: var(--muted);
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .shell {
+    align-items: center;
+    padding: 30px 18px 60px;
+  }
+}

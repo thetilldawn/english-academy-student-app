@@ -261,7 +261,12 @@ describe("responsive navigation contract", () => {
   });
 
   it("첫 시험 뒤 결과를 먼저 보여주고 학생이 재시험을 시작한다", () => {
-    const quizPlayer = source("src/components/quiz-player.tsx");
+    const quizController = source(
+      "src/features/quiz-player/controller/use-quiz-player-controller.ts",
+    );
+    const quizDomain = source(
+      "src/features/quiz-player/domain/quiz-session.ts",
+    );
     const resultPage = source(
       "src/app/student/(protected)/result/[id]/page.tsx",
     );
@@ -276,8 +281,11 @@ describe("responsive navigation contract", () => {
     );
     const studentCopy = source("src/content/ko/student-app.ts");
 
-    expect(quizPlayer).toContain(
+    expect(quizDomain).toContain(
       'payload.needsRetry && answeredPhase === "initial"',
+    );
+    expect(quizController).toContain(
+      "quizAnswerDisposition(payload, answeredPhase)",
     );
     expect(resultPage).toContain(
       'result.status === "in_progress" && result.phase === "review"',

@@ -1,0 +1,20 @@
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--no-line);
+  border-radius: var(--radius);
+  background: var(--no-bg);
+  color: var(--no-ink);
+  font-weight: 700;
+}
+
+@media (max-width: 580px) {
+  .error {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
