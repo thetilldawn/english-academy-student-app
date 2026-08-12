@@ -8,6 +8,17 @@ export type QuizPronunciation = {
   available: boolean;
 };
 
+export type VocabPronunciationRegistryRow = {
+  vocab_entry_id: number;
+  provider: unknown;
+  status: unknown;
+  review_status: unknown;
+  listening_enabled: unknown;
+  selected_variant_id: unknown;
+  selected_audio_url: unknown;
+  variants: unknown;
+};
+
 function objectValue(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -86,6 +97,45 @@ export function parseChoicePronunciations(
   return seenIndexes.size === choices.length
     ? result
     : choices.map(() => unavailablePronunciation());
+}
+
+export function parseRegistryPronunciation(
+  row: VocabPronunciationRegistryRow | null | undefined,
+): QuizPronunciation {
+  if (
+    !row ||
+    row.provider !== "merriam_webster" ||
+    row.status !== "raw_first_variant_unreviewed" ||
+    row.review_status !== "raw_unreviewed" ||
+    row.listening_enabled !== true
+  ) {
+    return unavailablePronunciation();
+  }
+  const variantId = optionalText(row.selected_variant_id);
+  const audioUrl = optionalText(row.selected_audio_url);
+  if (
+    !variantId ||
+    !audioUrl ||
+    !OFFICIAL_AUDIO_URL.test(audioUrl) ||
+    !Array.isArray(row.variants)
+  ) {
+    return unavailablePronunciation();
+  }
+  const selectionExists = row.variants.some((rawVariant) => {
+    const variant = objectValue(rawVariant);
+    return (
+      optionalText(variant?.variant_id) === variantId &&
+      optionalText(variant?.audio_url) === audioUrl
+    );
+  });
+  return selectionExists
+    ? {
+        displayKo: null,
+        variantId,
+        audioUrl,
+        available: true,
+      }
+    : unavailablePronunciation();
 }
 
 export function allChoiceAudioAvailable(

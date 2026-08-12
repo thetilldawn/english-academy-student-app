@@ -16,9 +16,11 @@ import type {
 import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
 import {
   parseChoicePronunciations,
+  parseRegistryPronunciation,
   parseTargetPronunciation,
   unavailablePronunciation,
   type QuizPronunciation,
+  type VocabPronunciationRegistryRow,
 } from "@/lib/quiz/pronunciation-snapshot";
 import {
   isTrustedQuestionSnapshot,
@@ -131,6 +133,8 @@ type QuestionRow = {
 };
 
 type AssignmentQuestionSnapshot = {
+  vocab_entry_id?: number;
+  choice_vocab_entry_ids?: number[] | null;
   headword_snapshot: string | null;
   primary_meaning_snapshot: string | null;
   provenance_status: QuestionProvenanceStatus;
@@ -139,6 +143,48 @@ type AssignmentQuestionSnapshot = {
     | ExamUseQuestionSnapshot[]
     | null;
 };
+
+async function loadVocabPronunciationRegistry(
+  vocabEntryIds: readonly number[],
+) {
+  const result = new Map<number, QuizPronunciation>();
+  if (vocabEntryIds.length === 0) return result;
+  const supabase = getServiceSupabaseClient();
+  const uniqueIds = [...new Set(vocabEntryIds)];
+  const chunkSize = 500;
+  for (let offset = 0; offset < uniqueIds.length; offset += chunkSize) {
+    const chunk = uniqueIds.slice(offset, offset + chunkSize);
+    const { data, error } = await supabase
+      .from("vocab_entry_pronunciations")
+      .select(
+        "vocab_entry_id, provider, status, review_status, listening_enabled, selected_variant_id, selected_audio_url, variants",
+      )
+      .in("vocab_entry_id", chunk)
+      .eq("listening_enabled", true);
+    if (error) {
+      console.warn("[quiz-pronunciation] registry lookup failed", {
+        code: error.code,
+      });
+      return new Map<number, QuizPronunciation>();
+    }
+    for (const row of (data ?? []) as VocabPronunciationRegistryRow[]) {
+      const pronunciation = parseRegistryPronunciation(row);
+      if (pronunciation.available) {
+        result.set(row.vocab_entry_id, pronunciation);
+      }
+    }
+  }
+  return result;
+}
+
+function preferredPronunciation(
+  snapshot: QuizPronunciation,
+  registry: QuizPronunciation | undefined,
+) {
+  return snapshot.available
+    ? snapshot
+    : (registry ?? unavailablePronunciation(snapshot.displayKo));
+}
 
 type ExamUseQuestionSnapshot = {
   headword_snapshot: string;
@@ -665,7 +711,7 @@ export async function getStudentAttempt(
       supabase
         .from("quiz_questions")
         .select(
-          "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, prior_wrong_count, initial_timed_out, retry_timed_out, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(headword_snapshot, primary_meaning_snapshot, provenance_status, exam_use_snapshot:assignment_question_exam_use_snapshot!assignment_question_exam_use_snapshot_question_fkey(headword_snapshot, primary_meaning_snapshot, display_pronunciation_ko_snapshot, pronunciation_snapshot, choice_dictionary_snapshots, provenance_status))",
+          "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, prior_wrong_count, initial_timed_out, retry_timed_out, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(vocab_entry_id, choice_vocab_entry_ids, headword_snapshot, primary_meaning_snapshot, provenance_status, exam_use_snapshot:assignment_question_exam_use_snapshot!assignment_question_exam_use_snapshot_question_fkey(headword_snapshot, primary_meaning_snapshot, display_pronunciation_ko_snapshot, pronunciation_snapshot, choice_dictionary_snapshots, provenance_status))",
         )
         .eq("attempt_id", attemptId)
         .order("order_index"),
@@ -681,6 +727,17 @@ export async function getStudentAttempt(
   const questionData = questionResult.data;
 
   const rows = (questionData ?? []) as QuestionRow[];
+  const registryIds = rows.flatMap((question) => {
+    const bankQuestion = oneRelation(question.assignment_question);
+    if (!bankQuestion) return [];
+    return [
+      bankQuestion.vocab_entry_id,
+      ...(bankQuestion.choice_vocab_entry_ids ?? []),
+    ].filter((value): value is number => typeof value === "number");
+  });
+  const pronunciationRegistry = await loadVocabPronunciationRegistry(
+    registryIds,
+  );
   const initialCurrent = rows.find(
     (question) => question.initial_choice_index === null,
   );
@@ -735,18 +792,33 @@ export async function getStudentAttempt(
         question.retry_choice_index !== null;
       const bankQuestion = oneRelation(question.assignment_question);
       const examUseSnapshot = reviewedExamUseSnapshot(bankQuestion);
-      const pronunciation = examUseSnapshot
+      const snapshotPronunciation = examUseSnapshot
         ? parseTargetPronunciation(
             examUseSnapshot.pronunciation_snapshot,
             examUseSnapshot.display_pronunciation_ko_snapshot,
           )
         : unavailablePronunciation();
-      const choicePronunciations = examUseSnapshot
+      const snapshotChoicePronunciations = examUseSnapshot
         ? parseChoicePronunciations(
             examUseSnapshot.choice_dictionary_snapshots,
             question.choices,
           )
         : question.choices.map(() => unavailablePronunciation());
+      const pronunciation = preferredPronunciation(
+        snapshotPronunciation,
+        typeof bankQuestion?.vocab_entry_id === "number"
+          ? pronunciationRegistry.get(bankQuestion.vocab_entry_id)
+          : undefined,
+      );
+      const choicePronunciations = question.choices.map((_, index) => {
+        const choiceVocabEntryId = bankQuestion?.choice_vocab_entry_ids?.[index];
+        return preferredPronunciation(
+          snapshotChoicePronunciations[index] ?? unavailablePronunciation(),
+          typeof choiceVocabEntryId === "number"
+            ? pronunciationRegistry.get(choiceVocabEntryId)
+            : undefined,
+        );
+      });
 
       return {
         id: question.id,

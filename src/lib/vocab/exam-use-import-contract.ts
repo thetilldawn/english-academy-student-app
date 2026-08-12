@@ -13,6 +13,11 @@ const OFFICIAL_AUDIO_URL =
 const SUPABASE_URL = /^https:\/\/([a-z0-9]{20})\.supabase\.co\/?$/;
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const PRODUCTION_PROJECT_REF = "xdxhswjgksukjmpbzqgz";
+const PRODUCTION_G12_DATASET_KEY =
+  "g12-long-reading-2025-exam-scope-v1";
+const PRODUCTION_G12_PACKAGE_VERSION =
+  "fc98d9cf6d0a688328234605377d159d50bbc51ba1c689852d657ffc95c77d08";
 
 function boundedText(maximum: number) {
   return z
@@ -461,4 +466,50 @@ export function assertPreviewImportEnvironment(
     );
   }
   return { supabaseUrl: url, projectRef: actualRef };
+}
+
+export function assertExamUseImportEnvironment(
+  environment: Readonly<Record<string, string | undefined>>,
+  examUsePackage: ExamUsePackage,
+  expectedProjectRef: string | null,
+) {
+  const url = environment.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const actualRef = supabaseProjectRef(url);
+  if (
+    !actualRef ||
+    !expectedProjectRef ||
+    actualRef !== expectedProjectRef
+  ) {
+    throw new Error("Supabase 프로젝트 ref 안전장치가 일치하지 않습니다.");
+  }
+  if (actualRef === PRODUCTION_PROJECT_REF) {
+    if (
+      examUsePackage.dataset_key !== PRODUCTION_G12_DATASET_KEY ||
+      examUsePackage.package_version !== PRODUCTION_G12_PACKAGE_VERSION
+    ) {
+      throw new Error(
+        "승인된 고3 모의고사 단어장 자료판만 운영 DB에 가져올 수 있습니다.",
+      );
+    }
+    return {
+      supabaseUrl: url,
+      projectRef: actualRef,
+      target: "production_exact_g12" as const,
+    };
+  }
+  if (environment.VERCEL_ENV === "production") {
+    throw new Error("Production 환경과 Supabase 프로젝트가 일치하지 않습니다.");
+  }
+  const previewRef =
+    environment.PREVIEW_EXPECTED_SUPABASE_PROJECT_REF?.trim() ?? "";
+  if (!previewRef || actualRef !== previewRef) {
+    throw new Error(
+      "Preview Supabase 프로젝트 ref가 안전장치 값과 일치하지 않습니다.",
+    );
+  }
+  return {
+    supabaseUrl: url,
+    projectRef: actualRef,
+    target: "preview" as const,
+  };
 }

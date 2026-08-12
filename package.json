@@ -30,6 +30,7 @@
     "import:word-index": "tsx scripts/import-word-index.ts",
     "import:vocab-link": "tsx scripts/import-vocab-link-package.ts",
     "import:exam-use": "tsx scripts/import-exam-use-package.ts",
+    "import:voca-pronunciation": "tsx scripts/import-voca-pronunciation-package.ts",
     "fixture:ui:ensure": "tsx scripts/ui-test-fixture.ts ensure",
     "fixture:ui:cleanup": "tsx scripts/ui-test-fixture.ts cleanup"
   },

@@ -97,7 +97,7 @@ describe("vocabulary dataset catalog", () => {
     ]);
 
     expect(groups.map((group) => group.label)).toEqual([
-      "고등 모의고사",
+      "고3 모의고사",
       "수능",
     ]);
   });

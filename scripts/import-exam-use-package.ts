@@ -5,22 +5,27 @@ import { createClient } from "@supabase/supabase-js";
 import { loadEnvConfig } from "@next/env";
 
 import {
-  assertPreviewImportEnvironment,
+  assertExamUseImportEnvironment,
   validateExamUsePackage,
 } from "../src/lib/vocab/exam-use-import-contract";
 
 type Options = {
   file: string;
+  expectedProjectRef: string | null;
   apply: boolean;
 };
 
 function parseOptions(arguments_: string[]): Options {
   let file = "";
+  let expectedProjectRef: string | null = null;
   let apply = false;
   for (let index = 0; index < arguments_.length; index += 1) {
     const argument = arguments_[index];
     if (argument === "--file") {
       file = arguments_[index + 1] ?? "";
+      index += 1;
+    } else if (argument === "--expected-project-ref") {
+      expectedProjectRef = arguments_[index + 1] ?? null;
       index += 1;
     } else if (argument === "--apply") {
       apply = true;
@@ -30,16 +35,17 @@ function parseOptions(arguments_: string[]): Options {
   }
   if (!file) {
     throw new Error(
-      "사용법: npm run import:exam-use -- --file <app-exam-use-package.json> [--apply]",
+      "사용법: npm run import:exam-use -- --file <app-exam-use-package.json> [--apply --expected-project-ref <ref>]",
     );
   }
-  return { file: resolve(file), apply };
+  return { file: resolve(file), expectedProjectRef, apply };
 }
 
 async function main() {
   const options = parseOptions(process.argv.slice(2));
   const input = JSON.parse(await readFile(options.file, "utf8")) as unknown;
-  const { summary } = validateExamUsePackage(input);
+  const { package: examUsePackage, summary } =
+    validateExamUsePackage(input);
 
   if (!options.apply) {
     console.log(
@@ -58,8 +64,12 @@ async function main() {
   }
 
   loadEnvConfig(process.cwd());
-  const { supabaseUrl, projectRef } =
-    assertPreviewImportEnvironment(process.env);
+  const { supabaseUrl, projectRef, target } =
+    assertExamUseImportEnvironment(
+      process.env,
+      examUsePackage,
+      options.expectedProjectRef,
+    );
   const secretKey = process.env.SUPABASE_SECRET_KEY;
   if (!secretKey) {
     throw new Error("SUPABASE_SECRET_KEY가 필요합니다.");
@@ -74,7 +84,7 @@ async function main() {
   });
   const { data, error } = await supabase.rpc(
     "import_app_exam_use_package_v1",
-    { p_package: input },
+    { p_package: examUsePackage },
   );
   if (error) {
     throw new Error(
@@ -86,6 +96,7 @@ async function main() {
     JSON.stringify(
       {
         mode: "apply",
+        target,
         projectRef,
         file: options.file,
         package: summary,

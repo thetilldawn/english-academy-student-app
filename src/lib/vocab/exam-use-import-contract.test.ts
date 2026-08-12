@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  assertExamUseImportEnvironment,
   assertPreviewImportEnvironment,
   computeExamUseEntryContentHash,
   computeExamUsePackageVersion,
@@ -184,5 +185,37 @@ describe("exam-use package import contract", () => {
           "wojxpruvbjzbhrpmsbuy",
       }),
     ).toThrow("프로젝트 ref");
+  });
+
+  it("운영 DB에는 승인된 고3 모의고사 자료판 하나만 허용한다", () => {
+    const approved = buildPackage();
+    approved.dataset_key = "g12-long-reading-2025-exam-scope-v1";
+    approved.package_version =
+      "fc98d9cf6d0a688328234605377d159d50bbc51ba1c689852d657ffc95c77d08";
+    expect(
+      assertExamUseImportEnvironment(
+        {
+          NEXT_PUBLIC_SUPABASE_URL:
+            "https://xdxhswjgksukjmpbzqgz.supabase.co",
+        },
+        approved as ReturnType<typeof validateExamUsePackage>["package"],
+        "xdxhswjgksukjmpbzqgz",
+      ).target,
+    ).toBe("production_exact_g12");
+
+    const unapproved = {
+      ...approved,
+      package_version: "9".repeat(64),
+    } as ReturnType<typeof validateExamUsePackage>["package"];
+    expect(() =>
+      assertExamUseImportEnvironment(
+        {
+          NEXT_PUBLIC_SUPABASE_URL:
+            "https://xdxhswjgksukjmpbzqgz.supabase.co",
+        },
+        unapproved,
+        "xdxhswjgksukjmpbzqgz",
+      ),
+    ).toThrow("승인된 고3 모의고사 단어장");
   });
 });

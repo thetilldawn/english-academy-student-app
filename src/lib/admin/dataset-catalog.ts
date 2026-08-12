@@ -55,7 +55,7 @@ export type CataloguedUnit = {
 const catalogGroupLabels: Record<DatasetCatalogGroup, string> = {
   middle: "중등",
   high: "고등",
-  high_mock: "고등 모의고사",
+  high_mock: "고3 모의고사",
   csat: "수능",
 };
 

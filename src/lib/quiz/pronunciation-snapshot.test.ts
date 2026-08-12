@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   allChoiceAudioAvailable,
   parseChoicePronunciations,
+  parseRegistryPronunciation,
   parseTargetPronunciation,
 } from "@/lib/quiz/pronunciation-snapshot";
 
@@ -64,5 +65,36 @@ describe("quiz pronunciation snapshots", () => {
       choices,
     );
     expect(allChoiceAudioAvailable(mismatched)).toBe(false);
+  });
+
+  it("Webster raw 연결표의 선택값이 전체 변이에 있을 때만 재생한다", () => {
+    const registry = {
+      vocab_entry_id: 1,
+      provider: "merriam_webster",
+      status: "raw_first_variant_unreviewed",
+      review_status: "raw_unreviewed",
+      listening_enabled: true,
+      selected_variant_id: "mw:raw-1",
+      selected_audio_url: officialUrl,
+      variants: [
+        {
+          variant_id: "mw:raw-1",
+          audio_url: officialUrl,
+          pos: "noun",
+        },
+      ],
+    };
+    expect(parseRegistryPronunciation(registry)).toMatchObject({
+      variantId: "mw:raw-1",
+      audioUrl: officialUrl,
+      available: true,
+    });
+
+    expect(
+      parseRegistryPronunciation({
+        ...registry,
+        variants: [],
+      }),
+    ).toMatchObject({ available: false });
   });
 });

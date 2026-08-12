@@ -590,6 +590,7 @@ describe("buildStudentProgress", () => {
           timingMode: "per_question",
         }),
       ],
+      Date.parse("2026-08-11T12:00:00.000Z"),
     );
 
     expect(progress.recommendationReason).toBe("resume");
