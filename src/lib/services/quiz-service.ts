@@ -22,9 +22,8 @@ import {
   parseRegistryPronunciation,
   parseSyntheticRegistryPronunciation,
   parseTargetPronunciation,
-  preferredPronunciation,
+  preferredPronunciationWithApprovedKorean,
   unavailablePronunciation,
-  withApprovedKoreanPronunciation,
   withPronunciationDisplay,
   type QuizPronunciation,
   type VocabApprovedKoreanPronunciationRow,
@@ -314,7 +313,7 @@ async function loadApprovedKoreanPronunciationRegistry(
 
 type ExamUseQuestionSnapshot = {
   dictionary_id?: string;
-  pronunciation_variant_id?: string;
+  pronunciation_variant_id?: string | null;
   headword_snapshot: string;
   primary_meaning_snapshot: string;
   display_pronunciation_ko_snapshot: string | null;
@@ -401,27 +400,17 @@ export function mapResultQuestions(
         : pronunciationDisplayRegistry.get(vocabEntryId)) ??
       vocabulary?.pronunciation_ko ??
       null;
-    const snapshotPronunciation = withApprovedKoreanPronunciation(
-      withPronunciationDisplay(
-        examUseSnapshot
-          ? parseTargetPronunciation(
-              examUseSnapshot.pronunciation_snapshot,
-              examUseSnapshot.display_pronunciation_ko_snapshot,
-            )
-          : unavailablePronunciation(),
-        displayFallback,
-      ),
-      typeof examUseSnapshot?.dictionary_id === "string" &&
-        typeof examUseSnapshot.pronunciation_variant_id === "string"
-        ? approvedKoreanPronunciationRegistry.get(
-            approvedKoreanPronunciationKey(
-              examUseSnapshot.dictionary_id,
-              examUseSnapshot.pronunciation_variant_id,
-            ),
+    const snapshotPronunciation = withPronunciationDisplay(
+      examUseSnapshot
+        ? parseTargetPronunciation(
+            examUseSnapshot.pronunciation_snapshot,
+            examUseSnapshot.display_pronunciation_ko_snapshot,
           )
-        : undefined,
+        : unavailablePronunciation(),
+      displayFallback,
     );
-    const pronunciation = preferredPronunciation(
+    const pronunciation = preferredPronunciationWithApprovedKorean(
+      examUseSnapshot?.dictionary_id,
       snapshotPronunciation,
       vocabEntryId === null
         ? undefined
@@ -429,6 +418,7 @@ export function mapResultQuestions(
       typeof examUseSnapshot?.dictionary_id === "string"
         ? syntheticPronunciationRegistry.get(examUseSnapshot.dictionary_id)
         : undefined,
+      approvedKoreanPronunciationRegistry,
     );
     const verifiedSnapshot = isTrustedQuestionSnapshot(
       bankQuestion?.provenance_status,
@@ -1045,25 +1035,14 @@ export async function getStudentAttempt(
         typeof targetVocabEntryId === "number"
           ? pronunciationDisplayRegistry.get(targetVocabEntryId)
           : null;
-      const snapshotPronunciation = withApprovedKoreanPronunciation(
-        withPronunciationDisplay(
-          examUseSnapshot
-            ? parseTargetPronunciation(
-                examUseSnapshot.pronunciation_snapshot,
-                examUseSnapshot.display_pronunciation_ko_snapshot,
-              )
-            : unavailablePronunciation(),
-          targetDisplayFallback,
-        ),
-        typeof examUseSnapshot?.dictionary_id === "string" &&
-          typeof examUseSnapshot.pronunciation_variant_id === "string"
-          ? approvedKoreanPronunciationRegistry.get(
-              approvedKoreanPronunciationKey(
-                examUseSnapshot.dictionary_id,
-                examUseSnapshot.pronunciation_variant_id,
-              ),
+      const snapshotPronunciation = withPronunciationDisplay(
+        examUseSnapshot
+          ? parseTargetPronunciation(
+              examUseSnapshot.pronunciation_snapshot,
+              examUseSnapshot.display_pronunciation_ko_snapshot,
             )
-          : undefined,
+          : unavailablePronunciation(),
+        targetDisplayFallback,
       );
       const snapshotChoicePronunciations = examUseSnapshot
         ? parseChoicePronunciations(
@@ -1077,7 +1056,8 @@ export async function getStudentAttempt(
             question.choices,
           )
         : question.choices.map(() => null);
-      const pronunciation = preferredPronunciation(
+      const pronunciation = preferredPronunciationWithApprovedKorean(
+        examUseSnapshot?.dictionary_id,
         snapshotPronunciation,
         typeof targetVocabEntryId === "number"
           ? pronunciationRegistry.get(targetVocabEntryId)
@@ -1085,6 +1065,7 @@ export async function getStudentAttempt(
         typeof examUseSnapshot?.dictionary_id === "string"
           ? syntheticPronunciationRegistry.get(examUseSnapshot.dictionary_id)
           : undefined,
+        approvedKoreanPronunciationRegistry,
       );
       const choiceVocabEntryIds = completeChoiceVocabEntryIds(
         bankQuestion?.choice_vocab_entry_ids,
@@ -1095,23 +1076,13 @@ export async function getStudentAttempt(
         const choiceDictionaryId = snapshotChoiceDictionaryIds[index];
         const choiceSnapshotPronunciation =
           snapshotChoicePronunciations[index] ?? unavailablePronunciation();
-        return preferredPronunciation(
-          withApprovedKoreanPronunciation(
-            withPronunciationDisplay(
-              choiceSnapshotPronunciation,
-              typeof choiceVocabEntryId === "number"
-                ? pronunciationDisplayRegistry.get(choiceVocabEntryId)
-                : null,
-            ),
-            typeof choiceDictionaryId === "string" &&
-              typeof choiceSnapshotPronunciation.variantId === "string"
-              ? approvedKoreanPronunciationRegistry.get(
-                  approvedKoreanPronunciationKey(
-                    choiceDictionaryId,
-                    choiceSnapshotPronunciation.variantId,
-                  ),
-                )
-              : undefined,
+        return preferredPronunciationWithApprovedKorean(
+          choiceDictionaryId,
+          withPronunciationDisplay(
+            choiceSnapshotPronunciation,
+            typeof choiceVocabEntryId === "number"
+              ? pronunciationDisplayRegistry.get(choiceVocabEntryId)
+              : null,
           ),
           typeof choiceVocabEntryId === "number"
             ? pronunciationRegistry.get(choiceVocabEntryId)
@@ -1119,6 +1090,7 @@ export async function getStudentAttempt(
           typeof choiceDictionaryId === "string"
             ? syntheticPronunciationRegistry.get(choiceDictionaryId)
             : undefined,
+          approvedKoreanPronunciationRegistry,
         );
       });
 

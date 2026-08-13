@@ -373,6 +373,28 @@ export function preferredPronunciation(
     : unavailablePronunciation(snapshot.displayKo, snapshot.segments);
 }
 
+export function preferredPronunciationWithApprovedKorean(
+  dictionaryId: string | null | undefined,
+  snapshot: QuizPronunciation,
+  officialRegistry: QuizPronunciation | undefined,
+  syntheticRegistry: QuizPronunciation | undefined,
+  approvedRegistry: ReadonlyMap<string, QuizPronunciation>,
+) {
+  const preferred = preferredPronunciation(
+    snapshot,
+    officialRegistry,
+    syntheticRegistry,
+  );
+  const approved =
+    typeof dictionaryId === "string" &&
+    typeof preferred.variantId === "string"
+      ? approvedRegistry.get(
+          approvedKoreanPronunciationKey(dictionaryId, preferred.variantId),
+        )
+      : undefined;
+  return withApprovedKoreanPronunciation(preferred, approved);
+}
+
 export function withPronunciationDisplay(
   pronunciation: QuizPronunciation,
   displayKo: string | null | undefined,

@@ -100,6 +100,16 @@ describe("mapResultQuestions", () => {
   });
 
   it("결과 화면에도 Google 합성 표현 음원과 한글 발음을 합쳐 전달한다", () => {
+    const dictionaryId = "expression:apply-for-4f26363d";
+    const assetId =
+      "synthetic:5906e950416fd2752329ef5ecc1761c62fd47d154a80f30fd171682596724458";
+    const audioUrl =
+      "https://wojxpruvbjzbhrpmsbuy.supabase.co/storage/v1/object/public/vocab-pronunciation-audio/pronunciation/google_cloud_text_to_speech/profile-5b6efb0ecc8f4702/5906e950416fd2752329ef5ecc1761c62fd47d154a80f30fd171682596724458.mp3";
+    const segments = [
+      { text: "어플", stress: "none" as const },
+      { text: "라이", stress: "primary" as const },
+      { text: " 포어", stress: "none" as const },
+    ];
     const [result] = mapResultQuestions(
       [
         resultRow({
@@ -108,8 +118,8 @@ describe("mapResultQuestions", () => {
             primary_meaning_snapshot: "지원하다",
             provenance_status: "legacy_backfill",
             exam_use_snapshot: {
-              dictionary_id: "expression:apply-for-12345678",
-              pronunciation_variant_id: "synthetic:apply-for",
+              dictionary_id: dictionaryId,
+              pronunciation_variant_id: null,
               headword_snapshot: "apply for",
               primary_meaning_snapshot: "지원하다",
               display_pronunciation_ko_snapshot: "어플라이 포어",
@@ -123,21 +133,36 @@ describe("mapResultQuestions", () => {
       new Map(),
       new Map([
         [
-          "expression:apply-for-12345678",
+          dictionaryId,
           {
-            audioUrl: "https://preview.supabase.co/apply-for.mp3",
+            audioUrl,
             available: true,
             displayKo: null,
-            variantId: "synthetic:apply-for",
+            variantId: assetId,
+          },
+        ],
+      ]),
+      new Map(),
+      new Map([
+        [
+          `${dictionaryId}\u0000${assetId}`,
+          {
+            audioUrl: null,
+            available: false,
+            displayKo: "어플라이 포어",
+            segments,
+            variantId: assetId,
           },
         ],
       ]),
     );
 
-    expect(result.pronunciation).toMatchObject({
-      audioUrl: "https://preview.supabase.co/apply-for.mp3",
+    expect(result.pronunciation).toEqual({
+      audioUrl,
       available: true,
       displayKo: "어플라이 포어",
+      segments,
+      variantId: assetId,
     });
   });
 

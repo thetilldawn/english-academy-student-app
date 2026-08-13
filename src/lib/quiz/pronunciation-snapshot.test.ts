@@ -10,6 +10,7 @@ import {
   parseSyntheticRegistryPronunciation,
   parseTargetPronunciation,
   preferredPronunciation,
+  preferredPronunciationWithApprovedKorean,
   withApprovedKoreanPronunciation,
 } from "@/lib/quiz/pronunciation-snapshot";
 
@@ -243,6 +244,56 @@ describe("quiz pronunciation snapshots", () => {
       variantId: "synthetic:test",
       displayKo: "이머지 프럼",
     });
+  });
+
+  it("최종 Google 합성음원을 고른 뒤 같은 자산에 승인된 구동사 강세를 붙인다", () => {
+    const dictionaryId = "expression:apply-for-4f26363d";
+    const assetId =
+      "synthetic:5906e950416fd2752329ef5ecc1761c62fd47d154a80f30fd171682596724458";
+    const synthetic = {
+      displayKo: null,
+      variantId: assetId,
+      audioUrl:
+        "https://wojxpruvbjzbhrpmsbuy.supabase.co/storage/v1/object/public/vocab-pronunciation-audio/apply-for.mp3",
+      available: true,
+    };
+    const approved = {
+      displayKo: "어플라이 포어",
+      segments: [
+        { text: "어플", stress: "none" as const },
+        { text: "라이", stress: "primary" as const },
+        { text: " 포어", stress: "none" as const },
+      ],
+      variantId: assetId,
+      audioUrl: null,
+      available: false,
+    };
+    const approvedRegistry = new Map([
+      [approvedKoreanPronunciationKey(dictionaryId, assetId), approved],
+    ]);
+
+    expect(
+      preferredPronunciationWithApprovedKorean(
+        dictionaryId,
+        parseTargetPronunciation({}, "어플라이 포어"),
+        undefined,
+        synthetic,
+        approvedRegistry,
+      ),
+    ).toEqual({
+      ...synthetic,
+      displayKo: "어플라이 포어",
+      segments: approved.segments,
+    });
+    expect(
+      preferredPronunciationWithApprovedKorean(
+        dictionaryId,
+        parseTargetPronunciation({}, "어플라이 포어"),
+        undefined,
+        { ...synthetic, variantId: `synthetic:${"0".repeat(64)}` },
+        approvedRegistry,
+      ).segments,
+    ).toBeUndefined();
   });
 
   it("다른 발음 변이의 음원에는 기존 강세 구간을 붙이지 않는다", () => {
