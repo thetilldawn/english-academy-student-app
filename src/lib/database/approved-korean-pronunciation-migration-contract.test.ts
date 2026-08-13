@@ -12,6 +12,9 @@ const policyMigrationPath = path.resolve(
 const validationFixMigrationPath = path.resolve(
   "supabase/migrations/20260813203200_fix_approved_korean_pronunciation_validation.sql",
 );
+const multiwordStressMigrationPath = path.resolve(
+  "supabase/migrations/20260813203300_allow_multiword_primary_stress.sql",
+);
 
 describe("approved Korean pronunciation migration", () => {
   it("stores only reviewed, structurally validated segments behind service-role access", async () => {
@@ -19,6 +22,10 @@ describe("approved Korean pronunciation migration", () => {
     const policyMigration = await readFile(policyMigrationPath, "utf8");
     const validationFixMigration = await readFile(
       validationFixMigrationPath,
+      "utf8",
+    );
+    const multiwordStressMigration = await readFile(
+      multiwordStressMigrationPath,
       "utf8",
     );
 
@@ -45,5 +52,6 @@ describe("approved Korean pronunciation migration", () => {
     expect(validationFixMigration).toContain(
       "coalesce(segment.value ->> 'stress', '') not in",
     );
+    expect(multiwordStressMigration).toContain(") >= 1");
   });
 });

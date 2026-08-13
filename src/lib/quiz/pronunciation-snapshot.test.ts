@@ -71,27 +71,18 @@ describe("quiz pronunciation snapshots", () => {
         ko_segments: [
           { text: "어플", stress: "none" },
           { text: "라이 ", stress: "primary" },
-          { text: "포어", stress: "secondary" },
+          { text: "포어", stress: "primary" },
         ],
       }).segments,
     ).toEqual([
       { text: "어플", stress: "none" },
       { text: "라이 ", stress: "primary" },
-      { text: "포어", stress: "secondary" },
+      { text: "포어", stress: "primary" },
     ]);
     expect(
       parseTargetPronunciation({
         displayPronunciationKo: "어플라이 포어",
         koSegments: [{ text: "다른 발음", stress: "primary" }],
-      }).segments,
-    ).toBeUndefined();
-    expect(
-      parseTargetPronunciation({
-        displayPronunciationKo: "double primary",
-        segments: [
-          { text: "double ", stress: "primary" },
-          { text: "primary", stress: "primary" },
-        ],
       }).segments,
     ).toBeUndefined();
     expect(

@@ -10,6 +10,9 @@ const migrationPath = path.resolve(
 const validationFixMigrationPath = path.resolve(
   "supabase/migrations/20260813203200_fix_approved_korean_pronunciation_validation.sql",
 );
+const multiwordStressMigrationPath = path.resolve(
+  "supabase/migrations/20260813203300_allow_multiword_primary_stress.sql",
+);
 
 describe("approved Korean pronunciation data", () => {
   it("accepts and stores the four reviewed segment records", async () => {
@@ -25,10 +28,15 @@ describe("approved Korean pronunciation data", () => {
       validationFixMigrationPath,
       "utf8",
     );
+    const multiwordStressMigration = await readFile(
+      multiwordStressMigrationPath,
+      "utf8",
+    );
     const seedMarker = "insert into public.vocab_approved_korean_pronunciations";
     const seedOffset = migration.indexOf(seedMarker);
     await database.exec(migration.slice(0, seedOffset));
     await database.exec(validationFixMigration);
+    await database.exec(multiwordStressMigration);
     const validation = await database.query<{
       combined: string;
       invalid_count: number;
@@ -77,6 +85,13 @@ describe("approved Korean pronunciation data", () => {
       ) as valid
     `);
     expect(missingStress.rows).toEqual([{ valid: false }]);
+    const multiwordPrimary = await database.query<{ valid: boolean }>(`
+      select private.valid_korean_pronunciation_segments_v1(
+        '어플라이 포어',
+        '[{"text":"어플","stress":"none"},{"text":"라이 ","stress":"primary"},{"text":"포어","stress":"primary"}]'::jsonb
+      ) as valid
+    `);
+    expect(multiwordPrimary.rows).toEqual([{ valid: true }]);
     await database.exec(migration.slice(seedOffset));
 
     const result = await database.query<{

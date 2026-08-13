@@ -26,7 +26,7 @@ as $$
       select count(*)
       from jsonb_array_elements(p_segments) as segment(value)
       where segment.value ->> 'stress' = 'primary'
-    ) = 1
+    ) >= 1
     and (
       select string_agg(segment.value ->> 'text', '' order by segment.ordinality)
       from jsonb_array_elements(p_segments)

@@ -94,7 +94,7 @@ export function parseKoreanPronunciationSegments(
     if (stress === "primary") primaryStressCount += 1;
     segments.push({ text, stress });
   }
-  return primaryStressCount === 1 &&
+  return primaryStressCount >= 1 &&
     segments.map(({ text }) => text).join("") === displayKo
     ? segments
     : undefined;

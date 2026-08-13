@@ -112,6 +112,30 @@ describe("QuizFrame", () => {
     }
   });
 
+  it("굵게 승인된 구동사 강세 구간을 모두 표시한다", () => {
+    const currentQuestion = question("english_to_korean");
+    currentQuestion.prompt = "apply for";
+    currentQuestion.pronunciation = {
+      ...availablePronunciation,
+      displayKo: "어플라이 포어",
+      segments: [
+        { text: "어플", stress: "none" },
+        { text: "라이 ", stress: "primary" },
+        { text: "포어", stress: "primary" },
+      ],
+    };
+    renderFrame(currentQuestion);
+
+    expect(
+      Array.from(document.querySelectorAll("[data-stress='primary']")).map(
+        (element) => element.textContent,
+      ),
+    ).toEqual(["라이 ", "포어"]);
+    expect(
+      document.querySelector("[data-pronunciation-text]"),
+    ).toHaveTextContent("[어플라이 포어]");
+  });
+
   it("shows a speaker beside every English choice and none beside the Korean prompt", () => {
     renderFrame(question("korean_to_english"));
 
