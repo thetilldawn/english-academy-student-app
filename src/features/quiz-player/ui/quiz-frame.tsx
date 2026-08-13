@@ -2,6 +2,7 @@ import type { KeyboardEvent, RefObject } from "react";
 
 import { formatContentText } from "@/content/format";
 import { studentAppText } from "@/content/ko/student-app";
+import { PronunciationText } from "@/components/pronunciation-text";
 import {
   HelpTip,
   inlineHelpClassName,
@@ -227,9 +228,7 @@ export function QuizFrame({
         >
           <span>{currentQuestion.prompt}</span>
           {isEnglishPrompt && currentQuestion.pronunciation.displayKo ? (
-            <small className={styles.promptPronunciation}>
-              {currentQuestion.pronunciation.displayKo}
-            </small>
+            <PronunciationText className={styles.promptPronunciation} pronunciation={currentQuestion.pronunciation} />
           ) : null}
         </h1>
         {promptAudioUrl ? (

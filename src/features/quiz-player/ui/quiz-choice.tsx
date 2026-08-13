@@ -1,5 +1,6 @@
 import { formatContentText } from "@/content/format";
 import { studentAppText } from "@/content/ko/student-app";
+import { PronunciationText } from "@/components/pronunciation-text";
 
 import type { QuizChoiceLength } from "../domain/quiz-session";
 import type { QuizPronunciation } from "../model";
@@ -58,9 +59,10 @@ export function QuizChoice({
         <span className={styles.copy}>
           <span className={styles.text}>{choice}</span>
           {isEnglish && pronunciation.displayKo ? (
-            <small className={styles.pronunciation}>
-              {pronunciation.displayKo}
-            </small>
+            <PronunciationText
+              className={styles.pronunciation}
+              pronunciation={pronunciation}
+            />
           ) : null}
         </span>
         <span aria-hidden="true" className={styles.mark}>

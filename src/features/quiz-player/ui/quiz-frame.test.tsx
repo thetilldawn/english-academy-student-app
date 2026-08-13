@@ -15,6 +15,10 @@ const availablePronunciation = {
   audioUrl: "https://example.com/audio.mp3",
   available: true,
   displayKo: "발음",
+  segments: [
+    { text: "발", stress: "primary" },
+    { text: "음", stress: "none" },
+  ],
   variantId: "test:1",
 } as const;
 
@@ -99,6 +103,10 @@ describe("QuizFrame", () => {
         button.getAttribute("aria-label")?.includes("outstanding"),
       ),
     ).toHaveLength(1);
+    expect(screen.getByText("발", { selector: "strong" })).toBeVisible();
+    expect(
+      document.querySelector("[data-pronunciation-text]"),
+    ).toHaveTextContent("[발음]");
     for (const meaning of ["뜻 하나", "뜻 둘", "뜻 셋", "뜻 넷"]) {
       expect(screen.getByRole("button", { name: new RegExp(meaning) })).toBeVisible();
     }

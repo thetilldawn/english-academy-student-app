@@ -1,0 +1,5 @@
+create policy vocab_approved_korean_pronunciations_service_select
+on public.vocab_approved_korean_pronunciations
+for select
+to service_role
+using (true);

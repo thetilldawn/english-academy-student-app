@@ -136,11 +136,41 @@
 
 .answerCopy {
   min-width: 0;
+  display: grid;
+  gap: var(--space-1);
   font-family: var(--font-krs);
   font-size: 18px;
   font-weight: 700;
   line-height: 1.45;
   overflow-wrap: anywhere;
+}
+
+.resultPronunciation {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pronunciation {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-family: var(--font-kr);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pronunciation [data-stress="secondary"] {
+  font-style: italic;
+  font-weight: 600;
+}
+
+.pronunciation [data-stress="primary"] {
+  font-weight: 800;
 }
 
 .answer[data-language="english"] .answerCopy {

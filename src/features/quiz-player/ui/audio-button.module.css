@@ -41,6 +41,11 @@
   height: 76px;
 }
 
+.compact {
+  width: 46px;
+  height: 46px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .button {
     transition: none;

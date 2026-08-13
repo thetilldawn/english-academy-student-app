@@ -221,11 +221,20 @@
 }
 
 .promptPronunciation {
-  color: var(--muted);
+  color: var(--ink);
   font-family: var(--font-kr);
   font-size: 12px;
   font-weight: 400;
   letter-spacing: 0;
+}
+
+.promptPronunciation [data-stress="secondary"] {
+  font-style: italic;
+  font-weight: 600;
+}
+
+.promptPronunciation [data-stress="primary"] {
+  font-weight: 800;
 }
 
 .choiceList {

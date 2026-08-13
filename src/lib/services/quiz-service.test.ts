@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { mapResultQuestions } from "@/lib/services/quiz-service";
+import {
+  completeChoiceVocabEntryIds,
+  mapResultQuestions,
+} from "@/lib/services/quiz-service";
 
 type ResultRow = Parameters<typeof mapResultQuestions>[0][number];
 
@@ -9,6 +12,7 @@ function resultRow(
 ): ResultRow {
   return {
     id: "question-1",
+    vocab_entry_id: null,
     order_index: 1,
     direction: "english_to_korean",
     prompt: "current",
@@ -23,6 +27,7 @@ function resultRow(
     vocab_entries: {
       headword: "current",
       primary_meaning: "현재 뜻",
+      pronunciation_ko: null,
     },
     ...overrides,
   };
@@ -65,10 +70,18 @@ describe("mapResultQuestions", () => {
           primary_meaning_snapshot: "검증 전 뜻",
           provenance_status: "legacy_backfill",
           exam_use_snapshot: {
+            dictionary_id: "word:observe",
+            pronunciation_variant_id: "mw:observe",
             headword_snapshot: "observe",
             primary_meaning_snapshot: "준수하다",
             display_pronunciation_ko_snapshot: "업저브",
-            pronunciation_snapshot: {},
+            pronunciation_snapshot: {
+              displayPronunciationKo: "업저브",
+              koSegments: [
+                { text: "업", stress: "none" },
+                { text: "저브", stress: "primary" },
+              ],
+            },
             choice_dictionary_snapshots: [],
             provenance_status: "reviewed_for_preview_v1",
           },
@@ -78,7 +91,105 @@ describe("mapResultQuestions", () => {
 
     expect(result.headword).toBe("observe");
     expect(result.primaryMeaning).toBe("준수하다");
+    expect(result.pronunciation.displayKo).toBe("업저브");
+    expect(result.pronunciation.segments).toEqual([
+      { text: "업", stress: "none" },
+      { text: "저브", stress: "primary" },
+    ]);
     expect(result.provenanceStatus).toBe("reviewed_for_preview_v1");
+  });
+
+  it("결과 화면에도 Google 합성 표현 음원과 한글 발음을 합쳐 전달한다", () => {
+    const [result] = mapResultQuestions(
+      [
+        resultRow({
+          assignment_question: {
+            headword_snapshot: "apply for",
+            primary_meaning_snapshot: "지원하다",
+            provenance_status: "legacy_backfill",
+            exam_use_snapshot: {
+              dictionary_id: "expression:apply-for-12345678",
+              pronunciation_variant_id: "synthetic:apply-for",
+              headword_snapshot: "apply for",
+              primary_meaning_snapshot: "지원하다",
+              display_pronunciation_ko_snapshot: "어플라이 포어",
+              pronunciation_snapshot: {},
+              choice_dictionary_snapshots: [],
+              provenance_status: "reviewed_for_preview_v1",
+            },
+          },
+        }),
+      ],
+      new Map(),
+      new Map([
+        [
+          "expression:apply-for-12345678",
+          {
+            audioUrl: "https://preview.supabase.co/apply-for.mp3",
+            available: true,
+            displayKo: null,
+            variantId: "synthetic:apply-for",
+          },
+        ],
+      ]),
+    );
+
+    expect(result.pronunciation).toMatchObject({
+      audioUrl: "https://preview.supabase.co/apply-for.mp3",
+      available: true,
+      displayKo: "어플라이 포어",
+    });
+  });
+
+  it("결과 화면에 동일 변이로 승인된 강세 구간을 전달한다", () => {
+    const approved = {
+      audioUrl: null,
+      available: false,
+      displayKo: "이네버터블",
+      segments: [
+        { text: "이", stress: "none" as const },
+        { text: "네", stress: "primary" as const },
+        { text: "버터블", stress: "none" as const },
+      ],
+      variantId: "mw:inevitable",
+    };
+    const [result] = mapResultQuestions(
+      [
+        resultRow({
+          assignment_question: {
+            headword_snapshot: "inevitable",
+            primary_meaning_snapshot: "불가피한",
+            provenance_status: "legacy_backfill",
+            exam_use_snapshot: {
+              dictionary_id: "word:inevitable",
+              pronunciation_variant_id: "mw:inevitable",
+              headword_snapshot: "inevitable",
+              primary_meaning_snapshot: "불가피한",
+              display_pronunciation_ko_snapshot: "이네버터블",
+              pronunciation_snapshot: {
+                displayPronunciationKo: "이네버터블",
+                pronunciationVariantId: "mw:inevitable",
+                audioStatus: "raw_attached",
+                audioUrl:
+                  "https://media.merriam-webster.com/audio/prons/en/us/mp3/i/inevitable.mp3",
+                listeningEnabled: true,
+              },
+              choice_dictionary_snapshots: [],
+              provenance_status: "reviewed_for_preview_v1",
+            },
+          },
+        }),
+      ],
+      new Map(),
+      new Map(),
+      new Map(),
+      new Map([["word:inevitable\u0000mw:inevitable", approved]]),
+    );
+
+    expect(result.pronunciation.segments?.[1]).toEqual({
+      text: "네",
+      stress: "primary",
+    });
   });
 
   it("검증되지 않은 레거시 backfill은 현재 단어 행을 우선한다", () => {
@@ -123,5 +234,19 @@ describe("mapResultQuestions", () => {
     ]);
 
     expect(result.wrongCount).toBe(1);
+  });
+});
+
+describe("completeChoiceVocabEntryIds", () => {
+  it("역방향 보기 네 개의 ID가 모두 있을 때만 사용한다", () => {
+    expect(completeChoiceVocabEntryIds([11, 12, 13, 14], 4)).toEqual([
+      11, 12, 13, 14,
+    ]);
+    expect(completeChoiceVocabEntryIds([11, 12, 13], 4)).toEqual([
+      null, null, null, null,
+    ]);
+    expect(completeChoiceVocabEntryIds(null, 4)).toEqual([
+      null, null, null, null,
+    ]);
   });
 });

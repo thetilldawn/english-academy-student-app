@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type {
@@ -15,7 +15,10 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn() }),
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 function question(
   id: string,
@@ -35,6 +38,12 @@ function question(
     wrongCount: 1,
     headword: `word-${id}`,
     primaryMeaning: `meaning-${id}`,
+    pronunciation: {
+      audioUrl: null,
+      available: false,
+      displayKo: `발음-${id}`,
+      variantId: null,
+    },
     provenanceStatus: "verified_v2",
     ...overrides,
   };
@@ -112,6 +121,70 @@ describe("StudentResultView", () => {
     expect(within(unresolved as HTMLElement).getByText("word-q1")).toBeVisible();
     expect(within(unresolved as HTMLElement).queryByText("word-q2")).not.toBeInTheDocument();
     expect(within(resolved as HTMLElement).getByText("word-q2")).toBeVisible();
+  });
+
+  it("shows pronunciation and a speaker on review cards when audio exists", () => {
+    const play = vi.fn().mockResolvedValue(undefined);
+    const audioInstances: Array<{ pause: ReturnType<typeof vi.fn> }> = [];
+    vi.stubGlobal(
+      "Audio",
+      class {
+        currentTime = 0;
+        load = vi.fn();
+        pause = vi.fn();
+        play = play;
+        preload = "";
+        removeAttribute = vi.fn();
+        src = "";
+
+        constructor() {
+          audioInstances.push(this);
+        }
+      },
+    );
+    render(
+      <StudentResultView
+        result={
+          result([
+            question("q1", {
+              pronunciation: {
+                audioUrl: "https://example.com/word-q1.mp3",
+                available: true,
+                displayKo: "워드",
+                segments: [
+                  { text: "워", stress: "primary" },
+                  { text: "드", stress: "none" },
+                ],
+                variantId: "test:q1",
+              },
+            }),
+            question("q2", {
+              direction: "korean_to_english",
+              pronunciation: {
+                audioUrl: "https://example.com/word-q2.mp3",
+                available: true,
+                displayKo: "워드 투",
+                variantId: "test:q2",
+              },
+            }),
+          ])
+        }
+      />,
+    );
+
+    expect(screen.getByText("워", { selector: "strong" })).toBeVisible();
+    expect(
+      [...document.querySelectorAll("[data-pronunciation-text]")].map(
+        (element) => element.textContent,
+      ),
+    ).toEqual(expect.arrayContaining(["[워드]", "[워드 투]"]));
+    expect(screen.getByRole("button", { name: /word-q1 발음 듣기/ })).toBeVisible();
+    expect(screen.getByRole("button", { name: /word-q2 발음 듣기/ })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: /word-q1 발음 듣기/ }));
+    fireEvent.click(screen.getByRole("button", { name: /word-q2 발음 듣기/ }));
+    expect(play).toHaveBeenCalledTimes(2);
+    expect(audioInstances).toHaveLength(1);
+    expect(audioInstances[0]?.pause).toHaveBeenCalledTimes(2);
   });
 
   it("shows the retry action only while the first result waits for review", () => {

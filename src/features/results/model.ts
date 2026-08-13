@@ -1,4 +1,5 @@
 import type { QuestionProvenanceStatus } from "@/lib/quiz/question-provenance";
+import type { QuizPronunciation } from "@/lib/quiz/pronunciation-snapshot";
 
 export type AttemptResultQuestion = {
   id: string;
@@ -14,6 +15,7 @@ export type AttemptResultQuestion = {
   wrongCount: number;
   headword: string;
   primaryMeaning: string;
+  pronunciation: QuizPronunciation;
   provenanceStatus: QuestionProvenanceStatus;
 };
 

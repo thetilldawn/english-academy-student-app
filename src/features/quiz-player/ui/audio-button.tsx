@@ -31,7 +31,7 @@ export function AudioButton({
   disabled?: boolean;
   label: string;
   onClick: MouseEventHandler<HTMLButtonElement>;
-  variant: "prompt" | "choice";
+  variant: "prompt" | "choice" | "compact";
 }) {
   return (
     <button

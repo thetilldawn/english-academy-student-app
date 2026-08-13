@@ -15,14 +15,19 @@ import type {
 } from "@/lib/admin/assignment-settings";
 import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
 import {
+  approvedKoreanPronunciationKey,
   parseChoicePronunciations,
   parseChoiceDictionaryIds,
+  parseApprovedKoreanPronunciation,
   parseRegistryPronunciation,
   parseSyntheticRegistryPronunciation,
   parseTargetPronunciation,
   preferredPronunciation,
   unavailablePronunciation,
+  withApprovedKoreanPronunciation,
+  withPronunciationDisplay,
   type QuizPronunciation,
+  type VocabApprovedKoreanPronunciationRow,
   type VocabPronunciationRegistryRow,
   type VocabSyntheticAudioAssetRow,
 } from "@/lib/quiz/pronunciation-snapshot";
@@ -76,6 +81,22 @@ export type AttemptState = {
 
 export type AttemptQuestionResult = AttemptResultQuestion;
 
+export function completeChoiceVocabEntryIds(
+  value: unknown,
+  choiceCount: number,
+): Array<number | null> {
+  if (
+    !Array.isArray(value) ||
+    value.length !== choiceCount ||
+    !value.every(
+      (item) => typeof item === "number" && Number.isSafeInteger(item),
+    )
+  ) {
+    return Array.from({ length: choiceCount }, () => null);
+  }
+  return value;
+}
+
 type AssignmentRow = {
   id: string;
   title: string;
@@ -118,6 +139,7 @@ type AttemptRow = {
 
 type QuestionRow = {
   id: string;
+  vocab_entry_id: number | null;
   order_index: number;
   direction: "english_to_korean" | "korean_to_english";
   prompt: string;
@@ -181,6 +203,39 @@ async function loadVocabPronunciationRegistry(
   return result;
 }
 
+async function loadVocabPronunciationDisplayRegistry(
+  vocabEntryIds: readonly number[],
+) {
+  const result = new Map<number, string>();
+  if (vocabEntryIds.length === 0) return result;
+  const supabase = getServiceSupabaseClient();
+  const uniqueIds = [...new Set(vocabEntryIds)];
+  const chunkSize = 500;
+  for (let offset = 0; offset < uniqueIds.length; offset += chunkSize) {
+    const chunk = uniqueIds.slice(offset, offset + chunkSize);
+    const { data, error } = await supabase
+      .from("vocab_entries")
+      .select("id, pronunciation_ko")
+      .in("id", chunk);
+    if (error) {
+      console.warn("[quiz-pronunciation] display lookup failed", {
+        code: error.code,
+      });
+      return new Map<number, string>();
+    }
+    for (const row of data ?? []) {
+      if (
+        typeof row.id === "number" &&
+        typeof row.pronunciation_ko === "string" &&
+        row.pronunciation_ko.trim()
+      ) {
+        result.set(row.id, row.pronunciation_ko.trim());
+      }
+    }
+  }
+  return result;
+}
+
 async function loadSyntheticPronunciationRegistry(
   dictionaryIds: readonly string[],
 ) {
@@ -215,8 +270,51 @@ async function loadSyntheticPronunciationRegistry(
   return result;
 }
 
+async function loadApprovedKoreanPronunciationRegistry(
+  dictionaryIds: readonly string[],
+) {
+  const result = new Map<string, QuizPronunciation>();
+  if (dictionaryIds.length === 0) return result;
+  const supabase = getServiceSupabaseClient();
+  const uniqueIds = [...new Set(dictionaryIds)];
+  const chunkSize = 500;
+  for (let offset = 0; offset < uniqueIds.length; offset += chunkSize) {
+    const chunk = uniqueIds.slice(offset, offset + chunkSize);
+    const { data, error } = await supabase
+      .from("vocab_approved_korean_pronunciations")
+      .select(
+        "dictionary_id, pronunciation_variant_id, display_pronunciation_ko, segments, review_status",
+      )
+      .in("dictionary_id", chunk)
+      .eq("review_status", "approved");
+    if (error) {
+      console.warn("[quiz-pronunciation] approved display lookup failed", {
+        code: error.code,
+      });
+      return new Map<string, QuizPronunciation>();
+    }
+    for (const row of (data ?? []) as VocabApprovedKoreanPronunciationRow[]) {
+      const pronunciation = parseApprovedKoreanPronunciation(row);
+      if (
+        pronunciation?.variantId &&
+        typeof row.dictionary_id === "string"
+      ) {
+        result.set(
+          approvedKoreanPronunciationKey(
+            row.dictionary_id,
+            pronunciation.variantId,
+          ),
+          pronunciation,
+        );
+      }
+    }
+  }
+  return result;
+}
+
 type ExamUseQuestionSnapshot = {
   dictionary_id?: string;
+  pronunciation_variant_id?: string;
   headword_snapshot: string;
   primary_meaning_snapshot: string;
   display_pronunciation_ko_snapshot: string | null;
@@ -227,6 +325,7 @@ type ExamUseQuestionSnapshot = {
 
 type ResultQuestionRow = {
   id: string;
+  vocab_entry_id: number | null;
   order_index: number;
   direction: "english_to_korean" | "korean_to_english";
   prompt: string;
@@ -244,8 +343,16 @@ type ResultQuestionRow = {
     | AssignmentQuestionSnapshot[]
     | null;
   vocab_entries:
-    | { headword: string; primary_meaning: string }
-    | Array<{ headword: string; primary_meaning: string }>
+    | {
+        headword: string;
+        primary_meaning: string;
+        pronunciation_ko: string | null;
+      }
+    | Array<{
+        headword: string;
+        primary_meaning: string;
+        pronunciation_ko: string | null;
+      }>
     | null;
 };
 
@@ -264,6 +371,14 @@ function reviewedExamUseSnapshot(
 
 export function mapResultQuestions(
   rows: ResultQuestionRow[],
+  pronunciationRegistry: ReadonlyMap<number, QuizPronunciation> = new Map(),
+  syntheticPronunciationRegistry: ReadonlyMap<string, QuizPronunciation> =
+    new Map(),
+  pronunciationDisplayRegistry: ReadonlyMap<number, string> = new Map(),
+  approvedKoreanPronunciationRegistry: ReadonlyMap<
+    string,
+    QuizPronunciation
+  > = new Map(),
 ): AttemptQuestionResult[] {
   return rows.map((row) => {
     const choices = Array.isArray(row.choices)
@@ -276,6 +391,45 @@ export function mapResultQuestions(
       : row.vocab_entries;
     const bankQuestion = oneRelation(row.assignment_question);
     const examUseSnapshot = reviewedExamUseSnapshot(bankQuestion);
+    const vocabEntryId =
+      typeof bankQuestion?.vocab_entry_id === "number"
+        ? bankQuestion.vocab_entry_id
+        : row.vocab_entry_id;
+    const displayFallback =
+      (vocabEntryId === null
+        ? null
+        : pronunciationDisplayRegistry.get(vocabEntryId)) ??
+      vocabulary?.pronunciation_ko ??
+      null;
+    const snapshotPronunciation = withApprovedKoreanPronunciation(
+      withPronunciationDisplay(
+        examUseSnapshot
+          ? parseTargetPronunciation(
+              examUseSnapshot.pronunciation_snapshot,
+              examUseSnapshot.display_pronunciation_ko_snapshot,
+            )
+          : unavailablePronunciation(),
+        displayFallback,
+      ),
+      typeof examUseSnapshot?.dictionary_id === "string" &&
+        typeof examUseSnapshot.pronunciation_variant_id === "string"
+        ? approvedKoreanPronunciationRegistry.get(
+            approvedKoreanPronunciationKey(
+              examUseSnapshot.dictionary_id,
+              examUseSnapshot.pronunciation_variant_id,
+            ),
+          )
+        : undefined,
+    );
+    const pronunciation = preferredPronunciation(
+      snapshotPronunciation,
+      vocabEntryId === null
+        ? undefined
+        : pronunciationRegistry.get(vocabEntryId),
+      typeof examUseSnapshot?.dictionary_id === "string"
+        ? syntheticPronunciationRegistry.get(examUseSnapshot.dictionary_id)
+        : undefined,
+    );
     const verifiedSnapshot = isTrustedQuestionSnapshot(
       bankQuestion?.provenance_status,
     )
@@ -314,6 +468,7 @@ export function mapResultQuestions(
         verifiedSnapshot?.primary_meaning_snapshot ??
         vocabulary?.primary_meaning ??
         "",
+      pronunciation,
       provenanceStatus:
         examUseSnapshot?.provenance_status ??
         verifiedSnapshot?.provenance_status ?? "legacy_backfill",
@@ -328,7 +483,7 @@ export async function getAttemptQuestionResults(
   const { data, error } = await supabase
     .from("quiz_questions")
     .select(
-      "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, prior_wrong_count, initial_timed_out, retry_timed_out, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(headword_snapshot, primary_meaning_snapshot, provenance_status, exam_use_snapshot:assignment_question_exam_use_snapshot!assignment_question_exam_use_snapshot_question_fkey(headword_snapshot, primary_meaning_snapshot, display_pronunciation_ko_snapshot, pronunciation_snapshot, choice_dictionary_snapshots, provenance_status)), vocab_entries(headword, primary_meaning)",
+      "id, vocab_entry_id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, prior_wrong_count, initial_timed_out, retry_timed_out, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(vocab_entry_id, headword_snapshot, primary_meaning_snapshot, provenance_status, exam_use_snapshot:assignment_question_exam_use_snapshot!assignment_question_exam_use_snapshot_question_fkey(dictionary_id, pronunciation_variant_id, headword_snapshot, primary_meaning_snapshot, display_pronunciation_ko_snapshot, pronunciation_snapshot, choice_dictionary_snapshots, provenance_status)), vocab_entries(headword, primary_meaning, pronunciation_ko)",
     )
     .eq("attempt_id", attemptId)
     .order("order_index");
@@ -337,7 +492,41 @@ export async function getAttemptQuestionResults(
     throw new Error("문항 결과를 불러오지 못했습니다.");
   }
 
-  return mapResultQuestions((data ?? []) as ResultQuestionRow[]);
+  const rows = (data ?? []) as ResultQuestionRow[];
+  const registryIds = rows.flatMap((row) => {
+    const bankQuestion = oneRelation(row.assignment_question);
+    const vocabEntryId =
+      typeof bankQuestion?.vocab_entry_id === "number"
+        ? bankQuestion.vocab_entry_id
+        : row.vocab_entry_id;
+    return typeof vocabEntryId === "number"
+      ? [vocabEntryId]
+      : [];
+  });
+  const syntheticDictionaryIds = rows.flatMap((row) => {
+    const bankQuestion = oneRelation(row.assignment_question);
+    const snapshot = reviewedExamUseSnapshot(bankQuestion);
+    return typeof snapshot?.dictionary_id === "string"
+      ? [snapshot.dictionary_id]
+      : [];
+  });
+  const [
+    pronunciationRegistry,
+    syntheticPronunciationRegistry,
+    approvedKoreanPronunciationRegistry,
+  ] = await Promise.all([
+    loadVocabPronunciationRegistry(registryIds),
+    loadSyntheticPronunciationRegistry(syntheticDictionaryIds),
+    loadApprovedKoreanPronunciationRegistry(syntheticDictionaryIds),
+  ]);
+
+  return mapResultQuestions(
+    rows,
+    pronunciationRegistry,
+    syntheticPronunciationRegistry,
+    new Map(),
+    approvedKoreanPronunciationRegistry,
+  );
 }
 
 export async function listStudentAssignments(
@@ -741,7 +930,7 @@ export async function getStudentAttempt(
       supabase
         .from("quiz_questions")
         .select(
-          "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, prior_wrong_count, initial_timed_out, retry_timed_out, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(vocab_entry_id, choice_vocab_entry_ids, headword_snapshot, primary_meaning_snapshot, provenance_status, exam_use_snapshot:assignment_question_exam_use_snapshot!assignment_question_exam_use_snapshot_question_fkey(dictionary_id, headword_snapshot, primary_meaning_snapshot, display_pronunciation_ko_snapshot, pronunciation_snapshot, choice_dictionary_snapshots, provenance_status))",
+          "id, vocab_entry_id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, prior_wrong_count, initial_timed_out, retry_timed_out, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(vocab_entry_id, choice_vocab_entry_ids, headword_snapshot, primary_meaning_snapshot, provenance_status, exam_use_snapshot:assignment_question_exam_use_snapshot!assignment_question_exam_use_snapshot_question_fkey(dictionary_id, pronunciation_variant_id, headword_snapshot, primary_meaning_snapshot, display_pronunciation_ko_snapshot, pronunciation_snapshot, choice_dictionary_snapshots, provenance_status))",
         )
         .eq("attempt_id", attemptId)
         .order("order_index"),
@@ -759,10 +948,13 @@ export async function getStudentAttempt(
   const rows = (questionData ?? []) as QuestionRow[];
   const registryIds = rows.flatMap((question) => {
     const bankQuestion = oneRelation(question.assignment_question);
-    if (!bankQuestion) return [];
+    const targetVocabEntryId =
+      typeof bankQuestion?.vocab_entry_id === "number"
+        ? bankQuestion.vocab_entry_id
+        : question.vocab_entry_id;
     return [
-      bankQuestion.vocab_entry_id,
-      ...(bankQuestion.choice_vocab_entry_ids ?? []),
+      targetVocabEntryId,
+      ...(bankQuestion?.choice_vocab_entry_ids ?? []),
     ].filter((value): value is number => typeof value === "number");
   });
   const syntheticDictionaryIds = rows.flatMap((question) => {
@@ -780,11 +972,17 @@ export async function getStudentAttempt(
       ...choiceIds,
     ];
   });
-  const [pronunciationRegistry, syntheticPronunciationRegistry] =
-    await Promise.all([
-      loadVocabPronunciationRegistry(registryIds),
-      loadSyntheticPronunciationRegistry(syntheticDictionaryIds),
-    ]);
+  const [
+    pronunciationRegistry,
+    syntheticPronunciationRegistry,
+    pronunciationDisplayRegistry,
+    approvedKoreanPronunciationRegistry,
+  ] = await Promise.all([
+    loadVocabPronunciationRegistry(registryIds),
+    loadSyntheticPronunciationRegistry(syntheticDictionaryIds),
+    loadVocabPronunciationDisplayRegistry(registryIds),
+    loadApprovedKoreanPronunciationRegistry(syntheticDictionaryIds),
+  ]);
   const initialCurrent = rows.find(
     (question) => question.initial_choice_index === null,
   );
@@ -838,13 +1036,35 @@ export async function getStudentAttempt(
         question.initial_choice_index !== null ||
         question.retry_choice_index !== null;
       const bankQuestion = oneRelation(question.assignment_question);
+      const targetVocabEntryId =
+        typeof bankQuestion?.vocab_entry_id === "number"
+          ? bankQuestion.vocab_entry_id
+          : question.vocab_entry_id;
       const examUseSnapshot = reviewedExamUseSnapshot(bankQuestion);
-      const snapshotPronunciation = examUseSnapshot
-        ? parseTargetPronunciation(
-            examUseSnapshot.pronunciation_snapshot,
-            examUseSnapshot.display_pronunciation_ko_snapshot,
-          )
-        : unavailablePronunciation();
+      const targetDisplayFallback =
+        typeof targetVocabEntryId === "number"
+          ? pronunciationDisplayRegistry.get(targetVocabEntryId)
+          : null;
+      const snapshotPronunciation = withApprovedKoreanPronunciation(
+        withPronunciationDisplay(
+          examUseSnapshot
+            ? parseTargetPronunciation(
+                examUseSnapshot.pronunciation_snapshot,
+                examUseSnapshot.display_pronunciation_ko_snapshot,
+              )
+            : unavailablePronunciation(),
+          targetDisplayFallback,
+        ),
+        typeof examUseSnapshot?.dictionary_id === "string" &&
+          typeof examUseSnapshot.pronunciation_variant_id === "string"
+          ? approvedKoreanPronunciationRegistry.get(
+              approvedKoreanPronunciationKey(
+                examUseSnapshot.dictionary_id,
+                examUseSnapshot.pronunciation_variant_id,
+              ),
+            )
+          : undefined,
+      );
       const snapshotChoicePronunciations = examUseSnapshot
         ? parseChoicePronunciations(
             examUseSnapshot.choice_dictionary_snapshots,
@@ -859,24 +1079,45 @@ export async function getStudentAttempt(
         : question.choices.map(() => null);
       const pronunciation = preferredPronunciation(
         snapshotPronunciation,
-        typeof bankQuestion?.vocab_entry_id === "number"
-          ? pronunciationRegistry.get(bankQuestion.vocab_entry_id)
+        typeof targetVocabEntryId === "number"
+          ? pronunciationRegistry.get(targetVocabEntryId)
           : undefined,
         typeof examUseSnapshot?.dictionary_id === "string"
           ? syntheticPronunciationRegistry.get(examUseSnapshot.dictionary_id)
           : undefined,
       );
+      const choiceVocabEntryIds = completeChoiceVocabEntryIds(
+        bankQuestion?.choice_vocab_entry_ids,
+        question.choices.length,
+      );
       const choicePronunciations = question.choices.map((_, index) => {
-        const choiceVocabEntryId = bankQuestion?.choice_vocab_entry_ids?.[index];
+        const choiceVocabEntryId = choiceVocabEntryIds[index];
+        const choiceDictionaryId = snapshotChoiceDictionaryIds[index];
+        const choiceSnapshotPronunciation =
+          snapshotChoicePronunciations[index] ?? unavailablePronunciation();
         return preferredPronunciation(
-          snapshotChoicePronunciations[index] ?? unavailablePronunciation(),
+          withApprovedKoreanPronunciation(
+            withPronunciationDisplay(
+              choiceSnapshotPronunciation,
+              typeof choiceVocabEntryId === "number"
+                ? pronunciationDisplayRegistry.get(choiceVocabEntryId)
+                : null,
+            ),
+            typeof choiceDictionaryId === "string" &&
+              typeof choiceSnapshotPronunciation.variantId === "string"
+              ? approvedKoreanPronunciationRegistry.get(
+                  approvedKoreanPronunciationKey(
+                    choiceDictionaryId,
+                    choiceSnapshotPronunciation.variantId,
+                  ),
+                )
+              : undefined,
+          ),
           typeof choiceVocabEntryId === "number"
             ? pronunciationRegistry.get(choiceVocabEntryId)
             : undefined,
-          typeof snapshotChoiceDictionaryIds[index] === "string"
-            ? syntheticPronunciationRegistry.get(
-                snapshotChoiceDictionaryIds[index],
-              )
+          typeof choiceDictionaryId === "string"
+            ? syntheticPronunciationRegistry.get(choiceDictionaryId)
             : undefined,
         );
       });

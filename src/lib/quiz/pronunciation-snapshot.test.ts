@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  approvedKoreanPronunciationKey,
   allChoiceAudioAvailable,
   parseChoiceDictionaryIds,
   parseChoicePronunciations,
+  parseApprovedKoreanPronunciation,
   parseRegistryPronunciation,
   parseSyntheticRegistryPronunciation,
   parseTargetPronunciation,
   preferredPronunciation,
+  withApprovedKoreanPronunciation,
 } from "@/lib/quiz/pronunciation-snapshot";
 
 const officialUrl =
@@ -30,6 +33,10 @@ describe("quiz pronunciation snapshots", () => {
     expect(
       parseTargetPronunciation({
         displayPronunciationKo: "테스트",
+        koSegments: [
+          { text: "테", stress: false },
+          { text: "스트", stress: true },
+        ],
         pronunciationVariantId: "mw:test",
         audioStatus: "raw_attached",
         audioUrl: officialUrl,
@@ -37,6 +44,10 @@ describe("quiz pronunciation snapshots", () => {
       }),
     ).toEqual({
       displayKo: "테스트",
+      segments: [
+        { text: "테", stress: "none" },
+        { text: "스트", stress: "primary" },
+      ],
       variantId: "mw:test",
       audioUrl: officialUrl,
       available: true,
@@ -51,6 +62,88 @@ describe("quiz pronunciation snapshots", () => {
         listeningEnabled: true,
       }),
     ).toMatchObject({ displayKo: "가짜", available: false });
+  });
+
+  it("표시 문자열과 정확히 맞는 구조화 강세만 전달한다", () => {
+    expect(
+      parseTargetPronunciation({
+        displayPronunciationKo: "어플라이 포어",
+        ko_segments: [
+          { text: "어플", stress: "none" },
+          { text: "라이 ", stress: "primary" },
+          { text: "포어", stress: "secondary" },
+        ],
+      }).segments,
+    ).toEqual([
+      { text: "어플", stress: "none" },
+      { text: "라이 ", stress: "primary" },
+      { text: "포어", stress: "secondary" },
+    ]);
+    expect(
+      parseTargetPronunciation({
+        displayPronunciationKo: "어플라이 포어",
+        koSegments: [{ text: "다른 발음", stress: "primary" }],
+      }).segments,
+    ).toBeUndefined();
+    expect(
+      parseTargetPronunciation({
+        displayPronunciationKo: "double primary",
+        segments: [
+          { text: "double ", stress: "primary" },
+          { text: "primary", stress: "primary" },
+        ],
+      }).segments,
+    ).toBeUndefined();
+    expect(
+      parseTargetPronunciation({
+        displayPronunciationKo: "secondary only",
+        segments: [
+          { text: "secondary ", stress: "secondary" },
+          { text: "only", stress: "none" },
+        ],
+      }).segments,
+    ).toBeUndefined();
+  });
+
+  it("승인된 동일 발음 변이의 한글 강세만 시험 발음에 합친다", () => {
+    const approved = parseApprovedKoreanPronunciation({
+      dictionary_id: "word:inevitable",
+      pronunciation_variant_id: "mw:inevitable",
+      display_pronunciation_ko: "이네버터블",
+      segments: [
+        { text: "이", stress: "none" },
+        { text: "네", stress: "primary" },
+        { text: "버터블", stress: "none" },
+      ],
+      review_status: "approved",
+    });
+    const snapshot = parseTargetPronunciation({
+      displayPronunciationKo: "이네버터블",
+      pronunciationVariantId: "mw:inevitable",
+      audioStatus: "raw_attached",
+      audioUrl: officialUrl,
+      listeningEnabled: true,
+    });
+
+    expect(
+      approvedKoreanPronunciationKey(
+        "word:inevitable",
+        "mw:inevitable",
+      ),
+    ).toBe("word:inevitable\u0000mw:inevitable");
+    expect(
+      withApprovedKoreanPronunciation(snapshot, approved).segments,
+    ).toEqual([
+      { text: "이", stress: "none" },
+      { text: "네", stress: "primary" },
+      { text: "버터블", stress: "none" },
+    ]);
+    expect(
+      withApprovedKoreanPronunciation(
+        { ...snapshot, variantId: "mw:different" },
+        approved,
+      ).segments,
+    ).toBeUndefined();
   });
 
   it("선택지 순서와 표제어가 정확한 네 음원만 한 묶음으로 허용한다", () => {
@@ -158,6 +251,32 @@ describe("quiz pronunciation snapshots", () => {
     expect(preferredPronunciation(unavailable, undefined, synthetic)).toMatchObject({
       variantId: "synthetic:test",
       displayKo: "이머지 프럼",
+    });
+  });
+
+  it("다른 발음 변이의 음원에는 기존 강세 구간을 붙이지 않는다", () => {
+    const snapshot = {
+      displayKo: "프로그램",
+      segments: [
+        { text: "프로", stress: "primary" as const },
+        { text: "그램", stress: "none" as const },
+      ],
+      variantId: "mw:verb",
+      audioUrl: null,
+      available: false,
+    };
+    const fallback = {
+      displayKo: null,
+      variantId: "mw:noun",
+      audioUrl: officialUrl,
+      available: true,
+    };
+
+    expect(preferredPronunciation(snapshot, fallback, undefined)).toEqual({
+      displayKo: "프로그램",
+      variantId: "mw:noun",
+      audioUrl: officialUrl,
+      available: true,
     });
   });
 

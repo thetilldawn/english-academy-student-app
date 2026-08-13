@@ -100,6 +100,12 @@ function detail(retryIsCorrect: boolean): AdminHistoryDetail {
           wrongCount: retryIsCorrect ? 1 : 2,
           headword: "observe",
           primaryMeaning: "준수하다",
+          pronunciation: {
+            audioUrl: null,
+            available: false,
+            displayKo: "업저브",
+            variantId: null,
+          },
           provenanceStatus: "verified_v2",
         },
       ],

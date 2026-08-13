@@ -9,9 +9,17 @@ const SYNTHETIC_BUCKET = "vocab-pronunciation-audio";
 
 export type QuizPronunciation = {
   displayKo: string | null;
+  segments?: readonly KoreanPronunciationSegment[];
   variantId: string | null;
   audioUrl: string | null;
   available: boolean;
+};
+
+export type KoreanPronunciationStress = "none" | "secondary" | "primary";
+
+export type KoreanPronunciationSegment = {
+  text: string;
+  stress: KoreanPronunciationStress;
 };
 
 export type VocabPronunciationRegistryRow = {
@@ -41,6 +49,14 @@ export type VocabSyntheticAudioAssetRow = {
   canonical_pronunciation_approval_implied: unknown;
 };
 
+export type VocabApprovedKoreanPronunciationRow = {
+  dictionary_id: unknown;
+  pronunciation_variant_id: unknown;
+  display_pronunciation_ko: unknown;
+  segments: unknown;
+  review_status: unknown;
+};
+
 function objectValue(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -51,12 +67,48 @@ function optionalText(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+function segmentStress(value: unknown): KoreanPronunciationStress | null {
+  if (value === true) return "primary";
+  if (value === false) return "none";
+  return value === "none" || value === "secondary" || value === "primary"
+    ? value
+    : null;
+}
+
+export function parseKoreanPronunciationSegments(
+  value: unknown,
+  displayKo: string | null,
+): KoreanPronunciationSegment[] | undefined {
+  if (!displayKo || !Array.isArray(value) || value.length === 0) {
+    return undefined;
+  }
+  const segments: KoreanPronunciationSegment[] = [];
+  let primaryStressCount = 0;
+  for (const rawSegment of value) {
+    const segment = objectValue(rawSegment);
+    const text = segment?.text;
+    const stress = segmentStress(segment?.stress);
+    if (typeof text !== "string" || text.length === 0 || stress === null) {
+      return undefined;
+    }
+    if (stress === "primary") primaryStressCount += 1;
+    segments.push({ text, stress });
+  }
+  return primaryStressCount === 1 &&
+    segments.map(({ text }) => text).join("") === displayKo
+    ? segments
+    : undefined;
+}
+
 export function unavailablePronunciation(
   displayKo: string | null = null,
+  segments?: readonly KoreanPronunciationSegment[],
+  variantId: string | null = null,
 ): QuizPronunciation {
   return {
     displayKo,
-    variantId: null,
+    ...(segments ? { segments } : {}),
+    variantId,
     audioUrl: null,
     available: false,
   };
@@ -70,6 +122,10 @@ export function parseTargetPronunciation(
   if (!snapshot) return unavailablePronunciation(displayFallback);
   const displayKo =
     optionalText(snapshot.displayPronunciationKo) ?? displayFallback;
+  const segments = parseKoreanPronunciationSegments(
+    snapshot.koSegments ?? snapshot.ko_segments ?? snapshot.segments,
+    displayKo,
+  );
   const variantId = optionalText(snapshot.pronunciationVariantId);
   const audioUrl = optionalText(snapshot.audioUrl);
   const available =
@@ -80,8 +136,14 @@ export function parseTargetPronunciation(
     OFFICIAL_AUDIO_URL.test(audioUrl);
 
   return available
-    ? { displayKo, variantId, audioUrl, available: true }
-    : unavailablePronunciation(displayKo);
+    ? {
+        displayKo,
+        ...(segments ? { segments } : {}),
+        variantId,
+        audioUrl,
+        available: true,
+      }
+    : unavailablePronunciation(displayKo, segments, variantId);
 }
 
 export function parseChoicePronunciations(
@@ -110,6 +172,7 @@ export function parseChoicePronunciations(
     seenIndexes.add(choiceIndex);
     result[choiceIndex] = parseTargetPronunciation({
       displayPronunciationKo: item.displayPronunciationKo,
+      koSegments: item.koSegments ?? item.ko_segments ?? item.segments,
       pronunciationVariantId: item.pronunciationVariantId,
       audioStatus: item.audioStatus,
       audioUrl: item.audioUrl,
@@ -233,6 +296,59 @@ export function parseSyntheticRegistryPronunciation(
   };
 }
 
+export function approvedKoreanPronunciationKey(
+  dictionaryId: string,
+  variantId: string,
+) {
+  return `${dictionaryId}\u0000${variantId}`;
+}
+
+export function parseApprovedKoreanPronunciation(
+  row: VocabApprovedKoreanPronunciationRow | null | undefined,
+): QuizPronunciation | undefined {
+  const dictionaryId = optionalText(row?.dictionary_id);
+  const variantId = optionalText(row?.pronunciation_variant_id);
+  const displayKo = optionalText(row?.display_pronunciation_ko);
+  if (
+    !row ||
+    row.review_status !== "approved" ||
+    !dictionaryId ||
+    !DICTIONARY_ID.test(dictionaryId) ||
+    !variantId ||
+    !displayKo
+  ) {
+    return undefined;
+  }
+  const segments = parseKoreanPronunciationSegments(row.segments, displayKo);
+  return segments
+    ? {
+        displayKo,
+        segments,
+        variantId,
+        audioUrl: null,
+        available: false,
+      }
+    : undefined;
+}
+
+export function withApprovedKoreanPronunciation(
+  pronunciation: QuizPronunciation,
+  approved: QuizPronunciation | undefined,
+) {
+  if (
+    !approved?.segments ||
+    !approved.displayKo ||
+    approved.variantId !== pronunciation.variantId
+  ) {
+    return pronunciation;
+  }
+  return {
+    ...pronunciation,
+    displayKo: approved.displayKo,
+    segments: approved.segments,
+  };
+}
+
 export function preferredPronunciation(
   snapshot: QuizPronunciation,
   officialRegistry: QuizPronunciation | undefined,
@@ -245,8 +361,25 @@ export function preferredPronunciation(
       ? syntheticRegistry
       : undefined;
   return fallback
-    ? { ...fallback, displayKo: fallback.displayKo ?? snapshot.displayKo }
-    : unavailablePronunciation(snapshot.displayKo);
+    ? {
+        ...fallback,
+        displayKo: fallback.displayKo ?? snapshot.displayKo,
+        ...(fallback.segments
+          ? { segments: fallback.segments }
+          : fallback.variantId === snapshot.variantId && snapshot.segments
+            ? { segments: snapshot.segments }
+            : {}),
+      }
+    : unavailablePronunciation(snapshot.displayKo, snapshot.segments);
+}
+
+export function withPronunciationDisplay(
+  pronunciation: QuizPronunciation,
+  displayKo: string | null | undefined,
+) {
+  return pronunciation.displayKo || !displayKo
+    ? pronunciation
+    : { ...pronunciation, displayKo };
 }
 
 export function allChoiceAudioAvailable(

@@ -43,6 +43,10 @@
   letter-spacing: -0.03em;
 }
 
+.headingDetail {
+  margin-top: var(--space-2);
+}
+
 @media (max-width: 580px) {
   .card {
     padding: 18px 14px;

@@ -10,6 +10,8 @@ import type {
   StudentAttemptResult,
 } from "../model";
 import { AttemptQuestionCard } from "./attempt-question-card";
+import { ResultAudioProvider } from "./result-audio-provider";
+import { ResultPronunciation } from "./result-pronunciation";
 import {
   ResultEmptyState,
   ResultLayout,
@@ -39,6 +41,14 @@ function QuestionReviewCard({
       eyebrow={formatContentText(studentAppText.result.question.number, {
         number: question.orderIndex,
       })}
+      headingDetail={
+        question.direction === "english_to_korean" ? (
+          <ResultPronunciation
+            headword={question.headword}
+            pronunciation={question.pronunciation}
+          />
+        ) : undefined
+      }
       prompt={presentation.prompt}
       wrongLevel={wrongLevel}
     >
@@ -56,7 +66,15 @@ function QuestionReviewCard({
           <span aria-hidden="true" className={styles.answerNumber}>
             {question.correctChoiceIndex + 1}
           </span>
-          <span className={styles.answerCopy}>{presentation.correctAnswer}</span>
+          <div className={styles.answerCopy}>
+            <span>{presentation.correctAnswer}</span>
+            {question.direction === "korean_to_english" ? (
+              <ResultPronunciation
+                headword={question.headword}
+                pronunciation={question.pronunciation}
+              />
+            ) : null}
+          </div>
         </div>
       </div>
     </AttemptQuestionCard>
@@ -264,18 +282,19 @@ export function StudentResultView({ result }: { result: StudentAttemptResult }) 
     ) : undefined;
 
   return (
-    <ResultLayout
-      header={
-        <ResultHeader
-          expired={expired}
-          hasRetryResult={hasRetryResult}
-          result={result}
-          reviewPending={reviewPending}
-        />
-      }
-      primary={unresolved}
-      secondary={resolved}
-      sidebar={sidebar}
-    />
+    <ResultAudioProvider>
+      <ResultLayout
+        header={
+          <ResultHeader
+            expired={expired}
+            hasRetryResult={hasRetryResult}
+            result={result} reviewPending={reviewPending}
+          />
+        }
+        primary={unresolved}
+        secondary={resolved}
+        sidebar={sidebar}
+      />
+    </ResultAudioProvider>
   );
 }

@@ -6,8 +6,14 @@ import type {
   QuizTransportResult,
 } from "../model";
 
+const pronunciationSegmentSchema = z.object({
+  text: z.string().min(1),
+  stress: z.enum(["none", "secondary", "primary"]),
+});
+
 const pronunciationSchema = z.object({
   displayKo: z.string().nullable(),
+  segments: z.array(pronunciationSegmentSchema).optional(),
   variantId: z.string().nullable(),
   audioUrl: z.string().nullable(),
   available: z.boolean(),
