@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   allChoiceAudioAvailable,
+  parseChoiceDictionaryIds,
   parseChoicePronunciations,
   parseRegistryPronunciation,
+  parseSyntheticRegistryPronunciation,
   parseTargetPronunciation,
+  preferredPronunciation,
 } from "@/lib/quiz/pronunciation-snapshot";
 
 const officialUrl =
@@ -96,5 +99,85 @@ describe("quiz pronunciation snapshots", () => {
         variants: [],
       }),
     ).toMatchObject({ available: false });
+  });
+
+  it("승인·검증된 Google 합성 표현 자산만 현재 Supabase 공개 URL로 만든다", () => {
+    const requestHash = "1".repeat(64);
+    const row = {
+      asset_id: `synthetic:${requestHash}`,
+      dictionary_id: "expression:emerge-from-4925a141",
+      profile_id: "profile:5b6efb0ecc8f4702",
+      provider: "google_cloud_text_to_speech",
+      model: "chirp3-hd",
+      voice: "en-US-Chirp3-HD-Despina",
+      request_sha256: requestHash,
+      storage_bucket: "vocab-pronunciation-audio",
+      storage_object_key: `pronunciation/google_cloud_text_to_speech/profile-5b6efb0ecc8f4702/${requestHash}.mp3`,
+      review_status: "profile_approved_generated",
+      storage_verified: true,
+      playback_enabled: true,
+      canonical_pronunciation_approval_implied: false,
+    };
+    expect(
+      parseSyntheticRegistryPronunciation(
+        row,
+        "https://wojxpruvbjzbhrpmsbuy.supabase.co",
+      ),
+    ).toEqual({
+      displayKo: null,
+      variantId: `synthetic:${requestHash}`,
+      audioUrl: `https://wojxpruvbjzbhrpmsbuy.supabase.co/storage/v1/object/public/vocab-pronunciation-audio/pronunciation/google_cloud_text_to_speech/profile-5b6efb0ecc8f4702/${requestHash}.mp3`,
+      available: true,
+    });
+    expect(
+      parseSyntheticRegistryPronunciation(
+        { ...row, canonical_pronunciation_approval_implied: true },
+        "https://wojxpruvbjzbhrpmsbuy.supabase.co",
+      ),
+    ).toMatchObject({ available: false });
+  });
+
+  it("시험 공식음원, Webster 연결표, Google 합성음원 순서를 지킨다", () => {
+    const unavailable = parseTargetPronunciation({}, "이머지 프럼");
+    const official = {
+      displayKo: null,
+      variantId: "mw:official",
+      audioUrl: officialUrl,
+      available: true,
+    };
+    const synthetic = {
+      displayKo: null,
+      variantId: "synthetic:test",
+      audioUrl: "https://wojxpruvbjzbhrpmsbuy.supabase.co/synthetic.mp3",
+      available: true,
+    };
+    expect(preferredPronunciation(unavailable, official, synthetic)).toMatchObject({
+      variantId: "mw:official",
+      displayKo: "이머지 프럼",
+    });
+    expect(preferredPronunciation(unavailable, undefined, synthetic)).toMatchObject({
+      variantId: "synthetic:test",
+      displayKo: "이머지 프럼",
+    });
+  });
+
+  it("선택지 표제어와 순서가 맞을 때만 합성 연결용 사전 ID를 꺼낸다", () => {
+    const choices = ["alpha", "beta", "gamma", "delta"];
+    const snapshots = choices.map((choice, choiceIndex) => ({
+      choiceIndex,
+      displayHeadword: choice,
+      dictionaryId: `expression:${choice}-12345678`,
+    }));
+    expect(parseChoiceDictionaryIds(snapshots, choices)).toEqual(
+      choices.map((choice) => `expression:${choice}-12345678`),
+    );
+    expect(
+      parseChoiceDictionaryIds(
+        snapshots.map((item, index) =>
+          index === 1 ? { ...item, displayHeadword: "wrong" } : item,
+        ),
+        choices,
+      ),
+    ).toEqual([null, null, null, null]);
   });
 });

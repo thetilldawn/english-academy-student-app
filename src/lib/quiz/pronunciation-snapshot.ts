@@ -1,5 +1,11 @@
 const OFFICIAL_AUDIO_URL =
   /^https:\/\/media\.merriam-webster\.com\/audio\/prons\/en\/us\/mp3\/[A-Za-z0-9_-]+\/[A-Za-z0-9_-]+\.mp3$/;
+const SUPABASE_URL = /^https:\/\/[a-z0-9]{20}\.supabase\.co$/;
+const DICTIONARY_ID =
+  /^(?:word|root_affix|expression):[a-z0-9][a-z0-9._'’-]*$/;
+const SYNTHETIC_REQUEST_HASH = /^[0-9a-f]{64}$/;
+const SYNTHETIC_PROFILE_ID = "profile:5b6efb0ecc8f4702";
+const SYNTHETIC_BUCKET = "vocab-pronunciation-audio";
 
 export type QuizPronunciation = {
   displayKo: string | null;
@@ -17,6 +23,22 @@ export type VocabPronunciationRegistryRow = {
   selected_variant_id: unknown;
   selected_audio_url: unknown;
   variants: unknown;
+};
+
+export type VocabSyntheticAudioAssetRow = {
+  asset_id: unknown;
+  dictionary_id: unknown;
+  profile_id: unknown;
+  provider: unknown;
+  model: unknown;
+  voice: unknown;
+  request_sha256: unknown;
+  storage_bucket: unknown;
+  storage_object_key: unknown;
+  review_status: unknown;
+  storage_verified: unknown;
+  playback_enabled: unknown;
+  canonical_pronunciation_approval_implied: unknown;
 };
 
 function objectValue(value: unknown): Record<string, unknown> | null {
@@ -99,6 +121,38 @@ export function parseChoicePronunciations(
     : choices.map(() => unavailablePronunciation());
 }
 
+export function parseChoiceDictionaryIds(
+  value: unknown,
+  choices: readonly string[],
+): Array<string | null> {
+  if (!Array.isArray(value) || value.length !== choices.length) {
+    return choices.map(() => null);
+  }
+  const result = choices.map((): string | null => null);
+  const seenIndexes = new Set<number>();
+  for (const rawItem of value) {
+    const item = objectValue(rawItem);
+    const choiceIndex = item?.choiceIndex;
+    const dictionaryId = optionalText(item?.dictionaryId);
+    if (
+      !item ||
+      typeof choiceIndex !== "number" ||
+      !Number.isInteger(choiceIndex) ||
+      choiceIndex < 0 ||
+      choiceIndex >= choices.length ||
+      seenIndexes.has(choiceIndex) ||
+      optionalText(item.displayHeadword) !== choices[choiceIndex] ||
+      dictionaryId === null ||
+      !DICTIONARY_ID.test(dictionaryId)
+    ) {
+      return choices.map(() => null);
+    }
+    seenIndexes.add(choiceIndex);
+    result[choiceIndex] = dictionaryId;
+  }
+  return seenIndexes.size === choices.length ? result : choices.map(() => null);
+}
+
 export function parseRegistryPronunciation(
   row: VocabPronunciationRegistryRow | null | undefined,
 ): QuizPronunciation {
@@ -136,6 +190,63 @@ export function parseRegistryPronunciation(
         available: true,
       }
     : unavailablePronunciation();
+}
+
+export function parseSyntheticRegistryPronunciation(
+  row: VocabSyntheticAudioAssetRow | null | undefined,
+  supabaseUrl: string,
+): QuizPronunciation {
+  const normalizedUrl = supabaseUrl.replace(/\/$/, "");
+  const requestHash = optionalText(row?.request_sha256);
+  const assetId = optionalText(row?.asset_id);
+  const dictionaryId = optionalText(row?.dictionary_id);
+  const objectKey = optionalText(row?.storage_object_key);
+  const expectedObjectKey = requestHash
+    ? `pronunciation/google_cloud_text_to_speech/${SYNTHETIC_PROFILE_ID.replace(":", "-")}/${requestHash}.mp3`
+    : null;
+  if (
+    !row ||
+    !SUPABASE_URL.test(normalizedUrl) ||
+    !dictionaryId ||
+    !DICTIONARY_ID.test(dictionaryId) ||
+    row.provider !== "google_cloud_text_to_speech" ||
+    row.model !== "chirp3-hd" ||
+    row.voice !== "en-US-Chirp3-HD-Despina" ||
+    row.profile_id !== SYNTHETIC_PROFILE_ID ||
+    row.review_status !== "profile_approved_generated" ||
+    row.storage_verified !== true ||
+    row.playback_enabled !== true ||
+    row.canonical_pronunciation_approval_implied !== false ||
+    row.storage_bucket !== SYNTHETIC_BUCKET ||
+    !requestHash ||
+    !SYNTHETIC_REQUEST_HASH.test(requestHash) ||
+    assetId !== `synthetic:${requestHash}` ||
+    objectKey !== expectedObjectKey
+  ) {
+    return unavailablePronunciation();
+  }
+  return {
+    displayKo: null,
+    variantId: assetId,
+    audioUrl: `${normalizedUrl}/storage/v1/object/public/${SYNTHETIC_BUCKET}/${objectKey}`,
+    available: true,
+  };
+}
+
+export function preferredPronunciation(
+  snapshot: QuizPronunciation,
+  officialRegistry: QuizPronunciation | undefined,
+  syntheticRegistry: QuizPronunciation | undefined,
+) {
+  if (snapshot.available) return snapshot;
+  const fallback = officialRegistry?.available
+    ? officialRegistry
+    : syntheticRegistry?.available
+      ? syntheticRegistry
+      : undefined;
+  return fallback
+    ? { ...fallback, displayKo: fallback.displayKo ?? snapshot.displayKo }
+    : unavailablePronunciation(snapshot.displayKo);
 }
 
 export function allChoiceAudioAvailable(

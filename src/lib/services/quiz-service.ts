@@ -16,11 +16,15 @@ import type {
 import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
 import {
   parseChoicePronunciations,
+  parseChoiceDictionaryIds,
   parseRegistryPronunciation,
+  parseSyntheticRegistryPronunciation,
   parseTargetPronunciation,
+  preferredPronunciation,
   unavailablePronunciation,
   type QuizPronunciation,
   type VocabPronunciationRegistryRow,
+  type VocabSyntheticAudioAssetRow,
 } from "@/lib/quiz/pronunciation-snapshot";
 import {
   isTrustedQuestionSnapshot,
@@ -177,16 +181,42 @@ async function loadVocabPronunciationRegistry(
   return result;
 }
 
-function preferredPronunciation(
-  snapshot: QuizPronunciation,
-  registry: QuizPronunciation | undefined,
+async function loadSyntheticPronunciationRegistry(
+  dictionaryIds: readonly string[],
 ) {
-  return snapshot.available
-    ? snapshot
-    : (registry ?? unavailablePronunciation(snapshot.displayKo));
+  const result = new Map<string, QuizPronunciation>();
+  if (dictionaryIds.length === 0) return result;
+  const supabase = getServiceSupabaseClient();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const uniqueIds = [...new Set(dictionaryIds)];
+  const chunkSize = 500;
+  for (let offset = 0; offset < uniqueIds.length; offset += chunkSize) {
+    const chunk = uniqueIds.slice(offset, offset + chunkSize);
+    const { data, error } = await supabase
+      .from("vocab_synthetic_audio_assets")
+      .select(
+        "asset_id, dictionary_id, profile_id, provider, model, voice, request_sha256, storage_bucket, storage_object_key, review_status, storage_verified, playback_enabled, canonical_pronunciation_approval_implied",
+      )
+      .in("dictionary_id", chunk)
+      .eq("playback_enabled", true);
+    if (error) {
+      console.warn("[quiz-pronunciation] synthetic registry lookup failed", {
+        code: error.code,
+      });
+      return new Map<string, QuizPronunciation>();
+    }
+    for (const row of (data ?? []) as VocabSyntheticAudioAssetRow[]) {
+      const pronunciation = parseSyntheticRegistryPronunciation(row, supabaseUrl);
+      if (pronunciation.available && typeof row.dictionary_id === "string") {
+        result.set(row.dictionary_id, pronunciation);
+      }
+    }
+  }
+  return result;
 }
 
 type ExamUseQuestionSnapshot = {
+  dictionary_id?: string;
   headword_snapshot: string;
   primary_meaning_snapshot: string;
   display_pronunciation_ko_snapshot: string | null;
@@ -711,7 +741,7 @@ export async function getStudentAttempt(
       supabase
         .from("quiz_questions")
         .select(
-          "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, prior_wrong_count, initial_timed_out, retry_timed_out, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(vocab_entry_id, choice_vocab_entry_ids, headword_snapshot, primary_meaning_snapshot, provenance_status, exam_use_snapshot:assignment_question_exam_use_snapshot!assignment_question_exam_use_snapshot_question_fkey(headword_snapshot, primary_meaning_snapshot, display_pronunciation_ko_snapshot, pronunciation_snapshot, choice_dictionary_snapshots, provenance_status))",
+          "id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, prior_wrong_count, initial_timed_out, retry_timed_out, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(vocab_entry_id, choice_vocab_entry_ids, headword_snapshot, primary_meaning_snapshot, provenance_status, exam_use_snapshot:assignment_question_exam_use_snapshot!assignment_question_exam_use_snapshot_question_fkey(dictionary_id, headword_snapshot, primary_meaning_snapshot, display_pronunciation_ko_snapshot, pronunciation_snapshot, choice_dictionary_snapshots, provenance_status))",
         )
         .eq("attempt_id", attemptId)
         .order("order_index"),
@@ -735,9 +765,26 @@ export async function getStudentAttempt(
       ...(bankQuestion.choice_vocab_entry_ids ?? []),
     ].filter((value): value is number => typeof value === "number");
   });
-  const pronunciationRegistry = await loadVocabPronunciationRegistry(
-    registryIds,
-  );
+  const syntheticDictionaryIds = rows.flatMap((question) => {
+    const bankQuestion = oneRelation(question.assignment_question);
+    const snapshot = reviewedExamUseSnapshot(bankQuestion);
+    if (!snapshot) return [];
+    const choiceIds = parseChoiceDictionaryIds(
+      snapshot.choice_dictionary_snapshots,
+      question.choices,
+    ).filter((value): value is string => typeof value === "string");
+    return [
+      ...(typeof snapshot.dictionary_id === "string"
+        ? [snapshot.dictionary_id]
+        : []),
+      ...choiceIds,
+    ];
+  });
+  const [pronunciationRegistry, syntheticPronunciationRegistry] =
+    await Promise.all([
+      loadVocabPronunciationRegistry(registryIds),
+      loadSyntheticPronunciationRegistry(syntheticDictionaryIds),
+    ]);
   const initialCurrent = rows.find(
     (question) => question.initial_choice_index === null,
   );
@@ -804,10 +851,19 @@ export async function getStudentAttempt(
             question.choices,
           )
         : question.choices.map(() => unavailablePronunciation());
+      const snapshotChoiceDictionaryIds = examUseSnapshot
+        ? parseChoiceDictionaryIds(
+            examUseSnapshot.choice_dictionary_snapshots,
+            question.choices,
+          )
+        : question.choices.map(() => null);
       const pronunciation = preferredPronunciation(
         snapshotPronunciation,
         typeof bankQuestion?.vocab_entry_id === "number"
           ? pronunciationRegistry.get(bankQuestion.vocab_entry_id)
+          : undefined,
+        typeof examUseSnapshot?.dictionary_id === "string"
+          ? syntheticPronunciationRegistry.get(examUseSnapshot.dictionary_id)
           : undefined,
       );
       const choicePronunciations = question.choices.map((_, index) => {
@@ -816,6 +872,11 @@ export async function getStudentAttempt(
           snapshotChoicePronunciations[index] ?? unavailablePronunciation(),
           typeof choiceVocabEntryId === "number"
             ? pronunciationRegistry.get(choiceVocabEntryId)
+            : undefined,
+          typeof snapshotChoiceDictionaryIds[index] === "string"
+            ? syntheticPronunciationRegistry.get(
+                snapshotChoiceDictionaryIds[index],
+              )
             : undefined,
         );
       });
