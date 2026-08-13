@@ -192,39 +192,79 @@ async function verifyDatabase(
   supabase: SupabaseClient,
   manifest: SyntheticAudioManifest,
 ) {
-  const { data, error } = await supabase
-    .from("vocab_synthetic_audio_assets")
+  const { data: bindingData, error: bindingError } = await supabase
+    .from("vocab_synthetic_audio_bindings")
     .select(
-      "dictionary_id, occurrence_count, request_sha256, audio_sha256, storage_object_key, playback_enabled",
+      "dictionary_id, occurrence_id, asset_id, source_queue_item_sha256",
     )
     .eq("dataset_key", manifest.dataset_key)
+    .eq("source_exam_package_version", manifest.source_exam_package_version)
     .eq("profile_id", manifest.profile_id)
-    .order("dictionary_id");
-  if (error) throw new Error(`합성 음원 DB를 확인하지 못했습니다: ${error.message}`);
-  const rows = data ?? [];
-  if (
-    rows.length !== manifest.expected_asset_count ||
-    rows.reduce((sum, row) => sum + row.occurrence_count, 0) !==
-      manifest.expected_occurrence_count ||
-    rows.some((row) => row.playback_enabled !== true)
-  ) {
-    throw new Error("합성 음원 DB 저장 집계가 manifest와 다릅니다.");
+    .order("occurrence_id");
+  if (bindingError) {
+    throw new Error(`합성 음원 출현 연결을 확인하지 못했습니다: ${bindingError.message}`);
   }
-  const expected = new Map(
-    manifest.items.map((item) => [item.dictionary_id, item] as const),
+  const bindingRows = bindingData ?? [];
+  if (bindingRows.length !== manifest.expected_occurrence_count) {
+    throw new Error("합성 음원 출현 연결 수가 manifest와 다릅니다.");
+  }
+  const expectedByOccurrence = new Map(
+    manifest.items.flatMap((item) =>
+      item.occurrence_ids.map(
+        (occurrenceId) => [occurrenceId, item] as const,
+      ),
+    ),
   );
-  for (const row of rows) {
-    const item = expected.get(row.dictionary_id);
+  for (const row of bindingRows) {
+    const item = expectedByOccurrence.get(row.occurrence_id);
     if (
       !item ||
+      row.dictionary_id !== item.dictionary_id ||
+      row.asset_id !== item.asset_id ||
+      row.source_queue_item_sha256 !== item.source_queue_item_sha256
+    ) {
+      throw new Error(`합성 음원 출현 결속값이 다릅니다: ${row.occurrence_id}`);
+    }
+  }
+
+  const assetIds = [...new Set(bindingRows.map((row) => row.asset_id))];
+  if (assetIds.length !== manifest.expected_asset_count) {
+    throw new Error("합성 음원 고유 자산 수가 manifest와 다릅니다.");
+  }
+  const { data: assetData, error: assetError } = await supabase
+    .from("vocab_synthetic_audio_assets")
+    .select(
+      "asset_id, dictionary_id, profile_id, request_sha256, audio_sha256, storage_object_key, playback_enabled",
+    )
+    .in("asset_id", assetIds)
+    .order("dictionary_id");
+  if (assetError) {
+    throw new Error(`합성 음원 자산을 확인하지 못했습니다: ${assetError.message}`);
+  }
+  const assetRows = assetData ?? [];
+  const expectedByAsset = new Map(
+    manifest.items.map((item) => [item.asset_id, item] as const),
+  );
+  if (
+    assetRows.length !== manifest.expected_asset_count ||
+    assetRows.some((row) => row.playback_enabled !== true)
+  ) {
+    throw new Error("합성 음원 자산 저장 집계가 manifest와 다릅니다.");
+  }
+  for (const row of assetRows) {
+    const item = expectedByAsset.get(row.asset_id);
+    if (
+      !item ||
+      row.dictionary_id !== item.dictionary_id ||
+      row.profile_id !== item.profile_id ||
       row.request_sha256 !== item.request_sha256 ||
       row.audio_sha256 !== item.audio_sha256 ||
       row.storage_object_key !== item.storage_object_key
     ) {
-      throw new Error(`합성 음원 DB 결속값이 다릅니다: ${row.dictionary_id}`);
+      throw new Error(`합성 음원 자산값이 다릅니다: ${row.asset_id}`);
     }
   }
-  return rows;
+  return { assetRows, bindingRows };
 }
 
 async function verifyPublicCanary(
@@ -292,6 +332,14 @@ async function main() {
   if (tableError) {
     throw new Error(`합성 음원 DB migration이 준비되지 않았습니다: ${tableError.message}`);
   }
+  const { error: bindingTableError } = await supabase
+    .from("vocab_synthetic_audio_bindings")
+    .select("asset_id", { count: "exact", head: true });
+  if (bindingTableError) {
+    throw new Error(
+      `합성 음원 출현 연결 migration이 준비되지 않았습니다: ${bindingTableError.message}`,
+    );
+  }
   if (options.mode === "preflight") {
     console.log(
       JSON.stringify(
@@ -318,7 +366,7 @@ async function main() {
   if (importError) {
     throw new Error(`합성 음원 DB 등록에 실패했습니다: ${importError.code} ${importError.message}`);
   }
-  const databaseRows = await verifyDatabase(supabase, validated.manifest);
+  const database = await verifyDatabase(supabase, validated.manifest);
   const publicCanary = await verifyPublicCanary(supabase, validated.manifest);
   console.log(
     JSON.stringify(
@@ -329,7 +377,8 @@ async function main() {
         bucket,
         storage,
         databaseResult: importResult,
-        databaseAssetCount: databaseRows.length,
+        databaseAssetCount: database.assetRows.length,
+        databaseOccurrenceBindingCount: database.bindingRows.length,
         publicCanary,
         llmTokens: 0,
         ...validated.summary,
