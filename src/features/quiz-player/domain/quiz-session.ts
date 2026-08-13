@@ -71,6 +71,18 @@ export function quizChoiceAudioUrls(question: QuizQuestion) {
     : [];
 }
 
+export function quizAnswerAudioUrl(
+  question: QuizQuestion,
+  choiceIndex: number | null,
+) {
+  if (choiceIndex === null) return null;
+  const pronunciation =
+    question.direction === "korean_to_english"
+      ? question.choicePronunciations[choiceIndex]
+      : question.pronunciation;
+  return pronunciation?.available ? pronunciation.audioUrl : null;
+}
+
 export function quizPreloadAudioUrls(attempt: QuizAttempt) {
   const current = currentQuizQuestion(attempt);
   if (!current) return [];

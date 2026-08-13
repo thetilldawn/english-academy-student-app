@@ -165,8 +165,8 @@
 }
 
 .pronunciation [data-stress="secondary"] {
-  font-style: italic;
-  font-weight: 600;
+  font-style: normal;
+  font-weight: 700;
 }
 
 .pronunciation [data-stress="primary"] {

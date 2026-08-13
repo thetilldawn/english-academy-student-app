@@ -20,6 +20,7 @@ import {
   ANSWER_FEEDBACK_DELAY_MS,
   applyQuizAnswerTransition,
   currentQuizQuestion,
+  quizAnswerAudioUrl,
   quizAnswerAnnouncement,
   quizAnswerDisposition,
   quizAudioPresentation,
@@ -197,6 +198,7 @@ export function useQuizPlayerController(input: {
         return;
       }
 
+      playAudio(quizAnswerAudioUrl(currentQuestion, choiceIndex));
       const answeredAttempt = state.attempt;
       const answeredPhase = state.attempt.phase;
       const requestKey = [
@@ -312,6 +314,7 @@ export function useQuizPlayerController(input: {
     [
       clearTransitionTimer,
       currentQuestion,
+      playAudio,
       recoverFromServer,
       resetClock,
       router,

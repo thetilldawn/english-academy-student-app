@@ -6,6 +6,7 @@ import type { QuizAttempt, QuizQuestion } from "../model";
 import {
   ANSWER_FEEDBACK_DELAY_MS,
   applyQuizAnswerTransition,
+  quizAnswerAudioUrl,
   quizAnswerDisposition,
   quizAudioPresentation,
   quizChoiceAudioUrls,
@@ -103,6 +104,16 @@ describe("quiz session domain", () => {
       ),
     );
     expect(quizChoiceAudioUrls(englishPromptQuestion)).toEqual([]);
+
+    expect(quizAnswerAudioUrl(englishPromptQuestion, 2)).toBe(
+      englishPromptQuestion.pronunciation.audioUrl,
+    );
+    expect(quizAnswerAudioUrl(englishChoiceQuestion, 2)).toBe(
+      englishChoiceQuestion.choicePronunciations[2].audioUrl,
+    );
+    expect(quizAnswerAudioUrl(englishChoiceQuestion, null)).toBeNull();
+    missingChoice.choicePronunciations[2] = unavailablePronunciation();
+    expect(quizAnswerAudioUrl(missingChoice, 2)).toBeNull();
   });
 
   it("preloads the current English choices and the next English prompt", () => {

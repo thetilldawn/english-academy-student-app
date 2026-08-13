@@ -136,6 +136,22 @@ describe("QuizFrame", () => {
     ).toHaveTextContent("[어플라이 포어]");
   });
 
+  it("1강세와 2강세를 모두 굵게 표시한다", () => {
+    const currentQuestion = question("english_to_korean");
+    currentQuestion.pronunciation = {
+      ...availablePronunciation,
+      displayKo: "프라스펙트",
+      segments: [
+        { text: "프라", stress: "primary" },
+        { text: "스펙트", stress: "secondary" },
+      ],
+    };
+    renderFrame(currentQuestion);
+
+    expect(screen.getByText("프라", { selector: "strong" })).toBeVisible();
+    expect(screen.getByText("스펙트", { selector: "strong" })).toBeVisible();
+  });
+
   it("shows a speaker beside every English choice and none beside the Korean prompt", () => {
     renderFrame(question("korean_to_english"));
 

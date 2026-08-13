@@ -14,20 +14,13 @@ export function PronunciationText({
       <span aria-hidden="true">[</span>
       {pronunciation.segments?.length
         ? pronunciation.segments.map((segment, index) =>
-            segment.stress === "primary" ? (
+            segment.stress !== "none" ? (
               <strong
-                data-stress="primary"
+                data-stress={segment.stress}
                 key={`${segment.text}:${index}`}
               >
                 {segment.text}
               </strong>
-            ) : segment.stress === "secondary" ? (
-              <em
-                data-stress="secondary"
-                key={`${segment.text}:${index}`}
-              >
-                {segment.text}
-              </em>
             ) : (
               <span data-stress="none" key={`${segment.text}:${index}`}>
                 {segment.text}

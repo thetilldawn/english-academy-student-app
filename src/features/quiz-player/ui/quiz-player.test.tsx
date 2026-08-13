@@ -217,14 +217,23 @@ describe("QuizPlayer", () => {
         resolveRequest = resolve;
       }),
     );
-    await renderReady();
+    const audioAttempt = attempt();
+    audioAttempt.questions[0].choicePronunciations[0] =
+      availablePronunciation;
+    await renderReady(audioAttempt);
 
-    const firstChoice = screen.getByRole("button", {
-      name: /question-1-one/,
-    });
+    const firstChoice = screen
+      .getByRole("group")
+      .firstElementChild!.querySelectorAll("button")[0];
     fireEvent.click(firstChoice);
     fireEvent.click(firstChoice);
     expect(mocks.submit).toHaveBeenCalledOnce();
+    expect(
+      audioInstances.reduce(
+        (count, audio) => count + audio.play.mock.calls.length,
+        0,
+      ),
+    ).toBe(1);
 
     await act(async () => {
       resolveRequest(successfulTransport({
@@ -259,7 +268,7 @@ describe("QuizPlayer", () => {
     expect(audioInstances[0]?.play).toHaveBeenCalledOnce();
   });
 
-  it("keeps a choice speaker separate from choosing an English answer", async () => {
+  it("previews from the speaker without submitting and plays once again when choosing the English answer", async () => {
     const audioAttempt = attempt();
     const current = audioAttempt.questions[0];
     current.choicePronunciations = Array.from(
@@ -283,7 +292,7 @@ describe("QuizPlayer", () => {
     expect(mocks.submit).not.toHaveBeenCalled();
 
     fireEvent.click(rowButtons![0]);
-    expect(player?.play).toHaveBeenCalledOnce();
+    expect(player?.play).toHaveBeenCalledTimes(2);
     expect(mocks.submit).toHaveBeenCalledOnce();
   });
 
@@ -324,10 +333,10 @@ describe("QuizPlayer", () => {
     await act(async () => Promise.resolve());
 
     expect(screen.getByText("english-2")).toBeInTheDocument();
-    expect(player?.play).toHaveBeenCalledTimes(3);
+    expect(player?.play).toHaveBeenCalledTimes(4);
   });
 
-  it("keeps manually played English audio playing across the 750ms transition", async () => {
+  it("keeps the chosen English answer audio playing across the 750ms transition", async () => {
     const audioAttempt = attempt();
     for (const current of audioAttempt.questions) {
       current.choicePronunciations = Array.from({ length: 4 }, (_, index) => ({
@@ -350,12 +359,11 @@ describe("QuizPlayer", () => {
     await renderReady(audioAttempt);
     const firstRow = screen.getByRole("group").firstElementChild;
     const rowButtons = firstRow!.querySelectorAll("button");
-    fireEvent.click(rowButtons[1]);
+    fireEvent.click(rowButtons[0]);
     const player = audioInstances.find((audio) =>
       audio.play.mock.calls.length > 0
     );
     const pauseCount = player?.pause.mock.calls.length;
-    fireEvent.click(rowButtons[0]);
     expect(player?.play).toHaveBeenCalledOnce();
     await act(async () => Promise.resolve());
     act(() => vi.advanceTimersByTime(750));
