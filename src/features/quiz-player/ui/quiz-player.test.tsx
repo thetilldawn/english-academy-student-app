@@ -131,11 +131,14 @@ function successfulTransport<T>(
   };
 }
 
-async function renderReady(quizAttempt = attempt()) {
+async function renderReady(
+  quizAttempt = attempt(),
+  remainingMilliseconds = 60_000,
+) {
   mocks.recover.mockImplementation(async () =>
     successfulTransport({
       attempt: quizAttempt,
-      timerRemainingMilliseconds: 60_000,
+      timerRemainingMilliseconds: remainingMilliseconds,
     }),
   );
   let view!: ReturnType<typeof render>;
@@ -143,7 +146,7 @@ async function renderReady(quizAttempt = attempt()) {
     view = render(
       <QuizPlayer
         initialAttempt={quizAttempt}
-        initialRemainingMilliseconds={60_000}
+        initialRemainingMilliseconds={remainingMilliseconds}
       />,
     );
     await Promise.resolve();
@@ -170,7 +173,7 @@ afterEach(() => {
 });
 
 describe("QuizPlayer", () => {
-  it("keeps the same question structure for 500ms and then starts the next server timer", async () => {
+  it("keeps the same question structure for 750ms and then starts the next server timer", async () => {
     mocks.submit.mockResolvedValue(
       successfulTransport({
         correct: true,
@@ -195,7 +198,7 @@ describe("QuizPlayer", () => {
       "sr-only",
     );
 
-    act(() => vi.advanceTimersByTime(499));
+    act(() => vi.advanceTimersByTime(749));
     expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
 
     act(() => vi.advanceTimersByTime(1));
@@ -280,7 +283,7 @@ describe("QuizPlayer", () => {
     expect(mocks.submit).not.toHaveBeenCalled();
 
     fireEvent.click(rowButtons![0]);
-    expect(player?.play).toHaveBeenCalledTimes(2);
+    expect(player?.play).toHaveBeenCalledOnce();
     expect(mocks.submit).toHaveBeenCalledOnce();
   });
 
@@ -317,14 +320,14 @@ describe("QuizPlayer", () => {
     expect(player?.play).toHaveBeenCalledTimes(2);
     fireEvent.click(screen.getByRole("button", { name: /하나/ }));
     await act(async () => Promise.resolve());
-    act(() => vi.advanceTimersByTime(500));
+    act(() => vi.advanceTimersByTime(750));
     await act(async () => Promise.resolve());
 
     expect(screen.getByText("english-2")).toBeInTheDocument();
     expect(player?.play).toHaveBeenCalledTimes(3);
   });
 
-  it("keeps selected English audio playing across the 500ms transition", async () => {
+  it("keeps manually played English audio playing across the 750ms transition", async () => {
     const audioAttempt = attempt();
     for (const current of audioAttempt.questions) {
       current.choicePronunciations = Array.from({ length: 4 }, (_, index) => ({
@@ -346,17 +349,61 @@ describe("QuizPlayer", () => {
 
     await renderReady(audioAttempt);
     const firstRow = screen.getByRole("group").firstElementChild;
-    fireEvent.click(firstRow!.querySelectorAll("button")[0]);
+    const rowButtons = firstRow!.querySelectorAll("button");
+    fireEvent.click(rowButtons[1]);
     const player = audioInstances.find((audio) =>
       audio.play.mock.calls.length > 0
     );
     const pauseCount = player?.pause.mock.calls.length;
+    fireEvent.click(rowButtons[0]);
+    expect(player?.play).toHaveBeenCalledOnce();
     await act(async () => Promise.resolve());
-    act(() => vi.advanceTimersByTime(500));
+    act(() => vi.advanceTimersByTime(750));
 
     expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
     expect(player?.pause).toHaveBeenCalledTimes(pauseCount ?? 0);
     pendingAudioPlays[0]?.();
+  });
+
+  it("shows a timeout notice for 750ms and records no answer as wrong", async () => {
+    mocks.submit.mockResolvedValue(
+      successfulTransport({
+        correct: false,
+        correctChoiceIndex: 1,
+        nextPhase: "initial",
+        nextQuestionId: "question-2",
+        questionDeadlineAt: "2099-01-01T00:00:10.000Z",
+        timedOut: true,
+        timerRemainingMilliseconds: 10_000,
+      }),
+    );
+
+    await renderReady(attempt(), 0);
+    await act(async () => {
+      vi.advanceTimersByTime(0);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(mocks.submit).toHaveBeenCalledWith(
+      expect.objectContaining({ choiceIndex: null }),
+    );
+    expect(screen.getByTestId("quiz-timeout-overlay")).toHaveTextContent(
+      studentAppText.attempt.timeoutTitle,
+    );
+    expect(screen.getByText(studentAppText.attempt.timedOut)).toHaveClass(
+      "sr-only",
+    );
+    expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(749));
+    expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(1));
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("quiz-timeout-overlay"),
+    ).not.toBeInTheDocument();
   });
 
   it("announces a wrong answer without adding visible feedback copy", async () => {

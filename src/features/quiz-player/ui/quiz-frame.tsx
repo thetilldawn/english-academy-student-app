@@ -13,6 +13,7 @@ import type { QuizQuestion } from "../model";
 import { AudioButton } from "./audio-button";
 import { QuizChoice, type QuizChoiceFeedback } from "./quiz-choice";
 import { QuizSynchronizationError } from "./quiz-synchronization-error";
+import { QuizTimeoutOverlay } from "./quiz-timeout-overlay";
 import styles from "./quiz-frame.module.css";
 
 function shouldIgnoreShortcut(event: KeyboardEvent<HTMLElement>) {
@@ -32,7 +33,6 @@ function shouldIgnoreShortcut(event: KeyboardEvent<HTMLElement>) {
 export function QuizFrame({
   answerAnnouncement,
   assignmentTitle,
-  choiceAudioEnabled,
   choiceDensity,
   choiceFeedback,
   completedInPhase,
@@ -53,11 +53,11 @@ export function QuizFrame({
   submitting,
   timerSynchronized,
   timeWarning,
+  timedOut,
   timingMode,
 }: {
   answerAnnouncement: string;
   assignmentTitle: string;
-  choiceAudioEnabled: boolean;
   choiceDensity: QuizChoiceLength;
   choiceFeedback: (index: number) => QuizChoiceFeedback;
   completedInPhase: number;
@@ -78,6 +78,7 @@ export function QuizFrame({
   submitting: boolean;
   timerSynchronized: boolean;
   timeWarning: string;
+  timedOut: boolean;
   timingMode: "total" | "per_question";
 }) {
   const isEnglishPrompt =
@@ -251,7 +252,10 @@ export function QuizFrame({
       >
         {currentQuestion.choices.map((choice, index) => (
           <QuizChoice
-            audioEnabled={choiceAudioEnabled}
+            audioEnabled={
+              isEnglishChoice &&
+              currentQuestion.choicePronunciations[index]?.available === true
+            }
             choice={choice}
             density={choiceDensity}
             disabled={submitting}
@@ -290,6 +294,7 @@ export function QuizFrame({
       <span aria-live="assertive" className="sr-only" role="status">
         {timeWarning}
       </span>
+      <QuizTimeoutOverlay visible={timedOut} />
     </section>
   );
 }

@@ -81,6 +81,19 @@ describe("quiz session domain", () => {
     const missingChoice = question("korean_to_english");
     missingChoice.choicePronunciations[3] = unavailablePronunciation();
     expect(quizAudioPresentation(missingChoice)).toEqual({
+      choiceAudioEnabled: true,
+      promptAudioUrl: null,
+    });
+    expect(quizChoiceAudioUrls(missingChoice)).toEqual(
+      missingChoice.choicePronunciations
+        .filter((pronunciation) => pronunciation.available)
+        .map((pronunciation) => pronunciation.audioUrl),
+    );
+    missingChoice.choicePronunciations = Array.from(
+      { length: 4 },
+      () => unavailablePronunciation(),
+    );
+    expect(quizAudioPresentation(missingChoice)).toEqual({
       choiceAudioEnabled: false,
       promptAudioUrl: null,
     });
@@ -158,7 +171,7 @@ describe("quiz session domain", () => {
         "initial",
       ),
     ).toBe("next-question");
-    expect(ANSWER_FEEDBACK_DELAY_MS).toBe(500);
+    expect(ANSWER_FEEDBACK_DELAY_MS).toBe(750);
   });
 
   it("applies the answer and next server state without rebuilding questions", () => {

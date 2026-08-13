@@ -6,6 +6,29 @@
   background: var(--card);
 }
 
+.timeoutOverlay {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--card) 72%, transparent);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+.timeoutMessage {
+  padding: 16px 24px;
+  border: 1px solid var(--no-line);
+  border-radius: var(--radius-card);
+  background: var(--no-bg);
+  color: var(--fail);
+  font-family: var(--font-kr);
+  font-size: clamp(24px, 6vw, 34px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
 .topline {
   min-height: 76px;
   display: flex;

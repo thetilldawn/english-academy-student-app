@@ -43,7 +43,7 @@ describe("redesign CSS contract", () => {
     expect(values.size).toBeLessThanOrEqual(5);
   });
 
-  it("limits blur to the responsive navigation surfaces", () => {
+  it("limits blur to navigation surfaces and the brief timeout notice", () => {
     expect(css).not.toMatch(
       /(?:linear-gradient|radial-gradient|box-shadow)\s*:/,
     );
@@ -56,6 +56,7 @@ describe("redesign CSS contract", () => {
     expect(blurFiles).toEqual([
       "components/shell/admin-navigation.module.css",
       "components/shell/app-shell.module.css",
+      "features/quiz-player/ui/quiz-frame.module.css",
     ]);
     expect(globalsCss).not.toMatch(/backdrop-filter\s*:/);
   });

@@ -47,11 +47,6 @@ export function QuizPlayer({
     currentQuestion.direction,
   );
   const choose = (index: number) => {
-    if (controller.audioPresentation.choiceAudioEnabled) {
-      controller.playAudio(
-        currentQuestion.choicePronunciations[index]?.audioUrl ?? null,
-      );
-    }
     void controller.submitChoice(index);
   };
   const choiceFeedback = (index: number): QuizChoiceFeedback => {
@@ -71,9 +66,6 @@ export function QuizPlayer({
       <QuizFrame
         answerAnnouncement={controller.answerAnnouncement}
         assignmentTitle={state.attempt.assignmentTitle}
-        choiceAudioEnabled={
-          controller.audioPresentation.choiceAudioEnabled
-        }
         choiceDensity={choiceDensity}
         choiceFeedback={choiceFeedback}
         completedInPhase={controller.completedInPhase}
@@ -98,6 +90,7 @@ export function QuizPlayer({
         submitting={state.submitting || !state.timerSynchronized}
         timerSynchronized={state.timerSynchronized}
         timeWarning={state.timeWarning}
+        timedOut={state.feedback?.timedOut ?? false}
         timingMode={state.attempt.timingMode}
       />
     </main>

@@ -1,6 +1,4 @@
 import { studentAppText } from "@/content/ko/student-app";
-import { allChoiceAudioAvailable } from "@/lib/quiz/pronunciation-snapshot";
-
 import type {
   QuizAnswerResponse,
   QuizAttempt,
@@ -8,7 +6,7 @@ import type {
   QuizQuestion,
 } from "../model";
 
-export const ANSWER_FEEDBACK_DELAY_MS = 500;
+export const ANSWER_FEEDBACK_DELAY_MS = 750;
 
 export function currentQuizQuestion(attempt: QuizAttempt) {
   return (
@@ -56,16 +54,19 @@ export function quizAudioPresentation(
       : null;
   const choiceAudioEnabled =
     question.direction === "korean_to_english" &&
-    allChoiceAudioAvailable(question.choicePronunciations);
+    question.choicePronunciations.some(
+      (pronunciation) => pronunciation.available,
+    );
 
   return { promptAudioUrl, choiceAudioEnabled };
 }
 
 export function quizChoiceAudioUrls(question: QuizQuestion) {
-  return question.direction === "korean_to_english" &&
-    allChoiceAudioAvailable(question.choicePronunciations)
-    ? question.choicePronunciations.map(
-        (pronunciation) => pronunciation.audioUrl as string,
+  return question.direction === "korean_to_english"
+    ? question.choicePronunciations.flatMap((pronunciation) =>
+        pronunciation.available && pronunciation.audioUrl
+          ? [pronunciation.audioUrl]
+          : [],
       )
     : [];
 }

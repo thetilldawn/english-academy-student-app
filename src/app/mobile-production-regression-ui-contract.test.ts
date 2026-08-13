@@ -18,6 +18,9 @@ describe("mobile production regression UI contract", () => {
   const quizFrameCss = source(
     "src/features/quiz-player/ui/quiz-frame.module.css",
   );
+  const quizTimeoutOverlay = source(
+    "src/features/quiz-player/ui/quiz-timeout-overlay.tsx",
+  );
   const quizChoiceCss = source(
     "src/features/quiz-player/ui/quiz-choice.module.css",
   );
@@ -70,7 +73,10 @@ describe("mobile production regression UI contract", () => {
     expect(quizDomain).toContain(
       'question.direction === "korean_to_english"',
     );
-    expect(quizDomain).toContain("allChoiceAudioAvailable");
+    expect(quizDomain).toContain("pronunciation.available");
+    expect(quizFrame).toContain(
+      "currentQuestion.choicePronunciations[index]?.available",
+    );
     expect(quizFrame).not.toContain("placeholder");
     expect(quizFrameCss).toMatch(
       /\.promptRow\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/,
@@ -94,6 +100,11 @@ describe("mobile production regression UI contract", () => {
     expect(css).not.toContain(".feedback-wrong");
     expect(css).not.toContain(".quiz-prompt-prior-wrong");
     expect(css).not.toContain(".quiz-error");
+    expect(quizFrame).toContain("<QuizTimeoutOverlay visible={timedOut} />");
+    expect(quizTimeoutOverlay).toContain("quiz-timeout-overlay");
+    expect(quizTimeoutOverlay).toContain(
+      "studentAppText.attempt.timeoutTitle",
+    );
     expect(quizChoiceCss).toMatch(
       /\.row\s*\{[^}]*height:\s*76px;/,
     );

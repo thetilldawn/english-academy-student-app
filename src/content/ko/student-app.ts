@@ -89,6 +89,7 @@ export const studentAppText = {
     chooseEnglish: "알맞은 영어 단어를 고르세요",
     pronunciationAria: "{word} 발음 듣기",
     correct: "정답입니다.",
+    timeoutTitle: "시간 초과",
     timedOut: "시간 초과로 미응답 오답 처리했습니다.",
     wrongInitial: "오답입니다. 첫 시험 결과에서 다시 확인할 수 있습니다.",
     wrongRetry: "다시 확인할 단어로 남겼습니다.",

@@ -6,6 +6,8 @@ import { createRef } from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { studentAppText } from "@/content/ko/student-app";
+
 import type { QuizQuestion } from "../model";
 import { QuizFrame } from "./quiz-frame";
 
@@ -54,9 +56,6 @@ function renderFrame(
     <QuizFrame
       answerAnnouncement=""
       assignmentTitle="Vocabulary quiz"
-      choiceAudioEnabled={
-        currentQuestion.direction === "korean_to_english"
-      }
       choiceDensity="default"
       choiceFeedback={() => null}
       completedInPhase={0}
@@ -81,6 +80,7 @@ function renderFrame(
       submitting={false}
       timerSynchronized
       timeWarning=""
+      timedOut={false}
       timingMode="per_question"
       {...overrides}
     />,
@@ -119,6 +119,44 @@ describe("QuizFrame", () => {
         button.getAttribute("aria-label")?.includes("뛰어난"),
       ),
     ).toBe(false);
+  });
+
+  it("shows speakers only beside English choices with available audio", () => {
+    const currentQuestion = question("korean_to_english");
+    currentQuestion.choicePronunciations[1] = {
+      audioUrl: null,
+      available: false,
+      displayKo: null,
+      variantId: null,
+    };
+    renderFrame(currentQuestion);
+
+    expect(
+      screen.getByRole("button", { name: /alpha 발음 듣기/ }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: /beta 발음 듣기/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /gamma 발음 듣기/ }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: /delta 발음 듣기/ }),
+    ).toBeVisible();
+  });
+
+  it("shows a full-screen timeout notice without duplicating live narration", () => {
+    renderFrame(question("korean_to_english"), {
+      answerAnnouncement: studentAppText.attempt.timedOut,
+      timedOut: true,
+    });
+
+    const overlay = screen.getByTestId("quiz-timeout-overlay");
+    expect(overlay).toHaveTextContent(studentAppText.attempt.timeoutTitle);
+    expect(overlay).toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByText(studentAppText.attempt.timedOut)).toHaveClass(
+      "sr-only",
+    );
   });
 
   it("renders no empty audio column when approved audio is unavailable", () => {

@@ -78,6 +78,12 @@ describe("assignment order and timing database contract", () => {
     const retryTimerMigration = source(
       "supabase/migrations/20260811090000_reset_retry_question_timer.sql",
     );
+    const feedbackDelayMigration = source(
+      "supabase/migrations/20260813103323_extend_quiz_answer_feedback_delay.sql",
+    );
+    const feedbackDelayRollback = source(
+      "supabase/rollback/20260813103323_extend_quiz_answer_feedback_delay.sql",
+    );
     const quizService = source("src/lib/services/quiz-service.ts");
     const timeoutRoute = source(
       "src/app/api/student/attempts/[id]/timeouts/route.ts",
@@ -94,6 +100,12 @@ describe("assignment order and timing database contract", () => {
     expect(frame).not.toContain('className="feedback feedback-wrong"');
     expect(retryTimerMigration).toContain(
       "current_question_started_at = retry_start_time",
+    );
+    expect(feedbackDelayMigration).toContain(
+      "clock_timestamp() + interval '750 milliseconds'",
+    );
+    expect(feedbackDelayRollback).toContain(
+      "clock_timestamp() + interval '500 milliseconds'",
     );
     expect(copy).toContain(
       'timedOut: "시간 초과로 미응답 오답 처리했습니다."',
