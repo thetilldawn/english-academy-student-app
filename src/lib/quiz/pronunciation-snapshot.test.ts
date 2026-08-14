@@ -191,10 +191,16 @@ describe("quiz pronunciation snapshots", () => {
     const row = {
       asset_id: `synthetic:${requestHash}`,
       dictionary_id: "expression:emerge-from-4925a141",
+      speech_text: "emerge from",
       profile_id: "profile:5b6efb0ecc8f4702",
       provider: "google_cloud_text_to_speech",
       model: "chirp3-hd",
       voice: "en-US-Chirp3-HD-Despina",
+      pronunciation_variant_id: null,
+      pronunciation_identity_type: "dictionary_expression",
+      pronunciation_mode: "provider_default_expression",
+      canonical_ipa: null,
+      google_tts_ipa: null,
       request_sha256: requestHash,
       storage_bucket: "vocab-pronunciation-audio",
       storage_object_key: `pronunciation/google_cloud_text_to_speech/profile-5b6efb0ecc8f4702/${requestHash}.mp3`,
@@ -218,6 +224,72 @@ describe("quiz pronunciation snapshots", () => {
       parseSyntheticRegistryPronunciation(
         { ...row, canonical_pronunciation_approval_implied: true },
         "https://wojxpruvbjzbhrpmsbuy.supabase.co",
+      ),
+    ).toMatchObject({ available: false });
+  });
+
+  it("단어 표면형·IPA 고정·출현 구절 합성 자산을 각각의 승인 규칙으로만 허용한다", () => {
+    const supabaseUrl = "https://wojxpruvbjzbhrpmsbuy.supabase.co";
+    const wordRow = (requestHash: string) => ({
+      asset_id: `synthetic:${requestHash}`,
+      dictionary_id: "word:selflessness",
+      speech_text: "selflessness",
+      profile_id: "profile:75ca7f418d66e6ab",
+      provider: "google_cloud_text_to_speech",
+      model: "chirp3-hd",
+      voice: "en-US-Chirp3-HD-Despina",
+      pronunciation_variant_id: "ttsword:selflessness:selflessness:noun",
+      pronunciation_identity_type: "dictionary_word_surface",
+      pronunciation_mode: "provider_default_word_surface",
+      canonical_ipa: null,
+      google_tts_ipa: null,
+      request_sha256: requestHash,
+      storage_bucket: "vocab-pronunciation-audio",
+      storage_object_key: `pronunciation/google_cloud_text_to_speech/profile-75ca7f418d66e6ab/${requestHash}.mp3`,
+      review_status: "profile_approved_generated",
+      storage_verified: true,
+      playback_enabled: true,
+      canonical_pronunciation_approval_implied: false,
+    });
+
+    const providerDefault = wordRow("2".repeat(64));
+    expect(
+      parseSyntheticRegistryPronunciation(providerDefault, supabaseUrl),
+    ).toMatchObject({ available: true });
+
+    const customIpa = {
+      ...wordRow("3".repeat(64)),
+      dictionary_id: "word:artifact",
+      speech_text: "artefact",
+      pronunciation_variant_id: "ttsword:artifact:artefact:noun",
+      pronunciation_mode: "custom_ipa_word_surface",
+      canonical_ipa: "ˈɑrtəˌfækt",
+      google_tts_ipa: "ˈɑːɹtəˌfækt",
+    };
+    expect(parseSyntheticRegistryPronunciation(customIpa, supabaseUrl)).toMatchObject({
+      available: true,
+    });
+
+    const occurrencePhrase = {
+      ...wordRow("4".repeat(64)),
+      dictionary_id: "word:strike",
+      speech_text: "disaster struck",
+      pronunciation_variant_id: "ttsocc:569e8f15fa62aa2f369de722:disaster-struck",
+      pronunciation_identity_type: "occurrence_word_phrase",
+    };
+    expect(
+      parseSyntheticRegistryPronunciation(occurrencePhrase, supabaseUrl),
+    ).toMatchObject({ available: true });
+
+    expect(
+      parseSyntheticRegistryPronunciation(
+        {
+          ...occurrencePhrase,
+          pronunciation_mode: "custom_ipa_word_surface",
+          canonical_ipa: "dɪˈzæstɚ strʌk",
+          google_tts_ipa: "dɪˈzæstɚ stɹʌk",
+        },
+        supabaseUrl,
       ),
     ).toMatchObject({ available: false });
   });

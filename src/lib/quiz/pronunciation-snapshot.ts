@@ -4,8 +4,10 @@ const SUPABASE_URL = /^https:\/\/[a-z0-9]{20}\.supabase\.co$/;
 const DICTIONARY_ID =
   /^(?:word|root_affix|expression):[a-z0-9][a-z0-9._'’-]*$/;
 const SYNTHETIC_REQUEST_HASH = /^[0-9a-f]{64}$/;
-const SYNTHETIC_PROFILE_ID = "profile:5b6efb0ecc8f4702";
+const EXPRESSION_SYNTHETIC_PROFILE_ID = "profile:5b6efb0ecc8f4702";
+const WORD_SYNTHETIC_PROFILE_ID = "profile:75ca7f418d66e6ab";
 const SYNTHETIC_BUCKET = "vocab-pronunciation-audio";
+const SYNTHETIC_VARIANT_ID = /^tts(?:word|occ):[a-z0-9][a-z0-9:._-]*$/;
 
 export type QuizPronunciation = {
   displayKo: string | null;
@@ -36,10 +38,16 @@ export type VocabPronunciationRegistryRow = {
 export type VocabSyntheticAudioAssetRow = {
   asset_id: unknown;
   dictionary_id: unknown;
+  speech_text: unknown;
   profile_id: unknown;
   provider: unknown;
   model: unknown;
   voice: unknown;
+  pronunciation_variant_id: unknown;
+  pronunciation_identity_type: unknown;
+  pronunciation_mode: unknown;
+  canonical_ipa: unknown;
+  google_tts_ipa: unknown;
   request_sha256: unknown;
   storage_bucket: unknown;
   storage_object_key: unknown;
@@ -263,19 +271,52 @@ export function parseSyntheticRegistryPronunciation(
   const requestHash = optionalText(row?.request_sha256);
   const assetId = optionalText(row?.asset_id);
   const dictionaryId = optionalText(row?.dictionary_id);
+  const speechText = optionalText(row?.speech_text);
+  const profileId = optionalText(row?.profile_id);
+  const pronunciationVariantId = optionalText(row?.pronunciation_variant_id);
+  const canonicalIpa = optionalText(row?.canonical_ipa);
+  const googleTtsIpa = optionalText(row?.google_tts_ipa);
   const objectKey = optionalText(row?.storage_object_key);
-  const expectedObjectKey = requestHash
-    ? `pronunciation/google_cloud_text_to_speech/${SYNTHETIC_PROFILE_ID.replace(":", "-")}/${requestHash}.mp3`
+  const expectedObjectKey = requestHash && profileId
+    ? `pronunciation/google_cloud_text_to_speech/${profileId.replace(":", "-")}/${requestHash}.mp3`
     : null;
+  const expressionIdentity =
+    dictionaryId?.startsWith("expression:") === true &&
+    profileId === EXPRESSION_SYNTHETIC_PROFILE_ID &&
+    row?.pronunciation_identity_type === "dictionary_expression" &&
+    row?.pronunciation_mode === "provider_default_expression" &&
+    pronunciationVariantId === null &&
+    canonicalIpa === null &&
+    googleTtsIpa === null;
+  const wordDefaultIdentity =
+    dictionaryId?.startsWith("word:") === true &&
+    profileId === WORD_SYNTHETIC_PROFILE_ID &&
+    (row?.pronunciation_identity_type === "dictionary_word_surface" ||
+      row?.pronunciation_identity_type === "occurrence_word_phrase") &&
+    row?.pronunciation_mode === "provider_default_word_surface" &&
+    pronunciationVariantId !== null &&
+    SYNTHETIC_VARIANT_ID.test(pronunciationVariantId) &&
+    canonicalIpa === null &&
+    googleTtsIpa === null;
+  const wordCustomIpaIdentity =
+    dictionaryId?.startsWith("word:") === true &&
+    profileId === WORD_SYNTHETIC_PROFILE_ID &&
+    row?.pronunciation_identity_type === "dictionary_word_surface" &&
+    row?.pronunciation_mode === "custom_ipa_word_surface" &&
+    pronunciationVariantId !== null &&
+    SYNTHETIC_VARIANT_ID.test(pronunciationVariantId) &&
+    canonicalIpa !== null &&
+    googleTtsIpa !== null;
   if (
     !row ||
     !SUPABASE_URL.test(normalizedUrl) ||
     !dictionaryId ||
     !DICTIONARY_ID.test(dictionaryId) ||
+    !speechText ||
     row.provider !== "google_cloud_text_to_speech" ||
     row.model !== "chirp3-hd" ||
     row.voice !== "en-US-Chirp3-HD-Despina" ||
-    row.profile_id !== SYNTHETIC_PROFILE_ID ||
+    (!expressionIdentity && !wordDefaultIdentity && !wordCustomIpaIdentity) ||
     row.review_status !== "profile_approved_generated" ||
     row.storage_verified !== true ||
     row.playback_enabled !== true ||
@@ -294,6 +335,13 @@ export function parseSyntheticRegistryPronunciation(
     audioUrl: `${normalizedUrl}/storage/v1/object/public/${SYNTHETIC_BUCKET}/${objectKey}`,
     available: true,
   };
+}
+
+export function syntheticPronunciationBindingKey(
+  releaseId: string,
+  vocabEntryId: number,
+) {
+  return `${releaseId}\u0000${vocabEntryId}`;
 }
 
 export function approvedKoreanPronunciationKey(

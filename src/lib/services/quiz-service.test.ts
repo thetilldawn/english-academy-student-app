@@ -113,11 +113,15 @@ describe("mapResultQuestions", () => {
     const [result] = mapResultQuestions(
       [
         resultRow({
+          vocab_entry_id: 701,
           assignment_question: {
+            vocab_entry_id: 701,
             headword_snapshot: "apply for",
             primary_meaning_snapshot: "지원하다",
             provenance_status: "legacy_backfill",
             exam_use_snapshot: {
+              release_id: "11111111-1111-4111-8111-111111111111",
+              occurrence_id: "occ:apply-for",
               dictionary_id: dictionaryId,
               pronunciation_variant_id: null,
               headword_snapshot: "apply for",
@@ -133,7 +137,7 @@ describe("mapResultQuestions", () => {
       new Map(),
       new Map([
         [
-          dictionaryId,
+          "11111111-1111-4111-8111-111111111111\u0000701",
           {
             audioUrl,
             available: true,
