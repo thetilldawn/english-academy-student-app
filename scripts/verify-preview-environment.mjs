@@ -1,4 +1,6 @@
 const PREVIEW_ENVIRONMENT = "preview";
+const PRODUCTION_ENVIRONMENT = "production";
+const PRODUCTION_SUPABASE_PROJECT_REF = "xdxhswjgksukjmpbzqgz";
 
 export function getSupabaseProjectRef(value) {
   try {
@@ -18,6 +20,17 @@ export function getSupabaseProjectRef(value) {
 }
 
 export function assertPreviewEnvironment(environment = process.env) {
+  if (environment.VERCEL_ENV === PRODUCTION_ENVIRONMENT) {
+    const actualRef = getSupabaseProjectRef(
+      environment.NEXT_PUBLIC_SUPABASE_URL ?? "",
+    );
+    if (actualRef !== PRODUCTION_SUPABASE_PROJECT_REF) {
+      throw new Error(
+        `Production build blocked: Supabase ref mismatch (expected ${PRODUCTION_SUPABASE_PROJECT_REF}, received ${actualRef ?? "invalid URL"}).`,
+      );
+    }
+    return;
+  }
   if (environment.VERCEL_ENV !== PREVIEW_ENVIRONMENT) {
     return;
   }

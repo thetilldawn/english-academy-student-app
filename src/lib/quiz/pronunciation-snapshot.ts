@@ -11,6 +11,12 @@ const EXPRESSION_SYNTHETIC_PROFILE_ID = "profile:5b6efb0ecc8f4702";
 const WORD_SYNTHETIC_PROFILE_ID = "profile:75ca7f418d66e6ab";
 const SYNTHETIC_BUCKET = "vocab-pronunciation-audio";
 const SYNTHETIC_VARIANT_ID = /^tts(?:word|occ):[a-z0-9][a-z0-9:._-]*$/;
+const VOCAB_PRONUNCIATION_IDENTITY_V2 = /^pron:v2:[0-9a-f]{64}$/;
+const VOCAB_PRONUNCIATION_CONTENT_HASH_V2 = /^[0-9A-F]{64}$/;
+const VOCAB_PRONUNCIATION_ENGINE_V2 =
+  "cmudict-arpabet-hangul-render-v1";
+const VOCAB_PRONUNCIATION_TTS_PREFIX_V2 =
+  "pronunciation/google_cloud_text_to_speech/profile-75ca7f418d66e6ab/ability-voca-etymology-2025-v1/";
 
 export type QuizPronunciation = {
   displayKo: string | null;
@@ -79,6 +85,28 @@ export type VocabRuleDerivedKoreanPronunciationRow = {
   confidence_scope: unknown;
   stress_evidence: unknown;
   display_enabled: unknown;
+};
+
+export type VocabPronunciationIdentityV2Row = {
+  identity_id: unknown;
+  pronunciation_variant_id: unknown;
+  audio_provider: unknown;
+  official_audio_url: unknown;
+  sound_audio: unknown;
+  storage_bucket: unknown;
+  storage_object_key: unknown;
+  audio_sha256: unknown;
+  byte_count: unknown;
+  profile_id: unknown;
+  request_sha256: unknown;
+  model: unknown;
+  voice: unknown;
+  display_pronunciation_ko: unknown;
+  segments: unknown;
+  engine_version: unknown;
+  playback_enabled: unknown;
+  display_enabled: unknown;
+  identity_content_sha256: unknown;
 };
 
 function objectValue(value: unknown): Record<string, unknown> | null {
@@ -448,6 +476,96 @@ export function parseRuleDerivedKoreanPronunciation(
   };
 }
 
+export function parseVocabPronunciationIdentityV2(
+  row: VocabPronunciationIdentityV2Row | null | undefined,
+  supabaseUrl: string,
+): QuizPronunciation | undefined {
+  const normalizedUrl = supabaseUrl.replace(/\/$/, "");
+  const identityId = optionalText(row?.identity_id);
+  const variantId = optionalText(row?.pronunciation_variant_id);
+  const displayKo = optionalText(row?.display_pronunciation_ko);
+  const contentHash = optionalText(row?.identity_content_sha256);
+  if (
+    !row ||
+    !SUPABASE_URL.test(normalizedUrl) ||
+    !identityId ||
+    !VOCAB_PRONUNCIATION_IDENTITY_V2.test(identityId) ||
+    !variantId ||
+    !RULE_DERIVED_FINAL_VARIANT.test(variantId) ||
+    !displayKo ||
+    row.engine_version !== VOCAB_PRONUNCIATION_ENGINE_V2 ||
+    row.playback_enabled !== true ||
+    row.display_enabled !== true ||
+    !contentHash ||
+    !VOCAB_PRONUNCIATION_CONTENT_HASH_V2.test(contentHash)
+  ) {
+    return undefined;
+  }
+  const segments = parseKoreanPronunciationSegments(row.segments, displayKo);
+  if (
+    !segments ||
+    segments.filter(({ stress }) => stress === "primary").length !== 1
+  ) {
+    return undefined;
+  }
+  if (row.audio_provider === "merriam_webster") {
+    const audioUrl = optionalText(row.official_audio_url);
+    if (
+      !variantId.startsWith("mw:") ||
+      !audioUrl ||
+      !OFFICIAL_AUDIO_URL.test(audioUrl) ||
+      !optionalText(row.sound_audio) ||
+      row.storage_bucket !== null ||
+      row.storage_object_key !== null ||
+      row.audio_sha256 !== null ||
+      row.byte_count !== null ||
+      row.profile_id !== null ||
+      row.request_sha256 !== null ||
+      row.model !== null ||
+      row.voice !== null
+    ) {
+      return undefined;
+    }
+    return {
+      displayKo,
+      segments,
+      variantId,
+      audioUrl,
+      available: true,
+    };
+  }
+  const requestHash = optionalText(row.request_sha256);
+  const audioHash = optionalText(row.audio_sha256);
+  const objectKey = optionalText(row.storage_object_key);
+  if (
+    row.audio_provider !== "google_cloud_text_to_speech" ||
+    !requestHash ||
+    !SYNTHETIC_REQUEST_HASH.test(requestHash) ||
+    variantId !== `synthetic:${requestHash}` ||
+    row.official_audio_url !== null ||
+    row.sound_audio !== null ||
+    row.storage_bucket !== SYNTHETIC_BUCKET ||
+    objectKey !== `${VOCAB_PRONUNCIATION_TTS_PREFIX_V2}${requestHash}.mp3` ||
+    !audioHash ||
+    !SYNTHETIC_REQUEST_HASH.test(audioHash) ||
+    typeof row.byte_count !== "number" ||
+    !Number.isInteger(row.byte_count) ||
+    row.byte_count < 128 ||
+    row.profile_id !== WORD_SYNTHETIC_PROFILE_ID ||
+    row.model !== "chirp3-hd" ||
+    row.voice !== "en-US-Chirp3-HD-Despina"
+  ) {
+    return undefined;
+  }
+  return {
+    displayKo,
+    segments,
+    variantId,
+    audioUrl: `${normalizedUrl}/storage/v1/object/public/${SYNTHETIC_BUCKET}/${objectKey}`,
+    available: true,
+  };
+}
+
 export function withApprovedKoreanPronunciation(
   pronunciation: QuizPronunciation,
   approved: QuizPronunciation | undefined,
@@ -510,6 +628,26 @@ export function preferredPronunciationWithApprovedKorean(
         )
       : undefined;
   return withApprovedKoreanPronunciation(preferred, approved);
+}
+
+export function preferredPronunciationWithActiveVocaRelease(
+  dictionaryId: string | null | undefined,
+  snapshot: QuizPronunciation,
+  activeVocaRelease: QuizPronunciation | undefined,
+  officialRegistry: QuizPronunciation | undefined,
+  syntheticRegistry: QuizPronunciation | undefined,
+  approvedRegistry: ReadonlyMap<string, QuizPronunciation>,
+) {
+  if (!snapshot.available && activeVocaRelease?.available) {
+    return activeVocaRelease;
+  }
+  return preferredPronunciationWithApprovedKorean(
+    dictionaryId,
+    snapshot,
+    officialRegistry,
+    syntheticRegistry,
+    approvedRegistry,
+  );
 }
 
 export function withPronunciationDisplay(

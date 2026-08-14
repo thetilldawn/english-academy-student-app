@@ -62,6 +62,34 @@ describe("mapResultQuestions", () => {
     expect(result.correctChoiceIndex).toBe(0);
   });
 
+  it("일반 VOCA 결과와 다시 볼 단어에 활성 v2 음원·한글 강세를 전달한다", () => {
+    const activeVocaPronunciation = {
+      displayKo: "커런트",
+      segments: [
+        { text: "커", stress: "primary" as const },
+        { text: "런트", stress: "none" as const },
+      ],
+      variantId: `mw:${"1".repeat(20)}`,
+      audioUrl:
+        "https://media.merriam-webster.com/audio/prons/en/us/mp3/c/current01.mp3",
+      available: true,
+    };
+    const [result] = mapResultQuestions(
+      [resultRow({ vocab_entry_id: 42 })],
+      new Map(),
+      new Map(),
+      new Map(),
+      new Map(),
+      new Map([[42, activeVocaPronunciation]]),
+    );
+
+    expect(result.pronunciation).toBe(activeVocaPronunciation);
+    expect(result.pronunciation.segments?.[0]).toEqual({
+      text: "커",
+      stress: "primary",
+    });
+  });
+
   it("Preview 검토본도 배정 당시 문맥 뜻 스냅샷을 표시한다", () => {
     const [result] = mapResultQuestions([
       resultRow({

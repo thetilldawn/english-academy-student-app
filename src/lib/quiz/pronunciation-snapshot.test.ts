@@ -11,7 +11,9 @@ import {
   parseRegistryPronunciation,
   parseSyntheticRegistryPronunciation,
   parseTargetPronunciation,
+  parseVocabPronunciationIdentityV2,
   preferredPronunciation,
+  preferredPronunciationWithActiveVocaRelease,
   preferredPronunciationWithApprovedKorean,
   withApprovedKoreanPronunciation,
 } from "@/lib/quiz/pronunciation-snapshot";
@@ -485,5 +487,135 @@ describe("quiz pronunciation snapshots", () => {
         choices,
       ),
     ).toEqual([null, null, null, null]);
+  });
+
+  it("활성 VOCA Webster 음원과 한글 강세를 한 묶음으로 읽는다", () => {
+    const pronunciation = parseVocabPronunciationIdentityV2(
+      {
+        identity_id: `pron:v2:${"1".repeat(64)}`,
+        pronunciation_variant_id: `mw:${"2".repeat(20)}`,
+        audio_provider: "merriam_webster",
+        official_audio_url: officialUrl,
+        sound_audio: "test0001",
+        storage_bucket: null,
+        storage_object_key: null,
+        audio_sha256: null,
+        byte_count: null,
+        profile_id: null,
+        request_sha256: null,
+        model: null,
+        voice: null,
+        display_pronunciation_ko: "테스트",
+        segments: [
+          { text: "테", stress: "primary" },
+          { text: "스트", stress: "none" },
+        ],
+        engine_version: "cmudict-arpabet-hangul-render-v1",
+        playback_enabled: true,
+        display_enabled: true,
+        identity_content_sha256: "A".repeat(64),
+      },
+      "https://wojxpruvbjzbhrpmsbuy.supabase.co",
+    );
+    expect(pronunciation).toEqual({
+      displayKo: "테스트",
+      segments: [
+        { text: "테", stress: "primary" },
+        { text: "스트", stress: "none" },
+      ],
+      variantId: `mw:${"2".repeat(20)}`,
+      audioUrl: officialUrl,
+      available: true,
+    });
+  });
+
+  it("활성 VOCA Google 음원은 고정된 Storage 경로만 허용한다", () => {
+    const requestHash = "3".repeat(64);
+    const row = {
+      identity_id: `pron:v2:${"1".repeat(64)}`,
+      pronunciation_variant_id: `synthetic:${requestHash}`,
+      audio_provider: "google_cloud_text_to_speech",
+      official_audio_url: null,
+      sound_audio: null,
+      storage_bucket: "vocab-pronunciation-audio",
+      storage_object_key:
+        `pronunciation/google_cloud_text_to_speech/profile-75ca7f418d66e6ab/ability-voca-etymology-2025-v1/${requestHash}.mp3`,
+      audio_sha256: "4".repeat(64),
+      byte_count: 4096,
+      profile_id: "profile:75ca7f418d66e6ab",
+      request_sha256: requestHash,
+      model: "chirp3-hd",
+      voice: "en-US-Chirp3-HD-Despina",
+      display_pronunciation_ko: "테스트",
+      segments: [{ text: "테스트", stress: "primary" }],
+      engine_version: "cmudict-arpabet-hangul-render-v1",
+      playback_enabled: true,
+      display_enabled: true,
+      identity_content_sha256: "A".repeat(64),
+    };
+    expect(
+      parseVocabPronunciationIdentityV2(
+        row,
+        "https://wojxpruvbjzbhrpmsbuy.supabase.co",
+      )?.audioUrl,
+    ).toBe(
+      `https://wojxpruvbjzbhrpmsbuy.supabase.co/storage/v1/object/public/vocab-pronunciation-audio/${row.storage_object_key}`,
+    );
+    expect(
+      parseVocabPronunciationIdentityV2(
+        { ...row, storage_object_key: "wrong.mp3" },
+        "https://wojxpruvbjzbhrpmsbuy.supabase.co",
+      ),
+    ).toBeUndefined();
+    expect(
+      parseVocabPronunciationIdentityV2(
+        {
+          ...row,
+          segments: [
+            { text: "테", stress: "primary" },
+            { text: "스트", stress: "primary" },
+          ],
+        },
+        "https://wojxpruvbjzbhrpmsbuy.supabase.co",
+      ),
+    ).toBeUndefined();
+  });
+
+  it("모의고사 저장 발음 다음에 활성 VOCA 묶음을 사용한다", () => {
+    const snapshot = parseTargetPronunciation({
+      displayPronunciationKo: "시험 발음",
+      pronunciationVariantId: "mw:exam",
+      audioStatus: "raw_attached",
+      audioUrl: officialUrl,
+      listeningEnabled: true,
+    });
+    const activeVoca = {
+      displayKo: "보카 발음",
+      segments: [{ text: "보카 발음", stress: "primary" as const }],
+      variantId: `mw:${"2".repeat(20)}`,
+      audioUrl: officialUrl,
+      available: true,
+    };
+    const legacy = { ...activeVoca, variantId: "mw:legacy" };
+    expect(
+      preferredPronunciationWithActiveVocaRelease(
+        null,
+        snapshot,
+        activeVoca,
+        legacy,
+        undefined,
+        new Map(),
+      ).variantId,
+    ).toBe("mw:exam");
+    expect(
+      preferredPronunciationWithActiveVocaRelease(
+        null,
+        parseTargetPronunciation({}),
+        activeVoca,
+        legacy,
+        undefined,
+        new Map(),
+      ),
+    ).toBe(activeVoca);
   });
 });

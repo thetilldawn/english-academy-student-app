@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+import { loadEnvConfig } from "@next/env";
 import { createClient } from "@supabase/supabase-js";
 
 import {
@@ -12,12 +13,16 @@ type CliOptions = {
   file: string;
   apply: boolean;
   markReady: boolean;
+  expectedProjectRef: string | null;
+  envDir: string;
 };
 
 function parseOptions(args: string[]): CliOptions {
   let file = "";
   let apply = false;
   let markReady = false;
+  let expectedProjectRef: string | null = null;
+  let envDir = process.cwd();
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
@@ -28,6 +33,12 @@ function parseOptions(args: string[]): CliOptions {
       apply = true;
     } else if (argument === "--mark-ready") {
       markReady = true;
+    } else if (argument === "--expected-project-ref") {
+      expectedProjectRef = args[index + 1] ?? null;
+      index += 1;
+    } else if (argument === "--env-dir") {
+      envDir = path.resolve(args[index + 1] ?? "");
+      index += 1;
     } else {
       throw new Error(`알 수 없는 옵션입니다: ${argument}`);
     }
@@ -41,8 +52,28 @@ function parseOptions(args: string[]): CliOptions {
   if (markReady && !apply) {
     throw new Error("--mark-ready는 --apply와 함께 사용해야 합니다.");
   }
+  if (apply && !expectedProjectRef) {
+    throw new Error("--apply에는 --expected-project-ref가 필요합니다.");
+  }
 
-  return { file: path.resolve(file), apply, markReady };
+  return {
+    file: path.resolve(file),
+    apply,
+    markReady,
+    expectedProjectRef,
+    envDir,
+  };
+}
+
+function projectRef(value: string) {
+  try {
+    const hostname = new URL(value).hostname;
+    return hostname.endsWith(".supabase.co")
+      ? (hostname.split(".")[0] ?? null)
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 async function main() {
@@ -69,12 +100,16 @@ async function main() {
 
   assertVocabularyImportApplyAllowed(normalized.file, options.markReady);
 
+  loadEnvConfig(options.envDir);
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const secretKey = process.env.SUPABASE_SECRET_KEY;
   if (!supabaseUrl || !secretKey) {
     throw new Error(
       "NEXT_PUBLIC_SUPABASE_URL과 SUPABASE_SECRET_KEY가 필요합니다.",
     );
+  }
+  if (projectRef(supabaseUrl) !== options.expectedProjectRef) {
+    throw new Error("Supabase 프로젝트 ref 안전장치가 일치하지 않습니다.");
   }
 
   const supabase = createClient(supabaseUrl, secretKey, {
@@ -268,6 +303,36 @@ async function main() {
     );
   }
 
+  const expectedBySourceRow = new Map(
+    normalized.entries.map((entry) => [entry.sourceRow, entry] as const),
+  );
+  let readbackCount = 0;
+  for (let offset = 0; ; offset += 1000) {
+    const { data, error } = await supabase
+      .from("vocab_entries")
+      .select("source_row, row_sha256, headword, headword_normalized")
+      .eq("dataset_id", datasetId)
+      .order("source_row")
+      .range(offset, offset + 999);
+    if (error) throw new Error(`가져온 행 readback 실패: ${error.message}`);
+    for (const row of data ?? []) {
+      const expected = expectedBySourceRow.get(row.source_row);
+      if (
+        !expected ||
+        row.row_sha256 !== expected.rowSha256 ||
+        row.headword !== expected.headword ||
+        row.headword_normalized !== expected.headwordNormalized
+      ) {
+        throw new Error(`${row.source_row}번 가져온 행의 결속값이 다릅니다.`);
+      }
+      readbackCount += 1;
+    }
+    if (!data || data.length < 1000) break;
+  }
+  if (readbackCount !== normalized.audit.rowCount) {
+    throw new Error(`가져온 행 readback 수가 다릅니다: ${readbackCount}`);
+  }
+
   if (options.markReady) {
     const { error } = await supabase
       .from("vocab_datasets")
@@ -284,7 +349,18 @@ async function main() {
     }
   }
 
-  console.log(JSON.stringify({ ...summary, datasetId }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        ...summary,
+        datasetId,
+        projectRef: options.expectedProjectRef,
+        readbackCount,
+      },
+      null,
+      2,
+    ),
+  );
 }
 
 main().catch((error: unknown) => {
