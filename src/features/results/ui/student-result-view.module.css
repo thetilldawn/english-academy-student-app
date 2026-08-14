@@ -154,25 +154,32 @@
 
 .pronunciation {
   min-width: 0;
+  min-height: var(--pronunciation-line-height);
   overflow: hidden;
   color: var(--text-primary);
   font-family: var(--font-kr);
   font-size: 13px;
   font-weight: 400;
-  line-height: 1.45;
+  line-height: var(--pronunciation-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .pronunciation [data-stress="secondary"] {
   color: var(--text-emphasis);
+  font-size: var(--pronunciation-stress-secondary-size);
   font-style: normal;
-  font-weight: 700;
+  font-weight: var(--pronunciation-stress-weight);
+  line-height: 1;
+  vertical-align: baseline;
 }
 
 .pronunciation [data-stress="primary"] {
   color: var(--text-emphasis);
-  font-weight: 800;
+  font-size: var(--pronunciation-stress-primary-size);
+  font-weight: var(--pronunciation-stress-weight);
+  line-height: 1;
+  vertical-align: baseline;
 }
 
 .answer[data-language="english"] .answerCopy {

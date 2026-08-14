@@ -104,6 +104,29 @@ function fixture() {
   return release;
 }
 
+function nucleusFixture() {
+  const release = fixture();
+  const identity = release.identities[0];
+  identity.identity_id = `pron:v3:${"5".repeat(64)}`;
+  identity.engine_version = "cmudict-arpabet-hangul-nucleus-render-v2";
+  identity.display_source = "deterministic_nucleus_rule_v2";
+  identity.identity_content_sha256 = computeVocabPronunciationIdentityHash(
+    identity as unknown as Record<string, unknown>,
+  );
+  for (const binding of release.bindings) {
+    binding.identity_id = identity.identity_id;
+    binding.binding_content_sha256 = computeVocabPronunciationBindingHash(
+      binding as unknown as Record<string, unknown>,
+    );
+  }
+  release.engine_version = "cmudict-arpabet-hangul-nucleus-render-v2";
+  release.package_version = computeVocabPronunciationPackageVersion(
+    release as unknown as Record<string, unknown>,
+  );
+  release.release_id = `voca-release:${release.package_version.toLowerCase()}`;
+  return release;
+}
+
 describe("VOCA pronunciation release v2 contract", () => {
   it("accepts an exact 3,001-row immutable release", () => {
     const result = validateVocabPronunciationReleaseV2(fixture());
@@ -119,6 +142,22 @@ describe("VOCA pronunciation release v2 contract", () => {
     release.identities[0].segments[0].stress = "none";
     expect(() => validateVocabPronunciationReleaseV2(release)).toThrow(
       "한글 발음 강세 구간",
+    );
+  });
+
+  it("accepts the separate v3 nucleus generation and rejects mixed generation IDs", () => {
+    expect(validateVocabPronunciationReleaseV2(nucleusFixture()).summary).toMatchObject({
+      binding_count: 3001,
+      identity_count: 1,
+    });
+    const mixed = nucleusFixture();
+    mixed.identities[0].identity_id = `pron:v2:${"5".repeat(64)}`;
+    mixed.identities[0].identity_content_sha256 =
+      computeVocabPronunciationIdentityHash(
+        mixed.identities[0] as unknown as Record<string, unknown>,
+      );
+    expect(() => validateVocabPronunciationReleaseV2(mixed)).toThrow(
+      "발음 엔진과 표시 출처",
     );
   });
 });

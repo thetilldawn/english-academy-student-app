@@ -6,15 +6,20 @@ const DICTIONARY_ID =
 const SYNTHETIC_REQUEST_HASH = /^[0-9a-f]{64}$/;
 const RULE_DERIVED_FINAL_VARIANT =
   /^(?:mw:[0-9a-f]{20}|synthetic:[0-9a-f]{64})$/;
-const RULE_DERIVED_ENGINE_VERSION = "cmudict-hangul-align-v2";
+const RULE_DERIVED_ENGINE_VERSIONS = new Set([
+  "cmudict-hangul-align-v2",
+  "cmudict-hangul-nucleus-align-v3",
+]);
 const EXPRESSION_SYNTHETIC_PROFILE_ID = "profile:5b6efb0ecc8f4702";
 const WORD_SYNTHETIC_PROFILE_ID = "profile:75ca7f418d66e6ab";
 const SYNTHETIC_BUCKET = "vocab-pronunciation-audio";
 const SYNTHETIC_VARIANT_ID = /^tts(?:word|occ):[a-z0-9][a-z0-9:._-]*$/;
-const VOCAB_PRONUNCIATION_IDENTITY_V2 = /^pron:v2:[0-9a-f]{64}$/;
+const VOCAB_PRONUNCIATION_IDENTITY_V2 = /^pron:v[23]:[0-9a-f]{64}$/;
 const VOCAB_PRONUNCIATION_CONTENT_HASH_V2 = /^[0-9A-F]{64}$/;
-const VOCAB_PRONUNCIATION_ENGINE_V2 =
-  "cmudict-arpabet-hangul-render-v1";
+const VOCAB_PRONUNCIATION_ENGINE_V2 = new Set([
+  "cmudict-arpabet-hangul-render-v1",
+  "cmudict-arpabet-hangul-nucleus-render-v2",
+]);
 const VOCAB_PRONUNCIATION_TTS_PREFIX_V2 =
   "pronunciation/google_cloud_text_to_speech/profile-75ca7f418d66e6ab/ability-voca-etymology-2025-v1/";
 
@@ -443,7 +448,7 @@ export function parseRuleDerivedKoreanPronunciation(
   if (
     !row ||
     row.derivation_status !== "rule_derived" ||
-    row.engine_version !== RULE_DERIVED_ENGINE_VERSION ||
+    !RULE_DERIVED_ENGINE_VERSIONS.has(String(row.engine_version)) ||
     !["high", "medium", "low"].includes(String(row.confidence)) ||
     row.confidence_scope !== "hangul_alignment_only" ||
     ![
@@ -485,6 +490,12 @@ export function parseVocabPronunciationIdentityV2(
   const variantId = optionalText(row?.pronunciation_variant_id);
   const displayKo = optionalText(row?.display_pronunciation_ko);
   const contentHash = optionalText(row?.identity_content_sha256);
+  const engineVersion = optionalText(row?.engine_version);
+  const generationMatches =
+    (identityId?.startsWith("pron:v2:") === true &&
+      engineVersion === "cmudict-arpabet-hangul-render-v1") ||
+    (identityId?.startsWith("pron:v3:") === true &&
+      engineVersion === "cmudict-arpabet-hangul-nucleus-render-v2");
   if (
     !row ||
     !SUPABASE_URL.test(normalizedUrl) ||
@@ -493,7 +504,9 @@ export function parseVocabPronunciationIdentityV2(
     !variantId ||
     !RULE_DERIVED_FINAL_VARIANT.test(variantId) ||
     !displayKo ||
-    row.engine_version !== VOCAB_PRONUNCIATION_ENGINE_V2 ||
+    !engineVersion ||
+    !VOCAB_PRONUNCIATION_ENGINE_V2.has(engineVersion) ||
+    !generationMatches ||
     row.playback_enabled !== true ||
     row.display_enabled !== true ||
     !contentHash ||

@@ -4,14 +4,15 @@ import { z } from "zod";
 
 const UPPER_SHA256 = /^[0-9A-F]{64}$/;
 const LOWER_SHA256 = /^[0-9a-f]{64}$/;
-const IDENTITY_ID = /^pron:v2:[0-9a-f]{64}$/;
+const IDENTITY_ID = /^pron:v[23]:[0-9a-f]{64}$/;
 const VARIANT_ID = /^(?:mw:[0-9a-f]{20}|synthetic:[0-9a-f]{64})$/;
 const OFFICIAL_AUDIO_URL =
   /^https:\/\/media\.merriam-webster\.com\/audio\/prons\/en\/us\/mp3\/[A-Za-z0-9_-]+\/[A-Za-z0-9_-]+\.mp3$/;
 const DATASET_KEY = "ability-voca-etymology-2025";
 const DATASET_SOURCE_SHA256 =
   "9FB5B8307C5E695853E2E0E49DE07DD9CD20D29BC59C749DED4D2D07B4C92133";
-const ENGINE_VERSION = "cmudict-arpabet-hangul-render-v1";
+const LEGACY_ENGINE_VERSION = "cmudict-arpabet-hangul-render-v1";
+const NUCLEUS_ENGINE_VERSION = "cmudict-arpabet-hangul-nucleus-render-v2";
 const TTS_PROFILE_ID = "profile:75ca7f418d66e6ab";
 const TTS_BUCKET = "vocab-pronunciation-audio";
 const TTS_PREFIX =
@@ -51,8 +52,10 @@ const identitySchema = z.object({
   display_source: z.enum([
     "user_approved_100_identity_v1",
     "deterministic_rule_v1",
+    "user_approved_display_nucleus_projection_v2",
+    "deterministic_nucleus_rule_v2",
   ]),
-  engine_version: z.literal(ENGINE_VERSION),
+  engine_version: z.enum([LEGACY_ENGINE_VERSION, NUCLEUS_ENGINE_VERSION]),
   stress_evidence: z.enum([
     "selected_webster_lexical_stress",
     "cmudict_lexical_stress",
@@ -102,7 +105,7 @@ const releaseSchema = z.object({
   dataset_source_sha256: z.literal(DATASET_SOURCE_SHA256),
   source_plan_version: z.string().regex(UPPER_SHA256),
   source_tts_manifest_sha256: z.string().regex(UPPER_SHA256),
-  engine_version: z.literal(ENGINE_VERSION),
+  engine_version: z.enum([LEGACY_ENGINE_VERSION, NUCLEUS_ENGINE_VERSION]),
   identities: z.array(identitySchema).min(1),
   bindings: z.array(bindingSchema).length(3001),
   summary: summarySchema,
@@ -177,6 +180,23 @@ function validateIdentity(identity: VocabPronunciationIdentityV2) {
   ) {
     throw new Error(`${identity.identity_id} 발음 묶음 해시가 다릅니다.`);
   }
+  const nucleusIdentity = identity.engine_version === NUCLEUS_ENGINE_VERSION;
+  if (
+    (nucleusIdentity && !identity.identity_id.startsWith("pron:v3:")) ||
+    (!nucleusIdentity && !identity.identity_id.startsWith("pron:v2:")) ||
+    (nucleusIdentity &&
+      ![
+        "user_approved_display_nucleus_projection_v2",
+        "deterministic_nucleus_rule_v2",
+      ].includes(identity.display_source)) ||
+    (!nucleusIdentity &&
+      ![
+        "user_approved_100_identity_v1",
+        "deterministic_rule_v1",
+      ].includes(identity.display_source))
+  ) {
+    throw new Error(`${identity.identity_id} 발음 엔진과 표시 출처가 다릅니다.`);
+  }
   if (identity.audio_provider === "merriam_webster") {
     if (
       !identity.pronunciation_variant_id.startsWith("mw:") ||
@@ -222,6 +242,9 @@ export function validateVocabPronunciationReleaseV2(input: unknown) {
       throw new Error(`${identity.identity_id} 발음 묶음이 중복됐습니다.`);
     }
     validateIdentity(identity);
+    if (identity.engine_version !== release.engine_version) {
+      throw new Error(`${identity.identity_id} 발음 엔진이 release와 다릅니다.`);
+    }
     identities.set(identity.identity_id, identity);
   }
 

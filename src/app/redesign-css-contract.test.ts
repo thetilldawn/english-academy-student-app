@@ -92,10 +92,18 @@ describe("redesign CSS contract", () => {
     );
   });
 
-  it("uses the theme-aware emphasis color for every pronunciation stress", () => {
+  it("uses one weight and separate sizes for pronunciation stress", () => {
     expect(tokensCss).toContain(
       "--text-emphasis: var(--status-warning-bg);",
     );
+    expect(tokensCss).toContain(
+      "--pronunciation-stress-secondary-size: 1.1em;",
+    );
+    expect(tokensCss).toContain(
+      "--pronunciation-stress-primary-size: 1.25em;",
+    );
+    expect(tokensCss).toContain("--pronunciation-stress-weight: 700;");
+    expect(tokensCss).toContain("--pronunciation-line-height: 20px;");
     expect(
       themeCss.match(/--text-emphasis:\s*var\(--retry\);/g),
     ).toHaveLength(2);
@@ -107,10 +115,13 @@ describe("redesign CSS contract", () => {
     ]) {
       const pronunciationCss = readCss(relativePath);
       expect(pronunciationCss).toMatch(
-        /\[data-stress="secondary"\]\s*\{[^}]*color:\s*var\(--text-emphasis\);[^}]*font-weight:\s*700;/,
+        /\[data-stress="secondary"\]\s*\{[^}]*color:\s*var\(--text-emphasis\);[^}]*font-size:\s*var\(--pronunciation-stress-secondary-size\);[^}]*font-weight:\s*var\(--pronunciation-stress-weight\);/,
       );
       expect(pronunciationCss).toMatch(
-        /\[data-stress="primary"\]\s*\{[^}]*color:\s*var\(--text-emphasis\);[^}]*font-weight:\s*800;/,
+        /\[data-stress="primary"\]\s*\{[^}]*color:\s*var\(--text-emphasis\);[^}]*font-size:\s*var\(--pronunciation-stress-primary-size\);[^}]*font-weight:\s*var\(--pronunciation-stress-weight\);/,
+      );
+      expect(pronunciationCss).toContain(
+        "line-height: var(--pronunciation-line-height);",
       );
     }
   });

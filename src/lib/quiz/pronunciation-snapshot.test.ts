@@ -173,6 +173,15 @@ describe("quiz pronunciation snapshots", () => {
     expect(
       parseRuleDerivedKoreanPronunciation({
         ...row,
+        engine_version: "cmudict-hangul-nucleus-align-v3",
+      }),
+    ).toMatchObject({
+      displayKo: "민와일",
+      variantId: "mw:288fb5a854433c5f7580",
+    });
+    expect(
+      parseRuleDerivedKoreanPronunciation({
+        ...row,
         engine_version: "cmudict-hangul-align-v1",
       }),
     ).toBeUndefined();
@@ -527,6 +536,69 @@ describe("quiz pronunciation snapshots", () => {
       audioUrl: officialUrl,
       available: true,
     });
+
+    expect(
+      parseVocabPronunciationIdentityV2(
+        {
+          identity_id: `pron:v3:${"3".repeat(64)}`,
+          pronunciation_variant_id: `mw:${"2".repeat(20)}`,
+          audio_provider: "merriam_webster",
+          official_audio_url: officialUrl,
+          sound_audio: "test0001",
+          storage_bucket: null,
+          storage_object_key: null,
+          audio_sha256: null,
+          byte_count: null,
+          profile_id: null,
+          request_sha256: null,
+          model: null,
+          voice: null,
+          display_pronunciation_ko: "포어헤드",
+          segments: [
+            { text: "포", stress: "primary" },
+            { text: "어", stress: "none" },
+            { text: "헤", stress: "secondary" },
+            { text: "드", stress: "none" },
+          ],
+          engine_version: "cmudict-arpabet-hangul-nucleus-render-v2",
+          playback_enabled: true,
+          display_enabled: true,
+          identity_content_sha256: "A".repeat(64),
+        },
+        "https://wojxpruvbjzbhrpmsbuy.supabase.co",
+      )?.segments,
+    ).toEqual([
+      { text: "포", stress: "primary" },
+      { text: "어", stress: "none" },
+      { text: "헤", stress: "secondary" },
+      { text: "드", stress: "none" },
+    ]);
+    expect(
+      parseVocabPronunciationIdentityV2(
+        {
+          identity_id: `pron:v2:${"3".repeat(64)}`,
+          pronunciation_variant_id: `mw:${"2".repeat(20)}`,
+          audio_provider: "merriam_webster",
+          official_audio_url: officialUrl,
+          sound_audio: "test0001",
+          storage_bucket: null,
+          storage_object_key: null,
+          audio_sha256: null,
+          byte_count: null,
+          profile_id: null,
+          request_sha256: null,
+          model: null,
+          voice: null,
+          display_pronunciation_ko: "포어헤드",
+          segments: [{ text: "포어헤드", stress: "primary" }],
+          engine_version: "cmudict-arpabet-hangul-nucleus-render-v2",
+          playback_enabled: true,
+          display_enabled: true,
+          identity_content_sha256: "A".repeat(64),
+        },
+        "https://wojxpruvbjzbhrpmsbuy.supabase.co",
+      ),
+    ).toBeUndefined();
   });
 
   it("활성 VOCA Google 음원은 고정된 Storage 경로만 허용한다", () => {

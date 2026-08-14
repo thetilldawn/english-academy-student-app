@@ -10,7 +10,7 @@ const OCCURRENCE_ID = /^occ:[a-z0-9][a-z0-9._-]*$/;
 const FINAL_VARIANT_ID = new RegExp(
   `^(?:mw:${HEX20.source.slice(1, -1)}|synthetic:${HEX64.source.slice(1, -1)})$`,
 );
-const ENGINE_VERSION = "cmudict-hangul-align-v2";
+const ENGINE_VERSION = "cmudict-hangul-nucleus-align-v3";
 
 const segmentSchema = z
   .object({
@@ -100,7 +100,7 @@ const packageSchema = z
     source_exam_package_version: z.string().regex(HEX64),
     status: z.literal("complete"),
     derivation_method: z.literal(
-      "cmudict_arpabet_to_hangul_dynamic_alignment",
+      "cmudict_arpabet_to_hangul_nucleus_alignment",
     ),
     engine_version: z.literal(ENGINE_VERSION),
     confidence_scope: z.literal("hangul_alignment_only"),

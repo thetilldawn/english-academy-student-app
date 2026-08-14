@@ -149,7 +149,7 @@ async function main() {
   }
 
   const { data: importResult, error: importError } = await supabase.rpc(
-    "import_rule_derived_korean_pronunciation_package_v1",
+    "import_rule_derived_korean_pronunciation_package_v2",
     { p_package: validated.pronunciationPackage },
   );
   if (importError) {

@@ -23,6 +23,10 @@
   --text-primary: var(--ink);
   --text-secondary: #5f5d55;
   --text-emphasis: var(--status-warning-bg);
+  --pronunciation-stress-secondary-size: 1.1em;
+  --pronunciation-stress-primary-size: 1.25em;
+  --pronunciation-stress-weight: 700;
+  --pronunciation-line-height: 20px;
   --selection-active: #e6e0d1;
   --status-success-bg: #176b3a;
   --status-warning-bg: #7a5700;

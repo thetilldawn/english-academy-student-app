@@ -30,7 +30,7 @@ function fixture() {
       { text: "와일", stress: "secondary" as const },
     ],
     derivation_status: "rule_derived" as const,
-    engine_version: "cmudict-hangul-align-v2" as const,
+    engine_version: "cmudict-hangul-nucleus-align-v3" as const,
     confidence: "high" as const,
     confidence_scope: "hangul_alignment_only" as const,
     stress_evidence: "selected_webster_lexical_stress" as const,
@@ -56,13 +56,13 @@ function fixture() {
   const item = { ...itemWithoutHash, content_sha256: hash(itemWithoutHash) };
   const packageWithoutGeneratedTimeAndHash = {
     schema_version: "rule-derived-korean-pronunciation-batch-v1" as const,
-    package_id: "rule-derived-test-v2",
+    package_id: "rule-derived-test-v3",
     dataset_key: "g12-long-reading-2025-exam-scope-v1",
     source_exam_package_version: "2".repeat(64),
     status: "complete" as const,
     derivation_method:
-      "cmudict_arpabet_to_hangul_dynamic_alignment" as const,
-    engine_version: "cmudict-hangul-align-v2" as const,
+      "cmudict_arpabet_to_hangul_nucleus_alignment" as const,
+    engine_version: "cmudict-hangul-nucleus-align-v3" as const,
     confidence_scope: "hangul_alignment_only" as const,
     display_semantics: "lexical_stress_not_tts_acoustic_prosody" as const,
     target_environment: "staging" as const,

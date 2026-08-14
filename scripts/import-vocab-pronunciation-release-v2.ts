@@ -210,8 +210,28 @@ async function main() {
     return;
   }
 
+  const stageRpc =
+    release.engine_version === "cmudict-arpabet-hangul-nucleus-render-v2"
+      ? "stage_vocab_pronunciation_release_v3"
+      : "stage_vocab_pronunciation_release_v2";
+  const identityImportRpc =
+    release.engine_version === "cmudict-arpabet-hangul-nucleus-render-v2"
+      ? "import_vocab_pronunciation_identity_batch_v3"
+      : "import_vocab_pronunciation_identity_batch_v2";
+  const bindingImportRpc =
+    release.engine_version === "cmudict-arpabet-hangul-nucleus-render-v2"
+      ? "import_vocab_pronunciation_binding_batch_v3"
+      : "import_vocab_pronunciation_binding_batch_v2";
+  const verifyRpc =
+    release.engine_version === "cmudict-arpabet-hangul-nucleus-render-v2"
+      ? "verify_vocab_pronunciation_release_v3"
+      : "verify_vocab_pronunciation_release_v2";
+  const activateRpc =
+    release.engine_version === "cmudict-arpabet-hangul-nucleus-render-v2"
+      ? "activate_vocab_pronunciation_release_v3"
+      : "activate_vocab_pronunciation_release_v2";
   const { data: staged, error: stageError } = await supabase.rpc(
-    "stage_vocab_pronunciation_release_v2",
+    stageRpc,
     { p_header: vocabPronunciationReleaseHeader(release) },
   );
   if (stageError) {
@@ -225,7 +245,7 @@ async function main() {
     let importedIdentities = 0;
     for (const batch of chunks(release.identities, 200)) {
       const { error } = await supabase.rpc(
-        "import_vocab_pronunciation_identity_batch_v2",
+        identityImportRpc,
         { p_release_id: release.release_id, p_items: batch },
       );
       if (error) {
@@ -243,7 +263,7 @@ async function main() {
     let importedBindings = 0;
     for (const batch of chunks(release.bindings, 300)) {
       const { error } = await supabase.rpc(
-        "import_vocab_pronunciation_binding_batch_v2",
+        bindingImportRpc,
         { p_release_id: release.release_id, p_items: batch },
       );
       if (error) {
@@ -263,7 +283,7 @@ async function main() {
   }
 
   const { data: verified, error: verifyError } = await supabase.rpc(
-    "verify_vocab_pronunciation_release_v2",
+    verifyRpc,
     { p_release_id: release.release_id },
   );
   if (verifyError) {
@@ -272,7 +292,7 @@ async function main() {
   let activated: unknown = null;
   if (options.activate) {
     const { data, error } = await supabase.rpc(
-      "activate_vocab_pronunciation_release_v2",
+      activateRpc,
       { p_release_id: release.release_id },
     );
     if (error) {

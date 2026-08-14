@@ -221,22 +221,30 @@
 }
 
 .promptPronunciation {
+  min-height: var(--pronunciation-line-height);
   color: var(--ink);
   font-family: var(--font-kr);
   font-size: 12px;
   font-weight: 400;
   letter-spacing: 0;
+  line-height: var(--pronunciation-line-height);
 }
 
 .promptPronunciation [data-stress="secondary"] {
   color: var(--text-emphasis);
+  font-size: var(--pronunciation-stress-secondary-size);
   font-style: normal;
-  font-weight: 700;
+  font-weight: var(--pronunciation-stress-weight);
+  line-height: 1;
+  vertical-align: baseline;
 }
 
 .promptPronunciation [data-stress="primary"] {
   color: var(--text-emphasis);
-  font-weight: 800;
+  font-size: var(--pronunciation-stress-primary-size);
+  font-weight: var(--pronunciation-stress-weight);
+  line-height: 1;
+  vertical-align: baseline;
 }
 
 .choiceList {
