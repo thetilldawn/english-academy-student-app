@@ -35,6 +35,7 @@
     "publish:synthetic-audio": "tsx scripts/publish-synthetic-audio-package.ts",
     "publish:synthetic-word-audio": "tsx scripts/publish-synthetic-word-audio-package.ts",
     "import:approved-pronunciation": "tsx scripts/import-approved-korean-pronunciation-package.ts",
+    "import:rule-derived-pronunciation": "tsx scripts/import-rule-derived-korean-pronunciation-package.ts",
     "fixture:ui:ensure": "tsx scripts/ui-test-fixture.ts ensure",
     "fixture:ui:cleanup": "tsx scripts/ui-test-fixture.ts cleanup"
   },

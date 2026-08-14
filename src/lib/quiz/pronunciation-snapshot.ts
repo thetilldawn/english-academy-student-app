@@ -4,6 +4,9 @@ const SUPABASE_URL = /^https:\/\/[a-z0-9]{20}\.supabase\.co$/;
 const DICTIONARY_ID =
   /^(?:word|root_affix|expression):[a-z0-9][a-z0-9._'’-]*$/;
 const SYNTHETIC_REQUEST_HASH = /^[0-9a-f]{64}$/;
+const RULE_DERIVED_FINAL_VARIANT =
+  /^(?:mw:[0-9a-f]{20}|synthetic:[0-9a-f]{64})$/;
+const RULE_DERIVED_ENGINE_VERSION = "cmudict-hangul-align-v2";
 const EXPRESSION_SYNTHETIC_PROFILE_ID = "profile:5b6efb0ecc8f4702";
 const WORD_SYNTHETIC_PROFILE_ID = "profile:75ca7f418d66e6ab";
 const SYNTHETIC_BUCKET = "vocab-pronunciation-audio";
@@ -63,6 +66,19 @@ export type VocabApprovedKoreanPronunciationRow = {
   display_pronunciation_ko: unknown;
   segments: unknown;
   review_status: unknown;
+};
+
+export type VocabRuleDerivedKoreanPronunciationRow = {
+  dictionary_id: unknown;
+  pronunciation_variant_id: unknown;
+  display_pronunciation_ko: unknown;
+  segments: unknown;
+  derivation_status: unknown;
+  engine_version: unknown;
+  confidence: unknown;
+  confidence_scope: unknown;
+  stress_evidence: unknown;
+  display_enabled: unknown;
 };
 
 function objectValue(value: unknown): Record<string, unknown> | null {
@@ -351,6 +367,17 @@ export function approvedKoreanPronunciationKey(
   return `${dictionaryId}\u0000${variantId}`;
 }
 
+export function mergeKoreanPronunciationRegistries(
+  approved: ReadonlyMap<string, QuizPronunciation>,
+  ruleDerived: ReadonlyMap<string, QuizPronunciation>,
+) {
+  const effective = new Map(ruleDerived);
+  for (const [key, pronunciation] of approved) {
+    effective.set(key, pronunciation);
+  }
+  return effective;
+}
+
 export function parseApprovedKoreanPronunciation(
   row: VocabApprovedKoreanPronunciationRow | null | undefined,
 ): QuizPronunciation | undefined {
@@ -377,6 +404,48 @@ export function parseApprovedKoreanPronunciation(
         available: false,
       }
     : undefined;
+}
+
+export function parseRuleDerivedKoreanPronunciation(
+  row: VocabRuleDerivedKoreanPronunciationRow | null | undefined,
+): QuizPronunciation | undefined {
+  const dictionaryId = optionalText(row?.dictionary_id);
+  const variantId = optionalText(row?.pronunciation_variant_id);
+  const displayKo = optionalText(row?.display_pronunciation_ko);
+  if (
+    !row ||
+    row.derivation_status !== "rule_derived" ||
+    row.engine_version !== RULE_DERIVED_ENGINE_VERSION ||
+    !["high", "medium", "low"].includes(String(row.confidence)) ||
+    row.confidence_scope !== "hangul_alignment_only" ||
+    ![
+      "selected_webster_lexical_stress",
+      "cmudict_lexical_stress_phrase_rule",
+      "cmudict_lexical_stress",
+    ].includes(String(row.stress_evidence)) ||
+    row.display_enabled !== true ||
+    !dictionaryId ||
+    !DICTIONARY_ID.test(dictionaryId) ||
+    !variantId ||
+    !RULE_DERIVED_FINAL_VARIANT.test(variantId) ||
+    !displayKo
+  ) {
+    return undefined;
+  }
+  const segments = parseKoreanPronunciationSegments(row.segments, displayKo);
+  if (
+    !segments ||
+    segments.filter(({ stress }) => stress === "primary").length !== 1
+  ) {
+    return undefined;
+  }
+  return {
+    displayKo,
+    segments,
+    variantId,
+    audioUrl: null,
+    available: false,
+  };
 }
 
 export function withApprovedKoreanPronunciation(

@@ -16,9 +16,11 @@ import type {
 import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
 import {
   approvedKoreanPronunciationKey,
+  mergeKoreanPronunciationRegistries,
   parseChoicePronunciations,
   parseChoiceDictionaryIds,
   parseApprovedKoreanPronunciation,
+  parseRuleDerivedKoreanPronunciation,
   parseRegistryPronunciation,
   parseSyntheticRegistryPronunciation,
   parseTargetPronunciation,
@@ -29,6 +31,7 @@ import {
   type QuizPronunciation,
   type VocabApprovedKoreanPronunciationRow,
   type VocabPronunciationRegistryRow,
+  type VocabRuleDerivedKoreanPronunciationRow,
   type VocabSyntheticAudioAssetRow,
 } from "@/lib/quiz/pronunciation-snapshot";
 import {
@@ -338,8 +341,8 @@ async function loadSyntheticPronunciationRegistry(
 async function loadApprovedKoreanPronunciationRegistry(
   dictionaryIds: readonly string[],
 ) {
-  const result = new Map<string, QuizPronunciation>();
-  if (dictionaryIds.length === 0) return result;
+  const approvedResult = new Map<string, QuizPronunciation>();
+  if (dictionaryIds.length === 0) return approvedResult;
   const supabase = getServiceSupabaseClient();
   const uniqueIds = [...new Set(dictionaryIds)];
   const chunkSize = 500;
@@ -364,7 +367,7 @@ async function loadApprovedKoreanPronunciationRegistry(
         pronunciation?.variantId &&
         typeof row.dictionary_id === "string"
       ) {
-        result.set(
+        approvedResult.set(
           approvedKoreanPronunciationKey(
             row.dictionary_id,
             pronunciation.variantId,
@@ -374,7 +377,37 @@ async function loadApprovedKoreanPronunciationRegistry(
       }
     }
   }
-  return result;
+  const ruleDerivedResult = new Map<string, QuizPronunciation>();
+  for (let offset = 0; offset < uniqueIds.length; offset += chunkSize) {
+    const chunk = uniqueIds.slice(offset, offset + chunkSize);
+    const { data, error } = await supabase
+      .from("vocab_rule_derived_korean_pronunciations")
+      .select(
+        "dictionary_id, pronunciation_variant_id, display_pronunciation_ko, segments, derivation_status, engine_version, confidence, confidence_scope, stress_evidence, display_enabled",
+      )
+      .in("dictionary_id", chunk)
+      .eq("display_enabled", true);
+    if (error) {
+      console.warn("[quiz-pronunciation] rule-derived display lookup failed", {
+        code: error.code,
+      });
+      return approvedResult;
+    }
+    for (const row of (data ?? []) as VocabRuleDerivedKoreanPronunciationRow[]) {
+      const pronunciation = parseRuleDerivedKoreanPronunciation(row);
+      if (pronunciation?.variantId && typeof row.dictionary_id === "string") {
+        const key = approvedKoreanPronunciationKey(
+          row.dictionary_id,
+          pronunciation.variantId,
+        );
+        ruleDerivedResult.set(key, pronunciation);
+      }
+    }
+  }
+  return mergeKoreanPronunciationRegistries(
+    approvedResult,
+    ruleDerivedResult,
+  );
 }
 
 type ExamUseQuestionSnapshot = {

@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   approvedKoreanPronunciationKey,
   allChoiceAudioAvailable,
+  mergeKoreanPronunciationRegistries,
   parseChoiceDictionaryIds,
   parseChoicePronunciations,
   parseApprovedKoreanPronunciation,
+  parseRuleDerivedKoreanPronunciation,
   parseRegistryPronunciation,
   parseSyntheticRegistryPronunciation,
   parseTargetPronunciation,
@@ -136,6 +138,77 @@ describe("quiz pronunciation snapshots", () => {
         approved,
       ).segments,
     ).toBeUndefined();
+  });
+
+  it("현재 규칙 엔진이 만든 최종 음원용 한글 강세만 허용한다", () => {
+    const row = {
+      dictionary_id: "word:meanwhile",
+      pronunciation_variant_id: "mw:288fb5a854433c5f7580",
+      display_pronunciation_ko: "민와일",
+      segments: [
+        { text: "민", stress: "primary" },
+        { text: "와일", stress: "secondary" },
+      ],
+      derivation_status: "rule_derived",
+      engine_version: "cmudict-hangul-align-v2",
+      confidence: "high",
+      confidence_scope: "hangul_alignment_only",
+      stress_evidence: "selected_webster_lexical_stress",
+      display_enabled: true,
+    };
+
+    expect(parseRuleDerivedKoreanPronunciation(row)).toMatchObject({
+      displayKo: "민와일",
+      variantId: "mw:288fb5a854433c5f7580",
+      segments: row.segments,
+    });
+    expect(
+      parseRuleDerivedKoreanPronunciation({
+        ...row,
+        pronunciation_variant_id: "ttsword:meanwhile",
+      }),
+    ).toBeUndefined();
+    expect(
+      parseRuleDerivedKoreanPronunciation({
+        ...row,
+        engine_version: "cmudict-hangul-align-v1",
+      }),
+    ).toBeUndefined();
+    expect(
+      parseRuleDerivedKoreanPronunciation({
+        ...row,
+        segments: [
+          { text: "민", stress: "primary" },
+          { text: "와일", stress: "primary" },
+        ],
+      }),
+    ).toBeUndefined();
+  });
+
+  it("사람이 승인한 강세가 같은 음원의 규칙 생성 강세보다 우선한다", () => {
+    const key = "word:inspire\u0000mw:817aa8db8ea99d67d2dc";
+    const derived = {
+      displayKo: "인스파이어",
+      segments: [{ text: "인스파이어", stress: "primary" as const }],
+      variantId: "mw:817aa8db8ea99d67d2dc",
+      audioUrl: null,
+      available: false,
+    };
+    const approved = {
+      ...derived,
+      segments: [
+        { text: "인", stress: "none" as const },
+        { text: "스파이", stress: "primary" as const },
+        { text: "어", stress: "none" as const },
+      ],
+    };
+
+    expect(
+      mergeKoreanPronunciationRegistries(
+        new Map([[key, approved]]),
+        new Map([[key, derived]]),
+      ).get(key),
+    ).toBe(approved);
   });
 
   it("선택지 순서와 표제어가 정확한 네 음원만 한 묶음으로 허용한다", () => {
