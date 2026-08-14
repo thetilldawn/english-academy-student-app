@@ -627,12 +627,21 @@ describe("pronunciation vowel-nucleus v3 migration", () => {
         "20260815103000_add_production_rule_derived_pronunciation_import.sql",
       ),
     );
+    await database.exec(
+      await migration(
+        "20260815104500_harden_pronunciation_import_project_routing.sql",
+      ),
+    );
     const productionPackage = {
       ...pronunciationPackage,
       package_id:
         "g12-long-reading-2025-rule-derived-stress-production-v3",
       target_environment: "production",
     };
+    await database.exec(
+      `set request.jwt.claims =
+        '{"role":"service_role","ref":"xdxhswjgksukjmpbzqgz"}'`,
+    );
     const first = await database.query<{ result: Record<string, unknown> }>(
       "select public.import_rule_derived_korean_pronunciation_package_production_v3($1::jsonb) as result",
       [JSON.stringify(productionPackage)],
@@ -646,6 +655,26 @@ describe("pronunciation vowel-nucleus v3 migration", () => {
       verifiedCount: 582,
       occurrenceCount: 601,
     });
+    await expect(
+      database.query(
+        "select public.import_rule_derived_korean_pronunciation_package_v2($1::jsonb)",
+        [JSON.stringify(pronunciationPackage)],
+      ),
+    ).rejects.toThrow("staging_pronunciation_import_project_mismatch");
+    await database.exec(
+      `set request.jwt.claims =
+        '{"role":"service_role","ref":"wojxpruvbjzbhrpmsbuy"}'`,
+    );
+    await expect(
+      database.query(
+        "select public.import_rule_derived_korean_pronunciation_package_production_v3($1::jsonb)",
+        [JSON.stringify(productionPackage)],
+      ),
+    ).rejects.toThrow("production_pronunciation_import_project_mismatch");
+    await database.exec(
+      `set request.jwt.claims =
+        '{"role":"service_role","ref":"xdxhswjgksukjmpbzqgz"}'`,
+    );
     const second = await database.query<{ result: Record<string, unknown> }>(
       "select public.import_rule_derived_korean_pronunciation_package_production_v3($1::jsonb) as result",
       [JSON.stringify(productionPackage)],
@@ -664,10 +693,24 @@ describe("pronunciation vowel-nucleus v3 migration", () => {
     `);
     expect(engines.rows).toEqual([{ count: 582 }]);
     const privileges = await database.query<{
+      private_v1: boolean;
+      private_v2: boolean;
       private_import: boolean;
+      public_v1: boolean;
+      public_v2: boolean;
       public_import: boolean;
     }>(`
       select
+        has_function_privilege(
+          'service_role',
+          'private.import_rule_derived_korean_pronunciation_package_v1(jsonb)',
+          'EXECUTE'
+        ) as private_v1,
+        has_function_privilege(
+          'service_role',
+          'private.import_rule_derived_korean_pronunciation_package_v2(jsonb)',
+          'EXECUTE'
+        ) as private_v2,
         has_function_privilege(
           'service_role',
           'private.import_rule_derived_korean_pronunciation_package_production_v3(jsonb)',
@@ -675,12 +718,29 @@ describe("pronunciation vowel-nucleus v3 migration", () => {
         ) as private_import,
         has_function_privilege(
           'service_role',
+          'public.import_rule_derived_korean_pronunciation_package_v1(jsonb)',
+          'EXECUTE'
+        ) as public_v1,
+        has_function_privilege(
+          'service_role',
+          'public.import_rule_derived_korean_pronunciation_package_v2(jsonb)',
+          'EXECUTE'
+        ) as public_v2,
+        has_function_privilege(
+          'service_role',
           'public.import_rule_derived_korean_pronunciation_package_production_v3(jsonb)',
           'EXECUTE'
         ) as public_import
     `);
     expect(privileges.rows).toEqual([
-      { private_import: false, public_import: true },
+      {
+        private_v1: false,
+        private_v2: false,
+        private_import: false,
+        public_v1: true,
+        public_v2: true,
+        public_import: true,
+      },
     ]);
     await database.close();
   }, 20_000);

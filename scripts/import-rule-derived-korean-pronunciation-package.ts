@@ -55,7 +55,13 @@ function parseOptions(arguments_: string[]): Options {
 
 function projectRef(supabaseUrl: string) {
   try {
-    return new URL(supabaseUrl).hostname.split(".")[0] ?? null;
+    const url = new URL(supabaseUrl);
+    if (url.protocol !== "https:") return null;
+    const hostname = url.hostname;
+    const suffix = ".supabase.co";
+    if (!hostname.endsWith(suffix)) return null;
+    const ref = hostname.slice(0, -suffix.length);
+    return /^[a-z0-9]{20}$/.test(ref) ? ref : null;
   } catch {
     return null;
   }
