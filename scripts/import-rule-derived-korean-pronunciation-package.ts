@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import path from "node:path";
 
 import { loadEnvConfig } from "@next/env";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -10,26 +11,40 @@ import {
 
 type Options = {
   packagePath: string;
-  expectedProjectRef: string | null;
+  envDir: string;
+  target: keyof typeof TARGET_REFS;
   mode: "dry-run" | "preflight" | "apply";
 };
 
+const TARGET_REFS = {
+  staging: "wojxpruvbjzbhrpmsbuy",
+  production: "xdxhswjgksukjmpbzqgz",
+} as const;
+
 function parseOptions(arguments_: string[]): Options {
   const packageIndex = arguments_.indexOf("--package");
-  const refIndex = arguments_.indexOf("--expected-project-ref");
+  const targetIndex = arguments_.indexOf("--target");
+  const envDirIndex = arguments_.indexOf("--env-dir");
   const packagePath =
     packageIndex >= 0 ? arguments_[packageIndex + 1] : undefined;
+  const target = targetIndex >= 0 ? arguments_[targetIndex + 1] : undefined;
   const modes = ["--preflight", "--apply"].filter((flag) =>
     arguments_.includes(flag),
   );
   if (!packagePath) {
     throw new Error("--package <규칙 생성 발음 묶음 JSON>이 필요합니다.");
   }
+  if (target !== "staging" && target !== "production") {
+    throw new Error("--target staging|production이 필요합니다.");
+  }
   if (modes.length > 1) throw new Error("실행 모드는 하나만 선택해야 합니다.");
   return {
     packagePath,
-    expectedProjectRef:
-      refIndex >= 0 ? (arguments_[refIndex + 1] ?? null) : null,
+    envDir:
+      envDirIndex >= 0
+        ? (arguments_[envDirIndex + 1] ?? process.cwd())
+        : process.cwd(),
+    target,
     mode: arguments_.includes("--apply")
       ? "apply"
       : arguments_.includes("--preflight")
@@ -101,19 +116,21 @@ async function main() {
   const options = parseOptions(process.argv.slice(2));
   const raw = JSON.parse(await readFile(options.packagePath, "utf8")) as unknown;
   const validated = validateRuleDerivedKoreanPronunciationPackage(raw);
+  if (validated.pronunciationPackage.target_environment !== options.target) {
+    throw new Error("규칙 생성 발음 묶음의 목표 환경이 --target과 다릅니다.");
+  }
   if (options.mode === "dry-run") {
     console.log(JSON.stringify({ mode: "dry-run", ...validated.summary }, null, 2));
     return;
   }
 
-  loadEnvConfig(process.cwd());
+  loadEnvConfig(path.resolve(options.envDir));
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const secretKey = process.env.SUPABASE_SECRET_KEY ?? "";
   const actualProjectRef = projectRef(supabaseUrl);
   if (
-    !options.expectedProjectRef ||
     !actualProjectRef ||
-    options.expectedProjectRef !== actualProjectRef
+    TARGET_REFS[options.target] !== actualProjectRef
   ) {
     throw new Error("Supabase 프로젝트 ref 안전장치가 일치하지 않습니다.");
   }
@@ -149,7 +166,9 @@ async function main() {
   }
 
   const { data: importResult, error: importError } = await supabase.rpc(
-    "import_rule_derived_korean_pronunciation_package_v2",
+    options.target === "production"
+      ? "import_rule_derived_korean_pronunciation_package_production_v3"
+      : "import_rule_derived_korean_pronunciation_package_v2",
     { p_package: validated.pronunciationPackage },
   );
   if (importError) {

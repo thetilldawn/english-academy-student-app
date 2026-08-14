@@ -168,4 +168,23 @@ describe("rule-derived Korean pronunciation import contract", () => {
       confidenceOccurrenceCounts: { high: 601, medium: 0, low: 0 },
     });
   });
+
+  it("운영용 묶음은 별도 목표 환경과 해시로 검증한다", () => {
+    const production = structuredClone(fixture()) as Record<string, unknown>;
+    production.package_id =
+      "g12-long-reading-2025-rule-derived-stress-production-v3";
+    production.target_environment = "production";
+    delete production.generated_at_utc;
+    delete production.package_version;
+    const packageValue = {
+      ...production,
+      generated_at_utc: "2026-08-15T00:00:00Z",
+      package_version: hash(production),
+    };
+
+    expect(
+      validateRuleDerivedKoreanPronunciationPackage(packageValue)
+        .pronunciationPackage.target_environment,
+    ).toBe("production");
+  });
 });

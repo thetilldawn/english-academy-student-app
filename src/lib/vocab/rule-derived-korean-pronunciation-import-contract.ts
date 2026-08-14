@@ -105,7 +105,7 @@ const packageSchema = z
     engine_version: z.literal(ENGINE_VERSION),
     confidence_scope: z.literal("hangul_alignment_only"),
     display_semantics: z.literal("lexical_stress_not_tts_acoustic_prosody"),
-    target_environment: z.literal("staging"),
+    target_environment: z.enum(["staging", "production"]),
     generated_at_utc: z.iso.datetime(),
     source_exam_package_sha256: z.string().regex(HEX64),
     source_cmudict_sha256: z.string().regex(HEX64),
