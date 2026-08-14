@@ -229,11 +229,13 @@
 }
 
 .promptPronunciation [data-stress="secondary"] {
+  color: var(--text-emphasis);
   font-style: normal;
   font-weight: 700;
 }
 
 .promptPronunciation [data-stress="primary"] {
+  color: var(--text-emphasis);
   font-weight: 800;
 }
 

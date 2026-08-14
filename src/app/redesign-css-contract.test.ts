@@ -92,6 +92,29 @@ describe("redesign CSS contract", () => {
     );
   });
 
+  it("uses the theme-aware emphasis color for every pronunciation stress", () => {
+    expect(tokensCss).toContain(
+      "--text-emphasis: var(--status-warning-bg);",
+    );
+    expect(
+      themeCss.match(/--text-emphasis:\s*var\(--retry\);/g),
+    ).toHaveLength(2);
+
+    for (const relativePath of [
+      "src/features/quiz-player/ui/quiz-frame.module.css",
+      "src/features/quiz-player/ui/quiz-choice.module.css",
+      "src/features/results/ui/student-result-view.module.css",
+    ]) {
+      const pronunciationCss = readCss(relativePath);
+      expect(pronunciationCss).toMatch(
+        /\[data-stress="secondary"\]\s*\{[^}]*color:\s*var\(--text-emphasis\);[^}]*font-weight:\s*700;/,
+      );
+      expect(pronunciationCss).toMatch(
+        /\[data-stress="primary"\]\s*\{[^}]*color:\s*var\(--text-emphasis\);[^}]*font-weight:\s*800;/,
+      );
+    }
+  });
+
   it("uses only the approved font weights", () => {
     const weights = new Set(
       [...css.matchAll(/font-weight:\s*(\d+);/g)].map((match) =>

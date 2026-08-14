@@ -21,6 +21,7 @@
   --nav-glass: rgb(35 34 32 / 84%);
   --text-primary: var(--ink);
   --text-secondary: #c8c5be;
+  --text-emphasis: var(--retry);
   --selection-active: #4a463e;
 }
 
@@ -48,6 +49,7 @@
     --nav-glass: rgb(35 34 32 / 84%);
     --text-primary: var(--ink);
     --text-secondary: #c8c5be;
+    --text-emphasis: var(--retry);
     --selection-active: #4a463e;
   }
 }

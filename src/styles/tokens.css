@@ -22,6 +22,7 @@
   --dialog-backdrop: rgb(17 17 15 / 58%);
   --text-primary: var(--ink);
   --text-secondary: #5f5d55;
+  --text-emphasis: var(--status-warning-bg);
   --selection-active: #e6e0d1;
   --status-success-bg: #176b3a;
   --status-warning-bg: #7a5700;
