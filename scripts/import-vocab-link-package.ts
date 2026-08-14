@@ -8,7 +8,12 @@ import { createClient } from "@supabase/supabase-js";
 import { sha256 } from "@/lib/vocab/canonical-linkage";
 import { resolveBookMeaningCapability } from "@/lib/vocab/vocab-link-import-policy";
 
-type ImportMode = "sample" | "table" | "status" | "finalize";
+type ImportMode =
+  | "preflight"
+  | "sample"
+  | "table"
+  | "status"
+  | "finalize";
 type ImportTable =
   | "occurrence"
   | "vocab_entry_link"
@@ -20,6 +25,8 @@ type CliOptions = {
   mode: ImportMode;
   table: ImportTable | null;
   apply: boolean;
+  expectedProjectRef: string;
+  envDir: string;
 };
 
 type ManifestFile = {
@@ -190,6 +197,8 @@ function parseOptions(args: string[]): CliOptions {
   let mode: ImportMode | null = null;
   let table: ImportTable | null = null;
   let apply = false;
+  let expectedProjectRef = "";
+  let envDir = process.cwd();
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
@@ -200,7 +209,9 @@ function parseOptions(args: string[]): CliOptions {
       const value = args[index + 1] as ImportMode | undefined;
       if (
         !value ||
-        !["sample", "table", "status", "finalize"].includes(value)
+        !["preflight", "sample", "table", "status", "finalize"].includes(
+          value,
+        )
       ) {
         throw new Error("잘못된 --mode 값입니다.");
       }
@@ -215,6 +226,12 @@ function parseOptions(args: string[]): CliOptions {
       index += 1;
     } else if (argument === "--apply") {
       apply = true;
+    } else if (argument === "--expected-project-ref") {
+      expectedProjectRef = args[index + 1] ?? "";
+      index += 1;
+    } else if (argument === "--env-dir") {
+      envDir = path.resolve(args[index + 1] ?? "");
+      index += 1;
     } else {
       throw new Error(`알 수 없는 옵션입니다: ${argument}`);
     }
@@ -222,8 +239,11 @@ function parseOptions(args: string[]): CliOptions {
 
   if (!packageDir || !mode) {
     throw new Error(
-      "사용법: npm run import:vocab-link -- --package-dir <패키지> --mode <sample|table|status|finalize> [--table <테이블>] [--apply]",
+      "사용법: npm run import:vocab-link -- --package-dir <패키지> --mode <preflight|sample|table|status|finalize> [--table <테이블>] [--apply]",
     );
+  }
+  if (!expectedProjectRef) {
+    throw new Error("원격 조회와 쓰기에는 --expected-project-ref가 필요합니다.");
   }
   if (mode === "table" && !table) {
     throw new Error("--mode table에는 --table이 필요합니다.");
@@ -231,7 +251,7 @@ function parseOptions(args: string[]): CliOptions {
   if (mode !== "table" && table) {
     throw new Error("--table은 --mode table에서만 사용합니다.");
   }
-  if (mode !== "status" && !apply) {
+  if (!["preflight", "status"].includes(mode) && !apply) {
     throw new Error("데이터를 쓰는 모드에는 --apply를 명시해야 합니다.");
   }
 
@@ -240,7 +260,20 @@ function parseOptions(args: string[]): CliOptions {
     mode,
     table,
     apply,
+    expectedProjectRef,
+    envDir,
   };
+}
+
+function projectRef(value: string) {
+  try {
+    const hostname = new URL(value).hostname;
+    return hostname.endsWith(".supabase.co")
+      ? (hostname.split(".")[0] ?? null)
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -305,7 +338,7 @@ function reasonCodesForMode(
 
 async function main() {
   const options = parseOptions(process.argv.slice(2));
-  loadEnvConfig(process.cwd());
+  loadEnvConfig(options.envDir);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const secretKey = process.env.SUPABASE_SECRET_KEY;
@@ -313,6 +346,10 @@ async function main() {
     throw new Error(
       "NEXT_PUBLIC_SUPABASE_URL과 SUPABASE_SECRET_KEY가 필요합니다.",
     );
+  }
+  const actualProjectRef = projectRef(supabaseUrl);
+  if (!actualProjectRef || actualProjectRef !== options.expectedProjectRef) {
+    throw new Error("Supabase 프로젝트 ref 안전장치가 일치하지 않습니다.");
   }
 
   const manifest = await readJson<Manifest>(
@@ -665,6 +702,104 @@ async function main() {
     "예상 연결 건수가 승인된 명세와 다릅니다.",
   );
 
+  const requiredLexemes = new Map<
+    string,
+    {
+      lexeme_id: string;
+      content_hash: string | null;
+      headword: string;
+      lexeme_type: string;
+    }
+  >();
+  const addRequiredLexeme = (requirement: {
+    lexeme_id: string;
+    content_hash: string | null;
+    headword: string;
+    lexeme_type: string;
+  }) => {
+    const previous = requiredLexemes.get(requirement.lexeme_id);
+    assert(
+      !previous ||
+        (previous.content_hash === requirement.content_hash &&
+          previous.headword === requirement.headword &&
+          previous.lexeme_type === requirement.lexeme_type),
+      `공용 단어 신분값이 서로 다릅니다: ${requirement.lexeme_id}`,
+    );
+    requiredLexemes.set(requirement.lexeme_id, requirement);
+  };
+  for (const link of packageLinks) {
+    if (link.mappingStatus === "exact_headword_unreviewed") {
+      assert(
+        link.lexemeId && link.lexemeContentHash,
+        `정확 연결의 공용 단어 결속값이 없습니다: ${link.sourceRow}`,
+      );
+      addRequiredLexeme({
+        lexeme_id: link.lexemeId,
+        content_hash: link.lexemeContentHash.toUpperCase(),
+        headword: link.headword,
+        lexeme_type: "word",
+      });
+    }
+    for (const candidate of link.nonWordCandidates) {
+      addRequiredLexeme({
+        lexeme_id: candidate.lexemeId,
+        content_hash: null,
+        headword: candidate.headword,
+        lexeme_type: candidate.lexemeType,
+      });
+    }
+  }
+  const requiredLexemeRows = [...requiredLexemes.values()].sort((left, right) =>
+    left.lexeme_id.localeCompare(right.lexeme_id),
+  );
+  assert(
+    requiredLexemeRows.length === 1979,
+    `필수 공용 단어 신분표 수가 다릅니다: ${requiredLexemeRows.length}`,
+  );
+
+  const preflightLexemes = async () => {
+    let checkedRows = 0;
+    for (let offset = 0; offset < requiredLexemeRows.length; offset += 500) {
+      const requirements = requiredLexemeRows.slice(offset, offset + 500);
+      const { data, error } = await supabase.rpc(
+        "preflight_vocab_link_lexeme_batch",
+        {
+          p_build_id: manifest.wordIndex.buildId,
+          p_input_snapshot_sha256:
+            manifest.wordIndex.inputSnapshotSha256.toUpperCase(),
+          p_requirements: requirements,
+        },
+      );
+      if (error) {
+        throw new Error(`공용 단어 신분표 사전 확인 실패: ${error.message}`);
+      }
+      const result = data as {
+        checkedRows: number;
+        missingRows: number;
+        mismatchedRows: number;
+      };
+      assert(
+        result.checkedRows === requirements.length &&
+          result.missingRows === 0 &&
+          result.mismatchedRows === 0,
+        "공용 단어 신분표 사전 확인 수량이 다릅니다.",
+      );
+      checkedRows += result.checkedRows;
+    }
+    assert(
+      checkedRows === requiredLexemeRows.length,
+      "공용 단어 신분표 전체 사전 확인이 끝나지 않았습니다.",
+    );
+    return {
+      buildId: manifest.wordIndex.buildId,
+      inputSnapshotSha256:
+        manifest.wordIndex.inputSnapshotSha256.toUpperCase(),
+      checkedRows,
+      missingRows: 0,
+      mismatchedRows: 0,
+    };
+  };
+
   const getStatus = async () => {
     const { data, error } = await supabase.rpc(
       "get_vocab_link_import_status",
@@ -677,7 +812,34 @@ async function main() {
   };
 
   if (options.mode === "status") {
-    console.log(JSON.stringify(await getStatus(), null, 2));
+    console.log(
+      JSON.stringify(
+        {
+          projectRef: actualProjectRef,
+          status: await getStatus(),
+        },
+        null,
+        2,
+      ),
+    );
+    return;
+  }
+
+  const lexemePreflight = await preflightLexemes();
+  if (options.mode === "preflight") {
+    console.log(
+      JSON.stringify(
+        {
+          mode: "preflight",
+          projectRef: actualProjectRef,
+          packageSnapshotSha256: manifest.packageSnapshotSha256,
+          datasetId: dataset.id,
+          lexemes: lexemePreflight,
+        },
+        null,
+        2,
+      ),
+    );
     return;
   }
 
@@ -777,6 +939,7 @@ async function main() {
       JSON.stringify(
         {
           mode: "sample",
+          projectRef: actualProjectRef,
           beginData,
           packageSnapshotSha256: manifest.packageSnapshotSha256,
           importedTable: "occurrence",
@@ -796,6 +959,7 @@ async function main() {
       JSON.stringify(
         {
           mode: "table",
+          projectRef: actualProjectRef,
           beginData,
           table,
           status: await importTable(table, false),
@@ -835,6 +999,7 @@ async function main() {
     JSON.stringify(
       {
         mode: "finalize",
+        projectRef: actualProjectRef,
         beginData,
         result: finalizeData,
       },
