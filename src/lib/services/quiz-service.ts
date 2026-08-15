@@ -1504,15 +1504,18 @@ export async function resumeStudentQuizAfterFeedback(input: {
   attemptId: string;
   nextQuestionId: string;
   nextPhase: "initial" | "retry";
+  transitionRemainingMilliseconds: number;
 }) {
   const supabase = getServiceSupabaseClient();
   const { data, error } = await supabase.rpc(
-    "resume_quiz_after_feedback_v1",
+    "resume_quiz_after_feedback_v2",
     {
       p_student_id: input.studentId,
       p_attempt_id: input.attemptId,
       p_next_question_id: input.nextQuestionId,
       p_next_phase: input.nextPhase,
+      p_transition_remaining_milliseconds:
+        input.transitionRemainingMilliseconds,
     },
   );
   if (error || !data) {

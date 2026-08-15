@@ -66,6 +66,9 @@ describe("assignment order and timing database contract", () => {
     const controller = source(
       "src/features/quiz-player/controller/use-quiz-player-controller.ts",
     );
+    const submission = source(
+      "src/features/quiz-player/controller/use-quiz-submission.ts",
+    );
     const transport = source(
       "src/features/quiz-player/api/quiz-attempt.ts",
     );
@@ -87,6 +90,12 @@ describe("assignment order and timing database contract", () => {
     const audioEndedFeedbackMigration = source(
       "supabase/migrations/20260815121000_resume_quiz_after_audio_feedback.sql",
     );
+    const variableFeedbackMigration = source(
+      "supabase/migrations/20260815123000_resume_quiz_after_variable_feedback.sql",
+    );
+    const variableFeedbackRollback = source(
+      "supabase/rollback/20260815123000_resume_quiz_after_variable_feedback.sql",
+    );
     const feedbackDelayRollback = source(
       "supabase/rollback/20260815113000_extend_quiz_audio_feedback_and_answer_grace.sql",
     );
@@ -94,12 +103,16 @@ describe("assignment order and timing database contract", () => {
     const timeoutRoute = source(
       "src/app/api/student/attempts/[id]/timeouts/route.ts",
     );
+    const feedbackRoute = source(
+      "src/app/api/student/attempts/[id]/feedback/route.ts",
+    );
     const copy = source("src/content/ko/student-app.ts");
 
-    expect(controller).toContain("const nextTimerDeadlineAt =");
-    expect(controller).toContain("payload.timerRemainingMilliseconds");
-    expect(controller).toContain("resetClock(nextRemainingMilliseconds)");
+    expect(submission).toContain("synchronized.payload.questionDeadlineAt!");
+    expect(submission).toContain("synchronized.payload.timerRemainingMilliseconds!");
+    expect(submission).toContain("input.resetClock(activeMilliseconds)");
     expect(transport).toContain('input.choiceIndex === null ? "timeouts" : "answers"');
+    expect(feedbackRoute).toContain(".max(750)");
     expect(domain).toContain("studentAppText.attempt.timedOut");
     expect(controller).toContain("const answerAnnouncement =");
     expect(frame).toContain('className="sr-only"');
@@ -121,6 +134,40 @@ describe("assignment order and timing database contract", () => {
     );
     expect(audioEndedFeedbackMigration).toContain(
       "from public, anon, authenticated",
+    );
+    expect(variableFeedbackMigration).toContain(
+      "create function public.resume_quiz_after_feedback_v2",
+    );
+    expect(variableFeedbackMigration).toContain(
+      "interval ''7000 milliseconds''",
+    );
+    expect(variableFeedbackMigration).toContain(
+      "interval ''3000 milliseconds''",
+    );
+    expect(variableFeedbackMigration).toContain(
+      "interval '7250 milliseconds'",
+    );
+    expect(variableFeedbackMigration).toContain(
+      "p_transition_remaining_milliseconds < 0",
+    );
+    expect(variableFeedbackMigration).toContain(
+      "p_transition_remaining_milliseconds > 750",
+    );
+    expect(variableFeedbackMigration).toContain("question_not_started");
+    expect(variableFeedbackMigration).toContain(
+      "attempt_row.deadline_at - unused_feedback",
+    );
+    expect(variableFeedbackMigration).toContain(
+      "from public, anon, authenticated",
+    );
+    expect(variableFeedbackRollback).toContain(
+      "drop function if exists public.resume_quiz_after_feedback_v2",
+    );
+    expect(variableFeedbackRollback).toContain(
+      "interval ''7000 milliseconds''",
+    );
+    expect(variableFeedbackRollback).toContain(
+      "interval ''3000 milliseconds''",
     );
     expect(feedbackDelayMigration).toContain(
       "else interval '250 milliseconds'",

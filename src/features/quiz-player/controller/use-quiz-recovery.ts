@@ -10,7 +10,6 @@ type MutableValue<T> = { current: T };
 
 export function useQuizRecovery(input: {
   attemptId: string;
-  clearTransitionTimer: () => void;
   dispatch: Dispatch<QuizPlayerAction>;
   expireStartedRef: MutableValue<boolean>;
   inFlightRequestRef: MutableValue<string | null>;
@@ -21,7 +20,6 @@ export function useQuizRecovery(input: {
   const { replace } = useRouter();
   const {
     attemptId,
-    clearTransitionTimer,
     dispatch,
     expireStartedRef,
     inFlightRequestRef,
@@ -42,7 +40,6 @@ export function useQuizRecovery(input: {
       ) {
         return false;
       }
-      clearTransitionTimer();
       inFlightRequestRef.current = null;
       if (
         payload.attempt.status !== "in_progress" ||
@@ -53,10 +50,18 @@ export function useQuizRecovery(input: {
         return true;
       }
 
-      const safeRemainingMilliseconds = Math.max(
+      const elapsedAdjustedMilliseconds = Math.max(
         0,
         payload.timerRemainingMilliseconds - roundTripMilliseconds,
       );
+      const safeRemainingMilliseconds =
+        payload.attempt.timingMode === "per_question" &&
+        payload.attempt.questionTimeLimitSeconds
+          ? Math.min(
+              elapsedAdjustedMilliseconds,
+              payload.attempt.questionTimeLimitSeconds * 1_000,
+            )
+          : elapsedAdjustedMilliseconds;
       expireStartedRef.current = false;
       timeWarningAnnouncedRef.current = false;
       resetClock(safeRemainingMilliseconds);
@@ -71,7 +76,6 @@ export function useQuizRecovery(input: {
     }
   }, [
     attemptId,
-    clearTransitionTimer,
     dispatch,
     expireStartedRef,
     inFlightRequestRef,

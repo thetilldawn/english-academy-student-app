@@ -6,7 +6,11 @@ import type { QuizAttempt, QuizQuestion } from "../model";
 import {
   ANSWER_AUDIO_END_GRACE_MS,
   ANSWER_AUDIO_END_TIMEOUT_MS,
+  ANSWER_AUDIO_START_TIMEOUT_MS,
   ANSWER_FEEDBACK_DELAY_MS,
+  ANSWER_RESULT_VISIBLE_MS,
+  ANSWER_SERVER_FEEDBACK_RESERVATION_MS,
+  QUIZ_REQUEST_TIMEOUT_MS,
   PROMPT_AUDIO_AUTOPLAY_DELAY_MS,
   applyQuizAnswerTransition,
   quizAnswerAudioUrl,
@@ -183,9 +187,19 @@ describe("quiz session domain", () => {
         "initial",
       ),
     ).toBe("next-question");
-    expect(ANSWER_FEEDBACK_DELAY_MS).toBe(3_000);
+    expect(ANSWER_FEEDBACK_DELAY_MS).toBe(750);
     expect(ANSWER_AUDIO_END_GRACE_MS).toBe(150);
     expect(ANSWER_AUDIO_END_TIMEOUT_MS).toBe(3_000);
+    expect(ANSWER_AUDIO_START_TIMEOUT_MS).toBe(1_000);
+    expect(QUIZ_REQUEST_TIMEOUT_MS).toBe(2_000);
+    expect(ANSWER_SERVER_FEEDBACK_RESERVATION_MS).toBe(7_000);
+    expect(ANSWER_SERVER_FEEDBACK_RESERVATION_MS).toBeGreaterThanOrEqual(
+      QUIZ_REQUEST_TIMEOUT_MS +
+        ANSWER_AUDIO_START_TIMEOUT_MS +
+        ANSWER_AUDIO_END_TIMEOUT_MS +
+        ANSWER_AUDIO_END_GRACE_MS,
+    );
+    expect(ANSWER_RESULT_VISIBLE_MS).toBe(250);
     expect(PROMPT_AUDIO_AUTOPLAY_DELAY_MS).toBe(250);
   });
 

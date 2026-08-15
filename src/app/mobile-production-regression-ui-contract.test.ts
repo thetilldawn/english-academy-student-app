@@ -111,6 +111,10 @@ describe("mobile production regression UI contract", () => {
     expect(quizChoiceCss).toMatch(
       /\.choice\s*\{[^}]*height:\s*76px;/,
     );
+    expect(quizChoiceCss).toContain("background-color 90ms ease-out");
+    expect(quizChoiceCss).toMatch(
+      /\.selected\s*\{[^}]*border-color:\s*var\(--ink\);/,
+    );
     expect(quizChoiceCss).toMatch(
       /@media \(max-width: 400px\)[\s\S]*?\.korean \.text\s*\{[^}]*-webkit-line-clamp:\s*3;/,
     );

@@ -7,7 +7,7 @@ import type { QuizPronunciation } from "../model";
 import { AudioButton } from "./audio-button";
 import styles from "./quiz-choice.module.css";
 
-export type QuizChoiceFeedback = "correct" | "wrong" | null;
+export type QuizChoiceFeedback = "correct" | "selected" | "wrong" | null;
 
 export function QuizChoice({
   audioEnabled,
@@ -46,12 +46,14 @@ export function QuizChoice({
           styles.choice,
           isEnglish ? styles.english : styles.korean,
           styles[density],
+          feedback === "selected" ? styles.selected : "",
           feedback === "correct" ? styles.correct : "",
           feedback === "wrong" ? styles.wrong : "",
         ]
           .filter(Boolean)
           .join(" ")}
         disabled={disabled}
+        data-feedback={feedback ?? "idle"}
         onClick={onChoose}
         type="button"
       >

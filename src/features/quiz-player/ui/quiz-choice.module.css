@@ -26,10 +26,11 @@
   color: var(--ink);
   cursor: pointer;
   text-align: left;
+  touch-action: manipulation;
   transition:
-    background-color var(--motion-standard),
-    border-color var(--motion-standard),
-    color var(--motion-standard);
+    background-color 90ms ease-out,
+    border-color 90ms ease-out,
+    color 90ms ease-out;
 }
 
 .choice:hover:not(:disabled) {
@@ -142,6 +143,17 @@
 .very-long.korean {
   font-size: 12px;
   line-height: 1.3;
+}
+
+.selected {
+  border-color: var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.selected .number {
+  background: var(--ink);
+  color: var(--paper);
 }
 
 .correct {

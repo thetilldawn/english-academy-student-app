@@ -203,6 +203,16 @@ beforeEach(() => {
   mocks.replace.mockReset();
   mocks.resume.mockReset();
   mocks.submit.mockReset();
+  mocks.resume.mockImplementation(async (input) =>
+    successfulTransport({
+      questionDeadlineAt: "2099-01-01T00:00:10.750Z",
+      questionStartsAt: "2099-01-01T00:00:00.750Z",
+      timerRemainingMilliseconds:
+        10_000 + input.transitionRemainingMilliseconds,
+      transitionRemainingMilliseconds:
+        input.transitionRemainingMilliseconds,
+    }),
+  );
 });
 
 afterEach(() => {
@@ -212,8 +222,10 @@ afterEach(() => {
 });
 
 describe("QuizPlayer", () => {
-  it("keeps the same question structure for 3000ms without reducing the next question timer", async () => {
-    mocks.submit.mockResolvedValue(
+  it("keeps silent feedback within 750ms without reducing the next question timer", async () => {
+    const quizAttempt = attempt();
+    quizAttempt.questionTimeLimitSeconds = 10;
+    mocks.submit.mockResolvedValueOnce(
       successfulTransport({
         correct: true,
         correctChoiceIndex: 0,
@@ -223,7 +235,7 @@ describe("QuizPlayer", () => {
         timerRemainingMilliseconds: 13_000,
       }, 1_200),
     );
-    await renderReady();
+    await renderReady(quizAttempt);
     const initialButtonCount = screen.getAllByRole("button").length;
 
     fireEvent.click(
@@ -239,20 +251,27 @@ describe("QuizPlayer", () => {
       "sr-only",
     );
 
-    act(() => vi.advanceTimersByTime(2_999));
+    act(() => vi.advanceTimersByTime(749));
     expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
 
-    act(() => vi.advanceTimersByTime(1));
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+    });
     expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
     expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:10");
 
-    act(() => vi.advanceTimersByTime(1000));
+    await act(async () => {
+      vi.advanceTimersByTime(1_251);
+      await Promise.resolve();
+    });
     expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:09");
     expect(mocks.replace).not.toHaveBeenCalled();
   });
 
   it("moves 150ms after the correct answer audio actually ends", async () => {
     const audioAttempt = attempt();
+    audioAttempt.questionTimeLimitSeconds = 10;
     audioAttempt.questions[0].choicePronunciations[0] =
       availablePronunciation;
     mocks.submit.mockResolvedValue(
@@ -296,17 +315,107 @@ describe("QuizPlayer", () => {
       attemptId: "attempt-1",
       nextPhase: "initial",
       nextQuestionId: "question-2",
+      transitionRemainingMilliseconds: 150,
     });
 
     act(() => vi.advanceTimersByTime(149));
     expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
-    act(() => vi.advanceTimersByTime(1));
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+    });
     expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
     expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:10");
   });
 
+  it("shows the next question at ended plus 150ms while a slow timer sync finishes", async () => {
+    const audioAttempt = attempt();
+    audioAttempt.questionTimeLimitSeconds = 10;
+    audioAttempt.questions[0].choicePronunciations[0] =
+      availablePronunciation;
+    mocks.submit.mockResolvedValueOnce(
+      successfulTransport({
+        correct: true,
+        correctChoiceIndex: 0,
+        nextPhase: "initial",
+        nextQuestionId: "question-2",
+        questionDeadlineAt: "2099-01-01T00:00:13.000Z",
+        timerRemainingMilliseconds: 13_000,
+      }),
+    );
+    mocks.submit.mockResolvedValueOnce(
+      successfulTransport({
+        completed: true,
+        correct: true,
+        correctChoiceIndex: 0,
+      }),
+    );
+    let resolveResume: (value: unknown) => void = () => {};
+    mocks.resume.mockReturnValue(
+      new Promise((resolve) => {
+        resolveResume = resolve;
+      }),
+    );
+
+    await renderReady(audioAttempt);
+    fireEvent.click(
+      screen
+        .getByRole("group")
+        .firstElementChild!.querySelectorAll("button")[0],
+    );
+    await act(async () => Promise.resolve());
+    const player = audioInstances.find((audio) =>
+      audio.playStates.some((state) => !state.muted),
+    )!;
+    await act(async () => {
+      player.emit("ended");
+      await Promise.resolve();
+    });
+
+    act(() => vi.advanceTimersByTime(149));
+    expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+    });
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:10");
+    const queuedChoice = screen.getByRole("button", {
+      name: /question-2-one/,
+    });
+    expect(queuedChoice).toBeEnabled();
+    fireEvent.click(queuedChoice);
+    fireEvent.click(queuedChoice);
+    expect(queuedChoice).toHaveAttribute("data-feedback", "selected");
+    expect(mocks.submit).toHaveBeenCalledOnce();
+
+    await act(async () => {
+      resolveResume(
+        successfulTransport(
+          {
+            questionDeadlineAt: "2099-01-01T00:00:10.150Z",
+            questionStartsAt: "2099-01-01T00:00:00.150Z",
+            timerRemainingMilliseconds: 10_300,
+            transitionRemainingMilliseconds: 0,
+          },
+          600,
+        ),
+      );
+      await Promise.resolve();
+    });
+    expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:10");
+    expect(mocks.submit).toHaveBeenCalledTimes(2);
+    expect(mocks.submit).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        choiceIndex: 0,
+        questionId: "question-2",
+      }),
+    );
+  });
+
   it("recovers server timing when both audio-resume responses fail", async () => {
     const audioAttempt = attempt();
+    audioAttempt.questionTimeLimitSeconds = 10;
     audioAttempt.questions[0].choicePronunciations[0] =
       availablePronunciation;
     mocks.submit.mockResolvedValue(
@@ -322,6 +431,16 @@ describe("QuizPlayer", () => {
     mocks.resume.mockRejectedValue(new Error("response lost"));
 
     await renderReady(audioAttempt);
+    const recoveredAttempt = structuredClone(audioAttempt);
+    recoveredAttempt.currentQuestionId = "question-2";
+    recoveredAttempt.questions[0].initialChoiceIndex = 0;
+    recoveredAttempt.questions[0].initialIsCorrect = true;
+    mocks.recover.mockResolvedValue(
+      successfulTransport({
+        attempt: recoveredAttempt,
+        timerRemainingMilliseconds: 13_000,
+      }),
+    );
     fireEvent.click(
       screen
         .getByRole("group")
@@ -339,11 +458,13 @@ describe("QuizPlayer", () => {
     expect(mocks.resume).toHaveBeenCalledTimes(2);
 
     await act(async () => {
-      vi.advanceTimersByTime(3_000);
+      vi.advanceTimersByTime(150);
       await Promise.resolve();
       await Promise.resolve();
     });
     expect(mocks.recover).toHaveBeenCalledTimes(2);
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:10");
   });
 
   it("moves to the result 150ms after final-answer audio ends", async () => {
@@ -374,7 +495,10 @@ describe("QuizPlayer", () => {
     });
     act(() => vi.advanceTimersByTime(149));
     expect(mocks.replace).not.toHaveBeenCalled();
-    act(() => vi.advanceTimersByTime(1));
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+    });
     expect(mocks.replace).toHaveBeenCalledWith("/student/result/attempt-1");
     expect(mocks.resume).not.toHaveBeenCalled();
   });
@@ -415,7 +539,83 @@ describe("QuizPlayer", () => {
     expect(mocks.replace).not.toHaveBeenCalled();
   });
 
-  it("keeps the 3000ms fallback when answer audio never ends", async () => {
+  it("does not navigate after leaving during the 150ms audio grace", async () => {
+    const audioAttempt = attempt();
+    audioAttempt.questions[0].choicePronunciations[0] =
+      availablePronunciation;
+    mocks.submit.mockResolvedValue(
+      successfulTransport({
+        completed: true,
+        correct: true,
+        correctChoiceIndex: 0,
+      }),
+    );
+
+    const view = await renderReady(audioAttempt);
+    fireEvent.click(
+      screen
+        .getByRole("group")
+        .firstElementChild!.querySelectorAll("button")[0],
+    );
+    await act(async () => Promise.resolve());
+    const player = audioInstances.find((audio) =>
+      audio.playStates.some((state) => !state.muted),
+    )!;
+    await act(async () => {
+      player.emit("ended");
+      await Promise.resolve();
+    });
+    act(() => view.unmount());
+    await act(async () => {
+      vi.advanceTimersByTime(150);
+      await Promise.resolve();
+    });
+    expect(mocks.replace).not.toHaveBeenCalled();
+  });
+
+  it("discards a queued next answer when leaving during timer synchronization", async () => {
+    mocks.submit.mockResolvedValueOnce(
+      successfulTransport({
+        correct: true,
+        correctChoiceIndex: 0,
+        nextPhase: "initial",
+        nextQuestionId: "question-2",
+        questionDeadlineAt: "2099-01-01T00:00:13.000Z",
+        timerRemainingMilliseconds: 13_000,
+      }),
+    );
+    let resolveResume: (value: unknown) => void = () => {};
+    mocks.resume.mockReturnValue(
+      new Promise((resolve) => {
+        resolveResume = resolve;
+      }),
+    );
+
+    const view = await renderReady();
+    fireEvent.click(screen.getByRole("button", { name: /question-1-one/ }));
+    await act(async () => Promise.resolve());
+    await act(async () => {
+      vi.advanceTimersByTime(750);
+      await Promise.resolve();
+    });
+    fireEvent.click(screen.getByRole("button", { name: /question-2-one/ }));
+    act(() => view.unmount());
+    await act(async () => {
+      resolveResume(
+        successfulTransport({
+          questionDeadlineAt: "2099-01-01T00:00:10.750Z",
+          questionStartsAt: "2099-01-01T00:00:00.750Z",
+          timerRemainingMilliseconds: 10_000,
+          transitionRemainingMilliseconds: 0,
+        }),
+      );
+      await Promise.resolve();
+    });
+    expect(mocks.submit).toHaveBeenCalledOnce();
+    expect(mocks.replace).not.toHaveBeenCalled();
+  });
+
+  it("moves immediately after the 3000ms watchdog when answer audio never ends", async () => {
     const audioAttempt = attempt();
     audioAttempt.questions[0].choicePronunciations[0] =
       availablePronunciation;
@@ -429,7 +629,7 @@ describe("QuizPlayer", () => {
         timerRemainingMilliseconds: 13_000,
       }),
     );
-    audioPlayResults.push("started", "pending");
+    audioPlayResults.push("started", "started");
 
     await renderReady(audioAttempt);
     fireEvent.click(
@@ -443,13 +643,19 @@ describe("QuizPlayer", () => {
       await Promise.resolve();
       await Promise.resolve();
     });
-    act(() => vi.advanceTimersByTime(1));
-    expect(mocks.resume).not.toHaveBeenCalled();
+    await act(async () => {
+      vi.advanceTimersByTime(0);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(mocks.resume).toHaveBeenCalledWith(
+      expect.objectContaining({ transitionRemainingMilliseconds: 0 }),
+    );
     expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
     pendingAudioPlays[0]?.();
   });
 
-  it("keeps the 3000ms fallback when correct-answer audio fails", async () => {
+  it("uses the 750ms silent fallback when correct-answer audio fails", async () => {
     const audioAttempt = attempt();
     audioAttempt.questions[0].choicePronunciations[0] =
       availablePronunciation;
@@ -473,11 +679,16 @@ describe("QuizPlayer", () => {
     );
     await act(async () => Promise.resolve());
 
-    act(() => vi.advanceTimersByTime(2_999));
+    act(() => vi.advanceTimersByTime(749));
     expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
-    act(() => vi.advanceTimersByTime(1));
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+    });
     expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
-    expect(mocks.resume).not.toHaveBeenCalled();
+    expect(mocks.resume).toHaveBeenCalledWith(
+      expect.objectContaining({ transitionRemainingMilliseconds: 750 }),
+    );
   });
 
   it("uses a synchronous request gate for repeated answer clicks", async () => {
@@ -498,6 +709,7 @@ describe("QuizPlayer", () => {
     fireEvent.click(firstChoice);
     fireEvent.click(firstChoice);
     expect(mocks.submit).toHaveBeenCalledOnce();
+    expect(firstChoice).toHaveAttribute("data-feedback", "selected");
     expect(audioPlayCount()).toBe(1);
     expect(audibleAudioPlayCount()).toBe(0);
 
@@ -685,7 +897,7 @@ describe("QuizPlayer", () => {
     fireEvent.click(screen.getByRole("button", { name: /하나/ }));
     await act(async () => Promise.resolve());
     expect(player?.play).toHaveBeenCalledTimes(2);
-    act(() => vi.advanceTimersByTime(3_000));
+    act(() => vi.advanceTimersByTime(750));
     await act(async () => Promise.resolve());
 
     expect(screen.getByText("english-2")).toBeInTheDocument();
@@ -697,7 +909,7 @@ describe("QuizPlayer", () => {
     expect(player?.play).toHaveBeenCalledTimes(3);
   });
 
-  it("keeps a correct English answer playing until the delayed next prompt starts", async () => {
+  it("starts the next prompt 250ms after the screen changes even while timer sync is slow", async () => {
     const audioAttempt = attempt();
     for (const current of audioAttempt.questions) {
       current.choicePronunciations = Array.from({ length: 4 }, (_, index) => ({
@@ -722,12 +934,10 @@ describe("QuizPlayer", () => {
         timerRemainingMilliseconds: 10_000,
       }),
     );
-    mocks.resume.mockImplementation(async () =>
-      successfulTransport({
-        questionDeadlineAt: "2099-01-01T00:00:10.150Z",
-        questionStartsAt: "2099-01-01T00:00:00.150Z",
-        timerRemainingMilliseconds: 10_150,
-        transitionRemainingMilliseconds: 150,
+    let resolveResume: (value: unknown) => void = () => {};
+    mocks.resume.mockReturnValue(
+      new Promise((resolve) => {
+        resolveResume = resolve;
       }),
     );
 
@@ -755,7 +965,10 @@ describe("QuizPlayer", () => {
     expect(mocks.resume).toHaveBeenCalledOnce();
     act(() => vi.advanceTimersByTime(149));
     expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
-    act(() => vi.advanceTimersByTime(1));
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+    });
 
     expect(screen.getByText("next-english-prompt")).toBeInTheDocument();
     expect(player?.pause).toHaveBeenCalledTimes(pauseCount ?? 0);
@@ -767,9 +980,22 @@ describe("QuizPlayer", () => {
     });
     expect(player?.pause).toHaveBeenCalledTimes((pauseCount ?? 0) + 1);
     expect(player?.src).toBe("https://example.com/next-prompt.mp3");
+    await act(async () => {
+      resolveResume(
+        successfulTransport({
+          questionDeadlineAt: "2099-01-01T00:00:10.150Z",
+          questionStartsAt: "2099-01-01T00:00:00.150Z",
+          timerRemainingMilliseconds: 10_000,
+          transitionRemainingMilliseconds: 0,
+        }),
+      );
+      await Promise.resolve();
+    });
+    act(() => vi.advanceTimersByTime(500));
+    expect(player?.play).toHaveBeenCalledTimes(3);
   });
 
-  it("locks choices at zero and shows a timeout notice for 3000ms", async () => {
+  it("locks choices at zero and shows a timeout notice for 750ms", async () => {
     mocks.submit.mockResolvedValue(
       successfulTransport({
         correct: false,
@@ -803,10 +1029,56 @@ describe("QuizPlayer", () => {
     );
     expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
 
-    act(() => vi.advanceTimersByTime(2_999));
+    act(() => vi.advanceTimersByTime(749));
     expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
 
-    act(() => vi.advanceTimersByTime(1));
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+    });
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("quiz-timeout-overlay"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows timeout immediately and does not add another 750ms after a slow request", async () => {
+    let resolveRequest: (value: unknown) => void = () => {};
+    mocks.submit.mockReturnValue(
+      new Promise((resolve) => {
+        resolveRequest = resolve;
+      }),
+    );
+    await renderReady(attempt(), 0);
+
+    await act(async () => {
+      vi.advanceTimersByTime(0);
+      await Promise.resolve();
+    });
+    expect(screen.getByTestId("quiz-timeout-overlay")).toHaveTextContent(
+      studentAppText.attempt.timeoutTitle,
+    );
+
+    act(() => vi.advanceTimersByTime(900));
+    expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
+    await act(async () => {
+      resolveRequest(
+        successfulTransport({
+          correct: false,
+          correctChoiceIndex: 1,
+          nextPhase: "initial",
+          nextQuestionId: "question-2",
+          questionDeadlineAt: "2099-01-01T00:00:13.000Z",
+          timedOut: true,
+          timerRemainingMilliseconds: 13_000,
+        }),
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+      vi.advanceTimersByTime(0);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
     expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
     expect(
       screen.queryByTestId("quiz-timeout-overlay"),

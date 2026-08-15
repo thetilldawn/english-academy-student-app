@@ -15,6 +15,7 @@ function response(payload: unknown) {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 describe("quiz attempt transport", () => {
@@ -102,6 +103,7 @@ describe("quiz attempt transport", () => {
       attemptId: "attempt-1",
       nextPhase: "initial",
       nextQuestionId: "question-2",
+      transitionRemainingMilliseconds: 150,
     });
     expect(result.ok).toBe(true);
     expect(fetchMock).toHaveBeenCalledWith(
@@ -110,9 +112,36 @@ describe("quiz attempt transport", () => {
         body: JSON.stringify({
           nextPhase: "initial",
           nextQuestionId: "question-2",
+          transitionRemainingMilliseconds: 150,
         }),
         method: "POST",
       }),
     );
+  });
+
+  it("aborts a feedback synchronization request that stops responding", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_resource: RequestInfo | URL, options?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          options?.signal?.addEventListener("abort", () => {
+            reject(new DOMException("aborted", "AbortError"));
+          });
+        }),
+      ),
+    );
+
+    const request = resumeQuizAfterFeedback({
+      attemptId: "attempt-1",
+      nextPhase: "initial",
+      nextQuestionId: "question-2",
+      transitionRemainingMilliseconds: 150,
+    });
+    const rejection = expect(request).rejects.toMatchObject({
+      name: "AbortError",
+    });
+    await vi.advanceTimersByTimeAsync(2_000);
+    await rejection;
   });
 });

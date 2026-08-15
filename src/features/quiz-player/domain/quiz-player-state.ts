@@ -19,6 +19,7 @@ export type QuizPlayerState = {
   submitting: boolean;
   error: string;
   timerSynchronized: boolean;
+  transitionPending: boolean;
   timeWarning: string;
 };
 
@@ -37,6 +38,12 @@ export type QuizPlayerAction =
       attempt: QuizAttempt;
       remainingSeconds: number;
     }
+  | { type: "feedback-transitioned"; attempt: QuizAttempt }
+  | {
+      type: "transition-choice-queued";
+      phase: QuizAttemptPhase;
+      choiceIndex: number | null;
+    }
   | { type: "submission-failed"; message: string };
 
 export function createQuizPlayerState(
@@ -50,6 +57,7 @@ export function createQuizPlayerState(
     submitting: false,
     error: "",
     timerSynchronized: false,
+    transitionPending: false,
     timeWarning: "",
   };
 }
@@ -74,6 +82,7 @@ export function quizPlayerReducer(
         submitting: false,
         error: "",
         timerSynchronized: false,
+        transitionPending: false,
         timeWarning: "",
       };
     case "submission-started":
@@ -84,10 +93,11 @@ export function quizPlayerReducer(
           selectedChoice: action.choiceIndex,
           correctChoice: null,
           correct: null,
-          timedOut: false,
+          timedOut: action.choiceIndex === null,
         },
         submitting: true,
         error: "",
+        transitionPending: false,
       };
     case "answer-received":
       return state.feedback
@@ -113,7 +123,32 @@ export function quizPlayerReducer(
         submitting: false,
         error: "",
         timerSynchronized: true,
+        transitionPending: false,
         timeWarning: "",
+      };
+    case "feedback-transitioned":
+      return {
+        ...state,
+        attempt: action.attempt,
+        feedback: null,
+        submitting: false,
+        error: "",
+        timerSynchronized: true,
+        transitionPending: true,
+        timeWarning: "",
+      };
+    case "transition-choice-queued":
+      return {
+        ...state,
+        feedback: {
+          phase: action.phase,
+          selectedChoice: action.choiceIndex,
+          correctChoice: null,
+          correct: null,
+          timedOut: action.choiceIndex === null,
+        },
+        submitting: true,
+        error: "",
       };
     case "submission-failed":
       return {
@@ -121,6 +156,7 @@ export function quizPlayerReducer(
         feedback: null,
         submitting: false,
         error: action.message,
+        transitionPending: false,
       };
   }
 }

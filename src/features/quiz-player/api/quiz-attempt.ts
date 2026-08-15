@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { QUIZ_REQUEST_TIMEOUT_MS } from "../domain/quiz-session";
 import type {
   QuizAnswerResponse,
   QuizAttemptResponse,
@@ -121,6 +122,25 @@ const errorResponseSchema = z.object({
   error: z.string().optional(),
 });
 
+async function boundedFetch(
+  resource: RequestInfo | URL,
+  options?: RequestInit,
+) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(
+    () => controller.abort(),
+    QUIZ_REQUEST_TIMEOUT_MS,
+  );
+  try {
+    return await fetch(resource, {
+      ...options,
+      signal: controller.signal,
+    });
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
 async function responsePayload(response: Response) {
   return response.json().catch(() => ({})) as Promise<unknown>;
 }
@@ -137,7 +157,7 @@ export async function submitQuizAnswer(input: {
   choiceIndex: number | null;
 }): Promise<QuizTransportResult<QuizAnswerResponse>> {
   const requestStartedAt = performance.now();
-  const response = await fetch(
+  const response = await boundedFetch(
     `/api/student/attempts/${input.attemptId}/${
       input.choiceIndex === null ? "timeouts" : "answers"
     }`,
@@ -173,7 +193,7 @@ export async function recoverQuizAttempt(
   attemptId: string,
 ): Promise<QuizTransportResult<QuizAttemptResponse>> {
   const requestStartedAt = performance.now();
-  const response = await fetch(`/api/student/attempts/${attemptId}`, {
+  const response = await boundedFetch(`/api/student/attempts/${attemptId}`, {
     cache: "no-store",
   });
   const payload = await responsePayload(response);
@@ -196,9 +216,10 @@ export async function resumeQuizAfterFeedback(input: {
   attemptId: string;
   nextPhase: "initial" | "retry";
   nextQuestionId: string;
+  transitionRemainingMilliseconds: number;
 }): Promise<QuizTransportResult<QuizFeedbackResumeResponse>> {
   const requestStartedAt = performance.now();
-  const response = await fetch(
+  const response = await boundedFetch(
     `/api/student/attempts/${input.attemptId}/feedback`,
     {
       method: "POST",
@@ -206,6 +227,8 @@ export async function resumeQuizAfterFeedback(input: {
       body: JSON.stringify({
         nextPhase: input.nextPhase,
         nextQuestionId: input.nextQuestionId,
+        transitionRemainingMilliseconds:
+          input.transitionRemainingMilliseconds,
       }),
     },
   );

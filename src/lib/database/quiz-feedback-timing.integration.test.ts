@@ -22,6 +22,12 @@ const audioEndedFeedbackMigration = fs.readFileSync(
   ),
   "utf8",
 );
+const variableFeedbackMigration = fs.readFileSync(
+  path.resolve(
+    "supabase/migrations/20260815123000_resume_quiz_after_variable_feedback.sql",
+  ),
+  "utf8",
+);
 
 const ids = {
   assignment: "00000000-0000-4000-8000-000000000101",
@@ -112,6 +118,7 @@ describe.sequential("quiz feedback timing migration", () => {
     await database.exec(migration);
     await database.exec(normalRateFeedbackMigration);
     await database.exec(audioEndedFeedbackMigration);
+    await database.exec(variableFeedbackMigration);
   }, 20_000);
 
   afterEach(async () => {
@@ -173,7 +180,7 @@ describe.sequential("quiz feedback timing migration", () => {
     `);
   }
 
-  async function resume() {
+  async function resume(delayMilliseconds = 150) {
     return database.query<{
       deadline_ms: number;
       started_ms: number;
@@ -184,11 +191,12 @@ describe.sequential("quiz feedback timing migration", () => {
         extract(epoch from (result ->> 'questionStartsAt')::timestamptz) * 1000
           as started_ms
       from (
-        select public.resume_quiz_after_feedback_v1(
+        select public.resume_quiz_after_feedback_v2(
           '${ids.student}'::uuid,
           '${ids.attempt}'::uuid,
           '${ids.nextQuestion}'::uuid,
-          'initial'
+          'initial',
+          ${delayMilliseconds}
         ) as result
       ) call;
     `);
@@ -229,7 +237,7 @@ describe.sequential("quiz feedback timing migration", () => {
     await expect(answer(true)).rejects.toThrow("question_time_remaining");
   });
 
-  it("starts the next question after 3000ms and preserves its full limit", async () => {
+  it("starts the next question after 7000ms and preserves its full limit", async () => {
     await seed("1 second");
     const before = Date.now();
     await answer(false);
@@ -248,12 +256,12 @@ describe.sequential("quiz feedback timing migration", () => {
       where attempt.id = '${ids.attempt}';
     `);
     const row = response.rows[0]!;
-    expect(row.started_ms - before).toBeGreaterThanOrEqual(2_950);
-    expect(row.started_ms - after).toBeLessThanOrEqual(3_050);
+    expect(row.started_ms - before).toBeGreaterThanOrEqual(6_950);
+    expect(row.started_ms - after).toBeLessThanOrEqual(7_050);
     expect(row.deadline_ms - row.started_ms).toBe(10_000);
   });
 
-  it("adds the locked 3000ms transition back to a total attempt deadline", async () => {
+  it("adds the locked 7000ms transition back to a total attempt deadline", async () => {
     await seed("1 second", "total");
     const before = await database.query<{ deadline_ms: number }>(`
       select extract(epoch from deadline_at) * 1000 as deadline_ms
@@ -274,15 +282,37 @@ describe.sequential("quiz feedback timing migration", () => {
       where id = '${ids.attempt}';
     `);
     const row = response.rows[0]!;
-    expect(row.deadline_ms - before.rows[0]!.deadline_ms).toBe(3_000);
-    expect(row.started_ms - wallClockBefore).toBeGreaterThanOrEqual(2_950);
-    expect(row.started_ms - wallClockAfter).toBeLessThanOrEqual(3_050);
+    expect(row.deadline_ms - before.rows[0]!.deadline_ms).toBe(7_000);
+    expect(row.started_ms - wallClockBefore).toBeGreaterThanOrEqual(6_950);
+    expect(row.started_ms - wallClockAfter).toBeLessThanOrEqual(7_050);
   });
 
   it("rejects a duplicate answer before it can add another transition", async () => {
     await seed("1 second", "total");
     await answer(false);
+    await database.exec(`
+      update public.quiz_attempts
+      set current_question_started_at = clock_timestamp() - interval '1 millisecond'
+      where id = '${ids.attempt}';
+    `);
     await expect(answer(false)).rejects.toThrow("question_already_answered");
+  });
+
+  it("rejects the next answer before its feedback transition has started", async () => {
+    await seed("1 second");
+    await answer(false);
+    await expect(
+      database.query(`
+        select public.answer_quiz_question_v3(
+          '${ids.student}'::uuid,
+          '${ids.attempt}'::uuid,
+          '${ids.nextQuestion}'::uuid,
+          'initial',
+          0::smallint,
+          false
+        );
+      `),
+    ).rejects.toThrow("question_not_started");
   });
 
   it("moves the next per-question clock to 150ms after audio completion", async () => {
@@ -297,7 +327,25 @@ describe.sequential("quiz feedback timing migration", () => {
     expect(row.deadline_ms - row.started_ms).toBe(10_000);
   });
 
-  it("never extends the server clock after the original 3000ms slot", async () => {
+  it("uses the requested 750ms silent-feedback window", async () => {
+    await seed("1 second");
+    await answer(false);
+    const before = Date.now();
+    const resumed = await resume(750);
+    const after = Date.now();
+    const row = resumed.rows[0]!;
+    expect(row.started_ms - before).toBeGreaterThanOrEqual(700);
+    expect(row.started_ms - after).toBeLessThanOrEqual(800);
+    expect(row.deadline_ms - row.started_ms).toBe(10_000);
+  });
+
+  it("rejects a feedback window outside the 750ms transition cap", async () => {
+    await seed("1 second");
+    await answer(false);
+    await expect(resume(751)).rejects.toThrow("invalid_feedback_delay");
+  });
+
+  it("never extends the server clock after the original 7000ms slot", async () => {
     await seed("1 second");
     await answer(false);
     await database.exec(`
@@ -328,16 +376,33 @@ describe.sequential("quiz feedback timing migration", () => {
     expect(second.rows[0]).toEqual(row);
   });
 
+  it("only shortens a total-timer transition when delays are retried", async () => {
+    await seed("1 second", "total");
+    await answer(false);
+    const silent = await resume(750);
+    const audioEnded = await resume(150);
+    const staleRetry = await resume(750);
+
+    expect(Number(audioEnded.rows[0]!.started_ms)).toBeLessThan(
+      Number(silent.rows[0]!.started_ms),
+    );
+    expect(Number(audioEnded.rows[0]!.deadline_ms)).toBeLessThan(
+      Number(silent.rows[0]!.deadline_ms),
+    );
+    expect(staleRetry.rows[0]).toEqual(audioEnded.rows[0]);
+  });
+
   it("rejects a stale or mismatched next-question signal", async () => {
     await seed("1 second");
     await answer(false);
     await expect(
       database.query(`
-        select public.resume_quiz_after_feedback_v1(
+        select public.resume_quiz_after_feedback_v2(
           '${ids.student}'::uuid,
           '${ids.attempt}'::uuid,
           '${ids.question}'::uuid,
-          'initial'
+          'initial',
+          150
         );
       `),
     ).rejects.toThrow("next_question_mismatch");
@@ -354,6 +419,9 @@ describe.sequential("quiz feedback timing migration", () => {
       resume_anon: boolean;
       resume_authenticated: boolean;
       resume_service: boolean;
+      variable_resume_anon: boolean;
+      variable_resume_authenticated: boolean;
+      variable_resume_service: boolean;
     }>(`
       select
         has_function_privilege(
@@ -400,7 +468,22 @@ describe.sequential("quiz feedback timing migration", () => {
           'service_role',
           'public.resume_quiz_after_feedback_v1(uuid,uuid,uuid,text)',
           'EXECUTE'
-        ) as resume_service;
+        ) as resume_service,
+        has_function_privilege(
+          'anon',
+          'public.resume_quiz_after_feedback_v2(uuid,uuid,uuid,text,integer)',
+          'EXECUTE'
+        ) as variable_resume_anon,
+        has_function_privilege(
+          'authenticated',
+          'public.resume_quiz_after_feedback_v2(uuid,uuid,uuid,text,integer)',
+          'EXECUTE'
+        ) as variable_resume_authenticated,
+        has_function_privilege(
+          'service_role',
+          'public.resume_quiz_after_feedback_v2(uuid,uuid,uuid,text,integer)',
+          'EXECUTE'
+        ) as variable_resume_service;
     `);
     expect(privileges.rows).toEqual([
       {
@@ -413,6 +496,9 @@ describe.sequential("quiz feedback timing migration", () => {
         resume_authenticated: false,
         resume_service: true,
         service: true,
+        variable_resume_anon: false,
+        variable_resume_authenticated: false,
+        variable_resume_service: true,
       },
     ]);
   });

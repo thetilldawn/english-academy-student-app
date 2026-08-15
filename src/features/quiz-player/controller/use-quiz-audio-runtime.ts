@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef } from "react";
 
 import {
   ANSWER_AUDIO_END_TIMEOUT_MS,
+  ANSWER_AUDIO_START_TIMEOUT_MS,
   PROMPT_AUDIO_AUTOPLAY_DELAY_MS,
 } from "../domain/quiz-session";
 import { QuizAudioPlayer } from "./quiz-audio-player";
@@ -102,6 +103,7 @@ export function useQuizAudioRuntime(input: {
         audioUrl,
         "choice",
         ANSWER_AUDIO_END_TIMEOUT_MS,
+        ANSWER_AUDIO_START_TIMEOUT_MS,
       ),
     [player],
   );

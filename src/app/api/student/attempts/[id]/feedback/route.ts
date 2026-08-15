@@ -11,6 +11,7 @@ import { resumeStudentQuizAfterFeedback } from "@/lib/services/quiz-service";
 const feedbackResumeSchema = z.object({
   nextPhase: z.enum(["initial", "retry"]),
   nextQuestionId: z.uuid(),
+  transitionRemainingMilliseconds: z.number().int().min(0).max(750),
 });
 
 export async function POST(
@@ -38,6 +39,8 @@ export async function POST(
       attemptId: id,
       nextPhase: input.nextPhase,
       nextQuestionId: input.nextQuestionId,
+      transitionRemainingMilliseconds:
+        input.transitionRemainingMilliseconds,
     });
     const now = currentTimeMilliseconds();
     return Response.json(

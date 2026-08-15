@@ -6,9 +6,13 @@ import type {
   QuizQuestion,
 } from "../model";
 
-export const ANSWER_FEEDBACK_DELAY_MS = 3_000;
+export const ANSWER_FEEDBACK_DELAY_MS = 750;
 export const ANSWER_AUDIO_END_GRACE_MS = 150;
 export const ANSWER_AUDIO_END_TIMEOUT_MS = 3_000;
+export const ANSWER_AUDIO_START_TIMEOUT_MS = 1_000;
+export const QUIZ_REQUEST_TIMEOUT_MS = 2_000;
+export const ANSWER_SERVER_FEEDBACK_RESERVATION_MS = 7_000;
+export const ANSWER_RESULT_VISIBLE_MS = 250;
 export const PROMPT_AUDIO_AUTOPLAY_DELAY_MS = 250;
 
 export function currentQuizQuestion(attempt: QuizAttempt) {

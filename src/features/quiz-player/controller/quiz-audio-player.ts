@@ -49,7 +49,8 @@ export class QuizAudioPlayer {
   async playUntilEnded(
     audioUrl: string,
     purpose: QuizAudioPurpose,
-    timeoutMilliseconds: number,
+    playbackTimeoutMilliseconds: number,
+    startupTimeoutMilliseconds: number,
   ) {
     this.interruptActiveCompletion();
     const generation = ++this.generation;
@@ -59,7 +60,8 @@ export class QuizAudioPlayer {
 
     const completion = waitForQuizAudioCompletion(
       player,
-      timeoutMilliseconds,
+      playbackTimeoutMilliseconds,
+      startupTimeoutMilliseconds,
     );
     this.interruptCompletion = completion.interrupt;
     const result = await completion.result;
