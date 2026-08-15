@@ -56,6 +56,7 @@ export type QuizAnswerResponse = {
   timedOut?: boolean;
   questionDeadlineAt?: string | null;
   timerRemainingMilliseconds?: number | null;
+  feedbackProtocol?: "legacy" | "variable";
   error?: string;
 };
 

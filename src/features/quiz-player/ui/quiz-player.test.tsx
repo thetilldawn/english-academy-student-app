@@ -269,6 +269,45 @@ describe("QuizPlayer", () => {
     expect(mocks.replace).not.toHaveBeenCalled();
   });
 
+  it("keeps the legacy rollout path silent and skips the unavailable resume RPC", async () => {
+    const legacyAttempt = attempt();
+    legacyAttempt.questionTimeLimitSeconds = 10;
+    legacyAttempt.questions[0].choicePronunciations[0] =
+      availablePronunciation;
+    mocks.submit.mockResolvedValueOnce(
+      successfulTransport({
+        correct: true,
+        correctChoiceIndex: 0,
+        feedbackProtocol: "legacy",
+        nextPhase: "initial",
+        nextQuestionId: "question-2",
+        questionDeadlineAt: "2099-01-01T00:00:10.750Z",
+        timerRemainingMilliseconds: 10_750,
+      }),
+    );
+    await renderReady(legacyAttempt);
+
+    fireEvent.click(
+      screen
+        .getByRole("group")
+        .firstElementChild!.querySelectorAll("button")[0],
+    );
+    await act(async () => Promise.resolve());
+
+    expect(audibleAudioPlayCount()).toBe(0);
+    expect(mocks.resume).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(749));
+    expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
+
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+    });
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:10");
+    expect(mocks.resume).not.toHaveBeenCalled();
+  });
+
   it("moves 150ms after the correct answer audio actually ends", async () => {
     const audioAttempt = attempt();
     audioAttempt.questionTimeLimitSeconds = 10;

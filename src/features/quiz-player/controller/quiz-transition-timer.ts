@@ -14,7 +14,9 @@ export function previewNextQuestionMilliseconds(
   return Math.max(
     0,
     (payload.timerRemainingMilliseconds ?? 0) -
-      ANSWER_SERVER_FEEDBACK_RESERVATION_MS,
+      (payload.feedbackProtocol === "legacy"
+        ? 0
+        : ANSWER_SERVER_FEEDBACK_RESERVATION_MS),
   );
 }
 

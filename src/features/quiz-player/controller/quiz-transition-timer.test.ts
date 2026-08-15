@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { QuizAttempt } from "../model";
-import { activeNextQuestionMilliseconds } from "./quiz-transition-timer";
+import {
+  activeNextQuestionMilliseconds,
+  previewNextQuestionMilliseconds,
+} from "./quiz-transition-timer";
 
 const perQuestionAttempt = {
   questionTimeLimitSeconds: 10,
@@ -39,5 +42,31 @@ describe("activeNextQuestionMilliseconds", () => {
         serverReceivedAt: 1_800,
       }),
     ).toBe(9_500);
+  });
+});
+
+describe("previewNextQuestionMilliseconds", () => {
+  it("does not subtract the new reservation from a legacy total timer", () => {
+    expect(
+      previewNextQuestionMilliseconds(
+        { timingMode: "total" } as QuizAttempt,
+        {
+          feedbackProtocol: "legacy",
+          timerRemainingMilliseconds: 12_000,
+        },
+      ),
+    ).toBe(12_000);
+  });
+
+  it("subtracts the seven-second reservation for the variable protocol", () => {
+    expect(
+      previewNextQuestionMilliseconds(
+        { timingMode: "total" } as QuizAttempt,
+        {
+          feedbackProtocol: "variable",
+          timerRemainingMilliseconds: 12_000,
+        },
+      ),
+    ).toBe(5_000);
   });
 });

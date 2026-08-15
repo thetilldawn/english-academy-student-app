@@ -104,7 +104,13 @@ export async function resolveQuizFeedbackTransition(input: {
   submittedAt: number;
 }): Promise<ResolvedQuizFeedbackTransition> {
   let delayMilliseconds: number;
-  if (
+  if (input.payload.feedbackProtocol === "legacy") {
+    delayMilliseconds = fixedFeedbackRemaining({
+      receivedAt: input.receivedAt,
+      submittedAt: input.submittedAt,
+      timedOut: Boolean(input.payload.timedOut),
+    });
+  } else if (
     input.payload.correct === true &&
     input.payload.timedOut !== true &&
     input.answerAudioUrl
@@ -133,14 +139,23 @@ export async function resolveQuizFeedbackTransition(input: {
     input.disposition === "next-question" &&
     input.payload.nextQuestionId &&
     input.payload.nextPhase
-      ? synchronizeNextQuestion({
-          attemptId: input.attemptId,
-          delayMilliseconds,
-          nextPhase: input.payload.nextPhase,
-          nextQuestionId: input.payload.nextQuestionId,
-          payload: input.payload,
-          receivedAt: input.receivedAt,
-        })
+      ? input.payload.feedbackProtocol === "legacy"
+        ? Promise.resolve({
+            payload: {
+              ...input.payload,
+              questionStartsAt: "",
+              transitionRemainingMilliseconds: 0,
+            },
+            receivedAt: input.receivedAt,
+          })
+        : synchronizeNextQuestion({
+            attemptId: input.attemptId,
+            delayMilliseconds,
+            nextPhase: input.payload.nextPhase,
+            nextQuestionId: input.payload.nextQuestionId,
+            payload: input.payload,
+            receivedAt: input.receivedAt,
+          })
       : null;
   await wait(delayMilliseconds);
   return { synchronization };

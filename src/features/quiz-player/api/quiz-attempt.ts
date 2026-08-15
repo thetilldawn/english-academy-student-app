@@ -68,6 +68,7 @@ const answerResponseSchema = z
     retryQuestionCount: z.number().int().nonnegative().optional(),
     timedOut: z.boolean().optional(),
     questionDeadlineAt: z.string().nullable().optional(),
+    feedbackProtocol: z.enum(["legacy", "variable"]).optional(),
     timerRemainingMilliseconds: z
       .number()
       .int()

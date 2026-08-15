@@ -43,7 +43,10 @@ import {
   type QuestionProvenanceStatus,
 } from "@/lib/quiz/question-provenance";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
-import { answerQuizQuestionWithCompatibleRpc } from "@/lib/services/quiz-rpc-compatibility";
+import {
+  answerQuizQuestionWithCompatibleRpc,
+  resumeQuizAfterFeedbackWithCompatibleRpc,
+} from "@/lib/services/quiz-rpc-compatibility";
 import type { StudentAssignmentSummary } from "@/features/student-dashboard/model";
 import type {
   AttemptResultQuestion,
@@ -1436,23 +1439,27 @@ export async function answerStudentQuestion(input: {
   choiceIndex: number;
 }) {
   const supabase = getServiceSupabaseClient();
-  const { data, error } = await answerQuizQuestionWithCompatibleRpc(
-    (functionName, parameters) => supabase.rpc(functionName, parameters),
-    {
-      p_student_id: input.studentId,
-      p_attempt_id: input.attemptId,
-      p_question_id: input.questionId,
-      p_phase: input.phase,
-      p_choice_index: input.choiceIndex,
-      p_force_timeout: false,
-    },
-  );
+  const { data, error, feedbackProtocol } =
+    await answerQuizQuestionWithCompatibleRpc(
+      (functionName, parameters) => supabase.rpc(functionName, parameters),
+      {
+        p_student_id: input.studentId,
+        p_attempt_id: input.attemptId,
+        p_question_id: input.questionId,
+        p_phase: input.phase,
+        p_choice_index: input.choiceIndex,
+        p_force_timeout: false,
+      },
+    );
 
   if (error || !data) {
     throw new Error("답안을 저장하지 못했습니다.");
   }
 
-  return data as {
+  return {
+    ...(data as Record<string, unknown>),
+    feedbackProtocol,
+  } as {
     correct?: boolean;
     correctChoiceIndex?: number;
     completed?: boolean;
@@ -1466,6 +1473,7 @@ export async function answerStudentQuestion(input: {
     retryQuestionCount?: number;
     timedOut?: boolean;
     questionDeadlineAt?: string | null;
+    feedbackProtocol: "legacy" | "variable";
   };
 }
 
@@ -1476,21 +1484,25 @@ export async function timeoutStudentQuestion(input: {
   phase: "initial" | "retry";
 }) {
   const supabase = getServiceSupabaseClient();
-  const { data, error } = await answerQuizQuestionWithCompatibleRpc(
-    (functionName, parameters) => supabase.rpc(functionName, parameters),
-    {
-      p_student_id: input.studentId,
-      p_attempt_id: input.attemptId,
-      p_question_id: input.questionId,
-      p_phase: input.phase,
-      p_choice_index: 0,
-      p_force_timeout: true,
-    },
-  );
+  const { data, error, feedbackProtocol } =
+    await answerQuizQuestionWithCompatibleRpc(
+      (functionName, parameters) => supabase.rpc(functionName, parameters),
+      {
+        p_student_id: input.studentId,
+        p_attempt_id: input.attemptId,
+        p_question_id: input.questionId,
+        p_phase: input.phase,
+        p_choice_index: 0,
+        p_force_timeout: true,
+      },
+    );
   if (error || !data) {
     throw new Error("시간 초과 상태를 저장하지 못했습니다.");
   }
-  return data as {
+  return {
+    ...(data as Record<string, unknown>),
+    feedbackProtocol,
+  } as {
     correct?: boolean;
     correctChoiceIndex?: number;
     completed?: boolean;
@@ -1500,6 +1512,7 @@ export async function timeoutStudentQuestion(input: {
     nextPhase?: "initial" | "retry" | null;
     timedOut?: boolean;
     questionDeadlineAt?: string | null;
+    feedbackProtocol: "legacy" | "variable";
   };
 }
 
@@ -1511,8 +1524,8 @@ export async function resumeStudentQuizAfterFeedback(input: {
   transitionRemainingMilliseconds: number;
 }) {
   const supabase = getServiceSupabaseClient();
-  const { data, error } = await supabase.rpc(
-    "resume_quiz_after_feedback_v2",
+  const { data, error } = await resumeQuizAfterFeedbackWithCompatibleRpc(
+    (functionName, parameters) => supabase.rpc(functionName, parameters),
     {
       p_student_id: input.studentId,
       p_attempt_id: input.attemptId,
