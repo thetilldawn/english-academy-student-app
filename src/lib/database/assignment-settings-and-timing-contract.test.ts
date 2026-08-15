@@ -78,12 +78,15 @@ describe("assignment order and timing database contract", () => {
     const retryTimerMigration = source(
       "supabase/migrations/20260811090000_reset_retry_question_timer.sql",
     );
-const feedbackDelayMigration = source(
-  "supabase/migrations/20260815113000_extend_quiz_audio_feedback_and_answer_grace.sql",
-);
-const normalRateFeedbackMigration = source(
-  "supabase/migrations/20260815115000_fit_normal_rate_answer_audio_feedback.sql",
-);
+    const feedbackDelayMigration = source(
+      "supabase/migrations/20260815113000_extend_quiz_audio_feedback_and_answer_grace.sql",
+    );
+    const normalRateFeedbackMigration = source(
+      "supabase/migrations/20260815115000_fit_normal_rate_answer_audio_feedback.sql",
+    );
+    const audioEndedFeedbackMigration = source(
+      "supabase/migrations/20260815121000_resume_quiz_after_audio_feedback.sql",
+    );
     const feedbackDelayRollback = source(
       "supabase/rollback/20260815113000_extend_quiz_audio_feedback_and_answer_grace.sql",
     );
@@ -110,6 +113,15 @@ const normalRateFeedbackMigration = source(
     expect(normalRateFeedbackMigration).toContain(
       "interval ''3000 milliseconds''",
     );
+    expect(audioEndedFeedbackMigration).toContain(
+      "resume_requested_at + interval '150 milliseconds'",
+    );
+    expect(audioEndedFeedbackMigration).toContain(
+      "attempt_row.deadline_at - unused_feedback",
+    );
+    expect(audioEndedFeedbackMigration).toContain(
+      "from public, anon, authenticated",
+    );
     expect(feedbackDelayMigration).toContain(
       "else interval '250 milliseconds'",
     );
@@ -122,7 +134,7 @@ const normalRateFeedbackMigration = source(
     expect(copy).toContain(
       'timedOut: "시간 초과로 미응답 오답 처리했습니다."',
     );
-    expect(quizService).toContain('"answer_quiz_question_v2"');
+    expect(quizService).toContain('"answer_quiz_question_v3"');
     expect(timeoutRoute).toContain("timeoutStudentQuestion");
   });
 });

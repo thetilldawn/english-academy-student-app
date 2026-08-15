@@ -59,6 +59,13 @@ export type QuizAnswerResponse = {
   error?: string;
 };
 
+export type QuizFeedbackResumeResponse = {
+  questionDeadlineAt: string;
+  questionStartsAt: string;
+  timerRemainingMilliseconds: number;
+  transitionRemainingMilliseconds: number;
+};
+
 export type QuizAttemptResponse = {
   attempt: QuizAttempt;
   timerRemainingMilliseconds: number;

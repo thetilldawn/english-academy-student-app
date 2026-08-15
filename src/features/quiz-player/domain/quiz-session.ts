@@ -7,6 +7,8 @@ import type {
 } from "../model";
 
 export const ANSWER_FEEDBACK_DELAY_MS = 3_000;
+export const ANSWER_AUDIO_END_GRACE_MS = 150;
+export const ANSWER_AUDIO_END_TIMEOUT_MS = 3_000;
 export const PROMPT_AUDIO_AUTOPLAY_DELAY_MS = 250;
 
 export function currentQuizQuestion(attempt: QuizAttempt) {

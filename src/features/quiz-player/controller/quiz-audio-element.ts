@@ -5,6 +5,11 @@ export type QuizAudioPlayback =
   | "interrupted"
   | "started";
 
+export type QuizAudioCompletion =
+  | QuizAudioPlayback
+  | "ended"
+  | "timed-out";
+
 export function audioPlaybackFailure(error: unknown): QuizAudioPlayback {
   return typeof error === "object" &&
     error !== null &&

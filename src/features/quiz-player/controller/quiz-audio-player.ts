@@ -1,76 +1,39 @@
 import {
   audioPlaybackFailure,
   primeAudioElement,
-  releaseAudioElement,
-  seekAudioToStart,
   type QuizAudioPurpose,
 } from "./quiz-audio-element";
+import { waitForQuizAudioCompletion } from "./quiz-audio-completion";
+import { QuizAudioPreloaders } from "./quiz-audio-preloaders";
+import { QuizAudioSource } from "./quiz-audio-source";
 
 export class QuizAudioPlayer {
   private activePurpose: QuizAudioPurpose | null = null;
   private generation = 0;
-  private player: HTMLAudioElement | null = null;
-  private playerUrl: string | null = null;
-  private readonly preloaders = new Map<string, HTMLAudioElement>();
-
-  private getPlayer() {
-    this.player ??= new Audio();
-    this.player.preload = "auto";
-    return this.player;
-  }
+  private interruptCompletion: (() => void) | null = null;
+  private readonly preloaders = new QuizAudioPreloaders();
+  private readonly source = new QuizAudioSource();
 
   preparePrompt(audioUrl: string) {
-    const player = this.getPlayer();
-    if (this.playerUrl === audioUrl) return;
-    player.pause();
-    player.src = audioUrl;
-    player.load();
-    this.playerUrl = audioUrl;
+    this.source.prepare(audioUrl, false);
   }
 
   preloadChoices(audioUrls: readonly string[]) {
-    const nextUrls = new Set(audioUrls);
-    for (const audioUrl of nextUrls) {
-      if (this.preloaders.has(audioUrl)) continue;
-      const preloader = new Audio();
-      preloader.preload = "auto";
-      preloader.src = audioUrl;
-      preloader.load();
-      this.preloaders.set(audioUrl, preloader);
-    }
-    for (const [audioUrl, preloader] of this.preloaders) {
-      if (nextUrls.has(audioUrl)) continue;
-      preloader.pause();
-      preloader.removeAttribute("src");
-      preloader.load();
-      this.preloaders.delete(audioUrl);
-    }
+    this.preloaders.sync(audioUrls);
   }
 
   primeChoice(audioUrl: string) {
+    this.interruptActiveCompletion();
     const generation = ++this.generation;
-    const player = this.getPlayer();
-    player.pause();
-    if (this.playerUrl !== audioUrl) {
-      player.src = audioUrl;
-      player.load();
-      this.playerUrl = audioUrl;
-    }
-    seekAudioToStart(player);
+    const player = this.source.prepare(audioUrl);
     this.activePurpose = null;
     primeAudioElement(player, () => generation === this.generation);
   }
 
   async play(audioUrl: string, purpose: QuizAudioPurpose) {
+    this.interruptActiveCompletion();
     const generation = ++this.generation;
-    const player = this.getPlayer();
-    player.pause();
-    seekAudioToStart(player);
-    if (this.playerUrl !== audioUrl) {
-      player.src = audioUrl;
-      player.load();
-      this.playerUrl = audioUrl;
-    }
+    const player = this.source.prepare(audioUrl);
     player.muted = false;
     this.activePurpose = purpose;
     try {
@@ -83,21 +46,54 @@ export class QuizAudioPlayer {
     }
   }
 
+  async playUntilEnded(
+    audioUrl: string,
+    purpose: QuizAudioPurpose,
+    timeoutMilliseconds: number,
+  ) {
+    this.interruptActiveCompletion();
+    const generation = ++this.generation;
+    const player = this.source.prepare(audioUrl);
+    player.muted = false;
+    this.activePurpose = purpose;
+
+    const completion = waitForQuizAudioCompletion(
+      player,
+      timeoutMilliseconds,
+    );
+    this.interruptCompletion = completion.interrupt;
+    const result = await completion.result;
+    if (this.interruptCompletion === completion.interrupt) {
+      this.interruptCompletion = null;
+    }
+    if (generation !== this.generation) return "interrupted";
+    if (["failed", "blocked", "timed-out"].includes(result)) {
+      player.pause();
+      this.activePurpose = null;
+    }
+    return result;
+  }
+
   stopPrompt() {
     if (this.activePurpose !== "prompt") return;
-    this.player?.pause();
+    this.interruptActiveCompletion();
+    this.source.pause();
     this.activePurpose = null;
     this.generation += 1;
   }
 
   dispose() {
-    if (this.player) releaseAudioElement(this.player);
-    for (const preloader of this.preloaders.values())
-      releaseAudioElement(preloader);
-    this.preloaders.clear();
-    this.player = null;
-    this.playerUrl = null;
+    this.interruptActiveCompletion();
+    this.source.dispose();
+    this.preloaders.dispose();
     this.activePurpose = null;
     this.generation += 1;
   }
+
+  private interruptActiveCompletion() {
+    const interrupt = this.interruptCompletion;
+    this.interruptCompletion = null;
+    interrupt?.();
+  }
+
 }

@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useRef } from "react";
 
-import { PROMPT_AUDIO_AUTOPLAY_DELAY_MS } from "../domain/quiz-session";
+import {
+  ANSWER_AUDIO_END_TIMEOUT_MS,
+  PROMPT_AUDIO_AUTOPLAY_DELAY_MS,
+} from "../domain/quiz-session";
 import { QuizAudioPlayer } from "./quiz-audio-player";
 
 export function useQuizAudioRuntime(input: {
@@ -93,6 +96,16 @@ export function useQuizAudioRuntime(input: {
     });
   }, [clearAutoPlayTimer, input.promptAudioUrl, playKey, player]);
 
+  const playAnswerAudio = useCallback(
+    (audioUrl: string) =>
+      player().playUntilEnded(
+        audioUrl,
+        "choice",
+        ANSWER_AUDIO_END_TIMEOUT_MS,
+      ),
+    [player],
+  );
+
   const primeChoiceAudio = useCallback((audioUrl: string | null) => {
     if (!audioUrl) return;
     clearAutoPlayTimer();
@@ -101,6 +114,7 @@ export function useQuizAudioRuntime(input: {
 
   return {
     cancelPendingPromptAudio: clearAutoPlayTimer,
+    playAnswerAudio,
     playAudio,
     primeChoiceAudio,
   };

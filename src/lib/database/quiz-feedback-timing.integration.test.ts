@@ -16,6 +16,12 @@ const normalRateFeedbackMigration = fs.readFileSync(
   ),
   "utf8",
 );
+const audioEndedFeedbackMigration = fs.readFileSync(
+  path.resolve(
+    "supabase/migrations/20260815121000_resume_quiz_after_audio_feedback.sql",
+  ),
+  "utf8",
+);
 
 const ids = {
   assignment: "00000000-0000-4000-8000-000000000101",
@@ -45,6 +51,8 @@ describe.sequential("quiz feedback timing migration", () => {
         id uuid primary key,
         student_id uuid not null,
         assignment_id uuid not null references public.assignments(id),
+        status text not null default 'in_progress',
+        phase text not null default 'initial',
         deadline_at timestamptz not null,
         current_question_started_at timestamptz not null
       );
@@ -52,7 +60,13 @@ describe.sequential("quiz feedback timing migration", () => {
       create table public.quiz_questions (
         id uuid primary key,
         attempt_id uuid not null references public.quiz_attempts(id),
+        order_index integer not null,
         correct_choice_index smallint not null,
+        initial_choice_index smallint,
+        initial_is_correct boolean,
+        initial_answered_at timestamptz,
+        retry_choice_index smallint,
+        retry_answered_at timestamptz,
         initial_timed_out boolean not null default false,
         retry_timed_out boolean not null default false
       );
@@ -65,18 +79,26 @@ describe.sequential("quiz feedback timing migration", () => {
         p_choice_index smallint
       )
       returns jsonb
-      language sql
+      language plpgsql
       security invoker
       set search_path = ''
       as $$
-        select jsonb_build_object(
+      begin
+        update public.quiz_questions
+        set initial_choice_index = p_choice_index,
+            initial_is_correct = p_choice_index = 0,
+            initial_answered_at = clock_timestamp()
+        where id = p_question_id;
+        return jsonb_build_object(
           'completed', false,
           'correct', p_choice_index = 0,
           'correctChoiceIndex', 0,
           'expired', false,
           'nextQuestionId', '${ids.nextQuestion}',
+          'nextPhase', 'initial',
           'receivedChoice', p_choice_index
         );
+      end;
       $$;
 
       grant usage on schema public to service_role;
@@ -89,6 +111,7 @@ describe.sequential("quiz feedback timing migration", () => {
     `);
     await database.exec(migration);
     await database.exec(normalRateFeedbackMigration);
+    await database.exec(audioEndedFeedbackMigration);
   }, 20_000);
 
   afterEach(async () => {
@@ -121,8 +144,10 @@ describe.sequential("quiz feedback timing migration", () => {
       );
 
       insert into public.quiz_questions (
-        id, attempt_id, correct_choice_index
-      ) values ('${ids.question}', '${ids.attempt}', 0);
+        id, attempt_id, order_index, correct_choice_index
+      ) values
+        ('${ids.question}', '${ids.attempt}', 1, 0),
+        ('${ids.nextQuestion}', '${ids.attempt}', 2, 0);
     `);
     await database.exec("set role service_role;");
   }
@@ -136,13 +161,34 @@ describe.sequential("quiz feedback timing migration", () => {
         (result ->> 'receivedChoice')::integer as received_choice,
         (result ->> 'timedOut')::boolean as timed_out
       from (
-        select public.answer_quiz_question_v2(
+        select public.answer_quiz_question_v3(
           '${ids.student}'::uuid,
           '${ids.attempt}'::uuid,
           '${ids.question}'::uuid,
           'initial',
           0::smallint,
           ${forceTimeout}
+        ) as result
+      ) call;
+    `);
+  }
+
+  async function resume() {
+    return database.query<{
+      deadline_ms: number;
+      started_ms: number;
+    }>(`
+      select
+        extract(epoch from (result ->> 'questionDeadlineAt')::timestamptz) * 1000
+          as deadline_ms,
+        extract(epoch from (result ->> 'questionStartsAt')::timestamptz) * 1000
+          as started_ms
+      from (
+        select public.resume_quiz_after_feedback_v1(
+          '${ids.student}'::uuid,
+          '${ids.attempt}'::uuid,
+          '${ids.nextQuestion}'::uuid,
+          'initial'
         ) as result
       ) call;
     `);
@@ -233,11 +279,81 @@ describe.sequential("quiz feedback timing migration", () => {
     expect(row.started_ms - wallClockAfter).toBeLessThanOrEqual(3_050);
   });
 
+  it("rejects a duplicate answer before it can add another transition", async () => {
+    await seed("1 second", "total");
+    await answer(false);
+    await expect(answer(false)).rejects.toThrow("question_already_answered");
+  });
+
+  it("moves the next per-question clock to 150ms after audio completion", async () => {
+    await seed("1 second");
+    await answer(false);
+    const before = Date.now();
+    const resumed = await resume();
+    const after = Date.now();
+    const row = resumed.rows[0]!;
+    expect(row.started_ms - before).toBeGreaterThanOrEqual(100);
+    expect(row.started_ms - after).toBeLessThanOrEqual(200);
+    expect(row.deadline_ms - row.started_ms).toBe(10_000);
+  });
+
+  it("never extends the server clock after the original 3000ms slot", async () => {
+    await seed("1 second");
+    await answer(false);
+    await database.exec(`
+      update public.quiz_attempts
+      set current_question_started_at = clock_timestamp() - interval '100 milliseconds'
+      where id = '${ids.attempt}';
+    `);
+    const before = Date.now();
+    const resumed = await resume();
+    const row = resumed.rows[0]!;
+    expect(Number(row.started_ms)).toBeLessThan(before);
+    expect(row.deadline_ms - row.started_ms).toBe(10_000);
+  });
+
+  it("refunds only the elapsed audio feedback in total timing and is idempotent", async () => {
+    await seed("1 second", "total");
+    const original = await database.query<{ deadline_ms: number }>(`
+      select extract(epoch from deadline_at) * 1000 as deadline_ms
+      from public.quiz_attempts where id = '${ids.attempt}';
+    `);
+    await answer(false);
+    const first = await resume();
+    const second = await resume();
+    const row = first.rows[0]!;
+    const refunded = row.deadline_ms - original.rows[0]!.deadline_ms;
+    expect(refunded).toBeGreaterThanOrEqual(100);
+    expect(refunded).toBeLessThanOrEqual(250);
+    expect(second.rows[0]).toEqual(row);
+  });
+
+  it("rejects a stale or mismatched next-question signal", async () => {
+    await seed("1 second");
+    await answer(false);
+    await expect(
+      database.query(`
+        select public.resume_quiz_after_feedback_v1(
+          '${ids.student}'::uuid,
+          '${ids.attempt}'::uuid,
+          '${ids.question}'::uuid,
+          'initial'
+        );
+      `),
+    ).rejects.toThrow("next_question_mismatch");
+  });
+
   it("keeps the timing RPC service-role only", async () => {
     const privileges = await database.query<{
       anon: boolean;
       authenticated: boolean;
       service: boolean;
+      guarded_anon: boolean;
+      guarded_authenticated: boolean;
+      guarded_service: boolean;
+      resume_anon: boolean;
+      resume_authenticated: boolean;
+      resume_service: boolean;
     }>(`
       select
         has_function_privilege(
@@ -254,10 +370,50 @@ describe.sequential("quiz feedback timing migration", () => {
           'service_role',
           'public.answer_quiz_question_v2(uuid,uuid,uuid,text,smallint,boolean)',
           'EXECUTE'
-        ) as service;
+        ) as service,
+        has_function_privilege(
+          'anon',
+          'public.answer_quiz_question_v3(uuid,uuid,uuid,text,smallint,boolean)',
+          'EXECUTE'
+        ) as guarded_anon,
+        has_function_privilege(
+          'authenticated',
+          'public.answer_quiz_question_v3(uuid,uuid,uuid,text,smallint,boolean)',
+          'EXECUTE'
+        ) as guarded_authenticated,
+        has_function_privilege(
+          'service_role',
+          'public.answer_quiz_question_v3(uuid,uuid,uuid,text,smallint,boolean)',
+          'EXECUTE'
+        ) as guarded_service,
+        has_function_privilege(
+          'anon',
+          'public.resume_quiz_after_feedback_v1(uuid,uuid,uuid,text)',
+          'EXECUTE'
+        ) as resume_anon,
+        has_function_privilege(
+          'authenticated',
+          'public.resume_quiz_after_feedback_v1(uuid,uuid,uuid,text)',
+          'EXECUTE'
+        ) as resume_authenticated,
+        has_function_privilege(
+          'service_role',
+          'public.resume_quiz_after_feedback_v1(uuid,uuid,uuid,text)',
+          'EXECUTE'
+        ) as resume_service;
     `);
     expect(privileges.rows).toEqual([
-      { anon: false, authenticated: false, service: true },
+      {
+        anon: false,
+        authenticated: false,
+        guarded_anon: false,
+        guarded_authenticated: false,
+        guarded_service: true,
+        resume_anon: false,
+        resume_authenticated: false,
+        resume_service: true,
+        service: true,
+      },
     ]);
   });
 });

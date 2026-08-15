@@ -1,12 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import {
-  useCallback,
-  useEffect,
-  useReducer,
-  useRef,
-} from "react";
+import { useCallback, useEffect, useReducer, useRef } from "react";
 
 import { studentAppText } from "@/content/ko/student-app";
 import { getPriorWrongIndicator } from "@/lib/quiz/prior-wrong";
@@ -16,7 +11,6 @@ import {
   submitQuizAnswer,
 } from "../api/quiz-attempt";
 import {
-  ANSWER_FEEDBACK_DELAY_MS,
   applyQuizAnswerTransition,
   quizAnswerAudioUrl,
   quizAnswerAnnouncement,
@@ -29,6 +23,7 @@ import {
   quizPlayerReducer,
 } from "../domain/quiz-player-state";
 import type { QuizAttempt } from "../model";
+import { resolveQuizFeedbackTransition } from "./resolve-quiz-feedback-transition";
 import { useInitialQuizSynchronization } from "./use-initial-quiz-synchronization";
 import { useQuizAudio } from "./use-quiz-audio";
 import { useQuizClock } from "./use-quiz-clock";
@@ -59,7 +54,8 @@ export function useQuizPlayerController(input: {
   const audioPresentation = currentQuestion
     ? quizAudioPresentation(currentQuestion)
     : { promptAudioUrl: null, choiceAudioEnabled: false };
-  const { cancelPendingPromptAudio, playAudio, primeChoiceAudio } = useQuizAudio({
+  const { cancelPendingPromptAudio, playAnswerAudio, playAudio, primeChoiceAudio } =
+    useQuizAudio({
     attemptId: state.attempt.id,
     autoPlayEnabled:
       state.timerSynchronized &&
@@ -219,12 +215,7 @@ export function useQuizPlayerController(input: {
           phase: answeredPhase,
           choiceIndex,
         });
-        if (
-          !mounted.current ||
-          inFlightRequest.current !== requestKey
-        ) {
-          return;
-        }
+        if (!mounted.current || inFlightRequest.current !== requestKey) return;
         if (!ok) {
           if (await tryRecover()) return;
           throw new Error(
@@ -237,11 +228,22 @@ export function useQuizPlayerController(input: {
           return;
         }
 
-        if (payload.correct && !payload.timedOut) {
-          playAudio(answerAudioUrl);
-        }
         dispatch({ type: "answer-received", payload });
         const disposition = quizAnswerDisposition(payload, answeredPhase);
+        const transition = await resolveQuizFeedbackTransition({
+          answerAudioUrl,
+          attemptId: answeredAttempt.id,
+          disposition,
+          payload,
+          playAnswerAudio,
+          receivedAt,
+        });
+        if (
+          !mounted.current ||
+          inFlightRequest.current !== requestKey
+        ) {
+          return;
+        }
         clearTransitionTimer();
         transitionTimer.current = window.setTimeout(() => {
           transitionTimer.current = null;
@@ -251,7 +253,7 @@ export function useQuizPlayerController(input: {
             router.replace("/student/result/" + answeredAttempt.id);
             return;
           }
-          if (disposition === "recover") {
+          if (transition.recoverFromServer || disposition === "recover") {
             void tryRecover().then((recovered) => {
               if (recovered || !mounted.current) return;
               inFlightRequest.current = null;
@@ -263,11 +265,11 @@ export function useQuizPlayerController(input: {
             return;
           }
 
-          const nextTimerDeadlineAt = payload.questionDeadlineAt!;
+          const nextTimerDeadlineAt = transition.payload.questionDeadlineAt!;
           const nextRemainingMilliseconds = Math.max(
             0,
-            payload.timerRemainingMilliseconds! -
-              (performance.now() - receivedAt),
+            transition.payload.timerRemainingMilliseconds! -
+              (performance.now() - transition.receivedAt),
           );
           const nextRemainingSeconds = Math.ceil(
             nextRemainingMilliseconds / 1000,
@@ -281,13 +283,13 @@ export function useQuizPlayerController(input: {
               answeredQuestionId: currentQuestion.id,
               answeredPhase,
               choiceIndex,
-              payload,
+              payload: transition.payload,
               timerDeadlineAt: nextTimerDeadlineAt,
             }),
             remainingSeconds: nextRemainingSeconds,
           });
           timeWarningAnnounced.current = false;
-        }, ANSWER_FEEDBACK_DELAY_MS);
+        }, transition.delayMilliseconds);
       } catch (requestError) {
         if (await tryRecover()) return;
         if (!mounted.current) return;
@@ -305,7 +307,7 @@ export function useQuizPlayerController(input: {
       clearTransitionTimer,
       cancelPendingPromptAudio,
       currentQuestion,
-      playAudio,
+      playAnswerAudio,
       primeChoiceAudio,
       recoverFromServer,
       resetClock,

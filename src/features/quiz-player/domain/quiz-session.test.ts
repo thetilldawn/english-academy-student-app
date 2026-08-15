@@ -4,6 +4,8 @@ import { unavailablePronunciation } from "@/lib/quiz/pronunciation-snapshot";
 
 import type { QuizAttempt, QuizQuestion } from "../model";
 import {
+  ANSWER_AUDIO_END_GRACE_MS,
+  ANSWER_AUDIO_END_TIMEOUT_MS,
   ANSWER_FEEDBACK_DELAY_MS,
   PROMPT_AUDIO_AUTOPLAY_DELAY_MS,
   applyQuizAnswerTransition,
@@ -182,6 +184,8 @@ describe("quiz session domain", () => {
       ),
     ).toBe("next-question");
     expect(ANSWER_FEEDBACK_DELAY_MS).toBe(3_000);
+    expect(ANSWER_AUDIO_END_GRACE_MS).toBe(150);
+    expect(ANSWER_AUDIO_END_TIMEOUT_MS).toBe(3_000);
     expect(PROMPT_AUDIO_AUTOPLAY_DELAY_MS).toBe(250);
   });
 

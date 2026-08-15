@@ -1435,7 +1435,7 @@ export async function answerStudentQuestion(input: {
   choiceIndex: number;
 }) {
   const supabase = getServiceSupabaseClient();
-  const { data, error } = await supabase.rpc("answer_quiz_question_v2", {
+  const { data, error } = await supabase.rpc("answer_quiz_question_v3", {
     p_student_id: input.studentId,
     p_attempt_id: input.attemptId,
     p_question_id: input.questionId,
@@ -1473,7 +1473,7 @@ export async function timeoutStudentQuestion(input: {
 }) {
   const supabase = getServiceSupabaseClient();
   const { data, error } = await supabase.rpc(
-    "answer_quiz_question_v2",
+    "answer_quiz_question_v3",
     {
       p_student_id: input.studentId,
       p_attempt_id: input.attemptId,
@@ -1496,6 +1496,31 @@ export async function timeoutStudentQuestion(input: {
     nextPhase?: "initial" | "retry" | null;
     timedOut?: boolean;
     questionDeadlineAt?: string | null;
+  };
+}
+
+export async function resumeStudentQuizAfterFeedback(input: {
+  studentId: string;
+  attemptId: string;
+  nextQuestionId: string;
+  nextPhase: "initial" | "retry";
+}) {
+  const supabase = getServiceSupabaseClient();
+  const { data, error } = await supabase.rpc(
+    "resume_quiz_after_feedback_v1",
+    {
+      p_student_id: input.studentId,
+      p_attempt_id: input.attemptId,
+      p_next_question_id: input.nextQuestionId,
+      p_next_phase: input.nextPhase,
+    },
+  );
+  if (error || !data) {
+    throw new Error("다음 문제 시간을 시작하지 못했습니다.");
+  }
+  return data as {
+    questionDeadlineAt: string;
+    questionStartsAt: string;
   };
 }
 

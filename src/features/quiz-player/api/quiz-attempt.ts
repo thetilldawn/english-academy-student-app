@@ -3,6 +3,7 @@ import { z } from "zod";
 import type {
   QuizAnswerResponse,
   QuizAttemptResponse,
+  QuizFeedbackResumeResponse,
   QuizTransportResult,
 } from "../model";
 
@@ -109,6 +110,13 @@ const attemptResponseSchema = z.object({
   timerRemainingMilliseconds: z.number().int().nonnegative(),
 });
 
+const feedbackResumeResponseSchema = z.object({
+  questionDeadlineAt: z.string().min(1),
+  questionStartsAt: z.string().min(1),
+  timerRemainingMilliseconds: z.number().int().nonnegative(),
+  transitionRemainingMilliseconds: z.number().int().nonnegative(),
+});
+
 const errorResponseSchema = z.object({
   error: z.string().optional(),
 });
@@ -180,6 +188,41 @@ export async function recoverQuizAttempt(
   return {
     ok: true,
     payload: attemptResponseSchema.parse(payload) as QuizAttemptResponse,
+    ...timing,
+  };
+}
+
+export async function resumeQuizAfterFeedback(input: {
+  attemptId: string;
+  nextPhase: "initial" | "retry";
+  nextQuestionId: string;
+}): Promise<QuizTransportResult<QuizFeedbackResumeResponse>> {
+  const requestStartedAt = performance.now();
+  const response = await fetch(
+    `/api/student/attempts/${input.attemptId}/feedback`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        nextPhase: input.nextPhase,
+        nextQuestionId: input.nextQuestionId,
+      }),
+    },
+  );
+  const payload = await responsePayload(response);
+  const receivedAt = performance.now();
+  const timing = {
+    receivedAt,
+    roundTripMilliseconds: Math.max(0, receivedAt - requestStartedAt),
+  };
+  if (!response.ok) {
+    return { ok: false, payload: errorPayload(payload), ...timing };
+  }
+  return {
+    ok: true,
+    payload: feedbackResumeResponseSchema.parse(
+      payload,
+    ) as QuizFeedbackResumeResponse,
     ...timing,
   };
 }

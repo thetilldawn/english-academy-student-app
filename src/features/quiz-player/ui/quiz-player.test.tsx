@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   expire: vi.fn(),
   recover: vi.fn(),
   replace: vi.fn(),
+  resume: vi.fn(),
   submit: vi.fn(),
 }));
 
@@ -24,6 +25,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("../api/quiz-attempt", () => ({
   expireQuizAttempt: mocks.expire,
   recoverQuizAttempt: mocks.recover,
+  resumeQuizAfterFeedback: mocks.resume,
   submitQuizAnswer: mocks.submit,
 }));
 
@@ -42,13 +44,17 @@ const availablePronunciation = {
 } as const;
 
 const audioInstances: Array<{
+  addEventListener: ReturnType<typeof vi.fn>;
   currentTime: number;
+  emit: (type: "ended" | "error") => void;
   load: ReturnType<typeof vi.fn>;
+  listeners: Map<string, Set<() => void>>;
   muted: boolean;
   pause: ReturnType<typeof vi.fn>;
   play: ReturnType<typeof vi.fn>;
   playStates: Array<{ muted: boolean; src: string }>;
   preload: string;
+  removeEventListener: ReturnType<typeof vi.fn>;
   removeAttribute: ReturnType<typeof vi.fn>;
   src: string;
 }> = [];
@@ -59,7 +65,16 @@ const audioPlayResults: Array<
 const pendingAudioPlays: Array<() => void> = [];
 
 class AudioStub {
+  listeners = new Map<string, Set<() => void>>();
+  addEventListener = vi.fn((type: string, listener: () => void) => {
+    const listeners = this.listeners.get(type) ?? new Set();
+    listeners.add(listener);
+    this.listeners.set(type, listeners);
+  });
   currentTime = 0;
+  emit(type: "ended" | "error") {
+    for (const listener of this.listeners.get(type) ?? []) listener();
+  }
   load = vi.fn();
   muted = false;
   pause = vi.fn();
@@ -75,6 +90,9 @@ class AudioStub {
     return Promise.resolve();
   });
   preload = "";
+  removeEventListener = vi.fn((type: string, listener: () => void) => {
+    this.listeners.get(type)?.delete(listener);
+  });
   removeAttribute = vi.fn((name: string) => {
     if (name === "src") this.src = "";
   });
@@ -183,6 +201,7 @@ beforeEach(() => {
   mocks.expire.mockReset();
   mocks.recover.mockReset();
   mocks.replace.mockReset();
+  mocks.resume.mockReset();
   mocks.submit.mockReset();
 });
 
@@ -230,6 +249,235 @@ describe("QuizPlayer", () => {
     act(() => vi.advanceTimersByTime(1000));
     expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:09");
     expect(mocks.replace).not.toHaveBeenCalled();
+  });
+
+  it("moves 150ms after the correct answer audio actually ends", async () => {
+    const audioAttempt = attempt();
+    audioAttempt.questions[0].choicePronunciations[0] =
+      availablePronunciation;
+    mocks.submit.mockResolvedValue(
+      successfulTransport({
+        correct: true,
+        correctChoiceIndex: 0,
+        nextPhase: "initial",
+        nextQuestionId: "question-2",
+        questionDeadlineAt: "2099-01-01T00:00:13.000Z",
+        timerRemainingMilliseconds: 13_000,
+      }),
+    );
+    mocks.resume.mockImplementation(async () =>
+      successfulTransport({
+        questionDeadlineAt: "2099-01-01T00:00:10.150Z",
+        questionStartsAt: "2099-01-01T00:00:00.150Z",
+        timerRemainingMilliseconds: 10_150,
+        transitionRemainingMilliseconds: 150,
+      }),
+    );
+
+    await renderReady(audioAttempt);
+    const firstChoice = screen
+      .getByRole("group")
+      .firstElementChild!.querySelectorAll("button")[0];
+    fireEvent.click(firstChoice);
+    await act(async () => Promise.resolve());
+    const player = audioInstances.find((audio) =>
+      audio.playStates.some((state) => !state.muted),
+    )!;
+
+    act(() => vi.advanceTimersByTime(1_000));
+    expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
+    await act(async () => {
+      player.emit("ended");
+      player.emit("error");
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(mocks.resume).toHaveBeenCalledWith({
+      attemptId: "attempt-1",
+      nextPhase: "initial",
+      nextQuestionId: "question-2",
+    });
+
+    act(() => vi.advanceTimersByTime(149));
+    expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(1));
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:10");
+  });
+
+  it("recovers server timing when both audio-resume responses fail", async () => {
+    const audioAttempt = attempt();
+    audioAttempt.questions[0].choicePronunciations[0] =
+      availablePronunciation;
+    mocks.submit.mockResolvedValue(
+      successfulTransport({
+        correct: true,
+        correctChoiceIndex: 0,
+        nextPhase: "initial",
+        nextQuestionId: "question-2",
+        questionDeadlineAt: "2099-01-01T00:00:13.000Z",
+        timerRemainingMilliseconds: 13_000,
+      }),
+    );
+    mocks.resume.mockRejectedValue(new Error("response lost"));
+
+    await renderReady(audioAttempt);
+    fireEvent.click(
+      screen
+        .getByRole("group")
+        .firstElementChild!.querySelectorAll("button")[0],
+    );
+    await act(async () => Promise.resolve());
+    const player = audioInstances.find((audio) =>
+      audio.playStates.some((state) => !state.muted),
+    )!;
+    await act(async () => {
+      player.emit("ended");
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(mocks.resume).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      vi.advanceTimersByTime(3_000);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(mocks.recover).toHaveBeenCalledTimes(2);
+  });
+
+  it("moves to the result 150ms after final-answer audio ends", async () => {
+    const audioAttempt = attempt();
+    audioAttempt.questions[0].choicePronunciations[0] =
+      availablePronunciation;
+    mocks.submit.mockResolvedValue(
+      successfulTransport({
+        completed: true,
+        correct: true,
+        correctChoiceIndex: 0,
+      }),
+    );
+
+    await renderReady(audioAttempt);
+    fireEvent.click(
+      screen
+        .getByRole("group")
+        .firstElementChild!.querySelectorAll("button")[0],
+    );
+    await act(async () => Promise.resolve());
+    const player = audioInstances.find((audio) =>
+      audio.playStates.some((state) => !state.muted),
+    )!;
+    await act(async () => {
+      player.emit("ended");
+      await Promise.resolve();
+    });
+    act(() => vi.advanceTimersByTime(149));
+    expect(mocks.replace).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(1));
+    expect(mocks.replace).toHaveBeenCalledWith("/student/result/attempt-1");
+    expect(mocks.resume).not.toHaveBeenCalled();
+  });
+
+  it("does not resume or transition after leaving during answer audio", async () => {
+    const audioAttempt = attempt();
+    audioAttempt.questions[0].choicePronunciations[0] =
+      availablePronunciation;
+    mocks.submit.mockResolvedValue(
+      successfulTransport({
+        correct: true,
+        correctChoiceIndex: 0,
+        nextPhase: "initial",
+        nextQuestionId: "question-2",
+        questionDeadlineAt: "2099-01-01T00:00:13.000Z",
+        timerRemainingMilliseconds: 13_000,
+      }),
+    );
+
+    const view = await renderReady(audioAttempt);
+    fireEvent.click(
+      screen
+        .getByRole("group")
+        .firstElementChild!.querySelectorAll("button")[0],
+    );
+    await act(async () => Promise.resolve());
+    const player = audioInstances.find((audio) =>
+      audio.playStates.some((state) => !state.muted),
+    )!;
+    act(() => view.unmount());
+    await act(async () => {
+      player.emit("ended");
+      vi.advanceTimersByTime(6_500);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(mocks.resume).not.toHaveBeenCalled();
+    expect(mocks.replace).not.toHaveBeenCalled();
+  });
+
+  it("keeps the 3000ms fallback when answer audio never ends", async () => {
+    const audioAttempt = attempt();
+    audioAttempt.questions[0].choicePronunciations[0] =
+      availablePronunciation;
+    mocks.submit.mockResolvedValue(
+      successfulTransport({
+        correct: true,
+        correctChoiceIndex: 0,
+        nextPhase: "initial",
+        nextQuestionId: "question-2",
+        questionDeadlineAt: "2099-01-01T00:00:13.000Z",
+        timerRemainingMilliseconds: 13_000,
+      }),
+    );
+    audioPlayResults.push("started", "pending");
+
+    await renderReady(audioAttempt);
+    fireEvent.click(
+      screen
+        .getByRole("group")
+        .firstElementChild!.querySelectorAll("button")[0],
+    );
+    await act(async () => Promise.resolve());
+    await act(async () => {
+      vi.advanceTimersByTime(3_000);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    act(() => vi.advanceTimersByTime(1));
+    expect(mocks.resume).not.toHaveBeenCalled();
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    pendingAudioPlays[0]?.();
+  });
+
+  it("keeps the 3000ms fallback when correct-answer audio fails", async () => {
+    const audioAttempt = attempt();
+    audioAttempt.questions[0].choicePronunciations[0] =
+      availablePronunciation;
+    audioPlayResults.push("started", "failed");
+    mocks.submit.mockResolvedValue(
+      successfulTransport({
+        correct: true,
+        correctChoiceIndex: 0,
+        nextPhase: "initial",
+        nextQuestionId: "question-2",
+        questionDeadlineAt: "2099-01-01T00:00:13.000Z",
+        timerRemainingMilliseconds: 13_000,
+      }),
+    );
+
+    await renderReady(audioAttempt);
+    fireEvent.click(
+      screen
+        .getByRole("group")
+        .firstElementChild!.querySelectorAll("button")[0],
+    );
+    await act(async () => Promise.resolve());
+
+    act(() => vi.advanceTimersByTime(2_999));
+    expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(1));
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(mocks.resume).not.toHaveBeenCalled();
   });
 
   it("uses a synchronous request gate for repeated answer clicks", async () => {
@@ -474,7 +722,14 @@ describe("QuizPlayer", () => {
         timerRemainingMilliseconds: 10_000,
       }),
     );
-    audioPlayResults.push("started", "pending", "started");
+    mocks.resume.mockImplementation(async () =>
+      successfulTransport({
+        questionDeadlineAt: "2099-01-01T00:00:10.150Z",
+        questionStartsAt: "2099-01-01T00:00:00.150Z",
+        timerRemainingMilliseconds: 10_150,
+        transitionRemainingMilliseconds: 150,
+      }),
+    );
 
     await renderReady(audioAttempt);
     const firstRow = screen.getByRole("group").firstElementChild;
@@ -490,7 +745,15 @@ describe("QuizPlayer", () => {
       true,
       false,
     ]);
-    act(() => vi.advanceTimersByTime(2_999));
+    act(() => vi.advanceTimersByTime(1_000));
+    expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
+    await act(async () => {
+      player?.emit("ended");
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(mocks.resume).toHaveBeenCalledOnce();
+    act(() => vi.advanceTimersByTime(149));
     expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
     act(() => vi.advanceTimersByTime(1));
 
@@ -504,7 +767,6 @@ describe("QuizPlayer", () => {
     });
     expect(player?.pause).toHaveBeenCalledTimes((pauseCount ?? 0) + 1);
     expect(player?.src).toBe("https://example.com/next-prompt.mp3");
-    pendingAudioPlays[0]?.();
   });
 
   it("locks choices at zero and shows a timeout notice for 3000ms", async () => {
