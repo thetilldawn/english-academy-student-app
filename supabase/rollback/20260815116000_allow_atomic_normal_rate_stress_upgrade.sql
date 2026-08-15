@@ -17,13 +17,21 @@ create or replace function public.import_rule_derived_korean_pronunciation_packa
   p_package jsonb
 )
 returns jsonb
-language sql
+language plpgsql
 security definer
 set search_path = ''
 as $$
-  select private.import_rule_derived_korean_pronunciation_package_v2(
+begin
+  if private.request_supabase_project_ref_v1() is distinct from
+    'wojxpruvbjzbhrpmsbuy'
+  then
+    raise exception 'staging_pronunciation_import_project_mismatch'
+      using errcode = '42501';
+  end if;
+  return private.import_rule_derived_korean_pronunciation_package_v2(
     p_package
   );
+end;
 $$;
 
 revoke all on function
