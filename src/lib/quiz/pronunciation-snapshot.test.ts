@@ -15,6 +15,8 @@ import {
   preferredPronunciation,
   preferredPronunciationWithActiveVocaRelease,
   preferredPronunciationWithApprovedKorean,
+  syntheticAudioProfilePriority,
+  sortSyntheticAudioBindingsByProfilePriority,
   withApprovedKoreanPronunciation,
 } from "@/lib/quiz/pronunciation-snapshot";
 
@@ -34,6 +36,32 @@ function choiceSnapshot(index: number, headword: string) {
 }
 
 describe("quiz pronunciation snapshots", () => {
+  it("새 일반 속도 합성 프로필을 이전 프로필보다 우선한다", () => {
+    expect(syntheticAudioProfilePriority("profile:5b6efb0ecc8f4702")).toBe(1);
+    expect(syntheticAudioProfilePriority("profile:75ca7f418d66e6ab")).toBe(1);
+    expect(syntheticAudioProfilePriority("profile:286866721f7f4ee8")).toBe(2);
+    expect(syntheticAudioProfilePriority("profile:1a77d56d47e26013")).toBe(2);
+
+    const normal = { asset_id: "synthetic:normal" };
+    const slow = { asset_id: "synthetic:slow" };
+    const priority = new Map([
+      [normal.asset_id, 2],
+      [slow.asset_id, 1],
+    ]);
+    expect(
+      sortSyntheticAudioBindingsByProfilePriority(
+        [normal, slow],
+        priority,
+      ).map(({ asset_id }) => asset_id),
+    ).toEqual([slow.asset_id, normal.asset_id]);
+    expect(
+      sortSyntheticAudioBindingsByProfilePriority(
+        [slow, normal],
+        priority,
+      ).map(({ asset_id }) => asset_id),
+    ).toEqual([slow.asset_id, normal.asset_id]);
+  });
+
   it("공식 Merriam-Webster 스냅샷만 재생 가능하게 만든다", () => {
     expect(
       parseTargetPronunciation({
@@ -632,6 +660,20 @@ describe("quiz pronunciation snapshots", () => {
       )?.audioUrl,
     ).toBe(
       `https://wojxpruvbjzbhrpmsbuy.supabase.co/storage/v1/object/public/vocab-pronunciation-audio/${row.storage_object_key}`,
+    );
+    const normalRateRow = {
+      ...row,
+      profile_id: "profile:1a77d56d47e26013",
+      storage_object_key:
+        `pronunciation/google_cloud_text_to_speech/profile-1a77d56d47e26013/ability-voca-etymology-2025-v1/${requestHash}.mp3`,
+    };
+    expect(
+      parseVocabPronunciationIdentityV2(
+        normalRateRow,
+        "https://wojxpruvbjzbhrpmsbuy.supabase.co",
+      )?.audioUrl,
+    ).toBe(
+      `https://wojxpruvbjzbhrpmsbuy.supabase.co/storage/v1/object/public/vocab-pronunciation-audio/${normalRateRow.storage_object_key}`,
     );
     expect(
       parseVocabPronunciationIdentityV2(

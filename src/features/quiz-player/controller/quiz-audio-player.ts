@@ -1,18 +1,10 @@
-export type QuizAudioPurpose = "choice" | "prompt";
-export type QuizAudioPlayback =
-  | "blocked"
-  | "failed"
-  | "interrupted"
-  | "started";
-
-function playbackFailure(error: unknown): QuizAudioPlayback {
-  return typeof error === "object" &&
-    error !== null &&
-    "name" in error &&
-    error.name === "NotAllowedError"
-    ? "blocked"
-    : "failed";
-}
+import {
+  audioPlaybackFailure,
+  primeAudioElement,
+  releaseAudioElement,
+  seekAudioToStart,
+  type QuizAudioPurpose,
+} from "./quiz-audio-element";
 
 export class QuizAudioPlayer {
   private activePurpose: QuizAudioPurpose | null = null;
@@ -55,27 +47,38 @@ export class QuizAudioPlayer {
     }
   }
 
-  async play(audioUrl: string, purpose: QuizAudioPurpose) {
+  primeChoice(audioUrl: string) {
     const generation = ++this.generation;
     const player = this.getPlayer();
     player.pause();
-    try {
-      player.currentTime = 0;
-    } catch {
-      // Some mobile engines reject seeking before metadata is available.
-    }
     if (this.playerUrl !== audioUrl) {
       player.src = audioUrl;
       player.load();
       this.playerUrl = audioUrl;
     }
+    seekAudioToStart(player);
+    this.activePurpose = null;
+    primeAudioElement(player, () => generation === this.generation);
+  }
+
+  async play(audioUrl: string, purpose: QuizAudioPurpose) {
+    const generation = ++this.generation;
+    const player = this.getPlayer();
+    player.pause();
+    seekAudioToStart(player);
+    if (this.playerUrl !== audioUrl) {
+      player.src = audioUrl;
+      player.load();
+      this.playerUrl = audioUrl;
+    }
+    player.muted = false;
     this.activePurpose = purpose;
     try {
       await player.play();
       return generation === this.generation ? "started" : "interrupted";
     } catch (error) {
       return generation === this.generation
-        ? playbackFailure(error)
+        ? audioPlaybackFailure(error)
         : "interrupted";
     }
   }
@@ -88,13 +91,9 @@ export class QuizAudioPlayer {
   }
 
   dispose() {
-    const release = (audio: HTMLAudioElement) => {
-      audio.pause();
-      audio.removeAttribute("src");
-      audio.load();
-    };
-    if (this.player) release(this.player);
-    for (const preloader of this.preloaders.values()) release(preloader);
+    if (this.player) releaseAudioElement(this.player);
+    for (const preloader of this.preloaders.values())
+      releaseAudioElement(preloader);
     this.preloaders.clear();
     this.player = null;
     this.playerUrl = null;

@@ -78,11 +78,14 @@ describe("assignment order and timing database contract", () => {
     const retryTimerMigration = source(
       "supabase/migrations/20260811090000_reset_retry_question_timer.sql",
     );
-    const feedbackDelayMigration = source(
-      "supabase/migrations/20260813103323_extend_quiz_answer_feedback_delay.sql",
-    );
+const feedbackDelayMigration = source(
+  "supabase/migrations/20260815113000_extend_quiz_audio_feedback_and_answer_grace.sql",
+);
+const normalRateFeedbackMigration = source(
+  "supabase/migrations/20260815115000_fit_normal_rate_answer_audio_feedback.sql",
+);
     const feedbackDelayRollback = source(
-      "supabase/rollback/20260813103323_extend_quiz_answer_feedback_delay.sql",
+      "supabase/rollback/20260815113000_extend_quiz_audio_feedback_and_answer_grace.sql",
     );
     const quizService = source("src/lib/services/quiz-service.ts");
     const timeoutRoute = source(
@@ -102,10 +105,19 @@ describe("assignment order and timing database contract", () => {
       "current_question_started_at = retry_start_time",
     );
     expect(feedbackDelayMigration).toContain(
-      "clock_timestamp() + interval '750 milliseconds'",
+      "clock_timestamp() + interval '1500 milliseconds'",
+    );
+    expect(normalRateFeedbackMigration).toContain(
+      "interval ''3000 milliseconds''",
+    );
+    expect(feedbackDelayMigration).toContain(
+      "else interval '250 milliseconds'",
     );
     expect(feedbackDelayRollback).toContain(
-      "clock_timestamp() + interval '500 milliseconds'",
+      "clock_timestamp() + interval '750 milliseconds'",
+    );
+    expect(feedbackDelayRollback).not.toContain(
+      "else interval '250 milliseconds'",
     );
     expect(copy).toContain(
       'timedOut: "시간 초과로 미응답 오답 처리했습니다."',

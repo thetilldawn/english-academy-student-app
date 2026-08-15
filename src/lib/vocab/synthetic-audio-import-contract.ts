@@ -7,7 +7,14 @@ import { z } from "zod";
 const HEX64 = /^[0-9a-f]{64}$/;
 const EXPRESSION_ID = /^expression:[a-z0-9][a-z0-9._'’-]*$/;
 const OCCURRENCE_ID = /^occ:[a-z0-9][a-z0-9._-]*$/;
-const BATCH_PROFILE_ID = "profile:5b6efb0ecc8f4702";
+const EXPRESSION_PROFILE_RATES = {
+  "profile:5b6efb0ecc8f4702": 0.88,
+  "profile:286866721f7f4ee8": 1,
+} as const;
+const EXPRESSION_PROFILE_IDS = Object.keys(EXPRESSION_PROFILE_RATES) as [
+  keyof typeof EXPRESSION_PROFILE_RATES,
+  ...(keyof typeof EXPRESSION_PROFILE_RATES)[],
+];
 const BATCH_VOICE = "en-US-Chirp3-HD-Despina";
 const STORAGE_BUCKET = "vocab-pronunciation-audio";
 
@@ -26,9 +33,9 @@ const itemSchema = z
     voice: z.literal(BATCH_VOICE),
     language_code: z.literal("en-US"),
     audio_encoding: z.literal("MP3"),
-    speaking_rate: z.literal(0.88),
+    speaking_rate: z.union([z.literal(0.88), z.literal(1)]),
     volume_gain_db: z.literal(4),
-    profile_id: z.literal(BATCH_PROFILE_ID),
+    profile_id: z.enum(EXPRESSION_PROFILE_IDS),
     pronunciation_mode: z.literal("provider_default_expression"),
     request_sha256: z.string().regex(HEX64),
     object_file: z.string().regex(/^objects\/[0-9a-f]{64}[.]mp3$/),
@@ -72,7 +79,7 @@ const manifestSchema = z
     source_exam_package_version: z.string().regex(HEX64),
     dataset_key: z.string().trim().min(3).max(200),
     source_package_sha256: z.string().regex(HEX64),
-    profile_id: z.literal(BATCH_PROFILE_ID),
+    profile_id: z.enum(EXPRESSION_PROFILE_IDS),
     profile: z
       .object({
         provider: z.literal("google_cloud_text_to_speech"),
@@ -80,7 +87,7 @@ const manifestSchema = z
         voice: z.literal(BATCH_VOICE),
         language_code: z.literal("en-US"),
         audio_encoding: z.literal("MP3"),
-        speaking_rate: z.literal(0.88),
+        speaking_rate: z.union([z.literal(0.88), z.literal(1)]),
         volume_gain_db: z.literal(4),
       })
       .strict(),
@@ -116,6 +123,11 @@ export function validateSyntheticAudioManifest(input: unknown) {
   const occurrenceIds = new Set<string>();
   let occurrenceCount = 0;
   let byteCount = 0;
+  const expectedRate = EXPRESSION_PROFILE_RATES[manifest.profile_id];
+
+  if (manifest.profile.speaking_rate !== expectedRate) {
+    throw new Error("합성 음원 profile과 재생 속도가 다릅니다.");
+  }
 
   for (const item of manifest.items) {
     if (
@@ -124,7 +136,9 @@ export function validateSyntheticAudioManifest(input: unknown) {
       item.storage_object_key !==
         `pronunciation/google_cloud_text_to_speech/${item.profile_id.replace(":", "-")}/${item.request_sha256}.mp3` ||
       item.occurrence_ids.length !== item.occurrence_count ||
-      new Set(item.occurrence_ids).size !== item.occurrence_count
+      new Set(item.occurrence_ids).size !== item.occurrence_count ||
+      item.profile_id !== manifest.profile_id ||
+      item.speaking_rate !== expectedRate
     ) {
       throw new Error(`합성 음원 결속값이 올바르지 않습니다: ${item.dictionary_id}`);
     }

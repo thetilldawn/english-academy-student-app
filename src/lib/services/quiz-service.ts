@@ -23,6 +23,8 @@ import {
   parseRuleDerivedKoreanPronunciation,
   parseRegistryPronunciation,
   parseSyntheticRegistryPronunciation,
+  syntheticAudioProfilePriority,
+  sortSyntheticAudioBindingsByProfilePriority,
   parseTargetPronunciation,
   parseVocabPronunciationIdentityV2,
   preferredPronunciationWithActiveVocaRelease,
@@ -413,13 +415,22 @@ async function loadSyntheticPronunciationRegistry(
     assetData.push(...((data ?? []) as VocabSyntheticAudioAssetRow[]));
   }
   const pronunciationByAsset = new Map<string, QuizPronunciation>();
+  const priorityByAsset = new Map<string, number>();
   for (const row of assetData) {
     const pronunciation = parseSyntheticRegistryPronunciation(row, supabaseUrl);
     if (pronunciation.available && typeof row.asset_id === "string") {
       pronunciationByAsset.set(row.asset_id, pronunciation);
+      priorityByAsset.set(
+        row.asset_id,
+        syntheticAudioProfilePriority(row.profile_id),
+      );
     }
   }
-  for (const binding of acceptedBindings) {
+  const preferredBindings = sortSyntheticAudioBindingsByProfilePriority(
+    acceptedBindings,
+    priorityByAsset,
+  );
+  for (const binding of preferredBindings) {
     const pronunciation = pronunciationByAsset.get(binding.asset_id);
     if (pronunciation) {
       result.set(

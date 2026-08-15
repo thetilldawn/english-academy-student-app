@@ -79,7 +79,7 @@ describe("DAY 문제은행 응시 계약", () => {
     expect(controller).not.toContain("}, 800)");
     expect(controller).toContain("const recoverFromServer");
     expect(controller).toContain("if (await tryRecover()) return");
-    expect(domain).toContain("ANSWER_FEEDBACK_DELAY_MS = 750");
+    expect(domain).toContain("ANSWER_FEEDBACK_DELAY_MS = 3_000");
     expect(controller).not.toContain("router.refresh()");
     expect(
       transport.match(

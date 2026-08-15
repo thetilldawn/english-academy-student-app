@@ -9,6 +9,12 @@ const migration = readFileSync(
   ),
   "utf8",
 );
+const normalRateMigration = readFileSync(
+  resolve(
+    "supabase/migrations/20260815114500_add_normal_rate_synthetic_audio_profiles.sql",
+  ),
+  "utf8",
+);
 
 describe("단어 표면형 합성 음원 migration", () => {
   it("word 자산과 표면형·IPA identity를 기존 expression 자산과 함께 허용한다", () => {
@@ -54,5 +60,19 @@ describe("단어 표면형 합성 음원 migration", () => {
       "grant execute on function\n  public.import_vocab_synthetic_word_audio_package_v1(jsonb)\n  to service_role",
     );
     expect(migration).not.toMatch(/grant execute[\s\S]+to (?:anon|authenticated)/i);
+  });
+
+  it("일반 속도 단어·VOCA 프로필과 프로필별 Storage 경로를 허용한다", () => {
+    expect(normalRateMigration).toContain("profile:1a77d56d47e26013");
+    expect(normalRateMigration).toContain(
+      "vocab_synthetic_audio_binding_release_vocab_entry_profile_key",
+    );
+    expect(normalRateMigration).toContain(
+      "vocab_pronunciation_tts_asset_profile_path_v2",
+    );
+    expect(normalRateMigration).toContain("replace(profile_id, ':', '-')");
+    expect(normalRateMigration).toContain(
+      "synthetic_word_audio_profile_rate_mismatch",
+    );
   });
 });

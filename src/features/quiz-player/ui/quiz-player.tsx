@@ -87,7 +87,11 @@ export function QuizPlayer({
         promptDensity={promptDensity}
         promptRef={controller.promptRef}
         remainingSeconds={state.remainingSeconds}
-        submitting={state.submitting || !state.timerSynchronized}
+        submitting={
+          state.submitting ||
+          !state.timerSynchronized ||
+          state.remainingSeconds === 0
+        }
         timerSynchronized={state.timerSynchronized}
         timeWarning={state.timeWarning}
         timedOut={state.feedback?.timedOut ?? false}

@@ -9,6 +9,16 @@ const WORD_ID = /^word:[a-z0-9][a-z0-9._'’-]*$/;
 const OCCURRENCE_ID = /^occ:[a-z0-9][a-z0-9._-]*$/;
 const VARIANT_ID = /^tts(?:word|occ):[a-z0-9][a-z0-9:._-]*$/;
 export const WORD_SYNTHETIC_PROFILE_ID = "profile:75ca7f418d66e6ab";
+export const WORD_SYNTHETIC_NORMAL_RATE_PROFILE_ID =
+  "profile:1a77d56d47e26013";
+const WORD_PROFILE_RATES = {
+  [WORD_SYNTHETIC_PROFILE_ID]: 0.88,
+  [WORD_SYNTHETIC_NORMAL_RATE_PROFILE_ID]: 1,
+} as const;
+const WORD_PROFILE_IDS = Object.keys(WORD_PROFILE_RATES) as [
+  keyof typeof WORD_PROFILE_RATES,
+  ...(keyof typeof WORD_PROFILE_RATES)[],
+];
 const VOICE = "en-US-Chirp3-HD-Despina";
 const BUCKET = "vocab-pronunciation-audio";
 
@@ -27,9 +37,9 @@ const itemSchema = z
     voice: z.literal(VOICE),
     language_code: z.literal("en-US"),
     audio_encoding: z.literal("MP3"),
-    speaking_rate: z.literal(0.88),
+    speaking_rate: z.union([z.literal(0.88), z.literal(1)]),
     volume_gain_db: z.literal(4),
-    profile_id: z.literal(WORD_SYNTHETIC_PROFILE_ID),
+    profile_id: z.enum(WORD_PROFILE_IDS),
     pronunciation_mode: z.enum([
       "provider_default_word_surface",
       "custom_ipa_word_surface",
@@ -82,7 +92,7 @@ const manifestSchema = z
     source_exam_package_version: z.string().regex(HEX64),
     dataset_key: z.literal("g12-long-reading-2025-exam-scope-v1"),
     source_package_sha256: z.string().regex(HEX64),
-    profile_id: z.literal(WORD_SYNTHETIC_PROFILE_ID),
+    profile_id: z.enum(WORD_PROFILE_IDS),
     profile: z
       .object({
         provider: z.literal("google_cloud_text_to_speech"),
@@ -90,7 +100,7 @@ const manifestSchema = z
         voice: z.literal(VOICE),
         language_code: z.literal("en-US"),
         audio_encoding: z.literal("MP3"),
-        speaking_rate: z.literal(0.88),
+        speaking_rate: z.union([z.literal(0.88), z.literal(1)]),
         volume_gain_db: z.literal(4),
       })
       .strict(),
@@ -130,6 +140,11 @@ export function validateSyntheticWordAudioManifest(input: unknown) {
   const customIpaSurfaces = new Set<string>();
   const occurrencePhraseSurfaces = new Set<string>();
   let byteCount = 0;
+  const expectedRate = WORD_PROFILE_RATES[manifest.profile_id];
+
+  if (manifest.profile.speaking_rate !== expectedRate) {
+    throw new Error("단어 합성 음원 profile과 재생 속도가 다릅니다.");
+  }
 
   for (const item of manifest.items) {
     const surfaceIdentity =
@@ -147,7 +162,9 @@ export function validateSyntheticWordAudioManifest(input: unknown) {
       (item.canonical_ipa === null) !== (item.google_tts_ipa === null) ||
       (item.pronunciation_identity_type === "occurrence_word_phrase" &&
         (item.occurrence_count !== 1 ||
-          item.pronunciation_mode !== "provider_default_word_surface"))
+          item.pronunciation_mode !== "provider_default_word_surface")) ||
+      item.profile_id !== manifest.profile_id ||
+      item.speaking_rate !== expectedRate
     ) {
       throw new Error(`단어 합성 음원 결속값이 올바르지 않습니다: ${item.dictionary_id}`);
     }

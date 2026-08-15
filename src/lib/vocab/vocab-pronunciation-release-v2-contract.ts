@@ -13,10 +13,14 @@ const DATASET_SOURCE_SHA256 =
   "9FB5B8307C5E695853E2E0E49DE07DD9CD20D29BC59C749DED4D2D07B4C92133";
 const LEGACY_ENGINE_VERSION = "cmudict-arpabet-hangul-render-v1";
 const NUCLEUS_ENGINE_VERSION = "cmudict-arpabet-hangul-nucleus-render-v2";
-const TTS_PROFILE_ID = "profile:75ca7f418d66e6ab";
+const TTS_PROFILE_IDS = new Set([
+  "profile:75ca7f418d66e6ab",
+  "profile:1a77d56d47e26013",
+]);
 const TTS_BUCKET = "vocab-pronunciation-audio";
-const TTS_PREFIX =
-  "pronunciation/google_cloud_text_to_speech/profile-75ca7f418d66e6ab/ability-voca-etymology-2025-v1/";
+function ttsPrefix(profileId: string) {
+  return `pronunciation/google_cloud_text_to_speech/${profileId.replace(":", "-")}/ability-voca-etymology-2025-v1/`;
+}
 
 const nullableText = z.string().trim().min(1).max(500).nullable();
 const segmentSchema = z
@@ -216,17 +220,19 @@ function validateIdentity(identity: VocabPronunciationIdentityV2) {
     return;
   }
   const requestHash = identity.request_sha256;
+  const profileId = identity.profile_id;
   if (
     !requestHash ||
+    !profileId ||
+    !TTS_PROFILE_IDS.has(profileId) ||
     identity.pronunciation_variant_id !== `synthetic:${requestHash}` ||
     identity.official_audio_url !== null ||
     identity.sound_audio !== null ||
     identity.mw_notation !== null ||
     identity.storage_bucket !== TTS_BUCKET ||
-    identity.storage_object_key !== `${TTS_PREFIX}${requestHash}.mp3` ||
+    identity.storage_object_key !== `${ttsPrefix(profileId)}${requestHash}.mp3` ||
     identity.audio_sha256 === null ||
     identity.byte_count === null ||
-    identity.profile_id !== TTS_PROFILE_ID ||
     identity.model !== "chirp3-hd" ||
     identity.voice !== "en-US-Chirp3-HD-Despina"
   ) {

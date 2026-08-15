@@ -6,7 +6,8 @@ import type {
   QuizQuestion,
 } from "../model";
 
-export const ANSWER_FEEDBACK_DELAY_MS = 750;
+export const ANSWER_FEEDBACK_DELAY_MS = 3_000;
+export const PROMPT_AUDIO_AUTOPLAY_DELAY_MS = 250;
 
 export function currentQuizQuestion(attempt: QuizAttempt) {
   return (
@@ -75,11 +76,13 @@ export function quizAnswerAudioUrl(
   question: QuizQuestion,
   choiceIndex: number | null,
 ) {
-  if (choiceIndex === null) return null;
-  const pronunciation =
-    question.direction === "korean_to_english"
-      ? question.choicePronunciations[choiceIndex]
-      : question.pronunciation;
+  if (
+    choiceIndex === null ||
+    question.direction !== "korean_to_english"
+  ) {
+    return null;
+  }
+  const pronunciation = question.choicePronunciations[choiceIndex];
   return pronunciation?.available ? pronunciation.audioUrl : null;
 }
 

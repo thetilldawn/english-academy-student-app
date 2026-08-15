@@ -138,6 +138,35 @@ describe("synthetic word audio import contract", () => {
     });
   });
 
+  it("일반 속도 단어 프로필을 허용하고 항목 속도 혼합을 거부한다", () => {
+    const manifest = fixture();
+    const profileId = "profile:1a77d56d47e26013";
+    const normalRate = {
+      ...manifest,
+      profile_id: profileId,
+      profile: { ...manifest.profile, speaking_rate: 1 },
+      items: manifest.items.map((item) => ({
+        ...item,
+        profile_id: profileId,
+        speaking_rate: 1,
+        storage_object_key:
+          `pronunciation/google_cloud_text_to_speech/profile-1a77d56d47e26013/${item.request_sha256}.mp3`,
+      })),
+    };
+
+    expect(
+      validateSyntheticWordAudioManifest(normalRate).summary.profileId,
+    ).toBe(profileId);
+    expect(() =>
+      validateSyntheticWordAudioManifest({
+        ...normalRate,
+        items: normalRate.items.map((item, index) =>
+          index === 0 ? { ...item, speaking_rate: 0.88 } : item,
+        ),
+      }),
+    ).toThrow("결속값");
+  });
+
   it("IPA 한쪽만 있거나 sparkling 결속이 빠지면 거부한다", () => {
     const oneSided = fixture();
     oneSided.items[2].google_tts_ipa = null;

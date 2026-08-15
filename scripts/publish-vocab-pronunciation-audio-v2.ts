@@ -31,6 +31,7 @@ type ManifestItem = {
   storage_bucket: string;
   storage_object_key: string;
   profile_id: string;
+  speaking_rate: number;
   model: string;
   voice: string;
   pronunciation_variant_id: string;
@@ -42,6 +43,9 @@ type Manifest = {
   dataset_key: string;
   source_plan_version: string;
   profile_id: string;
+  profile: {
+    speaking_rate: number;
+  };
   asset_count: number;
   binding_count: number;
   total_byte_count: number;
@@ -114,10 +118,9 @@ function stableValue(value: unknown): unknown {
 function manifestHash(value: unknown, uppercase = false) {
   // The Python generator intentionally serializes the approved +4 dB value as
   // `4.0`. JSON.parse loses that lexical decimal, so restore it before hashing.
-  const canonical = JSON.stringify(stableValue(value)).replace(
-    /"volume_gain_db":4(?=[,}])/g,
-    '"volume_gain_db":4.0',
-  );
+  const canonical = JSON.stringify(stableValue(value))
+    .replace(/"volume_gain_db":4(?=[,}])/g, '"volume_gain_db":4.0')
+    .replace(/"speaking_rate":1(?=[,}])/g, '"speaking_rate":1.0');
   const hash = createHash("sha256").update(canonical, "utf8").digest("hex");
   return uppercase ? hash.toUpperCase() : hash;
 }
@@ -144,12 +147,19 @@ async function validateManifestFiles(
 ) {
   const manifest = objectValue(rawManifest) as unknown as Manifest;
   const { release } = validateVocabPronunciationReleaseV2(rawRelease);
+  const expectedSpeakingRate =
+    manifest.profile_id === "profile:75ca7f418d66e6ab"
+      ? 0.88
+      : manifest.profile_id === "profile:1a77d56d47e26013"
+        ? 1
+        : null;
   if (
     manifest.schema_version !== "google-chirp-voca-word-audio-batch-v1" ||
     manifest.status !== "complete" ||
     manifest.dataset_key !== release.dataset_key ||
     manifest.source_plan_version !== release.source_plan_version ||
-    manifest.profile_id !== "profile:75ca7f418d66e6ab" ||
+    expectedSpeakingRate === null ||
+    manifest.profile?.speaking_rate !== expectedSpeakingRate ||
     !Array.isArray(manifest.items) ||
     manifest.asset_count !== manifest.items.length ||
     manifest.asset_count !== release.summary.tts_asset_count ||
@@ -195,6 +205,8 @@ async function validateManifestFiles(
       item.audio_sha256 !== identity.audio_sha256 ||
       item.byte_count !== identity.byte_count ||
       item.profile_id !== identity.profile_id ||
+      item.profile_id !== manifest.profile_id ||
+      item.speaking_rate !== expectedSpeakingRate ||
       item.model !== identity.model ||
       item.voice !== identity.voice ||
       item.playback_enabled !== true ||

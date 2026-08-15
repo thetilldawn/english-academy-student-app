@@ -44,8 +44,10 @@ const availablePronunciation = {
 const audioInstances: Array<{
   currentTime: number;
   load: ReturnType<typeof vi.fn>;
+  muted: boolean;
   pause: ReturnType<typeof vi.fn>;
   play: ReturnType<typeof vi.fn>;
+  playStates: Array<{ muted: boolean; src: string }>;
   preload: string;
   removeAttribute: ReturnType<typeof vi.fn>;
   src: string;
@@ -59,8 +61,11 @@ const pendingAudioPlays: Array<() => void> = [];
 class AudioStub {
   currentTime = 0;
   load = vi.fn();
+  muted = false;
   pause = vi.fn();
+  playStates: Array<{ muted: boolean; src: string }> = [];
   play = vi.fn().mockImplementation(() => {
+    this.playStates.push({ muted: this.muted, src: this.src });
     const result = audioPlayResults.shift() ?? "started";
     if (result === "blocked")
       return Promise.reject(new DOMException("blocked", "NotAllowedError"));
@@ -78,6 +83,21 @@ class AudioStub {
   constructor() {
     audioInstances.push(this);
   }
+}
+
+function audioPlayCount() {
+  return audioInstances.reduce(
+    (count, audio) => count + audio.play.mock.calls.length,
+    0,
+  );
+}
+
+function audibleAudioPlayCount() {
+  return audioInstances.reduce(
+    (count, audio) =>
+      count + audio.playStates.filter((state) => !state.muted).length,
+    0,
+  );
 }
 
 function question(id: string, orderIndex: number): QuizQuestion {
@@ -173,7 +193,7 @@ afterEach(() => {
 });
 
 describe("QuizPlayer", () => {
-  it("keeps the same question structure for 750ms and then starts the next server timer", async () => {
+  it("keeps the same question structure for 3000ms without reducing the next question timer", async () => {
     mocks.submit.mockResolvedValue(
       successfulTransport({
         correct: true,
@@ -181,14 +201,16 @@ describe("QuizPlayer", () => {
         nextPhase: "initial",
         nextQuestionId: "question-2",
         questionDeadlineAt: "2099-01-01T00:00:10.000Z",
-        timerRemainingMilliseconds: 10_800,
-      }, 300),
+        timerRemainingMilliseconds: 13_000,
+      }, 1_200),
     );
     await renderReady();
     const initialButtonCount = screen.getAllByRole("button").length;
 
     fireEvent.click(
-      screen.getByRole("button", { name: /question-1-one/ }),
+      screen
+        .getByRole("group")
+        .firstElementChild!.querySelectorAll("button")[0],
     );
     await act(async () => Promise.resolve());
 
@@ -198,7 +220,7 @@ describe("QuizPlayer", () => {
       "sr-only",
     );
 
-    act(() => vi.advanceTimersByTime(749));
+    act(() => vi.advanceTimersByTime(2_999));
     expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
 
     act(() => vi.advanceTimersByTime(1));
@@ -228,12 +250,8 @@ describe("QuizPlayer", () => {
     fireEvent.click(firstChoice);
     fireEvent.click(firstChoice);
     expect(mocks.submit).toHaveBeenCalledOnce();
-    expect(
-      audioInstances.reduce(
-        (count, audio) => count + audio.play.mock.calls.length,
-        0,
-      ),
-    ).toBe(1);
+    expect(audioPlayCount()).toBe(1);
+    expect(audibleAudioPlayCount()).toBe(0);
 
     await act(async () => {
       resolveRequest(successfulTransport({
@@ -243,9 +261,11 @@ describe("QuizPlayer", () => {
         }));
       await Promise.resolve();
     });
+    expect(audioPlayCount()).toBe(2);
+    expect(audibleAudioPlayCount()).toBe(1);
   });
 
-  it("auto-plays an available English prompt only once", async () => {
+  it("auto-plays an available English prompt once after 250ms and does not replay it for a Korean answer", async () => {
     const audioAttempt = attempt();
     const current = audioAttempt.questions[0];
     current.direction = "english_to_korean";
@@ -255,9 +275,14 @@ describe("QuizPlayer", () => {
 
     const view = await renderReady(audioAttempt);
 
-    expect(audioInstances).toHaveLength(1);
-    expect(audioInstances[0]?.src).toBe(availablePronunciation.audioUrl);
-    expect(audioInstances[0]?.play).toHaveBeenCalledOnce();
+    expect(audioPlayCount()).toBe(0);
+    act(() => vi.advanceTimersByTime(249));
+    expect(audioPlayCount()).toBe(0);
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+    });
+    expect(audioPlayCount()).toBe(1);
 
     view.rerender(
       <QuizPlayer
@@ -265,7 +290,73 @@ describe("QuizPlayer", () => {
         initialRemainingMilliseconds={60_000}
       />,
     );
-    expect(audioInstances[0]?.play).toHaveBeenCalledOnce();
+    expect(audioPlayCount()).toBe(1);
+
+    mocks.submit.mockResolvedValue(
+      successfulTransport({
+        completed: true,
+        correct: true,
+        correctChoiceIndex: 0,
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /뛰어난/ }));
+    await act(async () => Promise.resolve());
+    expect(audioPlayCount()).toBe(1);
+  });
+
+  it("cancels the delayed English prompt when an answer is submitted before 250ms", async () => {
+    const audioAttempt = attempt();
+    const current = audioAttempt.questions[0];
+    current.direction = "english_to_korean";
+    current.prompt = "outstanding";
+    current.pronunciation = availablePronunciation;
+    current.choices = ["뛰어난", "보호하다", "완전한", "구매하다"];
+    mocks.submit.mockResolvedValue(
+      successfulTransport({
+        completed: true,
+        correct: false,
+        correctChoiceIndex: 1,
+      }),
+    );
+
+    await renderReady(audioAttempt);
+    act(() => vi.advanceTimersByTime(100));
+    fireEvent.click(screen.getByRole("button", { name: /뛰어난/ }));
+    await act(async () => Promise.resolve());
+    act(() => vi.advanceTimersByTime(500));
+
+    expect(audioPlayCount()).toBe(0);
+    expect(audibleAudioPlayCount()).toBe(0);
+  });
+
+  it("does not schedule English prompt audio when the synchronized timer is already zero", async () => {
+    const audioAttempt = attempt();
+    const current = audioAttempt.questions[0];
+    current.direction = "english_to_korean";
+    current.prompt = "outstanding";
+    current.pronunciation = availablePronunciation;
+    current.choices = ["뛰어난", "보호하다", "완전한", "구매하다"];
+    mocks.submit.mockResolvedValue(
+      successfulTransport({
+        correct: false,
+        correctChoiceIndex: 1,
+        nextPhase: "initial",
+        nextQuestionId: "question-2",
+        questionDeadlineAt: "2099-01-01T00:00:10.000Z",
+        timedOut: true,
+        timerRemainingMilliseconds: 10_000,
+      }),
+    );
+
+    await renderReady(audioAttempt, 0);
+    await act(async () => {
+      vi.advanceTimersByTime(500);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(audioPlayCount()).toBe(0);
+    expect(audibleAudioPlayCount()).toBe(0);
   });
 
   it("previews from the speaker without submitting and plays once again when choosing the English answer", async () => {
@@ -275,7 +366,13 @@ describe("QuizPlayer", () => {
       { length: 4 },
       () => availablePronunciation,
     );
-    mocks.submit.mockReturnValue(new Promise(() => {}));
+    mocks.submit.mockResolvedValue(
+      successfulTransport({
+        completed: true,
+        correct: true,
+        correctChoiceIndex: 0,
+      }),
+    );
 
     await renderReady(audioAttempt);
 
@@ -292,7 +389,13 @@ describe("QuizPlayer", () => {
     expect(mocks.submit).not.toHaveBeenCalled();
 
     fireEvent.click(rowButtons![0]);
-    expect(player?.play).toHaveBeenCalledTimes(2);
+    await act(async () => Promise.resolve());
+    expect(player?.play).toHaveBeenCalledTimes(3);
+    expect(player?.playStates.map((state) => state.muted)).toEqual([
+      false,
+      true,
+      false,
+    ]);
     expect(mocks.submit).toHaveBeenCalledOnce();
   });
 
@@ -320,6 +423,10 @@ describe("QuizPlayer", () => {
     );
 
     await renderReady(audioAttempt);
+    await act(async () => {
+      vi.advanceTimersByTime(250);
+      await Promise.resolve();
+    });
     const player = audioInstances.find((audio) =>
       audio.play.mock.calls.length > 0
     );
@@ -329,14 +436,20 @@ describe("QuizPlayer", () => {
     expect(player?.play).toHaveBeenCalledTimes(2);
     fireEvent.click(screen.getByRole("button", { name: /하나/ }));
     await act(async () => Promise.resolve());
-    act(() => vi.advanceTimersByTime(750));
+    expect(player?.play).toHaveBeenCalledTimes(2);
+    act(() => vi.advanceTimersByTime(3_000));
     await act(async () => Promise.resolve());
 
     expect(screen.getByText("english-2")).toBeInTheDocument();
-    expect(player?.play).toHaveBeenCalledTimes(4);
+    expect(player?.play).toHaveBeenCalledTimes(2);
+    await act(async () => {
+      vi.advanceTimersByTime(250);
+      await Promise.resolve();
+    });
+    expect(player?.play).toHaveBeenCalledTimes(3);
   });
 
-  it("keeps the chosen English answer audio playing across the 750ms transition", async () => {
+  it("keeps a correct English answer playing until the delayed next prompt starts", async () => {
     const audioAttempt = attempt();
     for (const current of audioAttempt.questions) {
       current.choicePronunciations = Array.from({ length: 4 }, (_, index) => ({
@@ -344,6 +457,13 @@ describe("QuizPlayer", () => {
         audioUrl: `https://example.com/${current.id}-${index}.mp3`,
       }));
     }
+    audioAttempt.questions[1].direction = "english_to_korean";
+    audioAttempt.questions[1].prompt = "next-english-prompt";
+    audioAttempt.questions[1].pronunciation = {
+      ...availablePronunciation,
+      audioUrl: "https://example.com/next-prompt.mp3",
+    };
+    audioAttempt.questions[1].choices = ["하나", "둘", "셋", "넷"];
     mocks.submit.mockResolvedValue(
       successfulTransport({
         correct: true,
@@ -354,26 +474,40 @@ describe("QuizPlayer", () => {
         timerRemainingMilliseconds: 10_000,
       }),
     );
-    audioPlayResults.push("pending");
+    audioPlayResults.push("started", "pending", "started");
 
     await renderReady(audioAttempt);
     const firstRow = screen.getByRole("group").firstElementChild;
     const rowButtons = firstRow!.querySelectorAll("button");
     fireEvent.click(rowButtons[0]);
+    await act(async () => Promise.resolve());
     const player = audioInstances.find((audio) =>
       audio.play.mock.calls.length > 0
     );
     const pauseCount = player?.pause.mock.calls.length;
-    expect(player?.play).toHaveBeenCalledOnce();
-    await act(async () => Promise.resolve());
-    act(() => vi.advanceTimersByTime(750));
+    expect(player?.play).toHaveBeenCalledTimes(2);
+    expect(player?.playStates.map((state) => state.muted)).toEqual([
+      true,
+      false,
+    ]);
+    act(() => vi.advanceTimersByTime(2_999));
+    expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(1));
 
-    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(screen.getByText("next-english-prompt")).toBeInTheDocument();
     expect(player?.pause).toHaveBeenCalledTimes(pauseCount ?? 0);
+    act(() => vi.advanceTimersByTime(249));
+    expect(player?.pause).toHaveBeenCalledTimes(pauseCount ?? 0);
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+    });
+    expect(player?.pause).toHaveBeenCalledTimes((pauseCount ?? 0) + 1);
+    expect(player?.src).toBe("https://example.com/next-prompt.mp3");
     pendingAudioPlays[0]?.();
   });
 
-  it("shows a timeout notice for 750ms and records no answer as wrong", async () => {
+  it("locks choices at zero and shows a timeout notice for 3000ms", async () => {
     mocks.submit.mockResolvedValue(
       successfulTransport({
         correct: false,
@@ -387,6 +521,9 @@ describe("QuizPlayer", () => {
     );
 
     await renderReady(attempt(), 0);
+    expect(
+      screen.getByRole("button", { name: /question-1-one/ }),
+    ).toBeDisabled();
     await act(async () => {
       vi.advanceTimersByTime(0);
       await Promise.resolve();
@@ -404,7 +541,7 @@ describe("QuizPlayer", () => {
     );
     expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
 
-    act(() => vi.advanceTimersByTime(749));
+    act(() => vi.advanceTimersByTime(2_999));
     expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
 
     act(() => vi.advanceTimersByTime(1));
@@ -414,7 +551,7 @@ describe("QuizPlayer", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("announces a wrong answer without adding visible feedback copy", async () => {
+  it("announces a wrong answer without playing its English choice audio", async () => {
     mocks.submit.mockResolvedValue(
       successfulTransport({
         completed: true,
@@ -422,13 +559,20 @@ describe("QuizPlayer", () => {
         correctChoiceIndex: 1,
       }),
     );
-    await renderReady();
+    const audioAttempt = attempt();
+    audioAttempt.questions[0].choicePronunciations[0] =
+      availablePronunciation;
+    await renderReady(audioAttempt);
 
     fireEvent.click(
-      screen.getByRole("button", { name: /question-1-one/ }),
+      screen
+        .getByRole("group")
+        .firstElementChild!.querySelectorAll("button")[0],
     );
     await act(async () => Promise.resolve());
 
+    expect(audioPlayCount()).toBe(1);
+    expect(audibleAudioPlayCount()).toBe(0);
     expect(screen.getByText(studentAppText.attempt.wrongInitial)).toHaveClass(
       "sr-only",
     );
@@ -479,7 +623,14 @@ describe("QuizPlayer", () => {
 
     expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:09");
     expect(firstChoice).toBeEnabled();
-    expect(audioInstances[0]?.play).toHaveBeenCalledOnce();
+    expect(audioPlayCount()).toBe(0);
+    act(() => vi.advanceTimersByTime(249));
+    expect(audioPlayCount()).toBe(0);
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+    });
+    expect(audioPlayCount()).toBe(1);
   });
 
   it("keeps answers locked and lets the student retry a failed initial synchronization", async () => {

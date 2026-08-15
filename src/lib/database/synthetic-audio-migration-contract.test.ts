@@ -21,6 +21,12 @@ const splitMigration = readFileSync(
   ),
   "utf8",
 );
+const normalRateMigration = readFileSync(
+  resolve(
+    "supabase/migrations/20260815114500_add_normal_rate_synthetic_audio_profiles.sql",
+  ),
+  "utf8",
+);
 
 describe("합성 표현 음원 migration", () => {
   it("Webster 표와 분리된 expression 자산 및 불변 Storage 결속을 만든다", () => {
@@ -87,6 +93,22 @@ describe("합성 표현 음원 migration", () => {
     );
     expect(splitMigration).toContain(
       "grant execute on function public.import_vocab_synthetic_audio_package_v1(jsonb)",
+    );
+  });
+
+  it("구 음원을 보존하면서 일반 속도 표현 프로필을 별도 연결한다", () => {
+    expect(normalRateMigration).toContain("profile:286866721f7f4ee8");
+    expect(normalRateMigration).toContain(
+      "vocab_synthetic_audio_assets_profile_rate_scope_check",
+    );
+    expect(normalRateMigration).toContain(
+      "unique (release_id, vocab_entry_id, profile_id)",
+    );
+    expect(normalRateMigration).toContain(
+      "synthetic_audio_profile_rate_mismatch",
+    );
+    expect(normalRateMigration).toContain(
+      "from public, anon, authenticated, service_role",
     );
   });
 });

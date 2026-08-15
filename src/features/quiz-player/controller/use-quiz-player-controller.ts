@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
-  useMemo,
   useReducer,
   useRef,
 } from "react";
@@ -19,12 +18,10 @@ import {
 import {
   ANSWER_FEEDBACK_DELAY_MS,
   applyQuizAnswerTransition,
-  currentQuizQuestion,
   quizAnswerAudioUrl,
   quizAnswerAnnouncement,
   quizAnswerDisposition,
   quizAudioPresentation,
-  quizPhaseQuestions,
   quizPreloadAudioUrls,
 } from "../domain/quiz-session";
 import {
@@ -35,6 +32,7 @@ import type { QuizAttempt } from "../model";
 import { useInitialQuizSynchronization } from "./use-initial-quiz-synchronization";
 import { useQuizAudio } from "./use-quiz-audio";
 import { useQuizClock } from "./use-quiz-clock";
+import { useQuizPhaseSnapshot } from "./use-quiz-phase-snapshot";
 import { useQuizRecovery } from "./use-quiz-recovery";
 export function useQuizPlayerController(input: {
   initialAttempt: QuizAttempt;
@@ -55,31 +53,19 @@ export function useQuizPlayerController(input: {
   const transitionTimer = useRef<number | null>(null);
   const promptRef = useRef<HTMLHeadingElement>(null);
 
-  const currentQuestion = useMemo(
-    () => currentQuizQuestion(state.attempt),
-    [state.attempt],
+  const { currentQuestion, phaseSnapshot } = useQuizPhaseSnapshot(
+    state.attempt,
   );
-  const phaseSnapshot = useMemo(() => {
-    const questions = quizPhaseQuestions(state.attempt);
-    const completed = questions.filter((question) =>
-      state.attempt.phase === "retry"
-        ? question.retryIsCorrect !== null
-        : question.initialIsCorrect !== null,
-    ).length;
-    return {
-      completed,
-      progress:
-        questions.length === 0
-          ? 100
-          : Math.round((completed / questions.length) * 100),
-      questions,
-    };
-  }, [state.attempt]);
   const audioPresentation = currentQuestion
     ? quizAudioPresentation(currentQuestion)
     : { promptAudioUrl: null, choiceAudioEnabled: false };
-  const playAudio = useQuizAudio({
+  const { cancelPendingPromptAudio, playAudio, primeChoiceAudio } = useQuizAudio({
     attemptId: state.attempt.id,
+    autoPlayEnabled:
+      state.timerSynchronized &&
+      state.remainingSeconds > 0 &&
+      !state.submitting &&
+      state.feedback === null,
     phase: state.attempt.phase,
     playbackReady: state.timerSynchronized,
     preloadAudioUrls: quizPreloadAudioUrls(state.attempt),
@@ -192,13 +178,16 @@ export function useQuizPlayerController(input: {
         inFlightRequest.current !== null ||
         state.submitting ||
         state.feedback !== null ||
+        (choiceIndex !== null && state.remainingSeconds === 0) ||
         (state.attempt.phase !== "initial" &&
           state.attempt.phase !== "retry")
       ) {
         return;
       }
 
-      playAudio(quizAnswerAudioUrl(currentQuestion, choiceIndex));
+      cancelPendingPromptAudio();
+      const answerAudioUrl = quizAnswerAudioUrl(currentQuestion, choiceIndex);
+      primeChoiceAudio(answerAudioUrl);
       const answeredAttempt = state.attempt;
       const answeredPhase = state.attempt.phase;
       const requestKey = [
@@ -224,7 +213,6 @@ export function useQuizPlayerController(input: {
           ok,
           payload,
           receivedAt,
-          roundTripMilliseconds,
         } = await submitQuizAnswer({
           attemptId: answeredAttempt.id,
           questionId: currentQuestion.id,
@@ -249,6 +237,9 @@ export function useQuizPlayerController(input: {
           return;
         }
 
+        if (payload.correct && !payload.timedOut) {
+          playAudio(answerAudioUrl);
+        }
         dispatch({ type: "answer-received", payload });
         const disposition = quizAnswerDisposition(payload, answeredPhase);
         clearTransitionTimer();
@@ -276,7 +267,6 @@ export function useQuizPlayerController(input: {
           const nextRemainingMilliseconds = Math.max(
             0,
             payload.timerRemainingMilliseconds! -
-              roundTripMilliseconds -
               (performance.now() - receivedAt),
           );
           const nextRemainingSeconds = Math.ceil(
@@ -313,13 +303,16 @@ export function useQuizPlayerController(input: {
     },
     [
       clearTransitionTimer,
+      cancelPendingPromptAudio,
       currentQuestion,
       playAudio,
+      primeChoiceAudio,
       recoverFromServer,
       resetClock,
       router,
       state.attempt,
       state.feedback,
+      state.remainingSeconds,
       state.submitting,
       state.timerSynchronized,
     ],

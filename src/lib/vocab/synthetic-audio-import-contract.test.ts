@@ -102,6 +102,33 @@ describe("synthetic audio import contract", () => {
     });
   });
 
+  it("일반 속도 표현 프로필을 허용하고 프로필과 속도가 어긋나면 거부한다", () => {
+    const { manifest } = fixture();
+    const profileId = "profile:286866721f7f4ee8";
+    const normalRate = {
+      ...manifest,
+      profile_id: profileId,
+      profile: { ...manifest.profile, speaking_rate: 1 },
+      items: manifest.items.map((item) => ({
+        ...item,
+        profile_id: profileId,
+        speaking_rate: 1,
+        storage_object_key:
+          `pronunciation/google_cloud_text_to_speech/profile-286866721f7f4ee8/${item.request_sha256}.mp3`,
+      })),
+    };
+
+    expect(validateSyntheticAudioManifest(normalRate).summary.profileId).toBe(
+      profileId,
+    );
+    expect(() =>
+      validateSyntheticAudioManifest({
+        ...normalRate,
+        profile: { ...normalRate.profile, speaking_rate: 0.88 },
+      }),
+    ).toThrow("profile과 재생 속도");
+  });
+
   it("canonical 승인으로 위장하거나 object key가 다르면 거부한다", () => {
     const { manifest } = fixture();
     expect(() =>

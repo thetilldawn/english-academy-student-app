@@ -10,8 +10,18 @@ const RULE_DERIVED_ENGINE_VERSIONS = new Set([
   "cmudict-hangul-align-v2",
   "cmudict-hangul-nucleus-align-v3",
 ]);
-const EXPRESSION_SYNTHETIC_PROFILE_ID = "profile:5b6efb0ecc8f4702";
-const WORD_SYNTHETIC_PROFILE_ID = "profile:75ca7f418d66e6ab";
+const EXPRESSION_SYNTHETIC_PROFILE_IDS = new Set([
+  "profile:5b6efb0ecc8f4702",
+  "profile:286866721f7f4ee8",
+]);
+const WORD_SYNTHETIC_PROFILE_IDS = new Set([
+  "profile:75ca7f418d66e6ab",
+  "profile:1a77d56d47e26013",
+]);
+const NORMAL_RATE_SYNTHETIC_PROFILE_IDS = new Set([
+  "profile:286866721f7f4ee8",
+  "profile:1a77d56d47e26013",
+]);
 const SYNTHETIC_BUCKET = "vocab-pronunciation-audio";
 const SYNTHETIC_VARIANT_ID = /^tts(?:word|occ):[a-z0-9][a-z0-9:._-]*$/;
 const VOCAB_PRONUNCIATION_IDENTITY_V2 = /^pron:v[23]:[0-9a-f]{64}$/;
@@ -20,8 +30,9 @@ const VOCAB_PRONUNCIATION_ENGINE_V2 = new Set([
   "cmudict-arpabet-hangul-render-v1",
   "cmudict-arpabet-hangul-nucleus-render-v2",
 ]);
-const VOCAB_PRONUNCIATION_TTS_PREFIX_V2 =
-  "pronunciation/google_cloud_text_to_speech/profile-75ca7f418d66e6ab/ability-voca-etymology-2025-v1/";
+function vocabPronunciationTtsPrefix(profileId: string) {
+  return `pronunciation/google_cloud_text_to_speech/${profileId.replace(":", "-")}/ability-voca-etymology-2025-v1/`;
+}
 
 export type QuizPronunciation = {
   displayKo: string | null;
@@ -122,6 +133,27 @@ function objectValue(value: unknown): Record<string, unknown> | null {
 
 function optionalText(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+export function syntheticAudioProfilePriority(value: unknown) {
+  const profileId = optionalText(value);
+  if (!profileId) return 0;
+  if (NORMAL_RATE_SYNTHETIC_PROFILE_IDS.has(profileId)) return 2;
+  return EXPRESSION_SYNTHETIC_PROFILE_IDS.has(profileId) ||
+    WORD_SYNTHETIC_PROFILE_IDS.has(profileId)
+    ? 1
+    : 0;
+}
+
+export function sortSyntheticAudioBindingsByProfilePriority<
+  T extends { asset_id: string },
+>(bindings: readonly T[], priorityByAsset: ReadonlyMap<string, number>) {
+  return [...bindings].sort(
+    (left, right) =>
+      (priorityByAsset.get(left.asset_id) ?? 0) -
+        (priorityByAsset.get(right.asset_id) ?? 0) ||
+      left.asset_id.localeCompare(right.asset_id),
+  );
 }
 
 function segmentStress(value: unknown): KoreanPronunciationStress | null {
@@ -331,7 +363,8 @@ export function parseSyntheticRegistryPronunciation(
     : null;
   const expressionIdentity =
     dictionaryId?.startsWith("expression:") === true &&
-    profileId === EXPRESSION_SYNTHETIC_PROFILE_ID &&
+    profileId !== null &&
+    EXPRESSION_SYNTHETIC_PROFILE_IDS.has(profileId) &&
     row?.pronunciation_identity_type === "dictionary_expression" &&
     row?.pronunciation_mode === "provider_default_expression" &&
     pronunciationVariantId === null &&
@@ -339,7 +372,8 @@ export function parseSyntheticRegistryPronunciation(
     googleTtsIpa === null;
   const wordDefaultIdentity =
     dictionaryId?.startsWith("word:") === true &&
-    profileId === WORD_SYNTHETIC_PROFILE_ID &&
+    profileId !== null &&
+    WORD_SYNTHETIC_PROFILE_IDS.has(profileId) &&
     (row?.pronunciation_identity_type === "dictionary_word_surface" ||
       row?.pronunciation_identity_type === "occurrence_word_phrase") &&
     row?.pronunciation_mode === "provider_default_word_surface" &&
@@ -349,7 +383,8 @@ export function parseSyntheticRegistryPronunciation(
     googleTtsIpa === null;
   const wordCustomIpaIdentity =
     dictionaryId?.startsWith("word:") === true &&
-    profileId === WORD_SYNTHETIC_PROFILE_ID &&
+    profileId !== null &&
+    WORD_SYNTHETIC_PROFILE_IDS.has(profileId) &&
     row?.pronunciation_identity_type === "dictionary_word_surface" &&
     row?.pronunciation_mode === "custom_ipa_word_surface" &&
     pronunciationVariantId !== null &&
@@ -550,6 +585,7 @@ export function parseVocabPronunciationIdentityV2(
   const requestHash = optionalText(row.request_sha256);
   const audioHash = optionalText(row.audio_sha256);
   const objectKey = optionalText(row.storage_object_key);
+  const profileId = optionalText(row.profile_id);
   if (
     row.audio_provider !== "google_cloud_text_to_speech" ||
     !requestHash ||
@@ -558,13 +594,14 @@ export function parseVocabPronunciationIdentityV2(
     row.official_audio_url !== null ||
     row.sound_audio !== null ||
     row.storage_bucket !== SYNTHETIC_BUCKET ||
-    objectKey !== `${VOCAB_PRONUNCIATION_TTS_PREFIX_V2}${requestHash}.mp3` ||
+    !profileId ||
+    !WORD_SYNTHETIC_PROFILE_IDS.has(profileId) ||
+    objectKey !== `${vocabPronunciationTtsPrefix(profileId)}${requestHash}.mp3` ||
     !audioHash ||
     !SYNTHETIC_REQUEST_HASH.test(audioHash) ||
     typeof row.byte_count !== "number" ||
     !Number.isInteger(row.byte_count) ||
     row.byte_count < 128 ||
-    row.profile_id !== WORD_SYNTHETIC_PROFILE_ID ||
     row.model !== "chirp3-hd" ||
     row.voice !== "en-US-Chirp3-HD-Despina"
   ) {

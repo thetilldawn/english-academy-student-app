@@ -5,6 +5,7 @@ import { unavailablePronunciation } from "@/lib/quiz/pronunciation-snapshot";
 import type { QuizAttempt, QuizQuestion } from "../model";
 import {
   ANSWER_FEEDBACK_DELAY_MS,
+  PROMPT_AUDIO_AUTOPLAY_DELAY_MS,
   applyQuizAnswerTransition,
   quizAnswerAudioUrl,
   quizAnswerDisposition,
@@ -105,9 +106,7 @@ describe("quiz session domain", () => {
     );
     expect(quizChoiceAudioUrls(englishPromptQuestion)).toEqual([]);
 
-    expect(quizAnswerAudioUrl(englishPromptQuestion, 2)).toBe(
-      englishPromptQuestion.pronunciation.audioUrl,
-    );
+    expect(quizAnswerAudioUrl(englishPromptQuestion, 2)).toBeNull();
     expect(quizAnswerAudioUrl(englishChoiceQuestion, 2)).toBe(
       englishChoiceQuestion.choicePronunciations[2].audioUrl,
     );
@@ -182,7 +181,8 @@ describe("quiz session domain", () => {
         "initial",
       ),
     ).toBe("next-question");
-    expect(ANSWER_FEEDBACK_DELAY_MS).toBe(750);
+    expect(ANSWER_FEEDBACK_DELAY_MS).toBe(3_000);
+    expect(PROMPT_AUDIO_AUTOPLAY_DELAY_MS).toBe(250);
   });
 
   it("applies the answer and next server state without rebuilding questions", () => {
