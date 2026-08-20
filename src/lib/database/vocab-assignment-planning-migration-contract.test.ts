@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 const migration = readFileSync(
   path.resolve(
-    "supabase/migrations/20260821103000_add_class_groups_and_vocab_time_templates.sql",
+    "supabase/migrations/20260820192529_add_class_groups_and_vocab_time_templates.sql",
   ),
   "utf8",
 );

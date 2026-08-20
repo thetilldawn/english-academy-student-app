@@ -25,6 +25,7 @@ import {
   type AdminContext,
 } from "@/lib/auth/admin";
 import {
+  createRegularAssignmentPreparationCache,
   listAssignmentHistoryBundle,
   listDatasets,
   listStudents,
@@ -33,6 +34,7 @@ import {
 } from "@/lib/services/admin-service";
 import {
   calculateAssignmentCapacity,
+  createMixedAssignmentPreparationCache,
   MixedAssignmentError,
   prepareMixedAssignmentBatch,
 } from "@/lib/services/mixed-assignment-service";
@@ -215,11 +217,12 @@ export async function previewBulkAssignments(
   authenticatedAdmin?: AdminContext,
 ): Promise<BulkAssignmentPreview> {
   const admin = authenticatedAdmin ?? (await requireAdmin());
+  const preparationCache = createMixedAssignmentPreparationCache();
   const [students, datasets, units, historyBundle] = await Promise.all([
     listStudents(),
     listDatasets(),
     listVocabUnits(),
-    listAssignmentHistoryBundle(),
+    listAssignmentHistoryBundle({ finalizeStale: false }),
   ]);
   const studentById = new Map(
     students.map((student) => [student.id, student]),
@@ -399,6 +402,8 @@ export async function previewBulkAssignments(
                 englishToKoreanRatio: input.englishToKoreanRatio,
               },
               admin,
+              undefined,
+              preparationCache,
             );
             const capacityError =
               includeReview && capacity.wrongEligible < 1
@@ -611,6 +616,10 @@ export async function createBulkAssignments(
   let batches: Record<string, unknown>[];
   try {
     batches = [];
+    const mixedPreparationCache =
+      createMixedAssignmentPreparationCache();
+    const regularPreparationCache =
+      createRegularAssignmentPreparationCache();
     const sessionInputs = preview.items.flatMap((item) =>
       item.sessions.map((session) => ({ item, session })),
     );
@@ -646,6 +655,8 @@ export async function createBulkAssignments(
               questionTimeLimitSeconds: input.questionTimeLimitSeconds,
             },
             admin,
+            undefined,
+            mixedPreparationCache,
           );
           return {
             kind: "mixed",
@@ -693,6 +704,8 @@ export async function createBulkAssignments(
             studentIds: [item.studentId],
           },
           admin,
+          undefined,
+          regularPreparationCache,
         );
         return {
           kind: "regular",

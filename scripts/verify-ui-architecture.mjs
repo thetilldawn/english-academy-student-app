@@ -190,6 +190,12 @@ const assignmentFeatureContracts = [
     maxUseStateCalls: 2,
   },
   {
+    path: "src/features/assignments/controller/use-vocab-assignment-screen.ts",
+    maxLines: 150,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 2,
+  },
+  {
     path: "src/features/assignments/controller/use-legacy-review-recovery.ts",
     maxLines: 120,
     maxFetchCalls: 0,
@@ -728,6 +734,52 @@ for (const forbidden of [
   if (forbidden.test(assignmentWorkspaceSource)) {
     violations.push(
       `assignment workspace crossed the assignment editor boundary (${forbidden})`,
+    );
+  }
+}
+
+const vocabAssignmentPlannerUiSource = read(
+  "src/features/assignments/ui/vocab-assignment-planner.tsx",
+);
+for (const forbidden of [
+  /features\/assignments\/api|\.\.\/api\//,
+  /@\/lib\/services\//,
+  /\bnew Date\s*\(|\.toISOString\s*\(/,
+  /commonInitialDatasetId|toVocabTimeTemplate/,
+]) {
+  if (forbidden.test(vocabAssignmentPlannerUiSource)) {
+    violations.push(
+      `vocab assignment UI crossed the replaceable presentation boundary (${forbidden})`,
+    );
+  }
+}
+
+const bulkSeriesPreviewUiSource = read(
+  "src/features/assignments/ui/bulk-series-preview.tsx",
+);
+for (const forbidden of [
+  /warning\.kind\s*===\s*["']existing_assignment["']/,
+  /warning\.kind\s*===\s*["']planned_series_order["']/,
+  /mode:\s*["'](?:skip|move|allow)["']/,
+]) {
+  if (forbidden.test(bulkSeriesPreviewUiSource)) {
+    violations.push(
+      `bulk preview UI owns collision policy instead of rendering it (${forbidden})`,
+    );
+  }
+}
+
+const vocabAssignmentDomainSource = read(
+  "src/features/assignments/domain/vocab-assignment-plan.ts",
+);
+for (const forbidden of [
+  /from ["']react["']|\buseState\b|\buseEffect\b/,
+  /\.\.\/(?:ui|controller|api)\//,
+  /@\/lib\/services\/|\bfetch\s*\(/,
+]) {
+  if (forbidden.test(vocabAssignmentDomainSource)) {
+    violations.push(
+      `vocab assignment domain crossed the pure calculation boundary (${forbidden})`,
     );
   }
 }

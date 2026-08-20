@@ -28,6 +28,7 @@ import {
   storedDatasetDisplayLabel,
 } from "@/lib/ui/dataset-display";
 import { loadEligibleVocabularyDataset } from "@/lib/services/eligible-vocabulary-service";
+import { memoizeRequestPreparation } from "@/lib/services/request-preparation-cache";
 import {
   activeReviewIdentities,
   loadActiveReviewAssignments,
@@ -1323,13 +1324,17 @@ async function listHiddenHistoryEntries(
   }
 }
 
-export async function listAssignmentHistoryBundle(): Promise<{
+export async function listAssignmentHistoryBundle(options?: {
+  finalizeStale?: boolean;
+}): Promise<{
   history: AssignmentHistorySummary[];
   completeHistory: AssignmentHistorySummary[];
   currentHistory: AssignmentHistorySummary[];
 }> {
   await requireAdmin();
-  await finalizeStaleQuizAttempts();
+  if (options?.finalizeStale !== false) {
+    await finalizeStaleQuizAttempts();
+  }
   const supabase = await createServerSupabaseClient();
   const [
     { data: assignmentStudentData, error: assignmentStudentError },
@@ -1590,51 +1595,109 @@ export type PreparedRegularAssignment = {
   }[];
 };
 
-export async function prepareRegularAssignment(
-  input: RegularAssignmentInput,
-  authenticatedAdmin?: AdminContext,
-  exclusion?: {
-    assignmentId: string;
-    studentId: string;
-  },
-): Promise<PreparedRegularAssignment> {
-  if (!authenticatedAdmin) {
-    await requireAdmin();
-  }
-  const supabase = await createServerSupabaseClient();
-  const [
-    { data: dataset, error: datasetError },
-    { data: unitData, error: unitError },
-  ] = await Promise.all([
+type RegularAssignmentExclusion = {
+  assignmentId: string;
+  studentId: string;
+};
+
+async function loadRegularDatasetPreparation(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  datasetId: string,
+) {
+  const [datasetResult, unitResult, allCandidates] = await Promise.all([
     supabase
       .from("vocab_datasets")
       .select("id, title, edition")
-      .eq("id", input.datasetId)
+      .eq("id", datasetId)
       .eq("status", "ready")
       .eq("is_active", true)
       .maybeSingle(),
     supabase
       .from("vocab_units")
       .select("id, unit_label, sort_index")
-      .eq("dataset_id", input.datasetId)
-      .in("id", input.unitIds)
+      .eq("dataset_id", datasetId)
       .order("sort_index"),
+    loadEligibleVocabularyDataset(supabase, datasetId, {
+      includeExamUseProjection: true,
+    }),
   ]);
+  const datasetLabel =
+    datasetResult.data && !datasetResult.error
+      ? await loadDatasetDisplayLabel(supabase, datasetResult.data)
+      : null;
+  return { datasetResult, unitResult, allCandidates, datasetLabel };
+}
+
+function regularPreparationCacheKey(parts: readonly unknown[]) {
+  return JSON.stringify(parts);
+}
+
+export type RegularAssignmentPreparationCache = {
+  supabase: Promise<
+    Awaited<ReturnType<typeof createServerSupabaseClient>>
+  >;
+  datasets: Map<
+    string,
+    Promise<Awaited<ReturnType<typeof loadRegularDatasetPreparation>>>
+  >;
+  activeAssignments: Map<
+    string,
+    Promise<Awaited<ReturnType<typeof loadActiveReviewAssignments>>>
+  >;
+};
+
+/** Reuses preparation reads only for the lifetime of one save request. */
+export function createRegularAssignmentPreparationCache(): RegularAssignmentPreparationCache {
+  return {
+    supabase: createServerSupabaseClient(),
+    datasets: new Map(),
+    activeAssignments: new Map(),
+  };
+}
+
+export async function prepareRegularAssignment(
+  input: RegularAssignmentInput,
+  authenticatedAdmin?: AdminContext,
+  exclusion?: RegularAssignmentExclusion,
+  cache?: RegularAssignmentPreparationCache,
+): Promise<PreparedRegularAssignment> {
+  if (!authenticatedAdmin) {
+    await requireAdmin();
+  }
+  const preparationCache =
+    cache ?? createRegularAssignmentPreparationCache();
+  const supabase = await preparationCache.supabase;
+  const datasetPreparation = await memoizeRequestPreparation(
+    preparationCache.datasets,
+    input.datasetId,
+    () => loadRegularDatasetPreparation(supabase, input.datasetId),
+  );
+  const {
+    datasetResult: { data: dataset, error: datasetError },
+    unitResult: { data: unitData, error: unitError },
+    allCandidates,
+    datasetLabel,
+  } = datasetPreparation;
+  const requestedUnitIds = new Set(input.unitIds);
+  const selectedUnitData = (unitData ?? []).filter((unit) =>
+    requestedUnitIds.has(unit.id),
+  );
 
   if (
     datasetError ||
     unitError ||
     !dataset ||
     !unitData ||
-    unitData.length !== input.unitIds.length
+    !datasetLabel ||
+    selectedUnitData.length !== input.unitIds.length
   ) {
     throw new Error("선택한 단어장과 DAY를 사용할 수 없습니다.");
   }
 
-  let orderedUnits: typeof unitData;
+  let orderedUnits: typeof selectedUnitData;
   try {
     orderedUnits = resolveOrderedContiguousUnits(
-      unitData.map((unit) => ({
+      selectedUnitData.map((unit) => ({
         ...unit,
         sortIndex: unit.sort_index,
       })),
@@ -1647,17 +1710,23 @@ export async function prepareRegularAssignment(
     );
   }
   const orderedUnitIds = orderedUnits.map((unit) => unit.id);
-  const [allCandidates, activeAssignments] = await Promise.all([
-    loadEligibleVocabularyDataset(supabase, input.datasetId, {
-      includeExamUseProjection: true,
-    }),
-    loadActiveReviewAssignments(
-      supabase,
-      input.studentIds,
-      input.datasetId,
-      exclusion,
-    ),
+  const activeAssignmentKey = regularPreparationCacheKey([
+    [...input.studentIds].sort(),
+    input.datasetId,
+    exclusion?.assignmentId ?? null,
+    exclusion?.studentId ?? null,
   ]);
+  const activeAssignments = await memoizeRequestPreparation(
+    preparationCache.activeAssignments,
+    activeAssignmentKey,
+    () =>
+      loadActiveReviewAssignments(
+        supabase,
+        input.studentIds,
+        input.datasetId,
+        exclusion,
+      ),
+  );
   const unitIdSet = new Set(orderedUnitIds);
   const primaryCandidates = allCandidates.filter(
     (candidate) =>
@@ -1714,7 +1783,6 @@ export async function prepareRegularAssignment(
     orderedUnits.length === 1
       ? orderedUnits[0].unit_label
       : `${orderedUnits[0].unit_label}~${orderedUnits.at(-1)?.unit_label}`;
-  const datasetLabel = await loadDatasetDisplayLabel(supabase, dataset);
   const generatedTitle = [datasetLabel, unitRangeLabel].join(" · ");
 
   return {

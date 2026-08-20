@@ -26,7 +26,7 @@ export async function loadAssignmentManagerData() {
     listDatasets(),
     listStudents(),
     listVocabUnits(),
-    listAssignmentHistoryBundle(),
+    listAssignmentHistoryBundle({ finalizeStale: false }),
     listStudentPendingReviewSummaries(),
     listStudentCurrentVocabWrongSummaries(),
     listStudentLearningSources(),

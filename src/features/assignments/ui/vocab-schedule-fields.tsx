@@ -12,7 +12,7 @@ import {
   Select,
 } from "@/design-system/primitives/form/field";
 
-import type { VocabAssignmentPlannerController } from "../controller/use-vocab-assignment-planner";
+import type { VocabAssignmentScreenController } from "../controller/use-vocab-assignment-screen";
 import type { IsoWeekday } from "../domain/vocab-assignment-plan";
 import styles from "./vocab-assignment-planner.module.css";
 
@@ -30,7 +30,7 @@ const deadlineOffsets = Array.from({ length: 31 }, (_, offset) => offset);
 export function VocabScheduleFields({
   controller,
 }: {
-  controller: VocabAssignmentPlannerController;
+  controller: VocabAssignmentScreenController;
 }) {
   const [templateName, setTemplateName] = useState("");
   const schedule = controller.planner.schedule;
@@ -52,6 +52,8 @@ export function VocabScheduleFields({
         <Field as="label">
           <FieldLabel as="span">종료일</FieldLabel>
           <Input
+            max={controller.maximumScheduleEndDate}
+            min={schedule.startDate}
             onChange={(event) =>
               controller.actions.updateSchedule({ endDate: event.target.value })
             }

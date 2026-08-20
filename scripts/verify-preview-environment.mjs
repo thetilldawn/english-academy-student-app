@@ -45,6 +45,14 @@ export function assertPreviewEnvironment(environment = process.env) {
       "Preview build blocked: PREVIEW_EXPECTED_SUPABASE_PROJECT_REF is missing or invalid.",
     );
   }
+  if (
+    expectedRef === PRODUCTION_SUPABASE_PROJECT_REF ||
+    actualRef === PRODUCTION_SUPABASE_PROJECT_REF
+  ) {
+    throw new Error(
+      "Preview build blocked: the Production Supabase project is not allowed.",
+    );
+  }
   if (actualRef !== expectedRef) {
     throw new Error(
       `Preview build blocked: Supabase ref mismatch (expected ${expectedRef}, received ${actualRef ?? "invalid URL"}).`,

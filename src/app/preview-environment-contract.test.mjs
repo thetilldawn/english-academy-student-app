@@ -30,9 +30,20 @@ describe("Preview Supabase safety guard", () => {
         VERCEL_ENV: "preview",
         PREVIEW_EXPECTED_SUPABASE_PROJECT_REF: "wojxpruvbjzbhrpmsbuy",
         NEXT_PUBLIC_SUPABASE_URL:
-          "https://xdxhswjgksukjmpbzqgz.supabase.co",
+          "https://abcdefghijklmnopqrst.supabase.co",
       }),
     ).toThrow(/ref mismatch/);
+  });
+
+  it("blocks Production even when both Preview refs are misconfigured alike", () => {
+    expect(() =>
+      assertPreviewEnvironment({
+        VERCEL_ENV: "preview",
+        PREVIEW_EXPECTED_SUPABASE_PROJECT_REF: "xdxhswjgksukjmpbzqgz",
+        NEXT_PUBLIC_SUPABASE_URL:
+          "https://xdxhswjgksukjmpbzqgz.supabase.co",
+      }),
+    ).toThrow(/Production Supabase project is not allowed/);
   });
 
   it("blocks a mismatched Preview Drive folder when Drive sync is enabled", () => {

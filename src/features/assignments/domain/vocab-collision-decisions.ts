@@ -13,6 +13,32 @@ export type VocabCollisionDecisionInput = {
   warningKind: "existing_assignment" | "planned_series_order";
 };
 
+export type VocabCollisionWarningKind =
+  VocabCollisionDecisionInput["warningKind"];
+export type VocabCollisionDecisionMode =
+  VocabCollisionDecisionInput["mode"];
+
+export function vocabCollisionActionPolicy(
+  warningKind: VocabCollisionWarningKind,
+): {
+  canClear: boolean;
+  decisionModes: readonly VocabCollisionDecisionMode[];
+} {
+  return warningKind === "existing_assignment"
+    ? { canClear: false, decisionModes: ["skip", "move", "allow"] }
+    : { canClear: true, decisionModes: ["skip", "move"] };
+}
+
+export function buildVocabCollisionDecisionInput(
+  context: Omit<VocabCollisionDecisionInput, "mode">,
+  mode: VocabCollisionDecisionMode,
+): VocabCollisionDecisionInput | null {
+  const policy = vocabCollisionActionPolicy(context.warningKind);
+  return policy.decisionModes.includes(mode)
+    ? { ...context, mode }
+    : null;
+}
+
 export type VocabCollisionDecisionRecord = Omit<
   VocabCollisionDecisionInput,
   "mode"

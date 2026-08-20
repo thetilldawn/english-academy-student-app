@@ -126,7 +126,10 @@ describe("mixed assignment API contract", () => {
       "selectedReviewIdentities",
     );
     expect(service).toContain(
-      "loadEligibleVocabularyDataset(supabase, input.datasetId, {",
+      "loadEligibleVocabularyDataset(supabase, datasetId, {",
+    );
+    expect(service).toContain(
+      "loadDatasetForPreparation(supabase, input.datasetId)",
     );
     expect(service).toContain(
       "includeExamUseProjection: true",

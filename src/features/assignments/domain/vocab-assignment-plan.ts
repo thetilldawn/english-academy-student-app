@@ -84,6 +84,7 @@ export type ResolvedVocabPlan = {
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
+export const MAX_VOCAB_SCHEDULE_RANGE_DAYS = 366;
 
 function parseCalendarDate(value: string) {
   if (!DATE_PATTERN.test(value)) return null;
@@ -117,7 +118,16 @@ export function buildWeekdayDates(input: {
   const start = parseCalendarDate(input.startDate);
   const end = parseCalendarDate(input.endDate);
   const weekdays = new Set(input.weekdays);
-  if (!start || !end || start > end || weekdays.size === 0) return [];
+  if (
+    !start ||
+    !end ||
+    start > end ||
+    weekdays.size === 0 ||
+    end.getTime() - start.getTime() >
+      MAX_VOCAB_SCHEDULE_RANGE_DAYS * DAY_MILLISECONDS
+  ) {
+    return [];
+  }
 
   const dates: string[] = [];
   for (

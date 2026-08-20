@@ -11,11 +11,18 @@ import { Button } from "@/design-system/primitives/button/button";
 import { formatKoreanDateTime } from "@/lib/format";
 
 import type { BulkAssignmentController } from "../controller/use-bulk-assignment-controller";
-import type {
-  VocabCollisionDecisionInput,
-  VocabCollisionDecisionRecord,
+import {
+  buildVocabCollisionDecisionInput,
+  vocabCollisionActionPolicy,
+  type VocabCollisionDecisionInput,
+  type VocabCollisionDecisionRecord,
+  type VocabCollisionDecisionMode,
 } from "../domain/vocab-collision-decisions";
 import type { VocabRangeDistribution } from "../domain/vocab-assignment-plan";
+import {
+  vocabCollisionActionAriaLabel,
+  vocabCollisionActionLabels,
+} from "../presentation/vocab-collision-actions";
 import { CollisionDecisionList } from "./collision-decision-list";
 import styles from "./bulk-assignment-editor.module.css";
 import plannerStyles from "./vocab-assignment-planner.module.css";
@@ -49,7 +56,7 @@ export function BulkSeriesPreview({
   onCollisionDecision?: (input: VocabCollisionDecisionInput) => void;
   onCollisionDecisionChange?: (
     collisionId: string,
-    mode: "skip" | "move" | "allow",
+    mode: VocabCollisionDecisionMode,
   ) => void;
   students: readonly PreviewStudent[];
 }) {
@@ -177,84 +184,76 @@ export function BulkSeriesPreview({
                     error={
                       <>
                         {session.error ? <small>{session.error}</small> : null}
-                        {session.warnings?.map((warning) => (
-                          <div className={plannerStyles.warning} key={warning.id}>
-                            <span>{warning.message}</span>
-                            {warning.resolved ? (
-                              <MetaTag tone="warning">허용됨</MetaTag>
-                            ) : onCollisionDecision ? (
-                              <div className={plannerStyles.warningActions}>
-                                <Button
-                                  aria-label={`${item.studentName} 원래 ${session.sourceSessionNumber}회 건너뜀`}
-                                  onClick={() => onCollisionDecision({
-                                    collisionId: warning.id,
-                                    mode: "skip",
-                                    availableFrom: session.availableFrom,
-                                    availableUntil: session.availableUntil,
-                                    studentId: item.studentId,
-                                    studentName: item.studentName,
-                                    sourceSessionNumber: session.sourceSessionNumber,
-                                    unitLabel: session.unitLabel,
-                                    warningMessage: warning.message,
-                                    warningKind: warning.kind,
-                                  })}
-                                  size="small"
-                                  variant="quiet"
-                                >
-                                  건너뜀
-                                </Button>
-                                <Button
-                                  aria-label={`${item.studentName} 원래 ${session.sourceSessionNumber}회 ${warning.kind === "planned_series_order" ? "하루 더 이동" : "다음 날 이동"}`}
-                                  onClick={() => onCollisionDecision({
-                                    collisionId: warning.id,
-                                    mode: "move",
-                                    availableFrom: session.availableFrom,
-                                    availableUntil: session.availableUntil,
-                                    studentId: item.studentId,
-                                    studentName: item.studentName,
-                                    sourceSessionNumber: session.sourceSessionNumber,
-                                    unitLabel: session.unitLabel,
-                                    warningMessage: warning.message,
-                                    warningKind: warning.kind,
-                                  })}
-                                  size="small"
-                                >
-                                  다음 날 이동
-                                </Button>
-                                {warning.kind === "existing_assignment" ? (
-                                  <Button
-                                    aria-label={`${item.studentName} 원래 ${session.sourceSessionNumber}회 겹침 허용`}
-                                    onClick={() => onCollisionDecision({
-                                      collisionId: warning.id,
-                                      mode: "allow",
-                                      availableFrom: session.availableFrom,
-                                      availableUntil: session.availableUntil,
-                                      studentId: item.studentId,
-                                      studentName: item.studentName,
-                                      sourceSessionNumber: session.sourceSessionNumber,
-                                      unitLabel: session.unitLabel,
-                                      warningMessage: warning.message,
-                                      warningKind: warning.kind,
-                                    })}
-                                    size="small"
-                                    variant="primary"
-                                  >
-                                    허용
-                                  </Button>
-                                ) : onClearCollisionDecision ? (
-                                  <Button
-                                    aria-label={`${item.studentName} 원래 ${session.sourceSessionNumber}회 이동 되돌리기`}
-                                    onClick={() => onClearCollisionDecision(warning.id)}
-                                    size="small"
-                                    variant="quiet"
-                                  >
-                                    이동 되돌리기
-                                  </Button>
-                                ) : null}
-                              </div>
-                            ) : null}
-                          </div>
-                        ))}
+                        {session.warnings?.map((warning) => {
+                          const actionPolicy = vocabCollisionActionPolicy(
+                            warning.kind,
+                          );
+                          const decisionContext = {
+                            collisionId: warning.id,
+                            availableFrom: session.availableFrom,
+                            availableUntil: session.availableUntil,
+                            studentId: item.studentId,
+                            studentName: item.studentName,
+                            sourceSessionNumber: session.sourceSessionNumber,
+                            unitLabel: session.unitLabel,
+                            warningMessage: warning.message,
+                            warningKind: warning.kind,
+                          };
+                          return (
+                            <div
+                              className={plannerStyles.warning}
+                              key={warning.id}
+                            >
+                              <span>{warning.message}</span>
+                              {warning.resolved ? (
+                                <MetaTag tone="warning">허용됨</MetaTag>
+                              ) : onCollisionDecision ? (
+                                <div className={plannerStyles.warningActions}>
+                                  {actionPolicy.decisionModes.map((mode) => (
+                                    <Button
+                                      aria-label={vocabCollisionActionAriaLabel({
+                                        mode,
+                                        sourceSessionNumber:
+                                          session.sourceSessionNumber,
+                                        studentName: item.studentName,
+                                        warningKind: warning.kind,
+                                      })}
+                                      key={mode}
+                                      onClick={() => {
+                                        const input =
+                                          buildVocabCollisionDecisionInput(
+                                            decisionContext,
+                                            mode,
+                                          );
+                                        if (input) onCollisionDecision(input);
+                                      }}
+                                      size="small"
+                                      variant={mode === "allow"
+                                        ? "primary"
+                                        : mode === "skip"
+                                          ? "quiet"
+                                          : undefined}
+                                    >
+                                      {vocabCollisionActionLabels[mode]}
+                                    </Button>
+                                  ))}
+                                  {actionPolicy.canClear &&
+                                  onClearCollisionDecision ? (
+                                    <Button
+                                      aria-label={`${item.studentName} 원래 ${session.sourceSessionNumber}회 이동 되돌리기`}
+                                      onClick={() =>
+                                        onClearCollisionDecision(warning.id)}
+                                      size="small"
+                                      variant="quiet"
+                                    >
+                                      이동 되돌리기
+                                    </Button>
+                                  ) : null}
+                                </div>
+                              ) : null}
+                            </div>
+                          );
+                        })}
                       </>
                     }
                     heading={

@@ -28,6 +28,11 @@ describe("student progress history source contract", () => {
     expect(bulkAssignments).toMatch(
       /buildStudentProgress\(students, units, historyBundle\.completeHistory\)/,
     );
-    expect(bulkAssignments).toContain("listAssignmentHistoryBundle()");
+    expect(bulkAssignments).toContain(
+      "listAssignmentHistoryBundle({ finalizeStale: false })",
+    );
+    expect(assignmentManager).toContain(
+      "listAssignmentHistoryBundle({ finalizeStale: false })",
+    );
   });
 });

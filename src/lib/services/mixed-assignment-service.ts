@@ -32,6 +32,7 @@ import {
 } from "@/lib/services/active-review-assignment-service";
 import { loadEligibleVocabularyDataset } from "@/lib/services/eligible-vocabulary-service";
 import { loadDatasetDisplayLabel } from "@/lib/services/dataset-catalog-service";
+import { memoizeRequestPreparation } from "@/lib/services/request-preparation-cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type {
   AssignmentCapacityInput,
@@ -70,6 +71,81 @@ type DatasetRow = {
   is_active: boolean;
 };
 
+type AssignmentExclusion = {
+  assignmentId: string;
+  studentId: string;
+};
+
+async function loadStudentForPreparation(
+  supabase: ServerSupabaseClient,
+  studentId: string,
+) {
+  return supabase
+    .from("students")
+    .select("id, status")
+    .eq("id", studentId)
+    .maybeSingle();
+}
+
+async function loadDatasetForPreparation(
+  supabase: ServerSupabaseClient,
+  datasetId: string,
+) {
+  const [datasetResult, unitResult, allCandidates] = await Promise.all([
+    supabase
+      .from("vocab_datasets")
+      .select("id, title, edition, status, is_active")
+      .eq("id", datasetId)
+      .maybeSingle(),
+    supabase
+      .from("vocab_units")
+      .select("id, unit_label, sort_index")
+      .eq("dataset_id", datasetId)
+      .order("sort_index"),
+    loadEligibleVocabularyDataset(supabase, datasetId, {
+      includeExamUseProjection: true,
+    }),
+  ]);
+  return { datasetResult, unitResult, allCandidates };
+}
+
+function preparationCacheKey(parts: readonly unknown[]) {
+  return JSON.stringify(parts);
+}
+
+export type MixedAssignmentPreparationCache = {
+  supabase: Promise<ServerSupabaseClient>;
+  students: Map<
+    string,
+    Promise<Awaited<ReturnType<typeof loadStudentForPreparation>>>
+  >;
+  datasets: Map<
+    string,
+    Promise<Awaited<ReturnType<typeof loadDatasetForPreparation>>>
+  >;
+  reviewQueues: Map<string, Promise<ReviewQueueRow[]>>;
+  datasetLabels: Map<string, Promise<string>>;
+  activeAssignments: Map<
+    string,
+    Promise<Awaited<ReturnType<typeof loadActiveReviewAssignments>>>
+  >;
+};
+
+/**
+ * Reuses immutable preparation reads only inside one preview/save request.
+ * A new request always creates a fresh cache and therefore revalidates data.
+ */
+export function createMixedAssignmentPreparationCache(): MixedAssignmentPreparationCache {
+  return {
+    supabase: createServerSupabaseClient(),
+    students: new Map(),
+    datasets: new Map(),
+    reviewQueues: new Map(),
+    datasetLabels: new Map(),
+    activeAssignments: new Map(),
+  };
+}
+
 export type AssignmentCapacity = {
   eligibleBeforeActiveAssignment: number;
   activeAssignmentExcluded: number;
@@ -88,6 +164,7 @@ export type AssignmentCapacity = {
 type PreparedAssignment = {
   supabase: ServerSupabaseClient;
   dataset: DatasetRow;
+  preparationCache: MixedAssignmentPreparationCache;
   primaryUnits: MixedAssignmentUnit[];
   primaryCandidates: EligibleVocabularyEntry[];
   allCandidates: EligibleVocabularyEntry[];
@@ -182,54 +259,67 @@ async function loadReviewQueueRows(
 async function prepareAssignment(
   input: AssignmentCapacityInput,
   authenticatedAdmin?: AdminContext,
-  exclusion?: {
-    assignmentId: string;
-    studentId: string;
-  },
+  exclusion?: AssignmentExclusion,
+  cache?: MixedAssignmentPreparationCache,
 ): Promise<PreparedAssignment> {
   if (!authenticatedAdmin) {
     await requireAdmin();
   }
 
-  const supabase = await createServerSupabaseClient();
+  const preparationCache =
+    cache ?? createMixedAssignmentPreparationCache();
+  const supabase = await preparationCache.supabase;
   const reviewLevels = [...input.reviewLevels].sort(
     (left, right) => left - right,
   );
   const reviewScope = input.reviewScope ?? "dataset";
-  const [
-    { data: student, error: studentError },
-    { data: datasetData, error: datasetError },
-    { data: unitData, error: unitError },
-    allCandidates,
-    queueRows,
-    activeReviewAssignments,
-  ] = await Promise.all([
-    supabase
-      .from("students")
-      .select("id, status")
-      .eq("id", input.studentId)
-      .maybeSingle(),
-    supabase
-      .from("vocab_datasets")
-      .select("id, title, edition, status, is_active")
-      .eq("id", input.datasetId)
-      .maybeSingle(),
-    supabase
-      .from("vocab_units")
-      .select("id, unit_label, sort_index")
-      .eq("dataset_id", input.datasetId)
-      .order("sort_index"),
-    loadEligibleVocabularyDataset(supabase, input.datasetId, {
-      includeExamUseProjection: true,
-    }),
-    loadReviewQueueRows(supabase, input.studentId, input.datasetId),
-    loadActiveReviewAssignments(
-      supabase,
-      [input.studentId],
-      input.datasetId,
-      exclusion,
-    ),
+  const studentKey = input.studentId;
+  const datasetKey = input.datasetId;
+  const studentDatasetKey = preparationCacheKey([
+    input.studentId,
+    input.datasetId,
   ]);
+  const activeAssignmentKey = preparationCacheKey([
+    input.studentId,
+    input.datasetId,
+    exclusion?.assignmentId ?? null,
+    exclusion?.studentId ?? null,
+  ]);
+  const [studentResult, datasetPreparation, queueRows, activeReviewAssignments] =
+    await Promise.all([
+      memoizeRequestPreparation(
+        preparationCache.students,
+        studentKey,
+        () => loadStudentForPreparation(supabase, input.studentId),
+      ),
+      memoizeRequestPreparation(
+        preparationCache.datasets,
+        datasetKey,
+        () => loadDatasetForPreparation(supabase, input.datasetId),
+      ),
+      memoizeRequestPreparation(
+        preparationCache.reviewQueues,
+        studentDatasetKey,
+        () => loadReviewQueueRows(supabase, input.studentId, input.datasetId),
+      ),
+      memoizeRequestPreparation(
+        preparationCache.activeAssignments,
+        activeAssignmentKey,
+        () =>
+          loadActiveReviewAssignments(
+            supabase,
+            [input.studentId],
+            input.datasetId,
+            exclusion,
+          ),
+      ),
+    ]);
+  const { data: student, error: studentError } = studentResult;
+  const {
+    datasetResult: { data: datasetData, error: datasetError },
+    unitResult: { data: unitData, error: unitError },
+    allCandidates,
+  } = datasetPreparation;
 
   if (studentError || datasetError || unitError) {
     throw new MixedAssignmentError("database");
@@ -421,6 +511,7 @@ async function prepareAssignment(
   return {
     supabase,
     dataset,
+    preparationCache,
     primaryUnits,
     primaryCandidates,
     allCandidates,
@@ -433,15 +524,14 @@ async function prepareAssignment(
 export async function calculateAssignmentCapacity(
   input: AssignmentCapacityInput,
   authenticatedAdmin?: AdminContext,
-  exclusion?: {
-    assignmentId: string;
-    studentId: string;
-  },
+  exclusion?: AssignmentExclusion,
+  cache?: MixedAssignmentPreparationCache,
 ) {
   const prepared = await prepareAssignment(
     input,
     authenticatedAdmin,
     exclusion,
+    cache,
   );
   return prepared.capacity;
 }
@@ -472,10 +562,8 @@ export type PreparedMixedAssignmentBatch = {
 export async function prepareMixedAssignmentBatch(
   input: MixedAssignmentInput,
   authenticatedAdmin?: AdminContext,
-  exclusion?: {
-    assignmentId: string;
-    studentId: string;
-  },
+  exclusion?: AssignmentExclusion,
+  cache?: MixedAssignmentPreparationCache,
 ): Promise<PreparedMixedAssignmentBatch> {
   if (
     input.availableUntil &&
@@ -499,6 +587,7 @@ export async function prepareMixedAssignmentBatch(
     },
     authenticatedAdmin,
     exclusion,
+    cache,
   );
   const { capacity } = prepared;
   if (prepared.selectedQueueRows.length === 0) {
@@ -545,12 +634,11 @@ export async function prepareMixedAssignmentBatch(
   const selectedQueueIds = prepared.selectedQueueRows.map(
     (queue) => queue.id,
   );
-  const supabase = await createServerSupabaseClient();
-  const datasetLabel = await loadDatasetDisplayLabel(
-    supabase,
-    prepared.dataset,
+  const datasetLabel = await memoizeRequestPreparation(
+    prepared.preparationCache.datasetLabels,
+    prepared.dataset.id,
+    () => loadDatasetDisplayLabel(prepared.supabase, prepared.dataset),
   );
-
   return {
     studentId: input.studentId,
     datasetId: input.datasetId,

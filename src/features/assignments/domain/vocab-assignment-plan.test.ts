@@ -39,6 +39,14 @@ describe("단어 시험 공통 배정 계획", () => {
     })).toEqual(["2026-08-17", "2026-08-19", "2026-08-21"]);
   });
 
+  it("1년을 넘는 비정상 날짜 범위는 순회하지 않는다", () => {
+    expect(buildWeekdayDates({
+      startDate: "2026-01-01",
+      endDate: "9999-12-31",
+      weekdays: [1, 3, 5],
+    })).toEqual([]);
+  });
+
   it("요일을 다시 누르면 해제하고 달력 조건이 잘못되면 빈 후보를 반환한다", () => {
     expect(toggleWeekday([1, 3, 5], 3)).toEqual([1, 5]);
     expect(toggleWeekday([1, 5], 3)).toEqual([1, 3, 5]);
