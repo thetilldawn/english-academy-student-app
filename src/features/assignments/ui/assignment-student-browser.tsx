@@ -5,6 +5,8 @@ import { Button } from "@/design-system/primitives/button/button";
 import type { AssignmentWorkspaceController } from "../controller/use-assignment-workspace";
 import { AssignmentStudentRow } from "./assignment-student-row";
 import { AssignmentWorkspaceFilters } from "./assignment-workspace-filters";
+import { SelectedStudentBasket } from "./selected-student-basket";
+import { VocabAssignmentEntrySelector } from "./vocab-assignment-entry-selector";
 import styles from "./assignment-workspace.module.css";
 
 export function AssignmentStudentBrowser({
@@ -14,12 +16,12 @@ export function AssignmentStudentBrowser({
 }) {
   return (
     <section
-      aria-labelledby="vocabulary-learning-tab"
+      aria-label="단어 시험 대상 선택"
       className={styles.browser}
-      id="vocabulary-learning-panel"
-      role="tabpanel"
     >
+      <VocabAssignmentEntrySelector controller={controller} />
       <AssignmentWorkspaceFilters controller={controller} />
+      <SelectedStudentBasket controller={controller} />
 
       <div className={styles.bulkBar}>
         <div className={styles.bulkSummary}>
@@ -52,25 +54,12 @@ export function AssignmentStudentBrowser({
         </div>
         <div className={styles.bulkActions}>
           <Button
-            disabled={
-              controller.selectedBulkStudentIds.length === 0 ||
-              controller.readyDatasets.length === 0
-            }
-            onClick={() => controller.actions.setBulkMode("with_wrong")}
-            size="small"
-          >
-            {adminLearningText.page.bulk.includeWrong}
-          </Button>
-          <Button
-            disabled={
-              controller.selectedBulkStudentIds.length === 0 ||
-              controller.readyDatasets.length === 0
-            }
+            disabled={!controller.canPrepareBulk}
             onClick={() => controller.actions.setBulkMode("next")}
             size="small"
             variant="primary"
           >
-            {adminLearningText.page.bulk.assignNext}
+            {adminLearningText.page.bulk.prepare}
           </Button>
         </div>
       </div>

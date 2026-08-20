@@ -102,6 +102,27 @@ export type BulkAssignmentRange = {
   sessionCount: number;
 };
 
+export type BulkCommonPlanSession = {
+  availableLocalDateTime: string;
+  deadlineLocalDateTime: string;
+  unitIds: readonly string[];
+};
+
+export type BulkCollisionDecision = {
+  collisionId: string;
+  mode: "skip" | "move" | "allow";
+  movedAvailableLocalDateTime?: string;
+  movedDeadlineLocalDateTime?: string;
+};
+
+export type BulkCommonAssignmentPlan = {
+  datasetId: string;
+  distribution: "split" | "repeat";
+  targetWordsPerSession: number;
+  sessions: readonly BulkCommonPlanSession[];
+  collisionDecisions: readonly BulkCollisionDecision[];
+};
+
 export type BulkSeriesAssignmentDraft = {
   kind: "bulk_series";
   studentIds: readonly string[];
@@ -111,6 +132,7 @@ export type BulkSeriesAssignmentDraft = {
   dayInterval: number;
   exam: ExamSettings;
   review: BulkReviewPolicy;
+  commonPlan?: BulkCommonAssignmentPlan;
 };
 
 export type LegacyReviewRecoveryDraft = {

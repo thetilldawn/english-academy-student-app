@@ -83,6 +83,43 @@ export const updateStudentProfileSchema = z
   })
   .strict();
 
+const clockTimeSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "시각을 확인해 주세요.");
+
+const reservedVocabTimeTemplateNames = new Set([
+  "수업 후",
+  "저녁",
+  "당일 마감",
+]);
+
+export const createVocabTimeTemplateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(30).refine(
+      (name) => !reservedVocabTimeTemplateNames.has(name),
+      "기본 시간 버튼과 다른 이름을 사용해 주세요.",
+    ),
+    availableTime: clockTimeSchema,
+    deadlineDayOffset: z.number().int().min(0).max(30),
+    deadlineTime: clockTimeSchema,
+    timingMode: z.enum(timingModes),
+    totalSeconds: z.number().int().min(30).max(10800).nullable(),
+    perQuestionSeconds: z.number().int().min(5).max(600).nullable(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    const valid = value.timingMode === "total"
+      ? value.totalSeconds !== null && value.perQuestionSeconds === null
+      : value.totalSeconds === null && value.perQuestionSeconds !== null;
+    if (!valid) {
+      context.addIssue({
+        code: "custom",
+        path: ["timingMode"],
+        message: "제한시간 방식을 확인해 주세요.",
+      });
+    }
+  });
+
 export const queueWrongWordsSchema = z
   .object({
     questionIds: z.array(z.uuid()).min(1).max(500),
@@ -171,6 +208,58 @@ const mixedReviewLevelSchema = z.union([
 
 const reviewScopeSchema = z.enum(["dataset", "selection"]);
 
+const bulkCollisionDecisionSchema = z
+  .object({
+    collisionId: z.string().trim().min(1).max(240),
+    mode: z.enum(["skip", "move", "allow"]),
+    movedAvailableFrom: z.iso.datetime({ offset: true }).nullable(),
+    movedAvailableUntil: z.iso.datetime({ offset: true }).nullable(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (value.mode === "move") {
+      if (
+        !value.movedAvailableFrom ||
+        !value.movedAvailableUntil ||
+        Date.parse(value.movedAvailableUntil) <=
+          Date.parse(value.movedAvailableFrom)
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["movedAvailableUntil"],
+          message: "이동할 시험의 공개·마감 시각을 확인해 주세요.",
+        });
+      }
+    } else if (value.movedAvailableFrom || value.movedAvailableUntil) {
+      context.addIssue({
+        code: "custom",
+        path: ["movedAvailableFrom"],
+        message: "이동을 선택했을 때만 이동 시각을 보낼 수 있습니다.",
+      });
+    }
+  });
+
+const bulkCommonPlanSchema = z
+  .object({
+    datasetId: z.uuid(),
+    distribution: z.enum(["split", "repeat"]),
+    targetWordsPerSession: z.number().int().min(1).max(500),
+    sessions: z
+      .array(
+        z
+          .object({
+            unitIds: z.array(z.uuid()).min(1).max(500),
+            availableFrom: z.iso.datetime({ offset: true }),
+            availableUntil: z.iso.datetime({ offset: true }),
+          })
+          .strict(),
+      )
+      .min(1)
+      .max(7),
+    collisionDecisions: z.array(bulkCollisionDecisionSchema).max(210),
+  })
+  .strict();
+
 const bulkAssignmentSelectionFields = {
   studentIds: z.array(z.uuid()).min(1).max(30),
   rangeMode: z.enum(bulkAssignmentRangeModes).default("previous_span"),
@@ -186,6 +275,7 @@ const bulkAssignmentSelectionFields = {
     z.literal(50),
     z.literal(100),
   ]),
+  commonPlan: bulkCommonPlanSchema.optional(),
 } as const;
 
 function validateBulkAssignmentSelection(
@@ -194,6 +284,8 @@ function validateBulkAssignmentSelection(
     reviewLevels: (1 | 2)[];
     firstAvailableFrom: string;
     firstAvailableUntil: string | null;
+    sessionCount: number;
+    commonPlan?: z.infer<typeof bulkCommonPlanSchema>;
   },
   context: z.RefinementCtx,
 ) {
@@ -219,6 +311,48 @@ function validateBulkAssignmentSelection(
       code: "custom",
       path: ["firstAvailableUntil"],
       message: "첫 시험 마감은 첫 배정 시간보다 뒤로 정해 주세요.",
+    });
+  }
+  if (value.commonPlan) {
+    if (value.commonPlan.sessions.length !== value.sessionCount) {
+      context.addIssue({
+        code: "custom",
+        path: ["commonPlan", "sessions"],
+        message: "공통 배정 회차와 시험 횟수가 일치하지 않습니다.",
+      });
+    }
+    if (value.commonPlan.sessions.length === 0) return;
+    if (new Set(value.commonPlan.collisionDecisions.map((item) => item.collisionId)).size !== value.commonPlan.collisionDecisions.length) {
+      context.addIssue({
+        code: "custom",
+        path: ["commonPlan", "collisionDecisions"],
+        message: "같은 겹침 결정을 두 번 보낼 수 없습니다.",
+      });
+    }
+    let previousStart = Number.NEGATIVE_INFINITY;
+    value.commonPlan.sessions.forEach((session, index) => {
+      if (new Set(session.unitIds).size !== session.unitIds.length) {
+        context.addIssue({
+          code: "custom",
+          path: ["commonPlan", "sessions", index, "unitIds"],
+          message: "같은 DAY를 한 회차에 두 번 넣을 수 없습니다.",
+        });
+      }
+      if (Date.parse(session.availableUntil) <= Date.parse(session.availableFrom)) {
+        context.addIssue({
+          code: "custom",
+          path: ["commonPlan", "sessions", index, "availableUntil"],
+          message: "회차 마감은 공개 시작보다 뒤여야 합니다.",
+        });
+      }
+      if (Date.parse(session.availableFrom) <= previousStart) {
+        context.addIssue({
+          code: "custom",
+          path: ["commonPlan", "sessions", index, "availableFrom"],
+          message: "회차 공개 시각은 앞 회차보다 뒤여야 합니다.",
+        });
+      }
+      previousStart = Date.parse(session.availableFrom);
     });
   }
 }

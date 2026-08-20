@@ -5,6 +5,7 @@ import {
   assignmentReplacementSchema,
   bulkAssignmentPreviewSchema,
   bulkAssignmentSchema,
+  createVocabTimeTemplateSchema,
   createReviewAssignmentDraftSchema,
   createWrongWordWorksheetRequestSchema,
   createStudentSchema,
@@ -13,6 +14,30 @@ import {
   updateStudentProfileSchema,
   updateStudentVocabSchema,
 } from "@/lib/validation";
+
+describe("시간 템플릿 입력 계약", () => {
+  it("제한시간 방식과 값이 일치할 때만 받는다", () => {
+    const valid = {
+      name: "저녁 수업",
+      availableTime: "18:00",
+      deadlineDayOffset: 1,
+      deadlineTime: "22:00",
+      timingMode: "total" as const,
+      totalSeconds: 300,
+      perQuestionSeconds: null,
+    };
+    expect(createVocabTimeTemplateSchema.parse(valid)).toEqual(valid);
+    expect(() => createVocabTimeTemplateSchema.parse({
+      ...valid,
+      totalSeconds: null,
+      perQuestionSeconds: 20,
+    })).toThrow();
+    expect(() => createVocabTimeTemplateSchema.parse({
+      ...valid,
+      name: "저녁",
+    })).toThrow();
+  });
+});
 
 describe("오답 해석 시험지 요청 입력 계약", () => {
   const questionId = "11111111-1111-4111-8111-111111111111";

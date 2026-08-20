@@ -1,7 +1,6 @@
 export const studentAppText = {
   // 학생 첫 화면 > 브랜드와 관리자 이동
   landing: {
-    eyebrow: "ENGLISH STUDY ROOM",
     title: "영어 학습실",
     adminLink: "관리자 페이지 →",
   },

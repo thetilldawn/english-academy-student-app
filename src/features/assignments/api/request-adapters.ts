@@ -275,6 +275,49 @@ function bulkSelectionBody(draft: BulkSeriesAssignmentDraft) {
   if (!firstAvailableFrom) {
     throw new Error("검증되지 않은 한국시간 시작 시각입니다.");
   }
+  const commonPlan = draft.commonPlan
+    ? {
+        datasetId: draft.commonPlan.datasetId,
+        distribution: draft.commonPlan.distribution,
+        targetWordsPerSession: draft.commonPlan.targetWordsPerSession,
+        sessions: draft.commonPlan.sessions.map((session) => {
+          const availableFrom = koreanDateTimeLocalToIso(
+            session.availableLocalDateTime,
+          );
+          const availableUntil = koreanDateTimeLocalToIso(
+            session.deadlineLocalDateTime,
+          );
+          if (!availableFrom || !availableUntil) {
+            throw new Error("검증되지 않은 공통 배정 시각입니다.");
+          }
+          return {
+            unitIds: [...session.unitIds],
+            availableFrom,
+            availableUntil,
+          };
+        }),
+        collisionDecisions: draft.commonPlan.collisionDecisions.map(
+          (decision) => {
+            const movedAvailableFrom = decision.movedAvailableLocalDateTime
+              ? koreanDateTimeLocalToIso(
+                  decision.movedAvailableLocalDateTime,
+                )
+              : null;
+            const movedAvailableUntil = decision.movedDeadlineLocalDateTime
+              ? koreanDateTimeLocalToIso(
+                  decision.movedDeadlineLocalDateTime,
+                )
+              : null;
+            return {
+              collisionId: decision.collisionId,
+              mode: decision.mode,
+              movedAvailableFrom,
+              movedAvailableUntil,
+            };
+          },
+        ),
+      }
+    : undefined;
   return {
     studentIds: [...draft.studentIds],
     rangeMode: draft.range.mode,
@@ -286,6 +329,7 @@ function bulkSelectionBody(draft: BulkSeriesAssignmentDraft) {
     includePendingReview: draft.review.mode === "pending",
     reviewLevels: [...draft.review.levels],
     englishToKoreanRatio: draft.exam.directionRatio,
+    ...(commonPlan ? { commonPlan } : {}),
   };
 }
 

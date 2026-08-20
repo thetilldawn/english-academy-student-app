@@ -1,9 +1,5 @@
 import { useId, type ReactNode } from "react";
 
-import {
-  HelpTip,
-  inlineHelpClassName,
-} from "@/design-system/primitives/tooltip/help-tip";
 import type { TimingMode } from "@/lib/admin/assignment-settings";
 import {
   Field,
@@ -141,7 +137,6 @@ export function AssignmentTimingModeField({
 }
 
 export function AssignmentSegmentedField<Value extends string>({
-  helpAriaLabel,
   helpText,
   label,
   onChange,
@@ -163,9 +158,12 @@ export function AssignmentSegmentedField<Value extends string>({
 
   return (
     <Field className={styles.segmentedField}>
-      <FieldLabel as="span" className={inlineHelpClassName} id={labelId}>
-        <span>{label}</span>
-        <HelpTip label={helpAriaLabel}>{helpText}</HelpTip>
+      <FieldLabel
+        as="span"
+        id={labelId}
+        title={typeof helpText === "string" ? helpText : undefined}
+      >
+        {label}
       </FieldLabel>
       <SegmentedControl
         ariaLabelledBy={labelId}

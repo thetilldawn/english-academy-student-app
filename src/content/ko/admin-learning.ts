@@ -1,8 +1,8 @@
 export const adminLearningText = {
   // 학습 관리 > 페이지·시험 종류 탭·검색
   page: {
-    title: "학습 관리",
-    vocabularyTab: "단어",
+    title: "단어 시험 관리",
+    vocabularyTab: "배정",
     otherLearningTab: "다른 학습",
     otherLearningEmpty:
       "지문·해석·문법·모의고사 학습 구조가 확정되면 이곳에서 관리합니다.",
@@ -22,6 +22,7 @@ export const adminLearningText = {
       clearAll: "전체 해제",
       includeWrong: "틀린 단어 포함",
       assignNext: "다음 범위 일괄 배정",
+      prepare: "배정 준비",
       noReadyDatasets:
         "검수가 끝난 단어장이 없어 아직 시험을 배정할 수 없습니다.",
       selectStudentAria: "{student} 일괄 배정 선택",
@@ -399,7 +400,7 @@ export const adminLearningText = {
     atomicHelpAria: "일괄 배정 저장 방식 도움말",
     calculating: "계산 중",
     previewSummary:
-      "{assignable}명 가능 · 학생당 {sessions}회 · {blocked}명 확인 필요",
+      "{assignable}명 배정 · {assignments}개 시험 · {blocked}명 확인 필요",
     datasetPending: "단어장 확인 중",
     rangePending: "범위 확인 중",
     questionCount: "{count}문항",

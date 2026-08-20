@@ -16,6 +16,39 @@
   gap: var(--space-3);
 }
 
+.entryModes {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.entryChoice {
+  grid-column: 1 / -1;
+}
+
+.selectionBasket {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  background: var(--surface-muted);
+}
+
+.selectionBasketHeading,
+.selectionChips {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.selectionBasketHeading {
+  justify-content: space-between;
+}
+
 .studentList {
   align-items: start;
   gap: var(--space-2);

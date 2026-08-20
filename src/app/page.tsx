@@ -23,7 +23,6 @@ export default async function HomePage() {
             E
           </span>
           <div>
-            <p className={styles.eyebrow}>{studentAppText.landing.eyebrow}</p>
             <h1>{studentAppText.landing.title}</h1>
           </div>
         </div>

@@ -412,6 +412,107 @@ function firstAvailableFromIso(
   return value;
 }
 
+function validateCommonPlan(
+  draft: BulkSeriesAssignmentDraft,
+  issues: AssignmentDraftIssue[],
+) {
+  const plan = draft.commonPlan;
+  if (!plan) return;
+  validateId(plan.datasetId, "commonPlan.datasetId", issues);
+  if (!integerInRange(plan.targetWordsPerSession, 1, 500)) {
+    issues.push({
+      code: "out_of_range",
+      path: "commonPlan.targetWordsPerSession",
+      message: "회차당 목표 단어 수는 1개부터 500개까지 입력해 주세요.",
+    });
+  }
+  if (plan.sessions.length !== draft.range.sessionCount) {
+    issues.push({
+      code: "invalid_order",
+      path: "commonPlan.sessions",
+      message: "미리보기 회차와 시험 횟수가 일치하지 않습니다.",
+    });
+  }
+  if (!integerInRange(plan.sessions.length, 1, 7)) {
+    issues.push({
+      code: "out_of_range",
+      path: "commonPlan.sessions",
+      message: "공통 배정은 한 번에 1회부터 7회까지 만들 수 있습니다.",
+    });
+  }
+  let previousStart = Number.NEGATIVE_INFINITY;
+  plan.sessions.forEach((session, index) => {
+    validateUniqueIds(
+      session.unitIds,
+      `commonPlan.sessions.${index}.unitIds`,
+      issues,
+    );
+    const start = koreanDateTimeLocalToIso(session.availableLocalDateTime);
+    const deadline = koreanDateTimeLocalToIso(session.deadlineLocalDateTime);
+    if (!start || !deadline) {
+      issues.push({
+        code: "invalid_datetime",
+        path: `commonPlan.sessions.${index}`,
+        message: `${index + 1}회차 공개·마감 시각을 확인해 주세요.`,
+      });
+      return;
+    }
+    if (Date.parse(deadline) <= Date.parse(start)) {
+      issues.push({
+        code: "invalid_order",
+        path: `commonPlan.sessions.${index}.deadlineLocalDateTime`,
+        message: `${index + 1}회차 마감은 공개 시작보다 뒤여야 합니다.`,
+      });
+    }
+    if (Date.parse(start) <= previousStart) {
+      issues.push({
+        code: "invalid_order",
+        path: `commonPlan.sessions.${index}.availableLocalDateTime`,
+        message: "회차 공개 시각은 앞 회차보다 뒤여야 합니다.",
+      });
+    }
+    previousStart = Date.parse(start);
+  });
+  const collisionIds = plan.collisionDecisions.map(
+    (decision) => decision.collisionId,
+  );
+  if (new Set(collisionIds).size !== collisionIds.length) {
+    issues.push({
+      code: "duplicate",
+      path: "commonPlan.collisionDecisions",
+      message: "같은 겹침 결정을 두 번 저장할 수 없습니다.",
+    });
+  }
+  plan.collisionDecisions.forEach((decision, index) => {
+    if (!decision.collisionId.trim()) {
+      issues.push({
+        code: "required",
+        path: `commonPlan.collisionDecisions.${index}.collisionId`,
+        message: "겹침 항목을 다시 확인해 주세요.",
+      });
+    }
+    if (decision.mode === "move") {
+      const movedStart = decision.movedAvailableLocalDateTime
+        ? koreanDateTimeLocalToIso(decision.movedAvailableLocalDateTime)
+        : null;
+      const movedDeadline = decision.movedDeadlineLocalDateTime
+        ? koreanDateTimeLocalToIso(decision.movedDeadlineLocalDateTime)
+        : null;
+      if (
+        !movedStart ||
+        !movedDeadline ||
+        Date.parse(movedDeadline) <= Date.parse(movedStart)
+      ) {
+        issues.push({
+          code: "invalid_datetime",
+          path: `commonPlan.collisionDecisions.${index}`,
+          message: "이동할 공개·마감 시각을 확인해 주세요.",
+        });
+      }
+    }
+  });
+}
+
 export function validateBulkPreviewProjection(
   draft: BulkSeriesAssignmentDraft,
 ): AssignmentDraftIssue[] {
@@ -452,14 +553,17 @@ export function validateBulkPreviewProjection(
       message: "시험 간격은 1일부터 30일까지 설정해 주세요.",
     });
   }
-  const start = firstAvailableFromIso(draft, issues);
-  const deadline = deadlineIso(draft.firstDeadline, "firstDeadline", issues);
-  if (start && deadline && Date.parse(deadline) <= Date.parse(start)) {
-    issues.push({
-      code: "invalid_order",
-      path: "firstDeadline",
-      message: "첫 시험 마감은 첫 배정 시간보다 뒤로 정해 주세요.",
-    });
+  validateCommonPlan(draft, issues);
+  if (!draft.commonPlan) {
+    const start = firstAvailableFromIso(draft, issues);
+    const deadline = deadlineIso(draft.firstDeadline, "firstDeadline", issues);
+    if (start && deadline && Date.parse(deadline) <= Date.parse(start)) {
+      issues.push({
+        code: "invalid_order",
+        path: "firstDeadline",
+        message: "첫 시험 마감은 첫 배정 시간보다 뒤로 정해 주세요.",
+      });
+    }
   }
   validateDirection(draft.exam, issues);
   validateReviewLevels(draft.review, issues);
@@ -472,12 +576,16 @@ export function validateBulkAssignmentSubmission(
 ): AssignmentDraftIssue[] {
   const issues = validateBulkPreviewProjection(draft);
   validateExamSettings(draft.exam, issues);
-  const deadline = deadlineIso(draft.firstDeadline, "firstDeadline", []);
-  if (deadline && Date.parse(deadline) <= nowMilliseconds) {
+  const deadlines = draft.commonPlan
+    ? draft.commonPlan.sessions.map((session) =>
+        koreanDateTimeLocalToIso(session.deadlineLocalDateTime),
+      )
+    : [deadlineIso(draft.firstDeadline, "firstDeadline", [])];
+  if (deadlines.some((deadline) => deadline && Date.parse(deadline) <= nowMilliseconds)) {
     issues.push({
       code: "invalid_order",
-      path: "firstDeadline",
-      message: "첫 시험 마감은 현재 시각보다 뒤로 정해 주세요.",
+      path: draft.commonPlan ? "commonPlan.sessions" : "firstDeadline",
+      message: "시험 마감은 현재 시각보다 뒤로 정해 주세요.",
     });
   }
   return issues;

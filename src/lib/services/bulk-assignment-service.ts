@@ -9,11 +9,17 @@ import {
   unitRangeLabel,
 } from "@/lib/admin/bulk-assignment-range";
 import { resolveBulkAssignmentSchedule } from "@/lib/admin/bulk-assignment-schedule";
+import {
+  enforceIncreasingResolvedSchedules,
+  resolveBulkScheduleCollision,
+  type BulkScheduleCollisionWarning,
+} from "@/lib/admin/bulk-assignment-conflicts";
 import { cataloguedDatasetDisplayLabel } from "@/lib/admin/dataset-catalog";
 import {
   isAssignmentPersistenceInvariantFailure,
 } from "@/lib/admin/assignment-database-error";
 import { buildStudentProgress } from "@/lib/admin/progress";
+import { resolveOrderedContiguousUnits } from "@/lib/admin/unit-range";
 import {
   requireAdmin,
   type AdminContext,
@@ -38,6 +44,7 @@ import type {
 
 export type BulkAssignmentPreviewSession = {
   sessionNumber: number;
+  sourceSessionNumber: number;
   available: boolean;
   unitId: string | null;
   unitLabel: string | null;
@@ -48,6 +55,7 @@ export type BulkAssignmentPreviewSession = {
   wrongCount: number;
   availableFrom: string;
   availableUntil: string | null;
+  warnings: BulkScheduleCollisionWarning[];
   error: string | null;
 };
 
@@ -79,6 +87,20 @@ const bulkAssignmentResultSchema = z.array(
 export type BulkAssignmentResult = z.infer<
   typeof bulkAssignmentResultSchema
 >[number];
+
+async function mapInBatches<Input, Output>(
+  items: readonly Input[],
+  batchSize: number,
+  mapper: (item: Input) => Promise<Output>,
+) {
+  const results: Output[] = [];
+  for (let index = 0; index < items.length; index += batchSize) {
+    results.push(
+      ...await Promise.all(items.slice(index, index + batchSize).map(mapper)),
+    );
+  }
+  return results;
+}
 
 export class BulkAssignmentError extends Error {
   constructor(
@@ -179,6 +201,15 @@ function emptySessionError(sessionNumber: number) {
   return `${sessionNumber}회차에 배정할 다음 DAY가 없습니다. 시험 횟수나 회차당 DAY 수를 줄여 주세요.`;
 }
 
+function commonPlanSchedule(input: BulkAssignmentPreviewInput) {
+  if (!input.commonPlan) return resolveBulkAssignmentSchedule(input);
+  return input.commonPlan.sessions.map((session, index) => ({
+    sessionNumber: index + 1,
+    availableFrom: session.availableFrom,
+    availableUntil: session.availableUntil,
+  }));
+}
+
 export async function previewBulkAssignments(
   input: BulkAssignmentPreviewInput,
   authenticatedAdmin?: AdminContext,
@@ -207,23 +238,38 @@ export async function previewBulkAssignments(
       (item) => [item.studentId, item],
     ),
   );
-  const schedule = resolveBulkAssignmentSchedule(input);
+  const schedule = commonPlanSchedule(input);
 
   const items = await Promise.all(
     input.studentIds.map(async (studentId) => {
       const student = studentById.get(studentId);
       const progress = progressByStudent.get(studentId);
-      const progressBlockedReason = progress
+      const progressBlockedReason = !input.commonPlan && progress
         ? unavailableReason(progress.recommendationReason)
         : null;
-      const dataset = progress?.recommendedDatasetId
-        ? datasetById.get(progress.recommendedDatasetId)
+      const selectedDatasetId = input.commonPlan?.datasetId ??
+        progress?.recommendedDatasetId ?? null;
+      const dataset = selectedDatasetId
+        ? datasetById.get(selectedDatasetId)
         : null;
       let rangeError: string | null = null;
-      let resolvedSessions: ReturnType<
-        typeof resolveBulkAssignmentSeries<(typeof units)[number]>
-      >["sessions"] = [];
-      if (
+      let resolvedSessions: Array<{
+        sessionNumber: number;
+        units: (typeof units)[number][];
+        truncated: boolean;
+      }> = [];
+      if (input.commonPlan && dataset) {
+        try {
+          const datasetUnits = unitsByDataset.get(dataset.id) ?? [];
+          resolvedSessions = input.commonPlan.sessions.map((session, index) => ({
+            sessionNumber: index + 1,
+            units: resolveOrderedContiguousUnits(datasetUnits, session.unitIds),
+            truncated: false,
+          }));
+        } catch {
+          rangeError = "선택한 공통 DAY 범위를 사용할 수 없습니다.";
+        }
+      } else if (
         progress?.recommendedDatasetId &&
         progress.recommendedUnitIds.length > 0
       ) {
@@ -248,7 +294,7 @@ export async function previewBulkAssignments(
       const itemBase = {
         studentId,
         studentName: student?.displayName ?? "확인할 수 없는 학생",
-        datasetId: progress?.recommendedDatasetId ?? null,
+        datasetId: selectedDatasetId,
         datasetLabel: dataset
           ? cataloguedDatasetDisplayLabel(dataset)
           : null,
@@ -271,7 +317,7 @@ export async function previewBulkAssignments(
         };
       }
       if (
-        !progress?.recommendedDatasetId ||
+        !selectedDatasetId ||
         resolvedSessions.length !== input.sessionCount ||
         !dataset ||
         dataset.status !== "ready" ||
@@ -289,16 +335,47 @@ export async function previewBulkAssignments(
       for (const [index, resolved] of resolvedSessions.entries()) {
         const previewSession = await (async () => {
           const scheduled = schedule[index];
+          if (!scheduled) return null;
+          const collisionResolution = input.commonPlan
+            ? resolveBulkScheduleCollision({
+                studentId,
+                sourceSessionNumber: resolved.sessionNumber,
+                schedule: scheduled,
+                existingAssignments: historyBundle.completeHistory
+                  .filter(
+                    (item) =>
+                      item.studentId === studentId &&
+                      !item.assignmentDeleted &&
+                      ["not_started", "in_progress"].includes(item.status) &&
+                      Boolean(item.availableFrom ?? item.assignedAt),
+                  )
+                  .map((item) => ({
+                    assignmentId: item.assignmentId,
+                    assignmentTitle:
+                      item.assignmentTitle.trim() || item.datasetTitle,
+                    availableFrom: item.availableFrom ?? item.assignedAt,
+                  })),
+                decisions: input.commonPlan.collisionDecisions,
+              })
+            : {
+                kind: "scheduled" as const,
+                schedule: scheduled,
+                warnings: [],
+                unresolved: false,
+              };
+          if (collisionResolution.kind === "skip") return null;
           const unitIds = resolved.units.map((unit) => unit.id);
           const sessionBase = {
             sessionNumber: resolved.sessionNumber,
+            sourceSessionNumber: resolved.sessionNumber,
             unitId: resolved.units[0]?.id ?? null,
             unitLabel: unitRangeLabel(resolved.units),
             unitIds,
             unitLabels: resolved.units.map((unit) => unit.label),
             rangeTruncated: resolved.truncated,
-            availableFrom: scheduled.availableFrom,
-            availableUntil: scheduled.availableUntil,
+            availableFrom: collisionResolution.schedule.availableFrom,
+            availableUntil: collisionResolution.schedule.availableUntil,
+            warnings: collisionResolution.warnings,
           };
           if (unitIds.length === 0) {
             return {
@@ -323,7 +400,7 @@ export async function previewBulkAssignments(
               },
               admin,
             );
-            const error =
+            const capacityError =
               includeReview && capacity.wrongEligible < 1
                 ? "다음 시험에 추가 가능한 틀린 단어가 없습니다."
                 : includeReview &&
@@ -332,6 +409,9 @@ export async function previewBulkAssignments(
                 : capacity.maximumQuestionCount < capacity.minimumQuestionCount
                   ? "현재 범위에서 만들 수 있는 문항이 부족합니다."
                   : null;
+            const error = collisionResolution.unresolved
+              ? "같은 날 시험 겹침의 처리 방법을 선택해 주세요."
+              : capacityError;
             return {
               ...sessionBase,
               available: error === null,
@@ -352,21 +432,53 @@ export async function previewBulkAssignments(
             };
           }
         })();
-        sessions.push(previewSession);
+        if (previewSession) sessions.push(previewSession);
       }
-      const firstError = sessions.find((session) => !session.available)?.error;
+      const normalizedSessions = sessions.map((session, index) => ({
+        ...session,
+        sessionNumber: index + 1,
+      }));
+      const orderedSessions = input.commonPlan
+        ? enforceIncreasingResolvedSchedules({
+            studentId,
+            sessions: normalizedSessions,
+            decisions: input.commonPlan.collisionDecisions,
+          })
+        : normalizedSessions;
+      const deliberatelySkippedAll =
+        Boolean(input.commonPlan) &&
+        resolvedSessions.length > 0 &&
+        orderedSessions.length === 0;
+      const firstError = orderedSessions.find(
+        (session) => !session.available,
+      )?.error;
+      const skippedSessionCount = Math.max(
+        0,
+        resolvedSessions.length - normalizedSessions.length,
+      );
       return {
         ...itemBase,
-        available: sessions.every((session) => session.available),
-        sessions,
-        error: firstError ?? null,
+        available:
+          deliberatelySkippedAll ||
+          (orderedSessions.length > 0 &&
+            orderedSessions.every((session) => session.available)),
+        sessions: orderedSessions,
+        error:
+          firstError ??
+          (deliberatelySkippedAll
+            ? "모든 후보 회차를 건너뛰었습니다."
+            : skippedSessionCount > 0
+              ? `건너뜀으로 ${skippedSessionCount}회차 범위가 이번 배정에서 빠집니다.`
+            : null),
       };
     }),
   );
 
   return {
     items,
-    assignableCount: items.filter((item) => item.available).length,
+    assignableCount: items.filter(
+      (item) => item.available && item.sessions.length > 0,
+    ).length,
     blockedCount: items.filter((item) => !item.available).length,
     assignmentCount: items.reduce(
       (count, item) =>
@@ -395,6 +507,15 @@ function bulkAssignmentRequestSha256(input: BulkAssignmentInput) {
         questionOrderMode: input.questionOrderMode,
         timingMode: input.timingMode,
         questionTimeLimitSeconds: input.questionTimeLimitSeconds,
+        commonPlan: input.commonPlan
+          ? {
+              ...input.commonPlan,
+              collisionDecisions: [...input.commonPlan.collisionDecisions]
+                .toSorted((left, right) =>
+                  left.collisionId.localeCompare(right.collisionId),
+                ),
+            }
+          : null,
       }),
       "utf8",
     )
@@ -431,10 +552,19 @@ export async function createBulkAssignments(
   );
   if (previous) return previous;
 
-  if (
-    input.firstAvailableUntil &&
-    Date.parse(input.firstAvailableUntil) <= Date.now()
-  ) {
+  const requestedDeadlines = input.commonPlan
+    ? [
+        ...input.commonPlan.sessions.map((session) => session.availableUntil),
+        ...input.commonPlan.collisionDecisions.flatMap((decision) =>
+          decision.mode === "move" && decision.movedAvailableUntil
+            ? [decision.movedAvailableUntil]
+            : [],
+        ),
+      ]
+    : [input.firstAvailableUntil];
+  if (requestedDeadlines.some(
+    (deadline) => deadline && Date.parse(deadline) <= Date.now(),
+  )) {
     throw new BulkAssignmentError(
       "invalid_selection",
       "첫 시험 마감은 현재보다 뒤로 정해 주세요.",
@@ -461,6 +591,17 @@ export async function createBulkAssignments(
       requestSha256,
     );
     if (concurrent) return concurrent;
+    const newlyColliding = blocked.find((item) =>
+      item.sessions.some((session) =>
+        session.warnings.some((warning) => !warning.resolved)
+      )
+    );
+    if (newlyColliding) {
+      throw new BulkAssignmentError(
+        "conflict",
+        "저장 직전에 새 시험 겹침이 확인되었습니다. 미리보기에서 처리 방법을 선택해 주세요.",
+      );
+    }
     throw new BulkAssignmentError(
       "invalid_selection",
       `${blocked[0]?.studentName ?? "학생"}: ${blocked[0]?.error ?? "배정 조건을 확인해 주세요."}`,
@@ -470,114 +611,117 @@ export async function createBulkAssignments(
   let batches: Record<string, unknown>[];
   try {
     batches = [];
-    for (
-      let sessionIndex = 0;
-      sessionIndex < input.sessionCount;
-      sessionIndex += 1
-    ) {
-      const sessionBatches = await Promise.all(
-        preview.items.map(async (item) => {
-              const session = item.sessions[sessionIndex];
-              if (
-                !item.datasetId ||
-                !session ||
-                session.unitIds.length < 1 ||
-                session.questionCount < 1
-              ) {
-                throw new BulkAssignmentError("invalid_selection");
-              }
-              if (
-                input.includePendingReview &&
-                session.sessionNumber === 1
-              ) {
-                const prepared = await prepareMixedAssignmentBatch(
-                  {
-                    studentId: item.studentId,
-                    datasetId: item.datasetId,
-                    primaryUnitIds: session.unitIds,
-                    reviewLevels: input.reviewLevels,
-                    englishToKoreanRatio: input.englishToKoreanRatio,
-                    totalQuestionCount: session.questionCount,
-                    title: "",
-                    timeLimitSeconds: input.timeLimitSeconds,
-                    passingScore: input.passingScore,
-                    questionOrderMode: input.questionOrderMode,
-                    availableUntil: session.availableUntil,
-                    timingMode: input.timingMode,
-                    questionTimeLimitSeconds:
-                      input.questionTimeLimitSeconds,
-                  },
-                  admin,
-                );
-                return {
-                  kind: "mixed",
-                  student_id: prepared.studentId,
-                  dataset_id: prepared.datasetId,
-                  review_levels: prepared.reviewLevels,
-                  review_scope: prepared.reviewScope,
-                  selected_queue_ids: prepared.selectedQueueIds,
-                  title: prepared.title,
-                  unit_ids: prepared.primaryUnitIds,
-                  english_to_korean_ratio:
-                    prepared.englishToKoreanRatio,
-                  question_count: session.questionCount,
-                  time_limit_seconds: prepared.timeLimitSeconds,
-                  passing_score: prepared.passingScore,
-                  question_order_mode: prepared.questionOrderMode,
-                  available_from: session.availableFrom,
-                  available_until: prepared.availableUntil,
-                  timing_mode: prepared.timingMode,
-                  question_time_limit_seconds:
-                    prepared.questionTimeLimitSeconds,
-                  session_number: session.sessionNumber,
-                  session_count: input.sessionCount,
-                  questions: prepared.questions,
-                };
-              }
+    const sessionInputs = preview.items.flatMap((item) =>
+      item.sessions.map((session) => ({ item, session })),
+    );
+    const itemBatches = await mapInBatches(
+      sessionInputs,
+      30,
+      async ({ item, session }) => {
+        if (
+          !item.datasetId ||
+          session.unitIds.length < 1 ||
+          session.questionCount < 1
+        ) {
+          throw new BulkAssignmentError("invalid_selection");
+        }
+        if (
+          input.includePendingReview &&
+          session.sessionNumber === 1
+        ) {
+          const prepared = await prepareMixedAssignmentBatch(
+            {
+              studentId: item.studentId,
+              datasetId: item.datasetId,
+              primaryUnitIds: session.unitIds,
+              reviewLevels: input.reviewLevels,
+              englishToKoreanRatio: input.englishToKoreanRatio,
+              totalQuestionCount: session.questionCount,
+              title: "",
+              timeLimitSeconds: input.timeLimitSeconds,
+              passingScore: input.passingScore,
+              questionOrderMode: input.questionOrderMode,
+              availableUntil: session.availableUntil,
+              timingMode: input.timingMode,
+              questionTimeLimitSeconds: input.questionTimeLimitSeconds,
+            },
+            admin,
+          );
+          return {
+            kind: "mixed",
+            student_id: prepared.studentId,
+            dataset_id: prepared.datasetId,
+            review_levels: prepared.reviewLevels,
+            review_scope: prepared.reviewScope,
+            selected_queue_ids: prepared.selectedQueueIds,
+            title: prepared.title,
+            unit_ids: prepared.primaryUnitIds,
+            english_to_korean_ratio: prepared.englishToKoreanRatio,
+            question_count: session.questionCount,
+            time_limit_seconds: prepared.timeLimitSeconds,
+            passing_score: prepared.passingScore,
+            question_order_mode: prepared.questionOrderMode,
+            available_from: session.availableFrom,
+            available_until: prepared.availableUntil,
+            timing_mode: prepared.timingMode,
+            question_time_limit_seconds: prepared.questionTimeLimitSeconds,
+            allowed_collision_assignment_ids: session.warnings.flatMap(
+              (warning) =>
+                warning.resolved && warning.existingAssignmentId
+                  ? [warning.existingAssignmentId]
+                  : [],
+            ),
+            session_number: session.sessionNumber,
+            session_count: item.sessions.length,
+            questions: prepared.questions,
+          };
+        }
 
-              const prepared = await prepareRegularAssignment(
-                {
-                  title: "",
-                  datasetId: item.datasetId,
-                  unitIds: session.unitIds,
-                  questionCount: session.questionCount,
-                  englishToKoreanRatio: input.englishToKoreanRatio,
-                  timeLimitSeconds: input.timeLimitSeconds,
-                  timingMode: input.timingMode,
-                  questionTimeLimitSeconds:
-                    input.questionTimeLimitSeconds,
-                  passingScore: input.passingScore,
-                  questionOrderMode: input.questionOrderMode,
-                  availableUntil: session.availableUntil,
-                  studentIds: [item.studentId],
-                },
-                admin,
-              );
-              return {
-                kind: "regular",
-                student_id: item.studentId,
-                dataset_id: prepared.datasetId,
-                unit_ids: prepared.unitIds,
-                title: prepared.title,
-                question_count: prepared.questionCount,
-                english_to_korean_ratio:
-                  prepared.englishToKoreanRatio,
-                time_limit_seconds: prepared.timeLimitSeconds,
-                passing_score: prepared.passingScore,
-                question_order_mode: prepared.questionOrderMode,
-                available_from: session.availableFrom,
-                available_until: prepared.availableUntil,
-                timing_mode: prepared.timingMode,
-                question_time_limit_seconds:
-                  prepared.questionTimeLimitSeconds,
-                session_number: session.sessionNumber,
-                session_count: input.sessionCount,
-                questions: prepared.questions,
-              };
-        }),
-      );
-      batches.push(...sessionBatches);
-    }
+        const prepared = await prepareRegularAssignment(
+          {
+            title: "",
+            datasetId: item.datasetId,
+            unitIds: session.unitIds,
+            questionCount: session.questionCount,
+            englishToKoreanRatio: input.englishToKoreanRatio,
+            timeLimitSeconds: input.timeLimitSeconds,
+            timingMode: input.timingMode,
+            questionTimeLimitSeconds: input.questionTimeLimitSeconds,
+            passingScore: input.passingScore,
+            questionOrderMode: input.questionOrderMode,
+            availableUntil: session.availableUntil,
+            studentIds: [item.studentId],
+          },
+          admin,
+        );
+        return {
+          kind: "regular",
+          student_id: item.studentId,
+          dataset_id: prepared.datasetId,
+          unit_ids: prepared.unitIds,
+          title: prepared.title,
+          question_count: prepared.questionCount,
+          english_to_korean_ratio: prepared.englishToKoreanRatio,
+          time_limit_seconds: prepared.timeLimitSeconds,
+          passing_score: prepared.passingScore,
+          question_order_mode: prepared.questionOrderMode,
+          available_from: session.availableFrom,
+          available_until: prepared.availableUntil,
+          timing_mode: prepared.timingMode,
+          question_time_limit_seconds: prepared.questionTimeLimitSeconds,
+          allowed_collision_assignment_ids: session.warnings.flatMap(
+            (warning) =>
+              warning.resolved && warning.existingAssignmentId
+                ? [warning.existingAssignmentId]
+                : [],
+          ),
+          session_number: session.sessionNumber,
+          session_count: item.sessions.length,
+          questions: prepared.questions,
+        };
+      },
+    );
+    batches.push(...itemBatches);
   } catch (error) {
     const concurrent = await lookupBulkAssignmentResult(
       supabase,
@@ -601,7 +745,7 @@ export async function createBulkAssignments(
   }
 
   const { data, error } = await supabase.rpc(
-    "create_bulk_vocab_assignments_v5",
+    "create_bulk_vocab_assignments_v6",
     {
       p_idempotency_key: input.idempotencyKey,
       p_request_sha256: requestSha256,

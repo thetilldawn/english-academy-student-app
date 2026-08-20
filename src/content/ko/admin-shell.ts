@@ -6,7 +6,7 @@ export const adminShellText = {
   navigation: {
     overview: "Overview",
     students: "학생 관리",
-    learning: "학습 관리",
+    learning: "단어 시험 관리",
     history: "내역",
     pcAriaLabel: "PC 관리 메뉴",
     tabletAriaLabel: "태블릿 관리 메뉴",
@@ -17,7 +17,7 @@ export const adminShellText = {
   pageTitles: {
     overview: "Overview",
     students: "학생 관리",
-    learning: "학습 관리",
+    learning: "단어 시험 관리",
     history: "내역",
   },
 
@@ -28,7 +28,6 @@ export const adminShellText = {
 
   // 관리자 로그인 페이지
   login: {
-    eyebrow: "TEACHER ADMIN",
     title: "관리자 로그인",
     accountScopeHelp: "직접 만든 관리자 계정으로만 들어갈 수 있습니다.",
     backToStudent: "← 학생 인증 화면",

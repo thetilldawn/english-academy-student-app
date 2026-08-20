@@ -83,9 +83,16 @@ function previewAllowsSubmission(
 ) {
   return (
     preview.blockedCount === 0 &&
-    preview.assignableCount === draft.studentIds.length &&
-    preview.assignmentCount ===
-      draft.studentIds.length * draft.range.sessionCount
+    (draft.commonPlan
+      ? preview.assignableCount > 0 &&
+        preview.assignmentCount > 0 &&
+        preview.assignmentCount === preview.items.reduce(
+          (count, item) => count + item.sessions.length,
+          0,
+        )
+      : preview.assignableCount === draft.studentIds.length &&
+        preview.assignmentCount ===
+        draft.studentIds.length * draft.range.sessionCount)
   );
 }
 
@@ -94,26 +101,33 @@ const systemClock = () => Date.now();
 export function useBulkAssignmentController({
   firstAvailableDateKorean,
   genericErrorMessage,
+  initialCommonPlan,
   includePendingReview,
   previewDelayMs = 120,
   previewErrorMessage,
   studentIds,
   clock = systemClock,
+  commonPlanRequired = false,
+  commonPlanRequiredMessage = "단어장, DAY, 날짜를 먼저 정해 주세요.",
   transport = browserAssignmentTransport,
 }: {
   firstAvailableDateKorean: string;
   genericErrorMessage: string;
+  initialCommonPlan?: BulkSeriesAssignmentDraft["commonPlan"];
   includePendingReview: boolean;
   previewDelayMs?: number;
   previewErrorMessage: string;
   studentIds: readonly string[];
   clock?: () => number;
+  commonPlanRequired?: boolean;
+  commonPlanRequiredMessage?: string;
   transport?: AssignmentTransport;
 }) {
   const [initialDraft] = useState(() =>
     createInitialBulkSeriesAssignmentDraft({
       firstAvailableDateKorean,
       includePendingReview,
+      commonPlan: initialCommonPlan,
       studentIds,
     }),
   );
@@ -186,6 +200,7 @@ export function useBulkAssignmentController({
 
   useEffect(() => {
     const draft = state.draft;
+    if (commonPlanRequired && !draft.commonPlan) return;
     const issues = validateBulkPreviewProjection(draft);
     if (issues.length > 0) return;
     const request = buildBulkAssignmentPreviewRequest(draft);
@@ -260,6 +275,7 @@ export function useBulkAssignmentController({
     };
   }, [
     apply,
+    commonPlanRequired,
     previewDelayMs,
     previewErrorMessage,
     previewRefreshVersion,
@@ -268,11 +284,17 @@ export function useBulkAssignmentController({
     transport,
   ]);
 
-  const previewIssues = validateBulkPreviewProjection(state.draft);
-  const submissionIssues = validateBulkAssignmentSubmission(
-    state.draft,
-    nowMilliseconds,
-  );
+  const missingCommonPlan = commonPlanRequired && !state.draft.commonPlan;
+  const previewIssues = missingCommonPlan
+    ? [{
+        code: "required" as const,
+        path: "commonPlan",
+        message: commonPlanRequiredMessage,
+      }]
+    : validateBulkPreviewProjection(state.draft);
+  const submissionIssues = missingCommonPlan
+    ? previewIssues
+    : validateBulkAssignmentSubmission(state.draft, nowMilliseconds);
   const currentPreviewFingerprint = safePreviewFingerprint(state.draft);
   const preview =
     state.preview.status === "ready" &&
@@ -303,6 +325,14 @@ export function useBulkAssignmentController({
       return { conflict: false, message: genericErrorMessage, ok: false };
     }
     let current = stateRef.current;
+    if (commonPlanRequired && !current.draft.commonPlan) {
+      setMessage(commonPlanRequiredMessage);
+      return {
+        conflict: false,
+        message: commonPlanRequiredMessage,
+        ok: false,
+      };
+    }
     if (current.submission.status === "succeeded") {
       return { conflict: false, message: genericErrorMessage, ok: false };
     }
@@ -413,12 +443,21 @@ export function useBulkAssignmentController({
   }, [
     apply,
     clock,
+    commonPlanRequired,
+    commonPlanRequiredMessage,
     genericErrorMessage,
     previewErrorMessage,
     transport,
   ]);
 
+  const changeCommonPlan = useCallback(
+    (commonPlan: BulkSeriesAssignmentDraft["commonPlan"]) =>
+      changeDraft({ type: "common_plan/changed", commonPlan }),
+    [changeDraft],
+  );
+
   const actions = {
+    changeCommonPlan,
     changeDeadline: (deadline: AssignmentDeadline) =>
       changeDraft({ type: "deadline/changed", deadline }),
     changeDirection: (value: AssignmentDirectionRatio) =>

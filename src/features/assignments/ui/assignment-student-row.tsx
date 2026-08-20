@@ -54,7 +54,9 @@ export function AssignmentStudentRow({
   );
   const reviewCounts = studentPendingReviewCounts(controller, student);
   const assignmentBlockedReason =
-    controller.readyDatasets.length === 0
+    student.status === "blocked"
+      ? "접속 차단 학생"
+      : controller.readyDatasets.length === 0
       ? adminLearningText.assignmentModal.submit.blockedReason.noReadyDataset
       : progress?.nextAssignmentBlockedReason === "scheduled"
         ? adminLearningText.assignmentModal.submit.blockedReason
@@ -100,6 +102,7 @@ export function AssignmentStudentRow({
       checked={controller.selectedBulkStudentIds.includes(student.id)}
       checkboxId={`bulk-student-${student.id}`}
       onToggle={() => controller.actions.toggleBulkStudent(student.id)}
+      disabled={student.status === "blocked"}
       selectionAriaLabel={formatContentText(
         adminLearningText.page.bulk.selectStudentAria,
         { student: student.displayName },

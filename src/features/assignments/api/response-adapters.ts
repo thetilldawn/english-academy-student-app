@@ -98,6 +98,7 @@ const assignmentEditDraftResponseSchema = z
 const bulkPreviewSessionSchema = z
   .object({
     sessionNumber: z.number().int().positive(),
+    sourceSessionNumber: z.number().int().positive(),
     available: z.boolean(),
     unitId: z.uuid().nullable(),
     unitLabel: z.string().nullable(),
@@ -108,6 +109,19 @@ const bulkPreviewSessionSchema = z
     wrongCount: nonNegativeInteger,
     availableFrom: z.iso.datetime({ offset: true }),
     availableUntil: z.iso.datetime({ offset: true }).nullable(),
+    warnings: z
+      .array(
+        z
+          .object({
+            id: z.string(),
+            kind: z.enum(["existing_assignment", "planned_series_order"]),
+            existingAssignmentId: z.uuid().nullable(),
+            existingAssignmentTitle: z.string(),
+            message: z.string(),
+            resolved: z.boolean(),
+          })
+          .strict(),
+      ),
     error: z.string().nullable(),
   })
   .strict();

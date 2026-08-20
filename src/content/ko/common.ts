@@ -48,6 +48,10 @@ export const commonText = {
     bySchool: "학교별",
     byGrade: "학년별",
     byWordbook: "단어장별",
+    byClassGroup: "수업그룹",
+    byStatus: "재원 상태",
+    active: "재원",
+    blocked: "차단",
     studentCount: "{count}명",
   },
 } as const;

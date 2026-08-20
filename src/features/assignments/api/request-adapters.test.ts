@@ -451,6 +451,77 @@ describe("assignment request adapters", () => {
     );
   });
 
+  it("공통 DAY와 요일별 공개·마감 시각을 미리보기와 저장에 똑같이 보낸다", () => {
+    const commonDraft: BulkSeriesAssignmentDraft = {
+      ...bulkDraft,
+      range: { mode: "fixed_span", unitsPerSession: 1, sessionCount: 2 },
+      review: { mode: "none", levels: [1, 2] },
+      commonPlan: {
+        datasetId: assignmentContractIds.dataset,
+        distribution: "split",
+        targetWordsPerSession: 40,
+        sessions: [
+          {
+            unitIds: [assignmentContractIds.day57],
+            availableLocalDateTime: "2026-08-17T16:00",
+            deadlineLocalDateTime: "2026-08-18T22:00",
+          },
+          {
+            unitIds: [assignmentContractIds.day58],
+            availableLocalDateTime: "2026-08-19T16:00",
+            deadlineLocalDateTime: "2026-08-20T22:00",
+          },
+        ],
+        collisionDecisions: [
+          {
+            collisionId: `${assignmentContractIds.studentA}:1:${assignmentContractIds.day60}`,
+            mode: "move",
+            movedAvailableLocalDateTime: "2026-08-18T16:00",
+            movedDeadlineLocalDateTime: "2026-08-19T22:00",
+          },
+        ],
+      },
+    };
+    const preview = buildBulkAssignmentPreviewRequest(commonDraft);
+    const submit = buildBulkAssignmentRequest(
+      commonDraft,
+      assignmentContractIds.idempotencyKey,
+      NOW,
+    );
+
+    expect(preview.body.commonPlan).toMatchObject({
+      datasetId: assignmentContractIds.dataset,
+      distribution: "split",
+      targetWordsPerSession: 40,
+      sessions: [
+        {
+          unitIds: [assignmentContractIds.day57],
+          availableFrom: "2026-08-17T07:00:00.000Z",
+          availableUntil: "2026-08-18T13:00:00.000Z",
+        },
+        {
+          unitIds: [assignmentContractIds.day58],
+          availableFrom: "2026-08-19T07:00:00.000Z",
+          availableUntil: "2026-08-20T13:00:00.000Z",
+        },
+      ],
+      collisionDecisions: [
+        {
+          mode: "move",
+          movedAvailableFrom: "2026-08-18T07:00:00.000Z",
+          movedAvailableUntil: "2026-08-19T13:00:00.000Z",
+        },
+      ],
+    });
+    expect(submit.body.commonPlan).toStrictEqual(preview.body.commonPlan);
+    expect(bulkAssignmentPreviewSchema.parse(preview.body)).toStrictEqual(
+      preview.body,
+    );
+    expect(bulkAssignmentSchema.parse(submit.body)).toStrictEqual(
+      submit.body,
+    );
+  });
+
   it("keeps disabled bulk review levels as an adapter-only compatibility value", () => {
     const noReviewDraft: BulkSeriesAssignmentDraft = {
       ...bulkDraft,

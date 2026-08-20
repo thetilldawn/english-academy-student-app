@@ -22,7 +22,7 @@ function previewResponse(
       available: true,
       datasetId: assignmentContractIds.dataset,
       datasetLabel: "능률 VOCA",
-      error: null,
+      error: null as string | null,
       sessions: Array.from({ length: sessionCount }, (_, index) => ({
         available: true,
         availableFrom: `2099-08-${String(10 + index).padStart(2, "0")}T00:00:00.000Z`,
@@ -31,11 +31,13 @@ function previewResponse(
         questionCount: 40,
         rangeTruncated: false,
         sessionNumber: index + 1,
+        sourceSessionNumber: index + 1,
         unitId: assignmentContractIds.day60,
         unitIds: [assignmentContractIds.day60],
         unitLabel: `DAY ${60 - index}`,
         unitLabels: [`DAY ${60 - index}`],
         wrongCount: index === 0 ? 2 : 0,
+        warnings: [],
       })),
       studentId,
       studentName: `학생 ${studentIndex + 1}`,
@@ -76,6 +78,95 @@ function renderController(
 afterEach(() => vi.restoreAllMocks());
 
 describe("bulk assignment controller", () => {
+  it("does not fall back to the unrelated legacy preview while a common plan is required", async () => {
+    const transport: AssignmentTransport = vi.fn(async () => ({
+      data: previewResponse([assignmentContractIds.studentA], 1),
+      ok: true,
+      status: 200,
+    }));
+    const { result } = renderHook(() =>
+      useBulkAssignmentController({
+        clock: () => NOW,
+        commonPlanRequired: true,
+        firstAvailableDateKorean: "2099-08-10",
+        genericErrorMessage: "일괄 배정을 저장하지 못했습니다.",
+        includePendingReview: true,
+        previewDelayMs: 0,
+        previewErrorMessage: "학생별 범위를 계산하지 못했습니다.",
+        studentIds: [assignmentContractIds.studentA],
+        transport,
+      }),
+    );
+
+    await act(async () => Promise.resolve());
+
+    expect(transport).not.toHaveBeenCalled();
+    expect(result.current.canSubmit).toBe(false);
+    expect(result.current.submissionIssues).toEqual([
+      expect.objectContaining({ path: "commonPlan" }),
+    ]);
+  });
+
+  it("allows a common plan when one student deliberately skips every session and another still receives it", async () => {
+    const studentIds = [
+      assignmentContractIds.studentA,
+      assignmentContractIds.studentB,
+    ];
+    const transport: AssignmentTransport = vi.fn(async (request) => {
+      if (request.url.endsWith("/preview")) {
+        const preview = previewResponse(studentIds, 1);
+        preview.items[0] = {
+          ...preview.items[0]!,
+          available: true,
+          error: "모든 후보 회차를 건너뛰었습니다.",
+          sessions: [],
+        };
+        return {
+          data: {
+            ...preview,
+            assignableCount: 1,
+            assignmentCount: 1,
+          },
+          ok: true,
+          status: 200,
+        };
+      }
+      return {
+        data: creationResponse([assignmentContractIds.studentB], 1),
+        ok: true,
+        status: 201,
+      };
+    });
+    const { result } = renderHook(() => useBulkAssignmentController({
+      clock: () => NOW,
+      commonPlanRequired: true,
+      firstAvailableDateKorean: "2099-08-10",
+      genericErrorMessage: "일괄 배정을 저장하지 못했습니다.",
+      includePendingReview: false,
+      initialCommonPlan: {
+        datasetId: assignmentContractIds.dataset,
+        distribution: "split",
+        targetWordsPerSession: 40,
+        sessions: [{
+          unitIds: [assignmentContractIds.day60],
+          availableLocalDateTime: "2099-08-10T09:00",
+          deadlineLocalDateTime: "2099-08-11T22:00",
+        }],
+        collisionDecisions: [],
+      },
+      previewDelayMs: 0,
+      previewErrorMessage: "학생별 범위를 계산하지 못했습니다.",
+      studentIds,
+      transport,
+    }));
+
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    await act(async () => {
+      const outcome = await result.current.actions.submit();
+      expect(outcome.ok && outcome.result.assignments).toHaveLength(1);
+    });
+  });
+
   it("keeps a ready preview for exam-only changes but submits the changed settings", async () => {
     const requests: Parameters<AssignmentTransport>[0][] = [];
     const transport: AssignmentTransport = vi.fn(async (request) => {

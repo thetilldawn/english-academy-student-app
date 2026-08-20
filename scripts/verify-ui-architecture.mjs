@@ -184,6 +184,12 @@ const assignmentFeatureContracts = [
     maxUseStateCalls: 4,
   },
   {
+    path: "src/features/assignments/controller/use-vocab-assignment-planner.ts",
+    maxLines: 450,
+    maxFetchCalls: 0,
+    maxUseStateCalls: 2,
+  },
+  {
     path: "src/features/assignments/controller/use-legacy-review-recovery.ts",
     maxLines: 120,
     maxFetchCalls: 0,

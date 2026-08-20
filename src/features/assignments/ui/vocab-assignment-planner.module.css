@@ -1,0 +1,189 @@
+.section,
+.fieldStack,
+.templateArea,
+.sessionTimeArea,
+.decisionArea,
+.decisionList,
+.decisionCard,
+.warning,
+.warningActions {
+  min-width: 0;
+  display: grid;
+}
+
+.copyPanel {
+  align-items: end;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.copySource {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.copySource > strong,
+.copySource > small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.section {
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.sectionHeading {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.fieldStack,
+.templateArea,
+.sessionTimeArea,
+.decisionArea,
+.decisionList,
+.decisionCard {
+  gap: var(--space-2);
+}
+
+.decisionArea {
+  margin-block: var(--space-2);
+}
+
+.decisionCard {
+  padding: var(--space-2);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-muted);
+}
+
+.decisionHeading {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.decisionCard > span,
+.decisionCard > small {
+  color: var(--text-secondary);
+}
+
+.decisionCard > .omissionWarning {
+  color: var(--status-danger-bg);
+}
+
+.sessionTimeRow {
+  align-items: center;
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: minmax(3rem, auto) minmax(0, 1fr) minmax(0, 1fr);
+  min-width: 0;
+}
+
+.weekdayButtons,
+.modeButtons,
+.templateButtons,
+.templateSave,
+.warningActions {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.weekdayButtons > * {
+  flex: 1 1 42px;
+}
+
+.dayRailFrame {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dayRail {
+  min-width: 0;
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding: var(--space-1);
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  cursor: grab;
+}
+
+.dayRail[data-dragging="true"] {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.dayButton {
+  flex: 0 0 auto;
+  min-width: 78px;
+}
+
+.rangeSummary,
+.candidateSummary {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.templateSave > :first-child {
+  flex: 1 1 180px;
+}
+
+.warning {
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-muted);
+}
+
+.warning > span {
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.warningActions {
+  justify-content: flex-end;
+}
+
+@media (max-width: 767px) {
+  .copyPanel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sessionTimeRow {
+    grid-template-columns: 1fr;
+  }
+
+  .dayRailFrame {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dayRailFrame > button {
+    display: none;
+  }
+
+  .modeButtons > *,
+  .templateButtons > * {
+    flex: 1 1 120px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dayRail {
+    scroll-behavior: auto;
+  }
+}

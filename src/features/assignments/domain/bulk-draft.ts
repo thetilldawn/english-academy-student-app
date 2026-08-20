@@ -16,6 +16,10 @@ export type BulkSeriesAssignmentDraftAction =
   | { type: "schedule/date_changed"; value: string }
   | { type: "schedule/interval_changed"; value: number }
   | { type: "deadline/changed"; deadline: AssignmentDeadline }
+  | {
+      type: "common_plan/changed";
+      commonPlan: BulkSeriesAssignmentDraft["commonPlan"];
+    }
   | { type: "exam/direction_changed"; value: AssignmentDirectionRatio }
   | {
       type: "exam/order_changed";
@@ -28,10 +32,12 @@ export type BulkSeriesAssignmentDraftAction =
 export function createInitialBulkSeriesAssignmentDraft({
   firstAvailableDateKorean,
   includePendingReview,
+  commonPlan,
   studentIds,
 }: {
   firstAvailableDateKorean: string;
   includePendingReview: boolean;
+  commonPlan?: BulkSeriesAssignmentDraft["commonPlan"];
   studentIds: readonly string[];
 }): BulkSeriesAssignmentDraft {
   return {
@@ -40,7 +46,7 @@ export function createInitialBulkSeriesAssignmentDraft({
     range: {
       mode: "previous_span",
       unitsPerSession: 1,
-      sessionCount: 1,
+      sessionCount: commonPlan?.sessions.length ?? 1,
     },
     firstAvailableDateKorean,
     firstDeadline: { mode: "none" },
@@ -54,6 +60,7 @@ export function createInitialBulkSeriesAssignmentDraft({
     review: includePendingReview
       ? { mode: "pending", levels: [1, 2] }
       : { mode: "none", levels: [1, 2] },
+    commonPlan,
   };
 }
 
@@ -72,6 +79,30 @@ export function reduceBulkSeriesAssignmentDraft(
       return { ...draft, dayInterval: action.value };
     case "deadline/changed":
       return { ...draft, firstDeadline: action.deadline };
+    case "common_plan/changed":
+      return {
+        ...draft,
+        range: action.commonPlan
+          ? {
+              ...draft.range,
+              mode: "fixed_span",
+              sessionCount: action.commonPlan.sessions.length,
+            }
+          : draft.range,
+        commonPlan: action.commonPlan
+          ? {
+              ...action.commonPlan,
+              sessions: action.commonPlan.sessions.map((session) => ({
+                ...session,
+                unitIds: [...session.unitIds],
+              })),
+              collisionDecisions:
+                action.commonPlan.collisionDecisions.map((decision) => ({
+                  ...decision,
+                })),
+            }
+          : undefined,
+      };
     case "exam/direction_changed":
       return {
         ...draft,

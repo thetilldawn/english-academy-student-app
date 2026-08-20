@@ -118,6 +118,12 @@ export type StudentLearningSourceSummary = {
   sortOrder: number;
 };
 
+export type StudentClassGroupSummary = {
+  id: string;
+  name: string;
+  studentIds: string[];
+};
+
 export type DatasetSummary = CataloguedDataset & {
   datasetKey: string;
   rowCount: number;
@@ -505,6 +511,39 @@ export async function listStudents(): Promise<StudentSummary[]> {
     (codeData ?? []) as StudentCodeRow[],
     datasetLabelById,
   );
+}
+
+export async function listStudentClassGroups(): Promise<
+  StudentClassGroupSummary[]
+> {
+  await requireAdmin();
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("class_groups")
+    .select("id, name, class_group_students(student_id)")
+    .eq("active", true)
+    .order("name");
+  if (error) {
+    if (
+      error.code === "42P01" ||
+      ((error.code ?? "").startsWith("PGRST") &&
+        error.message.includes("class_groups"))
+    ) {
+      return [];
+    }
+    throw new Error("수업그룹을 불러오지 못했습니다.");
+  }
+  return ((data ?? []) as Array<{
+    id: string;
+    name: string;
+    class_group_students: Array<{ student_id: string }> | null;
+  }>).map((group) => ({
+    id: group.id,
+    name: group.name,
+    studentIds: (group.class_group_students ?? []).map(
+      (membership) => membership.student_id,
+    ),
+  }));
 }
 
 export async function listStudentLearningSources(): Promise<

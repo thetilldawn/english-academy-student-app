@@ -7,24 +7,57 @@ import {
   MetaTag,
   MetaTagList,
 } from "@/design-system/primitives/badge/badge";
-import {
-  HelpTip,
-  inlineHelpClassName,
-} from "@/design-system/primitives/tooltip/help-tip";
+import { Button } from "@/design-system/primitives/button/button";
 import { formatKoreanDateTime } from "@/lib/format";
 
 import type { BulkAssignmentController } from "../controller/use-bulk-assignment-controller";
+import type {
+  VocabCollisionDecisionInput,
+  VocabCollisionDecisionRecord,
+} from "../domain/vocab-collision-decisions";
+import type { VocabRangeDistribution } from "../domain/vocab-assignment-plan";
+import { CollisionDecisionList } from "./collision-decision-list";
 import styles from "./bulk-assignment-editor.module.css";
+import plannerStyles from "./vocab-assignment-planner.module.css";
+
+type PreviewStudent = {
+  id: string;
+  displayName: string;
+  schoolName?: string | null;
+  gradeLabel?: string | null;
+};
+
+function studentContextLabel(student: PreviewStudent) {
+  return [student.displayName, student.schoolName, student.gradeLabel]
+    .filter(Boolean)
+    .join(" · ");
+}
 
 export function BulkSeriesPreview({
   controller,
+  collisionDecisions = [],
+  distribution = "split",
+  onClearCollisionDecision,
+  onCollisionDecision,
+  onCollisionDecisionChange,
   students,
 }: {
   controller: BulkAssignmentController;
-  students: readonly { id: string; displayName: string }[];
+  collisionDecisions?: readonly VocabCollisionDecisionRecord[];
+  distribution?: VocabRangeDistribution;
+  onClearCollisionDecision?: (collisionId: string) => void;
+  onCollisionDecision?: (input: VocabCollisionDecisionInput) => void;
+  onCollisionDecisionChange?: (
+    collisionId: string,
+    mode: "skip" | "move" | "allow",
+  ) => void;
+  students: readonly PreviewStudent[];
 }) {
   const { message, preview, previewLoading, state } = controller;
-  const items =
+  const studentLabelById = new Map(
+    students.map((student) => [student.id, studentContextLabel(student)]),
+  );
+  const items = (
     preview?.items ??
     students.map((student) => ({
       available: false,
@@ -33,19 +66,18 @@ export function BulkSeriesPreview({
       error: null,
       sessions: [],
       studentId: student.id,
-      studentName: student.displayName,
-    }));
+      studentName: studentContextLabel(student),
+    }))
+  ).map((item) => ({
+    ...item,
+    studentName: studentLabelById.get(item.studentId) ?? item.studentName,
+  }));
 
   return (
     <>
       <div className={styles.previewHeading}>
-        <h3 className={inlineHelpClassName}>
+        <h3 title={adminLearningText.bulkAssignmentModal.atomicHelp}>
           {adminLearningText.bulkAssignmentModal.previewTitle}
-          <HelpTip
-            label={adminLearningText.bulkAssignmentModal.atomicHelpAria}
-          >
-            {adminLearningText.bulkAssignmentModal.atomicHelp}
-          </HelpTip>
         </h3>
         <span className={styles.previewSummary}>
           {previewLoading
@@ -54,12 +86,20 @@ export function BulkSeriesPreview({
                 adminLearningText.bulkAssignmentModal.previewSummary,
                 {
                   assignable: preview?.assignableCount ?? 0,
+                  assignments: preview?.assignmentCount ?? 0,
                   blocked: preview?.blockedCount ?? 0,
-                  sessions: state.draft.range.sessionCount,
                 },
               )}
         </span>
       </div>
+      {onClearCollisionDecision && onCollisionDecisionChange ? (
+        <CollisionDecisionList
+          decisions={collisionDecisions}
+          distribution={distribution}
+          onChange={onCollisionDecisionChange}
+          onClear={onClearCollisionDecision}
+        />
+      ) : null}
       <div className={styles.previewList}>
         {items.map((item) => (
           <article className={styles.previewRow} key={item.studentId}>
@@ -134,7 +174,89 @@ export function BulkSeriesPreview({
                         ) : null}
                       </MetaTagList>
                     }
-                    error={session.error ? <small>{session.error}</small> : null}
+                    error={
+                      <>
+                        {session.error ? <small>{session.error}</small> : null}
+                        {session.warnings?.map((warning) => (
+                          <div className={plannerStyles.warning} key={warning.id}>
+                            <span>{warning.message}</span>
+                            {warning.resolved ? (
+                              <MetaTag tone="warning">허용됨</MetaTag>
+                            ) : onCollisionDecision ? (
+                              <div className={plannerStyles.warningActions}>
+                                <Button
+                                  aria-label={`${item.studentName} 원래 ${session.sourceSessionNumber}회 건너뜀`}
+                                  onClick={() => onCollisionDecision({
+                                    collisionId: warning.id,
+                                    mode: "skip",
+                                    availableFrom: session.availableFrom,
+                                    availableUntil: session.availableUntil,
+                                    studentId: item.studentId,
+                                    studentName: item.studentName,
+                                    sourceSessionNumber: session.sourceSessionNumber,
+                                    unitLabel: session.unitLabel,
+                                    warningMessage: warning.message,
+                                    warningKind: warning.kind,
+                                  })}
+                                  size="small"
+                                  variant="quiet"
+                                >
+                                  건너뜀
+                                </Button>
+                                <Button
+                                  aria-label={`${item.studentName} 원래 ${session.sourceSessionNumber}회 ${warning.kind === "planned_series_order" ? "하루 더 이동" : "다음 날 이동"}`}
+                                  onClick={() => onCollisionDecision({
+                                    collisionId: warning.id,
+                                    mode: "move",
+                                    availableFrom: session.availableFrom,
+                                    availableUntil: session.availableUntil,
+                                    studentId: item.studentId,
+                                    studentName: item.studentName,
+                                    sourceSessionNumber: session.sourceSessionNumber,
+                                    unitLabel: session.unitLabel,
+                                    warningMessage: warning.message,
+                                    warningKind: warning.kind,
+                                  })}
+                                  size="small"
+                                >
+                                  다음 날 이동
+                                </Button>
+                                {warning.kind === "existing_assignment" ? (
+                                  <Button
+                                    aria-label={`${item.studentName} 원래 ${session.sourceSessionNumber}회 겹침 허용`}
+                                    onClick={() => onCollisionDecision({
+                                      collisionId: warning.id,
+                                      mode: "allow",
+                                      availableFrom: session.availableFrom,
+                                      availableUntil: session.availableUntil,
+                                      studentId: item.studentId,
+                                      studentName: item.studentName,
+                                      sourceSessionNumber: session.sourceSessionNumber,
+                                      unitLabel: session.unitLabel,
+                                      warningMessage: warning.message,
+                                      warningKind: warning.kind,
+                                    })}
+                                    size="small"
+                                    variant="primary"
+                                  >
+                                    허용
+                                  </Button>
+                                ) : onClearCollisionDecision ? (
+                                  <Button
+                                    aria-label={`${item.studentName} 원래 ${session.sourceSessionNumber}회 이동 되돌리기`}
+                                    onClick={() => onClearCollisionDecision(warning.id)}
+                                    size="small"
+                                    variant="quiet"
+                                  >
+                                    이동 되돌리기
+                                  </Button>
+                                ) : null}
+                              </div>
+                            ) : null}
+                          </div>
+                        ))}
+                      </>
+                    }
                     heading={
                       <strong>
                         {formatContentText(
@@ -148,11 +270,14 @@ export function BulkSeriesPreview({
                 ))
               ) : (
                 <span className={styles.pending}>
-                  {adminLearningText.bulkAssignmentModal.rangePending}
+                  {item.error ??
+                    adminLearningText.bulkAssignmentModal.rangePending}
                 </span>
               )}
             </div>
-            {item.error ? <small>{item.error}</small> : null}
+            {item.error && item.sessions.length > 0 ? (
+              <small>{item.error}</small>
+            ) : null}
           </article>
         ))}
       </div>

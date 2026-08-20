@@ -3,11 +3,13 @@ import {
   listAssignmentHistoryBundle,
   listDatasets,
   listStudentCurrentVocabWrongSummaries,
+  listStudentClassGroups,
   listStudentLearningSources,
   listStudentPendingReviewSummaries,
   listStudents,
   listVocabUnits,
 } from "@/lib/services/admin-service";
+import { listVocabTimeTemplates } from "@/lib/services/vocab-time-template-service";
 
 export async function loadAssignmentManagerData() {
   const [
@@ -18,6 +20,8 @@ export async function loadAssignmentManagerData() {
     pendingReviewSummaries,
     currentVocabWrongSummaries,
     learningSources,
+    classGroups,
+    timeTemplates,
   ] = await Promise.all([
     listDatasets(),
     listStudents(),
@@ -26,6 +30,8 @@ export async function loadAssignmentManagerData() {
     listStudentPendingReviewSummaries(),
     listStudentCurrentVocabWrongSummaries(),
     listStudentLearningSources(),
+    listStudentClassGroups(),
+    listVocabTimeTemplates(),
   ]);
 
   return {
@@ -41,6 +47,8 @@ export async function loadAssignmentManagerData() {
     pendingReviewSummaries,
     currentVocabWrongSummaries,
     learningSources,
+    classGroups,
+    timeTemplates,
   };
 }
 

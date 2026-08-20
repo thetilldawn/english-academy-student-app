@@ -35,7 +35,8 @@ export function AssignmentWorkspaceFilters({
 }) {
   const { actions, filters } = controller;
   const activeCount =
-    [filters.school, filters.grade, filters.wordbook].filter(Boolean).length +
+    [filters.school, filters.grade, filters.wordbook, filters.classGroup].filter(Boolean).length +
+    (filters.status === "active" ? 0 : 1) +
     (filters.wrongWord === "all" ? 0 : 1);
   const resetDisabled = activeCount === 0;
 
@@ -67,6 +68,27 @@ export function AssignmentWorkspaceFilters({
         </summary>
         <div className={styles.filterGroups}>
           <fieldset>
+            <legend>{commonText.filters.byStatus}</legend>
+            <div className={styles.filterChips}>
+              <Button
+                aria-pressed={filters.status === "active"}
+                onClick={() => actions.setFilter("status", "active")}
+                size="small"
+                variant="filter"
+              >
+                {commonText.filters.active}
+              </Button>
+              <Button
+                aria-pressed={filters.status === "blocked"}
+                onClick={() => actions.setFilter("status", "blocked")}
+                size="small"
+                variant="filter"
+              >
+                {commonText.filters.blocked}
+              </Button>
+            </div>
+          </fieldset>
+          <fieldset>
             <legend>{commonText.filters.wrongAvailability}</legend>
             <div className={styles.filterChips}>
               {wrongFilters.map(([value, label]) => (
@@ -89,6 +111,17 @@ export function AssignmentWorkspaceFilters({
             }
             options={controller.schoolOptions}
             value={filters.school}
+          />
+          <IdFilterGroup
+            label={commonText.filters.byClassGroup}
+            onChange={(value) =>
+              actions.setFilter(
+                "classGroup",
+                toggleValue(filters.classGroup, value),
+              )
+            }
+            options={controller.classGroupOptions}
+            value={filters.classGroup}
           />
           <FilterGroup
             label={commonText.filters.byGrade}
@@ -117,6 +150,16 @@ export function AssignmentWorkspaceFilters({
           {filters.school ? <MetaTag>{filters.school}</MetaTag> : null}
           {filters.grade ? <MetaTag>{filters.grade}</MetaTag> : null}
           {filters.wordbook ? <MetaTag>{filters.wordbook}</MetaTag> : null}
+          {filters.classGroup ? (
+            <MetaTag>
+              {controller.classGroupOptions.find(
+                (option) => option.value === filters.classGroup,
+              )?.label ?? commonText.filters.byClassGroup}
+            </MetaTag>
+          ) : null}
+          {filters.status === "blocked" ? (
+            <MetaTag tone="warning">{commonText.filters.blocked}</MetaTag>
+          ) : null}
           {filters.wrongWord !== "all" ? (
             <MetaTag tone="warning">
               {filters.wrongWord === "wrong"
@@ -171,6 +214,38 @@ function FilterGroup({
             variant="filter"
           >
             {option}
+          </Button>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+function IdFilterGroup({
+  label,
+  onChange,
+  options,
+  value,
+}: {
+  label: string;
+  onChange: (value: string) => void;
+  options: readonly { label: string; value: string }[];
+  value: string;
+}) {
+  if (options.length === 0) return null;
+  return (
+    <fieldset>
+      <legend>{label}</legend>
+      <div className={styles.filterChips}>
+        {options.map((option) => (
+          <Button
+            aria-pressed={value === option.value}
+            key={option.value}
+            onClick={() => onChange(option.value)}
+            size="small"
+            variant="filter"
+          >
+            {option.label}
           </Button>
         ))}
       </div>
