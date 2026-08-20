@@ -1,6 +1,11 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import {
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type FormEvent,
+} from "react";
 import {
   Button,
   ButtonSpinner,
@@ -19,10 +24,27 @@ type ErrorResponse = {
   error?: string;
 };
 
+function subscribeHydration() {
+  return () => {};
+}
+
+function getHydratedSnapshot() {
+  return true;
+}
+
+function getServerHydratedSnapshot() {
+  return false;
+}
+
 export function AdminLoginForm() {
   const requestInFlight = useRef(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const hydrated = useSyncExternalStore(
+    subscribeHydration,
+    getHydratedSnapshot,
+    getServerHydratedSnapshot,
+  );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -77,14 +99,15 @@ export function AdminLoginForm() {
 
   return (
     <form
-      aria-busy={submitting}
+      aria-busy={!hydrated || submitting}
       className={styles.form}
+      data-hydrated={hydrated ? "true" : "false"}
       onSubmit={handleSubmit}
     >
       <Field as="label" >
         <FieldLabel as="span" >{adminShellText.login.email}</FieldLabel>
         <Input
-          disabled={submitting}
+          disabled={!hydrated || submitting}
           name="email"
           type="email"
           autoComplete="username"
@@ -95,7 +118,7 @@ export function AdminLoginForm() {
       <Field as="label" >
         <FieldLabel as="span" >{adminShellText.login.password}</FieldLabel>
         <Input
-          disabled={submitting}
+          disabled={!hydrated || submitting}
           name="password"
           type="password"
           autoComplete="current-password"
@@ -110,7 +133,7 @@ export function AdminLoginForm() {
         </Notice>
       )}
       <Button
-        disabled={submitting}
+        disabled={!hydrated || submitting}
         size="large"
         type="submit"
         variant="primary"

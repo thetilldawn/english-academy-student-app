@@ -3,6 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AssignmentUnitItem } from "../catalog-types";
@@ -28,6 +29,9 @@ const units = [1, 2, 3].map((number) => ({
 
 beforeEach(() => {
   HTMLElement.prototype.scrollIntoView = vi.fn();
+  HTMLElement.prototype.setPointerCapture = vi.fn();
+  HTMLElement.prototype.releasePointerCapture = vi.fn();
+  HTMLElement.prototype.hasPointerCapture = vi.fn(() => false);
 });
 afterEach(cleanup);
 
@@ -55,5 +59,58 @@ describe("DAY 버튼판", () => {
     expect(second).toHaveFocus();
     fireEvent.click(second);
     expect(onSelect).toHaveBeenCalledWith(units[1]!.id);
+  });
+
+  it("짧은 포인터 클릭은 가로 드래그로 가로채지 않는다", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    render(
+      <DayRangeRail
+        onSelect={onSelect}
+        selectedUnitIds={new Set()}
+        selection={{ startUnitId: null, endUnitId: null }}
+        units={units}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "DAY 1" }));
+
+    expect(HTMLElement.prototype.setPointerCapture).not.toHaveBeenCalled();
+    expect(onSelect).toHaveBeenCalledWith(units[0]!.id);
+  });
+
+  it("5px를 넘긴 버튼 드래그만 스크롤하고 선택을 한 번 막은 뒤 해제한다", () => {
+    const onSelect = vi.fn();
+    vi.mocked(HTMLElement.prototype.hasPointerCapture).mockReturnValue(true);
+    render(
+      <DayRangeRail
+        onSelect={onSelect}
+        selectedUnitIds={new Set()}
+        selection={{ startUnitId: null, endUnitId: null }}
+        units={units}
+      />,
+    );
+
+    const rail = screen.getByRole("group", { name: "DAY 범위" });
+    const first = screen.getByRole("button", { name: "DAY 1" });
+    rail.scrollLeft = 40;
+    fireEvent.pointerDown(first, { button: 0, clientX: 100, pointerId: 1 });
+    fireEvent.pointerMove(first, { clientX: 97, pointerId: 1 });
+    expect(HTMLElement.prototype.setPointerCapture).not.toHaveBeenCalled();
+    expect(rail.scrollLeft).toBe(40);
+
+    fireEvent.pointerMove(first, { clientX: 80, pointerId: 1 });
+    expect(HTMLElement.prototype.setPointerCapture).toHaveBeenCalledWith(1);
+    expect(rail).toHaveAttribute("data-dragging", "true");
+    expect(rail.scrollLeft).toBe(60);
+
+    fireEvent.pointerUp(rail, { pointerId: 1 });
+    expect(HTMLElement.prototype.releasePointerCapture).toHaveBeenCalledWith(1);
+    expect(rail).toHaveAttribute("data-dragging", "false");
+
+    fireEvent.click(first);
+    expect(onSelect).not.toHaveBeenCalled();
+    fireEvent.click(first);
+    expect(onSelect).toHaveBeenCalledWith(units[0]!.id);
   });
 });

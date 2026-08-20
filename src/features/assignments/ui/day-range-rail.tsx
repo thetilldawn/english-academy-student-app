@@ -36,8 +36,6 @@ export function DayRangeRail({
       startX: event.clientX,
       scrollLeft: rail.scrollLeft,
     };
-    rail.setPointerCapture(event.pointerId);
-    rail.dataset.dragging = "true";
   }
 
   function moveDrag(event: PointerEvent<HTMLDivElement>) {
@@ -45,15 +43,21 @@ export function DayRangeRail({
     const drag = dragRef.current;
     if (!rail || !drag.active) return;
     const distance = event.clientX - drag.startX;
-    if (Math.abs(distance) > 5) drag.moved = true;
-    rail.scrollLeft = drag.scrollLeft - distance;
+    if (Math.abs(distance) > 5 && !drag.moved) {
+      drag.moved = true;
+      rail.setPointerCapture(event.pointerId);
+      rail.dataset.dragging = "true";
+    }
+    if (drag.moved) rail.scrollLeft = drag.scrollLeft - distance;
   }
 
   function endDrag(event: PointerEvent<HTMLDivElement>) {
     const rail = railRef.current;
     if (!rail) return;
     dragRef.current.active = false;
-    rail.releasePointerCapture(event.pointerId);
+    if (rail.hasPointerCapture(event.pointerId)) {
+      rail.releasePointerCapture(event.pointerId);
+    }
     rail.dataset.dragging = "false";
   }
 
