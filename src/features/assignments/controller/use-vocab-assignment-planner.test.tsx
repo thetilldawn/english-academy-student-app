@@ -192,6 +192,20 @@ describe("단어 배정 일정 controller", () => {
     ]);
   });
 
+  it("DAY가 회차보다 적은 나누기는 공통 계획을 지우고 배정을 막는다", () => {
+    const { result } = renderPlanner();
+    act(() => {
+      result.current.actions.selectUnit(units[0]!.id);
+      result.current.actions.selectUnit(units[1]!.id);
+    });
+
+    expect(result.current.scheduleSlots).toHaveLength(3);
+    expect(result.current.rangeSessions).toEqual([]);
+    expect(result.current.splitScheduleIssue).toBe(true);
+    expect(result.current.commonPlan).toBeUndefined();
+    expect(mocks.changeCommonPlan).toHaveBeenLastCalledWith(undefined);
+  });
+
   it("요일을 3개에서 2개로 줄였다 다시 늘리면 공통 계획도 3→2→3회로 동기화한다", () => {
     const { result } = renderPlanner();
     selectWholeRange(result);

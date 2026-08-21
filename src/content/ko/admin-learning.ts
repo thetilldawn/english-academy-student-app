@@ -13,7 +13,7 @@ export const adminLearningText = {
     noStudents: "조건에 맞는 접속 가능 학생이 없습니다.",
     tabsAria: "학습 종류",
     expiredReviewDraft:
-      "재시험 초안이 만료되었거나 이미 사용되었습니다. 학생 관리의 학습 관리에서 다시 선택해 주세요.",
+      "재시험 초안이 만료되었거나 이미 사용되었습니다. 학생 관리의 내역에서 다시 선택해 주세요.",
     bulk: {
       selectedCount: "{count}명 선택",
       maximum: "최대 30명",

@@ -51,7 +51,7 @@ export function VocabScheduleFields({
     <section className={styles.section}>
       <h3 className={styles.sectionHeading}>날짜 · 시간</h3>
       <Field as="label">
-        <FieldLabel as="span">첫 배정 가능일</FieldLabel>
+        <FieldLabel as="span">배정 기준일</FieldLabel>
         <Input
           onChange={(event) =>
             controller.actions.updateSchedule({ startDate: event.target.value })

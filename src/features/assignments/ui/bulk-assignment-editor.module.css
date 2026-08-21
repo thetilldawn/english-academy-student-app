@@ -97,12 +97,14 @@
   color: var(--fail);
 }
 
-@media (max-width: 767px) {
+@media (max-width: 960px) {
   .previewSection {
     max-height: none;
     overflow: visible;
   }
+}
 
+@media (max-width: 767px) {
   .previewHeading,
   .studentHeading {
     align-items: flex-start;

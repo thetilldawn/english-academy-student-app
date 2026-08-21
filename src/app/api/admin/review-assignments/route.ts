@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     return jsonError("관리자 로그인이 필요합니다.", 401);
   }
   return jsonError(
-    "별도 오답 재시험 배정은 종료되었습니다. 학습 관리의 ‘틀렸던 단어 추가’에서 단어 시험과 함께 배정해 주세요.",
+    "별도 오답 재시험 배정은 종료되었습니다. 단어 시험 관리의 ‘단어 배정’에서 오답을 포함해 배정해 주세요.",
     410,
   );
 }
