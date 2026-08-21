@@ -21,8 +21,7 @@
   min-width: 0;
 }
 
-.panel,
-.learningView {
+.panel {
   min-width: 0;
   display: grid;
   gap: var(--space-3);
@@ -32,7 +31,6 @@
   animation: panel-in var(--motion-standard) both;
 }
 
-.assignmentAction,
 .profileForm {
   min-width: 0;
   display: grid;
@@ -40,15 +38,6 @@
   padding: var(--space-3);
   border: 1px solid var(--line);
   background: var(--card);
-}
-
-.assignmentAction {
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-}
-
-.assignmentAction > strong {
-  min-width: 0;
 }
 
 .profileForm {
@@ -69,18 +58,6 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
   gap: var(--space-3);
-}
-
-.sectionHeading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-3);
-  margin-top: var(--space-1);
-}
-
-.sectionHeading h3 {
-  margin: 0;
 }
 
 .managementSummary {
@@ -164,7 +141,6 @@
 }
 
 @media (max-width: 767px) {
-  .assignmentAction,
   .wordbookForm,
   .profileGrid {
     grid-template-columns: 1fr;

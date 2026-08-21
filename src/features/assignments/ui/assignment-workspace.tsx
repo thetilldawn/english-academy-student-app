@@ -11,7 +11,6 @@ import {
   type AssignmentDialogView,
 } from "../controller/use-assignment-workspace";
 import { AssignmentStudentBrowser } from "./assignment-student-browser";
-import { AssignmentStudentDialog } from "./assignment-student-dialog";
 import { VocabAssignmentPlanner } from "./vocab-assignment-planner";
 
 export function AssignmentWorkspace({
@@ -36,17 +35,22 @@ export function AssignmentWorkspace({
     <>
       <AssignmentStudentBrowser controller={controller} />
 
-      {controller.bulkMode && controller.selectedBulkStudents.length > 0 ? (
+      {controller.plannerOpen && controller.plannerStudents.length > 0 ? (
         <VocabAssignmentPlanner
           data={controller.data}
           initialDatasetId={
-            controller.entryMode === "dataset"
+            controller.assignmentMode === "bulk" &&
+              controller.entryMode === "dataset"
               ? controller.entryDatasetId
-              : ""
+              : controller.assignmentMode === "single"
+                ? initialDatasetId
+                : ""
           }
-          onClose={() => controller.actions.setBulkMode(null)}
+          onClose={controller.actions.closePlanner}
           onSuccess={(assignmentCount, studentCount) => {
-            controller.actions.clearBulkStudents();
+            if (controller.assignmentMode === "bulk") {
+              controller.actions.clearBulkStudents();
+            }
             toast.success(
               formatContentText(adminLearningText.page.bulk.success, {
                 assignmentCount,
@@ -55,11 +59,9 @@ export function AssignmentWorkspace({
             );
             controller.actions.refresh();
           }}
-          students={controller.selectedBulkStudents}
+          students={controller.plannerStudents}
         />
       ) : null}
-
-      <AssignmentStudentDialog controller={controller} />
     </>
   );
 }

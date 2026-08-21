@@ -11,8 +11,7 @@ import type {
   VocabUnitSummary,
 } from "@/lib/services/admin-service";
 
-export type StudentDetailTab = "learning" | "account" | "history";
-export type StudentLearningView = "summary" | "vocab" | "passage";
+export type StudentDetailTab = "info" | "account" | "history";
 export type StudentWrongFilter = "all" | "wrong" | "repeated" | "retry";
 
 export type StudentCodeView = {

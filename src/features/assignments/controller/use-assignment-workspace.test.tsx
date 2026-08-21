@@ -14,7 +14,14 @@ vi.mock("next/navigation", () => ({
 }));
 
 const data = {
-  datasets: [],
+  datasets: [
+    {
+      id: "dataset-1",
+      isActive: true,
+      isAssignable: true,
+      status: "ready",
+    },
+  ],
   students: [
     {
       id: "student-1",
@@ -65,5 +72,32 @@ describe("단어 시험 배정 선택 바구니", () => {
     ]);
     expect(result.current.selectedBulkStudentIds).toEqual(["student-1"]);
     expect(result.current.selectedBulkStudents[0]?.displayName).toBe("김학생");
+  });
+
+  it("단일 배정과 일괄 배정이 같은 계획 창에 서로 정확한 학생을 전달한다", () => {
+    const { result } = renderHook(() => useAssignmentWorkspace({
+      data,
+      initialDatasetId: "",
+      initialDialogView: "overview",
+      initialStudentId: "",
+    }));
+
+    act(() => result.current.actions.openSingleAssignment("student-1"));
+    expect(result.current.plannerOpen).toBe(true);
+    expect(result.current.plannerStudents.map((student) => student.id)).toEqual([
+      "student-1",
+    ]);
+
+    act(() => result.current.actions.changeAssignmentMode("bulk"));
+    act(() => {
+      result.current.actions.toggleBulkStudent("student-1");
+      result.current.actions.toggleBulkStudent("student-2");
+    });
+    act(() => result.current.actions.prepareBulkAssignment());
+    expect(result.current.plannerOpen).toBe(true);
+    expect(result.current.plannerStudents.map((student) => student.id)).toEqual([
+      "student-1",
+      "student-2",
+    ]);
   });
 });

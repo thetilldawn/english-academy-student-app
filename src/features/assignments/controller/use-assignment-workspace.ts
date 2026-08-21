@@ -30,9 +30,9 @@ import type {
 import { assignmentDirectoryOptions } from "../presentation/assignment-directory-options";
 
 export type WrongWordStudentFilter = "all" | "wrong" | "repeated" | "retry";
-export type BulkAssignmentMode = "next" | "with_wrong";
 export type AssignmentDialogView = "overview" | "assign";
 export type AssignmentEntryMode = "student" | "school" | "dataset";
+export type AssignmentSelectionMode = "single" | "bulk";
 
 export type AssignmentWorkspaceFilters = {
   classGroup: string;
@@ -118,15 +118,15 @@ export function useAssignmentWorkspace({
     wordbook: "",
     wrongWord: "all",
   });
+  const [assignmentMode, setAssignmentMode] =
+    useState<AssignmentSelectionMode>("single");
   const [selectedBulkStudentIds, setSelectedBulkStudentIds] = useState<string[]>([]);
-  const [bulkMode, setBulkMode] = useState<BulkAssignmentMode | null>(null);
-  const [dialogView, setDialogView] = useState<AssignmentDialogView>(
-    initialDialogView,
+  const [plannerStudentIds, setPlannerStudentIds] = useState<string[]>(
+    initialStudent && initialDialogView === "assign" ? [initialStudent.id] : [],
   );
-  const [selectedStudentId, setSelectedStudentId] = useState(
-    initialStudent?.id ?? "",
+  const [plannerOpen, setPlannerOpen] = useState(
+    Boolean(initialStudent && initialDialogView === "assign"),
   );
-  const [editorBusy, setEditorBusy] = useState(false);
 
   const directoryOptions = useMemo(
     () => assignmentDirectoryOptions(data.students, data.learningSources),
@@ -215,6 +215,16 @@ export function useAssignmentWorkspace({
       }),
     [activeStudents, selectedBulkStudentIds],
   );
+  const plannerStudents = useMemo(
+    () =>
+      plannerStudentIds.flatMap((selectedId) => {
+        const student = activeStudents.find(
+          (candidate) => candidate.id === selectedId,
+        );
+        return student ? [student] : [];
+      }),
+    [activeStudents, plannerStudentIds],
+  );
   const canPrepareBulk =
     selectedBulkStudents.length > 0 &&
     readyDatasets.length > 0 &&
@@ -232,50 +242,6 @@ export function useAssignmentWorkspace({
       .every((student) =>
       selectedBulkStudentIds.includes(student.id),
     );
-  const selectedStudent =
-    activeStudents.find((student) => student.id === selectedStudentId) ?? null;
-  const selectedProgress = selectedStudent
-    ? (progressByStudent.get(selectedStudent.id) ?? null)
-    : null;
-  const selectedActivities = selectedStudent
-    ? (activitiesByStudent.get(selectedStudent.id) ?? [])
-    : [];
-  const selectedLearningSources = selectedStudent
-    ? (learningSourcesByStudent.get(selectedStudent.id) ?? []).filter(
-        (source) => source.sourceType !== "primary_vocab",
-      )
-    : [];
-  const selectedInitialDatasetId = selectedStudent
-    ? readyDatasets.some(
-        (dataset) =>
-          dataset.id === initialDatasetId && selectedStudent === initialStudent,
-      )
-      ? initialDatasetId
-      : readyDatasets.some(
-            (dataset) => dataset.id === selectedStudent.currentVocabDatasetId,
-          )
-        ? selectedStudent.currentVocabDatasetId!
-        : readyDatasets[0]?.id ?? ""
-    : "";
-  const selectedReviewCounts =
-    selectedStudent && selectedInitialDatasetId
-      ? (pendingReviewIndex.byStudentDataset.get(
-          pendingReviewSummaryKey(
-            selectedStudent.id,
-            selectedInitialDatasetId,
-          ),
-        ) ?? emptyPendingReviewCounts())
-      : emptyPendingReviewCounts();
-  const selectedCurrentWrongCounts =
-    selectedStudent && selectedInitialDatasetId
-      ? (currentVocabWrongIndex.byStudentDataset.get(
-          currentVocabWrongSummaryKey(
-            selectedStudent.id,
-            selectedInitialDatasetId,
-          ),
-        ) ?? emptyCurrentVocabWrongCounts())
-      : emptyCurrentVocabWrongCounts();
-
   function setFilter<Key extends keyof AssignmentWorkspaceFilters>(
     key: Key,
     value: AssignmentWorkspaceFilters[Key],
@@ -319,19 +285,27 @@ export function useAssignmentWorkspace({
     );
   }
 
-  function selectStudent(
-    studentId: string,
-    view: AssignmentDialogView = "overview",
-  ) {
-    setSelectedStudentId(studentId);
-    setDialogView(view);
+  function changeAssignmentMode(mode: AssignmentSelectionMode) {
+    setAssignmentMode(mode);
+    setPlannerOpen(false);
+    setPlannerStudentIds([]);
   }
 
-  function closeStudent() {
-    if (editorBusy) return;
-    setSelectedStudentId("");
-    setDialogView("overview");
-    setEditorBusy(false);
+  function openSingleAssignment(studentId: string) {
+    if (!activeStudents.some((student) => student.id === studentId)) return;
+    setPlannerStudentIds([studentId]);
+    setPlannerOpen(true);
+  }
+
+  function prepareBulkAssignment() {
+    if (!canPrepareBulk) return;
+    setPlannerStudentIds(selectedBulkStudentIds);
+    setPlannerOpen(true);
+  }
+
+  function closePlanner() {
+    setPlannerOpen(false);
+    setPlannerStudentIds([]);
   }
 
   function refresh() {
@@ -340,14 +314,13 @@ export function useAssignmentWorkspace({
 
   return {
     actions: {
+      changeAssignmentMode,
       clearBulkStudents: () => setSelectedBulkStudentIds([]),
-      closeStudent,
+      closePlanner,
+      openSingleAssignment,
+      prepareBulkAssignment,
       refresh,
       resetFilters,
-      selectStudent,
-      setBulkMode,
-      setDialogView,
-      setEditorBusy,
       setEntryDatasetId,
       setEntryMode,
       setFilter,
@@ -357,21 +330,13 @@ export function useAssignmentWorkspace({
     activeStudents,
     activitiesByStudent,
     allFilteredStudentsSelected,
-    availableReviewLevel1:
-      selectedReviewCounts.pendingLevel1Count -
-      selectedReviewCounts.reservedLevel1Count,
-    availableReviewLevel2:
-      selectedReviewCounts.pendingLevel2Count -
-      selectedReviewCounts.reservedLevel2Count,
-    bulkMode,
+    assignmentMode,
     canPrepareBulk,
     classGroupOptions: data.classGroups.map((group) => ({
       label: group.name,
       value: group.id,
     })),
     data,
-    dialogView,
-    editorBusy,
     entryDatasetId,
     entryMode,
     filteredStudents,
@@ -379,18 +344,13 @@ export function useAssignmentWorkspace({
     gradeOptions: directoryOptions.grades,
     learningSourcesByStudent,
     pendingReviewIndex,
+    plannerOpen,
+    plannerStudents,
     progressByStudent,
     readyDatasets,
     schoolOptions: directoryOptions.schools,
-    selectedActivities,
     selectedBulkStudentIds,
     selectedBulkStudents,
-    selectedCurrentWrongCounts,
-    selectedInitialDatasetId,
-    selectedLearningSources,
-    selectedPendingReviewCount: pendingReviewCount(selectedReviewCounts),
-    selectedProgress,
-    selectedStudent,
     wordbookOptions: directoryOptions.wordbooks,
     currentVocabWrongIndex,
   };

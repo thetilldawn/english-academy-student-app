@@ -7,7 +7,7 @@ import {
   applyScheduleSlotOverride,
   applyTimeTemplate,
   buildScheduleSlots,
-  buildWeekdayDates,
+  buildSelectedWeekdayDates,
   copyPreviousExamConditions,
   planUnitSessions,
   resolveDayRange,
@@ -31,33 +31,26 @@ describe("단어 시험 공통 배정 계획", () => {
     );
   });
 
-  it("한국 달력 기준으로 시작일과 종료일 사이 월수금만 만든다", () => {
-    expect(buildWeekdayDates({
+  it("선택한 요일마다 첫 배정 가능일 이후 날짜를 정확히 한 번씩 만든다", () => {
+    expect(buildSelectedWeekdayDates({
       startDate: "2026-08-17",
-      endDate: "2026-08-23",
       weekdays: [1, 3, 5],
     })).toEqual(["2026-08-17", "2026-08-19", "2026-08-21"]);
-  });
-
-  it("1년을 넘는 비정상 날짜 범위는 순회하지 않는다", () => {
-    expect(buildWeekdayDates({
-      startDate: "2026-01-01",
-      endDate: "9999-12-31",
+    expect(buildSelectedWeekdayDates({
+      startDate: "2026-08-21",
       weekdays: [1, 3, 5],
-    })).toEqual([]);
+    })).toEqual(["2026-08-24", "2026-08-26", "2026-08-28"]);
   });
 
-  it("요일을 다시 누르면 해제하고 달력 조건이 잘못되면 빈 후보를 반환한다", () => {
+  it("요일을 다시 누르면 해제하고 시작일이 잘못되면 빈 후보를 반환한다", () => {
     expect(toggleWeekday([1, 3, 5], 3)).toEqual([1, 5]);
     expect(toggleWeekday([1, 5], 3)).toEqual([1, 3, 5]);
-    expect(buildWeekdayDates({
-      startDate: "2026-08-23",
-      endDate: "2026-08-17",
+    expect(buildSelectedWeekdayDates({
+      startDate: "not-a-date",
       weekdays: [1],
     })).toEqual([]);
-    expect(buildWeekdayDates({
+    expect(buildSelectedWeekdayDates({
       startDate: "2026-08-17",
-      endDate: "2026-08-17",
       weekdays: [],
     })).toEqual([]);
   });
@@ -65,7 +58,6 @@ describe("단어 시험 공통 배정 계획", () => {
   it("공개 시각과 다음 날 마감을 회차별 후보로 만든다", () => {
     expect(buildScheduleSlots({
       startDate: "2026-08-17",
-      endDate: "2026-08-19",
       weekdays: [1, 3],
       availableTime: "16:00",
       deadlineDayOffset: 1,
@@ -117,14 +109,34 @@ describe("단어 시험 공통 배정 계획", () => {
       orderedUnits: units,
       distribution: "split",
       targetWordsPerSession: 40,
-      maximumSessions: 3,
+      sessionCount: 3,
     }).map((session) => session.sourceWordCount)).toEqual([40, 40, 30]);
     expect(planUnitSessions({
       orderedUnits: units,
       distribution: "repeat",
       targetWordsPerSession: 40,
-      maximumSessions: 3,
+      sessionCount: 3,
     }).map((session) => session.sourceWordCount)).toEqual([110, 110, 110]);
+  });
+
+  it("나누기는 선택한 날짜 수만큼 회차를 만들고 마지막 회차에 범위를 몰아넣지 않는다", () => {
+    const units = Array.from({ length: 8 }, (_, index) => ({
+      id: `day-${index + 1}`,
+      sortIndex: index + 1,
+      entryCount: 20,
+    }));
+    expect(planUnitSessions({
+      orderedUnits: units,
+      distribution: "split",
+      targetWordsPerSession: 40,
+      sessionCount: 3,
+    }).map((session) => session.sourceWordCount)).toEqual([60, 60, 40]);
+    expect(planUnitSessions({
+      orderedUnits: units.slice(0, 2),
+      distribution: "split",
+      targetWordsPerSession: 40,
+      sessionCount: 3,
+    })).toEqual([]);
   });
 
   it("시간 템플릿 적용과 회차 수정이 원본 템플릿을 바꾸지 않는다", () => {
@@ -139,7 +151,6 @@ describe("단어 시험 공통 배정 계획", () => {
     const applied = applyTimeTemplate({
       schedule: {
         startDate: "2026-08-17",
-        endDate: "2026-08-21",
         weekdays: [1, 3, 5] as const,
         availableTime: "00:00",
         deadlineDayOffset: 0,
@@ -155,10 +166,12 @@ describe("단어 시험 공통 배정 계획", () => {
       perQuestionSeconds: 20,
     });
     const changed = applyScheduleSlotOverride(slots, 1, {
-      availableLocalDateTime: "2026-08-17T20:00",
-      deadlineLocalDateTime: "2026-08-18T21:00",
+      availableLocalDateTime: "2026-08-18T20:00",
+      deadlineLocalDateTime: "2026-08-19T21:00",
     });
-    expect(changed[0]?.availableLocalDateTime).toBe("2026-08-17T20:00");
+    expect(changed[0]?.availableLocalDateTime).toBe("2026-08-18T20:00");
+    expect(changed[0]?.deadlineLocalDateTime).toBe("2026-08-19T21:00");
+    expect(changed[0]?.date).toBe("2026-08-18");
     expect(changed[1]).toEqual(slots[1]);
     expect(slots[0]?.availableLocalDateTime).toBe("2026-08-17T18:00");
     expect(template.availableTime).toBe("18:00");

@@ -17,9 +17,12 @@ function controllerStub(
 ): AssignmentWorkspaceController {
   return {
     actions: {
+      changeAssignmentMode: vi.fn(),
       clearBulkStudents: vi.fn(),
+      closePlanner: vi.fn(),
+      openSingleAssignment: vi.fn(),
+      prepareBulkAssignment: vi.fn(),
       resetFilters: vi.fn(),
-      setBulkMode: vi.fn(),
       setEntryDatasetId: vi.fn(),
       setEntryMode: vi.fn(),
       setFilter: vi.fn(),
@@ -27,6 +30,7 @@ function controllerStub(
       toggleFilteredStudents: vi.fn(),
     },
     allFilteredStudentsSelected: false,
+    assignmentMode: "bulk",
     canPrepareBulk: false,
     filteredStudents: [],
     filters: {
@@ -97,5 +101,20 @@ describe("assignment student browser", () => {
     expect(
       screen.getByRole("button", { name: "선택 학생 선택 해제" }),
     ).toBeInTheDocument();
+  });
+
+  it("단일 배정에서는 선택 바구니와 일괄 배정 버튼을 숨긴다", () => {
+    render(
+      <AssignmentStudentBrowser
+        controller={controllerStub({ assignmentMode: "single" })}
+      />,
+    );
+
+    expect(screen.queryByText("선택 바구니 · 1명")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", {
+        name: adminLearningText.page.bulk.prepare,
+      }),
+    ).not.toBeInTheDocument();
   });
 });

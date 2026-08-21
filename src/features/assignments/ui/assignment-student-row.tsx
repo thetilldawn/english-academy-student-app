@@ -1,6 +1,9 @@
 import { formatContentText } from "@/content/format";
 import { adminLearningText } from "@/content/ko/admin-learning";
-import { ActivityRow, SelectableRow } from "@/design-system/patterns/activity-row/activity-row";
+import {
+  ActivityRow,
+  SelectableRow,
+} from "@/design-system/patterns/activity-row/activity-row";
 import { ActionWithReason } from "@/design-system/patterns/action-reason/action-reason";
 import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 import { Button, ButtonLink } from "@/design-system/primitives/button/button";
@@ -57,10 +60,7 @@ export function AssignmentStudentRow({
     student.status === "blocked"
       ? "접속 차단 학생"
       : controller.readyDatasets.length === 0
-      ? adminLearningText.assignmentModal.submit.blockedReason.noReadyDataset
-      : progress?.nextAssignmentBlockedReason === "scheduled"
-        ? adminLearningText.assignmentModal.submit.blockedReason
-            .scheduledAssignment
+        ? adminLearningText.assignmentModal.submit.blockedReason.noReadyDataset
         : null;
   const recommendedRange = assignmentRecommendationLabel(progress);
   const currentActivityRange =
@@ -83,25 +83,26 @@ export function AssignmentStudentRow({
               {adminLearningText.page.studentCard.view}
             </ButtonLink>
           ) : null}
-          <ActionWithReason
-            reason={assignmentBlockedReason}
-          >
-            <Button
-              disabled={assignmentBlockedReason !== null}
-              onClick={() =>
-                controller.actions.selectStudent(student.id, "assign")
-              }
-              size="small"
-              variant={nextActivity ? "secondary" : "primary"}
-            >
-              {adminLearningText.page.studentCard.newAssignment}
-            </Button>
-          </ActionWithReason>
+          {controller.assignmentMode === "single" ? (
+            <ActionWithReason reason={assignmentBlockedReason}>
+              <Button
+                disabled={assignmentBlockedReason !== null}
+                onClick={() =>
+                  controller.actions.openSingleAssignment(student.id)
+                }
+                size="small"
+                variant={nextActivity ? "secondary" : "primary"}
+              >
+                {adminLearningText.page.studentCard.newAssignment}
+              </Button>
+            </ActionWithReason>
+          ) : null}
         </>
       }
       checked={controller.selectedBulkStudentIds.includes(student.id)}
       checkboxId={`bulk-student-${student.id}`}
       onToggle={() => controller.actions.toggleBulkStudent(student.id)}
+      selectionEnabled={controller.assignmentMode === "bulk"}
       disabled={student.status === "blocked"}
       selectionAriaLabel={formatContentText(
         adminLearningText.page.bulk.selectStudentAria,

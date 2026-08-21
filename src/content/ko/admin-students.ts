@@ -48,9 +48,27 @@ export const adminStudentsText = {
 
   // 학생 관리 > 학생 상세 모달 > 탭
   detailTabs: {
-    learning: "학습 관리",
+    info: "학생 정보",
     account: "계정 설정",
     history: "내역",
+  },
+
+  // 학생 관리 > 학생 상세 > 학생 정보
+  info: {
+    name: "이름",
+    school: "학교",
+    grade: "학년",
+    savePending: "저장 중…",
+    save: "학생 정보 저장",
+    currentWordbook: "현재 단어장",
+    chooseLater: "나중에 선택",
+    previousWordbook: "이전 단어장",
+    assignmentClosed: "신규 배정 종료",
+    saveWordbook: "단어장 저장",
+    profileSuccess: "학생 정보를 저장했습니다.",
+    profileError: "학생 정보를 저장하지 못했습니다.",
+    wordbookSuccess: "현재 단어장을 변경했습니다.",
+    wordbookError: "현재 단어장을 바꾸지 못했습니다.",
   },
 
   // 학생 관리 > 학생 상세 > 학습 관리
@@ -239,11 +257,6 @@ export const adminStudentsText = {
 
   // 학생 관리 > 학생 상세 모달 > 계정 설정
   account: {
-    name: "이름",
-    school: "학교",
-    grade: "학년",
-    savePending: "저장 중…",
-    save: "학생 정보 저장",
     status: "계정 상태",
     active: "접속 가능",
     blocked: "차단됨",
@@ -255,10 +268,6 @@ export const adminStudentsText = {
     resume: "새 코드로 재개",
     deletePending: "학생 삭제 중…",
     delete: "학생 삭제",
-    profileSuccess: "학생 정보를 저장했습니다.",
-    profileError: "학생 정보를 저장하지 못했습니다.",
-    wordbookSuccess: "최근 단어장을 변경했습니다.",
-    wordbookError: "현재 단어장을 바꾸지 못했습니다.",
     rotateConfirm:
       "{student} 학생의 기존 접속을 모두 끊고 새 코드를 발급할까요?",
     rotateSuccess: "접속 코드를 교체했습니다.",

@@ -22,7 +22,7 @@ import {
   planUnitSessions,
   resolveDayRange,
   selectInitialVocabDatasetId,
-  shiftCalendarDate,
+  shiftLocalDateTime,
   toggleWeekday,
   type DayRangeSelection,
   type IsoWeekday,
@@ -43,13 +43,14 @@ type PlannerState = {
   sessionScheduleOverrides: Readonly<Record<number, VocabScheduleSlotOverride>>;
   collisionDecisionRecords: readonly VocabCollisionDecisionRecord[];
 };
-
 type PlannerAction =
   | { type: "dataset"; value: string }
   | { type: "range"; unitId: string }
   | { type: "distribution"; value: VocabRangeDistribution }
   | { type: "target"; value: number }
-  | { type: "schedule"; value: VocabScheduleDraft }
+  | { type: "schedule/update"; patch: Partial<VocabScheduleDraft> }
+  | { type: "schedule/replace"; value: VocabScheduleDraft }
+  | { type: "schedule/toggle_weekday"; weekday: IsoWeekday }
   | {
       type: "session_schedule";
       sessionNumber: number;
@@ -57,7 +58,6 @@ type PlannerAction =
     }
   | { type: "decision/set"; value: VocabCollisionDecisionRecord }
   | { type: "decision/clear_from"; collisionId: string };
-
 function reducer(state: PlannerState, action: PlannerAction): PlannerState {
   switch (action.type) {
     case "dataset":
@@ -85,10 +85,27 @@ function reducer(state: PlannerState, action: PlannerAction): PlannerState {
         targetWordsPerSession: action.value,
         collisionDecisionRecords: [],
       };
-    case "schedule":
+    case "schedule/update":
+      return {
+        ...state,
+        schedule: { ...state.schedule, ...action.patch },
+        sessionScheduleOverrides: {},
+        collisionDecisionRecords: [],
+      };
+    case "schedule/replace":
       return {
         ...state,
         schedule: action.value,
+        sessionScheduleOverrides: {},
+        collisionDecisionRecords: [],
+      };
+    case "schedule/toggle_weekday":
+      return {
+        ...state,
+        schedule: {
+          ...state.schedule,
+          weekdays: toggleWeekday(state.schedule.weekdays, action.weekday),
+        },
         sessionScheduleOverrides: {},
         collisionDecisionRecords: [],
       };
@@ -136,7 +153,6 @@ function initialState(
     targetWordsPerSession: 40,
     schedule: {
       startDate: today,
-      endDate: shiftCalendarDate(today, 14) ?? today,
       weekdays: [1, 3, 5],
       availableTime: "16:00",
       deadlineDayOffset: 1,
@@ -145,12 +161,6 @@ function initialState(
     sessionScheduleOverrides: {},
     collisionDecisionRecords: [],
   };
-}
-
-function shiftLocalDateTime(value: string, days: number) {
-  const [date, time] = value.split("T");
-  const movedDate = shiftCalendarDate(date, days);
-  return movedDate && time ? `${movedDate}T${time}` : value;
 }
 
 export function useVocabAssignmentPlanner({
@@ -212,18 +222,14 @@ export function useVocabAssignmentPlanner({
     () => buildScheduleSlots(planner.schedule),
     [planner.schedule],
   );
-  const baseScheduleSlots = useMemo(
-    () => allScheduleSlots.slice(0, 7),
-    [allScheduleSlots],
-  );
   const candidateScheduleSlots = useMemo(
     () =>
       Object.entries(planner.sessionScheduleOverrides).reduce(
         (slots, [sessionNumber, override]) =>
           applyScheduleSlotOverride(slots, Number(sessionNumber), override),
-        baseScheduleSlots,
+        allScheduleSlots,
       ),
-    [baseScheduleSlots, planner.sessionScheduleOverrides],
+    [allScheduleSlots, planner.sessionScheduleOverrides],
   );
   const rangeSessions = useMemo(
     () =>
@@ -231,7 +237,7 @@ export function useVocabAssignmentPlanner({
         orderedUnits: selectedUnits,
         distribution: planner.distribution,
         targetWordsPerSession: planner.targetWordsPerSession,
-        maximumSessions: candidateScheduleSlots.length,
+        sessionCount: candidateScheduleSlots.length,
       }),
     [
       planner.distribution,
@@ -240,10 +246,7 @@ export function useVocabAssignmentPlanner({
       selectedUnits,
     ],
   );
-  const scheduleSlots = useMemo(
-    () => candidateScheduleSlots.slice(0, rangeSessions.length),
-    [candidateScheduleSlots, rangeSessions.length],
-  );
+  const scheduleSlots = candidateScheduleSlots;
   const commonPlan = useMemo(() => {
     const sessions = rangeSessions.flatMap((rangeSession, index) => {
       const slot = scheduleSlots[index];
@@ -255,7 +258,9 @@ export function useVocabAssignmentPlanner({
           }]
         : [];
     });
-    return sessions.length > 0 && planner.datasetId
+    return sessions.length > 0 &&
+        sessions.length === scheduleSlots.length &&
+        planner.datasetId
       ? {
           datasetId: planner.datasetId,
           distribution: planner.distribution,
@@ -276,7 +281,8 @@ export function useVocabAssignmentPlanner({
   ]);
   const bulk = useBulkAssignmentController({
     commonPlanRequired: true,
-    firstAvailableDateKorean: planner.schedule.startDate,
+    firstAvailableDateKorean:
+      scheduleSlots[0]?.date ?? planner.schedule.startDate,
     genericErrorMessage,
     includePendingReview: false,
     initialCommonPlan: commonPlan,
@@ -296,10 +302,7 @@ export function useVocabAssignmentPlanner({
   }, [changeCommonPlan, commonPlan]);
 
   function updateSchedule(patch: Partial<VocabScheduleDraft>) {
-    dispatch({
-      type: "schedule",
-      value: { ...planner.schedule, ...patch },
-    });
+    dispatch({ type: "schedule/update", patch });
   }
 
   function applyTemplate(template: VocabTimeTemplate) {
@@ -307,7 +310,7 @@ export function useVocabAssignmentPlanner({
       { schedule: planner.schedule, exam: bulk.state.draft.exam },
       template,
     );
-    dispatch({ type: "schedule", value: applied.schedule });
+    dispatch({ type: "schedule/replace", value: applied.schedule });
     bulk.actions.changeTiming(applied.exam.timing);
   }
 
@@ -319,11 +322,8 @@ export function useVocabAssignmentPlanner({
     );
     if (previousExam.scheduleRule) {
       dispatch({
-        type: "schedule",
-        value: {
-          ...planner.schedule,
-          ...previousExam.scheduleRule,
-        },
+        type: "schedule/update",
+        patch: previousExam.scheduleRule,
       });
     }
     bulk.actions.changeDirection(copied.exam.directionRatio);
@@ -422,12 +422,9 @@ export function useVocabAssignmentPlanner({
         value: VocabScheduleSlotOverride,
       ) => dispatch({ type: "session_schedule", sessionNumber, value }),
       toggleWeekday: (weekday: IsoWeekday) =>
-        updateSchedule({
-          weekdays: toggleWeekday(planner.schedule.weekdays, weekday),
-        }),
+        dispatch({ type: "schedule/toggle_weekday", weekday }),
       updateSchedule,
     },
-    allScheduleSlotCount: allScheduleSlots.length,
     availableUnits,
     bulk,
     commonPlan,
@@ -438,6 +435,10 @@ export function useVocabAssignmentPlanner({
     planner,
     rangeSessions,
     scheduleSlots,
+    splitScheduleIssue:
+      planner.distribution === "split" &&
+      selectedUnits.length > 0 &&
+      rangeSessions.length !== scheduleSlots.length,
     selectedUnits,
     templateSaving: timeTemplateController.saving,
     timeTemplates: timeTemplateController.timeTemplates,

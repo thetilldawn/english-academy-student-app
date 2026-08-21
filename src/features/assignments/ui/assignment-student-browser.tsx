@@ -1,6 +1,7 @@
 import { formatContentText } from "@/content/format";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { Button } from "@/design-system/primitives/button/button";
+import { Tabs } from "@/design-system/primitives/tabs/tabs";
 
 import type { AssignmentWorkspaceController } from "../controller/use-assignment-workspace";
 import { AssignmentStudentRow } from "./assignment-student-row";
@@ -15,54 +16,67 @@ export function AssignmentStudentBrowser({
   controller: AssignmentWorkspaceController;
 }) {
   return (
-    <section
-      aria-label="단어 시험 대상 선택"
-      className={styles.browser}
-    >
-      <VocabAssignmentEntrySelector controller={controller} />
+    <section aria-label="단어 시험 대상 선택" className={styles.browser}>
+      <Tabs
+        ariaLabel="단어 배정 방식"
+        className={styles.tabs}
+        items={[
+          { label: "단일 배정", value: "single" },
+          { label: "일괄 배정", value: "bulk" },
+        ]}
+        onChange={controller.actions.changeAssignmentMode}
+        value={controller.assignmentMode}
+      />
+      {controller.assignmentMode === "bulk" ? (
+        <VocabAssignmentEntrySelector controller={controller} />
+      ) : null}
       <AssignmentWorkspaceFilters controller={controller} />
-      <SelectedStudentBasket controller={controller} />
+      {controller.assignmentMode === "bulk" ? (
+        <SelectedStudentBasket controller={controller} />
+      ) : null}
 
-      <div className={styles.bulkBar}>
-        <div className={styles.bulkSummary}>
-          <strong>
-            {formatContentText(adminLearningText.page.bulk.selectedCount, {
-              count: controller.selectedBulkStudentIds.length,
-            })}
-          </strong>
-          <small>{adminLearningText.page.bulk.maximum}</small>
-          <Button
-            onClick={controller.actions.toggleFilteredStudents}
-            size="small"
-            variant="quiet"
-          >
-            {controller.allFilteredStudentsSelected
-              ? adminLearningText.page.bulk.clearVisible
-              : formatContentText(adminLearningText.page.bulk.selectVisible, {
-                  count: controller.filteredStudents.length,
-                })}
-          </Button>
-          {controller.selectedBulkStudentIds.length > 0 ? (
+      {controller.assignmentMode === "bulk" ? (
+        <div className={styles.bulkBar}>
+          <div className={styles.bulkSummary}>
+            <strong>
+              {formatContentText(adminLearningText.page.bulk.selectedCount, {
+                count: controller.selectedBulkStudentIds.length,
+              })}
+            </strong>
+            <small>{adminLearningText.page.bulk.maximum}</small>
             <Button
-              onClick={controller.actions.clearBulkStudents}
+              onClick={controller.actions.toggleFilteredStudents}
               size="small"
               variant="quiet"
             >
-              {adminLearningText.page.bulk.clearAll}
+              {controller.allFilteredStudentsSelected
+                ? adminLearningText.page.bulk.clearVisible
+                : formatContentText(adminLearningText.page.bulk.selectVisible, {
+                    count: controller.filteredStudents.length,
+                  })}
             </Button>
-          ) : null}
+            {controller.selectedBulkStudentIds.length > 0 ? (
+              <Button
+                onClick={controller.actions.clearBulkStudents}
+                size="small"
+                variant="quiet"
+              >
+                {adminLearningText.page.bulk.clearAll}
+              </Button>
+            ) : null}
+          </div>
+          <div className={styles.bulkActions}>
+            <Button
+              disabled={!controller.canPrepareBulk}
+              onClick={controller.actions.prepareBulkAssignment}
+              size="small"
+              variant="primary"
+            >
+              {adminLearningText.page.bulk.prepare}
+            </Button>
+          </div>
         </div>
-        <div className={styles.bulkActions}>
-          <Button
-            disabled={!controller.canPrepareBulk}
-            onClick={() => controller.actions.setBulkMode("next")}
-            size="small"
-            variant="primary"
-          >
-            {adminLearningText.page.bulk.prepare}
-          </Button>
-        </div>
-      </div>
+      ) : null}
 
       {controller.readyDatasets.length === 0 ? (
         <div className={styles.notice} role="status">

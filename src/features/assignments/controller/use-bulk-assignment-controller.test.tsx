@@ -260,6 +260,58 @@ describe("bulk assignment controller", () => {
     });
   });
 
+  it("공통 계획을 세 회차로 바꾸면 미리보기 요청도 세 회차로 동기화한다", async () => {
+    const previewBodies: unknown[] = [];
+    const transport: AssignmentTransport = vi.fn(async (request) => {
+      const body = request.body as {
+        sessionCount: number;
+        studentIds: string[];
+      };
+      if (request.url.endsWith("/preview")) {
+        previewBodies.push(body);
+        return {
+          data: previewResponse(body.studentIds, body.sessionCount),
+          ok: true,
+          status: 200,
+        };
+      }
+      return {
+        data: creationResponse(body.studentIds, body.sessionCount),
+        ok: true,
+        status: 201,
+      };
+    });
+    const { result } = renderController(transport);
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+
+    act(() => {
+      result.current.actions.changeCommonPlan({
+        collisionDecisions: [],
+        datasetId: assignmentContractIds.dataset,
+        distribution: "split",
+        sessions: [10, 12, 14].map((day, index) => ({
+          availableLocalDateTime: `2099-08-${day}T09:00`,
+          deadlineLocalDateTime: `2099-08-${day + 1}T22:00`,
+          unitIds: [
+            [assignmentContractIds.day60, assignmentContractIds.day59,
+              assignmentContractIds.day58][index]!,
+          ],
+        })),
+        targetWordsPerSession: 40,
+      });
+    });
+
+    await waitFor(() =>
+      expect(result.current.preview?.assignmentCount).toBe(3),
+    );
+    expect(previewBodies.at(-1)).toMatchObject({
+      commonPlan: {
+        sessions: expect.any(Array),
+      },
+      sessionCount: 3,
+    });
+  });
+
   it("submits the supported 30-student by 7-session boundary as 210 assignments", async () => {
     const studentIds = Array.from(
       { length: 30 },

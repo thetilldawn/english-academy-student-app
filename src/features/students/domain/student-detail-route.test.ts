@@ -8,33 +8,12 @@ import {
 
 const detail: StudentDetailBaseRoute = {
   kind: "detail",
-  learningView: "summary",
   studentId: "student-1",
-  tab: "learning",
+  tab: "info",
 };
 
 describe("student detail navigation", () => {
-  it("returns from a learning source to the same student's learning tab", () => {
-    expect(
-      studentDetailBackRoute({
-        datasetId: "dataset-1",
-        kind: "source",
-        label: "아주 긴 단어장 이름".repeat(8),
-        studentId: "student-1",
-        view: "vocab",
-      }),
-    ).toEqual(detail);
-  });
-
-  it("returns assignment and code subviews to their recorded parent", () => {
-    expect(
-      studentDetailBackRoute({
-        datasetId: "dataset-1",
-        kind: "assignment",
-        returnTo: detail,
-        studentId: "student-1",
-      }),
-    ).toEqual(detail);
+  it("returns a code subview to the recorded student tab", () => {
     expect(
       studentDetailBackRoute({
         code: { code: "ABCD-EFGH-IJKL", label: "접속 코드" },
@@ -52,8 +31,8 @@ describe("student detail navigation", () => {
     expect(
       studentDetailCloseRoute(
         {
-          datasetId: "dataset-1",
-          kind: "assignment",
+          code: { code: "ABCD-EFGH-IJKL", label: "접속 코드" },
+          kind: "code",
           returnTo: detail,
           studentId: "student-1",
         },

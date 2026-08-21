@@ -99,15 +99,18 @@
   text-overflow: ellipsis;
 }
 
-.filter:hover:not(:disabled) {
-  color: var(--ink);
-  background: var(--selection-active);
-}
-
 .filter[aria-pressed="true"] {
   border-color: var(--ink);
   background: var(--ink);
   color: var(--paper);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .filter:hover:not(:disabled):not([aria-pressed="true"]) {
+    border-color: var(--ink);
+    background: var(--surface);
+    color: var(--ink);
+  }
 }
 
 .circle {

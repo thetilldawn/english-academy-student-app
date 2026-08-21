@@ -27,6 +27,18 @@ const weekdays: ReadonlyArray<readonly [IsoWeekday, string]> = [
 ];
 const deadlineOffsets = Array.from({ length: 31 }, (_, offset) => offset);
 
+function sessionDateLabel(date: string) {
+  const parsed = new Date(`${date}T00:00:00Z`);
+  return Number.isNaN(parsed.getTime())
+    ? date
+    : new Intl.DateTimeFormat("ko-KR", {
+        month: "long",
+        day: "numeric",
+        weekday: "short",
+        timeZone: "UTC",
+      }).format(parsed);
+}
+
 export function VocabScheduleFields({
   controller,
 }: {
@@ -38,33 +50,19 @@ export function VocabScheduleFields({
   return (
     <section className={styles.section}>
       <h3 className={styles.sectionHeading}>날짜 · 시간</h3>
-      <AssignmentFieldGrid columns={2}>
-        <Field as="label">
-          <FieldLabel as="span">시작일</FieldLabel>
-          <Input
-            onChange={(event) =>
-              controller.actions.updateSchedule({ startDate: event.target.value })
-            }
-            type="date"
-            value={schedule.startDate}
-          />
-        </Field>
-        <Field as="label">
-          <FieldLabel as="span">종료일</FieldLabel>
-          <Input
-            max={controller.maximumScheduleEndDate}
-            min={schedule.startDate}
-            onChange={(event) =>
-              controller.actions.updateSchedule({ endDate: event.target.value })
-            }
-            type="date"
-            value={schedule.endDate}
-          />
-        </Field>
-      </AssignmentFieldGrid>
+      <Field as="label">
+        <FieldLabel as="span">첫 배정 가능일</FieldLabel>
+        <Input
+          onChange={(event) =>
+            controller.actions.updateSchedule({ startDate: event.target.value })
+          }
+          type="date"
+          value={schedule.startDate}
+        />
+      </Field>
       <Field>
         <FieldLabel as="span">요일</FieldLabel>
-        <div className={styles.weekdayButtons} role="group" aria-label="반복 요일">
+        <div className={styles.weekdayButtons} role="group" aria-label="배정 요일">
           {weekdays.map(([weekday, label]) => (
             <Button
               aria-pressed={schedule.weekdays.includes(weekday)}
@@ -126,7 +124,9 @@ export function VocabScheduleFields({
           <FieldLabel as="span">회차별 시간</FieldLabel>
           {controller.scheduleSlots.map((slot) => (
             <div className={styles.sessionTimeRow} key={slot.sessionNumber}>
-              <strong>{slot.sessionNumber}회</strong>
+              <strong>
+                {slot.sessionNumber}회차 · {sessionDateLabel(slot.date)}
+              </strong>
               <Field as="label">
                 <FieldLabel as="span">공개 시작</FieldLabel>
                 <Input
@@ -205,8 +205,10 @@ export function VocabScheduleFields({
         </div>
       </div>
       <span className={styles.candidateSummary}>
-        날짜 후보 {controller.allScheduleSlotCount}회 · 실제 배정 {controller.scheduleSlots.length}회
-        {controller.allScheduleSlotCount > 7 ? " · 이번 배정은 앞 7회만" : ""}
+        선택 요일 {controller.planner.schedule.weekdays.length}개 · 배정 회차 {controller.scheduleSlots.length}회
+        {controller.splitScheduleIssue
+          ? ` · 나누려면 DAY를 ${controller.scheduleSlots.length}개 이상 선택하세요`
+          : ""}
       </span>
     </section>
   );

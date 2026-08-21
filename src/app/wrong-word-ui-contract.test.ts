@@ -131,12 +131,12 @@ describe("wrong-word admin UI contract", () => {
     expect(panelCss).toContain("scroll-padding-bottom");
   });
 
-  it("loads wrong words only inside the student detail tab", () => {
+  it("loads wrong words only inside the student history tab", () => {
     const detail = source(
       "src/features/students/ui/student-detail-dialog.tsx",
     );
-    const learning = source(
-      "src/features/students/ui/panels/student-learning-panel.tsx",
+    const history = source(
+      "src/features/students/ui/panels/student-history-panel.tsx",
     );
     const panel = source(
       "src/features/students/ui/panels/student-wrong-word-panel.tsx",
@@ -146,13 +146,11 @@ describe("wrong-word admin UI contract", () => {
     );
     expect(detail).toContain("<Tabs");
     expect(detail).toContain("ariaLabel={adminStudentsText.detail.tabsAria}");
-    expect(learning).toContain('<StudentWrongWordPanel');
-    expect(learning).toContain('route.kind === "source"');
-    expect(learning).toContain('route.view === "vocab"');
-    expect(detail).toContain(
-      "adminStudentsText.learning.vocabularyManagement",
+    expect(history).toContain("<StudentWrongWordPanel");
+    expect(history).toContain(
+      'initialDatasetId={student.currentVocabDatasetId ?? ""}',
     );
-    expect(learning).toContain("initialDatasetId={route.datasetId}");
+    expect(detail).not.toMatch(/StudentAssignmentPanel|StudentLearningPanel/);
     expect(transport).toContain(
       "/api/admin/students/${studentId}/wrong-words",
     );

@@ -14,10 +14,6 @@ import {
   toVocabTimeTemplate,
   type VocabTimeTemplateRecord,
 } from "../api/vocab-time-template-adapter";
-import {
-  MAX_VOCAB_SCHEDULE_RANGE_DAYS,
-  shiftCalendarDate,
-} from "../domain/vocab-assignment-plan";
 import type { AssignmentTransport } from "./assignment-transport";
 import { useVocabAssignmentPlanner } from "./use-vocab-assignment-planner";
 
@@ -130,11 +126,6 @@ export function useVocabAssignmentScreen({
     },
     previousExamSourceStudentId,
     readyDatasets,
-    maximumScheduleEndDate:
-      shiftCalendarDate(
-        planner.planner.schedule.startDate,
-        MAX_VOCAB_SCHEDULE_RANGE_DAYS,
-      ) ?? planner.planner.schedule.startDate,
   };
 }
 

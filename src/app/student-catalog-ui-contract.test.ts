@@ -29,8 +29,8 @@ describe("student catalog and modal UI contract", () => {
   const studentDetailCss = source(
     "src/features/students/ui/student-detail.module.css",
   );
-  const studentLearning = source(
-    "src/features/students/ui/panels/student-learning-panel.tsx",
+  const studentInfo = source(
+    "src/features/students/ui/panels/student-info-panel.tsx",
   );
   const bulkDialog = source(
     "src/features/assignments/ui/bulk-assignment-editor.tsx",
@@ -60,7 +60,7 @@ describe("student catalog and modal UI contract", () => {
   });
 
   it("animates every modal tab while respecting reduced motion", () => {
-    expect(studentDetail).toContain('value: "learning"');
+    expect(studentDetail).toContain('value: "info"');
     expect(studentDetail).toContain('value: "account"');
     expect(studentDetail).toContain('value: "history"');
     expect(studentDetailCss).toContain(
@@ -99,16 +99,13 @@ describe("student catalog and modal UI contract", () => {
     ).toContain('size="small"');
   });
 
-  it("uses structured groups and preserves learned wordbooks", () => {
+  it("uses structured groups for the current student wordbook", () => {
     const copy = source("src/content/ko/admin-students.ts");
-    expect(studentLearning).toContain("groupCataloguedDatasets");
-    expect(studentLearning).toContain("<optgroup");
-    expect(studentLearning).toContain("adminStudentsText.learning.recentWordbookChange");
-    expect(studentLearning).toContain("StudentVocabBookHistoryList");
-    expect(source("src/features/students/ui/panels/student-vocab-book-history-list.tsx")).toContain(
-      "adminStudentsText.learning.wordbookHistory.title",
-    );
-    expect(copy).toContain('title: "학습한 단어장"');
+    expect(studentInfo).toContain("groupCataloguedDatasets");
+    expect(studentInfo).toContain("<optgroup");
+    expect(studentInfo).toContain("adminStudentsText.info.currentWordbook");
+    expect(studentInfo).not.toContain("StudentVocabBookHistoryList");
+    expect(copy).toContain('currentWordbook: "현재 단어장"');
   });
 
   it("현재 목록에서는 취소·삭제를 빼고 전체 내역에서만 보존한다", () => {

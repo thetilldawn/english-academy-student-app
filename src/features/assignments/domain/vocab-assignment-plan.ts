@@ -14,7 +14,6 @@ export type DayRangeSelection = {
 
 export type VocabScheduleDraft = {
   startDate: string;
-  endDate: string;
   weekdays: readonly IsoWeekday[];
   availableTime: string;
   deadlineDayOffset: number;
@@ -84,7 +83,6 @@ export type ResolvedVocabPlan = {
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
-export const MAX_VOCAB_SCHEDULE_RANGE_DAYS = 366;
 
 function parseCalendarDate(value: string) {
   if (!DATE_PATTERN.test(value)) return null;
@@ -110,37 +108,25 @@ function isoWeekday(date: Date): IsoWeekday {
   return (day === 0 ? 7 : day) as IsoWeekday;
 }
 
-export function buildWeekdayDates(input: {
+export function buildSelectedWeekdayDates(input: {
   startDate: string;
-  endDate: string;
   weekdays: readonly IsoWeekday[];
 }): string[] {
   const start = parseCalendarDate(input.startDate);
-  const end = parseCalendarDate(input.endDate);
   const weekdays = new Set(input.weekdays);
-  if (
-    !start ||
-    !end ||
-    start > end ||
-    weekdays.size === 0 ||
-    end.getTime() - start.getTime() >
-      MAX_VOCAB_SCHEDULE_RANGE_DAYS * DAY_MILLISECONDS
-  ) {
+  if (!start || weekdays.size === 0) {
     return [];
   }
 
-  const dates: string[] = [];
-  for (
-    let value = start.getTime();
-    value <= end.getTime();
-    value += DAY_MILLISECONDS
-  ) {
-    const date = new Date(value);
-    if (weekdays.has(isoWeekday(date))) {
-      dates.push(formatCalendarDate(date));
-    }
-  }
-  return dates;
+  let cursor = start;
+  return ISO_WEEKDAYS
+    .filter((weekday) => weekdays.has(weekday))
+    .map((weekday) => {
+      const offset = (weekday - isoWeekday(cursor) + 7) % 7;
+      const date = new Date(cursor.getTime() + offset * DAY_MILLISECONDS);
+      cursor = new Date(date.getTime() + DAY_MILLISECONDS);
+      return formatCalendarDate(date);
+    });
 }
 
 export function shiftCalendarDate(value: string, days: number) {
@@ -149,6 +135,12 @@ export function shiftCalendarDate(value: string, days: number) {
   return formatCalendarDate(
     new Date(date.getTime() + days * DAY_MILLISECONDS),
   );
+}
+
+export function shiftLocalDateTime(value: string, days: number) {
+  const [date, time] = value.split("T");
+  const movedDate = shiftCalendarDate(date, days);
+  return movedDate && time ? `${movedDate}T${time}` : value;
 }
 
 export function buildScheduleSlots(
@@ -164,7 +156,7 @@ export function buildScheduleSlots(
     return [];
   }
 
-  return buildWeekdayDates(draft).flatMap((date, index) => {
+  return buildSelectedWeekdayDates(draft).flatMap((date, index) => {
     const deadlineDate = shiftCalendarDate(date, draft.deadlineDayOffset);
     if (!deadlineDate) return [];
     return [{
@@ -236,13 +228,13 @@ export function planUnitSessions<T extends UnitWithEntryCount>(input: {
   orderedUnits: readonly T[];
   distribution: VocabRangeDistribution;
   targetWordsPerSession: number;
-  maximumSessions: number;
+  sessionCount: number;
 }): VocabRangeSession<T>[] {
   const { orderedUnits } = input;
   if (
     orderedUnits.length === 0 ||
-    !Number.isInteger(input.maximumSessions) ||
-    input.maximumSessions < 1 ||
+    !Number.isInteger(input.sessionCount) ||
+    input.sessionCount < 1 ||
     !Number.isInteger(input.targetWordsPerSession) ||
     input.targetWordsPerSession < 1
   ) {
@@ -254,29 +246,45 @@ export function planUnitSessions<T extends UnitWithEntryCount>(input: {
       (count, unit) => count + Math.max(0, unit.entryCount),
       0,
     );
-    return Array.from({ length: input.maximumSessions }, (_, index) => ({
+    return Array.from({ length: input.sessionCount }, (_, index) => ({
       sessionNumber: index + 1,
       units: [...orderedUnits],
       sourceWordCount,
     }));
   }
 
+  if (orderedUnits.length < input.sessionCount) return [];
+
   const chunks: T[][] = [];
-  let current: T[] = [];
-  let currentCount = 0;
-  for (const unit of orderedUnits) {
-    current.push(unit);
-    currentCount += Math.max(0, unit.entryCount);
-    if (
-      currentCount >= input.targetWordsPerSession &&
-      chunks.length < input.maximumSessions - 1
-    ) {
-      chunks.push(current);
-      current = [];
-      currentCount = 0;
+  const totalWordCount = orderedUnits.reduce(
+    (count, unit) => count + Math.max(0, unit.entryCount),
+    0,
+  );
+  const effectiveTarget = Math.max(
+    input.targetWordsPerSession,
+    Math.ceil(totalWordCount / input.sessionCount),
+  );
+  let cursor = 0;
+  for (let sessionIndex = 0; sessionIndex < input.sessionCount; sessionIndex += 1) {
+    const remainingSessions = input.sessionCount - sessionIndex;
+    const current: T[] = [];
+    let currentCount = 0;
+    while (cursor < orderedUnits.length) {
+      const unit = orderedUnits[cursor]!;
+      current.push(unit);
+      currentCount += Math.max(0, unit.entryCount);
+      cursor += 1;
+      const unitsStillAvailable = orderedUnits.length - cursor;
+      if (
+        sessionIndex < input.sessionCount - 1 &&
+        (currentCount >= effectiveTarget ||
+          unitsStillAvailable === remainingSessions - 1)
+      ) {
+        break;
+      }
     }
+    chunks.push(current);
   }
-  if (current.length > 0) chunks.push(current);
 
   return chunks.map((units, index) => ({
     sessionNumber: index + 1,
@@ -314,7 +322,11 @@ export function applyScheduleSlotOverride(
 ): VocabScheduleSlot[] {
   return slots.map((slot) =>
     slot.sessionNumber === sessionNumber
-      ? { ...slot, ...override }
+      ? {
+          ...slot,
+          ...override,
+          date: override.availableLocalDateTime.slice(0, 10),
+        }
       : { ...slot },
   );
 }

@@ -22,7 +22,7 @@ export const adminLearningText = {
       clearAll: "전체 해제",
       includeWrong: "틀린 단어 포함",
       assignNext: "다음 범위 일괄 배정",
-      prepare: "배정 준비",
+      prepare: "단어 배정",
       noReadyDatasets:
         "검수가 끝난 단어장이 없어 아직 시험을 배정할 수 없습니다.",
       selectStudentAria: "{student} 일괄 배정 선택",
@@ -37,7 +37,7 @@ export const adminLearningText = {
       noActivity: "배정된 학습 없음",
       recommendedRange: "추천 범위 · {range}",
       view: "보기",
-      newAssignment: "새 단어 시험",
+      newAssignment: "단어 배정",
       deadline: "마감 {datetime}",
       assignedWithoutDeadline: "배정 {datetime} · 마감 없음",
       finished: "종료 {datetime}",

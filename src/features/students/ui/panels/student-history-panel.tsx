@@ -2,6 +2,7 @@ import { StudentLearningActivityList } from "@/features/history/ui/student-learn
 
 import type { StudentDetailController } from "../../controller/use-student-detail-controller";
 import type { StudentManagementData } from "../../model";
+import { StudentWrongWordPanel } from "./student-wrong-word-panel";
 import styles from "../student-detail.module.css";
 
 export function StudentHistoryPanel({
@@ -21,6 +22,21 @@ export function StudentHistoryPanel({
       id="student-history-panel"
       role="tabpanel"
     >
+      <StudentWrongWordPanel
+        active
+        cachedAt={
+          controller.wrongHistoryByStudent[student.id]?.loadedAt ?? null
+        }
+        cachedHistory={
+          controller.wrongHistoryByStudent[student.id]?.history ?? null
+        }
+        initialCurriculumStage={student.readingCurriculumStage}
+        initialDatasetId={student.currentVocabDatasetId ?? ""}
+        initialReadingContextSyncStatus={student.readingContextSyncStatus}
+        onDataUpdated={controller.actions.refreshData}
+        onLoaded={controller.actions.cacheWrongWordHistory}
+        studentId={student.id}
+      />
       <StudentLearningActivityList
         filtersEnabled
         initialLimit={5}

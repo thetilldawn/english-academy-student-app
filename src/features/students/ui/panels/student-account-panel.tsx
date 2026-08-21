@@ -1,14 +1,7 @@
 "use client";
 
-import type { FormEvent } from "react";
-
 import { StatusBadge } from "@/design-system/primitives/badge/badge";
 import { Button } from "@/design-system/primitives/button/button";
-import {
-  Field,
-  FieldLabel,
-  Input,
-} from "@/design-system/primitives/form/field";
 import { adminStudentsText } from "@/content/ko/admin-students";
 import { Notice } from "@/design-system/patterns/feedback/feedback";
 
@@ -23,16 +16,6 @@ export function StudentAccountPanel({
   const student = controller.selectedStudent;
   if (!student) return null;
 
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    void controller.actions.saveProfile();
-  }
-
-  const profileUnchanged =
-    controller.profile.displayName === student.displayName &&
-    controller.profile.schoolName === (student.schoolName ?? "") &&
-    controller.profile.gradeLabel === (student.gradeLabel ?? "");
-
   return (
     <section
       aria-labelledby="student-account-tab"
@@ -40,62 +23,6 @@ export function StudentAccountPanel({
       id="student-account-panel"
       role="tabpanel"
     >
-      <form className={styles.profileForm} onSubmit={submit}>
-        <div className={styles.profileGrid}>
-          <Field as="label">
-            <FieldLabel as="span">{adminStudentsText.account.name}</FieldLabel>
-            <Input
-              maxLength={80}
-              onChange={(event) =>
-                controller.actions.setProfileField(
-                  "displayName",
-                  event.target.value,
-                )
-              }
-              required
-              value={controller.profile.displayName}
-            />
-          </Field>
-          <Field as="label">
-            <FieldLabel as="span">{adminStudentsText.account.school}</FieldLabel>
-            <Input
-              maxLength={120}
-              onChange={(event) =>
-                controller.actions.setProfileField(
-                  "schoolName",
-                  event.target.value,
-                )
-              }
-              value={controller.profile.schoolName}
-            />
-          </Field>
-          <Field as="label">
-            <FieldLabel as="span">{adminStudentsText.account.grade}</FieldLabel>
-            <Input
-              maxLength={40}
-              onChange={(event) =>
-                controller.actions.setProfileField(
-                  "gradeLabel",
-                  event.target.value,
-                )
-              }
-              value={controller.profile.gradeLabel}
-            />
-          </Field>
-        </div>
-        <Button
-          disabled={
-            controller.interactionBusy ||
-            !controller.profile.displayName.trim() ||
-            profileUnchanged
-          }
-          type="submit"
-        >
-          {controller.busyKey === `profile:${student.id}`
-            ? adminStudentsText.account.savePending
-            : adminStudentsText.account.save}
-        </Button>
-      </form>
       <div className={styles.managementSummary}>
         <div>
           <span>{adminStudentsText.account.status}</span>

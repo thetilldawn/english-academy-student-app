@@ -18,7 +18,6 @@ import type { DialogCloseReason } from "@/design-system/primitives/dialog/dialog
 import { sendKakaoText } from "@/lib/kakao-share";
 import { buildStudentAccessUrl } from "@/lib/auth/student-code-input";
 import type { StudentWrongWordHistory } from "@/lib/admin/wrong-word-history";
-import type { StudentLearningSourceItem } from "@/lib/admin/learning-sources";
 import type { StudentSummary } from "@/lib/services/admin-service";
 
 import {
@@ -33,7 +32,6 @@ import {
 import {
   studentDetailBackRoute,
   studentDetailCloseRoute,
-  type StudentDetailBaseRoute,
   type StudentDetailRoute,
 } from "../domain/student-detail-route";
 import type {
@@ -100,15 +98,13 @@ export function useStudentDetailController(data: StudentManagementData) {
     route: initialStudent
       ? {
           kind: "detail" as const,
-          learningView: "summary" as const,
           studentId: initialStudent.id,
-          tab: "learning" as const,
+          tab: "info" as const,
         }
       : { kind: "closed" as const },
   });
   const [busyKey, setBusyKey] = useState("");
   const [createError, setCreateError] = useState("");
-  const [assignmentBusy, setAssignmentBusy] = useState(false);
   const [wrongHistoryByStudent, setWrongHistoryByStudent] = useState<
     Record<string, WrongHistoryCacheEntry>
   >({});
@@ -116,7 +112,7 @@ export function useStudentDetailController(data: StudentManagementData) {
   const navigationVersionRef = useRef(0);
   const initialStudentIdRef = useRef(data.initialStudentId ?? "");
 
-  const interactionBusy = busyKey !== "" || assignmentBusy;
+  const interactionBusy = busyKey !== "";
   const selectedStudentId =
     state.route.kind === "closed" ? "" : state.route.studentId ?? "";
   const selectedStudent =
@@ -128,13 +124,12 @@ export function useStudentDetailController(data: StudentManagementData) {
   }, []);
 
   const openStudent = useCallback(
-    (student: StudentSummary, tab: StudentDetailTab = "learning") => {
+    (student: StudentSummary, tab: StudentDetailTab = "info") => {
       navigationVersionRef.current += 1;
       dispatch({
         profile: profileForStudent(student),
         route: {
           kind: "detail",
-          learningView: "summary",
           studentId: student.id,
           tab,
         },
@@ -167,7 +162,6 @@ export function useStudentDetailController(data: StudentManagementData) {
   }
 
   function closeAll() {
-    setAssignmentBusy(false);
     navigate({ kind: "closed" });
   }
 
@@ -176,7 +170,6 @@ export function useStudentDetailController(data: StudentManagementData) {
   }
 
   function requestClose(reason: DialogCloseReason) {
-    if (assignmentBusy) return;
     navigate(studentDetailCloseRoute(state.route, reason));
   }
 
@@ -184,42 +177,8 @@ export function useStudentDetailController(data: StudentManagementData) {
     if (!selectedStudent) return;
     navigate({
       kind: "detail",
-      learningView: "summary",
       studentId: selectedStudent.id,
       tab,
-    });
-  }
-
-  function openSource(
-    view: "vocab" | "passage",
-    source: StudentLearningSourceItem,
-  ) {
-    if (!selectedStudent) return;
-    navigate({
-      datasetId: source.vocabDatasetId ?? "",
-      kind: "source",
-      label: source.displayLabel,
-      studentId: selectedStudent.id,
-      view,
-    });
-  }
-
-  function openAssignment(datasetId: string) {
-    if (!selectedStudent || interactionBusy) return;
-    const returnTo: StudentDetailBaseRoute =
-      state.route.kind === "source"
-        ? state.route
-        : {
-            kind: "detail",
-            learningView: "summary",
-            studentId: selectedStudent.id,
-            tab: "learning",
-          };
-    navigate({
-      datasetId,
-      kind: "assignment",
-      returnTo,
-      studentId: selectedStudent.id,
     });
   }
 
@@ -268,13 +227,13 @@ export function useStudentDetailController(data: StudentManagementData) {
     if (!selectedStudent || !beginAction(`vocab:${selectedStudent.id}`)) return;
     try {
       await updateStudentDataset(selectedStudent.id, state.profile.datasetId);
-      toast.success(adminStudentsText.account.wordbookSuccess);
+      toast.success(adminStudentsText.info.wordbookSuccess);
       refresh();
     } catch (requestError) {
       toast.error(
         requestError instanceof Error
           ? requestError.message
-          : adminStudentsText.account.wordbookError,
+          : adminStudentsText.info.wordbookError,
       );
     } finally {
       finishAction();
@@ -295,13 +254,13 @@ export function useStudentDetailController(data: StudentManagementData) {
         gradeLabel: state.profile.gradeLabel,
         schoolName: state.profile.schoolName,
       });
-      toast.success(adminStudentsText.account.profileSuccess);
+      toast.success(adminStudentsText.info.profileSuccess);
       refresh();
     } catch (requestError) {
       toast.error(
         requestError instanceof Error
           ? requestError.message
-          : adminStudentsText.account.profileError,
+          : adminStudentsText.info.profileError,
       );
     } finally {
       finishAction();
@@ -487,8 +446,6 @@ export function useStudentDetailController(data: StudentManagementData) {
       changeTab,
       closeAll,
       createFromForm,
-      openAssignment,
-      openSource,
       openStudent,
       removeStudent,
       requestClose,
@@ -497,11 +454,9 @@ export function useStudentDetailController(data: StudentManagementData) {
       rotateCode,
       saveCurrentDataset,
       saveProfile,
-      setAssignmentBusy,
       setProfileField: (field: keyof StudentProfileDraft, value: string) =>
         dispatch({ field, type: "profile", value }),
     },
-    assignmentBusy,
     busyKey,
     codeActions,
     createError,

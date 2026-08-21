@@ -13,43 +13,22 @@ describe("student management feature boundary", () => {
     "src/features/students/ui/student-directory.module.css",
   );
   const detail = source("src/features/students/ui/student-detail-dialog.tsx");
-  const assignment = source(
-    "src/features/students/ui/panels/student-assignment-panel.tsx",
-  );
-  const assignmentEditor = source(
-    "src/features/assignments/ui/single-assignment-editor.tsx",
-  );
-  const assignmentEditorCss = source(
-    "src/features/assignments/ui/single-assignment-editor.module.css",
-  );
-  const dialogCss = source(
-    "src/design-system/primitives/dialog/dialog.module.css",
+  const info = source("src/features/students/ui/panels/student-info-panel.tsx");
+  const account = source(
+    "src/features/students/ui/panels/student-account-panel.tsx",
   );
   const wrongCss = source(
     "src/features/students/ui/panels/student-wrong-word-panel.module.css",
   );
   const globalCss = source("src/app/globals.css");
 
-  it("uses one dialog and the focused assignment editor instead of nesting managers", () => {
+  it("keeps word assignment out of student detail and separates info from account actions", () => {
     expect(detail.match(/<DialogFrame/g)).toHaveLength(1);
-    expect(detail).toContain("<StudentAssignmentPanel");
-    expect(assignment).toContain("<SingleAssignmentEditor");
-    expect(`${detail}\n${assignment}`).not.toMatch(
-      /AssignmentManager|launcherOnly/,
-    );
-  });
-
-  it("keeps the mobile assignment form inside the shared scroll region", () => {
-    expect(assignment).toContain('placement="dialog"');
-    expect(assignmentEditor).toContain(
-      'className={placement === "inline" ? styles.inlineBody : undefined}',
-    );
-    expect(assignmentEditorCss).not.toMatch(
-      /\.dialogBody\s*\{[^}]*overflow:\s*visible/,
-    );
-    expect(dialogCss).toMatch(
-      /\.body\s*\{[^}]*min-height:\s*0;[^}]*overflow-y:\s*auto;/,
-    );
+    expect(detail).toContain("<StudentInfoPanel");
+    expect(detail).not.toMatch(/StudentAssignmentPanel|StudentLearningPanel/);
+    expect(info).toMatch(/saveProfile|saveCurrentDataset/);
+    expect(account).toMatch(/revealCode|rotateCode|blockAccess|removeStudent/);
+    expect(account).not.toMatch(/saveProfile|saveCurrentDataset/);
   });
 
   it("does not reserve a score column when an activity has no score", () => {

@@ -72,6 +72,7 @@ export function SelectableRow({
   children,
   disabled = false,
   onToggle,
+  selectionEnabled = true,
   selectionAriaLabel,
 }: {
   actions?: ReactNode;
@@ -80,28 +81,39 @@ export function SelectableRow({
   children: ReactNode;
   disabled?: boolean;
   onToggle: () => void;
+  selectionEnabled?: boolean;
   selectionAriaLabel: string;
 }) {
   return (
-    <article className={styles.selectable} data-selected={checked}>
-      <label className={styles.checkbox} htmlFor={checkboxId}>
-        <Checkbox
+    <article
+      className={styles.selectable}
+      data-selected={selectionEnabled && checked}
+      data-selection-enabled={selectionEnabled}
+    >
+      {selectionEnabled ? (
+        <label className={styles.checkbox} htmlFor={checkboxId}>
+          <Checkbox
+            aria-label={selectionAriaLabel}
+            checked={checked}
+            disabled={disabled}
+            id={checkboxId}
+            onChange={onToggle}
+          />
+        </label>
+      ) : null}
+      {selectionEnabled ? (
+        <button
           aria-label={selectionAriaLabel}
-          checked={checked}
+          className={styles.selectableContent}
           disabled={disabled}
-          id={checkboxId}
-          onChange={onToggle}
-        />
-      </label>
-      <button
-        aria-label={selectionAriaLabel}
-        className={styles.selectableContent}
-        disabled={disabled}
-        onClick={onToggle}
-        type="button"
-      >
-        {children}
-      </button>
+          onClick={onToggle}
+          type="button"
+        >
+          {children}
+        </button>
+      ) : (
+        <span className={styles.selectableContent}>{children}</span>
+      )}
       {actions ? <span className={styles.actions}>{actions}</span> : null}
     </article>
   );

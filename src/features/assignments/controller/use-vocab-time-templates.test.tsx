@@ -30,7 +30,6 @@ describe("영구 시간 템플릿", () => {
       initialTemplates: [],
       schedule: {
         startDate: "2026-08-17",
-        endDate: "2026-08-31",
         weekdays: [1, 3, 5],
         availableTime: "18:00",
         deadlineDayOffset: 1,
@@ -63,7 +62,6 @@ describe("영구 시간 템플릿", () => {
       initialTemplates: [],
       schedule: {
         startDate: "2026-08-17",
-        endDate: "2026-08-31",
         weekdays: [1],
         availableTime: "18:00",
         deadlineDayOffset: 1,
@@ -90,7 +88,6 @@ describe("영구 시간 템플릿", () => {
       initialTemplates: [],
       schedule: {
         startDate: "2026-08-17",
-        endDate: "2026-08-31",
         weekdays: [1],
         availableTime: "18:00",
         deadlineDayOffset: 1,
