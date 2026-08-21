@@ -19,6 +19,14 @@ import {
 
 const BUILT_IN_TIME_TEMPLATES: readonly VocabTimeTemplate[] = [
   {
+    id: "day-start",
+    label: "하루 시작",
+    availableTime: "00:00",
+    deadlineDayOffset: 1,
+    deadlineTime: "22:00",
+    timing: { mode: "total", totalSeconds: 300 },
+  },
+  {
     id: "after-class",
     label: "수업 후",
     availableTime: "16:00",

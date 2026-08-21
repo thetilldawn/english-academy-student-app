@@ -9,6 +9,29 @@ import { useVocabTimeTemplates } from "./use-vocab-time-templates";
 const templateId = "00000000-0000-4000-8000-000000000111";
 
 describe("영구 시간 템플릿", () => {
+  it("배정일 자정부터 공개하는 기본 버튼을 제공한다", () => {
+    const { result } = renderHook(() => useVocabTimeTemplates({
+      initialTemplates: [],
+      schedule: {
+        startDate: "2026-08-17",
+        weekdays: [1],
+        availableTime: "18:00",
+        deadlineDayOffset: 1,
+        deadlineTime: "22:00",
+      },
+      timing: { mode: "total", totalSeconds: 300 },
+      transport: vi.fn(),
+    }));
+
+    expect(result.current.timeTemplates).toContainEqual(expect.objectContaining({
+      id: "day-start",
+      label: "하루 시작",
+      availableTime: "00:00",
+      deadlineDayOffset: 1,
+      deadlineTime: "22:00",
+    }));
+  });
+
   it("서버 저장에 성공한 템플릿만 현재 버튼 목록에 추가한다", async () => {
     const transport: AssignmentTransport = vi.fn(async () => ({
       ok: true,
