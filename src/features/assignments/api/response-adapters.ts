@@ -200,8 +200,14 @@ const bulkAssignmentCreationResponseSchema = z
       z
         .object({
           student_id: z.uuid(),
-          assignment_id: z.uuid(),
+          assignment_id: z.uuid().nullable(),
+          queue_series_id: z.uuid().nullable().optional().default(null),
+          queue_item_id: z.uuid().nullable().optional().default(null),
           session_number: z.number().int().positive(),
+          status: z
+            .enum(["assigned", "queued"])
+            .optional()
+            .default("assigned"),
         })
         .strict(),
     ),

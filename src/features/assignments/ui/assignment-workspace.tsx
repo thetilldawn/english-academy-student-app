@@ -47,15 +47,21 @@ export function AssignmentWorkspace({
                 : ""
           }
           onClose={controller.actions.closePlanner}
-          onSuccess={(assignmentCount, studentCount) => {
+          onSuccess={(assignmentCount, studentCount, queuedCount) => {
             if (controller.assignmentMode === "bulk") {
               controller.actions.clearBulkStudents();
             }
             toast.success(
-              formatContentText(adminLearningText.page.bulk.success, {
-                assignmentCount,
-                studentCount,
-              }),
+              formatContentText(
+                queuedCount > 0
+                  ? adminLearningText.page.bulk.queueSuccess
+                  : adminLearningText.page.bulk.success,
+                {
+                  assignmentCount,
+                  queuedCount,
+                  studentCount,
+                },
+              ),
             );
             controller.actions.refresh();
           }}

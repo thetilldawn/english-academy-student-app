@@ -9,6 +9,7 @@ import {
   studentLearningActivityIndex,
 } from "@/features/history/domain/learning-activity";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
+import { indexVocabAssignmentQueuesByStudent } from "@/lib/admin/vocab-assignment-queue";
 import {
   availableReviewCount,
   emptyPendingReviewCounts,
@@ -86,6 +87,10 @@ export function useAssignmentWorkspace({
   const activitiesByStudent = useMemo(
     () => studentLearningActivityIndex(data.history),
     [data.history],
+  );
+  const assignmentQueuesByStudent = useMemo(
+    () => indexVocabAssignmentQueuesByStudent(data.assignmentQueues ?? []),
+    [data.assignmentQueues],
   );
   const learningSourcesByStudent = useMemo(() => {
     const index = new Map<string, AssignmentLearningSourceItem[]>();
@@ -327,6 +332,7 @@ export function useAssignmentWorkspace({
     },
     activeStudents,
     activitiesByStudent,
+    assignmentQueuesByStudent,
     allFilteredStudentsSelected,
     assignmentMode,
     canPrepareBulk,

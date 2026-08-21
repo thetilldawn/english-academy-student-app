@@ -10,6 +10,7 @@ import {
   listVocabUnits,
 } from "@/lib/services/admin-service";
 import { listVocabTimeTemplates } from "@/lib/services/vocab-time-template-service";
+import { listVocabAssignmentQueueSummaries } from "@/lib/services/vocab-assignment-queue-service";
 
 export async function loadAssignmentManagerData() {
   const [
@@ -22,6 +23,7 @@ export async function loadAssignmentManagerData() {
     learningSources,
     classGroups,
     timeTemplates,
+    assignmentQueues,
   ] = await Promise.all([
     listDatasets(),
     listStudents(),
@@ -32,6 +34,7 @@ export async function loadAssignmentManagerData() {
     listStudentLearningSources(),
     listStudentClassGroups(),
     listVocabTimeTemplates(),
+    listVocabAssignmentQueueSummaries(),
   ]);
 
   return {
@@ -49,6 +52,7 @@ export async function loadAssignmentManagerData() {
     learningSources,
     classGroups,
     timeTemplates,
+    assignmentQueues,
   };
 }
 

@@ -35,7 +35,7 @@ function student(id: string, displayName: string): StudentSummary {
 function data(students: StudentSummary[]): StudentManagementData {
   return {
     appOrigin: "http://localhost:3000",
-    assignmentDatasets: [],
+  assignmentDatasets: [],
     assignmentUnits: [],
     currentHistory: [],
     currentVocabWrongSummaries: [],

@@ -8,6 +8,7 @@ import { ActionWithReason } from "@/design-system/patterns/action-reason/action-
 import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 import { Button, ButtonLink } from "@/design-system/primitives/button/button";
 import { ActivityStatusTimeline } from "@/features/history/ui/activity-status-timeline";
+import { AssignmentQueueTags } from "@/features/assignment-queue/ui/assignment-queue-tags";
 import { AssignmentMetaTags } from "@/features/history/ui/assignment-meta-tags";
 import { AttemptScoreSummary } from "@/features/history/ui/attempt-score-summary";
 import learningRowStyles from "@/features/history/ui/learning-management-row.module.css";
@@ -32,6 +33,8 @@ export function AssignmentStudentRow({
   student: AssignmentStudentItem;
 }) {
   const activities = studentActivities(controller, student.id);
+  const assignmentQueues =
+    controller.assignmentQueuesByStudent.get(student.id) ?? [];
   const nextActivity = activities[0] ?? null;
   const progress = controller.progressByStudent.get(student.id) ?? null;
   const scoreInput = nextActivity
@@ -150,6 +153,14 @@ export function AssignmentStudentRow({
                 <MetaTag>{adminLearningText.page.studentCard.wrongAssigned}</MetaTag>
               ) : null}
             </MetaTagList>
+            {assignmentQueues.slice(0, 2).map((queue) => (
+              <AssignmentQueueTags key={queue.seriesId} queue={queue} />
+            ))}
+            {assignmentQueues.length > 2 ? (
+              <MetaTagList>
+                <MetaTag>이어 배정 +{assignmentQueues.length - 2}</MetaTag>
+              </MetaTagList>
+            ) : null}
             <span className={learningRowStyles.recent}>
               {nextActivity ? (
                 <>

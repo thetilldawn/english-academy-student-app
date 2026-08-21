@@ -78,11 +78,18 @@ export function BulkSeriesPreview({
           {previewLoading
             ? adminLearningText.bulkAssignmentModal.calculating
             : formatContentText(
-                adminLearningText.bulkAssignmentModal.previewSummary,
+                distribution === "split"
+                  ? adminLearningText.bulkAssignmentModal.queuePreviewSummary
+                  : adminLearningText.bulkAssignmentModal.previewSummary,
                 {
                   assignable: preview?.assignableCount ?? 0,
                   assignments: preview?.assignmentCount ?? 0,
                   blocked: preview?.blockedCount ?? 0,
+                  queued: Math.max(
+                    0,
+                    (preview?.assignmentCount ?? 0) -
+                      (preview?.assignableCount ?? 0),
+                  ),
                 },
               )}
         </span>

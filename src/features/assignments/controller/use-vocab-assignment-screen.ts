@@ -38,10 +38,18 @@ function selectCommonInitialDatasetId(
 }
 
 export function summarizeVocabAssignmentResult(
-  assignments: readonly { student_id: string }[],
+  assignments: readonly {
+    student_id: string;
+    assignment_id?: string | null;
+    status?: "assigned" | "queued";
+  }[],
 ) {
+  const queuedCount = assignments.filter(
+    (item) => item.status === "queued" || item.assignment_id === null,
+  ).length;
   return {
-    assignmentCount: assignments.length,
+    assignmentCount: assignments.length - queuedCount,
+    queuedCount,
     studentCount: new Set(assignments.map((item) => item.student_id)).size,
   };
 }
@@ -113,7 +121,10 @@ export function useVocabAssignmentScreen({
   async function submitPlan() {
     const outcome = await planner.bulk.actions.submit();
     return outcome.ok
-      ? { ok: true as const, result: summarizeVocabAssignmentResult(outcome.result.assignments) }
+      ? {
+          ok: true as const,
+          result: summarizeVocabAssignmentResult(outcome.result.assignments),
+        }
       : outcome;
   }
 

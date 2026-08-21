@@ -1,4 +1,5 @@
 import { StudentLearningActivityList } from "@/features/history/ui/student-learning-activity-list";
+import { StudentAssignmentQueueHistory } from "@/features/assignment-queue/ui/student-assignment-queue-history";
 
 import type { StudentDetailController } from "../../controller/use-student-detail-controller";
 import type { StudentManagementData } from "../../model";
@@ -37,6 +38,7 @@ export function StudentHistoryPanel({
         onLoaded={controller.actions.cacheWrongWordHistory}
         studentId={student.id}
       />
+      <StudentAssignmentQueueHistory studentId={student.id} />
       <StudentLearningActivityList
         filtersEnabled
         initialLimit={5}

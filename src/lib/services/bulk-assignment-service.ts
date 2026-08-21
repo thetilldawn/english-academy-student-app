@@ -124,8 +124,14 @@ export type BulkAssignmentPreview = {
 const bulkAssignmentResultSchema = z.array(
   z.object({
     student_id: z.uuid(),
-    assignment_id: z.uuid(),
+    assignment_id: z.uuid().nullable(),
+    queue_series_id: z.uuid().nullable().optional().default(null),
+    queue_item_id: z.uuid().nullable().optional().default(null),
     session_number: z.coerce.number().int().positive(),
+    status: z
+      .enum(["assigned", "queued"])
+      .optional()
+      .default("assigned"),
   }),
 );
 
@@ -134,6 +140,48 @@ export type BulkAssignmentResult = z.infer<
 >[number];
 
 const MAXIMUM_BULK_QUESTION_COUNT = 10_000;
+const SEOUL_OFFSET_MILLISECONDS = 9 * 60 * 60 * 1000;
+const MAXIMUM_QUEUE_WINDOW_SECONDS = 365 * 24 * 60 * 60;
+
+function usesCompletionQueue(input: BulkAssignmentInput) {
+  return input.commonPlan?.distribution === "split";
+}
+
+function toSeoulRecurrenceSlot(input: {
+  availableFrom: string;
+  availableUntil: string;
+}) {
+  const from = Date.parse(input.availableFrom);
+  const until = Date.parse(input.availableUntil);
+  const durationSeconds = Math.floor((until - from) / 1000);
+  if (durationSeconds < 60 || durationSeconds > MAXIMUM_QUEUE_WINDOW_SECONDS) {
+    throw new BulkAssignmentError(
+      "invalid_selection",
+      "이어 배정의 공개·마감 간격은 1분부터 365일까지 설정할 수 있습니다.",
+    );
+  }
+  const local = new Date(from + SEOUL_OFFSET_MILLISECONDS);
+  const day = local.getUTCDay();
+  return {
+    isodow: day === 0 ? 7 : day,
+    local_time: [
+      local.getUTCHours(),
+      local.getUTCMinutes(),
+      local.getUTCSeconds(),
+    ]
+      .map((part) => String(part).padStart(2, "0"))
+      .join(":"),
+    duration_seconds: durationSeconds,
+  };
+}
+
+function queueRangeLabel(sessions: readonly BulkAssignmentPreviewSession[]) {
+  const labels = sessions.flatMap((session) => session.unitLabels);
+  const unique = [...new Set(labels)];
+  if (unique.length === 0) return "선택 범위";
+  if (unique.length === 1) return unique[0]!;
+  return `${unique[0]}~${unique.at(-1)}`;
+}
 
 async function mapInBatches<Input, Output>(
   items: readonly Input[],
@@ -1040,15 +1088,69 @@ function bulkAssignmentRequestSha256(input: BulkAssignmentInput) {
     .digest("hex");
 }
 
+function buildCompletionQueueSeriesPayload(
+  input: BulkAssignmentInput,
+  preview: BulkAssignmentPreview,
+  batches: readonly Record<string, unknown>[],
+) {
+  const commonPlan = input.commonPlan;
+  if (!commonPlan || commonPlan.distribution !== "split") {
+    throw new BulkAssignmentError("invalid_selection");
+  }
+  const batchesByStudent = new Map<string, Record<string, unknown>[]>();
+  for (const batch of batches) {
+    const studentId = batch.student_id;
+    if (typeof studentId !== "string") {
+      throw new BulkAssignmentError("invalid_selection");
+    }
+    const current = batchesByStudent.get(studentId) ?? [];
+    current.push(batch);
+    batchesByStudent.set(studentId, current);
+  }
+
+  const recurrenceSlots = commonPlan.recurrenceSessions.map(
+    toSeoulRecurrenceSlot,
+  );
+  return preview.items
+    .filter((item) => item.sessions.length > 0)
+    .map((item) => {
+      const items = (batchesByStudent.get(item.studentId) ?? []).toSorted(
+        (left, right) =>
+          Number(left.session_number) - Number(right.session_number),
+      );
+      if (
+        !item.datasetId ||
+        !item.datasetLabel ||
+        items.length !== item.sessions.length
+      ) {
+        throw new BulkAssignmentError("invalid_selection");
+      }
+      return {
+        student_id: item.studentId,
+        dataset_id: item.datasetId,
+        dataset_label: item.datasetLabel,
+        range_label: queueRangeLabel(item.sessions),
+        recurrence_slots: recurrenceSlots,
+        items,
+      };
+    })
+    .toSorted((left, right) => left.student_id.localeCompare(right.student_id));
+}
+
 async function lookupBulkAssignmentResult(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
   input: BulkAssignmentInput,
   requestSha256: string,
 ) {
-  const lookup = await supabase.rpc("get_bulk_vocab_series_result_v1", {
+  const lookup = await supabase.rpc(
+    usesCompletionQueue(input)
+      ? "get_vocab_assignment_queue_result_v1"
+      : "get_bulk_vocab_series_result_v1",
+    {
     p_idempotency_key: input.idempotencyKey,
     p_request_sha256: requestSha256,
-  });
+    },
+  );
   if (lookup.error) throw bulkDatabaseError(lookup.error);
   if (lookup.data === null) return null;
   const previous = bulkAssignmentResultSchema.safeParse(lookup.data);
@@ -1174,6 +1276,7 @@ export async function createBulkAssignments(
               student_id: item.studentId,
               dataset_id: prepared.datasetId,
               unit_ids: prepared.unitIds,
+              unit_labels: session.unitLabels,
               title: prepared.title,
               question_count: prepared.questionCount,
               english_to_korean_ratio: prepared.englishToKoreanRatio,
@@ -1366,14 +1469,18 @@ export async function createBulkAssignments(
     );
   }
 
-  const { data, error } = await supabase.rpc(
-    "create_bulk_vocab_assignments_v8",
-    {
-      p_idempotency_key: input.idempotencyKey,
-      p_request_sha256: requestSha256,
-      p_batches: batches,
-    },
-  );
+  const completionQueue = usesCompletionQueue(input);
+  const { data, error } = completionQueue
+    ? await supabase.rpc("create_vocab_assignment_queues_v1", {
+        p_idempotency_key: input.idempotencyKey,
+        p_request_sha256: requestSha256,
+        p_series: buildCompletionQueueSeriesPayload(input, preview, batches),
+      })
+    : await supabase.rpc("create_bulk_vocab_assignments_v8", {
+        p_idempotency_key: input.idempotencyKey,
+        p_request_sha256: requestSha256,
+        p_batches: batches,
+      });
   if (error) {
     console.error("[bulk-assignment-series] database operation failed", {
       code: error.code,

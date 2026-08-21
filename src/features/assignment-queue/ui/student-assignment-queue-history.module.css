@@ -1,0 +1,22 @@
+.wrapper {
+  display: grid;
+  justify-items: start;
+}
+
+.wrapper > section {
+  width: 100%;
+}
+
+.state,
+.error {
+  margin: 0 0 var(--space-4);
+  font-size: 0.875rem;
+}
+
+.state {
+  color: var(--muted);
+}
+
+.error {
+  color: var(--status-danger-bg);
+}

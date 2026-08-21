@@ -198,7 +198,14 @@ async function createFinalSchemaDatabase() {
     const migration = fs
       .readFileSync(migrationPath, "utf8")
       .replace("create extension if not exists pg_cron;", "");
-    await database.exec(migration);
+    try {
+      await database.exec(migration);
+    } catch (error) {
+      throw new Error(
+        `migration failed: ${path.basename(migrationPath)}: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error },
+      );
+    }
   }
   return database;
 }
@@ -1320,6 +1327,427 @@ describe.sequential("exam-use dictionary projection", () => {
       question_count: 4,
       recipient_count: 1,
       snapshot_count: 4,
+    });
+  });
+
+  it("분할 큐는 첫 시험만 만들고 완료 뒤 다음 한 회차만 멱등 생성한다", async () => {
+    const cancellable = await database.query<{ assignment_id: string }>(`
+      select link.assignment_id::text
+      from public.assignment_students as link
+      where link.student_id = '${ids.student}'
+        and link.cancelled_at is null
+        and not exists (
+          select 1 from public.quiz_attempts as attempt
+          where attempt.assignment_id = link.assignment_id
+            and attempt.student_id = link.student_id
+        );
+    `);
+    await database.exec("set role authenticated;");
+    for (const link of cancellable.rows) {
+      await database.query(
+        `select public.cancel_student_assignment_v1(
+          $1::uuid, $2::uuid, 'completion queue test cleanup'
+        )`,
+        [link.assignment_id, ids.student],
+      );
+    }
+    await database.exec("reset role;");
+    const source = await database.query<{
+      unit_id: string;
+      vocab_entry_id: number;
+    }>(`
+      select occurrence.unit_id::text, occurrence.vocab_entry_id
+      from word_index.app_exam_use_occurrence as occurrence
+      join word_index.app_exam_use_release as release
+        on release.release_id = occurrence.release_id
+       and release.status = 'active'
+      where occurrence.dataset_id = '${datasetId}'
+        and occurrence.include_in_exam
+      order by occurrence.source_row;
+    `);
+    const currentEntryIds = source.rows.map((row) => row.vocab_entry_id);
+    const questions = currentEntryIds.map((entryId, index) => ({
+      vocab_entry_id: entryId,
+      base_order_index: index + 1,
+      direction:
+        index < 2 ? "english_to_korean" : "korean_to_english",
+      choice_vocab_entry_ids: currentEntryIds,
+    }));
+    const firstFrom = new Date(Date.now() - 60_000);
+    const firstUntil = new Date(Date.now() + 60 * 60_000);
+    const secondFrom = new Date(Date.now() + 2 * 24 * 60 * 60_000);
+    const secondUntil = new Date(secondFrom.getTime() + 60 * 60_000);
+    const thirdFrom = new Date(Date.now() + 4 * 24 * 60 * 60_000);
+    const thirdUntil = new Date(thirdFrom.getTime() + 60 * 60_000);
+    const commonBatch = {
+      kind: "regular",
+      student_id: ids.student,
+      title: "Completion queue integration",
+      dataset_id: datasetId,
+      unit_ids: [source.rows[0]!.unit_id],
+      unit_labels: ["통합 DAY"],
+      question_count: 4,
+      english_to_korean_ratio: 50,
+      time_limit_seconds: 3600,
+      passing_score: 80,
+      question_order_mode: "fixed",
+      timing_mode: "total",
+      question_time_limit_seconds: null,
+      allowed_collision_assignment_ids: [],
+      session_count: 3,
+      questions,
+    };
+    const queueInput = [
+      {
+        student_id: ids.student,
+        dataset_id: datasetId,
+        dataset_label: "통합 테스트용 가짜 단어장",
+        range_label: "통합 DAY",
+        recurrence_slots: [
+          { isodow: 1, local_time: "15:00:00", duration_seconds: 3600 },
+          { isodow: 3, local_time: "15:00:00", duration_seconds: 3600 },
+          { isodow: 5, local_time: "15:00:00", duration_seconds: 3600 },
+        ],
+        items: [
+          {
+            ...commonBatch,
+            session_number: 1,
+            available_from: firstFrom.toISOString(),
+            available_until: firstUntil.toISOString(),
+          },
+          {
+            ...commonBatch,
+            session_number: 2,
+            available_from: secondFrom.toISOString(),
+            available_until: secondUntil.toISOString(),
+          },
+          {
+            ...commonBatch,
+            session_number: 3,
+            available_from: thirdFrom.toISOString(),
+            available_until: thirdUntil.toISOString(),
+          },
+        ],
+      },
+    ];
+
+    await database.exec("set role authenticated;");
+    const created = await database.query<{
+      result: Array<{
+        assignment_id: string | null;
+        queue_series_id: string;
+        session_number: number;
+        status: string;
+      }>;
+    }>(
+      `select public.create_vocab_assignment_queues_v1(
+        $1::uuid, $2::text, $3::jsonb
+      ) as result`,
+      [
+        "b4d82325-332a-44bb-b0ec-f225f22f6554",
+        "b".repeat(64),
+        JSON.stringify(queueInput),
+      ],
+    );
+    await database.exec("reset role;");
+
+    expect(created.rows[0]!.result.map((item) => item.status)).toEqual([
+      "assigned",
+      "queued",
+      "queued",
+    ]);
+    expect(created.rows[0]!.result[1]!.assignment_id).toBeNull();
+    const firstAssignmentId = created.rows[0]!.result[0]!.assignment_id!;
+
+    const attempt = await database.query<{ id: string }>(`
+      select public.create_quiz_attempt_from_bank(
+        '${ids.student}', '${firstAssignmentId}'
+      ) as id;
+    `);
+    const quizQuestions = await database.query<{
+      id: string;
+      correct_choice_index: number;
+    }>(`
+      select id::text, correct_choice_index
+      from public.quiz_questions
+      where attempt_id = '${attempt.rows[0]!.id}'
+      order by order_index;
+    `);
+    for (const question of quizQuestions.rows) {
+      await database.query(
+        `select public.answer_quiz_question_v2(
+          $1::uuid, $2::uuid, $3::uuid, 'initial', $4::smallint, false
+        )`,
+        [
+          ids.student,
+          attempt.rows[0]!.id,
+          question.id,
+          (question.correct_choice_index + 1) % 4,
+        ],
+      );
+    }
+
+    const reviewState = await database.query<{
+      status: string;
+      phase: string;
+    }>(`
+      select status::text, phase
+      from public.quiz_attempts
+      where id = '${attempt.rows[0]!.id}';
+    `);
+    expect(reviewState.rows[0]).toEqual({
+      status: "in_progress",
+      phase: "review",
+    });
+
+    await database.exec("set role service_role;");
+    const prematureMaterialize = await database.query<{ result: unknown[] }>(`
+      select public.materialize_ready_vocab_assignment_queue_v1(
+        '${ids.student}', 10
+      ) as result;
+    `);
+    await database.exec("reset role;");
+    expect(prematureMaterialize.rows[0]!.result).toEqual([]);
+
+    const waitingState = await database.query<{
+      statuses: string[];
+      assignment_count: number;
+    }>(`
+      select
+        array_agg(item.status order by item.sequence_number) as statuses,
+        count(item.assignment_id)::integer as assignment_count
+      from private.vocab_assignment_series_items as item
+      where item.series_id = '${created.rows[0]!.result[0]!.queue_series_id}';
+    `);
+    expect(waitingState.rows[0]).toEqual({
+      statuses: ["assigned", "queued", "queued"],
+      assignment_count: 1,
+    });
+
+    await database.query(
+      "select public.start_quiz_retry($1::uuid, $2::uuid)",
+      [ids.student, attempt.rows[0]!.id],
+    );
+    for (const question of quizQuestions.rows) {
+      await database.query(
+        `select public.answer_quiz_question_v2(
+          $1::uuid, $2::uuid, $3::uuid, 'retry', $4::smallint, false
+        )`,
+        [
+          ids.student,
+          attempt.rows[0]!.id,
+          question.id,
+          (question.correct_choice_index + 1) % 4,
+        ],
+      );
+    }
+
+    const completedAttempt = await database.query<{
+      status: string;
+      passed: boolean;
+    }>(`
+      select status::text, passed
+      from public.quiz_attempts
+      where id = '${attempt.rows[0]!.id}';
+    `);
+    expect(completedAttempt.rows[0]).toEqual({
+      status: "completed",
+      passed: false,
+    });
+
+    const readyState = await database.query<{
+      statuses: string[];
+      assignment_count: number;
+    }>(`
+      select
+        array_agg(item.status order by item.sequence_number) as statuses,
+        count(item.assignment_id)::integer as assignment_count
+      from private.vocab_assignment_series_items as item
+      where item.series_id = '${created.rows[0]!.result[0]!.queue_series_id}';
+    `);
+    expect(readyState.rows[0]).toEqual({
+      statuses: ["completed", "ready", "queued"],
+      assignment_count: 1,
+    });
+
+    await database.exec("set role service_role;");
+    const firstMaterialize = await database.query<{
+      result: Array<{ assignment_id: string }>;
+    }>(`
+      select public.materialize_ready_vocab_assignment_queue_v1(
+        '${ids.student}', 10
+      ) as result;
+    `);
+    const secondMaterialize = await database.query<{ result: unknown[] }>(`
+      select public.materialize_ready_vocab_assignment_queue_v1(
+        '${ids.student}', 10
+      ) as result;
+    `);
+    await database.exec("reset role;");
+    expect(firstMaterialize.rows[0]!.result).toHaveLength(1);
+    expect(secondMaterialize.rows[0]!.result).toEqual([]);
+
+    const assignedState = await database.query<{
+      statuses: string[];
+      assignment_count: number;
+      event_count: number;
+    }>(`
+      select
+        array_agg(item.status order by item.sequence_number) as statuses,
+        count(item.assignment_id)::integer as assignment_count,
+        (
+          select count(*)::integer
+          from private.vocab_assignment_series_events as event
+          where event.series_id = item.series_id
+        ) as event_count
+      from private.vocab_assignment_series_items as item
+      where item.series_id = '${created.rows[0]!.result[0]!.queue_series_id}'
+      group by item.series_id;
+    `);
+    expect(assignedState.rows[0]).toEqual({
+      statuses: ["completed", "assigned", "queued"],
+      assignment_count: 2,
+      event_count: 5,
+    });
+
+    const secondAssignmentId =
+      firstMaterialize.rows[0]!.result[0]!.assignment_id;
+    await database.exec(`
+      update public.assignments
+      set available_from = clock_timestamp() - interval '1 minute',
+          available_until = clock_timestamp() + interval '1 hour'
+      where id = '${secondAssignmentId}';
+    `);
+    const expiredAttempt = await database.query<{ id: string }>(`
+      select public.create_quiz_attempt_from_bank(
+        '${ids.student}', '${secondAssignmentId}'
+      ) as id;
+    `);
+    await database.exec(`
+      update public.quiz_attempts
+      set started_at = clock_timestamp() - interval '2 hours',
+          current_question_started_at = clock_timestamp() - interval '2 hours',
+          deadline_at = clock_timestamp() - interval '1 hour'
+      where id = '${expiredAttempt.rows[0]!.id}';
+    `);
+    await database.query(
+      "select public.expire_quiz_attempt($1::uuid, $2::uuid)",
+      [ids.student, expiredAttempt.rows[0]!.id],
+    );
+    const expiredQueue = await database.query<{
+      item_status: string;
+      series_status: string;
+      reason: string;
+    }>(`
+      select
+        item.status as item_status,
+        series.status as series_status,
+        series.attention_reason as reason
+      from private.vocab_assignment_series as series
+      join private.vocab_assignment_series_items as item
+        on item.series_id = series.id
+       and item.sequence_number = 2
+      where series.id = '${created.rows[0]!.result[0]!.queue_series_id}';
+    `);
+    expect(expiredQueue.rows[0]).toEqual({
+      item_status: "attention",
+      series_status: "attention",
+      reason: "assignment_expired",
+    });
+
+    await database.exec("set role service_role;");
+    const blockedMaterialize = await database.query<{ result: unknown[] }>(`
+      select public.materialize_ready_vocab_assignment_queue_v1(
+        '${ids.student}', 10
+      ) as result;
+    `);
+    await database.exec("reset role;");
+    expect(blockedMaterialize.rows[0]!.result).toEqual([]);
+
+    const blockedQueue = await database.query<{ statuses: string[] }>(`
+      select array_agg(item.status order by item.sequence_number) as statuses
+      from private.vocab_assignment_series_items as item
+      where item.series_id = '${created.rows[0]!.result[0]!.queue_series_id}';
+    `);
+    expect(blockedQueue.rows[0]!.statuses).toEqual([
+      "completed",
+      "attention",
+      "queued",
+    ]);
+
+    await database.exec("set role authenticated;");
+    await database.query(
+      `select public.resolve_vocab_assignment_queue_attention_v1(
+        $1::uuid, 'retry'
+      )`,
+      [created.rows[0]!.result[0]!.queue_series_id],
+    );
+    await database.exec("reset role;");
+    const retriedQueue = await database.query<{
+      statuses: string[];
+      assignment_count: number;
+      series_status: string;
+    }>(`
+      select
+        array_agg(item.status order by item.sequence_number) as statuses,
+        count(item.assignment_id)::integer as assignment_count,
+        series.status as series_status
+      from private.vocab_assignment_series as series
+      join private.vocab_assignment_series_items as item
+        on item.series_id = series.id
+      where series.id = '${created.rows[0]!.result[0]!.queue_series_id}'
+      group by series.status;
+    `);
+    expect(retriedQueue.rows[0]).toEqual({
+      statuses: ["completed", "ready", "queued"],
+      assignment_count: 1,
+      series_status: "active",
+    });
+
+    await database.exec("set role service_role;");
+    const retriedMaterialize = await database.query<{
+      result: Array<{ assignment_id: string }>;
+    }>(`
+      select public.materialize_ready_vocab_assignment_queue_v1(
+        '${ids.student}', 10
+      ) as result;
+    `);
+    await database.exec("reset role;");
+    expect(retriedMaterialize.rows[0]!.result).toHaveLength(1);
+
+    await database.exec("set role authenticated;");
+    await database.query(
+      `select public.cancel_student_assignment_v1(
+        $1::uuid, $2::uuid, 'queue recovery test cleanup'
+      )`,
+      [
+        retriedMaterialize.rows[0]!.result[0]!.assignment_id,
+        ids.student,
+      ],
+    );
+    await database.query(
+      `select public.resolve_vocab_assignment_queue_attention_v1(
+        $1::uuid, 'cancel'
+      )`,
+      [created.rows[0]!.result[0]!.queue_series_id],
+    );
+    await database.exec("reset role;");
+    const cancelledQueue = await database.query<{
+      statuses: string[];
+      series_status: string;
+    }>(`
+      select
+        array_agg(item.status order by item.sequence_number) as statuses,
+        series.status as series_status
+      from private.vocab_assignment_series as series
+      join private.vocab_assignment_series_items as item
+        on item.series_id = series.id
+      where series.id = '${created.rows[0]!.result[0]!.queue_series_id}'
+      group by series.status;
+    `);
+    expect(cancelledQueue.rows[0]).toEqual({
+      statuses: ["completed", "cancelled", "cancelled"],
+      series_status: "cancelled",
     });
   });
 });

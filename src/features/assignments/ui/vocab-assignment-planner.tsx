@@ -48,7 +48,11 @@ export function VocabAssignmentPlanner({
   data: VocabAssignmentScreenData;
   initialDatasetId?: string;
   onClose: () => void;
-  onSuccess: (assignmentCount: number, studentCount: number) => void;
+  onSuccess: (
+    assignmentCount: number,
+    studentCount: number,
+    queuedCount: number,
+  ) => void;
   students: readonly AssignmentStudentItem[];
 }) {
   const controller = useVocabAssignmentScreen({
@@ -61,6 +65,17 @@ export function VocabAssignmentPlanner({
   const readyDatasets = controller.readyDatasets;
   const bulk = controller.bulk;
   const busy = bulk.state.submission.status === "submitting";
+  const previewAssignableCount = bulk.preview?.assignableCount ?? students.length;
+  const previewAssignmentCount = bulk.preview?.assignmentCount ?? 0;
+  const previewQueuedCount = Math.max(
+    0,
+    previewAssignmentCount - (bulk.preview?.assignableCount ?? 0),
+  );
+  const submitLabel = busy
+    ? "저장 중…"
+    : controller.planner.distribution === "split"
+      ? `${previewAssignableCount}명 · 첫 시험 ${bulk.preview?.assignableCount ?? 0}개 · 이어 배정 ${previewQueuedCount}개 저장`
+      : `${previewAssignableCount}명에게 ${previewAssignmentCount}개 시험 배정`;
   const previousSourceStudent = students.find(
     (student) => student.id === controller.previousExamSourceStudentId,
   );
@@ -94,6 +109,7 @@ export function VocabAssignmentPlanner({
     onSuccess(
       outcome.result.assignmentCount,
       outcome.result.studentCount,
+      outcome.result.queuedCount,
     );
     onClose();
   }
@@ -218,9 +234,7 @@ export function VocabAssignmentPlanner({
           canSubmit={bulk.canSubmit}
           focusableWhenBlocked={!busy}
           formId="vocab-assignment-plan-form"
-          label={busy
-            ? "저장 중…"
-            : `${bulk.preview?.assignableCount ?? students.length}명에게 ${bulk.preview?.assignmentCount ?? 0}개 시험 배정`}
+          label={submitLabel}
           reasonLayout="remaining-center"
         />
       </DialogFooter>

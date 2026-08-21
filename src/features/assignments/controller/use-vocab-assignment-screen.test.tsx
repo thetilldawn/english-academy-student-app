@@ -121,11 +121,15 @@ describe("단어 시험 배정 화면과 기능 경계", () => {
 
     await expect(result.current.actions.submitPlan()).resolves.toEqual({
       ok: true,
-      result: { assignmentCount: 3, studentCount: 2 },
+      result: { assignmentCount: 3, queuedCount: 0, studentCount: 2 },
     });
     expect(summarizeVocabAssignmentResult([
       { student_id: "student-1" },
-      { student_id: "student-2" },
-    ])).toEqual({ assignmentCount: 2, studentCount: 2 });
+      {
+        assignment_id: null,
+        status: "queued",
+        student_id: "student-2",
+      },
+    ])).toEqual({ assignmentCount: 1, queuedCount: 1, studentCount: 2 });
   });
 });

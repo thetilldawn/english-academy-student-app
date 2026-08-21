@@ -232,9 +232,16 @@ describe("assignment response adapters", () => {
         },
       ],
     };
-    expect(parseBulkAssignmentCreationResponse(created)).toStrictEqual(
-      created,
-    );
+    expect(parseBulkAssignmentCreationResponse(created)).toStrictEqual({
+      assignments: [
+        {
+          ...created.assignments[0],
+          queue_item_id: null,
+          queue_series_id: null,
+          status: "assigned",
+        },
+      ],
+    });
     expect(
       parseLegacyReviewCancelResponse({
         status: "cancelled",

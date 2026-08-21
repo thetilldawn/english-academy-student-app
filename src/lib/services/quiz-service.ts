@@ -55,6 +55,7 @@ import type {
 import { loadDatasetDisplayLabelMap } from "@/lib/services/dataset-catalog-service";
 import { finalizeStudentMissedAssignments } from "@/lib/services/missed-assignment-service";
 import { finalizeStaleQuizAttempts } from "@/lib/services/stale-attempt-service";
+import { materializeReadyVocabAssignmentQueue } from "@/lib/services/vocab-assignment-queue-service";
 
 export type { StudentAssignmentSummary } from "@/features/student-dashboard/model";
 
@@ -761,6 +762,10 @@ export async function listStudentAssignments(
     finalizeStaleQuizAttempts(),
     finalizeStudentMissedAssignments(studentId),
   ]);
+  // A stale-attempt finalizer may complete the current queued exam and mark
+  // the next step ready. Materialize only after both finalizers commit so the
+  // newly-ready step is not missed by a racing read.
+  await materializeReadyVocabAssignmentQueue(studentId);
   if (missedFinalization.batchLimitReached) {
     console.warn("[missed-assignment] student batch limit reached");
   }
@@ -1456,6 +1461,10 @@ export async function answerStudentQuestion(input: {
     throw new Error("답안을 저장하지 못했습니다.");
   }
 
+  if ((data as Record<string, unknown>).completed === true) {
+    await materializeReadyVocabAssignmentQueue(input.studentId);
+  }
+
   return {
     ...(data as Record<string, unknown>),
     feedbackProtocol,
@@ -1498,6 +1507,9 @@ export async function timeoutStudentQuestion(input: {
     );
   if (error || !data) {
     throw new Error("시간 초과 상태를 저장하지 못했습니다.");
+  }
+  if ((data as Record<string, unknown>).completed === true) {
+    await materializeReadyVocabAssignmentQueue(input.studentId);
   }
   return {
     ...(data as Record<string, unknown>),
