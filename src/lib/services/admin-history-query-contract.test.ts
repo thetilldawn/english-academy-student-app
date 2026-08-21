@@ -23,6 +23,12 @@ const studentDashboardDomain = fs.readFileSync(
   ),
   "utf8",
 );
+const studentAssignmentLifecycle = fs.readFileSync(
+  path.resolve(
+    "src/features/student-dashboard/domain/student-assignment-lifecycle.ts",
+  ),
+  "utf8",
+);
 
 describe("admin assignment history query contract", () => {
   it("시험 목적과 주 DAY를 함께 조회하고 내역 모델로 전달한다", () => {
@@ -80,9 +86,23 @@ describe("admin assignment history query contract", () => {
       "studentAssignmentActivityInput(right)",
     );
     expect(studentDashboardDomain).toContain(
-      'state.kind === "missed"',
+      'lifecycle.progress === "missed"',
     );
-    expect(quizSource).toContain("!missed &&");
+    expect(quizSource).toContain(
+      "assignedAtByAssignment.get(assignment.id)",
+    );
+    expect(quizSource).toMatch(
+      /const assignedAt\s*=\s*assignedAtByAssignment\.get\(assignment\.id\)/,
+    );
+    expect(quizSource).not.toMatch(
+      /const assignedAt\s*=\s*assignment\.available_from/,
+    );
+    expect(quizSource).toContain(
+      "availableFrom: assignment.available_from",
+    );
+    expect(studentAssignmentLifecycle).toContain(
+      'progress === "not_started"',
+    );
   });
 
   it("does not turn student assignment query failures into an empty dashboard", () => {

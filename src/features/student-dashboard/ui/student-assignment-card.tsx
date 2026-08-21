@@ -3,6 +3,7 @@ import { studentAppText } from "@/content/ko/student-app";
 import {
   MetaTag,
   MetaTagList,
+  StatusBadge,
 } from "@/design-system/primitives/badge/badge";
 import { ButtonLink } from "@/design-system/primitives/button/button";
 import { AttemptScoreSummary } from "@/features/history/ui/attempt-score-summary";
@@ -11,26 +12,27 @@ import {
   assignmentOrderLabel,
   assignmentTypeLabel,
 } from "@/lib/admin/history";
-import {
-  currentTimeMilliseconds,
-  secondsUntil,
-} from "@/lib/deadline";
+import { assignmentTimingLabel } from "@/lib/admin/assignment-settings";
+import { currentTimeMilliseconds } from "@/lib/deadline";
 import { buildAttemptStatusPresentation } from "@/features/history/presentation/attempt-presentation";
 
 import { studentAssignmentTimeline } from "../domain/student-assignment-sections";
+import { deriveStudentAssignmentLifecycle } from "../domain/student-assignment-lifecycle";
 import type { StudentAssignmentSummary } from "../model";
-import { DeadlineCountdown } from "./deadline-countdown";
 import { StartAttemptButton } from "./start-attempt-button";
+import { StudentAssignmentAvailability } from "./student-assignment-availability";
 import styles from "./student-assignment-card.module.css";
 
 export function StudentAssignmentCard({
   assignment,
+  nowMilliseconds = currentTimeMilliseconds(),
 }: {
   assignment: StudentAssignmentSummary;
+  nowMilliseconds?: number;
 }) {
-  const initialDeadlineRemaining = secondsUntil(
-    assignment.availableUntil,
-    currentTimeMilliseconds(),
+  const lifecycle = deriveStudentAssignmentLifecycle(
+    assignment,
+    nowMilliseconds,
   );
   const timeline = studentAssignmentTimeline(assignment);
   const outcome = buildAttemptStatusPresentation(timeline).outcome;
@@ -59,13 +61,35 @@ export function StudentAssignmentCard({
             {heading}
           </h3>
         </div>
-        <ActivityStatusTimeline
-          align="end"
-          item={timeline}
-          showDeadline={
-            !(assignment.availableUntil && assignment.lastStatus === null)
-          }
-        />
+        <div className={styles.statusColumn}>
+          {lifecycle.progress === "not_started" ? (
+            <StatusBadge
+              tone={
+                lifecycle.window.kind === "open"
+                  ? "success"
+                  : lifecycle.window.kind === "scheduled"
+                    ? "warning"
+                    : "neutral"
+              }
+            >
+              {lifecycle.window.kind === "open"
+                ? studentAppText.dashboard.availability.open
+                : lifecycle.window.kind === "scheduled"
+                  ? studentAppText.dashboard.availability.scheduled
+                  : studentAppText.dashboard.availability.closed}
+            </StatusBadge>
+          ) : (
+            <ActivityStatusTimeline
+              align="end"
+              deadlineLabel={studentAppText.dashboard.attemptEndsAt}
+              item={timeline}
+              showDeadline={
+                lifecycle.progress === "initial_in_progress" ||
+                lifecycle.progress === "retry_in_progress"
+              }
+            />
+          )}
+        </div>
       </div>
 
       <MetaTagList className={styles.details} fullWidth>
@@ -83,15 +107,7 @@ export function StudentAssignmentCard({
           </MetaTag>
         ) : null}
         <MetaTag size="large">
-          {assignment.timingMode === "per_question"
-            ? formatContentText(
-                studentAppText.dashboard.meta.perQuestion,
-                { seconds: assignment.questionTimeLimitSeconds ?? 0 },
-              )
-            : formatContentText(
-                studentAppText.dashboard.meta.totalMinutes,
-                { minutes: Math.ceil(assignment.timeLimitSeconds / 60) },
-              )}
+          {assignmentTimingLabel(assignment)}
         </MetaTag>
         <MetaTag size="large">
           {formatContentText(studentAppText.dashboard.meta.passingScore, {
@@ -106,7 +122,13 @@ export function StudentAssignmentCard({
         </MetaTag>
       </MetaTagList>
 
-      {assignment.lastInitialScore !== null || assignment.missed ? (
+      <StudentAssignmentAvailability
+        assignment={assignment}
+        lifecycle={lifecycle}
+        nowMilliseconds={nowMilliseconds}
+      />
+
+      {assignment.lastInitialScore !== null || lifecycle.progress === "missed" ? (
         <AttemptScoreSummary
           compact
           finalScore={assignment.lastFinalScore}
@@ -115,40 +137,25 @@ export function StudentAssignmentCard({
           passingScore={assignment.passingScore}
           phase={assignment.lastPhase}
           retryStartedAt={assignment.lastRetryStartedAt}
-          status={assignment.missed ? "missed" : assignment.lastStatus}
+          status={
+            lifecycle.progress === "missed" ? "missed" : assignment.lastStatus
+          }
         />
       ) : null}
 
-      {!assignment.missed &&
-      assignment.availableUntil &&
-      assignment.lastStatus === null &&
-      initialDeadlineRemaining !== null ? (
-        <div className={styles.deadline}>
-          <span>{studentAppText.dashboard.deadline}</span>
-          <DeadlineCountdown
-            deadlineAt={assignment.availableUntil}
-            initialRemainingSeconds={initialDeadlineRemaining}
-            refreshOnExpire
-          />
-        </div>
-      ) : null}
-
       <div className={styles.actions}>
-        {assignment.lastStatus === "in_progress" &&
-        assignment.lastPhase === "review" &&
-        assignment.lastAttemptId ? (
+        {lifecycle.actions.canReviewAndRetry && assignment.lastAttemptId ? (
           <ButtonLink href={`/student/result/${assignment.lastAttemptId}`}>
             {studentAppText.dashboard.resultAndRetry}
           </ButtonLink>
         ) : null}
-        {assignment.lastStatus === "in_progress" &&
-        assignment.lastPhase !== "review" &&
-        assignment.lastAttemptId ? (
+        {lifecycle.actions.canResume && assignment.lastAttemptId ? (
           <ButtonLink href={`/student/attempt/${assignment.lastAttemptId}`}>
             {studentAppText.dashboard.resume}
           </ButtonLink>
         ) : null}
-        {assignment.lastStatus === "completed" &&
+        {lifecycle.actions.canViewResult &&
+        assignment.lastStatus === "completed" &&
         assignment.lastAttemptId ? (
           <ButtonLink
             href={`/student/result/${assignment.lastAttemptId}`}
@@ -157,7 +164,8 @@ export function StudentAssignmentCard({
             {studentAppText.dashboard.result}
           </ButtonLink>
         ) : null}
-        {assignment.lastStatus === "expired" &&
+        {lifecycle.actions.canViewResult &&
+        assignment.lastStatus === "expired" &&
         assignment.lastAttemptId ? (
           <ButtonLink
             href={`/student/result/${assignment.lastAttemptId}`}
@@ -166,7 +174,7 @@ export function StudentAssignmentCard({
             {studentAppText.dashboard.expiredResult}
           </ButtonLink>
         ) : null}
-        {assignment.canStart && assignment.lastStatus !== "in_progress" ? (
+        {lifecycle.actions.canStart ? (
           <StartAttemptButton assignmentId={assignment.id} />
         ) : null}
       </div>

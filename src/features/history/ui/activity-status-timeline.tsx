@@ -8,10 +8,12 @@ import {
 
 export function ActivityStatusTimeline({
   align = "start",
+  deadlineLabel,
   item,
   showDeadline = true,
 }: {
   align?: "end" | "start";
+  deadlineLabel?: string;
   item: ActivityTimelineInput;
   showDeadline?: boolean;
 }) {
@@ -24,7 +26,8 @@ export function ActivityStatusTimeline({
   ].map((row) => ({
     dateTime: row.timestamp,
     kind: row.kind,
-    label: row.label,
+    label:
+      row.kind === "deadline" && deadlineLabel ? deadlineLabel : row.label,
     timestamp: row.timestamp
       ? formatKoreanActivityDateTime(row.timestamp)
       : null,

@@ -11,6 +11,7 @@ import {
   assignmentOrderLabel,
   assignmentScopeLabel,
 } from "@/lib/admin/history";
+import { assignmentTimingLabel } from "@/lib/admin/assignment-settings";
 import { formatElapsed, formatKoreanDateTime } from "@/lib/format";
 import { getResultQuestionPresentation } from "@/lib/quiz/result-presentation";
 import type { AdminHistoryDetail } from "@/lib/services/admin-service";
@@ -94,7 +95,7 @@ export function AdminHistoryDetailContent({
             <dd>
               {formatContentText(adminHistoryText.list.conditions, {
                 questions: summary.questionCount,
-                minutes: Math.ceil(summary.timeLimitSeconds / 60),
+                timing: assignmentTimingLabel(summary),
                 score: summary.passingScore,
               })}
             </dd>

@@ -9,7 +9,7 @@ export const adminLearningText = {
     searchAriaLabel: "학생 및 학습 자료 검색",
     searchPlaceholder: "이름·학교·학년·단어장 검색",
     filterButton: "필터",
-    resetFilters: "초기화",
+    resetFilters: "필터 초기화",
     noStudents: "조건에 맞는 접속 가능 학생이 없습니다.",
     tabsAria: "학습 종류",
     expiredReviewDraft:
@@ -364,7 +364,7 @@ export const adminLearningText = {
     nextTitle: "날짜별 다회차 일괄 배정",
     withWrongTitle: "틀린 단어 포함 다회차 일괄 배정",
     close: "닫기",
-    previewTitle: "학생별 회차 미리보기",
+    previewTitle: "배정 미리보기",
     cancel: "취소",
     autoRangeHelp:
       "학생별 다음 범위부터 회차당 DAY 수만큼 독립된 시험을 만듭니다. 이전 배정 범위를 선택하면 학생별 직전 DAY 수와 방향을 유지합니다.",

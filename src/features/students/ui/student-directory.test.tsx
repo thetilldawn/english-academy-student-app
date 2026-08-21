@@ -98,4 +98,28 @@ describe("StudentDirectory", () => {
     }
     expect(screen.getAllByText(adminStudentsText.card.noHistory)).toHaveLength(3);
   });
+
+  it("clears a search independently from detailed filters", async () => {
+    const user = userEvent.setup();
+    const students = [
+      student("student-1", "가람"),
+      student("student-2", "나래"),
+    ];
+    render(
+      <StudentDirectory controller={controller()} data={data(students)} />,
+    );
+
+    await user.type(
+      screen.getByRole("searchbox", {
+        name: adminStudentsText.page.searchAriaLabel,
+      }),
+      "가람",
+    );
+    expect(screen.getByText("가람")).toBeVisible();
+    expect(screen.queryByText("나래")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "검색 지우기" }));
+    expect(screen.getByText("가람")).toBeVisible();
+    expect(screen.getByText("나래")).toBeVisible();
+  });
 });

@@ -8,6 +8,7 @@ import { Select } from "@/design-system/primitives/form/field";
 import { formatContentText } from "@/content/format";
 import { adminStudentsText } from "@/content/ko/admin-students";
 import {
+  adminHistoryActivityGroups,
   learningActivitySection,
   matchesLearningHistoryFilters,
   sortLearningActivities,
@@ -80,6 +81,7 @@ export function StudentLearningActivityList({
     statusFilter,
   ]);
   const visible = expanded ? sorted : sorted.slice(0, initialLimit);
+  const allGroups = adminHistoryActivityGroups(sorted);
   const availableSections = filtersEnabled
     ? [
         ...sectionDefinitions,
@@ -95,6 +97,10 @@ export function StudentLearningActivityList({
       items: visible.filter(
         (item) => learningActivitySection(item) === section.id,
       ),
+      totalCount:
+        section.id === "needs_attention"
+          ? allGroups.needsAttention.length
+          : allGroups[section.id].length,
     }))
     .filter((section) => section.items.length > 0);
 
@@ -211,7 +217,7 @@ export function StudentLearningActivityList({
                 <CountBadge>
                   {formatContentText(
                     adminStudentsText.learning.activityList.count,
-                    { count: section.items.length },
+                    { count: section.totalCount },
                   )}
                 </CountBadge>
               </div>

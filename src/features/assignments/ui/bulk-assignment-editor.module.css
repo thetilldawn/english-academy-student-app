@@ -2,6 +2,12 @@
   min-height: 0;
 }
 
+.previewRoot {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
 .fieldset {
   min-width: 0;
   margin: 0;
@@ -45,15 +51,25 @@
 }
 
 .previewHeading h3,
-.studentHeading strong {
+.studentHeading h4,
+.studentHeading strong,
+.previewList h4 {
   min-width: 0;
   margin: 0;
 }
 
-.previewSummary {
-  flex: none;
+.studentHeadingTags {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.planCounts {
+  margin: 0;
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .previewList,
@@ -109,5 +125,9 @@
   .studentHeading {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .studentHeadingTags {
+    justify-content: flex-start;
   }
 }

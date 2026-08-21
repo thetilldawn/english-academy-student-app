@@ -3,6 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
@@ -94,5 +95,82 @@ describe("AdminHistoryList", () => {
     expect(
       screen.getAllByRole("heading", { level: 2 }).map((node) => node.textContent),
     ).toEqual(["응시 전", "미응시 · 미통과", "완료", "취소 · 삭제"]);
+  });
+
+  it("keeps first completion, retry, missed, and failed filters disjoint", async () => {
+    const user = userEvent.setup();
+    render(
+      <AdminHistoryList
+        items={[
+          historyItem("첫 완료", {
+            completedAt: "2026-08-09T00:00:00.000Z",
+            finalScore: 100,
+            phase: "completed",
+            status: "completed",
+          }),
+          historyItem("재시험 성공", {
+            completedAt: "2026-08-10T00:00:00.000Z",
+            finalScore: 100,
+            phase: "completed",
+            retryStartedAt: "2026-08-09T12:00:00.000Z",
+            status: "completed",
+          }),
+          historyItem("재시험 실패", {
+            completedAt: "2026-08-11T00:00:00.000Z",
+            finalScore: 50,
+            phase: "completed",
+            retryStartedAt: "2026-08-10T12:00:00.000Z",
+            status: "completed",
+          }),
+          historyItem("재시험 진행", {
+            phase: "retry",
+            retryStartedAt: "2026-08-11T12:00:00.000Z",
+            status: "in_progress",
+          }),
+          historyItem("미응시", {
+            missedAt: "2026-08-12T00:00:00.000Z",
+            status: "missed",
+          }),
+          historyItem("첫 미통과", {
+            completedAt: "2026-08-13T00:00:00.000Z",
+            finalScore: 50,
+            phase: "completed",
+            status: "completed",
+          }),
+        ]}
+        showFilters
+      />,
+    );
+    const status = screen.getByLabelText("상태");
+
+    await user.selectOptions(status, "completed");
+    expect(screen.getByRole("link", { name: /첫 완료.*상세/ })).toBeVisible();
+    expect(screen.queryByRole("link", { name: /재시험 성공.*상세/ })).not.toBeInTheDocument();
+
+    await user.selectOptions(status, "retried");
+    expect(
+      screen.getByRole("heading", { level: 2, name: "재시험" }),
+    ).toBeVisible();
+    expect(screen.getByRole("link", { name: /재시험 성공.*상세/ })).toBeVisible();
+    expect(screen.getByRole("link", { name: /재시험 실패.*상세/ })).toBeVisible();
+    expect(screen.getByRole("link", { name: /재시험 진행.*상세/ })).toBeVisible();
+    expect(
+      screen.getAllByRole("link").map((link) => link.getAttribute("aria-label")),
+    ).toEqual([
+      "재시험 진행 재시험 진행 상세",
+      "재시험 실패 재시험 실패 상세",
+      "재시험 성공 재시험 성공 상세",
+    ]);
+    expect(screen.queryByRole("link", { name: /첫 완료.*상세/ })).not.toBeInTheDocument();
+
+    await user.selectOptions(status, "missed");
+    expect(screen.getByRole("heading", { level: 2, name: "미응시" })).toBeVisible();
+    expect(screen.getByRole("link", { name: /미응시.*상세/ })).toBeVisible();
+    expect(screen.queryByRole("link", { name: /첫 미통과.*상세/ })).not.toBeInTheDocument();
+
+    await user.selectOptions(status, "needs_attention");
+    expect(screen.getByRole("heading", { level: 2, name: "미통과" })).toBeVisible();
+    expect(screen.getByRole("link", { name: /첫 미통과.*상세/ })).toBeVisible();
+    expect(screen.queryByRole("link", { name: /미응시.*상세/ })).not.toBeInTheDocument();
   });
 });

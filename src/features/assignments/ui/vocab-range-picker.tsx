@@ -18,6 +18,7 @@ import type { VocabAssignmentPlannerController } from "../controller/use-vocab-a
 import type {
   VocabAssignmentFieldKey,
 } from "../presentation/vocab-assignment-field-errors";
+import { buildBulkPlanAudience } from "../presentation/bulk-plan-audience";
 import { DayRangeRail } from "./day-range-rail";
 import styles from "./vocab-assignment-planner.module.css";
 
@@ -98,19 +99,19 @@ export function VocabQuestionFields({
 }: PlannerFieldsProps) {
   const questionCountError = fieldErrors.questionCount;
   const selectionModeError = fieldErrors.selectionMode;
-  const summary = controller.bulk.preview?.commonPlanSummary ?? null;
-  const fallback = controller.bulk.preview?.items?.find(
-    (item) => item.availableQuestionCount !== null,
-  ) ?? null;
-  const availableQuestionCount =
-    summary?.availableQuestionCount ?? fallback?.availableQuestionCount ?? null;
+  const preview = controller.bulk.preview;
+  const audience = buildBulkPlanAudience(preview);
+  const reference = audience.reference;
+  const availableQuestionCount = reference?.availableQuestionCount ?? null;
   const defaultSessionCount =
-    controller.defaultSessionCount ?? summary?.defaultSessionCount ?? 0;
+    reference?.defaultSessionCount ?? controller.defaultSessionCount ?? 0;
   const selectedQuestionCount =
-    summary?.selectedQuestionCount ?? fallback?.selectedQuestionCount ?? 0;
+    reference?.selectedQuestionCount ?? 0;
   const remainingQuestionCount =
-    summary?.remainingQuestionCount ?? fallback?.remainingQuestionCount ?? 0;
-  const countSummary = availableQuestionCount === null
+    reference?.remainingQuestionCount ?? 0;
+  const countSummary = preview && audience.totalCount > 1 && !reference
+    ? "학생별 계획을 마지막 미리보기에서 확인해 주세요."
+    : availableQuestionCount === null
     ? "범위와 문항 수를 정하면 기본 회차를 계산합니다."
     : controller.planner.distribution === "repeat"
       ? `출제 가능 ${availableQuestionCount}문항 · 출제 ${selectedQuestionCount}문항 · 남음 ${remainingQuestionCount}문항 · 회차당 ${selectedQuestionCount}문항`
@@ -251,6 +252,11 @@ export function VocabQuestionFields({
       <span className={styles.questionCountSummary} aria-live="polite">
         {countSummary}
       </span>
+      {preview && audience.totalCount > 1 && audience.mode === "common" ? (
+        <span className={styles.questionCountSummary}>
+          공통 {audience.sameCount}명 · 별도 확인 {audience.separateCount}명
+        </span>
+      ) : null}
     </div>
   );
 }

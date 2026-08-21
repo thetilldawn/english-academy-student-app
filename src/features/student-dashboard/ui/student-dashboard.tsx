@@ -1,6 +1,7 @@
 import { formatContentText } from "@/content/format";
 import { studentAppText } from "@/content/ko/student-app";
 import { CountBadge } from "@/design-system/primitives/badge/badge";
+import { currentTimeMilliseconds } from "@/lib/deadline";
 
 import {
   selectStudentAssignmentSections,
@@ -12,9 +13,10 @@ import styles from "./student-dashboard.module.css";
 
 const sectionTitles: Record<StudentAssignmentSectionId, string> = {
   open: studentAppText.dashboard.sections.open,
+  scheduled: studentAppText.dashboard.sections.scheduled,
   "needs-attention": studentAppText.dashboard.sections.needsAttention,
   completed: studentAppText.dashboard.sections.completed,
-  "deadline-closed": studentAppText.dashboard.expired,
+  "deadline-closed": studentAppText.dashboard.sections.closed,
 };
 
 export function StudentDashboard({
@@ -24,7 +26,8 @@ export function StudentDashboard({
   assignments: readonly StudentAssignmentSummary[];
   displayName: string;
 }) {
-  const sections = selectStudentAssignmentSections(assignments);
+  const nowMilliseconds = currentTimeMilliseconds();
+  const sections = selectStudentAssignmentSections(assignments, nowMilliseconds);
   const visibleSections = sections.filter(
     (section) => section.assignments.length > 0,
   );
@@ -69,6 +72,7 @@ export function StudentDashboard({
                   <StudentAssignmentCard
                     assignment={assignment}
                     key={assignment.id}
+                    nowMilliseconds={nowMilliseconds}
                   />
                 ))}
               </div>

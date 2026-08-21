@@ -255,15 +255,15 @@ export function useAssignmentWorkspace({
   }
 
   function resetFilters() {
-    setFilters({
+    setFilters((current) => ({
       classGroup: "",
       grade: "",
-      query: "",
+      query: current.query,
       school: "",
       status: "active",
       wordbook: "",
       wrongWord: "all",
-    });
+    }));
   }
 
   function toggleBulkStudent(studentId: string) {
@@ -318,6 +318,7 @@ export function useAssignmentWorkspace({
   return {
     actions: {
       changeAssignmentMode,
+      clearSearch: () => setFilters((current) => ({ ...current, query: "" })),
       clearBulkStudents: () => setSelectedBulkStudentIds([]),
       closePlanner,
       openSingleAssignment,

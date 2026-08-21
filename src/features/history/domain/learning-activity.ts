@@ -48,6 +48,15 @@ export type LearningHistoryStatusFilter =
   | "completed"
   | "archived";
 
+export type AdminHistoryStatusFilter =
+  | "all"
+  | "open"
+  | "needs_attention"
+  | "missed"
+  | "completed"
+  | "retried"
+  | "archived";
+
 export type LearningActivityKind =
   | "not_started"
   | "initial_in_progress"
@@ -336,6 +345,33 @@ export function matchesLearningHistoryFilters(
   return (
     filters.since === null || timestamp(state.effectiveAt) >= filters.since
   );
+}
+
+export function adminHistoryFilterBucket(
+  item: AssignmentHistorySummary,
+): Exclude<AdminHistoryStatusFilter, "all"> {
+  const state = deriveLearningActivityState(item);
+  if (state.section === "archived") return "archived";
+  if (state.kind === "missed") return "missed";
+  if (
+    state.kind === "retry_in_progress" ||
+    state.kind === "completed_after_retry" ||
+    item.retryStartedAt !== null
+  ) {
+    return "retried";
+  }
+  if (state.kind === "completed_first_try") return "completed";
+  if (state.kind === "not_started" || state.kind === "initial_in_progress") {
+    return "open";
+  }
+  return "needs_attention";
+}
+
+export function matchesAdminHistoryStatusFilter(
+  item: AssignmentHistorySummary,
+  filter: AdminHistoryStatusFilter,
+) {
+  return filter === "all" || adminHistoryFilterBucket(item) === filter;
 }
 
 export function studentLearningActivityIndex(

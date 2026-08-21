@@ -5,7 +5,7 @@ export const adminStudentsText = {
     searchAriaLabel: "학생 및 학습 자료 검색",
     searchPlaceholder: "이름·학교·학년·단어장 검색",
     filterButton: "필터",
-    resetFilters: "초기화",
+    resetFilters: "필터 초기화",
     noMatches: "조건에 맞는 학생이 없습니다.",
   },
 

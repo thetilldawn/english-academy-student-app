@@ -873,7 +873,6 @@ export async function listStudentAssignments(
     }
   }
 
-  const now = Date.now();
   const summaries = assignments.map((assignment) => {
     const unitLabels =
       unitLabelsByAssignment.get(assignment.id) ?? [];
@@ -884,35 +883,15 @@ export async function listStudentAssignments(
         ? unitLabels
         : [`${assignment.range_start}~${assignment.range_end}번`];
     const lastAttempt = latestAttempts.get(assignment.id);
-    const availableUntilTime = assignment.available_until
-      ? Date.parse(assignment.available_until)
-      : Number.NaN;
     const missedAt =
       missedAtByAssignment.get(assignment.id) ?? null;
-    const missed =
-      !lastAttempt &&
-      (missedAt !== null ||
-        (!Number.isNaN(availableUntilTime) &&
-          availableUntilTime <= now));
-    const available =
-      assignment.status === "active" &&
-      (!assignment.available_from ||
-        new Date(assignment.available_from).getTime() <= now) &&
-      (!assignment.available_until ||
-        new Date(assignment.available_until).getTime() > now);
-    const canStart =
-      !missed &&
-      available &&
-      (!lastAttempt ||
-        lastAttempt.status === "expired" ||
-        assignment.retake_allowed);
     const assignedAt =
-      assignment.available_from ??
       assignedAtByAssignment.get(assignment.id) ??
       new Date(0).toISOString();
     const datasetTitle = datasetTitles.get(assignment.dataset_id) ?? "어휘";
     const summary: StudentAssignmentSummary = {
       id: assignment.id,
+      assignmentStatus: assignment.status,
       title: assignment.title,
       displayTitle: assignmentDisplayTitleForUnits(
         assignment.title,
@@ -958,10 +937,9 @@ export async function listStudentAssignments(
       lastUnresolvedWrongCount:
         lastAttempt?.unresolved_wrong_count ?? null,
       assignedAt,
+      availableFrom: assignment.available_from,
       availableUntil: assignment.available_until,
       missedAt,
-      missed,
-      canStart,
     };
 
     return summary;

@@ -6,6 +6,7 @@ import type {
 
 export type StudentAssignmentSummary = {
   id: string;
+  assignmentStatus: "draft" | "active" | "closed";
   title: string;
   displayTitle: string;
   datasetTitle: string;
@@ -31,8 +32,7 @@ export type StudentAssignmentSummary = {
   lastDeadlineAt: string | null;
   lastUnresolvedWrongCount: number | null;
   assignedAt: string;
+  availableFrom: string | null;
   availableUntil: string | null;
   missedAt: string | null;
-  missed: boolean;
-  canStart: boolean;
 };

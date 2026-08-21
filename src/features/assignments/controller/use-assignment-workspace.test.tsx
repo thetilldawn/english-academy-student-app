@@ -100,4 +100,33 @@ describe("단어 시험 배정 선택 바구니", () => {
       "student-2",
     ]);
   });
+
+  it("검색어, 세부 필터, 선택 바구니를 서로 독립적으로 초기화한다", () => {
+    const { result } = renderHook(() => useAssignmentWorkspace({
+      data,
+      initialDatasetId: "",
+      initialDialogView: "overview",
+      initialStudentId: "",
+    }));
+
+    act(() => {
+      result.current.actions.toggleBulkStudent("student-1");
+      result.current.actions.setFilter("query", "김학생");
+      result.current.actions.setFilter("school", "가학교");
+      result.current.actions.setFilter("grade", "중1");
+    });
+    act(() => result.current.actions.resetFilters());
+
+    expect(result.current.filters).toMatchObject({
+      query: "김학생",
+      school: "",
+      grade: "",
+      status: "active",
+    });
+    expect(result.current.selectedBulkStudentIds).toEqual(["student-1"]);
+
+    act(() => result.current.actions.clearSearch());
+    expect(result.current.filters.query).toBe("");
+    expect(result.current.selectedBulkStudentIds).toEqual(["student-1"]);
+  });
 });

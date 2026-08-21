@@ -241,4 +241,35 @@ describe("StudentResultView", () => {
       within(header as HTMLElement).queryByText("통과점수에는 미치지 못했습니다."),
     ).not.toBeInTheDocument();
   });
+
+  it("shows every unanswered question in a legacy expired result", () => {
+    render(
+      <StudentResultView
+        result={
+          result(
+            [
+              question("q1"),
+              question("q2", {
+                initialChoice: null,
+                initialIsCorrect: null,
+              }),
+            ],
+            {
+              initialCorrectCount: 0,
+              status: "expired",
+              unresolvedWrongCount: 2,
+            },
+          )
+        }
+      />,
+    );
+
+    const unresolved = screen
+      .getByRole("heading", { name: "다시 볼 단어" })
+      .closest("section");
+    expect(unresolved).not.toBeNull();
+    expect(within(unresolved as HTMLElement).getByText("word-q1")).toBeVisible();
+    expect(within(unresolved as HTMLElement).getByText("word-q2")).toBeVisible();
+    expect(within(unresolved as HTMLElement).getByText("2개")).toBeVisible();
+  });
 });

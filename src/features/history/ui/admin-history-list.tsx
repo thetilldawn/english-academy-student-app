@@ -11,9 +11,10 @@ import {
 import { adminHistoryText } from "@/content/ko/admin-history";
 import {
   adminHistoryActivityGroups,
-  learningActivitySection,
+  compareAdminHistoryRecency,
+  matchesAdminHistoryStatusFilter,
+  type AdminHistoryStatusFilter,
 } from "@/features/history/domain/learning-activity";
-import { buildAttemptStatusPresentation } from "@/features/history/presentation/attempt-presentation";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
 import { EmptyState } from "@/design-system/patterns/feedback/feedback";
 
@@ -23,13 +24,17 @@ import {
 } from "./history-section-groups";
 import styles from "./history-list.module.css";
 
-type HistoryStatusFilter =
-  | "all"
-  | "open"
-  | "needs_attention"
-  | "completed"
-  | "retried"
-  | "archived";
+const statusFilterTitles: Record<
+  Exclude<AdminHistoryStatusFilter, "all">,
+  string
+> = {
+  open: adminHistoryText.filters.statusOptions.open,
+  needs_attention: adminHistoryText.filters.statusOptions.needsAttention,
+  missed: adminHistoryText.filters.statusOptions.missed,
+  completed: adminHistoryText.filters.statusOptions.completed,
+  retried: adminHistoryText.filters.statusOptions.retried,
+  archived: adminHistoryText.filters.statusOptions.archived,
+};
 
 export function AdminHistoryList({
   items,
@@ -40,16 +45,15 @@ export function AdminHistoryList({
 }) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] =
-    useState<HistoryStatusFilter>("all");
+    useState<AdminHistoryStatusFilter>("all");
 
   const sections = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("ko-KR");
     const filteredItems = items.filter((item) => {
-      const matchesStatus =
-        statusFilter === "all" ||
-        (statusFilter === "retried"
-          ? buildAttemptStatusPresentation(item).outcome === "retried"
-          : learningActivitySection(item) === statusFilter);
+      const matchesStatus = matchesAdminHistoryStatusFilter(
+        item,
+        statusFilter,
+      );
       const matchesQuery =
         normalizedQuery.length === 0 ||
         [
@@ -67,6 +71,20 @@ export function AdminHistoryList({
       return matchesStatus && matchesQuery;
     });
     const groups = adminHistoryActivityGroups(filteredItems);
+    if (statusFilter !== "all") {
+      return [
+        {
+          id: `filter-${statusFilter}`,
+          title: statusFilterTitles[statusFilter],
+          items: [
+            ...groups.open,
+            ...groups.needsAttention,
+            ...groups.completed,
+            ...groups.archived,
+          ].toSorted(compareAdminHistoryRecency),
+        },
+      ].filter((section) => section.items.length > 0);
+    }
     const groupedSections: HistorySection[] = [
       {
         id: "open",
@@ -113,7 +131,7 @@ export function AdminHistoryList({
             </FieldLabel>
             <Select
               onChange={(event) =>
-                setStatusFilter(event.target.value as HistoryStatusFilter)
+                setStatusFilter(event.target.value as AdminHistoryStatusFilter)
               }
               value={statusFilter}
             >
@@ -125,6 +143,9 @@ export function AdminHistoryList({
               </option>
               <option value="needs_attention">
                 {adminHistoryText.filters.statusOptions.needsAttention}
+              </option>
+              <option value="missed">
+                {adminHistoryText.filters.statusOptions.missed}
               </option>
               <option value="completed">
                 {adminHistoryText.filters.statusOptions.completed}

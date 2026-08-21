@@ -39,6 +39,7 @@ export function AssignmentWorkspaceFilters({
     (filters.status === "active" ? 0 : 1) +
     (filters.wrongWord === "all" ? 0 : 1);
   const resetDisabled = activeCount === 0;
+  const searchDisabled = filters.query.trim().length === 0;
 
   return (
     <div className={styles.searchPanel}>
@@ -176,6 +177,14 @@ export function AssignmentWorkspaceFilters({
               count: controller.filteredStudents.length,
             })}
           </strong>
+          <Button
+            disabled={searchDisabled}
+            onClick={actions.clearSearch}
+            size="small"
+            variant="quiet"
+          >
+            {commonText.filters.clearSearch}
+          </Button>
           <Button
             disabled={resetDisabled}
             onClick={actions.resetFilters}

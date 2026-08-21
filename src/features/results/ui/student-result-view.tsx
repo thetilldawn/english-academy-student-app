@@ -9,6 +9,7 @@ import type {
   AttemptResultQuestion,
   StudentAttemptResult,
 } from "../model";
+import { selectResultQuestionGroups } from "../domain/result-question-groups";
 import { AttemptQuestionCard } from "./attempt-question-card";
 import { ResultAudioProvider } from "./result-audio-provider";
 import { ResultPronunciation } from "./result-pronunciation";
@@ -200,18 +201,10 @@ export function StudentResultView({ result }: { result: StudentAttemptResult }) 
   const reviewPending =
     result.status === "in_progress" && result.phase === "review";
   const expired = result.status === "expired";
-  const wrongQuestions = result.questions.filter(
-    (question) => question.initialIsCorrect === false,
-  );
-  const unresolvedQuestions = wrongQuestions.filter(
-    (question) => question.retryIsCorrect !== true,
-  );
-  const resolvedQuestions = wrongQuestions.filter(
-    (question) => question.retryIsCorrect === true,
-  );
-  const hasRetryResult = wrongQuestions.some(
-    (question) => question.retryIsCorrect !== null,
-  );
+  const questionGroups = selectResultQuestionGroups(result);
+  const unresolvedQuestions = questionGroups.unresolved;
+  const resolvedQuestions = questionGroups.resolved;
+  const hasRetryResult = questionGroups.hasRetryResult;
 
   const unresolved = (
     <ResultSection

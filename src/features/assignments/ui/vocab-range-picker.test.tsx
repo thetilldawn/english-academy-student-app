@@ -152,7 +152,9 @@ describe("VocabRangePicker", () => {
     const value = controller();
     value.bulk.preview!.commonPlanSummary = null;
     value.bulk.preview!.items = [{
+      available: true,
       availableQuestionCount: 640,
+      error: null,
       remainingQuestionCount: 140,
       selectedQuestionCount: 500,
       defaultSessionCount: 5,
@@ -173,11 +175,43 @@ describe("VocabRangePicker", () => {
 
     expect(screen.getByText("출제 가능 640문항 · 출제 500문항 · 남음 140문항 · 기본 5회"))
       .toBeVisible();
+    expect(screen.queryByText(/공통 1명/)).not.toBeInTheDocument();
     const group = screen.getByRole("group", { name: "문항 수" });
     expect(group).not.toHaveAttribute("data-invalid");
     expect(group).toHaveAttribute(
       "aria-describedby",
       "vocab-question-count-error",
     );
+  });
+
+  it("여러 학생의 공통 요약이 없으면 첫 학생 수치를 공통값처럼 표시하지 않는다", () => {
+    const value = controller();
+    value.bulk.preview!.commonPlanSummary = null;
+    value.bulk.preview!.items = [
+      {
+        available: true,
+        availableQuestionCount: 640,
+        defaultSessionCount: 5,
+        error: null,
+        remainingQuestionCount: 140,
+        selectedQuestionCount: 500,
+      },
+      {
+        available: true,
+        availableQuestionCount: 86,
+        defaultSessionCount: 3,
+        error: null,
+        remainingQuestionCount: 0,
+        selectedQuestionCount: 86,
+      },
+    ] as never;
+
+    render(<VocabRangePicker controller={value} datasets={[dataset]} />);
+
+    expect(
+      screen.getByText("학생별 계획을 마지막 미리보기에서 확인해 주세요."),
+    ).toBeVisible();
+    expect(screen.queryByText(/별도 확인 2명/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/출제 가능 640문항/)).not.toBeInTheDocument();
   });
 });

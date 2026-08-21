@@ -7,12 +7,15 @@ import {
   studentAssignmentTimeline,
 } from "./student-assignment-sections";
 
+const now = Date.parse("2026-08-22T00:00:00.000Z");
+
 function assignment(
   id: string,
   overrides: Partial<StudentAssignmentSummary> = {},
 ): StudentAssignmentSummary {
   return {
     id,
+    assignmentStatus: "active",
     title: id,
     displayTitle: `DAY ${id}`,
     datasetTitle: "테스트 단어장",
@@ -38,17 +41,16 @@ function assignment(
     lastDeadlineAt: null,
     lastUnresolvedWrongCount: null,
     assignedAt: "2026-08-01T00:00:00.000Z",
+    availableFrom: null,
     availableUntil: null,
     missedAt: null,
-    missed: false,
-    canStart: false,
     ...overrides,
   };
 }
 
 function idsBySection(assignments: readonly StudentAssignmentSummary[]) {
   return Object.fromEntries(
-    selectStudentAssignmentSections(assignments).map((section) => [
+    selectStudentAssignmentSections(assignments, now).map((section) => [
       section.id,
       section.assignments.map((item) => item.id),
     ]),
@@ -64,6 +66,7 @@ describe("student assignment sections", () => {
       ]),
     ).toEqual([
       ["open", 0],
+      ["scheduled", 0],
       ["needs-attention", 0],
       ["completed", 0],
       ["deadline-closed", 0],
@@ -129,7 +132,6 @@ describe("student assignment sections", () => {
       assignment("missed", {
         availableUntil: "2026-08-08T00:00:00.000Z",
         missedAt: "2026-08-08T00:00:00.000Z",
-        missed: true,
       }),
       assignment("failed", {
         lastAttemptId: "attempt-failed",
@@ -152,6 +154,7 @@ describe("student assignment sections", () => {
 
     expect(idsBySection(input)).toEqual({
       open: [],
+      scheduled: [],
       "needs-attention": ["review", "failed"],
       completed: ["completed"],
       "deadline-closed": ["missed"],
@@ -161,6 +164,72 @@ describe("student assignment sections", () => {
         .flatMap((section) => section.assignments)
         .map((item) => item.id),
     ).toHaveLength(new Set(input.map((item) => item.id)).size);
+  });
+
+  it("keeps a future assignment out of the currently open section", () => {
+    expect(
+      Object.fromEntries(
+        selectStudentAssignmentSections(
+          [
+            assignment("scheduled", {
+              availableFrom: "2026-08-23T00:00:00.000Z",
+            }),
+            assignment("open", {
+              availableFrom: "2026-08-21T00:00:00.000Z",
+            }),
+          ],
+          Date.parse("2026-08-22T00:00:00.000Z"),
+        ).map((section) => [
+          section.id,
+          section.assignments.map((item) => item.id),
+        ]),
+      ),
+    ).toMatchObject({ open: ["open"], scheduled: ["scheduled"] });
+  });
+
+  it("orders scheduled assignments by opening time rather than assignment time", () => {
+    const scheduled = selectStudentAssignmentSections(
+      [
+        assignment("opens-later", {
+          assignedAt: "2026-08-20T00:00:00.000Z",
+          availableFrom: "2026-08-24T00:00:00.000Z",
+        }),
+        assignment("opens-first", {
+          assignedAt: "2026-08-21T00:00:00.000Z",
+          availableFrom: "2026-08-23T00:00:00.000Z",
+        }),
+      ],
+      now,
+    ).find((section) => section.id === "scheduled");
+
+    expect(scheduled?.assignments.map((item) => item.id)).toEqual([
+      "opens-first",
+      "opens-later",
+    ]);
+  });
+
+  it("keeps real attempt progress ahead of a stale missed marker", () => {
+    const input = [
+      assignment("resume", {
+        lastAttemptId: "attempt-resume",
+        lastStatus: "in_progress",
+        lastPhase: "initial",
+        missedAt: "2026-08-20T00:00:00.000Z",
+      }),
+      assignment("completed", {
+        lastAttemptId: "attempt-completed",
+        lastStatus: "completed",
+        lastPhase: "completed",
+        lastPassed: true,
+        missedAt: "2026-08-20T00:00:00.000Z",
+      }),
+    ];
+
+    expect(idsBySection(input)).toMatchObject({
+      open: ["resume"],
+      completed: ["completed"],
+      "deadline-closed": [],
+    });
   });
 
   it("is deterministic and does not mutate the source array", () => {

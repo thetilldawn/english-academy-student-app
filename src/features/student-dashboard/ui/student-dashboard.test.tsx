@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { studentAppText } from "@/content/ko/student-app";
@@ -11,11 +11,17 @@ import type { StudentAssignmentSummary } from "../model";
 import { StudentAssignmentCard } from "./student-assignment-card";
 import { StudentDashboard } from "./student-dashboard";
 
+const { refresh } = vi.hoisted(() => ({ refresh: vi.fn() }));
+
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), refresh }),
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  refresh.mockReset();
+  vi.useRealTimers();
+});
 
 function assignment(
   id: string,
@@ -23,6 +29,7 @@ function assignment(
 ): StudentAssignmentSummary {
   return {
     id,
+    assignmentStatus: "active",
     title: id,
     displayTitle: `DAY ${id}`,
     datasetTitle: "[2025] 고3 모의고사 · 장문독해",
@@ -48,10 +55,9 @@ function assignment(
     lastDeadlineAt: null,
     lastUnresolvedWrongCount: null,
     assignedAt: "2026-08-01T00:00:00.000Z",
+    availableFrom: null,
     availableUntil: null,
     missedAt: null,
-    missed: false,
-    canStart: false,
     ...overrides,
   };
 }
@@ -90,7 +96,6 @@ describe("StudentDashboard", () => {
       assignment("missed", {
         availableUntil: "2026-08-08T00:00:00.000Z",
         missedAt: "2026-08-08T00:00:00.000Z",
-        missed: true,
       }),
     ];
 
@@ -106,7 +111,7 @@ describe("StudentDashboard", () => {
       studentAppText.dashboard.sections.open,
       studentAppText.dashboard.sections.needsAttention,
       studentAppText.dashboard.sections.completed,
-      studentAppText.dashboard.expired,
+      studentAppText.dashboard.sections.closed,
     ]);
     for (const section of container.querySelectorAll(
       "[data-assignment-section]",
@@ -196,12 +201,66 @@ describe("StudentAssignmentCard", () => {
           assignment("missed", {
             availableUntil: "2026-08-08T00:00:00.000Z",
             missedAt: "2026-08-08T00:00:00.000Z",
-            missed: true,
           })
         }
       />,
     );
 
     expect(screen.queryByRole("timer")).not.toBeInTheDocument();
+  });
+
+  it("shows absolute availability and does not offer start before opening", () => {
+    render(
+      <StudentAssignmentCard
+        assignment={
+          assignment("scheduled", {
+            availableFrom: "2099-08-22T00:00:00.000Z",
+            availableUntil: "2099-08-23T13:00:00.000Z",
+          })
+        }
+      />,
+    );
+
+    expect(screen.getByText(studentAppText.dashboard.availability.scheduled)).toBeVisible();
+    expect(screen.getByText("8월 22일 [토] 오전 9시 00분")).toBeVisible();
+    expect(screen.getByText("8월 23일 [일] 오후 10시 00분")).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: studentAppText.actions.start }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows no deadline explicitly", () => {
+    render(<StudentAssignmentCard assignment={assignment("no-deadline")} />);
+
+    expect(screen.getByText(studentAppText.dashboard.availability.availableNow)).toBeVisible();
+    expect(screen.getByText(studentAppText.dashboard.availability.noDeadline)).toBeVisible();
+  });
+
+  it("refreshes at the closing boundary when a completed exam can be retaken", async () => {
+    vi.useFakeTimers();
+    const nowMilliseconds = Date.parse("2026-08-22T00:00:00.000Z");
+    render(
+      <StudentAssignmentCard
+        assignment={
+          assignment("retake-closing", {
+            availableUntil: "2026-08-22T00:00:01.000Z",
+            lastAttemptId: "attempt-retake",
+            lastCompletedAt: "2026-08-21T00:00:00.000Z",
+            lastFinalScore: 100,
+            lastInitialScore: 100,
+            lastPassed: true,
+            lastPhase: "completed",
+            lastStatus: "completed",
+          })
+        }
+        nowMilliseconds={nowMilliseconds}
+      />,
+    );
+
+    expect(refresh).not.toHaveBeenCalled();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000);
+    });
+    expect(refresh).toHaveBeenCalledTimes(1);
   });
 });

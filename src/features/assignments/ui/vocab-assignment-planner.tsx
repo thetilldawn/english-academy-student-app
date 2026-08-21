@@ -70,11 +70,6 @@ export function VocabAssignmentPlanner({
   const previousSourceStudent = students.find(
     (student) => student.id === controller.previousExamSourceStudentId,
   );
-  const hasScheduleCollision = Boolean(
-    controller.scheduleSlots.length > 0 && bulk.preview?.items.some((item) =>
-      item.sessions.some((session) => session.warnings.length > 0)
-    ),
-  );
   const formRef = useRef<HTMLFormElement>(null);
 
   function focusFirstInvalidField() {
@@ -251,14 +246,11 @@ export function VocabAssignmentPlanner({
                   controller={controller}
                   fieldErrors={visibleErrors}
                 />
-                {controller.scheduleSlots.length > 0 && (submitAttempted ||
-                    hasScheduleCollision ||
-                    controller.collisionDecisionRecords.length > 0) ? (
+                {controller.scheduleSlots.length > 0 ? (
                   <BulkSeriesPreview
                     collisionDecisions={controller.collisionDecisionRecords}
                     controller={bulk}
                     distribution={controller.planner.distribution}
-                    exceptionsOnly
                     onClearCollisionDecision={controller.actions.clearCollisionDecision}
                     onCollisionDecision={controller.actions.decideCollision}
                     onCollisionDecisionChange={controller.actions.changeCollisionDecision}

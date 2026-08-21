@@ -3,6 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { adminLearningText } from "@/content/ko/admin-learning";
@@ -18,6 +19,7 @@ function controllerStub(
   return {
     actions: {
       changeAssignmentMode: vi.fn(),
+      clearSearch: vi.fn(),
       clearBulkStudents: vi.fn(),
       closePlanner: vi.fn(),
       openSingleAssignment: vi.fn(),
@@ -56,6 +58,29 @@ function controllerStub(
 }
 
 describe("assignment student browser", () => {
+  it("lets a query-only search be cleared without resetting facet filters", async () => {
+    const user = userEvent.setup();
+    const clearSearch = vi.fn();
+    render(
+      <AssignmentStudentBrowser
+        controller={controllerStub({
+          actions: {
+            ...controllerStub().actions,
+            clearSearch,
+          },
+          filters: {
+            ...controllerStub().filters,
+            query: "가람",
+          },
+        })}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "검색 지우기" }));
+    expect(clearSearch).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: "필터 초기화" })).toBeDisabled();
+  });
+
   it("blocks assignment preparation when no assignable wordbook exists", () => {
     render(<AssignmentStudentBrowser controller={controllerStub()} />);
 

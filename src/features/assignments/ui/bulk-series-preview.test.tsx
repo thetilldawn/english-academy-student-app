@@ -92,12 +92,93 @@ describe("BulkSeriesPreview", () => {
       />,
     );
 
-    expect(screen.getByText("공통 배정 계획")).toBeVisible();
-    expect(screen.getByText("동일 적용 2명")).toBeVisible();
-    expect(screen.getByText("확인 필요 1명")).toBeVisible();
+    expect(screen.getByText("기준 일정")).toBeVisible();
+    expect(screen.getByText("동일 조건 2명")).toBeVisible();
+    expect(screen.getByText("별도 확인 1명")).toBeVisible();
+    expect(screen.getByRole("heading", { name: "별도 확인" })).toBeVisible();
+    expect(screen.getByText("배정 불가")).toBeVisible();
     expect(screen.queryByText("학생 가")).not.toBeInTheDocument();
     expect(screen.queryByText("학생 나")).not.toBeInTheDocument();
     expect(screen.getByText("학생 다 · 테스트고")).toBeVisible();
     expect(screen.getAllByText("1회차")).toHaveLength(2);
+  });
+
+  it("shows one student's plan without bulk-only common labels", () => {
+    const value = controller();
+    value.preview!.items = [value.preview!.items[0]!];
+    value.preview!.assignableCount = 1;
+    value.preview!.assignmentCount = 1;
+    value.preview!.blockedCount = 0;
+    value.preview!.commonPlanSummary = {
+      ...value.preview!.commonPlanSummary!,
+      normalStudentIds: ["student-a"],
+      exceptionStudentIds: [],
+    };
+
+    render(
+      <BulkSeriesPreview
+        controller={value}
+        students={[{ id: "student-a", displayName: "학생 가" }]}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "시험 계획" })).toBeVisible();
+    expect(screen.queryByText(/공통 1명/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/별도 확인 0명/)).not.toBeInTheDocument();
+    expect(screen.queryByText("학생 가")).not.toBeInTheDocument();
+  });
+
+  it("keeps an invalid one-student preview in the single-plan layout", () => {
+    const value = controller();
+    value.preview!.items = [
+      {
+        ...value.preview!.items[0]!,
+        available: false,
+        error: "범위가 부족합니다.",
+        sessions: [],
+      },
+    ];
+    value.preview!.assignableCount = 0;
+    value.preview!.assignmentCount = 0;
+    value.preview!.blockedCount = 1;
+    value.preview!.commonPlanSummary = null;
+
+    render(
+      <BulkSeriesPreview
+        controller={value}
+        students={[{ id: "student-a", displayName: "학생 가" }]}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "시험 계획" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "학생별 계획" })).not.toBeInTheDocument();
+    expect(screen.queryByText("학생 가")).not.toBeInTheDocument();
+    expect(screen.getAllByText("범위가 부족합니다.").length).toBeGreaterThan(0);
+  });
+
+  it("shows every plan when a one-person group cannot represent the batch", () => {
+    const value = controller();
+    value.preview!.commonPlanSummary = {
+      ...value.preview!.commonPlanSummary!,
+      normalStudentIds: ["student-a"],
+      exceptionStudentIds: ["student-b", "student-c"],
+    };
+
+    render(
+      <BulkSeriesPreview
+        controller={value}
+        students={[
+          { id: "student-a", displayName: "학생 가" },
+          { id: "student-b", displayName: "학생 나" },
+          { id: "student-c", displayName: "학생 다" },
+        ]}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "학생별 계획" })).toBeVisible();
+    expect(screen.queryByText("기준 일정")).not.toBeInTheDocument();
+    expect(screen.getByText("학생 가")).toBeVisible();
+    expect(screen.getByText("학생 나")).toBeVisible();
+    expect(screen.getByText("학생 다")).toBeVisible();
   });
 });

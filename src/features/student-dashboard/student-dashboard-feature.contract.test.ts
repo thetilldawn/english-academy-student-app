@@ -32,7 +32,9 @@ describe("student dashboard feature boundary", () => {
   });
 
   it("keeps assignment structure in small semantic components", () => {
-    expect(dashboard).toContain("selectStudentAssignmentSections(assignments)");
+    expect(dashboard).toContain(
+      "selectStudentAssignmentSections(assignments, nowMilliseconds)",
+    );
     expect(dashboard).toContain("<StudentAssignmentCard");
     expect(card).toContain("<article");
     expect(card).toContain("<ActivityStatusTimeline");

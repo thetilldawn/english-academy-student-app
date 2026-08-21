@@ -253,6 +253,7 @@ function StudentDirectoryFilters({
   const filterCount =
     [filters.school, filters.grade, filters.wordbook].filter(Boolean).length +
     (filters.wrong === "all" ? 0 : 1);
+  const searchDisabled = filters.query.trim().length === 0;
   const wrongLabel =
     filters.wrong === "wrong"
       ? commonText.filters.hasWrong
@@ -357,6 +358,14 @@ function StudentDirectoryFilters({
               count: resultCount,
             })}
           </strong>
+          <Button
+            disabled={searchDisabled}
+            onClick={() => onChange({ ...filters, query: "" })}
+            size="small"
+            variant="quiet"
+          >
+            {commonText.filters.clearSearch}
+          </Button>
           <Button
             disabled={filterCount === 0}
             onClick={() => onChange({ ...initialFilters, query: filters.query })}

@@ -21,7 +21,8 @@ export const adminHistoryText = {
     statusOptions: {
       all: "전체",
       open: "응시 전·응시 중",
-      needsAttention: "미통과·미응시",
+      needsAttention: "미통과",
+      missed: "미응시",
       completed: "첫 시험 완료",
       retried: "재시험",
       archived: "취소·삭제",
@@ -73,7 +74,7 @@ export const adminHistoryText = {
     finished: "종료 {datetime}{wrong}",
     detailLoadError: "응시 상세를 불러오지 못했습니다.",
     count: "{count}개",
-    conditions: "{questions}문항 · {minutes}분 · {score}점",
+    conditions: "{questions}문항 · {timing} · {score}점",
     questionSummary: "오답 {wrong}개 · 미응답 {unanswered}개 · {elapsed}",
     unansweredNotice: "아직 답하지 않은 문항이 {count}개 있습니다.",
     questionCount: "{count}문항",

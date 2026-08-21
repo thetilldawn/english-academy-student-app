@@ -55,6 +55,7 @@ import {
   resolveVocabQuestionCycleAllocation,
   type VocabQuestionAllocationIssue,
 } from "@/features/assignments/domain/vocab-assignment-plan";
+import { bulkPlanSignature } from "@/features/assignments/domain/bulk-plan-signature";
 
 export type BulkAssignmentPreviewSession = {
   sessionNumber: number;
@@ -401,21 +402,7 @@ function buildCommonPlanSummary(
     ) {
       continue;
     }
-    const signature = JSON.stringify({
-      availableQuestionCount: item.availableQuestionCount,
-      selectedQuestionCount: item.selectedQuestionCount,
-      remainingQuestionCount: item.remainingQuestionCount,
-      defaultSessionCount: item.defaultSessionCount,
-      scheduledQuestionCount: item.scheduledQuestionCount,
-      requiresExtraDateDecision: item.requiresExtraDateDecision,
-      sessions: item.sessions.map((session) => ({
-        availableFrom: session.availableFrom,
-        availableUntil: session.availableUntil,
-        questionCount: session.questionCount,
-        cycleIndex: session.cycleIndex,
-        unitLabel: session.unitLabel,
-      })),
-    });
+    const signature = bulkPlanSignature(item);
     const group = groups.get(signature) ?? [];
     group.push(item);
     groups.set(signature, group);
@@ -426,6 +413,7 @@ function buildCommonPlanSummary(
   const representative = selectedGroup?.[0];
   if (
     !selectedGroup ||
+    selectedGroup.length < 2 ||
     !representative ||
     representative.availableQuestionCount === null ||
     representative.selectedQuestionCount === null ||

@@ -52,6 +52,7 @@ export const commonText = {
     byStatus: "재원 상태",
     active: "재원",
     blocked: "차단",
+    clearSearch: "검색 지우기",
     studentCount: "{count}명",
   },
 } as const;

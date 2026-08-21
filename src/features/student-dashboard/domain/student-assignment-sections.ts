@@ -6,9 +6,11 @@ import {
 import type { ActivityTimelineInput } from "@/features/history/presentation/activity-presentation";
 
 import type { StudentAssignmentSummary } from "../model";
+import { deriveStudentAssignmentLifecycle } from "./student-assignment-lifecycle";
 
 export type StudentAssignmentSectionId =
   | "open"
+  | "scheduled"
   | "needs-attention"
   | "deadline-closed"
   | "completed";
@@ -22,9 +24,8 @@ export function studentAssignmentActivityInput(
   assignment: StudentAssignmentSummary,
 ): LearningActivityOrderInput {
   return {
-    status: assignment.missed
-      ? "missed"
-      : (assignment.lastStatus ?? "not_started"),
+    status:
+      assignment.lastStatus ?? (assignment.missedAt ? "missed" : "not_started"),
     phase: assignment.lastPhase,
     assignedAt: assignment.assignedAt,
     availableUntil: assignment.availableUntil,
@@ -91,31 +92,49 @@ export function sortStudentAssignments(
 
 export function selectStudentAssignmentSections(
   assignments: readonly StudentAssignmentSummary[],
+  nowMilliseconds = Date.now(),
 ): StudentAssignmentSection[] {
   const sections: StudentAssignmentSection[] = [
     { id: "open", assignments: [] },
+    { id: "scheduled", assignments: [] },
     { id: "needs-attention", assignments: [] },
     { id: "completed", assignments: [] },
     { id: "deadline-closed", assignments: [] },
   ];
-  const sectionById = new Map(
-    sections.map((section) => [section.id, section]),
-  );
+  const sectionById = new Map(sections.map((section) => [section.id, section]));
 
   for (const assignment of sortStudentAssignments(assignments)) {
+    const lifecycle = deriveStudentAssignmentLifecycle(
+      assignment,
+      nowMilliseconds,
+    );
     const state = deriveLearningActivityState(
       studentAssignmentActivityInput(assignment),
     );
     const sectionId: StudentAssignmentSectionId =
-      state.kind === "missed"
-        ? "deadline-closed"
-        : state.section === "needs_attention"
-          ? "needs-attention"
-          : state.section === "completed"
-            ? "completed"
-            : "open";
+      lifecycle.progress === "not_started" &&
+      lifecycle.window.kind === "scheduled"
+        ? "scheduled"
+        : lifecycle.progress === "not_started" &&
+            lifecycle.window.kind === "closed"
+          ? "deadline-closed"
+          : lifecycle.progress === "missed"
+            ? "deadline-closed"
+            : state.section === "needs_attention"
+              ? "needs-attention"
+              : state.section === "completed"
+                ? "completed"
+                : "open";
     sectionById.get(sectionId)?.assignments.push(assignment);
   }
+
+  sectionById.get("scheduled")?.assignments.sort((left, right) => {
+    const openingDifference = Date.parse(left.availableFrom ?? "") -
+      Date.parse(right.availableFrom ?? "");
+    return openingDifference !== 0
+      ? openingDifference
+      : compareStudentAssignments(left, right);
+  });
 
   return sections;
 }

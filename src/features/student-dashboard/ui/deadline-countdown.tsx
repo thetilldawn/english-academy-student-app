@@ -5,10 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { formatContentText } from "@/content/format";
 import { studentAppText } from "@/content/ko/student-app";
-import {
-  formatRemainingSeconds,
-  secondsUntil,
-} from "@/lib/deadline";
+import { formatRemainingSeconds } from "@/lib/deadline";
 
 import styles from "./deadline-countdown.module.css";
 
@@ -29,9 +26,16 @@ export function DeadlineCountdown({
 
   useEffect(() => {
     refreshedRef.current = false;
+    const startedAt = performance.now();
 
     const update = () => {
-      const nextRemaining = secondsUntil(deadlineAt, Date.now()) ?? 0;
+      const elapsedSeconds = Math.floor(
+        (performance.now() - startedAt) / 1000,
+      );
+      const nextRemaining = Math.max(
+        0,
+        initialRemainingSeconds - elapsedSeconds,
+      );
       setRemainingSeconds(nextRemaining);
       if (
         nextRemaining === 0 &&
@@ -57,7 +61,7 @@ export function DeadlineCountdown({
         handleVisibilityChange,
       );
     };
-  }, [deadlineAt, refreshOnExpire, router]);
+  }, [deadlineAt, initialRemainingSeconds, refreshOnExpire, router]);
 
   const expired = remainingSeconds === 0;
 
