@@ -465,15 +465,18 @@ export function buildSelectedWeekdayDates(input: {
     return [];
   }
 
-  let cursor = start;
+  const startWeekday = isoWeekday(start);
   return ISO_WEEKDAYS
     .filter((weekday) => weekdays.has(weekday))
-    .map((weekday) => {
-      const offset = (weekday - isoWeekday(cursor) + 7) % 7;
-      const date = new Date(cursor.getTime() + offset * DAY_MILLISECONDS);
-      cursor = new Date(date.getTime() + DAY_MILLISECONDS);
-      return formatCalendarDate(date);
-    });
+    .map((weekday) => ({
+      offset: (weekday - startWeekday + 7) % 7,
+      weekday,
+    }))
+    .sort((left, right) =>
+      left.offset - right.offset || left.weekday - right.weekday)
+    .map(({ offset }) => formatCalendarDate(
+      new Date(start.getTime() + offset * DAY_MILLISECONDS),
+    ));
 }
 
 export function shiftCalendarDate(value: string, days: number) {

@@ -82,6 +82,13 @@ describe("VocabScheduleFields", () => {
     expect(screen.getByText(/3회차 · 8월 28일 \(금\)/)).toBeVisible();
     expect(screen.getByText("선택 요일 3개 · 기본 회차 3회")).toBeVisible();
 
+    fireEvent.change(screen.getByDisplayValue("2026-08-21"), {
+      target: { value: "2026-08-22" },
+    });
+    expect(value.actions.updateSchedule).toHaveBeenCalledWith({
+      startDate: "2026-08-22",
+    });
+
     fireEvent.click(screen.getByRole("button", { name: "수" }));
     expect(value.actions.toggleWeekday).toHaveBeenCalledWith(3);
   });

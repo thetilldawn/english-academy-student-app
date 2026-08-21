@@ -115,7 +115,7 @@ describe("단어 배정 일정 controller", () => {
     mocks.changeCommonPlan.mockReset();
   });
 
-  it("월수금은 날짜 범위와 무관하게 세 회차만 만들고 실제 날짜를 보존한다", () => {
+  it("월수금은 기준일부터 가까운 날짜로 세 회차만 만든다", () => {
     const { result } = renderHook(() => useVocabAssignmentPlanner({
       datasets: [],
       genericErrorMessage: "저장 실패",
@@ -130,9 +130,9 @@ describe("단어 배정 일정 controller", () => {
 
     expect(result.current.planner.schedule.startDate).toBe("2026-08-21");
     expect(result.current.scheduleSlots.map((slot) => slot.date)).toEqual([
+      "2026-08-21",
       "2026-08-24",
       "2026-08-26",
-      "2026-08-28",
     ]);
   });
 
@@ -172,9 +172,9 @@ describe("단어 배정 일정 controller", () => {
       date: session.availableLocalDateTime.slice(0, 10),
       unitIds: session.unitIds,
     }))).toEqual([
+      { date: "2026-08-21", unitIds: units.map((unit) => unit.id) },
       { date: "2026-08-24", unitIds: units.map((unit) => unit.id) },
       { date: "2026-08-26", unitIds: units.map((unit) => unit.id) },
-      { date: "2026-08-28", unitIds: units.map((unit) => unit.id) },
     ]);
   });
 
@@ -186,9 +186,9 @@ describe("단어 배정 일정 controller", () => {
       date: session.availableLocalDateTime.slice(0, 10),
       unitIds: session.unitIds,
     }))).toEqual([
+      { date: "2026-08-21", unitIds: units.map((unit) => unit.id) },
       { date: "2026-08-24", unitIds: units.map((unit) => unit.id) },
       { date: "2026-08-26", unitIds: units.map((unit) => unit.id) },
-      { date: "2026-08-28", unitIds: units.map((unit) => unit.id) },
     ]);
   });
 
@@ -244,8 +244,8 @@ describe("단어 배정 일정 controller", () => {
     expect(result.current.commonPlan?.sessions).toHaveLength(2);
     expect(result.current.commonPlan?.sessions.map((session) =>
       session.availableLocalDateTime.slice(0, 10))).toEqual([
+      "2026-08-21",
       "2026-08-24",
-      "2026-08-28",
     ]);
 
     act(() => result.current.actions.toggleWeekday(3));
@@ -253,13 +253,13 @@ describe("단어 배정 일정 controller", () => {
     expect(mocks.changeCommonPlan).toHaveBeenLastCalledWith(
       expect.objectContaining({ sessions: expect.arrayContaining([
         expect.objectContaining({
+          availableLocalDateTime: "2026-08-21T16:00",
+        }),
+        expect.objectContaining({
           availableLocalDateTime: "2026-08-24T16:00",
         }),
         expect.objectContaining({
           availableLocalDateTime: "2026-08-26T16:00",
-        }),
-        expect.objectContaining({
-          availableLocalDateTime: "2026-08-28T16:00",
         }),
       ]) }),
     );
@@ -271,22 +271,22 @@ describe("단어 배정 일정 controller", () => {
 
     act(() => {
       result.current.actions.updateSessionSchedule(2, {
-        availableLocalDateTime: "2026-08-27T16:00",
-        deadlineLocalDateTime: "2026-08-28T22:00",
+        availableLocalDateTime: "2026-08-25T16:00",
+        deadlineLocalDateTime: "2026-08-26T22:00",
       });
     });
 
     expect(result.current.commonPlan?.sessions.map((session) =>
       session.availableLocalDateTime.slice(0, 10))).toEqual([
-      "2026-08-24",
-      "2026-08-27",
-      "2026-08-28",
+      "2026-08-21",
+      "2026-08-25",
+      "2026-08-26",
     ]);
     expect(result.current.commonPlan?.recurrenceSessions.map((session) =>
       session.availableLocalDateTime.slice(0, 10))).toEqual([
+      "2026-08-21",
       "2026-08-24",
       "2026-08-26",
-      "2026-08-28",
     ]);
   });
 });

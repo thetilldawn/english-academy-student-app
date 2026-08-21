@@ -54,7 +54,7 @@ describe("단어 시험 공통 배정 계획", () => {
     );
   });
 
-  it("배정 기준일이 어느 요일이어도 선택 요일을 주간 순서로 한 번씩 만든다", () => {
+  it("배정 기준일부터 가까운 선택 요일을 달력 순서로 한 번씩 만든다", () => {
     expect(buildSelectedWeekdayDates({
       startDate: "2026-08-17",
       weekdays: [1, 3, 5],
@@ -62,7 +62,11 @@ describe("단어 시험 공통 배정 계획", () => {
     expect(buildSelectedWeekdayDates({
       startDate: "2026-08-21",
       weekdays: [1, 3, 5],
-    })).toEqual(["2026-08-24", "2026-08-26", "2026-08-28"]);
+    })).toEqual(["2026-08-21", "2026-08-24", "2026-08-26"]);
+    expect(buildSelectedWeekdayDates({
+      startDate: "2026-08-22",
+      weekdays: [7, 1, 6],
+    })).toEqual(["2026-08-22", "2026-08-23", "2026-08-24"]);
   });
 
   it("요일을 다시 누르면 해제하고 시작일이 잘못되면 빈 후보를 반환한다", () => {
@@ -296,15 +300,15 @@ describe("단어 시험 공통 배정 계획", () => {
       deadlineTime: "22:00",
     });
     expect(extendScheduleSlots(base, 5).map((slot) => slot.date)).toEqual([
+      "2026-08-21",
       "2026-08-24",
       "2026-08-26",
       "2026-08-28",
       "2026-08-31",
-      "2026-09-02",
     ]);
     expect(extendScheduleSlots(base, 5).at(-1)).toMatchObject({
-      availableLocalDateTime: "2026-09-02T16:00",
-      deadlineLocalDateTime: "2026-09-03T22:00",
+      availableLocalDateTime: "2026-08-31T16:00",
+      deadlineLocalDateTime: "2026-09-01T22:00",
     });
   });
 
@@ -317,19 +321,19 @@ describe("단어 시험 공통 배정 계획", () => {
       deadlineTime: "22:00",
     });
     const overridden = applyScheduleSlotOverride(recurrence, 2, {
-      availableLocalDateTime: "2026-08-27T16:00",
-      deadlineLocalDateTime: "2026-08-28T22:00",
+      availableLocalDateTime: "2026-08-25T16:00",
+      deadlineLocalDateTime: "2026-08-26T22:00",
     });
 
     expect(
       extendScheduleSlotsFromRecurrence(overridden, recurrence, 5)
         .map((slot) => slot.date),
     ).toEqual([
-      "2026-08-24",
-      "2026-08-27",
+      "2026-08-21",
+      "2026-08-25",
+      "2026-08-26",
       "2026-08-28",
       "2026-08-31",
-      "2026-09-02",
     ]);
   });
 
