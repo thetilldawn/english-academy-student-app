@@ -644,11 +644,11 @@ export function StudentWrongWordPanel({
           <span>{adminStudentsText.learning.wrongWordsPanel.refreshing}</span>
         ) : (
           <span className={inlineHelpClassName}>
-            {adminStudentsText.learning.wrongWordsPanel.refreshBasis}
             <HelpTip
               label={
                 adminStudentsText.learning.wrongWordsPanel.refreshBasisHelpAria
               }
+              trigger={adminStudentsText.learning.wrongWordsPanel.refreshBasis}
             >
               {adminStudentsText.learning.wrongHistoryRefreshHelp}
             </HelpTip>
@@ -867,6 +867,7 @@ export function StudentWrongWordPanel({
               label={
                 adminStudentsText.learning.wrongWordsPanel.purposeHelpAria
               }
+              trigger="사용 방식"
             >
               {selectionPurpose === "worksheet"
                 ? adminStudentsText.learning.worksheetWrongWordHelp

@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   calculateQuizScore,
+  createExplicitTargetedQuizQuestions,
   createMixedQuizQuestions,
   createQuizQuestions,
   createTargetedQuizQuestions,
+  quizIndependentTargetDirectionEligibility,
+  quizTargetDirectionEligibility,
   quizVocabularyIdentity,
   type QuizVocabularyEntry,
 } from "@/lib/quiz/engine";
@@ -27,6 +30,107 @@ function seededRandom(seed = 123456789) {
 }
 
 describe("createQuizQuestions", () => {
+  it("서로 다른 회차 후보의 같은 철자·다른 뜻은 독립 방향 자격에서 제거하지 않는다", () => {
+    const senseEntries: QuizVocabularyEntry[] = [
+      { id: 101, headword: "observe", primaryMeaning: "관찰하다" },
+      { id: 102, headword: "observe", primaryMeaning: "엄수하다" },
+      ...Array.from({ length: 6 }, (_, index) => ({
+        id: 103 + index,
+        headword: `sense-word-${index}`,
+        primaryMeaning: `센스 뜻-${index}`,
+      })),
+    ];
+    expect(
+      quizTargetDirectionEligibility(senseEntries, senseEntries)
+        .slice(0, 2)
+        .every((target) =>
+          !target.eligibleDirections.includes("english_to_korean")
+        ),
+    ).toBe(true);
+    expect(
+      quizIndependentTargetDirectionEligibility(senseEntries, senseEntries)
+        .slice(0, 2)
+        .every((target) =>
+          target.eligibleDirections.includes("english_to_korean")
+        ),
+    ).toBe(true);
+  });
+
+  it("확정 방향은 같은 철자의 다른 뜻을 회차별로 허용하고 같은 회차 충돌만 막는다", () => {
+    const senseEntries: QuizVocabularyEntry[] = [
+      { id: 201, headword: "observe", primaryMeaning: "관찰하다" },
+      { id: 202, headword: "observe", primaryMeaning: "엄수하다" },
+      ...Array.from({ length: 6 }, (_, index) => ({
+        id: 203 + index,
+        headword: `exact-word-${index}`,
+        primaryMeaning: `확정 뜻-${index}`,
+      })),
+    ];
+    for (const targetIds of [[201, 203, 204, 205], [202, 206, 207, 208]]) {
+      expect(createExplicitTargetedQuizQuestions(
+        targetIds.map((id) => ({ id, direction: "english_to_korean" })),
+        senseEntries,
+        seededRandom(),
+      )).toHaveLength(4);
+    }
+    expect(() => createExplicitTargetedQuizQuestions(
+      [201, 202, 203, 204].map((id) => ({
+        id,
+        direction: "english_to_korean" as const,
+      })),
+      senseEntries,
+      seededRandom(),
+    )).toThrow(/같은 문제 문구/);
+    expect(createExplicitTargetedQuizQuestions(
+      [
+        { id: 201, direction: "english_to_korean" },
+        { id: 202, direction: "korean_to_english" },
+        { id: 203, direction: "english_to_korean" },
+        { id: 204, direction: "korean_to_english" },
+      ],
+      senseEntries,
+      seededRandom(),
+    )).toHaveLength(4);
+  });
+
+  it("같은 문제 문구와 같은 정답의 서로 다른 출처 occurrence는 한 회차에 보존한다", () => {
+    const duplicateOccurrences: QuizVocabularyEntry[] = [
+      { id: 301, headword: "repeat", primaryMeaning: "반복하다" },
+      { id: 302, headword: "repeat", primaryMeaning: "반복하다" },
+      ...Array.from({ length: 4 }, (_, index) => ({
+        id: 303 + index,
+        headword: `duplicate-choice-${index}`,
+        primaryMeaning: `중복 보기-${index}`,
+      })),
+    ];
+    expect(createExplicitTargetedQuizQuestions(
+      [301, 302, 303, 304].map((id) => ({
+        id,
+        direction: "english_to_korean" as const,
+      })),
+      duplicateOccurrences,
+      seededRandom(),
+    )).toHaveLength(4);
+  });
+  it("각 출제 대상이 실제로 쓸 수 있는 방향을 그대로 돌려준다", () => {
+    const targets = [
+      { ...entries[0]!, eligibleDirections: ["english_to_korean" as const] },
+      { ...entries[1]!, eligibleDirections: ["korean_to_english" as const] },
+      { ...entries[2]!, eligibleDirections: [
+        "english_to_korean" as const,
+        "korean_to_english" as const,
+      ] },
+    ];
+    expect(quizTargetDirectionEligibility(targets, entries)).toEqual([
+      { id: 1, eligibleDirections: ["english_to_korean"] },
+      { id: 2, eligibleDirections: ["korean_to_english"] },
+      {
+        id: 3,
+        eligibleDirections: ["english_to_korean", "korean_to_english"],
+      },
+    ]);
+  });
+
   it("두 방향을 50:50으로 만들고 모든 보기를 중복 없이 구성한다", () => {
     const questions = createQuizQuestions(
       entries,

@@ -113,10 +113,10 @@ function StudentCreateForm({
           <Field>
             <FieldLabelRow>
               <FieldLabel as="span" className={inlineHelpClassName}>
-                <label htmlFor="create-student-display-name">
-                  {adminStudentsText.createStudent.nameLabel}
-                </label>
-                <HelpTip label={adminStudentsText.createStudent.nameHelpAria}>
+                <HelpTip
+                  label={adminStudentsText.createStudent.nameHelpAria}
+                  trigger={adminStudentsText.createStudent.nameLabel}
+                >
                   {adminStudentsText.createStudent.nameHelp}
                 </HelpTip>
               </FieldLabel>
@@ -125,6 +125,7 @@ function StudentCreateForm({
               </FieldRequirement>
             </FieldLabelRow>
             <Input
+              aria-label={adminStudentsText.createStudent.nameLabel}
               id="create-student-display-name"
               maxLength={80}
               name="displayName"
@@ -167,11 +168,9 @@ function StudentCreateForm({
           <Field>
             <FieldLabelRow>
               <FieldLabel as="span" className={inlineHelpClassName}>
-                <label htmlFor="create-student-vocab-dataset">
-                  {adminStudentsText.createStudent.startingWordbookLabel}
-                </label>
                 <HelpTip
                   label={adminStudentsText.createStudent.startingWordbookHelpAria}
+                  trigger={adminStudentsText.createStudent.startingWordbookLabel}
                 >
                   {adminStudentsText.createStudent.startingWordbookHelp}
                 </HelpTip>
@@ -181,6 +180,7 @@ function StudentCreateForm({
               </FieldRequirement>
             </FieldLabelRow>
             <Select
+              aria-label={adminStudentsText.createStudent.startingWordbookLabel}
               defaultValue=""
               id="create-student-vocab-dataset"
               name="currentVocabDatasetId"

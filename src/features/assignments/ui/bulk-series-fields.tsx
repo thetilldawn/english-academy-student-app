@@ -35,9 +35,9 @@ export function BulkSeriesFields({
           className={inlineHelpClassName}
           id={rangeLabelId}
         >
-          <span>{adminLearningText.bulkAssignmentModal.rangeMode.label}</span>
           <HelpTip
             label={adminLearningText.bulkAssignmentModal.rangeMode.helpAria}
+            trigger={adminLearningText.bulkAssignmentModal.rangeMode.label}
           >
             {adminLearningText.bulkAssignmentModal.rangeMode.help}
           </HelpTip>
@@ -128,14 +128,15 @@ export function BulkSeriesFields({
       </Field>
       <Field>
         <FieldLabel as="span" className={inlineHelpClassName}>
-          <label htmlFor={deadlineId}>
-            {adminLearningText.bulkAssignmentModal.firstDeadline}
-          </label>
-          <HelpTip label={adminLearningText.controls.deadlineHelpAria}>
+          <HelpTip
+            label={adminLearningText.controls.deadlineHelpAria}
+            trigger={adminLearningText.bulkAssignmentModal.firstDeadline}
+          >
             {adminLearningText.bulkAssignmentModal.deadlineHelp}
           </HelpTip>
         </FieldLabel>
         <Input
+          aria-label={adminLearningText.bulkAssignmentModal.firstDeadline}
           id={deadlineId}
           onChange={(event) =>
             actions.changeDeadline(

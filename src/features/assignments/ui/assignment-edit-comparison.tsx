@@ -168,6 +168,7 @@ export function AssignmentEditComparison({
           {rebuildsQuestions ? (
             <HelpTip
               label={adminLearningText.assignmentModal.edit.rebuildHelpAria}
+              trigger="문항 재생성"
             >
               {adminLearningText.assignmentModal.edit.rebuildQuestionsHelp}
             </HelpTip>

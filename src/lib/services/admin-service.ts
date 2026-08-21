@@ -22,7 +22,14 @@ import {
   type AttemptQuestionResult,
 } from "@/lib/services/quiz-service";
 import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
-import { buildAssignmentQuestionPlan } from "@/lib/assignment/question-planner";
+import {
+  buildAssignmentQuestionPlan,
+  buildExactAssignmentQuestionPlan,
+} from "@/lib/assignment/question-planner";
+import {
+  quizIndependentTargetDirectionEligibility,
+  quizTargetDirectionConflictKey,
+} from "@/lib/quiz/engine";
 import {
   datasetDisplayLabel,
   storedDatasetDisplayLabel,
@@ -1572,6 +1579,15 @@ export type RegularAssignmentInput = {
   questionOrderMode: QuestionOrderMode;
   availableUntil: string | null;
   studentIds: string[];
+  targetSelectionMode?: "source_order" | "random";
+  randomSeed?: string;
+  excludedTargetIds?: readonly number[];
+  requiredTargetIds?: readonly number[];
+  exactTargetIds?: readonly number[];
+  exactTargetDirections?: readonly (
+    | "english_to_korean"
+    | "korean_to_english"
+  )[];
 };
 
 export type PreparedRegularAssignment = {
@@ -1728,7 +1744,8 @@ export async function prepareRegularAssignment(
       ),
   );
   const unitIdSet = new Set(orderedUnitIds);
-  const primaryCandidates = allCandidates.filter(
+  const excludedTargetIds = new Set(input.excludedTargetIds ?? []);
+  const choiceCandidates = allCandidates.filter(
     (candidate) =>
       unitIdSet.has(candidate.unitId) &&
       !activeReviewIdentities(
@@ -1739,6 +1756,49 @@ export async function prepareRegularAssignment(
       ).some((identity) =>
         activeAssignments.reviewIdentities.has(identity),
       ),
+  );
+  const primaryCandidates = choiceCandidates.filter(
+    (candidate) => !excludedTargetIds.has(candidate.id),
+  );
+  const requiredTargetIds = input.requiredTargetIds ?? [];
+  const requiredTargetIdSet = new Set(requiredTargetIds);
+  const exactTargetIds = input.exactTargetIds ?? [];
+  const exactTargetIdSet = new Set(exactTargetIds);
+  const exactTargetDirections = input.exactTargetDirections ?? [];
+  const choiceCandidateById = new Map(
+    choiceCandidates.map((candidate) => [candidate.id, candidate]),
+  );
+  if (
+    (requiredTargetIds.length > 0 && exactTargetIds.length > 0) ||
+    requiredTargetIdSet.size !== requiredTargetIds.length ||
+    exactTargetIdSet.size !== exactTargetIds.length ||
+    (exactTargetDirections.length > 0 &&
+      exactTargetDirections.length !== exactTargetIds.length) ||
+    requiredTargetIds.some(
+      (targetId) =>
+        excludedTargetIds.has(targetId) ||
+        !choiceCandidateById.has(targetId),
+    ) ||
+    exactTargetIds.some(
+      (targetId) =>
+        excludedTargetIds.has(targetId) ||
+        !choiceCandidateById.has(targetId),
+    ) ||
+    (exactTargetIds.length > 0 && exactTargetIds.length !== input.questionCount)
+  ) {
+    throw new AssignmentCreationError(
+      "invalid_selection",
+      "이어 낼 출제 대상이 현재 단어장 범위와 일치하지 않습니다.",
+    );
+  }
+  const requiredTargets = requiredTargetIds.map(
+    (targetId) => choiceCandidateById.get(targetId)!,
+  );
+  const exactTargets = exactTargetIds.map(
+    (targetId) => choiceCandidateById.get(targetId)!,
+  );
+  const selectablePrimaryCandidates = primaryCandidates.filter(
+    (candidate) => !requiredTargetIdSet.has(candidate.id),
   );
   const sourceOrderByCandidateId = new Map(
     allCandidates.map((candidate) => [
@@ -1754,12 +1814,25 @@ export async function prepareRegularAssignment(
   );
   let questionDrafts: ReturnType<typeof buildAssignmentQuestionPlan>;
   try {
-    questionDrafts = buildAssignmentQuestionPlan({
-      primaryCandidates,
-      allCandidates: primaryCandidates,
-      questionCount: input.questionCount,
-      englishToKoreanRatio: input.englishToKoreanRatio,
-    });
+    questionDrafts = exactTargets.length > 0
+      ? buildExactAssignmentQuestionPlan({
+          targets: exactTargets,
+          allCandidates: choiceCandidates,
+          englishToKoreanRatio: input.englishToKoreanRatio,
+          randomSeed: input.randomSeed ?? "exact-assignment",
+          ...(exactTargetDirections.length > 0
+            ? { targetDirections: exactTargetDirections }
+            : {}),
+        })
+      : buildAssignmentQuestionPlan({
+          requiredTargets,
+          primaryCandidates: selectablePrimaryCandidates,
+          allCandidates: choiceCandidates,
+          questionCount: input.questionCount,
+          englishToKoreanRatio: input.englishToKoreanRatio,
+          targetSelectionMode: input.targetSelectionMode,
+          randomSeed: input.randomSeed,
+        });
   } catch (error) {
     throw new AssignmentCreationError(
       "invalid_selection",
@@ -1808,6 +1881,115 @@ export async function prepareRegularAssignment(
       choice_vocab_entry_ids: question.choiceVocabEntryIds,
     })),
   };
+}
+
+export async function loadRegularAssignmentSeriesCandidates(
+  input: {
+    datasetId: string;
+    unitIds: readonly string[];
+    studentIds: readonly string[];
+  },
+  authenticatedAdmin?: AdminContext,
+  cache?: RegularAssignmentPreparationCache,
+) {
+  if (!authenticatedAdmin) await requireAdmin();
+  const preparationCache = cache ?? createRegularAssignmentPreparationCache();
+  const supabase = await preparationCache.supabase;
+  const preparation = await memoizeRequestPreparation(
+    preparationCache.datasets,
+    input.datasetId,
+    () => loadRegularDatasetPreparation(supabase, input.datasetId),
+  );
+  const requestedUnitIds = new Set(input.unitIds);
+  const selectedUnitData = (preparation.unitResult.data ?? []).filter((unit) =>
+    requestedUnitIds.has(unit.id)
+  );
+  if (
+    preparation.datasetResult.error ||
+    preparation.unitResult.error ||
+    !preparation.datasetResult.data ||
+    !preparation.unitResult.data ||
+    selectedUnitData.length !== input.unitIds.length
+  ) {
+    throw new AssignmentCreationError(
+      "invalid_selection",
+      "선택한 단어장과 출제 대상을 사용할 수 없습니다.",
+    );
+  }
+  const activeAssignmentKey = regularPreparationCacheKey([
+    [...input.studentIds].sort(),
+    input.datasetId,
+    null,
+    null,
+  ]);
+  const activeAssignments = await memoizeRequestPreparation(
+    preparationCache.activeAssignments,
+    activeAssignmentKey,
+    () =>
+      loadActiveReviewAssignments(
+        supabase,
+        [...input.studentIds],
+        input.datasetId,
+      ),
+  );
+  let orderedUnits: typeof selectedUnitData;
+  try {
+    orderedUnits = resolveOrderedContiguousUnits(
+      selectedUnitData.map((unit) => ({
+        ...unit,
+        sortIndex: unit.sort_index,
+      })),
+      [...input.unitIds],
+    );
+  } catch {
+    throw new AssignmentCreationError(
+      "invalid_selection",
+      "선택한 DAY는 한 방향으로 이어지는 연속 범위여야 합니다.",
+    );
+  }
+  const orderedUnitIds = orderedUnits.map((unit) => unit.id);
+  const unitIdSet = new Set(orderedUnitIds);
+  const choiceCandidates = preparation.allCandidates.filter(
+    (candidate) =>
+      unitIdSet.has(candidate.unitId) &&
+      !activeReviewIdentities(
+        candidate.id,
+        candidate.canonicalLexemeId,
+        candidate.headwordNormalized,
+        candidate.canonicalDictionaryId,
+      ).some((identity) =>
+        activeAssignments.reviewIdentities.has(identity)
+      ),
+  );
+  const unitPositionById = new Map(
+    orderedUnitIds.map((unitId, index) => [unitId, index]),
+  );
+  const orderedCandidates = [...choiceCandidates].sort(
+    (left, right) =>
+      (unitPositionById.get(left.unitId) ?? Number.MAX_SAFE_INTEGER) -
+        (unitPositionById.get(right.unitId) ?? Number.MAX_SAFE_INTEGER) ||
+      left.sourceRow - right.sourceRow,
+  );
+  const candidateById = new Map(
+    orderedCandidates.map((candidate) => [candidate.id, candidate]),
+  );
+  return quizIndependentTargetDirectionEligibility(
+    orderedCandidates,
+    choiceCandidates,
+  )
+    .filter((candidate) => candidate.eligibleDirections.length > 0)
+    .map((candidate) => {
+      const entry = candidateById.get(candidate.id)!;
+      return {
+        ...candidate,
+        conflictKeys: Object.fromEntries(
+          candidate.eligibleDirections.map((direction) => [
+            direction,
+            quizTargetDirectionConflictKey(entry, direction),
+          ]),
+        ),
+      };
+    });
 }
 
 export async function createAssignment(

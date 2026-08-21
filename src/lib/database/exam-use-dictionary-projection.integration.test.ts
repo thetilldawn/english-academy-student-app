@@ -1255,6 +1255,9 @@ describe.sequential("exam-use dictionary projection", () => {
         time_limit_seconds: 60,
         passing_score: 80,
         question_order_mode: "fixed",
+        session_number: 1,
+        session_count: 1,
+        available_from: "2035-12-31T09:00:00.000Z",
         available_until: null,
         timing_mode: "total",
         question_time_limit_seconds: null,
@@ -1274,8 +1277,16 @@ describe.sequential("exam-use dictionary projection", () => {
     const bulk = await database.query<{
       result: Array<{ student_id: string; assignment_id: string }>;
     }>(
-      `select public.create_bulk_vocab_assignments_v3($1::jsonb) as result`,
-      [JSON.stringify(batches)],
+      `select public.create_bulk_vocab_assignments_v8(
+        $1::uuid,
+        $2::text,
+        $3::jsonb
+      ) as result`,
+      [
+        "a3d82325-332a-44bb-b0ec-f225f22f6554",
+        "a".repeat(64),
+        JSON.stringify(batches),
+      ],
     );
     await database.exec("reset role;");
 

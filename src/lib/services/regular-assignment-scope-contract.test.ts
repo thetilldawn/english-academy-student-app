@@ -21,10 +21,16 @@ describe("regular assignment scope contract", () => {
     );
 
     expect(adminService).toContain(
-      "buildAssignmentQuestionPlan({ primaryCandidates, allCandidates: primaryCandidates,",
+      "const choiceCandidates = allCandidates.filter( (candidate) => unitIdSet.has(candidate.unitId)",
+    );
+    expect(adminService).toContain(
+      "buildAssignmentQuestionPlan({ requiredTargets, primaryCandidates: selectablePrimaryCandidates, allCandidates: choiceCandidates,",
     );
     expect(mixedService).toContain(
       "calculateAssignmentQuestionRange({ primaryCandidates, allCandidates: primaryCandidates,",
+    );
+    expect(mixedService).toContain(
+      "calculateAssignmentSeriesQuestionCapacity({ requiredTargets: prepared.reviewTargets, primaryCandidates: prepared.primaryCandidates, allCandidates: input.includePendingReview ? prepared.allCandidates : prepared.primaryCandidates,",
     );
   });
 
@@ -38,6 +44,48 @@ describe("regular assignment scope contract", () => {
     );
     expect(adminService).toContain(
       "unitPositionById.get( unitIdByCandidateId.get(left.vocabEntryId)",
+    );
+  });
+
+  it("uses the same deterministic series preparation for preview and save", () => {
+    const bulkService = compact(
+      source("src/lib/services/bulk-assignment-service.ts"),
+    );
+
+    expect(
+      bulkService.match(/prepareCommonPlanSeries\(/g),
+    ).toHaveLength(3);
+    expect(bulkService).toContain(
+      "let seriesPreparationError: string | null = null",
+    );
+    expect(bulkService).toContain(
+      "seriesPreparationError === null && orderedSessions.length > 0",
+    );
+    expect(bulkService).toContain(
+      "item.availableQuestionCount === null || item.sessions.length === 0",
+    );
+    expect(bulkService).toContain(
+      "planDirectionalVocabSeriesTargets({",
+    );
+    expect(bulkService).toContain("materializeQuestions: false");
+    expect(bulkService).toContain("materializeQuestions: true");
+    expect(bulkService).toContain(
+      "preview.items.filter((item) => item.sessions.length > 0)",
+    );
+    expect(bulkService).toContain(
+      "batches.length > MAXIMUM_BULK_ASSIGNMENT_COUNT",
+    );
+    expect(bulkService).toContain(
+      "maximumSessionCount: MAXIMUM_BULK_ASSIGNMENT_COUNT",
+    );
+    expect(bulkService).toContain(
+      "totalBatchQuestionCount > MAXIMUM_BULK_QUESTION_COUNT",
+    );
+    expect(bulkService).not.toContain(
+      "maximumSessionCount: Math.floor(210 / input.studentIds.length)",
+    );
+    expect(bulkService).not.toContain(
+      "requiredTargetIds = requiredTargetIds.slice(0, -1)",
     );
   });
 

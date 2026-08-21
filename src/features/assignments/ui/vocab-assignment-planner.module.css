@@ -102,6 +102,14 @@
   flex: 1 1 42px;
 }
 
+.weekdayButtons[data-invalid="true"],
+.modeButtons[data-invalid="true"],
+.section [data-field-key="range"][data-invalid="true"] {
+  border-radius: var(--radius-small);
+  outline: 1px solid var(--no-line);
+  outline-offset: 2px;
+}
+
 .dayRailFrame {
   min-width: 0;
   display: grid;
@@ -136,6 +144,16 @@
 .candidateSummary {
   color: var(--text-secondary);
   font-size: 12px;
+}
+
+.questionCountSummary {
+  padding: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  color: var(--text-primary);
+  background: var(--card);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .templateSave > :first-child {

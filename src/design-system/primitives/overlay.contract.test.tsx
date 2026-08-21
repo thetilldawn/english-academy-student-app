@@ -23,6 +23,7 @@ import {
 } from "vitest";
 
 import { Button } from "./button/button";
+import { AssignmentTimingModeField } from "@/components/assignment-editor-ui";
 import {
   DialogBody,
   DialogFrame,
@@ -210,10 +211,45 @@ describe("tabs primitive", () => {
 });
 
 describe("help tooltip primitive", () => {
+  it("opens the assignment timing explanation by focus and touch click", async () => {
+    const user = userEvent.setup();
+    render(
+      <AssignmentTimingModeField
+        helpAriaLabel="시간 방식 설명"
+        helpText="전체 제한과 문제별 제한의 차이입니다."
+        label="시간 방식"
+        mode="total"
+        onChange={vi.fn()}
+        perQuestionLabel="문제별"
+        totalLabel="전체"
+      />,
+    );
+    const trigger = screen.getByRole("button", { name: "시간 방식 설명" });
+    const tooltip = screen.getByRole("tooltip", { hidden: true });
+
+    await user.tab();
+    await waitFor(() => expect(tooltip).toHaveAttribute("data-popover-open"));
+    await user.keyboard("{Escape}");
+    await waitFor(() =>
+      expect(tooltip).not.toHaveAttribute("data-popover-open"),
+    );
+    trigger.blur();
+    fireEvent.click(trigger);
+    await waitFor(() => expect(tooltip).toHaveAttribute("data-popover-open"));
+    fireEvent.click(trigger);
+    await waitFor(() =>
+      expect(tooltip).not.toHaveAttribute("data-popover-open"),
+    );
+  });
+
   it("connects help text only while the top-layer popover is open", async () => {
     const user = userEvent.setup();
 
-    render(<HelpTip label="Range help">Range explanation</HelpTip>);
+    render(
+      <HelpTip label="Range help" trigger="범위">
+        Range explanation
+      </HelpTip>,
+    );
     const trigger = screen.getByRole("button", { name: "Range help" });
     const tooltip = screen.getByText("Range explanation");
 
@@ -259,5 +295,41 @@ describe("help tooltip primitive", () => {
         viewportWidth: 180,
       }),
     ).toEqual({ left: 8, top: 113, width: 164 });
+  });
+
+  it("uses the visible label itself for hover, focus, touch click, and Escape", async () => {
+    const user = userEvent.setup();
+
+    const { container } = render(
+      <HelpTip label="Question count help" trigger="문항 수">
+        실제 출제 가능한 문항 수를 기준으로 계산합니다.
+      </HelpTip>,
+    );
+    const trigger = screen.getByRole("button", {
+      name: "Question count help",
+    });
+    const tooltip = container.querySelector<HTMLElement>("[role='tooltip']");
+    expect(tooltip).not.toBeNull();
+
+    expect(trigger).toHaveTextContent("문항 수");
+    expect(trigger).not.toHaveTextContent("?");
+
+    fireEvent.mouseEnter(trigger);
+    await waitFor(() => expect(tooltip!).toHaveAttribute("data-popover-open"));
+    fireEvent.mouseLeave(trigger);
+    await waitFor(() =>
+      expect(tooltip!).not.toHaveAttribute("data-popover-open"),
+    );
+
+    trigger.focus();
+    await waitFor(() => expect(tooltip!).toHaveAttribute("data-popover-open"));
+    await user.keyboard("{Escape}");
+    await waitFor(() =>
+      expect(tooltip!).not.toHaveAttribute("data-popover-open"),
+    );
+
+    trigger.blur();
+    fireEvent.click(trigger);
+    await waitFor(() => expect(tooltip!).toHaveAttribute("data-popover-open"));
   });
 });

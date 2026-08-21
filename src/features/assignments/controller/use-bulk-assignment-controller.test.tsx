@@ -18,11 +18,15 @@ function previewResponse(
     assignableCount: studentIds.length,
     assignmentCount: studentIds.length * sessionCount,
     blockedCount: 0,
+    commonPlanSummary: null,
     items: studentIds.map((studentId, studentIndex) => ({
       available: true,
+      availableQuestionCount: 40,
       datasetId: assignmentContractIds.dataset,
       datasetLabel: "능률 VOCA",
       error: null as string | null,
+      remainingQuestionCount: 0,
+      selectedQuestionCount: 40,
       sessions: Array.from({ length: sessionCount }, (_, index) => ({
         available: true,
         availableFrom: `2099-08-${String(10 + index).padStart(2, "0")}T00:00:00.000Z`,
@@ -60,13 +64,14 @@ function creationResponse(studentIds: readonly string[], sessionCount: number) {
 function renderController(
   transport: AssignmentTransport,
   studentIds: readonly string[] = [assignmentContractIds.studentA],
+  includePendingReview = true,
 ) {
   return renderHook(() =>
     useBulkAssignmentController({
       clock: () => NOW,
       firstAvailableDateKorean: "2099-08-10",
       genericErrorMessage: "일괄 배정을 저장하지 못했습니다.",
-      includePendingReview: true,
+      includePendingReview,
       previewDelayMs: 0,
       previewErrorMessage: "학생별 범위를 계산하지 못했습니다.",
       studentIds,
@@ -146,7 +151,14 @@ describe("bulk assignment controller", () => {
       initialCommonPlan: {
         datasetId: assignmentContractIds.dataset,
         distribution: "split",
-        targetWordsPerSession: 40,
+        questionCount: { mode: "manual", value: 40 },
+        overflowPolicy: "leave",
+        selectionMode: "random",
+        planNonce: assignmentContractIds.idempotencyKey,
+        recurrenceSessions: [{
+          availableLocalDateTime: "2099-08-10T09:00",
+          deadlineLocalDateTime: "2099-08-11T22:00",
+        }],
         sessions: [{
           unitIds: [assignmentContractIds.day60],
           availableLocalDateTime: "2099-08-10T09:00",
@@ -281,7 +293,11 @@ describe("bulk assignment controller", () => {
         status: 201,
       };
     });
-    const { result } = renderController(transport);
+    const { result } = renderController(
+      transport,
+      [assignmentContractIds.studentA],
+      false,
+    );
     await waitFor(() => expect(result.current.canSubmit).toBe(true));
 
     act(() => {
@@ -289,15 +305,19 @@ describe("bulk assignment controller", () => {
         collisionDecisions: [],
         datasetId: assignmentContractIds.dataset,
         distribution: "split",
-        sessions: [10, 12, 14].map((day, index) => ({
+        questionCount: { mode: "manual", value: 40 },
+        overflowPolicy: "leave",
+        selectionMode: "random",
+        planNonce: assignmentContractIds.idempotencyKey,
+        recurrenceSessions: [10, 12, 14].map((day) => ({
           availableLocalDateTime: `2099-08-${day}T09:00`,
           deadlineLocalDateTime: `2099-08-${day + 1}T22:00`,
-          unitIds: [
-            [assignmentContractIds.day60, assignmentContractIds.day59,
-              assignmentContractIds.day58][index]!,
-          ],
         })),
-        targetWordsPerSession: 40,
+        sessions: [10, 12, 14].map((day) => ({
+          availableLocalDateTime: `2099-08-${day}T09:00`,
+          deadlineLocalDateTime: `2099-08-${day + 1}T22:00`,
+          unitIds: [assignmentContractIds.day60],
+        })),
       });
     });
 

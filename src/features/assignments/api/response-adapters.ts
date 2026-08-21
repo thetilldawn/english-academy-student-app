@@ -123,6 +123,17 @@ const bulkPreviewSessionSchema = z
           .strict(),
       ),
     error: z.string().nullable(),
+    errorFieldKey: z
+      .enum([
+        "dataset",
+        "students",
+        "preview",
+        "range",
+        "questionCount",
+        "overflowPolicy",
+        "weekdays",
+      ])
+      .optional(),
   })
   .strict();
 
@@ -137,13 +148,49 @@ const bulkAssignmentPreviewResponseSchema = z
           datasetId: z.uuid().nullable(),
           datasetLabel: z.string().nullable(),
           sessions: z.array(bulkPreviewSessionSchema),
+          availableQuestionCount: nonNegativeInteger.nullable(),
+          selectedQuestionCount: nonNegativeInteger.nullable(),
+          remainingQuestionCount: nonNegativeInteger.nullable(),
           error: z.string().nullable(),
+          errorFieldKey: z
+            .enum([
+              "dataset",
+              "students",
+              "preview",
+              "range",
+              "questionCount",
+              "overflowPolicy",
+              "weekdays",
+            ])
+            .optional(),
         })
         .strict(),
     ),
     assignableCount: nonNegativeInteger,
     blockedCount: nonNegativeInteger,
     assignmentCount: nonNegativeInteger,
+    commonPlanSummary: z
+      .object({
+        representativeStudentId: z.uuid(),
+        normalStudentIds: z.array(z.uuid()),
+        exceptionStudentIds: z.array(z.uuid()),
+        availableQuestionCount: nonNegativeInteger,
+        selectedQuestionCount: nonNegativeInteger,
+        remainingQuestionCount: nonNegativeInteger,
+        sessions: z.array(
+          z
+            .object({
+              sessionNumber: z.number().int().positive(),
+              availableFrom: z.iso.datetime({ offset: true }),
+              availableUntil: z.iso.datetime({ offset: true }).nullable(),
+              questionCount: nonNegativeInteger,
+              unitLabel: z.string().nullable(),
+            })
+            .strict(),
+        ),
+      })
+      .strict()
+      .nullable(),
   })
   .strict();
 

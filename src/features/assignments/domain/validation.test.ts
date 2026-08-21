@@ -448,6 +448,46 @@ describe("assignment draft validation", () => {
     ).toContain("firstDeadline");
   });
 
+  it("공통 배정은 처음 발견한 과거 마감을 정확한 회차 필드에 연결한다", () => {
+    const sessions = [
+      {
+        unitIds: [assignmentContractIds.day60],
+        availableLocalDateTime: "2026-08-11T09:00",
+        deadlineLocalDateTime: "2026-08-30T22:00",
+      },
+      {
+        unitIds: [assignmentContractIds.day60],
+        availableLocalDateTime: "2026-08-12T09:00",
+        deadlineLocalDateTime: "2026-08-13T22:00",
+      },
+    ];
+    const commonDraft: BulkSeriesAssignmentDraft = {
+      ...baseBulk,
+      range: { mode: "fixed_span", unitsPerSession: 1, sessionCount: 2 },
+      commonPlan: {
+        datasetId: assignmentContractIds.dataset,
+        distribution: "split",
+        questionCount: { mode: "manual", value: 20 },
+        overflowPolicy: "leave",
+        selectionMode: "source_order",
+        planNonce: assignmentContractIds.idempotencyKey,
+        sessions,
+        recurrenceSessions: sessions.map((session) => ({
+          availableLocalDateTime: session.availableLocalDateTime,
+          deadlineLocalDateTime: session.deadlineLocalDateTime,
+        })),
+        collisionDecisions: [],
+      },
+    };
+
+    expect(
+      validateBulkAssignmentSubmission(
+        commonDraft,
+        Date.parse("2026-08-20T00:00:00.000Z"),
+      ).map((issue) => issue.path),
+    ).toContain("commonPlan.sessions.1.deadlineLocalDateTime");
+  });
+
   it("bulk preview validates selection while submit additionally validates exam and future deadline", () => {
     expect(validateBulkPreviewProjection(baseBulk)).toStrictEqual([]);
     expect(validateBulkAssignmentSubmission(baseBulk, NOW)).toStrictEqual([]);

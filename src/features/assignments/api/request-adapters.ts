@@ -279,7 +279,24 @@ function bulkSelectionBody(draft: BulkSeriesAssignmentDraft) {
     ? {
         datasetId: draft.commonPlan.datasetId,
         distribution: draft.commonPlan.distribution,
-        targetWordsPerSession: draft.commonPlan.targetWordsPerSession,
+        questionCount: draft.commonPlan.questionCount,
+        overflowPolicy: draft.commonPlan.overflowPolicy,
+        selectionMode: draft.commonPlan.selectionMode,
+        planNonce: draft.commonPlan.planNonce,
+        recurrenceSessions: draft.commonPlan.recurrenceSessions.map(
+          (session) => {
+            const availableFrom = koreanDateTimeLocalToIso(
+              session.availableLocalDateTime,
+            );
+            const availableUntil = koreanDateTimeLocalToIso(
+              session.deadlineLocalDateTime,
+            );
+            if (!availableFrom || !availableUntil) {
+              throw new Error("검증되지 않은 반복 일정 시각입니다.");
+            }
+            return { availableFrom, availableUntil };
+          },
+        ),
         sessions: draft.commonPlan.sessions.map((session) => {
           const availableFrom = koreanDateTimeLocalToIso(
             session.availableLocalDateTime,

@@ -25,6 +25,7 @@ import {
 import {
   buildAssignmentQuestionPlan,
   calculateAssignmentQuestionRange,
+  calculateAssignmentSeriesQuestionCapacity,
 } from "@/lib/assignment/question-planner";
 import {
   activeReviewIdentities,
@@ -534,6 +535,31 @@ export async function calculateAssignmentCapacity(
     cache,
   );
   return prepared.capacity;
+}
+
+export async function calculateAssignmentSeriesCapacity(
+  input: AssignmentCapacityInput,
+  authenticatedAdmin?: AdminContext,
+  exclusion?: AssignmentExclusion,
+  cache?: MixedAssignmentPreparationCache,
+) {
+  const prepared = await prepareAssignment(
+    input,
+    authenticatedAdmin,
+    exclusion,
+    cache,
+  );
+  return {
+    ...prepared.capacity,
+    seriesMaximumQuestionCount: calculateAssignmentSeriesQuestionCapacity({
+      requiredTargets: prepared.reviewTargets,
+      primaryCandidates: prepared.primaryCandidates,
+      allCandidates: input.includePendingReview
+        ? prepared.allCandidates
+        : prepared.primaryCandidates,
+      englishToKoreanRatio: input.englishToKoreanRatio,
+    }),
+  };
 }
 
 export type PreparedMixedAssignmentBatch = {

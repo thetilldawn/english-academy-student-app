@@ -167,8 +167,7 @@ export function QuizFrame({
 
       <p className={styles.direction}>
         <span className={inlineHelpClassName}>
-          {progressLabel}
-          <HelpTip label={studentAppText.attempt.keyboardShortcutAria}>
+          <HelpTip label={studentAppText.attempt.keyboardShortcutAria} trigger={progressLabel}>
             {studentAppText.attempt.keyboardShortcutHelp}
           </HelpTip>
         </span>

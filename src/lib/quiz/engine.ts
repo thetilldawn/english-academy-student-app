@@ -137,25 +137,21 @@ function buildDirectionalQuestionSets(
   } = buildDirectionalChoiceSets(choiceCandidates);
   const englishCandidates = targetSets.englishCandidates.filter(
     (entry) =>
-      buildDistractorCandidates(
+      hasMinimumDistinctDistractors(
         entry,
         englishChoiceCandidates,
         "english_to_korean",
         (candidate) => candidate.primaryMeaning,
-        undefined,
-        false,
-      ).length >= 3,
+      ),
   );
   const koreanCandidates = targetSets.koreanCandidates.filter(
     (entry) =>
-      buildDistractorCandidates(
+      hasMinimumDistinctDistractors(
         entry,
         koreanChoiceCandidates,
         "korean_to_english",
         (candidate) => candidate.headword,
-        undefined,
-        false,
-      ).length >= 3,
+      ),
   );
 
   return {
@@ -174,6 +170,141 @@ function buildDirectionalQuestionSets(
   };
 }
 
+/** Returns the directions that are safe for each exact target occurrence. */
+export function quizTargetDirectionEligibility(
+  targets: readonly QuizVocabularyEntry[],
+  choiceCandidates: readonly QuizVocabularyEntry[],
+) {
+  const { englishCandidateIds, koreanCandidateIds } =
+    buildDirectionalQuestionSets(targets, choiceCandidates);
+  return targets.map((target) => ({
+    id: target.id,
+    eligibleDirections: [
+      ...(englishCandidateIds.has(target.id)
+        ? ["english_to_korean" as const]
+        : []),
+      ...(koreanCandidateIds.has(target.id)
+        ? ["korean_to_english" as const]
+        : []),
+    ],
+  }));
+}
+
+/**
+ * Returns the directions that one source occurrence can use on its own.
+ * Prompt collisions belong to a single quiz paper, so series planning must not
+ * remove an occurrence just because a different sense exists in another quiz.
+ */
+export function quizIndependentTargetDirectionEligibility(
+  targets: readonly QuizVocabularyEntry[],
+  choiceCandidates: readonly QuizVocabularyEntry[],
+) {
+  const {
+    englishCandidates: englishChoiceCandidates,
+    koreanCandidates: koreanChoiceCandidates,
+  } = buildDirectionalChoiceSets(choiceCandidates);
+  return targets.map((target) => ({
+    id: target.id,
+    eligibleDirections: [
+      ...(canUseDirection(target, "english_to_korean") &&
+      hasMinimumDistinctDistractors(
+        target,
+        englishChoiceCandidates,
+        "english_to_korean",
+        (candidate) => candidate.primaryMeaning,
+      )
+        ? ["english_to_korean" as const]
+        : []),
+      ...(canUseDirection(target, "korean_to_english") &&
+      hasMinimumDistinctDistractors(
+        target,
+        koreanChoiceCandidates,
+        "korean_to_english",
+        (candidate) => candidate.headword,
+      )
+        ? ["korean_to_english" as const]
+        : []),
+    ],
+  }));
+}
+
+export function quizTargetDirectionConflictKey(
+  entry: QuizVocabularyEntry,
+  direction: QuizDirection,
+) {
+  return direction === "english_to_korean"
+    ? {
+        promptKey: normalizeQuizHeadword(entry.headword),
+        answerKey: normalizeChoice(entry.primaryMeaning),
+      }
+    : {
+        promptKey: normalizeChoice(entry.primaryMeaning),
+        answerKey: normalizeQuizHeadword(entry.headword),
+      };
+}
+
+function hasMinimumDistinctDistractors(
+  target: QuizVocabularyEntry,
+  candidates: readonly QuizVocabularyEntry[],
+  direction: QuizDirection,
+  display: (entry: QuizVocabularyEntry) => string,
+  minimum = 3,
+) {
+  const correctKey = normalizeChoice(display(target));
+  const correctIdentity = quizVocabularyIdentity(target);
+  const promptKey = direction === "english_to_korean"
+    ? normalizeQuizHeadword(target.headword)
+    : normalizeChoice(target.primaryMeaning);
+  const displaysByIdentity = new Map<string, Set<string>>();
+  const matchedIdentityByDisplay = new Map<string, string>();
+  const matchedDisplayByIdentity = new Map<string, string>();
+
+  const assignIdentity = (
+    identity: string,
+    visitedIdentities: Set<string>,
+  ): boolean => {
+    if (visitedIdentities.has(identity)) return false;
+    visitedIdentities.add(identity);
+    for (const displayKey of displaysByIdentity.get(identity) ?? []) {
+      const previousIdentity = matchedIdentityByDisplay.get(displayKey);
+      if (
+        !previousIdentity ||
+        assignIdentity(previousIdentity, visitedIdentities)
+      ) {
+        matchedIdentityByDisplay.set(displayKey, identity);
+        matchedDisplayByIdentity.set(identity, displayKey);
+        return true;
+      }
+    }
+    return false;
+  };
+
+  for (const candidate of candidates) {
+    const identity = quizVocabularyIdentity(candidate);
+    const displayKey = normalizeChoice(display(candidate));
+    const candidatePromptKey = direction === "english_to_korean"
+      ? normalizeQuizHeadword(candidate.headword)
+      : normalizeChoice(candidate.primaryMeaning);
+    if (
+      candidate.id === target.id ||
+      identity === correctIdentity ||
+      displayKey === correctKey ||
+      candidatePromptKey === promptKey
+    ) {
+      continue;
+    }
+    const displayKeys = displaysByIdentity.get(identity) ?? new Set<string>();
+    if (displayKeys.has(displayKey)) continue;
+    displayKeys.add(displayKey);
+    displaysByIdentity.set(identity, displayKeys);
+    if (!matchedDisplayByIdentity.has(identity)) {
+      assignIdentity(identity, new Set());
+    }
+    if (matchedIdentityByDisplay.size >= minimum) return true;
+  }
+  return matchedIdentityByDisplay.size >= minimum;
+}
+
 function shuffle<T>(items: readonly T[], random: RandomSource): T[] {
   const result = [...items];
 
@@ -185,88 +316,145 @@ function shuffle<T>(items: readonly T[], random: RandomSource): T[] {
   return result;
 }
 
+type QuizChoiceCandidateMetadata = {
+  entry: QuizVocabularyEntry;
+  identity: string;
+  headwordKey: string;
+  meaningKey: string;
+  recordType: ReturnType<typeof inferredRecordType>;
+  meaningShape: ReturnType<typeof meaningShape>;
+  headwordShape: ReturnType<typeof headwordShape>;
+  headwordLength: number;
+  meaningLength: number;
+};
+
+type QuizChoiceIndex = {
+  byId: ReadonlyMap<number, QuizChoiceCandidateMetadata>;
+  englishCandidates: readonly QuizChoiceCandidateMetadata[];
+  koreanCandidates: readonly QuizChoiceCandidateMetadata[];
+};
+
 function buildDistractorCandidates(
   target: QuizVocabularyEntry,
-  candidates: readonly QuizVocabularyEntry[],
+  choiceIndex: QuizChoiceIndex,
   direction: QuizDirection,
-  display: (entry: QuizVocabularyEntry) => string,
   random?: RandomSource,
   preferSimilar = true,
 ) {
-  const correctKey = normalizeChoice(display(target));
-  const correctIdentity = quizVocabularyIdentity(target);
-  const promptKey =
-    direction === "english_to_korean"
-      ? normalizeQuizHeadword(target.headword)
-      : normalizeChoice(target.primaryMeaning);
+  const targetMetadata = choiceIndex.byId.get(target.id) ??
+    quizChoiceCandidateMetadata(target);
+  const correctKey = direction === "english_to_korean"
+    ? targetMetadata.meaningKey
+    : targetMetadata.headwordKey;
+  const correctIdentity = targetMetadata.identity;
+  const promptKey = direction === "english_to_korean"
+    ? targetMetadata.headwordKey
+    : targetMetadata.meaningKey;
 
-  const eligible = candidates.filter(
-    (candidate) =>
-      candidate.id !== target.id &&
-      quizVocabularyIdentity(candidate) !== correctIdentity &&
-      normalizeChoice(display(candidate)) !== correctKey &&
-      (direction === "english_to_korean"
-        ? normalizeQuizHeadword(candidate.headword) !== promptKey
-        : normalizeChoice(candidate.primaryMeaning) !== promptKey),
-  );
-
-  const ranked = (random ? shuffle(eligible, random) : [...eligible])
-    .map((candidate) => ({
+  type DistractorEdge = {
+    candidate: QuizVocabularyEntry;
+    identity: string;
+    displayKey: string;
+    score: number;
+    tieBreaker: number;
+  };
+  const edgeByKey = new Map<string, DistractorEdge>();
+  const indexedCandidates = direction === "english_to_korean"
+    ? choiceIndex.englishCandidates
+    : choiceIndex.koreanCandidates;
+  for (const metadata of indexedCandidates) {
+    const candidate = metadata.entry;
+    const identity = metadata.identity;
+    const displayKey = direction === "english_to_korean"
+      ? metadata.meaningKey
+      : metadata.headwordKey;
+    const candidatePromptKey = direction === "english_to_korean"
+      ? metadata.headwordKey
+      : metadata.meaningKey;
+    if (
+      candidate.id === target.id ||
+      identity === correctIdentity ||
+      displayKey === correctKey ||
+      candidatePromptKey === promptKey
+    ) {
+      continue;
+    }
+    const edge: DistractorEdge = {
       candidate,
-      identity: quizVocabularyIdentity(candidate),
-      displayKey: normalizeChoice(display(candidate)),
+      identity,
+      displayKey,
       score: preferSimilar
-        ? distractorSimilarityScore(target, candidate, display)
+        ? indexedDistractorSimilarityScore(
+            targetMetadata,
+            metadata,
+            direction,
+          )
         : 0,
-    }));
-  if (preferSimilar) {
-    ranked.sort(
-      (left, right) =>
-        right.score - left.score ||
-        left.candidate.id - right.candidate.id,
-    );
-  }
-  const edgeByKey = new Map<string, (typeof ranked)[number]>();
-  for (const edge of ranked) {
+      tieBreaker: random?.() ?? candidate.id,
+    };
     const key = `${edge.identity}\u0000${edge.displayKey}`;
-    if (!edgeByKey.has(key)) edgeByKey.set(key, edge);
+    const previous = edgeByKey.get(key);
+    if (
+      !previous ||
+      edge.score > previous.score ||
+      (edge.score === previous.score && edge.tieBreaker < previous.tieBreaker)
+    ) {
+      edgeByKey.set(key, edge);
+    }
   }
 
   const edgesByIdentity = new Map<
     string,
-    (typeof ranked)[number][]
+    DistractorEdge[]
   >();
+  const edgesByScore = new Map<number, DistractorEdge[]>();
   for (const edge of edgeByKey.values()) {
-    const edges = edgesByIdentity.get(edge.identity) ?? [];
-    edges.push(edge);
-    edgesByIdentity.set(edge.identity, edges);
+    const bucket = edgesByScore.get(edge.score) ?? [];
+    bucket.push(edge);
+    edgesByScore.set(edge.score, bucket);
   }
-  const matchedByDisplay = new Map<
-    string,
-    (typeof ranked)[number]
-  >();
-  const assignIdentity = (
-    identity: string,
-    visitedIdentities: Set<string>,
-  ): boolean => {
-    if (visitedIdentities.has(identity)) return false;
-    visitedIdentities.add(identity);
-
-    for (const edge of edgesByIdentity.get(identity) ?? []) {
-      const previous = matchedByDisplay.get(edge.displayKey);
-      if (
-        !previous ||
-        assignIdentity(previous.identity, visitedIdentities)
-      ) {
-        matchedByDisplay.set(edge.displayKey, edge);
-        return true;
+  let matchedByDisplay = new Map<string, DistractorEdge>();
+  const rebuildMatching = () => {
+    const nextMatchedByDisplay = new Map<string, DistractorEdge>();
+    const assignIdentity = (
+      identity: string,
+      visitedIdentities: Set<string>,
+    ): boolean => {
+      if (visitedIdentities.has(identity)) return false;
+      visitedIdentities.add(identity);
+      for (const edge of edgesByIdentity.get(identity) ?? []) {
+        const previous = nextMatchedByDisplay.get(edge.displayKey);
+        if (
+          !previous ||
+          assignIdentity(previous.identity, visitedIdentities)
+        ) {
+          nextMatchedByDisplay.set(edge.displayKey, edge);
+          return true;
+        }
       }
+      return false;
+    };
+    for (const identity of edgesByIdentity.keys()) {
+      assignIdentity(identity, new Set());
+      if (nextMatchedByDisplay.size >= 3) break;
     }
-    return false;
+    return nextMatchedByDisplay;
   };
 
-  for (const identity of edgesByIdentity.keys()) {
-    assignIdentity(identity, new Set());
+  const scores = [...edgesByScore.keys()].sort((left, right) => right - left);
+  for (const score of scores) {
+    const bucket = edgesByScore.get(score)!;
+    bucket.sort(
+      (left, right) =>
+        left.tieBreaker - right.tieBreaker ||
+        left.candidate.id - right.candidate.id,
+    );
+    for (const edge of bucket) {
+      const edges = edgesByIdentity.get(edge.identity) ?? [];
+      edges.push(edge);
+      edgesByIdentity.set(edge.identity, edges);
+    }
+    matchedByDisplay = rebuildMatching();
     if (matchedByDisplay.size >= 3) break;
   }
 
@@ -318,39 +506,67 @@ function headwordShape(value: string) {
   return "single";
 }
 
-function distractorSimilarityScore(
-  target: QuizVocabularyEntry,
-  candidate: QuizVocabularyEntry,
-  display: (entry: QuizVocabularyEntry) => string,
+function quizChoiceCandidateMetadata(
+  entry: QuizVocabularyEntry,
+): QuizChoiceCandidateMetadata {
+  return {
+    entry,
+    identity: quizVocabularyIdentity(entry),
+    headwordKey: normalizeQuizHeadword(entry.headword),
+    meaningKey: normalizeChoice(entry.primaryMeaning),
+    recordType: inferredRecordType(entry),
+    meaningShape: meaningShape(entry.primaryMeaning),
+    headwordShape: headwordShape(entry.headword),
+    headwordLength: Array.from(entry.headword).length,
+    meaningLength: Array.from(entry.primaryMeaning).length,
+  };
+}
+
+function buildQuizChoiceIndex(
+  candidates: readonly QuizVocabularyEntry[],
+): QuizChoiceIndex {
+  const metadata = candidates.map(quizChoiceCandidateMetadata);
+  return {
+    byId: new Map(metadata.map((candidate) => [candidate.entry.id, candidate])),
+    englishCandidates: metadata.filter((candidate) =>
+      canUseDirection(candidate.entry, "english_to_korean")
+    ),
+    koreanCandidates: metadata.filter((candidate) =>
+      canUseDirection(candidate.entry, "korean_to_english")
+    ),
+  };
+}
+
+function indexedDistractorSimilarityScore(
+  target: QuizChoiceCandidateMetadata,
+  candidate: QuizChoiceCandidateMetadata,
+  direction: QuizDirection,
 ) {
   let score = 0;
-  if (inferredRecordType(target) === inferredRecordType(candidate)) {
-    score += 80;
-  }
-  if (meaningShape(target.primaryMeaning) === meaningShape(candidate.primaryMeaning)) {
-    score += 36;
-  }
-  if (headwordShape(target.headword) === headwordShape(candidate.headword)) {
-    score += 22;
-  }
-  const displayLengthDelta = Math.abs(
-    Array.from(display(target)).length - Array.from(display(candidate)).length,
-  );
-  score += Math.max(0, 18 - displayLengthDelta);
-  const meaningLengthDelta = Math.abs(
-    Array.from(target.primaryMeaning).length -
-      Array.from(candidate.primaryMeaning).length,
-  );
-  score += Math.max(0, 10 - meaningLengthDelta);
+  if (target.recordType === candidate.recordType) score += 80;
+  if (target.meaningShape === candidate.meaningShape) score += 36;
+  if (target.headwordShape === candidate.headwordShape) score += 22;
+  const targetDisplayLength = direction === "english_to_korean"
+    ? target.meaningLength
+    : target.headwordLength;
+  const candidateDisplayLength = direction === "english_to_korean"
+    ? candidate.meaningLength
+    : candidate.headwordLength;
+  score += Math.max(0, 18 - Math.abs(
+    targetDisplayLength - candidateDisplayLength,
+  ));
+  score += Math.max(0, 10 - Math.abs(
+    target.meaningLength - candidate.meaningLength,
+  ));
   return score;
 }
 
 function createChoices(
   target: QuizVocabularyEntry,
-  candidates: readonly QuizVocabularyEntry[],
   direction: QuizDirection,
   display: (entry: QuizVocabularyEntry) => string,
   random: RandomSource,
+  choiceIndex: QuizChoiceIndex,
 ): {
   choices: string[];
   choiceVocabEntryIds: number[];
@@ -359,20 +575,13 @@ function createChoices(
   const distractors = shuffle(
     buildDistractorCandidates(
       target,
-      candidates,
+      choiceIndex,
       direction,
-      display,
       random,
     ),
     random,
   )
-    .map((candidate) => ({
-      candidate,
-      score: distractorSimilarityScore(target, candidate, display),
-    }))
-    .sort((left, right) => right.score - left.score)
-    .slice(0, 3)
-    .map(({ candidate }) => candidate);
+    .slice(0, 3);
 
   if (distractors.length !== 3) {
     throw new Error("서로 다른 4지선다 보기를 만들 어휘가 부족합니다.");
@@ -420,10 +629,7 @@ export function createQuizQuestions(
     englishCandidates: englishEligible,
     koreanCandidates: koreanEligible,
   } = buildDirectionalQuestionSets(entries, entries);
-  const {
-    englishCandidates: englishChoiceCandidates,
-    koreanCandidates: koreanChoiceCandidates,
-  } = buildDirectionalChoiceSets(entries);
+  const choiceIndex = buildQuizChoiceIndex(entries);
   const englishIds = new Set(englishEligible.map((entry) => entry.id));
   const koreanIds = new Set(koreanEligible.map((entry) => entry.id));
   const englishOnly = englishEligible.filter(
@@ -498,20 +704,16 @@ export function createQuizQuestions(
         ? (candidate: QuizVocabularyEntry) =>
             candidate.primaryMeaning
         : (candidate: QuizVocabularyEntry) => candidate.headword;
-    const candidates =
-      direction === "english_to_korean"
-        ? englishChoiceCandidates
-        : koreanChoiceCandidates;
     const {
       choices,
       choiceVocabEntryIds,
       correctChoiceIndex,
     } = createChoices(
       entry,
-      candidates,
       direction,
       display,
       random,
+      choiceIndex,
     );
 
     return {
@@ -577,8 +779,7 @@ export function createTargetedQuizQuestions(
     koreanCandidateIds,
     promptSafeCandidateIds,
   } = buildDirectionalQuestionSets(trustedTargets, candidates);
-  const { englishCandidates, koreanCandidates } =
-    buildDirectionalChoiceSets(candidates);
+  const choiceIndex = buildQuizChoiceIndex(candidates);
   const englishOnly = trustedTargets.filter(
     (entry) =>
       englishCandidateIds.has(entry.id) &&
@@ -652,20 +853,16 @@ export function createTargetedQuizQuestions(
         ? (candidate: QuizVocabularyEntry) =>
             candidate.primaryMeaning
         : (candidate: QuizVocabularyEntry) => candidate.headword;
-    const choiceCandidates =
-      direction === "english_to_korean"
-        ? englishCandidates
-        : koreanCandidates;
     const {
       choices,
       choiceVocabEntryIds,
       correctChoiceIndex,
     } = createChoices(
       entry,
-      choiceCandidates,
       direction,
       display,
       random,
+      choiceIndex,
     );
 
     return {
@@ -675,6 +872,92 @@ export function createTargetedQuizQuestions(
         direction === "english_to_korean"
           ? entry.headword
           : entry.primaryMeaning,
+      choices,
+      choiceVocabEntryIds,
+      correctChoiceIndex,
+    };
+  });
+}
+
+/**
+ * Builds a paper from an exact occurrence-and-direction plan. Directions are
+ * checked per paper, so a different sense assigned to another paper cannot
+ * invalidate this one.
+ */
+export function createExplicitTargetedQuizQuestions(
+  targets: readonly { id: number; direction: QuizDirection }[],
+  candidates: readonly QuizVocabularyEntry[],
+  random: RandomSource = secureRandom,
+): QuizQuestionDraft[] {
+  if (
+    targets.length < 1 ||
+    targets.length > 500 ||
+    new Set(targets.map((target) => target.id)).size !== targets.length
+  ) {
+    throw new Error("확정 출제 대상은 서로 다른 1~500개 항목이어야 합니다.");
+  }
+  const candidateById = new Map<number, QuizVocabularyEntry>();
+  for (const candidate of candidates) {
+    if (candidateById.has(candidate.id)) {
+      throw new Error("보기 후보 단어 ID가 중복되었습니다.");
+    }
+    candidateById.set(candidate.id, candidate);
+  }
+  const plannedTargets = targets.map((target) => {
+    const entry = candidateById.get(target.id);
+    if (!entry) {
+      throw new Error("확정 출제 대상이 보기 후보 범위에 없습니다.");
+    }
+    if (!canUseDirection(entry, target.direction)) {
+      throw new Error("확정 출제 대상에 사용할 수 없는 문제 방향이 있습니다.");
+    }
+    return { entry, direction: target.direction };
+  });
+  const englishTargets = plannedTargets
+    .filter(({ direction }) => direction === "english_to_korean")
+    .map(({ entry }) => entry);
+  const koreanTargets = plannedTargets
+    .filter(({ direction }) => direction === "korean_to_english")
+    .map(({ entry }) => entry);
+  const englishQuestionSets = buildDirectionalQuestionSets(
+    englishTargets,
+    candidates,
+  );
+  const koreanQuestionSets = buildDirectionalQuestionSets(
+    koreanTargets,
+    candidates,
+  );
+  if (
+    englishTargets.some(
+      (entry) => !englishQuestionSets.englishCandidateIds.has(entry.id),
+    ) ||
+    koreanTargets.some(
+      (entry) => !koreanQuestionSets.koreanCandidateIds.has(entry.id),
+    )
+  ) {
+    throw new Error(
+      "확정 출제 대상에 같은 문제 문구의 다른 정답이 있거나 4지선다 보기가 부족합니다.",
+    );
+  }
+  const choiceIndex = buildQuizChoiceIndex(candidates);
+
+  return plannedTargets.map(({ entry, direction }) => {
+    const display = direction === "english_to_korean"
+      ? (candidate: QuizVocabularyEntry) => candidate.primaryMeaning
+      : (candidate: QuizVocabularyEntry) => candidate.headword;
+    const { choices, choiceVocabEntryIds, correctChoiceIndex } = createChoices(
+      entry,
+      direction,
+      display,
+      random,
+      choiceIndex,
+    );
+    return {
+      vocabEntryId: entry.id,
+      direction,
+      prompt: direction === "english_to_korean"
+        ? entry.headword
+        : entry.primaryMeaning,
       choices,
       choiceVocabEntryIds,
       correctChoiceIndex,
@@ -782,13 +1065,17 @@ export function calculateMixedQuizQuestionRange(
   primaryCandidates: readonly QuizVocabularyEntry[],
   allCandidates: readonly QuizVocabularyEntry[],
   englishToKoreanRatio: 0 | 50 | 100,
+  questionCountLimit = 500,
+  calculateMinimum = true,
 ) {
   const emptyRange = {
     minimumQuestionCount: 0,
     maximumQuestionCount: 0,
   };
   if (
-    requiredTargets.length > 500 ||
+    !Number.isInteger(questionCountLimit) ||
+    questionCountLimit < 4 ||
+    requiredTargets.length > questionCountLimit ||
     ![0, 50, 100].includes(englishToKoreanRatio)
   ) {
     return emptyRange;
@@ -861,7 +1148,7 @@ export function calculateMixedQuizQuestionRange(
     primaryCounts.korean;
   const minimumCandidateCount = Math.max(4, required.length);
   const maximumCandidateCount = Math.min(
-    500,
+    questionCountLimit,
     required.length + eligiblePrimaryCount,
   );
   let minimumQuestionCount = 0;
@@ -884,12 +1171,131 @@ export function calculateMixedQuizQuestionRange(
         maximumQuestionCount = questionCount;
       }
       minimumQuestionCount = questionCount;
+      if (!calculateMinimum) break;
     } else if (maximumQuestionCount > 0) {
       break;
     }
   }
 
   return { minimumQuestionCount, maximumQuestionCount };
+}
+
+/**
+ * Selects the earliest feasible target occurrences while preserving source
+ * order. Direction-only targets are skipped only when taking them would make
+ * the requested English/Korean ratio impossible to complete from the suffix.
+ */
+export function selectMixedQuizTargetsInSourceOrder(
+  requiredTargets: readonly QuizVocabularyEntry[],
+  primaryCandidates: readonly QuizVocabularyEntry[],
+  allCandidates: readonly QuizVocabularyEntry[],
+  totalQuestionCount: number,
+  englishToKoreanRatio: 0 | 50 | 100,
+): QuizVocabularyEntry[] {
+  const range = calculateMixedQuizQuestionRange(
+    requiredTargets,
+    primaryCandidates,
+    allCandidates,
+    englishToKoreanRatio,
+  );
+  if (
+    totalQuestionCount < range.minimumQuestionCount ||
+    totalQuestionCount > range.maximumQuestionCount
+  ) {
+    throw new Error("범위 앞쪽 단어로 요청한 문항 수와 출제 방향을 만들 수 없습니다.");
+  }
+
+  const candidateById = new Map(
+    allCandidates.map((candidate) => [candidate.id, candidate]),
+  );
+  const required = requiredTargets.map(
+    (target) => candidateById.get(target.id)!,
+  );
+  const requiredIds = new Set(required.map((entry) => entry.id));
+  const requiredIdentities = new Set(required.map(quizVocabularyIdentity));
+  const availablePrimary = primaryCandidates
+    .map((candidate) => candidateById.get(candidate.id)!)
+    .filter(
+      (entry) =>
+        !requiredIds.has(entry.id) &&
+        !requiredIdentities.has(quizVocabularyIdentity(entry)),
+    );
+  const targetScope = [...required, ...availablePrimary];
+  const { englishCandidateIds, koreanCandidateIds } =
+    buildDirectionalQuestionSets(targetScope, allCandidates);
+  const classify = (entry: QuizVocabularyEntry) =>
+    mixedCapacityDirection(
+      entry,
+      englishCandidateIds,
+      koreanCandidateIds,
+    );
+  const requiredClasses = required.map(classify);
+  const expectedEnglishCount = Math.round(
+    totalQuestionCount * (englishToKoreanRatio / 100),
+  );
+  const expectedKoreanCount = totalQuestionCount - expectedEnglishCount;
+  const maximumGeneralEnglishOnly =
+    expectedEnglishCount -
+    requiredClasses.filter((direction) => direction === "english").length;
+  const maximumGeneralKoreanOnly =
+    expectedKoreanCount -
+    requiredClasses.filter((direction) => direction === "korean").length;
+  const generalQuestionCount = totalQuestionCount - required.length;
+  const eligible: Array<{
+    entry: QuizVocabularyEntry;
+    direction: Exclude<MixedCapacityDirection, "none">;
+  }> = [];
+  for (const entry of availablePrimary) {
+    const direction = classify(entry);
+    if (direction !== "none") eligible.push({ entry, direction });
+  }
+  const suffixCounts = Array.from(
+    { length: eligible.length + 1 },
+    () => ({ both: 0, english: 0, korean: 0 }),
+  );
+  for (let index = eligible.length - 1; index >= 0; index -= 1) {
+    const current = { ...suffixCounts[index + 1]! };
+    current[eligible[index]!.direction] += 1;
+    suffixCounts[index] = current;
+  }
+
+  const selected: QuizVocabularyEntry[] = [];
+  let selectedEnglishOnly = 0;
+  let selectedKoreanOnly = 0;
+  for (const [index, candidate] of eligible.entries()) {
+    if (selected.length === generalQuestionCount) break;
+    const nextEnglishOnly =
+      selectedEnglishOnly + (candidate.direction === "english" ? 1 : 0);
+    const nextKoreanOnly =
+      selectedKoreanOnly + (candidate.direction === "korean" ? 1 : 0);
+    if (
+      nextEnglishOnly > maximumGeneralEnglishOnly ||
+      nextKoreanOnly > maximumGeneralKoreanOnly
+    ) {
+      continue;
+    }
+    const remainingSlots = generalQuestionCount - selected.length - 1;
+    const suffix = suffixCounts[index + 1]!;
+    const maximumSuffixSelection =
+      suffix.both +
+      Math.min(
+        suffix.english,
+        maximumGeneralEnglishOnly - nextEnglishOnly,
+      ) +
+      Math.min(
+        suffix.korean,
+        maximumGeneralKoreanOnly - nextKoreanOnly,
+      );
+    if (maximumSuffixSelection < remainingSlots) continue;
+    selected.push(candidate.entry);
+    selectedEnglishOnly = nextEnglishOnly;
+    selectedKoreanOnly = nextKoreanOnly;
+  }
+
+  if (selected.length !== generalQuestionCount) {
+    throw new Error("범위 앞쪽 단어의 출제 순서를 확정하지 못했습니다.");
+  }
+  return [...selected, ...required];
 }
 
 export function createMixedQuizQuestions(

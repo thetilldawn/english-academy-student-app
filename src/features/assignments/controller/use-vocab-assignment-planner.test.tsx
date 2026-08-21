@@ -178,7 +178,7 @@ describe("단어 배정 일정 controller", () => {
     ]);
   });
 
-  it("나누기는 DAY 범위를 월수금 세 회차의 서로 다른 묶음으로 나눈다", () => {
+  it("나누기는 모든 회차에 같은 전체 DAY 범위를 보내고 서버가 실제 문항을 나눈다", () => {
     const { result } = renderPlanner();
     selectWholeRange(result);
 
@@ -186,13 +186,13 @@ describe("단어 배정 일정 controller", () => {
       date: session.availableLocalDateTime.slice(0, 10),
       unitIds: session.unitIds,
     }))).toEqual([
-      { date: "2026-08-24", unitIds: ["unit-1", "unit-2"] },
-      { date: "2026-08-26", unitIds: ["unit-3", "unit-4"] },
-      { date: "2026-08-28", unitIds: ["unit-5", "unit-6"] },
+      { date: "2026-08-24", unitIds: units.map((unit) => unit.id) },
+      { date: "2026-08-26", unitIds: units.map((unit) => unit.id) },
+      { date: "2026-08-28", unitIds: units.map((unit) => unit.id) },
     ]);
   });
 
-  it("DAY가 회차보다 적은 나누기는 공통 계획을 지우고 배정을 막는다", () => {
+  it("DAY 수가 날짜보다 적어도 실제 출제 가능 문항은 서버에서 검증한다", () => {
     const { result } = renderPlanner();
     act(() => {
       result.current.actions.selectUnit(units[0]!.id);
@@ -200,10 +200,39 @@ describe("단어 배정 일정 controller", () => {
     });
 
     expect(result.current.scheduleSlots).toHaveLength(3);
-    expect(result.current.rangeSessions).toEqual([]);
-    expect(result.current.splitScheduleIssue).toBe(true);
-    expect(result.current.commonPlan).toBeUndefined();
-    expect(mocks.changeCommonPlan).toHaveBeenLastCalledWith(undefined);
+    expect(result.current.commonPlan?.sessions).toHaveLength(3);
+    expect(result.current.commonPlan?.sessions.every((session) =>
+      session.unitIds.join(",") === "unit-1,unit-2")).toBe(true);
+  });
+
+  it("문항 수는 전체가 기본이고 직접 입력값과 출제 대상을 별도로 보존한다", () => {
+    const { result } = renderPlanner();
+    selectWholeRange(result);
+    const initialNonce = result.current.planner.planNonce;
+    expect(result.current.commonPlan).toMatchObject({
+      questionCount: { mode: "all" },
+      overflowPolicy: "leave",
+      selectionMode: "source_order",
+    });
+
+    act(() => {
+      result.current.actions.changeQuestionCountMode("manual");
+      result.current.actions.changeManualQuestionCount(20);
+      result.current.actions.changeOverflowPolicy("continue_weekly");
+      result.current.actions.changeSelectionMode("random");
+      result.current.actions.toggleWeekday(3);
+    });
+    expect(result.current.commonPlan).toMatchObject({
+      questionCount: { mode: "manual", value: 20 },
+      overflowPolicy: "continue_weekly",
+      selectionMode: "random",
+      planNonce: initialNonce,
+    });
+    expect(result.current.planner.planNonce).toBe(initialNonce);
+
+    act(() => result.current.actions.changeQuestionCountMode("all"));
+    expect(result.current.planner.manualQuestionCount).toBe(20);
+    expect(result.current.commonPlan?.questionCount).toEqual({ mode: "all" });
   });
 
   it("요일을 3개에서 2개로 줄였다 다시 늘리면 공통 계획도 3→2→3회로 동기화한다", () => {
@@ -234,5 +263,30 @@ describe("단어 배정 일정 controller", () => {
         }),
       ]) }),
     );
+  });
+
+  it("한 회차 날짜를 바꿔도 다음 주 반복 기준은 원래 월수금으로 보존한다", () => {
+    const { result } = renderPlanner();
+    selectWholeRange(result);
+
+    act(() => {
+      result.current.actions.updateSessionSchedule(2, {
+        availableLocalDateTime: "2026-08-27T16:00",
+        deadlineLocalDateTime: "2026-08-28T22:00",
+      });
+    });
+
+    expect(result.current.commonPlan?.sessions.map((session) =>
+      session.availableLocalDateTime.slice(0, 10))).toEqual([
+      "2026-08-24",
+      "2026-08-27",
+      "2026-08-28",
+    ]);
+    expect(result.current.commonPlan?.recurrenceSessions.map((session) =>
+      session.availableLocalDateTime.slice(0, 10))).toEqual([
+      "2026-08-24",
+      "2026-08-26",
+      "2026-08-28",
+    ]);
   });
 });

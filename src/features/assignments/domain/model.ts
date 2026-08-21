@@ -4,6 +4,8 @@ export const assignmentQuestionOrderModes = [
   "random",
 ] as const;
 
+export const MAXIMUM_BULK_STUDENT_COUNT = 210;
+
 export type AssignmentQuestionOrderMode =
   (typeof assignmentQuestionOrderModes)[number];
 export type AssignmentDirectionRatio = 0 | 50 | 100;
@@ -118,8 +120,14 @@ export type BulkCollisionDecision = {
 export type BulkCommonAssignmentPlan = {
   datasetId: string;
   distribution: "split" | "repeat";
-  targetWordsPerSession: number;
+  questionCount:
+    | { mode: "all" }
+    | { mode: "manual"; value: number };
+  overflowPolicy: "leave" | "continue_weekly";
+  selectionMode: "source_order" | "random";
+  planNonce: string;
   sessions: readonly BulkCommonPlanSession[];
+  recurrenceSessions: readonly Omit<BulkCommonPlanSession, "unitIds">[];
   collisionDecisions: readonly BulkCollisionDecision[];
 };
 

@@ -64,9 +64,11 @@ export const inlineHelpClassName = styles.inline;
 export function HelpTip({
   label,
   children,
+  trigger,
 }: {
   label: string;
   children: ReactNode;
+  trigger: ReactNode;
 }) {
   const tooltipId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -119,11 +121,11 @@ export function HelpTip({
   }, [open, positionTooltip]);
 
   return (
-    <span className={styles.root}>
+    <span className={styles.labelRoot}>
       <button
         aria-describedby={open ? tooltipId : undefined}
         aria-label={label}
-        className={styles.trigger}
+        className={styles.labelTrigger}
         onBlur={hide}
         onClick={() => (open ? hide() : show())}
         onFocus={show}
@@ -137,7 +139,7 @@ export function HelpTip({
         ref={triggerRef}
         type="button"
       >
-        <span aria-hidden="true">?</span>
+        {trigger}
       </button>
       <span
         className={styles.content}

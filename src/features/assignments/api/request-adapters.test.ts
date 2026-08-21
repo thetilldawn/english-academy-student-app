@@ -459,7 +459,20 @@ describe("assignment request adapters", () => {
       commonPlan: {
         datasetId: assignmentContractIds.dataset,
         distribution: "split",
-        targetWordsPerSession: 40,
+        questionCount: { mode: "manual", value: 40 },
+        overflowPolicy: "continue_weekly",
+        selectionMode: "random",
+        planNonce: assignmentContractIds.idempotencyKey,
+        recurrenceSessions: [
+          {
+            availableLocalDateTime: "2026-08-17T16:00",
+            deadlineLocalDateTime: "2026-08-18T22:00",
+          },
+          {
+            availableLocalDateTime: "2026-08-19T16:00",
+            deadlineLocalDateTime: "2026-08-20T22:00",
+          },
+        ],
         sessions: [
           {
             unitIds: [assignmentContractIds.day57],
@@ -467,7 +480,7 @@ describe("assignment request adapters", () => {
             deadlineLocalDateTime: "2026-08-18T22:00",
           },
           {
-            unitIds: [assignmentContractIds.day58],
+            unitIds: [assignmentContractIds.day57],
             availableLocalDateTime: "2026-08-19T16:00",
             deadlineLocalDateTime: "2026-08-20T22:00",
           },
@@ -492,7 +505,20 @@ describe("assignment request adapters", () => {
     expect(preview.body.commonPlan).toMatchObject({
       datasetId: assignmentContractIds.dataset,
       distribution: "split",
-      targetWordsPerSession: 40,
+      questionCount: { mode: "manual", value: 40 },
+      overflowPolicy: "continue_weekly",
+      selectionMode: "random",
+      planNonce: assignmentContractIds.idempotencyKey,
+      recurrenceSessions: [
+        {
+          availableFrom: "2026-08-17T07:00:00.000Z",
+          availableUntil: "2026-08-18T13:00:00.000Z",
+        },
+        {
+          availableFrom: "2026-08-19T07:00:00.000Z",
+          availableUntil: "2026-08-20T13:00:00.000Z",
+        },
+      ],
       sessions: [
         {
           unitIds: [assignmentContractIds.day57],
@@ -500,7 +526,7 @@ describe("assignment request adapters", () => {
           availableUntil: "2026-08-18T13:00:00.000Z",
         },
         {
-          unitIds: [assignmentContractIds.day58],
+          unitIds: [assignmentContractIds.day57],
           availableFrom: "2026-08-19T07:00:00.000Z",
           availableUntil: "2026-08-20T13:00:00.000Z",
         },

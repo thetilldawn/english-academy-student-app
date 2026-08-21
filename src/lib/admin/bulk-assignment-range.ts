@@ -8,6 +8,9 @@ export const bulkAssignmentRangeModes = [
   "fixed_span",
 ] as const;
 
+export const MAXIMUM_BULK_ASSIGNMENT_COUNT = 210;
+export const MAXIMUM_BULK_STUDENT_COUNT = 210;
+
 export type BulkAssignmentRangeMode =
   (typeof bulkAssignmentRangeModes)[number];
 

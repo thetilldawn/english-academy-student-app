@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 import {
   Button,
   type ButtonSize,
@@ -11,6 +13,7 @@ export function AssignmentSubmitAction({
   label,
   reasonLayout = "inline",
   size = "large",
+  focusableWhenBlocked = false,
 }: {
   blockedReason: string | null;
   canSubmit: boolean;
@@ -18,11 +21,19 @@ export function AssignmentSubmitAction({
   label: string;
   reasonLayout?: "inline" | "remaining-center";
   size?: ButtonSize;
+  focusableWhenBlocked?: boolean;
 }) {
+  const reasonId = useId();
   return (
-    <ActionWithReason layout={reasonLayout} reason={blockedReason}>
+    <ActionWithReason
+      layout={reasonLayout}
+      reason={blockedReason}
+      reasonId={blockedReason ? reasonId : undefined}
+    >
       <Button
-        disabled={!canSubmit}
+        aria-describedby={blockedReason ? reasonId : undefined}
+        aria-disabled={!canSubmit}
+        disabled={!canSubmit && !focusableWhenBlocked}
         form={formId}
         size={size}
         type="submit"

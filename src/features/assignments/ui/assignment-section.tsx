@@ -24,10 +24,9 @@ export function AssignmentSection({
           {index}
         </span>
         <h3>
-          {title}
           {help && helpLabel ? (
-            <HelpTip label={helpLabel}>{help}</HelpTip>
-          ) : null}
+            <HelpTip label={helpLabel} trigger={title}>{help}</HelpTip>
+          ) : title}
         </h3>
       </div>
       {children}

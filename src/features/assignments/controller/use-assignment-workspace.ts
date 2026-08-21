@@ -266,9 +266,7 @@ export function useAssignmentWorkspace({
     setSelectedBulkStudentIds((current) =>
       current.includes(studentId)
         ? current.filter((candidate) => candidate !== studentId)
-        : current.length >= 30
-          ? current
-          : [...current, studentId],
+        : [...current, studentId],
     );
   }
 
@@ -281,7 +279,7 @@ export function useAssignmentWorkspace({
     setSelectedBulkStudentIds((current) =>
       allFilteredStudentsSelected
         ? current.filter((studentId) => !filteredIds.has(studentId))
-        : Array.from(new Set([...current, ...filteredIds])).slice(0, 30),
+        : Array.from(new Set([...current, ...filteredIds])),
     );
   }
 

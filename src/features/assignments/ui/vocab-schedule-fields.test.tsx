@@ -19,6 +19,8 @@ function controller() {
       updateSchedule: vi.fn(),
       updateSessionSchedule: vi.fn(),
     },
+    fieldErrors: {},
+    bulk: { preview: null },
     planner: {
       schedule: {
         availableTime: "16:00",
@@ -48,7 +50,6 @@ function controller() {
         sessionNumber: 3,
       },
     ],
-    splitScheduleIssue: false,
     templateSaving: false,
     timeTemplates: [],
   } as unknown as VocabAssignmentScreenController;
@@ -79,9 +80,22 @@ describe("VocabScheduleFields", () => {
     expect(screen.getByText(/1회차 · 8월 24일 \(월\)/)).toBeVisible();
     expect(screen.getByText(/2회차 · 8월 26일 \(수\)/)).toBeVisible();
     expect(screen.getByText(/3회차 · 8월 28일 \(금\)/)).toBeVisible();
-    expect(screen.getByText("선택 요일 3개 · 배정 회차 3회")).toBeVisible();
+    expect(screen.getByText("선택 요일 3개 · 기본 회차 3회")).toBeVisible();
 
     fireEvent.click(screen.getByRole("button", { name: "수" }));
     expect(value.actions.toggleWeekday).toHaveBeenCalledWith(3);
+  });
+
+  it("공통 요약이 없는 예외 학생도 연장된 최종 회차 수를 표시한다", () => {
+    const value = controller();
+    value.bulk.preview = {
+      commonPlanSummary: null,
+      items: [{ sessions: Array.from({ length: 5 }, () => ({})) }],
+    } as never;
+    render(<VocabScheduleFields controller={value} />);
+
+    expect(
+      screen.getByText("선택 요일 3개 · 기본 회차 3회 · 최종 5회"),
+    ).toBeVisible();
   });
 });

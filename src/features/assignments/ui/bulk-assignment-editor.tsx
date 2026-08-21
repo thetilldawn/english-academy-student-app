@@ -82,11 +82,13 @@ export function BulkAssignmentEditor({
       <DialogHeader closeLabel={adminLearningText.bulkAssignmentModal.close}>
         <div>
           <h2 className={inlineHelpClassName} id="bulk-assignment-title">
-            {includePendingReview
-              ? adminLearningText.bulkAssignmentModal.withWrongTitle
-              : adminLearningText.bulkAssignmentModal.nextTitle}
             <HelpTip
               label={adminLearningText.bulkAssignmentModal.autoRangeHelpAria}
+              trigger={
+                includePendingReview
+                  ? adminLearningText.bulkAssignmentModal.withWrongTitle
+                  : adminLearningText.bulkAssignmentModal.nextTitle
+              }
             >
               {adminLearningText.bulkAssignmentModal.autoRangeHelp}
             </HelpTip>

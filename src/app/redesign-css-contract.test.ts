@@ -26,6 +26,15 @@ const modulesCss = moduleFiles
 const css = [globalsCss, modulesCss].join("\n");
 
 describe("redesign CSS contract", () => {
+  it("prevents accidental text selection while preserving editable text", () => {
+    expect(resetCss).toMatch(
+      /:where\(body, body \*\)\s*\{[^}]*user-select:\s*none;/,
+    );
+    expect(resetCss).toMatch(
+      /input,[\s\S]*textarea,[\s\S]*\[contenteditable="true"\],[\s\S]*\[data-user-select="text"\][\s\S]*\{[^}]*user-select:\s*text;/,
+    );
+  });
+
   it("keeps literal colors inside token blocks", () => {
     expect([globalsCss, resetCss, modulesCss].join("\n")).not.toMatch(
       /#[0-9a-f]{3,8}\b|\b(?:rgb|hsl|oklch)\(/i,

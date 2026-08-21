@@ -133,6 +133,7 @@ describe("assignment response adapters", () => {
           studentId: assignmentContractIds.studentA,
           studentName: "검증 학생",
           available: true,
+          availableQuestionCount: 40,
           datasetId: assignmentContractIds.dataset,
           datasetLabel: "검증 단어장",
           sessions: [
@@ -153,12 +154,29 @@ describe("assignment response adapters", () => {
               error: null,
             },
           ],
+          selectedQuestionCount: 40,
+          remainingQuestionCount: 0,
           error: null,
         },
       ],
       assignableCount: 1,
       blockedCount: 0,
       assignmentCount: 1,
+      commonPlanSummary: {
+        representativeStudentId: assignmentContractIds.studentA,
+        normalStudentIds: [assignmentContractIds.studentA],
+        exceptionStudentIds: [],
+        availableQuestionCount: 40,
+        selectedQuestionCount: 40,
+        remainingQuestionCount: 0,
+        sessions: [{
+          sessionNumber: 1,
+          availableFrom: "2026-08-16T15:00:00.000Z",
+          availableUntil: "2026-08-17T12:00:00.000Z",
+          questionCount: 40,
+          unitLabel: "DAY 60",
+        }],
+      },
     };
     expect(parseBulkAssignmentPreviewResponse(response)).toStrictEqual(
       response,
@@ -182,6 +200,20 @@ describe("assignment response adapters", () => {
     }).items[0]?.sessions[0]?.warnings[0]?.kind).toBe(
       "planned_series_order",
     );
+    expect(parseBulkAssignmentPreviewResponse({
+      ...response,
+      blockedCount: 1,
+      assignableCount: 0,
+      assignmentCount: 0,
+      commonPlanSummary: null,
+      items: [{
+        ...response.items[0],
+        available: false,
+        error: "직접 입력한 문항 수가 너무 큽니다.",
+        errorFieldKey: "questionCount",
+        sessions: [],
+      }],
+    }).items[0]?.errorFieldKey).toBe("questionCount");
     expect(() =>
       parseBulkAssignmentPreviewResponse({
         ...response,

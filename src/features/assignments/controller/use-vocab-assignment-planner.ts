@@ -7,161 +7,34 @@ import { isoToKoreanDateTimeLocal } from "@/lib/deadline";
 
 import type { AssignmentDatasetItem, AssignmentUnitItem } from "../catalog-types";
 import {
-  clearVocabCollisionDecisionFrom,
-  setVocabCollisionDecision,
   type VocabCollisionDecisionInput,
-  type VocabCollisionDecisionRecord,
 } from "../domain/vocab-collision-decisions";
 import { selectPreviousVocabExamConditions } from "../domain/vocab-previous-exam";
+import { validateVocabPlannerInputs } from "../domain/vocab-planner-validation";
 import {
-  advanceDayRangeSelection,
   applyScheduleSlotOverride,
   applyTimeTemplate,
   buildScheduleSlots,
   copyPreviousExamConditions,
-  planUnitSessions,
   resolveDayRange,
-  selectInitialVocabDatasetId,
   shiftLocalDateTime,
-  toggleWeekday,
-  type DayRangeSelection,
   type IsoWeekday,
+  type VocabQuestionCountChoice,
   type VocabRangeDistribution,
   type VocabScheduleDraft,
   type VocabScheduleSlotOverride,
+  type VocabSplitOverflowPolicy,
+  type VocabTargetSelectionMode,
   type VocabTimeTemplate,
 } from "../domain/vocab-assignment-plan";
+import { buildVocabAssignmentFieldErrors } from "../presentation/vocab-assignment-field-errors";
 import { useBulkAssignmentController } from "./use-bulk-assignment-controller";
 import type { AssignmentTransport } from "./assignment-transport";
 import { useVocabTimeTemplates } from "./use-vocab-time-templates";
-type PlannerState = {
-  datasetId: string;
-  range: DayRangeSelection;
-  distribution: VocabRangeDistribution;
-  targetWordsPerSession: number;
-  schedule: VocabScheduleDraft;
-  sessionScheduleOverrides: Readonly<Record<number, VocabScheduleSlotOverride>>;
-  collisionDecisionRecords: readonly VocabCollisionDecisionRecord[];
-};
-type PlannerAction =
-  | { type: "dataset"; value: string }
-  | { type: "range"; unitId: string }
-  | { type: "distribution"; value: VocabRangeDistribution }
-  | { type: "target"; value: number }
-  | { type: "schedule/update"; patch: Partial<VocabScheduleDraft> }
-  | { type: "schedule/replace"; value: VocabScheduleDraft }
-  | { type: "schedule/toggle_weekday"; weekday: IsoWeekday }
-  | {
-      type: "session_schedule";
-      sessionNumber: number;
-      value: VocabScheduleSlotOverride;
-    }
-  | { type: "decision/set"; value: VocabCollisionDecisionRecord }
-  | { type: "decision/clear_from"; collisionId: string };
-function reducer(state: PlannerState, action: PlannerAction): PlannerState {
-  switch (action.type) {
-    case "dataset":
-      return {
-        ...state,
-        datasetId: action.value,
-        range: { startUnitId: null, endUnitId: null },
-        collisionDecisionRecords: [],
-      };
-    case "range":
-      return {
-        ...state,
-        range: advanceDayRangeSelection(state.range, action.unitId),
-        collisionDecisionRecords: [],
-      };
-    case "distribution":
-      return {
-        ...state,
-        distribution: action.value,
-        collisionDecisionRecords: [],
-      };
-    case "target":
-      return {
-        ...state,
-        targetWordsPerSession: action.value,
-        collisionDecisionRecords: [],
-      };
-    case "schedule/update":
-      return {
-        ...state,
-        schedule: { ...state.schedule, ...action.patch },
-        sessionScheduleOverrides: {},
-        collisionDecisionRecords: [],
-      };
-    case "schedule/replace":
-      return {
-        ...state,
-        schedule: action.value,
-        sessionScheduleOverrides: {},
-        collisionDecisionRecords: [],
-      };
-    case "schedule/toggle_weekday":
-      return {
-        ...state,
-        schedule: {
-          ...state.schedule,
-          weekdays: toggleWeekday(state.schedule.weekdays, action.weekday),
-        },
-        sessionScheduleOverrides: {},
-        collisionDecisionRecords: [],
-      };
-    case "session_schedule":
-      return {
-        ...state,
-        sessionScheduleOverrides: {
-          ...state.sessionScheduleOverrides,
-          [action.sessionNumber]: { ...action.value },
-        },
-        collisionDecisionRecords: [],
-      };
-    case "decision/set":
-      return {
-        ...state,
-        collisionDecisionRecords: setVocabCollisionDecision(
-          state.collisionDecisionRecords,
-          action.value,
-        ),
-      };
-    case "decision/clear_from":
-      return {
-        ...state,
-        collisionDecisionRecords: clearVocabCollisionDecisionFrom(
-          state.collisionDecisionRecords,
-          action.collisionId,
-        ),
-      };
-  }
-}
-
-function initialState(
-  datasets: readonly AssignmentDatasetItem[],
-  initialDatasetId: string,
-  today: string,
-): PlannerState {
-  const datasetId = selectInitialVocabDatasetId(datasets, initialDatasetId);
-  return {
-    datasetId,
-    range: {
-      startUnitId: null,
-      endUnitId: null,
-    },
-    distribution: "split",
-    targetWordsPerSession: 40,
-    schedule: {
-      startDate: today,
-      weekdays: [1, 3, 5],
-      availableTime: "16:00",
-      deadlineDayOffset: 1,
-      deadlineTime: "22:00",
-    },
-    sessionScheduleOverrides: {},
-    collisionDecisionRecords: [],
-  };
-}
+import {
+  createInitialVocabPlannerState,
+  vocabPlannerReducer,
+} from "./vocab-assignment-planner-state";
 
 export function useVocabAssignmentPlanner({
   datasets,
@@ -189,9 +62,9 @@ export function useVocabAssignmentPlanner({
   units: readonly AssignmentUnitItem[];
 }) {
   const [planner, dispatch] = useReducer(
-    reducer,
+    vocabPlannerReducer,
     undefined,
-    () => initialState(datasets, initialDatasetId, today),
+    () => createInitialVocabPlannerState(datasets, initialDatasetId, today),
   );
 
   const availableUnits = useMemo(
@@ -231,41 +104,60 @@ export function useVocabAssignmentPlanner({
       ),
     [allScheduleSlots, planner.sessionScheduleOverrides],
   );
-  const rangeSessions = useMemo(
-    () =>
-      planUnitSessions({
-        orderedUnits: selectedUnits,
-        distribution: planner.distribution,
-        targetWordsPerSession: planner.targetWordsPerSession,
-        sessionCount: candidateScheduleSlots.length,
-      }),
+  const scheduleSlots = candidateScheduleSlots;
+  const questionCount = useMemo<VocabQuestionCountChoice>(
+    () => planner.questionCountMode === "all"
+      ? { mode: "all" }
+      : { mode: "manual", value: planner.manualQuestionCount },
+    [planner.manualQuestionCount, planner.questionCountMode],
+  );
+  const localIssues = useMemo(
+    () => validateVocabPlannerInputs({
+      datasetId: planner.datasetId,
+      selectedUnitIds: selectedUnits.map((unit) => unit.id),
+      distribution: planner.distribution,
+      questionCount,
+      overflowPolicy: planner.overflowPolicy,
+      selectionMode: planner.selectionMode,
+      schedule: planner.schedule,
+      scheduleSlots,
+    }),
     [
+      planner.datasetId,
       planner.distribution,
-      planner.targetWordsPerSession,
-      candidateScheduleSlots.length,
+      planner.overflowPolicy,
+      planner.schedule,
+      planner.selectionMode,
+      questionCount,
+      scheduleSlots,
       selectedUnits,
     ],
   );
-  const scheduleSlots = candidateScheduleSlots;
   const commonPlan = useMemo(() => {
-    const sessions = rangeSessions.flatMap((rangeSession, index) => {
-      const slot = scheduleSlots[index];
-      return slot
-        ? [{
-            unitIds: rangeSession.units.map((unit) => unit.id),
-            availableLocalDateTime: slot.availableLocalDateTime,
-            deadlineLocalDateTime: slot.deadlineLocalDateTime,
-          }]
-        : [];
-    });
-    return sessions.length > 0 &&
-        sessions.length === scheduleSlots.length &&
-        planner.datasetId
+    const unitIds = selectedUnits.map((unit) => unit.id);
+    const sessions = scheduleSlots.map((slot) => ({
+      unitIds,
+      availableLocalDateTime: slot.availableLocalDateTime,
+      deadlineLocalDateTime: slot.deadlineLocalDateTime,
+    }));
+    const recurrenceSessions = allScheduleSlots.map((slot) => ({
+      availableLocalDateTime: slot.availableLocalDateTime,
+      deadlineLocalDateTime: slot.deadlineLocalDateTime,
+    }));
+    return localIssues.length === 0
       ? {
           datasetId: planner.datasetId,
           distribution: planner.distribution,
-          targetWordsPerSession: planner.targetWordsPerSession,
+          questionCount,
+          overflowPolicy:
+            planner.distribution === "split" &&
+              planner.questionCountMode === "manual"
+              ? planner.overflowPolicy
+              : "leave" as const,
+          selectionMode: planner.selectionMode,
+          planNonce: planner.planNonce,
           sessions,
+          recurrenceSessions,
           collisionDecisions: planner.collisionDecisionRecords.map(
             (record) => record.decision,
           ),
@@ -275,9 +167,15 @@ export function useVocabAssignmentPlanner({
     planner.collisionDecisionRecords,
     planner.datasetId,
     planner.distribution,
-    planner.targetWordsPerSession,
-    rangeSessions,
+    planner.overflowPolicy,
+    planner.planNonce,
+    planner.questionCountMode,
+    planner.selectionMode,
+    localIssues.length,
+    questionCount,
+    allScheduleSlots,
     scheduleSlots,
+    selectedUnits,
   ]);
   const bulk = useBulkAssignmentController({
     commonPlanRequired: true,
@@ -403,6 +301,32 @@ export function useVocabAssignmentPlanner({
     return true;
   }
 
+  const previewFieldIssues = (bulk.preview?.items ?? []).flatMap((item) => {
+    if (!item.error || !item.errorFieldKey) return [];
+    const path = item.errorFieldKey === "dataset"
+      ? "commonPlan.datasetId"
+      : item.errorFieldKey === "students"
+        ? "studentIds"
+        : item.errorFieldKey === "range"
+          ? "commonPlan.sessions.0.unitIds"
+          : item.errorFieldKey === "questionCount"
+            ? "commonPlan.questionCount"
+            : item.errorFieldKey === "overflowPolicy"
+              ? "commonPlan.overflowPolicy"
+              : "preview";
+    return [{
+      code: "invalid_order" as const,
+      path,
+      message: item.error,
+    }];
+  });
+
+  const fieldValidation = buildVocabAssignmentFieldErrors([
+    ...localIssues,
+    ...(bulk.submissionIssues ?? []),
+    ...previewFieldIssues,
+  ]);
+
   return {
     actions: {
       applyTemplate,
@@ -410,7 +334,14 @@ export function useVocabAssignmentPlanner({
       changeCollisionDecision,
       changeDistribution: (value: VocabRangeDistribution) =>
         dispatch({ type: "distribution", value }),
-      changeTargetWords: (value: number) => dispatch({ type: "target", value }),
+      changeQuestionCountMode: (value: VocabQuestionCountChoice["mode"]) =>
+        dispatch({ type: "question_count_mode", value }),
+      changeManualQuestionCount: (value: number) =>
+        dispatch({ type: "manual_question_count", value }),
+      changeOverflowPolicy: (value: VocabSplitOverflowPolicy) =>
+        dispatch({ type: "overflow_policy", value }),
+      changeSelectionMode: (value: VocabTargetSelectionMode) =>
+        dispatch({ type: "selection_mode", value }),
       copyPreviousExam,
       decideCollision,
       clearCollisionDecision: (collisionId: string) =>
@@ -433,12 +364,12 @@ export function useVocabAssignmentPlanner({
     hasPreviousExam: previousExam !== null,
     previousExam,
     planner,
-    rangeSessions,
+    fieldErrors: fieldValidation.errors,
+    firstFieldKey: fieldValidation.firstFieldKey,
+    blockedReason:
+      fieldValidation.blockerReason ??
+      (!bulk.canSubmit ? bulk.message || "배정 후보를 확인해 주세요." : null),
     scheduleSlots,
-    splitScheduleIssue:
-      planner.distribution === "split" &&
-      selectedUnits.length > 0 &&
-      rangeSessions.length !== scheduleSlots.length,
     selectedUnits,
     templateSaving: timeTemplateController.saving,
     timeTemplates: timeTemplateController.timeTemplates,

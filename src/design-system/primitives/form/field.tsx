@@ -71,6 +71,19 @@ export function FieldHelp({
   return <p className={classNames(styles.help, className)} {...props} />;
 }
 
+export function FieldError({
+  className,
+  ...props
+}: HTMLAttributes<HTMLParagraphElement>) {
+  return (
+    <p
+      className={classNames(styles.error, className)}
+      role="alert"
+      {...props}
+    />
+  );
+}
+
 export type InputProps = ComponentPropsWithoutRef<"input"> & {
   appearance?: "default" | "unstyled";
   leadingAdornment?: boolean;

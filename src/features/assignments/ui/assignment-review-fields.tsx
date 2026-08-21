@@ -31,6 +31,7 @@ export function AssignmentReviewFields({
       <div className={styles.reviewToggleRow}>
         <label className={styles.reviewSwitch}>
           <Checkbox
+            aria-label={adminLearningText.assignmentModal.wrongWords.title}
             checked={review.mode === "pending"}
             disabled={isExactReview}
             onChange={(event) =>
@@ -39,9 +40,11 @@ export function AssignmentReviewFields({
               )
             }
           />
-          <strong>{adminLearningText.assignmentModal.wrongWords.title}</strong>
         </label>
-        <HelpTip label={adminLearningText.assignmentModal.wrongWords.helpAria}>
+        <HelpTip
+          label={adminLearningText.assignmentModal.wrongWords.helpAria}
+          trigger={adminLearningText.assignmentModal.wrongWords.title}
+        >
           {adminLearningText.assignmentModal.wrongWords.help}
         </HelpTip>
       </div>

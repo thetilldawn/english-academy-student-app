@@ -40,6 +40,14 @@
   line-height: 1.5;
 }
 
+.error {
+  margin: 0;
+  color: var(--no-ink);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .control {
   width: 100%;
   min-width: 0;
@@ -60,6 +68,11 @@
 .checkbox:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 2px;
+}
+
+.control[aria-invalid="true"] {
+  border-color: var(--no-line);
+  background: var(--no-bg);
 }
 
 .control:disabled,

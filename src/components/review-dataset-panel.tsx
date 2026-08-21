@@ -23,8 +23,10 @@ export function ReviewDatasetPanel({
     >
       <div className={styles.sectionHeading}>
         <h2 className={inlineHelpClassName} id="review-dataset-heading">
-          {adminLearningText.reviewDatasetPanel.title}
-          <HelpTip label={adminLearningText.reviewDatasetPanel.helpAria}>
+          <HelpTip
+            label={adminLearningText.reviewDatasetPanel.helpAria}
+            trigger={adminLearningText.reviewDatasetPanel.title}
+          >
             {adminLearningText.reviewDatasetPanel.help}
           </HelpTip>
         </h2>

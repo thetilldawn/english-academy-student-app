@@ -44,20 +44,17 @@ p {
   margin-top: 0;
 }
 
-body,
-button,
-a,
-label,
-summary,
-[role="button"],
-[role="tab"] {
+:where(body, body *) {
   user-select: none;
   -webkit-user-select: none;
 }
 
-input,
-textarea,
-[contenteditable="true"] {
+:where(
+  input,
+  textarea,
+  [contenteditable="true"],
+  [data-user-select="text"]
+) {
   user-select: text;
   -webkit-user-select: text;
 }

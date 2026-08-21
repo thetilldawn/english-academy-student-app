@@ -1,6 +1,6 @@
 "use client";
 
-import type { FormEvent } from "react";
+import { useRef, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import {
@@ -26,6 +26,7 @@ import {
 } from "../controller/use-vocab-assignment-screen";
 import { BulkExamFields } from "./bulk-exam-fields";
 import { BulkSeriesPreview } from "./bulk-series-preview";
+import { AssignmentSubmitAction } from "./assignment-submit-action";
 import { VocabRangePicker } from "./vocab-range-picker";
 import { VocabScheduleFields } from "./vocab-schedule-fields";
 import editorStyles from "./bulk-assignment-editor.module.css";
@@ -63,9 +64,28 @@ export function VocabAssignmentPlanner({
   const previousSourceStudent = students.find(
     (student) => student.id === controller.previousExamSourceStudentId,
   );
+  const formRef = useRef<HTMLFormElement>(null);
+
+  function focusFirstInvalidField() {
+    const key = controller.firstFieldKey;
+    if (!key) return;
+    const target =
+      formRef.current?.querySelector<HTMLElement>(
+        `[data-field-key="${key}"][aria-invalid="true"]`,
+      ) ??
+      formRef.current?.querySelector<HTMLElement>(
+        `[data-field-key="${key}"]`,
+      );
+    target?.focus();
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!bulk.canSubmit) {
+      focusFirstInvalidField();
+      toast.error(controller.blockedReason ?? "배정 조건을 확인해 주세요.");
+      return;
+    }
     const outcome = await controller.actions.submitPlan();
     if (!outcome.ok) {
       toast.error(outcome.message);
@@ -98,7 +118,9 @@ export function VocabAssignmentPlanner({
           aria-busy={busy}
           className={editorStyles.form}
           id="vocab-assignment-plan-form"
+          noValidate
           onSubmit={submit}
+          ref={formRef}
         >
           <fieldset className={editorStyles.fieldset} disabled={busy}>
             <legend className="sr-only">단어 시험 배정 조건</legend>
@@ -165,7 +187,11 @@ export function VocabAssignmentPlanner({
                 <VocabScheduleFields controller={controller} />
                 <section>
                   <h3>시험 조건</h3>
-                  <BulkExamFields controller={bulk} />
+                  <BulkExamFields
+                    controller={bulk}
+                    fieldErrors={controller.fieldErrors}
+                    orderLabel="학생 풀이 순서"
+                  />
                 </section>
               </AssignmentEditorSettings>
               <AssignmentEditorSummary
@@ -187,17 +213,16 @@ export function VocabAssignmentPlanner({
         </form>
       </DialogBody>
       <DialogFooter>
-        <Button
-          disabled={!bulk.canSubmit}
-          form="vocab-assignment-plan-form"
-          size="large"
-          type="submit"
-          variant="primary"
-        >
-          {busy
+        <AssignmentSubmitAction
+          blockedReason={bulk.canSubmit ? null : controller.blockedReason}
+          canSubmit={bulk.canSubmit}
+          focusableWhenBlocked={!busy}
+          formId="vocab-assignment-plan-form"
+          label={busy
             ? "저장 중…"
             : `${bulk.preview?.assignableCount ?? students.length}명에게 ${bulk.preview?.assignmentCount ?? 0}개 시험 배정`}
-        </Button>
+          reasonLayout="remaining-center"
+        />
       </DialogFooter>
     </DialogFrame>
   );

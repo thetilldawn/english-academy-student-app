@@ -4,7 +4,10 @@ import {
   questionOrderModes,
   timingModes,
 } from "@/lib/admin/assignment-settings";
-import { bulkAssignmentRangeModes } from "@/lib/admin/bulk-assignment-range";
+import {
+  bulkAssignmentRangeModes,
+  MAXIMUM_BULK_STUDENT_COUNT,
+} from "@/lib/admin/bulk-assignment-range";
 import { readingCurriculumStages } from "@/lib/admin/reading-curriculum";
 
 const timingSettingsSchema = z
@@ -243,7 +246,29 @@ const bulkCommonPlanSchema = z
   .object({
     datasetId: z.uuid(),
     distribution: z.enum(["split", "repeat"]),
-    targetWordsPerSession: z.number().int().min(1).max(500),
+    questionCount: z.discriminatedUnion("mode", [
+      z.object({ mode: z.literal("all") }).strict(),
+      z
+        .object({
+          mode: z.literal("manual"),
+          value: z.number().int().min(4).max(500),
+        })
+        .strict(),
+    ]),
+    overflowPolicy: z.enum(["leave", "continue_weekly"]),
+    selectionMode: z.enum(["source_order", "random"]),
+    planNonce: z.uuid(),
+    recurrenceSessions: z
+      .array(
+        z
+          .object({
+            availableFrom: z.iso.datetime({ offset: true }),
+            availableUntil: z.iso.datetime({ offset: true }),
+          })
+          .strict(),
+      )
+      .min(1)
+      .max(7),
     sessions: z
       .array(
         z
@@ -258,10 +283,58 @@ const bulkCommonPlanSchema = z
       .max(7),
     collisionDecisions: z.array(bulkCollisionDecisionSchema).max(210),
   })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    if (
+      value.distribution !== "split" &&
+      value.overflowPolicy === "continue_weekly"
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["overflowPolicy"],
+        message: "같은 요일로 이어서는 나누기에서만 사용할 수 있습니다.",
+      });
+    }
+    if (
+      value.questionCount.mode !== "manual" &&
+      value.overflowPolicy === "continue_weekly"
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["overflowPolicy"],
+        message: "직접 입력한 문항 수가 있을 때만 다음 주로 이어갈 수 있습니다.",
+      });
+    }
+    if (value.recurrenceSessions.length !== value.sessions.length) {
+      context.addIssue({
+        code: "custom",
+        path: ["recurrenceSessions"],
+        message: "반복 일정 기준과 배정 회차 수가 일치하지 않습니다.",
+      });
+    }
+    let previousRecurrenceStart = Number.NEGATIVE_INFINITY;
+    value.recurrenceSessions.forEach((session, index) => {
+      const start = Date.parse(session.availableFrom);
+      if (Date.parse(session.availableUntil) <= start) {
+        context.addIssue({
+          code: "custom",
+          path: ["recurrenceSessions", index, "availableUntil"],
+          message: "반복 일정 마감은 공개 시작보다 뒤여야 합니다.",
+        });
+      }
+      if (start <= previousRecurrenceStart) {
+        context.addIssue({
+          code: "custom",
+          path: ["recurrenceSessions", index, "availableFrom"],
+          message: "반복 일정 공개 시각은 앞 회차보다 뒤여야 합니다.",
+        });
+      }
+      previousRecurrenceStart = start;
+    });
+  });
 
 const bulkAssignmentSelectionFields = {
-  studentIds: z.array(z.uuid()).min(1).max(30),
+  studentIds: z.array(z.uuid()).min(1).max(MAXIMUM_BULK_STUDENT_COUNT),
   rangeMode: z.enum(bulkAssignmentRangeModes).default("previous_span"),
   unitsPerSession: z.number().int().min(1).max(30).default(1),
   sessionCount: z.number().int().min(1).max(7).default(1),
@@ -285,6 +358,7 @@ function validateBulkAssignmentSelection(
     firstAvailableFrom: string;
     firstAvailableUntil: string | null;
     sessionCount: number;
+    includePendingReview: boolean;
     commonPlan?: z.infer<typeof bulkCommonPlanSchema>;
   },
   context: z.RefinementCtx,
@@ -314,6 +388,13 @@ function validateBulkAssignmentSelection(
     });
   }
   if (value.commonPlan) {
+    if (value.includePendingReview) {
+      context.addIssue({
+        code: "custom",
+        path: ["includePendingReview"],
+        message: "공통 단어 배정에서는 오답을 함께 넣을 수 없습니다.",
+      });
+    }
     if (value.commonPlan.sessions.length !== value.sessionCount) {
       context.addIssue({
         code: "custom",
@@ -329,6 +410,9 @@ function validateBulkAssignmentSelection(
         message: "같은 겹침 결정을 두 번 보낼 수 없습니다.",
       });
     }
+    const commonUnitIds = JSON.stringify(
+      value.commonPlan.sessions[0]?.unitIds ?? [],
+    );
     let previousStart = Number.NEGATIVE_INFINITY;
     value.commonPlan.sessions.forEach((session, index) => {
       if (new Set(session.unitIds).size !== session.unitIds.length) {
@@ -336,6 +420,13 @@ function validateBulkAssignmentSelection(
           code: "custom",
           path: ["commonPlan", "sessions", index, "unitIds"],
           message: "같은 DAY를 한 회차에 두 번 넣을 수 없습니다.",
+        });
+      }
+      if (JSON.stringify(session.unitIds) !== commonUnitIds) {
+        context.addIssue({
+          code: "custom",
+          path: ["commonPlan", "sessions", index, "unitIds"],
+          message: "문항 나누기는 모든 회차에서 같은 전체 DAY 범위를 사용해야 합니다.",
         });
       }
       if (Date.parse(session.availableUntil) <= Date.parse(session.availableFrom)) {

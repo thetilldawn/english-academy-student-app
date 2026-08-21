@@ -28,5 +28,8 @@
 .root[data-layout="remaining-center"] .reason {
   width: 100%;
   max-width: none;
+  overflow: visible;
   text-align: center;
+  text-overflow: clip;
+  white-space: normal;
 }

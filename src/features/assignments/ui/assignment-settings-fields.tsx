@@ -185,14 +185,15 @@ export function AssignmentSettingsFields({
       </AssignmentFieldGrid>
       <Field>
         <FieldLabel as="span" className={inlineHelpClassName}>
-          <label htmlFor={deadlineId}>
-            {adminLearningText.assignmentModal.deadline.label}
-          </label>
-          <HelpTip label={adminLearningText.assignmentModal.deadline.helpAria}>
+          <HelpTip
+            label={adminLearningText.assignmentModal.deadline.helpAria}
+            trigger={adminLearningText.assignmentModal.deadline.label}
+          >
             {adminLearningText.assignmentModal.deadline.help}
           </HelpTip>
         </FieldLabel>
         <Input
+          aria-label={adminLearningText.assignmentModal.deadline.label}
           id={deadlineId}
           onChange={(event) =>
             actions.changeDeadline(
@@ -215,14 +216,15 @@ export function AssignmentSettingsFields({
       </Field>
       <Field>
         <FieldLabel as="span" className={inlineHelpClassName}>
-          <label htmlFor={titleId}>
-            {adminLearningText.assignmentModal.submit.optionalTitle}
-          </label>
-          <HelpTip label={adminLearningText.controls.titleHelpAria}>
+          <HelpTip
+            label={adminLearningText.controls.titleHelpAria}
+            trigger={adminLearningText.assignmentModal.submit.optionalTitle}
+          >
             {adminLearningText.assignmentModal.submit.titleHelp}
           </HelpTip>
         </FieldLabel>
         <Input
+          aria-label={adminLearningText.assignmentModal.submit.optionalTitle}
           id={titleId}
           maxLength={160}
           onChange={(event) => actions.changeTitle(event.target.value)}

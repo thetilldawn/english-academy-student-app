@@ -172,7 +172,7 @@ describe("일괄 단어 시험 입력 계약", () => {
     firstAvailableUntil: "2026-08-12T12:00:00.000Z",
   };
 
-  it("서로 다른 학생 1~30명만 미리보기 대상으로 받는다", () => {
+  it("서로 다른 학생 1~210명만 미리보기 대상으로 받는다", () => {
     expect(
       bulkAssignmentPreviewSchema.parse({
         studentIds,
@@ -222,7 +222,7 @@ describe("일괄 단어 시험 입력 계약", () => {
     ).toThrow("같은 학생을 두 번 선택할 수 없습니다.");
     expect(() =>
       bulkAssignmentPreviewSchema.parse({
-        studentIds: Array.from({ length: 31 }, (_, index) =>
+        studentIds: Array.from({ length: 211 }, (_, index) =>
           `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
         ),
         ...schedule,

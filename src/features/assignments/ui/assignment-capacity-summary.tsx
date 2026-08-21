@@ -62,6 +62,7 @@ export function AssignmentCapacitySummary({
           label={
             adminLearningText.assignmentModal.range.activeAssignmentHelpAria
           }
+          trigger="제외 기준"
         >
           {adminLearningText.assignmentModal.range.activeAssignmentHelp}
         </HelpTip>

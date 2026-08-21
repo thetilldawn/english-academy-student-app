@@ -6,6 +6,7 @@ import {
   FieldLabel,
 } from "@/design-system/primitives/form/field";
 import { SegmentedControl } from "@/design-system/primitives/form/segmented-control";
+import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
 
 import styles from "./assignment-editor-ui.module.css";
 
@@ -137,6 +138,7 @@ export function AssignmentTimingModeField({
 }
 
 export function AssignmentSegmentedField<Value extends string>({
+  helpAriaLabel,
   helpText,
   label,
   onChange,
@@ -161,9 +163,10 @@ export function AssignmentSegmentedField<Value extends string>({
       <FieldLabel
         as="span"
         id={labelId}
-        title={typeof helpText === "string" ? helpText : undefined}
       >
-        {label}
+        <HelpTip label={helpAriaLabel} trigger={label}>
+          {helpText}
+        </HelpTip>
       </FieldLabel>
       <SegmentedControl
         ariaLabelledBy={labelId}
