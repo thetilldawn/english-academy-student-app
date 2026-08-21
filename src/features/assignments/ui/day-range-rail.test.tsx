@@ -91,7 +91,7 @@ describe("DAY 버튼판", () => {
       />,
     );
 
-    const rail = screen.getByRole("group", { name: "DAY 범위" });
+    const rail = screen.getByRole("group", { name: "단어 범위" });
     const first = screen.getByRole("button", { name: "DAY 1" });
     rail.scrollLeft = 40;
     fireEvent.pointerDown(first, { button: 0, clientX: 100, pointerId: 1 });

@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { toast } from "sonner";
-
 import { AssignmentFieldGrid } from "@/components/assignment-editor-ui";
 import { Button } from "@/design-system/primitives/button/button";
+import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 import {
   Field,
   FieldError,
@@ -12,10 +10,15 @@ import {
   Input,
   Select,
 } from "@/design-system/primitives/form/field";
+import { cataloguedDatasetDisplayLabel } from "@/lib/admin/dataset-catalog";
 
 import type { VocabAssignmentScreenController } from "../controller/use-vocab-assignment-screen";
 import type { IsoWeekday } from "../domain/vocab-assignment-plan";
+import type {
+  VocabAssignmentFieldKey,
+} from "../presentation/vocab-assignment-field-errors";
 import styles from "./vocab-assignment-planner.module.css";
+import { VocabScheduleDetailFields } from "./vocab-schedule-detail-fields";
 
 const weekdays: ReadonlyArray<readonly [IsoWeekday, string]> = [
   [1, "월"],
@@ -28,43 +31,61 @@ const weekdays: ReadonlyArray<readonly [IsoWeekday, string]> = [
 ];
 const deadlineOffsets = Array.from({ length: 31 }, (_, offset) => offset);
 
-function sessionDateLabel(date: string) {
-  const parsed = new Date(`${date}T00:00:00Z`);
-  return Number.isNaN(parsed.getTime())
-    ? date
-    : new Intl.DateTimeFormat("ko-KR", {
-        month: "long",
-        day: "numeric",
-        weekday: "short",
-        timeZone: "UTC",
-      }).format(parsed);
-}
-
 export function VocabScheduleFields({
   controller,
+  fieldErrors = {},
 }: {
   controller: VocabAssignmentScreenController;
+  fieldErrors?: Partial<Record<VocabAssignmentFieldKey, string>>;
 }) {
-  const [templateName, setTemplateName] = useState("");
   const schedule = controller.planner.schedule;
-  const startDateError = controller.fieldErrors.startDate;
-  const weekdaysError = controller.fieldErrors.weekdays;
-  const availableTimeError = controller.fieldErrors.availableTime;
-  const deadlineOffsetError = controller.fieldErrors.deadlineOffset;
-  const deadlineTimeError = controller.fieldErrors.deadlineTime;
+  const startDateError = fieldErrors.startDate;
+  const weekdaysError = fieldErrors.weekdays;
+  const availableTimeError = fieldErrors.availableTime;
+  const deadlineOffsetError = fieldErrors.deadlineOffset;
+  const deadlineTimeError = fieldErrors.deadlineTime;
   const previewSessionCount = Math.max(
     0,
     ...(controller.bulk.preview?.items?.map(
       (item) => item.sessions.length,
     ) ?? []),
   );
-  const finalSessionCount =
-    controller.bulk.preview?.commonPlanSummary?.sessions.length ??
-    (previewSessionCount || controller.scheduleSlots.length);
+  const finalSessionCount = schedule.weekdays.length === 0
+    ? 0
+    : controller.bulk.preview?.commonPlanSummary?.sessions.length ??
+      (previewSessionCount || controller.scheduleSlots.length);
+  const representative = controller.bulk.preview?.items?.find(
+    (item) => item.datasetLabel,
+  ) ?? null;
+  const selectedDataset = controller.readyDatasets?.find(
+    (dataset) => dataset.id === controller.planner.datasetId,
+  ) ?? null;
+  const datasetLabel = selectedDataset
+    ? cataloguedDatasetDisplayLabel(selectedDataset)
+    : representative?.datasetLabel ?? "단어장 미선택";
+  const selectedUnits = controller.selectedUnits ?? [];
+  const rangeLabel = selectedUnits.length === 0
+    ? "범위 미선택"
+    : selectedUnits.length === 1
+      ? selectedUnits[0]!.label
+      : `${selectedUnits[0]!.label}–${selectedUnits.at(-1)!.label}`;
+  const baseSessionCount = controller.requiresExtraDateDecision
+    ? controller.extraDateDecisionSessionCount ?? controller.defaultSessionCount
+    : controller.defaultSessionCount;
 
   return (
-    <section className={styles.section}>
-      <h3 className={styles.sectionHeading}>날짜 · 시간</h3>
+    <div className={styles.fieldStack}>
+      <MetaTagList>
+        <MetaTag>{datasetLabel}</MetaTag>
+        <MetaTag>{rangeLabel}</MetaTag>
+        <MetaTag>
+          {controller.requiresExtraDateDecision ? "기본 최소 " : "기본 "}
+          {baseSessionCount ?? 0}회
+        </MetaTag>
+        {schedule.weekdays.length > 0 ? (
+          <MetaTag>배정 합계 {controller.scheduledQuestionCount ?? 0}문항</MetaTag>
+        ) : null}
+      </MetaTagList>
       <Field as="label">
         <FieldLabel as="span">배정 기준일</FieldLabel>
         <Input
@@ -88,7 +109,6 @@ export function VocabScheduleFields({
           aria-label="배정 요일"
           className={styles.weekdayButtons}
           data-field-key="weekdays"
-          data-invalid={Boolean(weekdaysError)}
           role="group"
           tabIndex={-1}
         >
@@ -108,6 +128,31 @@ export function VocabScheduleFields({
           <FieldError id="vocab-weekdays-error">{weekdaysError}</FieldError>
         ) : null}
       </Field>
+      {controller.requiresExtraDateDecision ? (
+        <div className={styles.warning} role="status">
+          <span>
+            기본 {controller.extraDateDecisionSessionCount ?? controller.defaultSessionCount ?? 0}회보다 날짜가 많습니다. 추가 날짜에는 범위를 처음부터 반복할까요?
+          </span>
+          <div className={styles.warningActions}>
+            <Button
+              onClick={controller.actions.cancelExtraDates}
+              size="small"
+              variant="secondary"
+            >
+              추가 취소
+            </Button>
+            <Button
+              onClick={() =>
+                controller.actions.changeExtraDatePolicy("repeat_from_start")
+              }
+              size="small"
+              variant="primary"
+            >
+              범위 반복
+            </Button>
+          </div>
+        </div>
+      ) : null}
       <AssignmentFieldGrid columns={3}>
         <Field as="label">
           <FieldLabel as="span">공개 시작</FieldLabel>
@@ -181,117 +226,13 @@ export function VocabScheduleFields({
           ) : null}
         </Field>
       </AssignmentFieldGrid>
-      {controller.scheduleSlots.length > 0 ? (
-        <div className={styles.sessionTimeArea}>
-          <FieldLabel as="span">회차별 시간</FieldLabel>
-          {controller.scheduleSlots.map((slot) => (
-            <div className={styles.sessionTimeRow} key={slot.sessionNumber}>
-              <strong>
-                {slot.sessionNumber}회차 · {sessionDateLabel(slot.date)}
-              </strong>
-              <Field as="label">
-                <FieldLabel as="span">공개 시작</FieldLabel>
-                <Input
-                  aria-errormessage={controller.fieldErrors[`session-${slot.sessionNumber}-available`]
-                    ? `vocab-session-${slot.sessionNumber}-available-error`
-                    : undefined}
-                  aria-invalid={Boolean(controller.fieldErrors[`session-${slot.sessionNumber}-available`])}
-                  data-field-key={`session-${slot.sessionNumber}-available`}
-                  onChange={(event) =>
-                    controller.actions.updateSessionSchedule(
-                      slot.sessionNumber,
-                      {
-                        availableLocalDateTime: event.target.value,
-                        deadlineLocalDateTime: slot.deadlineLocalDateTime,
-                      },
-                    )
-                  }
-                  type="datetime-local"
-                  value={slot.availableLocalDateTime}
-                />
-                {controller.fieldErrors[`session-${slot.sessionNumber}-available`] ? (
-                  <FieldError id={`vocab-session-${slot.sessionNumber}-available-error`}>
-                    {controller.fieldErrors[`session-${slot.sessionNumber}-available`]}
-                  </FieldError>
-                ) : null}
-              </Field>
-              <Field as="label">
-                <FieldLabel as="span">마감</FieldLabel>
-                <Input
-                  aria-errormessage={controller.fieldErrors[`session-${slot.sessionNumber}-deadline`]
-                    ? `vocab-session-${slot.sessionNumber}-deadline-error`
-                    : undefined}
-                  aria-invalid={Boolean(controller.fieldErrors[`session-${slot.sessionNumber}-deadline`])}
-                  data-field-key={`session-${slot.sessionNumber}-deadline`}
-                  onChange={(event) =>
-                    controller.actions.updateSessionSchedule(
-                      slot.sessionNumber,
-                      {
-                        availableLocalDateTime: slot.availableLocalDateTime,
-                        deadlineLocalDateTime: event.target.value,
-                      },
-                    )
-                  }
-                  type="datetime-local"
-                  value={slot.deadlineLocalDateTime}
-                />
-                {controller.fieldErrors[`session-${slot.sessionNumber}-deadline`] ? (
-                  <FieldError id={`vocab-session-${slot.sessionNumber}-deadline-error`}>
-                    {controller.fieldErrors[`session-${slot.sessionNumber}-deadline`]}
-                  </FieldError>
-                ) : null}
-              </Field>
-            </div>
-          ))}
-        </div>
-      ) : null}
-      <div className={styles.templateArea}>
-        <FieldLabel as="span">빠른 시간</FieldLabel>
-        <div className={styles.templateButtons}>
-          {controller.timeTemplates.map((template) => (
-            <Button
-              key={template.id}
-              onClick={() => controller.actions.applyTemplate(template)}
-              size="small"
-              variant="filter"
-            >
-              {template.label}
-            </Button>
-          ))}
-        </div>
-        <div className={styles.templateSave}>
-          <Input
-            aria-label="새 시간 템플릿 이름"
-            maxLength={30}
-            onChange={(event) => setTemplateName(event.target.value)}
-            placeholder="현재 시간을 템플릿으로 저장"
-            value={templateName}
-          />
-          <Button
-            disabled={!templateName.trim() || controller.templateSaving}
-            onClick={async () => {
-              const result = await controller.actions.saveCurrentTemplate(
-                templateName,
-              );
-              if (result.ok) {
-                setTemplateName("");
-                toast.success("시간 템플릿을 저장했습니다.");
-              } else {
-                toast.error(result.message);
-              }
-            }}
-            size="small"
-          >
-            {controller.templateSaving ? "저장 중" : "추가"}
-          </Button>
-        </div>
-      </div>
+      <VocabScheduleDetailFields
+        controller={controller}
+        fieldErrors={fieldErrors}
+      />
       <span className={styles.candidateSummary}>
-        선택 요일 {controller.planner.schedule.weekdays.length}개 · 기본 회차 {controller.scheduleSlots.length}회
-        {finalSessionCount !== controller.scheduleSlots.length
-          ? ` · 최종 ${finalSessionCount}회`
-          : ""}
+        선택 요일 {controller.planner.schedule.weekdays.length}개 · 배정 {finalSessionCount}회
       </span>
-    </section>
+    </div>
   );
 }

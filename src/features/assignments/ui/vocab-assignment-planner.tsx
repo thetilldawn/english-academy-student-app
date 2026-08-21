@@ -1,13 +1,8 @@
 "use client";
 
-import { useRef, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
-import {
-  AssignmentEditorLayout,
-  AssignmentEditorSettings,
-  AssignmentEditorSummary,
-} from "@/components/assignment-editor-ui";
 import { Button } from "@/design-system/primitives/button/button";
 import {
   DialogBody,
@@ -15,19 +10,25 @@ import {
   DialogFrame,
   DialogHeader,
 } from "@/design-system/primitives/dialog/dialog";
-import {
-  FieldLabel,
-  Select,
-} from "@/design-system/primitives/form/field";
+import { FieldLabel, Select } from "@/design-system/primitives/form/field";
+
 import type { AssignmentStudentItem } from "../catalog-types";
 import {
   useVocabAssignmentScreen,
   type VocabAssignmentScreenData,
 } from "../controller/use-vocab-assignment-screen";
+import {
+  hasVocabAssignmentFieldError,
+  hasVocabScheduleFieldError,
+} from "../presentation/vocab-assignment-field-errors";
+import { AssignmentSection } from "./assignment-section";
+import { AssignmentSubmitAction } from "./assignment-submit-action";
 import { BulkExamFields } from "./bulk-exam-fields";
 import { BulkSeriesPreview } from "./bulk-series-preview";
-import { AssignmentSubmitAction } from "./assignment-submit-action";
-import { VocabRangePicker } from "./vocab-range-picker";
+import {
+  VocabQuestionFields,
+  VocabRangeFields,
+} from "./vocab-range-picker";
 import { VocabScheduleFields } from "./vocab-schedule-fields";
 import editorStyles from "./bulk-assignment-editor.module.css";
 import styles from "./vocab-assignment-planner.module.css";
@@ -62,48 +63,49 @@ export function VocabAssignmentPlanner({
     previewErrorMessage: "배정 후보를 계산하지 못했습니다.",
     students,
   });
-  const readyDatasets = controller.readyDatasets;
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const bulk = controller.bulk;
   const busy = bulk.state.submission.status === "submitting";
-  const previewAssignableCount = bulk.preview?.assignableCount ?? students.length;
-  const previewAssignmentCount = bulk.preview?.assignmentCount ?? 0;
-  const previewQueuedCount = Math.max(
-    0,
-    previewAssignmentCount - (bulk.preview?.assignableCount ?? 0),
-  );
-  const submitLabel = busy
-    ? "저장 중…"
-    : controller.planner.distribution === "split"
-      ? `${previewAssignableCount}명 · 첫 시험 ${bulk.preview?.assignableCount ?? 0}개 · 이어 배정 ${previewQueuedCount}개 저장`
-      : `${previewAssignableCount}명에게 ${previewAssignmentCount}개 시험 배정`;
+  const visibleErrors = submitAttempted ? controller.fieldErrors : {};
   const previousSourceStudent = students.find(
     (student) => student.id === controller.previousExamSourceStudentId,
+  );
+  const hasScheduleCollision = Boolean(
+    controller.scheduleSlots.length > 0 && bulk.preview?.items.some((item) =>
+      item.sessions.some((session) => session.warnings.length > 0)
+    ),
   );
   const formRef = useRef<HTMLFormElement>(null);
 
   function focusFirstInvalidField() {
     const key = controller.firstFieldKey;
     if (!key) return;
-    const target =
-      formRef.current?.querySelector<HTMLElement>(
-        `[data-field-key="${key}"][aria-invalid="true"]`,
-      ) ??
-      formRef.current?.querySelector<HTMLElement>(
+    window.requestAnimationFrame(() => {
+      const target = formRef.current?.querySelector<HTMLElement>(
         `[data-field-key="${key}"]`,
       );
-    target?.focus();
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      const focusTarget = target.matches("button, input, select, textarea")
+        ? target
+        : target.querySelector<HTMLElement>(
+            "button, input, select, textarea, [tabindex]:not([tabindex='-1'])",
+          );
+      focusTarget?.focus({ preventScroll: true });
+    });
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!bulk.canSubmit) {
+    setSubmitAttempted(true);
+    if (!controller.canSubmit) {
       focusFirstInvalidField();
-      toast.error(controller.blockedReason ?? "배정 조건을 확인해 주세요.");
       return;
     }
     const outcome = await controller.actions.submitPlan();
     if (!outcome.ok) {
       toast.error(outcome.message);
+      focusFirstInvalidField();
       return;
     }
     onSuccess(
@@ -113,6 +115,25 @@ export function VocabAssignmentPlanner({
     );
     onClose();
   }
+
+  const rangeStatus = hasVocabAssignmentFieldError(visibleErrors, ["dataset", "range"])
+    ? "범위 확인"
+    : null;
+  const conditionStatus = hasVocabAssignmentFieldError(visibleErrors, [
+    "distribution",
+    "questionCount",
+    "overflowPolicy",
+    "selectionMode",
+    "direction",
+    "questionOrder",
+    "passingScore",
+    "timing",
+  ])
+    ? "조건 확인"
+    : null;
+  const scheduleStatus = hasVocabScheduleFieldError(visibleErrors)
+    ? "일정 확인"
+    : null;
 
   return (
     <DialogFrame
@@ -140,103 +161,124 @@ export function VocabAssignmentPlanner({
         >
           <fieldset className={editorStyles.fieldset} disabled={busy}>
             <legend className="sr-only">단어 시험 배정 조건</legend>
-            <section
-              aria-label="직전 시험 복사"
-              className={styles.copyPanel}
-            >
-              <div className={styles.copySource}>
-                <FieldLabel as="span">복사 기준</FieldLabel>
-                {students.length > 1 ? (
-                  <Select
-                    aria-label="직전 시험 복사 기준 학생"
-                    onChange={(event) =>
-                      controller.actions.changePreviousExamSourceStudentId(
-                        event.target.value,
-                      )
-                    }
-                    value={controller.previousExamSourceStudentId}
-                  >
-                    {students.map((student) => (
-                      <option key={student.id} value={student.id}>
-                        {previousSourceLabel(student)}
-                      </option>
-                    ))}
-                  </Select>
-                ) : (
-                  <strong>
-                    {previousSourceStudent
-                      ? previousSourceLabel(previousSourceStudent)
-                      : "학생 선택 필요"}
-                  </strong>
-                )}
-                <small>
-                  {controller.previousExam
-                    ? controller.previousExam.assignmentTitle
-                    : "현재 단어장에서 복사할 직전 시험이 없습니다."}
-                </small>
-              </div>
-              <Button
-                disabled={!controller.hasPreviousExam || busy}
-                onClick={() => {
-                  if (controller.actions.copyPreviousExam()) {
-                    toast.success(
-                      controller.previousExam?.scheduleRule
-                        ? "직전 시험의 조건과 시간 규칙을 적용했습니다."
-                        : "직전 시험 조건을 적용했습니다. 시간 이력이 없어 현재 시간은 유지했습니다.",
-                    );
-                  }
-                }}
-                size="small"
-                title={controller.previousExam
-                  ? `${controller.previousExam.sourceStudentName} · ${controller.previousExam.assignmentTitle}`
-                  : "현재 단어장에서 복사할 직전 시험이 없습니다."}
+            <div className={styles.plannerSections}>
+              <AssignmentSection
+                help="시험에 사용할 단어장과 연속 범위를 고릅니다."
+                helpLabel="시험 범위 설명"
+                index={1}
+                status={rangeStatus}
+                title="시험 범위"
               >
-                직전 시험 복사
-              </Button>
-            </section>
-            <AssignmentEditorLayout>
-              <AssignmentEditorSettings>
-                <VocabRangePicker
+                <VocabRangeFields
                   controller={controller}
-                  datasets={readyDatasets}
+                  datasets={controller.readyDatasets}
+                  fieldErrors={visibleErrors}
                 />
-                <VocabScheduleFields controller={controller} />
-                <section>
-                  <h3>시험 조건</h3>
-                  <BulkExamFields
-                    controller={bulk}
-                    fieldErrors={controller.fieldErrors}
-                    orderLabel="학생 풀이 순서"
-                  />
-                </section>
-              </AssignmentEditorSettings>
-              <AssignmentEditorSummary
-                busy={bulk.previewLoading}
-                className={editorStyles.previewSection}
+              </AssignmentSection>
+              <AssignmentSection
+                help="문항 수, 문제 순서, 풀이 조건을 정합니다."
+                helpLabel="시험 조건 설명"
+                index={2}
+                status={conditionStatus}
+                title="시험 조건"
               >
-                <BulkSeriesPreview
-                  controller={bulk}
-                  collisionDecisions={controller.collisionDecisionRecords}
-                  distribution={controller.planner.distribution}
-                  onClearCollisionDecision={controller.actions.clearCollisionDecision}
-                  onCollisionDecision={controller.actions.decideCollision}
-                  onCollisionDecisionChange={controller.actions.changeCollisionDecision}
-                  students={students}
+                <VocabQuestionFields
+                  controller={controller}
+                  datasets={controller.readyDatasets}
+                  fieldErrors={visibleErrors}
                 />
-              </AssignmentEditorSummary>
-            </AssignmentEditorLayout>
+                <section
+                  aria-label="직전 시험 복사"
+                  className={styles.copyPanel}
+                >
+                  <div className={styles.copySource}>
+                    <FieldLabel as="span">직전 시험</FieldLabel>
+                    {students.length > 1 ? (
+                      <Select
+                        aria-label="직전 시험 복사 기준 학생"
+                        onChange={(event) =>
+                          controller.actions.changePreviousExamSourceStudentId(
+                            event.target.value,
+                          )
+                        }
+                        value={controller.previousExamSourceStudentId}
+                      >
+                        {students.map((student) => (
+                          <option key={student.id} value={student.id}>
+                            {previousSourceLabel(student)}
+                          </option>
+                        ))}
+                      </Select>
+                    ) : (
+                      <strong>
+                        {previousSourceStudent
+                          ? previousSourceLabel(previousSourceStudent)
+                          : "학생 선택 필요"}
+                      </strong>
+                    )}
+                    <small>
+                      {controller.previousExam
+                        ? controller.previousExam.assignmentTitle
+                        : "복사할 직전 시험 없음"}
+                    </small>
+                  </div>
+                  <Button
+                    disabled={!controller.hasPreviousExam || busy}
+                    onClick={() => {
+                      if (controller.actions.copyPreviousExam()) {
+                        toast.success("직전 시험 조건을 적용했습니다.");
+                      }
+                    }}
+                    size="small"
+                  >
+                    조건 복사
+                  </Button>
+                </section>
+                <BulkExamFields
+                  controller={bulk}
+                  fieldErrors={visibleErrors}
+                  orderLabel="풀이 순서"
+                />
+              </AssignmentSection>
+              <AssignmentSection
+                help="요일을 고르면 기본 회차를 날짜에 배치합니다."
+                helpLabel="시험 일정 설명"
+                index={3}
+                status={scheduleStatus}
+                title="시험 일정"
+              >
+                <VocabScheduleFields
+                  controller={controller}
+                  fieldErrors={visibleErrors}
+                />
+                {controller.scheduleSlots.length > 0 && (submitAttempted ||
+                    hasScheduleCollision ||
+                    controller.collisionDecisionRecords.length > 0) ? (
+                  <BulkSeriesPreview
+                    collisionDecisions={controller.collisionDecisionRecords}
+                    controller={bulk}
+                    distribution={controller.planner.distribution}
+                    exceptionsOnly
+                    onClearCollisionDecision={controller.actions.clearCollisionDecision}
+                    onCollisionDecision={controller.actions.decideCollision}
+                    onCollisionDecisionChange={controller.actions.changeCollisionDecision}
+                    students={students}
+                  />
+                ) : null}
+              </AssignmentSection>
+            </div>
           </fieldset>
         </form>
       </DialogBody>
       <DialogFooter>
-        <AssignmentSubmitAction
-          blockedReason={bulk.canSubmit ? null : controller.blockedReason}
-          canSubmit={bulk.canSubmit}
-          focusableWhenBlocked={!busy}
-          formId="vocab-assignment-plan-form"
-          label={submitLabel}
-          reasonLayout="remaining-center"
-        />
+        <div className={styles.submitRow}>
+          <AssignmentSubmitAction
+            blockedReason={null}
+            canSubmit={!busy && (!submitAttempted || controller.canSubmit)}
+            formId="vocab-assignment-plan-form"
+            label={busy ? "배정 중…" : "배정하기"}
+          />
+        </div>
       </DialogFooter>
     </DialogFrame>
   );

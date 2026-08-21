@@ -37,6 +37,7 @@ export function BulkSeriesPreview({
   onCollisionDecision,
   onCollisionDecisionChange,
   students,
+  exceptionsOnly = false,
 }: {
   controller: BulkAssignmentController;
   collisionDecisions?: readonly VocabCollisionDecisionRecord[];
@@ -48,6 +49,7 @@ export function BulkSeriesPreview({
     mode: VocabCollisionDecisionMode,
   ) => void;
   students: readonly PreviewStudent[];
+  exceptionsOnly?: boolean;
 }) {
   const { message, preview, previewLoading, state } = controller;
   const labelByStudentId = new Map(
@@ -61,11 +63,20 @@ export function BulkSeriesPreview({
   const exceptionStudentIds = new Set(summary?.exceptionStudentIds ?? []);
   const visibleItems = summary
     ? items.filter((item) => exceptionStudentIds.has(item.studentId))
-    : items;
+    : exceptionsOnly
+      ? items.filter(
+          (item) =>
+            Boolean(item.error) ||
+            item.sessions.some(
+              (session) =>
+                Boolean(session.error) || session.warnings.length > 0,
+            ),
+        )
+      : items;
 
   return (
     <>
-      <div className={styles.previewHeading}>
+      {!exceptionsOnly ? <div className={styles.previewHeading}>
         <h3>
           <HelpTip
             label="회차별 미리보기 설명"
@@ -93,7 +104,7 @@ export function BulkSeriesPreview({
                 },
               )}
         </span>
-      </div>
+      </div> : null}
       {onClearCollisionDecision && onCollisionDecisionChange ? (
         <CollisionDecisionList
           decisions={collisionDecisions}
@@ -102,18 +113,18 @@ export function BulkSeriesPreview({
           onClear={onClearCollisionDecision}
         />
       ) : null}
-      {!preview ? (
+      {!exceptionsOnly && !preview ? (
         <div className={styles.previewList}>
           <article className={styles.previewRow}>
             <span className={styles.pending}>
               {previewLoading
                 ? "실제 문항 수와 일정을 계산하고 있습니다."
-                : "단어장·DAY·요일을 정하면 공통 계획을 보여 줍니다."}
+                : "단어장·범위·요일을 정하면 공통 계획을 보여 줍니다."}
             </span>
           </article>
         </div>
       ) : null}
-      {summary ? (
+      {!exceptionsOnly && summary ? (
         <article className={styles.previewRow}>
           <div className={styles.studentHeading}>
             <strong>공통 배정 계획</strong>

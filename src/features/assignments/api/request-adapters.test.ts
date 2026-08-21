@@ -461,6 +461,8 @@ describe("assignment request adapters", () => {
         distribution: "split",
         questionCount: { mode: "manual", value: 40 },
         overflowPolicy: "continue_weekly",
+        extraDatePolicy: "unconfirmed",
+        selectedDateCount: 2,
         selectionMode: "random",
         planNonce: assignmentContractIds.idempotencyKey,
         recurrenceSessions: [
@@ -507,6 +509,8 @@ describe("assignment request adapters", () => {
       distribution: "split",
       questionCount: { mode: "manual", value: 40 },
       overflowPolicy: "continue_weekly",
+      extraDatePolicy: "unconfirmed",
+      selectedDateCount: 2,
       selectionMode: "random",
       planNonce: assignmentContractIds.idempotencyKey,
       recurrenceSessions: [
@@ -545,6 +549,19 @@ describe("assignment request adapters", () => {
     );
     expect(bulkAssignmentSchema.parse(submit.body)).toStrictEqual(
       submit.body,
+    );
+    const repeatedDraft: BulkSeriesAssignmentDraft = {
+      ...commonDraft,
+      commonPlan: {
+        ...commonDraft.commonPlan!,
+        extraDatePolicy: "repeat_from_start",
+      },
+    };
+    expect(bulkPreviewFingerprint(repeatedDraft)).not.toBe(
+      bulkPreviewFingerprint(commonDraft),
+    );
+    expect(bulkSubmissionFingerprint(repeatedDraft)).not.toBe(
+      bulkSubmissionFingerprint(commonDraft),
     );
   });
 

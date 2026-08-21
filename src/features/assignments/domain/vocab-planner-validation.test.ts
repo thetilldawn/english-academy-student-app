@@ -42,7 +42,7 @@ describe("vocab planner field validation", () => {
       dataset: "단어장을 선택해 주세요.",
       deadlineTime: "마감 시각을 확인해 주세요.",
       questionCount: "문항 수는 4개부터 500개까지 입력해 주세요.",
-      range: "시험에 넣을 DAY 범위를 선택해 주세요.",
+      range: "시험 범위를 선택해 주세요.",
       startDate: "배정 기준일을 확인해 주세요.",
       weekdays: "배정할 요일을 하나 이상 선택해 주세요.",
     });

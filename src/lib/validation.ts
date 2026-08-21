@@ -179,7 +179,7 @@ export const assignmentSchema = z
   .refine(
     (value) => new Set(value.unitIds).size === value.unitIds.length,
     {
-      message: "같은 DAY를 두 번 선택할 수 없습니다.",
+      message: "같은 범위를 두 번 선택할 수 없습니다.",
       path: ["unitIds"],
     },
   );
@@ -256,6 +256,8 @@ const bulkCommonPlanSchema = z
         .strict(),
     ]),
     overflowPolicy: z.enum(["leave", "continue_weekly"]),
+    extraDatePolicy: z.enum(["unconfirmed", "repeat_from_start"]),
+    selectedDateCount: z.number().int().min(0).max(7),
     selectionMode: z.enum(["source_order", "random"]),
     planNonce: z.uuid(),
     recurrenceSessions: z
@@ -310,6 +312,17 @@ const bulkCommonPlanSchema = z
         code: "custom",
         path: ["recurrenceSessions"],
         message: "반복 일정 기준과 배정 회차 수가 일치하지 않습니다.",
+      });
+    }
+    if (
+      (value.selectedDateCount === 0 && value.sessions.length !== 1) ||
+      (value.selectedDateCount > 0 &&
+        value.sessions.length !== value.selectedDateCount)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["selectedDateCount"],
+        message: "선택한 날짜 수와 일정이 일치하지 않습니다.",
       });
     }
     let previousRecurrenceStart = Number.NEGATIVE_INFINITY;
@@ -419,14 +432,14 @@ function validateBulkAssignmentSelection(
         context.addIssue({
           code: "custom",
           path: ["commonPlan", "sessions", index, "unitIds"],
-          message: "같은 DAY를 한 회차에 두 번 넣을 수 없습니다.",
+          message: "같은 범위를 한 회차에 두 번 넣을 수 없습니다.",
         });
       }
       if (JSON.stringify(session.unitIds) !== commonUnitIds) {
         context.addIssue({
           code: "custom",
           path: ["commonPlan", "sessions", index, "unitIds"],
-          message: "문항 나누기는 모든 회차에서 같은 전체 DAY 범위를 사용해야 합니다.",
+          message: "문항 나누기는 모든 회차에서 같은 전체 범위를 사용해야 합니다.",
         });
       }
       if (Date.parse(session.availableUntil) <= Date.parse(session.availableFrom)) {
@@ -471,6 +484,13 @@ export const bulkAssignmentSchema = z
   .strict()
   .superRefine((value, context) => {
     validateBulkAssignmentSelection(value, context);
+    if (value.commonPlan?.selectedDateCount === 0) {
+      context.addIssue({
+        code: "custom",
+        path: ["commonPlan", "selectedDateCount"],
+        message: "배정할 요일을 하나 이상 선택해 주세요.",
+      });
+    }
     if (
       (value.timingMode === "total" &&
         value.questionTimeLimitSeconds !== null) ||
@@ -507,7 +527,7 @@ const mixedAssignmentSelectionSchema = z
       context.addIssue({
         code: "custom",
         path: ["primaryUnitIds"],
-        message: "같은 DAY를 두 번 선택할 수 없습니다.",
+        message: "같은 범위를 두 번 선택할 수 없습니다.",
       });
     }
     if (
@@ -555,7 +575,7 @@ export const assignmentCapacitySchema = z
       context.addIssue({
         code: "custom",
         path: ["primaryUnitIds"],
-        message: "같은 DAY를 두 번 선택할 수 없습니다.",
+        message: "같은 범위를 두 번 선택할 수 없습니다.",
       });
     }
     if (
@@ -615,7 +635,7 @@ export const assignmentReplacementSchema = z
       context.addIssue({
         code: "custom",
         path: ["primaryUnitIds"],
-        message: "같은 DAY를 두 번 선택할 수 없습니다.",
+        message: "같은 범위를 두 번 선택할 수 없습니다.",
       });
     }
     if (
@@ -677,7 +697,7 @@ export const mixedAssignmentSchema = z
       context.addIssue({
         code: "custom",
         path: ["primaryUnitIds"],
-        message: "같은 DAY를 두 번 선택할 수 없습니다.",
+        message: "같은 범위를 두 번 선택할 수 없습니다.",
       });
     }
     if (

@@ -124,6 +124,8 @@ export type BulkCommonAssignmentPlan = {
     | { mode: "all" }
     | { mode: "manual"; value: number };
   overflowPolicy: "leave" | "continue_weekly";
+  extraDatePolicy: "unconfirmed" | "repeat_from_start";
+  selectedDateCount: number;
   selectionMode: "source_order" | "random";
   planNonce: string;
   sessions: readonly BulkCommonPlanSession[];

@@ -21,6 +21,58 @@ export type VocabAssignmentFieldKey =
   | `session-${number}-available`
   | `session-${number}-deadline`;
 
+export function hasVocabAssignmentFieldError(
+  errors: Partial<Record<VocabAssignmentFieldKey, string>>,
+  keys: readonly VocabAssignmentFieldKey[],
+) {
+  return keys.some((key) => Boolean(errors[key]));
+}
+
+export function hasVocabScheduleFieldError(
+  errors: Partial<Record<VocabAssignmentFieldKey, string>>,
+) {
+  return hasVocabAssignmentFieldError(errors, [
+    "startDate",
+    "weekdays",
+    "availableTime",
+    "deadlineOffset",
+    "deadlineTime",
+    "preview",
+  ]) || Object.keys(errors).some((key) => key.startsWith("session-"));
+}
+
+const fieldOrder: readonly VocabAssignmentFieldKey[] = [
+  "dataset",
+  "range",
+  "distribution",
+  "questionCount",
+  "overflowPolicy",
+  "selectionMode",
+  "direction",
+  "questionOrder",
+  "passingScore",
+  "timing",
+  "startDate",
+  "weekdays",
+  "availableTime",
+  "deadlineOffset",
+  "deadlineTime",
+  "preview",
+  "students",
+];
+
+function fieldRank(key: VocabAssignmentFieldKey) {
+  const staticIndex = fieldOrder.indexOf(key);
+  if (staticIndex >= 0) {
+    return key === "preview" || key === "students"
+      ? 10_000 + staticIndex
+      : staticIndex;
+  }
+  const session = key.match(/^session-(\d+)-(available|deadline)$/);
+  if (!session) return 20_000;
+  return 100 + Number(session[1]) * 2 + (session[2] === "deadline" ? 1 : 0);
+}
+
 export function vocabAssignmentFieldKeyForIssue(
   issue: AssignmentDraftIssue,
 ): VocabAssignmentFieldKey {
@@ -32,6 +84,10 @@ export function vocabAssignmentFieldKeyForIssue(
   if (/commonPlan\.sessions\.\d+\.unitIds/.test(path)) return "range";
   if (path === "commonPlan.questionCount") return "questionCount";
   if (path === "commonPlan.overflowPolicy") return "overflowPolicy";
+  if (
+    path === "commonPlan.extraDatePolicy" ||
+    path === "commonPlan.selectedDateCount"
+  ) return "weekdays";
   if (path === "commonPlan.selectionMode") return "selectionMode";
   if (path === "commonPlan.schedule.startDate") return "startDate";
   if (path === "commonPlan.schedule.availableTime") return "availableTime";
@@ -66,11 +122,11 @@ export function buildVocabAssignmentFieldErrors(
     const key = vocabAssignmentFieldKeyForIssue(issue);
     errors[key] ??= issue.message;
   }
+  const firstFieldKey = (Object.keys(errors) as VocabAssignmentFieldKey[])
+    .toSorted((left, right) => fieldRank(left) - fieldRank(right))[0] ?? null;
   return {
     errors,
-    firstFieldKey: issues[0]
-      ? vocabAssignmentFieldKeyForIssue(issues[0])
-      : null,
-    blockerReason: issues[0]?.message ?? null,
+    firstFieldKey,
+    blockerReason: firstFieldKey ? errors[firstFieldKey] ?? null : null,
   };
 }

@@ -441,11 +441,29 @@ function validateCommonPlan(
       message: "같은 요일로 이어서는 나누기·직접 입력에서만 선택할 수 있습니다.",
     });
   }
+  if (
+    !["unconfirmed", "repeat_from_start"].includes(
+      plan.extraDatePolicy,
+    )
+  ) {
+    issues.push({
+      code: "invalid_order",
+      path: "commonPlan.extraDatePolicy",
+      message: "추가 날짜 처리 방법을 확인해 주세요.",
+    });
+  }
+  if (!integerInRange(plan.selectedDateCount, 0, 7)) {
+    issues.push({
+      code: "out_of_range",
+      path: "commonPlan.selectedDateCount",
+      message: "선택한 날짜 수를 확인해 주세요.",
+    });
+  }
   if (!["source_order", "random"].includes(plan.selectionMode)) {
     issues.push({
       code: "invalid_order",
       path: "commonPlan.selectionMode",
-      message: "출제 대상을 범위순 또는 무작위로 선택해 주세요.",
+      message: "문제 순서를 선택해 주세요.",
     });
   }
   if (plan.sessions.length !== draft.range.sessionCount) {
@@ -460,6 +478,17 @@ function validateCommonPlan(
       code: "invalid_order",
       path: "commonPlan.sessions",
       message: "원래 요일 반복 기준과 배정 회차 수가 일치하지 않습니다.",
+    });
+  }
+  if (
+    (plan.selectedDateCount === 0 && plan.sessions.length !== 1) ||
+    (plan.selectedDateCount > 0 &&
+      plan.sessions.length !== plan.selectedDateCount)
+  ) {
+    issues.push({
+      code: "invalid_order",
+      path: "commonPlan.selectedDateCount",
+      message: "선택한 날짜 수와 일정이 일치하지 않습니다.",
     });
   }
   if (!integerInRange(plan.sessions.length, 1, 7)) {
@@ -488,7 +517,7 @@ function validateCommonPlan(
       issues.push({
         code: "invalid_order",
         path: `commonPlan.sessions.${index}.unitIds`,
-        message: "문항 나누기는 모든 회차에서 같은 전체 DAY 범위를 사용해야 합니다.",
+        message: "문항 나누기는 모든 회차에서 같은 전체 범위를 사용해야 합니다.",
       });
     }
     const start = koreanDateTimeLocalToIso(session.availableLocalDateTime);
@@ -580,7 +609,7 @@ export function validateBulkPreviewProjection(
     issues.push({
       code: "out_of_range",
       path: "range.unitsPerSession",
-      message: "회차당 DAY 수는 1개부터 30개까지 설정해 주세요.",
+      message: "회차당 범위 수는 1개부터 30개까지 설정해 주세요.",
     });
   }
   if (!integerInRange(draft.range.sessionCount, 1, 7)) {
@@ -621,6 +650,13 @@ export function validateBulkAssignmentSubmission(
   const issues = validateBulkPreviewProjection(draft);
   validateExamSettings(draft.exam, issues);
   if (draft.commonPlan) {
+    if (draft.commonPlan.selectedDateCount === 0) {
+      issues.push({
+        code: "required",
+        path: "commonPlan.sessions",
+        message: "배정할 요일을 하나 이상 선택해 주세요.",
+      });
+    }
     draft.commonPlan.sessions.forEach((session, index) => {
       const deadline = koreanDateTimeLocalToIso(
         session.deadlineLocalDateTime,

@@ -11,6 +11,7 @@ import {
   type DayRangeSelection,
   type IsoWeekday,
   type VocabQuestionCountChoice,
+  type VocabExtraDatePolicy,
   type VocabRangeDistribution,
   type VocabScheduleDraft,
   type VocabScheduleSlotOverride,
@@ -25,6 +26,7 @@ export type VocabPlannerState = {
   questionCountMode: VocabQuestionCountChoice["mode"];
   manualQuestionCount: number;
   overflowPolicy: VocabSplitOverflowPolicy;
+  extraDatePolicy: VocabExtraDatePolicy;
   selectionMode: VocabTargetSelectionMode;
   planNonce: string;
   schedule: VocabScheduleDraft;
@@ -41,6 +43,7 @@ export type VocabPlannerAction =
   | { type: "question_count_mode"; value: VocabQuestionCountChoice["mode"] }
   | { type: "manual_question_count"; value: number }
   | { type: "overflow_policy"; value: VocabSplitOverflowPolicy }
+  | { type: "extra_date_policy"; value: VocabExtraDatePolicy }
   | { type: "selection_mode"; value: VocabTargetSelectionMode }
   | { type: "schedule/update"; patch: Partial<VocabScheduleDraft> }
   | { type: "schedule/replace"; value: VocabScheduleDraft }
@@ -63,12 +66,14 @@ export function vocabPlannerReducer(
         ...state,
         datasetId: action.value,
         range: { startUnitId: null, endUnitId: null },
+        extraDatePolicy: "unconfirmed",
         collisionDecisionRecords: [],
       };
     case "range":
       return {
         ...state,
         range: advanceDayRangeSelection(state.range, action.unitId),
+        extraDatePolicy: "unconfirmed",
         collisionDecisionRecords: [],
       };
     case "distribution":
@@ -78,6 +83,7 @@ export function vocabPlannerReducer(
         overflowPolicy: action.value === "split"
           ? state.overflowPolicy
           : "leave",
+        extraDatePolicy: "unconfirmed",
         collisionDecisionRecords: [],
       };
     case "question_count_mode":
@@ -88,18 +94,26 @@ export function vocabPlannerReducer(
           action.value === "manual" && state.distribution === "split"
             ? state.overflowPolicy
             : "leave",
+        extraDatePolicy: "unconfirmed",
         collisionDecisionRecords: [],
       };
     case "manual_question_count":
       return {
         ...state,
         manualQuestionCount: action.value,
+        extraDatePolicy: "unconfirmed",
         collisionDecisionRecords: [],
       };
     case "overflow_policy":
       return {
         ...state,
         overflowPolicy: action.value,
+        collisionDecisionRecords: [],
+      };
+    case "extra_date_policy":
+      return {
+        ...state,
+        extraDatePolicy: action.value,
         collisionDecisionRecords: [],
       };
     case "selection_mode":
@@ -112,16 +126,28 @@ export function vocabPlannerReducer(
       return {
         ...state,
         schedule: { ...state.schedule, ...action.patch },
+        extraDatePolicy: action.patch.weekdays !== undefined
+          ? "unconfirmed"
+          : state.extraDatePolicy,
         sessionScheduleOverrides: {},
         collisionDecisionRecords: [],
       };
-    case "schedule/replace":
+    case "schedule/replace": {
+      const weekdaysChanged =
+        state.schedule.weekdays.length !== action.value.weekdays.length ||
+        state.schedule.weekdays.some(
+          (weekday, index) => weekday !== action.value.weekdays[index],
+        );
       return {
         ...state,
         schedule: action.value,
+        extraDatePolicy: weekdaysChanged
+          ? "unconfirmed"
+          : state.extraDatePolicy,
         sessionScheduleOverrides: {},
         collisionDecisionRecords: [],
       };
+    }
     case "schedule/toggle_weekday":
       return {
         ...state,
@@ -129,6 +155,7 @@ export function vocabPlannerReducer(
           ...state.schedule,
           weekdays: toggleWeekday(state.schedule.weekdays, action.weekday),
         },
+        extraDatePolicy: "unconfirmed",
         sessionScheduleOverrides: {},
         collisionDecisionRecords: [],
       };
@@ -173,11 +200,12 @@ export function createInitialVocabPlannerState(
     questionCountMode: "all",
     manualQuestionCount: 20,
     overflowPolicy: "leave",
+    extraDatePolicy: "unconfirmed",
     selectionMode: "source_order",
     planNonce: crypto.randomUUID(),
     schedule: {
       startDate: today,
-      weekdays: [1, 3, 5],
+      weekdays: [],
       availableTime: "16:00",
       deadlineDayOffset: 1,
       deadlineTime: "22:00",

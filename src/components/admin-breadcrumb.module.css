@@ -5,7 +5,8 @@
   gap: 7px;
   margin: 0 0 14px;
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 15px;
+  line-height: 1.45;
 }
 
 .breadcrumb strong {

@@ -83,6 +83,7 @@ function previewAllowsSubmission(
 ) {
   return (
     preview.blockedCount === 0 &&
+    preview.items.every((item) => !item.requiresExtraDateDecision) &&
     (draft.commonPlan
       ? preview.assignableCount > 0 &&
         preview.assignmentCount > 0 &&
@@ -108,7 +109,7 @@ export function useBulkAssignmentController({
   studentIds,
   clock = systemClock,
   commonPlanRequired = false,
-  commonPlanRequiredMessage = "단어장, DAY, 날짜를 먼저 정해 주세요.",
+  commonPlanRequiredMessage = "단어장, 범위, 날짜를 먼저 정해 주세요.",
   transport = browserAssignmentTransport,
 }: {
   firstAvailableDateKorean: string;
@@ -515,6 +516,4 @@ export function useBulkAssignmentController({
   };
 }
 
-export type BulkAssignmentController = ReturnType<
-  typeof useBulkAssignmentController
->;
+export type BulkAssignmentController = ReturnType<typeof useBulkAssignmentController>;

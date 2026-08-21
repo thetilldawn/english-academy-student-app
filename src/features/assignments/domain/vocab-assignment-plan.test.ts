@@ -15,6 +15,7 @@ import {
   planDirectionalVocabSeriesTargets,
   planVocabSeriesTargetIds,
   rebalanceHalfRatioSplitQuestionCounts,
+  resolveVocabQuestionCycleAllocation,
   resolveVocabQuestionAllocation,
   resolveDayRange,
   selectInitialVocabDatasetId,
@@ -289,6 +290,87 @@ describe("단어 시험 공통 배정 계획", () => {
       497,
       4,
     ]);
+  });
+
+  it.each([0, 1, 2])(
+    "80문항을 45개씩 나누면 날짜 %i개와 무관하게 기본 2회다",
+    (selectedDateCount) => {
+      expect(resolveVocabQuestionCycleAllocation({
+        availableQuestionCount: 80,
+        distribution: "split",
+        questionCount: { mode: "manual", value: 45 },
+        selectedDateCount,
+        extraDatePolicy: "unconfirmed",
+      })).toMatchObject({
+        baseSessionQuestionCounts: [45, 35],
+        defaultSessionCount: 2,
+        sessionQuestionCounts: [45, 35],
+        requiresExtraDateDecision: false,
+        scheduledQuestionCount: 80,
+        sessionCycleIndexes: [0, 0],
+      });
+    },
+  );
+
+  it("기본 회차보다 날짜가 많을 때만 범위 반복 결정을 요구한다", () => {
+    const common = {
+      availableQuestionCount: 80,
+      distribution: "split" as const,
+      questionCount: { mode: "manual" as const, value: 45 },
+      selectedDateCount: 3,
+    };
+    expect(resolveVocabQuestionCycleAllocation({
+      ...common,
+      extraDatePolicy: "unconfirmed",
+    })).toMatchObject({
+      sessionQuestionCounts: [45, 35],
+      requiresExtraDateDecision: true,
+    });
+    expect(resolveVocabQuestionCycleAllocation({
+      ...common,
+      extraDatePolicy: "repeat_from_start",
+    })).toMatchObject({
+      sessionQuestionCounts: [45, 35, 45],
+      requiresExtraDateDecision: false,
+      scheduledQuestionCount: 125,
+      sessionCycleIndexes: [0, 0, 1],
+    });
+  });
+
+  it.each([
+    [45, [45]],
+    [46, [42, 4]],
+    [80, [45, 35]],
+    [90, [45, 45]],
+    [91, [45, 42, 4]],
+    [92, [45, 43, 4]],
+    [93, [45, 44, 4]],
+  ])("직접 입력 45문항의 총 %i개 경계를 안전하게 나눈다", (
+    availableQuestionCount,
+    expected,
+  ) => {
+    expect(resolveVocabQuestionCycleAllocation({
+      availableQuestionCount,
+      distribution: "split",
+      questionCount: { mode: "manual", value: 45 },
+      selectedDateCount: 1,
+      extraDatePolicy: "unconfirmed",
+    }).sessionQuestionCounts).toEqual(expected);
+  });
+
+  it("전체 반복은 선택한 날짜마다 같은 문항 수를 배정하고 추가 확인하지 않는다", () => {
+    expect(resolveVocabQuestionCycleAllocation({
+      availableQuestionCount: 80,
+      distribution: "repeat",
+      questionCount: { mode: "manual", value: 45 },
+      selectedDateCount: 3,
+      extraDatePolicy: "unconfirmed",
+    })).toMatchObject({
+      sessionQuestionCounts: [45, 45, 45],
+      defaultSessionCount: 1,
+      requiresExtraDateDecision: false,
+      scheduledQuestionCount: 135,
+    });
   });
 
   it("같은 요일 시간표를 다음 주 실제 날짜로 반복한다", () => {

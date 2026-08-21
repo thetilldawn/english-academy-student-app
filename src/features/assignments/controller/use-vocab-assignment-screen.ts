@@ -119,6 +119,13 @@ export function useVocabAssignmentScreen({
   });
 
   async function submitPlan() {
+    if (planner.canSubmit === false) {
+      return {
+        conflict: false,
+        message: planner.blockedReason ?? "배정 조건을 확인해 주세요.",
+        ok: false as const,
+      };
+    }
     const outcome = await planner.bulk.actions.submit();
     return outcome.ok
       ? {
@@ -140,6 +147,4 @@ export function useVocabAssignmentScreen({
   };
 }
 
-export type VocabAssignmentScreenController = ReturnType<
-  typeof useVocabAssignmentScreen
->;
+export type VocabAssignmentScreenController = ReturnType<typeof useVocabAssignmentScreen>;

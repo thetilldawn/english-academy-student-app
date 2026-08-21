@@ -13,6 +13,7 @@
   font-size: 15px;
   font-weight: 700;
   white-space: nowrap;
+  user-select: none;
   cursor: pointer;
   translate: none;
   transform: none;
@@ -108,7 +109,7 @@
 @media (hover: hover) and (pointer: fine) {
   .filter:hover:not(:disabled):not([aria-pressed="true"]) {
     border-color: var(--ink);
-    background: var(--surface);
+    background: var(--selection-active);
     color: var(--ink);
   }
 }

@@ -71,7 +71,7 @@ const assignmentEditDraftResponseSchema = z
       context.addIssue({
         code: "custom",
         path: ["primaryUnitIds"],
-        message: "같은 DAY가 중복된 수정 응답입니다.",
+        message: "같은 범위가 중복된 수정 응답입니다.",
       });
     }
     if (new Set(value.reviewLevels).size !== value.reviewLevels.length) {
@@ -99,6 +99,7 @@ const bulkPreviewSessionSchema = z
   .object({
     sessionNumber: z.number().int().positive(),
     sourceSessionNumber: z.number().int().positive(),
+    cycleIndex: nonNegativeInteger,
     available: z.boolean(),
     unitId: z.uuid().nullable(),
     unitLabel: z.string().nullable(),
@@ -151,6 +152,9 @@ const bulkAssignmentPreviewResponseSchema = z
           availableQuestionCount: nonNegativeInteger.nullable(),
           selectedQuestionCount: nonNegativeInteger.nullable(),
           remainingQuestionCount: nonNegativeInteger.nullable(),
+          defaultSessionCount: nonNegativeInteger.nullable(),
+          scheduledQuestionCount: nonNegativeInteger.nullable(),
+          requiresExtraDateDecision: z.boolean(),
           error: z.string().nullable(),
           errorFieldKey: z
             .enum([
@@ -177,6 +181,9 @@ const bulkAssignmentPreviewResponseSchema = z
         availableQuestionCount: nonNegativeInteger,
         selectedQuestionCount: nonNegativeInteger,
         remainingQuestionCount: nonNegativeInteger,
+        defaultSessionCount: nonNegativeInteger,
+        scheduledQuestionCount: nonNegativeInteger,
+        requiresExtraDateDecision: z.boolean(),
         sessions: z.array(
           z
             .object({
@@ -184,6 +191,7 @@ const bulkAssignmentPreviewResponseSchema = z
               availableFrom: z.iso.datetime({ offset: true }),
               availableUntil: z.iso.datetime({ offset: true }).nullable(),
               questionCount: nonNegativeInteger,
+              cycleIndex: nonNegativeInteger,
               unitLabel: z.string().nullable(),
             })
             .strict(),

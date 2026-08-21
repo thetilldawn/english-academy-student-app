@@ -47,7 +47,7 @@ export function validateVocabPlannerInputs(input: {
     issues.push({
       code: "required",
       path: "commonPlan.sessions.0.unitIds",
-      message: "시험에 넣을 DAY 범위를 선택해 주세요.",
+      message: "시험 범위를 선택해 주세요.",
     });
   }
   if (
@@ -76,7 +76,7 @@ export function validateVocabPlannerInputs(input: {
     issues.push({
       code: "invalid_order",
       path: "commonPlan.selectionMode",
-      message: "출제 대상을 범위순 또는 무작위로 선택해 주세요.",
+      message: "문제 순서를 선택해 주세요.",
     });
   }
   if (!isCalendarDate(input.schedule.startDate)) {

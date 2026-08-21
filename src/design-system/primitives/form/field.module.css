@@ -70,8 +70,8 @@
   outline-offset: 2px;
 }
 
-.control[aria-invalid="true"] {
-  border-color: var(--no-line);
+.input[aria-invalid="true"] {
+  border-color: var(--fail);
   background: var(--no-bg);
 }
 

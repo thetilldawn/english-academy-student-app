@@ -256,6 +256,35 @@ describe("일괄 단어 시험 입력 계약", () => {
     ).toThrow("첫 시험 마감은 첫 배정 시간보다 뒤로 정해 주세요.");
   });
 
+  it("날짜를 줄이지 않고 기본 회차만 쓰라는 우회 요청은 받지 않는다", () => {
+    const availableFrom = "2026-08-24T00:00:00.000Z";
+    const availableUntil = "2026-08-24T12:00:00.000Z";
+    expect(() => bulkAssignmentPreviewSchema.parse({
+      studentIds,
+      ...schedule,
+      includePendingReview: false,
+      reviewLevels: [1, 2],
+      englishToKoreanRatio: 50,
+      commonPlan: {
+        datasetId: studentIds[0],
+        distribution: "split",
+        questionCount: { mode: "manual", value: 45 },
+        overflowPolicy: "leave",
+        extraDatePolicy: "base_only",
+        selectedDateCount: 1,
+        selectionMode: "source_order",
+        planNonce: "33333333-3333-4333-8333-333333333333",
+        recurrenceSessions: [{ availableFrom, availableUntil }],
+        sessions: [{
+          unitIds: [studentIds[0]],
+          availableFrom,
+          availableUntil,
+        }],
+        collisionDecisions: [],
+      },
+    })).toThrow();
+  });
+
   it("전체 시간과 문제당 시간을 동시에 저장하지 않는다", () => {
     const base = {
       studentIds,

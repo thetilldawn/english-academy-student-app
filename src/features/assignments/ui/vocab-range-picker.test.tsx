@@ -73,15 +73,19 @@ function controller(input?: {
       preview: {
         commonPlanSummary: {
           availableQuestionCount: 86,
+          defaultSessionCount: sessionCount,
           exceptionStudentIds: [],
           normalStudentIds: ["student-a"],
           remainingQuestionCount: input?.remaining ?? 0,
+          requiresExtraDateDecision: false,
           representativeStudentId: "student-a",
           selectedQuestionCount: input?.remaining ? 40 : 86,
+          scheduledQuestionCount: input?.remaining ? 40 : 86,
           sessions: Array.from({ length: sessionCount }, (_, index) => ({
             availableFrom: `2026-08-${24 + index}T07:00:00.000Z`,
             availableUntil: null,
             questionCount: 20,
+            cycleIndex: 0,
             sessionNumber: index + 1,
             unitLabel: "DAY 1~DAY 2",
           })),
@@ -89,6 +93,8 @@ function controller(input?: {
       },
     },
     fieldErrors: {},
+    defaultSessionCount: sessionCount,
+    scheduledQuestionCount: input?.remaining ? 40 : 86,
     planner: {
       datasetId: dataset.id,
       distribution: "split",
@@ -119,7 +125,7 @@ describe("VocabRangePicker", () => {
       "aria-pressed",
       "true",
     );
-    expect(screen.getByText("출제 가능 86 · 이번 배정 86 · 남음 0"))
+    expect(screen.getByText("출제 가능 86문항 · 출제 86문항 · 남음 0문항 · 기본 3회"))
       .toBeVisible();
 
     fireEvent.click(screen.getByRole("button", { name: "직접 입력" }));
@@ -128,27 +134,17 @@ describe("VocabRangePicker", () => {
     );
   });
 
-  it("남은 문항이 있거나 다음 주 일정이 만들어진 동안 처리 선택을 유지한다", () => {
+  it("문제 순서와 직접 입력을 시험 조건으로 분리해 제공한다", () => {
     const withRemaining = controller({ manual: true, remaining: 46 });
-    const { rerender } = render(
+    render(
       <VocabRangePicker controller={withRemaining} datasets={[dataset]} />,
     );
-    expect(screen.getByRole("button", { name: "이번 일정만" })).toBeVisible();
-    expect(screen.getByText("출제 가능 86 · 이번 배정 40 · 남음 46"))
+    expect(screen.getByRole("group", { name: "문제 순서" })).toBeVisible();
+    expect(screen.getByText("출제 가능 86문항 · 출제 40문항 · 남음 46문항 · 기본 3회"))
       .toBeVisible();
-
-    const continued = controller({
-      manual: true,
-      overflowPolicy: "continue_weekly",
-      remaining: 0,
-      sessionCount: 5,
-    });
-    rerender(<VocabRangePicker controller={continued} datasets={[dataset]} />);
-    expect(screen.getByRole("button", { name: "같은 요일로 이어서" }))
-      .toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "이번 일정만" }));
-    expect(continued.actions.changeOverflowPolicy).toHaveBeenCalledWith(
-      "leave",
+    fireEvent.click(screen.getByRole("button", { name: "무작위" }));
+    expect(withRemaining.actions.changeSelectionMode).toHaveBeenCalledWith(
+      "random",
     );
   });
 
@@ -159,15 +155,26 @@ describe("VocabRangePicker", () => {
       availableQuestionCount: 640,
       remainingQuestionCount: 140,
       selectedQuestionCount: 500,
+      defaultSessionCount: 5,
+      scheduledQuestionCount: 500,
+      requiresExtraDateDecision: false,
       sessions: Array.from({ length: 5 }, () => ({})),
     }] as never;
     value.fieldErrors.questionCount = "한 회차에는 최대 500문항까지 가능합니다.";
-    render(<VocabRangePicker controller={value} datasets={[dataset]} />);
+    value.defaultSessionCount = 5;
+    value.scheduledQuestionCount = 500;
+    render(
+      <VocabRangePicker
+        controller={value}
+        datasets={[dataset]}
+        fieldErrors={value.fieldErrors}
+      />,
+    );
 
-    expect(screen.getByText("출제 가능 640 · 이번 배정 500 · 남음 140"))
+    expect(screen.getByText("출제 가능 640문항 · 출제 500문항 · 남음 140문항 · 기본 5회"))
       .toBeVisible();
     const group = screen.getByRole("group", { name: "문항 수" });
-    expect(group).toHaveAttribute("data-invalid", "true");
+    expect(group).not.toHaveAttribute("data-invalid");
     expect(group).toHaveAttribute(
       "aria-describedby",
       "vocab-question-count-error",

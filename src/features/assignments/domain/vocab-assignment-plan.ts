@@ -10,6 +10,9 @@ export type VocabQuestionCountChoice =
   | { mode: "all" }
   | { mode: "manual"; value: number };
 export type VocabSplitOverflowPolicy = "leave" | "continue_weekly";
+export type VocabExtraDatePolicy =
+  | "unconfirmed"
+  | "repeat_from_start";
 export type VocabTargetSelectionMode = "source_order" | "random";
 export type VocabTargetDirection =
   | "english_to_korean"
@@ -45,6 +48,29 @@ export type VocabQuestionAllocation = {
   extraSessionCount: number;
   issue: VocabQuestionAllocationIssue | null;
 };
+
+export type VocabQuestionCycleAllocation = VocabQuestionAllocation & {
+  baseSessionQuestionCounts: number[];
+  defaultSessionCount: number;
+  requiresExtraDateDecision: boolean;
+  scheduledQuestionCount: number;
+  sessionCycleIndexes: number[];
+};
+
+export function resolveExtraDateCancelSessionCount(
+  items: readonly {
+    defaultSessionCount: number | null;
+    requiresExtraDateDecision: boolean;
+  }[],
+  fallback: number,
+) {
+  const counts = items
+    .filter((item) => item.requiresExtraDateDecision)
+    .flatMap((item) => item.defaultSessionCount === null
+      ? []
+      : [item.defaultSessionCount]);
+  return counts.length > 0 ? Math.min(...counts) : fallback;
+}
 
 export type DayRangeSelection = {
   startUnitId: string | null;
@@ -252,6 +278,160 @@ export function splitVocabTargetPoolPreparationCounts(
   }
   counts.push(remaining);
   return counts;
+}
+
+function splitManualVocabQuestionCounts(
+  totalQuestionCount: number,
+  maximumQuestionCount: number,
+) {
+  const minimum = MINIMUM_VOCAB_SESSION_QUESTION_COUNT;
+  if (
+    !Number.isInteger(totalQuestionCount) ||
+    totalQuestionCount < minimum ||
+    !Number.isInteger(maximumQuestionCount) ||
+    maximumQuestionCount < minimum ||
+    maximumQuestionCount > MAXIMUM_VOCAB_SESSION_QUESTION_COUNT
+  ) {
+    return [];
+  }
+  const counts: number[] = [];
+  let remaining = totalQuestionCount;
+  while (remaining > maximumQuestionCount) {
+    let current = maximumQuestionCount;
+    const tail = remaining - current;
+    if (tail < minimum) current -= minimum - tail;
+    if (current < minimum) return [];
+    counts.push(current);
+    remaining -= current;
+  }
+  if (remaining < minimum) return [];
+  counts.push(remaining);
+  return counts;
+}
+
+/**
+ * Calculates the question cycle before calendar dates are applied. Weekdays
+ * place the calculated sessions; they do not decide how the range is split.
+ */
+export function resolveVocabQuestionCycleAllocation(input: {
+  availableQuestionCount: number;
+  distribution: VocabRangeDistribution;
+  questionCount: VocabQuestionCountChoice;
+  selectedDateCount: number;
+  extraDatePolicy: VocabExtraDatePolicy;
+  maximumSessionCount?: number;
+}): VocabQuestionCycleAllocation {
+  const minimum = MINIMUM_VOCAB_SESSION_QUESTION_COUNT;
+  const maximum = MAXIMUM_VOCAB_SESSION_QUESTION_COUNT;
+  const maximumSessionCount = input.maximumSessionCount ?? 210;
+  const empty = (
+    issue: VocabQuestionAllocationIssue,
+  ): VocabQuestionCycleAllocation => ({
+    ...emptyQuestionAllocation(issue),
+    baseSessionQuestionCounts: [],
+    defaultSessionCount: 0,
+    requiresExtraDateDecision: false,
+    scheduledQuestionCount: 0,
+    sessionCycleIndexes: [],
+  });
+  if (
+    !Number.isInteger(input.availableQuestionCount) ||
+    input.availableQuestionCount < minimum
+  ) {
+    return empty("invalid_available_count");
+  }
+  if (
+    !Number.isInteger(input.selectedDateCount) ||
+    input.selectedDateCount < 0
+  ) {
+    return empty("missing_schedule");
+  }
+  const manualCount = input.questionCount.mode === "manual"
+    ? input.questionCount.value
+    : null;
+  if (
+    manualCount !== null &&
+    (!Number.isInteger(manualCount) ||
+      manualCount < minimum ||
+      manualCount > maximum)
+  ) {
+    return empty("invalid_question_count");
+  }
+
+  if (input.distribution === "repeat") {
+    const perSessionCount = manualCount ?? input.availableQuestionCount;
+    if (perSessionCount > input.availableQuestionCount) {
+      return empty("question_count_exceeds_capacity");
+    }
+    if (perSessionCount > maximum) {
+      return empty("session_question_limit_exceeded");
+    }
+    const sessionCount = Math.max(1, input.selectedDateCount);
+    if (sessionCount > maximumSessionCount) {
+      return empty("series_session_limit_exceeded");
+    }
+    const counts = Array.from({ length: sessionCount }, () => perSessionCount);
+    return {
+      ...allocationResult({
+        availableQuestionCount: input.availableQuestionCount,
+        baseSessionCount: sessionCount,
+        sessionQuestionCounts: counts,
+        selectedQuestionCount: perSessionCount,
+      }),
+      baseSessionQuestionCounts: [perSessionCount],
+      defaultSessionCount: 1,
+      requiresExtraDateDecision: false,
+      scheduledQuestionCount: counts.reduce((sum, count) => sum + count, 0),
+      sessionCycleIndexes: counts.map((_count, index) => index),
+    };
+  }
+
+  const baseCounts = manualCount === null
+    ? splitVocabTargetPoolPreparationCounts(input.availableQuestionCount)
+    : splitManualVocabQuestionCounts(
+        input.availableQuestionCount,
+        manualCount,
+      );
+  if (baseCounts.length === 0) {
+    return empty("insufficient_for_selected_dates");
+  }
+  const requiresExtraDateDecision =
+    input.selectedDateCount > baseCounts.length &&
+    input.extraDatePolicy === "unconfirmed";
+  const shouldRepeat =
+    input.selectedDateCount > baseCounts.length &&
+    input.extraDatePolicy === "repeat_from_start";
+  const sessionCount = shouldRepeat
+    ? input.selectedDateCount
+    : baseCounts.length;
+  if (sessionCount > maximumSessionCount) {
+    return empty("series_session_limit_exceeded");
+  }
+  const sessionQuestionCounts = shouldRepeat
+    ? Array.from(
+        { length: sessionCount },
+        (_value, index) => baseCounts[index % baseCounts.length]!,
+      )
+    : [...baseCounts];
+  const scheduledQuestionCount = sessionQuestionCounts.reduce(
+    (sum, count) => sum + count,
+    0,
+  );
+  return {
+    ...allocationResult({
+      availableQuestionCount: input.availableQuestionCount,
+      baseSessionCount: Math.max(1, input.selectedDateCount),
+      sessionQuestionCounts,
+      selectedQuestionCount: scheduledQuestionCount,
+    }),
+    baseSessionQuestionCounts: [...baseCounts],
+    defaultSessionCount: baseCounts.length,
+    requiresExtraDateDecision,
+    scheduledQuestionCount,
+    sessionCycleIndexes: sessionQuestionCounts.map(
+      (_count, index) => Math.floor(index / baseCounts.length),
+    ),
+  };
 }
 
 /**
@@ -477,6 +657,16 @@ export function buildSelectedWeekdayDates(input: {
     .map(({ offset }) => formatCalendarDate(
       new Date(start.getTime() + offset * DAY_MILLISECONDS),
     ));
+}
+
+export function keepFirstSelectedWeekdays(
+  input: VocabScheduleDraft,
+  count: number,
+) {
+  return buildSelectedWeekdayDates(input).slice(0, count).flatMap((date) => {
+    const parsed = parseCalendarDate(date);
+    return parsed ? [isoWeekday(parsed)] : [];
+  });
 }
 
 export function shiftCalendarDate(value: string, days: number) {

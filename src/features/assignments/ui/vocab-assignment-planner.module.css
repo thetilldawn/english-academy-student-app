@@ -1,4 +1,5 @@
 .section,
+.plannerSections,
 .fieldStack,
 .templateArea,
 .sessionTimeArea,
@@ -9,6 +10,10 @@
 .warningActions {
   min-width: 0;
   display: grid;
+}
+
+.plannerSections {
+  gap: var(--space-4);
 }
 
 .copyPanel {
@@ -87,6 +92,12 @@
   min-width: 0;
 }
 
+.generatedSessionTime {
+  grid-column: 2 / -1;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
 .weekdayButtons,
 .modeButtons,
 .templateButtons,
@@ -100,14 +111,8 @@
 
 .weekdayButtons > * {
   flex: 1 1 42px;
-}
-
-.weekdayButtons[data-invalid="true"],
-.modeButtons[data-invalid="true"],
-.section [data-field-key="range"][data-invalid="true"] {
-  border-radius: var(--radius-small);
-  outline: 1px solid var(--no-line);
-  outline-offset: 2px;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .dayRailFrame {
@@ -154,6 +159,12 @@
   background: var(--card);
   font-size: 12px;
   font-weight: 700;
+}
+
+.submitRow {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .templateSave > :first-child {

@@ -177,7 +177,7 @@ describe("배정 요청 현행 계약 특성화", () => {
           assignmentContractIds.day60,
         ],
       }),
-    ).toThrow("같은 DAY를 두 번 선택할 수 없습니다.");
+    ).toThrow("같은 범위를 두 번 선택할 수 없습니다.");
     expect(() =>
       assignmentCapacitySchema.parse({
         ...mutable(replacementPreviewContract),

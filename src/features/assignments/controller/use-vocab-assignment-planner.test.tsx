@@ -11,6 +11,16 @@ import { useVocabAssignmentPlanner } from "./use-vocab-assignment-planner";
 
 const mocks = vi.hoisted(() => ({
   changeCommonPlan: vi.fn(),
+  preview: null as null | {
+    commonPlanSummary: null;
+    items: Array<{
+      defaultSessionCount: number;
+      error: null;
+      errorFieldKey?: "weekdays";
+      requiresExtraDateDecision: boolean;
+      scheduledQuestionCount: number;
+    }>;
+  },
 }));
 
 vi.mock("./use-bulk-assignment-controller", () => ({
@@ -24,7 +34,7 @@ vi.mock("./use-bulk-assignment-controller", () => ({
       submit: vi.fn(),
     },
     canSubmit: false,
-    preview: null,
+    preview: mocks.preview,
     previewLoading: false,
     state: {
       draft: {
@@ -110,12 +120,23 @@ function selectWholeRange(
   });
 }
 
+function selectMondayWednesdayFriday(
+  result: ReturnType<typeof renderPlanner>["result"],
+) {
+  act(() => {
+    result.current.actions.toggleWeekday(1);
+    result.current.actions.toggleWeekday(3);
+    result.current.actions.toggleWeekday(5);
+  });
+}
+
 describe("단어 배정 일정 controller", () => {
   beforeEach(() => {
     mocks.changeCommonPlan.mockReset();
+    mocks.preview = null;
   });
 
-  it("월수금은 기준일부터 가까운 날짜로 세 회차만 만든다", () => {
+  it("요일은 처음에 비어 있고 월수금을 고르면 가까운 세 날짜를 만든다", () => {
     const { result } = renderHook(() => useVocabAssignmentPlanner({
       datasets: [],
       genericErrorMessage: "저장 실패",
@@ -129,6 +150,12 @@ describe("단어 배정 일정 controller", () => {
     }));
 
     expect(result.current.planner.schedule.startDate).toBe("2026-08-21");
+    expect(result.current.scheduleSlots).toEqual([]);
+    act(() => {
+      result.current.actions.toggleWeekday(1);
+      result.current.actions.toggleWeekday(3);
+      result.current.actions.toggleWeekday(5);
+    });
     expect(result.current.scheduleSlots.map((slot) => slot.date)).toEqual([
       "2026-08-21",
       "2026-08-24",
@@ -153,18 +180,19 @@ describe("단어 배정 일정 controller", () => {
       result.current.actions.toggleWeekday(2);
       result.current.actions.toggleWeekday(4);
     });
-    expect(result.current.planner.schedule.weekdays).toEqual([1, 2, 3, 4, 5]);
+    expect(result.current.planner.schedule.weekdays).toEqual([2, 4]);
 
     act(() => {
       result.current.actions.toggleWeekday(3);
       result.current.actions.toggleWeekday(3);
     });
-    expect(result.current.planner.schedule.weekdays).toEqual([1, 2, 3, 4, 5]);
+    expect(result.current.planner.schedule.weekdays).toEqual([2, 4]);
   });
 
   it("전체 반복은 같은 DAY 범위를 월수금 세 날짜에 정확히 한 번씩 배정한다", () => {
     const { result } = renderPlanner();
     selectWholeRange(result);
+    selectMondayWednesdayFriday(result);
     act(() => result.current.actions.changeDistribution("repeat"));
 
     expect(result.current.commonPlan?.sessions).toHaveLength(3);
@@ -181,6 +209,7 @@ describe("단어 배정 일정 controller", () => {
   it("나누기는 모든 회차에 같은 전체 DAY 범위를 보내고 서버가 실제 문항을 나눈다", () => {
     const { result } = renderPlanner();
     selectWholeRange(result);
+    selectMondayWednesdayFriday(result);
 
     expect(result.current.commonPlan?.sessions.map((session) => ({
       date: session.availableLocalDateTime.slice(0, 10),
@@ -198,6 +227,7 @@ describe("단어 배정 일정 controller", () => {
       result.current.actions.selectUnit(units[0]!.id);
       result.current.actions.selectUnit(units[1]!.id);
     });
+    selectMondayWednesdayFriday(result);
 
     expect(result.current.scheduleSlots).toHaveLength(3);
     expect(result.current.commonPlan?.sessions).toHaveLength(3);
@@ -212,6 +242,8 @@ describe("단어 배정 일정 controller", () => {
     expect(result.current.commonPlan).toMatchObject({
       questionCount: { mode: "all" },
       overflowPolicy: "leave",
+      extraDatePolicy: "unconfirmed",
+      selectedDateCount: 0,
       selectionMode: "source_order",
     });
 
@@ -238,6 +270,7 @@ describe("단어 배정 일정 controller", () => {
   it("요일을 3개에서 2개로 줄였다 다시 늘리면 공통 계획도 3→2→3회로 동기화한다", () => {
     const { result } = renderPlanner();
     selectWholeRange(result);
+    selectMondayWednesdayFriday(result);
     expect(result.current.commonPlan?.sessions).toHaveLength(3);
 
     act(() => result.current.actions.toggleWeekday(3));
@@ -268,6 +301,7 @@ describe("단어 배정 일정 controller", () => {
   it("한 회차 날짜를 바꿔도 다음 주 반복 기준은 원래 월수금으로 보존한다", () => {
     const { result } = renderPlanner();
     selectWholeRange(result);
+    selectMondayWednesdayFriday(result);
 
     act(() => {
       result.current.actions.updateSessionSchedule(2, {
@@ -288,5 +322,69 @@ describe("단어 배정 일정 controller", () => {
       "2026-08-24",
       "2026-08-26",
     ]);
+  });
+
+  it("추가 날짜 확인 결과를 공통 계획에 반영하고 조건 변경 시 초기화한다", () => {
+    mocks.preview = {
+      commonPlanSummary: null,
+      items: [{
+        defaultSessionCount: 2,
+        error: null,
+        requiresExtraDateDecision: true,
+        scheduledQuestionCount: 80,
+      }],
+    };
+    const { result } = renderPlanner();
+    selectWholeRange(result);
+    selectMondayWednesdayFriday(result);
+
+    expect(result.current.requiresExtraDateDecision).toBe(true);
+    expect(result.current.fieldErrors.weekdays).toMatch(/반복 여부/);
+
+    mocks.preview = {
+      commonPlanSummary: null,
+      items: [{
+        defaultSessionCount: 2,
+        error: null,
+        requiresExtraDateDecision: false,
+        scheduledQuestionCount: 125,
+      }],
+    };
+    act(() =>
+      result.current.actions.changeExtraDatePolicy("repeat_from_start"),
+    );
+    expect(result.current.commonPlan?.extraDatePolicy).toBe(
+      "repeat_from_start",
+    );
+
+    act(() => result.current.actions.changeManualQuestionCount(45));
+    expect(result.current.planner.extraDatePolicy).toBe("unconfirmed");
+  });
+
+  it("학생별 기본 회차가 다르면 추가 취소는 경고 학생 중 가장 짧은 회차에 맞춘다", () => {
+    mocks.preview = {
+      commonPlanSummary: null,
+      items: [
+        {
+          defaultSessionCount: 3,
+          error: null,
+          requiresExtraDateDecision: false,
+          scheduledQuestionCount: 120,
+        },
+        {
+          defaultSessionCount: 2,
+          error: null,
+          requiresExtraDateDecision: true,
+          scheduledQuestionCount: 80,
+        },
+      ],
+    };
+    const { result } = renderPlanner();
+    selectWholeRange(result);
+    selectMondayWednesdayFriday(result);
+
+    expect(result.current.extraDateDecisionSessionCount).toBe(2);
+    act(() => result.current.actions.cancelExtraDates());
+    expect(result.current.planner.schedule.weekdays).toEqual([5, 1]);
   });
 });

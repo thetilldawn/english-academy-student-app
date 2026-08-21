@@ -76,11 +76,11 @@ export function DayRangeRail({
 
   return (
     <div className={styles.dayRailFrame}>
-      <IconButton aria-label="이전 DAY 보기" onClick={() => scroll(-1)}>
+      <IconButton aria-label="이전 범위 보기" onClick={() => scroll(-1)}>
         ‹
       </IconButton>
       <div
-        aria-label="DAY 범위"
+        aria-label="단어 범위"
         className={styles.dayRail}
         data-dragging="false"
         onPointerCancel={endDrag}
@@ -114,7 +114,7 @@ export function DayRangeRail({
           </Button>
         ))}
       </div>
-      <IconButton aria-label="다음 DAY 보기" onClick={() => scroll(1)}>
+      <IconButton aria-label="다음 범위 보기" onClick={() => scroll(1)}>
         ›
       </IconButton>
     </div>

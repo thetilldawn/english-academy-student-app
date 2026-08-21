@@ -281,6 +281,8 @@ function bulkSelectionBody(draft: BulkSeriesAssignmentDraft) {
         distribution: draft.commonPlan.distribution,
         questionCount: draft.commonPlan.questionCount,
         overflowPolicy: draft.commonPlan.overflowPolicy,
+        extraDatePolicy: draft.commonPlan.extraDatePolicy,
+        selectedDateCount: draft.commonPlan.selectedDateCount,
         selectionMode: draft.commonPlan.selectionMode,
         planNonce: draft.commonPlan.planNonce,
         recurrenceSessions: draft.commonPlan.recurrenceSessions.map(
