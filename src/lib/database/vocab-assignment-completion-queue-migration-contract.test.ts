@@ -10,6 +10,13 @@ const migration = readFileSync(
   "utf8",
 );
 
+const foreignKeyIndexMigration = readFileSync(
+  path.resolve(
+    "supabase/migrations/20260822021819_index_vocab_assignment_queue_foreign_keys.sql",
+  ),
+  "utf8",
+);
+
 describe("단어 시험 완료 후 이어 배정 migration", () => {
   it("학생별 계획·회차·변경 이력을 비공개 표에 보존한다", () => {
     expect(migration).toContain(
@@ -106,5 +113,32 @@ describe("단어 시험 완료 후 이어 배정 migration", () => {
       "order by series.updated_at desc, series.id desc\n    limit p_limit",
     );
     expect(migration).not.toContain("student_history_rank <= 100");
+  });
+
+  it("관리자·자료·완료 시험·변경 이력 외래키를 모두 인덱스로 보호한다", () => {
+    expect(foreignKeyIndexMigration).toContain(
+      "vocab_assignment_queue_requests_actor_admin_id_idx",
+    );
+    expect(foreignKeyIndexMigration).toContain(
+      "vocab_assignment_series_actor_admin_id_idx",
+    );
+    expect(foreignKeyIndexMigration).toContain(
+      "vocab_assignment_series_dataset_id_idx",
+    );
+    expect(foreignKeyIndexMigration).toContain(
+      "vocab_assignment_series_exam_use_release_id_idx",
+    );
+    expect(foreignKeyIndexMigration).toContain(
+      "vocab_assignment_series_items_completed_attempt_id_idx",
+    );
+    expect(foreignKeyIndexMigration).toContain(
+      "vocab_assignment_series_events_assignment_id_idx",
+    );
+    expect(foreignKeyIndexMigration).toContain(
+      "vocab_assignment_series_events_attempt_id_idx",
+    );
+    expect(foreignKeyIndexMigration).toContain(
+      "vocab_assignment_series_events_item_id_idx",
+    );
   });
 });
