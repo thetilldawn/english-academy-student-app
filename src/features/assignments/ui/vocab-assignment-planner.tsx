@@ -89,7 +89,7 @@ export function VocabAssignmentPlanner({
     >
       <DialogHeader closeLabel="닫기">
         <div>
-          <h2 id="vocab-assignment-plan-title">단어 시험 배정</h2>
+          <h2 id="vocab-assignment-plan-title">단어 배정</h2>
           <p>{students.length}명 선택</p>
         </div>
       </DialogHeader>
