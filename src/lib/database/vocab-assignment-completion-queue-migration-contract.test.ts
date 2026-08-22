@@ -19,14 +19,14 @@ const foreignKeyIndexMigration = readFileSync(
 
 const plannedWeekdayMigration = readFileSync(
   path.resolve(
-    "supabase/migrations/20260822150000_preserve_vocab_queue_planned_weekday.sql",
+    "supabase/migrations/20260822090109_preserve_vocab_queue_planned_weekday.sql",
   ),
   "utf8",
 );
 
 const materializedWindowMigration = readFileSync(
   path.resolve(
-    "supabase/migrations/20260822151000_reconcile_vocab_queue_materialized_window.sql",
+    "supabase/migrations/20260822091643_reconcile_vocab_queue_materialized_window.sql",
   ),
   "utf8",
 );

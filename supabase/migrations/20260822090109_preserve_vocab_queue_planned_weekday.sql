@@ -1,4 +1,4 @@
--- Completion-gated sessions keep the weekday, local time, and duration that
+-- Completion-gated sessions preserve the weekday, local time, and duration that
 -- belong to their planned range chunk. Existing queue rows are not rewritten;
 -- this only normalizes a ready item's next effective window when it advances.
 

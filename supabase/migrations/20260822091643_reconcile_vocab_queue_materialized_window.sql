@@ -1,4 +1,4 @@
--- The planned-window trigger may normalize an expired ready item to a
+-- The planned-window trigger can normalize an expired ready item to a
 -- different weekday. Re-read the trigger-adjusted values before collision
 -- checks and assignment creation so the queue row and real quiz stay aligned.
 
