@@ -5,6 +5,8 @@ export const assignmentQuestionOrderModes = [
 ] as const;
 
 export const MAXIMUM_BULK_STUDENT_COUNT = 210;
+export const MAXIMUM_BULK_ASSIGNMENT_COUNT = 210;
+export const MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT = 30;
 
 export type AssignmentQuestionOrderMode =
   (typeof assignmentQuestionOrderModes)[number];
@@ -120,6 +122,9 @@ export type BulkCollisionDecision = {
 export type BulkCommonAssignmentPlan = {
   datasetId: string;
   distribution: "split" | "repeat";
+  splitBasis: "question_count" | "range_unit";
+  orderedUnitIds: readonly string[];
+  rangeUnitCounts: readonly number[];
   questionCount:
     | { mode: "all" }
     | { mode: "manual"; value: number };

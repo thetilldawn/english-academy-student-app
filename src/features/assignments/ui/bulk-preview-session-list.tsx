@@ -6,6 +6,7 @@ import { Button } from "@/design-system/primitives/button/button";
 import { formatKoreanDateTime } from "@/lib/format";
 
 import type { BulkAssignmentPreviewResponse } from "../api/response-adapters";
+import type { VocabRangeDistribution } from "../domain/vocab-assignment-plan";
 import {
   buildVocabCollisionDecisionInput,
   vocabCollisionActionPolicy,
@@ -23,11 +24,13 @@ type PreviewItem = BulkAssignmentPreviewResponse["items"][number];
 export function BulkPreviewSessionList({
   includePendingReview,
   item,
+  distribution = "split",
   onClearCollisionDecision,
   onCollisionDecision,
 }: {
   includePendingReview: boolean;
   item: PreviewItem;
+  distribution?: VocabRangeDistribution;
   onClearCollisionDecision?: (collisionId: string) => void;
   onCollisionDecision?: (input: VocabCollisionDecisionInput) => void;
 }) {
@@ -77,6 +80,9 @@ export function BulkPreviewSessionList({
                     )
                   : adminLearningText.bulkAssignmentModal.needsReview}
               </MetaTag>
+              {distribution === "split" && session.sessionNumber > 1 ? (
+                <MetaTag size="large">완료 후 생성</MetaTag>
+              ) : null}
               {includePendingReview && session.wrongCount > 0 ? (
                 <MetaTag size="large" tone="warning">
                   {formatContentText(

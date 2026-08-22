@@ -38,4 +38,27 @@ describe("buildVocabAssignmentFieldErrors", () => {
 
     expect(result.firstFieldKey).toBe("session-1-available");
   });
+
+  it("시험 조건 뒤에는 일정 화면의 실제 위에서 아래 순서로 이동한다", () => {
+    expect(buildVocabAssignmentFieldErrors([
+      { code: "out_of_range", path: "commonPlan.unitsPerSession", message: "단위" },
+      { code: "out_of_range", path: "commonPlan.questionCount", message: "문항" },
+    ]).firstFieldKey).toBe("questionCount");
+    expect(buildVocabAssignmentFieldErrors([
+      { code: "out_of_range", path: "commonPlan.weekdayUnitsPerSession.3", message: "수요일" },
+      { code: "invalid_datetime", path: "commonPlan.schedule.availableTime", message: "공개" },
+      { code: "required", path: "commonPlan.schedule.startDate", message: "기준일" },
+    ]).firstFieldKey).toBe("startDate");
+  });
+
+  it("서버의 범위 단위 수 계약 오류를 보이는 일정 입력으로 연결한다", () => {
+    expect(buildVocabAssignmentFieldErrors([{
+      code: "invalid_order",
+      path: "commonPlan.rangeUnitCounts",
+      message: "단위 수 확인",
+    }])).toMatchObject({
+      firstFieldKey: "unitAllocationMode",
+      errors: { unitAllocationMode: "단위 수 확인" },
+    });
+  });
 });

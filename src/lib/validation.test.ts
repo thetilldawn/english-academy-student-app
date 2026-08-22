@@ -285,6 +285,127 @@ describe("일괄 단어 시험 입력 계약", () => {
     })).toThrow();
   });
 
+  it("범위 단위 회차는 선택한 전체 순서와 요일별 단위 수를 정확히 지킨다", () => {
+    const unitIds = Array.from({ length: 4 }, (_, index) =>
+      `44444444-4444-4444-8444-${String(index).padStart(12, "0")}`
+    );
+    const sessions = [0, 1].map((index) => ({
+      unitIds: unitIds.slice(index * 2, index * 2 + 2),
+      availableFrom: `2026-08-${24 + index * 2}T07:00:00.000Z`,
+      availableUntil: `2026-08-${24 + index * 2}T13:00:00.000Z`,
+    }));
+    const input = {
+      studentIds,
+      ...schedule,
+      sessionCount: 2,
+      includePendingReview: false,
+      reviewLevels: [1, 2],
+      englishToKoreanRatio: 50,
+      commonPlan: {
+        datasetId: studentIds[0],
+        distribution: "split",
+        splitBasis: "range_unit",
+        orderedUnitIds: unitIds,
+        rangeUnitCounts: [2, 2],
+        questionCount: { mode: "all" },
+        overflowPolicy: "continue_weekly",
+        extraDatePolicy: "unconfirmed",
+        selectedDateCount: 2,
+        selectionMode: "source_order",
+        planNonce: "33333333-3333-4333-8333-333333333333",
+        recurrenceSessions: sessions.map(({ availableFrom, availableUntil }) => ({
+          availableFrom,
+          availableUntil,
+        })),
+        sessions,
+        collisionDecisions: [],
+      },
+    } as const;
+
+    expect(bulkAssignmentPreviewSchema.parse(input).commonPlan?.sessions)
+      .toHaveLength(2);
+    expect(() => bulkAssignmentPreviewSchema.parse({
+      ...input,
+      commonPlan: {
+        ...input.commonPlan,
+        sessions: [sessions[1], sessions[0]],
+      },
+    })).toThrow("회차별 범위가 선택한 순서 또는 단위 수와 일치하지 않습니다.");
+    expect(() => bulkAssignmentPreviewSchema.parse({
+      ...input,
+      commonPlan: {
+        ...input.commonPlan,
+        sessions: [sessions[0], sessions[0]],
+      },
+    })).toThrow("회차별 범위가 선택한 순서 또는 단위 수와 일치하지 않습니다.");
+  });
+
+  it("이어 배정은 DB 한도 30명과 전체 210시험을 계산 전에 막는다", () => {
+    const manyStudents = Array.from({ length: 31 }, (_, index) =>
+      `50000000-0000-4000-8000-${String(index).padStart(12, "0")}`
+    );
+    const availableFrom = "2026-08-24T07:00:00.000Z";
+    const availableUntil = "2026-08-24T13:00:00.000Z";
+    const unitId = "60000000-0000-4000-8000-000000000000";
+    const oneSessionPlan = {
+      datasetId: unitId,
+      distribution: "split",
+      splitBasis: "question_count",
+      orderedUnitIds: [unitId],
+      rangeUnitCounts: [],
+      questionCount: { mode: "manual", value: 20 },
+      overflowPolicy: "leave",
+      extraDatePolicy: "unconfirmed",
+      selectedDateCount: 1,
+      selectionMode: "source_order",
+      planNonce: "70000000-0000-4000-8000-000000000000",
+      recurrenceSessions: [{ availableFrom, availableUntil }],
+      sessions: [{ unitIds: [unitId], availableFrom, availableUntil }],
+      collisionDecisions: [],
+    } as const;
+    expect(() => bulkAssignmentPreviewSchema.parse({
+      studentIds: manyStudents,
+      ...schedule,
+      sessionCount: 1,
+      includePendingReview: false,
+      reviewLevels: [1, 2],
+      englishToKoreanRatio: 50,
+      commonPlan: oneSessionPlan,
+    })).toThrow("이어 배정은 한 번에 최대 30명까지 선택할 수 있습니다.");
+
+    const thirtyStudents = manyStudents.slice(0, 30);
+    const eightUnits = Array.from({ length: 8 }, (_, index) =>
+      `80000000-0000-4000-8000-${String(index).padStart(12, "0")}`
+    );
+    const eightSessions = eightUnits.map((id, index) => ({
+      unitIds: [id],
+      availableFrom: `2026-0${9 + Math.floor(index / 28)}-${String(1 + index).padStart(2, "0")}T07:00:00.000Z`,
+      availableUntil: `2026-0${9 + Math.floor(index / 28)}-${String(1 + index).padStart(2, "0")}T13:00:00.000Z`,
+    }));
+    expect(() => bulkAssignmentPreviewSchema.parse({
+      studentIds: thirtyStudents,
+      ...schedule,
+      sessionCount: 8,
+      includePendingReview: false,
+      reviewLevels: [1, 2],
+      englishToKoreanRatio: 50,
+      commonPlan: {
+        ...oneSessionPlan,
+        datasetId: eightUnits[0],
+        splitBasis: "range_unit",
+        orderedUnitIds: eightUnits,
+        rangeUnitCounts: [1],
+        questionCount: { mode: "all" },
+        overflowPolicy: "continue_weekly",
+        recurrenceSessions: [{
+          availableFrom: eightSessions[0]!.availableFrom,
+          availableUntil: eightSessions[0]!.availableUntil,
+        }],
+        sessions: eightSessions,
+      },
+    })).toThrow("한 번에 저장할 수 있는 시험은 전체 210개까지입니다.");
+  });
+
   it("전체 시간과 문제당 시간을 동시에 저장하지 않는다", () => {
     const base = {
       studentIds,

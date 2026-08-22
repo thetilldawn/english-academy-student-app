@@ -15,14 +15,21 @@ import {
   type VocabRangeDistribution,
   type VocabScheduleDraft,
   type VocabScheduleSlotOverride,
+  type VocabSplitBasis,
   type VocabSplitOverflowPolicy,
   type VocabTargetSelectionMode,
+  type VocabUnitAllocationMode,
+  type VocabWeekdayUnitCounts,
 } from "../domain/vocab-assignment-plan";
 
 export type VocabPlannerState = {
   datasetId: string;
   range: DayRangeSelection;
   distribution: VocabRangeDistribution;
+  splitBasis: VocabSplitBasis;
+  unitAllocationMode: VocabUnitAllocationMode;
+  unitsPerSession: number;
+  weekdayUnitsPerSession: VocabWeekdayUnitCounts;
   questionCountMode: VocabQuestionCountChoice["mode"];
   manualQuestionCount: number;
   overflowPolicy: VocabSplitOverflowPolicy;
@@ -40,6 +47,10 @@ export type VocabPlannerAction =
   | { type: "dataset"; value: string }
   | { type: "range"; unitId: string }
   | { type: "distribution"; value: VocabRangeDistribution }
+  | { type: "split_basis"; value: VocabSplitBasis }
+  | { type: "unit_allocation_mode"; value: VocabUnitAllocationMode }
+  | { type: "units_per_session"; value: number }
+  | { type: "weekday_units_per_session"; weekday: IsoWeekday; value: number }
   | { type: "question_count_mode"; value: VocabQuestionCountChoice["mode"] }
   | { type: "manual_question_count"; value: number }
   | { type: "overflow_policy"; value: VocabSplitOverflowPolicy }
@@ -86,12 +97,48 @@ export function vocabPlannerReducer(
         extraDatePolicy: "unconfirmed",
         collisionDecisionRecords: [],
       };
+    case "split_basis":
+      return {
+        ...state,
+        splitBasis: action.value,
+        overflowPolicy: action.value === "range_unit" ||
+            state.questionCountMode !== "manual"
+          ? "leave"
+          : state.overflowPolicy,
+        extraDatePolicy: "unconfirmed",
+        collisionDecisionRecords: [],
+      };
+    case "unit_allocation_mode":
+      return {
+        ...state,
+        unitAllocationMode: action.value,
+        extraDatePolicy: "unconfirmed",
+        collisionDecisionRecords: [],
+      };
+    case "units_per_session":
+      return {
+        ...state,
+        unitsPerSession: action.value,
+        extraDatePolicy: "unconfirmed",
+        collisionDecisionRecords: [],
+      };
+    case "weekday_units_per_session":
+      return {
+        ...state,
+        weekdayUnitsPerSession: {
+          ...state.weekdayUnitsPerSession,
+          [action.weekday]: action.value,
+        },
+        extraDatePolicy: "unconfirmed",
+        collisionDecisionRecords: [],
+      };
     case "question_count_mode":
       return {
         ...state,
         questionCountMode: action.value,
         overflowPolicy:
-          action.value === "manual" && state.distribution === "split"
+          state.distribution === "split" &&
+              (action.value === "manual" || state.splitBasis === "range_unit")
             ? state.overflowPolicy
             : "leave",
         extraDatePolicy: "unconfirmed",
@@ -197,6 +244,18 @@ export function createInitialVocabPlannerState(
     datasetId,
     range: { startUnitId: null, endUnitId: null },
     distribution: "split",
+    splitBasis: "question_count",
+    unitAllocationMode: "same",
+    unitsPerSession: 2,
+    weekdayUnitsPerSession: {
+      1: 2,
+      2: 2,
+      3: 2,
+      4: 2,
+      5: 2,
+      6: 2,
+      7: 2,
+    },
     questionCountMode: "all",
     manualQuestionCount: 20,
     overflowPolicy: "leave",

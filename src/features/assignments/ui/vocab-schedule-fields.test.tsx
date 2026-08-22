@@ -20,6 +20,10 @@ function controller() {
       updateSessionSchedule: vi.fn(),
       cancelExtraDates: vi.fn(),
       changeExtraDatePolicy: vi.fn(),
+      changeOverflowPolicy: vi.fn(),
+      changeUnitAllocationMode: vi.fn(),
+      changeUnitsPerSession: vi.fn(),
+      changeWeekdayUnitsPerSession: vi.fn(),
     },
     fieldErrors: {},
     bulk: { preview: null },
@@ -27,6 +31,21 @@ function controller() {
     scheduledQuestionCount: 60,
     requiresExtraDateDecision: false,
     planner: {
+      distribution: "split",
+      splitBasis: "question_count",
+      questionCountMode: "all",
+      overflowPolicy: "leave",
+      unitAllocationMode: "same",
+      unitsPerSession: 2,
+      weekdayUnitsPerSession: {
+        1: 2,
+        2: 2,
+        3: 2,
+        4: 2,
+        5: 2,
+        6: 2,
+        7: 2,
+      },
       schedule: {
         availableTime: "16:00",
         deadlineDayOffset: 0,
@@ -55,9 +74,13 @@ function controller() {
         sessionNumber: 3,
       },
     ],
-    selectedUnits: [{ label: "DAY 1" }, { label: "DAY 2" }],
+    selectedUnits: [
+      { id: "unit-1", label: "DAY 1" },
+      { id: "unit-2", label: "DAY 2" },
+    ],
     templateSaving: false,
     timeTemplates: [],
+    unitAllocation: null,
   } as unknown as VocabAssignmentScreenController;
 }
 
@@ -183,5 +206,71 @@ describe("VocabScheduleFields", () => {
     render(<VocabScheduleFields controller={value} />);
 
     expect(screen.getByText("선택 단어장")).toBeVisible();
+  });
+
+  it("요일별 범위 단위 수와 완료 후 이어 배정 횟수를 표시한다", () => {
+    const value = controller();
+    value.planner.splitBasis = "range_unit";
+    value.planner.unitAllocationMode = "by_weekday";
+    value.planner.schedule.weekdays = [1, 3];
+    value.scheduleSlots = value.scheduleSlots.slice(0, 2);
+    value.unitAllocation = {
+      defaultSessionCount: 3,
+      issue: null,
+      remainingUnitIds: [],
+      requiresExtraDateDecision: false,
+      sessionCycleIndexes: [0, 0, 0],
+      sessionUnitIds: [["unit-1"], ["unit-2"], ["unit-3"]],
+    };
+
+    render(<VocabScheduleFields controller={value} />);
+
+    expect(screen.getByLabelText("월요일 단위 수")).toHaveValue(2);
+    expect(screen.getByLabelText("수요일 단위 수")).toHaveValue(2);
+    expect(screen.getByText("기본 3회 · 이어 배정 2회")).toBeVisible();
+    fireEvent.change(screen.getByLabelText("수요일 단위 수"), {
+      target: { value: "3" },
+    });
+    expect(value.actions.changeWeekdayUnitsPerSession).toHaveBeenCalledWith(
+      3,
+      3,
+    );
+  });
+
+  it("문항 수로 나눌 때도 남은 문제를 다음 주로 잇는 선택을 제공한다", () => {
+    const value = controller();
+    value.planner.questionCountMode = "manual";
+
+    render(<VocabScheduleFields controller={value} />);
+
+    expect(screen.getByText("남은 문제")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "같은 요일로 이어서" }));
+    expect(value.actions.changeOverflowPolicy).toHaveBeenCalledWith(
+      "continue_weekly",
+    );
+  });
+
+  it("이번 일정만 배정하면 남은 정확한 범위를 표시한다", () => {
+    const value = controller();
+    value.planner.splitBasis = "range_unit";
+    value.unitAllocation = {
+      defaultSessionCount: 2,
+      issue: null,
+      remainingUnitIds: ["unit-2"],
+      requiresExtraDateDecision: false,
+      sessionCycleIndexes: [0],
+      sessionUnitIds: [["unit-1"]],
+    };
+
+    render(<VocabScheduleFields controller={value} />);
+
+    expect(screen.getByText("기본 2회 · 남음 DAY 2 (1단위)")).toBeVisible();
+  });
+
+  it("나누기 두 번째 회차부터 완료 후 생성 상태를 표시한다", () => {
+    const value = controller();
+    render(<VocabScheduleFields controller={value} />);
+
+    expect(screen.getAllByText("완료 후 생성")).toHaveLength(2);
   });
 });

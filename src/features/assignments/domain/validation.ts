@@ -3,7 +3,9 @@ import { z } from "zod";
 import { koreanDateTimeLocalToIso } from "@/lib/deadline";
 
 import {
+  MAXIMUM_BULK_ASSIGNMENT_COUNT,
   MAXIMUM_BULK_STUDENT_COUNT,
+  MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT,
   type AssignmentDeadline,
   type AssignmentDraft,
   type BulkReviewPolicy,
@@ -14,6 +16,7 @@ import {
   type ReviewPolicy,
   type SingleAssignmentDraft,
 } from "./model";
+import { resolveVocabUnitCycleAllocation } from "./vocab-assignment-plan";
 
 export type AssignmentDraftIssueCode =
   | "required"
@@ -421,6 +424,55 @@ function validateCommonPlan(
   if (!plan) return;
   validateId(plan.datasetId, "commonPlan.datasetId", issues);
   validateId(plan.planNonce, "commonPlan.planNonce", issues);
+  validateUniqueIds(plan.orderedUnitIds, "commonPlan.orderedUnitIds", issues);
+  if (plan.splitBasis === "range_unit") {
+    if (
+      plan.rangeUnitCounts.length !== plan.selectedDateCount ||
+      plan.rangeUnitCounts.some((count) => !integerInRange(count, 1, 30))
+    ) {
+      issues.push({
+        code: "invalid_order",
+        path: "commonPlan.rangeUnitCounts",
+        message: "요일별 범위 단위 수와 선택한 날짜 수가 일치하지 않습니다.",
+      });
+    } else {
+      const allocation = resolveVocabUnitCycleAllocation({
+        orderedUnitIds: plan.orderedUnitIds,
+        baseSessionUnitCounts: plan.rangeUnitCounts,
+        selectedDateCount: plan.selectedDateCount,
+        overflowPolicy: plan.overflowPolicy,
+        extraDatePolicy: plan.extraDatePolicy,
+      });
+      if (
+        allocation.issue ||
+        JSON.stringify(allocation.sessionUnitIds) !==
+          JSON.stringify(plan.sessions.map((session) => session.unitIds))
+      ) {
+        issues.push({
+          code: "invalid_order",
+          path: "commonPlan.sessions",
+          message: "회차별 범위가 선택한 순서 또는 단위 수와 일치하지 않습니다.",
+        });
+      }
+    }
+  } else if (plan.rangeUnitCounts.length > 0) {
+    issues.push({
+      code: "invalid_order",
+      path: "commonPlan.rangeUnitCounts",
+      message: "문항 수 기준에는 범위 단위 수를 함께 보낼 수 없습니다.",
+    });
+  }
+  if (
+    plan.splitBasis === "question_count" &&
+    JSON.stringify(plan.sessions[0]?.unitIds ?? []) !==
+      JSON.stringify(plan.orderedUnitIds)
+  ) {
+    issues.push({
+      code: "invalid_order",
+      path: "commonPlan.orderedUnitIds",
+      message: "문항 수 기준의 전체 범위와 회차 범위가 일치하지 않습니다.",
+    });
+  }
   if (
     plan.questionCount.mode === "manual" &&
     !integerInRange(plan.questionCount.value, 4, 500)
@@ -433,12 +485,21 @@ function validateCommonPlan(
   }
   if (
     plan.overflowPolicy === "continue_weekly" &&
-    (plan.distribution !== "split" || plan.questionCount.mode !== "manual")
+    (plan.distribution !== "split" ||
+      (plan.splitBasis === "question_count" &&
+        plan.questionCount.mode !== "manual"))
   ) {
     issues.push({
       code: "invalid_order",
       path: "commonPlan.overflowPolicy",
-      message: "같은 요일로 이어서는 나누기·직접 입력에서만 선택할 수 있습니다.",
+      message: "같은 요일로 이어서는 문항 수 직접 입력 또는 범위 단위 나누기에서 선택할 수 있습니다.",
+    });
+  }
+  if (plan.distribution !== "split" && plan.splitBasis === "range_unit") {
+    issues.push({
+      code: "invalid_order",
+      path: "commonPlan.splitBasis",
+      message: "범위 단위 기준은 나누기에서만 사용할 수 있습니다.",
     });
   }
   if (
@@ -473,7 +534,10 @@ function validateCommonPlan(
       message: "미리보기 회차와 시험 횟수가 일치하지 않습니다.",
     });
   }
-  if (plan.recurrenceSessions.length !== plan.sessions.length) {
+  if (
+    plan.splitBasis === "question_count" &&
+    plan.recurrenceSessions.length !== plan.sessions.length
+  ) {
     issues.push({
       code: "invalid_order",
       path: "commonPlan.sessions",
@@ -481,9 +545,10 @@ function validateCommonPlan(
     });
   }
   if (
-    (plan.selectedDateCount === 0 && plan.sessions.length !== 1) ||
-    (plan.selectedDateCount > 0 &&
-      plan.sessions.length !== plan.selectedDateCount)
+    plan.splitBasis === "question_count" &&
+    ((plan.selectedDateCount === 0 && plan.sessions.length !== 1) ||
+      (plan.selectedDateCount > 0 &&
+        plan.sessions.length !== plan.selectedDateCount))
   ) {
     issues.push({
       code: "invalid_order",
@@ -491,11 +556,22 @@ function validateCommonPlan(
       message: "선택한 날짜 수와 일정이 일치하지 않습니다.",
     });
   }
-  if (!integerInRange(plan.sessions.length, 1, 7)) {
+  if (
+    plan.splitBasis === "range_unit" &&
+    plan.selectedDateCount > 0 &&
+    plan.recurrenceSessions.length !== plan.selectedDateCount
+  ) {
+    issues.push({
+      code: "invalid_order",
+      path: "commonPlan.sessions",
+      message: "선택한 요일 수와 반복 일정 기준이 일치하지 않습니다.",
+    });
+  }
+  if (!integerInRange(plan.sessions.length, 1, plan.splitBasis === "range_unit" ? 210 : 7)) {
     issues.push({
       code: "out_of_range",
       path: "commonPlan.sessions",
-      message: "공통 배정은 한 번에 1회부터 7회까지 만들 수 있습니다.",
+      message: `공통 배정은 한 번에 1회부터 ${plan.splitBasis === "range_unit" ? 210 : 7}회까지 만들 수 있습니다.`,
     });
   }
   if (draft.review.mode !== "none") {
@@ -506,6 +582,7 @@ function validateCommonPlan(
     });
   }
   const commonUnitIds = JSON.stringify(plan.sessions[0]?.unitIds ?? []);
+  const orderedUnitIdSet = new Set(plan.orderedUnitIds);
   let previousStart = Number.NEGATIVE_INFINITY;
   plan.sessions.forEach((session, index) => {
     validateUniqueIds(
@@ -513,7 +590,17 @@ function validateCommonPlan(
       `commonPlan.sessions.${index}.unitIds`,
       issues,
     );
-    if (JSON.stringify(session.unitIds) !== commonUnitIds) {
+    if (session.unitIds.some((unitId) => !orderedUnitIdSet.has(unitId))) {
+      issues.push({
+        code: "invalid_order",
+        path: `commonPlan.sessions.${index}.unitIds`,
+        message: "회차 범위가 선택한 전체 범위를 벗어났습니다.",
+      });
+    }
+    if (
+      plan.splitBasis === "question_count" &&
+      JSON.stringify(session.unitIds) !== commonUnitIds
+    ) {
       issues.push({
         code: "invalid_order",
         path: `commonPlan.sessions.${index}.unitIds`,
@@ -598,6 +685,27 @@ export function validateBulkPreviewProjection(
       message: `한 번에 최대 ${MAXIMUM_BULK_STUDENT_COUNT}명까지 선택할 수 있습니다.`,
     });
   }
+  if (
+    draft.commonPlan?.distribution === "split" &&
+    draft.studentIds.length > MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT
+  ) {
+    issues.push({
+      code: "out_of_range",
+      path: "studentIds",
+      message: `이어 배정은 한 번에 최대 ${MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT}명까지 선택할 수 있습니다.`,
+    });
+  }
+  if (
+    draft.commonPlan &&
+    draft.studentIds.length * draft.commonPlan.sessions.length >
+      MAXIMUM_BULK_ASSIGNMENT_COUNT
+  ) {
+    issues.push({
+      code: "out_of_range",
+      path: "range.sessionCount",
+      message: `한 번에 저장할 수 있는 시험은 전체 ${MAXIMUM_BULK_ASSIGNMENT_COUNT}개까지입니다. 학생이나 회차를 줄여 주세요.`,
+    });
+  }
   if (!["previous_span", "fixed_span"].includes(draft.range.mode)) {
     issues.push({
       code: "out_of_range",
@@ -612,11 +720,14 @@ export function validateBulkPreviewProjection(
       message: "회차당 범위 수는 1개부터 30개까지 설정해 주세요.",
     });
   }
-  if (!integerInRange(draft.range.sessionCount, 1, 7)) {
+  const maximumSessionCount = draft.commonPlan?.splitBasis === "range_unit"
+    ? 210
+    : 7;
+  if (!integerInRange(draft.range.sessionCount, 1, maximumSessionCount)) {
     issues.push({
       code: "out_of_range",
       path: "range.sessionCount",
-      message: "시험 횟수는 1회부터 7회까지 설정해 주세요.",
+      message: `시험 횟수는 1회부터 ${maximumSessionCount}회까지 설정해 주세요.`,
     });
   }
   if (!integerInRange(draft.dayInterval, 1, 30)) {

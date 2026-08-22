@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import {
   MAXIMUM_BULK_ASSIGNMENT_COUNT,
+  MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT,
   resolveBulkAssignmentSeries,
   unitRangeLabel,
 } from "@/lib/admin/bulk-assignment-range";
@@ -53,6 +54,7 @@ import {
   planDirectionalVocabSeriesTargets,
   rebalanceHalfRatioSplitQuestionCounts,
   resolveVocabQuestionCycleAllocation,
+  resolveVocabUnitCycleAllocation,
   type VocabQuestionAllocationIssue,
 } from "@/features/assignments/domain/vocab-assignment-plan";
 import { bulkPlanSignature } from "@/features/assignments/domain/bulk-plan-signature";
@@ -509,6 +511,66 @@ async function prepareCommonPlanSeries(input: {
   ) {
     throw new BulkAssignmentError("invalid_selection");
   }
+  if (commonPlan.splitBasis === "range_unit") {
+    const sessionQuestionCounts = sessions.map((session) => session.questionCount);
+    const plannedTargets: ReturnType<typeof planDirectionalVocabSeriesTargets> = [];
+    for (const session of sessions) {
+      const candidates = await loadRegularAssignmentSeriesCandidates(
+        {
+          datasetId,
+          unitIds: session.unitIds,
+          studentIds: [studentId],
+        },
+        admin,
+        cache,
+      );
+      const targets = planDirectionalVocabSeriesTargets({
+        candidates,
+        distribution: "repeat",
+        selectionMode: commonPlan.selectionMode,
+        sessionQuestionCounts: [session.questionCount],
+        englishToKoreanRatio: request.englishToKoreanRatio,
+        seedScope:
+          `${commonPlan.planNonce}:${studentId}:unit:${session.sourceSessionNumber}:cycle:${session.cycleIndex}`,
+      })[0] ?? [];
+      if (targets.length !== session.questionCount) {
+        throw new BulkAssignmentError(
+          "invalid_selection",
+          `${session.sessionNumber}회차 범위 안에서 문항 수와 출제 방향을 함께 만들 수 없습니다.`,
+        );
+      }
+      plannedTargets.push(targets);
+    }
+
+    const preparedSeries: PreparedRegularAssignment[] = [];
+    if (!materializeQuestions) {
+      return { preparedSeries, sessionQuestionCounts };
+    }
+    for (const [index, session] of sessions.entries()) {
+      const exactTargets = plannedTargets[index]!;
+      preparedSeries.push(await prepareRegularAssignment(
+        {
+          title: "",
+          datasetId,
+          unitIds: session.unitIds,
+          questionCount: sessionQuestionCounts[index]!,
+          englishToKoreanRatio: request.englishToKoreanRatio,
+          ...assignmentSettings,
+          availableUntil: session.availableUntil,
+          studentIds: [studentId],
+          targetSelectionMode: commonPlan.selectionMode,
+          randomSeed:
+            `${commonPlan.planNonce}:${studentId}:unit:${session.sourceSessionNumber}`,
+          exactTargetIds: exactTargets.map((target) => target.id),
+          exactTargetDirections: exactTargets.map((target) => target.direction),
+        },
+        admin,
+        undefined,
+        cache,
+      ));
+    }
+    return { preparedSeries, sessionQuestionCounts };
+  }
   const targetEligibility = await loadRegularAssignmentSeriesCandidates(
     {
       datasetId,
@@ -633,6 +695,19 @@ export async function previewBulkAssignments(
   authenticatedAdmin?: AdminContext,
 ): Promise<BulkAssignmentPreview> {
   const admin = authenticatedAdmin ?? (await requireAdmin());
+  const requestedSessionCount = input.commonPlan?.sessions.length ??
+    input.sessionCount;
+  if (
+    (input.commonPlan?.distribution === "split" &&
+      input.studentIds.length > MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT) ||
+    input.studentIds.length * requestedSessionCount >
+      MAXIMUM_BULK_ASSIGNMENT_COUNT
+  ) {
+    throw new BulkAssignmentError(
+      "invalid_selection",
+      `한 번에 저장할 수 있는 시험은 전체 ${MAXIMUM_BULK_ASSIGNMENT_COUNT}개이며 이어 배정 학생은 ${MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT}명까지입니다.`,
+    );
+  }
   const preparationCache = createMixedAssignmentPreparationCache();
   const regularPreparationCache = createRegularAssignmentPreparationCache();
   const [students, datasets, units, historyBundle] = await Promise.all([
@@ -673,6 +748,7 @@ export async function previewBulkAssignments(
         ? datasetById.get(selectedDatasetId)
         : null;
       let rangeError: string | null = null;
+      let orderedCommonUnits: (typeof units)[number][] = [];
       let resolvedSessions: Array<{
         sessionNumber: number;
         units: (typeof units)[number][];
@@ -681,6 +757,10 @@ export async function previewBulkAssignments(
       if (input.commonPlan && dataset) {
         try {
           const datasetUnits = unitsByDataset.get(dataset.id) ?? [];
+          orderedCommonUnits = resolveOrderedContiguousUnits(
+            datasetUnits,
+            input.commonPlan.orderedUnitIds,
+          );
           resolvedSessions = input.commonPlan.sessions.map((session, index) => ({
             sessionNumber: index + 1,
             units: resolveOrderedContiguousUnits(datasetUnits, session.unitIds),
@@ -776,7 +856,9 @@ export async function previewBulkAssignments(
       const plannedQuestionCountBySession = new Map<number, number>();
       const cycleIndexBySession = new Map<number, number>();
       if (input.commonPlan) {
-        const commonUnits = resolvedSessions[0]?.units ?? [];
+        const commonUnits = input.commonPlan.splitBasis === "range_unit"
+          ? orderedCommonUnits
+          : resolvedSessions[0]?.units ?? [];
         try {
           const capacity = await calculateAssignmentSeriesCapacity(
             {
@@ -792,51 +874,89 @@ export async function previewBulkAssignments(
             preparationCache,
           );
           availableQuestionCount = capacity.seriesMaximumQuestionCount;
-          const allocation = resolveVocabQuestionCycleAllocation({
-            availableQuestionCount,
-            distribution: input.commonPlan.distribution,
-            questionCount: input.commonPlan.questionCount,
-            selectedDateCount: input.commonPlan.selectedDateCount,
-            extraDatePolicy: input.commonPlan.extraDatePolicy,
-            maximumSessionCount: MAXIMUM_BULK_ASSIGNMENT_COUNT,
-          });
-          if (allocation.issue) {
-            return {
-              ...itemBase,
-              available: false,
-              sessions: [],
-              availableQuestionCount,
-              selectedQuestionCount: null,
-              remainingQuestionCount: null,
-              error: allocationIssueMessage(allocation.issue),
-              errorFieldKey: allocationIssueFieldKey(allocation.issue),
-            };
-          }
-          selectedQuestionCount = allocation.selectedQuestionCount;
-          remainingQuestionCount = allocation.remainingQuestionCount;
-          defaultSessionCount = allocation.defaultSessionCount;
-          scheduledQuestionCount = allocation.scheduledQuestionCount;
-          requiresExtraDateDecision =
-            allocation.requiresExtraDateDecision;
-          itemSchedule = extendCommonPlanSchedule(
-            schedule,
-            input.commonPlan.recurrenceSessions,
-            allocation.sessionQuestionCounts.length,
-          );
-          resolvedSessions = allocation.sessionQuestionCounts.map(
-            (questionCount, index) => {
-              plannedQuestionCountBySession.set(index + 1, questionCount);
-              cycleIndexBySession.set(
-                index + 1,
-                allocation.sessionCycleIndexes[index] ?? 0,
+          if (input.commonPlan.splitBasis === "range_unit") {
+            const unitAllocation = resolveVocabUnitCycleAllocation({
+              orderedUnitIds: input.commonPlan.orderedUnitIds,
+              baseSessionUnitCounts: input.commonPlan.rangeUnitCounts,
+              selectedDateCount: input.commonPlan.selectedDateCount,
+              overflowPolicy: input.commonPlan.overflowPolicy,
+              extraDatePolicy: input.commonPlan.extraDatePolicy,
+              maximumSessionCount: MAXIMUM_BULK_ASSIGNMENT_COUNT,
+            });
+            if (unitAllocation.issue) {
+              throw new BulkAssignmentError(
+                "invalid_selection",
+                "범위 단위와 회차 일정을 다시 확인해 주세요.",
               );
+            }
+            const actualSessionUnitIds = resolvedSessions.map((session) =>
+              session.units.map((unit) => unit.id)
+            );
+            if (
+              JSON.stringify(actualSessionUnitIds) !==
+                JSON.stringify(unitAllocation.sessionUnitIds)
+            ) {
+              throw new BulkAssignmentError(
+                "invalid_selection",
+                "회차별 범위가 선택한 순서 또는 단위 수와 일치하지 않습니다.",
+              );
+            }
+            defaultSessionCount = unitAllocation.defaultSessionCount;
+            requiresExtraDateDecision =
+              unitAllocation.requiresExtraDateDecision;
+            resolvedSessions.forEach((session, index) => {
+              cycleIndexBySession.set(
+                session.sessionNumber,
+                unitAllocation.sessionCycleIndexes[index] ?? 0,
+              );
+            });
+          } else {
+            const allocation = resolveVocabQuestionCycleAllocation({
+              availableQuestionCount,
+              distribution: input.commonPlan.distribution,
+              questionCount: input.commonPlan.questionCount,
+              selectedDateCount: input.commonPlan.selectedDateCount,
+              extraDatePolicy: input.commonPlan.extraDatePolicy,
+              maximumSessionCount: MAXIMUM_BULK_ASSIGNMENT_COUNT,
+            });
+            if (allocation.issue) {
               return {
-                sessionNumber: index + 1,
-                units: commonUnits,
-                truncated: false,
+                ...itemBase,
+                available: false,
+                sessions: [],
+                availableQuestionCount,
+                selectedQuestionCount: null,
+                remainingQuestionCount: null,
+                error: allocationIssueMessage(allocation.issue),
+                errorFieldKey: allocationIssueFieldKey(allocation.issue),
               };
-            },
-          );
+            }
+            selectedQuestionCount = allocation.selectedQuestionCount;
+            remainingQuestionCount = allocation.remainingQuestionCount;
+            defaultSessionCount = allocation.defaultSessionCount;
+            scheduledQuestionCount = allocation.scheduledQuestionCount;
+            requiresExtraDateDecision =
+              allocation.requiresExtraDateDecision;
+            itemSchedule = extendCommonPlanSchedule(
+              schedule,
+              input.commonPlan.recurrenceSessions,
+              allocation.sessionQuestionCounts.length,
+            );
+            resolvedSessions = allocation.sessionQuestionCounts.map(
+              (questionCount, index) => {
+                plannedQuestionCountBySession.set(index + 1, questionCount);
+                cycleIndexBySession.set(
+                  index + 1,
+                  allocation.sessionCycleIndexes[index] ?? 0,
+                );
+                return {
+                  sessionNumber: index + 1,
+                  units: commonUnits,
+                  truncated: false,
+                };
+              },
+            );
+          }
         } catch (error) {
           return {
             ...itemBase,
@@ -929,6 +1049,13 @@ export async function previewBulkAssignments(
             const plannedQuestionCount = plannedQuestionCountBySession.get(
               resolved.sessionNumber,
             );
+            const unitSplitQuestionCount = input.commonPlan?.splitBasis === "range_unit"
+              ? input.commonPlan.questionCount.mode === "manual"
+                ? input.commonPlan.questionCount.value
+                : capacity.maximumQuestionCount
+              : undefined;
+            const resolvedQuestionCount = plannedQuestionCount ??
+              unitSplitQuestionCount;
             const capacityError =
               includeReview && capacity.wrongEligible < 1
                 ? "다음 시험에 추가 가능한 틀린 단어가 없습니다."
@@ -937,9 +1064,9 @@ export async function previewBulkAssignments(
                   ? "첫 회차에 새 범위 단어를 하나 이상 포함할 수 없습니다."
                 : capacity.maximumQuestionCount < capacity.minimumQuestionCount
                   ? "현재 범위에서 만들 수 있는 문항이 부족합니다."
-                  : plannedQuestionCount !== undefined &&
-                      plannedQuestionCount > capacity.maximumQuestionCount
-                    ? "현재 회차에서 만들 수 있는 문항이 부족합니다."
+                  : resolvedQuestionCount !== undefined &&
+                      resolvedQuestionCount > capacity.maximumQuestionCount
+                    ? `현재 회차는 최대 ${capacity.maximumQuestionCount}문항까지 만들 수 있습니다.`
                   : null;
             const error = collisionResolution.unresolved
               ? "같은 날 시험 겹침의 처리 방법을 선택해 주세요."
@@ -949,7 +1076,7 @@ export async function previewBulkAssignments(
               available: error === null,
               questionCount: error
                 ? 0
-                : plannedQuestionCount ?? capacity.recommendedQuestionCount,
+                : resolvedQuestionCount ?? capacity.recommendedQuestionCount,
               wrongCount: includeReview ? capacity.wrongEligible : 0,
               error,
               ...(capacityError && !collisionResolution.unresolved

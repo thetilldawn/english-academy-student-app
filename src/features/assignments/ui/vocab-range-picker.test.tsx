@@ -63,6 +63,7 @@ function controller(input?: {
     changeOverflowPolicy: vi.fn(),
     changeQuestionCountMode: vi.fn(),
     changeSelectionMode: vi.fn(),
+    changeSplitBasis: vi.fn(),
     selectUnit: vi.fn(),
   };
   const sessionCount = input?.sessionCount ?? 3;
@@ -98,6 +99,7 @@ function controller(input?: {
     planner: {
       datasetId: dataset.id,
       distribution: "split",
+      splitBasis: "question_count",
       manualQuestionCount: 20,
       overflowPolicy: input?.overflowPolicy ?? "leave",
       questionCountMode: input?.manual ? "manual" : "all",
@@ -145,6 +147,10 @@ describe("VocabRangePicker", () => {
     fireEvent.click(screen.getByRole("button", { name: "무작위" }));
     expect(withRemaining.actions.changeSelectionMode).toHaveBeenCalledWith(
       "random",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "범위 단위" }));
+    expect(withRemaining.actions.changeSplitBasis).toHaveBeenCalledWith(
+      "range_unit",
     );
   });
 

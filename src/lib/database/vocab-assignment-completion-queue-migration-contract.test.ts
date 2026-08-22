@@ -17,6 +17,13 @@ const foreignKeyIndexMigration = readFileSync(
   "utf8",
 );
 
+const plannedWeekdayMigration = readFileSync(
+  path.resolve(
+    "supabase/migrations/20260822150000_preserve_vocab_queue_planned_weekday.sql",
+  ),
+  "utf8",
+);
+
 describe("단어 시험 완료 후 이어 배정 migration", () => {
   it("학생별 계획·회차·변경 이력을 비공개 표에 보존한다", () => {
     expect(migration).toContain(
@@ -70,6 +77,22 @@ describe("단어 시험 완료 후 이어 배정 migration", () => {
     expect(migration).toContain("if shifted_until <= new.completed_at then");
     expect(migration).toContain("effective_available_from = shifted_from");
     expect(migration).toContain("'scheduleShifted'");
+  });
+
+  it("늦게 완료해도 다음 범위에 지정한 원래 요일·시간·기간을 보존한다", () => {
+    expect(plannedWeekdayMigration).toContain(
+      "create function private.preserve_vocab_assignment_queue_planned_window_v1()",
+    );
+    expect(plannedWeekdayMigration).toContain(
+      "new.planned_available_from at time zone 'Asia/Seoul'",
+    );
+    expect(plannedWeekdayMigration).toContain(
+      "new.planned_available_until - new.planned_available_from",
+    );
+    expect(plannedWeekdayMigration).toContain(
+      "before update of status, effective_available_from, effective_available_until",
+    );
+    expect(plannedWeekdayMigration).toContain("new.status = 'ready'");
   });
 
   it("일시적 생성 실패는 ready 상태로 남겨 다음 호출에서 재시도한다", () => {

@@ -134,8 +134,8 @@ export function VocabAssignmentPlanner({
     : null;
   const conditionStatus = hasVocabAssignmentFieldError(visibleErrors, [
     "distribution",
+    "splitBasis",
     "questionCount",
-    "overflowPolicy",
     "selectionMode",
     "direction",
     "questionOrder",

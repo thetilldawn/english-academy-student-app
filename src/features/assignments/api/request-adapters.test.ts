@@ -459,6 +459,9 @@ describe("assignment request adapters", () => {
       commonPlan: {
         datasetId: assignmentContractIds.dataset,
         distribution: "split",
+        splitBasis: "question_count",
+        orderedUnitIds: [assignmentContractIds.day57],
+        rangeUnitCounts: [],
         questionCount: { mode: "manual", value: 40 },
         overflowPolicy: "continue_weekly",
         extraDatePolicy: "unconfirmed",
@@ -507,6 +510,9 @@ describe("assignment request adapters", () => {
     expect(preview.body.commonPlan).toMatchObject({
       datasetId: assignmentContractIds.dataset,
       distribution: "split",
+      splitBasis: "question_count",
+      orderedUnitIds: [assignmentContractIds.day57],
+      rangeUnitCounts: [],
       questionCount: { mode: "manual", value: 40 },
       overflowPolicy: "continue_weekly",
       extraDatePolicy: "unconfirmed",
@@ -562,6 +568,67 @@ describe("assignment request adapters", () => {
     );
     expect(bulkSubmissionFingerprint(repeatedDraft)).not.toBe(
       bulkSubmissionFingerprint(commonDraft),
+    );
+  });
+
+  it("범위 단위 수와 회차별 정확한 범위를 미리보기·저장에 함께 보낸다", () => {
+    const sessions = [
+      {
+        unitIds: [assignmentContractIds.day57],
+        availableLocalDateTime: "2026-08-17T16:00",
+        deadlineLocalDateTime: "2026-08-18T22:00",
+      },
+      {
+        unitIds: [assignmentContractIds.day60],
+        availableLocalDateTime: "2026-08-19T16:00",
+        deadlineLocalDateTime: "2026-08-20T22:00",
+      },
+    ];
+    const draft: BulkSeriesAssignmentDraft = {
+      ...bulkDraft,
+      range: { mode: "fixed_span", unitsPerSession: 1, sessionCount: 2 },
+      review: { mode: "none", levels: [1, 2] },
+      commonPlan: {
+        datasetId: assignmentContractIds.dataset,
+        distribution: "split",
+        splitBasis: "range_unit",
+        orderedUnitIds: [
+          assignmentContractIds.day57,
+          assignmentContractIds.day60,
+        ],
+        rangeUnitCounts: [1, 1],
+        questionCount: { mode: "all" },
+        overflowPolicy: "continue_weekly",
+        extraDatePolicy: "unconfirmed",
+        selectedDateCount: 2,
+        selectionMode: "source_order",
+        planNonce: assignmentContractIds.idempotencyKey,
+        recurrenceSessions: sessions.map((session) => ({
+          availableLocalDateTime: session.availableLocalDateTime,
+          deadlineLocalDateTime: session.deadlineLocalDateTime,
+        })),
+        sessions,
+        collisionDecisions: [],
+      },
+    };
+
+    const preview = buildBulkAssignmentPreviewRequest(draft);
+    const submit = buildBulkAssignmentRequest(
+      draft,
+      assignmentContractIds.idempotencyKey,
+      NOW,
+    );
+    expect(preview.body.commonPlan).toMatchObject({
+      splitBasis: "range_unit",
+      rangeUnitCounts: [1, 1],
+      sessions: [
+        { unitIds: [assignmentContractIds.day57] },
+        { unitIds: [assignmentContractIds.day60] },
+      ],
+    });
+    expect(submit.body.commonPlan).toStrictEqual(preview.body.commonPlan);
+    expect(bulkAssignmentPreviewSchema.parse(preview.body)).toStrictEqual(
+      preview.body,
     );
   });
 

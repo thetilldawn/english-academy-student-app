@@ -5,6 +5,9 @@ export const ISO_WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const;
 export type IsoWeekday = (typeof ISO_WEEKDAYS)[number];
 export type VocabAssignmentEntryMode = "student" | "school" | "dataset";
 export type VocabRangeDistribution = "split" | "repeat";
+export type VocabSplitBasis = "question_count" | "range_unit";
+export type VocabUnitAllocationMode = "same" | "by_weekday";
+export type VocabWeekdayUnitCounts = Readonly<Record<IsoWeekday, number>>;
 export type CollisionDecisionMode = "skip" | "move" | "allow";
 export type VocabQuestionCountChoice =
   | { mode: "all" }
@@ -55,6 +58,21 @@ export type VocabQuestionCycleAllocation = VocabQuestionAllocation & {
   requiresExtraDateDecision: boolean;
   scheduledQuestionCount: number;
   sessionCycleIndexes: number[];
+};
+
+export type VocabUnitCycleAllocationIssue =
+  | "missing_units"
+  | "missing_schedule"
+  | "invalid_unit_count"
+  | "series_session_limit_exceeded";
+
+export type VocabUnitCycleAllocation = {
+  sessionUnitIds: string[][];
+  remainingUnitIds: string[];
+  defaultSessionCount: number;
+  requiresExtraDateDecision: boolean;
+  sessionCycleIndexes: number[];
+  issue: VocabUnitCycleAllocationIssue | null;
 };
 
 export function resolveExtraDateCancelSessionCount(
@@ -435,6 +453,109 @@ export function resolveVocabQuestionCycleAllocation(input: {
 }
 
 /**
+ * Splits only the already selected, ordered range. Calendar slots provide the
+ * repeating per-session unit counts but never expand the selected range.
+ */
+export function resolveVocabUnitCycleAllocation(input: {
+  orderedUnitIds: readonly string[];
+  baseSessionUnitCounts: readonly number[];
+  selectedDateCount: number;
+  overflowPolicy: VocabSplitOverflowPolicy;
+  extraDatePolicy: VocabExtraDatePolicy;
+  maximumSessionCount?: number;
+}): VocabUnitCycleAllocation {
+  const maximumSessionCount = input.maximumSessionCount ?? 210;
+  const empty = (
+    issue: VocabUnitCycleAllocationIssue,
+  ): VocabUnitCycleAllocation => ({
+    sessionUnitIds: [],
+    remainingUnitIds: [],
+    defaultSessionCount: 0,
+    requiresExtraDateDecision: false,
+    sessionCycleIndexes: [],
+    issue,
+  });
+  if (
+    input.orderedUnitIds.length === 0 ||
+    new Set(input.orderedUnitIds).size !== input.orderedUnitIds.length
+  ) {
+    return empty("missing_units");
+  }
+  if (
+    !Number.isInteger(input.selectedDateCount) ||
+    input.selectedDateCount < 1 ||
+    input.baseSessionUnitCounts.length !== input.selectedDateCount
+  ) {
+    return empty("missing_schedule");
+  }
+  if (
+    input.baseSessionUnitCounts.some(
+      (count) => !Number.isInteger(count) || count < 1 || count > 30,
+    )
+  ) {
+    return empty("invalid_unit_count");
+  }
+
+  let firstCycleCursor = 0;
+  let defaultSessionCount = 0;
+  while (firstCycleCursor < input.orderedUnitIds.length) {
+    const count = input.baseSessionUnitCounts[
+      defaultSessionCount % input.baseSessionUnitCounts.length
+    ]!;
+    firstCycleCursor += input.orderedUnitIds.slice(
+      firstCycleCursor,
+      firstCycleCursor + count,
+    ).length;
+    defaultSessionCount += 1;
+  }
+  const requiresExtraDateDecision =
+    input.selectedDateCount > defaultSessionCount &&
+    input.extraDatePolicy === "unconfirmed";
+  const repeatFromStart =
+    input.selectedDateCount > defaultSessionCount &&
+    input.extraDatePolicy === "repeat_from_start";
+  const requiredSessionCount = repeatFromStart
+    ? input.selectedDateCount
+    : (
+    input.overflowPolicy === "continue_weekly" &&
+    defaultSessionCount > input.selectedDateCount
+      ? defaultSessionCount
+      : Math.min(defaultSessionCount, input.selectedDateCount)
+    );
+  if (requiredSessionCount > maximumSessionCount) {
+    return empty("series_session_limit_exceeded");
+  }
+
+  const sessionUnitIds: string[][] = [];
+  const sessionCycleIndexes: number[] = [];
+  let cursor = 0;
+  let cycleIndex = 0;
+  for (let index = 0; index < requiredSessionCount; index += 1) {
+    const count = input.baseSessionUnitCounts[
+      index % input.baseSessionUnitCounts.length
+    ]!;
+    const chunk = input.orderedUnitIds.slice(cursor, cursor + count);
+    sessionUnitIds.push([...chunk]);
+    sessionCycleIndexes.push(cycleIndex);
+    cursor += chunk.length;
+    if (cursor === input.orderedUnitIds.length && index + 1 < requiredSessionCount) {
+      cursor = 0;
+      cycleIndex += 1;
+    }
+  }
+  return {
+    sessionUnitIds,
+    remainingUnitIds: repeatFromStart || cursor === 0
+      ? []
+      : input.orderedUnitIds.slice(cursor),
+    defaultSessionCount,
+    requiresExtraDateDecision,
+    sessionCycleIndexes,
+    issue: null,
+  };
+}
+
+/**
  * Converts one student's actual eligible question capacity into the concrete
  * question count for each scheduled quiz. It does not inspect DAY row counts.
  */
@@ -705,6 +826,20 @@ export function buildScheduleSlots(
       availableLocalDateTime: `${date}T${draft.availableTime}`,
       deadlineLocalDateTime: `${deadlineDate}T${draft.deadlineTime}`,
     }];
+  });
+}
+
+export function resolveVocabBaseSessionUnitCounts(input: {
+  slots: readonly VocabScheduleSlot[];
+  mode: VocabUnitAllocationMode;
+  unitsPerSession: number;
+  weekdayUnitsPerSession: VocabWeekdayUnitCounts;
+}): number[] {
+  return input.slots.map((slot) => {
+    if (input.mode === "same") return input.unitsPerSession;
+    const date = parseCalendarDate(slot.date);
+    if (!date) return Number.NaN;
+    return input.weekdayUnitsPerSession[isoWeekday(date)];
   });
 }
 

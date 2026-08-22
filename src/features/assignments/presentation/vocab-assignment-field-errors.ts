@@ -4,6 +4,9 @@ export type VocabAssignmentFieldKey =
   | "dataset"
   | "range"
   | "distribution"
+  | "splitBasis"
+  | "unitAllocationMode"
+  | "unitsPerSession"
   | "questionCount"
   | "overflowPolicy"
   | "selectionMode"
@@ -19,7 +22,8 @@ export type VocabAssignmentFieldKey =
   | "students"
   | "preview"
   | `session-${number}-available`
-  | `session-${number}-deadline`;
+  | `session-${number}-deadline`
+  | `weekday-${number}-units`;
 
 export function hasVocabAssignmentFieldError(
   errors: Partial<Record<VocabAssignmentFieldKey, string>>,
@@ -37,16 +41,21 @@ export function hasVocabScheduleFieldError(
     "availableTime",
     "deadlineOffset",
     "deadlineTime",
+    "unitAllocationMode",
+    "unitsPerSession",
+    "overflowPolicy",
     "preview",
-  ]) || Object.keys(errors).some((key) => key.startsWith("session-"));
+  ]) || Object.keys(errors).some(
+    (key) => key.startsWith("session-") || key.startsWith("weekday-"),
+  );
 }
 
 const fieldOrder: readonly VocabAssignmentFieldKey[] = [
   "dataset",
   "range",
   "distribution",
+  "splitBasis",
   "questionCount",
-  "overflowPolicy",
   "selectionMode",
   "direction",
   "questionOrder",
@@ -54,6 +63,9 @@ const fieldOrder: readonly VocabAssignmentFieldKey[] = [
   "timing",
   "startDate",
   "weekdays",
+  "unitAllocationMode",
+  "overflowPolicy",
+  "unitsPerSession",
   "availableTime",
   "deadlineOffset",
   "deadlineTime",
@@ -69,8 +81,13 @@ function fieldRank(key: VocabAssignmentFieldKey) {
       : staticIndex;
   }
   const session = key.match(/^session-(\d+)-(available|deadline)$/);
-  if (!session) return 20_000;
-  return 100 + Number(session[1]) * 2 + (session[2] === "deadline" ? 1 : 0);
+  if (session) {
+    return 100 + Number(session[1]) * 2 + (session[2] === "deadline" ? 1 : 0);
+  }
+  const weekday = key.match(/^weekday-(\d+)-units$/);
+  return weekday
+    ? fieldOrder.indexOf("unitsPerSession") + Number(weekday[1]) / 100
+    : 20_000;
 }
 
 export function vocabAssignmentFieldKeyForIssue(
@@ -82,6 +99,14 @@ export function vocabAssignmentFieldKeyForIssue(
     return "dataset";
   }
   if (/commonPlan\.sessions\.\d+\.unitIds/.test(path)) return "range";
+  if (path === "commonPlan.splitBasis") return "splitBasis";
+  if (path === "commonPlan.unitAllocationMode") return "unitAllocationMode";
+  if (path === "commonPlan.unitsPerSession") return "unitsPerSession";
+  if (path === "commonPlan.rangeUnitCounts") return "unitAllocationMode";
+  const weekdayUnits = path.match(
+    /^commonPlan\.weekdayUnitsPerSession\.(\d+)$/,
+  );
+  if (weekdayUnits) return `weekday-${Number(weekdayUnits[1])}-units`;
   if (path === "commonPlan.questionCount") return "questionCount";
   if (path === "commonPlan.overflowPolicy") return "overflowPolicy";
   if (

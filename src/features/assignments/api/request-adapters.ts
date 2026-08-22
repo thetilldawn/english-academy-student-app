@@ -279,6 +279,9 @@ function bulkSelectionBody(draft: BulkSeriesAssignmentDraft) {
     ? {
         datasetId: draft.commonPlan.datasetId,
         distribution: draft.commonPlan.distribution,
+        splitBasis: draft.commonPlan.splitBasis,
+        orderedUnitIds: [...draft.commonPlan.orderedUnitIds],
+        rangeUnitCounts: [...draft.commonPlan.rangeUnitCounts],
         questionCount: draft.commonPlan.questionCount,
         overflowPolicy: draft.commonPlan.overflowPolicy,
         extraDatePolicy: draft.commonPlan.extraDatePolicy,

@@ -19,6 +19,7 @@ import type {
 } from "../presentation/vocab-assignment-field-errors";
 import styles from "./vocab-assignment-planner.module.css";
 import { VocabScheduleDetailFields } from "./vocab-schedule-detail-fields";
+import { VocabUnitAllocationFields } from "./vocab-unit-allocation-fields";
 
 const weekdays: ReadonlyArray<readonly [IsoWeekday, string]> = [
   [1, "월"],
@@ -128,6 +129,10 @@ export function VocabScheduleFields({
           <FieldError id="vocab-weekdays-error">{weekdaysError}</FieldError>
         ) : null}
       </Field>
+      <VocabUnitAllocationFields
+        controller={controller}
+        fieldErrors={fieldErrors}
+      />
       {controller.requiresExtraDateDecision ? (
         <div className={styles.warning} role="status">
           <span>

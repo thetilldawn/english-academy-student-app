@@ -4,8 +4,11 @@ import type {
   VocabRangeDistribution,
   VocabScheduleDraft,
   VocabScheduleSlot,
+  VocabSplitBasis,
   VocabSplitOverflowPolicy,
   VocabTargetSelectionMode,
+  VocabUnitAllocationMode,
+  VocabWeekdayUnitCounts,
 } from "./vocab-assignment-plan";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -29,6 +32,10 @@ export function validateVocabPlannerInputs(input: {
   datasetId: string;
   selectedUnitIds: readonly string[];
   distribution: VocabRangeDistribution;
+  splitBasis: VocabSplitBasis;
+  unitAllocationMode: VocabUnitAllocationMode;
+  unitsPerSession: number;
+  weekdayUnitsPerSession: VocabWeekdayUnitCounts;
   questionCount: VocabQuestionCountChoice;
   overflowPolicy: VocabSplitOverflowPolicy;
   selectionMode: VocabTargetSelectionMode;
@@ -64,13 +71,61 @@ export function validateVocabPlannerInputs(input: {
   }
   if (
     input.overflowPolicy === "continue_weekly" &&
-    (input.distribution !== "split" || input.questionCount.mode !== "manual")
+    (input.distribution !== "split" ||
+      (input.splitBasis === "question_count" &&
+        input.questionCount.mode !== "manual"))
   ) {
     issues.push({
       code: "invalid_order",
       path: "commonPlan.overflowPolicy",
-      message: "같은 요일로 이어서는 나누기·직접 입력에서만 선택할 수 있습니다.",
+      message: "같은 요일로 이어서는 문항 수 직접 입력 또는 범위 단위 나누기에서 선택할 수 있습니다.",
     });
+  }
+  if (
+    input.distribution === "split" &&
+    !["question_count", "range_unit"].includes(input.splitBasis)
+  ) {
+    issues.push({
+      code: "invalid_order",
+      path: "commonPlan.splitBasis",
+      message: "나누기 기준을 골라 주세요.",
+    });
+  }
+  if (
+    input.distribution === "split" &&
+    input.splitBasis === "range_unit"
+  ) {
+    if (!['same', 'by_weekday'].includes(input.unitAllocationMode)) {
+      issues.push({
+        code: "invalid_order",
+        path: "commonPlan.unitAllocationMode",
+        message: "범위 단위 배정 방식을 골라 주세요.",
+      });
+    }
+    if (
+      input.unitAllocationMode === "same" &&
+      (!Number.isInteger(input.unitsPerSession) ||
+        input.unitsPerSession < 1 ||
+        input.unitsPerSession > 30)
+    ) {
+      issues.push({
+        code: "out_of_range",
+        path: "commonPlan.unitsPerSession",
+        message: "단위 수는 1개부터 30개까지 입력해 주세요.",
+      });
+    }
+    if (input.unitAllocationMode === "by_weekday") {
+      input.schedule.weekdays.forEach((weekday) => {
+        const count = input.weekdayUnitsPerSession[weekday];
+        if (!Number.isInteger(count) || count < 1 || count > 30) {
+          issues.push({
+            code: "out_of_range",
+            path: `commonPlan.weekdayUnitsPerSession.${weekday}`,
+            message: "요일별 단위 수는 1개부터 30개까지 입력해 주세요.",
+          });
+        }
+      });
+    }
   }
   if (!["source_order", "random"].includes(input.selectionMode)) {
     issues.push({

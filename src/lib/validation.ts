@@ -1,12 +1,16 @@
 import { z } from "zod";
 
+import { resolveVocabUnitCycleAllocation } from "@/features/assignments/domain/vocab-assignment-plan";
+
 import {
   questionOrderModes,
   timingModes,
 } from "@/lib/admin/assignment-settings";
 import {
   bulkAssignmentRangeModes,
+  MAXIMUM_BULK_ASSIGNMENT_COUNT,
   MAXIMUM_BULK_STUDENT_COUNT,
+  MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT,
 } from "@/lib/admin/bulk-assignment-range";
 import { readingCurriculumStages } from "@/lib/admin/reading-curriculum";
 
@@ -237,6 +241,9 @@ const bulkCommonPlanSchema = z
   .object({
     datasetId: z.uuid(),
     distribution: z.enum(["split", "repeat"]),
+    splitBasis: z.enum(["question_count", "range_unit"]),
+    orderedUnitIds: z.array(z.uuid()).min(1).max(500),
+    rangeUnitCounts: z.array(z.number().int().min(1).max(30)).max(7),
     questionCount: z.discriminatedUnion("mode", [
       z.object({ mode: z.literal("all") }).strict(),
       z
@@ -273,7 +280,7 @@ const bulkCommonPlanSchema = z
           .strict(),
       )
       .min(1)
-      .max(7),
+      .max(210),
     collisionDecisions: z.array(bulkCollisionDecisionSchema).max(210),
   })
   .strict()
@@ -289,16 +296,50 @@ const bulkCommonPlanSchema = z
       });
     }
     if (
+      value.splitBasis === "question_count" &&
       value.questionCount.mode !== "manual" &&
       value.overflowPolicy === "continue_weekly"
     ) {
       context.addIssue({
         code: "custom",
         path: ["overflowPolicy"],
-        message: "직접 입력한 문항 수가 있을 때만 다음 주로 이어갈 수 있습니다.",
+        message: "문항 수 기준은 직접 입력한 문항 수가 있을 때만 다음 주로 이어갈 수 있습니다.",
       });
     }
-    if (value.recurrenceSessions.length !== value.sessions.length) {
+    if (
+      value.distribution !== "split" &&
+      value.splitBasis === "range_unit"
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["splitBasis"],
+        message: "범위 단위 기준은 나누기에서만 사용할 수 있습니다.",
+      });
+    }
+    if (
+      value.splitBasis === "range_unit" &&
+      value.rangeUnitCounts.length !== value.selectedDateCount
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["rangeUnitCounts"],
+        message: "요일별 범위 단위 수와 선택한 날짜 수가 일치하지 않습니다.",
+      });
+    }
+    if (
+      value.splitBasis === "question_count" &&
+      value.rangeUnitCounts.length !== 0
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["rangeUnitCounts"],
+        message: "문항 수 기준에는 범위 단위 수를 함께 보낼 수 없습니다.",
+      });
+    }
+    if (
+      value.splitBasis === "question_count" &&
+      value.recurrenceSessions.length !== value.sessions.length
+    ) {
       context.addIssue({
         code: "custom",
         path: ["recurrenceSessions"],
@@ -306,14 +347,26 @@ const bulkCommonPlanSchema = z
       });
     }
     if (
-      (value.selectedDateCount === 0 && value.sessions.length !== 1) ||
-      (value.selectedDateCount > 0 &&
-        value.sessions.length !== value.selectedDateCount)
+      value.splitBasis === "question_count" &&
+      ((value.selectedDateCount === 0 && value.sessions.length !== 1) ||
+        (value.selectedDateCount > 0 &&
+          value.sessions.length !== value.selectedDateCount))
     ) {
       context.addIssue({
         code: "custom",
         path: ["selectedDateCount"],
         message: "선택한 날짜 수와 일정이 일치하지 않습니다.",
+      });
+    }
+    if (
+      value.splitBasis === "range_unit" &&
+      value.selectedDateCount > 0 &&
+      value.recurrenceSessions.length !== value.selectedDateCount
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["recurrenceSessions"],
+        message: "선택한 요일 수와 반복 일정 기준이 일치하지 않습니다.",
       });
     }
     let previousRecurrenceStart = Number.NEGATIVE_INFINITY;
@@ -335,13 +388,54 @@ const bulkCommonPlanSchema = z
       }
       previousRecurrenceStart = start;
     });
+    if (new Set(value.orderedUnitIds).size !== value.orderedUnitIds.length) {
+      context.addIssue({
+        code: "custom",
+        path: ["orderedUnitIds"],
+        message: "선택한 전체 범위에 같은 단위를 두 번 넣을 수 없습니다.",
+      });
+    }
+    if (
+      value.splitBasis === "question_count" &&
+      JSON.stringify(value.sessions[0]?.unitIds ?? []) !==
+        JSON.stringify(value.orderedUnitIds)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["orderedUnitIds"],
+        message: "문항 수 기준의 전체 범위와 회차 범위가 일치하지 않습니다.",
+      });
+    }
+    if (
+      value.splitBasis === "range_unit" &&
+      value.rangeUnitCounts.length === value.selectedDateCount
+    ) {
+      const allocation = resolveVocabUnitCycleAllocation({
+        orderedUnitIds: value.orderedUnitIds,
+        baseSessionUnitCounts: value.rangeUnitCounts,
+        selectedDateCount: value.selectedDateCount,
+        overflowPolicy: value.overflowPolicy,
+        extraDatePolicy: value.extraDatePolicy,
+      });
+      if (
+        allocation.issue ||
+        JSON.stringify(allocation.sessionUnitIds) !==
+          JSON.stringify(value.sessions.map((session) => session.unitIds))
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["sessions"],
+          message: "회차별 범위가 선택한 순서 또는 단위 수와 일치하지 않습니다.",
+        });
+      }
+    }
   });
 
 const bulkAssignmentSelectionFields = {
   studentIds: z.array(z.uuid()).min(1).max(MAXIMUM_BULK_STUDENT_COUNT),
   rangeMode: z.enum(bulkAssignmentRangeModes).default("previous_span"),
   unitsPerSession: z.number().int().min(1).max(30).default(1),
-  sessionCount: z.number().int().min(1).max(7).default(1),
+  sessionCount: z.number().int().min(1).max(210).default(1),
   firstAvailableFrom: z.iso.datetime({ offset: true }),
   dayInterval: z.number().int().min(1).max(30).default(1),
   firstAvailableUntil: z.iso.datetime({ offset: true }).nullable(),
@@ -367,6 +461,37 @@ function validateBulkAssignmentSelection(
   },
   context: z.RefinementCtx,
 ) {
+  const maximumSessionCount = value.commonPlan?.splitBasis === "range_unit"
+    ? 210
+    : 7;
+  if (value.sessionCount > maximumSessionCount) {
+    context.addIssue({
+      code: "custom",
+      path: ["sessionCount"],
+      message: `시험 횟수는 1회부터 ${maximumSessionCount}회까지 설정해 주세요.`,
+    });
+  }
+  if (
+    value.commonPlan?.distribution === "split" &&
+    value.studentIds.length > MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["studentIds"],
+      message: `이어 배정은 한 번에 최대 ${MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT}명까지 선택할 수 있습니다.`,
+    });
+  }
+  if (
+    value.commonPlan &&
+    value.studentIds.length * value.commonPlan.sessions.length >
+      MAXIMUM_BULK_ASSIGNMENT_COUNT
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["sessionCount"],
+      message: `한 번에 저장할 수 있는 시험은 전체 ${MAXIMUM_BULK_ASSIGNMENT_COUNT}개까지입니다. 학생이나 회차를 줄여 주세요.`,
+    });
+  }
   if (new Set(value.studentIds).size !== value.studentIds.length) {
     context.addIssue({
       code: "custom",
@@ -392,6 +517,7 @@ function validateBulkAssignmentSelection(
     });
   }
   if (value.commonPlan) {
+    const commonPlan = value.commonPlan;
     if (value.includePendingReview) {
       context.addIssue({
         code: "custom",
@@ -399,15 +525,15 @@ function validateBulkAssignmentSelection(
         message: "공통 단어 배정에서는 오답을 함께 넣을 수 없습니다.",
       });
     }
-    if (value.commonPlan.sessions.length !== value.sessionCount) {
+    if (commonPlan.sessions.length !== value.sessionCount) {
       context.addIssue({
         code: "custom",
         path: ["commonPlan", "sessions"],
         message: "공통 배정 회차와 시험 횟수가 일치하지 않습니다.",
       });
     }
-    if (value.commonPlan.sessions.length === 0) return;
-    if (new Set(value.commonPlan.collisionDecisions.map((item) => item.collisionId)).size !== value.commonPlan.collisionDecisions.length) {
+    if (commonPlan.sessions.length === 0) return;
+    if (new Set(commonPlan.collisionDecisions.map((item) => item.collisionId)).size !== commonPlan.collisionDecisions.length) {
       context.addIssue({
         code: "custom",
         path: ["commonPlan", "collisionDecisions"],
@@ -415,10 +541,11 @@ function validateBulkAssignmentSelection(
       });
     }
     const commonUnitIds = JSON.stringify(
-      value.commonPlan.sessions[0]?.unitIds ?? [],
+      commonPlan.sessions[0]?.unitIds ?? [],
     );
+    const orderedUnitIdSet = new Set(commonPlan.orderedUnitIds);
     let previousStart = Number.NEGATIVE_INFINITY;
-    value.commonPlan.sessions.forEach((session, index) => {
+    commonPlan.sessions.forEach((session, index) => {
       if (new Set(session.unitIds).size !== session.unitIds.length) {
         context.addIssue({
           code: "custom",
@@ -426,7 +553,17 @@ function validateBulkAssignmentSelection(
           message: "같은 범위를 한 회차에 두 번 넣을 수 없습니다.",
         });
       }
-      if (JSON.stringify(session.unitIds) !== commonUnitIds) {
+      if (session.unitIds.some((unitId) => !orderedUnitIdSet.has(unitId))) {
+        context.addIssue({
+          code: "custom",
+          path: ["commonPlan", "sessions", index, "unitIds"],
+          message: "회차 범위가 선택한 전체 범위를 벗어났습니다.",
+        });
+      }
+      if (
+        commonPlan.splitBasis === "question_count" &&
+        JSON.stringify(session.unitIds) !== commonUnitIds
+      ) {
         context.addIssue({
           code: "custom",
           path: ["commonPlan", "sessions", index, "unitIds"],

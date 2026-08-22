@@ -17,6 +17,8 @@ import {
   rebalanceHalfRatioSplitQuestionCounts,
   resolveVocabQuestionCycleAllocation,
   resolveVocabQuestionAllocation,
+  resolveVocabBaseSessionUnitCounts,
+  resolveVocabUnitCycleAllocation,
   resolveDayRange,
   selectInitialVocabDatasetId,
   splitVocabTargetPoolPreparationCounts,
@@ -47,6 +49,131 @@ function targetSetCanMeetEnglishCount(
 }
 
 describe("단어 시험 공통 배정 계획", () => {
+  it("선택 범위를 회차당 단위 수로 나누고 마지막 한 단위를 보존한다", () => {
+    expect(resolveVocabUnitCycleAllocation({
+      orderedUnitIds: ["1", "2", "3", "4", "5"],
+      baseSessionUnitCounts: [2, 2],
+      selectedDateCount: 2,
+      overflowPolicy: "continue_weekly",
+      extraDatePolicy: "unconfirmed",
+    })).toMatchObject({
+      sessionUnitIds: [["1", "2"], ["3", "4"], ["5"]],
+      remainingUnitIds: [],
+      defaultSessionCount: 3,
+      sessionCycleIndexes: [0, 0, 0],
+      issue: null,
+    });
+  });
+
+  it("역방향 범위를 다시 정렬하지 않고 요일별 단위 수를 반복한다", () => {
+    expect(resolveVocabUnitCycleAllocation({
+      orderedUnitIds: ["8", "7", "6", "5", "4", "3", "2", "1"],
+      baseSessionUnitCounts: [2, 3],
+      selectedDateCount: 2,
+      overflowPolicy: "continue_weekly",
+      extraDatePolicy: "unconfirmed",
+    }).sessionUnitIds).toEqual([
+      ["8", "7"],
+      ["6", "5", "4"],
+      ["3", "2"],
+      ["1"],
+    ]);
+  });
+
+  it("선택한 날짜 순서대로 요일별 단위 수를 연결한다", () => {
+    const slots = buildScheduleSlots({
+      startDate: "2026-08-24",
+      weekdays: [1, 3],
+      availableTime: "16:00",
+      deadlineDayOffset: 1,
+      deadlineTime: "22:00",
+    });
+    expect(resolveVocabBaseSessionUnitCounts({
+      slots,
+      mode: "by_weekday",
+      unitsPerSession: 9,
+      weekdayUnitsPerSession: {
+        1: 2,
+        2: 1,
+        3: 3,
+        4: 1,
+        5: 1,
+        6: 1,
+        7: 1,
+      },
+    })).toEqual([2, 3]);
+  });
+
+  it("이번 일정만이면 남은 단위를 반환하고 날짜가 많으면 반복 결정을 요구한다", () => {
+    expect(resolveVocabUnitCycleAllocation({
+      orderedUnitIds: ["1", "2", "3", "4", "5"],
+      baseSessionUnitCounts: [2, 2],
+      selectedDateCount: 2,
+      overflowPolicy: "leave",
+      extraDatePolicy: "unconfirmed",
+    })).toMatchObject({
+      sessionUnitIds: [["1", "2"], ["3", "4"]],
+      remainingUnitIds: ["5"],
+      requiresExtraDateDecision: false,
+    });
+    expect(resolveVocabUnitCycleAllocation({
+      orderedUnitIds: ["1", "2"],
+      baseSessionUnitCounts: [2, 2, 2],
+      selectedDateCount: 3,
+      overflowPolicy: "leave",
+      extraDatePolicy: "unconfirmed",
+    })).toMatchObject({
+      sessionUnitIds: [["1", "2"]],
+      requiresExtraDateDecision: true,
+    });
+    expect(resolveVocabUnitCycleAllocation({
+      orderedUnitIds: ["1", "2"],
+      baseSessionUnitCounts: [2, 2, 2],
+      selectedDateCount: 3,
+      overflowPolicy: "leave",
+      extraDatePolicy: "repeat_from_start",
+    })).toMatchObject({
+      sessionUnitIds: [["1", "2"], ["1", "2"], ["1", "2"]],
+      sessionCycleIndexes: [0, 1, 2],
+      requiresExtraDateDecision: false,
+    });
+  });
+
+  it("범위를 반복할 때도 실제 날짜의 요일별 단위 수를 적용한다", () => {
+    expect(resolveVocabUnitCycleAllocation({
+      orderedUnitIds: ["1", "2", "3", "4", "5"],
+      baseSessionUnitCounts: [2, 3, 4],
+      selectedDateCount: 3,
+      overflowPolicy: "leave",
+      extraDatePolicy: "repeat_from_start",
+    })).toMatchObject({
+      sessionUnitIds: [
+        ["1", "2"],
+        ["3", "4", "5"],
+        ["1", "2", "3", "4"],
+      ],
+      sessionCycleIndexes: [0, 0, 1],
+      defaultSessionCount: 2,
+      requiresExtraDateDecision: false,
+    });
+  });
+
+  it("이번 일정만 선택하면 전체 기본 회차가 210회를 넘어도 선택 날짜만 만든다", () => {
+    const allocation = resolveVocabUnitCycleAllocation({
+      orderedUnitIds: Array.from({ length: 500 }, (_, index) => `${index + 1}`),
+      baseSessionUnitCounts: [1, 1, 1, 1, 1, 1, 1],
+      selectedDateCount: 7,
+      overflowPolicy: "leave",
+      extraDatePolicy: "unconfirmed",
+    });
+    expect(allocation).toMatchObject({
+      defaultSessionCount: 500,
+      issue: null,
+    });
+    expect(allocation.sessionUnitIds).toHaveLength(7);
+    expect(allocation.remainingUnitIds).toHaveLength(493);
+  });
+
   it("공통 단어장이 명확하지 않으면 첫 자료를 조용히 고르지 않는다", () => {
     const datasets = [{ id: "dataset-a" }, { id: "dataset-b" }];
     expect(selectInitialVocabDatasetId(datasets, "")).toBe("");

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/design-system/primitives/button/button";
+import { MetaTag } from "@/design-system/primitives/badge/badge";
 import {
   Field,
   FieldError,
@@ -62,6 +63,9 @@ export function VocabScheduleDetailFields({
       deadlineLocalDateTime,
       editableSlot: slot,
       questionCount: preview?.questionCount ?? null,
+      queued:
+        controller.planner.distribution === "split" &&
+        (preview?.sessionNumber ?? slot?.sessionNumber ?? index + 1) > 1,
       sessionNumber: preview?.sessionNumber ?? slot?.sessionNumber ?? index + 1,
     };
   });
@@ -88,6 +92,7 @@ export function VocabScheduleDetailFields({
                       ? ""
                       : ` · ${row.questionCount}문항`}
                   </strong>
+                  {row.queued ? <MetaTag tone="neutral">완료 후 생성</MetaTag> : null}
                   <span className={styles.generatedSessionTime}>
                     {row.availableLocalDateTime.slice(11, 16)} 공개
                     {row.deadlineLocalDateTime
@@ -105,6 +110,7 @@ export function VocabScheduleDetailFields({
                     ? ""
                     : ` · ${row.questionCount}문항`}
                 </strong>
+                {row.queued ? <MetaTag tone="neutral">완료 후 생성</MetaTag> : null}
                 <Field as="label">
                   <FieldLabel as="span">공개</FieldLabel>
                   <Input

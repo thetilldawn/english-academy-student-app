@@ -5,99 +5,24 @@ import {
   FieldError,
   FieldLabel,
   Input,
-  Select,
 } from "@/design-system/primitives/form/field";
 import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
-import {
-  cataloguedDatasetDisplayLabel,
-  groupCataloguedDatasets,
-} from "@/lib/admin/dataset-catalog";
 
-import type { AssignmentDatasetItem } from "../catalog-types";
-import type { VocabAssignmentPlannerController } from "../controller/use-vocab-assignment-planner";
-import type {
-  VocabAssignmentFieldKey,
-} from "../presentation/vocab-assignment-field-errors";
 import { buildBulkPlanAudience } from "../presentation/bulk-plan-audience";
-import { DayRangeRail } from "./day-range-rail";
+import {
+  VocabRangeFields,
+  type VocabPlannerFieldsProps,
+} from "./vocab-range-fields";
 import styles from "./vocab-assignment-planner.module.css";
 
-type PlannerFieldsProps = {
-  controller: VocabAssignmentPlannerController;
-  datasets: readonly AssignmentDatasetItem[];
-  fieldErrors?: Partial<Record<VocabAssignmentFieldKey, string>>;
-};
-
-export function VocabRangeFields({
-  controller,
-  datasets,
-  fieldErrors = {},
-}: PlannerFieldsProps) {
-  const selectedIds = new Set(controller.selectedUnits.map((unit) => unit.id));
-  const groups = groupCataloguedDatasets(datasets);
-  const selectedLabel = controller.selectedUnits.length === 0
-    ? "범위를 선택하세요"
-    : controller.selectedUnits.length === 1
-      ? controller.selectedUnits[0]!.label
-      : `${controller.selectedUnits[0]!.label} → ${controller.selectedUnits.at(-1)!.label}`;
-  const datasetError = fieldErrors.dataset;
-  const rangeError = fieldErrors.range;
-
-  return (
-    <div className={styles.fieldStack}>
-      <Field as="label">
-        <FieldLabel as="span">단어장</FieldLabel>
-        <Select
-          aria-errormessage={datasetError ? "vocab-dataset-error" : undefined}
-          aria-invalid={Boolean(datasetError)}
-          data-field-key="dataset"
-          onChange={(event) => controller.actions.changeDataset(event.target.value)}
-          value={controller.planner.datasetId}
-        >
-          <option disabled value="">
-            단어장 선택
-          </option>
-          {groups.map((group) => (
-            <optgroup key={group.group} label={group.label}>
-              {group.datasets.map((dataset) => (
-                <option key={dataset.id} value={dataset.id}>
-                  {cataloguedDatasetDisplayLabel(dataset)}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </Select>
-        {datasetError ? (
-          <FieldError id="vocab-dataset-error">{datasetError}</FieldError>
-        ) : null}
-      </Field>
-      <div
-        aria-describedby={rangeError ? "vocab-range-error" : undefined}
-        aria-label="시험 범위 선택"
-        data-field-key="range"
-        role="group"
-        tabIndex={-1}
-      >
-        <DayRangeRail
-          onSelect={controller.actions.selectUnit}
-          selectedUnitIds={selectedIds}
-          selection={controller.planner.range}
-          units={controller.availableUnits}
-        />
-        <span className={styles.rangeSummary}>{selectedLabel}</span>
-        {rangeError ? (
-          <FieldError id="vocab-range-error">{rangeError}</FieldError>
-        ) : null}
-      </div>
-    </div>
-  );
-}
+export { VocabRangeFields } from "./vocab-range-fields";
 
 export function VocabQuestionFields({
   controller,
   fieldErrors = {},
-}: PlannerFieldsProps) {
+}: VocabPlannerFieldsProps) {
   const questionCountError = fieldErrors.questionCount;
+  const splitBasisError = fieldErrors.splitBasis;
   const selectionModeError = fieldErrors.selectionMode;
   const preview = controller.bulk.preview;
   const audience = buildBulkPlanAudience(preview);
@@ -119,7 +44,7 @@ export function VocabQuestionFields({
 
   return (
     <div className={styles.fieldStack}>
-      <AssignmentFieldGrid columns={2}>
+      <AssignmentFieldGrid columns={3}>
         <Field>
           <FieldLabel as="span" id="vocab-distribution-label">
             <HelpTip label="배정 방식 설명" trigger="배정 방식">
@@ -151,10 +76,51 @@ export function VocabQuestionFields({
             </Button>
           </div>
         </Field>
+        {controller.planner.distribution === "split" ? (
+          <Field>
+            <FieldLabel as="span" id="vocab-split-basis-label">
+              <HelpTip label="나누기 기준 설명" trigger="나누기 기준">
+                범위 단위는 DAY·단원·지문 묶음으로, 문항 수는 실제 문제 개수로 회차를 나눕니다.
+              </HelpTip>
+            </FieldLabel>
+            <div
+              aria-describedby={splitBasisError
+                ? "vocab-split-basis-error"
+                : undefined}
+              aria-labelledby="vocab-split-basis-label"
+              className={styles.modeButtons}
+              data-field-key="splitBasis"
+              role="group"
+              tabIndex={-1}
+            >
+              <Button
+                aria-pressed={controller.planner.splitBasis === "range_unit"}
+                onClick={() => controller.actions.changeSplitBasis("range_unit")}
+                size="small"
+                variant="filter"
+              >
+                범위 단위
+              </Button>
+              <Button
+                aria-pressed={controller.planner.splitBasis === "question_count"}
+                onClick={() => controller.actions.changeSplitBasis("question_count")}
+                size="small"
+                variant="filter"
+              >
+                문항 수
+              </Button>
+            </div>
+            {splitBasisError ? (
+              <FieldError id="vocab-split-basis-error">
+                {splitBasisError}
+              </FieldError>
+            ) : null}
+          </Field>
+        ) : null}
         <Field>
           <FieldLabel as="span" id="vocab-question-count-label">
             <HelpTip label="문항 수 설명" trigger="문항 수">
-              전체는 가능한 문제를 모두, 직접 입력은 회차당 지정한 수만 사용합니다.
+              전체는 각 회차 범위에서 가능한 문제를 모두, 직접 입력은 회차당 지정한 수만 사용합니다.
             </HelpTip>
           </FieldLabel>
           <div
@@ -256,7 +222,7 @@ export function VocabQuestionFields({
   );
 }
 
-export function VocabRangePicker(props: PlannerFieldsProps) {
+export function VocabRangePicker(props: VocabPlannerFieldsProps) {
   return (
     <>
       <VocabRangeFields {...props} />

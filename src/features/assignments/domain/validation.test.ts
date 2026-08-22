@@ -467,6 +467,9 @@ describe("assignment draft validation", () => {
       commonPlan: {
         datasetId: assignmentContractIds.dataset,
         distribution: "split",
+        splitBasis: "question_count",
+        orderedUnitIds: [assignmentContractIds.day60],
+        rangeUnitCounts: [],
         questionCount: { mode: "manual", value: 20 },
       overflowPolicy: "leave",
       extraDatePolicy: "unconfirmed",

@@ -95,6 +95,8 @@ export function BulkSeriesPreview({
       aria-busy={previewLoading}
       aria-labelledby="bulk-series-preview-title"
       className={styles.previewRoot}
+      data-field-key="preview"
+      tabIndex={-1}
     >
       <div className={styles.previewHeading}>
         <h3 id="bulk-series-preview-title">
@@ -138,6 +140,7 @@ export function BulkSeriesPreview({
               adminLearningText.bulkAssignmentModal.datasetPending}
           </small>
           <BulkPreviewSessionList
+            distribution={distribution}
             includePendingReview={state.draft.review.mode === "pending"}
             item={singleItem}
             onClearCollisionDecision={onClearCollisionDecision}
@@ -174,6 +177,9 @@ export function BulkSeriesPreview({
                     <MetaTag size="large" tone="success">
                       {session.questionCount}문항
                     </MetaTag>
+                    {distribution === "split" && session.sessionNumber > 1 ? (
+                      <MetaTag size="large">완료 후 생성</MetaTag>
+                    ) : null}
                   </MetaTagList>
                 }
                 heading={<strong>{session.sessionNumber}회차</strong>}
@@ -207,6 +213,7 @@ export function BulkSeriesPreview({
                     adminLearningText.bulkAssignmentModal.datasetPending}
                 </small>
                 <BulkPreviewSessionList
+                  distribution={distribution}
                   includePendingReview={state.draft.review.mode === "pending"}
                   item={item}
                   onClearCollisionDecision={onClearCollisionDecision}

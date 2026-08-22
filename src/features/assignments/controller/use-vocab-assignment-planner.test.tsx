@@ -387,4 +387,84 @@ describe("단어 배정 일정 controller", () => {
     act(() => result.current.actions.cancelExtraDates());
     expect(result.current.planner.schedule.weekdays).toEqual([5, 1]);
   });
+
+  it("범위 단위는 월·수 회차에 2단위씩 배정하고 남은 범위를 다음 주로 잇는다", () => {
+    const { result } = renderPlanner();
+    act(() => {
+      result.current.actions.selectUnit(units[0]!.id);
+      result.current.actions.selectUnit(units[5]!.id);
+      result.current.actions.toggleWeekday(1);
+      result.current.actions.toggleWeekday(3);
+      result.current.actions.changeSplitBasis("range_unit");
+      result.current.actions.changeUnitsPerSession(2);
+      result.current.actions.changeOverflowPolicy("continue_weekly");
+    });
+
+    expect(result.current.commonPlan).toMatchObject({
+      splitBasis: "range_unit",
+      orderedUnitIds: units.map((unit) => unit.id),
+      rangeUnitCounts: [2, 2],
+      overflowPolicy: "continue_weekly",
+    });
+    expect(result.current.commonPlan?.sessions.map((session) => ({
+      date: session.availableLocalDateTime.slice(0, 10),
+      unitIds: session.unitIds,
+    }))).toEqual([
+      { date: "2026-08-24", unitIds: ["unit-1", "unit-2"] },
+      { date: "2026-08-26", unitIds: ["unit-3", "unit-4"] },
+      { date: "2026-08-31", unitIds: ["unit-5", "unit-6"] },
+    ]);
+  });
+
+  it("요일별 단위 수와 역방향 범위를 그대로 보존한다", () => {
+    const { result } = renderPlanner();
+    act(() => {
+      result.current.actions.selectUnit(units[5]!.id);
+      result.current.actions.selectUnit(units[0]!.id);
+      result.current.actions.toggleWeekday(1);
+      result.current.actions.toggleWeekday(3);
+      result.current.actions.changeSplitBasis("range_unit");
+      result.current.actions.changeUnitAllocationMode("by_weekday");
+      result.current.actions.changeWeekdayUnitsPerSession(1, 2);
+      result.current.actions.changeWeekdayUnitsPerSession(3, 3);
+      result.current.actions.changeOverflowPolicy("continue_weekly");
+    });
+
+    expect(result.current.commonPlan?.rangeUnitCounts).toEqual([2, 3]);
+    expect(result.current.commonPlan?.sessions.map((session) =>
+      session.unitIds)).toEqual([
+      ["unit-6", "unit-5"],
+      ["unit-4", "unit-3", "unit-2"],
+      ["unit-1"],
+    ]);
+  });
+
+  it("회차 날짜를 옮겨도 범위 단위 수는 원래 요일 규칙을 유지한다", () => {
+    const { result } = renderPlanner();
+    act(() => {
+      result.current.actions.selectUnit(units[0]!.id);
+      result.current.actions.selectUnit(units[5]!.id);
+      result.current.actions.toggleWeekday(1);
+      result.current.actions.toggleWeekday(3);
+      result.current.actions.changeSplitBasis("range_unit");
+      result.current.actions.changeUnitAllocationMode("by_weekday");
+      result.current.actions.changeWeekdayUnitsPerSession(1, 2);
+      result.current.actions.changeWeekdayUnitsPerSession(3, 3);
+      result.current.actions.changeOverflowPolicy("continue_weekly");
+      result.current.actions.updateSessionSchedule(2, {
+        availableLocalDateTime: "2026-08-27T16:00",
+        deadlineLocalDateTime: "2026-08-28T22:00",
+      });
+    });
+
+    expect(result.current.commonPlan?.rangeUnitCounts).toEqual([2, 3]);
+    expect(result.current.commonPlan?.sessions.map((session) => ({
+      date: session.availableLocalDateTime.slice(0, 10),
+      unitIds: session.unitIds,
+    }))).toEqual([
+      { date: "2026-08-24", unitIds: ["unit-1", "unit-2"] },
+      { date: "2026-08-27", unitIds: ["unit-3", "unit-4", "unit-5"] },
+      { date: "2026-08-31", unitIds: ["unit-6"] },
+    ]);
+  });
 });

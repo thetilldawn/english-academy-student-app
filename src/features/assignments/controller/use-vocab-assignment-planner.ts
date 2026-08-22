@@ -8,11 +8,8 @@ import { isoToKoreanDateTimeLocal } from "@/lib/deadline";
 import type { AssignmentDatasetItem, AssignmentUnitItem } from "../catalog-types";
 import type { VocabCollisionDecisionInput } from "../domain/vocab-collision-decisions";
 import { selectPreviousVocabExamConditions } from "../domain/vocab-previous-exam";
-import { validateVocabPlannerInputs } from "../domain/vocab-planner-validation";
 import {
-  applyScheduleSlotOverride,
   applyTimeTemplate,
-  buildScheduleSlots,
   copyPreviousExamConditions,
   keepFirstSelectedWeekdays,
   resolveDayRange,
@@ -24,13 +21,16 @@ import {
   type VocabRangeDistribution,
   type VocabScheduleDraft,
   type VocabScheduleSlotOverride,
+  type VocabSplitBasis,
   type VocabSplitOverflowPolicy,
   type VocabTargetSelectionMode,
+  type VocabUnitAllocationMode,
   type VocabTimeTemplate,
 } from "../domain/vocab-assignment-plan";
 import { buildVocabAssignmentFieldErrors } from "../presentation/vocab-assignment-field-errors";
 import { useBulkAssignmentController } from "./use-bulk-assignment-controller";
 import type { AssignmentTransport } from "./assignment-transport";
+import { useVocabAssignmentDerivedPlan } from "./use-vocab-assignment-derived-plan";
 import { useVocabTimeTemplates } from "./use-vocab-time-templates";
 import {
   createInitialVocabPlannerState,
@@ -92,116 +92,13 @@ export function useVocabAssignmentPlanner({
       previousExamSourceStudentId,
     ],
   );
-  const allScheduleSlots = useMemo(
-    () => buildScheduleSlots(planner.schedule),
-    [planner.schedule],
-  );
-  const candidateScheduleSlots = useMemo(
-    () =>
-      Object.entries(planner.sessionScheduleOverrides).reduce(
-        (slots, [sessionNumber, override]) =>
-          applyScheduleSlotOverride(slots, Number(sessionNumber), override),
-        allScheduleSlots,
-      ),
-    [allScheduleSlots, planner.sessionScheduleOverrides],
-  );
-  const scheduleSlots = candidateScheduleSlots;
-  const previewScheduleSlots = useMemo(() => {
-    if (candidateScheduleSlots.length > 0) return candidateScheduleSlots;
-    const parsed = new Date(`${planner.schedule.startDate}T00:00:00Z`);
-    if (Number.isNaN(parsed.getTime())) return [];
-    const day = parsed.getUTCDay();
-    const weekday = (day === 0 ? 7 : day) as IsoWeekday;
-    return buildScheduleSlots({
-      ...planner.schedule,
-      weekdays: [weekday],
-    }).slice(0, 1);
-  }, [candidateScheduleSlots, planner.schedule]);
-  const questionCount = useMemo<VocabQuestionCountChoice>(
-    () => planner.questionCountMode === "all"
-      ? { mode: "all" }
-      : { mode: "manual", value: planner.manualQuestionCount },
-    [planner.manualQuestionCount, planner.questionCountMode],
-  );
-  const localIssues = useMemo(
-    () => validateVocabPlannerInputs({
-      datasetId: planner.datasetId,
-      selectedUnitIds: selectedUnits.map((unit) => unit.id),
-      distribution: planner.distribution,
-      questionCount,
-      overflowPolicy: planner.overflowPolicy,
-      selectionMode: planner.selectionMode,
-      schedule: planner.schedule,
-      scheduleSlots,
-    }),
-    [
-      planner.datasetId,
-      planner.distribution,
-      planner.overflowPolicy,
-      planner.schedule,
-      planner.selectionMode,
-      questionCount,
-      scheduleSlots,
-      selectedUnits,
-    ],
-  );
-  const commonPlan = useMemo(() => {
-    const unitIds = selectedUnits.map((unit) => unit.id);
-    const planScheduleSlots = scheduleSlots.length > 0
-      ? scheduleSlots
-      : previewScheduleSlots;
-    const sessions = planScheduleSlots.map((slot) => ({
-      unitIds,
-      availableLocalDateTime: slot.availableLocalDateTime,
-      deadlineLocalDateTime: slot.deadlineLocalDateTime,
-    }));
-    const recurrenceScheduleSlots = scheduleSlots.length > 0
-      ? allScheduleSlots
-      : previewScheduleSlots;
-    const recurrenceSessions = recurrenceScheduleSlots.map((slot) => ({
-      availableLocalDateTime: slot.availableLocalDateTime,
-      deadlineLocalDateTime: slot.deadlineLocalDateTime,
-    }));
-    const previewBlockingIssues = localIssues.filter(
-      (issue) => issue.path !== "commonPlan.sessions",
-    );
-    return previewBlockingIssues.length === 0 && sessions.length > 0
-      ? {
-          datasetId: planner.datasetId,
-          distribution: planner.distribution,
-          questionCount,
-          overflowPolicy:
-            planner.distribution === "split" &&
-              planner.questionCountMode === "manual"
-              ? planner.overflowPolicy
-              : "leave" as const,
-          extraDatePolicy: planner.extraDatePolicy,
-          selectedDateCount: scheduleSlots.length,
-          selectionMode: planner.selectionMode,
-          planNonce: planner.planNonce,
-          sessions,
-          recurrenceSessions,
-          collisionDecisions: planner.collisionDecisionRecords.map(
-            (record) => record.decision,
-          ),
-        }
-      : undefined;
-  }, [
-    planner.collisionDecisionRecords,
-    planner.datasetId,
-    planner.distribution,
-    planner.extraDatePolicy,
-    planner.overflowPolicy,
-    planner.planNonce,
-    planner.questionCountMode,
-    planner.selectionMode,
+  const {
+    commonPlan,
+    effectiveSplitBasis,
     localIssues,
-    questionCount,
-    allScheduleSlots,
-    previewScheduleSlots,
     scheduleSlots,
-    selectedUnits,
-  ]);
+    unitAllocation,
+  } = useVocabAssignmentDerivedPlan({ planner, selectedUnits });
   const bulk = useBulkAssignmentController({
     commonPlanRequired: true,
     firstAvailableDateKorean:
@@ -346,7 +243,8 @@ export function useVocabAssignmentPlanner({
     }];
   });
   const requiresExtraDateDecision = Boolean(
-    bulk.preview?.items.some((item) => item.requiresExtraDateDecision),
+    unitAllocation?.requiresExtraDateDecision ||
+      bulk.preview?.items.some((item) => item.requiresExtraDateDecision),
   );
   const extraDateIssues = requiresExtraDateDecision
     ? [{
@@ -366,8 +264,11 @@ export function useVocabAssignmentPlanner({
   const representative = bulk.preview?.items.find(
     (item) => item.defaultSessionCount !== null,
   ) ?? null;
-  const defaultSessionCount =
-    summary?.defaultSessionCount ?? representative?.defaultSessionCount ?? 0;
+  const defaultSessionCount = effectiveSplitBasis === "range_unit"
+    ? unitAllocation?.defaultSessionCount ?? 0
+    : summary?.defaultSessionCount ??
+      representative?.defaultSessionCount ??
+      0;
   const extraDateDecisionSessionCount = resolveExtraDateCancelSessionCount(
     bulk.preview?.items ?? [],
     defaultSessionCount,
@@ -388,6 +289,14 @@ export function useVocabAssignmentPlanner({
       changeCollisionDecision,
       changeDistribution: (value: VocabRangeDistribution) =>
         dispatch({ type: "distribution", value }),
+      changeSplitBasis: (value: VocabSplitBasis) =>
+        dispatch({ type: "split_basis", value }),
+      changeUnitAllocationMode: (value: VocabUnitAllocationMode) =>
+        dispatch({ type: "unit_allocation_mode", value }),
+      changeUnitsPerSession: (value: number) =>
+        dispatch({ type: "units_per_session", value }),
+      changeWeekdayUnitsPerSession: (weekday: IsoWeekday, value: number) =>
+        dispatch({ type: "weekday_units_per_session", weekday, value }),
       changeQuestionCountMode: (value: VocabQuestionCountChoice["mode"]) =>
         dispatch({ type: "question_count_mode", value }),
       changeManualQuestionCount: (value: number) =>
@@ -441,6 +350,7 @@ export function useVocabAssignmentPlanner({
     selectedUnits,
     templateSaving: timeTemplateController.saving,
     timeTemplates: timeTemplateController.timeTemplates,
+    unitAllocation,
   };
 }
 

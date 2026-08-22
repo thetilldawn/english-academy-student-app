@@ -7,6 +7,18 @@ const state: VocabPlannerState = {
   datasetId: "dataset-a",
   range: { startUnitId: "unit-1", endUnitId: "unit-2" },
   distribution: "split",
+  splitBasis: "question_count",
+  unitAllocationMode: "same",
+  unitsPerSession: 2,
+  weekdayUnitsPerSession: {
+    1: 2,
+    2: 2,
+    3: 2,
+    4: 2,
+    5: 2,
+    6: 2,
+    7: 2,
+  },
   questionCountMode: "manual",
   manualQuestionCount: 45,
   overflowPolicy: "leave",
@@ -25,6 +37,16 @@ const state: VocabPlannerState = {
 };
 
 describe("vocabPlannerReducer extra date decision", () => {
+  it("범위 단위를 선택해도 교사가 고르기 전에는 다음 주 이어 배정을 켜지 않는다", () => {
+    expect(vocabPlannerReducer({
+      ...state,
+      overflowPolicy: "continue_weekly",
+    }, {
+      type: "split_basis",
+      value: "range_unit",
+    }).overflowPolicy).toBe("leave");
+  });
+
   it("시간·기준일·시간 템플릿 변경 뒤에도 범위 반복 결정을 유지한다", () => {
     const changedTime = vocabPlannerReducer(state, {
       type: "schedule/update",
