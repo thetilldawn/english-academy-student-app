@@ -267,6 +267,37 @@ describe("VocabScheduleFields", () => {
     expect(screen.getByText("기본 2회 · 남음 DAY 2 (1단위)")).toBeVisible();
   });
 
+  it("선택 일정의 대기 회차와 일정 밖 남은 범위를 함께 표시한다", () => {
+    const value = controller();
+    value.planner.splitBasis = "range_unit";
+    value.planner.schedule.weekdays = [1, 3];
+    value.selectedUnits = [
+      { id: "unit-1", label: "DAY 1" },
+      { id: "unit-2", label: "DAY 2" },
+      { id: "unit-3", label: "DAY 3" },
+      { id: "unit-4", label: "DAY 4" },
+      { id: "unit-5", label: "DAY 5" },
+      { id: "unit-6", label: "DAY 6" },
+    ] as never;
+    value.unitAllocation = {
+      defaultSessionCount: 3,
+      issue: null,
+      remainingUnitIds: ["unit-5", "unit-6"],
+      requiresExtraDateDecision: false,
+      sessionCycleIndexes: [0, 0],
+      sessionUnitIds: [
+        ["unit-1", "unit-2"],
+        ["unit-3", "unit-4"],
+      ],
+    };
+
+    render(<VocabScheduleFields controller={value} />);
+
+    expect(
+      screen.getByText("기본 3회 · 이어 배정 1회 · 남음 DAY 5–DAY 6 (2단위)"),
+    ).toBeVisible();
+  });
+
   it("나누기 두 번째 회차부터 완료 후 생성 상태를 표시한다", () => {
     const value = controller();
     render(<VocabScheduleFields controller={value} />);

@@ -206,9 +206,10 @@ export function VocabUnitAllocationFields({
           기본 {controller.unitAllocation?.defaultSessionCount ?? 0}회
           {queuedSessionCount > 0
             ? ` · 이어 배정 ${queuedSessionCount}회`
-            : remainingUnitCount > 0
-              ? ` · 남음 ${remainingRangeLabel} (${remainingUnitCount}단위)`
-              : ""}
+            : ""}
+          {remainingUnitCount > 0
+            ? ` · 남음 ${remainingRangeLabel} (${remainingUnitCount}단위)`
+            : ""}
         </span>
       ) : null}
     </div>

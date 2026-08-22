@@ -27,6 +27,7 @@ import { AssignmentSection } from "./assignment-section";
 import { AssignmentSubmitAction } from "./assignment-submit-action";
 import { BulkExamFields } from "./bulk-exam-fields";
 import { BulkSeriesPreview } from "./bulk-series-preview";
+import { resolveInvalidAssignmentFieldFocusTarget } from "./focus-invalid-assignment-field";
 import {
   VocabQuestionFields,
   VocabRangeFields,
@@ -99,11 +100,7 @@ export function VocabAssignmentPlanner({
       );
       if (!target) return;
       target.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "center" });
-      const focusTarget = target.matches("button, input, select, textarea")
-        ? target
-        : target.querySelector<HTMLElement>(
-            "button, input, select, textarea, [tabindex]:not([tabindex='-1'])",
-          );
+      const focusTarget = resolveInvalidAssignmentFieldFocusTarget(target);
       focusTarget?.focus({ preventScroll: true });
     });
   }
@@ -271,6 +268,7 @@ export function VocabAssignmentPlanner({
                 {controller.scheduleSlots.length > 0 ? (
                   <BulkSeriesPreview
                     collisionDecisions={controller.collisionDecisionRecords}
+                    completionGated={controller.planner.distribution === "split"}
                     controller={bulk}
                     distribution={controller.planner.distribution}
                     onClearCollisionDecision={controller.actions.clearCollisionDecision}

@@ -24,6 +24,13 @@ const plannedWeekdayMigration = readFileSync(
   "utf8",
 );
 
+const materializedWindowMigration = readFileSync(
+  path.resolve(
+    "supabase/migrations/20260822151000_reconcile_vocab_queue_materialized_window.sql",
+  ),
+  "utf8",
+);
+
 describe("단어 시험 완료 후 이어 배정 migration", () => {
   it("학생별 계획·회차·변경 이력을 비공개 표에 보존한다", () => {
     expect(migration).toContain(
@@ -93,6 +100,15 @@ describe("단어 시험 완료 후 이어 배정 migration", () => {
       "before update of status, effective_available_from, effective_available_until",
     );
     expect(plannedWeekdayMigration).toContain("new.status = 'ready'");
+    expect(materializedWindowMigration).toContain(
+      "create or replace function private.materialize_ready_vocab_assignment_queue_v1(",
+    );
+    expect(materializedWindowMigration).toMatch(
+      /update private\.vocab_assignment_series_items[\s\S]*?returning effective_available_from, effective_available_until[\s\S]*?into shifted_from, shifted_until;[\s\S]*?if failure_reason is null and exists/,
+    );
+    expect(materializedWindowMigration).toMatch(
+      /if failure_reason is null and exists[\s\S]*?shifted_from[\s\S]*?create_assignment_with_delivery_system_v1[\s\S]*?shifted_until/,
+    );
   });
 
   it("일시적 생성 실패는 ready 상태로 남겨 다음 호출에서 재시도한다", () => {

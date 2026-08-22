@@ -45,6 +45,7 @@ function studentContextLabel(student: PreviewStudent) {
 }
 
 export function BulkSeriesPreview({
+  completionGated = false,
   controller,
   collisionDecisions = [],
   distribution = "split",
@@ -53,6 +54,7 @@ export function BulkSeriesPreview({
   onCollisionDecisionChange,
   students,
 }: {
+  completionGated?: boolean;
   controller: BulkAssignmentController;
   collisionDecisions?: readonly VocabCollisionDecisionRecord[];
   distribution?: VocabRangeDistribution;
@@ -89,15 +91,29 @@ export function BulkSeriesPreview({
     summary && summary.exceptionStudentIds.length === 0
       ? "공통 일정"
       : "기준 일정";
+  const previewErrorMessages = Array.from(new Set(items.flatMap((item) => [
+    item.error,
+    ...item.sessions.map((session) => session.error),
+  ]).filter((value): value is string => Boolean(value))));
+  const describedBy = [
+    message ? "bulk-series-preview-message" : null,
+    previewErrorMessages.length > 0 ? "bulk-series-preview-errors" : null,
+  ].filter(Boolean).join(" ") || undefined;
 
   return (
     <section
       aria-busy={previewLoading}
+      aria-describedby={describedBy}
       aria-labelledby="bulk-series-preview-title"
       className={styles.previewRoot}
       data-field-key="preview"
       tabIndex={-1}
     >
+      {previewErrorMessages.length > 0 ? (
+        <span className="sr-only" id="bulk-series-preview-errors">
+          {previewErrorMessages.join(" ")}
+        </span>
+      ) : null}
       <div className={styles.previewHeading}>
         <h3 id="bulk-series-preview-title">
           <HelpTip
@@ -140,7 +156,7 @@ export function BulkSeriesPreview({
               adminLearningText.bulkAssignmentModal.datasetPending}
           </small>
           <BulkPreviewSessionList
-            distribution={distribution}
+            completionGated={completionGated}
             includePendingReview={state.draft.review.mode === "pending"}
             item={singleItem}
             onClearCollisionDecision={onClearCollisionDecision}
@@ -177,7 +193,7 @@ export function BulkSeriesPreview({
                     <MetaTag size="large" tone="success">
                       {session.questionCount}문항
                     </MetaTag>
-                    {distribution === "split" && session.sessionNumber > 1 ? (
+                    {completionGated && session.sessionNumber > 1 ? (
                       <MetaTag size="large">완료 후 생성</MetaTag>
                     ) : null}
                   </MetaTagList>
@@ -213,7 +229,7 @@ export function BulkSeriesPreview({
                     adminLearningText.bulkAssignmentModal.datasetPending}
                 </small>
                 <BulkPreviewSessionList
-                  distribution={distribution}
+                  completionGated={completionGated}
                   includePendingReview={state.draft.review.mode === "pending"}
                   item={item}
                   onClearCollisionDecision={onClearCollisionDecision}
@@ -227,7 +243,11 @@ export function BulkSeriesPreview({
       ) : null}
 
       {message ? (
-        <div className={styles.message} role="alert">
+        <div
+          className={styles.message}
+          id="bulk-series-preview-message"
+          role="alert"
+        >
           {message}
         </div>
       ) : null}

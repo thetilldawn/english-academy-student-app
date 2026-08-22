@@ -154,6 +154,12 @@ describe("BulkSeriesPreview", () => {
     expect(screen.queryByRole("heading", { name: "학생별 계획" })).not.toBeInTheDocument();
     expect(screen.queryByText("학생 가")).not.toBeInTheDocument();
     expect(screen.getAllByText("범위가 부족합니다.").length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("region", { name: "배정 미리보기" }),
+    ).toHaveAttribute("aria-describedby", "bulk-series-preview-errors");
+    expect(document.getElementById("bulk-series-preview-errors")).toHaveTextContent(
+      "범위가 부족합니다.",
+    );
   });
 
   it("shows every plan when a one-person group cannot represent the batch", () => {
@@ -180,5 +186,48 @@ describe("BulkSeriesPreview", () => {
     expect(screen.getByText("학생 가")).toBeVisible();
     expect(screen.getByText("학생 나")).toBeVisible();
     expect(screen.getByText("학생 다")).toBeVisible();
+  });
+
+  it("완료 연동 배정에서만 두 번째 회차를 완료 후 생성으로 표시한다", () => {
+    const value = controller();
+    const secondSession = {
+      ...schedule,
+      availableFrom: "2026-08-26T07:00:00.000Z",
+      availableUntil: "2026-08-26T13:00:00.000Z",
+      sessionNumber: 2,
+      sourceSessionNumber: 2,
+    };
+    value.preview!.commonPlanSummary!.sessions = [schedule, secondSession];
+    value.preview!.items = value.preview!.items.map((item) => ({
+      ...item,
+      sessions: item.available
+        ? [item.sessions[0]!, { ...secondSession }]
+        : item.sessions,
+    }));
+
+    const { rerender } = render(
+      <BulkSeriesPreview
+        controller={value}
+        students={[
+          { id: "student-a", displayName: "학생 가" },
+          { id: "student-b", displayName: "학생 나" },
+          { id: "student-c", displayName: "학생 다" },
+        ]}
+      />,
+    );
+    expect(screen.queryByText("완료 후 생성")).not.toBeInTheDocument();
+
+    rerender(
+      <BulkSeriesPreview
+        completionGated
+        controller={value}
+        students={[
+          { id: "student-a", displayName: "학생 가" },
+          { id: "student-b", displayName: "학생 나" },
+          { id: "student-c", displayName: "학생 다" },
+        ]}
+      />,
+    );
+    expect(screen.getAllByText("완료 후 생성")).toHaveLength(1);
   });
 });
