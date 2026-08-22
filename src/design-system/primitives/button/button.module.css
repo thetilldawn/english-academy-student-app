@@ -92,6 +92,7 @@
 }
 
 .filter {
+  min-width: var(--control-height-small);
   max-width: 100%;
   overflow: hidden;
   border-color: transparent;

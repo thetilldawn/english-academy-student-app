@@ -49,7 +49,7 @@
 }
 
 .labelTrigger {
-  min-width: 0;
+  min-width: var(--control-height-small);
   min-height: 44px;
   display: inline-flex;
   align-items: center;

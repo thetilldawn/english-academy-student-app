@@ -230,7 +230,7 @@ export const adminStudentsText = {
       addToNextExam: "다음 시험에 추가",
       downloadJson: "익명 기준본 JSON 받기",
       empty: "조건에 맞는 오답 단어가 없습니다.",
-      wordAria: "{word}을(를) {action}",
+      wordAria: "{action}: {word}",
       resolved: "해결됨",
       assigned: "배정 중",
       pending: "다음 시험 대기",
