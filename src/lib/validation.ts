@@ -28,6 +28,9 @@ const timingSettingsSchema = z
   .strict()
   .superRefine((value, context) => {
     if (
+      (value.timingMode === "none" &&
+        value.questionTimeLimitSeconds !== null &&
+        value.questionTimeLimitSeconds !== undefined) ||
       (value.timingMode === "total" &&
         value.questionTimeLimitSeconds !== null &&
         value.questionTimeLimitSeconds !== undefined) ||
@@ -106,9 +109,11 @@ export const createVocabTimeTemplateSchema = z
   })
   .strict()
   .superRefine((value, context) => {
-    const valid = value.timingMode === "total"
-      ? value.totalSeconds !== null && value.perQuestionSeconds === null
-      : value.totalSeconds === null && value.perQuestionSeconds !== null;
+    const valid = value.timingMode === "none"
+      ? value.totalSeconds === null && value.perQuestionSeconds === null
+      : value.timingMode === "total"
+        ? value.totalSeconds !== null && value.perQuestionSeconds === null
+        : value.totalSeconds === null && value.perQuestionSeconds !== null;
     if (!valid) {
       context.addIssue({
         code: "custom",
@@ -620,6 +625,8 @@ export const bulkAssignmentSchema = z
       });
     }
     if (
+      (value.timingMode === "none" &&
+        value.questionTimeLimitSeconds !== null) ||
       (value.timingMode === "total" &&
         value.questionTimeLimitSeconds !== null) ||
       (value.timingMode === "per_question" &&
@@ -776,6 +783,8 @@ export const assignmentReplacementSchema = z
       });
     }
     if (
+      (value.timingMode === "none" &&
+        value.questionTimeLimitSeconds !== null) ||
       (value.timingMode === "total" &&
         value.questionTimeLimitSeconds !== null) ||
       (value.timingMode === "per_question" &&
@@ -839,6 +848,9 @@ export const mixedAssignmentSchema = z
       });
     }
     if (
+      (value.timingMode === "none" &&
+        value.questionTimeLimitSeconds !== null &&
+        value.questionTimeLimitSeconds !== undefined) ||
       (value.timingMode === "total" &&
         value.questionTimeLimitSeconds !== null &&
         value.questionTimeLimitSeconds !== undefined) ||
@@ -857,8 +869,31 @@ export const mixedAssignmentSchema = z
     }
   });
 
+export const directReviewAssignmentSchema = mixedAssignmentSchema.superRefine(
+  (value, context) => {
+    if (value.totalQuestionCount > 400) {
+      context.addIssue({
+        code: "custom",
+        path: ["totalQuestionCount"],
+        message: "오답 시험은 한 번에 400문항까지 배정할 수 있습니다.",
+      });
+    }
+    if (value.reviewScope !== "dataset") {
+      context.addIssue({
+        code: "custom",
+        path: ["reviewScope"],
+        message: "오답 시험은 선택한 단어장 전체 오답으로 배정해 주세요.",
+      });
+    }
+  },
+);
+
 export type MixedAssignmentInput = z.infer<
   typeof mixedAssignmentSchema
+>;
+
+export type DirectReviewAssignmentInput = z.infer<
+  typeof directReviewAssignmentSchema
 >;
 
 export type AssignmentInput = z.infer<typeof assignmentSchema>;

@@ -16,7 +16,7 @@ export type VocabTimeTemplateSummary = {
   availableTime: string;
   deadlineDayOffset: number;
   deadlineTime: string;
-  timingMode: "total" | "per_question";
+  timingMode: "none" | "total" | "per_question";
   totalSeconds: number | null;
   perQuestionSeconds: number | null;
 };
@@ -27,7 +27,7 @@ type VocabTimeTemplateRow = {
   available_time: string;
   deadline_day_offset: number;
   deadline_time: string;
-  timing_mode: "total" | "per_question";
+  timing_mode: "none" | "total" | "per_question";
   total_seconds: number | null;
   per_question_seconds: number | null;
 };

@@ -5,6 +5,7 @@ export function previewNextQuestionMilliseconds(
   attempt: QuizAttempt,
   payload: QuizAnswerResponse,
 ) {
+  if (attempt.timingMode === "none") return 1_000;
   if (
     attempt.timingMode === "per_question" &&
     attempt.questionTimeLimitSeconds
@@ -27,6 +28,7 @@ export function activeNextQuestionMilliseconds(input: {
   serverMilliseconds: number;
   serverReceivedAt: number;
 }) {
+  if (input.attempt.timingMode === "none") return 1_000;
   const now = performance.now();
   const localRemaining = Math.max(
     0,

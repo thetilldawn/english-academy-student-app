@@ -50,7 +50,7 @@ const assignmentEditDraftResponseSchema = z
       z.literal(100),
     ]),
     timeLimitSeconds: z.number().int().min(30).max(10800),
-    timingMode: z.enum(["total", "per_question"]),
+    timingMode: z.enum(["none", "total", "per_question"]),
     questionTimeLimitSeconds: z.number().int().min(5).max(600).nullable(),
     passingScore: z.number().int().min(0).max(100),
     questionOrderMode: z.enum([
@@ -82,6 +82,8 @@ const assignmentEditDraftResponseSchema = z
       });
     }
     if (
+      (value.timingMode === "none" &&
+        value.questionTimeLimitSeconds !== null) ||
       (value.timingMode === "total" &&
         value.questionTimeLimitSeconds !== null) ||
       (value.timingMode === "per_question" &&

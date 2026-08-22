@@ -3,11 +3,6 @@
 import { useCallback, useEffect, useId, useMemo, type FormEvent } from "react";
 import { toast } from "sonner";
 
-import {
-  AssignmentEditorLayout,
-  AssignmentEditorSettings,
-  AssignmentEditorSummary,
-} from "@/components/assignment-editor-ui";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { formatContentText } from "@/content/format";
 import {
@@ -28,7 +23,6 @@ import {
 } from "../presentation/assignment-submit-blocker";
 import { newAssignmentDraftDefaults } from "../presentation/new-assignment-defaults";
 import { AssignmentRangeFields } from "./assignment-range-fields";
-import { AssignmentReviewFields } from "./assignment-review-fields";
 import { AssignmentSection } from "./assignment-section";
 import { AssignmentSettingsFields } from "./assignment-settings-fields";
 import { AssignmentSubmitAction } from "./assignment-submit-action";
@@ -37,8 +31,6 @@ import type { SingleAssignmentEditorProps } from "./single-assignment-editor.typ
 import styles from "./single-assignment-editor.module.css";
 
 export function SingleAssignmentEditor({
-  availableReviewLevel1,
-  availableReviewLevel2,
   datasets,
   editTarget,
   formId: suppliedFormId,
@@ -122,6 +114,7 @@ export function SingleAssignmentEditor({
     reviewMode: controller.state.draft.review.mode,
   });
   const blockedReason = assignmentSubmitBlockerLabel(controller.submitBlocker);
+  const actionReason = controller.message || blockedReason;
 
   useEffect(() => {
     onBusyChange?.(busy);
@@ -130,13 +123,13 @@ export function SingleAssignmentEditor({
 
   useEffect(() => {
     onSubmitPresentationChange?.({
-      blockedReason,
+      blockedReason: actionReason,
       canSubmit: controller.canSubmit,
       formId,
       label: submitLabel,
     });
   }, [
-    blockedReason,
+    actionReason,
     controller.canSubmit,
     formId,
     onSubmitPresentationChange,
@@ -169,11 +162,19 @@ export function SingleAssignmentEditor({
       <DialogBody
         className={placement === "inline" ? styles.inlineBody : undefined}
       >
-        {controller.loadStatus === "loading" ? (
-          <Notice role="status">
-            {adminLearningText.assignmentModal.overview.loadingEdit}
-          </Notice>
-        ) : null}
+        <div
+          aria-live="polite"
+          className={styles.loadStatus}
+          data-active={controller.loadStatus === "loading"}
+        >
+          {controller.loadStatus === "loading" ? (
+            <Notice role="status">
+              {adminLearningText.assignmentModal.overview.loadingEdit}
+            </Notice>
+          ) : (
+            <span aria-hidden="true">&nbsp;</span>
+          )}
+        </div>
         <form
           aria-busy={busy}
           className={styles.form}
@@ -187,8 +188,7 @@ export function SingleAssignmentEditor({
             <legend className="sr-only">
               {adminLearningText.assignmentModal.overview.formAria}
             </legend>
-            <AssignmentEditorLayout>
-              <AssignmentEditorSettings>
+            <div className={styles.sections}>
                 <AssignmentSection
                   help={adminLearningText.assignmentModal.range.help}
                   helpLabel={formatContentText(
@@ -204,11 +204,6 @@ export function SingleAssignmentEditor({
                     progress={progress}
                     units={units}
                   />
-                  <AssignmentReviewFields
-                    availableLevel1={availableReviewLevel1}
-                    availableLevel2={availableReviewLevel2}
-                    controller={controller}
-                  />
                 </AssignmentSection>
                 <AssignmentSection
                   help={adminLearningText.assignmentModal.conditions.help}
@@ -221,17 +216,34 @@ export function SingleAssignmentEditor({
                   <AssignmentSettingsFields
                     controller={controller}
                     fieldIdPrefix={formId}
+                    part="conditions"
                   />
                 </AssignmentSection>
-              </AssignmentEditorSettings>
-              <AssignmentEditorSummary busy={busy}>
+                <AssignmentSection
+                  help="제한시간과 응시 마감 사용 여부를 정합니다."
+                  helpLabel="시험 일정 설명"
+                  index={3}
+                  title="시험 일정"
+                >
+                  <AssignmentSettingsFields
+                    controller={controller}
+                    fieldIdPrefix={formId}
+                    part="schedule"
+                  />
+                </AssignmentSection>
+                <AssignmentSection
+                  help="저장될 범위와 시험 조건을 마지막으로 확인합니다."
+                  helpLabel="시험 미리보기 설명"
+                  index={4}
+                  title="미리보기"
+                >
                 <AssignmentSummaryPanel
                   controller={controller}
                   datasets={datasets}
                   units={units}
                 />
-              </AssignmentEditorSummary>
-            </AssignmentEditorLayout>
+                </AssignmentSection>
+            </div>
           </fieldset>
         </form>
       </DialogBody>
@@ -240,11 +252,12 @@ export function SingleAssignmentEditor({
           className={placement === "inline" ? styles.inlineFooter : undefined}
         >
           <AssignmentSubmitAction
-            blockedReason={blockedReason}
+            blockedReason={actionReason}
             canSubmit={controller.canSubmit}
             formId={formId}
             label={submitLabel}
             reasonLayout="remaining-center"
+            reasonPosition="before"
           />
         </DialogFooter>
       ) : null}

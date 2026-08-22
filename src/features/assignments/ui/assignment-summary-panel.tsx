@@ -90,7 +90,9 @@ export function AssignmentSummaryPanel({
         <div>
           <dt>{adminLearningText.assignmentModal.summary.timing}</dt>
           <dd>
-            {draft.exam.timing.mode === "total"
+            {draft.exam.timeLimitEnabled === false
+              ? "시간 제한 없음"
+              : draft.exam.timing.mode === "total"
               ? formatContentText(
                   adminLearningText.assignmentModal.edit.totalTiming,
                   { minutes: draft.exam.timing.totalSeconds / 60 },
@@ -131,7 +133,6 @@ export function AssignmentSummaryPanel({
       {[
         previewError,
         capacityMessage,
-        controller.message,
         ...controller.issues.map((issue) => issue.message),
       ]
         .filter((value, index, values) => value && values.indexOf(value) === index)

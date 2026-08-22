@@ -75,7 +75,9 @@ export function QuizPlayer({
         currentQuestion={currentQuestion}
         error={state.error}
         formattedRemaining={
-          state.timerSynchronized
+          state.attempt.timingMode === "none"
+            ? "제한 없음"
+            : state.timerSynchronized
             ? formatQuizTime(state.remainingSeconds)
             : "--:--"
         }
@@ -93,7 +95,7 @@ export function QuizPlayer({
         submitting={
           state.submitting ||
           !state.timerSynchronized ||
-          state.remainingSeconds === 0
+          (state.attempt.timingMode !== "none" && state.remainingSeconds === 0)
         }
         timerSynchronized={state.timerSynchronized}
         timeWarning={state.timeWarning}

@@ -47,7 +47,7 @@ const attemptSchema = z.object({
   startedAt: z.string().min(1),
   deadlineAt: z.string().min(1),
   timerDeadlineAt: z.string().min(1),
-  timingMode: z.enum(["total", "per_question"]),
+  timingMode: z.enum(["none", "total", "per_question"]),
   questionTimeLimitSeconds: z.number().int().positive().nullable(),
   questions: z.array(questionSchema),
   currentQuestionId: z.string().nullable(),

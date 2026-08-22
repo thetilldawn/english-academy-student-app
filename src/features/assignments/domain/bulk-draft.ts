@@ -26,6 +26,7 @@ export type BulkSeriesAssignmentDraftAction =
       value: AssignmentQuestionOrderMode;
     }
   | { type: "exam/timing_changed"; timing: ExamTiming }
+  | { type: "exam/time_limit_changed"; enabled: boolean }
   | { type: "exam/passing_score_changed"; value: number }
   | { type: "review/levels_changed"; levels: readonly ReviewLevel[] };
 
@@ -55,6 +56,7 @@ export function createInitialBulkSeriesAssignmentDraft({
       directionRatio: 50,
       passingScore: 80,
       questionOrderMode: "random",
+      timeLimitEnabled: true,
       timing: { mode: "total", totalSeconds: 300 },
     },
     review: includePendingReview
@@ -115,6 +117,11 @@ export function reduceBulkSeriesAssignmentDraft(
       };
     case "exam/timing_changed":
       return { ...draft, exam: { ...draft.exam, timing: action.timing } };
+    case "exam/time_limit_changed":
+      return {
+        ...draft,
+        exam: { ...draft.exam, timeLimitEnabled: action.enabled },
+      };
     case "exam/passing_score_changed":
       return {
         ...draft,

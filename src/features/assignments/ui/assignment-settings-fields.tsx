@@ -9,21 +9,22 @@ import {
   HelpTip,
   inlineHelpClassName,
 } from "@/design-system/primitives/tooltip/help-tip";
-import {
-  AssignmentFieldGrid,
-  AssignmentTimingModeField,
-} from "@/components/assignment-editor-ui";
+import { AssignmentFieldGrid } from "@/components/assignment-editor-ui";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { formatContentText } from "@/content/format";
 
 import type { SingleAssignmentController } from "../controller/use-assignment-controller";
+import { AssignmentDeadlineFields } from "./assignment-deadline-fields";
+import { ExamTimingFields } from "./exam-timing-fields";
 
 export function AssignmentSettingsFields({
   controller,
   fieldIdPrefix,
+  part,
 }: {
   controller: SingleAssignmentController;
   fieldIdPrefix: string;
+  part: "conditions" | "schedule";
 }) {
   const { actions, capacity, isExactReview, minimumQuestionCount, state } =
     controller;
@@ -31,6 +32,24 @@ export function AssignmentSettingsFields({
   const questionCountId = `${fieldIdPrefix}-question-count`;
   const deadlineId = `${fieldIdPrefix}-deadline`;
   const titleId = `${fieldIdPrefix}-title`;
+
+  if (part === "schedule") {
+    return (
+      <>
+        <ExamTimingFields
+          exam={draft.exam}
+          onEnabledChange={actions.changeTimeLimitEnabled}
+          onModeChange={actions.changeTimingMode}
+          onTimingChange={actions.changeTiming}
+        />
+        <AssignmentDeadlineFields
+          deadline={draft.deadline}
+          id={deadlineId}
+          onChange={actions.changeDeadline}
+        />
+      </>
+    );
+  }
 
   return (
     <>
@@ -119,54 +138,6 @@ export function AssignmentSettingsFields({
             </Button>
           ) : null}
         </Field>
-        <AssignmentTimingModeField
-          helpAriaLabel={adminLearningText.controls.timing.helpAria}
-          helpText={adminLearningText.assignmentModal.conditions.timingHelp}
-          label={adminLearningText.assignmentModal.conditions.timingMode}
-          mode={draft.exam.timing.mode}
-          onChange={actions.changeTimingMode}
-          perQuestionLabel={adminLearningText.controls.timing.perQuestion}
-          totalLabel={adminLearningText.controls.timing.total}
-        />
-      </AssignmentFieldGrid>
-      <AssignmentFieldGrid>
-        <Field as="label">
-          <FieldLabel as="span">
-            {draft.exam.timing.mode === "total"
-              ? adminLearningText.assignmentModal.conditions.totalTime
-              : adminLearningText.assignmentModal.conditions.perQuestionTime}
-          </FieldLabel>
-          {draft.exam.timing.mode === "total" ? (
-            <Input
-              max={180}
-              min={0.5}
-              onChange={(event) =>
-                actions.changeTiming({
-                  mode: "total",
-                  totalSeconds: Number(event.target.value) * 60,
-                })
-              }
-              required
-              step={0.5}
-              type="number"
-              value={draft.exam.timing.totalSeconds / 60}
-            />
-          ) : (
-            <Input
-              max={600}
-              min={5}
-              onChange={(event) =>
-                actions.changeTiming({
-                  mode: "per_question",
-                  perQuestionSeconds: Number(event.target.value),
-                })
-              }
-              required
-              type="number"
-              value={draft.exam.timing.perQuestionSeconds}
-            />
-          )}
-        </Field>
         <Field as="label">
           <FieldLabel as="span">
             {adminLearningText.assignmentModal.conditions.passingScore}
@@ -183,37 +154,6 @@ export function AssignmentSettingsFields({
           />
         </Field>
       </AssignmentFieldGrid>
-      <Field>
-        <FieldLabel as="span" className={inlineHelpClassName}>
-          <HelpTip
-            label={adminLearningText.assignmentModal.deadline.helpAria}
-            trigger={adminLearningText.assignmentModal.deadline.label}
-          >
-            {adminLearningText.assignmentModal.deadline.help}
-          </HelpTip>
-        </FieldLabel>
-        <Input
-          aria-label={adminLearningText.assignmentModal.deadline.label}
-          id={deadlineId}
-          onChange={(event) =>
-            actions.changeDeadline(
-              event.target.value
-                ? {
-                    mode: "at",
-                    koreanLocalDateTime: event.target.value,
-                  }
-                : { mode: "none" },
-            )
-          }
-          step={60}
-          type="datetime-local"
-          value={
-            draft.deadline.mode === "at"
-              ? draft.deadline.koreanLocalDateTime
-              : ""
-          }
-        />
-      </Field>
       <Field>
         <FieldLabel as="span" className={inlineHelpClassName}>
           <HelpTip

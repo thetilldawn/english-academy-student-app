@@ -22,6 +22,7 @@ export type ExamSettings = {
   directionRatio: AssignmentDirectionRatio;
   questionOrderMode: AssignmentQuestionOrderMode;
   passingScore: number;
+  timeLimitEnabled?: boolean;
   timing: ExamTiming;
 };
 
@@ -44,6 +45,17 @@ export type BulkReviewPolicy =
 export type AssignmentDeadline =
   | { mode: "none" }
   | { mode: "at"; koreanLocalDateTime: string };
+
+export type DirectReviewAssignmentDraft = {
+  studentId: string;
+  datasetId: string;
+  primaryUnitIds: readonly string[];
+  reviewLevels: readonly ReviewLevel[];
+  questionCount: number;
+  title: string;
+  exam: ExamSettings;
+  deadline: AssignmentDeadline;
+};
 
 export type AssignmentRange = {
   datasetId: string;

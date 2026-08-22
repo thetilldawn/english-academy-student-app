@@ -1,16 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useRef } from "react";
+
+import { useQuizClockLifecycle } from "./use-quiz-clock-lifecycle";
 
 export function useQuizClock(
   initialRemainingMilliseconds: number,
   onTick: (remainingSeconds: number) => void,
+  enabled = true,
 ) {
   const clockAnchor = useRef<{
     remainingMilliseconds: number;
     startedAt: number;
   } | null>(null);
   const expiryTimer = useRef<number | null>(null);
+
+  const clearExpiryTimer = useCallback(() => {
+    if (expiryTimer.current === null) return;
+    window.clearTimeout(expiryTimer.current);
+    expiryTimer.current = null;
+  }, []);
+  const hasClock = useCallback(() => Boolean(clockAnchor.current), []);
 
   const updateRemaining = useCallback(() => {
     const anchor = clockAnchor.current;
@@ -25,10 +35,14 @@ export function useQuizClock(
 
   const resetClock = useCallback(
     (remainingMilliseconds: number) => {
-      const safeRemaining = Math.max(0, remainingMilliseconds);
-      if (expiryTimer.current !== null) {
-        window.clearTimeout(expiryTimer.current);
+      if (!enabled) {
+        clockAnchor.current = null;
+        clearExpiryTimer();
+        onTick(1);
+        return;
       }
+      const safeRemaining = Math.max(0, remainingMilliseconds);
+      clearExpiryTimer();
       clockAnchor.current = {
         remainingMilliseconds: safeRemaining,
         startedAt: performance.now(),
@@ -39,31 +53,17 @@ export function useQuizClock(
         updateRemaining();
       }, Math.ceil(safeRemaining) + 1);
     },
-    [onTick, updateRemaining],
+    [clearExpiryTimer, enabled, onTick, updateRemaining],
   );
 
-  useEffect(() => {
-    if (clockAnchor.current) return;
-    resetClock(initialRemainingMilliseconds);
-  }, [initialRemainingMilliseconds, resetClock]);
-
-  useEffect(() => {
-    const timer = window.setInterval(updateRemaining, 500);
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") updateRemaining();
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => {
-      window.clearInterval(timer);
-      if (expiryTimer.current !== null) {
-        window.clearTimeout(expiryTimer.current);
-      }
-      document.removeEventListener(
-        "visibilitychange",
-        handleVisibilityChange,
-      );
-    };
-  }, [updateRemaining]);
+  useQuizClockLifecycle({
+    clearExpiryTimer,
+    enabled,
+    hasClock,
+    initialRemainingMilliseconds,
+    resetClock,
+    updateRemaining,
+  });
 
   return resetClock;
 }

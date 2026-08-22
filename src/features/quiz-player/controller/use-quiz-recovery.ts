@@ -55,13 +55,15 @@ export function useQuizRecovery(input: {
         payload.timerRemainingMilliseconds - roundTripMilliseconds,
       );
       const safeRemainingMilliseconds =
-        payload.attempt.timingMode === "per_question" &&
-        payload.attempt.questionTimeLimitSeconds
-          ? Math.min(
-              elapsedAdjustedMilliseconds,
-              payload.attempt.questionTimeLimitSeconds * 1_000,
-            )
-          : elapsedAdjustedMilliseconds;
+        payload.attempt.timingMode === "none"
+          ? 1_000
+          : payload.attempt.timingMode === "per_question" &&
+              payload.attempt.questionTimeLimitSeconds
+            ? Math.min(
+                elapsedAdjustedMilliseconds,
+                payload.attempt.questionTimeLimitSeconds * 1_000,
+              )
+            : elapsedAdjustedMilliseconds;
       expireStartedRef.current = false;
       timeWarningAnnouncedRef.current = false;
       resetClock(safeRemainingMilliseconds);

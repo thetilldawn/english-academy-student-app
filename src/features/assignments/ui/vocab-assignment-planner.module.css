@@ -167,6 +167,114 @@
   justify-content: flex-end;
 }
 
+.assignmentKind,
+.reviewLevelButtons {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.assignmentKind {
+  padding: var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-card);
+  background: var(--surface-muted);
+}
+
+.assignmentKind > button {
+  flex: 1 1 140px;
+}
+
+.reviewRangeGrid {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.reviewLevelButtons > button {
+  flex: 1 1 120px;
+}
+
+.reviewCalculation {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  color: var(--text-primary);
+  background: var(--surface-muted);
+  font-size: 12px;
+  font-weight: 700;
+  transition: opacity var(--motion-fast), background var(--motion-fast);
+}
+
+.reviewCalculation[data-status="loading"] {
+  background: linear-gradient(
+    100deg,
+    var(--surface-muted) 20%,
+    var(--card) 45%,
+    var(--surface-muted) 70%
+  );
+  background-size: 220% 100%;
+  animation: reviewCalculationPulse 0.9s ease-in-out infinite;
+}
+
+.reviewQuestionCount {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--surface-muted);
+}
+
+.reviewQuestionCount span {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.reviewPreview {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+}
+
+.reviewPreview > div {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(72px, auto) minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--space-2);
+  padding-block: var(--space-2);
+  border-bottom: 1px solid var(--line);
+}
+
+.reviewPreview dt {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.reviewPreview dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+@keyframes reviewCalculationPulse {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
 .templateSave > :first-child {
   flex: 1 1 180px;
 }
@@ -209,10 +317,20 @@
   .templateButtons > * {
     flex: 1 1 120px;
   }
+
+  .reviewRangeGrid,
+  .reviewPreview {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .dayRail {
     scroll-behavior: auto;
+  }
+
+  .reviewCalculation {
+    animation: none;
+    transition: none;
   }
 }

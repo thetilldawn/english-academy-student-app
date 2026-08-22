@@ -32,7 +32,9 @@ export function useQuizPlayerController(input: {
     quizPlayerReducer,
     createQuizPlayerState(
       input.initialAttempt,
-      Math.ceil(input.initialRemainingMilliseconds / 1000),
+      input.initialAttempt.timingMode === "none"
+        ? 1
+        : Math.ceil(input.initialRemainingMilliseconds / 1000),
     ),
   );
   const expireStarted = useRef(false);
@@ -71,6 +73,7 @@ export function useQuizPlayerController(input: {
   const resetClock = useQuizClock(
     input.initialRemainingMilliseconds,
     handleClockTick,
+    input.initialAttempt.timingMode !== "none",
   );
 
   useEffect(() => {
@@ -140,6 +143,7 @@ export function useQuizPlayerController(input: {
   useEffect(() => {
     if (
       state.remainingSeconds > 0 &&
+      state.attempt.timingMode !== "none" &&
       state.timerSynchronized &&
       state.remainingSeconds <= 30 &&
       !timeWarningAnnounced.current
@@ -150,7 +154,11 @@ export function useQuizPlayerController(input: {
         message: studentAppText.attempt.timeWarning,
       });
     }
-  }, [state.remainingSeconds, state.timerSynchronized]);
+  }, [
+    state.attempt.timingMode,
+    state.remainingSeconds,
+    state.timerSynchronized,
+  ]);
 
   const submitChoice = useQuizSubmission({
     cancelPendingPromptAudio,
@@ -170,6 +178,7 @@ export function useQuizPlayerController(input: {
   useEffect(() => {
     if (
       state.remainingSeconds !== 0 ||
+      state.attempt.timingMode === "none" ||
       !state.timerSynchronized ||
       state.attempt.status !== "in_progress"
     ) {

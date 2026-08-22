@@ -11,6 +11,7 @@ import {
   type AssignmentReviewSnapshotMode,
 } from "@/lib/admin/assignment-edit";
 import { assignmentReplacementFingerprintPayload } from "@/lib/admin/assignment-replacement-fingerprint";
+import type { TimingMode } from "@/lib/admin/assignment-settings";
 import {
   requireAdmin,
   type AdminContext,
@@ -54,7 +55,7 @@ type AssignmentRelation = {
   question_count: number;
   english_to_korean_ratio: number;
   time_limit_seconds: number;
-  timing_mode: "total" | "per_question";
+  timing_mode: TimingMode;
   question_time_limit_seconds: number | null;
   passing_score: number;
   question_order_mode: "fixed" | "ascending" | "descending" | "random";

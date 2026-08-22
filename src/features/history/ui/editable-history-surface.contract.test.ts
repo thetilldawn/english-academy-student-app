@@ -28,8 +28,8 @@ describe("editable history surface contract", () => {
     expect(interceptedPage).toContain("<EditableHistoryDetailDialog");
     expect(directPage).toContain("<EditableHistoryDetailPage");
     expect(actions).not.toMatch(/SingleAssignmentEditor|editorHeading/);
-    expect(overlay).toContain('submitPlacement="external"');
-    expect(page).toContain('submitPlacement="external"');
+    expect(overlay).toContain('submitPlacement="footer"');
+    expect(page).toContain('submitPlacement="footer"');
     expect(`${overlay}\n${page}`).toContain("useEditableHistoryAssignment");
   });
 });

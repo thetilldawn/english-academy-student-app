@@ -10,8 +10,6 @@ import {
   DialogFrame,
   DialogHeader,
 } from "@/design-system/primitives/dialog/dialog";
-import { FieldLabel, Select } from "@/design-system/primitives/form/field";
-import { HelpTip, inlineHelpClassName } from "@/design-system/primitives/tooltip/help-tip";
 import { prefersReducedMotion } from "@/lib/ui/motion";
 
 import type { AssignmentStudentItem } from "../catalog-types";
@@ -19,28 +17,13 @@ import {
   useVocabAssignmentScreen,
   type VocabAssignmentScreenData,
 } from "../controller/use-vocab-assignment-screen";
-import {
-  hasVocabAssignmentFieldError,
-  hasVocabScheduleFieldError,
-} from "../presentation/vocab-assignment-field-errors";
-import { AssignmentSection } from "./assignment-section";
+import { useDirectReviewAssignmentController } from "../controller/use-direct-review-assignment-controller";
 import { AssignmentSubmitAction } from "./assignment-submit-action";
-import { BulkExamFields } from "./bulk-exam-fields";
-import { BulkSeriesPreview } from "./bulk-series-preview";
+import { DirectReviewAssignmentSections } from "./direct-review-assignment-sections";
 import { resolveInvalidAssignmentFieldFocusTarget } from "./focus-invalid-assignment-field";
-import {
-  VocabQuestionFields,
-  VocabRangeFields,
-} from "./vocab-range-picker";
-import { VocabScheduleFields } from "./vocab-schedule-fields";
+import { VocabRangeAssignmentSections } from "./vocab-range-assignment-sections";
 import editorStyles from "./bulk-assignment-editor.module.css";
 import styles from "./vocab-assignment-planner.module.css";
-
-function previousSourceLabel(student: AssignmentStudentItem) {
-  return [student.displayName, student.schoolName, student.gradeLabel]
-    .filter(Boolean)
-    .join(" · ");
-}
 
 export function VocabAssignmentPlanner({
   data,
@@ -59,6 +42,9 @@ export function VocabAssignmentPlanner({
   ) => void;
   students: readonly AssignmentStudentItem[];
 }) {
+  const [assignmentPurpose, setAssignmentPurpose] = useState<"range" | "review">(
+    "range",
+  );
   const controller = useVocabAssignmentScreen({
     data,
     genericErrorMessage: "단어 시험 배정을 저장하지 못했습니다.",
@@ -66,17 +52,32 @@ export function VocabAssignmentPlanner({
     previewErrorMessage: "배정 후보를 계산하지 못했습니다.",
     students,
   });
+  const reviewController = useDirectReviewAssignmentController({
+    datasets: controller.readyDatasets,
+    initialDatasetId,
+    student: students[0]!,
+    units: data.units,
+  });
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const bulk = controller.bulk;
-  const busy = bulk.state.submission.status === "submitting";
+  const busy = assignmentPurpose === "range"
+    ? bulk.state.submission.status === "submitting"
+    : reviewController.submitting;
   const visibleErrors = submitAttempted ? controller.fieldErrors : {};
-  const previousSourceStudent = students.find(
-    (student) => student.id === controller.previousExamSourceStudentId,
-  );
+  const visibleReviewErrors = submitAttempted
+    ? reviewController.fieldErrors
+    : {};
   const formRef = useRef<HTMLFormElement>(null);
   const draftSignature = JSON.stringify({
-    exam: bulk.state.draft,
-    planner: controller.planner,
+    assignmentPurpose,
+    range: {
+      exam: bulk.state.draft,
+      planner: controller.planner,
+    },
+    review: {
+      ...reviewController.draft,
+      questionCount: 0,
+    },
   });
   const initialDraftSignatureRef = useRef(draftSignature);
 
@@ -92,7 +93,9 @@ export function VocabAssignmentPlanner({
   }
 
   function focusFirstInvalidField() {
-    const key = controller.firstFieldKey;
+    const key = assignmentPurpose === "range"
+      ? controller.firstFieldKey
+      : reviewController.firstFieldKey;
     if (!key) return;
     window.requestAnimationFrame(() => {
       const target = formRef.current?.querySelector<HTMLElement>(
@@ -108,42 +111,37 @@ export function VocabAssignmentPlanner({
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitAttempted(true);
-    if (!controller.canSubmit) {
+    const canSubmit = assignmentPurpose === "range"
+      ? controller.canSubmit
+      : reviewController.canSubmit;
+    if (!canSubmit) {
       focusFirstInvalidField();
       return;
     }
-    const outcome = await controller.actions.submitPlan();
+    const outcome = assignmentPurpose === "range"
+      ? await controller.actions.submitPlan()
+      : await reviewController.actions.submit();
     if (!outcome.ok) {
       toast.error(outcome.message);
       focusFirstInvalidField();
       return;
     }
-    onSuccess(
-      outcome.result.assignmentCount,
-      outcome.result.studentCount,
-      outcome.result.queuedCount,
-    );
+    if (assignmentPurpose === "range") {
+      const result = outcome.result as {
+        assignmentCount: number;
+        studentCount: number;
+        queuedCount: number;
+      };
+      onSuccess(result.assignmentCount, result.studentCount, result.queuedCount);
+    } else {
+      onSuccess(1, 1, 0);
+    }
     onClose();
   }
 
-  const rangeStatus = hasVocabAssignmentFieldError(visibleErrors, ["dataset", "range"])
-    ? "범위 확인"
-    : null;
-  const conditionStatus = hasVocabAssignmentFieldError(visibleErrors, [
-    "distribution",
-    "splitBasis",
-    "questionCount",
-    "selectionMode",
-    "direction",
-    "questionOrder",
-    "passingScore",
-    "timing",
-  ])
-    ? "조건 확인"
-    : null;
-  const scheduleStatus = hasVocabScheduleFieldError(visibleErrors)
-    ? "일정 확인"
-    : null;
+  const canSubmit = assignmentPurpose === "range"
+    ? controller.canSubmit
+    : reviewController.canSubmit;
 
   return (
     <DialogFrame
@@ -171,114 +169,51 @@ export function VocabAssignmentPlanner({
         >
           <fieldset className={editorStyles.fieldset} disabled={busy}>
             <legend className="sr-only">단어 시험 배정 조건</legend>
-            <div className={styles.plannerSections}>
-              <AssignmentSection
-                help="시험에 사용할 단어장과 연속 범위를 고릅니다."
-                helpLabel="시험 범위 설명"
-                index={1}
-                status={rangeStatus}
-                title="시험 범위"
+            <div
+              aria-label="시험 종류"
+              className={styles.assignmentKind}
+              role="group"
+            >
+              <Button
+                aria-pressed={assignmentPurpose === "range"}
+                onClick={() => {
+                  setAssignmentPurpose("range");
+                  setSubmitAttempted(false);
+                }}
+                variant="filter"
               >
-                <VocabRangeFields
-                  controller={controller}
-                  datasets={controller.readyDatasets}
-                  fieldErrors={visibleErrors}
-                />
-              </AssignmentSection>
-              <AssignmentSection
-                help="문항 수, 문항 선택, 출제 순서와 풀이 조건을 정합니다."
-                helpLabel="시험 조건 설명"
-                index={2}
-                status={conditionStatus}
-                title="시험 조건"
+                범위 시험
+              </Button>
+              <Button
+                aria-pressed={assignmentPurpose === "review"}
+                disabled={students.length !== 1}
+                onClick={() => {
+                  setAssignmentPurpose("review");
+                  setSubmitAttempted(false);
+                }}
+                title={students.length === 1
+                  ? "학생의 미배정 오답만 시험으로 만듭니다."
+                  : "오답 시험은 학생 한 명을 선택했을 때 배정할 수 있습니다."}
+                variant="filter"
               >
-                <VocabQuestionFields
-                  controller={controller}
-                  datasets={controller.readyDatasets}
-                  fieldErrors={visibleErrors}
-                />
-                <section
-                  aria-label="최근 시험 복사"
-                  className={styles.copyPanel}
-                >
-                  <div className={styles.copySource}>
-                    <FieldLabel as="span" className={inlineHelpClassName}>
-                      <HelpTip label="최근 시험 설명" trigger="최근 시험">
-                        선택한 학생과 단어장의 최근 일반 시험에서 시험 조건과 공개·마감 시간만 불러옵니다. 범위와 날짜는 바뀌지 않습니다.
-                      </HelpTip>
-                    </FieldLabel>
-                    {students.length > 1 ? (
-                      <Select
-                        aria-label="최근 시험 복사 기준 학생"
-                        onChange={(event) =>
-                          controller.actions.changePreviousExamSourceStudentId(
-                            event.target.value,
-                          )
-                        }
-                        value={controller.previousExamSourceStudentId}
-                      >
-                        {students.map((student) => (
-                          <option key={student.id} value={student.id}>
-                            {previousSourceLabel(student)}
-                          </option>
-                        ))}
-                      </Select>
-                    ) : (
-                      <strong>
-                        {previousSourceStudent
-                          ? previousSourceLabel(previousSourceStudent)
-                          : "학생 선택 필요"}
-                      </strong>
-                    )}
-                    <small>
-                      {controller.previousExam
-                        ? controller.previousExam.assignmentTitle
-                        : "복사할 최근 시험 없음"}
-                    </small>
-                  </div>
-                  <Button
-                    disabled={!controller.hasPreviousExam || busy}
-                    onClick={() => {
-                      if (controller.actions.copyPreviousExam()) {
-                        toast.success("최근 시험 조건을 적용했습니다.");
-                      }
-                    }}
-                    size="small"
-                  >
-                    조건 복사
-                  </Button>
-                </section>
-                <BulkExamFields
-                  controller={bulk}
-                  fieldErrors={visibleErrors}
-                  orderLabel="출제 순서"
-                />
-              </AssignmentSection>
-              <AssignmentSection
-                help="요일을 고르면 기본 회차를 날짜에 배치합니다."
-                helpLabel="시험 일정 설명"
-                index={3}
-                status={scheduleStatus}
-                title="시험 일정"
-              >
-                <VocabScheduleFields
-                  controller={controller}
-                  fieldErrors={visibleErrors}
-                />
-                {controller.scheduleSlots.length > 0 ? (
-                  <BulkSeriesPreview
-                    collisionDecisions={controller.collisionDecisionRecords}
-                    completionGated={controller.planner.distribution === "split"}
-                    controller={bulk}
-                    distribution={controller.planner.distribution}
-                    onClearCollisionDecision={controller.actions.clearCollisionDecision}
-                    onCollisionDecision={controller.actions.decideCollision}
-                    onCollisionDecisionChange={controller.actions.changeCollisionDecision}
-                    students={students}
-                  />
-                ) : null}
-              </AssignmentSection>
+                오답 시험
+              </Button>
             </div>
+            {assignmentPurpose === "review" ? (
+              <DirectReviewAssignmentSections
+                controller={reviewController}
+                datasets={controller.readyDatasets}
+                fieldErrors={visibleReviewErrors}
+                student={students[0]!}
+              />
+            ) : (
+              <VocabRangeAssignmentSections
+                busy={busy}
+                controller={controller}
+                fieldErrors={visibleErrors}
+                students={students}
+              />
+            )}
           </fieldset>
         </form>
       </DialogBody>
@@ -286,7 +221,7 @@ export function VocabAssignmentPlanner({
         <div className={styles.submitRow}>
           <AssignmentSubmitAction
             blockedReason={null}
-            canSubmit={!busy && (!submitAttempted || controller.canSubmit)}
+            canSubmit={!busy && (!submitAttempted || canSubmit)}
             formId="vocab-assignment-plan-form"
             label={busy ? "배정 중…" : "배정하기"}
           />

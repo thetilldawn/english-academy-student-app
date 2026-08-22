@@ -6,7 +6,6 @@ import { adminHistoryText } from "@/content/ko/admin-history";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { DetailHeader } from "@/design-system/patterns/detail-header/detail-header";
 import { Button, ButtonLink } from "@/design-system/primitives/button/button";
-import { AssignmentSubmitAction } from "@/features/assignments/ui/assignment-submit-action";
 import { SingleAssignmentEditor } from "@/features/assignments/ui/single-assignment-editor";
 import type { AdminHistoryDetail } from "@/lib/services/admin-service";
 import type { AssignmentManagerData } from "@/lib/services/assignment-manager-data";
@@ -34,27 +33,14 @@ export function EditableHistoryDetailPage({
       {editor.editing ? (
         <HistoryDetailPageHeaderFrame
           actions={
-            <>
-              <AssignmentSubmitAction
-                blockedReason={editor.submitPresentation.blockedReason}
-                canSubmit={editor.submitPresentation.canSubmit}
-                formId={editor.formId}
-                label={
-                  editor.editorBusy
-                    ? adminLearningText.assignmentModal.submit.saving
-                    : adminLearningText.assignmentModal.submit.headerSaveChanges
-                }
-                size="small"
-              />
-              <Button
-                disabled={editor.editorBusy}
-                onClick={editor.closeEditor}
-                size="small"
-                variant="quiet"
-              >
-                {adminHistoryText.detailModal.close}
-              </Button>
-            </>
+            <Button
+              disabled={editor.editorBusy}
+              onClick={editor.closeEditor}
+              size="small"
+              variant="quiet"
+            >
+              {adminHistoryText.detailModal.close}
+            </Button>
           }
         >
           <DetailHeader
@@ -90,7 +76,7 @@ export function EditableHistoryDetailPage({
           onSubmitPresentationChange={editor.setSubmitPresentation}
           onSucceeded={editor.handleSucceeded}
           placement="inline"
-          submitPlacement="external"
+          submitPlacement="footer"
         />
       ) : (
         <AdminHistoryDetailContent

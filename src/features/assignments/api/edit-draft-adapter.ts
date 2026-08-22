@@ -67,8 +67,9 @@ export function hydrateSingleAssignmentDraftFromEditResponse(
         source.questionOrderMode,
       ),
       passingScore: source.passingScore,
+      timeLimitEnabled: source.timingMode !== "none",
       timing:
-        source.timingMode === "total"
+        source.timingMode !== "per_question"
           ? { mode: "total", totalSeconds: source.timeLimitSeconds }
           : {
               mode: "per_question",

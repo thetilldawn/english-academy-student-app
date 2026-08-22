@@ -80,7 +80,7 @@ export function QuizFrame({
   timerSynchronized: boolean;
   timeWarning: string;
   timedOut: boolean;
-  timingMode: "total" | "per_question";
+  timingMode: "none" | "total" | "per_question";
 }) {
   const isEnglishPrompt =
     currentQuestion.direction === "english_to_korean";
@@ -130,7 +130,7 @@ export function QuizFrame({
           })}
           className={[
             styles.timer,
-            timerSynchronized && remainingSeconds <= 30
+            timingMode !== "none" && timerSynchronized && remainingSeconds <= 30
               ? styles.timerWarning
               : "",
           ]
@@ -152,7 +152,7 @@ export function QuizFrame({
         aria-valuenow={progress}
         className={[
           styles.progressTrack,
-          timerSynchronized && remainingSeconds <= 30
+          timingMode !== "none" && timerSynchronized && remainingSeconds <= 30
             ? styles.progressWarning
             : "",
         ]

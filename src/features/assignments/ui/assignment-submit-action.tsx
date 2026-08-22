@@ -12,6 +12,7 @@ export function AssignmentSubmitAction({
   formId,
   label,
   reasonLayout = "inline",
+  reasonPosition = "after",
   size = "large",
   focusableWhenBlocked = false,
 }: {
@@ -20,6 +21,7 @@ export function AssignmentSubmitAction({
   formId: string;
   label: string;
   reasonLayout?: "inline" | "remaining-center";
+  reasonPosition?: "before" | "after";
   size?: ButtonSize;
   focusableWhenBlocked?: boolean;
 }) {
@@ -29,6 +31,7 @@ export function AssignmentSubmitAction({
       layout={reasonLayout}
       reason={blockedReason}
       reasonId={blockedReason ? reasonId : undefined}
+      reasonPosition={reasonPosition}
     >
       <Button
         aria-describedby={blockedReason ? reasonId : undefined}

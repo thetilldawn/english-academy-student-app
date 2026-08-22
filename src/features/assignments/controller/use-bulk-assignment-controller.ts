@@ -484,6 +484,7 @@ export function useBulkAssignmentController({
       }
       changeDraft({ type: "exam/timing_changed", timing });
     },
+    changeTimeLimitEnabled: (enabled: boolean) => changeDraft({ type: "exam/time_limit_changed", enabled }),
     changeTimingMode: (mode: ExamTiming["mode"]) => {
       changeDraft({
         type: "exam/timing_changed",

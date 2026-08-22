@@ -21,7 +21,7 @@ export type PreviousVocabExamSource = {
   studentId: string;
   studentName: string;
   timeLimitSeconds: number;
-  timingMode: "total" | "per_question";
+  timingMode: "none" | "total" | "per_question";
 };
 
 export type PreviousVocabExamConditions = {
@@ -93,6 +93,7 @@ function toConditions(
         item.questionOrderMode === "fixed"
           ? "ascending"
           : item.questionOrderMode,
+      timeLimitEnabled: item.timingMode !== "none",
       timing,
     },
     scheduleRule: scheduleRule(item),

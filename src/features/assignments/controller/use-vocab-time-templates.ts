@@ -20,11 +20,13 @@ import {
 export function useVocabTimeTemplates({
   initialTemplates,
   schedule,
+  timeLimitEnabled = true,
   timing,
   transport = browserAssignmentTransport,
 }: {
   initialTemplates: readonly VocabTimeTemplate[];
   schedule: VocabScheduleDraft;
+  timeLimitEnabled?: boolean;
   timing: ExamTiming;
   transport?: AssignmentTransport;
 }) {
@@ -58,6 +60,7 @@ export function useVocabTimeTemplates({
           availableTime: schedule.availableTime,
           deadlineDayOffset: schedule.deadlineDayOffset,
           deadlineTime: schedule.deadlineTime,
+          timeLimitEnabled,
           timing,
         }),
         method: "POST",

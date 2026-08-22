@@ -1,0 +1,38 @@
+.root {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.toggle {
+  width: fit-content;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--text-primary);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.control {
+  min-width: 0;
+  transition: opacity var(--motion-fast);
+}
+
+.root:has(.toggle input:not(:checked)) .control {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.fixedStatus {
+  min-height: 1.45em;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .control {
+    transition: none;
+  }
+}

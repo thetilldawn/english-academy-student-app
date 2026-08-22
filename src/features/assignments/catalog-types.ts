@@ -96,7 +96,7 @@ export type AssignmentProgressItem = {
     questionOrderMode: "ascending" | "descending" | "random";
     questionTimeLimitSeconds: number | null;
     timeLimitSeconds: number;
-    timingMode: "total" | "per_question";
+    timingMode: "none" | "total" | "per_question";
     unitIds: string[];
   } | null;
   studentId: string;

@@ -95,6 +95,7 @@ export function createInitialSingleAssignmentDraft({
     directionRatio: 50,
     passingScore: 80,
     questionOrderMode: "random",
+    timeLimitEnabled: true,
     timing: { mode: "total", totalSeconds: 300 },
   },
   orderedUnitIds,
@@ -568,6 +569,12 @@ export function useAssignmentController({
         changeDraft({
           type: "exam/changed",
           exam: { ...stateRef.current.draft.exam, timing },
+        });
+      },
+      changeTimeLimitEnabled(timeLimitEnabled: boolean) {
+        changeDraft({
+          type: "exam/changed",
+          exam: { ...stateRef.current.draft.exam, timeLimitEnabled },
         });
       },
       changeTimingMode(mode: ExamTiming["mode"]) {

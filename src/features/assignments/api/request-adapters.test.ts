@@ -9,6 +9,7 @@ import {
   assignmentSchema,
   bulkAssignmentPreviewSchema,
   bulkAssignmentSchema,
+  directReviewAssignmentSchema,
   mixedAssignmentSchema,
 } from "@/lib/validation";
 import {
@@ -28,6 +29,7 @@ import {
 } from "../domain/fingerprint";
 import type {
   BulkSeriesAssignmentDraft,
+  DirectReviewAssignmentDraft,
   SingleAssignmentOperation,
   SingleAssignmentDraft,
 } from "../domain/model";
@@ -38,6 +40,7 @@ import {
   buildAssignmentEditDraftRequest,
   buildBulkAssignmentPreviewRequest,
   buildBulkAssignmentRequest,
+  buildDirectReviewAssignmentRequest,
   buildLegacyReviewCancelRequest,
   buildSingleAssignmentRequest,
   bulkPreviewFingerprint,
@@ -155,6 +158,44 @@ const bulkDraft: BulkSeriesAssignmentDraft = {
 };
 
 describe("assignment request adapters", () => {
+  it("builds an independent untimed review assignment for one student", () => {
+    const draft: DirectReviewAssignmentDraft = {
+      studentId: assignmentContractIds.studentA,
+      datasetId: assignmentContractIds.dataset,
+      primaryUnitIds: [...reverseUnitIds],
+      reviewLevels: [1, 2],
+      questionCount: 4,
+      title: "오답 시험",
+      exam: {
+        directionRatio: 50,
+        questionOrderMode: "random",
+        passingScore: 80,
+        timeLimitEnabled: false,
+        timing: { mode: "total", totalSeconds: 300 },
+      },
+      deadline: { mode: "none" },
+    };
+
+    const request = buildDirectReviewAssignmentRequest(draft);
+
+    expect(request.endpoint).toBe("/api/admin/exact-review-assignments");
+    expect(request.method).toBe("POST");
+    expect(request.body).toMatchObject({
+      studentId: assignmentContractIds.studentA,
+      datasetId: assignmentContractIds.dataset,
+      primaryUnitIds: [...reverseUnitIds],
+      reviewLevels: [1, 2],
+      reviewScope: "dataset",
+      totalQuestionCount: 4,
+      timingMode: "none",
+      questionTimeLimitSeconds: null,
+      availableUntil: null,
+    });
+    expect(directReviewAssignmentSchema.safeParse(request.body).success).toBe(
+      true,
+    );
+  });
+
   it("keeps regular capacity and submission on the same range and direction", () => {
     const capacity = buildAssignmentCapacityRequest(regularDraft);
     const request = buildSingleAssignmentRequest(

@@ -222,6 +222,21 @@ afterEach(() => {
 });
 
 describe("QuizPlayer", () => {
+  it("keeps an untimed attempt open without starting a countdown", async () => {
+    const quizAttempt = attempt();
+    quizAttempt.deadlineAt = "infinity";
+    quizAttempt.timerDeadlineAt = "infinity";
+    quizAttempt.timingMode = "none";
+    quizAttempt.questionTimeLimitSeconds = null;
+
+    await renderReady(quizAttempt, 1_000);
+
+    expect(screen.getByTestId("quiz-timer")).toHaveTextContent("제한 없음");
+    act(() => vi.advanceTimersByTime(24 * 60 * 60 * 1_000));
+    expect(mocks.expire).not.toHaveBeenCalled();
+    expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
+  });
+
   it("keeps silent feedback within 750ms without reducing the next question timer", async () => {
     const quizAttempt = attempt();
     quizAttempt.questionTimeLimitSeconds = 10;

@@ -19,6 +19,8 @@ export function RouteDetailDialog({
   headerActions,
   layout = "body",
   onRequestClose,
+  size = "wide",
+  height,
 }: {
   children: ReactNode;
   closeDisabled?: boolean;
@@ -27,6 +29,8 @@ export function RouteDetailDialog({
   headerActions?: ReactNode;
   layout?: DialogLayout;
   onRequestClose?: () => void;
+  size?: "wide" | "extra-wide";
+  height?: "large";
 }) {
   const router = useRouter();
   const closingRef = useRef(false);
@@ -42,9 +46,10 @@ export function RouteDetailDialog({
     <DialogFrame
       aria-labelledby="route-history-detail-title"
       closeDisabled={closeDisabled}
+      height={height}
       layout={layout}
       onRequestClose={close}
-      size="wide"
+      size={size}
     >
       <DialogHeader
         actions={headerActions}

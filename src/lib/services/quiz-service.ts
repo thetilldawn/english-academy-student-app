@@ -933,7 +933,10 @@ export async function listStudentAssignments(
       lastInitialCompletedAt:
         lastAttempt?.initial_completed_at ?? null,
       lastCompletedAt: lastAttempt?.completed_at ?? null,
-      lastDeadlineAt: lastAttempt?.deadline_at ?? null,
+      lastDeadlineAt:
+        assignment.timing_mode === "none"
+          ? null
+          : lastAttempt?.deadline_at ?? null,
       lastUnresolvedWrongCount:
         lastAttempt?.unresolved_wrong_count ?? null,
       assignedAt,

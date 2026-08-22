@@ -88,29 +88,37 @@ vi.mock("@/features/assignments/ui/single-assignment-editor", () => ({
       });
     }, [formId, onSubmitPresentationChange]);
     return (
-      <form id={formId}>
-        편집 양식
-        <button onClick={() => onBusyChange(true)} type="button">
-          저장 시작
-        </button>
-        <button
-          onClick={() => {
-            onBusyChange(false);
-            onSucceeded({
-              idempotent: false,
-              replacementAssignmentId:
-                "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
-              replacementPurpose: "regular",
-              sourceAssignmentId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-              status: "replaced",
-              studentId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
-            });
-          }}
-          type="button"
-        >
-          저장 완료
-        </button>
-      </form>
+      <>
+        <form id={formId}>
+          편집 양식
+          <button onClick={() => onBusyChange(true)} type="button">
+            저장 시작
+          </button>
+          <button
+            onClick={() => {
+              onBusyChange(false);
+              onSucceeded({
+                idempotent: false,
+                replacementAssignmentId:
+                  "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+                replacementPurpose: "regular",
+                sourceAssignmentId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                status: "replaced",
+                studentId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+              });
+            }}
+            type="button"
+          >
+            저장 완료
+          </button>
+        </form>
+        <div data-testid="edit-footer">
+          <span data-testid="edit-footer-error">범위 선택</span>
+          <button disabled form={formId} type="submit">
+            {adminLearningText.assignmentModal.submit.headerSaveChanges}
+          </button>
+        </div>
+      </>
     );
   },
 }));
@@ -180,7 +188,17 @@ describe("editable history detail dialog", () => {
         name: adminLearningText.assignmentModal.submit.headerSaveChanges,
       }),
     ).toBeDisabled();
-    expect(screen.getByText("범위 선택")).toBeInTheDocument();
+    const footer = screen.getByTestId("edit-footer");
+    const footerError = screen.getByTestId("edit-footer-error");
+    const footerSave = screen.getByRole("button", {
+      name: adminLearningText.assignmentModal.submit.headerSaveChanges,
+    });
+    expect(footerError).toHaveTextContent("범위 선택");
+    expect(
+      footerError.compareDocumentPosition(footerSave) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(footer).toContainElement(footerSave);
     expect(
       screen.getAllByRole("button", {
         name: adminHistoryText.detailModal.close,

@@ -14,6 +14,7 @@ import {
   type MixedAssignmentUnit,
   type PendingReviewIdentity,
 } from "@/lib/admin/mixed-assignment";
+import type { TimingMode } from "@/lib/admin/assignment-settings";
 import {
   requireAdmin,
   type AdminContext,
@@ -575,7 +576,7 @@ export type PreparedMixedAssignmentBatch = {
   passingScore: number;
   questionOrderMode: MixedAssignmentInput["questionOrderMode"];
   availableUntil: string | null;
-  timingMode: "total" | "per_question";
+  timingMode: TimingMode;
   questionTimeLimitSeconds: number | null;
   questions: {
     vocab_entry_id: number;

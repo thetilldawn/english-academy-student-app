@@ -35,7 +35,7 @@ export type QuizAttempt = {
   startedAt: string;
   deadlineAt: string;
   timerDeadlineAt: string;
-  timingMode: "total" | "per_question";
+  timingMode: "none" | "total" | "per_question";
   questionTimeLimitSeconds: number | null;
   questions: QuizQuestion[];
   currentQuestionId: string | null;

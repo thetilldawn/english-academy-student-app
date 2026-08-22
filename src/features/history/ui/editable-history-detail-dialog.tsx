@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { DetailHeader } from "@/design-system/patterns/detail-header/detail-header";
 import { SingleAssignmentEditor } from "@/features/assignments/ui/single-assignment-editor";
-import { AssignmentSubmitAction } from "@/features/assignments/ui/assignment-submit-action";
 import type { AdminHistoryDetail } from "@/lib/services/admin-service";
 import type { AssignmentManagerData } from "@/lib/services/assignment-manager-data";
 
@@ -38,27 +37,15 @@ export function EditableHistoryDetailDialog({
       titleId="route-history-detail-title"
     />
   );
-  const headerActions = editor.editing ? (
-    <AssignmentSubmitAction
-      blockedReason={editor.submitPresentation.blockedReason}
-      canSubmit={editor.submitPresentation.canSubmit}
-      formId={editor.formId}
-      label={
-        editor.editorBusy
-          ? adminLearningText.assignmentModal.submit.saving
-          : adminLearningText.assignmentModal.submit.headerSaveChanges
-      }
-      size="small"
-    />
-  ) : undefined;
-
   return (
     <RouteDetailDialog
       closeDisabled={editor.editing && editor.editorBusy}
       contentMode={editor.editing ? "structured" : "body"}
+      height={editor.editing ? "large" : undefined}
       heading={heading}
-      headerActions={headerActions}
+      layout={editor.editing ? "body-footer" : "body"}
       onRequestClose={editor.editing ? editor.closeEditor : undefined}
+      size={editor.editing ? "extra-wide" : "wide"}
     >
       {editor.editing && editor.editorModel ? (
         <SingleAssignmentEditor
@@ -74,7 +61,7 @@ export function EditableHistoryDetailDialog({
           onSubmitPresentationChange={editor.setSubmitPresentation}
           onSucceeded={editor.handleSucceeded}
           placement="dialog"
-          submitPlacement="external"
+          submitPlacement="footer"
         />
       ) : (
         <AdminHistoryDetailContent

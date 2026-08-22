@@ -14,7 +14,14 @@ export function AssignmentCapacitySummary({
   exactReview: boolean;
   sourceWordCount: number;
 }) {
-  if (!capacity || exactReview) return null;
+  if (exactReview) return null;
+  if (!capacity) {
+    return (
+      <p aria-busy="true" aria-live="polite" className={styles.capacitySummary}>
+        <span>문항 계산 중…</span>
+      </p>
+    );
+  }
   return (
     <p aria-live="polite" className={styles.capacitySummary}>
       <span>

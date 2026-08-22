@@ -44,7 +44,12 @@ function comparable(draft: SingleAssignmentDraft, key: ChangeKey) {
   if (key === "questionCount") return draft.questionCount.value;
   if (key === "direction") return draft.exam.directionRatio;
   if (key === "order") return draft.exam.questionOrderMode;
-  if (key === "timing") return draft.exam.timing;
+  if (key === "timing") {
+    return {
+      enabled: draft.exam.timeLimitEnabled !== false,
+      timing: draft.exam.timing,
+    };
+  }
   if (key === "passingScore") return draft.exam.passingScore;
   if (key === "deadline") return draft.deadline;
   return draft.review;
@@ -90,7 +95,9 @@ function valueLabel(
     return adminLearningText.controls.order[draft.exam.questionOrderMode];
   }
   if (key === "timing") {
-    return draft.exam.timing.mode === "total"
+    return draft.exam.timeLimitEnabled === false
+      ? "시간 제한 없음"
+      : draft.exam.timing.mode === "total"
       ? formatContentText(adminLearningText.assignmentModal.edit.totalTiming, {
           minutes: draft.exam.timing.totalSeconds / 60,
         })

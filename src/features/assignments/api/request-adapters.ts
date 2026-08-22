@@ -6,6 +6,7 @@ import type {
   AssignmentReplacementInput,
   BulkAssignmentInput,
   BulkAssignmentPreviewInput,
+  DirectReviewAssignmentInput,
   MixedAssignmentInput,
 } from "@/lib/validation";
 
@@ -13,6 +14,7 @@ import { assignmentRequestFingerprint } from "../domain/fingerprint";
 import type {
   AssignmentDeadline,
   BulkSeriesAssignmentDraft,
+  DirectReviewAssignmentDraft,
   ExamSettings,
   LegacyReviewRecoveryDraft,
   ReviewPolicy,
@@ -39,6 +41,12 @@ export type MixedAssignmentRequest = {
   endpoint: "/api/admin/mixed-assignments";
   method: "POST";
   body: MixedAssignmentInput;
+};
+
+export type DirectReviewAssignmentRequest = {
+  endpoint: "/api/admin/exact-review-assignments";
+  method: "POST";
+  body: DirectReviewAssignmentInput;
 };
 
 export type AssignmentCapacityRequest = {
@@ -80,6 +88,7 @@ export type LegacyReviewCancelRequest = {
 export type AssignmentHttpRequest =
   | RegularAssignmentRequest
   | MixedAssignmentRequest
+  | DirectReviewAssignmentRequest
   | AssignmentEditDraftRequest
   | AssignmentCapacityRequest
   | AssignmentReplacementRequest
@@ -104,7 +113,37 @@ function deadlineToIso(deadline: AssignmentDeadline): string | null {
   return value;
 }
 
+export function buildDirectReviewAssignmentRequest(
+  draft: DirectReviewAssignmentDraft,
+): DirectReviewAssignmentRequest {
+  return {
+    endpoint: "/api/admin/exact-review-assignments",
+    method: "POST",
+    body: {
+      studentId: draft.studentId,
+      datasetId: draft.datasetId,
+      primaryUnitIds: [...draft.primaryUnitIds],
+      reviewLevels: [...draft.reviewLevels],
+      reviewScope: "dataset",
+      totalQuestionCount: draft.questionCount,
+      title: draft.title,
+      ...examSettingsToApi(draft.exam),
+      availableUntil: deadlineToIso(draft.deadline),
+    },
+  };
+}
+
 function examSettingsToApi(exam: ExamSettings) {
+  if (exam.timeLimitEnabled === false) {
+    return {
+      englishToKoreanRatio: exam.directionRatio,
+      timeLimitSeconds: PER_QUESTION_TOTAL_TIME_COMPATIBILITY_SECONDS,
+      timingMode: "none" as const,
+      questionTimeLimitSeconds: null,
+      passingScore: exam.passingScore,
+      questionOrderMode: exam.questionOrderMode,
+    };
+  }
   if (exam.timing.mode === "total") {
     return {
       englishToKoreanRatio: exam.directionRatio,

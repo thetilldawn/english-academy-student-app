@@ -10,6 +10,22 @@
   border: 0;
 }
 
+.sections {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-4);
+}
+
+.loadStatus {
+  min-height: 36px;
+  display: grid;
+  align-items: center;
+}
+
+.loadStatus:not([data-active="true"]) {
+  visibility: hidden;
+}
+
 .inlineBody {
   padding: 0;
   overflow: visible;
@@ -31,6 +47,7 @@
 }
 
 .capacitySummary {
+  min-height: 42px;
   min-width: 0;
   display: flex;
   align-items: center;

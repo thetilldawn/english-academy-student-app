@@ -7,7 +7,7 @@ export const questionOrderModes = [
 
 export type QuestionOrderMode = (typeof questionOrderModes)[number];
 
-export const timingModes = ["total", "per_question"] as const;
+export const timingModes = ["none", "total", "per_question"] as const;
 
 export type TimingMode = (typeof timingModes)[number];
 
@@ -24,6 +24,8 @@ export function questionOrderLabel(mode: QuestionOrderMode) {
 }
 
 export function assignmentTimingLabel(source: AssignmentTimingSource) {
+  if (source.timingMode === "none") return "시간 제한 없음";
+
   if (source.timingMode === "per_question") {
     return source.questionTimeLimitSeconds !== null &&
       Number.isFinite(source.questionTimeLimitSeconds) &&

@@ -38,6 +38,7 @@ describe("newAssignmentDraftDefaults", () => {
         directionRatio: 100,
         passingScore: 85,
         questionOrderMode: "descending",
+        timeLimitEnabled: true,
         timing: { mode: "per_question", perQuestionSeconds: 12 },
       },
       orderedUnitIds: ["unit-7", "unit-8"],

@@ -166,6 +166,7 @@ function validateExamSettings(
     });
   }
   if (
+    exam.timeLimitEnabled !== false &&
     exam.timing.mode === "total" &&
     !integerInRange(exam.timing.totalSeconds, 30, 10800)
   ) {
@@ -176,6 +177,7 @@ function validateExamSettings(
     });
   }
   if (
+    exam.timeLimitEnabled !== false &&
     exam.timing.mode === "per_question" &&
     !integerInRange(exam.timing.perQuestionSeconds, 5, 600)
   ) {

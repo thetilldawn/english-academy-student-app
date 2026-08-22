@@ -14,6 +14,7 @@ const defaultExam: ExamSettings = {
   directionRatio: 50,
   passingScore: 80,
   questionOrderMode: "random",
+  timeLimitEnabled: true,
   timing: { mode: "total", totalSeconds: 300 },
 };
 
@@ -53,7 +54,13 @@ function inheritedExam(
             totalSeconds: source.timeLimitSeconds,
           }
         : defaultExam.timing;
-  return { directionRatio, passingScore, questionOrderMode, timing };
+  return {
+    directionRatio,
+    passingScore,
+    questionOrderMode,
+    timeLimitEnabled: source.timingMode !== "none",
+    timing,
+  };
 }
 
 export function newAssignmentDraftDefaults(

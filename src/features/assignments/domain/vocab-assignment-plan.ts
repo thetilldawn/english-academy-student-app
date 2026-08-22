@@ -109,6 +109,7 @@ export type VocabTimeTemplate = {
   availableTime: string;
   deadlineDayOffset: number;
   deadlineTime: string;
+  timeLimitEnabled?: boolean;
   timing: ExamTiming;
 };
 
@@ -2299,6 +2300,7 @@ export function applyTimeTemplate<T extends {
     },
     exam: {
       ...draft.exam,
+      timeLimitEnabled: template.timeLimitEnabled !== false,
       timing: { ...template.timing },
     },
   };

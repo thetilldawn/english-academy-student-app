@@ -38,7 +38,7 @@ export async function POST(
         ? millisecondsUntil(
             result.questionDeadlineAt,
             currentTimeMilliseconds(),
-          )
+          ) ?? 0
         : null,
     }, {
       headers: { "Cache-Control": "private, no-store" },

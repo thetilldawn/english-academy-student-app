@@ -113,6 +113,7 @@ export function useVocabAssignmentPlanner({
   const timeTemplateController = useVocabTimeTemplates({
     initialTemplates: initialTimeTemplates,
     schedule: planner.schedule,
+    timeLimitEnabled: bulk.state.draft.exam.timeLimitEnabled !== false,
     timing: bulk.state.draft.exam.timing,
     transport,
   });
@@ -131,6 +132,7 @@ export function useVocabAssignmentPlanner({
       template,
     );
     dispatch({ type: "schedule/replace", value: applied.schedule });
+    bulk.actions.changeTimeLimitEnabled(applied.exam.timeLimitEnabled !== false);
     bulk.actions.changeTiming(applied.exam.timing);
   }
 
@@ -149,6 +151,7 @@ export function useVocabAssignmentPlanner({
     bulk.actions.changeDirection(copied.exam.directionRatio);
     bulk.actions.changeOrder(copied.exam.questionOrderMode);
     bulk.actions.changePassingScore(copied.exam.passingScore);
+    bulk.actions.changeTimeLimitEnabled(copied.exam.timeLimitEnabled !== false);
     bulk.actions.changeTiming(copied.exam.timing);
   }
 

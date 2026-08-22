@@ -106,6 +106,7 @@ export function AssignmentSessionRow({
 }
 
 export function AssignmentTimingModeField({
+  disabled = false,
   helpAriaLabel,
   helpText,
   label,
@@ -114,11 +115,12 @@ export function AssignmentTimingModeField({
   perQuestionLabel,
   totalLabel,
 }: {
+  disabled?: boolean;
   helpAriaLabel: string;
   helpText: ReactNode;
   label: ReactNode;
-  mode: TimingMode;
-  onChange: (mode: TimingMode) => void;
+  mode: Exclude<TimingMode, "none">;
+  onChange: (mode: Exclude<TimingMode, "none">) => void;
   perQuestionLabel: ReactNode;
   totalLabel: ReactNode;
 }) {
@@ -129,8 +131,8 @@ export function AssignmentTimingModeField({
       label={label}
       onChange={onChange}
       options={[
-        { label: totalLabel, value: "total" },
-        { label: perQuestionLabel, value: "per_question" },
+        { disabled, label: totalLabel, value: "total" },
+        { disabled, label: perQuestionLabel, value: "per_question" },
       ]}
       value={mode}
     />

@@ -44,7 +44,7 @@ export async function POST(
         ? millisecondsUntil(
             result.questionDeadlineAt,
             currentTimeMilliseconds(),
-          )
+          ) ?? 0
         : null,
     });
   } catch {

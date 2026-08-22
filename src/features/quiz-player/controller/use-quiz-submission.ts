@@ -268,7 +268,9 @@ export function useQuizSubmission(input: {
       if (
         !question ||
         (phase !== "initial" && phase !== "retry") ||
-        (choiceIndex !== null && input.state.remainingSeconds === 0)
+        (choiceIndex !== null &&
+          input.state.attempt.timingMode !== "none" &&
+          input.state.remainingSeconds === 0)
       ) {
         return;
       }
