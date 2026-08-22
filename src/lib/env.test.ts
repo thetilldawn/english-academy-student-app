@@ -60,10 +60,20 @@ describe("기능별 서버 환경설정 계약", () => {
 
   it("Preview 주소 설정이 없으면 현재 Vercel 배포 주소를 사용한다", () => {
     vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("VERCEL_ENV", "preview");
     vi.stubEnv("APP_ORIGIN", "");
     vi.stubEnv("VERCEL_URL", "preview.example.vercel.app");
 
     expect(getAppOrigin()).toBe("https://preview.example.vercel.app");
+  });
+
+  it("운영환경은 Vercel 배포 주소로 APP_ORIGIN을 대신하지 않는다", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("VERCEL_ENV", "production");
+    vi.stubEnv("APP_ORIGIN", "");
+    vi.stubEnv("VERCEL_URL", "production.example.vercel.app");
+
+    expect(() => getAppOrigin()).toThrow(AppConfigurationError);
   });
 
   it("운영 앱 주소가 잘못되면 설정 오류로 중단한다", () => {

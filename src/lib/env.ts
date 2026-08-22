@@ -111,7 +111,7 @@ export function getAppOrigin() {
   }
 
   const vercelUrl = process.env.VERCEL_URL;
-  if (vercelUrl) {
+  if (process.env.VERCEL_ENV === "preview" && vercelUrl) {
     const result = z.url().safeParse(`https://${vercelUrl}`);
     if (result.success) return result.data;
   }

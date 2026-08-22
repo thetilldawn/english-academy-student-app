@@ -70,6 +70,8 @@ describe("student management feature boundary", () => {
       /listStudents\(|listDatasets\(|listSelectableDatasets\(|listStudentLearningSources\(/,
     );
     expect(loader).toContain("loadStudentDirectoryBundle()");
+    expect(loader).toContain("getAppOrigin()");
+    expect(loader).not.toContain("getServerEnvironment");
     expect(service).toContain("export async function loadStudentDirectoryBundle");
     expect(service).toContain("toSelectableDatasetOptions(allDatasets)");
     expect(service).toContain('dataset.status === "ready"');
