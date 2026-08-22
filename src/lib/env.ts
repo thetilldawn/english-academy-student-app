@@ -98,6 +98,31 @@ export function getPublicEnvironment() {
   return parseEnvironment(publicEnvironmentSchema, "공개 데이터 연결");
 }
 
+export function getAppOrigin() {
+  const configuredOrigin = process.env.APP_ORIGIN;
+  if (configuredOrigin) {
+    const result = z.url().safeParse(configuredOrigin);
+    if (!result.success) {
+      throw new AppConfigurationError(
+        "앱 주소 설정이 올바르지 않습니다: APP_ORIGIN",
+      );
+    }
+    return result.data;
+  }
+
+  const vercelUrl = process.env.VERCEL_URL;
+  if (vercelUrl) {
+    const result = z.url().safeParse(`https://${vercelUrl}`);
+    if (result.success) return result.data;
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    return "http://localhost:3000";
+  }
+
+  throw new AppConfigurationError("운영환경에는 APP_ORIGIN이 필요합니다.");
+}
+
 export function getServiceEnvironment() {
   return parseEnvironment(serviceEnvironmentSchema, "서버 데이터 연결");
 }

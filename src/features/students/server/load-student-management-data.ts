@@ -1,7 +1,7 @@
 import "server-only";
 
 import { buildStudentVocabBookHistory } from "@/lib/admin/student-vocab-book-history";
-import { getServerEnvironment } from "@/lib/env";
+import { getAppOrigin } from "@/lib/env";
 import {
   buildStudentProgress,
   listAssignmentHistoryBundle,
@@ -32,8 +32,7 @@ export async function loadStudentManagementData(): Promise<
   const history = historyBundle.history;
 
   return {
-    appOrigin:
-      getServerEnvironment().APP_ORIGIN ?? "http://localhost:3000",
+    appOrigin: getAppOrigin(),
     assignmentDatasets: directory.allDatasets,
     assignmentUnits,
     currentHistory: historyBundle.currentHistory,

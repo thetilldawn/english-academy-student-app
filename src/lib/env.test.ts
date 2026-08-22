@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   AppConfigurationError,
+  getAppOrigin,
   getStudentCodeEnvironment,
 } from "@/lib/env";
 
@@ -44,5 +45,31 @@ describe("기능별 서버 환경설정 계약", () => {
     expect(() => getStudentCodeEnvironment()).toThrow(
       AppConfigurationError,
     );
+  });
+
+  it("학생 조회 화면은 코드·세션 비밀값 없이 앱 주소만 읽는다", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("APP_ORIGIN", "https://preview.example.com");
+    vi.stubEnv("STUDENT_CODE_PEPPER", "");
+    vi.stubEnv("STUDENT_SESSION_PEPPER", "");
+    vi.stubEnv("STUDENT_CODE_ENCRYPTION_KEY", "");
+    vi.stubEnv("LOGIN_IP_PEPPER", "");
+
+    expect(getAppOrigin()).toBe("https://preview.example.com");
+  });
+
+  it("Preview 주소 설정이 없으면 현재 Vercel 배포 주소를 사용한다", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("APP_ORIGIN", "");
+    vi.stubEnv("VERCEL_URL", "preview.example.vercel.app");
+
+    expect(getAppOrigin()).toBe("https://preview.example.vercel.app");
+  });
+
+  it("운영 앱 주소가 잘못되면 설정 오류로 중단한다", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("APP_ORIGIN", "not-a-url");
+
+    expect(() => getAppOrigin()).toThrow(AppConfigurationError);
   });
 });
