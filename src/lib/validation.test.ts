@@ -32,10 +32,10 @@ describe("시간 템플릿 입력 계약", () => {
       totalSeconds: null,
       perQuestionSeconds: 20,
     })).toThrow();
-    expect(() => createVocabTimeTemplateSchema.parse({
+    expect(createVocabTimeTemplateSchema.parse({
       ...valid,
       name: "저녁",
-    })).toThrow();
+    }).name).toBe("저녁");
   });
 });
 

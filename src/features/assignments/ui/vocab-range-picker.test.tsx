@@ -134,12 +134,12 @@ describe("VocabRangePicker", () => {
     );
   });
 
-  it("문제 순서와 직접 입력을 시험 조건으로 분리해 제공한다", () => {
+  it("문항 선택과 직접 입력을 시험 조건으로 분리해 제공한다", () => {
     const withRemaining = controller({ manual: true, remaining: 46 });
     render(
       <VocabRangePicker controller={withRemaining} datasets={[dataset]} />,
     );
-    expect(screen.getByRole("group", { name: "문제 순서" })).toBeVisible();
+    expect(screen.getByRole("group", { name: "문항 선택" })).toBeVisible();
     expect(screen.getByText("출제 가능 86문항 · 출제 40문항 · 남음 46문항 · 기본 3회"))
       .toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "무작위" }));

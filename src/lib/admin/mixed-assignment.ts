@@ -115,7 +115,7 @@ export function mixedAssignmentGeneratedTitle(
   totalQuestionCount: number,
 ) {
   if (reviewQuestionCount === totalQuestionCount) {
-    return `${datasetLabel} · 오답 재시험 · ${reviewQuestionCount}문항`;
+    return `${datasetLabel} · 오답 시험 · ${reviewQuestionCount}문항`;
   }
 
   const unitRange =

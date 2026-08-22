@@ -25,7 +25,7 @@ import { getServiceSupabaseClient } from "@/lib/supabase/service";
 const REVIEW_DRAFT_FINALIZE_LIMIT = 400;
 const ID_FILTER_CHUNK_SIZE = 80;
 const MAX_ASSIGNMENT_TITLE_LENGTH = 160;
-const REVIEW_TITLE_SUFFIX = " · 오답 재시험";
+const REVIEW_TITLE_SUFFIX = " · 오답 시험";
 
 type DraftRow = {
   id: string;
@@ -76,7 +76,7 @@ export class ReviewAssignmentError extends Error {
       | "invalid_selection"
       | "conflict"
       | "database",
-    message = "오답 재시험을 배정하지 못했습니다.",
+    message = "오답 시험을 배정하지 못했습니다.",
   ) {
     super(message);
     this.name = "ReviewAssignmentError";
@@ -91,7 +91,7 @@ export class ReviewAssignmentDraftCancelError extends Error {
       | "unavailable"
       | "database",
   ) {
-    super("오답 재시험 준비를 취소하지 못했습니다.");
+    super("오답 시험 준비를 취소하지 못했습니다.");
     this.name = "ReviewAssignmentDraftCancelError";
   }
 }
@@ -155,7 +155,7 @@ export async function finalizeExpiredReviewAssignmentDrafts(
     !Number.isSafeInteger(finalizedCount) ||
     finalizedCount < 0
   ) {
-    throw new Error("만료된 오답 재시험 초안을 정리하지 못했습니다.");
+    throw new Error("만료된 오답 시험 초안을 정리하지 못했습니다.");
   }
   return finalizedCount;
 }
@@ -170,7 +170,7 @@ async function loadReviewDraftContext(
     .eq("id", reviewDraftId)
     .maybeSingle();
   if (draftError) {
-    throw new Error("오답 재시험 초안을 불러오지 못했습니다.");
+    throw new Error("오답 시험 초안을 불러오지 못했습니다.");
   }
   const draft = draftData as DraftRow | null;
   if (!draft || draft.status !== "pending") return null;
@@ -203,7 +203,7 @@ async function loadReviewDraftContext(
   ]);
 
   if (studentError || datasetError || itemError) {
-    throw new Error("오답 재시험 초안의 연결 정보를 불러오지 못했습니다.");
+    throw new Error("오답 시험 초안의 연결 정보를 불러오지 못했습니다.");
   }
   if (
     !student ||
@@ -222,7 +222,7 @@ async function loadReviewDraftContext(
     new Set(items.map((item) => item.queue_id)).size !== items.length ||
     items.some((item, index) => item.position !== index + 1)
   ) {
-    throw new Error("오답 재시험 초안 항목이 올바르지 않습니다.");
+    throw new Error("오답 시험 초안 항목이 올바르지 않습니다.");
   }
 
   const queueIds = items.map((item) => item.queue_id);
@@ -245,7 +245,7 @@ async function loadReviewDraftContext(
       .eq("status", "pending")
       .eq("reserved_review_draft_id", reviewDraftId);
     if (error) {
-      throw new Error("오답 재시험 대기 단어를 불러오지 못했습니다.");
+      throw new Error("오답 시험 대기 단어를 불러오지 못했습니다.");
     }
     queueRows.push(...((data ?? []) as ReviewQueueRow[]));
   }
@@ -260,7 +260,7 @@ async function loadReviewDraftContext(
     targetEntryIds.length !== items.length ||
     new Set(targetEntryIds).size !== targetEntryIds.length
   ) {
-    throw new Error("오답 재시험 대상 단어가 올바르지 않습니다.");
+    throw new Error("오답 시험 대상 단어가 올바르지 않습니다.");
   }
 
   const datasetLabel = await loadDatasetDisplayLabel(supabase, dataset);

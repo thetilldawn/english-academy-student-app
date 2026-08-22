@@ -10,6 +10,7 @@ import {
   FieldLabel,
   Input,
 } from "@/design-system/primitives/form/field";
+import { HelpTip, inlineHelpClassName } from "@/design-system/primitives/tooltip/help-tip";
 import { isoToKoreanDateTimeLocal } from "@/lib/deadline";
 
 import type { VocabAssignmentScreenController } from "../controller/use-vocab-assignment-screen";
@@ -105,7 +106,7 @@ export function VocabScheduleDetailFields({
                     : ` · ${row.questionCount}문항`}
                 </strong>
                 <Field as="label">
-                  <FieldLabel as="span">공개 시작</FieldLabel>
+                  <FieldLabel as="span">공개</FieldLabel>
                   <Input
                     aria-errormessage={availableError
                       ? `vocab-session-${row.sessionNumber}-available-error`
@@ -162,25 +163,31 @@ export function VocabScheduleDetailFields({
         </div>
       ) : null}
       <div className={styles.templateArea}>
-        <FieldLabel as="span">빠른 시간</FieldLabel>
-        <div className={styles.templateButtons}>
-          {controller.timeTemplates.map((template) => (
-            <Button
-              key={template.id}
-              onClick={() => controller.actions.applyTemplate(template)}
-              size="small"
-              variant="filter"
-            >
-              {template.label}
-            </Button>
-          ))}
-        </div>
+        <FieldLabel as="span" className={inlineHelpClassName}>
+          <HelpTip label="시간 템플릿 설명" trigger="시간 템플릿">
+            현재 공개·마감·제한시간을 저장해 다음 배정에서 바로 적용합니다.
+          </HelpTip>
+        </FieldLabel>
+        {controller.timeTemplates.length > 0 ? (
+          <div className={styles.templateButtons}>
+            {controller.timeTemplates.map((template) => (
+              <Button
+                key={template.id}
+                onClick={() => controller.actions.applyTemplate(template)}
+                size="small"
+                variant="filter"
+              >
+                {template.label}
+              </Button>
+            ))}
+          </div>
+        ) : null}
         <div className={styles.templateSave}>
           <Input
             aria-label="새 시간 템플릿 이름"
             maxLength={30}
             onChange={(event) => setTemplateName(event.target.value)}
-            placeholder="현재 시간을 템플릿으로 저장"
+            placeholder="예: 중3 저녁반"
             value={templateName}
           />
           <Button
@@ -196,7 +203,7 @@ export function VocabScheduleDetailFields({
             }}
             size="small"
           >
-            {controller.templateSaving ? "저장 중" : "추가"}
+            {controller.templateSaving ? "저장 중" : "저장"}
           </Button>
         </div>
       </div>

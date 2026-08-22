@@ -36,19 +36,12 @@ describe("mobile production regression UI contract", () => {
   const studentController = source(
     "src/features/students/controller/use-student-detail-controller.ts",
   );
-  it("stacks score and timeline before the student card can overflow", () => {
-    expect(studentDirectory).toContain("hasAttemptScoreContent(");
-    expect(studentDirectory).toContain('data-has-score={hasScore || undefined}');
-    expect(studentDirectoryCss).toMatch(
-      /@media \(max-width: 767px\)[\s\S]*?\.scoreLine\[data-has-score="true"\]\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/,
-    );
-    const timelineCss = source(
-      "src/design-system/patterns/activity-timeline/activity-timeline.module.css",
-    );
-    expect(studentDirectory).toContain('align="end"');
-    expect(timelineCss).toMatch(
-      /\.timeline\[data-align="end"\]\s*\{[^}]*justify-items:\s*end;/,
-    );
+  it("keeps the student card to the requested summary fields", () => {
+    expect(studentDirectory).toContain("summarizeStudentDirectoryActivities");
+    expect(studentDirectory).toContain("summary.completedCount");
+    expect(studentDirectory).toContain("summary.missedCount");
+    expect(studentDirectory).toContain("summary.notStartedCount");
+    expect(studentDirectoryCss).toContain(".activityStats");
   });
 
   it("shows an existing student's code inside one modal level", () => {
@@ -90,6 +83,12 @@ describe("mobile production regression UI contract", () => {
     expect(quizChoiceCss).toMatch(
       /\.withAudio\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 46px;/,
     );
+    expect(quizChoiceCss).toMatch(
+      /\.row\s*\{[^}]*align-items:\s*center;/,
+    );
+    expect(quizChoiceCss).toMatch(
+      /\.text\s*\{[^}]*overflow-wrap:\s*anywhere;/,
+    );
   });
 
   it("keeps answer feedback out of the visual layout", () => {
@@ -106,17 +105,16 @@ describe("mobile production regression UI contract", () => {
       "studentAppText.attempt.timeoutTitle",
     );
     expect(quizChoiceCss).toMatch(
-      /\.row\s*\{[^}]*height:\s*76px;/,
+      /\.row\s*\{[^}]*min-height:\s*76px;/,
     );
     expect(quizChoiceCss).toMatch(
-      /\.choice\s*\{[^}]*height:\s*76px;/,
+      /\.choice\s*\{[^}]*min-height:\s*76px;/,
     );
     expect(quizChoiceCss).toContain("background-color 90ms ease-out");
     expect(quizChoiceCss).toMatch(
       /\.selected\s*\{[^}]*border-color:\s*var\(--ink\);/,
     );
-    expect(quizChoiceCss).toMatch(
-      /@media \(max-width: 400px\)[\s\S]*?\.korean \.text\s*\{[^}]*-webkit-line-clamp:\s*3;/,
-    );
+    expect(quizChoiceCss).not.toContain("-webkit-line-clamp");
+    expect(quizFrameCss).not.toContain("max-height: 142px");
   });
 });

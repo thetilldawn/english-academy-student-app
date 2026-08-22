@@ -76,7 +76,7 @@ export function validateVocabPlannerInputs(input: {
     issues.push({
       code: "invalid_order",
       path: "commonPlan.selectionMode",
-      message: "문제 순서를 선택해 주세요.",
+      message: "문항 선택 방식을 골라 주세요.",
     });
   }
   if (!isCalendarDate(input.schedule.startDate)) {
@@ -97,7 +97,7 @@ export function validateVocabPlannerInputs(input: {
     issues.push({
       code: "invalid_datetime",
       path: "commonPlan.schedule.availableTime",
-      message: "공개 시작 시각을 확인해 주세요.",
+      message: "공개 시각을 확인해 주세요.",
     });
   }
   if (
@@ -125,7 +125,7 @@ export function validateVocabPlannerInputs(input: {
       issues.push({
         code: "invalid_datetime",
         path: `commonPlan.sessions.${index}.availableLocalDateTime`,
-        message: `${index + 1}회차 공개 시작을 확인해 주세요.`,
+        message: `${index + 1}회차 공개를 확인해 주세요.`,
       });
     }
     if (!deadlineValid) {
@@ -144,7 +144,7 @@ export function validateVocabPlannerInputs(input: {
       issues.push({
         code: "invalid_order",
         path: `commonPlan.sessions.${index}.deadlineLocalDateTime`,
-        message: `${index + 1}회차 마감은 공개 시작보다 뒤여야 합니다.`,
+        message: `${index + 1}회차 마감은 공개보다 뒤여야 합니다.`,
       });
     }
   });

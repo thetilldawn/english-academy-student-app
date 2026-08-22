@@ -93,12 +93,12 @@ describe("StudentAssignmentQueueHistory", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<StudentAssignmentQueueHistory studentId={first.studentId} />);
-    expect(await screen.findByText("최근 단어장")).toBeInTheDocument();
+    expect(await screen.findByText(/최근 단어장/)).toBeInTheDocument();
 
     await user.click(
       screen.getByRole("button", { name: "이전 이력 더 보기" }),
     );
-    expect(await screen.findByText("이전 단어장")).toBeInTheDocument();
+    expect(await screen.findByText(/이전 단어장/)).toBeInTheDocument();
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
     expect(String(fetchMock.mock.calls[1]![0])).toContain(
       `beforeSeriesId=${first.seriesId}`,

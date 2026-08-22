@@ -1,6 +1,6 @@
 import { formatContentText } from "@/content/format";
 import { studentAppText } from "@/content/ko/student-app";
-import { CountBadge } from "@/design-system/primitives/badge/badge";
+import { CollapsibleStatusSection } from "@/design-system/patterns/collapsible-status-section/collapsible-status-section";
 import { currentTimeMilliseconds } from "@/lib/deadline";
 
 import {
@@ -50,33 +50,31 @@ export function StudentDashboard({
       ) : (
         <div className={styles.sectionList}>
           {visibleSections.map((section) => (
-            <section
-              aria-labelledby={`student-assignment-${section.id}`}
+            <div
               className={styles.section}
               data-assignment-section={section.id}
               key={section.id}
             >
-              <div className={styles.sectionHeading}>
-                <h2 id={`student-assignment-${section.id}`}>
-                  {sectionTitles[section.id]}
-                </h2>
-                <CountBadge>
-                  {formatContentText(
-                    studentAppText.dashboard.meta.sectionCount,
-                    { count: section.assignments.length },
-                  )}
-                </CountBadge>
-              </div>
-              <div className={styles.grid}>
-                {section.assignments.map((assignment) => (
-                  <StudentAssignmentCard
-                    assignment={assignment}
-                    key={assignment.id}
-                    nowMilliseconds={nowMilliseconds}
-                  />
-                ))}
-              </div>
-            </section>
+              <CollapsibleStatusSection
+                countLabel={formatContentText(
+                  studentAppText.dashboard.meta.sectionCount,
+                  { count: section.assignments.length },
+                )}
+                defaultOpen={section.id === "open"}
+                id={`student-assignment-${section.id}`}
+                title={sectionTitles[section.id]}
+              >
+                <div className={styles.grid}>
+                  {section.assignments.map((assignment) => (
+                    <StudentAssignmentCard
+                      assignment={assignment}
+                      key={assignment.id}
+                      nowMilliseconds={nowMilliseconds}
+                    />
+                  ))}
+                </div>
+              </CollapsibleStatusSection>
+            </div>
           ))}
         </div>
       )}

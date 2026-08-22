@@ -93,8 +93,8 @@ describe("BulkSeriesPreview", () => {
     );
 
     expect(screen.getByText("기준 일정")).toBeVisible();
-    expect(screen.getByText("동일 조건 2명")).toBeVisible();
-    expect(screen.getByText("별도 확인 1명")).toBeVisible();
+    expect(screen.queryByText("동일 조건 2명")).not.toBeInTheDocument();
+    expect(screen.queryByText("별도 확인 1명")).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "별도 확인" })).toBeVisible();
     expect(screen.getByText("배정 불가")).toBeVisible();
     expect(screen.queryByText("학생 가")).not.toBeInTheDocument();

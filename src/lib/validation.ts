@@ -90,18 +90,9 @@ const clockTimeSchema = z
   .string()
   .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "시각을 확인해 주세요.");
 
-const reservedVocabTimeTemplateNames = new Set([
-  "수업 후",
-  "저녁",
-  "당일 마감",
-]);
-
 export const createVocabTimeTemplateSchema = z
   .object({
-    name: z.string().trim().min(1).max(30).refine(
-      (name) => !reservedVocabTimeTemplateNames.has(name),
-      "기본 시간 버튼과 다른 이름을 사용해 주세요.",
-    ),
+    name: z.string().trim().min(1).max(30),
     availableTime: clockTimeSchema,
     deadlineDayOffset: z.number().int().min(0).max(30),
     deadlineTime: clockTimeSchema,
@@ -332,7 +323,7 @@ const bulkCommonPlanSchema = z
         context.addIssue({
           code: "custom",
           path: ["recurrenceSessions", index, "availableUntil"],
-          message: "반복 일정 마감은 공개 시작보다 뒤여야 합니다.",
+          message: "반복 일정 마감은 공개보다 뒤여야 합니다.",
         });
       }
       if (start <= previousRecurrenceStart) {
@@ -446,7 +437,7 @@ function validateBulkAssignmentSelection(
         context.addIssue({
           code: "custom",
           path: ["commonPlan", "sessions", index, "availableUntil"],
-          message: "회차 마감은 공개 시작보다 뒤여야 합니다.",
+          message: "회차 마감은 공개보다 뒤여야 합니다.",
         });
       }
       if (Date.parse(session.availableFrom) <= previousStart) {

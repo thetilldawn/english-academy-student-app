@@ -46,18 +46,18 @@ export function BulkPreviewSessionList({
           className={styles.sessionRow}
           details={
             <MetaTagList>
-              <MetaTag>
+              <MetaTag size="large">
                 {session.unitLabel ??
                   adminLearningText.bulkAssignmentModal.rangePending}
               </MetaTag>
-              <MetaTag>
+              <MetaTag size="large">
                 {formatContentText(
                   adminLearningText.bulkAssignmentModal.assignmentDateTag,
                   { datetime: formatKoreanDateTime(session.availableFrom) },
                 )}
               </MetaTag>
               {session.availableUntil ? (
-                <MetaTag>
+                <MetaTag size="large">
                   {formatContentText(
                     adminLearningText.bulkAssignmentModal.deadlineTag,
                     { datetime: formatKoreanDateTime(session.availableUntil) },
@@ -65,11 +65,11 @@ export function BulkPreviewSessionList({
                 </MetaTag>
               ) : null}
               {session.rangeTruncated ? (
-                <MetaTag tone="warning">
+                <MetaTag size="large" tone="warning">
                   {adminLearningText.bulkAssignmentModal.rangeMode.remainingOnly}
                 </MetaTag>
               ) : null}
-              <MetaTag tone={session.available ? "success" : "danger"}>
+              <MetaTag size="large" tone={session.available ? "success" : "danger"}>
                 {session.available
                   ? formatContentText(
                       adminLearningText.bulkAssignmentModal.questionCount,
@@ -78,7 +78,7 @@ export function BulkPreviewSessionList({
                   : adminLearningText.bulkAssignmentModal.needsReview}
               </MetaTag>
               {includePendingReview && session.wrongCount > 0 ? (
-                <MetaTag tone="warning">
+                <MetaTag size="large" tone="warning">
                   {formatContentText(
                     adminLearningText.bulkAssignmentModal.wrongCount,
                     { count: session.wrongCount },

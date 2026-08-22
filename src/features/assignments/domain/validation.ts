@@ -152,7 +152,7 @@ function validateExamSettings(
     issues.push({
       code: "out_of_range",
       path: "exam.questionOrderMode",
-      message: "문제 순서를 확인해 주세요.",
+      message: "출제 순서를 확인해 주세요.",
     });
   }
   if (!integerInRange(exam.passingScore, 0, 100)) {
@@ -252,7 +252,7 @@ function validateExactReviewProjectedLock(
     issues.push({
       code: "invalid_order",
       path: "operation.lockedShape",
-      message: "오답 재시험은 기존 대상 단어와 단계를 바꿀 수 없습니다.",
+      message: "오답 시험은 기존 대상 단어와 단계를 바꿀 수 없습니다.",
     });
   }
 }
@@ -273,7 +273,7 @@ function validateExactReviewSubmissionLock(
     issues.push({
       code: "out_of_range",
       path: "operation.lockedShape.questionCount",
-      message: "잠긴 오답 재시험 문항 수를 확인해 주세요.",
+      message: "잠긴 오답 시험 문항 수를 확인해 주세요.",
     });
   }
   if (
@@ -284,7 +284,7 @@ function validateExactReviewSubmissionLock(
     issues.push({
       code: "invalid_order",
       path: "operation.lockedShape.questionCount",
-      message: "오답 재시험의 기존 문항 수를 바꿀 수 없습니다.",
+      message: "오답 시험의 기존 문항 수를 바꿀 수 없습니다.",
     });
   }
 }
@@ -463,7 +463,7 @@ function validateCommonPlan(
     issues.push({
       code: "invalid_order",
       path: "commonPlan.selectionMode",
-      message: "문제 순서를 선택해 주세요.",
+      message: "문항 선택 방식을 골라 주세요.",
     });
   }
   if (plan.sessions.length !== draft.range.sessionCount) {
@@ -534,7 +534,7 @@ function validateCommonPlan(
       issues.push({
         code: "invalid_order",
         path: `commonPlan.sessions.${index}.deadlineLocalDateTime`,
-        message: `${index + 1}회차 마감은 공개 시작보다 뒤여야 합니다.`,
+        message: `${index + 1}회차 마감은 공개보다 뒤여야 합니다.`,
       });
     }
     if (Date.parse(start) <= previousStart) {

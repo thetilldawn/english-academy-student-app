@@ -44,7 +44,29 @@
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(12rem, 1fr);
   gap: var(--space-3);
-  margin: var(--space-4) 0 var(--space-3);
+  margin: 0;
+}
+
+.controlSection,
+.selectionSection {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-muted);
+}
+
+.controlSection h4,
+.selectionSection h4 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 15px;
+}
+
+.selectionSection {
+  padding-bottom: 0;
 }
 
 .filterChips {
@@ -99,8 +121,8 @@
 .checkbox {
   display: grid;
   place-items: center;
-  min-width: 36px;
-  min-height: 36px;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .selectionBar {
@@ -113,7 +135,7 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2);
-  border: 1px solid var(--line);
+  border: 0;
   background: color-mix(in srgb, var(--paper) 96%, transparent);
 }
 

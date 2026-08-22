@@ -2,13 +2,12 @@
 
 import { useMemo, useState } from "react";
 
-import { CountBadge } from "@/design-system/primitives/badge/badge";
+import { CollapsibleStatusSection } from "@/design-system/patterns/collapsible-status-section/collapsible-status-section";
 import { Button } from "@/design-system/primitives/button/button";
 import { Select } from "@/design-system/primitives/form/field";
 import { formatContentText } from "@/content/format";
 import { adminStudentsText } from "@/content/ko/admin-students";
 import {
-  adminHistoryActivityGroups,
   learningActivitySection,
   matchesLearningHistoryFilters,
   sortLearningActivities,
@@ -80,8 +79,6 @@ export function StudentLearningActivityList({
     purposeFilter,
     statusFilter,
   ]);
-  const visible = expanded ? sorted : sorted.slice(0, initialLimit);
-  const allGroups = adminHistoryActivityGroups(sorted);
   const availableSections = filtersEnabled
     ? [
         ...sectionDefinitions,
@@ -92,17 +89,20 @@ export function StudentLearningActivityList({
       ]
     : sectionDefinitions;
   const visibleSections = availableSections
-    .map((section) => ({
-      ...section,
-      items: visible.filter(
+    .map((section) => {
+      const allItems = sorted.filter(
         (item) => learningActivitySection(item) === section.id,
-      ),
-      totalCount:
-        section.id === "needs_attention"
-          ? allGroups.needsAttention.length
-          : allGroups[section.id].length,
-    }))
-    .filter((section) => section.items.length > 0);
+      );
+      return {
+        ...section,
+        items: expanded ? allItems : allItems.slice(0, initialLimit),
+        totalCount: allItems.length,
+      };
+    })
+    .filter((section) => section.totalCount > 0);
+  const hasHiddenItems = visibleSections.some(
+    (section) => section.totalCount > initialLimit,
+  );
 
   if (!filtersEnabled && sorted.length === 0) {
     return <EmptyState className={styles.empty}>{emptyLabel}</EmptyState>;
@@ -205,22 +205,17 @@ export function StudentLearningActivityList({
       ) : (
         <div className={styles.sections}>
           {visibleSections.map((section) => (
-            <section
-              aria-labelledby={`learning-activity-${section.id}`}
-              className={styles.section}
-              key={section.id}
+            <CollapsibleStatusSection
+              countLabel={formatContentText(
+                adminStudentsText.learning.activityList.count,
+                { count: section.totalCount },
+              )}
+              defaultOpen={section.id === "open" || statusFilter !== "all"}
+              headingLevel={4}
+              id={`learning-activity-${section.id}`}
+              key={`${purposeFilter}:${statusFilter}:${periodFilter}:${section.id}`}
+              title={section.label}
             >
-              <div className={styles.sectionHeading}>
-                <h4 id={`learning-activity-${section.id}`}>
-                  {section.label}
-                </h4>
-                <CountBadge>
-                  {formatContentText(
-                    adminStudentsText.learning.activityList.count,
-                    { count: section.totalCount },
-                  )}
-                </CountBadge>
-              </div>
               <ol className={styles.list}>
                 {section.items.map((item) => (
                   <li key={item.id}>
@@ -232,12 +227,12 @@ export function StudentLearningActivityList({
                   </li>
                 ))}
               </ol>
-            </section>
+            </CollapsibleStatusSection>
           ))}
         </div>
       )}
 
-      {sorted.length > initialLimit ? (
+      {hasHiddenItems ? (
         <Button
           aria-expanded={expanded}
           className={styles.expand}

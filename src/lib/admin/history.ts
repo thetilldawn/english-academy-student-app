@@ -100,7 +100,7 @@ function unitRangeLabel(labels: string[]) {
 export function assignmentTypeLabel(
   assignmentPurpose: AssignmentPurpose,
 ) {
-  if (assignmentPurpose === "review") return "오답 재시험";
+  if (assignmentPurpose === "review") return "오답 시험";
   if (assignmentPurpose === "mixed") return "틀린 단어 포함";
   return "단어 시험";
 }
@@ -130,7 +130,7 @@ export function assignmentScopeLabel(
   >,
 ) {
   if (item.assignmentPurpose === "review") {
-    return `오답 재시험 · ${item.questionCount}문항`;
+    return `오답 시험 · ${item.questionCount}문항`;
   }
 
   const label = assignmentUnitRangeLabel(item);
@@ -187,6 +187,7 @@ export function assignmentDisplayTitleForUnits(
     (part) =>
       !unitLabelSet.has(part) &&
       part !== "오답 재시험" &&
+      part !== "오답 시험" &&
       !/^\d+문항$/.test(part) &&
       !/^틀렸던 단어 \d+개 포함$/.test(part),
   );

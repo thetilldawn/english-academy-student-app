@@ -1,6 +1,6 @@
 import { formatContentText } from "@/content/format";
 import { studentAppText } from "@/content/ko/student-app";
-import { CountBadge } from "@/design-system/primitives/badge/badge";
+import { CountBadge, MetaTag } from "@/design-system/primitives/badge/badge";
 import { ButtonLink } from "@/design-system/primitives/button/button";
 import { formatElapsed } from "@/lib/format";
 import { getResultQuestionPresentation } from "@/lib/quiz/result-presentation";
@@ -35,7 +35,8 @@ function QuestionReviewCard({
   question: AttemptResultQuestion;
 }) {
   const presentation = getResultQuestionPresentation(question);
-  const wrongLevel = question.wrongCount >= 2 ? 2 : 1;
+  const visibleWrongCount = Math.max(1, question.wrongCount);
+  const wrongLevel = visibleWrongCount >= 2 ? 2 : 1;
 
   return (
     <AttemptQuestionCard
@@ -51,6 +52,13 @@ function QuestionReviewCard({
         ) : undefined
       }
       prompt={presentation.prompt}
+      status={
+        <MetaTag tone={wrongLevel === 2 ? "danger" : "warning"}>
+          {formatContentText(studentAppText.result.question.wrongCount, {
+            count: visibleWrongCount,
+          })}
+        </MetaTag>
+      }
       wrongLevel={wrongLevel}
     >
       <div className={styles.answerBlock}>
@@ -170,16 +178,6 @@ function ResultMetrics({
       </section>
 
       <section className={styles.summary}>
-        <div>
-          <span>{studentAppText.result.summary.finalScore}</span>
-          <strong>
-            {reviewPending || result.finalScore === null
-              ? "-"
-              : formatContentText(studentAppText.result.score, {
-                  score: result.finalScore,
-                })}
-          </strong>
-        </div>
         <div>
           <span>{studentAppText.result.summary.elapsed}</span>
           <strong>{formatElapsed(result.elapsedSeconds)}</strong>

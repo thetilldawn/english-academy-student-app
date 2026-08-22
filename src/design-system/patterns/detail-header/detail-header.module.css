@@ -5,13 +5,15 @@
 }
 
 .header h1,
+.header h2,
 .header p {
   min-width: 0;
   margin: 0;
   color: var(--text-primary);
 }
 
-.header h1 {
+.header h1,
+.header h2 {
   font-size: clamp(20px, 2.3vw, 27px);
 }
 

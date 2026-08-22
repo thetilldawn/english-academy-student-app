@@ -16,7 +16,7 @@ export const adminHistoryText = {
   // 내역 페이지 > 검색·상태 필터
   filters: {
     searchLabel: "학생·시험 검색",
-    searchPlaceholder: "학생, 학교, 시험, DAY",
+    searchPlaceholder: "학생, 학교, 시험, 범위",
     statusLabel: "상태",
     statusOptions: {
       all: "전체",

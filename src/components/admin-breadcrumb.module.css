@@ -9,13 +9,25 @@
   line-height: 1.45;
 }
 
-.breadcrumb strong {
+.breadcrumb h1 {
+  margin: 0;
   color: var(--text-primary);
+  font-size: 22px;
   font-weight: 700;
+  letter-spacing: -0.035em;
 }
 
 @media (max-width: 767px) {
   .breadcrumb {
-    margin-bottom: 10px;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    white-space: nowrap;
   }
 }

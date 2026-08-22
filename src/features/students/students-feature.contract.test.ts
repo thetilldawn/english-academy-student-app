@@ -31,15 +31,13 @@ describe("student management feature boundary", () => {
     expect(account).not.toMatch(/saveProfile|saveCurrentDataset/);
   });
 
-  it("does not reserve a score column when an activity has no score", () => {
-    expect(directory).toContain("hasAttemptScoreContent(");
-    expect(directory).toContain("{hasScore ? (");
-    expect(directoryCss).toMatch(
-      /\.scoreLine\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/,
-    );
-    expect(directoryCss).toMatch(
-      /\.scoreLine\[data-has-score="true"\]\s*\{[^}]*grid-template-columns:\s*minmax\(80px, auto\) minmax\(0, 1fr\);/,
-    );
+  it("uses the dedicated activity summary instead of a score timeline", () => {
+    expect(directory).toContain("summarizeStudentDirectoryActivities");
+    expect(directory).toContain("summary.completedCount");
+    expect(directory).toContain("summary.missedCount");
+    expect(directory).toContain("summary.notStartedCount");
+    expect(directory).not.toContain("AttemptScoreSummary");
+    expect(directory).not.toContain("ActivityStatusTimeline");
   });
 
   it("keeps long names and wrong-word rows inside 320 through 1440 pixels", () => {
@@ -50,7 +48,7 @@ describe("student management feature boundary", () => {
       /@media \(max-width: 767px\)[\s\S]*?\.card\s*\{[^}]*grid-template-columns:\s*1fr;/,
     );
     expect(directoryCss).toMatch(
-      /@media \(max-width: 359px\)[\s\S]*?\.primarySource,[\s\S]*?overflow-wrap:\s*anywhere;/,
+      /@media \(max-width: 359px\)[\s\S]*?\.primarySource\s*\{[^}]*overflow-wrap:\s*anywhere;/,
     );
     expect(wrongCss).toMatch(
       /@media \(max-width: 960px\)[\s\S]*?\.row\s*\{[^}]*grid-template-columns:\s*auto minmax\(0, 1fr\);/,

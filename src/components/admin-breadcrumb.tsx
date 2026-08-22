@@ -16,7 +16,7 @@ export function AdminBreadcrumb({
     >
       {section ? <span>{section}</span> : null}
       {section ? <span aria-hidden="true">/</span> : null}
-      <strong aria-current="page">{current}</strong>
+      <h1 aria-current="page">{current}</h1>
     </nav>
   );
 }

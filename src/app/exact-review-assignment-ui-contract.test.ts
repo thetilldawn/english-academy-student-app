@@ -85,7 +85,7 @@ describe("exact review assignment app contract", () => {
     expect(route).toContain("isSameOriginRequest(request)");
     expect(route).toContain("getAdminContext()");
     expect(route).toContain("410");
-    expect(route).toContain("별도 오답 재시험 배정은 종료");
+    expect(route).toContain("별도 오답 시험 배정은 종료");
     expect(route).not.toContain("createExactReviewAssignment");
   });
 

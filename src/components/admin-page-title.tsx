@@ -1,14 +1,14 @@
 "use client";
 
-import { useSelectedLayoutSegment } from "next/navigation";
+import { usePathname } from "next/navigation";
 
-import { adminRouteForSegment } from "@/lib/ui/admin-routes";
+import { adminPageTitleForPathname } from "@/lib/ui/admin-routes";
 
 import styles from "./shell/app-shell.module.css";
 
 export function AdminPageTitle() {
-  const segment = useSelectedLayoutSegment();
-  const title = adminRouteForSegment(segment).pageTitle;
+  const pathname = usePathname();
+  const title = adminPageTitleForPathname(pathname);
 
   return <strong className={styles.adminMobilePageTitle}>{title}</strong>;
 }

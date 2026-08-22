@@ -72,10 +72,10 @@ describe("student catalog and modal UI contract", () => {
   });
 
   it("uses one named button size contract and compact bulk spacing", () => {
-    expect(tokens).toContain("--control-height-small: 36px;");
+    expect(tokens).toContain("--control-height-small: 44px;");
     expect(tokens).toContain("--control-height-default: 44px;");
     expect(tokens).toContain("--control-height-large: 58px;");
-    expect(tokens).toContain("--control-height-icon: 36px;");
+    expect(tokens).toContain("--control-height-icon: 44px;");
     expect(buttonCss).toMatch(
       /\.small\s*\{[^}]*height:\s*var\(--control-height-small\);/,
     );
@@ -137,9 +137,7 @@ describe("student catalog and modal UI contract", () => {
       "src/features/history/domain/learning-activity.ts",
     );
 
-    expect(studentCard).toContain(
-      "assignmentTypeLabel(assignment.assignmentPurpose)",
-    );
+    expect(studentCard).toContain('assignment.assignmentPurpose === "review"');
     expect(timeline).toContain("timestamp: state.statusAt");
     expect(activityDomain).toContain(
       "item.missedAt ?? item.availableUntil ?? item.activityAt",

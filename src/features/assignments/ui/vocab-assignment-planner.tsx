@@ -11,6 +11,8 @@ import {
   DialogHeader,
 } from "@/design-system/primitives/dialog/dialog";
 import { FieldLabel, Select } from "@/design-system/primitives/form/field";
+import { HelpTip, inlineHelpClassName } from "@/design-system/primitives/tooltip/help-tip";
+import { prefersReducedMotion } from "@/lib/ui/motion";
 
 import type { AssignmentStudentItem } from "../catalog-types";
 import {
@@ -71,6 +73,22 @@ export function VocabAssignmentPlanner({
     (student) => student.id === controller.previousExamSourceStudentId,
   );
   const formRef = useRef<HTMLFormElement>(null);
+  const draftSignature = JSON.stringify({
+    exam: bulk.state.draft,
+    planner: controller.planner,
+  });
+  const initialDraftSignatureRef = useRef(draftSignature);
+
+  function requestClose() {
+    if (busy) return;
+    if (
+      draftSignature !== initialDraftSignatureRef.current &&
+      !window.confirm("입력한 배정 내용을 버리고 닫을까요?")
+    ) {
+      return;
+    }
+    onClose();
+  }
 
   function focusFirstInvalidField() {
     const key = controller.firstFieldKey;
@@ -80,7 +98,7 @@ export function VocabAssignmentPlanner({
         `[data-field-key="${key}"]`,
       );
       if (!target) return;
-      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      target.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "center" });
       const focusTarget = target.matches("button, input, select, textarea")
         ? target
         : target.querySelector<HTMLElement>(
@@ -136,7 +154,7 @@ export function VocabAssignmentPlanner({
       closeDisabled={busy}
       height="large"
       layout="body-footer"
-      onRequestClose={() => !busy && onClose()}
+      onRequestClose={requestClose}
       size="extra-wide"
     >
       <DialogHeader closeLabel="닫기">
@@ -171,7 +189,7 @@ export function VocabAssignmentPlanner({
                 />
               </AssignmentSection>
               <AssignmentSection
-                help="문항 수, 문제 순서, 풀이 조건을 정합니다."
+                help="문항 수, 문항 선택, 출제 순서와 풀이 조건을 정합니다."
                 helpLabel="시험 조건 설명"
                 index={2}
                 status={conditionStatus}
@@ -183,14 +201,18 @@ export function VocabAssignmentPlanner({
                   fieldErrors={visibleErrors}
                 />
                 <section
-                  aria-label="직전 시험 복사"
+                  aria-label="최근 시험 복사"
                   className={styles.copyPanel}
                 >
                   <div className={styles.copySource}>
-                    <FieldLabel as="span">직전 시험</FieldLabel>
+                    <FieldLabel as="span" className={inlineHelpClassName}>
+                      <HelpTip label="최근 시험 설명" trigger="최근 시험">
+                        선택한 학생과 단어장의 최근 일반 시험에서 시험 조건과 공개·마감 시간만 불러옵니다. 범위와 날짜는 바뀌지 않습니다.
+                      </HelpTip>
+                    </FieldLabel>
                     {students.length > 1 ? (
                       <Select
-                        aria-label="직전 시험 복사 기준 학생"
+                        aria-label="최근 시험 복사 기준 학생"
                         onChange={(event) =>
                           controller.actions.changePreviousExamSourceStudentId(
                             event.target.value,
@@ -214,14 +236,14 @@ export function VocabAssignmentPlanner({
                     <small>
                       {controller.previousExam
                         ? controller.previousExam.assignmentTitle
-                        : "복사할 직전 시험 없음"}
+                        : "복사할 최근 시험 없음"}
                     </small>
                   </div>
                   <Button
                     disabled={!controller.hasPreviousExam || busy}
                     onClick={() => {
                       if (controller.actions.copyPreviousExam()) {
-                        toast.success("직전 시험 조건을 적용했습니다.");
+                        toast.success("최근 시험 조건을 적용했습니다.");
                       }
                     }}
                     size="small"
@@ -232,7 +254,7 @@ export function VocabAssignmentPlanner({
                 <BulkExamFields
                   controller={bulk}
                   fieldErrors={visibleErrors}
-                  orderLabel="풀이 순서"
+                  orderLabel="출제 순서"
                 />
               </AssignmentSection>
               <AssignmentSection

@@ -38,6 +38,7 @@ import {
   queueStudentWrongWords,
 } from "../../api/wrong-word-transport";
 import styles from "./student-wrong-word-panel.module.css";
+import { WrongWordControlSection } from "./wrong-word-control-section";
 
 type LevelFilter = "all" | "once" | "repeated";
 type SelectionPurpose = "next_exam" | "worksheet";
@@ -764,6 +765,7 @@ export function StudentWrongWordPanel({
       )}
 
       <div id="wrong-word-aggregate-panel">
+        <WrongWordControlSection title={adminStudentsText.learning.wrongWordsPanel.sections.filters} titleId="wrong-word-filter-title">
           <div className={styles.filterGrid}>
             <Field as="label" >
               <FieldLabel as="span" >
@@ -808,6 +810,7 @@ export function StudentWrongWordPanel({
               adminStudentsText.learning.wrongWordsPanel.levelFilterAria
             }
             className={styles.filterChips}
+            role="group"
           >
             {(
               [
@@ -836,6 +839,8 @@ export function StudentWrongWordPanel({
               </Button>
             ))}
           </div>
+        </WrongWordControlSection>
+        <WrongWordControlSection title={adminStudentsText.learning.wrongWordsPanel.sections.purpose} titleId="wrong-word-purpose-title">
           <div
             aria-label={adminStudentsText.learning.wrongWordsPanel.purposeAria}
             className={styles.filterChips}
@@ -867,13 +872,15 @@ export function StudentWrongWordPanel({
               label={
                 adminStudentsText.learning.wrongWordsPanel.purposeHelpAria
               }
-              trigger="사용 방식"
+              trigger="설명"
             >
               {selectionPurpose === "worksheet"
                 ? adminStudentsText.learning.worksheetWrongWordHelp
                 : adminStudentsText.learning.nextExamWrongWordHelp}
             </HelpTip>
           </div>
+        </WrongWordControlSection>
+        <WrongWordControlSection selection title={adminStudentsText.learning.wrongWordsPanel.sections.selection} titleId="wrong-word-selection-title">
           <div className={styles.selectionBar}>
             {selectionPurpose === "worksheet" && (
               <Field as="label" className={styles.curriculumField}>
@@ -1103,6 +1110,7 @@ export function StudentWrongWordPanel({
               })}
             </div>
           )}
+        </WrongWordControlSection>
       </div>
     </section>
   );

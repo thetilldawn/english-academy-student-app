@@ -138,7 +138,8 @@ export function QuizFrame({
             .join(" ")}
           data-testid="quiz-timer"
         >
-          {formattedRemaining}
+          {timingMode === "per_question" ? <small className={styles.timerLabel}>문제당</small> : null}
+          <span>{formattedRemaining}</span>
         </span>
       </div>
 

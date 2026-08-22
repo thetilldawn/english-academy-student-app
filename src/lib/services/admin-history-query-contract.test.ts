@@ -58,11 +58,10 @@ describe("admin assignment history query contract", () => {
     );
     expect(quizSource).toContain("primaryUnitLabelsByAssignment");
     expect(quizSource).toContain("scopeLabel: assignmentScopeLabel");
-    expect(studentCard).toContain("{assignment.scopeLabel}");
-    expect(studentCard).toContain("assignmentOrderLabel(");
-    expect(studentCard).toContain(
-      'assignment.assignmentPurpose !== "review"',
-    );
+    expect(studentCard).toContain("assignment.scopeLabel");
+    expect(studentCard).toContain('assignment.assignmentPurpose === "review"');
+    expect(studentCard).not.toContain("assignmentOrderLabel(");
+    expect(studentCard).not.toContain("assignmentTimingLabel(");
   });
 
   it("persists missed assignment state across admin and student queries", () => {

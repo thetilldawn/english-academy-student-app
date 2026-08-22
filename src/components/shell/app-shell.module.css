@@ -46,7 +46,8 @@
   margin: 0 auto;
 }
 
-.adminMobilePageTitle {
+.adminMobilePageTitle,
+.studentMobilePageTitle {
   display: none;
 }
 
@@ -57,6 +58,8 @@
 }
 
 .brand {
+  min-width: 44px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -191,6 +194,19 @@
     padding: 26px 0 calc(104px + env(safe-area-inset-bottom));
   }
 
+  .studentTopbar .brand > span:last-child {
+    display: none;
+  }
+
+  .studentMobilePageTitle {
+    min-width: 0;
+    display: inline;
+    overflow: hidden;
+    margin-right: auto;
+    font-size: 16px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 @media (max-width: 580px) {
@@ -198,12 +214,14 @@
     width: min(100% - 24px, 1180px);
   }
 
-  .studentTopbar .brand > span:last-child {
-    display: none;
-  }
-
   .studentUserLabel {
     max-width: 130px;
     display: block;
+  }
+}
+
+@media (max-width: 420px) {
+  .studentUserLabel {
+    display: none;
   }
 }

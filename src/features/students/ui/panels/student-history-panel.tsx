@@ -23,27 +23,33 @@ export function StudentHistoryPanel({
       id="student-history-panel"
       role="tabpanel"
     >
-      <StudentWrongWordPanel
-        active
-        cachedAt={
-          controller.wrongHistoryByStudent[student.id]?.loadedAt ?? null
-        }
-        cachedHistory={
-          controller.wrongHistoryByStudent[student.id]?.history ?? null
-        }
-        initialCurriculumStage={student.readingCurriculumStage}
-        initialDatasetId={student.currentVocabDatasetId ?? ""}
-        initialReadingContextSyncStatus={student.readingContextSyncStatus}
-        onDataUpdated={controller.actions.refreshData}
-        onLoaded={controller.actions.cacheWrongWordHistory}
-        studentId={student.id}
-      />
-      <StudentAssignmentQueueHistory studentId={student.id} />
-      <StudentLearningActivityList
-        filtersEnabled
-        initialLimit={5}
-        items={history}
-      />
+      <section aria-labelledby="student-wrong-words-title" className={styles.historySection}>
+        <h3 id="student-wrong-words-title">오답 단어</h3>
+        <StudentWrongWordPanel
+          active
+          cachedAt={
+            controller.wrongHistoryByStudent[student.id]?.loadedAt ?? null
+          }
+          cachedHistory={
+            controller.wrongHistoryByStudent[student.id]?.history ?? null
+          }
+          initialCurriculumStage={student.readingCurriculumStage}
+          initialDatasetId={student.currentVocabDatasetId ?? ""}
+          initialReadingContextSyncStatus={student.readingContextSyncStatus}
+          onDataUpdated={controller.actions.refreshData}
+          onLoaded={controller.actions.cacheWrongWordHistory}
+          studentId={student.id}
+        />
+      </section>
+      <StudentAssignmentQueueHistory headingLevel={3} studentId={student.id} />
+      <section aria-labelledby="student-learning-history-title" className={styles.historySection}>
+        <h3 id="student-learning-history-title">시험 내역</h3>
+        <StudentLearningActivityList
+          filtersEnabled
+          initialLimit={5}
+          items={history}
+        />
+      </section>
     </section>
   );
 }

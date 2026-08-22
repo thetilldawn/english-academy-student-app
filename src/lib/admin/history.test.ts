@@ -242,7 +242,7 @@ describe("assignmentScopeLabel", () => {
   it("시험 유형과 단원 범위를 태그용 라벨로 분리한다", () => {
     expect(assignmentTypeLabel("regular")).toBe("단어 시험");
     expect(assignmentTypeLabel("mixed")).toBe("틀린 단어 포함");
-    expect(assignmentTypeLabel("review")).toBe("오답 재시험");
+    expect(assignmentTypeLabel("review")).toBe("오답 시험");
     expect(
       assignmentUnitRangeLabel({
         assignmentPurpose: "mixed",
@@ -252,7 +252,7 @@ describe("assignmentScopeLabel", () => {
     ).toBe("DAY 01~DAY 02");
   });
 
-  it("오답 재시험은 내부 지원 DAY 대신 선택 문항 수를 표시한다", () => {
+  it("오답 시험은 내부 지원 DAY 대신 선택 문항 수를 표시한다", () => {
     expect(
       assignmentScopeLabel({
         assignmentPurpose: "review",
@@ -260,7 +260,7 @@ describe("assignmentScopeLabel", () => {
         primaryUnitLabels: [],
         questionCount: 3,
       }),
-    ).toBe("오답 재시험 · 3문항");
+    ).toBe("오답 시험 · 3문항");
   });
 
   it("혼합 시험은 주 DAY 범위와 오답 포함 여부를 표시한다", () => {

@@ -13,9 +13,11 @@ import { AssignmentQueueHistory } from "./assignment-queue-history";
 import styles from "./student-assignment-queue-history.module.css";
 
 function StudentAssignmentQueueHistoryPage({
+  headingLevel,
   onRefresh,
   studentId,
 }: {
+  headingLevel: 2 | 3;
   onRefresh: () => void;
   studentId: string;
 }) {
@@ -83,6 +85,7 @@ function StudentAssignmentQueueHistoryPage({
   return (
     <div className={styles.wrapper}>
       <AssignmentQueueHistory
+        headingLevel={headingLevel}
         onResolved={onRefresh}
         queues={queues}
       />
@@ -111,13 +114,16 @@ function StudentAssignmentQueueHistoryPage({
 }
 
 export function StudentAssignmentQueueHistory({
+  headingLevel = 2,
   studentId,
 }: {
+  headingLevel?: 2 | 3;
   studentId: string;
 }) {
   const [refreshVersion, setRefreshVersion] = useState(0);
   return (
     <StudentAssignmentQueueHistoryPage
+      headingLevel={headingLevel}
       key={`${studentId}:${refreshVersion}`}
       onRefresh={() => setRefreshVersion((value) => value + 1)}
       studentId={studentId}

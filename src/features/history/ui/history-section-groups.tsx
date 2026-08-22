@@ -1,10 +1,11 @@
-import { CountBadge } from "@/design-system/primitives/badge/badge";
+import { CollapsibleStatusSection } from "@/design-system/patterns/collapsible-status-section/collapsible-status-section";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
 
 import { HistoryRows } from "./history-rows";
 import styles from "./history-section-groups.module.css";
 
 export type HistorySection = {
+  defaultOpen?: boolean;
   id: string;
   title: string;
   items: AssignmentHistorySummary[];
@@ -22,20 +23,15 @@ export function HistorySectionGroups({
   return (
     <div className={styles.groups}>
       {sections.map((section) => (
-        <section
-          aria-labelledby={`history-${section.id}`}
-          className={styles.section}
+        <CollapsibleStatusSection
+          countLabel={`${section.items.length}${countSuffix}`}
+          defaultOpen={section.defaultOpen ?? section.id === "open"}
+          id={`history-${section.id}`}
           key={section.id}
+          title={section.title}
         >
-          <div className={styles.heading}>
-            <h2 id={`history-${section.id}`}>{section.title}</h2>
-            <CountBadge>
-              {section.items.length}
-              {countSuffix}
-            </CountBadge>
-          </div>
           <HistoryRows compact={compact} items={section.items} />
-        </section>
+        </CollapsibleStatusSection>
       ))}
     </div>
   );

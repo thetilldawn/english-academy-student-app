@@ -295,7 +295,7 @@ describe("buildStudentProgress", () => {
     );
 
     expect(progress.latestAssignmentTitle).toBe("오답 재시험");
-    expect(progress.latestUnitLabel).toBe("오답 재시험 · 3문항");
+    expect(progress.latestUnitLabel).toBe("오답 시험 · 3문항");
     expect(progress.recommendedUnitLabel).toBe("DAY 02");
     expect(progress.recommendationReason).toBe("next");
   });

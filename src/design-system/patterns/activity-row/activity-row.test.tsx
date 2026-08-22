@@ -72,16 +72,15 @@ describe("activity row patterns", () => {
       </SelectableRow>,
     );
 
-    const [checkbox, content] = screen.getAllByLabelText("테스트 학생 선택");
+    const checkbox = screen.getByRole("checkbox", { name: "테스트 학생 선택" });
     await user.click(checkbox);
-    await user.click(content);
-    content.focus();
-    await user.keyboard("{Enter}");
+    await user.click(screen.getByText("테스트 학생"));
+    checkbox.focus();
     await user.keyboard(" ");
-    expect(onToggle).toHaveBeenCalledTimes(4);
+    expect(onToggle).toHaveBeenCalledTimes(3);
 
     await user.click(screen.getByRole("link", { name: "보기" }));
-    expect(onToggle).toHaveBeenCalledTimes(4);
+    expect(onToggle).toHaveBeenCalledTimes(3);
   });
 
   it("disables both selection controls together", async () => {
@@ -100,11 +99,31 @@ describe("activity row patterns", () => {
       </SelectableRow>,
     );
 
-    const controls = screen.getAllByLabelText("배정 불가 학생 선택");
-    expect(controls).toHaveLength(2);
-    for (const control of controls) expect(control).toBeDisabled();
-    await user.click(controls[0]);
-    await user.click(controls[1]);
+    const control = screen.getByRole("checkbox", { name: "배정 불가 학생 선택" });
+    expect(control).toBeDisabled();
+    await user.click(control);
+    await user.click(screen.getByText("배정 불가 학생"));
     expect(onToggle).not.toHaveBeenCalled();
+  });
+
+  it("turns the content into one link when selection is disabled", () => {
+    render(
+      <SelectableRow
+        checked={false}
+        checkboxId="student-3"
+        contentHref="/admin/results/attempt.3"
+        onToggle={vi.fn()}
+        selectionAriaLabel="테스트 학생 선택"
+        selectionEnabled={false}
+      >
+        최근 시험
+      </SelectableRow>,
+    );
+
+    expect(screen.getByRole("link", { name: "최근 시험" })).toHaveAttribute(
+      "href",
+      "/admin/results/attempt.3",
+    );
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
   });
 });

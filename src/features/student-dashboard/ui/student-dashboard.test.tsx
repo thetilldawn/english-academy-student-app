@@ -138,22 +138,43 @@ describe("StudentDashboard", () => {
       longTitle,
     );
   });
+
+  it("keeps a completed-only section collapsed by default", () => {
+    render(
+      <StudentDashboard
+        assignments={[
+          assignment("completed-only", {
+            lastAttemptId: "attempt-completed",
+            lastStatus: "completed",
+            lastPhase: "completed",
+            lastInitialScore: 100,
+            lastFinalScore: 100,
+            lastPassed: true,
+            lastCompletedAt: "2026-08-09T00:00:00.000Z",
+          }),
+        ]}
+        displayName="테스트"
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", {
+        name: studentAppText.dashboard.sections.completed,
+      }),
+    ).toHaveAttribute("aria-expanded", "false");
+  });
 });
 
 describe("StudentAssignmentCard", () => {
-  it("renders the complete vocabulary exam metadata", () => {
+  it("keeps only the range as always-visible exam metadata", () => {
     render(<StudentAssignmentCard assignment={assignment("metadata")} />);
 
-    for (const text of [
-      "단어 시험",
-      "DAY 01",
-      "20문항",
-      "전체 5분",
-      "80점 통과",
-      "무작위 순서",
-    ]) {
-      expect(screen.getByText(text)).toBeVisible();
-    }
+    expect(screen.getByText("DAY 01")).toBeVisible();
+    expect(screen.queryByText("단어 시험")).not.toBeInTheDocument();
+    expect(screen.queryByText("20문항")).not.toBeInTheDocument();
+    expect(screen.queryByText("전체 5분")).not.toBeInTheDocument();
+    expect(screen.queryByText("80점 통과")).not.toBeInTheDocument();
+    expect(screen.queryByText("무작위 순서")).not.toBeInTheDocument();
   });
 
   it("routes review-pending and resumable attempts to their distinct screens", () => {

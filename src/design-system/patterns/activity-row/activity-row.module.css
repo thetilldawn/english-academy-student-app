@@ -101,7 +101,7 @@
 .selectable {
   min-width: 0;
   display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   padding: 11px 12px;
@@ -116,14 +116,29 @@
   background: var(--selection-active);
 }
 
-.selectable[data-selection-enabled="false"] {
-  grid-template-columns: minmax(0, 1fr) auto;
-}
-
 .checkbox {
+  width: 44px;
+  min-height: 44px;
   display: grid;
   place-items: center;
   cursor: pointer;
+}
+
+.selectableToggle {
+  min-width: 0;
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  cursor: pointer;
+}
+
+.selectableToggle:has(input:disabled) {
+  cursor: not-allowed;
+}
+
+.selectableToggle:has(input:disabled) .selectableContent {
+  cursor: not-allowed;
 }
 
 .selectableContent,
@@ -139,11 +154,8 @@
   background: transparent;
   font: inherit;
   text-align: left;
+  text-decoration: none;
   cursor: pointer;
-}
-
-.selectableContent:disabled {
-  cursor: not-allowed;
 }
 
 .actions {
@@ -203,7 +215,7 @@
   }
 
   .selectable {
-    grid-template-columns: 20px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 8px 10px;
     padding: 9px 10px;
   }
@@ -216,13 +228,8 @@
     grid-column: 1;
   }
 
-  .checkbox {
-    align-self: start;
-    padding-top: 2px;
-  }
-
   .actions {
-    grid-column: 2;
+    grid-column: 1;
     justify-content: flex-start;
   }
 }

@@ -32,3 +32,18 @@ export type AdminNavigationVariant = "mobile" | "sidebar" | "tablet";
 export function adminRouteForSegment(segment: string | null) {
   return ADMIN_ROUTES.find((route) => route.segment === segment) ?? ADMIN_ROUTES[0];
 }
+
+export function adminPageTitleForPathname(pathname: string) {
+  if (/^\/admin\/results\/[^/]+\/?$/.test(pathname)) {
+    return adminShellText.pageTitles.resultDetail;
+  }
+
+  const route = [...ADMIN_ROUTES]
+    .sort((left, right) => right.href.length - left.href.length)
+    .find(
+      (item) =>
+        pathname === item.href || pathname.startsWith(`${item.href}/`),
+    );
+
+  return route?.pageTitle ?? adminShellText.pageTitles.overview;
+}

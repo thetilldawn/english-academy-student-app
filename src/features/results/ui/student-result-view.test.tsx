@@ -80,13 +80,18 @@ describe("StudentResultView", () => {
     const questions = [
       question("q1", { wrongCount: 1 }),
       question("q2", { wrongCount: 2 }),
+      question("q3", { wrongCount: 3 }),
     ];
     const { container } = render(<StudentResultView result={result(questions)} />);
 
     const cards = container.querySelectorAll("article[data-wrong-level]");
-    expect(cards).toHaveLength(2);
+    expect(cards).toHaveLength(3);
     expect(cards[0]).toHaveAttribute("data-wrong-level", "1");
     expect(cards[1]).toHaveAttribute("data-wrong-level", "2");
+    expect(cards[2]).toHaveAttribute("data-wrong-level", "2");
+    expect(screen.getByText("오답 1회")).toBeVisible();
+    expect(screen.getByText("오답 2회")).toBeVisible();
+    expect(screen.getByText("오답 3회")).toBeVisible();
 
     for (const [index, card] of [...cards].entries()) {
       expect(within(card as HTMLElement).getByText(`meaning-q${index + 1}`)).toBeVisible();
@@ -240,6 +245,8 @@ describe("StudentResultView", () => {
     expect(
       within(header as HTMLElement).queryByText("통과점수에는 미치지 못했습니다."),
     ).not.toBeInTheDocument();
+    expect(screen.getAllByText("100점")).toHaveLength(1);
+    expect(screen.queryByText("재시험 후 점수")).not.toBeInTheDocument();
   });
 
   it("shows every unanswered question in a legacy expired result", () => {

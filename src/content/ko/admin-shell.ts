@@ -4,9 +4,9 @@ export const adminShellText = {
 
   // 관리자 공통 셸 > PC·태블릿·모바일 내비게이션
   navigation: {
-    overview: "Overview",
-    students: "학생 관리",
-    learning: "단어 시험 관리",
+    overview: "개요",
+    students: "학생",
+    learning: "단어 시험",
     history: "내역",
     pcAriaLabel: "PC 관리 메뉴",
     tabletAriaLabel: "태블릿 관리 메뉴",
@@ -15,10 +15,11 @@ export const adminShellText = {
 
   // 관리자 공통 셸 > 현재 페이지 제목
   pageTitles: {
-    overview: "Overview",
-    students: "학생 관리",
-    learning: "단어 시험 관리",
+    overview: "개요",
+    students: "학생",
+    learning: "배정",
     history: "내역",
+    resultDetail: "응시 상세",
   },
 
   // 관리자 공통 셸 > 브레드크럼

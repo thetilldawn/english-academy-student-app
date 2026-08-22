@@ -1,7 +1,7 @@
 export const adminLearningText = {
   // 학습 관리 > 페이지·시험 종류 탭·검색
   page: {
-    title: "단어 시험 관리",
+    title: "단어 시험",
     vocabularyTab: "배정",
     otherLearningTab: "다른 학습",
     otherLearningEmpty:
@@ -56,8 +56,8 @@ export const adminLearningText = {
     complete: "현재 단어장 완료",
     assignedFallback: "배정 범위",
     recentFallback: "최근 범위",
-    manual: "과거 시험의 DAY 범위 직접 확인",
-    firstFallback: "첫 DAY 선택",
+    manual: "과거 시험 범위 직접 확인",
+    firstFallback: "첫 범위 선택",
     reasons: {
       needsWordbook: "현재 단어장을 먼저 선택하세요.",
       assigned: "이미 배정했지만 아직 시작하지 않은 범위입니다.",
@@ -106,7 +106,7 @@ export const adminLearningText = {
       mixed: "영어 ↔ 뜻 혼합",
     },
     order: {
-      label: "문제 순서",
+      label: "출제 순서",
       ascending: "오름차순",
       descending: "내림차순",
       random: "무작위",
@@ -178,7 +178,7 @@ export const adminLearningText = {
       scopeAll: "전체 단어장",
       scopeCurrent: "현재 범위",
       scopeHelp:
-        "전체는 현재 단어장의 대기 오답 전체, 현재 범위는 위에서 선택한 DAY·단원 안의 대기 오답만 포함합니다.",
+        "전체는 현재 단어장의 대기 오답 전체, 현재 범위는 위에서 고른 범위 안의 대기 오답만 포함합니다.",
       scopeHelpAria: "틀렸던 단어 범위 도움말",
       total: "전체",
       once: "1회",
@@ -195,7 +195,7 @@ export const adminLearningText = {
       help: "방향·순서·시간과 통과 기준을 정합니다.",
       helpAria: "문제 조건 도움말",
       direction: "출제 방식",
-      order: "문제 순서",
+      order: "출제 순서",
       questionCount: "문항 수",
       totalQuestionCount: "총 문항 수",
       timingMode: "시간 제한 방식",
@@ -286,7 +286,7 @@ export const adminLearningText = {
       before: "변경 전: ",
       after: "변경 후: ",
       lockedReview:
-        "오답 재시험은 대상 단어를 그대로 유지합니다. 단어장·범위·문항 수·오답 단계는 잠겨 있고, 나머지 시험 조건만 바꿀 수 있습니다.",
+        "오답 시험은 대상 단어를 그대로 유지합니다. 단어장·범위·문항 수·오답 단계는 잠겨 있고, 나머지 시험 조건만 바꿀 수 있습니다.",
       questionCount: "{count}문항",
       perQuestionTiming: "문제당 {seconds}초",
       totalTiming: "전체 {minutes}분",
@@ -342,11 +342,11 @@ export const adminLearningText = {
     },
   },
 
-  // 학습 관리 > 구 오답 재시험 초안 복구 모달
+  // 학습 관리 > 구 오답 시험 초안 복구 모달
   reviewAssignmentModal: {
     title: "이전 재시험 준비 복구",
     recoveryHelp:
-      "별도 오답 재시험 방식은 종료되었습니다. 예약된 단어를 다음 시험 대기로 되돌린 뒤, 현재 단어 시험 배정에서 틀렸던 단어를 함께 추가할 수 있습니다.",
+      "별도 오답 시험 방식은 종료되었습니다. 예약된 단어를 다음 시험 대기로 되돌린 뒤, 현재 단어 시험 배정에서 틀렸던 단어를 함께 추가할 수 있습니다.",
     selectedWrongCount: "선택한 오답 {count}개",
     student: "학생",
     dataset: "단어장",
@@ -367,7 +367,7 @@ export const adminLearningText = {
     previewTitle: "배정 미리보기",
     cancel: "취소",
     autoRangeHelp:
-      "학생별 다음 범위부터 회차당 DAY 수만큼 독립된 시험을 만듭니다. 이전 배정 범위를 선택하면 학생별 직전 DAY 수와 방향을 유지합니다.",
+      "학생별 다음 범위부터 회차마다 정한 범위 수만큼 독립된 시험을 만듭니다. 이전 배정 범위를 선택하면 학생별 직전 범위 수와 방향을 유지합니다.",
     deadlineHelp:
       "첫 시험의 마감을 정하면 나머지 시험도 배정 날짜와 같은 간격으로 마감이 이동합니다.",
     atomicHelp:
@@ -380,12 +380,12 @@ export const adminLearningText = {
       label: "배정 범위",
       helpAria: "일괄 배정 범위 도움말",
       help:
-        "이전 배정과 같은 DAY 수는 학생별 직전 시험 범위와 정방향·역방향을 유지합니다. 직접 지정은 회차당 DAY 수를 모든 학생에게 같게 적용합니다.",
-      previousSpan: "이전 배정과 같은 DAY 수",
-      fixedSpan: "회차당 DAY 수 직접 지정",
+        "이전 배정과 같은 범위 수는 학생별 최근 시험 범위와 정방향·역방향을 유지합니다. 직접 지정은 회차당 범위 수를 모든 학생에게 같게 적용합니다.",
+      previousSpan: "이전 배정과 같은 범위 수",
+      fixedSpan: "회차당 범위 수 직접 지정",
       remainingOnly: "단어장 끝까지",
     },
-    unitsPerSession: "회차당 DAY 수",
+    unitsPerSession: "회차당 범위 수",
     sessionCount: "시험 횟수",
     firstAvailableDate: "첫 배정 날짜",
     firstDateRequired: "첫 배정 날짜를 정해 주세요.",
@@ -394,7 +394,7 @@ export const adminLearningText = {
     firstDeadlineInvalid:
       "첫 시험 마감은 첫 배정 날짜보다 뒤로 정해 주세요.",
     sessionLabel: "{count}회차",
-    assignmentDateTag: "배정 {datetime}",
+    assignmentDateTag: "공개 {datetime}",
     deadlineTag: "마감 {datetime}",
     wrongWordsLegend: "포함할 오답",
     wrongOnce: "한 번 틀림",

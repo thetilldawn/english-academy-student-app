@@ -76,14 +76,14 @@ export function VocabScheduleFields({
   return (
     <div className={styles.fieldStack}>
       <MetaTagList>
-        <MetaTag>{datasetLabel}</MetaTag>
-        <MetaTag>{rangeLabel}</MetaTag>
-        <MetaTag>
+        <MetaTag size="large">{datasetLabel}</MetaTag>
+        <MetaTag size="large">{rangeLabel}</MetaTag>
+        <MetaTag size="large">
           {controller.requiresExtraDateDecision ? "기본 최소 " : "기본 "}
           {baseSessionCount ?? 0}회
         </MetaTag>
         {schedule.weekdays.length > 0 ? (
-          <MetaTag>배정 합계 {controller.scheduledQuestionCount ?? 0}문항</MetaTag>
+          <MetaTag size="large">배정 합계 {controller.scheduledQuestionCount ?? 0}문항</MetaTag>
         ) : null}
       </MetaTagList>
       <Field as="label">
@@ -155,7 +155,7 @@ export function VocabScheduleFields({
       ) : null}
       <AssignmentFieldGrid columns={3}>
         <Field as="label">
-          <FieldLabel as="span">공개 시작</FieldLabel>
+          <FieldLabel as="span">공개</FieldLabel>
           <Input
             aria-errormessage={availableTimeError
               ? "vocab-available-time-error"

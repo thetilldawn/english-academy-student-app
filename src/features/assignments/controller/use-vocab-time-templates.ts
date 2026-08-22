@@ -17,41 +17,6 @@ import {
   type AssignmentTransport,
 } from "./assignment-transport";
 
-const BUILT_IN_TIME_TEMPLATES: readonly VocabTimeTemplate[] = [
-  {
-    id: "day-start",
-    label: "하루 시작",
-    availableTime: "00:00",
-    deadlineDayOffset: 1,
-    deadlineTime: "22:00",
-    timing: { mode: "total", totalSeconds: 300 },
-  },
-  {
-    id: "after-class",
-    label: "수업 후",
-    availableTime: "16:00",
-    deadlineDayOffset: 1,
-    deadlineTime: "22:00",
-    timing: { mode: "total", totalSeconds: 300 },
-  },
-  {
-    id: "evening",
-    label: "저녁",
-    availableTime: "18:00",
-    deadlineDayOffset: 1,
-    deadlineTime: "22:00",
-    timing: { mode: "per_question", perQuestionSeconds: 20 },
-  },
-  {
-    id: "same-day",
-    label: "당일 마감",
-    availableTime: "14:00",
-    deadlineDayOffset: 0,
-    deadlineTime: "23:00",
-    timing: { mode: "total", totalSeconds: 300 },
-  },
-];
-
 export function useVocabTimeTemplates({
   initialTemplates,
   schedule,
@@ -75,7 +40,7 @@ export function useVocabTimeTemplates({
       return { ok: false as const, message: "템플릿 이름을 확인해 주세요." };
     }
     if (
-      [...BUILT_IN_TIME_TEMPLATES, ...state.templates].some(
+      state.templates.some(
         (template) => template.label.trim() === trimmed,
       )
     ) {
@@ -128,6 +93,6 @@ export function useVocabTimeTemplates({
     customTemplates: state.templates,
     saveCurrentTemplate,
     saving: state.saving,
-    timeTemplates: [...BUILT_IN_TIME_TEMPLATES, ...state.templates],
+    timeTemplates: state.templates,
   };
 }

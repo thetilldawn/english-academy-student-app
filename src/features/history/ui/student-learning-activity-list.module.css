@@ -1,6 +1,5 @@
 .region,
-.sections,
-.section {
+.sections {
   min-width: 0;
   display: grid;
   gap: var(--space-3);
@@ -8,23 +7,6 @@
 
 .sections {
   gap: var(--space-4);
-}
-
-.section {
-  gap: 10px;
-}
-
-.sectionHeading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-3);
-  margin-top: 2px;
-}
-
-.sectionHeading h4 {
-  margin: 0;
-  font-size: 13px;
 }
 
 .list {

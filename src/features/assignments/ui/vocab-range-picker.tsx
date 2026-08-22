@@ -212,7 +212,7 @@ export function VocabQuestionFields({
       </AssignmentFieldGrid>
       <Field>
         <FieldLabel as="span" id="vocab-selection-mode-label">
-          <HelpTip label="문제 순서 설명" trigger="문제 순서">
+          <HelpTip label="문항 선택 설명" trigger="문항 선택">
             범위순은 선택 범위의 순서대로 고르고, 무작위는 새 배정마다 다르게 고릅니다.
           </HelpTip>
         </FieldLabel>
@@ -252,11 +252,6 @@ export function VocabQuestionFields({
       <span className={styles.questionCountSummary} aria-live="polite">
         {countSummary}
       </span>
-      {preview && audience.totalCount > 1 && audience.mode === "common" ? (
-        <span className={styles.questionCountSummary}>
-          공통 {audience.sameCount}명 · 별도 확인 {audience.separateCount}명
-        </span>
-      ) : null}
     </div>
   );
 }

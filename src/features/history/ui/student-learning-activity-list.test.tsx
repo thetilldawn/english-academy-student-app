@@ -84,7 +84,8 @@ describe("StudentLearningActivityList", () => {
     expect(screen.getAllByRole("listitem")).toHaveLength(6);
   });
 
-  it("does not render an empty section whose rows are below the initial limit", () => {
+  it("keeps every nonempty status header even when another status fills the initial limit", async () => {
+    const user = userEvent.setup();
     const completed = {
       ...openItem(7),
       activityAt: "2026-07-01T00:00:00.000Z",
@@ -106,8 +107,12 @@ describe("StudentLearningActivityList", () => {
       />,
     );
 
-    expect(screen.queryByRole("heading", { name: "완료" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "완료" })).toBeInTheDocument();
+    expect(screen.getByText("1건")).toBeInTheDocument();
     expect(screen.getAllByRole("listitem")).toHaveLength(5);
+
+    await user.click(screen.getByRole("button", { name: /완료/ }));
+    expect(screen.getAllByRole("listitem")).toHaveLength(6);
   });
 
   it("preserves the activity priority order inside each visible section", () => {

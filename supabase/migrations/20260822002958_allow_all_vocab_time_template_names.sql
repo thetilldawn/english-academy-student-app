@@ -1,0 +1,2 @@
+alter table public.admin_vocab_assignment_time_templates
+  drop constraint if exists admin_vocab_assignment_time_templates_name_check1;

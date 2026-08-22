@@ -71,7 +71,7 @@ function queue(
 }
 
 describe("AssignmentQueueHistory", () => {
-  it("진행 큐는 펼치고 완료 큐는 접은 채 남은 범위를 태그로 표시한다", async () => {
+  it("진행 큐는 펼치고 완료 큐는 접은 채 핵심 정보만 요약한다", async () => {
     const user = userEvent.setup();
     render(
       <AssignmentQueueHistory
@@ -92,7 +92,7 @@ describe("AssignmentQueueHistory", () => {
       .toHaveAttribute("inert");
     expect(active).toHaveTextContent("능률 VOCA 고교필수");
     expect(active).toHaveTextContent("DAY 1~6");
-    expect(active).toHaveTextContent("전체 3회 중 2회 남음");
+    expect(active).toHaveTextContent("2회 · 40문항 남음");
     expect(active).toHaveTextContent("40문항 남음");
 
     await user.click(completed);

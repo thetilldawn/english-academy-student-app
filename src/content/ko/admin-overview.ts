@@ -1,7 +1,7 @@
 export const adminOverviewText = {
-  // Overview > 브레드크럼과 브라우저 제목
+  // 개요 > 브레드크럼과 브라우저 제목
   page: {
-    title: "Overview",
+    title: "개요",
   },
 
   // Overview > 우선 확인 목록 구역

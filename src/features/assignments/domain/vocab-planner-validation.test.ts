@@ -38,7 +38,7 @@ describe("vocab planner field validation", () => {
 
     expect(result.firstFieldKey).toBe("dataset");
     expect(result.errors).toMatchObject({
-      availableTime: "공개 시작 시각을 확인해 주세요.",
+      availableTime: "공개 시각을 확인해 주세요.",
       dataset: "단어장을 선택해 주세요.",
       deadlineTime: "마감 시각을 확인해 주세요.",
       questionCount: "문항 수는 4개부터 500개까지 입력해 주세요.",
@@ -73,7 +73,7 @@ describe("vocab planner field validation", () => {
 
     expect(buildVocabAssignmentFieldErrors(issues)).toMatchObject({
       errors: {
-        "session-1-deadline": "1회차 마감은 공개 시작보다 뒤여야 합니다.",
+        "session-1-deadline": "1회차 마감은 공개보다 뒤여야 합니다.",
       },
       firstFieldKey: "session-1-deadline",
     });
@@ -103,7 +103,7 @@ describe("vocab planner field validation", () => {
     });
 
     expect(buildVocabAssignmentFieldErrors(issues).errors).toMatchObject({
-      "session-1-available": "1회차 공개 시작을 확인해 주세요.",
+      "session-1-available": "1회차 공개를 확인해 주세요.",
       "session-1-deadline": "1회차 마감을 확인해 주세요.",
     });
   });

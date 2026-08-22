@@ -1,18 +1,10 @@
-import { formatContentText } from "@/content/format";
 import { studentAppText } from "@/content/ko/student-app";
 import {
-  MetaTag,
-  MetaTagList,
   StatusBadge,
 } from "@/design-system/primitives/badge/badge";
 import { ButtonLink } from "@/design-system/primitives/button/button";
 import { AttemptScoreSummary } from "@/features/history/ui/attempt-score-summary";
 import { ActivityStatusTimeline } from "@/features/history/ui/activity-status-timeline";
-import {
-  assignmentOrderLabel,
-  assignmentTypeLabel,
-} from "@/lib/admin/history";
-import { assignmentTimingLabel } from "@/lib/admin/assignment-settings";
 import { currentTimeMilliseconds } from "@/lib/deadline";
 import { buildAttemptStatusPresentation } from "@/features/history/presentation/attempt-presentation";
 
@@ -92,35 +84,11 @@ export function StudentAssignmentCard({
         </div>
       </div>
 
-      <MetaTagList className={styles.details} fullWidth>
-        <MetaTag size="large">
-          {assignmentTypeLabel(assignment.assignmentPurpose)}
-        </MetaTag>
-        <MetaTag size="large">
-          {assignment.scopeLabel}
-        </MetaTag>
-        {assignment.assignmentPurpose !== "review" ? (
-          <MetaTag size="large">
-            {formatContentText(studentAppText.dashboard.meta.questionCount, {
-              count: assignment.questionCount,
-            })}
-          </MetaTag>
-        ) : null}
-        <MetaTag size="large">
-          {assignmentTimingLabel(assignment)}
-        </MetaTag>
-        <MetaTag size="large">
-          {formatContentText(studentAppText.dashboard.meta.passingScore, {
-            score: assignment.passingScore,
-          })}
-        </MetaTag>
-        <MetaTag size="large">
-          {assignmentOrderLabel(
-            assignment.assignmentPurpose,
-            assignment.questionOrderMode,
-          )}
-        </MetaTag>
-      </MetaTagList>
+      <p className={styles.scope}>
+        {assignment.assignmentPurpose === "review"
+          ? `오답 시험 · ${assignment.questionCount}문항`
+          : assignment.scopeLabel}
+      </p>
 
       <StudentAssignmentAvailability
         assignment={assignment}

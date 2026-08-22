@@ -6,24 +6,20 @@ import {
 } from "@/design-system/patterns/activity-row/activity-row";
 import { ActionWithReason } from "@/design-system/patterns/action-reason/action-reason";
 import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
-import { Button, ButtonLink } from "@/design-system/primitives/button/button";
-import { ActivityStatusTimeline } from "@/features/history/ui/activity-status-timeline";
+import { Button } from "@/design-system/primitives/button/button";
 import { AssignmentQueueTags } from "@/features/assignment-queue/ui/assignment-queue-tags";
-import { AssignmentMetaTags } from "@/features/history/ui/assignment-meta-tags";
-import { AttemptScoreSummary } from "@/features/history/ui/attempt-score-summary";
 import learningRowStyles from "@/features/history/ui/learning-management-row.module.css";
-import { hasAttemptScoreContent } from "@/features/history/presentation/attempt-presentation";
-import { assignmentDisplayTitle } from "@/lib/admin/history";
+import {
+  assignmentScopeLabel,
+} from "@/lib/admin/history";
+import { compareAdminHistoryRecency } from "@/features/history/domain/learning-activity";
 import { historyDetailHref } from "@/lib/admin/history-route";
-import { learningSourceTypeLabel } from "@/lib/admin/learning-sources";
 
 import type { AssignmentStudentItem } from "../catalog-types";
 import {
   studentActivities,
-  studentPendingReviewCounts,
   type AssignmentWorkspaceController,
 } from "../controller/use-assignment-workspace";
-import { assignmentRecommendationLabel } from "../presentation/assignment-recommendation";
 
 export function AssignmentStudentRow({
   controller,
@@ -35,58 +31,17 @@ export function AssignmentStudentRow({
   const activities = studentActivities(controller, student.id);
   const assignmentQueues =
     controller.assignmentQueuesByStudent.get(student.id) ?? [];
-  const nextActivity = activities[0] ?? null;
-  const progress = controller.progressByStudent.get(student.id) ?? null;
-  const scoreInput = nextActivity
-    ? {
-        finalScore: nextActivity.finalScore,
-        initialScore: nextActivity.initialScore,
-        passed: nextActivity.passed,
-        passingScore: nextActivity.passingScore,
-        phase: nextActivity.phase,
-        retryStartedAt: nextActivity.retryStartedAt,
-        status: nextActivity.status,
-      }
-    : null;
-  const hasScore =
-    scoreInput !== null &&
-    hasAttemptScoreContent(scoreInput, { compact: true });
-  const learningSources = (
-    controller.learningSourcesByStudent.get(student.id) ?? []
-  ).filter(
-    (source) =>
-      source.sourceType !== "primary_vocab" &&
-      source.displayLabel !== student.currentVocabBook,
-  );
-  const reviewCounts = studentPendingReviewCounts(controller, student);
+  const recentActivity = activities.toSorted(compareAdminHistoryRecency)[0] ?? null;
   const assignmentBlockedReason =
     student.status === "blocked"
       ? "접속 차단 학생"
       : controller.readyDatasets.length === 0
         ? adminLearningText.assignmentModal.submit.blockedReason.noReadyDataset
         : null;
-  const recommendedRange = assignmentRecommendationLabel(progress);
-  const currentActivityRange =
-    nextActivity?.primaryUnitLabels[0] ?? nextActivity?.unitLabels[0] ?? null;
-  const showRecommendation =
-    !nextActivity ||
-    !currentActivityRange ||
-    currentActivityRange !== recommendedRange;
-
   return (
     <SelectableRow
       actions={
-        <>
-          {nextActivity ? (
-            <ButtonLink
-              href={historyDetailHref(nextActivity)}
-              size="small"
-              variant="primary"
-            >
-              {adminLearningText.page.studentCard.view}
-            </ButtonLink>
-          ) : null}
-          {controller.assignmentMode === "single" ? (
+        controller.assignmentMode === "single" ? (
             <ActionWithReason reason={assignmentBlockedReason}>
               <Button
                 disabled={assignmentBlockedReason !== null}
@@ -94,16 +49,16 @@ export function AssignmentStudentRow({
                   controller.actions.openSingleAssignment(student.id)
                 }
                 size="small"
-                variant={nextActivity ? "secondary" : "primary"}
+                variant={recentActivity ? "secondary" : "primary"}
               >
                 {adminLearningText.page.studentCard.newAssignment}
               </Button>
             </ActionWithReason>
-          ) : null}
-        </>
+          ) : null
       }
       checked={controller.selectedBulkStudentIds.includes(student.id)}
       checkboxId={`bulk-student-${student.id}`}
+      contentHref={recentActivity ? historyDetailHref(recentActivity) : undefined}
       onToggle={() => controller.actions.toggleBulkStudent(student.id)}
       selectionEnabled={controller.assignmentMode === "bulk"}
       disabled={student.status === "blocked"}
@@ -128,70 +83,32 @@ export function AssignmentStudentRow({
                 </MetaTag>
               </MetaTagList>
             </span>
-            <MetaTagList className={learningRowStyles.book}>
-              <MetaTag>
+            <span className={learningRowStyles.book}>
+              <small>현재 단어장</small>
+              <strong>
                 {student.currentVocabBook ??
                   adminLearningText.page.studentCard.wordbookMissing}
-              </MetaTag>
-              {learningSources.slice(0, 2).map((source) => (
-                <MetaTag key={source.id}>
-                  {learningSourceTypeLabel(source.sourceType)} ·{" "}
-                  {source.displayLabel}
-                </MetaTag>
-              ))}
-              {learningSources.length > 2 ? (
-                <MetaTag>+{learningSources.length - 2}</MetaTag>
-              ) : null}
-              {reviewCounts.available > 0 ? (
-                <MetaTag tone="warning">
-                  {formatContentText(
-                    adminLearningText.page.studentCard.wrongAvailable,
-                    { count: reviewCounts.available },
-                  )}
-                </MetaTag>
-              ) : reviewCounts.pending > 0 ? (
-                <MetaTag>{adminLearningText.page.studentCard.wrongAssigned}</MetaTag>
-              ) : null}
-            </MetaTagList>
-            {assignmentQueues.slice(0, 2).map((queue) => (
-              <AssignmentQueueTags key={queue.seriesId} queue={queue} />
+              </strong>
+            </span>
+            {assignmentQueues.slice(0, 1).map((queue) => (
+              <AssignmentQueueTags compact key={queue.seriesId} queue={queue} />
             ))}
-            {assignmentQueues.length > 2 ? (
+            {assignmentQueues.length > 1 ? (
               <MetaTagList>
-                <MetaTag>이어 배정 +{assignmentQueues.length - 2}</MetaTag>
+                <MetaTag>이어 배정 외 {assignmentQueues.length - 1}개</MetaTag>
               </MetaTagList>
             ) : null}
             <span className={learningRowStyles.recent}>
-              {nextActivity ? (
+              {recentActivity ? (
                 <>
-                  {assignmentDisplayTitle(nextActivity) ? (
-                    <strong>{assignmentDisplayTitle(nextActivity)}</strong>
-                  ) : null}
-                  <AssignmentMetaTags {...nextActivity} compact />
+                  <small>최근 시험 범위</small>
+                  <strong>{assignmentScopeLabel(recentActivity)}</strong>
                 </>
               ) : (
                 <strong>{adminLearningText.page.studentCard.noActivity}</strong>
               )}
             </span>
-            {showRecommendation ? (
-              <MetaTagList>
-                <MetaTag tone="warning">
-                  {formatContentText(
-                    adminLearningText.page.studentCard.recommendedRange,
-                    { range: recommendedRange },
-                  )}
-                </MetaTag>
-              </MetaTagList>
-            ) : null}
           </>
-        }
-        score={
-          hasScore && scoreInput ? (
-            <AttemptScoreSummary compact {...scoreInput} />
-          ) : undefined
-        }
-        timeline={
-          nextActivity ? <ActivityStatusTimeline item={nextActivity} /> : null
         }
       />
     </SelectableRow>

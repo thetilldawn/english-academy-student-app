@@ -74,6 +74,7 @@ export function AdminHistoryList({
     if (statusFilter !== "all") {
       return [
         {
+          defaultOpen: true,
           id: `filter-${statusFilter}`,
           title: statusFilterTitles[statusFilter],
           items: [

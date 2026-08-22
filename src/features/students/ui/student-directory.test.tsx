@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -97,6 +97,22 @@ describe("StudentDirectory", () => {
       expect(screen.getByText(item.displayName)).toBeVisible();
     }
     expect(screen.getAllByText(adminStudentsText.card.noHistory)).toHaveLength(3);
+  });
+
+  it("shows the current wordbook, recent exam, and three counts on the card", () => {
+    render(
+      <StudentDirectory
+        controller={controller()}
+        data={data([student("student-summary", "요약 학생")])}
+      />,
+    );
+
+    const card = screen.getByRole("button", { name: /요약 학생/ });
+    expect(within(card).getByText("현재 단어장")).toBeVisible();
+    expect(within(card).getByText("최근 시험")).toBeVisible();
+    expect(within(card).getByText("완료 0개")).toBeVisible();
+    expect(within(card).getByText("미응시 0개")).toBeVisible();
+    expect(within(card).getByText("응시 전 0개")).toBeVisible();
   });
 
   it("clears a search independently from detailed filters", async () => {

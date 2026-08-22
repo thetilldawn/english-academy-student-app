@@ -257,5 +257,12 @@ describe("QuizFrame", () => {
       remainingSeconds: 0,
     });
     expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:00");
+    expect(screen.getByText("문제당")).toBeVisible();
+  });
+
+  it("does not label a total timer as per-question", () => {
+    renderFrame(question("english_to_korean"), { timingMode: "total" });
+
+    expect(screen.queryByText("문제당")).not.toBeInTheDocument();
   });
 });

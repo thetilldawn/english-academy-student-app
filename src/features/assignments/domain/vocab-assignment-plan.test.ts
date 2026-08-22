@@ -1020,7 +1020,7 @@ describe("단어 시험 공통 배정 계획", () => {
     expect(template.availableTime).toBe("18:00");
   });
 
-  it("직전 시험 복사는 시험 조건만 바꾸고 대상과 날짜와 범위는 유지한다", () => {
+  it("최근 시험 복사는 시험 조건만 바꾸고 대상과 날짜와 범위는 유지한다", () => {
     const draft = {
       studentIds: ["student-new"],
       date: "2026-08-21",

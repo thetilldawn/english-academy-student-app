@@ -193,7 +193,7 @@ export function useQuizPlayerController(input: {
   ]);
 
   useEffect(() => {
-    promptRef.current?.focus({ preventScroll: true });
+    promptRef.current?.focus({ preventScroll: false });
   }, [currentQuestion?.id]);
 
   const priorWrongIndicator = currentQuestion

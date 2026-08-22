@@ -151,16 +151,6 @@ export function BulkSeriesPreview({
         <article className={styles.previewRow}>
           <div className={styles.studentHeading}>
             <h4>{commonPlanTitle}</h4>
-            <div className={styles.studentHeadingTags}>
-              <MetaTag tone="success">
-                동일 조건 {summary.normalStudentIds.length}명
-              </MetaTag>
-              {summary.exceptionStudentIds.length > 0 ? (
-                <MetaTag tone="warning">
-                  별도 확인 {summary.exceptionStudentIds.length}명
-                </MetaTag>
-              ) : null}
-            </div>
           </div>
           <p className={styles.planCounts}>
             출제 {summary.selectedQuestionCount}문항 · 남음{" "}
@@ -172,16 +162,16 @@ export function BulkSeriesPreview({
                 className={styles.sessionRow}
                 details={
                   <MetaTagList>
-                    <MetaTag>{session.unitLabel ?? "선택 범위"}</MetaTag>
-                    <MetaTag>
+                    <MetaTag size="large">{session.unitLabel ?? "선택 범위"}</MetaTag>
+                    <MetaTag size="large">
                       {formatKoreanDateTime(session.availableFrom)} 공개
                     </MetaTag>
                     {session.availableUntil ? (
-                      <MetaTag>
+                      <MetaTag size="large">
                         {formatKoreanDateTime(session.availableUntil)} 마감
                       </MetaTag>
                     ) : null}
-                    <MetaTag tone="success">
+                    <MetaTag size="large" tone="success">
                       {session.questionCount}문항
                     </MetaTag>
                   </MetaTagList>

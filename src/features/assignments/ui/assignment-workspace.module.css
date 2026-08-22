@@ -113,7 +113,7 @@
 }
 
 .filterDisclosure > summary {
-  min-height: 42px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: space-between;

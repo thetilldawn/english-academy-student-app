@@ -2,14 +2,7 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 
-import { assignmentDisplayTitle } from "@/lib/admin/history";
 import { studentLearningActivityIndex } from "@/features/history/domain/learning-activity";
-import {
-  buildAttemptStatusPresentation,
-  hasAttemptScoreContent,
-} from "@/features/history/presentation/attempt-presentation";
-import { ActivityStatusTimeline } from "@/features/history/ui/activity-status-timeline";
-import { AttemptScoreSummary } from "@/features/history/ui/attempt-score-summary";
 import { HelpTip, inlineHelpClassName } from "@/design-system/primitives/tooltip/help-tip";
 import {
   MetaTag,
@@ -42,7 +35,7 @@ import {
   cataloguedDatasetDisplayLabel,
   groupCataloguedDatasets,
 } from "@/lib/admin/dataset-catalog";
-import { learningSourceTypeLabel } from "@/lib/admin/learning-sources";
+import { formatKoreanDateTime } from "@/lib/format";
 import {
   indexStudentCurrentVocabWrongSummaries,
 } from "@/lib/admin/wrong-history-summary";
@@ -53,6 +46,7 @@ import {
   indexStudentLearningSources,
   studentDirectoryFilterOptions,
 } from "../domain/student-directory";
+import { summarizeStudentDirectoryActivities } from "../domain/student-directory-summary";
 import type {
   StudentDirectoryFilters,
   StudentManagementData,
@@ -66,21 +60,6 @@ const initialFilters: StudentDirectoryFilters = {
   wordbook: "",
   wrong: "all",
 };
-
-function recommendationLabel(
-  progress: StudentManagementData["progress"][number] | null | undefined,
-) {
-  if (progress?.recommendationReason === "complete") {
-    return adminStudentsText.recommendation.complete;
-  }
-  if (progress?.recommendationReason === "manual") {
-    return adminStudentsText.recommendation.manual;
-  }
-  return (
-    progress?.recommendedUnitLabel ??
-    adminStudentsText.recommendation.needsWordbook
-  );
-}
 
 function StudentCreateForm({
   controller,
@@ -424,11 +403,6 @@ export function StudentDirectory({
       data.students,
     ],
   );
-  const progressByStudent = useMemo(
-    () => new Map(data.progress.map((item) => [item.studentId, item])),
-    [data.progress],
-  );
-
   return (
     <>
       <StudentCreateForm controller={controller} data={data} />
@@ -444,48 +418,13 @@ export function StudentDirectory({
         ) : (
           <div className={styles.cardGrid}>
             {students.map((student) => {
-              const progress = progressByStudent.get(student.id);
-              const activity = activitiesByStudent.get(student.id)?.[0] ?? null;
-              const presentation = buildAttemptStatusPresentation({
-                finalScore: activity?.finalScore,
-                initialScore: activity?.initialScore,
-                passed: activity?.passed,
-                passingScore: activity?.passingScore,
-                phase: activity?.phase ?? null,
-                retryStartedAt: activity?.retryStartedAt,
-                status: activity?.status ?? null,
-              });
-              const hasScore = activity
-                ? hasAttemptScoreContent(
-                    {
-                      finalScore: activity.finalScore,
-                      initialScore: activity.initialScore,
-                      passed: activity.passed,
-                      passingScore: activity.passingScore,
-                      phase: activity.phase,
-                      retryStartedAt: activity.retryStartedAt,
-                      status: activity.status,
-                    },
-                    { compact: true },
-                  )
-                : false;
-              const supplemental = (
-                learningSourcesByStudent.get(student.id) ?? []
-              )
-                .filter((source) => source.sourceType !== "primary_vocab")
-                .map((source) => ({
-                  key: source.id,
-                  label: `${learningSourceTypeLabel(source.sourceType)} · ${source.displayLabel}`,
-                }));
+              const activities = activitiesByStudent.get(student.id) ?? [];
+              const summary = summarizeStudentDirectoryActivities(activities);
               const primary =
                 student.currentVocabBook ?? adminStudentsText.card.wordbookMissing;
-              const activityTitle = activity
-                ? assignmentDisplayTitle(activity)
-                : "";
               return (
                 <button
                   className={styles.card}
-                  data-exam-outcome={activity ? presentation.outcome : undefined}
                   key={student.id}
                   onClick={() => controller.actions.openStudent(student)}
                   type="button"
@@ -521,63 +460,28 @@ export function StudentDirectory({
                   </span>
                   <span className={styles.cardDetails}>
                     <span className={styles.infoRow}>
-                      <small>{adminStudentsText.card.recentWordbook}</small>
+                      <small>{adminStudentsText.card.currentWordbook}</small>
                       <strong className={styles.primarySource} title={primary}>
                         {primary}
                       </strong>
                     </span>
-                    {supplemental.length > 0 ? (
-                      <span className={styles.infoRow}>
-                        <small>{adminStudentsText.card.learningMaterials}</small>
-                        <MetaTagList className={styles.sourceTags}>
-                          {supplemental.slice(0, 2).map((source) => (
-                            <MetaTag key={source.key}>{source.label}</MetaTag>
-                          ))}
-                          {supplemental.length > 2 ? (
-                            <MetaTag>+{supplemental.length - 2}</MetaTag>
-                          ) : null}
-                        </MetaTagList>
-                      </span>
-                    ) : null}
                     <span className={styles.infoRow}>
-                      <small>{adminStudentsText.card.nextRange}</small>
-                      <MetaTag tone="warning">
-                        {recommendationLabel(progress)}
-                      </MetaTag>
+                      <small>{adminStudentsText.card.recentExam}</small>
+                      <strong className={styles.primarySource}>
+                        {summary.recentAttemptAt
+                          ? formatKoreanDateTime(summary.recentAttemptAt)
+                          : adminStudentsText.card.noHistory}
+                      </strong>
                     </span>
-                    <span className={styles.infoRow}>
-                      <small>{adminStudentsText.card.priority}</small>
-                      <span className={styles.priority}>
-                        {activity?.primaryUnitLabels[0] ?? activity?.unitLabels[0] ? (
-                          <MetaTag>
-                            {activity?.primaryUnitLabels[0] ?? activity?.unitLabels[0]}
-                          </MetaTag>
-                        ) : null}
-                        {activityTitle ? (
-                          <strong>{activityTitle}</strong>
-                        ) : activity ? null : (
-                          <strong>{adminStudentsText.card.noHistory}</strong>
-                        )}
-                        {activity ? (
-                          <span
-                            className={styles.scoreLine}
-                            data-has-score={hasScore || undefined}
-                          >
-                            {hasScore ? (
-                              <AttemptScoreSummary
-                                compact
-                                finalScore={activity.finalScore}
-                                initialScore={activity.initialScore}
-                                passed={activity.passed}
-                                passingScore={activity.passingScore}
-                                phase={activity.phase}
-                                retryStartedAt={activity.retryStartedAt}
-                                status={activity.status}
-                              />
-                            ) : null}
-                            <ActivityStatusTimeline align="end" item={activity} />
-                          </span>
-                        ) : null}
+                    <span className={styles.activityStats}>
+                      <span>
+                        {adminStudentsText.card.completed} {summary.completedCount}개
+                      </span>
+                      <span>
+                        {adminStudentsText.card.missed} {summary.missedCount}개
+                      </span>
+                      <span>
+                        {adminStudentsText.card.notStarted} {summary.notStartedCount}개
                       </span>
                     </span>
                   </span>

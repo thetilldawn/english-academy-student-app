@@ -1,18 +1,12 @@
 import {
-  MetaTag,
-  MetaTagList,
-} from "@/design-system/primitives/badge/badge";
-import { formatContentText } from "@/content/format";
-import { adminHistoryText } from "@/content/ko/admin-history";
-import {
-  assignmentTypeLabel,
-  assignmentUnitRangeLabel,
+  assignmentScopeLabel,
   type AssignmentHistorySource,
 } from "@/lib/admin/history";
 
+import styles from "./assignment-meta-tags.module.css";
+
 export function AssignmentMetaTags({
   assignmentPurpose,
-  compact = false,
   datasetTitle,
   primaryUnitLabels,
   questionCount,
@@ -25,27 +19,18 @@ export function AssignmentMetaTags({
   | "questionCount"
   | "unitLabels"
 > & { compact?: boolean }) {
-  const questionCountLabel = formatContentText(
-    adminHistoryText.list.questionCount,
-    { count: questionCount },
-  );
-  const rangeLabel =
-    assignmentPurpose === "review"
-      ? questionCountLabel
-      : assignmentUnitRangeLabel({
-          assignmentPurpose,
-          primaryUnitLabels,
-          unitLabels,
-        });
+  const rangeLabel = assignmentScopeLabel({
+    assignmentPurpose,
+    primaryUnitLabels,
+    questionCount,
+    unitLabels,
+  });
 
   return (
-    <MetaTagList>
-      <MetaTag>{datasetTitle}</MetaTag>
-      <MetaTag>{assignmentTypeLabel(assignmentPurpose)}</MetaTag>
-      <MetaTag>{rangeLabel}</MetaTag>
-      {!compact && assignmentPurpose !== "review" ? (
-        <MetaTag>{questionCountLabel}</MetaTag>
-      ) : null}
-    </MetaTagList>
+    <span aria-label="단어장과 범위" className={styles.root}>
+      <span className={styles.dataset}>{datasetTitle}</span>
+      <span aria-hidden="true" className={styles.separator}>·</span>
+      <span className={styles.range}>{rangeLabel}</span>
+    </span>
   );
 }

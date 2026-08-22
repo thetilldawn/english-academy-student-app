@@ -2,9 +2,12 @@
   --paper: #fcfbf7;
   --card: #ffffff;
   --surface: #f1efe6;
+  --surface-muted: #f7f5ef;
   --line: #dedcd1;
   --control-line: #918e85;
+  --line-strong: var(--control-line);
   --ink: #1a1a18;
+  --focus-ring: var(--ink);
   --muted: #66645d;
   --dim: #a9a79c;
   --pass: #1a6e33;
@@ -35,10 +38,10 @@
   --status-fg: #ffffff;
   --motion-standard: 250ms ease-in-out;
   --motion-complex: 300ms ease-in-out;
-  --control-height-small: 36px;
+  --control-height-small: 44px;
   --control-height-default: 44px;
   --control-height-large: 58px;
-  --control-height-icon: 36px;
+  --control-height-icon: 44px;
   --control-height-field: 46px;
   --space-1: 4px;
   --space-2: 8px;

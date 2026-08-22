@@ -1,6 +1,11 @@
 .wrapper {
+  min-width: 0;
   display: grid;
+  gap: var(--space-3);
   justify-items: start;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  background: var(--surface-muted);
 }
 
 .wrapper > section {

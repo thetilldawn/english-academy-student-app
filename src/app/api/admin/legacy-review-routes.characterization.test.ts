@@ -42,7 +42,7 @@ function request(url: string, method: "POST" | "DELETE") {
   return new Request(url, { method });
 }
 
-describe("퇴역한 별도 오답 재시험 HTTP 계약", () => {
+describe("퇴역한 별도 오답 시험 HTTP 계약", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getAdminContext.mockResolvedValue({ userId: "admin-id" });
@@ -66,7 +66,7 @@ describe("퇴역한 별도 오답 재시험 HTTP 계약", () => {
       410, 410,
     ]);
     expect(await responses[0].json()).toMatchObject({
-      error: expect.stringContaining("별도 오답 재시험 배정은 종료"),
+      error: expect.stringContaining("별도 오답 시험 배정은 종료"),
     });
     expect(await responses[1].json()).toMatchObject({
       error: expect.stringContaining("이전 재시험 준비 방식은 종료"),

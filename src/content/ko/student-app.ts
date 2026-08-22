@@ -106,10 +106,10 @@ export const studentAppText = {
   result: {
     metadataTitle: "시험 결과",
     eyebrow: {
-      reviewPending: "FIRST TEST RESULT",
-      expired: "TIME ENDED",
-      passed: "PASSED",
-      completed: "COMPLETED",
+      reviewPending: "첫 시험 결과",
+      expired: "시간 종료",
+      passed: "통과",
+      completed: "시험 완료",
     },
     question: {
       number: "문항 {number}",
@@ -121,6 +121,7 @@ export const studentAppText = {
       retry: "재시험",
       answer: "정답",
       noChoice: "선택 안 함",
+      wrongCount: "오답 {count}회",
     },
     message: {
       retryReady: "틀린 단어를 확인한 뒤 재시험을 시작할 수 있습니다.",
@@ -148,7 +149,6 @@ export const studentAppText = {
       retryCorrect: "재시험 정답",
       retryTarget: "재시험 대상 단어",
       unresolved: "다시 볼 단어",
-      finalScore: "재시험 후 점수",
       elapsed: "응시 시간",
       attemptNumber: "응시 회차",
     },

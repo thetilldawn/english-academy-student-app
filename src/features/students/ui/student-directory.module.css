@@ -79,7 +79,7 @@
 }
 
 .filterDisclosure > summary {
-  min-height: 42px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -194,8 +194,7 @@
 }
 
 .cardHeading,
-.cardDetails,
-.priority {
+.cardDetails {
   min-width: 0;
   display: grid;
 }
@@ -248,8 +247,7 @@
   line-height: 1.5;
 }
 
-.primarySource,
-.priority > strong {
+.primarySource {
   min-width: 0;
   overflow: hidden;
   color: var(--text-primary);
@@ -260,29 +258,26 @@
   white-space: nowrap;
 }
 
-.sourceTags {
-  min-width: 0;
-  justify-content: flex-start;
-}
-
-.priority {
-  justify-items: start;
-  gap: var(--space-1);
-}
-
-.scoreLine {
+.activityStats {
   min-width: 0;
   width: 100%;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  align-items: start;
-  justify-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
 }
 
-.scoreLine[data-has-score="true"] {
-  grid-template-columns: minmax(80px, auto) minmax(0, 1fr);
-  align-items: center;
+.activityStats > span {
+  padding-right: var(--space-2);
+  border-right: 1px solid var(--line);
+}
+
+.activityStats > span:last-child {
+  padding-right: 0;
+  border-right: 0;
 }
 
 @media (max-width: 767px) {
@@ -302,11 +297,6 @@
 
   .infoRow {
     grid-template-columns: 68px minmax(0, 1fr);
-  }
-
-  .scoreLine[data-has-score="true"] {
-    grid-template-columns: minmax(0, 1fr);
-    align-items: start;
   }
 
   .filterSummary {
@@ -331,8 +321,7 @@
     gap: var(--space-1);
   }
 
-  .primarySource,
-  .priority > strong {
+  .primarySource {
     white-space: normal;
     overflow-wrap: anywhere;
   }

@@ -82,7 +82,7 @@ describe("mixedAssignmentGeneratedTitle", () => {
   it("오답만 배정하면 선택 DAY를 제목에 노출하지 않는다", () => {
     expect(
       mixedAssignmentGeneratedTitle("능률 VOCA", units, 7, 7),
-    ).toBe("능률 VOCA · 오답 재시험 · 7문항");
+    ).toBe("능률 VOCA · 오답 시험 · 7문항");
   });
 
   it("일반 단어가 섞이면 선택 범위와 오답 수를 유지한다", () => {

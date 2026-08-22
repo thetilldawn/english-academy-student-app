@@ -127,7 +127,7 @@ export class ReviewAssignmentDraftError extends Error {
       | "conflict"
       | "database",
   ) {
-    super("오답 재시험 배정 준비에 실패했습니다.");
+    super("오답 시험 배정 준비에 실패했습니다.");
     this.name = "ReviewAssignmentDraftError";
   }
 }

@@ -3,6 +3,7 @@
 import { useRef, type KeyboardEvent, type PointerEvent } from "react";
 
 import { Button, IconButton } from "@/design-system/primitives/button/button";
+import { prefersReducedMotion } from "@/lib/ui/motion";
 
 import type { AssignmentUnitItem } from "../catalog-types";
 import type { DayRangeSelection } from "../domain/vocab-assignment-plan";
@@ -24,7 +25,10 @@ export function DayRangeRail({
   const dragRef = useRef({ active: false, moved: false, startX: 0, scrollLeft: 0 });
 
   function scroll(direction: -1 | 1) {
-    railRef.current?.scrollBy({ left: direction * 360, behavior: "smooth" });
+    railRef.current?.scrollBy({
+      left: direction * 360,
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+    });
   }
 
   function startDrag(event: PointerEvent<HTMLDivElement>) {
@@ -68,7 +72,7 @@ export function DayRangeRail({
     const next = Math.min(units.length - 1, Math.max(0, index + offset));
     buttonRefs.current[next]?.focus();
     buttonRefs.current[next]?.scrollIntoView({
-      behavior: "smooth",
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
       block: "nearest",
       inline: "center",
     });

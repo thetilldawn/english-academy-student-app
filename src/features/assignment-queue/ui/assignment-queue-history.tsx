@@ -72,7 +72,7 @@ function AssignmentQueueDisclosure({
         onClick={() => setOpen((current) => !current)}
         type="button"
       >
-        <AssignmentQueueTags queue={queue} />
+        <AssignmentQueueTags compact queue={queue} />
         <span aria-hidden="true" className={styles.indicator}>
           ▾
         </span>
@@ -146,21 +146,24 @@ function AssignmentQueueDisclosure({
 }
 
 export function AssignmentQueueHistory({
+  headingLevel = 2,
   onResolved,
   queues,
 }: {
+  headingLevel?: 2 | 3;
   onResolved?: () => void;
   queues: readonly VocabAssignmentQueueSummary[];
 }) {
   if (queues.length === 0) return null;
+  const Heading = headingLevel === 2 ? "h2" : "h3";
   return (
     <section aria-labelledby="vocab-assignment-queue-history-title">
-      <h2
+      <Heading
         className={styles.title}
         id="vocab-assignment-queue-history-title"
       >
         이어 배정
-      </h2>
+      </Heading>
       <div className={styles.list}>
         {queues.map((queue) => (
           <AssignmentQueueDisclosure

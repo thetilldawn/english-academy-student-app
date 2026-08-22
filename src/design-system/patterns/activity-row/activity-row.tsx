@@ -70,6 +70,7 @@ export function SelectableRow({
   checked,
   checkboxId,
   children,
+  contentHref,
   disabled = false,
   onToggle,
   selectionEnabled = true,
@@ -79,6 +80,7 @@ export function SelectableRow({
   checked: boolean;
   checkboxId: string;
   children: ReactNode;
+  contentHref?: string;
   disabled?: boolean;
   onToggle: () => void;
   selectionEnabled?: boolean;
@@ -91,26 +93,26 @@ export function SelectableRow({
       data-selection-enabled={selectionEnabled}
     >
       {selectionEnabled ? (
-        <label className={styles.checkbox} htmlFor={checkboxId}>
-          <Checkbox
-            aria-label={selectionAriaLabel}
-            checked={checked}
-            disabled={disabled}
-            id={checkboxId}
-            onChange={onToggle}
-          />
+        <label className={styles.selectableToggle} htmlFor={checkboxId}>
+          <span className={styles.checkbox}>
+            <Checkbox
+              aria-label={selectionAriaLabel}
+              checked={checked}
+              disabled={disabled}
+              id={checkboxId}
+              onChange={onToggle}
+            />
+          </span>
+          <span className={styles.selectableContent}>{children}</span>
         </label>
-      ) : null}
-      {selectionEnabled ? (
-        <button
-          aria-label={selectionAriaLabel}
+      ) : contentHref ? (
+        <Link
           className={styles.selectableContent}
-          disabled={disabled}
-          onClick={onToggle}
-          type="button"
+          href={contentHref}
+          scroll={false}
         >
           {children}
-        </button>
+        </Link>
       ) : (
         <span className={styles.selectableContent}>{children}</span>
       )}

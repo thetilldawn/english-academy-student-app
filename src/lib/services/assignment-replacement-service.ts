@@ -480,7 +480,7 @@ async function requireEditableSourceContext(
   ) {
     throw new AssignmentReplacementError(
       "conflict",
-      "오답 재시험 대상 일부가 이미 해결되어 기존 배정을 수정할 수 없습니다. 남은 오답으로 새 시험을 배정해 주세요.",
+      "오답 시험 대상 일부가 이미 해결되어 기존 배정을 수정할 수 없습니다. 남은 오답으로 새 시험을 배정해 주세요.",
     );
   }
 
@@ -586,7 +586,7 @@ function assertExactReviewShape(
   ) {
     throw new AssignmentReplacementError(
       "invalid_selection",
-      "오답 재시험은 대상 단어를 유지한 채 제목·출제 방향·순서·시간·통과 점수·마감만 수정할 수 있습니다.",
+      "오답 시험은 대상 단어를 유지한 채 제목·출제 방향·순서·시간·통과 점수·마감만 수정할 수 있습니다.",
     );
   }
 }
@@ -614,7 +614,7 @@ async function prepareExactReviewQuestions(
   if (targets.length !== source.selectedReviewVocabEntryIds.length) {
     throw new AssignmentReplacementError(
       "invalid_selection",
-      "오답 재시험 대상 중 현재 출제할 수 없는 단어가 있습니다.",
+      "오답 시험 대상 중 현재 출제할 수 없는 단어가 있습니다.",
     );
   }
 
@@ -631,7 +631,7 @@ async function prepareExactReviewQuestions(
       "invalid_selection",
       error instanceof Error
         ? error.message
-        : "오답 재시험 문항을 다시 만들 수 없습니다.",
+        : "오답 시험 문항을 다시 만들 수 없습니다.",
     );
   }
   return drafts.map((question, index) => ({

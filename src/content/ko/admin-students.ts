@@ -1,7 +1,7 @@
 export const adminStudentsText = {
   // 학생 관리 > 페이지와 검색·필터
   page: {
-    title: "학생 관리",
+    title: "학생",
     searchAriaLabel: "학생 및 학습 자료 검색",
     searchPlaceholder: "이름·학교·학년·단어장 검색",
     filterButton: "필터",
@@ -12,7 +12,7 @@ export const adminStudentsText = {
   // 학생 관리 > 학생 카드의 다음 범위
   recommendation: {
     complete: "현재 단어장 완료",
-    manual: "DAY 범위 확인 필요",
+    manual: "범위 확인 필요",
     needsWordbook: "단어장 선택 필요",
   },
 
@@ -98,7 +98,7 @@ export const adminStudentsText = {
         allTypes: "전체 유형",
         regular: "단어 시험",
         mixed: "틀린 단어 포함",
-        review: "오답 재시험",
+        review: "오답 시험",
         status: "상태",
         allStatuses: "전체 상태",
         open: "진행 전·진행 중",
@@ -122,7 +122,7 @@ export const adminStudentsText = {
         started: "시작 {datetime}",
       },
       count: "{count}건",
-      recentOnly: "최근 {count}개만 보기",
+      recentOnly: "상태별 {count}개만 보기",
       showAll: "전체 {count}개 보기",
     },
     recentWordbookChange: "최근 단어장 변경",
@@ -197,6 +197,11 @@ export const adminStudentsText = {
       wordbookFallback: "단어장",
       canceling: "취소하는 중…",
       cancelDraft: "재시험 준비 취소",
+      sections: {
+        filters: "검색·필터",
+        purpose: "사용 방식",
+        selection: "단어 선택",
+      },
       search: "단어 검색",
       searchPlaceholder: "영어·뜻·단어장",
       wordbook: "단어장",
@@ -242,10 +247,11 @@ export const adminStudentsText = {
     codeExpired: "코드 만료됨",
     schoolMissing: "학교 미입력",
     gradeMissing: "학년 미입력",
-    recentWordbook: "최근 단어장",
-    learningMaterials: "학습 자료",
-    nextRange: "다음 범위",
-    priority: "우선 확인",
+    currentWordbook: "현재 단어장",
+    recentExam: "최근 시험",
+    completed: "완료",
+    missed: "미응시",
+    notStarted: "응시 전",
     noHistory: "학습 기록 없음",
   },
 
