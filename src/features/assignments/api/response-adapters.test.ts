@@ -100,6 +100,8 @@ describe("assignment response adapters", () => {
       timingMode: "per_question",
       questionTimeLimitSeconds: 20,
       passingScore: 80,
+      retryEnabled: true,
+      retryPassingScore: 80,
       questionOrderMode: "fixed",
       availableUntil: "2026-08-18T12:00:00.000Z",
       includePendingReview: true,

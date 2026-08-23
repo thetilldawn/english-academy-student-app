@@ -7,7 +7,6 @@ import { useEffect } from "react";
 import { StudentLogoutButton } from "@/components/student-logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { studentAppText } from "@/content/ko/student-app";
-import { studentPageTitleForPathname } from "@/lib/ui/student-routes";
 
 import styles from "./shell/app-shell.module.css";
 
@@ -22,7 +21,6 @@ export function StudentShell({
 }) {
   const pathname = usePathname();
   const focusedAttempt = pathname.startsWith("/student/attempt/");
-  const pageTitle = studentPageTitleForPathname(pathname);
 
   useEffect(() => {
     if (!window.location.hash) return;
@@ -52,7 +50,6 @@ export function StudentShell({
               </span>
               <span>{studentAppText.shell.brand}</span>
             </Link>
-            <strong className={styles.studentMobilePageTitle}>{pageTitle}</strong>
             <div className={styles.topbarActions}>
               <ThemeToggle />
               <span

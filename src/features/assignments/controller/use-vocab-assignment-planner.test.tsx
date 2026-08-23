@@ -189,6 +189,27 @@ describe("단어 배정 일정 controller", () => {
     expect(result.current.planner.schedule.weekdays).toEqual([2, 4]);
   });
 
+  it("시험일을 끄면 요일과 마감 없이 바로 시작하는 한 회차만 만든다", () => {
+    const { result } = renderPlanner();
+    selectWholeRange(result);
+
+    act(() => result.current.actions.changeScheduleEnabled(false));
+
+    expect(result.current.scheduleSlots).toEqual([]);
+    expect(result.current.commonPlan).toMatchObject({
+      distribution: "repeat",
+      splitBasis: "question_count",
+      selectedDateCount: 0,
+      questionCount: { mode: "all" },
+      overflowPolicy: "leave",
+      sessions: [{
+        availableLocalDateTime: "2026-08-21T00:00",
+        deadlineLocalDateTime: null,
+        unitIds: units.map((unit) => unit.id),
+      }],
+    });
+  });
+
   it("전체 반복은 같은 DAY 범위를 월수금 세 날짜에 정확히 한 번씩 배정한다", () => {
     const { result } = renderPlanner();
     selectWholeRange(result);

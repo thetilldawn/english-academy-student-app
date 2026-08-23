@@ -82,7 +82,7 @@ describe("AssignmentQueueHistory", () => {
       />,
     );
 
-    const active = screen.getByRole("button", { name: /이어 배정 중/ });
+    const active = screen.getByRole("button", { name: /배정된 시험/ });
     const completed = screen.getByRole("button", { name: /완료/ });
     expect(active).toHaveAttribute("aria-expanded", "true");
     expect(completed).toHaveAttribute("aria-expanded", "false");

@@ -44,6 +44,8 @@ const validInput = {
   englishToKoreanRatio: 50,
   timeLimitSeconds: 300,
   passingScore: 80,
+  retryEnabled: true,
+  retryPassingScore: 80,
   questionOrderMode: "random",
   availableUntil: null,
 };

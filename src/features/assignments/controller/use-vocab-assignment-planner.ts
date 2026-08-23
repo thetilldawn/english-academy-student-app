@@ -102,7 +102,9 @@ export function useVocabAssignmentPlanner({
   const bulk = useBulkAssignmentController({
     commonPlanRequired: true,
     firstAvailableDateKorean:
-      scheduleSlots[0]?.date ?? planner.schedule.startDate,
+      planner.scheduleEnabled !== false
+        ? scheduleSlots[0]?.date ?? planner.schedule.startDate
+        : planner.immediateDate ?? planner.schedule.startDate,
     genericErrorMessage,
     includePendingReview: false,
     initialCommonPlan: commonPlan,
@@ -149,7 +151,13 @@ export function useVocabAssignmentPlanner({
       });
     }
     bulk.actions.changeDirection(copied.exam.directionRatio);
-    bulk.actions.changeOrder(copied.exam.questionOrderMode);
+    const copiedSelectionMode = copied.exam.questionOrderMode === "random"
+      ? "random"
+      : "source_order";
+    dispatch({ type: "selection_mode", value: copiedSelectionMode });
+    bulk.actions.changeOrder(
+      copiedSelectionMode === "random" ? "random" : "ascending",
+    );
     bulk.actions.changePassingScore(copied.exam.passingScore);
     bulk.actions.changeTimeLimitEnabled(copied.exam.timeLimitEnabled !== false);
     bulk.actions.changeTiming(copied.exam.timing);
@@ -308,8 +316,12 @@ export function useVocabAssignmentPlanner({
         dispatch({ type: "overflow_policy", value }),
       changeExtraDatePolicy: (value: VocabExtraDatePolicy) =>
         dispatch({ type: "extra_date_policy", value }),
-      changeSelectionMode: (value: VocabTargetSelectionMode) =>
-        dispatch({ type: "selection_mode", value }),
+      changeSelectionMode: (value: VocabTargetSelectionMode) => {
+        dispatch({ type: "selection_mode", value });
+        bulk.actions.changeOrder(
+          value === "random" ? "random" : "ascending",
+        );
+      },
       copyPreviousExam,
       decideCollision,
       clearCollisionDecision: (collisionId: string) =>
@@ -322,6 +334,8 @@ export function useVocabAssignmentPlanner({
         ) },
       }),
       saveCurrentTemplate: timeTemplateController.saveCurrentTemplate,
+      changeScheduleEnabled: (enabled: boolean) =>
+        dispatch({ type: "schedule/enabled", enabled }),
       selectUnit: (unitId: string) => dispatch({ type: "range", unitId }),
       updateSessionSchedule: (
         sessionNumber: number,

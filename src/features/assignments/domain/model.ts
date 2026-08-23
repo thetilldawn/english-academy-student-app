@@ -22,6 +22,8 @@ export type ExamSettings = {
   directionRatio: AssignmentDirectionRatio;
   questionOrderMode: AssignmentQuestionOrderMode;
   passingScore: number;
+  retryEnabled?: boolean;
+  retryPassingScore?: number;
   timeLimitEnabled?: boolean;
   timing: ExamTiming;
 };
@@ -120,7 +122,7 @@ export type BulkAssignmentRange = {
 
 export type BulkCommonPlanSession = {
   availableLocalDateTime: string;
-  deadlineLocalDateTime: string;
+  deadlineLocalDateTime: string | null;
   unitIds: readonly string[];
 };
 

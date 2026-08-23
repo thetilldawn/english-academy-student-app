@@ -30,7 +30,7 @@ export function AssignmentQueueTags({
   const attention = vocabAssignmentQueueAttentionLabel(queue.attentionReason);
   if (compact) {
     return (
-      <span aria-label="이어 배정 상태" className={styles.compact}>
+      <span aria-label="배정된 시험 상태" className={styles.compact}>
         <MetaTag tone={statusTone(queue.status)}>
           {vocabAssignmentQueueStatusLabel(queue.status)}
         </MetaTag>
@@ -45,7 +45,7 @@ export function AssignmentQueueTags({
   }
 
   return (
-    <MetaTagList aria-label="이어 배정 상태">
+    <MetaTagList aria-label="배정된 시험 상태">
       <MetaTag tone={statusTone(queue.status)}>
         {vocabAssignmentQueueStatusLabel(queue.status)}
       </MetaTag>

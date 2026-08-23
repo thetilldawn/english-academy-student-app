@@ -55,6 +55,7 @@ export function VocabAssignmentPlanner({
   const reviewController = useDirectReviewAssignmentController({
     datasets: controller.readyDatasets,
     initialDatasetId,
+    pendingReviewSummaries: data.pendingReviewSummaries ?? [],
     student: students[0]!,
     units: data.units,
   });
@@ -142,6 +143,10 @@ export function VocabAssignmentPlanner({
   const canSubmit = assignmentPurpose === "range"
     ? controller.canSubmit
     : reviewController.canSubmit;
+  const singleStudent = students.length === 1 ? students[0] : null;
+  const headerDetail = singleStudent
+    ? `${singleStudent.displayName} · ${singleStudent.schoolName || "학교 미입력"}`
+    : `${students.length}명 선택`;
 
   return (
     <DialogFrame
@@ -154,8 +159,10 @@ export function VocabAssignmentPlanner({
     >
       <DialogHeader closeLabel="닫기">
         <div>
-          <h2 id="vocab-assignment-plan-title">단어 배정</h2>
-          <p>{students.length}명 선택</p>
+          <h2 id="vocab-assignment-plan-title">
+            {singleStudent ? "단일 배정" : "일괄 배정"}
+          </h2>
+          <p>{headerDetail}</p>
         </div>
       </DialogHeader>
       <DialogBody>
@@ -182,7 +189,7 @@ export function VocabAssignmentPlanner({
                 }}
                 variant="filter"
               >
-                범위 시험
+                단어 시험
               </Button>
               <Button
                 aria-pressed={assignmentPurpose === "review"}
@@ -199,21 +206,23 @@ export function VocabAssignmentPlanner({
                 오답 시험
               </Button>
             </div>
-            {assignmentPurpose === "review" ? (
-              <DirectReviewAssignmentSections
-                controller={reviewController}
-                datasets={controller.readyDatasets}
-                fieldErrors={visibleReviewErrors}
-                student={students[0]!}
-              />
-            ) : (
-              <VocabRangeAssignmentSections
-                busy={busy}
-                controller={controller}
-                fieldErrors={visibleErrors}
-                students={students}
-              />
-            )}
+            <div className={styles.assignmentPanel} key={assignmentPurpose}>
+              {assignmentPurpose === "review" ? (
+                <DirectReviewAssignmentSections
+                  controller={reviewController}
+                  datasets={controller.readyDatasets}
+                  fieldErrors={visibleReviewErrors}
+                  student={students[0]!}
+                />
+              ) : (
+                <VocabRangeAssignmentSections
+                  busy={busy}
+                  controller={controller}
+                  fieldErrors={visibleErrors}
+                  students={students}
+                />
+              )}
+            </div>
           </fieldset>
         </form>
       </DialogBody>

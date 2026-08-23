@@ -23,6 +23,8 @@ export type AssignmentEditDraft = {
   timingMode: TimingMode;
   questionTimeLimitSeconds: number | null;
   passingScore: number;
+  retryEnabled: boolean;
+  retryPassingScore: number | null;
   questionOrderMode: QuestionOrderMode;
   availableUntil: string | null;
   includePendingReview: boolean;
@@ -73,6 +75,7 @@ export type AssignmentEditChangeKey =
   | "order"
   | "timing"
   | "passingScore"
+  | "retry"
   | "deadline"
   | "review";
 
@@ -110,6 +113,12 @@ export function assignmentEditChangeKeys(
   }
   if (before.passingScore !== after.passingScore) {
     changes.push("passingScore");
+  }
+  if (
+    before.retryEnabled !== after.retryEnabled ||
+    before.retryPassingScore !== after.retryPassingScore
+  ) {
+    changes.push("retry");
   }
   if (before.availableUntil !== after.availableUntil) {
     changes.push("deadline");

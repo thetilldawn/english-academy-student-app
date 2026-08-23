@@ -3,7 +3,6 @@ import {
   Field,
   FieldLabel,
   Input,
-  Select,
 } from "@/design-system/primitives/form/field";
 import {
   HelpTip,
@@ -16,6 +15,10 @@ import { formatContentText } from "@/content/format";
 import type { SingleAssignmentController } from "../controller/use-assignment-controller";
 import { AssignmentDeadlineFields } from "./assignment-deadline-fields";
 import { ExamTimingFields } from "./exam-timing-fields";
+import {
+  ExamConditionFields,
+  ExamQuestionOrderField,
+} from "./bulk-exam-fields";
 
 export function AssignmentSettingsFields({
   controller,
@@ -53,54 +56,22 @@ export function AssignmentSettingsFields({
 
   return (
     <>
-      <AssignmentFieldGrid>
-        <Field as="label">
-          <FieldLabel as="span">
-            {adminLearningText.assignmentModal.conditions.direction}
-          </FieldLabel>
-          <Select
-            onChange={(event) =>
-              actions.changeDirection(
-                Number(event.target.value) as 0 | 50 | 100,
-              )
-            }
-            value={draft.exam.directionRatio}
-          >
-            <option value={100}>
-              {adminLearningText.controls.direction.englishToMeaning}
-            </option>
-            <option value={0}>
-              {adminLearningText.controls.direction.meaningToEnglish}
-            </option>
-            <option value={50}>
-              {adminLearningText.controls.direction.mixed}
-            </option>
-          </Select>
-        </Field>
-        <Field as="label">
-          <FieldLabel as="span">
-            {adminLearningText.assignmentModal.conditions.order}
-          </FieldLabel>
-          <Select
-            onChange={(event) =>
-              actions.changeOrder(
-                event.target.value as "ascending" | "descending" | "random",
-              )
-            }
-            value={draft.exam.questionOrderMode}
-          >
-            <option value="ascending">
-              {adminLearningText.controls.order.ascending}
-            </option>
-            <option value="descending">
-              {adminLearningText.controls.order.descending}
-            </option>
-            <option value="random">
-              {adminLearningText.controls.order.random}
-            </option>
-          </Select>
-        </Field>
-      </AssignmentFieldGrid>
+      <ExamQuestionOrderField
+        onChange={(value) =>
+          actions.changeOrder(value === "random" ? "random" : "ascending")
+        }
+        value={draft.exam.questionOrderMode === "random"
+          ? "random"
+          : "source_order"}
+      />
+      <ExamConditionFields
+        exam={draft.exam}
+        idPrefix={fieldIdPrefix}
+        onDirectionChange={actions.changeDirection}
+        onPassingScoreChange={actions.changePassingScore}
+        onRetryEnabledChange={actions.changeRetryEnabled}
+        onRetryPassingScoreChange={actions.changeRetryPassingScore}
+      />
       <AssignmentFieldGrid>
         <Field>
           <FieldLabel as="span">
@@ -137,21 +108,6 @@ export function AssignmentSettingsFields({
               )}
             </Button>
           ) : null}
-        </Field>
-        <Field as="label">
-          <FieldLabel as="span">
-            {adminLearningText.assignmentModal.conditions.passingScore}
-          </FieldLabel>
-          <Input
-            max={100}
-            min={0}
-            onChange={(event) =>
-              actions.changePassingScore(Number(event.target.value))
-            }
-            required
-            type="number"
-            value={draft.exam.passingScore}
-          />
         </Field>
       </AssignmentFieldGrid>
       <Field>

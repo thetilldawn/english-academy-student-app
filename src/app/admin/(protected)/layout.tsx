@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import { AdminNavigation } from "@/components/admin-navigation";
 import { AdminLogoutButton } from "@/components/admin-logout-button";
-import { AdminPageTitle } from "@/components/admin-page-title";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationBootstrap } from "@/components/notification-bootstrap";
 import { adminShellText } from "@/content/ko/admin-shell";
@@ -54,7 +53,6 @@ export default async function AdminProtectedLayout({
               </span>
               <span>{adminShellText.brand}</span>
             </Link>
-            <AdminPageTitle />
             <AdminNavigation
               label={adminShellText.navigation.tabletAriaLabel}
               variant="tablet"

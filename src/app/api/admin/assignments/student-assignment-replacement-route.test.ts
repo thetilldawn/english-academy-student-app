@@ -90,6 +90,8 @@ const replacementInput = {
   timingMode: "total",
   questionTimeLimitSeconds: null,
   passingScore: 80,
+  retryEnabled: true,
+  retryPassingScore: 80,
   questionOrderMode: "random",
   availableUntil: null,
 };
@@ -108,6 +110,8 @@ const mixedEditDraftResponse = {
   timingMode: "total" as const,
   questionTimeLimitSeconds: null,
   passingScore: 80,
+  retryEnabled: true,
+  retryPassingScore: 80,
   questionOrderMode: "random" as const,
   availableUntil: "2026-08-18T12:00:00.000Z",
   includePendingReview: true,

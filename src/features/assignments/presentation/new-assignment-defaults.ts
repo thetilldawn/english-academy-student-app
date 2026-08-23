@@ -13,6 +13,8 @@ export type NewAssignmentDraftDefaults = {
 const defaultExam: ExamSettings = {
   directionRatio: 50,
   passingScore: 80,
+  retryEnabled: true,
+  retryPassingScore: 80,
   questionOrderMode: "random",
   timeLimitEnabled: true,
   timing: { mode: "total", totalSeconds: 300 },
@@ -57,6 +59,8 @@ function inheritedExam(
   return {
     directionRatio,
     passingScore,
+    retryEnabled: true,
+    retryPassingScore: passingScore,
     questionOrderMode,
     timeLimitEnabled: source.timingMode !== "none",
     timing,

@@ -99,13 +99,11 @@ describe("student catalog and modal UI contract", () => {
     ).toContain('size="small"');
   });
 
-  it("uses structured groups for the current student wordbook", () => {
-    const copy = source("src/content/ko/admin-students.ts");
-    expect(studentInfo).toContain("groupCataloguedDatasets");
-    expect(studentInfo).toContain("<optgroup");
-    expect(studentInfo).toContain("adminStudentsText.info.currentWordbook");
-    expect(studentInfo).not.toContain("StudentVocabBookHistoryList");
-    expect(copy).toContain('currentWordbook: "현재 단어장"');
+  it("shows recent wordbook history without manual selection", () => {
+    expect(studentInfo).toContain("StudentVocabBookHistoryList");
+    expect(studentInfo).not.toContain("groupCataloguedDatasets");
+    expect(studentInfo).not.toContain("<optgroup");
+    expect(studentInfo).not.toContain("adminStudentsText.info.currentWordbook");
   });
 
   it("현재 목록에서는 취소·삭제를 빼고 전체 내역에서만 보존한다", () => {

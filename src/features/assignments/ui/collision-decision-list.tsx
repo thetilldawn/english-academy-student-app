@@ -66,14 +66,16 @@ export function CollisionDecisionList({
                 >
                   건너뜀
                 </Button>
-                <Button
-                  aria-label={`${record.studentName} 원래 ${record.sourceSessionNumber}회 ${mode === "move" ? "하루 더 이동" : "다음 날 이동"}`}
-                  aria-pressed={mode === "move"}
-                  onClick={() => onChange(record.decision.collisionId, "move")}
-                  size="small"
-                >
-                  {mode === "move" ? "하루 더 이동" : "다음 날 이동"}
-                </Button>
+                {record.availableUntil ? (
+                  <Button
+                    aria-label={`${record.studentName} 원래 ${record.sourceSessionNumber}회 ${mode === "move" ? "하루 더 이동" : "다음 날 이동"}`}
+                    aria-pressed={mode === "move"}
+                    onClick={() => onChange(record.decision.collisionId, "move")}
+                    size="small"
+                  >
+                    {mode === "move" ? "하루 더 이동" : "다음 날 이동"}
+                  </Button>
+                ) : null}
                 <Button
                   aria-label={`${record.studentName} 원래 ${record.sourceSessionNumber}회 ${mode === "move" ? "원래 날짜 겹침 허용" : "겹침 허용"}`}
                   aria-pressed={mode === "allow"}

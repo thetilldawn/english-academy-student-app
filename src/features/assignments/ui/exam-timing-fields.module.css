@@ -15,20 +15,22 @@
   cursor: pointer;
 }
 
+.toggleRow {
+  min-width: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
 .control {
   min-width: 0;
   transition: opacity var(--motion-fast);
 }
 
-.root:has(.toggle input:not(:checked)) .control {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.fixedStatus {
-  min-height: 1.45em;
-  color: var(--text-secondary);
-  font-size: 12px;
+.revealContent {
+  padding-top: var(--space-3);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -53,7 +53,7 @@ export function vocabAssignmentQueueStatusLabel(
 ) {
   switch (status) {
     case "active":
-      return "이어 배정 중";
+      return "배정된 시험";
     case "attention":
       return "확인 필요";
     case "completed":

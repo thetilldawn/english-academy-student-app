@@ -40,7 +40,7 @@ function StudentAssignmentQueueHistoryPage({
         setError(
           requestError instanceof Error
             ? requestError.message
-            : "이어 배정 이력을 불러오지 못했습니다.",
+            : "배정된 시험 내역을 불러오지 못했습니다.",
         );
       })
       .finally(() => {
@@ -70,7 +70,7 @@ function StudentAssignmentQueueHistoryPage({
       setError(
         requestError instanceof Error
           ? requestError.message
-          : "이어 배정 이력을 불러오지 못했습니다.",
+          : "배정된 시험 내역을 불러오지 못했습니다.",
       );
     } finally {
       setLoadingMore(false);
@@ -78,7 +78,7 @@ function StudentAssignmentQueueHistoryPage({
   }
 
   if (initialLoading) {
-    return <p className={styles.state}>이어 배정 이력을 불러오는 중...</p>;
+    return <p className={styles.state}>배정된 시험 내역을 불러오는 중...</p>;
   }
   if (queues.length === 0 && !error) return null;
 

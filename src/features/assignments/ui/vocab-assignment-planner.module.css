@@ -109,6 +109,39 @@
   gap: var(--space-2);
 }
 
+.modeButtons > button {
+  flex: 1 1 120px;
+}
+
+.toggleFieldHeading {
+  min-width: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.inlineToggle {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.revealField {
+  padding-top: var(--space-2);
+}
+
+.scheduleRevealContent {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+}
+
 .weekdayButtons > * {
   flex: 1 1 42px;
   min-width: 44px;
@@ -168,22 +201,37 @@
 }
 
 .assignmentKind,
-.reviewLevelButtons {
+.reviewLevelButtons,
+.reviewDatasetButtons {
   min-width: 0;
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
 }
 
+.reviewDatasetTotal {
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  color: var(--text-secondary);
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 700;
+  min-height: var(--control-height-small);
+  padding: 0 var(--space-3);
+}
+
 .assignmentKind {
-  padding: var(--space-3);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-card);
-  background: var(--surface-muted);
+  margin-bottom: var(--space-3);
 }
 
 .assignmentKind > button {
   flex: 1 1 140px;
+}
+
+.assignmentPanel {
+  min-width: 0;
+  animation: assignmentPanelIn var(--motion-standard) both;
 }
 
 .reviewRangeGrid {
@@ -195,6 +243,10 @@
 
 .reviewLevelButtons > button {
   flex: 1 1 120px;
+}
+
+.reviewDatasetButtons > button {
+  flex: 0 1 auto;
 }
 
 .reviewCalculation {
@@ -275,6 +327,18 @@
   to { background-position: -100% 0; }
 }
 
+@keyframes assignmentPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .templateSave > :first-child {
   flex: 1 1 180px;
 }
@@ -332,5 +396,9 @@
   .reviewCalculation {
     animation: none;
     transition: none;
+  }
+
+  .assignmentPanel {
+    animation: none;
   }
 }

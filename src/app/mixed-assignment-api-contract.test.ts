@@ -77,7 +77,11 @@ describe("mixed assignment API contract", () => {
     );
     expect(service).toContain("buildAssignmentQuestionPlan({");
     expect(service).toContain(
-      '"create_mixed_review_assignment_v9"',
+      '"create_mixed_review_assignment_v10"',
+    );
+    expect(service).toContain("p_retry_enabled: prepared.retryEnabled");
+    expect(service).toContain(
+      "p_retry_passing_score: prepared.retryPassingScore",
     );
     expect(service).toContain(
       "p_selected_queue_ids: prepared.selectedQueueIds",

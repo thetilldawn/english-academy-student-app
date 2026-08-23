@@ -37,6 +37,8 @@ describe("newAssignmentDraftDefaults", () => {
       exam: {
         directionRatio: 100,
         passingScore: 85,
+        retryEnabled: true,
+        retryPassingScore: 85,
         questionOrderMode: "descending",
         timeLimitEnabled: true,
         timing: { mode: "per_question", perQuestionSeconds: 12 },

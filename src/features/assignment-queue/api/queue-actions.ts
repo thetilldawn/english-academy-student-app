@@ -28,7 +28,7 @@ export async function loadStudentAssignmentQueuePage(
   } | null;
   if (!response.ok || !payload?.queues) {
     throw new Error(
-      payload?.error ?? "이어 배정 이력을 불러오지 못했습니다.",
+      payload?.error ?? "배정된 시험 내역을 불러오지 못했습니다.",
     );
   }
   return {
@@ -54,7 +54,7 @@ export async function resolveAssignmentQueue(
   } | null;
   if (!response.ok) {
     throw new Error(
-      payload?.error ?? "이어 배정 상태를 처리하지 못했습니다.",
+      payload?.error ?? "배정된 시험 상태를 처리하지 못했습니다.",
     );
   }
 }

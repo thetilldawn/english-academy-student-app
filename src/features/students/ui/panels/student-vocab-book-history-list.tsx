@@ -40,11 +40,9 @@ function statusPresentation(item: StudentVocabBookHistory) {
 }
 
 export function StudentVocabBookHistoryList({
-  currentDatasetId,
   datasets,
   items,
 }: {
-  currentDatasetId: string | null;
   datasets: readonly CataloguedDataset[];
   items: readonly StudentVocabBookHistory[];
 }) {
@@ -66,14 +64,14 @@ export function StudentVocabBookHistoryList({
         </EmptyState>
       ) : (
         <ol className={styles.list}>
-          {items.map((item) => {
+          {items.map((item, index) => {
             const dataset = datasetById.get(item.datasetId);
             const presentation = statusPresentation(item);
-            const isCurrent = item.datasetId === currentDatasetId;
+            const isRecent = index === 0;
             return (
               <li
                 className={styles.row}
-                data-current={isCurrent || undefined}
+                data-current={isRecent || undefined}
                 key={item.datasetId}
               >
                 <div className={styles.itemHeading}>
@@ -83,7 +81,7 @@ export function StudentVocabBookHistoryList({
                       : item.datasetTitle}
                   </strong>
                   <MetaTagList>
-                    {isCurrent ? (
+                    {isRecent ? (
                       <MetaTag>
                         {adminStudentsText.learning.wordbookHistory.recent}
                       </MetaTag>

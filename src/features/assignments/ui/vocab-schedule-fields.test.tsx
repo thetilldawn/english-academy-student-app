@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { VocabAssignmentScreenController } from "../controller/use-vocab-assignment-screen";
 import { VocabScheduleFields } from "./vocab-schedule-fields";
+import { VocabUnitAllocationFields } from "./vocab-unit-allocation-fields";
 
 afterEach(cleanup);
 
@@ -223,12 +224,12 @@ describe("VocabScheduleFields", () => {
       sessionUnitIds: [["unit-1"], ["unit-2"], ["unit-3"]],
     };
 
-    render(<VocabScheduleFields controller={value} />);
+    render(<VocabUnitAllocationFields controller={value} />);
 
-    expect(screen.getByLabelText("월요일 단위 수")).toHaveValue(2);
-    expect(screen.getByLabelText("수요일 단위 수")).toHaveValue(2);
-    expect(screen.getByText("기본 3회 · 이어 배정 2회")).toBeVisible();
-    fireEvent.change(screen.getByLabelText("수요일 단위 수"), {
+    expect(screen.getByLabelText("월요일 범위 수")).toHaveValue(2);
+    expect(screen.getByLabelText("수요일 범위 수")).toHaveValue(2);
+    expect(screen.getByText("기본 3회 · 배정된 시험 2회")).toBeVisible();
+    fireEvent.change(screen.getByLabelText("수요일 범위 수"), {
       target: { value: "3" },
     });
     expect(value.actions.changeWeekdayUnitsPerSession).toHaveBeenCalledWith(
@@ -241,7 +242,7 @@ describe("VocabScheduleFields", () => {
     const value = controller();
     value.planner.questionCountMode = "manual";
 
-    render(<VocabScheduleFields controller={value} />);
+    render(<VocabUnitAllocationFields controller={value} />);
 
     expect(screen.getByText("남은 문제")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "같은 요일로 이어서" }));
@@ -262,7 +263,7 @@ describe("VocabScheduleFields", () => {
       sessionUnitIds: [["unit-1"]],
     };
 
-    render(<VocabScheduleFields controller={value} />);
+    render(<VocabUnitAllocationFields controller={value} />);
 
     expect(screen.getByText("기본 2회 · 남음 DAY 2 (1단위)")).toBeVisible();
   });
@@ -291,10 +292,10 @@ describe("VocabScheduleFields", () => {
       ],
     };
 
-    render(<VocabScheduleFields controller={value} />);
+    render(<VocabUnitAllocationFields controller={value} />);
 
     expect(
-      screen.getByText("기본 3회 · 이어 배정 1회 · 남음 DAY 5–DAY 6 (2단위)"),
+      screen.getByText("기본 3회 · 배정된 시험 1회 · 남음 DAY 5–DAY 6 (2단위)"),
     ).toBeVisible();
   });
 

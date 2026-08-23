@@ -15,6 +15,9 @@ describe("DAY 문제은행 응시 계약", () => {
     const settingsFields = source(
       "src/features/assignments/ui/assignment-settings-fields.tsx",
     );
+    const bulkExamFields = source(
+      "src/features/assignments/ui/bulk-exam-fields.tsx",
+    );
     const adminService = source("src/lib/services/admin-service.ts");
     const eligibleLoader = source(
       "src/lib/services/eligible-vocabulary-service.ts",
@@ -23,13 +26,15 @@ describe("DAY 문제은행 응시 계약", () => {
 
     expect(rangeFields).toContain("adminLearningText.assignmentModal.range.start");
     expect(rangeFields).toContain("adminLearningText.assignmentModal.range.end");
-    expect(settingsFields).toContain("adminLearningText.controls.order.random");
-    expect(settingsFields).toContain("adminLearningText.controls.order.ascending");
-    expect(settingsFields).toContain("adminLearningText.controls.order.descending");
+    expect(settingsFields).toContain("<ExamQuestionOrderField");
+    expect(bulkExamFields).toContain('trigger="시험 문제 순서"');
+    expect(bulkExamFields).toContain("순서대로");
+    expect(bulkExamFields).toContain("무작위");
+    expect(bulkExamFields).toContain('value === "random"');
     expect(copy).toContain('start: "시작 {unit}"');
     expect(copy).toContain('end: "끝 {unit}"');
     expect(adminService).toContain(
-      '"create_assignment_with_delivery_v6"',
+      '"create_assignment_with_delivery_v7"',
     );
     expect(adminService).toContain(
       "loadEligibleVocabularyDataset(",

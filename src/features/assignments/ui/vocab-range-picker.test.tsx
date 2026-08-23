@@ -127,7 +127,7 @@ describe("VocabRangePicker", () => {
       "aria-pressed",
       "true",
     );
-    expect(screen.getByText("출제 가능 86문항 · 출제 86문항 · 남음 0문항 · 기본 3회"))
+    expect(screen.getByText("전체 86개 · 배정 86개 · 남음 0개 · 기본 3회"))
       .toBeVisible();
 
     fireEvent.click(screen.getByRole("button", { name: "직접 입력" }));
@@ -141,14 +141,14 @@ describe("VocabRangePicker", () => {
     render(
       <VocabRangePicker controller={withRemaining} datasets={[dataset]} />,
     );
-    expect(screen.getByRole("group", { name: "문항 선택" })).toBeVisible();
-    expect(screen.getByText("출제 가능 86문항 · 출제 40문항 · 남음 46문항 · 기본 3회"))
+    expect(screen.getByRole("group", { name: "시험 문제 순서" })).toBeVisible();
+    expect(screen.getByText("전체 86개 · 배정 40개 · 남음 46개 · 기본 3회"))
       .toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "무작위" }));
     expect(withRemaining.actions.changeSelectionMode).toHaveBeenCalledWith(
       "random",
     );
-    fireEvent.click(screen.getByRole("button", { name: "범위 단위" }));
+    fireEvent.click(screen.getByRole("button", { name: "범위" }));
     expect(withRemaining.actions.changeSplitBasis).toHaveBeenCalledWith(
       "range_unit",
     );
@@ -179,10 +179,10 @@ describe("VocabRangePicker", () => {
       />,
     );
 
-    expect(screen.getByText("출제 가능 640문항 · 출제 500문항 · 남음 140문항 · 기본 5회"))
+    expect(screen.getByText("전체 640개 · 배정 500개 · 남음 140개 · 기본 5회"))
       .toBeVisible();
     expect(screen.queryByText(/공통 1명/)).not.toBeInTheDocument();
-    const group = screen.getByRole("group", { name: "문항 수" });
+    const group = screen.getByRole("group", { name: "단어 수" });
     expect(group).not.toHaveAttribute("data-invalid");
     expect(group).toHaveAttribute(
       "aria-describedby",
@@ -218,6 +218,6 @@ describe("VocabRangePicker", () => {
       screen.getByText("학생별 계획을 마지막 미리보기에서 확인해 주세요."),
     ).toBeVisible();
     expect(screen.queryByText(/별도 확인 2명/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/출제 가능 640문항/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/전체 640개/)).not.toBeInTheDocument();
   });
 });

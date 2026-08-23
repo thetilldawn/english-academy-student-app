@@ -14,6 +14,8 @@ export type DirectReviewDraftAction =
   | { type: "direction_changed"; value: AssignmentDirectionRatio }
   | { type: "order_changed"; value: AssignmentQuestionOrderMode }
   | { type: "passing_score_changed"; value: number }
+  | { type: "retry_enabled_changed"; enabled: boolean }
+  | { type: "retry_passing_score_changed"; value: number }
   | { type: "time_limit_changed"; enabled: boolean }
   | { type: "timing_changed"; timing: ExamTiming }
   | { type: "timing_mode_changed"; mode: ExamTiming["mode"] }
@@ -35,6 +37,8 @@ export function createInitialDirectReviewDraft(input: {
       directionRatio: 50,
       questionOrderMode: "random",
       passingScore: 80,
+      retryEnabled: true,
+      retryPassingScore: 80,
       timeLimitEnabled: true,
       timing: { mode: "total", totalSeconds: 300 },
     },
@@ -80,6 +84,16 @@ export function reduceDirectReviewDraft(
       };
     case "passing_score_changed":
       return { ...draft, exam: { ...draft.exam, passingScore: action.value } };
+    case "retry_enabled_changed":
+      return {
+        ...draft,
+        exam: { ...draft.exam, retryEnabled: action.enabled },
+      };
+    case "retry_passing_score_changed":
+      return {
+        ...draft,
+        exam: { ...draft.exam, retryPassingScore: action.value },
+      };
     case "time_limit_changed":
       return {
         ...draft,

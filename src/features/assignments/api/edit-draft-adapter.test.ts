@@ -20,6 +20,8 @@ const baseResponse = {
   timingMode: "total" as const,
   questionTimeLimitSeconds: null,
   passingScore: 80,
+  retryEnabled: true,
+  retryPassingScore: 80,
   questionOrderMode: "fixed" as const,
   availableUntil: "2026-08-18T12:00:00.000Z",
   includePendingReview: false,

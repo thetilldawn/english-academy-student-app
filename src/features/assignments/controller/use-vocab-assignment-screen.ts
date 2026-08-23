@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
+import type { StudentPendingReviewSummary } from "@/lib/admin/review-queue-summary";
 import { isoToKoreanDateTimeLocal } from "@/lib/deadline";
 
 import type {
@@ -14,28 +15,17 @@ import {
   toVocabTimeTemplate,
   type VocabTimeTemplateRecord,
 } from "../api/vocab-time-template-adapter";
+import { selectCommonInitialDatasetId } from "../presentation/select-common-initial-dataset";
 import type { AssignmentTransport } from "./assignment-transport";
 import { useVocabAssignmentPlanner } from "./use-vocab-assignment-planner";
 
 export type VocabAssignmentScreenData = {
   datasets: readonly AssignmentDatasetItem[];
   history: readonly AssignmentHistorySummary[];
+  pendingReviewSummaries?: readonly StudentPendingReviewSummary[];
   timeTemplates: readonly VocabTimeTemplateRecord[];
   units: readonly AssignmentUnitItem[];
 };
-
-function selectCommonInitialDatasetId(
-  students: readonly AssignmentStudentItem[],
-  readyDatasetIds: ReadonlySet<string>,
-) {
-  const selected = new Set(
-    students
-      .map((student) => student.currentVocabDatasetId)
-      .filter((value): value is string => Boolean(value)),
-  );
-  const only = [...selected][0];
-  return selected.size === 1 && only && readyDatasetIds.has(only) ? only : "";
-}
 
 export function summarizeVocabAssignmentResult(
   assignments: readonly {

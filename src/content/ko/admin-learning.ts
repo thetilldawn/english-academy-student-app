@@ -28,7 +28,7 @@ export const adminLearningText = {
       selectStudentAria: "{student} 일괄 배정 선택",
       success: "{studentCount}명에게 {assignmentCount}개 시험을 배정했습니다.",
       queueSuccess:
-        "{studentCount}명에게 첫 시험 {assignmentCount}개를 배정하고 다음 시험 {queuedCount}개를 이어 배정으로 저장했습니다.",
+        "{studentCount}명에게 첫 시험 {assignmentCount}개를 배정하고 이후 시험 {queuedCount}개를 저장했습니다.",
     },
     studentCard: {
       schoolMissing: "학교 미입력",
@@ -404,7 +404,7 @@ export const adminLearningText = {
     previewSummary:
       "{assignable}명 배정 · {assignments}개 시험 · {blocked}명 확인 필요",
     queuePreviewSummary:
-      "{assignable}명 · 첫 시험 {assignable}개 · 이어 배정 {queued}개 · {blocked}명 확인 필요",
+      "{assignable}명 · 첫 시험 {assignable}개 · 배정된 시험 {queued}개 · {blocked}명 확인 필요",
     datasetPending: "단어장 확인 중",
     rangePending: "범위 확인 중",
     questionCount: "{count}문항",

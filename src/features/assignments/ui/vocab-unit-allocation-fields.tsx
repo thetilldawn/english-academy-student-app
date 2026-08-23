@@ -10,7 +10,7 @@ import {
 } from "@/design-system/primitives/form/field";
 import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
 
-import type { VocabAssignmentScreenController } from "../controller/use-vocab-assignment-screen";
+import type { VocabAssignmentPlannerController } from "../controller/use-vocab-assignment-planner";
 import type { IsoWeekday } from "../domain/vocab-assignment-plan";
 import type { VocabAssignmentFieldKey } from "../presentation/vocab-assignment-field-errors";
 import styles from "./vocab-assignment-planner.module.css";
@@ -29,13 +29,13 @@ export function VocabUnitAllocationFields({
   controller,
   fieldErrors = {},
 }: {
-  controller: VocabAssignmentScreenController;
+  controller: VocabAssignmentPlannerController;
   fieldErrors?: Partial<Record<VocabAssignmentFieldKey, string>>;
 }) {
   const usesRangeUnits = controller.planner.splitBasis === "range_unit";
   const showsContinuation = usesRangeUnits ||
     controller.planner.questionCountMode === "manual";
-  if (controller.planner.distribution !== "split" || !showsContinuation) {
+  if (controller.planner.distribution !== "split") {
     return null;
   }
 
@@ -61,12 +61,11 @@ export function VocabUnitAllocationFields({
 
   return (
     <div className={styles.fieldStack}>
-      <AssignmentFieldGrid columns={2}>
-        {usesRangeUnits ? (
-          <Field>
+      {usesRangeUnits ? (
+        <Field>
             <FieldLabel as="span" id="vocab-unit-allocation-mode-label">
-              <HelpTip label="회차별 범위 설명" trigger="회차별 범위">
-                같은 수를 모든 회차에 적용하거나 선택한 요일마다 다른 단위 수를 정합니다.
+              <HelpTip label="요일별 배정 방식 설명" trigger="요일별 배정 방식">
+                모든 요일에 같은 범위 수를 적용할지, 요일마다 다르게 정할지 선택합니다.
               </HelpTip>
             </FieldLabel>
             <div
@@ -85,7 +84,7 @@ export function VocabUnitAllocationFields({
                 size="small"
                 variant="filter"
               >
-                모든 회차 동일
+                모든 요일 동일
               </Button>
               <Button
                 aria-pressed={controller.planner.unitAllocationMode === "by_weekday"}
@@ -101,8 +100,9 @@ export function VocabUnitAllocationFields({
                 {allocationModeError}
               </FieldError>
             ) : null}
-          </Field>
-        ) : null}
+        </Field>
+      ) : null}
+      {showsContinuation ? (
         <Field>
           <FieldLabel as="span" id="vocab-overflow-policy-label">
             <HelpTip
@@ -143,11 +143,11 @@ export function VocabUnitAllocationFields({
             </FieldError>
           ) : null}
         </Field>
-      </AssignmentFieldGrid>
+      ) : null}
 
       {usesRangeUnits && controller.planner.unitAllocationMode === "same" ? (
         <Field as="label">
-          <FieldLabel as="span">회차당 단위 수</FieldLabel>
+          <FieldLabel as="span">요일당 범위 수</FieldLabel>
           <Input
             aria-errormessage={commonCountError
               ? "vocab-units-per-session-error"
@@ -177,7 +177,7 @@ export function VocabUnitAllocationFields({
             return (
               <Field as="label" key={weekday}>
                 <FieldLabel as="span">
-                  {weekdayLabels[weekday]} 단위 수
+                  {weekdayLabels[weekday]} 범위 수
                 </FieldLabel>
                 <Input
                   aria-errormessage={error ? errorId : undefined}
@@ -205,7 +205,7 @@ export function VocabUnitAllocationFields({
         <span className={styles.candidateSummary} aria-live="polite">
           기본 {controller.unitAllocation?.defaultSessionCount ?? 0}회
           {queuedSessionCount > 0
-            ? ` · 이어 배정 ${queuedSessionCount}회`
+            ? ` · 배정된 시험 ${queuedSessionCount}회`
             : ""}
           {remainingUnitCount > 0
             ? ` · 남음 ${remainingRangeLabel} (${remainingUnitCount}단위)`

@@ -4,12 +4,14 @@ import { AssignmentFieldGrid } from "@/components/assignment-editor-ui";
 import { Button } from "@/design-system/primitives/button/button";
 import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 import {
+  Checkbox,
   Field,
   FieldError,
   FieldLabel,
   Input,
   Select,
 } from "@/design-system/primitives/form/field";
+import { ConditionalReveal } from "@/design-system/patterns/conditional-reveal/conditional-reveal";
 import { cataloguedDatasetDisplayLabel } from "@/lib/admin/dataset-catalog";
 
 import type { VocabAssignmentScreenController } from "../controller/use-vocab-assignment-screen";
@@ -19,7 +21,6 @@ import type {
 } from "../presentation/vocab-assignment-field-errors";
 import styles from "./vocab-assignment-planner.module.css";
 import { VocabScheduleDetailFields } from "./vocab-schedule-detail-fields";
-import { VocabUnitAllocationFields } from "./vocab-unit-allocation-fields";
 
 const weekdays: ReadonlyArray<readonly [IsoWeekday, string]> = [
   [1, "월"],
@@ -40,6 +41,7 @@ export function VocabScheduleFields({
   fieldErrors?: Partial<Record<VocabAssignmentFieldKey, string>>;
 }) {
   const schedule = controller.planner.schedule;
+  const scheduleEnabled = controller.planner.scheduleEnabled !== false;
   const startDateError = fieldErrors.startDate;
   const weekdaysError = fieldErrors.weekdays;
   const availableTimeError = fieldErrors.availableTime;
@@ -51,7 +53,9 @@ export function VocabScheduleFields({
       (item) => item.sessions.length,
     ) ?? []),
   );
-  const finalSessionCount = schedule.weekdays.length === 0
+  const finalSessionCount = !scheduleEnabled
+    ? 1
+    : schedule.weekdays.length === 0
     ? 0
     : controller.bulk.preview?.commonPlanSummary?.sessions.length ??
       (previewSessionCount || controller.scheduleSlots.length);
@@ -76,17 +80,35 @@ export function VocabScheduleFields({
 
   return (
     <div className={styles.fieldStack}>
-      <MetaTagList>
-        <MetaTag size="large">{datasetLabel}</MetaTag>
-        <MetaTag size="large">{rangeLabel}</MetaTag>
-        <MetaTag size="large">
-          {controller.requiresExtraDateDecision ? "기본 최소 " : "기본 "}
-          {baseSessionCount ?? 0}회
-        </MetaTag>
-        {schedule.weekdays.length > 0 ? (
-          <MetaTag size="large">배정 합계 {controller.scheduledQuestionCount ?? 0}문항</MetaTag>
-        ) : null}
-      </MetaTagList>
+      {scheduleEnabled ? (
+        <MetaTagList>
+          <MetaTag size="large">{datasetLabel}</MetaTag>
+          <MetaTag size="large">{rangeLabel}</MetaTag>
+          <MetaTag size="large">
+            {controller.requiresExtraDateDecision ? "기본 최소 " : "기본 "}
+            {baseSessionCount ?? 0}회
+          </MetaTag>
+          {schedule.weekdays.length > 0 ? (
+            <MetaTag size="large">
+              배정 합계 {controller.scheduledQuestionCount ?? 0}개
+            </MetaTag>
+          ) : null}
+        </MetaTagList>
+      ) : null}
+      <div className={styles.toggleFieldHeading}>
+        <FieldLabel as="span">시험일 사용</FieldLabel>
+        <label className={styles.inlineToggle}>
+          <Checkbox
+            checked={scheduleEnabled}
+            onChange={(event) =>
+              controller.actions.changeScheduleEnabled(event.target.checked)
+            }
+          />
+          <span>사용</span>
+        </label>
+      </div>
+      <ConditionalReveal open={scheduleEnabled}>
+        <div className={styles.scheduleRevealContent}>
       <Field as="label">
         <FieldLabel as="span">배정 기준일</FieldLabel>
         <Input
@@ -129,10 +151,6 @@ export function VocabScheduleFields({
           <FieldError id="vocab-weekdays-error">{weekdaysError}</FieldError>
         ) : null}
       </Field>
-      <VocabUnitAllocationFields
-        controller={controller}
-        fieldErrors={fieldErrors}
-      />
       {controller.requiresExtraDateDecision ? (
         <div className={styles.warning} role="status">
           <span>
@@ -238,6 +256,8 @@ export function VocabScheduleFields({
       <span className={styles.candidateSummary}>
         선택 요일 {controller.planner.schedule.weekdays.length}개 · 배정 {finalSessionCount}회
       </span>
+        </div>
+      </ConditionalReveal>
     </div>
   );
 }

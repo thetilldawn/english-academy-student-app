@@ -122,11 +122,11 @@ export async function listVocabAssignmentQueueSummaries(options?: {
   );
   if (error) {
     if (isQueueMigrationUnavailable(error)) return [];
-    throw new Error("이어 배정 상태를 불러오지 못했습니다.");
+    throw new Error("배정된 시험 상태를 불러오지 못했습니다.");
   }
   const parsed = z.array(rowSchema).safeParse(data ?? []);
   if (!parsed.success) {
-    throw new Error("이어 배정 상태 응답을 확인하지 못했습니다.");
+    throw new Error("배정된 시험 상태 응답을 확인하지 못했습니다.");
   }
   return parsed.data.map(mapRow);
 }
@@ -184,11 +184,11 @@ export async function resolveVocabAssignmentQueueAttention(
     { p_action: action, p_series_id: seriesId },
   );
   if (error) {
-    throw new Error("이어 배정 상태를 처리하지 못했습니다.");
+    throw new Error("배정된 시험 상태를 처리하지 못했습니다.");
   }
   const parsed = resolutionSchema.safeParse(data);
   if (!parsed.success) {
-    throw new Error("이어 배정 처리 결과를 확인하지 못했습니다.");
+    throw new Error("배정된 시험 처리 결과를 확인하지 못했습니다.");
   }
   if (action !== "cancel") {
     await materializeReadyVocabAssignmentQueue(parsed.data.student_id);

@@ -17,6 +17,8 @@ type CommonAssignmentInput = {
   timingMode?: TimingMode;
   questionTimeLimitSeconds?: number | null;
   passingScore: number;
+  retryEnabled: boolean;
+  retryPassingScore: number | null;
   questionOrderMode: QuestionOrderMode;
   availableUntil: string | null;
 };
@@ -83,6 +85,8 @@ export function buildAssignmentSubmission(
             }
           : {}),
         passingScore: input.passingScore,
+        retryEnabled: input.retryEnabled,
+        retryPassingScore: input.retryPassingScore,
         questionOrderMode: input.questionOrderMode,
         availableUntil: input.availableUntil,
       },
@@ -108,6 +112,8 @@ export function buildAssignmentSubmission(
           }
         : {}),
       passingScore: input.passingScore,
+      retryEnabled: input.retryEnabled,
+      retryPassingScore: input.retryPassingScore,
       questionOrderMode: input.questionOrderMode,
       availableUntil: input.availableUntil,
       studentIds: [input.studentId],

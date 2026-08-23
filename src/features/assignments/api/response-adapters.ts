@@ -53,6 +53,8 @@ const assignmentEditDraftResponseSchema = z
     timingMode: z.enum(["none", "total", "per_question"]),
     questionTimeLimitSeconds: z.number().int().min(5).max(600).nullable(),
     passingScore: z.number().int().min(0).max(100),
+    retryEnabled: z.boolean(),
+    retryPassingScore: z.number().int().min(0).max(100).nullable(),
     questionOrderMode: z.enum([
       "ascending",
       "descending",

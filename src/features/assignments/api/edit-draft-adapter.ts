@@ -67,6 +67,9 @@ export function hydrateSingleAssignmentDraftFromEditResponse(
         source.questionOrderMode,
       ),
       passingScore: source.passingScore,
+      retryEnabled: source.retryEnabled !== false,
+      retryPassingScore:
+        source.retryPassingScore ?? source.passingScore,
       timeLimitEnabled: source.timingMode !== "none",
       timing:
         source.timingMode !== "per_question"

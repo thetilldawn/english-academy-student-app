@@ -27,6 +27,7 @@ export function AssignmentStudentBrowser({
         onChange={controller.actions.changeAssignmentMode}
         value={controller.assignmentMode}
       />
+      <div className={styles.browserModePanel} key={controller.assignmentMode}>
       {controller.assignmentMode === "bulk" ? (
         <VocabAssignmentEntrySelector controller={controller} />
       ) : null}
@@ -99,6 +100,7 @@ export function AssignmentStudentBrowser({
           ))}
         </div>
       )}
+      </div>
     </section>
   );
 }

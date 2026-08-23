@@ -3,6 +3,13 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 
 import { koreanDateTimeLocalToIso } from "@/lib/deadline";
+import {
+  availableReviewCount,
+  emptyPendingReviewCounts,
+  indexStudentPendingReviewSummaries,
+  pendingReviewSummaryKey,
+  type StudentPendingReviewSummary,
+} from "@/lib/admin/review-queue-summary";
 
 import {
   buildDirectReviewAssignmentRequest,
@@ -41,6 +48,7 @@ export type DirectReviewFieldKey =
   | "direction"
   | "questionOrder"
   | "passingScore"
+  | "retryPassingScore"
   | "timing"
   | "deadline"
   | "preview";
@@ -85,19 +93,43 @@ function timingError(timing: ExamTiming) {
 export function useDirectReviewAssignmentController({
   datasets,
   initialDatasetId,
+  pendingReviewSummaries = [],
   student,
   transport = browserAssignmentTransport,
   units,
 }: {
   datasets: readonly AssignmentDatasetItem[];
   initialDatasetId: string;
+  pendingReviewSummaries?: readonly StudentPendingReviewSummary[];
   student: AssignmentStudentItem;
   transport?: AssignmentTransport;
   units: readonly AssignmentUnitItem[];
 }) {
+  const pendingReviewIndex = useMemo(
+    () => indexStudentPendingReviewSummaries(pendingReviewSummaries),
+    [pendingReviewSummaries],
+  );
+  const datasetOptions = useMemo(
+    () => datasets.flatMap((dataset) => {
+      const counts = pendingReviewIndex.byStudentDataset.get(
+        pendingReviewSummaryKey(student.id, dataset.id),
+      ) ?? emptyPendingReviewCounts();
+      const count = availableReviewCount(counts);
+      return count > 0 ? [{ dataset, count }] : [];
+    }),
+    [datasets, pendingReviewIndex, student.id],
+  );
+  const totalAvailableCount = datasetOptions.reduce(
+    (total, option) => total + option.count,
+    0,
+  );
   const initialDataset = useMemo(
-    () => preferredDatasetId(datasets, student, initialDatasetId),
-    [datasets, initialDatasetId, student],
+    () => preferredDatasetId(
+      datasetOptions.map((option) => option.dataset),
+      student,
+      initialDatasetId,
+    ),
+    [datasetOptions, initialDatasetId, student],
   );
   const initialUnitIds = useMemo(
     () =>
@@ -247,6 +279,14 @@ export function useDirectReviewAssignmentController({
       draft.exam.passingScore < 0 || draft.exam.passingScore > 100) {
       errors.passingScore = "점수 확인";
     }
+    if (
+      draft.exam.retryEnabled !== false &&
+      (!Number.isInteger(draft.exam.retryPassingScore) ||
+        (draft.exam.retryPassingScore ?? -1) < 0 ||
+        (draft.exam.retryPassingScore ?? 101) > 100)
+    ) {
+      errors.retryPassingScore = "점수 확인";
+    }
     if (draft.exam.timeLimitEnabled !== false) {
       const error = timingError(draft.exam.timing);
       if (error) errors.timing = error;
@@ -265,6 +305,7 @@ export function useDirectReviewAssignmentController({
       "direction",
       "questionOrder",
       "passingScore",
+      "retryPassingScore",
       "timing",
       "deadline",
       "preview",
@@ -353,6 +394,10 @@ export function useDirectReviewAssignmentController({
         dispatch({ type: "order_changed", value }),
       changePassingScore: (value: number) =>
         dispatch({ type: "passing_score_changed", value }),
+      changeRetryEnabled: (enabled: boolean) =>
+        dispatch({ type: "retry_enabled_changed", enabled }),
+      changeRetryPassingScore: (value: number) =>
+        dispatch({ type: "retry_passing_score_changed", value }),
       changeTimeLimitEnabled: (enabled: boolean) =>
         dispatch({ type: "time_limit_changed", enabled }),
       changeTiming: (timing: ExamTiming) =>
@@ -368,6 +413,8 @@ export function useDirectReviewAssignmentController({
     fieldErrors,
     firstFieldKey,
     knownLevelCounts,
+    datasetOptions,
+    totalAvailableCount,
     message: submission.message || capacity.message,
     submitting: submission.status === "submitting",
   };

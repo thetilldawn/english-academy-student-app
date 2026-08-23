@@ -21,6 +21,7 @@ type ChangeKey =
   | "order"
   | "timing"
   | "passingScore"
+  | "retry"
   | "deadline"
   | "review";
 
@@ -32,6 +33,7 @@ const labels: Record<ChangeKey, string> = {
   passingScore: adminLearningText.controls.passingScore,
   questionCount: adminLearningText.assignmentModal.conditions.questionCount,
   range: adminLearningText.assignmentModal.range.groupFallback,
+  retry: "재시험",
   review: adminLearningText.assignmentModal.wrongWords.title,
   timing: adminLearningText.controls.timing.label,
   title: adminLearningText.assignmentModal.submit.optionalTitle,
@@ -51,6 +53,12 @@ function comparable(draft: SingleAssignmentDraft, key: ChangeKey) {
     };
   }
   if (key === "passingScore") return draft.exam.passingScore;
+  if (key === "retry") {
+    return {
+      enabled: draft.exam.retryEnabled !== false,
+      passingScore: draft.exam.retryPassingScore ?? draft.exam.passingScore,
+    };
+  }
   if (key === "deadline") return draft.deadline;
   return draft.review;
 }
@@ -107,6 +115,11 @@ function valueLabel(
         );
   }
   if (key === "passingScore") return `${draft.exam.passingScore}`;
+  if (key === "retry") {
+    return draft.exam.retryEnabled === false
+      ? "사용 안 함"
+      : `사용 · ${draft.exam.retryPassingScore ?? draft.exam.passingScore}점`;
+  }
   if (key === "deadline") {
     if (draft.deadline.mode === "none") {
       return adminLearningText.assignmentModal.edit.noDeadline;
@@ -151,6 +164,7 @@ export function AssignmentEditComparison({
       "order",
       "timing",
       "passingScore",
+      "retry",
       "deadline",
       "review",
     ] as const

@@ -574,6 +574,8 @@ export type PreparedMixedAssignmentBatch = {
   englishToKoreanRatio: 0 | 50 | 100;
   timeLimitSeconds: number;
   passingScore: number;
+  retryEnabled: boolean;
+  retryPassingScore: number | null;
   questionOrderMode: MixedAssignmentInput["questionOrderMode"];
   availableUntil: string | null;
   timingMode: TimingMode;
@@ -690,6 +692,8 @@ export async function prepareMixedAssignmentBatch(
     englishToKoreanRatio: input.englishToKoreanRatio,
     timeLimitSeconds: input.timeLimitSeconds,
     passingScore: input.passingScore,
+    retryEnabled: input.retryEnabled,
+    retryPassingScore: input.retryPassingScore,
     questionOrderMode: input.questionOrderMode,
     availableUntil: input.availableUntil,
     timingMode: input.timingMode ?? "total",
@@ -716,7 +720,7 @@ export async function createMixedAssignment(
   );
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc(
-    "create_mixed_review_assignment_v9",
+    "create_mixed_review_assignment_v10",
     {
       p_student_id: prepared.studentId,
       p_dataset_id: prepared.datasetId,
@@ -728,6 +732,8 @@ export async function createMixedAssignment(
       p_english_to_korean_ratio: prepared.englishToKoreanRatio,
       p_time_limit_seconds: prepared.timeLimitSeconds,
       p_passing_score: prepared.passingScore,
+      p_retry_enabled: prepared.retryEnabled,
+      p_retry_passing_score: prepared.retryPassingScore,
       p_question_order_mode: prepared.questionOrderMode,
       p_available_until: prepared.availableUntil,
       p_timing_mode: prepared.timingMode,

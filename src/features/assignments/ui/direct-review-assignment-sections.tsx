@@ -3,7 +3,6 @@ import {
   Field,
   FieldError,
   FieldLabel,
-  Select,
 } from "@/design-system/primitives/form/field";
 import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
 import { cataloguedDatasetDisplayLabel } from "@/lib/admin/dataset-catalog";
@@ -21,7 +20,10 @@ import type {
 import type { ReviewLevel } from "../domain/model";
 import { AssignmentDeadlineFields } from "./assignment-deadline-fields";
 import { AssignmentSection } from "./assignment-section";
-import { ExamConditionFields } from "./bulk-exam-fields";
+import {
+  ExamConditionFields,
+  ExamQuestionOrderField,
+} from "./bulk-exam-fields";
 import { ExamTimingFields } from "./exam-timing-fields";
 import styles from "./vocab-assignment-planner.module.css";
 
@@ -62,7 +64,7 @@ export function DirectReviewAssignmentSections({
     ? "범위 확인"
     : null;
   const conditionStatus = fieldErrors.direction || fieldErrors.questionOrder ||
-    fieldErrors.passingScore
+    fieldErrors.passingScore || fieldErrors.retryPassingScore
     ? "조건 확인"
     : null;
   const scheduleStatus = fieldErrors.timing || fieldErrors.deadline
@@ -91,36 +93,47 @@ export function DirectReviewAssignmentSections({
         title="시험 범위"
       >
         <div className={styles.reviewRangeGrid}>
-          <Field as="label">
-            <FieldLabel as="span">단어장</FieldLabel>
-            <Select
-              aria-errormessage={fieldErrors.dataset
+          <Field>
+            <FieldLabel as="span" id="review-dataset-label">단어장</FieldLabel>
+            <div
+              aria-describedby={fieldErrors.dataset
                 ? "review-dataset-error"
                 : undefined}
-              aria-invalid={Boolean(fieldErrors.dataset)}
+              aria-labelledby="review-dataset-label"
+              className={styles.reviewDatasetButtons}
               data-field-key="dataset"
-              onChange={(event) =>
-                controller.actions.changeDataset(event.target.value)
-              }
-              value={draft.datasetId}
+              role="group"
+              tabIndex={-1}
             >
-              <option value="">단어장을 선택하세요</option>
-              {datasets.map((candidate) => (
-                <option key={candidate.id} value={candidate.id}>
-                  {cataloguedDatasetDisplayLabel(candidate)}
-                </option>
+              <span className={styles.reviewDatasetTotal}>
+                전체 {controller.totalAvailableCount}개
+              </span>
+              {controller.datasetOptions.map(({ dataset: candidate, count }) => (
+                <Button
+                  aria-pressed={draft.datasetId === candidate.id}
+                  key={candidate.id}
+                  onClick={() => controller.actions.changeDataset(candidate.id)}
+                  size="small"
+                  variant="filter"
+                >
+                  {cataloguedDatasetDisplayLabel(candidate)} {count}개
+                </Button>
               ))}
-            </Select>
+            </div>
             {fieldErrors.dataset ? (
               <FieldError id="review-dataset-error">
                 {fieldErrors.dataset}
               </FieldError>
+            ) : !draft.datasetId && controller.totalAvailableCount > 0 ? (
+              <small className={styles.rangeSummary}>
+                시험을 배정할 단어장을 선택하세요.
+              </small>
             ) : null}
           </Field>
           <Field>
             <FieldLabel as="span" id="review-level-label">
-              <HelpTip label="오답 단계 설명" trigger="오답 단계">
-                1회는 한 번 틀린 단어, 2회 이상은 반복해서 틀린 단어입니다.
+              <HelpTip label="틀린 횟수 설명" trigger="틀린 횟수">
+                단어 시험에서 틀린 횟수입니다.
               </HelpTip>
             </FieldLabel>
             <div
@@ -168,24 +181,37 @@ export function DirectReviewAssignmentSections({
       </AssignmentSection>
 
       <AssignmentSection
-        help="오답 문항의 방향, 순서와 통과 점수를 정합니다."
+        help="오답 단어의 문제 순서와 통과 기준을 정합니다."
         helpLabel="오답 시험 조건 설명"
         index={2}
         status={conditionStatus}
         title="시험 조건"
       >
         <div className={styles.reviewQuestionCount}>
-          <span>문항 수</span>
-          <strong>{draft.questionCount}문항</strong>
+          <span>단어 수</span>
+          <strong>{draft.questionCount}개</strong>
         </div>
+        <ExamQuestionOrderField
+          error={fieldErrors.questionOrder}
+          onChange={(value) =>
+            controller.actions.changeOrder(
+              value === "random" ? "random" : "ascending",
+            )
+          }
+          value={draft.exam.questionOrderMode === "random"
+            ? "random"
+            : "source_order"}
+        />
         <ExamConditionFields
           exam={draft.exam}
           fieldErrors={fieldErrors}
           idPrefix="review"
           onDirectionChange={controller.actions.changeDirection}
-          onOrderChange={controller.actions.changeOrder}
           onPassingScoreChange={controller.actions.changePassingScore}
-          orderLabel="출제 순서"
+          onRetryEnabledChange={controller.actions.changeRetryEnabled}
+          onRetryPassingScoreChange={
+            controller.actions.changeRetryPassingScore
+          }
         />
       </AssignmentSection>
 
@@ -224,7 +250,7 @@ export function DirectReviewAssignmentSections({
             <dd>{dataset ? cataloguedDatasetDisplayLabel(dataset) : "선택 전"}</dd>
           </div>
           <div><dt>범위</dt><dd>오답 · {selectedLevelLabel(draft.reviewLevels)}</dd></div>
-          <div><dt>문항 수</dt><dd>{draft.questionCount}문항</dd></div>
+          <div><dt>단어 수</dt><dd>{draft.questionCount}개</dd></div>
           <div><dt>시간</dt><dd>{timingLabel(controller)}</dd></div>
           <div>
             <dt>마감</dt>

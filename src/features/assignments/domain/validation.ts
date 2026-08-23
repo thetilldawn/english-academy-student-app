@@ -166,6 +166,16 @@ function validateExamSettings(
     });
   }
   if (
+    exam.retryEnabled !== false &&
+    !integerInRange(exam.retryPassingScore ?? exam.passingScore, 0, 100)
+  ) {
+    issues.push({
+      code: "out_of_range",
+      path: "exam.retryPassingScore",
+      message: "재시험 통과 점수는 0점부터 100점까지 입력해 주세요.",
+    });
+  }
+  if (
     exam.timeLimitEnabled !== false &&
     exam.timing.mode === "total" &&
     !integerInRange(exam.timing.totalSeconds, 30, 10800)
@@ -424,6 +434,7 @@ function validateCommonPlan(
 ) {
   const plan = draft.commonPlan;
   if (!plan) return;
+  const immediate = plan.selectedDateCount === 0;
   validateId(plan.datasetId, "commonPlan.datasetId", issues);
   validateId(plan.planNonce, "commonPlan.planNonce", issues);
   validateUniqueIds(plan.orderedUnitIds, "commonPlan.orderedUnitIds", issues);
@@ -522,6 +533,20 @@ function validateCommonPlan(
       message: "선택한 날짜 수를 확인해 주세요.",
     });
   }
+  if (
+    immediate &&
+    (plan.distribution !== "repeat" ||
+      plan.splitBasis !== "question_count" ||
+      plan.overflowPolicy !== "leave" ||
+      plan.sessions.length !== 1 ||
+      plan.recurrenceSessions.length !== 1)
+  ) {
+    issues.push({
+      code: "invalid_order",
+      path: "commonPlan.selectedDateCount",
+      message: "시험일 없는 배정은 한 번만 바로 배정할 수 있습니다.",
+    });
+  }
   if (!["source_order", "random"].includes(plan.selectionMode)) {
     issues.push({
       code: "invalid_order",
@@ -610,16 +635,22 @@ function validateCommonPlan(
       });
     }
     const start = koreanDateTimeLocalToIso(session.availableLocalDateTime);
-    const deadline = koreanDateTimeLocalToIso(session.deadlineLocalDateTime);
-    if (!start || !deadline) {
+    const deadline = session.deadlineLocalDateTime
+      ? koreanDateTimeLocalToIso(session.deadlineLocalDateTime)
+      : null;
+    if (!start || (immediate
+      ? session.deadlineLocalDateTime !== null
+      : !deadline)) {
       issues.push({
         code: "invalid_datetime",
         path: `commonPlan.sessions.${index}`,
-        message: `${index + 1}회차 공개·마감 시각을 확인해 주세요.`,
+        message: immediate
+          ? "시험일 없는 배정에는 마감을 넣을 수 없습니다."
+          : `${index + 1}회차 공개·마감 시각을 확인해 주세요.`,
       });
       return;
     }
-    if (Date.parse(deadline) <= Date.parse(start)) {
+    if (deadline && Date.parse(deadline) <= Date.parse(start)) {
       issues.push({
         code: "invalid_order",
         path: `commonPlan.sessions.${index}.deadlineLocalDateTime`,
@@ -694,7 +725,7 @@ export function validateBulkPreviewProjection(
     issues.push({
       code: "out_of_range",
       path: "studentIds",
-      message: `이어 배정은 한 번에 최대 ${MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT}명까지 선택할 수 있습니다.`,
+      message: `배정된 시험은 한 번에 최대 ${MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT}명까지 저장할 수 있습니다.`,
     });
   }
   if (
@@ -763,17 +794,10 @@ export function validateBulkAssignmentSubmission(
   const issues = validateBulkPreviewProjection(draft);
   validateExamSettings(draft.exam, issues);
   if (draft.commonPlan) {
-    if (draft.commonPlan.selectedDateCount === 0) {
-      issues.push({
-        code: "required",
-        path: "commonPlan.sessions",
-        message: "배정할 요일을 하나 이상 선택해 주세요.",
-      });
-    }
     draft.commonPlan.sessions.forEach((session, index) => {
-      const deadline = koreanDateTimeLocalToIso(
-        session.deadlineLocalDateTime,
-      );
+      const deadline = session.deadlineLocalDateTime
+        ? koreanDateTimeLocalToIso(session.deadlineLocalDateTime)
+        : null;
       if (deadline && Date.parse(deadline) <= nowMilliseconds) {
         issues.push({
           code: "invalid_order",

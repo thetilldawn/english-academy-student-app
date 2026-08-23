@@ -12,7 +12,7 @@ const parameters = {
 };
 
 describe("quiz RPC deployment compatibility", () => {
-  it("uses v3 when the current production function is available", async () => {
+  it("uses v4 when the current production function is available", async () => {
     const rpc = vi.fn<QuizRpc>().mockResolvedValue({
       data: { correct: true },
       error: null,
@@ -23,14 +23,21 @@ describe("quiz RPC deployment compatibility", () => {
     expect(result.data).toEqual({ correct: true });
     expect(result.feedbackProtocol).toBe("variable");
     expect(rpc).toHaveBeenCalledTimes(1);
-    expect(rpc).toHaveBeenCalledWith("answer_quiz_question_v3", parameters);
+    expect(rpc).toHaveBeenCalledWith("answer_quiz_question_v4", parameters);
   });
 
   it.each(["PGRST202", "42883"])(
-    "falls back to v2 only when v3 is unavailable (%s)",
+    "falls back to v2 only when v4 and v3 are unavailable (%s)",
     async (code) => {
       const rpc = vi
         .fn<QuizRpc>()
+        .mockResolvedValueOnce({
+          data: null,
+          error: {
+            code,
+            message: "Could not find answer_quiz_question_v4",
+          },
+        })
         .mockResolvedValueOnce({
           data: null,
           error: {
@@ -48,14 +55,14 @@ describe("quiz RPC deployment compatibility", () => {
       expect(result.data).toEqual({ correct: true });
       expect(result.feedbackProtocol).toBe("legacy");
       expect(rpc).toHaveBeenNthCalledWith(
-        2,
+        3,
         "answer_quiz_question_v2",
         parameters,
       );
     },
   );
 
-  it("does not hide a real v3 answer error", async () => {
+  it("does not hide a real v4 answer error", async () => {
     const rpc = vi.fn<QuizRpc>().mockResolvedValue({
       data: null,
       error: { code: "22023", message: "question_already_answered" },

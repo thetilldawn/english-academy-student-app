@@ -35,7 +35,7 @@ export async function GET(
     beforeUpdatedAt: url.searchParams.get("beforeUpdatedAt") ?? undefined,
   });
   if (!cursor.success) {
-    return jsonError("이어 배정 이력 위치를 확인해 주세요.", 400);
+    return jsonError("배정된 시험 내역 위치를 확인해 주세요.", 400);
   }
 
   try {
@@ -53,6 +53,6 @@ export async function GET(
       headers: { "Cache-Control": "private, no-store" },
     });
   } catch {
-    return jsonError("이어 배정 이력을 불러오지 못했습니다.", 500);
+    return jsonError("배정된 시험 내역을 불러오지 못했습니다.", 500);
   }
 }

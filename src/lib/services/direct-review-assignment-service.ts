@@ -58,7 +58,7 @@ export async function createDirectReviewAssignment(
 
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc(
-    "create_exact_review_assignment_v6",
+    "create_exact_review_assignment_v7",
     {
       p_student_id: prepared.studentId,
       p_dataset_id: prepared.datasetId,
@@ -67,6 +67,8 @@ export async function createDirectReviewAssignment(
       p_english_to_korean_ratio: prepared.englishToKoreanRatio,
       p_time_limit_seconds: prepared.timeLimitSeconds,
       p_passing_score: prepared.passingScore,
+      p_retry_enabled: prepared.retryEnabled,
+      p_retry_passing_score: prepared.retryPassingScore,
       p_question_order_mode: prepared.questionOrderMode,
       p_available_until: prepared.availableUntil,
       p_timing_mode: prepared.timingMode,

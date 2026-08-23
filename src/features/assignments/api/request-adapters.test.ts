@@ -367,6 +367,8 @@ describe("assignment request adapters", () => {
       timingMode: "per_question",
       questionTimeLimitSeconds: 20,
       passingScore: 80,
+      retryEnabled: true,
+      retryPassingScore: 80,
       questionOrderMode: "ascending",
       availableUntil: null,
     });

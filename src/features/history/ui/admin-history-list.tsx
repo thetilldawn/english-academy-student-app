@@ -170,6 +170,7 @@ export function AdminHistoryList({
         </EmptyState>
       ) : (
         <HistorySectionGroups
+          key={`${query}:${statusFilter}`}
           countSuffix={adminHistoryText.sections.countSuffix}
           sections={sections}
         />

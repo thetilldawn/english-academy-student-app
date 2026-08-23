@@ -33,12 +33,27 @@ export async function answerQuizQuestionWithCompatibleRpc(
   rpc: QuizRpc,
   parameters: Record<string, unknown>,
 ) {
-  const current = await rpc("answer_quiz_question_v3", parameters);
-  if (!isMissingRpc(current.error, "answer_quiz_question_v3")) {
+  const current = await rpc("answer_quiz_question_v4", parameters);
+  if (!isMissingRpc(current.error, "answer_quiz_question_v4")) {
     return { ...current, feedbackProtocol: "variable" as const };
+  }
+  const previous = await rpc("answer_quiz_question_v3", parameters);
+  if (!isMissingRpc(previous.error, "answer_quiz_question_v3")) {
+    return { ...previous, feedbackProtocol: "variable" as const };
   }
   const legacy = await rpc("answer_quiz_question_v2", parameters);
   return { ...legacy, feedbackProtocol: "legacy" as const };
+}
+
+export async function startQuizRetryWithCompatibleRpc(
+  rpc: QuizRpc,
+  parameters: Record<string, unknown>,
+) {
+  const current = await rpc("start_quiz_retry_v2", parameters);
+  if (!isMissingRpc(current.error, "start_quiz_retry_v2")) {
+    return current;
+  }
+  return rpc("start_quiz_retry", parameters);
 }
 
 export async function resumeQuizAfterFeedbackWithCompatibleRpc(

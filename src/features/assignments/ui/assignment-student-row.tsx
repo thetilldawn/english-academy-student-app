@@ -95,7 +95,7 @@ export function AssignmentStudentRow({
             ))}
             {assignmentQueues.length > 1 ? (
               <MetaTagList>
-                <MetaTag>이어 배정 외 {assignmentQueues.length - 1}개</MetaTag>
+                <MetaTag>배정된 시험 외 {assignmentQueues.length - 1}개</MetaTag>
               </MetaTagList>
             ) : null}
             <span className={learningRowStyles.recent}>

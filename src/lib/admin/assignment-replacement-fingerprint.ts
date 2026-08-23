@@ -10,6 +10,8 @@ export type AssignmentReplacementFingerprintFields = {
   timingMode: string;
   questionTimeLimitSeconds: number | null;
   passingScore: number;
+  retryEnabled: boolean;
+  retryPassingScore: number | null;
   questionOrderMode: string;
   availableUntil: string | null;
 };
@@ -40,6 +42,8 @@ export function assignmentReplacementFingerprintPayload(
     timingMode: input.timingMode,
     questionTimeLimitSeconds: input.questionTimeLimitSeconds,
     passingScore: input.passingScore,
+    retryEnabled: input.retryEnabled,
+    retryPassingScore: input.retryPassingScore,
     questionOrderMode: input.questionOrderMode,
     availableUntil: input.availableUntil,
   };

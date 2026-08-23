@@ -36,6 +36,8 @@ export type VocabPlannerState = {
   extraDatePolicy: VocabExtraDatePolicy;
   selectionMode: VocabTargetSelectionMode;
   planNonce: string;
+  scheduleEnabled?: boolean;
+  immediateDate?: string;
   schedule: VocabScheduleDraft;
   sessionScheduleOverrides: Readonly<
     Record<number, VocabScheduleSlotOverride>
@@ -56,6 +58,7 @@ export type VocabPlannerAction =
   | { type: "overflow_policy"; value: VocabSplitOverflowPolicy }
   | { type: "extra_date_policy"; value: VocabExtraDatePolicy }
   | { type: "selection_mode"; value: VocabTargetSelectionMode }
+  | { type: "schedule/enabled"; enabled: boolean }
   | { type: "schedule/update"; patch: Partial<VocabScheduleDraft> }
   | { type: "schedule/replace"; value: VocabScheduleDraft }
   | { type: "schedule/toggle_weekday"; weekday: IsoWeekday }
@@ -169,6 +172,14 @@ export function vocabPlannerReducer(
         selectionMode: action.value,
         collisionDecisionRecords: [],
       };
+    case "schedule/enabled":
+      return {
+        ...state,
+        scheduleEnabled: action.enabled,
+        extraDatePolicy: "unconfirmed",
+        sessionScheduleOverrides: {},
+        collisionDecisionRecords: [],
+      };
     case "schedule/update":
       return {
         ...state,
@@ -262,6 +273,8 @@ export function createInitialVocabPlannerState(
     extraDatePolicy: "unconfirmed",
     selectionMode: "source_order",
     planNonce: crypto.randomUUID(),
+    scheduleEnabled: true,
+    immediateDate: today,
     schedule: {
       startDate: today,
       weekdays: [],

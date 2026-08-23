@@ -28,6 +28,8 @@ export type BulkSeriesAssignmentDraftAction =
   | { type: "exam/timing_changed"; timing: ExamTiming }
   | { type: "exam/time_limit_changed"; enabled: boolean }
   | { type: "exam/passing_score_changed"; value: number }
+  | { type: "exam/retry_enabled_changed"; enabled: boolean }
+  | { type: "exam/retry_passing_score_changed"; value: number }
   | { type: "review/levels_changed"; levels: readonly ReviewLevel[] };
 
 export function createInitialBulkSeriesAssignmentDraft({
@@ -55,6 +57,8 @@ export function createInitialBulkSeriesAssignmentDraft({
     exam: {
       directionRatio: 50,
       passingScore: 80,
+      retryEnabled: true,
+      retryPassingScore: 80,
       questionOrderMode: "random",
       timeLimitEnabled: true,
       timing: { mode: "total", totalSeconds: 300 },
@@ -126,6 +130,16 @@ export function reduceBulkSeriesAssignmentDraft(
       return {
         ...draft,
         exam: { ...draft.exam, passingScore: action.value },
+      };
+    case "exam/retry_enabled_changed":
+      return {
+        ...draft,
+        exam: { ...draft.exam, retryEnabled: action.enabled },
+      };
+    case "exam/retry_passing_score_changed":
+      return {
+        ...draft,
+        exam: { ...draft.exam, retryPassingScore: action.value },
       };
     case "review/levels_changed":
       return {

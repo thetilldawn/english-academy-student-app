@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useReducer,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
 import {
   buildBulkAssignmentPreviewRequest,
@@ -471,6 +465,10 @@ export function useBulkAssignmentController({
       changeDraft({ type: "exam/order_changed", value }),
     changePassingScore: (value: number) =>
       changeDraft({ type: "exam/passing_score_changed", value }),
+    changeRetryEnabled: (enabled: boolean) =>
+      changeDraft({ type: "exam/retry_enabled_changed", enabled }),
+    changeRetryPassingScore: (value: number) =>
+      changeDraft({ type: "exam/retry_passing_score_changed", value }),
     changeRange: (range: BulkSeriesAssignmentDraft["range"]) =>
       changeDraft({ type: "range/changed", range }),
     changeReviewLevels: (levels: readonly ReviewLevel[]) =>

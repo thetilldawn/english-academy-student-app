@@ -24,7 +24,7 @@ export async function PATCH(
     parseJson(request, resolutionSchema),
   ]);
   if (!z.uuid().safeParse(seriesId).success || !input) {
-    return jsonError("이어 배정 처리 요청을 확인해 주세요.", 400);
+    return jsonError("배정된 시험 처리 요청을 확인해 주세요.", 400);
   }
 
   try {
@@ -37,7 +37,7 @@ export async function PATCH(
     });
   } catch {
     return jsonError(
-      "이어 배정 상태를 처리하지 못했습니다. 다시 확인해 주세요.",
+      "배정된 시험 상태를 처리하지 못했습니다. 다시 확인해 주세요.",
       409,
     );
   }

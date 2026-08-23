@@ -61,9 +61,8 @@ export function VocabRangeAssignmentSections({
     "questionCount",
     "selectionMode",
     "direction",
-    "questionOrder",
     "passingScore",
-    "timing",
+    "retryPassingScore",
   ])
     ? "조건 확인"
     : null;
@@ -87,7 +86,7 @@ export function VocabRangeAssignmentSections({
         />
       </AssignmentSection>
       <AssignmentSection
-        help="문항 수, 문항 선택, 출제 순서와 풀이 조건을 정합니다."
+        help="범위를 나누는 방법과 시험 문제 순서, 통과 기준을 정합니다."
         helpLabel="시험 조건 설명"
         index={2}
         status={conditionStatus}
@@ -96,6 +95,10 @@ export function VocabRangeAssignmentSections({
         <VocabQuestionFields
           controller={controller}
           datasets={controller.readyDatasets}
+          fieldErrors={fieldErrors}
+        />
+        <BulkExamFields
+          controller={bulk}
           fieldErrors={fieldErrors}
         />
         <section aria-label="최근 시험 복사" className={styles.copyPanel}>
@@ -147,11 +150,6 @@ export function VocabRangeAssignmentSections({
             조건 복사
           </Button>
         </section>
-        <BulkExamFields
-          controller={bulk}
-          fieldErrors={fieldErrors}
-          orderLabel="출제 순서"
-        />
       </AssignmentSection>
       <AssignmentSection
         help="요일을 고르면 기본 회차를 날짜에 배치합니다."
@@ -178,7 +176,7 @@ export function VocabRangeAssignmentSections({
         index={4}
         title="미리보기"
       >
-        {controller.scheduleSlots.length > 0 ? (
+        {controller.commonPlan ? (
           <BulkSeriesPreview
             collisionDecisions={controller.collisionDecisionRecords}
             completionGated={controller.planner.distribution === "split"}
@@ -198,7 +196,7 @@ export function VocabRangeAssignmentSections({
             data-status="idle"
             role="status"
           >
-            범위와 일정을 정하면 회차가 표시됩니다.
+            시험 범위와 조건을 정하면 배정 내용이 표시됩니다.
           </div>
         )}
       </AssignmentSection>

@@ -1576,6 +1576,8 @@ export type RegularAssignmentInput = {
   timingMode?: TimingMode;
   questionTimeLimitSeconds?: number | null;
   passingScore: number;
+  retryEnabled: boolean;
+  retryPassingScore: number | null;
   questionOrderMode: QuestionOrderMode;
   availableUntil: string | null;
   studentIds: string[];
@@ -1600,6 +1602,8 @@ export type PreparedRegularAssignment = {
   timingMode: TimingMode;
   questionTimeLimitSeconds: number | null;
   passingScore: number;
+  retryEnabled: boolean;
+  retryPassingScore: number | null;
   questionOrderMode: QuestionOrderMode;
   availableUntil: string | null;
   studentIds: string[];
@@ -1871,6 +1875,8 @@ export async function prepareRegularAssignment(
         ? (input.questionTimeLimitSeconds ?? null)
         : null,
     passingScore: input.passingScore,
+    retryEnabled: input.retryEnabled,
+    retryPassingScore: input.retryPassingScore,
     questionOrderMode: input.questionOrderMode,
     availableUntil: input.availableUntil,
     studentIds: input.studentIds,
@@ -2002,7 +2008,7 @@ export async function createAssignment(
   );
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc(
-    "create_assignment_with_delivery_v6",
+    "create_assignment_with_delivery_v7",
     {
       p_title: prepared.title,
       p_dataset_id: prepared.datasetId,
@@ -2011,6 +2017,8 @@ export async function createAssignment(
       p_english_to_korean_ratio: prepared.englishToKoreanRatio,
       p_time_limit_seconds: prepared.timeLimitSeconds,
       p_passing_score: prepared.passingScore,
+      p_retry_enabled: prepared.retryEnabled,
+      p_retry_passing_score: prepared.retryPassingScore,
       p_question_order_mode: prepared.questionOrderMode,
       p_available_until: prepared.availableUntil,
       p_student_ids: prepared.studentIds,

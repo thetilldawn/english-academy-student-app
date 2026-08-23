@@ -94,6 +94,8 @@ export function createInitialSingleAssignmentDraft({
   exam = {
     directionRatio: 50,
     passingScore: 80,
+    retryEnabled: true,
+    retryPassingScore: 80,
     questionOrderMode: "random",
     timeLimitEnabled: true,
     timing: { mode: "total", totalSeconds: 300 },
@@ -531,6 +533,18 @@ export function useAssignmentController({
         changeDraft({
           type: "exam/changed",
           exam: { ...stateRef.current.draft.exam, passingScore },
+        });
+      },
+      changeRetryEnabled(retryEnabled: boolean) {
+        changeDraft({
+          type: "exam/changed",
+          exam: { ...stateRef.current.draft.exam, retryEnabled },
+        });
+      },
+      changeRetryPassingScore(retryPassingScore: number) {
+        changeDraft({
+          type: "exam/changed",
+          exam: { ...stateRef.current.draft.exam, retryPassingScore },
         });
       },
       changeQuestionCount(value: number) {

@@ -115,6 +115,8 @@ describe("학생별 배정 수정 입력 계약", () => {
     timingMode: "total" as const,
     questionTimeLimitSeconds: null,
     passingScore: 80,
+    retryEnabled: true,
+    retryPassingScore: 80,
     questionOrderMode: "random" as const,
     availableUntil: null,
   };
@@ -340,7 +342,7 @@ describe("일괄 단어 시험 입력 계약", () => {
     })).toThrow("회차별 범위가 선택한 순서 또는 단위 수와 일치하지 않습니다.");
   });
 
-  it("이어 배정은 DB 한도 30명과 전체 210시험을 계산 전에 막는다", () => {
+  it("배정된 시험은 DB 한도 30명과 전체 210시험을 계산 전에 막는다", () => {
     const manyStudents = Array.from({ length: 31 }, (_, index) =>
       `50000000-0000-4000-8000-${String(index).padStart(12, "0")}`
     );
@@ -371,7 +373,7 @@ describe("일괄 단어 시험 입력 계약", () => {
       reviewLevels: [1, 2],
       englishToKoreanRatio: 50,
       commonPlan: oneSessionPlan,
-    })).toThrow("이어 배정은 한 번에 최대 30명까지 선택할 수 있습니다.");
+    })).toThrow("배정된 시험은 한 번에 최대 30명까지 저장할 수 있습니다.");
 
     const thirtyStudents = manyStudents.slice(0, 30);
     const eightUnits = Array.from({ length: 8 }, (_, index) =>
@@ -416,6 +418,8 @@ describe("일괄 단어 시험 입력 계약", () => {
       englishToKoreanRatio: 50 as const,
       timeLimitSeconds: 300,
       passingScore: 80,
+      retryEnabled: true,
+      retryPassingScore: 80,
       questionOrderMode: "random" as const,
     };
     expect(
@@ -589,6 +593,8 @@ describe("정확 오답 재시험 배정 입력 계약", () => {
     englishToKoreanRatio: 50 as const,
     timeLimitSeconds: 300,
     passingScore: 80,
+    retryEnabled: true,
+    retryPassingScore: 80,
     questionOrderMode: "random" as const,
     availableUntil: null,
   };
@@ -658,6 +664,8 @@ describe("DAY+오답 혼합 시험 입력 계약", () => {
     englishToKoreanRatio: 50 as const,
     timeLimitSeconds: 300,
     passingScore: 80,
+    retryEnabled: true,
+    retryPassingScore: 80,
     questionOrderMode: "random" as const,
     availableUntil: null,
   };

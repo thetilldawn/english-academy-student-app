@@ -134,6 +134,12 @@ export function buildDirectReviewAssignmentRequest(
 }
 
 function examSettingsToApi(exam: ExamSettings) {
+  const retry = {
+    retryEnabled: exam.retryEnabled !== false,
+    retryPassingScore: exam.retryEnabled === false
+      ? null
+      : exam.retryPassingScore ?? exam.passingScore,
+  };
   if (exam.timeLimitEnabled === false) {
     return {
       englishToKoreanRatio: exam.directionRatio,
@@ -142,6 +148,7 @@ function examSettingsToApi(exam: ExamSettings) {
       questionTimeLimitSeconds: null,
       passingScore: exam.passingScore,
       questionOrderMode: exam.questionOrderMode,
+      ...retry,
     };
   }
   if (exam.timing.mode === "total") {
@@ -152,6 +159,7 @@ function examSettingsToApi(exam: ExamSettings) {
       questionTimeLimitSeconds: null,
       passingScore: exam.passingScore,
       questionOrderMode: exam.questionOrderMode,
+      ...retry,
     };
   }
   return {
@@ -161,6 +169,7 @@ function examSettingsToApi(exam: ExamSettings) {
     questionTimeLimitSeconds: exam.timing.perQuestionSeconds,
     passingScore: exam.passingScore,
     questionOrderMode: exam.questionOrderMode,
+    ...retry,
   };
 }
 
@@ -332,10 +341,11 @@ function bulkSelectionBody(draft: BulkSeriesAssignmentDraft) {
             const availableFrom = koreanDateTimeLocalToIso(
               session.availableLocalDateTime,
             );
-            const availableUntil = koreanDateTimeLocalToIso(
-              session.deadlineLocalDateTime,
-            );
-            if (!availableFrom || !availableUntil) {
+            const availableUntil = session.deadlineLocalDateTime
+              ? koreanDateTimeLocalToIso(session.deadlineLocalDateTime)
+              : null;
+            if (!availableFrom ||
+              (session.deadlineLocalDateTime && !availableUntil)) {
               throw new Error("검증되지 않은 반복 일정 시각입니다.");
             }
             return { availableFrom, availableUntil };
@@ -345,10 +355,11 @@ function bulkSelectionBody(draft: BulkSeriesAssignmentDraft) {
           const availableFrom = koreanDateTimeLocalToIso(
             session.availableLocalDateTime,
           );
-          const availableUntil = koreanDateTimeLocalToIso(
-            session.deadlineLocalDateTime,
-          );
-          if (!availableFrom || !availableUntil) {
+          const availableUntil = session.deadlineLocalDateTime
+            ? koreanDateTimeLocalToIso(session.deadlineLocalDateTime)
+            : null;
+          if (!availableFrom ||
+            (session.deadlineLocalDateTime && !availableUntil)) {
             throw new Error("검증되지 않은 공통 배정 시각입니다.");
           }
           return {

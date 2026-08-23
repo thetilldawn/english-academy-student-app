@@ -58,6 +58,8 @@ type AssignmentRelation = {
   timing_mode: TimingMode;
   question_time_limit_seconds: number | null;
   passing_score: number;
+  retry_enabled: boolean;
+  retry_passing_score: number | null;
   question_order_mode: "fixed" | "ascending" | "descending" | "random";
   available_until: string | null;
   assignment_units: AssignmentUnitRelation[] | null;
@@ -381,6 +383,8 @@ async function requireEditableSourceContext(
               timing_mode,
               question_time_limit_seconds,
               passing_score,
+              retry_enabled,
+              retry_passing_score,
               question_order_mode,
               available_until,
               assignment_units(
@@ -506,6 +510,8 @@ async function requireEditableSourceContext(
       questionTimeLimitSeconds:
         assignment.question_time_limit_seconds,
       passingScore: assignment.passing_score,
+      retryEnabled: assignment.retry_enabled,
+      retryPassingScore: assignment.retry_passing_score,
       questionOrderMode: assignment.question_order_mode,
       availableUntil: assignment.available_until,
       includePendingReview:
@@ -798,6 +804,8 @@ export async function replaceStudentAssignment(
     englishToKoreanRatio: 0 | 50 | 100;
     timeLimitSeconds: number;
     passingScore: number;
+    retryEnabled: boolean;
+    retryPassingScore: number | null;
     questionOrderMode: AssignmentReplacementInput["questionOrderMode"];
     availableUntil: string | null;
     timingMode: AssignmentReplacementInput["timingMode"];
@@ -832,6 +840,8 @@ export async function replaceStudentAssignment(
         englishToKoreanRatio: input.englishToKoreanRatio,
         timeLimitSeconds: input.timeLimitSeconds,
         passingScore: input.passingScore,
+        retryEnabled: input.retryEnabled,
+        retryPassingScore: input.retryPassingScore,
         questionOrderMode: input.questionOrderMode,
         availableUntil: input.availableUntil,
         timingMode: input.timingMode,
@@ -855,6 +865,8 @@ export async function replaceStudentAssignment(
         englishToKoreanRatio: input.englishToKoreanRatio,
         timeLimitSeconds: input.timeLimitSeconds,
         passingScore: input.passingScore,
+        retryEnabled: input.retryEnabled,
+        retryPassingScore: input.retryPassingScore,
         questionOrderMode: input.questionOrderMode,
         availableUntil: input.availableUntil,
         timingMode: input.timingMode,
@@ -882,6 +894,8 @@ export async function replaceStudentAssignment(
           timingMode: input.timingMode,
           questionTimeLimitSeconds: input.questionTimeLimitSeconds,
           passingScore: input.passingScore,
+          retryEnabled: input.retryEnabled,
+          retryPassingScore: input.retryPassingScore,
           questionOrderMode: input.questionOrderMode,
           availableUntil: input.availableUntil,
         },
@@ -906,6 +920,8 @@ export async function replaceStudentAssignment(
           timingMode: input.timingMode,
           questionTimeLimitSeconds: input.questionTimeLimitSeconds,
           passingScore: input.passingScore,
+          retryEnabled: input.retryEnabled,
+          retryPassingScore: input.retryPassingScore,
           questionOrderMode: input.questionOrderMode,
           availableUntil: input.availableUntil,
           studentIds: [studentId],
@@ -921,6 +937,8 @@ export async function replaceStudentAssignment(
         englishToKoreanRatio: regular.englishToKoreanRatio,
         timeLimitSeconds: regular.timeLimitSeconds,
         passingScore: regular.passingScore,
+        retryEnabled: regular.retryEnabled,
+        retryPassingScore: regular.retryPassingScore,
         questionOrderMode: regular.questionOrderMode,
         availableUntil: regular.availableUntil,
         timingMode: regular.timingMode,
@@ -957,7 +975,7 @@ export async function replaceStudentAssignment(
   }
 
   const { data, error } = await supabase.rpc(
-    "replace_student_assignment_v4",
+    "replace_student_assignment_v5",
     {
       p_source_assignment_id: assignmentId,
       p_student_id: studentId,
@@ -972,6 +990,8 @@ export async function replaceStudentAssignment(
       p_english_to_korean_ratio: prepared.englishToKoreanRatio,
       p_time_limit_seconds: prepared.timeLimitSeconds,
       p_passing_score: prepared.passingScore,
+      p_retry_enabled: prepared.retryEnabled,
+      p_retry_passing_score: prepared.retryPassingScore,
       p_question_order_mode: prepared.questionOrderMode,
       p_available_until: prepared.availableUntil,
       p_timing_mode: prepared.timingMode,

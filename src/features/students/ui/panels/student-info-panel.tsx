@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type FormEvent } from "react";
+import type { FormEvent } from "react";
 
 import { adminStudentsText } from "@/content/ko/admin-students";
 import { Button } from "@/design-system/primitives/button/button";
@@ -8,16 +8,12 @@ import {
   Field,
   FieldLabel,
   Input,
-  Select,
 } from "@/design-system/primitives/form/field";
-import {
-  cataloguedDatasetDisplayLabel,
-  groupCataloguedDatasets,
-} from "@/lib/admin/dataset-catalog";
 
 import type { StudentDetailController } from "../../controller/use-student-detail-controller";
 import type { StudentManagementData } from "../../model";
 import styles from "../student-detail.module.css";
+import { StudentVocabBookHistoryList } from "./student-vocab-book-history-list";
 
 export function StudentInfoPanel({
   controller,
@@ -27,11 +23,10 @@ export function StudentInfoPanel({
   data: StudentManagementData;
 }) {
   const student = controller.selectedStudent;
-  const datasetGroups = useMemo(
-    () => groupCataloguedDatasets(data.datasets),
-    [data.datasets],
-  );
   if (!student) return null;
+  const vocabBookHistory = data.vocabBookHistory.filter(
+    (item) => item.studentId === student.id,
+  );
 
   const profileUnchanged =
     controller.profile.displayName === student.displayName &&
@@ -107,51 +102,10 @@ export function StudentInfoPanel({
         </Button>
       </form>
 
-      <div className={styles.wordbookForm}>
-        <Field as="label">
-          <FieldLabel as="span">
-            {adminStudentsText.info.currentWordbook}
-          </FieldLabel>
-          <Select
-            onChange={(event) =>
-              controller.actions.setProfileField("datasetId", event.target.value)
-            }
-            value={controller.profile.datasetId}
-          >
-            <option value="">{adminStudentsText.info.chooseLater}</option>
-            {controller.profile.datasetId &&
-            !data.datasets.some(
-              (dataset) => dataset.id === controller.profile.datasetId,
-            ) ? (
-              <option disabled value={controller.profile.datasetId}>
-                {student.currentVocabBook ??
-                  adminStudentsText.info.previousWordbook}{" "}
-                · {adminStudentsText.info.assignmentClosed}
-              </option>
-            ) : null}
-            {datasetGroups.map((group) => (
-              <optgroup key={group.group} label={group.label}>
-                {group.datasets.map((dataset) => (
-                  <option key={dataset.id} value={dataset.id}>
-                    {cataloguedDatasetDisplayLabel(dataset)}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </Select>
-        </Field>
-        <Button
-          disabled={
-            controller.interactionBusy ||
-            controller.profile.datasetId ===
-              (student.currentVocabDatasetId ?? "")
-          }
-          onClick={() => void controller.actions.saveCurrentDataset()}
-          variant="secondary"
-        >
-          {adminStudentsText.info.saveWordbook}
-        </Button>
-      </div>
+      <StudentVocabBookHistoryList
+        datasets={data.datasets}
+        items={vocabBookHistory}
+      />
     </section>
   );
 }

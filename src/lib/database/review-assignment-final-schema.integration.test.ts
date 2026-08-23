@@ -49,7 +49,16 @@ const ids = {
   rollbackDraft: "00000000-0000-4000-8000-000000000402",
 } as const;
 
-async function createFinalSchemaDatabase() {
+type FinalSchemaDatabaseOptions = {
+  beforeMigration?: (
+    database: PGlite,
+    migrationName: string,
+  ) => Promise<void>;
+};
+
+async function createFinalSchemaDatabase(
+  options: FinalSchemaDatabaseOptions = {},
+) {
   const database = new PGlite({
     extensions: {
       pgcrypto,
@@ -118,6 +127,8 @@ async function createFinalSchemaDatabase() {
   `);
 
   for (const migrationPath of migrationPaths) {
+    const migrationName = path.basename(migrationPath);
+    await options.beforeMigration?.(database, migrationName);
     const migration = fs
       .readFileSync(migrationPath, "utf8")
       .replace(
@@ -897,6 +908,12 @@ describe.sequential("final review-assignment database schema", () => {
         current_mixed: boolean;
         legacy_regular: boolean;
         current_regular: boolean;
+        retry_regular: boolean;
+        retry_mixed: boolean;
+        retry_exact: boolean;
+        retry_replace: boolean;
+        retry_bulk: boolean;
+        retry_queue: boolean;
       }>(`
         select
           has_function_privilege(
@@ -918,18 +935,54 @@ describe.sequential("final review-assignment database schema", () => {
             'authenticated',
             'public.create_assignment_with_delivery_v4(text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,uuid[],text,integer,jsonb)',
             'execute'
-          ) as current_regular;
+          ) as current_regular,
+          has_function_privilege(
+            'authenticated',
+            'public.create_assignment_with_delivery_v7(text,uuid,uuid[],integer,smallint,integer,smallint,boolean,smallint,public.question_order_mode,timestamp with time zone,uuid[],text,integer,jsonb)',
+            'execute'
+          ) as retry_regular,
+          has_function_privilege(
+            'authenticated',
+            'public.create_mixed_review_assignment_v10(uuid,uuid,smallint[],text,uuid[],text,uuid[],smallint,integer,smallint,boolean,smallint,public.question_order_mode,timestamp with time zone,text,integer,jsonb)',
+            'execute'
+          ) as retry_mixed,
+          has_function_privilege(
+            'authenticated',
+            'public.create_exact_review_assignment_v7(uuid,uuid,uuid[],text,smallint,integer,smallint,boolean,smallint,public.question_order_mode,timestamp with time zone,text,integer,jsonb)',
+            'execute'
+          ) as retry_exact,
+          has_function_privilege(
+            'authenticated',
+            'public.replace_student_assignment_v5(uuid,uuid,uuid,text,text,text,text,uuid,uuid[],integer,smallint,integer,smallint,boolean,smallint,public.question_order_mode,timestamp with time zone,text,integer,smallint[],uuid[],jsonb)',
+            'execute'
+          ) as retry_replace,
+          has_function_privilege(
+            'authenticated',
+            'public.create_bulk_vocab_assignments_v9(uuid,text,jsonb)',
+            'execute'
+          ) as retry_bulk,
+          has_function_privilege(
+            'authenticated',
+            'public.create_vocab_assignment_queues_v2(uuid,text,jsonb)',
+            'execute'
+          ) as retry_queue;
       `);
       expect(privileges.rows[0]).toEqual({
         legacy_mixed: true,
         current_mixed: false,
         legacy_regular: true,
         current_regular: false,
+        retry_regular: false,
+        retry_mixed: false,
+        retry_exact: false,
+        retry_replace: false,
+        retry_bulk: false,
+        retry_queue: false,
       });
     } finally {
       await rollbackDatabase.close();
     }
-  });
+  }, 30_000);
 
   it("blocks the compatibility rollback after post-cutover activity", async () => {
     const rollbackDatabase = await createFinalSchemaDatabase();
@@ -4110,4 +4163,364 @@ describe.sequential("admin deletion controls", () => {
       await replacementDatabase.close();
     }
   }, 40_000);
+});
+
+describe.sequential("assignment retry rules", () => {
+  it("backfills retry rules when deleted assignments already exist", async () => {
+    let deletedAssignmentId: string | null = null;
+    let deletedAssignmentUpdatedAt: string | null = null;
+    const database = await createFinalSchemaDatabase({
+      beforeMigration: async (pendingDatabase, migrationName) => {
+        if (
+          migrationName !== "20260824010000_add_assignment_retry_rules.sql"
+        ) {
+          return;
+        }
+
+        await seedReviewAssignmentScenario(pendingDatabase);
+        const created = await pendingDatabase.query<{ assignment_id: string }>(`
+          select private.create_assignment_with_question_bank_v3(
+            'Deleted assignment retry backfill fixture',
+            '${ids.dataset}',
+            array['${ids.units[0]}'::uuid],
+            1,
+            100::smallint,
+            300,
+            80::smallint,
+            'fixed',
+            null,
+            array['${ids.student}'::uuid],
+            $questions$[
+              {
+                "vocab_entry_id": 1,
+                "base_order_index": 1,
+                "direction": "english_to_korean",
+                "choice_vocab_entry_ids": [1, 2, 3, 4],
+                "correct_choice_index": 0
+              }
+            ]$questions$::jsonb
+          ) as assignment_id;
+        `);
+        deletedAssignmentId = created.rows[0]!.assignment_id;
+        await pendingDatabase.exec("set role authenticated;");
+        await pendingDatabase.query(`
+          select public.delete_assignment_v1(
+            '${deletedAssignmentId}',
+            'retry migration fixture'
+          );
+        `);
+        await pendingDatabase.exec("reset role;");
+        const deletedState = await pendingDatabase.query<{
+          updated_at: string;
+        }>(`
+          select updated_at::text
+          from public.assignments
+          where id = '${deletedAssignmentId}';
+        `);
+        deletedAssignmentUpdatedAt = deletedState.rows[0]!.updated_at;
+      },
+    });
+
+    try {
+      expect(deletedAssignmentId).not.toBeNull();
+      const state = await database.query<{
+        deleted_at: string;
+        passing_score: number;
+        retry_enabled: boolean;
+        retry_passing_score: number;
+        immutability_trigger_enabled: boolean;
+        updated_at_trigger_enabled: boolean;
+        updated_at: string;
+      }>(`
+        select
+          assignment.deleted_at::text,
+          assignment.updated_at::text,
+          assignment.passing_score,
+          assignment.retry_enabled,
+          assignment.retry_passing_score,
+          exists (
+            select 1
+            from pg_trigger as trigger
+            where trigger.tgrelid = 'public.assignments'::regclass
+              and trigger.tgname =
+                'assignments_prevent_deleted_reactivation'
+              and trigger.tgenabled = 'O'
+          ) as immutability_trigger_enabled,
+          exists (
+            select 1
+            from pg_trigger as trigger
+            where trigger.tgrelid = 'public.assignments'::regclass
+              and trigger.tgname = 'assignments_set_updated_at'
+              and trigger.tgenabled = 'O'
+          ) as updated_at_trigger_enabled
+        from public.assignments as assignment
+        where assignment.id = '${deletedAssignmentId}';
+      `);
+      expect(state.rows[0]).toMatchObject({
+        passing_score: 80,
+        retry_enabled: true,
+        retry_passing_score: 80,
+        immutability_trigger_enabled: true,
+        updated_at_trigger_enabled: true,
+      });
+      expect(state.rows[0]?.deleted_at).toBeTruthy();
+      expect(state.rows[0]?.updated_at).toBe(deletedAssignmentUpdatedAt);
+
+      await expectPostgresError(
+        database.query(`
+          update public.assignments
+          set title = 'Deleted assignment must stay immutable'
+          where id = '${deletedAssignmentId}';
+        `),
+        "55000",
+        "deleted_assignment_is_immutable",
+      );
+    } finally {
+      await database.close();
+    }
+  }, 60_000);
+
+  it("keeps retry rules separate from full-assignment retakes", async () => {
+    const database = await createFinalSchemaDatabase();
+    try {
+    const schema = await database.query<{
+      assignment_retry_enabled: string | null;
+      assignment_retry_score: string | null;
+      attempt_retry_enabled: string | null;
+      attempt_retry_score: string | null;
+      regular_v7: string | null;
+      bulk_v9: string | null;
+      queue_v2: string | null;
+      exact_v7: string | null;
+      replace_v5: string | null;
+      answer_v4: string | null;
+      start_retry_v2: string | null;
+    }>(`
+      select
+        to_regclass('public.assignments')::text as assignment_table,
+        (
+          select column_name
+          from information_schema.columns
+          where table_schema = 'public'
+            and table_name = 'assignments'
+            and column_name = 'retry_enabled'
+        ) as assignment_retry_enabled,
+        (
+          select column_name
+          from information_schema.columns
+          where table_schema = 'public'
+            and table_name = 'assignments'
+            and column_name = 'retry_passing_score'
+        ) as assignment_retry_score,
+        (
+          select column_name
+          from information_schema.columns
+          where table_schema = 'public'
+            and table_name = 'quiz_attempts'
+            and column_name = 'retry_enabled_snapshot'
+        ) as attempt_retry_enabled,
+        (
+          select column_name
+          from information_schema.columns
+          where table_schema = 'public'
+            and table_name = 'quiz_attempts'
+            and column_name = 'retry_passing_score_snapshot'
+        ) as attempt_retry_score,
+        to_regprocedure(
+          'public.create_assignment_with_delivery_v7(text,uuid,uuid[],integer,smallint,integer,smallint,boolean,smallint,public.question_order_mode,timestamp with time zone,uuid[],text,integer,jsonb)'
+        )::text as regular_v7,
+        to_regprocedure(
+          'public.create_bulk_vocab_assignments_v9(uuid,text,jsonb)'
+        )::text as bulk_v9,
+        to_regprocedure(
+          'public.create_vocab_assignment_queues_v2(uuid,text,jsonb)'
+        )::text as queue_v2,
+        to_regprocedure(
+          'public.create_exact_review_assignment_v7(uuid,uuid,uuid[],text,smallint,integer,smallint,boolean,smallint,public.question_order_mode,timestamp with time zone,text,integer,jsonb)'
+        )::text as exact_v7,
+        to_regprocedure(
+          'public.replace_student_assignment_v5(uuid,uuid,uuid,text,text,text,text,uuid,uuid[],integer,smallint,integer,smallint,boolean,smallint,public.question_order_mode,timestamp with time zone,text,integer,smallint[],uuid[],jsonb)'
+        )::text as replace_v5,
+        to_regprocedure(
+          'public.answer_quiz_question_v4(uuid,uuid,uuid,text,smallint,boolean)'
+        )::text as answer_v4,
+        to_regprocedure(
+          'public.start_quiz_retry_v2(uuid,uuid)'
+        )::text as start_retry_v2;
+    `);
+
+    expect(schema.rows[0]).toMatchObject({
+      assignment_retry_enabled: "retry_enabled",
+      assignment_retry_score: "retry_passing_score",
+      attempt_retry_enabled: "retry_enabled_snapshot",
+      attempt_retry_score: "retry_passing_score_snapshot",
+    });
+    for (const functionName of [
+      "regular_v7",
+      "bulk_v9",
+      "queue_v2",
+      "exact_v7",
+      "replace_v5",
+      "answer_v4",
+      "start_retry_v2",
+    ] as const) {
+      expect(schema.rows[0]?.[functionName]).not.toBeNull();
+    }
+
+    const answerDefinition = await database.query<{ definition: string }>(`
+      select pg_get_functiondef(
+        'public.answer_quiz_question_v4(uuid,uuid,uuid,text,smallint,boolean)'::regprocedure
+      ) as definition;
+    `);
+    expect(answerDefinition.rows[0]?.definition).toContain(
+      "not attempt_row.retry_enabled_snapshot",
+    );
+    expect(answerDefinition.rows[0]?.definition).toContain(
+      "final_score >= retry_passing_score_snapshot",
+    );
+
+    const retakeColumn = await database.query<{ present: boolean }>(`
+      select exists (
+        select 1
+        from information_schema.columns
+        where table_schema = 'public'
+          and table_name = 'assignments'
+          and column_name = 'retake_allowed'
+      ) as present;
+    `);
+    expect(retakeColumn.rows[0]?.present).toBe(true);
+    } finally {
+      await database.close();
+    }
+  }, 60_000);
+
+  it("persists disabled retry rules and completes the initial attempt without a retry", async () => {
+    const database = await createFinalSchemaDatabase();
+    try {
+      await seedReviewAssignmentScenario(database);
+      await database.exec("delete from public.student_vocab_review_queue;");
+      await database.exec("set role authenticated;");
+      const created = await database.query<{ assignment_id: string }>(`
+        select public.create_assignment_with_delivery_v7(
+          'Retry disabled fixture',
+          '${ids.dataset}',
+          array['${ids.units[0]}'::uuid, '${ids.units[4]}'::uuid],
+          4,
+          100::smallint,
+          300,
+          80::smallint,
+          false,
+          null,
+          'fixed',
+          null,
+          array['${ids.student}'::uuid],
+          'total',
+          null,
+          $questions$${mixedQuestions}$questions$::jsonb
+        ) as assignment_id;
+      `);
+      await database.exec("reset role;");
+      const assignmentId = created.rows[0]!.assignment_id;
+      const attempt = await database.query<{ attempt_id: string }>(`
+        select public.create_quiz_attempt_from_bank(
+          '${ids.student}',
+          '${assignmentId}'
+        ) as attempt_id;
+      `);
+      const attemptId = attempt.rows[0]!.attempt_id;
+      const retrySettings = await database.query<{
+        assignment_enabled: boolean;
+        assignment_score: number | null;
+        attempt_enabled: boolean;
+        attempt_score: number | null;
+      }>(`
+        select
+          assignment.retry_enabled as assignment_enabled,
+          assignment.retry_passing_score as assignment_score,
+          attempt.retry_enabled_snapshot as attempt_enabled,
+          attempt.retry_passing_score_snapshot as attempt_score
+        from public.assignments as assignment
+        join public.quiz_attempts as attempt
+          on attempt.assignment_id = assignment.id
+        where assignment.id = '${assignmentId}'
+          and attempt.id = '${attemptId}';
+      `);
+      expect(retrySettings.rows[0]).toEqual({
+        assignment_enabled: false,
+        assignment_score: null,
+        attempt_enabled: false,
+        attempt_score: null,
+      });
+
+      const questions = await database.query<{
+        id: string;
+        correct_choice_index: number;
+      }>(`
+        select id, correct_choice_index
+        from public.quiz_questions
+        where attempt_id = '${attemptId}'
+        order by order_index;
+      `);
+      let finalAnswer: { completed?: boolean; needsRetry?: boolean; passed?: boolean } = {};
+      for (const [index, question] of questions.rows.entries()) {
+        const choice = index === 0
+          ? (question.correct_choice_index + 1) % 4
+          : question.correct_choice_index;
+        const answer = await database.query<{ result: typeof finalAnswer }>(`
+          select public.answer_quiz_question_v4(
+            '${ids.student}',
+            '${attemptId}',
+            '${question.id}',
+            'initial',
+            ${choice}::smallint,
+            false
+          ) as result;
+        `);
+        finalAnswer = answer.rows[0]!.result;
+        const nextQuestion = questions.rows[index + 1];
+        if (nextQuestion) {
+          await database.query(`
+            select public.resume_quiz_after_feedback_v2(
+              '${ids.student}',
+              '${attemptId}',
+              '${nextQuestion.id}',
+              'initial',
+              0
+            );
+          `);
+        }
+      }
+      expect(finalAnswer).toMatchObject({
+        completed: true,
+        needsRetry: false,
+        passed: false,
+      });
+      const completed = await database.query<{
+        passed: boolean;
+        phase: string;
+        status: string;
+      }>(`
+        select passed, phase::text, status::text
+        from public.quiz_attempts
+        where id = '${attemptId}';
+      `);
+      expect(completed.rows[0]).toEqual({
+        passed: false,
+        phase: "completed",
+        status: "completed",
+      });
+      await expectPostgresError(
+        database.query(`
+          select public.start_quiz_retry_v2(
+            '${ids.student}',
+            '${attemptId}'
+          );
+        `),
+        "22023",
+        "retry_disabled",
+      );
+    } finally {
+      await database.close();
+    }
+  }, 60_000);
 });

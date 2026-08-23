@@ -46,6 +46,7 @@ import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import {
   answerQuizQuestionWithCompatibleRpc,
   resumeQuizAfterFeedbackWithCompatibleRpc,
+  startQuizRetryWithCompatibleRpc,
 } from "@/lib/services/quiz-rpc-compatibility";
 import type { StudentAssignmentSummary } from "@/features/student-dashboard/model";
 import type {
@@ -1401,10 +1402,13 @@ export async function startStudentRetry(
   attemptId: string,
 ) {
   const supabase = getServiceSupabaseClient();
-  const { data, error } = await supabase.rpc("start_quiz_retry", {
-    p_student_id: studentId,
-    p_attempt_id: attemptId,
-  });
+  const { data, error } = await startQuizRetryWithCompatibleRpc(
+    (functionName, parameters) => supabase.rpc(functionName, parameters),
+    {
+      p_student_id: studentId,
+      p_attempt_id: attemptId,
+    },
+  );
 
   if (error || !data) {
     throw new Error("재시험을 시작하지 못했습니다.");

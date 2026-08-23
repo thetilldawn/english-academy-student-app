@@ -18,6 +18,7 @@ export type VocabAssignmentFieldKey =
   | "direction"
   | "questionOrder"
   | "passingScore"
+  | "retryPassingScore"
   | "timing"
   | "students"
   | "preview"
@@ -60,6 +61,7 @@ const fieldOrder: readonly VocabAssignmentFieldKey[] = [
   "direction",
   "questionOrder",
   "passingScore",
+  "retryPassingScore",
   "timing",
   "startDate",
   "weekdays",
@@ -135,6 +137,7 @@ export function vocabAssignmentFieldKeyForIssue(
   if (path === "exam.directionRatio") return "direction";
   if (path === "exam.questionOrderMode") return "questionOrder";
   if (path === "exam.passingScore") return "passingScore";
+  if (path === "exam.retryPassingScore") return "retryPassingScore";
   if (path.startsWith("exam.timing")) return "timing";
   return "preview";
 }

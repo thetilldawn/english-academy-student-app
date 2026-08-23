@@ -155,6 +155,19 @@ export const createWrongWordWorksheetRequestSchema = z
 export const createReviewAssignmentDraftSchema =
   queueWrongWordsSchema;
 
+function validateRetrySettings(
+  value: { retryEnabled: boolean; retryPassingScore: number | null },
+  context: z.RefinementCtx,
+) {
+  if (value.retryEnabled !== (value.retryPassingScore !== null)) {
+    context.addIssue({
+      code: "custom",
+      path: ["retryPassingScore"],
+      message: "재시험 사용 여부와 통과 점수를 확인해 주세요.",
+    });
+  }
+}
+
 export const assignmentSchema = z
   .object({
     title: z.string().trim().max(160).default(""),
@@ -168,6 +181,8 @@ export const assignmentSchema = z
     ]),
     timeLimitSeconds: z.coerce.number().int().min(30).max(10800),
     passingScore: z.coerce.number().int().min(0).max(100),
+    retryEnabled: z.boolean(),
+    retryPassingScore: z.coerce.number().int().min(0).max(100).nullable(),
     questionOrderMode: z.enum(questionOrderModes).default("random"),
     availableUntil: z
       .union([z.iso.datetime({ offset: true }), z.literal(""), z.null()])
@@ -182,7 +197,8 @@ export const assignmentSchema = z
       message: "같은 범위를 두 번 선택할 수 없습니다.",
       path: ["unitIds"],
     },
-  );
+  )
+  .superRefine(validateRetrySettings);
 
 export const exactReviewAssignmentSchema = z
   .object({
@@ -195,6 +211,8 @@ export const exactReviewAssignmentSchema = z
     ]),
     timeLimitSeconds: z.coerce.number().int().min(30).max(10800),
     passingScore: z.coerce.number().int().min(0).max(100),
+    retryEnabled: z.boolean(),
+    retryPassingScore: z.coerce.number().int().min(0).max(100).nullable(),
     questionOrderMode: z.enum(questionOrderModes).default("random"),
     availableUntil: z
       .union([z.iso.datetime({ offset: true }), z.literal(""), z.null()])
@@ -202,7 +220,8 @@ export const exactReviewAssignmentSchema = z
       .transform((value) => value || null),
   })
   .strict()
-  .and(timingSettingsSchema);
+  .and(timingSettingsSchema)
+  .superRefine(validateRetrySettings);
 
 const mixedReviewLevelSchema = z.union([
   z.literal(1),
@@ -268,7 +287,7 @@ const bulkCommonPlanSchema = z
         z
           .object({
             availableFrom: z.iso.datetime({ offset: true }),
-            availableUntil: z.iso.datetime({ offset: true }),
+            availableUntil: z.iso.datetime({ offset: true }).nullable(),
           })
           .strict(),
       )
@@ -280,7 +299,7 @@ const bulkCommonPlanSchema = z
           .object({
             unitIds: z.array(z.uuid()).min(1).max(500),
             availableFrom: z.iso.datetime({ offset: true }),
-            availableUntil: z.iso.datetime({ offset: true }),
+            availableUntil: z.iso.datetime({ offset: true }).nullable(),
           })
           .strict(),
       )
@@ -290,6 +309,21 @@ const bulkCommonPlanSchema = z
   })
   .strict()
   .superRefine((value, context) => {
+    const immediate = value.selectedDateCount === 0;
+    if (
+      immediate &&
+      (value.distribution !== "repeat" ||
+        value.splitBasis !== "question_count" ||
+        value.overflowPolicy !== "leave" ||
+        value.sessions.length !== 1 ||
+        value.recurrenceSessions.length !== 1)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["selectedDateCount"],
+        message: "시험일 없는 배정은 한 번만 바로 배정할 수 있습니다.",
+      });
+    }
     if (
       value.distribution !== "split" &&
       value.overflowPolicy === "continue_weekly"
@@ -377,7 +411,18 @@ const bulkCommonPlanSchema = z
     let previousRecurrenceStart = Number.NEGATIVE_INFINITY;
     value.recurrenceSessions.forEach((session, index) => {
       const start = Date.parse(session.availableFrom);
-      if (Date.parse(session.availableUntil) <= start) {
+      if (immediate ? session.availableUntil !== null : session.availableUntil === null) {
+        context.addIssue({
+          code: "custom",
+          path: ["recurrenceSessions", index, "availableUntil"],
+          message: immediate
+            ? "시험일 없는 배정에는 마감을 넣을 수 없습니다."
+            : "반복 일정 마감을 입력해 주세요.",
+        });
+      } else if (
+        session.availableUntil &&
+        Date.parse(session.availableUntil) <= start
+      ) {
         context.addIssue({
           code: "custom",
           path: ["recurrenceSessions", index, "availableUntil"],
@@ -483,7 +528,7 @@ function validateBulkAssignmentSelection(
     context.addIssue({
       code: "custom",
       path: ["studentIds"],
-      message: `이어 배정은 한 번에 최대 ${MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT}명까지 선택할 수 있습니다.`,
+      message: `배정된 시험은 한 번에 최대 ${MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT}명까지 저장할 수 있습니다.`,
     });
   }
   if (
@@ -575,7 +620,22 @@ function validateBulkAssignmentSelection(
           message: "문항 나누기는 모든 회차에서 같은 전체 범위를 사용해야 합니다.",
         });
       }
-      if (Date.parse(session.availableUntil) <= Date.parse(session.availableFrom)) {
+      if (
+        commonPlan.selectedDateCount === 0
+          ? session.availableUntil !== null
+          : session.availableUntil === null
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["commonPlan", "sessions", index, "availableUntil"],
+          message: commonPlan.selectedDateCount === 0
+            ? "시험일 없는 배정에는 마감을 넣을 수 없습니다."
+            : "회차 마감을 입력해 주세요.",
+        });
+      } else if (
+        session.availableUntil &&
+        Date.parse(session.availableUntil) <= Date.parse(session.availableFrom)
+      ) {
         context.addIssue({
           code: "custom",
           path: ["commonPlan", "sessions", index, "availableUntil"],
@@ -605,6 +665,8 @@ export const bulkAssignmentSchema = z
     idempotencyKey: z.uuid(),
     timeLimitSeconds: z.number().int().min(30).max(10800),
     passingScore: z.number().int().min(0).max(100),
+    retryEnabled: z.boolean(),
+    retryPassingScore: z.number().int().min(0).max(100).nullable(),
     questionOrderMode: z.enum(questionOrderModes).default("random"),
     timingMode: z.enum(timingModes),
     questionTimeLimitSeconds: z
@@ -617,11 +679,11 @@ export const bulkAssignmentSchema = z
   .strict()
   .superRefine((value, context) => {
     validateBulkAssignmentSelection(value, context);
-    if (value.commonPlan?.selectedDateCount === 0) {
+    if (value.retryEnabled !== (value.retryPassingScore !== null)) {
       context.addIssue({
         code: "custom",
-        path: ["commonPlan", "selectedDateCount"],
-        message: "배정할 요일을 하나 이상 선택해 주세요.",
+        path: ["retryPassingScore"],
+        message: "재시험 사용 여부와 통과 점수를 확인해 주세요.",
       });
     }
     if (
@@ -751,11 +813,20 @@ export const assignmentReplacementSchema = z
       .max(600)
       .nullable(),
     passingScore: z.number().int().min(0).max(100),
+    retryEnabled: z.boolean(),
+    retryPassingScore: z.number().int().min(0).max(100).nullable(),
     questionOrderMode: z.enum(questionOrderModes),
     availableUntil: z.iso.datetime({ offset: true }).nullable(),
   })
   .strict()
   .superRefine((value, context) => {
+    if (value.retryEnabled !== (value.retryPassingScore !== null)) {
+      context.addIssue({
+        code: "custom",
+        path: ["retryPassingScore"],
+        message: "재시험 사용 여부와 통과 점수를 확인해 주세요.",
+      });
+    }
     if (value.includePendingReview && value.reviewLevels.length === 0) {
       context.addIssue({
         code: "custom",
@@ -814,6 +885,8 @@ export const mixedAssignmentSchema = z
     title: z.string().trim().max(160).default(""),
     timeLimitSeconds: z.number().int().min(30).max(10800),
     passingScore: z.number().int().min(0).max(100),
+    retryEnabled: z.boolean(),
+    retryPassingScore: z.number().int().min(0).max(100).nullable(),
     questionOrderMode: z.enum(questionOrderModes).default("random"),
     availableUntil: z.iso.datetime({ offset: true }).nullable(),
     timingMode: z.enum(timingModes).optional(),
@@ -827,6 +900,13 @@ export const mixedAssignmentSchema = z
   })
   .strict()
   .superRefine((value, context) => {
+    if (value.retryEnabled !== (value.retryPassingScore !== null)) {
+      context.addIssue({
+        code: "custom",
+        path: ["retryPassingScore"],
+        message: "재시험 사용 여부와 통과 점수를 확인해 주세요.",
+      });
+    }
     if (
       new Set(value.primaryUnitIds).size !==
       value.primaryUnitIds.length

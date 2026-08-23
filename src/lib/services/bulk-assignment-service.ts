@@ -154,21 +154,63 @@ const MAXIMUM_BULK_QUESTION_COUNT = 10_000;
 const SEOUL_OFFSET_MILLISECONDS = 9 * 60 * 60 * 1000;
 const MAXIMUM_QUEUE_WINDOW_SECONDS = 365 * 24 * 60 * 60;
 
+function seoulTodayStartIso(now = new Date()) {
+  const seoulNow = new Date(now.getTime() + SEOUL_OFFSET_MILLISECONDS);
+  return new Date(
+    Date.UTC(
+      seoulNow.getUTCFullYear(),
+      seoulNow.getUTCMonth(),
+      seoulNow.getUTCDate(),
+    ) - SEOUL_OFFSET_MILLISECONDS,
+  ).toISOString();
+}
+
+function normalizeImmediateSchedule<T extends BulkAssignmentPreviewInput>(
+  input: T,
+): T {
+  if (!input.commonPlan || input.commonPlan.selectedDateCount !== 0) {
+    return input;
+  }
+  const availableFrom = seoulTodayStartIso();
+  return {
+    ...input,
+    firstAvailableFrom: availableFrom,
+    firstAvailableUntil: null,
+    commonPlan: {
+      ...input.commonPlan,
+      recurrenceSessions: input.commonPlan.recurrenceSessions.map(
+        (session) => ({ ...session, availableFrom, availableUntil: null }),
+      ),
+      sessions: input.commonPlan.sessions.map((session) => ({
+        ...session,
+        availableFrom,
+        availableUntil: null,
+      })),
+    },
+  } as T;
+}
+
 function usesCompletionQueue(input: BulkAssignmentInput) {
   return input.commonPlan?.distribution === "split";
 }
 
 function toSeoulRecurrenceSlot(input: {
   availableFrom: string;
-  availableUntil: string;
+  availableUntil: string | null;
 }) {
+  if (!input.availableUntil) {
+    throw new BulkAssignmentError(
+      "invalid_selection",
+      "배정된 시험의 반복 일정에는 마감이 필요합니다.",
+    );
+  }
   const from = Date.parse(input.availableFrom);
   const until = Date.parse(input.availableUntil);
   const durationSeconds = Math.floor((until - from) / 1000);
   if (durationSeconds < 60 || durationSeconds > MAXIMUM_QUEUE_WINDOW_SECONDS) {
     throw new BulkAssignmentError(
       "invalid_selection",
-      "이어 배정의 공개·마감 간격은 1분부터 365일까지 설정할 수 있습니다.",
+      "배정된 시험의 공개·마감 간격은 1분부터 365일까지 설정할 수 있습니다.",
     );
   }
   const local = new Date(from + SEOUL_OFFSET_MILLISECONDS);
@@ -357,6 +399,9 @@ function extendCommonPlanSchedule(
   recurrenceSchedule: CommonPlanInput["recurrenceSessions"],
   requiredSessionCount: number,
 ) {
+  if (requiredSessionCount <= schedule.length) {
+    return schedule.slice(0, requiredSessionCount);
+  }
   const baseSchedule = schedule.map((slot) => ({
     sessionNumber: slot.sessionNumber,
     date: slot.availableFrom.slice(0, 10),
@@ -367,7 +412,7 @@ function extendCommonPlanSchedule(
     sessionNumber: index + 1,
     date: slot.availableFrom.slice(0, 10),
     availableLocalDateTime: slot.availableFrom,
-    deadlineLocalDateTime: slot.availableUntil,
+    deadlineLocalDateTime: slot.availableUntil ?? slot.availableFrom,
   }));
   const extended = extendScheduleSlotsFromRecurrence(
     baseSchedule,
@@ -492,6 +537,8 @@ async function prepareCommonPlanSeries(input: {
         timingMode: request.timingMode,
         questionTimeLimitSeconds: request.questionTimeLimitSeconds,
         passingScore: request.passingScore,
+        retryEnabled: request.retryEnabled,
+        retryPassingScore: request.retryPassingScore,
         questionOrderMode: request.questionOrderMode,
       }
     : {
@@ -499,6 +546,8 @@ async function prepareCommonPlanSeries(input: {
         timingMode: "total" as const,
         questionTimeLimitSeconds: null,
         passingScore: 80,
+        retryEnabled: true,
+        retryPassingScore: 80,
         questionOrderMode: "ascending" as const,
       };
   const firstSession = sessions[0];
@@ -694,6 +743,7 @@ export async function previewBulkAssignments(
   input: BulkAssignmentPreviewInput,
   authenticatedAdmin?: AdminContext,
 ): Promise<BulkAssignmentPreview> {
+  input = normalizeImmediateSchedule(input);
   const admin = authenticatedAdmin ?? (await requireAdmin());
   const requestedSessionCount = input.commonPlan?.sessions.length ??
     input.sessionCount;
@@ -705,7 +755,7 @@ export async function previewBulkAssignments(
   ) {
     throw new BulkAssignmentError(
       "invalid_selection",
-      `한 번에 저장할 수 있는 시험은 전체 ${MAXIMUM_BULK_ASSIGNMENT_COUNT}개이며 이어 배정 학생은 ${MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT}명까지입니다.`,
+      `한 번에 저장할 수 있는 시험은 전체 ${MAXIMUM_BULK_ASSIGNMENT_COUNT}개이며 배정된 시험은 ${MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT}명까지입니다.`,
     );
   }
   const preparationCache = createMixedAssignmentPreparationCache();
@@ -1262,6 +1312,8 @@ function bulkAssignmentRequestSha256(input: BulkAssignmentInput) {
         englishToKoreanRatio: input.englishToKoreanRatio,
         timeLimitSeconds: input.timeLimitSeconds,
         passingScore: input.passingScore,
+        retryEnabled: input.retryEnabled,
+        retryPassingScore: input.retryPassingScore,
         questionOrderMode: input.questionOrderMode,
         timingMode: input.timingMode,
         questionTimeLimitSeconds: input.questionTimeLimitSeconds,
@@ -1354,6 +1406,7 @@ export async function createBulkAssignments(
   input: BulkAssignmentInput,
   authenticatedAdmin?: AdminContext,
 ): Promise<BulkAssignmentResult[]> {
+  input = normalizeImmediateSchedule(input);
   const admin = authenticatedAdmin ?? (await requireAdmin());
   const supabase = await createServerSupabaseClient();
   const requestSha256 = bulkAssignmentRequestSha256(input);
@@ -1483,6 +1536,8 @@ export async function createBulkAssignments(
               english_to_korean_ratio: prepared.englishToKoreanRatio,
               time_limit_seconds: prepared.timeLimitSeconds,
               passing_score: prepared.passingScore,
+              retry_enabled: prepared.retryEnabled,
+              retry_passing_score: prepared.retryPassingScore,
               question_order_mode: prepared.questionOrderMode,
               available_from: session.availableFrom,
               available_until: prepared.availableUntil,
@@ -1532,6 +1587,8 @@ export async function createBulkAssignments(
               title: "",
               timeLimitSeconds: input.timeLimitSeconds,
               passingScore: input.passingScore,
+              retryEnabled: input.retryEnabled,
+              retryPassingScore: input.retryPassingScore,
               questionOrderMode: input.questionOrderMode,
               availableUntil: session.availableUntil,
               timingMode: input.timingMode,
@@ -1554,6 +1611,8 @@ export async function createBulkAssignments(
             question_count: session.questionCount,
             time_limit_seconds: prepared.timeLimitSeconds,
             passing_score: prepared.passingScore,
+            retry_enabled: prepared.retryEnabled,
+            retry_passing_score: prepared.retryPassingScore,
             question_order_mode: prepared.questionOrderMode,
             available_from: session.availableFrom,
             available_until: prepared.availableUntil,
@@ -1582,6 +1641,8 @@ export async function createBulkAssignments(
             timingMode: input.timingMode,
             questionTimeLimitSeconds: input.questionTimeLimitSeconds,
             passingScore: input.passingScore,
+            retryEnabled: input.retryEnabled,
+            retryPassingScore: input.retryPassingScore,
             questionOrderMode: input.questionOrderMode,
             availableUntil: session.availableUntil,
             studentIds: [item.studentId],
@@ -1600,6 +1661,8 @@ export async function createBulkAssignments(
           english_to_korean_ratio: prepared.englishToKoreanRatio,
           time_limit_seconds: prepared.timeLimitSeconds,
           passing_score: prepared.passingScore,
+          retry_enabled: prepared.retryEnabled,
+          retry_passing_score: prepared.retryPassingScore,
           question_order_mode: prepared.questionOrderMode,
           available_from: session.availableFrom,
           available_until: prepared.availableUntil,
@@ -1672,12 +1735,12 @@ export async function createBulkAssignments(
 
   const completionQueue = usesCompletionQueue(input);
   const { data, error } = completionQueue
-    ? await supabase.rpc("create_vocab_assignment_queues_v1", {
+    ? await supabase.rpc("create_vocab_assignment_queues_v2", {
         p_idempotency_key: input.idempotencyKey,
         p_request_sha256: requestSha256,
         p_series: buildCompletionQueueSeriesPayload(input, preview, batches),
       })
-    : await supabase.rpc("create_bulk_vocab_assignments_v8", {
+    : await supabase.rpc("create_bulk_vocab_assignments_v9", {
         p_idempotency_key: input.idempotencyKey,
         p_request_sha256: requestSha256,
         p_batches: batches,

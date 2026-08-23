@@ -245,6 +245,34 @@ revoke all on function private.cancel_student_assignment_v1(
   uuid, uuid, text
 ) from public, anon, authenticated, service_role;
 
+-- Newer assignment writers remain present during a deployment-window
+-- rollback. Revoke them conditionally so they cannot bypass the restored
+-- legacy boundary, while keeping this rollback executable on older schemas.
+do $$
+declare
+  function_signature text;
+begin
+  for function_signature in
+    select signature
+    from (values
+      ('public.create_assignment_with_delivery_v7(text,uuid,uuid[],integer,smallint,integer,smallint,boolean,smallint,public.question_order_mode,timestamp with time zone,uuid[],text,integer,jsonb)'),
+      ('public.create_mixed_review_assignment_v10(uuid,uuid,smallint[],text,uuid[],text,uuid[],smallint,integer,smallint,boolean,smallint,public.question_order_mode,timestamp with time zone,text,integer,jsonb)'),
+      ('public.create_exact_review_assignment_v7(uuid,uuid,uuid[],text,smallint,integer,smallint,boolean,smallint,public.question_order_mode,timestamp with time zone,text,integer,jsonb)'),
+      ('public.replace_student_assignment_v5(uuid,uuid,uuid,text,text,text,text,uuid,uuid[],integer,smallint,integer,smallint,boolean,smallint,public.question_order_mode,timestamp with time zone,text,integer,smallint[],uuid[],jsonb)'),
+      ('public.create_bulk_vocab_assignments_v9(uuid,text,jsonb)'),
+      ('public.create_vocab_assignment_queues_v2(uuid,text,jsonb)')
+    ) as rollback_functions(signature)
+  loop
+    if to_regprocedure(function_signature) is not null then
+      execute format(
+        'revoke all on function %s from public, anon, authenticated, service_role',
+        function_signature
+      );
+    end if;
+  end loop;
+end;
+$$;
+
 grant execute on function private.create_assignment_with_question_bank_v3(
   text, uuid, uuid[], integer, smallint, integer, smallint,
   public.question_order_mode, timestamptz, uuid[], jsonb

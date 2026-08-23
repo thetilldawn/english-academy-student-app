@@ -16,6 +16,25 @@
   gap: var(--space-3);
 }
 
+.browserModePanel {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-3);
+  animation: browserModePanelIn var(--motion-standard) both;
+}
+
+@keyframes browserModePanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .entryModes {
   min-width: 0;
   display: grid;
@@ -311,7 +330,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .searchIcon,
-  .bulkBar {
+  .bulkBar,
+  .browserModePanel {
+    animation: none;
     transition: none;
   }
 }

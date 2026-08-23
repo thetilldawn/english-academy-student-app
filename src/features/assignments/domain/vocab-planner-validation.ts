@@ -39,6 +39,7 @@ export function validateVocabPlannerInputs(input: {
   questionCount: VocabQuestionCountChoice;
   overflowPolicy: VocabSplitOverflowPolicy;
   selectionMode: VocabTargetSelectionMode;
+  scheduleEnabled?: boolean;
   schedule: VocabScheduleDraft;
   scheduleSlots: readonly VocabScheduleSlot[];
 }): AssignmentDraftIssue[] {
@@ -134,21 +135,21 @@ export function validateVocabPlannerInputs(input: {
       message: "문항 선택 방식을 골라 주세요.",
     });
   }
-  if (!isCalendarDate(input.schedule.startDate)) {
+  if (input.scheduleEnabled !== false && !isCalendarDate(input.schedule.startDate)) {
     issues.push({
       code: "invalid_datetime",
       path: "commonPlan.schedule.startDate",
       message: "배정 기준일을 확인해 주세요.",
     });
   }
-  if (input.schedule.weekdays.length === 0) {
+  if (input.scheduleEnabled !== false && input.schedule.weekdays.length === 0) {
     issues.push({
       code: "required",
       path: "commonPlan.sessions",
       message: "배정할 요일을 하나 이상 선택해 주세요.",
     });
   }
-  if (!TIME_PATTERN.test(input.schedule.availableTime)) {
+  if (input.scheduleEnabled !== false && !TIME_PATTERN.test(input.schedule.availableTime)) {
     issues.push({
       code: "invalid_datetime",
       path: "commonPlan.schedule.availableTime",
@@ -156,9 +157,10 @@ export function validateVocabPlannerInputs(input: {
     });
   }
   if (
-    !Number.isInteger(input.schedule.deadlineDayOffset) ||
+    input.scheduleEnabled !== false &&
+    (!Number.isInteger(input.schedule.deadlineDayOffset) ||
     input.schedule.deadlineDayOffset < 0 ||
-    input.schedule.deadlineDayOffset > 30
+    input.schedule.deadlineDayOffset > 30)
   ) {
     issues.push({
       code: "out_of_range",
@@ -166,14 +168,14 @@ export function validateVocabPlannerInputs(input: {
       message: "마감일은 당일부터 30일 뒤까지 선택해 주세요.",
     });
   }
-  if (!TIME_PATTERN.test(input.schedule.deadlineTime)) {
+  if (input.scheduleEnabled !== false && !TIME_PATTERN.test(input.schedule.deadlineTime)) {
     issues.push({
       code: "invalid_datetime",
       path: "commonPlan.schedule.deadlineTime",
       message: "마감 시각을 확인해 주세요.",
     });
   }
-  input.scheduleSlots.forEach((slot, index) => {
+  if (input.scheduleEnabled !== false) input.scheduleSlots.forEach((slot, index) => {
     const availableValid = isLocalDateTime(slot.availableLocalDateTime);
     const deadlineValid = isLocalDateTime(slot.deadlineLocalDateTime);
     if (!availableValid) {
