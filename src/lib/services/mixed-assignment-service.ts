@@ -25,6 +25,7 @@ import {
 } from "@/lib/quiz/engine";
 import {
   buildAssignmentQuestionPlan,
+  buildExactAssignmentQuestionPlan,
   calculateAssignmentQuestionRange,
   calculateAssignmentSeriesQuestionCapacity,
 } from "@/lib/assignment/question-planner";
@@ -38,6 +39,7 @@ import { memoizeRequestPreparation } from "@/lib/services/request-preparation-ca
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type {
   AssignmentCapacityInput,
+  DirectReviewAssignmentInput,
   MixedAssignmentInput,
 } from "@/lib/validation";
 
@@ -588,11 +590,12 @@ export type PreparedMixedAssignmentBatch = {
   }[];
 };
 
-export async function prepareMixedAssignmentBatch(
-  input: MixedAssignmentInput,
+async function preparePendingReviewAssignmentBatch(
+  input: MixedAssignmentInput | DirectReviewAssignmentInput,
   authenticatedAdmin?: AdminContext,
   exclusion?: AssignmentExclusion,
   cache?: MixedAssignmentPreparationCache,
+  mode: "mixed" | "exact-review" = "mixed",
 ): Promise<PreparedMixedAssignmentBatch> {
   if (
     input.availableUntil &&
@@ -627,13 +630,21 @@ export async function prepareMixedAssignmentBatch(
         : "선택한 단계에 추가할 틀렸던 단어가 없습니다.",
     );
   }
-  if (
-    input.totalQuestionCount < capacity.minimumQuestionCount ||
-    input.totalQuestionCount > capacity.maximumQuestionCount
-  ) {
+  const invalidExactReviewCount =
+    mode === "exact-review" &&
+    (input.totalQuestionCount < 1 ||
+      input.totalQuestionCount > 400 ||
+      input.totalQuestionCount !== prepared.selectedQueueRows.length);
+  const invalidMixedCount =
+    mode === "mixed" &&
+    (input.totalQuestionCount < capacity.minimumQuestionCount ||
+      input.totalQuestionCount > capacity.maximumQuestionCount);
+  if (invalidExactReviewCount || invalidMixedCount) {
     throw new MixedAssignmentError(
       "invalid_selection",
-      capacity.maximumQuestionCount >= capacity.minimumQuestionCount
+      mode === "exact-review"
+        ? "오답 목록이 바뀌었거나 현재 조건으로 문제를 만들 수 없습니다."
+        : capacity.maximumQuestionCount >= capacity.minimumQuestionCount
         ? `현재 조건에서는 ${capacity.minimumQuestionCount}~${capacity.maximumQuestionCount}문항으로 배정할 수 있습니다.`
         : "선택한 단어장 범위는 아직 시험 배정 준비가 끝나지 않았습니다.",
     );
@@ -641,13 +652,25 @@ export async function prepareMixedAssignmentBatch(
 
   let questionDrafts;
   try {
-    questionDrafts = buildAssignmentQuestionPlan({
-      requiredTargets: prepared.reviewTargets,
-      primaryCandidates: prepared.primaryCandidates,
-      allCandidates: prepared.allCandidates,
-      questionCount: input.totalQuestionCount,
-      englishToKoreanRatio: input.englishToKoreanRatio,
-    });
+    questionDrafts = mode === "exact-review"
+      ? buildExactAssignmentQuestionPlan({
+          targets: prepared.reviewTargets,
+          allCandidates: prepared.allCandidates,
+          englishToKoreanRatio: input.englishToKoreanRatio,
+          randomSeed: [
+            "direct-review",
+            input.studentId,
+            input.datasetId,
+            ...prepared.selectedQueueRows.map((queue) => queue.id),
+          ].join(":"),
+        })
+      : buildAssignmentQuestionPlan({
+          requiredTargets: prepared.reviewTargets,
+          primaryCandidates: prepared.primaryCandidates,
+          allCandidates: prepared.allCandidates,
+          questionCount: input.totalQuestionCount,
+          englishToKoreanRatio: input.englishToKoreanRatio,
+        });
   } catch (error) {
     throw new MixedAssignmentError(
       "invalid_selection",
@@ -708,6 +731,36 @@ export async function prepareMixedAssignmentBatch(
       choice_vocab_entry_ids: question.choiceVocabEntryIds,
     })),
   };
+}
+
+export async function prepareMixedAssignmentBatch(
+  input: MixedAssignmentInput,
+  authenticatedAdmin?: AdminContext,
+  exclusion?: AssignmentExclusion,
+  cache?: MixedAssignmentPreparationCache,
+) {
+  return preparePendingReviewAssignmentBatch(
+    input,
+    authenticatedAdmin,
+    exclusion,
+    cache,
+    "mixed",
+  );
+}
+
+export async function prepareDirectReviewAssignmentBatch(
+  input: DirectReviewAssignmentInput,
+  authenticatedAdmin?: AdminContext,
+  exclusion?: AssignmentExclusion,
+  cache?: MixedAssignmentPreparationCache,
+) {
+  return preparePendingReviewAssignmentBatch(
+    input,
+    authenticatedAdmin,
+    exclusion,
+    cache,
+    "exact-review",
+  );
 }
 
 export async function createMixedAssignment(

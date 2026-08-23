@@ -9,6 +9,7 @@ import {
   createReviewAssignmentDraftSchema,
   createWrongWordWorksheetRequestSchema,
   createStudentSchema,
+  directReviewAssignmentSchema,
   exactReviewAssignmentSchema,
   mixedAssignmentSchema,
   updateStudentProfileSchema,
@@ -680,6 +681,30 @@ describe("DAY+오답 혼합 시험 입력 계약", () => {
         availableUntil: "2026-08-01T10:00:00+09:00",
       }).availableUntil,
     ).toBe("2026-08-01T10:00:00+09:00");
+  });
+
+  it("독립 오답 시험만 1~3문항을 허용하고 일반 혼합 시험은 최소 4문항을 유지한다", () => {
+    for (const totalQuestionCount of [1, 2, 3]) {
+      const input = {
+        ...validInput,
+        reviewScope: "dataset" as const,
+        totalQuestionCount,
+      };
+      expect(directReviewAssignmentSchema.parse(input).totalQuestionCount).toBe(
+        totalQuestionCount,
+      );
+      expect(mixedAssignmentSchema.safeParse(input).success).toBe(false);
+    }
+    expect(directReviewAssignmentSchema.safeParse({
+      ...validInput,
+      reviewScope: "dataset",
+      totalQuestionCount: 0,
+    }).success).toBe(false);
+    expect(directReviewAssignmentSchema.safeParse({
+      ...validInput,
+      reviewScope: "dataset",
+      totalQuestionCount: 401,
+    }).success).toBe(false);
   });
 
   it.each([

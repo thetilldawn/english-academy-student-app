@@ -164,7 +164,7 @@ describe("assignment request adapters", () => {
       datasetId: assignmentContractIds.dataset,
       primaryUnitIds: [...reverseUnitIds],
       reviewLevels: [1, 2],
-      questionCount: 4,
+      questionCount: 1,
       title: "오답 시험",
       exam: {
         directionRatio: 50,
@@ -186,7 +186,7 @@ describe("assignment request adapters", () => {
       primaryUnitIds: [...reverseUnitIds],
       reviewLevels: [1, 2],
       reviewScope: "dataset",
-      totalQuestionCount: 4,
+      totalQuestionCount: 1,
       timingMode: "none",
       questionTimeLimitSeconds: null,
       availableUntil: null,

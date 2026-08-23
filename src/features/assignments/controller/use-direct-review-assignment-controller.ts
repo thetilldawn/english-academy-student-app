@@ -26,6 +26,7 @@ import type {
 } from "../catalog-types";
 import {
   createInitialDirectReviewDraft,
+  directReviewQuestionCountError,
   reduceDirectReviewDraft,
 } from "../domain/direct-review-draft";
 import type {
@@ -262,15 +263,11 @@ export function useDirectReviewAssignmentController({
     }
     if (capacity.status === "error") errors.preview = "계산 확인";
     if (capacity.status === "ready") {
-      if (draft.questionCount === 0) errors.questionCount = "오답 없음";
-      else if (draft.questionCount < 4) errors.questionCount = "4개 이상 필요";
-      else if (draft.questionCount > 400) errors.questionCount = "400개까지";
-      else if (
-        capacity.value.minimumQuestionCount !== draft.questionCount ||
-        capacity.value.maximumQuestionCount < draft.questionCount
-      ) {
-        errors.questionCount = "출제 조건 확인";
-      }
+      const questionCountError = directReviewQuestionCountError({
+        questionCount: draft.questionCount,
+        wrongEligible: capacity.value.wrongEligible,
+      });
+      if (questionCountError) errors.questionCount = questionCountError;
     }
     if (![0, 50, 100].includes(draft.exam.directionRatio)) {
       errors.direction = "방향 확인";

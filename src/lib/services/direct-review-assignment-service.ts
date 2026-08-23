@@ -6,7 +6,7 @@ import { isAssignmentPersistenceInvariantFailure } from "@/lib/admin/assignment-
 import { requireAdmin, type AdminContext } from "@/lib/auth/admin";
 import {
   MixedAssignmentError,
-  prepareMixedAssignmentBatch,
+  prepareDirectReviewAssignmentBatch,
 } from "@/lib/services/mixed-assignment-service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { DirectReviewAssignmentInput } from "@/lib/validation";
@@ -34,7 +34,10 @@ export async function createDirectReviewAssignment(
 
   let prepared;
   try {
-    prepared = await prepareMixedAssignmentBatch(input, authenticatedAdmin);
+    prepared = await prepareDirectReviewAssignmentBatch(
+      input,
+      authenticatedAdmin,
+    );
   } catch (error) {
     if (error instanceof MixedAssignmentError) {
       throw new DirectReviewAssignmentError(error.reason, error.message);

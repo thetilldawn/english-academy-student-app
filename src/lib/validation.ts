@@ -869,7 +869,7 @@ export const assignmentReplacementSchema = z
     }
   });
 
-export const mixedAssignmentSchema = z
+const mixedAssignmentBaseSchema = z
   .object({
     studentId: z.uuid(),
     datasetId: z.uuid(),
@@ -898,59 +898,71 @@ export const mixedAssignmentSchema = z
       .nullable()
       .optional(),
   })
-  .strict()
-  .superRefine((value, context) => {
-    if (value.retryEnabled !== (value.retryPassingScore !== null)) {
-      context.addIssue({
-        code: "custom",
-        path: ["retryPassingScore"],
-        message: "재시험 사용 여부와 통과 점수를 확인해 주세요.",
-      });
-    }
-    if (
-      new Set(value.primaryUnitIds).size !==
-      value.primaryUnitIds.length
-    ) {
-      context.addIssue({
-        code: "custom",
-        path: ["primaryUnitIds"],
-        message: "같은 범위를 두 번 선택할 수 없습니다.",
-      });
-    }
-    if (
-      new Set(value.reviewLevels).size !==
-      value.reviewLevels.length
-    ) {
-      context.addIssue({
-        code: "custom",
-        path: ["reviewLevels"],
-        message: "같은 오답 단계를 두 번 선택할 수 없습니다.",
-      });
-    }
-    if (
-      (value.timingMode === "none" &&
-        value.questionTimeLimitSeconds !== null &&
-        value.questionTimeLimitSeconds !== undefined) ||
-      (value.timingMode === "total" &&
-        value.questionTimeLimitSeconds !== null &&
-        value.questionTimeLimitSeconds !== undefined) ||
-      (value.timingMode === "per_question" &&
-        (value.questionTimeLimitSeconds === null ||
-          value.questionTimeLimitSeconds === undefined)) ||
-      (value.timingMode === undefined &&
-        value.questionTimeLimitSeconds !== null &&
-        value.questionTimeLimitSeconds !== undefined)
-    ) {
-      context.addIssue({
-        code: "custom",
-        path: ["questionTimeLimitSeconds"],
-        message: "시간 제한 방식과 문제당 시간을 확인해주세요.",
-      });
-    }
-  });
+  .strict();
 
-export const directReviewAssignmentSchema = mixedAssignmentSchema.superRefine(
-  (value, context) => {
+function refineMixedAssignmentSettings(
+  value: z.infer<typeof mixedAssignmentBaseSchema>,
+  context: z.RefinementCtx,
+) {
+  if (value.retryEnabled !== (value.retryPassingScore !== null)) {
+    context.addIssue({
+      code: "custom",
+      path: ["retryPassingScore"],
+      message: "재시험 사용 여부와 통과 점수를 확인해 주세요.",
+    });
+  }
+  if (
+    new Set(value.primaryUnitIds).size !==
+    value.primaryUnitIds.length
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["primaryUnitIds"],
+      message: "같은 범위를 두 번 선택할 수 없습니다.",
+    });
+  }
+  if (
+    new Set(value.reviewLevels).size !==
+    value.reviewLevels.length
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["reviewLevels"],
+      message: "같은 오답 단계를 두 번 선택할 수 없습니다.",
+    });
+  }
+  if (
+    (value.timingMode === "none" &&
+      value.questionTimeLimitSeconds !== null &&
+      value.questionTimeLimitSeconds !== undefined) ||
+    (value.timingMode === "total" &&
+      value.questionTimeLimitSeconds !== null &&
+      value.questionTimeLimitSeconds !== undefined) ||
+    (value.timingMode === "per_question" &&
+      (value.questionTimeLimitSeconds === null ||
+        value.questionTimeLimitSeconds === undefined)) ||
+    (value.timingMode === undefined &&
+      value.questionTimeLimitSeconds !== null &&
+      value.questionTimeLimitSeconds !== undefined)
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["questionTimeLimitSeconds"],
+      message: "시간 제한 방식과 문제당 시간을 확인해주세요.",
+    });
+  }
+}
+
+export const mixedAssignmentSchema = mixedAssignmentBaseSchema.superRefine(
+  refineMixedAssignmentSettings,
+);
+
+export const directReviewAssignmentSchema = mixedAssignmentBaseSchema
+  .extend({
+    totalQuestionCount: z.number().int().min(1).max(500),
+  })
+  .superRefine(refineMixedAssignmentSettings)
+  .superRefine((value, context) => {
     if (value.totalQuestionCount > 400) {
       context.addIssue({
         code: "custom",
@@ -965,8 +977,7 @@ export const directReviewAssignmentSchema = mixedAssignmentSchema.superRefine(
         message: "오답 시험은 선택한 단어장 전체 오답으로 배정해 주세요.",
       });
     }
-  },
-);
+  });
 
 export type MixedAssignmentInput = z.infer<
   typeof mixedAssignmentSchema

@@ -21,6 +21,20 @@ export type DirectReviewDraftAction =
   | { type: "timing_mode_changed"; mode: ExamTiming["mode"] }
   | { type: "deadline_changed"; deadline: AssignmentDeadline };
 
+export function directReviewQuestionCountError(input: {
+  questionCount: number;
+  wrongEligible: number;
+}) {
+  if (input.questionCount < 1) return "오답 없음";
+  if (input.questionCount > 400) return "400개까지";
+  if (
+    input.questionCount !== input.wrongEligible
+  ) {
+    return "출제 조건 확인";
+  }
+  return null;
+}
+
 export function createInitialDirectReviewDraft(input: {
   studentId: string;
   datasetId: string;

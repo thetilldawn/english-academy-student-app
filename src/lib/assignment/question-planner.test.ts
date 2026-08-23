@@ -166,6 +166,51 @@ describe("assignment question planner", () => {
     );
   });
 
+  it.each([1, 2, 3])("독립 오답 대상 %i개도 보기 4개짜리 문제로 만든다", (count) => {
+    const candidates = Array.from({ length: 8 }, (_, index) => ({
+      id: 64_000 + index,
+      headword: `small-review-${index}`,
+      primaryMeaning: `작은 오답 뜻-${index}`,
+      canonicalKey: `small-review-${index}`,
+    }));
+    const questions = buildExactAssignmentQuestionPlan({
+      targets: candidates.slice(0, count),
+      allCandidates: candidates,
+      englishToKoreanRatio: 100,
+      randomSeed: `small-review-${count}`,
+    });
+
+    expect(questions).toHaveLength(count);
+    expect(questions.every((question) =>
+      question.choiceVocabEntryIds.length === 4
+    )).toBe(true);
+  });
+
+  it("일반 혼합 용량이 0이어도 독립 오답 1문항을 만들 수 있다", () => {
+    const candidates = Array.from({ length: 4 }, (_, index) => ({
+      id: 65_000 + index,
+      headword: `english-only-${index}`,
+      primaryMeaning: `영한 전용 뜻-${index}`,
+      canonicalKey: `english-only-${index}`,
+      eligibleDirections: ["english_to_korean" as const],
+    }));
+    expect(calculateAssignmentQuestionRange({
+      requiredTargets: candidates.slice(0, 1),
+      primaryCandidates: candidates.slice(1),
+      allCandidates: candidates,
+      englishToKoreanRatio: 50,
+    })).toEqual({
+      minimumQuestionCount: 0,
+      maximumQuestionCount: 0,
+    });
+    expect(buildExactAssignmentQuestionPlan({
+      targets: candidates.slice(0, 1),
+      allCandidates: candidates,
+      englishToKoreanRatio: 50,
+      randomSeed: "small-review-independent-capacity",
+    })).toHaveLength(1);
+  });
+
   it("요청 비율 때문에 실제로 가능한 최소 문항 수를 계산한다", () => {
     const englishOnly = Array.from({ length: 4 }, (_, index) => ({
       id: 2001 + index,

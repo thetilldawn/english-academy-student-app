@@ -4523,4 +4523,128 @@ describe.sequential("assignment retry rules", () => {
       await database.close();
     }
   }, 60_000);
+
+  it("creates a one-question direct review assignment and starts its quiz attempt", async () => {
+    const directReviewDatabase = await createFinalSchemaDatabase();
+    try {
+      await seedReviewAssignmentScenario(directReviewDatabase);
+      const privileges = await directReviewDatabase.query<{
+        anon_execute: boolean;
+        authenticated_execute: boolean;
+        service_execute: boolean;
+      }>(`
+        select
+          has_function_privilege(
+            'anon',
+            'private.create_exact_review_assignment_v5(uuid,uuid,uuid[],text,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,jsonb)',
+            'execute'
+          ) as anon_execute,
+          has_function_privilege(
+            'authenticated',
+            'private.create_exact_review_assignment_v5(uuid,uuid,uuid[],text,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,jsonb)',
+            'execute'
+          ) as authenticated_execute,
+          has_function_privilege(
+            'service_role',
+            'private.create_exact_review_assignment_v5(uuid,uuid,uuid[],text,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,jsonb)',
+            'execute'
+          ) as service_execute;
+      `);
+      expect(privileges.rows[0]).toEqual({
+        anon_execute: false,
+        authenticated_execute: true,
+        service_execute: true,
+      });
+      const oneQuestion = JSON.stringify([
+        {
+          vocab_entry_id: 1,
+          base_order_index: 1,
+          direction: "english_to_korean",
+          choice_vocab_entry_ids: [1, 2, 3, 4],
+        },
+      ]);
+
+      await directReviewDatabase.exec("set role authenticated;");
+      const created = await directReviewDatabase.query<{
+        assignment_id: string;
+      }>(`
+        select public.create_exact_review_assignment_v7(
+          '${ids.student}',
+          '${ids.dataset}',
+          array['${ids.selectedQueue}'::uuid],
+          'One-word direct review',
+          100::smallint,
+          300,
+          80::smallint,
+          true,
+          80::smallint,
+          'fixed',
+          null,
+          'total',
+          null,
+          $questions$${oneQuestion}$questions$::jsonb
+        ) as assignment_id;
+      `);
+      await directReviewDatabase.exec("reset role;");
+      const assignmentId = created.rows[0]!.assignment_id;
+
+      const assignment = await directReviewDatabase.query<{
+        assignment_purpose: string;
+        question_count: number;
+        question_bank_count: number;
+        review_target_count: number;
+      }>(`
+        select
+          assignment.assignment_purpose,
+          assignment.question_count,
+          (
+            select count(*)::integer
+            from public.assignment_questions as question
+            where question.assignment_id = assignment.id
+          ) as question_bank_count,
+          (
+            select count(*)::integer
+            from public.assignment_review_targets as target
+            where target.assignment_id = assignment.id
+          ) as review_target_count
+        from public.assignments as assignment
+        where assignment.id = '${assignmentId}';
+      `);
+      expect(assignment.rows[0]).toEqual({
+        assignment_purpose: "review",
+        question_count: 1,
+        question_bank_count: 1,
+        review_target_count: 1,
+      });
+
+      const attempt = await directReviewDatabase.query<{
+        attempt_id: string;
+      }>(`
+        select public.create_quiz_attempt_from_bank(
+          '${ids.student}',
+          '${assignmentId}'
+        ) as attempt_id;
+      `);
+      const attemptState = await directReviewDatabase.query<{
+        question_count_snapshot: number;
+        question_count: number;
+      }>(`
+        select
+          attempt.question_count_snapshot,
+          (
+            select count(*)::integer
+            from public.quiz_questions as question
+            where question.attempt_id = attempt.id
+          ) as question_count
+        from public.quiz_attempts as attempt
+        where attempt.id = '${attempt.rows[0]!.attempt_id}';
+      `);
+      expect(attemptState.rows[0]).toEqual({
+        question_count_snapshot: 1,
+        question_count: 1,
+      });
+    } finally {
+      await directReviewDatabase.close();
+    }
+  }, 60_000);
 });
