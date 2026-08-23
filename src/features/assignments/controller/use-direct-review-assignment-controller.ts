@@ -165,13 +165,14 @@ export function useDirectReviewAssignmentController({
   });
   const [openedAt] = useState(() => Date.now());
   const submittingRef = useRef(false);
+  const calculationPrerequisitesReady = Boolean(draft.datasetId) &&
+    draft.primaryUnitIds.length > 0 &&
+    draft.reviewLevels.length > 0;
+  const calculationPending = calculationPrerequisitesReady &&
+    (capacity.status === "idle" || capacity.status === "loading");
 
   useEffect(() => {
-    if (
-      !draft.datasetId ||
-      draft.primaryUnitIds.length === 0 ||
-      draft.reviewLevels.length === 0
-    ) {
+    if (!calculationPrerequisitesReady) {
       return;
     }
 
@@ -250,6 +251,7 @@ export function useDirectReviewAssignmentController({
     draft.primaryUnitIds,
     draft.reviewLevels,
     draft.studentId,
+    calculationPrerequisitesReady,
     transport,
   ]);
 
@@ -404,6 +406,7 @@ export function useDirectReviewAssignmentController({
       submit,
       toggleReviewLevel,
     },
+    calculationPending,
     canSubmit,
     capacity,
     draft,

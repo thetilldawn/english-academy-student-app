@@ -218,6 +218,8 @@ describe.sequential("exam-use dictionary projection", () => {
   let entryIds: number[] = [];
   let assignmentId = "";
   let attemptId = "";
+  let exactQueueIds: string[] = [];
+  let dictionaryExactAssignmentId = "";
 
   beforeAll(async () => {
     database = await createFinalSchemaDatabase();
@@ -758,6 +760,7 @@ describe.sequential("exam-use dictionary projection", () => {
     await database.exec("reset role;");
 
     const queueIds = queued.rows[0]!.queue_ids;
+    exactQueueIds = queueIds;
     expect(queueIds).toHaveLength(4);
     const queueEntries = await database.query<{
       id: string;
@@ -804,6 +807,7 @@ describe.sequential("exam-use dictionary projection", () => {
       [ids.student, datasetId, queueIds, JSON.stringify(questions)],
     );
     const exactAssignmentId = exact.rows[0]!.assignment_id;
+    dictionaryExactAssignmentId = exactAssignmentId;
 
     const exactState = await database.query<{
       assignment_purpose: string;
@@ -848,27 +852,149 @@ describe.sequential("exam-use dictionary projection", () => {
     });
   });
 
-  it("remaps historical queues to the active release through the public mixed RPC", async () => {
-    const exactAssignment = await database.query<{ id: string }>(`
-      select id
-      from public.assignments
-      where title = 'Dictionary exact review'
-      order by created_at desc
-      limit 1;
-    `);
-    expect(exactAssignment.rows[0]?.id).toMatch(/^[0-9a-f-]{36}$/i);
+  it("creates and starts a one-word exact review through the active exam-use release", async () => {
+    expect(exactQueueIds).toHaveLength(4);
+    expect(dictionaryExactAssignmentId).toMatch(/^[0-9a-f-]{36}$/i);
 
     await database.exec("set role authenticated;");
     await database.query(
       `select public.cancel_student_assignment_v1(
         $1::uuid,
         $2::uuid,
-        'active release remap fixture'
+        'one-word exact review fixture'
       )`,
-      [exactAssignment.rows[0]!.id, ids.student],
+      [dictionaryExactAssignmentId, ids.student],
     );
     await database.exec("reset role;");
 
+    const queueEntry = await database.query<{ vocab_entry_id: number }>(
+      `select vocab_entry_id
+       from public.student_vocab_review_queue
+       where id = $1::uuid
+         and student_id = $2::uuid
+         and status = 'pending'`,
+      [exactQueueIds[0], ids.student],
+    );
+    expect(queueEntry.rows).toHaveLength(1);
+    const oneQuestion = JSON.stringify([{
+      vocab_entry_id: queueEntry.rows[0]!.vocab_entry_id,
+      base_order_index: 1,
+      direction: "english_to_korean",
+      choice_vocab_entry_ids: entryIds,
+    }]);
+
+    await database.exec("set role authenticated;");
+    await expect(database.query(
+      `select public.create_assignment_with_delivery_v6(
+        'Regular one-word assignment must stay blocked',
+        $1::uuid,
+        array[$2::uuid],
+        1,
+        100::smallint,
+        300,
+        80::smallint,
+        'fixed'::public.question_order_mode,
+        clock_timestamp() + interval '1 day',
+        array[$3::uuid],
+        'total',
+        null,
+        $4::jsonb
+      )`,
+      [datasetId, unitId, ids.student, oneQuestion],
+    )).rejects.toThrow("invalid_exam_use_question_settings");
+
+    const created = await database.query<{ assignment_id: string }>(
+      `select public.create_exact_review_assignment_v7(
+        $1::uuid,
+        $2::uuid,
+        array[$3::uuid],
+        'Dictionary one-word exact review',
+        100::smallint,
+        300,
+        80::smallint,
+        true,
+        80::smallint,
+        'fixed'::public.question_order_mode,
+        clock_timestamp() + interval '1 day',
+        'total',
+        null,
+        $4::jsonb
+      ) as assignment_id`,
+      [ids.student, datasetId, exactQueueIds[0], oneQuestion],
+    );
+    await database.exec("reset role;");
+    const oneAssignmentId = created.rows[0]!.assignment_id;
+
+    const state = await database.query<{
+      assignment_purpose: string;
+      question_count: number;
+      snapshot_count: number;
+      target_count: number;
+    }>(`
+      select
+        assignment.assignment_purpose,
+        assignment.question_count,
+        (select count(*)::integer
+          from public.assignment_question_exam_use_snapshot as snapshot
+          where snapshot.assignment_id = assignment.id
+            and snapshot.release_id = '${releaseId}') as snapshot_count,
+        (select count(*)::integer
+          from public.assignment_review_targets as target
+          where target.assignment_id = assignment.id
+            and target.released_at is null) as target_count
+      from public.assignments as assignment
+      where assignment.id = '${oneAssignmentId}';
+    `);
+    expect(state.rows[0]).toEqual({
+      assignment_purpose: "review",
+      question_count: 1,
+      snapshot_count: 1,
+      target_count: 1,
+    });
+
+    const attempt = await database.query<{ attempt_id: string }>(`
+      select public.create_quiz_attempt_from_bank(
+        '${ids.student}',
+        '${oneAssignmentId}'
+      ) as attempt_id;
+    `);
+    const attemptId = attempt.rows[0]!.attempt_id;
+    const attemptState = await database.query<{
+      phase: string;
+      question_count: number;
+      status: string;
+    }>(`
+      select
+        attempt.phase::text,
+        attempt.status::text,
+        (select count(*)::integer
+          from public.quiz_questions as question
+          where question.attempt_id = attempt.id) as question_count
+      from public.quiz_attempts as attempt
+      where attempt.id = '${attemptId}';
+    `);
+    expect(attemptState.rows[0]).toEqual({
+      phase: "initial",
+      question_count: 1,
+      status: "in_progress",
+    });
+
+    await database.exec(`
+      delete from public.quiz_attempts where id = '${attemptId}';
+    `);
+    await database.exec("set role authenticated;");
+    await database.query(
+      `select public.cancel_student_assignment_v1(
+        $1::uuid,
+        $2::uuid,
+        'release one-word exact review fixture'
+      )`,
+      [oneAssignmentId, ids.student],
+    );
+    await database.exec("reset role;");
+  });
+
+  it("remaps historical queues to the active release through the public mixed RPC", async () => {
     const remapUnitId = "00000000-0000-4000-8000-000000009101";
     const remapReleaseId = "00000000-0000-4000-8000-000000009102";
     await database.exec(`

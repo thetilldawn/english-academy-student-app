@@ -167,17 +167,21 @@ export function DirectReviewAssignmentSections({
             ) : null}
           </Field>
         </div>
-        <div
-          aria-live="polite"
-          className={styles.reviewCalculation}
-          data-status={capacity.status}
-          role="status"
-        >
-          {countText}
+        <div data-field-key="preview" tabIndex={-1}>
+          <div
+            aria-live="polite"
+            className={styles.reviewCalculation}
+            data-field-key="questionCount"
+            data-status={capacity.status}
+            role="status"
+            tabIndex={-1}
+          >
+            {countText}
+          </div>
+          {fieldErrors.questionCount ? (
+            <FieldError>{fieldErrors.questionCount}</FieldError>
+          ) : null}
         </div>
-        {fieldErrors.questionCount ? (
-          <FieldError>{fieldErrors.questionCount}</FieldError>
-        ) : null}
       </AssignmentSection>
 
       <AssignmentSection

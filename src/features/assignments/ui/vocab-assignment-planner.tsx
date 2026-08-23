@@ -64,6 +64,8 @@ export function VocabAssignmentPlanner({
   const busy = assignmentPurpose === "range"
     ? bulk.state.submission.status === "submitting"
     : reviewController.submitting;
+  const reviewCalculationPending = assignmentPurpose === "review" &&
+    reviewController.calculationPending;
   const visibleErrors = submitAttempted ? controller.fieldErrors : {};
   const visibleReviewErrors = submitAttempted
     ? reviewController.fieldErrors
@@ -230,7 +232,11 @@ export function VocabAssignmentPlanner({
         <div className={styles.submitRow}>
           <AssignmentSubmitAction
             blockedReason={null}
-            canSubmit={!busy && (!submitAttempted || canSubmit)}
+            canSubmit={
+              !busy &&
+              !reviewCalculationPending &&
+              (!submitAttempted || canSubmit)
+            }
             formId="vocab-assignment-plan-form"
             label={busy ? "배정 중…" : "배정하기"}
           />
