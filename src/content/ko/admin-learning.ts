@@ -407,7 +407,7 @@ export const adminLearningText = {
       "{assignable}명 · 첫 시험 {assignable}개 · 배정된 시험 {queued}개 · {blocked}명 확인 필요",
     datasetPending: "단어장 확인 중",
     rangePending: "범위 확인 중",
-    questionCount: "{count}문항",
+    questionCount: "{count}개",
     needsReview: "확인 필요",
     wrongCount: "오답 {count}개",
     submitting: "전체 저장 중…",

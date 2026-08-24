@@ -346,6 +346,72 @@ describe("bulk assignment controller", () => {
     });
   });
 
+  it("submits the visible source-order choice as ascending without another click", async () => {
+    const requests: Parameters<AssignmentTransport>[0][] = [];
+    const transport: AssignmentTransport = vi.fn(async (request) => {
+      requests.push(request);
+      const body = request.body as {
+        sessionCount: number;
+        studentIds: string[];
+      };
+      return request.url.endsWith("/preview")
+        ? {
+            data: previewResponse(body.studentIds, body.sessionCount),
+            ok: true,
+            status: 200,
+          }
+        : {
+            data: creationResponse(body.studentIds, body.sessionCount),
+            ok: true,
+            status: 201,
+          };
+    });
+    const { result } = renderHook(() => useBulkAssignmentController({
+      clock: () => NOW,
+      commonPlanRequired: true,
+      firstAvailableDateKorean: "2099-08-10",
+      genericErrorMessage: "일괄 배정을 저장하지 못했습니다.",
+      includePendingReview: false,
+      initialCommonPlan: {
+        collisionDecisions: [],
+        datasetId: assignmentContractIds.dataset,
+        distribution: "repeat",
+        extraDatePolicy: "unconfirmed",
+        orderedUnitIds: [assignmentContractIds.day60],
+        overflowPolicy: "leave",
+        planNonce: assignmentContractIds.idempotencyKey,
+        questionCount: { mode: "all" },
+        rangeUnitCounts: [],
+        recurrenceSessions: [{
+          availableLocalDateTime: "2099-08-10T09:00",
+          deadlineLocalDateTime: "2099-08-11T22:00",
+        }],
+        selectedDateCount: 1,
+        selectionMode: "source_order",
+        sessions: [{
+          availableLocalDateTime: "2099-08-10T09:00",
+          deadlineLocalDateTime: "2099-08-11T22:00",
+          unitIds: [assignmentContractIds.day60],
+        }],
+        splitBasis: "question_count",
+      },
+      previewDelayMs: 0,
+      previewErrorMessage: "학생별 범위를 계산하지 못했습니다.",
+      studentIds: [assignmentContractIds.studentA],
+      transport,
+    }));
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    expect(result.current.state.draft.exam.questionOrderMode).toBe("ascending");
+
+    await act(async () => {
+      expect(await result.current.actions.submit()).toMatchObject({ ok: true });
+    });
+    expect(requests.at(-1)).toMatchObject({
+      body: { questionOrderMode: "ascending" },
+      url: "/api/admin/bulk-assignments",
+    });
+  });
+
   it("submits the supported 30-student by 7-session boundary as 210 assignments", async () => {
     const studentIds = Array.from(
       { length: 30 },

@@ -100,6 +100,7 @@ describe("BulkSeriesPreview", () => {
     expect(screen.queryByText("학생 가")).not.toBeInTheDocument();
     expect(screen.queryByText("학생 나")).not.toBeInTheDocument();
     expect(screen.getByText("학생 다 · 테스트고")).toBeVisible();
+    expect(screen.getByText("배정 40개 · 남음 46개")).toBeVisible();
     expect(screen.getAllByText("1회차")).toHaveLength(2);
   });
 
@@ -126,6 +127,7 @@ describe("BulkSeriesPreview", () => {
     expect(screen.queryByText(/공통 1명/)).not.toBeInTheDocument();
     expect(screen.queryByText(/별도 확인 0명/)).not.toBeInTheDocument();
     expect(screen.queryByText("학생 가")).not.toBeInTheDocument();
+    expect(screen.getByText("20개")).toBeVisible();
   });
 
   it("keeps an invalid one-student preview in the single-plan layout", () => {

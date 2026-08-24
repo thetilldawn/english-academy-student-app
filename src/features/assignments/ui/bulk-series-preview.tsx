@@ -139,7 +139,7 @@ export function BulkSeriesPreview({
           <article className={styles.previewRow}>
             <span className={styles.pending} role="status">
               {previewLoading
-                ? "실제 문항 수와 일정을 계산하고 있습니다."
+                ? "실제 단어 수와 일정을 계산하고 있습니다."
                 : "범위와 일정을 정하면 배정 계획을 보여 줍니다."}
             </span>
           </article>
@@ -172,8 +172,8 @@ export function BulkSeriesPreview({
             <h4>{commonPlanTitle}</h4>
           </div>
           <p className={styles.planCounts}>
-            출제 {summary.selectedQuestionCount}문항 · 남음{" "}
-            {summary.remainingQuestionCount}문항
+            배정 {summary.selectedQuestionCount}개 · 남음{" "}
+            {summary.remainingQuestionCount}개
           </p>
           <div className={styles.sessionList}>
             {summary.sessions.map((session) => (
@@ -191,7 +191,7 @@ export function BulkSeriesPreview({
                       </MetaTag>
                     ) : null}
                     <MetaTag size="large" tone="success">
-                      {session.questionCount}문항
+                      {session.questionCount}개
                     </MetaTag>
                     {completionGated && session.sessionNumber > 1 ? (
                       <MetaTag size="large">완료 후 생성</MetaTag>
