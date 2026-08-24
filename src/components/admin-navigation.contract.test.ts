@@ -11,6 +11,10 @@ describe("admin navigation loading contract", () => {
   it("does not attach route loading indicators to individual nav labels", () => {
     const component = source("src/components/admin-navigation.tsx");
     const css = source("src/components/shell/admin-navigation.module.css");
+    const assignmentCss = source(
+      "src/features/assignments/ui/assignment-workspace.module.css",
+    );
+    const tokens = source("src/styles/tokens.css");
     const pageLoading = source("src/app/admin/(protected)/loading.tsx");
 
     expect(component).not.toMatch(/useLinkStatus|ButtonSpinner|pending/);
@@ -18,6 +22,10 @@ describe("admin navigation loading contract", () => {
     expect(css).toMatch(
       /\.mobile \.link\s*\{[^}]*padding:\s*6px;/,
     );
+    expect(tokens).toContain("--admin-mobile-nav-height: 65px");
+    expect(css).toContain("var(--admin-mobile-nav-height)");
+    expect(assignmentCss).toContain("var(--admin-mobile-nav-height)");
+    expect(assignmentCss).not.toContain("72px");
     expect(pageLoading).toContain('role="status"');
   });
 });

@@ -127,7 +127,7 @@ function ResultHeader({
     <header className={styles.header} data-expired={expired || undefined}>
       <div className={styles.headerCopy}>
         <p className={styles.eyebrow}>{eyebrow}</p>
-        <h1>{result.title}</h1>
+        <h2>{result.title}</h2>
         <p>{message}</p>
       </div>
       <strong className={styles.score}>

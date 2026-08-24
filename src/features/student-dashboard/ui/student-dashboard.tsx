@@ -21,7 +21,6 @@ const sectionTitles: Record<StudentAssignmentSectionId, string> = {
 
 export function StudentDashboard({
   assignments,
-  displayName,
 }: {
   assignments: readonly StudentAssignmentSummary[];
   displayName: string;
@@ -34,13 +33,6 @@ export function StudentDashboard({
 
   return (
     <main className={styles.page} id="main-content">
-      <header className={styles.heading}>
-        <h1>
-          {displayName}
-          {studentAppText.dashboard.titleSuffix}
-        </h1>
-      </header>
-
       {visibleSections.length === 0 ? (
         <div className={styles.empty} role="status">
           {studentAppText.dashboard.emptyTitle}

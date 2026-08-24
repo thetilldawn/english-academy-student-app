@@ -1,9 +1,12 @@
 import { adminLearningText } from "@/content/ko/admin-learning";
+import { unitSelectionRangeLabel } from "@/lib/admin/history";
 
-export function assignmentUnitRangeLabel(labels: readonly string[]) {
+export function assignmentUnitRangeLabel(
+  labels: readonly string[],
+  sortIndexes?: readonly number[],
+) {
   if (labels.length === 0) {
     return adminLearningText.assignmentModal.range.rangeMissing;
   }
-  if (labels.length === 1) return labels[0];
-  return `${labels[0]}~${labels.at(-1)}`;
+  return unitSelectionRangeLabel(labels, sortIndexes);
 }

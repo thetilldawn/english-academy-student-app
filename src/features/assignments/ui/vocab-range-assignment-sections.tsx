@@ -73,7 +73,7 @@ export function VocabRangeAssignmentSections({
   return (
     <div className={styles.plannerSections}>
       <AssignmentSection
-        help="시험에 사용할 단어장과 연속 범위를 고릅니다."
+        help="시험에 사용할 단어장과 범위를 고릅니다."
         helpLabel="시험 범위 설명"
         index={1}
         status={rangeStatus}
@@ -178,15 +178,9 @@ export function VocabRangeAssignmentSections({
       >
         {controller.commonPlan ? (
           <BulkSeriesPreview
-            collisionDecisions={controller.collisionDecisionRecords}
-            completionGated={controller.planner.distribution === "split"}
+            completionGated={controller.distribution === "split"}
             controller={bulk}
-            distribution={controller.planner.distribution}
-            onClearCollisionDecision={controller.actions.clearCollisionDecision}
-            onCollisionDecision={controller.actions.decideCollision}
-            onCollisionDecisionChange={
-              controller.actions.changeCollisionDecision
-            }
+            distribution={controller.distribution}
             students={students}
           />
         ) : (

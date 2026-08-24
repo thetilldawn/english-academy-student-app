@@ -95,7 +95,7 @@ export function BulkPreviewSessionList({
           error={
             <>
               {session.error ? <small>{session.error}</small> : null}
-              {session.warnings.map((warning) => {
+              {session.warnings.filter((warning) => !warning.resolved).map((warning) => {
                 const actionPolicy = vocabCollisionActionPolicy(warning.kind);
                 const decisionContext = {
                   collisionId: warning.id,

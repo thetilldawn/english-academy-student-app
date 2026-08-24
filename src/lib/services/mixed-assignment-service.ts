@@ -33,6 +33,7 @@ import {
   activeReviewIdentities,
   loadActiveReviewAssignments,
 } from "@/lib/services/active-review-assignment-service";
+import { resolveOrderedUnitSelection } from "@/lib/admin/unit-range";
 import { loadEligibleVocabularyDataset } from "@/lib/services/eligible-vocabulary-service";
 import { loadDatasetDisplayLabel } from "@/lib/services/dataset-catalog-service";
 import { memoizeRequestPreparation } from "@/lib/services/request-preparation-cache";
@@ -341,14 +342,14 @@ async function prepareAssignment(
 
   let primaryUnits: MixedAssignmentUnit[];
   try {
-    primaryUnits = orderContiguousPrimaryUnits(
-      ((unitData ?? []) as UnitRow[]).map((unit) => ({
+    const availableUnits = ((unitData ?? []) as UnitRow[]).map((unit) => ({
         id: unit.id,
         unitLabel: unit.unit_label,
         sortIndex: unit.sort_index,
-      })),
-      input.primaryUnitIds,
-    );
+      }));
+    primaryUnits = input.includePendingReview
+      ? orderContiguousPrimaryUnits(availableUnits, input.primaryUnitIds)
+      : resolveOrderedUnitSelection(availableUnits, input.primaryUnitIds);
   } catch {
     throw new MixedAssignmentError("invalid_selection");
   }

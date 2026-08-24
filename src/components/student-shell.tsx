@@ -1,12 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 import { StudentLogoutButton } from "@/components/student-logout-button";
+import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { studentAppText } from "@/content/ko/student-app";
+import { studentBreadcrumbForPathname } from "@/lib/ui/student-routes";
 
 import styles from "./shell/app-shell.module.css";
 
@@ -21,6 +21,7 @@ export function StudentShell({
 }) {
   const pathname = usePathname();
   const focusedAttempt = pathname.startsWith("/student/attempt/");
+  const routeLocation = studentBreadcrumbForPathname(pathname);
 
   useEffect(() => {
     if (!window.location.hash) return;
@@ -44,12 +45,9 @@ export function StudentShell({
       {!focusedAttempt && (
         <header className={[styles.topbar, styles.studentTopbar].join(" ")}>
           <div className={styles.topbarInner}>
-            <Link className={styles.brand} href="/student">
-              <span className={styles.brandMark} aria-hidden="true">
-                E
-              </span>
-              <span>{studentAppText.shell.brand}</span>
-            </Link>
+            {routeLocation ? (
+              <AdminBreadcrumb {...routeLocation} variant="topbar" />
+            ) : null}
             <div className={styles.topbarActions}>
               <ThemeToggle />
               <span

@@ -115,8 +115,7 @@ function selectWholeRange(
   result: ReturnType<typeof renderPlanner>["result"],
 ) {
   act(() => {
-    result.current.actions.selectUnit(units[0]!.id);
-    result.current.actions.selectUnit(units.at(-1)!.id);
+    result.current.actions.selectAllUnits(true);
   });
 }
 
@@ -210,11 +209,11 @@ describe("단어 배정 일정 controller", () => {
     });
   });
 
-  it("전체 반복은 같은 DAY 범위를 월수금 세 날짜에 정확히 한 번씩 배정한다", () => {
+  it("전체 회차는 같은 범위를 월수금 세 날짜에 정확히 한 번씩 배정한다", () => {
     const { result } = renderPlanner();
     selectWholeRange(result);
     selectMondayWednesdayFriday(result);
-    act(() => result.current.actions.changeDistribution("repeat"));
+    act(() => result.current.actions.changeAssignmentMode("all_sessions"));
 
     expect(result.current.commonPlan?.sessions).toHaveLength(3);
     expect(result.current.commonPlan?.sessions.map((session) => ({
@@ -227,10 +226,11 @@ describe("단어 배정 일정 controller", () => {
     ]);
   });
 
-  it("나누기는 모든 회차에 같은 전체 DAY 범위를 보내고 서버가 실제 문항을 나눈다", () => {
+  it("단어 수 방식은 모든 회차에 전체 범위를 보내고 서버가 단어를 나눈다", () => {
     const { result } = renderPlanner();
     selectWholeRange(result);
     selectMondayWednesdayFriday(result);
+    act(() => result.current.actions.changeAssignmentMode("word_count"));
 
     expect(result.current.commonPlan?.sessions.map((session) => ({
       date: session.availableLocalDateTime.slice(0, 10),
@@ -256,10 +256,11 @@ describe("단어 배정 일정 controller", () => {
       session.unitIds.join(",") === "unit-1,unit-2")).toBe(true);
   });
 
-  it("문항 수는 전체가 기본이고 직접 입력값과 출제 대상을 별도로 보존한다", () => {
+  it("단어 수는 전체가 기본이고 직접 입력값과 문제 순서를 별도로 보존한다", () => {
     const { result } = renderPlanner();
     selectWholeRange(result);
     const initialNonce = result.current.planner.planNonce;
+    act(() => result.current.actions.changeAssignmentMode("word_count"));
     expect(result.current.commonPlan).toMatchObject({
       questionCount: { mode: "all" },
       overflowPolicy: "leave",
@@ -269,7 +270,7 @@ describe("단어 배정 일정 controller", () => {
     });
 
     act(() => {
-      result.current.actions.changeQuestionCountMode("manual");
+      result.current.actions.activateManualQuestionCount(120);
       result.current.actions.changeManualQuestionCount(20);
       result.current.actions.changeOverflowPolicy("continue_weekly");
       result.current.actions.changeSelectionMode("random");
@@ -286,6 +287,12 @@ describe("단어 배정 일정 controller", () => {
     act(() => result.current.actions.changeQuestionCountMode("all"));
     expect(result.current.planner.manualQuestionCount).toBe(20);
     expect(result.current.commonPlan?.questionCount).toEqual({ mode: "all" });
+
+    act(() => {
+      result.current.actions.changeAssignmentMode("all_sessions");
+      result.current.actions.changeAssignmentMode("word_count");
+    });
+    expect(result.current.planner.manualQuestionCount).toBe(20);
   });
 
   it("요일을 3개에서 2개로 줄였다 다시 늘리면 공통 계획도 3→2→3회로 동기화한다", () => {
@@ -307,13 +314,13 @@ describe("단어 배정 일정 controller", () => {
     expect(mocks.changeCommonPlan).toHaveBeenLastCalledWith(
       expect.objectContaining({ sessions: expect.arrayContaining([
         expect.objectContaining({
-          availableLocalDateTime: "2026-08-21T16:00",
+          availableLocalDateTime: "2026-08-21T00:00",
         }),
         expect.objectContaining({
-          availableLocalDateTime: "2026-08-24T16:00",
+          availableLocalDateTime: "2026-08-24T00:00",
         }),
         expect.objectContaining({
-          availableLocalDateTime: "2026-08-26T16:00",
+          availableLocalDateTime: "2026-08-26T00:00",
         }),
       ]) }),
     );
@@ -343,6 +350,36 @@ describe("단어 배정 일정 controller", () => {
       "2026-08-24",
       "2026-08-26",
     ]);
+  });
+
+  it("공개 시간을 꺼도 회차별 시간은 보존하고 실제 배정에는 자정을 적용한다", () => {
+    const { result } = renderPlanner();
+    selectWholeRange(result);
+    act(() => {
+      result.current.actions.toggleWeekday(1);
+      result.current.actions.updateSessionSchedule(1, {
+        availableLocalDateTime: "2026-08-24T17:30",
+        deadlineLocalDateTime: "2026-08-24T23:00",
+      });
+      result.current.actions.updateSchedule({ availableTimeEnabled: false });
+    });
+
+    expect(result.current.planner.sessionScheduleOverrides[1]).toEqual({
+      availableLocalDateTime: "2026-08-24T17:30",
+      deadlineLocalDateTime: "2026-08-24T23:00",
+    });
+    expect(result.current.commonPlan?.sessions[0]).toMatchObject({
+      availableLocalDateTime: "2026-08-24T00:00",
+      deadlineLocalDateTime: "2026-08-24T23:00",
+    });
+
+    act(() => {
+      result.current.actions.updateSchedule({ availableTimeEnabled: true });
+    });
+    expect(result.current.commonPlan?.sessions[0]).toMatchObject({
+      availableLocalDateTime: "2026-08-24T17:30",
+      deadlineLocalDateTime: "2026-08-24T23:00",
+    });
   });
 
   it("추가 날짜 확인 결과를 공통 계획에 반영하고 조건 변경 시 초기화한다", () => {
@@ -409,68 +446,63 @@ describe("단어 배정 일정 controller", () => {
     expect(result.current.planner.schedule.weekdays).toEqual([5, 1]);
   });
 
-  it("범위 단위는 월·수 회차에 2단위씩 배정하고 남은 범위를 다음 주로 잇는다", () => {
+  it("회차별은 월·수에 범위를 하나씩 배정하고 남은 범위를 다음 주로 잇는다", () => {
     const { result } = renderPlanner();
     act(() => {
-      result.current.actions.selectUnit(units[0]!.id);
-      result.current.actions.selectUnit(units[5]!.id);
+      result.current.actions.selectAllUnits(true);
       result.current.actions.toggleWeekday(1);
       result.current.actions.toggleWeekday(3);
-      result.current.actions.changeSplitBasis("range_unit");
-      result.current.actions.changeUnitsPerSession(2);
+      result.current.actions.changeAssignmentMode("per_session");
       result.current.actions.changeOverflowPolicy("continue_weekly");
     });
 
     expect(result.current.commonPlan).toMatchObject({
       splitBasis: "range_unit",
       orderedUnitIds: units.map((unit) => unit.id),
-      rangeUnitCounts: [2, 2],
+      rangeUnitCounts: [1, 1],
       overflowPolicy: "continue_weekly",
     });
     expect(result.current.commonPlan?.sessions.map((session) => ({
       date: session.availableLocalDateTime.slice(0, 10),
       unitIds: session.unitIds,
     }))).toEqual([
-      { date: "2026-08-24", unitIds: ["unit-1", "unit-2"] },
-      { date: "2026-08-26", unitIds: ["unit-3", "unit-4"] },
-      { date: "2026-08-31", unitIds: ["unit-5", "unit-6"] },
+      { date: "2026-08-24", unitIds: ["unit-1"] },
+      { date: "2026-08-26", unitIds: ["unit-2"] },
+      { date: "2026-08-31", unitIds: ["unit-3"] },
+      { date: "2026-09-02", unitIds: ["unit-4"] },
+      { date: "2026-09-07", unitIds: ["unit-5"] },
+      { date: "2026-09-09", unitIds: ["unit-6"] },
     ]);
   });
 
-  it("요일별 단위 수와 역방향 범위를 그대로 보존한다", () => {
+  it("비연속 범위도 원래 범위 순서로 회차별 배정한다", () => {
     const { result } = renderPlanner();
     act(() => {
       result.current.actions.selectUnit(units[5]!.id);
       result.current.actions.selectUnit(units[0]!.id);
+      result.current.actions.selectUnit(units[2]!.id);
       result.current.actions.toggleWeekday(1);
       result.current.actions.toggleWeekday(3);
-      result.current.actions.changeSplitBasis("range_unit");
-      result.current.actions.changeUnitAllocationMode("by_weekday");
-      result.current.actions.changeWeekdayUnitsPerSession(1, 2);
-      result.current.actions.changeWeekdayUnitsPerSession(3, 3);
+      result.current.actions.changeAssignmentMode("per_session");
       result.current.actions.changeOverflowPolicy("continue_weekly");
     });
 
-    expect(result.current.commonPlan?.rangeUnitCounts).toEqual([2, 3]);
+    expect(result.current.commonPlan?.rangeUnitCounts).toEqual([1, 1]);
     expect(result.current.commonPlan?.sessions.map((session) =>
       session.unitIds)).toEqual([
-      ["unit-6", "unit-5"],
-      ["unit-4", "unit-3", "unit-2"],
       ["unit-1"],
+      ["unit-3"],
+      ["unit-6"],
     ]);
   });
 
-  it("회차 날짜를 옮겨도 범위 단위 수는 원래 요일 규칙을 유지한다", () => {
+  it("회차 날짜를 옮겨도 회차별 범위 순서를 유지한다", () => {
     const { result } = renderPlanner();
     act(() => {
-      result.current.actions.selectUnit(units[0]!.id);
-      result.current.actions.selectUnit(units[5]!.id);
+      result.current.actions.selectAllUnits(true);
       result.current.actions.toggleWeekday(1);
       result.current.actions.toggleWeekday(3);
-      result.current.actions.changeSplitBasis("range_unit");
-      result.current.actions.changeUnitAllocationMode("by_weekday");
-      result.current.actions.changeWeekdayUnitsPerSession(1, 2);
-      result.current.actions.changeWeekdayUnitsPerSession(3, 3);
+      result.current.actions.changeAssignmentMode("per_session");
       result.current.actions.changeOverflowPolicy("continue_weekly");
       result.current.actions.updateSessionSchedule(2, {
         availableLocalDateTime: "2026-08-27T16:00",
@@ -478,14 +510,17 @@ describe("단어 배정 일정 controller", () => {
       });
     });
 
-    expect(result.current.commonPlan?.rangeUnitCounts).toEqual([2, 3]);
+    expect(result.current.commonPlan?.rangeUnitCounts).toEqual([1, 1]);
     expect(result.current.commonPlan?.sessions.map((session) => ({
       date: session.availableLocalDateTime.slice(0, 10),
       unitIds: session.unitIds,
     }))).toEqual([
-      { date: "2026-08-24", unitIds: ["unit-1", "unit-2"] },
-      { date: "2026-08-27", unitIds: ["unit-3", "unit-4", "unit-5"] },
-      { date: "2026-08-31", unitIds: ["unit-6"] },
+      { date: "2026-08-24", unitIds: ["unit-1"] },
+      { date: "2026-08-27", unitIds: ["unit-2"] },
+      { date: "2026-08-31", unitIds: ["unit-3"] },
+      { date: "2026-09-02", unitIds: ["unit-4"] },
+      { date: "2026-09-07", unitIds: ["unit-5"] },
+      { date: "2026-09-09", unitIds: ["unit-6"] },
     ]);
   });
 });

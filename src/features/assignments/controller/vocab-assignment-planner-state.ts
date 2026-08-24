@@ -5,31 +5,25 @@ import {
   type VocabCollisionDecisionRecord,
 } from "../domain/vocab-collision-decisions";
 import {
-  advanceDayRangeSelection,
+  selectAllVocabUnits,
+  toggleVocabUnitSelection,
   selectInitialVocabDatasetId,
   toggleWeekday,
-  type DayRangeSelection,
   type IsoWeekday,
+  type VocabAssignmentMode,
+  type VocabUnitSelection,
   type VocabQuestionCountChoice,
   type VocabExtraDatePolicy,
-  type VocabRangeDistribution,
   type VocabScheduleDraft,
   type VocabScheduleSlotOverride,
-  type VocabSplitBasis,
   type VocabSplitOverflowPolicy,
   type VocabTargetSelectionMode,
-  type VocabUnitAllocationMode,
-  type VocabWeekdayUnitCounts,
 } from "../domain/vocab-assignment-plan";
 
 export type VocabPlannerState = {
   datasetId: string;
-  range: DayRangeSelection;
-  distribution: VocabRangeDistribution;
-  splitBasis: VocabSplitBasis;
-  unitAllocationMode: VocabUnitAllocationMode;
-  unitsPerSession: number;
-  weekdayUnitsPerSession: VocabWeekdayUnitCounts;
+  range: VocabUnitSelection;
+  assignmentMode: VocabAssignmentMode;
   questionCountMode: VocabQuestionCountChoice["mode"];
   manualQuestionCount: number;
   overflowPolicy: VocabSplitOverflowPolicy;
@@ -47,12 +41,9 @@ export type VocabPlannerState = {
 
 export type VocabPlannerAction =
   | { type: "dataset"; value: string }
-  | { type: "range"; unitId: string }
-  | { type: "distribution"; value: VocabRangeDistribution }
-  | { type: "split_basis"; value: VocabSplitBasis }
-  | { type: "unit_allocation_mode"; value: VocabUnitAllocationMode }
-  | { type: "units_per_session"; value: number }
-  | { type: "weekday_units_per_session"; weekday: IsoWeekday; value: number }
+  | { type: "range/toggle"; unitId: string }
+  | { type: "range/all"; unitIds: readonly string[]; selectAll: boolean }
+  | { type: "assignment_mode"; value: VocabAssignmentMode }
   | { type: "question_count_mode"; value: VocabQuestionCountChoice["mode"] }
   | { type: "manual_question_count"; value: number }
   | { type: "overflow_policy"; value: VocabSplitOverflowPolicy }
@@ -79,72 +70,46 @@ export function vocabPlannerReducer(
       return {
         ...state,
         datasetId: action.value,
-        range: { startUnitId: null, endUnitId: null },
+        range: { selectedUnitIds: [] },
+        questionCountMode: "all",
+        manualQuestionCount: 0,
         extraDatePolicy: "unconfirmed",
+        sessionScheduleOverrides: {},
         collisionDecisionRecords: [],
       };
-    case "range":
+    case "range/toggle":
       return {
         ...state,
-        range: advanceDayRangeSelection(state.range, action.unitId),
+        range: toggleVocabUnitSelection(state.range, action.unitId),
         extraDatePolicy: "unconfirmed",
+        sessionScheduleOverrides: {},
         collisionDecisionRecords: [],
       };
-    case "distribution":
+    case "range/all":
       return {
         ...state,
-        distribution: action.value,
-        overflowPolicy: action.value === "split"
-          ? state.overflowPolicy
-          : "leave",
+        range: selectAllVocabUnits(action.unitIds, action.selectAll),
         extraDatePolicy: "unconfirmed",
+        sessionScheduleOverrides: {},
         collisionDecisionRecords: [],
       };
-    case "split_basis":
+    case "assignment_mode":
       return {
         ...state,
-        splitBasis: action.value,
-        overflowPolicy: action.value === "range_unit" ||
-            state.questionCountMode !== "manual"
+        assignmentMode: action.value,
+        overflowPolicy: action.value === "all_sessions"
           ? "leave"
           : state.overflowPolicy,
         extraDatePolicy: "unconfirmed",
-        collisionDecisionRecords: [],
-      };
-    case "unit_allocation_mode":
-      return {
-        ...state,
-        unitAllocationMode: action.value,
-        extraDatePolicy: "unconfirmed",
-        collisionDecisionRecords: [],
-      };
-    case "units_per_session":
-      return {
-        ...state,
-        unitsPerSession: action.value,
-        extraDatePolicy: "unconfirmed",
-        collisionDecisionRecords: [],
-      };
-    case "weekday_units_per_session":
-      return {
-        ...state,
-        weekdayUnitsPerSession: {
-          ...state.weekdayUnitsPerSession,
-          [action.weekday]: action.value,
-        },
-        extraDatePolicy: "unconfirmed",
+        sessionScheduleOverrides: {},
         collisionDecisionRecords: [],
       };
     case "question_count_mode":
       return {
         ...state,
         questionCountMode: action.value,
-        overflowPolicy:
-          state.distribution === "split" &&
-              (action.value === "manual" || state.splitBasis === "range_unit")
-            ? state.overflowPolicy
-            : "leave",
         extraDatePolicy: "unconfirmed",
+        sessionScheduleOverrides: {},
         collisionDecisionRecords: [],
       };
     case "manual_question_count":
@@ -152,6 +117,7 @@ export function vocabPlannerReducer(
         ...state,
         manualQuestionCount: action.value,
         extraDatePolicy: "unconfirmed",
+        sessionScheduleOverrides: {},
         collisionDecisionRecords: [],
       };
     case "overflow_policy":
@@ -176,20 +142,28 @@ export function vocabPlannerReducer(
       return {
         ...state,
         scheduleEnabled: action.enabled,
+        assignmentMode: action.enabled ? state.assignmentMode : "all_sessions",
+        overflowPolicy: action.enabled ? state.overflowPolicy : "leave",
         extraDatePolicy: "unconfirmed",
         sessionScheduleOverrides: {},
         collisionDecisionRecords: [],
       };
-    case "schedule/update":
+    case "schedule/update": {
+      const scheduleShapeChanged =
+        action.patch.weekdays !== undefined ||
+        action.patch.startDate !== undefined;
       return {
         ...state,
         schedule: { ...state.schedule, ...action.patch },
         extraDatePolicy: action.patch.weekdays !== undefined
           ? "unconfirmed"
           : state.extraDatePolicy,
-        sessionScheduleOverrides: {},
+        sessionScheduleOverrides: scheduleShapeChanged
+          ? {}
+          : state.sessionScheduleOverrides,
         collisionDecisionRecords: [],
       };
+    }
     case "schedule/replace": {
       const weekdaysChanged =
         state.schedule.weekdays.length !== action.value.weekdays.length ||
@@ -249,26 +223,19 @@ export function createInitialVocabPlannerState(
   datasets: readonly AssignmentDatasetItem[],
   initialDatasetId: string,
   today: string,
+  currentLocalDateTime = `${today}T00:00`,
 ): VocabPlannerState {
   const datasetId = selectInitialVocabDatasetId(datasets, initialDatasetId);
+  const initialDeadline = resolveInitialVocabDeadline(
+    today,
+    currentLocalDateTime,
+  );
   return {
     datasetId,
-    range: { startUnitId: null, endUnitId: null },
-    distribution: "split",
-    splitBasis: "question_count",
-    unitAllocationMode: "same",
-    unitsPerSession: 2,
-    weekdayUnitsPerSession: {
-      1: 2,
-      2: 2,
-      3: 2,
-      4: 2,
-      5: 2,
-      6: 2,
-      7: 2,
-    },
+    range: { selectedUnitIds: [] },
+    assignmentMode: "all_sessions",
     questionCountMode: "all",
-    manualQuestionCount: 20,
+    manualQuestionCount: 0,
     overflowPolicy: "leave",
     extraDatePolicy: "unconfirmed",
     selectionMode: "source_order",
@@ -278,11 +245,30 @@ export function createInitialVocabPlannerState(
     schedule: {
       startDate: today,
       weekdays: [],
+      availableTimeEnabled: false,
       availableTime: "16:00",
-      deadlineDayOffset: 1,
-      deadlineTime: "22:00",
+      deadlineDayOffset: initialDeadline.dayOffset,
+      deadlineTime: initialDeadline.time,
     },
     sessionScheduleOverrides: {},
     collisionDecisionRecords: [],
   };
+}
+
+export function resolveInitialVocabDeadline(
+  today: string,
+  currentLocalDateTime: string,
+) {
+  const currentDate = currentLocalDateTime.slice(0, 10);
+  const currentTime = currentLocalDateTime.slice(11, 16);
+  if (currentDate !== today || !/^\d{2}:\d{2}$/.test(currentTime)) {
+    return { dayOffset: 0, time: "22:00" } as const;
+  }
+  if (currentTime < "21:45") {
+    return { dayOffset: 0, time: "22:00" } as const;
+  }
+  if (currentTime < "23:45") {
+    return { dayOffset: 0, time: "23:59" } as const;
+  }
+  return { dayOffset: 1, time: "22:00" } as const;
 }

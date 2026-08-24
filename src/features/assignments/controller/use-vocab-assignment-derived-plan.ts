@@ -8,7 +8,7 @@ import {
   applyScheduleSlotOverride,
   buildScheduleSlots,
   extendScheduleSlotsFromRecurrence,
-  resolveVocabBaseSessionUnitCounts,
+  resolveVocabAssignmentMode,
   resolveVocabUnitCycleAllocation,
   type IsoWeekday,
   type VocabQuestionCountChoice,
@@ -30,11 +30,27 @@ export function useVocabAssignmentDerivedPlan({
   const scheduleSlots = useMemo(
     () =>
       Object.entries(planner.sessionScheduleOverrides).reduce(
-        (slots, [sessionNumber, override]) =>
-          applyScheduleSlotOverride(slots, Number(sessionNumber), override),
+        (slots, [sessionNumber, override]) => {
+          const effectiveOverride = planner.schedule.availableTimeEnabled === false
+            ? {
+                ...override,
+                availableLocalDateTime:
+                  `${override.availableLocalDateTime.slice(0, 10)}T00:00`,
+              }
+            : override;
+          return applyScheduleSlotOverride(
+            slots,
+            Number(sessionNumber),
+            effectiveOverride,
+          );
+        },
         allScheduleSlots,
       ),
-    [allScheduleSlots, planner.sessionScheduleOverrides],
+    [
+      allScheduleSlots,
+      planner.schedule.availableTimeEnabled,
+      planner.sessionScheduleOverrides,
+    ],
   );
   const previewScheduleSlots = useMemo(() => {
     if (scheduleSlots.length > 0) return scheduleSlots;
@@ -47,23 +63,17 @@ export function useVocabAssignmentDerivedPlan({
       weekdays: [weekday],
     }).slice(0, 1);
   }, [planner.schedule, scheduleSlots]);
+  const assignmentModePlan = resolveVocabAssignmentMode(
+    planner.assignmentMode,
+  );
+  const distribution = assignmentModePlan.distribution;
   const effectiveSplitBasis: VocabSplitBasis =
-    planner.scheduleEnabled !== false && planner.distribution === "split"
-      ? planner.splitBasis
+    planner.scheduleEnabled !== false && distribution === "split"
+      ? assignmentModePlan.splitBasis
       : "question_count";
   const baseSessionUnitCounts = useMemo(
-    () => resolveVocabBaseSessionUnitCounts({
-      slots: allScheduleSlots,
-      mode: planner.unitAllocationMode,
-      unitsPerSession: planner.unitsPerSession,
-      weekdayUnitsPerSession: planner.weekdayUnitsPerSession,
-    }),
-    [
-      allScheduleSlots,
-      planner.unitAllocationMode,
-      planner.unitsPerSession,
-      planner.weekdayUnitsPerSession,
-    ],
+    () => allScheduleSlots.map(() => 1),
+    [allScheduleSlots],
   );
   const unitAllocation = useMemo(
     () => effectiveSplitBasis === "range_unit"
@@ -85,20 +95,33 @@ export function useVocabAssignmentDerivedPlan({
     ],
   );
   const questionCount = useMemo<VocabQuestionCountChoice>(
-    () => planner.questionCountMode === "all"
+    () => planner.assignmentMode !== "word_count" ||
+        planner.questionCountMode === "all"
       ? { mode: "all" }
       : { mode: "manual", value: planner.manualQuestionCount },
-    [planner.manualQuestionCount, planner.questionCountMode],
+    [
+      planner.assignmentMode,
+      planner.manualQuestionCount,
+      planner.questionCountMode,
+    ],
   );
   const localIssues = useMemo(
     () => validateVocabPlannerInputs({
       datasetId: planner.datasetId,
       selectedUnitIds: selectedUnits.map((unit) => unit.id),
-      distribution: planner.distribution,
+      distribution,
       splitBasis: effectiveSplitBasis,
-      unitAllocationMode: planner.unitAllocationMode,
-      unitsPerSession: planner.unitsPerSession,
-      weekdayUnitsPerSession: planner.weekdayUnitsPerSession,
+      unitAllocationMode: "same",
+      unitsPerSession: 1,
+      weekdayUnitsPerSession: {
+        1: 1,
+        2: 1,
+        3: 1,
+        4: 1,
+        5: 1,
+        6: 1,
+        7: 1,
+      },
       questionCount,
       overflowPolicy: planner.overflowPolicy,
       selectionMode: planner.selectionMode,
@@ -109,14 +132,11 @@ export function useVocabAssignmentDerivedPlan({
     [
       effectiveSplitBasis,
       planner.datasetId,
-      planner.distribution,
+      distribution,
       planner.overflowPolicy,
       planner.schedule,
       planner.selectionMode,
       planner.scheduleEnabled,
-      planner.unitAllocationMode,
-      planner.unitsPerSession,
-      planner.weekdayUnitsPerSession,
       questionCount,
       scheduleSlots,
       selectedUnits,
@@ -189,7 +209,7 @@ export function useVocabAssignmentDerivedPlan({
     return previewBlockingIssues.length === 0 && sessions.length > 0
       ? {
           datasetId: planner.datasetId,
-          distribution: planner.distribution,
+          distribution,
           splitBasis: effectiveSplitBasis,
           orderedUnitIds: unitIds,
           rangeUnitCounts: effectiveSplitBasis === "range_unit"
@@ -197,9 +217,7 @@ export function useVocabAssignmentDerivedPlan({
             : [],
           questionCount,
           overflowPolicy:
-            planner.distribution === "split" &&
-              (planner.questionCountMode === "manual" ||
-                effectiveSplitBasis === "range_unit")
+            distribution === "split"
               ? planner.overflowPolicy
               : "leave" as const,
           extraDatePolicy: planner.extraDatePolicy,
@@ -217,14 +235,13 @@ export function useVocabAssignmentDerivedPlan({
     allScheduleSlots,
     baseSessionUnitCounts,
     effectiveSplitBasis,
+    distribution,
     localIssues,
     planner.collisionDecisionRecords,
     planner.datasetId,
-    planner.distribution,
     planner.extraDatePolicy,
     planner.overflowPolicy,
     planner.planNonce,
-    planner.questionCountMode,
     planner.selectionMode,
     planner.scheduleEnabled,
     planner.schedule.startDate,
@@ -240,6 +257,7 @@ export function useVocabAssignmentDerivedPlan({
     allScheduleSlots,
     baseSessionUnitCounts,
     commonPlan,
+    distribution,
     effectiveSplitBasis,
     localIssues,
     questionCount,

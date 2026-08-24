@@ -40,6 +40,8 @@ export function VocabScheduleDetailFields({
   fieldErrors: Partial<Record<VocabAssignmentFieldKey, string>>;
 }) {
   const [templateName, setTemplateName] = useState("");
+  const availableTimeEnabled =
+    controller.planner.schedule.availableTimeEnabled !== false;
   const summary = controller.bulk.preview?.commonPlanSummary ?? null;
   const previewSessions = controller.planner.schedule.weekdays.length > 0
     ? summary?.sessions ?? []
@@ -64,7 +66,7 @@ export function VocabScheduleDetailFields({
       editableSlot: slot,
       questionCount: preview?.questionCount ?? null,
       queued:
-        controller.planner.distribution === "split" &&
+        controller.distribution === "split" &&
         (preview?.sessionNumber ?? slot?.sessionNumber ?? index + 1) > 1,
       sessionNumber: preview?.sessionNumber ?? slot?.sessionNumber ?? index + 1,
     };
@@ -87,16 +89,18 @@ export function VocabScheduleDetailFields({
                   key={row.sessionNumber}
                 >
                   <strong>
-                    {row.sessionNumber}회차 · {sessionDateLabel(row.date)}
+                    {row.sessionNumber}회차 [{sessionDateLabel(row.date)}]
                     {row.questionCount === null
                       ? ""
-                      : ` · ${row.questionCount}문항`}
+                      : ` ${row.questionCount}개`}
                   </strong>
                   {row.queued ? <MetaTag tone="neutral">완료 후 생성</MetaTag> : null}
                   <span className={styles.generatedSessionTime}>
-                    {row.availableLocalDateTime.slice(11, 16)} 공개
+                    {availableTimeEnabled
+                      ? `공개 ${row.availableLocalDateTime.slice(11, 16)}`
+                      : "즉시 공개"}
                     {row.deadlineLocalDateTime
-                      ? ` · ${row.deadlineLocalDateTime.slice(0, 10)} ${row.deadlineLocalDateTime.slice(11, 16)} 마감`
+                      ? ` / 마감 ${row.deadlineLocalDateTime.slice(0, 10)} ${row.deadlineLocalDateTime.slice(11, 16)}`
                       : ""}
                   </span>
                 </div>
@@ -105,38 +109,40 @@ export function VocabScheduleDetailFields({
             return (
               <div className={styles.sessionTimeRow} key={row.sessionNumber}>
                 <strong>
-                  {row.sessionNumber}회차 · {sessionDateLabel(row.date)}
+                  {row.sessionNumber}회차 [{sessionDateLabel(row.date)}]
                   {row.questionCount === null
                     ? ""
-                    : ` · ${row.questionCount}문항`}
+                    : ` ${row.questionCount}개`}
                 </strong>
                 {row.queued ? <MetaTag tone="neutral">완료 후 생성</MetaTag> : null}
-                <Field as="label">
-                  <FieldLabel as="span">공개</FieldLabel>
-                  <Input
-                    aria-errormessage={availableError
-                      ? `vocab-session-${row.sessionNumber}-available-error`
-                      : undefined}
-                    aria-invalid={Boolean(availableError)}
-                    data-field-key={`session-${row.sessionNumber}-available`}
-                    onChange={(event) =>
-                      controller.actions.updateSessionSchedule(
-                        row.sessionNumber,
-                        {
-                          availableLocalDateTime: event.target.value,
-                          deadlineLocalDateTime: row.deadlineLocalDateTime,
-                        },
-                      )
-                    }
-                    type="datetime-local"
-                    value={row.availableLocalDateTime}
-                  />
-                  {availableError ? (
-                    <FieldError id={`vocab-session-${row.sessionNumber}-available-error`}>
-                      {availableError}
-                    </FieldError>
-                  ) : null}
-                </Field>
+                {availableTimeEnabled ? (
+                  <Field as="label">
+                    <FieldLabel as="span">공개</FieldLabel>
+                    <Input
+                      aria-errormessage={availableError
+                        ? `vocab-session-${row.sessionNumber}-available-error`
+                        : undefined}
+                      aria-invalid={Boolean(availableError)}
+                      data-field-key={`session-${row.sessionNumber}-available`}
+                      onChange={(event) =>
+                        controller.actions.updateSessionSchedule(
+                          row.sessionNumber,
+                          {
+                            availableLocalDateTime: event.target.value,
+                            deadlineLocalDateTime: row.deadlineLocalDateTime,
+                          },
+                        )
+                      }
+                      type="datetime-local"
+                      value={row.availableLocalDateTime}
+                    />
+                    {availableError ? (
+                      <FieldError id={`vocab-session-${row.sessionNumber}-available-error`}>
+                        {availableError}
+                      </FieldError>
+                    ) : null}
+                  </Field>
+                ) : null}
                 <Field as="label">
                   <FieldLabel as="span">마감</FieldLabel>
                   <Input

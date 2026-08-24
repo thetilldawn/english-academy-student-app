@@ -129,7 +129,7 @@ export function resolveBulkScheduleCollision(input: {
   const final = current;
   const warnings = final.map(({ assignment, collisionId }) => {
     const decision = decisionById.get(collisionId);
-    const resolved = decision?.mode === "allow";
+    const resolved = !decision || decision.mode === "allow";
     return {
       id: collisionId,
       kind: "existing_assignment" as const,

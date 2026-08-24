@@ -80,7 +80,9 @@ import {
   type VocabUnitType,
 } from "@/lib/admin/dataset-catalog";
 import type { ReadingCurriculumStage } from "@/lib/admin/reading-curriculum";
-import { resolveOrderedContiguousUnits } from "@/lib/admin/unit-range";
+import {
+  resolveOrderedUnitSelection,
+} from "@/lib/admin/unit-range";
 import {
   isAssignmentPersistenceInvariantFailure,
 } from "@/lib/admin/assignment-database-error";
@@ -1147,6 +1149,7 @@ type HistoryDatasetRelation = {
 type HistoryUnitRelation = {
   id: string;
   unit_label: string;
+  sort_index: number;
 };
 
 type HistoryAssignmentUnitRelation = {
@@ -1262,7 +1265,7 @@ async function listAssignmentHistorySourceRows(
             assignment_units(
               position,
               is_primary,
-              unit:vocab_units(id, unit_label)
+              unit:vocab_units(id, unit_label, sort_index)
             )
           )
         `,
@@ -1428,6 +1431,10 @@ export async function listAssignmentHistoryBundle(options?: {
           orderedUnits.length > 0
             ? orderedUnits.map((unit) => unit.unit_label)
             : legacyUnitLabels,
+        unitSortIndexes:
+          orderedUnits.length > 0
+            ? orderedUnits.map((unit) => unit.sort_index)
+            : undefined,
         primaryUnitIds: primaryUnits.map((unit) => unit.id),
         primaryUnitLabels:
           primaryUnits.length > 0
@@ -1435,6 +1442,10 @@ export async function listAssignmentHistoryBundle(options?: {
             : assignment.assignment_purpose === "regular"
               ? legacyUnitLabels
               : [],
+        primaryUnitSortIndexes:
+          primaryUnits.length > 0
+            ? primaryUnits.map((unit) => unit.sort_index)
+            : undefined,
         questionCount: assignment.question_count,
         englishToKoreanRatio: assignment.english_to_korean_ratio,
         timeLimitSeconds: assignment.time_limit_seconds,
@@ -1716,7 +1727,7 @@ export async function prepareRegularAssignment(
 
   let orderedUnits: typeof selectedUnitData;
   try {
-    orderedUnits = resolveOrderedContiguousUnits(
+    orderedUnits = resolveOrderedUnitSelection(
       selectedUnitData.map((unit) => ({
         ...unit,
         sortIndex: unit.sort_index,
@@ -1726,7 +1737,7 @@ export async function prepareRegularAssignment(
   } catch {
     throw new AssignmentCreationError(
       "invalid_selection",
-      "선택한 DAY는 한 방향으로 이어지는 연속 범위여야 합니다.",
+      "선택한 범위의 순서를 확인해 주세요.",
     );
   }
   const orderedUnitIds = orderedUnits.map((unit) => unit.id);
@@ -1856,10 +1867,15 @@ export async function prepareRegularAssignment(
       (sourceOrderByCandidateId.get(left.vocabEntryId) ?? 0) -
         (sourceOrderByCandidateId.get(right.vocabEntryId) ?? 0),
   );
-  const unitRangeLabel =
-    orderedUnits.length === 1
-      ? orderedUnits[0].unit_label
-      : `${orderedUnits[0].unit_label}~${orderedUnits.at(-1)?.unit_label}`;
+  const isContiguousSelection = orderedUnits.every(
+    (unit, index) => index === 0 ||
+      Math.abs(unit.sort_index - orderedUnits[index - 1]!.sort_index) === 1,
+  );
+  const unitRangeLabel = orderedUnits.length === 1
+    ? orderedUnits[0].unit_label
+    : isContiguousSelection
+      ? `${orderedUnits[0].unit_label}~${orderedUnits.at(-1)?.unit_label}`
+      : `${orderedUnits[0].unit_label} 외 ${orderedUnits.length - 1}개`;
   const generatedTitle = [datasetLabel, unitRangeLabel].join(" · ");
 
   return {
@@ -1940,7 +1956,7 @@ export async function loadRegularAssignmentSeriesCandidates(
   );
   let orderedUnits: typeof selectedUnitData;
   try {
-    orderedUnits = resolveOrderedContiguousUnits(
+    orderedUnits = resolveOrderedUnitSelection(
       selectedUnitData.map((unit) => ({
         ...unit,
         sortIndex: unit.sort_index,
@@ -1950,7 +1966,7 @@ export async function loadRegularAssignmentSeriesCandidates(
   } catch {
     throw new AssignmentCreationError(
       "invalid_selection",
-      "선택한 DAY는 한 방향으로 이어지는 연속 범위여야 합니다.",
+      "선택한 범위의 순서를 확인해 주세요.",
     );
   }
   const orderedUnitIds = orderedUnits.map((unit) => unit.id);

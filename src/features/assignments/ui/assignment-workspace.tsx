@@ -10,6 +10,7 @@ import {
   useAssignmentWorkspace,
   type AssignmentDialogView,
 } from "../controller/use-assignment-workspace";
+import { buildBulkStudentFilterLabels } from "../presentation/bulk-student-selection-summary";
 import { AssignmentStudentBrowser } from "./assignment-student-browser";
 import { VocabAssignmentPlanner } from "./vocab-assignment-planner";
 
@@ -30,6 +31,23 @@ export function AssignmentWorkspace({
     initialDialogView,
     initialStudentId,
   });
+  const activeFilteredStudentIds = new Set(
+    controller.filteredStudents
+      .filter((student) => student.status === "active")
+      .map((student) => student.id),
+  );
+  const isWholeFilteredSelection =
+    activeFilteredStudentIds.size === controller.plannerStudents.length &&
+    controller.plannerStudents.every((student) =>
+      activeFilteredStudentIds.has(student.id)
+    );
+  const bulkFilterLabels = buildBulkStudentFilterLabels({
+    classGroupLabel: controller.classGroupOptions.find(
+      (option) => option.value === controller.filters.classGroup,
+    )?.label ?? null,
+    filters: controller.filters,
+    isWholeFilteredSelection,
+  });
 
   return (
     <>
@@ -37,6 +55,7 @@ export function AssignmentWorkspace({
 
       {controller.plannerOpen && controller.plannerStudents.length > 0 ? (
         <VocabAssignmentPlanner
+          bulkFilterLabels={bulkFilterLabels}
           data={controller.data}
           initialDatasetId={
             controller.assignmentMode === "bulk" &&
@@ -65,6 +84,7 @@ export function AssignmentWorkspace({
             );
             controller.actions.refresh();
           }}
+          selectionMode={controller.assignmentMode}
           students={controller.plannerStudents}
         />
       ) : null}

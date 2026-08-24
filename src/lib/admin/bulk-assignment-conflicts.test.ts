@@ -19,7 +19,7 @@ const existing = [{
 }];
 
 describe("일괄 배정 날짜 겹침", () => {
-  it("결정 전에는 경고를 미해결로 반환한다", () => {
+  it("기존 시험과 같은 날이어도 자동 허용한다", () => {
     const result = resolveBulkScheduleCollision({
       studentId,
       sourceSessionNumber: 1,
@@ -29,10 +29,10 @@ describe("일괄 배정 날짜 겹침", () => {
     });
     expect(result.kind).toBe("scheduled");
     if (result.kind !== "scheduled") return;
-    expect(result.unresolved).toBe(true);
+    expect(result.unresolved).toBe(false);
     expect(result.warnings[0]).toMatchObject({
       existingAssignmentId,
-      resolved: false,
+      resolved: true,
     });
   });
 

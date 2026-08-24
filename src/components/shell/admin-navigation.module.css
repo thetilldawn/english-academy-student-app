@@ -67,6 +67,7 @@
     right: 0;
     bottom: 0;
     left: 0;
+    min-height: calc(var(--admin-mobile-nav-height) + env(safe-area-inset-bottom));
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: var(--space-1);
@@ -75,6 +76,7 @@
     background: var(--nav-glass);
     -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
+    box-sizing: border-box;
   }
 
   .mobile .link {

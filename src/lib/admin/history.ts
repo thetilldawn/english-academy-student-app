@@ -24,8 +24,10 @@ export type AssignmentHistorySource = {
   datasetTitle: string;
   unitIds: string[];
   unitLabels: string[];
+  unitSortIndexes?: number[];
   primaryUnitIds: string[];
   primaryUnitLabels: string[];
+  primaryUnitSortIndexes?: number[];
   questionCount: number;
   englishToKoreanRatio: number;
   timeLimitSeconds: number;
@@ -91,10 +93,27 @@ function pairKey(assignmentId: string, studentId: string) {
   return `${assignmentId}\u0000${studentId}`;
 }
 
-function unitRangeLabel(labels: string[]) {
+export function unitSelectionRangeLabel(
+  labels: readonly string[],
+  sortIndexes?: readonly number[],
+) {
   if (labels.length === 0) return "범위 정보 없음";
   if (labels.length === 1) return labels[0];
-  return `${labels[0]}~${labels.at(-1)}`;
+  if (
+    !sortIndexes ||
+    sortIndexes.length !== labels.length ||
+    !sortIndexes.every(Number.isFinite)
+  ) {
+    return `${labels[0]}~${labels.at(-1)}`;
+  }
+  const direction = Math.sign(sortIndexes[1]! - sortIndexes[0]!);
+  const contiguous = Math.abs(direction) === 1 && sortIndexes.every(
+    (sortIndex, index) =>
+      index === 0 || sortIndex - sortIndexes[index - 1]! === direction,
+  );
+  return contiguous
+    ? `${labels[0]}~${labels.at(-1)}`
+    : `${labels[0]} 외 ${labels.length - 1}개`;
 }
 
 export function assignmentTypeLabel(
@@ -108,16 +127,23 @@ export function assignmentTypeLabel(
 export function assignmentUnitRangeLabel(
   item: Pick<
     AssignmentHistorySource,
-    "assignmentPurpose" | "primaryUnitLabels" | "unitLabels"
+    | "assignmentPurpose"
+    | "primaryUnitLabels"
+    | "primaryUnitSortIndexes"
+    | "unitLabels"
+    | "unitSortIndexes"
   >,
 ) {
-  const labels =
-    item.assignmentPurpose === "review"
-      ? item.unitLabels
-      : item.primaryUnitLabels.length > 0
-        ? item.primaryUnitLabels
-        : item.unitLabels;
-  return unitRangeLabel(labels);
+  if (item.assignmentPurpose === "review") {
+    return unitSelectionRangeLabel(item.unitLabels, item.unitSortIndexes);
+  }
+  if (item.primaryUnitLabels.length > 0) {
+    return unitSelectionRangeLabel(
+      item.primaryUnitLabels,
+      item.primaryUnitSortIndexes,
+    );
+  }
+  return unitSelectionRangeLabel(item.unitLabels, item.unitSortIndexes);
 }
 
 export function assignmentScopeLabel(
@@ -125,7 +151,9 @@ export function assignmentScopeLabel(
     AssignmentHistorySource,
     | "assignmentPurpose"
     | "primaryUnitLabels"
+    | "primaryUnitSortIndexes"
     | "unitLabels"
+    | "unitSortIndexes"
     | "questionCount"
   >,
 ) {
@@ -173,8 +201,9 @@ export function assignmentDisplayTitleForUnits(
   datasetTitle?: string,
 ) {
   const unitLabelSet = new Set(unitLabels);
-  if (unitLabels.length > 0) {
-    unitLabelSet.add(unitRangeLabel(unitLabels));
+  if (unitLabels.length > 1) {
+    unitLabelSet.add(`${unitLabels[0]}~${unitLabels.at(-1)}`);
+    unitLabelSet.add(`${unitLabels[0]} 외 ${unitLabels.length - 1}개`);
   }
   const titleParts = stripDatasetTitlePrefix(
     assignmentTitle,

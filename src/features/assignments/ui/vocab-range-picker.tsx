@@ -24,7 +24,6 @@ export function VocabQuestionFields({
   fieldErrors = {},
 }: VocabPlannerFieldsProps) {
   const questionCountError = fieldErrors.questionCount;
-  const splitBasisError = fieldErrors.splitBasis;
   const selectionModeError = fieldErrors.selectionMode;
   const preview = controller.bulk.preview;
   const audience = buildBulkPlanAudience(preview);
@@ -40,16 +39,27 @@ export function VocabQuestionFields({
     ? "학생별 계획을 마지막 미리보기에서 확인해 주세요."
     : availableQuestionCount === null
     ? "범위와 단어 수를 정하면 기본 회차를 계산합니다."
-    : controller.planner.distribution === "repeat"
+    : controller.distribution === "repeat"
       ? `전체 ${availableQuestionCount}개 · 배정 ${selectedQuestionCount}개 · 남음 ${remainingQuestionCount}개 · 회차당 ${selectedQuestionCount}개`
-      : `전체 ${availableQuestionCount}개 · 배정 ${selectedQuestionCount}개 · 남음 ${remainingQuestionCount}개 · 기본 ${defaultSessionCount}회`;
+      : controller.planner.assignmentMode === "per_session"
+        ? `전체 ${availableQuestionCount}개 · 범위별 배정 · 기본 ${defaultSessionCount}회`
+        : `전체 ${availableQuestionCount}개 · 배정 ${selectedQuestionCount}개 · 남음 ${remainingQuestionCount}개 · 기본 ${defaultSessionCount}회`;
+  const defaultManualCount = availableQuestionCount === null
+    ? 0
+    : Math.min(500, availableQuestionCount);
+  const manualCountValue = controller.planner.questionCountMode === "manual"
+    ? controller.planner.manualQuestionCount
+    : controller.planner.manualQuestionCount > 0
+      ? controller.planner.manualQuestionCount
+      : availableQuestionCount ?? "";
 
   return (
     <div className={styles.fieldStack}>
       <Field>
           <FieldLabel as="span" id="vocab-distribution-label">
             <HelpTip label="배정 방식 설명" trigger="배정 방식">
-              나누기는 범위를 회차별로 나누고, 전체 반복은 매회 같은 범위를 냅니다.
+              전체 회차는 같은 범위를 매번, 회차별은 범위를 하나씩,
+              단어 수는 정한 개수씩 배정합니다.
             </HelpTip>
           </FieldLabel>
           <div
@@ -60,74 +70,49 @@ export function VocabQuestionFields({
             tabIndex={-1}
           >
             <Button
-              aria-pressed={controller.planner.distribution === "split"}
-              onClick={() => controller.actions.changeDistribution("split")}
+              aria-pressed={controller.planner.assignmentMode === "all_sessions"}
+              onClick={() =>
+                controller.actions.changeAssignmentMode("all_sessions")
+              }
               size="small"
               variant="filter"
             >
-              나누기
+              전체 회차
             </Button>
             <Button
-              aria-pressed={controller.planner.distribution === "repeat"}
-              onClick={() => controller.actions.changeDistribution("repeat")}
+              aria-pressed={controller.planner.assignmentMode === "per_session"}
+              onClick={() =>
+                controller.actions.changeAssignmentMode("per_session")
+              }
               size="small"
               variant="filter"
             >
-              전체 반복
+              회차별
+            </Button>
+            <Button
+              aria-pressed={controller.planner.assignmentMode === "word_count"}
+              onClick={() =>
+                controller.actions.changeAssignmentMode("word_count")
+              }
+              size="small"
+              variant="filter"
+            >
+              단어 수
             </Button>
           </div>
       </Field>
-      <ConditionalReveal open={controller.planner.distribution === "split"}>
+      <ConditionalReveal open={controller.planner.assignmentMode !== "all_sessions"}>
         <VocabUnitAllocationFields
           controller={controller}
           fieldErrors={fieldErrors}
         />
       </ConditionalReveal>
-      <ConditionalReveal open={controller.planner.distribution === "split"}>
-          <Field>
-            <FieldLabel as="span" id="vocab-split-basis-label">
-              <HelpTip label="나누기 기준 설명" trigger="나누기 기준">
-                범위는 DAY·지문 같은 한 범위씩, 단어 수는 입력한 개수씩 나눕니다.
-              </HelpTip>
-            </FieldLabel>
-            <div
-              aria-describedby={splitBasisError
-                ? "vocab-split-basis-error"
-                : undefined}
-              aria-labelledby="vocab-split-basis-label"
-              className={styles.modeButtons}
-              data-field-key="splitBasis"
-              role="group"
-              tabIndex={-1}
-            >
-              <Button
-                aria-pressed={controller.planner.splitBasis === "range_unit"}
-                onClick={() => controller.actions.changeSplitBasis("range_unit")}
-                size="small"
-                variant="filter"
-              >
-                범위
-              </Button>
-              <Button
-                aria-pressed={controller.planner.splitBasis === "question_count"}
-                onClick={() => controller.actions.changeSplitBasis("question_count")}
-                size="small"
-                variant="filter"
-              >
-                단어 수
-              </Button>
-            </div>
-            {splitBasisError ? (
-              <FieldError id="vocab-split-basis-error">
-                {splitBasisError}
-              </FieldError>
-            ) : null}
-          </Field>
-      </ConditionalReveal>
-      <Field>
+      <ConditionalReveal open={controller.planner.assignmentMode === "word_count"}>
+        <Field>
           <FieldLabel as="span" id="vocab-question-count-label">
             <HelpTip label="단어 수 설명" trigger="단어 수">
-              전체는 개수 제한 없이 선택 범위를 모두 배정하고, 직접 입력은 입력한 개수씩 요일에 배정합니다.
+              전체는 선택한 범위의 단어를 모두 배정하고, 숫자를 누르면
+              입력한 개수씩 회차에 배정합니다.
             </HelpTip>
           </FieldLabel>
           <div
@@ -135,7 +120,7 @@ export function VocabQuestionFields({
               ? "vocab-question-count-error"
               : undefined}
             aria-labelledby="vocab-question-count-label"
-            className={styles.modeButtons}
+            className={styles.wordCountControls}
             data-field-key="questionCount"
             role="group"
             tabIndex={-1}
@@ -148,42 +133,39 @@ export function VocabQuestionFields({
             >
               전체
             </Button>
-            <Button
-              aria-pressed={controller.planner.questionCountMode === "manual"}
-              onClick={() => controller.actions.changeQuestionCountMode("manual")}
-              size="small"
-              variant="filter"
-            >
-              직접 입력
-            </Button>
-          </div>
-          <ConditionalReveal
-            open={controller.planner.questionCountMode === "manual"}
-          >
             <Input
-              aria-labelledby="vocab-question-count-label"
+              aria-label="회차당 단어 수"
               aria-errormessage={questionCountError
                 ? "vocab-question-count-error"
                 : undefined}
               aria-invalid={Boolean(questionCountError)}
-              data-field-key="questionCount"
+              data-active={controller.planner.questionCountMode === "manual"}
               max={500}
               min={4}
-              onChange={(event) =>
+              onChange={(event) => {
+                controller.actions.activateManualQuestionCount(
+                  defaultManualCount,
+                );
                 controller.actions.changeManualQuestionCount(
                   Number(event.target.value),
+                );
+              }}
+              onFocus={() =>
+                controller.actions.activateManualQuestionCount(
+                  defaultManualCount,
                 )
               }
               type="number"
-              value={controller.planner.manualQuestionCount}
+              value={manualCountValue}
             />
-          </ConditionalReveal>
+          </div>
           {questionCountError ? (
             <FieldError id="vocab-question-count-error">
               {questionCountError}
             </FieldError>
           ) : null}
-      </Field>
+        </Field>
+      </ConditionalReveal>
       <ExamQuestionOrderField
         error={selectionModeError}
         onChange={controller.actions.changeSelectionMode}

@@ -19,6 +19,7 @@ import type { IsoWeekday } from "../domain/vocab-assignment-plan";
 import type {
   VocabAssignmentFieldKey,
 } from "../presentation/vocab-assignment-field-errors";
+import { assignmentUnitRangeLabel } from "../presentation/assignment-unit-range-label";
 import styles from "./vocab-assignment-planner.module.css";
 import { VocabScheduleDetailFields } from "./vocab-schedule-detail-fields";
 
@@ -42,23 +43,12 @@ export function VocabScheduleFields({
 }) {
   const schedule = controller.planner.schedule;
   const scheduleEnabled = controller.planner.scheduleEnabled !== false;
+  const availableTimeEnabled = schedule.availableTimeEnabled !== false;
   const startDateError = fieldErrors.startDate;
   const weekdaysError = fieldErrors.weekdays;
   const availableTimeError = fieldErrors.availableTime;
   const deadlineOffsetError = fieldErrors.deadlineOffset;
   const deadlineTimeError = fieldErrors.deadlineTime;
-  const previewSessionCount = Math.max(
-    0,
-    ...(controller.bulk.preview?.items?.map(
-      (item) => item.sessions.length,
-    ) ?? []),
-  );
-  const finalSessionCount = !scheduleEnabled
-    ? 1
-    : schedule.weekdays.length === 0
-    ? 0
-    : controller.bulk.preview?.commonPlanSummary?.sessions.length ??
-      (previewSessionCount || controller.scheduleSlots.length);
   const representative = controller.bulk.preview?.items?.find(
     (item) => item.datasetLabel,
   ) ?? null;
@@ -71,12 +61,23 @@ export function VocabScheduleFields({
   const selectedUnits = controller.selectedUnits ?? [];
   const rangeLabel = selectedUnits.length === 0
     ? "범위 미선택"
-    : selectedUnits.length === 1
-      ? selectedUnits[0]!.label
-      : `${selectedUnits[0]!.label}–${selectedUnits.at(-1)!.label}`;
-  const baseSessionCount = controller.requiresExtraDateDecision
-    ? controller.extraDateDecisionSessionCount ?? controller.defaultSessionCount
-    : controller.defaultSessionCount;
+    : assignmentUnitRangeLabel(
+        selectedUnits.map((unit) => unit.label),
+        selectedUnits.map((unit) => unit.sortIndex),
+      );
+  const baseSessionCount = controller.planner.assignmentMode === "per_session"
+    ? selectedUnits.length
+    : controller.requiresExtraDateDecision
+      ? controller.extraDateDecisionSessionCount ?? controller.defaultSessionCount
+      : controller.defaultSessionCount;
+  const currentScheduleCount = !scheduleEnabled
+    ? 1
+    : controller.distribution === "repeat"
+      ? controller.scheduleSlots.length
+      : Math.min(controller.scheduleSlots.length, baseSessionCount ?? 0);
+  const remainingSessionCount = controller.distribution === "repeat"
+    ? 0
+    : Math.max(0, (baseSessionCount ?? 0) - currentScheduleCount);
 
   return (
     <div className={styles.fieldStack}>
@@ -84,15 +85,6 @@ export function VocabScheduleFields({
         <MetaTagList>
           <MetaTag size="large">{datasetLabel}</MetaTag>
           <MetaTag size="large">{rangeLabel}</MetaTag>
-          <MetaTag size="large">
-            {controller.requiresExtraDateDecision ? "기본 최소 " : "기본 "}
-            {baseSessionCount ?? 0}회
-          </MetaTag>
-          {schedule.weekdays.length > 0 ? (
-            <MetaTag size="large">
-              배정 합계 {controller.scheduledQuestionCount ?? 0}개
-            </MetaTag>
-          ) : null}
         </MetaTagList>
       ) : null}
       <div className={styles.toggleFieldHeading}>
@@ -126,7 +118,15 @@ export function VocabScheduleFields({
         ) : null}
       </Field>
       <Field>
-        <FieldLabel as="span">요일</FieldLabel>
+        <div className={styles.weekdayFieldHeading}>
+          <FieldLabel as="span">요일</FieldLabel>
+          <MetaTag size="large">
+            배정 {currentScheduleCount}회
+            {remainingSessionCount > 0
+              ? ` · 남음 ${remainingSessionCount}회`
+              : ""}
+          </MetaTag>
+        </div>
         <div
           aria-describedby={weekdaysError ? "vocab-weekdays-error" : undefined}
           aria-label="배정 요일"
@@ -176,9 +176,23 @@ export function VocabScheduleFields({
           </div>
         </div>
       ) : null}
-      <AssignmentFieldGrid columns={3}>
+      <div className={styles.toggleFieldHeading}>
+        <FieldLabel as="span">공개 시간 사용</FieldLabel>
+        <label className={styles.inlineToggle}>
+          <Checkbox
+            checked={availableTimeEnabled}
+            onChange={(event) =>
+              controller.actions.updateSchedule({
+                availableTimeEnabled: event.target.checked,
+              })
+            }
+          />
+          <span>사용</span>
+        </label>
+      </div>
+      <ConditionalReveal open={availableTimeEnabled}>
         <Field as="label">
-          <FieldLabel as="span">공개</FieldLabel>
+          <FieldLabel as="span">공개 시간</FieldLabel>
           <Input
             aria-errormessage={availableTimeError
               ? "vocab-available-time-error"
@@ -197,6 +211,8 @@ export function VocabScheduleFields({
             </FieldError>
           ) : null}
         </Field>
+      </ConditionalReveal>
+      <AssignmentFieldGrid columns={2}>
         <Field as="label">
           <FieldLabel as="span">마감일</FieldLabel>
           <Select
@@ -253,9 +269,6 @@ export function VocabScheduleFields({
         controller={controller}
         fieldErrors={fieldErrors}
       />
-      <span className={styles.candidateSummary}>
-        선택 요일 {controller.planner.schedule.weekdays.length}개 · 배정 {finalSessionCount}회
-      </span>
         </div>
       </ConditionalReveal>
     </div>

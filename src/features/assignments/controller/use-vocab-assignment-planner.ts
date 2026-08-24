@@ -12,19 +12,17 @@ import {
   applyTimeTemplate,
   copyPreviousExamConditions,
   keepFirstSelectedWeekdays,
-  resolveDayRange,
+  resolveVocabUnitSelection,
   resolveExtraDateCancelSessionCount,
   shiftLocalDateTime,
   type IsoWeekday,
+  type VocabAssignmentMode,
   type VocabQuestionCountChoice,
   type VocabExtraDatePolicy,
-  type VocabRangeDistribution,
   type VocabScheduleDraft,
   type VocabScheduleSlotOverride,
-  type VocabSplitBasis,
   type VocabSplitOverflowPolicy,
   type VocabTargetSelectionMode,
-  type VocabUnitAllocationMode,
   type VocabTimeTemplate,
 } from "../domain/vocab-assignment-plan";
 import { buildVocabAssignmentFieldErrors } from "../presentation/vocab-assignment-field-errors";
@@ -47,6 +45,7 @@ export function useVocabAssignmentPlanner({
   previewErrorMessage,
   studentIds,
   today,
+  currentLocalDateTime = `${today}T00:00`,
   transport,
   units,
 }: {
@@ -59,13 +58,19 @@ export function useVocabAssignmentPlanner({
   previewErrorMessage: string;
   studentIds: readonly string[];
   today: string;
+  currentLocalDateTime?: string;
   transport?: AssignmentTransport;
   units: readonly AssignmentUnitItem[];
 }) {
   const [planner, dispatch] = useReducer(
     vocabPlannerReducer,
     undefined,
-    () => createInitialVocabPlannerState(datasets, initialDatasetId, today),
+    () => createInitialVocabPlannerState(
+      datasets,
+      initialDatasetId,
+      today,
+      currentLocalDateTime,
+    ),
   );
 
   const availableUnits = useMemo(
@@ -76,7 +81,7 @@ export function useVocabAssignmentPlanner({
     [planner.datasetId, units],
   );
   const selectedUnits = useMemo(
-    () => resolveDayRange(availableUnits, planner.range),
+    () => resolveVocabUnitSelection(availableUnits, planner.range),
     [availableUnits, planner.range],
   );
   const previousExam = useMemo(
@@ -94,6 +99,7 @@ export function useVocabAssignmentPlanner({
   );
   const {
     commonPlan,
+    distribution,
     effectiveSplitBasis,
     localIssues,
     scheduleSlots,
@@ -147,7 +153,10 @@ export function useVocabAssignmentPlanner({
     if (previousExam.scheduleRule) {
       dispatch({
         type: "schedule/update",
-        patch: previousExam.scheduleRule,
+        patch: {
+          ...previousExam.scheduleRule,
+          availableTimeEnabled: true,
+        },
       });
     }
     bulk.actions.changeDirection(copied.exam.directionRatio);
@@ -298,18 +307,16 @@ export function useVocabAssignmentPlanner({
       applyTemplate,
       changeDataset: (value: string) => dispatch({ type: "dataset", value }),
       changeCollisionDecision,
-      changeDistribution: (value: VocabRangeDistribution) =>
-        dispatch({ type: "distribution", value }),
-      changeSplitBasis: (value: VocabSplitBasis) =>
-        dispatch({ type: "split_basis", value }),
-      changeUnitAllocationMode: (value: VocabUnitAllocationMode) =>
-        dispatch({ type: "unit_allocation_mode", value }),
-      changeUnitsPerSession: (value: number) =>
-        dispatch({ type: "units_per_session", value }),
-      changeWeekdayUnitsPerSession: (weekday: IsoWeekday, value: number) =>
-        dispatch({ type: "weekday_units_per_session", weekday, value }),
+      changeAssignmentMode: (value: VocabAssignmentMode) =>
+        dispatch({ type: "assignment_mode", value }),
       changeQuestionCountMode: (value: VocabQuestionCountChoice["mode"]) =>
         dispatch({ type: "question_count_mode", value }),
+      activateManualQuestionCount: (defaultValue: number) => {
+        if (planner.manualQuestionCount < 1) {
+          dispatch({ type: "manual_question_count", value: defaultValue });
+        }
+        dispatch({ type: "question_count_mode", value: "manual" });
+      },
       changeManualQuestionCount: (value: number) =>
         dispatch({ type: "manual_question_count", value }),
       changeOverflowPolicy: (value: VocabSplitOverflowPolicy) =>
@@ -336,7 +343,13 @@ export function useVocabAssignmentPlanner({
       saveCurrentTemplate: timeTemplateController.saveCurrentTemplate,
       changeScheduleEnabled: (enabled: boolean) =>
         dispatch({ type: "schedule/enabled", enabled }),
-      selectUnit: (unitId: string) => dispatch({ type: "range", unitId }),
+      selectUnit: (unitId: string) =>
+        dispatch({ type: "range/toggle", unitId }),
+      selectAllUnits: (selectAll: boolean) => dispatch({
+        type: "range/all",
+        unitIds: availableUnits.map((unit) => unit.id),
+        selectAll,
+      }),
       updateSessionSchedule: (
         sessionNumber: number,
         value: VocabScheduleSlotOverride,
@@ -348,6 +361,7 @@ export function useVocabAssignmentPlanner({
     availableUnits,
     bulk,
     commonPlan,
+    distribution,
     canSubmit,
     customTemplates: timeTemplateController.customTemplates,
     collisionDecisionRecords: planner.collisionDecisionRecords,

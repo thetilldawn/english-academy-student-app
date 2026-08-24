@@ -61,11 +61,13 @@ export function useVocabAssignmentScreen({
   today?: string;
   transport?: AssignmentTransport;
 }) {
-  const [today] = useState(
+  const [initialLocalDateTime] = useState(
     () =>
-      todayOverride ??
-      isoToKoreanDateTimeLocal(new Date().toISOString()).slice(0, 10),
+      todayOverride
+        ? `${todayOverride}T00:00`
+        : isoToKoreanDateTimeLocal(new Date().toISOString()).slice(0, 16),
   );
+  const today = initialLocalDateTime.slice(0, 10);
   const [previousExamSourceStudentId, setPreviousExamSourceStudentId] =
     useState(() => students[0]?.id ?? "");
   const readyDatasets = useMemo(
@@ -104,6 +106,7 @@ export function useVocabAssignmentScreen({
     previewErrorMessage,
     studentIds,
     today,
+    currentLocalDateTime: initialLocalDateTime,
     transport,
     units: data.units,
   });

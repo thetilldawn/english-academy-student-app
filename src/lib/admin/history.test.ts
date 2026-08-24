@@ -252,6 +252,18 @@ describe("assignmentScopeLabel", () => {
     ).toBe("DAY 01~DAY 02");
   });
 
+  it("띄어 고른 범위만 개수형 라벨로 표시한다", () => {
+    expect(
+      assignmentUnitRangeLabel({
+        assignmentPurpose: "regular",
+        unitLabels: ["DAY 01", "DAY 03"],
+        unitSortIndexes: [1, 3],
+        primaryUnitLabels: ["DAY 01", "DAY 03"],
+        primaryUnitSortIndexes: [1, 3],
+      }),
+    ).toBe("DAY 01 외 1개");
+  });
+
   it("오답 시험은 내부 지원 DAY 대신 선택 문항 수를 표시한다", () => {
     expect(
       assignmentScopeLabel({

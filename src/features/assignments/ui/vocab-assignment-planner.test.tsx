@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 
+import "@testing-library/jest-dom/vitest";
+
 import {
   cleanup,
   fireEvent,
@@ -138,6 +140,7 @@ describe("오답 단일 배정 제출", () => {
         data={data}
         onClose={vi.fn()}
         onSuccess={vi.fn()}
+        selectionMode="single"
         students={[student]}
       />,
     );
@@ -161,6 +164,7 @@ describe("오답 단일 배정 제출", () => {
         data={data}
         onClose={onClose}
         onSuccess={onSuccess}
+        selectionMode="single"
         students={[student]}
       />,
     );
@@ -181,6 +185,7 @@ describe("오답 단일 배정 제출", () => {
         data={data}
         onClose={vi.fn()}
         onSuccess={vi.fn()}
+        selectionMode="single"
         students={[student]}
       />,
     );
@@ -204,6 +209,7 @@ describe("오답 단일 배정 제출", () => {
         data={data}
         onClose={vi.fn()}
         onSuccess={vi.fn()}
+        selectionMode="single"
         students={[student]}
       />,
     );
@@ -214,5 +220,24 @@ describe("오답 단일 배정 제출", () => {
         .disabled,
     ).toBe(true);
     expect(mocks.reviewSubmit).not.toHaveBeenCalled();
+  });
+
+  it("일괄 배정은 학생이 한 명이어도 일괄 제목과 필터를 유지한다", () => {
+    mocks.useReview.mockReturnValue(reviewController("ready", true));
+    render(
+      <VocabAssignmentPlanner
+        bulkFilterLabels={["미리보기고", "고3"]}
+        data={data}
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+        selectionMode="bulk"
+        students={[student]}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "일괄 배정" })).toBeVisible();
+    expect(screen.getByText("미리보기고")).toBeVisible();
+    expect(screen.getByText("고3")).toBeVisible();
+    expect(screen.getByText("1명 선택")).toBeVisible();
   });
 });

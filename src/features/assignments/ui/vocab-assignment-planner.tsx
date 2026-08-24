@@ -4,6 +4,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/design-system/primitives/button/button";
+import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 import {
   DialogBody,
   DialogFooter,
@@ -26,12 +27,15 @@ import editorStyles from "./bulk-assignment-editor.module.css";
 import styles from "./vocab-assignment-planner.module.css";
 
 export function VocabAssignmentPlanner({
+  bulkFilterLabels = [],
   data,
   initialDatasetId = "",
   onClose,
   onSuccess,
+  selectionMode,
   students,
 }: {
+  bulkFilterLabels?: readonly string[];
   data: VocabAssignmentScreenData;
   initialDatasetId?: string;
   onClose: () => void;
@@ -40,6 +44,7 @@ export function VocabAssignmentPlanner({
     studentCount: number,
     queuedCount: number,
   ) => void;
+  selectionMode: "single" | "bulk";
   students: readonly AssignmentStudentItem[];
 }) {
   const [assignmentPurpose, setAssignmentPurpose] = useState<"range" | "review">(
@@ -145,7 +150,7 @@ export function VocabAssignmentPlanner({
   const canSubmit = assignmentPurpose === "range"
     ? controller.canSubmit
     : reviewController.canSubmit;
-  const singleStudent = students.length === 1 ? students[0] : null;
+  const singleStudent = selectionMode === "single" ? students[0] ?? null : null;
   const headerDetail = singleStudent
     ? `${singleStudent.displayName} · ${singleStudent.schoolName || "학교 미입력"}`
     : `${students.length}명 선택`;
@@ -162,9 +167,19 @@ export function VocabAssignmentPlanner({
       <DialogHeader closeLabel="닫기">
         <div>
           <h2 id="vocab-assignment-plan-title">
-            {singleStudent ? "단일 배정" : "일괄 배정"}
+            {selectionMode === "bulk" ? "일괄 배정" : "단일 배정"}
           </h2>
-          <p>{headerDetail}</p>
+          {selectionMode === "bulk" ? (
+            <MetaTagList>
+              {(bulkFilterLabels.length > 0
+                ? bulkFilterLabels
+                : ["전체 학생"]
+              ).map((label) => <MetaTag key={label}>{label}</MetaTag>)}
+              <MetaTag>{headerDetail}</MetaTag>
+            </MetaTagList>
+          ) : (
+            <p>{headerDetail}</p>
+          )}
         </div>
       </DialogHeader>
       <DialogBody>

@@ -10,7 +10,6 @@ import {
   bulkAssignmentRangeModes,
   MAXIMUM_BULK_ASSIGNMENT_COUNT,
   MAXIMUM_BULK_STUDENT_COUNT,
-  MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT,
 } from "@/lib/admin/bulk-assignment-range";
 import { readingCurriculumStages } from "@/lib/admin/reading-curriculum";
 
@@ -519,16 +518,6 @@ function validateBulkAssignmentSelection(
       code: "custom",
       path: ["sessionCount"],
       message: `시험 횟수는 1회부터 ${maximumSessionCount}회까지 설정해 주세요.`,
-    });
-  }
-  if (
-    value.commonPlan?.distribution === "split" &&
-    value.studentIds.length > MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT
-  ) {
-    context.addIssue({
-      code: "custom",
-      path: ["studentIds"],
-      message: `배정된 시험은 한 번에 최대 ${MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT}명까지 저장할 수 있습니다.`,
     });
   }
   if (

@@ -219,7 +219,10 @@ export function AssignmentRangeFields({
           adminLearningText.assignmentModal.range.sourceWordCount,
           {
             count: sourceWordCount.toLocaleString(),
-            range: assignmentUnitRangeLabel(selectedLabels),
+            range: assignmentUnitRangeLabel(
+              selectedLabels,
+              selectedUnits.map((unit) => unit.sortIndex),
+            ),
           },
         )}
       </p>

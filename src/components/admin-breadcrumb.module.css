@@ -17,6 +17,16 @@
   letter-spacing: -0.035em;
 }
 
+.topbar {
+  flex: none;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.topbar h1 {
+  font-size: 20px;
+}
+
 @media (max-width: 767px) {
   .breadcrumb {
     gap: 6px;
@@ -25,5 +35,13 @@
 
   .breadcrumb h1 {
     font-size: 21px;
+  }
+
+  .topbar {
+    font-size: 13px;
+  }
+
+  .topbar h1 {
+    font-size: 18px;
   }
 }

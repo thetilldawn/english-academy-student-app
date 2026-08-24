@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 
-import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
 import {
   OverviewActionGroups,
-  OverviewEmptyState,
 } from "@/features/history/ui/overview-action-groups";
 import { adminOverviewText } from "@/content/ko/admin-overview";
 import { overviewActivityGroups } from "@/features/history/domain/learning-activity";
@@ -33,16 +31,7 @@ export default async function AdminDashboardPage() {
       title: adminOverviewText.sections.completed,
       items: groups.completed,
     },
-  ].filter((section) => section.items.length > 0);
+  ];
 
-  return (
-    <>
-      <AdminBreadcrumb current={adminOverviewText.page.title} />
-      {sections.length === 0 ? (
-        <OverviewEmptyState />
-      ) : (
-        <OverviewActionGroups sections={sections} />
-      )}
-    </>
-  );
+  return <OverviewActionGroups sections={sections} />;
 }

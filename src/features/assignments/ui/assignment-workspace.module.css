@@ -303,7 +303,7 @@
 
 @media (max-width: 767px) {
   .bulkBar {
-    bottom: calc(72px + env(safe-area-inset-bottom));
+    bottom: calc(var(--admin-mobile-nav-height) + env(safe-area-inset-bottom));
     align-items: stretch;
     flex-direction: column;
   }

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   resolveBulkAssignmentSeries,
   unitRangeLabel,
+  unitSelectionLabel,
 } from "@/lib/admin/bulk-assignment-range";
 
 const units = Array.from({ length: 60 }, (_, index) => ({
@@ -12,6 +13,15 @@ const units = Array.from({ length: 60 }, (_, index) => ({
 }));
 
 describe("일괄 배정 회차 범위", () => {
+  it("비연속 선택은 연속 범위처럼 오해되지 않게 요약한다", () => {
+    expect(unitSelectionLabel([units[0]!, units[2]!, units[4]!])).toBe(
+      "DAY 01 외 2개",
+    );
+    expect(unitSelectionLabel([units[0]!, units[1]!, units[2]!])).toBe(
+      "DAY 01~DAY 03",
+    );
+  });
+
   it("3 DAY씩 5개의 독립된 정방향 시험을 만든다", () => {
     const series = resolveBulkAssignmentSeries(
       units,

@@ -343,7 +343,7 @@ describe("일괄 단어 시험 입력 계약", () => {
     })).toThrow("회차별 범위가 선택한 순서 또는 단위 수와 일치하지 않습니다.");
   });
 
-  it("배정된 시험은 DB 한도 30명과 전체 210시험을 계산 전에 막는다", () => {
+  it("배정된 시험은 31명도 허용하되 학생과 회차를 합쳐 210시험을 지킨다", () => {
     const manyStudents = Array.from({ length: 31 }, (_, index) =>
       `50000000-0000-4000-8000-${String(index).padStart(12, "0")}`
     );
@@ -366,7 +366,7 @@ describe("일괄 단어 시험 입력 계약", () => {
       sessions: [{ unitIds: [unitId], availableFrom, availableUntil }],
       collisionDecisions: [],
     } as const;
-    expect(() => bulkAssignmentPreviewSchema.parse({
+    expect(bulkAssignmentPreviewSchema.parse({
       studentIds: manyStudents,
       ...schedule,
       sessionCount: 1,
@@ -374,37 +374,36 @@ describe("일괄 단어 시험 입력 계약", () => {
       reviewLevels: [1, 2],
       englishToKoreanRatio: 50,
       commonPlan: oneSessionPlan,
-    })).toThrow("배정된 시험은 한 번에 최대 30명까지 저장할 수 있습니다.");
+    }).studentIds).toHaveLength(31);
 
-    const thirtyStudents = manyStudents.slice(0, 30);
-    const eightUnits = Array.from({ length: 8 }, (_, index) =>
+    const sevenUnits = Array.from({ length: 7 }, (_, index) =>
       `80000000-0000-4000-8000-${String(index).padStart(12, "0")}`
     );
-    const eightSessions = eightUnits.map((id, index) => ({
+    const sevenSessions = sevenUnits.map((id, index) => ({
       unitIds: [id],
       availableFrom: `2026-0${9 + Math.floor(index / 28)}-${String(1 + index).padStart(2, "0")}T07:00:00.000Z`,
       availableUntil: `2026-0${9 + Math.floor(index / 28)}-${String(1 + index).padStart(2, "0")}T13:00:00.000Z`,
     }));
     expect(() => bulkAssignmentPreviewSchema.parse({
-      studentIds: thirtyStudents,
+      studentIds: manyStudents,
       ...schedule,
-      sessionCount: 8,
+      sessionCount: 7,
       includePendingReview: false,
       reviewLevels: [1, 2],
       englishToKoreanRatio: 50,
       commonPlan: {
         ...oneSessionPlan,
-        datasetId: eightUnits[0],
+        datasetId: sevenUnits[0],
         splitBasis: "range_unit",
-        orderedUnitIds: eightUnits,
+        orderedUnitIds: sevenUnits,
         rangeUnitCounts: [1],
         questionCount: { mode: "all" },
         overflowPolicy: "continue_weekly",
         recurrenceSessions: [{
-          availableFrom: eightSessions[0]!.availableFrom,
-          availableUntil: eightSessions[0]!.availableUntil,
+          availableFrom: sevenSessions[0]!.availableFrom,
+          availableUntil: sevenSessions[0]!.availableUntil,
         }],
-        sessions: eightSessions,
+        sessions: sevenSessions,
       },
     })).toThrow("한 번에 저장할 수 있는 시험은 전체 210개까지입니다.");
   });

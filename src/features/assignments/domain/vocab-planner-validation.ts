@@ -72,14 +72,12 @@ export function validateVocabPlannerInputs(input: {
   }
   if (
     input.overflowPolicy === "continue_weekly" &&
-    (input.distribution !== "split" ||
-      (input.splitBasis === "question_count" &&
-        input.questionCount.mode !== "manual"))
+    input.distribution !== "split"
   ) {
     issues.push({
       code: "invalid_order",
       path: "commonPlan.overflowPolicy",
-      message: "같은 요일로 이어서는 문항 수 직접 입력 또는 범위 단위 나누기에서 선택할 수 있습니다.",
+      message: "같은 요일로 이어서는 회차별 또는 단어 수 배정에서 선택할 수 있습니다.",
     });
   }
   if (
@@ -149,7 +147,11 @@ export function validateVocabPlannerInputs(input: {
       message: "배정할 요일을 하나 이상 선택해 주세요.",
     });
   }
-  if (input.scheduleEnabled !== false && !TIME_PATTERN.test(input.schedule.availableTime)) {
+  if (
+    input.scheduleEnabled !== false &&
+    input.schedule.availableTimeEnabled !== false &&
+    !TIME_PATTERN.test(input.schedule.availableTime)
+  ) {
     issues.push({
       code: "invalid_datetime",
       path: "commonPlan.schedule.availableTime",

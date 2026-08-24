@@ -1,24 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import type { VocabPlannerState } from "./vocab-assignment-planner-state";
-import { vocabPlannerReducer } from "./vocab-assignment-planner-state";
+import {
+  createInitialVocabPlannerState,
+  resolveInitialVocabDeadline,
+  vocabPlannerReducer,
+} from "./vocab-assignment-planner-state";
 
 const state: VocabPlannerState = {
   datasetId: "dataset-a",
-  range: { startUnitId: "unit-1", endUnitId: "unit-2" },
-  distribution: "split",
-  splitBasis: "question_count",
-  unitAllocationMode: "same",
-  unitsPerSession: 2,
-  weekdayUnitsPerSession: {
-    1: 2,
-    2: 2,
-    3: 2,
-    4: 2,
-    5: 2,
-    6: 2,
-    7: 2,
-  },
+  range: { selectedUnitIds: ["unit-1", "unit-2"] },
+  assignmentMode: "word_count",
   questionCountMode: "manual",
   manualQuestionCount: 45,
   overflowPolicy: "leave",
@@ -37,14 +29,73 @@ const state: VocabPlannerState = {
 };
 
 describe("vocabPlannerReducer extra date decision", () => {
-  it("범위 단위를 선택해도 교사가 고르기 전에는 다음 주 이어 배정을 켜지 않는다", () => {
-    expect(vocabPlannerReducer({
+  it("새 배정은 전체 회차·즉시 공개·당일 마감으로 시작한다", () => {
+    expect(createInitialVocabPlannerState([], "", "2026-08-24")).toMatchObject({
+      assignmentMode: "all_sessions",
+      schedule: {
+        availableTimeEnabled: false,
+        deadlineDayOffset: 0,
+      },
+    });
+  });
+
+  it("늦은 시각에도 기본 마감이 과거가 되지 않도록 안전 여유를 둔다", () => {
+    expect(resolveInitialVocabDeadline(
+      "2026-08-24",
+      "2026-08-24T21:30",
+    )).toEqual({ dayOffset: 0, time: "22:00" });
+    expect(resolveInitialVocabDeadline(
+      "2026-08-24",
+      "2026-08-24T22:15",
+    )).toEqual({ dayOffset: 0, time: "23:59" });
+    expect(resolveInitialVocabDeadline(
+      "2026-08-24",
+      "2026-08-24T23:50",
+    )).toEqual({ dayOffset: 1, time: "22:00" });
+  });
+
+  it("범위를 각각 토글하고 전체 선택·해제한다", () => {
+    expect(vocabPlannerReducer(state, {
+      type: "range/toggle",
+      unitId: "unit-2",
+    }).range).toEqual({ selectedUnitIds: ["unit-1"] });
+    expect(vocabPlannerReducer(state, {
+      type: "range/all",
+      unitIds: ["unit-1", "unit-2", "unit-3"],
+      selectAll: true,
+    }).range).toEqual({
+      selectedUnitIds: ["unit-1", "unit-2", "unit-3"],
+    });
+    expect(vocabPlannerReducer(state, {
+      type: "range/all",
+      unitIds: ["unit-1", "unit-2"],
+      selectAll: false,
+    }).range).toEqual({ selectedUnitIds: [] });
+  });
+
+  it("배정 방식을 바꿔도 직접 입력한 단어 수를 보존한다", () => {
+    const allSessions = vocabPlannerReducer({
       ...state,
       overflowPolicy: "continue_weekly",
     }, {
-      type: "split_basis",
-      value: "range_unit",
-    }).overflowPolicy).toBe("leave");
+      type: "assignment_mode",
+      value: "all_sessions",
+    });
+    expect(allSessions).toMatchObject({
+      assignmentMode: "all_sessions",
+      manualQuestionCount: 45,
+      questionCountMode: "manual",
+      overflowPolicy: "leave",
+    });
+
+    expect(vocabPlannerReducer(allSessions, {
+      type: "assignment_mode",
+      value: "word_count",
+    })).toMatchObject({
+      assignmentMode: "word_count",
+      manualQuestionCount: 45,
+      questionCountMode: "manual",
+    });
   });
 
   it("시간·기준일·시간 템플릿 변경 뒤에도 범위 반복 결정을 유지한다", () => {
@@ -59,6 +110,41 @@ describe("vocabPlannerReducer extra date decision", () => {
       value: { ...state.schedule, availableTime: "18:00" },
     });
     expect(appliedTemplate.extraDatePolicy).toBe("repeat_from_start");
+  });
+
+  it("공개 시간 토글은 회차별 공개·마감 수정값을 보존한다", () => {
+    const withOverride = {
+      ...state,
+      sessionScheduleOverrides: {
+        2: {
+          availableLocalDateTime: "2026-08-26T17:00",
+          deadlineLocalDateTime: "2026-08-26T22:30",
+        },
+      },
+    };
+    const toggled = vocabPlannerReducer(withOverride, {
+      type: "schedule/update",
+      patch: { availableTimeEnabled: false },
+    });
+    expect(toggled.sessionScheduleOverrides).toEqual(
+      withOverride.sessionScheduleOverrides,
+    );
+  });
+
+  it("시험일을 끄면 단순한 전체 범위 1회 배정으로 맞춘다", () => {
+    const disabled = vocabPlannerReducer({
+      ...state,
+      assignmentMode: "per_session",
+      overflowPolicy: "continue_weekly",
+    }, {
+      type: "schedule/enabled",
+      enabled: false,
+    });
+    expect(disabled).toMatchObject({
+      assignmentMode: "all_sessions",
+      overflowPolicy: "leave",
+      scheduleEnabled: false,
+    });
   });
 
   it("요일이 달라질 때만 범위 반복 결정을 다시 확인한다", () => {

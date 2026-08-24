@@ -5,7 +5,6 @@ import { koreanDateTimeLocalToIso } from "@/lib/deadline";
 import {
   MAXIMUM_BULK_ASSIGNMENT_COUNT,
   MAXIMUM_BULK_STUDENT_COUNT,
-  MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT,
   type AssignmentDeadline,
   type AssignmentDraft,
   type BulkReviewPolicy,
@@ -498,14 +497,12 @@ function validateCommonPlan(
   }
   if (
     plan.overflowPolicy === "continue_weekly" &&
-    (plan.distribution !== "split" ||
-      (plan.splitBasis === "question_count" &&
-        plan.questionCount.mode !== "manual"))
+    plan.distribution !== "split"
   ) {
     issues.push({
       code: "invalid_order",
       path: "commonPlan.overflowPolicy",
-      message: "같은 요일로 이어서는 문항 수 직접 입력 또는 범위 단위 나누기에서 선택할 수 있습니다.",
+      message: "같은 요일로 이어서는 회차별 또는 단어 수 배정에서 선택할 수 있습니다.",
     });
   }
   if (plan.distribution !== "split" && plan.splitBasis === "range_unit") {
@@ -716,16 +713,6 @@ export function validateBulkPreviewProjection(
       code: "out_of_range",
       path: "studentIds",
       message: `한 번에 최대 ${MAXIMUM_BULK_STUDENT_COUNT}명까지 선택할 수 있습니다.`,
-    });
-  }
-  if (
-    draft.commonPlan?.distribution === "split" &&
-    draft.studentIds.length > MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT
-  ) {
-    issues.push({
-      code: "out_of_range",
-      path: "studentIds",
-      message: `배정된 시험은 한 번에 최대 ${MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT}명까지 저장할 수 있습니다.`,
     });
   }
   if (

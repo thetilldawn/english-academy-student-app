@@ -51,22 +51,25 @@ const units: AssignmentUnitItem[] = [1, 2].map((number) => ({
 }));
 
 function controller(input?: {
+  assignmentMode?: "all_sessions" | "per_session" | "word_count";
   manual?: boolean;
   overflowPolicy?: "leave" | "continue_weekly";
   remaining?: number;
   sessionCount?: number;
 }) {
   const actions = {
+    activateManualQuestionCount: vi.fn(),
+    changeAssignmentMode: vi.fn(),
     changeDataset: vi.fn(),
-    changeDistribution: vi.fn(),
     changeManualQuestionCount: vi.fn(),
     changeOverflowPolicy: vi.fn(),
     changeQuestionCountMode: vi.fn(),
     changeSelectionMode: vi.fn(),
-    changeSplitBasis: vi.fn(),
+    selectAllUnits: vi.fn(),
     selectUnit: vi.fn(),
   };
   const sessionCount = input?.sessionCount ?? 3;
+  const assignmentMode = input?.assignmentMode ?? "all_sessions";
   return {
     actions,
     availableUnits: units,
@@ -95,15 +98,15 @@ function controller(input?: {
     },
     fieldErrors: {},
     defaultSessionCount: sessionCount,
+    distribution: assignmentMode === "all_sessions" ? "repeat" : "split",
     scheduledQuestionCount: input?.remaining ? 40 : 86,
     planner: {
+      assignmentMode,
       datasetId: dataset.id,
-      distribution: "split",
-      splitBasis: "question_count",
-      manualQuestionCount: 20,
+      manualQuestionCount: input?.manual ? 20 : 0,
       overflowPolicy: input?.overflowPolicy ?? "leave",
       questionCountMode: input?.manual ? "manual" : "all",
-      range: { startUnitId: units[0]!.id, endUnitId: units[1]!.id },
+      range: { selectedUnitIds: units.map((unit) => unit.id) },
       selectionMode: "source_order",
     },
     scheduleSlots: Array.from({ length: 3 }, (_, index) => ({
@@ -119,25 +122,44 @@ function controller(input?: {
 afterEach(cleanup);
 
 describe("VocabRangePicker", () => {
-  it("전체 문항을 기본값으로 두고 실제 가능·출제·남은 수를 표시한다", () => {
+  it("배정 방식을 전체 회차·회차별·단어 수로 제공한다", () => {
     const value = controller();
     render(<VocabRangePicker controller={value} datasets={[dataset]} />);
 
-    expect(screen.getByRole("button", { name: "전체" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "전체 회차" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
-    expect(screen.getByText("전체 86개 · 배정 86개 · 남음 0개 · 기본 3회"))
-      .toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "회차별" }));
+    expect(value.actions.changeAssignmentMode).toHaveBeenCalledWith(
+      "per_session",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "단어 수" }));
+    expect(value.actions.changeAssignmentMode).toHaveBeenCalledWith(
+      "word_count",
+    );
+  });
 
-    fireEvent.click(screen.getByRole("button", { name: "직접 입력" }));
+  it("단어 수에서 전체와 숫자 입력을 함께 두고 전체 개수를 기본값으로 쓴다", () => {
+    const value = controller({ assignmentMode: "word_count" });
+    render(<VocabRangePicker controller={value} datasets={[dataset]} />);
+
+    const input = screen.getByRole("spinbutton", { name: "회차당 단어 수" });
+    expect(input).toHaveValue(86);
+    fireEvent.focus(input);
+    expect(value.actions.activateManualQuestionCount).toHaveBeenCalledWith(86);
+    fireEvent.click(screen.getByRole("button", { name: "전체" }));
     expect(value.actions.changeQuestionCountMode).toHaveBeenCalledWith(
-      "manual",
+      "all",
     );
   });
 
   it("문항 선택과 직접 입력을 시험 조건으로 분리해 제공한다", () => {
-    const withRemaining = controller({ manual: true, remaining: 46 });
+    const withRemaining = controller({
+      assignmentMode: "word_count",
+      manual: true,
+      remaining: 46,
+    });
     render(
       <VocabRangePicker controller={withRemaining} datasets={[dataset]} />,
     );
@@ -148,14 +170,14 @@ describe("VocabRangePicker", () => {
     expect(withRemaining.actions.changeSelectionMode).toHaveBeenCalledWith(
       "random",
     );
-    fireEvent.click(screen.getByRole("button", { name: "범위" }));
-    expect(withRemaining.actions.changeSplitBasis).toHaveBeenCalledWith(
-      "range_unit",
+    fireEvent.click(screen.getByRole("button", { name: "회차별" }));
+    expect(withRemaining.actions.changeAssignmentMode).toHaveBeenCalledWith(
+      "per_session",
     );
   });
 
   it("공통 요약이 없어도 학생 예외 수치와 전체 모드 오류를 표시한다", () => {
-    const value = controller();
+    const value = controller({ assignmentMode: "word_count" });
     value.bulk.preview!.commonPlanSummary = null;
     value.bulk.preview!.items = [{
       available: true,
@@ -191,7 +213,7 @@ describe("VocabRangePicker", () => {
   });
 
   it("여러 학생의 공통 요약이 없으면 첫 학생 수치를 공통값처럼 표시하지 않는다", () => {
-    const value = controller();
+    const value = controller({ assignmentMode: "word_count" });
     value.bulk.preview!.commonPlanSummary = null;
     value.bulk.preview!.items = [
       {

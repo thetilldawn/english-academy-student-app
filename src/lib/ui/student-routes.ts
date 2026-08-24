@@ -1,5 +1,14 @@
-export function studentPageTitleForPathname(pathname: string) {
-  if (pathname.startsWith("/student/attempt/")) return "시험";
-  if (pathname.startsWith("/student/result/")) return "시험 결과";
-  return "내 시험";
+export type StudentRouteLocation = {
+  current: string;
+  section?: string;
+};
+
+export function studentBreadcrumbForPathname(
+  pathname: string,
+): StudentRouteLocation | null {
+  if (pathname.startsWith("/student/attempt/")) return null;
+  if (pathname.startsWith("/student/result/")) {
+    return { section: "내 단어 시험", current: "시험 결과" };
+  }
+  return { current: "내 단어 시험" };
 }

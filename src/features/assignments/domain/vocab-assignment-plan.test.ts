@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import type { ExamSettings } from "./model";
 import {
-  advanceDayRangeSelection,
   applyCollisionDecisions,
   applyScheduleSlotOverride,
   applyTimeTemplate,
@@ -15,14 +14,17 @@ import {
   planDirectionalVocabSeriesTargets,
   planVocabSeriesTargetIds,
   rebalanceHalfRatioSplitQuestionCounts,
+  resolveVocabAssignmentMode,
   resolveVocabQuestionCycleAllocation,
   resolveVocabQuestionAllocation,
   resolveVocabBaseSessionUnitCounts,
   resolveVocabUnitCycleAllocation,
-  resolveDayRange,
+  resolveVocabUnitSelection,
+  selectAllVocabUnits,
   selectInitialVocabDatasetId,
   splitVocabTargetPoolPreparationCounts,
   toggleWeekday,
+  toggleVocabUnitSelection,
 } from "./vocab-assignment-plan";
 
 const exam: ExamSettings = {
@@ -49,6 +51,21 @@ function targetSetCanMeetEnglishCount(
 }
 
 describe("단어 시험 공통 배정 계획", () => {
+  it("세 배정 방식을 기존 저장 계약으로 변환한다", () => {
+    expect(resolveVocabAssignmentMode("all_sessions")).toEqual({
+      distribution: "repeat",
+      splitBasis: "question_count",
+    });
+    expect(resolveVocabAssignmentMode("per_session")).toEqual({
+      distribution: "split",
+      splitBasis: "range_unit",
+    });
+    expect(resolveVocabAssignmentMode("word_count")).toEqual({
+      distribution: "split",
+      splitBasis: "question_count",
+    });
+  });
+
   it("선택 범위를 회차당 단위 수로 나누고 마지막 한 단위를 보존한다", () => {
     expect(resolveVocabUnitCycleAllocation({
       orderedUnitIds: ["1", "2", "3", "4", "5"],
@@ -233,25 +250,45 @@ describe("단어 시험 공통 배정 계획", () => {
     ]);
   });
 
-  it("DAY를 두 번 눌러 역방향 범위를 보존하고 세 번째 선택은 다시 시작한다", () => {
+  it("공개 시간을 사용하지 않으면 시험일 자정부터 바로 공개한다", () => {
+    expect(buildScheduleSlots({
+      startDate: "2026-08-17",
+      weekdays: [1],
+      availableTimeEnabled: false,
+      availableTime: "invalid",
+      deadlineDayOffset: 0,
+      deadlineTime: "22:00",
+    })[0]).toMatchObject({
+      availableLocalDateTime: "2026-08-17T00:00",
+      deadlineLocalDateTime: "2026-08-17T22:00",
+    });
+  });
+
+  it("범위를 각각 켜고 끄며 전체 선택을 자료 순서로 해석한다", () => {
     const units = [1, 2, 3, 4].map((sortIndex) => ({
       id: `day-${sortIndex}`,
       sortIndex,
     }));
-    const first = advanceDayRangeSelection(
-      { startUnitId: null, endUnitId: null },
-      "day-4",
-    );
-    const second = advanceDayRangeSelection(first, "day-2");
-    expect(resolveDayRange(units, second).map((unit) => unit.id)).toEqual([
-      "day-4",
+    const first = toggleVocabUnitSelection(
+      { selectedUnitIds: [] },
       "day-3",
-      "day-2",
+    );
+    const second = toggleVocabUnitSelection(first, "day-1");
+    expect(
+      resolveVocabUnitSelection(units, second).map((unit) => unit.id),
+    ).toEqual([
+      "day-1",
+      "day-3",
     ]);
-    expect(advanceDayRangeSelection(second, "day-1")).toEqual({
-      startUnitId: "day-1",
-      endUnitId: null,
+    expect(toggleVocabUnitSelection(second, "day-3")).toEqual({
+      selectedUnitIds: ["day-1"],
     });
+    expect(resolveVocabUnitSelection(
+      units,
+      selectAllVocabUnits(units.map((unit) => unit.id), true),
+    ).map((unit) => unit.id)).toEqual([
+      "day-1", "day-2", "day-3", "day-4",
+    ]);
   });
 
   it("전체 문항은 실제 가능한 수를 선택 날짜에 균등하게 나눈다", () => {
@@ -419,25 +456,42 @@ describe("단어 시험 공통 배정 계획", () => {
     ]);
   });
 
-  it.each([0, 1, 2])(
-    "80문항을 45개씩 나누면 날짜 %i개와 무관하게 기본 2회다",
-    (selectedDateCount) => {
-      expect(resolveVocabQuestionCycleAllocation({
-        availableQuestionCount: 80,
-        distribution: "split",
-        questionCount: { mode: "manual", value: 45 },
-        selectedDateCount,
-        extraDatePolicy: "unconfirmed",
-      })).toMatchObject({
-        baseSessionQuestionCounts: [45, 35],
-        defaultSessionCount: 2,
-        sessionQuestionCounts: [45, 35],
-        requiresExtraDateDecision: false,
-        scheduledQuestionCount: 80,
-        sessionCycleIndexes: [0, 0],
-      });
-    },
-  );
+  it("가능한 범위까지만은 선택한 날짜 안에서만 문항을 배정한다", () => {
+    expect(resolveVocabQuestionCycleAllocation({
+      availableQuestionCount: 80,
+      distribution: "split",
+      questionCount: { mode: "manual", value: 45 },
+      selectedDateCount: 1,
+      overflowPolicy: "leave",
+      extraDatePolicy: "unconfirmed",
+    })).toMatchObject({
+      baseSessionQuestionCounts: [45, 35],
+      defaultSessionCount: 2,
+      sessionQuestionCounts: [45],
+      requiresExtraDateDecision: false,
+      scheduledQuestionCount: 45,
+      remainingQuestionCount: 35,
+      sessionCycleIndexes: [0],
+    });
+  });
+
+  it("같은 요일로 이어서는 남은 문항이 끝날 때까지 회차를 연장한다", () => {
+    expect(resolveVocabQuestionCycleAllocation({
+      availableQuestionCount: 80,
+      distribution: "split",
+      questionCount: { mode: "manual", value: 45 },
+      selectedDateCount: 1,
+      overflowPolicy: "continue_weekly",
+      extraDatePolicy: "unconfirmed",
+    })).toMatchObject({
+      baseSessionQuestionCounts: [45, 35],
+      defaultSessionCount: 2,
+      sessionQuestionCounts: [45, 35],
+      scheduledQuestionCount: 80,
+      remainingQuestionCount: 0,
+      sessionCycleIndexes: [0, 0],
+    });
+  });
 
   it("기본 회차보다 날짜가 많을 때만 범위 반복 결정을 요구한다", () => {
     const common = {
@@ -445,6 +499,7 @@ describe("단어 시험 공통 배정 계획", () => {
       distribution: "split" as const,
       questionCount: { mode: "manual" as const, value: 45 },
       selectedDateCount: 3,
+      overflowPolicy: "leave" as const,
     };
     expect(resolveVocabQuestionCycleAllocation({
       ...common,
@@ -481,6 +536,7 @@ describe("단어 시험 공통 배정 계획", () => {
       distribution: "split",
       questionCount: { mode: "manual", value: 45 },
       selectedDateCount: 1,
+      overflowPolicy: "continue_weekly",
       extraDatePolicy: "unconfirmed",
     }).sessionQuestionCounts).toEqual(expected);
   });
@@ -491,6 +547,7 @@ describe("단어 시험 공통 배정 계획", () => {
       distribution: "repeat",
       questionCount: { mode: "manual", value: 45 },
       selectedDateCount: 3,
+      overflowPolicy: "leave",
       extraDatePolicy: "unconfirmed",
     })).toMatchObject({
       sessionQuestionCounts: [45, 45, 45],

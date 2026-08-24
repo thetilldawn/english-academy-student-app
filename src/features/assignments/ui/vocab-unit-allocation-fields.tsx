@@ -1,29 +1,17 @@
 "use client";
 
-import { AssignmentFieldGrid } from "@/components/assignment-editor-ui";
 import { Button } from "@/design-system/primitives/button/button";
 import {
   Field,
   FieldError,
   FieldLabel,
-  Input,
 } from "@/design-system/primitives/form/field";
 import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
 
 import type { VocabAssignmentPlannerController } from "../controller/use-vocab-assignment-planner";
-import type { IsoWeekday } from "../domain/vocab-assignment-plan";
 import type { VocabAssignmentFieldKey } from "../presentation/vocab-assignment-field-errors";
+import { assignmentUnitRangeLabel } from "../presentation/assignment-unit-range-label";
 import styles from "./vocab-assignment-planner.module.css";
-
-const weekdayLabels: Readonly<Record<IsoWeekday, string>> = {
-  1: "월요일",
-  2: "화요일",
-  3: "수요일",
-  4: "목요일",
-  5: "금요일",
-  6: "토요일",
-  7: "일요일",
-};
 
 export function VocabUnitAllocationFields({
   controller,
@@ -32,84 +20,40 @@ export function VocabUnitAllocationFields({
   controller: VocabAssignmentPlannerController;
   fieldErrors?: Partial<Record<VocabAssignmentFieldKey, string>>;
 }) {
-  const usesRangeUnits = controller.planner.splitBasis === "range_unit";
+  const usesRangeUnits = controller.planner.assignmentMode === "per_session";
   const showsContinuation = usesRangeUnits ||
-    controller.planner.questionCountMode === "manual";
-  if (controller.planner.distribution !== "split") {
+    controller.planner.assignmentMode === "word_count";
+  if (!showsContinuation) {
     return null;
   }
 
-  const allocationModeError = fieldErrors.unitAllocationMode;
-  const commonCountError = fieldErrors.unitsPerSession;
   const overflowError = fieldErrors.overflowPolicy;
   const remainingUnitCount = controller.unitAllocation?.remainingUnitIds.length ?? 0;
-  const unitLabelById = new Map(
-    controller.selectedUnits.map((unit) => [unit.id, unit.label]),
+  const unitById = new Map(
+    controller.selectedUnits.map((unit) => [unit.id, unit]),
   );
-  const remainingUnitLabels = (
+  const remainingUnits = (
     controller.unitAllocation?.remainingUnitIds ?? []
-  ).map((unitId) => unitLabelById.get(unitId) ?? unitId);
-  const remainingRangeLabel = remainingUnitLabels.length === 0
+  ).flatMap((unitId) => {
+    const unit = unitById.get(unitId);
+    return unit ? [unit] : [];
+  });
+  const remainingRangeLabel = remainingUnits.length === 0
     ? ""
-    : remainingUnitLabels.length === 1
-      ? remainingUnitLabels[0]!
-      : `${remainingUnitLabels[0]}–${remainingUnitLabels.at(-1)}`;
-  const queuedSessionCount = Math.max(
-    0,
-    (controller.unitAllocation?.sessionUnitIds.length ?? 0) - 1,
-  );
-
+    : assignmentUnitRangeLabel(
+        remainingUnits.map((unit) => unit.label),
+        remainingUnits.map((unit) => unit.sortIndex),
+      );
   return (
     <div className={styles.fieldStack}>
-      {usesRangeUnits ? (
-        <Field>
-            <FieldLabel as="span" id="vocab-unit-allocation-mode-label">
-              <HelpTip label="요일별 배정 방식 설명" trigger="요일별 배정 방식">
-                모든 요일에 같은 범위 수를 적용할지, 요일마다 다르게 정할지 선택합니다.
-              </HelpTip>
-            </FieldLabel>
-            <div
-              aria-describedby={allocationModeError
-                ? "vocab-unit-allocation-mode-error"
-                : undefined}
-              aria-labelledby="vocab-unit-allocation-mode-label"
-              className={styles.modeButtons}
-              data-field-key="unitAllocationMode"
-              role="group"
-              tabIndex={-1}
-            >
-              <Button
-                aria-pressed={controller.planner.unitAllocationMode === "same"}
-                onClick={() => controller.actions.changeUnitAllocationMode("same")}
-                size="small"
-                variant="filter"
-              >
-                모든 요일 동일
-              </Button>
-              <Button
-                aria-pressed={controller.planner.unitAllocationMode === "by_weekday"}
-                onClick={() => controller.actions.changeUnitAllocationMode("by_weekday")}
-                size="small"
-                variant="filter"
-              >
-                요일별 다르게
-              </Button>
-            </div>
-            {allocationModeError ? (
-              <FieldError id="vocab-unit-allocation-mode-error">
-                {allocationModeError}
-              </FieldError>
-            ) : null}
-        </Field>
-      ) : null}
-      {showsContinuation ? (
-        <Field>
+      <Field>
           <FieldLabel as="span" id="vocab-overflow-policy-label">
             <HelpTip
-              label={usesRangeUnits ? "남은 범위 설명" : "남은 문제 설명"}
-              trigger={usesRangeUnits ? "남은 범위" : "남은 문제"}
+              label="남은 범위 설명"
+              trigger="남은 범위"
             >
-              선택한 날짜보다 회차가 많을 때 이번 일정에서 멈출지 같은 요일로 이어갈지 정합니다.
+              선택한 일정에 담을 수 있는 범위까지만 배정하거나, 남은 범위를
+              같은 요일로 이어서 배정합니다.
             </HelpTip>
           </FieldLabel>
           <div
@@ -126,7 +70,7 @@ export function VocabUnitAllocationFields({
               size="small"
               variant="filter"
             >
-              이번 일정만
+              가능한 범위까지만
             </Button>
             <Button
               aria-pressed={controller.planner.overflowPolicy === "continue_weekly"}
@@ -142,71 +86,11 @@ export function VocabUnitAllocationFields({
               {overflowError}
             </FieldError>
           ) : null}
-        </Field>
-      ) : null}
-
-      {usesRangeUnits && controller.planner.unitAllocationMode === "same" ? (
-        <Field as="label">
-          <FieldLabel as="span">요일당 범위 수</FieldLabel>
-          <Input
-            aria-errormessage={commonCountError
-              ? "vocab-units-per-session-error"
-              : undefined}
-            aria-invalid={Boolean(commonCountError)}
-            data-field-key="unitsPerSession"
-            max={30}
-            min={1}
-            onChange={(event) =>
-              controller.actions.changeUnitsPerSession(Number(event.target.value))
-            }
-            type="number"
-            value={controller.planner.unitsPerSession}
-          />
-          {commonCountError ? (
-            <FieldError id="vocab-units-per-session-error">
-              {commonCountError}
-            </FieldError>
-          ) : null}
-        </Field>
-      ) : usesRangeUnits ? (
-        <AssignmentFieldGrid columns={3}>
-          {controller.planner.schedule.weekdays.map((weekday) => {
-            const fieldKey = `weekday-${weekday}-units` as const;
-            const error = fieldErrors[fieldKey];
-            const errorId = `vocab-weekday-${weekday}-units-error`;
-            return (
-              <Field as="label" key={weekday}>
-                <FieldLabel as="span">
-                  {weekdayLabels[weekday]} 범위 수
-                </FieldLabel>
-                <Input
-                  aria-errormessage={error ? errorId : undefined}
-                  aria-invalid={Boolean(error)}
-                  data-field-key={fieldKey}
-                  max={30}
-                  min={1}
-                  onChange={(event) =>
-                    controller.actions.changeWeekdayUnitsPerSession(
-                      weekday,
-                      Number(event.target.value),
-                    )
-                  }
-                  type="number"
-                  value={controller.planner.weekdayUnitsPerSession[weekday]}
-                />
-                {error ? <FieldError id={errorId}>{error}</FieldError> : null}
-              </Field>
-            );
-          })}
-        </AssignmentFieldGrid>
-      ) : null}
+      </Field>
 
       {usesRangeUnits ? (
         <span className={styles.candidateSummary} aria-live="polite">
           기본 {controller.unitAllocation?.defaultSessionCount ?? 0}회
-          {queuedSessionCount > 0
-            ? ` · 배정된 시험 ${queuedSessionCount}회`
-            : ""}
           {remainingUnitCount > 0
             ? ` · 남음 ${remainingRangeLabel} (${remainingUnitCount}단위)`
             : ""}

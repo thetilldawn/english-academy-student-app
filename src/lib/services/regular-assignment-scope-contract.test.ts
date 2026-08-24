@@ -47,6 +47,16 @@ describe("regular assignment scope contract", () => {
     );
   });
 
+  it("allows sparse ordered units for regular capacity while keeping mixed review contiguous", () => {
+    const mixedService = compact(
+      source("src/lib/services/mixed-assignment-service.ts"),
+    );
+
+    expect(mixedService).toContain(
+      "primaryUnits = input.includePendingReview ? orderContiguousPrimaryUnits(availableUnits, input.primaryUnitIds) : resolveOrderedUnitSelection(availableUnits, input.primaryUnitIds)",
+    );
+  });
+
   it("uses the same deterministic series preparation for preview and save", () => {
     const bulkService = compact(
       source("src/lib/services/bulk-assignment-service.ts"),

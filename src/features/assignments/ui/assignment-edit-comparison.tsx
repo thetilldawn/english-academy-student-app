@@ -83,12 +83,17 @@ function valueLabel(
       : adminLearningText.assignmentModal.range.unavailableWordbook;
   }
   if (key === "range") {
+    const selectedUnits = draft.range.orderedUnitIds.map((unitId) =>
+      units.find((unit) => unit.id === unitId),
+    );
     return assignmentUnitRangeLabel(
-      draft.range.orderedUnitIds.map(
-        (unitId) =>
-          units.find((unit) => unit.id === unitId)?.displayName ??
-          adminLearningText.assignmentModal.range.unknownUnit,
+      selectedUnits.map(
+        (unit) =>
+          unit?.displayName ?? adminLearningText.assignmentModal.range.unknownUnit,
       ),
+      selectedUnits.every(Boolean)
+        ? selectedUnits.map((unit) => unit!.sortIndex)
+        : undefined,
     );
   }
   if (key === "questionCount") return String(draft.questionCount.value);

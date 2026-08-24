@@ -2,6 +2,7 @@ import type {
   AssignmentActivityStatus,
   AssignmentHistorySummary,
 } from "@/lib/admin/history";
+import { unitSelectionRangeLabel } from "@/lib/admin/history";
 import {
   activityPassed,
   learningActivityEffectiveAt,
@@ -26,12 +27,6 @@ function timestamp(value: string) {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
-function scopeLabel(labels: string[]) {
-  if (labels.length === 0) return "범위 정보 없음";
-  if (labels.length === 1) return labels[0];
-  return `${labels[0]}~${labels.at(-1)}`;
-}
-
 function progressLabels(
   item: AssignmentHistorySummary,
   unitDisplayNameById: ReadonlyMap<string, string>,
@@ -51,6 +46,12 @@ function progressLabels(
       fallbackLabels[index] ??
       "범위 정보 없음",
   );
+}
+
+function progressSortIndexes(item: AssignmentHistorySummary) {
+  return item.assignmentPurpose === "mixed" || item.primaryUnitIds.length > 0
+    ? item.primaryUnitSortIndexes
+    : item.unitSortIndexes;
 }
 
 export function buildStudentVocabBookHistory(
@@ -87,8 +88,9 @@ export function buildStudentVocabBookHistory(
         studentId: latest.studentId,
         datasetId: latest.datasetId,
         datasetTitle: latest.datasetTitle,
-        lastScopeLabel: scopeLabel(
+        lastScopeLabel: unitSelectionRangeLabel(
           progressLabels(latest, unitDisplayNameById),
+          progressSortIndexes(latest),
         ),
         lastActivityAt: learningActivityEffectiveAt(latest),
         lastStatus: latest.status,

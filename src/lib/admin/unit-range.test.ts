@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   planNextUnitRange,
   resolveOrderedContiguousUnits,
+  resolveOrderedUnitSelection,
   selectInclusiveUnitRange,
 } from "@/lib/admin/unit-range";
 
@@ -40,6 +41,21 @@ describe("unit range", () => {
     expect(() =>
       resolveOrderedContiguousUnits(units, ["day-60", "day-59", "day-60"]),
     ).toThrow("올바르지");
+  });
+
+  it("공통 배정 선택은 순서를 보존하면서 비연속 단원을 허용한다", () => {
+    expect(resolveOrderedUnitSelection(
+      units,
+      ["day-54", "day-56", "day-60"],
+    ).map((unit) => unit.id)).toEqual(["day-54", "day-56", "day-60"]);
+    expect(resolveOrderedUnitSelection(
+      units,
+      ["day-60", "day-56", "day-54"],
+    ).map((unit) => unit.id)).toEqual(["day-60", "day-56", "day-54"]);
+    expect(() => resolveOrderedUnitSelection(
+      units,
+      ["day-54", "day-60", "day-56"],
+    )).toThrow("순서");
   });
 
   it("continues with the previous range length and direction", () => {

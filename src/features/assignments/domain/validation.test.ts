@@ -493,6 +493,59 @@ describe("assignment draft validation", () => {
     ).toContain("commonPlan.sessions.1.deadlineLocalDateTime");
   });
 
+  it("배정된 시험은 31명도 허용하고 학생과 회차를 합쳐 210시험을 지킨다", () => {
+    const students = Array.from(
+      { length: 106 },
+      (_, index) => `student-${index}`,
+    );
+    const sessions = [
+      {
+        unitIds: [assignmentContractIds.day60],
+        availableLocalDateTime: "2026-08-17T09:00",
+        deadlineLocalDateTime: "2026-08-17T22:00",
+      },
+      {
+        unitIds: [assignmentContractIds.day60],
+        availableLocalDateTime: "2026-08-19T09:00",
+        deadlineLocalDateTime: "2026-08-19T22:00",
+      },
+    ];
+    const commonPlan = {
+      datasetId: assignmentContractIds.dataset,
+      distribution: "split" as const,
+      splitBasis: "question_count" as const,
+      orderedUnitIds: [assignmentContractIds.day60],
+      rangeUnitCounts: [],
+      questionCount: { mode: "manual" as const, value: 20 },
+      overflowPolicy: "leave" as const,
+      extraDatePolicy: "unconfirmed" as const,
+      selectedDateCount: 2,
+      selectionMode: "source_order" as const,
+      planNonce: assignmentContractIds.idempotencyKey,
+      sessions,
+      recurrenceSessions: sessions,
+      collisionDecisions: [],
+    };
+
+    expect(validateBulkPreviewProjection({
+      ...baseBulk,
+      studentIds: students.slice(0, 31),
+      range: { ...baseBulk.range, sessionCount: 1 },
+      commonPlan: {
+        ...commonPlan,
+        selectedDateCount: 1,
+        sessions: sessions.slice(0, 1),
+        recurrenceSessions: sessions.slice(0, 1),
+      },
+    }).map((issue) => issue.path)).not.toContain("studentIds");
+
+    expect(validateBulkPreviewProjection({
+      ...baseBulk,
+      studentIds: students,
+      commonPlan,
+    }).map((issue) => issue.path)).toContain("range.sessionCount");
+  });
+
   it("bulk preview validates selection while submit additionally validates exam and future deadline", () => {
     expect(validateBulkPreviewProjection(baseBulk)).toStrictEqual([]);
     expect(validateBulkAssignmentSubmission(baseBulk, NOW)).toStrictEqual([]);

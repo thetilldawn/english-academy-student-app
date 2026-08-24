@@ -6,7 +6,6 @@ export const assignmentQuestionOrderModes = [
 
 export const MAXIMUM_BULK_STUDENT_COUNT = 210;
 export const MAXIMUM_BULK_ASSIGNMENT_COUNT = 210;
-export const MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT = 30;
 
 export type AssignmentQuestionOrderMode =
   (typeof assignmentQuestionOrderModes)[number];

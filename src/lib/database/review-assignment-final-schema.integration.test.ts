@@ -855,6 +855,17 @@ describe.sequential("final review-assignment database schema", () => {
       `);
       expect(direction.rows[0]?.direction).toBe(-1);
 
+      const sparseDirection = await rangeDatabase.query<{ direction: number }>(`
+        select private.resolve_contiguous_unit_direction_v1(
+          '${ids.dataset}',
+          array[
+            '${ids.units[0]}'::uuid,
+            '${ids.units[2]}'::uuid
+          ]
+        )::integer as direction;
+      `);
+      expect(sparseDirection.rows[0]?.direction).toBe(1);
+
       await rangeDatabase.query(`
         select private.align_assignment_unit_direction_v1(
           '${assignmentId}',
@@ -892,12 +903,258 @@ describe.sequential("final review-assignment database schema", () => {
           );
         `),
         "22023",
-        "assignment_unit_range_not_contiguous",
+        "assignment_unit_range_not_monotonic",
       );
     } finally {
       await rangeDatabase.close();
     }
   }, 30_000);
+
+  it("persists sparse bulk ranges and materializes overlapping queued sessions", async () => {
+    const sparseDatabase = await createFinalSchemaDatabase();
+    try {
+      await seedReviewAssignmentScenario(sparseDatabase);
+      // This suite replaces the legacy v3 bank builder with a persistence
+      // stub after migrations. Mirror the queue's actor-aware wrapper so this
+      // test isolates sparse links, overlap policy and completion advancement.
+      await sparseDatabase.exec(`
+        create or replace function private.create_assignment_with_question_bank_v3_system_v1(
+          p_actor_admin_id uuid,
+          p_title text,
+          p_dataset_id uuid,
+          p_unit_ids uuid[],
+          p_question_count integer,
+          p_english_to_korean_ratio smallint,
+          p_time_limit_seconds integer,
+          p_passing_score smallint,
+          p_question_order_mode public.question_order_mode,
+          p_available_until timestamptz,
+          p_student_ids uuid[],
+          p_questions jsonb
+        )
+        returns uuid
+        language sql
+        security definer
+        set search_path = ''
+        as $$
+          select private.create_assignment_with_question_bank_v3(
+            p_title,
+            p_dataset_id,
+            p_unit_ids,
+            p_question_count,
+            p_english_to_korean_ratio,
+            p_time_limit_seconds,
+            p_passing_score,
+            p_question_order_mode,
+            p_available_until,
+            p_student_ids,
+            p_questions
+          );
+        $$;
+      `);
+      const makeBatch = (
+        title: string,
+        availableFrom: string,
+        availableUntil: string,
+        sessionNumber = 1,
+        sessionCount = 1,
+      ) => ({
+        kind: "regular",
+        student_id: ids.student,
+        dataset_id: ids.dataset,
+        unit_ids: [ids.units[0], ids.units[4]],
+        unit_labels: ["DAY 1", "DAY 5"],
+        title,
+        question_count: 4,
+        english_to_korean_ratio: 100,
+        time_limit_seconds: 300,
+        passing_score: 80,
+        retry_enabled: true,
+        retry_passing_score: 80,
+        question_order_mode: "fixed",
+        available_from: availableFrom,
+        available_until: availableUntil,
+        timing_mode: "total",
+        question_time_limit_seconds: null,
+        allowed_collision_assignment_ids: [],
+        session_number: sessionNumber,
+        session_count: sessionCount,
+        questions: JSON.parse(mixedQuestions),
+      });
+      const createBulk = async (
+        requestId: string,
+        requestHash: string,
+        batch: ReturnType<typeof makeBatch>,
+      ) => sparseDatabase.query(`
+        select public.create_bulk_vocab_assignments_v9(
+          '${requestId}',
+          '${requestHash}',
+          $batches$${JSON.stringify([batch])}$batches$::jsonb
+        );
+      `);
+
+      const firstWindow = {
+        from: "2030-01-01T00:00:00.000Z",
+        until: "2030-01-01T14:00:00.000Z",
+      };
+      const secondWindow = {
+        from: "2030-01-08T00:00:00.000Z",
+        until: "2030-01-08T14:00:00.000Z",
+      };
+      await createBulk(
+        "00000000-0000-4000-8000-000000000501",
+        "a".repeat(64),
+        makeBatch("Sparse first", firstWindow.from, firstWindow.until),
+      );
+      await createBulk(
+        "00000000-0000-4000-8000-000000000502",
+        "b".repeat(64),
+        makeBatch("Sparse overlap", firstWindow.from, firstWindow.until),
+      );
+
+      const seriesPayload = [{
+        student_id: ids.student,
+        dataset_id: ids.dataset,
+        dataset_label: "Final schema test",
+        range_label: "DAY 1 외 1개",
+        recurrence_slots: [{
+          isodow: 2,
+          local_time: "09:00:00",
+          duration_seconds: 50400,
+        }],
+        items: [
+          makeBatch(
+            "Sparse queue 1",
+            firstWindow.from,
+            firstWindow.until,
+            1,
+            2,
+          ),
+          makeBatch(
+            "Sparse queue 2",
+            secondWindow.from,
+            secondWindow.until,
+            2,
+            2,
+          ),
+        ],
+      }];
+      await sparseDatabase.query(`
+        select public.create_vocab_assignment_queues_v2(
+          '00000000-0000-4000-8000-000000000503',
+          '${"c".repeat(64)}',
+          $series$${JSON.stringify(seriesPayload)}$series$::jsonb
+        );
+      `);
+
+      await createBulk(
+        "00000000-0000-4000-8000-000000000504",
+        "d".repeat(64),
+        makeBatch("Future overlap", secondWindow.from, secondWindow.until),
+      );
+      const firstQueueItem = await sparseDatabase.query<{
+        assignment_id: string;
+      }>(`
+        select item.assignment_id
+        from private.vocab_assignment_series_items as item
+        join private.vocab_assignment_series as series
+          on series.id = item.series_id
+        where series.request_id = '00000000-0000-4000-8000-000000000503'
+          and item.sequence_number = 1;
+      `);
+      const firstQueueAssignmentId = firstQueueItem.rows[0]?.assignment_id;
+      expect(firstQueueAssignmentId).toBeTruthy();
+      await sparseDatabase.exec(`
+        insert into public.quiz_attempts (
+          id,
+          student_id,
+          assignment_id,
+          attempt_number,
+          status,
+          phase,
+          started_at,
+          deadline_at,
+          question_count_snapshot,
+          time_limit_seconds_snapshot,
+          passing_score_snapshot,
+          passing_basis_snapshot
+        ) values (
+          '00000000-0000-4000-8000-000000000505',
+          '${ids.student}',
+          '${firstQueueAssignmentId}',
+          1,
+          'in_progress',
+          'initial',
+          clock_timestamp(),
+          clock_timestamp() + interval '1 hour',
+          4,
+          300,
+          80,
+          'initial'
+        );
+
+        update public.quiz_attempts
+        set status = 'completed',
+            phase = 'completed',
+            initial_completed_at = clock_timestamp(),
+            completed_at = clock_timestamp(),
+            initial_correct_count = 4,
+            retry_correct_count = 0,
+            unresolved_wrong_count = 0,
+            initial_score = 100,
+            final_score = 100,
+            passed = true,
+            elapsed_seconds = 1
+        where id = '00000000-0000-4000-8000-000000000505';
+      `);
+      const materialized = await sparseDatabase.query<{
+        result: Array<{ status: string }>;
+      }>(`
+        select private.materialize_ready_vocab_assignment_queue_v1(
+          '${ids.student}',
+          10
+        ) as result;
+      `);
+      const persisted = await sparseDatabase.query<{
+        status: string;
+        attention_reason: string | null;
+        event_details: Record<string, unknown> | null;
+        unit_ids: string[];
+      }>(`
+        select
+          item.status::text as status,
+          item.attention_reason,
+          (
+            select event.details
+            from private.vocab_assignment_series_events as event
+            where event.item_id = item.id
+            order by event.occurred_at desc
+            limit 1
+          ) as event_details,
+          array_agg(link.unit_id order by link.position)
+            filter (where link.is_primary) as unit_ids
+        from private.vocab_assignment_series_items as item
+        join private.vocab_assignment_series as series
+          on series.id = item.series_id
+        left join public.assignment_units as link
+          on link.assignment_id = item.assignment_id
+        where series.request_id = '00000000-0000-4000-8000-000000000503'
+          and item.sequence_number = 2
+        group by item.id, item.status, item.attention_reason;
+      `);
+      expect(persisted.rows[0]).toEqual({
+        status: "assigned",
+        attention_reason: null,
+        event_details: expect.any(Object),
+        unit_ids: [ids.units[0], ids.units[4]],
+      });
+      expect(materialized.rows[0]?.result).toEqual([
+        expect.objectContaining({ status: "assigned" }),
+      ]);
+    } finally {
+      await sparseDatabase.close();
+    }
+  }, 60_000);
 
   it("keeps the deployment-window compatibility rollback executable", async () => {
     const rollbackDatabase = await createFinalSchemaDatabase();

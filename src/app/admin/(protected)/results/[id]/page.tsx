@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { EditableHistoryDetailPage } from "@/features/history/ui/editable-history-detail-page";
-import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
 import { adminHistoryText } from "@/content/ko/admin-history";
 import { historyDetailHref } from "@/lib/admin/history-route";
 import { isStudentAssignmentEditable } from "@/lib/admin/assignment-edit";
@@ -30,10 +29,6 @@ export default async function AdminResultDetailPage({
 
   return (
     <>
-      <AdminBreadcrumb
-        current={adminHistoryText.resultDetail.metadataTitle}
-        section={adminHistoryText.page.title}
-      />
       <EditableHistoryDetailPage detail={detail} editorData={editorData} />
     </>
   );

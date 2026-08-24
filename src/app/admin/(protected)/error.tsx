@@ -30,7 +30,7 @@ export default function AdminError({
   return (
     <section className={styles.error} role="alert">
       <p className={styles.eyebrow}>{commonText.errorBoundary.eyebrow}</p>
-      <h1>{commonText.errorBoundary.title}</h1>
+      <h2>{commonText.errorBoundary.title}</h2>
       <p>
         {adminShellText.errorBoundary.safeDescription}
       </p>

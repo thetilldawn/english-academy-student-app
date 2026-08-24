@@ -4,6 +4,10 @@ export const ISO_WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const;
 
 export type IsoWeekday = (typeof ISO_WEEKDAYS)[number];
 export type VocabAssignmentEntryMode = "student" | "school" | "dataset";
+export type VocabAssignmentMode =
+  | "all_sessions"
+  | "per_session"
+  | "word_count";
 export type VocabRangeDistribution = "split" | "repeat";
 export type VocabSplitBasis = "question_count" | "range_unit";
 export type VocabUnitAllocationMode = "same" | "by_weekday";
@@ -20,6 +24,22 @@ export type VocabTargetSelectionMode = "source_order" | "random";
 export type VocabTargetDirection =
   | "english_to_korean"
   | "korean_to_english";
+
+export function resolveVocabAssignmentMode(
+  mode: VocabAssignmentMode,
+): {
+  distribution: VocabRangeDistribution;
+  splitBasis: VocabSplitBasis;
+} {
+  switch (mode) {
+    case "all_sessions":
+      return { distribution: "repeat", splitBasis: "question_count" };
+    case "per_session":
+      return { distribution: "split", splitBasis: "range_unit" };
+    case "word_count":
+      return { distribution: "split", splitBasis: "question_count" };
+  }
+}
 export type VocabSeriesTarget = {
   id: number;
   eligibleDirections: readonly VocabTargetDirection[];
@@ -90,14 +110,14 @@ export function resolveExtraDateCancelSessionCount(
   return counts.length > 0 ? Math.min(...counts) : fallback;
 }
 
-export type DayRangeSelection = {
-  startUnitId: string | null;
-  endUnitId: string | null;
+export type VocabUnitSelection = {
+  selectedUnitIds: readonly string[];
 };
 
 export type VocabScheduleDraft = {
   startDate: string;
   weekdays: readonly IsoWeekday[];
+  availableTimeEnabled?: boolean;
   availableTime: string;
   deadlineDayOffset: number;
   deadlineTime: string;
@@ -337,6 +357,7 @@ export function resolveVocabQuestionCycleAllocation(input: {
   distribution: VocabRangeDistribution;
   questionCount: VocabQuestionCountChoice;
   selectedDateCount: number;
+  overflowPolicy: VocabSplitOverflowPolicy;
   extraDatePolicy: VocabExtraDatePolicy;
   maximumSessionCount?: number;
 }): VocabQuestionCycleAllocation {
@@ -422,7 +443,9 @@ export function resolveVocabQuestionCycleAllocation(input: {
     input.extraDatePolicy === "repeat_from_start";
   const sessionCount = shouldRepeat
     ? input.selectedDateCount
-    : baseCounts.length;
+    : input.overflowPolicy === "continue_weekly"
+      ? baseCounts.length
+      : Math.min(baseCounts.length, input.selectedDateCount);
   if (sessionCount > maximumSessionCount) {
     return empty("series_session_limit_exceeded");
   }
@@ -431,7 +454,7 @@ export function resolveVocabQuestionCycleAllocation(input: {
         { length: sessionCount },
         (_value, index) => baseCounts[index % baseCounts.length]!,
       )
-    : [...baseCounts];
+    : baseCounts.slice(0, sessionCount);
   const scheduledQuestionCount = sessionQuestionCounts.reduce(
     (sum, count) => sum + count,
     0,
@@ -808,8 +831,11 @@ export function shiftLocalDateTime(value: string, days: number) {
 export function buildScheduleSlots(
   draft: VocabScheduleDraft,
 ): VocabScheduleSlot[] {
+  const effectiveAvailableTime = draft.availableTimeEnabled === false
+    ? "00:00"
+    : draft.availableTime;
   if (
-    !TIME_PATTERN.test(draft.availableTime) ||
+    !TIME_PATTERN.test(effectiveAvailableTime) ||
     !TIME_PATTERN.test(draft.deadlineTime) ||
     !Number.isInteger(draft.deadlineDayOffset) ||
     draft.deadlineDayOffset < 0 ||
@@ -824,7 +850,7 @@ export function buildScheduleSlots(
     return [{
       sessionNumber: index + 1,
       date,
-      availableLocalDateTime: `${date}T${draft.availableTime}`,
+      availableLocalDateTime: `${date}T${effectiveAvailableTime}`,
       deadlineLocalDateTime: `${deadlineDate}T${draft.deadlineTime}`,
     }];
   });
@@ -2250,40 +2276,33 @@ export function selectInitialVocabDatasetId(
     : "";
 }
 
-export function advanceDayRangeSelection(
-  current: DayRangeSelection,
+export function toggleVocabUnitSelection(
+  current: VocabUnitSelection,
   unitId: string,
-): DayRangeSelection {
-  if (!current.startUnitId || current.endUnitId) {
-    return { startUnitId: unitId, endUnitId: null };
-  }
-  if (current.startUnitId === unitId) {
-    return { startUnitId: null, endUnitId: null };
-  }
-  return { startUnitId: current.startUnitId, endUnitId: unitId };
+): VocabUnitSelection {
+  const selected = new Set(current.selectedUnitIds);
+  if (selected.has(unitId)) selected.delete(unitId);
+  else selected.add(unitId);
+  return { selectedUnitIds: [...selected] };
 }
 
-export function resolveDayRange<T extends { id: string; sortIndex: number }>(
+export function selectAllVocabUnits(
+  unitIds: readonly string[],
+  selectAll: boolean,
+): VocabUnitSelection {
+  return { selectedUnitIds: selectAll ? [...unitIds] : [] };
+}
+
+export function resolveVocabUnitSelection<
+  T extends { id: string; sortIndex: number },
+>(
   units: readonly T[],
-  selection: DayRangeSelection,
+  selection: VocabUnitSelection,
 ): T[] {
-  if (!selection.startUnitId) return [];
-  const sorted = [...units].sort(
+  const selectedIds = new Set(selection.selectedUnitIds);
+  return [...units].sort(
     (left, right) => left.sortIndex - right.sortIndex,
-  );
-  const startIndex = sorted.findIndex(
-    (unit) => unit.id === selection.startUnitId,
-  );
-  const endIndex = sorted.findIndex(
-    (unit) => unit.id ===
-      (selection.endUnitId ?? selection.startUnitId),
-  );
-  if (startIndex < 0 || endIndex < 0) return [];
-  const selected = sorted.slice(
-    Math.min(startIndex, endIndex),
-    Math.max(startIndex, endIndex) + 1,
-  );
-  return startIndex <= endIndex ? selected : selected.reverse();
+  ).filter((unit) => selectedIds.has(unit.id));
 }
 
 export function applyTimeTemplate<T extends {
@@ -2294,6 +2313,7 @@ export function applyTimeTemplate<T extends {
     ...draft,
     schedule: {
       ...draft.schedule,
+      availableTimeEnabled: true,
       availableTime: template.availableTime,
       deadlineDayOffset: template.deadlineDayOffset,
       deadlineTime: template.deadlineTime,

@@ -118,7 +118,7 @@ describe("buildBulkPlanAudience", () => {
       available: true,
       error: null,
       sessions: [
-        { available: true, error: null, warnings: [] as string[] },
+        { available: true, error: null, warnings: [] },
       ],
       studentId: "b",
     };
@@ -129,12 +129,23 @@ describe("buildBulkPlanAudience", () => {
         {
           ...item,
           sessions: [
-            { available: true, error: null, warnings: ["일정 겹침"] },
+            { available: true, error: null, warnings: [{ resolved: false }] },
           ],
         },
         normalStudentIds,
       ),
     ).toBe("needs_review");
+    expect(
+      bulkPlanItemStatus(
+        {
+          ...item,
+          sessions: [
+            { available: true, error: null, warnings: [{ resolved: true }] },
+          ],
+        },
+        normalStudentIds,
+      ),
+    ).toBe("different");
     expect(
       bulkPlanItemStatus({ ...item, available: false }, normalStudentIds),
     ).toBe("blocked");

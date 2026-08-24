@@ -3,6 +3,12 @@
   gap: 32px;
 }
 
+.sectionContent {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
 .loadMore {
   width: 100%;
 }

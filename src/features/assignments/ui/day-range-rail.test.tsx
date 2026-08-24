@@ -42,10 +42,6 @@ describe("DAY 버튼판", () => {
       <DayRangeRail
         onSelect={onSelect}
         selectedUnitIds={new Set([units[0]!.id, units[1]!.id])}
-        selection={{
-          startUnitId: units[0]!.id,
-          endUnitId: units[1]!.id,
-        }}
         units={units}
       />,
     );
@@ -68,7 +64,6 @@ describe("DAY 버튼판", () => {
       <DayRangeRail
         onSelect={onSelect}
         selectedUnitIds={new Set()}
-        selection={{ startUnitId: null, endUnitId: null }}
         units={units}
       />,
     );
@@ -86,7 +81,6 @@ describe("DAY 버튼판", () => {
       <DayRangeRail
         onSelect={onSelect}
         selectedUnitIds={new Set()}
-        selection={{ startUnitId: null, endUnitId: null }}
         units={units}
       />,
     );

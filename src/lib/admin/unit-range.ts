@@ -63,6 +63,38 @@ export function resolveOrderedContiguousUnits<T extends OrderedUnit>(
   return selected;
 }
 
+export function resolveOrderedUnitSelection<T extends OrderedUnit>(
+  availableUnits: readonly T[],
+  unitIds: readonly string[],
+): T[] {
+  if (unitIds.length < 1 || new Set(unitIds).size !== unitIds.length) {
+    throw new Error("선택한 단원 범위가 올바르지 않습니다.");
+  }
+  const availableById = new Map(
+    availableUnits.map((unit) => [unit.id, unit]),
+  );
+  const selected = unitIds.flatMap((unitId) => {
+    const unit = availableById.get(unitId);
+    return unit ? [unit] : [];
+  });
+  if (selected.length !== unitIds.length) {
+    throw new Error("선택한 단원을 사용할 수 없습니다.");
+  }
+  if (selected.length < 2) return selected;
+  const direction = Math.sign(selected[1]!.sortIndex - selected[0]!.sortIndex);
+  if (
+    direction === 0 ||
+    selected.some(
+      (unit, index) =>
+        index > 0 &&
+        Math.sign(unit.sortIndex - selected[index - 1]!.sortIndex) !== direction,
+    )
+  ) {
+    throw new Error("선택한 단원 순서를 확인해 주세요.");
+  }
+  return selected;
+}
+
 export function planNextUnitRange<T extends OrderedUnit>(
   availableUnits: readonly T[],
   previousUnitIds: readonly string[],

@@ -173,4 +173,16 @@ describe("AdminHistoryList", () => {
     expect(screen.getByRole("link", { name: /첫 미통과.*상세/ })).toBeVisible();
     expect(screen.queryByRole("link", { name: /미응시.*상세/ })).not.toBeInTheDocument();
   });
+
+  it("검색 결과가 없을 때는 빈 상태를 표시한다", async () => {
+    const user = userEvent.setup();
+    render(
+      <AdminHistoryList items={[historyItem("응시 전 항목")]} showFilters />,
+    );
+
+    await user.type(screen.getByLabelText("학생·시험 검색"), "없는 학생");
+    expect(screen.getByText("조건에 맞는 내역이 없습니다.")).toBeVisible();
+    expect(screen.queryByRole("heading", { level: 2, name: "응시 전" }))
+      .not.toBeInTheDocument();
+  });
 });

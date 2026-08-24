@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AdminNavigation } from "@/components/admin-navigation";
+import { AdminCurrentRouteTitle } from "@/components/admin-current-route-title";
 import { AdminLogoutButton } from "@/components/admin-logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationBootstrap } from "@/components/notification-bootstrap";
@@ -44,15 +45,7 @@ export default async function AdminProtectedLayout({
       <div className={shellStyles.adminWorkspace}>
         <header className={shellStyles.adminTopbar}>
           <div className={shellStyles.adminTopbarInner}>
-            <Link
-              className={[shellStyles.brand, shellStyles.adminTabletBrand].join(" ")}
-              href="/admin"
-            >
-              <span className={shellStyles.brandMark} aria-hidden="true">
-                E
-              </span>
-              <span>{adminShellText.brand}</span>
-            </Link>
+            <AdminCurrentRouteTitle />
             <AdminNavigation
               label={adminShellText.navigation.tabletAriaLabel}
               variant="tablet"

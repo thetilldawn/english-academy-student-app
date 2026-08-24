@@ -12,6 +12,8 @@ import {
 import type { AssignmentDatasetItem } from "../catalog-types";
 import type { VocabAssignmentPlannerController } from "../controller/use-vocab-assignment-planner";
 import type { VocabAssignmentFieldKey } from "../presentation/vocab-assignment-field-errors";
+import { assignmentUnitRangeLabel } from "../presentation/assignment-unit-range-label";
+import { Button } from "@/design-system/primitives/button/button";
 import { DayRangeRail } from "./day-range-rail";
 import styles from "./vocab-assignment-planner.module.css";
 
@@ -28,11 +30,14 @@ export function VocabRangeFields({
 }: VocabPlannerFieldsProps) {
   const selectedIds = new Set(controller.selectedUnits.map((unit) => unit.id));
   const groups = groupCataloguedDatasets(datasets);
+  const allSelected = controller.availableUnits.length > 0 &&
+    controller.selectedUnits.length === controller.availableUnits.length;
   const selectedLabel = controller.selectedUnits.length === 0
     ? "범위를 선택하세요"
-    : controller.selectedUnits.length === 1
-      ? controller.selectedUnits[0]!.label
-      : `${controller.selectedUnits[0]!.label} → ${controller.selectedUnits.at(-1)!.label}`;
+    : assignmentUnitRangeLabel(
+        controller.selectedUnits.map((unit) => unit.label),
+        controller.selectedUnits.map((unit) => unit.sortIndex),
+      );
   const datasetError = fieldErrors.dataset;
   const rangeError = fieldErrors.range;
 
@@ -71,13 +76,29 @@ export function VocabRangeFields({
         role="group"
         tabIndex={-1}
       >
+        <div className={styles.rangeControlHeading}>
+          <FieldLabel as="span">범위</FieldLabel>
+          <Button
+            aria-pressed={allSelected}
+            disabled={controller.availableUnits.length === 0}
+            onClick={() => controller.actions.selectAllUnits(!allSelected)}
+            size="small"
+            variant="filter"
+          >
+            {allSelected ? "전체 해제" : "전체 선택"}
+          </Button>
+        </div>
         <DayRangeRail
           onSelect={controller.actions.selectUnit}
           selectedUnitIds={selectedIds}
-          selection={controller.planner.range}
           units={controller.availableUnits}
         />
-        <span className={styles.rangeSummary}>{selectedLabel}</span>
+        <span className={styles.rangeSummary}>
+          {selectedLabel}
+          {controller.selectedUnits.length > 0
+            ? ` · ${controller.selectedUnits.length}개 선택`
+            : ""}
+        </span>
         {rangeError ? (
           <FieldError id="vocab-range-error">{rangeError}</FieldError>
         ) : null}

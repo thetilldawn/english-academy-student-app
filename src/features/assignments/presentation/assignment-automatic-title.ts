@@ -18,15 +18,22 @@ export function buildAutomaticAssignmentTitle(
   const dataset = datasets.find(
     (candidate) => candidate.id === draft.range.datasetId,
   );
-  const labels = draft.range.orderedUnitIds.map(
-    (unitId) =>
-      units.find((unit) => unit.id === unitId)?.displayName ??
-      adminLearningText.assignmentModal.range.unknownUnit,
+  const selectedUnits = draft.range.orderedUnitIds.map((unitId) =>
+    units.find((unit) => unit.id === unitId),
+  );
+  const labels = selectedUnits.map(
+    (unit) =>
+      unit?.displayName ?? adminLearningText.assignmentModal.range.unknownUnit,
   );
 
   return [
     dataset ? cataloguedDatasetDisplayLabel(dataset) : null,
-    assignmentUnitRangeLabel(labels),
+    assignmentUnitRangeLabel(
+      labels,
+      selectedUnits.every(Boolean)
+        ? selectedUnits.map((unit) => unit!.sortIndex)
+        : undefined,
+    ),
     draft.review.mode === "pending"
       ? formatContentText(
           adminLearningText.assignmentModal.overview.includedWrong,

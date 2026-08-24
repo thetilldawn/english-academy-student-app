@@ -112,6 +112,21 @@ describe("student vocabulary book history", () => {
     expect(result[0].attemptCount).toBe(1);
   });
 
+  it("shows a sparse latest range without pretending it is continuous", () => {
+    const result = buildStudentVocabBookHistory([
+      activity({
+        unitIds: ["unit-1", "unit-3"],
+        unitLabels: ["DAY 01", "DAY 03"],
+        unitSortIndexes: [1, 3],
+        primaryUnitIds: ["unit-1", "unit-3"],
+        primaryUnitLabels: ["DAY 01", "DAY 03"],
+        primaryUnitSortIndexes: [1, 3],
+      }),
+    ]);
+
+    expect(result[0].lastScopeLabel).toBe("DAY 01 외 1개");
+  });
+
   it("excludes assignments that were never attempted", () => {
     const result = buildStudentVocabBookHistory([
       activity({

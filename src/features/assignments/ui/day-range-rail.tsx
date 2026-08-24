@@ -6,18 +6,15 @@ import { Button, IconButton } from "@/design-system/primitives/button/button";
 import { prefersReducedMotion } from "@/lib/ui/motion";
 
 import type { AssignmentUnitItem } from "../catalog-types";
-import type { DayRangeSelection } from "../domain/vocab-assignment-plan";
 import styles from "./vocab-assignment-planner.module.css";
 
 export function DayRangeRail({
   onSelect,
   selectedUnitIds,
-  selection,
   units,
 }: {
   onSelect: (unitId: string) => void;
   selectedUnitIds: ReadonlySet<string>;
-  selection: DayRangeSelection;
   units: readonly AssignmentUnitItem[];
 }) {
   const railRef = useRef<HTMLDivElement>(null);
@@ -108,11 +105,7 @@ export function DayRangeRail({
               buttonRefs.current[index] = element;
             }}
             size="small"
-            variant={
-              unit.id === selection.startUnitId || unit.id === selection.endUnitId
-                ? "primary"
-                : "filter"
-            }
+            variant={selectedUnitIds.has(unit.id) ? "primary" : "filter"}
           >
             {unit.label}
           </Button>

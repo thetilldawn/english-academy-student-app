@@ -132,7 +132,7 @@
   .adminTopbarInner {
     width: min(1460px, calc(100% - 56px));
     min-height: 52px;
-    justify-content: flex-end;
+    justify-content: space-between;
   }
 
   .adminTabletBrand,

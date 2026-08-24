@@ -71,6 +71,9 @@ export function AdminHistoryList({
       return matchesStatus && matchesQuery;
     });
     const groups = adminHistoryActivityGroups(filteredItems);
+    if (statusFilter === "all" && normalizedQuery && filteredItems.length === 0) {
+      return [];
+    }
     if (statusFilter !== "all") {
       return [
         {
@@ -108,7 +111,7 @@ export function AdminHistoryList({
         items: groups.archived,
       },
     ];
-    return groupedSections.filter((section) => section.items.length > 0);
+    return groupedSections;
   }, [items, query, statusFilter]);
 
   return (

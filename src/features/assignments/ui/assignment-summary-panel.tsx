@@ -28,12 +28,17 @@ export function AssignmentSummaryPanel({
   const dataset = datasets.find(
     (candidate) => candidate.id === draft.range.datasetId,
   );
+  const selectedUnits = draft.range.orderedUnitIds.map((unitId) =>
+    units.find((unit) => unit.id === unitId),
+  );
   const rangeLabel = assignmentUnitRangeLabel(
-    draft.range.orderedUnitIds.map(
-      (unitId) =>
-        units.find((unit) => unit.id === unitId)?.displayName ??
-        adminLearningText.assignmentModal.range.unknownUnit,
+    selectedUnits.map(
+      (unit) =>
+        unit?.displayName ?? adminLearningText.assignmentModal.range.unknownUnit,
     ),
+    selectedUnits.every(Boolean)
+      ? selectedUnits.map((unit) => unit!.sortIndex)
+      : undefined,
   );
   const deadlineIso =
     draft.deadline.mode === "at"

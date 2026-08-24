@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { z } from "zod";
 
-import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
 import { Notice } from "@/design-system/patterns/feedback/feedback";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { AssignmentWorkspace } from "@/features/assignments/ui/assignment-workspace";
@@ -12,7 +11,7 @@ import {
 import { getReviewAssignmentDraftSummary } from "@/lib/services/review-assignment-service";
 
 export const metadata: Metadata = {
-  title: adminLearningText.page.title,
+  title: adminLearningText.page.vocabularyTab,
 };
 export const dynamic = "force-dynamic";
 
@@ -46,10 +45,6 @@ export default async function AssignmentsPage({
 
   return (
     <>
-      <AdminBreadcrumb
-        current={adminLearningText.page.vocabularyTab}
-        section={adminLearningText.page.title}
-      />
       {requestedReviewDraftId && !reviewDraft && (
         <Notice role="status" tone="warning">
           {adminLearningText.page.expiredReviewDraft}

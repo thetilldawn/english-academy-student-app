@@ -41,7 +41,7 @@ type StatusItem = {
   sessions: ReadonlyArray<{
     available: boolean;
     error: string | null;
-    warnings: readonly unknown[];
+    warnings: ReadonlyArray<{ resolved?: boolean }>;
   }>;
   studentId: string;
 };
@@ -130,7 +130,9 @@ export function bulkPlanItemStatus(
   ) {
     return "blocked";
   }
-  if (item.sessions.some((session) => session.warnings.length > 0)) {
+  if (item.sessions.some((session) =>
+    session.warnings.some((warning) => !warning.resolved)
+  )) {
     return "needs_review";
   }
   if (!normalStudentIds) return "individual";

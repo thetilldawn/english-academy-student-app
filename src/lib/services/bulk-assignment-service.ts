@@ -6,9 +6,8 @@ import { z } from "zod";
 
 import {
   MAXIMUM_BULK_ASSIGNMENT_COUNT,
-  MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT,
   resolveBulkAssignmentSeries,
-  unitRangeLabel,
+  unitSelectionLabel,
 } from "@/lib/admin/bulk-assignment-range";
 import { resolveBulkAssignmentSchedule } from "@/lib/admin/bulk-assignment-schedule";
 import {
@@ -21,7 +20,7 @@ import {
   isAssignmentPersistenceInvariantFailure,
 } from "@/lib/admin/assignment-database-error";
 import { buildStudentProgress } from "@/lib/admin/progress";
-import { resolveOrderedContiguousUnits } from "@/lib/admin/unit-range";
+import { resolveOrderedUnitSelection } from "@/lib/admin/unit-range";
 import {
   requireAdmin,
   type AdminContext,
@@ -226,14 +225,6 @@ function toSeoulRecurrenceSlot(input: {
       .join(":"),
     duration_seconds: durationSeconds,
   };
-}
-
-function queueRangeLabel(sessions: readonly BulkAssignmentPreviewSession[]) {
-  const labels = sessions.flatMap((session) => session.unitLabels);
-  const unique = [...new Set(labels)];
-  if (unique.length === 0) return "선택 범위";
-  if (unique.length === 1) return unique[0]!;
-  return `${unique[0]}~${unique.at(-1)}`;
 }
 
 async function mapInBatches<Input, Output>(
@@ -444,7 +435,7 @@ function buildCommonPlanSummary(
         (session) =>
           !session.available ||
           Boolean(session.error) ||
-          session.warnings.length > 0,
+          session.warnings.some((warning) => !warning.resolved),
       )
     ) {
       continue;
@@ -748,14 +739,12 @@ export async function previewBulkAssignments(
   const requestedSessionCount = input.commonPlan?.sessions.length ??
     input.sessionCount;
   if (
-    (input.commonPlan?.distribution === "split" &&
-      input.studentIds.length > MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT) ||
     input.studentIds.length * requestedSessionCount >
       MAXIMUM_BULK_ASSIGNMENT_COUNT
   ) {
     throw new BulkAssignmentError(
       "invalid_selection",
-      `한 번에 저장할 수 있는 시험은 전체 ${MAXIMUM_BULK_ASSIGNMENT_COUNT}개이며 배정된 시험은 ${MAXIMUM_VOCAB_QUEUE_STUDENT_COUNT}명까지입니다.`,
+      `한 번에 저장할 수 있는 시험은 전체 ${MAXIMUM_BULK_ASSIGNMENT_COUNT}개까지입니다. 학생이나 회차를 줄여 주세요.`,
     );
   }
   const preparationCache = createMixedAssignmentPreparationCache();
@@ -807,13 +796,13 @@ export async function previewBulkAssignments(
       if (input.commonPlan && dataset) {
         try {
           const datasetUnits = unitsByDataset.get(dataset.id) ?? [];
-          orderedCommonUnits = resolveOrderedContiguousUnits(
+          orderedCommonUnits = resolveOrderedUnitSelection(
             datasetUnits,
             input.commonPlan.orderedUnitIds,
           );
           resolvedSessions = input.commonPlan.sessions.map((session, index) => ({
             sessionNumber: index + 1,
-            units: resolveOrderedContiguousUnits(datasetUnits, session.unitIds),
+            units: resolveOrderedUnitSelection(datasetUnits, session.unitIds),
             truncated: false,
           }));
         } catch {
@@ -966,6 +955,7 @@ export async function previewBulkAssignments(
               distribution: input.commonPlan.distribution,
               questionCount: input.commonPlan.questionCount,
               selectedDateCount: input.commonPlan.selectedDateCount,
+              overflowPolicy: input.commonPlan.overflowPolicy,
               extraDatePolicy: input.commonPlan.extraDatePolicy,
               maximumSessionCount: MAXIMUM_BULK_ASSIGNMENT_COUNT,
             });
@@ -1062,7 +1052,7 @@ export async function previewBulkAssignments(
             sourceSessionNumber: resolved.sessionNumber,
             cycleIndex: cycleIndexBySession.get(resolved.sessionNumber) ?? 0,
             unitId: resolved.units[0]?.id ?? null,
-            unitLabel: unitRangeLabel(resolved.units),
+            unitLabel: unitSelectionLabel(resolved.units),
             unitIds,
             unitLabels: resolved.units.map((unit) => unit.label),
             rangeTruncated: resolved.truncated,
@@ -1332,7 +1322,7 @@ function bulkAssignmentRequestSha256(input: BulkAssignmentInput) {
     .digest("hex");
 }
 
-function buildCompletionQueueSeriesPayload(
+async function buildCompletionQueueSeriesPayload(
   input: BulkAssignmentInput,
   preview: BulkAssignmentPreview,
   batches: readonly Record<string, unknown>[],
@@ -1341,6 +1331,13 @@ function buildCompletionQueueSeriesPayload(
   if (!commonPlan || commonPlan.distribution !== "split") {
     throw new BulkAssignmentError("invalid_selection");
   }
+  const selectedUnits = resolveOrderedUnitSelection(
+    (await listVocabUnits()).filter(
+      (unit) => unit.datasetId === commonPlan.datasetId,
+    ),
+    commonPlan.orderedUnitIds,
+  );
+  const rangeLabel = unitSelectionLabel(selectedUnits) ?? "선택 범위";
   const batchesByStudent = new Map<string, Record<string, unknown>[]>();
   for (const batch of batches) {
     const studentId = batch.student_id;
@@ -1373,7 +1370,7 @@ function buildCompletionQueueSeriesPayload(
         student_id: item.studentId,
         dataset_id: item.datasetId,
         dataset_label: item.datasetLabel,
-        range_label: queueRangeLabel(item.sessions),
+        range_label: rangeLabel,
         recurrence_slots: recurrenceSlots,
         items,
       };
@@ -1738,7 +1735,7 @@ export async function createBulkAssignments(
     ? await supabase.rpc("create_vocab_assignment_queues_v2", {
         p_idempotency_key: input.idempotencyKey,
         p_request_sha256: requestSha256,
-        p_series: buildCompletionQueueSeriesPayload(input, preview, batches),
+        p_series: await buildCompletionQueueSeriesPayload(input, preview, batches),
       })
     : await supabase.rpc("create_bulk_vocab_assignments_v9", {
         p_idempotency_key: input.idempotencyKey,
