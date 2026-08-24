@@ -92,8 +92,8 @@ describe("AssignmentQueueHistory", () => {
       .toHaveAttribute("inert");
     expect(active).toHaveTextContent("능률 VOCA 고교필수");
     expect(active).toHaveTextContent("DAY 1~6");
-    expect(active).toHaveTextContent("2회 · 40문항 남음");
-    expect(active).toHaveTextContent("40문항 남음");
+    expect(active).toHaveTextContent("2회 · 40개 남음");
+    expect(active).toHaveTextContent("40개 남음");
 
     await user.click(completed);
     expect(completed).toHaveAttribute("aria-expanded", "true");

@@ -65,8 +65,9 @@ vi.mock("@/features/assignments/ui/single-assignment-editor", () => ({
     formId: string;
     onBusyChange: (busy: boolean) => void;
     onSubmitPresentationChange: (presentation: {
-      blockedReason: string;
+      blockedReason: string | null;
       canSubmit: boolean;
+      dirty: boolean;
       formId: string;
       label: string;
     }) => void;
@@ -83,6 +84,7 @@ vi.mock("@/features/assignments/ui/single-assignment-editor", () => ({
       onSubmitPresentationChange({
         blockedReason: "범위 선택",
         canSubmit: false,
+        dirty: false,
         formId,
         label: "변경 저장",
       });
@@ -91,6 +93,20 @@ vi.mock("@/features/assignments/ui/single-assignment-editor", () => ({
       <>
         <form id={formId}>
           편집 양식
+          <button
+            onClick={() =>
+              onSubmitPresentationChange({
+                blockedReason: null,
+                canSubmit: true,
+                dirty: true,
+                formId,
+                label: "변경 저장",
+              })
+            }
+            type="button"
+          >
+            내용 변경
+          </button>
           <button onClick={() => onBusyChange(true)} type="button">
             저장 시작
           </button>
@@ -240,5 +256,25 @@ describe("editable history detail dialog", () => {
     expect(screen.getByText("상세 본문")).toBeInTheDocument();
     expect(router.replace).toHaveBeenCalledOnce();
     expect(router.refresh).toHaveBeenCalledOnce();
+  });
+
+  it("asks before discarding changed edit values", async () => {
+    const user = userEvent.setup();
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    renderDialog();
+    await user.click(screen.getByRole("button", { name: "배정 수정 열기" }));
+    await user.click(screen.getByRole("button", { name: "내용 변경" }));
+    await user.click(
+      screen.getByRole("button", { name: adminHistoryText.detailModal.close }),
+    );
+
+    expect(confirm).toHaveBeenCalledWith("입력한 변경 내용을 버리고 닫을까요?");
+    expect(screen.getByText("편집 양식")).toBeInTheDocument();
+
+    confirm.mockReturnValue(true);
+    await user.click(
+      screen.getByRole("button", { name: adminHistoryText.detailModal.close }),
+    );
+    expect(screen.getByText("상세 본문")).toBeInTheDocument();
   });
 });

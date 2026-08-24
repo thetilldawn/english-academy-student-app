@@ -19,7 +19,7 @@
 .slot small {
   color: var(--text-secondary);
   font-family: var(--font-kr);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 400;
   white-space: nowrap;
 }
@@ -45,7 +45,7 @@
 
 @media (min-width: 768px) {
   .slot small {
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .slot strong {

@@ -45,9 +45,9 @@ export class AssignmentCreationError extends Error {
   ) {
     super(
       message ?? (reason === "conflict"
-        ? "다른 시험에 이미 포함된 단어가 있습니다. 새로 계산된 최대 문항 수를 확인해 주세요."
+        ? "다른 시험에 이미 포함된 단어가 있습니다. 새로 계산된 최대 단어 수를 확인해 주세요."
         : reason === "invalid_selection"
-          ? "현재 출제 가능한 범위와 문항 수를 다시 확인해 주세요."
+          ? "현재 배정 가능한 범위와 단어 수를 다시 확인해 주세요."
           : "시험을 배정하지 못했습니다. 잠시 후 다시 시도해 주세요."),
     );
     this.name = "AssignmentCreationError";
@@ -330,7 +330,7 @@ export async function prepareRegularAssignment(
       "invalid_selection",
       error instanceof Error
         ? error.message
-        : `선택한 범위에서는 ${input.questionCount}문항을 만들 수 없습니다. 문항 수를 줄이거나 출제 방식을 바꿔주세요.`,
+        : `선택한 범위에서는 ${input.questionCount}개를 배정할 수 없습니다. 단어 수를 줄이거나 시험 방식을 바꿔주세요.`,
     );
   }
   questionDrafts.sort(

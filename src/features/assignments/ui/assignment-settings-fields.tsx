@@ -19,8 +19,14 @@ export function AssignmentSettingsFields({
   fieldIdPrefix: string;
   part: "conditions" | "schedule";
 }) {
-  const { actions, capacity, isExactReview, minimumQuestionCount, state } =
-    controller;
+  const {
+    actions,
+    capacity,
+    isContentLocked,
+    isMixedReview,
+    minimumQuestionCount,
+    state,
+  } = controller;
   const { draft } = state;
 
   if (part === "schedule") {
@@ -47,7 +53,7 @@ export function AssignmentSettingsFields({
     <>
       <AssignmentWordCountField
         allSelected={draft.questionCount.mode === "automatic"}
-        disabled={isExactReview}
+        disabled={isContentLocked}
         error={fieldErrors.questionCount}
         errorId={`${fieldIdPrefix}-question-count-error`}
         helpText="전체는 선택한 범위의 단어를 모두 배정하고, 숫자를 누르면 이 시험에 배정할 단어 수를 입력합니다."
@@ -68,6 +74,7 @@ export function AssignmentSettingsFields({
           : "source_order"}
       />
       <ExamConditionFields
+        directionDisabled={isMixedReview}
         exam={draft.exam}
         fieldErrors={fieldErrors}
         idPrefix={fieldIdPrefix}

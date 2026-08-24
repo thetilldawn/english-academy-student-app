@@ -591,6 +591,23 @@ describe("single assignment controller", () => {
     );
     await waitFor(() => expect(result.current.state.preview.status).toBe("ready"));
     expect(result.current.canSubmit).toBe(false);
+    if (purpose === "mixed") {
+      const locked = result.current.state.draft;
+      expect(result.current.isContentLocked).toBe(true);
+      expect(result.current.isMixedReview).toBe(true);
+      act(() => {
+        result.current.actions.changeRange(assignmentContractIds.dataset, [
+          assignmentContractIds.day57,
+        ]);
+        result.current.actions.changeQuestionCount(8);
+        result.current.actions.changeDirection(100);
+      });
+      expect(result.current.state.draft.range).toStrictEqual(locked.range);
+      expect(result.current.state.draft.questionCount).toStrictEqual(
+        locked.questionCount,
+      );
+      expect(result.current.state.draft.exam.directionRatio).toBe(50);
+    }
     await act(async () => {
       expect(await result.current.actions.submit()).toMatchObject({ ok: false });
     });
@@ -680,6 +697,7 @@ describe("single assignment controller", () => {
       }),
     );
     await waitFor(() => expect(result.current.isExactReview).toBe(true));
+    expect(result.current.isContentLocked).toBe(true);
     await waitFor(() => expect(result.current.state.preview.status).toBe("ready"));
     const locked = result.current.state.draft;
 

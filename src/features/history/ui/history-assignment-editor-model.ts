@@ -1,9 +1,4 @@
 import { newAssignmentDefaultUnitIds } from "@/lib/admin/new-assignment-range";
-import {
-  emptyPendingReviewCounts,
-  indexStudentPendingReviewSummaries,
-  pendingReviewSummaryKey,
-} from "@/lib/admin/review-queue-summary";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
 import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
 
@@ -40,20 +35,7 @@ export function buildHistoryAssignmentEditorModel(
       (unit) => unit.id === unitId && unit.datasetId === initialDatasetId,
     ),
   );
-  const pendingIndex = indexStudentPendingReviewSummaries(
-    editorData.pendingReviewSummaries,
-  );
-  const reviewCounts = initialDatasetId
-    ? (pendingIndex.byStudentDataset.get(
-        pendingReviewSummaryKey(student.id, initialDatasetId),
-      ) ?? emptyPendingReviewCounts())
-    : emptyPendingReviewCounts();
-
   return {
-    availableReviewLevel1:
-      reviewCounts.pendingLevel1Count - reviewCounts.reservedLevel1Count,
-    availableReviewLevel2:
-      reviewCounts.pendingLevel2Count - reviewCounts.reservedLevel2Count,
     datasets: editorData.datasets,
     initialDatasetId,
     initialUnitIds:

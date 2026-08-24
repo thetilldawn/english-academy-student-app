@@ -59,7 +59,9 @@ function controller(exactReview = false) {
     value: {
       actions: { changeRange },
       capacity: null,
+      isContentLocked: exactReview,
       isExactReview: exactReview,
+      isMixedReview: false,
       state: {
         draft: {
           range: {

@@ -133,7 +133,7 @@ export async function createDirectReviewAssignment(
   ) {
     throw new DirectReviewAssignmentError(
       "conflict",
-      "오답 목록이 바뀌었습니다. 문항 수를 다시 확인해 주세요.",
+      "오답 목록이 바뀌었습니다. 단어 수를 다시 확인해 주세요.",
     );
   }
 

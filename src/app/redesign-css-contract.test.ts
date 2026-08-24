@@ -74,6 +74,7 @@ describe("redesign CSS contract", () => {
     const studentDetailCss = readCss(
       "src/features/students/ui/student-detail.module.css",
     );
+    expect(tokensCss).toContain("--motion-fast: 160ms ease-out;");
     expect(tokensCss).toContain("--motion-standard: 250ms ease-in-out;");
     expect(tokensCss).toContain("--motion-complex: 300ms ease-in-out;");
     expect(studentDetailCss).toContain(
@@ -88,6 +89,34 @@ describe("redesign CSS contract", () => {
       .join("\n");
     expect(interactiveHoverBodies).not.toMatch(
       /(?:transform|translate|top|right|bottom|left|width|height|margin|padding)\s*:/,
+    );
+  });
+
+  it("styles the actual student result heading and keeps core helper text readable", () => {
+    const resultCss = readCss(
+      "src/features/results/ui/student-result-view.module.css",
+    );
+    const resultView = readCss(
+      "src/features/results/ui/student-result-view.tsx",
+    );
+    const badgeCss = readCss(
+      "src/design-system/primitives/badge/badge.module.css",
+    );
+    const fieldCss = readCss(
+      "src/design-system/primitives/form/field.module.css",
+    );
+    const assignmentCardCss = readCss(
+      "src/features/student-dashboard/ui/student-assignment-card.module.css",
+    );
+
+    expect(resultView).toContain("<h2>{result.title}</h2>");
+    expect(resultCss).toMatch(/\.header h2\s*\{/);
+    expect(resultCss).not.toMatch(/\.header h1\s*\{/);
+    expect(badgeCss).not.toMatch(/font-size:\s*(?:10(?:\.5)?|11(?:\.5)?)px;/);
+    expect(fieldCss).toMatch(/\.requirement\s*\{[^}]*font-size:\s*12px;/);
+    expect(assignmentCardCss).toMatch(/\.dataset\s*\{[^}]*font-size:\s*13px;/);
+    expect(modulesCss).not.toMatch(
+      /font-size:\s*(?:10(?:\.5)?|11(?:\.5)?)px;/,
     );
   });
 

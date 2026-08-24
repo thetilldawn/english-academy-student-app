@@ -161,6 +161,8 @@ export function VocabAssignmentPlanner({
   const canSubmit = assignmentPurpose === "range"
     ? controller.canSubmit
     : reviewController.canSubmit;
+  const reviewAssignmentAvailable =
+    selectionMode === "single" && students.length === 1;
   const singleStudent = selectionMode === "single" ? students[0] ?? null : null;
   const headerDetail = singleStudent
     ? `${singleStudent.displayName} · ${singleStudent.schoolName || "학교 미입력"}`
@@ -220,20 +222,31 @@ export function VocabAssignmentPlanner({
                 단어 시험
               </Button>
               <Button
+                aria-describedby={!reviewAssignmentAvailable
+                  ? "review-assignment-unavailable"
+                  : undefined}
                 aria-pressed={assignmentPurpose === "review"}
-                disabled={students.length !== 1}
+                disabled={!reviewAssignmentAvailable}
                 onClick={() => {
                   setAssignmentPurpose("review");
                   setSubmitAttempted(false);
                 }}
-                title={students.length === 1
+                title={reviewAssignmentAvailable
                   ? "학생의 미배정 오답만 시험으로 만듭니다."
-                  : "오답 시험은 학생 한 명을 선택했을 때 배정할 수 있습니다."}
+                  : "오답 시험은 단일 배정에서만 사용할 수 있습니다."}
                 variant="filter"
               >
                 오답 시험
               </Button>
             </div>
+            {!reviewAssignmentAvailable ? (
+              <p
+                className={styles.assignmentKindHint}
+                id="review-assignment-unavailable"
+              >
+                오답 시험은 단일 배정에서만 사용할 수 있습니다.
+              </p>
+            ) : null}
             <div className={styles.assignmentPanel} key={assignmentPurpose}>
               {assignmentPurpose === "review" ? (
                 <DirectReviewAssignmentSections

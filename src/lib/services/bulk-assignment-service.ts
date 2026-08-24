@@ -250,7 +250,7 @@ function bulkDatabaseError(error: { code?: string; message?: string }) {
   ) {
     return new BulkAssignmentError(
       "invalid_selection",
-      "선택한 범위에서 현재 출제 방식에 맞는 문항을 만들 수 없습니다. 범위 또는 출제 방식을 확인해 주세요.",
+      "선택한 범위에서 현재 시험 방식에 맞는 문제를 만들 수 없습니다. 범위 또는 시험 방식을 확인해 주세요.",
     );
   }
   if (
@@ -311,24 +311,24 @@ function commonPlanSchedule(input: BulkAssignmentPreviewInput) {
 
 function allocationIssueMessage(issue: VocabQuestionAllocationIssue) {
   if (issue === "invalid_available_count") {
-    return "현재 범위에서 만들 수 있는 문항이 4개보다 적습니다.";
+    return "현재 범위에서 배정할 수 있는 단어가 4개보다 적습니다.";
   }
   if (issue === "invalid_question_count") {
-    return "문항 수는 4개부터 500개까지 입력해 주세요.";
+    return "단어 수는 4개부터 500개까지 입력해 주세요.";
   }
   if (issue === "missing_schedule") {
     return "배정할 요일을 하나 이상 선택해 주세요.";
   }
   if (issue === "insufficient_for_selected_dates") {
-    return "선택한 모든 날짜에 최소 4문항씩 배정할 수 없습니다. 날짜를 줄이거나 범위를 넓혀 주세요.";
+    return "선택한 모든 날짜에 최소 4개씩 배정할 수 없습니다. 날짜를 줄이거나 범위를 넓혀 주세요.";
   }
   if (issue === "question_count_exceeds_capacity") {
-    return "직접 입력한 문항 수가 현재 출제 가능한 문항 수보다 많습니다.";
+    return "직접 입력한 단어 수가 현재 배정 가능한 단어 수보다 많습니다.";
   }
   if (issue === "session_question_limit_exceeded") {
-    return "한 회차에는 최대 500문항까지 배정할 수 있습니다. 날짜를 늘리거나 문항 수를 직접 입력해 주세요.";
+    return "한 회차에는 최대 500개까지 배정할 수 있습니다. 날짜를 늘리거나 단어 수를 직접 입력해 주세요.";
   }
-  return "한 번에 저장할 수 있는 시험 수를 넘었습니다. 학생 수나 문항 범위를 나눠서 배정해 주세요.";
+  return "한 번에 저장할 수 있는 시험 수를 넘었습니다. 학생 수나 배정 범위를 나눠서 배정해 주세요.";
 }
 
 function allocationIssueFieldKey(
@@ -537,7 +537,7 @@ async function prepareCommonPlanSeries(input: {
       if (targets.length !== session.questionCount) {
         throw new BulkAssignmentError(
           "invalid_selection",
-          `${session.sessionNumber}회차 범위 안에서 문항 수와 출제 방향을 함께 만들 수 없습니다.`,
+          `${session.sessionNumber}회차 범위 안에서 단어 수와 시험 방식을 함께 적용할 수 없습니다.`,
         );
       }
       plannedTargets.push(targets);
@@ -665,7 +665,7 @@ async function prepareCommonPlanSeries(input: {
   ) {
     throw new BulkAssignmentError(
       "invalid_selection",
-      "전체 회차의 문항 수와 출제 방향을 함께 만들 수 없습니다.",
+      "전체 회차에서 단어 수와 시험 방식을 함께 적용할 수 없습니다.",
     );
   }
 
@@ -1131,10 +1131,10 @@ async function resolveBulkAssignmentPreview(
                     capacity.recommendedQuestionCount <= capacity.wrongEligible
                   ? "첫 회차에 새 범위 단어를 하나 이상 포함할 수 없습니다."
                 : capacity.maximumQuestionCount < capacity.minimumQuestionCount
-                  ? "현재 범위에서 만들 수 있는 문항이 부족합니다."
+                  ? "현재 범위에서 배정할 수 있는 단어가 부족합니다."
                   : resolvedQuestionCount !== undefined &&
                       resolvedQuestionCount > capacity.maximumQuestionCount
-                    ? `현재 회차는 최대 ${capacity.maximumQuestionCount}문항까지 만들 수 있습니다.`
+                    ? `현재 회차는 최대 ${capacity.maximumQuestionCount}개까지 배정할 수 있습니다.`
                   : null;
             const error = collisionResolution.unresolved
               ? "같은 날 시험 겹침의 처리 방법을 선택해 주세요."
@@ -1371,7 +1371,7 @@ async function resolveBulkAssignmentPreview(
           available: false,
           error: assignmentLimitExceeded
             ? `한 번에 저장할 수 있는 시험은 전체 ${MAXIMUM_BULK_ASSIGNMENT_COUNT}개까지입니다. 학생이나 회차를 줄여 주세요.`
-            : `한 번에 저장할 수 있는 실제 문항은 전체 ${MAXIMUM_BULK_QUESTION_COUNT.toLocaleString("ko-KR")}개까지입니다. 학생·회차·문항 수를 줄여 주세요.`,
+            : `한 번에 저장할 수 있는 단어는 전체 ${MAXIMUM_BULK_QUESTION_COUNT.toLocaleString("ko-KR")}개까지입니다. 학생·회차·단어 수를 줄여 주세요.`,
           errorFieldKey: "questionCount" as const,
         })
     : items;
@@ -1749,7 +1749,7 @@ export async function createBulkAssignments(
       "invalid_selection",
       error instanceof Error
         ? error.message
-        : "학생별 문항을 만들지 못했습니다.",
+        : "학생별 시험 문제를 만들지 못했습니다.",
     );
   }
 
@@ -1778,7 +1778,7 @@ export async function createBulkAssignments(
         ? "배정할 시험이 없습니다. 건너뜀 선택을 확인해 주세요."
         : batches.length > MAXIMUM_BULK_ASSIGNMENT_COUNT
           ? `한 번에 저장할 수 있는 시험은 전체 ${MAXIMUM_BULK_ASSIGNMENT_COUNT}개까지입니다.`
-          : `한 번에 저장할 수 있는 실제 문항은 전체 ${MAXIMUM_BULK_QUESTION_COUNT.toLocaleString("ko-KR")}개까지입니다.`,
+          : `한 번에 저장할 수 있는 시험 문제는 전체 ${MAXIMUM_BULK_QUESTION_COUNT.toLocaleString("ko-KR")}개까지입니다.`,
     );
   }
 

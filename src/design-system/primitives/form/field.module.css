@@ -23,7 +23,7 @@
   border-radius: var(--radius-card);
   color: var(--muted);
   background: var(--surface);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.4;
   white-space: nowrap;

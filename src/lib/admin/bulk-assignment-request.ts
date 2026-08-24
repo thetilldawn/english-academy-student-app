@@ -125,7 +125,7 @@ const bulkCommonPlanSchema = z
       context.addIssue({
         code: "custom",
         path: ["overflowPolicy"],
-        message: "문항 수 기준은 직접 입력한 문항 수가 있을 때만 다음 주로 이어갈 수 있습니다.",
+        message: "단어 수 기준은 직접 입력한 단어 수가 있을 때만 다음 주로 이어갈 수 있습니다.",
       });
     }
     if (
@@ -155,7 +155,7 @@ const bulkCommonPlanSchema = z
       context.addIssue({
         code: "custom",
         path: ["rangeUnitCounts"],
-        message: "문항 수 기준에는 범위 단위 수를 함께 보낼 수 없습니다.",
+        message: "단어 수 기준에는 범위 단위 수를 함께 보낼 수 없습니다.",
       });
     }
     if (
@@ -240,7 +240,7 @@ const bulkCommonPlanSchema = z
       context.addIssue({
         code: "custom",
         path: ["orderedUnitIds"],
-        message: "문항 수 기준의 전체 범위와 회차 범위가 일치하지 않습니다.",
+        message: "단어 수 기준의 전체 범위와 회차 범위가 일치하지 않습니다.",
       });
     }
     if (
@@ -398,7 +398,7 @@ function validateBulkAssignmentSelection(
         context.addIssue({
           code: "custom",
           path: ["commonPlan", "sessions", index, "unitIds"],
-          message: "문항 나누기는 모든 회차에서 같은 전체 범위를 사용해야 합니다.",
+          message: "단어 수 배정은 모든 회차에서 같은 전체 범위를 사용해야 합니다.",
         });
       }
       if (

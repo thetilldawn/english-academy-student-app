@@ -8,6 +8,7 @@ import {
 } from "@/lib/services/assignment-replacement-errors";
 import {
   assertExactReviewShape,
+  assertLegacyMixedContentShape,
   canReuseSourceQuestions,
 } from "@/lib/services/assignment-replacement-policy";
 
@@ -48,6 +49,7 @@ const source: EditableSourceContext = {
     },
   ],
   selectedQueueIds: ["queue-1", "queue-2"],
+  selectedReviewLevels: [1, 2],
   selectedReviewVocabEntryIds: [10, 20],
 };
 
@@ -94,6 +96,31 @@ describe("assignment replacement policy", () => {
         source,
         replacementInput({ questionCount: 1 }),
       ),
+    ).toThrowError(AssignmentReplacementError);
+  });
+
+  it("keeps legacy mixed content fixed while allowing non-content settings", () => {
+    const mixedSource: EditableSourceContext = {
+      ...source,
+      draft: { ...source.draft, purpose: "mixed" },
+    };
+    expect(() =>
+      assertLegacyMixedContentShape(
+        mixedSource,
+        replacementInput({ passingScore: 90 }),
+      )
+    ).not.toThrow();
+    expect(() =>
+      assertLegacyMixedContentShape(
+        mixedSource,
+        replacementInput({ englishToKoreanRatio: 100 }),
+      )
+    ).toThrowError(AssignmentReplacementError);
+    expect(() =>
+      assertLegacyMixedContentShape(
+        mixedSource,
+        replacementInput({ questionCount: 1 }),
+      )
     ).toThrowError(AssignmentReplacementError);
   });
 

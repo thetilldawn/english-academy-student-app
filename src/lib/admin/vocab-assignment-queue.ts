@@ -97,7 +97,7 @@ export function vocabAssignmentQueueAttentionLabel(reason: string | null) {
     case "admin_inactive":
       return "최초 배정 관리자 확인 필요";
     case "content_unavailable":
-      return "보존한 문항을 현재 자료로 만들 수 없음";
+      return "보존한 단어를 현재 자료로 만들 수 없음";
     case "content_release_changed":
       return "단어 자료가 바뀌어 확인 필요";
     case "materialization_failed":

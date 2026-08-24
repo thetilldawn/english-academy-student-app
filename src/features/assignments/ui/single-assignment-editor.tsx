@@ -138,11 +138,14 @@ export function SingleAssignmentEditor({
     onSubmitPresentationChange?.({
       blockedReason: actionReason,
       canSubmit: validationCanSubmit,
+      dirty: controller.loadStatus === "ready" && controller.dirty,
       formId,
       label: submitLabel,
     });
   }, [
     actionReason,
+    controller.dirty,
+    controller.loadStatus,
     formId,
     onSubmitPresentationChange,
     validationCanSubmit,
@@ -177,45 +180,52 @@ export function SingleAssignmentEditor({
       <DialogBody
         className={placement === "inline" ? styles.inlineBody : undefined}
       >
-        <div
-          aria-live="polite"
-          className={styles.loadStatus}
-          data-active={controller.loadStatus === "loading"}
-        >
-          {controller.loadStatus === "loading" ? (
-            <Notice role="status">
-              {adminLearningText.assignmentModal.overview.loadingEdit}
-            </Notice>
-          ) : (
-            <span aria-hidden="true">&nbsp;</span>
-          )}
-        </div>
-        <form
-          aria-busy={busy}
-          className={styles.form}
-          id={formId}
-          noValidate
-          onSubmit={submit}
-          ref={formRef}
-        >
-          <fieldset
-            className={styles.fieldset}
-            disabled={busy || controller.loadStatus !== "ready"}
+        {controller.loadStatus === "loading" ? (
+          <div
+            aria-busy="true"
+            className={styles.editorSkeleton}
+            role="status"
           >
-            <legend className="sr-only">
-              {adminLearningText.assignmentModal.overview.formAria}
-            </legend>
-            <SingleAssignmentEditorSections
-              controller={controller}
-              datasets={datasets}
-              editPurpose={editTarget?.purpose ?? null}
-              fieldErrors={fieldErrors}
-              formId={formId}
-              progress={progress}
-              units={units}
-            />
-          </fieldset>
-        </form>
+            <span className={styles.skeletonLabel}>
+              {adminLearningText.assignmentModal.overview.loadingEdit}
+            </span>
+            {[1, 2, 3, 4].map((index) => (
+              <span aria-hidden="true" className={styles.skeletonSection} key={index}>
+                <span />
+                <span />
+                <span />
+              </span>
+            ))}
+          </div>
+        ) : controller.loadStatus === "error" ? (
+          <Notice role="alert" tone="danger">
+            {controller.message || adminLearningText.assignmentModal.errors.editLoad}
+          </Notice>
+        ) : (
+          <form
+            aria-busy={busy}
+            className={styles.form}
+            id={formId}
+            noValidate
+            onSubmit={submit}
+            ref={formRef}
+          >
+            <fieldset className={styles.fieldset} disabled={busy}>
+              <legend className="sr-only">
+                {adminLearningText.assignmentModal.overview.formAria}
+              </legend>
+              <SingleAssignmentEditorSections
+                controller={controller}
+                datasets={datasets}
+                editPurpose={editTarget?.purpose ?? null}
+                fieldErrors={fieldErrors}
+                formId={formId}
+                progress={progress}
+                units={units}
+              />
+            </fieldset>
+          </form>
+        )}
       </DialogBody>
       {submitPlacement === "footer" ? (
         <DialogFooter

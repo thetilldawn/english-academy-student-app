@@ -65,7 +65,7 @@ function AssignmentQueueDisclosure({
   return (
     <article className={styles.queue}>
       <button
-        aria-label={`${vocabAssignmentQueueStatusLabel(queue.status)} · ${queue.datasetLabel} · ${queue.rangeLabel} · ${queue.remainingSessionCount}회 · ${queue.remainingQuestionCount}문항 남음`}
+        aria-label={`${vocabAssignmentQueueStatusLabel(queue.status)} · ${queue.datasetLabel} · ${queue.rangeLabel} · ${queue.remainingSessionCount}회 · ${queue.remainingQuestionCount}개 남음`}
         aria-controls={contentId}
         aria-expanded={open}
         className={styles.summary}
@@ -97,7 +97,7 @@ function AssignmentQueueDisclosure({
                     {vocabAssignmentQueueItemStatusLabel(item.status)}
                   </strong>
                   <span>
-                    {item.unitLabels.join(" · ")} · {item.questionCount}문항
+                    {item.unitLabels.join(" · ")} · {item.questionCount}개
                   </span>
                   <span>
                     {localDateTime(item.effectiveAvailableFrom)} ~{" "}

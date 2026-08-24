@@ -18,7 +18,7 @@
 
 .summary {
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .list {
@@ -73,7 +73,7 @@
 
 .facts dt {
   color: var(--text-secondary);
-  font-size: 10.5px;
+  font-size: 12px;
 }
 
 .facts dd {

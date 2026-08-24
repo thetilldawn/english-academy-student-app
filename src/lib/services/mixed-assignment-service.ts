@@ -635,7 +635,7 @@ async function preparePendingReviewAssignmentBatch(
     throw new MixedAssignmentError(
       "invalid_selection",
       capacity.maximumQuestionCount >= capacity.minimumQuestionCount
-        ? `현재 조건에서는 ${capacity.minimumQuestionCount}~${capacity.maximumQuestionCount}문항으로 배정할 수 있습니다.`
+        ? `현재 조건에서는 ${capacity.minimumQuestionCount}~${capacity.maximumQuestionCount}개를 배정할 수 있습니다.`
         : "선택한 단어장 범위는 아직 시험 배정 준비가 끝나지 않았습니다.",
     );
   }
@@ -654,7 +654,7 @@ async function preparePendingReviewAssignmentBatch(
       "invalid_selection",
       error instanceof Error
         ? error.message
-        : `현재 조건에서는 최대 ${capacity.maximumQuestionCount}문항까지 배정할 수 있습니다.`,
+        : `현재 조건에서는 최대 ${capacity.maximumQuestionCount}개까지 배정할 수 있습니다.`,
     );
   }
 

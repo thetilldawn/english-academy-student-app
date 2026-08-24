@@ -65,4 +65,29 @@ describe("배정과 수정 화면 공통 계약", () => {
       expect(value).toContain("purpose: detail.summary.assignmentPurpose");
     }
   });
+
+  it("기존 오답 포함 시험의 내용을 잠그고 옛 혼합 UI를 제거한다", () => {
+    const sections = source(
+      "src/features/assignments/ui/single-assignment-editor-sections.tsx",
+    );
+    const settings = source(
+      "src/features/assignments/ui/assignment-settings-fields.tsx",
+    );
+    const props = source(
+      "src/features/assignments/ui/single-assignment-editor.types.ts",
+    );
+
+    expect(sections).toContain('editPurpose === "mixed"');
+    expect(sections).toContain("lockedMixed");
+    expect(settings).toContain("isContentLocked");
+    expect(settings).toContain("directionDisabled={isMixedReview}");
+    expect(props).not.toContain("availableReviewLevel");
+    expect(
+      fs.existsSync(
+        path.resolve(
+          "src/features/assignments/ui/assignment-review-fields.tsx",
+        ),
+      ),
+    ).toBe(false);
+  });
 });

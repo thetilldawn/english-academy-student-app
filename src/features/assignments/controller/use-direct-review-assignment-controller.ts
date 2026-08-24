@@ -280,7 +280,7 @@ export function useDirectReviewAssignmentController({
           throw new Error(
             assignmentTransportError(
               response.data,
-              "오답 문항 수를 계산하지 못했습니다.",
+              "오답 단어 수를 계산하지 못했습니다.",
             ),
           );
         }
@@ -293,7 +293,7 @@ export function useDirectReviewAssignmentController({
         const message =
           error instanceof Error && error.message
             ? error.message
-            : "오답 문항 수를 계산하지 못했습니다.";
+            : "오답 단어 수를 계산하지 못했습니다.";
         setCapacity({ status: "error", value: null, message });
         dispatch({ type: "question_count_resolved", value: 0 });
       }

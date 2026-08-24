@@ -262,5 +262,13 @@ describe("오답 단일 배정 제출", () => {
     expect(screen.getByText("미리보기고")).toBeVisible();
     expect(screen.getByText("고3")).toBeVisible();
     expect(screen.getByText("1명 선택")).toBeVisible();
+    expect(screen.getByRole("button", { name: "오답 시험" }))
+      .toHaveAccessibleDescription(
+        "오답 시험은 단일 배정에서만 사용할 수 있습니다.",
+      );
+    expect(screen.getByRole("button", { name: "오답 시험" })).toBeDisabled();
+    expect(
+      screen.getByText("오답 시험은 단일 배정에서만 사용할 수 있습니다."),
+    ).toBeVisible();
   });
 });

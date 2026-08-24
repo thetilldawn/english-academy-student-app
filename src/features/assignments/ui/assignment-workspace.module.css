@@ -159,7 +159,7 @@
 .filterGroups legend {
   margin-bottom: 7px;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -226,7 +226,7 @@
 
 .bulkSummary > small {
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .studentOverview {
@@ -256,7 +256,7 @@
 
 .sourceRow span {
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .sourceRow strong {
@@ -298,7 +298,7 @@
 
 .sectionSummary {
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 @media (max-width: 767px) {

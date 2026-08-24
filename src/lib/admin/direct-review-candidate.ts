@@ -117,7 +117,7 @@ export function parseDirectReviewCandidates(
     };
   });
   if (new Set(result.map((candidate) => candidate.sourceQuestionId)).size !== result.length) {
-    throw new Error("같은 오답 문항이 후보에 중복되었습니다.");
+    throw new Error("같은 오답 단어가 후보에 중복되었습니다.");
   }
   return result;
 }

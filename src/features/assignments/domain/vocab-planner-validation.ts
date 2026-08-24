@@ -67,7 +67,7 @@ export function validateVocabPlannerInputs(input: {
     issues.push({
       code: "out_of_range",
       path: "commonPlan.questionCount",
-      message: "문항 수는 4개부터 500개까지 입력해 주세요.",
+      message: "단어 수는 4개부터 500개까지 입력해 주세요.",
     });
   }
   if (
@@ -130,7 +130,7 @@ export function validateVocabPlannerInputs(input: {
     issues.push({
       code: "invalid_order",
       path: "commonPlan.selectionMode",
-      message: "문항 선택 방식을 골라 주세요.",
+      message: "시험 문제 순서를 골라 주세요.",
     });
   }
   if (input.scheduleEnabled !== false && !isCalendarDate(input.schedule.startDate)) {

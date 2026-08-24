@@ -38,7 +38,7 @@ describe("AssignmentMetaTags", () => {
       />,
     );
 
-    expect(screen.getByText("오답 시험 · 3문항")).toBeVisible();
+    expect(screen.getByText("오답 시험 · 단어 3개")).toBeVisible();
     expect(screen.queryByText("오답 시험")).not.toBeInTheDocument();
     expect(screen.queryByText("3문항")).not.toBeInTheDocument();
   });

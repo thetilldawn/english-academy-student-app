@@ -20,12 +20,12 @@
 .eyebrow {
   margin: 0 0 var(--space-2);
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
 }
 
-.header h1 {
+.header h2 {
   margin: 0;
   color: var(--text-primary);
   font-family: var(--font-krs);
@@ -103,7 +103,7 @@
 
 .answerLabel {
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
 }
 

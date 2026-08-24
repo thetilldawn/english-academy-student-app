@@ -65,3 +65,40 @@ export function assertExactReviewShape(
   }
 }
 
+export function assertLegacyMixedContentShape(
+  source: EditableSourceContext,
+  input: Pick<
+    AssignmentReplacementInput,
+    | "datasetId"
+    | "primaryUnitIds"
+    | "englishToKoreanRatio"
+    | "includePendingReview"
+    | "reviewLevels"
+  > & { questionCount?: number },
+) {
+  const before = source.draft;
+  if (before.purpose !== "mixed") return;
+  if (source.questions === null || source.selectedQueueIds.length === 0) {
+    throw new AssignmentReplacementError(
+      "conflict",
+      "기존 오답 포함 시험의 문제 정보를 확인하지 못해 수정할 수 없습니다.",
+    );
+  }
+  if (
+    !input.includePendingReview ||
+    input.datasetId !== before.datasetId ||
+    !sameOrderedValues(input.primaryUnitIds, before.primaryUnitIds) ||
+    input.englishToKoreanRatio !== before.englishToKoreanRatio ||
+    (input.questionCount !== undefined &&
+      input.questionCount !== before.questionCount) ||
+    !sameOrderedValues(
+      [...input.reviewLevels].toSorted(),
+      [...before.reviewLevels].toSorted(),
+    )
+  ) {
+    throw new AssignmentReplacementError(
+      "invalid_selection",
+      "기존 오답 포함 시험은 대상 단어와 시험 방식을 유지한 채 문제 순서·시간·점수·마감만 수정할 수 있습니다.",
+    );
+  }
+}

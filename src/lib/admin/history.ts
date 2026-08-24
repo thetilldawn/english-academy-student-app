@@ -158,7 +158,7 @@ export function assignmentScopeLabel(
   >,
 ) {
   if (item.assignmentPurpose === "review") {
-    return `오답 시험 · ${item.questionCount}문항`;
+    return `오답 시험 · 단어 ${item.questionCount}개`;
   }
 
   const label = assignmentUnitRangeLabel(item);
@@ -218,6 +218,7 @@ export function assignmentDisplayTitleForUnits(
       part !== "오답 재시험" &&
       part !== "오답 시험" &&
       !/^\d+문항$/.test(part) &&
+      !/^단어 \d+개$/.test(part) &&
       !/^틀렸던 단어 \d+개 포함$/.test(part),
   );
   return filtered.join(" · ");

@@ -16,14 +16,47 @@
   gap: var(--space-4);
 }
 
-.loadStatus {
-  min-height: 36px;
+.editorSkeleton {
+  min-width: 0;
   display: grid;
-  align-items: center;
+  gap: var(--space-4);
 }
 
-.loadStatus:not([data-active="true"]) {
-  visibility: hidden;
+.skeletonLabel {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.skeletonSection {
+  min-height: 132px;
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  animation: editorSkeletonPulse 900ms ease-in-out infinite alternate;
+}
+
+.skeletonSection:nth-of-type(3) {
+  min-height: 220px;
+}
+
+.skeletonSection > span {
+  width: min(100%, 360px);
+  height: 18px;
+  background: var(--line);
+}
+
+.skeletonSection > span:first-child {
+  width: min(42%, 180px);
+  height: 24px;
+}
+
+@keyframes editorSkeletonPulse {
+  from { opacity: 0.58; }
+  to { opacity: 1; }
 }
 
 .inlineBody {
@@ -63,60 +96,6 @@
   color: var(--text-primary);
 }
 
-.reviewOptions {
-  display: grid;
-  gap: var(--space-3);
-  margin: 0;
-  padding: var(--space-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--paper);
-}
-
-.reviewToggleRow,
-.reviewSwitch,
-.reviewCounts {
-  display: flex;
-  align-items: center;
-}
-
-.reviewToggleRow {
-  gap: var(--space-1);
-}
-
-.reviewSwitch {
-  gap: var(--space-2);
-  cursor: pointer;
-}
-
-.reviewCounts {
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
-.reviewCounts > span {
-  padding: 4px 7px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-small);
-  color: var(--text-primary);
-  background: var(--card);
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.reviewControls {
-  display: grid;
-  gap: var(--space-3);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--line);
-}
-
-.reviewLevelButtons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
 .summaryPanel {
   min-width: 0;
   display: grid;
@@ -141,7 +120,7 @@
 
 .summaryFacts dt {
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .summaryFacts dd {
@@ -190,7 +169,7 @@
 
 .editComparison dt {
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -212,5 +191,11 @@
 @media (max-width: 767px) {
   .summaryFacts {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeletonSection {
+    animation: none;
   }
 }

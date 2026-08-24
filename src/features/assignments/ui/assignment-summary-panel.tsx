@@ -10,6 +10,7 @@ import type {
   AssignmentUnitItem,
 } from "../catalog-types";
 import type { SingleAssignmentController } from "../controller/use-assignment-controller";
+import { assignmentEditFieldKeyForPath } from "../presentation/assignment-edit-field-errors";
 import { AssignmentEditComparison } from "./assignment-edit-comparison";
 import { assignmentUnitRangeLabel } from "../presentation/assignment-unit-range-label";
 import styles from "./single-assignment-editor.module.css";
@@ -23,7 +24,7 @@ export function AssignmentSummaryPanel({
   datasets: readonly AssignmentDatasetItem[];
   units: readonly AssignmentUnitItem[];
 }) {
-  const { capacity, minimumQuestionCount, state } = controller;
+  const { state } = controller;
   const { draft, preview } = state;
   const dataset = datasets.find(
     (candidate) => candidate.id === draft.range.datasetId,
@@ -44,28 +45,10 @@ export function AssignmentSummaryPanel({
     draft.deadline.mode === "at"
       ? koreanDateTimeLocalToIso(draft.deadline.koreanLocalDateTime)
       : null;
-  const capacityMessage =
-    capacity && capacity.maximumQuestionCount < minimumQuestionCount
-      ? formatContentText(
-          adminLearningText.assignmentModal.errors.rangeUnavailable,
-          { count: capacity.maximumQuestionCount },
-        )
-      : capacity && draft.questionCount.value > capacity.maximumQuestionCount
-        ? formatContentText(
-            adminLearningText.assignmentModal.errors.maximumDetail,
-            { count: capacity.maximumQuestionCount },
-          )
-        : capacity && draft.questionCount.value < capacity.minimumQuestionCount
-          ? formatContentText(
-              adminLearningText.assignmentModal.errors.minimumDetail,
-              { count: capacity.minimumQuestionCount },
-            )
-          : draft.review.mode === "pending" &&
-              capacity &&
-              capacity.wrongEligible === 0
-            ? adminLearningText.assignmentModal.wrongWords.noEligible
-            : "";
   const previewError = preview.status === "error" ? preview.message : "";
+  const unmappedIssues = controller.issues.filter(
+    (issue) => assignmentEditFieldKeyForPath(issue.path) === null,
+  );
 
   return (
     <section className={styles.summaryPanel}>
@@ -131,8 +114,7 @@ export function AssignmentSummaryPanel({
       ) : null}
       {[
         previewError,
-        capacityMessage,
-        ...controller.issues.map((issue) => issue.message),
+        ...unmappedIssues.map((issue) => issue.message),
       ]
         .filter((value, index, values) => value && values.indexOf(value) === index)
         .map((value) => (

@@ -20,6 +20,7 @@ import {
   AssignmentReplacementError,
 } from "@/lib/services/assignment-replacement-errors";
 import {
+  assertLegacyMixedContentShape,
   assertExactReviewShape,
   canReuseSourceQuestions,
 } from "@/lib/services/assignment-replacement-policy";
@@ -72,7 +73,7 @@ async function prepareExactReviewQuestions(
       "invalid_selection",
       error instanceof Error
         ? error.message
-        : "오답 시험 문항을 다시 만들 수 없습니다.",
+        : "오답 시험 문제를 다시 만들 수 없습니다.",
     );
   }
   return drafts.map((question, index) => ({
@@ -124,12 +125,35 @@ export async function calculateStudentAssignmentReplacementCapacity(
       questionPlanExcluded: 0,
       unitEligible: 0,
       wrongEligible: count,
-      wrongLevel1Eligible: source.draft.reviewLevels.includes(1)
-        ? count
-        : 0,
-      wrongLevel2Eligible: source.draft.reviewLevels.includes(2)
-        ? count
-        : 0,
+      wrongLevel1Eligible: source.selectedReviewLevels.filter(
+        (level) => level === 1,
+      ).length,
+      wrongLevel2Eligible: source.selectedReviewLevels.filter(
+        (level) => level === 2,
+      ).length,
+      overlap: 0,
+      alreadyAssigned: 0,
+      maximumQuestionCount: count,
+      recommendedQuestionCount: count,
+      minimumQuestionCount: count,
+    };
+  }
+  if (source.draft.purpose === "mixed") {
+    assertLegacyMixedContentShape(source, input);
+    const count = source.draft.questionCount;
+    const wrongCount = source.selectedQueueIds.length;
+    return {
+      eligibleBeforeActiveAssignment: count,
+      activeAssignmentExcluded: 0,
+      questionPlanExcluded: 0,
+      unitEligible: Math.max(0, count - wrongCount),
+      wrongEligible: wrongCount,
+      wrongLevel1Eligible: source.selectedReviewLevels.filter(
+        (level) => level === 1,
+      ).length,
+      wrongLevel2Eligible: source.selectedReviewLevels.filter(
+        (level) => level === 2,
+      ).length,
       overlap: 0,
       alreadyAssigned: 0,
       maximumQuestionCount: count,
@@ -196,6 +220,7 @@ export async function prepareStudentAssignmentReplacement(
     if (source.draft.purpose === "review") {
       assertExactReviewShape(source, input);
     }
+    assertLegacyMixedContentShape(source, input);
 
     if (canReuseSourceQuestions(source, input)) {
       const replacementPlan = preservedAssignmentReplacementPlan(

@@ -92,6 +92,7 @@ export type EditableSourceContext = {
   draft: AssignmentEditDraft;
   questions: AssignmentQuestionPlan[] | null;
   selectedQueueIds: string[];
+  selectedReviewLevels: (1 | 2)[];
   selectedReviewVocabEntryIds: number[];
 };
 
@@ -146,6 +147,7 @@ async function loadSourceSnapshot(
     return {
       questions,
       selectedQueueIds: [] as string[],
+      selectedReviewLevels: [] as (1 | 2)[],
       selectedReviewVocabEntryIds: [] as number[],
       reviewLevels: [] as (1 | 2)[],
     };
@@ -200,6 +202,9 @@ async function loadSourceSnapshot(
   return {
     questions,
     selectedQueueIds,
+    selectedReviewLevels: selectedQueueIds.map(
+      (queueId) => levelByQueueId.get(queueId)!,
+    ),
     selectedReviewVocabEntryIds: targets.map(
       (target) => target.vocab_entry_id,
     ),
@@ -381,6 +386,7 @@ export async function requireEditableSourceContext(
     },
     questions: sourceSnapshot.questions,
     selectedQueueIds: sourceSnapshot.selectedQueueIds,
+    selectedReviewLevels: sourceSnapshot.selectedReviewLevels,
     selectedReviewVocabEntryIds:
       sourceSnapshot.selectedReviewVocabEntryIds,
   };
@@ -399,4 +405,3 @@ export async function getStudentAssignmentEditDraft(
     )
   ).draft;
 }
-

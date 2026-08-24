@@ -77,12 +77,12 @@ export function DirectReviewAssignmentSections({
       : controller.totalAvailableCount === 0
         ? "현재 배정할 오답이 없습니다."
         : capacity.status === "loading"
-    ? "오답 문항 계산 중…"
+    ? "오답 단어 계산 중…"
     : capacity.status === "error"
       ? capacity.message
       : capacity.status === "ready"
         ? draft.questionCount > 0
-          ? `출제 ${draft.questionCount}문항`
+          ? `단어 ${draft.questionCount}개`
           : "현재 배정할 오답이 없습니다."
         : "단어장과 오답 단계를 선택해 주세요.";
   const deadlineIso = draft.deadline.mode === "at"

@@ -1,4 +1,6 @@
 import { Button } from "@/design-system/primitives/button/button";
+import { Notice } from "@/design-system/patterns/feedback/feedback";
+import { adminLearningText } from "@/content/ko/admin-learning";
 
 import type {
   AssignmentDatasetItem,
@@ -69,6 +71,9 @@ export function SingleAssignmentEditorSections({
             오답 시험
           </Button>
         </div>
+      ) : null}
+      {editPurpose === "mixed" ? (
+        <Notice>{adminLearningText.assignmentModal.edit.lockedMixed}</Notice>
       ) : null}
       <div
         className={[styles.sections, plannerStyles.assignmentPanel].join(" ")}

@@ -36,6 +36,7 @@
   --status-danger-bg: #a3322b;
   --status-neutral-bg: #575650;
   --status-fg: #ffffff;
+  --motion-fast: 160ms ease-out;
   --motion-standard: 250ms ease-in-out;
   --motion-complex: 300ms ease-in-out;
   --control-height-small: 44px;

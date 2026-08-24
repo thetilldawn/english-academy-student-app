@@ -35,7 +35,7 @@ export function AssignmentQueueTags({
           {vocabAssignmentQueueStatusLabel(queue.status)}
         </MetaTag>
         <span className={styles.summary}>
-          {queue.datasetLabel} · {queue.rangeLabel} · {queue.remainingSessionCount}회 · {queue.remainingQuestionCount}문항 남음
+          {queue.datasetLabel} · {queue.rangeLabel} · {queue.remainingSessionCount}회 · {queue.remainingQuestionCount}개 남음
         </span>
         {attention ? (
           <span className={styles.attention}>{attention}</span>
@@ -54,7 +54,7 @@ export function AssignmentQueueTags({
       <MetaTag>
         전체 {queue.totalSessionCount}회 중 {queue.remainingSessionCount}회 남음
       </MetaTag>
-      <MetaTag>{queue.remainingQuestionCount}문항 남음</MetaTag>
+      <MetaTag>{queue.remainingQuestionCount}개 남음</MetaTag>
       {attention ? <MetaTag tone="warning">{attention}</MetaTag> : null}
     </MetaTagList>
   );

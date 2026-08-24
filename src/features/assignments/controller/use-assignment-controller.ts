@@ -129,6 +129,17 @@ function isExactReviewEdit(draft: SingleAssignmentDraft) {
   );
 }
 
+function isMixedReviewEdit(draft: SingleAssignmentDraft) {
+  return (
+    draft.operation.mode === "replace" &&
+    draft.operation.sourcePurpose === "mixed"
+  );
+}
+
+function isReviewContentLockedEdit(draft: SingleAssignmentDraft) {
+  return isExactReviewEdit(draft) || isMixedReviewEdit(draft);
+}
+
 function safeCapacityFingerprint(draft: SingleAssignmentDraft) {
   try {
     return assignmentCapacityFingerprint(draft);
@@ -512,12 +523,14 @@ export function useAssignmentController({
   const actions = useMemo(
     () => ({
       changeDataset(datasetId: string) {
+        if (isReviewContentLockedEdit(stateRef.current.draft)) return;
         changeDraft({ type: "dataset/changed", datasetId });
       },
       changeDeadline(deadline: AssignmentDeadline) {
         changeDraft({ type: "deadline/changed", deadline });
       },
       changeDirection(directionRatio: AssignmentDirectionRatio) {
+        if (isMixedReviewEdit(stateRef.current.draft)) return;
         changeDraft({
           type: "exam/changed",
           exam: { ...stateRef.current.draft.exam, directionRatio },
@@ -548,18 +561,22 @@ export function useAssignmentController({
         });
       },
       changeQuestionCount(value: number) {
+        if (isReviewContentLockedEdit(stateRef.current.draft)) return;
         changeDraft({ type: "questionCount/manuallyChanged", value });
       },
       changeRange(datasetId: string, orderedUnitIds: readonly string[]) {
+        if (isReviewContentLockedEdit(stateRef.current.draft)) return;
         changeDraft({
           type: "range/changed",
           range: { datasetId, orderedUnitIds: [...orderedUnitIds] },
         });
       },
       changeReview(review: ReviewPolicy) {
+        if (isReviewContentLockedEdit(stateRef.current.draft)) return;
         changeDraft({ type: "review/changed", review });
       },
       changeReviewMode(mode: ReviewPolicy["mode"]) {
+        if (isReviewContentLockedEdit(stateRef.current.draft)) return;
         const current = stateRef.current.draft.review;
         changeDraft({
           type: "review/changed",
@@ -567,6 +584,7 @@ export function useAssignmentController({
         });
       },
       changeReviewScope(scope: ReviewScope) {
+        if (isReviewContentLockedEdit(stateRef.current.draft)) return;
         const current = stateRef.current.draft.review;
         changeDraft({
           type: "review/changed",
@@ -616,6 +634,7 @@ export function useAssignmentController({
         );
       },
       restoreAutomaticCount() {
+        if (isReviewContentLockedEdit(stateRef.current.draft)) return;
         const currentCapacity =
           stateRef.current.preview.status === "ready"
             ? stateRef.current.preview.value
@@ -632,6 +651,7 @@ export function useAssignmentController({
       },
       submit,
       toggleReviewLevel(level: ReviewLevel) {
+        if (isReviewContentLockedEdit(stateRef.current.draft)) return;
         const current = stateRef.current.draft.review;
         const levels = current.levels.includes(level)
           ? current.levels.filter((candidate) => candidate !== level)
@@ -652,7 +672,9 @@ export function useAssignmentController({
     canSubmit,
     capacity,
     dirty,
+    isContentLocked: isReviewContentLockedEdit(state.draft),
     isExactReview: isExactReviewEdit(state.draft),
+    isMixedReview: isMixedReviewEdit(state.draft),
     issues,
     loadStatus,
     message,

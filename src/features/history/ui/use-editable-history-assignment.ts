@@ -15,6 +15,7 @@ import { buildHistoryAssignmentEditorModel } from "./history-assignment-editor-m
 const initialSubmitPresentation = {
   blockedReason: assignmentSubmitBlockerLabel({ code: "loading" }),
   canSubmit: false,
+  dirty: false,
 };
 
 export function useEditableHistoryAssignment(
@@ -57,6 +58,12 @@ export function useEditableHistoryAssignment(
 
   function closeEditor() {
     if (editorBusy) return;
+    if (
+      submitPresentation?.dirty &&
+      !window.confirm("입력한 변경 내용을 버리고 닫을까요?")
+    ) {
+      return;
+    }
     restoreEditFocusRef.current = true;
     setEditing(false);
     setSubmitPresentation(null);

@@ -23,7 +23,7 @@
 .row span,
 .row small {
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .row strong {

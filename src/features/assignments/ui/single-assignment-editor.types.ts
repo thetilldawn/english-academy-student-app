@@ -9,13 +9,12 @@ import type { SingleAssignmentResult } from "../controller/use-assignment-contro
 export type SingleAssignmentSubmitPresentation = {
   blockedReason: string | null;
   canSubmit: boolean;
+  dirty: boolean;
   formId: string;
   label: string;
 };
 
 export type SingleAssignmentEditorProps = {
-  availableReviewLevel1: number;
-  availableReviewLevel2: number;
   datasets: readonly AssignmentDatasetItem[];
   editTarget: {
     assignmentId: string;

@@ -272,7 +272,7 @@ describe("assignmentScopeLabel", () => {
         primaryUnitLabels: [],
         questionCount: 3,
       }),
-    ).toBe("오답 시험 · 3문항");
+    ).toBe("오답 시험 · 단어 3개");
   });
 
   it("혼합 시험은 주 DAY 범위와 오답 포함 여부를 표시한다", () => {

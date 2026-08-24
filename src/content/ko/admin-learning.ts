@@ -84,7 +84,7 @@ export const adminLearningText = {
     },
     originalRows: "원본 행 {start}~{end}",
     empty: "관리할 시험이 없습니다.",
-    questionCount: "{count}문항",
+    questionCount: "{count}개",
     studentCount: "학생 {count}명",
     delete: {
       confirm:
@@ -268,7 +268,7 @@ export const adminLearningText = {
       title: "배정 요약",
       wordbook: "단어장",
       range: "범위",
-      questions: "문항",
+      questions: "단어 수",
       timing: "시간",
       passingScore: "통과 점수",
       deadline: "마감",
@@ -281,12 +281,14 @@ export const adminLearningText = {
       rebuildQuestionsHelp:
         "범위·단어 구성 변경으로 문제와 선택지를 다시 구성합니다.",
       comparisonAria: "배정 변경 비교",
-      rebuildHelpAria: "문항 재구성 도움말",
+      rebuildHelpAria: "시험 문제 재구성 도움말",
       changedCount: "{count}개 변경",
       before: "변경 전: ",
       after: "변경 후: ",
       lockedReview:
         "오답 시험은 대상 단어를 그대로 유지합니다. 단어장·범위·단어 수·오답 단계는 잠겨 있고, 나머지 시험 조건만 바꿀 수 있습니다.",
+      lockedMixed:
+        "기존 오답 포함 시험입니다. 대상 단어와 시험 방식은 유지하고, 문제 순서·시간·점수·마감만 바꿀 수 있습니다.",
       questionCount: "{count}개",
       perQuestionTiming: "문제당 {seconds}초",
       totalTiming: "전체 {minutes}분",
@@ -295,7 +297,7 @@ export const adminLearningText = {
       noWrongWords: "추가 안 함",
     },
 
-    // 모달 > 문항 수 오류. 정상일 때는 표시하지 않습니다.
+    // 모달 > 단어 수 오류. 정상일 때는 표시하지 않습니다.
     errors: {
       capacityLoading: "배정 가능한 단어 수를 확인하는 중입니다.",
       rangeUnavailable:

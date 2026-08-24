@@ -287,7 +287,7 @@ function validateExactReviewSubmissionLock(
     issues.push({
       code: "out_of_range",
       path: "operation.lockedShape.questionCount",
-      message: "잠긴 오답 시험 문항 수를 확인해 주세요.",
+      message: "잠긴 오답 시험 단어 수를 확인해 주세요.",
     });
   }
   if (
@@ -298,7 +298,7 @@ function validateExactReviewSubmissionLock(
     issues.push({
       code: "invalid_order",
       path: "operation.lockedShape.questionCount",
-      message: "오답 시험의 기존 문항 수를 바꿀 수 없습니다.",
+      message: "오답 시험의 기존 단어 수를 바꿀 수 없습니다.",
     });
   }
 }
@@ -471,7 +471,7 @@ function validateCommonPlan(
     issues.push({
       code: "invalid_order",
       path: "commonPlan.rangeUnitCounts",
-      message: "문항 수 기준에는 범위 단위 수를 함께 보낼 수 없습니다.",
+      message: "단어 수 기준에는 범위 단위 수를 함께 보낼 수 없습니다.",
     });
   }
   if (
@@ -482,7 +482,7 @@ function validateCommonPlan(
     issues.push({
       code: "invalid_order",
       path: "commonPlan.orderedUnitIds",
-      message: "문항 수 기준의 전체 범위와 회차 범위가 일치하지 않습니다.",
+      message: "단어 수 기준의 전체 범위와 회차 범위가 일치하지 않습니다.",
     });
   }
   if (
@@ -492,7 +492,7 @@ function validateCommonPlan(
     issues.push({
       code: "out_of_range",
       path: "commonPlan.questionCount",
-      message: "문항 수는 4개부터 500개까지 입력해 주세요.",
+      message: "단어 수는 4개부터 500개까지 입력해 주세요.",
     });
   }
   if (
@@ -548,7 +548,7 @@ function validateCommonPlan(
     issues.push({
       code: "invalid_order",
       path: "commonPlan.selectionMode",
-      message: "문항 선택 방식을 골라 주세요.",
+      message: "시험 문제 순서를 골라 주세요.",
     });
   }
   if (plan.sessions.length !== draft.range.sessionCount) {
@@ -628,7 +628,7 @@ function validateCommonPlan(
       issues.push({
         code: "invalid_order",
         path: `commonPlan.sessions.${index}.unitIds`,
-        message: "문항 나누기는 모든 회차에서 같은 전체 범위를 사용해야 합니다.",
+        message: "단어 수 배정은 모든 회차에서 같은 전체 범위를 사용해야 합니다.",
       });
     }
     const start = koreanDateTimeLocalToIso(session.availableLocalDateTime);

@@ -78,7 +78,7 @@ export const directReviewAssignmentSchema = directReviewAssignmentBaseSchema
       context.addIssue({
         code: "custom",
         path: ["totalQuestionCount"],
-        message: "오답 시험은 한 번에 400문항까지 배정할 수 있습니다.",
+        message: "오답 시험은 한 번에 400개까지 배정할 수 있습니다.",
       });
     }
     validateTimingSettings(value, context);

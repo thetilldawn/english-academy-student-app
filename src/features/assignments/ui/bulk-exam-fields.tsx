@@ -67,6 +67,7 @@ export function ExamQuestionOrderField({
 }
 
 export function ExamConditionFields({
+  directionDisabled = false,
   exam,
   fieldErrors = {},
   idPrefix = "exam",
@@ -75,6 +76,7 @@ export function ExamConditionFields({
   onRetryEnabledChange,
   onRetryPassingScoreChange,
 }: {
+  directionDisabled?: boolean;
   exam: ExamSettings;
   fieldErrors?: ExamConditionErrors;
   idPrefix?: string;
@@ -111,6 +113,7 @@ export function ExamConditionFields({
           ] as const).map(([value, label]) => (
             <Button
               aria-pressed={exam.directionRatio === value}
+              disabled={directionDisabled}
               key={value}
               onClick={() => onDirectionChange(value)}
               size="small"
