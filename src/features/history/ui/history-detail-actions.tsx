@@ -7,7 +7,7 @@ import { adminHistoryText } from "@/content/ko/admin-history";
 import { Button, ButtonLink } from "@/design-system/primitives/button/button";
 import { isStudentAssignmentEditable } from "@/lib/admin/assignment-edit";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
-import type { AssignmentManagerData } from "@/lib/services/assignment-manager-data";
+import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
 
 import { AdminHistoryActions } from "./admin-history-actions";
 import { buildHistoryAssignmentEditorModel } from "./history-assignment-editor-model";

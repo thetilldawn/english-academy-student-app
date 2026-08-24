@@ -17,12 +17,9 @@ import {
   Input,
 } from "@/design-system/primitives/form/field";
 import { Notice } from "@/design-system/patterns/feedback/feedback";
+import { requestAdminLogin } from "@/features/session/api/session";
 
 import styles from "./login-form.module.css";
-
-type ErrorResponse = {
-  error?: string;
-};
 
 function subscribeHydration() {
   return () => {};
@@ -65,19 +62,16 @@ export function AdminLoginForm() {
     );
 
     try {
-      const response = await fetch("/api/admin/session", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
+      const result = await requestAdminLogin(
+        {
           email: form.get("email"),
           password: form.get("password"),
-        }),
-        signal: controller.signal,
-      });
-      const payload = (await response.json()) as ErrorResponse;
+        },
+        controller.signal,
+      );
 
-      if (!response.ok) {
-        setError(payload.error ?? adminShellText.login.error);
+      if (!result.ok) {
+        setError(result.error ?? adminShellText.login.error);
         requestInFlight.current = false;
         setSubmitting(false);
         return;

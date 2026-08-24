@@ -7,9 +7,9 @@ import type { StudentCurrentVocabWrongSummary } from "@/lib/admin/wrong-history-
 import type {
   DatasetOption,
   DatasetSummary,
-  StudentSummary,
   VocabUnitSummary,
-} from "@/lib/services/admin-service";
+} from "@/lib/admin/dataset-summary";
+import type { StudentSummary } from "@/lib/admin/student-summary";
 
 export type StudentDetailTab = "info" | "account" | "history";
 export type StudentWrongFilter = "all" | "wrong" | "repeated" | "retry";

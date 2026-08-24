@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 import { formatContentText } from "@/content/format";
 import { adminLearningText } from "@/content/ko/admin-learning";
-import type { AssignmentManagerData } from "@/lib/services/assignment-manager-data";
+import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
 
 import {
   useAssignmentWorkspace,

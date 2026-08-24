@@ -25,7 +25,7 @@ import {
   prepareMixedAssignmentBatch,
 } from "@/lib/services/mixed-assignment-service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { AssignmentCapacityInput } from "@/lib/validation";
+import type { AssignmentCapacityInput } from "@/lib/admin/assignment-replacement-request";
 
 type StudentRelation = {
   id: string;

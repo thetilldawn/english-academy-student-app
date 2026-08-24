@@ -16,7 +16,7 @@ import {
   type VocabTimeTemplateRecord,
 } from "../api/vocab-time-template-adapter";
 import { selectCommonInitialDatasetId } from "../presentation/select-common-initial-dataset";
-import type { AssignmentTransport } from "./assignment-transport";
+import type { AssignmentTransport } from "../transport/assignment-transport";
 import { useVocabAssignmentPlanner } from "./use-vocab-assignment-planner";
 
 export type VocabAssignmentScreenData = {

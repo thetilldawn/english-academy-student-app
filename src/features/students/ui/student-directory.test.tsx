@@ -7,7 +7,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { adminStudentsText } from "@/content/ko/admin-students";
-import type { StudentSummary } from "@/lib/services/admin-service";
+import type { StudentSummary } from "@/lib/admin/student-summary";
 
 import type { StudentDetailController } from "../controller/use-student-detail-controller";
 import type { StudentManagementData } from "../model";

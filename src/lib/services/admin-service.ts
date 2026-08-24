@@ -19,7 +19,6 @@ import {
 } from "@/lib/services/stale-attempt-service";
 import {
   getAttemptQuestionResults,
-  type AttemptQuestionResult,
 } from "@/lib/services/quiz-service";
 import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
 import {
@@ -33,7 +32,7 @@ import {
 import {
   datasetDisplayLabel,
   storedDatasetDisplayLabel,
-} from "@/lib/ui/dataset-display";
+} from "@/lib/admin/dataset-display";
 import { loadEligibleVocabularyDataset } from "@/lib/services/eligible-vocabulary-service";
 import { memoizeRequestPreparation } from "@/lib/services/request-preparation-cache";
 import {
@@ -60,6 +59,23 @@ import type {
   QuestionOrderMode,
   TimingMode,
 } from "@/lib/admin/assignment-settings";
+import type { AssignmentSummary } from "@/lib/admin/assignment-summary";
+import type {
+  DatasetOption,
+  DatasetSummary,
+  ReviewDatasetSummary,
+  VocabUnitSummary,
+} from "@/lib/admin/dataset-summary";
+import type {
+  AdminAttemptDetail,
+  AdminHistoryDetail,
+  AttemptSummary,
+} from "@/features/history/model";
+import type {
+  StudentClassGroupSummary,
+  StudentLearningSourceSummary,
+  StudentSummary,
+} from "@/lib/admin/student-summary";
 import {
   parseStudentPendingReviewSummaries,
   type PendingReviewSummaryRow,
@@ -74,7 +90,6 @@ import {
   cataloguedDatasetDisplayLabel,
   compareCataloguedDatasets,
   type CataloguedDataset,
-  type CataloguedUnit,
   type DatasetCatalogGroup,
   type DatasetMaterialKind,
   type VocabUnitType,
@@ -92,80 +107,6 @@ export type { StudentProgressSummary } from "@/lib/admin/progress";
 export type { AssignmentHistorySummary } from "@/lib/admin/history";
 export type { StudentPendingReviewSummary } from "@/lib/admin/review-queue-summary";
 export type { StudentCurrentVocabWrongSummary } from "@/lib/admin/wrong-history-summary";
-
-export type StudentSummary = {
-  id: string;
-  displayName: string;
-  schoolName: string | null;
-  gradeLabel: string | null;
-  currentVocabBook: string | null;
-  currentVocabDatasetId: string | null;
-  readingCurriculumStage: ReadingCurriculumStage;
-  readingContextSyncStatus:
-    | "not_synced"
-    | "not_configured"
-    | "synced"
-    | "failed";
-  status: "active" | "blocked";
-  codeGeneration: number;
-  codeStatus: "active" | "blocked" | "expired" | "missing";
-  createdAt: string;
-};
-
-export type StudentLearningSourceSummary = {
-  id: string;
-  studentId: string;
-  sourceType:
-    | "primary_vocab"
-    | "exam_vocab"
-    | "textbook"
-    | "supplement"
-    | "mock_exam"
-    | "passage";
-  vocabDatasetId: string | null;
-  displayLabel: string;
-  rangeMetadata: Record<string, unknown>;
-  sortOrder: number;
-};
-
-export type StudentClassGroupSummary = {
-  id: string;
-  name: string;
-  studentIds: string[];
-};
-
-export type DatasetSummary = CataloguedDataset & {
-  datasetKey: string;
-  rowCount: number;
-  status: "pending_review" | "ready" | "retired";
-  isActive: boolean;
-};
-
-export type ReviewDatasetSummary = {
-  id: string;
-  title: string;
-  edition: string | null;
-  rowCount: number;
-  visibleEntryCount: number;
-  entries: {
-    id: number;
-    sourceRow: number;
-    headword: string;
-    primaryMeaning: string;
-  }[];
-};
-
-export type DatasetOption = CataloguedDataset;
-
-export type VocabUnitSummary = CataloguedUnit & {
-  id: string;
-  datasetId: string;
-  label: string;
-  kind: "day" | "supplement";
-  number: number | null;
-  sortIndex: number;
-  entryCount: number;
-};
 
 type DatasetCatalogRow = {
   dataset_id: string;
@@ -249,52 +190,6 @@ export class AssignmentCreationError extends Error {
     this.name = "AssignmentCreationError";
   }
 }
-
-export type AssignmentSummary = {
-  id: string;
-  title: string;
-  status: "draft" | "active" | "closed";
-  datasetId: string;
-  datasetTitle: string;
-  unitLabels: string[];
-  rangeStart: number;
-  rangeEnd: number;
-  questionCount: number;
-  englishToKoreanRatio: number;
-  timeLimitSeconds: number;
-  passingScore: number;
-  questionOrderMode: QuestionOrderMode;
-  availableUntil: string | null;
-  studentCount: number;
-  createdAt: string;
-};
-
-export type AttemptSummary = {
-  id: string;
-  studentName: string;
-  assignmentTitle: string;
-  attemptNumber: number;
-  status: "in_progress" | "completed" | "expired";
-  phase: "initial" | "review" | "retry" | "completed";
-  initialScore: number | null;
-  finalScore: number | null;
-  passed: boolean | null;
-  questionCount: number;
-  initialCorrectCount: number | null;
-  retryCorrectCount: number | null;
-  unresolvedWrongCount: number | null;
-  startedAt: string;
-  completedAt: string | null;
-};
-
-export type AdminAttemptDetail = AttemptSummary & {
-  questionCount: number;
-  initialCorrectCount: number | null;
-  retryCorrectCount: number | null;
-  unresolvedWrongCount: number | null;
-  elapsedSeconds: number | null;
-  questions: AttemptQuestionResult[];
-};
 
 type StudentRow = {
   id: string;
@@ -1544,12 +1439,6 @@ export async function listCurrentAssignmentHistory(): Promise<
 > {
   return (await listAssignmentHistoryBundle()).currentHistory;
 }
-
-export type AdminHistoryDetail = {
-  summary: AssignmentHistorySummary;
-  attempt: AdminAttemptDetail | null;
-  canonicalKey: string;
-};
 
 export async function getAdminHistoryDetail(
   entryKey: string,

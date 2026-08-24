@@ -19,7 +19,7 @@ import {
 import {
   assignmentReplacementPreviewSchema,
   assignmentReplacementSchema,
-} from "@/lib/validation";
+} from "@/lib/admin/assignment-replacement-request";
 
 const paramsSchema = z.object({
   assignmentId: z.uuid(),

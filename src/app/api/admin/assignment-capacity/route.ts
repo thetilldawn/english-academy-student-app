@@ -4,7 +4,7 @@ import {
   calculateAssignmentCapacity,
   MixedAssignmentError,
 } from "@/lib/services/mixed-assignment-service";
-import { assignmentCapacitySchema } from "@/lib/validation";
+import { assignmentCapacitySchema } from "@/lib/admin/assignment-replacement-request";
 
 export const dynamic = "force-dynamic";
 

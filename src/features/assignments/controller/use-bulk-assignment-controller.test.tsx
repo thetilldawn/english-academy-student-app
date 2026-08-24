@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { assignmentContractIds } from "@/test-support/assignment-contract-fixtures";
 
-import type { AssignmentTransport } from "./assignment-transport";
+import type { AssignmentTransport } from "../transport/assignment-transport";
 import { useBulkAssignmentController } from "./use-bulk-assignment-controller";
 
 const NOW = Date.parse("2026-08-10T00:00:00.000Z");

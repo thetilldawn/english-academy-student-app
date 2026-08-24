@@ -1,17 +1,21 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 
-import type { AssignmentInput } from "@/lib/validation";
+import type { AssignmentInput } from "@/lib/admin/regular-assignment-request";
 import { assignmentReplacementFingerprintPayload } from "@/lib/admin/assignment-replacement-fingerprint";
 import {
   assignmentCapacitySchema,
   assignmentReplacementPreviewSchema,
   assignmentReplacementSchema,
-  assignmentSchema,
+} from "@/lib/admin/assignment-replacement-request";
+import {
   bulkAssignmentPreviewSchema,
   bulkAssignmentSchema,
-  directReviewAssignmentSchema,
-  mixedAssignmentSchema,
-} from "@/lib/validation";
+} from "@/lib/admin/bulk-assignment-request";
+import { directReviewAssignmentSchema } from "@/lib/admin/direct-review-assignment-request";
+import { mixedAssignmentSchema } from "@/lib/admin/mixed-assignment-request";
+import {
+  assignmentSchema,
+} from "@/lib/admin/regular-assignment-request";
 import {
   assignmentContractIds,
   bulkPreviewContract,

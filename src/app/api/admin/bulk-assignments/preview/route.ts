@@ -1,7 +1,7 @@
 import { getAdminContext } from "@/lib/auth/admin";
 import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
 import { previewBulkAssignments } from "@/lib/services/bulk-assignment-service";
-import { bulkAssignmentPreviewSchema } from "@/lib/validation";
+import { bulkAssignmentPreviewSchema } from "@/lib/admin/bulk-assignment-request";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;

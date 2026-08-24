@@ -5,7 +5,7 @@ import {
   datasetDisplayLabel,
   isInternalDatasetEdition,
   storedDatasetDisplayLabel,
-} from "@/lib/ui/dataset-display";
+} from "@/lib/admin/dataset-display";
 
 describe("dataset display labels", () => {
   it("hides staging release metadata from learner-facing labels", () => {

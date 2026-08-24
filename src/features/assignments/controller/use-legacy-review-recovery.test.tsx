@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { assignmentContractIds } from "@/test-support/assignment-contract-fixtures";
 
-import type { AssignmentTransport } from "./assignment-transport";
+import type { AssignmentTransport } from "../transport/assignment-transport";
 import { useLegacyReviewRecovery } from "./use-legacy-review-recovery";
 
 const reviewDraftId = "88888888-8888-4888-8888-888888888888";

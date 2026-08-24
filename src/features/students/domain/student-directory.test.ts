@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { indexStudentCurrentVocabWrongSummaries } from "@/lib/admin/wrong-history-summary";
 import type { StudentLearningSourceItem } from "@/lib/admin/learning-sources";
-import type { StudentSummary } from "@/lib/services/admin-service";
+import type { StudentSummary } from "@/lib/admin/student-summary";
 
 import {
   filterAndSortStudents,

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/design-system/primitives/button/button";
 import { InlineError } from "@/design-system/patterns/feedback/feedback";
 import { studentAppText } from "@/content/ko/student-app";
+import { requestStudentLogout } from "@/features/session/api/session";
 
 import styles from "./session-action.module.css";
 
@@ -17,10 +18,8 @@ export function StudentLogoutButton() {
     setError("");
     setSubmitting(true);
     try {
-      const response = await fetch("/api/student/session", {
-        method: "DELETE",
-      });
-      if (!response.ok) {
+      const ok = await requestStudentLogout();
+      if (!ok) {
         setError(studentAppText.shell.logoutError);
         return;
       }

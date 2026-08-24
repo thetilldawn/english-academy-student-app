@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { AdminContext } from "@/lib/auth/admin";
+import type { VocabTimeTemplateSummary } from "@/lib/admin/vocab-time-template";
 import { requireAdmin } from "@/lib/auth/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { createVocabTimeTemplateSchema } from "@/lib/validation";
@@ -9,17 +10,6 @@ import type { z } from "zod";
 export type VocabTimeTemplateInput = z.infer<
   typeof createVocabTimeTemplateSchema
 >;
-
-export type VocabTimeTemplateSummary = {
-  id: string;
-  name: string;
-  availableTime: string;
-  deadlineDayOffset: number;
-  deadlineTime: string;
-  timingMode: "none" | "total" | "per_question";
-  totalSeconds: number | null;
-  perQuestionSeconds: number | null;
-};
 
 type VocabTimeTemplateRow = {
   id: string;

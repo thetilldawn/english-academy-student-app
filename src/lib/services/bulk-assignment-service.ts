@@ -47,7 +47,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type {
   BulkAssignmentInput,
   BulkAssignmentPreviewInput,
-} from "@/lib/validation";
+} from "@/lib/admin/bulk-assignment-request";
 import {
   extendScheduleSlotsFromRecurrence,
   planDirectionalVocabSeriesTargets,

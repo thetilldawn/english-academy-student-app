@@ -4,7 +4,7 @@ import {
   createMixedAssignment,
   MixedAssignmentError,
 } from "@/lib/services/mixed-assignment-service";
-import { mixedAssignmentSchema } from "@/lib/validation";
+import { mixedAssignmentSchema } from "@/lib/admin/mixed-assignment-request";
 
 export const dynamic = "force-dynamic";
 

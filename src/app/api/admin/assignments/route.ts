@@ -5,7 +5,7 @@ import {
   createAssignment,
   listAssignments,
 } from "@/lib/services/admin-service";
-import { assignmentSchema } from "@/lib/validation";
+import { assignmentSchema } from "@/lib/admin/regular-assignment-request";
 
 export async function GET() {
   if (!(await getAdminContext())) {

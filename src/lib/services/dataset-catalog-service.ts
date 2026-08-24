@@ -8,7 +8,7 @@ import {
   type DatasetCatalogGroup,
   type DatasetMaterialKind,
 } from "@/lib/admin/dataset-catalog";
-import { datasetDisplayLabel } from "@/lib/ui/dataset-display";
+import { datasetDisplayLabel } from "@/lib/admin/dataset-display";
 
 type RawDataset = {
   id: string;

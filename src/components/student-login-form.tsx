@@ -26,12 +26,9 @@ import {
   Input,
 } from "@/design-system/primitives/form/field";
 import { Notice } from "@/design-system/patterns/feedback/feedback";
+import { requestStudentLogin } from "@/features/session/api/session";
 
 import styles from "./login-form.module.css";
-
-type LoginResponse = {
-  error?: string;
-};
 
 const CODE_SLOT_GROUPS = [0, 1, 2] as const;
 
@@ -98,16 +95,10 @@ export function StudentLoginForm() {
     );
 
     try {
-      const response = await fetch("/api/student/session", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ code }),
-        signal: controller.signal,
-      });
-      const payload = (await response.json()) as LoginResponse;
+      const result = await requestStudentLogin(code, controller.signal);
 
-      if (!response.ok) {
-        setError(payload.error ?? studentAppText.login.invalidCode);
+      if (!result.ok) {
+        setError(result.error ?? studentAppText.login.invalidCode);
         requestInFlight.current = false;
         setSubmitting(false);
         return;

@@ -7,8 +7,8 @@ import type { SingleAssignmentResult } from "@/features/assignments/controller/u
 import { assignmentSubmitBlockerLabel } from "@/features/assignments/presentation/assignment-submit-blocker";
 import type { SingleAssignmentSubmitPresentation } from "@/features/assignments/ui/single-assignment-editor.types";
 import { historyDetailHref } from "@/lib/admin/history-route";
-import type { AdminHistoryDetail } from "@/lib/services/admin-service";
-import type { AssignmentManagerData } from "@/lib/services/assignment-manager-data";
+import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
+import type { AdminHistoryDetail } from "../model";
 
 import { buildHistoryAssignmentEditorModel } from "./history-assignment-editor-model";
 

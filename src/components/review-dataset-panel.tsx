@@ -5,7 +5,7 @@ import {
 } from "@/design-system/primitives/tooltip/help-tip";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { formatContentText } from "@/content/format";
-import type { ReviewDatasetSummary } from "@/lib/services/admin-service";
+import type { ReviewDatasetSummary } from "@/lib/admin/dataset-summary";
 
 import styles from "./review-dataset-panel.module.css";
 

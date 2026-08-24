@@ -33,6 +33,7 @@ export type ModuleBoundaryPolicy = {
   forbidEndpointLiterals?: boolean;
   forbidJsx?: boolean;
   forbidBrowserGlobals?: boolean;
+  forbidNetwork?: boolean;
 };
 
 const BROWSER_GLOBALS = new Set([
@@ -172,13 +173,66 @@ function isIdentifierNamePosition(node: ts.Identifier): boolean {
 
 function isFetchReference(node: ts.Node): boolean {
   if (ts.isIdentifier(node)) return node.text === "fetch";
-  if (ts.isPropertyAccessExpression(node)) return node.name.text === "fetch";
+  if (ts.isPropertyAccessExpression(node)) {
+    return (
+      node.name.text === "fetch" &&
+      ts.isIdentifier(node.expression) &&
+      ["global", "globalThis", "self", "window"].includes(
+        node.expression.text,
+      )
+    );
+  }
   if (ts.isElementAccessExpression(node)) {
     return (
+      ts.isIdentifier(node.expression) &&
+      ["global", "globalThis", "self", "window"].includes(
+        node.expression.text,
+      ) &&
       !!node.argumentExpression &&
       ts.isStringLiteralLike(node.argumentExpression) &&
       node.argumentExpression.text === "fetch"
     );
+  }
+  return false;
+}
+
+function isModuleSpecifier(node: ts.StringLiteralLike): boolean {
+  const parent = node.parent;
+  return (
+    (ts.isImportDeclaration(parent) || ts.isExportDeclaration(parent)) &&
+      parent.moduleSpecifier === node
+  ) ||
+    (ts.isExternalModuleReference(parent) && parent.expression === node) ||
+    (ts.isLiteralTypeNode(parent) && ts.isImportTypeNode(parent.parent)) ||
+    (ts.isCallExpression(parent) &&
+      isModuleLoaderCall(parent) &&
+      parent.arguments[0] === node);
+}
+
+function bindingNameContains(
+  name: ts.BindingName,
+  identifier: string,
+): boolean {
+  if (ts.isIdentifier(name)) return name.text === identifier;
+  return name.elements.some(
+    (element) =>
+      !ts.isOmittedExpression(element) &&
+      bindingNameContains(element.name, identifier),
+  );
+}
+
+function isFunctionParameterReference(node: ts.Identifier): boolean {
+  let parent: ts.Node | undefined = node.parent;
+  while (parent) {
+    if (
+      ts.isFunctionLike(parent) &&
+      parent.parameters.some((parameter) =>
+        bindingNameContains(parameter.name, node.text)
+      )
+    ) {
+      return true;
+    }
+    parent = parent.parent;
   }
   return false;
 }
@@ -252,14 +306,17 @@ export function inspectBoundarySource(
     }
 
     if (
+      policy.forbidNetwork !== false &&
       ts.isCallExpression(node) &&
       isFetchReference(node.expression)
     ) {
       report(node.expression, "network", "Network execution is not allowed.");
     } else if (
+      policy.forbidNetwork !== false &&
       ts.isIdentifier(node) &&
       node.text === "fetch" &&
       !isIdentifierNamePosition(node) &&
+      !(ts.isCallExpression(node.parent) && node.parent.expression === node) &&
       !(
         ts.isPropertyAccessExpression(node.parent) &&
         node.parent.name === node
@@ -267,6 +324,7 @@ export function inspectBoundarySource(
     ) {
       report(node, "network", "The fetch API is not allowed in this layer.");
     } else if (
+      policy.forbidNetwork !== false &&
       (ts.isPropertyAccessExpression(node) ||
         ts.isElementAccessExpression(node)) &&
       isFetchReference(node)
@@ -278,6 +336,7 @@ export function inspectBoundarySource(
       policy.forbidBrowserGlobals &&
       ts.isIdentifier(node) &&
       !isIdentifierNamePosition(node) &&
+      !isFunctionParameterReference(node) &&
       BROWSER_GLOBALS.has(node.text)
     ) {
       report(
@@ -290,6 +349,7 @@ export function inspectBoundarySource(
     if (
       policy.forbidEndpointLiterals &&
       (ts.isStringLiteralLike(node) || ts.isNoSubstitutionTemplateLiteral(node)) &&
+      !isModuleSpecifier(node) &&
       node.text.includes("/api/")
     ) {
       report(node, "endpoint-literal", "Domain code cannot contain API endpoints.");
@@ -335,8 +395,12 @@ export function resolvesInside(
   specifier: string,
   allowedRoots: readonly string[],
 ): boolean {
-  if (!specifier.startsWith(".")) return false;
-  const resolved = path.resolve(path.dirname(importer), specifier);
+  const resolved = specifier.startsWith("@/")
+    ? path.resolve("src", specifier.slice(2))
+    : specifier.startsWith(".")
+      ? path.resolve(path.dirname(importer), specifier)
+      : null;
+  if (!resolved) return false;
   return allowedRoots.some((root) => {
     const relative = path.relative(root, resolved);
     return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));

@@ -18,7 +18,7 @@ import type { DialogCloseReason } from "@/design-system/primitives/dialog/dialog
 import { sendKakaoText } from "@/lib/kakao-share";
 import { buildStudentAccessUrl } from "@/lib/auth/student-code-input";
 import type { StudentWrongWordHistory } from "@/lib/admin/wrong-word-history";
-import type { StudentSummary } from "@/lib/services/admin-service";
+import type { StudentSummary } from "@/lib/admin/student-summary";
 
 import {
   blockStudent,

@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { DetailHeader } from "@/design-system/patterns/detail-header/detail-header";
 import { SingleAssignmentEditor } from "@/features/assignments/ui/single-assignment-editor";
-import type { AdminHistoryDetail } from "@/lib/services/admin-service";
-import type { AssignmentManagerData } from "@/lib/services/assignment-manager-data";
+import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
+import type { AdminHistoryDetail } from "../model";
 
 import { AdminHistoryDetailContent } from "./admin-history-detail";
 import { HistoryDetailActions } from "./history-detail-actions";

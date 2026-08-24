@@ -4,7 +4,7 @@ import {
   DirectReviewAssignmentError,
 } from "@/lib/services/direct-review-assignment-service";
 import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
-import { directReviewAssignmentSchema } from "@/lib/validation";
+import { directReviewAssignmentSchema } from "@/lib/admin/direct-review-assignment-request";
 
 export const dynamic = "force-dynamic";
 

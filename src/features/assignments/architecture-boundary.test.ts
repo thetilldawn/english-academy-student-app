@@ -46,7 +46,10 @@ describe("assignment feature dependency boundaries", () => {
       allowModule: (specifier, importer, typeOnly) =>
         specifier === "zod" ||
         pureSharedModules.has(specifier) ||
-        (specifier === "@/lib/validation" && typeOnly) ||
+        (typeOnly &&
+          specifier.startsWith("@/lib/admin/") &&
+          specifier.includes("assignment") &&
+          specifier.endsWith("-request")) ||
         resolvesInside(importer, specifier, [apiRoot, domainRoot]),
       forbidJsx: true,
       forbidBrowserGlobals: true,

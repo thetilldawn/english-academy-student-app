@@ -11,8 +11,11 @@ import {
 } from "@/lib/services/admin-service";
 import { listVocabTimeTemplates } from "@/lib/services/vocab-time-template-service";
 import { listVocabAssignmentQueueSummaries } from "@/lib/services/vocab-assignment-queue-service";
+import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
 
-export async function loadAssignmentManagerData() {
+export async function loadAssignmentManagerData(): Promise<
+  AssignmentManagerData
+> {
   const [
     datasets,
     students,
@@ -55,7 +58,3 @@ export async function loadAssignmentManagerData() {
     assignmentQueues,
   };
 }
-
-export type AssignmentManagerData = Awaited<
-  ReturnType<typeof loadAssignmentManagerData>
->;

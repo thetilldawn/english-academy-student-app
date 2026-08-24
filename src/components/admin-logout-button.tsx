@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { adminShellText } from "@/content/ko/admin-shell";
 import { Button } from "@/design-system/primitives/button/button";
 import { InlineError } from "@/design-system/patterns/feedback/feedback";
+import { requestAdminLogout } from "@/features/session/api/session";
 
 import styles from "./session-action.module.css";
 
@@ -18,10 +19,8 @@ export function AdminLogoutButton() {
     setError("");
     setSubmitting(true);
     try {
-      const response = await fetch("/api/admin/session", {
-        method: "DELETE",
-      });
-      if (!response.ok) {
+      const ok = await requestAdminLogout();
+      if (!ok) {
         setError(adminShellText.logout.error);
         return;
       }

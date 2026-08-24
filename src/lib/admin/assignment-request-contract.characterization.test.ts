@@ -7,12 +7,16 @@ import {
   assignmentCapacitySchema,
   assignmentReplacementPreviewSchema,
   assignmentReplacementSchema,
-  assignmentSchema,
+} from "@/lib/admin/assignment-replacement-request";
+import {
   bulkAssignmentPreviewSchema,
   bulkAssignmentSchema,
+} from "@/lib/admin/bulk-assignment-request";
+import {
   mixedAssignmentPreviewSchema,
   mixedAssignmentSchema,
-} from "@/lib/validation";
+} from "@/lib/admin/mixed-assignment-request";
+import { assignmentSchema } from "@/lib/admin/regular-assignment-request";
 import {
   assignmentContractIds,
   bulkPreviewContract,

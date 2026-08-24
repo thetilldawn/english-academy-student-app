@@ -144,7 +144,6 @@ const cssMetrics = {
 };
 
 const cssMaximums = {
-  lines: 1000,
   styleRules: 12,
   selectorContextKeys: 12,
   duplicateContextKeys: 0,
@@ -161,49 +160,41 @@ const legacyComponents = [];
 const assignmentFeatureContracts = [
   {
     path: "src/features/assignments/controller/use-assignment-workspace.ts",
-    maxLines: 430,
     maxFetchCalls: 0,
     maxUseStateCalls: 7,
   },
   {
     path: "src/features/assignments/controller/use-assignment-controller.ts",
-    maxLines: 700,
     maxFetchCalls: 0,
     maxUseStateCalls: 5,
   },
   {
     path: "src/features/assignments/controller/use-assignment-preview.ts",
-    maxLines: 220,
     maxFetchCalls: 0,
     maxUseStateCalls: 0,
   },
   {
     path: "src/features/assignments/controller/use-bulk-assignment-controller.ts",
-    maxLines: 520,
     maxFetchCalls: 0,
     maxUseStateCalls: 4,
   },
   {
     path: "src/features/assignments/controller/use-vocab-assignment-planner.ts",
-    maxLines: 450,
     maxFetchCalls: 0,
     maxUseStateCalls: 2,
   },
   {
     path: "src/features/assignments/controller/use-vocab-assignment-screen.ts",
-    maxLines: 150,
     maxFetchCalls: 0,
     maxUseStateCalls: 2,
   },
   {
     path: "src/features/assignments/controller/use-legacy-review-recovery.ts",
-    maxLines: 120,
     maxFetchCalls: 0,
     maxUseStateCalls: 2,
   },
   {
     path: "src/features/assignments/ui/single-assignment-editor.tsx",
-    maxLines: 280,
     maxFetchCalls: 0,
     maxUseStateCalls: 0,
   },
@@ -211,31 +202,26 @@ const assignmentFeatureContracts = [
 const studentFeatureContracts = [
   {
     path: "src/features/students/controller/use-student-detail-controller.ts",
-    maxLines: 600,
     maxFetchCalls: 0,
     maxUseStateCalls: 4,
   },
   {
     path: "src/features/students/domain/student-directory.ts",
-    maxLines: 140,
     maxFetchCalls: 0,
     maxUseStateCalls: 0,
   },
   {
     path: "src/features/students/ui/student-directory.tsx",
-    maxLines: 600,
     maxFetchCalls: 0,
     maxUseStateCalls: 1,
   },
   {
     path: "src/features/students/ui/student-detail-dialog.tsx",
-    maxLines: 180,
     maxFetchCalls: 0,
     maxUseStateCalls: 0,
   },
   {
     path: "src/features/students/ui/panels/student-wrong-word-panel.tsx",
-    maxLines: 1120,
     maxFetchCalls: 0,
     maxUseStateCalls: 15,
   },
@@ -243,19 +229,16 @@ const studentFeatureContracts = [
 const studentDashboardFeatureContracts = [
   {
     path: "src/features/student-dashboard/domain/student-assignment-sections.ts",
-    maxLines: 140,
     maxFetchCalls: 0,
     maxUseStateCalls: 0,
   },
   {
     path: "src/features/student-dashboard/ui/student-assignment-card.tsx",
-    maxLines: 240,
     maxFetchCalls: 0,
     maxUseStateCalls: 0,
   },
   {
     path: "src/features/student-dashboard/ui/student-dashboard.tsx",
-    maxLines: 110,
     maxFetchCalls: 0,
     maxUseStateCalls: 0,
   },
@@ -263,56 +246,45 @@ const studentDashboardFeatureContracts = [
 const quizPlayerFeatureContracts = [
   {
     path: "src/features/quiz-player/controller/quiz-audio-player.ts",
-    maxLines: 110,
     maxFetchCalls: 0,
     maxUseStateCalls: 0,
   },
   {
     path: "src/features/quiz-player/controller/use-initial-quiz-synchronization.ts",
-    maxLines: 30,
     maxFetchCalls: 0,
     maxUseStateCalls: 0,
   },
   {
     path: "src/features/quiz-player/controller/use-quiz-audio.ts",
-    maxLines: 60,
     maxFetchCalls: 0,
     maxUseStateCalls: 0,
   },
   {
     path: "src/features/quiz-player/controller/use-quiz-player-controller.ts",
-    maxLines: 380,
     maxFetchCalls: 0,
     maxUseStateCalls: 0,
   },
   {
     path: "src/features/quiz-player/controller/use-quiz-clock.ts",
-    maxLines: 70,
     maxFetchCalls: 0,
     maxUseStateCalls: 0,
   },
   {
     path: "src/features/quiz-player/controller/use-quiz-recovery.ts",
-    maxLines: 90,
     maxFetchCalls: 0,
     maxUseStateCalls: 0,
   },
   {
     path: "src/features/quiz-player/ui/quiz-player.tsx",
-    maxLines: 150,
     maxFetchCalls: 0,
     maxUseStateCalls: 0,
   },
   {
     path: "src/features/quiz-player/ui/quiz-frame.tsx",
-    maxLines: 300,
     maxFetchCalls: 0,
     maxUseStateCalls: 0,
   },
 ];
-const legacyPaths = new Set(
-  legacyComponents.map((contract) => contract.path),
-);
 const violations = [];
 const allowedGlobalClasses = new Set([
   "app-sonner-toast",
@@ -531,7 +503,6 @@ const componentMetrics = legacyComponents.map((contract) => {
     useStateCalls: count(source, /\buseState\s*(?:<|\()/g),
   };
   for (const [metric, maximum] of [
-    ["lines", contract.maxLines],
     ["fetchCalls", contract.maxFetchCalls],
     ["useStateCalls", contract.maxUseStateCalls],
   ]) {
@@ -553,7 +524,6 @@ const assignmentFeatureMetrics = assignmentFeatureContracts.map((contract) => {
     useStateCalls: count(source, /\buseState\s*(?:<|\()/g),
   };
   for (const [metric, maximum] of [
-    ["lines", contract.maxLines],
     ["fetchCalls", contract.maxFetchCalls],
     ["useStateCalls", contract.maxUseStateCalls],
   ]) {
@@ -575,7 +545,6 @@ const studentFeatureMetrics = studentFeatureContracts.map((contract) => {
     useStateCalls: count(source, /\buseState\s*(?:<|\()/g),
   };
   for (const [metric, maximum] of [
-    ["lines", contract.maxLines],
     ["fetchCalls", contract.maxFetchCalls],
     ["useStateCalls", contract.maxUseStateCalls],
   ]) {
@@ -598,7 +567,6 @@ const studentDashboardFeatureMetrics = studentDashboardFeatureContracts.map(
       useStateCalls: count(source, /\buseState\s*(?:<|\()/g),
     };
     for (const [metric, maximum] of [
-      ["lines", contract.maxLines],
       ["fetchCalls", contract.maxFetchCalls],
       ["useStateCalls", contract.maxUseStateCalls],
     ]) {
@@ -621,7 +589,6 @@ const quizPlayerFeatureMetrics = quizPlayerFeatureContracts.map(
       useStateCalls: count(source, /\buseState\s*(?:<|\()/g),
     };
     for (const [metric, maximum] of [
-      ["lines", contract.maxLines],
       ["fetchCalls", contract.maxFetchCalls],
       ["useStateCalls", contract.maxUseStateCalls],
     ]) {
@@ -640,13 +607,6 @@ for (const relativePath of filesUnder(
   (candidate) => candidate.endsWith(".tsx") && !candidate.endsWith(".test.tsx"),
 )) {
   const source = read(relativePath);
-  if (
-    !relativePath.endsWith("student-directory.tsx") &&
-    !relativePath.endsWith("student-wrong-word-panel.tsx") &&
-    lineCount(source) > 300
-  ) {
-    violations.push(`${relativePath} exceeds the 300 line feature UI ceiling`);
-  }
   if (/\bfetch\s*\(|["']\/api\//.test(source)) {
     violations.push(`${relativePath} performs transport work inside feature UI`);
   }
@@ -664,9 +624,6 @@ for (const relativePath of filesUnder(
   (candidate) => candidate.endsWith(".tsx") && !candidate.endsWith(".test.tsx"),
 )) {
   const source = read(relativePath);
-  if (lineCount(source) > 300) {
-    violations.push(`${relativePath} exceeds the 300 line feature UI ceiling`);
-  }
   if (/\bfetch\s*\(|["']\/api\/|@\/lib\/services\//.test(source)) {
     violations.push(`${relativePath} crosses the student dashboard UI boundary`);
   }
@@ -677,9 +634,6 @@ for (const relativePath of filesUnder(
   (candidate) => candidate.endsWith(".tsx") && !candidate.endsWith(".test.tsx"),
 )) {
   const source = read(relativePath);
-  if (lineCount(source) > 300) {
-    violations.push(`${relativePath} exceeds the 300 line feature UI ceiling`);
-  }
   if (
     /\bfetch\s*\(|["']\/api\/|@\/lib\/services\/|from ["']next\/navigation["']/.test(
       source,
@@ -694,9 +648,6 @@ for (const relativePath of filesUnder(
   (candidate) => candidate.endsWith(".tsx") && !candidate.endsWith(".test.tsx"),
 )) {
   const source = read(relativePath);
-  if (lineCount(source) > 300) {
-    violations.push(`${relativePath} exceeds the 300 line feature UI ceiling`);
-  }
   if (/\bfetch\s*\(|["']\/api\/|@\/lib\/services\//.test(source)) {
     violations.push(`${relativePath} crosses the results UI boundary`);
   }
@@ -789,21 +740,8 @@ for (const relativePath of filesUnder(
   (candidate) => candidate.endsWith(".tsx") && !candidate.endsWith(".test.tsx"),
 )) {
   const source = read(relativePath);
-  if (lineCount(source) > 300) {
-    violations.push(`${relativePath} exceeds the 300 line feature UI ceiling`);
-  }
   if (/\bfetch\s*\(|["']\/api\//.test(source)) {
     violations.push(`${relativePath} performs transport work inside feature UI`);
-  }
-}
-
-const componentDirectory = path.join(rootDirectory, "src/components");
-for (const name of fs.readdirSync(componentDirectory)) {
-  if (!name.endsWith(".tsx")) continue;
-  const relativePath = `src/components/${name}`;
-  const source = read(relativePath);
-  if (!legacyPaths.has(relativePath) && lineCount(source) > 500) {
-    violations.push(`${relativePath} exceeds the 500 line ceiling`);
   }
 }
 

@@ -17,7 +17,7 @@ import {
   pendingReviewCount,
   pendingReviewSummaryKey,
 } from "@/lib/admin/review-queue-summary";
-import type { AssignmentManagerData } from "@/lib/services/assignment-manager-data";
+import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
 import {
   currentVocabWrongSummaryKey,
   emptyCurrentVocabWrongCounts,

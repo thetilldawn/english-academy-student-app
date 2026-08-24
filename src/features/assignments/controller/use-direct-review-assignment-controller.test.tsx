@@ -8,7 +8,7 @@ import type {
   AssignmentStudentItem,
   AssignmentUnitItem,
 } from "../catalog-types";
-import type { AssignmentTransport } from "./assignment-transport";
+import type { AssignmentTransport } from "../transport/assignment-transport";
 import { useDirectReviewAssignmentController } from "./use-direct-review-assignment-controller";
 
 const ids = {

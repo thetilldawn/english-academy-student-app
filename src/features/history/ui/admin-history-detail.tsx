@@ -14,7 +14,7 @@ import {
 import { assignmentTimingLabel } from "@/lib/admin/assignment-settings";
 import { formatElapsed, formatKoreanDateTime } from "@/lib/format";
 import { getResultQuestionPresentation } from "@/lib/quiz/result-presentation";
-import type { AdminHistoryDetail } from "@/lib/services/admin-service";
+import type { AdminHistoryDetail } from "../model";
 
 import { ActivityStatusTimeline } from "./activity-status-timeline";
 import { AttemptScoreSummary } from "./attempt-score-summary";

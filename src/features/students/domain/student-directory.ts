@@ -4,7 +4,7 @@ import {
   compareLearningActivities,
 } from "@/features/history/domain/learning-activity";
 import type { StudentLearningSourceItem } from "@/lib/admin/learning-sources";
-import type { StudentSummary } from "@/lib/services/admin-service";
+import type { StudentSummary } from "@/lib/admin/student-summary";
 import {
   currentVocabWrongSummaryKey,
   emptyCurrentVocabWrongCounts,

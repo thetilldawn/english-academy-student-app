@@ -38,7 +38,7 @@ import {
   createDirectReviewAssignment,
   DirectReviewAssignmentError,
 } from "./direct-review-assignment-service";
-import type { DirectReviewAssignmentInput } from "@/lib/validation";
+import type { DirectReviewAssignmentInput } from "@/lib/admin/direct-review-assignment-request";
 
 const ids = {
   assignment: "00000000-0000-4000-8000-000000000010",

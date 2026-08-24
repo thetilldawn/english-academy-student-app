@@ -1,20 +1,28 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  assignmentReplacementPreviewSchema,
-  assignmentReplacementSchema,
-  bulkAssignmentPreviewSchema,
-  bulkAssignmentSchema,
   createVocabTimeTemplateSchema,
   createReviewAssignmentDraftSchema,
   createWrongWordWorksheetRequestSchema,
   createStudentSchema,
-  directReviewAssignmentSchema,
-  exactReviewAssignmentSchema,
-  mixedAssignmentSchema,
   updateStudentProfileSchema,
   updateStudentVocabSchema,
 } from "@/lib/validation";
+import {
+  assignmentReplacementPreviewSchema,
+  assignmentReplacementSchema,
+} from "@/lib/admin/assignment-replacement-request";
+import {
+  bulkAssignmentPreviewSchema,
+  bulkAssignmentSchema,
+} from "@/lib/admin/bulk-assignment-request";
+import {
+  directReviewAssignmentSchema,
+  exactReviewAssignmentSchema,
+} from "@/lib/admin/direct-review-assignment-request";
+import {
+  mixedAssignmentSchema,
+} from "@/lib/admin/mixed-assignment-request";
 
 describe("시간 템플릿 입력 계약", () => {
   it("제한시간 방식과 값이 일치할 때만 받는다", () => {

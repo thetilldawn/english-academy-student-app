@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { inspectBoundarySource } from "./module-boundary";
+import { inspectBoundarySource, resolvesInside } from "./module-boundary";
 
 const root = path.resolve("src/features/assignments/domain");
 const file = path.join(root, "nested", "probe.tsx");
@@ -80,14 +80,14 @@ describe("module boundary inspector", () => {
     const typeOnlyPolicy = {
       ...strictPolicy,
       allowModule: (specifier: string, _importer: string, typeOnly: boolean) =>
-        specifier === "@/lib/validation" && typeOnly,
+        specifier.startsWith("@/lib/admin/") && typeOnly,
     };
     const typeOnlySource = [
-      'import { type AssignmentInput } from "@/lib/validation";',
-      'export { type AssignmentReplacementInput } from "@/lib/validation";',
+      'import { type AssignmentInput } from "@/lib/admin/regular-assignment-request";',
+      'export { type AssignmentReplacementInput } from "@/lib/admin/assignment-replacement-request";',
     ].join("\n");
     const mixedSource =
-      'import { type AssignmentInput, assignmentSchema } from "@/lib/validation";';
+      'import { type AssignmentInput, assignmentSchema } from "@/lib/admin/regular-assignment-request";';
 
     expect(
       inspectBoundarySource(
@@ -134,5 +134,76 @@ describe("module boundary inspector", () => {
     );
 
     expect(violations).toStrictEqual([]);
+  });
+
+  it("distinguishes browser globals from function parameters", () => {
+    const violations = inspectBoundarySource(
+      path.join(root, "parameter.ts"),
+      "export function read(window: { kind: string }) { return window.kind; }",
+      strictPolicy,
+    );
+
+    expect(
+      violations.filter((violation) => violation.kind === "browser-global"),
+    ).toStrictEqual([]);
+  });
+
+  it("does not treat API module specifiers as endpoint literals", () => {
+    const violations = inspectBoundarySource(
+      path.join(root, "dynamic-import.ts"),
+      'const adapter = import("../api/response-adapters");',
+      strictPolicy,
+    );
+
+    expect(
+      violations.filter((violation) => violation.kind === "endpoint-literal"),
+    ).toStrictEqual([]);
+  });
+
+  it("reports one network violation per direct fetch and can allow transport execution", () => {
+    const source = 'fetch("/health");';
+    const denied = inspectBoundarySource(
+      path.join(root, "network.ts"),
+      source,
+      strictPolicy,
+    );
+    const allowed = inspectBoundarySource(
+      path.join(root, "transport.ts"),
+      source,
+      { ...strictPolicy, forbidNetwork: false },
+    );
+
+    expect(
+      denied.filter((violation) => violation.kind === "network"),
+    ).toHaveLength(1);
+    expect(
+      allowed.filter((violation) => violation.kind === "network"),
+    ).toStrictEqual([]);
+  });
+
+  it("does not treat an application object's fetch method as the global fetch API", () => {
+    const violations = inspectBoundarySource(
+      path.join(root, "repository.ts"),
+      "repository.fetch();",
+      strictPolicy,
+    );
+
+    expect(
+      violations.filter((violation) => violation.kind === "network"),
+    ).toStrictEqual([]);
+  });
+
+  it("resolves alias and relative imports against forbidden roots", () => {
+    const servicesRoot = path.resolve("src/lib/services");
+    const importer = path.resolve("src/features/students/ui/panel.tsx");
+
+    expect(
+      resolvesInside(importer, "@/lib/services/admin-service", [servicesRoot]),
+    ).toBe(true);
+    expect(
+      resolvesInside(importer, "../../../lib/services/admin-service", [
+        servicesRoot,
+      ]),
+    ).toBe(true);
   });
 });

@@ -27,7 +27,7 @@ import {
 } from "../domain/vocab-assignment-plan";
 import { buildVocabAssignmentFieldErrors } from "../presentation/vocab-assignment-field-errors";
 import { useBulkAssignmentController } from "./use-bulk-assignment-controller";
-import type { AssignmentTransport } from "./assignment-transport";
+import type { AssignmentTransport } from "../transport/assignment-transport";
 import { useVocabAssignmentDerivedPlan } from "./use-vocab-assignment-derived-plan";
 import { useVocabTimeTemplates } from "./use-vocab-time-templates";
 import {

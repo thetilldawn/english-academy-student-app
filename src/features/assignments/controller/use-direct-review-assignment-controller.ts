@@ -36,7 +36,7 @@ import {
   assignmentTransportError,
   browserAssignmentTransport,
   type AssignmentTransport,
-} from "./assignment-transport";
+} from "../transport/assignment-transport";
 
 export type DirectReviewFieldKey =
   | "dataset"

@@ -1,4 +1,4 @@
-import { datasetDisplayLabel } from "@/lib/ui/dataset-display";
+import { datasetDisplayLabel } from "@/lib/admin/dataset-display";
 
 export const DATASET_CATALOG_GROUPS = [
   "middle",

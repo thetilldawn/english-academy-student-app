@@ -11,26 +11,13 @@ import { isStudentAssignmentEditable } from "@/lib/admin/assignment-edit";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
 import { historyDetailHref } from "@/lib/admin/history-route";
 
+import {
+  cancelStudentAssignment,
+  hideAdminHistoryEntry,
+} from "../api/history-mutations";
 import styles from "./admin-history-actions.module.css";
 
 type ActionKey = "cancel" | "delete-history";
-
-type ErrorResponse = {
-  error?: string;
-};
-
-async function mutate(url: string, options: RequestInit) {
-  const response = await fetch(url, options);
-  let payload: ErrorResponse = {};
-  try {
-    payload = (await response.json()) as ErrorResponse;
-  } catch {
-    // 비정상 응답도 사용자가 다시 시도할 수 있는 공통 오류로 처리한다.
-  }
-  if (!response.ok) {
-    throw new Error(payload.error ?? adminHistoryText.actions.genericError);
-  }
-}
 
 export function AdminHistoryActions({
   item,
@@ -58,13 +45,12 @@ export function AdminHistoryActions({
   async function run(
     action: ActionKey,
     confirmation: string,
-    url: string,
-    options: RequestInit,
+    request: () => Promise<void>,
   ) {
     if (busyAction || !window.confirm(confirmation)) return;
     setBusyAction(action);
     try {
-      await mutate(url, options);
+      await request();
       toast.success(
         action === "cancel"
           ? adminHistoryText.actions.cancelSuccess
@@ -153,8 +139,12 @@ export function AdminHistoryActions({
                 formatContentText(adminHistoryText.actions.cancel.confirm, {
                   student: item.studentName,
                 }),
-                `/api/admin/assignments/${item.assignmentId}/students/${item.studentId}`,
-                { method: "DELETE" },
+                () =>
+                  cancelStudentAssignment(
+                    item.assignmentId,
+                    item.studentId,
+                    adminHistoryText.actions.genericError,
+                  ),
               )
             }
             size={buttonSize}
@@ -174,16 +164,15 @@ export function AdminHistoryActions({
               void run(
                 "delete-history",
                 adminHistoryText.actions.delete.confirm,
-                "/api/admin/history",
-                {
-                  method: "DELETE",
-                  headers: { "content-type": "application/json" },
-                  body: JSON.stringify({
-                    assignmentId: item.assignmentId,
-                    studentId: item.studentId,
-                    attemptId: item.attemptId,
-                  }),
-                },
+                () =>
+                  hideAdminHistoryEntry(
+                    {
+                      assignmentId: item.assignmentId,
+                      studentId: item.studentId,
+                      attemptId: item.attemptId,
+                    },
+                    adminHistoryText.actions.genericError,
+                  ),
               )
             }
             size={buttonSize}

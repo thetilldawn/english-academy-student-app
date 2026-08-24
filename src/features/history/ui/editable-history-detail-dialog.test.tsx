@@ -9,8 +9,8 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vites
 
 import { adminHistoryText } from "@/content/ko/admin-history";
 import { adminLearningText } from "@/content/ko/admin-learning";
-import type { AdminHistoryDetail } from "@/lib/services/admin-service";
-import type { AssignmentManagerData } from "@/lib/services/assignment-manager-data";
+import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
+import type { AdminHistoryDetail } from "../model";
 
 import { EditableHistoryDetailDialog } from "./editable-history-detail-dialog";
 

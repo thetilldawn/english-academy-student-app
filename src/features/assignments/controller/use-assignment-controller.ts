@@ -56,7 +56,7 @@ import {
   assignmentTransportError,
   browserAssignmentTransport,
   type AssignmentTransport,
-} from "./assignment-transport";
+} from "../transport/assignment-transport";
 import { useAssignmentPreview } from "./use-assignment-preview";
 
 export type SingleAssignmentResult =

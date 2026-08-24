@@ -45,7 +45,7 @@ import {
   assignmentTransportError,
   browserAssignmentTransport,
   type AssignmentTransport,
-} from "./assignment-transport";
+} from "../transport/assignment-transport";
 
 type ControllerState = AssignmentEditorState<
   BulkSeriesAssignmentDraft,

@@ -5,7 +5,7 @@ import {
   pendingReviewSummaryKey,
 } from "@/lib/admin/review-queue-summary";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
-import type { AssignmentManagerData } from "@/lib/services/assignment-manager-data";
+import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
 
 export function buildHistoryAssignmentEditorModel(
   editorData: AssignmentManagerData | null,

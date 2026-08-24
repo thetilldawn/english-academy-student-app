@@ -110,7 +110,7 @@ function deriveWindow(
 
 function deriveProgress(
   assignment: LifecycleInput,
-  window: StudentAssignmentWindow,
+  availabilityWindow: StudentAssignmentWindow,
 ): StudentAssignmentProgress {
   if (assignment.lastStatus === "in_progress") {
     if (assignment.lastPhase === "review") return "review_pending";
@@ -121,7 +121,8 @@ function deriveProgress(
   if (assignment.lastStatus === "expired") return "expired";
   if (
     assignment.missedAt !== null ||
-    (window.kind === "closed" && window.reason === "deadline")
+    (availabilityWindow.kind === "closed" &&
+      availabilityWindow.reason === "deadline")
   ) {
     return "missed";
   }
@@ -132,11 +133,11 @@ export function deriveStudentAssignmentLifecycle(
   assignment: LifecycleInput,
   nowMilliseconds: number,
 ): StudentAssignmentLifecycle {
-  const window = deriveWindow(assignment, nowMilliseconds);
-  const progress = deriveProgress(assignment, window);
+  const availabilityWindow = deriveWindow(assignment, nowMilliseconds);
+  const progress = deriveProgress(assignment, availabilityWindow);
   const hasAttempt = assignment.lastAttemptId !== null;
   const canStart =
-    window.kind === "open" &&
+    availabilityWindow.kind === "open" &&
     ((!hasAttempt && progress === "not_started") ||
       (hasAttempt && progress === "expired") ||
       (hasAttempt &&
@@ -155,6 +156,6 @@ export function deriveStudentAssignmentLifecycle(
         hasAttempt && (progress === "completed" || progress === "expired"),
     },
     progress,
-    window,
+    window: availabilityWindow,
   };
 }

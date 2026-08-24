@@ -18,7 +18,7 @@ import type { SingleAssignmentDraft } from "../domain/model";
 import {
   assignmentTransportError,
   type AssignmentTransport,
-} from "./assignment-transport";
+} from "../transport/assignment-transport";
 
 type SingleEditorState<Result> = AssignmentEditorState<
   SingleAssignmentDraft,

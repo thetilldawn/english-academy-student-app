@@ -6,7 +6,7 @@ import { formatContentText } from "@/content/format";
 import { adminHistoryText } from "@/content/ko/admin-history";
 import { assignmentDisplayTitle } from "@/lib/admin/history";
 import { formatKoreanDateTime } from "@/lib/format";
-import type { AdminHistoryDetail } from "@/lib/services/admin-service";
+import type { AdminHistoryDetail } from "../model";
 
 import { AssignmentMetaTags } from "./assignment-meta-tags";
 import styles from "./history-detail-header.module.css";

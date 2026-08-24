@@ -12,7 +12,9 @@ describe("mixed assignment API contract", () => {
     const route = source(
       "src/app/api/admin/mixed-assignments/route.ts",
     );
-    const validation = source("src/lib/validation.ts");
+    const validation = source(
+      "src/lib/admin/mixed-assignment-request.ts",
+    );
 
     expect(route).toContain('dynamic = "force-dynamic"');
     expect(route).toContain("isSameOriginRequest(request)");

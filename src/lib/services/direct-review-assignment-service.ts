@@ -10,7 +10,7 @@ import {
   prepareDirectReviewAssignmentBatch,
 } from "@/lib/services/mixed-assignment-service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { DirectReviewAssignmentInput } from "@/lib/validation";
+import type { DirectReviewAssignmentInput } from "@/lib/admin/direct-review-assignment-request";
 
 export class DirectReviewAssignmentError extends Error {
   constructor(

@@ -6,7 +6,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
-import type { AdminHistoryDetail } from "@/lib/services/admin-service";
+import type { AdminHistoryDetail } from "../model";
 
 import { AdminHistoryDetailContent } from "./admin-history-detail";
 

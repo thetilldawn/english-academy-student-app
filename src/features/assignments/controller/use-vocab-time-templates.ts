@@ -15,7 +15,7 @@ import {
   assignmentTransportError,
   browserAssignmentTransport,
   type AssignmentTransport,
-} from "./assignment-transport";
+} from "../transport/assignment-transport";
 
 export function useVocabTimeTemplates({
   initialTemplates,

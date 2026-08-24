@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { assignmentContractIds, reverseUnitIds } from "@/test-support/assignment-contract-fixtures";
 
-import type { AssignmentTransport } from "./assignment-transport";
+import type { AssignmentTransport } from "../transport/assignment-transport";
 import {
   createInitialSingleAssignmentDraft,
   useAssignmentController,

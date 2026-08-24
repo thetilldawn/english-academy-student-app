@@ -41,11 +41,9 @@ import {
 } from "@/lib/services/direct-review-candidate-service";
 import { memoizeRequestPreparation } from "@/lib/services/request-preparation-cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type {
-  AssignmentCapacityInput,
-  DirectReviewAssignmentInput,
-  MixedAssignmentInput,
-} from "@/lib/validation";
+import type { DirectReviewAssignmentInput } from "@/lib/admin/direct-review-assignment-request";
+import type { AssignmentCapacityInput } from "@/lib/admin/assignment-replacement-request";
+import type { MixedAssignmentInput } from "@/lib/admin/mixed-assignment-request";
 
 const REVIEW_QUEUE_PAGE_SIZE = 1000;
 const MAX_ASSIGNMENT_TITLE_LENGTH = 160;

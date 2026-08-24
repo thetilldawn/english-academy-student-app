@@ -9,7 +9,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { adminHistoryText } from "@/content/ko/admin-history";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
-import type { AssignmentManagerData } from "@/lib/services/assignment-manager-data";
+import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
 
 import { HistoryDetailActions } from "./history-detail-actions";
 

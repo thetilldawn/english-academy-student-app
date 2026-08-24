@@ -2,13 +2,8 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
 import { notificationText } from "@/content/ko/notifications";
-
-const responseSchema = z.object({
-  newAssignmentCount: z.number().int().nonnegative(),
-  deadlineSoonCount: z.number().int().nonnegative(),
-});
+import { requestNotificationDelivery } from "@/features/notifications/api/notification-delivery";
 
 const RECHECK_INTERVAL_MS = 5 * 60 * 1000;
 
@@ -23,25 +18,19 @@ export function NotificationBootstrap({
     if (inFlight.current || document.visibilityState === "hidden") return;
     inFlight.current = true;
     try {
-      const response = await fetch(`/api/${role}/notifications`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-      });
-      const payload: unknown = await response.json();
-      if (!response.ok) return;
-      const parsed = responseSchema.safeParse(payload);
-      if (!parsed.success) return;
+      const delivery = await requestNotificationDelivery(role);
+      if (!delivery) return;
 
-      if (parsed.data.newAssignmentCount > 0) {
+      if (delivery.newAssignmentCount > 0) {
         toast.info(
           role === "student"
-            ? `${parsed.data.newAssignmentCount}${notificationText.delivery.studentNewAssignmentsSuffix}`
-            : `${parsed.data.newAssignmentCount}${notificationText.delivery.adminNewAssignmentsSuffix}`,
+            ? `${delivery.newAssignmentCount}${notificationText.delivery.studentNewAssignmentsSuffix}`
+            : `${delivery.newAssignmentCount}${notificationText.delivery.adminNewAssignmentsSuffix}`,
         );
       }
-      if (role === "student" && parsed.data.deadlineSoonCount > 0) {
+      if (role === "student" && delivery.deadlineSoonCount > 0) {
         toast.warning(
-          `${notificationText.delivery.deadlineSoonPrefix} ${parsed.data.deadlineSoonCount}${notificationText.delivery.deadlineSoonSuffix}`,
+          `${notificationText.delivery.deadlineSoonPrefix} ${delivery.deadlineSoonCount}${notificationText.delivery.deadlineSoonSuffix}`,
         );
       }
     } catch {

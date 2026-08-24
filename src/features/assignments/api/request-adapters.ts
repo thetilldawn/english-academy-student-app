@@ -2,13 +2,15 @@ import { koreanDateTimeLocalToIso } from "@/lib/deadline";
 import { assignmentReplacementFingerprintPayload } from "@/lib/admin/assignment-replacement-fingerprint";
 import type {
   AssignmentCapacityInput,
-  AssignmentInput,
   AssignmentReplacementInput,
+} from "@/lib/admin/assignment-replacement-request";
+import type {
   BulkAssignmentInput,
   BulkAssignmentPreviewInput,
-  DirectReviewAssignmentInput,
-  MixedAssignmentInput,
-} from "@/lib/validation";
+} from "@/lib/admin/bulk-assignment-request";
+import type { DirectReviewAssignmentInput } from "@/lib/admin/direct-review-assignment-request";
+import type { MixedAssignmentInput } from "@/lib/admin/mixed-assignment-request";
+import type { AssignmentInput } from "@/lib/admin/regular-assignment-request";
 
 import { assignmentRequestFingerprint } from "../domain/fingerprint";
 import type {

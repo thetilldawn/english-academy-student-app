@@ -3,7 +3,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { AssignmentTransport } from "./assignment-transport";
+import type { AssignmentTransport } from "../transport/assignment-transport";
 import { useVocabTimeTemplates } from "./use-vocab-time-templates";
 
 const templateId = "00000000-0000-4000-8000-000000000111";

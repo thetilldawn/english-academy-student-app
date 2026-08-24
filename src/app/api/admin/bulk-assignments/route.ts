@@ -4,7 +4,7 @@ import {
   BulkAssignmentError,
   createBulkAssignments,
 } from "@/lib/services/bulk-assignment-service";
-import { bulkAssignmentSchema } from "@/lib/validation";
+import { bulkAssignmentSchema } from "@/lib/admin/bulk-assignment-request";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
