@@ -8,8 +8,10 @@ import {
 } from "@/lib/assignment/question-planner";
 import {
   quizIndependentTargetDirectionEligibility,
+} from "@/lib/quiz/choice-policy";
+import {
   quizTargetDirectionConflictKey,
-} from "@/lib/quiz/engine";
+} from "@/lib/quiz/word-identity";
 import type {
   QuestionOrderMode,
   TimingMode,

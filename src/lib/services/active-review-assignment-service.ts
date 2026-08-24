@@ -1,6 +1,6 @@
 import "server-only";
 
-import { normalizeQuizHeadword } from "@/lib/quiz/engine";
+import { normalizeQuizHeadword } from "@/lib/quiz/word-identity";
 import type { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const PAGE_SIZE = 1000;

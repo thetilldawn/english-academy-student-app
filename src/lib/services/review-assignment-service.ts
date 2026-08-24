@@ -16,7 +16,7 @@ import {
 } from "@/lib/auth/admin";
 import {
   createTargetedQuizQuestions,
-} from "@/lib/quiz/engine";
+} from "@/lib/quiz/question-generator";
 import { loadEligibleVocabularyDataset } from "@/lib/services/eligible-vocabulary-service";
 import { loadDatasetDisplayLabel } from "@/lib/services/dataset-catalog-service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";

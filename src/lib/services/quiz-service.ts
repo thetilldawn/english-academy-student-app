@@ -2,8 +2,8 @@ import "server-only";
 
 import {
   createQuizQuestions,
-  type QuizVocabularyEntry,
-} from "@/lib/quiz/engine";
+} from "@/lib/quiz/question-generator";
+import type { QuizVocabularyEntry } from "@/lib/quiz/question-types";
 import {
   assignmentDisplayTitleForUnits,
   assignmentScopeLabel,

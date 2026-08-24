@@ -1,16 +1,20 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  calculateQuizScore,
-  createExplicitTargetedQuizQuestions,
-  createMixedQuizQuestions,
-  createQuizQuestions,
-  createTargetedQuizQuestions,
   quizIndependentTargetDirectionEligibility,
   quizTargetDirectionEligibility,
+} from "@/lib/quiz/choice-policy";
+import {
+  createExplicitTargetedQuizQuestions,
+  createQuizQuestions,
+  createTargetedQuizQuestions,
+} from "@/lib/quiz/question-generator";
+import { createMixedQuizQuestions } from "@/lib/quiz/mixed-question-planner";
+import { calculateQuizScore } from "@/lib/quiz/quiz-scoring";
+import {
   quizVocabularyIdentity,
-  type QuizVocabularyEntry,
-} from "@/lib/quiz/engine";
+} from "@/lib/quiz/word-identity";
+import type { QuizVocabularyEntry } from "@/lib/quiz/question-types";
 
 const entries: QuizVocabularyEntry[] = Array.from(
   { length: 12 },

@@ -2,7 +2,7 @@ import type { EligibleVocabularyEntry } from "@/lib/quiz/eligible-vocabulary";
 import {
   normalizeQuizHeadword,
   quizVocabularyIdentity,
-} from "@/lib/quiz/engine";
+} from "@/lib/quiz/word-identity";
 import { resolveOrderedContiguousUnits } from "@/lib/admin/unit-range";
 
 export type MixedAssignmentUnit = {

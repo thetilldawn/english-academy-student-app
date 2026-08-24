@@ -1,7 +1,7 @@
 import type {
   QuizDirection,
   QuizVocabularyEntry,
-} from "@/lib/quiz/engine";
+} from "@/lib/quiz/question-types";
 
 export type VocabularyEntrySourceRow = {
   id: number;

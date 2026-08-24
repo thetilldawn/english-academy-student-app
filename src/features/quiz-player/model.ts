@@ -1,4 +1,4 @@
-import type { QuizDirection } from "@/lib/quiz/engine";
+import type { QuizDirection } from "@/lib/quiz/question-types";
 import type { QuizPronunciation } from "@/lib/quiz/pronunciation-snapshot";
 
 export type { QuizPronunciation } from "@/lib/quiz/pronunciation-snapshot";

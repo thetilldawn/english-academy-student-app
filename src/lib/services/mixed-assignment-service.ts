@@ -23,7 +23,7 @@ import {
 import type { EligibleVocabularyEntry } from "@/lib/quiz/eligible-vocabulary";
 import {
   quizVocabularyIdentity,
-} from "@/lib/quiz/engine";
+} from "@/lib/quiz/word-identity";
 import {
   buildAssignmentQuestionPlan,
   calculateAssignmentQuestionRange,

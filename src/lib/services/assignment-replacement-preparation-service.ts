@@ -10,7 +10,7 @@ import {
   requireAdmin,
   type AdminContext,
 } from "@/lib/auth/admin";
-import { createTargetedQuizQuestions } from "@/lib/quiz/engine";
+import { createTargetedQuizQuestions } from "@/lib/quiz/question-generator";
 import {
   type AssignmentQuestionPlan,
   type EditableSourceContext,
@@ -341,4 +341,3 @@ export async function prepareStudentAssignmentReplacement(
 
   return { replacementKind, reviewSnapshotMode, prepared };
 }
-

@@ -13,7 +13,7 @@ import type {
 import type { DirectReviewCandidate } from "@/lib/admin/direct-review-candidate";
 import { buildExactAssignmentQuestionPlan } from "@/lib/assignment/question-planner";
 import type { EligibleVocabularyEntry } from "@/lib/quiz/eligible-vocabulary";
-import { quizVocabularyIdentity } from "@/lib/quiz/engine";
+import { quizVocabularyIdentity } from "@/lib/quiz/word-identity";
 import {
   DirectReviewCandidateError,
   listStudentDirectReviewCandidates,

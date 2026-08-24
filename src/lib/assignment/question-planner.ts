@@ -1,14 +1,20 @@
 import {
   calculateMixedQuizQuestionRange,
-  createExplicitTargetedQuizQuestions,
   createMixedQuizQuestions,
-  createTargetedQuizQuestions,
-  quizIndependentTargetDirectionEligibility,
   selectMixedQuizTargetsInSourceOrder,
-  type QuizQuestionDraft,
-  type QuizVocabularyEntry,
-  type RandomSource,
-} from "@/lib/quiz/engine";
+} from "@/lib/quiz/mixed-question-planner";
+import {
+  createExplicitTargetedQuizQuestions,
+  createTargetedQuizQuestions,
+} from "@/lib/quiz/question-generator";
+import {
+  quizIndependentTargetDirectionEligibility,
+} from "@/lib/quiz/choice-policy";
+import type {
+  QuizQuestionDraft,
+  QuizVocabularyEntry,
+  RandomSource,
+} from "@/lib/quiz/question-types";
 
 export const ASSIGNMENT_QUESTION_PLAN_VERSION =
   "source-occurrence-v2-exact";

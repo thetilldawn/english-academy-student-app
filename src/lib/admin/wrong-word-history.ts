@@ -1,4 +1,4 @@
-import { normalizeQuizHeadword } from "@/lib/quiz/engine";
+import { normalizeQuizHeadword } from "@/lib/quiz/word-identity";
 
 export type WrongStage = "initial" | "retry";
 

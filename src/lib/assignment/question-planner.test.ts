@@ -8,7 +8,7 @@ import {
   calculateAssignmentQuestionRange,
   calculateAssignmentSeriesQuestionCapacity,
 } from "@/lib/assignment/question-planner";
-import type { QuizVocabularyEntry } from "@/lib/quiz/engine";
+import type { QuizVocabularyEntry } from "@/lib/quiz/question-types";
 
 function seededRandom(seed: number) {
   let state = seed >>> 0;
