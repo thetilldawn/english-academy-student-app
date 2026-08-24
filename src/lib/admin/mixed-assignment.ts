@@ -17,12 +17,6 @@ export type PendingReviewIdentity = {
   headword?: string;
 };
 
-export type PendingReviewCandidateIdentity = {
-  vocabEntryId: number;
-  canonicalDictionaryId: string | null;
-  canonicalLexemeId: string | null;
-};
-
 export type MixedAssignmentFailureReason =
   | "forbidden"
   | "conflict"
@@ -34,69 +28,6 @@ export type MixedAssignmentDatabaseError = {
   code: string;
   message: string;
 };
-
-export function isCandidateInReviewScope(
-  scope: "dataset" | "selection",
-  candidateUnitId: string,
-  selectedUnitIds: ReadonlySet<string>,
-) {
-  return scope === "dataset" || selectedUnitIds.has(candidateUnitId);
-}
-
-function candidateMatchesPendingIdentity(
-  candidate: EligibleVocabularyEntry,
-  pending: PendingReviewCandidateIdentity,
-) {
-  if (
-    candidate.canonicalDictionaryId !== null &&
-    pending.canonicalDictionaryId !== null
-  ) {
-    return (
-      candidate.canonicalDictionaryId ===
-      pending.canonicalDictionaryId
-    );
-  }
-  if (
-    candidate.canonicalLexemeId !== null &&
-    pending.canonicalLexemeId !== null
-  ) {
-    return candidate.canonicalLexemeId === pending.canonicalLexemeId;
-  }
-  return candidate.id === pending.vocabEntryId;
-}
-
-export function resolvePendingReviewCandidate(
-  candidates: readonly EligibleVocabularyEntry[],
-  pending: PendingReviewCandidateIdentity,
-  scope: "dataset" | "selection",
-  selectedUnitIds: ReadonlySet<string>,
-) {
-  const scoped = candidates
-    .filter(
-      (candidate) =>
-        isCandidateInReviewScope(
-          scope,
-          candidate.unitId,
-          selectedUnitIds,
-        ) && candidateMatchesPendingIdentity(candidate, pending),
-    )
-    .sort(
-      (left, right) =>
-        Number(right.id === pending.vocabEntryId) -
-          Number(left.id === pending.vocabEntryId) ||
-        left.sourceRow - right.sourceRow ||
-        left.id - right.id,
-    );
-  return scoped[0];
-}
-
-export function countEligibleReviewLevels(
-  levels: readonly (1 | 2)[],
-) {
-  const level1 = levels.filter((level) => level === 1).length;
-  const level2 = levels.filter((level) => level === 2).length;
-  return { total: level1 + level2, level1, level2 };
-}
 
 export function mixedAssignmentPrimaryUnitIds(
   primaryUnitIds: readonly string[],

@@ -19,6 +19,26 @@ const assignmentCapacityResponseSchema = z
   })
   .strict();
 
+const directReviewPreviewResponseSchema = z
+  .object({
+    wrongEligible: nonNegativeInteger,
+    wrongLevel1Eligible: nonNegativeInteger,
+    wrongLevel2Eligible: nonNegativeInteger,
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (
+      value.wrongLevel1Eligible + value.wrongLevel2Eligible !==
+      value.wrongEligible
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["wrongEligible"],
+        message: "오답 단계별 합계가 출제 가능 수와 다릅니다.",
+      });
+    }
+  });
+
 const assignmentCreationResponseSchema = z
   .object({ assignmentId: z.uuid() })
   .strict();
@@ -274,6 +294,9 @@ export type AssignmentCapacityResponse = z.infer<
 export type AssignmentCreationResponse = z.infer<
   typeof assignmentCreationResponseSchema
 >;
+export type DirectReviewPreviewResponse = z.infer<
+  typeof directReviewPreviewResponseSchema
+>;
 export type DirectReviewDatasetSummariesResponse = z.infer<
   typeof directReviewDatasetSummariesResponseSchema
 >;
@@ -303,6 +326,12 @@ export function parseAssignmentCreationResponse(
   value: unknown,
 ): AssignmentCreationResponse {
   return assignmentCreationResponseSchema.parse(value);
+}
+
+export function parseDirectReviewPreviewResponse(
+  value: unknown,
+): DirectReviewPreviewResponse {
+  return directReviewPreviewResponseSchema.parse(value);
 }
 
 export function parseDirectReviewDatasetSummariesResponse(

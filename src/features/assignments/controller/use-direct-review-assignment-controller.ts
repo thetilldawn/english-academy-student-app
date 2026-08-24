@@ -6,18 +6,18 @@ import { koreanDateTimeLocalToIso } from "@/lib/deadline";
 
 import {
   buildDirectReviewAssignmentRequest,
+  buildDirectReviewPreviewRequest,
 } from "../api/request-adapters";
 import {
-  parseAssignmentCapacityResponse,
   parseAssignmentCreationResponse,
   parseDirectReviewDatasetSummariesResponse,
-  type AssignmentCapacityResponse,
+  parseDirectReviewPreviewResponse,
   type DirectReviewDatasetSummariesResponse,
+  type DirectReviewPreviewResponse,
 } from "../api/response-adapters";
 import type {
   AssignmentDatasetItem,
   AssignmentStudentItem,
-  AssignmentUnitItem,
 } from "../catalog-types";
 import {
   createInitialDirectReviewDraft,
@@ -52,8 +52,8 @@ export type DirectReviewFieldKey =
 
 type CapacityState =
   | { status: "idle"; value: null; message: "" }
-  | { status: "loading"; value: AssignmentCapacityResponse | null; message: "" }
-  | { status: "ready"; value: AssignmentCapacityResponse; message: "" }
+  | { status: "loading"; value: DirectReviewPreviewResponse | null; message: "" }
+  | { status: "ready"; value: DirectReviewPreviewResponse; message: "" }
   | { status: "error"; value: null; message: string };
 
 type SummaryState =
@@ -103,14 +103,12 @@ export function useDirectReviewAssignmentController({
   initialDatasetId,
   student,
   transport = browserAssignmentTransport,
-  units,
 }: {
   datasets: readonly AssignmentDatasetItem[];
   enabled?: boolean;
   initialDatasetId: string;
   student: AssignmentStudentItem;
   transport?: AssignmentTransport;
-  units: readonly AssignmentUnitItem[];
 }) {
   const [summary, setSummary] = useState<SummaryState>({
     status: "idle",
@@ -140,21 +138,12 @@ export function useDirectReviewAssignmentController({
     ),
     [datasets, initialDatasetId, student],
   );
-  const initialUnitIds = useMemo(
-    () =>
-      units
-        .filter((unit) => unit.datasetId === initialDataset)
-        .toSorted((left, right) => left.sortIndex - right.sortIndex)
-        .map((unit) => unit.id),
-    [initialDataset, units],
-  );
   const [draft, dispatch] = useReducer(
     reduceDirectReviewDraft,
     undefined,
     () =>
       createInitialDirectReviewDraft({
         datasetId: initialDataset,
-        primaryUnitIds: initialUnitIds,
         studentId: student.id,
       }),
   );
@@ -184,7 +173,6 @@ export function useDirectReviewAssignmentController({
   const calculationPrerequisitesReady = enabled &&
     summary.status === "ready" &&
     Boolean(draft.datasetId) &&
-    draft.primaryUnitIds.length > 0 &&
     draft.reviewLevels.length > 0;
   const calculationPending = enabled && (
     summary.status === "idle" ||
@@ -238,15 +226,7 @@ export function useDirectReviewAssignmentController({
       student,
       initialDatasetId,
     );
-    const primaryUnitIds = units
-      .filter((unit) => unit.datasetId === nextDatasetId)
-      .toSorted((left, right) => left.sortIndex - right.sortIndex)
-      .map((unit) => unit.id);
-    const selectionChanged = draft.datasetId !== nextDatasetId ||
-      draft.primaryUnitIds.length !== primaryUnitIds.length ||
-      draft.primaryUnitIds.some(
-        (unitId, index) => unitId !== primaryUnitIds[index],
-      );
+    const selectionChanged = draft.datasetId !== nextDatasetId;
     if (selectionChanged) {
       let cancelled = false;
       void Promise.resolve().then(() => {
@@ -255,7 +235,6 @@ export function useDirectReviewAssignmentController({
         dispatch({
           type: "dataset_changed",
           datasetId: nextDatasetId,
-          primaryUnitIds,
         });
       });
       return () => {
@@ -265,13 +244,11 @@ export function useDirectReviewAssignmentController({
   }, [
     datasetOptions,
     draft.datasetId,
-    draft.primaryUnitIds,
     enabled,
     initialDatasetId,
     student,
     summary.status,
     summaryByDatasetId,
-    units,
   ]);
 
   useEffect(() => {
@@ -287,20 +264,17 @@ export function useDirectReviewAssignmentController({
         message: "",
       }));
       try {
+        const request = buildDirectReviewPreviewRequest({
+          studentId: draft.studentId,
+          datasetId: draft.datasetId,
+          reviewLevels: draft.reviewLevels,
+          directionRatio: draft.exam.directionRatio,
+        });
         const response = await transport({
-          body: {
-            studentId: draft.studentId,
-            datasetId: draft.datasetId,
-            primaryUnitIds: [...draft.primaryUnitIds],
-            includePendingReview: true,
-            reviewSource: "current_wrong",
-            reviewLevels: [...draft.reviewLevels],
-            reviewScope: "dataset",
-            englishToKoreanRatio: draft.exam.directionRatio,
-          },
-          method: "POST",
+          body: request.body,
+          method: request.method,
           signal: abortController.signal,
-          url: "/api/admin/assignment-capacity",
+          url: request.endpoint,
         });
         if (!response.ok) {
           throw new Error(
@@ -310,7 +284,7 @@ export function useDirectReviewAssignmentController({
             ),
           );
         }
-        const value = parseAssignmentCapacityResponse(response.data);
+        const value = parseDirectReviewPreviewResponse(response.data);
         if (abortController.signal.aborted) return;
         setCapacity({ status: "ready", value, message: "" });
         dispatch({ type: "question_count_resolved", value: value.wrongEligible });
@@ -332,7 +306,6 @@ export function useDirectReviewAssignmentController({
   }, [
     draft.datasetId,
     draft.exam.directionRatio,
-    draft.primaryUnitIds,
     draft.reviewLevels,
     draft.studentId,
     calculationPrerequisitesReady,
@@ -341,7 +314,7 @@ export function useDirectReviewAssignmentController({
 
   const fieldErrors = useMemo(() => {
     const errors: Partial<Record<DirectReviewFieldKey, string>> = {};
-    if (!draft.datasetId || draft.primaryUnitIds.length === 0) {
+    if (!draft.datasetId) {
       errors.dataset = "단어장 선택";
     }
     if (draft.reviewLevels.length === 0) {
@@ -405,12 +378,8 @@ export function useDirectReviewAssignmentController({
 
   function changeDataset(datasetId: string) {
     setUserEdited(true);
-    const primaryUnitIds = units
-      .filter((unit) => unit.datasetId === datasetId)
-      .toSorted((left, right) => left.sortIndex - right.sortIndex)
-      .map((unit) => unit.id);
     setCapacity({ status: "idle", value: null, message: "" });
-    dispatch({ type: "dataset_changed", datasetId, primaryUnitIds });
+    dispatch({ type: "dataset_changed", datasetId });
   }
 
   function toggleReviewLevel(level: ReviewLevel) {

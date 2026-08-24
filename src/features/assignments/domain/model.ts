@@ -50,7 +50,6 @@ export type AssignmentDeadline =
 export type DirectReviewAssignmentDraft = {
   studentId: string;
   datasetId: string;
-  primaryUnitIds: readonly string[];
   reviewLevels: readonly ReviewLevel[];
   questionCount: number;
   title: string;

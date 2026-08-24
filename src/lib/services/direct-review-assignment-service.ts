@@ -6,11 +6,15 @@ import { z } from "zod";
 import { isAssignmentPersistenceInvariantFailure } from "@/lib/admin/assignment-database-error";
 import { requireAdmin, type AdminContext } from "@/lib/auth/admin";
 import {
-  MixedAssignmentError,
+  calculateDirectReviewPreview,
+  DirectReviewPreparationError,
   prepareDirectReviewAssignmentBatch,
-} from "@/lib/services/mixed-assignment-service";
+} from "@/lib/services/direct-review-preparation-service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { DirectReviewAssignmentInput } from "@/lib/admin/direct-review-assignment-request";
+import type {
+  DirectReviewAssignmentInput,
+  DirectReviewPreviewInput,
+} from "@/lib/admin/direct-review-assignment-request";
 
 export class DirectReviewAssignmentError extends Error {
   constructor(
@@ -32,9 +36,7 @@ function directReviewRequestSha256(input: DirectReviewAssignmentInput) {
     .update(JSON.stringify({
       studentId: input.studentId,
       datasetId: input.datasetId,
-      primaryUnitIds: [...input.primaryUnitIds],
       reviewLevels: [...input.reviewLevels].toSorted(),
-      reviewScope: input.reviewScope ?? "dataset",
       totalQuestionCount: input.totalQuestionCount,
       title: input.title,
       englishToKoreanRatio: input.englishToKoreanRatio,
@@ -50,11 +52,35 @@ function directReviewRequestSha256(input: DirectReviewAssignmentInput) {
     .digest("hex");
 }
 
+function mapPreparationError(error: DirectReviewPreparationError) {
+  return new DirectReviewAssignmentError(error.reason, error.message);
+}
+
+export async function previewDirectReviewAssignment(
+  input: DirectReviewPreviewInput,
+  authenticatedAdmin?: AdminContext,
+) {
+  const admin = authenticatedAdmin ?? await requireAdmin();
+  const supabase = await createServerSupabaseClient();
+  try {
+    return await calculateDirectReviewPreview(
+      input,
+      admin,
+      supabase,
+    );
+  } catch (error) {
+    if (error instanceof DirectReviewPreparationError) {
+      throw mapPreparationError(error);
+    }
+    throw error;
+  }
+}
+
 export async function createDirectReviewAssignment(
   input: DirectReviewAssignmentInput,
   authenticatedAdmin?: AdminContext,
 ): Promise<string> {
-  if (!authenticatedAdmin) await requireAdmin();
+  const admin = authenticatedAdmin ?? await requireAdmin();
 
   const supabase = await createServerSupabaseClient();
   const requestSha256 = directReviewRequestSha256(input);
@@ -87,11 +113,12 @@ export async function createDirectReviewAssignment(
   try {
     prepared = await prepareDirectReviewAssignmentBatch(
       input,
-      authenticatedAdmin,
+      admin,
+      supabase,
     );
   } catch (error) {
-    if (error instanceof MixedAssignmentError) {
-      throw new DirectReviewAssignmentError(error.reason, error.message);
+    if (error instanceof DirectReviewPreparationError) {
+      throw mapPreparationError(error);
     }
     throw error;
   }

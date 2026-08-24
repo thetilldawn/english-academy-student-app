@@ -62,7 +62,6 @@ export function VocabAssignmentPlanner({
     enabled: assignmentPurpose === "review",
     initialDatasetId,
     student: students[0]!,
-    units: data.units,
   });
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const bulk = controller.bulk;

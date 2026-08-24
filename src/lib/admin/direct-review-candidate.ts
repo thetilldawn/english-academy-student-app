@@ -16,7 +16,6 @@ export type DirectReviewCandidate = {
   reasonLevel: 1 | 2;
   wrongCount: number;
   lastWrongAt: string | null;
-  existingQueueId: string | null;
 };
 
 export type DirectReviewDatasetSummaryRow = {
@@ -37,7 +36,6 @@ export type DirectReviewCandidateRow = {
   reason_level: unknown;
   wrong_count: unknown;
   last_wrong_at: unknown;
-  existing_queue_id: unknown;
 };
 
 function nonNegativeInteger(value: unknown, label: string) {
@@ -116,7 +114,6 @@ export function parseDirectReviewCandidates(
       reasonLevel,
       wrongCount,
       lastWrongAt: nullableString(row.last_wrong_at, "최근 오답 시각"),
-      existingQueueId: nullableString(row.existing_queue_id, "오답 대기열"),
     };
   });
   if (new Set(result.map((candidate) => candidate.sourceQuestionId)).size !== result.length) {

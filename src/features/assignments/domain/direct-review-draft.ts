@@ -8,7 +8,7 @@ import type {
 } from "./model";
 
 export type DirectReviewDraftAction =
-  | { type: "dataset_changed"; datasetId: string; primaryUnitIds: readonly string[] }
+  | { type: "dataset_changed"; datasetId: string }
   | { type: "review_level_toggled"; level: ReviewLevel }
   | { type: "question_count_resolved"; value: number }
   | { type: "direction_changed"; value: AssignmentDirectionRatio }
@@ -38,12 +38,10 @@ export function directReviewQuestionCountError(input: {
 export function createInitialDirectReviewDraft(input: {
   studentId: string;
   datasetId: string;
-  primaryUnitIds: readonly string[];
 }): DirectReviewAssignmentDraft {
   return {
     studentId: input.studentId,
     datasetId: input.datasetId,
-    primaryUnitIds: [...input.primaryUnitIds],
     reviewLevels: [1, 2],
     questionCount: 0,
     title: "오답 시험",
@@ -69,7 +67,6 @@ export function reduceDirectReviewDraft(
       return {
         ...draft,
         datasetId: action.datasetId,
-        primaryUnitIds: [...action.primaryUnitIds],
         reviewLevels: [1, 2],
         questionCount: 0,
       };

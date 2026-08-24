@@ -41,9 +41,7 @@ describe("direct review candidate responses", () => {
       reason_level: 2,
       wrong_count: 3,
       last_wrong_at: "2026-08-24T12:00:00.000Z",
-      existing_queue_id: null,
     }])).toEqual([expect.objectContaining({
-      existingQueueId: null,
       reasonLevel: 2,
       sourceQuestionId: "question-a",
       wrongCount: 3,
@@ -61,7 +59,6 @@ describe("direct review candidate responses", () => {
       reason_level: 1,
       wrong_count: 1,
       last_wrong_at: null,
-      existing_queue_id: null,
     };
     expect(() => parseDirectReviewCandidates([row, row])).toThrow("중복");
   });

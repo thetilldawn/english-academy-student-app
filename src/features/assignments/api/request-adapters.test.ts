@@ -11,7 +11,10 @@ import {
   bulkAssignmentPreviewSchema,
   bulkAssignmentSchema,
 } from "@/lib/admin/bulk-assignment-request";
-import { directReviewAssignmentSchema } from "@/lib/admin/direct-review-assignment-request";
+import {
+  directReviewAssignmentSchema,
+  directReviewPreviewSchema,
+} from "@/lib/admin/direct-review-assignment-request";
 import { mixedAssignmentSchema } from "@/lib/admin/mixed-assignment-request";
 import {
   assignmentSchema,
@@ -45,6 +48,7 @@ import {
   buildBulkAssignmentPreviewRequest,
   buildBulkAssignmentRequest,
   buildDirectReviewAssignmentRequest,
+  buildDirectReviewPreviewRequest,
   buildLegacyReviewCancelRequest,
   buildSingleAssignmentRequest,
   bulkPreviewFingerprint,
@@ -166,7 +170,6 @@ describe("assignment request adapters", () => {
     const draft: DirectReviewAssignmentDraft = {
       studentId: assignmentContractIds.studentA,
       datasetId: assignmentContractIds.dataset,
-      primaryUnitIds: [...reverseUnitIds],
       reviewLevels: [1, 2],
       questionCount: 1,
       title: "오답 시험",
@@ -189,15 +192,35 @@ describe("assignment request adapters", () => {
       idempotencyKey,
       studentId: assignmentContractIds.studentA,
       datasetId: assignmentContractIds.dataset,
-      primaryUnitIds: [...reverseUnitIds],
       reviewLevels: [1, 2],
-      reviewScope: "dataset",
       totalQuestionCount: 1,
       timingMode: "none",
       questionTimeLimitSeconds: null,
       availableUntil: null,
     });
     expect(directReviewAssignmentSchema.safeParse(request.body).success).toBe(
+      true,
+    );
+    expect(request.body).not.toHaveProperty("primaryUnitIds");
+    expect(request.body).not.toHaveProperty("reviewScope");
+
+    const preview = buildDirectReviewPreviewRequest({
+      studentId: draft.studentId,
+      datasetId: draft.datasetId,
+      reviewLevels: draft.reviewLevels,
+      directionRatio: draft.exam.directionRatio,
+    });
+    expect(preview).toStrictEqual({
+      endpoint: "/api/admin/exact-review-assignments/preview",
+      method: "POST",
+      body: {
+        studentId: assignmentContractIds.studentA,
+        datasetId: assignmentContractIds.dataset,
+        reviewLevels: [1, 2],
+        englishToKoreanRatio: 50,
+      },
+    });
+    expect(directReviewPreviewSchema.safeParse(preview.body).success).toBe(
       true,
     );
   });

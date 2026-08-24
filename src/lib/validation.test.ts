@@ -18,7 +18,7 @@ import {
 } from "@/lib/admin/bulk-assignment-request";
 import {
   directReviewAssignmentSchema,
-  exactReviewAssignmentSchema,
+  directReviewPreviewSchema,
 } from "@/lib/admin/direct-review-assignment-request";
 import {
   mixedAssignmentSchema,
@@ -592,69 +592,6 @@ describe("오답 재시험 초안 입력 계약", () => {
   });
 });
 
-describe("정확 오답 재시험 배정 입력 계약", () => {
-  const reviewDraftId =
-    "11111111-1111-4111-8111-111111111111";
-  const validInput = {
-    reviewDraftId,
-    title: "",
-    englishToKoreanRatio: 50 as const,
-    timeLimitSeconds: 300,
-    passingScore: 80,
-    retryEnabled: true,
-    retryPassingScore: 80,
-    questionOrderMode: "random" as const,
-    availableUntil: null,
-  };
-
-  it("초안 UUID와 시험 조건만 엄격하게 받는다", () => {
-    expect(exactReviewAssignmentSchema.parse(validInput)).toEqual(
-      validInput,
-    );
-    for (const ratio of [0, 50, 100] as const) {
-      expect(
-        exactReviewAssignmentSchema.parse({
-          ...validInput,
-          englishToKoreanRatio: ratio,
-        }).englishToKoreanRatio,
-      ).toBe(ratio);
-    }
-  });
-
-  it("DAY·학생·문항 ID 주입과 범위 밖 조건을 거부한다", () => {
-    expect(() =>
-      exactReviewAssignmentSchema.parse({
-        ...validInput,
-        studentIds: [reviewDraftId],
-      }),
-    ).toThrow();
-    expect(() =>
-      exactReviewAssignmentSchema.parse({
-        ...validInput,
-        questionIds: [reviewDraftId],
-      }),
-    ).toThrow();
-    expect(() =>
-      exactReviewAssignmentSchema.parse({
-        ...validInput,
-        unitIds: [reviewDraftId],
-      }),
-    ).toThrow();
-    expect(() =>
-      exactReviewAssignmentSchema.parse({
-        ...validInput,
-        englishToKoreanRatio: 25,
-      }),
-    ).toThrow();
-    expect(() =>
-      exactReviewAssignmentSchema.parse({
-        ...validInput,
-        timeLimitSeconds: 29,
-      }),
-    ).toThrow();
-  });
-});
-
 describe("DAY+오답 혼합 시험 입력 계약", () => {
   const studentId =
     "11111111-1111-4111-8111-111111111111";
@@ -677,6 +614,21 @@ describe("DAY+오답 혼합 시험 입력 계약", () => {
     questionOrderMode: "random" as const,
     availableUntil: null,
   };
+  const directValidInput = {
+    studentId,
+    datasetId,
+    reviewLevels: [1, 2] as const,
+    totalQuestionCount: 10,
+    title: "",
+    englishToKoreanRatio: 50 as const,
+    timeLimitSeconds: 300,
+    passingScore: 80,
+    retryEnabled: true,
+    retryPassingScore: 80,
+    questionOrderMode: "random" as const,
+    availableUntil: null,
+    idempotencyKey: studentId,
+  };
 
   it("단일학생·주 DAY·오답 단계와 시험 조건만 받는다", () => {
     expect(mixedAssignmentSchema.parse(validInput)).toEqual(
@@ -693,9 +645,7 @@ describe("DAY+오답 혼합 시험 입력 계약", () => {
   it("독립 오답 시험만 1~3문항을 허용하고 일반 혼합 시험은 최소 4문항을 유지한다", () => {
     for (const totalQuestionCount of [1, 2, 3]) {
       const input = {
-        ...validInput,
-        idempotencyKey: studentId,
-        reviewScope: "dataset" as const,
+        ...directValidInput,
         totalQuestionCount,
       };
       expect(directReviewAssignmentSchema.parse(input).totalQuestionCount).toBe(
@@ -704,26 +654,52 @@ describe("DAY+오답 혼합 시험 입력 계약", () => {
       expect(mixedAssignmentSchema.safeParse(input).success).toBe(false);
     }
     expect(directReviewAssignmentSchema.safeParse({
-      ...validInput,
-      idempotencyKey: studentId,
-      reviewScope: "dataset",
+      ...directValidInput,
       totalQuestionCount: 0,
     }).success).toBe(false);
     expect(directReviewAssignmentSchema.safeParse({
-      ...validInput,
-      idempotencyKey: studentId,
-      reviewScope: "dataset",
+      ...directValidInput,
       totalQuestionCount: 401,
     }).success).toBe(false);
+  });
+
+  it("독립 오답 미리보기는 학생·단어장·오답 단계·방향만 받는다", () => {
+    const preview = {
+      studentId,
+      datasetId,
+      reviewLevels: [1, 2] as const,
+      englishToKoreanRatio: 50 as const,
+    };
+    expect(directReviewPreviewSchema.parse(preview)).toEqual(preview);
+    expect(directReviewPreviewSchema.safeParse({
+      ...preview,
+      primaryUnitIds: [unitId],
+    }).success).toBe(false);
+    expect(directReviewPreviewSchema.safeParse({
+      ...preview,
+      reviewScope: "dataset",
+    }).success).toBe(false);
+  });
+
+  it("독립 오답 저장은 범위와 수동 오답 큐 조건을 받지 않는다", () => {
+    for (const [key, value] of [
+      ["primaryUnitIds", [unitId]],
+      ["reviewScope", "dataset"],
+      ["selectedQueueIds", [studentId]],
+    ] as const) {
+      expect(directReviewAssignmentSchema.safeParse({
+        ...directValidInput,
+        [key]: value,
+      }).success).toBe(false);
+    }
   });
 
   it.each([undefined, "not-a-uuid"])(
     "독립 오답 시험의 멱등키 %s를 거절한다",
     (idempotencyKey) => {
       expect(directReviewAssignmentSchema.safeParse({
-        ...validInput,
+        ...directValidInput,
         idempotencyKey,
-        reviewScope: "dataset",
         totalQuestionCount: 1,
       }).success).toBe(false);
     },

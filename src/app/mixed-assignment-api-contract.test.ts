@@ -141,10 +141,36 @@ describe("mixed assignment API contract", () => {
       "includeExamUseProjection: true",
     );
     expect(service).toContain('const reviewScope = input.reviewScope ?? "dataset"');
-    expect(service).toContain("resolvePendingReviewCandidate(");
+    expect(service).toContain("resolveReviewCandidate(");
     expect(service).toContain("primaryUnitIdSet,");
     expect(service).toContain(
       "eligibleReviewRows.map((row) => row.reason_level)",
+    );
+  });
+
+  it("keeps current-wrong exams and manual review queues in separate services", () => {
+    const mixedService = source(
+      "src/lib/services/mixed-assignment-service.ts",
+    );
+    const directPreparation = source(
+      "src/lib/services/direct-review-preparation-service.ts",
+    );
+    const directService = source(
+      "src/lib/services/direct-review-assignment-service.ts",
+    );
+
+    expect(mixedService).not.toContain("current_wrong");
+    expect(mixedService).not.toContain("DirectReview");
+    expect(mixedService).not.toContain("buildExactAssignmentQuestionPlan");
+    expect(mixedService).not.toContain("source_question_id");
+
+    for (const directSource of [directPreparation, directService]) {
+      expect(directSource).not.toContain("mixed-assignment-service");
+      expect(directSource).not.toContain("student_vocab_review_queue");
+      expect(directSource).not.toContain("create_mixed_review_assignment");
+    }
+    expect(directService).toContain(
+      '"create_current_wrong_review_assignment_v1"',
     );
   });
 });

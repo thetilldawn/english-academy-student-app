@@ -4,15 +4,17 @@ import { z } from "zod";
 
 import {
   excludePendingReviewCandidates,
-  countEligibleReviewLevels,
   mixedAssignmentDatabaseErrorReason,
   mixedAssignmentGeneratedTitle,
   mixedAssignmentPrimaryUnitIds,
-  resolvePendingReviewCandidate,
   type MixedAssignmentFailureReason,
   type MixedAssignmentUnit,
   type PendingReviewIdentity,
 } from "@/lib/admin/mixed-assignment";
+import {
+  countReviewLevels,
+  resolveReviewCandidate,
+} from "@/lib/admin/review-candidate";
 import type { TimingMode } from "@/lib/admin/assignment-settings";
 import {
   requireAdmin,
@@ -24,7 +26,6 @@ import {
 } from "@/lib/quiz/engine";
 import {
   buildAssignmentQuestionPlan,
-  buildExactAssignmentQuestionPlan,
   calculateAssignmentQuestionRange,
   calculateAssignmentSeriesQuestionCapacity,
 } from "@/lib/assignment/question-planner";
@@ -35,13 +36,8 @@ import {
 import { resolveOrderedUnitSelection } from "@/lib/admin/unit-range";
 import { loadEligibleVocabularyDataset } from "@/lib/services/eligible-vocabulary-service";
 import { loadDatasetDisplayLabel } from "@/lib/services/dataset-catalog-service";
-import {
-  DirectReviewCandidateError,
-  listStudentDirectReviewCandidates,
-} from "@/lib/services/direct-review-candidate-service";
 import { memoizeRequestPreparation } from "@/lib/services/request-preparation-cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { DirectReviewAssignmentInput } from "@/lib/admin/direct-review-assignment-request";
 import type { AssignmentCapacityInput } from "@/lib/admin/assignment-replacement-request";
 import type { MixedAssignmentInput } from "@/lib/admin/mixed-assignment-request";
 
@@ -61,7 +57,6 @@ type ReviewQueueRow = {
   reason_level: 1 | 2;
   queued_at: string;
   reserved_review_draft_id: string | null;
-  source_question_id: string | null;
 };
 
 type UnitRow = {
@@ -244,7 +239,7 @@ async function loadReviewQueueRows(
     const { data, error } = await supabase
       .from("student_vocab_review_queue")
       .select(
-        "id, vocab_entry_id, canonical_lexeme_id_snapshot, canonical_dictionary_id_snapshot, reason_level, queued_at, reserved_review_draft_id, source_question_id",
+        "id, vocab_entry_id, canonical_lexeme_id_snapshot, canonical_dictionary_id_snapshot, reason_level, queued_at, reserved_review_draft_id",
       )
       .eq("student_id", studentId)
       .eq("dataset_id", datasetId)
@@ -261,40 +256,6 @@ async function loadReviewQueueRows(
     if (!data || data.length < REVIEW_QUEUE_PAGE_SIZE) break;
   }
   return rows;
-}
-
-async function loadCurrentWrongRows(
-  input: AssignmentCapacityInput,
-  authenticatedAdmin?: AdminContext,
-): Promise<ReviewQueueRow[]> {
-  let candidates: Awaited<
-    ReturnType<typeof listStudentDirectReviewCandidates>
-  >;
-  try {
-    candidates = await listStudentDirectReviewCandidates(
-      {
-        datasetId: input.datasetId,
-        reviewLevels: input.reviewLevels,
-        studentId: input.studentId,
-      },
-      authenticatedAdmin,
-    );
-  } catch (error) {
-    if (error instanceof DirectReviewCandidateError) {
-      throw new MixedAssignmentError(error.reason, error.message);
-    }
-    throw error;
-  }
-  return candidates.map((candidate) => ({
-    id: candidate.existingQueueId ?? `current-wrong:${candidate.sourceQuestionId}`,
-    vocab_entry_id: candidate.vocabEntryId,
-    canonical_lexeme_id_snapshot: candidate.canonicalLexemeId,
-    canonical_dictionary_id_snapshot: candidate.canonicalDictionaryId,
-    reason_level: candidate.reasonLevel,
-    queued_at: candidate.lastWrongAt ?? "1970-01-01T00:00:00.000Z",
-    reserved_review_draft_id: null,
-    source_question_id: candidate.sourceQuestionId,
-  }));
 }
 
 async function prepareAssignment(
@@ -338,31 +299,22 @@ async function prepareAssignment(
         datasetKey,
         () => loadDatasetForPreparation(supabase, input.datasetId),
       ),
-      input.reviewSource === "current_wrong"
-        ? loadCurrentWrongRows(input, authenticatedAdmin)
-        : memoizeRequestPreparation(
-            preparationCache.reviewQueues,
-            studentDatasetKey,
-            () => loadReviewQueueRows(supabase, input.studentId, input.datasetId),
+      memoizeRequestPreparation(
+        preparationCache.reviewQueues,
+        studentDatasetKey,
+        () => loadReviewQueueRows(supabase, input.studentId, input.datasetId),
+      ),
+      memoizeRequestPreparation(
+        preparationCache.activeAssignments,
+        activeAssignmentKey,
+        () =>
+          loadActiveReviewAssignments(
+            supabase,
+            [input.studentId],
+            input.datasetId,
+            exclusion,
           ),
-      input.reviewSource === "current_wrong"
-        ? Promise.resolve({
-            queueIds: new Set<string>(),
-            identities: new Set<string>(),
-            reviewIdentities: new Set<string>(),
-            words: [],
-          })
-        : memoizeRequestPreparation(
-            preparationCache.activeAssignments,
-            activeAssignmentKey,
-            () =>
-              loadActiveReviewAssignments(
-                supabase,
-                [input.studentId],
-                input.datasetId,
-                exclusion,
-              ),
-          ),
+      ),
     ]);
   const { data: student, error: studentError } = studentResult;
   const {
@@ -408,7 +360,7 @@ async function prepareAssignment(
     EligibleVocabularyEntry
   >();
   const scopedQueueRows = queueRows.filter((row) => {
-    const candidate = resolvePendingReviewCandidate(
+    const candidate = resolveReviewCandidate(
       allCandidates,
       {
         vocabEntryId: row.vocab_entry_id,
@@ -474,7 +426,7 @@ async function prepareAssignment(
   const reviewTargets = input.includePendingReview
     ? eligibleReviewTargets
     : [];
-  const reviewLevelCounts = countEligibleReviewLevels(
+  const reviewLevelCounts = countReviewLevels(
     eligibleReviewRows.map((row) => row.reason_level),
   );
 
@@ -618,7 +570,6 @@ export type PreparedMixedAssignmentBatch = {
   reviewLevels: (1 | 2)[];
   reviewScope: "dataset" | "selection";
   selectedQueueIds: string[];
-  sourceQuestionIds: string[];
   title: string;
   primaryUnitIds: string[];
   englishToKoreanRatio: 0 | 50 | 100;
@@ -639,11 +590,10 @@ export type PreparedMixedAssignmentBatch = {
 };
 
 async function preparePendingReviewAssignmentBatch(
-  input: MixedAssignmentInput | DirectReviewAssignmentInput,
+  input: MixedAssignmentInput,
   authenticatedAdmin?: AdminContext,
   exclusion?: AssignmentExclusion,
   cache?: MixedAssignmentPreparationCache,
-  mode: "mixed" | "exact-review" = "mixed",
 ): Promise<PreparedMixedAssignmentBatch> {
   if (
     input.availableUntil &&
@@ -663,7 +613,6 @@ async function preparePendingReviewAssignmentBatch(
       includePendingReview: true,
       reviewLevels: input.reviewLevels,
       reviewScope: input.reviewScope,
-      reviewSource: mode === "exact-review" ? "current_wrong" : "pending",
       englishToKoreanRatio: input.englishToKoreanRatio,
     },
     authenticatedAdmin,
@@ -679,21 +628,13 @@ async function preparePendingReviewAssignmentBatch(
         : "선택한 단계에 추가할 틀렸던 단어가 없습니다.",
     );
   }
-  const invalidExactReviewCount =
-    mode === "exact-review" &&
-    (input.totalQuestionCount < 1 ||
-      input.totalQuestionCount > 400 ||
-      input.totalQuestionCount !== prepared.selectedQueueRows.length);
-  const invalidMixedCount =
-    mode === "mixed" &&
-    (input.totalQuestionCount < capacity.minimumQuestionCount ||
-      input.totalQuestionCount > capacity.maximumQuestionCount);
-  if (invalidExactReviewCount || invalidMixedCount) {
+  if (
+    input.totalQuestionCount < capacity.minimumQuestionCount ||
+    input.totalQuestionCount > capacity.maximumQuestionCount
+  ) {
     throw new MixedAssignmentError(
       "invalid_selection",
-      mode === "exact-review"
-        ? "오답 목록이 바뀌었거나 현재 조건으로 문제를 만들 수 없습니다."
-        : capacity.maximumQuestionCount >= capacity.minimumQuestionCount
+      capacity.maximumQuestionCount >= capacity.minimumQuestionCount
         ? `현재 조건에서는 ${capacity.minimumQuestionCount}~${capacity.maximumQuestionCount}문항으로 배정할 수 있습니다.`
         : "선택한 단어장 범위는 아직 시험 배정 준비가 끝나지 않았습니다.",
     );
@@ -701,25 +642,13 @@ async function preparePendingReviewAssignmentBatch(
 
   let questionDrafts;
   try {
-    questionDrafts = mode === "exact-review"
-      ? buildExactAssignmentQuestionPlan({
-          targets: prepared.reviewTargets,
-          allCandidates: prepared.allCandidates,
-          englishToKoreanRatio: input.englishToKoreanRatio,
-          randomSeed: [
-            "direct-review",
-            input.studentId,
-            input.datasetId,
-            ...prepared.selectedQueueRows.map((queue) => queue.id),
-          ].join(":"),
-        })
-      : buildAssignmentQuestionPlan({
-          requiredTargets: prepared.reviewTargets,
-          primaryCandidates: prepared.primaryCandidates,
-          allCandidates: prepared.allCandidates,
-          questionCount: input.totalQuestionCount,
-          englishToKoreanRatio: input.englishToKoreanRatio,
-        });
+    questionDrafts = buildAssignmentQuestionPlan({
+      requiredTargets: prepared.reviewTargets,
+      primaryCandidates: prepared.primaryCandidates,
+      allCandidates: prepared.allCandidates,
+      questionCount: input.totalQuestionCount,
+      englishToKoreanRatio: input.englishToKoreanRatio,
+    });
   } catch (error) {
     throw new MixedAssignmentError(
       "invalid_selection",
@@ -735,18 +664,6 @@ async function preparePendingReviewAssignmentBatch(
   const selectedQueueIds = prepared.selectedQueueRows.map(
     (queue) => queue.id,
   );
-  const sourceQuestionIds = prepared.selectedQueueRows.flatMap(
-    (queue) => queue.source_question_id ? [queue.source_question_id] : [],
-  );
-  if (
-    mode === "exact-review" &&
-    sourceQuestionIds.length !== prepared.selectedQueueRows.length
-  ) {
-    throw new MixedAssignmentError(
-      "conflict",
-      "현재 오답 목록이 바뀌었습니다. 다시 계산해 주세요.",
-    );
-  }
   const datasetLabel = await memoizeRequestPreparation(
     prepared.preparationCache.datasetLabels,
     prepared.dataset.id,
@@ -758,7 +675,6 @@ async function preparePendingReviewAssignmentBatch(
     reviewLevels,
     reviewScope: input.reviewScope ?? "dataset",
     selectedQueueIds,
-    sourceQuestionIds,
     title:
       input.title ||
       mixedAssignmentGeneratedTitle(
@@ -806,22 +722,6 @@ export async function prepareMixedAssignmentBatch(
     authenticatedAdmin,
     exclusion,
     cache,
-    "mixed",
-  );
-}
-
-export async function prepareDirectReviewAssignmentBatch(
-  input: DirectReviewAssignmentInput,
-  authenticatedAdmin?: AdminContext,
-  exclusion?: AssignmentExclusion,
-  cache?: MixedAssignmentPreparationCache,
-) {
-  return preparePendingReviewAssignmentBatch(
-    input,
-    authenticatedAdmin,
-    exclusion,
-    cache,
-    "exact-review",
   );
 }
 

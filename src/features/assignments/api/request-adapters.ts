@@ -8,17 +8,22 @@ import type {
   BulkAssignmentInput,
   BulkAssignmentPreviewInput,
 } from "@/lib/admin/bulk-assignment-request";
-import type { DirectReviewAssignmentInput } from "@/lib/admin/direct-review-assignment-request";
+import type {
+  DirectReviewAssignmentInput,
+  DirectReviewPreviewInput,
+} from "@/lib/admin/direct-review-assignment-request";
 import type { MixedAssignmentInput } from "@/lib/admin/mixed-assignment-request";
 import type { AssignmentInput } from "@/lib/admin/regular-assignment-request";
 
 import { assignmentRequestFingerprint } from "../domain/fingerprint";
 import type {
+  AssignmentDirectionRatio,
   AssignmentDeadline,
   BulkSeriesAssignmentDraft,
   DirectReviewAssignmentDraft,
   ExamSettings,
   LegacyReviewRecoveryDraft,
+  ReviewLevel,
   ReviewPolicy,
   ResolvedSingleAssignment,
   SingleAssignmentDraft,
@@ -49,6 +54,12 @@ export type DirectReviewAssignmentRequest = {
   endpoint: "/api/admin/exact-review-assignments";
   method: "POST";
   body: DirectReviewAssignmentInput;
+};
+
+export type DirectReviewPreviewRequest = {
+  endpoint: "/api/admin/exact-review-assignments/preview";
+  method: "POST";
+  body: DirectReviewPreviewInput;
 };
 
 export type AssignmentCapacityRequest = {
@@ -91,6 +102,7 @@ export type AssignmentHttpRequest =
   | RegularAssignmentRequest
   | MixedAssignmentRequest
   | DirectReviewAssignmentRequest
+  | DirectReviewPreviewRequest
   | AssignmentEditDraftRequest
   | AssignmentCapacityRequest
   | AssignmentReplacementRequest
@@ -126,13 +138,31 @@ export function buildDirectReviewAssignmentRequest(
       idempotencyKey,
       studentId: draft.studentId,
       datasetId: draft.datasetId,
-      primaryUnitIds: [...draft.primaryUnitIds],
       reviewLevels: [...draft.reviewLevels],
-      reviewScope: "dataset",
       totalQuestionCount: draft.questionCount,
       title: draft.title,
       ...examSettingsToApi(draft.exam),
       availableUntil: deadlineToIso(draft.deadline),
+    },
+  };
+}
+
+export function buildDirectReviewPreviewRequest(
+  input: {
+    studentId: string;
+    datasetId: string;
+    reviewLevels: readonly ReviewLevel[];
+    directionRatio: AssignmentDirectionRatio;
+  },
+): DirectReviewPreviewRequest {
+  return {
+    endpoint: "/api/admin/exact-review-assignments/preview",
+    method: "POST",
+    body: {
+      studentId: input.studentId,
+      datasetId: input.datasetId,
+      reviewLevels: [...input.reviewLevels],
+      englishToKoreanRatio: input.directionRatio,
     },
   };
 }

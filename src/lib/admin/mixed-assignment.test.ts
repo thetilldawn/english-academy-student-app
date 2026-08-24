@@ -1,15 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  countEligibleReviewLevels,
   excludePendingReviewCandidates,
-  isCandidateInReviewScope,
   mixedAssignmentDatabaseErrorReason,
   mixedAssignmentGeneratedTitle,
   mixedAssignmentPrimaryUnitIds,
   orderContiguousPrimaryUnits,
-  resolvePendingReviewCandidate,
 } from "@/lib/admin/mixed-assignment";
+import {
+  countReviewLevels,
+  isCandidateInReviewScope,
+  resolveReviewCandidate,
+} from "@/lib/admin/review-candidate";
 import type { EligibleVocabularyEntry } from "@/lib/quiz/eligible-vocabulary";
 
 describe("orderContiguousPrimaryUnits", () => {
@@ -54,7 +56,7 @@ describe("review scope and count", () => {
   });
 
   it("추가 가능한 고유 행의 전체·1회·2회 이상 수를 나눈다", () => {
-    expect(countEligibleReviewLevels([2, 1, 2, 1, 1])).toEqual({
+    expect(countReviewLevels([2, 1, 2, 1, 1])).toEqual({
       total: 5,
       level1: 3,
       level2: 2,
@@ -187,7 +189,7 @@ describe("excludePendingReviewCandidates", () => {
   });
 });
 
-describe("resolvePendingReviewCandidate", () => {
+describe("resolveReviewCandidate", () => {
   const candidates: EligibleVocabularyEntry[] = [
     {
       id: 20,
@@ -225,7 +227,7 @@ describe("resolvePendingReviewCandidate", () => {
     };
 
     expect(
-      resolvePendingReviewCandidate(
+      resolveReviewCandidate(
         candidates,
         pending,
         "dataset",
@@ -233,7 +235,7 @@ describe("resolvePendingReviewCandidate", () => {
       )?.id,
     ).toBe(10);
     expect(
-      resolvePendingReviewCandidate(
+      resolveReviewCandidate(
         candidates,
         pending,
         "selection",
@@ -244,7 +246,7 @@ describe("resolvePendingReviewCandidate", () => {
 
   it("does not let an entry fallback override conflicting dictionary IDs", () => {
     expect(
-      resolvePendingReviewCandidate(
+      resolveReviewCandidate(
         candidates,
         {
           vocabEntryId: 10,

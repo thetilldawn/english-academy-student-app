@@ -6,7 +6,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type {
   AssignmentDatasetItem,
   AssignmentStudentItem,
-  AssignmentUnitItem,
 } from "../catalog-types";
 import type { AssignmentTransport } from "../transport/assignment-transport";
 import { useDirectReviewAssignmentController } from "./use-direct-review-assignment-controller";
@@ -15,7 +14,6 @@ const ids = {
   assignment: "00000000-0000-4000-8000-000000000010",
   dataset: "00000000-0000-4000-8000-000000000020",
   student: "00000000-0000-4000-8000-000000000030",
-  unit: "00000000-0000-4000-8000-000000000040",
   idempotency: "00000000-0000-4000-8000-000000000050",
 } as const;
 
@@ -49,24 +47,6 @@ const student: AssignmentStudentItem = {
   status: "active",
 };
 
-const unit: AssignmentUnitItem = {
-  academicYear: null,
-  agency: null,
-  catalogGroup: "middle",
-  catalogSortIndex: 1,
-  datasetId: ids.dataset,
-  displayName: "DAY 1",
-  entryCount: 100,
-  examMonth: null,
-  id: ids.unit,
-  itemRange: null,
-  kind: "day",
-  label: "DAY 1",
-  number: 1,
-  sortIndex: 1,
-  unitType: "day",
-};
-
 const summaryResponse = {
   summaries: [{
     datasetId: ids.dataset,
@@ -78,15 +58,6 @@ const summaryResponse = {
 };
 
 const capacityResponse = {
-  activeAssignmentExcluded: 0,
-  alreadyAssigned: 0,
-  eligibleBeforeActiveAssignment: 100,
-  maximumQuestionCount: 2,
-  minimumQuestionCount: 2,
-  overlap: 2,
-  questionPlanExcluded: 0,
-  recommendedQuestionCount: 2,
-  unitEligible: 100,
   wrongEligible: 2,
   wrongLevel1Eligible: 1,
   wrongLevel2Eligible: 1,
@@ -113,7 +84,6 @@ describe("direct review assignment controller", () => {
         initialDatasetId: ids.dataset,
         student,
         transport,
-        units: [unit],
       }),
       { initialProps: { enabled: false } },
     );
@@ -130,12 +100,12 @@ describe("direct review assignment controller", () => {
       ),
     ).toHaveLength(1);
     expect(requests.find((request) =>
-      request.url === "/api/admin/assignment-capacity"
+      request.url === "/api/admin/exact-review-assignments/preview"
     )).toMatchObject({
       body: {
-        includePendingReview: true,
         reviewLevels: [1, 2],
-        reviewSource: "current_wrong",
+        studentId: ids.student,
+        datasetId: ids.dataset,
       },
       method: "POST",
     });
@@ -159,7 +129,7 @@ describe("direct review assignment controller", () => {
       if (request.url.endsWith("/direct-review-summaries")) {
         return { data: summaryResponse, ok: true, status: 200 };
       }
-      if (request.url === "/api/admin/assignment-capacity") {
+      if (request.url === "/api/admin/exact-review-assignments/preview") {
         return { data: capacityResponse, ok: true, status: 200 };
       }
       exactBodies.push(request.body as Record<string, unknown>);
@@ -178,7 +148,6 @@ describe("direct review assignment controller", () => {
         initialDatasetId: ids.dataset,
         student,
         transport,
-        units: [unit],
       }),
     );
     await waitFor(() => expect(result.current.canSubmit).toBe(true));
@@ -218,9 +187,6 @@ describe("direct review assignment controller", () => {
       return {
         data: {
           ...capacityResponse,
-          maximumQuestionCount: 400,
-          minimumQuestionCount: 400,
-          recommendedQuestionCount: 400,
           wrongEligible: 400,
           wrongLevel1Eligible: 0,
           wrongLevel2Eligible: 400,
@@ -236,7 +202,6 @@ describe("direct review assignment controller", () => {
         initialDatasetId: ids.dataset,
         student,
         transport,
-        units: [unit],
       }),
     );
 

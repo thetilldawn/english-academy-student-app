@@ -16,7 +16,6 @@ export const assignmentCapacitySchema = z
     datasetId: z.uuid(),
     primaryUnitIds: z.array(z.uuid()).min(1).max(500),
     includePendingReview: z.boolean(),
-    reviewSource: z.enum(["pending", "current_wrong"]).optional(),
     reviewLevels: z.array(reviewLevelSchema).max(2),
     reviewScope: reviewScopeSchema.optional(),
     englishToKoreanRatio: z.union([

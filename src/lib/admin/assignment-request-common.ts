@@ -3,7 +3,37 @@ import { z } from "zod";
 import {
   questionOrderModes,
   timingModes,
+  type TimingMode,
 } from "@/lib/admin/assignment-settings";
+
+export function validateTimingSettings(
+  value: {
+    timingMode?: TimingMode;
+    questionTimeLimitSeconds?: number | null;
+  },
+  context: z.RefinementCtx,
+) {
+  if (
+    (value.timingMode === "none" &&
+      value.questionTimeLimitSeconds !== null &&
+      value.questionTimeLimitSeconds !== undefined) ||
+    (value.timingMode === "total" &&
+      value.questionTimeLimitSeconds !== null &&
+      value.questionTimeLimitSeconds !== undefined) ||
+    (value.timingMode === "per_question" &&
+      (value.questionTimeLimitSeconds === null ||
+        value.questionTimeLimitSeconds === undefined)) ||
+    (value.timingMode === undefined &&
+      value.questionTimeLimitSeconds !== null &&
+      value.questionTimeLimitSeconds !== undefined)
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["questionTimeLimitSeconds"],
+      message: "시간 제한 방식과 문제당 시간을 확인해 주세요.",
+    });
+  }
+}
 
 export const timingSettingsSchema = z
   .object({
@@ -18,26 +48,7 @@ export const timingSettingsSchema = z
   })
   .strict()
   .superRefine((value, context) => {
-    if (
-      (value.timingMode === "none" &&
-        value.questionTimeLimitSeconds !== null &&
-        value.questionTimeLimitSeconds !== undefined) ||
-      (value.timingMode === "total" &&
-        value.questionTimeLimitSeconds !== null &&
-        value.questionTimeLimitSeconds !== undefined) ||
-      (value.timingMode === "per_question" &&
-        (value.questionTimeLimitSeconds === null ||
-          value.questionTimeLimitSeconds === undefined)) ||
-      (value.timingMode === undefined &&
-        value.questionTimeLimitSeconds !== null &&
-        value.questionTimeLimitSeconds !== undefined)
-    ) {
-      context.addIssue({
-        code: "custom",
-        path: ["questionTimeLimitSeconds"],
-        message: "시간 제한 방식과 문제당 시간을 확인해 주세요.",
-      });
-    }
+    validateTimingSettings(value, context);
   });
 
 export function validateRetrySettings(
@@ -116,24 +127,5 @@ export function refineMixedAssignmentSettings(
       message: "같은 오답 단계를 두 번 선택할 수 없습니다.",
     });
   }
-  if (
-    (value.timingMode === "none" &&
-      value.questionTimeLimitSeconds !== null &&
-      value.questionTimeLimitSeconds !== undefined) ||
-    (value.timingMode === "total" &&
-      value.questionTimeLimitSeconds !== null &&
-      value.questionTimeLimitSeconds !== undefined) ||
-    (value.timingMode === "per_question" &&
-      (value.questionTimeLimitSeconds === null ||
-        value.questionTimeLimitSeconds === undefined)) ||
-    (value.timingMode === undefined &&
-      value.questionTimeLimitSeconds !== null &&
-      value.questionTimeLimitSeconds !== undefined)
-  ) {
-    context.addIssue({
-      code: "custom",
-      path: ["questionTimeLimitSeconds"],
-      message: "시간 제한 방식과 문제당 시간을 확인해주세요.",
-    });
-  }
+  validateTimingSettings(value, context);
 }

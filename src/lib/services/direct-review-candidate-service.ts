@@ -11,6 +11,10 @@ import {
 import { requireAdmin, type AdminContext } from "@/lib/auth/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
+type ServerSupabaseClient = Awaited<
+  ReturnType<typeof createServerSupabaseClient>
+>;
+
 export class DirectReviewCandidateError extends Error {
   constructor(
     public readonly reason:
@@ -42,9 +46,10 @@ function candidateError(error: { code?: string; message?: string } | null) {
 export async function listStudentDirectReviewDatasetSummaries(
   studentId: string,
   authenticatedAdmin?: AdminContext,
+  client?: ServerSupabaseClient,
 ): Promise<DirectReviewDatasetSummary[]> {
   if (!authenticatedAdmin) await requireAdmin();
-  const supabase = await createServerSupabaseClient();
+  const supabase = client ?? await createServerSupabaseClient();
   const { data, error } = await supabase.rpc(
     "list_student_direct_review_dataset_summaries_v1",
     { p_student_id: studentId },
@@ -72,9 +77,10 @@ export async function listStudentDirectReviewCandidates(
     studentId: string;
   },
   authenticatedAdmin?: AdminContext,
+  client?: ServerSupabaseClient,
 ): Promise<DirectReviewCandidate[]> {
   if (!authenticatedAdmin) await requireAdmin();
-  const supabase = await createServerSupabaseClient();
+  const supabase = client ?? await createServerSupabaseClient();
   const { data, error } = await supabase.rpc(
     "list_student_direct_review_candidates_v1",
     {

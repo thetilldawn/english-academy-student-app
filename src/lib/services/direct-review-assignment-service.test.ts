@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => {
-  class MockMixedAssignmentError extends Error {
+  class MockDirectReviewPreparationError extends Error {
     constructor(
       public readonly reason:
         | "forbidden"
@@ -10,15 +10,16 @@ const mocks = vi.hoisted(() => {
         | "conflict"
         | "database",
     ) {
-      super("mixed assignment error");
+      super("direct review preparation error");
     }
   }
 
   return {
+    calculate: vi.fn(),
     createServerSupabaseClient: vi.fn(),
     prepare: vi.fn(),
     requireAdmin: vi.fn(),
-    MixedAssignmentError: MockMixedAssignmentError,
+    DirectReviewPreparationError: MockDirectReviewPreparationError,
   };
 });
 
@@ -29,16 +30,21 @@ vi.mock("@/lib/auth/admin", () => ({
 vi.mock("@/lib/supabase/server", () => ({
   createServerSupabaseClient: mocks.createServerSupabaseClient,
 }));
-vi.mock("@/lib/services/mixed-assignment-service", () => ({
-  MixedAssignmentError: mocks.MixedAssignmentError,
+vi.mock("@/lib/services/direct-review-preparation-service", () => ({
+  calculateDirectReviewPreview: mocks.calculate,
+  DirectReviewPreparationError: mocks.DirectReviewPreparationError,
   prepareDirectReviewAssignmentBatch: mocks.prepare,
 }));
 
 import {
   createDirectReviewAssignment,
   DirectReviewAssignmentError,
+  previewDirectReviewAssignment,
 } from "./direct-review-assignment-service";
-import type { DirectReviewAssignmentInput } from "@/lib/admin/direct-review-assignment-request";
+import type {
+  DirectReviewAssignmentInput,
+  DirectReviewPreviewInput,
+} from "@/lib/admin/direct-review-assignment-request";
 
 const ids = {
   assignment: "00000000-0000-4000-8000-000000000010",
@@ -47,7 +53,6 @@ const ids = {
   questionA: "00000000-0000-4000-8000-000000000040",
   questionB: "00000000-0000-4000-8000-000000000050",
   student: "00000000-0000-4000-8000-000000000060",
-  unit: "00000000-0000-4000-8000-000000000070",
 } as const;
 const admin = { displayName: "테스트 관리자", userId: "admin-id" };
 
@@ -57,13 +62,11 @@ const input: DirectReviewAssignmentInput = {
   englishToKoreanRatio: 50,
   idempotencyKey: ids.idempotency,
   passingScore: 80,
-  primaryUnitIds: [ids.unit],
   questionOrderMode: "random",
   questionTimeLimitSeconds: null,
   retryEnabled: true,
   retryPassingScore: 80,
   reviewLevels: [1, 2],
-  reviewScope: "dataset",
   studentId: ids.student,
   timeLimitSeconds: 300,
   timingMode: "total",
@@ -76,7 +79,6 @@ const prepared = {
   datasetId: ids.dataset,
   englishToKoreanRatio: 50,
   passingScore: 80,
-  primaryUnitIds: [ids.unit],
   questionOrderMode: "random" as const,
   questionTimeLimitSeconds: null,
   questions: [1, 2].map((entryId, index) => ({
@@ -88,8 +90,6 @@ const prepared = {
   retryEnabled: true,
   retryPassingScore: 80,
   reviewLevels: [1, 2] as (1 | 2)[],
-  reviewScope: "dataset" as const,
-  selectedQueueIds: [],
   sourceQuestionIds: [ids.questionA, ids.questionB],
   studentId: ids.student,
   timeLimitSeconds: 300,
@@ -136,7 +136,11 @@ describe("createDirectReviewAssignment", () => {
       ids.assignment,
     );
 
-    expect(mocks.prepare).toHaveBeenCalledWith(input, admin);
+    expect(mocks.prepare).toHaveBeenCalledWith(
+      input,
+      admin,
+      expect.objectContaining({ rpc }),
+    );
     const lookupArgs = rpc.mock.calls[0]?.[1] as Record<string, unknown>;
     const createArgs = rpc.mock.calls[1]?.[1] as Record<string, unknown>;
     expect(lookupArgs.p_request_sha256).toMatch(/^[0-9a-f]{64}$/);
@@ -176,11 +180,58 @@ describe("createDirectReviewAssignment", () => {
     const rpc = vi.fn().mockResolvedValue({ data: null, error: null });
     mocks.createServerSupabaseClient.mockResolvedValue({ rpc });
     mocks.prepare.mockRejectedValue(
-      new mocks.MixedAssignmentError("forbidden"),
+      new mocks.DirectReviewPreparationError("forbidden"),
     );
 
     await expect(createDirectReviewAssignment(input, admin)).rejects.toEqual(
       expect.objectContaining({ reason: "forbidden" }),
     );
+  });
+});
+
+describe("previewDirectReviewAssignment", () => {
+  const previewInput: DirectReviewPreviewInput = {
+    datasetId: ids.dataset,
+    englishToKoreanRatio: 50,
+    reviewLevels: [1, 2],
+    studentId: ids.student,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.requireAdmin.mockResolvedValue(admin);
+  });
+
+  it("전용 계산 경로에 같은 관리자와 DB 연결을 전달한다", async () => {
+    const client = { rpc: vi.fn() };
+    const preview = {
+      wrongEligible: 2,
+      wrongLevel1Eligible: 1,
+      wrongLevel2Eligible: 1,
+    };
+    mocks.createServerSupabaseClient.mockResolvedValue(client);
+    mocks.calculate.mockResolvedValue(preview);
+
+    await expect(
+      previewDirectReviewAssignment(previewInput, admin),
+    ).resolves.toEqual(preview);
+    expect(mocks.calculate).toHaveBeenCalledWith(
+      previewInput,
+      admin,
+      client,
+    );
+  });
+
+  it("후보 준비 오류를 공개 서비스 오류로 변환한다", async () => {
+    mocks.createServerSupabaseClient.mockResolvedValue({ rpc: vi.fn() });
+    mocks.calculate.mockRejectedValue(
+      new mocks.DirectReviewPreparationError("invalid_selection"),
+    );
+
+    await expect(
+      previewDirectReviewAssignment(previewInput, admin),
+    ).rejects.toEqual(expect.objectContaining({
+      reason: "invalid_selection",
+    }));
   });
 });
