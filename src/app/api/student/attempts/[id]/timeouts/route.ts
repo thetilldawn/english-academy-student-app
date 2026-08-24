@@ -6,7 +6,7 @@ import {
   millisecondsUntil,
 } from "@/lib/deadline";
 import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
-import { timeoutStudentQuestion } from "@/lib/services/quiz-service";
+import { timeoutStudentQuestion } from "@/lib/services/quiz/attempt-command";
 import { questionTimeoutSchema } from "@/lib/validation";
 
 export async function POST(

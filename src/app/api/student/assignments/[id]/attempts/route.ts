@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { getStudentSession } from "@/lib/auth/student-session";
 import { jsonError, isSameOriginRequest } from "@/lib/http";
-import { startStudentAttempt } from "@/lib/services/quiz-service";
+import { startStudentAttempt } from "@/lib/services/quiz/attempt-start";
 
 export async function POST(
   request: Request,

@@ -8,7 +8,7 @@ const source = fs.readFileSync(
   "utf8",
 );
 const quizSource = fs.readFileSync(
-  path.resolve("src/lib/services/quiz-service.ts"),
+  path.resolve("src/lib/services/quiz/student-assignment-query.ts"),
   "utf8",
 );
 const studentCard = fs.readFileSync(

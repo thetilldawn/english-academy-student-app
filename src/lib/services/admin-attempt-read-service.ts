@@ -9,7 +9,7 @@ import type {
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-import { getAttemptQuestionResults } from "./quiz-service";
+import { getAttemptQuestionResults } from "./quiz/attempt-result-query";
 import {
   finalizeQuizAttemptIfStale,
   finalizeStaleQuizAttempts,

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { studentAppText } from "@/content/ko/student-app";
 import { StudentDashboard } from "@/features/student-dashboard/ui/student-dashboard";
 import { requireStudentSession } from "@/lib/auth/student-session";
-import { listStudentAssignments } from "@/lib/services/quiz-service";
+import { listStudentAssignments } from "@/lib/services/quiz/student-assignment-query";
 
 export const metadata: Metadata = {
   title: studentAppText.dashboard.metadataTitle,

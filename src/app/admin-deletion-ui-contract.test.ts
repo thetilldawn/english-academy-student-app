@@ -60,7 +60,9 @@ describe("admin deletion UI contract", () => {
     const historyReadService = source(
       "src/lib/services/admin-history-read-service.ts",
     );
-    const quizService = source("src/lib/services/quiz-service.ts");
+    const quizService = source(
+      "src/lib/services/quiz/student-assignment-query.ts",
+    );
     const detailActions = source(
       "src/features/history/ui/history-detail-actions.tsx",
     );

@@ -99,7 +99,9 @@ describe("assignment order and timing database contract", () => {
     const feedbackDelayRollback = source(
       "supabase/rollback/20260815113000_extend_quiz_audio_feedback_and_answer_grace.sql",
     );
-    const quizService = source("src/lib/services/quiz-service.ts");
+    const quizCommand = source(
+      "src/lib/services/quiz/attempt-command.ts",
+    );
     const quizRpcCompatibility = source(
       "src/lib/services/quiz-rpc-compatibility.ts",
     );
@@ -184,7 +186,7 @@ describe("assignment order and timing database contract", () => {
     expect(copy).toContain(
       'timedOut: "시간 초과로 미응답 오답 처리했습니다."',
     );
-    expect(quizService).toContain("answerQuizQuestionWithCompatibleRpc");
+    expect(quizCommand).toContain("answerQuizQuestionWithCompatibleRpc");
     expect(quizRpcCompatibility).toContain('"answer_quiz_question_v3"');
     expect(quizRpcCompatibility).toContain('"answer_quiz_question_v2"');
     expect(timeoutRoute).toContain("timeoutStudentQuestion");

@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   completeChoiceVocabEntryIds,
+} from "@/lib/services/quiz/question-snapshot";
+import {
   mapResultQuestions,
-} from "@/lib/services/quiz-service";
+} from "@/lib/services/quiz/result-question-mapper";
 
 type ResultRow = Parameters<typeof mapResultQuestions>[0][number];
 

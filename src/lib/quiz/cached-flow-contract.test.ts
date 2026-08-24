@@ -58,15 +58,20 @@ describe("DAY 문제은행 응시 계약", () => {
   });
 
   it("새 시도는 문제를 다시 만들지 않고 문제은행에서 복사한다", () => {
-    const quizService = source("src/lib/services/quiz-service.ts");
+    const attemptStart = source(
+      "src/lib/services/quiz/attempt-start.ts",
+    );
+    const attemptQuery = source(
+      "src/lib/services/quiz/attempt-query.ts",
+    );
 
-    expect(quizService).toContain(
+    expect(attemptStart).toContain(
       '"create_quiz_attempt_from_bank"',
     );
-    expect(quizService).toContain(
+    expect(attemptStart).toContain(
       'assignment.range_basis === "units"',
     );
-    expect(quizService).toContain(
+    expect(attemptQuery).toContain(
       "assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey",
     );
   });

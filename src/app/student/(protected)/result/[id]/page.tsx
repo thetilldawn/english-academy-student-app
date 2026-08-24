@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { studentAppText } from "@/content/ko/student-app";
 import { StudentResultView } from "@/features/results/ui/student-result-view";
 import { requireStudentSession } from "@/lib/auth/student-session";
-import { getAttemptResult } from "@/lib/services/quiz-service";
+import { getAttemptResult } from "@/lib/services/quiz/attempt-result-query";
 
 export const metadata: Metadata = {
   title: studentAppText.result.metadataTitle,

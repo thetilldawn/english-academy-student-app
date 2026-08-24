@@ -8,7 +8,7 @@ import {
   currentTimeMilliseconds,
   millisecondsUntil,
 } from "@/lib/deadline";
-import { getStudentAttempt } from "@/lib/services/quiz-service";
+import { getStudentAttempt } from "@/lib/services/quiz/attempt-query";
 
 export const metadata: Metadata = {
   title: studentAppText.attempt.metadataTitle,

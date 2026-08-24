@@ -331,7 +331,9 @@ describe("wrong-word admin UI contract", () => {
   });
 
   it("exposes only the clamped prior wrong level to the quiz client", () => {
-    const quizService = source("src/lib/services/quiz-service.ts");
+    const quizService = source(
+      "src/lib/services/quiz/attempt-query.ts",
+    );
     const quizController = source(
       "src/features/quiz-player/controller/use-quiz-player-controller.ts",
     );

@@ -6,7 +6,7 @@ import {
   millisecondsUntil,
 } from "@/lib/deadline";
 import { jsonError } from "@/lib/http";
-import { getStudentAttempt } from "@/lib/services/quiz-service";
+import { getStudentAttempt } from "@/lib/services/quiz/attempt-query";
 
 export async function GET(
   _request: Request,

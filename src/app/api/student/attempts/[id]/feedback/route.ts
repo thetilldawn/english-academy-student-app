@@ -6,7 +6,7 @@ import {
   millisecondsUntil,
 } from "@/lib/deadline";
 import { isSameOriginRequest, jsonError, parseJson } from "@/lib/http";
-import { resumeStudentQuizAfterFeedback } from "@/lib/services/quiz-service";
+import { resumeStudentQuizAfterFeedback } from "@/lib/services/quiz/attempt-command";
 
 const feedbackResumeSchema = z.object({
   nextPhase: z.enum(["initial", "retry"]),

@@ -6,14 +6,14 @@ import { describe, expect, it } from "vitest";
 describe("active vocabulary pronunciation release query", () => {
   it("filters bindings by active release before PostgREST can truncate history", async () => {
     const source = await readFile(
-      path.resolve("src/lib/services/quiz-service.ts"),
+      path.resolve("src/lib/services/quiz/pronunciation-registry.ts"),
       "utf8",
     );
     const start = source.indexOf(
-      "async function loadActiveVocabPronunciationReleaseRegistry",
+      "export async function loadActiveVocabPronunciationReleaseRegistry",
     );
     const end = source.indexOf(
-      "async function loadVocabPronunciationDisplayRegistry",
+      "export async function loadVocabPronunciationDisplayRegistry",
       start,
     );
     const loader = source.slice(start, end);
