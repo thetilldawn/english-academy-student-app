@@ -198,10 +198,10 @@ describe("module boundary inspector", () => {
     const importer = path.resolve("src/features/students/ui/panel.tsx");
 
     expect(
-      resolvesInside(importer, "@/lib/services/admin-service", [servicesRoot]),
+      resolvesInside(importer, "@/lib/services/admin-history-read-service", [servicesRoot]),
     ).toBe(true);
     expect(
-      resolvesInside(importer, "../../../lib/services/admin-service", [
+      resolvesInside(importer, "../../../lib/services/admin-history-read-service", [
         servicesRoot,
       ]),
     ).toBe(true);

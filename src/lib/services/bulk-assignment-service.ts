@@ -25,10 +25,8 @@ import {
 } from "@/lib/auth/admin";
 import {
   listAssignmentHistoryBundle,
-  listDatasets,
-  listStudents,
-  listVocabUnits,
-} from "@/lib/services/admin-service";
+} from "@/lib/services/admin-history-read-service";
+import { loadAssignmentPlanningCatalog } from "@/lib/services/admin-student-read-service";
 import {
   calculateRegularAssignmentCapacity,
   createRegularAssignmentPreparationCache,
@@ -750,12 +748,11 @@ async function resolveBulkAssignmentPreview(
     );
   }
   const regularPreparationCache = context.regular;
-  const [students, datasets, units, historyBundle] = await Promise.all([
-    listStudents(),
-    listDatasets(),
-    listVocabUnits(),
+  const [catalog, historyBundle] = await Promise.all([
+    loadAssignmentPlanningCatalog(),
     listAssignmentHistoryBundle({ finalizeStale: false }),
   ]);
+  const { students, datasets, units } = catalog;
   const studentById = new Map(
     students.map((student) => [student.id, student]),
   );

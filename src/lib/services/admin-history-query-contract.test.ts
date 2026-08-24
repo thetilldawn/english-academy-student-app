@@ -4,7 +4,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 const source = fs.readFileSync(
-  path.resolve("src/lib/services/admin-service.ts"),
+  path.resolve("src/lib/services/admin-history-read-service.ts"),
   "utf8",
 );
 const quizSource = fs.readFileSync(

@@ -3,9 +3,9 @@ import { AppConfigurationError } from "@/lib/env";
 import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
 import {
   createStudent,
-  listStudents,
   StudentCreationError,
-} from "@/lib/services/admin-service";
+} from "@/lib/services/admin-student-command-service";
+import { listStudents } from "@/lib/services/admin-student-read-service";
 import { createStudentSchema } from "@/lib/validation";
 
 export async function GET() {

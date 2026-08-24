@@ -1,14 +1,11 @@
+import { buildStudentProgress } from "@/lib/admin/progress";
+import { listAssignmentHistoryBundle } from "@/lib/services/admin-history-read-service";
 import {
-  buildStudentProgress,
-  listAssignmentHistoryBundle,
-  listDatasets,
   listStudentCurrentVocabWrongSummaries,
   listStudentClassGroups,
-  listStudentLearningSources,
   listStudentPendingReviewSummaries,
-  listStudents,
-  listVocabUnits,
-} from "@/lib/services/admin-service";
+  loadStudentDirectoryBundle,
+} from "@/lib/services/admin-student-read-service";
 import { listVocabTimeTemplates } from "@/lib/services/vocab-time-template-service";
 import { listVocabAssignmentQueueSummaries } from "@/lib/services/vocab-assignment-queue-service";
 import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
@@ -17,28 +14,28 @@ export async function loadAssignmentManagerData(): Promise<
   AssignmentManagerData
 > {
   const [
-    datasets,
-    students,
-    units,
+    directory,
     historyBundle,
     pendingReviewSummaries,
     currentVocabWrongSummaries,
-    learningSources,
     classGroups,
     timeTemplates,
     assignmentQueues,
   ] = await Promise.all([
-    listDatasets(),
-    listStudents(),
-    listVocabUnits(),
+    loadStudentDirectoryBundle(),
     listAssignmentHistoryBundle({ finalizeStale: false }),
     listStudentPendingReviewSummaries(),
     listStudentCurrentVocabWrongSummaries(),
-    listStudentLearningSources(),
     listStudentClassGroups(),
     listVocabTimeTemplates(),
     listVocabAssignmentQueueSummaries(),
   ]);
+  const {
+    allDatasets: datasets,
+    assignmentUnits: units,
+    learningSources,
+    students,
+  } = directory;
 
   return {
     datasets,

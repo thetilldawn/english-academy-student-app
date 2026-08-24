@@ -63,7 +63,12 @@ describe("student management feature boundary", () => {
     const loader = source(
       "src/features/students/server/load-student-management-data.ts",
     );
-    const service = source("src/lib/services/admin-service.ts");
+    const studentReadService = source(
+      "src/lib/services/admin-student-read-service.ts",
+    );
+    const materialReadService = source(
+      "src/lib/services/admin-material-read-service.ts",
+    );
 
     expect(page).toContain("loadStudentManagementData()");
     expect(page).not.toMatch(
@@ -72,11 +77,14 @@ describe("student management feature boundary", () => {
     expect(loader).toContain("loadStudentDirectoryBundle()");
     expect(loader).toContain("getAppOrigin()");
     expect(loader).not.toContain("getServerEnvironment");
-    expect(service).toContain("export async function loadStudentDirectoryBundle");
-    expect(service).toContain("toSelectableDatasetOptions(allDatasets)");
-    expect(service).toContain('dataset.status === "ready"');
-    expect(service).toContain("dataset.isActive");
-    expect(service).toContain("dataset.isAssignable");
+    expect(studentReadService).toContain(
+      "export async function loadStudentDirectoryBundle",
+    );
+    expect(studentReadService).toContain("loadAdminMaterialSnapshot(supabase)");
+    expect(materialReadService).toContain("toSelectableDatasetOptions(allDatasets)");
+    expect(materialReadService).toContain('dataset.status === "ready"');
+    expect(materialReadService).toContain("dataset.isActive");
+    expect(materialReadService).toContain("dataset.isAssignable");
   });
 
   it("keeps retired student selectors out of the global cascade", () => {

@@ -41,6 +41,26 @@ export type CataloguedDataset = {
   catalogSortIndex: number;
 };
 
+export type RawCataloguedDataset = {
+  id: string;
+  title: string;
+  edition?: string | null;
+};
+
+export type DatasetCatalogMetadata = {
+  displayName: string;
+  catalogGroup: DatasetCatalogGroup;
+  materialKind: DatasetMaterialKind;
+  gradeCode: string | null;
+  publisher: string | null;
+  seriesTitle: string | null;
+  academicYear: number | null;
+  curriculumRevision: string | null;
+  editionLabel: string | null;
+  isAssignable: boolean;
+  sortIndex: number;
+};
+
 export type CataloguedUnit = {
   catalogGroup: DatasetCatalogGroup | null;
   unitType: VocabUnitType | null;
@@ -61,6 +81,30 @@ const catalogGroupLabels: Record<DatasetCatalogGroup, string> = {
 
 export function datasetCatalogGroupLabel(group: DatasetCatalogGroup) {
   return catalogGroupLabels[group];
+}
+
+export function cataloguedDatasetFromMetadata(
+  dataset: RawCataloguedDataset,
+  catalog: DatasetCatalogMetadata | undefined,
+): CataloguedDataset {
+  return {
+    id: dataset.id,
+    title: dataset.title,
+    edition: dataset.edition ?? null,
+    displayName:
+      catalog?.displayName ??
+      datasetDisplayLabel(dataset.title, dataset.edition),
+    catalogGroup: catalog?.catalogGroup ?? "high",
+    materialKind: catalog?.materialKind ?? null,
+    gradeCode: catalog?.gradeCode ?? null,
+    publisher: catalog?.publisher ?? null,
+    seriesTitle: catalog?.seriesTitle ?? null,
+    academicYear: catalog?.academicYear ?? null,
+    curriculumRevision: catalog?.curriculumRevision ?? null,
+    editionLabel: catalog?.editionLabel ?? null,
+    isAssignable: catalog?.isAssignable ?? true,
+    catalogSortIndex: catalog?.sortIndex ?? 1000,
+  };
 }
 
 function prefixLabel(dataset: CataloguedDataset) {

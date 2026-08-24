@@ -10,7 +10,7 @@ import {
   AdminDeletionError,
   deleteStudent,
 } from "@/lib/services/admin-deletion-service";
-import { updateStudentProfile } from "@/lib/services/admin-service";
+import { updateStudentProfile } from "@/lib/services/admin-student-command-service";
 import { updateStudentProfileSchema } from "@/lib/validation";
 
 export async function PATCH(

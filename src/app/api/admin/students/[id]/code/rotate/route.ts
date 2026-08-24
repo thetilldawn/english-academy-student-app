@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { getAdminContext } from "@/lib/auth/admin";
 import { jsonError, isSameOriginRequest } from "@/lib/http";
-import { rotateStudentCode } from "@/lib/services/admin-service";
+import { rotateStudentCode } from "@/lib/services/admin-student-command-service";
 
 export async function POST(
   request: Request,

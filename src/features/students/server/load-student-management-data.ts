@@ -3,13 +3,14 @@ import "server-only";
 import { buildStudentVocabBookHistory } from "@/lib/admin/student-vocab-book-history";
 import { getAppOrigin } from "@/lib/env";
 import {
-  buildStudentProgress,
   listAssignmentHistoryBundle,
+} from "@/lib/services/admin-history-read-service";
+import { buildStudentProgress } from "@/lib/admin/progress";
+import {
   listStudentCurrentVocabWrongSummaries,
   loadStudentDirectoryBundle,
   listStudentPendingReviewSummaries,
-  listVocabUnits,
-} from "@/lib/services/admin-service";
+} from "@/lib/services/admin-student-read-service";
 
 import type { StudentManagementData } from "../model";
 
@@ -18,17 +19,16 @@ export async function loadStudentManagementData(): Promise<
 > {
   const [
     directory,
-    assignmentUnits,
     historyBundle,
     pendingReviewSummaries,
     currentVocabWrongSummaries,
   ] = await Promise.all([
     loadStudentDirectoryBundle(),
-    listVocabUnits(),
     listAssignmentHistoryBundle(),
     listStudentPendingReviewSummaries(),
     listStudentCurrentVocabWrongSummaries(),
   ]);
+  const assignmentUnits = directory.assignmentUnits;
   const history = historyBundle.history;
 
   return {

@@ -9,13 +9,15 @@ function source(relativePath: string) {
 
 describe("admin current-vocabulary wrong summary query", () => {
   it("reads one paged aggregate RPC instead of loading every history", () => {
-    const adminService = source("src/lib/services/admin-service.ts");
+    const adminService = source(
+      "src/lib/services/admin-student-read-service.ts",
+    );
     const start = adminService.indexOf(
       "export async function listStudentCurrentVocabWrongSummaries",
     );
     const body = adminService.slice(
       start,
-      adminService.indexOf("type HistoryStudentRelation", start),
+      adminService.length,
     );
 
     expect(body).toContain(

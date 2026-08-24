@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { EditableHistoryDetailDialog } from "@/features/history/ui/editable-history-detail-dialog";
 import { historyDetailHref } from "@/lib/admin/history-route";
 import { isStudentAssignmentEditable } from "@/lib/admin/assignment-edit";
-import { getAdminHistoryDetail } from "@/lib/services/admin-service";
+import { getAdminHistoryDetail } from "@/lib/services/admin-history-read-service";
 import { loadAssignmentManagerData } from "@/lib/services/assignment-manager-data";
 
 export default async function InterceptedAdminResultDetailPage({

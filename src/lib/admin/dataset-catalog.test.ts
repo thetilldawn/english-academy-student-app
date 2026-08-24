@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   cataloguedDatasetDisplayLabel,
+  cataloguedDatasetFromMetadata,
   groupCataloguedDatasets,
   groupCataloguedUnits,
   type CataloguedDataset,
@@ -30,6 +31,41 @@ function dataset(
 }
 
 describe("vocabulary dataset catalog", () => {
+  it("builds the same fallback and catalogued shape from raw dataset rows", () => {
+    expect(cataloguedDatasetFromMetadata({
+      id: "raw",
+      title: "VOCA",
+      edition: "2026",
+    }, undefined)).toMatchObject({
+      id: "raw",
+      displayName: "VOCA · 2026",
+      catalogGroup: "high",
+      isAssignable: true,
+      catalogSortIndex: 1000,
+    });
+    expect(cataloguedDatasetFromMetadata({
+      id: "catalogued",
+      title: "raw title",
+    }, {
+      displayName: "표시 제목",
+      catalogGroup: "middle",
+      materialKind: "textbook",
+      gradeCode: "m1",
+      publisher: "출판사",
+      seriesTitle: "시리즈",
+      academicYear: 2026,
+      curriculumRevision: "2022",
+      editionLabel: null,
+      isAssignable: false,
+      sortIndex: 7,
+    })).toMatchObject({
+      displayName: "표시 제목",
+      catalogGroup: "middle",
+      isAssignable: false,
+      catalogSortIndex: 7,
+    });
+  });
+
   it("formats textbook revision and exam year without changing raw titles", () => {
     expect(
       cataloguedDatasetDisplayLabel(

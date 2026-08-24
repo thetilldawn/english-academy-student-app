@@ -5,7 +5,7 @@ import {
 } from "@/features/history/ui/overview-action-groups";
 import { adminOverviewText } from "@/content/ko/admin-overview";
 import { overviewActivityGroups } from "@/features/history/domain/learning-activity";
-import { listAssignmentHistoryBundle } from "@/lib/services/admin-service";
+import { listAssignmentHistoryBundle } from "@/lib/services/admin-history-read-service";
 
 export const metadata: Metadata = {
   title: adminOverviewText.page.title,

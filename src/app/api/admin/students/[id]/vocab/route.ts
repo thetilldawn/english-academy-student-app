@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { getAdminContext } from "@/lib/auth/admin";
 import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
-import { setStudentCurrentDataset } from "@/lib/services/admin-service";
+import { setStudentCurrentDataset } from "@/lib/services/admin-student-command-service";
 import { updateStudentVocabSchema } from "@/lib/validation";
 
 export async function PATCH(

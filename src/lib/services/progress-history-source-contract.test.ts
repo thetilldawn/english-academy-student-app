@@ -35,4 +35,30 @@ describe("student progress history source contract", () => {
       "listAssignmentHistoryBundle({ finalizeStale: false })",
     );
   });
+
+  it("loads shared student and material data once per server workflow", () => {
+    const studentManagement = source(
+      "src/features/students/server/load-student-management-data.ts",
+    );
+    const assignmentManager = source(
+      "src/lib/services/assignment-manager-data.ts",
+    );
+    const bulkAssignments = source(
+      "src/lib/services/bulk-assignment-service.ts",
+    );
+
+    expect(studentManagement).toContain("loadStudentDirectoryBundle()");
+    expect(assignmentManager).toContain("loadStudentDirectoryBundle()");
+    expect(bulkAssignments).toContain("loadAssignmentPlanningCatalog()");
+
+    for (const workflow of [
+      studentManagement,
+      assignmentManager,
+      bulkAssignments,
+    ]) {
+      expect(workflow).not.toMatch(
+        /\blistStudents\(\)|\blistDatasets\(\)|\blistVocabUnits\(\)|\blistStudentLearningSources\(\)/,
+      );
+    }
+  });
 });

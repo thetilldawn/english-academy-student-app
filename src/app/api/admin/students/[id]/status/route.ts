@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { getAdminContext } from "@/lib/auth/admin";
 import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
-import { setStudentStatus } from "@/lib/services/admin-service";
+import { setStudentStatus } from "@/lib/services/admin-student-command-service";
 
 const statusSchema = z.object({
   status: z.enum(["active", "blocked"]),

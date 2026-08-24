@@ -107,7 +107,9 @@ describe("student catalog and modal UI contract", () => {
   });
 
   it("현재 목록에서는 취소·삭제를 빼고 전체 내역에서만 보존한다", () => {
-    const service = source("src/lib/services/admin-service.ts");
+    const service = source(
+      "src/lib/services/admin-history-read-service.ts",
+    );
     const activityList = source(
       "src/features/history/ui/student-learning-activity-list.tsx",
     );

@@ -2,7 +2,7 @@ import { getAdminContext } from "@/lib/auth/admin";
 import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
 import {
   listAssignments,
-} from "@/lib/services/admin-service";
+} from "@/lib/services/admin-assignment-read-service";
 import {
   AssignmentCreationError,
   createRegularAssignment,

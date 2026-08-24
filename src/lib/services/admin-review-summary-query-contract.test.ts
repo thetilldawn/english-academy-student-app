@@ -9,7 +9,9 @@ function source(relativePath: string) {
 
 describe("admin pending-review summary query", () => {
   it("학생별 상세 이력 N+1 대신 집계 RPC를 커서로 이어 읽는다", () => {
-    const adminService = source("src/lib/services/admin-service.ts");
+    const adminService = source(
+      "src/lib/services/admin-student-read-service.ts",
+    );
     const functionBody = adminService.slice(
       adminService.indexOf(
         "export async function listStudentPendingReviewSummaries",

@@ -2,13 +2,13 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { datasetDisplayLabel } from "@/lib/admin/dataset-display";
 import {
+  cataloguedDatasetFromMetadata,
   cataloguedDatasetDisplayLabel,
-  type CataloguedDataset,
   type DatasetCatalogGroup,
   type DatasetMaterialKind,
 } from "@/lib/admin/dataset-catalog";
-import { datasetDisplayLabel } from "@/lib/admin/dataset-display";
 
 type RawDataset = {
   id: string;
@@ -31,28 +31,22 @@ type CatalogRow = {
   sort_index: number;
 };
 
-function toCataloguedDataset(
-  dataset: RawDataset,
-  catalog: CatalogRow | undefined,
-): CataloguedDataset {
-  return {
-    id: dataset.id,
-    title: dataset.title,
-    edition: dataset.edition ?? null,
-    displayName:
-      catalog?.display_name ??
-      datasetDisplayLabel(dataset.title, dataset.edition),
-    catalogGroup: catalog?.catalog_group ?? "high",
-    materialKind: catalog?.material_kind ?? null,
-    gradeCode: catalog?.grade_code ?? null,
-    publisher: catalog?.publisher ?? null,
-    seriesTitle: catalog?.series_title ?? null,
-    academicYear: catalog?.academic_year ?? null,
-    curriculumRevision: catalog?.curriculum_revision ?? null,
-    editionLabel: catalog?.edition_label ?? null,
-    isAssignable: catalog?.is_assignable ?? true,
-    catalogSortIndex: catalog?.sort_index ?? 1000,
-  };
+function catalogMetadata(catalog: CatalogRow | undefined) {
+  return catalog
+    ? {
+        displayName: catalog.display_name,
+        catalogGroup: catalog.catalog_group,
+        materialKind: catalog.material_kind,
+        gradeCode: catalog.grade_code,
+        publisher: catalog.publisher,
+        seriesTitle: catalog.series_title,
+        academicYear: catalog.academic_year,
+        curriculumRevision: catalog.curriculum_revision,
+        editionLabel: catalog.edition_label,
+        isAssignable: catalog.is_assignable,
+        sortIndex: catalog.sort_index,
+      }
+    : undefined;
 }
 
 export async function loadDatasetDisplayLabelMap(
@@ -84,7 +78,10 @@ export async function loadDatasetDisplayLabelMap(
     datasets.map((dataset) => [
       dataset.id,
       cataloguedDatasetDisplayLabel(
-        toCataloguedDataset(dataset, catalogById.get(dataset.id)),
+        cataloguedDatasetFromMetadata(
+          dataset,
+          catalogMetadata(catalogById.get(dataset.id)),
+        ),
       ),
     ]),
   );

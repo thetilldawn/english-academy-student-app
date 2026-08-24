@@ -48,7 +48,9 @@ describe("regular assignment scope contract", () => {
   });
 
   it("keeps regular preparation out of the integrated admin service", () => {
-    const adminService = source("src/lib/services/admin-service.ts");
+    const adminService = source(
+      "src/lib/services/admin-history-read-service.ts",
+    );
     const bulkService = source("src/lib/services/bulk-assignment-service.ts");
     const replacementPreparation = source(
       "src/lib/services/assignment-replacement-preparation-service.ts",

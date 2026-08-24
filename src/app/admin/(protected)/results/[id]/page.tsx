@@ -5,7 +5,7 @@ import { EditableHistoryDetailPage } from "@/features/history/ui/editable-histor
 import { adminHistoryText } from "@/content/ko/admin-history";
 import { historyDetailHref } from "@/lib/admin/history-route";
 import { isStudentAssignmentEditable } from "@/lib/admin/assignment-edit";
-import { getAdminHistoryDetail } from "@/lib/services/admin-service";
+import { getAdminHistoryDetail } from "@/lib/services/admin-history-read-service";
 import { loadAssignmentManagerData } from "@/lib/services/assignment-manager-data";
 
 export const metadata: Metadata = {

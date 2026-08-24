@@ -54,17 +54,22 @@ describe("admin deletion UI contract", () => {
   });
 
   it("삭제된 학생·시험은 목록에서 빠지고 과거 내역은 삭제됨으로 남는다", () => {
-    const adminService = source("src/lib/services/admin-service.ts");
+    const studentReadService = source(
+      "src/lib/services/admin-student-read-service.ts",
+    );
+    const historyReadService = source(
+      "src/lib/services/admin-history-read-service.ts",
+    );
     const quizService = source("src/lib/services/quiz-service.ts");
     const detailActions = source(
       "src/features/history/ui/history-detail-actions.tsx",
     );
 
-    expect(adminService).toContain('.is("deleted_at", null)');
-    expect(adminService).toContain('"삭제됨"');
-    expect(adminService).toContain("admin_history_hidden_entries");
-    expect(adminService).toContain("HISTORY_PAGE_SIZE");
-    expect(adminService).toContain(
+    expect(studentReadService).toContain('.is("deleted_at", null)');
+    expect(historyReadService).toContain('"삭제됨"');
+    expect(historyReadService).toContain("admin_history_hidden_entries");
+    expect(historyReadService).toContain("HISTORY_PAGE_SIZE");
+    expect(historyReadService).toContain(
       ".range(from, from + HISTORY_PAGE_SIZE - 1)",
     );
     expect(quizService).toContain('.is("deleted_at", null)');

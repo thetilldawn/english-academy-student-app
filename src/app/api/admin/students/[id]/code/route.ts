@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { getAdminContext } from "@/lib/auth/admin";
 import { jsonError } from "@/lib/http";
-import { revealStudentCode } from "@/lib/services/admin-service";
+import { revealStudentCode } from "@/lib/services/admin-student-command-service";
 
 export async function GET(
   _request: Request,
