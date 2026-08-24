@@ -36,6 +36,7 @@ export function StudentHistoryPanel({
           initialCurriculumStage={student.readingCurriculumStage}
           initialDatasetId={student.currentVocabDatasetId ?? ""}
           initialReadingContextSyncStatus={student.readingContextSyncStatus}
+          key={student.id}
           onDataUpdated={controller.actions.refreshData}
           onLoaded={controller.actions.cacheWrongWordHistory}
           studentId={student.id}
