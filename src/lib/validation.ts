@@ -737,6 +737,7 @@ export const assignmentCapacitySchema = z
     datasetId: z.uuid(),
     primaryUnitIds: z.array(z.uuid()).min(1).max(500),
     includePendingReview: z.boolean(),
+    reviewSource: z.enum(["pending", "current_wrong"]).optional(),
     reviewLevels: z.array(mixedReviewLevelSchema).max(2),
     reviewScope: reviewScopeSchema.optional(),
     englishToKoreanRatio: z.union([
@@ -948,6 +949,7 @@ export const mixedAssignmentSchema = mixedAssignmentBaseSchema.superRefine(
 
 export const directReviewAssignmentSchema = mixedAssignmentBaseSchema
   .extend({
+    idempotencyKey: z.uuid(),
     totalQuestionCount: z.number().int().min(1).max(500),
   })
   .superRefine(refineMixedAssignmentSettings)

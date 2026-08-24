@@ -57,7 +57,7 @@ export function DirectReviewAssignmentSections({
   fieldErrors: Partial<Record<DirectReviewFieldKey, string>>;
   student: AssignmentStudentItem;
 }) {
-  const { capacity, draft, knownLevelCounts } = controller;
+  const { capacity, draft, knownLevelCounts, summary } = controller;
   const dataset = datasets.find((candidate) => candidate.id === draft.datasetId);
   const rangeStatus = fieldErrors.dataset || fieldErrors.reviewLevels ||
     fieldErrors.questionCount || fieldErrors.preview
@@ -70,7 +70,13 @@ export function DirectReviewAssignmentSections({
   const scheduleStatus = fieldErrors.timing || fieldErrors.deadline
     ? "일정 확인"
     : null;
-  const countText = capacity.status === "loading"
+  const countText = summary.status === "loading" || summary.status === "idle"
+    ? "현재 오답 단어 계산 중…"
+    : summary.status === "error"
+      ? summary.message
+      : controller.totalAvailableCount === 0
+        ? "현재 배정할 오답이 없습니다."
+        : capacity.status === "loading"
     ? "오답 문항 계산 중…"
     : capacity.status === "error"
       ? capacity.message
@@ -172,7 +178,7 @@ export function DirectReviewAssignmentSections({
             aria-live="polite"
             className={styles.reviewCalculation}
             data-field-key="questionCount"
-            data-status={capacity.status}
+            data-status={summary.status === "ready" ? capacity.status : summary.status}
             role="status"
             tabIndex={-1}
           >

@@ -99,7 +99,9 @@ function reviewController(
     draft: { questionCount: status === "ready" ? 1 : 0 },
     fieldErrors: {},
     firstFieldKey: null,
+    summary: { status, value: [], message: "" },
     submitting: false,
+    userEdited: false,
   };
 }
 
@@ -151,6 +153,27 @@ describe("오답 단일 배정 제출", () => {
         .disabled,
     ).toBe(true);
     expect(mocks.reviewSubmit).not.toHaveBeenCalled();
+  });
+
+  it("시험 종류만 확인하고 닫을 때 변경 폐기 확인을 띄우지 않는다", () => {
+    mocks.useReview.mockReturnValue(reviewController("ready", true));
+    const confirm = vi.spyOn(window, "confirm");
+    const onClose = vi.fn();
+
+    render(
+      <VocabAssignmentPlanner
+        data={data}
+        onClose={onClose}
+        onSuccess={vi.fn()}
+        selectionMode="single"
+        students={[student]}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "오답 시험" }));
+    fireEvent.click(screen.getByRole("button", { name: "닫기" }));
+
+    expect(confirm).not.toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it("계산이 끝난 1문항 오답 시험을 정확히 한 번 제출하고 닫는다", async () => {

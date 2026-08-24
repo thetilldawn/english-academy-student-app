@@ -1,5 +1,6 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
 import { z } from "zod";
 
 import { isAssignmentPersistenceInvariantFailure } from "@/lib/admin/assignment-database-error";
@@ -26,11 +27,61 @@ export class DirectReviewAssignmentError extends Error {
   }
 }
 
+function directReviewRequestSha256(input: DirectReviewAssignmentInput) {
+  return createHash("sha256")
+    .update(JSON.stringify({
+      studentId: input.studentId,
+      datasetId: input.datasetId,
+      primaryUnitIds: [...input.primaryUnitIds],
+      reviewLevels: [...input.reviewLevels].toSorted(),
+      reviewScope: input.reviewScope ?? "dataset",
+      totalQuestionCount: input.totalQuestionCount,
+      title: input.title,
+      englishToKoreanRatio: input.englishToKoreanRatio,
+      timeLimitSeconds: input.timeLimitSeconds,
+      passingScore: input.passingScore,
+      retryEnabled: input.retryEnabled,
+      retryPassingScore: input.retryPassingScore,
+      questionOrderMode: input.questionOrderMode,
+      availableUntil: input.availableUntil,
+      timingMode: input.timingMode ?? "total",
+      questionTimeLimitSeconds: input.questionTimeLimitSeconds ?? null,
+    }), "utf8")
+    .digest("hex");
+}
+
 export async function createDirectReviewAssignment(
   input: DirectReviewAssignmentInput,
   authenticatedAdmin?: AdminContext,
 ): Promise<string> {
   if (!authenticatedAdmin) await requireAdmin();
+
+  const supabase = await createServerSupabaseClient();
+  const requestSha256 = directReviewRequestSha256(input);
+  const previous = await supabase.rpc(
+    "get_current_wrong_review_assignment_result_v1",
+    {
+      p_student_id: input.studentId,
+      p_dataset_id: input.datasetId,
+      p_idempotency_key: input.idempotencyKey,
+      p_request_sha256: requestSha256,
+    },
+  );
+  if (previous.error) {
+    throw new DirectReviewAssignmentError(
+      previous.error.code === "42501"
+        ? "forbidden"
+        : previous.error.code === "23505"
+          ? "conflict"
+          : "database",
+    );
+  }
+  if (previous.data !== null) {
+    if (!z.uuid().safeParse(previous.data).success) {
+      throw new DirectReviewAssignmentError("database");
+    }
+    return previous.data as string;
+  }
 
   let prepared;
   try {
@@ -45,7 +96,7 @@ export async function createDirectReviewAssignment(
     throw error;
   }
 
-  const queueCount = prepared.selectedQueueIds.length;
+  const queueCount = prepared.sourceQuestionIds.length;
   const questionCount = prepared.questions.length;
   if (
     queueCount !== input.totalQuestionCount ||
@@ -59,13 +110,15 @@ export async function createDirectReviewAssignment(
     );
   }
 
-  const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc(
-    "create_exact_review_assignment_v7",
+    "create_current_wrong_review_assignment_v1",
     {
       p_student_id: prepared.studentId,
       p_dataset_id: prepared.datasetId,
-      p_selected_queue_ids: prepared.selectedQueueIds,
+      p_review_levels: prepared.reviewLevels,
+      p_source_question_ids: prepared.sourceQuestionIds,
+      p_idempotency_key: input.idempotencyKey,
+      p_request_sha256: requestSha256,
       p_title: prepared.title,
       p_english_to_korean_ratio: prepared.englishToKoreanRatio,
       p_time_limit_seconds: prepared.timeLimitSeconds,
@@ -90,7 +143,7 @@ export async function createDirectReviewAssignment(
       ? "database"
       : error.code === "42501"
         ? "forbidden"
-        : error.code === "40001"
+        : error.code === "40001" || error.code === "23505"
           ? "conflict"
           : ["22023", "P0002", "23503", "23505"].includes(error.code)
             ? "invalid_selection"

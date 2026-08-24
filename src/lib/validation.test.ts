@@ -686,6 +686,7 @@ describe("DAY+오답 혼합 시험 입력 계약", () => {
     for (const totalQuestionCount of [1, 2, 3]) {
       const input = {
         ...validInput,
+        idempotencyKey: studentId,
         reviewScope: "dataset" as const,
         totalQuestionCount,
       };
@@ -696,15 +697,29 @@ describe("DAY+오답 혼합 시험 입력 계약", () => {
     }
     expect(directReviewAssignmentSchema.safeParse({
       ...validInput,
+      idempotencyKey: studentId,
       reviewScope: "dataset",
       totalQuestionCount: 0,
     }).success).toBe(false);
     expect(directReviewAssignmentSchema.safeParse({
       ...validInput,
+      idempotencyKey: studentId,
       reviewScope: "dataset",
       totalQuestionCount: 401,
     }).success).toBe(false);
   });
+
+  it.each([undefined, "not-a-uuid"])(
+    "독립 오답 시험의 멱등키 %s를 거절한다",
+    (idempotencyKey) => {
+      expect(directReviewAssignmentSchema.safeParse({
+        ...validInput,
+        idempotencyKey,
+        reviewScope: "dataset",
+        totalQuestionCount: 1,
+      }).success).toBe(false);
+    },
+  );
 
   it.each([
     ["queueIds", [studentId]],

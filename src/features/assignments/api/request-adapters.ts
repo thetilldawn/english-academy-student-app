@@ -115,11 +115,13 @@ function deadlineToIso(deadline: AssignmentDeadline): string | null {
 
 export function buildDirectReviewAssignmentRequest(
   draft: DirectReviewAssignmentDraft,
+  idempotencyKey: string,
 ): DirectReviewAssignmentRequest {
   return {
     endpoint: "/api/admin/exact-review-assignments",
     method: "POST",
     body: {
+      idempotencyKey,
       studentId: draft.studentId,
       datasetId: draft.datasetId,
       primaryUnitIds: [...draft.primaryUnitIds],

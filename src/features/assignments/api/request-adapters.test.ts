@@ -176,11 +176,13 @@ describe("assignment request adapters", () => {
       deadline: { mode: "none" },
     };
 
-    const request = buildDirectReviewAssignmentRequest(draft);
+    const idempotencyKey = "99999999-9999-4999-8999-999999999999";
+    const request = buildDirectReviewAssignmentRequest(draft, idempotencyKey);
 
     expect(request.endpoint).toBe("/api/admin/exact-review-assignments");
     expect(request.method).toBe("POST");
     expect(request.body).toMatchObject({
+      idempotencyKey,
       studentId: assignmentContractIds.studentA,
       datasetId: assignmentContractIds.dataset,
       primaryUnitIds: [...reverseUnitIds],

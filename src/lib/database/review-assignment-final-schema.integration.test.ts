@@ -1012,6 +1012,45 @@ describe.sequential("final review-assignment database schema", () => {
         makeBatch("Sparse overlap", firstWindow.from, firstWindow.until),
       );
 
+      const readExistingOverlapAssignments = () => sparseDatabase.query<{
+        id: string;
+        title: string;
+        status: string;
+        available_from: string;
+        available_until: string;
+        updated_at: string;
+        deleted_at: string | null;
+        cancelled_at: string | null;
+        missed_at: string | null;
+      }>(`
+        select
+          assignment.id,
+          assignment.title,
+          assignment.status::text as status,
+          assignment.available_from::text as available_from,
+          assignment.available_until::text as available_until,
+          assignment.updated_at::text as updated_at,
+          assignment.deleted_at::text as deleted_at,
+          recipient.cancelled_at::text as cancelled_at,
+          recipient.missed_at::text as missed_at
+        from public.assignments as assignment
+        join public.assignment_students as recipient
+          on recipient.assignment_id = assignment.id
+        where recipient.student_id = '${ids.student}'
+          and assignment.title in (
+            'Sparse first',
+            'Sparse overlap',
+            'Future overlap'
+          )
+        order by assignment.title;
+      `);
+      const firstWindowAssignmentsBeforeQueue =
+        await readExistingOverlapAssignments();
+      expect(firstWindowAssignmentsBeforeQueue.rows.map((row) => row.title)).toEqual([
+        "Sparse first",
+        "Sparse overlap",
+      ]);
+
       const seriesPayload = [{
         student_id: ids.student,
         dataset_id: ids.dataset,
@@ -1046,12 +1085,22 @@ describe.sequential("final review-assignment database schema", () => {
           $series$${JSON.stringify(seriesPayload)}$series$::jsonb
         );
       `);
+      expect((await readExistingOverlapAssignments()).rows).toEqual(
+        firstWindowAssignmentsBeforeQueue.rows,
+      );
 
       await createBulk(
         "00000000-0000-4000-8000-000000000504",
         "d".repeat(64),
         makeBatch("Future overlap", secondWindow.from, secondWindow.until),
       );
+      const existingAssignmentsBeforeFollowUp =
+        await readExistingOverlapAssignments();
+      expect(existingAssignmentsBeforeFollowUp.rows.map((row) => row.title)).toEqual([
+        "Future overlap",
+        "Sparse first",
+        "Sparse overlap",
+      ]);
       const firstQueueItem = await sparseDatabase.query<{
         assignment_id: string;
       }>(`
@@ -1151,6 +1200,9 @@ describe.sequential("final review-assignment database schema", () => {
       expect(materialized.rows[0]?.result).toEqual([
         expect.objectContaining({ status: "assigned" }),
       ]);
+      expect((await readExistingOverlapAssignments()).rows).toEqual(
+        existingAssignmentsBeforeFollowUp.rows,
+      );
     } finally {
       await sparseDatabase.close();
     }
@@ -4778,6 +4830,343 @@ describe.sequential("assignment retry rules", () => {
       );
     } finally {
       await database.close();
+    }
+  }, 60_000);
+
+  it("finds unresolved wrong words without a manual queue and creates the direct review assignment idempotently", async () => {
+    const directReviewDatabase = await createFinalSchemaDatabase();
+    try {
+      await seedReviewAssignmentScenario(directReviewDatabase);
+      await directReviewDatabase.exec(
+        "delete from public.student_vocab_review_queue;",
+      );
+
+      await directReviewDatabase.exec("set role authenticated;");
+      const sourceAssignment = await directReviewDatabase.query<{
+        assignment_id: string;
+      }>(`
+        select public.create_assignment_with_delivery_v7(
+          'Current wrong source fixture',
+          '${ids.dataset}',
+          array['${ids.units[0]}'::uuid, '${ids.units[4]}'::uuid],
+          4,
+          100::smallint,
+          300,
+          80::smallint,
+          false,
+          null,
+          'fixed',
+          null,
+          array['${ids.student}'::uuid],
+          'total',
+          null,
+          $questions$${mixedQuestions}$questions$::jsonb
+        ) as assignment_id;
+      `);
+      await directReviewDatabase.exec("reset role;");
+
+      const sourceAttempt = await directReviewDatabase.query<{
+        attempt_id: string;
+      }>(`
+        select public.create_quiz_attempt_from_bank(
+          '${ids.student}',
+          '${sourceAssignment.rows[0]!.assignment_id}'
+        ) as attempt_id;
+      `);
+      const sourceAttemptId = sourceAttempt.rows[0]!.attempt_id;
+      const sourceQuestions = await directReviewDatabase.query<{
+        correct_choice_index: number;
+        id: string;
+        vocab_entry_id: number;
+      }>(`
+        select id, vocab_entry_id, correct_choice_index
+        from public.quiz_questions
+        where attempt_id = '${sourceAttemptId}'
+        order by order_index;
+      `);
+      for (const [index, question] of sourceQuestions.rows.entries()) {
+        const choice = index === 0
+          ? (question.correct_choice_index + 1) % 4
+          : question.correct_choice_index;
+        await directReviewDatabase.query(`
+          select public.answer_quiz_question_v4(
+            '${ids.student}',
+            '${sourceAttemptId}',
+            '${question.id}',
+            'initial',
+            ${choice}::smallint,
+            false
+          );
+        `);
+        const nextQuestion = sourceQuestions.rows[index + 1];
+        if (nextQuestion) {
+          await directReviewDatabase.query(`
+            select public.resume_quiz_after_feedback_v2(
+              '${ids.student}',
+              '${sourceAttemptId}',
+              '${nextQuestion.id}',
+              'initial',
+              0
+            );
+          `);
+        }
+      }
+
+      const manualQueue = await directReviewDatabase.query<{ count: number }>(`
+        select count(*)::integer as count
+        from public.student_vocab_review_queue
+        where student_id = '${ids.student}';
+      `);
+      expect(manualQueue.rows[0]?.count).toBe(0);
+
+      await directReviewDatabase.exec("set role authenticated;");
+      const summaries = await directReviewDatabase.query<{
+        dataset_id: string;
+        level_1_count: number;
+        level_2_count: number;
+        total_count: number;
+      }>(`
+        select dataset_id, level_1_count, level_2_count, total_count
+        from public.list_student_direct_review_dataset_summaries_v1(
+          '${ids.student}'
+        );
+      `);
+      const candidates = await directReviewDatabase.query<{
+        existing_queue_id: string | null;
+        reason_level: number;
+        source_question_id: string;
+        vocab_entry_id: number;
+        wrong_count: number;
+      }>(`
+        select
+          source_question_id,
+          vocab_entry_id,
+          reason_level,
+          wrong_count,
+          existing_queue_id
+        from public.list_student_direct_review_candidates_v1(
+          '${ids.student}',
+          '${ids.dataset}',
+          array[1]::smallint[],
+          400
+        );
+      `);
+      expect(summaries.rows).toEqual([{
+        dataset_id: ids.dataset,
+        level_1_count: 1,
+        level_2_count: 0,
+        total_count: 1,
+      }]);
+      expect(candidates.rows).toHaveLength(1);
+      expect(candidates.rows[0]).toMatchObject({
+        existing_queue_id: null,
+        reason_level: 1,
+        vocab_entry_id: sourceQuestions.rows[0]!.vocab_entry_id,
+        wrong_count: 1,
+      });
+
+      const requestKey = "00000000-0000-4000-8000-000000000888";
+      const requestHash = "8".repeat(64);
+      const selectedCandidate = candidates.rows[0]!;
+      const directQuestion = JSON.stringify([{
+        vocab_entry_id: selectedCandidate.vocab_entry_id,
+        base_order_index: 1,
+        direction: "english_to_korean",
+        choice_vocab_entry_ids: [1, 2, 3, 4],
+      }]);
+      await expectPostgresError(
+        directReviewDatabase.query(
+          `select public.create_current_wrong_review_assignment_v1(
+            $1::uuid,
+            $2::uuid,
+            array[1]::smallint[],
+            array['00000000-0000-4000-8000-000000000777'::uuid],
+            '00000000-0000-4000-8000-000000000887'::uuid,
+            $3::text,
+            'Stale current wrong direct review',
+            100::smallint,
+            300,
+            80::smallint,
+            true,
+            80::smallint,
+            'fixed',
+            null,
+            'total',
+            null,
+            $4::jsonb
+          )`,
+          [ids.student, ids.dataset, "7".repeat(64), directQuestion],
+        ),
+        "40001",
+        "current_wrong_review_snapshot_changed",
+      );
+      await directReviewDatabase.exec("reset role;");
+      const rolledBack = await directReviewDatabase.query<{
+        assignment_count: number;
+        queue_count: number;
+        request_count: number;
+      }>(`
+        select
+          (
+            select count(*)::integer
+            from public.assignments
+            where title = 'Stale current wrong direct review'
+          ) as assignment_count,
+          (
+            select count(*)::integer
+            from public.student_vocab_review_queue
+            where student_id = '${ids.student}'
+          ) as queue_count,
+          (
+            select count(*)::integer
+            from private.current_wrong_review_assignment_requests
+            where idempotency_key =
+              '00000000-0000-4000-8000-000000000887'
+          ) as request_count;
+      `);
+      expect(rolledBack.rows[0]).toEqual({
+        assignment_count: 0,
+        queue_count: 0,
+        request_count: 0,
+      });
+      await directReviewDatabase.exec("set role authenticated;");
+      const createDirectReview = () => directReviewDatabase.query<{
+        assignment_id: string;
+      }>(
+        `select public.create_current_wrong_review_assignment_v1(
+          $1::uuid,
+          $2::uuid,
+          array[1]::smallint[],
+          array[$3::uuid],
+          $4::uuid,
+          $5::text,
+          'Current wrong direct review',
+          100::smallint,
+          300,
+          80::smallint,
+          true,
+          80::smallint,
+          'fixed',
+          null,
+          'total',
+          null,
+          $6::jsonb
+        ) as assignment_id`,
+        [
+          ids.student,
+          ids.dataset,
+          selectedCandidate.source_question_id,
+          requestKey,
+          requestHash,
+          directQuestion,
+        ],
+      );
+      const firstCreation = await createDirectReview();
+      const replayedCreation = await createDirectReview();
+      expect(replayedCreation.rows[0]?.assignment_id).toBe(
+        firstCreation.rows[0]?.assignment_id,
+      );
+      await expectPostgresError(
+        directReviewDatabase.query(
+          `select public.get_current_wrong_review_assignment_result_v1(
+            $1::uuid,
+            $2::uuid,
+            $3::uuid,
+            $4::text
+          )`,
+          [ids.student, ids.dataset, requestKey, "9".repeat(64)],
+        ),
+        "23505",
+        "idempotency_key_reused",
+      );
+
+      await directReviewDatabase.exec("reset role;");
+      const persisted = await directReviewDatabase.query<{
+        assignment_count: number;
+        audit_count: number;
+        completed_request_count: number;
+        queue_count: number;
+        target_count: number;
+      }>(`
+        select
+          (
+            select count(*)::integer
+            from public.assignments
+            where id = '${firstCreation.rows[0]!.assignment_id}'
+          ) as assignment_count,
+          (
+            select count(*)::integer
+            from public.audit_events
+            where event_type =
+              'assignment.current_wrong_review_v1_created'
+          ) as audit_count,
+          (
+            select count(*)::integer
+            from private.current_wrong_review_assignment_requests
+            where idempotency_key = '${requestKey}'
+              and assignment_id = '${firstCreation.rows[0]!.assignment_id}'
+              and completed_at is not null
+          ) as completed_request_count,
+          (
+            select count(*)::integer
+            from public.student_vocab_review_queue
+            where student_id = '${ids.student}'
+              and status = 'pending'
+          ) as queue_count,
+          (
+            select count(*)::integer
+            from public.assignment_review_targets
+            where assignment_id = '${firstCreation.rows[0]!.assignment_id}'
+          ) as target_count;
+      `);
+      expect(persisted.rows[0]).toEqual({
+        assignment_count: 1,
+        audit_count: 1,
+        completed_request_count: 1,
+        queue_count: 1,
+        target_count: 1,
+      });
+
+      await directReviewDatabase.exec("set role authenticated;");
+      const remaining = await directReviewDatabase.query<{
+        total_count: number;
+      }>(`
+        select total_count
+        from public.list_student_direct_review_dataset_summaries_v1(
+          '${ids.student}'
+        );
+      `);
+      expect(remaining.rows).toEqual([]);
+      await directReviewDatabase.exec("reset role;");
+
+      const reviewAttempt = await directReviewDatabase.query<{
+        attempt_id: string;
+      }>(`
+        select public.create_quiz_attempt_from_bank(
+          '${ids.student}',
+          '${firstCreation.rows[0]!.assignment_id}'
+        ) as attempt_id;
+      `);
+      const reviewAttemptState = await directReviewDatabase.query<{
+        question_count: number;
+        question_count_snapshot: number;
+      }>(`
+        select
+          attempt.question_count_snapshot,
+          (
+            select count(*)::integer
+            from public.quiz_questions as question
+            where question.attempt_id = attempt.id
+          ) as question_count
+        from public.quiz_attempts as attempt
+        where attempt.id = '${reviewAttempt.rows[0]!.attempt_id}';
+      `);
+      expect(reviewAttemptState.rows[0]).toEqual({
+        question_count: 1,
+        question_count_snapshot: 1,
+      });
+    } finally {
+      await directReviewDatabase.close();
     }
   }, 60_000);
 

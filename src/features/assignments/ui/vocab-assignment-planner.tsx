@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/design-system/primitives/button/button";
@@ -59,8 +59,8 @@ export function VocabAssignmentPlanner({
   });
   const reviewController = useDirectReviewAssignmentController({
     datasets: controller.readyDatasets,
+    enabled: assignmentPurpose === "review",
     initialDatasetId,
-    pendingReviewSummaries: data.pendingReviewSummaries ?? [],
     student: students[0]!,
     units: data.units,
   });
@@ -76,23 +76,35 @@ export function VocabAssignmentPlanner({
     ? reviewController.fieldErrors
     : {};
   const formRef = useRef<HTMLFormElement>(null);
-  const draftSignature = JSON.stringify({
-    assignmentPurpose,
-    range: {
-      exam: bulk.state.draft,
-      planner: controller.planner,
-    },
-    review: {
-      ...reviewController.draft,
-      questionCount: 0,
-    },
+  const rangeDraftSignature = JSON.stringify({
+    exam: bulk.state.draft,
+    planner: controller.planner,
   });
-  const initialDraftSignatureRef = useRef(draftSignature);
-
+  const reviewDraftSignature = JSON.stringify({
+    ...reviewController.draft,
+    questionCount: 0,
+  });
+  const initialRangeDraftSignatureRef = useRef(rangeDraftSignature);
+  const initialReviewDraftSignatureRef = useRef(reviewDraftSignature);
+  useEffect(() => {
+    if (
+      reviewController.summary.status === "ready" &&
+      !reviewController.userEdited
+    ) {
+      initialReviewDraftSignatureRef.current = reviewDraftSignature;
+    }
+  }, [
+    reviewController.summary.status,
+    reviewController.userEdited,
+    reviewDraftSignature,
+  ]);
   function requestClose() {
     if (busy) return;
+    const draftChanged =
+      rangeDraftSignature !== initialRangeDraftSignatureRef.current ||
+      reviewDraftSignature !== initialReviewDraftSignatureRef.current;
     if (
-      draftSignature !== initialDraftSignatureRef.current &&
+      draftChanged &&
       !window.confirm("입력한 배정 내용을 버리고 닫을까요?")
     ) {
       return;

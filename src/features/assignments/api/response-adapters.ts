@@ -23,6 +23,41 @@ const assignmentCreationResponseSchema = z
   .object({ assignmentId: z.uuid() })
   .strict();
 
+const directReviewDatasetSummariesResponseSchema = z
+  .object({
+    summaries: z.array(
+      z
+        .object({
+          datasetId: z.uuid(),
+          level1Count: nonNegativeInteger,
+          level2Count: nonNegativeInteger,
+          totalCount: nonNegativeInteger,
+          latestWrongAt: z.iso.datetime({ offset: true }).nullable(),
+        })
+        .strict(),
+    ),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    const ids = value.summaries.map((summary) => summary.datasetId);
+    if (new Set(ids).size !== ids.length) {
+      context.addIssue({
+        code: "custom",
+        path: ["summaries"],
+        message: "같은 단어장의 오답 요약이 중복되었습니다.",
+      });
+    }
+    value.summaries.forEach((summary, index) => {
+      if (summary.level1Count + summary.level2Count !== summary.totalCount) {
+        context.addIssue({
+          code: "custom",
+          path: ["summaries", index, "totalCount"],
+          message: "오답 단계별 합계가 전체와 다릅니다.",
+        });
+      }
+    });
+  });
+
 const assignmentReplacementResponseSchema = z
   .object({
     status: z.literal("replaced"),
@@ -239,6 +274,9 @@ export type AssignmentCapacityResponse = z.infer<
 export type AssignmentCreationResponse = z.infer<
   typeof assignmentCreationResponseSchema
 >;
+export type DirectReviewDatasetSummariesResponse = z.infer<
+  typeof directReviewDatasetSummariesResponseSchema
+>;
 export type AssignmentReplacementResponse = z.infer<
   typeof assignmentReplacementResponseSchema
 >;
@@ -265,6 +303,12 @@ export function parseAssignmentCreationResponse(
   value: unknown,
 ): AssignmentCreationResponse {
   return assignmentCreationResponseSchema.parse(value);
+}
+
+export function parseDirectReviewDatasetSummariesResponse(
+  value: unknown,
+): DirectReviewDatasetSummariesResponse {
+  return directReviewDatasetSummariesResponseSchema.parse(value);
 }
 
 export function parseAssignmentReplacementResponse(

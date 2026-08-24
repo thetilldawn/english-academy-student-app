@@ -3,13 +3,6 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 
 import { koreanDateTimeLocalToIso } from "@/lib/deadline";
-import {
-  availableReviewCount,
-  emptyPendingReviewCounts,
-  indexStudentPendingReviewSummaries,
-  pendingReviewSummaryKey,
-  type StudentPendingReviewSummary,
-} from "@/lib/admin/review-queue-summary";
 
 import {
   buildDirectReviewAssignmentRequest,
@@ -17,7 +10,9 @@ import {
 import {
   parseAssignmentCapacityResponse,
   parseAssignmentCreationResponse,
+  parseDirectReviewDatasetSummariesResponse,
   type AssignmentCapacityResponse,
+  type DirectReviewDatasetSummariesResponse,
 } from "../api/response-adapters";
 import type {
   AssignmentDatasetItem,
@@ -28,6 +23,7 @@ import {
   createInitialDirectReviewDraft,
   directReviewQuestionCountError,
   reduceDirectReviewDraft,
+  type DirectReviewDraftAction,
 } from "../domain/direct-review-draft";
 import type {
   AssignmentDeadline,
@@ -59,6 +55,16 @@ type CapacityState =
   | { status: "loading"; value: AssignmentCapacityResponse | null; message: "" }
   | { status: "ready"; value: AssignmentCapacityResponse; message: "" }
   | { status: "error"; value: null; message: string };
+
+type SummaryState =
+  | { status: "idle"; value: readonly []; message: "" }
+  | { status: "loading"; value: readonly []; message: "" }
+  | {
+      status: "ready";
+      value: DirectReviewDatasetSummariesResponse["summaries"];
+      message: "";
+    }
+  | { status: "error"; value: readonly []; message: string };
 
 function preferredDatasetId(
   datasets: readonly AssignmentDatasetItem[],
@@ -93,32 +99,34 @@ function timingError(timing: ExamTiming) {
 
 export function useDirectReviewAssignmentController({
   datasets,
+  enabled = true,
   initialDatasetId,
-  pendingReviewSummaries = [],
   student,
   transport = browserAssignmentTransport,
   units,
 }: {
   datasets: readonly AssignmentDatasetItem[];
+  enabled?: boolean;
   initialDatasetId: string;
-  pendingReviewSummaries?: readonly StudentPendingReviewSummary[];
   student: AssignmentStudentItem;
   transport?: AssignmentTransport;
   units: readonly AssignmentUnitItem[];
 }) {
-  const pendingReviewIndex = useMemo(
-    () => indexStudentPendingReviewSummaries(pendingReviewSummaries),
-    [pendingReviewSummaries],
+  const [summary, setSummary] = useState<SummaryState>({
+    status: "idle",
+    value: [],
+    message: "",
+  });
+  const summaryByDatasetId = useMemo(
+    () => new Map(summary.value.map((item) => [item.datasetId, item])),
+    [summary.value],
   );
   const datasetOptions = useMemo(
     () => datasets.flatMap((dataset) => {
-      const counts = pendingReviewIndex.byStudentDataset.get(
-        pendingReviewSummaryKey(student.id, dataset.id),
-      ) ?? emptyPendingReviewCounts();
-      const count = availableReviewCount(counts);
+      const count = summaryByDatasetId.get(dataset.id)?.totalCount ?? 0;
       return count > 0 ? [{ dataset, count }] : [];
     }),
-    [datasets, pendingReviewIndex, student.id],
+    [datasets, summaryByDatasetId],
   );
   const totalAvailableCount = datasetOptions.reduce(
     (total, option) => total + option.count,
@@ -126,11 +134,11 @@ export function useDirectReviewAssignmentController({
   );
   const initialDataset = useMemo(
     () => preferredDatasetId(
-      datasetOptions.map((option) => option.dataset),
+      datasets,
       student,
       initialDatasetId,
     ),
-    [datasetOptions, initialDatasetId, student],
+    [datasets, initialDatasetId, student],
   );
   const initialUnitIds = useMemo(
     () =>
@@ -155,21 +163,116 @@ export function useDirectReviewAssignmentController({
     value: null,
     message: "",
   });
-  const [knownLevelCounts, setKnownLevelCounts] = useState({
-    level1: null as number | null,
-    level2: null as number | null,
-  });
+  const knownLevelCounts = useMemo(() => {
+    const selectedSummary = summaryByDatasetId.get(draft.datasetId);
+    return {
+      level1: selectedSummary?.level1Count ?? null,
+      level2: selectedSummary?.level2Count ?? null,
+    };
+  }, [draft.datasetId, summaryByDatasetId]);
   const [submission, setSubmission] = useState({
     status: "idle" as "idle" | "submitting" | "error",
     message: "",
   });
+  const [userEdited, setUserEdited] = useState(false);
   const [openedAt] = useState(() => Date.now());
   const submittingRef = useRef(false);
-  const calculationPrerequisitesReady = Boolean(draft.datasetId) &&
+  const idempotencyRef = useRef<{
+    fingerprint: string;
+    key: string;
+  } | null>(null);
+  const calculationPrerequisitesReady = enabled &&
+    summary.status === "ready" &&
+    Boolean(draft.datasetId) &&
     draft.primaryUnitIds.length > 0 &&
     draft.reviewLevels.length > 0;
-  const calculationPending = calculationPrerequisitesReady &&
-    (capacity.status === "idle" || capacity.status === "loading");
+  const calculationPending = enabled && (
+    summary.status === "idle" ||
+    summary.status === "loading" ||
+    (calculationPrerequisitesReady &&
+      (capacity.status === "idle" || capacity.status === "loading"))
+  );
+
+  useEffect(() => {
+    if (!enabled) return;
+    const abortController = new AbortController();
+    void (async () => {
+      await Promise.resolve();
+      if (abortController.signal.aborted) return;
+      setCapacity({ status: "idle", value: null, message: "" });
+      setSummary({ status: "loading", value: [], message: "" });
+      try {
+        const response = await transport({
+          signal: abortController.signal,
+          url: `/api/admin/students/${student.id}/direct-review-summaries`,
+        });
+        if (!response.ok) {
+          throw new Error(assignmentTransportError(
+            response.data,
+            "현재 오답 단어 수를 불러오지 못했습니다.",
+          ));
+        }
+        const value = parseDirectReviewDatasetSummariesResponse(response.data);
+        if (abortController.signal.aborted) return;
+        setSummary({ status: "ready", value: value.summaries, message: "" });
+      } catch (error) {
+        if (abortController.signal.aborted) return;
+        setSummary({
+          status: "error",
+          value: [],
+          message: error instanceof Error && error.message
+            ? error.message
+            : "현재 오답 단어 수를 불러오지 못했습니다.",
+        });
+      }
+    })();
+    return () => abortController.abort();
+  }, [enabled, student.id, transport]);
+
+  useEffect(() => {
+    if (!enabled || summary.status !== "ready") return;
+    const selectedSummary = summaryByDatasetId.get(draft.datasetId);
+    if (selectedSummary) return;
+    const nextDatasetId = preferredDatasetId(
+      datasetOptions.map((option) => option.dataset),
+      student,
+      initialDatasetId,
+    );
+    const primaryUnitIds = units
+      .filter((unit) => unit.datasetId === nextDatasetId)
+      .toSorted((left, right) => left.sortIndex - right.sortIndex)
+      .map((unit) => unit.id);
+    const selectionChanged = draft.datasetId !== nextDatasetId ||
+      draft.primaryUnitIds.length !== primaryUnitIds.length ||
+      draft.primaryUnitIds.some(
+        (unitId, index) => unitId !== primaryUnitIds[index],
+      );
+    if (selectionChanged) {
+      let cancelled = false;
+      void Promise.resolve().then(() => {
+        if (cancelled) return;
+        setCapacity({ status: "idle", value: null, message: "" });
+        dispatch({
+          type: "dataset_changed",
+          datasetId: nextDatasetId,
+          primaryUnitIds,
+        });
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+  }, [
+    datasetOptions,
+    draft.datasetId,
+    draft.primaryUnitIds,
+    enabled,
+    initialDatasetId,
+    student,
+    summary.status,
+    summaryByDatasetId,
+    units,
+  ]);
 
   useEffect(() => {
     if (!calculationPrerequisitesReady) {
@@ -190,6 +293,7 @@ export function useDirectReviewAssignmentController({
             datasetId: draft.datasetId,
             primaryUnitIds: [...draft.primaryUnitIds],
             includePendingReview: true,
+            reviewSource: "current_wrong",
             reviewLevels: [...draft.reviewLevels],
             reviewScope: "dataset",
             englishToKoreanRatio: draft.exam.directionRatio,
@@ -209,26 +313,6 @@ export function useDirectReviewAssignmentController({
         const value = parseAssignmentCapacityResponse(response.data);
         if (abortController.signal.aborted) return;
         setCapacity({ status: "ready", value, message: "" });
-        setKnownLevelCounts((current) => ({
-          level1: draft.reviewLevels.includes(1)
-            ? value.wrongLevel1Eligible
-            : current.level1,
-          level2: draft.reviewLevels.includes(2)
-            ? value.wrongLevel2Eligible
-            : current.level2,
-        }));
-        if (
-          draft.reviewLevels.includes(1) &&
-          value.wrongLevel1Eligible === 0
-        ) {
-          dispatch({ type: "review_level_toggled", level: 1 });
-        }
-        if (
-          draft.reviewLevels.includes(2) &&
-          value.wrongLevel2Eligible === 0
-        ) {
-          dispatch({ type: "review_level_toggled", level: 2 });
-        }
         dispatch({ type: "question_count_resolved", value: value.wrongEligible });
       } catch (error) {
         if (abortController.signal.aborted) return;
@@ -263,7 +347,9 @@ export function useDirectReviewAssignmentController({
     if (draft.reviewLevels.length === 0) {
       errors.reviewLevels = "단계 선택";
     }
-    if (capacity.status === "error") errors.preview = "계산 확인";
+    if (summary.status === "error" || capacity.status === "error") {
+      errors.preview = "계산 확인";
+    }
     if (capacity.status === "ready") {
       const questionCountError = directReviewQuestionCountError({
         questionCount: draft.questionCount,
@@ -295,7 +381,7 @@ export function useDirectReviewAssignmentController({
       if (!iso || Date.parse(iso) <= openedAt) errors.deadline = "마감 확인";
     }
     return errors;
-  }, [capacity, draft, openedAt]);
+  }, [capacity, draft, openedAt, summary.status]);
   const firstFieldKey = (
     [
       "dataset",
@@ -311,16 +397,18 @@ export function useDirectReviewAssignmentController({
     ] as const
   ).find((key) => fieldErrors[key]) ?? null;
   const canSubmit =
+    enabled &&
+    summary.status === "ready" &&
     capacity.status === "ready" &&
     Object.keys(fieldErrors).length === 0 &&
     submission.status !== "submitting";
 
   function changeDataset(datasetId: string) {
+    setUserEdited(true);
     const primaryUnitIds = units
       .filter((unit) => unit.datasetId === datasetId)
       .toSorted((left, right) => left.sortIndex - right.sortIndex)
       .map((unit) => unit.id);
-    setKnownLevelCounts({ level1: null, level2: null });
     setCapacity({ status: "idle", value: null, message: "" });
     dispatch({ type: "dataset_changed", datasetId, primaryUnitIds });
   }
@@ -330,13 +418,20 @@ export function useDirectReviewAssignmentController({
       ? knownLevelCounts.level1
       : knownLevelCounts.level2;
     if (knownCount === 0) return;
+    setUserEdited(true);
     setCapacity({ status: "idle", value: null, message: "" });
     dispatch({ type: "review_level_toggled", level });
   }
 
   function changeDirection(value: AssignmentDirectionRatio) {
+    setUserEdited(true);
     setCapacity({ status: "idle", value: null, message: "" });
     dispatch({ type: "direction_changed", value });
+  }
+
+  function dispatchUserAction(action: DirectReviewDraftAction) {
+    setUserEdited(true);
+    dispatch(action);
   }
 
   async function submit() {
@@ -353,7 +448,17 @@ export function useDirectReviewAssignmentController({
     submittingRef.current = true;
     setSubmission({ status: "submitting", message: "" });
     try {
-      const request = buildDirectReviewAssignmentRequest(draft);
+      const fingerprint = JSON.stringify(draft);
+      if (idempotencyRef.current?.fingerprint !== fingerprint) {
+        idempotencyRef.current = {
+          fingerprint,
+          key: crypto.randomUUID(),
+        };
+      }
+      const request = buildDirectReviewAssignmentRequest(
+        draft,
+        idempotencyRef.current.key,
+      );
       const response = await transport({
         body: request.body,
         method: request.method,
@@ -387,22 +492,22 @@ export function useDirectReviewAssignmentController({
     actions: {
       changeDataset,
       changeDeadline: (deadline: AssignmentDeadline) =>
-        dispatch({ type: "deadline_changed", deadline }),
+        dispatchUserAction({ type: "deadline_changed", deadline }),
       changeDirection,
       changeOrder: (value: AssignmentQuestionOrderMode) =>
-        dispatch({ type: "order_changed", value }),
+        dispatchUserAction({ type: "order_changed", value }),
       changePassingScore: (value: number) =>
-        dispatch({ type: "passing_score_changed", value }),
+        dispatchUserAction({ type: "passing_score_changed", value }),
       changeRetryEnabled: (enabled: boolean) =>
-        dispatch({ type: "retry_enabled_changed", enabled }),
+        dispatchUserAction({ type: "retry_enabled_changed", enabled }),
       changeRetryPassingScore: (value: number) =>
-        dispatch({ type: "retry_passing_score_changed", value }),
+        dispatchUserAction({ type: "retry_passing_score_changed", value }),
       changeTimeLimitEnabled: (enabled: boolean) =>
-        dispatch({ type: "time_limit_changed", enabled }),
+        dispatchUserAction({ type: "time_limit_changed", enabled }),
       changeTiming: (timing: ExamTiming) =>
-        dispatch({ type: "timing_changed", timing }),
+        dispatchUserAction({ type: "timing_changed", timing }),
       changeTimingMode: (mode: ExamTiming["mode"]) =>
-        dispatch({ type: "timing_mode_changed", mode }),
+        dispatchUserAction({ type: "timing_mode_changed", mode }),
       submit,
       toggleReviewLevel,
     },
@@ -414,8 +519,10 @@ export function useDirectReviewAssignmentController({
     firstFieldKey,
     knownLevelCounts,
     datasetOptions,
+    summary,
+    userEdited,
     totalAvailableCount,
-    message: submission.message || capacity.message,
+    message: submission.message || capacity.message || summary.message,
     submitting: submission.status === "submitting",
   };
 }
