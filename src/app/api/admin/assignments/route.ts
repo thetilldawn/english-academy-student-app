@@ -1,10 +1,12 @@
 import { getAdminContext } from "@/lib/auth/admin";
 import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
 import {
-  AssignmentCreationError,
-  createAssignment,
   listAssignments,
 } from "@/lib/services/admin-service";
+import {
+  AssignmentCreationError,
+  createRegularAssignment,
+} from "@/lib/services/regular-assignment-service";
 import { assignmentSchema } from "@/lib/admin/regular-assignment-request";
 
 export async function GET() {
@@ -24,7 +26,8 @@ export async function POST(request: Request) {
     return jsonError("허용되지 않은 요청입니다.", 403);
   }
 
-  if (!(await getAdminContext())) {
+  const admin = await getAdminContext();
+  if (!admin) {
     return jsonError("관리자 로그인이 필요합니다.", 401);
   }
 
@@ -34,7 +37,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const assignmentId = await createAssignment(input);
+    const assignmentId = await createRegularAssignment(input, admin);
     return Response.json({ assignmentId }, { status: 201 });
   } catch (error) {
     if (error instanceof AssignmentCreationError) {

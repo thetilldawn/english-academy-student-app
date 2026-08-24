@@ -41,9 +41,11 @@ describe("bulk assignment preparation cache contract", () => {
     const mixedAssignments = source(
       "src/lib/services/mixed-assignment-service.ts",
     );
-    const adminService = source("src/lib/services/admin-service.ts");
+    const regularAssignments = source(
+      "src/lib/services/regular-assignment-service.ts",
+    );
 
-    for (const serviceSource of [mixedAssignments, adminService]) {
+    for (const serviceSource of [mixedAssignments, regularAssignments]) {
       expect(serviceSource).toContain(
         "supabase: createServerSupabaseClient()",
       );
@@ -53,6 +55,6 @@ describe("bulk assignment preparation cache contract", () => {
     expect(mixedAssignments).toContain("datasets: new Map()");
     expect(mixedAssignments).toContain("reviewQueues: new Map()");
     expect(mixedAssignments).toContain("datasetLabels: new Map()");
-    expect(adminService).toContain("datasets: new Map()");
+    expect(regularAssignments).toContain("datasets: new Map()");
   });
 });

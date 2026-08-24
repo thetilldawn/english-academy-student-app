@@ -26,16 +26,18 @@ import {
   type AdminContext,
 } from "@/lib/auth/admin";
 import {
-  createRegularAssignmentPreparationCache,
-  loadRegularAssignmentSeriesCandidates,
   listAssignmentHistoryBundle,
   listDatasets,
   listStudents,
   listVocabUnits,
+} from "@/lib/services/admin-service";
+import {
+  createRegularAssignmentPreparationCache,
+  loadRegularAssignmentSeriesCandidates,
   prepareRegularAssignment,
   type PreparedRegularAssignment,
   type RegularAssignmentPreparationCache,
-} from "@/lib/services/admin-service";
+} from "@/lib/services/regular-assignment-service";
 import {
   calculateAssignmentCapacity,
   calculateAssignmentSeriesCapacity,

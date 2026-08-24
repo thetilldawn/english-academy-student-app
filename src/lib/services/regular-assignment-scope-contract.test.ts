@@ -13,17 +13,17 @@ function compact(value: string) {
 
 describe("regular assignment scope contract", () => {
   it("builds regular questions and capacity from the selected units only", () => {
-    const adminService = compact(
-      source("src/lib/services/admin-service.ts"),
+    const regularService = compact(
+      source("src/lib/services/regular-assignment-service.ts"),
     );
     const mixedService = compact(
       source("src/lib/services/mixed-assignment-service.ts"),
     );
 
-    expect(adminService).toContain(
+    expect(regularService).toContain(
       "const choiceCandidates = allCandidates.filter( (candidate) => unitIdSet.has(candidate.unitId)",
     );
-    expect(adminService).toContain(
+    expect(regularService).toContain(
       "buildAssignmentQuestionPlan({ requiredTargets, primaryCandidates: selectablePrimaryCandidates, allCandidates: choiceCandidates,",
     );
     expect(mixedService).toContain(
@@ -35,15 +35,32 @@ describe("regular assignment scope contract", () => {
   });
 
   it("orders the base question bank by the teacher's selected unit direction", () => {
-    const adminService = compact(
-      source("src/lib/services/admin-service.ts"),
+    const regularService = compact(
+      source("src/lib/services/regular-assignment-service.ts"),
     );
 
-    expect(adminService).toContain(
+    expect(regularService).toContain(
       "const unitPositionById = new Map( orderedUnitIds.map",
     );
-    expect(adminService).toContain(
+    expect(regularService).toContain(
       "unitPositionById.get( unitIdByCandidateId.get(left.vocabEntryId)",
+    );
+  });
+
+  it("keeps regular preparation out of the integrated admin service", () => {
+    const adminService = source("src/lib/services/admin-service.ts");
+    const bulkService = source("src/lib/services/bulk-assignment-service.ts");
+    const replacementPreparation = source(
+      "src/lib/services/assignment-replacement-preparation-service.ts",
+    );
+
+    expect(adminService).not.toContain("prepareRegularAssignment");
+    expect(adminService).not.toContain("createRegularAssignment");
+    expect(bulkService).toContain(
+      'from "@/lib/services/regular-assignment-service"',
+    );
+    expect(replacementPreparation).toContain(
+      'from "@/lib/services/regular-assignment-service"',
     );
   });
 

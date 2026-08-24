@@ -40,11 +40,23 @@ vi.mock("@/lib/auth/admin", () => ({
 }));
 
 vi.mock("@/lib/services/assignment-replacement-service", () => ({
+  replaceStudentAssignment: mocks.replaceStudentAssignment,
+}));
+
+vi.mock(
+  "@/lib/services/assignment-replacement-preparation-service",
+  () => ({
+    calculateStudentAssignmentReplacementCapacity:
+      mocks.calculateStudentAssignmentReplacementCapacity,
+  }),
+);
+
+vi.mock("@/lib/services/assignment-edit-source-service", () => ({
   getStudentAssignmentEditDraft:
     mocks.getStudentAssignmentEditDraft,
-  calculateStudentAssignmentReplacementCapacity:
-    mocks.calculateStudentAssignmentReplacementCapacity,
-  replaceStudentAssignment: mocks.replaceStudentAssignment,
+}));
+
+vi.mock("@/lib/services/assignment-replacement-errors", () => ({
   AssignmentReplacementError: mocks.AssignmentReplacementError,
 }));
 

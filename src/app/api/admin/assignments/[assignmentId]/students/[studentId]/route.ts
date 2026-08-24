@@ -11,11 +11,11 @@ import {
   cancelStudentAssignment,
 } from "@/lib/services/assignment-cancellation-service";
 import {
-  AssignmentReplacementError,
-  calculateStudentAssignmentReplacementCapacity,
-  getStudentAssignmentEditDraft,
   replaceStudentAssignment,
 } from "@/lib/services/assignment-replacement-service";
+import { calculateStudentAssignmentReplacementCapacity } from "@/lib/services/assignment-replacement-preparation-service";
+import { getStudentAssignmentEditDraft } from "@/lib/services/assignment-edit-source-service";
+import { AssignmentReplacementError } from "@/lib/services/assignment-replacement-errors";
 import {
   assignmentReplacementPreviewSchema,
   assignmentReplacementSchema,

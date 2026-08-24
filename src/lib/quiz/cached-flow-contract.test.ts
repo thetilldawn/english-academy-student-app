@@ -18,7 +18,9 @@ describe("DAY 문제은행 응시 계약", () => {
     const bulkExamFields = source(
       "src/features/assignments/ui/bulk-exam-fields.tsx",
     );
-    const adminService = source("src/lib/services/admin-service.ts");
+    const regularAssignmentService = source(
+      "src/lib/services/regular-assignment-service.ts",
+    );
     const eligibleLoader = source(
       "src/lib/services/eligible-vocabulary-service.ts",
     );
@@ -32,17 +34,19 @@ describe("DAY 문제은행 응시 계약", () => {
     expect(bulkExamFields).toContain("무작위");
     expect(bulkExamFields).toContain('value === "random"');
     expect(copy).toContain('questionCount: "단어 수"');
-    expect(adminService).toContain(
+    expect(regularAssignmentService).toContain(
       '"create_assignment_with_delivery_v7"',
     );
-    expect(adminService).toContain(
+    expect(regularAssignmentService).toContain(
       "loadEligibleVocabularyDataset(",
     );
-    expect(adminService).toContain("buildAssignmentQuestionPlan({");
-    expect(adminService).toContain("p_available_until");
-    expect(adminService).toContain("base_order_index");
-    expect(adminService).toContain("choice_vocab_entry_ids");
-    expect(adminService).not.toContain(
+    expect(regularAssignmentService).toContain(
+      "buildAssignmentQuestionPlan({",
+    );
+    expect(regularAssignmentService).toContain("p_available_until");
+    expect(regularAssignmentService).toContain("base_order_index");
+    expect(regularAssignmentService).toContain("choice_vocab_entry_ids");
+    expect(regularAssignmentService).not.toContain(
       "correct_choice_index: question.correctChoiceIndex",
     );
     expect(eligibleLoader).toContain(
