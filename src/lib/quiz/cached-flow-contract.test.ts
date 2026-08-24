@@ -24,15 +24,14 @@ describe("DAY 문제은행 응시 계약", () => {
     );
     const copy = source("src/content/ko/admin-learning.ts");
 
-    expect(rangeFields).toContain("adminLearningText.assignmentModal.range.start");
-    expect(rangeFields).toContain("adminLearningText.assignmentModal.range.end");
+    expect(rangeFields).toContain("<AssignmentUnitRangePicker");
+    expect(rangeFields).not.toContain("selectInclusiveUnitRange");
     expect(settingsFields).toContain("<ExamQuestionOrderField");
     expect(bulkExamFields).toContain('trigger="시험 문제 순서"');
     expect(bulkExamFields).toContain("순서대로");
     expect(bulkExamFields).toContain("무작위");
     expect(bulkExamFields).toContain('value === "random"');
-    expect(copy).toContain('start: "시작 {unit}"');
-    expect(copy).toContain('end: "끝 {unit}"');
+    expect(copy).toContain('questionCount: "단어 수"');
     expect(adminService).toContain(
       '"create_assignment_with_delivery_v7"',
     );

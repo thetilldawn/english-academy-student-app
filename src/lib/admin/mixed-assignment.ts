@@ -118,10 +118,16 @@ export function mixedAssignmentGeneratedTitle(
     return `${datasetLabel} · 오답 시험 · ${reviewQuestionCount}문항`;
   }
 
-  const unitRange =
-    units.length === 1
-      ? units[0].unitLabel
-      : `${units[0].unitLabel}~${units.at(-1)?.unitLabel}`;
+  const contiguous = units.every(
+    (unit, index) =>
+      index === 0 ||
+      Math.abs(unit.sortIndex - units[index - 1]!.sortIndex) === 1,
+  );
+  const unitRange = units.length === 1
+    ? units[0].unitLabel
+    : contiguous
+      ? `${units[0].unitLabel}~${units.at(-1)?.unitLabel}`
+      : `${units[0].unitLabel} 외 ${units.length - 1}개`;
   return [
     datasetLabel,
     unitRange,

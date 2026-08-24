@@ -69,7 +69,6 @@ export function AssignmentSummaryPanel({
 
   return (
     <section className={styles.summaryPanel}>
-      <h3>{adminLearningText.assignmentModal.summary.title}</h3>
       <dl className={styles.summaryFacts}>
         <div>
           <dt>{adminLearningText.assignmentModal.summary.wordbook}</dt>
@@ -84,13 +83,8 @@ export function AssignmentSummaryPanel({
           <dd>{rangeLabel}</dd>
         </div>
         <div>
-          <dt>{adminLearningText.assignmentModal.summary.questions}</dt>
-          <dd>
-            {formatContentText(
-              adminLearningText.assignmentModal.edit.questionCount,
-              { count: draft.questionCount.value },
-            )}
-          </dd>
+          <dt>단어 수</dt>
+          <dd>{draft.questionCount.value}개</dd>
         </div>
         <div>
           <dt>{adminLearningText.assignmentModal.summary.timing}</dt>

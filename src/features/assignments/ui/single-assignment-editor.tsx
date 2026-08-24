@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  type FormEvent,
+} from "react";
 import { toast } from "sonner";
 
 import { adminLearningText } from "@/content/ko/admin-learning";
@@ -22,12 +28,10 @@ import {
   assignmentSubmitButtonLabel,
 } from "../presentation/assignment-submit-blocker";
 import { newAssignmentDraftDefaults } from "../presentation/new-assignment-defaults";
-import { AssignmentRangeFields } from "./assignment-range-fields";
-import { AssignmentSection } from "./assignment-section";
-import { AssignmentSettingsFields } from "./assignment-settings-fields";
+import { SingleAssignmentEditorSections } from "./single-assignment-editor-sections";
 import { AssignmentSubmitAction } from "./assignment-submit-action";
-import { AssignmentSummaryPanel } from "./assignment-summary-panel";
 import type { SingleAssignmentEditorProps } from "./single-assignment-editor.types";
+import { useEditAssignmentValidation } from "./use-edit-assignment-validation";
 import styles from "./single-assignment-editor.module.css";
 
 export function SingleAssignmentEditor({
@@ -114,7 +118,16 @@ export function SingleAssignmentEditor({
     reviewMode: controller.state.draft.review.mode,
   });
   const blockedReason = assignmentSubmitBlockerLabel(controller.submitBlocker);
-  const actionReason = controller.message || blockedReason;
+  const {
+    canSubmit: validationCanSubmit,
+    fieldErrors,
+    focusFirstInvalidField,
+    formRef,
+    prepareSubmit,
+    showBlockedReason,
+  } = useEditAssignmentValidation({ blockedReason, controller });
+  const actionReason = controller.message ||
+    (showBlockedReason ? blockedReason : null);
 
   useEffect(() => {
     onBusyChange?.(busy);
@@ -124,23 +137,25 @@ export function SingleAssignmentEditor({
   useEffect(() => {
     onSubmitPresentationChange?.({
       blockedReason: actionReason,
-      canSubmit: controller.canSubmit,
+      canSubmit: validationCanSubmit,
       formId,
       label: submitLabel,
     });
   }, [
     actionReason,
-    controller.canSubmit,
     formId,
     onSubmitPresentationChange,
+    validationCanSubmit,
     submitLabel,
   ]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!prepareSubmit()) return;
     const outcome = await controller.actions.submit();
     if (!outcome.ok) {
       toast.error(outcome.message);
+      focusFirstInvalidField();
       return;
     }
     const edited = "status" in outcome.result;
@@ -179,7 +194,9 @@ export function SingleAssignmentEditor({
           aria-busy={busy}
           className={styles.form}
           id={formId}
+          noValidate
           onSubmit={submit}
+          ref={formRef}
         >
           <fieldset
             className={styles.fieldset}
@@ -188,62 +205,15 @@ export function SingleAssignmentEditor({
             <legend className="sr-only">
               {adminLearningText.assignmentModal.overview.formAria}
             </legend>
-            <div className={styles.sections}>
-                <AssignmentSection
-                  help={adminLearningText.assignmentModal.range.help}
-                  helpLabel={formatContentText(
-                    adminLearningText.assignmentModal.range.helpAria,
-                    { unit: adminLearningText.assignmentModal.range.unitTerm },
-                  )}
-                  index={1}
-                  title={adminLearningText.assignmentModal.range.title}
-                >
-                  <AssignmentRangeFields
-                    controller={controller}
-                    datasets={datasets}
-                    progress={progress}
-                    units={units}
-                  />
-                </AssignmentSection>
-                <AssignmentSection
-                  help={adminLearningText.assignmentModal.conditions.help}
-                  helpLabel={
-                    adminLearningText.assignmentModal.conditions.helpAria
-                  }
-                  index={2}
-                  title={adminLearningText.assignmentModal.conditions.title}
-                >
-                  <AssignmentSettingsFields
-                    controller={controller}
-                    fieldIdPrefix={formId}
-                    part="conditions"
-                  />
-                </AssignmentSection>
-                <AssignmentSection
-                  help="제한시간과 응시 마감 사용 여부를 정합니다."
-                  helpLabel="시험 일정 설명"
-                  index={3}
-                  title="시험 일정"
-                >
-                  <AssignmentSettingsFields
-                    controller={controller}
-                    fieldIdPrefix={formId}
-                    part="schedule"
-                  />
-                </AssignmentSection>
-                <AssignmentSection
-                  help="저장될 범위와 시험 조건을 마지막으로 확인합니다."
-                  helpLabel="시험 미리보기 설명"
-                  index={4}
-                  title="미리보기"
-                >
-                <AssignmentSummaryPanel
-                  controller={controller}
-                  datasets={datasets}
-                  units={units}
-                />
-                </AssignmentSection>
-            </div>
+            <SingleAssignmentEditorSections
+              controller={controller}
+              datasets={datasets}
+              editPurpose={editTarget?.purpose ?? null}
+              fieldErrors={fieldErrors}
+              formId={formId}
+              progress={progress}
+              units={units}
+            />
           </fieldset>
         </form>
       </DialogBody>
@@ -253,7 +223,7 @@ export function SingleAssignmentEditor({
         >
           <AssignmentSubmitAction
             blockedReason={actionReason}
-            canSubmit={controller.canSubmit}
+            canSubmit={validationCanSubmit}
             formId={formId}
             label={submitLabel}
             reasonLayout="remaining-center"

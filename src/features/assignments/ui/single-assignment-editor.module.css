@@ -123,10 +123,6 @@
   gap: var(--space-3);
 }
 
-.summaryPanel > h3 {
-  margin: 0;
-}
-
 .summaryFacts {
   min-width: 0;
   display: grid;

@@ -349,14 +349,14 @@ export function validateSingleAssignmentSubmission(
     issues.push({
       code: "out_of_range",
       path: "questionCount",
-      message: `문항 수는 ${minimum}개부터 500개까지 입력해 주세요.`,
+      message: `단어 수는 ${minimum}개부터 500개까지 입력해 주세요.`,
     });
   }
   if (resolved.questionCount !== draft.questionCount.value) {
     issues.push({
       code: "invalid_order",
       path: "questionCount",
-      message: "화면에 표시된 문항 수를 그대로 사용해 주세요.",
+      message: "화면에 표시된 단어 수를 그대로 사용해 주세요.",
     });
   }
   if (draft.title.mode === "source" && draft.operation.mode === "create") {

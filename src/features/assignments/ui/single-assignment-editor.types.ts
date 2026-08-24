@@ -17,7 +17,11 @@ export type SingleAssignmentEditorProps = {
   availableReviewLevel1: number;
   availableReviewLevel2: number;
   datasets: readonly AssignmentDatasetItem[];
-  editTarget: { assignmentId: string; studentId: string } | null;
+  editTarget: {
+    assignmentId: string;
+    purpose: "regular" | "mixed" | "review";
+    studentId: string;
+  } | null;
   formId?: string;
   initialDatasetId: string;
   initialUnitIds?: readonly string[];

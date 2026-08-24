@@ -18,7 +18,7 @@ export function AssignmentCapacitySummary({
   if (!capacity) {
     return (
       <p aria-busy="true" aria-live="polite" className={styles.capacitySummary}>
-        <span>문항 계산 중…</span>
+        <span>단어 수 계산 중…</span>
       </p>
     );
   }
@@ -60,7 +60,7 @@ export function AssignmentCapacitySummary({
       ) : null}
       <strong>
         {formatContentText(
-          adminLearningText.assignmentModal.range.maximumQuestionCount,
+          "현재 최대 {count}개",
           { count: capacity.maximumQuestionCount.toLocaleString() },
         )}
       </strong>

@@ -1,15 +1,11 @@
 import { Button } from "@/design-system/primitives/button/button";
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-  Input,
-} from "@/design-system/primitives/form/field";
+import { Field, FieldLabel } from "@/design-system/primitives/form/field";
 import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
 import { ConditionalReveal } from "@/design-system/patterns/conditional-reveal/conditional-reveal";
 
 import { buildBulkPlanAudience } from "../presentation/bulk-plan-audience";
 import { ExamQuestionOrderField } from "./bulk-exam-fields";
+import { AssignmentWordCountField } from "./assignment-word-count-field";
 import {
   VocabRangeFields,
   type VocabPlannerFieldsProps,
@@ -108,63 +104,27 @@ export function VocabQuestionFields({
         />
       </ConditionalReveal>
       <ConditionalReveal open={controller.planner.assignmentMode === "word_count"}>
-        <Field>
-          <FieldLabel as="span" id="vocab-question-count-label">
-            <HelpTip label="단어 수 설명" trigger="단어 수">
-              전체는 선택한 범위의 단어를 모두 배정하고, 숫자를 누르면
-              입력한 개수씩 회차에 배정합니다.
-            </HelpTip>
-          </FieldLabel>
-          <div
-            aria-describedby={questionCountError
-              ? "vocab-question-count-error"
-              : undefined}
-            aria-labelledby="vocab-question-count-label"
-            className={styles.wordCountControls}
-            data-field-key="questionCount"
-            role="group"
-            tabIndex={-1}
-          >
-            <Button
-              aria-pressed={controller.planner.questionCountMode === "all"}
-              onClick={() => controller.actions.changeQuestionCountMode("all")}
-              size="small"
-              variant="filter"
-            >
-              전체
-            </Button>
-            <Input
-              aria-label="회차당 단어 수"
-              aria-errormessage={questionCountError
-                ? "vocab-question-count-error"
-                : undefined}
-              aria-invalid={Boolean(questionCountError)}
-              data-active={controller.planner.questionCountMode === "manual"}
-              max={500}
-              min={4}
-              onChange={(event) => {
-                controller.actions.activateManualQuestionCount(
-                  defaultManualCount,
-                );
-                controller.actions.changeManualQuestionCount(
-                  Number(event.target.value),
-                );
-              }}
-              onFocus={() =>
-                controller.actions.activateManualQuestionCount(
-                  defaultManualCount,
-                )
-              }
-              type="number"
-              value={manualCountValue}
-            />
-          </div>
-          {questionCountError ? (
-            <FieldError id="vocab-question-count-error">
-              {questionCountError}
-            </FieldError>
-          ) : null}
-        </Field>
+        <AssignmentWordCountField
+          allSelected={controller.planner.questionCountMode === "all"}
+          error={questionCountError}
+          errorId="vocab-question-count-error"
+          helpText={
+            <>전체는 선택한 범위의 단어를 모두 배정하고, 숫자를 누르면 입력한
+            개수씩 회차에 배정합니다.</>
+          }
+          inputLabel="회차당 단어 수"
+          max={500}
+          min={4}
+          onChange={(value) => {
+            controller.actions.activateManualQuestionCount(defaultManualCount);
+            controller.actions.changeManualQuestionCount(value);
+          }}
+          onFocus={() =>
+            controller.actions.activateManualQuestionCount(defaultManualCount)
+          }
+          onSelectAll={() => controller.actions.changeQuestionCountMode("all")}
+          value={manualCountValue}
+        />
       </ConditionalReveal>
       <ExamQuestionOrderField
         error={selectionModeError}

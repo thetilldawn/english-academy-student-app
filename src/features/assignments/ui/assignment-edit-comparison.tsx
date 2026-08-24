@@ -28,10 +28,10 @@ type ChangeKey =
 const labels: Record<ChangeKey, string> = {
   dataset: adminLearningText.assignmentModal.range.wordbook,
   deadline: adminLearningText.assignmentModal.deadline.label,
-  direction: adminLearningText.controls.direction.label,
-  order: adminLearningText.controls.order.label,
+  direction: "시험 방식",
+  order: "시험 문제 순서",
   passingScore: adminLearningText.controls.passingScore,
-  questionCount: adminLearningText.assignmentModal.conditions.questionCount,
+  questionCount: "단어 수",
   range: adminLearningText.assignmentModal.range.groupFallback,
   retry: "재시험",
   review: adminLearningText.assignmentModal.wrongWords.title,
@@ -194,7 +194,7 @@ export function AssignmentEditComparison({
           {rebuildsQuestions ? (
             <HelpTip
               label={adminLearningText.assignmentModal.edit.rebuildHelpAria}
-              trigger="문항 재생성"
+              trigger="문제 재생성"
             >
               {adminLearningText.assignmentModal.edit.rebuildQuestionsHelp}
             </HelpTip>

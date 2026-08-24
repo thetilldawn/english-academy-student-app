@@ -47,23 +47,3 @@ export function adminPageTitleForPathname(pathname: string) {
 
   return route?.pageTitle ?? adminShellText.pageTitles.overview;
 }
-
-export function adminBreadcrumbForPathname(pathname: string): {
-  current: string;
-  section?: string;
-} {
-  if (/^\/admin\/results\/[^/]+\/?$/.test(pathname)) {
-    return {
-      section: adminShellText.navigation.history,
-      current: adminShellText.pageTitles.resultDetail,
-    };
-  }
-  if (pathname === "/admin/assignments" ||
-    pathname.startsWith("/admin/assignments/")) {
-    return {
-      section: adminShellText.navigation.learning,
-      current: adminShellText.pageTitles.learning,
-    };
-  }
-  return { current: adminPageTitleForPathname(pathname) };
-}

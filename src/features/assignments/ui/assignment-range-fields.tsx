@@ -1,19 +1,16 @@
 import { adminLearningText } from "@/content/ko/admin-learning";
-import { formatContentText } from "@/content/format";
 import {
   Field,
+  FieldError,
   FieldLabel,
   Select,
 } from "@/design-system/primitives/form/field";
+import { Notice } from "@/design-system/patterns/feedback/feedback";
 import {
   cataloguedDatasetDisplayLabel,
   groupCataloguedDatasets,
-  groupCataloguedUnits,
 } from "@/lib/admin/dataset-catalog";
 import { newAssignmentDefaultUnitIds } from "@/lib/admin/new-assignment-range";
-import { selectInclusiveUnitRange } from "@/lib/admin/unit-range";
-import { AssignmentFieldGrid } from "@/components/assignment-editor-ui";
-import { Notice } from "@/design-system/patterns/feedback/feedback";
 
 import type {
   AssignmentDatasetItem,
@@ -21,18 +18,20 @@ import type {
   AssignmentUnitItem,
 } from "../catalog-types";
 import type { SingleAssignmentController } from "../controller/use-assignment-controller";
-import { assignmentUnitRangeLabel } from "../presentation/assignment-unit-range-label";
+import type { AssignmentEditFieldErrors } from "../presentation/assignment-edit-field-errors";
 import { AssignmentCapacitySummary } from "./assignment-capacity-summary";
-import styles from "./single-assignment-editor.module.css";
+import { AssignmentUnitRangePicker } from "./assignment-unit-range-picker";
 
 export function AssignmentRangeFields({
   controller,
   datasets,
+  fieldErrors = {},
   progress,
   units,
 }: {
   controller: SingleAssignmentController;
   datasets: readonly AssignmentDatasetItem[];
+  fieldErrors?: AssignmentEditFieldErrors;
   progress: AssignmentProgressItem | null;
   units: readonly AssignmentUnitItem[];
 }) {
@@ -49,20 +48,8 @@ export function AssignmentRangeFields({
   const datasetUnits = units
     .filter((unit) => unit.datasetId === draft.range.datasetId)
     .toSorted((left, right) => left.sortIndex - right.sortIndex);
-  const unitGroups = groupCataloguedUnits(datasetUnits);
-  const startUnitId = draft.range.orderedUnitIds[0] ?? "";
-  const endUnitId = draft.range.orderedUnitIds.at(-1) ?? startUnitId;
-  const selectedUnits = draft.range.orderedUnitIds.flatMap((unitId) => {
-    const unit = datasetUnits.find((candidate) => candidate.id === unitId);
-    return unit ? [unit] : [];
-  });
-  const usesDayLabels =
-    datasetUnits.length > 0 &&
-    datasetUnits.every((unit) => unit.kind === "day");
-  const unitTerm = usesDayLabels
-    ? adminLearningText.assignmentModal.range.dayTerm
-    : adminLearningText.assignmentModal.range.unitTerm;
-  const selectedLabels = selectedUnits.map((unit) => unit.displayName);
+  const selectedUnitIds = new Set(draft.range.orderedUnitIds);
+  const selectedUnits = datasetUnits.filter((unit) => selectedUnitIds.has(unit.id));
   const sourceWordCount = selectedUnits.reduce(
     (total, unit) => total + unit.entryCount,
     0,
@@ -76,49 +63,53 @@ export function AssignmentRangeFields({
       progress,
       datasetId,
     ).filter((unitId) => nextUnits.some((unit) => unit.id === unitId));
-    const orderedUnitIds =
-      recommendedUnitIds.length > 0
-        ? recommendedUnitIds
-        : nextUnits[0]
-          ? [nextUnits[0].id]
-          : [];
+    const orderedUnitIds = recommendedUnitIds.length > 0
+      ? recommendedUnitIds
+      : nextUnits[0]
+        ? [nextUnits[0].id]
+        : [];
     actions.changeRange(datasetId, orderedUnitIds);
   }
 
-  function changeBoundary(startId: string, endId: string) {
+  function toggleUnit(unitId: string) {
+    const nextSelected = new Set(selectedUnitIds);
+    if (nextSelected.has(unitId)) nextSelected.delete(unitId);
+    else nextSelected.add(unitId);
     actions.changeRange(
       draft.range.datasetId,
-      selectInclusiveUnitRange(datasetUnits, startId, endId).map(
-        (unit) => unit.id,
-      ),
+      datasetUnits
+        .filter((unit) => nextSelected.has(unit.id))
+        .map((unit) => unit.id),
+    );
+  }
+
+  function toggleAll(selected: boolean) {
+    actions.changeRange(
+      draft.range.datasetId,
+      selected ? datasetUnits.map((unit) => unit.id) : [],
     );
   }
 
   return (
     <>
       {isExactReview ? (
-        <Notice>
-          {adminLearningText.assignmentModal.edit.lockedReview}
-        </Notice>
+        <Notice>{adminLearningText.assignmentModal.edit.lockedReview}</Notice>
       ) : null}
-      <Field as="label">
-        <FieldLabel as="span">
-          {adminLearningText.assignmentModal.range.wordbook}
-        </FieldLabel>
+      <Field as="label" data-field-key="dataset" tabIndex={-1}>
+        <FieldLabel as="span">단어장</FieldLabel>
         <Select
+          aria-errormessage={fieldErrors.dataset ? "edit-dataset-error" : undefined}
+          aria-invalid={Boolean(fieldErrors.dataset)}
           disabled={isExactReview}
           onChange={(event) => changeDataset(event.target.value)}
           required
           value={draft.range.datasetId}
         >
-          <option disabled value="">
-            {adminLearningText.assignmentModal.range.selectWordbook}
-          </option>
+          <option disabled value="">단어장 선택</option>
           {selectedDataset &&
           !readyDatasets.some((dataset) => dataset.id === selectedDataset.id) ? (
             <option disabled value={selectedDataset.id}>
-              {cataloguedDatasetDisplayLabel(selectedDataset)} ·{" "}
-              {adminLearningText.assignmentModal.range.assignmentClosed}
+              {cataloguedDatasetDisplayLabel(selectedDataset)} · 배정 종료
             </option>
           ) : null}
           {readyDatasetGroups.map((group) => (
@@ -131,101 +122,21 @@ export function AssignmentRangeFields({
             </optgroup>
           ))}
         </Select>
+        {fieldErrors.dataset ? (
+          <FieldError id="edit-dataset-error">
+            {fieldErrors.dataset}
+          </FieldError>
+        ) : null}
       </Field>
-      <AssignmentFieldGrid>
-        <Field as="label">
-          <FieldLabel as="span">
-            {formatContentText(adminLearningText.assignmentModal.range.start, {
-              unit: unitTerm,
-            })}
-          </FieldLabel>
-          <Select
-            disabled={isExactReview}
-            onChange={(event) =>
-              changeBoundary(event.target.value, endUnitId || event.target.value)
-            }
-            required
-            value={startUnitId}
-          >
-            <option disabled value="">
-              {formatContentText(
-                adminLearningText.assignmentModal.range.selectStart,
-                { unit: unitTerm },
-              )}
-            </option>
-            {unitGroups.map((group) => (
-              <optgroup
-                key={group.group ?? "range"}
-                label={
-                  group.label ??
-                  adminLearningText.assignmentModal.range.groupFallback
-                }
-              >
-                {group.units.map((unit) => (
-                  <option key={unit.id} value={unit.id}>
-                    {formatContentText(
-                      adminLearningText.assignmentModal.range.unitEntryCount,
-                      { count: unit.entryCount, unit: unit.displayName },
-                    )}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </Select>
-        </Field>
-        <Field as="label">
-          <FieldLabel as="span">
-            {formatContentText(adminLearningText.assignmentModal.range.end, {
-              unit: unitTerm,
-            })}
-          </FieldLabel>
-          <Select
-            disabled={isExactReview}
-            onChange={(event) =>
-              changeBoundary(startUnitId || event.target.value, event.target.value)
-            }
-            required
-            value={endUnitId}
-          >
-            <option disabled value="">
-              {formatContentText(
-                adminLearningText.assignmentModal.range.selectEnd,
-                { unit: unitTerm },
-              )}
-            </option>
-            {unitGroups.map((group) => (
-              <optgroup
-                key={group.group ?? "range"}
-                label={
-                  group.label ??
-                  adminLearningText.assignmentModal.range.groupFallback
-                }
-              >
-                {group.units.map((unit) => (
-                  <option key={unit.id} value={unit.id}>
-                    {formatContentText(
-                      adminLearningText.assignmentModal.range.unitEntryCount,
-                      { count: unit.entryCount, unit: unit.displayName },
-                    )}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </Select>
-        </Field>
-      </AssignmentFieldGrid>
-      <p className={styles.selectionSummary}>
-        {formatContentText(
-          adminLearningText.assignmentModal.range.sourceWordCount,
-          {
-            count: sourceWordCount.toLocaleString(),
-            range: assignmentUnitRangeLabel(
-              selectedLabels,
-              selectedUnits.map((unit) => unit.sortIndex),
-            ),
-          },
-        )}
-      </p>
+      <AssignmentUnitRangePicker
+        disabled={isExactReview}
+        error={fieldErrors.range}
+        errorId="edit-range-error"
+        onSelect={toggleUnit}
+        onToggleAll={toggleAll}
+        selectedUnitIds={selectedUnitIds}
+        units={datasetUnits}
+      />
       <AssignmentCapacitySummary
         capacity={capacity}
         exactReview={isExactReview}

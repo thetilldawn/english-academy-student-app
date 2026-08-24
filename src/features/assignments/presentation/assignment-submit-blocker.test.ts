@@ -64,7 +64,7 @@ describe("assignment submit blocker labels", () => {
         editing: true,
         reviewMode: "none",
       }),
-    ).toBe("변경 내용 저장");
+    ).toBe("변경 저장");
     expect(
       assignmentSubmitButtonLabel({
         busy: false,

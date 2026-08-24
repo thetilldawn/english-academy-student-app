@@ -44,7 +44,10 @@ export function EditableHistoryDetailPage({
           }
         >
           <DetailHeader
-            subtitle={detail.summary.studentName}
+            subtitle={[
+              detail.summary.studentName,
+              detail.summary.schoolName || "학교 미입력",
+            ].join(" · ")}
             title={adminLearningText.assignmentModal.header.editTitle}
             titleId="history-detail-page-title"
             titleRef={editor.editHeadingRef}
@@ -67,6 +70,7 @@ export function EditableHistoryDetailPage({
           {...editor.editorModel}
           editTarget={{
             assignmentId: detail.summary.assignmentId,
+            purpose: detail.summary.assignmentPurpose,
             studentId: detail.summary.studentId,
           }}
           formId={editor.formId}

@@ -90,6 +90,20 @@ describe("mixedAssignmentGeneratedTitle", () => {
       mixedAssignmentGeneratedTitle("능률 VOCA", units, 3, 10),
     ).toBe("능률 VOCA · DAY 09 · 틀렸던 단어 3개 포함");
   });
+
+  it("띄어 고른 범위를 선택하지 않은 중간 DAY까지로 쓰지 않는다", () => {
+    expect(
+      mixedAssignmentGeneratedTitle(
+        "능률 VOCA",
+        [
+          { id: "day-1", unitLabel: "DAY 01", sortIndex: 1 },
+          { id: "day-3", unitLabel: "DAY 03", sortIndex: 3 },
+        ],
+        3,
+        10,
+      ),
+    ).toBe("능률 VOCA · DAY 01 외 1개 · 틀렸던 단어 3개 포함");
+  });
 });
 
 describe("excludePendingReviewCandidates", () => {

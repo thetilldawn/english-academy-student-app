@@ -9,10 +9,12 @@ import type { AssignmentUnitItem } from "../catalog-types";
 import styles from "./vocab-assignment-planner.module.css";
 
 export function DayRangeRail({
+  disabled = false,
   onSelect,
   selectedUnitIds,
   units,
 }: {
+  disabled?: boolean;
   onSelect: (unitId: string) => void;
   selectedUnitIds: ReadonlySet<string>;
   units: readonly AssignmentUnitItem[];
@@ -95,6 +97,7 @@ export function DayRangeRail({
           <Button
             aria-pressed={selectedUnitIds.has(unit.id)}
             className={styles.dayButton}
+            disabled={disabled}
             key={unit.id}
             onClick={() => {
               if (!dragRef.current.moved) onSelect(unit.id);

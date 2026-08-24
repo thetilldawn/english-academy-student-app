@@ -4,9 +4,9 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 import { StudentLogoutButton } from "@/components/student-logout-button";
-import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
+import { RouteScreenReaderTitle } from "@/components/route-screen-reader-title";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { studentBreadcrumbForPathname } from "@/lib/ui/student-routes";
+import { studentPageTitleForPathname } from "@/lib/ui/student-routes";
 
 import styles from "./shell/app-shell.module.css";
 
@@ -21,7 +21,7 @@ export function StudentShell({
 }) {
   const pathname = usePathname();
   const focusedAttempt = pathname.startsWith("/student/attempt/");
-  const routeLocation = studentBreadcrumbForPathname(pathname);
+  const pageTitle = studentPageTitleForPathname(pathname);
 
   useEffect(() => {
     if (!window.location.hash) return;
@@ -45,9 +45,7 @@ export function StudentShell({
       {!focusedAttempt && (
         <header className={[styles.topbar, styles.studentTopbar].join(" ")}>
           <div className={styles.topbarInner}>
-            {routeLocation ? (
-              <AdminBreadcrumb {...routeLocation} variant="topbar" />
-            ) : null}
+            {pageTitle ? <RouteScreenReaderTitle title={pageTitle} /> : null}
             <div className={styles.topbarActions}>
               <ThemeToggle />
               <span

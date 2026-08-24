@@ -8,7 +8,6 @@ import {
   mixedAssignmentDatabaseErrorReason,
   mixedAssignmentGeneratedTitle,
   mixedAssignmentPrimaryUnitIds,
-  orderContiguousPrimaryUnits,
   resolvePendingReviewCandidate,
   type MixedAssignmentFailureReason,
   type MixedAssignmentUnit,
@@ -347,9 +346,10 @@ async function prepareAssignment(
         unitLabel: unit.unit_label,
         sortIndex: unit.sort_index,
       }));
-    primaryUnits = input.includePendingReview
-      ? orderContiguousPrimaryUnits(availableUnits, input.primaryUnitIds)
-      : resolveOrderedUnitSelection(availableUnits, input.primaryUnitIds);
+    primaryUnits = resolveOrderedUnitSelection(
+      availableUnits,
+      input.primaryUnitIds,
+    );
   } catch {
     throw new MixedAssignmentError("invalid_selection");
   }

@@ -26,7 +26,10 @@ export function EditableHistoryDetailDialog({
 
   const heading = editor.editing ? (
     <DetailHeader
-      subtitle={detail.summary.studentName}
+      subtitle={[
+        detail.summary.studentName,
+        detail.summary.schoolName || "학교 미입력",
+      ].join(" · ")}
       title={adminLearningText.assignmentModal.header.editTitle}
       titleId="route-history-detail-title"
       titleRef={editor.editHeadingRef}
@@ -52,6 +55,7 @@ export function EditableHistoryDetailDialog({
           {...editor.editorModel}
           editTarget={{
             assignmentId: detail.summary.assignmentId,
+            purpose: detail.summary.assignmentPurpose,
             studentId: detail.summary.studentId,
           }}
           formId={editor.formId}

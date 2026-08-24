@@ -74,6 +74,19 @@ describe("DAY 버튼판", () => {
     expect(onSelect).toHaveBeenCalledWith(units[0]!.id);
   });
 
+  it("읽기 전용 범위는 선택 버튼을 잠근다", () => {
+    render(
+      <DayRangeRail
+        disabled
+        onSelect={vi.fn()}
+        selectedUnitIds={new Set([units[0]!.id])}
+        units={units}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "DAY 1" })).toBeDisabled();
+  });
+
   it("5px를 넘긴 버튼 드래그만 스크롤하고 선택을 한 번 막은 뒤 해제한다", () => {
     const onSelect = vi.fn();
     vi.mocked(HTMLElement.prototype.hasPointerCapture).mockReturnValue(true);

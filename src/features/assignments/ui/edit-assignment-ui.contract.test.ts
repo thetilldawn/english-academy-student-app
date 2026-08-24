@@ -1,0 +1,68 @@
+import fs from "node:fs";
+import path from "node:path";
+
+import { describe, expect, it } from "vitest";
+
+function source(relativePath: string) {
+  return fs.readFileSync(path.resolve(relativePath), "utf8");
+}
+
+describe("배정과 수정 화면 공통 계약", () => {
+  it("신규 배정과 수정이 같은 개별 범위 선택 부품을 쓴다", () => {
+    const createRange = source(
+      "src/features/assignments/ui/vocab-range-fields.tsx",
+    );
+    const editRange = source(
+      "src/features/assignments/ui/assignment-range-fields.tsx",
+    );
+
+    expect(createRange).toContain("<AssignmentUnitRangePicker");
+    expect(editRange).toContain("<AssignmentUnitRangePicker");
+    expect(editRange).not.toContain("selectInclusiveUnitRange");
+    expect(editRange).not.toContain("selectStart");
+    expect(editRange).not.toContain("selectEnd");
+  });
+
+  it("수정 조건도 단어 수부터 공통 시험 조건 순서로 배치한다", () => {
+    const settings = source(
+      "src/features/assignments/ui/assignment-settings-fields.tsx",
+    );
+    const count = settings.indexOf("<AssignmentWordCountField");
+    const order = settings.indexOf("<ExamQuestionOrderField");
+    const exam = settings.indexOf("<ExamConditionFields");
+
+    expect(count).toBeGreaterThan(-1);
+    expect(order).toBeGreaterThan(count);
+    expect(exam).toBeGreaterThan(order);
+    expect(settings).not.toContain("optionalTitle");
+  });
+
+  it("수정도 시험 종류와 네 단계 제목을 같은 순서로 표시한다", () => {
+    const editor = source(
+      "src/features/assignments/ui/single-assignment-editor-sections.tsx",
+    );
+    const range = editor.indexOf('title="시험 범위"');
+    const conditions = editor.indexOf('title="시험 조건"');
+    const schedule = editor.indexOf('title="시험 일정"');
+    const preview = editor.indexOf('title="미리보기"');
+
+    expect(editor).toContain('aria-label="시험 종류"');
+    expect(editor).toContain("단어 시험");
+    expect(editor).toContain("오답 시험");
+    expect(range).toBeGreaterThan(-1);
+    expect(conditions).toBeGreaterThan(range);
+    expect(schedule).toBeGreaterThan(conditions);
+    expect(preview).toBeGreaterThan(schedule);
+  });
+
+  it("수정 헤더에 학생과 학교를 표시하고 시험 종류를 전달한다", () => {
+    for (const file of [
+      "src/features/history/ui/editable-history-detail-dialog.tsx",
+      "src/features/history/ui/editable-history-detail-page.tsx",
+    ]) {
+      const value = source(file);
+      expect(value).toContain("detail.summary.schoolName");
+      expect(value).toContain("purpose: detail.summary.assignmentPurpose");
+    }
+  });
+});
