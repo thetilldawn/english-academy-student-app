@@ -6,6 +6,7 @@ const day58 = "58585858-5858-4858-8858-585858585858";
 const day59 = "59595959-5959-4959-8959-595959595959";
 const day60 = "60606060-6060-4060-8060-606060606060";
 const idempotencyKey = "77777777-7777-4777-8777-777777777777";
+const previewPlanSignature = "a".repeat(64);
 
 export const assignmentContractIds = {
   studentA,
@@ -16,6 +17,7 @@ export const assignmentContractIds = {
   day59,
   day60,
   idempotencyKey,
+  previewPlanSignature,
 } as const;
 
 export const reverseUnitIds = [day60, day59, day58] as const;
@@ -148,6 +150,7 @@ export const bulkPreviewContract = {
 export const bulkSubmitContract = {
   ...bulkPreviewContract,
   idempotencyKey,
+  previewPlanSignature,
   timeLimitSeconds: 10800,
   passingScore: 80,
   retryEnabled: true,

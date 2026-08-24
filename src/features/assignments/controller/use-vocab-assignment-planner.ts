@@ -9,12 +9,7 @@ import type { AssignmentDatasetItem, AssignmentUnitItem } from "../catalog-types
 import type { VocabCollisionDecisionInput } from "../domain/vocab-collision-decisions";
 import { selectPreviousVocabExamConditions } from "../domain/vocab-previous-exam";
 import {
-  applyTimeTemplate,
-  copyPreviousExamConditions,
-  keepFirstSelectedWeekdays,
-  resolveVocabUnitSelection,
   resolveExtraDateCancelSessionCount,
-  shiftLocalDateTime,
   type IsoWeekday,
   type VocabAssignmentMode,
   type VocabQuestionCountChoice,
@@ -24,7 +19,16 @@ import {
   type VocabSplitOverflowPolicy,
   type VocabTargetSelectionMode,
   type VocabTimeTemplate,
-} from "../domain/vocab-assignment-plan";
+} from "../domain/vocab-assignment-contract";
+import {
+  applyTimeTemplate,
+  copyPreviousExamConditions,
+  resolveVocabUnitSelection,
+} from "../domain/vocab-planner-controls";
+import {
+  keepFirstSelectedWeekdays,
+  shiftLocalDateTime,
+} from "../domain/vocab-schedule";
 import { buildVocabAssignmentFieldErrors } from "../presentation/vocab-assignment-field-errors";
 import { useBulkAssignmentController } from "./use-bulk-assignment-controller";
 import type { AssignmentTransport } from "../transport/assignment-transport";

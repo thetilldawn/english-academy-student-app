@@ -421,6 +421,7 @@ describe("일괄 단어 시험 입력 계약", () => {
       studentIds,
       ...schedule,
       idempotencyKey: "33333333-3333-4333-8333-333333333333",
+      previewPlanSignature: "a".repeat(64),
       includePendingReview: true,
       reviewLevels: [1, 2] as const,
       englishToKoreanRatio: 50 as const,

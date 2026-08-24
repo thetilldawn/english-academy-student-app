@@ -15,7 +15,7 @@ import {
   type ReviewPolicy,
   type SingleAssignmentDraft,
 } from "./model";
-import { resolveVocabUnitCycleAllocation } from "./vocab-assignment-plan";
+import { resolveVocabUnitCycleAllocation } from "./vocab-unit-allocation";
 
 export type AssignmentDraftIssueCode =
   | "required"

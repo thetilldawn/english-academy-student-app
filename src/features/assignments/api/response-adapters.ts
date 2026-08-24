@@ -232,6 +232,8 @@ const bulkAssignmentPreviewResponseSchema = z
     assignableCount: nonNegativeInteger,
     blockedCount: nonNegativeInteger,
     assignmentCount: nonNegativeInteger,
+    planSignature: z.string().regex(/^[0-9a-f]{64}$/),
+    rangeLabel: z.string().nullable(),
     commonPlanSummary: z
       .object({
         representativeStudentId: z.uuid(),

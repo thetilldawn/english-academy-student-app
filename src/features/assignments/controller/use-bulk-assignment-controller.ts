@@ -359,7 +359,10 @@ export function useBulkAssignmentController({
       current = stateRef.current;
     }
 
-    const fingerprint = bulkSubmissionFingerprint(current.draft);
+    const fingerprint = bulkSubmissionFingerprint(
+      current.draft,
+      currentPreview.planSignature,
+    );
     const reservation = reserveIdempotencyKey(
       idempotencyRef.current,
       fingerprint,
@@ -371,6 +374,7 @@ export function useBulkAssignmentController({
       current.draft,
       reservation.key,
       clock(),
+      currentPreview.planSignature,
     );
     submittingRef.current = true;
     setMessage("");

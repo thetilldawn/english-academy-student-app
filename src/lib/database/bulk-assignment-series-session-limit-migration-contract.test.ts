@@ -27,8 +27,8 @@ const studentLimitMigration = fs.readFileSync(
   ),
   "utf8",
 );
-const service = fs.readFileSync(
-  path.resolve("src/lib/services/bulk-assignment-service.ts"),
+const persistence = fs.readFileSync(
+  path.resolve("src/lib/services/bulk-assignment-persistence.ts"),
   "utf8",
 );
 
@@ -79,7 +79,7 @@ describe("단어 배정 연장 회차 저장 마이그레이션", () => {
     expect(migration).toContain(
       "grant execute on function public.create_bulk_vocab_assignments_v8(",
     );
-    expect(service).toContain('"create_bulk_vocab_assignments_v9"');
+    expect(persistence).toContain('"create_bulk_vocab_assignments_v9"');
   });
 
   it("공개 v8 경계에서 실제 문항 합계 10,000개를 넘는 요청을 막는다", () => {

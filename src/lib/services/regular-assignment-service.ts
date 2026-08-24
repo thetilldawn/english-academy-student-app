@@ -3,6 +3,8 @@ import "server-only";
 import {
   buildAssignmentQuestionPlan,
   buildExactAssignmentQuestionPlan,
+  calculateAssignmentQuestionRange,
+  calculateAssignmentSeriesQuestionCapacity,
 } from "@/lib/assignment/question-planner";
 import {
   quizIndependentTargetDirectionEligibility,
@@ -485,6 +487,87 @@ export async function loadRegularAssignmentSeriesCandidates(
         ),
       };
     });
+}
+
+/** Capacity for a normal range assignment without reading the wrong-word queue. */
+export async function calculateRegularAssignmentCapacity(
+  input: {
+    datasetId: string;
+    unitIds: readonly string[];
+    studentIds: readonly string[];
+    englishToKoreanRatio: 0 | 50 | 100;
+  },
+  authenticatedAdmin?: AdminContext,
+  cache?: RegularAssignmentPreparationCache,
+) {
+  if (!authenticatedAdmin) await requireAdmin();
+  const preparationCache = cache ?? createRegularAssignmentPreparationCache();
+  const supabase = await preparationCache.supabase;
+  const preparation = await memoizeRequestPreparation(
+    preparationCache.datasets,
+    input.datasetId,
+    () => loadRegularDatasetPreparation(supabase, input.datasetId),
+  );
+  const requestedUnitIds = new Set(input.unitIds);
+  const selectedUnitData = (preparation.unitResult.data ?? []).filter((unit) =>
+    requestedUnitIds.has(unit.id)
+  );
+  if (
+    preparation.datasetResult.error ||
+    preparation.unitResult.error ||
+    !preparation.datasetResult.data ||
+    !preparation.unitResult.data ||
+    selectedUnitData.length !== input.unitIds.length
+  ) {
+    throw new AssignmentCreationError(
+      "invalid_selection",
+      "선택한 단어장과 출제 대상을 사용할 수 없습니다.",
+    );
+  }
+  const activeAssignmentKey = regularPreparationCacheKey([
+    [...input.studentIds].sort(),
+    input.datasetId,
+    null,
+    null,
+  ]);
+  const activeAssignments = await memoizeRequestPreparation(
+    preparationCache.activeAssignments,
+    activeAssignmentKey,
+    () =>
+      loadActiveReviewAssignments(
+        supabase,
+        [...input.studentIds],
+        input.datasetId,
+      ),
+  );
+  const choiceCandidates = preparation.allCandidates.filter(
+    (candidate) =>
+      requestedUnitIds.has(candidate.unitId) &&
+      !activeReviewIdentities(
+        candidate.id,
+        candidate.canonicalLexemeId,
+        candidate.headwordNormalized,
+        candidate.canonicalDictionaryId,
+      ).some((identity) =>
+        activeAssignments.reviewIdentities.has(identity)
+      ),
+  );
+  const range = calculateAssignmentQuestionRange({
+    requiredTargets: [],
+    primaryCandidates: choiceCandidates,
+    allCandidates: choiceCandidates,
+    englishToKoreanRatio: input.englishToKoreanRatio,
+  });
+  return {
+    ...range,
+    recommendedQuestionCount: range.maximumQuestionCount,
+    seriesMaximumQuestionCount: calculateAssignmentSeriesQuestionCapacity({
+      requiredTargets: [],
+      primaryCandidates: choiceCandidates,
+      allCandidates: choiceCandidates,
+      englishToKoreanRatio: input.englishToKoreanRatio,
+    }),
+  };
 }
 
 export async function createRegularAssignment(

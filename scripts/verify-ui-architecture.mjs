@@ -720,18 +720,26 @@ for (const forbidden of [
   }
 }
 
-const vocabAssignmentDomainSource = read(
-  "src/features/assignments/domain/vocab-assignment-plan.ts",
-);
-for (const forbidden of [
-  /from ["']react["']|\buseState\b|\buseEffect\b/,
-  /\.\.\/(?:ui|controller|api)\//,
-  /@\/lib\/services\/|\bfetch\s*\(/,
-]) {
-  if (forbidden.test(vocabAssignmentDomainSource)) {
-    violations.push(
-      `vocab assignment domain crossed the pure calculation boundary (${forbidden})`,
-    );
+const vocabAssignmentDomainPaths = [
+  "src/features/assignments/domain/vocab-assignment-contract.ts",
+  "src/features/assignments/domain/vocab-question-allocation.ts",
+  "src/features/assignments/domain/vocab-unit-allocation.ts",
+  "src/features/assignments/domain/vocab-schedule.ts",
+  "src/features/assignments/domain/vocab-series-target-planner.ts",
+  "src/features/assignments/domain/vocab-planner-controls.ts",
+];
+for (const relativePath of vocabAssignmentDomainPaths) {
+  const source = read(relativePath);
+  for (const forbidden of [
+    /from ["']react["']|\buseState\b|\buseEffect\b/,
+    /\.\.\/(?:ui|controller|api)\//,
+    /@\/lib\/services\/|\bfetch\s*\(/,
+  ]) {
+    if (forbidden.test(source)) {
+      violations.push(
+        `${relativePath} crossed the pure calculation boundary (${forbidden})`,
+      );
+    }
   }
 }
 

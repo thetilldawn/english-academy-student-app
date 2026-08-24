@@ -5,10 +5,6 @@ import {
   type VocabCollisionDecisionRecord,
 } from "../domain/vocab-collision-decisions";
 import {
-  selectAllVocabUnits,
-  toggleVocabUnitSelection,
-  selectInitialVocabDatasetId,
-  toggleWeekday,
   type IsoWeekday,
   type VocabAssignmentMode,
   type VocabUnitSelection,
@@ -18,7 +14,13 @@ import {
   type VocabScheduleSlotOverride,
   type VocabSplitOverflowPolicy,
   type VocabTargetSelectionMode,
-} from "../domain/vocab-assignment-plan";
+} from "../domain/vocab-assignment-contract";
+import {
+  selectAllVocabUnits,
+  selectInitialVocabDatasetId,
+  toggleVocabUnitSelection,
+  toggleWeekday,
+} from "../domain/vocab-planner-controls";
 
 export type VocabPlannerState = {
   datasetId: string;

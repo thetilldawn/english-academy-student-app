@@ -10,7 +10,7 @@ import type {
   VocabCollisionDecisionMode,
   VocabCollisionDecisionRecord,
 } from "../domain/vocab-collision-decisions";
-import type { VocabRangeDistribution } from "../domain/vocab-assignment-plan";
+import type { VocabRangeDistribution } from "../domain/vocab-assignment-contract";
 import {
   buildBulkPlanAudience,
   bulkPlanItemStatus,

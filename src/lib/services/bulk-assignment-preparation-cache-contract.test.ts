@@ -8,32 +8,35 @@ function source(relativePath: string) {
 }
 
 describe("bulk assignment preparation cache contract", () => {
-  it("shares one mixed cache across every preview capacity calculation", () => {
+  it("shares one request context across every preview capacity calculation", () => {
     const bulkAssignments = source(
       "src/lib/services/bulk-assignment-service.ts",
     );
 
     expect(bulkAssignments).toMatch(
-      /previewBulkAssignments[\s\S]*?const preparationCache = createMixedAssignmentPreparationCache\(\)[\s\S]*?calculateAssignmentCapacity\([\s\S]*?admin,\s*undefined,\s*preparationCache,\s*\)/,
+      /resolveBulkAssignmentPreview[\s\S]*?calculateAssignmentCapacity\([\s\S]*?admin,\s*undefined,\s*mixedAssignmentPreparationCache\(context\),\s*\)/,
     );
   });
 
-  it("shares request caches across mixed and regular save preparation", () => {
+  it("reuses Preview request caches and legacy prepared plans during save", () => {
     const bulkAssignments = source(
       "src/lib/services/bulk-assignment-service.ts",
     );
 
     expect(bulkAssignments).toMatch(
-      /const mixedPreparationCache =\s*createMixedAssignmentPreparationCache\(\)/,
+      /const preparationContext = createBulkAssignmentPreparationContext\(\)[\s\S]*?resolveBulkAssignmentPreview\([\s\S]*?preparationContext/,
     );
     expect(bulkAssignments).toMatch(
-      /const regularPreparationCache =\s*createRegularAssignmentPreparationCache\(\)/,
-    );
-    expect(bulkAssignments).toMatch(
-      /prepareMixedAssignmentBatch\([\s\S]*?admin,\s*undefined,\s*mixedPreparationCache,\s*\)/,
+      /const regularPreparationCache = preparationContext\.regular/,
     );
     expect(bulkAssignments).toMatch(
       /prepareRegularAssignment\([\s\S]*?admin,\s*undefined,\s*regularPreparationCache,\s*\)/,
+    );
+    expect(bulkAssignments).toContain(
+      "preparedLegacySeriesByStudent.set(studentId, preparedSeries)",
+    );
+    expect(bulkAssignments).toMatch(
+      /resolvedPreview\.preparedLegacySeriesByStudent\s*\.get\(item\.studentId\)/,
     );
   });
 

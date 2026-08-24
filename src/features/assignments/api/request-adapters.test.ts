@@ -503,6 +503,7 @@ describe("assignment request adapters", () => {
       bulkDraft,
       assignmentContractIds.idempotencyKey,
       NOW,
+      assignmentContractIds.previewPlanSignature,
     );
 
     expect(preview).toStrictEqual({
@@ -577,6 +578,7 @@ describe("assignment request adapters", () => {
       commonDraft,
       assignmentContractIds.idempotencyKey,
       NOW,
+      assignmentContractIds.previewPlanSignature,
     );
 
     expect(preview.body.commonPlan).toMatchObject({
@@ -638,8 +640,14 @@ describe("assignment request adapters", () => {
     expect(bulkPreviewFingerprint(repeatedDraft)).not.toBe(
       bulkPreviewFingerprint(commonDraft),
     );
-    expect(bulkSubmissionFingerprint(repeatedDraft)).not.toBe(
-      bulkSubmissionFingerprint(commonDraft),
+    expect(bulkSubmissionFingerprint(
+      repeatedDraft,
+      assignmentContractIds.previewPlanSignature,
+    )).not.toBe(
+      bulkSubmissionFingerprint(
+        commonDraft,
+        assignmentContractIds.previewPlanSignature,
+      ),
     );
   });
 
@@ -689,6 +697,7 @@ describe("assignment request adapters", () => {
       draft,
       assignmentContractIds.idempotencyKey,
       NOW,
+      assignmentContractIds.previewPlanSignature,
     );
     expect(preview.body.commonPlan).toMatchObject({
       splitBasis: "range_unit",
@@ -723,7 +732,10 @@ describe("assignment request adapters", () => {
 
   it("uses semantic bulk fingerprints without erasing meaningful settings", () => {
     const previewFingerprint = bulkPreviewFingerprint(bulkDraft);
-    const submitFingerprint = bulkSubmissionFingerprint(bulkDraft);
+    const submitFingerprint = bulkSubmissionFingerprint(
+      bulkDraft,
+      assignmentContractIds.previewPlanSignature,
+    );
     const reorderedSets: BulkSeriesAssignmentDraft = {
       ...bulkDraft,
       studentIds: [...bulkDraft.studentIds].toReversed(),
@@ -738,19 +750,41 @@ describe("assignment request adapters", () => {
       range: { ...bulkDraft.range, unitsPerSession: 3 },
     };
 
-    expect(bulkSubmissionFingerprint(reorderedSets)).toBe(
+    expect(bulkSubmissionFingerprint(
+      reorderedSets,
+      assignmentContractIds.previewPlanSignature,
+    )).toBe(
       submitFingerprint,
     );
     expect(bulkPreviewFingerprint(changedExam)).toBe(previewFingerprint);
-    expect(bulkSubmissionFingerprint(changedExam)).not.toBe(
+    expect(bulkSubmissionFingerprint(
+      changedExam,
+      assignmentContractIds.previewPlanSignature,
+    )).not.toBe(
       submitFingerprint,
     );
     expect(bulkPreviewFingerprint(changedRange)).not.toBe(
       previewFingerprint,
     );
-    expect(bulkSubmissionFingerprint(changedRange)).not.toBe(
+    expect(bulkSubmissionFingerprint(
+      changedRange,
+      assignmentContractIds.previewPlanSignature,
+    )).not.toBe(
       submitFingerprint,
     );
+    expect(bulkSubmissionFingerprint(
+      bulkDraft,
+      "b".repeat(64),
+    )).not.toBe(submitFingerprint);
+  });
+
+  it("rejects a bulk save without a valid current Preview signature", () => {
+    expect(() => buildBulkAssignmentRequest(
+      bulkDraft,
+      assignmentContractIds.idempotencyKey,
+      NOW,
+      "stale-preview",
+    )).toThrow("현재 미리보기 계획");
   });
 
   it("excludes the replacement idempotency key from its semantic fingerprint", () => {

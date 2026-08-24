@@ -454,15 +454,20 @@ export function buildBulkAssignmentRequest(
   draft: BulkSeriesAssignmentDraft,
   idempotencyKey: string,
   nowMilliseconds: number,
+  previewPlanSignature: string,
 ): BulkAssignmentRequest {
   assertValidBulkAssignmentSubmission(draft, nowMilliseconds);
   if (!idempotencyKey) throw new Error("일괄 배정에는 멱등키가 필요합니다.");
+  if (!/^[0-9a-f]{64}$/.test(previewPlanSignature)) {
+    throw new Error("일괄 배정에는 현재 미리보기 계획이 필요합니다.");
+  }
   return {
     endpoint: "/api/admin/bulk-assignments",
     method: "POST",
     body: {
       ...bulkSelectionBody(draft),
       idempotencyKey,
+      previewPlanSignature,
       ...examSettingsToApi(draft.exam),
     },
   };
@@ -478,12 +483,14 @@ export function bulkPreviewFingerprint(
 
 export function bulkSubmissionFingerprint(
   draft: BulkSeriesAssignmentDraft,
+  previewPlanSignature: string,
 ): string {
   const previewBody = buildBulkAssignmentPreviewRequest(draft).body;
   return assignmentRequestFingerprint({
     ...previewBody,
     studentIds: [...draft.studentIds].toSorted(),
     reviewLevels: [...draft.review.levels].toSorted(),
+    previewPlanSignature,
     ...examSettingsToApi(draft.exam),
   });
 }

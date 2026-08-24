@@ -15,7 +15,7 @@ import { ConditionalReveal } from "@/design-system/patterns/conditional-reveal/c
 import { cataloguedDatasetDisplayLabel } from "@/lib/admin/dataset-catalog";
 
 import type { VocabAssignmentScreenController } from "../controller/use-vocab-assignment-screen";
-import type { IsoWeekday } from "../domain/vocab-assignment-plan";
+import type { IsoWeekday } from "../domain/vocab-assignment-contract";
 import type {
   VocabAssignmentFieldKey,
 } from "../presentation/vocab-assignment-field-errors";

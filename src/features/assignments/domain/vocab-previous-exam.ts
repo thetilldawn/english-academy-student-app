@@ -1,7 +1,7 @@
 import { isoToKoreanDateTimeLocal } from "@/lib/deadline";
 
 import type { ExamSettings } from "./model";
-import { shiftCalendarDate } from "./vocab-assignment-plan";
+import { shiftCalendarDate } from "./vocab-schedule";
 
 export type PreviousVocabExamSource = {
   assignmentDeleted: boolean;

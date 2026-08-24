@@ -19,6 +19,8 @@ function previewResponse(
     assignmentCount: studentIds.length * sessionCount,
     blockedCount: 0,
     commonPlanSummary: null,
+    planSignature: assignmentContractIds.previewPlanSignature,
+    rangeLabel: "DAY 60",
     items: studentIds.map((studentId, studentIndex) => ({
       available: true,
       availableQuestionCount: 40,

@@ -2,30 +2,38 @@ import { describe, expect, it } from "vitest";
 
 import type { ExamSettings } from "./model";
 import {
-  applyCollisionDecisions,
-  applyScheduleSlotOverride,
-  applyTimeTemplate,
-  buildScheduleSlots,
-  buildSelectedWeekdayDates,
-  copyPreviousExamConditions,
-  extendScheduleSlots,
-  extendScheduleSlotsFromRecurrence,
+  resolveVocabAssignmentMode,
+} from "./vocab-assignment-contract";
+import {
+  rebalanceHalfRatioSplitQuestionCounts,
+  resolveVocabQuestionCycleAllocation,
+  resolveVocabQuestionAllocation,
+  splitVocabTargetPoolPreparationCounts,
+} from "./vocab-question-allocation";
+import {
   planDirectionalVocabSeriesTargetIds,
   planDirectionalVocabSeriesTargets,
   planVocabSeriesTargetIds,
-  rebalanceHalfRatioSplitQuestionCounts,
-  resolveVocabAssignmentMode,
-  resolveVocabQuestionCycleAllocation,
-  resolveVocabQuestionAllocation,
-  resolveVocabBaseSessionUnitCounts,
-  resolveVocabUnitCycleAllocation,
+} from "./vocab-series-target-planner";
+import {
+  applyCollisionDecisions,
+  applyScheduleSlotOverride,
+  applyTimeTemplate,
+  copyPreviousExamConditions,
   resolveVocabUnitSelection,
   selectAllVocabUnits,
   selectInitialVocabDatasetId,
-  splitVocabTargetPoolPreparationCounts,
   toggleWeekday,
   toggleVocabUnitSelection,
-} from "./vocab-assignment-plan";
+} from "./vocab-planner-controls";
+import {
+  buildScheduleSlots,
+  buildSelectedWeekdayDates,
+  extendScheduleSlots,
+  extendScheduleSlotsFromRecurrence,
+  resolveVocabBaseSessionUnitCounts,
+} from "./vocab-schedule";
+import { resolveVocabUnitCycleAllocation } from "./vocab-unit-allocation";
 
 const exam: ExamSettings = {
   directionRatio: 50,

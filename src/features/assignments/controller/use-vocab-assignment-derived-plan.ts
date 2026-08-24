@@ -5,15 +5,17 @@ import { useMemo } from "react";
 import type { AssignmentUnitItem } from "../catalog-types";
 import { validateVocabPlannerInputs } from "../domain/vocab-planner-validation";
 import {
-  applyScheduleSlotOverride,
-  buildScheduleSlots,
-  extendScheduleSlotsFromRecurrence,
   resolveVocabAssignmentMode,
-  resolveVocabUnitCycleAllocation,
   type IsoWeekday,
   type VocabQuestionCountChoice,
   type VocabSplitBasis,
-} from "../domain/vocab-assignment-plan";
+} from "../domain/vocab-assignment-contract";
+import { applyScheduleSlotOverride } from "../domain/vocab-planner-controls";
+import {
+  buildScheduleSlots,
+  extendScheduleSlotsFromRecurrence,
+} from "../domain/vocab-schedule";
+import { resolveVocabUnitCycleAllocation } from "../domain/vocab-unit-allocation";
 import type { VocabPlannerState } from "./vocab-assignment-planner-state";
 
 export function useVocabAssignmentDerivedPlan({

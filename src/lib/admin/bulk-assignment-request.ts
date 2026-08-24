@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { resolveVocabUnitCycleAllocation } from "@/features/assignments/domain/vocab-assignment-plan";
+import { resolveVocabUnitCycleAllocation } from "@/features/assignments/domain/vocab-unit-allocation";
 import {
   questionOrderModes,
   timingModes,
@@ -444,6 +444,7 @@ export const bulkAssignmentSchema = z
   .object({
     ...bulkAssignmentSelectionFields,
     idempotencyKey: z.uuid(),
+    previewPlanSignature: z.string().regex(/^[0-9a-f]{64}$/),
     timeLimitSeconds: z.number().int().min(30).max(10800),
     passingScore: z.number().int().min(0).max(100),
     retryEnabled: z.boolean(),

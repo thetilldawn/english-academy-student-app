@@ -10,7 +10,7 @@ import type { ExamTiming } from "../domain/model";
 import type {
   VocabScheduleDraft,
   VocabTimeTemplate,
-} from "../domain/vocab-assignment-plan";
+} from "../domain/vocab-assignment-contract";
 import {
   assignmentTransportError,
   browserAssignmentTransport,

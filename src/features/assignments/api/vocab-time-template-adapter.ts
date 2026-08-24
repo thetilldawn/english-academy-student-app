@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import type { ExamTiming } from "../domain/model";
-import type { VocabTimeTemplate } from "../domain/vocab-assignment-plan";
+import type { VocabTimeTemplate } from "../domain/vocab-assignment-contract";
 
 const templateSchema = z
   .object({

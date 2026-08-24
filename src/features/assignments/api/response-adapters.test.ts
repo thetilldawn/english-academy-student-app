@@ -168,6 +168,8 @@ describe("assignment response adapters", () => {
       assignableCount: 1,
       blockedCount: 0,
       assignmentCount: 1,
+      planSignature: assignmentContractIds.previewPlanSignature,
+      rangeLabel: "DAY 60",
       commonPlanSummary: {
         representativeStudentId: assignmentContractIds.studentA,
         normalStudentIds: [assignmentContractIds.studentA],
