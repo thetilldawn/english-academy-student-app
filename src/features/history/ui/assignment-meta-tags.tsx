@@ -27,7 +27,7 @@ export function AssignmentMetaTags({
   });
 
   return (
-    <span aria-label="단어장과 범위" className={styles.root}>
+    <span aria-label="단어장과 범위" className={styles.root} role="group">
       <span className={styles.dataset}>{datasetTitle}</span>
       <span aria-hidden="true" className={styles.separator}>·</span>
       <span className={styles.range}>{rangeLabel}</span>

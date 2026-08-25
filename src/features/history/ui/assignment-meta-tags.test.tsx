@@ -23,6 +23,7 @@ describe("AssignmentMetaTags", () => {
 
     expect(screen.getByText("능률 VOCA")).toBeVisible();
     expect(screen.getByText("DAY 01~DAY 02")).toBeVisible();
+    expect(screen.getByRole("group", { name: "단어장과 범위" })).toBeVisible();
     expect(screen.queryByText("단어 시험")).not.toBeInTheDocument();
     expect(screen.queryByText("20문항")).not.toBeInTheDocument();
   });
