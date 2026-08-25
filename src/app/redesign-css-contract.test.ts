@@ -26,6 +26,11 @@ const modulesCss = moduleFiles
 const css = [globalsCss, modulesCss].join("\n");
 
 describe("redesign CSS contract", () => {
+  it("does not force horizontal scrolling at the narrowest viewport", () => {
+    expect(resetCss).toMatch(/html\s*\{[^}]*min-width:\s*0;/);
+    expect(resetCss).not.toMatch(/min-width:\s*320px;/);
+  });
+
   it("prevents accidental text selection while preserving editable text", () => {
     expect(resetCss).toMatch(
       /:where\(body, body \*\)\s*\{[^}]*user-select:\s*none;/,
