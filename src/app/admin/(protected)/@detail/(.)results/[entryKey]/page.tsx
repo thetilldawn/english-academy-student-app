@@ -18,7 +18,10 @@ export default async function InterceptedAdminResultDetailPage({
     redirect(historyDetailHref(detail.summary));
   }
   const editorData = isStudentAssignmentEditable(detail.summary)
-    ? await loadAssignmentManagerData({ finalizeStale: true })
+    ? await loadAssignmentManagerData({
+        finalizeStale: true,
+        reuseMaterialRequestCache: false,
+      })
     : null;
 
   return <EditableHistoryDetailDialog detail={detail} editorData={editorData} />;

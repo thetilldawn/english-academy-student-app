@@ -28,11 +28,14 @@ describe("student progress history source contract", () => {
     expect(bulkAssignments).toMatch(
       /buildStudentProgress\(students, units, historyBundle\.completeHistory\)/,
     );
-    expect(bulkAssignments).toContain(
-      "listAssignmentHistoryBundle({ finalizeStale: false })",
+    expect(bulkAssignments).toMatch(
+      /listAssignmentHistoryBundle\(\{[\s\S]*?finalizeStale:\s*false,[\s\S]*?reuseMaterialRequestCache:\s*false,[\s\S]*?\}\)/,
     );
     expect(assignmentManager).toMatch(
-      /listAssignmentHistoryBundle\(\{[\s\S]*?finalizeStale:\s*options\?\.finalizeStale\s*\?\?\s*false,[\s\S]*?\}\)/,
+      /listAssignmentHistoryBundle\(\{[\s\S]*?finalizeStale:\s*options\?\.finalizeStale\s*\?\?\s*false,[\s\S]*?reuseMaterialRequestCache:\s*options\?\.reuseMaterialRequestCache\s*\?\?\s*true,[\s\S]*?\}\)/,
+    );
+    expect(studentManagement).toContain(
+      "listAssignmentHistoryBundle({ reuseMaterialRequestCache: true })",
     );
   });
 

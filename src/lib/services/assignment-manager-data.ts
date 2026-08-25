@@ -12,6 +12,7 @@ import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data"
 
 export async function loadAssignmentManagerData(options?: {
   finalizeStale?: boolean;
+  reuseMaterialRequestCache?: boolean;
 }): Promise<
   AssignmentManagerData
 > {
@@ -27,6 +28,8 @@ export async function loadAssignmentManagerData(options?: {
     loadStudentDirectoryBundle(),
     listAssignmentHistoryBundle({
       finalizeStale: options?.finalizeStale ?? false,
+      reuseMaterialRequestCache:
+        options?.reuseMaterialRequestCache ?? true,
     }),
     listStudentPendingReviewSummaries(),
     listStudentCurrentVocabWrongSummaries(),

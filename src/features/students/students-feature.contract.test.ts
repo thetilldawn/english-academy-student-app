@@ -69,6 +69,17 @@ describe("student management feature boundary", () => {
     const materialReadService = source(
       "src/lib/services/admin-material-read-service.ts",
     );
+    const directoryStart = studentReadService.indexOf(
+      "export async function loadStudentDirectoryBundle",
+    );
+    const planningStart = studentReadService.indexOf(
+      "export async function loadAssignmentPlanningCatalog",
+    );
+    const directorySource = studentReadService.slice(
+      directoryStart,
+      planningStart,
+    );
+    const planningSource = studentReadService.slice(planningStart);
 
     expect(page).toContain("loadStudentManagementData()");
     expect(page).not.toMatch(
@@ -81,7 +92,12 @@ describe("student management feature boundary", () => {
     expect(studentReadService).toContain(
       "export async function loadStudentDirectoryBundle",
     );
-    expect(studentReadService).toContain("loadAdminMaterialSnapshot(supabase)");
+    expect(directorySource).toContain("loadCurrentAdminMaterialSnapshotForRsc()");
+    expect(directorySource).toContain("loadCurrentAdminVocabUnitsForRsc()");
+    expect(planningSource).toContain("loadAdminMaterialSnapshot(supabase)");
+    expect(planningSource).toContain("loadAdminVocabUnits(supabase)");
+    expect(planningSource).not.toContain("loadCurrentAdminMaterialSnapshotForRsc()");
+    expect(planningSource).not.toContain("loadCurrentAdminVocabUnitsForRsc()");
     expect(materialReadService).toContain("toSelectableDatasetOptions(allDatasets)");
     expect(materialReadService).toContain('dataset.status === "ready"');
     expect(materialReadService).toContain("dataset.isActive");

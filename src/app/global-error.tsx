@@ -2,6 +2,10 @@
 
 import { useEffect } from "react";
 
+import "pretendard/dist/web/variable/pretendardvariable.css";
+import "@/styles/tokens.css";
+import "@/styles/theme.css";
+import "@/styles/reset.css";
 import { getErrorReference } from "@/lib/observability/error-reference";
 import { commonText } from "@/content/ko/common";
 import { Button } from "@/design-system/primitives/button/button";
@@ -17,6 +21,19 @@ export default function GlobalError({
   const errorReference = getErrorReference(error);
 
   useEffect(() => {
+    try {
+      const storedTheme = localStorage.getItem("english-academy-theme");
+      const theme =
+        storedTheme === "light" || storedTheme === "dark"
+          ? storedTheme
+          : matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+      document.documentElement.dataset.theme = theme;
+      document.documentElement.style.colorScheme = theme;
+    } catch {
+      // The CSS color-scheme fallback still keeps the error screen readable.
+    }
     console.error(
       JSON.stringify({
         level: "error",

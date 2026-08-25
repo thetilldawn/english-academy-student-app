@@ -9,6 +9,7 @@ import { datasetDisplayLabel } from "@/lib/admin/dataset-display";
 import {
   loadDatasetDisplayLabelMap,
 } from "@/lib/services/dataset-catalog-service";
+import { loadCurrentAdminDatasetDisplayLabelMapForRsc } from "@/lib/services/admin-material-read-service";
 import {
   buildAssignmentHistory,
   projectCurrentAssignmentHistory,
@@ -234,11 +235,7 @@ async function listHiddenHistoryEntries(
   }
 }
 
-async function loadAssignmentHistoryBundle(finalizeStale: boolean): Promise<{
-  history: AssignmentHistorySummary[];
-  completeHistory: AssignmentHistorySummary[];
-  currentHistory: AssignmentHistorySummary[];
-}> {
+async function loadAssignmentHistoryRows(finalizeStale: boolean) {
   await requireAdmin();
   if (finalizeStale) {
     await finalizeStaleQuizAttempts();
@@ -261,8 +258,33 @@ async function loadAssignmentHistoryBundle(finalizeStale: boolean): Promise<{
   ) {
     throw new Error("시험 배정과 응시 내역을 불러오지 못했습니다.");
   }
+
+  return {
+    supabase,
+    assignmentStudentData: (assignmentStudentData ?? []) as HistoryAssignmentStudentRow[],
+    attemptData: (attemptData ?? []) as HistoryAttemptRow[],
+    hiddenHistoryData: (hiddenHistoryData ?? []) as HiddenHistoryEntryRow[],
+  };
+}
+
+const loadAssignmentHistoryRowsForRequest = cache(loadAssignmentHistoryRows);
+
+async function loadAssignmentHistoryBundle(
+  finalizeStale: boolean,
+  reuseMaterialRequestCache: boolean,
+): Promise<{
+  history: AssignmentHistorySummary[];
+  completeHistory: AssignmentHistorySummary[];
+  currentHistory: AssignmentHistorySummary[];
+}> {
+  const {
+    supabase,
+    assignmentStudentData,
+    attemptData,
+    hiddenHistoryData,
+  } = await loadAssignmentHistoryRowsForRequest(finalizeStale);
   const historyDatasets = (
-    (assignmentStudentData ?? []) as HistoryAssignmentStudentRow[]
+    assignmentStudentData
   ).flatMap((row) => {
     const assignment = oneRelation(row.assignment);
     const dataset = assignment ? oneRelation(assignment.dataset) : null;
@@ -270,12 +292,11 @@ async function loadAssignmentHistoryBundle(finalizeStale: boolean): Promise<{
       ? [{ id: assignment.dataset_id, ...dataset }]
       : [];
   });
-  const datasetLabelById = await loadDatasetDisplayLabelMap(
-    supabase,
-    historyDatasets,
-  );
+  const datasetLabelById = reuseMaterialRequestCache
+    ? await loadCurrentAdminDatasetDisplayLabelMapForRsc(historyDatasets)
+    : await loadDatasetDisplayLabelMap(supabase, historyDatasets);
   const assignmentSources = (
-    (assignmentStudentData ?? []) as HistoryAssignmentStudentRow[]
+    assignmentStudentData
   ).flatMap((row): AssignmentHistorySource[] => {
     const student = oneRelation(row.student);
     const assignment = oneRelation(row.assignment);
@@ -362,7 +383,7 @@ async function loadAssignmentHistoryBundle(finalizeStale: boolean): Promise<{
   });
 
   const attemptSources = (
-    (attemptData ?? []) as HistoryAttemptRow[]
+    attemptData
   ).map(
     (attempt): AttemptHistorySource => ({
       id: attempt.id,
@@ -395,7 +416,7 @@ async function loadAssignmentHistoryBundle(finalizeStale: boolean): Promise<{
   const hiddenAttempts = new Set<string>();
   const hiddenRecipients = new Set<string>();
   for (const hidden of (
-    (hiddenHistoryData ?? []) as HiddenHistoryEntryRow[]
+    hiddenHistoryData
   )) {
     if (hidden.attempt_id) {
       hiddenAttempts.add(hidden.attempt_id);
@@ -437,6 +458,7 @@ const loadAssignmentHistoryBundleForRequest = cache(
 
 export async function listAssignmentHistoryBundle(options?: {
   finalizeStale?: boolean;
+  reuseMaterialRequestCache?: boolean;
 }): Promise<{
   history: AssignmentHistorySummary[];
   completeHistory: AssignmentHistorySummary[];
@@ -444,6 +466,7 @@ export async function listAssignmentHistoryBundle(options?: {
 }> {
   return loadAssignmentHistoryBundleForRequest(
     options?.finalizeStale !== false,
+    options?.reuseMaterialRequestCache === true,
   );
 }
 

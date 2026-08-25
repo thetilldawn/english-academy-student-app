@@ -128,11 +128,14 @@ describe("admin assignment history query contract", () => {
       "const loadAssignmentHistoryBundleForRequest = cache(",
     );
     expect(source).toContain(
+      "const loadAssignmentHistoryRowsForRequest = cache(",
+    );
+    expect(source).toContain(
       "options?.finalizeStale !== false",
     );
     for (const detailPage of [directDetailPage, interceptedDetailPage]) {
-      expect(detailPage).toContain(
-        "loadAssignmentManagerData({ finalizeStale: true })",
+      expect(detailPage).toMatch(
+        /loadAssignmentManagerData\(\{[\s\S]*?finalizeStale:\s*true,[\s\S]*?reuseMaterialRequestCache:\s*false,[\s\S]*?\}\)/,
       );
     }
   });

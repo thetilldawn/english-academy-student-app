@@ -769,7 +769,10 @@ async function resolveBulkAssignmentPreview(
   const regularPreparationCache = context.regular;
   const [catalog, historyBundle] = await Promise.all([
     loadAssignmentPlanningCatalog(),
-    listAssignmentHistoryBundle({ finalizeStale: false }),
+    listAssignmentHistoryBundle({
+      finalizeStale: false,
+      reuseMaterialRequestCache: false,
+    }),
   ]);
   const { students, datasets, units } = catalog;
   const studentById = new Map(

@@ -24,6 +24,8 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   loadAdminMaterialSnapshot,
   loadAdminVocabUnits,
+  loadCurrentAdminMaterialSnapshotForRsc,
+  loadCurrentAdminVocabUnitsForRsc,
 } from "./admin-material-read-service";
 
 type AdminSupabase = Awaited<ReturnType<typeof createServerSupabaseClient>>;
@@ -255,8 +257,8 @@ export async function loadStudentDirectoryBundle(): Promise<
     loadStudentRows(supabase),
     loadStudentCodeRows(supabase),
     loadStudentLearningSourceRows(supabase),
-    loadAdminMaterialSnapshot(supabase),
-    loadAdminVocabUnits(supabase),
+    loadCurrentAdminMaterialSnapshotForRsc(),
+    loadCurrentAdminVocabUnitsForRsc(),
   ]);
   const rows = requireStudentRows(studentResult, codeResult);
   if (learningSourceResult.error) {

@@ -10,13 +10,13 @@ import {
   type DatasetMaterialKind,
 } from "@/lib/admin/dataset-catalog";
 
-type RawDataset = {
+export type RawDataset = {
   id: string;
   title: string;
   edition?: string | null;
 };
 
-type CatalogRow = {
+export type DatasetCatalogRow = {
   dataset_id: string;
   display_name: string;
   catalog_group: DatasetCatalogGroup;
@@ -31,7 +31,7 @@ type CatalogRow = {
   sort_index: number;
 };
 
-function catalogMetadata(catalog: CatalogRow | undefined) {
+function catalogMetadata(catalog: DatasetCatalogRow | undefined) {
   return catalog
     ? {
         displayName: catalog.display_name,
@@ -49,21 +49,36 @@ function catalogMetadata(catalog: CatalogRow | undefined) {
     : undefined;
 }
 
-export async function loadDatasetDisplayLabelMap(
+export async function queryDatasetCatalogRows(
   supabase: SupabaseClient,
-  datasets: readonly RawDataset[],
+  datasetIds?: readonly string[],
 ) {
-  const datasetIds = [...new Set(datasets.map((dataset) => dataset.id))];
-  if (datasetIds.length === 0) return new Map<string, string>();
-
-  const { data, error } = await supabase
+  let query = supabase
     .from("vocab_dataset_catalog")
     .select(
       "dataset_id, display_name, catalog_group, material_kind, grade_code, publisher, series_title, academic_year, curriculum_revision, edition_label, is_assignable, sort_index",
-    )
-    .in("dataset_id", datasetIds);
+    );
+  const uniqueDatasetIds = datasetIds
+    ? [...new Set(datasetIds)]
+    : undefined;
+  if (uniqueDatasetIds) {
+    query = query.in("dataset_id", uniqueDatasetIds);
+  }
+  const { data, error } = await query;
 
-  if (error) {
+  return {
+    rows: (data ?? []) as DatasetCatalogRow[],
+    failed: Boolean(error),
+  };
+}
+
+export function buildDatasetDisplayLabelMap(
+  datasets: readonly RawDataset[],
+  catalogRows: readonly DatasetCatalogRow[] | null,
+) {
+  if (datasets.length === 0) return new Map<string, string>();
+
+  if (catalogRows === null) {
     return new Map(
       datasets.map((dataset) => [
         dataset.id,
@@ -72,8 +87,9 @@ export async function loadDatasetDisplayLabelMap(
     );
   }
 
-  const rows = (data ?? []) as CatalogRow[];
-  const catalogById = new Map(rows.map((row) => [row.dataset_id, row]));
+  const catalogById = new Map(
+    catalogRows.map((row) => [row.dataset_id, row]),
+  );
   return new Map(
     datasets.map((dataset) => [
       dataset.id,
@@ -84,6 +100,19 @@ export async function loadDatasetDisplayLabelMap(
         ),
       ),
     ]),
+  );
+}
+
+export async function loadDatasetDisplayLabelMap(
+  supabase: SupabaseClient,
+  datasets: readonly RawDataset[],
+) {
+  const datasetIds = [...new Set(datasets.map((dataset) => dataset.id))];
+  if (datasetIds.length === 0) return new Map<string, string>();
+  const catalog = await queryDatasetCatalogRows(supabase, datasetIds);
+  return buildDatasetDisplayLabelMap(
+    datasets,
+    catalog.failed ? null : catalog.rows,
   );
 }
 

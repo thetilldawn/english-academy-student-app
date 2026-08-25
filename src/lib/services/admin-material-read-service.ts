@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { requireAdmin } from "@/lib/auth/admin";
 import {
   cataloguedDatasetDisplayLabel,
@@ -7,7 +9,6 @@ import {
   compareCataloguedDatasets,
   type CataloguedDataset,
   type DatasetCatalogGroup,
-  type DatasetMaterialKind,
   type VocabUnitType,
 } from "@/lib/admin/dataset-catalog";
 import type {
@@ -15,24 +16,15 @@ import type {
   DatasetSummary,
   VocabUnitSummary,
 } from "@/lib/admin/dataset-summary";
+import { datasetDisplayLabel } from "@/lib/admin/dataset-display";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  queryDatasetCatalogRows,
+  type DatasetCatalogRow,
+  type RawDataset,
+} from "@/lib/services/dataset-catalog-service";
 
 type AdminSupabase = Awaited<ReturnType<typeof createServerSupabaseClient>>;
-
-type DatasetCatalogRow = {
-  dataset_id: string;
-  display_name: string;
-  catalog_group: DatasetCatalogGroup;
-  material_kind: DatasetMaterialKind;
-  grade_code: string | null;
-  publisher: string | null;
-  series_title: string | null;
-  academic_year: number | null;
-  curriculum_revision: string | null;
-  edition_label: string | null;
-  is_assignable: boolean;
-  sort_index: number;
-};
 
 type UnitCatalogRow = {
   unit_id: string;
@@ -115,38 +107,21 @@ export type AdminMaterialSnapshot = {
   selectableDatasets: DatasetOption[];
 };
 
-export async function loadAdminMaterialSnapshot(
-  supabase: AdminSupabase,
-): Promise<AdminMaterialSnapshot> {
-  const [datasetResult, catalogResult] = await Promise.all([
-    supabase
-      .from("vocab_datasets")
-      .select("id, dataset_key, title, edition, row_count, status, is_active")
-      .order("title"),
-    supabase
-      .from("vocab_dataset_catalog")
-      .select(
-        "dataset_id, display_name, catalog_group, material_kind, grade_code, publisher, series_title, academic_year, curriculum_revision, edition_label, is_assignable, sort_index",
-      ),
-  ]);
+async function queryDatasetSummaryRows(supabase: AdminSupabase) {
+  return supabase
+    .from("vocab_datasets")
+    .select("id, dataset_key, title, edition, row_count, status, is_active")
+    .order("title");
+}
 
-  if (datasetResult.error) {
-    throw new Error("단어장 목록을 불러오지 못했습니다.");
-  }
-  if (catalogResult.error) {
-    throw new Error("단어장 분류 정보를 불러오지 못했습니다.");
-  }
-
+function buildAdminMaterialSnapshot(
+  datasetRows: readonly DatasetSummaryRow[],
+  catalogRows: readonly DatasetCatalogRow[],
+): AdminMaterialSnapshot {
   const catalogByDatasetId = new Map(
-    ((catalogResult.data ?? []) as DatasetCatalogRow[]).map((catalog) => [
-      catalog.dataset_id,
-      catalog,
-    ]),
+    catalogRows.map((catalog) => [catalog.dataset_id, catalog]),
   );
-  const allDatasets = mapDatasetSummaries(
-    (datasetResult.data ?? []) as DatasetSummaryRow[],
-    catalogByDatasetId,
-  );
+  const allDatasets = mapDatasetSummaries(datasetRows, catalogByDatasetId);
   const datasetLabelById = new Map(
     allDatasets.map((dataset) => [
       dataset.id,
@@ -159,6 +134,26 @@ export async function loadAdminMaterialSnapshot(
     datasetLabelById,
     selectableDatasets: toSelectableDatasetOptions(allDatasets),
   };
+}
+
+export async function loadAdminMaterialSnapshot(
+  supabase: AdminSupabase,
+): Promise<AdminMaterialSnapshot> {
+  const [datasetResult, catalogResult] = await Promise.all([
+    queryDatasetSummaryRows(supabase),
+    queryDatasetCatalogRows(supabase),
+  ]);
+
+  if (datasetResult.error) {
+    throw new Error("단어장 목록을 불러오지 못했습니다.");
+  }
+  if (catalogResult.failed) {
+    throw new Error("단어장 분류 정보를 불러오지 못했습니다.");
+  }
+  return buildAdminMaterialSnapshot(
+    (datasetResult.data ?? []) as DatasetSummaryRow[],
+    catalogResult.rows,
+  );
 }
 
 export async function loadAdminVocabUnits(
@@ -210,6 +205,55 @@ export async function loadAdminVocabUnits(
       catalogSortIndex: catalog?.sort_index ?? unit.sort_index,
     };
   });
+}
+
+const loadAdminMaterialSnapshotForRscRequest = cache(
+  async (adminUserId: string): Promise<AdminMaterialSnapshot> => {
+    if (!adminUserId) {
+      throw new Error("관리자 인증 정보가 필요합니다.");
+    }
+    const supabase = await createServerSupabaseClient();
+    return loadAdminMaterialSnapshot(supabase);
+  },
+);
+
+const loadAdminVocabUnitsForRscRequest = cache(
+  async (adminUserId: string): Promise<VocabUnitSummary[]> => {
+    if (!adminUserId) {
+      throw new Error("관리자 인증 정보가 필요합니다.");
+    }
+    const supabase = await createServerSupabaseClient();
+    return loadAdminVocabUnits(supabase);
+  },
+);
+
+/** 같은 React Server Component 렌더 안에서만 공용 자료를 재사용합니다. */
+export async function loadCurrentAdminMaterialSnapshotForRsc(): Promise<AdminMaterialSnapshot> {
+  const admin = await requireAdmin();
+  return loadAdminMaterialSnapshotForRscRequest(admin.userId);
+}
+
+/** 이력과 공용 자료가 같은 렌더에서 단어장 분류 조회를 공유합니다. */
+export async function loadCurrentAdminDatasetDisplayLabelMapForRsc(
+  datasets: readonly RawDataset[],
+) {
+  const admin = await requireAdmin();
+  const snapshot = await loadAdminMaterialSnapshotForRscRequest(admin.userId);
+  return new Map(
+    datasets.map((dataset) => [
+      dataset.id,
+      snapshot.datasetLabelById.get(dataset.id) ??
+        datasetDisplayLabel(dataset.title, dataset.edition),
+    ]),
+  );
+}
+
+/** 같은 React Server Component 렌더 안에서만 공용 범위를 재사용합니다. */
+export async function loadCurrentAdminVocabUnitsForRsc(): Promise<
+  VocabUnitSummary[]
+> {
+  const admin = await requireAdmin();
+  return loadAdminVocabUnitsForRscRequest(admin.userId);
 }
 
 export async function listDatasets(): Promise<DatasetSummary[]> {

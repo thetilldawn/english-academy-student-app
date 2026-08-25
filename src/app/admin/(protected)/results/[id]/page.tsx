@@ -24,7 +24,10 @@ export default async function AdminResultDetailPage({
     redirect(historyDetailHref(detail.summary));
   }
   const editorData = isStudentAssignmentEditable(detail.summary)
-    ? await loadAssignmentManagerData({ finalizeStale: true })
+    ? await loadAssignmentManagerData({
+        finalizeStale: true,
+        reuseMaterialRequestCache: false,
+      })
     : null;
 
   return (

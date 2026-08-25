@@ -34,7 +34,7 @@ export async function loadStudentManagementData(): Promise<
     pointBalances,
   ] = await Promise.all([
     directoryPromise,
-    listAssignmentHistoryBundle(),
+    listAssignmentHistoryBundle({ reuseMaterialRequestCache: true }),
     listStudentPendingReviewSummaries(),
     listStudentCurrentVocabWrongSummaries(),
     pointBalancesPromise,
