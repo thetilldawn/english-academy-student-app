@@ -10,6 +10,12 @@ const migration = fs.readFileSync(
   ),
   "utf8",
 );
+const readMigration = fs.readFileSync(
+  path.resolve(
+    "supabase/migrations/20260825085507_add_student_point_reads.sql",
+  ),
+  "utf8",
+);
 
 const ids = {
   student: "00000000-0000-4000-8000-000000000001",
@@ -128,6 +134,7 @@ describe.sequential("student point ledger", () => {
       );
     `);
     await database.exec(migration);
+    await database.exec(readMigration);
     const historicalAttempt = await database.query<{
       point_rule_version_snapshot: string | null;
     }>(`
@@ -412,6 +419,96 @@ describe.sequential("student point ledger", () => {
     expect(totalAfterDuplicate.rows).toEqual([
       { total_points: -2, event_count: 12 },
     ]);
+
+    const balances = await database.query<{
+      current_points: number;
+      student_id: string;
+    }>(`
+      select student_id::text, current_points::integer
+      from public.list_student_point_totals_v1(array[
+        '${ids.student}'::uuid,
+        '${uuid(999)}'::uuid,
+        '${ids.student}'::uuid
+      ])
+      order by student_id;
+    `);
+    expect(balances.rows).toEqual([
+      { student_id: ids.student, current_points: 0 },
+      { student_id: uuid(999), current_points: 0 },
+    ]);
+
+    const regularSummary = await database.query<{
+      correct_reward: number;
+      current_points: number;
+      event_count: number;
+      net_change: number;
+      wrong_effect: number;
+    }>(`
+      select
+        event_count::integer,
+        correct_reward::integer,
+        wrong_effect::integer,
+        net_change::integer,
+        current_points::integer
+      from public.get_quiz_attempt_point_summary_v1(
+        '${ids.student}',
+        '${ids.regularAttempt}'
+      );
+    `);
+    expect(regularSummary.rows).toEqual([{
+      event_count: 5,
+      correct_reward: 4,
+      wrong_effect: -6,
+      net_change: -2,
+      current_points: 0,
+    }]);
+
+    await database.exec(`
+      insert into public.quiz_attempts (
+        id, student_id, assignment_id, status, phase
+      ) values (
+        '${uuid(205)}', '${ids.student}', '${ids.reviewAssignment}',
+        'in_progress', 'initial'
+      );
+      insert into public.quiz_questions (
+        id, attempt_id, vocab_entry_id, assignment_question_id,
+        initial_choice_index, initial_is_correct, initial_answered_at
+      ) values (
+        '${uuid(309)}', '${uuid(205)}', 4, '${uuid(404)}',
+        1, false, clock_timestamp()
+      );
+      update public.quiz_attempts
+      set status = 'completed', phase = 'completed',
+        completed_at = clock_timestamp()
+      where id = '${uuid(205)}';
+    `);
+    const zeroPointSummary = await database.query<{
+      event_count: number;
+      net_change: number;
+    }>(`
+      select event_count::integer, net_change::integer
+      from public.get_quiz_attempt_point_summary_v1(
+        '${ids.student}',
+        '${uuid(205)}'
+      );
+    `);
+    expect(zeroPointSummary.rows).toEqual([
+      { event_count: 1, net_change: 0 },
+    ]);
+
+    const missingSummary = await database.query<{
+      event_count: number;
+      net_change: number;
+    }>(`
+      select event_count::integer, net_change::integer
+      from public.get_quiz_attempt_point_summary_v1(
+        '${ids.student}',
+        '${uuid(998)}'
+      );
+    `);
+    expect(missingSummary.rows).toEqual([
+      { event_count: 0, net_change: 0 },
+    ]);
   });
 
   it("rejects changes to a recorded event", async () => {
@@ -464,6 +561,23 @@ describe.sequential("student point ledger", () => {
       where id = '${ids.regularAttempt}';
     `);
 
+    await database.exec("set role anon;");
+    await expect(
+      database.query(`
+        select * from public.list_student_point_totals_v1(
+          array['${ids.student}'::uuid]
+        );
+      `),
+    ).rejects.toMatchObject({ code: "42501" });
+    await expect(
+      database.query(`
+        select * from public.get_quiz_attempt_point_summary_v1(
+          '${ids.student}', '${ids.regularAttempt}'
+        );
+      `),
+    ).rejects.toMatchObject({ code: "42501" });
+    await database.exec("reset role;");
+
     await database.exec(`
       select set_config('app.test_active_admin', 'false', false);
       set role authenticated;
@@ -498,6 +612,20 @@ describe.sequential("student point ledger", () => {
         select nextval('public.student_point_events_id_seq');
       `),
     ).rejects.toMatchObject({ code: "42501" });
+    await expect(
+      database.query(`
+        select * from public.list_student_point_totals_v1(
+          array['${ids.student}'::uuid]
+        );
+      `),
+    ).rejects.toMatchObject({ code: "42501" });
+    await expect(
+      database.query(`
+        select * from public.get_quiz_attempt_point_summary_v1(
+          '${ids.student}', '${ids.regularAttempt}'
+        );
+      `),
+    ).rejects.toMatchObject({ code: "42501" });
     await database.exec("reset role;");
 
     await database.exec("set role service_role;");
@@ -505,6 +633,27 @@ describe.sequential("student point ledger", () => {
       select count(*)::integer as count from public.student_point_events;
     `);
     expect(serviceVisible.rows).toEqual([{ count: 1 }]);
+    const serviceBalance = await database.query<{
+      current_points: number;
+    }>(`
+      select current_points::integer
+      from public.list_student_point_totals_v1(
+        array['${ids.student}'::uuid]
+      );
+    `);
+    expect(serviceBalance.rows).toEqual([{ current_points: 2 }]);
+    const serviceAttemptSummary = await database.query<{
+      event_count: number;
+      net_change: number;
+    }>(`
+      select event_count::integer, net_change::integer
+      from public.get_quiz_attempt_point_summary_v1(
+        '${ids.student}', '${ids.regularAttempt}'
+      );
+    `);
+    expect(serviceAttemptSummary.rows).toEqual([
+      { event_count: 1, net_change: 2 },
+    ]);
     await expect(
       database.exec(`
         insert into public.student_point_events (
