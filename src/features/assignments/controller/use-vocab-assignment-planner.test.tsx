@@ -209,6 +209,37 @@ describe("단어 배정 일정 controller", () => {
     });
   });
 
+  it("단어 수 배정은 시험일을 꺼도 입력한 수로 바로 시작하는 한 회차를 만든다", () => {
+    const { result } = renderPlanner();
+    selectWholeRange(result);
+
+    act(() => {
+      result.current.actions.changeAssignmentMode("word_count");
+      result.current.actions.activateManualQuestionCount(120);
+      result.current.actions.changeManualQuestionCount(4);
+      result.current.actions.changeOverflowPolicy("continue_weekly");
+      result.current.actions.changeScheduleEnabled(false);
+    });
+
+    expect(result.current.planner).toMatchObject({
+      assignmentMode: "word_count",
+      manualQuestionCount: 4,
+      questionCountMode: "manual",
+      overflowPolicy: "continue_weekly",
+      scheduleEnabled: false,
+    });
+    expect(result.current.commonPlan).toMatchObject({
+      distribution: "repeat",
+      questionCount: { mode: "manual", value: 4 },
+      selectedDateCount: 0,
+      sessions: [{
+        availableLocalDateTime: "2026-08-21T00:00",
+        deadlineLocalDateTime: null,
+        unitIds: units.map((unit) => unit.id),
+      }],
+    });
+  });
+
   it("전체 회차는 같은 범위를 월수금 세 날짜에 정확히 한 번씩 배정한다", () => {
     const { result } = renderPlanner();
     selectWholeRange(result);

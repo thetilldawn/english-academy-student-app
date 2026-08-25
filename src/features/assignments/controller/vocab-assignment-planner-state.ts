@@ -140,16 +140,23 @@ export function vocabPlannerReducer(
         selectionMode: action.value,
         collisionDecisionRecords: [],
       };
-    case "schedule/enabled":
+    case "schedule/enabled": {
+      const shouldNormalizeRangeSplit =
+        !action.enabled && state.assignmentMode === "per_session";
       return {
         ...state,
         scheduleEnabled: action.enabled,
-        assignmentMode: action.enabled ? state.assignmentMode : "all_sessions",
-        overflowPolicy: action.enabled ? state.overflowPolicy : "leave",
+        assignmentMode: shouldNormalizeRangeSplit
+          ? "all_sessions"
+          : state.assignmentMode,
+        overflowPolicy: shouldNormalizeRangeSplit
+          ? "leave"
+          : state.overflowPolicy,
         extraDatePolicy: "unconfirmed",
         sessionScheduleOverrides: {},
         collisionDecisionRecords: [],
       };
+    }
     case "schedule/update": {
       const scheduleShapeChanged =
         action.patch.weekdays !== undefined ||

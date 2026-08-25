@@ -147,6 +147,25 @@ describe("vocabPlannerReducer extra date decision", () => {
     });
   });
 
+  it("단어 수 배정은 시험일을 꺼도 입력한 수와 남은 범위 방식을 보존한다", () => {
+    const disabled = vocabPlannerReducer({
+      ...state,
+      manualQuestionCount: 4,
+      overflowPolicy: "continue_weekly",
+    }, {
+      type: "schedule/enabled",
+      enabled: false,
+    });
+
+    expect(disabled).toMatchObject({
+      assignmentMode: "word_count",
+      manualQuestionCount: 4,
+      questionCountMode: "manual",
+      overflowPolicy: "continue_weekly",
+      scheduleEnabled: false,
+    });
+  });
+
   it("요일이 달라질 때만 범위 반복 결정을 다시 확인한다", () => {
     expect(vocabPlannerReducer(state, {
       type: "schedule/update",
