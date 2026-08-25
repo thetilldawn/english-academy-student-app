@@ -567,6 +567,57 @@ const mixedQuestions = JSON.stringify([
   },
 ]);
 
+async function createRegularPointAttempt(
+  database: PGlite,
+  title: string,
+) {
+  await database.exec("set role authenticated;");
+  let assignmentId: string;
+  try {
+    const created = await database.query<{ assignment_id: string }>(`
+      select public.create_assignment_with_delivery_v7(
+        '${title}',
+        '${ids.dataset}',
+        array['${ids.units[0]}'::uuid, '${ids.units[4]}'::uuid],
+        4,
+        100::smallint,
+        300,
+        100::smallint,
+        true,
+        100::smallint,
+        'fixed',
+        null,
+        array['${ids.student}'::uuid],
+        'total',
+        null,
+        $questions$${mixedQuestions}$questions$::jsonb
+      ) as assignment_id;
+    `);
+    assignmentId = created.rows[0]!.assignment_id;
+  } finally {
+    await database.exec("reset role;");
+  }
+
+  const attempt = await database.query<{ attempt_id: string }>(`
+    select public.create_quiz_attempt_from_bank(
+      '${ids.student}',
+      '${assignmentId}'
+    ) as attempt_id;
+  `);
+  const attemptId = attempt.rows[0]!.attempt_id;
+  const questions = await database.query<{
+    correct_choice_index: number;
+    id: string;
+  }>(`
+    select id, correct_choice_index
+    from public.quiz_questions
+    where attempt_id = '${attemptId}'
+    order by order_index;
+  `);
+
+  return { attemptId, questions: questions.rows };
+}
+
 describe.sequential("final review-assignment database schema", () => {
   let database: PGlite;
 
@@ -4818,6 +4869,31 @@ describe.sequential("assignment retry rules", () => {
         phase: "completed",
         status: "completed",
       });
+      const points = await database.query<{
+        event_count: number;
+        ledger_sum: number;
+        total_points: number;
+        unique_outcomes: number;
+      }>(`
+        select
+          total.total_points::integer,
+          total.event_count::integer,
+          count(distinct (event.quiz_question_id, event.stage))::integer
+            as unique_outcomes,
+          sum(event.delta)::integer as ledger_sum
+        from public.student_point_totals as total
+        join public.student_point_events as event
+          on event.student_id = total.student_id
+        where total.student_id = '${ids.student}'
+          and event.quiz_attempt_id = '${attemptId}'
+        group by total.total_points, total.event_count;
+      `);
+      expect(points.rows).toEqual([{
+        total_points: 3,
+        event_count: 4,
+        unique_outcomes: 4,
+        ledger_sum: 3,
+      }]);
       await expectPostgresError(
         database.query(`
           select public.start_quiz_retry_v2(
@@ -4828,6 +4904,406 @@ describe.sequential("assignment retry rules", () => {
         "22023",
         "retry_disabled",
       );
+    } finally {
+      await database.close();
+    }
+  }, 60_000);
+
+  it("records final-question initial and retry timeouts after answer v4 finishes", async () => {
+    const database = await createFinalSchemaDatabase();
+    try {
+      await seedReviewAssignmentScenario(database);
+      await database.exec("delete from public.student_vocab_review_queue;");
+      await database.exec("set role authenticated;");
+      const created = await database.query<{ assignment_id: string }>(`
+        select public.create_assignment_with_delivery_v7(
+          'Point timeout fixture',
+          '${ids.dataset}',
+          array['${ids.units[0]}'::uuid, '${ids.units[4]}'::uuid],
+          4,
+          100::smallint,
+          300,
+          100::smallint,
+          true,
+          100::smallint,
+          'fixed',
+          null,
+          array['${ids.student}'::uuid],
+          'per_question',
+          300,
+          $questions$${mixedQuestions}$questions$::jsonb
+        ) as assignment_id;
+      `);
+      await database.exec("reset role;");
+
+      const attempt = await database.query<{ attempt_id: string }>(`
+        select public.create_quiz_attempt_from_bank(
+          '${ids.student}',
+          '${created.rows[0]!.assignment_id}'
+        ) as attempt_id;
+      `);
+      const attemptId = attempt.rows[0]!.attempt_id;
+      const questions = await database.query<{
+        correct_choice_index: number;
+        id: string;
+      }>(`
+        select id, correct_choice_index
+        from public.quiz_questions
+        where attempt_id = '${attemptId}'
+        order by order_index;
+      `);
+      const timeoutTarget = questions.rows.at(-1)!;
+
+      for (const [index, question] of questions.rows.entries()) {
+        const isLast = index === questions.rows.length - 1;
+        if (isLast) {
+          await database.exec(`
+            update public.quiz_attempts
+            set current_question_started_at =
+              clock_timestamp() - interval '10 minutes'
+            where id = '${attemptId}';
+          `);
+        }
+        await database.query(`
+          select public.answer_quiz_question_v4(
+            '${ids.student}',
+            '${attemptId}',
+            '${question.id}',
+            'initial',
+            ${question.correct_choice_index}::smallint,
+            ${isLast}
+          );
+        `);
+        const nextQuestion = questions.rows[index + 1];
+        if (nextQuestion) {
+          await database.query(`
+            select public.resume_quiz_after_feedback_v2(
+              '${ids.student}',
+              '${attemptId}',
+              '${nextQuestion.id}',
+              'initial',
+              0
+            );
+          `);
+        }
+      }
+
+      const initialTimeout = await database.query<{
+        delta: number;
+        outcome: string;
+        stage: string;
+      }>(`
+        select stage, outcome, delta
+        from public.student_point_events
+        where quiz_question_id = '${timeoutTarget.id}'
+        order by stage;
+      `);
+      expect(initialTimeout.rows).toEqual([
+        { stage: "initial", outcome: "timeout", delta: -3 },
+      ]);
+
+      await database.query(`
+        select public.start_quiz_retry_v2(
+          '${ids.student}',
+          '${attemptId}'
+        );
+      `);
+      await database.exec(`
+        update public.quiz_attempts
+        set current_question_started_at =
+          clock_timestamp() - interval '10 minutes'
+        where id = '${attemptId}';
+      `);
+      await database.query(`
+        select public.answer_quiz_question_v4(
+          '${ids.student}',
+          '${attemptId}',
+          '${timeoutTarget.id}',
+          'retry',
+          ${timeoutTarget.correct_choice_index}::smallint,
+          true
+        );
+      `);
+
+      const timeoutEvents = await database.query<{
+        delta: number;
+        outcome: string;
+        stage: string;
+      }>(`
+        select stage, outcome, delta
+        from public.student_point_events
+        where quiz_question_id = '${timeoutTarget.id}'
+        order by stage;
+      `);
+      expect(timeoutEvents.rows).toEqual([
+        { stage: "initial", outcome: "timeout", delta: -3 },
+        { stage: "retry", outcome: "timeout", delta: 0 },
+      ]);
+
+      const pointTotal = await database.query<{
+        event_count: number;
+        last_event_matches: boolean;
+        ledger_sum: number;
+        total_points: number;
+      }>(`
+        select
+          total.total_points::integer,
+          total.event_count::integer,
+          sum(event.delta)::integer as ledger_sum,
+          total.last_event_at = max(event.occurred_at) as last_event_matches
+        from public.student_point_totals as total
+        join public.student_point_events as event
+          on event.student_id = total.student_id
+        where total.student_id = '${ids.student}'
+        group by
+          total.total_points,
+          total.event_count,
+          total.last_event_at;
+      `);
+      expect(pointTotal.rows).toEqual([{
+        total_points: 3,
+        event_count: 5,
+        ledger_sum: 3,
+        last_event_matches: true,
+      }]);
+    } finally {
+      await database.close();
+    }
+  }, 60_000);
+
+  it("does not backfill or score an attempt created before the point migration", async () => {
+    let historicalAttemptId = "";
+    const database = await createFinalSchemaDatabase({
+      beforeMigration: async (migrationDatabase, migrationName) => {
+        if (
+          migrationName !==
+          "20260825083542_add_student_point_ledger.sql"
+        ) {
+          return;
+        }
+        await seedReviewAssignmentScenario(migrationDatabase);
+        await migrationDatabase.exec(
+          "delete from public.student_vocab_review_queue;",
+        );
+        historicalAttemptId = (
+          await createRegularPointAttempt(
+            migrationDatabase,
+            "Historical point fixture",
+          )
+        ).attemptId;
+      },
+    });
+    try {
+      expect(historicalAttemptId).not.toBe("");
+      const snapshot = await database.query<{
+        point_rule_version_snapshot: string | null;
+      }>(`
+        select point_rule_version_snapshot
+        from public.quiz_attempts
+        where id = '${historicalAttemptId}';
+      `);
+      expect(snapshot.rows).toEqual([
+        { point_rule_version_snapshot: null },
+      ]);
+
+      await database.exec(`
+        update public.quiz_attempts
+        set
+          started_at = clock_timestamp() - interval '20 minutes',
+          current_question_started_at =
+            clock_timestamp() - interval '20 minutes',
+          deadline_at = clock_timestamp() - interval '10 minutes'
+        where id = '${historicalAttemptId}';
+      `);
+      const finalized = await database.query<{ count: number }>(`
+        select public.finalize_stale_quiz_attempts(10) as count;
+      `);
+      expect(finalized.rows).toEqual([{ count: 1 }]);
+
+      const points = await database.query<{ count: number }>(`
+        select count(*)::integer as count
+        from public.student_point_events
+        where quiz_attempt_id = '${historicalAttemptId}';
+      `);
+      expect(points.rows).toEqual([{ count: 0 }]);
+    } finally {
+      await database.close();
+    }
+  }, 60_000);
+
+  it("records initial unanswered outcomes through the stale-attempt batch once", async () => {
+    const database = await createFinalSchemaDatabase();
+    try {
+      await seedReviewAssignmentScenario(database);
+      await database.exec("delete from public.student_vocab_review_queue;");
+      const { attemptId } = await createRegularPointAttempt(
+        database,
+        "Initial stale point fixture",
+      );
+      await database.exec(`
+        update public.quiz_attempts
+        set
+          started_at = clock_timestamp() - interval '20 minutes',
+          current_question_started_at =
+            clock_timestamp() - interval '20 minutes',
+          deadline_at = clock_timestamp() - interval '10 minutes'
+        where id = '${attemptId}';
+      `);
+
+      const first = await database.query<{ finalized: number }>(`
+        select public.finalize_stale_quiz_attempts(10) as finalized;
+      `);
+      const second = await database.query<{ finalized: number }>(`
+        select public.finalize_stale_quiz_attempts(10) as finalized;
+      `);
+      expect(first.rows).toEqual([{ finalized: 1 }]);
+      expect(second.rows).toEqual([{ finalized: 0 }]);
+
+      const events = await database.query<{
+        delta: number;
+        outcome: string;
+        stage: string;
+      }>(`
+        select stage, outcome, delta
+        from public.student_point_events
+        where quiz_attempt_id = '${attemptId}'
+        order by quiz_question_id;
+      `);
+      expect(events.rows).toHaveLength(4);
+      expect(events.rows).toEqual(
+        events.rows.map(() => ({
+          stage: "initial",
+          outcome: "unanswered",
+          delta: -3,
+        })),
+      );
+
+      const total = await database.query<{
+        event_count: number;
+        ledger_sum: number;
+        total_points: number;
+      }>(`
+        select
+          total.total_points::integer,
+          total.event_count::integer,
+          sum(event.delta)::integer as ledger_sum
+        from public.student_point_totals as total
+        join public.student_point_events as event
+          on event.student_id = total.student_id
+        where total.student_id = '${ids.student}'
+        group by total.total_points, total.event_count;
+      `);
+      expect(total.rows).toEqual([{
+        total_points: -12,
+        event_count: 4,
+        ledger_sum: -12,
+      }]);
+    } finally {
+      await database.close();
+    }
+  }, 60_000);
+
+  it("records retry unanswered outcomes through the stale-attempt batch once", async () => {
+    const database = await createFinalSchemaDatabase();
+    try {
+      await seedReviewAssignmentScenario(database);
+      await database.exec("delete from public.student_vocab_review_queue;");
+      const { attemptId, questions } = await createRegularPointAttempt(
+        database,
+        "Retry stale point fixture",
+      );
+      const retryTarget = questions[0]!;
+
+      for (const [index, question] of questions.entries()) {
+        const choice = index === 0
+          ? (question.correct_choice_index + 1) % 4
+          : question.correct_choice_index;
+        await database.query(`
+          select public.answer_quiz_question_v4(
+            '${ids.student}',
+            '${attemptId}',
+            '${question.id}',
+            'initial',
+            ${choice}::smallint,
+            false
+          );
+        `);
+        const nextQuestion = questions[index + 1];
+        if (nextQuestion) {
+          await database.query(`
+            select public.resume_quiz_after_feedback_v2(
+              '${ids.student}',
+              '${attemptId}',
+              '${nextQuestion.id}',
+              'initial',
+              0
+            );
+          `);
+        }
+      }
+
+      await database.query(`
+        select public.start_quiz_retry_v2(
+          '${ids.student}',
+          '${attemptId}'
+        );
+      `);
+      await database.exec(`
+        update public.quiz_attempts
+        set
+          started_at = clock_timestamp() - interval '20 minutes',
+          initial_completed_at = clock_timestamp() - interval '10 minutes',
+          retry_started_at = clock_timestamp() - interval '5 minutes',
+          current_question_started_at =
+            clock_timestamp() - interval '5 minutes',
+          deadline_at = clock_timestamp() - interval '1 minute'
+        where id = '${attemptId}';
+      `);
+
+      const first = await database.query<{ finalized: number }>(`
+        select public.finalize_stale_quiz_attempts(10) as finalized;
+      `);
+      const second = await database.query<{ finalized: number }>(`
+        select public.finalize_stale_quiz_attempts(10) as finalized;
+      `);
+      expect(first.rows).toEqual([{ finalized: 1 }]);
+      expect(second.rows).toEqual([{ finalized: 0 }]);
+
+      const targetEvents = await database.query<{
+        delta: number;
+        outcome: string;
+        stage: string;
+      }>(`
+        select stage, outcome, delta
+        from public.student_point_events
+        where quiz_question_id = '${retryTarget.id}'
+        order by stage;
+      `);
+      expect(targetEvents.rows).toEqual([
+        { stage: "initial", outcome: "wrong", delta: -3 },
+        { stage: "retry", outcome: "unanswered", delta: 0 },
+      ]);
+
+      const total = await database.query<{
+        event_count: number;
+        ledger_sum: number;
+        total_points: number;
+      }>(`
+        select
+          total.total_points::integer,
+          total.event_count::integer,
+          sum(event.delta)::integer as ledger_sum
+        from public.student_point_totals as total
+        join public.student_point_events as event
+          on event.student_id = total.student_id
+        where total.student_id = '${ids.student}'
+        group by total.total_points, total.event_count;
+      `);
+      expect(total.rows).toEqual([{
+        total_points: 3,
+        event_count: 5,
+        ledger_sum: 3,
+      }]);
     } finally {
       await database.close();
     }
