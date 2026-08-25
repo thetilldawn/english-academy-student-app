@@ -14,6 +14,9 @@ describe("admin navigation loading contract", () => {
     const assignmentCss = source(
       "src/features/assignments/ui/assignment-workspace.module.css",
     );
+    const assignmentEditorCss = source(
+      "src/features/assignments/ui/single-assignment-editor.module.css",
+    );
     const tokens = source("src/styles/tokens.css");
     const pageLoading = source("src/app/admin/(protected)/loading.tsx");
 
@@ -25,6 +28,9 @@ describe("admin navigation loading contract", () => {
     expect(tokens).toContain("--admin-mobile-nav-height: 65px");
     expect(css).toContain("var(--admin-mobile-nav-height)");
     expect(assignmentCss).toContain("var(--admin-mobile-nav-height)");
+    expect(assignmentEditorCss).toMatch(
+      /@media \(max-width: 767px\) \{\s*\.inlineFooter \{\s*bottom: calc\(var\(--admin-mobile-nav-height\) \+ env\(safe-area-inset-bottom\)\);/,
+    );
     expect(assignmentCss).not.toContain("72px");
     expect(pageLoading).toContain('role="status"');
   });
