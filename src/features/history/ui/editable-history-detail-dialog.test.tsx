@@ -277,4 +277,24 @@ describe("editable history detail dialog", () => {
     );
     expect(screen.getByText("상세 본문")).toBeInTheDocument();
   });
+
+  it("warns before reloading while changed edit values remain", async () => {
+    const user = userEvent.setup();
+    renderDialog();
+    await user.click(screen.getByRole("button", { name: "배정 수정 열기" }));
+
+    const unchangedEvent = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(unchangedEvent);
+    expect(unchangedEvent.defaultPrevented).toBe(false);
+
+    await user.click(screen.getByRole("button", { name: "내용 변경" }));
+    const changedEvent = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(changedEvent);
+    expect(changedEvent.defaultPrevented).toBe(true);
+
+    await user.click(screen.getByRole("button", { name: "저장 완료" }));
+    const completedEvent = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(completedEvent);
+    expect(completedEvent.defaultPrevented).toBe(false);
+  });
 });

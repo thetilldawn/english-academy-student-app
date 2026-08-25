@@ -8,6 +8,7 @@ import { assignmentSubmitBlockerLabel } from "@/features/assignments/presentatio
 import type { SingleAssignmentSubmitPresentation } from "@/features/assignments/ui/single-assignment-editor.types";
 import { historyDetailHref } from "@/lib/admin/history-route";
 import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
+import { useUnsavedChangesWarning } from "@/lib/ui/use-unsaved-changes-warning";
 import type { AdminHistoryDetail } from "../model";
 
 import { buildHistoryAssignmentEditorModel } from "./history-assignment-editor-model";
@@ -35,6 +36,9 @@ export function useEditableHistoryAssignment(
   const editorModel = useMemo(
     () => buildHistoryAssignmentEditorModel(editorData, detail.summary),
     [detail.summary, editorData],
+  );
+  useUnsavedChangesWarning(
+    editing && (Boolean(submitPresentation?.dirty) || editorBusy),
   );
 
   useEffect(() => {

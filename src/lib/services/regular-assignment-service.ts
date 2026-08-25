@@ -54,6 +54,38 @@ export class AssignmentCreationError extends Error {
   }
 }
 
+function assertRegularAssignmentSelectionAvailable({
+  datasetAvailable,
+  datasetLabelAvailable = true,
+  datasetQueryFailed,
+  requestedUnitCount,
+  selectedUnitCount,
+  unitQueryFailed,
+  unitRowsAvailable,
+}: {
+  datasetAvailable: boolean;
+  datasetLabelAvailable?: boolean;
+  datasetQueryFailed: boolean;
+  requestedUnitCount: number;
+  selectedUnitCount: number;
+  unitQueryFailed: boolean;
+  unitRowsAvailable: boolean;
+}) {
+  if (datasetQueryFailed || unitQueryFailed || !unitRowsAvailable) {
+    throw new AssignmentCreationError("database");
+  }
+  if (
+    !datasetAvailable ||
+    !datasetLabelAvailable ||
+    selectedUnitCount !== requestedUnitCount
+  ) {
+    throw new AssignmentCreationError(
+      "invalid_selection",
+      "선택한 단어장과 범위를 다시 선택해 주세요.",
+    );
+  }
+}
+
 export type RegularAssignmentInput = {
   title: string;
   datasetId: string;
@@ -191,16 +223,15 @@ export async function prepareRegularAssignment(
     requestedUnitIds.has(unit.id),
   );
 
-  if (
-    datasetError ||
-    unitError ||
-    !dataset ||
-    !unitData ||
-    !datasetLabel ||
-    selectedUnitData.length !== input.unitIds.length
-  ) {
-    throw new Error("선택한 단어장과 DAY를 사용할 수 없습니다.");
-  }
+  assertRegularAssignmentSelectionAvailable({
+    datasetAvailable: Boolean(dataset),
+    datasetLabelAvailable: Boolean(datasetLabel),
+    datasetQueryFailed: Boolean(datasetError),
+    requestedUnitCount: input.unitIds.length,
+    selectedUnitCount: selectedUnitData.length,
+    unitQueryFailed: Boolean(unitError),
+    unitRowsAvailable: Boolean(unitData),
+  });
 
   let orderedUnits: typeof selectedUnitData;
   try {
@@ -403,18 +434,14 @@ export async function loadRegularAssignmentSeriesCandidates(
   const selectedUnitData = (preparation.unitResult.data ?? []).filter((unit) =>
     requestedUnitIds.has(unit.id)
   );
-  if (
-    preparation.datasetResult.error ||
-    preparation.unitResult.error ||
-    !preparation.datasetResult.data ||
-    !preparation.unitResult.data ||
-    selectedUnitData.length !== input.unitIds.length
-  ) {
-    throw new AssignmentCreationError(
-      "invalid_selection",
-      "선택한 단어장과 출제 대상을 사용할 수 없습니다.",
-    );
-  }
+  assertRegularAssignmentSelectionAvailable({
+    datasetAvailable: Boolean(preparation.datasetResult.data),
+    datasetQueryFailed: Boolean(preparation.datasetResult.error),
+    requestedUnitCount: input.unitIds.length,
+    selectedUnitCount: selectedUnitData.length,
+    unitQueryFailed: Boolean(preparation.unitResult.error),
+    unitRowsAvailable: Boolean(preparation.unitResult.data),
+  });
   const activeAssignmentKey = regularPreparationCacheKey([
     [...input.studentIds].sort(),
     input.datasetId,
@@ -514,18 +541,14 @@ export async function calculateRegularAssignmentCapacity(
   const selectedUnitData = (preparation.unitResult.data ?? []).filter((unit) =>
     requestedUnitIds.has(unit.id)
   );
-  if (
-    preparation.datasetResult.error ||
-    preparation.unitResult.error ||
-    !preparation.datasetResult.data ||
-    !preparation.unitResult.data ||
-    selectedUnitData.length !== input.unitIds.length
-  ) {
-    throw new AssignmentCreationError(
-      "invalid_selection",
-      "선택한 단어장과 출제 대상을 사용할 수 없습니다.",
-    );
-  }
+  assertRegularAssignmentSelectionAvailable({
+    datasetAvailable: Boolean(preparation.datasetResult.data),
+    datasetQueryFailed: Boolean(preparation.datasetResult.error),
+    requestedUnitCount: input.unitIds.length,
+    selectedUnitCount: selectedUnitData.length,
+    unitQueryFailed: Boolean(preparation.unitResult.error),
+    unitRowsAvailable: Boolean(preparation.unitResult.data),
+  });
   const activeAssignmentKey = regularPreparationCacheKey([
     [...input.studentIds].sort(),
     input.datasetId,

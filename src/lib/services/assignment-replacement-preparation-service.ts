@@ -30,7 +30,10 @@ import {
   MixedAssignmentError,
   prepareMixedAssignmentBatch,
 } from "@/lib/services/mixed-assignment-service";
-import { prepareRegularAssignment } from "@/lib/services/regular-assignment-service";
+import {
+  AssignmentCreationError,
+  prepareRegularAssignment,
+} from "@/lib/services/regular-assignment-service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 async function prepareExactReviewQuestions(
@@ -347,6 +350,12 @@ export async function prepareStudentAssignmentReplacement(
       };
     }
   } catch (error) {
+    if (error instanceof AssignmentCreationError) {
+      throw new AssignmentReplacementError(
+        error.reason,
+        error.message,
+      );
+    }
     if (error instanceof MixedAssignmentError) {
       throw new AssignmentReplacementError(
         error.reason === "forbidden"

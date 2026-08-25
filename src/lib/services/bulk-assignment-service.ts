@@ -28,6 +28,7 @@ import {
 } from "@/lib/services/admin-history-read-service";
 import { loadAssignmentPlanningCatalog } from "@/lib/services/admin-student-read-service";
 import {
+  AssignmentCreationError,
   calculateRegularAssignmentCapacity,
   createRegularAssignmentPreparationCache,
   loadRegularAssignmentSeriesCandidates,
@@ -212,6 +213,24 @@ export class BulkAssignmentError extends Error {
     super(message);
     this.name = "BulkAssignmentError";
   }
+}
+
+export function mapBulkAssignmentPreparationFailure(error: unknown) {
+  if (error instanceof BulkAssignmentError) return error;
+  if (error instanceof AssignmentCreationError) {
+    return new BulkAssignmentError(error.reason, error.message);
+  }
+  if (error instanceof MixedAssignmentError) {
+    return new BulkAssignmentError(
+      error.reason === "database"
+        ? "database"
+        : error.reason === "conflict"
+          ? "conflict"
+          : "invalid_selection",
+      error.message,
+    );
+  }
+  return new BulkAssignmentError("database");
 }
 
 function bulkDatabaseError(error: { code?: string; message?: string }) {
@@ -1738,19 +1757,7 @@ export async function createBulkAssignments(
       requestSha256,
     );
     if (concurrent) return concurrent;
-    if (error instanceof BulkAssignmentError) throw error;
-    if (error instanceof MixedAssignmentError) {
-      throw new BulkAssignmentError(
-        error.reason === "conflict" ? "conflict" : "invalid_selection",
-        error.message,
-      );
-    }
-    throw new BulkAssignmentError(
-      "invalid_selection",
-      error instanceof Error
-        ? error.message
-        : "학생별 시험 문제를 만들지 못했습니다.",
-    );
+    throw mapBulkAssignmentPreparationFailure(error);
   }
 
   const totalBatchQuestionCount = batches.reduce((total, batch) => {

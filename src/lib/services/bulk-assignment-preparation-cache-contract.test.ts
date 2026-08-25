@@ -38,6 +38,9 @@ describe("bulk assignment preparation cache contract", () => {
     expect(bulkAssignments).toMatch(
       /resolvedPreview\.preparedLegacySeriesByStudent\s*\.get\(item\.studentId\)/,
     );
+    expect(bulkAssignments).toContain(
+      "throw mapBulkAssignmentPreparationFailure(error)",
+    );
   });
 
   it("keeps mixed and regular caches request-scoped Promise maps", () => {
