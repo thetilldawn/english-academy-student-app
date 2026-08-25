@@ -29,6 +29,16 @@ const studentAssignmentLifecycle = fs.readFileSync(
   ),
   "utf8",
 );
+const directDetailPage = fs.readFileSync(
+  path.resolve("src/app/admin/(protected)/results/[id]/page.tsx"),
+  "utf8",
+);
+const interceptedDetailPage = fs.readFileSync(
+  path.resolve(
+    "src/app/admin/(protected)/@detail/(.)results/[entryKey]/page.tsx",
+  ),
+  "utf8",
+);
 
 describe("admin assignment history query contract", () => {
   it("시험 목적과 주 DAY를 함께 조회하고 내역 모델로 전달한다", () => {
@@ -110,5 +120,20 @@ describe("admin assignment history query contract", () => {
     expect(quizSource).toContain(
       "if (datasetError || assignmentUnitError) {",
     );
+  });
+
+  it("reuses the finalized history bundle within an editable detail request", () => {
+    expect(source).toContain('import { cache } from "react";');
+    expect(source).toContain(
+      "const loadAssignmentHistoryBundleForRequest = cache(",
+    );
+    expect(source).toContain(
+      "options?.finalizeStale !== false",
+    );
+    for (const detailPage of [directDetailPage, interceptedDetailPage]) {
+      expect(detailPage).toContain(
+        "loadAssignmentManagerData({ finalizeStale: true })",
+      );
+    }
   });
 });

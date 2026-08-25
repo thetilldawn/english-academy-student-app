@@ -31,8 +31,8 @@ describe("student progress history source contract", () => {
     expect(bulkAssignments).toContain(
       "listAssignmentHistoryBundle({ finalizeStale: false })",
     );
-    expect(assignmentManager).toContain(
-      "listAssignmentHistoryBundle({ finalizeStale: false })",
+    expect(assignmentManager).toMatch(
+      /listAssignmentHistoryBundle\(\{[\s\S]*?finalizeStale:\s*options\?\.finalizeStale\s*\?\?\s*false,[\s\S]*?\}\)/,
     );
   });
 

@@ -10,7 +10,9 @@ import { listVocabTimeTemplates } from "@/lib/services/vocab-time-template-servi
 import { listVocabAssignmentQueueSummaries } from "@/lib/services/vocab-assignment-queue-service";
 import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
 
-export async function loadAssignmentManagerData(): Promise<
+export async function loadAssignmentManagerData(options?: {
+  finalizeStale?: boolean;
+}): Promise<
   AssignmentManagerData
 > {
   const [
@@ -23,7 +25,9 @@ export async function loadAssignmentManagerData(): Promise<
     assignmentQueues,
   ] = await Promise.all([
     loadStudentDirectoryBundle(),
-    listAssignmentHistoryBundle({ finalizeStale: false }),
+    listAssignmentHistoryBundle({
+      finalizeStale: options?.finalizeStale ?? false,
+    }),
     listStudentPendingReviewSummaries(),
     listStudentCurrentVocabWrongSummaries(),
     listStudentClassGroups(),

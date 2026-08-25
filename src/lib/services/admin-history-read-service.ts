@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { requireAdmin } from "@/lib/auth/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { finalizeStaleQuizAttempts } from "@/lib/services/stale-attempt-service";
@@ -232,15 +234,13 @@ async function listHiddenHistoryEntries(
   }
 }
 
-export async function listAssignmentHistoryBundle(options?: {
-  finalizeStale?: boolean;
-}): Promise<{
+async function loadAssignmentHistoryBundle(finalizeStale: boolean): Promise<{
   history: AssignmentHistorySummary[];
   completeHistory: AssignmentHistorySummary[];
   currentHistory: AssignmentHistorySummary[];
 }> {
   await requireAdmin();
-  if (options?.finalizeStale !== false) {
+  if (finalizeStale) {
     await finalizeStaleQuizAttempts();
   }
   const supabase = await createServerSupabaseClient();
@@ -429,6 +429,22 @@ export async function listAssignmentHistoryBundle(options?: {
     ),
     history: completeHistory.filter(isVisibleHistoryItem),
   };
+}
+
+const loadAssignmentHistoryBundleForRequest = cache(
+  loadAssignmentHistoryBundle,
+);
+
+export async function listAssignmentHistoryBundle(options?: {
+  finalizeStale?: boolean;
+}): Promise<{
+  history: AssignmentHistorySummary[];
+  completeHistory: AssignmentHistorySummary[];
+  currentHistory: AssignmentHistorySummary[];
+}> {
+  return loadAssignmentHistoryBundleForRequest(
+    options?.finalizeStale !== false,
+  );
 }
 
 export async function listAssignmentHistory(): Promise<

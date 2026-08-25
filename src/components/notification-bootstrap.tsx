@@ -13,9 +13,16 @@ export function NotificationBootstrap({
   role: "student" | "admin";
 }) {
   const inFlight = useRef(false);
+  const lastAttemptedAt = useRef(0);
 
-  const deliver = useCallback(async () => {
+  const deliver = useCallback(async (force = false) => {
     if (inFlight.current || document.visibilityState === "hidden") return;
+    const now = Date.now();
+    if (!force && now - lastAttemptedAt.current < RECHECK_INTERVAL_MS) {
+      return;
+    }
+    // 응답 성공 여부와 무관하게 탭 전환으로 같은 요청이 연속 발생하지 않게 한다.
+    lastAttemptedAt.current = now;
     inFlight.current = true;
     try {
       const delivery = await requestNotificationDelivery(role);
@@ -41,7 +48,7 @@ export function NotificationBootstrap({
   }, [role]);
 
   useEffect(() => {
-    void deliver();
+    void deliver(true);
     const intervalId = window.setInterval(
       () => void deliver(),
       RECHECK_INTERVAL_MS,
