@@ -4,6 +4,7 @@ import type { FormEvent } from "react";
 
 import { adminStudentsText } from "@/content/ko/admin-students";
 import { Button } from "@/design-system/primitives/button/button";
+import { CurrentPointSummary } from "@/features/learning-points/ui/point-summary";
 import {
   Field,
   FieldLabel,
@@ -45,6 +46,9 @@ export function StudentInfoPanel({
       id="student-info-panel"
       role="tabpanel"
     >
+      <CurrentPointSummary
+        currentPoints={data.pointBalances[student.id] ?? 0}
+      />
       <form className={styles.profileForm} onSubmit={submit}>
         <div className={styles.profileGrid}>
           <Field as="label">

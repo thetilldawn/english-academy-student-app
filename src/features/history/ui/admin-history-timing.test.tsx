@@ -66,6 +66,7 @@ function perQuestionDetail(): AdminHistoryDetail {
   return {
     attempt: null,
     canonicalKey: "assignment.assignment-1.student-1",
+    pointSummary: null,
     summary,
   };
 }

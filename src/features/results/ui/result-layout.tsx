@@ -7,15 +7,18 @@ export function ResultLayout({
   primary,
   secondary,
   sidebar,
+  summary,
 }: {
   header: ReactNode;
   primary: ReactNode;
   secondary?: ReactNode;
   sidebar: ReactNode;
+  summary?: ReactNode;
 }) {
   return (
     <main className={styles.page} id="main-content">
       {header}
+      {summary ? <div className={styles.summary}>{summary}</div> : null}
       <div className={styles.layout}>
         <div className={styles.primary}>{primary}</div>
         <aside className={styles.sidebar}>{sidebar}</aside>

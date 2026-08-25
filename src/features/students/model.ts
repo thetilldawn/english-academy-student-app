@@ -10,6 +10,7 @@ import type {
   VocabUnitSummary,
 } from "@/lib/admin/dataset-summary";
 import type { StudentSummary } from "@/lib/admin/student-summary";
+import type { StudentPointBalances } from "@/features/learning-points/model";
 
 export type StudentDetailTab = "info" | "account" | "history";
 export type StudentWrongFilter = "all" | "wrong" | "repeated" | "retry";
@@ -44,6 +45,7 @@ export type StudentManagementData = {
   initialStudentId?: string;
   learningSources: StudentLearningSourceItem[];
   pendingReviewSummaries: StudentPendingReviewSummary[];
+  pointBalances: StudentPointBalances;
   progress: StudentProgressSummary[];
   students: StudentSummary[];
   vocabBookHistory: StudentVocabBookHistory[];

@@ -8,6 +8,11 @@
   margin-bottom: var(--gap-title);
 }
 
+.pointSummary {
+  min-width: 0;
+  margin-bottom: 34px;
+}
+
 .heading h1 {
   margin: 0;
   color: var(--text-primary);
@@ -57,6 +62,10 @@
 
   .sectionList {
     gap: 28px;
+  }
+
+  .pointSummary {
+    margin-bottom: 28px;
   }
 }
 

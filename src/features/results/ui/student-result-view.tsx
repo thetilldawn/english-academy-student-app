@@ -2,6 +2,7 @@ import { formatContentText } from "@/content/format";
 import { studentAppText } from "@/content/ko/student-app";
 import { CountBadge, MetaTag } from "@/design-system/primitives/badge/badge";
 import { ButtonLink } from "@/design-system/primitives/button/button";
+import { StudentAttemptPointSummaryView } from "@/features/learning-points/ui/point-summary";
 import { formatElapsed } from "@/lib/format";
 import { getResultQuestionPresentation } from "@/lib/quiz/result-presentation";
 
@@ -285,6 +286,11 @@ export function StudentResultView({ result }: { result: StudentAttemptResult }) 
         primary={unresolved}
         secondary={resolved}
         sidebar={sidebar}
+        summary={
+          result.pointSummary ? (
+            <StudentAttemptPointSummaryView summary={result.pointSummary} />
+          ) : undefined
+        }
       />
     </ResultAudioProvider>
   );

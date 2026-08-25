@@ -64,11 +64,18 @@ function assignment(
 
 describe("StudentDashboard", () => {
   it("renders the dedicated empty state for zero assignments", () => {
-    render(<StudentDashboard assignments={[]} displayName="테스트" />);
+    render(
+      <StudentDashboard
+        assignments={[]}
+        currentPoints={17}
+        displayName="테스트"
+      />,
+    );
 
     expect(screen.getByRole("status")).toHaveTextContent(
       studentAppText.dashboard.emptyTitle,
     );
+    expect(screen.getByLabelText("현재 포인트")).toHaveTextContent("17");
     expect(screen.queryByRole("heading", { level: 2 })).not.toBeInTheDocument();
   });
 
@@ -100,7 +107,11 @@ describe("StudentDashboard", () => {
     ];
 
     const { container } = render(
-      <StudentDashboard assignments={assignments} displayName="테스트" />,
+      <StudentDashboard
+        assignments={assignments}
+        currentPoints={0}
+        displayName="테스트"
+      />,
     );
 
     expect(
@@ -129,6 +140,7 @@ describe("StudentDashboard", () => {
         assignments={[
           assignment("long", { datasetTitle: longTitle, displayTitle: "" }),
         ]}
+        currentPoints={0}
         displayName="테스트"
       />,
     );
@@ -153,6 +165,7 @@ describe("StudentDashboard", () => {
             lastCompletedAt: "2026-08-09T00:00:00.000Z",
           }),
         ]}
+        currentPoints={0}
         displayName="테스트"
       />,
     );

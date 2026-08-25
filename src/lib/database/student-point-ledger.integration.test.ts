@@ -464,6 +464,23 @@ describe.sequential("student point ledger", () => {
     }]);
 
     await database.exec(`
+      insert into public.students (id) values ('${uuid(997)}');
+    `);
+    const crossStudentSummary = await database.query<{
+      event_count: number;
+      net_change: number;
+    }>(`
+      select event_count::integer, net_change::integer
+      from public.get_quiz_attempt_point_summary_v1(
+        '${uuid(997)}',
+        '${ids.regularAttempt}'
+      );
+    `);
+    expect(crossStudentSummary.rows).toEqual([
+      { event_count: 0, net_change: 0 },
+    ]);
+
+    await database.exec(`
       insert into public.quiz_attempts (
         id, student_id, assignment_id, status, phase
       ) values (

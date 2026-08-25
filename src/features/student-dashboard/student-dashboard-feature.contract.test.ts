@@ -25,6 +25,7 @@ describe("student dashboard feature boundary", () => {
 
   it("leaves the route responsible only for server loading and feature composition", () => {
     expect(page).toContain("listStudentAssignments(session.studentId)");
+    expect(page).toContain("getStudentPointBalance(session.studentId)");
     expect(page).toContain("<StudentDashboard");
     expect(page).not.toMatch(
       /function AssignmentCard|assignments\.filter|<article|activitySection/,

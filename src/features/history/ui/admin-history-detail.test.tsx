@@ -67,6 +67,7 @@ function summary(): AssignmentHistorySummary {
 function detail(retryIsCorrect: boolean): AdminHistoryDetail {
   return {
     canonicalKey: "attempt.attempt-1",
+    pointSummary: null,
     summary: summary(),
     attempt: {
       id: "attempt-1",
@@ -114,6 +115,27 @@ function detail(retryIsCorrect: boolean): AdminHistoryDetail {
 }
 
 describe("AdminHistoryDetailContent", () => {
+  it("shows the signed point breakdown only when events exist", () => {
+    const withPoints = detail(true);
+    withPoints.pointSummary = {
+      correctReward: 3,
+      wrongEffect: -3,
+      netChange: 0,
+      currentPoints: 8,
+    };
+    const { rerender } = render(
+      <AdminHistoryDetailContent detail={withPoints} />,
+    );
+    expect(screen.getByLabelText("포인트 반영 내역")).toHaveTextContent(
+      "정답 보상+3오답 반영-3순변화0현재 포인트8",
+    );
+
+    rerender(<AdminHistoryDetailContent detail={detail(true)} />);
+    expect(
+      screen.queryByLabelText("포인트 반영 내역"),
+    ).not.toBeInTheDocument();
+  });
+
   it("does not repeat the correct answer after a successful retry", () => {
     render(<AdminHistoryDetailContent detail={detail(true)} />);
 

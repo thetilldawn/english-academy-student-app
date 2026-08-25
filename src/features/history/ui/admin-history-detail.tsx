@@ -7,6 +7,7 @@ import {
   StatusBadge,
 } from "@/design-system/primitives/badge/badge";
 import { AttemptQuestionCard } from "@/features/results/ui/attempt-question-card";
+import { AdminAttemptPointSummaryView } from "@/features/learning-points/ui/point-summary";
 import {
   assignmentOrderLabel,
   assignmentScopeLabel,
@@ -80,6 +81,10 @@ export function AdminHistoryDetailContent({
           />
           <ActivityStatusTimeline item={summary} />
         </div>
+
+        {detail.pointSummary ? (
+          <AdminAttemptPointSummaryView summary={detail.pointSummary} />
+        ) : null}
 
         <dl className={styles.metadata}>
           <div>

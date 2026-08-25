@@ -26,6 +26,7 @@ import type {
 import type { AdminHistoryDetail } from "@/features/history/model";
 
 import { getAdminAttemptDetail } from "./admin-attempt-read-service";
+import { getAdminAttemptPointSummary } from "./learning-point-read-service";
 
 function oneRelation<T>(value: T | T[] | null): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : value;
@@ -459,11 +460,17 @@ export async function getAdminHistoryDetail(
         );
   if (!summary) return null;
 
+  const [attempt, pointSummary] = summary.attemptId
+    ? await Promise.all([
+        getAdminAttemptDetail(summary.attemptId),
+        getAdminAttemptPointSummary(summary.studentId, summary.attemptId),
+      ])
+    : [null, null];
+
   return {
     summary,
-    attempt: summary.attemptId
-      ? await getAdminAttemptDetail(summary.attemptId)
-      : null,
+    attempt,
     canonicalKey: historyEntryKey(summary),
+    pointSummary,
   };
 }

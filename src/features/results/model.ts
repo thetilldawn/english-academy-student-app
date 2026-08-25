@@ -1,5 +1,6 @@
 import type { QuestionProvenanceStatus } from "@/lib/quiz/question-provenance";
 import type { QuizPronunciation } from "@/lib/quiz/pronunciation-snapshot";
+import type { StudentAttemptPointSummary } from "@/features/learning-points/model";
 
 export type AttemptResultQuestion = {
   id: string;
@@ -36,5 +37,6 @@ export type StudentAttemptResult = {
   startedAt: string;
   initialCompletedAt: string | null;
   completedAt: string | null;
+  pointSummary: StudentAttemptPointSummary | null;
   questions: AttemptResultQuestion[];
 };

@@ -2,6 +2,7 @@ import "server-only";
 
 import type { StudentAttemptResult } from "@/features/results/model";
 import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
+import { getStudentAttemptPointSummary } from "@/lib/services/learning-point-read-service";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import {
   loadActiveVocabPronunciationReleaseRegistry,
@@ -102,7 +103,10 @@ export async function getAttemptResult(
   if (error || !data) {
     return null;
   }
-  const questions = await getAttemptQuestionResults(attemptId);
+  const [questions, pointSummary] = await Promise.all([
+    getAttemptQuestionResults(attemptId),
+    getStudentAttemptPointSummary(studentId, attemptId),
+  ]);
 
   const assignment = Array.isArray(data.assignments)
     ? data.assignments[0]
@@ -147,7 +151,7 @@ export async function getAttemptResult(
     startedAt: data.started_at,
     initialCompletedAt: data.initial_completed_at,
     completedAt: data.completed_at,
+    pointSummary,
     questions,
   };
 }
-

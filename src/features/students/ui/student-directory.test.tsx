@@ -43,6 +43,9 @@ function data(students: StudentSummary[]): StudentManagementData {
     history: [],
     learningSources: [],
     pendingReviewSummaries: [],
+    pointBalances: Object.fromEntries(
+      students.map((item, index) => [item.id, index + 7]),
+    ),
     progress: [],
     students,
     vocabBookHistory: [],
@@ -113,6 +116,7 @@ describe("StudentDirectory", () => {
     expect(within(card).getByText("완료 0개")).toBeVisible();
     expect(within(card).getByText("미응시 0개")).toBeVisible();
     expect(within(card).getByText("응시 전 0개")).toBeVisible();
+    expect(within(card).getByText("현재 포인트 7")).toBeVisible();
   });
 
   it("clears a search independently from detailed filters", async () => {

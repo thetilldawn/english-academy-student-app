@@ -1,7 +1,4 @@
-export type StudentPointBalance = {
-  studentId: string;
-  currentPoints: number;
-};
+export type StudentPointBalances = Readonly<Record<string, number>>;
 
 export type StudentAttemptPointSummary = {
   attemptPoints: number;

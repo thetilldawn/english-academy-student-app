@@ -168,6 +168,7 @@ afterAll(() => {
 });
 
 const detail = {
+  pointSummary: null,
   summary: {
     assignmentId: "assignment-1",
     studentId: "student-1",

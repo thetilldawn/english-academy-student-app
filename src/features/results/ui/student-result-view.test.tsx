@@ -70,12 +70,31 @@ function result(
     startedAt: "2026-08-11T00:00:00.000Z",
     initialCompletedAt: "2026-08-11T00:01:00.000Z",
     completedAt: "2026-08-11T00:01:00.000Z",
+    pointSummary: null,
     questions,
     ...overrides,
   };
 }
 
 describe("StudentResultView", () => {
+  it("shows new point events and hides the area for an old attempt", () => {
+    const { rerender } = render(
+      <StudentResultView
+        result={
+          result([question("q1")], {
+            pointSummary: { attemptPoints: 0, currentPoints: 0 },
+          })
+        }
+      />,
+    );
+    expect(screen.getByLabelText("시험 포인트")).toHaveTextContent(
+      "이번 시험 포인트0현재 포인트0",
+    );
+
+    rerender(<StudentResultView result={result([question("q1")])} />);
+    expect(screen.queryByLabelText("시험 포인트")).not.toBeInTheDocument();
+  });
+
   it("shows only the correct answer and colors the left bar by wrong count", () => {
     const questions = [
       question("q1", { wrongCount: 1 }),

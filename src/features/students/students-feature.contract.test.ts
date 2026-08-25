@@ -75,6 +75,7 @@ describe("student management feature boundary", () => {
       /listStudents\(|listDatasets\(|listSelectableDatasets\(|listStudentLearningSources\(/,
     );
     expect(loader).toContain("loadStudentDirectoryBundle()");
+    expect(loader).toContain("listStudentPointBalances(");
     expect(loader).toContain("getAppOrigin()");
     expect(loader).not.toContain("getServerEnvironment");
     expect(studentReadService).toContain(

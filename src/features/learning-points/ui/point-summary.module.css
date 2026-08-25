@@ -1,0 +1,129 @@
+.list {
+  --point-divider: color-mix(
+    in srgb,
+    var(--text-secondary) 65%,
+    var(--line)
+  );
+
+  min-width: 0;
+  display: grid;
+  margin: 0;
+  border: 1px solid var(--point-divider);
+  background: var(--surface);
+}
+
+.list > div {
+  min-width: 0;
+  display: grid;
+  align-content: center;
+  gap: var(--space-1);
+  padding: 14px 16px;
+}
+
+.list dt {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.list dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-krs);
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.list[data-point-summary="current"] {
+  width: min(100%, 220px);
+}
+
+.list[data-point-summary="current"] > div {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.list[data-point-summary="current"] dd {
+  font-size: 24px;
+}
+
+.list[data-point-summary="student-attempt"] {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.list[data-point-summary="student-attempt"]::after {
+  content: "→";
+  grid-column: 2;
+  grid-row: 1;
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.list[data-point-summary="student-attempt"] > div:first-child {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.list[data-point-summary="student-attempt"] > div:last-child {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.list[data-point-summary="admin-attempt"] > div + div {
+  border-left: 1px solid var(--point-divider);
+}
+
+.list[data-point-summary="admin-attempt"] {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 767px) {
+  .list[data-point-summary="admin-attempt"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .list[data-point-summary="admin-attempt"] > div:nth-child(3) {
+    border-left: 0;
+  }
+
+  .list[data-point-summary="admin-attempt"] > div:nth-child(n + 3) {
+    border-top: 1px solid var(--point-divider);
+  }
+}
+
+@media (max-width: 359px) {
+  .list[data-point-summary="student-attempt"],
+  .list[data-point-summary="admin-attempt"] {
+    grid-template-columns: 1fr;
+  }
+
+  .list[data-point-summary="student-attempt"] > div:last-of-type,
+  .list[data-point-summary="admin-attempt"] > div + div,
+  .list[data-point-summary="admin-attempt"] > div:nth-child(3) {
+    border-top: 1px solid var(--point-divider);
+    border-left: 0;
+  }
+
+  .list[data-point-summary="student-attempt"]::after {
+    grid-column: 1;
+    grid-row: 2;
+    transform: rotate(90deg);
+  }
+
+  .list[data-point-summary="student-attempt"] > div:first-child {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .list[data-point-summary="student-attempt"] > div:last-child {
+    grid-column: 1;
+    grid-row: 3;
+  }
+}

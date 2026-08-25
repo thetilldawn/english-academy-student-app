@@ -313,6 +313,17 @@
     min-height: var(--control-height-default);
     height: var(--control-height-default);
   }
+
+  .activityStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: grid;
+    gap: var(--space-1) var(--space-3);
+  }
+
+  .activityStats > span {
+    padding-right: 0;
+    border-right: 0;
+  }
 }
 
 @media (max-width: 359px) {

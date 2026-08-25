@@ -11,22 +11,33 @@ import {
   loadStudentDirectoryBundle,
   listStudentPendingReviewSummaries,
 } from "@/lib/services/admin-student-read-service";
+import { listStudentPointBalances } from "@/lib/services/learning-point-read-service";
 
 import type { StudentManagementData } from "../model";
 
 export async function loadStudentManagementData(): Promise<
   Omit<StudentManagementData, "initialStudentId">
 > {
+  const directoryPromise = loadStudentDirectoryBundle();
+  const pointBalancesPromise = directoryPromise.then(async (directory) =>
+    Object.fromEntries(
+      await listStudentPointBalances(
+        directory.students.map((student) => student.id),
+      ),
+    ),
+  );
   const [
     directory,
     historyBundle,
     pendingReviewSummaries,
     currentVocabWrongSummaries,
+    pointBalances,
   ] = await Promise.all([
-    loadStudentDirectoryBundle(),
+    directoryPromise,
     listAssignmentHistoryBundle(),
     listStudentPendingReviewSummaries(),
     listStudentCurrentVocabWrongSummaries(),
+    pointBalancesPromise,
   ]);
   const assignmentUnits = directory.assignmentUnits;
   const history = historyBundle.history;
@@ -41,6 +52,7 @@ export async function loadStudentManagementData(): Promise<
     history,
     learningSources: directory.learningSources,
     pendingReviewSummaries,
+    pointBalances,
     progress: buildStudentProgress(
       directory.students,
       assignmentUnits,

@@ -1,4 +1,5 @@
 import type { AttemptResultQuestion } from "@/features/results/model";
+import type { AdminAttemptPointSummary } from "@/features/learning-points/model";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
 
 export type AttemptSummary = {
@@ -28,4 +29,5 @@ export type AdminHistoryDetail = {
   summary: AssignmentHistorySummary;
   attempt: AdminAttemptDetail | null;
   canonicalKey: string;
+  pointSummary: AdminAttemptPointSummary | null;
 };

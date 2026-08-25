@@ -30,7 +30,9 @@ import {
 } from "@/design-system/primitives/form/field";
 import { adminStudentsText } from "@/content/ko/admin-students";
 import { commonText } from "@/content/ko/common";
+import { learningPointsText } from "@/content/ko/learning-points";
 import { formatContentText } from "@/content/format";
+import { formatVisiblePoints } from "@/features/learning-points/presentation/point-presentation";
 import {
   cataloguedDatasetDisplayLabel,
   groupCataloguedDatasets,
@@ -482,6 +484,10 @@ export function StudentDirectory({
                       </span>
                       <span>
                         {adminStudentsText.card.notStarted} {summary.notStartedCount}개
+                      </span>
+                      <span>
+                        {learningPointsText.current}{" "}
+                        {formatVisiblePoints(data.pointBalances[student.id] ?? 0)}
                       </span>
                     </span>
                   </span>

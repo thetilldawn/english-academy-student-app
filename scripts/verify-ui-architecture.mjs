@@ -856,6 +856,10 @@ const boundedCssModulePaths = [
     "src/features/results",
     (candidate) => candidate.endsWith(".module.css"),
   ),
+  ...filesUnder(
+    "src/features/learning-points",
+    (candidate) => candidate.endsWith(".module.css"),
+  ),
 ];
 
 for (const relativePath of boundedCssModulePaths) {
