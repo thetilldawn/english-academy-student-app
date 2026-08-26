@@ -22,7 +22,8 @@ describe("student quiz service boundaries", () => {
     const snapshot = source("question-snapshot.ts");
     const resultMapper = source("result-question-mapper.ts");
 
-    expect(query).toContain('from "./attempt-command"');
+    expect(query).not.toContain('from "./attempt-command"');
+    expect(query).not.toContain("expireStudentAttempt");
     expect(command).not.toContain("attempt-query");
     expect(resultQuery).toContain('from "./result-question-mapper"');
     expect(resultQuery).toContain('from "./pronunciation-registry"');

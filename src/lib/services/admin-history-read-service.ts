@@ -4,7 +4,6 @@ import { cache } from "react";
 
 import { requireAdmin } from "@/lib/auth/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { finalizeStaleQuizAttempts } from "@/lib/services/stale-attempt-service";
 import { datasetDisplayLabel } from "@/lib/admin/dataset-display";
 import {
   loadDatasetDisplayLabelMap,
@@ -235,11 +234,8 @@ async function listHiddenHistoryEntries(
   }
 }
 
-async function loadAssignmentHistoryRows(finalizeStale: boolean) {
+async function loadAssignmentHistoryRows() {
   await requireAdmin();
-  if (finalizeStale) {
-    await finalizeStaleQuizAttempts();
-  }
   const supabase = await createServerSupabaseClient();
   const [
     { data: assignmentStudentData, error: assignmentStudentError },
@@ -270,7 +266,6 @@ async function loadAssignmentHistoryRows(finalizeStale: boolean) {
 const loadAssignmentHistoryRowsForRequest = cache(loadAssignmentHistoryRows);
 
 async function loadAssignmentHistoryBundle(
-  finalizeStale: boolean,
   reuseMaterialRequestCache: boolean,
 ): Promise<{
   history: AssignmentHistorySummary[];
@@ -282,7 +277,7 @@ async function loadAssignmentHistoryBundle(
     assignmentStudentData,
     attemptData,
     hiddenHistoryData,
-  } = await loadAssignmentHistoryRowsForRequest(finalizeStale);
+  } = await loadAssignmentHistoryRowsForRequest();
   const historyDatasets = (
     assignmentStudentData
   ).flatMap((row) => {
@@ -457,7 +452,6 @@ const loadAssignmentHistoryBundleForRequest = cache(
 );
 
 export async function listAssignmentHistoryBundle(options?: {
-  finalizeStale?: boolean;
   reuseMaterialRequestCache?: boolean;
 }): Promise<{
   history: AssignmentHistorySummary[];
@@ -465,7 +459,6 @@ export async function listAssignmentHistoryBundle(options?: {
   currentHistory: AssignmentHistorySummary[];
 }> {
   return loadAssignmentHistoryBundleForRequest(
-    options?.finalizeStale !== false,
     options?.reuseMaterialRequestCache === true,
   );
 }

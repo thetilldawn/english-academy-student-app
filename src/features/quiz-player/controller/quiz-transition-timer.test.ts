@@ -43,9 +43,56 @@ describe("activeNextQuestionMilliseconds", () => {
       }),
     ).toBe(9_500);
   });
+
+  it("keeps decreasing the same untimed assignment deadline after activation", () => {
+    vi.spyOn(performance, "now").mockReturnValue(2_000);
+
+    expect(
+      activeNextQuestionMilliseconds({
+        activatedAt: 1_000,
+        attempt: {
+          timingMode: "none",
+          timerDeadlineAt: "2099-01-01T00:10:00.000Z",
+        } as QuizAttempt,
+        previewMilliseconds: 12_000,
+        serverMilliseconds: 11_700,
+        serverReceivedAt: 1_800,
+      }),
+    ).toBe(11_000);
+  });
 });
 
 describe("previewNextQuestionMilliseconds", () => {
+  it("keeps an untimed assignment deadline instead of resetting it to one second", () => {
+    expect(
+      previewNextQuestionMilliseconds(
+        {
+          timingMode: "none",
+          timerDeadlineAt: "2099-01-01T00:10:00.000Z",
+        } as QuizAttempt,
+        {
+          feedbackProtocol: "variable",
+          timerRemainingMilliseconds: 12_000,
+        },
+      ),
+    ).toBe(12_000);
+  });
+
+  it("does not start a deadline clock for a truly untimed assignment", () => {
+    expect(
+      previewNextQuestionMilliseconds(
+        {
+          timingMode: "none",
+          timerDeadlineAt: "infinity",
+        } as QuizAttempt,
+        {
+          feedbackProtocol: "variable",
+          timerRemainingMilliseconds: 12_000,
+        },
+      ),
+    ).toBe(1_000);
+  });
+
   it("does not subtract the new reservation from a legacy total timer", () => {
     expect(
       previewNextQuestionMilliseconds(

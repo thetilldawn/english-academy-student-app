@@ -15,6 +15,7 @@ import {
   applyQuizAnswerTransition,
   quizAnswerAudioUrl,
   quizAnswerDisposition,
+  quizAttemptUsesDeadlineClock,
   quizAudioPresentation,
   quizChoiceAudioUrls,
   quizChoicesDensity,
@@ -71,6 +72,33 @@ function attempt(): QuizAttempt {
 }
 
 describe("quiz session domain", () => {
+  it("uses a hidden deadline clock only when an untimed assignment has a deadline", () => {
+    expect(
+      quizAttemptUsesDeadlineClock({
+        timingMode: "none",
+        timerDeadlineAt: "infinity",
+      }),
+    ).toBe(false);
+    expect(
+      quizAttemptUsesDeadlineClock({
+        timingMode: "none",
+        timerDeadlineAt: "2099-01-01T00:10:00.000Z",
+      }),
+    ).toBe(true);
+    expect(
+      quizAttemptUsesDeadlineClock({
+        timingMode: "total",
+        timerDeadlineAt: "2099-01-01T00:10:00.000Z",
+      }),
+    ).toBe(true);
+    expect(
+      quizAttemptUsesDeadlineClock({
+        timingMode: "none",
+        timerDeadlineAt: "invalid-deadline",
+      }),
+    ).toBe(true);
+  });
+
   it("enables audio only on the English side of each direction", () => {
     const englishPromptQuestion = question("english_to_korean");
     const englishPrompt = quizAudioPresentation(englishPromptQuestion);

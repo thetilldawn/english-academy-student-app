@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   cacheStores: [] as Array<Map<string, unknown>>,
   createServerSupabaseClient: vi.fn(),
-  finalizeStaleQuizAttempts: vi.fn(),
   loadCurrentAdminDatasetDisplayLabelMapForRsc: vi.fn(),
   requireAdmin: vi.fn(),
 }));
@@ -25,9 +24,6 @@ vi.mock("@/lib/auth/admin", () => ({
 }));
 vi.mock("@/lib/supabase/server", () => ({
   createServerSupabaseClient: mocks.createServerSupabaseClient,
-}));
-vi.mock("@/lib/services/stale-attempt-service", () => ({
-  finalizeStaleQuizAttempts: mocks.finalizeStaleQuizAttempts,
 }));
 vi.mock("@/lib/services/admin-material-read-service", () => ({
   loadCurrentAdminDatasetDisplayLabelMapForRsc:
@@ -52,36 +48,24 @@ beforeEach(() => {
   vi.clearAllMocks();
   for (const store of mocks.cacheStores) store.clear();
   mocks.requireAdmin.mockResolvedValue({ userId: "admin-id" });
-  mocks.finalizeStaleQuizAttempts.mockResolvedValue(0);
   mocks.loadCurrentAdminDatasetDisplayLabelMapForRsc.mockResolvedValue(
     new Map(),
   );
 });
 
 describe("admin history request cache", () => {
-  it("reuses the same finalized bundle but keeps the non-finalizing load separate", async () => {
+  it("reuses the same read-only bundle within one request", async () => {
     const { client } = emptyHistoryClient();
     mocks.createServerSupabaseClient.mockResolvedValue(client);
 
     await Promise.all([
       listAssignmentHistoryBundle(),
-      listAssignmentHistoryBundle({ finalizeStale: true }),
+      listAssignmentHistoryBundle(),
     ]);
 
     expect(mocks.requireAdmin).toHaveBeenCalledOnce();
-    expect(mocks.finalizeStaleQuizAttempts).toHaveBeenCalledOnce();
     expect(mocks.createServerSupabaseClient).toHaveBeenCalledOnce();
     expect(client.from).toHaveBeenCalledTimes(3);
-
-    await Promise.all([
-      listAssignmentHistoryBundle({ finalizeStale: false }),
-      listAssignmentHistoryBundle({ finalizeStale: false }),
-    ]);
-
-    expect(mocks.requireAdmin).toHaveBeenCalledTimes(2);
-    expect(mocks.finalizeStaleQuizAttempts).toHaveBeenCalledOnce();
-    expect(mocks.createServerSupabaseClient).toHaveBeenCalledTimes(2);
-    expect(client.from).toHaveBeenCalledTimes(6);
   });
 
   it("shares history rows when only the material-label projection differs", async () => {
@@ -89,15 +73,13 @@ describe("admin history request cache", () => {
     mocks.createServerSupabaseClient.mockResolvedValue(client);
 
     await Promise.all([
-      listAssignmentHistoryBundle({ finalizeStale: true }),
+      listAssignmentHistoryBundle(),
       listAssignmentHistoryBundle({
-        finalizeStale: true,
         reuseMaterialRequestCache: true,
       }),
     ]);
 
     expect(mocks.requireAdmin).toHaveBeenCalledOnce();
-    expect(mocks.finalizeStaleQuizAttempts).toHaveBeenCalledOnce();
     expect(mocks.createServerSupabaseClient).toHaveBeenCalledOnce();
     expect(client.from).toHaveBeenCalledTimes(3);
     expect(

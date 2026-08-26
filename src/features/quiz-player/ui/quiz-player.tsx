@@ -4,6 +4,7 @@ import { studentAppText } from "@/content/ko/student-app";
 
 import { useQuizPlayerController } from "../controller/use-quiz-player-controller";
 import {
+  quizAttemptUsesDeadlineClock,
   quizChoicesDensity,
   quizPromptDensity,
 } from "../domain/quiz-session";
@@ -95,7 +96,8 @@ export function QuizPlayer({
         submitting={
           state.submitting ||
           !state.timerSynchronized ||
-          (state.attempt.timingMode !== "none" && state.remainingSeconds === 0)
+          (quizAttemptUsesDeadlineClock(state.attempt) &&
+            state.remainingSeconds === 0)
         }
         timerSynchronized={state.timerSynchronized}
         timeWarning={state.timeWarning}

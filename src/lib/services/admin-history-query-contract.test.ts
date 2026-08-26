@@ -74,12 +74,10 @@ describe("admin assignment history query contract", () => {
     expect(studentCard).not.toContain("assignmentTimingLabel(");
   });
 
-  it("persists missed assignment state across admin and student queries", () => {
+  it("reads persisted missed assignment state without changing it", () => {
     expect(source).toContain("missed_at,");
     expect(source).toContain("missedAt: row.missed_at");
-    expect(quizSource).toContain(
-      "finalizeStudentMissedAssignments(studentId)",
-    );
+    expect(quizSource).not.toContain("finalizeStudentMissedAssignments");
     expect(quizSource).toContain(
       '.select("assignment_id, assigned_at, missed_at, cancelled_at")',
     );
@@ -122,7 +120,7 @@ describe("admin assignment history query contract", () => {
     );
   });
 
-  it("reuses the finalized history bundle within an editable detail request", () => {
+  it("reuses the read-only history rows within an editable detail request", () => {
     expect(source).toContain('import { cache } from "react";');
     expect(source).toContain(
       "const loadAssignmentHistoryBundleForRequest = cache(",
@@ -130,13 +128,11 @@ describe("admin assignment history query contract", () => {
     expect(source).toContain(
       "const loadAssignmentHistoryRowsForRequest = cache(",
     );
-    expect(source).toContain(
-      "options?.finalizeStale !== false",
-    );
     for (const detailPage of [directDetailPage, interceptedDetailPage]) {
       expect(detailPage).toMatch(
-        /loadAssignmentManagerData\(\{[\s\S]*?finalizeStale:\s*true,[\s\S]*?reuseMaterialRequestCache:\s*false,[\s\S]*?\}\)/,
+        /loadAssignmentManagerData\(\{[\s\S]*?reuseMaterialRequestCache:\s*false,[\s\S]*?\}\)/,
       );
+      expect(detailPage).not.toContain("finalizeStale");
     }
   });
 });

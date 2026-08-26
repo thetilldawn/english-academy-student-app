@@ -10,14 +10,9 @@ import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 import { getAttemptQuestionResults } from "./quiz/attempt-result-query";
-import {
-  finalizeQuizAttemptIfStale,
-  finalizeStaleQuizAttempts,
-} from "./stale-attempt-service";
 
 export async function listAttempts(): Promise<AttemptSummary[]> {
   await requireAdmin();
-  await finalizeStaleQuizAttempts();
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("quiz_attempts")
@@ -78,7 +73,6 @@ export async function getAdminAttemptDetail(
   if (!authenticatedAdmin) {
     await requireAdmin();
   }
-  await finalizeQuizAttemptIfStale(attemptId);
   const supabase = getServiceSupabaseClient();
   const [{ data, error }, questions] = await Promise.all([
     supabase

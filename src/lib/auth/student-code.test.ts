@@ -12,8 +12,6 @@ import {
   hashStudentSessionToken,
   normalizeStudentCode,
 } from "@/lib/auth/student-code";
-import { STUDENT_SESSION_MAX_AGE_SECONDS } from "@/lib/constants";
-
 const key = randomBytes(32).toString("base64");
 
 describe("student code security", () => {
@@ -37,10 +35,11 @@ describe("student code security", () => {
     expect(hashStudentSessionToken(token, key)).toMatch(/^[A-F0-9]{64}$/);
   });
 
-  it("운영 쿠키는 60일·HttpOnly·SameSite=Lax를 사용한다", () => {
-    const options = getStudentCookieOptions();
+  it("운영 쿠키는 DB 만료시각·HttpOnly·SameSite=Lax를 사용한다", () => {
+    const expires = new Date("2026-10-25T00:00:00.000Z");
+    const options = getStudentCookieOptions(expires);
     expect(options.httpOnly).toBe(true);
     expect(options.sameSite).toBe("lax");
-    expect(options.maxAge).toBe(STUDENT_SESSION_MAX_AGE_SECONDS);
+    expect(options.expires).toBe(expires);
   });
 });

@@ -11,7 +11,6 @@ import {
   withPronunciationDisplay,
 } from "@/lib/quiz/pronunciation-snapshot";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
-import { expireStudentAttempt } from "./attempt-command";
 import {
   loadActiveVocabPronunciationReleaseRegistry,
   loadApprovedKoreanPronunciationRegistry,
@@ -64,16 +63,6 @@ export async function getStudentAttempt(
 
   if (attemptError) throw attemptError;
   if (!attemptData) return null;
-
-  if (
-    attemptData.status === "in_progress" &&
-    attemptData.phase !== "review" &&
-    new Date(attemptData.deadline_at).getTime() <= Date.now()
-  ) {
-    await expireStudentAttempt(studentId, attemptId);
-    attemptData.status = "expired";
-    attemptData.phase = "completed";
-  }
 
   const [assignmentResult, questionResult] =
     await Promise.all([
@@ -324,4 +313,3 @@ export async function getStudentAttempt(
     }),
   };
 }
-

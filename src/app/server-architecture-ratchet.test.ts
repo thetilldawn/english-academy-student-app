@@ -12,6 +12,7 @@ import {
 import {
   collectDirectDbWriteCalls,
   collectQueryWriteEdges,
+  collectReadExportWriteViolations,
   countRouterRefreshCalls,
   hasTopLevelDirective,
   inspectSharedCacheSource,
@@ -36,60 +37,12 @@ function relative(file: string) {
 const QUERY_WRITE_ALLOWLIST = new Map<
   string,
   { maxCalls: number; removeIn: string }
->(
-  [
-    [
-      "src/lib/services/admin-attempt-read-service.ts|./stale-attempt-service|finalizeQuizAttemptIfStale",
-      { maxCalls: 1, removeIn: "R1" },
-    ],
-    [
-      "src/lib/services/admin-attempt-read-service.ts|./stale-attempt-service|finalizeStaleQuizAttempts",
-      { maxCalls: 1, removeIn: "R1" },
-    ],
-    [
-      "src/lib/services/admin-history-read-service.ts|@/lib/services/stale-attempt-service|finalizeStaleQuizAttempts",
-      { maxCalls: 1, removeIn: "R1" },
-    ],
-    [
-      "src/lib/services/quiz/attempt-query.ts|./attempt-command|expireStudentAttempt",
-      { maxCalls: 1, removeIn: "R1" },
-    ],
-    [
-      "src/lib/services/quiz/student-assignment-query.ts|../missed-assignment-service|finalizeStudentMissedAssignments",
-      { maxCalls: 1, removeIn: "R1" },
-    ],
-    [
-      "src/lib/services/quiz/student-assignment-query.ts|../stale-attempt-service|finalizeStaleQuizAttempts",
-      { maxCalls: 1, removeIn: "R1" },
-    ],
-    [
-      "src/lib/services/quiz/student-assignment-query.ts|../vocab-assignment-queue-service|materializeReadyVocabAssignmentQueue",
-      { maxCalls: 1, removeIn: "R1" },
-    ],
-    [
-      "src/lib/services/wrong-word-service.ts|@/lib/services/review-assignment-service|finalizeExpiredReviewAssignmentDrafts",
-      { maxCalls: 1, removeIn: "R1" },
-    ],
-    [
-      "src/lib/services/wrong-word-service.ts|@/lib/services/stale-attempt-service|finalizeStaleQuizAttempts",
-      { maxCalls: 1, removeIn: "R1" },
-    ],
-  ] as const,
-);
+>();
 
 const DIRECT_QUERY_WRITE_ALLOWLIST = new Map<
   string,
   { maxCalls: number; removeIn: string }
->([
-  [
-    "src/lib/services/wrong-word-service.ts|rpc|queue_student_vocab_review_words",
-    { maxCalls: 1, removeIn: "R1" },
-  ],
-  [
-    "src/lib/services/wrong-word-service.ts|rpc|create_student_vocab_review_assignment_draft",
-    { maxCalls: 1, removeIn: "R1" },
-  ],
-]);
+>();
 
 const ROUTER_REFRESH_ALLOWLIST = new Map<
   string,
@@ -170,6 +123,15 @@ describe("server architecture debt ratchets", () => {
     }
   });
 
+  it("keeps exported read functions free from hidden local writes", () => {
+    const violations = sourceFiles
+      .filter((file) => file.startsWith(servicesRoot))
+      .flatMap((file) =>
+        collectReadExportWriteViolations(file, fs.readFileSync(file, "utf8")),
+      );
+    expect(violations).toStrictEqual([]);
+  });
+
   it("keeps cross-request cache files free from request identity and private data", () => {
     const violations = sourceFiles.flatMap((file) =>
       inspectSharedCacheSource(file, fs.readFileSync(file, "utf8")),
@@ -200,6 +162,10 @@ describe("server architecture debt ratchets", () => {
       "src/features/example/server/queries/list-items.ts",
       'client.from("items").update({ active: false });',
     );
+    const hiddenLocalWrites = collectReadExportWriteViolations(
+      "src/lib/services/items-service.ts",
+      'async function saveItems() { client.from("items").update({ active: false }); }\nexport async function getItems() { return saveItems(); }',
+    );
     const dynamicQueryEdges = collectQueryWriteEdges(
       "src/features/example/server/queries/list-more-items.ts",
       'const commands = await import("../commands/save-items");',
@@ -222,6 +188,7 @@ describe("server architecture debt ratchets", () => {
     expect(queryEdges).toHaveLength(1);
     expect(dynamicQueryEdges).toHaveLength(1);
     expect(directWrites).toHaveLength(1);
+    expect(hiddenLocalWrites).toHaveLength(1);
     expect(sharedCacheViolations).toHaveLength(3);
     expect(clientViolations).toHaveLength(1);
     expect(isReadModulePath("src/features/example/server/queries/items.ts")).toBe(true);

@@ -193,6 +193,13 @@ async function createFinalSchemaDatabase() {
         ''
       );
     $$;
+    create function auth.jwt()
+    returns jsonb language sql stable set search_path = '' as $$
+      select coalesce(
+        nullif(current_setting('request.jwt.claims', true), ''),
+        '{}'
+      )::jsonb;
+    $$;
   `);
   for (const migrationPath of migrationPaths) {
     const migration = fs
@@ -235,7 +242,11 @@ describe.sequential("exam-use dictionary projection", () => {
 
   it("service role만 같은 패키지를 원자적·멱등적으로 가져온다", async () => {
     const packageJson = JSON.stringify(buildPackage());
-    await database.exec("set role service_role;");
+    await database.exec(`
+      set role service_role;
+      select set_config('request.jwt.claim.role', 'service_role', false);
+      select set_config('request.jwt.claims', '{"role":"service_role"}', false);
+    `);
     const first = await database.query<{
       result: {
         datasetId: string;
@@ -261,7 +272,11 @@ describe.sequential("exam-use dictionary projection", () => {
       "select public.import_app_exam_use_package_v1($1::jsonb) as result",
       [packageJson],
     );
-    await database.exec("reset role;");
+    await database.exec(`
+      reset role;
+      select set_config('request.jwt.claim.role', 'authenticated', false);
+      select set_config('request.jwt.claims', '{"role":"authenticated"}', false);
+    `);
 
     datasetId = first.rows[0]!.result.datasetId;
     releaseId = first.rows[0]!.result.releaseId;
@@ -330,6 +345,11 @@ describe.sequential("exam-use dictionary projection", () => {
     await database.exec(`
       select set_config('request.jwt.claim.sub', '${ids.admin}', false);
       select set_config('request.jwt.claim.role', 'authenticated', false);
+      select set_config(
+        'request.jwt.claims',
+        '{"role":"authenticated"}',
+        false
+      );
       insert into auth.users (id) values ('${ids.admin}');
       insert into public.admin_profiles (user_id, display_name, is_active)
       values ('${ids.admin}', 'Preview admin', true);
@@ -473,14 +493,22 @@ describe.sequential("exam-use dictionary projection", () => {
   });
 
   it("stores separate source occurrences that share one dictionary identity", async () => {
-    await database.exec("set role service_role;");
+    await database.exec(`
+      set role service_role;
+      select set_config('request.jwt.claim.role', 'service_role', false);
+      select set_config('request.jwt.claims', '{"role":"service_role"}', false);
+    `);
     const imported = await database.query<{
       result: { datasetId: string; releaseId: string };
     }>(
       "select public.import_app_exam_use_package_v1($1::jsonb) as result",
       [JSON.stringify(buildRepeatedOccurrencePackage())],
     );
-    await database.exec("reset role;");
+    await database.exec(`
+      reset role;
+      select set_config('request.jwt.claim.role', 'authenticated', false);
+      select set_config('request.jwt.claims', '{"role":"authenticated"}', false);
+    `);
 
     const repeatedDatasetId = imported.rows[0]!.result.datasetId;
     const repeatedReleaseId = imported.rows[0]!.result.releaseId;
@@ -1626,13 +1654,21 @@ describe.sequential("exam-use dictionary projection", () => {
       phase: "review",
     });
 
-    await database.exec("set role service_role;");
+    await database.exec(`
+      set role service_role;
+      select set_config('request.jwt.claim.role', 'service_role', false);
+      select set_config('request.jwt.claims', '{"role":"service_role"}', false);
+    `);
     const prematureMaterialize = await database.query<{ result: unknown[] }>(`
       select public.materialize_ready_vocab_assignment_queue_v1(
         '${ids.student}', 10
       ) as result;
     `);
-    await database.exec("reset role;");
+    await database.exec(`
+      reset role;
+      select set_config('request.jwt.claim.role', 'authenticated', false);
+      select set_config('request.jwt.claims', '{"role":"authenticated"}', false);
+    `);
     expect(prematureMaterialize.rows[0]!.result).toEqual([]);
 
     const waitingState = await database.query<{
@@ -1696,7 +1732,11 @@ describe.sequential("exam-use dictionary projection", () => {
       assignment_count: 1,
     });
 
-    await database.exec("set role service_role;");
+    await database.exec(`
+      set role service_role;
+      select set_config('request.jwt.claim.role', 'service_role', false);
+      select set_config('request.jwt.claims', '{"role":"service_role"}', false);
+    `);
     const firstMaterialize = await database.query<{
       result: Array<{ assignment_id: string }>;
     }>(`
@@ -1709,7 +1749,11 @@ describe.sequential("exam-use dictionary projection", () => {
         '${ids.student}', 10
       ) as result;
     `);
-    await database.exec("reset role;");
+    await database.exec(`
+      reset role;
+      select set_config('request.jwt.claim.role', 'authenticated', false);
+      select set_config('request.jwt.claims', '{"role":"authenticated"}', false);
+    `);
     expect(firstMaterialize.rows[0]!.result).toHaveLength(1);
     expect(secondMaterialize.rows[0]!.result).toEqual([]);
 
@@ -1781,13 +1825,21 @@ describe.sequential("exam-use dictionary projection", () => {
       reason: "assignment_expired",
     });
 
-    await database.exec("set role service_role;");
+    await database.exec(`
+      set role service_role;
+      select set_config('request.jwt.claim.role', 'service_role', false);
+      select set_config('request.jwt.claims', '{"role":"service_role"}', false);
+    `);
     const blockedMaterialize = await database.query<{ result: unknown[] }>(`
       select public.materialize_ready_vocab_assignment_queue_v1(
         '${ids.student}', 10
       ) as result;
     `);
-    await database.exec("reset role;");
+    await database.exec(`
+      reset role;
+      select set_config('request.jwt.claim.role', 'authenticated', false);
+      select set_config('request.jwt.claims', '{"role":"authenticated"}', false);
+    `);
     expect(blockedMaterialize.rows[0]!.result).toEqual([]);
 
     const blockedQueue = await database.query<{ statuses: string[] }>(`
@@ -1830,7 +1882,11 @@ describe.sequential("exam-use dictionary projection", () => {
       series_status: "active",
     });
 
-    await database.exec("set role service_role;");
+    await database.exec(`
+      set role service_role;
+      select set_config('request.jwt.claim.role', 'service_role', false);
+      select set_config('request.jwt.claims', '{"role":"service_role"}', false);
+    `);
     const retriedMaterialize = await database.query<{
       result: Array<{ assignment_id: string }>;
     }>(`
@@ -1838,7 +1894,11 @@ describe.sequential("exam-use dictionary projection", () => {
         '${ids.student}', 10
       ) as result;
     `);
-    await database.exec("reset role;");
+    await database.exec(`
+      reset role;
+      select set_config('request.jwt.claim.role', 'authenticated', false);
+      select set_config('request.jwt.claims', '{"role":"authenticated"}', false);
+    `);
     expect(retriedMaterialize.rows[0]!.result).toHaveLength(1);
 
     await database.exec("set role authenticated;");

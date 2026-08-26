@@ -4,8 +4,9 @@ import { z } from "zod";
 
 import type { VocabAssignmentQueueSummary } from "@/lib/admin/vocab-assignment-queue";
 import { requireAdmin } from "@/lib/auth/admin";
-import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+
+import { isVocabAssignmentQueueUnavailable } from "./vocab-assignment-queue-support";
 
 const itemSchema = z
   .object({
@@ -54,31 +55,10 @@ const rowSchema = z
   })
   .strict();
 
-const resolutionSchema = z
-  .object({
-    action: z.enum(["retry", "skip", "cancel"]),
-    series_id: z.uuid(),
-    student_id: z.uuid(),
-  })
-  .strict();
-
-export type VocabAssignmentQueueResolutionAction = z.infer<
-  typeof resolutionSchema
->["action"];
-
 export type VocabAssignmentQueueCursor = {
   seriesId: string;
   updatedAt: string;
 };
-
-function isQueueMigrationUnavailable(error: {
-  code?: string;
-  message: string;
-}) {
-  return error.code === "42883" ||
-    error.code === "PGRST202" ||
-    error.message.includes("list_vocab_assignment_queue_summaries_v1");
-}
 
 function mapRow(row: z.infer<typeof rowSchema>): VocabAssignmentQueueSummary {
   return {
@@ -121,7 +101,7 @@ export async function listVocabAssignmentQueueSummaries(options?: {
     },
   );
   if (error) {
-    if (isQueueMigrationUnavailable(error)) return [];
+    if (isVocabAssignmentQueueUnavailable(error)) return [];
     throw new Error("배정된 시험 상태를 불러오지 못했습니다.");
   }
   const parsed = z.array(rowSchema).safeParse(data ?? []);
@@ -152,46 +132,4 @@ export async function listStudentVocabAssignmentQueuePage(options: {
         : null,
     queues,
   };
-}
-
-export async function materializeReadyVocabAssignmentQueue(
-  studentId: string,
-) {
-  const supabase = getServiceSupabaseClient();
-  const { data, error } = await supabase.rpc(
-    "materialize_ready_vocab_assignment_queue_v1",
-    { p_student_id: studentId, p_limit: 10 },
-  );
-  if (error) {
-    if (isQueueMigrationUnavailable(error)) return [];
-    console.error("[vocab-assignment-queue] materialization failed", {
-      code: error.code,
-      message: error.message,
-    });
-    return [];
-  }
-  return Array.isArray(data) ? data : [];
-}
-
-export async function resolveVocabAssignmentQueueAttention(
-  seriesId: string,
-  action: VocabAssignmentQueueResolutionAction,
-) {
-  await requireAdmin();
-  const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase.rpc(
-    "resolve_vocab_assignment_queue_attention_v1",
-    { p_action: action, p_series_id: seriesId },
-  );
-  if (error) {
-    throw new Error("배정된 시험 상태를 처리하지 못했습니다.");
-  }
-  const parsed = resolutionSchema.safeParse(data);
-  if (!parsed.success) {
-    throw new Error("배정된 시험 처리 결과를 확인하지 못했습니다.");
-  }
-  if (action !== "cancel") {
-    await materializeReadyVocabAssignmentQueue(parsed.data.student_id);
-  }
-  return parsed.data;
 }

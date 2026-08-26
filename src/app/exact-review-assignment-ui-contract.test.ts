@@ -28,25 +28,25 @@ describe("exact review assignment app contract", () => {
   });
 
   it("loads an exact private draft and chunks every UUID filter", () => {
-    const service = source(
-      "src/lib/services/review-assignment-service.ts",
+    const query = source(
+      "src/lib/services/review-assignment-draft-query.ts",
     );
-    expect(service).toContain("ID_FILTER_CHUNK_SIZE = 80");
-    expect(service).toContain(
+    expect(query).toContain("ID_FILTER_CHUNK_SIZE = 80");
+    expect(query).toContain(
       "offset += ID_FILTER_CHUNK_SIZE",
     );
-    expect(service).toContain(".in(\"id\", queueIdChunk)");
-    expect(service).toContain(
+    expect(query).toContain(".in(\"id\", queueIdChunk)");
+    expect(query).toContain(
       '.eq("reserved_review_draft_id", reviewDraftId)',
     );
-    expect(service).toContain(
-      "finalizeExpiredReviewAssignmentDrafts(draft.student_id)",
-    );
-    expect(service).toContain("items.length > 400");
-    expect(service).toContain(
+    expect(query).toContain("Date.parse(draft.expires_at) <= Date.now()");
+    expect(query).not.toContain("finalizeExpiredReviewAssignmentDrafts");
+    expect(query).not.toContain(".rpc(");
+    expect(query).toContain("items.length > 400");
+    expect(query).toContain(
       "item.position !== index + 1",
     );
-    expect(service).toContain(
+    expect(query).toContain(
       "MAX_ASSIGNMENT_TITLE_LENGTH - REVIEW_TITLE_SUFFIX.length",
     );
   });

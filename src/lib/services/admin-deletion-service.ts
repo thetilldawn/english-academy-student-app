@@ -7,7 +7,6 @@ import {
   type AdminContext,
 } from "@/lib/auth/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { finalizeStaleQuizAttempts } from "@/lib/services/stale-attempt-service";
 
 const studentDeletionResultSchema = z.object({
   status: z.literal("deleted"),
@@ -105,9 +104,8 @@ export async function deleteStudent(
   if (!authenticatedAdmin) {
     await requireAdmin();
   }
-  await finalizeStaleQuizAttempts();
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase.rpc("delete_student_v1", {
+  const { data, error } = await supabase.rpc("delete_student_v2", {
     p_student_id: studentId,
   });
 
@@ -131,9 +129,8 @@ export async function deleteAssignment(
   if (!authenticatedAdmin) {
     await requireAdmin();
   }
-  await finalizeStaleQuizAttempts();
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase.rpc("delete_assignment_v1", {
+  const { data, error } = await supabase.rpc("delete_assignment_v2", {
     p_assignment_id: assignmentId,
     p_reason: "관리자 삭제",
   });

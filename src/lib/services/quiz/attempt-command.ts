@@ -6,7 +6,7 @@ import {
   resumeQuizAfterFeedbackWithCompatibleRpc,
   startQuizRetryWithCompatibleRpc,
 } from "../quiz-rpc-compatibility";
-import { materializeReadyVocabAssignmentQueue } from "../vocab-assignment-queue-service";
+import { materializeReadyVocabAssignmentQueue } from "../vocab-assignment-queue-command";
 
 export async function expireStudentAttempt(
   studentId: string,
@@ -21,6 +21,7 @@ export async function expireStudentAttempt(
   if (error) {
     throw new Error("시험 종료상태를 저장하지 못했습니다.");
   }
+  await materializeReadyVocabAssignmentQueue(studentId);
 }
 
 export async function startStudentRetry(
@@ -166,4 +167,3 @@ export async function resumeStudentQuizAfterFeedback(input: {
     questionStartsAt: string;
   };
 }
-

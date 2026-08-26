@@ -7,11 +7,10 @@ import {
   loadStudentDirectoryBundle,
 } from "@/lib/services/admin-student-read-service";
 import { listVocabTimeTemplates } from "@/lib/services/vocab-time-template-service";
-import { listVocabAssignmentQueueSummaries } from "@/lib/services/vocab-assignment-queue-service";
+import { listVocabAssignmentQueueSummaries } from "@/lib/services/vocab-assignment-queue-query";
 import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
 
 export async function loadAssignmentManagerData(options?: {
-  finalizeStale?: boolean;
   reuseMaterialRequestCache?: boolean;
 }): Promise<
   AssignmentManagerData
@@ -27,7 +26,6 @@ export async function loadAssignmentManagerData(options?: {
   ] = await Promise.all([
     loadStudentDirectoryBundle(),
     listAssignmentHistoryBundle({
-      finalizeStale: options?.finalizeStale ?? false,
       reuseMaterialRequestCache:
         options?.reuseMaterialRequestCache ?? true,
     }),

@@ -23,8 +23,8 @@ describe("wrong-word admin UI contract", () => {
     const route = source(
       "src/app/api/admin/students/[id]/wrong-words/route.ts",
     );
-    const service = source(
-      "src/lib/services/wrong-word-service.ts",
+    const command = source(
+      "src/lib/services/wrong-word-command.ts",
     );
     const validation = source("src/lib/validation.ts");
     expect(route).toContain("isSameOriginRequest(request)");
@@ -32,11 +32,11 @@ describe("wrong-word admin UI contract", () => {
     expect(route).toContain(
       "queueStudentWrongWords(\n      id,\n      input.questionIds,\n      admin,",
     );
-    expect(service).toContain("createServerSupabaseClient()");
-    expect(service).toContain(
+    expect(command).toContain("createServerSupabaseClient()");
+    expect(command).toContain(
       '"queue_student_vocab_review_words"',
     );
-    expect(service).toContain("p_question_ids: questionIds");
+    expect(command).toContain("p_question_ids: questionIds");
     expect(validation).toContain(
       "export const queueWrongWordsSchema",
     );
@@ -300,7 +300,7 @@ describe("wrong-word admin UI contract", () => {
 
   it("pages all initial-wrong history without a fixed event ceiling", () => {
     const service = source(
-      "src/lib/services/wrong-word-service.ts",
+      "src/lib/services/wrong-word-query.ts",
     );
     const activeAssignments = source(
       "src/lib/services/active-review-assignment-service.ts",

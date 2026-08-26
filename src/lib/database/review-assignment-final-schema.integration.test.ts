@@ -124,6 +124,17 @@ async function createFinalSchemaDatabase(
         ''
       );
     $$;
+    create function auth.jwt()
+    returns jsonb
+    language sql
+    stable
+    set search_path = ''
+    as $$
+      select coalesce(
+        nullif(current_setting('request.jwt.claims', true), ''),
+        '{}'
+      )::jsonb;
+    $$;
   `);
 
   for (const migrationPath of migrationPaths) {
@@ -165,6 +176,11 @@ async function seedReviewAssignmentScenario(database: PGlite) {
     select set_config(
       'request.jwt.claim.role',
       'authenticated',
+      false
+    );
+    select set_config(
+      'request.jwt.claims',
+      '{"role":"authenticated"}',
       false
     );
 
@@ -570,7 +586,19 @@ const mixedQuestions = JSON.stringify([
 async function createRegularPointAttempt(
   database: PGlite,
   title: string,
+  options: {
+    availableUntil?: Date | null;
+    studentId?: string;
+    timeLimitSeconds?: number;
+    timingMode?: "none" | "total";
+  } = {},
 ) {
+  const studentId = options.studentId ?? ids.student;
+  const timingMode = options.timingMode ?? "total";
+  const timeLimitSeconds = options.timeLimitSeconds ?? 300;
+  const availableUntilSql = options.availableUntil
+    ? `'${options.availableUntil.toISOString()}'::timestamptz`
+    : "null";
   await database.exec("set role authenticated;");
   let assignmentId: string;
   try {
@@ -581,14 +609,14 @@ async function createRegularPointAttempt(
         array['${ids.units[0]}'::uuid, '${ids.units[4]}'::uuid],
         4,
         100::smallint,
-        300,
+        ${timeLimitSeconds},
         100::smallint,
         true,
         100::smallint,
         'fixed',
-        null,
-        array['${ids.student}'::uuid],
-        'total',
+        ${availableUntilSql},
+        array['${studentId}'::uuid],
+        '${timingMode}',
         null,
         $questions$${mixedQuestions}$questions$::jsonb
       ) as assignment_id;
@@ -599,8 +627,8 @@ async function createRegularPointAttempt(
   }
 
   const attempt = await database.query<{ attempt_id: string }>(`
-    select public.create_quiz_attempt_from_bank(
-      '${ids.student}',
+      select public.create_quiz_attempt_from_bank(
+      '${studentId}',
       '${assignmentId}'
     ) as attempt_id;
   `);
@@ -615,7 +643,7 @@ async function createRegularPointAttempt(
     order by order_index;
   `);
 
-  return { attemptId, questions: questions.rows };
+  return { assignmentId, attemptId, questions: questions.rows };
 }
 
 describe.sequential("final review-assignment database schema", () => {
@@ -3302,6 +3330,388 @@ describe.sequential("admin deletion controls", () => {
     }
   }, 30_000);
 
+  it("학생 삭제 v2는 익명 사용자와 비활성 관리자를 거부한다", async () => {
+    const database = await createFinalSchemaDatabase();
+    try {
+      await seedReviewAssignmentScenario(database);
+      await database.exec("set role anon;");
+      await expectPostgresError(
+        database.query(`
+          select public.delete_student_v2('${ids.student}');
+        `),
+        "42501",
+        "permission denied",
+      );
+      await database.exec(`
+        reset role;
+        update public.admin_profiles
+        set is_active = false
+        where user_id = '${ids.admin}';
+        set role authenticated;
+      `);
+      await expectPostgresError(
+        database.query(`
+          select public.delete_student_v2('${ids.student}');
+        `),
+        "42501",
+        "forbidden",
+      );
+      await database.exec("reset role;");
+    } finally {
+      await database.close();
+    }
+  }, 30_000);
+
+  it("deletes one student with target-only expiry, queue cleanup, and idempotent audit", async () => {
+    const database = await createFinalSchemaDatabase();
+    const peerStudent = "00000000-0000-4000-8000-000000000721";
+    const requestId = "00000000-0000-4000-8000-000000000722";
+    const targetSeries = "00000000-0000-4000-8000-000000000723";
+    const peerSeries = "00000000-0000-4000-8000-000000000724";
+    const targetItem = "00000000-0000-4000-8000-000000000725";
+    const peerItem = "00000000-0000-4000-8000-000000000726";
+    try {
+      await seedReviewAssignmentScenario(database);
+      await database.exec(`
+        insert into public.students (id, display_name, status, created_by)
+        values ('${peerStudent}', 'Deletion peer', 'active', '${ids.admin}');
+      `);
+      const target = await createRegularPointAttempt(
+        database,
+        "Targeted student deletion",
+      );
+      const peer = await createRegularPointAttempt(
+        database,
+        "Untouched peer deletion",
+        { studentId: peerStudent },
+      );
+
+      await database.exec(`
+        update public.quiz_attempts
+        set
+          started_at = clock_timestamp() - interval '2 minutes',
+          current_question_started_at = clock_timestamp() - interval '2 minutes',
+          deadline_at = clock_timestamp() - interval '1 minute'
+        where id in ('${target.attemptId}', '${peer.attemptId}');
+
+        insert into private.vocab_assignment_queue_requests (
+          idempotency_key,
+          request_sha256,
+          payload_sha256,
+          actor_admin_id
+        ) values (
+          '${requestId}',
+          repeat('a', 64),
+          repeat('b', 64),
+          '${ids.admin}'
+        );
+
+        insert into private.vocab_assignment_series (
+          id,
+          request_id,
+          student_id,
+          dataset_id,
+          actor_admin_id,
+          dataset_label,
+          range_label,
+          recurrence_slots,
+          status
+        ) values
+          (
+            '${targetSeries}',
+            '${requestId}',
+            '${ids.student}',
+            '${ids.dataset}',
+            '${ids.admin}',
+            'Target dataset',
+            'Target range',
+            '[{"isodow":1,"local_time":"10:00","duration_seconds":3600}]'::jsonb,
+            'active'
+          ),
+          (
+            '${peerSeries}',
+            '${requestId}',
+            '${peerStudent}',
+            '${ids.dataset}',
+            '${ids.admin}',
+            'Peer dataset',
+            'Peer range',
+            '[{"isodow":1,"local_time":"10:00","duration_seconds":3600}]'::jsonb,
+            'active'
+          );
+
+        insert into private.vocab_assignment_series_items (
+          id,
+          series_id,
+          sequence_number,
+          status,
+          question_count,
+          unit_ids,
+          unit_labels,
+          planned_available_from,
+          planned_available_until,
+          effective_available_from,
+          effective_available_until,
+          payload,
+          assignment_id,
+          materialized_at
+        ) values
+          (
+            '${targetItem}',
+            '${targetSeries}',
+            1,
+            'assigned',
+            4,
+            array['${ids.units[0]}'::uuid],
+            array['DAY 1'],
+            clock_timestamp(),
+            clock_timestamp() + interval '1 hour',
+            clock_timestamp(),
+            clock_timestamp() + interval '1 hour',
+            '{"retry_enabled":true,"retry_passing_score":100,"passing_score":100}'::jsonb,
+            '${target.assignmentId}',
+            clock_timestamp()
+          ),
+          (
+            '${peerItem}',
+            '${peerSeries}',
+            1,
+            'queued',
+            4,
+            array['${ids.units[0]}'::uuid],
+            array['DAY 1'],
+            clock_timestamp(),
+            clock_timestamp() + interval '1 hour',
+            clock_timestamp(),
+            clock_timestamp() + interval '1 hour',
+            '{}'::jsonb,
+            null,
+            null
+          );
+
+        insert into private.student_app_maintenance_retry_state (
+          job_name,
+          target_kind,
+          target_id,
+          student_id,
+          consecutive_failures,
+          next_retry_at,
+          requires_attention,
+          last_error_code,
+          last_failed_at,
+          updated_at
+        ) values
+          (
+            'english-academy-finalize-stale-attempts',
+            'quiz_attempt',
+            '${target.attemptId}',
+            '${ids.student}',
+            1,
+            clock_timestamp(),
+            false,
+            '40001',
+            clock_timestamp(),
+            clock_timestamp()
+          ),
+          (
+            'english-academy-finalize-stale-attempts',
+            'quiz_attempt',
+            '${peer.attemptId}',
+            '${peerStudent}',
+            1,
+            clock_timestamp(),
+            false,
+            '40001',
+            clock_timestamp(),
+            clock_timestamp()
+          );
+      `);
+
+      await database.exec("set role authenticated;");
+      const first = await database.query<{ result: Record<string, unknown> }>(`
+        select public.delete_student_v2('${ids.student}') as result;
+      `);
+      const second = await database.query<{ result: Record<string, unknown> }>(`
+        select public.delete_student_v2('${ids.student}') as result;
+      `);
+      await database.exec("reset role;");
+
+      expect(first.rows[0]?.result).toMatchObject({
+        status: "deleted",
+        studentId: ids.student,
+        expiredAttemptCount: 1,
+        abandonedAttemptCount: 0,
+        cancelledSeriesCount: 1,
+        cancelledSeriesItemCount: 1,
+      });
+      expect(second.rows[0]?.result).toMatchObject({
+        status: "deleted",
+        studentId: ids.student,
+        expiredAttemptCount: 0,
+        abandonedAttemptCount: 0,
+        cancelledSeriesCount: 0,
+        cancelledSeriesItemCount: 0,
+      });
+
+      const state = await database.query<{
+        target_deleted: boolean;
+        peer_deleted: boolean;
+        target_attempt_status: string;
+        peer_attempt_status: string;
+        target_timed_out: number;
+        target_wrong_events: number;
+        peer_wrong_events: number;
+        target_point_events: number;
+        target_points: number;
+        peer_point_events: number;
+        target_series_status: string;
+        target_item_status: string;
+        peer_series_status: string;
+        peer_item_status: string;
+        target_retries: number;
+        peer_retries: number;
+        cancelled_events: number;
+        attention_events: number;
+        deletion_audits: number;
+      }>(`
+        select
+          (select deleted_at is not null from public.students where id = '${ids.student}') as target_deleted,
+          (select deleted_at is not null from public.students where id = '${peerStudent}') as peer_deleted,
+          (select status::text from public.quiz_attempts where id = '${target.attemptId}') as target_attempt_status,
+          (select status::text from public.quiz_attempts where id = '${peer.attemptId}') as peer_attempt_status,
+          (select count(*)::integer from public.quiz_questions where attempt_id = '${target.attemptId}' and initial_timed_out) as target_timed_out,
+          (select count(*)::integer from public.student_vocab_wrong_events where quiz_attempt_id = '${target.attemptId}') as target_wrong_events,
+          (select count(*)::integer from public.student_vocab_wrong_events where quiz_attempt_id = '${peer.attemptId}') as peer_wrong_events,
+          (select count(*)::integer from public.student_point_events where quiz_attempt_id = '${target.attemptId}') as target_point_events,
+          (select coalesce(sum(delta), 0)::integer from public.student_point_events where quiz_attempt_id = '${target.attemptId}') as target_points,
+          (select count(*)::integer from public.student_point_events where quiz_attempt_id = '${peer.attemptId}') as peer_point_events,
+          (select status from private.vocab_assignment_series where id = '${targetSeries}') as target_series_status,
+          (select status from private.vocab_assignment_series_items where id = '${targetItem}') as target_item_status,
+          (select status from private.vocab_assignment_series where id = '${peerSeries}') as peer_series_status,
+          (select status from private.vocab_assignment_series_items where id = '${peerItem}') as peer_item_status,
+          (select count(*)::integer from private.student_app_maintenance_retry_state where student_id = '${ids.student}') as target_retries,
+          (select count(*)::integer from private.student_app_maintenance_retry_state where student_id = '${peerStudent}') as peer_retries,
+          (select count(*)::integer from private.vocab_assignment_series_events where series_id = '${targetSeries}' and event_kind = 'series.cancelled') as cancelled_events,
+          (select count(*)::integer from private.vocab_assignment_series_events where series_id = '${targetSeries}' and event_kind = 'session.attention') as attention_events,
+          (select count(*)::integer from public.audit_events where event_type = 'student.deleted' and student_id = '${ids.student}') as deletion_audits;
+      `);
+      expect(state.rows[0]).toEqual({
+        target_deleted: true,
+        peer_deleted: false,
+        target_attempt_status: "expired",
+        peer_attempt_status: "in_progress",
+        target_timed_out: 4,
+        target_wrong_events: 4,
+        peer_wrong_events: 0,
+        target_point_events: 4,
+        target_points: -6,
+        peer_point_events: 0,
+        target_series_status: "cancelled",
+        target_item_status: "cancelled",
+        peer_series_status: "active",
+        peer_item_status: "queued",
+        target_retries: 0,
+        peer_retries: 1,
+        cancelled_events: 1,
+        attention_events: 0,
+        deletion_audits: 1,
+      });
+    } finally {
+      await database.close();
+    }
+  }, 60_000);
+
+  it("deletes one assignment after finalizing only its expired attempts", async () => {
+    const database = await createFinalSchemaDatabase();
+    const peerStudent = "00000000-0000-4000-8000-000000000731";
+    try {
+      await seedReviewAssignmentScenario(database);
+      await database.exec(`
+        insert into public.students (id, display_name, status, created_by)
+        values ('${peerStudent}', 'Assignment peer', 'active', '${ids.admin}');
+      `);
+      const target = await createRegularPointAttempt(
+        database,
+        "Targeted assignment deletion",
+      );
+      const peer = await createRegularPointAttempt(
+        database,
+        "Untouched assignment deletion",
+        { studentId: peerStudent },
+      );
+      await database.exec(`
+        update public.quiz_attempts
+        set
+          started_at = clock_timestamp() - interval '2 minutes',
+          current_question_started_at = clock_timestamp() - interval '2 minutes',
+          deadline_at = clock_timestamp() - interval '1 minute'
+        where id in ('${target.attemptId}', '${peer.attemptId}');
+      `);
+
+      await database.exec("set role authenticated;");
+      const first = await database.query<{ result: Record<string, unknown> }>(`
+        select public.delete_assignment_v2(
+          '${target.assignmentId}',
+          'targeted integration test'
+        ) as result;
+      `);
+      const second = await database.query<{ result: Record<string, unknown> }>(`
+        select public.delete_assignment_v2(
+          '${target.assignmentId}',
+          'targeted integration test'
+        ) as result;
+      `);
+      await database.exec("reset role;");
+
+      expect(first.rows[0]?.result).toMatchObject({
+        status: "deleted",
+        assignmentId: target.assignmentId,
+        expiredAttemptCount: 1,
+      });
+      expect(second.rows[0]?.result).toMatchObject({
+        status: "deleted",
+        assignmentId: target.assignmentId,
+        expiredAttemptCount: 0,
+      });
+
+      const state = await database.query<{
+        target_assignment_deleted: boolean;
+        peer_assignment_deleted: boolean;
+        target_attempt_status: string;
+        peer_attempt_status: string;
+        target_wrong_events: number;
+        peer_wrong_events: number;
+        target_point_events: number;
+        peer_point_events: number;
+        target_audits: number;
+      }>(`
+        select
+          (select deleted_at is not null from public.assignments where id = '${target.assignmentId}') as target_assignment_deleted,
+          (select deleted_at is not null from public.assignments where id = '${peer.assignmentId}') as peer_assignment_deleted,
+          (select status::text from public.quiz_attempts where id = '${target.attemptId}') as target_attempt_status,
+          (select status::text from public.quiz_attempts where id = '${peer.attemptId}') as peer_attempt_status,
+          (select count(*)::integer from public.student_vocab_wrong_events where quiz_attempt_id = '${target.attemptId}') as target_wrong_events,
+          (select count(*)::integer from public.student_vocab_wrong_events where quiz_attempt_id = '${peer.attemptId}') as peer_wrong_events,
+          (select count(*)::integer from public.student_point_events where quiz_attempt_id = '${target.attemptId}') as target_point_events,
+          (select count(*)::integer from public.student_point_events where quiz_attempt_id = '${peer.attemptId}') as peer_point_events,
+          (select count(*)::integer from public.audit_events where event_type = 'assignment.deleted' and details ->> 'assignmentId' = '${target.assignmentId}') as target_audits;
+      `);
+      expect(state.rows[0]).toEqual({
+        target_assignment_deleted: true,
+        peer_assignment_deleted: false,
+        target_attempt_status: "expired",
+        peer_attempt_status: "in_progress",
+        target_wrong_events: 4,
+        peer_wrong_events: 0,
+        target_point_events: 4,
+        peer_point_events: 0,
+        target_audits: 1,
+      });
+    } finally {
+      await database.close();
+    }
+  }, 60_000);
+
   it("deletes an unstarted assignment, rejects an active attempt, and hides history idempotently", async () => {
     const database = await createFinalSchemaDatabase();
     try {
@@ -3437,7 +3847,7 @@ describe.sequential("admin deletion controls", () => {
         );
 
         set role authenticated;
-        select public.delete_assignment_v1(
+        select public.delete_assignment_v2(
           '${deletableAssignment}',
           'integration test'
         );
@@ -3547,7 +3957,7 @@ describe.sequential("admin deletion controls", () => {
       );
       await expectPostgresError(
         database.query(`
-          select public.delete_assignment_v1(
+          select public.delete_assignment_v2(
             '${activeAssignment}',
             'must fail'
           );
@@ -4754,6 +5164,206 @@ describe.sequential("assignment retry rules", () => {
     }
   }, 60_000);
 
+  it("applies all four timer and assignment deadline combinations to initial and retry deadlines", async () => {
+    const database = await createFinalSchemaDatabase();
+    const cases = [
+      {
+        key: "timed-with-deadline",
+        studentId: "00000000-0000-4000-8000-000000007001",
+        timingMode: "total" as const,
+        usesAssignmentDeadline: true,
+      },
+      {
+        key: "timed-without-deadline",
+        studentId: "00000000-0000-4000-8000-000000007002",
+        timingMode: "total" as const,
+        usesAssignmentDeadline: false,
+      },
+      {
+        key: "untimed-with-deadline",
+        studentId: "00000000-0000-4000-8000-000000007003",
+        timingMode: "none" as const,
+        usesAssignmentDeadline: true,
+      },
+      {
+        key: "untimed-without-deadline",
+        studentId: "00000000-0000-4000-8000-000000007004",
+        timingMode: "none" as const,
+        usesAssignmentDeadline: false,
+      },
+    ];
+
+    try {
+      await seedReviewAssignmentScenario(database);
+      await database.exec(`
+        insert into public.students (id, display_name, status, created_by)
+        values
+          ('${cases[0].studentId}', 'Timer case 1', 'active', '${ids.admin}'),
+          ('${cases[1].studentId}', 'Timer case 2', 'active', '${ids.admin}'),
+          ('${cases[2].studentId}', 'Timer case 3', 'active', '${ids.admin}'),
+          ('${cases[3].studentId}', 'Timer case 4', 'active', '${ids.admin}');
+      `);
+
+      for (const testCase of cases) {
+        const availableUntil = testCase.usesAssignmentDeadline
+          ? new Date(Date.now() + 5 * 60 * 1000)
+          : null;
+        const { assignmentId, attemptId, questions } =
+          await createRegularPointAttempt(
+            database,
+            `Timer matrix ${testCase.key}`,
+            {
+              availableUntil,
+              studentId: testCase.studentId,
+              timeLimitSeconds: 600,
+              timingMode: testCase.timingMode,
+            },
+          );
+
+        const initialDeadline = await database.query<{
+          deadline_after_assignment: boolean | null;
+          is_infinite: boolean;
+          matches_assignment_deadline: boolean;
+          matches_timer: boolean | null;
+        }>(`
+          select
+            case
+              when assignment.timing_mode = 'total'
+              then abs(extract(epoch from (
+                attempt.deadline_at - attempt.started_at
+              )) - 600) < 1
+              else null
+            end as matches_timer,
+            attempt.deadline_at is not distinct from assignment.available_until
+              as matches_assignment_deadline,
+            attempt.deadline_at = 'infinity'::timestamptz as is_infinite,
+            attempt.deadline_at > assignment.available_until
+              as deadline_after_assignment
+          from public.quiz_attempts as attempt
+          join public.assignments as assignment
+            on assignment.id = attempt.assignment_id
+          where attempt.id = '${attemptId}'
+            and assignment.id = '${assignmentId}';
+        `);
+
+        const expectUntimedDeadlinePreserved = async (stage: string) => {
+          if (testCase.timingMode !== "none") return;
+          const state = await database.query<{
+            is_infinite: boolean;
+            matches_assignment_deadline: boolean;
+          }>(`
+            select
+              attempt.deadline_at = 'infinity'::timestamptz as is_infinite,
+              attempt.deadline_at is not distinct from assignment.available_until
+                as matches_assignment_deadline
+            from public.quiz_attempts as attempt
+            join public.assignments as assignment
+              on assignment.id = attempt.assignment_id
+            where attempt.id = '${attemptId}';
+          `);
+          expect(state.rows[0], `${testCase.key}:${stage}`).toEqual(
+            testCase.usesAssignmentDeadline
+              ? {
+                  is_infinite: false,
+                  matches_assignment_deadline: true,
+                }
+              : {
+                  is_infinite: true,
+                  matches_assignment_deadline: false,
+                },
+          );
+        };
+
+        for (const [index, question] of questions.entries()) {
+          const choice = index === 0
+            ? (question.correct_choice_index + 1) % 4
+            : question.correct_choice_index;
+          await database.query(`
+            select public.answer_quiz_question_v4(
+              '${testCase.studentId}',
+              '${attemptId}',
+              '${question.id}',
+              'initial',
+              ${choice}::smallint,
+              false
+            );
+          `);
+          const nextQuestion = questions[index + 1];
+          if (nextQuestion) {
+            await expectUntimedDeadlinePreserved(`answer-${index + 1}`);
+            await database.query(`
+              select public.resume_quiz_after_feedback_v2(
+                '${testCase.studentId}',
+                '${attemptId}',
+                '${nextQuestion.id}',
+                'initial',
+                0
+              );
+            `);
+            await expectUntimedDeadlinePreserved(`resume-${index + 1}`);
+          }
+        }
+
+        await database.query(`
+          select public.start_quiz_retry_v2(
+            '${testCase.studentId}',
+            '${attemptId}'
+          );
+        `);
+        const retryDeadline = await database.query<{
+          deadline_after_assignment: boolean | null;
+          is_infinite: boolean;
+          matches_assignment_deadline: boolean;
+          matches_timer: boolean | null;
+        }>(`
+          select
+            case
+              when assignment.timing_mode = 'total'
+              then abs(extract(epoch from (
+                attempt.deadline_at - attempt.retry_started_at
+              )) - 600) < 1
+              else null
+            end as matches_timer,
+            attempt.deadline_at is not distinct from assignment.available_until
+              as matches_assignment_deadline,
+            attempt.deadline_at = 'infinity'::timestamptz as is_infinite,
+            attempt.deadline_at > assignment.available_until
+              as deadline_after_assignment
+          from public.quiz_attempts as attempt
+          join public.assignments as assignment
+            on assignment.id = attempt.assignment_id
+          where attempt.id = '${attemptId}';
+        `);
+
+        const expected = testCase.timingMode === "total"
+          ? {
+              matches_timer: true,
+              matches_assignment_deadline: false,
+              is_infinite: false,
+              deadline_after_assignment:
+                testCase.usesAssignmentDeadline ? true : null,
+            }
+          : testCase.usesAssignmentDeadline
+            ? {
+                matches_timer: null,
+                matches_assignment_deadline: true,
+                is_infinite: false,
+                deadline_after_assignment: false,
+              }
+            : {
+                matches_timer: null,
+                matches_assignment_deadline: false,
+                is_infinite: true,
+                deadline_after_assignment: null,
+              };
+        expect(initialDeadline.rows[0], testCase.key).toEqual(expected);
+        expect(retryDeadline.rows[0], testCase.key).toEqual(expected);
+      }
+    } finally {
+      await database.close();
+    }
+  }, 90_000);
+
   it("persists disabled retry rules and completes the initial attempt without a retry", async () => {
     const database = await createFinalSchemaDatabase();
     try {
@@ -5115,6 +5725,18 @@ describe.sequential("assignment retry rules", () => {
           deadline_at = clock_timestamp() - interval '10 minutes'
         where id = '${historicalAttemptId}';
       `);
+      await database.exec(`
+        select set_config(
+          'request.jwt.claim.role',
+          'service_role',
+          false
+        );
+        select set_config(
+          'request.jwt.claims',
+          '{"role":"service_role"}',
+          false
+        );
+      `);
       const finalized = await database.query<{ count: number }>(`
         select public.finalize_stale_quiz_attempts(10) as count;
       `);
@@ -5150,14 +5772,42 @@ describe.sequential("assignment retry rules", () => {
         where id = '${attemptId}';
       `);
 
-      const first = await database.query<{ finalized: number }>(`
-        select public.finalize_stale_quiz_attempts(10) as finalized;
+      const first = await database.query<{
+        result: {
+          failedCount: number;
+          pendingCount: number;
+          processedCount: number;
+        };
+      }>(`
+        select private.run_stale_quiz_attempt_maintenance_v1(
+          10,
+          10,
+          1000
+        ) as result;
       `);
-      const second = await database.query<{ finalized: number }>(`
-        select public.finalize_stale_quiz_attempts(10) as finalized;
+      const second = await database.query<{
+        result: {
+          failedCount: number;
+          pendingCount: number;
+          processedCount: number;
+        };
+      }>(`
+        select private.run_stale_quiz_attempt_maintenance_v1(
+          10,
+          10,
+          1000
+        ) as result;
       `);
-      expect(first.rows).toEqual([{ finalized: 1 }]);
-      expect(second.rows).toEqual([{ finalized: 0 }]);
+      expect(first.rows[0]?.result).toMatchObject({
+        processedCount: 1,
+        failedCount: 0,
+        pendingCount: 0,
+      });
+      expect(second.rows[0]?.result).toMatchObject({
+        processedCount: 0,
+        failedCount: 0,
+        pendingCount: 0,
+      });
 
       const events = await database.query<{
         delta: number;
@@ -5258,6 +5908,18 @@ describe.sequential("assignment retry rules", () => {
             clock_timestamp() - interval '5 minutes',
           deadline_at = clock_timestamp() - interval '1 minute'
         where id = '${attemptId}';
+      `);
+      await database.exec(`
+        select set_config(
+          'request.jwt.claim.role',
+          'service_role',
+          false
+        );
+        select set_config(
+          'request.jwt.claims',
+          '{"role":"service_role"}',
+          false
+        );
       `);
 
       const first = await database.query<{ finalized: number }>(`

@@ -5,7 +5,6 @@ import type { QuestionOrderMode, TimingMode } from "@/lib/admin/assignment-setti
 import { createQuizQuestions } from "@/lib/quiz/question-generator";
 import type { QuizVocabularyEntry } from "@/lib/quiz/question-types";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
-import { finalizeStaleQuizAttempts } from "../stale-attempt-service";
 
 type AssignmentRow = {
   id: string;
@@ -29,11 +28,31 @@ type AssignmentRow = {
   available_until: string | null;
 };
 
+type ExistingAttemptRow = {
+  id: string;
+  phase: "initial" | "review" | "retry" | "completed";
+  deadline_at: string;
+};
+
+export function reusableInProgressAttemptId(
+  attempt: ExistingAttemptRow | null,
+  evaluatedAtMilliseconds = Date.now(),
+) {
+  if (!attempt) return null;
+  if (attempt.phase === "review") return attempt.id;
+  if (attempt.phase !== "initial" && attempt.phase !== "retry") return null;
+  if (attempt.deadline_at === "infinity") return attempt.id;
+  const deadlineMilliseconds = Date.parse(attempt.deadline_at);
+  return Number.isFinite(deadlineMilliseconds) &&
+    deadlineMilliseconds > evaluatedAtMilliseconds
+    ? attempt.id
+    : null;
+}
+
 export async function startStudentAttempt(
   studentId: string,
   assignmentId: string,
 ): Promise<string> {
-  await finalizeStaleQuizAttempts();
   const supabase = getServiceSupabaseClient();
   const [{ data: assignmentData, error: assignmentError }, { data: linkData }] =
     await Promise.all([
@@ -67,7 +86,7 @@ export async function startStudentAttempt(
   const { data: existingAttempt, error: existingAttemptError } =
     await supabase
       .from("quiz_attempts")
-      .select("id")
+      .select("id, phase, deadline_at")
       .eq("student_id", studentId)
       .eq("assignment_id", assignmentId)
       .eq("status", "in_progress")
@@ -75,7 +94,34 @@ export async function startStudentAttempt(
   if (existingAttemptError) {
     throw new Error("진행 중인 시험을 확인하지 못했습니다.");
   }
-  if (existingAttempt) return existingAttempt.id;
+  const reusableAttemptId = reusableInProgressAttemptId(
+    existingAttempt as ExistingAttemptRow | null,
+  );
+  if (reusableAttemptId) return reusableAttemptId;
+
+  if (existingAttempt) {
+    const { data: finalized, error: finalizeError } = await supabase.rpc(
+      "finalize_quiz_attempt_if_stale",
+      { p_attempt_id: existingAttempt.id },
+    );
+    if (finalizeError) {
+      throw new Error("만료된 시험을 정리하지 못했습니다.");
+    }
+    if (!finalized) {
+      const { data: currentAttempt, error: currentAttemptError } =
+        await supabase
+          .from("quiz_attempts")
+          .select("id")
+          .eq("student_id", studentId)
+          .eq("assignment_id", assignmentId)
+          .eq("status", "in_progress")
+          .maybeSingle();
+      if (currentAttemptError) {
+        throw new Error("진행 중인 시험을 다시 확인하지 못했습니다.");
+      }
+      if (currentAttempt?.id) return currentAttempt.id;
+    }
+  }
 
   if (
     assignment.range_basis === "units" &&
@@ -92,12 +138,15 @@ export async function startStudentAttempt(
     if (error || typeof data !== "string") {
       const { data: recoveredAttempt } = await supabase
         .from("quiz_attempts")
-        .select("id")
+        .select("id, phase, deadline_at")
         .eq("student_id", studentId)
         .eq("assignment_id", assignmentId)
         .eq("status", "in_progress")
         .maybeSingle();
-      if (recoveredAttempt) return recoveredAttempt.id;
+      const recoveredAttemptId = reusableInProgressAttemptId(
+        recoveredAttempt as ExistingAttemptRow | null,
+      );
+      if (recoveredAttemptId) return recoveredAttemptId;
       throw new Error("시험을 시작하지 못했습니다.");
     }
 
@@ -170,15 +219,17 @@ export async function startStudentAttempt(
   if (error || typeof data !== "string") {
     const { data: recoveredAttempt } = await supabase
       .from("quiz_attempts")
-      .select("id")
+      .select("id, phase, deadline_at")
       .eq("student_id", studentId)
       .eq("assignment_id", assignmentId)
       .eq("status", "in_progress")
       .maybeSingle();
-    if (recoveredAttempt) return recoveredAttempt.id;
+    const recoveredAttemptId = reusableInProgressAttemptId(
+      recoveredAttempt as ExistingAttemptRow | null,
+    );
+    if (recoveredAttemptId) return recoveredAttemptId;
     throw new Error("시험을 시작하지 못했습니다.");
   }
 
   return data;
 }
-

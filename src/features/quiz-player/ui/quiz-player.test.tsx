@@ -229,12 +229,45 @@ describe("QuizPlayer", () => {
     quizAttempt.timingMode = "none";
     quizAttempt.questionTimeLimitSeconds = null;
 
-    await renderReady(quizAttempt, 1_000);
+    await renderReady(quizAttempt, 0);
 
     expect(screen.getByTestId("quiz-timer")).toHaveTextContent("제한 없음");
     act(() => vi.advanceTimersByTime(24 * 60 * 60 * 1_000));
     expect(mocks.expire).not.toHaveBeenCalled();
     expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
+  });
+
+  it("expires an untimed attempt once when its assignment deadline passes", async () => {
+    const quizAttempt = attempt();
+    quizAttempt.deadlineAt = "2099-01-01T00:10:00.000Z";
+    quizAttempt.timerDeadlineAt = quizAttempt.deadlineAt;
+    quizAttempt.timingMode = "none";
+    quizAttempt.questionTimeLimitSeconds = null;
+    mocks.expire.mockResolvedValue({ ok: true });
+
+    await renderReady(quizAttempt, 2_000);
+    act(() => vi.advanceTimersByTime(1_999));
+    expect(mocks.expire).not.toHaveBeenCalled();
+    await act(async () => {
+      vi.advanceTimersByTime(2);
+      await Promise.resolve();
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(0);
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTestId("quiz-timer")).toHaveTextContent("제한 없음");
+    expect(mocks.expire).toHaveBeenCalledTimes(1);
+    expect(mocks.replace).toHaveBeenCalledWith(
+      "/student/result/attempt-1",
+    );
+
+    await act(async () => {
+      vi.runOnlyPendingTimers();
+      await Promise.resolve();
+    });
+    expect(mocks.expire).toHaveBeenCalledTimes(1);
   });
 
   it("keeps silent feedback within 750ms without reducing the next question timer", async () => {

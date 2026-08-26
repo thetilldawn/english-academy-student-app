@@ -9,6 +9,7 @@ import {
   applyQuizAnswerTransition,
   quizAnswerAudioUrl,
   quizAnswerDisposition,
+  quizAttemptUsesDeadlineClock,
 } from "../domain/quiz-session";
 import type {
   QuizPlayerAction,
@@ -269,7 +270,7 @@ export function useQuizSubmission(input: {
         !question ||
         (phase !== "initial" && phase !== "retry") ||
         (choiceIndex !== null &&
-          input.state.attempt.timingMode !== "none" &&
+          quizAttemptUsesDeadlineClock(input.state.attempt) &&
           input.state.remainingSeconds === 0)
       ) {
         return;

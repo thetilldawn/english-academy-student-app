@@ -15,6 +15,12 @@ export const ANSWER_SERVER_FEEDBACK_RESERVATION_MS = 7_000;
 export const ANSWER_RESULT_VISIBLE_MS = 250;
 export const PROMPT_AUDIO_AUTOPLAY_DELAY_MS = 250;
 
+export function quizAttemptUsesDeadlineClock(
+  attempt: Pick<QuizAttempt, "timingMode" | "timerDeadlineAt">,
+) {
+  return attempt.timingMode !== "none" || attempt.timerDeadlineAt !== "infinity";
+}
+
 export function currentQuizQuestion(attempt: QuizAttempt) {
   return (
     attempt.questions.find(

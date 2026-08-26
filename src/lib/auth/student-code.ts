@@ -11,7 +11,6 @@ import {
 import {
   STUDENT_COOKIE_DEVELOPMENT,
   STUDENT_COOKIE_PRODUCTION,
-  STUDENT_SESSION_MAX_AGE_SECONDS,
 } from "@/lib/constants";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -124,10 +123,10 @@ export function getStudentCookieName(): string {
     : STUDENT_COOKIE_DEVELOPMENT;
 }
 
-export function getStudentCookieOptions() {
+export function getStudentCookieOptions(expires: Date) {
   return {
+    expires,
     httpOnly: true,
-    maxAge: STUDENT_SESSION_MAX_AGE_SECONDS,
     path: "/",
     sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",

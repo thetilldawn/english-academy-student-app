@@ -1,6 +1,10 @@
 import { StudentShell } from "@/components/student-shell";
 import { NotificationBootstrap } from "@/components/notification-bootstrap";
-import { getStudentSession } from "@/lib/auth/student-session";
+import { StudentSessionRenewal } from "@/features/session/ui/student-session-renewal";
+import {
+  getStudentSession,
+  studentSessionRenewalDelay,
+} from "@/lib/auth/student-session";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +19,11 @@ export default async function StudentProtectedLayout({
 
   return (
     <>
+      <StudentSessionRenewal
+        initialDelayMilliseconds={studentSessionRenewalDelay(
+          student.lastSeenAt,
+        )}
+      />
       <NotificationBootstrap role="student" />
       <StudentShell
         displayName={student.displayName}

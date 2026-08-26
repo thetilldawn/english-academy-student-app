@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { getAdminContext } from "@/lib/auth/admin";
 import { isSameOriginRequest, jsonError, parseJson } from "@/lib/http";
-import { resolveVocabAssignmentQueueAttention } from "@/lib/services/vocab-assignment-queue-service";
+import { resolveVocabAssignmentQueueAttention } from "@/lib/services/vocab-assignment-queue-command";
 
 const resolutionSchema = z
   .object({ action: z.enum(["retry", "skip", "cancel"]) })

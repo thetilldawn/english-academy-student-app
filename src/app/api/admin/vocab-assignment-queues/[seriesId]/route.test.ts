@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/auth/admin", () => ({
   getAdminContext: mocks.getAdminContext,
 }));
-vi.mock("@/lib/services/vocab-assignment-queue-service", () => ({
+vi.mock("@/lib/services/vocab-assignment-queue-command", () => ({
   resolveVocabAssignmentQueueAttention: mocks.resolveAttention,
 }));
 

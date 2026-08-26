@@ -8,7 +8,7 @@ import { LegacyReviewRecovery } from "@/features/assignments/ui/legacy-review-re
 import {
   loadAssignmentManagerData,
 } from "@/lib/services/assignment-manager-data";
-import { getReviewAssignmentDraftSummary } from "@/lib/services/review-assignment-service";
+import { getReviewAssignmentDraftSummary } from "@/lib/services/review-assignment-draft-query";
 
 export const metadata: Metadata = {
   title: adminLearningText.page.vocabularyTab,

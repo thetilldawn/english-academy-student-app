@@ -1,11 +1,17 @@
-import { ANSWER_SERVER_FEEDBACK_RESERVATION_MS } from "../domain/quiz-session";
+import {
+  ANSWER_SERVER_FEEDBACK_RESERVATION_MS,
+  quizAttemptUsesDeadlineClock,
+} from "../domain/quiz-session";
 import type { QuizAnswerResponse, QuizAttempt } from "../model";
 
 export function previewNextQuestionMilliseconds(
   attempt: QuizAttempt,
   payload: QuizAnswerResponse,
 ) {
-  if (attempt.timingMode === "none") return 1_000;
+  if (!quizAttemptUsesDeadlineClock(attempt)) return 1_000;
+  if (attempt.timingMode === "none") {
+    return Math.max(0, payload.timerRemainingMilliseconds ?? 0);
+  }
   if (
     attempt.timingMode === "per_question" &&
     attempt.questionTimeLimitSeconds
@@ -28,7 +34,7 @@ export function activeNextQuestionMilliseconds(input: {
   serverMilliseconds: number;
   serverReceivedAt: number;
 }) {
-  if (input.attempt.timingMode === "none") return 1_000;
+  if (!quizAttemptUsesDeadlineClock(input.attempt)) return 1_000;
   const now = performance.now();
   const localRemaining = Math.max(
     0,

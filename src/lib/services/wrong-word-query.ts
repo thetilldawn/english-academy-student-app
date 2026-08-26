@@ -1,7 +1,5 @@
 import "server-only";
 
-import { z } from "zod";
-
 import {
   isTrustedQuestionSnapshot,
   type QuestionProvenanceStatus,
@@ -22,8 +20,6 @@ import {
   requireAdmin,
   type AdminContext,
 } from "@/lib/auth/admin";
-import { finalizeStaleQuizAttempts } from "@/lib/services/stale-attempt-service";
-import { finalizeExpiredReviewAssignmentDrafts } from "@/lib/services/review-assignment-service";
 import {
   loadActiveReviewAssignments,
   type ActiveAssignmentWord,
@@ -107,31 +103,6 @@ type VocabStateRow = {
   last_evaluated_at: string;
 };
 
-export class WrongWordQueueError extends Error {
-  constructor(
-    public readonly reason:
-      | "forbidden"
-      | "invalid_selection"
-      | "database",
-  ) {
-    super("오답 단어를 다음 시험 대기열에 추가하지 못했습니다.");
-    this.name = "WrongWordQueueError";
-  }
-}
-
-export class ReviewAssignmentDraftError extends Error {
-  constructor(
-    public readonly reason:
-      | "forbidden"
-      | "invalid_selection"
-      | "conflict"
-      | "database",
-  ) {
-    super("오답 시험 배정 준비에 실패했습니다.");
-    this.name = "ReviewAssignmentDraftError";
-  }
-}
-
 function oneRelation<T>(value: T | T[] | null): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : value;
 }
@@ -155,7 +126,6 @@ export async function getStudentWrongWordHistory(
   if (!authenticatedAdmin) {
     await requireAdmin();
   }
-  await finalizeStaleQuizAttempts();
   const supabase = getServiceSupabaseClient();
   const authenticatedSupabase = await createServerSupabaseClient();
   const { data: student, error: studentError } = await supabase
@@ -165,7 +135,6 @@ export async function getStudentWrongWordHistory(
     .maybeSingle();
 
   if (studentError || !student) return null;
-  await finalizeExpiredReviewAssignmentDrafts(studentId);
   const eventRows: WrongEventRow[] = [];
   let beforeId: number | string | null = null;
 
@@ -387,91 +356,4 @@ export async function getStudentWrongWordHistory(
     questions,
     states,
   });
-}
-
-export async function queueStudentWrongWords(
-  studentId: string,
-  questionIds: string[],
-  authenticatedAdmin?: AdminContext,
-): Promise<string[]> {
-  if (!authenticatedAdmin) {
-    await requireAdmin();
-  }
-  const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase.rpc(
-    "queue_student_vocab_review_words",
-    {
-      p_student_id: studentId,
-      p_question_ids: questionIds,
-    },
-  );
-
-  if (error || !Array.isArray(data)) {
-    console.error("[wrong-word-queue] database operation failed", {
-      code: error?.code ?? "missing_result",
-      message: error?.message ?? "queue ids were not returned",
-      hint: error?.hint ?? null,
-    });
-    throw new WrongWordQueueError(
-      error?.code === "42501"
-        ? "forbidden"
-        : ["22023", "P0002", "23503", "23505"].includes(
-              error?.code ?? "",
-            )
-          ? "invalid_selection"
-          : "database",
-    );
-  }
-
-  if (
-    data.length === 0 ||
-    data.some((queueId) => typeof queueId !== "string")
-  ) {
-    throw new WrongWordQueueError("database");
-  }
-
-  return data as string[];
-}
-
-export async function createStudentReviewAssignmentDraft(
-  studentId: string,
-  questionIds: string[],
-  authenticatedAdmin?: AdminContext,
-): Promise<string> {
-  if (!authenticatedAdmin) {
-    await requireAdmin();
-  }
-  const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase.rpc(
-    "create_student_vocab_review_assignment_draft",
-    {
-      p_student_id: studentId,
-      p_question_ids: questionIds,
-    },
-  );
-
-  if (error) {
-    console.error("[review-assignment-draft] database operation failed", {
-      code: error.code,
-      message: error.message,
-      hint: error.hint ?? null,
-    });
-    throw new ReviewAssignmentDraftError(
-      error.code === "42501"
-        ? "forbidden"
-        : error.code === "40001"
-          ? "conflict"
-          : ["22023", "P0002", "23503", "23505"].includes(
-                error.code,
-              )
-            ? "invalid_selection"
-            : "database",
-    );
-  }
-
-  if (!z.uuid().safeParse(data).success) {
-    throw new ReviewAssignmentDraftError("database");
-  }
-
-  return data as string;
 }

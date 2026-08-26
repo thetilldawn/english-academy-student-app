@@ -93,6 +93,9 @@ describe("assignment order and timing database contract", () => {
     const variableFeedbackMigration = source(
       "supabase/migrations/20260815123000_resume_quiz_after_variable_feedback.sql",
     );
+    const untimedDeadlineMigration = source(
+      "supabase/migrations/20260826001648_preserve_untimed_assignment_deadlines.sql",
+    );
     const variableFeedbackRollback = source(
       "supabase/rollback/20260815123000_resume_quiz_after_variable_feedback.sql",
     );
@@ -164,6 +167,18 @@ describe("assignment order and timing database contract", () => {
     );
     expect(variableFeedbackMigration).toContain(
       "from public, anon, authenticated",
+    );
+    expect(untimedDeadlineMigration).toContain(
+      "elsif timing_mode_value = 'total' then",
+    );
+    expect(untimedDeadlineMigration).toContain(
+      "elsif timing_mode_value = 'none' then",
+    );
+    expect(untimedDeadlineMigration.match(
+      /next_deadline := attempt_row\.deadline_at;/g,
+    )).toHaveLength(2);
+    expect(untimedDeadlineMigration).toContain(
+      "attempt_row.deadline_at - unused_feedback",
     );
     expect(variableFeedbackRollback).toContain(
       "drop function if exists public.resume_quiz_after_feedback_v2",

@@ -3,10 +3,10 @@ import { z } from "zod";
 import { getAdminContext } from "@/lib/auth/admin";
 import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
 import {
-  getStudentWrongWordHistory,
   queueStudentWrongWords,
   WrongWordQueueError,
-} from "@/lib/services/wrong-word-service";
+} from "@/lib/services/wrong-word-command";
+import { getStudentWrongWordHistory } from "@/lib/services/wrong-word-query";
 import { queueWrongWordsSchema } from "@/lib/validation";
 
 export const dynamic = "force-dynamic";

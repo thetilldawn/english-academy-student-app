@@ -15,6 +15,12 @@ const rollback = fs.readFileSync(
   ),
   "utf8",
 );
+const targetedDeletionMigration = fs.readFileSync(
+  path.resolve(
+    "supabase/migrations/20260826001650_add_targeted_admin_deletion_commands.sql",
+  ),
+  "utf8",
+);
 
 describe("admin deletion controls migration", () => {
   it("학생과 시험은 이력을 보존하는 삭제 상태로 전환한다", () => {
@@ -86,5 +92,57 @@ describe("admin deletion controls migration", () => {
     expect(migration).toMatch(/^begin;/);
     expect(migration).toContain("notify pgrst, 'reload schema';");
     expect(rollback).toContain("notify pgrst, 'reload schema';");
+  });
+
+  it("대상 학생과 시험만 고정 시각으로 정리한 뒤 삭제한다", () => {
+    const service = fs.readFileSync(
+      path.resolve("src/lib/services/admin-deletion-service.ts"),
+      "utf8",
+    );
+    expect(targetedDeletionMigration).toContain(
+      "create function private.delete_student_v2(",
+    );
+    expect(targetedDeletionMigration).toContain(
+      "create function private.delete_assignment_v2(",
+    );
+    expect(targetedDeletionMigration).toContain(
+      "evaluation_at timestamptz := transaction_timestamp()",
+    );
+    expect(targetedDeletionMigration).toContain(
+      "private.finalize_expired_quiz_attempt_at_v2(",
+    );
+    expect(targetedDeletionMigration).not.toContain(
+      "finalize_stale_quiz_attempts",
+    );
+    expect(targetedDeletionMigration).toContain(
+      "where retry.student_id = p_student_id",
+    );
+    expect(targetedDeletionMigration).toContain(
+      "jsonb_build_object('reason', 'student_deleted')",
+    );
+    const attemptLockIndex = targetedDeletionMigration.indexOf(
+      "perform attempt.id",
+    );
+    const seriesLockIndex = targetedDeletionMigration.indexOf(
+      "for series_row in",
+    );
+    const attemptFinalizeIndex = targetedDeletionMigration.indexOf(
+      "for attempt_row in",
+    );
+    const baseDeleteIndex = targetedDeletionMigration.indexOf(
+      "base_result := private.delete_student_v1(p_student_id)",
+    );
+    expect(attemptLockIndex).toBeGreaterThan(-1);
+    expect(attemptLockIndex).toBeLessThan(seriesLockIndex);
+    expect(seriesLockIndex).toBeLessThan(attemptFinalizeIndex);
+    expect(attemptFinalizeIndex).toBeLessThan(baseDeleteIndex);
+    expect(targetedDeletionMigration).toContain(
+      "grant execute on function public.delete_student_v2(uuid)",
+    );
+    expect(targetedDeletionMigration).toContain(
+      "grant execute on function public.delete_assignment_v2(uuid, text)",
+    );
+    expect(service).toContain('supabase.rpc("delete_student_v2"');
+    expect(service).toContain('supabase.rpc("delete_assignment_v2"');
   });
 });

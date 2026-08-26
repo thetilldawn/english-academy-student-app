@@ -19,7 +19,6 @@ export default async function InterceptedAdminResultDetailPage({
   }
   const editorData = isStudentAssignmentEditable(detail.summary)
     ? await loadAssignmentManagerData({
-        finalizeStale: true,
         reuseMaterialRequestCache: false,
       })
     : null;

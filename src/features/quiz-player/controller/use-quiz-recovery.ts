@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, type Dispatch } from "react";
 
 import { recoverQuizAttempt } from "../api/quiz-attempt";
+import { quizAttemptUsesDeadlineClock } from "../domain/quiz-session";
 import type { QuizPlayerAction } from "../domain/quiz-player-state";
 
 type MutableValue<T> = { current: T };
@@ -55,7 +56,7 @@ export function useQuizRecovery(input: {
         payload.timerRemainingMilliseconds - roundTripMilliseconds,
       );
       const safeRemainingMilliseconds =
-        payload.attempt.timingMode === "none"
+        !quizAttemptUsesDeadlineClock(payload.attempt)
           ? 1_000
           : payload.attempt.timingMode === "per_question" &&
               payload.attempt.questionTimeLimitSeconds

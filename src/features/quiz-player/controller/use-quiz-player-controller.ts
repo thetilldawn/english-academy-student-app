@@ -9,6 +9,7 @@ import { getPriorWrongIndicator } from "@/lib/quiz/prior-wrong";
 import { expireQuizAttempt } from "../api/quiz-attempt";
 import {
   quizAnswerAnnouncement,
+  quizAttemptUsesDeadlineClock,
   quizAudioPresentation,
   quizPreloadAudioUrls,
 } from "../domain/quiz-session";
@@ -32,9 +33,9 @@ export function useQuizPlayerController(input: {
     quizPlayerReducer,
     createQuizPlayerState(
       input.initialAttempt,
-      input.initialAttempt.timingMode === "none"
-        ? 1
-        : Math.ceil(input.initialRemainingMilliseconds / 1000),
+      quizAttemptUsesDeadlineClock(input.initialAttempt)
+        ? Math.ceil(input.initialRemainingMilliseconds / 1000)
+        : 1,
     ),
   );
   const expireStarted = useRef(false);
@@ -73,7 +74,7 @@ export function useQuizPlayerController(input: {
   const resetClock = useQuizClock(
     input.initialRemainingMilliseconds,
     handleClockTick,
-    input.initialAttempt.timingMode !== "none",
+    quizAttemptUsesDeadlineClock(state.attempt),
   );
 
   useEffect(() => {
@@ -174,11 +175,12 @@ export function useQuizPlayerController(input: {
     state,
     timeWarningAnnouncedRef: timeWarningAnnounced,
   });
+  const attemptUsesDeadlineClock = quizAttemptUsesDeadlineClock(state.attempt);
 
   useEffect(() => {
     if (
       state.remainingSeconds !== 0 ||
-      state.attempt.timingMode === "none" ||
+      !attemptUsesDeadlineClock ||
       !state.timerSynchronized ||
       state.attempt.status !== "in_progress"
     ) {
@@ -193,6 +195,7 @@ export function useQuizPlayerController(input: {
     }, 0);
     return () => window.clearTimeout(timer);
   }, [
+    attemptUsesDeadlineClock,
     expireCurrentAttempt,
     state.attempt.status,
     state.attempt.timingMode,

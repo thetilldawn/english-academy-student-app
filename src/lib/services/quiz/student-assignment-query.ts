@@ -9,9 +9,6 @@ import {
 import type { QuestionOrderMode, TimingMode } from "@/lib/admin/assignment-settings";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import { loadDatasetDisplayLabelMap } from "../dataset-catalog-service";
-import { finalizeStudentMissedAssignments } from "../missed-assignment-service";
-import { finalizeStaleQuizAttempts } from "../stale-attempt-service";
-import { materializeReadyVocabAssignmentQueue } from "../vocab-assignment-queue-service";
 
 type AssignmentRow = {
   id: string;
@@ -56,17 +53,6 @@ type AttemptRow = {
 export async function listStudentAssignments(
   studentId: string,
 ): Promise<StudentAssignmentSummary[]> {
-  const [, missedFinalization] = await Promise.all([
-    finalizeStaleQuizAttempts(),
-    finalizeStudentMissedAssignments(studentId),
-  ]);
-  // A stale-attempt finalizer may complete the current queued exam and mark
-  // the next step ready. Materialize only after both finalizers commit so the
-  // newly-ready step is not missed by a racing read.
-  await materializeReadyVocabAssignmentQueue(studentId);
-  if (missedFinalization.batchLimitReached) {
-    console.warn("[missed-assignment] student batch limit reached");
-  }
   const supabase = getServiceSupabaseClient();
   const { data: linkData, error: linkError } = await supabase
     .from("assignment_students")
@@ -248,4 +234,3 @@ export async function listStudentAssignments(
 
   return summaries;
 }
-

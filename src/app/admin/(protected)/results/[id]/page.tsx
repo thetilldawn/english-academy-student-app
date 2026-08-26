@@ -25,7 +25,6 @@ export default async function AdminResultDetailPage({
   }
   const editorData = isStudentAssignmentEditable(detail.summary)
     ? await loadAssignmentManagerData({
-        finalizeStale: true,
         reuseMaterialRequestCache: false,
       })
     : null;

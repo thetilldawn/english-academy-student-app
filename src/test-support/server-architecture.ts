@@ -22,6 +22,11 @@ export type DirectDbWriteCall = {
   operation?: string;
 };
 
+export type ReadExportWriteViolation = {
+  file: string;
+  functionName: string;
+};
+
 const WRITE_MODULE_PATTERN =
   /(?:^|[/.-])(?:command|commands|finalizer|materializer|mutation|mutations|write|writes)(?:[/.-]|$)/;
 const WRITE_BINDING_PATTERN =
@@ -179,13 +184,96 @@ export function collectDirectDbWriteCalls(
   return calls;
 }
 
+export function collectReadExportWriteViolations(
+  file: string,
+  source: string,
+): ReadExportWriteViolation[] {
+  const parsed = sourceFile(file, source);
+  const importedWrites = new Set(
+    collectRuntimeImports(file, source)
+      .filter(
+        (entry) =>
+          WRITE_MODULE_PATTERN.test(entry.module) ||
+          WRITE_BINDING_PATTERN.test(entry.importedName),
+      )
+      .map((entry) => entry.localName),
+  );
+  const functions = new Map<
+    string,
+    { calls: Set<string>; directlyWrites: boolean; exportedRead: boolean }
+  >();
+
+  for (const statement of parsed.statements) {
+    if (!ts.isFunctionDeclaration(statement) || !statement.name || !statement.body) {
+      continue;
+    }
+    const calls = new Set<string>();
+    let directlyWrites = false;
+    const visit = (node: ts.Node) => {
+      if (ts.isCallExpression(node)) {
+        if (ts.isIdentifier(node.expression)) {
+          calls.add(node.expression.text);
+          if (importedWrites.has(node.expression.text)) directlyWrites = true;
+        } else if (ts.isPropertyAccessExpression(node.expression)) {
+          const method = node.expression.name.text;
+          if (DIRECT_DB_WRITE_METHODS.has(method as DirectDbWriteCall["method"])) {
+            directlyWrites = true;
+          } else if (
+            method === "rpc" &&
+            node.arguments.length > 0 &&
+            ts.isStringLiteralLike(node.arguments[0]) &&
+            MUTATING_RPC_PATTERN.test(node.arguments[0].text)
+          ) {
+            directlyWrites = true;
+          }
+        }
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(statement.body);
+    const exported = statement.modifiers?.some(
+      (modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword,
+    ) ?? false;
+    functions.set(statement.name.text, {
+      calls,
+      directlyWrites,
+      exportedRead:
+        exported && /^(?:get|list|load|read)(?:[A-Z_]|$)/.test(statement.name.text),
+    });
+  }
+
+  const mutatingFunctions = new Set(
+    [...functions]
+      .filter(([, value]) => value.directlyWrites)
+      .map(([name]) => name),
+  );
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const [name, value] of functions) {
+      if (
+        !mutatingFunctions.has(name) &&
+        [...value.calls].some((called) => mutatingFunctions.has(called))
+      ) {
+        mutatingFunctions.add(name);
+        changed = true;
+      }
+    }
+  }
+
+  return [...functions]
+    .filter(
+      ([name, value]) => value.exportedRead && mutatingFunctions.has(name),
+    )
+    .map(([functionName]) => ({ file, functionName }));
+}
+
 export function isReadModulePath(file: string) {
   const normalized = file.replaceAll("\\", "/");
   const basename = path.posix.basename(normalized);
   return (
     /(?:^|-)(?:list|load|read|query)(?:-|\.)/.test(basename) ||
-    normalized.includes("/server/queries/") ||
-    normalized.endsWith("/lib/services/wrong-word-service.ts")
+    normalized.includes("/server/queries/")
   );
 }
 

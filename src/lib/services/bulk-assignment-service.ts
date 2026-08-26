@@ -770,7 +770,6 @@ async function resolveBulkAssignmentPreview(
   const [catalog, historyBundle] = await Promise.all([
     loadAssignmentPlanningCatalog(),
     listAssignmentHistoryBundle({
-      finalizeStale: false,
       reuseMaterialRequestCache: false,
     }),
   ]);

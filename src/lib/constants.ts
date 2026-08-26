@@ -1,6 +1,9 @@
 export const STUDENT_SESSION_DAYS = 60;
 export const STUDENT_SESSION_MAX_AGE_SECONDS =
   STUDENT_SESSION_DAYS * 24 * 60 * 60;
+export const STUDENT_SESSION_RENEWAL_HOURS = 24;
+export const STUDENT_SESSION_RENEWAL_INTERVAL_MS =
+  STUDENT_SESSION_RENEWAL_HOURS * 60 * 60 * 1000;
 
 export const STUDENT_COOKIE_PRODUCTION = "__Host-ea_student_session";
 export const STUDENT_COOKIE_DEVELOPMENT = "ea_student_session";
