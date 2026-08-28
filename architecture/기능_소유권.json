@@ -1,0 +1,2254 @@
+{
+  "schemaVersion": 1,
+  "changeTrackingFrom": "a4772624f254f56998bc1b02f0c013ffa950000c",
+  "guide": "docs/코드_길찾기_및_변경영향.md",
+  "directoryRoles": [
+    { "path": "src/app", "role": "경로, Server Component 조합, Route Handler" },
+    { "path": "src/features", "role": "기능별 세로 구조" },
+    { "path": "src/design-system", "role": "기능을 모르는 공용 UI" },
+    { "path": "src/components", "role": "앱 shell과 아직 이동 전인 공용 부품" },
+    { "path": "src/content", "role": "화면 문구와 번역 자료" },
+    { "path": "src/styles", "role": "전역 token·theme·reset" },
+    { "path": "src/test-support", "role": "여러 기능이 공유하는 검사 도구와 fixture" },
+    { "path": "src/lib/admin", "role": "순수 관리자 계약과 정책" },
+    { "path": "src/lib/assignment", "role": "배정에서 공유하는 순수 계산" },
+    { "path": "src/lib/services", "role": "현재 서버 서비스, R3~R6 점진 이동 대상" },
+    { "path": "src/lib/quiz", "role": "시험에서 공유하는 순수 계산" },
+    { "path": "src/lib/auth", "role": "인증과 권한" },
+    { "path": "src/lib/database", "role": "DB 계약 검사" },
+    { "path": "src/lib/deploy", "role": "배포 환경 계약 검사" },
+    { "path": "src/lib/observability", "role": "서버 오류 식별과 기록" },
+    { "path": "src/lib/supabase", "role": "Supabase client 경계" },
+    { "path": "src/lib/ui", "role": "기능에 종속되지 않은 표시 계산과 경로" },
+    { "path": "src/lib/vocab", "role": "단어 자료 투입 계약" },
+    { "path": "supabase/migrations", "role": "스키마, RPC, 권한, 거래 불변식" }
+  ],
+  "structureState": {
+    "current": {
+      "browserFlow": "src/features/<기능>/controller|application|api|transport",
+      "serverUseCases": "src/lib/services",
+      "serverContracts": "src/lib/admin",
+      "note": "현재 실행 경로다. 목표 폴더가 문서에 있어도 아직 옮기지 않은 코드를 그곳에서 찾지 않는다."
+    },
+    "target": {
+      "browserFlow": "src/features/<기능>/client/{components,controllers,flows,transport}",
+      "serverUseCases": "src/features/<기능>/server/{components,queries,commands,use-cases,actions,http}",
+      "contracts": "src/features/<기능>/contracts",
+      "publicEntrypoints": "src/features/<기능>/{public-ui,public-contracts}.ts",
+      "migrationBatches": "R3~R7",
+      "note": "목표 위치다. 이동은 배치별 사용처 0건과 구조 검사를 통과할 때만 완료된다."
+    }
+  },
+  "pathStates": [
+    {
+      "path": "src/features/assignments/ui/bulk-assignment-editor.tsx",
+      "status": "legacy-inactive",
+      "reason": "현재 importer가 없으며 실제 단일·일괄 생성 화면은 VocabAssignmentPlanner다."
+    },
+    {
+      "path": "src/features/assignments/ui/single-assignment-editor.tsx",
+      "status": "partial-active",
+      "reason": "내역 수정 모드는 active지만 생성 모드는 현재 화면에서 사용하지 않는다."
+    },
+    {
+      "path": "src/app/api/admin/assignments/route.ts",
+      "status": "compatibility",
+      "reason": "GET/POST 계약은 남아 있지만 현재 단일·일괄 생성 화면은 bulk API를 사용한다."
+    },
+    {
+      "path": "src/app/api/admin/mixed-assignments/route.ts",
+      "status": "legacy-compatibility",
+      "reason": "새 독립 오답 화면 경로가 아니며 예전 mixed 자료 호환용이다."
+    },
+    {
+      "path": "src/app/api/admin/review-assignments/route.ts",
+      "status": "legacy-recovery",
+      "reason": "독립 오답의 현재 저장 경로가 아니라 예전 검토 흐름 복구용이다."
+    },
+    {
+      "path": "src/features/assignments/client",
+      "status": "planned",
+      "reason": "R5~R7에서 현재 controller/application/api/transport를 책임별로 이동한다."
+    },
+    {
+      "path": "src/features/assignments/server",
+      "status": "planned",
+      "reason": "R3~R6에서 현재 src/lib/services와 src/lib/admin 호출자를 전환한 뒤 이동한다."
+    }
+  ],
+  "specialOwners": [
+    "app-shell",
+    "auth",
+    "shared-contract",
+    "shared-ui",
+    "shared-admin-command",
+    "shared-quiz-domain",
+    "shared-infra",
+    "database-contract",
+    "architecture-meta"
+  ],
+  "srcSharedRoots": [
+    {
+      "path": "src/content",
+      "owner": "shared-contract",
+      "fileCount": 11,
+      "pathSetSha256": "cb63faba11e914ff592b6488b34da4581c8aef2ce15556018f37b3b16d87ee0f"
+    },
+    {
+      "path": "src/styles",
+      "owner": "shared-ui",
+      "fileCount": 3,
+      "pathSetSha256": "94dafc92b7eae50ef9924b76ef8e8d3f687ab55572ccc0e510c19086e1f380be"
+    },
+    {
+      "path": "src/test-support",
+      "owner": "architecture-meta",
+      "fileCount": 7,
+      "pathSetSha256": "d46a21c4ba1bddf6ba23f9e9fb56ea6045cfb5e940459ed41d9be12710580638"
+    }
+  ],
+  "pageOwners": [
+    { "path": "src/app/admin/(protected)/@detail/(.)results/[entryKey]/page.tsx", "owner": "history" },
+    { "path": "src/app/admin/(protected)/@detail/[...catchAll]/page.tsx", "owner": "app-shell" },
+    { "path": "src/app/admin/(protected)/assignments/page.tsx", "owner": "assignments" },
+    { "path": "src/app/admin/(protected)/page.tsx", "owner": "history" },
+    { "path": "src/app/admin/(protected)/results/[id]/page.tsx", "owner": "history" },
+    { "path": "src/app/admin/(protected)/results/page.tsx", "owner": "history" },
+    { "path": "src/app/admin/(protected)/students/page.tsx", "owner": "students" },
+    { "path": "src/app/admin/login/page.tsx", "owner": "auth" },
+    { "path": "src/app/code/page.tsx", "owner": "auth" },
+    { "path": "src/app/page.tsx", "owner": "app-shell" },
+    { "path": "src/app/student/(protected)/attempt/[id]/page.tsx", "owner": "quiz-player" },
+    { "path": "src/app/student/(protected)/page.tsx", "owner": "student-dashboard" },
+    { "path": "src/app/student/(protected)/result/[id]/page.tsx", "owner": "results" }
+  ],
+  "nextSpecialEntrypointOwners": [
+    { "path": "proxy.ts", "owner": "auth" },
+    { "path": "src/instrumentation.ts", "owner": "app-shell" },
+    { "path": "src/app/layout.tsx", "owner": "app-shell" },
+    { "path": "src/app/icon.svg", "owner": "app-shell" },
+    { "path": "src/app/error.tsx", "owner": "app-shell" },
+    { "path": "src/app/global-error.tsx", "owner": "app-shell" },
+    { "path": "src/app/not-found.tsx", "owner": "app-shell" },
+    { "path": "src/app/admin/(protected)/layout.tsx", "owner": "app-shell" },
+    { "path": "src/app/admin/(protected)/error.tsx", "owner": "app-shell" },
+    { "path": "src/app/admin/(protected)/loading.tsx", "owner": "app-shell" },
+    { "path": "src/app/admin/(protected)/@detail/default.tsx", "owner": "app-shell" },
+    { "path": "src/app/student/(protected)/layout.tsx", "owner": "app-shell" }
+  ],
+  "nextConfigOwners": [
+    { "path": "next.config.ts", "owner": "app-shell" }
+  ],
+  "appSupportOwners": [
+    { "path": "src/app/admin-deletion-ui-contract.test.ts", "owner": "shared-admin-command" },
+    { "path": "src/app/exact-review-assignment-ui-contract.test.ts", "owner": "assignments" },
+    { "path": "src/app/global-error-contract.test.ts", "owner": "app-shell" },
+    { "path": "src/app/globals.css", "owner": "app-shell" },
+    { "path": "src/app/mixed-assignment-api-contract.test.ts", "owner": "assignments" },
+    { "path": "src/app/mobile-production-regression-ui-contract.test.ts", "owner": "architecture-meta" },
+    { "path": "src/app/notification-ui-contract.test.ts", "owner": "notifications" },
+    { "path": "src/app/preview-environment-contract.test.mjs", "owner": "architecture-meta" },
+    { "path": "src/app/redesign-css-contract.test.ts", "owner": "shared-ui" },
+    { "path": "src/app/student-catalog-ui-contract.test.ts", "owner": "students" },
+    { "path": "src/app/student-reading-context-contract.test.ts", "owner": "students" },
+    { "path": "src/app/wrong-word-ui-contract.test.ts", "owner": "students" },
+    { "path": "src/app/admin/(protected)/route-state.module.css", "owner": "app-shell" },
+    { "path": "src/app/api/admin/admin-deletion-routes.test.ts", "owner": "shared-admin-command" },
+    { "path": "src/app/api/admin/legacy-review-routes.characterization.test.ts", "owner": "assignments" },
+    { "path": "src/app/api/admin/assignments/route.test.ts", "owner": "assignments" },
+    { "path": "src/app/api/admin/assignments/student-assignment-replacement-route.test.ts", "owner": "assignments" },
+    { "path": "src/app/api/admin/bulk-assignments/route.test.ts", "owner": "assignments" },
+    { "path": "src/app/api/admin/exact-review-assignments/route.test.ts", "owner": "assignments" },
+    { "path": "src/app/api/admin/exact-review-assignments/preview/route.test.ts", "owner": "assignments" },
+    { "path": "src/app/api/admin/mixed-assignments/route.test.ts", "owner": "assignments" },
+    { "path": "src/app/api/admin/students/[id]/direct-review-summaries/route.test.ts", "owner": "students" },
+    { "path": "src/app/api/admin/students/[id]/vocab-assignment-queues/route.test.ts", "owner": "students" },
+    { "path": "src/app/api/admin/vocab-assignment-queues/[seriesId]/route.test.ts", "owner": "assignment-queue" },
+    { "path": "src/app/api/student/session/route.test.ts", "owner": "session" },
+    { "path": "src/app/fonts/SourceSerif4-LICENSE.md", "owner": "app-shell" },
+    { "path": "src/app/fonts/SourceSerif4Variable-Roman.ttf.woff2", "owner": "app-shell" }
+  ],
+  "routeOwners": [
+    { "path": "src/app/api/admin/assignment-capacity/route.ts", "owner": "assignments" },
+    { "path": "src/app/api/admin/assignments/[assignmentId]/route.ts", "owner": "assignments" },
+    { "path": "src/app/api/admin/assignments/[assignmentId]/students/[studentId]/route.ts", "owner": "assignments" },
+    { "path": "src/app/api/admin/assignments/route.ts", "owner": "assignments" },
+    { "path": "src/app/api/admin/attempts/[id]/route.ts", "owner": "history" },
+    { "path": "src/app/api/admin/bulk-assignments/preview/route.ts", "owner": "assignments" },
+    { "path": "src/app/api/admin/bulk-assignments/route.ts", "owner": "assignments" },
+    { "path": "src/app/api/admin/exact-review-assignments/preview/route.ts", "owner": "assignments" },
+    { "path": "src/app/api/admin/exact-review-assignments/route.ts", "owner": "assignments" },
+    { "path": "src/app/api/admin/history/route.ts", "owner": "history" },
+    { "path": "src/app/api/admin/mixed-assignments/route.ts", "owner": "assignments" },
+    { "path": "src/app/api/admin/notifications/route.ts", "owner": "notifications" },
+    { "path": "src/app/api/admin/review-assignments/route.ts", "owner": "assignments" },
+    { "path": "src/app/api/admin/session/route.ts", "owner": "session" },
+    { "path": "src/app/api/admin/students/[id]/code/rotate/route.ts", "owner": "students" },
+    { "path": "src/app/api/admin/students/[id]/code/route.ts", "owner": "students" },
+    { "path": "src/app/api/admin/students/[id]/direct-review-summaries/route.ts", "owner": "students" },
+    { "path": "src/app/api/admin/students/[id]/review-assignment-drafts/[draftId]/route.ts", "owner": "students" },
+    { "path": "src/app/api/admin/students/[id]/review-assignment-drafts/route.ts", "owner": "students" },
+    { "path": "src/app/api/admin/students/[id]/route.ts", "owner": "students" },
+    { "path": "src/app/api/admin/students/[id]/status/route.ts", "owner": "students" },
+    { "path": "src/app/api/admin/students/[id]/vocab/route.ts", "owner": "students" },
+    { "path": "src/app/api/admin/students/[id]/vocab-assignment-queues/route.ts", "owner": "students" },
+    { "path": "src/app/api/admin/students/[id]/worksheet-requests/route.ts", "owner": "students" },
+    { "path": "src/app/api/admin/students/[id]/wrong-words/route.ts", "owner": "students" },
+    { "path": "src/app/api/admin/students/route.ts", "owner": "students" },
+    { "path": "src/app/api/admin/vocab-assignment-queues/[seriesId]/route.ts", "owner": "assignment-queue" },
+    { "path": "src/app/api/admin/vocab-time-templates/route.ts", "owner": "assignments" },
+    { "path": "src/app/api/admin/worksheet-requests/[id]/export/route.ts", "owner": "students" },
+    { "path": "src/app/api/student/assignments/[id]/attempts/route.ts", "owner": "quiz-player" },
+    { "path": "src/app/api/student/attempts/[id]/answers/route.ts", "owner": "quiz-player" },
+    { "path": "src/app/api/student/attempts/[id]/expire/route.ts", "owner": "quiz-player" },
+    { "path": "src/app/api/student/attempts/[id]/feedback/route.ts", "owner": "quiz-player" },
+    { "path": "src/app/api/student/attempts/[id]/retry/route.ts", "owner": "quiz-player" },
+    { "path": "src/app/api/student/attempts/[id]/route.ts", "owner": "quiz-player" },
+    { "path": "src/app/api/student/attempts/[id]/timeouts/route.ts", "owner": "quiz-player" },
+    { "path": "src/app/api/student/notifications/route.ts", "owner": "notifications" },
+    { "path": "src/app/api/student/session/route.ts", "owner": "session" }
+  ],
+  "serviceOwners": [
+    { "path": "src/lib/services/active-review-assignment-service.ts", "owner": "assignments" },
+    { "path": "src/lib/services/admin-assignment-read-service.ts", "owner": "assignments" },
+    { "path": "src/lib/services/admin-attempt-read-service.ts", "owner": "history" },
+    {
+      "path": "src/lib/services/admin-deletion-service.ts",
+      "owner": "shared-admin-command",
+      "consumers": ["students", "assignments", "history"]
+    },
+    { "path": "src/lib/services/admin-history-read-service.ts", "owner": "history" },
+    { "path": "src/lib/services/admin-material-read-service.ts", "owner": "assignments" },
+    { "path": "src/lib/services/admin-student-command-service.ts", "owner": "students" },
+    { "path": "src/lib/services/admin-student-read-service.ts", "owner": "students" },
+    { "path": "src/lib/services/assignment-cancellation-service.ts", "owner": "assignments" },
+    { "path": "src/lib/services/assignment-edit-source-service.ts", "owner": "assignments" },
+    { "path": "src/lib/services/assignment-manager-data.ts", "owner": "assignments" },
+    { "path": "src/lib/services/assignment-replacement-errors.ts", "owner": "assignments" },
+    { "path": "src/lib/services/assignment-replacement-policy.ts", "owner": "assignments" },
+    { "path": "src/lib/services/assignment-replacement-preparation-service.ts", "owner": "assignments" },
+    { "path": "src/lib/services/assignment-replacement-service.ts", "owner": "assignments" },
+    { "path": "src/lib/services/bulk-assignment-persistence.ts", "owner": "assignments" },
+    { "path": "src/lib/services/bulk-assignment-plan-digest.ts", "owner": "assignments" },
+    { "path": "src/lib/services/bulk-assignment-service.ts", "owner": "assignments" },
+    { "path": "src/lib/services/dataset-catalog-service.ts", "owner": "assignments" },
+    { "path": "src/lib/services/direct-review-assignment-service.ts", "owner": "assignments" },
+    { "path": "src/lib/services/direct-review-candidate-service.ts", "owner": "assignments" },
+    { "path": "src/lib/services/direct-review-preparation-service.ts", "owner": "assignments" },
+    { "path": "src/lib/services/eligible-vocabulary-service.ts", "owner": "assignments" },
+    { "path": "src/lib/services/learning-point-read-service.ts", "owner": "learning-points" },
+    { "path": "src/lib/services/mixed-assignment-service.ts", "owner": "assignments" },
+    { "path": "src/lib/services/notification-service.ts", "owner": "notifications" },
+    { "path": "src/lib/services/quiz/attempt-command.ts", "owner": "quiz-player" },
+    { "path": "src/lib/services/quiz/attempt-query.ts", "owner": "quiz-player" },
+    { "path": "src/lib/services/quiz/attempt-result-query.ts", "owner": "results" },
+    { "path": "src/lib/services/quiz/attempt-start.ts", "owner": "quiz-player" },
+    { "path": "src/lib/services/quiz/pronunciation-registry.ts", "owner": "quiz-player" },
+    { "path": "src/lib/services/quiz/question-snapshot.ts", "owner": "quiz-player" },
+    { "path": "src/lib/services/quiz/result-question-mapper.ts", "owner": "results" },
+    { "path": "src/lib/services/quiz/student-assignment-query.ts", "owner": "student-dashboard" },
+    { "path": "src/lib/services/quiz-rpc-compatibility.ts", "owner": "quiz-player" },
+    { "path": "src/lib/services/regular-assignment-service.ts", "owner": "assignments" },
+    { "path": "src/lib/services/request-preparation-cache.ts", "owner": "assignments" },
+    { "path": "src/lib/services/review-assignment-draft-query.ts", "owner": "assignments" },
+    { "path": "src/lib/services/review-assignment-service.ts", "owner": "assignments" },
+    { "path": "src/lib/services/student-login-service.ts", "owner": "session" },
+    { "path": "src/lib/services/student-reading-context-service.ts", "owner": "students" },
+    { "path": "src/lib/services/vocab-assignment-queue-command.ts", "owner": "assignment-queue" },
+    { "path": "src/lib/services/vocab-assignment-queue-plan.ts", "owner": "assignment-queue" },
+    { "path": "src/lib/services/vocab-assignment-queue-query.ts", "owner": "assignment-queue" },
+    { "path": "src/lib/services/vocab-assignment-queue-support.ts", "owner": "assignment-queue" },
+    { "path": "src/lib/services/vocab-time-template-service.ts", "owner": "assignments" },
+    { "path": "src/lib/services/wrong-word-command.ts", "owner": "students" },
+    { "path": "src/lib/services/wrong-word-query.ts", "owner": "students" },
+    { "path": "src/lib/services/wrong-word-worksheet-service.ts", "owner": "students" }
+  ],
+  "quizCoreOwners": [
+    { "path": "src/lib/quiz/choice-policy.ts", "owner": "shared-quiz-domain" },
+    { "path": "src/lib/quiz/eligible-vocabulary.ts", "owner": "shared-quiz-domain" },
+    { "path": "src/lib/quiz/mixed-question-planner.ts", "owner": "shared-quiz-domain" },
+    { "path": "src/lib/quiz/prior-wrong.ts", "owner": "shared-quiz-domain" },
+    { "path": "src/lib/quiz/pronunciation-snapshot.ts", "owner": "shared-quiz-domain" },
+    { "path": "src/lib/quiz/question-generator.ts", "owner": "shared-quiz-domain" },
+    { "path": "src/lib/quiz/question-provenance.ts", "owner": "shared-quiz-domain" },
+    { "path": "src/lib/quiz/question-types.ts", "owner": "shared-quiz-domain" },
+    { "path": "src/lib/quiz/quiz-scoring.ts", "owner": "shared-quiz-domain" },
+    { "path": "src/lib/quiz/random.ts", "owner": "shared-quiz-domain" },
+    { "path": "src/lib/quiz/result-presentation.ts", "owner": "shared-quiz-domain" },
+    { "path": "src/lib/quiz/word-identity.ts", "owner": "shared-quiz-domain" }
+  ],
+  "assignmentCoreOwners": [
+    { "path": "src/lib/assignment/question-planner.ts", "owner": "assignments" }
+  ],
+  "adminContractOwners": [
+    { "path": "src/lib/admin/assignment-database-error.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/assignment-edit.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/assignment-edit-policy.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/assignment-manager-data.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/assignment-replacement-fingerprint.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/assignment-replacement-request.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/assignment-request-common.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/assignment-settings.ts", "owner": "shared-contract" },
+    { "path": "src/lib/admin/assignment-submission.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/assignment-summary.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/bulk-assignment-conflicts.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/bulk-assignment-range.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/bulk-assignment-request.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/bulk-assignment-schedule.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/dataset-catalog.ts", "owner": "shared-contract" },
+    { "path": "src/lib/admin/dataset-display.ts", "owner": "shared-contract" },
+    { "path": "src/lib/admin/dataset-summary.ts", "owner": "shared-contract" },
+    { "path": "src/lib/admin/direct-review-assignment-request.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/direct-review-candidate.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/history.ts", "owner": "history" },
+    { "path": "src/lib/admin/history-route.ts", "owner": "history" },
+    { "path": "src/lib/admin/learning-sources.ts", "owner": "students" },
+    { "path": "src/lib/admin/mixed-assignment.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/mixed-assignment-request.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/new-assignment-range.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/progress.ts", "owner": "shared-contract" },
+    { "path": "src/lib/admin/reading-curriculum.ts", "owner": "students" },
+    { "path": "src/lib/admin/regular-assignment-request.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/review-assignment.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/review-candidate.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/review-queue-summary.ts", "owner": "shared-contract" },
+    { "path": "src/lib/admin/student-summary.ts", "owner": "students" },
+    { "path": "src/lib/admin/student-vocab-book-history.ts", "owner": "students" },
+    { "path": "src/lib/admin/unit-range.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/vocab-assignment-queue.ts", "owner": "assignment-queue" },
+    { "path": "src/lib/admin/vocab-time-template.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/wrong-history-summary.ts", "owner": "shared-contract" },
+    { "path": "src/lib/admin/wrong-word-history.ts", "owner": "students" }
+  ],
+  "componentOwners": [
+    { "path": "src/components/admin-login-form.tsx", "owner": "auth" },
+    { "path": "src/components/admin-logout-button.tsx", "owner": "auth" },
+    { "path": "src/components/admin-navigation.tsx", "owner": "app-shell" },
+    { "path": "src/components/admin-route-screen-reader-title.tsx", "owner": "app-shell" },
+    { "path": "src/components/app-toaster.tsx", "owner": "app-shell" },
+    { "path": "src/components/assignment-editor-ui.module.css", "owner": "assignments" },
+    { "path": "src/components/assignment-editor-ui.tsx", "owner": "assignments" },
+    { "path": "src/components/login-form.module.css", "owner": "auth" },
+    { "path": "src/components/notification-bootstrap.tsx", "owner": "notifications" },
+    { "path": "src/components/pronunciation-text.tsx", "owner": "shared-ui" },
+    { "path": "src/components/review-dataset-panel.module.css", "owner": "assignments" },
+    { "path": "src/components/review-dataset-panel.tsx", "owner": "assignments" },
+    { "path": "src/components/route-screen-reader-title.tsx", "owner": "app-shell" },
+    { "path": "src/components/session-action.module.css", "owner": "auth" },
+    { "path": "src/components/shell/admin-navigation.module.css", "owner": "app-shell" },
+    { "path": "src/components/shell/app-shell.module.css", "owner": "app-shell" },
+    { "path": "src/components/student-login-form.tsx", "owner": "auth" },
+    { "path": "src/components/student-logout-button.tsx", "owner": "auth" },
+    { "path": "src/components/student-shell.tsx", "owner": "app-shell" },
+    { "path": "src/components/theme-toggle.module.css", "owner": "app-shell" },
+    { "path": "src/components/theme-toggle.tsx", "owner": "app-shell" }
+  ],
+  "designSystemOwners": [
+    { "path": "src/design-system/patterns/action-reason/action-reason.module.css", "owner": "shared-ui" },
+    { "path": "src/design-system/patterns/action-reason/action-reason.tsx", "owner": "shared-ui" },
+    { "path": "src/design-system/patterns/activity-row/activity-row.module.css", "owner": "shared-ui" },
+    { "path": "src/design-system/patterns/activity-row/activity-row.tsx", "owner": "shared-ui" },
+    { "path": "src/design-system/patterns/activity-timeline/activity-timeline.module.css", "owner": "shared-ui" },
+    { "path": "src/design-system/patterns/activity-timeline/activity-timeline.tsx", "owner": "shared-ui" },
+    { "path": "src/design-system/patterns/auth/auth-layout.module.css", "owner": "shared-ui" },
+    { "path": "src/design-system/patterns/collapsible-status-section/collapsible-status-section.module.css", "owner": "shared-ui" },
+    { "path": "src/design-system/patterns/collapsible-status-section/collapsible-status-section.tsx", "owner": "shared-ui" },
+    { "path": "src/design-system/patterns/conditional-reveal/conditional-reveal.module.css", "owner": "shared-ui" },
+    { "path": "src/design-system/patterns/conditional-reveal/conditional-reveal.tsx", "owner": "shared-ui" },
+    { "path": "src/design-system/patterns/detail-header/detail-header.module.css", "owner": "shared-ui" },
+    { "path": "src/design-system/patterns/detail-header/detail-header.tsx", "owner": "shared-ui" },
+    { "path": "src/design-system/patterns/feedback/feedback.module.css", "owner": "shared-ui" },
+    { "path": "src/design-system/patterns/feedback/feedback.tsx", "owner": "shared-ui" },
+    { "path": "src/design-system/patterns/score-summary/score-summary.module.css", "owner": "shared-ui" },
+    { "path": "src/design-system/patterns/score-summary/score-summary.tsx", "owner": "shared-ui" },
+    { "path": "src/design-system/primitives/badge/badge.module.css", "owner": "shared-ui" },
+    { "path": "src/design-system/primitives/badge/badge.tsx", "owner": "shared-ui" },
+    { "path": "src/design-system/primitives/badge/tone.ts", "owner": "shared-ui" },
+    { "path": "src/design-system/primitives/button/button.module.css", "owner": "shared-ui" },
+    { "path": "src/design-system/primitives/button/button.tsx", "owner": "shared-ui" },
+    { "path": "src/design-system/primitives/dialog/dialog.module.css", "owner": "shared-ui" },
+    { "path": "src/design-system/primitives/dialog/dialog.tsx", "owner": "shared-ui" },
+    { "path": "src/design-system/primitives/form/field.module.css", "owner": "shared-ui" },
+    { "path": "src/design-system/primitives/form/field.tsx", "owner": "shared-ui" },
+    { "path": "src/design-system/primitives/form/segmented-control.module.css", "owner": "shared-ui" },
+    { "path": "src/design-system/primitives/form/segmented-control.tsx", "owner": "shared-ui" },
+    { "path": "src/design-system/primitives/tabs/tabs.module.css", "owner": "shared-ui" },
+    { "path": "src/design-system/primitives/tabs/tabs.tsx", "owner": "shared-ui" },
+    { "path": "src/design-system/primitives/tooltip/help-tip.module.css", "owner": "shared-ui" },
+    { "path": "src/design-system/primitives/tooltip/help-tip.tsx", "owner": "shared-ui" }
+  ],
+  "architectureGuardOwners": [
+    { "path": "scripts/check-feature-map.mjs", "owner": "architecture-meta" },
+    { "path": "scripts/feature-map/change-impact.mjs", "owner": "architecture-meta" },
+    { "path": "scripts/feature-map/common.mjs", "owner": "architecture-meta" },
+    { "path": "scripts/feature-map/flow-verification.mjs", "owner": "architecture-meta" },
+    { "path": "scripts/feature-map/import-graph.mjs", "owner": "architecture-meta" },
+    { "path": "scripts/feature-map/owner-output.mjs", "owner": "architecture-meta" },
+    { "path": "scripts/feature-map/ownership-catalog.mjs", "owner": "architecture-meta" },
+    { "path": "scripts/feature-map/runtime-flow.mjs", "owner": "architecture-meta" },
+    { "path": "scripts/verify-ui-architecture.mjs", "owner": "architecture-meta" },
+    { "path": "src/app/application-layer-boundaries.test.ts", "owner": "architecture-meta" },
+    { "path": "src/app/server-architecture-ratchet.test.ts", "owner": "architecture-meta" },
+    { "path": "src/app/ui-architecture-ratchet.test.ts", "owner": "architecture-meta" },
+    { "path": "src/design-system/architecture-boundary.test.ts", "owner": "architecture-meta" },
+    { "path": "src/features/assignments/architecture-boundary.test.ts", "owner": "architecture-meta" },
+    { "path": "src/test-support/module-boundary.test.ts", "owner": "architecture-meta" },
+    { "path": "src/test-support/module-boundary.ts", "owner": "architecture-meta" },
+    { "path": "src/test-support/server-architecture.ts", "owner": "architecture-meta" }
+  ],
+  "libRootOwners": [
+    { "path": "src/lib/constants.ts", "owner": "shared-contract" },
+    { "path": "src/lib/deadline.test.ts", "owner": "shared-contract" },
+    { "path": "src/lib/deadline.ts", "owner": "shared-contract" },
+    { "path": "src/lib/env.test.ts", "owner": "shared-infra" },
+    { "path": "src/lib/env.ts", "owner": "shared-infra" },
+    { "path": "src/lib/format.ts", "owner": "shared-contract" },
+    { "path": "src/lib/http.test.ts", "owner": "shared-infra" },
+    { "path": "src/lib/http.ts", "owner": "shared-infra" },
+    { "path": "src/lib/kakao-share.ts", "owner": "app-shell" },
+    { "path": "src/lib/validation.test.ts", "owner": "shared-contract" },
+    { "path": "src/lib/validation.ts", "owner": "shared-contract" }
+  ],
+  "libInfrastructureRoots": [
+    {
+      "path": "src/lib/auth",
+      "owner": "auth",
+      "fileCount": 11,
+      "pathSetSha256": "03f09c900f099c5027e0fc64106ab0da97f0a43c87f7c9009cdd71f5e78aa28d"
+    },
+    {
+      "path": "src/lib/database",
+      "owner": "database-contract",
+      "fileCount": 76,
+      "pathSetSha256": "6d95002b07499eb9a34766545c9641e2f39a3bc45ee06bebf089e9da073b4dc2"
+    },
+    {
+      "path": "src/lib/deploy",
+      "owner": "architecture-meta",
+      "fileCount": 1,
+      "pathSetSha256": "dc2a718d7aa3b82dcfe7cbb34bebb9f1652012569722695eba91178f828efedf"
+    },
+    {
+      "path": "src/lib/observability",
+      "owner": "shared-infra",
+      "fileCount": 4,
+      "pathSetSha256": "a49155755451823887c266a6c35d74728b94ec2dde3aae8c4d44587394dcae87"
+    },
+    {
+      "path": "src/lib/supabase",
+      "owner": "shared-infra",
+      "fileCount": 4,
+      "pathSetSha256": "cb5a1aa8844d0679f66ab9427ebd45af8b70155cd243da9602ddaa46e5142d10"
+    },
+    {
+      "path": "src/lib/ui",
+      "owner": "shared-ui",
+      "fileCount": 10,
+      "pathSetSha256": "0bc23edce67edb51121dcfa507ca4c72b5da9807fa17e1d9737b69eb1937e887"
+    },
+    {
+      "path": "src/lib/vocab",
+      "owner": "shared-contract",
+      "fileCount": 22,
+      "pathSetSha256": "1748726360d82ff536afbbef0898314e4bd1626060851802f832846ed891db50"
+    }
+  ],
+  "serverOwners": [],
+  "featureServerOwners": [
+    { "path": "src/features/students/server/load-student-management-data.ts", "owner": "students" }
+  ],
+  "migrationOwnershipFrom": "20260828193000",
+  "protectedMigrationCount": 136,
+  "protectedMigrationSetSha256": "b4ea57697824cb8fece77250a50950e58bb4e2516235e485106f126a8b00c13f",
+  "migrationOwners": [
+    {
+      "path": "supabase/migrations/20260828193000_preserve_assignment_edit_metadata.sql",
+      "owner": "assignments",
+      "flow": "assignment-edit"
+    }
+  ],
+  "features": [
+    {
+      "id": "assignment-queue",
+      "name": "이어지는 배정",
+      "ownerPath": "src/features/assignment-queue",
+      "localGuide": "src/features/assignment-queue/AGENTS.md",
+      "entrypoints": ["src/app/api/admin/vocab-assignment-queues/[seriesId]/route.ts"]
+    },
+    {
+      "id": "assignments",
+      "name": "단어 시험 배정과 수정",
+      "ownerPath": "src/features/assignments",
+      "localGuide": "src/features/assignments/AGENTS.md",
+      "entrypoints": [
+        "src/app/admin/(protected)/assignments/page.tsx",
+        "src/app/api/admin/bulk-assignments/route.ts",
+        "src/app/api/admin/exact-review-assignments/route.ts",
+        "src/app/api/admin/assignments/[assignmentId]/students/[studentId]/route.ts"
+      ]
+    },
+    {
+      "id": "history",
+      "name": "관리자 개요와 내역",
+      "ownerPath": "src/features/history",
+      "localGuide": "src/features/history/AGENTS.md",
+      "entrypoints": [
+        "src/app/admin/(protected)/page.tsx",
+        "src/app/admin/(protected)/results/page.tsx",
+        "src/app/admin/(protected)/results/[id]/page.tsx"
+      ]
+    },
+    {
+      "id": "learning-points",
+      "name": "포인트 표시",
+      "ownerPath": "src/features/learning-points",
+      "localGuide": "src/features/learning-points/AGENTS.md",
+      "entrypoints": ["src/app/student/(protected)/page.tsx"]
+    },
+    {
+      "id": "notifications",
+      "name": "알림 요청 계약",
+      "ownerPath": "src/features/notifications",
+      "localGuide": "src/features/notifications/AGENTS.md",
+      "entrypoints": [
+        "src/app/api/admin/notifications/route.ts",
+        "src/app/api/student/notifications/route.ts"
+      ]
+    },
+    {
+      "id": "quiz-player",
+      "name": "학생 시험 진행",
+      "ownerPath": "src/features/quiz-player",
+      "localGuide": "src/features/quiz-player/AGENTS.md",
+      "entrypoints": [
+        "src/app/student/(protected)/attempt/[id]/page.tsx",
+        "src/app/api/student/attempts/[id]/answers/route.ts"
+      ]
+    },
+    {
+      "id": "results",
+      "name": "학생 시험 결과",
+      "ownerPath": "src/features/results",
+      "localGuide": "src/features/results/AGENTS.md",
+      "entrypoints": ["src/app/student/(protected)/result/[id]/page.tsx"]
+    },
+    {
+      "id": "session",
+      "name": "학생 세션 갱신",
+      "ownerPath": "src/features/session",
+      "localGuide": "src/features/session/AGENTS.md",
+      "entrypoints": ["src/app/api/student/session/route.ts"]
+    },
+    {
+      "id": "student-dashboard",
+      "name": "학생 메인",
+      "ownerPath": "src/features/student-dashboard",
+      "localGuide": "src/features/student-dashboard/AGENTS.md",
+      "entrypoints": ["src/app/student/(protected)/page.tsx"]
+    },
+    {
+      "id": "students",
+      "name": "관리자 학생 관리",
+      "ownerPath": "src/features/students",
+      "localGuide": "src/features/students/AGENTS.md",
+      "entrypoints": [
+        "src/app/admin/(protected)/students/page.tsx",
+        "src/app/api/admin/students/[id]/route.ts"
+      ]
+    }
+  ],
+  "currentCrossFeatureImports": [
+    {
+      "from": "src/features/assignments/ui/assignment-student-row.tsx",
+      "to": "src/features/assignment-queue/ui/assignment-queue-tags.tsx",
+      "reason": "학생 행에 이어지는 배정 상태 표시",
+      "removeIn": "R7 공개 UI 진입점"
+    },
+    {
+      "from": "src/features/assignments/ui/assignment-student-row.tsx",
+      "to": "src/features/history/ui/learning-management-row.module.css",
+      "reason": "기존 행 스타일 공유 부채",
+      "removeIn": "R7 공용 패턴 분리"
+    },
+    {
+      "from": "src/features/history/ui/admin-history-detail.tsx",
+      "to": "src/features/results/ui/attempt-question-card.tsx",
+      "reason": "관리자 상세의 문항 표시",
+      "removeIn": "R7 공개 UI 진입점"
+    },
+    {
+      "from": "src/features/history/ui/admin-history-detail.tsx",
+      "to": "src/features/learning-points/ui/point-summary.tsx",
+      "reason": "관리자 상세의 포인트 표시",
+      "removeIn": "R7 공개 UI 진입점"
+    },
+    {
+      "from": "src/features/history/ui/editable-history-detail-dialog.tsx",
+      "to": "src/features/assignments/ui/single-assignment-editor.tsx",
+      "reason": "내역 대화상자에서 배정 수정 기능 사용",
+      "removeIn": "R7 공개 UI 진입점"
+    },
+    {
+      "from": "src/features/history/ui/editable-history-detail-page.tsx",
+      "to": "src/features/assignments/ui/single-assignment-editor.tsx",
+      "reason": "내역 페이지에서 배정 수정 기능 사용",
+      "removeIn": "R7 공개 UI 진입점"
+    },
+    {
+      "from": "src/features/history/ui/use-editable-history-assignment.ts",
+      "to": "src/features/assignments/ui/single-assignment-editor.types.ts",
+      "reason": "내역 수정 결과 계약 공유",
+      "removeIn": "R5 공개 계약 진입점"
+    },
+    {
+      "from": "src/features/results/ui/result-pronunciation.tsx",
+      "to": "src/features/quiz-player/ui/audio-button.tsx",
+      "reason": "결과 화면의 공용 발음 재생",
+      "removeIn": "R7 design-system 패턴 분리"
+    },
+    {
+      "from": "src/features/results/ui/student-result-view.tsx",
+      "to": "src/features/learning-points/ui/point-summary.tsx",
+      "reason": "학생 결과의 포인트 표시",
+      "removeIn": "R7 공개 UI 진입점"
+    },
+    {
+      "from": "src/features/student-dashboard/ui/student-assignment-card.tsx",
+      "to": "src/features/history/ui/activity-status-timeline.tsx",
+      "reason": "학생 메인의 시험 상태 표시",
+      "removeIn": "R7 공용 패턴 분리"
+    },
+    {
+      "from": "src/features/student-dashboard/ui/student-assignment-card.tsx",
+      "to": "src/features/history/ui/attempt-score-summary.tsx",
+      "reason": "학생 메인의 점수 표시",
+      "removeIn": "R7 공용 패턴 분리"
+    },
+    {
+      "from": "src/features/student-dashboard/ui/student-dashboard.tsx",
+      "to": "src/features/learning-points/ui/point-summary.tsx",
+      "reason": "학생 메인의 포인트 표시",
+      "removeIn": "R7 공개 UI 진입점"
+    },
+    {
+      "from": "src/features/students/ui/panels/student-history-panel.tsx",
+      "to": "src/features/assignment-queue/ui/student-assignment-queue-history.tsx",
+      "reason": "학생 상세의 이어지는 배정 내역",
+      "removeIn": "R7 공개 UI 진입점"
+    },
+    {
+      "from": "src/features/students/ui/panels/student-history-panel.tsx",
+      "to": "src/features/history/ui/student-learning-activity-list.tsx",
+      "reason": "학생 상세의 학습 내역",
+      "removeIn": "R7 공개 UI 진입점"
+    },
+    {
+      "from": "src/features/students/ui/panels/student-info-panel.tsx",
+      "to": "src/features/learning-points/ui/point-summary.tsx",
+      "reason": "학생 상세의 포인트 표시",
+      "removeIn": "R7 공개 UI 진입점"
+    },
+    {
+      "from": "src/features/assignments/controller/use-assignment-workspace.ts",
+      "to": "src/features/history/domain/learning-activity.ts",
+      "reason": "학생 행의 최근 학습 상태 계약",
+      "removeIn": "R5 공개 계약 진입점"
+    },
+    {
+      "from": "src/features/assignments/ui/assignment-student-row.tsx",
+      "to": "src/features/history/domain/learning-activity.ts",
+      "reason": "학생 행의 최근 학습 상태 표시",
+      "removeIn": "R5 공개 계약 진입점"
+    },
+    {
+      "from": "src/features/history/model.ts",
+      "to": "src/features/learning-points/model.ts",
+      "reason": "내역 화면 자료에 포인트 요약 포함",
+      "removeIn": "R5 공개 계약 진입점"
+    },
+    {
+      "from": "src/features/history/model.ts",
+      "to": "src/features/results/model.ts",
+      "reason": "관리자 내역 상세에 결과 자료 포함",
+      "removeIn": "R5 공개 계약 진입점"
+    },
+    {
+      "from": "src/features/history/ui/use-editable-history-assignment.ts",
+      "to": "src/features/assignments/controller/use-assignment-controller.ts",
+      "reason": "내역에서 배정 수정 controller 사용",
+      "removeIn": "R5 공개 Client 진입점"
+    },
+    {
+      "from": "src/features/history/ui/use-editable-history-assignment.ts",
+      "to": "src/features/assignments/presentation/assignment-submit-blocker.ts",
+      "reason": "내역 수정의 저장 차단 문구 공유",
+      "removeIn": "R5 공개 계약 진입점"
+    },
+    {
+      "from": "src/features/results/model.ts",
+      "to": "src/features/learning-points/model.ts",
+      "reason": "학생 결과 자료에 포인트 요약 포함",
+      "removeIn": "R5 공개 계약 진입점"
+    },
+    {
+      "from": "src/features/results/ui/result-audio-provider.tsx",
+      "to": "src/features/quiz-player/controller/quiz-audio-player.ts",
+      "reason": "결과 화면의 단일 음원 재생 제어 공유",
+      "removeIn": "R7 공용 음원 controller 분리"
+    },
+    {
+      "from": "src/features/student-dashboard/domain/student-assignment-sections.ts",
+      "to": "src/features/history/domain/learning-activity.ts",
+      "reason": "학생 메인의 학습 상태 분류",
+      "removeIn": "R5 공개 계약 진입점"
+    },
+    {
+      "from": "src/features/student-dashboard/domain/student-assignment-sections.ts",
+      "to": "src/features/history/presentation/activity-presentation.ts",
+      "reason": "학생 메인의 상태 표시 자료 재사용",
+      "removeIn": "R5 공개 표시 계약 진입점"
+    },
+    {
+      "from": "src/features/student-dashboard/ui/student-assignment-card.tsx",
+      "to": "src/features/history/presentation/attempt-presentation.ts",
+      "reason": "학생 메인의 응시 결과 표시 자료 재사용",
+      "removeIn": "R5 공개 표시 계약 진입점"
+    },
+    {
+      "from": "src/features/students/domain/student-directory-summary.ts",
+      "to": "src/features/history/domain/learning-activity.ts",
+      "reason": "학생 목록의 학습 횟수 요약",
+      "removeIn": "R5 공개 계약 진입점"
+    },
+    {
+      "from": "src/features/students/domain/student-directory.ts",
+      "to": "src/features/history/domain/learning-activity.ts",
+      "reason": "학생 목록의 최근 학습 자료",
+      "removeIn": "R5 공개 계약 진입점"
+    },
+    {
+      "from": "src/features/students/model.ts",
+      "to": "src/features/learning-points/model.ts",
+      "reason": "학생 상세 자료에 포인트 요약 포함",
+      "removeIn": "R5 공개 계약 진입점"
+    },
+    {
+      "from": "src/features/students/ui/student-directory.tsx",
+      "to": "src/features/history/domain/learning-activity.ts",
+      "reason": "학생 목록의 학습 상태 표시",
+      "removeIn": "R5 공개 계약 진입점"
+    },
+    {
+      "from": "src/features/students/ui/student-directory.tsx",
+      "to": "src/features/learning-points/presentation/point-presentation.ts",
+      "reason": "학생 목록의 포인트 문구 표시",
+      "removeIn": "R5 공개 표시 계약 진입점"
+    }
+  ],
+  "currentLibToFeatureImports": [
+    {
+      "from": "src/lib/admin/bulk-assignment-request.ts",
+      "to": "src/features/assignments/domain/vocab-unit-allocation.ts",
+      "reason": "현재 서버 요청 계약이 배정 단위 계산 자료형을 공유함",
+      "removeIn": "R3 assignments/contracts 이동"
+    },
+    {
+      "from": "src/lib/admin/student-vocab-book-history.ts",
+      "to": "src/features/history/domain/learning-activity.ts",
+      "reason": "현재 학생 단어장 이력이 학습 활동 분류를 공유함",
+      "removeIn": "R5 공개 계약 진입점"
+    },
+    {
+      "from": "src/lib/services/admin-attempt-read-service.ts",
+      "to": "src/features/history/model.ts",
+      "reason": "현재 응시 조회가 내역 상세 자료형을 반환함",
+      "removeIn": "R4 history/server 이동"
+    },
+    {
+      "from": "src/lib/services/admin-history-read-service.ts",
+      "to": "src/features/history/domain/learning-activity.ts",
+      "reason": "현재 내역 조회가 학습 활동 분류를 사용함",
+      "removeIn": "R4 history/server 이동"
+    },
+    {
+      "from": "src/lib/services/admin-history-read-service.ts",
+      "to": "src/features/history/model.ts",
+      "reason": "현재 내역 조회가 화면 상세 자료형을 반환함",
+      "removeIn": "R4 history/server 이동"
+    },
+    {
+      "from": "src/lib/services/bulk-assignment-service.ts",
+      "to": "src/features/assignments/domain/bulk-plan-signature.ts",
+      "reason": "서버가 Client와 같은 일괄 계획 서명을 재검증함",
+      "removeIn": "R3 assignments/server 이동"
+    },
+    {
+      "from": "src/lib/services/bulk-assignment-service.ts",
+      "to": "src/features/assignments/domain/vocab-assignment-contract.ts",
+      "reason": "서버가 같은 배정 계약으로 요청을 검증함",
+      "removeIn": "R3 assignments/server 이동"
+    },
+    {
+      "from": "src/lib/services/bulk-assignment-service.ts",
+      "to": "src/features/assignments/domain/vocab-question-allocation.ts",
+      "reason": "서버가 같은 단어 수 배분 계산을 사용함",
+      "removeIn": "R3 assignments/server 이동"
+    },
+    {
+      "from": "src/lib/services/bulk-assignment-service.ts",
+      "to": "src/features/assignments/domain/vocab-schedule.ts",
+      "reason": "서버가 같은 일정 반복 계산을 사용함",
+      "removeIn": "R3 assignments/server 이동"
+    },
+    {
+      "from": "src/lib/services/bulk-assignment-service.ts",
+      "to": "src/features/assignments/domain/vocab-series-target-planner.ts",
+      "reason": "서버가 같은 회차별 범위 계획을 사용함",
+      "removeIn": "R3 assignments/server 이동"
+    },
+    {
+      "from": "src/lib/services/bulk-assignment-service.ts",
+      "to": "src/features/assignments/domain/vocab-unit-allocation.ts",
+      "reason": "서버가 같은 요일별 단위 배분 계산을 사용함",
+      "removeIn": "R3 assignments/server 이동"
+    },
+    {
+      "from": "src/lib/services/learning-point-read-service.ts",
+      "to": "src/features/learning-points/model.ts",
+      "reason": "현재 포인트 조회가 기능 화면 자료형을 반환함",
+      "removeIn": "R6 learning-points/server 이동"
+    },
+    {
+      "from": "src/lib/services/quiz/attempt-result-query.ts",
+      "to": "src/features/results/model.ts",
+      "reason": "현재 결과 조회가 결과 화면 자료형을 반환함",
+      "removeIn": "R6 results/server 이동"
+    },
+    {
+      "from": "src/lib/services/quiz/result-question-mapper.ts",
+      "to": "src/features/results/model.ts",
+      "reason": "현재 문항 변환기가 결과 화면 자료형을 만듦",
+      "removeIn": "R6 results/server 이동"
+    },
+    {
+      "from": "src/lib/services/quiz/student-assignment-query.ts",
+      "to": "src/features/student-dashboard/model.ts",
+      "reason": "현재 학생 배정 조회가 학생 첫 화면 자료형을 반환함",
+      "removeIn": "R5 student-dashboard/server 이동"
+    }
+  ],
+  "currentFeatureToLibBridges": [
+    {
+      "from": "src/features/assignments/api/request-adapters.ts",
+      "to": "src/lib/admin/bulk-assignment-request.ts",
+      "reason": "현재 Client 요청 변환기가 예전 서버 요청 계약을 직렬화함",
+      "removeIn": "R3 assignments/contracts 이동"
+    },
+    {
+      "from": "src/features/students/model.ts",
+      "to": "src/lib/admin/student-vocab-book-history.ts",
+      "reason": "학생 화면 자료형이 현재 관리자 단어장 이력 계약을 포함함",
+      "removeIn": "R5 students/contracts 이동"
+    },
+    {
+      "from": "src/features/students/server/load-student-management-data.ts",
+      "to": "src/lib/admin/student-vocab-book-history.ts",
+      "reason": "학생 관리 서버 조합이 현재 단어장 이력 계약을 반환함",
+      "removeIn": "R5 students/server 이동"
+    },
+    {
+      "from": "src/features/students/server/load-student-management-data.ts",
+      "to": "src/lib/services/admin-history-read-service.ts",
+      "reason": "학생 관리 서버 조합이 최근 학습 이력을 함께 읽음",
+      "removeIn": "R5 students/server queries 분리"
+    },
+    {
+      "from": "src/features/students/server/load-student-management-data.ts",
+      "to": "src/lib/services/learning-point-read-service.ts",
+      "reason": "학생 관리 서버 조합이 포인트 요약을 함께 읽음",
+      "removeIn": "R5 공개 포인트 query 진입점"
+    },
+    {
+      "from": "src/features/students/ui/panels/student-vocab-book-history-list.tsx",
+      "to": "src/lib/admin/student-vocab-book-history.ts",
+      "reason": "현재 학생 단어장 목록이 예전 관리자 계약 자료형을 표시함",
+      "removeIn": "R5 students/public-contracts 이동"
+    }
+  ],
+  "currentFeatureViaLibToFeatureImports": [
+    {
+      "from": "src/features/students/model.ts",
+      "to": "src/features/history/domain/learning-activity.ts",
+      "via": ["src/lib/admin/student-vocab-book-history.ts"],
+      "reason": "학생 화면 계약이 이전 관리자 단어장 이력 계약을 거쳐 내역 기능 분류에 간접 의존함",
+      "removeIn": "R5 students/public-contracts 이동"
+    },
+    {
+      "from": "src/features/students/server/load-student-management-data.ts",
+      "to": "src/features/history/domain/learning-activity.ts",
+      "via": ["src/lib/admin/student-vocab-book-history.ts"],
+      "reason": "학생 관리 서버 조합이 이전 관리자 단어장 이력 계약을 거쳐 내역 기능 분류에 간접 의존함",
+      "removeIn": "R5 students/server queries 분리"
+    },
+    {
+      "from": "src/features/students/server/load-student-management-data.ts",
+      "to": "src/features/history/model.ts",
+      "via": ["src/lib/services/admin-history-read-service.ts"],
+      "reason": "학생 관리 서버 조합이 공용 이력 조회를 거쳐 내역 화면 계약을 반환함",
+      "removeIn": "R5 students/server queries 분리"
+    },
+    {
+      "from": "src/features/students/server/load-student-management-data.ts",
+      "to": "src/features/learning-points/model.ts",
+      "via": ["src/lib/services/learning-point-read-service.ts"],
+      "reason": "학생 관리 서버 조합이 공용 포인트 조회를 거쳐 포인트 화면 계약을 반환함",
+      "removeIn": "R5 공개 포인트 query 진입점"
+    },
+    {
+      "from": "src/features/students/server/load-student-management-data.ts",
+      "to": "src/features/results/model.ts",
+      "via": [
+        "src/lib/services/admin-history-read-service.ts",
+        "src/lib/services/admin-attempt-read-service.ts",
+        "src/lib/services/quiz/attempt-result-query.ts"
+      ],
+      "reason": "학생 관리의 최근 이력 상세 조회가 공용 조회 연쇄를 거쳐 시험 결과 화면 계약에 간접 의존함",
+      "removeIn": "R5 students/server queries와 R6 results/server 분리"
+    },
+    {
+      "from": "src/features/students/ui/panels/student-vocab-book-history-list.tsx",
+      "to": "src/features/history/domain/learning-activity.ts",
+      "via": ["src/lib/admin/student-vocab-book-history.ts"],
+      "reason": "학생 단어장 목록이 이전 관리자 계약을 거쳐 내역 기능 분류에 간접 의존함",
+      "removeIn": "R5 students/public-contracts 이동"
+    }
+  ],
+  "crossLayerFlows": [
+    {
+      "id": "assignment-workspace-load",
+      "name": "단어 배정 작업공간 초기 자료 불러오기",
+      "status": "active",
+      "owner": "assignments",
+      "participants": ["assignments", "students", "history", "assignment-queue"],
+      "dataClass": "private",
+      "cachePolicy": "학생·내역·오답·시간 템플릿·배정된 시험은 매 요청에서 다시 읽고 공유 캐시 금지",
+      "streamingPolicy": "관리자 보호 layout과 loading 경계 뒤에서 자료를 병렬 조회한 후 작업공간을 표시",
+      "closedLocalLayers": [],
+      "serverImportExceptions": {
+        "src/lib/services/admin-history-read-service.ts|src/lib/services/admin-attempt-read-service.ts": "작업공간은 목록 묶음만 읽으며 같은 파일의 시험 상세 조회 분기는 실행하지 않는다.",
+        "src/lib/services/admin-history-read-service.ts|src/lib/services/learning-point-read-service.ts": "학습 포인트는 시험 상세 조회에서만 읽고 작업공간 목록에서는 읽지 않는다."
+      },
+      "touchpoints": {
+        "route": ["src/app/admin/(protected)/assignments/page.tsx"],
+        "serverComponent": ["src/app/admin/(protected)/assignments/page.tsx"],
+        "ui": ["src/features/assignments/ui/assignment-workspace.tsx"],
+        "clientState": [],
+        "application": [],
+        "domain": ["src/lib/admin/progress.ts"],
+        "presentation": [],
+        "contract": ["src/lib/admin/assignment-manager-data.ts"],
+        "transport": [],
+        "server": [
+          "src/lib/services/assignment-manager-data.ts",
+          "src/lib/services/admin-history-read-service.ts",
+          "src/lib/services/admin-student-read-service.ts",
+          "src/lib/services/vocab-time-template-service.ts",
+          "src/lib/services/vocab-assignment-queue-query.ts"
+        ],
+        "database": [
+          "supabase/migrations/20260728162905_initial_student_app_mvp.sql",
+          "supabase/migrations/20260820192529_add_class_groups_and_vocab_time_templates.sql",
+          "supabase/migrations/20260822002958_allow_all_vocab_time_template_names.sql",
+          "supabase/migrations/20260822010300_add_vocab_assignment_completion_queue.sql"
+        ],
+        "cacheStreaming": [
+          "src/app/admin/(protected)/assignments/page.tsx",
+          "src/app/admin/(protected)/loading.tsx"
+        ],
+        "tests": [
+          "src/lib/services/progress-history-source-contract.test.ts",
+          "src/lib/services/admin-history-query-contract.test.ts",
+          "src/lib/database/migration-contract.test.ts",
+          "src/lib/database/vocab-assignment-planning-migration-contract.test.ts",
+          "src/lib/database/vocab-assignment-completion-queue-migration-contract.test.ts"
+        ]
+      },
+      "requiredImportEdges": [
+        {
+          "from": "src/app/admin/(protected)/assignments/page.tsx",
+          "to": "src/lib/services/assignment-manager-data.ts",
+          "reason": "배정 페이지가 작업공간의 초기 자료를 서버에서 한 번 준비함"
+        },
+        {
+          "from": "src/app/admin/(protected)/assignments/page.tsx",
+          "to": "src/features/assignments/ui/assignment-workspace.tsx",
+          "reason": "준비된 자료를 하나의 Client 작업공간에 전달함"
+        },
+        {
+          "from": "src/lib/services/assignment-manager-data.ts",
+          "to": "src/lib/services/admin-history-read-service.ts",
+          "reason": "현재 시험과 완료 내역을 함께 준비함"
+        },
+        {
+          "from": "src/lib/services/assignment-manager-data.ts",
+          "to": "src/lib/services/admin-student-read-service.ts",
+          "reason": "학생·단어장·오답 요약·수업 그룹을 함께 준비함"
+        },
+        {
+          "from": "src/lib/services/assignment-manager-data.ts",
+          "to": "src/lib/services/vocab-time-template-service.ts",
+          "reason": "저장된 빠른 시간 템플릿을 준비함"
+        },
+        {
+          "from": "src/lib/services/assignment-manager-data.ts",
+          "to": "src/lib/services/vocab-assignment-queue-query.ts",
+          "reason": "학생별 배정된 시험과 남은 회차를 준비함"
+        }
+      ],
+      "notApplicable": {
+        "clientState": "이 흐름은 Server Component가 Client 작업공간에 전달할 초기 자료만 준비한다.",
+        "application": "서버 로더가 읽기 서비스만 병렬 조합하며 별도 쓰기 수명이 없다.",
+        "presentation": "화면 표시 계산은 소비하는 각 기능 흐름이 소유한다.",
+        "transport": "Server Component 내부 호출이므로 브라우저 전송 계층이 없다."
+      }
+    },
+    {
+      "id": "assignment-workspace-selection",
+      "name": "단어 배정 작업공간 학생 찾기·선택",
+      "status": "active",
+      "owner": "assignments",
+      "participants": ["assignments", "students", "history", "assignment-queue"],
+      "dataClass": "private",
+      "cachePolicy": "서버에서 받은 학생·내역 요약을 현재 화면 안에서만 필터링하며 요청 사이 공유 캐시 금지",
+      "streamingPolicy": "assignment-workspace-load가 인증과 초기 자료 준비를 끝낸 뒤 Client 작업공간을 표시",
+      "dependsOnFlows": ["assignment-workspace-load"],
+      "closedLocalLayers": ["ui", "controller", "domain", "presentation"],
+      "flowImportExceptions": {
+        "src/features/assignments/ui/assignment-workspace.tsx|src/features/assignments/ui/vocab-assignment-planner.tsx": "학생 선택 결과를 넘긴 뒤의 시험 계획·저장은 각 배정 생성 흐름이 소유한다."
+      },
+      "touchpoints": {
+        "route": [],
+        "serverComponent": [],
+        "ui": ["src/features/assignments/ui/assignment-workspace.tsx"],
+        "clientState": ["src/features/assignments/controller/use-assignment-workspace.ts"],
+        "application": [],
+        "domain": ["src/features/history/domain/learning-activity.ts"],
+        "presentation": [
+          "src/features/assignments/presentation/assignment-directory-options.ts",
+          "src/features/assignments/presentation/bulk-student-selection-summary.ts"
+        ],
+        "contract": ["src/lib/admin/assignment-manager-data.ts"],
+        "transport": [],
+        "server": [],
+        "database": [],
+        "cacheStreaming": [],
+        "tests": [
+          "src/features/assignments/controller/use-assignment-workspace.test.tsx",
+          "src/features/assignments/ui/assignment-student-browser.test.tsx",
+          "src/features/assignments/presentation/bulk-student-selection-summary.test.ts"
+        ]
+      },
+      "requiredImportEdges": [
+        {
+          "from": "src/features/assignments/ui/assignment-workspace.tsx",
+          "to": "src/features/assignments/controller/use-assignment-workspace.ts",
+          "reason": "작업공간이 학생 필터·선택 바구니·단일/일괄 배정 시작 상태를 한 controller에서 받음"
+        },
+        {
+          "from": "src/features/assignments/ui/assignment-workspace.tsx",
+          "to": "src/features/assignments/ui/assignment-student-browser.tsx",
+          "reason": "작업공간이 선택 상태를 학생 탐색 화면에 전달함"
+        }
+      ],
+      "notApplicable": {
+        "route": "브라우저 안의 찾기·선택 흐름이며 별도 HTTP 진입점이 없다.",
+        "serverComponent": "인증과 초기 자료 전달은 선행 흐름 assignment-workspace-load가 소유한다.",
+        "application": "학생 필터·선택은 현재 controller 내부의 화면 수명 상태다.",
+        "transport": "시험 계획을 열기 전까지 네트워크 요청이 없다.",
+        "server": "선행 흐름에서 받은 자료만 사용한다.",
+        "database": "이 흐름 자체는 저장하지 않는다.",
+        "cacheStreaming": "선행 흐름이 로딩 경계를 소유하고 이 흐름은 현재 화면의 메모리 상태만 사용한다."
+      }
+    },
+    {
+      "id": "assignment-range-create",
+      "name": "일반 단일·일괄 범위 배정",
+      "status": "active",
+      "owner": "assignments",
+      "participants": ["assignments", "assignment-queue", "students", "history"],
+      "dataClass": "mutation",
+      "cachePolicy": "학생·배정·미리보기는 요청 사이 캐시 금지",
+      "streamingPolicy": "배정 작업공간은 현재 하나의 Client island이며 R5 전에는 분할하지 않음",
+      "dependsOnFlows": ["assignment-workspace-selection"],
+      "closedLocalLayers": ["ui", "controller", "application", "domain", "presentation", "api", "transport"],
+      "flowImportExceptions": {
+        "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/ui/direct-review-assignment-sections.tsx": "같은 모달의 오답 시험 탭은 assignment-direct-review-create가 소유한다.",
+        "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/controller/use-direct-review-assignment-controller.ts": "일반 범위 탭에서는 오답 시험 전용 Preview·저장 controller를 실행하지 않는다."
+      },
+      "serverImportExceptions": {
+        "src/lib/services/admin-history-read-service.ts|src/lib/services/admin-attempt-read-service.ts": "배정 계획은 목록 묶음만 읽으며 같은 파일의 시험 상세 조회 분기는 실행하지 않는다.",
+        "src/lib/services/admin-history-read-service.ts|src/lib/services/learning-point-read-service.ts": "학습 포인트는 시험 상세 조회에서만 읽고 범위 배정 계획에서는 읽지 않는다."
+      },
+      "touchpoints": {
+        "route": [
+          "src/app/api/admin/bulk-assignments/preview/route.ts",
+          "src/app/api/admin/bulk-assignments/route.ts"
+        ],
+        "serverComponent": [],
+        "ui": [
+          "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "src/features/assignments/ui/assignment-section.tsx",
+          "src/features/assignments/ui/assignment-submit-action.tsx",
+          "src/features/assignments/ui/focus-invalid-assignment-field.ts",
+          "src/features/assignments/ui/bulk-exam-fields.tsx",
+          "src/features/assignments/ui/bulk-series-preview.tsx",
+          "src/features/assignments/ui/bulk-preview-session-list.tsx",
+          "src/features/assignments/ui/collision-decision-list.tsx",
+          "src/features/assignments/ui/exam-timing-fields.tsx",
+          "src/features/assignments/ui/vocab-range-picker.tsx",
+          "src/features/assignments/ui/assignment-word-count-field.tsx",
+          "src/features/assignments/ui/vocab-range-fields.tsx",
+          "src/features/assignments/ui/assignment-unit-range-picker.tsx",
+          "src/features/assignments/ui/day-range-rail.tsx",
+          "src/features/assignments/ui/vocab-unit-allocation-fields.tsx",
+          "src/features/assignments/ui/vocab-schedule-fields.tsx",
+          "src/features/assignments/ui/vocab-schedule-detail-fields.tsx"
+        ],
+        "clientState": [
+          "src/features/assignments/controller/use-vocab-assignment-screen.ts",
+          "src/features/assignments/controller/use-vocab-assignment-planner.ts",
+          "src/features/assignments/controller/use-bulk-assignment-controller.ts"
+        ],
+        "application": [],
+        "domain": [
+          "src/features/assignments/domain/vocab-assignment-contract.ts",
+          "src/features/assignments/domain/vocab-schedule.ts",
+          "src/features/assignments/domain/vocab-question-allocation.ts",
+          "src/features/assignments/domain/vocab-unit-allocation.ts",
+          "src/lib/assignment/question-planner.ts"
+        ],
+        "presentation": [
+          "src/features/assignments/presentation/vocab-assignment-field-errors.ts",
+          "src/features/assignments/presentation/bulk-plan-audience.ts",
+          "src/features/assignments/presentation/bulk-student-selection-summary.ts"
+        ],
+        "contract": [
+          "src/features/assignments/api/request-adapters.ts",
+          "src/features/assignments/transport/assignment-transport.ts",
+          "src/lib/admin/bulk-assignment-request.ts"
+        ],
+        "transport": ["src/features/assignments/transport/assignment-transport.ts"],
+        "server": [
+          "src/app/api/admin/bulk-assignments/preview/route.ts",
+          "src/app/api/admin/bulk-assignments/route.ts",
+          "src/lib/services/admin-history-read-service.ts",
+          "src/lib/services/admin-student-read-service.ts",
+          "src/lib/services/active-review-assignment-service.ts",
+          "src/lib/services/dataset-catalog-service.ts",
+          "src/lib/services/eligible-vocabulary-service.ts",
+          "src/lib/services/request-preparation-cache.ts",
+          "src/lib/services/regular-assignment-service.ts",
+          "src/lib/services/mixed-assignment-service.ts",
+          "src/lib/services/bulk-assignment-service.ts",
+          "src/lib/services/bulk-assignment-plan-digest.ts",
+          "src/lib/services/bulk-assignment-persistence.ts",
+          "src/lib/services/vocab-assignment-queue-plan.ts"
+        ],
+        "database": [
+          "supabase/migrations/20260810123000_add_scheduled_bulk_assignment_series.sql",
+          "supabase/migrations/20260822010300_add_vocab_assignment_completion_queue.sql",
+          "supabase/migrations/20260824010000_add_assignment_retry_rules.sql"
+        ],
+        "cacheStreaming": [
+          "src/app/api/admin/bulk-assignments/preview/route.ts",
+          "src/app/api/admin/bulk-assignments/route.ts"
+        ],
+        "tests": [
+          "src/features/assignments/assignment-flow-contract.characterization.test.ts",
+          "src/features/assignments/controller/use-bulk-assignment-controller.test.tsx",
+          "src/app/api/admin/bulk-assignments/route.test.ts",
+          "src/lib/services/bulk-assignment-preparation-cache-contract.test.ts",
+          "src/lib/services/bulk-assignment-preparation-error.test.ts",
+          "src/lib/services/bulk-assignment-plan-digest.test.ts",
+          "src/lib/services/bulk-assignment-persistence.test.ts",
+          "src/lib/services/vocab-assignment-queue-plan.test.ts",
+          "src/lib/assignment/question-planner.test.ts"
+        ]
+      },
+      "requiredImportEdges": [
+        {
+          "from": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "to": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "reason": "일반 단어 시험 탭의 범위·조건·일정 UI"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "to": "src/features/assignments/controller/use-vocab-assignment-screen.ts",
+          "reason": "단일·일괄 화면이 같은 배정 상태를 사용함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-vocab-assignment-screen.ts",
+          "to": "src/features/assignments/controller/use-vocab-assignment-planner.ts",
+          "reason": "화면 상태가 범위·일정 계획을 조합함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-vocab-assignment-planner.ts",
+          "to": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+          "reason": "배정 계획이 공통 Preview·저장 수명을 사용함"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "to": "src/features/assignments/ui/assignment-section.tsx",
+          "reason": "범위 배정 화면의 세 구역 공통 틀"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "to": "src/features/assignments/ui/vocab-range-picker.tsx",
+          "reason": "단어장 범위와 단어 수 선택 UI"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "to": "src/features/assignments/ui/bulk-exam-fields.tsx",
+          "reason": "시험 방식과 통과 조건 UI"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "to": "src/features/assignments/ui/exam-timing-fields.tsx",
+          "reason": "시간 제한 UI"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "to": "src/features/assignments/ui/vocab-schedule-fields.tsx",
+          "reason": "요일·날짜·공개·마감 일정 UI"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "to": "src/features/assignments/ui/bulk-series-preview.tsx",
+          "reason": "저장 전 회차 계획 미리보기"
+        },
+        {
+          "from": "src/lib/services/bulk-assignment-service.ts",
+          "to": "src/lib/services/admin-student-read-service.ts",
+          "reason": "배정 Preview와 저장이 같은 학생·단어장 계획 자료를 읽음"
+        },
+        {
+          "from": "src/lib/services/bulk-assignment-service.ts",
+          "to": "src/lib/services/admin-history-read-service.ts",
+          "reason": "기존 배정과 학습 내역을 같은 계획 검증에 반영함"
+        },
+        {
+          "from": "src/lib/services/bulk-assignment-service.ts",
+          "to": "src/lib/services/regular-assignment-service.ts",
+          "reason": "일반 범위 배정의 실제 문항 계획을 준비함"
+        },
+        {
+          "from": "src/lib/services/bulk-assignment-service.ts",
+          "to": "src/lib/services/bulk-assignment-plan-digest.ts",
+          "reason": "Preview와 저장이 같은 해결된 계획 해시를 사용함"
+        },
+        {
+          "from": "src/lib/services/bulk-assignment-service.ts",
+          "to": "src/lib/services/bulk-assignment-persistence.ts",
+          "reason": "일괄 계획을 멱등 저장함"
+        },
+        {
+          "from": "src/lib/services/bulk-assignment-service.ts",
+          "to": "src/lib/services/vocab-assignment-queue-plan.ts",
+          "reason": "완료 뒤 생성할 남은 범위를 큐 계획으로 보존함"
+        }
+      ],
+      "notApplicable": {
+        "serverComponent": "페이지 초기 자료와 학생 선택은 선행 공통 흐름 assignment-workspace-selection을 통해 이어진다.",
+        "application": "범위 배정은 아직 controller가 요청 생명주기를 직접 소유하며 R2-4에서 client/flows로 이동한다."
+      }
+    },
+    {
+      "id": "weekday-unit-allocation",
+      "name": "요일별 범위·단어 수 배정",
+      "status": "R2-3에서 규칙 보존 확장 예정",
+      "owner": "assignments",
+      "participants": ["assignments", "assignment-queue", "students", "history"],
+      "dataClass": "mutation",
+      "cachePolicy": "계획·학생·series는 요청 사이 캐시 금지",
+      "streamingPolicy": "R2-3은 기존 배정 작업공간 안에서 구현하고 R5에서 화면 경계를 분리",
+      "dependsOnFlows": ["assignment-workspace-selection"],
+      "closedLocalLayers": ["ui", "controller", "application", "domain", "presentation", "api", "transport"],
+      "flowImportExceptions": {
+        "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/ui/direct-review-assignment-sections.tsx": "같은 모달의 오답 시험 탭은 assignment-direct-review-create가 소유한다.",
+        "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/controller/use-direct-review-assignment-controller.ts": "요일별 범위 배정에서는 오답 시험 전용 Preview·저장 controller를 실행하지 않는다."
+      },
+      "serverImportExceptions": {
+        "src/lib/services/admin-history-read-service.ts|src/lib/services/admin-attempt-read-service.ts": "요일별 계획은 목록 묶음만 읽으며 같은 파일의 시험 상세 조회 분기는 실행하지 않는다.",
+        "src/lib/services/admin-history-read-service.ts|src/lib/services/learning-point-read-service.ts": "학습 포인트는 시험 상세 조회에서만 읽고 요일별 계획에서는 읽지 않는다."
+      },
+      "knownGap": "현재 구체적인 unit_ids는 저장하지만 same/by_weekday 원래 규칙과 요일별 단위 수는 명시적으로 보존하지 않는다.",
+      "touchpoints": {
+        "route": [
+          "src/app/api/admin/bulk-assignments/preview/route.ts",
+          "src/app/api/admin/bulk-assignments/route.ts"
+        ],
+        "serverComponent": [],
+        "ui": [
+          "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "src/features/assignments/ui/assignment-submit-action.tsx",
+          "src/features/assignments/ui/focus-invalid-assignment-field.ts",
+          "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "src/features/assignments/ui/assignment-section.tsx",
+          "src/features/assignments/ui/bulk-exam-fields.tsx",
+          "src/features/assignments/ui/exam-timing-fields.tsx",
+          "src/features/assignments/ui/vocab-range-picker.tsx",
+          "src/features/assignments/ui/assignment-word-count-field.tsx",
+          "src/features/assignments/ui/vocab-range-fields.tsx",
+          "src/features/assignments/ui/assignment-unit-range-picker.tsx",
+          "src/features/assignments/ui/day-range-rail.tsx",
+          "src/features/assignments/ui/vocab-unit-allocation-fields.tsx",
+          "src/features/assignments/ui/vocab-schedule-fields.tsx",
+          "src/features/assignments/ui/vocab-schedule-detail-fields.tsx",
+          "src/features/assignments/ui/bulk-series-preview.tsx",
+          "src/features/assignments/ui/bulk-preview-session-list.tsx",
+          "src/features/assignments/ui/collision-decision-list.tsx"
+        ],
+        "clientState": [
+          "src/features/assignments/controller/vocab-assignment-planner-state.ts",
+          "src/features/assignments/controller/use-vocab-assignment-planner.ts",
+          "src/features/assignments/controller/use-vocab-assignment-derived-plan.ts"
+        ],
+        "application": [],
+        "domain": [
+          "src/features/assignments/domain/vocab-assignment-contract.ts",
+          "src/features/assignments/domain/vocab-schedule.ts",
+          "src/features/assignments/domain/vocab-unit-allocation.ts",
+          "src/features/assignments/domain/vocab-series-target-planner.ts",
+          "src/features/assignments/domain/vocab-planner-validation.ts",
+          "src/lib/assignment/question-planner.ts"
+        ],
+        "presentation": [
+          "src/features/assignments/presentation/vocab-assignment-field-errors.ts",
+          "src/features/assignments/presentation/bulk-plan-audience.ts"
+        ],
+        "contract": [
+          "src/features/assignments/api/request-adapters.ts",
+          "src/lib/admin/bulk-assignment-request.ts"
+        ],
+        "transport": ["src/features/assignments/transport/assignment-transport.ts"],
+        "server": [
+          "src/app/api/admin/bulk-assignments/preview/route.ts",
+          "src/app/api/admin/bulk-assignments/route.ts",
+          "src/lib/services/admin-history-read-service.ts",
+          "src/lib/services/admin-student-read-service.ts",
+          "src/lib/services/active-review-assignment-service.ts",
+          "src/lib/services/dataset-catalog-service.ts",
+          "src/lib/services/eligible-vocabulary-service.ts",
+          "src/lib/services/request-preparation-cache.ts",
+          "src/lib/services/regular-assignment-service.ts",
+          "src/lib/services/mixed-assignment-service.ts",
+          "src/lib/services/bulk-assignment-service.ts",
+          "src/lib/services/bulk-assignment-plan-digest.ts",
+          "src/lib/services/bulk-assignment-persistence.ts",
+          "src/lib/services/vocab-assignment-queue-plan.ts"
+        ],
+        "database": [
+          "supabase/migrations/20260810123000_add_scheduled_bulk_assignment_series.sql",
+          "supabase/migrations/20260822010300_add_vocab_assignment_completion_queue.sql",
+          "supabase/migrations/20260824010000_add_assignment_retry_rules.sql"
+        ],
+        "cacheStreaming": [
+          "src/app/admin/(protected)/assignments/page.tsx",
+          "src/app/admin/(protected)/loading.tsx"
+        ],
+        "tests": [
+          "src/features/assignments/domain/vocab-assignment-plan.test.ts",
+          "src/features/assignments/controller/use-vocab-assignment-planner.test.tsx",
+          "src/features/assignments/api/request-adapters.test.ts",
+          "src/app/api/admin/bulk-assignments/route.test.ts",
+          "src/lib/services/bulk-assignment-preparation-cache-contract.test.ts",
+          "src/lib/services/bulk-assignment-preparation-error.test.ts",
+          "src/lib/services/bulk-assignment-plan-digest.test.ts",
+          "src/lib/services/bulk-assignment-persistence.test.ts",
+          "src/lib/services/vocab-assignment-queue-plan.test.ts"
+        ]
+      },
+      "requiredImportEdges": [
+        {
+          "from": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "to": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "reason": "일반 단어 시험 탭에서 요일별 배정 조건을 엶"
+        },
+        {
+          "from": "src/features/assignments/controller/use-vocab-assignment-planner.ts",
+          "to": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+          "reason": "요일별 계획이 실제 Preview·저장 요청 수명으로 이어짐"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-schedule-fields.tsx",
+          "to": "src/features/assignments/ui/vocab-schedule-detail-fields.tsx",
+          "reason": "요일 선택과 회차별 날짜·시간 상세 입력을 함께 구성함"
+        },
+        {
+          "from": "src/lib/services/bulk-assignment-service.ts",
+          "to": "src/lib/services/admin-student-read-service.ts",
+          "reason": "요일별 배정 Preview와 저장이 같은 학생·단어장 계획 자료를 읽음"
+        },
+        {
+          "from": "src/lib/services/bulk-assignment-service.ts",
+          "to": "src/lib/services/admin-history-read-service.ts",
+          "reason": "기존 배정과 학습 내역을 같은 요일별 계획 검증에 반영함"
+        },
+        {
+          "from": "src/lib/services/bulk-assignment-service.ts",
+          "to": "src/lib/services/bulk-assignment-plan-digest.ts",
+          "reason": "요일별 Preview와 저장이 같은 해결된 계획 해시를 사용함"
+        },
+        {
+          "from": "src/lib/services/bulk-assignment-service.ts",
+          "to": "src/lib/services/vocab-assignment-queue-plan.ts",
+          "reason": "요일별 단위 배정의 남은 범위를 후속 회차 계획으로 보존함"
+        }
+      ],
+      "notApplicable": {
+        "serverComponent": "페이지 초기 자료와 학생 선택은 선행 공통 흐름 assignment-workspace-selection을 통해 이어진다.",
+        "application": "R2-3은 현재 controller 흐름에 계약을 연결하고 R2-4에서 client/flows로 이동한다."
+      }
+    },
+    {
+      "id": "assignment-direct-review-create",
+      "name": "독립 오답 시험 배정",
+      "status": "active",
+      "owner": "assignments",
+      "participants": ["assignments", "students"],
+      "dataClass": "mutation",
+      "cachePolicy": "오답 후보·미리보기·배정은 요청 사이 캐시 금지",
+      "streamingPolicy": "오답 후보가 완성된 뒤 한 패널로 표시",
+      "dependsOnFlows": ["assignment-workspace-selection"],
+      "closedLocalLayers": ["ui", "controller", "application", "domain", "presentation", "api", "transport"],
+      "flowImportExceptions": {
+        "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/ui/vocab-range-assignment-sections.tsx": "같은 모달의 일반 범위 시험 탭은 assignment-range-create가 소유한다.",
+        "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/controller/use-vocab-assignment-screen.ts": "오답 시험 탭에서는 일반 범위 시험 전용 화면 controller를 실행하지 않는다."
+      },
+      "touchpoints": {
+        "route": [
+          "src/app/api/admin/students/[id]/direct-review-summaries/route.ts",
+          "src/app/api/admin/exact-review-assignments/preview/route.ts",
+          "src/app/api/admin/exact-review-assignments/route.ts"
+        ],
+        "serverComponent": [],
+        "ui": [
+          "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "src/features/assignments/ui/assignment-submit-action.tsx",
+          "src/features/assignments/ui/focus-invalid-assignment-field.ts",
+          "src/features/assignments/ui/direct-review-assignment-sections.tsx",
+          "src/features/assignments/ui/assignment-deadline-fields.tsx",
+          "src/features/assignments/ui/assignment-date-time-toggle-field.tsx",
+          "src/features/assignments/ui/assignment-section.tsx",
+          "src/features/assignments/ui/bulk-exam-fields.tsx",
+          "src/features/assignments/ui/exam-timing-fields.tsx"
+        ],
+        "clientState": ["src/features/assignments/controller/use-direct-review-assignment-controller.ts"],
+        "application": [
+          "src/features/assignments/application/direct-review-flow-adapter.ts",
+          "src/features/assignments/application/preview-flow.ts",
+          "src/features/assignments/application/submission-flow.ts",
+          "src/features/assignments/application/request-lifecycle.ts"
+        ],
+        "domain": [
+          "src/features/assignments/domain/direct-review-draft.ts",
+          "src/lib/assignment/question-planner.ts"
+        ],
+        "presentation": ["src/features/assignments/presentation/vocab-assignment-field-errors.ts"],
+        "contract": [
+          "src/features/assignments/api/request-adapters.ts",
+          "src/features/assignments/api/response-adapters.ts",
+          "src/lib/admin/direct-review-assignment-request.ts"
+        ],
+        "transport": ["src/features/assignments/transport/assignment-transport.ts"],
+        "server": [
+          "src/app/api/admin/students/[id]/direct-review-summaries/route.ts",
+          "src/app/api/admin/exact-review-assignments/preview/route.ts",
+          "src/app/api/admin/exact-review-assignments/route.ts",
+          "src/lib/services/direct-review-preparation-service.ts",
+          "src/lib/services/direct-review-candidate-service.ts",
+          "src/lib/services/direct-review-assignment-service.ts",
+          "src/lib/services/dataset-catalog-service.ts",
+          "src/lib/services/eligible-vocabulary-service.ts"
+        ],
+        "database": [
+          "supabase/migrations/20260822183100_add_direct_review_assignments.sql",
+          "supabase/migrations/20260824010000_add_assignment_retry_rules.sql",
+          "supabase/migrations/20260824050000_list_direct_review_candidates.sql",
+          "supabase/migrations/20260824051000_create_current_wrong_review_assignment.sql",
+          "supabase/migrations/20260828174000_harden_current_wrong_review_deadline.sql"
+        ],
+        "cacheStreaming": [
+          "src/app/admin/(protected)/assignments/page.tsx",
+          "src/app/admin/(protected)/loading.tsx"
+        ],
+        "tests": [
+          "src/features/assignments/application/direct-review-flow-adapter.test.ts",
+          "src/features/assignments/controller/use-direct-review-assignment-controller.test.tsx",
+          "src/features/assignments/domain/direct-review-draft.test.ts",
+          "src/app/api/admin/exact-review-assignments/preview/route.test.ts",
+          "src/app/api/admin/exact-review-assignments/route.test.ts",
+          "src/app/api/admin/students/[id]/direct-review-summaries/route.test.ts",
+          "src/lib/services/direct-review-preparation-service.test.ts",
+          "src/lib/services/direct-review-assignment-service.test.ts",
+          "src/lib/assignment/question-planner.test.ts",
+          "src/lib/database/review-assignment-final-schema.integration.test.ts"
+        ]
+      },
+      "requiredImportEdges": [
+        {
+          "from": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "to": "src/features/assignments/ui/direct-review-assignment-sections.tsx",
+          "reason": "오답 시험 탭의 범위·조건·일정 UI"
+        },
+        {
+          "from": "src/features/assignments/controller/use-direct-review-assignment-controller.ts",
+          "to": "src/features/assignments/application/direct-review-flow-adapter.ts",
+          "reason": "독립 오답 화면이 공통 요청 수명 adapter를 사용함"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "to": "src/features/assignments/controller/use-direct-review-assignment-controller.ts",
+          "reason": "오답 시험 탭이 전용 상태와 Preview·저장 수명을 시작함"
+        },
+        {
+          "from": "src/features/assignments/ui/direct-review-assignment-sections.tsx",
+          "to": "src/features/assignments/ui/assignment-section.tsx",
+          "reason": "오답 시험 화면의 세 구역 공통 틀"
+        },
+        {
+          "from": "src/features/assignments/ui/direct-review-assignment-sections.tsx",
+          "to": "src/features/assignments/ui/bulk-exam-fields.tsx",
+          "reason": "오답 시험의 문제 순서와 시험 조건 UI"
+        },
+        {
+          "from": "src/features/assignments/ui/direct-review-assignment-sections.tsx",
+          "to": "src/features/assignments/ui/exam-timing-fields.tsx",
+          "reason": "오답 시험의 시간 제한 UI"
+        },
+        {
+          "from": "src/features/assignments/ui/direct-review-assignment-sections.tsx",
+          "to": "src/features/assignments/ui/assignment-deadline-fields.tsx",
+          "reason": "오답 시험의 공개·마감 UI"
+        },
+        {
+          "from": "src/lib/services/direct-review-assignment-service.ts",
+          "to": "src/lib/services/direct-review-preparation-service.ts",
+          "reason": "오답 시험 저장이 Preview와 같은 준비·검증 경로를 사용함"
+        },
+        {
+          "from": "src/lib/services/direct-review-preparation-service.ts",
+          "to": "src/lib/assignment/question-planner.ts",
+          "reason": "선택한 오답의 공용 문항 계획"
+        },
+        {
+          "from": "src/lib/services/direct-review-preparation-service.ts",
+          "to": "src/lib/services/dataset-catalog-service.ts",
+          "reason": "오답 시험에 표시할 출처 단어장 이름을 현재 자료 목록에서 확인함"
+        },
+        {
+          "from": "src/lib/services/direct-review-preparation-service.ts",
+          "to": "src/lib/services/eligible-vocabulary-service.ts",
+          "reason": "오답 단어의 현재 출제 가능 자료 조회"
+        }
+      ],
+      "notApplicable": {
+        "serverComponent": "페이지 초기 자료와 학생 선택은 선행 공통 흐름 assignment-workspace-selection을 통해 이어진다."
+      }
+    },
+    {
+      "id": "assignment-edit",
+      "name": "기존 시험 한 건 수정",
+      "status": "active",
+      "owner": "assignments",
+      "participants": ["history", "assignments", "assignment-queue", "students", "results", "learning-points", "quiz-player"],
+      "dataClass": "mutation",
+      "cachePolicy": "수정 원본·학생·배정·큐는 요청 사이 캐시 금지",
+      "streamingPolicy": "내역 상세 경계 안에서 전체 수정 원본이 준비된 뒤 표시",
+      "closedLocalLayers": ["ui", "controller", "application", "domain", "presentation", "api", "transport"],
+      "touchpoints": {
+        "route": [
+          "src/app/admin/(protected)/results/[id]/page.tsx",
+          "src/app/admin/(protected)/@detail/(.)results/[entryKey]/page.tsx",
+          "src/app/api/admin/assignments/[assignmentId]/students/[studentId]/route.ts"
+        ],
+        "serverComponent": [
+          "src/app/admin/(protected)/results/[id]/page.tsx",
+          "src/app/admin/(protected)/@detail/(.)results/[entryKey]/page.tsx"
+        ],
+        "ui": [
+          "src/features/history/ui/editable-history-detail-page.tsx",
+          "src/features/history/ui/editable-history-detail-dialog.tsx",
+          "src/features/history/ui/admin-history-detail.tsx",
+          "src/features/history/ui/history-detail-header.tsx",
+          "src/features/history/ui/route-detail-dialog.tsx",
+          "src/features/history/ui/activity-status-timeline.tsx",
+          "src/features/history/ui/attempt-score-summary.tsx",
+          "src/features/history/ui/assignment-meta-tags.tsx",
+          "src/features/history/ui/admin-history-actions.tsx",
+          "src/features/history/ui/history-detail-actions.tsx",
+          "src/features/history/ui/history-assignment-editor-model.ts",
+          "src/features/assignments/ui/single-assignment-editor.tsx",
+          "src/features/assignments/ui/single-assignment-editor-sections.tsx",
+          "src/features/assignments/ui/assignment-section.tsx",
+          "src/features/assignments/ui/assignment-range-fields.tsx",
+          "src/features/assignments/ui/assignment-capacity-summary.tsx",
+          "src/features/assignments/ui/assignment-unit-range-picker.tsx",
+          "src/features/assignments/ui/day-range-rail.tsx",
+          "src/features/assignments/ui/assignment-settings-fields.tsx",
+          "src/features/assignments/ui/assignment-availability-fields.tsx",
+          "src/features/assignments/ui/assignment-deadline-fields.tsx",
+          "src/features/assignments/ui/assignment-date-time-toggle-field.tsx",
+          "src/features/assignments/ui/assignment-word-count-field.tsx",
+          "src/features/assignments/ui/bulk-exam-fields.tsx",
+          "src/features/assignments/ui/exam-timing-fields.tsx",
+          "src/features/assignments/ui/assignment-summary-panel.tsx",
+          "src/features/assignments/ui/assignment-edit-comparison.tsx",
+          "src/features/assignments/ui/assignment-submit-action.tsx",
+          "src/features/results/ui/attempt-question-card.tsx",
+          "src/features/learning-points/ui/point-summary.tsx",
+          "src/components/assignment-editor-ui.tsx"
+        ],
+        "clientState": [
+          "src/features/history/ui/use-editable-history-assignment.ts",
+          "src/features/assignments/controller/use-assignment-controller.ts",
+          "src/features/assignments/controller/use-assignment-preview.ts",
+          "src/features/assignments/ui/use-edit-assignment-validation.ts",
+          "src/features/assignments/ui/focus-invalid-assignment-field.ts"
+        ],
+        "application": [],
+        "domain": [
+          "src/features/assignments/domain/editor-state.ts",
+          "src/features/assignments/domain/fingerprint.ts",
+          "src/features/assignments/domain/model.ts",
+          "src/features/assignments/domain/single-draft.ts",
+          "src/features/assignments/domain/assignment-edit-policy.ts",
+          "src/features/assignments/domain/submit-blocker.ts",
+          "src/features/assignments/domain/validation.ts",
+          "src/lib/admin/assignment-edit-policy.ts",
+          "src/lib/quiz/question-generator.ts",
+          "src/lib/assignment/question-planner.ts"
+        ],
+        "presentation": [
+          "src/features/assignments/presentation/assignment-automatic-title.ts",
+          "src/features/assignments/presentation/assignment-edit-field-errors.ts",
+          "src/features/assignments/presentation/assignment-edit-submit-presentation.ts",
+          "src/features/assignments/presentation/assignment-submit-blocker.ts",
+          "src/features/assignments/presentation/new-assignment-defaults.ts",
+          "src/features/assignments/presentation/assignment-unit-range-label.ts"
+        ],
+        "contract": [
+          "src/features/assignments/catalog-types.ts",
+          "src/features/assignments/ui/single-assignment-editor.types.ts",
+          "src/features/assignments/api/edit-draft-adapter.ts",
+          "src/features/assignments/api/request-adapters.ts",
+          "src/features/assignments/api/response-adapters.ts",
+          "src/lib/admin/assignment-edit.ts",
+          "src/lib/admin/assignment-manager-data.ts",
+          "src/lib/admin/assignment-settings.ts",
+          "src/lib/admin/dataset-catalog.ts",
+          "src/lib/admin/new-assignment-range.ts",
+          "src/lib/admin/assignment-replacement-fingerprint.ts",
+          "src/lib/admin/assignment-replacement-request.ts"
+        ],
+        "transport": ["src/features/assignments/transport/assignment-transport.ts"],
+        "server": [
+          "src/app/api/admin/assignments/[assignmentId]/students/[studentId]/route.ts",
+          "src/lib/services/admin-history-read-service.ts",
+          "src/lib/services/learning-point-read-service.ts",
+          "src/lib/services/admin-student-read-service.ts",
+          "src/lib/services/assignment-manager-data.ts",
+          "src/lib/services/vocab-time-template-service.ts",
+          "src/lib/services/vocab-assignment-queue-query.ts",
+          "src/lib/services/assignment-edit-source-service.ts",
+          "src/lib/services/assignment-cancellation-service.ts",
+          "src/lib/services/assignment-replacement-errors.ts",
+          "src/lib/services/assignment-replacement-policy.ts",
+          "src/lib/services/assignment-replacement-preparation-service.ts",
+          "src/lib/services/assignment-replacement-service.ts",
+          "src/lib/services/eligible-vocabulary-service.ts",
+          "src/lib/services/regular-assignment-service.ts",
+          "src/lib/services/mixed-assignment-service.ts"
+        ],
+        "database": [
+          "supabase/migrations/20260807221021_replace_student_assignment_v1.sql",
+          "supabase/migrations/20260825083542_add_student_point_ledger.sql",
+          "supabase/migrations/20260828193000_preserve_assignment_edit_metadata.sql"
+        ],
+        "cacheStreaming": [
+          "src/app/admin/(protected)/results/[id]/page.tsx",
+          "src/app/admin/(protected)/@detail/(.)results/[entryKey]/page.tsx",
+          "src/app/admin/(protected)/loading.tsx"
+        ],
+        "tests": [
+          "src/features/assignments/ui/single-assignment-editor.test.tsx",
+          "src/features/assignments/ui/assignment-date-time-toggle-field.test.tsx",
+          "src/features/assignments/ui/assignment-edit-comparison.test.tsx",
+          "src/features/assignments/ui/assignment-range-fields.test.tsx",
+          "src/features/assignments/ui/day-range-rail.test.tsx",
+          "src/features/assignments/ui/assignment-summary-panel.test.tsx",
+          "src/features/assignments/ui/edit-assignment-ui.contract.test.ts",
+          "src/features/assignments/ui/focus-invalid-assignment-field.test.ts",
+          "src/features/assignments/architecture-boundary.test.ts",
+          "src/features/assignments/controller/use-assignment-controller.test.tsx",
+          "src/features/assignments/domain/editor-state.test.ts",
+          "src/features/assignments/domain/single-draft.test.ts",
+          "src/features/assignments/domain/validation.test.ts",
+          "src/features/assignments/api/edit-draft-adapter.test.ts",
+          "src/features/assignments/api/request-adapters.test.ts",
+          "src/features/assignments/api/response-adapters.test.ts",
+          "src/features/history/ui/history-detail-actions.test.tsx",
+          "src/features/history/ui/editable-history-detail-dialog.test.tsx",
+          "src/features/history/ui/editable-history-surface.contract.test.ts",
+          "src/features/history/ui/admin-history-detail.test.tsx",
+          "src/features/history/ui/admin-history-timing.test.tsx",
+          "src/app/api/admin/assignments/student-assignment-replacement-route.test.ts",
+          "src/lib/admin/assignment-edit.test.ts",
+          "src/lib/admin/assignment-edit-policy.test.ts",
+          "src/features/assignments/presentation/assignment-edit-field-errors.test.ts",
+          "src/features/assignments/presentation/assignment-edit-submit-presentation.test.ts",
+          "src/features/assignments/presentation/assignment-submit-blocker.test.ts",
+          "src/features/assignments/presentation/new-assignment-defaults.test.ts",
+          "src/features/assignments/presentation/assignment-unit-range-label.test.ts",
+          "src/lib/services/assignment-replacement-boundary-contract.test.ts",
+          "src/lib/services/assignment-replacement-policy.test.ts",
+          "src/lib/services/assignment-replacement-preparation-error.test.ts",
+          "src/lib/services/assignment-replacement-preparation-service.test.ts",
+          "src/lib/services/assignment-replacement-service.test.ts",
+          "src/lib/services/learning-point-read-service.test.ts",
+          "src/lib/assignment/question-planner.test.ts",
+          "src/lib/database/assignment-edit-metadata-migration-contract.test.ts",
+          "src/lib/database/student-point-ledger-migration-contract.test.ts",
+          "src/lib/database/review-assignment-final-schema.integration.test.ts"
+        ]
+      },
+      "requiredImportEdges": [
+        {
+          "from": "src/features/history/ui/history-detail-actions.tsx",
+          "to": "src/lib/admin/assignment-edit.ts",
+          "reason": "내역 상세의 수정 가능 여부 판단"
+        },
+        {
+          "from": "src/features/assignments/ui/assignment-unit-range-picker.tsx",
+          "to": "src/features/assignments/ui/day-range-rail.tsx",
+          "reason": "수정 화면의 실제 범위 선택 UI"
+        },
+        {
+          "from": "src/lib/services/assignment-replacement-service.ts",
+          "to": "src/lib/services/assignment-replacement-preparation-service.ts",
+          "reason": "수정 저장이 Preview와 같은 교체 준비·검증 경로를 사용함"
+        },
+        {
+          "from": "src/lib/services/assignment-replacement-preparation-service.ts",
+          "to": "src/lib/quiz/question-generator.ts",
+          "reason": "수정 저장 전 안전한 문항 재생성"
+        },
+        {
+          "from": "src/lib/services/assignment-replacement-preparation-service.ts",
+          "to": "src/lib/services/eligible-vocabulary-service.ts",
+          "reason": "수정된 범위의 실제 출제 가능 단어 조회"
+        },
+        {
+          "from": "src/lib/services/assignment-manager-data.ts",
+          "to": "src/lib/services/admin-student-read-service.ts",
+          "reason": "수정 화면에서 학생·단어장·오답 요약을 함께 준비함"
+        },
+        {
+          "from": "src/lib/services/assignment-manager-data.ts",
+          "to": "src/lib/services/admin-history-read-service.ts",
+          "reason": "수정 화면에서 최근 시험과 완료 내역을 함께 준비함"
+        },
+        {
+          "from": "src/lib/services/assignment-manager-data.ts",
+          "to": "src/lib/services/vocab-time-template-service.ts",
+          "reason": "배정 화면과 같은 빠른 시간 템플릿을 수정 화면에도 제공함"
+        },
+        {
+          "from": "src/lib/services/assignment-manager-data.ts",
+          "to": "src/lib/services/vocab-assignment-queue-query.ts",
+          "reason": "수정 화면에서 현재 배정된 시험과 이어지는 회차 상태를 함께 제공함"
+        }
+      ],
+      "notApplicable": {
+        "application": "수정 controller는 아직 transport를 직접 호출하며 R2-4에서 client/flows로 이동한다."
+      }
+    },
+    {
+      "id": "assignment-series",
+      "name": "완료 뒤 이어지는 배정",
+      "status": "active",
+      "owner": "assignment-queue",
+      "participants": ["assignments", "assignment-queue", "quiz-player", "students", "history", "learning-points"],
+      "dataClass": "mutation",
+      "cachePolicy": "큐·배정·응시 완료 자료는 요청 사이 캐시 금지",
+      "streamingPolicy": "상태 태그만 소비 화면과 함께 표시하며 큐 명령은 stream하지 않음",
+      "dependsOnFlows": ["assignment-workspace-selection"],
+      "closedLocalLayers": ["ui", "controller", "application", "domain", "presentation", "api", "transport"],
+      "flowImportExceptions": {
+        "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/ui/direct-review-assignment-sections.tsx": "독립 오답 시험은 assignment-direct-review-create가 소유하며 이어지는 일반 범위 회차와 섞지 않는다.",
+        "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/controller/use-direct-review-assignment-controller.ts": "배정된 시험 회차 흐름에서는 독립 오답 시험 전용 Preview·저장 controller를 실행하지 않는다.",
+        "src/features/students/ui/student-detail-dialog.tsx|src/features/students/ui/panels/student-account-panel.tsx": "계정 탭은 배정된 시험 내역 흐름과 별개다.",
+        "src/features/students/ui/student-detail-dialog.tsx|src/features/students/ui/panels/student-code-panel.tsx": "접속 코드 화면은 배정된 시험 내역 흐름과 별개다.",
+        "src/features/students/ui/student-detail-dialog.tsx|src/features/students/ui/panels/student-info-panel.tsx": "학생 정보 탭은 배정된 시험 내역 흐름과 별개다.",
+        "src/features/students/ui/panels/student-history-panel.tsx|src/features/history/ui/student-learning-activity-list.tsx": "같은 내역 탭의 일반 시험 내역 형제 구역은 assignment-series의 큐 상태와 별개다.",
+        "src/features/students/ui/panels/student-history-panel.tsx|src/features/students/ui/panels/student-wrong-word-panel.tsx": "같은 내역 탭의 오답 단어 형제 구역은 assignment-series의 큐 상태와 별개다."
+      },
+      "serverImportExceptions": {
+        "src/lib/services/admin-history-read-service.ts|src/lib/services/admin-attempt-read-service.ts": "이어지는 배정은 목록 묶음만 읽으며 같은 파일의 시험 상세 조회 분기는 실행하지 않는다.",
+        "src/lib/services/admin-history-read-service.ts|src/lib/services/learning-point-read-service.ts": "학생 포인트는 학생 관리 로더에서 별도로 읽고 배정 계획의 내역 목록에서는 읽지 않는다."
+      },
+      "touchpoints": {
+        "route": [
+          "src/app/admin/(protected)/assignments/page.tsx",
+          "src/app/admin/(protected)/students/page.tsx",
+          "src/app/api/admin/bulk-assignments/preview/route.ts",
+          "src/app/api/admin/bulk-assignments/route.ts",
+          "src/app/api/admin/students/[id]/vocab-assignment-queues/route.ts",
+          "src/app/api/admin/vocab-assignment-queues/[seriesId]/route.ts",
+          "src/app/api/student/attempts/[id]/answers/route.ts",
+          "src/app/api/student/attempts/[id]/expire/route.ts",
+          "src/app/api/student/attempts/[id]/timeouts/route.ts"
+        ],
+        "serverComponent": [
+          "src/app/admin/(protected)/assignments/page.tsx",
+          "src/app/admin/(protected)/students/page.tsx"
+        ],
+        "ui": [
+          "src/features/assignments/ui/assignment-workspace.tsx",
+          "src/features/assignments/ui/assignment-workspace-filters.tsx",
+          "src/features/assignments/ui/assignment-student-browser.tsx",
+          "src/features/assignments/ui/assignment-student-row.tsx",
+          "src/features/assignments/ui/selected-student-basket.tsx",
+          "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "src/features/assignments/ui/assignment-submit-action.tsx",
+          "src/features/assignments/ui/focus-invalid-assignment-field.ts",
+          "src/features/assignments/ui/vocab-assignment-entry-selector.tsx",
+          "src/features/assignments/ui/assignment-section.tsx",
+          "src/features/assignments/ui/bulk-exam-fields.tsx",
+          "src/features/assignments/ui/exam-timing-fields.tsx",
+          "src/features/assignments/ui/assignment-word-count-field.tsx",
+          "src/features/assignments/ui/vocab-range-fields.tsx",
+          "src/features/assignments/ui/assignment-unit-range-picker.tsx",
+          "src/features/assignments/ui/day-range-rail.tsx",
+          "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "src/features/assignments/ui/vocab-range-picker.tsx",
+          "src/features/assignments/ui/vocab-unit-allocation-fields.tsx",
+          "src/features/assignments/ui/vocab-schedule-fields.tsx",
+          "src/features/assignments/ui/vocab-schedule-detail-fields.tsx",
+          "src/features/assignments/ui/bulk-series-preview.tsx",
+          "src/features/assignments/ui/bulk-preview-session-list.tsx",
+          "src/features/assignments/ui/collision-decision-list.tsx",
+          "src/features/assignment-queue/ui/assignment-queue-history.tsx",
+          "src/features/assignment-queue/ui/assignment-queue-tags.tsx",
+          "src/features/assignment-queue/ui/student-assignment-queue-history.tsx",
+          "src/features/students/ui/student-management-workspace.tsx",
+          "src/features/students/ui/student-directory.tsx",
+          "src/features/students/ui/student-detail-dialog.tsx",
+          "src/features/students/ui/panels/student-history-panel.tsx"
+        ],
+        "clientState": [
+          "src/features/assignments/controller/use-vocab-assignment-screen.ts",
+          "src/features/assignments/controller/use-vocab-assignment-planner.ts",
+          "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+          "src/features/assignments/controller/use-vocab-time-templates.ts",
+          "src/features/assignments/controller/vocab-assignment-planner-state.ts",
+          "src/features/assignments/controller/use-vocab-assignment-derived-plan.ts"
+        ],
+        "application": [],
+        "domain": [
+          "src/features/assignments/domain/bulk-draft.ts",
+          "src/features/assignments/domain/bulk-plan-signature.ts",
+          "src/features/assignments/domain/editor-state.ts",
+          "src/features/assignments/domain/fingerprint.ts",
+          "src/features/assignments/domain/vocab-assignment-contract.ts",
+          "src/features/assignments/domain/vocab-schedule.ts",
+          "src/features/assignments/domain/vocab-unit-allocation.ts",
+          "src/features/assignments/domain/vocab-series-target-planner.ts",
+          "src/features/assignments/domain/vocab-question-allocation.ts",
+          "src/features/assignments/domain/vocab-planner-controls.ts",
+          "src/features/assignments/domain/vocab-planner-validation.ts",
+          "src/features/assignments/domain/vocab-collision-decisions.ts",
+          "src/features/assignments/domain/vocab-previous-exam.ts",
+          "src/lib/assignment/question-planner.ts"
+        ],
+        "presentation": [
+          "src/features/assignments/presentation/assignment-directory-options.ts",
+          "src/features/assignments/presentation/assignment-unit-range-label.ts",
+          "src/features/assignments/presentation/bulk-plan-audience.ts",
+          "src/features/assignments/presentation/bulk-student-selection-summary.ts",
+          "src/features/assignments/presentation/select-common-initial-dataset.ts",
+          "src/features/assignments/presentation/vocab-assignment-field-errors.ts",
+          "src/features/assignments/presentation/vocab-collision-actions.ts"
+        ],
+        "contract": [
+          "src/features/assignments/api/request-adapters.ts",
+          "src/features/assignments/api/response-adapters.ts",
+          "src/lib/admin/bulk-assignment-request.ts",
+          "src/lib/admin/vocab-assignment-queue.ts"
+        ],
+        "transport": [
+          "src/features/assignments/transport/assignment-transport.ts",
+          "src/features/assignment-queue/api/queue-actions.ts"
+        ],
+        "server": [
+          "src/app/api/admin/bulk-assignments/preview/route.ts",
+          "src/app/api/admin/bulk-assignments/route.ts",
+          "src/app/api/admin/students/[id]/vocab-assignment-queues/route.ts",
+          "src/app/api/admin/vocab-assignment-queues/[seriesId]/route.ts",
+          "src/app/api/student/attempts/[id]/answers/route.ts",
+          "src/app/api/student/attempts/[id]/expire/route.ts",
+          "src/app/api/student/attempts/[id]/timeouts/route.ts",
+          "src/lib/services/vocab-assignment-queue-plan.ts",
+          "src/lib/services/vocab-assignment-queue-command.ts",
+          "src/lib/services/vocab-assignment-queue-query.ts",
+          "src/lib/services/vocab-assignment-queue-support.ts",
+          "src/lib/services/quiz/attempt-command.ts",
+          "src/lib/services/admin-history-read-service.ts",
+          "src/lib/services/admin-student-read-service.ts",
+          "src/lib/services/active-review-assignment-service.ts",
+          "src/lib/services/dataset-catalog-service.ts",
+          "src/lib/services/eligible-vocabulary-service.ts",
+          "src/lib/services/request-preparation-cache.ts",
+          "src/lib/services/bulk-assignment-service.ts",
+          "src/lib/services/bulk-assignment-persistence.ts",
+          "src/lib/services/bulk-assignment-plan-digest.ts",
+          "src/lib/services/regular-assignment-service.ts",
+          "src/lib/services/mixed-assignment-service.ts",
+          "src/features/students/server/load-student-management-data.ts",
+          "src/lib/services/learning-point-read-service.ts"
+        ],
+        "database": [
+          "supabase/migrations/20260810123000_add_scheduled_bulk_assignment_series.sql",
+          "supabase/migrations/20260821220000_extend_bulk_vocab_series_session_limit.sql",
+          "supabase/migrations/20260822010300_add_vocab_assignment_completion_queue.sql",
+          "supabase/migrations/20260822090109_preserve_vocab_queue_planned_weekday.sql",
+          "supabase/migrations/20260822091643_reconcile_vocab_queue_materialized_window.sql",
+          "supabase/migrations/20260824030000_allow_sparse_vocab_ranges_and_overlapping_schedules.sql",
+          "supabase/migrations/20260824010000_add_assignment_retry_rules.sql",
+          "supabase/migrations/20260826001635_add_ready_queue_fixed_time_materializer.sql",
+          "supabase/migrations/20260826001639_add_read_side_maintenance_workers.sql",
+          "supabase/migrations/20260826001655_schedule_read_side_maintenance_jobs.sql",
+          "supabase/migrations/20260828193000_preserve_assignment_edit_metadata.sql"
+        ],
+        "cacheStreaming": [
+          "src/app/admin/(protected)/assignments/page.tsx",
+          "src/app/admin/(protected)/students/page.tsx",
+          "src/app/admin/(protected)/loading.tsx"
+        ],
+        "tests": [
+          "src/features/assignments/domain/vocab-assignment-plan.test.ts",
+          "src/features/assignments/ui/vocab-assignment-planner.test.tsx",
+          "src/features/assignments/controller/use-vocab-assignment-planner.test.tsx",
+          "src/features/assignments/controller/use-bulk-assignment-controller.test.tsx",
+          "src/features/assignments/controller/use-vocab-assignment-screen.test.tsx",
+          "src/features/assignments/ui/bulk-series-preview.test.tsx",
+          "src/features/assignments/ui/vocab-schedule-fields.test.tsx",
+          "src/features/assignment-queue/ui/assignment-queue-history.test.tsx",
+          "src/features/assignment-queue/ui/student-assignment-queue-history.test.tsx",
+          "src/features/students/server/load-student-management-data.test.ts",
+          "src/app/api/admin/bulk-assignments/route.test.ts",
+          "src/app/api/admin/students/[id]/vocab-assignment-queues/route.test.ts",
+          "src/app/api/admin/vocab-assignment-queues/[seriesId]/route.test.ts",
+          "src/lib/services/bulk-assignment-persistence.test.ts",
+          "src/lib/services/bulk-assignment-plan-digest.test.ts",
+          "src/lib/services/bulk-assignment-preparation-cache-contract.test.ts",
+          "src/lib/services/bulk-assignment-preparation-error.test.ts",
+          "src/lib/services/vocab-assignment-queue-plan.test.ts",
+          "src/lib/services/quiz/attempt-command.test.ts",
+          "src/lib/assignment/question-planner.test.ts",
+          "src/lib/database/vocab-assignment-completion-queue-migration-contract.test.ts",
+          "src/lib/database/bulk-assignment-series-migration-contract.test.ts",
+          "src/lib/database/bulk-assignment-series-session-limit-migration-contract.test.ts",
+          "src/lib/database/read-side-maintenance-jobs.integration.test.ts"
+        ]
+      },
+      "requiredImportEdges": [
+        {
+          "from": "src/app/admin/(protected)/students/page.tsx",
+          "to": "src/features/students/server/load-student-management-data.ts",
+          "reason": "학생 페이지가 배정된 시험과 포인트를 한 서버 로더에서 준비함"
+        },
+        {
+          "from": "src/app/admin/(protected)/students/page.tsx",
+          "to": "src/features/students/ui/student-management-workspace.tsx",
+          "reason": "학생 페이지가 관리 작업공간을 Server Component 경계에서 조합함"
+        },
+        {
+          "from": "src/features/students/ui/student-management-workspace.tsx",
+          "to": "src/features/students/ui/student-detail-dialog.tsx",
+          "reason": "학생 작업공간에서 선택한 학생 상세를 엶"
+        },
+        {
+          "from": "src/features/students/ui/student-detail-dialog.tsx",
+          "to": "src/features/students/ui/panels/student-history-panel.tsx",
+          "reason": "학생 상세의 내역 탭이 학습·배정 내역 패널을 엶"
+        },
+        {
+          "from": "src/features/students/ui/panels/student-history-panel.tsx",
+          "to": "src/features/assignment-queue/ui/student-assignment-queue-history.tsx",
+          "reason": "학생 내역에서 남은 회차와 배정된 시험을 표시함"
+        },
+        {
+          "from": "src/features/students/server/load-student-management-data.ts",
+          "to": "src/lib/services/learning-point-read-service.ts",
+          "reason": "학생 정보에 누적 학습 포인트를 함께 표시함"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "to": "src/features/assignments/controller/use-vocab-assignment-screen.ts",
+          "reason": "배정 모달이 공통 화면 상태를 시작함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-vocab-assignment-screen.ts",
+          "to": "src/features/assignments/controller/use-vocab-assignment-planner.ts",
+          "reason": "화면 상태가 일정·범위 계획 controller를 조합함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-vocab-assignment-planner.ts",
+          "to": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+          "reason": "계획 상태가 Preview·저장 요청 수명을 사용함"
+        },
+        {
+          "from": "src/lib/services/bulk-assignment-service.ts",
+          "to": "src/lib/services/admin-history-read-service.ts",
+          "reason": "직전 시험과 중복 상태를 서버에서 계산함"
+        },
+        {
+          "from": "src/lib/services/bulk-assignment-service.ts",
+          "to": "src/lib/services/admin-student-read-service.ts",
+          "reason": "배정 가능한 학생·자료를 서버에서 다시 읽음"
+        },
+        {
+          "from": "src/lib/services/bulk-assignment-service.ts",
+          "to": "src/lib/services/regular-assignment-service.ts",
+          "reason": "일반 범위 회차의 문항 후보를 준비함"
+        },
+        {
+          "from": "src/lib/services/bulk-assignment-service.ts",
+          "to": "src/lib/services/mixed-assignment-service.ts",
+          "reason": "예전 오답 포함 회차의 문항 후보를 준비함"
+        },
+        {
+          "from": "src/lib/services/bulk-assignment-service.ts",
+          "to": "src/lib/services/bulk-assignment-persistence.ts",
+          "reason": "계획 digest와 결과를 멱등 저장함"
+        },
+        {
+          "from": "src/lib/services/bulk-assignment-service.ts",
+          "to": "src/lib/services/bulk-assignment-plan-digest.ts",
+          "reason": "후속 회차도 Preview와 저장 사이 같은 계획인지 검증함"
+        },
+        {
+          "from": "src/lib/services/bulk-assignment-service.ts",
+          "to": "src/lib/services/vocab-assignment-queue-plan.ts",
+          "reason": "완료 후 생성할 남은 회차 queue를 만듦"
+        },
+        {
+          "from": "src/lib/services/regular-assignment-service.ts",
+          "to": "src/lib/assignment/question-planner.ts",
+          "reason": "일반 배정의 공용 문항 계획"
+        },
+        {
+          "from": "src/lib/services/mixed-assignment-service.ts",
+          "to": "src/lib/assignment/question-planner.ts",
+          "reason": "오답 포함 배정의 공용 문항 계획"
+        },
+        {
+          "from": "src/lib/services/regular-assignment-service.ts",
+          "to": "src/lib/services/eligible-vocabulary-service.ts",
+          "reason": "일반 배정의 출제 가능 단어 조회"
+        },
+        {
+          "from": "src/lib/services/mixed-assignment-service.ts",
+          "to": "src/lib/services/request-preparation-cache.ts",
+          "reason": "같은 요청 안의 반복 준비 자료 재사용"
+        },
+        {
+          "from": "src/lib/services/quiz/attempt-command.ts",
+          "to": "src/lib/services/vocab-assignment-queue-command.ts",
+          "reason": "시험 완료가 준비된 다음 회차 생성을 촉발함"
+        },
+        {
+          "from": "src/lib/services/vocab-assignment-queue-command.ts",
+          "to": "src/lib/services/vocab-assignment-queue-support.ts",
+          "reason": "queue RPC 미적용 상태를 안전하게 구분함"
+        }
+      ],
+      "notApplicable": {
+        "application": "큐 생성·처리는 아직 controller와 Route/service 조합에 있으며 R5에서 server use-case로 이동한다."
+      }
+    },
+    {
+      "id": "student-quiz-attempt",
+      "name": "학생 시험 시작·풀이·재시험",
+      "status": "active",
+      "owner": "quiz-player",
+      "participants": ["quiz-player", "assignment-queue", "students", "learning-points"],
+      "dataClass": "mutation",
+      "cachePolicy": "진행 응시·문항·답·오답·포인트는 캐시 금지",
+      "streamingPolicy": "완전한 시험 snapshot을 하나의 경계로 준비하고 문항 일부를 먼저 stream하지 않음",
+      "closedLocalLayers": ["ui", "controller", "application", "domain", "presentation", "api", "transport"],
+      "touchpoints": {
+        "route": [
+          "src/app/student/(protected)/attempt/[id]/page.tsx",
+          "src/app/api/student/assignments/[id]/attempts/route.ts",
+          "src/app/api/student/attempts/[id]/route.ts",
+          "src/app/api/student/attempts/[id]/answers/route.ts",
+          "src/app/api/student/attempts/[id]/expire/route.ts",
+          "src/app/api/student/attempts/[id]/feedback/route.ts",
+          "src/app/api/student/attempts/[id]/retry/route.ts",
+          "src/app/api/student/attempts/[id]/timeouts/route.ts"
+        ],
+        "serverComponent": ["src/app/student/(protected)/attempt/[id]/page.tsx"],
+        "ui": [
+          "src/features/quiz-player/ui/quiz-player.tsx",
+          "src/features/quiz-player/ui/quiz-frame.tsx",
+          "src/features/quiz-player/ui/quiz-choice.tsx",
+          "src/features/quiz-player/ui/audio-button.tsx",
+          "src/features/quiz-player/ui/quiz-timeout-overlay.tsx",
+          "src/features/quiz-player/ui/quiz-synchronization-error.tsx",
+          "src/components/pronunciation-text.tsx"
+        ],
+        "clientState": [
+          "src/features/quiz-player/controller/use-quiz-player-controller.ts",
+          "src/features/quiz-player/controller/use-quiz-submission.ts",
+          "src/features/quiz-player/controller/use-quiz-clock.ts",
+          "src/features/quiz-player/controller/use-quiz-clock-lifecycle.ts",
+          "src/features/quiz-player/controller/use-quiz-recovery.ts",
+          "src/features/quiz-player/controller/use-initial-quiz-synchronization.ts",
+          "src/features/quiz-player/controller/use-quiz-phase-snapshot.ts",
+          "src/features/quiz-player/controller/use-quiz-audio.ts",
+          "src/features/quiz-player/controller/use-quiz-audio-runtime.ts",
+          "src/features/quiz-player/controller/quiz-audio-completion.ts",
+          "src/features/quiz-player/controller/quiz-audio-element.ts",
+          "src/features/quiz-player/controller/quiz-audio-player.ts",
+          "src/features/quiz-player/controller/quiz-audio-preloaders.ts",
+          "src/features/quiz-player/controller/quiz-audio-source.ts",
+          "src/features/quiz-player/controller/quiz-transition-timer.ts",
+          "src/features/quiz-player/controller/resolve-quiz-feedback-transition.ts"
+        ],
+        "application": [],
+        "domain": [
+          "src/features/quiz-player/domain/quiz-session.ts",
+          "src/features/quiz-player/domain/quiz-player-state.ts",
+          "src/lib/quiz/prior-wrong.ts",
+          "src/lib/quiz/pronunciation-snapshot.ts",
+          "src/lib/quiz/question-generator.ts",
+          "src/lib/quiz/choice-policy.ts",
+          "src/lib/quiz/random.ts",
+          "src/lib/quiz/word-identity.ts",
+          "src/lib/quiz/question-types.ts",
+          "src/lib/quiz/question-provenance.ts"
+        ],
+        "presentation": [],
+        "contract": ["src/features/quiz-player/model.ts"],
+        "transport": ["src/features/quiz-player/api/quiz-attempt.ts"],
+        "server": [
+          "src/app/api/student/assignments/[id]/attempts/route.ts",
+          "src/app/api/student/attempts/[id]/route.ts",
+          "src/app/api/student/attempts/[id]/answers/route.ts",
+          "src/app/api/student/attempts/[id]/expire/route.ts",
+          "src/app/api/student/attempts/[id]/feedback/route.ts",
+          "src/app/api/student/attempts/[id]/retry/route.ts",
+          "src/app/api/student/attempts/[id]/timeouts/route.ts",
+          "src/lib/services/quiz/attempt-start.ts",
+          "src/lib/services/quiz/attempt-query.ts",
+          "src/lib/services/quiz/attempt-command.ts",
+          "src/lib/services/quiz/question-snapshot.ts",
+          "src/lib/services/quiz/pronunciation-registry.ts",
+          "src/lib/services/quiz-rpc-compatibility.ts",
+          "src/lib/services/vocab-assignment-queue-command.ts",
+          "src/lib/services/vocab-assignment-queue-support.ts"
+        ],
+        "database": [
+          "supabase/migrations/20260728162905_initial_student_app_mvp.sql",
+          "supabase/migrations/20260730130000_add_vocab_wrong_event_history.sql",
+          "supabase/migrations/20260730235100_add_assignment_timing_and_order_behavior.sql",
+          "supabase/migrations/20260730235200_harden_assignment_delivery_rpc.sql",
+          "supabase/migrations/20260815123000_resume_quiz_after_variable_feedback.sql",
+          "supabase/migrations/20260822183000_add_untimed_vocab_assignments.sql",
+          "supabase/migrations/20260822010300_add_vocab_assignment_completion_queue.sql",
+          "supabase/migrations/20260824010000_add_assignment_retry_rules.sql",
+          "supabase/migrations/20260825083542_add_student_point_ledger.sql",
+          "supabase/migrations/20260826001639_add_read_side_maintenance_workers.sql",
+          "supabase/migrations/20260826001648_preserve_untimed_assignment_deadlines.sql"
+        ],
+        "cacheStreaming": [
+          "src/app/student/(protected)/attempt/[id]/page.tsx"
+        ],
+        "tests": [
+          "src/features/quiz-player/api/quiz-attempt.test.ts",
+          "src/features/quiz-player/domain/quiz-session.test.ts",
+          "src/features/quiz-player/ui/quiz-player.test.tsx",
+          "src/features/quiz-player/ui/quiz-frame.test.tsx",
+          "src/features/quiz-player/controller/quiz-audio-completion.test.ts",
+          "src/features/quiz-player/controller/quiz-transition-timer.test.ts",
+          "src/lib/services/quiz/attempt-start.test.ts",
+          "src/lib/services/quiz/attempt-command.test.ts",
+          "src/lib/services/quiz/question-mapping.test.ts",
+          "src/lib/services/quiz/quiz-service-boundary-contract.test.ts",
+          "src/lib/quiz/question-engine.test.ts",
+          "src/lib/quiz/question-engine-boundary-contract.test.ts",
+          "src/lib/quiz/cached-flow-contract.test.ts",
+          "src/lib/quiz/prior-wrong.test.ts",
+          "src/lib/quiz/pronunciation-snapshot.test.ts",
+          "src/lib/database/wrong-event-history-migration-contract.test.ts",
+          "src/lib/database/migration-contract.test.ts",
+          "src/lib/database/assignment-settings-and-timing-contract.test.ts",
+          "src/lib/database/read-side-maintenance-jobs.integration.test.ts",
+          "src/lib/database/student-point-ledger-migration-contract.test.ts",
+          "src/lib/database/student-point-ledger.integration.test.ts",
+          "src/lib/database/quiz-feedback-timing.integration.test.ts",
+          "src/lib/database/retry-question-timer.integration.test.ts"
+        ]
+      },
+      "requiredImportEdges": [
+        {
+          "from": "src/features/quiz-player/ui/quiz-player.tsx",
+          "to": "src/features/quiz-player/controller/use-quiz-player-controller.ts",
+          "reason": "학생 시험 화면이 한 controller에서 상태를 받음"
+        },
+        {
+          "from": "src/features/quiz-player/controller/use-quiz-player-controller.ts",
+          "to": "src/features/quiz-player/controller/use-quiz-audio.ts",
+          "reason": "문항·답 선택 음원 수명을 함께 제어함"
+        },
+        {
+          "from": "src/features/quiz-player/controller/use-quiz-player-controller.ts",
+          "to": "src/features/quiz-player/controller/use-quiz-submission.ts",
+          "reason": "답 제출과 피드백 전환을 분리해 조합함"
+        },
+        {
+          "from": "src/lib/services/quiz/attempt-start.ts",
+          "to": "src/lib/quiz/question-generator.ts",
+          "reason": "예전 형식 배정의 시험 문항 생성"
+        },
+        {
+          "from": "src/lib/services/quiz/attempt-query.ts",
+          "to": "src/lib/quiz/pronunciation-snapshot.ts",
+          "reason": "진행 중 시험의 발음 snapshot 복원"
+        },
+        {
+          "from": "src/lib/services/quiz/attempt-command.ts",
+          "to": "src/lib/services/vocab-assignment-queue-command.ts",
+          "reason": "완료·만료·시간초과 뒤 다음 회차 생성"
+        },
+        {
+          "from": "src/lib/services/quiz/attempt-command.ts",
+          "to": "src/lib/services/quiz-rpc-compatibility.ts",
+          "reason": "시험 답안 저장이 현재와 이전 RPC 계약을 안전하게 연결함"
+        },
+        {
+          "from": "src/lib/services/vocab-assignment-queue-command.ts",
+          "to": "src/lib/services/vocab-assignment-queue-support.ts",
+          "reason": "queue RPC 호환 오류 구분"
+        }
+      ],
+      "notApplicable": {
+        "application": "시험 controller가 전용 transport와 domain을 직접 조합하며 별도 application 폴더는 아직 없다.",
+        "presentation": "시험 표시 자료는 현재 model/domain과 UI가 소유하며 별도 presentation 파일은 없다."
+      }
+    }
+  ]
+}

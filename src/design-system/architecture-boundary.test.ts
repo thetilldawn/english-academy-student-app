@@ -1,36 +1,32 @@
 import { readFileSync, readdirSync } from "node:fs";
-import { extname, join, relative } from "node:path";
+import { join, relative } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-const designSystemRoot = join(process.cwd(), "src", "design-system");
+import {
+  collectBoundarySourceFiles,
+  inspectBoundarySource,
+  resolvesInside,
+} from "@/test-support/module-boundary";
 
-function sourceFiles(directory: string): string[] {
-  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-    const path = join(directory, entry.name);
-    if (entry.isDirectory()) return sourceFiles(path);
-    return [".ts", ".tsx"].includes(extname(path)) &&
-      !entry.name.endsWith(".test.ts") &&
-      !entry.name.endsWith(".test.tsx")
-      ? [path]
-      : [];
-  });
-}
+const designSystemRoot = join(process.cwd(), "src", "design-system");
 
 describe("design-system architecture boundary", () => {
   it("does not depend on application, feature, content, or service modules", () => {
-    const violations = sourceFiles(designSystemRoot).flatMap((file) => {
+    const violations = collectBoundarySourceFiles(designSystemRoot).flatMap((file) => {
       const source = readFileSync(file, "utf8");
-      const imports = Array.from(
-        source.matchAll(/from\s+["']([^"']+)["']/g),
-        (match) => match[1] ?? "",
+      return inspectBoundarySource(file, source, {
+        root: designSystemRoot,
+        allowModule: (specifier, importer) =>
+          !specifier.startsWith("@/") && !specifier.startsWith(".")
+            ? true
+            : resolvesInside(importer, specifier, [designSystemRoot]),
+        forbidBrowserGlobals: false,
+        forbidNetwork: false,
+      }).map(
+        (violation) =>
+          `${relative(process.cwd(), file)}:${violation.line}:${violation.column} ${violation.detail}`,
       );
-      return imports
-        .filter((specifier) => specifier.startsWith("@/"))
-        .map(
-          (specifier) =>
-            `${relative(process.cwd(), file)} imports ${specifier}`,
-        );
     });
 
     expect(violations).toEqual([]);
