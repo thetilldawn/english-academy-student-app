@@ -26,6 +26,18 @@ function gitRefExists(ref) {
   return result.status === 0;
 }
 
+function mergeBase(ref) {
+  if (!ref) return null;
+  const result = spawnSync("git", ["merge-base", ref, "HEAD"], {
+    cwd: root,
+    encoding: "utf8",
+  });
+  if (result.status !== 0) {
+    throw new Error(result.stderr.trim() || `${ref}와 HEAD의 공통 기준을 찾지 못했습니다.`);
+  }
+  return result.stdout.trim();
+}
+
 function registryAt(ref) {
   if (!ref) return null;
   const result = spawnSync(
@@ -71,7 +83,7 @@ function changedFileState(baseRef = null) {
     ...gitLines(["diff", "--cached", "--no-renames", "--diff-filter=D", "--name-only"]),
   ]);
   return {
-    changed,
+    changed: [...new Set([...changed, ...deletedFromBase, ...deletedFromHead])].sort(),
     deleted: new Set([...deletedFromBase, ...deletedFromHead]),
     deletedFromBase,
     deletedFromHead,
@@ -175,7 +187,8 @@ function ownersForPath(registry, filePath, flowPathIndex) {
 export function printChangedImpact(registry, baseRef = null) {
   const { changed, deleted, deletedFromBase, deletedFromHead } = changedFileState(baseRef);
   const flowPathIndex = buildFlowPathIndex(registry);
-  const baseRegistry = registryAt(baseRef);
+  const baseSnapshotRef = mergeBase(baseRef);
+  const baseRegistry = registryAt(baseSnapshotRef);
   const headRegistry = registryAt("HEAD");
   const baseFlowPathIndex = baseRegistry ? buildDeclaredFlowPathIndex(baseRegistry) : null;
   const headFlowPathIndex = headRegistry ? buildDeclaredFlowPathIndex(headRegistry) : null;
@@ -192,8 +205,7 @@ export function printChangedImpact(registry, baseRef = null) {
     );
   }
   const detailedFlowOwners = new Set(["assignments", "assignment-queue", "history", "quiz-player"]);
-  console.log(`\n변경 파일 영향 지도${baseRef ? ` (${baseRef}...HEAD + 작업 트리)` : " (작업 트리)"}`);
-  for (const filePath of changed) {
+  const mappedChanges = changed.map((filePath) => {
     const current = ownersForPath(registry, filePath, flowPathIndex);
     const previous = deletedFromHead.has(filePath) && headRegistry
       ? ownersForPath(headRegistry, filePath, headFlowPathIndex)
@@ -204,12 +216,32 @@ export function printChangedImpact(registry, baseRef = null) {
       owners: [...new Set([...current.owners, ...previous.owners])],
       flows: [...new Set([...current.flows, ...previous.flows])],
     };
+    return { filePath, current, previous, mapped, deleted: deleted.has(filePath) };
+  });
+  const changedFlowsByOwner = new Map();
+  for (const { mapped } of mappedChanges) {
+    if (mapped.flows.length === 0) continue;
+    for (const owner of mapped.owners) {
+      const flows = changedFlowsByOwner.get(owner) ?? new Set();
+      for (const flow of mapped.flows) flows.add(flow);
+      changedFlowsByOwner.set(owner, flows);
+    }
+  }
+
+  console.log(`\n변경 파일 영향 지도${baseRef ? ` (${baseRef}...HEAD + 작업 트리)` : " (작업 트리)"}`);
+  for (const change of mappedChanges) {
+    const { filePath, current, previous, mapped } = change;
+    const contextualFlows = change.deleted && mapped.flows.length === 0
+      ? [...new Set(mapped.owners.flatMap((owner) => [...(changedFlowsByOwner.get(owner) ?? [])]))]
+      : [];
+    if (contextualFlows.length > 0) mapped.flows.push(...contextualFlows);
     const labels = [
       ...current.owners,
       ...current.flows.map((flow) => `flow:${flow}`),
       ...previous.owners.map((owner) => `이전 소유:${owner}`),
       ...previous.flows.map((flow) => `이전 flow:${flow}`),
-      ...(deleted.has(filePath) ? ["삭제·이동 전 경로"] : []),
+      ...contextualFlows.map((flow) => `관련 변경 flow:${flow}`),
+      ...(change.deleted ? ["삭제·이동 전 경로"] : []),
     ];
     console.log(`- ${filePath}: ${labels.length > 0 ? labels.join(", ") : "지도 밖"}`);
     const mustMap = /^(src|supabase\/migrations)\//.test(filePath);

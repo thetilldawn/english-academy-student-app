@@ -2,15 +2,16 @@
 
 ## 먼저 출력할 기능 흐름
 
-- 공통 작업공간·학생 선택: `npm run map:flow -- assignment-workspace-load`
+- 공통 작업공간 초기 자료: `npm run map:flow -- assignment-workspace-load`
+- 공통 학생 찾기·선택: `npm run map:flow -- assignment-workspace-selection`
 - 일반 단일·일괄 범위 배정: `npm run map:flow -- assignment-range-create`
 - 요일별 범위·단어 수: `npm run map:flow -- weekday-unit-allocation`
 - 독립 오답 시험: `npm run map:flow -- assignment-direct-review-create`
 - 기존 시험 수정: `npm run map:flow -- assignment-edit`
 - 완료 뒤 이어지는 배정: `npm run map:flow -- assignment-series`
 
-위 목록은 업무 흐름 6개 중 배정 기능이 참여하는 5개와 공통 작업공간 흐름 1개다. 학생 시험 진행은
-`student-quiz-attempt`가 별도로 소유한다. 초기 자료·학생 필터를 고칠 때는 공통 작업공간 흐름을 먼저 보고,
+위 목록은 업무 흐름 6개 중 배정 기능이 참여하는 5개와 공통 작업공간 흐름 2개다. 학생 시험 진행은
+`student-quiz-attempt`가 별도로 소유한다. 초기 자료와 학생 필터·선택은 서로 다른 공통 흐름을 먼저 보고,
 범위·요일·오답의 실제 저장 규칙과 한 흐름으로 섞지 않는다.
 
 ## 현재 실행 경로
