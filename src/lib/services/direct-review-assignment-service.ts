@@ -25,6 +25,7 @@ export class DirectReviewAssignmentError extends Error {
       | "conflict"
       | "database",
     message = "오답 시험을 배정하지 못했습니다.",
+    public readonly fieldPath?: string,
   ) {
     super(message);
     this.name = "DirectReviewAssignmentError";
@@ -53,7 +54,11 @@ function directReviewRequestSha256(input: DirectReviewAssignmentInput) {
 }
 
 function mapPreparationError(error: DirectReviewPreparationError) {
-  return new DirectReviewAssignmentError(error.reason, error.message);
+  return new DirectReviewAssignmentError(
+    error.reason,
+    error.message,
+    error.fieldPath,
+  );
 }
 
 export async function previewDirectReviewAssignment(
@@ -79,8 +84,11 @@ export async function previewDirectReviewAssignment(
 export async function createDirectReviewAssignment(
   input: DirectReviewAssignmentInput,
   authenticatedAdmin?: AdminContext,
+  options?: { commandNowMilliseconds?: number },
 ): Promise<string> {
   const admin = authenticatedAdmin ?? await requireAdmin();
+  const commandNowMilliseconds =
+    options?.commandNowMilliseconds ?? Date.now();
 
   const supabase = await createServerSupabaseClient();
   const requestSha256 = directReviewRequestSha256(input);
@@ -115,6 +123,7 @@ export async function createDirectReviewAssignment(
       input,
       admin,
       supabase,
+      { nowMilliseconds: commandNowMilliseconds },
     );
   } catch (error) {
     if (error instanceof DirectReviewPreparationError) {
@@ -166,6 +175,8 @@ export async function createDirectReviewAssignment(
       message: error.message,
       hint: error.hint ?? null,
     });
+    const deadlineFailure = error.code === "22023" &&
+      error.message.includes("assignment_deadline");
     const reason = isAssignmentPersistenceInvariantFailure(error)
       ? "database"
       : error.code === "42501"
@@ -175,7 +186,13 @@ export async function createDirectReviewAssignment(
           : ["22023", "P0002", "23503", "23505"].includes(error.code)
             ? "invalid_selection"
             : "database";
-    throw new DirectReviewAssignmentError(reason);
+    throw new DirectReviewAssignmentError(
+      reason,
+      deadlineFailure
+        ? "응시 마감 시간은 현재보다 뒤로 정해 주세요."
+        : undefined,
+      deadlineFailure ? "deadline" : undefined,
+    );
   }
   if (!z.uuid().safeParse(data).success) {
     throw new DirectReviewAssignmentError("database");

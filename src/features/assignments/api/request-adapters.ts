@@ -62,6 +62,11 @@ export type DirectReviewPreviewRequest = {
   body: DirectReviewPreviewInput;
 };
 
+export type DirectReviewSummariesRequest = {
+  endpoint: `/api/admin/students/${string}/direct-review-summaries`;
+  method: "GET";
+};
+
 export type AssignmentCapacityRequest = {
   endpoint:
     | "/api/admin/assignment-capacity"
@@ -103,6 +108,7 @@ export type AssignmentHttpRequest =
   | MixedAssignmentRequest
   | DirectReviewAssignmentRequest
   | DirectReviewPreviewRequest
+  | DirectReviewSummariesRequest
   | AssignmentEditDraftRequest
   | AssignmentCapacityRequest
   | AssignmentReplacementRequest
@@ -116,6 +122,15 @@ export function buildAssignmentEditDraftRequest(
 ): AssignmentEditDraftRequest {
   return {
     endpoint: `/api/admin/assignments/${assignmentId}/students/${studentId}`,
+    method: "GET",
+  };
+}
+
+export function buildDirectReviewSummariesRequest(
+  studentId: string,
+): DirectReviewSummariesRequest {
+  return {
+    endpoint: `/api/admin/students/${studentId}/direct-review-summaries`,
     method: "GET",
   };
 }
@@ -147,6 +162,20 @@ export function buildDirectReviewAssignmentRequest(
   };
 }
 
+export function directReviewSubmissionFingerprint(
+  draft: DirectReviewAssignmentDraft,
+): string {
+  const payload = buildDirectReviewAssignmentRequest(
+    draft,
+    "fingerprint-only",
+  ).body;
+  return assignmentRequestFingerprint({
+    ...payload,
+    idempotencyKey: undefined,
+    reviewLevels: [...payload.reviewLevels].toSorted(),
+  });
+}
+
 export function buildDirectReviewPreviewRequest(
   input: {
     studentId: string;
@@ -165,6 +194,16 @@ export function buildDirectReviewPreviewRequest(
       englishToKoreanRatio: input.directionRatio,
     },
   };
+}
+
+export function directReviewPreviewFingerprint(
+  input: Parameters<typeof buildDirectReviewPreviewRequest>[0],
+): string {
+  const request = buildDirectReviewPreviewRequest(input);
+  return assignmentRequestFingerprint({
+    ...request.body,
+    reviewLevels: [...request.body.reviewLevels].toSorted(),
+  });
 }
 
 function examSettingsToApi(exam: ExamSettings) {

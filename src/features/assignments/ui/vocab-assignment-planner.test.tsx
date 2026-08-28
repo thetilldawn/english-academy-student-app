@@ -44,7 +44,14 @@ vi.mock("../controller/use-direct-review-assignment-controller", () => ({
 }));
 
 vi.mock("./direct-review-assignment-sections", () => ({
-  DirectReviewAssignmentSections: () => <div>오답 배정 내용</div>,
+  DirectReviewAssignmentSections: () => (
+    <div data-field-key="deadline">
+      <label>
+        마감 입력
+        <input />
+      </label>
+    </div>
+  ),
 }));
 
 vi.mock("./vocab-range-assignment-sections", () => ({
@@ -117,6 +124,17 @@ describe("오답 단일 배정 제출", () => {
       configurable: true,
       value() {
         this.removeAttribute("open");
+      },
+    });
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: vi.fn(),
+    });
+    Object.defineProperty(window, "requestAnimationFrame", {
+      configurable: true,
+      value(callback: FrameRequestCallback) {
+        callback(0);
+        return 1;
       },
     });
   });
@@ -198,6 +216,64 @@ describe("오답 단일 배정 제출", () => {
     expect(onSuccess).toHaveBeenCalledWith(1, 1, 0);
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(mocks.toastError).not.toHaveBeenCalled();
+  });
+
+  it("제출 중 새로 확인된 마감 오류 입력으로 이동한다", async () => {
+    mocks.reviewSubmit.mockResolvedValue({
+      fieldKey: "deadline",
+      message: "응시 마감 시간은 현재보다 뒤로 정해 주세요.",
+      ok: false,
+    });
+    mocks.useReview.mockReturnValue(reviewController("ready", true));
+
+    render(
+      <VocabAssignmentPlanner
+        data={data}
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+        selectionMode="single"
+        students={[student]}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "오답 시험" }));
+    fireEvent.click(screen.getByRole("button", { name: "배정하기" }));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("마감 입력")).toHaveFocus();
+    });
+    expect(mocks.toastError).toHaveBeenCalledWith(
+      "응시 마감 시간은 현재보다 뒤로 정해 주세요.",
+    );
+  });
+
+  it("입력 위치가 없는 서버 오류는 오래된 입력으로 이동하지 않는다", async () => {
+    mocks.reviewSubmit.mockResolvedValue({
+      message: "잠시 후 다시 시도해 주세요.",
+      ok: false,
+    });
+    mocks.useReview.mockReturnValue({
+      ...reviewController("ready", true),
+      firstFieldKey: "deadline",
+    });
+
+    render(
+      <VocabAssignmentPlanner
+        data={data}
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+        selectionMode="single"
+        students={[student]}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "오답 시험" }));
+    fireEvent.click(screen.getByRole("button", { name: "배정하기" }));
+
+    await waitFor(() => {
+      expect(mocks.toastError).toHaveBeenCalledWith(
+        "잠시 후 다시 시도해 주세요.",
+      );
+    });
+    expect(screen.getByLabelText("마감 입력")).not.toHaveFocus();
   });
 
   it("필수 조건이 비어 있으면 첫 클릭으로 오류를 확인할 수 있다", () => {

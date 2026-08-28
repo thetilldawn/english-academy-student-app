@@ -2,13 +2,17 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import type { DirectReviewPreviewInput } from "@/lib/admin/direct-review-assignment-request";
+import type {
+  DirectReviewAssignmentInput,
+  DirectReviewPreviewInput,
+} from "@/lib/admin/direct-review-assignment-request";
 import type { DirectReviewCandidate } from "@/lib/admin/direct-review-candidate";
 import type { EligibleVocabularyEntry } from "@/lib/quiz/eligible-vocabulary";
 
 import {
   buildDirectReviewSelection,
   DirectReviewPreparationError,
+  prepareDirectReviewAssignmentBatch,
   validateDirectReviewSelectionCount,
 } from "./direct-review-preparation-service";
 
@@ -167,5 +171,36 @@ describe("buildDirectReviewSelection", () => {
       validateDirectReviewSelectionCount(2, selection));
     expect(() => validateDirectReviewSelectionCount(1, selection))
       .not.toThrow();
+  });
+});
+
+describe("prepareDirectReviewAssignmentBatch", () => {
+  it("명령에서 확정한 시각으로 지난 마감을 조회 전에 거부한다", async () => {
+    const assignmentInput: DirectReviewAssignmentInput = {
+      ...input,
+      availableUntil: "2026-08-28T03:00:00.000Z",
+      idempotencyKey: "33333333-3333-4333-8333-333333333333",
+      passingScore: 80,
+      questionOrderMode: "random",
+      questionTimeLimitSeconds: null,
+      retryEnabled: true,
+      retryPassingScore: 80,
+      timeLimitSeconds: 300,
+      timingMode: "total",
+      title: "오답 시험",
+      totalQuestionCount: 1,
+    };
+
+    await expect(
+      prepareDirectReviewAssignmentBatch(
+        assignmentInput,
+        undefined,
+        undefined,
+        { nowMilliseconds: Date.parse("2026-08-28T03:00:00.000Z") },
+      ),
+    ).rejects.toMatchObject({
+      fieldPath: "deadline",
+      reason: "invalid_selection",
+    });
   });
 });

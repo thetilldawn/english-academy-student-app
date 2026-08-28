@@ -18,9 +18,12 @@ export async function POST(request: Request) {
 
   const input = await parseJson(request, directReviewAssignmentSchema);
   if (!input) return jsonError("오답 시험 조건을 확인해 주세요.", 400);
+  const commandNowMilliseconds = Date.now();
 
   try {
-    const assignmentId = await createDirectReviewAssignment(input, admin);
+    const assignmentId = await createDirectReviewAssignment(input, admin, {
+      commandNowMilliseconds,
+    });
     return Response.json(
       { assignmentId },
       {
@@ -37,7 +40,9 @@ export async function POST(request: Request) {
         return jsonError(error.message, 409);
       }
       if (error.reason === "invalid_selection") {
-        return jsonError(error.message, 422);
+        return jsonError(error.message, 422, {
+          fieldPath: error.fieldPath,
+        });
       }
     }
     return jsonError(

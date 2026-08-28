@@ -46,6 +46,7 @@ export class DirectReviewPreparationError extends Error {
       | "conflict"
       | "database",
     message = "오답 시험 후보를 준비하지 못했습니다.",
+    public readonly fieldPath?: string,
   ) {
     super(message);
     this.name = "DirectReviewPreparationError";
@@ -264,14 +265,17 @@ export async function prepareDirectReviewAssignmentBatch(
   input: DirectReviewAssignmentInput,
   authenticatedAdmin?: AdminContext,
   client?: ServerSupabaseClient,
+  options?: { nowMilliseconds?: number },
 ) {
+  const nowMilliseconds = options?.nowMilliseconds ?? Date.now();
   if (
     input.availableUntil &&
-    Date.parse(input.availableUntil) <= Date.now()
+    Date.parse(input.availableUntil) <= nowMilliseconds
   ) {
     throw new DirectReviewPreparationError(
       "invalid_selection",
       "응시 마감 시간은 현재보다 뒤로 정해 주세요.",
+      "deadline",
     );
   }
   const { dataset, selection, supabase } = await loadDirectReviewSelection(

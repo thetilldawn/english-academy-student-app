@@ -9,6 +9,7 @@ import {
   type AssignmentDraft,
   type BulkReviewPolicy,
   type BulkSeriesAssignmentDraft,
+  type DirectReviewAssignmentDraft,
   type ExamSettings,
   type LegacyReviewRecoveryDraft,
   type ResolvedSingleAssignment,
@@ -196,6 +197,49 @@ function validateExamSettings(
       message: "문제당 시간은 5초부터 600초까지 설정해 주세요.",
     });
   }
+}
+
+export function validateDirectReviewAssignmentSubmission(
+  draft: DirectReviewAssignmentDraft,
+  wrongEligible: number,
+  nowMilliseconds: number,
+): readonly AssignmentDraftIssue[] {
+  const issues: AssignmentDraftIssue[] = [];
+  validateId(draft.studentId, "studentId", issues);
+  validateId(draft.datasetId, "datasetId", issues);
+  validateReviewLevels(
+    { mode: "pending", levels: draft.reviewLevels },
+    issues,
+    "reviewLevels",
+  );
+  validateExamSettings(draft.exam, issues);
+
+  if (!integerInRange(draft.questionCount, 1, 400)) {
+    issues.push({
+      code: "out_of_range",
+      path: "questionCount",
+      message:
+        draft.questionCount < 1
+          ? "배정할 오답이 없습니다."
+          : "오답 시험은 400개까지 배정할 수 있습니다.",
+    });
+  } else if (draft.questionCount !== wrongEligible) {
+    issues.push({
+      code: "invalid_order",
+      path: "questionCount",
+      message: "오답 목록이 바뀌었습니다. 단어 수를 다시 확인해 주세요.",
+    });
+  }
+
+  const deadline = deadlineIso(draft.deadline, "deadline", issues);
+  if (deadline && Date.parse(deadline) <= nowMilliseconds) {
+    issues.push({
+      code: "invalid_datetime",
+      path: "deadline",
+      message: "응시 마감은 현재보다 뒤로 정해 주세요.",
+    });
+  }
+  return issues;
 }
 
 function validateSingleIdentity(

@@ -9,8 +9,10 @@ const mocks = vi.hoisted(() => {
         | "invalid_selection"
         | "conflict"
         | "database",
+      message = "direct review preparation error",
+      public readonly fieldPath?: string,
     ) {
-      super("direct review preparation error");
+      super(message);
     }
   }
 
@@ -126,20 +128,42 @@ describe("createDirectReviewAssignment", () => {
     expect(mocks.prepare).not.toHaveBeenCalled();
   });
 
+  it("완료 응답 재시도는 마감이 지난 뒤에도 기존 결과를 먼저 돌려준다", async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: ids.assignment,
+      error: null,
+    });
+    mocks.createServerSupabaseClient.mockResolvedValue({ rpc });
+    const expiredInput = {
+      ...input,
+      availableUntil: "2026-08-28T03:00:00.000Z",
+    };
+
+    await expect(
+      createDirectReviewAssignment(expiredInput, admin, {
+        commandNowMilliseconds: Date.parse("2026-08-28T03:01:00.000Z"),
+      }),
+    ).resolves.toBe(ids.assignment);
+
+    expect(mocks.prepare).not.toHaveBeenCalled();
+  });
+
   it("현재 후보를 다시 준비한 뒤 같은 해시와 출처로 원자 저장한다", async () => {
     const rpc = vi.fn()
       .mockResolvedValueOnce({ data: null, error: null })
       .mockResolvedValueOnce({ data: ids.assignment, error: null });
     mocks.createServerSupabaseClient.mockResolvedValue({ rpc });
 
-    await expect(createDirectReviewAssignment(input, admin)).resolves.toBe(
-      ids.assignment,
-    );
+    const commandNowMilliseconds = Date.parse("2026-08-28T02:00:00.000Z");
+    await expect(
+      createDirectReviewAssignment(input, admin, { commandNowMilliseconds }),
+    ).resolves.toBe(ids.assignment);
 
     expect(mocks.prepare).toHaveBeenCalledWith(
       input,
       admin,
       expect.objectContaining({ rpc }),
+      { nowMilliseconds: commandNowMilliseconds },
     );
     const lookupArgs = rpc.mock.calls[0]?.[1] as Record<string, unknown>;
     const createArgs = rpc.mock.calls[1]?.[1] as Record<string, unknown>;
@@ -185,6 +209,30 @@ describe("createDirectReviewAssignment", () => {
 
     await expect(createDirectReviewAssignment(input, admin)).rejects.toEqual(
       expect.objectContaining({ reason: "forbidden" }),
+    );
+  });
+
+  it.each([
+    "assignment_deadline_must_be_future",
+    "assignment_deadline_elapsed_during_review_creation",
+  ])("DB 마감 오류 %s를 deadline 입력 오류로 보존한다", async (message) => {
+    const rpc = vi.fn()
+      .mockResolvedValueOnce({ data: null, error: null })
+      .mockResolvedValueOnce({
+        data: null,
+        error: {
+          code: "22023",
+          message,
+        },
+      });
+    mocks.createServerSupabaseClient.mockResolvedValue({ rpc });
+
+    await expect(createDirectReviewAssignment(input, admin)).rejects.toEqual(
+      expect.objectContaining({
+        fieldPath: "deadline",
+        message: "응시 마감 시간은 현재보다 뒤로 정해 주세요.",
+        reason: "invalid_selection",
+      }),
     );
   });
 });

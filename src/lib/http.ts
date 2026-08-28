@@ -1,7 +1,11 @@
 import { z } from "zod";
 
-export function jsonError(message: string, status: number) {
-  return Response.json({ error: message }, { status });
+export function jsonError(
+  message: string,
+  status: number,
+  details: { code?: string; fieldPath?: string } = {},
+) {
+  return Response.json({ error: message, ...details }, { status });
 }
 
 export async function parseJson<T extends z.ZodType>(

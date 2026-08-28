@@ -6168,7 +6168,80 @@ describe.sequential("assignment retry rules", () => {
         request_count: 0,
       });
       await directReviewDatabase.exec("set role authenticated;");
-      const createDirectReview = () => directReviewDatabase.query<{
+
+      const expiredRequestKey = "00000000-0000-4000-8000-000000000889";
+      await expectPostgresError(
+        directReviewDatabase.query(
+          `select public.create_current_wrong_review_assignment_v1(
+            $1::uuid,
+            $2::uuid,
+            array[1]::smallint[],
+            array[$3::uuid],
+            $4::uuid,
+            $5::text,
+            'Expired current wrong direct review',
+            100::smallint,
+            300,
+            80::smallint,
+            true,
+            80::smallint,
+            'fixed',
+            '2000-01-01T00:00:00Z'::timestamptz,
+            'total',
+            null,
+            $6::jsonb
+          )`,
+          [
+            ids.student,
+            ids.dataset,
+            selectedCandidate.source_question_id,
+            expiredRequestKey,
+            "6".repeat(64),
+            directQuestion,
+          ],
+        ),
+        "22023",
+        "assignment_deadline_must_be_future",
+      );
+      await directReviewDatabase.exec("reset role;");
+      const expiredRollback = await directReviewDatabase.query<{
+        assignment_count: number;
+        audit_count: number;
+        queue_count: number;
+        request_count: number;
+      }>(`
+        select
+          (
+            select count(*)::integer
+            from public.assignments
+            where title = 'Expired current wrong direct review'
+          ) as assignment_count,
+          (
+            select count(*)::integer
+            from public.audit_events
+            where event_type = 'assignment.current_wrong_review_v1_created'
+          ) as audit_count,
+          (
+            select count(*)::integer
+            from public.student_vocab_review_queue
+            where student_id = '${ids.student}'
+          ) as queue_count,
+          (
+            select count(*)::integer
+            from private.current_wrong_review_assignment_requests
+            where idempotency_key = '${expiredRequestKey}'
+          ) as request_count;
+      `);
+      expect(expiredRollback.rows[0]).toEqual({
+        assignment_count: 0,
+        audit_count: 0,
+        queue_count: 0,
+        request_count: 0,
+      });
+      await directReviewDatabase.exec("set role authenticated;");
+
+      const createDirectReview = (availableUntil: string | null = null) =>
+        directReviewDatabase.query<{
         assignment_id: string;
       }>(
         `select public.create_current_wrong_review_assignment_v1(
@@ -6183,10 +6256,10 @@ describe.sequential("assignment retry rules", () => {
           300,
           80::smallint,
           true,
-          80::smallint,
-          'fixed',
-          null,
-          'total',
+            80::smallint,
+            'fixed',
+            $7::timestamptz,
+            'total',
           null,
           $6::jsonb
         ) as assignment_id`,
@@ -6197,11 +6270,18 @@ describe.sequential("assignment retry rules", () => {
           requestKey,
           requestHash,
           directQuestion,
+          availableUntil,
         ],
       );
       const firstCreation = await createDirectReview();
       const replayedCreation = await createDirectReview();
       expect(replayedCreation.rows[0]?.assignment_id).toBe(
+        firstCreation.rows[0]?.assignment_id,
+      );
+      const replayedAfterDeadline = await createDirectReview(
+        "2000-01-01T00:00:00.000Z",
+      );
+      expect(replayedAfterDeadline.rows[0]?.assignment_id).toBe(
         firstCreation.rows[0]?.assignment_id,
       );
       await expectPostgresError(

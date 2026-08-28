@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => {
   class MockDirectReviewAssignmentError extends Error {
@@ -9,8 +9,10 @@ const mocks = vi.hoisted(() => {
         | "unavailable"
         | "invalid_selection"
         | "database",
+      message = "direct review assignment error",
+      public readonly fieldPath?: string,
     ) {
-      super("direct review assignment error");
+      super(message);
     }
   }
 
@@ -59,6 +61,10 @@ function request(body: unknown) {
 }
 
 describe("POST /api/admin/exact-review-assignments", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getAdminContext.mockResolvedValue({ userId: "admin-id" });
@@ -68,13 +74,17 @@ describe("POST /api/admin/exact-review-assignments", () => {
   });
 
   it("오답 1개를 서비스에 전달하고 201로 반환한다", async () => {
+    const commandNowMilliseconds = Date.parse("2026-08-28T04:05:06.000Z");
+    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(commandNowMilliseconds);
     const response = await POST(request(validInput));
 
     expect(response.status).toBe(201);
     expect(mocks.createDirectReviewAssignment).toHaveBeenCalledWith(
       validInput,
       { userId: "admin-id" },
+      { commandNowMilliseconds },
     );
+    expect(nowSpy).toHaveBeenCalledTimes(1);
   });
 
   it("오답 0개는 서비스 호출 전에 차단한다", async () => {
@@ -108,5 +118,23 @@ describe("POST /api/admin/exact-review-assignments", () => {
     const response = await POST(request(validInput));
 
     expect(response.status).toBe(409);
+  });
+
+  it("서버 도착 중 지난 마감은 deadline 입력 오류로 반환한다", async () => {
+    mocks.createDirectReviewAssignment.mockRejectedValue(
+      new mocks.DirectReviewAssignmentError(
+        "invalid_selection",
+        "응시 마감 시간은 현재보다 뒤로 정해 주세요.",
+        "deadline",
+      ),
+    );
+
+    const response = await POST(request(validInput));
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toEqual({
+      error: "응시 마감 시간은 현재보다 뒤로 정해 주세요.",
+      fieldPath: "deadline",
+    });
   });
 });

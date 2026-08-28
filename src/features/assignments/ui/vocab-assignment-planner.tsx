@@ -111,10 +111,12 @@ export function VocabAssignmentPlanner({
     onClose();
   }
 
-  function focusFirstInvalidField() {
-    const key = assignmentPurpose === "range"
-      ? controller.firstFieldKey
-      : reviewController.firstFieldKey;
+  function focusFirstInvalidField(requestedKey?: string | null) {
+    const key = requestedKey === undefined
+      ? assignmentPurpose === "range"
+        ? controller.firstFieldKey
+        : reviewController.firstFieldKey
+      : requestedKey;
     if (!key) return;
     window.requestAnimationFrame(() => {
       const target = formRef.current?.querySelector<HTMLElement>(
@@ -142,7 +144,15 @@ export function VocabAssignmentPlanner({
       : await reviewController.actions.submit();
     if (!outcome.ok) {
       toast.error(outcome.message);
-      focusFirstInvalidField();
+      if (assignmentPurpose === "review") {
+        focusFirstInvalidField(
+          "fieldKey" in outcome && typeof outcome.fieldKey === "string"
+            ? outcome.fieldKey
+            : null,
+        );
+      } else {
+        focusFirstInvalidField();
+      }
       return;
     }
     if (assignmentPurpose === "range") {

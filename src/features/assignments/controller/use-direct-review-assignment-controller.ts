@@ -1,27 +1,37 @@
 "use client";
 
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
-
-import { koreanDateTimeLocalToIso } from "@/lib/deadline";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 
 import {
-  buildDirectReviewAssignmentRequest,
-  buildDirectReviewPreviewRequest,
-} from "../api/request-adapters";
-import {
-  parseAssignmentCreationResponse,
   parseDirectReviewDatasetSummariesResponse,
-  parseDirectReviewPreviewResponse,
   type DirectReviewDatasetSummariesResponse,
   type DirectReviewPreviewResponse,
 } from "../api/response-adapters";
+import { buildDirectReviewSummariesRequest } from "../api/request-adapters";
+import {
+  prepareDirectReviewPreview,
+  prepareDirectReviewSubmission,
+} from "../application/direct-review-flow-adapter";
+import type { AssignmentOperationError } from "../application/assignment-operation-error";
+import { executeAssignmentRequest } from "../application/execute-assignment-request";
+import type { AssignmentRequestIdentity } from "../application/request-lifecycle";
+import {
+  createAssignmentSubmissionFlow,
+  createAssignmentSubmissionSession,
+} from "../application/submission-flow";
 import type {
   AssignmentDatasetItem,
   AssignmentStudentItem,
 } from "../catalog-types";
 import {
   createInitialDirectReviewDraft,
-  directReviewQuestionCountError,
   reduceDirectReviewDraft,
   type DirectReviewDraftAction,
 } from "../domain/direct-review-draft";
@@ -33,10 +43,13 @@ import type {
   ReviewLevel,
 } from "../domain/model";
 import {
-  assignmentTransportError,
+  validateDirectReviewAssignmentSubmission,
+} from "../domain/validation";
+import {
   browserAssignmentTransport,
   type AssignmentTransport,
 } from "../transport/assignment-transport";
+import { useDebouncedAssignmentPreview } from "./use-debounced-assignment-preview";
 
 export type DirectReviewFieldKey =
   | "dataset"
@@ -82,31 +95,51 @@ function preferredDatasetId(
   return datasets[0]?.id ?? "";
 }
 
-function timingError(timing: ExamTiming) {
-  if (timing.mode === "total") {
-    return Number.isInteger(timing.totalSeconds) &&
-        timing.totalSeconds >= 30 &&
-        timing.totalSeconds <= 10800
-      ? ""
-      : "시간 확인";
-  }
-  return Number.isInteger(timing.perQuestionSeconds) &&
-      timing.perQuestionSeconds >= 5 &&
-      timing.perQuestionSeconds <= 600
-    ? ""
-    : "시간 확인";
+function directReviewFieldKey(path: string): DirectReviewFieldKey | null {
+  if (path === "datasetId") return "dataset";
+  if (path === "reviewLevels") return "reviewLevels";
+  if (path === "questionCount") return "questionCount";
+  if (path === "exam.directionRatio") return "direction";
+  if (path === "exam.questionOrderMode") return "questionOrder";
+  if (path === "exam.passingScore") return "passingScore";
+  if (path === "exam.retryPassingScore") return "retryPassingScore";
+  if (path.startsWith("exam.timing")) return "timing";
+  if (path === "deadline") return "deadline";
+  return null;
 }
+
+function directReviewFieldErrorLabel(key: DirectReviewFieldKey): string {
+  const labels: Record<DirectReviewFieldKey, string> = {
+    dataset: "단어장 선택",
+    reviewLevels: "횟수 선택",
+    questionCount: "단어 수 확인",
+    direction: "방향 확인",
+    questionOrder: "순서 확인",
+    passingScore: "점수 확인",
+    retryPassingScore: "점수 확인",
+    timing: "시간 확인",
+    deadline: "마감 확인",
+    preview: "계산 확인",
+  };
+  return labels[key];
+}
+
+const systemClock = () => Date.now();
 
 export function useDirectReviewAssignmentController({
   datasets,
   enabled = true,
   initialDatasetId,
   student,
+  clock = systemClock,
+  previewDelayMs = 160,
   transport = browserAssignmentTransport,
 }: {
+  clock?: () => number;
   datasets: readonly AssignmentDatasetItem[];
   enabled?: boolean;
   initialDatasetId: string;
+  previewDelayMs?: number;
   student: AssignmentStudentItem;
   transport?: AssignmentTransport;
 }) {
@@ -160,16 +193,33 @@ export function useDirectReviewAssignmentController({
     };
   }, [draft.datasetId, summaryByDatasetId]);
   const [submission, setSubmission] = useState({
-    status: "idle" as "idle" | "submitting" | "error",
+    status: "idle" as "idle" | "submitting" | "succeeded" | "error",
     message: "",
   });
   const [userEdited, setUserEdited] = useState(false);
-  const [openedAt] = useState(() => Date.now());
-  const submittingRef = useRef(false);
-  const idempotencyRef = useRef<{
-    fingerprint: string;
-    key: string;
+  const [submissionIssue, setSubmissionIssue] = useState<{
+    fieldPath: string;
+    message: string;
   } | null>(null);
+  const [nowMilliseconds, setNowMilliseconds] = useState(() => clock());
+  const [previewRevision, setPreviewRevision] = useState(0);
+  const [sourceRefreshVersion, setSourceRefreshVersion] = useState(0);
+  const [submissionSession] = useState(createAssignmentSubmissionSession);
+  const interactionLockedRef = useRef(false);
+  const previewRecoveryFingerprintRef = useRef<string | null>(null);
+  const submissionFlow = useMemo(
+    () =>
+      createAssignmentSubmissionFlow({
+        busyMessage: "오답 시험을 배정하고 있습니다.",
+        clock,
+        createIdempotencyKey: () => crypto.randomUUID(),
+        createRequestId: () => crypto.randomUUID(),
+        fallback: "오답 시험을 배정하지 못했습니다.",
+        session: submissionSession,
+        transport,
+      }),
+    [clock, submissionSession, transport],
+  );
   const calculationPrerequisitesReady = enabled &&
     summary.status === "ready" &&
     Boolean(draft.datasetId) &&
@@ -182,6 +232,12 @@ export function useDirectReviewAssignmentController({
   );
 
   useEffect(() => {
+    const updateNow = () => setNowMilliseconds(clock());
+    const intervalId = window.setInterval(updateNow, 60_000);
+    return () => window.clearInterval(intervalId);
+  }, [clock]);
+
+  useEffect(() => {
     if (!enabled) return;
     const abortController = new AbortController();
     void (async () => {
@@ -189,33 +245,34 @@ export function useDirectReviewAssignmentController({
       if (abortController.signal.aborted) return;
       setCapacity({ status: "idle", value: null, message: "" });
       setSummary({ status: "loading", value: [], message: "" });
-      try {
-        const response = await transport({
+      const request = buildDirectReviewSummariesRequest(student.id);
+      const result = await executeAssignmentRequest({
+        fallback: "현재 오답 단어 수를 불러오지 못했습니다.",
+        parse: parseDirectReviewDatasetSummariesResponse,
+        request: {
+          method: request.method,
           signal: abortController.signal,
-          url: `/api/admin/students/${student.id}/direct-review-summaries`,
+          url: request.endpoint,
+        },
+        transport,
+      });
+      if (abortController.signal.aborted) return;
+      if (result.ok) {
+        setSummary({
+          status: "ready",
+          value: result.value.summaries,
+          message: "",
         });
-        if (!response.ok) {
-          throw new Error(assignmentTransportError(
-            response.data,
-            "현재 오답 단어 수를 불러오지 못했습니다.",
-          ));
-        }
-        const value = parseDirectReviewDatasetSummariesResponse(response.data);
-        if (abortController.signal.aborted) return;
-        setSummary({ status: "ready", value: value.summaries, message: "" });
-      } catch (error) {
-        if (abortController.signal.aborted) return;
+      } else if (result.error.kind !== "aborted") {
         setSummary({
           status: "error",
           value: [],
-          message: error instanceof Error && error.message
-            ? error.message
-            : "현재 오답 단어 수를 불러오지 못했습니다.",
+          message: result.error.message,
         });
       }
     })();
     return () => abortController.abort();
-  }, [enabled, student.id, transport]);
+  }, [enabled, sourceRefreshVersion, student.id, transport]);
 
   useEffect(() => {
     if (!enabled || summary.status !== "ready") return;
@@ -232,6 +289,7 @@ export function useDirectReviewAssignmentController({
       void Promise.resolve().then(() => {
         if (cancelled) return;
         setCapacity({ status: "idle", value: null, message: "" });
+        setPreviewRevision((revision) => revision + 1);
         dispatch({
           type: "dataset_changed",
           datasetId: nextDatasetId,
@@ -251,110 +309,99 @@ export function useDirectReviewAssignmentController({
     summaryByDatasetId,
   ]);
 
-  useEffect(() => {
-    if (!calculationPrerequisitesReady) {
-      return;
-    }
-
-    const abortController = new AbortController();
-    const timer = window.setTimeout(async () => {
-      setCapacity((current) => ({
-        status: "loading",
-        value: current.value,
-        message: "",
-      }));
-      try {
-        const request = buildDirectReviewPreviewRequest({
-          studentId: draft.studentId,
-          datasetId: draft.datasetId,
-          reviewLevels: draft.reviewLevels,
-          directionRatio: draft.exam.directionRatio,
-        });
-        const response = await transport({
-          body: request.body,
-          method: request.method,
-          signal: abortController.signal,
-          url: request.endpoint,
-        });
-        if (!response.ok) {
-          throw new Error(
-            assignmentTransportError(
-              response.data,
-              "오답 단어 수를 계산하지 못했습니다.",
-            ),
-          );
-        }
-        const value = parseDirectReviewPreviewResponse(response.data);
-        if (abortController.signal.aborted) return;
-        setCapacity({ status: "ready", value, message: "" });
-        dispatch({ type: "question_count_resolved", value: value.wrongEligible });
-      } catch (error) {
-        if (abortController.signal.aborted) return;
-        const message =
-          error instanceof Error && error.message
-            ? error.message
-            : "오답 단어 수를 계산하지 못했습니다.";
-        setCapacity({ status: "error", value: null, message });
-        dispatch({ type: "question_count_resolved", value: 0 });
+  const previewPreparation = useMemo(
+    () =>
+      calculationPrerequisitesReady
+        ? prepareDirectReviewPreview({
+            datasetId: draft.datasetId,
+            directionRatio: draft.exam.directionRatio,
+            reviewLevels: draft.reviewLevels,
+            studentId: draft.studentId,
+          })
+        : null,
+    [
+      calculationPrerequisitesReady,
+      draft.datasetId,
+      draft.exam.directionRatio,
+      draft.reviewLevels,
+      draft.studentId,
+    ],
+  );
+  const handlePreviewRequested = useCallback(() => {
+    setCapacity((current) => ({
+      status: "loading",
+      value: current.value,
+      message: "",
+    }));
+  }, []);
+  const handlePreviewSucceeded = useCallback(
+    (value: DirectReviewPreviewResponse) => {
+      previewRecoveryFingerprintRef.current = null;
+      setCapacity({ status: "ready", value, message: "" });
+      dispatch({ type: "question_count_resolved", value: value.wrongEligible });
+    },
+    [],
+  );
+  const handlePreviewFailed = useCallback(
+    (
+      error: AssignmentOperationError,
+      identity: AssignmentRequestIdentity,
+    ) => {
+      if (
+        error.recovery === "refresh_summary_and_preview" &&
+        previewRecoveryFingerprintRef.current !== identity.fingerprint
+      ) {
+        previewRecoveryFingerprintRef.current = identity.fingerprint;
+        setCapacity({ status: "idle", value: null, message: "" });
+        setPreviewRevision((revision) => revision + 1);
+        setSourceRefreshVersion((version) => version + 1);
+        return;
       }
-    }, 160);
-
-    return () => {
-      window.clearTimeout(timer);
-      abortController.abort();
-    };
-  }, [
-    draft.datasetId,
-    draft.exam.directionRatio,
-    draft.reviewLevels,
-    draft.studentId,
-    calculationPrerequisitesReady,
+      setCapacity({ status: "error", value: null, message: error.message });
+      dispatch({ type: "question_count_resolved", value: 0 });
+    },
+    [],
+  );
+  useDebouncedAssignmentPreview({
+    delayMs: previewDelayMs,
+    enabled: calculationPrerequisitesReady,
+    onFailed: handlePreviewFailed,
+    onRequested: handlePreviewRequested,
+    onSucceeded: handlePreviewSucceeded,
+    preparation: previewPreparation,
+    refreshVersion: sourceRefreshVersion,
+    revision: previewRevision,
     transport,
-  ]);
+  });
+
+  const validationIssues = useMemo(
+    () =>
+      validateDirectReviewAssignmentSubmission(
+        draft,
+        capacity.status === "ready"
+          ? capacity.value.wrongEligible
+          : draft.questionCount,
+        nowMilliseconds,
+      ),
+    [capacity, draft, nowMilliseconds],
+  );
 
   const fieldErrors = useMemo(() => {
     const errors: Partial<Record<DirectReviewFieldKey, string>> = {};
-    if (!draft.datasetId) {
-      errors.dataset = "단어장 선택";
+    for (const issue of validationIssues) {
+      const key = directReviewFieldKey(issue.path);
+      if (key && !errors[key]) errors[key] = directReviewFieldErrorLabel(key);
     }
-    if (draft.reviewLevels.length === 0) {
-      errors.reviewLevels = "단계 선택";
+    if (submissionIssue) {
+      const key = directReviewFieldKey(submissionIssue.fieldPath);
+      if (key) errors[key] = directReviewFieldErrorLabel(key);
     }
     if (summary.status === "error" || capacity.status === "error") {
       errors.preview = "계산 확인";
     }
-    if (capacity.status === "ready") {
-      const questionCountError = directReviewQuestionCountError({
-        questionCount: draft.questionCount,
-        wrongEligible: capacity.value.wrongEligible,
-      });
-      if (questionCountError) errors.questionCount = questionCountError;
-    }
-    if (![0, 50, 100].includes(draft.exam.directionRatio)) {
-      errors.direction = "방향 확인";
-    }
-    if (!Number.isInteger(draft.exam.passingScore) ||
-      draft.exam.passingScore < 0 || draft.exam.passingScore > 100) {
-      errors.passingScore = "점수 확인";
-    }
-    if (
-      draft.exam.retryEnabled !== false &&
-      (!Number.isInteger(draft.exam.retryPassingScore) ||
-        (draft.exam.retryPassingScore ?? -1) < 0 ||
-        (draft.exam.retryPassingScore ?? 101) > 100)
-    ) {
-      errors.retryPassingScore = "점수 확인";
-    }
-    if (draft.exam.timeLimitEnabled !== false) {
-      const error = timingError(draft.exam.timing);
-      if (error) errors.timing = error;
-    }
-    if (draft.deadline.mode === "at") {
-      const iso = koreanDateTimeLocalToIso(draft.deadline.koreanLocalDateTime);
-      if (!iso || Date.parse(iso) <= openedAt) errors.deadline = "마감 확인";
-    }
     return errors;
-  }, [capacity, draft, openedAt, summary.status]);
+  }, [capacity.status, submissionIssue, summary.status, validationIssues]);
+
   const firstFieldKey = (
     [
       "dataset",
@@ -374,39 +421,69 @@ export function useDirectReviewAssignmentController({
     summary.status === "ready" &&
     capacity.status === "ready" &&
     Object.keys(fieldErrors).length === 0 &&
-    submission.status !== "submitting";
+    submission.status !== "submitting" &&
+    submission.status !== "succeeded";
 
   function changeDataset(datasetId: string) {
+    if (interactionLockedRef.current) return;
     setUserEdited(true);
+    setSubmission({ status: "idle", message: "" });
+    setSubmissionIssue(null);
     setCapacity({ status: "idle", value: null, message: "" });
+    setPreviewRevision((revision) => revision + 1);
     dispatch({ type: "dataset_changed", datasetId });
   }
 
   function toggleReviewLevel(level: ReviewLevel) {
+    if (interactionLockedRef.current) return;
     const knownCount = level === 1
       ? knownLevelCounts.level1
       : knownLevelCounts.level2;
     if (knownCount === 0) return;
     setUserEdited(true);
+    setSubmission({ status: "idle", message: "" });
+    setSubmissionIssue(null);
     setCapacity({ status: "idle", value: null, message: "" });
+    setPreviewRevision((revision) => revision + 1);
     dispatch({ type: "review_level_toggled", level });
   }
 
   function changeDirection(value: AssignmentDirectionRatio) {
+    if (interactionLockedRef.current) return;
     setUserEdited(true);
+    setSubmission({ status: "idle", message: "" });
+    setSubmissionIssue(null);
     setCapacity({ status: "idle", value: null, message: "" });
+    setPreviewRevision((revision) => revision + 1);
     dispatch({ type: "direction_changed", value });
   }
 
   function dispatchUserAction(action: DirectReviewDraftAction) {
+    if (interactionLockedRef.current) return;
     setUserEdited(true);
+    setSubmission({ status: "idle", message: "" });
+    setSubmissionIssue(null);
     dispatch(action);
   }
 
   async function submit() {
-    if (!canSubmit || submittingRef.current) {
+    if (interactionLockedRef.current) {
       return {
         conflict: false,
+        fieldKey: null,
+        message: "오답 시험을 배정하고 있습니다.",
+        ok: false as const,
+      };
+    }
+    if (
+      !enabled ||
+      submission.status === "succeeded" ||
+      summary.status !== "ready" ||
+      capacity.status !== "ready"
+    ) {
+      return {
+        conflict: false,
+        fieldKey: firstFieldKey,
         message:
           capacity.status === "error"
             ? capacity.message
@@ -414,47 +491,50 @@ export function useDirectReviewAssignmentController({
         ok: false as const,
       };
     }
-    submittingRef.current = true;
+    interactionLockedRef.current = true;
     setSubmission({ status: "submitting", message: "" });
+    setSubmissionIssue(null);
+    let outcome: Awaited<ReturnType<typeof submissionFlow.run>>;
     try {
-      const fingerprint = JSON.stringify(draft);
-      if (idempotencyRef.current?.fingerprint !== fingerprint) {
-        idempotencyRef.current = {
-          fingerprint,
-          key: crypto.randomUUID(),
-        };
-      }
-      const request = buildDirectReviewAssignmentRequest(
-        draft,
-        idempotencyRef.current.key,
+      outcome = await submissionFlow.run((now) =>
+        prepareDirectReviewSubmission(
+          { draft, wrongEligible: capacity.value.wrongEligible },
+          now,
+        )
       );
-      const response = await transport({
-        body: request.body,
-        method: request.method,
-        url: request.endpoint,
-      });
-      if (!response.ok) {
-        const message = assignmentTransportError(
-          response.data,
-          "오답 시험을 배정하지 못했습니다.",
-        );
-        setSubmission({ status: "error", message });
-        return {
-          conflict: response.status === 409,
-          message,
-          ok: false as const,
-        };
-      }
-      const result = parseAssignmentCreationResponse(response.data);
-      setSubmission({ status: "idle", message: "" });
-      return { ok: true as const, result };
-    } catch {
-      const message = "오답 시험을 배정하지 못했습니다.";
-      setSubmission({ status: "error", message });
-      return { conflict: false, message, ok: false as const };
     } finally {
-      submittingRef.current = false;
+      interactionLockedRef.current = false;
     }
+    if (outcome.ok) {
+      setSubmission({ status: "succeeded", message: "" });
+      return { ok: true as const, result: outcome.value };
+    }
+    if (outcome.error.kind === "busy") {
+      return {
+        conflict: false,
+        fieldKey: null,
+        message: outcome.error.message,
+        ok: false as const,
+      };
+    }
+    if (outcome.error.fieldPath) {
+      setSubmissionIssue({
+        fieldPath: outcome.error.fieldPath,
+        message: outcome.error.message,
+      });
+    }
+    setSubmission({ status: "error", message: outcome.error.message });
+    if (outcome.error.recovery === "refresh_summary_and_preview") {
+      setCapacity({ status: "idle", value: null, message: "" });
+      setPreviewRevision((revision) => revision + 1);
+      setSourceRefreshVersion((version) => version + 1);
+    }
+    return {
+      conflict: outcome.error.kind === "conflict",
+      fieldKey: directReviewFieldKey(outcome.error.fieldPath ?? ""),
+      message: outcome.error.message,
+      ok: false as const,
+    };
   }
 
   return {
