@@ -106,6 +106,12 @@ function buildWeekdayDraft(
       splitBasis: "range_unit",
       orderedUnitIds: unitIds,
       rangeUnitCounts,
+      unitAllocationRule: {
+        schemaVersion: 1,
+        mode: "by_weekday",
+        unitsPerSession: 1,
+        weekdayUnitsPerSession,
+      },
       questionCount: { mode: "all" },
       overflowPolicy: "continue_weekly",
       extraDatePolicy: "unconfirmed",

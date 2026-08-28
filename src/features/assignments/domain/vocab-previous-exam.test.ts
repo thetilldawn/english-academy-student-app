@@ -73,6 +73,17 @@ describe("직전 단어 시험 조건", () => {
           availableFrom: "2026-08-12T09:00:00.000Z",
           availableUntil: "2026-08-13T13:00:00.000Z",
           questionOrderMode: "descending",
+          vocabUnitAllocation: {
+            rule: {
+              schemaVersion: 1,
+              mode: "by_weekday",
+              unitsPerSession: 2,
+              weekdayUnitsPerSession: {
+                1: 2, 2: 1, 3: 3, 4: 1, 5: 1, 6: 1, 7: 1,
+              },
+            },
+            overflowPolicy: "continue_weekly",
+          },
         }),
         history({
           assignmentId: "review-newest",
@@ -88,13 +99,22 @@ describe("직전 단어 시험 조건", () => {
       exam: {
         directionRatio: 100,
         passingScore: 85,
-        questionOrderMode: "descending",
+        questionOrderMode: "ascending",
         timing: { mode: "per_question", perQuestionSeconds: 15 },
       },
       scheduleRule: {
         availableTime: "18:00",
         deadlineDayOffset: 1,
         deadlineTime: "22:00",
+      },
+      unitAllocation: {
+        rule: {
+          schemaVersion: 1,
+          mode: "by_weekday",
+          unitsPerSession: 2,
+          weekdayUnitsPerSession: { 1: 2, 3: 3 },
+        },
+        overflowPolicy: "continue_weekly",
       },
     });
   });
@@ -106,5 +126,21 @@ describe("직전 단어 시험 조건", () => {
       history: [history({ availableFrom: null, availableUntil: null })],
     });
     expect(result?.scheduleRule).toBeNull();
+  });
+
+  it("시간 제한이 없는 최근 시험도 복사 후보로 유지한다", () => {
+    const result = selectPreviousVocabExamConditions({
+      datasetId: "dataset-1",
+      studentId: "student-1",
+      history: [history({
+        timingMode: "none",
+        timeLimitSeconds: 0,
+        questionTimeLimitSeconds: null,
+      })],
+    });
+    expect(result?.exam).toMatchObject({
+      timeLimitEnabled: false,
+      timing: { mode: "total", totalSeconds: 300 },
+    });
   });
 });

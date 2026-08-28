@@ -2,6 +2,7 @@ import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 import {
   vocabAssignmentQueueAttentionLabel,
   vocabAssignmentQueueStatusLabel,
+  vocabAssignmentQueueUnitAllocationLabel,
   type VocabAssignmentQueueSummary,
 } from "@/lib/admin/vocab-assignment-queue";
 
@@ -28,6 +29,9 @@ export function AssignmentQueueTags({
   queue: VocabAssignmentQueueSummary;
 }) {
   const attention = vocabAssignmentQueueAttentionLabel(queue.attentionReason);
+  const unitAllocation = vocabAssignmentQueueUnitAllocationLabel(
+    queue.unitAllocation,
+  );
   if (compact) {
     return (
       <span aria-label="배정된 시험 상태" className={styles.compact}>
@@ -35,7 +39,9 @@ export function AssignmentQueueTags({
           {vocabAssignmentQueueStatusLabel(queue.status)}
         </MetaTag>
         <span className={styles.summary}>
-          {queue.datasetLabel} · {queue.rangeLabel} · {queue.remainingSessionCount}회 · {queue.remainingQuestionCount}개 남음
+          {queue.datasetLabel} · {queue.rangeLabel}
+          {unitAllocation ? ` · ${unitAllocation}` : ""}
+          {` · ${queue.remainingSessionCount}회 · ${queue.remainingQuestionCount}개 남음`}
         </span>
         {attention ? (
           <span className={styles.attention}>{attention}</span>
@@ -51,6 +57,7 @@ export function AssignmentQueueTags({
       </MetaTag>
       <MetaTag>{queue.datasetLabel}</MetaTag>
       <MetaTag>{queue.rangeLabel}</MetaTag>
+      {unitAllocation ? <MetaTag>{unitAllocation}</MetaTag> : null}
       <MetaTag>
         전체 {queue.totalSessionCount}회 중 {queue.remainingSessionCount}회 남음
       </MetaTag>

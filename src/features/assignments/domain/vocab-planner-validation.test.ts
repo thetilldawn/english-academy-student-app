@@ -119,4 +119,40 @@ describe("vocab planner field validation", () => {
       "session-1-deadline": "1회차 마감을 확인해 주세요.",
     });
   });
+
+  it("단위 수 1·30은 허용하고 0·31은 같은 필드에서 막는다", () => {
+    const validate = (unitsPerSession: number) =>
+      buildVocabAssignmentFieldErrors(validateVocabPlannerInputs({
+        datasetId: "dataset-a",
+        selectedUnitIds: ["unit-a"],
+        distribution: "split",
+        splitBasis: "range_unit",
+        unitAllocationMode: "same",
+        unitsPerSession,
+        weekdayUnitsPerSession: {
+          1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1,
+        },
+        questionCount: { mode: "all" },
+        overflowPolicy: "leave",
+        selectionMode: "source_order",
+        schedule: {
+          availableTime: "16:00",
+          deadlineDayOffset: 0,
+          deadlineTime: "22:00",
+          startDate: "2026-08-21",
+          weekdays: [1],
+        },
+        scheduleSlots: [{
+          availableLocalDateTime: "2026-08-24T16:00",
+          date: "2026-08-24",
+          deadlineLocalDateTime: "2026-08-24T22:00",
+          sessionNumber: 1,
+        }],
+      })).errors.unitsPerSession;
+
+    expect(validate(1)).toBeUndefined();
+    expect(validate(30)).toBeUndefined();
+    expect(validate(0)).toBe("단위 수는 1개부터 30개까지 입력해 주세요.");
+    expect(validate(31)).toBe("단위 수는 1개부터 30개까지 입력해 주세요.");
+  });
 });

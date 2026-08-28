@@ -1,6 +1,10 @@
 import { isoToKoreanDateTimeLocal } from "@/lib/deadline";
 
 import type { ExamSettings } from "./model";
+import type {
+  VocabSplitOverflowPolicy,
+  VocabUnitAllocationRuleV1,
+} from "./vocab-assignment-contract";
 import { shiftCalendarDate } from "./vocab-schedule";
 
 export type PreviousVocabExamSource = {
@@ -22,6 +26,10 @@ export type PreviousVocabExamSource = {
   studentName: string;
   timeLimitSeconds: number;
   timingMode: "none" | "total" | "per_question";
+  vocabUnitAllocation?: {
+    rule: VocabUnitAllocationRuleV1;
+    overflowPolicy: VocabSplitOverflowPolicy;
+  } | null;
 };
 
 export type PreviousVocabExamConditions = {
@@ -33,6 +41,10 @@ export type PreviousVocabExamConditions = {
     availableTime: string;
     deadlineDayOffset: number;
     deadlineTime: string;
+  } | null;
+  unitAllocation: {
+    rule: VocabUnitAllocationRuleV1;
+    overflowPolicy: VocabSplitOverflowPolicy;
   } | null;
   sourceStudentId: string;
   sourceStudentName: string;
@@ -71,7 +83,9 @@ function toConditions(
 ): PreviousVocabExamConditions | null {
   const ratio = directionRatio(item.englishToKoreanRatio);
   if (ratio === null) return null;
-  const timing = item.timingMode === "per_question"
+  const timing = item.timingMode === "none"
+    ? { mode: "total" as const, totalSeconds: 300 }
+    : item.timingMode === "per_question"
     ? item.questionTimeLimitSeconds
       ? {
           mode: "per_question" as const,
@@ -89,14 +103,14 @@ function toConditions(
     exam: {
       directionRatio: ratio,
       passingScore: item.passingScore,
-      questionOrderMode:
-        item.questionOrderMode === "fixed"
-          ? "ascending"
-          : item.questionOrderMode,
+      questionOrderMode: item.questionOrderMode === "random"
+        ? "random"
+        : "ascending",
       timeLimitEnabled: item.timingMode !== "none",
       timing,
     },
     scheduleRule: scheduleRule(item),
+    unitAllocation: item.vocabUnitAllocation ?? null,
     sourceStudentId: item.studentId,
     sourceStudentName: item.studentName,
   };

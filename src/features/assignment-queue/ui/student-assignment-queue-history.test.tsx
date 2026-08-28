@@ -57,6 +57,7 @@ function queue(seriesId: string, datasetLabel: string, updatedAt: string) {
     studentId: "00000000-0000-4000-8000-000000000020",
     totalQuestionCount: 20,
     totalSessionCount: 1,
+    unitAllocation: null,
     updatedAt,
   } satisfies VocabAssignmentQueueSummary;
 }

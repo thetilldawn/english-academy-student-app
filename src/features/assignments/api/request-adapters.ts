@@ -408,6 +408,14 @@ function bulkSelectionBody(draft: BulkSeriesAssignmentDraft) {
         splitBasis: draft.commonPlan.splitBasis,
         orderedUnitIds: [...draft.commonPlan.orderedUnitIds],
         rangeUnitCounts: [...draft.commonPlan.rangeUnitCounts],
+        unitAllocationRule: draft.commonPlan.unitAllocationRule
+          ? {
+              ...draft.commonPlan.unitAllocationRule,
+              weekdayUnitsPerSession: {
+                ...draft.commonPlan.unitAllocationRule.weekdayUnitsPerSession,
+              },
+            }
+          : null,
         questionCount: draft.commonPlan.questionCount,
         overflowPolicy: draft.commonPlan.overflowPolicy,
         extraDatePolicy: draft.commonPlan.extraDatePolicy,

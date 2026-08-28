@@ -154,7 +154,7 @@ describe("VocabRangePicker", () => {
     );
   });
 
-  it("문항 선택과 직접 입력을 시험 조건으로 분리해 제공한다", () => {
+  it("출제 단어 선택과 직접 입력을 시험 조건으로 분리해 제공한다", () => {
     const withRemaining = controller({
       assignmentMode: "word_count",
       manual: true,
@@ -163,7 +163,8 @@ describe("VocabRangePicker", () => {
     render(
       <VocabRangePicker controller={withRemaining} datasets={[dataset]} />,
     );
-    expect(screen.getByRole("group", { name: "시험 문제 순서" })).toBeVisible();
+    expect(screen.getByRole("group", { name: "출제 단어 선택" }))
+      .toBeVisible();
     expect(screen.getByText("전체 86개 · 배정 40개 · 남음 46개 · 기본 3회"))
       .toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "무작위" }));

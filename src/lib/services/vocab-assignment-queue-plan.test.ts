@@ -31,6 +31,7 @@ function commonPlan() {
       splitBasis: "question_count",
       orderedUnitIds: [assignmentContractIds.day57],
       rangeUnitCounts: [],
+      unitAllocationRule: null,
       questionCount: { mode: "manual", value: 4 },
       overflowPolicy: "leave",
       extraDatePolicy: "unconfirmed",
@@ -51,6 +52,7 @@ describe("vocab assignment queue plan", () => {
   it("keeps session order and converts recurrence slots to Seoul time", () => {
     const payload = buildVocabAssignmentQueueSeriesPayload({
       commonPlan: commonPlan(),
+      previewPlanSignature: assignmentContractIds.previewPlanSignature,
       rangeLabel: "DAY 57",
       previewItems: [{
         studentId: assignmentContractIds.studentA,
@@ -73,6 +75,9 @@ describe("vocab assignment queue plan", () => {
     expect(payload[0]).toMatchObject({
       student_id: assignmentContractIds.studentA,
       range_label: "DAY 57",
+      split_basis: "question_count",
+      allocation_rule: null,
+      resolved_plan_sha256: assignmentContractIds.previewPlanSignature,
       recurrence_slots: [
         { isodow: 1, local_time: "16:00:00", duration_seconds: 86400 },
         { isodow: 3, local_time: "17:30:00", duration_seconds: 86400 },
@@ -81,9 +86,77 @@ describe("vocab assignment queue plan", () => {
     });
   });
 
+  it("keeps the versioned weekday rule beside concrete queue items", () => {
+    const base = commonPlan();
+    const rangePlan = bulkAssignmentSchema.parse({
+      ...bulkSubmitContract,
+      includePendingReview: false,
+      commonPlan: {
+        ...base,
+        splitBasis: "range_unit",
+        orderedUnitIds: [assignmentContractIds.day57, assignmentContractIds.day60],
+        rangeUnitCounts: [1, 1],
+        unitAllocationRule: {
+          schemaVersion: 1,
+          mode: "by_weekday",
+          unitsPerSession: 1,
+          weekdayUnitsPerSession: {
+            1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1,
+          },
+        },
+        questionCount: { mode: "all" },
+        sessions: [
+          { ...base.sessions[0], unitIds: [assignmentContractIds.day57] },
+          { ...base.sessions[1], unitIds: [assignmentContractIds.day60] },
+        ],
+      },
+    }).commonPlan!;
+    const payload = buildVocabAssignmentQueueSeriesPayload({
+      commonPlan: rangePlan,
+      previewPlanSignature: assignmentContractIds.previewPlanSignature,
+      rangeLabel: "DAY 57~60",
+      previewItems: [{
+        studentId: assignmentContractIds.studentA,
+        datasetId: assignmentContractIds.dataset,
+        datasetLabel: "검증 단어장",
+        sessionCount: 2,
+      }],
+      batches: [1, 2].map((sessionNumber) => ({
+        student_id: assignmentContractIds.studentA,
+        session_number: sessionNumber,
+      })),
+    });
+
+    expect(payload[0]).toMatchObject({
+      split_basis: "range_unit",
+      allocation_rule: {
+        schema_version: 1,
+        mode: "by_weekday",
+        units_per_session: 1,
+        base_session_unit_counts: [1, 1],
+        ordered_unit_ids: [
+          assignmentContractIds.day57,
+          assignmentContractIds.day60,
+        ],
+        overflow_policy: "leave",
+        extra_date_policy: "unconfirmed",
+        weekday_units_per_session: [
+          { isodow: 1, unit_count: 1 },
+          { isodow: 2, unit_count: 1 },
+          { isodow: 3, unit_count: 1 },
+          { isodow: 4, unit_count: 1 },
+          { isodow: 5, unit_count: 1 },
+          { isodow: 6, unit_count: 1 },
+          { isodow: 7, unit_count: 1 },
+        ],
+      },
+    });
+  });
+
   it("rejects a queue whose batch count differs from Preview", () => {
     expect(() => buildVocabAssignmentQueueSeriesPayload({
       commonPlan: commonPlan(),
+      previewPlanSignature: assignmentContractIds.previewPlanSignature,
       rangeLabel: null,
       previewItems: [{
         studentId: assignmentContractIds.studentA,

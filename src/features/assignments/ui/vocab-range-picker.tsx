@@ -4,7 +4,7 @@ import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
 import { ConditionalReveal } from "@/design-system/patterns/conditional-reveal/conditional-reveal";
 
 import { buildBulkPlanAudience } from "../presentation/bulk-plan-audience";
-import { ExamQuestionOrderField } from "./bulk-exam-fields";
+import { VocabTargetSelectionField } from "./bulk-exam-fields";
 import { AssignmentWordCountField } from "./assignment-word-count-field";
 import {
   VocabRangeFields,
@@ -126,7 +126,7 @@ export function VocabQuestionFields({
           value={manualCountValue}
         />
       </ConditionalReveal>
-      <ExamQuestionOrderField
+      <VocabTargetSelectionField
         error={selectionModeError}
         onChange={controller.actions.changeSelectionMode}
         value={controller.planner.selectionMode}

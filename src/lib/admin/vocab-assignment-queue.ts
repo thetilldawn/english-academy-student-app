@@ -28,6 +28,13 @@ export type VocabAssignmentQueueItem = {
   completedAt: string | null;
 };
 
+export type VocabAssignmentQueueUnitAllocation = {
+  mode: "same" | "by_weekday";
+  unitsPerSession: number;
+  weekdayUnitsPerSession: Record<1 | 2 | 3 | 4 | 5 | 6 | 7, number>;
+  recurrenceWeekdays: Array<1 | 2 | 3 | 4 | 5 | 6 | 7>;
+};
+
 export type VocabAssignmentQueueSummary = {
   seriesId: string;
   studentId: string;
@@ -43,6 +50,7 @@ export type VocabAssignmentQueueSummary = {
   currentAssignmentId: string | null;
   nextAvailableFrom: string | null;
   nextAvailableUntil: string | null;
+  unitAllocation: VocabAssignmentQueueUnitAllocation | null;
   items: VocabAssignmentQueueItem[];
   createdAt: string;
   updatedAt: string;
@@ -61,6 +69,32 @@ export function vocabAssignmentQueueStatusLabel(
     case "cancelled":
       return "취소";
   }
+}
+
+const weekdayLabels = {
+  1: "월",
+  2: "화",
+  3: "수",
+  4: "목",
+  5: "금",
+  6: "토",
+  7: "일",
+} as const;
+
+export function vocabAssignmentQueueUnitAllocationLabel(
+  unitAllocation: VocabAssignmentQueueUnitAllocation | null,
+) {
+  if (!unitAllocation) return null;
+  if (unitAllocation.mode === "same") {
+    return `회차당 ${unitAllocation.unitsPerSession}단위`;
+  }
+  const counts = unitAllocation.recurrenceWeekdays.map(
+    (weekday) =>
+      `${weekdayLabels[weekday]} ${unitAllocation.weekdayUnitsPerSession[weekday]}`,
+  );
+  return counts.length > 0
+    ? `요일별 ${counts.join(" · ")}단위`
+    : "요일별 단위";
 }
 
 export function vocabAssignmentQueueItemStatusLabel(

@@ -7,6 +7,12 @@ const source = fs.readFileSync(
   path.resolve("src/lib/services/admin-history-read-service.ts"),
   "utf8",
 );
+const allocationRuleSource = fs.readFileSync(
+  path.resolve(
+    "src/lib/services/vocab-unit-allocation-rule-read-service.ts",
+  ),
+  "utf8",
+);
 const quizSource = fs.readFileSync(
   path.resolve("src/lib/services/quiz/student-assignment-query.ts"),
   "utf8",
@@ -134,5 +140,16 @@ describe("admin assignment history query contract", () => {
       );
       expect(detailPage).not.toContain("finalizeStale");
     }
+  });
+
+  it("최근 조건 복사용 단위 규칙은 학생·단어장별 최근 후보만 조회한다", () => {
+    expect(source).toContain("recentAllocationRuleAssignmentIds(");
+    expect(source).toContain(
+      "RECENT_ALLOCATION_RULE_CANDIDATES_PER_DATASET = 3",
+    );
+    expect(allocationRuleSource).toContain('error?.code === "PGRST202"');
+    expect(source).not.toContain(
+      "assignmentStudentData.map((row) => row.assignment_id)",
+    );
   });
 });

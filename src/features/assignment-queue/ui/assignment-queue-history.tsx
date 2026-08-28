@@ -13,6 +13,7 @@ import { AssignmentQueueTags } from "@/features/assignment-queue/ui/assignment-q
 import {
   vocabAssignmentQueueItemStatusLabel,
   vocabAssignmentQueueStatusLabel,
+  vocabAssignmentQueueUnitAllocationLabel,
   type VocabAssignmentQueueSummary,
 } from "@/lib/admin/vocab-assignment-queue";
 import { isoToKoreanDateTimeLocal } from "@/lib/deadline";
@@ -36,6 +37,9 @@ function AssignmentQueueDisclosure({
   const [resolving, setResolving] = useState(false);
   const contentId = useId();
   const router = useRouter();
+  const unitAllocation = vocabAssignmentQueueUnitAllocationLabel(
+    queue.unitAllocation,
+  );
 
   async function resolve(action: QueueResolutionAction) {
     const confirmation = {
@@ -65,7 +69,7 @@ function AssignmentQueueDisclosure({
   return (
     <article className={styles.queue}>
       <button
-        aria-label={`${vocabAssignmentQueueStatusLabel(queue.status)} · ${queue.datasetLabel} · ${queue.rangeLabel} · ${queue.remainingSessionCount}회 · ${queue.remainingQuestionCount}개 남음`}
+        aria-label={`${vocabAssignmentQueueStatusLabel(queue.status)} · ${queue.datasetLabel} · ${queue.rangeLabel}${unitAllocation ? ` · ${unitAllocation}` : ""} · ${queue.remainingSessionCount}회 · ${queue.remainingQuestionCount}개 남음`}
         aria-controls={contentId}
         aria-expanded={open}
         className={styles.summary}

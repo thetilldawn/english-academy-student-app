@@ -66,6 +66,16 @@ function queue(
     studentId: "00000000-0000-4000-8000-000000000020",
     totalQuestionCount: 60,
     totalSessionCount: 3,
+    unitAllocation: status === "active"
+      ? {
+          mode: "by_weekday",
+          unitsPerSession: 1,
+          weekdayUnitsPerSession: {
+            1: 2, 2: 1, 3: 3, 4: 1, 5: 1, 6: 1, 7: 1,
+          },
+          recurrenceWeekdays: [1, 3],
+        }
+      : null,
     updatedAt: "2026-08-22T01:00:00.000Z",
   };
 }
@@ -81,6 +91,7 @@ describe("AssignmentQueueHistory", () => {
         ]}
       />,
     );
+    expect(screen.getByText(/요일별 월 2 · 수 3단위/)).toBeVisible();
 
     const active = screen.getByRole("button", { name: /배정된 시험/ });
     const completed = screen.getByRole("button", { name: /완료/ });

@@ -27,8 +27,8 @@ export function ExamQuestionOrderField({
   value,
 }: {
   error?: string;
-  onChange: (value: "source_order" | "random") => void;
-  value: "source_order" | "random";
+  onChange: (value: "sequential" | "random") => void;
+  value: "sequential" | "random";
 }) {
   return (
     <Field>
@@ -40,6 +40,52 @@ export function ExamQuestionOrderField({
       <div
         aria-labelledby="exam-question-order-label"
         className={styles.modeButtons}
+        data-field-key="questionOrder"
+        role="group"
+        tabIndex={-1}
+      >
+        <Button
+          aria-pressed={value === "sequential"}
+          onClick={() => onChange("sequential")}
+          size="small"
+          variant="filter"
+        >
+          순서대로
+        </Button>
+        <Button
+          aria-pressed={value === "random"}
+          onClick={() => onChange("random")}
+          size="small"
+          variant="filter"
+        >
+          무작위
+        </Button>
+      </div>
+      {error ? <FieldError>{error}</FieldError> : null}
+    </Field>
+  );
+}
+
+export function VocabTargetSelectionField({
+  error,
+  onChange,
+  value,
+}: {
+  error?: string;
+  onChange: (value: "source_order" | "random") => void;
+  value: "source_order" | "random";
+}) {
+  return (
+    <Field>
+      <FieldLabel as="span" id="vocab-target-selection-label">
+        <HelpTip label="출제 단어 선택 설명" trigger="출제 단어 선택">
+          선택한 범위에서 단어를 앞에서부터 고를지, 회차마다 무작위로
+          고를지 정합니다.
+        </HelpTip>
+      </FieldLabel>
+      <div
+        aria-labelledby="vocab-target-selection-label"
+        className={styles.modeButtons}
         data-field-key="selectionMode"
         role="group"
         tabIndex={-1}
@@ -50,7 +96,7 @@ export function ExamQuestionOrderField({
           size="small"
           variant="filter"
         >
-          순서대로
+          범위순
         </Button>
         <Button
           aria-pressed={value === "random"}
@@ -206,14 +252,25 @@ export function BulkExamFields({
   const { actions, state } = controller;
 
   return (
-    <ExamConditionFields
-      exam={state.draft.exam}
-      fieldErrors={fieldErrors}
-      idPrefix="bulk"
-      onDirectionChange={actions.changeDirection}
-      onPassingScoreChange={actions.changePassingScore}
-      onRetryEnabledChange={actions.changeRetryEnabled}
-      onRetryPassingScoreChange={actions.changeRetryPassingScore}
-    />
+    <div className={styles.fieldStack}>
+      <ExamQuestionOrderField
+        error={fieldErrors.questionOrder}
+        onChange={(value) =>
+          actions.changeOrder(value === "random" ? "random" : "ascending")
+        }
+        value={state.draft.exam.questionOrderMode === "random"
+          ? "random"
+          : "sequential"}
+      />
+      <ExamConditionFields
+        exam={state.draft.exam}
+        fieldErrors={fieldErrors}
+        idPrefix="bulk"
+        onDirectionChange={actions.changeDirection}
+        onPassingScoreChange={actions.changePassingScore}
+        onRetryEnabledChange={actions.changeRetryEnabled}
+        onRetryPassingScoreChange={actions.changeRetryPassingScore}
+      />
+    </div>
   );
 }

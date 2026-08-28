@@ -527,6 +527,7 @@ describe("assignment request adapters", () => {
         splitBasis: "question_count",
         orderedUnitIds: [assignmentContractIds.day57],
         rangeUnitCounts: [],
+        unitAllocationRule: null,
         questionCount: { mode: "manual", value: 40 },
         overflowPolicy: "continue_weekly",
         extraDatePolicy: "unconfirmed",
@@ -669,6 +670,14 @@ describe("assignment request adapters", () => {
           assignmentContractIds.day60,
         ],
         rangeUnitCounts: [1, 1],
+        unitAllocationRule: {
+          schemaVersion: 1,
+          mode: "same",
+          unitsPerSession: 1,
+          weekdayUnitsPerSession: {
+            1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1,
+          },
+        },
         questionCount: { mode: "all" },
         overflowPolicy: "continue_weekly",
         extraDatePolicy: "unconfirmed",
@@ -694,6 +703,11 @@ describe("assignment request adapters", () => {
     expect(preview.body.commonPlan).toMatchObject({
       splitBasis: "range_unit",
       rangeUnitCounts: [1, 1],
+      unitAllocationRule: {
+        schemaVersion: 1,
+        mode: "same",
+        unitsPerSession: 1,
+      },
       sessions: [
         { unitIds: [assignmentContractIds.day57] },
         { unitIds: [assignmentContractIds.day60] },
@@ -704,6 +718,77 @@ describe("assignment request adapters", () => {
       preview.body,
     );
   });
+
+  it.each([
+    ["source_order", "ascending"],
+    ["source_order", "random"],
+    ["random", "ascending"],
+    ["random", "random"],
+  ] as const)(
+    "keeps %s target selection independent from %s display order for every student",
+    (selectionMode, questionOrderMode) => {
+      const schedule = {
+        availableLocalDateTime: "2026-08-17T16:00",
+        deadlineLocalDateTime: "2026-08-18T22:00",
+      };
+      const draft: BulkSeriesAssignmentDraft = {
+        ...bulkDraft,
+        studentIds: [
+          assignmentContractIds.studentA,
+          assignmentContractIds.studentB,
+        ],
+        range: { mode: "fixed_span", unitsPerSession: 1, sessionCount: 1 },
+        exam: { ...bulkDraft.exam, questionOrderMode },
+        review: { mode: "none", levels: [1, 2] },
+        commonPlan: {
+          datasetId: assignmentContractIds.dataset,
+          distribution: "split",
+          splitBasis: "range_unit",
+          orderedUnitIds: [assignmentContractIds.day57],
+          rangeUnitCounts: [1],
+          unitAllocationRule: {
+            schemaVersion: 1,
+            mode: "same",
+            unitsPerSession: 1,
+            weekdayUnitsPerSession: {
+              1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1,
+            },
+          },
+          questionCount: { mode: "all" },
+          overflowPolicy: "leave",
+          extraDatePolicy: "unconfirmed",
+          selectedDateCount: 1,
+          selectionMode,
+          planNonce: assignmentContractIds.idempotencyKey,
+          recurrenceSessions: [schedule],
+          sessions: [{
+            unitIds: [assignmentContractIds.day57],
+            ...schedule,
+          }],
+          collisionDecisions: [],
+        },
+      };
+
+      const preview = buildBulkAssignmentPreviewRequest(draft);
+      const submit = buildBulkAssignmentRequest(
+        draft,
+        assignmentContractIds.idempotencyKey,
+        NOW,
+        assignmentContractIds.previewPlanSignature,
+      );
+
+      expect(preview.body.studentIds).toEqual([
+        assignmentContractIds.studentA,
+        assignmentContractIds.studentB,
+      ]);
+      expect(preview.body.commonPlan?.selectionMode).toBe(selectionMode);
+      expect(submit.body.commonPlan?.selectionMode).toBe(selectionMode);
+      expect(submit.body.questionOrderMode).toBe(questionOrderMode);
+      expect(bulkAssignmentPreviewSchema.safeParse(preview.body).success)
+        .toBe(true);
+      expect(bulkAssignmentSchema.safeParse(submit.body).success).toBe(true);
+    },
+  );
 
   it("keeps disabled bulk review levels as an adapter-only compatibility value", () => {
     const noReviewDraft: BulkSeriesAssignmentDraft = {

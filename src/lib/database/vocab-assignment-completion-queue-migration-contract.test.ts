@@ -31,6 +31,18 @@ const materializedWindowMigration = readFileSync(
   "utf8",
 );
 
+const weekdayUnitRuleMigration = readFileSync(
+  path.resolve(
+    "supabase/migrations/20260829120000_preserve_vocab_weekday_unit_rules.sql",
+  ),
+  "utf8",
+);
+
+const queueQuerySource = readFileSync(
+  path.resolve("src/lib/services/vocab-assignment-queue-query.ts"),
+  "utf8",
+);
+
 describe("단어 시험 완료 후 이어 배정 migration", () => {
   it("학생별 계획·회차·변경 이력을 비공개 표에 보존한다", () => {
     expect(migration).toContain(
@@ -50,6 +62,49 @@ describe("단어 시험 완료 후 이어 배정 migration", () => {
     expect(migration).toContain("effective_available_from timestamptz not null");
     expect(migration.match(/revoke all on table private\./g)?.length)
       .toBeGreaterThanOrEqual(4);
+  });
+
+  it("요일별 원 규칙은 버전·해시와 함께 저장하고 기존 v2는 유지한다", () => {
+    expect(weekdayUnitRuleMigration).toContain(
+      "add column allocation_rule jsonb",
+    );
+    expect(weekdayUnitRuleMigration).toContain(
+      "add column allocation_rule_sha256 text",
+    );
+    expect(weekdayUnitRuleMigration).toContain(
+      "create function public.create_vocab_assignment_queues_v3(",
+    );
+    expect(weekdayUnitRuleMigration).toContain(
+      "create function public.list_vocab_assignment_queue_summaries_v2(",
+    );
+    expect(weekdayUnitRuleMigration).toContain(
+      "create function public.list_vocab_assignment_unit_rules_v1(",
+    );
+    expect(weekdayUnitRuleMigration).toContain(
+      "jsonb_array_length(p_series) not between 1 and 210",
+    );
+    expect(weekdayUnitRuleMigration).toContain(
+      "is distinct from 'array'",
+    );
+    expect(weekdayUnitRuleMigration).toContain(
+      "private.create_vocab_assignment_queues_v1(",
+    );
+    expect(weekdayUnitRuleMigration).not.toContain(
+      "drop function public.create_vocab_assignment_queues_v2",
+    );
+    expect(weekdayUnitRuleMigration).toMatch(
+      /revoke all on function private\.create_vocab_assignment_queues_v2\([\s\S]*?authenticated, service_role;/,
+    );
+  });
+
+  it("큐 상태 조회는 규칙 포함 v2를 쓰고 구 DB에서는 v1로 읽기만 호환한다", () => {
+    expect(queueQuerySource).toContain(
+      '"list_vocab_assignment_queue_summaries_v2"',
+    );
+    expect(queueQuerySource).toContain(
+      '"list_vocab_assignment_queue_summaries_v1"',
+    );
+    expect(queueQuerySource).toContain('error?.code === "PGRST202"');
   });
 
   it("실제 완료 전에는 다음 회차를 준비하지 않고 점수는 조건으로 쓰지 않는다", () => {

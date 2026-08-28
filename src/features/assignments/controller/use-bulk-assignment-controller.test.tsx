@@ -160,6 +160,7 @@ describe("bulk assignment controller", () => {
         splitBasis: "question_count",
         orderedUnitIds: [assignmentContractIds.day60],
         rangeUnitCounts: [],
+        unitAllocationRule: null,
         questionCount: { mode: "manual", value: 40 },
       overflowPolicy: "leave",
       extraDatePolicy: "unconfirmed",
@@ -319,6 +320,7 @@ describe("bulk assignment controller", () => {
         splitBasis: "question_count",
         orderedUnitIds: [assignmentContractIds.day60],
         rangeUnitCounts: [],
+        unitAllocationRule: null,
         questionCount: { mode: "manual", value: 40 },
     overflowPolicy: "leave",
     extraDatePolicy: "unconfirmed",
@@ -348,7 +350,7 @@ describe("bulk assignment controller", () => {
     });
   });
 
-  it("submits the visible source-order choice as ascending without another click", async () => {
+  it("submits the independent default question order without changing target selection", async () => {
     const requests: Parameters<AssignmentTransport>[0][] = [];
     const transport: AssignmentTransport = vi.fn(async (request) => {
       requests.push(request);
@@ -384,6 +386,7 @@ describe("bulk assignment controller", () => {
         planNonce: assignmentContractIds.idempotencyKey,
         questionCount: { mode: "all" },
         rangeUnitCounts: [],
+        unitAllocationRule: null,
         recurrenceSessions: [{
           availableLocalDateTime: "2099-08-10T09:00",
           deadlineLocalDateTime: "2099-08-11T22:00",

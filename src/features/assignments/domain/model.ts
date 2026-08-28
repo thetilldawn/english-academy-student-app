@@ -1,3 +1,5 @@
+import type { VocabUnitAllocationRuleV1 } from "./vocab-assignment-contract";
+
 export const assignmentQuestionOrderModes = [
   "ascending",
   "descending",
@@ -145,6 +147,7 @@ export type BulkCommonAssignmentPlan = {
   splitBasis: "question_count" | "range_unit";
   orderedUnitIds: readonly string[];
   rangeUnitCounts: readonly number[];
+  unitAllocationRule: VocabUnitAllocationRuleV1 | null;
   questionCount:
     | { mode: "all" }
     | { mode: "manual"; value: number };

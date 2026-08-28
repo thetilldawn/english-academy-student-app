@@ -59,11 +59,7 @@ export function createInitialBulkSeriesAssignmentDraft({
       passingScore: 80,
       retryEnabled: true,
       retryPassingScore: 80,
-      questionOrderMode: commonPlan
-        ? commonPlan.selectionMode === "random"
-          ? "random"
-          : "ascending"
-        : "random",
+      questionOrderMode: "ascending",
       timeLimitEnabled: true,
       timing: { mode: "total", totalSeconds: 300 },
     },
@@ -92,15 +88,6 @@ export function reduceBulkSeriesAssignmentDraft(
     case "common_plan/changed":
       return {
         ...draft,
-        exam: action.commonPlan
-          ? {
-              ...draft.exam,
-              questionOrderMode:
-                action.commonPlan.selectionMode === "random"
-                  ? "random"
-                  : "ascending",
-            }
-          : draft.exam,
         range: action.commonPlan
           ? {
               ...draft.range,
@@ -115,6 +102,18 @@ export function reduceBulkSeriesAssignmentDraft(
                 ...session,
                 unitIds: [...session.unitIds],
               })),
+              recurrenceSessions: action.commonPlan.recurrenceSessions.map(
+                (session) => ({ ...session }),
+              ),
+              unitAllocationRule: action.commonPlan.unitAllocationRule
+                ? {
+                    ...action.commonPlan.unitAllocationRule,
+                    weekdayUnitsPerSession: {
+                      ...action.commonPlan.unitAllocationRule
+                        .weekdayUnitsPerSession,
+                    },
+                  }
+                : null,
               collisionDecisions:
                 action.commonPlan.collisionDecisions.map((decision) => ({
                   ...decision,

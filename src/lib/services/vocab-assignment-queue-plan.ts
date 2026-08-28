@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { BulkAssignmentInput } from "@/lib/admin/bulk-assignment-request";
+import { ISO_WEEKDAYS } from "@/lib/admin/vocab-unit-allocation";
 
 const SEOUL_OFFSET_MILLISECONDS = 9 * 60 * 60 * 1000;
 const MAXIMUM_QUEUE_WINDOW_SECONDS = 365 * 24 * 60 * 60;
@@ -41,6 +42,7 @@ function toSeoulRecurrenceSlot(input: {
 
 export function buildVocabAssignmentQueueSeriesPayload(input: {
   commonPlan: NonNullable<BulkAssignmentInput["commonPlan"]>;
+  previewPlanSignature: string;
   rangeLabel: string | null;
   previewItems: ReadonlyArray<{
     studentId: string;
@@ -71,6 +73,23 @@ export function buildVocabAssignmentQueueSeriesPayload(input: {
   const recurrenceSlots = input.commonPlan.recurrenceSessions.map(
     toSeoulRecurrenceSlot,
   );
+  const allocationRule = input.commonPlan.unitAllocationRule
+    ? {
+        schema_version: 1,
+        mode: input.commonPlan.unitAllocationRule.mode,
+        units_per_session:
+          input.commonPlan.unitAllocationRule.unitsPerSession,
+        weekday_units_per_session: ISO_WEEKDAYS.map((isodow) => ({
+          isodow,
+          unit_count: input.commonPlan.unitAllocationRule!
+            .weekdayUnitsPerSession[isodow],
+        })),
+        base_session_unit_counts: [...input.commonPlan.rangeUnitCounts],
+        ordered_unit_ids: [...input.commonPlan.orderedUnitIds],
+        overflow_policy: input.commonPlan.overflowPolicy,
+        extra_date_policy: input.commonPlan.extraDatePolicy,
+      }
+    : null;
   const expectedBatchCount = input.previewItems.reduce(
     (total, item) => total + item.sessionCount,
     0,
@@ -101,6 +120,9 @@ export function buildVocabAssignmentQueueSeriesPayload(input: {
         dataset_id: item.datasetId,
         dataset_label: item.datasetLabel,
         range_label: input.rangeLabel ?? "선택 범위",
+        split_basis: input.commonPlan.splitBasis,
+        allocation_rule: allocationRule,
+        resolved_plan_sha256: input.previewPlanSignature,
         recurrence_slots: recurrenceSlots,
         items,
       };

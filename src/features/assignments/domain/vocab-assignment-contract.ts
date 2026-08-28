@@ -1,8 +1,21 @@
 import type { ExamTiming } from "./model";
+import {
+  ISO_WEEKDAYS,
+  type IsoWeekday,
+  type VocabSplitOverflowPolicy,
+  type VocabUnitAllocationMode,
+  type VocabUnitAllocationRuleV1,
+  type VocabWeekdayUnitCounts,
+} from "@/lib/admin/vocab-unit-allocation";
 
-export const ISO_WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const;
-
-export type IsoWeekday = (typeof ISO_WEEKDAYS)[number];
+export {
+  ISO_WEEKDAYS,
+  type IsoWeekday,
+  type VocabSplitOverflowPolicy,
+  type VocabUnitAllocationMode,
+  type VocabUnitAllocationRuleV1,
+  type VocabWeekdayUnitCounts,
+};
 export type VocabAssignmentEntryMode = "student" | "school" | "dataset";
 export type VocabAssignmentMode =
   | "all_sessions"
@@ -10,13 +23,10 @@ export type VocabAssignmentMode =
   | "word_count";
 export type VocabRangeDistribution = "split" | "repeat";
 export type VocabSplitBasis = "question_count" | "range_unit";
-export type VocabUnitAllocationMode = "same" | "by_weekday";
-export type VocabWeekdayUnitCounts = Readonly<Record<IsoWeekday, number>>;
 export type CollisionDecisionMode = "skip" | "move" | "allow";
 export type VocabQuestionCountChoice =
   | { mode: "all" }
   | { mode: "manual"; value: number };
-export type VocabSplitOverflowPolicy = "leave" | "continue_weekly";
 export type VocabExtraDatePolicy =
   | "unconfirmed"
   | "repeat_from_start";

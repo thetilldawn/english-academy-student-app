@@ -4,7 +4,7 @@ export type AssignmentEditFieldErrors = Partial<Record<
   | "dataset"
   | "range"
   | "questionCount"
-  | "selectionMode"
+  | "questionOrder"
   | "direction"
   | "passingScore"
   | "retryPassingScore"
@@ -20,7 +20,7 @@ export function assignmentEditFieldKeyForPath(
   if (path === "range.datasetId") return "dataset";
   if (path.startsWith("range.orderedUnitIds")) return "range";
   if (path === "questionCount") return "questionCount";
-  if (path === "exam.questionOrderMode") return "selectionMode";
+  if (path === "exam.questionOrderMode") return "questionOrder";
   if (path === "exam.directionRatio") return "direction";
   if (path === "exam.passingScore") return "passingScore";
   if (path === "exam.retryPassingScore") return "retryPassingScore";

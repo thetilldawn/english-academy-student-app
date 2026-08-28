@@ -29,6 +29,7 @@ import type { AdminHistoryDetail } from "@/features/history/model";
 
 import { getAdminAttemptDetail } from "./admin-attempt-read-service";
 import { getAdminAttemptPointSummary } from "./learning-point-read-service";
+import { listAssignmentUnitAllocationRules } from "./vocab-unit-allocation-rule-read-service";
 
 function oneRelation<T>(value: T | T[] | null): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : value;
@@ -125,6 +126,46 @@ type HiddenHistoryEntryRow = {
 };
 
 const HISTORY_PAGE_SIZE = 1000;
+const RECENT_ALLOCATION_RULE_CANDIDATES_PER_DATASET = 3;
+
+function recentAllocationRuleAssignmentIds(
+  rows: readonly HistoryAssignmentStudentRow[],
+) {
+  const candidates = new Map<string, Array<{
+    assignmentId: string;
+    assignedAt: number;
+    sequenceAt: number;
+  }>>();
+  for (const row of rows) {
+    const assignment = oneRelation(row.assignment);
+    if (
+      !assignment ||
+      assignment.deleted_at !== null ||
+      assignment.assignment_purpose === "review" ||
+      row.cancelled_at !== null
+    ) continue;
+    const key = `${row.student_id}\u0000${assignment.dataset_id}`;
+    const current = candidates.get(key) ?? [];
+    current.push({
+      assignmentId: row.assignment_id,
+      assignedAt: Date.parse(row.assigned_at) || 0,
+      sequenceAt: Date.parse(assignment.available_from ?? row.assigned_at) || 0,
+    });
+    candidates.set(key, current);
+  }
+  return [...new Set(
+    [...candidates.values()].flatMap((items) =>
+      items
+        .toSorted((left, right) =>
+          right.sequenceAt - left.sequenceAt ||
+          right.assignedAt - left.assignedAt ||
+          right.assignmentId.localeCompare(left.assignmentId)
+        )
+        .slice(0, RECENT_ALLOCATION_RULE_CANDIDATES_PER_DATASET)
+        .map((item) => item.assignmentId)
+    ),
+  )];
+}
 
 async function listAssignmentHistorySourceRows(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
@@ -267,6 +308,7 @@ const loadAssignmentHistoryRowsForRequest = cache(loadAssignmentHistoryRows);
 
 async function loadAssignmentHistoryBundle(
   reuseMaterialRequestCache: boolean,
+  includeUnitAllocationRules: boolean,
 ): Promise<{
   history: AssignmentHistorySummary[];
   completeHistory: AssignmentHistorySummary[];
@@ -287,9 +329,17 @@ async function loadAssignmentHistoryBundle(
       ? [{ id: assignment.dataset_id, ...dataset }]
       : [];
   });
-  const datasetLabelById = reuseMaterialRequestCache
-    ? await loadCurrentAdminDatasetDisplayLabelMapForRsc(historyDatasets)
-    : await loadDatasetDisplayLabelMap(supabase, historyDatasets);
+  const [datasetLabelById, allocationRuleByAssignmentId] = await Promise.all([
+    reuseMaterialRequestCache
+      ? loadCurrentAdminDatasetDisplayLabelMapForRsc(historyDatasets)
+      : loadDatasetDisplayLabelMap(supabase, historyDatasets),
+    includeUnitAllocationRules
+      ? listAssignmentUnitAllocationRules(
+          supabase,
+          recentAllocationRuleAssignmentIds(assignmentStudentData),
+        )
+      : Promise.resolve(new Map()),
+  ]);
   const assignmentSources = (
     assignmentStudentData
   ).flatMap((row): AssignmentHistorySource[] => {
@@ -373,6 +423,8 @@ async function loadAssignmentHistoryBundle(
         missedAt: row.missed_at,
         cancelledAt: row.cancelled_at,
         cancellationReason: row.cancellation_reason,
+        vocabUnitAllocation:
+          allocationRuleByAssignmentId.get(row.assignment_id) ?? null,
       },
     ];
   });
@@ -453,6 +505,7 @@ const loadAssignmentHistoryBundleForRequest = cache(
 
 export async function listAssignmentHistoryBundle(options?: {
   reuseMaterialRequestCache?: boolean;
+  includeUnitAllocationRules?: boolean;
 }): Promise<{
   history: AssignmentHistorySummary[];
   completeHistory: AssignmentHistorySummary[];
@@ -460,6 +513,7 @@ export async function listAssignmentHistoryBundle(options?: {
 }> {
   return loadAssignmentHistoryBundleForRequest(
     options?.reuseMaterialRequestCache === true,
+    options?.includeUnitAllocationRules === true,
   );
 }
 

@@ -84,13 +84,13 @@ export function AssignmentSettingsFields({
         value={draft.questionCount.value}
       />
       <ExamQuestionOrderField
-        error={fieldErrors.selectionMode}
+        error={fieldErrors.questionOrder}
         onChange={(value) =>
           actions.changeOrder(value === "random" ? "random" : "ascending")
         }
         value={draft.exam.questionOrderMode === "random"
           ? "random"
-          : "source_order"}
+          : "sequential"}
       />
       <ExamConditionFields
         directionDisabled={fieldPolicy.direction !== "editable"}

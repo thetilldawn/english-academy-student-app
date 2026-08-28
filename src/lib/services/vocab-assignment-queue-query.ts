@@ -2,7 +2,13 @@ import "server-only";
 
 import { z } from "zod";
 
-import type { VocabAssignmentQueueSummary } from "@/lib/admin/vocab-assignment-queue";
+import type {
+  VocabAssignmentQueueSummary,
+  VocabAssignmentQueueUnitAllocation,
+} from "@/lib/admin/vocab-assignment-queue";
+import {
+  decodeStoredVocabUnitAllocationRule,
+} from "@/lib/admin/vocab-unit-allocation-rule";
 import { requireAdmin } from "@/lib/auth/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -52,6 +58,10 @@ const rowSchema = z
     items: z.array(itemSchema),
     created_at: z.iso.datetime({ offset: true }),
     updated_at: z.iso.datetime({ offset: true }),
+    allocation_rule: z.unknown().nullable().optional().default(null),
+    recurrence_weekdays: z.array(
+      z.number().int().min(1).max(7),
+    ).optional().default([]),
   })
   .strict();
 
@@ -61,6 +71,25 @@ export type VocabAssignmentQueueCursor = {
 };
 
 function mapRow(row: z.infer<typeof rowSchema>): VocabAssignmentQueueSummary {
+  const decodedRule = row.allocation_rule
+    ? decodeStoredVocabUnitAllocationRule(row.allocation_rule)
+    : null;
+  if (row.allocation_rule && !decodedRule) {
+    console.error("[vocab-assignment-queue] invalid stored allocation rule", {
+      seriesId: row.series_id,
+    });
+  }
+  const unitAllocation = decodedRule
+    ? {
+        mode: decodedRule.rule.mode,
+        unitsPerSession: decodedRule.rule.unitsPerSession,
+        weekdayUnitsPerSession: decodedRule.rule.weekdayUnitsPerSession as
+          VocabAssignmentQueueUnitAllocation["weekdayUnitsPerSession"],
+        recurrenceWeekdays: row.recurrence_weekdays as Array<
+          1 | 2 | 3 | 4 | 5 | 6 | 7
+        >,
+      }
+    : null;
   return {
     seriesId: row.series_id,
     studentId: row.student_id,
@@ -76,6 +105,7 @@ function mapRow(row: z.infer<typeof rowSchema>): VocabAssignmentQueueSummary {
     currentAssignmentId: row.current_assignment_id,
     nextAvailableFrom: row.next_available_from,
     nextAvailableUntil: row.next_available_until,
+    unitAllocation,
     items: row.items,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -90,16 +120,25 @@ export async function listVocabAssignmentQueueSummaries(options?: {
 }): Promise<VocabAssignmentQueueSummary[]> {
   await requireAdmin();
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase.rpc(
-    "list_vocab_assignment_queue_summaries_v1",
-    {
-      p_before_series_id: options?.before?.seriesId ?? null,
-      p_before_updated_at: options?.before?.updatedAt ?? null,
-      p_include_closed: options?.includeClosed ?? false,
-      p_limit: options?.limit ?? null,
-      p_student_id: options?.studentId ?? null,
-    },
+  const parameters = {
+    p_before_series_id: options?.before?.seriesId ?? null,
+    p_before_updated_at: options?.before?.updatedAt ?? null,
+    p_include_closed: options?.includeClosed ?? false,
+    p_limit: options?.limit ?? null,
+    p_student_id: options?.studentId ?? null,
+  };
+  let { data, error } = await supabase.rpc(
+    "list_vocab_assignment_queue_summaries_v2",
+    parameters,
   );
+  if (error?.code === "42883" || error?.code === "PGRST202") {
+    const fallback = await supabase.rpc(
+      "list_vocab_assignment_queue_summaries_v1",
+      parameters,
+    );
+    data = fallback.data;
+    error = fallback.error;
+  }
   if (error) {
     if (isVocabAssignmentQueueUnavailable(error)) return [];
     throw new Error("배정된 시험 상태를 불러오지 못했습니다.");

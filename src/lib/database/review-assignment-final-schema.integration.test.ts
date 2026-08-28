@@ -696,6 +696,16 @@ describe.sequential("final review-assignment database schema", () => {
     expect(coreDefinition.rows[0]?.definition).toContain(
       "review_question_count > total_question_count",
     );
+    const queueWriterDefinition = await database.query<{
+      definition: string;
+    }>(`
+      select pg_get_functiondef(
+        'private.create_vocab_assignment_queues_v1(uuid,text,jsonb)'::regprocedure
+      ) as definition;
+    `);
+    expect(queueWriterDefinition.rows[0]?.definition).toContain(
+      "jsonb_array_length(p_series) not between 1 and 210",
+    );
 
     const privileges = await database.query<{
       authenticated_core: boolean;
@@ -710,6 +720,8 @@ describe.sequential("final review-assignment database schema", () => {
       authenticated_public_bulk_v1: boolean;
       authenticated_public_bulk_v3: boolean;
       authenticated_public_bulk_v4: boolean;
+      authenticated_public_queue_v3: boolean;
+      authenticated_private_queue_v2: boolean;
       authenticated_public_identity_v1: boolean;
       authenticated_public_review_summary: boolean;
       authenticated_replace_v2: boolean;
@@ -727,6 +739,7 @@ describe.sequential("final review-assignment database schema", () => {
       anon_replace_v2: boolean;
       anon_public_mixed_v9: boolean;
       anon_public_bulk_v4: boolean;
+      anon_public_queue_v3: boolean;
       anon_replace_v4: boolean;
       anon_series_context_v1: boolean;
     }>(`
@@ -791,6 +804,16 @@ describe.sequential("final review-assignment database schema", () => {
           'public.create_bulk_vocab_assignments_v4(jsonb)',
           'execute'
         ) as authenticated_public_bulk_v4,
+        has_function_privilege(
+          'authenticated',
+          'public.create_vocab_assignment_queues_v3(uuid,text,jsonb)',
+          'execute'
+        ) as authenticated_public_queue_v3,
+        has_function_privilege(
+          'authenticated',
+          'private.create_vocab_assignment_queues_v2(uuid,text,jsonb)',
+          'execute'
+        ) as authenticated_private_queue_v2,
         has_function_privilege(
           'authenticated',
           'public.list_assignment_question_dictionary_identities_v1(uuid[],uuid)',
@@ -878,6 +901,11 @@ describe.sequential("final review-assignment database schema", () => {
         ) as anon_public_bulk_v4,
         has_function_privilege(
           'anon',
+          'public.create_vocab_assignment_queues_v3(uuid,text,jsonb)',
+          'execute'
+        ) as anon_public_queue_v3,
+        has_function_privilege(
+          'anon',
           'public.replace_student_assignment_v4(uuid,uuid,uuid,text,text,text,text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,smallint[],uuid[],jsonb)',
           'execute'
         ) as anon_replace_v4,
@@ -901,6 +929,8 @@ describe.sequential("final review-assignment database schema", () => {
       authenticated_public_bulk_v1: false,
       authenticated_public_bulk_v3: false,
       authenticated_public_bulk_v4: false,
+      authenticated_public_queue_v3: true,
+      authenticated_private_queue_v2: false,
       authenticated_public_identity_v1: true,
       authenticated_public_review_summary: true,
       authenticated_replace_v2: false,
@@ -918,6 +948,7 @@ describe.sequential("final review-assignment database schema", () => {
       anon_replace_v2: false,
       anon_public_mixed_v9: false,
       anon_public_bulk_v4: false,
+      anon_public_queue_v3: false,
       anon_replace_v4: false,
       anon_series_context_v1: false,
     });
@@ -1790,6 +1821,600 @@ describe.sequential("final review-assignment database schema", () => {
       expect((await readExistingOverlapAssignments()).rows).toEqual(
         existingAssignmentsBeforeFollowUp.rows,
       );
+
+      const weekdayRuleStudentId =
+        "00000000-0000-4000-8000-000000000006";
+      const weekdayRuleRequestId =
+        "00000000-0000-4000-8000-000000000951";
+      const weekdayRuleAttemptId =
+        "00000000-0000-4000-8000-000000000952";
+      await sparseDatabase.exec(`
+        insert into public.students (
+          id,
+          display_name,
+          status,
+          created_by
+        ) values (
+          '${weekdayRuleStudentId}',
+          'Weekday rule student',
+          'active',
+          '${ids.admin}'
+        );
+      `);
+
+      const dayFiveQuestions = [2, 3, 4, 5].map(
+        (vocabEntryId, index) => ({
+          vocab_entry_id: vocabEntryId,
+          base_order_index: index + 1,
+          direction: "english_to_korean",
+          choice_vocab_entry_ids: [2, 3, 4, 5],
+        }),
+      );
+      const weekdayRuleWindows = [
+        {
+          from: "2030-01-01T00:00:00.000Z",
+          until: "2030-01-01T14:00:00.000Z",
+        },
+        {
+          from: "2030-01-03T00:00:00.000Z",
+          until: "2030-01-03T14:00:00.000Z",
+        },
+      ];
+      const makeWeekdayRuleBatch = (input: {
+        title: string;
+        sessionNumber: number;
+        unitIds: readonly string[];
+        unitLabels: readonly string[];
+        questions: readonly Record<string, unknown>[];
+      }) => ({
+        ...makeBatch(
+          input.title,
+          weekdayRuleWindows[input.sessionNumber - 1]!.from,
+          weekdayRuleWindows[input.sessionNumber - 1]!.until,
+          input.sessionNumber,
+          2,
+        ),
+        student_id: weekdayRuleStudentId,
+        unit_ids: [...input.unitIds],
+        unit_labels: [...input.unitLabels],
+        questions: [...input.questions],
+      });
+      const weekdayUnitAllocationRule = {
+        schema_version: 1,
+        mode: "by_weekday",
+        units_per_session: 1,
+        weekday_units_per_session: [
+          { isodow: 1, unit_count: 1 },
+          { isodow: 2, unit_count: 2 },
+          { isodow: 3, unit_count: 1 },
+          { isodow: 4, unit_count: 3 },
+          { isodow: 5, unit_count: 1 },
+          { isodow: 6, unit_count: 1 },
+          { isodow: 7, unit_count: 1 },
+        ],
+        base_session_unit_counts: [2, 3],
+        ordered_unit_ids: [...ids.units],
+        overflow_policy: "leave",
+        extra_date_policy: "unconfirmed",
+      };
+      const weekdayRulePayload = [{
+        student_id: weekdayRuleStudentId,
+        dataset_id: ids.dataset,
+        dataset_label: "Final schema test",
+        range_label: "DAY 1~5",
+        split_basis: "range_unit",
+        resolved_plan_sha256: "e".repeat(64),
+        recurrence_slots: [
+          { isodow: 2, local_time: "09:00:00", duration_seconds: 50400 },
+          { isodow: 4, local_time: "09:00:00", duration_seconds: 50400 },
+        ],
+        allocation_rule: weekdayUnitAllocationRule,
+        items: [
+          makeWeekdayRuleBatch({
+            title: "Weekday rule 1",
+            sessionNumber: 1,
+            unitIds: ids.units.slice(0, 2),
+            unitLabels: ["DAY 1", "DAY 2"],
+            questions: JSON.parse(mixedQuestions),
+          }),
+          makeWeekdayRuleBatch({
+            title: "Weekday rule 2",
+            sessionNumber: 2,
+            unitIds: ids.units.slice(2, 5),
+            unitLabels: ["DAY 3", "DAY 4", "DAY 5"],
+            questions: dayFiveQuestions,
+          }),
+        ],
+      }];
+
+      type QueueCreateResult = {
+        student_id: string;
+        assignment_id: string | null;
+        session_number: number;
+        status: string;
+      };
+      const createQueueV3 = async (input: {
+        requestId: string;
+        requestHash: string;
+        payload: readonly unknown[];
+      }) => {
+        await sparseDatabase.exec("set role authenticated;");
+        try {
+        const created = await sparseDatabase.query<{
+            result: QueueCreateResult[];
+        }>(`
+          select public.create_vocab_assignment_queues_v3(
+              '${input.requestId}',
+              '${input.requestHash}',
+              $series$${JSON.stringify(input.payload)}$series$::jsonb
+          ) as result;
+        `);
+          return created.rows[0]?.result ?? [];
+        } finally {
+          await sparseDatabase.exec("reset role;");
+        }
+      };
+      const weekdayRuleCreated = await createQueueV3({
+        requestId: weekdayRuleRequestId,
+        requestHash: "f".repeat(64),
+        payload: weekdayRulePayload,
+      });
+
+      expect(weekdayRuleCreated).toEqual([
+        expect.objectContaining({
+          student_id: weekdayRuleStudentId,
+          assignment_id: expect.any(String),
+          session_number: 1,
+          status: "assigned",
+        }),
+        expect.objectContaining({
+          student_id: weekdayRuleStudentId,
+          assignment_id: null,
+          session_number: 2,
+          status: "queued",
+        }),
+      ]);
+      const firstWeekdayRuleAssignmentId =
+        weekdayRuleCreated[0]?.assignment_id;
+      expect(firstWeekdayRuleAssignmentId).toBeTruthy();
+
+      const readWeekdayRuleReplaySnapshot = () => sparseDatabase.query<{
+        item_count: number;
+        assignment_count: number;
+        event_count: number;
+        series_updated_at: string;
+        assignment_updated_at: string;
+      }>(`
+        select
+          (
+            select count(*)::integer
+            from private.vocab_assignment_series_items as item
+            join private.vocab_assignment_series as series
+              on series.id = item.series_id
+            where series.request_id = '${weekdayRuleRequestId}'
+          ) as item_count,
+          (
+            select count(distinct assignment.id)::integer
+            from public.assignments as assignment
+            join private.vocab_assignment_series_items as item
+              on item.assignment_id = assignment.id
+            join private.vocab_assignment_series as series
+              on series.id = item.series_id
+            where series.request_id = '${weekdayRuleRequestId}'
+          ) as assignment_count,
+          (
+            select count(*)::integer
+            from private.vocab_assignment_series_events as event
+            join private.vocab_assignment_series as series
+              on series.id = event.series_id
+            where series.request_id = '${weekdayRuleRequestId}'
+          ) as event_count,
+          (
+            select max(series.updated_at)::text
+            from private.vocab_assignment_series as series
+            where series.request_id = '${weekdayRuleRequestId}'
+          ) as series_updated_at,
+          (
+            select max(assignment.updated_at)::text
+            from public.assignments as assignment
+            join private.vocab_assignment_series_items as item
+              on item.assignment_id = assignment.id
+            join private.vocab_assignment_series as series
+              on series.id = item.series_id
+            where series.request_id = '${weekdayRuleRequestId}'
+          ) as assignment_updated_at;
+      `);
+      const replaySnapshot = await readWeekdayRuleReplaySnapshot();
+      expect(await createQueueV3({
+        requestId: weekdayRuleRequestId,
+        requestHash: "f".repeat(64),
+        payload: weekdayRulePayload,
+      })).toEqual(weekdayRuleCreated);
+      expect((await readWeekdayRuleReplaySnapshot()).rows).toEqual(
+        replaySnapshot.rows,
+      );
+
+      const changedRulePayload = structuredClone(weekdayRulePayload);
+      changedRulePayload[0]!.allocation_rule.overflow_policy =
+        "continue_weekly";
+      await expectPostgresError(
+        createQueueV3({
+          requestId: weekdayRuleRequestId,
+          requestHash: "f".repeat(64),
+          payload: changedRulePayload,
+        }),
+        "23505",
+        "idempotency_key_reused",
+      );
+      const changedPlanPayload = structuredClone(weekdayRulePayload);
+      changedPlanPayload[0]!.resolved_plan_sha256 = "d".repeat(64);
+      await expectPostgresError(
+        createQueueV3({
+          requestId: weekdayRuleRequestId,
+          requestHash: "f".repeat(64),
+          payload: changedPlanPayload,
+        }),
+        "23505",
+        "idempotency_key_reused",
+      );
+      expect((await readWeekdayRuleReplaySnapshot()).rows).toEqual(
+        replaySnapshot.rows,
+      );
+
+      const storedWeekdayRule = await sparseDatabase.query<{
+        resolved_plan_sha256: string;
+        split_basis: string;
+        allocation_rule: Record<string, unknown>;
+        allocation_rule_sha256: string;
+      }>(`
+        select
+          request.resolved_plan_sha256,
+          series.split_basis,
+          series.allocation_rule,
+          series.allocation_rule_sha256
+        from private.vocab_assignment_series as series
+        join private.vocab_assignment_queue_requests as request
+          on request.idempotency_key = series.request_id
+        where series.request_id = '${weekdayRuleRequestId}';
+      `);
+      expect(storedWeekdayRule.rows[0]).toEqual({
+        resolved_plan_sha256: "e".repeat(64),
+        split_basis: "range_unit",
+        allocation_rule: weekdayUnitAllocationRule,
+        allocation_rule_sha256: expect.stringMatching(/^[0-9a-f]{64}$/),
+      });
+
+      const weekdayItemsBeforeCompletion = await sparseDatabase.query<{
+        sequence_number: number;
+        status: string;
+        assignment_id: string | null;
+        unit_ids: string[];
+      }>(`
+        select
+          item.sequence_number,
+          item.status::text as status,
+          item.assignment_id,
+          item.unit_ids
+        from private.vocab_assignment_series_items as item
+        join private.vocab_assignment_series as series
+          on series.id = item.series_id
+        where series.request_id = '${weekdayRuleRequestId}'
+        order by item.sequence_number;
+      `);
+      expect(weekdayItemsBeforeCompletion.rows).toEqual([
+        {
+          sequence_number: 1,
+          status: "assigned",
+          assignment_id: firstWeekdayRuleAssignmentId,
+          unit_ids: ids.units.slice(0, 2),
+        },
+        {
+          sequence_number: 2,
+          status: "queued",
+          assignment_id: null,
+          unit_ids: ids.units.slice(2, 5),
+        },
+      ]);
+
+      await sparseDatabase.exec(`
+        insert into public.quiz_attempts (
+          id,
+          student_id,
+          assignment_id,
+          attempt_number,
+          status,
+          phase,
+          started_at,
+          deadline_at,
+          question_count_snapshot,
+          time_limit_seconds_snapshot,
+          passing_score_snapshot,
+          passing_basis_snapshot
+        ) values (
+          '${weekdayRuleAttemptId}',
+          '${weekdayRuleStudentId}',
+          '${firstWeekdayRuleAssignmentId}',
+          1,
+          'in_progress',
+          'initial',
+          clock_timestamp(),
+          clock_timestamp() + interval '1 hour',
+          4,
+          300,
+          80,
+          'initial'
+        );
+
+        update public.quiz_attempts
+        set status = 'completed',
+            phase = 'completed',
+            initial_completed_at = clock_timestamp(),
+            completed_at = clock_timestamp(),
+            initial_correct_count = 4,
+            retry_correct_count = 0,
+            unresolved_wrong_count = 0,
+            initial_score = 100,
+            final_score = 100,
+            passed = true,
+            elapsed_seconds = 1
+        where id = '${weekdayRuleAttemptId}';
+      `);
+
+      const weekdayItemsReady = await sparseDatabase.query<{
+        sequence_number: number;
+        status: string;
+        completed_attempt_id: string | null;
+      }>(`
+        select
+          item.sequence_number,
+          item.status::text as status,
+          item.completed_attempt_id
+        from private.vocab_assignment_series_items as item
+        join private.vocab_assignment_series as series
+          on series.id = item.series_id
+        where series.request_id = '${weekdayRuleRequestId}'
+        order by item.sequence_number;
+      `);
+      expect(weekdayItemsReady.rows).toEqual([
+        {
+          sequence_number: 1,
+          status: "completed",
+          completed_attempt_id: weekdayRuleAttemptId,
+        },
+        {
+          sequence_number: 2,
+          status: "ready",
+          completed_attempt_id: null,
+        },
+      ]);
+
+      const weekdayMaterialized = await sparseDatabase.query<{
+        result: Array<{ assignment_id: string; status: string }>;
+      }>(`
+        select private.materialize_ready_vocab_assignment_queue_v1(
+          '${weekdayRuleStudentId}',
+          10
+        ) as result;
+      `);
+      expect(weekdayMaterialized.rows[0]?.result).toEqual([
+        expect.objectContaining({
+          assignment_id: expect.any(String),
+          status: "assigned",
+        }),
+      ]);
+      const secondWeekdayRuleAssignmentId =
+        weekdayMaterialized.rows[0]?.result[0]?.assignment_id;
+      expect(secondWeekdayRuleAssignmentId).toBeTruthy();
+
+      const materializedWeekdayItem = await sparseDatabase.query<{
+        assignment_id: string;
+        status: string;
+        unit_ids: string[];
+        allocation_rule: Record<string, unknown>;
+        allocation_rule_sha256: string;
+      }>(`
+        select
+          item.assignment_id,
+          item.status::text as status,
+          array_agg(link.unit_id order by link.position)
+            filter (where link.is_primary) as unit_ids,
+          series.allocation_rule,
+          series.allocation_rule_sha256
+        from private.vocab_assignment_series_items as item
+        join private.vocab_assignment_series as series
+          on series.id = item.series_id
+        join public.assignment_units as link
+          on link.assignment_id = item.assignment_id
+        where series.request_id = '${weekdayRuleRequestId}'
+          and item.sequence_number = 2
+        group by
+          item.assignment_id,
+          item.status,
+          series.allocation_rule,
+          series.allocation_rule_sha256;
+      `);
+      expect(materializedWeekdayItem.rows[0]).toEqual({
+        assignment_id: secondWeekdayRuleAssignmentId,
+        status: "assigned",
+        unit_ids: ids.units.slice(2, 5),
+        allocation_rule: weekdayUnitAllocationRule,
+        allocation_rule_sha256:
+          storedWeekdayRule.rows[0]!.allocation_rule_sha256,
+      });
+
+      const readableWeekdayRule = await sparseDatabase.query<{
+        assignment_id: string;
+        allocation_rule: Record<string, unknown>;
+      }>(`
+        select *
+        from public.list_vocab_assignment_unit_rules_v1(
+          array['${secondWeekdayRuleAssignmentId}'::uuid]
+        );
+      `);
+      expect(readableWeekdayRule.rows[0]).toEqual({
+        assignment_id: secondWeekdayRuleAssignmentId,
+        allocation_rule: weekdayUnitAllocationRule,
+      });
+      const readableWeekdaySummary = await sparseDatabase.query<{
+        allocation_rule: Record<string, unknown>;
+        recurrence_weekdays: number[];
+      }>(`
+        select allocation_rule, recurrence_weekdays
+        from public.list_vocab_assignment_queue_summaries_v2(
+          false,
+          '${weekdayRuleStudentId}',
+          null,
+          null,
+          null
+        );
+      `);
+      expect(readableWeekdaySummary.rows[0]).toEqual({
+        allocation_rule: weekdayUnitAllocationRule,
+        recurrence_weekdays: [2, 4],
+      });
+
+      const weekdayRuleEvents = await sparseDatabase.query<{
+        completed_count: number;
+        ready_count: number;
+        second_assigned_count: number;
+      }>(`
+        select
+          count(*) filter (
+            where event.event_kind = 'session.completed'
+          )::integer as completed_count,
+          count(*) filter (
+            where event.event_kind = 'session.ready'
+          )::integer as ready_count,
+          count(*) filter (
+            where event.event_kind = 'session.assigned'
+              and event.details ->> 'sequenceNumber' = '2'
+          )::integer as second_assigned_count
+        from private.vocab_assignment_series_events as event
+        join private.vocab_assignment_series as series
+          on series.id = event.series_id
+        where series.request_id = '${weekdayRuleRequestId}';
+      `);
+      expect(weekdayRuleEvents.rows[0]).toEqual({
+        completed_count: 1,
+        ready_count: 1,
+        second_assigned_count: 1,
+      });
+
+      const boundaryRequestId =
+        "00000000-0000-4000-8000-000000000953";
+      const boundaryStudentIds = Array.from(
+        { length: 31 },
+        (_, index) =>
+          `00000000-0000-4000-8001-${String(index + 1).padStart(12, "0")}`,
+      );
+      await sparseDatabase.exec(`
+        insert into public.students (
+          id,
+          display_name,
+          status,
+          created_by
+        ) values ${boundaryStudentIds.map((studentId, index) => `(
+          '${studentId}',
+          'Queue boundary ${index + 1}',
+          'active',
+          '${ids.admin}'
+        )`).join(",")};
+      `);
+      const boundaryWindow = {
+        from: "2031-01-06T00:00:00.000Z",
+        until: "2031-01-06T14:00:00.000Z",
+      };
+      const boundaryPayload = boundaryStudentIds.map((studentId, index) => ({
+        student_id: studentId,
+        dataset_id: ids.dataset,
+        dataset_label: "Final schema test",
+        range_label: "DAY 1, DAY 5",
+        split_basis: "question_count",
+        resolved_plan_sha256: "9".repeat(64),
+        recurrence_slots: [{
+          isodow: 1,
+          local_time: "09:00:00",
+          duration_seconds: 50400,
+        }],
+        allocation_rule: null,
+        items: [{
+          ...makeBatch(
+            `Queue boundary ${index + 1}`,
+            boundaryWindow.from,
+            boundaryWindow.until,
+          ),
+          student_id: studentId,
+        }],
+      }));
+      const boundaryCreated = await createQueueV3({
+        requestId: boundaryRequestId,
+        requestHash: "8".repeat(64),
+        payload: boundaryPayload,
+      });
+      expect(boundaryCreated).toHaveLength(31);
+      expect(boundaryCreated.every((result) =>
+        result.status === "assigned" && Boolean(result.assignment_id)
+      )).toBe(true);
+
+      const boundaryStored = await sparseDatabase.query<{
+        request_count: number;
+        series_count: number;
+        item_count: number;
+        assignment_count: number;
+        distinct_assignment_count: number;
+        assigned_event_count: number;
+      }>(`
+        select
+          (
+            select count(*)::integer
+            from private.vocab_assignment_queue_requests
+            where idempotency_key = '${boundaryRequestId}'
+          ) as request_count,
+          (
+            select count(*)::integer
+            from private.vocab_assignment_series
+            where request_id = '${boundaryRequestId}'
+          ) as series_count,
+          (
+            select count(*)::integer
+            from private.vocab_assignment_series_items as item
+            join private.vocab_assignment_series as series
+              on series.id = item.series_id
+            where series.request_id = '${boundaryRequestId}'
+          ) as item_count,
+          (
+            select count(*)::integer
+            from public.assignments as assignment
+            join private.vocab_assignment_series_items as item
+              on item.assignment_id = assignment.id
+            join private.vocab_assignment_series as series
+              on series.id = item.series_id
+            where series.request_id = '${boundaryRequestId}'
+          ) as assignment_count,
+          (
+            select count(distinct item.assignment_id)::integer
+            from private.vocab_assignment_series_items as item
+            join private.vocab_assignment_series as series
+              on series.id = item.series_id
+            where series.request_id = '${boundaryRequestId}'
+          ) as distinct_assignment_count,
+          (
+            select count(*)::integer
+            from private.vocab_assignment_series_events as event
+            join private.vocab_assignment_series as series
+              on series.id = event.series_id
+            where series.request_id = '${boundaryRequestId}'
+              and event.event_kind = 'session.assigned'
+          ) as assigned_event_count;
+      `);
+      expect(boundaryStored.rows[0]).toEqual({
+        request_count: 1,
+        series_count: 31,
+        item_count: 31,
+        assignment_count: 31,
+        distinct_assignment_count: 31,
+        assigned_event_count: 31,
+      });
     } finally {
       await sparseDatabase.close();
     }

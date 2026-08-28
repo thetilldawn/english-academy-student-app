@@ -152,7 +152,7 @@ export async function persistBulkAssignment(input: {
   queueSeries: readonly Record<string, unknown>[] | null;
 }) {
   return usesCompletionQueue(input.assignment)
-    ? input.client.rpc("create_vocab_assignment_queues_v2", {
+    ? input.client.rpc("create_vocab_assignment_queues_v3", {
         p_idempotency_key: input.assignment.idempotencyKey,
         p_request_sha256: input.requestSha256,
         p_series: input.queueSeries,

@@ -43,12 +43,12 @@ describe("buildVocabAssignmentFieldErrors", () => {
     expect(buildVocabAssignmentFieldErrors([
       { code: "out_of_range", path: "commonPlan.unitsPerSession", message: "단위" },
       { code: "out_of_range", path: "commonPlan.questionCount", message: "문항" },
-    ]).firstFieldKey).toBe("questionCount");
+    ]).firstFieldKey).toBe("unitsPerSession");
     expect(buildVocabAssignmentFieldErrors([
       { code: "out_of_range", path: "commonPlan.weekdayUnitsPerSession.3", message: "수요일" },
       { code: "invalid_datetime", path: "commonPlan.schedule.availableTime", message: "공개" },
       { code: "required", path: "commonPlan.schedule.startDate", message: "기준일" },
-    ]).firstFieldKey).toBe("startDate");
+    ]).firstFieldKey).toBe("weekday-3-units");
   });
 
   it("서버의 범위 단위 수 계약 오류를 보이는 일정 입력으로 연결한다", () => {

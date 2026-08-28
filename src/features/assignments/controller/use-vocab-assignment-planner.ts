@@ -19,6 +19,7 @@ import {
   type VocabSplitOverflowPolicy,
   type VocabTargetSelectionMode,
   type VocabTimeTemplate,
+  type VocabUnitAllocationMode,
 } from "../domain/vocab-assignment-contract";
 import {
   applyTimeTemplate,
@@ -163,14 +164,32 @@ export function useVocabAssignmentPlanner({
         },
       });
     }
+    if (previousExam.unitAllocation) {
+      dispatch({ type: "schedule/enabled", enabled: true });
+      dispatch({ type: "assignment_mode", value: "per_session" });
+      dispatch({
+        type: "unit_allocation_mode",
+        value: previousExam.unitAllocation.rule.mode,
+      });
+      dispatch({
+        type: "units_per_session",
+        value: previousExam.unitAllocation.rule.unitsPerSession,
+      });
+      for (const weekday of [1, 2, 3, 4, 5, 6, 7] as const) {
+        dispatch({
+          type: "weekday_units_per_session",
+          weekday,
+          value: previousExam.unitAllocation.rule
+            .weekdayUnitsPerSession[weekday],
+        });
+      }
+      dispatch({
+        type: "overflow_policy",
+        value: previousExam.unitAllocation.overflowPolicy,
+      });
+    }
     bulk.actions.changeDirection(copied.exam.directionRatio);
-    const copiedSelectionMode = copied.exam.questionOrderMode === "random"
-      ? "random"
-      : "source_order";
-    dispatch({ type: "selection_mode", value: copiedSelectionMode });
-    bulk.actions.changeOrder(
-      copiedSelectionMode === "random" ? "random" : "ascending",
-    );
+    bulk.actions.changeOrder(copied.exam.questionOrderMode);
     bulk.actions.changePassingScore(copied.exam.passingScore);
     bulk.actions.changeTimeLimitEnabled(copied.exam.timeLimitEnabled !== false);
     bulk.actions.changeTiming(copied.exam.timing);
@@ -313,6 +332,12 @@ export function useVocabAssignmentPlanner({
       changeCollisionDecision,
       changeAssignmentMode: (value: VocabAssignmentMode) =>
         dispatch({ type: "assignment_mode", value }),
+      changeUnitAllocationMode: (value: VocabUnitAllocationMode) =>
+        dispatch({ type: "unit_allocation_mode", value }),
+      changeUnitsPerSession: (value: number) =>
+        dispatch({ type: "units_per_session", value }),
+      changeWeekdayUnitsPerSession: (weekday: IsoWeekday, value: number) =>
+        dispatch({ type: "weekday_units_per_session", weekday, value }),
       changeQuestionCountMode: (value: VocabQuestionCountChoice["mode"]) =>
         dispatch({ type: "question_count_mode", value }),
       activateManualQuestionCount: (defaultValue: number) => {
@@ -329,9 +354,6 @@ export function useVocabAssignmentPlanner({
         dispatch({ type: "extra_date_policy", value }),
       changeSelectionMode: (value: VocabTargetSelectionMode) => {
         dispatch({ type: "selection_mode", value });
-        bulk.actions.changeOrder(
-          value === "random" ? "random" : "ascending",
-        );
       },
       copyPreviousExam,
       decideCollision,

@@ -17,6 +17,8 @@ import {
   type ReviewPolicy,
   type SingleAssignmentDraft,
 } from "./model";
+import { ISO_WEEKDAYS } from "./vocab-assignment-contract";
+import { resolveVocabUnitCountsForDates } from "./vocab-schedule";
 import { resolveVocabUnitCycleAllocation } from "./vocab-unit-allocation";
 
 export type AssignmentDraftIssueCode =
@@ -505,6 +507,22 @@ function validateCommonPlan(
   validateId(plan.planNonce, "commonPlan.planNonce", issues);
   validateUniqueIds(plan.orderedUnitIds, "commonPlan.orderedUnitIds", issues);
   if (plan.splitBasis === "range_unit") {
+    const rule = plan.unitAllocationRule;
+    if (
+      !rule ||
+      rule.schemaVersion !== 1 ||
+      !["same", "by_weekday"].includes(rule.mode) ||
+      !integerInRange(rule.unitsPerSession, 1, 30) ||
+      ISO_WEEKDAYS.some((weekday) =>
+        !integerInRange(rule.weekdayUnitsPerSession[weekday], 1, 30)
+      )
+    ) {
+      issues.push({
+        code: "invalid_order",
+        path: "commonPlan.unitAllocationMode",
+        message: "회차별 범위 단위 규칙을 확인해 주세요.",
+      });
+    }
     if (
       plan.rangeUnitCounts.length !== plan.selectedDateCount ||
       plan.rangeUnitCounts.some((count) => !integerInRange(count, 1, 30))
@@ -515,6 +533,22 @@ function validateCommonPlan(
         message: "요일별 범위 단위 수와 선택한 날짜 수가 일치하지 않습니다.",
       });
     } else {
+      if (
+        rule &&
+        plan.recurrenceSessions.length === plan.selectedDateCount &&
+        JSON.stringify(resolveVocabUnitCountsForDates({
+          dates: plan.recurrenceSessions.map((session) =>
+            session.availableLocalDateTime.slice(0, 10)
+          ),
+          rule,
+        })) !== JSON.stringify(plan.rangeUnitCounts)
+      ) {
+        issues.push({
+          code: "invalid_order",
+          path: "commonPlan.rangeUnitCounts",
+          message: "요일별 단위 수가 원래 반복 일정의 규칙과 일치하지 않습니다.",
+        });
+      }
       const allocation = resolveVocabUnitCycleAllocation({
         orderedUnitIds: plan.orderedUnitIds,
         baseSessionUnitCounts: plan.rangeUnitCounts,
@@ -534,12 +568,21 @@ function validateCommonPlan(
         });
       }
     }
-  } else if (plan.rangeUnitCounts.length > 0) {
-    issues.push({
-      code: "invalid_order",
-      path: "commonPlan.rangeUnitCounts",
-      message: "단어 수 기준에는 범위 단위 수를 함께 보낼 수 없습니다.",
-    });
+  } else {
+    if (plan.rangeUnitCounts.length > 0) {
+      issues.push({
+        code: "invalid_order",
+        path: "commonPlan.rangeUnitCounts",
+        message: "단어 수 기준에는 범위 단위 수를 함께 보낼 수 없습니다.",
+      });
+    }
+    if (plan.unitAllocationRule !== null) {
+      issues.push({
+        code: "invalid_order",
+        path: "commonPlan.unitAllocationMode",
+        message: "단어 수 기준에는 범위 단위 규칙을 함께 보낼 수 없습니다.",
+      });
+    }
   }
   if (
     plan.splitBasis === "question_count" &&
@@ -615,7 +658,7 @@ function validateCommonPlan(
     issues.push({
       code: "invalid_order",
       path: "commonPlan.selectionMode",
-      message: "시험 문제 순서를 골라 주세요.",
+      message: "출제 단어 선택 방식을 골라 주세요.",
     });
   }
   if (plan.sessions.length !== draft.range.sessionCount) {

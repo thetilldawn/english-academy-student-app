@@ -25,6 +25,10 @@ const pureSharedModules = new Map([
     "@/lib/admin/assignment-replacement-fingerprint",
     path.resolve("src/lib/admin/assignment-replacement-fingerprint.ts"),
   ],
+  [
+    "@/lib/admin/vocab-unit-allocation",
+    path.resolve("src/lib/admin/vocab-unit-allocation.ts"),
+  ],
 ]);
 
 describe("assignment feature dependency boundaries", () => {
@@ -35,6 +39,7 @@ describe("assignment feature dependency boundaries", () => {
         specifier === "zod" ||
         specifier === "@/lib/deadline" ||
         specifier === "@/lib/admin/assignment-edit-policy" ||
+        specifier === "@/lib/admin/vocab-unit-allocation" ||
         resolvesInside(importer, specifier, [domainRoot]),
       forbidEndpointLiterals: true,
       forbidJsx: true,

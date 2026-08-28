@@ -320,6 +320,14 @@ describe("일괄 단어 시험 입력 계약", () => {
         splitBasis: "range_unit",
         orderedUnitIds: unitIds,
         rangeUnitCounts: [2, 2],
+        unitAllocationRule: {
+          schemaVersion: 1,
+          mode: "same",
+          unitsPerSession: 2,
+          weekdayUnitsPerSession: {
+            1: 2, 2: 2, 3: 2, 4: 2, 5: 2, 6: 2, 7: 2,
+          },
+        },
         questionCount: { mode: "all" },
         overflowPolicy: "continue_weekly",
         extraDatePolicy: "unconfirmed",
@@ -337,6 +345,28 @@ describe("일괄 단어 시험 입력 계약", () => {
 
     expect(bulkAssignmentPreviewSchema.parse(input).commonPlan?.sessions)
       .toHaveLength(2);
+    expect(() => bulkAssignmentPreviewSchema.parse({
+      ...input,
+      commonPlan: {
+        ...input.commonPlan,
+        unitAllocationRule: {
+          ...input.commonPlan.unitAllocationRule,
+          unitsPerSession: 1,
+        },
+      },
+    })).toThrow("요일별 단위 수가 원래 반복 일정의 규칙과 일치하지 않습니다.");
+    for (const invalidCount of [0, 31]) {
+      expect(() => bulkAssignmentPreviewSchema.parse({
+        ...input,
+        commonPlan: {
+          ...input.commonPlan,
+          unitAllocationRule: {
+            ...input.commonPlan.unitAllocationRule,
+            unitsPerSession: invalidCount,
+          },
+        },
+      })).toThrow();
+    }
     expect(() => bulkAssignmentPreviewSchema.parse({
       ...input,
       commonPlan: {
@@ -366,6 +396,7 @@ describe("일괄 단어 시험 입력 계약", () => {
       splitBasis: "question_count",
       orderedUnitIds: [unitId],
       rangeUnitCounts: [],
+      unitAllocationRule: null,
       questionCount: { mode: "manual", value: 20 },
       overflowPolicy: "leave",
       extraDatePolicy: "unconfirmed",
@@ -407,6 +438,14 @@ describe("일괄 단어 시험 입력 계약", () => {
         splitBasis: "range_unit",
         orderedUnitIds: sevenUnits,
         rangeUnitCounts: [1],
+        unitAllocationRule: {
+          schemaVersion: 1,
+          mode: "same",
+          unitsPerSession: 1,
+          weekdayUnitsPerSession: {
+            1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1,
+          },
+        },
         questionCount: { mode: "all" },
         overflowPolicy: "continue_weekly",
         recurrenceSessions: [{

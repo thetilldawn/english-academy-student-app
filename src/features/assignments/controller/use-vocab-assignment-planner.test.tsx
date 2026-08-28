@@ -3,6 +3,8 @@
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { AssignmentHistorySummary } from "@/lib/admin/history";
+
 import type {
   AssignmentDatasetItem,
   AssignmentUnitItem,
@@ -11,6 +13,7 @@ import { useVocabAssignmentPlanner } from "./use-vocab-assignment-planner";
 
 const mocks = vi.hoisted(() => ({
   changeCommonPlan: vi.fn(),
+  changeOrder: vi.fn(),
   preview: null as null | {
     commonPlanSummary: null;
     items: Array<{
@@ -28,8 +31,9 @@ vi.mock("./use-bulk-assignment-controller", () => ({
     actions: {
       changeCommonPlan: mocks.changeCommonPlan,
       changeDirection: vi.fn(),
-      changeOrder: vi.fn(),
+      changeOrder: mocks.changeOrder,
       changePassingScore: vi.fn(),
+      changeTimeLimitEnabled: vi.fn(),
       changeTiming: vi.fn(),
       submit: vi.fn(),
     },
@@ -97,17 +101,20 @@ const units: AssignmentUnitItem[] = Array.from({ length: 6 }, (_, index) => ({
   unitType: "day",
 }));
 
-function renderPlanner() {
+function renderPlanner(
+  plannerUnits = units,
+  previousExamHistory: readonly AssignmentHistorySummary[] = [],
+) {
   return renderHook(() => useVocabAssignmentPlanner({
     datasets: [dataset],
     genericErrorMessage: "저장 실패",
     initialDatasetId: dataset.id,
-    previousExamHistory: [],
-    previousExamSourceStudentId: "",
+    previousExamHistory,
+    previousExamSourceStudentId: previousExamHistory[0]?.studentId ?? "",
     previewErrorMessage: "미리보기 실패",
     studentIds: ["student-a"],
     today: "2026-08-21",
-    units,
+    units: plannerUnits,
   }));
 }
 
@@ -132,6 +139,7 @@ function selectMondayWednesdayFriday(
 describe("단어 배정 일정 controller", () => {
   beforeEach(() => {
     mocks.changeCommonPlan.mockReset();
+    mocks.changeOrder.mockReset();
     mocks.preview = null;
   });
 
@@ -307,6 +315,7 @@ describe("단어 배정 일정 controller", () => {
       result.current.actions.changeSelectionMode("random");
       result.current.actions.toggleWeekday(3);
     });
+    expect(mocks.changeOrder).not.toHaveBeenCalled();
     expect(result.current.commonPlan).toMatchObject({
       questionCount: { mode: "manual", value: 20 },
       overflowPolicy: "continue_weekly",
@@ -504,6 +513,122 @@ describe("단어 배정 일정 controller", () => {
       { date: "2026-09-07", unitIds: ["unit-5"] },
       { date: "2026-09-09", unitIds: ["unit-6"] },
     ]);
+  });
+
+  it("월 2단위·수 3단위를 원래 요일 순서로 이어 배정한다", () => {
+    const eightUnits = Array.from({ length: 8 }, (_, index) => ({
+      ...units[index % units.length]!,
+      id: `weekday-unit-${index + 1}`,
+      label: `DAY ${index + 1}`,
+      displayName: `DAY ${index + 1}`,
+      number: index + 1,
+      sortIndex: index + 1,
+    }));
+    const { result } = renderPlanner(eightUnits);
+    act(() => {
+      result.current.actions.selectAllUnits(true);
+      result.current.actions.toggleWeekday(1);
+      result.current.actions.toggleWeekday(3);
+      result.current.actions.changeAssignmentMode("per_session");
+      result.current.actions.changeUnitAllocationMode("by_weekday");
+      result.current.actions.changeWeekdayUnitsPerSession(1, 2);
+      result.current.actions.changeWeekdayUnitsPerSession(3, 3);
+      result.current.actions.changeOverflowPolicy("continue_weekly");
+    });
+
+    expect(result.current.commonPlan).toMatchObject({
+      rangeUnitCounts: [2, 3],
+      unitAllocationRule: {
+        schemaVersion: 1,
+        mode: "by_weekday",
+        weekdayUnitsPerSession: { 1: 2, 3: 3 },
+      },
+    });
+    expect(result.current.commonPlan?.sessions.map((session) => ({
+      date: session.availableLocalDateTime.slice(0, 10),
+      unitIds: session.unitIds,
+    }))).toEqual([
+      {
+        date: "2026-08-24",
+        unitIds: ["weekday-unit-1", "weekday-unit-2"],
+      },
+      {
+        date: "2026-08-26",
+        unitIds: ["weekday-unit-3", "weekday-unit-4", "weekday-unit-5"],
+      },
+      {
+        date: "2026-08-31",
+        unitIds: ["weekday-unit-6", "weekday-unit-7"],
+      },
+      { date: "2026-09-02", unitIds: ["weekday-unit-8"] },
+    ]);
+
+    act(() => result.current.actions.updateSessionSchedule(2, {
+      availableLocalDateTime: "2026-08-27T16:00",
+      deadlineLocalDateTime: "2026-08-28T22:00",
+    }));
+    expect(result.current.commonPlan?.rangeUnitCounts).toEqual([2, 3]);
+    expect(result.current.commonPlan?.sessions[1]).toMatchObject({
+      availableLocalDateTime: "2026-08-27T00:00",
+      unitIds: ["weekday-unit-3", "weekday-unit-4", "weekday-unit-5"],
+    });
+  });
+
+  it("최근 시험 복사는 저장된 요일별 원 규칙을 새 계획에 복원한다", () => {
+    const previous = {
+      assignmentDeleted: false,
+      assignmentId: "assignment-previous",
+      assignmentPurpose: "regular",
+      assignmentTitle: "이전 시험",
+      assignedAt: "2026-08-20T00:00:00.000Z",
+      availableFrom: "2026-08-20T07:00:00.000Z",
+      availableUntil: "2026-08-20T13:00:00.000Z",
+      datasetId: dataset.id,
+      datasetTitle: dataset.title,
+      englishToKoreanRatio: 50,
+      passingScore: 80,
+      questionOrderMode: "ascending",
+      questionTimeLimitSeconds: null,
+      status: "completed",
+      studentId: "student-a",
+      studentName: "학생",
+      timeLimitSeconds: 300,
+      timingMode: "total",
+      vocabUnitAllocation: {
+        rule: {
+          schemaVersion: 1,
+          mode: "by_weekday",
+          unitsPerSession: 2,
+          weekdayUnitsPerSession: {
+            1: 2, 2: 1, 3: 3, 4: 1, 5: 1, 6: 1, 7: 1,
+          },
+        },
+        overflowPolicy: "continue_weekly",
+      },
+    } as AssignmentHistorySummary;
+    const { result } = renderPlanner(units, [previous]);
+    act(() => {
+      result.current.actions.selectAllUnits(true);
+      result.current.actions.toggleWeekday(1);
+      result.current.actions.toggleWeekday(3);
+      result.current.actions.changeScheduleEnabled(false);
+    });
+
+    let copied = false;
+    act(() => {
+      copied = result.current.actions.copyPreviousExam();
+    });
+    expect(copied).toBe(true);
+    expect(result.current.planner).toMatchObject({
+      assignmentMode: "per_session",
+      scheduleEnabled: true,
+      unitAllocationMode: "by_weekday",
+      unitsPerSession: 2,
+      weekdayUnitsPerSession: { 1: 2, 3: 3 },
+      overflowPolicy: "continue_weekly",
+    });
+    expect(result.current.commonPlan?.rangeUnitCounts).toEqual([2, 3]);
+    expect(mocks.changeOrder).toHaveBeenCalledWith("ascending");
   });
 
   it("비연속 범위도 원래 범위 순서로 회차별 배정한다", () => {

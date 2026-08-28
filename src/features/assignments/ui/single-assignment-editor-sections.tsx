@@ -37,7 +37,7 @@ export function SingleAssignmentEditorSections({
     ? "범위 확인"
     : null;
   const conditionStatus = fieldErrors.questionCount ||
-    fieldErrors.selectionMode ||
+    fieldErrors.questionOrder ||
     fieldErrors.direction ||
     fieldErrors.passingScore ||
     fieldErrors.retryPassingScore

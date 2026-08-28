@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { resolveVocabUnitCountsForDates } from "@/lib/admin/vocab-unit-allocation";
 import { resolveVocabUnitCycleAllocation } from "@/features/assignments/domain/vocab-unit-allocation";
 import {
   questionOrderModes,
@@ -10,8 +11,29 @@ import {
   MAXIMUM_BULK_ASSIGNMENT_COUNT,
   MAXIMUM_BULK_STUDENT_COUNT,
 } from "@/lib/admin/bulk-assignment-range";
+import { isoToKoreanDateTimeLocal } from "@/lib/deadline";
 
 import { reviewLevelSchema } from "./assignment-request-common";
+
+const vocabUnitCountSchema = z.number().int().min(1).max(30);
+const vocabUnitAllocationRuleSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    mode: z.enum(["same", "by_weekday"]),
+    unitsPerSession: vocabUnitCountSchema,
+    weekdayUnitsPerSession: z
+      .object({
+        1: vocabUnitCountSchema,
+        2: vocabUnitCountSchema,
+        3: vocabUnitCountSchema,
+        4: vocabUnitCountSchema,
+        5: vocabUnitCountSchema,
+        6: vocabUnitCountSchema,
+        7: vocabUnitCountSchema,
+      })
+      .strict(),
+  })
+  .strict();
 
 const bulkCollisionDecisionSchema = z
   .object({
@@ -51,6 +73,7 @@ const bulkCommonPlanSchema = z
     splitBasis: z.enum(["question_count", "range_unit"]),
     orderedUnitIds: z.array(z.uuid()).min(1).max(500),
     rangeUnitCounts: z.array(z.number().int().min(1).max(30)).max(7),
+    unitAllocationRule: vocabUnitAllocationRuleSchema.nullable(),
     questionCount: z.discriminatedUnion("mode", [
       z.object({ mode: z.literal("all") }).strict(),
       z
@@ -149,6 +172,16 @@ const bulkCommonPlanSchema = z
       });
     }
     if (
+      value.splitBasis === "range_unit" &&
+      value.unitAllocationRule === null
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["unitAllocationRule"],
+        message: "회차별 범위 단위 규칙을 확인해 주세요.",
+      });
+    }
+    if (
       value.splitBasis === "question_count" &&
       value.rangeUnitCounts.length !== 0
     ) {
@@ -156,6 +189,16 @@ const bulkCommonPlanSchema = z
         code: "custom",
         path: ["rangeUnitCounts"],
         message: "단어 수 기준에는 범위 단위 수를 함께 보낼 수 없습니다.",
+      });
+    }
+    if (
+      value.splitBasis === "question_count" &&
+      value.unitAllocationRule !== null
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["unitAllocationRule"],
+        message: "단어 수 기준에는 범위 단위 규칙을 함께 보낼 수 없습니다.",
       });
     }
     if (
@@ -242,6 +285,28 @@ const bulkCommonPlanSchema = z
         path: ["orderedUnitIds"],
         message: "단어 수 기준의 전체 범위와 회차 범위가 일치하지 않습니다.",
       });
+    }
+    if (
+      value.splitBasis === "range_unit" &&
+      value.unitAllocationRule &&
+      value.recurrenceSessions.length === value.selectedDateCount
+    ) {
+      const expectedCounts = resolveVocabUnitCountsForDates({
+        dates: value.recurrenceSessions.map((session) =>
+          isoToKoreanDateTimeLocal(session.availableFrom).slice(0, 10)
+        ),
+        rule: value.unitAllocationRule,
+      });
+      if (
+        JSON.stringify(expectedCounts) !==
+          JSON.stringify(value.rangeUnitCounts)
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["rangeUnitCounts"],
+          message: "요일별 단위 수가 원래 반복 일정의 규칙과 일치하지 않습니다.",
+        });
+      }
     }
     if (
       value.splitBasis === "range_unit" &&

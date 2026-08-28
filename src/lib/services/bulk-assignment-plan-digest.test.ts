@@ -3,7 +3,42 @@ import { describe, expect, it } from "vitest";
 import {
   resolvedBulkPlanSha256,
   type ResolvedBulkPlanDigestItem,
+  type ResolvedBulkPlanSourceContext,
 } from "./bulk-assignment-plan-digest";
+
+const weekdayCounts = {
+  1: 2, 2: 2, 3: 2, 4: 2, 5: 2, 6: 2, 7: 2,
+} as const;
+
+function sourceContext(
+  overrides: Partial<ResolvedBulkPlanSourceContext> = {},
+): ResolvedBulkPlanSourceContext {
+  return {
+    distribution: "split",
+    splitBasis: "range_unit",
+    orderedUnitIds: [
+      "00000000-0000-4000-8000-000000000003",
+      "00000000-0000-4000-8000-000000000004",
+    ],
+    rangeUnitCounts: [2],
+    unitAllocationRule: {
+      schemaVersion: 1,
+      mode: "same",
+      unitsPerSession: 2,
+      weekdayUnitsPerSession: weekdayCounts,
+    },
+    questionCount: { mode: "all" },
+    overflowPolicy: "leave",
+    extraDatePolicy: "unconfirmed",
+    selectedDateCount: 1,
+    selectionMode: "source_order",
+    recurrenceSessions: [{
+      availableFrom: "2026-08-24T00:00:00.000Z",
+      availableUntil: "2026-08-24T06:00:00.000Z",
+    }],
+    ...overrides,
+  };
+}
 
 function plan(
   overrides: Partial<ResolvedBulkPlanDigestItem["sessions"][number]> = {},
@@ -54,6 +89,44 @@ describe("resolved bulk plan digest", () => {
       resolvedBulkPlanSha256(plan({
         availableFrom: "2026-08-25T00:00:00.000Z",
       })),
+    );
+  });
+
+  it("changes when the original unit rule changes despite equal sessions", () => {
+    expect(resolvedBulkPlanSha256(plan(), sourceContext())).not.toBe(
+      resolvedBulkPlanSha256(plan(), sourceContext({
+        unitAllocationRule: {
+          schemaVersion: 1,
+          mode: "by_weekday",
+          unitsPerSession: 2,
+          weekdayUnitsPerSession: weekdayCounts,
+        },
+      })),
+    );
+  });
+
+  it.each([
+    ["overflow policy", { overflowPolicy: "continue_weekly" as const }],
+    ["extra-date policy", { extraDatePolicy: "repeat_from_start" as const }],
+    ["ordered unit ids", {
+      orderedUnitIds: [
+        "00000000-0000-4000-8000-000000000004",
+        "00000000-0000-4000-8000-000000000003",
+      ],
+    }],
+    ["base unit counts", { rangeUnitCounts: [1, 1] }],
+    ["recurrence schedule", {
+      recurrenceSessions: [{
+        availableFrom: "2026-08-25T00:00:00.000Z",
+        availableUntil: "2026-08-25T06:00:00.000Z",
+      }],
+    }],
+  ] satisfies ReadonlyArray<[
+    string,
+    Partial<ResolvedBulkPlanSourceContext>,
+  ]>)("changes when only the source %s changes", (_label, override) => {
+    expect(resolvedBulkPlanSha256(plan(), sourceContext())).not.toBe(
+      resolvedBulkPlanSha256(plan(), sourceContext(override)),
     );
   });
 });

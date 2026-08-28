@@ -210,7 +210,7 @@ export function DirectReviewAssignmentSections({
           }
           value={draft.exam.questionOrderMode === "random"
             ? "random"
-            : "source_order"}
+            : "sequential"}
         />
         <ExamConditionFields
           exam={draft.exam}

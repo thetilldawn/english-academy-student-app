@@ -22,6 +22,9 @@ function controller() {
       cancelExtraDates: vi.fn(),
       changeExtraDatePolicy: vi.fn(),
       changeOverflowPolicy: vi.fn(),
+      changeUnitAllocationMode: vi.fn(),
+      changeUnitsPerSession: vi.fn(),
+      changeWeekdayUnitsPerSession: vi.fn(),
     },
     fieldErrors: {},
     bulk: { preview: null },
@@ -31,6 +34,11 @@ function controller() {
     requiresExtraDateDecision: false,
     planner: {
       assignmentMode: "word_count",
+      unitAllocationMode: "same",
+      unitsPerSession: 1,
+      weekdayUnitsPerSession: {
+        1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1,
+      },
       questionCountMode: "all",
       overflowPolicy: "leave",
       schedule: {
@@ -210,7 +218,7 @@ describe("VocabScheduleFields", () => {
     expect(screen.getByText("선택 단어장")).toBeVisible();
   });
 
-  it("회차별은 남은 범위를 처리하는 두 선택만 표시한다", () => {
+  it("회차별은 단위 수와 남은 범위 처리를 함께 표시한다", () => {
     const value = controller();
     value.planner.assignmentMode = "per_session";
     value.planner.schedule.weekdays = [1, 3];
@@ -230,8 +238,31 @@ describe("VocabScheduleFields", () => {
       .toBeVisible();
     expect(screen.getByRole("button", { name: "같은 요일로 이어서" }))
       .toBeVisible();
-    expect(screen.queryByText(/요일별 배정 방식/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/범위 수/)).not.toBeInTheDocument();
+    expect(screen.getByText("요일별 배정 방식")).toBeVisible();
+    expect(screen.getByText("회차당 단위 수")).toBeVisible();
+  });
+
+  it("요일별 단위 수를 선택한 요일마다 입력한다", () => {
+    const value = controller();
+    value.planner.assignmentMode = "per_session";
+    value.planner.unitAllocationMode = "by_weekday";
+    value.planner.schedule.weekdays = [1, 3];
+
+    render(<VocabUnitAllocationFields controller={value} />);
+
+    expect(screen.getByLabelText("월요일 단위 수")).toHaveValue(1);
+    expect(screen.getByLabelText("수요일 단위 수")).toHaveValue(1);
+    expect(screen.queryByLabelText("금요일 단위 수")).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("월요일 단위 수"), {
+      target: { value: "2" },
+    });
+    fireEvent.change(screen.getByLabelText("수요일 단위 수"), {
+      target: { value: "3" },
+    });
+    expect(value.actions.changeWeekdayUnitsPerSession)
+      .toHaveBeenNthCalledWith(1, 1, 2);
+    expect(value.actions.changeWeekdayUnitsPerSession)
+      .toHaveBeenNthCalledWith(2, 3, 3);
   });
 
   it("단어 수 직접 입력도 남은 범위를 다음 주로 잇는 선택을 제공한다", () => {

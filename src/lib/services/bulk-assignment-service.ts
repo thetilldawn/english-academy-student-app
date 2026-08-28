@@ -45,6 +45,7 @@ import {
   type PreparedMixedAssignmentBatch,
 } from "@/lib/services/mixed-assignment-service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { isoToKoreanDateTimeLocal } from "@/lib/deadline";
 import { resolvedBulkPlanSha256 } from "@/lib/services/bulk-assignment-plan-digest";
 import {
   bulkAssignmentRequestSha256,
@@ -71,7 +72,10 @@ import {
   resolveVocabQuestionCycleAllocation,
 } from "@/features/assignments/domain/vocab-question-allocation";
 import { resolveVocabUnitCycleAllocation } from "@/features/assignments/domain/vocab-unit-allocation";
-import { extendScheduleSlotsFromRecurrence } from "@/features/assignments/domain/vocab-schedule";
+import {
+  extendScheduleSlotsFromRecurrence,
+} from "@/features/assignments/domain/vocab-schedule";
+import { resolveVocabUnitCountsForDates } from "@/lib/admin/vocab-unit-allocation";
 import { planDirectionalVocabSeriesTargets } from "@/features/assignments/domain/vocab-series-target-planner";
 import { bulkPlanSignature } from "@/features/assignments/domain/bulk-plan-signature";
 
@@ -235,6 +239,15 @@ export function mapBulkAssignmentPreparationFailure(error: unknown) {
 
 function bulkDatabaseError(error: { code?: string; message?: string }) {
   const message = error.message ?? "";
+  if (
+    (error.code === "42883" || error.code === "PGRST202") &&
+    message.includes("create_vocab_assignment_queues_v3")
+  ) {
+    return new BulkAssignmentError(
+      "database",
+      "요일별 배정 저장 기능을 업데이트하는 중입니다. 잠시 후 다시 배정해 주세요.",
+    );
+  }
   if (isAssignmentPersistenceInvariantFailure(error)) {
     return new BulkAssignmentError("database");
   }
@@ -949,9 +962,31 @@ async function resolveBulkAssignmentPreview(
           );
           availableQuestionCount = capacity.seriesMaximumQuestionCount;
           if (input.commonPlan.splitBasis === "range_unit") {
+            const unitAllocationRule = input.commonPlan.unitAllocationRule;
+            if (!unitAllocationRule) {
+              throw new BulkAssignmentError(
+                "invalid_selection",
+                "회차별 범위 단위 규칙을 확인해 주세요.",
+              );
+            }
+            const serverRangeUnitCounts = resolveVocabUnitCountsForDates({
+              dates: input.commonPlan.recurrenceSessions.map((session) =>
+                isoToKoreanDateTimeLocal(session.availableFrom).slice(0, 10)
+              ),
+              rule: unitAllocationRule,
+            });
+            if (
+              JSON.stringify(serverRangeUnitCounts) !==
+                JSON.stringify(input.commonPlan.rangeUnitCounts)
+            ) {
+              throw new BulkAssignmentError(
+                "invalid_selection",
+                "요일별 단위 수가 원래 반복 일정의 규칙과 일치하지 않습니다.",
+              );
+            }
             const unitAllocation = resolveVocabUnitCycleAllocation({
               orderedUnitIds: input.commonPlan.orderedUnitIds,
-              baseSessionUnitCounts: input.commonPlan.rangeUnitCounts,
+              baseSessionUnitCounts: serverRangeUnitCounts,
               selectedDateCount: input.commonPlan.selectedDateCount,
               overflowPolicy: input.commonPlan.overflowPolicy,
               extraDatePolicy: input.commonPlan.extraDatePolicy,
@@ -1427,6 +1462,21 @@ async function resolveBulkAssignmentPreview(
           targets: targetPlansByStudent.get(item.studentId)?.[index] ?? [],
         })),
       })),
+      input.commonPlan
+        ? {
+            distribution: input.commonPlan.distribution,
+            splitBasis: input.commonPlan.splitBasis,
+            orderedUnitIds: input.commonPlan.orderedUnitIds,
+            rangeUnitCounts: input.commonPlan.rangeUnitCounts,
+            unitAllocationRule: input.commonPlan.unitAllocationRule,
+            questionCount: input.commonPlan.questionCount,
+            overflowPolicy: input.commonPlan.overflowPolicy,
+            extraDatePolicy: input.commonPlan.extraDatePolicy,
+            selectedDateCount: input.commonPlan.selectedDateCount,
+            selectionMode: input.commonPlan.selectionMode,
+            recurrenceSessions: input.commonPlan.recurrenceSessions,
+          }
+        : null,
     ),
     rangeLabel,
   };
@@ -1799,6 +1849,7 @@ export async function createBulkAssignments(
     try {
       queueSeries = buildVocabAssignmentQueueSeriesPayload({
         commonPlan,
+        previewPlanSignature: input.previewPlanSignature,
         rangeLabel: preview.rangeLabel,
         previewItems: preview.items.map((item) => ({
           studentId: item.studentId,

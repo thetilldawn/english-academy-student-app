@@ -1,3 +1,12 @@
+import type {
+  QuestionOrderMode,
+  TimingMode,
+} from "@/lib/admin/assignment-settings";
+import type {
+  VocabSplitOverflowPolicy,
+  VocabUnitAllocationRuleV1,
+} from "@/lib/admin/vocab-unit-allocation";
+
 export type AssignmentActivityStatus =
   | "not_started"
   | "cancelled"
@@ -41,6 +50,10 @@ export type AssignmentHistorySource = {
   missedAt: string | null;
   cancelledAt: string | null;
   cancellationReason: string | null;
+  vocabUnitAllocation?: {
+    rule: VocabUnitAllocationRuleV1;
+    overflowPolicy: VocabSplitOverflowPolicy;
+  } | null;
 };
 
 export type AttemptHistorySource = {
@@ -366,7 +379,3 @@ export function projectCurrentAssignmentHistory(
   }
   return [...latestByRecipient.values()];
 }
-import type {
-  QuestionOrderMode,
-  TimingMode,
-} from "@/lib/admin/assignment-settings";

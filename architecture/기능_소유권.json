@@ -259,6 +259,7 @@
     { "path": "src/lib/services/vocab-assignment-queue-query.ts", "owner": "assignment-queue" },
     { "path": "src/lib/services/vocab-assignment-queue-support.ts", "owner": "assignment-queue" },
     { "path": "src/lib/services/vocab-time-template-service.ts", "owner": "assignments" },
+    { "path": "src/lib/services/vocab-unit-allocation-rule-read-service.ts", "owner": "assignments" },
     { "path": "src/lib/services/wrong-word-command.ts", "owner": "students" },
     { "path": "src/lib/services/wrong-word-query.ts", "owner": "students" },
     { "path": "src/lib/services/wrong-word-worksheet-service.ts", "owner": "students" }
@@ -317,6 +318,8 @@
     { "path": "src/lib/admin/unit-range.ts", "owner": "assignments" },
     { "path": "src/lib/admin/vocab-assignment-queue.ts", "owner": "assignment-queue" },
     { "path": "src/lib/admin/vocab-time-template.ts", "owner": "assignments" },
+    { "path": "src/lib/admin/vocab-unit-allocation.ts", "owner": "shared-contract" },
+    { "path": "src/lib/admin/vocab-unit-allocation-rule.ts", "owner": "shared-contract" },
     { "path": "src/lib/admin/wrong-history-summary.ts", "owner": "shared-contract" },
     { "path": "src/lib/admin/wrong-word-history.ts", "owner": "students" }
   ],
@@ -419,8 +422,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 77,
-      "pathSetSha256": "729c6747fd98ed5cc73c851b6931a857dc0d0107ad1bba11e153e72c4bd39cf6"
+      "fileCount": 78,
+      "pathSetSha256": "ad7156657552681bce1f7baaac330b8263847ae2ebf863437206839cbc1964b4"
     },
     {
       "path": "src/lib/deploy",
@@ -470,6 +473,11 @@
       "path": "supabase/migrations/20260829103000_fix_assignment_edit_preview_regressions.sql",
       "owner": "assignments",
       "flow": "assignment-edit"
+    },
+    {
+      "path": "supabase/migrations/20260829120000_preserve_vocab_weekday_unit_rules.sql",
+      "owner": "assignments",
+      "flow": "weekday-unit-allocation"
     }
   ],
   "features": [
@@ -1271,7 +1279,7 @@
     {
       "id": "weekday-unit-allocation",
       "name": "요일별 범위·단어 수 배정",
-      "status": "R2-3에서 규칙 보존 확장 예정",
+      "status": "active",
       "owner": "assignments",
       "participants": ["assignments", "assignment-queue", "students", "history"],
       "dataClass": "mutation",
@@ -1287,7 +1295,7 @@
         "src/lib/services/admin-history-read-service.ts|src/lib/services/admin-attempt-read-service.ts": "요일별 계획은 목록 묶음만 읽으며 같은 파일의 시험 상세 조회 분기는 실행하지 않는다.",
         "src/lib/services/admin-history-read-service.ts|src/lib/services/learning-point-read-service.ts": "학습 포인트는 시험 상세 조회에서만 읽고 요일별 계획에서는 읽지 않는다."
       },
-      "knownGap": "현재 구체적인 unit_ids는 저장하지만 same/by_weekday 원래 규칙과 요일별 단위 수는 명시적으로 보존하지 않는다.",
+      "knownGap": "최근 규칙 조회는 학생·단어장별 최근 3개 후보로 줄였지만 전체 조합 수에 비례한다. R3 목적형 읽기 모델에서 선택 학생·단어장 지연 조회로 분리한다.",
       "touchpoints": {
         "route": [
           "src/app/api/admin/bulk-assignments/preview/route.ts",
@@ -1312,7 +1320,9 @@
           "src/features/assignments/ui/vocab-schedule-detail-fields.tsx",
           "src/features/assignments/ui/bulk-series-preview.tsx",
           "src/features/assignments/ui/bulk-preview-session-list.tsx",
-          "src/features/assignments/ui/collision-decision-list.tsx"
+          "src/features/assignments/ui/collision-decision-list.tsx",
+          "src/features/assignment-queue/ui/assignment-queue-tags.tsx",
+          "src/features/assignment-queue/ui/assignment-queue-history.tsx"
         ],
         "clientState": [
           "src/features/assignments/controller/vocab-assignment-planner-state.ts",
@@ -1326,6 +1336,8 @@
           "src/features/assignments/domain/vocab-unit-allocation.ts",
           "src/features/assignments/domain/vocab-series-target-planner.ts",
           "src/features/assignments/domain/vocab-planner-validation.ts",
+          "src/features/assignments/domain/bulk-draft.ts",
+          "src/features/assignments/domain/vocab-previous-exam.ts",
           "src/lib/assignment/question-planner.ts"
         ],
         "presentation": [
@@ -1334,7 +1346,10 @@
         ],
         "contract": [
           "src/features/assignments/api/request-adapters.ts",
-          "src/lib/admin/bulk-assignment-request.ts"
+          "src/lib/admin/bulk-assignment-request.ts",
+          "src/lib/admin/vocab-unit-allocation.ts",
+          "src/lib/admin/vocab-unit-allocation-rule.ts",
+          "src/lib/admin/vocab-assignment-queue.ts"
         ],
         "transport": ["src/features/assignments/transport/assignment-transport.ts"],
         "server": [
@@ -1351,12 +1366,15 @@
           "src/lib/services/bulk-assignment-service.ts",
           "src/lib/services/bulk-assignment-plan-digest.ts",
           "src/lib/services/bulk-assignment-persistence.ts",
-          "src/lib/services/vocab-assignment-queue-plan.ts"
+          "src/lib/services/vocab-assignment-queue-plan.ts",
+          "src/lib/services/vocab-assignment-queue-query.ts",
+          "src/lib/services/vocab-unit-allocation-rule-read-service.ts"
         ],
         "database": [
           "supabase/migrations/20260810123000_add_scheduled_bulk_assignment_series.sql",
           "supabase/migrations/20260822010300_add_vocab_assignment_completion_queue.sql",
-          "supabase/migrations/20260824010000_add_assignment_retry_rules.sql"
+          "supabase/migrations/20260824010000_add_assignment_retry_rules.sql",
+          "supabase/migrations/20260829120000_preserve_vocab_weekday_unit_rules.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/assignments/page.tsx",
@@ -1371,7 +1389,11 @@
           "src/lib/services/bulk-assignment-preparation-error.test.ts",
           "src/lib/services/bulk-assignment-plan-digest.test.ts",
           "src/lib/services/bulk-assignment-persistence.test.ts",
-          "src/lib/services/vocab-assignment-queue-plan.test.ts"
+          "src/lib/services/vocab-assignment-queue-plan.test.ts",
+          "src/lib/admin/vocab-unit-allocation-rule.test.ts",
+          "src/lib/database/vocab-weekday-unit-rule.integration.test.ts",
+          "src/lib/database/vocab-assignment-completion-queue-migration-contract.test.ts",
+          "src/features/assignment-queue/ui/assignment-queue-history.test.tsx"
         ]
       },
       "requiredImportEdges": [

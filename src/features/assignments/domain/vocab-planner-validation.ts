@@ -130,7 +130,7 @@ export function validateVocabPlannerInputs(input: {
     issues.push({
       code: "invalid_order",
       path: "commonPlan.selectionMode",
-      message: "시험 문제 순서를 골라 주세요.",
+      message: "출제 단어 선택 방식을 골라 주세요.",
     });
   }
   if (input.scheduleEnabled !== false && !isCalendarDate(input.schedule.startDate)) {

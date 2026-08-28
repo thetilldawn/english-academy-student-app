@@ -42,12 +42,9 @@ export function hasVocabScheduleFieldError(
     "availableTime",
     "deadlineOffset",
     "deadlineTime",
-    "unitAllocationMode",
-    "unitsPerSession",
-    "overflowPolicy",
     "preview",
   ]) || Object.keys(errors).some(
-    (key) => key.startsWith("session-") || key.startsWith("weekday-"),
+    (key) => key.startsWith("session-"),
   );
 }
 
@@ -56,7 +53,10 @@ const fieldOrder: readonly VocabAssignmentFieldKey[] = [
   "range",
   "distribution",
   "splitBasis",
+  "unitAllocationMode",
+  "unitsPerSession",
   "questionCount",
+  "overflowPolicy",
   "selectionMode",
   "direction",
   "questionOrder",
@@ -65,9 +65,6 @@ const fieldOrder: readonly VocabAssignmentFieldKey[] = [
   "timing",
   "startDate",
   "weekdays",
-  "unitAllocationMode",
-  "overflowPolicy",
-  "unitsPerSession",
   "availableTime",
   "deadlineOffset",
   "deadlineTime",

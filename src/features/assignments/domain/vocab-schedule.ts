@@ -6,6 +6,9 @@ import {
   type VocabUnitAllocationMode,
   type VocabWeekdayUnitCounts,
 } from "./vocab-assignment-contract";
+import { resolveVocabUnitCountsForDates } from "@/lib/admin/vocab-unit-allocation";
+
+export { resolveVocabUnitCountsForDates } from "@/lib/admin/vocab-unit-allocation";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -117,11 +120,14 @@ export function resolveVocabBaseSessionUnitCounts(input: {
   unitsPerSession: number;
   weekdayUnitsPerSession: VocabWeekdayUnitCounts;
 }): number[] {
-  return input.slots.map((slot) => {
-    if (input.mode === "same") return input.unitsPerSession;
-    const date = parseCalendarDate(slot.date);
-    if (!date) return Number.NaN;
-    return input.weekdayUnitsPerSession[isoWeekday(date)];
+  return resolveVocabUnitCountsForDates({
+    dates: input.slots.map((slot) => slot.date),
+    rule: {
+      schemaVersion: 1,
+      mode: input.mode,
+      unitsPerSession: input.unitsPerSession,
+      weekdayUnitsPerSession: input.weekdayUnitsPerSession,
+    },
   });
 }
 

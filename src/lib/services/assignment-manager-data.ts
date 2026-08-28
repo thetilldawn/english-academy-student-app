@@ -28,6 +28,7 @@ export async function loadAssignmentManagerData(options?: {
     listAssignmentHistoryBundle({
       reuseMaterialRequestCache:
         options?.reuseMaterialRequestCache ?? true,
+      includeUnitAllocationRules: true,
     }),
     listStudentPendingReviewSummaries(),
     listStudentCurrentVocabWrongSummaries(),
