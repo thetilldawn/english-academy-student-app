@@ -26,6 +26,7 @@ export class DirectReviewAssignmentError extends Error {
       | "database",
     message = "오답 시험을 배정하지 못했습니다.",
     public readonly fieldPath?: string,
+    public readonly code?: string,
   ) {
     super(message);
     this.name = "DirectReviewAssignmentError";
@@ -61,6 +62,44 @@ function mapPreparationError(error: DirectReviewPreparationError) {
   );
 }
 
+type DirectReviewSupabaseClient = Awaited<
+  ReturnType<typeof createServerSupabaseClient>
+>;
+
+async function lookupDirectReviewAssignmentResult(
+  supabase: DirectReviewSupabaseClient,
+  input: DirectReviewAssignmentInput,
+  requestSha256: string,
+): Promise<string | null> {
+  const previous = await supabase.rpc(
+    "get_current_wrong_review_assignment_result_v1",
+    {
+      p_student_id: input.studentId,
+      p_dataset_id: input.datasetId,
+      p_idempotency_key: input.idempotencyKey,
+      p_request_sha256: requestSha256,
+    },
+  );
+  if (previous.error) {
+    if (previous.error.code === "23505") {
+      throw new DirectReviewAssignmentError(
+        "conflict",
+        "같은 저장 요청에 다른 시험 조건을 사용할 수 없습니다.",
+        undefined,
+        "idempotency_key_reused",
+      );
+    }
+    throw new DirectReviewAssignmentError(
+      previous.error.code === "42501" ? "forbidden" : "database",
+    );
+  }
+  if (previous.data === null) return null;
+  if (!z.uuid().safeParse(previous.data).success) {
+    throw new DirectReviewAssignmentError("database");
+  }
+  return previous.data as string;
+}
+
 export async function previewDirectReviewAssignment(
   input: DirectReviewPreviewInput,
   authenticatedAdmin?: AdminContext,
@@ -92,30 +131,12 @@ export async function createDirectReviewAssignment(
 
   const supabase = await createServerSupabaseClient();
   const requestSha256 = directReviewRequestSha256(input);
-  const previous = await supabase.rpc(
-    "get_current_wrong_review_assignment_result_v1",
-    {
-      p_student_id: input.studentId,
-      p_dataset_id: input.datasetId,
-      p_idempotency_key: input.idempotencyKey,
-      p_request_sha256: requestSha256,
-    },
+  const previous = await lookupDirectReviewAssignmentResult(
+    supabase,
+    input,
+    requestSha256,
   );
-  if (previous.error) {
-    throw new DirectReviewAssignmentError(
-      previous.error.code === "42501"
-        ? "forbidden"
-        : previous.error.code === "23505"
-          ? "conflict"
-          : "database",
-    );
-  }
-  if (previous.data !== null) {
-    if (!z.uuid().safeParse(previous.data).success) {
-      throw new DirectReviewAssignmentError("database");
-    }
-    return previous.data as string;
-  }
+  if (previous) return previous;
 
   let prepared;
   try {
@@ -126,6 +147,12 @@ export async function createDirectReviewAssignment(
       { nowMilliseconds: commandNowMilliseconds },
     );
   } catch (error) {
+    const concurrentResult = await lookupDirectReviewAssignmentResult(
+      supabase,
+      input,
+      requestSha256,
+    );
+    if (concurrentResult) return concurrentResult;
     if (error instanceof DirectReviewPreparationError) {
       throw mapPreparationError(error);
     }
@@ -143,6 +170,8 @@ export async function createDirectReviewAssignment(
     throw new DirectReviewAssignmentError(
       "conflict",
       "오답 목록이 바뀌었습니다. 단어 수를 다시 확인해 주세요.",
+      undefined,
+      "review_candidates_changed",
     );
   }
 
@@ -192,6 +221,11 @@ export async function createDirectReviewAssignment(
         ? "응시 마감 시간은 현재보다 뒤로 정해 주세요."
         : undefined,
       deadlineFailure ? "deadline" : undefined,
+      error.code === "23505"
+        ? "idempotency_key_reused"
+        : error.code === "40001"
+          ? "review_candidates_changed"
+          : undefined,
     );
   }
   if (!z.uuid().safeParse(data).success) {

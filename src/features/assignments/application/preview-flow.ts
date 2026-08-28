@@ -1,6 +1,7 @@
 import type {
   AssignmentTransport,
   AssignmentTransportRequest,
+  AssignmentTransportResponse,
 } from "../transport/assignment-transport";
 import type { AssignmentOperationRecovery } from "./assignment-operation-error";
 import { executeAssignmentRequest } from "./execute-assignment-request";
@@ -12,8 +13,8 @@ export type AssignmentPreviewPreparation<Value> = {
   fallback: string;
   fingerprint: string;
   parse: (data: unknown) => Value;
-  recoveryForStatus?: (
-    status: number,
+  recoveryForResponse?: (
+    response: AssignmentTransportResponse,
   ) => AssignmentOperationRecovery | undefined;
   request: AssignmentTransportRequest;
 };
@@ -39,7 +40,7 @@ export async function runAssignmentPreview<Value>({
 }): Promise<AssignmentPreviewOutcome<Value>> {
   const result = await executeAssignmentRequest({
     fallback: preparation.fallback,
-    failureRecovery: preparation.recoveryForStatus,
+    failureRecovery: preparation.recoveryForResponse,
     parse: preparation.parse,
     request: preparation.request,
     transport,

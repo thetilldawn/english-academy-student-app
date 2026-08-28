@@ -92,6 +92,7 @@ export async function replaceStudentAssignment(
   studentId: string,
   input: AssignmentReplacementInput,
   authenticatedAdmin?: AdminContext,
+  options?: { commandNowMilliseconds?: number },
 ): Promise<AssignmentReplacementResult> {
   const admin = authenticatedAdmin ?? (await requireAdmin());
   const supabase = await createServerSupabaseClient();
@@ -127,6 +128,7 @@ export async function replaceStudentAssignment(
       studentId,
       input,
       admin,
+      { nowMilliseconds: options?.commandNowMilliseconds },
     );
   } catch (error) {
     const concurrentResult = await lookupReplacementResult(

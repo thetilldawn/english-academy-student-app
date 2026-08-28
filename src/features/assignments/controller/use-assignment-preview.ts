@@ -1,24 +1,25 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 
 import {
-  assignmentCapacityFingerprint,
-  buildAssignmentCapacityRequest,
-} from "../api/request-adapters";
-import {
-  parseAssignmentCapacityResponse,
-  type AssignmentCapacityResponse,
-} from "../api/response-adapters";
+  prepareSingleAssignmentPreview,
+} from "../application/assignment-edit-flow-adapter";
+import type {
+  AssignmentOperationError,
+  AssignmentOperationRecovery,
+} from "../application/assignment-operation-error";
+import type { AssignmentRequestIdentity } from "../application/request-lifecycle";
 import type {
   AssignmentEditorAction,
   AssignmentEditorState,
 } from "../domain/editor-state";
 import type { SingleAssignmentDraft } from "../domain/model";
-import {
-  assignmentTransportError,
-  type AssignmentTransport,
-} from "../transport/assignment-transport";
+import type {
+  AssignmentCapacityResponse,
+} from "../api/response-adapters";
+import type { AssignmentTransport } from "../transport/assignment-transport";
+import { useDebouncedAssignmentPreview } from "./use-debounced-assignment-preview";
 
 type SingleEditorState<Result> = AssignmentEditorState<
   SingleAssignmentDraft,
@@ -32,39 +33,12 @@ type SingleEditorAction<Result> = AssignmentEditorAction<
   Result
 >;
 
-function capacityProjectionDraft({
-  directionRatio,
-  operation,
-  range,
-  review,
-  studentId,
-}: Pick<SingleAssignmentDraft, "operation" | "range" | "review" | "studentId"> & {
-  directionRatio: SingleAssignmentDraft["exam"]["directionRatio"];
-}): SingleAssignmentDraft {
-  return {
-    availability: { mode: "immediate" },
-    deadline: { mode: "none" },
-    exam: {
-      directionRatio,
-      passingScore: 0,
-      questionOrderMode: "random",
-      timing: { mode: "total", totalSeconds: 30 },
-    },
-    kind: "single",
-    operation,
-    questionCount: { mode: "automatic", value: 4 },
-    range,
-    review,
-    studentId,
-    title: { mode: "automatic" },
-  };
-}
-
 export function useAssignmentPreview<Result>({
   apply,
   delayMs = 120,
   enabled,
   errorMessage,
+  onRecovery,
   refreshVersion,
   state,
   transport,
@@ -73,111 +47,90 @@ export function useAssignmentPreview<Result>({
   delayMs?: number;
   enabled: boolean;
   errorMessage: string;
+  onRecovery?: (recovery: AssignmentOperationRecovery) => void;
   refreshVersion: number;
   state: SingleEditorState<Result>;
   transport: AssignmentTransport;
 }) {
-  const { draft, revision, submission } = state;
-  const directionRatio = draft.exam.directionRatio;
-  const operation = draft.operation;
-  const range = draft.range;
-  const review = draft.review;
-  const studentId = draft.studentId;
-  const projection = useMemo(() => {
-    try {
-      const projectedDraft = capacityProjectionDraft({
-        directionRatio,
-        operation,
-        range,
-        review,
-        studentId,
-      });
-      return {
-        fingerprint: assignmentCapacityFingerprint(projectedDraft),
-        minimumAllowedQuestionCount:
-          operation.mode === "replace" &&
-          operation.sourcePurpose === "review"
-            ? 1
-            : 4,
-        request: buildAssignmentCapacityRequest(projectedDraft),
-      };
-    } catch {
-      return null;
-    }
-  }, [
-    directionRatio,
-    operation,
-    range,
-    review,
-    studentId,
-  ]);
-
-  useEffect(() => {
-    if (!enabled || !projection || submission.status === "submitting") return;
-
-    const { fingerprint, minimumAllowedQuestionCount, request } = projection;
-    const abortController = new AbortController();
-    const timeoutId = window.setTimeout(() => {
-      const requestId = crypto.randomUUID();
+  const recoveredFingerprintRef = useRef<string | null>(null);
+  const directionRatio = state.draft.exam.directionRatio;
+  const operation = state.draft.operation;
+  const range = state.draft.range;
+  const review = state.draft.review;
+  const studentId = state.draft.studentId;
+  const projection = useMemo(
+    () =>
+      prepareSingleAssignmentPreview(
+        { directionRatio, operation, range, review, studentId },
+        errorMessage,
+      ),
+    [directionRatio, errorMessage, operation, range, review, studentId],
+  );
+  const handleRequested = useCallback(
+    (identity: AssignmentRequestIdentity) => {
       apply({
         type: "preview/requested",
-        fingerprint,
-        requestId,
-        revision,
+        fingerprint: identity.fingerprint,
+        requestId: identity.requestId,
+        revision: identity.revision,
       });
-      void transport({
-        body: request.body,
-        method: request.method,
-        signal: abortController.signal,
-        url: request.endpoint,
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(
-              assignmentTransportError(response.data, errorMessage),
-            );
-          }
-          const value = parseAssignmentCapacityResponse(response.data);
-          apply({
-            type: "preview/reconciled",
-            fingerprint,
-            reconciliation: {
-              kind: "single_capacity",
-              maximumQuestionCount: value.maximumQuestionCount,
-              minimumAllowedQuestionCount,
-              minimumQuestionCount: value.minimumQuestionCount,
-              recommendedQuestionCount: value.recommendedQuestionCount,
-            },
-            requestId,
-            revision,
-            value,
-          });
-        })
-        .catch((error: unknown) => {
-          if (abortController.signal.aborted) return;
-          apply({
-            type: "preview/failed",
-            fingerprint,
-            message: error instanceof Error ? error.message : errorMessage,
-            requestId,
-            revision,
-          });
-        });
-    }, delayMs);
+    },
+    [apply],
+  );
+  const handleSucceeded = useCallback(
+    (value: AssignmentCapacityResponse, identity: AssignmentRequestIdentity) => {
+      if (!projection) return;
+      recoveredFingerprintRef.current = null;
+      apply({
+        type: "preview/reconciled",
+        fingerprint: identity.fingerprint,
+        reconciliation: {
+          kind: "single_capacity",
+          maximumQuestionCount: value.maximumQuestionCount,
+          minimumAllowedQuestionCount:
+            projection.minimumAllowedQuestionCount,
+          minimumQuestionCount: value.minimumQuestionCount,
+          recommendedQuestionCount: value.recommendedQuestionCount,
+        },
+        requestId: identity.requestId,
+        revision: identity.revision,
+        value,
+      });
+    },
+    [apply, projection],
+  );
+  const handleFailed = useCallback(
+    (error: AssignmentOperationError, identity: AssignmentRequestIdentity) => {
+      if (
+        (error.recovery === "reload_source" ||
+          error.recovery === "refresh_preview") &&
+        onRecovery &&
+        recoveredFingerprintRef.current !== identity.fingerprint
+      ) {
+        recoveredFingerprintRef.current = identity.fingerprint;
+        onRecovery(error.recovery);
+        return;
+      }
+      apply({
+        type: "preview/failed",
+        fingerprint: identity.fingerprint,
+        message: error.message,
+        requestId: identity.requestId,
+        revision: identity.revision,
+      });
+    },
+    [apply, onRecovery],
+  );
 
-    return () => {
-      window.clearTimeout(timeoutId);
-      abortController.abort();
-    };
-  }, [
-    apply,
+  useDebouncedAssignmentPreview({
     delayMs,
-    enabled,
-    errorMessage,
-    projection,
+    enabled: enabled && state.submission.status !== "submitting",
+    onFailed: handleFailed,
+    onRequested: handleRequested,
+    onSucceeded: handleSucceeded,
+    preparation: projection?.preparation ?? null,
     refreshVersion,
-    revision,
-    submission.status,
+    revision: state.revision,
     transport,
-  ]);
+  });
 }

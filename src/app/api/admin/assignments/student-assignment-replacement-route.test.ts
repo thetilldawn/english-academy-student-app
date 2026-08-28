@@ -19,6 +19,8 @@ const mocks = vi.hoisted(() => {
         | "invalid_selection"
         | "database",
       message = "replacement error",
+      public readonly fieldPath?: string,
+      public readonly code?: string,
     ) {
       super(message);
     }
@@ -186,6 +188,7 @@ describe("student assignment replacement route", () => {
       assignmentId,
       studentId,
       admin,
+      { nowMilliseconds: expect.any(Number) },
     );
     expect(
       mocks.calculateStudentAssignmentReplacementCapacity,
@@ -194,16 +197,36 @@ describe("student assignment replacement route", () => {
       studentId,
       previewInput,
       admin,
+      { nowMilliseconds: expect.any(Number) },
     );
     expect(mocks.replaceStudentAssignment).toHaveBeenCalledWith(
       assignmentId,
       studentId,
       replacementInput,
       admin,
+      { commandNowMilliseconds: expect.any(Number) },
     );
     expect(putResponse.headers.get("cache-control")).toBe(
       "private, no-store",
     );
+  });
+
+  it("PUT 명령 시각을 한 번만 확정해 service에 전달한다", async () => {
+    const commandNowMilliseconds = Date.parse("2026-08-29T03:04:05.000Z");
+    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(commandNowMilliseconds);
+
+    const response = await PUT(request("PUT", replacementInput), { params });
+
+    expect(response.status).toBe(200);
+    expect(nowSpy).toHaveBeenCalledTimes(1);
+    expect(mocks.replaceStudentAssignment).toHaveBeenCalledWith(
+      assignmentId,
+      studentId,
+      replacementInput,
+      admin,
+      { commandNowMilliseconds },
+    );
+    nowSpy.mockRestore();
   });
 
   it("GET의 전체 mixed 응답을 strict parser와 edit draft hydration까지 전달한다", async () => {
@@ -280,5 +303,43 @@ describe("student assignment replacement route", () => {
     );
     expect(response.status).toBe(status);
     expect(await response.json()).toHaveProperty("error");
+  });
+
+  it("지난 새 마감을 422 deadline 입력 오류로 전달한다", async () => {
+    mocks.replaceStudentAssignment.mockRejectedValueOnce(
+      new mocks.AssignmentReplacementError(
+        "invalid_selection",
+        "응시 마감 시간은 현재보다 뒤로 정해 주세요.",
+        "deadline",
+        "assignment_deadline_elapsed",
+      ),
+    );
+
+    const response = await PUT(request("PUT", replacementInput), { params });
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "assignment_deadline_elapsed",
+      fieldPath: "deadline",
+    });
+  });
+
+  it.each([
+    "assignment_source_changed",
+    "idempotency_key_reused",
+  ] as const)("수정 충돌 코드 %s를 409 응답에 보존한다", async (code) => {
+    mocks.replaceStudentAssignment.mockRejectedValueOnce(
+      new mocks.AssignmentReplacementError(
+        "conflict",
+        "배정 상태가 바뀌었습니다.",
+        undefined,
+        code,
+      ),
+    );
+
+    const response = await PUT(request("PUT", replacementInput), { params });
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({ code });
   });
 });

@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => {
         | "database",
       message = "direct review assignment error",
       public readonly fieldPath?: string,
+      public readonly code?: string,
     ) {
       super(message);
     }
@@ -52,10 +53,13 @@ const validInput = {
   questionTimeLimitSeconds: null,
 };
 
-function request(body: unknown) {
+function request(body: unknown, origin?: string) {
   return new Request("http://localhost/api/admin/exact-review-assignments", {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      ...(origin ? { origin } : {}),
+    },
     body: JSON.stringify(body),
   });
 }
@@ -85,6 +89,32 @@ describe("POST /api/admin/exact-review-assignments", () => {
       { commandNowMilliseconds },
     );
     expect(nowSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("다른 출처의 저장 요청을 403으로 거부한다", async () => {
+    const response = await POST(request(validInput, "https://evil.example"));
+
+    expect(response.status).toBe(403);
+    expect(mocks.getAdminContext).not.toHaveBeenCalled();
+  });
+
+  it("관리자 로그인이 없으면 401로 거부한다", async () => {
+    mocks.getAdminContext.mockResolvedValue(null);
+
+    const response = await POST(request(validInput));
+
+    expect(response.status).toBe(401);
+    expect(mocks.createDirectReviewAssignment).not.toHaveBeenCalled();
+  });
+
+  it("비활성 관리자 서비스 오류를 403으로 보존한다", async () => {
+    mocks.createDirectReviewAssignment.mockRejectedValue(
+      new mocks.DirectReviewAssignmentError("forbidden"),
+    );
+
+    const response = await POST(request(validInput));
+
+    expect(response.status).toBe(403);
   });
 
   it("오답 0개는 서비스 호출 전에 차단한다", async () => {
@@ -118,6 +148,24 @@ describe("POST /api/admin/exact-review-assignments", () => {
     const response = await POST(request(validInput));
 
     expect(response.status).toBe(409);
+  });
+
+  it("멱등키 재사용 409의 원인을 응답에 보존한다", async () => {
+    mocks.createDirectReviewAssignment.mockRejectedValue(
+      new mocks.DirectReviewAssignmentError(
+        "conflict",
+        "같은 저장 요청에 다른 시험 조건을 사용할 수 없습니다.",
+        undefined,
+        "idempotency_key_reused",
+      ),
+    );
+
+    const response = await POST(request(validInput));
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "idempotency_key_reused",
+    });
   });
 
   it("서버 도착 중 지난 마감은 deadline 입력 오류로 반환한다", async () => {

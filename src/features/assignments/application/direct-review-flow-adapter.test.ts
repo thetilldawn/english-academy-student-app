@@ -115,9 +115,32 @@ describe("direct review flow adapter", () => {
       reviewLevels: draft.reviewLevels,
       studentId: draft.studentId,
     });
-    expect(preview.recoveryForStatus?.(409)).toBe(
+    expect(preview.recoveryForResponse?.({ data: null, ok: false, status: 409 })).toBe(
       "refresh_summary_and_preview",
     );
     expect(preview.fingerprint).toContain(draft.datasetId);
+  });
+
+  it("멱등키 재사용 409는 Preview 자동 갱신 대상으로 보지 않는다", () => {
+    const submission = prepareDirectReviewSubmission(
+      { draft, wrongEligible: 2 },
+      1000,
+    );
+    if (!submission.ok) throw new Error("제출 준비 실패");
+
+    expect(
+      submission.value.recoveryForResponse?.({
+        data: { code: "idempotency_key_reused" },
+        ok: false,
+        status: 409,
+      }),
+    ).toBe("none");
+    expect(
+      submission.value.recoveryForResponse?.({
+        data: { code: "review_candidates_changed" },
+        ok: false,
+        status: 409,
+      }),
+    ).toBe("refresh_summary_and_preview");
   });
 });

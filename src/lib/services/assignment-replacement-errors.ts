@@ -38,6 +38,8 @@ export class AssignmentReplacementError extends Error {
   constructor(
     public readonly reason: AssignmentReplacementFailureReason,
     message = failureMessages[reason],
+    public readonly fieldPath?: string,
+    public readonly code?: string,
   ) {
     super(message);
     this.name = "AssignmentReplacementError";
@@ -79,11 +81,15 @@ export function mapAssignmentReplacementDatabaseFailure(error: {
   if (/assignment_not_active/.test(message)) {
     return new AssignmentReplacementError("closed");
   }
-  if (
-    /assignment_unavailable|assignment_deadline_elapsed|assignment_replacement_deadline_elapsed/.test(
-      message,
-    )
-  ) {
+  if (/assignment_replacement_deadline_elapsed/.test(message)) {
+    return new AssignmentReplacementError(
+      "invalid_selection",
+      "응시 마감 시간은 현재보다 뒤로 정해 주세요.",
+      "deadline",
+      "assignment_deadline_elapsed",
+    );
+  }
+  if (/assignment_unavailable|assignment_deadline_elapsed/.test(message)) {
     return new AssignmentReplacementError("deadline_elapsed");
   }
   if (/assignment_replacement_persistence_mismatch/.test(message)) {
@@ -103,6 +109,10 @@ export function mapAssignmentReplacementDatabaseFailure(error: {
       /idempotency_key_reused/.test(message)
         ? "같은 수정 요청 키에 다른 조건이 사용되었습니다. 다시 열어 시도해 주세요."
         : failureMessages.conflict,
+      undefined,
+      /idempotency_key_reused/.test(message)
+        ? "idempotency_key_reused"
+        : "assignment_source_changed",
     );
   }
   if (error.code === "21000") {

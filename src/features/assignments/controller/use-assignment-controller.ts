@@ -10,42 +10,31 @@ import {
 } from "react";
 
 import {
-  assignmentCapacityFingerprint,
-  buildAssignmentEditDraftRequest,
-  buildSingleAssignmentRequest,
-  replacementDraftFingerprint,
-  replacementSubmissionFingerprint,
-} from "../api/request-adapters";
-import { hydrateSingleAssignmentDraftFromEditResponse } from "../api/edit-draft-adapter";
-import {
-  parseAssignmentCreationResponse,
-  parseAssignmentEditDraftResponse,
-  parseAssignmentReplacementResponse,
   type AssignmentCapacityResponse,
   type AssignmentCreationResponse,
   type AssignmentReplacementResponse,
 } from "../api/response-adapters";
+import {
+  loadSingleAssignmentEditDraft,
+  prepareSingleAssignmentSubmission,
+  resolveSingleAssignmentIssues,
+  resolveSingleAssignmentSubmitBlocker,
+  singleCapacityIdentity,
+  singleReplacementIsDirty,
+  singleSubmissionProgressIdentity,
+} from "../application/assignment-edit-flow-adapter";
+import type { AssignmentOperationRecovery } from "../application/assignment-operation-error";
+import {
+  createAssignmentSubmissionFlow,
+} from "../application/submission-flow";
 import {
   createAssignmentEditorState,
   reduceAssignmentEditorState,
   type AssignmentEditorAction,
   type AssignmentEditorState,
 } from "../domain/editor-state";
-import { deriveSingleAssignmentSubmitBlocker } from "../domain/submit-blocker";
-import {
-  assignmentRequestFingerprint,
-  reserveIdempotencyKey,
-  type IdempotencyReservation,
-} from "../domain/fingerprint";
 import type {
-  AssignmentAvailability,
   AssignmentDeadline,
-  AssignmentDirectionRatio,
-  AssignmentQuestionOrderMode,
-  ExamTiming,
-  ReviewLevel,
-  ReviewPolicy,
-  ReviewScope,
   SingleAssignmentDraft,
 } from "../domain/model";
 import { singleAssignmentFieldPolicy } from "../domain/assignment-edit-policy";
@@ -54,12 +43,18 @@ import {
   resolveSingleAssignmentDraft,
   type SingleAssignmentDraftAction,
 } from "../domain/single-draft";
-import { validateSingleAssignmentSubmission } from "../domain/validation";
 import {
-  assignmentTransportError,
   browserAssignmentTransport,
   type AssignmentTransport,
 } from "../transport/assignment-transport";
+import {
+  reduceSingleAssignmentTimingMemory,
+  useSingleAssignmentControllerActions,
+} from "./single-assignment-controller-actions";
+import {
+  useAssignmentMinuteClock,
+  useAssignmentSubmissionSession,
+} from "./use-assignment-controller-runtime";
 import { useAssignmentPreview } from "./use-assignment-preview";
 
 export type SingleAssignmentResult =
@@ -77,6 +72,11 @@ type ControllerAction = AssignmentEditorAction<
   AssignmentCapacityResponse,
   SingleAssignmentResult
 >;
+
+type AssignmentFeedback = {
+  message: string;
+  submissionIssue: { message: string; path: string } | null;
+};
 
 export type AssignmentControllerSource =
   | { kind: "create"; initialDraft: SingleAssignmentDraft }
@@ -140,45 +140,6 @@ function isMixedReviewEdit(draft: SingleAssignmentDraft) {
   );
 }
 
-function safeCapacityFingerprint(draft: SingleAssignmentDraft) {
-  try {
-    return assignmentCapacityFingerprint(draft);
-  } catch {
-    return null;
-  }
-}
-
-function safeReplacementDraftFingerprint(
-  draft: SingleAssignmentDraft,
-  resolved: ReturnType<typeof resolveSingleAssignmentDraft>,
-) {
-  try {
-    return replacementDraftFingerprint(draft, resolved);
-  } catch {
-    return null;
-  }
-}
-
-function replacementDraftIsDirty(
-  currentDraft: SingleAssignmentDraft,
-  currentResolved: ReturnType<typeof resolveSingleAssignmentDraft>,
-  baselineDraft: SingleAssignmentDraft,
-  baselineResolved: ReturnType<typeof resolveSingleAssignmentDraft>,
-) {
-  const currentFingerprint = safeReplacementDraftFingerprint(
-    currentDraft,
-    currentResolved,
-  );
-  const baselineFingerprint = safeReplacementDraftFingerprint(
-    baselineDraft,
-    baselineResolved,
-  );
-  return currentFingerprint === null || baselineFingerprint === null
-    ? assignmentRequestFingerprint(currentDraft) !==
-        assignmentRequestFingerprint(baselineDraft)
-    : currentFingerprint !== baselineFingerprint;
-}
-
 export function useAssignmentController({
   automaticTitleForDraft,
   capacityErrorMessage,
@@ -225,35 +186,67 @@ export function useAssignmentController({
   const [loadStatus, setLoadStatus] = useState<
     "loading" | "ready" | "error"
   >(source.kind === "edit" ? "loading" : "ready");
-  const [message, setMessage] = useState("");
-  const [previewRefreshVersion, setPreviewRefreshVersion] = useState(0);
-  const [nowMilliseconds, setNowMilliseconds] = useState(0);
-  const idempotencyRef = useRef<IdempotencyReservation | null>(null);
-  const timingMemoryRef = useRef({
-    perQuestionSeconds:
-      initialDraft.exam.timing.mode === "per_question"
-        ? initialDraft.exam.timing.perQuestionSeconds
-        : 20,
-    totalSeconds:
-      initialDraft.exam.timing.mode === "total"
-        ? initialDraft.exam.timing.totalSeconds
-        : 300,
+  const [feedback, setFeedback] = useState<AssignmentFeedback>({
+    message: "",
+    submissionIssue: null,
   });
+  const [previewRefreshVersion, setPreviewRefreshVersion] = useState(0);
+  const [sourceReloadVersion, setSourceReloadVersion] = useState(0);
+  const nowMilliseconds = useAssignmentMinuteClock({
+    clock,
+    initializeFromClock: false,
+  });
+  const submissionSession = useAssignmentSubmissionSession();
+  const [timingMemory, rememberTiming] = useReducer(
+    reduceSingleAssignmentTimingMemory,
+    {
+      perQuestionSeconds:
+        initialDraft.exam.timing.mode === "per_question"
+          ? initialDraft.exam.timing.perQuestionSeconds
+          : 20,
+      totalSeconds:
+        initialDraft.exam.timing.mode === "total"
+          ? initialDraft.exam.timing.totalSeconds
+          : 300,
+    },
+  );
   const sourceKind = source.kind;
   const sourceAssignmentId =
     source.kind === "edit" ? source.assignmentId : null;
   const sourceStudentId = source.kind === "edit" ? source.studentId : null;
+  const submissionFlow = useMemo(
+    () =>
+      createAssignmentSubmissionFlow({
+        busyMessage: "배정을 저장하고 있습니다.",
+        clock,
+        createIdempotencyKey: () => crypto.randomUUID(),
+        createRequestId: () => crypto.randomUUID(),
+        fallback: genericErrorMessage,
+        session: submissionSession,
+        transport,
+      }),
+    [clock, genericErrorMessage, submissionSession, transport],
+  );
 
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
 
-  useEffect(() => {
-    const updateNow = () => setNowMilliseconds(clock());
-    updateNow();
-    const intervalId = window.setInterval(updateNow, 60_000);
-    return () => window.clearInterval(intervalId);
-  }, [clock]);
+  const setMessage = useCallback((message: string) => {
+    setFeedback((current) =>
+      current.message === message ? current : { ...current, message },
+    );
+  }, []);
+  const setSubmissionIssue = useCallback(
+    (submissionIssue: AssignmentFeedback["submissionIssue"]) => {
+      setFeedback((current) =>
+        current.submissionIssue === submissionIssue
+          ? current
+          : { ...current, submissionIssue },
+      );
+    },
+    [],
+  );
 
   const apply = useCallback((action: ControllerAction) => {
     stateRef.current = reduceAssignmentEditorState(
@@ -272,45 +265,29 @@ export function useAssignmentController({
       return;
     }
     const abortController = new AbortController();
-    const request = buildAssignmentEditDraftRequest(
-      sourceAssignmentId,
-      sourceStudentId,
-    );
-    void transport({
-      method: request.method,
+    void loadSingleAssignmentEditDraft({
+      assignmentId: sourceAssignmentId,
+      fallback: editLoadErrorMessage,
       signal: abortController.signal,
-      url: request.endpoint,
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(
-            assignmentTransportError(response.data, editLoadErrorMessage),
-          );
-        }
-        const parsed = parseAssignmentEditDraftResponse(response.data);
-        if (
-          parsed.assignmentId !== sourceAssignmentId ||
-          parsed.studentId !== sourceStudentId
-        ) {
-          throw new Error(editLoadErrorMessage);
-        }
-        const hydrated = hydrateSingleAssignmentDraftFromEditResponse(parsed);
-        if (hydrated.exam.timing.mode === "total") {
-          timingMemoryRef.current.totalSeconds =
-            hydrated.exam.timing.totalSeconds;
-        } else {
-          timingMemoryRef.current.perQuestionSeconds =
-            hydrated.exam.timing.perQuestionSeconds;
-        }
+      studentId: sourceStudentId,
+      transport,
+    }).then((result) => {
+        if (!result.ok) throw result.error;
+        const hydrated = result.value;
+        rememberTiming(hydrated.exam.timing);
         setBaselineDraft(hydrated);
-        idempotencyRef.current = null;
+        setSubmissionIssue(null);
+        setMessage("");
         apply({ type: "draft/replaced", draft: hydrated });
         setLoadStatus("ready");
       })
       .catch((error: unknown) => {
         if (abortController.signal.aborted) return;
         setMessage(
-          error instanceof Error ? error.message : editLoadErrorMessage,
+          error && typeof error === "object" && "message" in error &&
+              typeof error.message === "string"
+            ? error.message
+            : editLoadErrorMessage,
         );
         setLoadStatus("error");
       });
@@ -318,17 +295,40 @@ export function useAssignmentController({
   }, [
     apply,
     editLoadErrorMessage,
+    rememberTiming,
+    setMessage,
+    setSubmissionIssue,
     sourceAssignmentId,
     sourceKind,
+    sourceReloadVersion,
     sourceStudentId,
     transport,
   ]);
+
+  const reloadSource = useCallback(() => {
+    if (sourceKind === "edit") {
+      setLoadStatus("loading");
+      setSourceReloadVersion((version) => version + 1);
+    }
+  }, [sourceKind]);
+
+  const recoverPreview = useCallback(
+    (recovery: AssignmentOperationRecovery) => {
+      if (recovery === "reload_source") {
+        reloadSource();
+      } else if (recovery === "refresh_preview") {
+        setPreviewRefreshVersion((version) => version + 1);
+      }
+    },
+    [reloadSource],
+  );
 
   useAssignmentPreview({
     apply,
     delayMs: previewDelayMs,
     enabled: loadStatus === "ready",
     errorMessage: capacityErrorMessage,
+    onRecovery: recoverPreview,
     refreshVersion: previewRefreshVersion,
     state,
     transport,
@@ -339,10 +339,10 @@ export function useAssignmentController({
       const currentDraft = stateRef.current.draft;
       const nextDraft = reduceSingleAssignmentDraft(currentDraft, action);
       if (nextDraft === currentDraft) return;
-      const currentCapacityFingerprint = safeCapacityFingerprint(currentDraft);
-      const nextCapacityFingerprint = safeCapacityFingerprint(nextDraft);
-      idempotencyRef.current = null;
+      const currentCapacityFingerprint = singleCapacityIdentity(currentDraft);
+      const nextCapacityFingerprint = singleCapacityIdentity(nextDraft);
       setMessage("");
+      setSubmissionIssue(null);
       apply({
         type: "draft/replaced",
         draft: nextDraft,
@@ -353,7 +353,7 @@ export function useAssignmentController({
             : "invalidate",
       });
     },
-    [apply],
+    [apply, setMessage, setSubmissionIssue],
   );
 
   const capacity = state.preview.status === "ready" ? state.preview.value : null;
@@ -363,18 +363,27 @@ export function useAssignmentController({
     title: automaticTitle,
   });
   const minimumQuestionCount = isExactReviewEdit(state.draft) ? 1 : 4;
-  const issues = validateSingleAssignmentSubmission(
-    state.draft,
-    resolved,
-    nowMilliseconds,
-  );
+  const issues = [
+    ...resolveSingleAssignmentIssues(
+      state.draft,
+      resolved,
+      nowMilliseconds,
+    ),
+    ...(feedback.submissionIssue
+      ? [{
+          code: "invalid_order" as const,
+          message: feedback.submissionIssue.message,
+          path: feedback.submissionIssue.path,
+        }]
+      : []),
+  ];
   const baselineResolved = baselineDraft
     ? resolveSingleAssignmentDraft(baselineDraft, {
         title: automaticTitleForDraft(baselineDraft, capacity),
       })
     : null;
   const dirty = baselineDraft && baselineResolved
-    ? replacementDraftIsDirty(
+    ? singleReplacementIsDirty(
         state.draft,
         resolved,
         baselineDraft,
@@ -384,7 +393,7 @@ export function useAssignmentController({
   const capacityReadyForCurrentDraft =
     state.preview.status === "ready" &&
     state.preview.revision === state.revision;
-  const submitBlocker = deriveSingleAssignmentSubmitBlocker({
+  const submitBlocker = resolveSingleAssignmentSubmitBlocker({
     capacity,
     capacityReadyForCurrentDraft,
     dirty,
@@ -400,15 +409,8 @@ export function useAssignmentController({
 
   const submit = useCallback(async (): Promise<AssignmentSubmitOutcome> => {
     let current = stateRef.current;
-    if (
-      current.submission.status === "submitting" ||
-      current.submission.status === "succeeded"
-    ) {
+    if (current.submission.status === "succeeded") {
       return { conflict: false, message: genericErrorMessage, ok: false };
-    }
-    if (current.submission.status !== "idle") {
-      apply({ type: "submission/reset" });
-      current = stateRef.current;
     }
     const currentCapacity =
       current.preview.status === "ready" ? current.preview.value : null;
@@ -418,10 +420,10 @@ export function useAssignmentController({
     const currentMinimumQuestionCount = isExactReviewEdit(current.draft)
       ? 1
       : 4;
-    const currentIssues = validateSingleAssignmentSubmission(
+    const currentIssues = resolveSingleAssignmentIssues(
       current.draft,
       currentResolved,
-      clock(),
+      nowMilliseconds,
     );
     const baselineResolvedForSubmit = baselineDraft
       ? resolveSingleAssignmentDraft(baselineDraft, {
@@ -429,14 +431,35 @@ export function useAssignmentController({
         })
       : null;
     const currentDirty = baselineDraft && baselineResolvedForSubmit
-      ? replacementDraftIsDirty(
+      ? singleReplacementIsDirty(
           current.draft,
           currentResolved,
           baselineDraft,
           baselineResolvedForSubmit,
         )
       : true;
-    const currentBlocker = deriveSingleAssignmentSubmitBlocker({
+    const runSubmission = () =>
+      submissionFlow.run((now) =>
+        prepareSingleAssignmentSubmission(
+          {
+            draft: current.draft,
+            fallback: genericErrorMessage,
+            resolved: currentResolved,
+          },
+          now,
+        )
+      );
+    if (current.submission.status === "submitting") {
+      const duplicate = await runSubmission();
+      return duplicate.ok
+        ? { ok: true, result: duplicate.value }
+        : {
+            conflict: duplicate.error.kind === "conflict",
+            message: duplicate.error.message,
+            ok: false,
+          };
+    }
+    const currentBlocker = resolveSingleAssignmentSubmitBlocker({
       capacity: currentCapacity,
       capacityReadyForCurrentDraft:
         current.preview.status === "ready" &&
@@ -448,7 +471,7 @@ export function useAssignmentController({
       previewStatus: current.preview.status,
       questionCount: currentResolved.questionCount,
       reviewMode: current.draft.review.mode,
-      submissionStatus: current.submission.status,
+      submissionStatus: "idle",
     });
     if (currentBlocker) {
       setMessage(capacityErrorMessage);
@@ -458,40 +481,21 @@ export function useAssignmentController({
         ok: false,
       };
     }
-    let request: ReturnType<typeof buildSingleAssignmentRequest>;
-    try {
-      const requestOptions: {
-        idempotencyKey?: string;
-        nowMilliseconds: number;
-      } = { nowMilliseconds: clock() };
-      if (current.draft.operation.mode === "replace") {
-        const fingerprint = replacementSubmissionFingerprint(
-          current.draft,
-          currentResolved,
-          requestOptions.nowMilliseconds,
-        );
-        idempotencyRef.current = reserveIdempotencyKey(
-          idempotencyRef.current,
-          fingerprint,
-          () => crypto.randomUUID(),
-        );
-        requestOptions.idempotencyKey = idempotencyRef.current.key;
-      }
-      request = buildSingleAssignmentRequest(
-        current.draft,
-        currentResolved,
-        requestOptions,
-      );
-    } catch (error: unknown) {
-      const nextMessage =
-        error instanceof Error ? error.message : genericErrorMessage;
-      setMessage(nextMessage);
-      return { conflict: false, message: nextMessage, ok: false };
+    if (current.submission.status !== "idle") {
+      apply({ type: "submission/reset" });
+      current = stateRef.current;
     }
 
     const requestId = crypto.randomUUID();
-    const fingerprint = assignmentRequestFingerprint(request.body);
-    const revision = stateRef.current.revision;
+    const fingerprint = singleSubmissionProgressIdentity(
+      current.draft,
+      currentResolved,
+    );
+    if (!fingerprint) {
+      setMessage(genericErrorMessage);
+      return { conflict: false, message: genericErrorMessage, ok: false };
+    }
+    const revision = current.revision;
     apply({
       type: "submission/requested",
       fingerprint,
@@ -507,207 +511,86 @@ export function useAssignmentController({
       return { conflict: false, message: nextMessage, ok: false };
     }
     setMessage("");
+    setSubmissionIssue(null);
 
-    try {
-      const response = await transport({
-        body: request.body,
-        method: request.method,
-        url: request.endpoint,
-      });
-      if (!response.ok) {
-        const nextMessage = assignmentTransportError(
-          response.data,
-          genericErrorMessage,
-        );
-        if (response.status === 409) {
-          apply({
-            type: "submission/conflicted",
-            message: nextMessage,
-            requestId,
-            revision,
-          });
-          apply({ type: "submission/reset" });
-          setPreviewRefreshVersion((version) => version + 1);
-          setMessage(nextMessage);
-          onConflict?.();
-          return { conflict: true, message: nextMessage, ok: false };
-        }
-        throw new Error(nextMessage);
-      }
-      const result =
-        request.method === "PUT"
-          ? parseAssignmentReplacementResponse(response.data)
-          : parseAssignmentCreationResponse(response.data);
+    const outcome = await runSubmission();
+    if (outcome.ok) {
       apply({
         type: "submission/succeeded",
         requestId,
-        result,
+        result: outcome.value,
         revision,
       });
-      return { ok: true, result };
-    } catch (error: unknown) {
-      const nextMessage =
-        error instanceof Error ? error.message : genericErrorMessage;
+      return { ok: true, result: outcome.value };
+    }
+    if (outcome.error.kind === "busy") {
+      return {
+        conflict: false,
+        message: outcome.error.message,
+        ok: false,
+      };
+    }
+    if (outcome.error.fieldPath) {
+      setSubmissionIssue({
+        message: outcome.error.message,
+        path: outcome.error.fieldPath,
+      });
+    }
+    if (outcome.error.kind === "conflict") {
       apply({
-        type: "submission/failed",
-        message: nextMessage,
+        type: "submission/conflicted",
+        message: outcome.error.message,
         requestId,
         revision,
       });
       apply({ type: "submission/reset" });
-      setMessage(nextMessage);
-      return { conflict: false, message: nextMessage, ok: false };
+      if (outcome.error.recovery === "reload_source") {
+        reloadSource();
+      } else if (outcome.error.recovery === "refresh_preview") {
+        setPreviewRefreshVersion((version) => version + 1);
+      }
+      onConflict?.();
+    } else {
+      apply({
+        type: "submission/failed",
+        message: outcome.error.message,
+        requestId,
+        revision,
+      });
+      apply({ type: "submission/reset" });
     }
+    setMessage(outcome.error.message);
+    return {
+      conflict: outcome.error.kind === "conflict",
+      message: outcome.error.message,
+      ok: false,
+    };
   }, [
     apply,
     automaticTitleForDraft,
     baselineDraft,
     capacityErrorMessage,
-    clock,
     genericErrorMessage,
     loadStatus,
+    nowMilliseconds,
     onConflict,
-    transport,
+    reloadSource,
+    setMessage,
+    setSubmissionIssue,
+    submissionFlow,
   ]);
 
-  const actions = useMemo(
-    () => ({
-      changeDataset(datasetId: string) {
-        changeDraft({ type: "dataset/changed", datasetId });
-      },
-      changeAvailability(availability: AssignmentAvailability) {
-        changeDraft({ type: "availability/changed", availability });
-      },
-      changeDeadline(deadline: AssignmentDeadline) {
-        changeDraft({ type: "deadline/changed", deadline });
-      },
-      changeDirection(directionRatio: AssignmentDirectionRatio) {
-        changeDraft({
-          type: "exam/changed",
-          exam: { ...stateRef.current.draft.exam, directionRatio },
-        });
-      },
-      changeOrder(questionOrderMode: AssignmentQuestionOrderMode) {
-        changeDraft({
-          type: "exam/changed",
-          exam: { ...stateRef.current.draft.exam, questionOrderMode },
-        });
-      },
-      changePassingScore(passingScore: number) {
-        changeDraft({
-          type: "exam/changed",
-          exam: { ...stateRef.current.draft.exam, passingScore },
-        });
-      },
-      changeRetryEnabled(retryEnabled: boolean) {
-        changeDraft({
-          type: "exam/changed",
-          exam: { ...stateRef.current.draft.exam, retryEnabled },
-        });
-      },
-      changeRetryPassingScore(retryPassingScore: number) {
-        changeDraft({
-          type: "exam/changed",
-          exam: { ...stateRef.current.draft.exam, retryPassingScore },
-        });
-      },
-      changeQuestionCount(value: number) {
-        changeDraft({ type: "questionCount/manuallyChanged", value });
-      },
-      changeRange(datasetId: string, orderedUnitIds: readonly string[]) {
-        changeDraft({
-          type: "range/changed",
-          range: { datasetId, orderedUnitIds: [...orderedUnitIds] },
-        });
-      },
-      changeReview(review: ReviewPolicy) {
-        changeDraft({ type: "review/changed", review });
-      },
-      changeReviewMode(mode: ReviewPolicy["mode"]) {
-        const current = stateRef.current.draft.review;
-        changeDraft({
-          type: "review/changed",
-          review: { ...current, mode },
-        });
-      },
-      changeReviewScope(scope: ReviewScope) {
-        const current = stateRef.current.draft.review;
-        changeDraft({
-          type: "review/changed",
-          review: { ...current, scope },
-        });
-      },
-      changeTiming(timing: ExamTiming) {
-        if (timing.mode === "total") {
-          timingMemoryRef.current.totalSeconds = timing.totalSeconds;
-        } else {
-          timingMemoryRef.current.perQuestionSeconds =
-            timing.perQuestionSeconds;
-        }
-        changeDraft({
-          type: "exam/changed",
-          exam: { ...stateRef.current.draft.exam, timing },
-        });
-      },
-      changeTimeLimitEnabled(timeLimitEnabled: boolean) {
-        changeDraft({
-          type: "exam/changed",
-          exam: { ...stateRef.current.draft.exam, timeLimitEnabled },
-        });
-      },
-      changeTimingMode(mode: ExamTiming["mode"]) {
-        const timing: ExamTiming =
-          mode === "total"
-            ? {
-                mode: "total",
-                totalSeconds: timingMemoryRef.current.totalSeconds,
-              }
-            : {
-                mode: "per_question",
-                perQuestionSeconds:
-                  timingMemoryRef.current.perQuestionSeconds,
-              };
-        changeDraft({
-          type: "exam/changed",
-          exam: { ...stateRef.current.draft.exam, timing },
-        });
-      },
-      changeTitle(value: string) {
-        changeDraft(
-          value.trim()
-            ? { type: "title/changed", value }
-            : { type: "title/restoreAutomatic" },
-        );
-      },
-      restoreAutomaticCount() {
-        const currentCapacity =
-          stateRef.current.preview.status === "ready"
-            ? stateRef.current.preview.value
-            : null;
-        if (!currentCapacity) return;
-        changeDraft({
-          type: "questionCount/restoreAutomatic",
-          recommendedQuestionCount:
-            currentCapacity.recommendedQuestionCount,
-        });
-      },
-      retryPreview() {
-        setPreviewRefreshVersion((version) => version + 1);
-      },
-      submit,
-      toggleReviewLevel(level: ReviewLevel) {
-        const current = stateRef.current.draft.review;
-        const levels = current.levels.includes(level)
-          ? current.levels.filter((candidate) => candidate !== level)
-          : [...current.levels, level].toSorted();
-        changeDraft({
-          type: "review/changed",
-          review: { ...current, levels },
-        });
-      },
-    }),
-    [changeDraft, submit],
-  );
+  const retryPreview = useCallback(() => {
+    setPreviewRefreshVersion((version) => version + 1);
+  }, []);
+  const actions = useSingleAssignmentControllerActions({
+    changeDraft,
+    currentState: stateRef,
+    rememberTiming,
+    retryPreview,
+    submit,
+    timingMemory,
+  });
 
   return {
     actions,
@@ -721,7 +604,7 @@ export function useAssignmentController({
     isMixedReview: isMixedReviewEdit(state.draft),
     issues,
     loadStatus,
-    message,
+    message: feedback.message,
     minimumQuestionCount,
     resolved,
     state,

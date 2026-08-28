@@ -116,4 +116,28 @@ describe("replaceStudentAssignment", () => {
       expectedLookupMetadata,
     );
   });
+
+  it("Route에서 확정한 명령 시각을 수정 원본 검사까지 그대로 전달한다", async () => {
+    const commandNowMilliseconds = Date.parse("2026-08-29T03:04:05.000Z");
+    const rpc = vi.fn()
+      .mockResolvedValueOnce({ data: null, error: null })
+      .mockResolvedValueOnce({ data: replacementResult, error: null });
+    mocks.createServerSupabaseClient.mockResolvedValue({ rpc });
+
+    await replaceStudentAssignment(
+      ids.assignment,
+      ids.student,
+      input,
+      { displayName: "관리자", userId: "admin-id" },
+      { commandNowMilliseconds },
+    );
+
+    expect(mocks.prepare).toHaveBeenCalledWith(
+      ids.assignment,
+      ids.student,
+      input,
+      { displayName: "관리자", userId: "admin-id" },
+      { nowMilliseconds: commandNowMilliseconds },
+    );
+  });
 });

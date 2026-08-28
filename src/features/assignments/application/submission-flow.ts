@@ -1,6 +1,7 @@
 import type {
   AssignmentTransport,
   AssignmentTransportRequest,
+  AssignmentTransportResponse,
 } from "../transport/assignment-transport";
 import {
   reserveIdempotencyKey,
@@ -19,8 +20,8 @@ export type AssignmentSubmissionPreparation<Value> = {
   fallback: string;
   fingerprint: string;
   parse: (data: unknown) => Value;
-  recoveryForStatus?: (
-    status: number,
+  recoveryForResponse?: (
+    response: AssignmentTransportResponse,
   ) => AssignmentOperationRecovery | undefined;
   request: (idempotencyKey: string) => AssignmentTransportRequest;
 };
@@ -90,7 +91,7 @@ export function createAssignmentSubmissionFlow({
         );
         const result = await executeAssignmentRequest({
           fallback: prepared.value.fallback || fallback,
-          failureRecovery: prepared.value.recoveryForStatus,
+          failureRecovery: prepared.value.recoveryForResponse,
           parse: prepared.value.parse,
           request: prepared.value.request(idempotencyKey),
           transport,

@@ -93,12 +93,14 @@ export async function calculateStudentAssignmentReplacementCapacity(
   studentId: string,
   input: AssignmentCapacityInput,
   authenticatedAdmin?: AdminContext,
+  options?: { nowMilliseconds?: number },
 ) {
   const admin = authenticatedAdmin ?? (await requireAdmin());
   const source = await requireEditableSourceContext(
     assignmentId,
     studentId,
     admin,
+    options,
   );
   if (input.studentId !== studentId) {
     throw new AssignmentReplacementError("invalid_selection");
@@ -198,6 +200,7 @@ export async function prepareStudentAssignmentReplacement(
   studentId: string,
   input: AssignmentReplacementInput,
   authenticatedAdmin?: AdminContext,
+  options?: { nowMilliseconds?: number },
 ) {
   const admin = authenticatedAdmin ?? (await requireAdmin());
   const exclusion = { assignmentId, studentId };
@@ -228,6 +231,7 @@ export async function prepareStudentAssignmentReplacement(
       assignmentId,
       studentId,
       admin,
+      options,
     );
     assertAssignmentEditFieldPolicy(source, input);
     if (source.draft.purpose === "review") {

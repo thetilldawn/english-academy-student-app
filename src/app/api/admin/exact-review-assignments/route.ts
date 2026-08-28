@@ -37,7 +37,7 @@ export async function POST(request: Request) {
         return jsonError("관리자 권한을 다시 확인해 주세요.", 403);
       }
       if (error.reason === "conflict" || error.reason === "unavailable") {
-        return jsonError(error.message, 409);
+        return jsonError(error.message, 409, { code: error.code });
       }
       if (error.reason === "invalid_selection") {
         return jsonError(error.message, 422, {

@@ -508,4 +508,129 @@ describe("bulk assignment controller", () => {
     });
     expect(submitCount).toBe(2);
   });
+
+  it("제출마다 현재 시각을 한 번만 읽고 503 재시도에는 같은 멱등키를 쓴다", async () => {
+    const keys: string[] = [];
+    let failSubmission = true;
+    const clock = vi.fn(() => NOW);
+    const transport: AssignmentTransport = vi.fn(async (request) => {
+      const body = request.body as {
+        idempotencyKey?: string;
+        sessionCount: number;
+        studentIds: string[];
+      };
+      if (request.url.endsWith("/preview")) {
+        return {
+          data: previewResponse(body.studentIds, body.sessionCount),
+          ok: true,
+          status: 200,
+        };
+      }
+      keys.push(body.idempotencyKey ?? "missing");
+      if (failSubmission) {
+        failSubmission = false;
+        return {
+          data: { error: "잠시 뒤 다시 시도해 주세요." },
+          ok: false,
+          status: 503,
+        };
+      }
+      return {
+        data: creationResponse(body.studentIds, body.sessionCount),
+        ok: true,
+        status: 201,
+      };
+    });
+    const { result } = renderHook(() =>
+      useBulkAssignmentController({
+        clock,
+        firstAvailableDateKorean: "2099-08-10",
+        genericErrorMessage: "일괄 배정을 저장하지 못했습니다.",
+        includePendingReview: true,
+        previewDelayMs: 0,
+        previewErrorMessage: "학생별 범위를 계산하지 못했습니다.",
+        studentIds: [assignmentContractIds.studentA],
+        transport,
+      }),
+    );
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    clock.mockClear();
+
+    await act(async () => {
+      expect(await result.current.actions.submit()).toMatchObject({
+        conflict: false,
+        ok: false,
+      });
+    });
+    await act(async () => {
+      expect(await result.current.actions.submit()).toMatchObject({ ok: true });
+    });
+
+    expect(clock).toHaveBeenCalledTimes(2);
+    expect(keys).toHaveLength(2);
+    expect(keys[0]).not.toBe("missing");
+    expect(keys[1]).toBe(keys[0]);
+  });
+
+  it("keeps a submit-time deadline error attached to the deadline field", async () => {
+    const beforeDeadline = Date.parse("2099-08-10T00:00:00.000Z");
+    const afterDeadline = Date.parse("2099-08-10T02:00:00.000Z");
+    const clock = vi
+      .fn<() => number>()
+      .mockReturnValueOnce(beforeDeadline)
+      .mockReturnValue(afterDeadline);
+    let submissionCount = 0;
+    const transport: AssignmentTransport = vi.fn(async (request) => {
+      const body = request.body as {
+        sessionCount: number;
+        studentIds: string[];
+      };
+      if (request.url.endsWith("/preview")) {
+        return {
+          data: previewResponse(body.studentIds, body.sessionCount),
+          ok: true,
+          status: 200,
+        };
+      }
+      submissionCount += 1;
+      return {
+        data: creationResponse(body.studentIds, body.sessionCount),
+        ok: true,
+        status: 201,
+      };
+    });
+    const { result } = renderHook(() =>
+      useBulkAssignmentController({
+        clock,
+        firstAvailableDateKorean: "2099-08-10",
+        genericErrorMessage: "배정하지 못했습니다.",
+        includePendingReview: true,
+        previewDelayMs: 0,
+        previewErrorMessage: "범위를 계산하지 못했습니다.",
+        studentIds: [assignmentContractIds.studentA],
+        transport,
+      }),
+    );
+
+    act(() => {
+      result.current.actions.changeDeadline({
+        koreanLocalDateTime: "2099-08-10T10:00",
+        mode: "at",
+      });
+    });
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+
+    await act(async () => {
+      expect(await result.current.actions.submit()).toMatchObject({
+        conflict: false,
+        ok: false,
+      });
+    });
+
+    expect(submissionCount).toBe(0);
+    expect(result.current.submissionIssues[0]).toMatchObject({
+      path: "firstDeadline",
+    });
+    expect(result.current.canSubmit).toBe(false);
+  });
 });

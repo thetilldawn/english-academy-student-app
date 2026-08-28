@@ -232,6 +232,7 @@ export async function requireEditableSourceContext(
   assignmentId: string,
   studentId: string,
   authenticatedAdmin?: AdminContext,
+  options?: { nowMilliseconds?: number },
 ): Promise<EditableSourceContext> {
   if (!authenticatedAdmin) {
     await requireAdmin();
@@ -334,7 +335,7 @@ export async function requireEditableSourceContext(
       studentDeleted: student.deleted_at !== null,
       studentStatus: student.status,
     },
-    Date.now(),
+    options?.nowMilliseconds ?? Date.now(),
   );
   if (unavailableReason) {
     throw new AssignmentReplacementError(unavailableReason);
@@ -422,12 +423,14 @@ export async function getStudentAssignmentEditDraft(
   assignmentId: string,
   studentId: string,
   authenticatedAdmin?: AdminContext,
+  options?: { nowMilliseconds?: number },
 ) {
   return (
     await requireEditableSourceContext(
       assignmentId,
       studentId,
       authenticatedAdmin,
+      options,
     )
   ).draft;
 }

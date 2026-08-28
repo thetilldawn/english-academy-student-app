@@ -1131,9 +1131,18 @@
         "clientState": [
           "src/features/assignments/controller/use-vocab-assignment-screen.ts",
           "src/features/assignments/controller/use-vocab-assignment-planner.ts",
-          "src/features/assignments/controller/use-bulk-assignment-controller.ts"
+          "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+          "src/features/assignments/controller/use-debounced-assignment-preview.ts",
+          "src/features/assignments/controller/use-assignment-controller-runtime.ts"
         ],
-        "application": [],
+        "application": [
+          "src/features/assignments/application/bulk-assignment-flow-adapter.ts",
+          "src/features/assignments/application/assignment-operation-error.ts",
+          "src/features/assignments/application/execute-assignment-request.ts",
+          "src/features/assignments/application/preview-flow.ts",
+          "src/features/assignments/application/submission-flow.ts",
+          "src/features/assignments/application/request-lifecycle.ts"
+        ],
         "domain": [
           "src/features/assignments/domain/vocab-assignment-contract.ts",
           "src/features/assignments/domain/vocab-schedule.ts",
@@ -1179,6 +1188,10 @@
         ],
         "tests": [
           "src/features/assignments/assignment-flow-contract.characterization.test.ts",
+          "src/features/assignments/application/assignment-flow.test.ts",
+          "src/features/assignments/application/request-lifecycle.test.ts",
+          "src/features/assignments/application/bulk-assignment-flow-adapter.test.ts",
+          "src/features/assignments/controller/use-debounced-assignment-preview.test.tsx",
           "src/features/assignments/controller/use-bulk-assignment-controller.test.tsx",
           "src/app/api/admin/bulk-assignments/route.test.ts",
           "src/lib/services/bulk-assignment-preparation-cache-contract.test.ts",
@@ -1190,6 +1203,41 @@
         ]
       },
       "requiredImportEdges": [
+        {
+          "from": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+          "to": "src/features/assignments/application/submission-flow.ts",
+          "reason": "한 명과 여러 명의 저장이 같은 중복 제출·시각·멱등 수명을 사용함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-debounced-assignment-preview.ts",
+          "to": "src/features/assignments/application/preview-flow.ts",
+          "reason": "취소 가능한 입력 지연 훅이 공통 미리보기 실행기를 호출함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-debounced-assignment-preview.ts",
+          "to": "src/features/assignments/application/request-lifecycle.ts",
+          "reason": "입력 지연 훅이 최신 요청 식별 규칙을 사용함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-assignment-controller-runtime.ts",
+          "to": "src/features/assignments/application/submission-flow.ts",
+          "reason": "공통 화면 실행 보조가 제출 세션을 한 번만 만들고 유지함"
+        },
+        {
+          "from": "src/features/assignments/application/bulk-assignment-flow-adapter.ts",
+          "to": "src/features/assignments/api/request-adapters.ts",
+          "reason": "범위 배정 응용 흐름이 요청 직렬화를 전용 변환기에 맡김"
+        },
+        {
+          "from": "src/features/assignments/application/bulk-assignment-flow-adapter.ts",
+          "to": "src/features/assignments/api/response-adapters.ts",
+          "reason": "범위 배정 응용 흐름이 응답 검증을 전용 변환기에 맡김"
+        },
+        {
+          "from": "src/features/assignments/application/bulk-assignment-flow-adapter.ts",
+          "to": "src/features/assignments/domain/validation.ts",
+          "reason": "범위 배정 응용 흐름이 같은 도메인 검증 결과를 미리보기와 저장에 사용함"
+        },
         {
           "from": "src/features/assignments/ui/vocab-assignment-planner.tsx",
           "to": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
@@ -1209,6 +1257,21 @@
           "from": "src/features/assignments/controller/use-vocab-assignment-planner.ts",
           "to": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
           "reason": "배정 계획이 공통 Preview·저장 수명을 사용함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+          "to": "src/features/assignments/application/bulk-assignment-flow-adapter.ts",
+          "reason": "한 명과 여러 명의 범위 배정이 같은 요청·응답·최신 시각·충돌 복구 규칙을 사용함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+          "to": "src/features/assignments/controller/use-debounced-assignment-preview.ts",
+          "reason": "입력 변경 뒤 최신 미리보기만 반영하는 공통 수명 훅"
+        },
+        {
+          "from": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+          "to": "src/features/assignments/controller/use-assignment-controller-runtime.ts",
+          "reason": "분 단위 현재 시각과 제출 세션을 다른 배정 흐름과 공유함"
         },
         {
           "from": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
@@ -1272,8 +1335,7 @@
         }
       ],
       "notApplicable": {
-        "serverComponent": "페이지 초기 자료와 학생 선택은 선행 공통 흐름 assignment-workspace-selection을 통해 이어진다.",
-        "application": "범위 배정은 아직 controller가 요청 생명주기를 직접 소유하며 R2-4에서 client/flows로 이동한다."
+        "serverComponent": "페이지 초기 자료와 학생 선택은 선행 공통 흐름 assignment-workspace-selection을 통해 이어진다."
       }
     },
     {
@@ -1327,9 +1389,19 @@
         "clientState": [
           "src/features/assignments/controller/vocab-assignment-planner-state.ts",
           "src/features/assignments/controller/use-vocab-assignment-planner.ts",
-          "src/features/assignments/controller/use-vocab-assignment-derived-plan.ts"
+          "src/features/assignments/controller/use-vocab-assignment-derived-plan.ts",
+          "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+          "src/features/assignments/controller/use-debounced-assignment-preview.ts",
+          "src/features/assignments/controller/use-assignment-controller-runtime.ts"
         ],
-        "application": [],
+        "application": [
+          "src/features/assignments/application/bulk-assignment-flow-adapter.ts",
+          "src/features/assignments/application/assignment-operation-error.ts",
+          "src/features/assignments/application/execute-assignment-request.ts",
+          "src/features/assignments/application/preview-flow.ts",
+          "src/features/assignments/application/submission-flow.ts",
+          "src/features/assignments/application/request-lifecycle.ts"
+        ],
         "domain": [
           "src/features/assignments/domain/vocab-assignment-contract.ts",
           "src/features/assignments/domain/vocab-schedule.ts",
@@ -1382,6 +1454,11 @@
         ],
         "tests": [
           "src/features/assignments/domain/vocab-assignment-plan.test.ts",
+          "src/features/assignments/application/assignment-flow.test.ts",
+          "src/features/assignments/application/request-lifecycle.test.ts",
+          "src/features/assignments/application/bulk-assignment-flow-adapter.test.ts",
+          "src/features/assignments/controller/use-debounced-assignment-preview.test.tsx",
+          "src/features/assignments/controller/use-bulk-assignment-controller.test.tsx",
           "src/features/assignments/controller/use-vocab-assignment-planner.test.tsx",
           "src/features/assignments/api/request-adapters.test.ts",
           "src/app/api/admin/bulk-assignments/route.test.ts",
@@ -1398,6 +1475,41 @@
       },
       "requiredImportEdges": [
         {
+          "from": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+          "to": "src/features/assignments/application/submission-flow.ts",
+          "reason": "요일별 배정 저장이 공통 중복 제출·시각·멱등 수명을 사용함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-debounced-assignment-preview.ts",
+          "to": "src/features/assignments/application/preview-flow.ts",
+          "reason": "요일 입력 변경이 공통 미리보기 실행기로 이어짐"
+        },
+        {
+          "from": "src/features/assignments/controller/use-debounced-assignment-preview.ts",
+          "to": "src/features/assignments/application/request-lifecycle.ts",
+          "reason": "요일 입력 변경도 최신 요청만 남기는 규칙을 사용함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-assignment-controller-runtime.ts",
+          "to": "src/features/assignments/application/submission-flow.ts",
+          "reason": "요일별 화면도 공통 제출 세션을 유지함"
+        },
+        {
+          "from": "src/features/assignments/application/bulk-assignment-flow-adapter.ts",
+          "to": "src/features/assignments/api/request-adapters.ts",
+          "reason": "요일별 범위 요청 직렬화를 전용 변환기가 소유함"
+        },
+        {
+          "from": "src/features/assignments/application/bulk-assignment-flow-adapter.ts",
+          "to": "src/features/assignments/api/response-adapters.ts",
+          "reason": "요일별 범위 응답 검증을 전용 변환기가 소유함"
+        },
+        {
+          "from": "src/features/assignments/application/bulk-assignment-flow-adapter.ts",
+          "to": "src/features/assignments/domain/validation.ts",
+          "reason": "요일별 범위도 공통 도메인 검증을 사용함"
+        },
+        {
           "from": "src/features/assignments/ui/vocab-assignment-planner.tsx",
           "to": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
           "reason": "일반 단어 시험 탭에서 요일별 배정 조건을 엶"
@@ -1406,6 +1518,21 @@
           "from": "src/features/assignments/controller/use-vocab-assignment-planner.ts",
           "to": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
           "reason": "요일별 계획이 실제 Preview·저장 요청 수명으로 이어짐"
+        },
+        {
+          "from": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+          "to": "src/features/assignments/application/bulk-assignment-flow-adapter.ts",
+          "reason": "요일별 범위 계획도 일반 범위 배정과 같은 미리보기·저장 수명을 사용함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+          "to": "src/features/assignments/controller/use-debounced-assignment-preview.ts",
+          "reason": "요일별 입력 변경도 이전 미리보기 응답을 버리는 공통 수명을 사용함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+          "to": "src/features/assignments/controller/use-assignment-controller-runtime.ts",
+          "reason": "요일별 배정의 현재 시각과 제출 세션을 공통으로 유지함"
         },
         {
           "from": "src/features/assignments/ui/vocab-schedule-fields.tsx",
@@ -1434,8 +1561,7 @@
         }
       ],
       "notApplicable": {
-        "serverComponent": "페이지 초기 자료와 학생 선택은 선행 공통 흐름 assignment-workspace-selection을 통해 이어진다.",
-        "application": "R2-3은 현재 controller 흐름에 계약을 연결하고 R2-4에서 client/flows로 이동한다."
+        "serverComponent": "페이지 초기 자료와 학생 선택은 선행 공통 흐름 assignment-workspace-selection을 통해 이어진다."
       }
     },
     {
@@ -1471,9 +1597,15 @@
           "src/features/assignments/ui/bulk-exam-fields.tsx",
           "src/features/assignments/ui/exam-timing-fields.tsx"
         ],
-        "clientState": ["src/features/assignments/controller/use-direct-review-assignment-controller.ts"],
+        "clientState": [
+          "src/features/assignments/controller/use-direct-review-assignment-controller.ts",
+          "src/features/assignments/controller/use-debounced-assignment-preview.ts",
+          "src/features/assignments/controller/use-assignment-controller-runtime.ts"
+        ],
         "application": [
           "src/features/assignments/application/direct-review-flow-adapter.ts",
+          "src/features/assignments/application/assignment-operation-error.ts",
+          "src/features/assignments/application/execute-assignment-request.ts",
           "src/features/assignments/application/preview-flow.ts",
           "src/features/assignments/application/submission-flow.ts",
           "src/features/assignments/application/request-lifecycle.ts"
@@ -1512,6 +1644,9 @@
         ],
         "tests": [
           "src/features/assignments/application/direct-review-flow-adapter.test.ts",
+          "src/features/assignments/application/assignment-flow.test.ts",
+          "src/features/assignments/application/request-lifecycle.test.ts",
+          "src/features/assignments/controller/use-debounced-assignment-preview.test.tsx",
           "src/features/assignments/controller/use-direct-review-assignment-controller.test.tsx",
           "src/features/assignments/domain/direct-review-draft.test.ts",
           "src/app/api/admin/exact-review-assignments/preview/route.test.ts",
@@ -1525,6 +1660,46 @@
       },
       "requiredImportEdges": [
         {
+          "from": "src/features/assignments/controller/use-direct-review-assignment-controller.ts",
+          "to": "src/features/assignments/application/submission-flow.ts",
+          "reason": "오답 시험 저장이 공통 중복 제출·시각·멱등 수명을 사용함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-debounced-assignment-preview.ts",
+          "to": "src/features/assignments/application/preview-flow.ts",
+          "reason": "오답 후보 변경이 공통 미리보기 실행기로 이어짐"
+        },
+        {
+          "from": "src/features/assignments/controller/use-debounced-assignment-preview.ts",
+          "to": "src/features/assignments/application/request-lifecycle.ts",
+          "reason": "오답 미리보기도 최신 요청 식별 규칙을 사용함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-assignment-controller-runtime.ts",
+          "to": "src/features/assignments/application/submission-flow.ts",
+          "reason": "오답 시험 화면도 공통 제출 세션을 유지함"
+        },
+        {
+          "from": "src/features/assignments/application/direct-review-flow-adapter.ts",
+          "to": "src/features/assignments/api/request-adapters.ts",
+          "reason": "오답 시험 응용 흐름이 요청 직렬화를 전용 변환기에 맡김"
+        },
+        {
+          "from": "src/features/assignments/application/direct-review-flow-adapter.ts",
+          "to": "src/features/assignments/api/response-adapters.ts",
+          "reason": "오답 시험 응용 흐름이 응답 검증을 전용 변환기에 맡김"
+        },
+        {
+          "from": "src/features/assignments/application/direct-review-flow-adapter.ts",
+          "to": "src/features/assignments/domain/validation.ts",
+          "reason": "오답 시험 응용 흐름이 공통 도메인 검증을 사용함"
+        },
+        {
+          "from": "src/features/assignments/application/direct-review-flow-adapter.ts",
+          "to": "src/features/assignments/application/execute-assignment-request.ts",
+          "reason": "오답 요약 조회도 공통 오류 해석과 전송 실행을 사용함"
+        },
+        {
           "from": "src/features/assignments/ui/vocab-assignment-planner.tsx",
           "to": "src/features/assignments/ui/direct-review-assignment-sections.tsx",
           "reason": "오답 시험 탭의 범위·조건·일정 UI"
@@ -1533,6 +1708,16 @@
           "from": "src/features/assignments/controller/use-direct-review-assignment-controller.ts",
           "to": "src/features/assignments/application/direct-review-flow-adapter.ts",
           "reason": "독립 오답 화면이 공통 요청 수명 adapter를 사용함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-direct-review-assignment-controller.ts",
+          "to": "src/features/assignments/controller/use-debounced-assignment-preview.ts",
+          "reason": "오답 후보 변경 뒤 최신 미리보기만 반영함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-direct-review-assignment-controller.ts",
+          "to": "src/features/assignments/controller/use-assignment-controller-runtime.ts",
+          "reason": "오답 시험도 같은 현재 시각과 제출 세션 수명을 사용함"
         },
         {
           "from": "src/features/assignments/ui/vocab-assignment-planner.tsx",
@@ -1640,11 +1825,21 @@
         "clientState": [
           "src/features/history/ui/use-editable-history-assignment.ts",
           "src/features/assignments/controller/use-assignment-controller.ts",
+          "src/features/assignments/controller/single-assignment-controller-actions.ts",
           "src/features/assignments/controller/use-assignment-preview.ts",
+          "src/features/assignments/controller/use-debounced-assignment-preview.ts",
+          "src/features/assignments/controller/use-assignment-controller-runtime.ts",
           "src/features/assignments/ui/use-edit-assignment-validation.ts",
           "src/features/assignments/ui/focus-invalid-assignment-field.ts"
         ],
-        "application": [],
+        "application": [
+          "src/features/assignments/application/assignment-edit-flow-adapter.ts",
+          "src/features/assignments/application/assignment-operation-error.ts",
+          "src/features/assignments/application/execute-assignment-request.ts",
+          "src/features/assignments/application/preview-flow.ts",
+          "src/features/assignments/application/submission-flow.ts",
+          "src/features/assignments/application/request-lifecycle.ts"
+        ],
         "domain": [
           "src/features/assignments/domain/editor-state.ts",
           "src/features/assignments/domain/fingerprint.ts",
@@ -1719,6 +1914,10 @@
           "src/features/assignments/ui/edit-assignment-ui.contract.test.ts",
           "src/features/assignments/ui/focus-invalid-assignment-field.test.ts",
           "src/features/assignments/architecture-boundary.test.ts",
+          "src/features/assignments/application/assignment-edit-flow-adapter.test.ts",
+          "src/features/assignments/application/assignment-flow.test.ts",
+          "src/features/assignments/application/request-lifecycle.test.ts",
+          "src/features/assignments/controller/use-debounced-assignment-preview.test.tsx",
           "src/features/assignments/controller/use-assignment-controller.test.tsx",
           "src/features/assignments/domain/editor-state.test.ts",
           "src/features/assignments/domain/single-draft.test.ts",
@@ -1754,6 +1953,71 @@
         ]
       },
       "requiredImportEdges": [
+        {
+          "from": "src/features/assignments/controller/use-assignment-controller.ts",
+          "to": "src/features/assignments/application/submission-flow.ts",
+          "reason": "수정 저장이 공통 중복 제출·시각·멱등 수명을 사용함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-debounced-assignment-preview.ts",
+          "to": "src/features/assignments/application/preview-flow.ts",
+          "reason": "수정 입력 변경이 공통 미리보기 실행기로 이어짐"
+        },
+        {
+          "from": "src/features/assignments/controller/use-debounced-assignment-preview.ts",
+          "to": "src/features/assignments/application/request-lifecycle.ts",
+          "reason": "수정 미리보기도 최신 요청 식별 규칙을 사용함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-assignment-controller-runtime.ts",
+          "to": "src/features/assignments/application/submission-flow.ts",
+          "reason": "수정 화면도 공통 제출 세션을 유지함"
+        },
+        {
+          "from": "src/features/assignments/application/assignment-edit-flow-adapter.ts",
+          "to": "src/features/assignments/api/request-adapters.ts",
+          "reason": "수정 응용 흐름이 조회·미리보기·저장 요청 직렬화를 전용 변환기에 맡김"
+        },
+        {
+          "from": "src/features/assignments/application/assignment-edit-flow-adapter.ts",
+          "to": "src/features/assignments/api/response-adapters.ts",
+          "reason": "수정 응용 흐름이 응답 검증을 전용 변환기에 맡김"
+        },
+        {
+          "from": "src/features/assignments/application/assignment-edit-flow-adapter.ts",
+          "to": "src/features/assignments/domain/validation.ts",
+          "reason": "수정 응용 흐름이 같은 도메인 검증을 미리보기와 저장에 사용함"
+        },
+        {
+          "from": "src/features/assignments/application/assignment-edit-flow-adapter.ts",
+          "to": "src/features/assignments/application/execute-assignment-request.ts",
+          "reason": "수정 원본 조회도 공통 오류 해석과 전송 실행을 사용함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-assignment-controller.ts",
+          "to": "src/features/assignments/application/assignment-edit-flow-adapter.ts",
+          "reason": "수정 원본 조회·미리보기·저장·충돌 복구를 한 응용 흐름에서 조합함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-assignment-controller.ts",
+          "to": "src/features/assignments/controller/use-assignment-controller-runtime.ts",
+          "reason": "수정도 생성 흐름과 같은 현재 시각과 제출 세션 수명을 사용함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-assignment-controller.ts",
+          "to": "src/features/assignments/controller/single-assignment-controller-actions.ts",
+          "reason": "수정 화면 입력 동작을 요청 수명과 분리한 재사용 가능한 조작 묶음"
+        },
+        {
+          "from": "src/features/assignments/controller/use-assignment-preview.ts",
+          "to": "src/features/assignments/application/assignment-edit-flow-adapter.ts",
+          "reason": "수정 미리보기가 저장과 같은 초안 계약과 충돌 복구 규칙을 사용함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-assignment-preview.ts",
+          "to": "src/features/assignments/controller/use-debounced-assignment-preview.ts",
+          "reason": "수정 초안 변경도 이전 응답을 버리는 공통 미리보기 수명을 사용함"
+        },
         {
           "from": "src/features/history/ui/history-detail-actions.tsx",
           "to": "src/lib/admin/assignment-edit.ts",
@@ -1799,10 +2063,7 @@
           "to": "src/lib/services/vocab-assignment-queue-query.ts",
           "reason": "수정 화면에서 현재 배정된 시험과 이어지는 회차 상태를 함께 제공함"
         }
-      ],
-      "notApplicable": {
-        "application": "수정 controller는 아직 transport를 직접 호출하며 R2-4에서 client/flows로 이동한다."
-      }
+      ]
     },
     {
       "id": "assignment-series",
@@ -1883,9 +2144,18 @@
           "src/features/assignments/controller/use-bulk-assignment-controller.ts",
           "src/features/assignments/controller/use-vocab-time-templates.ts",
           "src/features/assignments/controller/vocab-assignment-planner-state.ts",
-          "src/features/assignments/controller/use-vocab-assignment-derived-plan.ts"
+          "src/features/assignments/controller/use-vocab-assignment-derived-plan.ts",
+          "src/features/assignments/controller/use-debounced-assignment-preview.ts",
+          "src/features/assignments/controller/use-assignment-controller-runtime.ts"
         ],
-        "application": [],
+        "application": [
+          "src/features/assignments/application/bulk-assignment-flow-adapter.ts",
+          "src/features/assignments/application/assignment-operation-error.ts",
+          "src/features/assignments/application/execute-assignment-request.ts",
+          "src/features/assignments/application/preview-flow.ts",
+          "src/features/assignments/application/submission-flow.ts",
+          "src/features/assignments/application/request-lifecycle.ts"
+        ],
         "domain": [
           "src/features/assignments/domain/bulk-draft.ts",
           "src/features/assignments/domain/bulk-plan-signature.ts",
@@ -1969,7 +2239,11 @@
         ],
         "tests": [
           "src/features/assignments/domain/vocab-assignment-plan.test.ts",
+          "src/features/assignments/application/assignment-flow.test.ts",
+          "src/features/assignments/application/request-lifecycle.test.ts",
           "src/features/assignments/ui/vocab-assignment-planner.test.tsx",
+          "src/features/assignments/application/bulk-assignment-flow-adapter.test.ts",
+          "src/features/assignments/controller/use-debounced-assignment-preview.test.tsx",
           "src/features/assignments/controller/use-vocab-assignment-planner.test.tsx",
           "src/features/assignments/controller/use-bulk-assignment-controller.test.tsx",
           "src/features/assignments/controller/use-vocab-assignment-screen.test.tsx",
@@ -1995,6 +2269,41 @@
         ]
       },
       "requiredImportEdges": [
+        {
+          "from": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+          "to": "src/features/assignments/application/submission-flow.ts",
+          "reason": "첫 회차와 후속 회차 저장이 공통 중복 제출·시각·멱등 수명을 사용함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-debounced-assignment-preview.ts",
+          "to": "src/features/assignments/application/preview-flow.ts",
+          "reason": "후속 회차 계획도 공통 미리보기 실행기로 이어짐"
+        },
+        {
+          "from": "src/features/assignments/controller/use-debounced-assignment-preview.ts",
+          "to": "src/features/assignments/application/request-lifecycle.ts",
+          "reason": "후속 회차 미리보기도 최신 요청 식별 규칙을 사용함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-assignment-controller-runtime.ts",
+          "to": "src/features/assignments/application/submission-flow.ts",
+          "reason": "회차 계획 화면도 공통 제출 세션을 유지함"
+        },
+        {
+          "from": "src/features/assignments/application/bulk-assignment-flow-adapter.ts",
+          "to": "src/features/assignments/api/request-adapters.ts",
+          "reason": "회차 계획 응용 흐름이 요청 직렬화를 전용 변환기에 맡김"
+        },
+        {
+          "from": "src/features/assignments/application/bulk-assignment-flow-adapter.ts",
+          "to": "src/features/assignments/api/response-adapters.ts",
+          "reason": "회차 계획 응용 흐름이 응답 검증을 전용 변환기에 맡김"
+        },
+        {
+          "from": "src/features/assignments/application/bulk-assignment-flow-adapter.ts",
+          "to": "src/features/assignments/domain/validation.ts",
+          "reason": "첫 회차와 후속 회차 계획이 공통 도메인 검증을 사용함"
+        },
         {
           "from": "src/app/admin/(protected)/students/page.tsx",
           "to": "src/features/students/server/load-student-management-data.ts",
@@ -2039,6 +2348,21 @@
           "from": "src/features/assignments/controller/use-vocab-assignment-planner.ts",
           "to": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
           "reason": "계획 상태가 Preview·저장 요청 수명을 사용함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+          "to": "src/features/assignments/application/bulk-assignment-flow-adapter.ts",
+          "reason": "첫 회차와 이어지는 회차 계획을 같은 미리보기·저장 규칙으로 검증함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+          "to": "src/features/assignments/controller/use-debounced-assignment-preview.ts",
+          "reason": "이어지는 회차 계산도 최신 계획 미리보기만 반영함"
+        },
+        {
+          "from": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+          "to": "src/features/assignments/controller/use-assignment-controller-runtime.ts",
+          "reason": "회차 계획 저장의 현재 시각과 멱등 세션을 공통으로 유지함"
         },
         {
           "from": "src/lib/services/bulk-assignment-service.ts",
@@ -2105,10 +2429,7 @@
           "to": "src/lib/services/vocab-assignment-queue-support.ts",
           "reason": "queue RPC 미적용 상태를 안전하게 구분함"
         }
-      ],
-      "notApplicable": {
-        "application": "큐 생성·처리는 아직 controller와 Route/service 조합에 있으며 R5에서 server use-case로 이동한다."
-      }
+      ]
     },
     {
       "id": "student-quiz-attempt",

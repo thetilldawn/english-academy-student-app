@@ -10,21 +10,19 @@ import {
 } from "react";
 
 import {
-  parseDirectReviewDatasetSummariesResponse,
   type DirectReviewDatasetSummariesResponse,
   type DirectReviewPreviewResponse,
 } from "../api/response-adapters";
-import { buildDirectReviewSummariesRequest } from "../api/request-adapters";
 import {
+  loadDirectReviewSummaries,
   prepareDirectReviewPreview,
   prepareDirectReviewSubmission,
+  resolveDirectReviewSubmissionIssues,
 } from "../application/direct-review-flow-adapter";
 import type { AssignmentOperationError } from "../application/assignment-operation-error";
-import { executeAssignmentRequest } from "../application/execute-assignment-request";
 import type { AssignmentRequestIdentity } from "../application/request-lifecycle";
 import {
   createAssignmentSubmissionFlow,
-  createAssignmentSubmissionSession,
 } from "../application/submission-flow";
 import type {
   AssignmentDatasetItem,
@@ -43,12 +41,13 @@ import type {
   ReviewLevel,
 } from "../domain/model";
 import {
-  validateDirectReviewAssignmentSubmission,
-} from "../domain/validation";
-import {
   browserAssignmentTransport,
   type AssignmentTransport,
 } from "../transport/assignment-transport";
+import {
+  useAssignmentMinuteClock,
+  useAssignmentSubmissionSession,
+} from "./use-assignment-controller-runtime";
 import { useDebouncedAssignmentPreview } from "./use-debounced-assignment-preview";
 
 export type DirectReviewFieldKey =
@@ -201,10 +200,13 @@ export function useDirectReviewAssignmentController({
     fieldPath: string;
     message: string;
   } | null>(null);
-  const [nowMilliseconds, setNowMilliseconds] = useState(() => clock());
+  const nowMilliseconds = useAssignmentMinuteClock({
+    clock,
+    initializeFromClock: true,
+  });
   const [previewRevision, setPreviewRevision] = useState(0);
   const [sourceRefreshVersion, setSourceRefreshVersion] = useState(0);
-  const [submissionSession] = useState(createAssignmentSubmissionSession);
+  const submissionSession = useAssignmentSubmissionSession();
   const interactionLockedRef = useRef(false);
   const previewRecoveryFingerprintRef = useRef<string | null>(null);
   const submissionFlow = useMemo(
@@ -232,12 +234,6 @@ export function useDirectReviewAssignmentController({
   );
 
   useEffect(() => {
-    const updateNow = () => setNowMilliseconds(clock());
-    const intervalId = window.setInterval(updateNow, 60_000);
-    return () => window.clearInterval(intervalId);
-  }, [clock]);
-
-  useEffect(() => {
     if (!enabled) return;
     const abortController = new AbortController();
     void (async () => {
@@ -245,15 +241,10 @@ export function useDirectReviewAssignmentController({
       if (abortController.signal.aborted) return;
       setCapacity({ status: "idle", value: null, message: "" });
       setSummary({ status: "loading", value: [], message: "" });
-      const request = buildDirectReviewSummariesRequest(student.id);
-      const result = await executeAssignmentRequest({
+      const result = await loadDirectReviewSummaries({
         fallback: "현재 오답 단어 수를 불러오지 못했습니다.",
-        parse: parseDirectReviewDatasetSummariesResponse,
-        request: {
-          method: request.method,
-          signal: abortController.signal,
-          url: request.endpoint,
-        },
+        signal: abortController.signal,
+        studentId: student.id,
         transport,
       });
       if (abortController.signal.aborted) return;
@@ -376,11 +367,14 @@ export function useDirectReviewAssignmentController({
 
   const validationIssues = useMemo(
     () =>
-      validateDirectReviewAssignmentSubmission(
-        draft,
-        capacity.status === "ready"
-          ? capacity.value.wrongEligible
-          : draft.questionCount,
+      resolveDirectReviewSubmissionIssues(
+        {
+          draft,
+          wrongEligible:
+            capacity.status === "ready"
+              ? capacity.value.wrongEligible
+              : draft.questionCount,
+        },
         nowMilliseconds,
       ),
     [capacity, draft, nowMilliseconds],
@@ -467,14 +461,7 @@ export function useDirectReviewAssignmentController({
   }
 
   async function submit() {
-    if (interactionLockedRef.current) {
-      return {
-        conflict: false,
-        fieldKey: null,
-        message: "오답 시험을 배정하고 있습니다.",
-        ok: false as const,
-      };
-    }
+    const alreadySubmitting = interactionLockedRef.current;
     if (
       !enabled ||
       submission.status === "succeeded" ||
@@ -491,9 +478,11 @@ export function useDirectReviewAssignmentController({
         ok: false as const,
       };
     }
-    interactionLockedRef.current = true;
-    setSubmission({ status: "submitting", message: "" });
-    setSubmissionIssue(null);
+    if (!alreadySubmitting) {
+      interactionLockedRef.current = true;
+      setSubmission({ status: "submitting", message: "" });
+      setSubmissionIssue(null);
+    }
     let outcome: Awaited<ReturnType<typeof submissionFlow.run>>;
     try {
       outcome = await submissionFlow.run((now) =>
@@ -503,7 +492,7 @@ export function useDirectReviewAssignmentController({
         )
       );
     } finally {
-      interactionLockedRef.current = false;
+      if (!alreadySubmitting) interactionLockedRef.current = false;
     }
     if (outcome.ok) {
       setSubmission({ status: "succeeded", message: "" });

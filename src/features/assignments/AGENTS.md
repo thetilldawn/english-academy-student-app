@@ -18,8 +18,16 @@
 
 - 단일 배정과 일괄 배정은 학생 선택 방식만 다르고 둘 다 `VocabAssignmentPlanner`와
   `/api/admin/bulk-assignments[/preview]`를 사용한다.
-- 독립 오답 시험만 현재 `application` 흐름을 온전히 사용한다. 범위 배정과 수정 controller는 아직
-  요청 생명주기를 직접 소유한다.
+- 일반 단일·일괄 범위 배정, 요일별 범위 배정, 독립 오답 시험, 기존 시험 수정은 모두
+  `application`의 공통 미리보기·제출 흐름을 사용한다. controller는 입력·탭·focus·화면 진행 상태와
+  분류된 복구 실행을 소유한다. 각 흐름 adapter는 요청 생성·응답 해석·최신 시각 검증·멱등키와 충돌 뒤 복구 방식을
+  분류한다. `use-debounced-assignment-preview.ts`가 입력 지연·취소·최신 요청 정책을 실행하고,
+  controller가 분류된 원본 재조회·미리보기 새 계산을 실제로 실행한다.
+- 한 명 배정과 여러 명 배정은 별도 controller가 아니라 같은 `useBulkAssignmentController`에
+  학생 ID 배열만 다르게 전달한다. 단일 배정 전용 저장 경로를 새로 만들지 않는다.
+- 시험 수정은 `assignment-edit-flow-adapter.ts`, 범위 배정은 `bulk-assignment-flow-adapter.ts`,
+  오답 시험은 `direct-review-flow-adapter.ts`에서 시작한다. 입력 버튼 동작은
+  `single-assignment-controller-actions.ts`처럼 요청 수명과 분리한다.
 - 시험 수정은 배정 페이지가 아니라 관리자 개요·내역의 `EditableHistoryDetail*`에서 시작해
   `SingleAssignmentEditor`를 사용한다.
 - `api` 폴더는 Route Handler가 아니라 직렬화 가능한 요청·응답 변환기다. 실제 HTTP 경로는

@@ -156,6 +156,32 @@ describe("single assignment controller", () => {
     expect(result.current.capacity?.maximumQuestionCount).toBe(12);
   });
 
+  it("refreshes a create preview once after a capacity 409", async () => {
+    let capacityRequestCount = 0;
+    const transport: AssignmentTransport = vi.fn(async (request) => {
+      if (request.url === "/api/admin/assignment-capacity") {
+        capacityRequestCount += 1;
+        return capacityRequestCount === 1
+          ? {
+              data: { error: "출제 가능 수가 바뀌었습니다." },
+              ok: false,
+              status: 409,
+            }
+          : { data: capacity, ok: true, status: 200 };
+      }
+      return {
+        data: { assignmentId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" },
+        ok: true,
+        status: 201,
+      };
+    });
+    const { result } = renderController(transport);
+
+    await waitFor(() => expect(capacityRequestCount).toBe(2));
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    expect(result.current.capacity).toMatchObject({ maximumQuestionCount: 40 });
+  });
+
   it("preserves each timing value while switching timing modes", async () => {
     const transport: AssignmentTransport = vi.fn(async (request) =>
       request.url === "/api/admin/assignment-capacity"
@@ -398,6 +424,31 @@ describe("single assignment controller", () => {
           path: "deadline",
         }),
       ]),
+    );
+  });
+
+  it("서버 422의 fieldPath를 화면 입력 오류에 보존한다", async () => {
+    const transport: AssignmentTransport = vi.fn(async (request) =>
+      request.url === "/api/admin/assignment-capacity"
+        ? { data: capacity, ok: true, status: 200 }
+        : {
+            data: {
+              error: "응시 마감 시간은 현재보다 뒤로 정해 주세요.",
+              fieldPath: "deadline",
+            },
+            ok: false,
+            status: 422,
+          },
+    );
+    const { result } = renderController(transport);
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+
+    await act(async () => {
+      expect(await result.current.actions.submit()).toMatchObject({ ok: false });
+    });
+
+    expect(result.current.issues).toContainEqual(
+      expect.objectContaining({ path: "deadline" }),
     );
   });
 
@@ -803,5 +854,191 @@ describe("single assignment controller", () => {
       expect(await result.current.actions.submit()).toMatchObject({ ok: true });
     });
     expect(requests.at(-1)).toMatchObject({ method: "PUT" });
+  });
+
+  it("수정 409 뒤 원본 GET을 다시 읽고 이전 snapshot 편집을 중단한다", async () => {
+    const assignmentId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    let getCount = 0;
+    const onConflict = vi.fn();
+    const transport: AssignmentTransport = vi.fn(async (request) => {
+      if (request.method === "GET") {
+        getCount += 1;
+        return {
+          data: {
+            assignmentId,
+            availableFrom: null,
+            availableUntil: null,
+            datasetId: assignmentContractIds.dataset,
+            englishToKoreanRatio: 50,
+            includePendingReview: false,
+            passingScore: getCount === 1 ? 80 : 70,
+            primaryUnitIds: [...reverseUnitIds],
+            purpose: "regular",
+            questionCount: 12,
+            questionOrderMode: "random",
+            questionTimeLimitSeconds: null,
+            retryEnabled: true,
+            retryPassingScore: getCount === 1 ? 80 : 70,
+            reviewLevels: [],
+            reviewScope: "dataset",
+            seriesItem: false,
+            studentId: assignmentContractIds.studentA,
+            studentName: "학생",
+            timeLimitSeconds: 300,
+            timingMode: "total",
+            title: getCount === 1 ? "기존 시험" : "다른 관리자가 바꾼 시험",
+          },
+          ok: true,
+          status: 200,
+        };
+      }
+      if (request.method === "POST") {
+        return {
+          data: { ...capacity, maximumQuestionCount: 12, recommendedQuestionCount: 12 },
+          ok: true,
+          status: 200,
+        };
+      }
+      return {
+        data: {
+          code: "assignment_source_changed",
+          error: "배정 상태가 바뀌었습니다.",
+        },
+        ok: false,
+        status: 409,
+      };
+    });
+    const { result } = renderHook(() =>
+      useAssignmentController({
+        automaticTitleForDraft: () => "자동 시험",
+        capacityErrorMessage: "capacity error",
+        editLoadErrorMessage: "edit error",
+        genericErrorMessage: "submit error",
+        onConflict,
+        previewDelayMs: 0,
+        source: {
+          assignmentId,
+          fallbackDraft: createDraft(),
+          kind: "edit",
+          studentId: assignmentContractIds.studentA,
+        },
+        transport,
+      }),
+    );
+    await waitFor(() => expect(result.current.state.preview.status).toBe("ready"));
+    act(() => result.current.actions.changePassingScore(85));
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+
+    await act(async () => {
+      expect(await result.current.actions.submit()).toMatchObject({
+        conflict: true,
+        ok: false,
+      });
+    });
+
+    await waitFor(() => expect(getCount).toBe(2));
+    await waitFor(() => expect(result.current.loadStatus).toBe("ready"));
+    expect(result.current.state.draft).toMatchObject({
+      exam: { passingScore: 70 },
+      title: { mode: "source", value: "다른 관리자가 바꾼 시험" },
+    });
+    expect(result.current.dirty).toBe(false);
+    expect(onConflict).toHaveBeenCalledOnce();
+  });
+
+  it("수정 제출마다 현재 시각을 한 번만 읽고 503 재시도에는 같은 멱등키를 쓴다", async () => {
+    const assignmentId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const clock = vi.fn(() => Date.parse("2026-08-10T00:00:00.000Z"));
+    const idempotencyKeys: string[] = [];
+    let failPut = true;
+    const transport: AssignmentTransport = vi.fn(async (request) => {
+      if (request.method === "GET") {
+        return {
+          data: {
+            assignmentId,
+            availableFrom: null,
+            availableUntil: null,
+            datasetId: assignmentContractIds.dataset,
+            englishToKoreanRatio: 50,
+            includePendingReview: false,
+            passingScore: 80,
+            primaryUnitIds: [...reverseUnitIds],
+            purpose: "regular",
+            questionCount: 12,
+            questionOrderMode: "random",
+            questionTimeLimitSeconds: null,
+            retryEnabled: true,
+            retryPassingScore: 80,
+            reviewLevels: [],
+            reviewScope: "dataset",
+            seriesItem: false,
+            studentId: assignmentContractIds.studentA,
+            studentName: "학생",
+            timeLimitSeconds: 300,
+            timingMode: "total",
+            title: "기존 시험",
+          },
+          ok: true,
+          status: 200,
+        };
+      }
+      if (request.method === "POST") {
+        return {
+          data: { ...capacity, maximumQuestionCount: 12, recommendedQuestionCount: 12 },
+          ok: true,
+          status: 200,
+        };
+      }
+      const body = request.body as { idempotencyKey: string };
+      idempotencyKeys.push(body.idempotencyKey);
+      if (failPut) {
+        failPut = false;
+        return { data: { error: "일시 오류" }, ok: false, status: 503 };
+      }
+      return {
+        data: {
+          idempotent: false,
+          replacementAssignmentId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          replacementPurpose: "regular",
+          sourceAssignmentId: assignmentId,
+          status: "replaced",
+          studentId: assignmentContractIds.studentA,
+        },
+        ok: true,
+        status: 200,
+      };
+    });
+    const { result } = renderHook(() =>
+      useAssignmentController({
+        automaticTitleForDraft: () => "자동 시험",
+        capacityErrorMessage: "capacity error",
+        clock,
+        editLoadErrorMessage: "edit error",
+        genericErrorMessage: "submit error",
+        previewDelayMs: 0,
+        source: {
+          assignmentId,
+          fallbackDraft: createDraft(),
+          kind: "edit",
+          studentId: assignmentContractIds.studentA,
+        },
+        transport,
+      }),
+    );
+    await waitFor(() => expect(result.current.state.preview.status).toBe("ready"));
+    act(() => result.current.actions.changePassingScore(85));
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    clock.mockClear();
+
+    await act(async () => {
+      expect(await result.current.actions.submit()).toMatchObject({ ok: false });
+    });
+    await act(async () => {
+      expect(await result.current.actions.submit()).toMatchObject({ ok: true });
+    });
+
+    expect(clock).toHaveBeenCalledTimes(2);
+    expect(idempotencyKeys).toHaveLength(2);
+    expect(idempotencyKeys[1]).toBe(idempotencyKeys[0]);
   });
 });

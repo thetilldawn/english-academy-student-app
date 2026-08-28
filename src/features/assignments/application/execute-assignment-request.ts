@@ -1,6 +1,7 @@
 import type {
   AssignmentTransport,
   AssignmentTransportRequest,
+  AssignmentTransportResponse,
 } from "../transport/assignment-transport";
 import {
   assignmentFailureFromCause,
@@ -22,7 +23,9 @@ export async function executeAssignmentRequest<Value>({
   transport,
 }: {
   fallback: string;
-  failureRecovery?: (status: number) => AssignmentOperationRecovery | undefined;
+  failureRecovery?: (
+    response: AssignmentTransportResponse,
+  ) => AssignmentOperationRecovery | undefined;
   parse: (data: unknown) => Value;
   request: AssignmentTransportRequest;
   transport: AssignmentTransport;
@@ -43,7 +46,7 @@ export async function executeAssignmentRequest<Value>({
         error: assignmentFailureFromResponse(
           response,
           fallback,
-          failureRecovery?.(response.status),
+          failureRecovery?.(response),
         ),
         ok: false,
       };

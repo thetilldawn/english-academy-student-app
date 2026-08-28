@@ -179,12 +179,30 @@ describe("createDirectReviewAssignment", () => {
     expect(createArgs.p_questions).toEqual(prepared.questions);
   });
 
+  it("준비 중 같은 멱등 요청이 완료되면 준비 오류 대신 기존 결과를 돌려준다", async () => {
+    const rpc = vi.fn()
+      .mockResolvedValueOnce({ data: null, error: null })
+      .mockResolvedValueOnce({ data: ids.assignment, error: null });
+    mocks.createServerSupabaseClient.mockResolvedValue({ rpc });
+    mocks.prepare.mockRejectedValue(
+      new mocks.DirectReviewPreparationError("unavailable"),
+    );
+
+    await expect(createDirectReviewAssignment(input, admin)).resolves.toBe(
+      ids.assignment,
+    );
+
+    expect(rpc).toHaveBeenCalledTimes(2);
+    expect(rpc.mock.calls[1]).toEqual(rpc.mock.calls[0]);
+  });
+
   it.each([
-    ["lookup", "23505"],
-    ["create", "40001"],
-  ] as const)("%s 충돌을 다시 계산이 필요한 상태로 구분한다", async (
+    ["lookup", "23505", "idempotency_key_reused"],
+    ["create", "40001", "review_candidates_changed"],
+  ] as const)("%s 충돌 원인을 구조화해 구분한다", async (
     stage,
     code,
+    expectedCode,
   ) => {
     const rpc = stage === "lookup"
       ? vi.fn().mockResolvedValue({ data: null, error: { code } })
@@ -195,7 +213,8 @@ describe("createDirectReviewAssignment", () => {
 
     await expect(createDirectReviewAssignment(input, admin)).rejects.toEqual(
       expect.objectContaining({
-      reason: "conflict",
+        code: expectedCode,
+        reason: "conflict",
       }) satisfies Partial<DirectReviewAssignmentError>,
     );
   });

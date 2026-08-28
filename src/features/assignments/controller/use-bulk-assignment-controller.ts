@@ -1,19 +1,32 @@
 "use client";
 
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 
 import {
-  buildBulkAssignmentPreviewRequest,
-  buildBulkAssignmentRequest,
-  bulkPreviewFingerprint,
-  bulkSubmissionFingerprint,
-} from "../api/request-adapters";
-import {
-  parseBulkAssignmentCreationResponse,
-  parseBulkAssignmentPreviewResponse,
   type BulkAssignmentCreationResponse,
   type BulkAssignmentPreviewResponse,
 } from "../api/response-adapters";
+import {
+  bulkPreviewAllowsSubmission,
+  bulkPreviewIdentity,
+  bulkSubmissionIdentity,
+  prepareBulkAssignmentPreview,
+  prepareBulkAssignmentSubmission,
+  resolveBulkPreviewIssues,
+  resolveBulkSubmissionIssues,
+} from "../application/bulk-assignment-flow-adapter";
+import type { AssignmentOperationError } from "../application/assignment-operation-error";
+import type { AssignmentRequestIdentity } from "../application/request-lifecycle";
+import {
+  createAssignmentSubmissionFlow,
+} from "../application/submission-flow";
 import {
   createInitialBulkSeriesAssignmentDraft,
   reduceBulkSeriesAssignmentDraft,
@@ -25,10 +38,6 @@ import {
   type AssignmentEditorAction,
   type AssignmentEditorState,
 } from "../domain/editor-state";
-import {
-  reserveIdempotencyKey,
-  type IdempotencyReservation,
-} from "../domain/fingerprint";
 import type {
   AssignmentDeadline,
   AssignmentDirectionRatio,
@@ -38,14 +47,14 @@ import type {
   ReviewLevel,
 } from "../domain/model";
 import {
-  validateBulkAssignmentSubmission,
-  validateBulkPreviewProjection,
-} from "../domain/validation";
-import {
-  assignmentTransportError,
   browserAssignmentTransport,
   type AssignmentTransport,
 } from "../transport/assignment-transport";
+import {
+  useAssignmentMinuteClock,
+  useAssignmentSubmissionSession,
+} from "./use-assignment-controller-runtime";
+import { useDebouncedAssignmentPreview } from "./use-debounced-assignment-preview";
 
 type ControllerState = AssignmentEditorState<
   BulkSeriesAssignmentDraft,
@@ -59,37 +68,16 @@ type ControllerAction = AssignmentEditorAction<
   BulkAssignmentCreationResponse
 >;
 
+type BulkAssignmentFeedback = {
+  message: string;
+  submissionIssue:
+    | ReturnType<typeof resolveBulkSubmissionIssues>[number]
+    | null;
+};
+
 export type BulkAssignmentSubmitOutcome =
   | { ok: true; result: BulkAssignmentCreationResponse }
   | { conflict: boolean; message: string; ok: false };
-
-function safePreviewFingerprint(draft: BulkSeriesAssignmentDraft) {
-  try {
-    return bulkPreviewFingerprint(draft);
-  } catch {
-    return null;
-  }
-}
-
-function previewAllowsSubmission(
-  draft: BulkSeriesAssignmentDraft,
-  preview: BulkAssignmentPreviewResponse,
-) {
-  return (
-    preview.blockedCount === 0 &&
-    preview.items.every((item) => !item.requiresExtraDateDecision) &&
-    (draft.commonPlan
-      ? preview.assignableCount > 0 &&
-        preview.assignmentCount > 0 &&
-        preview.assignmentCount === preview.items.reduce(
-          (count, item) => count + item.sessions.length,
-          0,
-        )
-      : preview.assignableCount === draft.studentIds.length &&
-        preview.assignmentCount ===
-        draft.studentIds.length * draft.range.sessionCount)
-  );
-}
 
 const systemClock = () => Date.now();
 
@@ -141,26 +129,54 @@ export function useBulkAssignmentController({
       >(draft),
   );
   const stateRef = useRef<ControllerState>(state);
-  const [message, setMessage] = useState("");
+  const [feedback, setFeedback] = useState<BulkAssignmentFeedback>({
+    message: "",
+    submissionIssue: null,
+  });
   const [previewRefreshVersion, setPreviewRefreshVersion] = useState(0);
-  const [nowMilliseconds, setNowMilliseconds] = useState(() => clock());
-  const idempotencyRef = useRef<IdempotencyReservation | null>(null);
-  const submittingRef = useRef(false);
+  const [handledRefreshVersion, setHandledRefreshVersion] = useState(0);
+  const nowMilliseconds = useAssignmentMinuteClock({
+    clock,
+    initializeFromClock: true,
+  });
+  const submissionSession = useAssignmentSubmissionSession();
   const timingMemoryRef = useRef({
     perQuestionSeconds: 20,
     totalSeconds: 300,
   });
-  const handledRefreshVersionRef = useRef(previewRefreshVersion);
+  const previewRecoveryFingerprintRef = useRef<string | null>(null);
+
+  const setMessage = useCallback((message: string) => {
+    setFeedback((current) => ({ ...current, message }));
+  }, []);
+  const setSubmissionIssue = useCallback(
+    (
+      submissionIssue:
+        | ReturnType<typeof resolveBulkSubmissionIssues>[number]
+        | null,
+    ) => {
+      setFeedback((current) => ({ ...current, submissionIssue }));
+    },
+    [],
+  );
+
+  const submissionFlow = useMemo(
+    () =>
+      createAssignmentSubmissionFlow({
+        busyMessage: "일괄 배정을 저장하고 있습니다.",
+        clock,
+        createIdempotencyKey: () => crypto.randomUUID(),
+        createRequestId: () => crypto.randomUUID(),
+        fallback: genericErrorMessage,
+        session: submissionSession,
+        transport,
+      }),
+    [clock, genericErrorMessage, submissionSession, transport],
+  );
 
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
-
-  useEffect(() => {
-    const updateNow = () => setNowMilliseconds(clock());
-    const intervalId = window.setInterval(updateNow, 60_000);
-    return () => window.clearInterval(intervalId);
-  }, [clock]);
 
   const apply = useCallback((action: ControllerAction) => {
     stateRef.current = reduceAssignmentEditorState(
@@ -177,9 +193,9 @@ export function useBulkAssignmentController({
         currentDraft,
         action,
       );
-      const currentFingerprint = safePreviewFingerprint(currentDraft);
-      const nextFingerprint = safePreviewFingerprint(nextDraft);
-      setMessage("");
+      const currentFingerprint = bulkPreviewIdentity(currentDraft);
+      const nextFingerprint = bulkPreviewIdentity(nextDraft);
+      setFeedback({ message: "", submissionIssue: null });
       apply({
         type: "draft/replaced",
         draft: nextDraft,
@@ -193,115 +209,114 @@ export function useBulkAssignmentController({
     [apply],
   );
 
-  useEffect(() => {
-    const draft = state.draft;
-    if (commonPlanRequired && !draft.commonPlan) return;
-    const issues = validateBulkPreviewProjection(draft);
-    if (issues.length > 0) return;
-    const request = buildBulkAssignmentPreviewRequest(draft);
-    const fingerprint = bulkPreviewFingerprint(draft);
-    const forceRefresh =
-      handledRefreshVersionRef.current !== previewRefreshVersion;
-    handledRefreshVersionRef.current = previewRefreshVersion;
-    const currentState = stateRef.current;
-    if (
-      !forceRefresh &&
-      currentState.preview.status === "ready" &&
-      currentState.preview.revision === state.revision &&
-      currentState.preview.fingerprint === fingerprint
-    ) {
-      return;
-    }
-
-    const abortController = new AbortController();
-    const requestId = crypto.randomUUID();
-    const timeoutId = window.setTimeout(() => {
-      apply({
-        type: "preview/requested",
-        revision: state.revision,
-        requestId,
-        fingerprint,
-      });
-      void transport({
-        body: request.body,
-        method: request.method,
-        signal: abortController.signal,
-        url: request.endpoint,
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(
-              assignmentTransportError(
-                response.data,
-                previewErrorMessage,
-              ),
-            );
-          }
-          let parsed: BulkAssignmentPreviewResponse;
-          try {
-            parsed = parseBulkAssignmentPreviewResponse(response.data);
-          } catch {
-            throw new Error(previewErrorMessage);
-          }
-          apply({
-            type: "preview/succeeded",
-            revision: state.revision,
-            requestId,
-            fingerprint,
-            value: parsed,
-          });
-        })
-        .catch((error: unknown) => {
-          if (abortController.signal.aborted) return;
-          apply({
-            type: "preview/failed",
-            revision: state.revision,
-            requestId,
-            fingerprint,
-            message:
-              error instanceof Error ? error.message : previewErrorMessage,
-          });
-        });
-    }, previewDelayMs);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-      abortController.abort();
-    };
-  }, [
-    apply,
-    commonPlanRequired,
-    previewDelayMs,
-    previewErrorMessage,
-    previewRefreshVersion,
+  const flowPolicy = useMemo(
+    () => ({ commonPlanRequired, commonPlanRequiredMessage }),
+    [commonPlanRequired, commonPlanRequiredMessage],
+  );
+  const previewIssues = resolveBulkPreviewIssues(state.draft, flowPolicy);
+  const currentSubmissionIssues = resolveBulkSubmissionIssues(
     state.draft,
-    state.revision,
-    transport,
-  ]);
-
-  const missingCommonPlan = commonPlanRequired && !state.draft.commonPlan;
-  const previewIssues = missingCommonPlan
-    ? [{
-        code: "required" as const,
-        path: "commonPlan",
-        message: commonPlanRequiredMessage,
-      }]
-    : validateBulkPreviewProjection(state.draft);
-  const submissionIssues = missingCommonPlan
-    ? previewIssues
-    : validateBulkAssignmentSubmission(state.draft, nowMilliseconds);
-  const currentPreviewFingerprint = safePreviewFingerprint(state.draft);
+    nowMilliseconds,
+    flowPolicy,
+  );
+  const submissionIssues = feedback.submissionIssue
+    ? [
+        feedback.submissionIssue,
+        ...currentSubmissionIssues.filter(
+          (issue) => issue.path !== feedback.submissionIssue?.path,
+        ),
+      ]
+    : currentSubmissionIssues;
+  const previewPreparation = useMemo(
+    () =>
+      previewIssues.length === 0
+        ? prepareBulkAssignmentPreview(state.draft, previewErrorMessage)
+        : null,
+    [previewErrorMessage, previewIssues.length, state.draft],
+  );
+  const currentPreviewFingerprint = previewPreparation?.fingerprint ?? null;
   const preview =
     state.preview.status === "ready" &&
     state.preview.revision === state.revision &&
     state.preview.fingerprint === currentPreviewFingerprint
       ? state.preview.value
       : null;
+  const forcePreviewRefresh = handledRefreshVersion !== previewRefreshVersion;
+  const previewAlreadyCurrent =
+    state.preview.status === "ready" &&
+    state.preview.revision === state.revision &&
+    state.preview.fingerprint === currentPreviewFingerprint;
+  const handlePreviewRequested = useCallback(
+    (identity: AssignmentRequestIdentity) => {
+      setHandledRefreshVersion(previewRefreshVersion);
+      apply({
+        type: "preview/requested",
+        revision: identity.revision,
+        requestId: identity.requestId,
+        fingerprint: identity.fingerprint,
+      });
+    },
+    [apply, previewRefreshVersion],
+  );
+  const handlePreviewSucceeded = useCallback(
+    (
+      value: BulkAssignmentPreviewResponse,
+      identity: AssignmentRequestIdentity,
+    ) => {
+      previewRecoveryFingerprintRef.current = null;
+      apply({
+        type: "preview/succeeded",
+        revision: identity.revision,
+        requestId: identity.requestId,
+        fingerprint: identity.fingerprint,
+        value,
+      });
+    },
+    [apply],
+  );
+  const handlePreviewFailed = useCallback(
+    (
+      error: AssignmentOperationError,
+      identity: AssignmentRequestIdentity,
+    ) => {
+      if (
+        error.recovery === "refresh_preview" &&
+        previewRecoveryFingerprintRef.current !== identity.fingerprint
+      ) {
+        previewRecoveryFingerprintRef.current = identity.fingerprint;
+        setPreviewRefreshVersion((version) => version + 1);
+        return;
+      }
+      apply({
+        type: "preview/failed",
+        revision: identity.revision,
+        requestId: identity.requestId,
+        fingerprint: identity.fingerprint,
+        message: error.message,
+      });
+    },
+    [apply],
+  );
+  useDebouncedAssignmentPreview({
+    delayMs: previewDelayMs,
+    enabled:
+      previewPreparation !== null &&
+      state.submission.status !== "submitting" &&
+      (forcePreviewRefresh || !previewAlreadyCurrent),
+    onFailed: handlePreviewFailed,
+    onRequested: handlePreviewRequested,
+    onSucceeded: handlePreviewSucceeded,
+    preparation: previewPreparation,
+    refreshVersion: previewRefreshVersion,
+    revision: state.revision,
+    transport,
+  });
+
   const previewLoading =
     previewIssues.length === 0 &&
     (state.preview.status === "idle" || state.preview.status === "loading");
   const displayedMessage =
-    message ||
+    feedback.message ||
     previewIssues[0]?.message ||
     (state.preview.status === "error" ? state.preview.message : "") ||
     (state.submission.status === "conflict" ||
@@ -313,33 +328,24 @@ export function useBulkAssignmentController({
     state.submission.status !== "succeeded" &&
     submissionIssues.length === 0 &&
     preview !== null &&
-    previewAllowsSubmission(state.draft, preview);
+    bulkPreviewAllowsSubmission(state.draft, preview);
 
   const submit = useCallback(async (): Promise<BulkAssignmentSubmitOutcome> => {
-    if (submittingRef.current) {
-      return { conflict: false, message: genericErrorMessage, ok: false };
-    }
     let current = stateRef.current;
-    if (commonPlanRequired && !current.draft.commonPlan) {
-      setMessage(commonPlanRequiredMessage);
-      return {
-        conflict: false,
-        message: commonPlanRequiredMessage,
-        ok: false,
-      };
-    }
     if (current.submission.status === "succeeded") {
       return { conflict: false, message: genericErrorMessage, ok: false };
     }
-    const issues = validateBulkAssignmentSubmission(
+    const issues = resolveBulkSubmissionIssues(
       current.draft,
-      clock(),
+      nowMilliseconds,
+      flowPolicy,
     );
-    if (issues.length > 0) {
+    if (issues.length > 0 && current.submission.status !== "submitting") {
       setMessage(issues[0].message);
+      setSubmissionIssue(issues[0]);
       return { conflict: false, message: issues[0].message, ok: false };
     }
-    const previewFingerprint = bulkPreviewFingerprint(current.draft);
+    const previewFingerprint = bulkPreviewIdentity(current.draft);
     const currentPreview =
       current.preview.status === "ready" &&
       current.preview.revision === current.revision &&
@@ -348,36 +354,50 @@ export function useBulkAssignmentController({
         : null;
     if (
       currentPreview === null ||
-      !previewAllowsSubmission(current.draft, currentPreview)
+      previewFingerprint === null ||
+      !bulkPreviewAllowsSubmission(current.draft, currentPreview)
     ) {
       setMessage(previewErrorMessage);
       setPreviewRefreshVersion((version) => version + 1);
       return { conflict: false, message: previewErrorMessage, ok: false };
+    }
+    const runSubmission = () =>
+      submissionFlow.run((now) =>
+        prepareBulkAssignmentSubmission(
+          {
+            draft: current.draft,
+            preview: currentPreview,
+            previewFallback: previewErrorMessage,
+            previewFingerprint,
+            submissionFallback: genericErrorMessage,
+          },
+          now,
+        )
+      );
+    if (current.submission.status === "submitting") {
+      const duplicate = await runSubmission();
+      return duplicate.ok
+        ? { ok: true, result: duplicate.value }
+        : {
+            conflict: duplicate.error.kind === "conflict",
+            message: duplicate.error.message,
+            ok: false,
+          };
     }
     if (current.submission.status !== "idle") {
       apply({ type: "submission/reset" });
       current = stateRef.current;
     }
 
-    const fingerprint = bulkSubmissionFingerprint(
-      current.draft,
-      currentPreview.planSignature,
-    );
-    const reservation = reserveIdempotencyKey(
-      idempotencyRef.current,
-      fingerprint,
-      () => crypto.randomUUID(),
-    );
-    idempotencyRef.current = reservation;
+    const fingerprint = bulkSubmissionIdentity(current.draft, currentPreview);
+    if (!fingerprint) {
+      setMessage(previewErrorMessage);
+      setPreviewRefreshVersion((version) => version + 1);
+      return { conflict: false, message: previewErrorMessage, ok: false };
+    }
     const requestId = crypto.randomUUID();
-    const request = buildBulkAssignmentRequest(
-      current.draft,
-      reservation.key,
-      clock(),
-      currentPreview.planSignature,
-    );
-    submittingRef.current = true;
     setMessage("");
+    setSubmissionIssue(null);
     apply({
       type: "submission/requested",
       revision: current.revision,
@@ -385,68 +405,64 @@ export function useBulkAssignmentController({
       fingerprint,
     });
 
-    try {
-      const response = await transport({
-        body: request.body,
-        method: request.method,
-        url: request.endpoint,
-      });
-      if (!response.ok) {
-        const responseMessage = assignmentTransportError(
-          response.data,
-          genericErrorMessage,
-        );
-        if (response.status === 409) {
-          apply({
-            type: "submission/conflicted",
-            revision: current.revision,
-            requestId,
-            message: responseMessage,
-          });
-          setPreviewRefreshVersion((version) => version + 1);
-          return { conflict: true, message: responseMessage, ok: false };
-        }
-        throw new Error(responseMessage);
-      }
-      let result: BulkAssignmentCreationResponse;
-      try {
-        result = parseBulkAssignmentCreationResponse(response.data);
-      } catch {
-        throw new Error(genericErrorMessage);
-      }
-      if (
-        result.assignments.length !== currentPreview.assignmentCount
-      ) {
-        throw new Error(genericErrorMessage);
-      }
+    const outcome = await runSubmission();
+    if (outcome.ok) {
       apply({
         type: "submission/succeeded",
         revision: current.revision,
         requestId,
-        result,
+        result: outcome.value,
       });
-      return { ok: true, result };
-    } catch (error: unknown) {
-      const failureMessage =
-        error instanceof Error ? error.message : genericErrorMessage;
+      return { ok: true, result: outcome.value };
+    }
+    if (outcome.error.kind === "busy") {
+      return {
+        conflict: false,
+        message: outcome.error.message,
+        ok: false,
+      };
+    }
+    setSubmissionIssue(
+      outcome.error.fieldPath
+        ? {
+            code: "invalid_order",
+            message: outcome.error.message,
+            path: outcome.error.fieldPath,
+          }
+        : null,
+    );
+    if (outcome.error.kind === "conflict") {
+      apply({
+        type: "submission/conflicted",
+        revision: current.revision,
+        requestId,
+        message: outcome.error.message,
+      });
+      if (outcome.error.recovery === "refresh_preview") {
+        setPreviewRefreshVersion((version) => version + 1);
+      }
+    } else {
       apply({
         type: "submission/failed",
         revision: current.revision,
         requestId,
-        message: failureMessage,
+        message: outcome.error.message,
       });
-      return { conflict: false, message: failureMessage, ok: false };
-    } finally {
-      submittingRef.current = false;
     }
+    return {
+      conflict: outcome.error.kind === "conflict",
+      message: outcome.error.message,
+      ok: false,
+    };
   }, [
     apply,
-    clock,
-    commonPlanRequired,
-    commonPlanRequiredMessage,
+    flowPolicy,
     genericErrorMessage,
+    nowMilliseconds,
     previewErrorMessage,
-    transport,
+    setMessage,
+    setSubmissionIssue,
+    submissionFlow,
   ]);
 
   const changeCommonPlan = useCallback(

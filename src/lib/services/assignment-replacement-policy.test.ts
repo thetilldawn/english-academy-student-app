@@ -141,4 +141,31 @@ describe("assignment replacement policy", () => {
       mapAssignmentReplacementDatabaseFailure({ message }).reason,
     ).toBe(reason);
   });
+
+  it("새 수정본의 지난 마감을 deadline 입력 오류로 보존한다", () => {
+    expect(
+      mapAssignmentReplacementDatabaseFailure({
+        code: "22023",
+        message: "assignment_replacement_deadline_elapsed",
+      }),
+    ).toMatchObject({
+      code: "assignment_deadline_elapsed",
+      fieldPath: "deadline",
+      reason: "invalid_selection",
+    });
+  });
+
+  it("멱등키 재사용과 원본 변경 충돌 코드를 구분한다", () => {
+    expect(
+      mapAssignmentReplacementDatabaseFailure({
+        message: "idempotency_key_reused",
+      }),
+    ).toMatchObject({ code: "idempotency_key_reused", reason: "conflict" });
+    expect(
+      mapAssignmentReplacementDatabaseFailure({ message: "snapshot_changed" }),
+    ).toMatchObject({
+      code: "assignment_source_changed",
+      reason: "conflict",
+    });
+  });
 });

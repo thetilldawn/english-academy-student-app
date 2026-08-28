@@ -138,6 +138,7 @@ describe("prepareStudentAssignmentReplacement legacy mixed assignment", () => {
       assignmentId,
       studentId,
       admin,
+      undefined,
     );
   });
 

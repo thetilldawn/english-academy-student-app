@@ -39,7 +39,10 @@ function replacementErrorResponse(error: AssignmentReplacementError) {
           : error.reason === "invalid_selection"
             ? 422
             : 409;
-  return jsonError(error.message, status);
+  return jsonError(error.message, status, {
+    code: error.code,
+    fieldPath: error.fieldPath,
+  });
 }
 
 async function parseAssignmentParams(
@@ -64,11 +67,13 @@ export async function GET(
   if (!parsedParams.success) {
     return jsonError("배정 정보를 확인해 주세요.", 400);
   }
+  const requestNowMilliseconds = Date.now();
   try {
     const draft = await getStudentAssignmentEditDraft(
       parsedParams.data.assignmentId,
       parsedParams.data.studentId,
       admin,
+      { nowMilliseconds: requestNowMilliseconds },
     );
     return Response.json(draft, {
       headers: { "Cache-Control": "private, no-store" },
@@ -107,6 +112,7 @@ export async function POST(
   if (!input || input.studentId !== parsedParams.data.studentId) {
     return jsonError("수정할 범위와 출제 조건을 확인해 주세요.", 400);
   }
+  const requestNowMilliseconds = Date.now();
   try {
     const capacity =
       await calculateStudentAssignmentReplacementCapacity(
@@ -114,6 +120,7 @@ export async function POST(
         parsedParams.data.studentId,
         input,
         admin,
+        { nowMilliseconds: requestNowMilliseconds },
       );
     return Response.json(capacity, {
       headers: { "Cache-Control": "private, no-store" },
@@ -149,12 +156,14 @@ export async function PUT(
   if (!input) {
     return jsonError("수정할 시험 범위와 설정을 확인해 주세요.", 400);
   }
+  const commandNowMilliseconds = Date.now();
   try {
     const result = await replaceStudentAssignment(
       parsedParams.data.assignmentId,
       parsedParams.data.studentId,
       input,
       admin,
+      { commandNowMilliseconds },
     );
     return Response.json(result, {
       headers: { "Cache-Control": "private, no-store" },
