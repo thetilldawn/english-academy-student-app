@@ -2,21 +2,18 @@
 
 import { useMemo, useState } from "react";
 
+import { Button } from "@/design-system/primitives/button/button";
 import {
   Field,
   FieldLabel,
   Input,
   Select,
 } from "@/design-system/primitives/form/field";
-import { adminHistoryText } from "@/content/ko/admin-history";
-import {
-  adminHistoryActivityGroups,
-  compareAdminHistoryRecency,
-  matchesAdminHistoryStatusFilter,
-  type AdminHistoryStatusFilter,
-} from "@/features/history/domain/learning-activity";
-import type { AssignmentHistorySummary } from "@/lib/admin/history";
 import { EmptyState } from "@/design-system/patterns/feedback/feedback";
+import { adminHistoryText } from "@/content/ko/admin-history";
+import type { AdminHistorySnapshot } from "@/features/history/contracts/admin-history-read-model";
+import { useAdminHistoryListController } from "@/features/history/controller/use-admin-history-list-controller";
+import type { AdminHistoryStatusFilter } from "@/features/history/domain/learning-activity";
 
 import {
   HistorySectionGroups,
@@ -36,83 +33,56 @@ const statusFilterTitles: Record<
   archived: adminHistoryText.filters.statusOptions.archived,
 };
 
-export function AdminHistoryList({
-  items,
-  showFilters = false,
-}: {
-  items: AssignmentHistorySummary[];
-  showFilters?: boolean;
-}) {
-  const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] =
-    useState<AdminHistoryStatusFilter>("all");
+const sectionTitles: Record<string, string> = {
+  open: adminHistoryText.sections.open,
+  needs_attention: adminHistoryText.sections.needsAttention,
+  completed: adminHistoryText.sections.completed,
+  archived: adminHistoryText.sections.archived,
+};
 
-  const sections = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase("ko-KR");
-    const filteredItems = items.filter((item) => {
-      const matchesStatus = matchesAdminHistoryStatusFilter(
-        item,
-        statusFilter,
-      );
-      const matchesQuery =
-        normalizedQuery.length === 0 ||
-        [
-          item.studentName,
-          item.schoolName,
-          item.gradeLabel,
-          item.assignmentTitle,
-          item.datasetTitle,
-          ...item.unitLabels,
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLocaleLowerCase("ko-KR")
-          .includes(normalizedQuery);
-      return matchesStatus && matchesQuery;
-    });
-    const groups = adminHistoryActivityGroups(filteredItems);
-    if (statusFilter === "all" && normalizedQuery && filteredItems.length === 0) {
-      return [];
-    }
-    if (statusFilter !== "all") {
-      return [
-        {
-          defaultOpen: true,
-          id: `filter-${statusFilter}`,
-          title: statusFilterTitles[statusFilter],
-          items: [
-            ...groups.open,
-            ...groups.needsAttention,
-            ...groups.completed,
-            ...groups.archived,
-          ].toSorted(compareAdminHistoryRecency),
-        },
-      ].filter((section) => section.items.length > 0);
-    }
-    const groupedSections: HistorySection[] = [
-      {
-        id: "open",
-        title: adminHistoryText.sections.open,
-        items: groups.open,
-      },
-      {
-        id: "needs-attention",
-        title: adminHistoryText.sections.needsAttention,
-        items: groups.needsAttention,
-      },
-      {
-        id: "completed",
-        title: adminHistoryText.sections.completed,
-        items: groups.completed,
-      },
-      {
-        id: "archived",
-        title: adminHistoryText.sections.archived,
-        items: groups.archived,
-      },
-    ];
-    return groupedSections;
-  }, [items, query, statusFilter]);
+function snapshotSections(snapshot: AdminHistorySnapshot): HistorySection[] {
+  if (snapshot.statusFilter !== "all") {
+    const statusFilter = snapshot.statusFilter;
+    return snapshot.sections.map((section) => ({
+      ...section,
+      defaultOpen: true,
+      title: statusFilterTitles[statusFilter],
+    }));
+  }
+  return snapshot.sections.map((section) => ({
+    ...section,
+    title: sectionTitles[section.groupKey] ?? section.groupKey,
+  }));
+}
+
+type AdminHistoryListProps = {
+  initialSnapshot: AdminHistorySnapshot;
+  showFilters?: boolean;
+};
+
+function AdminHistoryListContent({
+  initialSnapshot,
+  query,
+  setQuery,
+  setStatusFilter,
+  showFilters = false,
+  statusFilter,
+}: AdminHistoryListProps & {
+  query: string;
+  setQuery: (value: string) => void;
+  setStatusFilter: (value: AdminHistoryStatusFilter) => void;
+  statusFilter: AdminHistoryStatusFilter;
+}) {
+  const { error, loading, retry, snapshot } =
+    useAdminHistoryListController(initialSnapshot, { query, statusFilter });
+
+  const sections = useMemo(() => snapshotSections(snapshot), [snapshot]);
+  const itemCount = sections.reduce(
+    (total, section) => total + section.totalCount,
+    0,
+  );
+  const hasActiveConditions =
+    snapshot.query.length > 0 || snapshot.statusFilter !== "all";
 
   return (
     <>
@@ -123,6 +93,7 @@ export function AdminHistoryList({
               {adminHistoryText.filters.searchLabel}
             </FieldLabel>
             <Input
+              maxLength={80}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={adminHistoryText.filters.searchPlaceholder}
               type="search"
@@ -165,19 +136,54 @@ export function AdminHistoryList({
         </div>
       ) : null}
 
-      {sections.length === 0 ? (
+      <p
+        aria-live="polite"
+        className={error ? styles.requestError : styles.requestState}
+        role={error ? "alert" : undefined}
+      >
+        {loading ? "계산 중..." : error || "\u00a0"}
+      </p>
+      {error ? (
+        <Button onClick={retry} type="button" variant="secondary">
+          다시 시도
+        </Button>
+      ) : null}
+
+      {itemCount === 0 ? (
         <EmptyState>
-          {items.length === 0
-            ? adminHistoryText.emptyState.noAssignments
-            : adminHistoryText.emptyState.noMatches}
+          {hasActiveConditions
+            ? adminHistoryText.emptyState.noMatches
+            : adminHistoryText.emptyState.noAssignments}
         </EmptyState>
       ) : (
         <HistorySectionGroups
-          key={`${query}:${statusFilter}`}
           countSuffix={adminHistoryText.sections.countSuffix}
+          loadMoreContext={{
+            currentOnly: false,
+            query: snapshot.query,
+            statusFilter: snapshot.statusFilter,
+          }}
+          revision={snapshot.snapshotAt}
           sections={sections}
         />
       )}
     </>
+  );
+}
+
+export function AdminHistoryList(props: AdminHistoryListProps) {
+  const [query, setQuery] = useState(props.initialSnapshot.query);
+  const [statusFilter, setStatusFilter] =
+    useState<AdminHistoryStatusFilter>(props.initialSnapshot.statusFilter);
+
+  return (
+    <AdminHistoryListContent
+      {...props}
+      key={props.initialSnapshot.snapshotAt}
+      query={query}
+      setQuery={setQuery}
+      setStatusFilter={setStatusFilter}
+      statusFilter={statusFilter}
+    />
   );
 }

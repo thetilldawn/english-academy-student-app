@@ -85,7 +85,10 @@ export async function getAdminAttemptDetail(
     getAttemptQuestionResults(attemptId),
   ]);
 
-  if (error || !data) {
+  if (error) {
+    throw new Error("응시 상세를 불러오지 못했습니다.");
+  }
+  if (!data) {
     return null;
   }
 

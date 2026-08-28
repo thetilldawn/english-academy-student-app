@@ -1,4 +1,4 @@
-import type { AssignmentHistorySummary } from "@/lib/admin/history";
+import type { AdminHistoryListItem } from "@/features/history/contracts/admin-history-read-model";
 
 import { HistoryActivityRow } from "./history-activity-row";
 import styles from "./history-list.module.css";
@@ -9,7 +9,7 @@ export function HistoryRows({
   showStudent = true,
 }: {
   compact?: boolean;
-  items: readonly AssignmentHistorySummary[];
+  items: readonly AdminHistoryListItem[];
   showStudent?: boolean;
 }) {
   return (

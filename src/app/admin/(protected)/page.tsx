@@ -4,34 +4,28 @@ import {
   OverviewActionGroups,
 } from "@/features/history/ui/overview-action-groups";
 import { adminOverviewText } from "@/content/ko/admin-overview";
-import { overviewActivityGroups } from "@/features/history/domain/learning-activity";
-import { listAssignmentHistoryBundle } from "@/lib/services/admin-history-read-service";
+import { listAdminHistoryInitial } from "@/features/history/server/queries/admin-history-list-query";
 
 export const metadata: Metadata = {
   title: adminOverviewText.page.title,
 };
 
 export default async function AdminDashboardPage() {
-  const historyBundle = await listAssignmentHistoryBundle();
-  const currentHistory = historyBundle.currentHistory;
-  const groups = overviewActivityGroups(currentHistory);
-  const sections = [
-    {
-      id: "open",
-      title: adminOverviewText.sections.open,
-      items: groups.open,
-    },
-    {
-      id: "needs-attention",
-      title: adminOverviewText.sections.needsAttention,
-      items: groups.needsAttention,
-    },
-    {
-      id: "completed",
-      title: adminOverviewText.sections.completed,
-      items: groups.completed,
-    },
-  ];
+  const snapshot = await listAdminHistoryInitial({ currentOnly: true });
+  const titleByGroup = {
+    open: adminOverviewText.sections.open,
+    needs_attention: adminOverviewText.sections.needsAttention,
+    completed: adminOverviewText.sections.completed,
+  } as const;
+  const sections = snapshot.sections.map((section) => ({
+    ...section,
+    title: titleByGroup[section.groupKey as keyof typeof titleByGroup],
+  }));
 
-  return <OverviewActionGroups sections={sections} />;
+  return (
+    <OverviewActionGroups
+      revision={snapshot.snapshotAt}
+      sections={sections}
+    />
+  );
 }

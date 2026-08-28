@@ -8,6 +8,16 @@ export function jsonError(
   return Response.json({ error: message, ...details }, { status });
 }
 
+export function privateJsonError(
+  message: string,
+  status: number,
+  details: { code?: string; fieldPath?: string } = {},
+) {
+  const response = jsonError(message, status, details);
+  response.headers.set("Cache-Control", "private, no-store");
+  return response;
+}
+
 export async function parseJson<T extends z.ZodType>(
   request: Request,
   schema: T,

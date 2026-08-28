@@ -13,6 +13,12 @@
   width: 100%;
 }
 
+.error {
+  margin: 0;
+  color: var(--status-danger-bg);
+  font-size: var(--font-size-sm);
+}
+
 @media (min-width: 768px) {
   .groups {
     gap: 40px;

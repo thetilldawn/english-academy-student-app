@@ -4,8 +4,8 @@ import {
 } from "@/design-system/patterns/activity-row/activity-row";
 import {
   assignmentDisplayTitle,
-  type AssignmentHistorySummary,
 } from "@/lib/admin/history";
+import type { AdminHistoryListItem } from "@/features/history/contracts/admin-history-read-model";
 import { historyDetailHref } from "@/lib/admin/history-route";
 
 import {
@@ -24,7 +24,7 @@ export function HistoryActivityRow({
   showScore = "always",
 }: {
   compact?: boolean;
-  item: AssignmentHistorySummary;
+  item: AdminHistoryListItem;
   showStudent?: boolean;
   showScore?: "always" | "meaningful";
 }) {

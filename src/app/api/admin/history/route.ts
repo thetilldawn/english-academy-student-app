@@ -1,10 +1,17 @@
 import { z } from "zod";
 
+import { adminHistoryStatusFilters } from "@/features/history/contracts/admin-history-read-model";
+import { AdminHistoryCursorError } from "@/features/history/server/admin-history-cursor";
+import { AdminHistoryReadError } from "@/features/history/server/queries/admin-history-read-error";
+import {
+  listAdminHistoryInitial,
+  listAdminHistoryNextPage,
+} from "@/features/history/server/queries/admin-history-list-query";
 import { getAdminContext } from "@/lib/auth/admin";
 import {
   isSameOriginRequest,
-  jsonError,
   parseJson,
+  privateJsonError,
 } from "@/lib/http";
 import {
   AdminDeletionError,
@@ -19,24 +26,79 @@ const historyDeletionSchema = z
   })
   .strict();
 
-export async function DELETE(request: Request) {
+const historyReadBaseSchema = z.object({
+  currentOnly: z.boolean(),
+  query: z.string().max(80),
+  statusFilter: z.enum(adminHistoryStatusFilters),
+});
+
+const historyReadSchema = z.discriminatedUnion("mode", [
+  historyReadBaseSchema.extend({
+    mode: z.literal("initial"),
+  }).strict(),
+  historyReadBaseSchema.extend({
+    cursor: z.string().min(1).max(2048),
+    groupKey: z.string().min(1).max(40),
+    mode: z.literal("page"),
+  }).strict(),
+]);
+
+const privateNoStoreHeaders = {
+  "Cache-Control": "private, no-store",
+} as const;
+
+export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
-    return jsonError("허용되지 않은 요청입니다.", 403);
+    return privateJsonError("허용되지 않은 요청입니다.", 403);
   }
   const admin = await getAdminContext();
   if (!admin) {
-    return jsonError("관리자 로그인이 필요합니다.", 401);
+    return privateJsonError("관리자 로그인이 필요합니다.", 401);
+  }
+  const input = await parseJson(request, historyReadSchema);
+  if (!input) {
+    return privateJsonError("내역 검색 조건을 확인해 주세요.", 400);
+  }
+
+  try {
+    if (input.mode === "initial") {
+      const snapshot = await listAdminHistoryInitial(input, admin);
+      return Response.json({ snapshot }, { headers: privateNoStoreHeaders });
+    }
+    const page = await listAdminHistoryNextPage(input, admin);
+    return Response.json({ page }, { headers: privateNoStoreHeaders });
+  } catch (error) {
+    if (error instanceof AdminHistoryCursorError) {
+      return privateJsonError(error.message, 400);
+    }
+    if (error instanceof AdminHistoryReadError) {
+      return privateJsonError(error.message, 503);
+    }
+    return privateJsonError(
+      "시험 내역을 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.",
+      503,
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  if (!isSameOriginRequest(request)) {
+    return privateJsonError("허용되지 않은 요청입니다.", 403);
+  }
+  const admin = await getAdminContext();
+  if (!admin) {
+    return privateJsonError("관리자 로그인이 필요합니다.", 401);
   }
   const input = await parseJson(request, historyDeletionSchema);
   if (!input) {
-    return jsonError("삭제할 내역을 확인해 주세요.", 400);
+    return privateJsonError("삭제할 내역을 확인해 주세요.", 400);
   }
 
   try {
     return Response.json(
       await hideAdminHistoryEntry(input, admin),
       {
-        headers: { "Cache-Control": "private, no-store" },
+        headers: privateNoStoreHeaders,
       },
     );
   } catch (error) {
@@ -49,9 +111,9 @@ export async function DELETE(request: Request) {
             : error.reason === "conflict"
               ? 409
             : 503;
-      return jsonError(error.message, status);
+      return privateJsonError(error.message, status);
     }
-    return jsonError(
+    return privateJsonError(
       "내역을 삭제하지 못했습니다. 잠시 뒤 다시 시도해 주세요.",
       503,
     );

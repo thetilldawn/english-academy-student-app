@@ -1,25 +1,29 @@
 import { adminOverviewText } from "@/content/ko/admin-overview";
-import type { AssignmentHistorySummary } from "@/lib/admin/history";
 import { EmptyState } from "@/design-system/patterns/feedback/feedback";
 
-import { HistorySectionGroups } from "./history-section-groups";
+import {
+  HistorySectionGroups,
+  type HistorySection,
+} from "./history-section-groups";
 import styles from "./overview-action-groups.module.css";
 
-type OverviewSection = {
-  id: string;
-  title: string;
-  items: AssignmentHistorySummary[];
-};
-
 export function OverviewActionGroups({
+  revision,
   sections,
 }: {
-  sections: OverviewSection[];
+  revision: string;
+  sections: HistorySection[];
 }) {
   return (
     <HistorySectionGroups
       compact
       countSuffix={adminOverviewText.countSuffix}
+      loadMoreContext={{
+        currentOnly: true,
+        query: "",
+        statusFilter: "all",
+      }}
+      revision={revision}
       sections={sections}
     />
   );

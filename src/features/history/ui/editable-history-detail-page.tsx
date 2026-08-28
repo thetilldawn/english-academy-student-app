@@ -16,7 +16,7 @@ import {
   HistoryDetailPageHeader,
   HistoryDetailPageHeaderFrame,
 } from "./history-detail-header";
-import { useEditableHistoryAssignment } from "./use-editable-history-assignment";
+import { useEditableHistoryAssignment } from "@/features/history/controller/use-editable-history-assignment";
 
 export function EditableHistoryDetailPage({
   detail,

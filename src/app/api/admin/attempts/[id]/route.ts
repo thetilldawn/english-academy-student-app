@@ -1,8 +1,12 @@
 import { z } from "zod";
 
 import { getAdminContext } from "@/lib/auth/admin";
-import { jsonError } from "@/lib/http";
+import { privateJsonError } from "@/lib/http";
 import { getAdminAttemptDetail } from "@/lib/services/admin-attempt-read-service";
+
+const privateNoStoreHeaders = {
+  "Cache-Control": "private, no-store",
+} as const;
 
 export async function GET(
   _request: Request,
@@ -10,18 +14,29 @@ export async function GET(
 ) {
   const admin = await getAdminContext();
   if (!admin) {
-    return jsonError("관리자 로그인이 필요합니다.", 401);
+    return privateJsonError("관리자 로그인이 필요합니다.", 401);
   }
 
   const { id } = await context.params;
   if (!z.uuid().safeParse(id).success) {
-    return jsonError("응시 정보를 확인해주세요.", 400);
+    return privateJsonError("응시 정보를 확인해주세요.", 400);
   }
 
-  const result = await getAdminAttemptDetail(id, admin);
+  let result;
+  try {
+    result = await getAdminAttemptDetail(id, admin);
+  } catch {
+    return privateJsonError(
+      "응시 상세를 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.",
+      503,
+    );
+  }
   if (!result) {
-    return jsonError("응시 내역을 찾지 못했습니다.", 404);
+    return privateJsonError("응시 내역을 찾지 못했습니다.", 404);
   }
 
-  return Response.json({ result });
+  return Response.json(
+    { result },
+    { headers: privateNoStoreHeaders },
+  );
 }

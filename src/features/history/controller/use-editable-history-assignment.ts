@@ -6,12 +6,11 @@ import { useRouter } from "next/navigation";
 import type { SingleAssignmentResult } from "@/features/assignments/controller/use-assignment-controller";
 import { assignmentSubmitBlockerLabel } from "@/features/assignments/presentation/assignment-submit-blocker";
 import type { SingleAssignmentSubmitPresentation } from "@/features/assignments/ui/single-assignment-editor.types";
+import type { AdminHistoryDetail } from "@/features/history/model";
+import { buildHistoryAssignmentEditorModel } from "@/features/history/ui/history-assignment-editor-model";
 import { historyDetailHref } from "@/lib/admin/history-route";
 import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
 import { useUnsavedChangesWarning } from "@/lib/ui/use-unsaved-changes-warning";
-import type { AdminHistoryDetail } from "../model";
-
-import { buildHistoryAssignmentEditorModel } from "./history-assignment-editor-model";
 
 const initialSubmitPresentation = {
   blockedReason: assignmentSubmitBlockerLabel({ code: "loading" }),

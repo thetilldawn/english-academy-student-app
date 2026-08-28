@@ -58,7 +58,7 @@ const ROUTER_REFRESH_ALLOWLIST = new Map<
     ["src/features/history/ui/editable-history-detail-dialog.tsx", { maxCalls: 1, removeIn: "충돌 복구" }],
     ["src/features/history/ui/editable-history-detail-page.tsx", { maxCalls: 1, removeIn: "충돌 복구" }],
     ["src/features/history/ui/history-detail-actions.tsx", { maxCalls: 1, removeIn: "R5" }],
-    ["src/features/history/ui/use-editable-history-assignment.ts", { maxCalls: 1, removeIn: "R5" }],
+    ["src/features/history/controller/use-editable-history-assignment.ts", { maxCalls: 1, removeIn: "R5" }],
     ["src/features/student-dashboard/ui/assignment-boundary-refresh.tsx", { maxCalls: 1, removeIn: "유지" }],
     ["src/features/student-dashboard/ui/deadline-countdown.tsx", { maxCalls: 1, removeIn: "유지" }],
     ["src/features/students/controller/use-student-detail-controller.ts", { maxCalls: 1, removeIn: "R5" }],

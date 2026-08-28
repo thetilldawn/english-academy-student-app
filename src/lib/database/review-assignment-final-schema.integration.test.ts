@@ -7651,3 +7651,767 @@ describe.sequential("assignment retry rules", () => {
     }
   }, 60_000);
 });
+
+describe.sequential("admin history read model", () => {
+  it("keeps 0/1/10/11/21 boundaries and a stable keyset snapshot", async () => {
+    const database = await createFinalSchemaDatabase();
+    const assignmentIds = Array.from(
+      { length: 21 },
+      (_, index) =>
+        `10000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
+    );
+    const assignmentValues = assignmentIds.map((assignmentId, index) => {
+      const markers = ["R3 twentyone"];
+      if (index < 11) markers.push("R3 eleven");
+      if (index < 10) markers.push("R3 ten");
+      if (index === 0) markers.push("R3 one");
+      return `(
+        '${assignmentId}',
+        '${markers.join(" ")}',
+        '${ids.dataset}',
+        1,
+        1,
+        1,
+        100,
+        60,
+        80,
+        'active',
+        '2026-08-01T00:00:00Z',
+        '${ids.admin}',
+        'source_rows',
+        'fixed',
+        null
+      )`;
+    }).join(",");
+    const recipientValues = assignmentIds.map((assignmentId) => `(
+      '${assignmentId}',
+      '${ids.student}',
+      '${ids.admin}',
+      '2026-08-28T00:00:00Z'
+    )`).join(",");
+    const unitValues = assignmentIds.map((assignmentId) => `(
+      '${assignmentId}',
+      '${ids.dataset}',
+      '${ids.units[0]}',
+      1,
+      true
+    )`).join(",");
+
+    type InitialRow = {
+      group_key: string;
+      items: Array<{
+        effectiveAt: string | Date;
+        entryKey: string;
+        item: { assignmentTitle: string };
+      }>;
+      snapshot_at: string | Date;
+      total_count: number | bigint;
+    };
+
+    try {
+      await seedReviewAssignmentScenario(database);
+      await database.exec(`
+        insert into public.assignments (
+          id,
+          title,
+          dataset_id,
+          range_start,
+          range_end,
+          question_count,
+          english_to_korean_ratio,
+          time_limit_seconds,
+          passing_score,
+          status,
+          available_from,
+          created_by,
+          range_basis,
+          question_order_mode,
+          question_bank_version
+        )
+        values ${assignmentValues};
+
+        insert into public.assignment_units (
+          assignment_id,
+          dataset_id,
+          unit_id,
+          position,
+          is_primary
+        )
+        values ${unitValues};
+
+        insert into public.assignment_students (
+          assignment_id,
+          student_id,
+          assigned_by,
+          assigned_at
+        )
+        values ${recipientValues};
+
+        set role authenticated;
+      `);
+
+      async function readInitial(query: string) {
+        return database.query<InitialRow>(`
+          select *
+          from public.get_admin_history_initial_v1(
+            $1,
+            'all',
+            false,
+            null,
+            11
+          )
+        `, [query]);
+      }
+
+      const none = await readInitial("R3 none");
+      const one = await readInitial("R3 one");
+      const ten = await readInitial("R3 ten");
+      const eleven = await readInitial("R3 eleven");
+      const twentyOne = await readInitial("R3 twentyone");
+      const studentNameResults = await readInitial("Test student");
+
+      const openRow = (rows: InitialRow[]) =>
+        rows.find((row) => row.group_key === "open")!;
+      expect(Number(openRow(none.rows).total_count)).toBe(0);
+      expect(openRow(none.rows).items).toHaveLength(0);
+      expect(Number(openRow(one.rows).total_count)).toBe(1);
+      expect(openRow(one.rows).items).toHaveLength(1);
+      expect(Number(openRow(ten.rows).total_count)).toBe(10);
+      expect(openRow(ten.rows).items).toHaveLength(10);
+      expect(Number(openRow(eleven.rows).total_count)).toBe(11);
+      expect(openRow(eleven.rows).items).toHaveLength(11);
+
+      const firstPage = openRow(twentyOne.rows);
+      expect(Number(firstPage.total_count)).toBe(21);
+      expect(firstPage.items).toHaveLength(11);
+      expect(new Set(twentyOne.rows.map(
+        (row) => new Date(row.snapshot_at).toISOString(),
+      )).size).toBe(1);
+      const stableSnapshotAt = new Date(firstPage.snapshot_at).toISOString();
+      const firstCursor = firstPage.items[9]!;
+      const firstCursorEffectiveAt = new Date(
+        firstCursor.effectiveAt,
+      ).toISOString();
+
+      await database.exec(`
+        reset role;
+        insert into public.assignments (
+          id,
+          title,
+          dataset_id,
+          range_start,
+          range_end,
+          question_count,
+          english_to_korean_ratio,
+          time_limit_seconds,
+          passing_score,
+          status,
+          available_from,
+          created_by,
+          range_basis,
+          question_order_mode,
+          question_bank_version
+        ) values (
+          '10000000-0000-4000-8000-000000000099',
+          'R3 twentyone inserted after snapshot',
+          '${ids.dataset}',
+          1,
+          1,
+          1,
+          100,
+          60,
+          80,
+          'active',
+          '2026-08-01T00:00:00Z',
+          '${ids.admin}',
+          'source_rows',
+          'fixed',
+          null
+        );
+        insert into public.assignment_units (
+          assignment_id,
+          dataset_id,
+          unit_id,
+          position,
+          is_primary
+        ) values (
+          '10000000-0000-4000-8000-000000000099',
+          '${ids.dataset}',
+          '${ids.units[0]}',
+          1,
+          true
+        );
+        insert into public.assignment_students (
+          assignment_id,
+          student_id,
+          assigned_by,
+          assigned_at
+        ) values (
+          '10000000-0000-4000-8000-000000000099',
+          '${ids.student}',
+          '${ids.admin}',
+          '${stableSnapshotAt}'::timestamptz + interval '1 second'
+        );
+        set role authenticated;
+      `);
+
+      const secondPage = await database.query<{
+        cursor_effective_at: string | Date;
+        cursor_entry_key: string;
+      }>(`
+        select *
+        from public.list_admin_history_page_v1(
+          'R3 twentyone',
+          'all',
+          false,
+          'open',
+          '${stableSnapshotAt}',
+          '${firstCursorEffectiveAt}',
+          '${firstCursor.entryKey}',
+          11
+        )
+      `);
+      expect(secondPage.rows).toHaveLength(11);
+      const secondCursor = secondPage.rows[9]!;
+      const secondCursorEffectiveAt = new Date(
+        secondCursor.cursor_effective_at,
+      ).toISOString();
+      const finalPage = await database.query<{
+        cursor_entry_key: string;
+      }>(`
+        select *
+        from public.list_admin_history_page_v1(
+          'R3 twentyone',
+          'all',
+          false,
+          'open',
+          '${stableSnapshotAt}',
+          '${secondCursorEffectiveAt}',
+          '${secondCursor.cursor_entry_key}',
+          11
+        )
+      `);
+      expect(finalPage.rows).toHaveLength(1);
+
+      const visibleKeys = [
+        ...firstPage.items.slice(0, 10).map((item) => item.entryKey),
+        ...secondPage.rows.slice(0, 10).map((item) => item.cursor_entry_key),
+        ...finalPage.rows.map((item) => item.cursor_entry_key),
+      ];
+      expect(new Set(visibleKeys).size).toBe(21);
+      expect(visibleKeys).not.toContain(
+        "assignment.10000000-0000-4000-8000-000000000099." + ids.student,
+      );
+
+      const studentNamePage = openRow(studentNameResults.rows);
+      const studentNameCursor = studentNamePage.items[9]!;
+      await database.exec(`
+        reset role;
+        update public.students
+        set display_name = 'Renamed student'
+        where id = '${ids.student}';
+        set role authenticated;
+      `);
+      const changedSearchPage = await database.query(`
+        select *
+        from public.list_admin_history_page_v1(
+          'Test student',
+          'all',
+          false,
+          'open',
+          '${new Date(studentNamePage.snapshot_at).toISOString()}',
+          '${new Date(studentNameCursor.effectiveAt).toISOString()}',
+          '${studentNameCursor.entryKey}',
+          11
+        )
+      `);
+      expect(changedSearchPage.rows).toHaveLength(0);
+      await database.exec(`
+        reset role;
+        update public.students
+        set display_name = 'Test student'
+        where id = '${ids.student}';
+        set role authenticated;
+      `);
+
+      const detail = await database.query<{ title: string }>(`
+        select public.get_admin_history_detail_v1(
+          null,
+          '${assignmentIds[0]}',
+          '${ids.student}'
+        ) ->> 'assignmentTitle' as title
+      `);
+      expect(detail.rows[0]?.title).toContain("R3 one");
+
+      await database.exec(`
+        reset role;
+        insert into public.assignments (
+          id,
+          title,
+          dataset_id,
+          range_start,
+          range_end,
+          question_count,
+          english_to_korean_ratio,
+          time_limit_seconds,
+          passing_score,
+          status,
+          available_from,
+          created_by,
+          range_basis,
+          question_order_mode,
+          question_bank_version
+        ) values
+          (
+            '10000000-0000-4000-8000-000000000101',
+            'R3 phase initial boundary',
+            '${ids.dataset}', 1, 1, 1, 100, 60, 80, 'active',
+            '2026-08-20T00:00:00Z', '${ids.admin}', 'source_rows', 'fixed', null
+          ),
+          (
+            '10000000-0000-4000-8000-000000000102',
+            'R3 phase retry boundary',
+            '${ids.dataset}', 1, 1, 1, 100, 60, 80, 'active',
+            '2026-08-20T00:00:00Z', '${ids.admin}', 'source_rows', 'fixed', null
+          );
+        insert into public.assignment_units (
+          assignment_id,
+          dataset_id,
+          unit_id,
+          position,
+          is_primary
+        ) values
+          (
+            '10000000-0000-4000-8000-000000000101',
+            '${ids.dataset}', '${ids.units[0]}', 1, true
+          ),
+          (
+            '10000000-0000-4000-8000-000000000102',
+            '${ids.dataset}', '${ids.units[0]}', 1, true
+          );
+        insert into public.assignment_students (
+          assignment_id,
+          student_id,
+          assigned_by,
+          assigned_at
+        ) values
+          (
+            '10000000-0000-4000-8000-000000000101',
+            '${ids.student}', '${ids.admin}', '2026-08-20T00:00:00Z'
+          ),
+          (
+            '10000000-0000-4000-8000-000000000102',
+            '${ids.student}', '${ids.admin}', '2026-08-20T00:00:00Z'
+          );
+        insert into public.quiz_attempts (
+          id,
+          student_id,
+          assignment_id,
+          attempt_number,
+          status,
+          phase,
+          started_at,
+          deadline_at,
+          initial_completed_at,
+          retry_started_at,
+          question_count_snapshot,
+          time_limit_seconds_snapshot,
+          passing_score_snapshot,
+          passing_basis_snapshot,
+          initial_correct_count,
+          retry_correct_count,
+          unresolved_wrong_count,
+          initial_score,
+          elapsed_seconds
+        ) values
+          (
+            '20000000-0000-4000-8000-000000000101',
+            '${ids.student}',
+            '10000000-0000-4000-8000-000000000101',
+            1, 'in_progress', 'review',
+            '2026-08-21T00:00:00Z', '2026-09-01T00:00:00Z',
+            '2026-08-23T00:00:00Z', null,
+            1, 60, 80, 'initial', 0, 0, 1, 0, 10
+          ),
+          (
+            '20000000-0000-4000-8000-000000000102',
+            '${ids.student}',
+            '10000000-0000-4000-8000-000000000102',
+            1, 'in_progress', 'retry',
+            '2026-08-20T00:00:00Z', '2026-09-01T00:00:00Z',
+            '2026-08-21T00:00:00Z', '2026-08-23T00:00:00Z',
+            1, 60, 80, 'initial', 0, 0, 1, 0, 10
+          );
+
+        insert into public.assignments (
+          id,
+          title,
+          dataset_id,
+          range_start,
+          range_end,
+          question_count,
+          english_to_korean_ratio,
+          time_limit_seconds,
+          passing_score,
+          status,
+          available_from,
+          created_by,
+          range_basis,
+          question_order_mode,
+          question_bank_version
+        ) values (
+          '10000000-0000-4000-8000-000000000103',
+          'R3 expired snapshot boundary',
+          '${ids.dataset}', 1, 1, 1, 100, 60, 80, 'active',
+          '2026-08-20T00:00:00Z', '${ids.admin}', 'source_rows', 'fixed', null
+        );
+        insert into public.assignment_units (
+          assignment_id,
+          dataset_id,
+          unit_id,
+          position,
+          is_primary
+        ) values (
+          '10000000-0000-4000-8000-000000000103',
+          '${ids.dataset}', '${ids.units[0]}', 1, true
+        );
+        insert into public.assignment_students (
+          assignment_id,
+          student_id,
+          assigned_by,
+          assigned_at
+        ) values (
+          '10000000-0000-4000-8000-000000000103',
+          '${ids.student}', '${ids.admin}', '2026-08-20T00:00:00Z'
+        );
+        insert into public.quiz_attempts (
+          id,
+          student_id,
+          assignment_id,
+          attempt_number,
+          status,
+          phase,
+          started_at,
+          deadline_at,
+          completed_at,
+          question_count_snapshot,
+          time_limit_seconds_snapshot,
+          passing_score_snapshot,
+          passing_basis_snapshot,
+          initial_correct_count,
+          retry_correct_count,
+          unresolved_wrong_count,
+          initial_score,
+          final_score,
+          passed,
+          elapsed_seconds
+        ) values (
+          '20000000-0000-4000-8000-000000000103',
+          '${ids.student}',
+          '10000000-0000-4000-8000-000000000103',
+          1, 'expired', 'completed',
+          '2026-08-20T00:00:00Z', '2026-08-22T00:00:00Z',
+          '2026-08-24T00:00:00Z',
+          1, 60, 80, 'initial', 0, 0, 1, 0, 0, false, 10
+        );
+
+        insert into public.assignments (
+          id,
+          title,
+          dataset_id,
+          range_start,
+          range_end,
+          question_count,
+          english_to_korean_ratio,
+          time_limit_seconds,
+          passing_score,
+          status,
+          available_from,
+          created_by,
+          range_basis,
+          question_order_mode,
+          question_bank_version
+        ) values (
+          '10000000-0000-4000-8000-000000000104',
+          'R3 hidden snapshot boundary',
+          '${ids.dataset}', 1, 1, 1, 100, 60, 80, 'active',
+          '2026-08-20T00:00:00Z', '${ids.admin}', 'source_rows', 'fixed', null
+        );
+        insert into public.assignment_units (
+          assignment_id,
+          dataset_id,
+          unit_id,
+          position,
+          is_primary
+        ) values (
+          '10000000-0000-4000-8000-000000000104',
+          '${ids.dataset}', '${ids.units[0]}', 1, true
+        );
+        insert into public.assignment_students (
+          assignment_id,
+          student_id,
+          assigned_by,
+          assigned_at
+        ) values (
+          '10000000-0000-4000-8000-000000000104',
+          '${ids.student}', '${ids.admin}', '2026-08-20T00:00:00Z'
+        );
+        insert into public.quiz_attempts (
+          id,
+          student_id,
+          assignment_id,
+          attempt_number,
+          status,
+          phase,
+          started_at,
+          deadline_at,
+          completed_at,
+          question_count_snapshot,
+          time_limit_seconds_snapshot,
+          passing_score_snapshot,
+          passing_basis_snapshot,
+          initial_correct_count,
+          retry_correct_count,
+          unresolved_wrong_count,
+          initial_score,
+          final_score,
+          passed,
+          elapsed_seconds
+        ) values (
+          '20000000-0000-4000-8000-000000000104',
+          '${ids.student}',
+          '10000000-0000-4000-8000-000000000104',
+          1, 'completed', 'completed',
+          '2026-08-20T00:00:00Z', '2026-09-01T00:00:00Z',
+          '2026-08-21T00:00:00Z',
+          1, 60, 80, 'initial', 1, 0, 0, 100, 100, true, 10
+        );
+        insert into public.quiz_attempts (
+          id,
+          student_id,
+          assignment_id,
+          attempt_number,
+          status,
+          phase,
+          started_at,
+          deadline_at,
+          question_count_snapshot,
+          time_limit_seconds_snapshot,
+          passing_score_snapshot,
+          passing_basis_snapshot
+        ) values (
+          '20000000-0000-4000-8000-000000000105',
+          '${ids.student}',
+          '10000000-0000-4000-8000-000000000104',
+          2, 'in_progress', 'initial',
+          '2026-08-22T00:00:00Z', '2026-09-01T00:00:00Z',
+          1, 60, 80, 'initial'
+        );
+        insert into public.admin_history_hidden_entries (
+          assignment_id,
+          student_id,
+          attempt_id,
+          hidden_by,
+          hidden_at
+        ) values (
+          '10000000-0000-4000-8000-000000000104',
+          '${ids.student}',
+          '20000000-0000-4000-8000-000000000105',
+          '${ids.admin}',
+          '2026-08-24T00:00:00Z'
+        );
+        set role authenticated;
+      `);
+      const initialPhase = await database.query<{
+        group_key: string;
+        total_count: number | bigint;
+      }>(`
+        select group_key, total_count
+        from public.get_admin_history_initial_v1(
+          'R3 phase initial', 'all', false,
+          '2026-08-22T00:00:00Z', 11
+        )
+      `);
+      const retryPhase = await database.query<{
+        group_key: string;
+        total_count: number | bigint;
+      }>(`
+        select group_key, total_count
+        from public.get_admin_history_initial_v1(
+          'R3 phase retry', 'all', false,
+          '2026-08-22T00:00:00Z', 11
+        )
+      `);
+      const countFor = (
+        rows: Array<{ group_key: string; total_count: number | bigint }>,
+        groupKey: string,
+      ) => Number(rows.find((row) => row.group_key === groupKey)?.total_count);
+      expect(countFor(initialPhase.rows, "open")).toBe(1);
+      expect(countFor(initialPhase.rows, "needs_attention")).toBe(0);
+      expect(countFor(retryPhase.rows, "open")).toBe(0);
+      expect(countFor(retryPhase.rows, "needs_attention")).toBe(1);
+
+      const expiredAtSnapshot = await database.query<{
+        items: Array<{ item: { status: string } }>;
+        total_count: number | bigint;
+      }>(`
+        select items, total_count
+        from public.get_admin_history_initial_v1(
+          'R3 expired snapshot', 'all', false,
+          '2026-08-23T00:00:00Z', 11
+        )
+        where group_key = 'needs_attention'
+      `);
+      expect(Number(expiredAtSnapshot.rows[0]?.total_count)).toBe(1);
+      expect(expiredAtSnapshot.rows[0]?.items[0]?.item.status).toBe("expired");
+
+      const visibleBeforeHidden = await database.query<{
+        items: Array<{ item: { attemptId: string } }>;
+        total_count: number | bigint;
+      }>(`
+        select items, total_count
+        from public.get_admin_history_initial_v1(
+          'R3 hidden snapshot', 'all', true,
+          '2026-08-23T00:00:00Z', 11
+        )
+        where group_key = 'open'
+      `);
+      expect(Number(visibleBeforeHidden.rows[0]?.total_count)).toBe(1);
+      expect(visibleBeforeHidden.rows[0]?.items[0]?.item.attemptId).toBe(
+        "20000000-0000-4000-8000-000000000105",
+      );
+
+      const previousVisibleAfterHidden = await database.query<{
+        items: Array<{ item: { attemptId: string } }>;
+        total_count: number | bigint;
+      }>(`
+        select items, total_count
+        from public.get_admin_history_initial_v1(
+          'R3 hidden snapshot', 'all', true,
+          '2026-08-25T00:00:00Z', 11
+        )
+        where group_key = 'completed'
+      `);
+      expect(Number(previousVisibleAfterHidden.rows[0]?.total_count)).toBe(1);
+      expect(previousVisibleAfterHidden.rows[0]?.items[0]?.item.attemptId).toBe(
+        "20000000-0000-4000-8000-000000000104",
+      );
+
+      const privileges = await database.query<{
+        anon_helper: boolean;
+        anon_initial: boolean;
+        anon_page: boolean;
+        anon_detail: boolean;
+        authenticated_helper: boolean;
+        authenticated_initial: boolean;
+        authenticated_page: boolean;
+        authenticated_detail: boolean;
+        service_helper: boolean;
+        service_initial: boolean;
+        service_page: boolean;
+        service_detail: boolean;
+      }>(`
+        select
+          has_function_privilege(
+            'anon',
+            'private.admin_history_read_rows_v1(timestamptz,uuid,uuid,uuid,text)',
+            'execute'
+          ) as anon_helper,
+          has_function_privilege(
+            'service_role',
+            'private.admin_history_read_rows_v1(timestamptz,uuid,uuid,uuid,text)',
+            'execute'
+          ) as service_helper,
+          has_function_privilege(
+            'authenticated',
+            'private.admin_history_read_rows_v1(timestamptz,uuid,uuid,uuid,text)',
+            'execute'
+          ) as authenticated_helper,
+          has_function_privilege(
+            'anon',
+            'public.get_admin_history_initial_v1(text,text,boolean,timestamptz,integer)',
+            'execute'
+          ) as anon_initial,
+          has_function_privilege(
+            'service_role',
+            'public.get_admin_history_initial_v1(text,text,boolean,timestamptz,integer)',
+            'execute'
+          ) as service_initial,
+          has_function_privilege(
+            'authenticated',
+            'public.get_admin_history_initial_v1(text,text,boolean,timestamptz,integer)',
+            'execute'
+          ) as authenticated_initial,
+          has_function_privilege(
+            'anon',
+            'public.list_admin_history_page_v1(text,text,boolean,text,timestamptz,timestamptz,text,integer)',
+            'execute'
+          ) as anon_page,
+          has_function_privilege(
+            'service_role',
+            'public.list_admin_history_page_v1(text,text,boolean,text,timestamptz,timestamptz,text,integer)',
+            'execute'
+          ) as service_page,
+          has_function_privilege(
+            'authenticated',
+            'public.list_admin_history_page_v1(text,text,boolean,text,timestamptz,timestamptz,text,integer)',
+            'execute'
+          ) as authenticated_page,
+          has_function_privilege(
+            'anon',
+            'public.get_admin_history_detail_v1(uuid,uuid,uuid)',
+            'execute'
+          ) as anon_detail,
+          has_function_privilege(
+            'service_role',
+            'public.get_admin_history_detail_v1(uuid,uuid,uuid)',
+            'execute'
+          ) as service_detail,
+          has_function_privilege(
+            'authenticated',
+            'public.get_admin_history_detail_v1(uuid,uuid,uuid)',
+            'execute'
+          ) as authenticated_detail
+      `);
+      expect(privileges.rows[0]).toEqual({
+        anon_helper: false,
+        anon_initial: false,
+        anon_page: false,
+        anon_detail: false,
+        authenticated_helper: true,
+        authenticated_initial: true,
+        authenticated_page: true,
+        authenticated_detail: true,
+        service_helper: false,
+        service_initial: false,
+        service_page: false,
+        service_detail: false,
+      });
+
+      await database.exec(`
+        reset role;
+        select set_config(
+          'request.jwt.claim.sub',
+          '${ids.student}',
+          false
+        );
+        set role authenticated;
+      `);
+      await expectPostgresError(
+        database.query(`
+          select *
+          from public.get_admin_history_initial_v1('', 'all', false, null, 11)
+        `),
+        "42501",
+        "forbidden",
+      );
+      const privateRows = await database.query<{ count: number }>(`
+        select count(*)::integer as count
+        from private.admin_history_read_rows_v1(clock_timestamp())
+      `);
+      expect(privateRows.rows).toEqual([{ count: 0 }]);
+    } finally {
+      await database.close();
+    }
+  }, 60_000);
+});

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   getClientAddress,
   isSameOriginRequest,
+  privateJsonError,
 } from "@/lib/http";
 
 afterEach(() => {
@@ -53,5 +54,20 @@ describe("getClientAddress", () => {
     });
 
     expect(getClientAddress(request)).toBe("203.0.113.8");
+  });
+});
+
+describe("privateJsonError", () => {
+  it("개인 API 오류도 브라우저·공유 캐시에 남기지 않는다", async () => {
+    const response = privateJsonError("불러오기 실패", 503, {
+      code: "read_failed",
+    });
+
+    expect(response.status).toBe(503);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(await response.json()).toEqual({
+      code: "read_failed",
+      error: "불러오기 실패",
+    });
   });
 });

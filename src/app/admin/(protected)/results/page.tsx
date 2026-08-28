@@ -2,18 +2,21 @@ import type { Metadata } from "next";
 
 import { AdminHistoryList } from "@/features/history/ui/admin-history-list";
 import { adminHistoryText } from "@/content/ko/admin-history";
-import { listAssignmentHistory } from "@/lib/services/admin-history-read-service";
+import { listAdminHistoryInitial } from "@/features/history/server/queries/admin-history-list-query";
 
 export const metadata: Metadata = {
   title: adminHistoryText.page.title,
 };
 
 export default async function ResultsPage() {
-  const history = await listAssignmentHistory();
+  const snapshot = await listAdminHistoryInitial({ currentOnly: false });
 
   return (
     <>
-      <AdminHistoryList items={history} showFilters />
+      <AdminHistoryList
+        initialSnapshot={snapshot}
+        showFilters
+      />
     </>
   );
 }

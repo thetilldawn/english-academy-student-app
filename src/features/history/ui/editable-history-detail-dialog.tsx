@@ -12,7 +12,7 @@ import { AdminHistoryDetailContent } from "./admin-history-detail";
 import { HistoryDetailActions } from "./history-detail-actions";
 import { HistoryDetailHeader } from "./history-detail-header";
 import { RouteDetailDialog } from "./route-detail-dialog";
-import { useEditableHistoryAssignment } from "./use-editable-history-assignment";
+import { useEditableHistoryAssignment } from "@/features/history/controller/use-editable-history-assignment";
 
 export function EditableHistoryDetailDialog({
   detail,
