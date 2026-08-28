@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useEffect } from "react";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -186,7 +186,7 @@ function renderDialog() {
 }
 
 describe("editable history detail dialog", () => {
-  it("replaces the detail body, reuses the header, and restores focus", async () => {
+  it("replaces the detail body and closes the whole route dialog", async () => {
     const user = userEvent.setup();
     renderDialog();
 
@@ -228,12 +228,7 @@ describe("editable history detail dialog", () => {
       }),
     );
 
-    expect(screen.getByText("상세 본문")).toBeInTheDocument();
-    expect(screen.queryByText("편집 양식")).not.toBeInTheDocument();
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "배정 수정 열기" })).toHaveFocus(),
-    );
-    expect(router.back).not.toHaveBeenCalled();
+    expect(router.back).toHaveBeenCalledOnce();
   });
 
   it("blocks every close path while saving and restores the detail after success", async () => {
@@ -255,8 +250,11 @@ describe("editable history detail dialog", () => {
     await user.click(screen.getByRole("button", { name: "저장 완료" }));
 
     expect(screen.getByText("상세 본문")).toBeInTheDocument();
-    expect(router.replace).toHaveBeenCalledOnce();
-    expect(router.refresh).toHaveBeenCalledOnce();
+    expect(router.replace).toHaveBeenCalledWith(
+      "/admin/results/assignment.bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      { scroll: false },
+    );
+    expect(router.refresh).not.toHaveBeenCalled();
   });
 
   it("asks before discarding changed edit values", async () => {
@@ -276,7 +274,7 @@ describe("editable history detail dialog", () => {
     await user.click(
       screen.getByRole("button", { name: adminHistoryText.detailModal.close }),
     );
-    expect(screen.getByText("상세 본문")).toBeInTheDocument();
+    expect(router.back).toHaveBeenCalledOnce();
   });
 
   it("warns before reloading while changed edit values remain", async () => {

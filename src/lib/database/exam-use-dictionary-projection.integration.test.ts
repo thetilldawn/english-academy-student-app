@@ -951,7 +951,7 @@ describe.sequential("exam-use dictionary projection", () => {
       [ids.student, datasetId, exactQueueIds[0], oneQuestion],
     );
     await database.exec("reset role;");
-    const oneAssignmentId = created.rows[0]!.assignment_id;
+    let oneAssignmentId = created.rows[0]!.assignment_id;
 
     const state = await database.query<{
       assignment_purpose: string;
@@ -979,6 +979,199 @@ describe.sequential("exam-use dictionary projection", () => {
       snapshot_count: 1,
       target_count: 1,
     });
+
+    const sourceAssignmentId = oneAssignmentId;
+    const replacementKey = "00000000-0000-4000-8000-000000009801";
+    await database.exec("set role authenticated;");
+    const replacement = await database.query<{
+      result: {
+        idempotent: boolean;
+        replacementAssignmentId: string;
+      };
+    }>(
+      `select public.replace_student_assignment_v6(
+        $1::uuid,
+        $2::uuid,
+        $3::uuid,
+        repeat('b', 64),
+        'review',
+        'preserve',
+        'Dictionary one-word exact review edited',
+        $4::uuid,
+        array[]::uuid[],
+        1,
+        100::smallint,
+        300,
+        80::smallint,
+        true,
+        80::smallint,
+        'ascending'::public.question_order_mode,
+        (select available_from from public.assignments where id = $1::uuid),
+        (select available_until from public.assignments where id = $1::uuid),
+        'total',
+        null,
+        array[1]::smallint[],
+        'dataset',
+        array[$5::uuid],
+        $6::jsonb
+      ) as result`,
+      [
+        sourceAssignmentId,
+        ids.student,
+        replacementKey,
+        datasetId,
+        exactQueueIds[0],
+        oneQuestion,
+      ],
+    );
+    const replay = await database.query<{
+      result: {
+        idempotent: boolean;
+        replacementAssignmentId: string;
+      };
+    }>(
+      `select public.replace_student_assignment_v6(
+        $1::uuid,
+        $2::uuid,
+        $3::uuid,
+        repeat('b', 64),
+        'review',
+        'preserve',
+        'Dictionary one-word exact review edited',
+        $4::uuid,
+        array[]::uuid[],
+        1,
+        100::smallint,
+        300,
+        80::smallint,
+        true,
+        80::smallint,
+        'ascending'::public.question_order_mode,
+        (select available_from from public.assignments where id = $1::uuid),
+        (select available_until from public.assignments where id = $1::uuid),
+        'total',
+        null,
+        array[1]::smallint[],
+        'dataset',
+        array[$5::uuid],
+        $6::jsonb
+      ) as result`,
+      [
+        sourceAssignmentId,
+        ids.student,
+        replacementKey,
+        datasetId,
+        exactQueueIds[0],
+        oneQuestion,
+      ],
+    );
+    await database.exec("reset role;");
+
+    oneAssignmentId = replacement.rows[0]!.result.replacementAssignmentId;
+    expect(replacement.rows[0]!.result.idempotent).toBe(false);
+    expect(replay.rows[0]!.result).toEqual({
+      idempotent: true,
+      replacementAssignmentId: oneAssignmentId,
+      replacementPurpose: "review",
+      sourceAssignmentId,
+      status: "replaced",
+      studentId: ids.student,
+    });
+
+    const replacementState = await database.query<{
+      primary_unit_count: number;
+      queue_pending: boolean;
+      replacement_active_targets: number;
+      replacement_bank_hash: string;
+      replacement_question_hash: string;
+      replacement_request_count: number;
+      review_scope: string;
+      retry_enabled: boolean;
+      retry_passing_score: number;
+      snapshot_count: number;
+      source_active_targets: number;
+      source_bank_hash: string;
+      source_cancelled: boolean;
+      source_question_hash: string;
+    }>(`
+      select
+        source_link.cancelled_at is not null as source_cancelled,
+        source_assignment.question_bank_sha256 as source_bank_hash,
+        replacement_assignment.question_bank_sha256 as replacement_bank_hash,
+        replacement_assignment.review_scope,
+        replacement_assignment.retry_enabled,
+        replacement_assignment.retry_passing_score,
+        (
+          select question_content_sha256
+          from public.assignment_questions
+          where assignment_id = '${sourceAssignmentId}'
+        ) as source_question_hash,
+        (
+          select question_content_sha256
+          from public.assignment_questions
+          where assignment_id = '${oneAssignmentId}'
+        ) as replacement_question_hash,
+        (
+          select count(*)::integer
+          from public.assignment_units
+          where assignment_id = '${oneAssignmentId}'
+            and is_primary
+        ) as primary_unit_count,
+        (
+          select count(*)::integer
+          from public.assignment_review_targets
+          where assignment_id = '${sourceAssignmentId}'
+            and released_at is null
+        ) as source_active_targets,
+        (
+          select count(*)::integer
+          from public.assignment_review_targets
+          where assignment_id = '${oneAssignmentId}'
+            and released_at is null
+        ) as replacement_active_targets,
+        (
+          select count(*)::integer
+          from public.assignment_question_exam_use_snapshot
+          where assignment_id = '${oneAssignmentId}'
+            and release_id = '${releaseId}'
+        ) as snapshot_count,
+        (
+          select status = 'pending' and consumed_assignment_id is null
+          from public.student_vocab_review_queue
+          where id = '${exactQueueIds[0]}'
+        ) as queue_pending,
+        (
+          select count(*)::integer
+          from private.assignment_replacement_requests
+          where source_assignment_id = '${sourceAssignmentId}'
+            and student_id = '${ids.student}'
+        ) as replacement_request_count
+      from public.assignments as source_assignment
+      join public.assignment_students as source_link
+        on source_link.assignment_id = source_assignment.id
+       and source_link.student_id = '${ids.student}'
+      cross join public.assignments as replacement_assignment
+      where source_assignment.id = '${sourceAssignmentId}'
+        and replacement_assignment.id = '${oneAssignmentId}';
+    `);
+    expect(replacementState.rows[0]).toMatchObject({
+      primary_unit_count: 0,
+      queue_pending: true,
+      replacement_active_targets: 1,
+      replacement_request_count: 1,
+      review_scope: "dataset",
+      retry_enabled: true,
+      retry_passing_score: 80,
+      snapshot_count: 1,
+      source_active_targets: 0,
+      source_cancelled: true,
+    });
+    expect(replacementState.rows[0]!.replacement_bank_hash).toBe(
+      replacementState.rows[0]!.source_bank_hash,
+    );
+    expect(replacementState.rows[0]!.replacement_question_hash).toBe(
+      replacementState.rows[0]!.source_question_hash,
+    );
 
     const attempt = await database.query<{ attempt_id: string }>(`
       select public.create_quiz_attempt_from_bank(
@@ -1020,6 +1213,141 @@ describe.sequential("exam-use dictionary projection", () => {
       [oneAssignmentId, ids.student],
     );
     await database.exec("reset role;");
+  });
+
+  it("replaces two- and three-word exact reviews through the active exam-use release", async () => {
+    for (const targetCount of [2, 3]) {
+      const selectedQueueIds = exactQueueIds.slice(0, targetCount);
+      const queueEntries = await database.query<{ vocab_entry_id: number }>(
+        `select vocab_entry_id
+         from public.student_vocab_review_queue
+         where id = any($1::uuid[])
+           and student_id = $2::uuid
+           and status = 'pending'
+         order by array_position($1::uuid[], id)`,
+        [selectedQueueIds, ids.student],
+      );
+      expect(queueEntries.rows).toHaveLength(targetCount);
+      const questions = JSON.stringify(
+        queueEntries.rows.map((queue, index) => ({
+          vocab_entry_id: queue.vocab_entry_id,
+          base_order_index: index + 1,
+          direction: "english_to_korean",
+          choice_vocab_entry_ids: entryIds,
+        })),
+      );
+
+      await database.exec("set role authenticated;");
+      const source = await database.query<{ assignment_id: string }>(
+        `select public.create_exact_review_assignment_v7(
+          $1::uuid,
+          $2::uuid,
+          $3::uuid[],
+          $4,
+          100::smallint,
+          300,
+          80::smallint,
+          true,
+          80::smallint,
+          'fixed'::public.question_order_mode,
+          clock_timestamp() + interval '1 day',
+          'total',
+          null,
+          $5::jsonb
+        ) as assignment_id`,
+        [
+          ids.student,
+          datasetId,
+          selectedQueueIds,
+          `Dictionary ${targetCount}-word exact review`,
+          questions,
+        ],
+      );
+      const sourceAssignmentId = source.rows[0]!.assignment_id;
+      const replacementKey =
+        `00000000-0000-4000-8000-00000000980${targetCount}`;
+      const replacement = await database.query<{
+        result: { replacementAssignmentId: string };
+      }>(
+        `select public.replace_student_assignment_v6(
+          $1::uuid, $2::uuid, $3::uuid, repeat('c', 64),
+          'review', 'preserve', $4, $5::uuid, array[]::uuid[],
+          $6::integer, 100::smallint, 300, 80::smallint, true, 80::smallint,
+          'ascending'::public.question_order_mode,
+          (select available_from from public.assignments where id = $1::uuid),
+          (select available_until from public.assignments where id = $1::uuid),
+          'total', null, array[1]::smallint[], 'dataset', $7::uuid[],
+          $8::jsonb
+        ) as result`,
+        [
+          sourceAssignmentId,
+          ids.student,
+          replacementKey,
+          `Dictionary ${targetCount}-word exact review edited`,
+          datasetId,
+          targetCount,
+          selectedQueueIds,
+          questions,
+        ],
+      );
+      await database.exec("reset role;");
+      const replacementAssignmentId =
+        replacement.rows[0]!.result.replacementAssignmentId;
+
+      const state = await database.query<{
+        active_targets: number;
+        pending_queues: number;
+        question_count: number;
+        snapshots: number;
+        source_cancelled: boolean;
+      }>(`
+        select
+          link.cancelled_at is not null as source_cancelled,
+          replacement.question_count,
+          (
+            select count(*)::integer
+            from public.assignment_review_targets
+            where assignment_id = '${replacementAssignmentId}'
+              and released_at is null
+          ) as active_targets,
+          (
+            select count(*)::integer
+            from public.assignment_question_exam_use_snapshot
+            where assignment_id = '${replacementAssignmentId}'
+              and release_id = '${releaseId}'
+          ) as snapshots,
+          (
+            select count(*)::integer
+            from public.student_vocab_review_queue
+            where id = any(array[
+              ${selectedQueueIds.map((id) => `'${id}'::uuid`).join(",")}
+            ]::uuid[])
+              and status = 'pending'
+              and consumed_assignment_id is null
+          ) as pending_queues
+        from public.assignment_students as link
+        cross join public.assignments as replacement
+        where link.assignment_id = '${sourceAssignmentId}'
+          and link.student_id = '${ids.student}'
+          and replacement.id = '${replacementAssignmentId}';
+      `);
+      expect(state.rows[0]).toEqual({
+        active_targets: targetCount,
+        pending_queues: targetCount,
+        question_count: targetCount,
+        snapshots: targetCount,
+        source_cancelled: true,
+      });
+
+      await database.exec("set role authenticated;");
+      await database.query(
+        `select public.cancel_student_assignment_v1(
+          $1::uuid, $2::uuid, 'next active-release replacement fixture'
+        )`,
+        [replacementAssignmentId, ids.student],
+      );
+      await database.exec("reset role;");
+    }
   });
 
   it("remaps historical queues to the active release through the public mixed RPC", async () => {

@@ -1208,6 +1208,80 @@ describe.sequential("final review-assignment database schema", () => {
         replacementAssignmentId,
       });
 
+      const reboundState = await database.query<{
+        attention_assignment_id: string;
+        attention_at: string;
+        attention_events: number;
+        item_attention: string | null;
+        item_status: string;
+        replaced_assignment_id: string;
+        replaced_at: string;
+        replaced_events: number;
+        series_attention: string | null;
+        series_status: string;
+      }>(`
+        select
+          item.status as item_status,
+          item.attention_reason as item_attention,
+          series.status as series_status,
+          series.attention_reason as series_attention,
+          (
+            select count(*)::integer
+            from private.vocab_assignment_series_events
+            where series_id = '${seriesId}'
+              and event_kind = 'session.attention'
+          ) as attention_events,
+          (
+            select assignment_id::text
+            from private.vocab_assignment_series_events
+            where series_id = '${seriesId}'
+              and event_kind = 'session.attention'
+          ) as attention_assignment_id,
+          (
+            select occurred_at::text
+            from private.vocab_assignment_series_events
+            where series_id = '${seriesId}'
+              and event_kind = 'session.attention'
+          ) as attention_at,
+          (
+            select count(*)::integer
+            from private.vocab_assignment_series_events
+            where series_id = '${seriesId}'
+              and event_kind = 'session.replaced'
+          ) as replaced_events,
+          (
+            select assignment_id::text
+            from private.vocab_assignment_series_events
+            where series_id = '${seriesId}'
+              and event_kind = 'session.replaced'
+          ) as replaced_assignment_id,
+          (
+            select occurred_at::text
+            from private.vocab_assignment_series_events
+            where series_id = '${seriesId}'
+              and event_kind = 'session.replaced'
+          ) as replaced_at
+        from private.vocab_assignment_series_items as item
+        join private.vocab_assignment_series as series
+          on series.id = item.series_id
+        where item.id = '${currentItemId}';
+      `);
+      expect(reboundState.rows[0]).toMatchObject({
+        attention_assignment_id: sourceAssignmentId,
+        attention_events: 1,
+        item_attention: null,
+        item_status: "assigned",
+        replaced_assignment_id: replacementAssignmentId,
+        replaced_events: 1,
+        series_attention: null,
+        series_status: "active",
+      });
+      expect(
+        new Date(reboundState.rows[0]!.attention_at).getTime(),
+      ).toBeLessThanOrEqual(
+        new Date(reboundState.rows[0]!.replaced_at).getTime(),
+      );
+
       const attempt = await database.query<{ attempt_id: string }>(`
         select public.create_quiz_attempt_from_bank(
           '${ids.student}', '${replacementAssignmentId}'

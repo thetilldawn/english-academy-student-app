@@ -60,17 +60,23 @@ export function useEditableHistoryAssignment(
     setEditing(true);
   }
 
-  function closeEditor() {
-    if (editorBusy) return;
+  function canCloseEditor() {
+    if (editorBusy) return false;
     if (
       submitPresentation?.dirty &&
       !window.confirm("입력한 변경 내용을 버리고 닫을까요?")
     ) {
-      return;
+      return false;
     }
+    return true;
+  }
+
+  function closeEditor() {
+    if (!canCloseEditor()) return false;
     restoreEditFocusRef.current = true;
     setEditing(false);
     setSubmitPresentation(null);
+    return true;
   }
 
   function handleSucceeded(result: SingleAssignmentResult) {
@@ -85,12 +91,14 @@ export function useEditableHistoryAssignment(
         }),
         { scroll: false },
       );
+      return;
     }
     router.refresh();
   }
 
   return {
     beginEditing,
+    canCloseEditor,
     closeEditor,
     editing,
     editButtonRef,

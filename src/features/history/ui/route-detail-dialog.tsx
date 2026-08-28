@@ -12,23 +12,23 @@ import {
 import { adminHistoryText } from "@/content/ko/admin-history";
 
 export function RouteDetailDialog({
+  beforeRouteClose,
   children,
   closeDisabled = false,
   contentMode = "body",
   heading,
   headerActions,
   layout = "body",
-  onRequestClose,
   size = "wide",
   height,
 }: {
+  beforeRouteClose?: () => boolean;
   children: ReactNode;
   closeDisabled?: boolean;
   contentMode?: "body" | "structured";
   heading: ReactNode;
   headerActions?: ReactNode;
   layout?: DialogLayout;
-  onRequestClose?: () => void;
   size?: "wide" | "extra-wide";
   height?: "large";
 }) {
@@ -40,7 +40,10 @@ export function RouteDetailDialog({
     closingRef.current = true;
     router.back();
   }, [router]);
-  const close = onRequestClose ?? closeRoute;
+  const close = useCallback(() => {
+    if (beforeRouteClose && !beforeRouteClose()) return;
+    closeRoute();
+  }, [beforeRouteClose, closeRoute]);
 
   return (
     <DialogFrame

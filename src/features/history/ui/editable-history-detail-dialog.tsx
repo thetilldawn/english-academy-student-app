@@ -42,12 +42,12 @@ export function EditableHistoryDetailDialog({
   );
   return (
     <RouteDetailDialog
+      beforeRouteClose={editor.editing ? editor.canCloseEditor : undefined}
       closeDisabled={editor.editing && editor.editorBusy}
       contentMode={editor.editing ? "structured" : "body"}
       height={editor.editing ? "large" : undefined}
       heading={heading}
       layout={editor.editing ? "body-footer" : "body"}
-      onRequestClose={editor.editing ? editor.closeEditor : undefined}
       size={editor.editing ? "extra-wide" : "wide"}
     >
       {editor.editing && editor.editorModel ? (

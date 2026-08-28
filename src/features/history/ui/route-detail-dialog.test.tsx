@@ -60,14 +60,14 @@ describe("RouteDetailDialog", () => {
     expect(back).toHaveBeenCalledOnce();
   });
 
-  it("can keep the route open and delegate close to an editor state", async () => {
+  it("checks editor state before closing the route", async () => {
     const user = userEvent.setup();
-    const closeEditor = vi.fn();
+    const beforeRouteClose = vi.fn(() => true);
     render(
       <RouteDetailDialog
+        beforeRouteClose={beforeRouteClose}
         heading={<h2 id="route-history-detail-title">상세</h2>}
         headerActions={<button type="button">변경 저장</button>}
-        onRequestClose={closeEditor}
       >
         편집 양식
       </RouteDetailDialog>,
@@ -80,7 +80,29 @@ describe("RouteDetailDialog", () => {
       }),
     );
 
-    expect(closeEditor).toHaveBeenCalledOnce();
+    expect(beforeRouteClose).toHaveBeenCalledOnce();
+    expect(back).toHaveBeenCalledOnce();
+  });
+
+  it("keeps the route open when the editor rejects the close request", async () => {
+    const user = userEvent.setup();
+    const beforeRouteClose = vi.fn(() => false);
+    render(
+      <RouteDetailDialog
+        beforeRouteClose={beforeRouteClose}
+        heading={<h2 id="route-history-detail-title">상세</h2>}
+      >
+        편집 양식
+      </RouteDetailDialog>,
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: adminHistoryText.detailModal.close,
+      }),
+    );
+
+    expect(beforeRouteClose).toHaveBeenCalledOnce();
     expect(back).not.toHaveBeenCalled();
   });
 });

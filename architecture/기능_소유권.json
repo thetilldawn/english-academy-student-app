@@ -419,8 +419,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 76,
-      "pathSetSha256": "6d95002b07499eb9a34766545c9641e2f39a3bc45ee06bebf089e9da073b4dc2"
+      "fileCount": 77,
+      "pathSetSha256": "729c6747fd98ed5cc73c851b6931a857dc0d0107ad1bba11e153e72c4bd39cf6"
     },
     {
       "path": "src/lib/deploy",
@@ -463,6 +463,11 @@
   "migrationOwners": [
     {
       "path": "supabase/migrations/20260828193000_preserve_assignment_edit_metadata.sql",
+      "owner": "assignments",
+      "flow": "assignment-edit"
+    },
+    {
+      "path": "supabase/migrations/20260829103000_fix_assignment_edit_preview_regressions.sql",
       "owner": "assignments",
       "flow": "assignment-edit"
     }
@@ -1674,7 +1679,8 @@
         "database": [
           "supabase/migrations/20260807221021_replace_student_assignment_v1.sql",
           "supabase/migrations/20260825083542_add_student_point_ledger.sql",
-          "supabase/migrations/20260828193000_preserve_assignment_edit_metadata.sql"
+          "supabase/migrations/20260828193000_preserve_assignment_edit_metadata.sql",
+          "supabase/migrations/20260829103000_fix_assignment_edit_preview_regressions.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/results/[id]/page.tsx",
@@ -1719,6 +1725,8 @@
           "src/lib/services/learning-point-read-service.test.ts",
           "src/lib/assignment/question-planner.test.ts",
           "src/lib/database/assignment-edit-metadata-migration-contract.test.ts",
+          "src/lib/database/assignment-edit-preview-regression-migration-contract.test.ts",
+          "src/lib/database/exam-use-dictionary-projection.integration.test.ts",
           "src/lib/database/student-point-ledger-migration-contract.test.ts",
           "src/lib/database/review-assignment-final-schema.integration.test.ts"
         ]
@@ -1929,7 +1937,8 @@
           "supabase/migrations/20260826001635_add_ready_queue_fixed_time_materializer.sql",
           "supabase/migrations/20260826001639_add_read_side_maintenance_workers.sql",
           "supabase/migrations/20260826001655_schedule_read_side_maintenance_jobs.sql",
-          "supabase/migrations/20260828193000_preserve_assignment_edit_metadata.sql"
+          "supabase/migrations/20260828193000_preserve_assignment_edit_metadata.sql",
+          "supabase/migrations/20260829103000_fix_assignment_edit_preview_regressions.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/assignments/page.tsx",
