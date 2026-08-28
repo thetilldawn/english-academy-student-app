@@ -56,8 +56,7 @@ export async function loadReviewDraftContext(
   const draft = draftData as DraftRow | null;
   if (
     !draft ||
-    draft.status !== "pending" ||
-    Date.parse(draft.expires_at) <= Date.now()
+    draft.status !== "pending"
   ) {
     return null;
   }
@@ -119,13 +118,13 @@ export async function loadReviewDraftContext(
       offset + ID_FILTER_CHUNK_SIZE,
     );
     const { data, error } = await supabase
-      .from("student_vocab_review_queue")
+      .from("student_vocab_review_queue_read_v1")
       .select("id, vocab_entry_id")
       .in("id", queueIdChunk)
       .eq("student_id", draft.student_id)
       .eq("dataset_id", draft.dataset_id)
       .eq("status", "pending")
-      .eq("reserved_review_draft_id", reviewDraftId);
+      .eq("active_review_draft_id", reviewDraftId);
     if (error) {
       throw new Error("오답 시험 대기 단어를 불러오지 못했습니다.");
     }

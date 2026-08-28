@@ -311,8 +311,10 @@ describe("wrong-word admin UI contract", () => {
     expect(service).toContain(".limit(WRONG_EVENT_PAGE_SIZE)");
     expect(service).toContain('.eq("wrong_stage", "initial")');
     expect(service).toContain(
-      '.from("student_vocab_review_queue")',
+      '.from("student_vocab_review_queue_read_v1")',
     );
+    expect(service).toContain("active_review_draft_id");
+    expect(service).not.toContain("reserved_review_draft_id");
     expect(service).toContain("loadActiveReviewAssignments(");
     expect(service).toContain(
       "const authenticatedSupabase = await createServerSupabaseClient()",

@@ -37,9 +37,14 @@ describe("exact review assignment app contract", () => {
     );
     expect(query).toContain(".in(\"id\", queueIdChunk)");
     expect(query).toContain(
-      '.eq("reserved_review_draft_id", reviewDraftId)',
+      '.eq("active_review_draft_id", reviewDraftId)',
     );
-    expect(query).toContain("Date.parse(draft.expires_at) <= Date.now()");
+    expect(query).toContain(
+      '.from("student_vocab_review_queue_read_v1")',
+    );
+    expect(query).not.toContain(
+      "Date.parse(draft.expires_at) <= Date.now()",
+    );
     expect(query).not.toContain("finalizeExpiredReviewAssignmentDrafts");
     expect(query).not.toContain(".rpc(");
     expect(query).toContain("items.length > 400");

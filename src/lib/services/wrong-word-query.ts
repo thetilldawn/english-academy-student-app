@@ -92,7 +92,7 @@ type PendingReviewRow = {
   source_question_id: string;
   reason_level: 1 | 2;
   queued_at: string;
-  reserved_review_draft_id: string | null;
+  active_review_draft_id: string | null;
 };
 
 type VocabStateRow = {
@@ -164,9 +164,9 @@ export async function getStudentWrongWordHistory(
   const pendingReviewRows: PendingReviewRow[] = [];
   for (let offset = 0; ; offset += WRONG_EVENT_PAGE_SIZE) {
     const { data, error } = await supabase
-      .from("student_vocab_review_queue")
+      .from("student_vocab_review_queue_read_v1")
       .select(
-        "id, dataset_id, vocab_entry_id, canonical_dictionary_id_snapshot, canonical_lexeme_id_snapshot, source_question_id, reason_level, queued_at, reserved_review_draft_id",
+        "id, dataset_id, vocab_entry_id, canonical_dictionary_id_snapshot, canonical_lexeme_id_snapshot, source_question_id, reason_level, queued_at, active_review_draft_id",
       )
       .eq("student_id", studentId)
       .eq("status", "pending")
@@ -271,7 +271,7 @@ export async function getStudentWrongWordHistory(
       sourceQuestionId: row.source_question_id,
       reasonLevel: row.reason_level,
       queuedAt: row.queued_at,
-      reviewDraftId: row.reserved_review_draft_id,
+      reviewDraftId: row.active_review_draft_id,
     }),
   );
   const questions = questionRows.flatMap(
