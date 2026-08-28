@@ -86,6 +86,7 @@ const regularDraft: SingleAssignmentDraft = {
     passingScore: 80,
     timing: { mode: "total", totalSeconds: 300 },
   },
+  availability: { mode: "immediate" },
   deadline: {
     mode: "at",
     koreanLocalDateTime: "2026-08-18T21:00",
@@ -109,6 +110,7 @@ const mixedDraft: SingleAssignmentDraft = {
     passingScore: 90,
     timing: { mode: "per_question", perQuestionSeconds: 12 },
   },
+  availability: { mode: "immediate" },
   deadline: { mode: "none" },
   review: { mode: "pending", scope: "selection", levels: [1, 2] },
 };
@@ -122,6 +124,7 @@ const exactReviewOperation = {
       datasetId: assignmentContractIds.dataset,
       orderedUnitIds: [...reverseUnitIds],
       questionCount: 1,
+      reviewScope: "dataset",
       reviewLevels: [2],
     },
   } satisfies SingleAssignmentOperation;
@@ -142,6 +145,7 @@ const replacementDraft: SingleAssignmentDraft = {
     passingScore: 80,
     timing: { mode: "per_question", perQuestionSeconds: 20 },
   },
+  availability: { mode: "immediate" },
   deadline: { mode: "none" },
   review: { mode: "pending", scope: "dataset", levels: [2] },
 };
@@ -332,7 +336,7 @@ describe("assignment request adapters", () => {
     );
   });
 
-  it("keeps replacement preview scope but removes it from the PUT body", () => {
+  it("keeps replacement preview scope and sends it in the PUT body", () => {
     const preview = buildAssignmentCapacityRequest(replacementDraft);
     const request = buildSingleAssignmentRequest(
       replacementDraft,
@@ -359,8 +363,9 @@ describe("assignment request adapters", () => {
     expect(assignmentReplacementSchema.parse(request.body)).toStrictEqual(
       replacementSubmitContract,
     );
+    if (request.method !== "PUT") throw new Error("Expected replacement.");
     expect(request.body).not.toHaveProperty("studentId");
-    expect(request.body).not.toHaveProperty("reviewScope");
+    expect(request.body.reviewScope).toBe("dataset");
   });
 
   it("shares every replacement fingerprint field with the server hash payload", () => {
@@ -389,6 +394,7 @@ describe("assignment request adapters", () => {
       datasetId: replacementSubmitContract.datasetId,
       primaryUnitIds: replacementSubmitContract.primaryUnitIds,
       includePendingReview: true,
+      reviewScope: "dataset",
       reviewLevels: [2],
       questionCount: 1,
       englishToKoreanRatio: 0,
@@ -399,6 +405,7 @@ describe("assignment request adapters", () => {
       retryEnabled: true,
       retryPassingScore: 80,
       questionOrderMode: "ascending",
+      availableFrom: null,
       availableUntil: null,
     });
     expect(
@@ -439,7 +446,7 @@ describe("assignment request adapters", () => {
     );
   });
 
-  it("retains a selected review level and scope while review is switched off", () => {
+  it("keeps a mixed replacement review selection locked", () => {
     const replacement: SingleAssignmentDraft = {
       ...regularDraft,
       operation: {
@@ -466,35 +473,20 @@ describe("assignment request adapters", () => {
     );
 
     expect(disabled.review).toStrictEqual({
-      mode: "none",
+      mode: "pending",
       scope: "selection",
       levels: [2],
     });
     expect(preview.body).toMatchObject({
-      includePendingReview: false,
+      includePendingReview: true,
       reviewLevels: [2],
       reviewScope: "selection",
     });
     expect(request.body).toMatchObject({
-      includePendingReview: false,
+      includePendingReview: true,
+      reviewScope: "selection",
       reviewLevels: [2],
     });
-    expect(
-      replacementSubmissionFingerprint(
-        disabled,
-        resolved("오답 선택 보존", 12),
-        NOW,
-      ),
-    ).toBe(
-      replacementSubmissionFingerprint(
-        {
-          ...disabled,
-          review: { mode: "none", scope: "dataset", levels: [1] },
-        },
-        resolved("오답 선택 보존", 12),
-        NOW,
-      ),
-    );
   });
 
   it("converts the date-only bulk start and matches preview and submit contracts", () => {

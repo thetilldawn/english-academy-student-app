@@ -30,6 +30,7 @@ function controller(): SingleAssignmentController {
     ],
     state: {
       draft: {
+        availability: { mode: "immediate" },
         deadline: { mode: "none" },
         exam: {
           passingScore: 80,
@@ -59,5 +60,24 @@ describe("AssignmentSummaryPanel errors", () => {
     expect(screen.queryByText("단어 수를 확인해 주세요.")).not
       .toBeInTheDocument();
     expect(screen.getByText("저장 상태를 확인해 주세요.")).toBeVisible();
+  });
+
+  it("shows a scheduled public time in the final summary", () => {
+    const value = controller();
+    value.state.draft.availability = {
+      mode: "at",
+      koreanLocalDateTime: "2026-08-29T10:00",
+    };
+
+    render(
+      <AssignmentSummaryPanel
+        controller={value}
+        datasets={[]}
+        units={[]}
+      />,
+    );
+
+    expect(screen.getByText("공개")).toBeVisible();
+    expect(screen.getByText(/2026/)).toBeVisible();
   });
 });

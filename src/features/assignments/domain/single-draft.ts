@@ -1,12 +1,13 @@
 import type {
+  AssignmentAvailability,
   AssignmentDeadline,
   AssignmentRange,
   ExamSettings,
   ResolvedSingleAssignment,
   ReviewPolicy,
-  SingleAssignmentOperation,
   SingleAssignmentDraft,
 } from "./model";
+import { canEditSingleAssignmentField } from "./assignment-edit-policy";
 
 export type SingleAssignmentDraftAction =
   | { type: "student/changed"; studentId: string }
@@ -27,24 +28,12 @@ export type SingleAssignmentDraftAction =
       minimumAllowedQuestionCount: number;
     }
   | { type: "exam/changed"; exam: ExamSettings }
+  | {
+      type: "availability/changed";
+      availability: AssignmentAvailability;
+    }
   | { type: "deadline/changed"; deadline: AssignmentDeadline }
   | { type: "review/changed"; review: ReviewPolicy };
-
-type ExactReviewReplacementOperation = Extract<
-  SingleAssignmentOperation,
-  { mode: "replace"; sourcePurpose: "review" }
->;
-
-function isExactReviewReplacement(
-  draft: SingleAssignmentDraft,
-): draft is SingleAssignmentDraft & {
-  operation: ExactReviewReplacementOperation;
-} {
-  return (
-    draft.operation.mode === "replace" &&
-    draft.operation.sourcePurpose === "review"
-  );
-}
 
 export function reduceSingleAssignmentDraft(
   draft: SingleAssignmentDraft,
@@ -56,7 +45,7 @@ export function reduceSingleAssignmentDraft(
       : { ...draft, studentId: action.studentId };
   }
   if (action.type === "dataset/changed") {
-    if (isExactReviewReplacement(draft)) return draft;
+    if (!canEditSingleAssignmentField(draft, "dataset")) return draft;
     return {
       ...draft,
       range: { datasetId: action.datasetId, orderedUnitIds: [] },
@@ -67,7 +56,13 @@ export function reduceSingleAssignmentDraft(
     };
   }
   if (action.type === "range/changed") {
-    if (isExactReviewReplacement(draft)) return draft;
+    if (!canEditSingleAssignmentField(draft, "range")) return draft;
+    if (
+      action.range.datasetId !== draft.range.datasetId &&
+      !canEditSingleAssignmentField(draft, "dataset")
+    ) {
+      return draft;
+    }
     return {
       ...draft,
       range: action.range,
@@ -78,25 +73,22 @@ export function reduceSingleAssignmentDraft(
     };
   }
   if (action.type === "title/changed") {
+    if (!canEditSingleAssignmentField(draft, "title")) return draft;
     return { ...draft, title: { mode: "custom", value: action.value } };
   }
   if (action.type === "title/restoreAutomatic") {
+    if (!canEditSingleAssignmentField(draft, "title")) return draft;
     return { ...draft, title: { mode: "automatic" } };
   }
   if (action.type === "questionCount/manuallyChanged") {
-    if (
-      isExactReviewReplacement(draft) &&
-      action.value !== draft.operation.lockedShape.questionCount
-    ) {
-      return draft;
-    }
+    if (!canEditSingleAssignmentField(draft, "questionCount")) return draft;
     return {
       ...draft,
       questionCount: { mode: "manual", value: action.value },
     };
   }
   if (action.type === "questionCount/restoreAutomatic") {
-    if (isExactReviewReplacement(draft)) return draft;
+    if (!canEditSingleAssignmentField(draft, "questionCount")) return draft;
     return {
       ...draft,
       questionCount: {
@@ -106,7 +98,7 @@ export function reduceSingleAssignmentDraft(
     };
   }
   if (action.type === "capacity/reconciled") {
-    if (isExactReviewReplacement(draft)) return draft;
+    if (!canEditSingleAssignmentField(draft, "questionCount")) return draft;
     if (
       action.maximumQuestionCount < action.minimumQuestionCount ||
       action.maximumQuestionCount < action.minimumAllowedQuestionCount
@@ -129,12 +121,57 @@ export function reduceSingleAssignmentDraft(
     };
   }
   if (action.type === "exam/changed") {
-    return { ...draft, exam: action.exam };
+    const policy = {
+      direction: canEditSingleAssignmentField(draft, "direction"),
+      order: canEditSingleAssignmentField(draft, "order"),
+      passingScore: canEditSingleAssignmentField(draft, "passingScore"),
+      retry: canEditSingleAssignmentField(draft, "retry"),
+      timing: canEditSingleAssignmentField(draft, "timing"),
+    };
+    const exam = {
+      ...draft.exam,
+      directionRatio: policy.direction
+        ? action.exam.directionRatio
+        : draft.exam.directionRatio,
+      questionOrderMode: policy.order
+        ? action.exam.questionOrderMode
+        : draft.exam.questionOrderMode,
+      passingScore: policy.passingScore
+        ? action.exam.passingScore
+        : draft.exam.passingScore,
+      retryEnabled: policy.retry
+        ? action.exam.retryEnabled
+        : draft.exam.retryEnabled,
+      retryPassingScore: policy.retry
+        ? action.exam.retryPassingScore
+        : draft.exam.retryPassingScore,
+      timeLimitEnabled: policy.timing
+        ? action.exam.timeLimitEnabled
+        : draft.exam.timeLimitEnabled,
+      timing: policy.timing ? action.exam.timing : draft.exam.timing,
+    };
+    if (
+      exam.directionRatio === draft.exam.directionRatio &&
+      exam.questionOrderMode === draft.exam.questionOrderMode &&
+      exam.passingScore === draft.exam.passingScore &&
+      exam.retryEnabled === draft.exam.retryEnabled &&
+      exam.retryPassingScore === draft.exam.retryPassingScore &&
+      exam.timeLimitEnabled === draft.exam.timeLimitEnabled &&
+      exam.timing === draft.exam.timing
+    ) {
+      return draft;
+    }
+    return { ...draft, exam };
+  }
+  if (action.type === "availability/changed") {
+    if (!canEditSingleAssignmentField(draft, "availableFrom")) return draft;
+    return { ...draft, availability: action.availability };
   }
   if (action.type === "deadline/changed") {
+    if (!canEditSingleAssignmentField(draft, "deadline")) return draft;
     return { ...draft, deadline: action.deadline };
   }
-  if (isExactReviewReplacement(draft)) return draft;
+  if (!canEditSingleAssignmentField(draft, "review")) return draft;
   return { ...draft, review: action.review };
 }
 

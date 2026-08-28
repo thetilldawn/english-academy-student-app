@@ -24,6 +24,7 @@ const automaticDraft: SingleAssignmentDraft = {
     passingScore: 80,
     timing: { mode: "total", totalSeconds: 300 },
   },
+  availability: { mode: "immediate" },
   deadline: { mode: "none" },
   review: { mode: "none", scope: "dataset", levels: [1, 2] },
 };
@@ -39,6 +40,7 @@ const exactReviewDraft: SingleAssignmentDraft = {
       datasetId: assignmentContractIds.dataset,
       orderedUnitIds: [assignmentContractIds.day60],
       questionCount: 1,
+      reviewScope: "dataset",
       reviewLevels: [2],
     },
   },
@@ -191,6 +193,38 @@ describe("single assignment draft reducer", () => {
     }
   });
 
+  it("keeps a series dataset immutable even when the range action contains another dataset", () => {
+    const seriesDraft: SingleAssignmentDraft = {
+      ...automaticDraft,
+      operation: {
+        mode: "replace",
+        assignmentId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        targetStudentId: assignmentContractIds.studentA,
+        sourcePurpose: "regular",
+        seriesItem: true,
+      },
+    };
+
+    expect(
+      reduceSingleAssignmentDraft(seriesDraft, {
+        type: "range/changed",
+        range: {
+          datasetId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          orderedUnitIds: [assignmentContractIds.day59],
+        },
+      }),
+    ).toBe(seriesDraft);
+    expect(
+      reduceSingleAssignmentDraft(seriesDraft, {
+        type: "range/changed",
+        range: {
+          datasetId: assignmentContractIds.dataset,
+          orderedUnitIds: [assignmentContractIds.day59],
+        },
+      }).range.orderedUnitIds,
+    ).toStrictEqual([assignmentContractIds.day59]);
+  });
+
   it("keeps exact-review range, review levels, and count immutable", () => {
     const actions = [
       {
@@ -235,8 +269,31 @@ describe("single assignment draft reducer", () => {
     expect(
       reduceSingleAssignmentDraft(exactReviewDraft, {
         type: "title/changed",
-        value: "제목은 수정 가능",
-      }).title,
-    ).toStrictEqual({ mode: "custom", value: "제목은 수정 가능" });
+        value: "제목 변경 시도",
+      }),
+    ).toBe(exactReviewDraft);
+  });
+
+  it("does not create a dirty draft when an exact-review locked exam field is changed", () => {
+    const changedExam = {
+      ...exactReviewDraft.exam,
+      directionRatio: 100 as const,
+    };
+    const mixedDraft: SingleAssignmentDraft = {
+      ...exactReviewDraft,
+      operation: {
+        mode: "replace",
+        assignmentId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        targetStudentId: assignmentContractIds.studentA,
+        sourcePurpose: "mixed",
+      },
+    };
+
+    expect(
+      reduceSingleAssignmentDraft(mixedDraft, {
+        type: "exam/changed",
+        exam: changedExam,
+      }),
+    ).toBe(mixedDraft);
   });
 });

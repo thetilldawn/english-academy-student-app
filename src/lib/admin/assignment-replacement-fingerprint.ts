@@ -13,7 +13,9 @@ export type AssignmentReplacementFingerprintFields = {
   retryEnabled: boolean;
   retryPassingScore: number | null;
   questionOrderMode: string;
+  availableFrom: string | null;
   availableUntil: string | null;
+  reviewScope: "dataset" | "selection";
 };
 
 /**
@@ -33,6 +35,9 @@ export function assignmentReplacementFingerprintPayload(
     datasetId: input.datasetId,
     primaryUnitIds: [...input.primaryUnitIds],
     includePendingReview: input.includePendingReview,
+    reviewScope: input.includePendingReview
+      ? input.reviewScope
+      : "dataset",
     reviewLevels: input.includePendingReview
       ? [...input.reviewLevels].toSorted()
       : [],
@@ -45,6 +50,7 @@ export function assignmentReplacementFingerprintPayload(
     retryEnabled: input.retryEnabled,
     retryPassingScore: input.retryPassingScore,
     questionOrderMode: input.questionOrderMode,
+    availableFrom: input.availableFrom,
     availableUntil: input.availableUntil,
   };
 }

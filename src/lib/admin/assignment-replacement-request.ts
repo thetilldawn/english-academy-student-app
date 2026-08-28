@@ -84,7 +84,9 @@ export const assignmentReplacementSchema = z
     retryEnabled: z.boolean(),
     retryPassingScore: z.number().int().min(0).max(100).nullable(),
     questionOrderMode: z.enum(questionOrderModes),
+    availableFrom: z.iso.datetime({ offset: true }).nullable(),
     availableUntil: z.iso.datetime({ offset: true }).nullable(),
+    reviewScope: reviewScopeSchema,
   })
   .strict()
   .superRefine((value, context) => {
@@ -133,6 +135,17 @@ export const assignmentReplacementSchema = z
         code: "custom",
         path: ["questionTimeLimitSeconds"],
         message: "시간 제한 방식과 문제당 시간을 확인해주세요.",
+      });
+    }
+    if (
+      value.availableFrom &&
+      value.availableUntil &&
+      Date.parse(value.availableUntil) <= Date.parse(value.availableFrom)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["availableUntil"],
+        message: "마감 시각은 공개 시각보다 뒤여야 합니다.",
       });
     }
   });

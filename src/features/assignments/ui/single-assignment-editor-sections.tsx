@@ -43,7 +43,9 @@ export function SingleAssignmentEditorSections({
     fieldErrors.retryPassingScore
     ? "조건 확인"
     : null;
-  const scheduleStatus = fieldErrors.timing || fieldErrors.deadline
+  const scheduleStatus = fieldErrors.timing ||
+    fieldErrors.availability ||
+    fieldErrors.deadline
     ? "일정 확인"
     : null;
 

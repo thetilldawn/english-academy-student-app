@@ -18,6 +18,7 @@ const source: EditableSourceContext = {
     studentId: "22222222-2222-4222-8222-222222222222",
     studentName: "가짜 학생",
     purpose: "review",
+    seriesItem: false,
     title: "오답 시험",
     datasetId: "33333333-3333-4333-8333-333333333333",
     primaryUnitIds: ["44444444-4444-4444-8444-444444444444"],
@@ -30,8 +31,10 @@ const source: EditableSourceContext = {
     retryEnabled: true,
     retryPassingScore: 80,
     questionOrderMode: "random",
+    availableFrom: null,
     availableUntil: null,
     includePendingReview: true,
+    reviewScope: "dataset",
     reviewLevels: [2],
   },
   questions: [
@@ -70,8 +73,10 @@ function replacementInput(
     retryEnabled: source.draft.retryEnabled,
     retryPassingScore: source.draft.retryPassingScore,
     questionOrderMode: source.draft.questionOrderMode,
+    availableFrom: source.draft.availableFrom,
     availableUntil: source.draft.availableUntil,
     includePendingReview: true,
+    reviewScope: source.draft.reviewScope,
     reviewLevels: [2],
     ...overrides,
   };
@@ -130,6 +135,7 @@ describe("assignment replacement policy", () => {
     ["assignment_already_missed", "missed"],
     ["student_deleted", "deleted"],
     ["snapshot_changed", "conflict"],
+    ["vocab_assignment_series_edit_unavailable", "conflict"],
   ] as const)("maps %s to the shared %s error", (message, reason) => {
     expect(
       mapAssignmentReplacementDatabaseFailure({ message }).reason,

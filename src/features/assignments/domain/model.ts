@@ -47,6 +47,10 @@ export type AssignmentDeadline =
   | { mode: "none" }
   | { mode: "at"; koreanLocalDateTime: string };
 
+export type AssignmentAvailability =
+  | { mode: "immediate" }
+  | { mode: "at"; koreanLocalDateTime: string };
+
 export type DirectReviewAssignmentDraft = {
   studentId: string;
   datasetId: string;
@@ -75,6 +79,7 @@ export type ExactReviewLockedShape = {
   datasetId: string;
   orderedUnitIds: readonly string[];
   questionCount: number;
+  reviewScope: ReviewScope;
   reviewLevels: readonly ReviewLevel[];
 };
 
@@ -85,12 +90,14 @@ export type SingleAssignmentOperation =
       assignmentId: string;
       targetStudentId: string;
       sourcePurpose: "regular" | "mixed";
+      seriesItem?: boolean;
     }
   | {
       mode: "replace";
       assignmentId: string;
       targetStudentId: string;
       sourcePurpose: "review";
+      seriesItem?: boolean;
       lockedShape: ExactReviewLockedShape;
     };
 
@@ -102,6 +109,7 @@ export type SingleAssignmentDraft = {
   range: AssignmentRange;
   questionCount: AssignmentQuestionCountChoice;
   exam: ExamSettings;
+  availability: AssignmentAvailability;
   deadline: AssignmentDeadline;
   review: ReviewPolicy;
 };

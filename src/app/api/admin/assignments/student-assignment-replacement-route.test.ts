@@ -105,7 +105,9 @@ const replacementInput = {
   retryEnabled: true,
   retryPassingScore: 80,
   questionOrderMode: "random",
+  availableFrom: null,
   availableUntil: null,
+  reviewScope: "dataset",
 };
 
 const mixedEditDraftResponse = {
@@ -125,9 +127,12 @@ const mixedEditDraftResponse = {
   retryEnabled: true,
   retryPassingScore: 80,
   questionOrderMode: "random" as const,
+  availableFrom: null,
   availableUntil: "2026-08-18T12:00:00.000Z",
   includePendingReview: true,
+  reviewScope: "dataset" as const,
   reviewLevels: [2] as (1 | 2)[],
+  seriesItem: false,
 };
 
 function request(method: "GET" | "POST" | "PUT", body?: unknown) {

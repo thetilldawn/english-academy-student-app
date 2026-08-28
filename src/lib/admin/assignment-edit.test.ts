@@ -17,6 +17,7 @@ const before: AssignmentEditDraft = {
   studentId: "22222222-2222-4222-8222-222222222222",
   studentName: "테스트 학생",
   purpose: "mixed",
+  seriesItem: false,
   title: "기존 시험",
   datasetId: "33333333-3333-4333-8333-333333333333",
   primaryUnitIds: ["44444444-4444-4444-8444-444444444444"],
@@ -29,8 +30,10 @@ const before: AssignmentEditDraft = {
   retryEnabled: true,
   retryPassingScore: 80,
   questionOrderMode: "random",
+  availableFrom: null,
   availableUntil: "2026-08-08T12:30:00.000Z",
   includePendingReview: true,
+  reviewScope: "dataset",
   reviewLevels: [1, 2],
 };
 
@@ -50,25 +53,27 @@ function editableValues(
     retryEnabled: draft.retryEnabled,
     retryPassingScore: draft.retryPassingScore,
     questionOrderMode: draft.questionOrderMode,
+    availableFrom: draft.availableFrom,
     availableUntil: draft.availableUntil,
     includePendingReview: draft.includePendingReview,
+    reviewScope: draft.reviewScope,
     reviewLevels: draft.reviewLevels,
   };
 }
 
 describe("assignment edit helpers", () => {
-  it("활성 오답이 사라진 mixed snapshot은 regular 교체로 내린다", () => {
-    expect(preservedAssignmentReplacementPlan("mixed", false)).toEqual({
-      kind: "regular",
-      reviewSnapshotMode: "none",
-    });
-    expect(preservedAssignmentReplacementPlan("mixed", true)).toEqual({
+  it("교체 후에도 원래 시험 종류를 유지한다", () => {
+    expect(preservedAssignmentReplacementPlan("mixed")).toEqual({
       kind: "mixed",
       reviewSnapshotMode: "preserve",
     });
-    expect(preservedAssignmentReplacementPlan("review", true)).toEqual({
+    expect(preservedAssignmentReplacementPlan("review")).toEqual({
       kind: "review",
       reviewSnapshotMode: "preserve",
+    });
+    expect(preservedAssignmentReplacementPlan("regular")).toEqual({
+      kind: "regular",
+      reviewSnapshotMode: "none",
     });
   });
 

@@ -20,6 +20,7 @@ import {
   AssignmentReplacementError,
 } from "@/lib/services/assignment-replacement-errors";
 import {
+  assertAssignmentEditFieldPolicy,
   assertLegacyMixedContentShape,
   assertExactReviewShape,
   canReuseSourceQuestions,
@@ -102,6 +103,11 @@ export async function calculateStudentAssignmentReplacementCapacity(
   if (input.studentId !== studentId) {
     throw new AssignmentReplacementError("invalid_selection");
   }
+  const policyInput = {
+    ...input,
+    reviewScope: input.reviewScope ?? source.draft.reviewScope,
+  };
+  assertAssignmentEditFieldPolicy(source, policyInput);
   if (source.draft.purpose === "review") {
     assertExactReviewShape(source, {
       datasetId: input.datasetId,
@@ -109,6 +115,7 @@ export async function calculateStudentAssignmentReplacementCapacity(
       questionCount: source.draft.questionCount,
       includePendingReview: input.includePendingReview,
       reviewLevels: input.reviewLevels,
+      reviewScope: policyInput.reviewScope,
     });
     const count =
       source.questions &&
@@ -142,7 +149,7 @@ export async function calculateStudentAssignmentReplacementCapacity(
     };
   }
   if (source.draft.purpose === "mixed") {
-    assertLegacyMixedContentShape(source, input);
+    assertLegacyMixedContentShape(source, policyInput);
     const count = source.draft.questionCount;
     const wrongCount = source.selectedQueueIds.length;
     return {
@@ -207,10 +214,12 @@ export async function prepareStudentAssignmentReplacement(
     retryEnabled: boolean;
     retryPassingScore: number | null;
     questionOrderMode: AssignmentReplacementInput["questionOrderMode"];
+    availableFrom: string | null;
     availableUntil: string | null;
     timingMode: AssignmentReplacementInput["timingMode"];
     questionTimeLimitSeconds: number | null;
     reviewLevels: (1 | 2)[];
+    reviewScope: AssignmentReplacementInput["reviewScope"];
     selectedQueueIds: string[];
     questions: AssignmentQuestionPlan[];
   };
@@ -220,15 +229,18 @@ export async function prepareStudentAssignmentReplacement(
       studentId,
       admin,
     );
+    assertAssignmentEditFieldPolicy(source, input);
     if (source.draft.purpose === "review") {
       assertExactReviewShape(source, input);
     }
     assertLegacyMixedContentShape(source, input);
+    const effectiveReviewScope = input.includePendingReview
+      ? input.reviewScope
+      : source.draft.reviewScope;
 
     if (canReuseSourceQuestions(source, input)) {
       const replacementPlan = preservedAssignmentReplacementPlan(
         source.draft.purpose,
-        input.includePendingReview,
       );
       replacementKind = replacementPlan.kind;
       reviewSnapshotMode = replacementPlan.reviewSnapshotMode;
@@ -244,12 +256,14 @@ export async function prepareStudentAssignmentReplacement(
         retryEnabled: input.retryEnabled,
         retryPassingScore: input.retryPassingScore,
         questionOrderMode: input.questionOrderMode,
+        availableFrom: input.availableFrom,
         availableUntil: input.availableUntil,
         timingMode: input.timingMode,
         questionTimeLimitSeconds: input.questionTimeLimitSeconds,
         reviewLevels: input.includePendingReview
           ? [...input.reviewLevels].toSorted()
           : [],
+        reviewScope: effectiveReviewScope,
         selectedQueueIds: input.includePendingReview
           ? source.selectedQueueIds
           : [],
@@ -269,10 +283,12 @@ export async function prepareStudentAssignmentReplacement(
         retryEnabled: input.retryEnabled,
         retryPassingScore: input.retryPassingScore,
         questionOrderMode: input.questionOrderMode,
+        availableFrom: input.availableFrom,
         availableUntil: input.availableUntil,
         timingMode: input.timingMode,
         questionTimeLimitSeconds: input.questionTimeLimitSeconds,
         reviewLevels: [...input.reviewLevels].toSorted(),
+        reviewScope: effectiveReviewScope,
         selectedQueueIds: source.selectedQueueIds,
         questions: await prepareExactReviewQuestions(
           source,
@@ -288,6 +304,7 @@ export async function prepareStudentAssignmentReplacement(
           datasetId: input.datasetId,
           primaryUnitIds: input.primaryUnitIds,
           reviewLevels: input.reviewLevels,
+          reviewScope: input.reviewScope,
           totalQuestionCount: input.questionCount,
           title: input.title.trim(),
           englishToKoreanRatio: input.englishToKoreanRatio,
@@ -306,6 +323,8 @@ export async function prepareStudentAssignmentReplacement(
       prepared = {
         ...mixed,
         questionCount: input.questionCount,
+        availableFrom: input.availableFrom,
+        reviewScope: effectiveReviewScope,
       };
     } else {
       replacementKind = "regular";
@@ -341,10 +360,12 @@ export async function prepareStudentAssignmentReplacement(
         retryEnabled: regular.retryEnabled,
         retryPassingScore: regular.retryPassingScore,
         questionOrderMode: regular.questionOrderMode,
+        availableFrom: input.availableFrom,
         availableUntil: regular.availableUntil,
         timingMode: regular.timingMode,
         questionTimeLimitSeconds: regular.questionTimeLimitSeconds,
         reviewLevels: [],
+        reviewScope: effectiveReviewScope,
         selectedQueueIds: [],
         questions: regular.questions,
       };

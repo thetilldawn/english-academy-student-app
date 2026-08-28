@@ -42,6 +42,7 @@ const baseSingle: SingleAssignmentDraft = {
     passingScore: 80,
     timing: { mode: "total", totalSeconds: 300 },
   },
+  availability: { mode: "immediate" },
   deadline: { mode: "none" },
   review: { mode: "none", scope: "dataset", levels: [1, 2] },
 };
@@ -63,6 +64,7 @@ const exactReview: SingleAssignmentDraft = {
       datasetId: assignmentContractIds.dataset,
       orderedUnitIds: [assignmentContractIds.day60],
       questionCount: 1,
+      reviewScope: "dataset",
       reviewLevels: [2],
     },
   },

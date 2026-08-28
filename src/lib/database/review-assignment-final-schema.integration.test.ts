@@ -715,6 +715,9 @@ describe.sequential("final review-assignment database schema", () => {
       authenticated_replace_v2: boolean;
       authenticated_replace_v3: boolean;
       authenticated_replace_v4: boolean;
+      authenticated_replace_v5: boolean;
+      authenticated_replace_v6: boolean;
+      authenticated_series_context_v1: boolean;
       authenticated_replace_v1: boolean;
       service_replace_v1: boolean;
       authenticated_replacement_ledger_select: boolean;
@@ -725,6 +728,7 @@ describe.sequential("final review-assignment database schema", () => {
       anon_public_mixed_v9: boolean;
       anon_public_bulk_v4: boolean;
       anon_replace_v4: boolean;
+      anon_series_context_v1: boolean;
     }>(`
       select
         has_function_privilege(
@@ -814,6 +818,21 @@ describe.sequential("final review-assignment database schema", () => {
         ) as authenticated_replace_v4,
         has_function_privilege(
           'authenticated',
+          'public.replace_student_assignment_v5(uuid,uuid,uuid,text,text,text,text,uuid,uuid[],integer,smallint,integer,smallint,boolean,smallint,public.question_order_mode,timestamp with time zone,text,integer,smallint[],uuid[],jsonb)',
+          'execute'
+        ) as authenticated_replace_v5,
+        has_function_privilege(
+          'authenticated',
+          'public.replace_student_assignment_v6(uuid,uuid,uuid,text,text,text,text,uuid,uuid[],integer,smallint,integer,smallint,boolean,smallint,public.question_order_mode,timestamp with time zone,timestamp with time zone,text,integer,smallint[],text,uuid[],jsonb)',
+          'execute'
+        ) as authenticated_replace_v6,
+        has_function_privilege(
+          'authenticated',
+          'public.get_assignment_edit_series_context_v1(uuid,uuid)',
+          'execute'
+        ) as authenticated_series_context_v1,
+        has_function_privilege(
+          'authenticated',
           'public.replace_student_assignment_v1(uuid,uuid,uuid,text,text,text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,smallint[],uuid[],jsonb)',
           'execute'
         ) as authenticated_replace_v1,
@@ -861,7 +880,12 @@ describe.sequential("final review-assignment database schema", () => {
           'anon',
           'public.replace_student_assignment_v4(uuid,uuid,uuid,text,text,text,text,uuid,uuid[],integer,smallint,integer,smallint,public.question_order_mode,timestamp with time zone,text,integer,smallint[],uuid[],jsonb)',
           'execute'
-        ) as anon_replace_v4;
+        ) as anon_replace_v4,
+        has_function_privilege(
+          'anon',
+          'public.get_assignment_edit_series_context_v1(uuid,uuid)',
+          'execute'
+        ) as anon_series_context_v1;
     `);
 
     expect(privileges.rows[0]).toEqual({
@@ -880,8 +904,11 @@ describe.sequential("final review-assignment database schema", () => {
       authenticated_public_identity_v1: true,
       authenticated_public_review_summary: true,
       authenticated_replace_v2: false,
-      authenticated_replace_v3: true,
-      authenticated_replace_v4: true,
+      authenticated_replace_v3: false,
+      authenticated_replace_v4: false,
+      authenticated_replace_v5: true,
+      authenticated_replace_v6: true,
+      authenticated_series_context_v1: true,
       authenticated_replace_v1: false,
       service_replace_v1: false,
       authenticated_replacement_ledger_select: false,
@@ -892,8 +919,415 @@ describe.sequential("final review-assignment database schema", () => {
       anon_public_mixed_v9: false,
       anon_public_bulk_v4: false,
       anon_replace_v4: false,
+      anon_series_context_v1: false,
     });
   });
+
+  it("preserves edit metadata, rebinds a queued session, and advances after completion", async () => {
+    const database = await createFinalSchemaDatabase();
+    const queueRequestId = "00000000-0000-4000-8000-000000000901";
+    const seriesId = "00000000-0000-4000-8000-000000000902";
+    const currentItemId = "00000000-0000-4000-8000-000000000903";
+    const nextItemId = "00000000-0000-4000-8000-000000000904";
+    const idempotencyKey = "00000000-0000-4000-8000-000000000905";
+    const missingScheduleKey = "00000000-0000-4000-8000-000000000906";
+    const availableFrom = "2026-08-01T01:00:00Z";
+    const availableUntil = "2099-09-01T02:00:00Z";
+    try {
+      await seedReviewAssignmentScenario(database);
+      await database.exec("set role authenticated;");
+      const source = await database.query<{ assignment_id: string }>(`
+        select public.create_assignment_with_delivery_v7(
+          'Queued edit source',
+          '${ids.dataset}',
+          array['${ids.units[0]}'::uuid, '${ids.units[4]}'::uuid],
+          4,
+          100::smallint,
+          300,
+          80::smallint,
+          true,
+          80::smallint,
+          'fixed',
+          null,
+          array['${ids.student}'::uuid],
+          'total',
+          null,
+          $questions$${mixedQuestions}$questions$::jsonb
+        ) as assignment_id;
+      `);
+      await database.exec("reset role;");
+      const sourceAssignmentId = source.rows[0]!.assignment_id;
+
+      await database.exec(`
+        update public.assignments
+        set
+          available_from = '2026-07-01T01:00:00Z'::timestamptz,
+          available_until = '2099-08-01T02:00:00Z'::timestamptz
+        where id = '${sourceAssignmentId}';
+
+        insert into private.vocab_assignment_queue_requests (
+          idempotency_key,
+          request_sha256,
+          payload_sha256,
+          actor_admin_id
+        ) values (
+          '${queueRequestId}', repeat('1', 64), repeat('2', 64), '${ids.admin}'
+        );
+
+        insert into private.vocab_assignment_series (
+          id,
+          request_id,
+          student_id,
+          dataset_id,
+          actor_admin_id,
+          dataset_label,
+          range_label,
+          recurrence_slots,
+          status
+        ) values (
+          '${seriesId}',
+          '${queueRequestId}',
+          '${ids.student}',
+          '${ids.dataset}',
+          '${ids.admin}',
+          'Edit queue dataset',
+          'DAY 1, DAY 5',
+          '[{"isodow":1,"local_time":"10:00","duration_seconds":3600}]'::jsonb,
+          'active'
+        );
+
+        insert into private.vocab_assignment_series_items (
+          id,
+          series_id,
+          sequence_number,
+          status,
+          question_count,
+          unit_ids,
+          unit_labels,
+          planned_available_from,
+          planned_available_until,
+          effective_available_from,
+          effective_available_until,
+          payload,
+          assignment_id,
+          materialized_at
+        ) values
+          (
+            '${currentItemId}',
+            '${seriesId}',
+            1,
+            'assigned',
+            4,
+            array['${ids.units[0]}'::uuid, '${ids.units[4]}'::uuid],
+            array['DAY 1', 'DAY 5'],
+            '2026-07-01T01:00:00Z'::timestamptz,
+            '2099-08-01T02:00:00Z'::timestamptz,
+            '2026-07-01T01:00:00Z'::timestamptz,
+            '2099-08-01T02:00:00Z'::timestamptz,
+            '{"passing_score":80,"retry_enabled":true,"retry_passing_score":80}'::jsonb,
+            '${sourceAssignmentId}',
+            clock_timestamp()
+          ),
+          (
+            '${nextItemId}',
+            '${seriesId}',
+            2,
+            'queued',
+            4,
+            array['${ids.units[0]}'::uuid, '${ids.units[4]}'::uuid],
+            array['DAY 1', 'DAY 5'],
+            '2099-09-08T01:00:00Z'::timestamptz,
+            '2099-09-08T02:00:00Z'::timestamptz,
+            '2099-09-08T01:00:00Z'::timestamptz,
+            '2099-09-08T02:00:00Z'::timestamptz,
+            '{"passing_score":80,"retry_enabled":true,"retry_passing_score":80}'::jsonb,
+            null,
+            null
+          );
+      `);
+
+      await database.exec("set role authenticated;");
+      await expectPostgresError(
+        database.query(`
+          select public.replace_student_assignment_v6(
+            '${sourceAssignmentId}', '${ids.student}',
+            '${missingScheduleKey}', repeat('f', 64),
+            'regular', 'none', 'Missing series schedule',
+            '${ids.dataset}',
+            array['${ids.units[0]}'::uuid, '${ids.units[4]}'::uuid],
+            4, 100::smallint, 600, 90::smallint, false, null,
+            'fixed', null, null, 'total', null,
+            array[]::smallint[], 'dataset', array[]::uuid[],
+            $questions$${mixedQuestions}$questions$::jsonb
+          );
+        `),
+        "22023",
+        "vocab_assignment_series_schedule_required",
+      );
+      await database.exec("reset role;");
+      const beforeReplacement = await database.query<{
+        cancelled: boolean;
+        item_status: string;
+      }>(`
+        select
+          link.cancelled_at is not null as cancelled,
+          item.status as item_status
+        from public.assignment_students as link
+        join private.vocab_assignment_series_items as item
+          on item.assignment_id = link.assignment_id
+        where link.assignment_id = '${sourceAssignmentId}'
+          and link.student_id = '${ids.student}';
+      `);
+      expect(beforeReplacement.rows[0]).toEqual({
+        cancelled: false,
+        item_status: "assigned",
+      });
+
+      await database.exec("set role authenticated;");
+      const first = await database.query<{
+        result: {
+          idempotent: boolean;
+          replacementAssignmentId: string;
+        };
+      }>(`
+        select public.replace_student_assignment_v6(
+          '${sourceAssignmentId}',
+          '${ids.student}',
+          '${idempotencyKey}',
+          repeat('a', 64),
+          'regular',
+          'none',
+          'Queued edit replacement',
+          '${ids.dataset}',
+          array['${ids.units[0]}'::uuid, '${ids.units[4]}'::uuid],
+          4,
+          100::smallint,
+          600,
+          90::smallint,
+          false,
+          null,
+          'fixed',
+          '${availableFrom}'::timestamptz,
+          '${availableUntil}'::timestamptz,
+          'total',
+          null,
+          array[]::smallint[],
+          'dataset',
+          array[]::uuid[],
+          $questions$${mixedQuestions}$questions$::jsonb
+        ) as result;
+      `);
+      const replay = await database.query<{
+        result: {
+          idempotent: boolean;
+          replacementAssignmentId: string;
+        };
+      }>(`
+        select public.replace_student_assignment_v6(
+          '${sourceAssignmentId}',
+          '${ids.student}',
+          '${idempotencyKey}',
+          repeat('a', 64),
+          'regular',
+          'none',
+          'Queued edit replacement',
+          '${ids.dataset}',
+          array['${ids.units[0]}'::uuid, '${ids.units[4]}'::uuid],
+          4,
+          100::smallint,
+          600,
+          90::smallint,
+          false,
+          null,
+          'fixed',
+          '${availableFrom}'::timestamptz,
+          '${availableUntil}'::timestamptz,
+          'total',
+          null,
+          array[]::smallint[],
+          'dataset',
+          array[]::uuid[],
+          $questions$${mixedQuestions}$questions$::jsonb
+        ) as result;
+      `);
+      const recoveredByNewLookup = await database.query<{
+        result: { idempotent: boolean; replacementAssignmentId: string };
+      }>(`
+        select public.get_student_assignment_replacement_result_v2(
+          '${sourceAssignmentId}', '${ids.student}', '${idempotencyKey}',
+          repeat('a', 64), '${availableFrom}'::timestamptz, 'dataset',
+          false, null
+        ) as result;
+      `);
+      const recoveredByRollingLookup = await database.query<{
+        result: { idempotent: boolean; replacementAssignmentId: string };
+      }>(`
+        select public.get_student_assignment_replacement_result_v1(
+          '${sourceAssignmentId}', '${ids.student}', '${idempotencyKey}',
+          repeat('a', 64)
+        ) as result;
+      `);
+      expect(recoveredByNewLookup.rows[0]!.result.idempotent).toBe(true);
+      expect(recoveredByRollingLookup.rows[0]!.result.idempotent).toBe(true);
+      await expectPostgresError(
+        database.query(`
+          select public.get_student_assignment_replacement_result_v2(
+            '${sourceAssignmentId}', '${ids.student}', '${idempotencyKey}',
+            repeat('a', 64), '${availableFrom}'::timestamptz, 'dataset',
+            true, 90::smallint
+          );
+        `),
+        "23505",
+        "idempotency_key_reused",
+      );
+      await expectPostgresError(
+        database.query(`
+          select public.replace_student_assignment_v6(
+            '${sourceAssignmentId}', '${ids.student}', '${idempotencyKey}',
+            repeat('a', 64), 'regular', 'none', 'Queued edit replacement',
+            '${ids.dataset}',
+            array['${ids.units[0]}'::uuid, '${ids.units[4]}'::uuid],
+            4, 100::smallint, 600, 90::smallint, false, null, 'fixed',
+            '2026-08-02T01:00:00Z'::timestamptz,
+            '${availableUntil}'::timestamptz,
+            'total', null, array[]::smallint[], 'dataset',
+            array[]::uuid[],
+            $questions$${mixedQuestions}$questions$::jsonb
+          );
+        `),
+        "23505",
+        "idempotency_key_reused",
+      );
+      await database.exec("reset role;");
+
+      const replacementAssignmentId =
+        first.rows[0]!.result.replacementAssignmentId;
+      expect(first.rows[0]!.result.idempotent).toBe(false);
+      expect(replay.rows[0]!.result).toMatchObject({
+        idempotent: true,
+        replacementAssignmentId,
+      });
+
+      const attempt = await database.query<{ attempt_id: string }>(`
+        select public.create_quiz_attempt_from_bank(
+          '${ids.student}', '${replacementAssignmentId}'
+        ) as attempt_id;
+      `);
+      await database.exec(`
+        update public.quiz_attempts
+        set
+          status = 'completed',
+          phase = 'completed',
+          completed_at = clock_timestamp(),
+          initial_correct_count = question_count_snapshot,
+          retry_correct_count = 0,
+          unresolved_wrong_count = 0,
+          initial_score = 100,
+          final_score = 100,
+          passed = true,
+          elapsed_seconds = 0
+        where id = '${attempt.rows[0]!.attempt_id}';
+      `);
+
+      const state = await database.query<{
+        available_from: string;
+        available_until: string;
+        review_scope: string;
+        retry_enabled: boolean;
+        retry_passing_score: number | null;
+        source_cancelled: boolean;
+        current_assignment_id: string;
+        current_status: string;
+        next_status: string;
+        series_status: string;
+        replaced_events: number;
+        completed_events: number;
+        ready_events: number;
+        metadata_audits: number;
+        effective_available_from: string;
+        effective_available_until: string;
+        payload_retry_enabled: boolean;
+      }>(`
+        select
+          assignment.available_from::text as available_from,
+          assignment.available_until::text as available_until,
+          assignment.review_scope,
+          assignment.retry_enabled,
+          assignment.retry_passing_score,
+          (
+            select cancelled_at is not null
+            from public.assignment_students
+            where assignment_id = '${sourceAssignmentId}'
+              and student_id = '${ids.student}'
+          ) as source_cancelled,
+          current_item.assignment_id::text as current_assignment_id,
+          current_item.status as current_status,
+          current_item.effective_available_from::text as effective_available_from,
+          current_item.effective_available_until::text as effective_available_until,
+          (current_item.payload ->> 'retry_enabled')::boolean as payload_retry_enabled,
+          next_item.status as next_status,
+          series.status as series_status,
+          (
+            select count(*)::integer
+            from private.vocab_assignment_series_events
+            where series_id = '${seriesId}' and event_kind = 'session.replaced'
+          ) as replaced_events,
+          (
+            select count(*)::integer
+            from private.vocab_assignment_series_events
+            where series_id = '${seriesId}' and event_kind = 'session.completed'
+          ) as completed_events,
+          (
+            select count(*)::integer
+            from private.vocab_assignment_series_events
+            where series_id = '${seriesId}' and event_kind = 'session.ready'
+          ) as ready_events,
+          (
+            select count(*)::integer
+            from public.audit_events
+            where event_type = 'assignment.student.replacement_metadata_v1'
+              and details ->> 'sourceAssignmentId' = '${sourceAssignmentId}'
+          ) as metadata_audits
+        from public.assignments as assignment
+        join private.vocab_assignment_series_items as current_item
+          on current_item.id = '${currentItemId}'
+        join private.vocab_assignment_series_items as next_item
+          on next_item.id = '${nextItemId}'
+        join private.vocab_assignment_series as series
+          on series.id = '${seriesId}'
+        where assignment.id = '${replacementAssignmentId}';
+      `);
+      expect(state.rows[0]).toMatchObject({
+        review_scope: "dataset",
+        retry_enabled: false,
+        retry_passing_score: null,
+        source_cancelled: true,
+        current_assignment_id: replacementAssignmentId,
+        current_status: "completed",
+        next_status: "ready",
+        series_status: "active",
+        replaced_events: 1,
+        completed_events: 1,
+        ready_events: 1,
+        metadata_audits: 1,
+        payload_retry_enabled: false,
+      });
+      expect(new Date(state.rows[0]!.available_from).toISOString()).toBe(
+        "2026-08-01T01:00:00.000Z",
+      );
+      expect(new Date(state.rows[0]!.available_until).toISOString()).toBe(
+        "2099-09-01T02:00:00.000Z",
+      );
+      expect(
+        new Date(state.rows[0]!.effective_available_from).toISOString(),
+      ).toBe("2026-08-01T01:00:00.000Z");
+      expect(
+        new Date(state.rows[0]!.effective_available_until).toISOString(),
+      ).toBe("2099-09-01T02:00:00.000Z");
+    } finally {
+      await database.close();
+    }
+  }, 50_000);
 
   it("validates and persists an explicitly descending DAY range", async () => {
     const rangeDatabase = await createFinalSchemaDatabase();
@@ -3971,7 +4405,7 @@ describe.sequential("admin deletion controls", () => {
     }
   }, 30_000);
 
-  it("preserves mixed targets for metadata edits and rolls the full lifecycle back on failure", async () => {
+  it("preserves mixed targets for metadata edits and rejects locked-shape changes", async () => {
     const mixedReplacementDatabase = await createFinalSchemaDatabase();
     const replacementKey = "00000000-0000-4000-8000-000000000811";
     const rollbackKey = "00000000-0000-4000-8000-000000000812";
@@ -4032,20 +4466,44 @@ describe.sequential("admin deletion controls", () => {
       `);
       const sourceAssignmentId = source.rows[0]!.assignment_id;
 
+      await mixedReplacementDatabase.exec("reset role;");
+      const persistedSourcePlan = await mixedReplacementDatabase.query<{
+        questions: unknown;
+      }>(`
+        select coalesce(
+          jsonb_agg(
+            jsonb_build_object(
+              'vocab_entry_id', question.vocab_entry_id,
+              'base_order_index', question.base_order_index,
+              'direction', question.direction,
+              'choice_vocab_entry_ids', question.choice_vocab_entry_ids
+            ) order by question.base_order_index
+          ),
+          '[]'::jsonb
+        ) as questions
+        from public.assignment_questions as question
+        where question.assignment_id = '${sourceAssignmentId}';
+      `);
+      const sourceQuestions = JSON.stringify(
+        persistedSourcePlan.rows[0]!.questions,
+      );
+      await mixedReplacementDatabase.exec("set role authenticated;");
+
       const replacement = await mixedReplacementDatabase.query<{
         result: {
           replacementAssignmentId: string;
           replacementPurpose: string;
         };
       }>(`
-        select public.replace_student_assignment_v3(
+        select public.replace_student_assignment_v6(
           '${sourceAssignmentId}', '${ids.student}', '${replacementKey}',
           repeat('b', 64), 'mixed', 'preserve', 'Mixed renamed',
           '${ids.dataset}', array['${ids.units[4]}'::uuid], 4,
-          100::smallint, 600, 80::smallint, 'fixed', null,
-          'total', null, array[1]::smallint[],
+          100::smallint, 600, 80::smallint, true, 80::smallint,
+          'fixed', null, null, 'total', null, array[1]::smallint[],
+          'dataset',
           array['${ids.selectedQueue}'::uuid],
-          $questions$${mixedQuestions}$questions$::jsonb
+          $questions$${sourceQuestions}$questions$::jsonb
         ) as result;
       `);
       await mixedReplacementDatabase.exec("reset role;");
@@ -4109,7 +4567,7 @@ describe.sequential("admin deletion controls", () => {
       expect(state.rows[0]!.before_hash).toBe(state.rows[0]!.after_hash);
 
       const invalidQuestions = JSON.stringify(
-        JSON.parse(mixedQuestions).map(
+        JSON.parse(sourceQuestions).map(
           (question: Record<string, unknown>) => ({
             ...question,
             base_order_index: 1,
@@ -4119,18 +4577,19 @@ describe.sequential("admin deletion controls", () => {
       await mixedReplacementDatabase.exec("set role authenticated;");
       await expectPostgresError(
         mixedReplacementDatabase.query(`
-          select public.replace_student_assignment_v3(
+          select public.replace_student_assignment_v6(
             '${replacementAssignmentId}', '${ids.student}', '${rollbackKey}',
-            repeat('c', 64), 'mixed', 'recalculate', 'Must roll back',
+            repeat('c', 64), 'mixed', 'preserve', 'Must roll back',
             '${ids.dataset}', array['${ids.units[4]}'::uuid], 4,
-            100::smallint, 600, 80::smallint, 'fixed', null,
-            'total', null, array[1]::smallint[],
+            100::smallint, 600, 80::smallint, true, 80::smallint,
+            'fixed', null, null, 'total', null, array[1]::smallint[],
+            'dataset',
             array['${ids.selectedQueue}'::uuid],
             $questions$${invalidQuestions}$questions$::jsonb
           );
         `),
         "22023",
-        "invalid_review_question_plan",
+        "assignment_edit_field_locked",
       );
       await mixedReplacementDatabase.exec("reset role;");
 
@@ -4186,49 +4645,22 @@ describe.sequential("admin deletion controls", () => {
         },
       ]);
       await mixedReplacementDatabase.exec("set role authenticated;");
-      const allReview = await mixedReplacementDatabase.query<{
-        result: {
-          replacementAssignmentId: string;
-          replacementPurpose: string;
-        };
-      }>(`
-        select public.replace_student_assignment_v3(
-          '${replacementAssignmentId}', '${ids.student}', '${allReviewKey}',
-          repeat('e', 64), 'mixed', 'recalculate', 'Only wrong word',
-          '${ids.dataset}', array['${ids.units[4]}'::uuid], 1,
-          100::smallint, 600, 80::smallint, 'fixed', null,
-          'total', null, array[1]::smallint[],
-          array['${ids.selectedQueue}'::uuid],
-          $questions$${oneReviewQuestion}$questions$::jsonb
-        ) as result;
-      `);
-      await mixedReplacementDatabase.exec("reset role;");
-      expect(allReview.rows[0]!.result.replacementPurpose).toBe(
-        "review",
+      await expectPostgresError(
+        mixedReplacementDatabase.query(`
+          select public.replace_student_assignment_v6(
+            '${replacementAssignmentId}', '${ids.student}', '${allReviewKey}',
+            repeat('e', 64), 'review', 'preserve', 'Only wrong word',
+            '${ids.dataset}', array['${ids.units[4]}'::uuid], 1,
+            100::smallint, 600, 80::smallint, true, 80::smallint,
+            'fixed', null, null, 'total', null, array[1]::smallint[],
+            'dataset', array['${ids.selectedQueue}'::uuid],
+            $questions$${oneReviewQuestion}$questions$::jsonb
+          );
+        `),
+        "22023",
+        "assignment_edit_field_locked",
       );
-      const allReviewState = await mixedReplacementDatabase.query<{
-        question_count: number;
-        primary_units: number;
-        active_targets: number;
-      }>(`
-        select
-          assignment.question_count,
-          (
-            select count(*)::integer from public.assignment_units
-            where assignment_id = assignment.id and is_primary
-          ) as primary_units,
-          (
-            select count(*)::integer from public.assignment_review_targets
-            where assignment_id = assignment.id and released_at is null
-          ) as active_targets
-        from public.assignments as assignment
-        where assignment.id = '${allReview.rows[0]!.result.replacementAssignmentId}';
-      `);
-      expect(allReviewState.rows[0]).toEqual({
-        question_count: 1,
-        primary_units: 0,
-        active_targets: 1,
-      });
+      await mixedReplacementDatabase.exec("reset role;");
     } finally {
       await mixedReplacementDatabase.close();
     }
@@ -4436,12 +4868,12 @@ describe.sequential("admin deletion controls", () => {
             replacementPurpose: string;
           };
         }>(`
-          select public.replace_student_assignment_v3(
+          select public.replace_student_assignment_v5(
             '${sourceAssignmentId}', '${ids.student}', '${replacementKey}',
             repeat('d', 64), 'review', 'preserve',
             'Exact replacement ${targetCount}', '${ids.dataset}',
             array[]::uuid[], ${targetCount}, 100::smallint, 600,
-            80::smallint, 'fixed', null, 'total', null,
+            80::smallint, true, 80::smallint, 'fixed', null, 'total', null,
             array[1]::smallint[], array[${queueSql}]::uuid[],
             $questions$${questions}$questions$::jsonb
           ) as result;
@@ -4597,7 +5029,7 @@ describe.sequential("admin deletion controls", () => {
           idempotent: boolean;
         };
       }>(`
-        select public.replace_student_assignment_v3(
+        select public.replace_student_assignment_v5(
           '${sourceAssignmentId}',
           '${ids.student}',
           '${replacementKey}',
@@ -4616,6 +5048,8 @@ describe.sequential("admin deletion controls", () => {
           4,
           100::smallint,
           300,
+          80::smallint,
+          true,
           80::smallint,
           'descending',
           (select deadline from replacement_deadline_fixture),
@@ -4748,7 +5182,7 @@ describe.sequential("admin deletion controls", () => {
           idempotent: boolean;
         };
       }>(`
-        select public.replace_student_assignment_v3(
+        select public.replace_student_assignment_v5(
           '${sourceAssignmentId}',
           '${ids.student}',
           '${replacementKey}',
@@ -4767,6 +5201,8 @@ describe.sequential("admin deletion controls", () => {
           4,
           100::smallint,
           300,
+          80::smallint,
+          true,
           80::smallint,
           'descending',
           (select deadline from replacement_deadline_fixture),
@@ -4790,7 +5226,7 @@ describe.sequential("admin deletion controls", () => {
       `);
       await expectPostgresError(
         replacementDatabase.query(`
-          select public.replace_student_assignment_v3(
+          select public.replace_student_assignment_v5(
             '${sourceAssignmentId}',
             '${ids.student}',
             '${replacementKey}',
@@ -4803,6 +5239,8 @@ describe.sequential("admin deletion controls", () => {
             4,
             100::smallint,
             300,
+            80::smallint,
+            true,
             80::smallint,
             'descending',
             (select deadline from replacement_deadline_fixture),
@@ -4867,7 +5305,7 @@ describe.sequential("admin deletion controls", () => {
 
       await expectPostgresError(
         replacementDatabase.query(`
-          select public.replace_student_assignment_v3(
+          select public.replace_student_assignment_v5(
             '${rollbackSourceId}',
             '${rollbackStudent}',
             '${rollbackKey}',
@@ -4886,6 +5324,8 @@ describe.sequential("admin deletion controls", () => {
             4,
             100::smallint,
             300,
+            80::smallint,
+            true,
             80::smallint,
             'ascending',
             null,

@@ -534,6 +534,7 @@ describe("single assignment controller", () => {
         return {
           data: {
             assignmentId,
+            availableFrom: null,
             availableUntil: null,
             datasetId: assignmentContractIds.dataset,
             englishToKoreanRatio: 50,
@@ -547,6 +548,8 @@ describe("single assignment controller", () => {
             questionOrderMode: "random",
             questionTimeLimitSeconds: null,
             reviewLevels: includePendingReview ? [1, 2] : [],
+            reviewScope: "dataset",
+            seriesItem: false,
             studentId: assignmentContractIds.studentA,
             studentName: "학생",
             timeLimitSeconds: 300,
@@ -593,7 +596,7 @@ describe("single assignment controller", () => {
     expect(result.current.canSubmit).toBe(false);
     if (purpose === "mixed") {
       const locked = result.current.state.draft;
-      expect(result.current.isContentLocked).toBe(true);
+      expect(result.current.fieldPolicy.range).toBe("locked");
       expect(result.current.isMixedReview).toBe(true);
       act(() => {
         result.current.actions.changeRange(assignmentContractIds.dataset, [
@@ -630,11 +633,93 @@ describe("single assignment controller", () => {
     });
   });
 
+  it("does not mark an edit dirty when only the question-count UI mode changes", async () => {
+    const assignmentId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const requests: Parameters<AssignmentTransport>[0][] = [];
+    const transport: AssignmentTransport = vi.fn(async (request) => {
+      requests.push(request);
+      if (request.method === "GET") {
+        return {
+          data: {
+            assignmentId,
+            availableFrom: null,
+            availableUntil: null,
+            datasetId: assignmentContractIds.dataset,
+            englishToKoreanRatio: 50,
+            includePendingReview: false,
+            passingScore: 80,
+            retryEnabled: true,
+            retryPassingScore: 80,
+            primaryUnitIds: [...reverseUnitIds],
+            purpose: "regular",
+            questionCount: 12,
+            questionOrderMode: "random",
+            questionTimeLimitSeconds: null,
+            reviewLevels: [],
+            reviewScope: "dataset",
+            seriesItem: false,
+            studentId: assignmentContractIds.studentA,
+            studentName: "학생",
+            timeLimitSeconds: 300,
+            timingMode: "total",
+            title: "기존 단어 시험",
+          },
+          ok: true,
+          status: 200,
+        };
+      }
+      if (request.method === "POST") {
+        return {
+          data: {
+            ...capacity,
+            maximumQuestionCount: 12,
+            recommendedQuestionCount: 12,
+            unitEligible: 12,
+          },
+          ok: true,
+          status: 200,
+        };
+      }
+      return { data: {}, ok: true, status: 200 };
+    });
+    const { result } = renderHook(() =>
+      useAssignmentController({
+        automaticTitleForDraft: () => "자동 시험",
+        capacityErrorMessage: "capacity error",
+        editLoadErrorMessage: "edit error",
+        genericErrorMessage: "submit error",
+        previewDelayMs: 0,
+        source: {
+          assignmentId,
+          fallbackDraft: createDraft(),
+          kind: "edit",
+          studentId: assignmentContractIds.studentA,
+        },
+        transport,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.state.preview.status).toBe("ready"));
+    expect(result.current.dirty).toBe(false);
+    act(() => result.current.actions.restoreAutomaticCount());
+    expect(result.current.state.draft.questionCount).toEqual({
+      mode: "automatic",
+      value: 12,
+    });
+    expect(result.current.dirty).toBe(false);
+    expect(result.current.canSubmit).toBe(false);
+    await act(async () => {
+      expect(await result.current.actions.submit()).toMatchObject({ ok: false });
+    });
+    expect(requests.filter((request) => request.method === "PUT")).toHaveLength(0);
+  });
+
   it("hydrates and locks the exact-review range while allowing settings edits", async () => {
     const requests: Parameters<AssignmentTransport>[0][] = [];
     const assignmentId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
     const editResponse = {
       assignmentId,
+      availableFrom: null,
       availableUntil: null,
       datasetId: assignmentContractIds.dataset,
       englishToKoreanRatio: 0,
@@ -648,6 +733,8 @@ describe("single assignment controller", () => {
       questionOrderMode: "ascending" as const,
       questionTimeLimitSeconds: 20,
       reviewLevels: [2] as const,
+      reviewScope: "dataset" as const,
+      seriesItem: false,
       studentId: assignmentContractIds.studentA,
       studentName: "학생",
       timeLimitSeconds: 10800,
@@ -697,7 +784,7 @@ describe("single assignment controller", () => {
       }),
     );
     await waitFor(() => expect(result.current.isExactReview).toBe(true));
-    expect(result.current.isContentLocked).toBe(true);
+    expect(result.current.fieldPolicy.range).toBe("locked");
     await waitFor(() => expect(result.current.state.preview.status).toBe("ready"));
     const locked = result.current.state.draft;
 

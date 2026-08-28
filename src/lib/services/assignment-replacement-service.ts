@@ -55,14 +55,25 @@ async function lookupReplacementResult(
   studentId: string,
   idempotencyKey: string,
   requestSha256: string,
+  input: Pick<
+    AssignmentReplacementInput,
+    | "availableFrom"
+    | "reviewScope"
+    | "retryEnabled"
+    | "retryPassingScore"
+  >,
 ) {
   const lookup = await supabase.rpc(
-    "get_student_assignment_replacement_result_v1",
+    "get_student_assignment_replacement_result_v2",
     {
       p_source_assignment_id: assignmentId,
       p_student_id: studentId,
       p_idempotency_key: idempotencyKey,
       p_request_sha256: requestSha256,
+      p_available_from: input.availableFrom,
+      p_review_scope: input.reviewScope,
+      p_retry_enabled: input.retryEnabled,
+      p_retry_passing_score: input.retryPassingScore,
     },
   );
   if (lookup.error) {
@@ -89,12 +100,21 @@ export async function replaceStudentAssignment(
     studentId,
     input,
   );
+  const replacementMetadata = {
+    availableFrom: input.availableFrom,
+    reviewScope: input.includePendingReview
+      ? input.reviewScope
+      : ("dataset" as const),
+    retryEnabled: input.retryEnabled,
+    retryPassingScore: input.retryPassingScore,
+  };
   const previous = await lookupReplacementResult(
     supabase,
     assignmentId,
     studentId,
     input.idempotencyKey,
     requestSha256,
+    replacementMetadata,
   );
   if (previous) return previous;
 
@@ -115,6 +135,7 @@ export async function replaceStudentAssignment(
       studentId,
       input.idempotencyKey,
       requestSha256,
+      replacementMetadata,
     );
     if (concurrentResult) return concurrentResult;
     if (error instanceof AssignmentReplacementError) throw error;
@@ -125,7 +146,7 @@ export async function replaceStudentAssignment(
     replacement;
 
   const { data, error } = await supabase.rpc(
-    "replace_student_assignment_v5",
+    "replace_student_assignment_v6",
     {
       p_source_assignment_id: assignmentId,
       p_student_id: studentId,
@@ -143,11 +164,13 @@ export async function replaceStudentAssignment(
       p_retry_enabled: prepared.retryEnabled,
       p_retry_passing_score: prepared.retryPassingScore,
       p_question_order_mode: prepared.questionOrderMode,
+      p_available_from: prepared.availableFrom,
       p_available_until: prepared.availableUntil,
       p_timing_mode: prepared.timingMode,
       p_question_time_limit_seconds:
         prepared.questionTimeLimitSeconds,
       p_review_levels: prepared.reviewLevels,
+      p_review_scope: prepared.reviewScope,
       p_selected_queue_ids: prepared.selectedQueueIds,
       p_questions: prepared.questions,
     },
@@ -159,6 +182,7 @@ export async function replaceStudentAssignment(
       studentId,
       input.idempotencyKey,
       requestSha256,
+      replacementMetadata,
     );
     if (concurrentResult) return concurrentResult;
     console.error("[assignment-replacement] database operation failed", {

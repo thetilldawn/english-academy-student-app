@@ -45,6 +45,12 @@ export function AssignmentSummaryPanel({
     draft.deadline.mode === "at"
       ? koreanDateTimeLocalToIso(draft.deadline.koreanLocalDateTime)
       : null;
+  const availableIso =
+    draft.availability.mode === "at"
+      ? koreanDateTimeLocalToIso(
+          draft.availability.koreanLocalDateTime,
+        )
+      : null;
   const previewError = preview.status === "error" ? preview.message : "";
   const unmappedIssues = controller.issues.filter(
     (issue) => assignmentEditFieldKeyForPath(issue.path) === null,
@@ -91,6 +97,14 @@ export function AssignmentSummaryPanel({
             {formatContentText(adminLearningText.assignmentModal.edit.score, {
               score: draft.exam.passingScore,
             })}
+          </dd>
+        </div>
+        <div>
+          <dt>공개</dt>
+          <dd>
+            {availableIso
+              ? formatKoreanDateTime(availableIso)
+              : "바로 공개"}
           </dd>
         </div>
         <div>

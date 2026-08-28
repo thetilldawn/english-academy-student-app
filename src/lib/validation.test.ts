@@ -127,7 +127,9 @@ describe("학생별 배정 수정 입력 계약", () => {
     retryEnabled: true,
     retryPassingScore: 80,
     questionOrderMode: "random" as const,
+    availableFrom: null,
     availableUntil: null,
+    reviewScope: "dataset" as const,
   };
 
   it("정확 오답 재시험 1문항을 허용하고 0문항은 거부한다", () => {

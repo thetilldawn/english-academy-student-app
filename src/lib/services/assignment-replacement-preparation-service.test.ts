@@ -36,6 +36,7 @@ const source: EditableSourceContext = {
     studentId,
     studentName: "미리보기 학생",
     purpose: "mixed",
+    seriesItem: false,
     title: "기존 오답 포함 시험",
     datasetId,
     primaryUnitIds: [unitId],
@@ -48,8 +49,10 @@ const source: EditableSourceContext = {
     retryEnabled: true,
     retryPassingScore: 80,
     questionOrderMode: "random",
+    availableFrom: "2026-08-29T00:00:00.000Z",
     availableUntil: null,
     includePendingReview: true,
+    reviewScope: "selection",
     reviewLevels: [1, 2],
   },
   questions: [
@@ -88,8 +91,10 @@ function replacementInput(
     retryEnabled: source.draft.retryEnabled,
     retryPassingScore: source.draft.retryPassingScore,
     questionOrderMode: source.draft.questionOrderMode,
+    availableFrom: source.draft.availableFrom,
     availableUntil: source.draft.availableUntil,
     includePendingReview: source.draft.includePendingReview,
+    reviewScope: source.draft.reviewScope,
     reviewLevels: source.draft.reviewLevels,
     ...overrides,
   };
@@ -134,6 +139,37 @@ describe("prepareStudentAssignmentReplacement legacy mixed assignment", () => {
       studentId,
       admin,
     );
+  });
+
+  it("오답을 쓰지 않는 시험은 무의미한 요청 범위 대신 기존 저장 범위를 보존한다", async () => {
+    const regularSource: EditableSourceContext = {
+      ...source,
+      draft: {
+        ...source.draft,
+        purpose: "regular",
+        includePendingReview: false,
+        reviewScope: "dataset",
+        reviewLevels: [],
+      },
+      selectedQueueIds: [],
+      selectedReviewLevels: [],
+      selectedReviewVocabEntryIds: [],
+    };
+    requireEditableSourceContextMock.mockResolvedValue(regularSource);
+
+    const result = await prepareStudentAssignmentReplacement(
+      assignmentId,
+      studentId,
+      replacementInput({
+        includePendingReview: false,
+        reviewScope: "selection",
+        reviewLevels: [],
+      }),
+      admin,
+    );
+
+    expect(result.prepared.reviewScope).toBe("dataset");
+    expect(result.prepared.questions).toBe(regularSource.questions);
   });
 
   it("오답 단계별 수를 실제 보존된 대기열 기준으로 계산한다", async () => {

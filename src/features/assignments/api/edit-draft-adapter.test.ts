@@ -23,9 +23,12 @@ const baseResponse = {
   retryEnabled: true,
   retryPassingScore: 80,
   questionOrderMode: "fixed" as const,
+  availableFrom: "2026-08-17T03:00:00.000Z",
   availableUntil: "2026-08-18T12:00:00.000Z",
   includePendingReview: false,
+  reviewScope: "dataset" as const,
   reviewLevels: [] as (1 | 2)[],
+  seriesItem: false,
 };
 
 describe("assignment edit draft hydration", () => {
@@ -38,6 +41,7 @@ describe("assignment edit draft hydration", () => {
         assignmentId: assignmentContractIds.day57,
         targetStudentId: assignmentContractIds.studentA,
         sourcePurpose: "regular",
+        seriesItem: false,
       },
       studentId: assignmentContractIds.studentA,
       title: { mode: "source", value: "기존 시험 제목" },
@@ -45,6 +49,10 @@ describe("assignment edit draft hydration", () => {
       exam: {
         questionOrderMode: "ascending",
         timing: { mode: "total", totalSeconds: 300 },
+      },
+      availability: {
+        mode: "at",
+        koreanLocalDateTime: "2026-08-17T12:00",
       },
       deadline: {
         mode: "at",
@@ -72,10 +80,12 @@ describe("assignment edit draft hydration", () => {
       assignmentId: assignmentContractIds.day57,
       targetStudentId: assignmentContractIds.studentA,
       sourcePurpose: "review",
+      seriesItem: false,
       lockedShape: {
         datasetId: assignmentContractIds.dataset,
         orderedUnitIds: [assignmentContractIds.day60],
         questionCount: 1,
+        reviewScope: "dataset",
         reviewLevels: [2],
       },
     });

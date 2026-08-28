@@ -5,6 +5,7 @@ import { koreanDateTimeLocalToIso } from "@/lib/deadline";
 import {
   MAXIMUM_BULK_ASSIGNMENT_COUNT,
   MAXIMUM_BULK_STUDENT_COUNT,
+  type AssignmentAvailability,
   type AssignmentDeadline,
   type AssignmentDraft,
   type BulkReviewPolicy,
@@ -99,6 +100,23 @@ function deadlineIso(
       code: "invalid_datetime",
       path,
       message: "한국시간 날짜와 시간을 확인해 주세요.",
+    });
+  }
+  return iso;
+}
+
+function availabilityIso(
+  availability: AssignmentAvailability,
+  path: string,
+  issues: AssignmentDraftIssue[],
+): string | null {
+  if (availability.mode === "immediate") return null;
+  const iso = koreanDateTimeLocalToIso(availability.koreanLocalDateTime);
+  if (!iso) {
+    issues.push({
+      code: "invalid_datetime",
+      path,
+      message: "공개 날짜와 시간을 확인해 주세요.",
     });
   }
   return iso;
@@ -302,7 +320,7 @@ function validateExactReviewProjectedLock(
       : [];
   if (
     draft.review.mode !== "pending" ||
-    draft.review.scope !== "dataset" ||
+    draft.review.scope !== locked.reviewScope ||
     draft.range.datasetId !== locked.datasetId ||
     !sameOrderedValues(draft.range.orderedUnitIds, locked.orderedUnitIds) ||
     !sameOrderedValues(levels, [...locked.reviewLevels].toSorted())
@@ -354,17 +372,6 @@ export function validateSingleCapacityProjection(
   validateSingleIdentity(draft, issues);
   validateDirection(draft.exam, issues);
   validateReviewLevels(draft.review, issues);
-  if (
-    draft.operation.mode === "replace" &&
-    draft.review.mode === "pending" &&
-    draft.review.scope !== "dataset"
-  ) {
-    issues.push({
-      code: "out_of_range",
-      path: "review.scope",
-      message: "수정 배정의 오답 범위는 현재 단어장 전체만 사용할 수 있습니다.",
-    });
-  }
   validateExactReviewProjectedLock(draft, issues);
   return issues;
 }
@@ -376,12 +383,28 @@ export function validateSingleAssignmentSubmission(
 ): AssignmentDraftIssue[] {
   const issues = validateSingleCapacityProjection(draft);
   validateExamSettings(draft.exam, issues);
+  const availableFrom = availabilityIso(
+    draft.availability,
+    "availability",
+    issues,
+  );
   const deadline = deadlineIso(draft.deadline, "deadline", issues);
   if (deadline && Date.parse(deadline) <= nowMilliseconds) {
     issues.push({
       code: "invalid_order",
       path: "deadline",
       message: "응시 마감은 현재 시각보다 뒤로 정해 주세요.",
+    });
+  }
+  if (
+    availableFrom &&
+    deadline &&
+    Date.parse(deadline) <= Date.parse(availableFrom)
+  ) {
+    issues.push({
+      code: "invalid_order",
+      path: "deadline",
+      message: "마감 시각은 공개 시각보다 뒤여야 합니다.",
     });
   }
   const minimum =

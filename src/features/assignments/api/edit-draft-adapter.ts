@@ -23,15 +23,21 @@ function replacementOperation(
     targetStudentId: source.studentId,
   };
   if (source.purpose !== "review") {
-    return { ...common, sourcePurpose: source.purpose };
+    return {
+      ...common,
+      sourcePurpose: source.purpose,
+      seriesItem: source.seriesItem,
+    };
   }
   return {
     ...common,
     sourcePurpose: "review",
+    seriesItem: source.seriesItem,
     lockedShape: {
       datasetId: source.datasetId,
       orderedUnitIds: [...source.primaryUnitIds],
       questionCount: source.questionCount,
+      reviewScope: source.reviewScope,
       reviewLevels: [...source.reviewLevels],
     },
   };
@@ -50,6 +56,7 @@ export function hydrateSingleAssignmentDraftFromEditResponse(
 ): SingleAssignmentDraft {
   const source = parseAssignmentEditDraftResponse(value);
   const levels = retainedReviewLevels(source);
+  const availableLocal = isoToKoreanDateTimeLocal(source.availableFrom);
   const deadlineLocal = isoToKoreanDateTimeLocal(source.availableUntil);
   const draft: SingleAssignmentDraft = {
     kind: "single",
@@ -79,13 +86,17 @@ export function hydrateSingleAssignmentDraftFromEditResponse(
               perQuestionSeconds: source.questionTimeLimitSeconds!,
             },
     },
+    availability:
+      source.availableFrom === null
+        ? { mode: "immediate" }
+        : { mode: "at", koreanLocalDateTime: availableLocal },
     deadline:
       source.availableUntil === null
         ? { mode: "none" }
         : { mode: "at", koreanLocalDateTime: deadlineLocal },
     review: source.includePendingReview
-      ? { mode: "pending", scope: "dataset", levels }
-      : { mode: "none", scope: "dataset", levels },
+      ? { mode: "pending", scope: source.reviewScope, levels }
+      : { mode: "none", scope: source.reviewScope, levels },
   };
 
   assertValidSingleCapacityProjection(draft);

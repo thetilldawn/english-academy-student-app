@@ -103,9 +103,12 @@ describe("assignment response adapters", () => {
       retryEnabled: true,
       retryPassingScore: 80,
       questionOrderMode: "fixed",
+      availableFrom: "2026-08-17T03:00:00.000Z",
       availableUntil: "2026-08-18T12:00:00.000Z",
       includePendingReview: true,
+      reviewScope: "dataset",
       reviewLevels: [2],
+      seriesItem: false,
     } as const;
 
     expect(parseAssignmentEditDraftResponse(response)).toStrictEqual(

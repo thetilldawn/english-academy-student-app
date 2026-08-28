@@ -79,8 +79,8 @@ describe("배정과 수정 화면 공통 계약", () => {
 
     expect(sections).toContain('editPurpose === "mixed"');
     expect(sections).toContain("lockedMixed");
-    expect(settings).toContain("isContentLocked");
-    expect(settings).toContain("directionDisabled={isMixedReview}");
+    expect(settings).toContain("fieldPolicy.questionCount");
+    expect(settings).toContain("fieldPolicy.direction");
     expect(props).not.toContain("availableReviewLevel");
     expect(
       fs.existsSync(

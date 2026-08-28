@@ -22,7 +22,7 @@ describe("assignment replacement responsibility boundaries", () => {
     expect(sourceService).not.toContain(
       "assignment-replacement-preparation-service",
     );
-    expect(sourceService).not.toContain("replace_student_assignment_v5");
+    expect(sourceService).not.toContain("replace_student_assignment_v6");
 
     expect(preparationService).toContain(
       "requireEditableSourceContext",
@@ -30,13 +30,13 @@ describe("assignment replacement responsibility boundaries", () => {
     expect(preparationService).toContain("prepareRegularAssignment");
     expect(preparationService).toContain("prepareMixedAssignmentBatch");
     expect(preparationService).not.toContain(
-      "replace_student_assignment_v5",
+      "replace_student_assignment_v6",
     );
 
     expect(persistenceService).toContain(
       "prepareStudentAssignmentReplacement",
     );
-    expect(persistenceService).toContain("replace_student_assignment_v5");
+    expect(persistenceService).toContain("replace_student_assignment_v6");
     expect(persistenceService).not.toContain(
       "requireEditableSourceContext",
     );

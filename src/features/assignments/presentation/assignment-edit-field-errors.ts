@@ -9,6 +9,7 @@ export type AssignmentEditFieldErrors = Partial<Record<
   | "passingScore"
   | "retryPassingScore"
   | "timing"
+  | "availability"
   | "deadline",
   string
 >>;
@@ -24,6 +25,7 @@ export function assignmentEditFieldKeyForPath(
   if (path === "exam.passingScore") return "passingScore";
   if (path === "exam.retryPassingScore") return "retryPassingScore";
   if (path.startsWith("exam.timing")) return "timing";
+  if (path.startsWith("availability")) return "availability";
   if (path.startsWith("deadline")) return "deadline";
   return null;
 }

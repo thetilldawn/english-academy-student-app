@@ -131,7 +131,9 @@ export const replacementSubmitContract = {
   retryEnabled: true,
   retryPassingScore: 80,
   questionOrderMode: "ascending",
+  availableFrom: null,
   availableUntil: null,
+  reviewScope: "dataset",
 } as const;
 
 export const bulkPreviewContract = {

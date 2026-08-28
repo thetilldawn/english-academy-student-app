@@ -22,10 +22,12 @@ type ChangeKey =
   | "timing"
   | "passingScore"
   | "retry"
+  | "availability"
   | "deadline"
   | "review";
 
 const labels: Record<ChangeKey, string> = {
+  availability: "공개",
   dataset: adminLearningText.assignmentModal.range.wordbook,
   deadline: adminLearningText.assignmentModal.deadline.label,
   direction: "시험 방식",
@@ -59,6 +61,7 @@ function comparable(draft: SingleAssignmentDraft, key: ChangeKey) {
       passingScore: draft.exam.retryPassingScore ?? draft.exam.passingScore,
     };
   }
+  if (key === "availability") return draft.availability;
   if (key === "deadline") return draft.deadline;
   return draft.review;
 }
@@ -125,6 +128,15 @@ function valueLabel(
       ? "사용 안 함"
       : `사용 · ${draft.exam.retryPassingScore ?? draft.exam.passingScore}점`;
   }
+  if (key === "availability") {
+    if (draft.availability.mode === "immediate") return "바로 공개";
+    const availableIso = koreanDateTimeLocalToIso(
+      draft.availability.koreanLocalDateTime,
+    );
+    return availableIso
+      ? formatKoreanDateTime(availableIso)
+      : draft.availability.koreanLocalDateTime;
+  }
   if (key === "deadline") {
     if (draft.deadline.mode === "none") {
       return adminLearningText.assignmentModal.edit.noDeadline;
@@ -170,6 +182,7 @@ export function AssignmentEditComparison({
       "timing",
       "passingScore",
       "retry",
+      "availability",
       "deadline",
       "review",
     ] as const

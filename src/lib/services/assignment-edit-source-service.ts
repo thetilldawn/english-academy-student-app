@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { AssignmentEditDraft } from "@/lib/admin/assignment-edit";
+import { assignmentEditUnavailableReason } from "@/lib/admin/assignment-edit-policy";
 import type { TimingMode } from "@/lib/admin/assignment-settings";
 import {
   requireAdmin,
@@ -45,7 +46,9 @@ type AssignmentRelation = {
   retry_enabled: boolean;
   retry_passing_score: number | null;
   question_order_mode: "fixed" | "ascending" | "descending" | "random";
+  available_from: string | null;
   available_until: string | null;
+  review_scope: "dataset" | "selection";
   assignment_units: AssignmentUnitRelation[] | null;
 };
 
@@ -60,6 +63,11 @@ type AssignmentStudentRelation = {
 
 type SourceAttemptRow = {
   status: "in_progress" | "completed" | "expired";
+};
+
+type AssignmentSeriesEditContext = {
+  editable: boolean;
+  seriesItem: boolean;
 };
 
 type SourceQuestionRow = {
@@ -85,7 +93,7 @@ export type AssignmentQuestionPlan = {
   vocab_entry_id: number;
   base_order_index: number;
   direction: "english_to_korean" | "korean_to_english";
-  choice_vocab_entry_ids: number[];
+  choice_vocab_entry_ids: number[] | null;
 };
 
 export type EditableSourceContext = {
@@ -130,18 +138,22 @@ async function loadSourceSnapshot(
   }
 
   const sourceQuestions = (questionResult.data ?? []) as SourceQuestionRow[];
-  const questions = sourceQuestions.every(
-    (question) =>
-      Array.isArray(question.choice_vocab_entry_ids) &&
-      question.choice_vocab_entry_ids.length === 4,
-  )
-    ? sourceQuestions.map((question) => ({
+  // Mixed/review writers can persist the already-rendered choices while the
+  // source vocab-id array remains null. The replacement writer understands
+  // that legacy shape, so keep the complete ordered bank instead of treating
+  // the whole assignment as unreadable.
+  const questions = sourceQuestions.length === 0
+    ? null
+    : sourceQuestions.map((question) => ({
         vocab_entry_id: question.vocab_entry_id,
         base_order_index: question.base_order_index,
         direction: question.direction,
-        choice_vocab_entry_ids: question.choice_vocab_entry_ids!,
-      }))
-    : null;
+        choice_vocab_entry_ids:
+          Array.isArray(question.choice_vocab_entry_ids) &&
+          question.choice_vocab_entry_ids.length === 4
+            ? question.choice_vocab_entry_ids
+            : null,
+      }));
 
   if (purpose === "regular") {
     return {
@@ -225,7 +237,11 @@ export async function requireEditableSourceContext(
     await requireAdmin();
   }
   const supabase = await createServerSupabaseClient();
-  const [{ data, error }, { data: attemptData, error: attemptError }] =
+  const [
+    { data, error },
+    { data: attemptData, error: attemptError },
+    { data: seriesData, error: seriesError },
+  ] =
     await Promise.all([
       supabase
         .from("assignment_students")
@@ -252,7 +268,9 @@ export async function requireEditableSourceContext(
               retry_enabled,
               retry_passing_score,
               question_order_mode,
+              available_from,
               available_until,
+              review_scope,
               assignment_units(
                 position,
                 is_primary,
@@ -269,9 +287,13 @@ export async function requireEditableSourceContext(
         .select("status")
         .eq("assignment_id", assignmentId)
         .eq("student_id", studentId),
+      supabase.rpc("get_assignment_edit_series_context_v1", {
+        p_assignment_id: assignmentId,
+        p_student_id: studentId,
+      }),
     ]);
 
-  if (error || attemptError) {
+  if (error || attemptError || seriesError) {
     throw new AssignmentReplacementError("database");
   }
   if (!data) {
@@ -283,38 +305,39 @@ export async function requireEditableSourceContext(
   if (!student || !assignment) {
     throw new AssignmentReplacementError("not_found");
   }
-  if (student.deleted_at || assignment.deleted_at) {
-    throw new AssignmentReplacementError("deleted");
-  }
-  if (student.status !== "active") {
-    throw new AssignmentReplacementError("blocked");
-  }
-  if (row.cancelled_at) {
-    throw new AssignmentReplacementError("cancelled");
-  }
-  if (row.missed_at) {
-    throw new AssignmentReplacementError("missed");
-  }
   const attempts = (attemptData ?? []) as SourceAttemptRow[];
+  const seriesContext = seriesData as AssignmentSeriesEditContext | null;
   if (
-    attempts.some(
-      (attempt) =>
-        attempt.status === "completed" || attempt.status === "expired",
-    )
+    !seriesContext ||
+    typeof seriesContext.seriesItem !== "boolean" ||
+    typeof seriesContext.editable !== "boolean"
   ) {
-    throw new AssignmentReplacementError("completed");
+    throw new AssignmentReplacementError("database");
   }
-  if (attempts.length > 0) {
-    throw new AssignmentReplacementError("started");
+  if (seriesContext.seriesItem && !seriesContext.editable) {
+    throw new AssignmentReplacementError("conflict");
   }
-  if (
-    assignment.available_until &&
-    Date.parse(assignment.available_until) <= Date.now()
-  ) {
-    throw new AssignmentReplacementError("deadline_elapsed");
-  }
-  if (assignment.status !== "active") {
-    throw new AssignmentReplacementError("closed");
+  const unavailableReason = assignmentEditUnavailableReason(
+    {
+      assignmentDeleted: assignment.deleted_at !== null,
+      assignmentStatus: assignment.status,
+      attemptCount: attempts.length,
+      attemptId: attempts.length > 0 ? "started" : null,
+      availableUntil: assignment.available_until,
+      cancelled: row.cancelled_at !== null,
+      hasCompletedAttempt: attempts.some(
+        (attempt) =>
+          attempt.status === "completed" || attempt.status === "expired",
+      ),
+      missed: row.missed_at !== null,
+      status: "not_started",
+      studentDeleted: student.deleted_at !== null,
+      studentStatus: student.status,
+    },
+    Date.now(),
+  );
+  if (unavailableReason) {
+    throw new AssignmentReplacementError(unavailableReason);
   }
 
   const orderedUnitLinks = (assignment.assignment_units ?? [])
@@ -379,10 +402,13 @@ export async function requireEditableSourceContext(
       retryEnabled: assignment.retry_enabled,
       retryPassingScore: assignment.retry_passing_score,
       questionOrderMode: assignment.question_order_mode,
+      availableFrom: assignment.available_from,
       availableUntil: assignment.available_until,
       includePendingReview:
         sourceSnapshot.selectedQueueIds.length > 0,
+      reviewScope: assignment.review_scope,
       reviewLevels: sourceSnapshot.reviewLevels,
+      seriesItem: seriesContext.seriesItem,
     },
     questions: sourceSnapshot.questions,
     selectedQueueIds: sourceSnapshot.selectedQueueIds,

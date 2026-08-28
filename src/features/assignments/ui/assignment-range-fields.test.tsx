@@ -59,7 +59,10 @@ function controller(exactReview = false) {
     value: {
       actions: { changeRange },
       capacity: null,
-      isContentLocked: exactReview,
+      fieldPolicy: {
+        dataset: exactReview ? "locked" : "editable",
+        range: exactReview ? "locked" : "editable",
+      },
       isExactReview: exactReview,
       isMixedReview: false,
       state: {

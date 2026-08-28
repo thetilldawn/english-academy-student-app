@@ -94,7 +94,9 @@ export function mapAssignmentReplacementDatabaseFailure(error: {
   }
   if (
     error.code === "40001" ||
-    /idempotency_key_reused|snapshot_changed|already_active/.test(message)
+    /idempotency_key_reused|snapshot_changed|already_active|vocab_assignment_series_edit_unavailable/.test(
+      message,
+    )
   ) {
     return new AssignmentReplacementError(
       "conflict",

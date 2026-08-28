@@ -18,6 +18,10 @@ const transportRoot = path.join(featureRoot, "transport");
 const pureSharedModules = new Map([
   ["@/lib/deadline", path.resolve("src/lib/deadline.ts")],
   [
+    "@/lib/admin/assignment-edit-policy",
+    path.resolve("src/lib/admin/assignment-edit-policy.ts"),
+  ],
+  [
     "@/lib/admin/assignment-replacement-fingerprint",
     path.resolve("src/lib/admin/assignment-replacement-fingerprint.ts"),
   ],
@@ -30,6 +34,7 @@ describe("assignment feature dependency boundaries", () => {
       allowModule: (specifier, importer) =>
         specifier === "zod" ||
         specifier === "@/lib/deadline" ||
+        specifier === "@/lib/admin/assignment-edit-policy" ||
         resolvesInside(importer, specifier, [domainRoot]),
       forbidEndpointLiterals: true,
       forbidJsx: true,

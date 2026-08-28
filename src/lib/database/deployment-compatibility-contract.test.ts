@@ -53,4 +53,20 @@ describe("redesign 무중단 배포 migration 계약", () => {
       "grant execute on function public.create_exact_review_assignment_v4(",
     );
   });
+
+  it("keeps replacement v5 as a v6 compatibility wrapper during rolling deploy", () => {
+    const migration = source(
+      "supabase/migrations/20260828193000_preserve_assignment_edit_metadata.sql",
+    );
+
+    expect(migration).toContain(
+      "create or replace function public.replace_student_assignment_v5(",
+    );
+    expect(migration).toContain(
+      "return public.replace_student_assignment_v6(",
+    );
+    expect(migration).toContain(
+      "grant execute on function public.replace_student_assignment_v5(",
+    );
+  });
 });

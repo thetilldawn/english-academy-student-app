@@ -24,6 +24,7 @@ const draft: SingleAssignmentDraft = {
     passingScore: 80,
     timing: { mode: "total", totalSeconds: 300 },
   },
+  availability: { mode: "immediate" },
   deadline: { mode: "none" },
   review: { mode: "none", scope: "dataset", levels: [1, 2] },
 };

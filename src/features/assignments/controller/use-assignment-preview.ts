@@ -42,6 +42,7 @@ function capacityProjectionDraft({
   directionRatio: SingleAssignmentDraft["exam"]["directionRatio"];
 }): SingleAssignmentDraft {
   return {
+    availability: { mode: "immediate" },
     deadline: { mode: "none" },
     exam: {
       directionRatio,

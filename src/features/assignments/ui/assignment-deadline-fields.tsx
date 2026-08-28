@@ -1,18 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-
-import {
-  Checkbox,
-  Field,
-  FieldError,
-  FieldLabel,
-  Input,
-} from "@/design-system/primitives/form/field";
 import { isoToKoreanDateTimeLocal } from "@/lib/deadline";
 
 import type { AssignmentDeadline } from "../domain/model";
-import styles from "./exam-timing-fields.module.css";
+import { AssignmentDateTimeToggleField } from "./assignment-date-time-toggle-field";
 
 function nextDayDefault() {
   return isoToKoreanDateTimeLocal(
@@ -25,64 +16,40 @@ export function AssignmentDeadlineFields({
   error,
   fieldKey = "deadline",
   id,
+  memoryKey = id,
   onChange,
+  scheduleRequired = false,
 }: {
   deadline: AssignmentDeadline;
   error?: string;
   fieldKey?: string;
   id: string;
+  memoryKey?: string;
   onChange: (deadline: AssignmentDeadline) => void;
+  scheduleRequired?: boolean;
 }) {
-  const remembered = useRef(
-    deadline.mode === "at" ? deadline.koreanLocalDateTime : "",
-  );
-
-  useEffect(() => {
-    if (deadline.mode === "at") remembered.current = deadline.koreanLocalDateTime;
-  }, [deadline]);
-
-  const enabled = deadline.mode === "at";
-  const errorId = error ? `${id}-error` : undefined;
   return (
-    <div className={styles.root} data-field-key={fieldKey} tabIndex={-1}>
-      <label className={styles.toggle}>
-        <Checkbox
-          checked={enabled}
-          onChange={(event) =>
-            onChange(
-              event.target.checked
-                ? {
-                    mode: "at",
-                    koreanLocalDateTime: remembered.current || nextDayDefault(),
-                  }
-                : { mode: "none" },
-            )
-          }
-        />
-        <span>응시 마감 사용</span>
-      </label>
-      <Field as="label" className={styles.control}>
-        <FieldLabel as="span">마감</FieldLabel>
-        <Input
-          aria-errormessage={errorId}
-          aria-invalid={Boolean(error)}
-          disabled={!enabled}
-          id={id}
-          onChange={(event) =>
-            onChange({
-              mode: "at",
-              koreanLocalDateTime: event.target.value,
-            })
-          }
-          step={60}
-          type="datetime-local"
-          value={enabled ? deadline.koreanLocalDateTime : ""}
-        />
-        {error ? <FieldError id={errorId}>{error}</FieldError> : null}
-      </Field>
-      <span aria-hidden={enabled} className={styles.fixedStatus}>
-        {enabled ? "\u00a0" : "마감 없이 응시합니다."}
-      </span>
-    </div>
+    <AssignmentDateTimeToggleField
+      defaultValue={nextDayDefault}
+      error={error}
+      fieldKey={fieldKey}
+      id={id}
+      memoryKey={memoryKey}
+      inputLabel="마감"
+      offText="마감 없이 응시합니다."
+      onChange={(value) =>
+        onChange(
+          value === null
+            ? { mode: "none" }
+            : { mode: "at", koreanLocalDateTime: value },
+        )
+      }
+      toggleLabel="응시 마감 사용"
+      toggleLocked={scheduleRequired}
+      toggleLockedText="이어 배정 시험 일정"
+      value={
+        deadline.mode === "at" ? deadline.koreanLocalDateTime : null
+      }
+    />
   );
 }

@@ -142,6 +142,15 @@ function deadlineToIso(deadline: AssignmentDeadline): string | null {
   return value;
 }
 
+function availabilityToIso(
+  availability: SingleAssignmentDraft["availability"],
+): string | null {
+  if (availability.mode === "immediate") return null;
+  const value = koreanDateTimeLocalToIso(availability.koreanLocalDateTime);
+  if (!value) throw new Error("검증되지 않은 한국시간 공개 시각입니다.");
+  return value;
+}
+
 export function buildDirectReviewAssignmentRequest(
   draft: DirectReviewAssignmentDraft,
   idempotencyKey: string,
@@ -262,14 +271,9 @@ function reviewPolicyToCapacityApi(review: ReviewPolicy) {
 }
 
 function reviewPolicyToReplacementApi(review: ReviewPolicy) {
-  if (review.mode === "none") {
-    return {
-      includePendingReview: false,
-      reviewLevels: [...review.levels],
-    };
-  }
   return {
-    includePendingReview: true,
+    includePendingReview: review.mode === "pending",
+    reviewScope: review.scope,
     reviewLevels: [...review.levels],
   };
 }
@@ -321,6 +325,7 @@ function replacementBodyWithoutIdempotency(
     ...reviewPolicyToReplacementApi(draft.review),
     questionCount: resolved.questionCount,
     ...examSettingsToApi(draft.exam),
+    availableFrom: availabilityToIso(draft.availability),
     availableUntil: deadlineToIso(draft.deadline),
   };
 }
@@ -543,6 +548,16 @@ export function replacementSubmissionFingerprint(
     throw new Error("수정 draft만 fingerprint를 만들 수 있습니다.");
   }
   assertValidSingleAssignmentSubmission(draft, resolved, nowMilliseconds);
+  return replacementDraftFingerprint(draft, resolved);
+}
+
+export function replacementDraftFingerprint(
+  draft: SingleAssignmentDraft,
+  resolved: ResolvedSingleAssignment,
+): string {
+  if (draft.operation.mode !== "replace") {
+    throw new Error("수정 draft만 fingerprint를 만들 수 있습니다.");
+  }
   const body = replacementBodyWithoutIdempotency(draft, resolved);
   return assignmentRequestFingerprint(
     assignmentReplacementFingerprintPayload(

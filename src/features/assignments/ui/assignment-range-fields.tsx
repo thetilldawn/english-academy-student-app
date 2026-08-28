@@ -35,7 +35,7 @@ export function AssignmentRangeFields({
   progress: AssignmentProgressItem | null;
   units: readonly AssignmentUnitItem[];
 }) {
-  const { actions, capacity, isContentLocked, isExactReview, state } = controller;
+  const { actions, capacity, fieldPolicy, isExactReview, state } = controller;
   const draft = state.draft;
   const readyDatasets = datasets.filter(
     (dataset) =>
@@ -100,7 +100,7 @@ export function AssignmentRangeFields({
         <Select
           aria-errormessage={fieldErrors.dataset ? "edit-dataset-error" : undefined}
           aria-invalid={Boolean(fieldErrors.dataset)}
-          disabled={isContentLocked}
+          disabled={fieldPolicy.dataset !== "editable"}
           onChange={(event) => changeDataset(event.target.value)}
           required
           value={draft.range.datasetId}
@@ -129,7 +129,7 @@ export function AssignmentRangeFields({
         ) : null}
       </Field>
       <AssignmentUnitRangePicker
-        disabled={isContentLocked}
+        disabled={fieldPolicy.range !== "editable"}
         error={fieldErrors.range}
         errorId="edit-range-error"
         onSelect={toggleUnit}

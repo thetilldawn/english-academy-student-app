@@ -13,6 +13,7 @@ import {
   assignmentCapacityFingerprint,
   buildAssignmentEditDraftRequest,
   buildSingleAssignmentRequest,
+  replacementDraftFingerprint,
   replacementSubmissionFingerprint,
 } from "../api/request-adapters";
 import { hydrateSingleAssignmentDraftFromEditResponse } from "../api/edit-draft-adapter";
@@ -37,6 +38,7 @@ import {
   type IdempotencyReservation,
 } from "../domain/fingerprint";
 import type {
+  AssignmentAvailability,
   AssignmentDeadline,
   AssignmentDirectionRatio,
   AssignmentQuestionOrderMode,
@@ -46,6 +48,7 @@ import type {
   ReviewScope,
   SingleAssignmentDraft,
 } from "../domain/model";
+import { singleAssignmentFieldPolicy } from "../domain/assignment-edit-policy";
 import {
   reduceSingleAssignmentDraft,
   resolveSingleAssignmentDraft,
@@ -117,6 +120,7 @@ export function createInitialSingleAssignmentDraft({
     range: { datasetId, orderedUnitIds: [...orderedUnitIds] },
     questionCount: { mode: "automatic", value: 20 },
     exam,
+    availability: { mode: "immediate" },
     deadline,
     review: { mode: "none", scope: "dataset", levels: [1, 2] },
   };
@@ -136,16 +140,43 @@ function isMixedReviewEdit(draft: SingleAssignmentDraft) {
   );
 }
 
-function isReviewContentLockedEdit(draft: SingleAssignmentDraft) {
-  return isExactReviewEdit(draft) || isMixedReviewEdit(draft);
-}
-
 function safeCapacityFingerprint(draft: SingleAssignmentDraft) {
   try {
     return assignmentCapacityFingerprint(draft);
   } catch {
     return null;
   }
+}
+
+function safeReplacementDraftFingerprint(
+  draft: SingleAssignmentDraft,
+  resolved: ReturnType<typeof resolveSingleAssignmentDraft>,
+) {
+  try {
+    return replacementDraftFingerprint(draft, resolved);
+  } catch {
+    return null;
+  }
+}
+
+function replacementDraftIsDirty(
+  currentDraft: SingleAssignmentDraft,
+  currentResolved: ReturnType<typeof resolveSingleAssignmentDraft>,
+  baselineDraft: SingleAssignmentDraft,
+  baselineResolved: ReturnType<typeof resolveSingleAssignmentDraft>,
+) {
+  const currentFingerprint = safeReplacementDraftFingerprint(
+    currentDraft,
+    currentResolved,
+  );
+  const baselineFingerprint = safeReplacementDraftFingerprint(
+    baselineDraft,
+    baselineResolved,
+  );
+  return currentFingerprint === null || baselineFingerprint === null
+    ? assignmentRequestFingerprint(currentDraft) !==
+        assignmentRequestFingerprint(baselineDraft)
+    : currentFingerprint !== baselineFingerprint;
 }
 
 export function useAssignmentController({
@@ -327,6 +358,7 @@ export function useAssignmentController({
 
   const capacity = state.preview.status === "ready" ? state.preview.value : null;
   const automaticTitle = automaticTitleForDraft(state.draft, capacity);
+  const fieldPolicy = singleAssignmentFieldPolicy(state.draft);
   const resolved = resolveSingleAssignmentDraft(state.draft, {
     title: automaticTitle,
   });
@@ -336,9 +368,18 @@ export function useAssignmentController({
     resolved,
     nowMilliseconds,
   );
-  const dirty = baselineDraft
-    ? assignmentRequestFingerprint(state.draft) !==
-      assignmentRequestFingerprint(baselineDraft)
+  const baselineResolved = baselineDraft
+    ? resolveSingleAssignmentDraft(baselineDraft, {
+        title: automaticTitleForDraft(baselineDraft, capacity),
+      })
+    : null;
+  const dirty = baselineDraft && baselineResolved
+    ? replacementDraftIsDirty(
+        state.draft,
+        resolved,
+        baselineDraft,
+        baselineResolved,
+      )
     : true;
   const capacityReadyForCurrentDraft =
     state.preview.status === "ready" &&
@@ -382,9 +423,18 @@ export function useAssignmentController({
       currentResolved,
       clock(),
     );
-    const currentDirty = baselineDraft
-      ? assignmentRequestFingerprint(current.draft) !==
-        assignmentRequestFingerprint(baselineDraft)
+    const baselineResolvedForSubmit = baselineDraft
+      ? resolveSingleAssignmentDraft(baselineDraft, {
+          title: automaticTitleForDraft(baselineDraft, currentCapacity),
+        })
+      : null;
+    const currentDirty = baselineDraft && baselineResolvedForSubmit
+      ? replacementDraftIsDirty(
+          current.draft,
+          currentResolved,
+          baselineDraft,
+          baselineResolvedForSubmit,
+        )
       : true;
     const currentBlocker = deriveSingleAssignmentSubmitBlocker({
       capacity: currentCapacity,
@@ -523,14 +573,15 @@ export function useAssignmentController({
   const actions = useMemo(
     () => ({
       changeDataset(datasetId: string) {
-        if (isReviewContentLockedEdit(stateRef.current.draft)) return;
         changeDraft({ type: "dataset/changed", datasetId });
+      },
+      changeAvailability(availability: AssignmentAvailability) {
+        changeDraft({ type: "availability/changed", availability });
       },
       changeDeadline(deadline: AssignmentDeadline) {
         changeDraft({ type: "deadline/changed", deadline });
       },
       changeDirection(directionRatio: AssignmentDirectionRatio) {
-        if (isMixedReviewEdit(stateRef.current.draft)) return;
         changeDraft({
           type: "exam/changed",
           exam: { ...stateRef.current.draft.exam, directionRatio },
@@ -561,22 +612,18 @@ export function useAssignmentController({
         });
       },
       changeQuestionCount(value: number) {
-        if (isReviewContentLockedEdit(stateRef.current.draft)) return;
         changeDraft({ type: "questionCount/manuallyChanged", value });
       },
       changeRange(datasetId: string, orderedUnitIds: readonly string[]) {
-        if (isReviewContentLockedEdit(stateRef.current.draft)) return;
         changeDraft({
           type: "range/changed",
           range: { datasetId, orderedUnitIds: [...orderedUnitIds] },
         });
       },
       changeReview(review: ReviewPolicy) {
-        if (isReviewContentLockedEdit(stateRef.current.draft)) return;
         changeDraft({ type: "review/changed", review });
       },
       changeReviewMode(mode: ReviewPolicy["mode"]) {
-        if (isReviewContentLockedEdit(stateRef.current.draft)) return;
         const current = stateRef.current.draft.review;
         changeDraft({
           type: "review/changed",
@@ -584,7 +631,6 @@ export function useAssignmentController({
         });
       },
       changeReviewScope(scope: ReviewScope) {
-        if (isReviewContentLockedEdit(stateRef.current.draft)) return;
         const current = stateRef.current.draft.review;
         changeDraft({
           type: "review/changed",
@@ -634,7 +680,6 @@ export function useAssignmentController({
         );
       },
       restoreAutomaticCount() {
-        if (isReviewContentLockedEdit(stateRef.current.draft)) return;
         const currentCapacity =
           stateRef.current.preview.status === "ready"
             ? stateRef.current.preview.value
@@ -651,7 +696,6 @@ export function useAssignmentController({
       },
       submit,
       toggleReviewLevel(level: ReviewLevel) {
-        if (isReviewContentLockedEdit(stateRef.current.draft)) return;
         const current = stateRef.current.draft.review;
         const levels = current.levels.includes(level)
           ? current.levels.filter((candidate) => candidate !== level)
@@ -672,7 +716,7 @@ export function useAssignmentController({
     canSubmit,
     capacity,
     dirty,
-    isContentLocked: isReviewContentLockedEdit(state.draft),
+    fieldPolicy,
     isExactReview: isExactReviewEdit(state.draft),
     isMixedReview: isMixedReviewEdit(state.draft),
     issues,

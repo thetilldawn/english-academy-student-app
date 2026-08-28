@@ -28,6 +28,7 @@ const mocks = vi.hoisted(() => {
   return {
     AssignmentCreationError: MockAssignmentCreationError,
     MixedAssignmentError: MockMixedAssignmentError,
+    assertAssignmentEditFieldPolicy: vi.fn(),
     assertExactReviewShape: vi.fn(),
     assertLegacyMixedContentShape: vi.fn(),
     canReuseSourceQuestions: vi.fn(),
@@ -43,6 +44,7 @@ vi.mock("@/lib/services/assignment-edit-source-service", () => ({
   requireEditableSourceContext: mocks.requireEditableSourceContext,
 }));
 vi.mock("@/lib/services/assignment-replacement-policy", () => ({
+  assertAssignmentEditFieldPolicy: mocks.assertAssignmentEditFieldPolicy,
   assertExactReviewShape: mocks.assertExactReviewShape,
   assertLegacyMixedContentShape: mocks.assertLegacyMixedContentShape,
   canReuseSourceQuestions: mocks.canReuseSourceQuestions,
@@ -68,6 +70,7 @@ const ids = {
 };
 const admin = { displayName: "테스트 관리자", userId: "admin-id" };
 const input: AssignmentReplacementInput = {
+  availableFrom: null,
   availableUntil: null,
   datasetId: ids.dataset,
   englishToKoreanRatio: 50,
@@ -81,6 +84,7 @@ const input: AssignmentReplacementInput = {
   retryEnabled: true,
   retryPassingScore: 80,
   reviewLevels: [],
+  reviewScope: "dataset",
   timeLimitSeconds: 300,
   timingMode: "total",
   title: "단어 시험",
@@ -93,6 +97,7 @@ describe("assignment replacement preparation errors", () => {
     mocks.requireEditableSourceContext.mockResolvedValue({
       draft: {
         assignmentId: ids.assignment,
+        availableFrom: null,
         availableUntil: null,
         datasetId: ids.dataset,
         englishToKoreanRatio: 50,
@@ -106,6 +111,7 @@ describe("assignment replacement preparation errors", () => {
         retryEnabled: true,
         retryPassingScore: 80,
         reviewLevels: [],
+        reviewScope: "dataset",
         studentId: ids.student,
         studentName: "가짜 학생",
         timeLimitSeconds: 300,

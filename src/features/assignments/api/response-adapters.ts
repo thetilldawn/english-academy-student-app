@@ -116,9 +116,12 @@ const assignmentEditDraftResponseSchema = z
       "random",
       "fixed",
     ]),
+    availableFrom: z.iso.datetime({ offset: true }).nullable(),
     availableUntil: z.iso.datetime({ offset: true }).nullable(),
     includePendingReview: z.boolean(),
+    reviewScope: z.enum(["dataset", "selection"]),
     reviewLevels: z.array(z.union([z.literal(1), z.literal(2)])).max(2),
+    seriesItem: z.boolean(),
   })
   .strict()
   .superRefine((value, context) => {
