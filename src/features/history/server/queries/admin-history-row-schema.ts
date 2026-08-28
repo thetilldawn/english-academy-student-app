@@ -11,6 +11,11 @@ import {
 
 const timestampSchema = z.iso.datetime({ offset: true });
 const nullableTimestampSchema = timestampSchema.nullable();
+const nullableDeadlineTimestampSchema = z.preprocess(
+  (value) =>
+    value === "infinity" || value === "-infinity" ? null : value,
+  nullableTimestampSchema,
+);
 const assignmentStatusSchema = z.enum(["draft", "active", "closed"]);
 const assignmentPurposeSchema = z.enum(["regular", "review", "mixed"]);
 const activityStatusSchema = z.enum([
@@ -73,7 +78,7 @@ export const adminHistoryListItemSchema = z.object({
   cancelledAt: nullableTimestampSchema,
   completedAt: nullableTimestampSchema,
   datasetTitle: z.string(),
-  deadlineAt: nullableTimestampSchema,
+  deadlineAt: nullableDeadlineTimestampSchema,
   finalScore: z.number().nullable(),
   id: z.string().min(1),
   initialCompletedAt: nullableTimestampSchema,

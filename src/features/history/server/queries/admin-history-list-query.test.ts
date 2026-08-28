@@ -193,4 +193,27 @@ describe("admin history list query", () => {
     })).rejects.toBeInstanceOf(AdminHistoryCursorError);
     expect(mocks.rpc).toHaveBeenCalledTimes(callsBeforeMismatch);
   });
+
+  it("시간 제한 없는 DB 마감 값을 화면용 null로 바꾼다", async () => {
+    mocks.rpc.mockResolvedValueOnce({
+      data: [
+        {
+          group_key: "open",
+          items: [{
+            ...node(1),
+            item: { ...rawItem(1), deadlineAt: "infinity" },
+          }],
+          snapshot_at: snapshotAt,
+          total_count: 1,
+        },
+        emptyInitialRow("needs_attention"),
+        emptyInitialRow("completed"),
+      ],
+      error: null,
+    });
+
+    const snapshot = await listAdminHistoryInitial({ currentOnly: true });
+
+    expect(snapshot.sections[0]?.items[0]?.deadlineAt).toBeNull();
+  });
 });

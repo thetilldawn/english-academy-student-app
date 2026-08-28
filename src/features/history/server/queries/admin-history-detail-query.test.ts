@@ -146,6 +146,19 @@ describe("admin history detail query", () => {
     });
   });
 
+  it("상세에서도 시간 제한 없는 DB 마감 값을 null로 바꾼다", async () => {
+    mocks.rpc.mockResolvedValue({
+      data: { ...rawDetail(null), deadlineAt: "infinity" },
+      error: null,
+    });
+
+    const detail = await getAdminHistoryReadModelDetail(
+      `assignment.${assignmentId}.${studentId}`,
+    );
+
+    expect(detail?.summary.deadlineAt).toBeNull();
+  });
+
   it("잘못된 주소와 DB 오류를 구분한다", async () => {
     await expect(getAdminHistoryReadModelDetail("invalid-key")).resolves.toBeNull();
     expect(mocks.requireAdmin).not.toHaveBeenCalled();
