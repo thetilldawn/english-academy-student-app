@@ -26,8 +26,12 @@ type InitialRow = {
   current_items: Array<{
     assignmentId: string;
     dashboardSection: string;
+    item: Record<string, unknown>;
   }>;
+  deadline_closed_count: string;
+  needs_attention_count: string;
   open_count: string;
+  scheduled_count: string;
   snapshot_at: Date;
 };
 
@@ -200,6 +204,15 @@ describe("student dashboard read model SQL", () => {
       )
     `);
     const row = result.rows[0];
+    const legacyFullList = await database.query<{ items: unknown[] }>(`
+      select coalesce(
+        jsonb_agg(item order by effective_at desc, assignment_id asc),
+        '[]'::jsonb
+      ) as items
+      from private.student_dashboard_read_rows_v1(
+        '${studentId}', '${snapshotAt}'
+      )
+    `);
 
     expect(row?.snapshot_at.toISOString()).toBe(snapshotAt);
     expect(Number(row?.completed_count)).toBe(21);
@@ -222,6 +235,29 @@ describe("student dashboard read model SQL", () => {
       passingScore: 80,
       questionCount: 20,
     });
+
+    const boundedClientPayload = {
+      completedPage: {
+        items: row?.completed_items.slice(0, 10).map((node) => node.item),
+        nextCursor: "x".repeat(256),
+      },
+      currentAssignments: row?.current_items.map((node) => node.item),
+      sectionCounts: {
+        completed: row?.completed_count,
+        deadlineClosed: row?.deadline_closed_count,
+        needsAttention: row?.needs_attention_count,
+        open: row?.open_count,
+        scheduled: row?.scheduled_count,
+      },
+      snapshotAt: row?.snapshot_at.toISOString(),
+    };
+    const legacyFullPayload = legacyFullList.rows[0]?.items ?? [];
+
+    expect(legacyFullPayload).toHaveLength(33);
+    expect(Buffer.byteLength(JSON.stringify(boundedClientPayload), "utf8"))
+      .toBeLessThan(
+        Buffer.byteLength(JSON.stringify(legacyFullPayload), "utf8"),
+      );
   });
 
   it("동일 완료 시각 21건을 ID 보조 정렬로 10, 10, 1 연결한다", async () => {
