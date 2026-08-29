@@ -31,6 +31,14 @@ function dispatchPopState(state: Record<string, unknown>) {
   window.dispatchEvent(new PopStateEvent("popstate", { state }));
 }
 
+function dispatchBeforeUnload() {
+  const event = new Event("beforeunload", {
+    cancelable: true,
+  }) as BeforeUnloadEvent;
+  window.dispatchEvent(event);
+  return event.defaultPrevented;
+}
+
 beforeEach(() => {
   window.history.replaceState({}, "", "/admin/students/student-1");
 });
@@ -69,6 +77,30 @@ describe("useRouteExitGuard", () => {
     await waitFor(() => expect(exit).toHaveBeenCalledOnce());
   });
 
+  it("does not warn again while an approved document exit continues", async () => {
+    vi.spyOn(window.history, "back").mockImplementation(() => {});
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const beforeUnloadBlocked = vi.fn();
+    const { result } = renderGuard();
+    const baseState = currentBaseState();
+
+    expect(result.current.requestExit(() => {
+      beforeUnloadBlocked(dispatchBeforeUnload());
+    })).toBe(true);
+    act(() => dispatchPopState(baseState));
+
+    await waitFor(() => expect(beforeUnloadBlocked).toHaveBeenCalledWith(false));
+  });
+
+  it("keeps the document warning active when a guarded exit is cancelled", () => {
+    vi.spyOn(window.history, "back").mockImplementation(() => {});
+    vi.spyOn(window, "confirm").mockReturnValue(false);
+    const { result } = renderGuard();
+
+    expect(result.current.requestExit(vi.fn())).toBe(false);
+    expect(dispatchBeforeUnload()).toBe(true);
+  });
+
   it("저장 중에는 확인창 없이 모든 프로그램 이동을 막는다", () => {
     const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
     const confirm = vi.spyOn(window, "confirm");
@@ -98,6 +130,7 @@ describe("useRouteExitGuard", () => {
     await waitFor(() => expect(failedExit).toHaveBeenCalledOnce());
     await waitFor(() => expect(pushState).toHaveBeenCalledOnce());
     expect(window.history.state[SENTINEL_KEY]).toEqual(expect.any(String));
+    expect(dispatchBeforeUnload()).toBe(true);
     expect(result.current.requestExit(retryExit)).toBe(true);
     expect(back).toHaveBeenCalledTimes(2);
   });

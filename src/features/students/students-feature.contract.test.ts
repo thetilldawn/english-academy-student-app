@@ -45,7 +45,9 @@ describe("student management feature boundary", () => {
     expect(detailPage).toContain("<GuardedLink");
     expect(detailPage).toContain('href="/admin/students"');
     expect(detailPage).not.toContain('router.push("/admin/students")');
-    expect(detailRouteGuard).toContain("useUnsavedChangesWarning(active)");
+    expect(detailRouteGuard).toContain(
+      "useUnsavedChangesWarning(active, activeRef)",
+    );
     expect(detailRouteGuard).toContain('window.addEventListener("popstate"');
     expect(detailRouteGuard).toContain('document.addEventListener("click"');
     expect(detailRouteGuard).toContain("if (!link?.hashOnly) return");

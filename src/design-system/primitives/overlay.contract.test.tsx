@@ -270,6 +270,41 @@ describe("dialog primitive", () => {
     expect(onClose).toHaveBeenCalledOnce();
     expect(onClose).toHaveBeenCalledWith("escape");
   });
+
+  it("closes a hover-open help popover before the dialog when focus is elsewhere", async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+
+    render(
+      <DialogFrame
+        aria-labelledby="hover-help-dialog-title"
+        onRequestClose={onClose}
+      >
+        <DialogHeader closeLabel="Close">
+          <h2 id="hover-help-dialog-title">Dialog title</h2>
+        </DialogHeader>
+        <DialogBody>
+          <button type="button">Other control</button>
+          <HelpTip label="Help" trigger="Field label">
+            Help text
+          </HelpTip>
+        </DialogBody>
+      </DialogFrame>,
+    );
+
+    screen.getByRole("button", { name: "Other control" }).focus();
+    fireEvent.mouseEnter(screen.getByRole("button", { name: "Help" }));
+    const tooltip = screen.getByRole("tooltip", { hidden: true });
+    await waitFor(() => expect(tooltip).toHaveAttribute("data-popover-open"));
+
+    await user.keyboard("{Escape}");
+
+    expect(onClose).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(tooltip).not.toHaveAttribute("data-popover-open"),
+    );
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
 });
 
 describe("tabs primitive", () => {
@@ -330,6 +365,7 @@ describe("help tooltip primitive", () => {
     );
     const trigger = screen.getByRole("button", { name: "시간 방식 설명" });
     const tooltip = screen.getByRole("tooltip", { hidden: true });
+    expect(tooltip).toHaveAttribute("popover", "manual");
 
     await user.tab();
     await waitFor(() => expect(tooltip).toHaveAttribute("data-popover-open"));
@@ -338,9 +374,17 @@ describe("help tooltip primitive", () => {
       expect(tooltip).not.toHaveAttribute("data-popover-open"),
     );
     trigger.blur();
-    fireEvent.click(trigger);
+    await user.click(trigger);
     await waitFor(() => expect(tooltip).toHaveAttribute("data-popover-open"));
-    fireEvent.click(trigger);
+    fireEvent.mouseLeave(trigger);
+    fireEvent.mouseEnter(trigger);
+    await user.click(trigger);
+    await waitFor(() =>
+      expect(tooltip).not.toHaveAttribute("data-popover-open"),
+    );
+    await user.click(trigger);
+    await waitFor(() => expect(tooltip).toHaveAttribute("data-popover-open"));
+    fireEvent.pointerDown(document.body);
     await waitFor(() =>
       expect(tooltip).not.toHaveAttribute("data-popover-open"),
     );

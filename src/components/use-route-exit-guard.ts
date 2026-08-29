@@ -121,7 +121,7 @@ export function useRouteExitGuard({
   const protectedHrefRef = useRef("");
   const pendingExitRef = useRef<NavigationContinuation | null>(null);
 
-  useUnsavedChangesWarning(active);
+  useUnsavedChangesWarning(active, activeRef);
 
   const pushSentinel = useCallback(() => {
     const href = protectedHrefRef.current || window.location.href;

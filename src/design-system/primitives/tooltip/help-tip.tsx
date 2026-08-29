@@ -71,6 +71,7 @@ export function HelpTip({
   trigger: ReactNode;
 }) {
   const tooltipId = useId();
+  const transientOpenRef = useRef(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const tooltipRef = useRef<HTMLSpanElement>(null);
   const [open, setOpen] = useState(false);
@@ -120,24 +121,80 @@ export function HelpTip({
     };
   }, [open, positionTooltip]);
 
+  useEffect(() => {
+    if (!open) return;
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (
+        triggerRef.current?.contains(target) ||
+        tooltipRef.current?.contains(target)
+      ) {
+        return;
+      }
+      transientOpenRef.current = false;
+      hide();
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      transientOpenRef.current = false;
+      hide();
+    };
+    document.addEventListener("pointerdown", closeOnOutsidePointer, true);
+    document.addEventListener("keydown", closeOnEscape, true);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsidePointer, true);
+      document.removeEventListener("keydown", closeOnEscape, true);
+    };
+  }, [hide, open]);
+
   return (
     <span className={styles.labelRoot}>
       <button
         aria-describedby={open ? tooltipId : undefined}
         aria-label={label}
         className={styles.labelTrigger}
-        onBlur={hide}
-        onClick={() => (open ? hide() : show())}
-        onFocus={show}
+        onBlur={() => {
+          transientOpenRef.current = false;
+          hide();
+        }}
+        onClick={() => {
+          const tooltip = tooltipRef.current;
+          if (tooltip?.matches(":popover-open")) {
+            if (transientOpenRef.current) {
+              transientOpenRef.current = false;
+              return;
+            }
+            hide();
+            return;
+          }
+          transientOpenRef.current = false;
+          show();
+        }}
+        onFocus={() => {
+          if (tooltipRef.current?.matches(":popover-open")) return;
+          transientOpenRef.current = true;
+          show();
+        }}
         onKeyDown={(event) => {
           if (event.key !== "Escape" || !open) return;
           event.preventDefault();
           event.stopPropagation();
+          transientOpenRef.current = false;
           hide();
         }}
-        onMouseEnter={show}
+        onMouseEnter={() => {
+          if (tooltipRef.current?.matches(":popover-open")) return;
+          transientOpenRef.current = true;
+          show();
+        }}
         onMouseLeave={() => {
-          if (document.activeElement !== triggerRef.current) hide();
+          if (document.activeElement !== triggerRef.current) {
+            transientOpenRef.current = false;
+            hide();
+          }
         }}
         ref={triggerRef}
         type="button"
@@ -150,7 +207,7 @@ export function HelpTip({
         onToggle={(event) =>
           setOpen(event.currentTarget.matches(":popover-open"))
         }
-        popover="auto"
+        popover="manual"
         ref={tooltipRef}
         role="tooltip"
       >
