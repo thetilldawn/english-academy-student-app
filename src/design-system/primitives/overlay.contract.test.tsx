@@ -143,15 +143,76 @@ describe("dialog primitive", () => {
     render(<DialogHarness onClose={onClose} />);
     const opener = screen.getByRole("button", { name: "Open dialog" });
     await user.click(opener);
+    screen.getByRole("button", { name: "Close" }).focus();
+    await user.keyboard("{Escape}");
+    expect(onClose).toHaveBeenLastCalledWith("escape");
+    expect(onClose).toHaveBeenCalledTimes(1);
+
+    await user.click(opener);
     fireEvent(
       screen.getByRole("dialog"),
       new Event("cancel", { bubbles: false, cancelable: true }),
     );
     expect(onClose).toHaveBeenLastCalledWith("escape");
+    expect(onClose).toHaveBeenCalledTimes(2);
 
     await user.click(opener);
     fireEvent.click(screen.getByRole("dialog"));
     expect(onClose).toHaveBeenLastCalledWith("backdrop");
+    expect(onClose).toHaveBeenCalledTimes(3);
+  });
+
+  it("deduplicates a keyboard Escape followed by a native cancel signal", () => {
+    const onClose = vi.fn();
+    render(
+      <DialogFrame
+        aria-labelledby="dedupe-dialog-title"
+        onRequestClose={onClose}
+      >
+        <DialogHeader closeLabel="Close">
+          <h2 id="dedupe-dialog-title">Dialog title</h2>
+        </DialogHeader>
+        <DialogBody>Dialog body</DialogBody>
+      </DialogFrame>,
+    );
+    const dialog = screen.getByRole("dialog");
+    const closeButton = screen.getByRole("button", { name: "Close" });
+
+    fireEvent.keyDown(closeButton, { key: "Escape" });
+    fireEvent(dialog, new Event("cancel", { cancelable: true }));
+
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(onClose).toHaveBeenCalledWith("escape");
+  });
+
+  it("keeps the dialog open when a child control consumes Escape", () => {
+    const onClose = vi.fn();
+    render(
+      <DialogFrame
+        aria-labelledby="child-dialog-title"
+        onRequestClose={onClose}
+      >
+        <DialogHeader closeLabel="Close">
+          <h2 id="child-dialog-title">Dialog title</h2>
+        </DialogHeader>
+        <DialogBody>
+          <button
+            onKeyDown={(event) => {
+              if (event.key === "Escape") event.preventDefault();
+            }}
+            type="button"
+          >
+            Child control
+          </button>
+        </DialogBody>
+      </DialogFrame>,
+    );
+
+    fireEvent.keyDown(screen.getByRole("button", { name: "Child control" }), {
+      key: "Escape",
+    });
+
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it("blocks every close path while a mutation is busy", async () => {
@@ -161,10 +222,53 @@ describe("dialog primitive", () => {
     render(<DialogHarness closeDisabled onClose={onClose} />);
     await user.click(screen.getByRole("button", { name: "Open dialog" }));
     const dialog = screen.getByRole("dialog");
+    screen.getByRole("button", { name: "Body action" }).focus();
+    await user.keyboard("{Escape}");
     fireEvent(dialog, new Event("cancel", { cancelable: true }));
     fireEvent.click(dialog);
     expect(screen.getByRole("button", { name: "Close" })).toBeDisabled();
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("lets an open help popover consume the first Escape", async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+
+    render(
+      <DialogFrame
+        aria-labelledby="help-dialog-title"
+        onRequestClose={onClose}
+      >
+        <DialogHeader closeLabel="Close">
+          <h2 id="help-dialog-title">Dialog title</h2>
+        </DialogHeader>
+        <DialogBody>
+          <HelpTip label="Help" trigger="Field label">
+            Help text
+          </HelpTip>
+        </DialogBody>
+      </DialogFrame>,
+    );
+
+    const trigger = screen.getByRole("button", { name: "Help" });
+    trigger.focus();
+    await waitFor(() =>
+      expect(screen.getByRole("tooltip", { hidden: true })).toHaveAttribute(
+        "data-popover-open",
+      ),
+    );
+    await user.keyboard("{Escape}");
+
+    expect(onClose).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(screen.getByRole("tooltip", { hidden: true })).not.toHaveAttribute(
+        "data-popover-open",
+      ),
+    );
+
+    await user.keyboard("{Escape}");
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(onClose).toHaveBeenCalledWith("escape");
   });
 });
 

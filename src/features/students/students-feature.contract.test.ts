@@ -11,6 +11,7 @@ describe("student management feature boundary", () => {
   const directory = source("src/features/students/ui/student-directory.tsx");
   const directoryCss = source("src/features/students/ui/student-directory.module.css");
   const detailDialog = source("src/features/students/ui/student-detail-dialog.tsx");
+  const detailPage = source("src/features/students/ui/student-detail-page.tsx");
   const detailContent = source("src/features/students/ui/student-detail-content.tsx");
   const detailRouteGuard = source("src/components/use-route-exit-guard.ts");
   const guardedLink = source("src/components/guarded-link.tsx");
@@ -41,6 +42,9 @@ describe("student management feature boundary", () => {
     expect(account).toContain("controller.actions.remove()");
     expect(account).not.toContain("controller.actions.save()");
     expect(detailDialog).toContain("useRouteExitGuard({");
+    expect(detailPage).toContain("<GuardedLink");
+    expect(detailPage).toContain('href="/admin/students"');
+    expect(detailPage).not.toContain('router.push("/admin/students")');
     expect(detailRouteGuard).toContain("useUnsavedChangesWarning(active)");
     expect(detailRouteGuard).toContain('window.addEventListener("popstate"');
     expect(detailRouteGuard).toContain('document.addEventListener("click"');

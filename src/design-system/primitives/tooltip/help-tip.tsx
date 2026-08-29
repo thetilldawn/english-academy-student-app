@@ -130,7 +130,10 @@ export function HelpTip({
         onClick={() => (open ? hide() : show())}
         onFocus={show}
         onKeyDown={(event) => {
-          if (event.key === "Escape") hide();
+          if (event.key !== "Escape" || !open) return;
+          event.preventDefault();
+          event.stopPropagation();
+          hide();
         }}
         onMouseEnter={show}
         onMouseLeave={() => {

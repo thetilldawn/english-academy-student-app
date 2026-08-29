@@ -57,9 +57,21 @@ function useDialogContext() {
   return context;
 }
 
+function hasOpenPopover() {
+  return Array.from(document.querySelectorAll<HTMLElement>("[popover]")).some(
+    (popover) => {
+      try {
+        return popover.matches(":popover-open");
+      } catch {
+        return false;
+      }
+    },
+  );
+}
+
 type DialogFrameProps = Omit<
   ComponentPropsWithoutRef<"dialog">,
-  "onCancel" | "onClick" | "onClose"
+  "onCancel" | "onClick" | "onClose" | "onKeyDown"
 > & {
   closeDisabled?: boolean;
   fullScreenMobile?: boolean;
@@ -88,6 +100,8 @@ export const DialogFrame = forwardRef<HTMLDialogElement, DialogFrameProps>(
   ) {
     const localRef = useRef<HTMLDialogElement | null>(null);
     const returnFocusRef = useRef<HTMLElement | null>(null);
+    const escapeKeyRequestRef = useRef(false);
+    const escapeResetTimerRef = useRef<number | null>(null);
 
     const setRef = useCallback(
       (node: HTMLDialogElement | null) => {
@@ -118,6 +132,9 @@ export const DialogFrame = forwardRef<HTMLDialogElement, DialogFrameProps>(
       lockDocumentScroll();
 
       return () => {
+        if (escapeResetTimerRef.current !== null) {
+          window.clearTimeout(escapeResetTimerRef.current);
+        }
         if (dialog?.open) dialog.close();
         unlockDocumentScroll();
         const returnTarget = returnFocusRef.current;
@@ -142,6 +159,7 @@ export const DialogFrame = forwardRef<HTMLDialogElement, DialogFrameProps>(
           data-layout={layout}
           onCancel={(event) => {
             event.preventDefault();
+            if (escapeKeyRequestRef.current) return;
             requestClose("escape");
           }}
           onClick={(event) => {
@@ -150,6 +168,26 @@ export const DialogFrame = forwardRef<HTMLDialogElement, DialogFrameProps>(
             }
           }}
           onClose={onAfterClose}
+          onKeyDown={(event) => {
+            if (
+              event.key !== "Escape" ||
+              event.defaultPrevented ||
+              hasOpenPopover()
+            ) {
+              return;
+            }
+            event.preventDefault();
+            event.stopPropagation();
+            escapeKeyRequestRef.current = true;
+            if (escapeResetTimerRef.current !== null) {
+              window.clearTimeout(escapeResetTimerRef.current);
+            }
+            escapeResetTimerRef.current = window.setTimeout(() => {
+              escapeKeyRequestRef.current = false;
+              escapeResetTimerRef.current = null;
+            }, 0);
+            requestClose("escape");
+          }}
           ref={setRef}
           {...props}
         >

@@ -3,9 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { GuardedLink } from "@/components/guarded-link";
 import { useRouteExitGuard } from "@/components/use-route-exit-guard";
 import { adminStudentsText } from "@/content/ko/admin-students";
-import { Button } from "@/design-system/primitives/button/button";
+import { buttonRecipe } from "@/design-system/primitives/button/button";
 
 import type { StudentDetailInitial } from "../contracts/student-detail-read-model";
 import { StudentDetailContent } from "./student-detail-content";
@@ -31,10 +32,6 @@ export function StudentDetailPage({
     idPrefix: "student-detail",
   });
 
-  function openStudentList() {
-    routeGuard.requestExit(() => router.push("/admin/students"));
-  }
-
   return (
     <article className={styles.page}>
       <header className={styles.pageHeader}>
@@ -43,13 +40,17 @@ export function StudentDetailPage({
           student={initial.student}
           titleId="student-detail-page-title"
         />
-        <Button
-          disabled={interactionState.busy}
-          onClick={openStudentList}
-          variant="quiet"
+        <GuardedLink
+          aria-disabled={interactionState.busy}
+          className={buttonRecipe({ variant: "quiet" })}
+          href="/admin/students"
+          onClick={(event) => {
+            if (interactionState.busy) event.preventDefault();
+          }}
+          tabIndex={interactionState.busy ? -1 : undefined}
         >
           {adminStudentsText.detail.backToList}
-        </Button>
+        </GuardedLink>
       </header>
       <StudentDetailContent
         appOrigin={appOrigin}

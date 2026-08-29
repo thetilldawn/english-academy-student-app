@@ -42,6 +42,24 @@ afterAll(() => {
 });
 
 describe("RoutedDetailDialog", () => {
+  it("navigates back once for a real Escape key", async () => {
+    const user = userEvent.setup();
+    render(
+      <RoutedDetailDialog
+        closeLabel="상세 닫기"
+        heading={<h2 id="escape-detail-title">상세</h2>}
+        titleId="escape-detail-title"
+      >
+        상세 내용
+      </RoutedDetailDialog>,
+    );
+
+    screen.getByRole("button", { name: "상세 닫기" }).focus();
+    await user.keyboard("{Escape}");
+
+    expect(back).toHaveBeenCalledOnce();
+  });
+
   it("deduplicates close signals before navigating back", async () => {
     const user = userEvent.setup();
     render(

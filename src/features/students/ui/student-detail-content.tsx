@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useLayoutEffect } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 
@@ -74,7 +74,7 @@ export function StudentDetailContent({
   });
   const wrongCache = useStudentWrongWordCache(initial.student.id);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     onInteractionStateChange?.({
       busy: profile.busy || access.interactionBusy,
       dirty: !profile.unchanged,

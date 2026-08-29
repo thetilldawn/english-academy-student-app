@@ -24,6 +24,37 @@ function item(id: string) {
 afterEach(() => vi.clearAllMocks());
 
 describe("useStudentHistoryPage", () => {
+  it("accumulates 29 records as 10, 20, then 29", async () => {
+    vi.mocked(loadStudentHistoryNextPage)
+      .mockResolvedValueOnce({
+        items: Array.from({ length: 10 }, (_, index) => item(String(index + 11))),
+        nextCursor: "third",
+      })
+      .mockResolvedValueOnce({
+        items: Array.from({ length: 9 }, (_, index) => item(String(index + 21))),
+        nextCursor: null,
+      });
+    const { result } = renderHook(() => useStudentHistoryPage({
+      initialPage: {
+        items: Array.from({ length: 10 }, (_, index) => item(String(index + 1))),
+        nextCursor: "second",
+        totalCount: 29,
+      },
+      studentId: "00000000-0000-4000-8000-000000000001",
+    }));
+
+    expect(result.current.page.items).toHaveLength(10);
+    await act(async () => result.current.actions.loadMore());
+    await waitFor(() => expect(result.current.page.items).toHaveLength(20));
+    expect(result.current.page.nextCursor).toBe("third");
+
+    await act(async () => result.current.actions.loadMore());
+    await waitFor(() => expect(result.current.page.items).toHaveLength(29));
+    expect(new Set(result.current.page.items.map((entry) => entry.id)).size).toBe(29);
+    expect(result.current.page.nextCursor).toBeNull();
+    expect(result.current.page.totalCount).toBe(29);
+  });
+
   it("appends the next 10 records without duplicates and preserves the total", async () => {
     vi.mocked(loadStudentHistoryNextPage).mockResolvedValue({
       items: [item("2"), item("3")],

@@ -4,7 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   type ReactNode,
@@ -68,7 +68,7 @@ export function useNavigationExitGuardRegistration({
   requestExit: ExitRequest;
 }) {
   const context = useContext(NavigationExitGuardContext);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!active || !context) return;
     return context.register(id, requestExit);
   }, [active, context, id, requestExit]);

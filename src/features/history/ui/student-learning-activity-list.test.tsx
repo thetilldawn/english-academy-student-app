@@ -66,6 +66,22 @@ function openItem(index: number): AssignmentHistorySummary {
 }
 
 describe("StudentLearningActivityList", () => {
+  it("renders every server-loaded row without a second local limit", () => {
+    render(
+      <StudentLearningActivityList
+        displayMode="all-loaded"
+        initialLimit={10}
+        items={Array.from({ length: 16 }, (_, index) => openItem(index + 1))}
+      />,
+    );
+
+    expect(screen.getByText("16건")).toBeVisible();
+    expect(screen.getAllByRole("listitem")).toHaveLength(16);
+    expect(
+      screen.queryByRole("button", { name: /전체 16개 보기/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it("counts the full filtered section before limiting visible rows", async () => {
     const user = userEvent.setup();
     render(

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef } from "react";
 
 import {
   useNavigationExitGuardRegistration,
@@ -204,7 +204,7 @@ export function useRouteExitGuard({
     };
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     busyRef.current = busy;
     dirtyRef.current = dirty;
     desiredActiveRef.current = active;

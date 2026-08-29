@@ -92,8 +92,8 @@ export function StudentLearningHistory({
       </div>
       {controller.error ? <Notice role="alert" tone="danger">{controller.error}</Notice> : null}
       <StudentLearningActivityList
+        displayMode="all-loaded"
         includeArchived
-        initialLimit={10}
         items={controller.page.items}
         showFilters={false}
       />

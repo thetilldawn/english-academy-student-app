@@ -38,6 +38,7 @@ const sectionDefinitions: Array<{
 ];
 
 export function StudentLearningActivityList({
+  displayMode = "section-preview",
   emptyLabel = adminStudentsText.learning.activityList.empty,
   filtersEnabled = false,
   includeArchived = filtersEnabled,
@@ -45,6 +46,7 @@ export function StudentLearningActivityList({
   items,
   showFilters = filtersEnabled,
 }: {
+  displayMode?: "all-loaded" | "section-preview";
   emptyLabel?: string;
   filtersEnabled?: boolean;
   includeArchived?: boolean;
@@ -100,14 +102,17 @@ export function StudentLearningActivityList({
       );
       return {
         ...section,
-        items: expanded ? allItems : allItems.slice(0, initialLimit),
+        items:
+          displayMode === "all-loaded" || expanded
+            ? allItems
+            : allItems.slice(0, initialLimit),
         totalCount: allItems.length,
       };
     })
     .filter((section) => section.totalCount > 0);
-  const hasHiddenItems = visibleSections.some(
-    (section) => section.totalCount > initialLimit,
-  );
+  const hasHiddenItems =
+    displayMode === "section-preview" &&
+    visibleSections.some((section) => section.totalCount > initialLimit);
 
   if (!filtersEnabled && sorted.length === 0) {
     return <EmptyState className={styles.empty}>{emptyLabel}</EmptyState>;
