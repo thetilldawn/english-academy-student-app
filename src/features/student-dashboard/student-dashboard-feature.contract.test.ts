@@ -12,6 +12,12 @@ describe("student dashboard feature boundary", () => {
   const dashboard = source(
     "src/features/student-dashboard/ui/student-dashboard.tsx",
   );
+  const dashboardContent = source(
+    "src/features/student-dashboard/server/components/student-dashboard-content.tsx",
+  );
+  const completed = source(
+    "src/features/student-dashboard/ui/student-completed-assignments.tsx",
+  );
   const dashboardCss = source(
     "src/features/student-dashboard/ui/student-dashboard.module.css",
   );
@@ -24,9 +30,12 @@ describe("student dashboard feature boundary", () => {
   const globalCss = source("src/app/globals.css");
 
   it("leaves the route responsible only for server loading and feature composition", () => {
-    expect(page).toContain("listStudentAssignments(session.studentId)");
-    expect(page).toContain("getStudentPointBalance(session.studentId)");
-    expect(page).toContain("<StudentDashboard");
+    expect(page).toContain("<Suspense");
+    expect(page).toContain("<StudentDashboardContent student={session}");
+    expect(dashboardContent).toContain("Promise.all([");
+    expect(dashboardContent).toContain("getStudentDashboardInitial(student)");
+    expect(dashboardContent).toContain("getStudentPointBalance(student.studentId)");
+    expect(dashboardContent).toContain("<StudentDashboard");
     expect(page).not.toMatch(
       /function AssignmentCard|assignments\.filter|<article|activitySection/,
     );
@@ -34,9 +43,11 @@ describe("student dashboard feature boundary", () => {
 
   it("keeps assignment structure in small semantic components", () => {
     expect(dashboard).toContain(
-      "selectStudentAssignmentSections(assignments, nowMilliseconds)",
+      "selectStudentDashboardCurrentSections(",
     );
     expect(dashboard).toContain("<StudentAssignmentCard");
+    expect(dashboard).toContain("<StudentCompletedAssignments");
+    expect(completed).toContain('"use client"');
     expect(card).toContain("<article");
     expect(card).toContain("<ActivityStatusTimeline");
     expect(card).toContain("<AttemptScoreSummary");

@@ -6,6 +6,10 @@ import { act, cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { studentAppText } from "@/content/ko/student-app";
+import type {
+  StudentDashboardCurrentNode,
+  StudentDashboardInitialSnapshot,
+} from "../contracts/student-dashboard-read-model";
 
 import type { StudentAssignmentSummary } from "../model";
 import { StudentAssignmentCard } from "./student-assignment-card";
@@ -30,16 +34,11 @@ function assignment(
   return {
     id,
     assignmentStatus: "active",
-    title: id,
     displayTitle: `DAY ${id}`,
     datasetTitle: "[2025] 고3 모의고사 · 장문독해",
     assignmentPurpose: "regular",
     scopeLabel: "DAY 01",
     questionCount: 20,
-    questionOrderMode: "random",
-    timeLimitSeconds: 300,
-    timingMode: "total",
-    questionTimeLimitSeconds: null,
     passingScore: 80,
     retakeAllowed: true,
     lastAttemptId: null,
@@ -62,13 +61,34 @@ function assignment(
   };
 }
 
+function snapshot(input: {
+  completed?: StudentAssignmentSummary[];
+  current?: StudentDashboardCurrentNode[];
+} = {}): StudentDashboardInitialSnapshot {
+  const current = input.current ?? [];
+  const completed = input.completed ?? [];
+  const count = (section: StudentDashboardCurrentNode["section"]) =>
+    current.filter((node) => node.section === section).length;
+  return {
+    completedPage: { items: completed, nextCursor: null },
+    currentAssignments: current,
+    sectionCounts: {
+      completed: completed.length,
+      deadline_closed: count("deadline_closed"),
+      needs_attention: count("needs_attention"),
+      open: count("open"),
+      scheduled: count("scheduled"),
+    },
+    snapshotAt: "2026-08-22T00:00:00.000Z",
+  };
+}
+
 describe("StudentDashboard", () => {
   it("renders the dedicated empty state for zero assignments", () => {
     render(
       <StudentDashboard
-        assignments={[]}
         currentPoints={17}
-        displayName="테스트"
+        snapshot={snapshot()}
       />,
     );
 
@@ -80,9 +100,8 @@ describe("StudentDashboard", () => {
   });
 
   it("renders N-item section counts once in the stable section order", () => {
-    const assignments = [
-      assignment("open"),
-      assignment("failed", {
+    const open = assignment("open");
+    const failed = assignment("failed", {
         lastAttemptId: "attempt-failed",
         lastStatus: "completed",
         lastPhase: "completed",
@@ -90,8 +109,8 @@ describe("StudentDashboard", () => {
         lastFinalScore: 70,
         lastPassed: false,
         lastCompletedAt: "2026-08-10T00:00:00.000Z",
-      }),
-      assignment("completed", {
+      });
+    const completed = assignment("completed", {
         lastAttemptId: "attempt-completed",
         lastStatus: "completed",
         lastPhase: "completed",
@@ -99,18 +118,23 @@ describe("StudentDashboard", () => {
         lastFinalScore: 100,
         lastPassed: true,
         lastCompletedAt: "2026-08-09T00:00:00.000Z",
-      }),
-      assignment("missed", {
+      });
+    const missed = assignment("missed", {
         availableUntil: "2026-08-08T00:00:00.000Z",
         missedAt: "2026-08-08T00:00:00.000Z",
-      }),
-    ];
+      });
 
     const { container } = render(
       <StudentDashboard
-        assignments={assignments}
         currentPoints={0}
-        displayName="테스트"
+        snapshot={snapshot({
+          completed: [completed],
+          current: [
+            { assignment: open, section: "open" },
+            { assignment: failed, section: "needs_attention" },
+            { assignment: missed, section: "deadline_closed" },
+          ],
+        })}
       />,
     );
 
@@ -137,11 +161,16 @@ describe("StudentDashboard", () => {
       "아주 긴 이름의 고등학교 시험 대비 장문독해 단어장 ".repeat(6).trim();
     render(
       <StudentDashboard
-        assignments={[
-          assignment("long", { datasetTitle: longTitle, displayTitle: "" }),
-        ]}
         currentPoints={0}
-        displayName="테스트"
+        snapshot={snapshot({
+          current: [{
+            assignment: assignment("long", {
+              datasetTitle: longTitle,
+              displayTitle: "",
+            }),
+            section: "open",
+          }],
+        })}
       />,
     );
 
@@ -154,8 +183,9 @@ describe("StudentDashboard", () => {
   it("keeps a completed-only section collapsed by default", () => {
     render(
       <StudentDashboard
-        assignments={[
-          assignment("completed-only", {
+        currentPoints={0}
+        snapshot={snapshot({
+          completed: [assignment("completed-only", {
             lastAttemptId: "attempt-completed",
             lastStatus: "completed",
             lastPhase: "completed",
@@ -163,10 +193,8 @@ describe("StudentDashboard", () => {
             lastFinalScore: 100,
             lastPassed: true,
             lastCompletedAt: "2026-08-09T00:00:00.000Z",
-          }),
-        ]}
-        currentPoints={0}
-        displayName="테스트"
+          })],
+        })}
       />,
     );
 

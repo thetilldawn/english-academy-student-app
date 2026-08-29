@@ -9,11 +9,13 @@ function source(relativePath: string) {
 
 describe("learning point screen wiring", () => {
   it("loads the student dashboard balance beside assignments", () => {
-    const page = source("src/app/student/(protected)/page.tsx");
-    expect(page).toContain("Promise.all([");
-    expect(page).toContain("listStudentAssignments(session.studentId)");
-    expect(page).toContain("getStudentPointBalance(session.studentId)");
-    expect(page).toContain("currentPoints={currentPoints}");
+    const content = source(
+      "src/features/student-dashboard/server/components/student-dashboard-content.tsx",
+    );
+    expect(content).toContain("Promise.all([");
+    expect(content).toContain("getStudentDashboardInitial(student)");
+    expect(content).toContain("getStudentPointBalance(student.studentId)");
+    expect(content).toContain("currentPoints={currentPoints}");
   });
 
   it("loads an owned attempt's questions and point summary together", () => {

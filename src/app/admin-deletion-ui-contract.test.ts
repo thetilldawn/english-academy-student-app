@@ -60,8 +60,8 @@ describe("admin deletion UI contract", () => {
     const historyReadService = source(
       "src/lib/services/admin-history-read-service.ts",
     );
-    const quizService = source(
-      "src/lib/services/quiz/student-assignment-query.ts",
+    const dashboardReadModel = source(
+      "supabase/migrations/20260829190000_add_student_dashboard_read_model.sql",
     );
     const detailActions = source(
       "src/features/history/ui/history-detail-actions.tsx",
@@ -74,7 +74,8 @@ describe("admin deletion UI contract", () => {
     expect(historyReadService).toContain(
       ".range(from, from + HISTORY_PAGE_SIZE - 1)",
     );
-    expect(quizService).toContain('.is("deleted_at", null)');
+    expect(dashboardReadModel).toContain("assignment.deleted_at is null");
+    expect(dashboardReadModel).toContain("assignment.deleted_at > p_snapshot_at");
     expect(detailActions).toContain("!item.studentDeleted");
     expect(detailActions).toContain("refreshAfterMutation={false}");
     expect(detailActions).toContain('window.addEventListener("popstate"');

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { studentAppText } from "@/content/ko/student-app";
-import { StudentDashboard } from "@/features/student-dashboard/ui/student-dashboard";
+import { StudentDashboardContent } from "@/features/student-dashboard/server/components/student-dashboard-content";
+import { StudentDashboardSkeleton } from "@/features/student-dashboard/ui/student-dashboard-skeleton";
 import { requireStudentSession } from "@/lib/auth/student-session";
-import { getStudentPointBalance } from "@/lib/services/learning-point-read-service";
-import { listStudentAssignments } from "@/lib/services/quiz/student-assignment-query";
 
 export const metadata: Metadata = {
   title: studentAppText.dashboard.metadataTitle,
@@ -12,16 +12,10 @@ export const metadata: Metadata = {
 
 export default async function StudentDashboardPage() {
   const session = await requireStudentSession();
-  const [assignments, currentPoints] = await Promise.all([
-    listStudentAssignments(session.studentId),
-    getStudentPointBalance(session.studentId),
-  ]);
 
   return (
-    <StudentDashboard
-      assignments={assignments}
-      currentPoints={currentPoints}
-      displayName={session.displayName}
-    />
+    <Suspense fallback={<StudentDashboardSkeleton />}>
+      <StudentDashboardContent student={session} />
+    </Suspense>
   );
 }

@@ -13,8 +13,22 @@ const allocationRuleSource = fs.readFileSync(
   ),
   "utf8",
 );
-const quizSource = fs.readFileSync(
-  path.resolve("src/lib/services/quiz/student-assignment-query.ts"),
+const dashboardQuery = fs.readFileSync(
+  path.resolve(
+    "src/features/student-dashboard/server/queries/student-dashboard-query.ts",
+  ),
+  "utf8",
+);
+const dashboardRowSchema = fs.readFileSync(
+  path.resolve(
+    "src/features/student-dashboard/server/queries/student-dashboard-row-schema.ts",
+  ),
+  "utf8",
+);
+const dashboardReadModel = fs.readFileSync(
+  path.resolve(
+    "supabase/migrations/20260829190000_add_student_dashboard_read_model.sql",
+  ),
   "utf8",
 );
 const studentCard = fs.readFileSync(
@@ -66,14 +80,10 @@ describe("admin assignment history query contract", () => {
   });
 
   it("학생 배정 목록도 시험 목적과 주 DAY만 표시한다", () => {
-    expect(quizSource).toContain(
-      '"id, title, assignment_purpose, dataset_id',
-    );
-    expect(quizSource).toContain(
-      '"assignment_id, position, is_primary, vocab_units(unit_label)"',
-    );
-    expect(quizSource).toContain("primaryUnitLabelsByAssignment");
-    expect(quizSource).toContain("scopeLabel: assignmentScopeLabel");
+    expect(dashboardReadModel).toContain("assignment.assignment_purpose");
+    expect(dashboardReadModel).toContain("filter (where link.is_primary)");
+    expect(dashboardReadModel).toContain("'primaryUnitLabels'");
+    expect(dashboardRowSchema).toContain("scopeLabel: assignmentScopeLabel");
     expect(studentCard).toContain("assignment.scopeLabel");
     expect(studentCard).toContain('assignment.assignmentPurpose === "review"');
     expect(studentCard).not.toContain("assignmentOrderLabel(");
@@ -83,12 +93,9 @@ describe("admin assignment history query contract", () => {
   it("reads persisted missed assignment state without changing it", () => {
     expect(source).toContain("missed_at,");
     expect(source).toContain("missedAt: row.missed_at");
-    expect(quizSource).not.toContain("finalizeStudentMissedAssignments");
-    expect(quizSource).toContain(
-      '.select("assignment_id, assigned_at, missed_at, cancelled_at")',
-    );
-    expect(quizSource).toContain('.is("cancelled_at", null)');
-    expect(quizSource).toContain("missedAtByAssignment");
+    expect(dashboardReadModel).not.toContain("finalizeStudentMissedAssignments");
+    expect(dashboardReadModel).toContain("recipient.missed_at <= p_snapshot_at");
+    expect(dashboardReadModel).toContain("recipient.cancelled_at is null");
     expect(studentDashboardDomain).toContain(
       "missedAt: assignment.missedAt",
     );
@@ -101,29 +108,17 @@ describe("admin assignment history query contract", () => {
     expect(studentDashboardDomain).toContain(
       'lifecycle.progress === "missed"',
     );
-    expect(quizSource).toContain(
-      "assignedAtByAssignment.get(assignment.id)",
-    );
-    expect(quizSource).toMatch(
-      /const assignedAt\s*=\s*assignedAtByAssignment\.get\(assignment\.id\)/,
-    );
-    expect(quizSource).not.toMatch(
-      /const assignedAt\s*=\s*assignment\.available_from/,
-    );
-    expect(quizSource).toContain(
-      "availableFrom: assignment.available_from",
-    );
+    expect(dashboardReadModel).toContain("recipient.assigned_at");
+    expect(dashboardReadModel).toContain("'availableFrom', classified.available_from");
     expect(studentAssignmentLifecycle).toContain(
       'progress === "not_started"',
     );
   });
 
   it("does not turn student assignment query failures into an empty dashboard", () => {
-    expect(quizSource).toContain("if (linkError) {");
-    expect(quizSource).toContain("if (assignmentError || attemptError) {");
-    expect(quizSource).toContain(
-      "if (datasetError || assignmentUnitError) {",
-    );
+    expect(dashboardQuery).toContain("if (error) {");
+    expect(dashboardQuery).toContain("StudentDashboardReadError");
+    expect(dashboardQuery).toContain('"contract"');
   });
 
   it("reuses the read-only history rows within an editable detail request", () => {

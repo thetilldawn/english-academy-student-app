@@ -2,14 +2,14 @@ import { formatContentText } from "@/content/format";
 import { studentAppText } from "@/content/ko/student-app";
 import { CollapsibleStatusSection } from "@/design-system/patterns/collapsible-status-section/collapsible-status-section";
 import { CurrentPointSummary } from "@/features/learning-points/ui/point-summary";
-import { currentTimeMilliseconds } from "@/lib/deadline";
+import type { StudentDashboardInitialSnapshot } from "@/features/student-dashboard/contracts/student-dashboard-read-model";
 
 import {
-  selectStudentAssignmentSections,
+  selectStudentDashboardCurrentSections,
   type StudentAssignmentSectionId,
 } from "../domain/student-assignment-sections";
-import type { StudentAssignmentSummary } from "../model";
 import { StudentAssignmentCard } from "./student-assignment-card";
+import { StudentCompletedAssignments } from "./student-completed-assignments";
 import styles from "./student-dashboard.module.css";
 
 const sectionTitles: Record<StudentAssignmentSectionId, string> = {
@@ -21,25 +21,36 @@ const sectionTitles: Record<StudentAssignmentSectionId, string> = {
 };
 
 export function StudentDashboard({
-  assignments,
   currentPoints,
+  snapshot,
 }: {
-  assignments: readonly StudentAssignmentSummary[];
   currentPoints: number;
-  displayName: string;
+  snapshot: StudentDashboardInitialSnapshot;
 }) {
-  const nowMilliseconds = currentTimeMilliseconds();
-  const sections = selectStudentAssignmentSections(assignments, nowMilliseconds);
-  const visibleSections = sections.filter(
-    (section) => section.assignments.length > 0,
+  const nowMilliseconds = Date.parse(snapshot.snapshotAt);
+  const sections = selectStudentDashboardCurrentSections(
+    snapshot.currentAssignments,
   );
+  const totalCount = Object.values(snapshot.sectionCounts).reduce(
+    (total, count) => total + count,
+    0,
+  );
+  const sectionCount = (sectionId: StudentAssignmentSectionId) => {
+    if (sectionId === "needs-attention") {
+      return snapshot.sectionCounts.needs_attention;
+    }
+    if (sectionId === "deadline-closed") {
+      return snapshot.sectionCounts.deadline_closed;
+    }
+    return snapshot.sectionCounts[sectionId];
+  };
 
   return (
     <main className={styles.page} id="main-content">
       <div className={styles.pointSummary}>
         <CurrentPointSummary currentPoints={currentPoints} />
       </div>
-      {visibleSections.length === 0 ? (
+      {totalCount === 0 ? (
         <div className={styles.empty} role="status">
           {studentAppText.dashboard.emptyTitle}
           <br />
@@ -47,33 +58,46 @@ export function StudentDashboard({
         </div>
       ) : (
         <div className={styles.sectionList}>
-          {visibleSections.map((section) => (
-            <div
-              className={styles.section}
-              data-assignment-section={section.id}
-              key={section.id}
-            >
-              <CollapsibleStatusSection
-                countLabel={formatContentText(
-                  studentAppText.dashboard.meta.sectionCount,
-                  { count: section.assignments.length },
-                )}
-                defaultOpen={section.id === "open"}
-                id={`student-assignment-${section.id}`}
-                title={sectionTitles[section.id]}
+          {sections.map((section) => {
+            if (section.id === "completed") {
+              return snapshot.sectionCounts.completed > 0 ? (
+                <StudentCompletedAssignments
+                  initialPage={snapshot.completedPage}
+                  key={snapshot.snapshotAt}
+                  nowMilliseconds={nowMilliseconds}
+                  totalCount={snapshot.sectionCounts.completed}
+                />
+              ) : null;
+            }
+            if (section.assignments.length === 0) return null;
+            return (
+              <div
+                className={styles.section}
+                data-assignment-section={section.id}
+                key={section.id}
               >
-                <div className={styles.grid}>
-                  {section.assignments.map((assignment) => (
-                    <StudentAssignmentCard
-                      assignment={assignment}
-                      key={assignment.id}
-                      nowMilliseconds={nowMilliseconds}
-                    />
-                  ))}
-                </div>
-              </CollapsibleStatusSection>
-            </div>
-          ))}
+                <CollapsibleStatusSection
+                  countLabel={formatContentText(
+                    studentAppText.dashboard.meta.sectionCount,
+                    { count: sectionCount(section.id) },
+                  )}
+                  defaultOpen={section.id === "open"}
+                  id={`student-assignment-${section.id}`}
+                  title={sectionTitles[section.id]}
+                >
+                  <div className={styles.grid}>
+                    {section.assignments.map((assignment) => (
+                      <StudentAssignmentCard
+                        assignment={assignment}
+                        key={assignment.id}
+                        nowMilliseconds={nowMilliseconds}
+                      />
+                    ))}
+                  </div>
+                </CollapsibleStatusSection>
+              </div>
+            );
+          })}
         </div>
       )}
     </main>

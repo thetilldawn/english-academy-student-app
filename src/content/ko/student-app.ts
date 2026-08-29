@@ -74,6 +74,11 @@ export const studentAppText = {
       passingScore: "{score}점 통과",
       sectionCount: "{count}건",
     },
+    history: {
+      loadMore: "10개 더보기",
+      loading: "불러오는 중...",
+      loadError: "다음 완료 시험을 불러오지 못했습니다.",
+    },
   },
 
   // 학생 시험 응시 화면 > 문제 도움말

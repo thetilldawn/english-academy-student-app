@@ -6,6 +6,7 @@ import {
 import type { ActivityTimelineInput } from "@/features/history/presentation/activity-presentation";
 
 import type { StudentAssignmentSummary } from "../model";
+import type { StudentDashboardCurrentNode } from "../contracts/student-dashboard-read-model";
 import { deriveStudentAssignmentLifecycle } from "./student-assignment-lifecycle";
 
 export type StudentAssignmentSectionId =
@@ -136,5 +137,44 @@ export function selectStudentAssignmentSections(
       : compareStudentAssignments(left, right);
   });
 
+  return sections;
+}
+
+const dashboardSectionIdByReadSection = {
+  open: "open",
+  scheduled: "scheduled",
+  needs_attention: "needs-attention",
+  deadline_closed: "deadline-closed",
+} as const satisfies Record<
+  StudentDashboardCurrentNode["section"],
+  Exclude<StudentAssignmentSectionId, "completed">
+>;
+
+export function selectStudentDashboardCurrentSections(
+  nodes: readonly StudentDashboardCurrentNode[],
+): StudentAssignmentSection[] {
+  const sections: StudentAssignmentSection[] = [
+    { id: "open", assignments: [] },
+    { id: "scheduled", assignments: [] },
+    { id: "needs-attention", assignments: [] },
+    { id: "completed", assignments: [] },
+    { id: "deadline-closed", assignments: [] },
+  ];
+  const sectionById = new Map(sections.map((section) => [section.id, section]));
+  for (const node of nodes) {
+    sectionById
+      .get(dashboardSectionIdByReadSection[node.section])
+      ?.assignments.push(node.assignment);
+  }
+  for (const section of sections) {
+    section.assignments.sort(compareStudentAssignments);
+  }
+  sectionById.get("scheduled")?.assignments.sort((left, right) => {
+    const openingDifference = Date.parse(left.availableFrom ?? "") -
+      Date.parse(right.availableFrom ?? "");
+    return openingDifference !== 0
+      ? openingDifference
+      : compareStudentAssignments(left, right);
+  });
   return sections;
 }
