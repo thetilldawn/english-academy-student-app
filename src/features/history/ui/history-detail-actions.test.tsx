@@ -62,6 +62,21 @@ const editorData = {
 } as unknown as AssignmentManagerData;
 
 describe("history detail actions", () => {
+  it("opens the student through the ID-based detail route", () => {
+    render(
+      <HistoryDetailActions
+        editorData={editorData}
+        item={item}
+        mode="page"
+        onEditRequested={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("link", {
+      name: adminHistoryText.detailModal.openStudent,
+    })).toHaveAttribute("href", "/admin/students/student-1");
+  });
+
   it("delegates editing to the owning detail surface", async () => {
     const user = userEvent.setup();
     const editButtonRef = createRef<HTMLButtonElement>();

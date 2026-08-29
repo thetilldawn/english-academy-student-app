@@ -5,21 +5,21 @@ import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { StudentSummary } from "@/lib/admin/student-summary";
+import { learningPointsText } from "@/content/ko/learning-points";
 
-import type { StudentDetailController } from "../../controller/use-student-detail-controller";
-import type { StudentManagementData } from "../../model";
+import type { StudentDetailProfile } from "../../contracts/student-detail-read-model";
+import type { StudentProfileController } from "../../controller/use-student-profile-controller";
 import { StudentInfoPanel } from "./student-info-panel";
 
-const selectedStudent: StudentSummary = {
-  codeGeneration: 1,
+const student: StudentDetailProfile = {
   codeStatus: "active",
   createdAt: "2026-08-25T00:00:00.000Z",
   currentVocabBook: null,
   currentVocabDatasetId: null,
   displayName: "선택 학생",
-  gradeLabel: "고2",
-  id: "student-a",
+  gradeLabel: "고3",
+  id: "00000000-0000-4000-8000-000000000001",
+  rawPoints: 7,
   readingContextSyncStatus: "not_configured",
   readingCurriculumStage: "undecided",
   schoolName: "미리보기고",
@@ -27,31 +27,27 @@ const selectedStudent: StudentSummary = {
 };
 
 describe("StudentInfoPanel", () => {
-  it("shows only the selected student's mapped point balance", () => {
+  it("shows the selected student's raw balance through the visible point formatter", () => {
     const controller = {
-      actions: {
-        saveProfile: vi.fn(),
-        setProfileField: vi.fn(),
+      actions: { save: vi.fn(), setField: vi.fn() },
+      busy: false,
+      draft: {
+        displayName: student.displayName,
+        gradeLabel: student.gradeLabel ?? "",
+        schoolName: student.schoolName ?? "",
       },
-      busyKey: "",
-      interactionBusy: false,
-      profile: {
-        datasetId: "",
-        displayName: selectedStudent.displayName,
-        gradeLabel: selectedStudent.gradeLabel,
-        schoolName: selectedStudent.schoolName,
-      },
-      selectedStudent,
-    } as unknown as StudentDetailController;
-    const data = {
-      datasets: [],
-      pointBalances: { "student-a": 7, "student-b": 29 },
-      vocabBookHistory: [],
-    } as unknown as StudentManagementData;
+      unchanged: true,
+    } as StudentProfileController;
 
-    render(<StudentInfoPanel controller={controller} data={data} />);
+    render(
+      <StudentInfoPanel
+        controller={controller}
+        learningSources={[]}
+        student={student}
+        vocabBookHistory={[]}
+      />,
+    );
 
-    expect(screen.getByLabelText("현재 포인트")).toHaveTextContent("7");
-    expect(screen.getByLabelText("현재 포인트")).not.toHaveTextContent("29");
+    expect(screen.getByLabelText(learningPointsText.current)).toHaveTextContent("7");
   });
 });

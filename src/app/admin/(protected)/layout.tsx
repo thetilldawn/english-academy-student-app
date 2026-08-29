@@ -1,8 +1,8 @@
-import Link from "next/link";
-
 import { AdminNavigation } from "@/components/admin-navigation";
 import { AdminRouteScreenReaderTitle } from "@/components/admin-route-screen-reader-title";
 import { AdminLogoutButton } from "@/components/admin-logout-button";
+import { GuardedLink } from "@/components/guarded-link";
+import { NavigationExitGuardProvider } from "@/components/navigation-exit-guard";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationBootstrap } from "@/components/notification-bootstrap";
 import { adminShellText } from "@/content/ko/admin-shell";
@@ -20,10 +20,11 @@ export default async function AdminProtectedLayout({
   const admin = await requireAdmin();
 
   return (
-    <div className={shellStyles.adminAppShell}>
+    <NavigationExitGuardProvider>
+      <div className={shellStyles.adminAppShell}>
       <NotificationBootstrap role="admin" />
       <aside className={shellStyles.adminSidebar}>
-        <Link
+        <GuardedLink
           className={[shellStyles.brand, shellStyles.adminSidebarBrand].join(" ")}
           href="/admin"
         >
@@ -31,7 +32,7 @@ export default async function AdminProtectedLayout({
             E
           </span>
           <span>{adminShellText.brand}</span>
-        </Link>
+        </GuardedLink>
         <AdminNavigation
           label={adminShellText.navigation.pcAriaLabel}
           variant="sidebar"
@@ -75,7 +76,8 @@ export default async function AdminProtectedLayout({
           variant="mobile"
         />
       </div>
-      {detail}
-    </div>
+        {detail}
+      </div>
+    </NavigationExitGuardProvider>
   );
 }

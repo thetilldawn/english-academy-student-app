@@ -162,6 +162,9 @@ function ownersForPath(registry, filePath, flowPathIndex) {
     const match = entries.find((entry) => entry.path === filePath);
     if (match) owners.add(match.owner);
   }
+  for (const entry of registry.retiredPathOwners ?? []) {
+    if (entry.path === filePath) owners.add(entry.owner);
+  }
   for (const feature of registry.features) {
     if (filePath === feature.ownerPath || filePath.startsWith(`${feature.ownerPath}/`)) {
       owners.add(feature.id);
@@ -207,11 +210,30 @@ export function printChangedImpact(registry, baseRef = null) {
   const detailedFlowOwners = new Set(["assignments", "assignment-queue", "history", "quiz-player"]);
   const mappedChanges = changed.map((filePath) => {
     const current = ownersForPath(registry, filePath, flowPathIndex);
-    const previous = deletedFromHead.has(filePath) && headRegistry
-      ? ownersForPath(headRegistry, filePath, headFlowPathIndex)
-      : deletedFromBase.has(filePath) && baseRegistry
-        ? ownersForPath(baseRegistry, filePath, baseFlowPathIndex)
-        : { owners: [], flows: [] };
+    const previousCandidates = [];
+    if (deletedFromHead.has(filePath) && headRegistry) {
+      previousCandidates.push(
+        ownersForPath(headRegistry, filePath, headFlowPathIndex),
+      );
+    }
+    if (deletedFromBase.has(filePath)) {
+      if (baseRegistry) {
+        previousCandidates.push(
+          ownersForPath(baseRegistry, filePath, baseFlowPathIndex),
+        );
+      }
+      // The tracking base can predate an ownership entry. HEAD then carries
+      // the last known owner for a file removed by an earlier batch.
+      if (headRegistry) {
+        previousCandidates.push(
+          ownersForPath(headRegistry, filePath, headFlowPathIndex),
+        );
+      }
+    }
+    const previous = {
+      owners: [...new Set(previousCandidates.flatMap((item) => item.owners))],
+      flows: [...new Set(previousCandidates.flatMap((item) => item.flows))],
+    };
     const mapped = {
       owners: [...new Set([...current.owners, ...previous.owners])],
       flows: [...new Set([...current.flows, ...previous.flows])],

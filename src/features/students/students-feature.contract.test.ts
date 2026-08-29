@@ -9,104 +9,105 @@ function source(relativePath: string) {
 
 describe("student management feature boundary", () => {
   const directory = source("src/features/students/ui/student-directory.tsx");
-  const directoryCss = source(
-    "src/features/students/ui/student-directory.module.css",
-  );
-  const detail = source("src/features/students/ui/student-detail-dialog.tsx");
+  const directoryCss = source("src/features/students/ui/student-directory.module.css");
+  const detailDialog = source("src/features/students/ui/student-detail-dialog.tsx");
+  const detailContent = source("src/features/students/ui/student-detail-content.tsx");
+  const detailRouteGuard = source("src/components/use-route-exit-guard.ts");
+  const guardedLink = source("src/components/guarded-link.tsx");
+  const adminLayout = source("src/app/admin/(protected)/layout.tsx");
   const info = source("src/features/students/ui/panels/student-info-panel.tsx");
-  const account = source(
-    "src/features/students/ui/panels/student-account-panel.tsx",
-  );
-  const wrongCss = source(
-    "src/features/students/ui/panels/student-wrong-word-panel.module.css",
-  );
+  const account = source("src/features/students/ui/panels/student-account-panel.tsx");
+  const wrongCss = source("src/features/students/ui/panels/student-wrong-word-panel.module.css");
   const globalCss = source("src/app/globals.css");
 
-  it("keeps word assignment out of student detail and separates info from account actions", () => {
-    expect(detail.match(/<DialogFrame/g)).toHaveLength(1);
-    expect(detail).toContain("<StudentInfoPanel");
-    expect(detail).not.toMatch(/StudentAssignmentPanel|StudentLearningPanel/);
-    expect(info).toMatch(/saveProfile|saveCurrentDataset/);
-    expect(account).toMatch(/revealCode|rotateCode|blockAccess|removeStudent/);
-    expect(account).not.toMatch(/saveProfile|saveCurrentDataset/);
+  it("shares one detail body while keeping profile and access actions separate", () => {
+    expect(detailDialog).toContain("<RoutedDetailDialog");
+    expect(detailDialog).toContain("<StudentDetailContent");
+    expect(detailContent).toContain("<StudentInfoPanel");
+    expect(detailContent).toContain("<StudentAccountPanel");
+    expect(detailContent).toContain("<StudentHistoryPanel");
+    expect(detailContent).toContain('dynamic(');
+    expect(detailContent).toContain('import("./panels/student-history-panel")');
+    expect(detailContent).not.toContain(
+      'import { StudentHistoryPanel } from "./panels/student-history-panel"',
+    );
+    expect(detailContent).toContain('id="student-history-panel"');
+    expect(detailContent).toContain('aria-labelledby="student-history-tab"');
+    expect(detailContent).not.toMatch(/StudentAssignmentPanel|StudentLearningPanel/);
+    expect(info).toContain("controller.actions.save()");
+    expect(account).toContain("controller.actions.revealCode()");
+    expect(account).toContain("controller.actions.rotateCode()");
+    expect(account).toContain("controller.actions.block()");
+    expect(account).toContain("controller.actions.remove()");
+    expect(account).not.toContain("controller.actions.save()");
+    expect(detailDialog).toContain("useRouteExitGuard({");
+    expect(detailRouteGuard).toContain("useUnsavedChangesWarning(active)");
+    expect(detailRouteGuard).toContain('window.addEventListener("popstate"');
+    expect(detailRouteGuard).toContain('document.addEventListener("click"');
+    expect(detailRouteGuard).toContain("if (!link?.hashOnly) return");
+    expect(guardedLink).toContain("onNavigate={(event) =>");
+    expect(guardedLink).toContain("requestNavigation(() =>");
+    expect(adminLayout).toContain("<NavigationExitGuardProvider>");
+    expect(detailContent).toContain("announceStudentDirectoryRefresh()");
   });
 
-  it("uses the dedicated activity summary instead of a score timeline", () => {
-    expect(directory).toContain("summarizeStudentDirectoryActivities");
-    expect(directory).toContain("summary.completedCount");
-    expect(directory).toContain("summary.missedCount");
-    expect(directory).toContain("summary.notStartedCount");
+  it("renders only the server directory summary and does not prefetch private details", () => {
+    expect(directory).toContain("student.completedCount");
+    expect(directory).toContain("student.missedCount");
+    expect(directory).toContain("student.notStartedCount");
+    expect(directory).toContain("student.rawPoints");
+    expect(directory).toContain("prefetch={false}");
     expect(directory).not.toContain("AttemptScoreSummary");
     expect(directory).not.toContain("ActivityStatusTimeline");
   });
 
-  it("keeps long names and wrong-word rows inside 320 through 1440 pixels", () => {
-    expect(directoryCss).toMatch(
-      /\.card\s*\{[^}]*min-width:\s*0;[^}]*width:\s*100%;/,
-    );
-    expect(directoryCss).toMatch(
-      /@media \(max-width: 767px\)[\s\S]*?\.card\s*\{[^}]*grid-template-columns:\s*1fr;/,
-    );
-    expect(directoryCss).toMatch(
-      /@media \(max-width: 359px\)[\s\S]*?\.primarySource\s*\{[^}]*overflow-wrap:\s*anywhere;/,
-    );
-    expect(wrongCss).toMatch(
-      /@media \(max-width: 960px\)[\s\S]*?\.row\s*\{[^}]*grid-template-columns:\s*auto minmax\(0, 1fr\);/,
-    );
-    expect(wrongCss).toMatch(
-      /@media \(max-width: 359px\)[\s\S]*?\.row\s*\{[^}]*grid-template-columns:\s*1fr;/,
-    );
+  it("uses direct Server queries and one shared direct/intercepted detail route component", () => {
+    const page = source("src/app/admin/(protected)/students/page.tsx");
+    const directoryContent = source("src/features/students/server/components/student-directory-content.tsx");
+    const detailRouteContent = source("src/features/students/server/components/student-detail-route-content.tsx");
+    const detailQuery = source("src/features/students/server/queries/student-detail-query.ts");
+    const directoryQuery = source("src/features/students/server/queries/student-directory-query.ts");
+    const historyQuery = source("src/features/students/server/queries/student-history-query.ts");
+    const directoryRoute = source("src/app/api/admin/students/directory/route.ts");
+    const historyRoute = source("src/app/api/admin/students/[id]/history/route.ts");
+    const directPage = source("src/app/admin/(protected)/students/[studentId]/page.tsx");
+    const interceptedPage = source("src/app/admin/(protected)/@detail/(.)students/[studentId]/page.tsx");
+
+    expect(page).toContain("<StudentDirectoryContent />");
+    expect(page).toContain("<StudentCreateContent />");
+    expect(page).toContain("<Suspense");
+    expect(directoryContent).toContain("getStudentDirectoryInitial(");
+    expect(directoryContent).not.toContain("fetch(");
+    expect(detailRouteContent).toContain("getStudentDetailInitial(parsedId.data)");
+    expect(detailRouteContent).toContain("notFound()");
+    expect(detailRouteContent).not.toContain("fetch(");
+    expect(detailQuery).toContain("await requireAdmin()");
+    expect(detailQuery).toContain('"get_admin_student_detail_initial_v1"');
+    expect(directoryQuery).toContain("if (!authenticatedAdmin) await requireAdmin()");
+    expect(historyQuery).toContain("if (!authenticatedAdmin) await requireAdmin()");
+    expect(directoryRoute).toContain("getStudentDirectoryInitial(parsed.data, admin)");
+    expect(directoryRoute).toContain("privateJsonError");
+    expect(directoryRoute).not.toMatch(/\bjsonError\(/);
+    expect(directoryRoute).toContain('"Cache-Control": "private, no-store"');
+    expect(historyRoute).toMatch(/getStudentHistoryInitial\(\{[\s\S]*?\}, admin\)/);
+    expect(historyRoute).toContain("privateJsonError");
+    expect(historyRoute).not.toMatch(/\bjsonError\(/);
+    expect(historyRoute).toContain('"Cache-Control": "private, no-store"');
+    expect(directPage).toContain("await params");
+    expect(interceptedPage).toContain("await params");
+    expect(directPage).toContain("<StudentDetailRouteContent");
+    expect(interceptedPage).toContain("<StudentDetailRouteContent");
   });
 
-  it("loads the student page through one feature server boundary", () => {
-    const page = source("src/app/admin/(protected)/students/page.tsx");
-    const loader = source(
-      "src/features/students/server/load-student-management-data.ts",
-    );
-    const studentReadService = source(
-      "src/lib/services/admin-student-read-service.ts",
-    );
-    const materialReadService = source(
-      "src/lib/services/admin-material-read-service.ts",
-    );
-    const directoryStart = studentReadService.indexOf(
-      "export async function loadStudentDirectoryBundle",
-    );
-    const planningStart = studentReadService.indexOf(
-      "export async function loadAssignmentPlanningCatalog",
-    );
-    const directorySource = studentReadService.slice(
-      directoryStart,
-      planningStart,
-    );
-    const planningSource = studentReadService.slice(planningStart);
-
-    expect(page).toContain("loadStudentManagementData()");
-    expect(page).not.toMatch(
-      /listStudents\(|listDatasets\(|listSelectableDatasets\(|listStudentLearningSources\(/,
-    );
-    expect(loader).toContain("loadStudentDirectoryBundle()");
-    expect(loader).toContain("listStudentPointBalances(");
-    expect(loader).toContain("getAppOrigin()");
-    expect(loader).not.toContain("getServerEnvironment");
-    expect(studentReadService).toContain(
-      "export async function loadStudentDirectoryBundle",
-    );
-    expect(directorySource).toContain("loadCurrentAdminMaterialSnapshotForRsc()");
-    expect(directorySource).toContain("loadCurrentAdminVocabUnitsForRsc()");
-    expect(planningSource).toContain("loadAdminMaterialSnapshot(supabase)");
-    expect(planningSource).toContain("loadAdminVocabUnits(supabase)");
-    expect(planningSource).not.toContain("loadCurrentAdminMaterialSnapshotForRsc()");
-    expect(planningSource).not.toContain("loadCurrentAdminVocabUnitsForRsc()");
-    expect(materialReadService).toContain("toSelectableDatasetOptions(allDatasets)");
-    expect(materialReadService).toContain('dataset.status === "ready"');
-    expect(materialReadService).toContain("dataset.isActive");
-    expect(materialReadService).toContain("dataset.isAssignable");
+  it("keeps long names and wrong-word rows inside 320 through 1440 pixels", () => {
+    expect(directoryCss).toMatch(/\.card\s*\{[^}]*min-width:\s*0;[^}]*width:\s*100%;/);
+    expect(directoryCss).toMatch(/@media \(max-width: 767px\)[\s\S]*?\.card\s*\{[^}]*grid-template-columns:\s*1fr;/);
+    expect(directoryCss).toMatch(/@media \(max-width: 359px\)[\s\S]*?\.primarySource\s*\{[^}]*overflow-wrap:\s*anywhere;/);
+    expect(wrongCss).toMatch(/@media \(max-width: 960px\)[\s\S]*?\.row\s*\{[^}]*grid-template-columns:\s*auto minmax\(0, 1fr\);/);
+    expect(wrongCss).toMatch(/@media \(max-width: 359px\)[\s\S]*?\.row\s*\{[^}]*grid-template-columns:\s*1fr;/);
   });
 
   it("keeps retired student selectors out of the global cascade", () => {
-    expect(globalCss).not.toMatch(
-      /\.(?:student-card|student-dialog-|student-learning-|student-code-|wrong-word-)/,
-    );
+    expect(globalCss).not.toMatch(/\.(?:student-card|student-dialog-|student-learning-|student-code-|wrong-word-)/);
   });
 });

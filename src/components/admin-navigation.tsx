@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
 
+import { GuardedLink } from "@/components/guarded-link";
 import {
   ADMIN_ROUTES,
   type AdminNavigationVariant,
@@ -28,14 +28,14 @@ export function AdminNavigation({
         const active = item.segment === segment;
 
         return (
-          <Link
+          <GuardedLink
             aria-current={active ? "page" : undefined}
             className={styles.link}
             href={item.href}
             key={item.href}
           >
             <span>{item.navLabel}</span>
-          </Link>
+          </GuardedLink>
         );
       })}
     </nav>

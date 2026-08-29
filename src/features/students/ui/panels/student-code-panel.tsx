@@ -6,17 +6,19 @@ import { toast } from "sonner";
 import { Button } from "@/design-system/primitives/button/button";
 import { adminStudentsText } from "@/content/ko/admin-students";
 
-import type { StudentDetailController } from "../../controller/use-student-detail-controller";
 import styles from "../student-detail.module.css";
 
 export function StudentCodePanel({
-  controller,
+  code,
+  onCopy,
+  onShare,
 }: {
-  controller: StudentDetailController;
+  code: string;
+  onCopy: () => Promise<void>;
+  onShare: () => Promise<"sent" | "unconfigured" | "failed">;
 }) {
   const [copied, setCopied] = useState(false);
   const timerRef = useRef<number | null>(null);
-  const route = controller.route;
 
   useEffect(
     () => () => {
@@ -25,12 +27,9 @@ export function StudentCodePanel({
     [],
   );
 
-  if (route.kind !== "code" || !controller.codeActions) return null;
-
   async function copy() {
-    if (!controller.codeActions) return;
     try {
-      await controller.codeActions.copy();
+      await onCopy();
       setCopied(true);
       toast.success(adminStudentsText.codeModal.copySuccess);
       if (timerRef.current !== null) window.clearTimeout(timerRef.current);
@@ -44,9 +43,8 @@ export function StudentCodePanel({
   }
 
   async function share() {
-    if (!controller.codeActions) return;
     try {
-      const result = await controller.codeActions.share();
+      const result = await onShare();
       if (result === "sent") {
         toast.success(adminStudentsText.codeModal.kakaoOpened);
       } else {
@@ -63,7 +61,7 @@ export function StudentCodePanel({
 
   return (
     <div className={styles.codePanel}>
-      <div className={styles.codeValue}>{route.code.code}</div>
+      <div className={styles.codeValue}>{code}</div>
       <div className={styles.codeActions}>
         <Button autoFocus onClick={() => void share()} variant="primary">
           {adminStudentsText.codeModal.sendKakao}

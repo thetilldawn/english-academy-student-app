@@ -1,21 +1,22 @@
 "use client";
 
+import { adminStudentsText } from "@/content/ko/admin-students";
 import { StatusBadge } from "@/design-system/primitives/badge/badge";
 import { Button } from "@/design-system/primitives/button/button";
-import { adminStudentsText } from "@/content/ko/admin-students";
 import { Notice } from "@/design-system/patterns/feedback/feedback";
 
-import type { StudentDetailController } from "../../controller/use-student-detail-controller";
+import type { StudentDetailProfile } from "../../contracts/student-detail-read-model";
+import type { StudentAccessController } from "../../controller/use-student-access-controller";
 import styles from "../student-detail.module.css";
+import { StudentCodePanel } from "./student-code-panel";
 
 export function StudentAccountPanel({
   controller,
+  student,
 }: {
-  controller: StudentDetailController;
+  controller: StudentAccessController;
+  student: StudentDetailProfile;
 }) {
-  const student = controller.selectedStudent;
-  if (!student) return null;
-
   return (
     <section
       aria-labelledby="student-account-tab"
@@ -59,7 +60,7 @@ export function StudentAccountPanel({
             </Button>
             <Button
               disabled={controller.interactionBusy}
-              onClick={() => void controller.actions.blockAccess()}
+              onClick={() => void controller.actions.block()}
               variant="danger"
             >
               {adminStudentsText.account.block}
@@ -69,21 +70,35 @@ export function StudentAccountPanel({
           <Button
             disabled={controller.interactionBusy}
             onClick={() => void controller.actions.rotateCode()}
-            variant="primary"
           >
             {adminStudentsText.account.resume}
           </Button>
         )}
         <Button
           disabled={controller.interactionBusy}
-          onClick={() => void controller.actions.removeStudent()}
+          onClick={() => void controller.actions.remove()}
           variant="danger"
         >
-          {controller.busyKey === `delete:${student.id}`
+          {controller.busyKey === "delete"
             ? adminStudentsText.account.deletePending
             : adminStudentsText.account.delete}
         </Button>
       </div>
+      {controller.code ? (
+        <section className={styles.historySection}>
+          <div className={styles.codeHeading}>
+            <h3>{controller.code.label}</h3>
+            <Button onClick={controller.actions.clearCode} size="small" variant="quiet">
+              {adminStudentsText.codeModal.close}
+            </Button>
+          </div>
+          <StudentCodePanel
+            code={controller.code.code}
+            onCopy={controller.actions.copyCode}
+            onShare={controller.actions.shareCode}
+          />
+        </section>
+      ) : null}
     </section>
   );
 }

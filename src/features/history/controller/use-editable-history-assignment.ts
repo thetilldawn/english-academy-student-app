@@ -3,6 +3,8 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { useRouteExitGuard } from "@/components/use-route-exit-guard";
+import { adminHistoryText } from "@/content/ko/admin-history";
 import type { SingleAssignmentResult } from "@/features/assignments/controller/use-assignment-controller";
 import { assignmentSubmitBlockerLabel } from "@/features/assignments/presentation/assignment-submit-blocker";
 import type { SingleAssignmentSubmitPresentation } from "@/features/assignments/ui/single-assignment-editor.types";
@@ -10,7 +12,6 @@ import type { AdminHistoryDetail } from "@/features/history/model";
 import { buildHistoryAssignmentEditorModel } from "@/features/history/ui/history-assignment-editor-model";
 import { historyDetailHref } from "@/lib/admin/history-route";
 import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
-import { useUnsavedChangesWarning } from "@/lib/ui/use-unsaved-changes-warning";
 
 const initialSubmitPresentation = {
   blockedReason: assignmentSubmitBlockerLabel({ code: "loading" }),
@@ -36,9 +37,12 @@ export function useEditableHistoryAssignment(
     () => buildHistoryAssignmentEditorModel(editorData, detail.summary),
     [detail.summary, editorData],
   );
-  useUnsavedChangesWarning(
-    editing && (Boolean(submitPresentation?.dirty) || editorBusy),
-  );
+  const routeGuard = useRouteExitGuard({
+    busy: editing && editorBusy,
+    confirmMessage: adminHistoryText.detailModal.discardChangesConfirm,
+    dirty: editing && Boolean(submitPresentation?.dirty),
+    idPrefix: "history-assignment-edit",
+  });
 
   useEffect(() => {
     const target = editing
@@ -60,14 +64,7 @@ export function useEditableHistoryAssignment(
   }
 
   function canCloseEditor() {
-    if (editorBusy) return false;
-    if (
-      submitPresentation?.dirty &&
-      !window.confirm("입력한 변경 내용을 버리고 닫을까요?")
-    ) {
-      return false;
-    }
-    return true;
+    return routeGuard.canExit();
   }
 
   function closeEditor() {
@@ -79,20 +76,22 @@ export function useEditableHistoryAssignment(
   }
 
   function handleSucceeded(result: SingleAssignmentResult) {
-    setEditing(false);
-    setSubmitPresentation(null);
-    if ("status" in result) {
-      router.replace(
-        historyDetailHref({
-          assignmentId: result.replacementAssignmentId,
-          attemptId: null,
-          studentId: result.studentId,
-        }),
-        { scroll: false },
-      );
-      return;
-    }
-    router.refresh();
+    routeGuard.forceExit(() => {
+      setEditing(false);
+      setSubmitPresentation(null);
+      if ("status" in result) {
+        router.replace(
+          historyDetailHref({
+            assignmentId: result.replacementAssignmentId,
+            attemptId: null,
+            studentId: result.studentId,
+          }),
+          { scroll: false },
+        );
+        return;
+      }
+      router.refresh();
+    });
   }
 
   return {
@@ -106,6 +105,7 @@ export function useEditableHistoryAssignment(
     editorModel,
     formId,
     handleSucceeded,
+    requestRouteExit: routeGuard.requestExit,
     setEditorBusy,
     setSubmitPresentation,
     submitPresentation: submitPresentation ?? initialSubmitPresentation,

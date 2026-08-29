@@ -1,21 +1,35 @@
-import { StudentLearningActivityList } from "@/features/history/ui/student-learning-activity-list";
-import { StudentAssignmentQueueHistory } from "@/features/assignment-queue/ui/student-assignment-queue-history";
+"use client";
 
-import type { StudentDetailController } from "../../controller/use-student-detail-controller";
-import type { StudentManagementData } from "../../model";
-import { StudentWrongWordPanel } from "./student-wrong-word-panel";
+import { StudentAssignmentQueueHistory } from "@/features/assignment-queue/ui/student-assignment-queue-history";
+import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
+import { formatContentText } from "@/content/format";
+import { adminStudentsText } from "@/content/ko/admin-students";
+
+import type {
+  StudentCurrentWrongSummary,
+  StudentDetailProfile,
+} from "../../contracts/student-detail-read-model";
+import type { StudentHistoryPageController } from "../../controller/use-student-history-page";
+import type { StudentWrongWordCacheController } from "../../controller/use-student-wrong-word-cache";
 import styles from "../student-detail.module.css";
+import { StudentLearningHistory } from "./student-learning-history";
+import { StudentWrongWordPanel } from "./student-wrong-word-panel";
 
 export function StudentHistoryPanel({
-  controller,
-  data,
+  active,
+  historyController,
+  onDataUpdated,
+  student,
+  wrongCache,
+  wrongSummary,
 }: {
-  controller: StudentDetailController;
-  data: StudentManagementData;
+  active: boolean;
+  historyController: StudentHistoryPageController;
+  onDataUpdated: () => void;
+  student: StudentDetailProfile;
+  wrongCache: StudentWrongWordCacheController;
+  wrongSummary: StudentCurrentWrongSummary;
 }) {
-  const student = controller.selectedStudent;
-  if (!student) return null;
-  const history = data.history.filter((item) => item.studentId === student.id);
   return (
     <section
       aria-labelledby="student-history-tab"
@@ -24,32 +38,45 @@ export function StudentHistoryPanel({
       role="tabpanel"
     >
       <section aria-labelledby="student-wrong-words-title" className={styles.historySection}>
-        <h3 id="student-wrong-words-title">오답 단어</h3>
+        <div className={styles.sectionHeading}>
+          <h3 id="student-wrong-words-title">오답 단어</h3>
+          <MetaTagList>
+            <MetaTag>
+              {adminStudentsText.learning.wrongWordsPanel.summary.current}{" "}
+              {formatContentText(
+                adminStudentsText.learning.wrongWordsPanel.summary.count,
+                { count: wrongSummary.wrongWordCount },
+              )}
+            </MetaTag>
+            <MetaTag>
+              {adminStudentsText.learning.wrongWordsPanel.summary.repeated}{" "}
+              {formatContentText(
+                adminStudentsText.learning.wrongWordsPanel.summary.count,
+                { count: wrongSummary.repeatedWrongWordCount },
+              )}
+            </MetaTag>
+          </MetaTagList>
+        </div>
         <StudentWrongWordPanel
-          active
-          cachedAt={
-            controller.wrongHistoryByStudent[student.id]?.loadedAt ?? null
-          }
-          cachedHistory={
-            controller.wrongHistoryByStudent[student.id]?.history ?? null
-          }
+          active={active}
+          cachedAt={wrongCache.entry?.loadedAt ?? null}
+          cachedHistory={wrongCache.entry?.history ?? null}
           initialCurriculumStage={student.readingCurriculumStage}
           initialDatasetId={student.currentVocabDatasetId ?? ""}
           initialReadingContextSyncStatus={student.readingContextSyncStatus}
           key={student.id}
-          onDataUpdated={controller.actions.refreshData}
-          onLoaded={controller.actions.cacheWrongWordHistory}
+          onDataUpdated={onDataUpdated}
+          onLoaded={wrongCache.actions.cache}
           studentId={student.id}
         />
       </section>
-      <StudentAssignmentQueueHistory headingLevel={3} studentId={student.id} />
+      <StudentAssignmentQueueHistory
+        headingLevel={3}
+        studentId={student.id}
+      />
       <section aria-labelledby="student-learning-history-title" className={styles.historySection}>
         <h3 id="student-learning-history-title">시험 내역</h3>
-        <StudentLearningActivityList
-          filtersEnabled
-          initialLimit={5}
-          items={history}
-        />
+        <StudentLearningHistory controller={historyController} />
       </section>
     </section>
   );

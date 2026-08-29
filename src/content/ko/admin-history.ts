@@ -84,6 +84,7 @@ export const adminHistoryText = {
   detailModal: {
     eyebrow: "학습 내역",
     close: "닫기",
+    discardChangesConfirm: "입력한 변경 내용을 버리고 이동할까요?",
     status: "상태",
     score: "점수",
     unresolvedWords: "다시 볼 단어",

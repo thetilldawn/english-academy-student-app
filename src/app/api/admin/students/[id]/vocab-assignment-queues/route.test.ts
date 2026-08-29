@@ -37,10 +37,13 @@ describe("GET /api/admin/students/[id]/vocab-assignment-queues", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
-    expect(mocks.listPage).toHaveBeenCalledWith({
-      before: { seriesId, updatedAt },
-      studentId,
-    });
+    expect(mocks.listPage).toHaveBeenCalledWith(
+      {
+        before: { seriesId, updatedAt },
+        studentId,
+      },
+      { userId: "admin-id" },
+    );
   });
 
   it("로그인과 완전한 커서를 요구한다", async () => {

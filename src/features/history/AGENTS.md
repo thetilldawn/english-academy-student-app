@@ -8,6 +8,9 @@
   `/api/admin/history`가 인증·상태 코드를 맡는다. UI 파일에서 `fetch`하지 않는다.
 - 상세 편집의 열기·닫기·저장 후 이동·포커스 수명은
   `controller/use-editable-history-assignment.ts`가 맡는다. UI 폴더에 상태 조정 hook을 두지 않는다.
+- 배정 수정의 관리자 메뉴·로그아웃·브라우저 뒤로가기·모달 닫기는 app-shell의
+  `useRouteExitGuard`를 함께 사용한다. 저장 중은 확인 없이 차단하고 dirty일 때만 확인하며, UI에서
+  별도 `beforeRouteClose` 확인을 겹쳐 호출하지 않는다.
 - 목록과 상세 조회를 한 파일로 합치지 않는다. 목록은 구역별 10건+다음 행과 불투명 커서만,
   상세는 정확한 응시 ID 또는 배정 ID+학생 ID 한 건만 읽는다.
 - 개인 내역은 공유 캐시와 `use cache`를 금지한다. 초기 RSC 조회는 보호 구역의 동적 요청에 두고,

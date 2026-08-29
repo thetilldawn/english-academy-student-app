@@ -76,6 +76,14 @@
       "reason": "R3~R6에서 현재 src/lib/services와 src/lib/admin 호출자를 전환한 뒤 이동한다."
     }
   ],
+  "retiredPathOwners": [
+    {
+      "path": "src/lib/services/quiz/student-assignment-query.ts",
+      "owner": "student-dashboard",
+      "retiredIn": "8203479",
+      "reason": "학생 메인 전용 조회를 student-dashboard Server query와 DB 읽기 모델로 교체"
+    }
+  ],
   "specialOwners": [
     "app-shell",
     "auth",
@@ -108,33 +116,124 @@
     }
   ],
   "pageOwners": [
-    { "path": "src/app/admin/(protected)/@detail/(.)results/[entryKey]/page.tsx", "owner": "history" },
-    { "path": "src/app/admin/(protected)/@detail/[...catchAll]/page.tsx", "owner": "app-shell" },
-    { "path": "src/app/admin/(protected)/assignments/page.tsx", "owner": "assignments" },
-    { "path": "src/app/admin/(protected)/page.tsx", "owner": "history" },
-    { "path": "src/app/admin/(protected)/results/[id]/page.tsx", "owner": "history" },
-    { "path": "src/app/admin/(protected)/results/page.tsx", "owner": "history" },
-    { "path": "src/app/admin/(protected)/students/page.tsx", "owner": "students" },
-    { "path": "src/app/admin/login/page.tsx", "owner": "auth" },
-    { "path": "src/app/code/page.tsx", "owner": "auth" },
-    { "path": "src/app/page.tsx", "owner": "app-shell" },
-    { "path": "src/app/student/(protected)/attempt/[id]/page.tsx", "owner": "quiz-player" },
-    { "path": "src/app/student/(protected)/page.tsx", "owner": "student-dashboard" },
-    { "path": "src/app/student/(protected)/result/[id]/page.tsx", "owner": "results" }
+    {
+      "path": "src/app/admin/(protected)/@detail/(.)results/[entryKey]/page.tsx",
+      "owner": "history"
+    },
+    {
+      "path": "src/app/admin/(protected)/@detail/(.)students/[studentId]/page.tsx",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/admin/(protected)/@detail/[...catchAll]/page.tsx",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/app/admin/(protected)/assignments/page.tsx",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/app/admin/(protected)/page.tsx",
+      "owner": "history"
+    },
+    {
+      "path": "src/app/admin/(protected)/results/[id]/page.tsx",
+      "owner": "history"
+    },
+    {
+      "path": "src/app/admin/(protected)/results/page.tsx",
+      "owner": "history"
+    },
+    {
+      "path": "src/app/admin/(protected)/students/[studentId]/page.tsx",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/admin/(protected)/students/page.tsx",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/admin/login/page.tsx",
+      "owner": "auth"
+    },
+    {
+      "path": "src/app/code/page.tsx",
+      "owner": "auth"
+    },
+    {
+      "path": "src/app/page.tsx",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/app/student/(protected)/attempt/[id]/page.tsx",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/app/student/(protected)/page.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/result/[id]/page.tsx",
+      "owner": "results"
+    }
   ],
   "nextSpecialEntrypointOwners": [
-    { "path": "proxy.ts", "owner": "auth" },
-    { "path": "src/instrumentation.ts", "owner": "app-shell" },
-    { "path": "src/app/layout.tsx", "owner": "app-shell" },
-    { "path": "src/app/icon.svg", "owner": "app-shell" },
-    { "path": "src/app/error.tsx", "owner": "app-shell" },
-    { "path": "src/app/global-error.tsx", "owner": "app-shell" },
-    { "path": "src/app/not-found.tsx", "owner": "app-shell" },
-    { "path": "src/app/admin/(protected)/layout.tsx", "owner": "app-shell" },
-    { "path": "src/app/admin/(protected)/error.tsx", "owner": "app-shell" },
-    { "path": "src/app/admin/(protected)/loading.tsx", "owner": "app-shell" },
-    { "path": "src/app/admin/(protected)/@detail/default.tsx", "owner": "app-shell" },
-    { "path": "src/app/student/(protected)/layout.tsx", "owner": "app-shell" }
+    {
+      "path": "proxy.ts",
+      "owner": "auth"
+    },
+    {
+      "path": "src/app/admin/(protected)/@detail/(.)students/[studentId]/loading.tsx",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/admin/(protected)/@detail/default.tsx",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/app/admin/(protected)/error.tsx",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/app/admin/(protected)/layout.tsx",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/app/admin/(protected)/loading.tsx",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/app/admin/(protected)/students/[studentId]/loading.tsx",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/error.tsx",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/app/global-error.tsx",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/app/icon.svg",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/app/layout.tsx",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/app/not-found.tsx",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/app/student/(protected)/layout.tsx",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/instrumentation.ts",
+      "owner": "app-shell"
+    }
   ],
   "nextConfigOwners": [
     { "path": "next.config.ts", "owner": "app-shell" }
@@ -164,7 +263,9 @@
     { "path": "src/app/api/admin/history/route.test.ts", "owner": "history" },
     { "path": "src/app/api/admin/mixed-assignments/route.test.ts", "owner": "assignments" },
     { "path": "src/app/api/admin/students/[id]/direct-review-summaries/route.test.ts", "owner": "students" },
+    { "path": "src/app/api/admin/students/[id]/history/route.test.ts", "owner": "students" },
     { "path": "src/app/api/admin/students/[id]/vocab-assignment-queues/route.test.ts", "owner": "students" },
+    { "path": "src/app/api/admin/students/directory/route.test.ts", "owner": "students" },
     { "path": "src/app/api/admin/vocab-assignment-queues/[seriesId]/route.test.ts", "owner": "assignment-queue" },
     { "path": "src/app/api/student/dashboard/completed/route.test.ts", "owner": "student-dashboard" },
     { "path": "src/app/api/student/session/route.test.ts", "owner": "session" },
@@ -172,45 +273,170 @@
     { "path": "src/app/fonts/SourceSerif4Variable-Roman.ttf.woff2", "owner": "app-shell" }
   ],
   "routeOwners": [
-    { "path": "src/app/api/admin/assignment-capacity/route.ts", "owner": "assignments" },
-    { "path": "src/app/api/admin/assignments/[assignmentId]/route.ts", "owner": "assignments" },
-    { "path": "src/app/api/admin/assignments/[assignmentId]/students/[studentId]/route.ts", "owner": "assignments" },
-    { "path": "src/app/api/admin/assignments/route.ts", "owner": "assignments" },
-    { "path": "src/app/api/admin/attempts/[id]/route.ts", "owner": "history" },
-    { "path": "src/app/api/admin/bulk-assignments/preview/route.ts", "owner": "assignments" },
-    { "path": "src/app/api/admin/bulk-assignments/route.ts", "owner": "assignments" },
-    { "path": "src/app/api/admin/exact-review-assignments/preview/route.ts", "owner": "assignments" },
-    { "path": "src/app/api/admin/exact-review-assignments/route.ts", "owner": "assignments" },
-    { "path": "src/app/api/admin/history/route.ts", "owner": "history" },
-    { "path": "src/app/api/admin/mixed-assignments/route.ts", "owner": "assignments" },
-    { "path": "src/app/api/admin/notifications/route.ts", "owner": "notifications" },
-    { "path": "src/app/api/admin/review-assignments/route.ts", "owner": "assignments" },
-    { "path": "src/app/api/admin/session/route.ts", "owner": "session" },
-    { "path": "src/app/api/admin/students/[id]/code/rotate/route.ts", "owner": "students" },
-    { "path": "src/app/api/admin/students/[id]/code/route.ts", "owner": "students" },
-    { "path": "src/app/api/admin/students/[id]/direct-review-summaries/route.ts", "owner": "students" },
-    { "path": "src/app/api/admin/students/[id]/review-assignment-drafts/[draftId]/route.ts", "owner": "students" },
-    { "path": "src/app/api/admin/students/[id]/review-assignment-drafts/route.ts", "owner": "students" },
-    { "path": "src/app/api/admin/students/[id]/route.ts", "owner": "students" },
-    { "path": "src/app/api/admin/students/[id]/status/route.ts", "owner": "students" },
-    { "path": "src/app/api/admin/students/[id]/vocab/route.ts", "owner": "students" },
-    { "path": "src/app/api/admin/students/[id]/vocab-assignment-queues/route.ts", "owner": "students" },
-    { "path": "src/app/api/admin/students/[id]/worksheet-requests/route.ts", "owner": "students" },
-    { "path": "src/app/api/admin/students/[id]/wrong-words/route.ts", "owner": "students" },
-    { "path": "src/app/api/admin/students/route.ts", "owner": "students" },
-    { "path": "src/app/api/admin/vocab-assignment-queues/[seriesId]/route.ts", "owner": "assignment-queue" },
-    { "path": "src/app/api/admin/vocab-time-templates/route.ts", "owner": "assignments" },
-    { "path": "src/app/api/admin/worksheet-requests/[id]/export/route.ts", "owner": "students" },
-    { "path": "src/app/api/student/assignments/[id]/attempts/route.ts", "owner": "quiz-player" },
-    { "path": "src/app/api/student/attempts/[id]/answers/route.ts", "owner": "quiz-player" },
-    { "path": "src/app/api/student/attempts/[id]/expire/route.ts", "owner": "quiz-player" },
-    { "path": "src/app/api/student/attempts/[id]/feedback/route.ts", "owner": "quiz-player" },
-    { "path": "src/app/api/student/attempts/[id]/retry/route.ts", "owner": "quiz-player" },
-    { "path": "src/app/api/student/attempts/[id]/route.ts", "owner": "quiz-player" },
-    { "path": "src/app/api/student/attempts/[id]/timeouts/route.ts", "owner": "quiz-player" },
-    { "path": "src/app/api/student/dashboard/completed/route.ts", "owner": "student-dashboard" },
-    { "path": "src/app/api/student/notifications/route.ts", "owner": "notifications" },
-    { "path": "src/app/api/student/session/route.ts", "owner": "session" }
+    {
+      "path": "src/app/api/admin/assignment-capacity/route.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/app/api/admin/assignments/[assignmentId]/route.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/app/api/admin/assignments/[assignmentId]/students/[studentId]/route.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/app/api/admin/assignments/route.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/app/api/admin/attempts/[id]/route.ts",
+      "owner": "history"
+    },
+    {
+      "path": "src/app/api/admin/bulk-assignments/preview/route.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/app/api/admin/bulk-assignments/route.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/app/api/admin/exact-review-assignments/preview/route.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/app/api/admin/exact-review-assignments/route.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/app/api/admin/history/route.ts",
+      "owner": "history"
+    },
+    {
+      "path": "src/app/api/admin/mixed-assignments/route.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/app/api/admin/notifications/route.ts",
+      "owner": "notifications"
+    },
+    {
+      "path": "src/app/api/admin/review-assignments/route.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/app/api/admin/session/route.ts",
+      "owner": "session"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/code/rotate/route.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/code/route.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/direct-review-summaries/route.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/history/route.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/review-assignment-drafts/[draftId]/route.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/review-assignment-drafts/route.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/route.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/status/route.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/vocab-assignment-queues/route.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/vocab/route.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/worksheet-requests/route.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/wrong-words/route.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/admin/students/directory/route.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/admin/students/route.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/admin/vocab-assignment-queues/[seriesId]/route.ts",
+      "owner": "assignment-queue"
+    },
+    {
+      "path": "src/app/api/admin/vocab-time-templates/route.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/app/api/admin/worksheet-requests/[id]/export/route.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/app/api/student/assignments/[id]/attempts/route.ts",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/app/api/student/attempts/[id]/answers/route.ts",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/app/api/student/attempts/[id]/expire/route.ts",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/app/api/student/attempts/[id]/feedback/route.ts",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/app/api/student/attempts/[id]/retry/route.ts",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/app/api/student/attempts/[id]/route.ts",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/app/api/student/attempts/[id]/timeouts/route.ts",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/app/api/student/dashboard/completed/route.ts",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/api/student/notifications/route.ts",
+      "owner": "notifications"
+    },
+    {
+      "path": "src/app/api/student/session/route.ts",
+      "owner": "session"
+    }
   ],
   "serviceOwners": [
     { "path": "src/lib/services/active-review-assignment-service.ts", "owner": "assignments" },
@@ -327,61 +553,244 @@
     { "path": "src/lib/admin/wrong-word-history.ts", "owner": "students" }
   ],
   "componentOwners": [
-    { "path": "src/components/admin-login-form.tsx", "owner": "auth" },
-    { "path": "src/components/admin-logout-button.tsx", "owner": "auth" },
-    { "path": "src/components/admin-navigation.tsx", "owner": "app-shell" },
-    { "path": "src/components/admin-route-screen-reader-title.tsx", "owner": "app-shell" },
-    { "path": "src/components/app-toaster.tsx", "owner": "app-shell" },
-    { "path": "src/components/assignment-editor-ui.module.css", "owner": "assignments" },
-    { "path": "src/components/assignment-editor-ui.tsx", "owner": "assignments" },
-    { "path": "src/components/login-form.module.css", "owner": "auth" },
-    { "path": "src/components/notification-bootstrap.tsx", "owner": "notifications" },
-    { "path": "src/components/pronunciation-text.tsx", "owner": "shared-ui" },
-    { "path": "src/components/review-dataset-panel.module.css", "owner": "assignments" },
-    { "path": "src/components/review-dataset-panel.tsx", "owner": "assignments" },
-    { "path": "src/components/route-screen-reader-title.tsx", "owner": "app-shell" },
-    { "path": "src/components/session-action.module.css", "owner": "auth" },
-    { "path": "src/components/shell/admin-navigation.module.css", "owner": "app-shell" },
-    { "path": "src/components/shell/app-shell.module.css", "owner": "app-shell" },
-    { "path": "src/components/student-login-form.tsx", "owner": "auth" },
-    { "path": "src/components/student-logout-button.tsx", "owner": "auth" },
-    { "path": "src/components/student-shell.tsx", "owner": "app-shell" },
-    { "path": "src/components/theme-toggle.module.css", "owner": "app-shell" },
-    { "path": "src/components/theme-toggle.tsx", "owner": "app-shell" }
+    {
+      "path": "src/components/admin-login-form.tsx",
+      "owner": "auth"
+    },
+    {
+      "path": "src/components/admin-logout-button.tsx",
+      "owner": "auth"
+    },
+    {
+      "path": "src/components/admin-navigation.tsx",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/components/admin-route-screen-reader-title.tsx",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/components/app-toaster.tsx",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/components/document-navigation.ts",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/components/guarded-link.tsx",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/components/assignment-editor-ui.module.css",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/components/assignment-editor-ui.tsx",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/components/login-form.module.css",
+      "owner": "auth"
+    },
+    {
+      "path": "src/components/notification-bootstrap.tsx",
+      "owner": "notifications"
+    },
+    {
+      "path": "src/components/navigation-exit-guard.tsx",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/components/use-route-exit-guard.ts",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/components/pronunciation-text.tsx",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/components/review-dataset-panel.module.css",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/components/review-dataset-panel.tsx",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/components/route-screen-reader-title.tsx",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/components/routed-detail-dialog.tsx",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/components/session-action.module.css",
+      "owner": "auth"
+    },
+    {
+      "path": "src/components/shell/admin-navigation.module.css",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/components/shell/app-shell.module.css",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/components/student-login-form.tsx",
+      "owner": "auth"
+    },
+    {
+      "path": "src/components/student-logout-button.tsx",
+      "owner": "auth"
+    },
+    {
+      "path": "src/components/student-shell.tsx",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/components/theme-toggle.module.css",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/components/theme-toggle.tsx",
+      "owner": "app-shell"
+    }
   ],
   "designSystemOwners": [
-    { "path": "src/design-system/patterns/action-reason/action-reason.module.css", "owner": "shared-ui" },
-    { "path": "src/design-system/patterns/action-reason/action-reason.tsx", "owner": "shared-ui" },
-    { "path": "src/design-system/patterns/activity-row/activity-row.module.css", "owner": "shared-ui" },
-    { "path": "src/design-system/patterns/activity-row/activity-row.tsx", "owner": "shared-ui" },
-    { "path": "src/design-system/patterns/activity-timeline/activity-timeline.module.css", "owner": "shared-ui" },
-    { "path": "src/design-system/patterns/activity-timeline/activity-timeline.tsx", "owner": "shared-ui" },
-    { "path": "src/design-system/patterns/auth/auth-layout.module.css", "owner": "shared-ui" },
-    { "path": "src/design-system/patterns/collapsible-status-section/collapsible-status-section.module.css", "owner": "shared-ui" },
-    { "path": "src/design-system/patterns/collapsible-status-section/collapsible-status-section.tsx", "owner": "shared-ui" },
-    { "path": "src/design-system/patterns/conditional-reveal/conditional-reveal.module.css", "owner": "shared-ui" },
-    { "path": "src/design-system/patterns/conditional-reveal/conditional-reveal.tsx", "owner": "shared-ui" },
-    { "path": "src/design-system/patterns/detail-header/detail-header.module.css", "owner": "shared-ui" },
-    { "path": "src/design-system/patterns/detail-header/detail-header.tsx", "owner": "shared-ui" },
-    { "path": "src/design-system/patterns/feedback/feedback.module.css", "owner": "shared-ui" },
-    { "path": "src/design-system/patterns/feedback/feedback.tsx", "owner": "shared-ui" },
-    { "path": "src/design-system/patterns/score-summary/score-summary.module.css", "owner": "shared-ui" },
-    { "path": "src/design-system/patterns/score-summary/score-summary.tsx", "owner": "shared-ui" },
-    { "path": "src/design-system/primitives/badge/badge.module.css", "owner": "shared-ui" },
-    { "path": "src/design-system/primitives/badge/badge.tsx", "owner": "shared-ui" },
-    { "path": "src/design-system/primitives/badge/tone.ts", "owner": "shared-ui" },
-    { "path": "src/design-system/primitives/button/button.module.css", "owner": "shared-ui" },
-    { "path": "src/design-system/primitives/button/button.tsx", "owner": "shared-ui" },
-    { "path": "src/design-system/primitives/dialog/dialog.module.css", "owner": "shared-ui" },
-    { "path": "src/design-system/primitives/dialog/dialog.tsx", "owner": "shared-ui" },
-    { "path": "src/design-system/primitives/form/field.module.css", "owner": "shared-ui" },
-    { "path": "src/design-system/primitives/form/field.tsx", "owner": "shared-ui" },
-    { "path": "src/design-system/primitives/form/segmented-control.module.css", "owner": "shared-ui" },
-    { "path": "src/design-system/primitives/form/segmented-control.tsx", "owner": "shared-ui" },
-    { "path": "src/design-system/primitives/tabs/tabs.module.css", "owner": "shared-ui" },
-    { "path": "src/design-system/primitives/tabs/tabs.tsx", "owner": "shared-ui" },
-    { "path": "src/design-system/primitives/tooltip/help-tip.module.css", "owner": "shared-ui" },
-    { "path": "src/design-system/primitives/tooltip/help-tip.tsx", "owner": "shared-ui" }
+    {
+      "path": "src/design-system/patterns/action-reason/action-reason.module.css",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/action-reason/action-reason.tsx",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/activity-row/activity-row.module.css",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/activity-row/activity-row.tsx",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/activity-timeline/activity-timeline.module.css",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/activity-timeline/activity-timeline.tsx",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/auth/auth-layout.module.css",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/collapsible-status-section/collapsible-status-section.module.css",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/collapsible-status-section/collapsible-status-section.tsx",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/conditional-reveal/conditional-reveal.module.css",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/conditional-reveal/conditional-reveal.tsx",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/detail-header/detail-header.module.css",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/detail-header/detail-header.tsx",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/feedback/feedback.module.css",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/feedback/feedback.tsx",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/route-detail-dialog/route-detail-dialog.tsx",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/score-summary/score-summary.module.css",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/score-summary/score-summary.tsx",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/primitives/badge/badge.module.css",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/primitives/badge/badge.tsx",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/primitives/badge/tone.ts",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/primitives/button/button.module.css",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/primitives/button/button.tsx",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/primitives/dialog/dialog.module.css",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/primitives/dialog/dialog.tsx",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/primitives/form/field.module.css",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/primitives/form/field.tsx",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/primitives/form/segmented-control.module.css",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/primitives/form/segmented-control.tsx",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/primitives/tabs/tabs.module.css",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/primitives/tabs/tabs.tsx",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/primitives/tooltip/help-tip.module.css",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/primitives/tooltip/help-tip.tsx",
+      "owner": "shared-ui"
+    }
   ],
   "architectureGuardOwners": [
     { "path": "scripts/check-feature-map.mjs", "owner": "architecture-meta" },
@@ -425,8 +834,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 81,
-      "pathSetSha256": "0ce5ecafac07668a42958354f99c093e0b2766fcf96d142f00e3b975daa34196"
+      "fileCount": 83,
+      "pathSetSha256": "18442ca34477433ce1fd61ff2f63da83a2d62c6478a7ac2a7b3f3af7cfbd8ac3"
     },
     {
       "path": "src/lib/deploy",
@@ -461,17 +870,98 @@
   ],
   "serverOwners": [],
   "featureServerOwners": [
-    { "path": "src/features/history/server/admin-history-cursor.ts", "owner": "history" },
-    { "path": "src/features/history/server/queries/admin-history-detail-query.ts", "owner": "history" },
-    { "path": "src/features/history/server/queries/admin-history-list-query.ts", "owner": "history" },
-    { "path": "src/features/history/server/queries/admin-history-read-error.ts", "owner": "history" },
-    { "path": "src/features/history/server/queries/admin-history-row-schema.ts", "owner": "history" },
-    { "path": "src/features/student-dashboard/server/components/student-dashboard-content.tsx", "owner": "student-dashboard" },
-    { "path": "src/features/student-dashboard/server/student-dashboard-cursor.ts", "owner": "student-dashboard" },
-    { "path": "src/features/student-dashboard/server/queries/student-dashboard-query.ts", "owner": "student-dashboard" },
-    { "path": "src/features/student-dashboard/server/queries/student-dashboard-read-error.ts", "owner": "student-dashboard" },
-    { "path": "src/features/student-dashboard/server/queries/student-dashboard-row-schema.ts", "owner": "student-dashboard" },
-    { "path": "src/features/students/server/load-student-management-data.ts", "owner": "students" }
+    {
+      "path": "src/features/history/server/admin-history-cursor.ts",
+      "owner": "history"
+    },
+    {
+      "path": "src/features/history/server/queries/admin-history-detail-query.ts",
+      "owner": "history"
+    },
+    {
+      "path": "src/features/history/server/queries/admin-history-list-query.ts",
+      "owner": "history"
+    },
+    {
+      "path": "src/features/history/server/queries/admin-history-read-error.ts",
+      "owner": "history"
+    },
+    {
+      "path": "src/features/history/server/queries/admin-history-row-schema.ts",
+      "owner": "history"
+    },
+    {
+      "path": "src/features/student-dashboard/server/components/student-dashboard-content.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/student-dashboard-query.ts",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/student-dashboard-read-error.ts",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/student-dashboard-row-schema.ts",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/features/student-dashboard/server/student-dashboard-cursor.ts",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/features/students/server/components/student-create-content.tsx",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/students/server/components/student-detail-route-content.tsx",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/students/server/components/student-directory-content.tsx",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/students/server/queries/student-detail-query.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/students/server/queries/student-detail-read-error.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/students/server/queries/student-detail-row-schema.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/students/server/queries/student-directory-query.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/students/server/queries/student-directory-read-error.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/students/server/queries/student-directory-row-schema.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/students/server/queries/student-history-query.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/students/server/queries/student-history-row-schema.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/students/server/student-directory-cursor.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/students/server/student-history-cursor.ts",
+      "owner": "students"
+    }
   ],
   "migrationOwnershipFrom": "20260828193000",
   "protectedMigrationCount": 136,
@@ -501,6 +991,11 @@
       "path": "supabase/migrations/20260829190000_add_student_dashboard_read_model.sql",
       "owner": "student-dashboard",
       "flow": "student-dashboard-read"
+    },
+    {
+      "path": "supabase/migrations/20260829213000_add_admin_student_directory_read_model.sql",
+      "owner": "students",
+      "flow": "student-management-screen"
     }
   ],
   "features": [
@@ -509,7 +1004,9 @@
       "name": "이어지는 배정",
       "ownerPath": "src/features/assignment-queue",
       "localGuide": "src/features/assignment-queue/AGENTS.md",
-      "entrypoints": ["src/app/api/admin/vocab-assignment-queues/[seriesId]/route.ts"]
+      "entrypoints": [
+        "src/app/api/admin/vocab-assignment-queues/[seriesId]/route.ts"
+      ]
     },
     {
       "id": "assignments",
@@ -572,21 +1069,27 @@
       "name": "학생 시험 결과",
       "ownerPath": "src/features/results",
       "localGuide": "src/features/results/AGENTS.md",
-      "entrypoints": ["src/app/student/(protected)/result/[id]/page.tsx"]
+      "entrypoints": [
+        "src/app/student/(protected)/result/[id]/page.tsx"
+      ]
     },
     {
       "id": "session",
       "name": "학생 세션 갱신",
       "ownerPath": "src/features/session",
       "localGuide": "src/features/session/AGENTS.md",
-      "entrypoints": ["src/app/api/student/session/route.ts"]
+      "entrypoints": [
+        "src/app/api/student/session/route.ts"
+      ]
     },
     {
       "id": "student-dashboard",
       "name": "학생 메인",
       "ownerPath": "src/features/student-dashboard",
       "localGuide": "src/features/student-dashboard/AGENTS.md",
-      "entrypoints": ["src/app/student/(protected)/page.tsx"]
+      "entrypoints": [
+        "src/app/student/(protected)/page.tsx"
+      ]
     },
     {
       "id": "students",
@@ -595,101 +1098,15 @@
       "localGuide": "src/features/students/AGENTS.md",
       "entrypoints": [
         "src/app/admin/(protected)/students/page.tsx",
+        "src/app/admin/(protected)/students/[studentId]/page.tsx",
+        "src/app/admin/(protected)/@detail/(.)students/[studentId]/page.tsx",
+        "src/app/api/admin/students/directory/route.ts",
+        "src/app/api/admin/students/[id]/history/route.ts",
         "src/app/api/admin/students/[id]/route.ts"
       ]
     }
   ],
   "currentCrossFeatureImports": [
-    {
-      "from": "src/features/assignments/ui/assignment-student-row.tsx",
-      "to": "src/features/assignment-queue/ui/assignment-queue-tags.tsx",
-      "reason": "학생 행에 이어지는 배정 상태 표시",
-      "removeIn": "R7 공개 UI 진입점"
-    },
-    {
-      "from": "src/features/assignments/ui/assignment-student-row.tsx",
-      "to": "src/features/history/ui/learning-management-row.module.css",
-      "reason": "기존 행 스타일 공유 부채",
-      "removeIn": "R7 공용 패턴 분리"
-    },
-    {
-      "from": "src/features/history/ui/admin-history-detail.tsx",
-      "to": "src/features/results/ui/attempt-question-card.tsx",
-      "reason": "관리자 상세의 문항 표시",
-      "removeIn": "R7 공개 UI 진입점"
-    },
-    {
-      "from": "src/features/history/ui/admin-history-detail.tsx",
-      "to": "src/features/learning-points/ui/point-summary.tsx",
-      "reason": "관리자 상세의 포인트 표시",
-      "removeIn": "R7 공개 UI 진입점"
-    },
-    {
-      "from": "src/features/history/ui/editable-history-detail-dialog.tsx",
-      "to": "src/features/assignments/ui/single-assignment-editor.tsx",
-      "reason": "내역 대화상자에서 배정 수정 기능 사용",
-      "removeIn": "R7 공개 UI 진입점"
-    },
-    {
-      "from": "src/features/history/ui/editable-history-detail-page.tsx",
-      "to": "src/features/assignments/ui/single-assignment-editor.tsx",
-      "reason": "내역 페이지에서 배정 수정 기능 사용",
-      "removeIn": "R7 공개 UI 진입점"
-    },
-    {
-      "from": "src/features/history/controller/use-editable-history-assignment.ts",
-      "to": "src/features/assignments/ui/single-assignment-editor.types.ts",
-      "reason": "내역 수정 결과 계약 공유",
-      "removeIn": "R5 공개 계약 진입점"
-    },
-    {
-      "from": "src/features/results/ui/result-pronunciation.tsx",
-      "to": "src/features/quiz-player/ui/audio-button.tsx",
-      "reason": "결과 화면의 공용 발음 재생",
-      "removeIn": "R7 design-system 패턴 분리"
-    },
-    {
-      "from": "src/features/results/ui/student-result-view.tsx",
-      "to": "src/features/learning-points/ui/point-summary.tsx",
-      "reason": "학생 결과의 포인트 표시",
-      "removeIn": "R7 공개 UI 진입점"
-    },
-    {
-      "from": "src/features/student-dashboard/ui/student-assignment-card.tsx",
-      "to": "src/features/history/ui/activity-status-timeline.tsx",
-      "reason": "학생 메인의 시험 상태 표시",
-      "removeIn": "R7 공용 패턴 분리"
-    },
-    {
-      "from": "src/features/student-dashboard/ui/student-assignment-card.tsx",
-      "to": "src/features/history/ui/attempt-score-summary.tsx",
-      "reason": "학생 메인의 점수 표시",
-      "removeIn": "R7 공용 패턴 분리"
-    },
-    {
-      "from": "src/features/student-dashboard/ui/student-dashboard.tsx",
-      "to": "src/features/learning-points/ui/point-summary.tsx",
-      "reason": "학생 메인의 포인트 표시",
-      "removeIn": "R7 공개 UI 진입점"
-    },
-    {
-      "from": "src/features/students/ui/panels/student-history-panel.tsx",
-      "to": "src/features/assignment-queue/ui/student-assignment-queue-history.tsx",
-      "reason": "학생 상세의 이어지는 배정 내역",
-      "removeIn": "R7 공개 UI 진입점"
-    },
-    {
-      "from": "src/features/students/ui/panels/student-history-panel.tsx",
-      "to": "src/features/history/ui/student-learning-activity-list.tsx",
-      "reason": "학생 상세의 학습 내역",
-      "removeIn": "R7 공개 UI 진입점"
-    },
-    {
-      "from": "src/features/students/ui/panels/student-info-panel.tsx",
-      "to": "src/features/learning-points/ui/point-summary.tsx",
-      "reason": "학생 상세의 포인트 표시",
-      "removeIn": "R7 공개 UI 진입점"
-    },
     {
       "from": "src/features/assignments/controller/use-assignment-workspace.ts",
       "to": "src/features/history/domain/learning-activity.ts",
@@ -698,8 +1115,38 @@
     },
     {
       "from": "src/features/assignments/ui/assignment-student-row.tsx",
+      "to": "src/features/assignment-queue/ui/assignment-queue-tags.tsx",
+      "reason": "학생 행에 이어지는 배정 상태 표시",
+      "removeIn": "R7 공개 UI 진입점"
+    },
+    {
+      "from": "src/features/assignments/ui/assignment-student-row.tsx",
       "to": "src/features/history/domain/learning-activity.ts",
       "reason": "학생 행의 최근 학습 상태 표시",
+      "removeIn": "R5 공개 계약 진입점"
+    },
+    {
+      "from": "src/features/assignments/ui/assignment-student-row.tsx",
+      "to": "src/features/history/ui/learning-management-row.module.css",
+      "reason": "기존 행 스타일 공유 부채",
+      "removeIn": "R7 공용 패턴 분리"
+    },
+    {
+      "from": "src/features/history/controller/use-editable-history-assignment.ts",
+      "to": "src/features/assignments/controller/use-assignment-controller.ts",
+      "reason": "내역에서 배정 수정 controller 사용",
+      "removeIn": "R5 공개 Client 진입점"
+    },
+    {
+      "from": "src/features/history/controller/use-editable-history-assignment.ts",
+      "to": "src/features/assignments/presentation/assignment-submit-blocker.ts",
+      "reason": "내역 수정의 저장 차단 문구 공유",
+      "removeIn": "R5 공개 계약 진입점"
+    },
+    {
+      "from": "src/features/history/controller/use-editable-history-assignment.ts",
+      "to": "src/features/assignments/ui/single-assignment-editor.types.ts",
+      "reason": "내역 수정 결과 계약 공유",
       "removeIn": "R5 공개 계약 진입점"
     },
     {
@@ -715,16 +1162,28 @@
       "removeIn": "R5 공개 계약 진입점"
     },
     {
-      "from": "src/features/history/controller/use-editable-history-assignment.ts",
-      "to": "src/features/assignments/controller/use-assignment-controller.ts",
-      "reason": "내역에서 배정 수정 controller 사용",
-      "removeIn": "R5 공개 Client 진입점"
+      "from": "src/features/history/ui/admin-history-detail.tsx",
+      "to": "src/features/learning-points/ui/point-summary.tsx",
+      "reason": "관리자 상세의 포인트 표시",
+      "removeIn": "R7 공개 UI 진입점"
     },
     {
-      "from": "src/features/history/controller/use-editable-history-assignment.ts",
-      "to": "src/features/assignments/presentation/assignment-submit-blocker.ts",
-      "reason": "내역 수정의 저장 차단 문구 공유",
-      "removeIn": "R5 공개 계약 진입점"
+      "from": "src/features/history/ui/admin-history-detail.tsx",
+      "to": "src/features/results/ui/attempt-question-card.tsx",
+      "reason": "관리자 상세의 문항 표시",
+      "removeIn": "R7 공개 UI 진입점"
+    },
+    {
+      "from": "src/features/history/ui/editable-history-detail-dialog.tsx",
+      "to": "src/features/assignments/ui/single-assignment-editor.tsx",
+      "reason": "내역 대화상자에서 배정 수정 기능 사용",
+      "removeIn": "R7 공개 UI 진입점"
+    },
+    {
+      "from": "src/features/history/ui/editable-history-detail-page.tsx",
+      "to": "src/features/assignments/ui/single-assignment-editor.tsx",
+      "reason": "내역 페이지에서 배정 수정 기능 사용",
+      "removeIn": "R7 공개 UI 진입점"
     },
     {
       "from": "src/features/results/model.ts",
@@ -737,6 +1196,18 @@
       "to": "src/features/quiz-player/controller/quiz-audio-player.ts",
       "reason": "결과 화면의 단일 음원 재생 제어 공유",
       "removeIn": "R7 공용 음원 controller 분리"
+    },
+    {
+      "from": "src/features/results/ui/result-pronunciation.tsx",
+      "to": "src/features/quiz-player/ui/audio-button.tsx",
+      "reason": "결과 화면의 공용 발음 재생",
+      "removeIn": "R7 design-system 패턴 분리"
+    },
+    {
+      "from": "src/features/results/ui/student-result-view.tsx",
+      "to": "src/features/learning-points/ui/point-summary.tsx",
+      "reason": "학생 결과의 포인트 표시",
+      "removeIn": "R7 공개 UI 진입점"
     },
     {
       "from": "src/features/student-dashboard/domain/student-assignment-sections.ts",
@@ -757,28 +1228,70 @@
       "removeIn": "R5 공개 표시 계약 진입점"
     },
     {
-      "from": "src/features/students/domain/student-directory-summary.ts",
-      "to": "src/features/history/domain/learning-activity.ts",
-      "reason": "학생 목록의 학습 횟수 요약",
-      "removeIn": "R5 공개 계약 진입점"
+      "from": "src/features/student-dashboard/ui/student-assignment-card.tsx",
+      "to": "src/features/history/ui/activity-status-timeline.tsx",
+      "reason": "학생 메인의 시험 상태 표시",
+      "removeIn": "R7 공용 패턴 분리"
     },
     {
-      "from": "src/features/students/domain/student-directory.ts",
-      "to": "src/features/history/domain/learning-activity.ts",
-      "reason": "학생 목록의 최근 학습 자료",
-      "removeIn": "R5 공개 계약 진입점"
+      "from": "src/features/student-dashboard/ui/student-assignment-card.tsx",
+      "to": "src/features/history/ui/attempt-score-summary.tsx",
+      "reason": "학생 메인의 점수 표시",
+      "removeIn": "R7 공용 패턴 분리"
     },
     {
-      "from": "src/features/students/model.ts",
-      "to": "src/features/learning-points/model.ts",
-      "reason": "학생 상세 자료에 포인트 요약 포함",
-      "removeIn": "R5 공개 계약 진입점"
+      "from": "src/features/student-dashboard/ui/student-dashboard.tsx",
+      "to": "src/features/learning-points/ui/point-summary.tsx",
+      "reason": "학생 메인의 포인트 표시",
+      "removeIn": "R7 공개 UI 진입점"
     },
     {
-      "from": "src/features/students/ui/student-directory.tsx",
-      "to": "src/features/history/domain/learning-activity.ts",
-      "reason": "학생 목록의 학습 상태 표시",
-      "removeIn": "R5 공개 계약 진입점"
+      "from": "src/features/students/contracts/student-detail-read-model.ts",
+      "to": "src/features/history/contracts/admin-history-read-model.ts",
+      "reason": "학생 상세 초기 이력의 공개 읽기 계약",
+      "removeIn": "R7 공개 진입점 정리"
+    },
+    {
+      "from": "src/features/students/server/queries/student-detail-query.ts",
+      "to": "src/features/history/server/queries/admin-history-row-schema.ts",
+      "reason": "학생 상세 초기 이력 DB 행 검증",
+      "removeIn": "R7 공개 진입점 정리"
+    },
+    {
+      "from": "src/features/students/server/queries/student-detail-row-schema.ts",
+      "to": "src/features/history/server/queries/admin-history-row-schema.ts",
+      "reason": "학생 상세 복합 응답의 이력 행 검증",
+      "removeIn": "R7 공개 진입점 정리"
+    },
+    {
+      "from": "src/features/students/server/queries/student-history-query.ts",
+      "to": "src/features/history/server/queries/admin-history-row-schema.ts",
+      "reason": "학생 이력 다음 페이지 DB 행 검증",
+      "removeIn": "R7 공개 진입점 정리"
+    },
+    {
+      "from": "src/features/students/server/queries/student-history-row-schema.ts",
+      "to": "src/features/history/server/queries/admin-history-row-schema.ts",
+      "reason": "학생 이력 응답의 공통 행 검증",
+      "removeIn": "R7 공개 진입점 정리"
+    },
+    {
+      "from": "src/features/students/ui/panels/student-history-panel.tsx",
+      "to": "src/features/assignment-queue/ui/student-assignment-queue-history.tsx",
+      "reason": "학생 상세의 이어지는 배정 내역",
+      "removeIn": "R7 공개 UI 진입점"
+    },
+    {
+      "from": "src/features/students/ui/panels/student-info-panel.tsx",
+      "to": "src/features/learning-points/ui/point-summary.tsx",
+      "reason": "학생 상세의 포인트 표시",
+      "removeIn": "R7 공개 UI 진입점"
+    },
+    {
+      "from": "src/features/students/ui/panels/student-learning-history.tsx",
+      "to": "src/features/history/ui/student-learning-activity-list.tsx",
+      "reason": "학생 상세의 공용 학습 이력 목록 표시",
+      "removeIn": "R7 공개 진입점 정리"
     },
     {
       "from": "src/features/students/ui/student-directory.tsx",
@@ -875,12 +1388,6 @@
   ],
   "currentFeatureToLibBridges": [
     {
-      "from": "src/features/student-dashboard/server/components/student-dashboard-content.tsx",
-      "to": "src/lib/services/learning-point-read-service.ts",
-      "reason": "학생 메인 서버 구성이 기존 현재 포인트 전용 조회를 시험 목록과 병렬 실행함",
-      "removeIn": "R6 learning-points/server 공개 조회 진입점"
-    },
-    {
       "from": "src/features/assignments/api/request-adapters.ts",
       "to": "src/lib/admin/bulk-assignment-request.ts",
       "reason": "현재 Client 요청 변환기가 예전 서버 요청 계약을 직렬화함",
@@ -899,28 +1406,22 @@
       "removeIn": "R6 learning-points/server 공개 조회 진입점"
     },
     {
-      "from": "src/features/students/model.ts",
-      "to": "src/lib/admin/student-vocab-book-history.ts",
-      "reason": "학생 화면 자료형이 현재 관리자 단어장 이력 계약을 포함함",
-      "removeIn": "R5 students/contracts 이동"
-    },
-    {
-      "from": "src/features/students/server/load-student-management-data.ts",
-      "to": "src/lib/admin/student-vocab-book-history.ts",
-      "reason": "학생 관리 서버 조합이 현재 단어장 이력 계약을 반환함",
-      "removeIn": "R5 students/server 이동"
-    },
-    {
-      "from": "src/features/students/server/load-student-management-data.ts",
-      "to": "src/lib/services/admin-history-read-service.ts",
-      "reason": "학생 관리 서버 조합이 최근 학습 이력을 함께 읽음",
-      "removeIn": "R5 students/server queries 분리"
-    },
-    {
-      "from": "src/features/students/server/load-student-management-data.ts",
+      "from": "src/features/student-dashboard/server/components/student-dashboard-content.tsx",
       "to": "src/lib/services/learning-point-read-service.ts",
-      "reason": "학생 관리 서버 조합이 포인트 요약을 함께 읽음",
-      "removeIn": "R5 공개 포인트 query 진입점"
+      "reason": "학생 메인 서버 구성이 기존 현재 포인트 전용 조회를 시험 목록과 병렬 실행함",
+      "removeIn": "R6 learning-points/server 공개 조회 진입점"
+    },
+    {
+      "from": "src/features/students/contracts/student-detail-read-model.ts",
+      "to": "src/lib/admin/student-vocab-book-history.ts",
+      "reason": "학생 상세의 단어장 학습 이력 계약 표시",
+      "removeIn": "R7 students 공개 계약 이동"
+    },
+    {
+      "from": "src/features/students/ui/panels/student-info-panel.tsx",
+      "to": "src/lib/admin/student-vocab-book-history.ts",
+      "reason": "학생 상세의 단어장 학습 이력 계약 표시",
+      "removeIn": "R7 students 공개 계약 이동"
     },
     {
       "from": "src/features/students/ui/panels/student-vocab-book-history-list.tsx",
@@ -931,16 +1432,11 @@
   ],
   "currentFeatureViaLibToFeatureImports": [
     {
-      "from": "src/features/student-dashboard/server/components/student-dashboard-content.tsx",
-      "to": "src/features/learning-points/model.ts",
-      "via": ["src/lib/services/learning-point-read-service.ts"],
-      "reason": "학생 메인 서버 구성이 기존 포인트 조회를 거쳐 학습 포인트 계약을 사용함",
-      "removeIn": "R6 learning-points/server 공개 조회 진입점"
-    },
-    {
       "from": "src/features/history/server/queries/admin-history-detail-query.ts",
       "to": "src/features/learning-points/model.ts",
-      "via": ["src/lib/services/learning-point-read-service.ts"],
+      "via": [
+        "src/lib/services/learning-point-read-service.ts"
+      ],
       "reason": "내역 상세가 기존 포인트 조회를 거쳐 포인트 표시 자료를 받음",
       "removeIn": "R6 learning-points/server 공개 조회 진입점"
     },
@@ -955,48 +1451,38 @@
       "removeIn": "R6 results/server 공개 조회 진입점"
     },
     {
-      "from": "src/features/students/model.ts",
-      "to": "src/features/history/domain/learning-activity.ts",
-      "via": ["src/lib/admin/student-vocab-book-history.ts"],
-      "reason": "학생 화면 계약이 이전 관리자 단어장 이력 계약을 거쳐 내역 기능 분류에 간접 의존함",
-      "removeIn": "R5 students/public-contracts 이동"
-    },
-    {
-      "from": "src/features/students/server/load-student-management-data.ts",
-      "to": "src/features/history/domain/learning-activity.ts",
-      "via": ["src/lib/admin/student-vocab-book-history.ts"],
-      "reason": "학생 관리 서버 조합이 이전 관리자 단어장 이력 계약을 거쳐 내역 기능 분류에 간접 의존함",
-      "removeIn": "R5 students/server queries 분리"
-    },
-    {
-      "from": "src/features/students/server/load-student-management-data.ts",
-      "to": "src/features/history/model.ts",
-      "via": ["src/lib/services/admin-history-read-service.ts"],
-      "reason": "학생 관리 서버 조합이 공용 이력 조회를 거쳐 내역 화면 계약을 반환함",
-      "removeIn": "R5 students/server queries 분리"
-    },
-    {
-      "from": "src/features/students/server/load-student-management-data.ts",
+      "from": "src/features/student-dashboard/server/components/student-dashboard-content.tsx",
       "to": "src/features/learning-points/model.ts",
-      "via": ["src/lib/services/learning-point-read-service.ts"],
-      "reason": "학생 관리 서버 조합이 공용 포인트 조회를 거쳐 포인트 화면 계약을 반환함",
-      "removeIn": "R5 공개 포인트 query 진입점"
+      "via": [
+        "src/lib/services/learning-point-read-service.ts"
+      ],
+      "reason": "학생 메인 서버 구성이 기존 포인트 조회를 거쳐 학습 포인트 계약을 사용함",
+      "removeIn": "R6 learning-points/server 공개 조회 진입점"
     },
     {
-      "from": "src/features/students/server/load-student-management-data.ts",
-      "to": "src/features/results/model.ts",
+      "from": "src/features/students/contracts/student-detail-read-model.ts",
+      "to": "src/features/history/domain/learning-activity.ts",
       "via": [
-        "src/lib/services/admin-history-read-service.ts",
-        "src/lib/services/admin-attempt-read-service.ts",
-        "src/lib/services/quiz/attempt-result-query.ts"
+        "src/lib/admin/student-vocab-book-history.ts"
       ],
-      "reason": "학생 관리의 최근 이력 상세 조회가 공용 조회 연쇄를 거쳐 시험 결과 화면 계약에 간접 의존함",
-      "removeIn": "R5 students/server queries와 R6 results/server 분리"
+      "reason": "학생 단어장 이력 계약이 학습 활동 분류를 간접 사용",
+      "removeIn": "R7 students 공개 계약 이동"
+    },
+    {
+      "from": "src/features/students/ui/panels/student-info-panel.tsx",
+      "to": "src/features/history/domain/learning-activity.ts",
+      "via": [
+        "src/lib/admin/student-vocab-book-history.ts"
+      ],
+      "reason": "학생 단어장 이력 계약이 학습 활동 분류를 간접 사용",
+      "removeIn": "R7 students 공개 계약 이동"
     },
     {
       "from": "src/features/students/ui/panels/student-vocab-book-history-list.tsx",
       "to": "src/features/history/domain/learning-activity.ts",
-      "via": ["src/lib/admin/student-vocab-book-history.ts"],
+      "via": [
+        "src/lib/admin/student-vocab-book-history.ts"
+      ],
       "reason": "학생 단어장 목록이 이전 관리자 계약을 거쳐 내역 기능 분류에 간접 의존함",
       "removeIn": "R5 students/public-contracts 이동"
     }
@@ -2119,16 +2605,32 @@
         "presentation": "학생 카드 표시 계산은 기존 domain과 UI가 소유하므로 별도 presentation 계층을 만들지 않는다."
       }
     },
-    {
+        {
       "id": "assignment-edit",
       "name": "기존 시험 한 건 수정",
       "status": "active",
       "owner": "assignments",
-      "participants": ["history", "assignments", "assignment-queue", "students", "results", "learning-points", "quiz-player"],
+      "participants": [
+        "history",
+        "assignments",
+        "assignment-queue",
+        "students",
+        "results",
+        "learning-points",
+        "quiz-player"
+      ],
       "dataClass": "mutation",
       "cachePolicy": "수정 원본·학생·배정·큐는 요청 사이 캐시 금지",
       "streamingPolicy": "내역 상세 경계 안에서 전체 수정 원본이 준비된 뒤 표시",
-      "closedLocalLayers": ["ui", "controller", "application", "domain", "presentation", "api", "transport"],
+      "closedLocalLayers": [
+        "ui",
+        "controller",
+        "application",
+        "domain",
+        "presentation",
+        "api",
+        "transport"
+      ],
       "touchpoints": {
         "route": [
           "src/app/admin/(protected)/results/[id]/page.tsx",
@@ -2144,7 +2646,7 @@
           "src/features/history/ui/editable-history-detail-dialog.tsx",
           "src/features/history/ui/admin-history-detail.tsx",
           "src/features/history/ui/history-detail-header.tsx",
-          "src/features/history/ui/route-detail-dialog.tsx",
+          "src/components/routed-detail-dialog.tsx",
           "src/features/history/ui/activity-status-timeline.tsx",
           "src/features/history/ui/attempt-score-summary.tsx",
           "src/features/history/ui/assignment-meta-tags.tsx",
@@ -2173,6 +2675,7 @@
           "src/components/assignment-editor-ui.tsx"
         ],
         "clientState": [
+          "src/components/use-route-exit-guard.ts",
           "src/features/history/controller/use-editable-history-assignment.ts",
           "src/features/assignments/controller/use-assignment-controller.ts",
           "src/features/assignments/controller/single-assignment-controller-actions.ts",
@@ -2224,7 +2727,9 @@
           "src/lib/admin/assignment-replacement-fingerprint.ts",
           "src/lib/admin/assignment-replacement-request.ts"
         ],
-        "transport": ["src/features/assignments/transport/assignment-transport.ts"],
+        "transport": [
+          "src/features/assignments/transport/assignment-transport.ts"
+        ],
         "server": [
           "src/app/api/admin/assignments/[assignmentId]/students/[studentId]/route.ts",
           "src/lib/services/admin-history-read-service.ts",
@@ -2255,6 +2760,7 @@
           "src/app/admin/(protected)/loading.tsx"
         ],
         "tests": [
+          "src/components/use-route-exit-guard.test.tsx",
           "src/features/assignments/ui/single-assignment-editor.test.tsx",
           "src/features/assignments/ui/assignment-date-time-toggle-field.test.tsx",
           "src/features/assignments/ui/assignment-edit-comparison.test.tsx",
@@ -2303,6 +2809,11 @@
         ]
       },
       "requiredImportEdges": [
+        {
+          "from": "src/features/history/controller/use-editable-history-assignment.ts",
+          "to": "src/components/use-route-exit-guard.ts",
+          "reason": "내역의 배정 수정도 관리자 공용 이탈 보호 계약을 사용"
+        },
         {
           "from": "src/features/assignments/controller/use-assignment-controller.ts",
           "to": "src/features/assignments/application/submission-flow.ts",
@@ -2415,24 +2926,298 @@
         }
       ]
     },
+        {
+      "id": "student-management-screen",
+      "name": "관리자 학생 관리 화면",
+      "status": "active",
+      "owner": "students",
+      "participants": [
+        "students",
+        "history",
+        "learning-points",
+        "assignment-queue",
+        "assignments",
+        "session"
+      ],
+      "dataClass": "private",
+      "cachePolicy": "학생 목록·상세·포인트·오답·시험 이력 조회는 요청 사이 공유 캐시를 쓰지 않고 브라우저 후속 조회도 private no-store로 처리한다. 같은 화면의 학생 변경 요청도 응답을 캐시하지 않는다.",
+      "streamingPolicy": "관리자 인증을 먼저 끝낸 뒤 목록과 생성 준비를 Suspense 형제로 표시하며 상세는 직접 주소와 인터셉트 모달이 같은 Server Component 조회를 공유",
+      "closedLocalLayers": [
+        "ui",
+        "controller",
+        "domain",
+        "transport"
+      ],
+      "touchpoints": {
+        "route": [
+          "src/app/admin/(protected)/layout.tsx",
+          "src/app/admin/(protected)/students/page.tsx",
+          "src/app/admin/(protected)/students/[studentId]/page.tsx",
+          "src/app/admin/(protected)/@detail/(.)students/[studentId]/page.tsx",
+          "src/app/api/admin/students/directory/route.ts",
+          "src/app/api/admin/students/[id]/history/route.ts"
+        ],
+        "serverComponent": [
+          "src/features/students/server/components/student-create-content.tsx",
+          "src/features/students/server/components/student-detail-route-content.tsx",
+          "src/features/students/server/components/student-directory-content.tsx"
+        ],
+        "ui": [
+          "src/features/students/ui/student-create-workspace.tsx",
+          "src/features/students/ui/student-detail-content.tsx",
+          "src/features/students/ui/student-detail-dialog.tsx",
+          "src/features/students/ui/student-detail-header.tsx",
+          "src/features/students/ui/student-detail-page.tsx",
+          "src/features/students/ui/student-detail-skeleton.tsx",
+          "src/features/students/ui/student-directory.tsx",
+          "src/features/students/ui/student-directory-filters.tsx",
+          "src/features/students/ui/student-directory-skeleton.tsx",
+          "src/features/students/ui/panels/student-account-panel.tsx",
+          "src/features/students/ui/panels/student-code-panel.tsx",
+          "src/features/students/ui/panels/student-history-panel.tsx",
+          "src/features/students/ui/panels/student-info-panel.tsx",
+          "src/features/students/ui/panels/student-learning-history.tsx",
+          "src/features/students/ui/panels/student-wrong-word-panel.tsx",
+          "src/components/admin-logout-button.tsx",
+          "src/components/admin-navigation.tsx",
+          "src/components/document-navigation.ts",
+          "src/components/guarded-link.tsx",
+          "src/components/navigation-exit-guard.tsx",
+          "src/features/history/ui/history-activity-row.tsx",
+          "src/features/history/ui/student-learning-activity-list.tsx",
+          "src/features/learning-points/ui/point-summary.tsx",
+          "src/features/assignment-queue/ui/student-assignment-queue-history.tsx",
+          "src/components/routed-detail-dialog.tsx",
+          "src/design-system/patterns/route-detail-dialog/route-detail-dialog.tsx"
+        ],
+        "clientState": [
+          "src/features/students/controller/student-directory-events.ts",
+          "src/features/students/controller/use-student-access-controller.ts",
+          "src/features/students/controller/use-student-creation-controller.ts",
+          "src/features/students/controller/use-student-detail-view.ts",
+          "src/components/use-route-exit-guard.ts",
+          "src/features/students/controller/use-student-directory-page.ts",
+          "src/features/students/controller/use-student-history-page.ts",
+          "src/features/students/controller/use-student-profile-controller.ts",
+          "src/features/students/controller/use-student-wrong-word-actions.ts",
+          "src/features/students/controller/use-student-wrong-word-cache.ts",
+          "src/features/students/controller/use-student-wrong-word-history.ts"
+        ],
+        "application": [],
+        "domain": [
+          "src/features/students/domain/wrong-word-selection.ts"
+        ],
+        "presentation": [],
+        "contract": [
+          "src/features/students/contracts/student-detail-read-model.ts",
+          "src/features/students/contracts/student-directory-read-model.ts"
+        ],
+        "transport": [
+          "src/features/students/api/student-mutations.ts",
+          "src/features/students/api/wrong-word-transport.ts",
+          "src/features/students/transport/student-directory-pages.ts",
+          "src/features/students/transport/student-history-pages.ts",
+          "src/features/session/api/session.ts"
+        ],
+        "server": [
+          "src/features/students/server/components/student-create-content.tsx",
+          "src/features/students/server/components/student-detail-route-content.tsx",
+          "src/features/students/server/components/student-directory-content.tsx",
+          "src/features/students/server/queries/student-detail-query.ts",
+          "src/features/students/server/queries/student-detail-read-error.ts",
+          "src/features/students/server/queries/student-detail-row-schema.ts",
+          "src/features/students/server/queries/student-directory-query.ts",
+          "src/features/students/server/queries/student-directory-read-error.ts",
+          "src/features/students/server/queries/student-directory-row-schema.ts",
+          "src/features/students/server/queries/student-history-query.ts",
+          "src/features/students/server/queries/student-history-row-schema.ts",
+          "src/features/students/server/student-directory-cursor.ts",
+          "src/features/students/server/student-history-cursor.ts"
+        ],
+        "database": [
+          "supabase/migrations/20260829213000_add_admin_student_directory_read_model.sql"
+        ],
+        "cacheStreaming": [
+          "src/app/admin/(protected)/students/page.tsx",
+          "src/app/admin/(protected)/students/[studentId]/page.tsx",
+          "src/app/admin/(protected)/students/[studentId]/loading.tsx",
+          "src/app/admin/(protected)/@detail/(.)students/[studentId]/page.tsx",
+          "src/app/admin/(protected)/@detail/(.)students/[studentId]/loading.tsx",
+          "src/app/api/admin/students/directory/route.ts",
+          "src/app/api/admin/students/[id]/history/route.ts"
+        ],
+        "tests": [
+          "src/components/guarded-link.test.tsx",
+          "src/components/admin-logout-button.test.tsx",
+          "src/components/routed-detail-dialog.test.tsx",
+          "src/components/use-route-exit-guard.test.tsx",
+          "src/app/api/admin/students/directory/route.test.ts",
+          "src/app/api/admin/students/[id]/history/route.test.ts",
+          "src/features/students/students-feature.contract.test.ts",
+          "src/features/students/controller/use-student-access-controller.test.tsx",
+          "src/features/students/controller/use-student-detail-view.test.tsx",
+          "src/features/students/controller/use-student-directory-page.test.tsx",
+          "src/features/students/controller/use-student-history-page.test.tsx",
+          "src/features/students/controller/use-student-profile-controller.test.tsx",
+          "src/features/students/server/student-directory-cursor.test.ts",
+          "src/features/students/server/student-history-cursor.test.ts",
+          "src/features/students/ui/student-directory.test.tsx",
+          "src/lib/database/admin-student-directory-read-model.integration.test.ts"
+        ]
+      },
+      "requiredImportEdges": [
+        {
+          "from": "src/app/admin/(protected)/layout.tsx",
+          "to": "src/components/navigation-exit-guard.tsx",
+          "reason": "관리자 shell과 가로채기 상세가 같은 미저장 이동 보호 등록소를 공유"
+        },
+        {
+          "from": "src/app/admin/(protected)/students/page.tsx",
+          "to": "src/features/students/server/components/student-directory-content.tsx",
+          "reason": "관리자 인증 뒤 학생 목록 초기 자료를 기능 Server Component에서 직접 조합"
+        },
+        {
+          "from": "src/app/admin/(protected)/students/[studentId]/page.tsx",
+          "to": "src/features/students/server/components/student-detail-route-content.tsx",
+          "reason": "직접 주소가 공용 학생 상세 Server Component를 사용"
+        },
+        {
+          "from": "src/app/admin/(protected)/@detail/(.)students/[studentId]/page.tsx",
+          "to": "src/features/students/server/components/student-detail-route-content.tsx",
+          "reason": "인터셉트 모달이 직접 주소와 같은 학생 상세 조회를 사용"
+        },
+        {
+          "from": "src/features/students/server/components/student-directory-content.tsx",
+          "to": "src/features/students/server/queries/student-directory-query.ts",
+          "reason": "초기 목록은 앱 내부 HTTP 없이 DB 읽기 모델을 직접 조회"
+        },
+        {
+          "from": "src/features/students/server/components/student-detail-route-content.tsx",
+          "to": "src/features/students/server/queries/student-detail-query.ts",
+          "reason": "초기 상세는 앱 내부 HTTP 없이 DB 읽기 모델을 직접 조회"
+        },
+        {
+          "from": "src/features/students/ui/student-directory.tsx",
+          "to": "src/features/students/controller/use-student-directory-page.ts",
+          "reason": "목록 표시와 필터·더보기 요청 수명을 분리"
+        },
+        {
+          "from": "src/components/use-route-exit-guard.ts",
+          "to": "src/components/navigation-exit-guard.tsx",
+          "reason": "기능 화면의 미저장 종료 요청을 관리자 shell의 Next Link와 공유"
+        },
+        {
+          "from": "src/features/students/ui/student-detail-page.tsx",
+          "to": "src/components/use-route-exit-guard.ts",
+          "reason": "직접 주소 학생 상세가 공용 변경·저장 중 이탈 보호를 사용"
+        },
+        {
+          "from": "src/features/students/ui/student-detail-dialog.tsx",
+          "to": "src/components/use-route-exit-guard.ts",
+          "reason": "인터셉트 학생 상세가 직접 주소와 같은 이탈 보호를 사용"
+        },
+        {
+          "from": "src/components/guarded-link.tsx",
+          "to": "src/components/navigation-exit-guard.tsx",
+          "reason": "Next Link onNavigate가 현재 편집기의 공용 이탈 요청을 전달"
+        },
+        {
+          "from": "src/components/guarded-link.tsx",
+          "to": "src/components/document-navigation.ts",
+          "reason": "변경 폐기를 승인한 이동은 병렬 슬롯에 이전 편집 화면을 남기지 않도록 문서 이동"
+        },
+        {
+          "from": "src/components/admin-navigation.tsx",
+          "to": "src/components/guarded-link.tsx",
+          "reason": "관리자 공용 메뉴가 편집 상태를 보존하는 Next Link를 사용"
+        },
+        {
+          "from": "src/components/admin-logout-button.tsx",
+          "to": "src/components/navigation-exit-guard.tsx",
+          "reason": "로그아웃도 현재 편집기의 이탈 확인과 저장 중 차단을 따름"
+        },
+        {
+          "from": "src/components/admin-logout-button.tsx",
+          "to": "src/features/session/api/session.ts",
+          "reason": "로그아웃 성공과 실패를 공용 이탈 보호에 그대로 반환"
+        },
+        {
+          "from": "src/features/students/controller/use-student-directory-page.ts",
+          "to": "src/features/students/transport/student-directory-pages.ts",
+          "reason": "필터와 더보기가 전용 브라우저 전송 함수를 사용"
+        },
+        {
+          "from": "src/app/api/admin/students/directory/route.ts",
+          "to": "src/features/students/server/queries/student-directory-query.ts",
+          "reason": "브라우저 필터·더보기만 목록 query에 연결"
+        },
+        {
+          "from": "src/features/students/ui/student-detail-content.tsx",
+          "to": "src/features/students/ui/panels/student-history-panel.tsx",
+          "reason": "상세 내역 탭을 방문했을 때만 이력 패널을 렌더 트리에 마운트"
+        },
+        {
+          "from": "src/features/students/controller/use-student-history-page.ts",
+          "to": "src/features/students/transport/student-history-pages.ts",
+          "reason": "이력 필터와 더보기가 전용 브라우저 전송 함수를 사용"
+        },
+        {
+          "from": "src/app/api/admin/students/[id]/history/route.ts",
+          "to": "src/features/students/server/queries/student-history-query.ts",
+          "reason": "브라우저 이력 필터·더보기만 학생 이력 query에 연결"
+        },
+        {
+          "from": "src/features/students/server/queries/student-directory-query.ts",
+          "to": "src/features/students/server/student-directory-cursor.ts",
+          "reason": "목록 snapshot과 복합 커서를 함께 검증"
+        },
+        {
+          "from": "src/features/students/server/queries/student-detail-query.ts",
+          "to": "src/features/students/server/queries/student-detail-row-schema.ts",
+          "reason": "상세 DB 응답을 최소 화면 계약으로 검증"
+        },
+        {
+          "from": "src/features/students/server/queries/student-history-query.ts",
+          "to": "src/features/students/server/student-history-cursor.ts",
+          "reason": "학생별 이력 snapshot과 복합 커서를 함께 검증"
+        }
+      ],
+      "notApplicable": {
+        "application": "이 흐름은 화면의 읽기 수명과 독립된 학생 변경 controller를 함께 추적하지만, 여러 저장 단계를 하나로 조합하지 않으므로 별도 응용 계층을 만들지 않는다.",
+        "presentation": "표시 계산은 계약 변환과 기존 공용 UI가 소유하므로 별도 표시 계층을 만들지 않는다."
+      }
+    },
     {
       "id": "assignment-series",
       "name": "완료 뒤 이어지는 배정",
       "status": "active",
       "owner": "assignment-queue",
-      "participants": ["assignments", "assignment-queue", "quiz-player", "students", "history", "learning-points"],
+      "participants": [
+        "assignments",
+        "assignment-queue",
+        "quiz-player",
+        "students",
+        "history",
+        "learning-points"
+      ],
       "dataClass": "mutation",
       "cachePolicy": "큐·배정·응시 완료 자료는 요청 사이 캐시 금지",
       "streamingPolicy": "상태 태그만 소비 화면과 함께 표시하며 큐 명령은 stream하지 않음",
-      "dependsOnFlows": ["assignment-workspace-selection"],
-      "closedLocalLayers": ["ui", "controller", "application", "domain", "presentation", "api", "transport"],
+      "dependsOnFlows": [
+        "assignment-workspace-selection"
+      ],
+      "closedLocalLayers": [
+        "ui",
+        "controller",
+        "application",
+        "domain",
+        "presentation",
+        "api",
+        "transport"
+      ],
       "flowImportExceptions": {
         "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/ui/direct-review-assignment-sections.tsx": "독립 오답 시험은 assignment-direct-review-create가 소유하며 이어지는 일반 범위 회차와 섞지 않는다.",
         "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/controller/use-direct-review-assignment-controller.ts": "배정된 시험 회차 흐름에서는 독립 오답 시험 전용 Preview·저장 controller를 실행하지 않는다.",
-        "src/features/students/ui/student-detail-dialog.tsx|src/features/students/ui/panels/student-account-panel.tsx": "계정 탭은 배정된 시험 내역 흐름과 별개다.",
-        "src/features/students/ui/student-detail-dialog.tsx|src/features/students/ui/panels/student-code-panel.tsx": "접속 코드 화면은 배정된 시험 내역 흐름과 별개다.",
-        "src/features/students/ui/student-detail-dialog.tsx|src/features/students/ui/panels/student-info-panel.tsx": "학생 정보 탭은 배정된 시험 내역 흐름과 별개다.",
-        "src/features/students/ui/panels/student-history-panel.tsx|src/features/history/ui/student-learning-activity-list.tsx": "같은 내역 탭의 일반 시험 내역 형제 구역은 assignment-series의 큐 상태와 별개다.",
         "src/features/students/ui/panels/student-history-panel.tsx|src/features/students/ui/panels/student-wrong-word-panel.tsx": "같은 내역 탭의 오답 단어 형제 구역은 assignment-series의 큐 상태와 별개다."
       },
       "serverImportExceptions": {
@@ -2442,7 +3227,6 @@
       "touchpoints": {
         "route": [
           "src/app/admin/(protected)/assignments/page.tsx",
-          "src/app/admin/(protected)/students/page.tsx",
           "src/app/api/admin/bulk-assignments/preview/route.ts",
           "src/app/api/admin/bulk-assignments/route.ts",
           "src/app/api/admin/students/[id]/vocab-assignment-queues/route.ts",
@@ -2452,8 +3236,7 @@
           "src/app/api/student/attempts/[id]/timeouts/route.ts"
         ],
         "serverComponent": [
-          "src/app/admin/(protected)/assignments/page.tsx",
-          "src/app/admin/(protected)/students/page.tsx"
+          "src/app/admin/(protected)/assignments/page.tsx"
         ],
         "ui": [
           "src/features/assignments/ui/assignment-workspace.tsx",
@@ -2483,10 +3266,9 @@
           "src/features/assignment-queue/ui/assignment-queue-history.tsx",
           "src/features/assignment-queue/ui/assignment-queue-tags.tsx",
           "src/features/assignment-queue/ui/student-assignment-queue-history.tsx",
-          "src/features/students/ui/student-management-workspace.tsx",
-          "src/features/students/ui/student-directory.tsx",
           "src/features/students/ui/student-detail-dialog.tsx",
-          "src/features/students/ui/panels/student-history-panel.tsx"
+          "src/features/students/ui/panels/student-history-panel.tsx",
+          "src/features/students/ui/student-detail-content.tsx"
         ],
         "clientState": [
           "src/features/assignments/controller/use-vocab-assignment-screen.ts",
@@ -2565,7 +3347,6 @@
           "src/lib/services/bulk-assignment-plan-digest.ts",
           "src/lib/services/regular-assignment-service.ts",
           "src/lib/services/mixed-assignment-service.ts",
-          "src/features/students/server/load-student-management-data.ts",
           "src/lib/services/learning-point-read-service.ts"
         ],
         "database": [
@@ -2584,7 +3365,6 @@
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/assignments/page.tsx",
-          "src/app/admin/(protected)/students/page.tsx",
           "src/app/admin/(protected)/loading.tsx"
         ],
         "tests": [
@@ -2601,7 +3381,6 @@
           "src/features/assignments/ui/vocab-schedule-fields.test.tsx",
           "src/features/assignment-queue/ui/assignment-queue-history.test.tsx",
           "src/features/assignment-queue/ui/student-assignment-queue-history.test.tsx",
-          "src/features/students/server/load-student-management-data.test.ts",
           "src/app/api/admin/bulk-assignments/route.test.ts",
           "src/app/api/admin/students/[id]/vocab-assignment-queues/route.test.ts",
           "src/app/api/admin/vocab-assignment-queues/[seriesId]/route.test.ts",
@@ -2655,34 +3434,9 @@
           "reason": "첫 회차와 후속 회차 계획이 공통 도메인 검증을 사용함"
         },
         {
-          "from": "src/app/admin/(protected)/students/page.tsx",
-          "to": "src/features/students/server/load-student-management-data.ts",
-          "reason": "학생 페이지가 배정된 시험과 포인트를 한 서버 로더에서 준비함"
-        },
-        {
-          "from": "src/app/admin/(protected)/students/page.tsx",
-          "to": "src/features/students/ui/student-management-workspace.tsx",
-          "reason": "학생 페이지가 관리 작업공간을 Server Component 경계에서 조합함"
-        },
-        {
-          "from": "src/features/students/ui/student-management-workspace.tsx",
-          "to": "src/features/students/ui/student-detail-dialog.tsx",
-          "reason": "학생 작업공간에서 선택한 학생 상세를 엶"
-        },
-        {
-          "from": "src/features/students/ui/student-detail-dialog.tsx",
-          "to": "src/features/students/ui/panels/student-history-panel.tsx",
-          "reason": "학생 상세의 내역 탭이 학습·배정 내역 패널을 엶"
-        },
-        {
           "from": "src/features/students/ui/panels/student-history-panel.tsx",
           "to": "src/features/assignment-queue/ui/student-assignment-queue-history.tsx",
           "reason": "학생 내역에서 남은 회차와 배정된 시험을 표시함"
-        },
-        {
-          "from": "src/features/students/server/load-student-management-data.ts",
-          "to": "src/lib/services/learning-point-read-service.ts",
-          "reason": "학생 정보에 누적 학습 포인트를 함께 표시함"
         },
         {
           "from": "src/features/assignments/ui/vocab-assignment-planner.tsx",
@@ -2778,6 +3532,11 @@
           "from": "src/lib/services/vocab-assignment-queue-command.ts",
           "to": "src/lib/services/vocab-assignment-queue-support.ts",
           "reason": "queue RPC 미적용 상태를 안전하게 구분함"
+        },
+        {
+          "from": "src/features/students/ui/student-detail-content.tsx",
+          "to": "src/features/students/ui/panels/student-history-panel.tsx",
+          "reason": "학생 상세 내역 탭에서 배정된 시험 큐를 국소 표시"
         }
       ]
     },

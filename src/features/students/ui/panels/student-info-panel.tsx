@@ -4,39 +4,35 @@ import type { FormEvent } from "react";
 
 import { adminStudentsText } from "@/content/ko/admin-students";
 import { Button } from "@/design-system/primitives/button/button";
-import { CurrentPointSummary } from "@/features/learning-points/ui/point-summary";
 import {
   Field,
   FieldLabel,
   Input,
 } from "@/design-system/primitives/form/field";
+import { CurrentPointSummary } from "@/features/learning-points/ui/point-summary";
+import type { StudentLearningSourceItem } from "@/lib/admin/learning-sources";
+import type { StudentVocabBookHistory } from "@/lib/admin/student-vocab-book-history";
 
-import type { StudentDetailController } from "../../controller/use-student-detail-controller";
-import type { StudentManagementData } from "../../model";
+import type { StudentDetailProfile } from "../../contracts/student-detail-read-model";
+import type { StudentProfileController } from "../../controller/use-student-profile-controller";
 import styles from "../student-detail.module.css";
+import { StudentLearningSourceList } from "./student-learning-source-list";
 import { StudentVocabBookHistoryList } from "./student-vocab-book-history-list";
 
 export function StudentInfoPanel({
   controller,
-  data,
+  learningSources,
+  student,
+  vocabBookHistory,
 }: {
-  controller: StudentDetailController;
-  data: StudentManagementData;
+  controller: StudentProfileController;
+  learningSources: StudentLearningSourceItem[];
+  student: StudentDetailProfile;
+  vocabBookHistory: StudentVocabBookHistory[];
 }) {
-  const student = controller.selectedStudent;
-  if (!student) return null;
-  const vocabBookHistory = data.vocabBookHistory.filter(
-    (item) => item.studentId === student.id,
-  );
-
-  const profileUnchanged =
-    controller.profile.displayName === student.displayName &&
-    controller.profile.schoolName === (student.schoolName ?? "") &&
-    controller.profile.gradeLabel === (student.gradeLabel ?? "");
-
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    void controller.actions.saveProfile();
+    void controller.actions.save();
   }
 
   return (
@@ -46,9 +42,7 @@ export function StudentInfoPanel({
       id="student-info-panel"
       role="tabpanel"
     >
-      <CurrentPointSummary
-        currentPoints={data.pointBalances[student.id] ?? 0}
-      />
+      <CurrentPointSummary currentPoints={student.rawPoints} />
       <form className={styles.profileForm} onSubmit={submit}>
         <div className={styles.profileGrid}>
           <Field as="label">
@@ -56,13 +50,10 @@ export function StudentInfoPanel({
             <Input
               maxLength={80}
               onChange={(event) =>
-                controller.actions.setProfileField(
-                  "displayName",
-                  event.target.value,
-                )
+                controller.actions.setField("displayName", event.target.value)
               }
               required
-              value={controller.profile.displayName}
+              value={controller.draft.displayName}
             />
           </Field>
           <Field as="label">
@@ -70,12 +61,9 @@ export function StudentInfoPanel({
             <Input
               maxLength={120}
               onChange={(event) =>
-                controller.actions.setProfileField(
-                  "schoolName",
-                  event.target.value,
-                )
+                controller.actions.setField("schoolName", event.target.value)
               }
-              value={controller.profile.schoolName}
+              value={controller.draft.schoolName}
             />
           </Field>
           <Field as="label">
@@ -83,33 +71,34 @@ export function StudentInfoPanel({
             <Input
               maxLength={40}
               onChange={(event) =>
-                controller.actions.setProfileField(
-                  "gradeLabel",
-                  event.target.value,
-                )
+                controller.actions.setField("gradeLabel", event.target.value)
               }
-              value={controller.profile.gradeLabel}
+              value={controller.draft.gradeLabel}
             />
           </Field>
         </div>
         <Button
           disabled={
-            controller.interactionBusy ||
-            !controller.profile.displayName.trim() ||
-            profileUnchanged
+            controller.busy ||
+            controller.unchanged ||
+            !controller.draft.displayName.trim()
           }
           type="submit"
         >
-          {controller.busyKey === `profile:${student.id}`
+          {controller.busy
             ? adminStudentsText.info.savePending
             : adminStudentsText.info.save}
         </Button>
       </form>
 
-      <StudentVocabBookHistoryList
-        datasets={data.datasets}
-        items={vocabBookHistory}
-      />
+      <section className={styles.historySection}>
+        <h3>{adminStudentsText.info.currentWordbook}</h3>
+        <StudentLearningSourceList
+          fallbackPrimaryLabel={student.currentVocabBook}
+          sources={learningSources}
+        />
+      </section>
+      <StudentVocabBookHistoryList datasets={[]} items={vocabBookHistory} />
     </section>
   );
 }

@@ -61,7 +61,8 @@ const ROUTER_REFRESH_ALLOWLIST = new Map<
     ["src/features/history/controller/use-editable-history-assignment.ts", { maxCalls: 1, removeIn: "R5" }],
     ["src/features/student-dashboard/ui/assignment-boundary-refresh.tsx", { maxCalls: 1, removeIn: "유지" }],
     ["src/features/student-dashboard/ui/deadline-countdown.tsx", { maxCalls: 1, removeIn: "유지" }],
-    ["src/features/students/controller/use-student-detail-controller.ts", { maxCalls: 1, removeIn: "R5" }],
+    ["src/features/students/controller/use-student-creation-controller.ts", { maxCalls: 1, removeIn: "R8" }],
+    ["src/features/students/ui/student-detail-content.tsx", { maxCalls: 1, removeIn: "R8" }],
   ] as const,
 );
 

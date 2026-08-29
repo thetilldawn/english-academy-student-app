@@ -147,7 +147,7 @@ describe("wrong-word admin UI contract", () => {
 
   it("loads wrong words only inside the student history tab", () => {
     const detail = source(
-      "src/features/students/ui/student-detail-dialog.tsx",
+      "src/features/students/ui/student-detail-content.tsx",
     );
     const history = source(
       "src/features/students/ui/panels/student-history-panel.tsx",

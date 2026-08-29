@@ -48,6 +48,22 @@ function verifyRegistry(registry) {
     if (!entry.status || !entry.reason) errors.push(`경로 상태 설명 누락: ${entry.path}`);
     if (entry.status !== "planned") assertPathExists(entry.path, "현재 경로 상태", errors);
   }
+  for (const entry of registry.retiredPathOwners ?? []) {
+    if (!validOwners.has(entry.owner)) {
+      errors.push(`종료 경로의 알 수 없는 소유자: ${entry.path} -> ${entry.owner}`);
+    }
+    if (!entry.retiredIn || !entry.reason) {
+      errors.push(`종료 경로 설명 누락: ${entry.path}`);
+    }
+    if (fs.existsSync(path.join(root, entry.path))) {
+      errors.push(`종료 경로가 다시 존재함: ${entry.path}`);
+    }
+  }
+  for (const filePath of duplicateValues(
+    (registry.retiredPathOwners ?? []).map((entry) => entry.path),
+  )) {
+    errors.push(`종료 경로 중복 등록: ${filePath}`);
+  }
 
   const actualFeatureIds = fs
     .readdirSync(path.join(root, "src", "features"), { withFileTypes: true })

@@ -214,7 +214,7 @@ describe("Kakao code sharing contract", () => {
       "src/features/students/ui/panels/student-code-panel.tsx",
     );
     const controller = source(
-      "src/features/students/controller/use-student-detail-controller.ts",
+      "src/features/students/controller/use-student-access-controller.ts",
     );
     const kakao = source("src/lib/kakao-share.ts");
     const copy = source("src/content/ko/admin-students.ts");

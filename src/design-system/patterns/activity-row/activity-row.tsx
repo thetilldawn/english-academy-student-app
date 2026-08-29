@@ -1,11 +1,19 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
-
+import type { ComponentType, ReactNode } from "react";
 import { Checkbox } from "../../primitives/form/field";
 
 import styles from "./activity-row.module.css";
 
 export type ActivityRowTone = "neutral" | "success" | "warning" | "danger";
+
+export type NavigableRowLinkComponent = ComponentType<{
+  "aria-label"?: string;
+  children: ReactNode;
+  className?: string;
+  "data-tone"?: ActivityRowTone;
+  href: string;
+  scroll?: boolean;
+}>;
 
 function classNames(...values: Array<string | false | undefined>) {
   return values.filter(Boolean).join(" ");
@@ -41,16 +49,19 @@ export function NavigableRow({
   children,
   density = "default",
   href,
+  linkComponent,
   tone = "neutral",
 }: {
   ariaLabel?: string;
   children: ReactNode;
   density?: "compact" | "default";
   href: string;
+  linkComponent?: NavigableRowLinkComponent;
   tone?: ActivityRowTone;
 }) {
+  const LinkComponent = linkComponent ?? Link;
   return (
-    <Link
+    <LinkComponent
       aria-label={ariaLabel}
       className={classNames(
         styles.navigable,
@@ -61,7 +72,7 @@ export function NavigableRow({
       scroll={false}
     >
       {children}
-    </Link>
+    </LinkComponent>
   );
 }
 

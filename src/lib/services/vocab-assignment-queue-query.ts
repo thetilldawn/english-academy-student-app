@@ -9,7 +9,7 @@ import type {
 import {
   decodeStoredVocabUnitAllocationRule,
 } from "@/lib/admin/vocab-unit-allocation-rule";
-import { requireAdmin } from "@/lib/auth/admin";
+import { requireAdmin, type AdminContext } from "@/lib/auth/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 import { isVocabAssignmentQueueUnavailable } from "./vocab-assignment-queue-support";
@@ -117,8 +117,8 @@ export async function listVocabAssignmentQueueSummaries(options?: {
   includeClosed?: boolean;
   limit?: number;
   studentId?: string;
-}): Promise<VocabAssignmentQueueSummary[]> {
-  await requireAdmin();
+}, authenticatedAdmin?: AdminContext): Promise<VocabAssignmentQueueSummary[]> {
+  if (!authenticatedAdmin) await requireAdmin();
   const supabase = await createServerSupabaseClient();
   const parameters = {
     p_before_series_id: options?.before?.seriesId ?? null,
@@ -154,14 +154,14 @@ export async function listStudentVocabAssignmentQueuePage(options: {
   before?: VocabAssignmentQueueCursor;
   pageSize?: number;
   studentId: string;
-}) {
+}, authenticatedAdmin?: AdminContext) {
   const pageSize = Math.min(Math.max(options.pageSize ?? 20, 1), 100);
   const rows = await listVocabAssignmentQueueSummaries({
     before: options.before,
     includeClosed: true,
     limit: pageSize + 1,
     studentId: options.studentId,
-  });
+  }, authenticatedAdmin);
   const queues = rows.slice(0, pageSize);
   const last = queues.at(-1);
   return {

@@ -139,6 +139,12 @@
   text-align: right;
 }
 
+.filteringStatus {
+  min-width: 54px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
 .groupPane,
 .cardGrid {
   min-width: 0;
@@ -167,6 +173,7 @@
   background: transparent;
   font: inherit;
   text-align: left;
+  text-decoration: none;
   cursor: pointer;
   transition:
     color var(--motion-standard),
@@ -278,6 +285,35 @@
 .activityStats > span:last-child {
   padding-right: 0;
   border-right: 0;
+}
+
+.loadMore {
+  width: 100%;
+}
+
+.skeleton {
+  min-height: 480px;
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.skeleton > span {
+  min-height: 132px;
+  border-left: 4px solid var(--dim);
+  background: var(--surface);
+  animation: student-directory-pulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes student-directory-pulse {
+  from {
+    opacity: 0.52;
+  }
+
+  to {
+    opacity: 0.9;
+  }
 }
 
 @media (max-width: 767px) {

@@ -46,6 +46,104 @@
   font-size: 17px;
 }
 
+.sectionHeading,
+.codeHeading,
+.historySummary,
+.pageHeader {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.sectionHeading h3,
+.codeHeading h3 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.learningHistory,
+.historyFilters {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.historyFilters {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.historyFilters label {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.historySummary {
+  min-height: 24px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.historyMore {
+  justify-self: center;
+}
+
+.page {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-4);
+}
+
+.pageHeader {
+  align-items: start;
+}
+
+.pageBody {
+  min-width: 0;
+  padding-block: var(--space-4);
+}
+
+.dialogSkeleton,
+.pageSkeleton {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.pageSkeleton {
+  min-height: 420px;
+}
+
+.skeletonTitle,
+.skeletonTabs,
+.skeletonBody {
+  display: block;
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+  animation: skeleton-pulse 1.2s ease-in-out infinite alternate;
+}
+
+.skeletonTitle {
+  width: min(240px, 60%);
+  height: 42px;
+}
+
+.skeletonTabs {
+  width: 100%;
+  height: 46px;
+}
+
+.skeletonBody {
+  width: 100%;
+  min-height: 260px;
+}
+
 .profileForm {
   min-width: 0;
   display: grid;
@@ -149,6 +247,11 @@
   }
 }
 
+@keyframes skeleton-pulse {
+  from { opacity: 0.55; }
+  to { opacity: 1; }
+}
+
 @media (min-width: 768px) {
   .codeActions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -157,13 +260,31 @@
 
 @media (max-width: 767px) {
   .wordbookForm,
-  .profileGrid {
+  .profileGrid,
+  .historyFilters {
     grid-template-columns: 1fr;
+  }
+
+  .historySection,
+  .profileForm,
+  .pageBody {
+    padding: var(--space-3);
+  }
+
+  .pageHeader {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .panel {
+    animation: none;
+  }
+
+  .skeletonTitle,
+  .skeletonTabs,
+  .skeletonBody {
     animation: none;
   }
 }

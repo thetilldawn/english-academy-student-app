@@ -33,14 +33,19 @@ describe("mobile production regression UI contract", () => {
   const studentDetail = source(
     "src/features/students/ui/student-detail-dialog.tsx",
   );
+  const studentDetailContent = source(
+    "src/features/students/ui/student-detail-content.tsx",
+  );
+  const studentAccount = source(
+    "src/features/students/ui/panels/student-account-panel.tsx",
+  );
   const studentController = source(
-    "src/features/students/controller/use-student-detail-controller.ts",
+    "src/features/students/controller/use-student-access-controller.ts",
   );
   it("keeps the student card to the requested summary fields", () => {
-    expect(studentDirectory).toContain("summarizeStudentDirectoryActivities");
-    expect(studentDirectory).toContain("summary.completedCount");
-    expect(studentDirectory).toContain("summary.missedCount");
-    expect(studentDirectory).toContain("summary.notStartedCount");
+    expect(studentDirectory).toContain("student.completedCount");
+    expect(studentDirectory).toContain("student.missedCount");
+    expect(studentDirectory).toContain("student.notStartedCount");
     expect(studentDirectoryCss).toContain(".activityStats");
   });
 
@@ -48,15 +53,12 @@ describe("mobile production regression UI contract", () => {
     const codePanel = source(
       "src/features/students/ui/panels/student-code-panel.tsx",
     );
-    expect(studentDetail.match(/<DialogFrame/g)).toHaveLength(1);
-    expect(studentDetail).toContain(
-      "onRequestClose={controller.actions.requestClose}",
-    );
-    expect(studentDetail).toContain('route.kind === "code"');
-    expect(studentDetail).toContain("<StudentCodePanel controller={controller} />");
+    expect(studentDetail.match(/<RoutedDetailDialog/g)).toHaveLength(1);
+    expect(studentDetailContent).toContain("<StudentAccountPanel");
+    expect(studentAccount).toContain("<StudentCodePanel");
     expect(codePanel).not.toContain("<DialogFrame");
-    expect(studentController).toContain("returnTo: state.route");
-    expect(studentController).toContain("studentDetailBackRoute(state.route)");
+    expect(studentController).toContain("setCodeState({");
+    expect(studentController).toContain("clearCode: () => setCodeState(null)");
   });
 
   it("reserves pronunciation columns only where the visible text is English", () => {

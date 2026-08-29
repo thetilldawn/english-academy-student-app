@@ -1,435 +1,57 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
-
-import { studentLearningActivityIndex } from "@/features/history/domain/learning-activity";
-import { HelpTip, inlineHelpClassName } from "@/design-system/primitives/tooltip/help-tip";
+import { GuardedLink } from "@/components/guarded-link";
+import { adminStudentsText } from "@/content/ko/admin-students";
+import { learningPointsText } from "@/content/ko/learning-points";
 import {
   MetaTag,
   MetaTagList,
-  CountBadge,
   StatusBadge,
 } from "@/design-system/primitives/badge/badge";
-import {
-  EmptyState,
-  Notice,
-} from "@/design-system/patterns/feedback/feedback";
-import {
-  Button,
-  buttonRecipe,
-} from "@/design-system/primitives/button/button";
-import {
-  Field,
-  FieldHelp,
-  FieldLabel,
-  FieldLabelRow,
-  FieldRequirement,
-  Input,
-  Select,
-  Textarea,
-} from "@/design-system/primitives/form/field";
-import { adminStudentsText } from "@/content/ko/admin-students";
-import { commonText } from "@/content/ko/common";
-import { learningPointsText } from "@/content/ko/learning-points";
-import { formatContentText } from "@/content/format";
+import { Button } from "@/design-system/primitives/button/button";
+import { EmptyState, Notice } from "@/design-system/patterns/feedback/feedback";
 import { formatVisiblePoints } from "@/features/learning-points/presentation/point-presentation";
-import {
-  cataloguedDatasetDisplayLabel,
-  groupCataloguedDatasets,
-} from "@/lib/admin/dataset-catalog";
 import { formatKoreanDateTime } from "@/lib/format";
-import {
-  indexStudentCurrentVocabWrongSummaries,
-} from "@/lib/admin/wrong-history-summary";
 
-import type { StudentDetailController } from "../controller/use-student-detail-controller";
-import {
-  filterAndSortStudents,
-  indexStudentLearningSources,
-  studentDirectoryFilterOptions,
-} from "../domain/student-directory";
-import { summarizeStudentDirectoryActivities } from "../domain/student-directory-summary";
-import type {
-  StudentDirectoryFilters,
-  StudentManagementData,
-} from "../model";
+import type { StudentDirectorySnapshot } from "../contracts/student-directory-read-model";
+import { useStudentDirectoryPage } from "../controller/use-student-directory-page";
+import { StudentDirectoryFilters } from "./student-directory-filters";
 import styles from "./student-directory.module.css";
 
-const initialFilters: StudentDirectoryFilters = {
-  grade: "",
-  query: "",
-  school: "",
-  wordbook: "",
-  wrong: "all",
-};
-
-function StudentCreateForm({
-  controller,
-  data,
-}: {
-  controller: StudentDetailController;
-  data: StudentManagementData;
-}) {
-  const datasetGroups = useMemo(
-    () => groupCataloguedDatasets(data.datasets),
-    [data.datasets],
-  );
-
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    void controller.actions.createFromForm(event.currentTarget);
-  }
-
-  return (
-    <details className={styles.createDisclosure}>
-      <summary className={buttonRecipe({ variant: "primary" })}>
-        {adminStudentsText.createStudent.open}
-      </summary>
-      <div className={styles.createContent}>
-        <form
-          aria-busy={controller.busyKey === "create"}
-          className={styles.formStack}
-          onSubmit={submit}
-        >
-          <Field>
-            <FieldLabelRow>
-              <FieldLabel as="span" className={inlineHelpClassName}>
-                <HelpTip
-                  label={adminStudentsText.createStudent.nameHelpAria}
-                  trigger={adminStudentsText.createStudent.nameLabel}
-                >
-                  {adminStudentsText.createStudent.nameHelp}
-                </HelpTip>
-              </FieldLabel>
-              <FieldRequirement data-kind="required">
-                {adminStudentsText.createStudent.required}
-              </FieldRequirement>
-            </FieldLabelRow>
-            <Input
-              aria-label={adminStudentsText.createStudent.nameLabel}
-              id="create-student-display-name"
-              maxLength={80}
-              name="displayName"
-              placeholder={adminStudentsText.createStudent.namePlaceholder}
-              required
-            />
-          </Field>
-          <div className={styles.formGrid}>
-            <Field as="label">
-              <FieldLabelRow>
-                <FieldLabel as="span">
-                  {adminStudentsText.createStudent.schoolLabel}
-                </FieldLabel>
-                <FieldRequirement>
-                  {adminStudentsText.createStudent.optional}
-                </FieldRequirement>
-              </FieldLabelRow>
-              <Input
-                maxLength={120}
-                name="schoolName"
-                placeholder={adminStudentsText.createStudent.schoolPlaceholder}
-              />
-            </Field>
-            <Field as="label">
-              <FieldLabelRow>
-                <FieldLabel as="span">
-                  {adminStudentsText.createStudent.gradeLabel}
-                </FieldLabel>
-                <FieldRequirement>
-                  {adminStudentsText.createStudent.optional}
-                </FieldRequirement>
-              </FieldLabelRow>
-              <Input
-                maxLength={40}
-                name="gradeLabel"
-                placeholder={adminStudentsText.createStudent.gradePlaceholder}
-              />
-            </Field>
-          </div>
-          <Field>
-            <FieldLabelRow>
-              <FieldLabel as="span" className={inlineHelpClassName}>
-                <HelpTip
-                  label={adminStudentsText.createStudent.startingWordbookHelpAria}
-                  trigger={adminStudentsText.createStudent.startingWordbookLabel}
-                >
-                  {adminStudentsText.createStudent.startingWordbookHelp}
-                </HelpTip>
-              </FieldLabel>
-              <FieldRequirement>
-                {adminStudentsText.createStudent.optional}
-              </FieldRequirement>
-            </FieldLabelRow>
-            <Select
-              aria-label={adminStudentsText.createStudent.startingWordbookLabel}
-              defaultValue=""
-              id="create-student-vocab-dataset"
-              name="currentVocabDatasetId"
-            >
-              <option value="">
-                {adminStudentsText.createStudent.chooseLater}
-              </option>
-              {datasetGroups.map((group) => (
-                <optgroup key={group.group} label={group.label}>
-                  {group.datasets.map((dataset) => (
-                    <option key={dataset.id} value={dataset.id}>
-                      {cataloguedDatasetDisplayLabel(dataset)}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </Select>
-            {data.datasets.length === 0 ? (
-              <FieldHelp>
-                {adminStudentsText.createStudent.noWordbookNotice}
-              </FieldHelp>
-            ) : null}
-          </Field>
-          <Field as="label">
-            <FieldLabelRow>
-              <FieldLabel as="span">
-                {adminStudentsText.createStudent.memoLabel}
-              </FieldLabel>
-              <FieldRequirement>
-                {adminStudentsText.createStudent.optional}
-              </FieldRequirement>
-            </FieldLabelRow>
-            <Textarea
-              maxLength={2000}
-              name="note"
-              placeholder={adminStudentsText.createStudent.memoPlaceholder}
-            />
-          </Field>
-          {controller.createError ? (
-            <Notice role="alert" tone="danger">
-              {controller.createError}
-            </Notice>
-          ) : null}
-          <Button
-            disabled={controller.interactionBusy}
-            type="submit"
-            variant="primary"
-          >
-            {controller.busyKey === "create"
-              ? adminStudentsText.createStudent.submitting
-              : adminStudentsText.createStudent.submit}
-          </Button>
-        </form>
-      </div>
-    </details>
-  );
-}
-
-function StudentDirectoryFilters({
-  filters,
-  onChange,
-  options,
-  resultCount,
-}: {
-  filters: StudentDirectoryFilters;
-  onChange: (next: StudentDirectoryFilters) => void;
-  options: ReturnType<typeof studentDirectoryFilterOptions>;
-  resultCount: number;
-}) {
-  const filterCount =
-    [filters.school, filters.grade, filters.wordbook].filter(Boolean).length +
-    (filters.wrong === "all" ? 0 : 1);
-  const searchDisabled = filters.query.trim().length === 0;
-  const wrongLabel =
-    filters.wrong === "wrong"
-      ? commonText.filters.hasWrong
-      : filters.wrong === "repeated"
-        ? commonText.filters.repeatedWrong
-        : commonText.filters.retryNeeded;
-
-  return (
-    <div className={styles.searchPanel}>
-      <label className={styles.searchField}>
-        <span aria-hidden="true" className={styles.searchIcon}>
-          <svg viewBox="0 0 24 24">
-            <circle cx="11" cy="11" r="6" />
-            <path d="m16 16 4 4" />
-          </svg>
-        </span>
-        <span className="sr-only">
-          {adminStudentsText.page.searchAriaLabel}
-        </span>
-        <Input
-          leadingAdornment
-          onChange={(event) =>
-            onChange({ ...filters, query: event.target.value })
-          }
-          placeholder={adminStudentsText.page.searchPlaceholder}
-          type="search"
-          value={filters.query}
-        />
-      </label>
-      <details className={styles.filterDisclosure}>
-        <summary>
-          <span>{adminStudentsText.page.filterButton}</span>
-          <CountBadge>{filterCount}</CountBadge>
-        </summary>
-        <div className={styles.filterGroups}>
-          <fieldset>
-            <legend>{commonText.filters.wrongAvailability}</legend>
-            <div className={styles.filterChips}>
-              {(
-                [
-                  ["all", commonText.filters.all],
-                  ["wrong", commonText.filters.hasWrong],
-                  ["repeated", commonText.filters.repeatedWrong],
-                  ["retry", commonText.filters.retryNeeded],
-                ] as const
-              ).map(([value, label]) => (
-                <Button
-                  aria-pressed={filters.wrong === value}
-                  key={value}
-                  onClick={() => onChange({ ...filters, wrong: value })}
-                  size="small"
-                  variant="filter"
-                >
-                  {label}
-                </Button>
-              ))}
-            </div>
-          </fieldset>
-          {(
-            [
-              ["school", commonText.filters.bySchool, options.schools],
-              ["grade", commonText.filters.byGrade, options.grades],
-              ["wordbook", commonText.filters.byWordbook, options.wordbooks],
-            ] as const
-          ).map(([field, label, values]) => (
-            <fieldset key={field}>
-              <legend>{label}</legend>
-              <div className={styles.filterChips}>
-                {values.map((value) => (
-                  <Button
-                    aria-pressed={filters[field] === value}
-                    key={value}
-                    onClick={() =>
-                      onChange({
-                        ...filters,
-                        [field]: filters[field] === value ? "" : value,
-                      })
-                    }
-                    size="small"
-                    variant="filter"
-                  >
-                    {value}
-                  </Button>
-                ))}
-              </div>
-            </fieldset>
-          ))}
-        </div>
-      </details>
-      <div className={styles.filterSummary}>
-        <MetaTagList>
-          {filters.school ? <MetaTag>{filters.school}</MetaTag> : null}
-          {filters.grade ? <MetaTag>{filters.grade}</MetaTag> : null}
-          {filters.wordbook ? <MetaTag>{filters.wordbook}</MetaTag> : null}
-          {filters.wrong !== "all" ? (
-            <MetaTag tone="warning">{wrongLabel}</MetaTag>
-          ) : null}
-        </MetaTagList>
-        <div className={styles.filterSummaryActions}>
-          <strong>
-            {formatContentText(commonText.filters.studentCount, {
-              count: resultCount,
-            })}
-          </strong>
-          <Button
-            disabled={searchDisabled}
-            onClick={() => onChange({ ...filters, query: "" })}
-            size="small"
-            variant="quiet"
-          >
-            {commonText.filters.clearSearch}
-          </Button>
-          <Button
-            disabled={filterCount === 0}
-            onClick={() => onChange({ ...initialFilters, query: filters.query })}
-            size="small"
-            variant="quiet"
-          >
-            {adminStudentsText.page.resetFilters}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function StudentDirectory({
-  controller,
-  data,
+  initialSnapshot,
 }: {
-  controller: StudentDetailController;
-  data: StudentManagementData;
+  initialSnapshot: StudentDirectorySnapshot;
 }) {
-  const [filters, setFilters] = useState(initialFilters);
-  const activitiesByStudent = useMemo(
-    () => studentLearningActivityIndex(data.currentHistory),
-    [data.currentHistory],
-  );
-  const currentWrongIndex = useMemo(
-    () =>
-      indexStudentCurrentVocabWrongSummaries(
-        data.currentVocabWrongSummaries,
-      ),
-    [data.currentVocabWrongSummaries],
-  );
-  const learningSourcesByStudent = useMemo(
-    () => indexStudentLearningSources(data.learningSources),
-    [data.learningSources],
-  );
-  const filterOptions = useMemo(
-    () => studentDirectoryFilterOptions(data.students, data.learningSources),
-    [data.learningSources, data.students],
-  );
-  const students = useMemo(
-    () =>
-      filterAndSortStudents({
-        activitiesByStudent,
-        currentWrongIndex,
-        filters,
-        learningSourcesByStudent,
-        students: data.students,
-      }),
-    [
-      activitiesByStudent,
-      currentWrongIndex,
-      filters,
-      learningSourcesByStudent,
-      data.students,
-    ],
-  );
+  const controller = useStudentDirectoryPage(initialSnapshot);
+  const { snapshot } = controller;
   return (
-    <>
-      <StudentCreateForm controller={controller} data={data} />
+    <section aria-busy={controller.filtering}>
       <StudentDirectoryFilters
-        filters={filters}
-        onChange={setFilters}
-        options={filterOptions}
-        resultCount={students.length}
+        filtering={controller.filtering}
+        filters={controller.filters}
+        onChange={controller.actions.replaceFilters}
+        onQueryChange={controller.actions.replaceQuery}
+        options={snapshot.filterOptions}
+        resultCount={snapshot.totalCount}
       />
+      {controller.error ? (
+        <Notice role="alert" tone="danger">{controller.error}</Notice>
+      ) : null}
       <section className={styles.groupPane}>
-        {students.length === 0 ? (
+        {snapshot.page.items.length === 0 ? (
           <EmptyState>{adminStudentsText.page.noMatches}</EmptyState>
         ) : (
           <div className={styles.cardGrid}>
-            {students.map((student) => {
-              const activities = activitiesByStudent.get(student.id) ?? [];
-              const summary = summarizeStudentDirectoryActivities(activities);
-              const primary =
-                student.currentVocabBook ?? adminStudentsText.card.wordbookMissing;
+            {snapshot.page.items.map((student) => {
+              const primary = student.currentVocabBook ??
+                adminStudentsText.card.wordbookMissing;
               return (
-                <button
+                <GuardedLink
                   className={styles.card}
+                  href={`/admin/students/${student.id}`}
                   key={student.id}
-                  onClick={() => controller.actions.openStudent(student)}
-                  type="button"
+                  prefetch={false}
                 >
                   <span className={styles.cardHeading}>
                     <span className={styles.cardTitleRow}>
@@ -470,33 +92,45 @@ export function StudentDirectory({
                     <span className={styles.infoRow}>
                       <small>{adminStudentsText.card.recentExam}</small>
                       <strong className={styles.primarySource}>
-                        {summary.recentAttemptAt
-                          ? formatKoreanDateTime(summary.recentAttemptAt)
+                        {student.recentExamAt
+                          ? formatKoreanDateTime(student.recentExamAt)
                           : adminStudentsText.card.noHistory}
                       </strong>
                     </span>
                     <span className={styles.activityStats}>
                       <span>
-                        {adminStudentsText.card.completed} {summary.completedCount}개
+                        {adminStudentsText.card.completed} {student.completedCount}개
                       </span>
                       <span>
-                        {adminStudentsText.card.missed} {summary.missedCount}개
+                        {adminStudentsText.card.missed} {student.missedCount}개
                       </span>
                       <span>
-                        {adminStudentsText.card.notStarted} {summary.notStartedCount}개
+                        {adminStudentsText.card.notStarted} {student.notStartedCount}개
                       </span>
                       <span>
                         {learningPointsText.current}{" "}
-                        {formatVisiblePoints(data.pointBalances[student.id] ?? 0)}
+                        {formatVisiblePoints(student.rawPoints)}
                       </span>
                     </span>
                   </span>
-                </button>
+                </GuardedLink>
               );
             })}
           </div>
         )}
+        {snapshot.page.nextCursor ? (
+          <Button
+            className={styles.loadMore}
+            disabled={controller.filtering || controller.loadingMore}
+            onClick={() => void controller.actions.loadMore()}
+            variant="quiet"
+          >
+            {controller.loadingMore
+              ? adminStudentsText.page.loadingMore
+              : adminStudentsText.page.loadMore}
+          </Button>
+        ) : null}
       </section>
-    </>
+    </section>
   );
 }

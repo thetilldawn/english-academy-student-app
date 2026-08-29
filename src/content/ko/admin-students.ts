@@ -5,8 +5,13 @@ export const adminStudentsText = {
     searchAriaLabel: "학생 및 학습 자료 검색",
     searchPlaceholder: "이름·학교·학년·단어장 검색",
     filterButton: "필터",
+    statusFilter: "접속 상태",
+    classGroupFilter: "수업그룹",
     resetFilters: "필터 초기화",
     noMatches: "조건에 맞는 학생이 없습니다.",
+    filtering: "계산 중…",
+    loadMore: "10명 더보기",
+    loadingMore: "불러오는 중…",
   },
 
   // 학생 관리 > 학생 카드의 다음 범위
@@ -122,6 +127,8 @@ export const adminStudentsText = {
         started: "시작 {datetime}",
       },
       count: "{count}건",
+      loadMore: "10건 더보기",
+      loadingMore: "불러오는 중…",
       recentOnly: "상태별 {count}개만 보기",
       showAll: "전체 {count}개 보기",
     },
@@ -257,6 +264,8 @@ export const adminStudentsText = {
 
   // 학생 관리 > 학생 상세 모달 > 공통 헤더
   detail: {
+    backToList: "학생 목록",
+    discardChangesConfirm: "입력한 변경 내용을 버리고 이동할까요?",
     missingSchoolGrade: "학교·학년 미입력",
     tabsAria: "학생 상세 메뉴",
   },

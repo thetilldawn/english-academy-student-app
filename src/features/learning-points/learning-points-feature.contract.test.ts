@@ -29,15 +29,17 @@ describe("learning point screen wiring", () => {
     expect(query).toContain("pointSummary,");
   });
 
-  it("uses one batch balance read for the admin student directory", () => {
-    const loader = source(
-      "src/features/students/server/load-student-management-data.ts",
+  it("reads directory point balances inside one purpose-built RPC", () => {
+    const query = source(
+      "src/features/students/server/queries/student-directory-query.ts",
     );
-    expect(loader).toContain("const directoryPromise = loadStudentDirectoryBundle()");
-    expect(loader).toContain("listStudentPointBalances(");
-    expect(loader).toContain("directory.students.map((student) => student.id)");
-    expect(loader).toContain("pointBalancesPromise");
-    expect(loader).not.toMatch(/students\.map\(async/);
+    const migration = source(
+      "supabase/migrations/20260829213000_add_admin_student_directory_read_model.sql",
+    );
+    expect(query).toContain('"get_admin_student_directory_initial_v1"');
+    expect(query).not.toContain("listStudentPointBalances(");
+    expect(migration).toContain("student_point_totals");
+    expect(migration).toContain("rawPoints");
   });
 
   it("loads one admin attempt and its point breakdown together", () => {

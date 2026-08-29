@@ -24,7 +24,7 @@ describe("student catalog and modal UI contract", () => {
     "src/design-system/primitives/tabs/tabs.module.css",
   );
   const studentDetail = source(
-    "src/features/students/ui/student-detail-dialog.tsx",
+    "src/features/students/ui/student-detail-content.tsx",
   );
   const studentDetailCss = source(
     "src/features/students/ui/student-detail.module.css",
@@ -101,9 +101,10 @@ describe("student catalog and modal UI contract", () => {
 
   it("shows recent wordbook history without manual selection", () => {
     expect(studentInfo).toContain("StudentVocabBookHistoryList");
+    expect(studentInfo).toContain("StudentLearningSourceList");
     expect(studentInfo).not.toContain("groupCataloguedDatasets");
     expect(studentInfo).not.toContain("<optgroup");
-    expect(studentInfo).not.toContain("adminStudentsText.info.currentWordbook");
+    expect(studentInfo).toContain("adminStudentsText.info.currentWordbook");
   });
 
   it("현재 목록에서는 취소·삭제를 빼고 전체 내역에서만 보존한다", () => {
@@ -121,7 +122,7 @@ describe("student catalog and modal UI contract", () => {
       'learningActivitySection(item) !== "archived"',
     );
     expect(activityList).toContain(
-      "filtersEnabled || learningActivitySection(item) !== \"archived\"",
+      "includeArchived || learningActivitySection(item) !== \"archived\"",
     );
     expect(activityList).toContain('id: "archived" as const');
   });

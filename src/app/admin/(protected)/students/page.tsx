@@ -1,29 +1,27 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
-import { loadStudentManagementData } from "@/features/students/server/load-student-management-data";
-import { StudentManagementWorkspace } from "@/features/students/ui/student-management-workspace";
 import { adminStudentsText } from "@/content/ko/admin-students";
+import { StudentCreateContent } from "@/features/students/server/components/student-create-content";
+import { StudentDirectoryContent } from "@/features/students/server/components/student-directory-content";
+import { StudentDirectorySkeleton } from "@/features/students/ui/student-directory-skeleton";
+import { requireAdmin } from "@/lib/auth/admin";
 
 export const metadata: Metadata = {
   title: adminStudentsText.page.title,
 };
 
-export default async function StudentsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ student?: string }>;
-}) {
-  const [{ student: initialStudentId = "" }, data] = await Promise.all([
-    searchParams,
-    loadStudentManagementData(),
-  ]);
+export default async function StudentsPage() {
+  await requireAdmin();
 
   return (
     <>
-      <StudentManagementWorkspace
-        {...data}
-        initialStudentId={initialStudentId}
-      />
+      <Suspense fallback={null}>
+        <StudentCreateContent />
+      </Suspense>
+      <Suspense fallback={<StudentDirectorySkeleton />}>
+        <StudentDirectoryContent />
+      </Suspense>
     </>
   );
 }

@@ -8,20 +8,11 @@ function source(relativePath: string) {
 }
 
 describe("student progress history source contract", () => {
-  it("keeps admin-hidden history out of lists but not out of progress", () => {
-    const studentManagement = source(
-      "src/features/students/server/load-student-management-data.ts",
-    );
-    const assignmentManager = source(
-      "src/lib/services/assignment-manager-data.ts",
-    );
-    const bulkAssignments = source(
-      "src/lib/services/bulk-assignment-service.ts",
-    );
+  it("keeps complete history for planning while admin directory reads its own compact model", () => {
+    const assignmentManager = source("src/lib/services/assignment-manager-data.ts");
+    const bulkAssignments = source("src/lib/services/bulk-assignment-service.ts");
+    const directoryQuery = source("src/features/students/server/queries/student-directory-query.ts");
 
-    expect(studentManagement).toMatch(
-      /progress:\s*buildStudentProgress\([\s\S]*?historyBundle\.completeHistory[\s\S]*?\),/,
-    );
     expect(assignmentManager).toMatch(
       /progress:\s*buildStudentProgress\([\s\S]*?historyBundle\.completeHistory[\s\S]*?\),/,
     );
@@ -34,33 +25,23 @@ describe("student progress history source contract", () => {
     expect(assignmentManager).toMatch(
       /listAssignmentHistoryBundle\(\{[\s\S]*?reuseMaterialRequestCache:\s*options\?\.reuseMaterialRequestCache\s*\?\?\s*true,[\s\S]*?\}\)/,
     );
+    expect(directoryQuery).toContain('"get_admin_student_directory_initial_v1"');
+    expect(directoryQuery).not.toContain("listAssignmentHistoryBundle");
     expect(bulkAssignments).not.toContain("finalizeStale");
     expect(assignmentManager).not.toContain("finalizeStale");
-    expect(studentManagement).toContain(
-      "listAssignmentHistoryBundle({ reuseMaterialRequestCache: true })",
-    );
   });
 
-  it("loads shared student and material data once per server workflow", () => {
-    const studentManagement = source(
-      "src/features/students/server/load-student-management-data.ts",
-    );
-    const assignmentManager = source(
-      "src/lib/services/assignment-manager-data.ts",
-    );
-    const bulkAssignments = source(
-      "src/lib/services/bulk-assignment-service.ts",
-    );
+  it("keeps shared planning catalogs in assignment workflows only", () => {
+    const assignmentManager = source("src/lib/services/assignment-manager-data.ts");
+    const bulkAssignments = source("src/lib/services/bulk-assignment-service.ts");
+    const studentPage = source("src/app/admin/(protected)/students/page.tsx");
 
-    expect(studentManagement).toContain("loadStudentDirectoryBundle()");
     expect(assignmentManager).toContain("loadStudentDirectoryBundle()");
     expect(bulkAssignments).toContain("loadAssignmentPlanningCatalog()");
+    expect(studentPage).not.toContain("loadStudentDirectoryBundle");
+    expect(studentPage).not.toContain("loadAssignmentPlanningCatalog");
 
-    for (const workflow of [
-      studentManagement,
-      assignmentManager,
-      bulkAssignments,
-    ]) {
+    for (const workflow of [assignmentManager, bulkAssignments]) {
       expect(workflow).not.toMatch(
         /\blistStudents\(\)|\blistDatasets\(\)|\blistVocabUnits\(\)|\blistStudentLearningSources\(\)/,
       );

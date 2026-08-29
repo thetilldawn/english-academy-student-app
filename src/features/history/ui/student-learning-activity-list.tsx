@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { GuardedLink } from "@/components/guarded-link";
 import { CollapsibleStatusSection } from "@/design-system/patterns/collapsible-status-section/collapsible-status-section";
 import { Button } from "@/design-system/primitives/button/button";
 import { Select } from "@/design-system/primitives/form/field";
@@ -15,8 +16,8 @@ import {
   type LearningHistoryPurposeFilter,
   type LearningHistoryStatusFilter,
 } from "@/features/history/domain/learning-activity";
-import type { AssignmentHistorySummary } from "@/lib/admin/history";
 import { EmptyState } from "@/design-system/patterns/feedback/feedback";
+import type { AdminHistoryListItem } from "@/features/history/contracts/admin-history-read-model";
 
 import { HistoryActivityRow } from "./history-activity-row";
 import styles from "./student-learning-activity-list.module.css";
@@ -39,13 +40,17 @@ const sectionDefinitions: Array<{
 export function StudentLearningActivityList({
   emptyLabel = adminStudentsText.learning.activityList.empty,
   filtersEnabled = false,
+  includeArchived = filtersEnabled,
   initialLimit = 5,
   items,
+  showFilters = filtersEnabled,
 }: {
   emptyLabel?: string;
   filtersEnabled?: boolean;
+  includeArchived?: boolean;
   initialLimit?: number;
-  items: AssignmentHistorySummary[];
+  items: AdminHistoryListItem[];
+  showFilters?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [filterNow] = useState(() => Date.now());
@@ -63,7 +68,7 @@ export function StudentLearningActivityList({
     return sortLearningActivities(
       items.filter(
         (item) =>
-          (filtersEnabled || learningActivitySection(item) !== "archived") &&
+          (includeArchived || learningActivitySection(item) !== "archived") &&
           matchesLearningHistoryFilters(item, {
             purpose: purposeFilter,
             status: statusFilter,
@@ -73,13 +78,13 @@ export function StudentLearningActivityList({
     );
   }, [
     filterNow,
-    filtersEnabled,
+    includeArchived,
     items,
     periodFilter,
     purposeFilter,
     statusFilter,
   ]);
-  const availableSections = filtersEnabled
+  const availableSections = includeArchived
     ? [
         ...sectionDefinitions,
         {
@@ -110,7 +115,7 @@ export function StudentLearningActivityList({
 
   return (
     <div className={styles.region}>
-      {filtersEnabled ? (
+      {showFilters ? (
         <div
           aria-label={adminStudentsText.learning.activityList.filterAria}
           className={styles.filters}
@@ -198,7 +203,7 @@ export function StudentLearningActivityList({
 
       {sorted.length === 0 ? (
         <EmptyState className={styles.empty}>
-          {filtersEnabled
+          {showFilters
             ? adminStudentsText.learning.activityList.noMatches
             : emptyLabel}
         </EmptyState>
@@ -222,6 +227,7 @@ export function StudentLearningActivityList({
                     <HistoryActivityRow
                       compact
                       item={item}
+                      linkComponent={GuardedLink}
                       showStudent={false}
                     />
                   </li>

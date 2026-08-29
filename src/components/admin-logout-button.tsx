@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { useGuardedNavigationRequest } from "@/components/navigation-exit-guard";
 import { adminShellText } from "@/content/ko/admin-shell";
 import { Button } from "@/design-system/primitives/button/button";
 import { InlineError } from "@/design-system/patterns/feedback/feedback";
@@ -12,25 +13,33 @@ import styles from "./session-action.module.css";
 
 export function AdminLogoutButton() {
   const router = useRouter();
+  const requestNavigation = useGuardedNavigationRequest();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  async function logout() {
+  async function performLogout() {
     setError("");
     setSubmitting(true);
     try {
       const ok = await requestAdminLogout();
       if (!ok) {
         setError(adminShellText.logout.error);
-        return;
+        return false;
       }
       router.replace("/admin/login");
       router.refresh();
+      return true;
     } catch {
       setError(adminShellText.logout.error);
+      return false;
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function logout() {
+    if (requestNavigation(performLogout)) return;
+    void performLogout();
   }
 
   return (

@@ -20,7 +20,8 @@ export async function GET(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
-  if (!(await getAdminContext())) {
+  const admin = await getAdminContext();
+  if (!admin) {
     return jsonError("관리자 로그인이 필요합니다.", 401);
   }
 
@@ -48,7 +49,7 @@ export async function GET(
             }
           : undefined,
       studentId: id,
-    });
+    }, admin);
     return Response.json(page, {
       headers: { "Cache-Control": "private, no-store" },
     });

@@ -1,6 +1,7 @@
 import {
   ActivityRow,
   NavigableRow,
+  type NavigableRowLinkComponent,
 } from "@/design-system/patterns/activity-row/activity-row";
 import {
   assignmentDisplayTitle,
@@ -20,11 +21,13 @@ import styles from "./history-activity-row.module.css";
 export function HistoryActivityRow({
   compact = false,
   item,
+  linkComponent,
   showStudent = true,
   showScore = "always",
 }: {
   compact?: boolean;
   item: AdminHistoryListItem;
+  linkComponent?: NavigableRowLinkComponent;
   showStudent?: boolean;
   showScore?: "always" | "meaningful";
 }) {
@@ -54,12 +57,14 @@ export function HistoryActivityRow({
   ]
     .filter(Boolean)
     .join(" ");
+  const detailHref = historyDetailHref(item);
 
   return (
     <NavigableRow
       ariaLabel={ariaLabel}
       density={compact ? "compact" : "default"}
-      href={historyDetailHref(item)}
+      href={detailHref}
+      linkComponent={linkComponent}
       tone={presentation.tone}
     >
       <ActivityRow

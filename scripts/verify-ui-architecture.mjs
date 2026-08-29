@@ -198,32 +198,102 @@ const assignmentFeatureContracts = [
     maxFetchCalls: 0,
     maxUseStateCalls: 0,
   },
+  {
+    path: "src/features/history/controller/use-editable-history-assignment.ts",
+    maxFetchCalls: 0,
+    maxUseStateCalls: 3,
+  },
 ];
 const studentFeatureContracts = [
   {
-    path: "src/features/students/controller/use-student-detail-controller.ts",
-    maxFetchCalls: 0,
-    maxUseStateCalls: 4,
-  },
-  {
-    path: "src/features/students/domain/student-directory.ts",
+    path: "src/components/guarded-link.tsx",
     maxFetchCalls: 0,
     maxUseStateCalls: 0,
   },
   {
-    path: "src/features/students/ui/student-directory.tsx",
+    path: "src/components/navigation-exit-guard.tsx",
+    maxFetchCalls: 0,
+    maxUseStateCalls: 0,
+  },
+  {
+    path: "src/features/students/controller/use-student-access-controller.ts",
+    maxFetchCalls: 0,
+    maxUseStateCalls: 2,
+  },
+  {
+    path: "src/features/students/controller/use-student-creation-controller.ts",
+    maxFetchCalls: 0,
+    maxUseStateCalls: 3,
+  },
+  {
+    path: "src/features/students/controller/use-student-detail-view.ts",
+    maxFetchCalls: 0,
+    maxUseStateCalls: 2,
+  },
+  {
+    path: "src/components/use-route-exit-guard.ts",
+    maxFetchCalls: 0,
+    maxUseStateCalls: 0,
+  },
+  {
+    path: "src/features/students/controller/use-student-directory-page.ts",
+    maxFetchCalls: 0,
+    maxUseStateCalls: 5,
+  },
+  {
+    path: "src/features/students/controller/use-student-history-page.ts",
+    maxFetchCalls: 0,
+    maxUseStateCalls: 5,
+  },
+  {
+    path: "src/features/students/controller/use-student-profile-controller.ts",
+    maxFetchCalls: 0,
+    maxUseStateCalls: 2,
+  },
+  {
+    path: "src/features/students/controller/use-student-wrong-word-actions.ts",
+    maxFetchCalls: 0,
+    maxUseStateCalls: 3,
+  },
+  {
+    path: "src/features/students/controller/use-student-wrong-word-cache.ts",
     maxFetchCalls: 0,
     maxUseStateCalls: 1,
   },
   {
-    path: "src/features/students/ui/student-detail-dialog.tsx",
+    path: "src/features/students/controller/use-student-wrong-word-history.ts",
+    maxFetchCalls: 0,
+    maxUseStateCalls: 4,
+  },
+  {
+    path: "src/features/students/ui/student-directory.tsx",
     maxFetchCalls: 0,
     maxUseStateCalls: 0,
+  },
+    {
+      path: "src/features/students/ui/student-detail-content.tsx",
+      maxFetchCalls: 0,
+      maxUseStateCalls: 0,
+    },
+  {
+    path: "src/features/students/ui/student-detail-dialog.tsx",
+    maxFetchCalls: 0,
+    maxUseStateCalls: 1,
+  },
+  {
+    path: "src/features/students/ui/student-detail-page.tsx",
+    maxFetchCalls: 0,
+    maxUseStateCalls: 1,
+  },
+  {
+    path: "src/features/students/ui/panels/student-learning-history.tsx",
+    maxFetchCalls: 0,
+    maxUseStateCalls: 1,
   },
   {
     path: "src/features/students/ui/panels/student-wrong-word-panel.tsx",
     maxFetchCalls: 0,
-    maxUseStateCalls: 15,
+    maxUseStateCalls: 8,
   },
 ];
 const studentDashboardFeatureContracts = [

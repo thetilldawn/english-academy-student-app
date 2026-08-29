@@ -281,7 +281,9 @@ export function compareLearningActivities(
   return timestamp(rightState.effectiveAt) - timestamp(leftState.effectiveAt);
 }
 
-export function sortLearningActivities(items: AssignmentHistorySummary[]) {
+export function sortLearningActivities<T extends LearningActivityOrderInput>(
+  items: readonly T[],
+) {
   return items.toSorted(compareLearningActivities);
 }
 
@@ -323,7 +325,9 @@ export function adminHistoryActivityGroups(
 }
 
 export function matchesLearningHistoryFilters(
-  item: AssignmentHistorySummary,
+  item: LearningActivityOrderInput & {
+    assignmentPurpose: AssignmentHistorySummary["assignmentPurpose"];
+  },
   filters: {
     purpose: LearningHistoryPurposeFilter;
     status: LearningHistoryStatusFilter;

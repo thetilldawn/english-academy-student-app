@@ -2,13 +2,24 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useEffect } from "react";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { adminHistoryText } from "@/content/ko/admin-history";
 import { adminLearningText } from "@/content/ko/admin-learning";
+import {
+  NavigationExitGuardProvider,
+  useGuardedNavigationRequest,
+} from "@/components/navigation-exit-guard";
 import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
 import type { AdminHistoryDetail } from "../model";
 
@@ -144,6 +155,7 @@ const originalClose = HTMLDialogElement.prototype.close;
 
 beforeEach(() => {
   Object.values(router).forEach((mock) => mock.mockReset());
+  window.history.replaceState({}, "", "/admin/results/assignment.test.student");
   HTMLDialogElement.prototype.showModal = function showModal() {
     this.setAttribute("open", "");
   };
@@ -160,6 +172,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  window.history.replaceState({}, "", "/");
 });
 
 afterAll(() => {
@@ -178,11 +191,36 @@ const detail = {
 
 function renderDialog() {
   return render(
-    <EditableHistoryDetailDialog
-      detail={detail}
-      editorData={{} as AssignmentManagerData}
-    />,
+    <NavigationExitGuardProvider>
+      <EditableHistoryDetailDialog
+        detail={detail}
+        editorData={{} as AssignmentManagerData}
+      />
+      <NavigationProbe />
+    </NavigationExitGuardProvider>,
   );
+}
+
+function NavigationProbe() {
+  const requestNavigation = useGuardedNavigationRequest();
+  return (
+    <button
+      onClick={() => {
+        if (requestNavigation(() => router.replace("/admin"))) return;
+        router.replace("/admin");
+      }}
+      type="button"
+    >
+      관리자 메뉴 이동
+    </button>
+  );
+}
+
+function releaseRouteGuardSentinel() {
+  const state = { ...(window.history.state as Record<string, unknown>) };
+  delete state.__routeExitGuardSentinel;
+  window.history.replaceState(state, "", window.location.href);
+  window.dispatchEvent(new PopStateEvent("popstate", { state }));
 }
 
 describe("editable history detail dialog", () => {
@@ -267,14 +305,15 @@ describe("editable history detail dialog", () => {
       screen.getByRole("button", { name: adminHistoryText.detailModal.close }),
     );
 
-    expect(confirm).toHaveBeenCalledWith("입력한 변경 내용을 버리고 닫을까요?");
+    expect(confirm).toHaveBeenCalledWith("입력한 변경 내용을 버리고 이동할까요?");
     expect(screen.getByText("편집 양식")).toBeInTheDocument();
 
     confirm.mockReturnValue(true);
     await user.click(
       screen.getByRole("button", { name: adminHistoryText.detailModal.close }),
     );
-    expect(router.back).toHaveBeenCalledOnce();
+    if (router.back.mock.calls.length === 0) act(releaseRouteGuardSentinel);
+    await waitFor(() => expect(router.back).toHaveBeenCalledOnce());
   });
 
   it("warns before reloading while changed edit values remain", async () => {
@@ -292,8 +331,43 @@ describe("editable history detail dialog", () => {
     expect(changedEvent.defaultPrevented).toBe(true);
 
     await user.click(screen.getByRole("button", { name: "저장 완료" }));
+    if (router.replace.mock.calls.length === 0) act(releaseRouteGuardSentinel);
+    await waitFor(() => expect(router.replace).toHaveBeenCalledOnce());
+    await waitFor(() => expect(screen.getByText("상세 본문")).toBeInTheDocument());
     const completedEvent = new Event("beforeunload", { cancelable: true });
     window.dispatchEvent(completedEvent);
     expect(completedEvent.defaultPrevented).toBe(false);
+  });
+
+  it("관리자 공용 이동도 같은 변경 확인을 거친다", async () => {
+    const user = userEvent.setup();
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    renderDialog();
+    await user.click(screen.getByRole("button", { name: "배정 수정 열기" }));
+    await user.click(screen.getByRole("button", { name: "내용 변경" }));
+    confirm.mockClear();
+
+    await user.click(screen.getByRole("button", { name: "관리자 메뉴 이동" }));
+    expect(confirm).toHaveBeenCalledOnce();
+    expect(router.replace).not.toHaveBeenCalled();
+
+    confirm.mockReturnValue(true);
+    await user.click(screen.getByRole("button", { name: "관리자 메뉴 이동" }));
+    if (router.replace.mock.calls.length === 0) act(releaseRouteGuardSentinel);
+    await waitFor(() => expect(router.replace).toHaveBeenCalledWith("/admin"));
+  });
+
+  it("저장 중인 편집은 확인창 없이 관리자 공용 이동을 막는다", async () => {
+    const user = userEvent.setup();
+    const confirm = vi.spyOn(window, "confirm");
+    renderDialog();
+    await user.click(screen.getByRole("button", { name: "배정 수정 열기" }));
+    await user.click(screen.getByRole("button", { name: "저장 시작" }));
+    confirm.mockClear();
+
+    await user.click(screen.getByRole("button", { name: "관리자 메뉴 이동" }));
+
+    expect(confirm).not.toHaveBeenCalled();
+    expect(router.replace).not.toHaveBeenCalled();
   });
 });

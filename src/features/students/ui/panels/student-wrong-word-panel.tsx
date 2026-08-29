@@ -242,7 +242,6 @@ export function StudentWrongWordPanel({
       );
       setSelectedQuestionIds([]);
       refreshHistory();
-      onDataUpdated?.();
     } catch (requestError) {
       toast.error(
         requestError instanceof Error
