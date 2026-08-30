@@ -1,7 +1,7 @@
 import {
   AssignmentFieldGrid,
   AssignmentTimingModeField,
-} from "@/components/assignment-editor-ui";
+} from "./assignment-editor-fields";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import {
   Checkbox,

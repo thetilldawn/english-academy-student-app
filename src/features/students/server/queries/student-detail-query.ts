@@ -1,6 +1,6 @@
 import "server-only";
 
-import { mapAdminHistoryDetailItem } from "@/features/history/server/queries/admin-history-row-schema";
+import { mapAdminHistoryDetailItem } from "@/features/history/public-server";
 import { requireAdmin } from "@/lib/auth/admin";
 import { unitSelectionRangeLabel } from "@/lib/admin/history";
 import { createServerSupabaseClient } from "@/lib/supabase/server";

@@ -1,6 +1,6 @@
 "use client";
 
-import { AssignmentFieldGrid } from "@/components/assignment-editor-ui";
+import { AssignmentFieldGrid } from "./assignment-editor-fields";
 import { Button } from "@/design-system/primitives/button/button";
 import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 import {

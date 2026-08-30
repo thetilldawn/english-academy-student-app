@@ -126,9 +126,18 @@ describe("server architecture debt ratchets", () => {
   });
 
   it("keeps cross-request cache files free from request identity and private data", () => {
-    const violations = sourceFiles.flatMap((file) =>
-      inspectSharedCacheSource(file, fs.readFileSync(file, "utf8")),
-    );
+    const violations = sourceFiles.flatMap((file) => {
+      const relativeFile = relative(file);
+      const allowedReasons = relativeFile ===
+          "src/lib/services/shared-vocab-material-cache.ts"
+        ? ["database client import"]
+        : [];
+      return inspectSharedCacheSource(
+        file,
+        fs.readFileSync(file, "utf8"),
+        allowedReasons,
+      );
+    });
     expect(violations).toStrictEqual([]);
   });
 

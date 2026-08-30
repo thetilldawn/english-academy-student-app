@@ -164,7 +164,7 @@ describe("오답 단일 배정 제출", () => {
         students={[student]}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "오답 시험" }));
+    fireEvent.click(screen.getByRole("tab", { name: "오답 시험" }));
 
     expect(
       (screen.getByRole("button", { name: "배정하기" }) as HTMLButtonElement)
@@ -187,7 +187,7 @@ describe("오답 단일 배정 제출", () => {
         students={[student]}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "오답 시험" }));
+    fireEvent.click(screen.getByRole("tab", { name: "오답 시험" }));
     fireEvent.click(screen.getByRole("button", { name: "닫기" }));
 
     expect(confirm).not.toHaveBeenCalled();
@@ -209,7 +209,7 @@ describe("오답 단일 배정 제출", () => {
         students={[student]}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "오답 시험" }));
+    fireEvent.click(screen.getByRole("tab", { name: "오답 시험" }));
     fireEvent.click(screen.getByRole("button", { name: "배정하기" }));
 
     await waitFor(() => expect(mocks.reviewSubmit).toHaveBeenCalledTimes(1));
@@ -235,7 +235,7 @@ describe("오답 단일 배정 제출", () => {
         students={[student]}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "오답 시험" }));
+    fireEvent.click(screen.getByRole("tab", { name: "오답 시험" }));
     fireEvent.click(screen.getByRole("button", { name: "배정하기" }));
 
     await waitFor(() => {
@@ -265,7 +265,7 @@ describe("오답 단일 배정 제출", () => {
         students={[student]}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "오답 시험" }));
+    fireEvent.click(screen.getByRole("tab", { name: "오답 시험" }));
     fireEvent.click(screen.getByRole("button", { name: "배정하기" }));
 
     await waitFor(() => {
@@ -288,7 +288,7 @@ describe("오답 단일 배정 제출", () => {
         students={[student]}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "오답 시험" }));
+    fireEvent.click(screen.getByRole("tab", { name: "오답 시험" }));
 
     const submitButton = screen.getByRole("button", {
       name: "배정하기",
@@ -312,7 +312,7 @@ describe("오답 단일 배정 제출", () => {
         students={[student]}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "오답 시험" }));
+    fireEvent.click(screen.getByRole("tab", { name: "오답 시험" }));
 
     expect(
       (screen.getByRole("button", { name: "배정하기" }) as HTMLButtonElement)
@@ -338,11 +338,11 @@ describe("오답 단일 배정 제출", () => {
     expect(screen.getByText("미리보기고")).toBeVisible();
     expect(screen.getByText("고3")).toBeVisible();
     expect(screen.getByText("1명 선택")).toBeVisible();
-    expect(screen.getByRole("button", { name: "오답 시험" }))
+    expect(screen.getByRole("tab", { name: "오답 시험" }))
       .toHaveAccessibleDescription(
         "오답 시험은 단일 배정에서만 사용할 수 있습니다.",
       );
-    expect(screen.getByRole("button", { name: "오답 시험" })).toBeDisabled();
+    expect(screen.getByRole("tab", { name: "오답 시험" })).toBeDisabled();
     expect(
       screen.getByText("오답 시험은 단일 배정에서만 사용할 수 있습니다."),
     ).toBeVisible();

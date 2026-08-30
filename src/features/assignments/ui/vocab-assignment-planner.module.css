@@ -240,7 +240,6 @@
   justify-content: flex-end;
 }
 
-.assignmentKind,
 .reviewLevelButtons,
 .reviewDatasetButtons {
   min-width: 0;
@@ -261,24 +260,11 @@
   padding: 0 var(--space-3);
 }
 
-.assignmentKind {
-  margin-bottom: var(--space-3);
-}
-
 .assignmentKindHint {
   margin: calc(-1 * var(--space-2)) 0 var(--space-3);
   color: var(--text-secondary);
   font-size: 13px;
   line-height: 1.5;
-}
-
-.assignmentKind > button {
-  flex: 1 1 140px;
-}
-
-.assignmentPanel {
-  min-width: 0;
-  animation: assignmentPanelIn var(--motion-standard) both;
 }
 
 .reviewRangeGrid {
@@ -374,18 +360,6 @@
   to { background-position: -100% 0; }
 }
 
-@keyframes assignmentPanelIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .templateSave > :first-child {
   flex: 1 1 180px;
 }
@@ -460,7 +434,4 @@
     transition: none;
   }
 
-  .assignmentPanel {
-    animation: none;
-  }
 }

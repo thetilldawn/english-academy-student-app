@@ -1,28 +1,3 @@
-.layout {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.44fr);
-  align-items: start;
-  gap: var(--space-5);
-}
-
-.settings,
-.summary {
-  min-width: 0;
-  display: grid;
-  align-content: start;
-  gap: var(--space-4);
-}
-
-.summary {
-  position: sticky;
-  top: 0;
-  padding: var(--space-4);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  background: var(--surface);
-}
-
 .fieldGrid {
   min-width: 0;
   display: grid;
@@ -59,13 +34,8 @@
 }
 
 @media (max-width: 960px) {
-  .layout,
   .fieldGridThree {
     grid-template-columns: 1fr;
-  }
-
-  .summary {
-    position: static;
   }
 }
 

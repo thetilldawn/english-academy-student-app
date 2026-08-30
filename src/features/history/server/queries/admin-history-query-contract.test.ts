@@ -43,7 +43,7 @@ describe("admin history query boundaries", () => {
     expect(publicServer).toContain(
       'from "./server/queries/admin-attempt-detail-query"',
     );
-    expect(attemptRoute).toContain('from "@/features/history/public-server"');
+    expect(attemptRoute).toContain('from "@/features/history/public-server-queries"');
     expect(attemptRoute).not.toContain("admin-attempt-read-service");
   });
 

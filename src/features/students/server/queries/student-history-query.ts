@@ -2,7 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 
-import { mapAdminHistoryListItem } from "@/features/history/server/queries/admin-history-row-schema";
+import { mapAdminHistoryListItem } from "@/features/history/public-server";
 import { requireAdmin, type AdminContext } from "@/lib/auth/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 

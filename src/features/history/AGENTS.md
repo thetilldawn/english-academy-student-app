@@ -13,8 +13,8 @@
   별도 `beforeRouteClose` 확인을 겹쳐 호출하지 않는다.
 - 목록과 상세 조회를 한 파일로 합치지 않는다. 목록은 구역별 10건+다음 행과 불투명 커서만,
   상세는 정확한 응시 ID 또는 배정 ID+학생 ID 한 건만 읽는다.
-- 응시 문항 상세 조회는 `server/queries/admin-attempt-detail-query.ts`가 소유한다. 다른 기능·Route
-  Handler는 `public-server.ts`로만 들어오며 예전 `lib/services/admin-attempt-read-service`를 되살리지 않는다.
+- 응시 문항 상세 조회는 `server/queries/admin-attempt-detail-query.ts`가 소유한다. Route Handler는
+  `public-server-queries.ts`로만 들어오며 예전 `lib/services/admin-attempt-read-service`를 되살리지 않는다.
 - 개인 내역은 공유 캐시와 `use cache`를 금지한다. 초기 RSC 조회는 보호 구역의 동적 요청에 두고,
   상호작용 응답에는 `Cache-Control: private, no-store`를 유지한다.
 - 커서는 `snapshotAt + 범위 + 구역 + 검색 지문 + effectiveAt + entryKey` 계약이다. 화면에서 임의로
@@ -34,4 +34,7 @@
 - 수정 작업은 `npm run map:flow -- assignment-edit`로 페이지, 대화상자, controller, 정책, Route,
   service, migration, 검사를 함께 확인한다.
 - 다른 기능의 UI·계약을 새로 깊은 경로로 가져오지 않는다. 현재 직접 참조는 소유권 지도에 동결돼 있다.
+- 다른 기능이 학습 활동 상태·표시 자료형을 쓰면 `public-contracts.ts`, 상태·점수·학습 이력 UI를 쓰면
+  `public-ui.ts`, DB 행 검증·변환을 쓰면 `public-server.ts`로만 들어온다. 다른 기능에서
+  `history/domain`, `history/presentation`, `history/ui`, `history/server`를 직접 가져오지 않는다.
 - 내역 조회와 표시 변환에 숨은 DB 쓰기를 넣지 않는다.

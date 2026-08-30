@@ -12,11 +12,13 @@ import type { SingleAssignmentController } from "../controller/use-assignment-co
 import type { AssignmentEditFieldErrors } from "../presentation/assignment-edit-field-errors";
 import { AssignmentRangeFields } from "./assignment-range-fields";
 import { AssignmentEditRangeSummary } from "./assignment-edit-range-summary";
+import {
+  AssignmentEditorLockedMode,
+  AssignmentEditorPanel,
+} from "./assignment-editor-shell";
 import { AssignmentSection } from "./assignment-section";
 import { AssignmentSettingsFields } from "./assignment-settings-fields";
 import { AssignmentSummaryPanel } from "./assignment-summary-panel";
-import styles from "./single-assignment-editor.module.css";
-import plannerStyles from "./vocab-assignment-planner.module.css";
 
 export function SingleAssignmentEditorSections({
   controller,
@@ -60,35 +62,24 @@ export function SingleAssignmentEditorSections({
     fieldErrors.deadline
     ? "일정 확인"
     : null;
+  const editPurposeLabel = editPurpose === "regular"
+    ? "단어 시험"
+    : editPurpose === "review"
+      ? "오답 시험"
+      : "단어+오답 시험";
 
   return (
     <>
       {editPurpose ? (
-        <div
-          aria-label="시험 종류"
-          className={plannerStyles.assignmentKind}
-          role="group"
+        <AssignmentEditorLockedMode
+          label={editPurposeLabel}
           title="시험 종류는 수정할 수 없습니다."
-        >
-          <Button
-            aria-pressed="true"
-            disabled
-            variant="filter"
-          >
-            {editPurpose === "regular"
-              ? "단어 시험"
-              : editPurpose === "review"
-                ? "오답 시험"
-                : "단어+오답 시험"}
-          </Button>
-        </div>
+        />
       ) : null}
       {editPurpose === "mixed" ? (
         <Notice>{adminLearningText.assignmentModal.edit.lockedMixed}</Notice>
       ) : null}
-      <div
-        className={[styles.sections, plannerStyles.assignmentPanel].join(" ")}
-      >
+      <AssignmentEditorPanel>
         <AssignmentSection
           help="시험에 사용할 단어장과 범위를 고릅니다."
           helpLabel="시험 범위 설명"
@@ -166,7 +157,7 @@ export function SingleAssignmentEditorSections({
             units={units}
           />
         </AssignmentSection>
-      </div>
+      </AssignmentEditorPanel>
     </>
   );
 }

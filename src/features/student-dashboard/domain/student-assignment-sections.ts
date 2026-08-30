@@ -1,9 +1,9 @@
 import {
   compareLearningActivities,
   deriveLearningActivityState,
+  type ActivityTimelineInput,
   type LearningActivityOrderInput,
-} from "@/features/history/domain/learning-activity";
-import type { ActivityTimelineInput } from "@/features/history/presentation/activity-presentation";
+} from "@/features/history/public-contracts";
 
 import type { StudentAssignmentSummary } from "../model";
 import type { StudentDashboardCurrentNode } from "../contracts/student-dashboard-read-model";

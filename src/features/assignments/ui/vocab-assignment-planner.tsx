@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
-import { Button } from "@/design-system/primitives/button/button";
 import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 import {
   DialogBody,
@@ -21,10 +20,14 @@ import {
 import { useDirectReviewAssignmentController } from "../controller/use-direct-review-assignment-controller";
 import { useAssignmentDatasetUnitCatalog } from "../controller/use-assignment-dataset-unit-catalog";
 import { AssignmentSubmitAction } from "./assignment-submit-action";
+import {
+  AssignmentEditorForm,
+  AssignmentEditorModeTabs,
+  AssignmentEditorPanel,
+} from "./assignment-editor-shell";
 import { DirectReviewAssignmentSections } from "./direct-review-assignment-sections";
 import { resolveInvalidAssignmentFieldFocusTarget } from "./focus-invalid-assignment-field";
 import { VocabRangeAssignmentSections } from "./vocab-range-assignment-sections";
-import editorStyles from "./vocab-assignment-form.module.css";
 import styles from "./vocab-assignment-planner.module.css";
 
 export function VocabAssignmentPlanner({
@@ -194,6 +197,24 @@ export function VocabAssignmentPlanner({
   const headerDetail = singleStudent
     ? `${singleStudent.displayName} · ${singleStudent.schoolName || "학교 미입력"}`
     : `${students.length}명 선택`;
+  const purposeTabs = [
+    {
+      controls: "vocab-assignment-range-panel",
+      id: "vocab-assignment-range-tab",
+      label: "단어 시험",
+      value: "range" as const,
+    },
+    {
+      controls: "vocab-assignment-review-panel",
+      describedBy: !reviewAssignmentAvailable
+        ? "review-assignment-unavailable"
+        : undefined,
+      disabled: !reviewAssignmentAvailable,
+      id: "vocab-assignment-review-tab",
+      label: "오답 시험",
+      value: "review" as const,
+    },
+  ];
 
   return (
     <DialogFrame
@@ -223,80 +244,56 @@ export function VocabAssignmentPlanner({
         </div>
       </DialogHeader>
       <DialogBody>
-        <form
-          aria-busy={busy}
-          className={editorStyles.form}
-          id="vocab-assignment-plan-form"
-          noValidate
+        <AssignmentEditorForm
+          busy={busy}
+          formId="vocab-assignment-plan-form"
+          formRef={formRef}
+          legend="단어 시험 배정 조건"
           onSubmit={submit}
-          ref={formRef}
         >
-          <fieldset className={editorStyles.fieldset} disabled={busy}>
-            <legend className="sr-only">단어 시험 배정 조건</legend>
-            <div
-              aria-label="시험 종류"
-              className={styles.assignmentKind}
-              role="group"
+          <AssignmentEditorModeTabs
+            ariaLabel="시험 종류"
+            items={purposeTabs}
+            onChange={(purpose) => {
+              setAssignmentPurpose(purpose);
+              setSubmitAttempted(false);
+            }}
+            value={assignmentPurpose}
+          />
+          {!reviewAssignmentAvailable ? (
+            <p
+              className={styles.assignmentKindHint}
+              id="review-assignment-unavailable"
             >
-              <Button
-                aria-pressed={assignmentPurpose === "range"}
-                onClick={() => {
-                  setAssignmentPurpose("range");
-                  setSubmitAttempted(false);
-                }}
-                variant="filter"
-              >
-                단어 시험
-              </Button>
-              <Button
-                aria-describedby={!reviewAssignmentAvailable
-                  ? "review-assignment-unavailable"
-                  : undefined}
-                aria-pressed={assignmentPurpose === "review"}
-                disabled={!reviewAssignmentAvailable}
-                onClick={() => {
-                  setAssignmentPurpose("review");
-                  setSubmitAttempted(false);
-                }}
-                title={reviewAssignmentAvailable
-                  ? "학생의 미배정 오답만 시험으로 만듭니다."
-                  : "오답 시험은 단일 배정에서만 사용할 수 있습니다."}
-                variant="filter"
-              >
-                오답 시험
-              </Button>
-            </div>
-            {!reviewAssignmentAvailable ? (
-              <p
-                className={styles.assignmentKindHint}
-                id="review-assignment-unavailable"
-              >
-                오답 시험은 단일 배정에서만 사용할 수 있습니다.
-              </p>
-            ) : null}
-            <div className={styles.assignmentPanel} key={assignmentPurpose}>
-              {assignmentPurpose === "review" ? (
-                <DirectReviewAssignmentSections
-                  controller={reviewController}
-                  datasets={controller.readyDatasets}
-                  fieldErrors={visibleReviewErrors}
-                  student={students[0]!}
-                />
-              ) : (
-                <VocabRangeAssignmentSections
-                  busy={busy}
-                  controller={controller}
-                  fieldErrors={visibleErrors}
-                  unitLoadState={unitCatalog.state}
-                  onRetryUnits={() =>
-                    void unitCatalog.actions.retry()
-                  }
-                  students={students}
-                />
-              )}
-            </div>
-          </fieldset>
-        </form>
+              오답 시험은 단일 배정에서만 사용할 수 있습니다.
+            </p>
+          ) : null}
+          <AssignmentEditorPanel
+            key={assignmentPurpose}
+            labelledBy={`vocab-assignment-${assignmentPurpose}-tab`}
+            panelId={`vocab-assignment-${assignmentPurpose}-panel`}
+          >
+            {assignmentPurpose === "review" ? (
+              <DirectReviewAssignmentSections
+                controller={reviewController}
+                datasets={controller.readyDatasets}
+                fieldErrors={visibleReviewErrors}
+                student={students[0]!}
+              />
+            ) : (
+              <VocabRangeAssignmentSections
+                busy={busy}
+                controller={controller}
+                fieldErrors={visibleErrors}
+                unitLoadState={unitCatalog.state}
+                onRetryUnits={() =>
+                  void unitCatalog.actions.retry()
+                }
+                students={students}
+              />
+            )}
+          </AssignmentEditorPanel>
+        </AssignmentEditorForm>
       </DialogBody>
       <DialogFooter>
         <div className={styles.submitRow}>

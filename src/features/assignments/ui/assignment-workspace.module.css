@@ -5,8 +5,6 @@
 
 .browser,
 .studentList,
-.searchPanel,
-.filterGroups,
 .studentOverview {
   min-width: 0;
   display: grid;
@@ -141,81 +139,6 @@
   text-align: left;
 }
 
-.searchPanel {
-  gap: var(--space-2);
-}
-
-.searchField {
-  position: relative;
-  display: block;
-}
-
-.searchIcon {
-  position: absolute;
-  z-index: 1;
-  top: 50%;
-  left: 14px;
-  width: 18px;
-  height: 18px;
-  color: var(--text-secondary);
-  transform: translateY(-50%);
-  pointer-events: none;
-}
-
-.searchIcon svg {
-  width: 100%;
-  height: 100%;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-width: 1.8;
-}
-
-.filterDisclosure {
-  border: 1px solid var(--line);
-  background: var(--card);
-}
-
-.filterDisclosure > summary {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  color: var(--text-primary);
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.filterGroups {
-  gap: var(--space-3);
-  padding: var(--space-1) var(--space-3) var(--space-3);
-  border-top: 1px solid var(--line);
-}
-
-.filterGroups fieldset {
-  min-width: 0;
-  margin: 0;
-  padding: 10px 0 0;
-  border: 0;
-}
-
-.filterGroups legend {
-  margin-bottom: 7px;
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.filterChips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
-.filterSummary,
-.filterSummaryActions,
 .bulkBar,
 .bulkSummary,
 .bulkActions,
@@ -227,28 +150,10 @@
   align-items: center;
 }
 
-.filterSummary {
-  min-height: 32px;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-
-.filterSummaryActions,
 .bulkSummary,
 .bulkActions {
   flex-wrap: wrap;
   gap: var(--space-2);
-}
-
-.filterSummaryActions {
-  justify-content: flex-end;
-}
-
-.filterSummaryActions > strong {
-  min-width: 40px;
-  color: var(--text-primary);
-  font-size: 12px;
-  text-align: right;
 }
 
 .bulkBar {
@@ -362,24 +267,9 @@
     flex: 1 1 140px;
   }
 
-  .filterSummary {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .filterSummaryActions {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .filterSummaryActions button {
-    min-height: var(--control-height-default);
-    height: var(--control-height-default);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .searchIcon,
   .bulkBar,
   .browserModePanel {
     animation: none;

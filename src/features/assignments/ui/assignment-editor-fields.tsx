@@ -1,64 +1,17 @@
 import { useId, type ReactNode } from "react";
 
-import type { TimingMode } from "@/lib/admin/assignment-settings";
 import {
   Field,
   FieldLabel,
 } from "@/design-system/primitives/form/field";
 import { SegmentedControl } from "@/design-system/primitives/form/segmented-control";
 import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
+import type { TimingMode } from "@/lib/admin/assignment-settings";
 
-import styles from "./assignment-editor-ui.module.css";
+import styles from "./assignment-editor-fields.module.css";
 
 function classNames(...values: Array<string | undefined>) {
   return values.filter(Boolean).join(" ");
-}
-
-export function AssignmentEditorLayout({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={classNames(styles.layout, className)}>
-      {children}
-    </div>
-  );
-}
-
-export function AssignmentEditorSettings({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={classNames(styles.settings, className)}>
-      {children}
-    </div>
-  );
-}
-
-export function AssignmentEditorSummary({
-  busy,
-  children,
-  className,
-}: {
-  busy?: boolean;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <aside
-      aria-busy={busy || undefined}
-      className={classNames(styles.summary, className)}
-    >
-      {children}
-    </aside>
-  );
 }
 
 export function AssignmentFieldGrid({
@@ -98,9 +51,7 @@ export function AssignmentSessionRow({
     <div className={classNames(styles.sessionRow, className)}>
       <div className={styles.sessionHeading}>{heading}</div>
       <div className={styles.sessionDetails}>{details}</div>
-      {error ? (
-        <div className={styles.sessionError}>{error}</div>
-      ) : null}
+      {error ? <div className={styles.sessionError}>{error}</div> : null}
     </div>
   );
 }
@@ -162,10 +113,7 @@ export function AssignmentSegmentedField<Value extends string>({
 
   return (
     <Field className={styles.segmentedField}>
-      <FieldLabel
-        as="span"
-        id={labelId}
-      >
+      <FieldLabel as="span" id={labelId}>
         <HelpTip label={helpAriaLabel} trigger={label}>
           {helpText}
         </HelpTip>

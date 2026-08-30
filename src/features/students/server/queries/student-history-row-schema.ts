@@ -2,7 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 
-import { adminHistoryListItemSchema } from "@/features/history/server/queries/admin-history-row-schema";
+import { adminHistoryListItemSchema } from "@/features/history/public-server";
 
 const timestampSchema = z.iso.datetime({ offset: true });
 

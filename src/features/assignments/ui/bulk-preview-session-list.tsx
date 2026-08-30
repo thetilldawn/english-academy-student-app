@@ -1,4 +1,4 @@
-import { AssignmentSessionRow } from "@/components/assignment-editor-ui";
+import { AssignmentSessionRow } from "./assignment-editor-fields";
 import { formatContentText } from "@/content/format";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";

@@ -1,0 +1,42 @@
+.form {
+  min-height: 0;
+  display: block;
+}
+
+.fieldset {
+  min-width: 0;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.modeTabs,
+.lockedMode {
+  margin-bottom: var(--space-3);
+}
+
+.panel {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-4);
+  animation: assignmentEditorPanelIn var(--motion-standard) both;
+}
+
+@keyframes assignmentEditorPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
+  }
+}

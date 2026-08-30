@@ -7,7 +7,7 @@ import { adminStudentsText } from "@/content/ko/admin-students";
 import { Button } from "@/design-system/primitives/button/button";
 import { Select } from "@/design-system/primitives/form/field";
 import { Notice } from "@/design-system/patterns/feedback/feedback";
-import { StudentLearningActivityList } from "@/features/history/ui/student-learning-activity-list";
+import { StudentLearningActivityList } from "@/features/history/public-ui";
 
 import type { StudentHistoryPageController } from "../../controller/use-student-history-page";
 import styles from "../student-detail.module.css";

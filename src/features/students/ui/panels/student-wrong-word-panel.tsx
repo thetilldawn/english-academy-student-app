@@ -13,15 +13,8 @@ import type { ReadingCurriculumStage } from "@/lib/admin/reading-curriculum";
 
 import { useStudentWrongWordActions } from "../../controller/use-student-wrong-word-actions";
 import { useStudentWrongWordHistory } from "../../controller/use-student-wrong-word-history";
-import {
-  activeWrongWordReviewDrafts,
-  filterWrongWords,
-  keepSelectableQuestionIds,
-  selectableWrongWordQuestionIds,
-  wrongWordDatasetOptions,
-  type WrongWordLevelFilter,
-  type WrongWordSelectionPurpose,
-} from "../../domain/wrong-word-selection";
+import { useWrongWordPanelSelection } from "../../controller/use-wrong-word-panel-selection";
+import { activeWrongWordReviewDrafts } from "../../domain/wrong-word-selection";
 import styles from "./student-wrong-word-panel.module.css";
 import { WrongWordControlSection } from "./wrong-word-control-section";
 import { WrongWordFilterSection } from "./wrong-word-filter-section";
@@ -88,35 +81,23 @@ export function StudentWrongWordPanel({
     worksheetErrorMessage:
       adminStudentsText.learning.wrongWordsPanel.worksheetError,
   });
-  const [levelFilter, setLevelFilter] =
-    useState<WrongWordLevelFilter>("all");
-  const [datasetFilter, setDatasetFilter] = useState(initialDatasetId);
-  const [query, setQuery] = useState("");
-  const [selectedQuestionIds, setSelectedQuestionIds] = useState<
-    string[]
-  >([]);
-  const [worksheetSelectedQuestionIds, setWorksheetSelectedQuestionIds] =
-    useState<string[]>([]);
-  const [selectionPurpose, setSelectionPurpose] =
-    useState<WrongWordSelectionPurpose>("next_exam");
   const [readingCurriculumStage, setReadingCurriculumStage] =
     useState<ReadingCurriculumStage>(initialCurriculumStage);
   const [readingContextSyncStatus, setReadingContextSyncStatus] =
     useState(initialReadingContextSyncStatus);
-
-  const datasetOptions = useMemo(
-    () => wrongWordDatasetOptions(cachedHistory),
-    [cachedHistory],
-  );
+  const selection = useWrongWordPanelSelection({
+    history: cachedHistory,
+    initialDatasetId,
+  });
   const datasetLabelById = useMemo(
     () =>
       new Map(
-        datasetOptions.map((dataset) => [
+        selection.datasetOptions.map((dataset) => [
           dataset.id,
           dataset.label,
         ]),
       ),
-    [datasetOptions],
+    [selection.datasetOptions],
   );
 
   const activeDrafts = useMemo(
@@ -124,114 +105,10 @@ export function StudentWrongWordPanel({
     [cachedHistory],
   );
 
-  const filteredWords = useMemo(
-    () => filterWrongWords({
-      history: cachedHistory,
-      datasetId: datasetFilter,
-      level: levelFilter,
-      query,
-    }),
-    [cachedHistory, datasetFilter, levelFilter, query],
-  );
-
-  const selectableFilteredQuestionIds = useMemo(
-    () => selectableWrongWordQuestionIds({
-      words: filteredWords,
-      datasetId: datasetFilter,
-      purpose: "next_exam",
-      }),
-    [datasetFilter, filteredWords],
-  );
-  const validSelectedQuestionIds = useMemo(
-    () => keepSelectableQuestionIds(
-      selectedQuestionIds,
-      selectableFilteredQuestionIds,
-    ),
-    [selectableFilteredQuestionIds, selectedQuestionIds],
-  );
-  const worksheetSelectableFilteredQuestionIds = useMemo(
-    () => selectableWrongWordQuestionIds({
-      words: filteredWords,
-      datasetId: datasetFilter,
-      purpose: "worksheet",
-      }),
-    [datasetFilter, filteredWords],
-  );
-  const validWorksheetSelectedQuestionIds = useMemo(
-    () => keepSelectableQuestionIds(
-      worksheetSelectedQuestionIds,
-      worksheetSelectableFilteredQuestionIds,
-    ),
-    [
-      worksheetSelectableFilteredQuestionIds,
-      worksheetSelectedQuestionIds,
-    ],
-  );
-  const activeSelectableQuestionIds =
-    selectionPurpose === "next_exam"
-      ? selectableFilteredQuestionIds
-      : worksheetSelectableFilteredQuestionIds.slice(0, 50);
-  const activeSelectedQuestionIds =
-    selectionPurpose === "next_exam"
-      ? validSelectedQuestionIds
-      : validWorksheetSelectedQuestionIds;
-  const allVisibleSelected =
-    activeSelectableQuestionIds.length > 0 &&
-    activeSelectableQuestionIds.every((questionId) =>
-      activeSelectedQuestionIds.includes(questionId),
-    );
-
-  function toggleQuestion(questionId: string) {
-    if (
-      isRequesting() ||
-      busy
-    ) {
-      return;
-    }
-    if (selectionPurpose === "next_exam") {
-      setSelectedQuestionIds((current) =>
-        current.includes(questionId)
-          ? current.filter((value) => value !== questionId)
-          : [...current, questionId],
-      );
-      return;
-    }
-    setWorksheetSelectedQuestionIds((current) =>
-      current.includes(questionId)
-        ? current.filter((value) => value !== questionId)
-        : current.length < 50
-          ? [...current, questionId]
-          : current,
-    );
-  }
-
-  function toggleVisibleQuestions() {
-    if (
-      isRequesting() ||
-      busy
-    ) {
-      return;
-    }
-    if (selectionPurpose === "next_exam") {
-      setSelectedQuestionIds(
-        allVisibleSelected ? [] : selectableFilteredQuestionIds,
-      );
-      return;
-    }
-    setWorksheetSelectedQuestionIds(
-      allVisibleSelected ? [] : activeSelectableQuestionIds,
-    );
-  }
-
-  function resetSelectionFeedback() {
-    setSelectedQuestionIds([]);
-    setWorksheetSelectedQuestionIds([]);
-  }
-
   async function queueSelectedWords() {
     try {
       const queueIds = await queueWords(
-        validSelectedQuestionIds,
+        selection.selectedQueuedIds,
       );
       if (!queueIds) return;
       toast.success(
@@ -240,7 +117,7 @@ export function StudentWrongWordPanel({
           { count: queueIds.length },
         ),
       );
-      setSelectedQuestionIds([]);
+      selection.actions.clearQueuedSelection();
       refreshHistory();
     } catch (requestError) {
       toast.error(
@@ -255,7 +132,7 @@ export function StudentWrongWordPanel({
   async function createWorksheetRequest() {
     try {
       const payload = await requestWorksheet({
-        questionIds: validWorksheetSelectedQuestionIds,
+        questionIds: selection.selectedWorksheetIds,
         curriculumStage: readingCurriculumStage,
       });
       if (!payload) return;
@@ -291,7 +168,7 @@ export function StudentWrongWordPanel({
         payload.sync.status === "synced" ||
         payload.sync.status === "unchanged"
       ) {
-        setWorksheetSelectedQuestionIds([]);
+        selection.actions.clearWorksheetSelection();
       }
     } catch (requestError) {
       toast.error(
@@ -479,27 +356,17 @@ export function StudentWrongWordPanel({
 
       <div id="wrong-word-aggregate-panel">
         <WrongWordFilterSection
-          datasetFilter={datasetFilter}
-          datasetOptions={datasetOptions}
-          levelFilter={levelFilter}
-          onDatasetFilterChange={(value) => {
-            setDatasetFilter(value);
-            resetSelectionFeedback();
-          }}
-          onLevelFilterChange={(value) => {
-            if (levelFilter === value) return;
-            setLevelFilter(value);
-            resetSelectionFeedback();
-          }}
-          onQueryChange={(value) => {
-            setQuery(value);
-            resetSelectionFeedback();
-          }}
-          query={query}
+          datasetFilter={selection.datasetFilter}
+          datasetOptions={selection.datasetOptions}
+          levelFilter={selection.levelFilter}
+          onDatasetFilterChange={selection.actions.setDatasetFilter}
+          onLevelFilterChange={selection.actions.changeLevelFilter}
+          onQueryChange={selection.actions.setQuery}
+          query={selection.query}
         />
         <WrongWordPurposeSection
-          onChange={setSelectionPurpose}
-          value={selectionPurpose}
+          onChange={selection.actions.setPurpose}
+          value={selection.purpose}
         />
         <WrongWordControlSection
           selection
@@ -507,31 +374,37 @@ export function StudentWrongWordPanel({
           titleId="wrong-word-selection-title"
         >
           <WrongWordSelectionControls
-            allVisibleSelected={allVisibleSelected}
+            allVisibleSelected={selection.allVisibleSelected}
             busy={busy}
             curriculumStage={readingCurriculumStage}
             loading={loading}
             onCreateWorksheet={() => void createWorksheetRequest()}
             onCurriculumStageChange={setReadingCurriculumStage}
             onQueueWords={() => void queueSelectedWords()}
-            onToggleVisible={toggleVisibleQuestions}
-            purpose={selectionPurpose}
+            onToggleVisible={() => {
+              if (isRequesting() || busy) return;
+              selection.actions.toggleVisible();
+            }}
+            purpose={selection.purpose}
             queueing={queueing}
             readingContextSyncStatus={readingContextSyncStatus}
-            selectableCount={activeSelectableQuestionIds.length}
-            selectedCount={activeSelectedQuestionIds.length}
+            selectableCount={selection.selectableIds.length}
+            selectedCount={selection.selectedIds.length}
             worksheetRequesting={worksheetRequesting}
           />
           <WrongWordList
-            datasetFilter={datasetFilter}
+            datasetFilter={selection.datasetFilter}
             disabled={loading || busy}
-            onToggleQuestion={toggleQuestion}
-            purpose={selectionPurpose}
-            selectedQuestionIds={activeSelectedQuestionIds}
+            onToggleQuestion={(questionId) => {
+              if (isRequesting() || busy) return;
+              selection.actions.toggleQuestion(questionId);
+            }}
+            purpose={selection.purpose}
+            selectedQuestionIds={selection.selectedIds}
             worksheetSelectionLimitReached={
-              validWorksheetSelectedQuestionIds.length >= 50
+              selection.worksheetSelectionLimitReached
             }
-            words={filteredWords}
+            words={selection.filteredWords}
           />
         </WrongWordControlSection>
       </div>

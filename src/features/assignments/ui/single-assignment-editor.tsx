@@ -31,6 +31,7 @@ import {
 import { newAssignmentDraftDefaults } from "../presentation/new-assignment-defaults";
 import { hydrateSingleAssignmentDraftFromEditResponse } from "../api/edit-draft-adapter";
 import { SingleAssignmentEditorSections } from "./single-assignment-editor-sections";
+import { AssignmentEditorForm } from "./assignment-editor-shell";
 import { AssignmentSubmitAction } from "./assignment-submit-action";
 import type { SingleAssignmentEditorProps } from "./single-assignment-editor.types";
 import { useEditAssignmentValidation } from "./use-edit-assignment-validation";
@@ -223,32 +224,26 @@ export function SingleAssignmentEditor({
             {controller.message || adminLearningText.assignmentModal.errors.editLoad}
           </Notice>
         ) : (
-          <form
-            aria-busy={busy}
-            className={styles.form}
-            id={formId}
-            noValidate
+          <AssignmentEditorForm
+            busy={busy}
+            formId={formId}
+            formRef={formRef}
+            legend={adminLearningText.assignmentModal.overview.formAria}
             onSubmit={submit}
-            ref={formRef}
           >
-            <fieldset className={styles.fieldset} disabled={busy}>
-              <legend className="sr-only">
-                {adminLearningText.assignmentModal.overview.formAria}
-              </legend>
-              <SingleAssignmentEditorSections
-                controller={controller}
-                datasets={datasets}
-                editPurpose={editTarget?.purpose ?? null}
-                editSnapshot={initialEditDraft}
-                fieldErrors={fieldErrors}
-                formId={formId}
-                progress={progress}
-                units={units}
-                unitLoadState={unitCatalog.state}
-                onRetryUnits={() => void unitCatalog.actions.retry()}
-              />
-            </fieldset>
-          </form>
+            <SingleAssignmentEditorSections
+              controller={controller}
+              datasets={datasets}
+              editPurpose={editTarget?.purpose ?? null}
+              editSnapshot={initialEditDraft}
+              fieldErrors={fieldErrors}
+              formId={formId}
+              progress={progress}
+              units={units}
+              unitLoadState={unitCatalog.state}
+              onRetryUnits={() => void unitCatalog.actions.retry()}
+            />
+          </AssignmentEditorForm>
         )}
       </DialogBody>
       {submitPlacement === "footer" ? (

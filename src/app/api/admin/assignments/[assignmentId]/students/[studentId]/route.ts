@@ -3,7 +3,7 @@ import { z } from "zod";
 import {
   getAdminHistoryReadModelDetail,
   projectAdminHistoryListItem,
-} from "@/features/history/public-server";
+} from "@/features/history/public-server-queries";
 import { getAdminContext } from "@/lib/auth/admin";
 import {
   isSameOriginRequest,

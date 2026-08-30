@@ -3,10 +3,12 @@ import {
   StatusBadge,
 } from "@/design-system/primitives/badge/badge";
 import { ButtonLink } from "@/design-system/primitives/button/button";
-import { AttemptScoreSummary } from "@/features/history/ui/attempt-score-summary";
-import { ActivityStatusTimeline } from "@/features/history/ui/activity-status-timeline";
+import { buildAttemptStatusPresentation } from "@/features/history/public-contracts";
+import {
+  ActivityStatusTimeline,
+  AttemptScoreSummary,
+} from "@/features/history/public-ui";
 import { currentTimeMilliseconds } from "@/lib/deadline";
-import { buildAttemptStatusPresentation } from "@/features/history/presentation/attempt-presentation";
 
 import { studentAssignmentTimeline } from "../domain/student-assignment-sections";
 import { deriveStudentAssignmentLifecycle } from "../domain/student-assignment-lifecycle";

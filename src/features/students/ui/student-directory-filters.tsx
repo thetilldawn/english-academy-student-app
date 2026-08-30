@@ -3,13 +3,12 @@
 import { formatContentText } from "@/content/format";
 import { adminStudentsText } from "@/content/ko/admin-students";
 import { commonText } from "@/content/ko/common";
-import {
-  CountBadge,
-  MetaTag,
-  MetaTagList,
-} from "@/design-system/primitives/badge/badge";
+import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 import { Button } from "@/design-system/primitives/button/button";
-import { Input } from "@/design-system/primitives/form/field";
+import {
+  FilterWorkspace,
+  FilterWorkspaceGroup,
+} from "@/design-system/patterns/filter-workspace/filter-workspace";
 
 import {
   emptyStudentDirectoryFilters,
@@ -51,120 +50,9 @@ export function StudentDirectoryFilters({
       : commonText.filters.retryNeeded;
 
   return (
-    <div className={styles.searchPanel}>
-      <label className={styles.searchField}>
-        <span aria-hidden="true" className={styles.searchIcon}>
-          <svg viewBox="0 0 24 24">
-            <circle cx="11" cy="11" r="6" />
-            <path d="m16 16 4 4" />
-          </svg>
-        </span>
-        <span className="sr-only">{adminStudentsText.page.searchAriaLabel}</span>
-        <Input
-          leadingAdornment
-          onChange={(event) => onQueryChange(event.target.value)}
-          placeholder={adminStudentsText.page.searchPlaceholder}
-          type="search"
-          value={filters.query}
-        />
-      </label>
-      <details className={styles.filterDisclosure}>
-        <summary>
-          <span>{adminStudentsText.page.filterButton}</span>
-          <CountBadge>{filterCount}</CountBadge>
-        </summary>
-        <div className={styles.filterGroups}>
-          <fieldset>
-            <legend>{adminStudentsText.page.statusFilter}</legend>
-            <div className={styles.filterChips}>
-              {([
-                ["all", commonText.filters.all],
-                ["active", adminStudentsText.card.active],
-                ["blocked", adminStudentsText.card.blocked],
-              ] as const).map(([value, label]) => (
-                <Button
-                  aria-pressed={filters.status === value}
-                  key={value}
-                  onClick={() => onChange({ ...filters, status: value })}
-                  size="small"
-                  variant="filter"
-                >
-                  {label}
-                </Button>
-              ))}
-            </div>
-          </fieldset>
-          <fieldset>
-            <legend>{commonText.filters.wrongAvailability}</legend>
-            <div className={styles.filterChips}>
-              {([
-                ["all", commonText.filters.all],
-                ["wrong", commonText.filters.hasWrong],
-                ["repeated", commonText.filters.repeatedWrong],
-                ["retry", commonText.filters.retryNeeded],
-              ] as const).map(([value, label]) => (
-                <Button
-                  aria-pressed={filters.wrong === value}
-                  key={value}
-                  onClick={() => onChange({ ...filters, wrong: value })}
-                  size="small"
-                  variant="filter"
-                >
-                  {label}
-                </Button>
-              ))}
-            </div>
-          </fieldset>
-          {([
-            ["school", commonText.filters.bySchool, options.schools],
-            ["grade", commonText.filters.byGrade, options.grades],
-            ["wordbook", commonText.filters.byWordbook, options.wordbooks],
-          ] as const).map(([field, label, values]) => (
-            <fieldset key={field}>
-              <legend>{label}</legend>
-              <div className={styles.filterChips}>
-                {values.map((value) => (
-                  <Button
-                    aria-pressed={filters[field] === value}
-                    key={value}
-                    onClick={() => onChange({
-                      ...filters,
-                      [field]: filters[field] === value ? "" : value,
-                    })}
-                    size="small"
-                    variant="filter"
-                  >
-                    {value}
-                  </Button>
-                ))}
-              </div>
-            </fieldset>
-          ))}
-          {options.classGroups.length > 0 ? (
-            <fieldset>
-              <legend>{adminStudentsText.page.classGroupFilter}</legend>
-              <div className={styles.filterChips}>
-                {options.classGroups.map((group) => (
-                  <Button
-                    aria-pressed={filters.classGroupId === group.id}
-                    key={group.id}
-                    onClick={() => onChange({
-                      ...filters,
-                      classGroupId:
-                        filters.classGroupId === group.id ? "" : group.id,
-                    })}
-                    size="small"
-                    variant="filter"
-                  >
-                    {group.name}
-                  </Button>
-                ))}
-              </div>
-            </fieldset>
-          ) : null}
-        </div>
-      </details>
-      <div className={styles.filterSummary}>
+    <FilterWorkspace
+      activeFilterCount={filterCount}
+      activeTags={(
         <MetaTagList>
           {filters.school ? <MetaTag>{filters.school}</MetaTag> : null}
           {filters.grade ? <MetaTag>{filters.grade}</MetaTag> : null}
@@ -181,10 +69,16 @@ export function StudentDirectoryFilters({
             <MetaTag tone="warning">{wrongLabel}</MetaTag>
           ) : null}
         </MetaTagList>
-        <div className={styles.filterSummaryActions}>
-          <span aria-live="polite" className={styles.filteringStatus}>
-            {filtering ? adminStudentsText.page.filtering : ""}
-          </span>
+      )}
+      className={styles.directoryFilters}
+      filterLabel={adminStudentsText.page.filterButton}
+      filteringStatus={filtering ? adminStudentsText.page.filtering : ""}
+      onQueryChange={onQueryChange}
+      query={filters.query}
+      searchAriaLabel={adminStudentsText.page.searchAriaLabel}
+      searchPlaceholder={adminStudentsText.page.searchPlaceholder}
+      summaryActions={(
+        <>
           <strong>
             {formatContentText(commonText.filters.studentCount, {
               count: resultCount,
@@ -209,8 +103,87 @@ export function StudentDirectoryFilters({
           >
             {adminStudentsText.page.resetFilters}
           </Button>
-        </div>
-      </div>
-    </div>
+        </>
+      )}
+    >
+      <FilterWorkspaceGroup label={adminStudentsText.page.statusFilter}>
+        {([
+          ["all", commonText.filters.all],
+          ["active", adminStudentsText.card.active],
+          ["blocked", adminStudentsText.card.blocked],
+        ] as const).map(([value, label]) => (
+          <Button
+            aria-pressed={filters.status === value}
+            key={value}
+            onClick={() => onChange({ ...filters, status: value })}
+            size="small"
+            variant="filter"
+          >
+            {label}
+          </Button>
+        ))}
+      </FilterWorkspaceGroup>
+
+      <FilterWorkspaceGroup label={commonText.filters.wrongAvailability}>
+        {([
+          ["all", commonText.filters.all],
+          ["wrong", commonText.filters.hasWrong],
+          ["repeated", commonText.filters.repeatedWrong],
+          ["retry", commonText.filters.retryNeeded],
+        ] as const).map(([value, label]) => (
+          <Button
+            aria-pressed={filters.wrong === value}
+            key={value}
+            onClick={() => onChange({ ...filters, wrong: value })}
+            size="small"
+            variant="filter"
+          >
+            {label}
+          </Button>
+        ))}
+      </FilterWorkspaceGroup>
+
+      {([
+        ["school", commonText.filters.bySchool, options.schools],
+        ["grade", commonText.filters.byGrade, options.grades],
+        ["wordbook", commonText.filters.byWordbook, options.wordbooks],
+      ] as const).map(([field, label, values]) => (
+        <FilterWorkspaceGroup key={field} label={label}>
+          {values.map((value) => (
+            <Button
+              aria-pressed={filters[field] === value}
+              key={value}
+              onClick={() => onChange({
+                ...filters,
+                [field]: filters[field] === value ? "" : value,
+              })}
+              size="small"
+              variant="filter"
+            >
+              {value}
+            </Button>
+          ))}
+        </FilterWorkspaceGroup>
+      ))}
+
+      {options.classGroups.length > 0 ? (
+        <FilterWorkspaceGroup label={adminStudentsText.page.classGroupFilter}>
+          {options.classGroups.map((group) => (
+            <Button
+              aria-pressed={filters.classGroupId === group.id}
+              key={group.id}
+              onClick={() => onChange({
+                ...filters,
+                classGroupId: filters.classGroupId === group.id ? "" : group.id,
+              })}
+              size="small"
+              variant="filter"
+            >
+              {group.name}
+            </Button>
+          ))}
+        </FilterWorkspaceGroup>
+      ) : null}
+    </FilterWorkspace>
   );
 }

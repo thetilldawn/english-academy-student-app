@@ -130,6 +130,18 @@
   ],
   "retiredPathOwners": [
     {
+      "path": "src/components/assignment-editor-ui.tsx",
+      "owner": "assignments",
+      "retiredIn": "R7",
+      "reason": "배정 편집 골격과 필드 부품을 assignments 기능 안의 명시적 소유 파일로 이동"
+    },
+    {
+      "path": "src/components/assignment-editor-ui.module.css",
+      "owner": "assignments",
+      "retiredIn": "R7",
+      "reason": "소비자 없는 레이아웃 선택자를 제거하고 실제 필드와 골격 스타일로 분리"
+    },
+    {
       "path": "src/features/transport-contract.test.ts",
       "owner": "architecture-meta",
       "retiredIn": "R6",
@@ -597,6 +609,10 @@
       "owner": "history"
     },
     {
+      "path": "src/app/api/admin/material-cache/revalidate/route.test.ts",
+      "owner": "assignments"
+    },
+    {
       "path": "src/app/api/admin/mixed-assignments/route.test.ts",
       "owner": "assignments"
     },
@@ -701,6 +717,10 @@
     {
       "path": "src/app/api/admin/history/route.ts",
       "owner": "history"
+    },
+    {
+      "path": "src/app/api/admin/material-cache/revalidate/route.ts",
+      "owner": "assignments"
     },
     {
       "path": "src/app/api/admin/mixed-assignments/route.ts",
@@ -847,7 +867,24 @@
     },
     {
       "path": "src/lib/services/admin-material-read-service.ts",
-      "owner": "assignments"
+      "owner": "assignments",
+      "consumers": [
+        "students"
+      ]
+    },
+    {
+      "path": "src/lib/services/admin-material-query.ts",
+      "owner": "assignments",
+      "consumers": [
+        "students"
+      ]
+    },
+    {
+      "path": "src/lib/services/shared-vocab-material-cache.ts",
+      "owner": "assignments",
+      "consumers": [
+        "students"
+      ]
     },
     {
       "path": "src/lib/services/admin-student-command-service.ts",
@@ -1222,14 +1259,6 @@
       "owner": "app-shell"
     },
     {
-      "path": "src/components/assignment-editor-ui.module.css",
-      "owner": "assignments"
-    },
-    {
-      "path": "src/components/assignment-editor-ui.tsx",
-      "owner": "assignments"
-    },
-    {
       "path": "src/components/login-form.module.css",
       "owner": "auth"
     },
@@ -1357,6 +1386,14 @@
     },
     {
       "path": "src/design-system/patterns/feedback/feedback.tsx",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/filter-workspace/filter-workspace.module.css",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/filter-workspace/filter-workspace.tsx",
       "owner": "shared-ui"
     },
     {
@@ -2087,32 +2124,20 @@
     },
     {
       "from": "src/features/student-dashboard/domain/student-assignment-sections.ts",
-      "to": "src/features/history/domain/learning-activity.ts",
+      "to": "src/features/history/public-contracts.ts",
       "reason": "학생 메인의 학습 상태 분류",
       "removeIn": "R5 공개 계약 진입점"
     },
     {
-      "from": "src/features/student-dashboard/domain/student-assignment-sections.ts",
-      "to": "src/features/history/presentation/activity-presentation.ts",
-      "reason": "학생 메인의 상태 표시 자료 재사용",
-      "removeIn": "R5 공개 표시 계약 진입점"
-    },
-    {
       "from": "src/features/student-dashboard/ui/student-assignment-card.tsx",
-      "to": "src/features/history/presentation/attempt-presentation.ts",
+      "to": "src/features/history/public-contracts.ts",
       "reason": "학생 메인의 응시 결과 표시 자료 재사용",
       "removeIn": "R5 공개 표시 계약 진입점"
     },
     {
       "from": "src/features/student-dashboard/ui/student-assignment-card.tsx",
-      "to": "src/features/history/ui/activity-status-timeline.tsx",
+      "to": "src/features/history/public-ui.ts",
       "reason": "학생 메인의 시험 상태 표시",
-      "removeIn": "R7 공용 패턴 분리"
-    },
-    {
-      "from": "src/features/student-dashboard/ui/student-assignment-card.tsx",
-      "to": "src/features/history/ui/attempt-score-summary.tsx",
-      "reason": "학생 메인의 점수 표시",
       "removeIn": "R7 공용 패턴 분리"
     },
     {
@@ -2123,31 +2148,31 @@
     },
     {
       "from": "src/features/students/contracts/student-detail-read-model.ts",
-      "to": "src/features/history/contracts/admin-history-read-model.ts",
+      "to": "src/features/history/public-contracts.ts",
       "reason": "학생 상세 초기 이력의 공개 읽기 계약",
       "removeIn": "R7 공개 진입점 정리"
     },
     {
       "from": "src/features/students/server/queries/student-detail-query.ts",
-      "to": "src/features/history/server/queries/admin-history-row-schema.ts",
+      "to": "src/features/history/public-server.ts",
       "reason": "학생 상세 초기 이력 DB 행 검증",
       "removeIn": "R7 공개 진입점 정리"
     },
     {
       "from": "src/features/students/server/queries/student-detail-row-schema.ts",
-      "to": "src/features/history/server/queries/admin-history-row-schema.ts",
+      "to": "src/features/history/public-server.ts",
       "reason": "학생 상세 복합 응답의 이력 행 검증",
       "removeIn": "R7 공개 진입점 정리"
     },
     {
       "from": "src/features/students/server/queries/student-history-query.ts",
-      "to": "src/features/history/server/queries/admin-history-row-schema.ts",
+      "to": "src/features/history/public-server.ts",
       "reason": "학생 이력 다음 페이지 DB 행 검증",
       "removeIn": "R7 공개 진입점 정리"
     },
     {
       "from": "src/features/students/server/queries/student-history-row-schema.ts",
-      "to": "src/features/history/server/queries/admin-history-row-schema.ts",
+      "to": "src/features/history/public-server.ts",
       "reason": "학생 이력 응답의 공통 행 검증",
       "removeIn": "R7 공개 진입점 정리"
     },
@@ -2165,12 +2190,12 @@
     },
     {
       "from": "src/features/students/ui/panels/student-learning-history.tsx",
-      "to": "src/features/history/ui/student-learning-activity-list.tsx",
+      "to": "src/features/history/public-ui.ts",
       "reason": "학생 상세의 공용 학습 이력 목록 표시",
       "removeIn": "R7 공개 진입점 정리"
     },
     {
-      "from": "src/features/students/ui/student-directory.tsx",
+      "from": "src/features/students/ui/student-directory-card.tsx",
       "to": "src/features/learning-points/presentation/point-presentation.ts",
       "reason": "학생 목록의 포인트 문구 표시",
       "removeIn": "R5 공개 표시 계약 진입점"
@@ -2278,6 +2303,7 @@
           "src/app/admin/(protected)/assignments/page.tsx"
         ],
         "ui": [
+          "src/design-system/patterns/filter-workspace/filter-workspace.tsx",
           "src/features/assignments/ui/assignment-workspace.tsx",
           "src/features/assignments/ui/legacy-review-recovery.tsx"
         ],
@@ -2302,6 +2328,7 @@
           "src/app/admin/(protected)/loading.tsx"
         ],
         "tests": [
+          "src/design-system/patterns/filter-workspace/filter-workspace.test.tsx",
           "src/features/assignments/controller/use-assignment-workspace.test.tsx"
         ]
       },
@@ -3254,6 +3281,7 @@
           "src/app/admin/(protected)/@detail/(.)results/[entryKey]/page.tsx"
         ],
         "ui": [
+          "src/features/history/public-ui.ts",
           "src/features/history/ui/admin-history-actions.tsx",
           "src/features/history/ui/admin-history-list.tsx",
           "src/features/history/ui/history-section-groups.tsx",
@@ -3273,6 +3301,7 @@
           "src/features/history/presentation/attempt-presentation.ts"
         ],
         "contract": [
+          "src/features/history/public-contracts.ts",
           "src/features/history/contracts/admin-history-mutation.ts",
           "src/features/history/contracts/admin-history-read-model.ts",
           "src/features/history/model.ts"
@@ -3291,7 +3320,8 @@
           "src/features/history/server/queries/admin-history-read-error.ts",
           "src/features/history/server/queries/admin-history-row-schema.ts",
           "src/features/history/server/queries/admin-attempt-detail-query.ts",
-          "src/features/history/public-server.ts"
+          "src/features/history/public-server.ts",
+          "src/features/history/public-server-queries.ts"
         ],
         "database": [
           "supabase/migrations/20260829153000_add_admin_history_read_model.sql",
@@ -3307,6 +3337,7 @@
           "src/app/api/admin/attempts/[id]/route.ts"
         ],
         "tests": [
+          "src/features/history/history-public-boundary.contract.test.ts",
           "src/app/api/admin/attempts/[id]/route.test.ts",
           "src/app/api/admin/history/route.test.ts",
           "src/features/history/controller/use-admin-history-section-page.test.tsx",
@@ -3400,7 +3431,7 @@
         },
         {
           "from": "src/app/api/admin/attempts/[id]/route.ts",
-          "to": "src/features/history/public-server.ts",
+          "to": "src/features/history/public-server-queries.ts",
           "reason": "응시 상세 API가 history 기능의 공개 서버 진입점만 호출"
         }
       ],
@@ -3437,6 +3468,7 @@
           "src/features/student-dashboard/server/components/student-dashboard-content.tsx"
         ],
         "ui": [
+          "src/features/history/public-ui.ts",
           "src/features/student-dashboard/ui/student-dashboard.tsx",
           "src/features/student-dashboard/ui/student-completed-assignments.tsx",
           "src/features/student-dashboard/ui/student-assignment-card.tsx",
@@ -3452,6 +3484,7 @@
         ],
         "presentation": [],
         "contract": [
+          "src/features/history/public-contracts.ts",
           "src/features/student-dashboard/contracts/student-dashboard-read-model.ts",
           "src/features/student-dashboard/model.ts"
         ],
@@ -3610,7 +3643,8 @@
           "src/features/assignments/ui/assignment-submit-action.tsx",
           "src/features/results/ui/attempt-question-card.tsx",
           "src/features/learning-points/ui/point-summary.tsx",
-          "src/components/assignment-editor-ui.tsx"
+          "src/features/assignments/ui/assignment-editor-fields.tsx",
+          "src/features/assignments/ui/assignment-editor-shell.tsx"
         ],
         "clientState": [
           "src/components/use-route-exit-guard.ts",
@@ -3911,6 +3945,7 @@
           "src/features/students/server/components/student-directory-content.tsx"
         ],
         "ui": [
+          "src/design-system/patterns/filter-workspace/filter-workspace.tsx",
           "src/features/students/ui/student-create-workspace.tsx",
           "src/features/students/ui/student-detail-content.tsx",
           "src/features/students/ui/student-detail-dialog.tsx",
@@ -3931,8 +3966,7 @@
           "src/components/document-navigation.ts",
           "src/components/guarded-link.tsx",
           "src/components/navigation-exit-guard.tsx",
-          "src/features/history/ui/history-activity-row.tsx",
-          "src/features/history/ui/student-learning-activity-list.tsx",
+          "src/features/history/public-ui.ts",
           "src/features/learning-points/ui/point-summary.tsx",
           "src/features/assignment-queue/ui/student-assignment-queue-history.tsx",
           "src/components/routed-detail-dialog.tsx",
@@ -3958,6 +3992,7 @@
         ],
         "presentation": [],
         "contract": [
+          "src/features/history/public-contracts.ts",
           "src/features/students/contracts/student-detail-read-model.ts",
           "src/features/students/contracts/student-directory-read-model.ts",
           "src/features/students/contracts/student-mutation-result.ts"
@@ -3971,6 +4006,7 @@
           "src/features/session/api/session.ts"
         ],
         "server": [
+          "src/features/history/public-server.ts",
           "src/features/students/server/actions/update-student-profile-action.ts",
           "src/features/students/server/components/student-create-content.tsx",
           "src/features/students/server/components/student-detail-route-content.tsx",
@@ -4000,6 +4036,7 @@
           "src/app/api/admin/students/[id]/history/route.ts"
         ],
         "tests": [
+          "src/design-system/patterns/filter-workspace/filter-workspace.test.tsx",
           "src/components/guarded-link.test.tsx",
           "src/components/admin-logout-button.test.tsx",
           "src/components/routed-detail-dialog.test.tsx",
@@ -4215,7 +4252,10 @@
           "src/app/admin/(protected)/assignments/page.tsx"
         ],
         "ui": [
+          "src/design-system/patterns/filter-workspace/filter-workspace.tsx",
           "src/features/assignments/ui/assignment-workspace.tsx",
+          "src/features/assignments/ui/assignment-editor-fields.tsx",
+          "src/features/assignments/ui/assignment-editor-shell.tsx",
           "src/features/assignments/ui/assignment-workspace-filters.tsx",
           "src/features/assignments/ui/assignment-student-browser.tsx",
           "src/features/assignments/ui/assignment-student-row.tsx",

@@ -23,6 +23,8 @@
   실패할 수 있는 비동기 명령은 성공 여부를 반환하고, 실패 뒤 보호 기록과 재시도가 복구되는지 검사한다.
 - 배정 생성·수정은 `assignments`, 배정된 시험은 `assignment-queue`, 내역 분류는 `history`, 포인트
   표시는 `learning-points`의 공개 경계를 사용한다.
+- 학습 이력 자료형·상태 계산은 `history/public-contracts.ts`, 목록·상태·점수 UI는
+  `history/public-ui.ts`, 서버 행 검증·변환은 `history/public-server.ts`만 사용한다.
 - 다른 기능의 내부 UI·model을 새로 직접 가져오지 않는다. 공유 경계가 없으면 기능 소유권 지도에
   의존 이유와 제거 시점을 먼저 기록한다.
 - DB 함수가 바뀌면 migration, 통합검사, Preview 함수·권한 재확인을 같은 작업에서 갱신한다.

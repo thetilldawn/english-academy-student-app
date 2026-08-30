@@ -1,21 +1,3 @@
-.form {
-  display: block;
-}
-
-.fieldset {
-  min-width: 0;
-  display: block;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.sections {
-  min-width: 0;
-  display: grid;
-  gap: var(--space-4);
-}
-
 .editorSkeleton {
   min-width: 0;
   display: grid;

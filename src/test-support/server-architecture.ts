@@ -337,10 +337,11 @@ const SHARED_CACHE_FORBIDDEN_PATTERNS = [
 export function inspectSharedCacheSource(
   file: string,
   source: string,
+  allowedReasons: readonly string[] = [],
 ): SharedCacheViolation[] {
   if (!hasCacheDirective(file, source)) return [];
-  return SHARED_CACHE_FORBIDDEN_PATTERNS.filter(({ pattern }) =>
-    pattern.test(source),
+  return SHARED_CACHE_FORBIDDEN_PATTERNS.filter(({ pattern, reason }) =>
+    pattern.test(source) && !allowedReasons.includes(reason),
   ).map(({ reason }) => ({ file, reason }));
 }
 

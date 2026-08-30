@@ -8,6 +8,8 @@ export type TabItem<Value extends string> = {
   value: Value;
   label: string;
   controls?: string;
+  describedBy?: string;
+  disabled?: boolean;
   id?: string;
 };
 
@@ -34,13 +36,20 @@ export function Tabs<Value extends string>({
       return;
     }
     event.preventDefault();
-    const nextIndex =
-      event.key === "Home"
-        ? 0
-        : event.key === "End"
-          ? items.length - 1
-          : (index + (event.key === "ArrowRight" ? 1 : -1) + items.length) %
-            items.length;
+    const enabledIndices = items
+      .map((item, itemIndex) => item.disabled ? -1 : itemIndex)
+      .filter((itemIndex) => itemIndex >= 0);
+    if (enabledIndices.length === 0) return;
+    const currentEnabledIndex = enabledIndices.indexOf(index);
+    const nextIndex = event.key === "Home"
+      ? enabledIndices[0]!
+      : event.key === "End"
+        ? enabledIndices.at(-1)!
+        : enabledIndices[
+            (Math.max(currentEnabledIndex, 0) +
+              (event.key === "ArrowRight" ? 1 : -1) +
+              enabledIndices.length) % enabledIndices.length
+          ]!;
     const next = items[nextIndex];
     if (!next) return;
     onChange(next.value);
@@ -60,8 +69,10 @@ export function Tabs<Value extends string>({
         return (
           <button
             aria-controls={item.controls}
+            aria-describedby={item.describedBy}
             aria-selected={selected}
             className={styles.tab}
+            disabled={item.disabled}
             id={item.id ?? `${fallbackId}-${item.value}`}
             key={item.value}
             onClick={() => onChange(item.value)}

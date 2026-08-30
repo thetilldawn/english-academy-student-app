@@ -1,17 +1,15 @@
 import { formatContentText } from "@/content/format";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { commonText } from "@/content/ko/common";
-import {
-  CountBadge,
-  MetaTag,
-  MetaTagList,
-} from "@/design-system/primitives/badge/badge";
+import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 import { Button } from "@/design-system/primitives/button/button";
-import { Input } from "@/design-system/primitives/form/field";
+import {
+  FilterWorkspace,
+  FilterWorkspaceGroup,
+} from "@/design-system/patterns/filter-workspace/filter-workspace";
 import type { StudentDirectoryWrongFilter } from "@/features/students/public-contracts";
 
 import type { AssignmentWorkspaceController } from "../controller/use-assignment-workspace";
-import styles from "./assignment-workspace.module.css";
 
 const wrongFilters: ReadonlyArray<
   readonly [StudentDirectoryWrongFilter, string]
@@ -40,113 +38,11 @@ export function AssignmentWorkspaceFilters({
   ].filter(Boolean).length +
     (filters.status === "active" ? 0 : 1) +
     (filters.wrong === "all" ? 0 : 1);
-  const resetDisabled = activeCount === 0;
-  const searchDisabled = filters.query.trim().length === 0;
 
   return (
-    <div className={styles.searchPanel}>
-      <label className={styles.searchField}>
-        <span aria-hidden="true" className={styles.searchIcon}>
-          <svg viewBox="0 0 24 24">
-            <circle cx="11" cy="11" r="6" />
-            <path d="m16 16 4 4" />
-          </svg>
-        </span>
-        <span className="sr-only">{adminLearningText.page.searchAriaLabel}</span>
-        <Input
-          leadingAdornment
-          onChange={(event) => actions.setFilter("query", event.target.value)}
-          placeholder={adminLearningText.page.searchPlaceholder}
-          type="search"
-          value={filters.query}
-        />
-      </label>
-
-      <details className={styles.filterDisclosure}>
-        <summary>
-          <span>{adminLearningText.page.filterButton}</span>
-          <CountBadge>{activeCount}</CountBadge>
-        </summary>
-        <div className={styles.filterGroups}>
-          <fieldset>
-            <legend>{commonText.filters.byStatus}</legend>
-            <div className={styles.filterChips}>
-              <Button
-                aria-pressed={filters.status === "active"}
-                onClick={() => actions.setFilter("status", "active")}
-                size="small"
-                variant="filter"
-              >
-                {commonText.filters.active}
-              </Button>
-              <Button
-                aria-pressed={filters.status === "blocked"}
-                onClick={() => actions.setFilter("status", "blocked")}
-                size="small"
-                variant="filter"
-              >
-                {commonText.filters.blocked}
-              </Button>
-            </div>
-          </fieldset>
-          <fieldset>
-            <legend>{commonText.filters.wrongAvailability}</legend>
-            <div className={styles.filterChips}>
-              {wrongFilters.map(([value, label]) => (
-                <Button
-                  aria-pressed={filters.wrong === value}
-                  key={value}
-                  onClick={() => actions.setFilter("wrong", value)}
-                  size="small"
-                  variant="filter"
-                >
-                  {label}
-                </Button>
-              ))}
-            </div>
-          </fieldset>
-          <FilterGroup
-            label={commonText.filters.bySchool}
-            onChange={(value) =>
-              actions.setFilter("school", toggleValue(filters.school, value))
-            }
-            options={controller.schoolOptions}
-            value={filters.school}
-          />
-          <IdFilterGroup
-            label={commonText.filters.byClassGroup}
-            onChange={(value) =>
-              actions.setFilter(
-                "classGroupId",
-                toggleValue(filters.classGroupId, value),
-              )
-            }
-            options={controller.classGroupOptions}
-            value={filters.classGroupId}
-          />
-          <FilterGroup
-            label={commonText.filters.byGrade}
-            onChange={(value) =>
-              actions.setFilter("grade", toggleValue(filters.grade, value))
-            }
-            options={controller.gradeOptions}
-            value={filters.grade}
-          />
-          <FilterGroup
-            label={commonText.filters.byWordbook}
-            onChange={(value) =>
-              actions.setFilter(
-                "wordbook",
-                toggleValue(filters.wordbook, value),
-              )
-            }
-            options={controller.wordbookOptions}
-            value={filters.wordbook}
-          />
-        </div>
-      </details>
-
-      <div className={styles.filterSummary}>
+    <FilterWorkspace
+      activeFilterCount={activeCount}
+      activeTags={(
         <MetaTagList>
           {filters.school ? <MetaTag>{filters.school}</MetaTag> : null}
           {filters.grade ? <MetaTag>{filters.grade}</MetaTag> : null}
@@ -171,14 +67,21 @@ export function AssignmentWorkspaceFilters({
             </MetaTag>
           ) : null}
         </MetaTagList>
-        <div className={styles.filterSummaryActions}>
+      )}
+      filterLabel={adminLearningText.page.filterButton}
+      onQueryChange={(query) => actions.setFilter("query", query)}
+      query={filters.query}
+      searchAriaLabel={adminLearningText.page.searchAriaLabel}
+      searchPlaceholder={adminLearningText.page.searchPlaceholder}
+      summaryActions={(
+        <>
           <strong>
             {formatContentText(commonText.filters.studentCount, {
               count: controller.directory.snapshot.totalCount,
             })}
           </strong>
           <Button
-            disabled={searchDisabled}
+            disabled={filters.query.trim().length === 0}
             onClick={actions.clearSearch}
             size="small"
             variant="quiet"
@@ -186,16 +89,85 @@ export function AssignmentWorkspaceFilters({
             {commonText.filters.clearSearch}
           </Button>
           <Button
-            disabled={resetDisabled}
+            disabled={activeCount === 0}
             onClick={actions.resetFilters}
             size="small"
             variant="quiet"
           >
             {adminLearningText.page.resetFilters}
           </Button>
-        </div>
-      </div>
-    </div>
+        </>
+      )}
+    >
+      <FilterWorkspaceGroup label={commonText.filters.byStatus}>
+        <Button
+          aria-pressed={filters.status === "active"}
+          onClick={() => actions.setFilter("status", "active")}
+          size="small"
+          variant="filter"
+        >
+          {commonText.filters.active}
+        </Button>
+        <Button
+          aria-pressed={filters.status === "blocked"}
+          onClick={() => actions.setFilter("status", "blocked")}
+          size="small"
+          variant="filter"
+        >
+          {commonText.filters.blocked}
+        </Button>
+      </FilterWorkspaceGroup>
+
+      <FilterWorkspaceGroup label={commonText.filters.wrongAvailability}>
+        {wrongFilters.map(([value, label]) => (
+          <Button
+            aria-pressed={filters.wrong === value}
+            key={value}
+            onClick={() => actions.setFilter("wrong", value)}
+            size="small"
+            variant="filter"
+          >
+            {label}
+          </Button>
+        ))}
+      </FilterWorkspaceGroup>
+
+      <FilterGroup
+        label={commonText.filters.bySchool}
+        onChange={(value) =>
+          actions.setFilter("school", toggleValue(filters.school, value))
+        }
+        options={controller.schoolOptions}
+        value={filters.school}
+      />
+      <IdFilterGroup
+        label={commonText.filters.byClassGroup}
+        onChange={(value) =>
+          actions.setFilter(
+            "classGroupId",
+            toggleValue(filters.classGroupId, value),
+          )
+        }
+        options={controller.classGroupOptions}
+        value={filters.classGroupId}
+      />
+      <FilterGroup
+        label={commonText.filters.byGrade}
+        onChange={(value) =>
+          actions.setFilter("grade", toggleValue(filters.grade, value))
+        }
+        options={controller.gradeOptions}
+        value={filters.grade}
+      />
+      <FilterGroup
+        label={commonText.filters.byWordbook}
+        onChange={(value) =>
+          actions.setFilter("wordbook", toggleValue(filters.wordbook, value))
+        }
+        options={controller.wordbookOptions}
+        value={filters.wordbook}
+      />
+    </FilterWorkspace>
   );
 }
 
@@ -211,22 +183,19 @@ function FilterGroup({
   value: string;
 }) {
   return (
-    <fieldset>
-      <legend>{label}</legend>
-      <div className={styles.filterChips}>
-        {options.map((option) => (
-          <Button
-            aria-pressed={value === option}
-            key={option}
-            onClick={() => onChange(option)}
-            size="small"
-            variant="filter"
-          >
-            {option}
-          </Button>
-        ))}
-      </div>
-    </fieldset>
+    <FilterWorkspaceGroup label={label}>
+      {options.map((option) => (
+        <Button
+          aria-pressed={value === option}
+          key={option}
+          onClick={() => onChange(option)}
+          size="small"
+          variant="filter"
+        >
+          {option}
+        </Button>
+      ))}
+    </FilterWorkspaceGroup>
   );
 }
 
@@ -242,22 +211,20 @@ function IdFilterGroup({
   value: string;
 }) {
   if (options.length === 0) return null;
+
   return (
-    <fieldset>
-      <legend>{label}</legend>
-      <div className={styles.filterChips}>
-        {options.map((option) => (
-          <Button
-            aria-pressed={value === option.value}
-            key={option.value}
-            onClick={() => onChange(option.value)}
-            size="small"
-            variant="filter"
-          >
-            {option.label}
-          </Button>
-        ))}
-      </div>
-    </fieldset>
+    <FilterWorkspaceGroup label={label}>
+      {options.map((option) => (
+        <Button
+          aria-pressed={value === option.value}
+          key={option.value}
+          onClick={() => onChange(option.value)}
+          size="small"
+          variant="filter"
+        >
+          {option.label}
+        </Button>
+      ))}
+    </FilterWorkspaceGroup>
   );
 }

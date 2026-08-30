@@ -23,7 +23,7 @@ import {
 } from "vitest";
 
 import { Button } from "./button/button";
-import { AssignmentTimingModeField } from "@/components/assignment-editor-ui";
+import { AssignmentTimingModeField } from "@/features/assignments/ui/assignment-editor-fields";
 import {
   DialogBody,
   DialogFrame,
