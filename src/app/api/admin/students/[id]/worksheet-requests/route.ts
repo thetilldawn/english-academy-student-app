@@ -9,8 +9,6 @@ import {
 } from "@/lib/services/wrong-word-worksheet-service";
 import { createWrongWordWorksheetRequestSchema } from "@/lib/validation";
 
-export const dynamic = "force-dynamic";
-
 export async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> },

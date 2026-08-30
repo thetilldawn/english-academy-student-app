@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+
 import { StudentShell } from "@/components/student-shell";
 import { NotificationBootstrap } from "@/components/notification-bootstrap";
 import { StudentSessionRenewal } from "@/features/session/ui/student-session-renewal";
@@ -7,9 +9,17 @@ import {
 } from "@/lib/auth/student-session";
 import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+export default function StudentProtectedLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <Suspense fallback={null}>
+      <StudentProtectedShell>{children}</StudentProtectedShell>
+    </Suspense>
+  );
+}
 
-export default async function StudentProtectedLayout({
+async function StudentProtectedShell({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const student = await getStudentSession();

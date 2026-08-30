@@ -10,12 +10,16 @@ export const metadata: Metadata = {
   title: studentAppText.dashboard.metadataTitle,
 };
 
-export default async function StudentDashboardPage() {
-  const session = await requireStudentSession();
-
+export default function StudentDashboardPage() {
   return (
     <Suspense fallback={<StudentDashboardSkeleton />}>
-      <StudentDashboardContent student={session} />
+      <StudentDashboardRouteContent />
     </Suspense>
   );
+}
+
+async function StudentDashboardRouteContent() {
+  const session = await requireStudentSession();
+
+  return <StudentDashboardContent student={session} />;
 }

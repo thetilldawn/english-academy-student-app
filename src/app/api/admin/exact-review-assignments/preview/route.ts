@@ -6,8 +6,6 @@ import {
   previewDirectReviewAssignment,
 } from "@/lib/services/direct-review-assignment-service";
 
-export const dynamic = "force-dynamic";
-
 export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
     return privateJsonError("허용되지 않은 요청입니다.", 403);

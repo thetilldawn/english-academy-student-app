@@ -37,6 +37,16 @@
   background: var(--surface);
 }
 
+.tab:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.tab:disabled:hover {
+  color: var(--muted);
+  background: transparent;
+}
+
 .tab[aria-selected="true"] {
   color: var(--ink);
   background: var(--selection-active);

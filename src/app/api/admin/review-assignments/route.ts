@@ -1,8 +1,6 @@
 import { getAdminContext } from "@/lib/auth/admin";
 import { jsonError, isSameOriginRequest } from "@/lib/http";
 
-export const dynamic = "force-dynamic";
-
 export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
     return jsonError("허용되지 않은 요청입니다.", 403);

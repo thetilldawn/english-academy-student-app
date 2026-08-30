@@ -7,8 +7,6 @@ import {
   listStudentDirectReviewDatasetSummaries,
 } from "@/lib/services/direct-review-candidate-service";
 
-export const dynamic = "force-dynamic";
-
 export async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> },

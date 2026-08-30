@@ -4,8 +4,6 @@ import { getAdminContext } from "@/lib/auth/admin";
 import { jsonError } from "@/lib/http";
 import { listStudentVocabAssignmentQueuePage } from "@/lib/services/vocab-assignment-queue-query";
 
-export const dynamic = "force-dynamic";
-
 const cursorSchema = z
   .object({
     beforeSeriesId: z.uuid().optional(),

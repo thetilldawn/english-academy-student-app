@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { AdminHistoryList } from "@/features/history/ui/admin-history-list";
 import { adminHistoryText } from "@/content/ko/admin-history";
@@ -8,7 +9,15 @@ export const metadata: Metadata = {
   title: adminHistoryText.page.title,
 };
 
-export default async function ResultsPage() {
+export default function ResultsPage() {
+  return (
+    <Suspense fallback={null}>
+      <ResultsContent />
+    </Suspense>
+  );
+}
+
+async function ResultsContent() {
   const snapshot = await listAdminHistoryInitial({ currentOnly: false });
 
   return (

@@ -1,10 +1,23 @@
 import { notFound, redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { EditableHistoryDetailDialog } from "@/features/history/ui/editable-history-detail-dialog";
 import { historyDetailHref } from "@/lib/admin/history-route";
 import { getAdminHistoryReadModelDetail } from "@/features/history/server/queries/admin-history-detail-query";
 
-export default async function InterceptedAdminResultDetailPage({
+export default function InterceptedAdminResultDetailPage({
+  params,
+}: {
+  params: Promise<{ entryKey: string }>;
+}) {
+  return (
+    <Suspense fallback={null}>
+      <InterceptedAdminResultDetailContent params={params} />
+    </Suspense>
+  );
+}
+
+async function InterceptedAdminResultDetailContent({
   params,
 }: {
   params: Promise<{ entryKey: string }>;

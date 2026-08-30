@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import {
   OverviewActionGroups,
@@ -10,7 +11,15 @@ export const metadata: Metadata = {
   title: adminOverviewText.page.title,
 };
 
-export default async function AdminDashboardPage() {
+export default function AdminDashboardPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminDashboardContent />
+    </Suspense>
+  );
+}
+
+async function AdminDashboardContent() {
   const snapshot = await listAdminHistoryInitial({ currentOnly: true });
   const titleByGroup = {
     open: adminOverviewText.sections.open,

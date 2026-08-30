@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { studentAppText } from "@/content/ko/student-app";
 import { QuizPlayer } from "@/features/quiz-player/ui/quiz-player";
@@ -14,7 +15,19 @@ export const metadata: Metadata = {
   title: studentAppText.attempt.metadataTitle,
 };
 
-export default async function AttemptPage({
+export default function AttemptPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  return (
+    <Suspense fallback={null}>
+      <AttemptContent params={params} />
+    </Suspense>
+  );
+}
+
+async function AttemptContent({
   params,
 }: {
   params: Promise<{ id: string }>;

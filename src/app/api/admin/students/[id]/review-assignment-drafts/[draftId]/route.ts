@@ -7,8 +7,6 @@ import {
   ReviewAssignmentDraftCancelError,
 } from "@/lib/services/review-assignment-service";
 
-export const dynamic = "force-dynamic";
-
 const privateNoStoreHeaders = {
   "Cache-Control": "private, no-store",
 };

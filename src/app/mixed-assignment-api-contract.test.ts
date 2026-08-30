@@ -16,7 +16,7 @@ describe("mixed assignment API contract", () => {
       "src/lib/admin/mixed-assignment-request.ts",
     );
 
-    expect(route).toContain('dynamic = "force-dynamic"');
+    expect(route).not.toContain('dynamic = "force-dynamic"');
     expect(route).toContain("isSameOriginRequest(request)");
     expect(route).toContain("getAdminContext()");
     expect(route).toContain(

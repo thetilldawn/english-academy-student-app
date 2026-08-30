@@ -1,9 +1,7 @@
 import { z } from "zod";
 
-import {
-  getAdminHistoryReadModelDetail,
-  projectAdminHistoryListItem,
-} from "@/features/history/public-server-queries";
+import { projectAdminHistoryListItem } from "@/features/history/public-server";
+import { getAdminHistoryReadModelDetail } from "@/features/history/public-server-queries";
 import { getAdminContext } from "@/lib/auth/admin";
 import {
   isSameOriginRequest,
@@ -30,8 +28,6 @@ const paramsSchema = z.object({
   assignmentId: z.uuid(),
   studentId: z.uuid(),
 });
-
-export const dynamic = "force-dynamic";
 
 function replacementErrorResponse(error: AssignmentReplacementError) {
   const status =

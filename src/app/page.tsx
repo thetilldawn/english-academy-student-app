@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { StudentLoginForm } from "@/components/student-login-form";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -7,9 +8,15 @@ import { studentAppText } from "@/content/ko/student-app";
 import styles from "@/design-system/patterns/auth/auth-layout.module.css";
 import { getStudentSession } from "@/lib/auth/student-session";
 
-export const dynamic = "force-dynamic";
+export default function HomePage() {
+  return (
+    <Suspense fallback={null}>
+      <HomePageContent />
+    </Suspense>
+  );
+}
 
-export default async function HomePage() {
+async function HomePageContent() {
   if (await getStudentSession()) {
     redirect("/student");
   }

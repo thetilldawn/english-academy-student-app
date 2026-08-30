@@ -6,8 +6,6 @@ import {
 } from "@/lib/services/mixed-assignment-service";
 import { mixedAssignmentSchema } from "@/lib/admin/mixed-assignment-request";
 
-export const dynamic = "force-dynamic";
-
 export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
     return jsonError("허용되지 않은 요청입니다.", 403);

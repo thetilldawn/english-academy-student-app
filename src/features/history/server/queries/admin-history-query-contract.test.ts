@@ -35,12 +35,14 @@ describe("admin history query boundaries", () => {
     const attemptQuery = source(
       "src/features/history/server/queries/admin-attempt-detail-query.ts",
     );
-    const publicServer = source("src/features/history/public-server.ts");
+    const publicServerQueries = source(
+      "src/features/history/public-server-queries.ts",
+    );
     const attemptRoute = source("src/app/api/admin/attempts/[id]/route.ts");
 
     expect(attemptQuery).toContain("getAttemptQuestionResults(attemptId)");
     expect(attemptQuery).toContain("deriveAttemptQuestionMetrics(questions)");
-    expect(publicServer).toContain(
+    expect(publicServerQueries).toContain(
       'from "./server/queries/admin-attempt-detail-query"',
     );
     expect(attemptRoute).toContain('from "@/features/history/public-server-queries"');

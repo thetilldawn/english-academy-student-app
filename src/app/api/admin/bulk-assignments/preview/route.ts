@@ -3,7 +3,6 @@ import { privateJsonError, isSameOriginRequest, parseJson } from "@/lib/http";
 import { previewBulkAssignments } from "@/features/assignments/server/use-cases/bulk-assignment-service";
 import { bulkAssignmentPreviewSchema } from "@/features/assignments/contracts/bulk-assignment-request";
 
-export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 export async function POST(request: Request) {

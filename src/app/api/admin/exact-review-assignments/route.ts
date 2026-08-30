@@ -6,8 +6,6 @@ import {
 import { privateJsonError, isSameOriginRequest, parseJson } from "@/lib/http";
 import { directReviewAssignmentSchema } from "@/lib/admin/direct-review-assignment-request";
 
-export const dynamic = "force-dynamic";
-
 export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
     return privateJsonError("허용되지 않은 요청입니다.", 403);

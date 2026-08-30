@@ -7,8 +7,8 @@ import { getPublicEnvironment } from "@/lib/env";
 import { adminAuthCookieOptions } from "@/lib/supabase/cookie-options";
 
 export async function createServerSupabaseClient() {
-  const environment = getPublicEnvironment();
   const cookieStore = await cookies();
+  const environment = getPublicEnvironment();
 
   return createServerClient(
     environment.NEXT_PUBLIC_SUPABASE_URL,

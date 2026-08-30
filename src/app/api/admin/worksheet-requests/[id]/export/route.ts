@@ -8,8 +8,6 @@ import {
   WrongWordWorksheetError,
 } from "@/lib/services/wrong-word-worksheet-service";
 
-export const dynamic = "force-dynamic";
-
 export async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> },

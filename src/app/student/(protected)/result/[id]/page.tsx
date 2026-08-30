@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { studentAppText } from "@/content/ko/student-app";
 import { StudentResultView } from "@/features/results/ui/student-result-view";
@@ -10,7 +11,19 @@ export const metadata: Metadata = {
   title: studentAppText.result.metadataTitle,
 };
 
-export default async function StudentResultPage({
+export default function StudentResultPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  return (
+    <Suspense fallback={null}>
+      <StudentResultContent params={params} />
+    </Suspense>
+  );
+}
+
+async function StudentResultContent({
   params,
 }: {
   params: Promise<{ id: string }>;

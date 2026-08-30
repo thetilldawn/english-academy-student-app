@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+
 import { AdminNavigation } from "@/components/admin-navigation";
 import { AdminRouteScreenReaderTitle } from "@/components/admin-route-screen-reader-title";
 import { AdminLogoutButton } from "@/components/admin-logout-button";
@@ -10,7 +12,21 @@ import { requireAdmin } from "@/lib/auth/admin";
 
 import shellStyles from "@/components/shell/app-shell.module.css";
 
-export default async function AdminProtectedLayout({
+export default function AdminProtectedLayout({
+  children,
+  detail,
+}: Readonly<{
+  children: React.ReactNode;
+  detail: React.ReactNode;
+}>) {
+  return (
+    <Suspense fallback={null}>
+      <AdminProtectedShell detail={detail}>{children}</AdminProtectedShell>
+    </Suspense>
+  );
+}
+
+async function AdminProtectedShell({
   children,
   detail,
 }: Readonly<{

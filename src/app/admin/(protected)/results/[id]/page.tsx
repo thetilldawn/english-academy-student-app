@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { EditableHistoryDetailPage } from "@/features/history/ui/editable-history-detail-page";
 import { getAdminHistoryReadModelDetail } from "@/features/history/server/queries/admin-history-detail-query";
@@ -10,7 +11,19 @@ export const metadata: Metadata = {
   title: adminHistoryText.resultDetail.metadataTitle,
 };
 
-export default async function AdminResultDetailPage({
+export default function AdminResultDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  return (
+    <Suspense fallback={null}>
+      <AdminResultDetailContent params={params} />
+    </Suspense>
+  );
+}
+
+async function AdminResultDetailContent({
   params,
 }: {
   params: Promise<{ id: string }>;

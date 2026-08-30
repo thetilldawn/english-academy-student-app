@@ -11,7 +11,15 @@ export const metadata: Metadata = {
   title: adminStudentsText.page.title,
 };
 
-export default async function StudentsPage() {
+export default function StudentsPage() {
+  return (
+    <Suspense fallback={null}>
+      <StudentsPageContent />
+    </Suspense>
+  );
+}
+
+async function StudentsPageContent() {
   await requireAdmin();
 
   return (

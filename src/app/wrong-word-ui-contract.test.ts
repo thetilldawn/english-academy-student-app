@@ -8,11 +8,11 @@ function source(filePath: string) {
 }
 
 describe("wrong-word admin UI contract", () => {
-  it("keeps personal history behind an authenticated dynamic endpoint", () => {
+  it("keeps personal history behind an authenticated private endpoint", () => {
     const route = source(
       "src/app/api/admin/students/[id]/wrong-words/route.ts",
     );
-    expect(route).toContain('export const dynamic = "force-dynamic"');
+    expect(route).not.toContain('export const dynamic = "force-dynamic"');
     expect(route).toContain("getAdminContext()");
     expect(route).toContain("z.uuid()");
     expect(route).toContain("getStudentWrongWordHistory(id, admin)");
@@ -50,11 +50,17 @@ describe("wrong-word admin UI contract", () => {
     const panel = source(
       "src/features/students/ui/panels/student-wrong-word-panel.tsx",
     );
-    const selection = source(
+    const selectionDomain = source(
       "src/features/students/domain/wrong-word-selection.ts",
+    );
+    const selectionController = source(
+      "src/features/students/controller/use-wrong-word-panel-selection.ts",
     );
     const actions = source(
       "src/features/students/controller/use-student-wrong-word-actions.ts",
+    );
+    const queueAction = source(
+      "src/features/students/controller/use-student-wrong-word-queue-action.ts",
     );
     const controls = source(
       "src/features/students/ui/panels/wrong-word-selection-controls.tsx",
@@ -67,15 +73,20 @@ describe("wrong-word admin UI contract", () => {
 
     expect(panel).toContain("async function queueSelectedWords()");
     expect(queueFunction).toContain("queueWords(");
-    expect(queueFunction).toContain("validSelectedQuestionIds,");
+    expect(queueFunction).toContain("selection.selectedQueuedIds,");
+    expect(queueFunction).toContain("selection.actions.clearQueuedSelection()");
     expect(queueFunction).toContain("refreshHistory()");
-    expect(queueFunction).not.toContain("worksheetSelectedQuestionIds");
+    expect(queueFunction).not.toContain("selectedWorksheetIds");
     expect(controls).toContain("copy.addToNextExam");
     expect(copy).toContain('addToNextExam: "다음 시험에 추가"');
-    expect(selection).toContain(
+    expect(selectionDomain).toContain(
       'target.scheduling !== "available"',
     );
-    expect(actions).toContain("queueStudentWrongWords(studentId, questionIds)");
+    expect(selectionController).toContain("selectedQueuedIds");
+    expect(selectionController).toContain(
+      "keepSelectableQuestionIds(queuedQuestionIds, selectableQueuedIds)",
+    );
+    expect(queueAction).toContain("queueStudentWrongWords(studentId, questionIds)");
     expect(actions).toContain("actionInFlightRef.current = true");
     expect(panel).not.toContain("createReviewAssignmentDraft(");
     expect(panel).not.toContain("router.push(");
@@ -93,6 +104,9 @@ describe("wrong-word admin UI contract", () => {
     );
     const actions = source(
       "src/features/students/controller/use-student-wrong-word-actions.ts",
+    );
+    const draftAction = source(
+      "src/features/students/controller/use-student-wrong-word-draft-action.ts",
     );
     const list = source(
       "src/features/students/ui/panels/wrong-word-list.tsx",
@@ -122,7 +136,11 @@ describe("wrong-word admin UI contract", () => {
       '"cancel_student_vocab_review_assignment_draft"',
     );
     expect(transport).toContain('{ method: "DELETE" }');
-    expect(actions).toContain("cancelStudentReviewDraft(studentId, draftId)");
+    expect(actions).toContain("useStudentWrongWordDraftAction");
+    expect(actions).toContain("...draft");
+    expect(draftAction).toContain("cancelStudentReviewDraft(studentId, draftId)");
+    expect(draftAction).toContain('payload.status !== "cancelled"');
+    expect(draftAction).toContain('payload.queueDisposition !== "pending"');
     expect(panel).toContain(
       "adminStudentsText.learning.wrongWordsPanel.cancelDraft",
     );
@@ -161,8 +179,11 @@ describe("wrong-word admin UI contract", () => {
     const loader = source(
       "src/features/students/controller/use-student-wrong-word-history.ts",
     );
-    const selection = source(
+    const selectionDomain = source(
       "src/features/students/domain/wrong-word-selection.ts",
+    );
+    const selectionController = source(
+      "src/features/students/controller/use-wrong-word-panel-selection.ts",
     );
     const filter = source(
       "src/features/students/ui/panels/wrong-word-filter-section.tsx",
@@ -191,7 +212,9 @@ describe("wrong-word admin UI contract", () => {
     expect(panel).toContain(
       "adminStudentsText.learning.wrongWordsPanel.refresh",
     );
-    expect(panel).toContain("useState(initialDatasetId)");
+    expect(panel).toContain("useWrongWordPanelSelection({");
+    expect(panel).toContain("initialDatasetId,");
+    expect(selectionController).toContain("useState(initialDatasetId)");
     expect(filter).toContain('["repeated", copy.repeated]');
     expect(list).toContain("<Checkbox");
     expect(list).toContain(
@@ -203,10 +226,10 @@ describe("wrong-word admin UI contract", () => {
     expect(list).toContain("copy.pending");
     expect(list).toContain("copy.assigned");
     expect(list).toContain("copy.resolved");
-    expect(selection).toContain(
+    expect(selectionDomain).toContain(
       "candidate.datasetId === datasetId",
     );
-    expect(selection).toContain(
+    expect(selectionDomain).toContain(
       "questionId: occurrence.latestQuestionId",
     );
     expect(transport).toContain('method: "POST"');
@@ -222,11 +245,17 @@ describe("wrong-word admin UI contract", () => {
       "src/features/students/ui/panels/student-wrong-word-panel.tsx",
     );
     const copy = source("src/content/ko/admin-students.ts");
-    const selection = source(
+    const selectionDomain = source(
       "src/features/students/domain/wrong-word-selection.ts",
+    );
+    const selectionController = source(
+      "src/features/students/controller/use-wrong-word-panel-selection.ts",
     );
     const actions = source(
       "src/features/students/controller/use-student-wrong-word-actions.ts",
+    );
+    const worksheetAction = source(
+      "src/features/students/controller/use-student-wrong-word-worksheet-action.ts",
     );
     const list = source(
       "src/features/students/ui/panels/wrong-word-list.tsx",
@@ -245,11 +274,12 @@ describe("wrong-word admin UI contract", () => {
       panel.indexOf("async function cancelReviewAssignmentDraft("),
     );
 
-    expect(selection).toContain(
+    expect(selectionDomain).toContain(
       'export type WrongWordSelectionPurpose = "next_exam" | "worksheet"',
     );
-    expect(panel).toContain("worksheetSelectedQuestionIds");
-    expect(panel).toContain("validWorksheetSelectedQuestionIds");
+    expect(selectionController).toContain("worksheetQuestionIds");
+    expect(selectionController).toContain("selectedWorksheetIds");
+    expect(selectionController).toContain("clearWorksheetSelection");
     expect(list).toContain("selectWorksheetWrongWordTarget(");
     expect(purpose).toContain("aria-label={copy.purposeAria}");
     expect(copy).toContain("한 번에 50개까지");
@@ -257,13 +287,14 @@ describe("wrong-word admin UI contract", () => {
       "adminStudentsText.learning.worksheetWrongWordHelp",
     );
     expect(worksheetFunction).toContain(
-      "questionIds: validWorksheetSelectedQuestionIds",
+      "questionIds: selection.selectedWorksheetIds",
     );
     expect(worksheetFunction).toContain("requestWorksheet({");
-    expect(actions).toContain("createStudentWorksheetRequest(studentId, input)");
+    expect(actions).toContain("useStudentWrongWordWorksheetAction");
+    expect(worksheetAction).toContain("createStudentWorksheetRequest(studentId, input)");
+    expect(worksheetFunction).toContain("selection.actions.clearWorksheetSelection()");
     expect(worksheetFunction).not.toContain("refreshHistory()");
-    expect(worksheetFunction).not.toContain("setSelectedQuestionIds(");
-    expect(requestRoute).toContain('export const dynamic = "force-dynamic"');
+    expect(requestRoute).not.toContain('export const dynamic = "force-dynamic"');
     expect(requestRoute).toContain("isSameOriginRequest(request)");
     expect(requestRoute).toContain("getAdminContext()");
     expect(requestRoute).toContain(
@@ -279,23 +310,28 @@ describe("wrong-word admin UI contract", () => {
     const panel = source(
       "src/features/students/ui/panels/student-wrong-word-panel.tsx",
     );
-    const selection = source(
+    const selectionDomain = source(
       "src/features/students/domain/wrong-word-selection.ts",
+    );
+    const selectionController = source(
+      "src/features/students/controller/use-wrong-word-panel-selection.ts",
     );
 
     expect(panel).not.toContain("type ViewMode");
     expect(panel).not.toContain("wrong-word-attempt-tab");
     expect(panel).not.toContain("wrong-word-attempt-panel");
     expect(panel).not.toContain("moveViewTabFocus");
-    expect(selection).toContain(
+    expect(selectionDomain).toContain(
       "new Set(selectableQuestionIds)",
     );
-    expect(panel).toContain(
-      "allVisibleSelected ? [] : selectableFilteredQuestionIds",
+    expect(selectionController).toContain(
+      "setQueuedQuestionIds(allVisibleSelected ? [] : selectableQueuedIds)",
     );
-    expect(panel).toContain("function resetSelectionFeedback()");
-    expect(panel).toContain("if (levelFilter === value)");
-    expect(panel.match(/resetSelectionFeedback\(\);/g)).toHaveLength(3);
+    expect(selectionController).toContain(
+      "setWorksheetQuestionIds(allVisibleSelected ? [] : selectableIds)",
+    );
+    expect(selectionController).toContain("if (current === value) return current");
+    expect(selectionController.match(/clearSelections\(\);/g)).toHaveLength(3);
   });
 
   it("pages all initial-wrong history without a fixed event ceiling", () => {

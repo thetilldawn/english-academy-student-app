@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { z } from "zod";
 
 import { Notice } from "@/design-system/patterns/feedback/feedback";
@@ -12,9 +13,24 @@ import { getReviewAssignmentDraftSummary } from "@/lib/services/review-assignmen
 export const metadata: Metadata = {
   title: adminLearningText.page.vocabularyTab,
 };
-export const dynamic = "force-dynamic";
+export default function AssignmentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    dataset?: string | string[];
+    reviewDraft?: string | string[];
+    student?: string | string[];
+    view?: string | string[];
+  }>;
+}) {
+  return (
+    <Suspense fallback={null}>
+      <AssignmentsPageContent searchParams={searchParams} />
+    </Suspense>
+  );
+}
 
-export default async function AssignmentsPage({
+async function AssignmentsPageContent({
   searchParams,
 }: {
   searchParams: Promise<{
