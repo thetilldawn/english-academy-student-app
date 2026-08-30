@@ -34,6 +34,8 @@ describe("R6 부분 갱신 DB 계약", () => {
 
   it("학생 프로필은 전용 버전 조건부 저장과 감사 기록을 한 함수에 둔다", () => {
     expect(profile).toContain("add column profile_updated_at timestamptz");
+    expect(profile).toContain("default clock_timestamp()");
+    expect(profile).not.toMatch(/update\s+public\.students\s+set\s+profile_updated_at/iu);
     expect(profile).toContain(
       "and student.profile_updated_at = p_base_version",
     );

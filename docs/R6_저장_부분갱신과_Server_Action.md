@@ -96,7 +96,8 @@ DB 문장 스냅샷에서 받는다. 저장 충돌 409는 최신 프로필을 �
 
 ## 9. 2026-08-31 로컬 검증과 Preview 적용 대기
 
-- 전체 검사: 337파일·1,779테스트 통과
+- 전체 검사: 337파일·1,780테스트 통과
+- 프로필 열 안전 초기화 집중 검사: 2파일·7테스트 통과(삭제 학생·기존 `updated_at` 보존 포함)
 - 구조 검사: 4파일·64테스트 통과
 - lint·typecheck·기능 지도·변경 형식 검사 통과
 - Next.js 16.2.12 build: Preview ref `wojxpruvbjzbhrpmsbuy`를 고정한 공개 검증값으로 21개 정적
@@ -110,10 +111,16 @@ DB 문장 스냅샷에서 받는다. 저장 충돌 409는 최신 프로필을 �
 - `20260831100000_return_admin_history_hidden_version.sql` —
   `C0907D83DABF42895BF31166E32966586079F330EC92AD3D6C641F25A1BDB395`
 - `20260831101000_add_student_profile_version_command.sql` —
-  `B453CD8013F49216DD5B11532CDF01281B49F98D479B086B9DD228918EC1786D`
+  `FD52F9467B9BB38FE5341859B5F69F8CE53562058D196851D7F562629DB87498`
 - `20260831102000_add_atomic_vocab_queue_resolution.sql` —
   `9CAA5BE9FE4A32C3E20F53FF8A30A63F18FBF0D613210DCBD33CD8DA7AE73014`
 
 세 migration은 아직 Preview에 적용하지 않았다. `SECURITY DEFINER` 함수와 `authenticated` 실행 권한을
 추가하므로 정확한 권한 범위에 대한 사용자 명시 승인 뒤 한 건씩 적용한다. `db push`는 사용하지 않으며,
 적용 뒤 함수 본문·권한·migration 이력·위 지문 불변을 다시 읽고 나서만 코드 push와 Preview 검증을 한다.
+
+첫 적용 시도는 명시 승인 문구 부족으로 안전 검토에서 차단되어 DB 변경이 없었다. 그 뒤 독립 SQL 감사에서
+학생 전체 행을 `UPDATE`하던 초기 백필이 기존 `updated_at` 트리거를 실행하고 삭제 학생 불변성 트리거와
+충돌할 수 있음을 찾았다. Preview에는 삭제 학생이 실제 6명 있어 기존 SQL은 적용 시 전체가 되돌아갈
+상태였다. 따라서 새 열은 `ALTER TABLE ... DEFAULT clock_timestamp() NOT NULL`로 추가해 기존
+행의 다른 열이나 사용자 `UPDATE` 트리거를 건드리지 않도록 고쳤고 위 SHA-256을 새 기준으로 삼는다.

@@ -1,14 +1,9 @@
 begin;
 
 alter table public.students
-  add column profile_updated_at timestamptz;
-
-update public.students
-set profile_updated_at = updated_at;
-
-alter table public.students
-  alter column profile_updated_at set default clock_timestamp(),
-  alter column profile_updated_at set not null;
+  add column profile_updated_at timestamptz
+  default clock_timestamp()
+  not null;
 
 create function private.get_admin_student_profile_v1(
   p_student_id uuid

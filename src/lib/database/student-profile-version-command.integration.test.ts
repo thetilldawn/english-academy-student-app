@@ -11,6 +11,7 @@ const migration = fs.readFileSync(
   "utf8",
 );
 const studentId = "00000000-0000-4000-8000-000000000001";
+const deletedStudentId = "00000000-0000-4000-8000-000000000002";
 
 describe("student profile optimistic command SQL", () => {
   let database: PGlite;
@@ -43,6 +44,28 @@ describe("student profile optimistic command SQL", () => {
         student_id uuid,
         details jsonb
       );
+      create function private.set_updated_at()
+      returns trigger language plpgsql as $$
+      begin
+        new.updated_at = clock_timestamp();
+        return new;
+      end
+      $$;
+      create trigger students_set_updated_at
+      before update on public.students
+      for each row execute function private.set_updated_at();
+      create function private.prevent_deleted_student_reactivation()
+      returns trigger language plpgsql as $$
+      begin
+        if old.deleted_at is not null and new is distinct from old then
+          raise exception 'deleted_student_is_immutable';
+        end if;
+        return new;
+      end
+      $$;
+      create trigger students_prevent_deleted_reactivation
+      before update on public.students
+      for each row execute function private.prevent_deleted_student_reactivation();
       create function public.get_admin_student_detail_initial_v1(
         p_student_id uuid,
         p_snapshot_at timestamptz default null
@@ -65,11 +88,39 @@ describe("student profile optimistic command SQL", () => {
         '${studentId}', '학생 A', '미리보기고', '고3',
         '2026-08-31T00:00:00.000Z'
       );
+      insert into public.students (
+        id, display_name, school_name, grade_label, updated_at, deleted_at
+      ) values (
+        '${deletedStudentId}', '삭제 학생', '미리보기고', '고3',
+        '2026-08-01T00:00:00.000Z', '2026-08-15T00:00:00.000Z'
+      );
     `);
     await database.exec(migration);
   });
 
   afterAll(async () => database?.close());
+
+  it("adds initial profile versions without updating existing or deleted rows", async () => {
+    const result = await database.query<{
+      activeUnchanged: boolean;
+      deletedUnchanged: boolean;
+      profilesInitialized: boolean;
+    }>(`
+      select
+        (select updated_at = '2026-08-31T00:00:00.000Z'::timestamptz
+         from public.students where id = '${studentId}') as "activeUnchanged",
+        (select updated_at = '2026-08-01T00:00:00.000Z'::timestamptz
+         from public.students where id = '${deletedStudentId}') as "deletedUnchanged",
+        not exists (
+          select 1 from public.students where profile_updated_at is null
+        ) as "profilesInitialized"
+    `);
+    expect(result.rows[0]).toStrictEqual({
+      activeUnchanged: true,
+      deletedUnchanged: true,
+      profilesInitialized: true,
+    });
+  });
 
   it("rejects a reused base version and keeps versions monotonic", async () => {
     const firstProfile = await database.query<{ profile: { updatedAt: string } }>(`
