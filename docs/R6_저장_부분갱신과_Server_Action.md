@@ -94,7 +94,7 @@ DB 문장 스냅샷에서 받는다. 저장 충돌 409는 최신 프로필을 �
 초안은 그대로 둔다. 첫 페이지를 새로 읽기 시작하면 이전 스냅샷 커서를 즉시 폐기하므로 갱신 실패 뒤
 오래된 더보기를 붙일 수 없다.
 
-## 9. 2026-08-31 로컬 검증과 Preview 적용 대기
+## 9. 2026-08-31 로컬 검증과 Preview DB 적용
 
 - 전체 검사: 337파일·1,780테스트 통과
 - 프로필 열 안전 초기화 집중 검사: 2파일·7테스트 통과(삭제 학생·기존 `updated_at` 보존 포함)
@@ -106,7 +106,7 @@ DB 문장 스냅샷에서 받는다. 저장 충돌 409는 최신 프로필을 �
 - Preview 적용 전 지문: 학생 35, 시험 125, 학생 배정 124, 문항 4,790, 오답 배정 요청 2,
   단어 시험 series 35
 
-적용 대기 migration과 SHA-256:
+적용 migration과 SHA-256:
 
 - `20260831100000_return_admin_history_hidden_version.sql` —
   `C0907D83DABF42895BF31166E32966586079F330EC92AD3D6C641F25A1BDB395`
@@ -115,12 +115,31 @@ DB 문장 스냅샷에서 받는다. 저장 충돌 409는 최신 프로필을 �
 - `20260831102000_add_atomic_vocab_queue_resolution.sql` —
   `9CAA5BE9FE4A32C3E20F53FF8A30A63F18FBF0D613210DCBD33CD8DA7AE73014`
 
-세 migration은 아직 Preview에 적용하지 않았다. `SECURITY DEFINER` 함수와 `authenticated` 실행 권한을
-추가하므로 정확한 권한 범위에 대한 사용자 명시 승인 뒤 한 건씩 적용한다. `db push`는 사용하지 않으며,
-적용 뒤 함수 본문·권한·migration 이력·위 지문 불변을 다시 읽고 나서만 코드 push와 Preview 검증을 한다.
-
 첫 적용 시도는 명시 승인 문구 부족으로 안전 검토에서 차단되어 DB 변경이 없었다. 그 뒤 독립 SQL 감사에서
 학생 전체 행을 `UPDATE`하던 초기 백필이 기존 `updated_at` 트리거를 실행하고 삭제 학생 불변성 트리거와
 충돌할 수 있음을 찾았다. Preview에는 삭제 학생이 실제 6명 있어 기존 SQL은 적용 시 전체가 되돌아갈
 상태였다. 따라서 새 열은 `ALTER TABLE ... DEFAULT clock_timestamp() NOT NULL`로 추가해 기존
 행의 다른 열이나 사용자 `UPDATE` 트리거를 건드리지 않도록 고쳤고 위 SHA-256을 새 기준으로 삼는다.
+
+사용자가 세 건의 Preview 적용을 명시 승인한 뒤 `db push` 없이 한 건씩 적용했다. 원격 이력은 다음과 같다.
+
+- `20260830171251 return_admin_history_hidden_version`
+- `20260830171304 add_student_profile_version_command`
+- `20260830171317 add_atomic_vocab_queue_resolution`
+
+원격 함수 10개를 본문까지 다시 읽었다. 모두 owner `postgres`, `SECURITY DEFINER`, 빈 `search_path`이며,
+private 함수는 `PUBLIC`, `anon`, `authenticated`, `service_role` 실행이 닫혀 있다. public 함수는
+`PUBLIC`, `anon`, `service_role`이 닫혀 있고 `authenticated`만 실행할 수 있으며 함수 안의 활성 관리자
+검사도 유지됐다.
+`profile_updated_at`은 `timestamptz`, `NOT NULL`, 기본값 `clock_timestamp()`, null·비유한 값 0건이다.
+적용 뒤 핵심 지문은 35/125/124/4,790/2/35로 적용 전과 같다.
+
+가짜 학생 `[E2E] 단일 단위 20260822-01`에 표시값이 같은 저장을 한 번 실행했다. 첫 긴 검증 호출은 연결
+유실 뒤 최신 상태를 다시 읽어 미커밋을 확인하고 자동 반복하지 않았다. 짧은 명령으로 다시 저장해 DB 버전
+증가, 상세 읽기 모델과 버전 일치, 옛 버전 재사용의 `40001` 충돌, 감사 기록 정확히 1건을 확인했다.
+관리자 이력 숨김과 큐 처리는 기존 자료를 바꾸므로 실제 Preview 자료에는 호출하지 않았다.
+
+보안 advisor의 이번 함수 관련 경고 5건은 `authenticated`가 public `SECURITY DEFINER` 진입점을 호출할 수
+있다는 [항목](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable)이다.
+이는 private 구현을 외부에 열지 않고 public 진입점 내부에서 활성 관리자를 검사하기 위한 의도된 경계다.
+성능 advisor에는 이번 변경 관련 항목이 없다. 다음 단계는 코드 push, Vercel Preview와 실제 화면 확인이다.
