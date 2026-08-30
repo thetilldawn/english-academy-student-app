@@ -2,6 +2,8 @@ import { Suspense } from "react";
 
 import { StudentShell } from "@/components/student-shell";
 import { NotificationBootstrap } from "@/components/notification-bootstrap";
+import { studentAppText } from "@/content/ko/student-app";
+import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import { StudentSessionRenewal } from "@/features/session/ui/student-session-renewal";
 import {
   getStudentSession,
@@ -13,7 +15,14 @@ export default function StudentProtectedLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={(
+        <RouteLoadingState
+          label={studentAppText.login.loading}
+          variant="shell"
+        />
+      )}
+    >
       <StudentProtectedShell>{children}</StudentProtectedShell>
     </Suspense>
   );

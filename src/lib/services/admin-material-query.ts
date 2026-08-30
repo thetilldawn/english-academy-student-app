@@ -33,12 +33,6 @@ export type AdminMaterialSnapshot = {
   selectableDatasets: DatasetOption[];
 };
 
-export type SerializableAdminMaterialSnapshot = {
-  allDatasets: DatasetSummary[];
-  datasetLabels: Array<readonly [string, string]>;
-  selectableDatasets: DatasetOption[];
-};
-
 function catalogMetadata(catalog: DatasetCatalogRow | undefined) {
   return catalog
     ? {
@@ -128,24 +122,4 @@ export async function loadAdminMaterialSnapshot(
     (datasetResult.data ?? []) as DatasetSummaryRow[],
     catalogResult.rows,
   );
-}
-
-export function serializeAdminMaterialSnapshot(
-  snapshot: AdminMaterialSnapshot,
-): SerializableAdminMaterialSnapshot {
-  return {
-    allDatasets: snapshot.allDatasets,
-    datasetLabels: [...snapshot.datasetLabelById.entries()],
-    selectableDatasets: snapshot.selectableDatasets,
-  };
-}
-
-export function hydrateAdminMaterialSnapshot(
-  snapshot: SerializableAdminMaterialSnapshot,
-): AdminMaterialSnapshot {
-  return {
-    allDatasets: snapshot.allDatasets,
-    datasetLabelById: new Map(snapshot.datasetLabels),
-    selectableDatasets: snapshot.selectableDatasets,
-  };
 }

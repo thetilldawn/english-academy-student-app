@@ -7,9 +7,10 @@ import {
   FilterWorkspace,
   FilterWorkspaceGroup,
 } from "@/design-system/patterns/filter-workspace/filter-workspace";
-import type { StudentDirectoryWrongFilter } from "@/features/students/public-contracts";
-
-import type { AssignmentWorkspaceController } from "../controller/use-assignment-workspace";
+import type {
+  StudentDirectoryFilters,
+  StudentDirectoryWrongFilter,
+} from "@/features/students/public-contracts";
 
 const wrongFilters: ReadonlyArray<
   readonly [StudentDirectoryWrongFilter, string]
@@ -25,11 +26,29 @@ function toggleValue(current: string, next: string) {
 }
 
 export function AssignmentWorkspaceFilters({
-  controller,
+  classGroupOptions,
+  filters,
+  gradeOptions,
+  onClearSearch,
+  onResetFilters,
+  onSetFilter,
+  schoolOptions,
+  totalCount,
+  wordbookOptions,
 }: {
-  controller: AssignmentWorkspaceController;
+  classGroupOptions: readonly { label: string; value: string }[];
+  filters: StudentDirectoryFilters;
+  gradeOptions: readonly string[];
+  onClearSearch: () => void;
+  onResetFilters: () => void;
+  onSetFilter: <Key extends keyof StudentDirectoryFilters>(
+    key: Key,
+    value: StudentDirectoryFilters[Key],
+  ) => void;
+  schoolOptions: readonly string[];
+  totalCount: number;
+  wordbookOptions: readonly string[];
 }) {
-  const { actions, filters } = controller;
   const activeCount = [
     filters.school,
     filters.grade,
@@ -49,7 +68,7 @@ export function AssignmentWorkspaceFilters({
           {filters.wordbook ? <MetaTag>{filters.wordbook}</MetaTag> : null}
           {filters.classGroupId ? (
             <MetaTag>
-              {controller.classGroupOptions.find(
+              {classGroupOptions.find(
                 (option) => option.value === filters.classGroupId,
               )?.label ?? commonText.filters.byClassGroup}
             </MetaTag>
@@ -69,7 +88,7 @@ export function AssignmentWorkspaceFilters({
         </MetaTagList>
       )}
       filterLabel={adminLearningText.page.filterButton}
-      onQueryChange={(query) => actions.setFilter("query", query)}
+      onQueryChange={(query) => onSetFilter("query", query)}
       query={filters.query}
       searchAriaLabel={adminLearningText.page.searchAriaLabel}
       searchPlaceholder={adminLearningText.page.searchPlaceholder}
@@ -77,12 +96,12 @@ export function AssignmentWorkspaceFilters({
         <>
           <strong>
             {formatContentText(commonText.filters.studentCount, {
-              count: controller.directory.snapshot.totalCount,
+              count: totalCount,
             })}
           </strong>
           <Button
             disabled={filters.query.trim().length === 0}
-            onClick={actions.clearSearch}
+            onClick={onClearSearch}
             size="small"
             variant="quiet"
           >
@@ -90,7 +109,7 @@ export function AssignmentWorkspaceFilters({
           </Button>
           <Button
             disabled={activeCount === 0}
-            onClick={actions.resetFilters}
+            onClick={onResetFilters}
             size="small"
             variant="quiet"
           >
@@ -102,7 +121,7 @@ export function AssignmentWorkspaceFilters({
       <FilterWorkspaceGroup label={commonText.filters.byStatus}>
         <Button
           aria-pressed={filters.status === "active"}
-          onClick={() => actions.setFilter("status", "active")}
+          onClick={() => onSetFilter("status", "active")}
           size="small"
           variant="filter"
         >
@@ -110,7 +129,7 @@ export function AssignmentWorkspaceFilters({
         </Button>
         <Button
           aria-pressed={filters.status === "blocked"}
-          onClick={() => actions.setFilter("status", "blocked")}
+          onClick={() => onSetFilter("status", "blocked")}
           size="small"
           variant="filter"
         >
@@ -123,7 +142,7 @@ export function AssignmentWorkspaceFilters({
           <Button
             aria-pressed={filters.wrong === value}
             key={value}
-            onClick={() => actions.setFilter("wrong", value)}
+            onClick={() => onSetFilter("wrong", value)}
             size="small"
             variant="filter"
           >
@@ -135,36 +154,36 @@ export function AssignmentWorkspaceFilters({
       <FilterGroup
         label={commonText.filters.bySchool}
         onChange={(value) =>
-          actions.setFilter("school", toggleValue(filters.school, value))
+          onSetFilter("school", toggleValue(filters.school, value))
         }
-        options={controller.schoolOptions}
+        options={schoolOptions}
         value={filters.school}
       />
       <IdFilterGroup
         label={commonText.filters.byClassGroup}
         onChange={(value) =>
-          actions.setFilter(
+          onSetFilter(
             "classGroupId",
             toggleValue(filters.classGroupId, value),
           )
         }
-        options={controller.classGroupOptions}
+        options={classGroupOptions}
         value={filters.classGroupId}
       />
       <FilterGroup
         label={commonText.filters.byGrade}
         onChange={(value) =>
-          actions.setFilter("grade", toggleValue(filters.grade, value))
+          onSetFilter("grade", toggleValue(filters.grade, value))
         }
-        options={controller.gradeOptions}
+        options={gradeOptions}
         value={filters.grade}
       />
       <FilterGroup
         label={commonText.filters.byWordbook}
         onChange={(value) =>
-          actions.setFilter("wordbook", toggleValue(filters.wordbook, value))
+          onSetFilter("wordbook", toggleValue(filters.wordbook, value))
         }
-        options={controller.wordbookOptions}
+        options={wordbookOptions}
         value={filters.wordbook}
       />
     </FilterWorkspace>

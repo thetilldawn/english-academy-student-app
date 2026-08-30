@@ -8,6 +8,7 @@ import { NavigationExitGuardProvider } from "@/components/navigation-exit-guard"
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationBootstrap } from "@/components/notification-bootstrap";
 import { adminShellText } from "@/content/ko/admin-shell";
+import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import { requireAdmin } from "@/lib/auth/admin";
 
 import shellStyles from "@/components/shell/app-shell.module.css";
@@ -20,7 +21,14 @@ export default function AdminProtectedLayout({
   detail: React.ReactNode;
 }>) {
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={(
+        <RouteLoadingState
+          label={adminShellText.loading}
+          variant="shell"
+        />
+      )}
+    >
       <AdminProtectedShell detail={detail}>{children}</AdminProtectedShell>
     </Suspense>
   );

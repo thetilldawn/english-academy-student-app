@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { studentAppText } from "@/content/ko/student-app";
+import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import { QuizPlayer } from "@/features/quiz-player/ui/quiz-player";
 import { requireStudentSession } from "@/lib/auth/student-session";
 import {
@@ -21,7 +22,7 @@ export default function AttemptPage({
   params: Promise<{ id: string }>;
 }) {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<RouteLoadingState label={studentAppText.login.loading} />}>
       <AttemptContent params={params} />
     </Suspense>
   );

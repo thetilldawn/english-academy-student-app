@@ -16,16 +16,20 @@ import { assignmentUnitRangeLabel } from "../presentation/assignment-unit-range-
 import styles from "./single-assignment-editor.module.css";
 
 export function AssignmentSummaryPanel({
-  controller,
+  baselineDraft,
   datasets,
+  draft,
+  issues,
+  preview,
   units,
 }: {
-  controller: SingleAssignmentController;
+  baselineDraft: SingleAssignmentController["baselineDraft"];
   datasets: readonly AssignmentDatasetItem[];
+  draft: SingleAssignmentController["state"]["draft"];
+  issues: SingleAssignmentController["issues"];
+  preview: SingleAssignmentController["state"]["preview"];
   units: readonly AssignmentUnitItem[];
 }) {
-  const { state } = controller;
-  const { draft, preview } = state;
   const dataset = datasets.find(
     (candidate) => candidate.id === draft.range.datasetId,
   );
@@ -52,7 +56,7 @@ export function AssignmentSummaryPanel({
         )
       : null;
   const previewError = preview.status === "error" ? preview.message : "";
-  const unmappedIssues = controller.issues.filter(
+  const unmappedIssues = issues.filter(
     (issue) => assignmentEditFieldKeyForPath(issue.path) === null,
   );
 
@@ -117,8 +121,9 @@ export function AssignmentSummaryPanel({
         </div>
       </dl>
       <AssignmentEditComparison
-        controller={controller}
+        baseline={baselineDraft}
         datasets={datasets}
+        draft={draft}
         units={units}
       />
       {preview.status === "loading" ? (

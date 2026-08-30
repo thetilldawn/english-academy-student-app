@@ -481,6 +481,10 @@
       "owner": "students"
     },
     {
+      "path": "src/app/student/(protected)/loading.tsx",
+      "owner": "app-shell"
+    },
+    {
       "path": "src/app/error.tsx",
       "owner": "app-shell"
     },
@@ -609,10 +613,6 @@
       "owner": "history"
     },
     {
-      "path": "src/app/api/admin/material-cache/revalidate/route.test.ts",
-      "owner": "assignments"
-    },
-    {
       "path": "src/app/api/admin/mixed-assignments/route.test.ts",
       "owner": "assignments"
     },
@@ -717,10 +717,6 @@
     {
       "path": "src/app/api/admin/history/route.ts",
       "owner": "history"
-    },
-    {
-      "path": "src/app/api/admin/material-cache/revalidate/route.ts",
-      "owner": "assignments"
     },
     {
       "path": "src/app/api/admin/mixed-assignments/route.ts",
@@ -874,13 +870,6 @@
     },
     {
       "path": "src/lib/services/admin-material-query.ts",
-      "owner": "assignments",
-      "consumers": [
-        "students"
-      ]
-    },
-    {
-      "path": "src/lib/services/shared-vocab-material-cache.ts",
       "owner": "assignments",
       "consumers": [
         "students"
@@ -1329,6 +1318,14 @@
   ],
   "designSystemOwners": [
     {
+      "path": "src/design-system/patterns/audio-button/audio-button.module.css",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/audio-button/audio-button.tsx",
+      "owner": "shared-ui"
+    },
+    {
       "path": "src/design-system/patterns/action-reason/action-reason.module.css",
       "owner": "shared-ui"
     },
@@ -1398,6 +1395,14 @@
     },
     {
       "path": "src/design-system/patterns/route-detail-dialog/route-detail-dialog.tsx",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/route-state/route-state.module.css",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/route-state/route-state.tsx",
       "owner": "shared-ui"
     },
     {
@@ -1586,6 +1591,12 @@
     }
   ],
   "libInfrastructureRoots": [
+    {
+      "path": "src/lib/audio",
+      "owner": "shared-ui",
+      "fileCount": 2,
+      "pathSetSha256": "6dc14097c7788bd8fafd4c02c461a1803d50442047b6d20fd6f60cfee7f24074"
+    },
     {
       "path": "src/lib/auth",
       "owner": "auth",
@@ -2076,15 +2087,15 @@
     },
     {
       "from": "src/features/history/ui/admin-history-detail.tsx",
-      "to": "src/features/learning-points/ui/point-summary.tsx",
+      "to": "src/features/learning-points/public-ui.ts",
       "reason": "관리자 상세의 포인트 표시",
-      "removeIn": "R7 공개 UI 진입점"
+      "removeIn": "공개 진입점으로 고정"
     },
     {
       "from": "src/features/history/ui/admin-history-detail.tsx",
-      "to": "src/features/results/ui/attempt-question-card.tsx",
+      "to": "src/features/results/public-ui.ts",
       "reason": "관리자 상세의 문항 표시",
-      "removeIn": "R7 공개 UI 진입점"
+      "removeIn": "공개 진입점으로 고정"
     },
     {
       "from": "src/features/history/ui/editable-history-detail-dialog.tsx",
@@ -2105,22 +2116,10 @@
       "removeIn": "R5 공개 계약 진입점"
     },
     {
-      "from": "src/features/results/ui/result-audio-provider.tsx",
-      "to": "src/features/quiz-player/controller/quiz-audio-player.ts",
-      "reason": "결과 화면의 단일 음원 재생 제어 공유",
-      "removeIn": "R7 공용 음원 controller 분리"
-    },
-    {
-      "from": "src/features/results/ui/result-pronunciation.tsx",
-      "to": "src/features/quiz-player/ui/audio-button.tsx",
-      "reason": "결과 화면의 공용 발음 재생",
-      "removeIn": "R7 design-system 패턴 분리"
-    },
-    {
       "from": "src/features/results/ui/student-result-view.tsx",
-      "to": "src/features/learning-points/ui/point-summary.tsx",
+      "to": "src/features/learning-points/public-ui.ts",
       "reason": "학생 결과의 포인트 표시",
-      "removeIn": "R7 공개 UI 진입점"
+      "removeIn": "공개 진입점으로 고정"
     },
     {
       "from": "src/features/student-dashboard/domain/student-assignment-sections.ts",
@@ -2138,67 +2137,67 @@
       "from": "src/features/student-dashboard/ui/student-assignment-card.tsx",
       "to": "src/features/history/public-ui.ts",
       "reason": "학생 메인의 시험 상태 표시",
-      "removeIn": "R7 공용 패턴 분리"
+      "removeIn": "공개 진입점으로 고정"
     },
     {
       "from": "src/features/student-dashboard/ui/student-dashboard.tsx",
-      "to": "src/features/learning-points/ui/point-summary.tsx",
+      "to": "src/features/learning-points/public-ui.ts",
       "reason": "학생 메인의 포인트 표시",
-      "removeIn": "R7 공개 UI 진입점"
+      "removeIn": "공개 진입점으로 고정"
     },
     {
       "from": "src/features/students/contracts/student-detail-read-model.ts",
       "to": "src/features/history/public-contracts.ts",
       "reason": "학생 상세 초기 이력의 공개 읽기 계약",
-      "removeIn": "R7 공개 진입점 정리"
+      "removeIn": "공개 진입점으로 고정"
     },
     {
       "from": "src/features/students/server/queries/student-detail-query.ts",
       "to": "src/features/history/public-server.ts",
       "reason": "학생 상세 초기 이력 DB 행 검증",
-      "removeIn": "R7 공개 진입점 정리"
+      "removeIn": "공개 진입점으로 고정"
     },
     {
       "from": "src/features/students/server/queries/student-detail-row-schema.ts",
       "to": "src/features/history/public-server.ts",
       "reason": "학생 상세 복합 응답의 이력 행 검증",
-      "removeIn": "R7 공개 진입점 정리"
+      "removeIn": "공개 진입점으로 고정"
     },
     {
       "from": "src/features/students/server/queries/student-history-query.ts",
       "to": "src/features/history/public-server.ts",
       "reason": "학생 이력 다음 페이지 DB 행 검증",
-      "removeIn": "R7 공개 진입점 정리"
+      "removeIn": "공개 진입점으로 고정"
     },
     {
       "from": "src/features/students/server/queries/student-history-row-schema.ts",
       "to": "src/features/history/public-server.ts",
       "reason": "학생 이력 응답의 공통 행 검증",
-      "removeIn": "R7 공개 진입점 정리"
+      "removeIn": "공개 진입점으로 고정"
     },
     {
       "from": "src/features/students/ui/panels/student-history-panel.tsx",
-      "to": "src/features/assignment-queue/ui/student-assignment-queue-history.tsx",
+      "to": "src/features/assignment-queue/public-ui.ts",
       "reason": "학생 상세의 이어지는 배정 내역",
-      "removeIn": "R7 공개 UI 진입점"
+      "removeIn": "공개 진입점으로 고정"
     },
     {
       "from": "src/features/students/ui/panels/student-info-panel.tsx",
-      "to": "src/features/learning-points/ui/point-summary.tsx",
+      "to": "src/features/learning-points/public-ui.ts",
       "reason": "학생 상세의 포인트 표시",
-      "removeIn": "R7 공개 UI 진입점"
+      "removeIn": "공개 진입점으로 고정"
     },
     {
       "from": "src/features/students/ui/panels/student-learning-history.tsx",
       "to": "src/features/history/public-ui.ts",
       "reason": "학생 상세의 공용 학습 이력 목록 표시",
-      "removeIn": "R7 공개 진입점 정리"
+      "removeIn": "공개 진입점으로 고정"
     },
     {
       "from": "src/features/students/ui/student-directory-card.tsx",
-      "to": "src/features/learning-points/presentation/point-presentation.ts",
+      "to": "src/features/learning-points/public-presentation.ts",
       "reason": "학생 목록의 포인트 문구 표시",
-      "removeIn": "R5 공개 표시 계약 진입점"
+      "removeIn": "공개 진입점으로 고정"
     }
   ],
   "currentLibToFeatureImports": [
@@ -3949,7 +3948,6 @@
           "src/app/admin/(protected)/students/page.tsx",
           "src/app/admin/(protected)/students/[studentId]/page.tsx",
           "src/app/admin/(protected)/@detail/(.)students/[studentId]/page.tsx",
-          "src/app/api/admin/material-cache/revalidate/route.ts",
           "src/app/api/admin/students/directory/route.ts",
           "src/app/api/admin/students/[id]/history/route.ts",
           "src/app/api/admin/students/[id]/route.ts"
@@ -4022,10 +4020,8 @@
         ],
         "server": [
           "src/features/history/public-server.ts",
-          "src/app/api/admin/material-cache/revalidate/route.ts",
           "src/lib/services/admin-material-query.ts",
           "src/lib/services/admin-material-read-service.ts",
-          "src/lib/services/shared-vocab-material-cache.ts",
           "src/features/students/server/actions/update-student-profile-action.ts",
           "src/features/students/server/components/student-create-content.tsx",
           "src/features/students/server/components/student-detail-route-content.tsx",
@@ -4051,8 +4047,6 @@
           "src/app/admin/(protected)/students/[studentId]/loading.tsx",
           "src/app/admin/(protected)/@detail/(.)students/[studentId]/page.tsx",
           "src/app/admin/(protected)/@detail/(.)students/[studentId]/loading.tsx",
-          "src/app/api/admin/material-cache/revalidate/route.ts",
-          "src/lib/services/shared-vocab-material-cache.ts",
           "src/app/api/admin/students/directory/route.ts",
           "src/app/api/admin/students/[id]/history/route.ts"
         ],
@@ -4077,8 +4071,6 @@
           "src/lib/database/admin-student-directory-read-model.integration.test.ts",
           "src/lib/database/student-profile-version-command.integration.test.ts",
           "src/lib/services/admin-material-request-cache.test.ts",
-          "src/lib/services/shared-vocab-material-cache.test.ts",
-          "src/app/api/admin/material-cache/revalidate/route.test.ts",
           "src/lib/services/admin-wrong-summary-query-contract.test.ts"
         ]
       },
@@ -4304,6 +4296,7 @@
           "src/features/assignments/ui/bulk-preview-session-list.tsx",
           "src/features/assignment-queue/ui/assignment-queue-history.tsx",
           "src/features/assignment-queue/ui/assignment-queue-tags.tsx",
+          "src/features/assignment-queue/public-ui.ts",
           "src/features/assignment-queue/ui/student-assignment-queue-history.tsx",
           "src/features/students/ui/student-detail-dialog.tsx",
           "src/features/students/ui/panels/student-history-panel.tsx",
@@ -4480,7 +4473,7 @@
         },
         {
           "from": "src/features/students/ui/panels/student-history-panel.tsx",
-          "to": "src/features/assignment-queue/ui/student-assignment-queue-history.tsx",
+          "to": "src/features/assignment-queue/public-ui.ts",
           "reason": "학생 내역에서 남은 회차와 배정된 시험을 표시함"
         },
         {
@@ -4636,7 +4629,7 @@
           "src/features/quiz-player/ui/quiz-player.tsx",
           "src/features/quiz-player/ui/quiz-frame.tsx",
           "src/features/quiz-player/ui/quiz-choice.tsx",
-          "src/features/quiz-player/ui/audio-button.tsx",
+          "src/design-system/patterns/audio-button/audio-button.tsx",
           "src/features/quiz-player/ui/quiz-timeout-overlay.tsx",
           "src/features/quiz-player/ui/quiz-synchronization-error.tsx",
           "src/components/pronunciation-text.tsx"

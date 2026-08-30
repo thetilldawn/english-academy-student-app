@@ -82,8 +82,12 @@ describe("수정 시험 범위", () => {
     const value = controller();
     render(
       <AssignmentRangeFields
-        controller={value.value}
+        capacity={value.value.capacity}
         datasets={[dataset]}
+        draft={value.value.state.draft}
+        fieldPolicy={value.value.fieldPolicy}
+        isExactReview={value.value.isExactReview}
+        onChangeRange={value.value.actions.changeRange}
         progress={null}
         units={units}
       />,
@@ -106,8 +110,12 @@ describe("수정 시험 범위", () => {
     const value = controller(true);
     render(
       <AssignmentRangeFields
-        controller={value.value}
+        capacity={value.value.capacity}
         datasets={[dataset]}
+        draft={value.value.state.draft}
+        fieldPolicy={value.value.fieldPolicy}
+        isExactReview={value.value.isExactReview}
+        onChangeRange={value.value.actions.changeRange}
         progress={null}
         units={units}
       />,

@@ -12,6 +12,8 @@ export const adminStudentsText = {
     filtering: "계산 중…",
     loadMore: "10명 더보기",
     loadingMore: "불러오는 중…",
+    loadError: "학생 목록을 불러오지 못했습니다.",
+    retry: "다시 불러오기",
   },
 
   // 학생 관리 > 학생 카드의 다음 범위
@@ -46,6 +48,7 @@ export const adminStudentsText = {
     startingWordbookHelpAria: "시작 단어장 도움말",
     noWordbookNotice: "단어장 없이 학생과 코드부터 만들 수 있습니다.",
     noCodeError: "새 접속코드를 받지 못했습니다.",
+    loadError: "학생 추가 자료를 불러오지 못했습니다.",
     codeTitle: "{student} 새 접속코드",
     success: "학생과 접속 코드를 만들었습니다.",
     error: "학생을 만들지 못했습니다.",

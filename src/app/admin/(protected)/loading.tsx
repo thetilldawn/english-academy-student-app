@@ -1,12 +1,6 @@
 import { adminShellText } from "@/content/ko/admin-shell";
-import { ButtonSpinner } from "@/design-system/primitives/button/button";
-import styles from "./route-state.module.css";
+import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 
 export default function AdminLoading() {
-  return (
-    <div aria-live="polite" className={styles.loading} role="status">
-      <ButtonSpinner />
-      <span>{adminShellText.loading}</span>
-    </div>
-  );
+  return <RouteLoadingState label={adminShellText.loading} role="status" />;
 }

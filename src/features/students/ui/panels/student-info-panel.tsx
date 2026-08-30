@@ -9,7 +9,7 @@ import {
   FieldLabel,
   Input,
 } from "@/design-system/primitives/form/field";
-import { CurrentPointSummary } from "@/features/learning-points/ui/point-summary";
+import { CurrentPointSummary } from "@/features/learning-points/public-ui";
 import type { StudentLearningSourceItem } from "@/lib/admin/learning-sources";
 import type { StudentVocabBookHistory } from "../../public-contracts";
 

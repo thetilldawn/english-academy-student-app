@@ -51,8 +51,11 @@ describe("AssignmentSummaryPanel errors", () => {
   it("leaves field errors beside the field and shows only unmapped failures", () => {
     render(
       <AssignmentSummaryPanel
-        controller={controller()}
+        baselineDraft={controller().baselineDraft}
         datasets={[]}
+        draft={controller().state.draft}
+        issues={controller().issues}
+        preview={controller().state.preview}
         units={[]}
       />,
     );
@@ -71,8 +74,11 @@ describe("AssignmentSummaryPanel errors", () => {
 
     render(
       <AssignmentSummaryPanel
-        controller={value}
+        baselineDraft={value.baselineDraft}
         datasets={[]}
+        draft={value.state.draft}
+        issues={value.issues}
+        preview={value.state.preview}
         units={[]}
       />,
     );

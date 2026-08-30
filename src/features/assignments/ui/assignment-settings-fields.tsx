@@ -10,24 +10,38 @@ import {
 import { ExamTimingFields } from "./exam-timing-fields";
 
 export function AssignmentSettingsFields({
-  controller,
+  actions,
+  capacity,
+  draft,
+  fieldPolicy,
   fieldErrors = {},
   fieldIdPrefix,
+  minimumQuestionCount,
   part,
 }: {
-  controller: SingleAssignmentController;
+  actions: Pick<
+    SingleAssignmentController["actions"],
+    | "changeAvailability"
+    | "changeDeadline"
+    | "changeDirection"
+    | "changeOrder"
+    | "changePassingScore"
+    | "changeQuestionCount"
+    | "changeRetryEnabled"
+    | "changeRetryPassingScore"
+    | "changeTimeLimitEnabled"
+    | "changeTiming"
+    | "changeTimingMode"
+    | "restoreAutomaticCount"
+  >;
+  capacity: SingleAssignmentController["capacity"];
+  draft: SingleAssignmentController["state"]["draft"];
+  fieldPolicy: SingleAssignmentController["fieldPolicy"];
   fieldErrors?: AssignmentEditFieldErrors;
   fieldIdPrefix: string;
+  minimumQuestionCount: number;
   part: "conditions" | "schedule";
 }) {
-  const {
-    actions,
-    capacity,
-    fieldPolicy,
-    minimumQuestionCount,
-    state,
-  } = controller;
-  const { draft } = state;
   const seriesItem =
     draft.operation.mode === "replace" &&
     draft.operation.seriesItem === true;

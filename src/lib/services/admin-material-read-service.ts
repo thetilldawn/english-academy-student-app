@@ -1,14 +1,15 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { requireAdmin } from "@/lib/auth/admin";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 import {
-  hydrateAdminMaterialSnapshot,
   loadAdminMaterialSnapshot,
   toSelectableDatasetOptions,
   type AdminMaterialSnapshot,
 } from "./admin-material-query";
-import { loadSharedVocabMaterialSnapshot } from "./shared-vocab-material-cache";
 
 export {
   loadAdminMaterialSnapshot,
@@ -16,12 +17,20 @@ export {
   type AdminMaterialSnapshot,
 };
 
-/** 인증 뒤 공용 단어장 목록만 요청 간 재사용합니다. */
+const loadAdminMaterialSnapshotForRscRequest = cache(
+  async (adminUserId: string): Promise<AdminMaterialSnapshot> => {
+    if (!adminUserId) {
+      throw new Error("관리자 인증 정보가 필요합니다.");
+    }
+    const supabase = await createServerSupabaseClient();
+    return loadAdminMaterialSnapshot(supabase);
+  },
+);
+
+/** 인증된 한 RSC 요청 안에서만 단어장 목록을 중복 조회하지 않습니다. */
 export async function loadCurrentAdminMaterialSnapshotForRsc(): Promise<
   AdminMaterialSnapshot
 > {
-  await requireAdmin();
-  return hydrateAdminMaterialSnapshot(
-    await loadSharedVocabMaterialSnapshot(),
-  );
+  const admin = await requireAdmin();
+  return loadAdminMaterialSnapshotForRscRequest(admin.userId);
 }

@@ -6,7 +6,7 @@ import {
   MetaTagList,
   StatusBadge,
 } from "@/design-system/primitives/badge/badge";
-import { formatVisiblePoints } from "@/features/learning-points/presentation/point-presentation";
+import { formatVisiblePoints } from "@/features/learning-points/public-presentation";
 import { formatKoreanDateTime } from "@/lib/format";
 
 import type { StudentDirectoryListItem } from "../contracts/student-directory-read-model";

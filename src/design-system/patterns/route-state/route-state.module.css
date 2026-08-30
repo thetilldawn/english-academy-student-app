@@ -1,0 +1,40 @@
+.loading {
+  min-height: 260px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 24px;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.loading[data-variant="compact"] {
+  min-height: 64px;
+  grid-auto-flow: column;
+}
+
+.loading[data-variant="shell"] {
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+.panelError {
+  min-height: 120px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 24px;
+  border: 1px solid var(--danger-line, var(--line));
+  border-radius: var(--radius-card);
+  background: var(--card);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.panelError p {
+  margin: 0;
+}

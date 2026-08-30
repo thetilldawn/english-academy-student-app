@@ -5,7 +5,6 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { SingleAssignmentController } from "../controller/use-assignment-controller";
 import type { SingleAssignmentDraft } from "../domain/model";
 import { AssignmentEditComparison } from "./assignment-edit-comparison";
 
@@ -50,15 +49,11 @@ describe("assignment edit comparison", () => {
         koreanLocalDateTime: "2026-08-29T10:00",
       },
     };
-    const controller = {
-      baselineDraft: baseline,
-      state: { draft: current },
-    } as SingleAssignmentController;
-
     render(
       <AssignmentEditComparison
-        controller={controller}
+        baseline={baseline}
         datasets={[]}
+        draft={current}
         units={[]}
       />,
     );

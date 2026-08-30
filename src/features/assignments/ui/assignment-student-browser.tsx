@@ -34,7 +34,17 @@ export function AssignmentStudentBrowser({
         {controller.assignmentMode === "bulk" ? (
           <VocabAssignmentEntrySelector controller={controller} />
         ) : null}
-        <AssignmentWorkspaceFilters controller={controller} />
+        <AssignmentWorkspaceFilters
+          classGroupOptions={controller.classGroupOptions}
+          filters={controller.filters}
+          gradeOptions={controller.gradeOptions}
+          onClearSearch={controller.actions.clearSearch}
+          onResetFilters={controller.actions.resetFilters}
+          onSetFilter={controller.actions.setFilter}
+          schoolOptions={controller.schoolOptions}
+          totalCount={controller.directory.snapshot.totalCount}
+          wordbookOptions={controller.wordbookOptions}
+        />
         {controller.assignmentMode === "bulk" ? (
           <SelectedStudentBasket controller={controller} />
         ) : null}

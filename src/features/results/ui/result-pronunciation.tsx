@@ -3,9 +3,9 @@
 import { PronunciationText } from "@/components/pronunciation-text";
 import { formatContentText } from "@/content/format";
 import { studentAppText } from "@/content/ko/student-app";
+import { AudioButton } from "@/design-system/patterns/audio-button/audio-button";
 import type { QuizPronunciation } from "@/lib/quiz/pronunciation-snapshot";
 
-import { AudioButton } from "../../quiz-player/ui/audio-button";
 import { useResultAudio } from "./result-audio-provider";
 import styles from "./student-result-view.module.css";
 

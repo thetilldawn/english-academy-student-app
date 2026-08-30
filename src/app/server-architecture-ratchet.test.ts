@@ -59,6 +59,35 @@ const ROUTER_REFRESH_ALLOWLIST = new Map<
 );
 
 describe("server architecture debt ratchets", () => {
+  it("keeps R7 feature entrypoints complete and leaf assignment fields narrow", () => {
+    const registry = JSON.parse(
+      fs.readFileSync(path.resolve("architecture", "기능_소유권.json"), "utf8"),
+    ) as {
+      currentCrossFeatureImports: Array<{ removeIn: string }>;
+    };
+    expect(
+      registry.currentCrossFeatureImports.filter(({ removeIn }) =>
+        removeIn.startsWith("R7"),
+      ),
+    ).toStrictEqual([]);
+
+    for (const fileName of [
+      "assignment-edit-comparison.tsx",
+      "assignment-range-fields.tsx",
+      "assignment-settings-fields.tsx",
+      "assignment-summary-panel.tsx",
+      "assignment-workspace-filters.tsx",
+    ]) {
+      const source = fs.readFileSync(
+        path.join(srcRoot, "features", "assignments", "ui", fileName),
+        "utf8",
+      );
+      expect(source, `${fileName} must not accept a whole controller`).not.toMatch(
+        /\bcontroller\s*:/,
+      );
+    }
+  });
+
   it("keeps every Client module away from direct DB and server imports", () => {
     const violations = sourceFiles.flatMap((file) => {
       const source = fs.readFileSync(file, "utf8");
@@ -127,15 +156,10 @@ describe("server architecture debt ratchets", () => {
 
   it("keeps cross-request cache files free from request identity and private data", () => {
     const violations = sourceFiles.flatMap((file) => {
-      const relativeFile = relative(file);
-      const allowedReasons = relativeFile ===
-          "src/lib/services/shared-vocab-material-cache.ts"
-        ? ["database client import"]
-        : [];
       return inspectSharedCacheSource(
         file,
         fs.readFileSync(file, "utf8"),
-        allowedReasons,
+        [],
       );
     });
     expect(violations).toStrictEqual([]);

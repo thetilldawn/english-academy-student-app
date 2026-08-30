@@ -1,7 +1,7 @@
 import { formatContentText } from "@/content/format";
 import { studentAppText } from "@/content/ko/student-app";
 import { CollapsibleStatusSection } from "@/design-system/patterns/collapsible-status-section/collapsible-status-section";
-import { CurrentPointSummary } from "@/features/learning-points/ui/point-summary";
+import { CurrentPointSummary } from "@/features/learning-points/public-ui";
 import type { StudentDashboardInitialSnapshot } from "@/features/student-dashboard/contracts/student-dashboard-read-model";
 
 import {

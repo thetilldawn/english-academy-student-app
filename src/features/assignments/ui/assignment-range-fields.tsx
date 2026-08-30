@@ -23,20 +23,26 @@ import { AssignmentCapacitySummary } from "./assignment-capacity-summary";
 import { AssignmentUnitRangePicker } from "./assignment-unit-range-picker";
 
 export function AssignmentRangeFields({
-  controller,
+  capacity,
   datasets,
+  draft,
+  fieldPolicy,
   fieldErrors = {},
+  isExactReview,
+  onChangeRange,
   progress,
   units,
 }: {
-  controller: SingleAssignmentController;
+  capacity: SingleAssignmentController["capacity"];
   datasets: readonly AssignmentDatasetItem[];
+  draft: SingleAssignmentController["state"]["draft"];
+  fieldPolicy: SingleAssignmentController["fieldPolicy"];
   fieldErrors?: AssignmentEditFieldErrors;
+  isExactReview: boolean;
+  onChangeRange: SingleAssignmentController["actions"]["changeRange"];
   progress: AssignmentProgressItem | null;
   units: readonly AssignmentUnitItem[];
 }) {
-  const { actions, capacity, fieldPolicy, isExactReview, state } = controller;
-  const draft = state.draft;
   const readyDatasets = datasets.filter(
     (dataset) =>
       dataset.status === "ready" && dataset.isActive && dataset.isAssignable,
@@ -68,14 +74,14 @@ export function AssignmentRangeFields({
       : nextUnits[0]
         ? [nextUnits[0].id]
         : [];
-    actions.changeRange(datasetId, orderedUnitIds);
+    onChangeRange(datasetId, orderedUnitIds);
   }
 
   function toggleUnit(unitId: string) {
     const nextSelected = new Set(selectedUnitIds);
     if (nextSelected.has(unitId)) nextSelected.delete(unitId);
     else nextSelected.add(unitId);
-    actions.changeRange(
+    onChangeRange(
       draft.range.datasetId,
       datasetUnits
         .filter((unit) => nextSelected.has(unit.id))
@@ -84,7 +90,7 @@ export function AssignmentRangeFields({
   }
 
   function toggleAll(selected: boolean) {
-    actions.changeRange(
+    onChangeRange(
       draft.range.datasetId,
       selected ? datasetUnits.map((unit) => unit.id) : [],
     );

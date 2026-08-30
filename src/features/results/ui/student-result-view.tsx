@@ -2,7 +2,7 @@ import { formatContentText } from "@/content/format";
 import { studentAppText } from "@/content/ko/student-app";
 import { CountBadge, MetaTag } from "@/design-system/primitives/badge/badge";
 import { ButtonLink } from "@/design-system/primitives/button/button";
-import { StudentAttemptPointSummaryView } from "@/features/learning-points/ui/point-summary";
+import { StudentAttemptPointSummaryView } from "@/features/learning-points/public-ui";
 import { formatElapsed } from "@/lib/format";
 import { getResultQuestionPresentation } from "@/lib/quiz/result-presentation";
 

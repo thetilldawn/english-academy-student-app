@@ -96,9 +96,13 @@ export function SingleAssignmentEditorSections({
             />
           ) : (
             <AssignmentRangeFields
-              controller={controller}
+              capacity={controller.capacity}
               datasets={datasets}
+              draft={controller.state.draft}
+              fieldPolicy={controller.fieldPolicy}
               fieldErrors={fieldErrors}
+              isExactReview={controller.isExactReview}
+              onChangeRange={controller.actions.changeRange}
               progress={progress}
               units={units}
             />
@@ -126,9 +130,13 @@ export function SingleAssignmentEditorSections({
           title="시험 조건"
         >
           <AssignmentSettingsFields
-            controller={controller}
+            actions={controller.actions}
+            capacity={controller.capacity}
+            draft={controller.state.draft}
+            fieldPolicy={controller.fieldPolicy}
             fieldErrors={fieldErrors}
             fieldIdPrefix={formId}
+            minimumQuestionCount={controller.minimumQuestionCount}
             part="conditions"
           />
         </AssignmentSection>
@@ -140,9 +148,13 @@ export function SingleAssignmentEditorSections({
           title="시험 일정"
         >
           <AssignmentSettingsFields
-            controller={controller}
+            actions={controller.actions}
+            capacity={controller.capacity}
+            draft={controller.state.draft}
+            fieldPolicy={controller.fieldPolicy}
             fieldErrors={fieldErrors}
             fieldIdPrefix={formId}
+            minimumQuestionCount={controller.minimumQuestionCount}
             part="schedule"
           />
         </AssignmentSection>
@@ -153,8 +165,11 @@ export function SingleAssignmentEditorSections({
           title="미리보기"
         >
           <AssignmentSummaryPanel
-            controller={controller}
+            baselineDraft={controller.baselineDraft}
             datasets={datasets}
+            draft={controller.state.draft}
+            issues={controller.issues}
+            preview={controller.state.preview}
             units={units}
           />
         </AssignmentSection>

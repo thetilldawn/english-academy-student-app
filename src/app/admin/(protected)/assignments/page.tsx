@@ -4,6 +4,8 @@ import { z } from "zod";
 
 import { Notice } from "@/design-system/patterns/feedback/feedback";
 import { adminLearningText } from "@/content/ko/admin-learning";
+import { adminShellText } from "@/content/ko/admin-shell";
+import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import { AssignmentWorkspace } from "@/features/assignments/ui/assignment-workspace";
 import { LegacyReviewRecovery } from "@/features/assignments/ui/legacy-review-recovery";
 import { getStudentDirectoryInitial } from "@/features/students/public-server";
@@ -24,7 +26,7 @@ export default function AssignmentsPage({
   }>;
 }) {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<RouteLoadingState label={adminShellText.loading} />}>
       <AssignmentsPageContent searchParams={searchParams} />
     </Suspense>
   );

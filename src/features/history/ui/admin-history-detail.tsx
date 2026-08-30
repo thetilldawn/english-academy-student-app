@@ -6,8 +6,8 @@ import {
   CountBadge,
   StatusBadge,
 } from "@/design-system/primitives/badge/badge";
-import { AttemptQuestionCard } from "@/features/results/ui/attempt-question-card";
-import { AdminAttemptPointSummaryView } from "@/features/learning-points/ui/point-summary";
+import { AdminAttemptPointSummaryView } from "@/features/learning-points/public-ui";
+import { AttemptQuestionCard } from "@/features/results/public-ui";
 import {
   assignmentOrderLabel,
   assignmentScopeLabel,

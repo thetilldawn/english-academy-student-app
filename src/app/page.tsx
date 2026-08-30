@@ -6,11 +6,19 @@ import { StudentLoginForm } from "@/components/student-login-form";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { studentAppText } from "@/content/ko/student-app";
 import styles from "@/design-system/patterns/auth/auth-layout.module.css";
+import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import { getStudentSession } from "@/lib/auth/student-session";
 
 export default function HomePage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={(
+        <RouteLoadingState
+          label={studentAppText.login.loading}
+          variant="shell"
+        />
+      )}
+    >
       <HomePageContent />
     </Suspense>
   );

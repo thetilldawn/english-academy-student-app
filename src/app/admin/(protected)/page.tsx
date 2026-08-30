@@ -5,6 +5,8 @@ import {
   OverviewActionGroups,
 } from "@/features/history/ui/overview-action-groups";
 import { adminOverviewText } from "@/content/ko/admin-overview";
+import { adminShellText } from "@/content/ko/admin-shell";
+import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import { listAdminHistoryInitial } from "@/features/history/server/queries/admin-history-list-query";
 
 export const metadata: Metadata = {
@@ -13,7 +15,7 @@ export const metadata: Metadata = {
 
 export default function AdminDashboardPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<RouteLoadingState label={adminShellText.loading} />}>
       <AdminDashboardContent />
     </Suspense>
   );

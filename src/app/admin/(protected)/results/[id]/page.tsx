@@ -5,6 +5,8 @@ import { Suspense } from "react";
 import { EditableHistoryDetailPage } from "@/features/history/ui/editable-history-detail-page";
 import { getAdminHistoryReadModelDetail } from "@/features/history/server/queries/admin-history-detail-query";
 import { adminHistoryText } from "@/content/ko/admin-history";
+import { adminShellText } from "@/content/ko/admin-shell";
+import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import { historyDetailHref } from "@/lib/admin/history-route";
 
 export const metadata: Metadata = {
@@ -17,7 +19,7 @@ export default function AdminResultDetailPage({
   params: Promise<{ id: string }>;
 }) {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<RouteLoadingState label={adminShellText.loading} />}>
       <AdminResultDetailContent params={params} />
     </Suspense>
   );

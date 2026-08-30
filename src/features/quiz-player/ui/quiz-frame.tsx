@@ -7,11 +7,11 @@ import {
   HelpTip,
   inlineHelpClassName,
 } from "@/design-system/primitives/tooltip/help-tip";
+import { AudioButton } from "@/design-system/patterns/audio-button/audio-button";
 import type { PriorWrongIndicator } from "@/lib/quiz/prior-wrong";
 
 import type { QuizChoiceLength } from "../domain/quiz-session";
 import type { QuizQuestion } from "../model";
-import { AudioButton } from "./audio-button";
 import { QuizChoice, type QuizChoiceFeedback } from "./quiz-choice";
 import { QuizSynchronizationError } from "./quiz-synchronization-error";
 import { QuizTimeoutOverlay } from "./quiz-timeout-overlay";

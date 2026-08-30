@@ -2,6 +2,8 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { EditableHistoryDetailDialog } from "@/features/history/ui/editable-history-detail-dialog";
+import { adminShellText } from "@/content/ko/admin-shell";
+import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import { historyDetailHref } from "@/lib/admin/history-route";
 import { getAdminHistoryReadModelDetail } from "@/features/history/server/queries/admin-history-detail-query";
 
@@ -11,7 +13,7 @@ export default function InterceptedAdminResultDetailPage({
   params: Promise<{ entryKey: string }>;
 }) {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<RouteLoadingState label={adminShellText.loading} />}>
       <InterceptedAdminResultDetailContent params={params} />
     </Suspense>
   );

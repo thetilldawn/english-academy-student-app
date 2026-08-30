@@ -1,6 +1,6 @@
 "use client";
 
-import { StudentAssignmentQueueHistory } from "@/features/assignment-queue/ui/student-assignment-queue-history";
+import { StudentAssignmentQueueHistory } from "@/features/assignment-queue/public-ui";
 import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 import { formatContentText } from "@/content/format";
 import { adminStudentsText } from "@/content/ko/admin-students";

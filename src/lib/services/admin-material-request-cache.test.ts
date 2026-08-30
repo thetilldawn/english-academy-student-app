@@ -1,53 +1,75 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  loadShared: vi.fn(),
+  cacheEntries: new Map<string, unknown>(),
+  createServerClient: vi.fn(),
+  loadMaterial: vi.fn(),
   requireAdmin: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
+vi.mock("react", () => ({
+  cache:
+    <TResult>(loader: (key: string) => Promise<TResult>) =>
+    async (key: string) => {
+      if (!mocks.cacheEntries.has(key)) {
+        mocks.cacheEntries.set(key, loader(key));
+      }
+      return mocks.cacheEntries.get(key) as Promise<TResult>;
+    },
+}));
 vi.mock("@/lib/auth/admin", () => ({
   requireAdmin: mocks.requireAdmin,
 }));
-vi.mock("./shared-vocab-material-cache", () => ({
-  loadSharedVocabMaterialSnapshot: mocks.loadShared,
+vi.mock("@/lib/supabase/server", () => ({
+  createServerSupabaseClient: mocks.createServerClient,
+}));
+vi.mock("./admin-material-query", () => ({
+  loadAdminMaterialSnapshot: mocks.loadMaterial,
+  toSelectableDatasetOptions: vi.fn(),
 }));
 
 import { loadCurrentAdminMaterialSnapshotForRsc } from "./admin-material-read-service";
 
-const sharedSnapshot = {
+const snapshot = {
   allDatasets: [],
-  datasetLabels: [["dataset-a", "단어장 A"]] as Array<readonly [string, string]>,
+  datasetLabelById: new Map([["dataset-a", "단어장 A"]]),
   selectableDatasets: [],
 };
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.cacheEntries.clear();
   mocks.requireAdmin.mockResolvedValue({
     userId: "admin-a",
     displayName: "관리자 A",
   });
-  mocks.loadShared.mockResolvedValue(sharedSnapshot);
+  mocks.createServerClient.mockResolvedValue({ kind: "session-client" });
+  mocks.loadMaterial.mockResolvedValue(snapshot);
 });
 
-describe("admin material cached RSC boundary", () => {
-  it("authenticates before entering the shared material cache", async () => {
-    const material = await loadCurrentAdminMaterialSnapshotForRsc();
+describe("admin material request cache boundary", () => {
+  it("authenticates first and memoizes the material query within one RSC request", async () => {
+    const first = await loadCurrentAdminMaterialSnapshotForRsc();
+    const second = await loadCurrentAdminMaterialSnapshotForRsc();
 
-    expect(material.datasetLabelById.get("dataset-a")).toBe("단어장 A");
-    expect(mocks.requireAdmin).toHaveBeenCalledTimes(1);
-    expect(mocks.loadShared).toHaveBeenCalledTimes(1);
+    expect(first).toBe(snapshot);
+    expect(second).toBe(snapshot);
+    expect(mocks.requireAdmin).toHaveBeenCalledTimes(2);
+    expect(mocks.createServerClient).toHaveBeenCalledTimes(1);
+    expect(mocks.loadMaterial).toHaveBeenCalledTimes(1);
     expect(mocks.requireAdmin.mock.invocationCallOrder[0]).toBeLessThan(
-      mocks.loadShared.mock.invocationCallOrder[0]!,
+      mocks.createServerClient.mock.invocationCallOrder[0]!,
     );
   });
 
-  it("never reads shared service data when admin authentication fails", async () => {
+  it("does not create a database client when administrator authentication fails", async () => {
     mocks.requireAdmin.mockRejectedValue(new Error("redirect"));
 
     await expect(loadCurrentAdminMaterialSnapshotForRsc()).rejects.toThrow(
       "redirect",
     );
-    expect(mocks.loadShared).not.toHaveBeenCalled();
+    expect(mocks.createServerClient).not.toHaveBeenCalled();
+    expect(mocks.loadMaterial).not.toHaveBeenCalled();
   });
 });

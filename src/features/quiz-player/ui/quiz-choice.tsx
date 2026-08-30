@@ -4,7 +4,7 @@ import { PronunciationText } from "@/components/pronunciation-text";
 
 import type { QuizChoiceLength } from "../domain/quiz-session";
 import type { QuizPronunciation } from "../model";
-import { AudioButton } from "./audio-button";
+import { AudioButton } from "@/design-system/patterns/audio-button/audio-button";
 import styles from "./quiz-choice.module.css";
 
 export type QuizChoiceFeedback = "correct" | "selected" | "wrong" | null;

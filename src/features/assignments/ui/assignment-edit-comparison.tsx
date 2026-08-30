@@ -161,15 +161,16 @@ function valueLabel(
 }
 
 export function AssignmentEditComparison({
-  controller,
+  baseline,
   datasets,
+  draft,
   units,
 }: {
-  controller: SingleAssignmentController;
+  baseline: SingleAssignmentController["baselineDraft"];
   datasets: readonly AssignmentDatasetItem[];
+  draft: SingleAssignmentController["state"]["draft"];
   units: readonly AssignmentUnitItem[];
 }) {
-  const baseline = controller.baselineDraft;
   if (!baseline) return null;
   const keys = (
     [
@@ -189,7 +190,7 @@ export function AssignmentEditComparison({
   ).filter(
     (key) =>
       assignmentRequestFingerprint(comparable(baseline, key)) !==
-      assignmentRequestFingerprint(comparable(controller.state.draft, key)),
+      assignmentRequestFingerprint(comparable(draft, key)),
   );
   const rebuildsQuestions = keys.some((key) =>
     ["dataset", "range", "questionCount", "direction", "review"].includes(
@@ -237,7 +238,7 @@ export function AssignmentEditComparison({
                   <span className="sr-only">
                     {adminLearningText.assignmentModal.edit.after}
                   </span>
-                  {valueLabel(controller.state.draft, key, datasets, units)}
+                {valueLabel(draft, key, datasets, units)}
                 </strong>
               </dd>
             </div>

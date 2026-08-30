@@ -8,21 +8,21 @@ import {
   useMemo,
 } from "react";
 
-import { QuizAudioPlayer } from "../../quiz-player/controller/quiz-audio-player";
+import { ManagedAudioPlayer } from "@/lib/audio/managed-audio-player";
 
 const ResultAudioContext = createContext<
   ((audioUrl: string) => void) | null
 >(null);
 
 export function ResultAudioProvider({ children }: { children: ReactNode }) {
-  const player = useMemo(() => new QuizAudioPlayer(), []);
+  const player = useMemo(() => new ManagedAudioPlayer(), []);
 
   useEffect(() => () => player.dispose(), [player]);
 
   return (
     <ResultAudioContext.Provider
       value={(audioUrl) => {
-        void player.play(audioUrl, "prompt");
+        void player.play(audioUrl);
       }}
     >
       {children}
