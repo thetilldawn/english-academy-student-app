@@ -51,18 +51,10 @@ const ROUTER_REFRESH_ALLOWLIST = new Map<
   [
     ["src/components/admin-logout-button.tsx", { maxCalls: 1, removeIn: "유지" }],
     ["src/components/student-logout-button.tsx", { maxCalls: 1, removeIn: "유지" }],
-    ["src/features/assignment-queue/ui/assignment-queue-history.tsx", { maxCalls: 1, removeIn: "R5" }],
-    ["src/features/assignments/controller/use-assignment-workspace.ts", { maxCalls: 1, removeIn: "R5" }],
-    ["src/features/assignments/ui/legacy-review-recovery.tsx", { maxCalls: 1, removeIn: "R5" }],
-    ["src/features/history/ui/admin-history-actions.tsx", { maxCalls: 1, removeIn: "R5" }],
     ["src/features/history/ui/editable-history-detail-dialog.tsx", { maxCalls: 1, removeIn: "충돌 복구" }],
     ["src/features/history/ui/editable-history-detail-page.tsx", { maxCalls: 1, removeIn: "충돌 복구" }],
-    ["src/features/history/ui/history-detail-actions.tsx", { maxCalls: 1, removeIn: "R5" }],
-    ["src/features/history/controller/use-editable-history-assignment.ts", { maxCalls: 1, removeIn: "R5" }],
     ["src/features/student-dashboard/ui/assignment-boundary-refresh.tsx", { maxCalls: 1, removeIn: "유지" }],
     ["src/features/student-dashboard/ui/deadline-countdown.tsx", { maxCalls: 1, removeIn: "유지" }],
-    ["src/features/students/controller/use-student-creation-controller.ts", { maxCalls: 1, removeIn: "R8" }],
-    ["src/features/students/ui/student-detail-content.tsx", { maxCalls: 1, removeIn: "R8" }],
   ] as const,
 );
 

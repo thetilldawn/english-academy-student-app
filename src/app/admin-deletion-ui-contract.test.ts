@@ -81,15 +81,11 @@ describe("admin deletion UI contract", () => {
     expect(dashboardReadModel).toContain("assignment.deleted_at is null");
     expect(dashboardReadModel).toContain("assignment.deleted_at > p_snapshot_at");
     expect(detailActions).toContain("!item.studentDeleted");
-    expect(detailActions).toContain("refreshAfterMutation={false}");
-    expect(detailActions).toContain('window.addEventListener("popstate"');
-    expect(detailActions).toContain(
-      "window.requestAnimationFrame(() => router.refresh())",
-    );
-    expect(detailActions).toContain(
-      'window.location.replace("/admin/results")',
-    );
-    expect(detailActions).not.toContain("window.setTimeout");
+    expect(detailActions).toContain("router.back()");
+    expect(detailActions).toContain('router.replace("/admin/results")');
+    expect(detailActions).not.toContain("router.refresh()");
+    expect(detailActions).not.toContain("window.addEventListener");
+    expect(detailActions).not.toContain("window.location");
   });
 
   it("태블릿·PC 상태 문구와 배정 버튼 글자색을 보존한다", () => {

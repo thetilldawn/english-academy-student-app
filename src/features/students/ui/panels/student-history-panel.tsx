@@ -18,14 +18,12 @@ import { StudentWrongWordPanel } from "./student-wrong-word-panel";
 export function StudentHistoryPanel({
   active,
   historyController,
-  onDataUpdated,
   student,
   wrongCache,
   wrongSummary,
 }: {
   active: boolean;
   historyController: StudentHistoryPageController;
-  onDataUpdated: () => void;
   student: StudentDetailProfile;
   wrongCache: StudentWrongWordCacheController;
   wrongSummary: StudentCurrentWrongSummary;
@@ -65,13 +63,13 @@ export function StudentHistoryPanel({
           initialDatasetId={student.currentVocabDatasetId ?? ""}
           initialReadingContextSyncStatus={student.readingContextSyncStatus}
           key={student.id}
-          onDataUpdated={onDataUpdated}
           onLoaded={wrongCache.actions.cache}
           studentId={student.id}
         />
       </section>
       <StudentAssignmentQueueHistory
         headingLevel={3}
+        onHistoryChanged={historyController.actions.refreshFirstPage}
         studentId={student.id}
       />
       <section aria-labelledby="student-learning-history-title" className={styles.historySection}>

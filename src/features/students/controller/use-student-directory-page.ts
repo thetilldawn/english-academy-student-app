@@ -44,46 +44,6 @@ function appendUniqueStudents(
   ];
 }
 
-async function reloadVisibleDirectory(input: {
-  filters: StudentDirectoryFilters;
-  removedIds: ReadonlySet<string>;
-  signal: AbortSignal;
-  targetCount: number;
-}) {
-  let snapshot = withoutRemovedStudents(
-    await loadStudentDirectorySnapshot(
-      { filters: input.filters, mode: "initial" },
-      input.signal,
-    ),
-    input.removedIds,
-  );
-  while (
-    snapshot.page.nextCursor &&
-    snapshot.page.items.length < input.targetCount
-  ) {
-    const page = await loadStudentDirectoryNextPage(
-      {
-        cursor: snapshot.page.nextCursor,
-        filters: snapshot.filters,
-        mode: "page",
-      },
-      input.signal,
-    );
-    snapshot = {
-      ...snapshot,
-      page: {
-        items: appendUniqueStudents(
-          snapshot.page.items,
-          page.items,
-          input.removedIds,
-        ),
-        nextCursor: page.nextCursor,
-      },
-    };
-  }
-  return snapshot;
-}
-
 export function useStudentDirectoryPage(
   initialSnapshot: StudentDirectorySnapshot,
 ) {
@@ -98,7 +58,6 @@ export function useStudentDirectoryPage(
   const acceptedFiltersRef = useRef(initialSnapshot.filters);
   const requestedFiltersRef = useRef(initialSnapshot.filters);
   const removedIdsRef = useRef(new Set<string>());
-  const visibleCountRef = useRef(initialSnapshot.page.items.length);
 
   const stopCurrentRequest = useCallback(() => {
     requestVersionRef.current += 1;
@@ -113,12 +72,7 @@ export function useStudentDirectoryPage(
     [stopCurrentRequest],
   );
 
-  useEffect(() => {
-    visibleCountRef.current = snapshot.page.items.length;
-  }, [snapshot.page.items.length]);
-
   const reloadCurrent = useCallback(async () => {
-    const targetCount = visibleCountRef.current;
     const requestedFilters = requestedFiltersRef.current;
     stopCurrentRequest();
     const requestVersion = requestVersionRef.current;
@@ -129,12 +83,13 @@ export function useStudentDirectoryPage(
     setError("");
     setFilters(requestedFilters);
     try {
-      const result = await reloadVisibleDirectory({
-        filters: requestedFilters,
-        removedIds: removedIdsRef.current,
-        signal: abort.signal,
-        targetCount,
-      });
+      const result = withoutRemovedStudents(
+        await loadStudentDirectorySnapshot(
+          { filters: requestedFilters, mode: "initial" },
+          abort.signal,
+        ),
+        removedIdsRef.current,
+      );
       if (requestVersionRef.current !== requestVersion) return;
       acceptedFiltersRef.current = result.filters;
       requestedFiltersRef.current = result.filters;

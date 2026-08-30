@@ -111,6 +111,7 @@ function buildInitialSnapshot(
         snapshotAt: row.snapshot_at,
       }),
       totalCount: row.total_count,
+      version: row.snapshot_at,
     };
   });
 
@@ -124,6 +125,7 @@ function buildInitialSnapshot(
 export async function listAdminHistoryInitial(input: {
   currentOnly: boolean;
   query?: string;
+  snapshotAt?: string | null;
   statusFilter?: AdminHistoryStatusFilter;
 }, authenticatedAdmin?: AdminContext): Promise<AdminHistorySnapshot> {
   if (!authenticatedAdmin) await requireAdmin();
@@ -136,7 +138,7 @@ export async function listAdminHistoryInitial(input: {
       p_current_only: input.currentOnly,
       p_limit: DATABASE_PAGE_LIMIT,
       p_query: query,
-      p_snapshot_at: null,
+      p_snapshot_at: input.snapshotAt ?? null,
       p_status_filter: statusFilter,
     },
   );
@@ -221,4 +223,52 @@ export async function listAdminHistoryNextPage(input: {
       statusFilter,
     }),
   };
+}
+
+export async function listAdminHistoryFreshSection(input: {
+  currentOnly: boolean;
+  groupKey: string;
+  query?: string;
+  snapshotAt: string;
+  statusFilter?: AdminHistoryStatusFilter;
+}, authenticatedAdmin?: AdminContext): Promise<
+  AdminHistorySectionPage
+> {
+  if (!authenticatedAdmin) await requireAdmin();
+  const query = normalizeAdminHistoryQuery(input.query ?? "");
+  const statusFilter = input.statusFilter ?? "all";
+  if (!expectedGroupKeys(input.currentOnly, statusFilter).includes(input.groupKey as never)) {
+    throw new AdminHistoryReadError(
+      "새로 읽을 내역 구역을 확인하지 못했습니다.",
+      "input",
+    );
+  }
+
+  const parsedSnapshotAt = z.iso.datetime({ offset: true }).safeParse(
+    input.snapshotAt,
+  );
+  if (!parsedSnapshotAt.success) {
+    throw new AdminHistoryReadError(
+      "새로 읽을 내역 기준 시각을 확인하지 못했습니다.",
+      "input",
+    );
+  }
+  const freshSnapshot = await listAdminHistoryInitial(
+    {
+      currentOnly: input.currentOnly,
+      query,
+      statusFilter,
+    },
+    authenticatedAdmin,
+  );
+  const section = freshSnapshot.sections.find(
+    (candidate) => candidate.groupKey === input.groupKey,
+  );
+  if (!section) {
+    throw new AdminHistoryReadError(
+      "새로 읽은 내역 구역을 확인하지 못했습니다.",
+      "contract",
+    );
+  }
+  return section;
 }

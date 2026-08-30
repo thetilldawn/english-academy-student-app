@@ -121,4 +121,69 @@ describe("useStudentHistoryPage", () => {
     expect(result.current.page.items[0]?.id).toBe("new");
     expect(result.current.filters.purpose).toBe("review");
   });
+
+  it("첫 페이지 갱신이 필터 요청을 중단하고 진행 중에는 과거 커서를 붙이지 않는다", async () => {
+    const requests: Array<{
+      resolve: (value: { items: AdminHistoryListItem[]; nextCursor: null; totalCount: number }) => void;
+      signal: AbortSignal | undefined;
+    }> = [];
+    vi.mocked(loadStudentHistoryInitial).mockImplementation(
+      (_studentId, _request, signal) => new Promise((resolve) => {
+        requests.push({ resolve, signal });
+      }),
+    );
+    const { result } = renderHook(() => useStudentHistoryPage({
+      initialPage: {
+        items: [item("initial")],
+        nextCursor: "old-cursor",
+        totalCount: 11,
+      },
+      studentId: "00000000-0000-4000-8000-000000000001",
+    }));
+
+    act(() => void result.current.actions.replaceFilters({
+      ...emptyStudentHistoryFilters,
+      purpose: "regular",
+    }));
+    await waitFor(() => expect(result.current.filtering).toBe(true));
+
+    act(() => void result.current.actions.refreshFirstPage());
+    await waitFor(() => expect(requests).toHaveLength(2));
+    expect(requests[0]?.signal?.aborted).toBe(true);
+    expect(result.current.filtering).toBe(false);
+
+    await act(async () => result.current.actions.loadMore());
+    expect(loadStudentHistoryNextPage).not.toHaveBeenCalled();
+
+    await act(async () => {
+      requests[1]?.resolve({
+        items: [item("fresh")],
+        nextCursor: null,
+        totalCount: 1,
+      });
+      await Promise.resolve();
+    });
+    expect(result.current.page.items[0]?.id).toBe("fresh");
+  });
+
+  it("첫 페이지 갱신이 실패해도 이전 스냅샷의 더보기를 막는다", async () => {
+    vi.mocked(loadStudentHistoryInitial).mockRejectedValue(
+      new Error("새 목록 실패"),
+    );
+    const { result } = renderHook(() => useStudentHistoryPage({
+      initialPage: {
+        items: [item("old")],
+        nextCursor: "stale-cursor",
+        totalCount: 11,
+      },
+      studentId: "00000000-0000-4000-8000-000000000001",
+    }));
+
+    await act(async () => result.current.actions.refreshFirstPage());
+    expect(result.current.error).toBe("새 목록 실패");
+    expect(result.current.page.nextCursor).toBeNull();
+
+    await act(async () => result.current.actions.loadMore());
+    expect(loadStudentHistoryNextPage).not.toHaveBeenCalled();
+  });
 });

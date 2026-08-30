@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useLayoutEffect } from "react";
+import { useLayoutEffect } from "react";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
 
 import { adminStudentsText } from "@/content/ko/admin-students";
 import { DialogBody } from "@/design-system/primitives/dialog/dialog";
@@ -42,30 +41,31 @@ export function StudentDetailContent({
   initial,
   onInteractionStateChange,
   onStudentRemoved,
+  onStudentUpdated,
   presentation,
 }: {
   appOrigin: string;
   initial: StudentDetailInitial;
   onInteractionStateChange?: (state: { busy: boolean; dirty: boolean }) => void;
   onStudentRemoved: () => void;
+  onStudentUpdated: (student: Partial<StudentDetailInitial["student"]>) => void;
   presentation: StudentDetailPresentation;
 }) {
-  const router = useRouter();
-  const refresh = useCallback((includeDirectory: boolean) => {
-    if (includeDirectory) announceStudentDirectoryRefresh();
-    router.refresh();
-  }, [router]);
-  const refreshDetail = useCallback(() => refresh(false), [refresh]);
-  const refreshStudent = useCallback(() => refresh(true), [refresh]);
   const view = useStudentDetailView();
   const profile = useStudentProfileController({
-    onUpdated: refreshStudent,
+    onUpdated: (receipt) => {
+      onStudentUpdated(receipt.student);
+      announceStudentDirectoryRefresh();
+    },
     student: initial.student,
   });
   const access = useStudentAccessController({
     appOrigin,
     onRemoved: onStudentRemoved,
-    onUpdated: refreshStudent,
+    onUpdated: (patch) => {
+      onStudentUpdated(patch);
+      announceStudentDirectoryRefresh();
+    },
     student: initial.student,
   });
   const history = useStudentHistoryPage({
@@ -104,7 +104,6 @@ export function StudentDetailContent({
           <StudentHistoryPanel
             active={view.tab === "history"}
             historyController={history}
-            onDataUpdated={refreshDetail}
             student={initial.student}
             wrongCache={wrongCache}
             wrongSummary={initial.wrongSummary}

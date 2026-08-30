@@ -22,7 +22,10 @@ export async function POST(
   }
 
   try {
-    return Response.json({ code: await rotateStudentCode(id) });
+    return Response.json(
+      { code: await rotateStudentCode(id) },
+      { headers: { "Cache-Control": "private, no-store" } },
+    );
   } catch {
     return jsonError("학생코드를 교체하지 못했습니다.", 503);
   }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 import { RoutedDetailDialog } from "@/components/routed-detail-dialog";
 import { useRouteExitGuard } from "@/components/use-route-exit-guard";
@@ -9,6 +8,7 @@ import { commonText } from "@/content/ko/common";
 import { adminStudentsText } from "@/content/ko/admin-students";
 
 import type { StudentDetailInitial } from "../contracts/student-detail-read-model";
+import { useStudentDetailShellState } from "../controller/use-student-detail-shell-state";
 import { StudentDetailContent } from "./student-detail-content";
 import { StudentDetailHeader } from "./student-detail-header";
 
@@ -20,10 +20,9 @@ export function StudentDetailDialog({
   initial: StudentDetailInitial;
 }) {
   const router = useRouter();
-  const [interactionState, setInteractionState] = useState({
-    busy: false,
-    dirty: false,
-  });
+  const { actions, interactionState, student } = useStudentDetailShellState(
+    initial.student,
+  );
   const routeGuard = useRouteExitGuard({
     busy: interactionState.busy,
     confirmMessage: adminStudentsText.detail.discardChangesConfirm,
@@ -39,7 +38,7 @@ export function StudentDetailDialog({
       fullScreenMobile
       heading={
         <StudentDetailHeader
-          student={initial.student}
+          student={student}
           titleId="student-detail-title"
         />
       }
@@ -51,9 +50,10 @@ export function StudentDetailDialog({
     >
       <StudentDetailContent
         appOrigin={appOrigin}
-        initial={initial}
-        onInteractionStateChange={setInteractionState}
+        initial={{ ...initial, student }}
+        onInteractionStateChange={actions.setInteractionState}
         onStudentRemoved={() => routeGuard.forceExit(() => router.back())}
+        onStudentUpdated={actions.mergeStudent}
         presentation="dialog"
       />
     </RoutedDetailDialog>

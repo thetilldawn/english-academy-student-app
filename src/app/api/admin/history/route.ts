@@ -4,6 +4,7 @@ import { adminHistoryStatusFilters } from "@/features/history/contracts/admin-hi
 import { AdminHistoryCursorError } from "@/features/history/server/admin-history-cursor";
 import { AdminHistoryReadError } from "@/features/history/server/queries/admin-history-read-error";
 import {
+  listAdminHistoryFreshSection,
   listAdminHistoryInitial,
   listAdminHistoryNextPage,
 } from "@/features/history/server/queries/admin-history-list-query";
@@ -41,6 +42,11 @@ const historyReadSchema = z.discriminatedUnion("mode", [
     groupKey: z.string().min(1).max(40),
     mode: z.literal("page"),
   }).strict(),
+  historyReadBaseSchema.extend({
+    groupKey: z.string().min(1).max(40),
+    mode: z.literal("section"),
+    snapshotAt: z.iso.datetime({ offset: true }),
+  }).strict(),
 ]);
 
 const privateNoStoreHeaders = {
@@ -65,6 +71,10 @@ export async function POST(request: Request) {
       const snapshot = await listAdminHistoryInitial(input, admin);
       return Response.json({ snapshot }, { headers: privateNoStoreHeaders });
     }
+    if (input.mode === "section") {
+      const section = await listAdminHistoryFreshSection(input, admin);
+      return Response.json({ section }, { headers: privateNoStoreHeaders });
+    }
     const page = await listAdminHistoryNextPage(input, admin);
     return Response.json({ page }, { headers: privateNoStoreHeaders });
   } catch (error) {
@@ -72,7 +82,7 @@ export async function POST(request: Request) {
       return privateJsonError(error.message, 400);
     }
     if (error instanceof AdminHistoryReadError) {
-      return privateJsonError(error.message, 503);
+      return privateJsonError(error.message, error.reason === "input" ? 400 : 503);
     }
     return privateJsonError(
       "시험 내역을 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.",

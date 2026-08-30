@@ -39,7 +39,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    return Response.json(await createStudent(input), { status: 201 });
+    return Response.json(await createStudent(input), {
+      headers: { "Cache-Control": "private, no-store" },
+      status: 201,
+    });
   } catch (error) {
     console.error("[students-api] create failed", {
       name: error instanceof Error ? error.name : "UnknownError",

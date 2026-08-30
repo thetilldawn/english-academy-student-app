@@ -25,6 +25,7 @@ export type StudentDetailProfile = {
   readingCurriculumStage: ReadingCurriculumStage;
   schoolName: string | null;
   status: "active" | "blocked";
+  updatedAt: string;
 };
 
 export type StudentCurrentWrongSummary = {

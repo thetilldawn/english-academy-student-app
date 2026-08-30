@@ -1,12 +1,16 @@
+import type {
+  AdminHistoryCancellationResponse,
+} from "../contracts/admin-history-mutation";
+
 type ErrorResponse = {
   error?: string;
 };
 
-async function mutate(
+async function mutate<Result>(
   url: string,
   options: RequestInit,
   fallbackError: string,
-) {
+): Promise<Result> {
   const response = await fetch(url, options);
   let payload: ErrorResponse = {};
   try {
@@ -17,35 +21,17 @@ async function mutate(
   if (!response.ok) {
     throw new Error(payload.error ?? fallbackError);
   }
+  return payload as Result;
 }
 
 export function cancelStudentAssignment(
   assignmentId: string,
   studentId: string,
   fallbackError: string,
-) {
-  return mutate(
+): Promise<AdminHistoryCancellationResponse> {
+  return mutate<AdminHistoryCancellationResponse>(
     `/api/admin/assignments/${assignmentId}/students/${studentId}`,
     { method: "DELETE" },
-    fallbackError,
-  );
-}
-
-export function hideAdminHistoryEntry(
-  input: {
-    assignmentId: string;
-    studentId: string;
-    attemptId: string | null;
-  },
-  fallbackError: string,
-) {
-  return mutate(
-    "/api/admin/history",
-    {
-      method: "DELETE",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(input),
-    },
     fallbackError,
   );
 }

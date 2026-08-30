@@ -1,13 +1,13 @@
 "use client";
 
 import { useId, useState } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/design-system/primitives/button/button";
 import {
   resolveAssignmentQueue,
   type QueueResolutionAction,
+  type QueueResolutionResult,
 } from "@/features/assignment-queue/api/queue-actions";
 import { AssignmentQueueTags } from "@/features/assignment-queue/ui/assignment-queue-tags";
 import {
@@ -25,10 +25,12 @@ function localDateTime(value: string) {
 }
 
 function AssignmentQueueDisclosure({
+  onResolutionError,
   onResolved,
   queue,
 }: {
-  onResolved?: () => void;
+  onResolutionError?: (error: unknown) => void;
+  onResolved?: (result: QueueResolutionResult) => void;
   queue: VocabAssignmentQueueSummary;
 }) {
   const [open, setOpen] = useState(
@@ -36,7 +38,6 @@ function AssignmentQueueDisclosure({
   );
   const [resolving, setResolving] = useState(false);
   const contentId = useId();
-  const router = useRouter();
   const unitAllocation = vocabAssignmentQueueUnitAllocationLabel(
     queue.unitAllocation,
   );
@@ -51,11 +52,11 @@ function AssignmentQueueDisclosure({
     if (!window.confirm(confirmation)) return;
     setResolving(true);
     try {
-      await resolveAssignmentQueue(queue.seriesId, action);
+      const result = await resolveAssignmentQueue(queue.seriesId, action);
       toast.success("배정된 시험 상태를 처리했습니다.");
-      onResolved?.();
-      router.refresh();
+      onResolved?.(result);
     } catch (error) {
+      onResolutionError?.(error);
       toast.error(
         error instanceof Error
           ? error.message
@@ -151,11 +152,13 @@ function AssignmentQueueDisclosure({
 
 export function AssignmentQueueHistory({
   headingLevel = 2,
+  onResolutionError,
   onResolved,
   queues,
 }: {
   headingLevel?: 2 | 3;
-  onResolved?: () => void;
+  onResolutionError?: (error: unknown) => void;
+  onResolved?: (result: QueueResolutionResult) => void;
   queues: readonly VocabAssignmentQueueSummary[];
 }) {
   if (queues.length === 0) return null;
@@ -172,6 +175,7 @@ export function AssignmentQueueHistory({
         {queues.map((queue) => (
           <AssignmentQueueDisclosure
             key={queue.seriesId}
+            onResolutionError={onResolutionError}
             onResolved={onResolved}
             queue={queue}
           />

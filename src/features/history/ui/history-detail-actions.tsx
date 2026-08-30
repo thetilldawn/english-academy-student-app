@@ -25,14 +25,10 @@ export function HistoryDetailActions({
   const router = useRouter();
   function leaveDetail() {
     if (mode === "overlay") {
-      const refreshParent = () => {
-        window.requestAnimationFrame(() => router.refresh());
-      };
-      window.addEventListener("popstate", refreshParent, { once: true });
       router.back();
       return;
     }
-    window.location.replace("/admin/results");
+    router.replace("/admin/results");
   }
 
   return (
@@ -48,7 +44,6 @@ export function HistoryDetailActions({
       <AdminHistoryActions
         item={item}
         onMutated={leaveDetail}
-        refreshAfterMutation={false}
         showDetailLink={false}
       />
       {!item.studentDeleted ? (

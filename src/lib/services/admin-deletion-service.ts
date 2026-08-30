@@ -23,6 +23,7 @@ const historyDeletionResultSchema = z.object({
   assignmentId: z.uuid(),
   studentId: z.uuid(),
   attemptId: z.uuid().nullable(),
+  hiddenAt: z.iso.datetime({ offset: true }),
 });
 
 export class AdminDeletionError extends Error {
@@ -161,7 +162,7 @@ export async function hideAdminHistoryEntry(
   }
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc(
-    "hide_admin_history_entry_v1",
+    "hide_admin_history_entry_v2",
     {
       p_assignment_id: input.assignmentId,
       p_student_id: input.studentId,

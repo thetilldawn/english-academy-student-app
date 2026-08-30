@@ -26,12 +26,12 @@ function HistorySectionGroup({
   loadMoreContext?: AdminHistoryLoadMoreContext;
   section: HistorySection;
 }) {
-  const { error, items, loadMore, loading, nextCursor } =
+  const { error, items, loadMore, loading, nextCursor, totalCount } =
     useAdminHistorySectionPage({ loadMoreContext, section });
 
   return (
     <CollapsibleStatusSection
-      countLabel={`${section.totalCount}${countSuffix}`}
+      countLabel={`${totalCount}${countSuffix}`}
       defaultOpen={section.defaultOpen ?? section.groupKey === "open"}
       id={`history-${section.groupKey}`}
       title={section.title}
@@ -75,7 +75,7 @@ export function HistorySectionGroups({
         <HistorySectionGroup
           compact={compact}
           countSuffix={countSuffix}
-          key={`${revision}:${section.groupKey}`}
+          key={`${section.version ?? revision}:${section.groupKey}`}
           loadMoreContext={loadMoreContext}
           section={section}
         />

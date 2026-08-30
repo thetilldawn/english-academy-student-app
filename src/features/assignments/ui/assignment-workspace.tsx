@@ -86,7 +86,7 @@ export function AssignmentWorkspace({
                 { assignmentCount, queuedCount, studentCount },
               ),
             );
-            controller.actions.refresh();
+            controller.actions.refreshDirectory();
           }}
           selectionMode={planner.request.selectionMode}
           students={planner.data.students}

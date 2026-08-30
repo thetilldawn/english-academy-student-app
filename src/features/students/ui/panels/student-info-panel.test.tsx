@@ -24,6 +24,7 @@ const student: StudentDetailProfile = {
   readingCurriculumStage: "undecided",
   schoolName: "미리보기고",
   status: "active",
+  updatedAt: "2026-08-29T00:00:00.000Z",
 };
 
 describe("StudentInfoPanel", () => {

@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+import {
+  getAdminHistoryReadModelDetail,
+  projectAdminHistoryListItem,
+} from "@/features/history/public-server";
 import { getAdminContext } from "@/lib/auth/admin";
 import {
   isSameOriginRequest,
@@ -20,6 +24,7 @@ import {
   assignmentReplacementPreviewSchema,
   assignmentReplacementSchema,
 } from "@/lib/admin/assignment-replacement-request";
+import { historyEntryKey } from "@/lib/admin/history-route";
 
 const paramsSchema = z.object({
   assignmentId: z.uuid(),
@@ -205,7 +210,29 @@ export async function DELETE(
       parsedParams.data.studentId,
       admin,
     );
-    return Response.json(result, {
+    const detail = await getAdminHistoryReadModelDetail(
+      historyEntryKey({
+        assignmentId: result.assignmentId,
+        attemptId: null,
+        studentId: result.studentId,
+      }),
+      admin,
+    );
+    if (!detail) {
+      return privateJsonError("취소한 배정 내역을 확인하지 못했습니다.", 503);
+    }
+    const item = projectAdminHistoryListItem(detail.summary);
+    return Response.json({
+      ...result,
+      item,
+      receipt: {
+        assignmentId: result.assignmentId,
+        attemptId: null,
+        kind: "cancelled",
+        studentId: result.studentId,
+        version: item.activityAt,
+      },
+    }, {
       headers: { "Cache-Control": "private, no-store" },
     });
   } catch (error) {

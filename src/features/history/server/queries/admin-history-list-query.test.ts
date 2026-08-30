@@ -14,6 +14,7 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 import { AdminHistoryCursorError } from "../admin-history-cursor";
 import {
+  listAdminHistoryFreshSection,
   listAdminHistoryInitial,
   listAdminHistoryNextPage,
 } from "./admin-history-list-query";
@@ -208,5 +209,46 @@ describe("admin history list query", () => {
     const snapshot = await listAdminHistoryInitial({ currentOnly: true });
 
     expect(snapshot.sections[0]?.items[0]?.deadlineAt).toBeNull();
+  });
+
+  it("변경 구역은 같은 DB 스냅샷의 10건·커서·전체 개수를 다시 읽는다", async () => {
+    const changedAt = "2026-08-31T00:00:02.000Z";
+    mocks.rpc.mockResolvedValueOnce({
+      data: [
+        {
+          group_key: "open",
+          items: Array.from({ length: 11 }, (_, index) => ({
+            ...node(index + 1),
+            effectiveAt: changedAt,
+          })),
+          snapshot_at: changedAt,
+          total_count: 19,
+        },
+        { ...emptyInitialRow("needs_attention"), snapshot_at: changedAt },
+        { ...emptyInitialRow("completed"), snapshot_at: changedAt },
+        { ...emptyInitialRow("archived"), snapshot_at: changedAt },
+      ],
+      error: null,
+    });
+
+    const section = await listAdminHistoryFreshSection({
+      currentOnly: false,
+      groupKey: "open",
+      query: "",
+      snapshotAt: changedAt,
+      statusFilter: "all",
+    });
+
+    expect(section.items).toHaveLength(10);
+    expect(section.totalCount).toBe(19);
+    expect(section.nextCursor).toEqual(expect.any(String));
+    expect(section.version).toBe(changedAt);
+    expect(mocks.rpc).toHaveBeenCalledWith(
+      "get_admin_history_initial_v1",
+      expect.objectContaining({
+        p_limit: 11,
+        p_snapshot_at: null,
+      }),
+    );
   });
 });

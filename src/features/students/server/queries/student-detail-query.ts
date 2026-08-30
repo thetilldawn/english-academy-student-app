@@ -20,7 +20,7 @@ export async function getStudentDetailInitial(
   await requireAdmin();
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc(
-    "get_admin_student_detail_initial_v1",
+    "get_admin_student_detail_initial_v2",
     { p_snapshot_at: null, p_student_id: studentId },
   );
   if (error) {

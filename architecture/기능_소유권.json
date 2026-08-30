@@ -130,6 +130,12 @@
   ],
   "retiredPathOwners": [
     {
+      "path": "src/features/transport-contract.test.ts",
+      "owner": "architecture-meta",
+      "retiredIn": "R6",
+      "reason": "여러 기능의 브라우저 전송 계약을 src/test-support 공용 검사로 이동"
+    },
+    {
       "path": "src/lib/services/quiz/student-assignment-query.ts",
       "owner": "student-dashboard",
       "retiredIn": "8203479",
@@ -367,8 +373,8 @@
     {
       "path": "src/test-support",
       "owner": "architecture-meta",
-      "fileCount": 7,
-      "pathSetSha256": "d46a21c4ba1bddf6ba23f9e9fb56ea6045cfb5e940459ed41d9be12710580638"
+      "fileCount": 8,
+      "pathSetSha256": "2c2b44f720c6246e7a38c6a370adcee1f8af01de81592b795219f2309fa64ce4"
     }
   ],
   "pageOwners": [
@@ -1552,8 +1558,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 85,
-      "pathSetSha256": "b397f6bc9f4201b15a393df1703d1853d81d698b4e9034d96afdabd02fa6378b"
+      "fileCount": 87,
+      "pathSetSha256": "89afd406e2842c167954eb8065978693c3ced0e50da3aaf46d61360a2096f14f"
     },
     {
       "path": "src/lib/deploy",
@@ -1747,6 +1753,14 @@
     {
       "path": "src/features/students/server/student-history-cursor.ts",
       "owner": "students"
+    },
+    {
+      "path": "src/features/students/server/actions/update-student-profile-action.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/history/server/actions/hide-admin-history-entry-action.ts",
+      "owner": "history"
     }
   ],
   "migrationOwnershipFrom": "20260828193000",
@@ -1807,6 +1821,21 @@
       "path": "supabase/migrations/20260830111500_lock_exact_review_assignment_snapshot.sql",
       "owner": "assignments",
       "flow": "assignment-edit"
+    },
+    {
+      "path": "supabase/migrations/20260831100000_return_admin_history_hidden_version.sql",
+      "owner": "history",
+      "flow": "admin-history-read"
+    },
+    {
+      "path": "supabase/migrations/20260831101000_add_student_profile_version_command.sql",
+      "owner": "students",
+      "flow": "student-management-screen"
+    },
+    {
+      "path": "supabase/migrations/20260831102000_add_atomic_vocab_queue_resolution.sql",
+      "owner": "assignment-queue",
+      "flow": "assignment-series"
     }
   ],
   "features": [
@@ -1924,6 +1953,12 @@
     }
   ],
   "currentCrossFeatureImports": [
+    {
+      "from": "src/features/students/controller/use-student-history-page.ts",
+      "to": "src/features/history/public-client.ts",
+      "reason": "학생 상세가 내역 기능의 공개 변경 사건을 받아 해당 학생 첫 10+1만 다시 읽음",
+      "removeIn": "공개 진입점으로 고정"
+    },
     {
       "from": "src/features/assignments/contracts/assignment-workspace-read-model.ts",
       "to": "src/features/students/public-contracts.ts",
@@ -3219,29 +3254,37 @@
           "src/app/admin/(protected)/@detail/(.)results/[entryKey]/page.tsx"
         ],
         "ui": [
+          "src/features/history/ui/admin-history-actions.tsx",
           "src/features/history/ui/admin-history-list.tsx",
           "src/features/history/ui/history-section-groups.tsx",
           "src/features/history/ui/overview-action-groups.tsx"
         ],
         "clientState": [
+          "src/features/history/controller/admin-history-mutation-events.ts",
           "src/features/history/controller/use-admin-history-list-controller.ts",
           "src/features/history/controller/use-admin-history-section-page.ts"
         ],
         "application": [],
         "domain": [
+          "src/features/history/domain/admin-history-mutation.ts",
           "src/features/history/domain/learning-activity.ts"
         ],
         "presentation": [
           "src/features/history/presentation/attempt-presentation.ts"
         ],
         "contract": [
+          "src/features/history/contracts/admin-history-mutation.ts",
           "src/features/history/contracts/admin-history-read-model.ts",
           "src/features/history/model.ts"
         ],
         "transport": [
+          "src/features/history/actions/hide-admin-history-entry.ts",
+          "src/features/history/api/history-mutations.ts",
+          "src/features/history/public-client.ts",
           "src/features/history/transport/history-pages.ts"
         ],
         "server": [
+          "src/features/history/server/actions/hide-admin-history-entry-action.ts",
           "src/features/history/server/admin-history-cursor.ts",
           "src/features/history/server/queries/admin-history-detail-query.ts",
           "src/features/history/server/queries/admin-history-list-query.ts",
@@ -3251,7 +3294,8 @@
           "src/features/history/public-server.ts"
         ],
         "database": [
-          "supabase/migrations/20260829153000_add_admin_history_read_model.sql"
+          "supabase/migrations/20260829153000_add_admin_history_read_model.sql",
+          "supabase/migrations/20260831100000_return_admin_history_hidden_version.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/loading.tsx",
@@ -3308,6 +3352,16 @@
           "from": "src/features/history/ui/admin-history-list.tsx",
           "to": "src/features/history/controller/use-admin-history-list-controller.ts",
           "reason": "목록 UI와 검색 요청 수명·취소 상태를 분리"
+        },
+        {
+          "from": "src/features/history/ui/admin-history-actions.tsx",
+          "to": "src/features/history/actions/hide-admin-history-entry.ts",
+          "reason": "내역 숨김 UI가 공개 Server Action 경계로 정확한 변경 영수증을 받음"
+        },
+        {
+          "from": "src/features/history/actions/hide-admin-history-entry.ts",
+          "to": "src/features/history/server/actions/hide-admin-history-entry-action.ts",
+          "reason": "공개 Server Action 경계가 인증과 숨김 변경 사용 사례로 연결"
         },
         {
           "from": "src/features/history/ui/history-section-groups.tsx",
@@ -3848,7 +3902,8 @@
           "src/app/admin/(protected)/students/[studentId]/page.tsx",
           "src/app/admin/(protected)/@detail/(.)students/[studentId]/page.tsx",
           "src/app/api/admin/students/directory/route.ts",
-          "src/app/api/admin/students/[id]/history/route.ts"
+          "src/app/api/admin/students/[id]/history/route.ts",
+          "src/app/api/admin/students/[id]/route.ts"
         ],
         "serverComponent": [
           "src/features/students/server/components/student-create-content.tsx",
@@ -3891,6 +3946,7 @@
           "src/components/use-route-exit-guard.ts",
           "src/features/students/controller/use-student-directory-page.ts",
           "src/features/students/controller/use-student-history-page.ts",
+          "src/features/students/controller/use-student-detail-shell-state.ts",
           "src/features/students/controller/use-student-profile-controller.ts",
           "src/features/students/controller/use-student-wrong-word-actions.ts",
           "src/features/students/controller/use-student-wrong-word-cache.ts",
@@ -3903,9 +3959,11 @@
         "presentation": [],
         "contract": [
           "src/features/students/contracts/student-detail-read-model.ts",
-          "src/features/students/contracts/student-directory-read-model.ts"
+          "src/features/students/contracts/student-directory-read-model.ts",
+          "src/features/students/contracts/student-mutation-result.ts"
         ],
         "transport": [
+          "src/features/students/actions/update-student-profile.ts",
           "src/features/students/api/student-mutations.ts",
           "src/features/students/api/wrong-word-transport.ts",
           "src/features/students/transport/student-directory-pages.ts",
@@ -3913,6 +3971,7 @@
           "src/features/session/api/session.ts"
         ],
         "server": [
+          "src/features/students/server/actions/update-student-profile-action.ts",
           "src/features/students/server/components/student-create-content.tsx",
           "src/features/students/server/components/student-detail-route-content.tsx",
           "src/features/students/server/components/student-directory-content.tsx",
@@ -3928,7 +3987,8 @@
           "src/features/students/server/student-history-cursor.ts"
         ],
         "database": [
-          "supabase/migrations/20260829213000_add_admin_student_directory_read_model.sql"
+          "supabase/migrations/20260829213000_add_admin_student_directory_read_model.sql",
+          "supabase/migrations/20260831101000_add_student_profile_version_command.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/students/page.tsx",
@@ -3952,10 +4012,12 @@
           "src/features/students/controller/use-student-directory-page.test.tsx",
           "src/features/students/controller/use-student-history-page.test.tsx",
           "src/features/students/controller/use-student-profile-controller.test.tsx",
+          "src/features/students/server/actions/update-student-profile-action.test.ts",
           "src/features/students/server/student-directory-cursor.test.ts",
           "src/features/students/server/student-history-cursor.test.ts",
           "src/features/students/ui/student-directory.test.tsx",
           "src/lib/database/admin-student-directory-read-model.integration.test.ts",
+          "src/lib/database/student-profile-version-command.integration.test.ts",
           "src/lib/services/admin-material-request-cache.test.ts",
           "src/lib/services/admin-wrong-summary-query-contract.test.ts"
         ]
@@ -4010,6 +4072,26 @@
           "from": "src/features/students/ui/student-detail-dialog.tsx",
           "to": "src/components/use-route-exit-guard.ts",
           "reason": "인터셉트 학생 상세가 직접 주소와 같은 이탈 보호를 사용"
+        },
+        {
+          "from": "src/features/students/ui/student-detail-page.tsx",
+          "to": "src/features/students/controller/use-student-detail-shell-state.ts",
+          "reason": "직접 주소 상세가 학생 갱신과 이탈 상태를 공용 셸 controller에서 관리"
+        },
+        {
+          "from": "src/features/students/ui/student-detail-dialog.tsx",
+          "to": "src/features/students/controller/use-student-detail-shell-state.ts",
+          "reason": "인터셉트 상세도 같은 학생 갱신과 이탈 상태 controller를 재사용"
+        },
+        {
+          "from": "src/features/students/controller/use-student-profile-controller.ts",
+          "to": "src/features/students/actions/update-student-profile.ts",
+          "reason": "프로필 controller가 공개 Server Action 경계로 조건부 저장을 요청"
+        },
+        {
+          "from": "src/features/students/actions/update-student-profile.ts",
+          "to": "src/features/students/server/actions/update-student-profile-action.ts",
+          "reason": "공개 Server Action 경계가 인증과 프로필 변경 사용 사례로 연결"
         },
         {
           "from": "src/components/guarded-link.tsx",
@@ -4253,7 +4335,8 @@
           "supabase/migrations/20260826001639_add_read_side_maintenance_workers.sql",
           "supabase/migrations/20260826001655_schedule_read_side_maintenance_jobs.sql",
           "supabase/migrations/20260828193000_preserve_assignment_edit_metadata.sql",
-          "supabase/migrations/20260829103000_fix_assignment_edit_preview_regressions.sql"
+          "supabase/migrations/20260829103000_fix_assignment_edit_preview_regressions.sql",
+          "supabase/migrations/20260831102000_add_atomic_vocab_queue_resolution.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/assignments/page.tsx",
@@ -4273,9 +4356,12 @@
           "src/features/assignments/ui/vocab-schedule-fields.test.tsx",
           "src/features/assignment-queue/ui/assignment-queue-history.test.tsx",
           "src/features/assignment-queue/ui/student-assignment-queue-history.test.tsx",
+          "src/features/assignment-queue/api/queue-actions.test.ts",
           "src/app/api/admin/bulk-assignments/route.test.ts",
           "src/app/api/admin/students/[id]/vocab-assignment-queues/route.test.ts",
           "src/app/api/admin/vocab-assignment-queues/[seriesId]/route.test.ts",
+          "src/lib/services/vocab-assignment-queue-command.test.ts",
+          "src/lib/database/r6-partial-mutation-contract.test.ts",
           "src/lib/services/quiz/attempt-command.test.ts",
           "src/lib/assignment/question-planner.test.ts",
           "src/lib/database/vocab-assignment-completion-queue-migration-contract.test.ts",
@@ -4387,6 +4473,11 @@
           "from": "src/lib/services/vocab-assignment-queue-command.ts",
           "to": "src/lib/services/vocab-assignment-queue-support.ts",
           "reason": "queue RPC 미적용 상태를 안전하게 구분함"
+        },
+        {
+          "from": "src/lib/services/vocab-assignment-queue-command.ts",
+          "to": "src/lib/services/vocab-assignment-queue-query.ts",
+          "reason": "원자 처리 RPC가 반환한 대상 queue 영수증을 공용 조회 계약으로 검증함"
         },
         {
           "from": "src/features/students/ui/student-detail-content.tsx",

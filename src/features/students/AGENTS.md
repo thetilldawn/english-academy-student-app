@@ -26,3 +26,15 @@
 - 다른 기능의 내부 UI·model을 새로 직접 가져오지 않는다. 공유 경계가 없으면 기능 소유권 지도에
   의존 이유와 제거 시점을 먼저 기록한다.
 - DB 함수가 바뀌면 migration, 통합검사, Preview 함수·권한 재확인을 같은 작업에서 갱신한다.
+- 이름·학교·학년 저장은 `server/actions/update-student-profile-action.ts`만 사용하고 프로필 전용 DB
+  버전을 함께 보낸다. Client controller는 `actions/update-student-profile.ts` 공개 Server Action
+  경계로 들어가며 기존 학생 PATCH Route를 다시 만들지 않는다.
+- 최초 상세는 `get_admin_student_detail_initial_v2` 한 번으로 상세 자료와 프로필 버전을 같은 DB
+  스냅샷에서 받는다. 버전을 위해 프로필 RPC를 순차로 한 번 더 호출하지 않는다.
+- 409이면 서버 최신값으로 기준선과 기준 버전만 갱신하고 작성 중 입력은 보존한다. 같은 기준 버전 저장은
+  한 번만 성공하며 성공 DB 트랜잭션 안에서 감사 기록도 함께 남아야 한다.
+- 학생 상세의 프로필·접속 변경 콜백은 전체 학생 객체가 아니라 작은 변경 조각만 전달하고, page/dialog의
+  공용 `use-student-detail-shell-state.ts`에서 합친다. 정상 성공 뒤 학생 목록은 현재 필터의 첫 10+1만
+  다시 읽는다.
+- 학생 내역 필터 교체나 첫 페이지 갱신을 시작하면 이전 `nextCursor`를 즉시 폐기한다. 새 요청이
+  실패해도 이전 스냅샷의 더보기를 붙이지 않는다.

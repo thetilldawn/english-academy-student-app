@@ -16,7 +16,7 @@ describe("admin student wrong-summary query", () => {
       "src/features/students/server/queries/student-detail-row-schema.ts",
     );
 
-    expect(query).toContain('"get_admin_student_detail_initial_v1"');
+    expect(query).toContain('"get_admin_student_detail_initial_v2"');
     expect(query).toContain("wrongSummary: parsed.data.wrongSummary");
     expect(schema).toContain("wrongSummary: z.object({");
     expect(schema).toContain("wrongWordCount: z.coerce.number().int().nonnegative()");

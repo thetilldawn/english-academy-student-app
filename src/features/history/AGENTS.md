@@ -21,6 +21,16 @@
   만들거나 해석하지 않고 `server/admin-history-cursor.ts`만 사용한다.
 - DB 함수·권한·스냅샷 계산을 바꾸면 `supabase/migrations`와 최종 스키마 통합검사를 함께 바꾸며,
   Preview 한 건 적용 전에는 완료로 올리지 않는다.
+- 숨김·취소 성공은 `admin-history-mutation-events.ts`로 DB 버전이 든 영수증을 먼저 알린다. 목록은
+  `use-admin-history-section-page.ts`에서 영향 구역만 새 스냅샷 10+1로 바꾸며 전체 화면을 갱신하지 않는다.
+- 숨김 UI는 `actions/hide-admin-history-entry.ts` 공개 Server Action 경계로만 들어가며, `api/`나
+  `transport/`에서 `server/actions/`를 직접 가져오지 않는다.
+- 현재 응시를 숨기면 이전 응시가 다른 상태 구역에 나타날 수 있으므로 현재 표시 중인 모든 일반 구역을
+  서버 값으로 바꾼다. 개수는 로컬 증감하지 않고 서버 `totalCount`를 사용한다.
+- 변경 뒤 첫 구역 재조회가 시작되는 순간 기존 `nextCursor`를 폐기한다. 재조회가 실패해도 예전
+  스냅샷 커서로 더보기를 허용하지 않는다.
+- 숨김 뒤 재조회 스냅샷은 DB의 `hidden_at`보다 빠르면 안 된다. 앱 서버의 `new Date()`를 변경 버전으로
+  사용하지 않는다.
 - 수정 작업은 `npm run map:flow -- assignment-edit`로 페이지, 대화상자, controller, 정책, Route,
   service, migration, 검사를 함께 확인한다.
 - 다른 기능의 UI·계약을 새로 깊은 경로로 가져오지 않는다. 현재 직접 참조는 소유권 지도에 동결돼 있다.

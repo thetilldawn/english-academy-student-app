@@ -112,6 +112,16 @@ function mapRow(row: z.infer<typeof rowSchema>): VocabAssignmentQueueSummary {
   };
 }
 
+export function parseVocabAssignmentQueueSummary(
+  value: unknown,
+): VocabAssignmentQueueSummary {
+  const parsed = rowSchema.safeParse(value);
+  if (!parsed.success) {
+    throw new Error("배정된 시험 상태 응답을 확인하지 못했습니다.");
+  }
+  return mapRow(parsed.data);
+}
+
 export async function listVocabAssignmentQueueSummaries(options?: {
   before?: VocabAssignmentQueueCursor;
   includeClosed?: boolean;

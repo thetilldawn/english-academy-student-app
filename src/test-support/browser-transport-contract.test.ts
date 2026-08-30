@@ -1,9 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import {
-  cancelStudentAssignment,
-  hideAdminHistoryEntry,
-} from "@/features/history/api/history-mutations";
+import { cancelStudentAssignment } from "@/features/history/api/history-mutations";
 import { requestNotificationDelivery } from "@/features/notifications/api/notification-delivery";
 import {
   requestAdminLogin,
@@ -14,7 +11,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("browser transport contracts", () => {
+describe("shared browser transport contracts", () => {
   it("keeps a successful empty login response successful", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(null, { status: 204 }),
@@ -62,11 +59,8 @@ describe("browser transport contracts", () => {
       cancelStudentAssignment("assignment", "student", "취소 실패"),
     ).rejects.toThrow("취소할 수 없습니다");
     await expect(
-      hideAdminHistoryEntry(
-        { assignmentId: "assignment", studentId: "student", attemptId: null },
-        "내역 숨기기 실패",
-      ),
-    ).rejects.toThrow("내역 숨기기 실패");
+      cancelStudentAssignment("assignment-2", "student-2", "취소 실패"),
+    ).rejects.toThrow("취소 실패");
   });
 
   it("accepts only a valid successful notification payload", async () => {

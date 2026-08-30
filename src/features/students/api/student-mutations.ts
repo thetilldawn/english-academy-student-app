@@ -44,16 +44,6 @@ export function createStudent(input: {
   );
 }
 
-export function updateStudentProfile(
-  studentId: string,
-  input: { displayName: string; gradeLabel: string; schoolName: string },
-) {
-  return requestStudentMutation(
-    `/api/admin/students/${studentId}`,
-    jsonRequest("PATCH", input),
-  );
-}
-
 export function updateStudentDataset(studentId: string, datasetId: string) {
   return requestStudentMutation(
     `/api/admin/students/${studentId}/vocab`,

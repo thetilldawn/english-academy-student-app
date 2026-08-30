@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AdminHistorySnapshot } from "@/features/history/contracts/admin-history-read-model";
 
 import {
+  loadAdminHistoryFreshSection,
   loadAdminHistoryNextPage,
   loadAdminHistorySnapshot,
 } from "./history-pages";
@@ -68,5 +69,26 @@ describe("admin history browser transport", () => {
     await expect(loadAdminHistoryNextPage(pageRequest)).rejects.toThrow(
       "다음 시험 내역 응답을 확인하지 못했습니다.",
     );
+  });
+
+  it("변경된 구역의 서버 확정 개수까지 전달한다", async () => {
+    const section = {
+      groupKey: "completed",
+      items: [],
+      nextCursor: null,
+      totalCount: 4,
+      version: "2026-08-31T00:00:02.000Z",
+    };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+      Response.json({ section }),
+    ));
+    await expect(loadAdminHistoryFreshSection({
+      currentOnly: false,
+      groupKey: "completed",
+      mode: "section",
+      query: "",
+      snapshotAt: section.version,
+      statusFilter: "all",
+    })).resolves.toEqual(section);
   });
 });

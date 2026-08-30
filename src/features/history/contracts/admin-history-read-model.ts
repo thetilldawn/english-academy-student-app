@@ -59,6 +59,7 @@ export type AdminHistorySectionPage = {
   items: AdminHistoryListItem[];
   nextCursor: string | null;
   totalCount: number;
+  version?: string;
 };
 
 export type AdminHistorySnapshot = {
@@ -92,7 +93,21 @@ export type AdminHistoryPageRequest = {
 
 export type AdminHistoryReadRequest =
   | AdminHistoryInitialRequest
-  | AdminHistoryPageRequest;
+  | AdminHistoryPageRequest
+  | AdminHistorySectionRefreshRequest;
+
+export type AdminHistorySectionRefreshRequest = {
+  currentOnly: boolean;
+  groupKey: string;
+  mode: "section";
+  query: string;
+  snapshotAt: string;
+  statusFilter: AdminHistoryStatusFilter;
+};
+
+export type AdminHistorySectionRefresh = {
+  section: AdminHistorySectionPage;
+};
 
 export function normalizeAdminHistoryQuery(query: string) {
   return query.replace(/\s+/gu, " ").trim().slice(0, 80);

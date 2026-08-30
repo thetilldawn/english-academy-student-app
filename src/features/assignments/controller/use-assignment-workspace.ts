@@ -6,9 +6,7 @@ import {
   useReducer,
   useRef,
   useState,
-  useTransition,
 } from "react";
-import { useRouter } from "next/navigation";
 
 import type { StudentDirectoryFilters } from "@/features/students/public-contracts";
 import type {
@@ -45,8 +43,6 @@ export function useAssignmentWorkspace({
   initialDialogView: AssignmentDialogView;
   initialStudentId: string;
 }) {
-  const router = useRouter();
-  const [, startRefreshTransition] = useTransition();
   const directory = useAssignmentStudentDirectory(initial.directory);
   const basket = useAssignmentSelectionBasket();
   const datasetDirectory = useAssignmentDatasetDirectory();
@@ -239,8 +235,8 @@ export function useAssignmentWorkspace({
 
   useEffect(() => cancelDirectorySelection, [cancelDirectorySelection]);
 
-  function refresh() {
-    startRefreshTransition(() => router.refresh());
+  function refreshDirectory() {
+    void directory.actions.reloadFirstPage();
   }
 
   return {
@@ -252,7 +248,7 @@ export function useAssignmentWorkspace({
       loadMore: directory.actions.loadMore,
       openSingleAssignment,
       prepareBulkAssignment,
-      refresh,
+      refreshDirectory,
       resetFilters,
       setEntryDatasetId,
       setEntryMode: changeEntryMode,

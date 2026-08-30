@@ -146,7 +146,7 @@ describe("useStudentDirectoryPage", () => {
     );
   });
 
-  it("현재 필터와 표시 깊이를 보존하며 목록의 최신 행을 다시 읽는다", async () => {
+  it("현재 필터를 보존하고 첫 10+1만 최신 목록으로 다시 읽는다", async () => {
     vi.mocked(loadStudentDirectoryNextPage)
       .mockResolvedValueOnce({
         items: [student(3), student(4)],
@@ -195,19 +195,11 @@ describe("useStudentDirectoryPage", () => {
     expect(result.current.snapshot.page.items.map((item) => item.id)).toEqual([
       student(1).id,
       student(2).id,
-      student(3).id,
-      student(5).id,
     ]);
     expect(result.current.snapshot.page.items[0]?.displayName).toBe(
       "학생 1 수정",
     );
-    expect(loadStudentDirectoryNextPage).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        cursor: "refresh-page-2",
-        mode: "page",
-      }),
-      expect.any(AbortSignal),
-    );
+    expect(loadStudentDirectoryNextPage).toHaveBeenCalledTimes(1);
   });
 
   it("삭제된 학생을 늦은 더보기 응답이 다시 넣지 못하게 한다", async () => {

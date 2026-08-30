@@ -1,12 +1,14 @@
 import type {
   AdminHistoryNextPage,
   AdminHistoryReadRequest,
+  AdminHistorySectionRefresh,
   AdminHistorySnapshot,
 } from "@/features/history/contracts/admin-history-read-model";
 
 type HistoryPageResponse = {
   error?: string;
   page?: AdminHistoryNextPage;
+  section?: AdminHistorySectionRefresh["section"];
   snapshot?: AdminHistorySnapshot;
 };
 
@@ -52,4 +54,15 @@ export async function loadAdminHistoryNextPage(
     throw new Error("다음 시험 내역 응답을 확인하지 못했습니다.");
   }
   return payload.page;
+}
+
+export async function loadAdminHistoryFreshSection(
+  request: Extract<AdminHistoryReadRequest, { mode: "section" }>,
+  signal?: AbortSignal,
+) {
+  const payload = await requestHistoryPage(request, signal);
+  if (!payload.section) {
+    throw new Error("시험 내역 구역 응답을 확인하지 못했습니다.");
+  }
+  return payload.section;
 }

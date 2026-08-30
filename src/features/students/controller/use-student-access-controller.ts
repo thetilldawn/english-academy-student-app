@@ -23,7 +23,7 @@ import { announceStudentRemoved } from "./student-directory-events";
 export function useStudentAccessController(input: {
   appOrigin: string;
   onRemoved: () => void;
-  onUpdated: () => void;
+  onUpdated: (patch: Partial<StudentDetailProfile>) => void;
   student: StudentDetailProfile;
 }) {
   const studentId = input.student.id;
@@ -89,7 +89,7 @@ export function useStudentAccessController(input: {
       });
       if (kind === "rotate") {
         toast.success(adminStudentsText.account.rotateSuccess);
-        input.onUpdated();
+        input.onUpdated({ codeStatus: "active" });
       }
     } catch (error) {
       if (versionRef.current !== version) return;
@@ -123,7 +123,7 @@ export function useStudentAccessController(input: {
       if (versionRef.current !== version) return;
       setCodeState(null);
       toast.success(adminStudentsText.account.blockSuccess);
-      input.onUpdated();
+      input.onUpdated({ codeStatus: "blocked", status: "blocked" });
     } catch (error) {
       if (versionRef.current === version) {
         toast.error(

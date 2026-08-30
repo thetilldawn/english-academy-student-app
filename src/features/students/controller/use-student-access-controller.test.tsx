@@ -30,8 +30,9 @@ function student(index: number): StudentDetailProfile {
     readingContextSyncStatus: "not_configured",
     readingCurriculumStage: "undecided",
     schoolName: null,
-    status: "active",
-  };
+  status: "active",
+  updatedAt: "2026-08-29T00:00:00.000Z",
+};
 }
 
 afterEach(() => {

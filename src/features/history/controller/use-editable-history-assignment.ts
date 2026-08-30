@@ -148,7 +148,14 @@ export function useEditableHistoryAssignment(detail: AdminHistoryDetail) {
         );
         return;
       }
-      router.refresh();
+      router.replace(
+        historyDetailHref({
+          assignmentId: result.assignmentId,
+          attemptId: null,
+          studentId: detail.summary.studentId,
+        }),
+        { scroll: false },
+      );
     });
   }
 

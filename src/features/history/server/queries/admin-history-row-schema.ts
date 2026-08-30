@@ -186,3 +186,37 @@ export function mapAdminHistoryDetailItem(
     ...(unitSortIndexes ? { unitSortIndexes } : {}),
   };
 }
+
+export function projectAdminHistoryListItem(
+  item: AssignmentHistorySummary,
+): AdminHistoryListItem {
+  return {
+    activityAt: item.activityAt,
+    assignedAt: item.assignedAt,
+    assignmentId: item.assignmentId,
+    assignmentPurpose: item.assignmentPurpose,
+    assignmentTitle: item.assignmentTitle,
+    attemptId: item.attemptId,
+    availableUntil: item.availableUntil,
+    cancelledAt: item.cancelledAt,
+    completedAt: item.completedAt,
+    datasetTitle: item.datasetTitle,
+    deadlineAt: item.deadlineAt,
+    finalScore: item.finalScore,
+    id: item.id,
+    initialCompletedAt: item.initialCompletedAt ?? null,
+    initialScore: item.initialScore,
+    missedAt: item.missedAt,
+    passed: item.passed,
+    passingScore: item.passingScore,
+    phase: item.phase,
+    primaryUnitLabels: item.primaryUnitLabels,
+    questionCount: item.questionCount,
+    retryStartedAt: item.retryStartedAt,
+    startedAt: item.startedAt,
+    status: item.status,
+    studentId: item.studentId,
+    studentName: item.studentName,
+    unitLabels: item.unitLabels,
+  };
+}

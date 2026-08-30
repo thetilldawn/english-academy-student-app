@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => {
   return {
     AdminHistoryReadError: MockAdminHistoryReadError,
     getAdminContext: vi.fn(),
+    listAdminHistoryFreshSection: vi.fn(),
     listAdminHistoryInitial: vi.fn(),
     listAdminHistoryNextPage: vi.fn(),
   };
@@ -18,6 +19,7 @@ vi.mock("@/features/history/server/queries/admin-history-read-error", () => ({
   AdminHistoryReadError: mocks.AdminHistoryReadError,
 }));
 vi.mock("@/features/history/server/queries/admin-history-list-query", () => ({
+  listAdminHistoryFreshSection: mocks.listAdminHistoryFreshSection,
   listAdminHistoryInitial: mocks.listAdminHistoryInitial,
   listAdminHistoryNextPage: mocks.listAdminHistoryNextPage,
 }));
@@ -49,6 +51,13 @@ describe("POST /api/admin/history", () => {
     vi.clearAllMocks();
     mocks.getAdminContext.mockResolvedValue({ userId: "admin-id" });
     mocks.listAdminHistoryInitial.mockResolvedValue(snapshot);
+    mocks.listAdminHistoryFreshSection.mockResolvedValue({
+      groupKey: "completed",
+      items: [],
+      nextCursor: null,
+      totalCount: 3,
+      version: "2026-08-31T00:00:02.000Z",
+    });
     mocks.listAdminHistoryNextPage.mockResolvedValue({
       items: [],
       nextCursor: null,
@@ -95,6 +104,27 @@ describe("POST /api/admin/history", () => {
     const invalid = await POST(request(input));
     expect(invalid.status).toBe(400);
     expect(invalid.headers.get("cache-control")).toBe("private, no-store");
+  });
+
+  it("변경된 한 구역을 private no-store로 반환한다", async () => {
+    const input = {
+      currentOnly: false,
+      groupKey: "completed",
+      mode: "section",
+      query: "",
+      snapshotAt: "2026-08-31T00:00:02.000Z",
+      statusFilter: "all",
+    } as const;
+    const response = await POST(request(input));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(mocks.listAdminHistoryFreshSection).toHaveBeenCalledWith(
+      input,
+      { userId: "admin-id" },
+    );
+    expect(await response.json()).toMatchObject({
+      section: { totalCount: 3 },
+    });
   });
 
   it("비로그인·다른 origin·잘못된 body에서는 조회하지 않는다", async () => {

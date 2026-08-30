@@ -128,6 +128,39 @@ export function useAssignmentStudentDirectory(
     }
   }, [filtering, loadingMore, snapshot]);
 
+  const reloadFirstPage = useCallback(async () => {
+    const nextFilters = acceptedFiltersRef.current;
+    stopCurrentRequest();
+    const requestVersion = requestVersionRef.current;
+    const abort = new AbortController();
+    abortRef.current = abort;
+    setFiltering(true);
+    setLoadingMore(false);
+    setError("");
+    try {
+      const result = await loadStudentDirectorySnapshot(
+        { filters: nextFilters, mode: "initial" },
+        abort.signal,
+      );
+      if (requestVersionRef.current !== requestVersion) return;
+      acceptedFiltersRef.current = result.filters;
+      setFilters(result.filters);
+      setSnapshot(result);
+    } catch (requestError) {
+      if (abort.signal.aborted || requestVersionRef.current !== requestVersion) return;
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "학생 목록을 새로 불러오지 못했습니다.",
+      );
+    } finally {
+      if (requestVersionRef.current === requestVersion) {
+        setFiltering(false);
+        abortRef.current = null;
+      }
+    }
+  }, [stopCurrentRequest]);
+
   return {
     error,
     filtering,
@@ -136,6 +169,7 @@ export function useAssignmentStudentDirectory(
     snapshot,
     actions: {
       loadMore,
+      reloadFirstPage,
       replaceFilters,
       replaceQuery: (query: string) =>
         replaceFilters({ ...filters, query }, 250),

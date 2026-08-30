@@ -10,17 +10,12 @@ import type { VocabAssignmentQueueSummary } from "@/lib/admin/vocab-assignment-q
 
 import { AssignmentQueueHistory } from "./assignment-queue-history";
 
-const mocks = vi.hoisted(() => ({ refresh: vi.fn() }));
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: mocks.refresh }),
-}));
 vi.mock("sonner", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));
 
 afterEach(() => {
   cleanup();
-  mocks.refresh.mockReset();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
@@ -114,16 +109,31 @@ describe("AssignmentQueueHistory", () => {
       .not.toHaveAttribute("inert");
   });
 
-  it("확인 필요 큐에서 같은 회차 재배정을 요청하고 화면을 갱신한다", async () => {
+  it("확인 필요 큐에서 같은 회차 재배정 영수증을 부모에 전달한다", async () => {
     const user = userEvent.setup();
+    const resolvedQueue = queue(
+      "active",
+      "00000000-0000-4000-8000-000000000033",
+    );
+    const resolution = {
+      queue: resolvedQueue,
+      resolution: {
+        action: "retry" as const,
+        series_id: resolvedQueue.seriesId,
+        student_id: resolvedQueue.studentId,
+      },
+      version: resolvedQueue.updatedAt,
+    };
     const fetchMock = vi.fn().mockResolvedValue({
-      json: async () => ({}),
+      json: async () => resolution,
       ok: true,
     });
+    const onResolved = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
     vi.spyOn(window, "confirm").mockReturnValue(true);
     render(
       <AssignmentQueueHistory
+        onResolved={onResolved}
         queues={[
           queue("attention", "00000000-0000-4000-8000-000000000033"),
         ]}
@@ -133,7 +143,7 @@ describe("AssignmentQueueHistory", () => {
     await user.click(
       screen.getByRole("button", { name: "같은 회차 다시 배정" }),
     );
-    await waitFor(() => expect(mocks.refresh).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onResolved).toHaveBeenCalledWith(resolution));
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/admin/vocab-assignment-queues/00000000-0000-4000-8000-000000000033",
       expect.objectContaining({

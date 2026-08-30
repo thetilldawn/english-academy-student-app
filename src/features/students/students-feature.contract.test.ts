@@ -88,7 +88,7 @@ describe("student management feature boundary", () => {
     expect(detailRouteContent).toContain("notFound()");
     expect(detailRouteContent).not.toContain("fetch(");
     expect(detailQuery).toContain("await requireAdmin()");
-    expect(detailQuery).toContain('"get_admin_student_detail_initial_v1"');
+    expect(detailQuery).toContain('"get_admin_student_detail_initial_v2"');
     expect(directoryQuery).toContain("if (!authenticatedAdmin) await requireAdmin()");
     expect(historyQuery).toContain("if (!authenticatedAdmin) await requireAdmin()");
     expect(directoryRoute).toContain("getStudentDirectoryInitial(parsed.data, admin)");

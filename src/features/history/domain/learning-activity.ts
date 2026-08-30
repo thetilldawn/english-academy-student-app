@@ -352,7 +352,7 @@ export function matchesLearningHistoryFilters(
 }
 
 export function adminHistoryFilterBucket(
-  item: AssignmentHistorySummary,
+  item: LearningActivityOrderInput,
 ): Exclude<AdminHistoryStatusFilter, "all"> {
   const state = deriveLearningActivityState(item);
   if (state.section === "archived") return "archived";
@@ -372,7 +372,7 @@ export function adminHistoryFilterBucket(
 }
 
 export function matchesAdminHistoryStatusFilter(
-  item: AssignmentHistorySummary,
+  item: LearningActivityOrderInput,
   filter: AdminHistoryStatusFilter,
 ) {
   return filter === "all" || adminHistoryFilterBucket(item) === filter;

@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -11,10 +10,13 @@ import { isStudentAssignmentEditable } from "@/lib/admin/assignment-edit";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
 import { historyDetailHref } from "@/lib/admin/history-route";
 
-import {
-  cancelStudentAssignment,
-  hideAdminHistoryEntry,
-} from "../api/history-mutations";
+import { hideAdminHistoryEntry } from "../actions/hide-admin-history-entry";
+import { cancelStudentAssignment } from "../api/history-mutations";
+import type {
+  AdminHistoryMutationReceipt,
+} from "../contracts/admin-history-mutation";
+import type { AdminHistoryListItem } from "../contracts/admin-history-read-model";
+import { announceAdminHistoryMutation } from "../controller/admin-history-mutation-events";
 import styles from "./admin-history-actions.module.css";
 
 type ActionKey = "cancel" | "delete-history";
@@ -24,7 +26,6 @@ export function AdminHistoryActions({
   onEdit,
   onMutated,
   onViewDetail,
-  refreshAfterMutation = true,
   showDetailLink = true,
   size = "regular",
   summaryOnly = false,
@@ -33,31 +34,35 @@ export function AdminHistoryActions({
   onEdit?: (item: AssignmentHistorySummary) => void;
   onMutated?: () => void;
   onViewDetail?: () => void;
-  refreshAfterMutation?: boolean;
   showDetailLink?: boolean;
   size?: "regular" | "small";
   summaryOnly?: boolean;
 }) {
-  const router = useRouter();
   const [busyAction, setBusyAction] = useState<ActionKey | null>(null);
   const buttonSize = size === "small" ? "small" : "default";
 
   async function run(
     action: ActionKey,
     confirmation: string,
-    request: () => Promise<void>,
+    request: () => Promise<{
+      after: AdminHistoryListItem | null;
+      receipt: AdminHistoryMutationReceipt;
+    }>,
   ) {
     if (busyAction || !window.confirm(confirmation)) return;
     setBusyAction(action);
     try {
-      await request();
+      const mutation = await request();
+      announceAdminHistoryMutation({
+        ...mutation,
+        before: item,
+      });
       toast.success(
         action === "cancel"
           ? adminHistoryText.actions.cancelSuccess
           : adminHistoryText.actions.deleteSuccess,
       );
       onMutated?.();
-      if (refreshAfterMutation) router.refresh();
     } catch (requestError) {
       toast.error(
         requestError instanceof Error
@@ -144,7 +149,10 @@ export function AdminHistoryActions({
                     item.assignmentId,
                     item.studentId,
                     adminHistoryText.actions.genericError,
-                  ),
+                  ).then((response) => ({
+                    after: response.item,
+                    receipt: response.receipt,
+                  })),
               )
             }
             size={buttonSize}
@@ -172,7 +180,10 @@ export function AdminHistoryActions({
                       attemptId: item.attemptId,
                     },
                     adminHistoryText.actions.genericError,
-                  ),
+                  ).then((receipt) => ({
+                    after: null,
+                    receipt,
+                  })),
               )
             }
             size={buttonSize}

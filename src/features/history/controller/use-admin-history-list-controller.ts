@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   normalizeAdminHistoryQuery,
@@ -25,6 +25,7 @@ export function useAdminHistoryListController(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [retryRevision, setRetryRevision] = useState(0);
+  const requestRevisionRef = useRef(0);
 
   const normalizedQuery = normalizeAdminHistoryQuery(query);
   const conditionsMatchSnapshot =
@@ -36,11 +37,12 @@ export function useAdminHistoryListController(
 
     const controller = new AbortController();
     const timeout = window.setTimeout(() => {
+      const requestRevision = ++requestRevisionRef.current;
       setLoading(true);
       setError("");
       void loadAdminHistorySnapshot(
         {
-          currentOnly: false,
+          currentOnly: initialSnapshot.currentOnly,
           mode: "initial",
           query: normalizedQuery,
           statusFilter,
@@ -48,10 +50,16 @@ export function useAdminHistoryListController(
         controller.signal,
       )
         .then((nextSnapshot) => {
-          if (!controller.signal.aborted) setSnapshot(nextSnapshot);
+          if (
+            !controller.signal.aborted &&
+            requestRevisionRef.current === requestRevision
+          ) setSnapshot(nextSnapshot);
         })
         .catch((requestError: unknown) => {
-          if (controller.signal.aborted) return;
+          if (
+            controller.signal.aborted ||
+            requestRevisionRef.current !== requestRevision
+          ) return;
           setError(
             requestError instanceof Error
               ? requestError.message
@@ -59,7 +67,10 @@ export function useAdminHistoryListController(
           );
         })
         .finally(() => {
-          if (!controller.signal.aborted) setLoading(false);
+          if (
+            !controller.signal.aborted &&
+            requestRevisionRef.current === requestRevision
+          ) setLoading(false);
         });
     }, SEARCH_DELAY_MS);
 
@@ -69,6 +80,7 @@ export function useAdminHistoryListController(
     };
   }, [
     conditionsMatchSnapshot,
+    initialSnapshot.currentOnly,
     normalizedQuery,
     retryRevision,
     statusFilter,

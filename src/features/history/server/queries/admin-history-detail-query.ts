@@ -5,7 +5,7 @@ import {
   historyEntryKey,
   parseHistoryEntryKey,
 } from "@/lib/admin/history-route";
-import { requireAdmin } from "@/lib/auth/admin";
+import { requireAdmin, type AdminContext } from "@/lib/auth/admin";
 import { getAdminAttemptDetail } from "./admin-attempt-detail-query";
 import { getAdminAttemptPointSummary } from "@/lib/services/learning-point-read-service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -18,10 +18,11 @@ import {
 
 export async function getAdminHistoryReadModelDetail(
   entryKey: string,
+  authenticatedAdmin?: AdminContext,
 ): Promise<AdminHistoryDetail | null> {
   const parsedKey = parseHistoryEntryKey(entryKey);
   if (!parsedKey) return null;
-  const admin = await requireAdmin();
+  const admin = authenticatedAdmin ?? (await requireAdmin());
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc(
     "get_admin_history_detail_v1",

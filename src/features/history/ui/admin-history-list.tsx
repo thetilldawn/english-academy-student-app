@@ -159,7 +159,7 @@ function AdminHistoryListContent({
         <HistorySectionGroups
           countSuffix={adminHistoryText.sections.countSuffix}
           loadMoreContext={{
-            currentOnly: false,
+            currentOnly: snapshot.currentOnly,
             query: snapshot.query,
             statusFilter: snapshot.statusFilter,
           }}

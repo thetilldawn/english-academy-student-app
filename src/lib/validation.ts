@@ -47,6 +47,12 @@ export const updateStudentProfileSchema = z
   })
   .strict();
 
+export const updateStudentProfileCommandSchema = updateStudentProfileSchema
+  .extend({
+    baseVersion: z.iso.datetime({ offset: true }),
+  })
+  .strict();
+
 const clockTimeSchema = z
   .string()
   .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "시각을 확인해 주세요.");

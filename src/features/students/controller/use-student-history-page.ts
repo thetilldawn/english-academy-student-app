@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { subscribeAdminHistoryMutation } from "@/features/history/public-client";
+
 import {
   emptyStudentHistoryFilters,
   type StudentHistoryFilters,
@@ -28,17 +30,27 @@ export function useStudentHistoryPage(input: {
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
+  const beginRequest = useCallback((kind: "filter" | "more" | "refresh") => {
+    abortRef.current?.abort();
+    const abort = new AbortController();
+    abortRef.current = abort;
+    const requestVersion = ++requestVersionRef.current;
+    if (kind !== "more") {
+      // A new first-page snapshot makes every cursor from the previous
+      // snapshot invalid, even when that refresh later fails.
+      setPage((current) => ({ ...current, nextCursor: null }));
+    }
+    setFiltering(kind === "filter");
+    setLoadingMore(kind === "more");
+    return { abort, requestVersion };
+  }, []);
+
   const replaceFilters = useCallback(async (
     nextFilters: StudentHistoryFilters,
   ) => {
     setFilters(nextFilters);
     setError("");
-    setFiltering(true);
-    requestVersionRef.current += 1;
-    const requestVersion = requestVersionRef.current;
-    abortRef.current?.abort();
-    const abort = new AbortController();
-    abortRef.current = abort;
+    const { abort, requestVersion } = beginRequest("filter");
     try {
       const nextPage = await loadStudentHistoryInitial(
         input.studentId,
@@ -62,16 +74,46 @@ export function useStudentHistoryPage(input: {
         abortRef.current = null;
       }
     }
-  }, [input.studentId]);
+  }, [beginRequest, input.studentId]);
+
+  const refreshFirstPage = useCallback(async () => {
+    setError("");
+    const { abort, requestVersion } = beginRequest("refresh");
+    try {
+      const nextPage = await loadStudentHistoryInitial(
+        input.studentId,
+        { filters, mode: "initial" },
+        abort.signal,
+      );
+      if (requestVersionRef.current !== requestVersion) return;
+      setPage(nextPage);
+    } catch (requestError) {
+      if (abort.signal.aborted || requestVersionRef.current !== requestVersion) {
+        return;
+      }
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "변경된 학생 시험 내역을 불러오지 못했습니다.",
+      );
+    } finally {
+      if (requestVersionRef.current === requestVersion) {
+        abortRef.current = null;
+      }
+    }
+  }, [beginRequest, filters, input.studentId]);
+
+  useEffect(() => subscribeAdminHistoryMutation((notice) => {
+    if (notice.receipt.studentId === input.studentId) {
+      void refreshFirstPage();
+    }
+  }), [input.studentId, refreshFirstPage]);
 
   const loadMore = useCallback(async () => {
-    if (!page.nextCursor || filtering || loadingMore) return;
+    if (!page.nextCursor || filtering || loadingMore || abortRef.current) return;
     const cursor = page.nextCursor;
-    setLoadingMore(true);
     setError("");
-    const requestVersion = requestVersionRef.current;
-    const abort = new AbortController();
-    abortRef.current = abort;
+    const { abort, requestVersion } = beginRequest("more");
     try {
       const nextPage = await loadStudentHistoryNextPage(
         input.studentId,
@@ -99,10 +141,15 @@ export function useStudentHistoryPage(input: {
         );
       }
     } finally {
-      setLoadingMore(false);
-      if (abortRef.current === abort) abortRef.current = null;
+      if (
+        abortRef.current === abort &&
+        requestVersionRef.current === requestVersion
+      ) {
+        setLoadingMore(false);
+        abortRef.current = null;
+      }
     }
-  }, [filtering, filters, input.studentId, loadingMore, page.nextCursor]);
+  }, [beginRequest, filtering, filters, input.studentId, loadingMore, page.nextCursor]);
 
   return {
     error,
@@ -110,7 +157,7 @@ export function useStudentHistoryPage(input: {
     filters,
     loadingMore,
     page,
-    actions: { loadMore, replaceFilters },
+    actions: { loadMore, refreshFirstPage, replaceFilters },
   };
 }
 

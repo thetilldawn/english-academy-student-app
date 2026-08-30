@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { formatContentText } from "@/content/format";
@@ -14,11 +13,9 @@ import type { StudentCodeView } from "../contracts/student-detail-read-model";
 import { announceStudentDirectoryRefresh } from "./student-directory-events";
 
 export function useStudentCreationController(appOrigin: string) {
-  const router = useRouter();
   const [code, setCode] = useState<StudentCodeView | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [, startRefreshTransition] = useTransition();
 
   async function submit(formElement: HTMLFormElement) {
     if (busy) return;
@@ -46,7 +43,6 @@ export function useStudentCreationController(appOrigin: string) {
       toast.success(adminStudentsText.createStudent.success);
       formElement.reset();
       announceStudentDirectoryRefresh();
-      startRefreshTransition(() => router.refresh());
     } catch (requestError) {
       const message = requestError instanceof Error
         ? requestError.message

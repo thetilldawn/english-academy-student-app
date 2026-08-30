@@ -53,6 +53,7 @@ export const studentDetailInitialRowSchema = z.object({
     readingCurriculumStage: z.enum(readingCurriculumStages),
     schoolName: z.string().nullable(),
     status: z.enum(["active", "blocked"]),
+    updatedAt: timestampSchema,
   }),
   vocabBookHistory: z.array(z.object({
     assignmentPurpose: z.enum(["regular", "review", "mixed"]),

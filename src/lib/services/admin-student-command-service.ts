@@ -1,5 +1,7 @@
 import "server-only";
 
+import { z } from "zod";
+
 import {
   requireAdmin,
   type AdminContext,
@@ -26,6 +28,28 @@ export class StudentCreationError extends Error {
     this.name = "StudentCreationError";
   }
 }
+
+export class StudentProfileUpdateError extends Error {
+  constructor(
+    public readonly reason: "conflict" | "database",
+    message: string,
+  ) {
+    super(message);
+    this.name = "StudentProfileUpdateError";
+  }
+}
+
+const studentProfileMutationSchema = z.object({
+  displayName: z.string().min(1),
+  gradeLabel: z.string().nullable(),
+  id: z.uuid(),
+  schoolName: z.string().nullable(),
+  updatedAt: z.iso.datetime({ offset: true }),
+});
+
+export type StudentProfileMutationSnapshot = z.infer<
+  typeof studentProfileMutationSchema
+>;
 
 export async function createStudent(input: {
   displayName: string;
@@ -98,47 +122,86 @@ export async function setStudentCurrentDataset(
 export async function updateStudentProfile(
   studentId: string,
   input: {
+    baseVersion: string;
     displayName: string;
     schoolName: string;
     gradeLabel: string;
   },
-  admin: AdminContext,
-): Promise<void> {
-  const supabase = getServiceSupabaseClient();
+  _admin: AdminContext,
+): Promise<{
+  student: {
+    displayName: string;
+    gradeLabel: string | null;
+    id: string;
+    schoolName: string | null;
+    updatedAt: string;
+  };
+  version: string;
+}> {
+  void _admin;
+  const supabase = await createServerSupabaseClient();
   const { data: updatedStudent, error: updateError } = await supabase
-    .from("students")
-    .update({
-      display_name: input.displayName,
-      school_name: input.schoolName || null,
-      grade_label: input.gradeLabel || null,
-    })
-    .eq("id", studentId)
-    .is("deleted_at", null)
-    .select("id")
-    .maybeSingle();
-
-  if (updateError || !updatedStudent) {
-    throw new Error("student_profile_update_failed");
-  }
-
-  const { error: auditError } = await supabase.from("audit_events").insert({
-    event_type: "student.profile_updated",
-    actor_admin_id: admin.userId,
-    student_id: studentId,
-    details: {
-      display_name: input.displayName,
-      school_name: input.schoolName || null,
-      grade_label: input.gradeLabel || null,
-    },
-  });
-
-  if (auditError) {
-    console.error("[student-profile] audit insert failed", {
-      code: auditError.code,
-      message: auditError.message,
-      studentId,
+    .rpc("update_admin_student_profile_v1", {
+      p_base_version: input.baseVersion,
+      p_display_name: input.displayName,
+      p_grade_label: input.gradeLabel,
+      p_school_name: input.schoolName,
+      p_student_id: studentId,
     });
+
+  const parsedStudent = studentProfileMutationSchema.safeParse(updatedStudent);
+  if (updateError) {
+    if (
+      updateError.code === "40001" ||
+      /student_profile_conflict/u.test(updateError.message ?? "")
+    ) {
+      throw new StudentProfileUpdateError(
+        "conflict",
+        "다른 변경이 먼저 저장되었습니다. 현재 입력을 확인한 뒤 다시 저장해 주세요.",
+      );
+    }
+    throw new StudentProfileUpdateError(
+      "database",
+      "학생 정보를 저장하지 못했습니다.",
+    );
   }
+  if (!parsedStudent.success) {
+    throw new StudentProfileUpdateError(
+      "database",
+      "학생 정보 저장 결과를 확인하지 못했습니다.",
+    );
+  }
+
+  return {
+    student: {
+      displayName: parsedStudent.data.displayName,
+      gradeLabel: parsedStudent.data.gradeLabel,
+      id: parsedStudent.data.id,
+      schoolName: parsedStudent.data.schoolName,
+      updatedAt: parsedStudent.data.updatedAt,
+    },
+    version: parsedStudent.data.updatedAt,
+  };
+}
+
+export async function getStudentProfileMutationSnapshot(
+  studentId: string,
+  _admin: AdminContext,
+): Promise<StudentProfileMutationSnapshot> {
+  void _admin;
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase.rpc(
+    "get_admin_student_profile_v1",
+    { p_student_id: studentId },
+  );
+  const parsed = studentProfileMutationSchema.safeParse(data);
+  if (error || !parsed.success || parsed.data.id !== studentId) {
+    throw new StudentProfileUpdateError(
+      "database",
+      "최신 학생 정보를 불러오지 못했습니다.",
+    );
+  }
+  return parsed.data;
 }
 
 export async function revealStudentCode(studentId: string): Promise<string> {

@@ -88,6 +88,7 @@ function HistoryHarness() {
       loadMore: async () => {
         setPage({ items: allItems, nextCursor: null, totalCount: 29 });
       },
+      refreshFirstPage: async () => {},
       replaceFilters: async () => {},
     },
   } as StudentHistoryPageController;

@@ -59,7 +59,6 @@ export function LegacyReviewRecovery({
     } else {
       router.replace("/admin/assignments");
     }
-    router.refresh();
   }
 
   return (
