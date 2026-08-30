@@ -88,7 +88,7 @@ describe("assignment date-time toggle field", () => {
         onChange={vi.fn()}
         toggleLabel="공개 시간 사용"
         toggleLocked
-        toggleLockedText="이어 배정 시험 일정"
+        toggleLockedText="배정된 시험 일정"
         value="2026-09-01T09:00"
       />,
     );
@@ -98,6 +98,6 @@ describe("assignment date-time toggle field", () => {
       "aria-errormessage",
       "series-availability-error",
     );
-    expect(screen.getByText("이어 배정 시험 일정")).toBeInTheDocument();
+    expect(screen.getByText("배정된 시험 일정")).toBeInTheDocument();
   });
 });

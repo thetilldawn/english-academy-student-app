@@ -46,7 +46,7 @@ export function AssignmentDeadlineFields({
       }
       toggleLabel="응시 마감 사용"
       toggleLocked={scheduleRequired}
-      toggleLockedText="이어 배정 시험 일정"
+      toggleLockedText="배정된 시험 일정"
       value={
         deadline.mode === "at" ? deadline.koreanLocalDateTime : null
       }

@@ -92,4 +92,18 @@ describe("배정과 수정 화면 공통 계약", () => {
       ),
     ).toBe(false);
   });
+
+  it("uses the settled assigned-test label in both locked schedule fields", () => {
+    const availability = source(
+      "src/features/assignments/ui/assignment-availability-fields.tsx",
+    );
+    const deadline = source(
+      "src/features/assignments/ui/assignment-deadline-fields.tsx",
+    );
+
+    for (const value of [availability, deadline]) {
+      expect(value).toContain('toggleLockedText="배정된 시험 일정"');
+      expect(value).not.toContain("이어 배정 시험 일정");
+    }
+  });
 });

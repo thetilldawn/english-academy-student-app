@@ -42,7 +42,7 @@ export function AssignmentAvailabilityFields({
       }
       toggleLabel="공개 시간 사용"
       toggleLocked={scheduleRequired}
-      toggleLockedText="이어 배정 시험 일정"
+      toggleLockedText="배정된 시험 일정"
       value={
         availability.mode === "at"
           ? availability.koreanLocalDateTime
