@@ -170,7 +170,10 @@ describe("mixed assignment API contract", () => {
       expect(directSource).not.toContain("create_mixed_review_assignment");
     }
     expect(directService).toContain(
-      '"create_current_wrong_review_assignment_v1"',
+      '"create_current_wrong_review_assignment_v2"',
+    );
+    expect(directService).toContain(
+      "p_available_from: prepared.availableFrom",
     );
   });
 });

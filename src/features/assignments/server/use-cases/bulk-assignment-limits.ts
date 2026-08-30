@@ -1,0 +1,1 @@
+export const MAXIMUM_BULK_QUESTION_COUNT = 10_000;

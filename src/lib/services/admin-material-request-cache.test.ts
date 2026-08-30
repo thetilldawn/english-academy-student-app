@@ -25,11 +25,7 @@ vi.mock("@/lib/supabase/server", () => ({
   createServerSupabaseClient: mocks.createServerSupabaseClient,
 }));
 
-import {
-  loadCurrentAdminDatasetDisplayLabelMapForRsc,
-  loadCurrentAdminMaterialSnapshotForRsc,
-  loadCurrentAdminVocabUnitsForRsc,
-} from "./admin-material-read-service";
+import { loadCurrentAdminMaterialSnapshotForRsc } from "./admin-material-read-service";
 
 type QueryResult = { data: unknown[]; error: null };
 
@@ -120,27 +116,18 @@ describe("admin material React request cache", () => {
     const client = materialClient("a");
     mocks.createServerSupabaseClient.mockResolvedValue(client);
 
-    const [firstMaterial, secondMaterial, labels, firstUnits, secondUnits] =
-      await Promise.all([
-        loadCurrentAdminMaterialSnapshotForRsc(),
-        loadCurrentAdminMaterialSnapshotForRsc(),
-        loadCurrentAdminDatasetDisplayLabelMapForRsc([
-          { id: "dataset-a", title: "단어장 a", edition: null },
-        ]),
-        loadCurrentAdminVocabUnitsForRsc(),
-        loadCurrentAdminVocabUnitsForRsc(),
-      ]);
+    const [firstMaterial, secondMaterial] = await Promise.all([
+      loadCurrentAdminMaterialSnapshotForRsc(),
+      loadCurrentAdminMaterialSnapshotForRsc(),
+    ]);
 
     expect(firstMaterial).toBe(secondMaterial);
-    expect(labels.get("dataset-a")).toBe(firstMaterial.datasetLabelById.get("dataset-a"));
-    expect(firstUnits).toBe(secondUnits);
-    expect(mocks.createServerSupabaseClient).toHaveBeenCalledTimes(2);
-    expect(client.from).toHaveBeenCalledTimes(4);
+    expect(firstMaterial.datasetLabelById.get("dataset-a")).toBeDefined();
+    expect(mocks.createServerSupabaseClient).toHaveBeenCalledTimes(1);
+    expect(client.from).toHaveBeenCalledTimes(2);
     expect(client.from.mock.calls.map(([table]) => table)).toEqual([
       "vocab_datasets",
       "vocab_dataset_catalog",
-      "vocab_units",
-      "vocab_unit_catalog",
     ]);
   });
 

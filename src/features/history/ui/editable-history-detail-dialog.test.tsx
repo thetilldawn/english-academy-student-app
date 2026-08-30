@@ -20,7 +20,6 @@ import {
   NavigationExitGuardProvider,
   useGuardedNavigationRequest,
 } from "@/components/navigation-exit-guard";
-import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
 import type { AdminHistoryDetail } from "../model";
 
 import { EditableHistoryDetailDialog } from "./editable-history-detail-dialog";
@@ -30,11 +29,11 @@ const router = vi.hoisted(() => ({
   refresh: vi.fn(),
   replace: vi.fn(),
 }));
+const loadAssignmentEditContext = vi.hoisted(() => vi.fn());
 
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
-
-vi.mock("./history-assignment-editor-model", () => ({
-  buildHistoryAssignmentEditorModel: () => ({ editor: true }),
+vi.mock("@/features/assignments/public-client", () => ({
+  loadAssignmentEditContext,
 }));
 
 vi.mock("./history-detail-header", () => ({
@@ -66,7 +65,7 @@ vi.mock("./history-detail-actions", () => ({
   ),
 }));
 
-vi.mock("@/features/assignments/ui/single-assignment-editor", () => ({
+vi.mock("@/features/assignments/public-ui", () => ({
   SingleAssignmentEditor: ({
     formId,
     onBusyChange,
@@ -155,6 +154,16 @@ const originalClose = HTMLDialogElement.prototype.close;
 
 beforeEach(() => {
   Object.values(router).forEach((mock) => mock.mockReset());
+  loadAssignmentEditContext.mockReset();
+  loadAssignmentEditContext.mockResolvedValue({
+    datasets: [],
+    initialDatasetId: "dataset-1",
+    initialEditDraft: { purpose: "regular" },
+    initialUnitIds: [],
+    progress: null,
+    student: {},
+    units: [],
+  });
   window.history.replaceState({}, "", "/admin/results/assignment.test.student");
   HTMLDialogElement.prototype.showModal = function showModal() {
     this.setAttribute("open", "");
@@ -192,10 +201,7 @@ const detail = {
 function renderDialog() {
   return render(
     <NavigationExitGuardProvider>
-      <EditableHistoryDetailDialog
-        detail={detail}
-        editorData={{} as AssignmentManagerData}
-      />
+      <EditableHistoryDetailDialog detail={detail} />
       <NavigationProbe />
     </NavigationExitGuardProvider>,
   );
@@ -286,8 +292,11 @@ describe("editable history detail dialog", () => {
     expect(router.back).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole("button", { name: "저장 완료" }));
+    act(() => releaseRouteGuardSentinel());
 
-    expect(screen.getByText("상세 본문")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("상세 본문")).toBeInTheDocument();
+    });
     expect(router.replace).toHaveBeenCalledWith(
       "/admin/results/assignment.bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.cccccccc-cccc-4ccc-8ccc-cccccccccccc",
       { scroll: false },

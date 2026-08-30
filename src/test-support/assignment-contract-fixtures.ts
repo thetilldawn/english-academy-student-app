@@ -7,6 +7,7 @@ const day59 = "59595959-5959-4959-8959-595959595959";
 const day60 = "60606060-6060-4060-8060-606060606060";
 const idempotencyKey = "77777777-7777-4777-8777-777777777777";
 const previewPlanSignature = "a".repeat(64);
+const planNonce = "88888888-8888-4888-8888-888888888888";
 
 export const assignmentContractIds = {
   studentA,
@@ -18,6 +19,7 @@ export const assignmentContractIds = {
   day60,
   idempotencyKey,
   previewPlanSignature,
+  planNonce,
 } as const;
 
 export const reverseUnitIds = [day60, day59, day58] as const;
@@ -138,15 +140,70 @@ export const replacementSubmitContract = {
 
 export const bulkPreviewContract = {
   studentIds: [studentA, studentB],
-  rangeMode: "previous_span",
-  unitsPerSession: 2,
-  sessionCount: 2,
-  firstAvailableFrom: "2026-08-16T15:00:00.000Z",
-  dayInterval: 2,
-  firstAvailableUntil: "2026-08-17T12:00:00.000Z",
-  includePendingReview: true,
-  reviewLevels: [1, 2],
   englishToKoreanRatio: 50,
+  commonPlan: {
+    datasetId: dataset,
+    distribution: "split",
+    splitBasis: "question_count",
+    orderedUnitIds: reverseUnitIds,
+    rangeUnitCounts: [],
+    unitAllocationRule: null,
+    questionCount: { mode: "manual", value: 12 },
+    overflowPolicy: "leave",
+    extraDatePolicy: "unconfirmed",
+    selectedDateCount: 2,
+    selectionMode: "source_order",
+    planNonce,
+    recurrenceSessions: [
+      {
+        availableFrom: "2026-08-16T15:00:00.000Z",
+        availableUntil: "2026-08-17T12:00:00.000Z",
+      },
+      {
+        availableFrom: "2026-08-18T15:00:00.000Z",
+        availableUntil: "2026-08-19T12:00:00.000Z",
+      },
+    ],
+    sessions: [
+      {
+        unitIds: reverseUnitIds,
+        availableFrom: "2026-08-16T15:00:00.000Z",
+        availableUntil: "2026-08-17T12:00:00.000Z",
+      },
+      {
+        unitIds: reverseUnitIds,
+        availableFrom: "2026-08-18T15:00:00.000Z",
+        availableUntil: "2026-08-19T12:00:00.000Z",
+      },
+    ],
+  },
+} as const;
+
+export const bulkImmediatePreviewContract = {
+  studentIds: [studentA],
+  englishToKoreanRatio: 50,
+  commonPlan: {
+    datasetId: dataset,
+    distribution: "repeat",
+    splitBasis: "question_count",
+    orderedUnitIds: reverseUnitIds,
+    rangeUnitCounts: [],
+    unitAllocationRule: null,
+    questionCount: { mode: "all" },
+    overflowPolicy: "leave",
+    extraDatePolicy: "unconfirmed",
+    selectedDateCount: 0,
+    selectionMode: "source_order",
+    planNonce,
+    recurrenceSessions: [{ availableFrom: null, availableUntil: null }],
+    sessions: [
+      {
+        unitIds: reverseUnitIds,
+        availableFrom: null,
+        availableUntil: null,
+      },
+    ],
+  },
 } as const;
 
 export const bulkSubmitContract = {
@@ -160,6 +217,19 @@ export const bulkSubmitContract = {
   questionOrderMode: "random",
   timingMode: "per_question",
   questionTimeLimitSeconds: 15,
+} as const;
+
+export const bulkImmediateSubmitContract = {
+  ...bulkImmediatePreviewContract,
+  idempotencyKey,
+  previewPlanSignature,
+  timeLimitSeconds: 300,
+  passingScore: 80,
+  retryEnabled: false,
+  retryPassingScore: null,
+  questionOrderMode: "ascending",
+  timingMode: "total",
+  questionTimeLimitSeconds: null,
 } as const;
 
 export const orderedBulkUnits = [

@@ -41,10 +41,6 @@ export type ReviewPolicy =
       levels: readonly ReviewLevel[];
     };
 
-export type BulkReviewPolicy =
-  | { mode: "none"; levels: readonly ReviewLevel[] }
-  | { mode: "pending"; levels: readonly ReviewLevel[] };
-
 export type AssignmentDeadline =
   | { mode: "none" }
   | { mode: "at"; koreanLocalDateTime: string };
@@ -60,6 +56,7 @@ export type DirectReviewAssignmentDraft = {
   questionCount: number;
   title: string;
   exam: ExamSettings;
+  availability: AssignmentAvailability;
   deadline: AssignmentDeadline;
 };
 
@@ -122,23 +119,10 @@ export type ResolvedSingleAssignment = {
   questionCount: number;
 };
 
-export type BulkAssignmentRange = {
-  mode: "previous_span" | "fixed_span";
-  unitsPerSession: number;
-  sessionCount: number;
-};
-
 export type BulkCommonPlanSession = {
-  availableLocalDateTime: string;
+  availableLocalDateTime: string | null;
   deadlineLocalDateTime: string | null;
   unitIds: readonly string[];
-};
-
-export type BulkCollisionDecision = {
-  collisionId: string;
-  mode: "skip" | "move" | "allow";
-  movedAvailableLocalDateTime?: string;
-  movedDeadlineLocalDateTime?: string;
 };
 
 export type BulkCommonAssignmentPlan = {
@@ -158,18 +142,12 @@ export type BulkCommonAssignmentPlan = {
   planNonce: string;
   sessions: readonly BulkCommonPlanSession[];
   recurrenceSessions: readonly Omit<BulkCommonPlanSession, "unitIds">[];
-  collisionDecisions: readonly BulkCollisionDecision[];
 };
 
 export type BulkSeriesAssignmentDraft = {
   kind: "bulk_series";
   studentIds: readonly string[];
-  range: BulkAssignmentRange;
-  firstAvailableDateKorean: string;
-  firstDeadline: AssignmentDeadline;
-  dayInterval: number;
   exam: ExamSettings;
-  review: BulkReviewPolicy;
   commonPlan?: BulkCommonAssignmentPlan;
 };
 

@@ -1,315 +1,243 @@
 "use client";
 
-import { useMemo, useReducer, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useReducer,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { useRouter } from "next/navigation";
 
-import {
-  activityNeedsRetry,
-  compareLearningActivities,
-  studentLearningActivityIndex,
-} from "@/features/history/domain/learning-activity";
-import type { AssignmentHistorySummary } from "@/lib/admin/history";
-import { indexVocabAssignmentQueuesByStudent } from "@/lib/admin/vocab-assignment-queue";
-import {
-  availableReviewCount,
-  emptyPendingReviewCounts,
-  indexStudentPendingReviewSummaries,
-  pendingReviewCount,
-  pendingReviewSummaryKey,
-} from "@/lib/admin/review-queue-summary";
-import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
-import {
-  currentVocabWrongSummaryKey,
-  emptyCurrentVocabWrongCounts,
-  indexStudentCurrentVocabWrongSummaries,
-} from "@/lib/admin/wrong-history-summary";
-
+import type { StudentDirectoryFilters } from "@/features/students/public-contracts";
 import type {
-  AssignmentLearningSourceItem,
-  AssignmentStudentItem,
-} from "../catalog-types";
-import { assignmentDirectoryOptions } from "../presentation/assignment-directory-options";
+  AssignmentSelectionStudent,
+  AssignmentWorkspaceInitial,
+} from "../contracts/assignment-workspace-read-model";
+import { MAXIMUM_BULK_STUDENT_COUNT } from "../domain/model";
+import { buildBulkStudentFilterLabels } from "../presentation/bulk-student-selection-summary";
+import { loadAssignmentDirectorySelection } from "../transport/assignment-workspace-reads";
+import { useAssignmentDatasetDirectory } from "./use-assignment-dataset-directory";
+import { useAssignmentPlannerPreparation } from "./use-assignment-planner-preparation";
+import { useAssignmentSelectionBasket } from "./use-assignment-selection-basket";
+import { useAssignmentStudentDirectory } from "./use-assignment-student-directory";
 
-export type WrongWordStudentFilter = "all" | "wrong" | "repeated" | "retry";
 export type AssignmentDialogView = "overview" | "assign";
 export type AssignmentEntryMode = "student" | "school" | "dataset";
 export type AssignmentSelectionMode = "single" | "bulk";
 
-export type AssignmentWorkspaceFilters = {
-  classGroup: string;
-  grade: string;
-  query: string;
-  school: string;
-  status: "active" | "blocked";
-  wordbook: string;
-  wrongWord: WrongWordStudentFilter;
-};
+function selectionFilterKey(
+  filters: StudentDirectoryFilters,
+  snapshotAt: string,
+) {
+  return JSON.stringify({ filters, snapshotAt });
+}
 
 export function useAssignmentWorkspace({
-  data,
+  initial,
   initialDatasetId,
   initialDialogView,
   initialStudentId,
 }: {
-  data: AssignmentManagerData;
+  initial: AssignmentWorkspaceInitial;
   initialDatasetId: string;
   initialDialogView: AssignmentDialogView;
   initialStudentId: string;
 }) {
   const router = useRouter();
   const [, startRefreshTransition] = useTransition();
-  const readyDatasets = useMemo(
-    () =>
-      data.datasets.filter(
-        (dataset) =>
-          dataset.status === "ready" &&
-          dataset.isActive &&
-          dataset.isAssignable,
-      ),
-    [data.datasets],
-  );
-  const activeStudents = useMemo(
-    () => data.students.filter((student) => student.status === "active"),
-    [data.students],
-  );
-  const progressByStudent = useMemo(
-    () => new Map(data.progress.map((item) => [item.studentId, item])),
-    [data.progress],
-  );
-  const pendingReviewIndex = useMemo(
-    () => indexStudentPendingReviewSummaries(data.pendingReviewSummaries),
-    [data.pendingReviewSummaries],
-  );
-  const currentVocabWrongIndex = useMemo(
-    () => indexStudentCurrentVocabWrongSummaries(data.currentVocabWrongSummaries),
-    [data.currentVocabWrongSummaries],
-  );
-  const activitiesByStudent = useMemo(
-    () => studentLearningActivityIndex(data.history),
-    [data.history],
-  );
-  const assignmentQueuesByStudent = useMemo(
-    () => indexVocabAssignmentQueuesByStudent(data.assignmentQueues ?? []),
-    [data.assignmentQueues],
-  );
-  const learningSourcesByStudent = useMemo(() => {
-    const index = new Map<string, AssignmentLearningSourceItem[]>();
-    for (const source of data.learningSources) {
-      const current = index.get(source.studentId) ?? [];
-      current.push(source);
-      index.set(source.studentId, current);
-    }
-    return index;
-  }, [data.learningSources]);
-  const initialStudent =
-    activeStudents.find((student) => student.id === initialStudentId) ?? null;
-
+  const directory = useAssignmentStudentDirectory(initial.directory);
+  const basket = useAssignmentSelectionBasket();
+  const datasetDirectory = useAssignmentDatasetDirectory();
+  const ensureDatasetDirectory = datasetDirectory.actions.ensure;
+  const planner = useAssignmentPlannerPreparation();
+  const openPlanner = planner.actions.open;
+  const initialOpenHandledRef = useRef(false);
+  const selectionAbortRef = useRef<AbortController | null>(null);
+  const [selectionLoading, setSelectionLoading] = useState(false);
+  const [selectionError, setSelectionError] = useState("");
   const [entryMode, setEntryMode] = useReducer(
     (_current: AssignmentEntryMode, next: AssignmentEntryMode) => next,
-    "student",
+    initialDatasetId && !initialStudentId ? "dataset" : "student",
   );
-  const [entryDatasetId, setEntryDatasetId] = useReducer(
-    (_current: string, next: string) => next,
-    readyDatasets.some((dataset) => dataset.id === initialDatasetId)
-      ? initialDatasetId
-      : "",
-  );
-  const [filters, setFilters] = useState<AssignmentWorkspaceFilters>({
-    classGroup: "",
-    grade: "",
-    query: "",
-    school: "",
-    status: "active",
-    wordbook: "",
-    wrongWord: "all",
-  });
   const [assignmentMode, setAssignmentMode] =
     useState<AssignmentSelectionMode>("single");
-  const [selectedBulkStudentIds, setSelectedBulkStudentIds] = useState<string[]>([]);
-  const [plannerStudentIds, setPlannerStudentIds] = useState<string[]>(
-    initialStudent && initialDialogView === "assign" ? [initialStudent.id] : [],
-  );
-  const [plannerOpen, setPlannerOpen] = useState(
-    Boolean(initialStudent && initialDialogView === "assign"),
+  const [entryDatasetId, setEntryDatasetId] = useState(() =>
+    initialDatasetId && !initialStudentId ? initialDatasetId : ""
   );
 
-  const directoryOptions = useMemo(
-    () => assignmentDirectoryOptions(data.students, data.learningSources),
-    [data.learningSources, data.students],
+  const filters = directory.filters;
+  const filterOptions = directory.snapshot.filterOptions;
+  const currentFilterKey = selectionFilterKey(
+    directory.snapshot.filters,
+    directory.snapshot.snapshotAt,
   );
-  const filteredStudents = useMemo(() => {
-    const keyword = filters.query.trim().toLocaleLowerCase("ko-KR");
-    const selectedGroup = data.classGroups.find(
-      (group) => group.id === filters.classGroup,
-    );
-    const groupStudentIds = new Set(selectedGroup?.studentIds ?? []);
-    return data.students
-      .filter((student) => {
-        if (student.status !== filters.status) return false;
-        const searchText = [
-          student.displayName,
-          student.schoolName,
-          student.gradeLabel,
-          student.currentVocabBook,
-          ...(learningSourcesByStudent.get(student.id) ?? []).map(
-            (source) => source.displayLabel,
-          ),
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLocaleLowerCase("ko-KR");
-        if (keyword && !searchText.includes(keyword)) return false;
-        if (filters.school && student.schoolName !== filters.school) return false;
-        if (filters.grade && student.gradeLabel !== filters.grade) return false;
-        if (filters.classGroup && !groupStudentIds.has(student.id)) return false;
-        if (
-          filters.wordbook &&
-          student.currentVocabBook !== filters.wordbook &&
-          !(learningSourcesByStudent.get(student.id) ?? []).some(
-            (source) => source.displayLabel === filters.wordbook,
-          )
-        ) {
-          return false;
-        }
-        if (filters.wrongWord === "all") return true;
-        if (filters.wrongWord === "retry") {
-          return (activitiesByStudent.get(student.id) ?? []).some(
-            activityNeedsRetry,
-          );
-        }
-        if (!student.currentVocabDatasetId) return false;
-        const wrongCounts =
-          currentVocabWrongIndex.byStudentDataset.get(
-            currentVocabWrongSummaryKey(
-              student.id,
-              student.currentVocabDatasetId,
-            ),
-          ) ?? emptyCurrentVocabWrongCounts();
-        return filters.wrongWord === "repeated"
-          ? wrongCounts.repeatedWrongWordCount > 0
-          : wrongCounts.wrongWordCount > 0;
-      })
-      .toSorted((left, right) => {
-        const leftActivity = activitiesByStudent.get(left.id)?.[0] ?? null;
-        const rightActivity = activitiesByStudent.get(right.id)?.[0] ?? null;
-        if (leftActivity && rightActivity) {
-          const order = compareLearningActivities(leftActivity, rightActivity);
-          if (order !== 0) return order;
-        } else if (leftActivity) {
-          return -1;
-        } else if (rightActivity) {
-          return 1;
-        }
-        return left.displayName.localeCompare(right.displayName, "ko-KR");
-      });
-  }, [
-    activitiesByStudent,
-    currentVocabWrongIndex,
-    data.classGroups,
-    data.students,
-    filters,
-    learningSourcesByStudent,
-  ]);
-  const selectedBulkStudents = useMemo(
-    () =>
-      selectedBulkStudentIds.flatMap((selectedId) => {
-        const student = activeStudents.find(
-          (candidate) => candidate.id === selectedId,
-        );
-        return student ? [student] : [];
-      }),
-    [activeStudents, selectedBulkStudentIds],
+  const allFilteredStudentsSelected = basket.containsFilterSelection(currentFilterKey);
+  const exactlyFilteredStudentsSelected = basket.isExactFilterSelection(
+    currentFilterKey,
   );
-  const plannerStudents = useMemo(
-    () =>
-      plannerStudentIds.flatMap((selectedId) => {
-        const student = activeStudents.find(
-          (candidate) => candidate.id === selectedId,
-        );
-        return student ? [student] : [];
-      }),
-    [activeStudents, plannerStudentIds],
-  );
-  const canPrepareBulk =
+  const selectedBulkStudents = basket.students;
+  const selectedBulkStudentIds = selectedBulkStudents.map((student) => student.id);
+  const entryDatasetAvailable = datasetDirectory.status === "ready" &&
+    datasetDirectory.datasets.some((dataset) => dataset.id === entryDatasetId);
+  const canPrepareBulk = !selectionLoading &&
     selectedBulkStudents.length > 0 &&
-    readyDatasets.length > 0 &&
+    selectedBulkStudents.length <= MAXIMUM_BULK_STUDENT_COUNT &&
     (entryMode === "student" ||
-      (entryMode === "school" &&
-        Boolean(filters.school) &&
-        selectedBulkStudents.every(
-          (student) => student.schoolName === filters.school,
-        )) ||
-      (entryMode === "dataset" && Boolean(entryDatasetId)));
-  const allFilteredStudentsSelected =
-    filteredStudents.some((student) => student.status === "active") &&
-    filteredStudents
-      .filter((student) => student.status === "active")
-      .every((student) =>
-      selectedBulkStudentIds.includes(student.id),
-    );
-  function setFilter<Key extends keyof AssignmentWorkspaceFilters>(
+      (entryMode === "dataset" && entryDatasetAvailable) ||
+      (Boolean(filters.school) && selectedBulkStudents.every(
+        (student) => student.schoolName === filters.school,
+      )));
+  const classGroupOptions = filterOptions.classGroups.map((group) => ({
+    label: group.name,
+    value: group.id,
+  }));
+
+  const cancelDirectorySelection = useCallback(() => {
+    selectionAbortRef.current?.abort();
+    selectionAbortRef.current = null;
+    setSelectionLoading(false);
+  }, []);
+
+  function replaceFilter<Key extends keyof StudentDirectoryFilters>(
     key: Key,
-    value: AssignmentWorkspaceFilters[Key],
+    value: StudentDirectoryFilters[Key],
   ) {
-    setFilters((current) => ({ ...current, [key]: value }));
+    cancelDirectorySelection();
+    const next = { ...filters, [key]: value };
+    if (key === "query") directory.actions.replaceQuery(String(value));
+    else directory.actions.replaceFilters(next);
   }
 
   function resetFilters() {
-    setFilters((current) => ({
-      classGroup: "",
+    cancelDirectorySelection();
+    directory.actions.replaceFilters({
+      classGroupId: "",
       grade: "",
-      query: current.query,
+      query: filters.query,
       school: "",
       status: "active",
       wordbook: "",
-      wrongWord: "all",
-    }));
+      wrong: "all",
+    });
   }
 
-  function toggleBulkStudent(studentId: string) {
-    if (!activeStudents.some((student) => student.id === studentId)) return;
-    setSelectedBulkStudentIds((current) =>
-      current.includes(studentId)
-        ? current.filter((candidate) => candidate !== studentId)
-        : [...current, studentId],
-    );
-  }
-
-  function toggleFilteredStudents() {
-    const filteredIds = new Set(
-      filteredStudents
-        .filter((student) => student.status === "active")
-        .map((student) => student.id),
-    );
-    setSelectedBulkStudentIds((current) =>
-      allFilteredStudentsSelected
-        ? current.filter((studentId) => !filteredIds.has(studentId))
-        : Array.from(new Set([...current, ...filteredIds])),
-    );
+  async function toggleFilteredStudents() {
+    if (selectionLoading || directory.filtering || filters.status !== "active") return;
+    const intent = allFilteredStudentsSelected ? "deselect" : "select";
+    selectionAbortRef.current?.abort();
+    const abort = new AbortController();
+    selectionAbortRef.current = abort;
+    setSelectionLoading(true);
+    setSelectionError("");
+    try {
+      const selection = await loadAssignmentDirectorySelection(
+        {
+          filters: directory.snapshot.filters,
+          snapshotAt: directory.snapshot.snapshotAt,
+        },
+        abort.signal,
+      );
+      if (abort.signal.aborted) return;
+      const result = basket.actions.applyFilterSelection(
+        currentFilterKey,
+        selection.students,
+        intent,
+        MAXIMUM_BULK_STUDENT_COUNT,
+      );
+      if (!result.ok) {
+        setSelectionError(
+          `선택 바구니는 최대 ${MAXIMUM_BULK_STUDENT_COUNT}명까지 담을 수 있습니다. 기존 선택을 줄여 주세요.`,
+        );
+      }
+    } catch (error) {
+      if (!abort.signal.aborted) {
+        setSelectionError(
+          error instanceof Error
+            ? error.message
+            : "선택할 학생을 불러오지 못했습니다.",
+        );
+      }
+    } finally {
+      if (!abort.signal.aborted) setSelectionLoading(false);
+      if (selectionAbortRef.current === abort) selectionAbortRef.current = null;
+    }
   }
 
   function changeAssignmentMode(mode: AssignmentSelectionMode) {
     setAssignmentMode(mode);
-    setPlannerOpen(false);
-    setPlannerStudentIds([]);
+    planner.actions.close();
+  }
+
+  function changeEntryMode(mode: AssignmentEntryMode) {
+    setEntryMode(mode);
+    planner.actions.close();
+    if (mode === "dataset") void ensureDatasetDirectory();
   }
 
   function openSingleAssignment(studentId: string) {
-    if (!activeStudents.some((student) => student.id === studentId)) return;
-    setPlannerStudentIds([studentId]);
-    setPlannerOpen(true);
+    void openPlanner({
+      bulkFilterLabels: [],
+      initialDatasetId,
+      selectionMode: "single",
+      studentIds: [studentId],
+    });
   }
 
   function prepareBulkAssignment() {
     if (!canPrepareBulk) return;
-    setPlannerStudentIds(selectedBulkStudentIds);
-    setPlannerOpen(true);
+    const bulkFilterLabels = buildBulkStudentFilterLabels({
+      classGroupLabel: classGroupOptions.find(
+        (option) => option.value === filters.classGroupId,
+      )?.label ?? null,
+      filters,
+      isWholeFilteredSelection: exactlyFilteredStudentsSelected,
+    });
+    void openPlanner({
+      bulkFilterLabels,
+      initialDatasetId: entryMode === "dataset" ? entryDatasetId : "",
+      selectionMode: "bulk",
+      studentIds: selectedBulkStudentIds,
+    });
   }
 
-  function closePlanner() {
-    setPlannerOpen(false);
-    setPlannerStudentIds([]);
+  function toggleBulkStudent(student: AssignmentSelectionStudent) {
+    if (selectionLoading) return;
+    const isSelected = basket.selectedById.has(student.id);
+    if (!isSelected && basket.students.length >= MAXIMUM_BULK_STUDENT_COUNT) {
+      setSelectionError(
+        `한 번에 선택할 수 있는 학생은 ${MAXIMUM_BULK_STUDENT_COUNT}명까지입니다.`,
+      );
+      return;
+    }
+    setSelectionError("");
+    basket.actions.toggle(student);
   }
+
+  function clearBulkStudents() {
+    if (selectionLoading) return;
+    setSelectionError("");
+    basket.actions.clear();
+  }
+
+  useEffect(() => {
+    if (entryMode === "dataset") void ensureDatasetDirectory();
+  }, [ensureDatasetDirectory, entryMode]);
+
+  useEffect(() => {
+    if (initialOpenHandledRef.current) return;
+    initialOpenHandledRef.current = true;
+    if (initialDialogView !== "assign" || !initialStudentId) return;
+    void openPlanner({
+      bulkFilterLabels: [],
+      initialDatasetId,
+      selectionMode: "single",
+      studentIds: [initialStudentId],
+    });
+  }, [initialDatasetId, initialDialogView, initialStudentId, openPlanner]);
+
+  useEffect(() => cancelDirectorySelection, [cancelDirectorySelection]);
 
   function refresh() {
     startRefreshTransition(() => router.refresh());
@@ -318,71 +246,40 @@ export function useAssignmentWorkspace({
   return {
     actions: {
       changeAssignmentMode,
-      clearSearch: () => setFilters((current) => ({ ...current, query: "" })),
-      clearBulkStudents: () => setSelectedBulkStudentIds([]),
-      closePlanner,
+      clearSearch: () => replaceFilter("query", ""),
+      clearBulkStudents,
+      closePlanner: planner.actions.close,
+      loadMore: directory.actions.loadMore,
       openSingleAssignment,
       prepareBulkAssignment,
       refresh,
       resetFilters,
       setEntryDatasetId,
-      setEntryMode,
-      setFilter,
+      setEntryMode: changeEntryMode,
+      setFilter: replaceFilter,
       toggleBulkStudent,
       toggleFilteredStudents,
     },
-    activeStudents,
-    activitiesByStudent,
-    assignmentQueuesByStudent,
     allFilteredStudentsSelected,
     assignmentMode,
     canPrepareBulk,
-    classGroupOptions: data.classGroups.map((group) => ({
-      label: group.name,
-      value: group.id,
-    })),
-    data,
+    classGroupOptions,
+    directory,
+    datasetDirectory,
     entryDatasetId,
     entryMode,
-    filteredStudents,
     filters,
-    gradeOptions: directoryOptions.grades,
-    learningSourcesByStudent,
-    pendingReviewIndex,
-    plannerOpen,
-    plannerStudents,
-    progressByStudent,
-    readyDatasets,
-    schoolOptions: directoryOptions.schools,
+    gradeOptions: filterOptions.grades,
+    planner,
+    schoolOptions: filterOptions.schools,
     selectedBulkStudentIds,
     selectedBulkStudents,
-    wordbookOptions: directoryOptions.wordbooks,
-    currentVocabWrongIndex,
+    selectionError,
+    selectionLoading,
+    wordbookOptions: filterOptions.wordbooks,
   };
 }
 
 export type AssignmentWorkspaceController = ReturnType<
   typeof useAssignmentWorkspace
 >;
-
-export function studentPendingReviewCounts(
-  controller: AssignmentWorkspaceController,
-  student: AssignmentStudentItem,
-) {
-  const counts = student.currentVocabDatasetId
-    ? (controller.pendingReviewIndex.byStudentDataset.get(
-        pendingReviewSummaryKey(student.id, student.currentVocabDatasetId),
-      ) ?? emptyPendingReviewCounts())
-    : emptyPendingReviewCounts();
-  return {
-    available: availableReviewCount(counts),
-    pending: pendingReviewCount(counts),
-  };
-}
-
-export function studentActivities(
-  controller: AssignmentWorkspaceController,
-  studentId: string,
-): AssignmentHistorySummary[] {
-  return controller.activitiesByStudent.get(studentId) ?? [];
-}

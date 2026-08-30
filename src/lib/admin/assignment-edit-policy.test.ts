@@ -55,7 +55,7 @@ describe("assignment edit field policy", () => {
       dataset: "locked",
       range: "locked",
       questionCount: "locked",
-      direction: "editable",
+      direction: "locked",
       order: "editable",
     });
   });
@@ -104,6 +104,7 @@ describe("assignment edit field policy", () => {
     expect(lockedAssignmentEditChangeKeys("review", before, after)).toEqual([
       "range",
       "questionCount",
+      "direction",
     ]);
   });
 

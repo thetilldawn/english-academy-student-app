@@ -62,7 +62,9 @@ describe("배정과 수정 화면 공통 계약", () => {
     ]) {
       const value = source(file);
       expect(value).toContain("detail.summary.schoolName");
-      expect(value).toContain("purpose: detail.summary.assignmentPurpose");
+      expect(value).toContain(
+        "purpose: editor.editorModel.initialEditDraft.purpose",
+      );
     }
   });
 

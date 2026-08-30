@@ -1,37 +1,28 @@
 "use client";
 
-import { useMemo, type Ref } from "react";
+import type { Ref } from "react";
 import { useRouter } from "next/navigation";
 
 import { adminHistoryText } from "@/content/ko/admin-history";
 import { Button, ButtonLink } from "@/design-system/primitives/button/button";
 import { isStudentAssignmentEditable } from "@/lib/admin/assignment-edit";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
-import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
 
 import { AdminHistoryActions } from "./admin-history-actions";
-import { buildHistoryAssignmentEditorModel } from "./history-assignment-editor-model";
 import styles from "./history-detail-actions.module.css";
 
 export function HistoryDetailActions({
-  editorData,
   editButtonRef,
   item,
   mode,
   onEditRequested,
 }: {
-  editorData: AssignmentManagerData | null;
   editButtonRef?: Ref<HTMLButtonElement>;
   item: AssignmentHistorySummary;
   mode: "page" | "overlay";
   onEditRequested: () => void;
 }) {
   const router = useRouter();
-  const editorModel = useMemo(
-    () => buildHistoryAssignmentEditorModel(editorData, item),
-    [editorData, item],
-  );
-
   function leaveDetail() {
     if (mode === "overlay") {
       const refreshParent = () => {
@@ -46,7 +37,7 @@ export function HistoryDetailActions({
 
   return (
     <div className={styles.actions}>
-      {editorModel && isStudentAssignmentEditable(item) ? (
+      {isStudentAssignmentEditable(item) ? (
         <Button
           ref={editButtonRef}
           onClick={onEditRequested}

@@ -183,7 +183,6 @@ export function useVocabAssignmentDerivedPlan({
       const previewBlockingIssues = localIssues.filter(
         (issue) => issue.path !== "commonPlan.sessions",
       );
-      const immediateLocalDateTime = `${planner.immediateDate ?? planner.schedule.startDate}T00:00`;
       return previewBlockingIssues.length === 0 && unitIds.length > 0
         ? {
             datasetId: planner.datasetId,
@@ -200,16 +199,13 @@ export function useVocabAssignmentDerivedPlan({
             planNonce: planner.planNonce,
             sessions: [{
               unitIds,
-              availableLocalDateTime: immediateLocalDateTime,
+              availableLocalDateTime: null,
               deadlineLocalDateTime: null,
             }],
             recurrenceSessions: [{
-              availableLocalDateTime: immediateLocalDateTime,
+              availableLocalDateTime: null,
               deadlineLocalDateTime: null,
             }],
-            collisionDecisions: planner.collisionDecisionRecords.map(
-              (record) => record.decision,
-            ),
           }
         : undefined;
     }
@@ -265,9 +261,6 @@ export function useVocabAssignmentDerivedPlan({
           planNonce: planner.planNonce,
           sessions,
           recurrenceSessions,
-          collisionDecisions: planner.collisionDecisionRecords.map(
-            (record) => record.decision,
-          ),
         }
       : undefined;
   }, [
@@ -276,15 +269,12 @@ export function useVocabAssignmentDerivedPlan({
     effectiveSplitBasis,
     distribution,
     localIssues,
-    planner.collisionDecisionRecords,
     planner.datasetId,
     planner.extraDatePolicy,
     planner.overflowPolicy,
     planner.planNonce,
     planner.selectionMode,
     planner.scheduleEnabled,
-    planner.schedule.startDate,
-    planner.immediateDate,
     previewScheduleSlots,
     questionCount,
     scheduleSlots,

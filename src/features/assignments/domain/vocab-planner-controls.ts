@@ -2,17 +2,12 @@ import type { ExamSettings } from "./model";
 import {
   ISO_WEEKDAYS,
   type IsoWeekday,
-  type ResolvedVocabPlan,
-  type VocabCollisionDecision,
-  type VocabPlanCandidate,
-  type VocabPlanCollision,
   type VocabScheduleDraft,
   type VocabScheduleSlot,
   type VocabScheduleSlotOverride,
   type VocabTimeTemplate,
   type VocabUnitSelection,
 } from "./vocab-assignment-contract";
-import { parseCalendarDate } from "./vocab-schedule";
 
 export function toggleWeekday(
   weekdays: readonly IsoWeekday[],
@@ -110,52 +105,5 @@ export function copyPreviousExamConditions<T extends { exam: ExamSettings }>(
       ...previous,
       timing: { ...previous.timing },
     },
-  };
-}
-
-export function applyCollisionDecisions(input: {
-  candidates: readonly VocabPlanCandidate[];
-  collisions: readonly VocabPlanCollision[];
-  decisions: readonly VocabCollisionDecision[];
-}): ResolvedVocabPlan {
-  const decisionByCollision = new Map(
-    input.decisions.map((decision) => [decision.collisionId, decision]),
-  );
-  const candidateById = new Map(
-    input.candidates.map((candidate) => [candidate.id, candidate]),
-  );
-  const skipped = new Set<string>();
-  const movedDates = new Map<string, string>();
-  const unresolvedCollisionIds: string[] = [];
-
-  for (const collision of input.collisions) {
-    if (!candidateById.has(collision.candidateId)) continue;
-    const decision = decisionByCollision.get(collision.id);
-    if (!decision) {
-      unresolvedCollisionIds.push(collision.id);
-      continue;
-    }
-    if (decision.mode === "skip") skipped.add(collision.candidateId);
-    if (decision.mode === "move") {
-      if (!decision.movedDate || !parseCalendarDate(decision.movedDate)) {
-        unresolvedCollisionIds.push(collision.id);
-      } else {
-        movedDates.set(collision.candidateId, decision.movedDate);
-      }
-    }
-  }
-
-  return {
-    candidates: input.candidates.flatMap((candidate) =>
-      skipped.has(candidate.id)
-        ? []
-        : [{
-            ...candidate,
-            unitIds: [...candidate.unitIds],
-            date: movedDates.get(candidate.id) ?? candidate.date,
-          }],
-    ),
-    unresolvedCollisionIds,
-    skippedCandidateIds: [...skipped],
   };
 }

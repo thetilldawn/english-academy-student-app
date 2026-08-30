@@ -13,9 +13,8 @@ import {
   parseAssignmentEditDraftResponse,
   parseAssignmentReplacementResponse,
   type AssignmentCapacityResponse,
-  type AssignmentCreationResponse,
-  type AssignmentReplacementResponse,
 } from "../api/response-adapters";
+import type { SingleAssignmentResult } from "../contracts/single-assignment-editor-contract";
 import { assignmentRequestFingerprint } from "../domain/fingerprint";
 import type {
   ResolvedSingleAssignment,
@@ -36,10 +35,6 @@ import type { AssignmentPreviewPreparation } from "./preview-flow";
 import type {
   AssignmentSubmissionPreparationResult,
 } from "./submission-flow";
-
-export type SingleAssignmentResult =
-  | AssignmentCreationResponse
-  | AssignmentReplacementResponse;
 
 export type SingleAssignmentPreviewPreparation = {
   minimumAllowedQuestionCount: number;

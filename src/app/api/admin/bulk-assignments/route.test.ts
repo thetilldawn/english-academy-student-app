@@ -25,11 +25,14 @@ vi.mock("@/lib/auth/admin", () => ({
 }));
 vi.mock("@/lib/http", () => ({
   isSameOriginRequest: () => true,
-  jsonError: (message: string, status: number) =>
-    Response.json({ error: message }, { status }),
+  privateJsonError: (message: string, status: number) =>
+    Response.json(
+      { error: message },
+      { status, headers: { "Cache-Control": "private, no-store" } },
+    ),
   parseJson: mocks.parseJson,
 }));
-vi.mock("@/lib/services/bulk-assignment-service", () => ({
+vi.mock("@/features/assignments/server/use-cases/bulk-assignment-service", () => ({
   BulkAssignmentError: mocks.BulkAssignmentError,
   createBulkAssignments: mocks.createBulkAssignments,
 }));
@@ -76,6 +79,7 @@ describe("POST /api/admin/bulk-assignments", () => {
     const response = await POST(request());
 
     expect(response.status).toBe(status);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(await response.json()).toHaveProperty("error");
   });
 });

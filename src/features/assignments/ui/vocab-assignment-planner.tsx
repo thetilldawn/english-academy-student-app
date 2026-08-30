@@ -19,11 +19,12 @@ import {
   type VocabAssignmentScreenData,
 } from "../controller/use-vocab-assignment-screen";
 import { useDirectReviewAssignmentController } from "../controller/use-direct-review-assignment-controller";
+import { useAssignmentDatasetUnitCatalog } from "../controller/use-assignment-dataset-unit-catalog";
 import { AssignmentSubmitAction } from "./assignment-submit-action";
 import { DirectReviewAssignmentSections } from "./direct-review-assignment-sections";
 import { resolveInvalidAssignmentFieldFocusTarget } from "./focus-invalid-assignment-field";
 import { VocabRangeAssignmentSections } from "./vocab-range-assignment-sections";
-import editorStyles from "./bulk-assignment-editor.module.css";
+import editorStyles from "./vocab-assignment-form.module.css";
 import styles from "./vocab-assignment-planner.module.css";
 
 export function VocabAssignmentPlanner({
@@ -50,13 +51,29 @@ export function VocabAssignmentPlanner({
   const [assignmentPurpose, setAssignmentPurpose] = useState<"range" | "review">(
     "range",
   );
+  const unitCatalog = useAssignmentDatasetUnitCatalog(data.units);
+  const cancelUnitRequest = unitCatalog.actions.cancel;
+  const ensureDatasetUnits = unitCatalog.actions.ensureDataset;
   const controller = useVocabAssignmentScreen({
-    data,
+    data: { ...data, units: unitCatalog.units },
+    enabled: assignmentPurpose === "range",
     genericErrorMessage: "단어 시험 배정을 저장하지 못했습니다.",
     initialDatasetId,
     previewErrorMessage: "배정 후보를 계산하지 못했습니다.",
     students,
   });
+  useEffect(() => {
+    if (assignmentPurpose !== "range") {
+      cancelUnitRequest();
+      return;
+    }
+    void ensureDatasetUnits(controller.planner.datasetId);
+  }, [
+    assignmentPurpose,
+    cancelUnitRequest,
+    controller.planner.datasetId,
+    ensureDatasetUnits,
+  ]);
   const reviewController = useDirectReviewAssignmentController({
     datasets: controller.readyDatasets,
     enabled: assignmentPurpose === "review",
@@ -270,6 +287,10 @@ export function VocabAssignmentPlanner({
                   busy={busy}
                   controller={controller}
                   fieldErrors={visibleErrors}
+                  unitLoadState={unitCatalog.state}
+                  onRetryUnits={() =>
+                    void unitCatalog.actions.retry()
+                  }
                   students={students}
                 />
               )}

@@ -14,7 +14,7 @@ vi.mock("@/lib/auth/admin", () => ({
 vi.mock("@/lib/supabase/server", () => ({
   createServerSupabaseClient: mocks.createServerSupabaseClient,
 }));
-vi.mock("@/lib/services/admin-attempt-read-service", () => ({
+vi.mock("./admin-attempt-detail-query", () => ({
   getAdminAttemptDetail: mocks.getAdminAttemptDetail,
 }));
 vi.mock("@/lib/services/learning-point-read-service", () => ({

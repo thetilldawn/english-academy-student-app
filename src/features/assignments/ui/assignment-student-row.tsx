@@ -7,108 +7,82 @@ import {
 import { ActionWithReason } from "@/design-system/patterns/action-reason/action-reason";
 import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 import { Button } from "@/design-system/primitives/button/button";
-import { AssignmentQueueTags } from "@/features/assignment-queue/ui/assignment-queue-tags";
-import learningRowStyles from "@/features/history/ui/learning-management-row.module.css";
-import {
-  assignmentScopeLabel,
-} from "@/lib/admin/history";
-import { compareAdminHistoryRecency } from "@/features/history/domain/learning-activity";
-import { historyDetailHref } from "@/lib/admin/history-route";
+import type { StudentDirectoryListItem } from "@/features/students/public-contracts";
+import { formatKoreanDateTime } from "@/lib/format";
 
-import type { AssignmentStudentItem } from "../catalog-types";
-import {
-  studentActivities,
-  type AssignmentWorkspaceController,
-} from "../controller/use-assignment-workspace";
+import type { AssignmentWorkspaceController } from "../controller/use-assignment-workspace";
+import styles from "./assignment-workspace.module.css";
 
 export function AssignmentStudentRow({
   controller,
   student,
 }: {
   controller: AssignmentWorkspaceController;
-  student: AssignmentStudentItem;
+  student: StudentDirectoryListItem;
 }) {
-  const activities = studentActivities(controller, student.id);
-  const assignmentQueues =
-    controller.assignmentQueuesByStudent.get(student.id) ?? [];
-  const recentActivity = activities.toSorted(compareAdminHistoryRecency)[0] ?? null;
-  const assignmentBlockedReason =
-    student.status === "blocked"
-      ? "접속 차단 학생"
-      : controller.readyDatasets.length === 0
-        ? adminLearningText.assignmentModal.submit.blockedReason.noReadyDataset
-        : null;
+  const assignmentBlockedReason = student.status === "blocked"
+    ? "접속 차단 학생"
+    : null;
   return (
     <SelectableRow
       actions={
         controller.assignmentMode === "single" ? (
-            <ActionWithReason reason={assignmentBlockedReason}>
-              <Button
-                disabled={assignmentBlockedReason !== null}
-                onClick={() =>
-                  controller.actions.openSingleAssignment(student.id)
-                }
-                size="small"
-                variant={recentActivity ? "secondary" : "primary"}
-              >
-                {adminLearningText.page.studentCard.newAssignment}
-              </Button>
-            </ActionWithReason>
-          ) : null
+          <ActionWithReason reason={assignmentBlockedReason}>
+            <Button
+              disabled={assignmentBlockedReason !== null}
+              onClick={() => controller.actions.openSingleAssignment(student.id)}
+              size="small"
+              variant="primary"
+            >
+              {adminLearningText.page.studentCard.newAssignment}
+            </Button>
+          </ActionWithReason>
+        ) : null
       }
       checked={controller.selectedBulkStudentIds.includes(student.id)}
       checkboxId={`bulk-student-${student.id}`}
-      contentHref={recentActivity ? historyDetailHref(recentActivity) : undefined}
-      onToggle={() => controller.actions.toggleBulkStudent(student.id)}
-      selectionEnabled={controller.assignmentMode === "bulk"}
-      disabled={student.status === "blocked"}
+      disabled={student.status === "blocked" || controller.selectionLoading}
+      onToggle={() => controller.actions.toggleBulkStudent(student)}
       selectionAriaLabel={formatContentText(
         adminLearningText.page.bulk.selectStudentAria,
         { student: student.displayName },
       )}
+      selectionEnabled={controller.assignmentMode === "bulk"}
     >
       <ActivityRow
         main={
-          <>
-            <span className={learningRowStyles.identity}>
+          <div className={styles.studentRowSummary}>
+            <span className={styles.studentIdentity}>
               <strong>{student.displayName}</strong>
               <MetaTagList>
                 <MetaTag>
-                  {student.schoolName ??
-                    adminLearningText.page.studentCard.schoolMissing}
+                  {student.schoolName ?? adminLearningText.page.studentCard.schoolMissing}
                 </MetaTag>
                 <MetaTag>
-                  {student.gradeLabel ??
-                    adminLearningText.page.studentCard.gradeMissing}
+                  {student.gradeLabel ?? adminLearningText.page.studentCard.gradeMissing}
                 </MetaTag>
               </MetaTagList>
             </span>
-            <span className={learningRowStyles.book}>
+            <span className={styles.studentBook}>
               <small>현재 단어장</small>
               <strong>
-                {student.currentVocabBook ??
-                  adminLearningText.page.studentCard.wordbookMissing}
+                {student.currentVocabBook ?? adminLearningText.page.studentCard.wordbookMissing}
               </strong>
             </span>
-            {assignmentQueues.slice(0, 1).map((queue) => (
-              <AssignmentQueueTags compact key={queue.seriesId} queue={queue} />
-            ))}
-            {assignmentQueues.length > 1 ? (
-              <MetaTagList>
-                <MetaTag>배정된 시험 외 {assignmentQueues.length - 1}개</MetaTag>
-              </MetaTagList>
-            ) : null}
-            <span className={learningRowStyles.recent}>
-              {recentActivity ? (
-                <>
-                  <small>최근 시험 범위</small>
-                  <strong>{assignmentScopeLabel(recentActivity)}</strong>
-                </>
-              ) : (
-                <strong>{adminLearningText.page.studentCard.noActivity}</strong>
-              )}
+            <span className={styles.studentRecentExam}>
+              <small>최근 시험</small>
+              <strong>
+                {student.recentExamAt
+                  ? formatKoreanDateTime(student.recentExamAt)
+                  : "시험 없음"}
+              </strong>
             </span>
-          </>
+            <MetaTagList>
+              <MetaTag>완료 {student.completedCount}</MetaTag>
+              <MetaTag>미응시 {student.missedCount}</MetaTag>
+              <MetaTag>응시 전 {student.notStartedCount}</MetaTag>
+            </MetaTagList>
+          </div>
         }
       />
     </SelectableRow>

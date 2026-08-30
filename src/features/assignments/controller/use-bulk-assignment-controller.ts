@@ -39,12 +39,10 @@ import {
   type AssignmentEditorState,
 } from "../domain/editor-state";
 import type {
-  AssignmentDeadline,
   AssignmentDirectionRatio,
   AssignmentQuestionOrderMode,
   BulkSeriesAssignmentDraft,
   ExamTiming,
-  ReviewLevel,
 } from "../domain/model";
 import {
   browserAssignmentTransport,
@@ -82,34 +80,26 @@ export type BulkAssignmentSubmitOutcome =
 const systemClock = () => Date.now();
 
 export function useBulkAssignmentController({
-  firstAvailableDateKorean,
+  enabled = true,
   genericErrorMessage,
   initialCommonPlan,
-  includePendingReview,
   previewDelayMs = 120,
   previewErrorMessage,
   studentIds,
   clock = systemClock,
-  commonPlanRequired = false,
-  commonPlanRequiredMessage = "단어장, 범위, 날짜를 먼저 정해 주세요.",
   transport = browserAssignmentTransport,
 }: {
-  firstAvailableDateKorean: string;
+  enabled?: boolean;
   genericErrorMessage: string;
   initialCommonPlan?: BulkSeriesAssignmentDraft["commonPlan"];
-  includePendingReview: boolean;
   previewDelayMs?: number;
   previewErrorMessage: string;
   studentIds: readonly string[];
   clock?: () => number;
-  commonPlanRequired?: boolean;
-  commonPlanRequiredMessage?: string;
   transport?: AssignmentTransport;
 }) {
   const [initialDraft] = useState(() =>
     createInitialBulkSeriesAssignmentDraft({
-      firstAvailableDateKorean,
-      includePendingReview,
       commonPlan: initialCommonPlan,
       studentIds,
     }),
@@ -209,15 +199,10 @@ export function useBulkAssignmentController({
     [apply],
   );
 
-  const flowPolicy = useMemo(
-    () => ({ commonPlanRequired, commonPlanRequiredMessage }),
-    [commonPlanRequired, commonPlanRequiredMessage],
-  );
-  const previewIssues = resolveBulkPreviewIssues(state.draft, flowPolicy);
+  const previewIssues = resolveBulkPreviewIssues(state.draft);
   const currentSubmissionIssues = resolveBulkSubmissionIssues(
     state.draft,
     nowMilliseconds,
-    flowPolicy,
   );
   const submissionIssues = feedback.submissionIssue
     ? [
@@ -300,6 +285,7 @@ export function useBulkAssignmentController({
   useDebouncedAssignmentPreview({
     delayMs: previewDelayMs,
     enabled:
+      enabled &&
       previewPreparation !== null &&
       state.submission.status !== "submitting" &&
       (forcePreviewRefresh || !previewAlreadyCurrent),
@@ -324,6 +310,7 @@ export function useBulkAssignmentController({
       ? state.submission.message
       : "");
   const canSubmit =
+    enabled &&
     state.submission.status !== "submitting" &&
     state.submission.status !== "succeeded" &&
     submissionIssues.length === 0 &&
@@ -338,7 +325,6 @@ export function useBulkAssignmentController({
     const issues = resolveBulkSubmissionIssues(
       current.draft,
       nowMilliseconds,
-      flowPolicy,
     );
     if (issues.length > 0 && current.submission.status !== "submitting") {
       setMessage(issues[0].message);
@@ -456,7 +442,6 @@ export function useBulkAssignmentController({
     };
   }, [
     apply,
-    flowPolicy,
     genericErrorMessage,
     nowMilliseconds,
     previewErrorMessage,
@@ -473,14 +458,8 @@ export function useBulkAssignmentController({
 
   const actions = {
     changeCommonPlan,
-    changeDeadline: (deadline: AssignmentDeadline) =>
-      changeDraft({ type: "deadline/changed", deadline }),
     changeDirection: (value: AssignmentDirectionRatio) =>
       changeDraft({ type: "exam/direction_changed", value }),
-    changeFirstAvailableDate: (value: string) =>
-      changeDraft({ type: "schedule/date_changed", value }),
-    changeInterval: (value: number) =>
-      changeDraft({ type: "schedule/interval_changed", value }),
     changeOrder: (value: AssignmentQuestionOrderMode) =>
       changeDraft({ type: "exam/order_changed", value }),
     changePassingScore: (value: number) =>
@@ -489,10 +468,6 @@ export function useBulkAssignmentController({
       changeDraft({ type: "exam/retry_enabled_changed", enabled }),
     changeRetryPassingScore: (value: number) =>
       changeDraft({ type: "exam/retry_passing_score_changed", value }),
-    changeRange: (range: BulkSeriesAssignmentDraft["range"]) =>
-      changeDraft({ type: "range/changed", range }),
-    changeReviewLevels: (levels: readonly ReviewLevel[]) =>
-      changeDraft({ type: "review/levels_changed", levels }),
     changeTiming: (timing: ExamTiming) => {
       if (timing.mode === "total") {
         timingMemoryRef.current.totalSeconds = timing.totalSeconds;

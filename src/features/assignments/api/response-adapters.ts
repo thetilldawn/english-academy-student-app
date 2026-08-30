@@ -169,22 +169,8 @@ const bulkPreviewSessionSchema = z
     unitLabels: z.array(z.string()),
     rangeTruncated: z.boolean(),
     questionCount: nonNegativeInteger,
-    wrongCount: nonNegativeInteger,
-    availableFrom: z.iso.datetime({ offset: true }),
+    availableFrom: z.iso.datetime({ offset: true }).nullable(),
     availableUntil: z.iso.datetime({ offset: true }).nullable(),
-    warnings: z
-      .array(
-        z
-          .object({
-            id: z.string(),
-            kind: z.enum(["existing_assignment", "planned_series_order"]),
-            existingAssignmentId: z.uuid().nullable(),
-            existingAssignmentTitle: z.string(),
-            message: z.string(),
-            resolved: z.boolean(),
-          })
-          .strict(),
-      ),
     error: z.string().nullable(),
     errorFieldKey: z
       .enum([
@@ -252,7 +238,7 @@ const bulkAssignmentPreviewResponseSchema = z
           z
             .object({
               sessionNumber: z.number().int().positive(),
-              availableFrom: z.iso.datetime({ offset: true }),
+              availableFrom: z.iso.datetime({ offset: true }).nullable(),
               availableUntil: z.iso.datetime({ offset: true }).nullable(),
               questionCount: nonNegativeInteger,
               cycleIndex: nonNegativeInteger,

@@ -102,6 +102,12 @@ describe("assignment replacement policy", () => {
         replacementInput({ questionCount: 1 }),
       ),
     ).toThrowError(AssignmentReplacementError);
+    expect(() =>
+      assertExactReviewShape(
+        source,
+        replacementInput({ englishToKoreanRatio: 100 }),
+      ),
+    ).toThrowError(AssignmentReplacementError);
   });
 
   it("keeps legacy mixed content fixed while allowing non-content settings", () => {

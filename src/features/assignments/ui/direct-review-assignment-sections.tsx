@@ -18,6 +18,7 @@ import type {
   DirectReviewFieldKey,
 } from "../controller/use-direct-review-assignment-controller";
 import type { ReviewLevel } from "../domain/model";
+import { AssignmentAvailabilityFields } from "./assignment-availability-fields";
 import { AssignmentDeadlineFields } from "./assignment-deadline-fields";
 import { AssignmentSection } from "./assignment-section";
 import {
@@ -67,7 +68,8 @@ export function DirectReviewAssignmentSections({
     fieldErrors.passingScore || fieldErrors.retryPassingScore
     ? "조건 확인"
     : null;
-  const scheduleStatus = fieldErrors.timing || fieldErrors.deadline
+  const scheduleStatus = fieldErrors.availability || fieldErrors.timing ||
+      fieldErrors.deadline
     ? "일정 확인"
     : null;
   const countText = summary.status === "loading" || summary.status === "idle"
@@ -87,6 +89,9 @@ export function DirectReviewAssignmentSections({
         : "단어장과 오답 단계를 선택해 주세요.";
   const deadlineIso = draft.deadline.mode === "at"
     ? koreanDateTimeLocalToIso(draft.deadline.koreanLocalDateTime)
+    : null;
+  const availabilityIso = draft.availability.mode === "at"
+    ? koreanDateTimeLocalToIso(draft.availability.koreanLocalDateTime)
     : null;
 
   return (
@@ -232,6 +237,13 @@ export function DirectReviewAssignmentSections({
         status={scheduleStatus}
         title="시험 일정"
       >
+        <AssignmentAvailabilityFields
+          availability={draft.availability}
+          error={fieldErrors.availability}
+          id="review-availability"
+          memoryKey={student.id}
+          onChange={controller.actions.changeAvailability}
+        />
         <ExamTimingFields
           error={fieldErrors.timing}
           exam={draft.exam}
@@ -261,6 +273,10 @@ export function DirectReviewAssignmentSections({
           </div>
           <div><dt>범위</dt><dd>오답 · {selectedLevelLabel(draft.reviewLevels)}</dd></div>
           <div><dt>단어 수</dt><dd>{draft.questionCount}개</dd></div>
+          <div>
+            <dt>공개</dt>
+            <dd>{availabilityIso ? formatKoreanDateTime(availabilityIso) : "즉시"}</dd>
+          </div>
           <div><dt>시간</dt><dd>{timingLabel(controller)}</dd></div>
           <div>
             <dt>마감</dt>

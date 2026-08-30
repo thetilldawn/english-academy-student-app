@@ -76,12 +76,30 @@ const exactReview: SingleAssignmentDraft = {
 const baseBulk: BulkSeriesAssignmentDraft = {
   kind: "bulk_series",
   studentIds: [assignmentContractIds.studentA],
-  range: { mode: "previous_span", unitsPerSession: 2, sessionCount: 2 },
-  firstAvailableDateKorean: "2026-08-17",
-  firstDeadline: { mode: "at", koreanLocalDateTime: "2026-08-17T21:00" },
-  dayInterval: 2,
   exam: baseSingle.exam,
-  review: { mode: "none", levels: [1, 2] },
+  commonPlan: {
+    datasetId: assignmentContractIds.dataset,
+    distribution: "split",
+    splitBasis: "question_count",
+    orderedUnitIds: [assignmentContractIds.day60],
+    rangeUnitCounts: [],
+    unitAllocationRule: null,
+    questionCount: { mode: "manual", value: 20 },
+    overflowPolicy: "leave",
+    extraDatePolicy: "unconfirmed",
+    selectedDateCount: 2,
+    selectionMode: "source_order",
+    planNonce: assignmentContractIds.planNonce,
+    recurrenceSessions: [17, 19].map((day) => ({
+      availableLocalDateTime: `2026-08-${day}T09:00`,
+      deadlineLocalDateTime: `2026-08-${day}T22:00`,
+    })),
+    sessions: [17, 19].map((day) => ({
+      availableLocalDateTime: `2026-08-${day}T09:00`,
+      deadlineLocalDateTime: `2026-08-${day}T22:00`,
+      unitIds: [assignmentContractIds.day60],
+    })),
+  },
 };
 
 function issuePaths(issues: ReturnType<typeof validateSingleAssignmentSubmission>) {
@@ -435,19 +453,27 @@ describe("assignment draft validation", () => {
       ),
     ).toContain("deadline");
 
-    const pastBulk = {
+    const pastBulk: BulkSeriesAssignmentDraft = {
       ...baseBulk,
-      firstAvailableDateKorean: "2026-08-09",
-      firstDeadline: {
-        mode: "at",
-        koreanLocalDateTime: "2026-08-09T21:00",
-      } as const,
+      commonPlan: {
+        ...baseBulk.commonPlan!,
+        selectedDateCount: 1,
+        recurrenceSessions: [{
+          availableLocalDateTime: "2026-08-09T09:00",
+          deadlineLocalDateTime: "2026-08-09T21:00",
+        }],
+        sessions: [{
+          availableLocalDateTime: "2026-08-09T09:00",
+          deadlineLocalDateTime: "2026-08-09T21:00",
+          unitIds: [assignmentContractIds.day60],
+        }],
+      },
     };
     expect(
       validateBulkAssignmentSubmission(pastBulk, NOW).map(
         (issue) => issue.path,
       ),
-    ).toContain("firstDeadline");
+    ).toContain("commonPlan.sessions.0.deadlineLocalDateTime");
   });
 
   it("공통 배정은 처음 발견한 과거 마감을 정확한 회차 필드에 연결한다", () => {
@@ -465,7 +491,6 @@ describe("assignment draft validation", () => {
     ];
     const commonDraft: BulkSeriesAssignmentDraft = {
       ...baseBulk,
-      range: { mode: "fixed_span", unitsPerSession: 1, sessionCount: 2 },
       commonPlan: {
         datasetId: assignmentContractIds.dataset,
         distribution: "split",
@@ -474,17 +499,16 @@ describe("assignment draft validation", () => {
         rangeUnitCounts: [],
         unitAllocationRule: null,
         questionCount: { mode: "manual", value: 20 },
-      overflowPolicy: "leave",
-      extraDatePolicy: "unconfirmed",
-      selectedDateCount: 2,
+        overflowPolicy: "leave",
+        extraDatePolicy: "unconfirmed",
+        selectedDateCount: 2,
         selectionMode: "source_order",
-        planNonce: assignmentContractIds.idempotencyKey,
+        planNonce: assignmentContractIds.planNonce,
         sessions,
         recurrenceSessions: sessions.map((session) => ({
           availableLocalDateTime: session.availableLocalDateTime,
           deadlineLocalDateTime: session.deadlineLocalDateTime,
         })),
-        collisionDecisions: [],
       },
     };
 
@@ -499,7 +523,8 @@ describe("assignment draft validation", () => {
   it("배정된 시험은 31명도 허용하고 학생과 회차를 합쳐 210시험을 지킨다", () => {
     const students = Array.from(
       { length: 106 },
-      (_, index) => `student-${index}`,
+      (_, index) =>
+        `10000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
     );
     const sessions = [
       {
@@ -525,16 +550,14 @@ describe("assignment draft validation", () => {
       extraDatePolicy: "unconfirmed" as const,
       selectedDateCount: 2,
       selectionMode: "source_order" as const,
-      planNonce: assignmentContractIds.idempotencyKey,
+      planNonce: assignmentContractIds.planNonce,
       sessions,
       recurrenceSessions: sessions,
-      collisionDecisions: [],
     };
 
     expect(validateBulkPreviewProjection({
       ...baseBulk,
       studentIds: students.slice(0, 31),
-      range: { ...baseBulk.range, sessionCount: 1 },
       commonPlan: {
         ...commonPlan,
         selectedDateCount: 1,
@@ -547,7 +570,7 @@ describe("assignment draft validation", () => {
       ...baseBulk,
       studentIds: students,
       commonPlan,
-    }).map((issue) => issue.path)).toContain("range.sessionCount");
+    }).map((issue) => issue.path)).toContain("commonPlan.sessions");
   });
 
   it("bulk preview validates selection while submit additionally validates exam and future deadline", () => {
@@ -560,26 +583,12 @@ describe("assignment draft validation", () => {
         assignmentContractIds.studentA,
         assignmentContractIds.studentA,
       ],
-      range: { ...baseBulk.range, unitsPerSession: 0, sessionCount: 8 },
-      dayInterval: 31,
-      firstDeadline: {
-        mode: "at",
-        koreanLocalDateTime: "2026-08-16T23:59",
-      } as const,
     };
     expect(
       validateBulkPreviewProjection(invalidSelection).map(
         (issue) => issue.path,
       ),
-    ).toEqual(
-      expect.arrayContaining([
-        "studentIds",
-        "range.unitsPerSession",
-        "range.sessionCount",
-        "dayInterval",
-        "firstDeadline",
-      ]),
-    );
+    ).toContain("studentIds");
 
     const invalidExam = {
       ...baseBulk,
@@ -603,13 +612,21 @@ describe("assignment draft validation", () => {
   });
 
   it("allows a same-day bulk start that is already past when its deadline is still future", () => {
-    const sameDay = {
+    const sameDay: BulkSeriesAssignmentDraft = {
       ...baseBulk,
-      firstAvailableDateKorean: "2026-08-17",
-      firstDeadline: {
-        mode: "at",
-        koreanLocalDateTime: "2026-08-17T22:00",
-      } as const,
+      commonPlan: {
+        ...baseBulk.commonPlan!,
+        selectedDateCount: 1,
+        recurrenceSessions: [{
+          availableLocalDateTime: "2026-08-17T08:00",
+          deadlineLocalDateTime: "2026-08-17T22:00",
+        }],
+        sessions: [{
+          availableLocalDateTime: "2026-08-17T08:00",
+          deadlineLocalDateTime: "2026-08-17T22:00",
+          unitIds: [assignmentContractIds.day60],
+        }],
+      },
     };
     const nowAtNinePmKorean = Date.parse("2026-08-17T12:00:00.000Z");
 

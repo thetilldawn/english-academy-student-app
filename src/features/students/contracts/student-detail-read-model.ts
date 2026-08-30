@@ -1,7 +1,7 @@
 import type { AdminHistoryListItem } from "@/features/history/contracts/admin-history-read-model";
 import type { ReadingCurriculumStage } from "@/lib/admin/reading-curriculum";
 import type { StudentLearningSourceItem } from "@/lib/admin/learning-sources";
-import type { StudentVocabBookHistory } from "@/lib/admin/student-vocab-book-history";
+import type { StudentVocabBookHistory } from "./student-vocab-book-history";
 
 export type StudentCodeView = {
   code: string;

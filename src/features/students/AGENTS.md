@@ -6,6 +6,9 @@
   의존을 함께 보여 준다. 변경 Route Handler와 server service 전체는 `map:feature -- students`로 확인한다.
 - `contracts/`는 서버와 브라우저가 함께 쓰는 목록·상세 자료 모양, `controller/`는 Client 입력과 요청 수명,
   `transport/`는 브라우저 후속 HTTP, `server/queries/`는 인증 뒤 DB 조회를 맡는다.
+- 다른 기능이 학생 목록 자료형·단어장 학습 이력 자료형을 써야 하면 `public-contracts.ts`, 서버 조회를
+  써야 하면 `public-server.ts`, 브라우저 조회를 써야 하면 `public-client.ts`로 들어온다. 예전
+  `lib/admin/student-vocab-book-history` 경로를 다시 만들지 않는다.
 - `server/components/`는 첫 목록·상세 자료를 query에서 직접 받아 UI에 전달한다. 최초 읽기에서 앱의
   Route Handler를 다시 HTTP로 호출하지 않는다.
 - 검색·필터·더보기·이력 더보기만 `controller → transport → Route Handler → server query` 순서로 간다.

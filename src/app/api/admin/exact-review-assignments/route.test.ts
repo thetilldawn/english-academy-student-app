@@ -48,6 +48,7 @@ const validInput = {
   retryEnabled: true,
   retryPassingScore: 80,
   questionOrderMode: "random",
+  availableFrom: null,
   availableUntil: null,
   timingMode: "none",
   questionTimeLimitSeconds: null,
@@ -83,6 +84,7 @@ describe("POST /api/admin/exact-review-assignments", () => {
     const response = await POST(request(validInput));
 
     expect(response.status).toBe(201);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(mocks.createDirectReviewAssignment).toHaveBeenCalledWith(
       validInput,
       { userId: "admin-id" },
@@ -95,6 +97,7 @@ describe("POST /api/admin/exact-review-assignments", () => {
     const response = await POST(request(validInput, "https://evil.example"));
 
     expect(response.status).toBe(403);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(mocks.getAdminContext).not.toHaveBeenCalled();
   });
 
@@ -104,6 +107,7 @@ describe("POST /api/admin/exact-review-assignments", () => {
     const response = await POST(request(validInput));
 
     expect(response.status).toBe(401);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(mocks.createDirectReviewAssignment).not.toHaveBeenCalled();
   });
 
@@ -115,6 +119,7 @@ describe("POST /api/admin/exact-review-assignments", () => {
     const response = await POST(request(validInput));
 
     expect(response.status).toBe(403);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
   });
 
   it("오답 0개는 서비스 호출 전에 차단한다", async () => {
@@ -124,6 +129,7 @@ describe("POST /api/admin/exact-review-assignments", () => {
     }));
 
     expect(response.status).toBe(400);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(mocks.createDirectReviewAssignment).not.toHaveBeenCalled();
   });
 
@@ -137,6 +143,7 @@ describe("POST /api/admin/exact-review-assignments", () => {
     }));
 
     expect(response.status).toBe(400);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(mocks.createDirectReviewAssignment).not.toHaveBeenCalled();
   });
 
@@ -148,6 +155,7 @@ describe("POST /api/admin/exact-review-assignments", () => {
     const response = await POST(request(validInput));
 
     expect(response.status).toBe(409);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
   });
 
   it("멱등키 재사용 409의 원인을 응답에 보존한다", async () => {
@@ -163,6 +171,7 @@ describe("POST /api/admin/exact-review-assignments", () => {
     const response = await POST(request(validInput));
 
     expect(response.status).toBe(409);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
     await expect(response.json()).resolves.toMatchObject({
       code: "idempotency_key_reused",
     });
@@ -180,6 +189,7 @@ describe("POST /api/admin/exact-review-assignments", () => {
     const response = await POST(request(validInput));
 
     expect(response.status).toBe(422);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
     await expect(response.json()).resolves.toEqual({
       error: "응시 마감 시간은 현재보다 뒤로 정해 주세요.",
       fieldPath: "deadline",

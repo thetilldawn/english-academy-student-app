@@ -1,10 +1,5 @@
 import type { AssignmentDatasetItem } from "../catalog-types";
 import {
-  clearVocabCollisionDecisionFrom,
-  setVocabCollisionDecision,
-  type VocabCollisionDecisionRecord,
-} from "../domain/vocab-collision-decisions";
-import {
   type IsoWeekday,
   type VocabAssignmentMode,
   type VocabUnitSelection,
@@ -38,12 +33,10 @@ export type VocabPlannerState = {
   selectionMode: VocabTargetSelectionMode;
   planNonce: string;
   scheduleEnabled?: boolean;
-  immediateDate?: string;
   schedule: VocabScheduleDraft;
   sessionScheduleOverrides: Readonly<
     Record<number, VocabScheduleSlotOverride>
   >;
-  collisionDecisionRecords: readonly VocabCollisionDecisionRecord[];
 };
 
 export type VocabPlannerAction =
@@ -71,9 +64,7 @@ export type VocabPlannerAction =
       type: "session_schedule";
       sessionNumber: number;
       value: VocabScheduleSlotOverride;
-    }
-  | { type: "decision/set"; value: VocabCollisionDecisionRecord }
-  | { type: "decision/clear_from"; collisionId: string };
+    };
 
 export function vocabPlannerReducer(
   state: VocabPlannerState,
@@ -89,7 +80,6 @@ export function vocabPlannerReducer(
         manualQuestionCount: 0,
         extraDatePolicy: "unconfirmed",
         sessionScheduleOverrides: {},
-        collisionDecisionRecords: [],
       };
     case "range/toggle":
       return {
@@ -97,7 +87,6 @@ export function vocabPlannerReducer(
         range: toggleVocabUnitSelection(state.range, action.unitId),
         extraDatePolicy: "unconfirmed",
         sessionScheduleOverrides: {},
-        collisionDecisionRecords: [],
       };
     case "range/all":
       return {
@@ -105,7 +94,6 @@ export function vocabPlannerReducer(
         range: selectAllVocabUnits(action.unitIds, action.selectAll),
         extraDatePolicy: "unconfirmed",
         sessionScheduleOverrides: {},
-        collisionDecisionRecords: [],
       };
     case "assignment_mode":
       return {
@@ -116,7 +104,6 @@ export function vocabPlannerReducer(
           : state.overflowPolicy,
         extraDatePolicy: "unconfirmed",
         sessionScheduleOverrides: {},
-        collisionDecisionRecords: [],
       };
     case "unit_allocation_mode":
       return {
@@ -124,7 +111,6 @@ export function vocabPlannerReducer(
         unitAllocationMode: action.value,
         extraDatePolicy: "unconfirmed",
         sessionScheduleOverrides: {},
-        collisionDecisionRecords: [],
       };
     case "units_per_session":
       return {
@@ -132,7 +118,6 @@ export function vocabPlannerReducer(
         unitsPerSession: action.value,
         extraDatePolicy: "unconfirmed",
         sessionScheduleOverrides: {},
-        collisionDecisionRecords: [],
       };
     case "weekday_units_per_session":
       return {
@@ -143,7 +128,6 @@ export function vocabPlannerReducer(
         },
         extraDatePolicy: "unconfirmed",
         sessionScheduleOverrides: {},
-        collisionDecisionRecords: [],
       };
     case "question_count_mode":
       return {
@@ -151,7 +135,6 @@ export function vocabPlannerReducer(
         questionCountMode: action.value,
         extraDatePolicy: "unconfirmed",
         sessionScheduleOverrides: {},
-        collisionDecisionRecords: [],
       };
     case "manual_question_count":
       return {
@@ -159,25 +142,21 @@ export function vocabPlannerReducer(
         manualQuestionCount: action.value,
         extraDatePolicy: "unconfirmed",
         sessionScheduleOverrides: {},
-        collisionDecisionRecords: [],
       };
     case "overflow_policy":
       return {
         ...state,
         overflowPolicy: action.value,
-        collisionDecisionRecords: [],
       };
     case "extra_date_policy":
       return {
         ...state,
         extraDatePolicy: action.value,
-        collisionDecisionRecords: [],
       };
     case "selection_mode":
       return {
         ...state,
         selectionMode: action.value,
-        collisionDecisionRecords: [],
       };
     case "schedule/enabled": {
       const shouldNormalizeRangeSplit =
@@ -193,7 +172,6 @@ export function vocabPlannerReducer(
           : state.overflowPolicy,
         extraDatePolicy: "unconfirmed",
         sessionScheduleOverrides: {},
-        collisionDecisionRecords: [],
       };
     }
     case "schedule/update": {
@@ -209,7 +187,6 @@ export function vocabPlannerReducer(
         sessionScheduleOverrides: scheduleShapeChanged
           ? {}
           : state.sessionScheduleOverrides,
-        collisionDecisionRecords: [],
       };
     }
     case "schedule/replace": {
@@ -225,7 +202,6 @@ export function vocabPlannerReducer(
           ? "unconfirmed"
           : state.extraDatePolicy,
         sessionScheduleOverrides: {},
-        collisionDecisionRecords: [],
       };
     }
     case "schedule/toggle_weekday":
@@ -237,7 +213,6 @@ export function vocabPlannerReducer(
         },
         extraDatePolicy: "unconfirmed",
         sessionScheduleOverrides: {},
-        collisionDecisionRecords: [],
       };
     case "session_schedule":
       return {
@@ -246,23 +221,6 @@ export function vocabPlannerReducer(
           ...state.sessionScheduleOverrides,
           [action.sessionNumber]: { ...action.value },
         },
-        collisionDecisionRecords: [],
-      };
-    case "decision/set":
-      return {
-        ...state,
-        collisionDecisionRecords: setVocabCollisionDecision(
-          state.collisionDecisionRecords,
-          action.value,
-        ),
-      };
-    case "decision/clear_from":
-      return {
-        ...state,
-        collisionDecisionRecords: clearVocabCollisionDecisionFrom(
-          state.collisionDecisionRecords,
-          action.collisionId,
-        ),
       };
   }
 }
@@ -300,7 +258,6 @@ export function createInitialVocabPlannerState(
     selectionMode: "source_order",
     planNonce: crypto.randomUUID(),
     scheduleEnabled: true,
-    immediateDate: today,
     schedule: {
       startDate: today,
       weekdays: [],
@@ -310,7 +267,6 @@ export function createInitialVocabPlannerState(
       deadlineTime: initialDeadline.time,
     },
     sessionScheduleOverrides: {},
-    collisionDecisionRecords: [],
   };
 }
 

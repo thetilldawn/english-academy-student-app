@@ -7,7 +7,7 @@ export type BulkPlanSignatureSource = {
   scheduledQuestionCount: number | null;
   requiresExtraDateDecision: boolean;
   sessions: ReadonlyArray<{
-    availableFrom: string;
+    availableFrom: string | null;
     availableUntil: string | null;
     questionCount: number;
     cycleIndex: number;

@@ -14,6 +14,7 @@ const featureRoot = path.resolve("src/features/assignments");
 const domainRoot = path.join(featureRoot, "domain");
 const apiRoot = path.join(featureRoot, "api");
 const applicationRoot = path.join(featureRoot, "application");
+const contractsRoot = path.join(featureRoot, "contracts");
 const transportRoot = path.join(featureRoot, "transport");
 const pureSharedModules = new Map([
   ["@/lib/deadline", path.resolve("src/lib/deadline.ts")],
@@ -97,7 +98,7 @@ describe("assignment feature dependency boundaries", () => {
           specifier.startsWith("@/lib/admin/") &&
           specifier.includes("assignment") &&
           specifier.endsWith("-request")) ||
-        resolvesInside(importer, specifier, [apiRoot, domainRoot]),
+        resolvesInside(importer, specifier, [apiRoot, contractsRoot, domainRoot]),
       forbidJsx: true,
       forbidBrowserGlobals: true,
     });
@@ -116,6 +117,7 @@ describe("assignment feature dependency boundaries", () => {
         resolvesInside(importer, specifier, [
           applicationRoot,
           apiRoot,
+          contractsRoot,
           domainRoot,
           transportRoot,
         ]),

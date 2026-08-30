@@ -5,20 +5,13 @@ import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
 import { formatKoreanDateTime } from "@/lib/format";
 
 import type { BulkAssignmentController } from "../controller/use-bulk-assignment-controller";
-import type {
-  VocabCollisionDecisionInput,
-  VocabCollisionDecisionMode,
-  VocabCollisionDecisionRecord,
-} from "../domain/vocab-collision-decisions";
-import type { VocabRangeDistribution } from "../domain/vocab-assignment-contract";
 import {
   buildBulkPlanAudience,
   bulkPlanItemStatus,
   type BulkPlanItemStatus,
 } from "../presentation/bulk-plan-audience";
-import styles from "./bulk-assignment-editor.module.css";
+import styles from "./vocab-assignment-form.module.css";
 import { BulkPreviewSessionList } from "./bulk-preview-session-list";
-import { CollisionDecisionList } from "./collision-decision-list";
 
 type PreviewStudent = {
   id: string;
@@ -33,7 +26,6 @@ const itemStatusPresentation: Record<
 > = {
   same: { label: "동일 조건", tone: "success" },
   different: { label: "다른 조건", tone: "warning" },
-  needs_review: { label: "확인 필요", tone: "warning" },
   blocked: { label: "배정 불가", tone: "danger" },
   individual: { label: "개별 계획", tone: "neutral" },
 };
@@ -47,26 +39,13 @@ function studentContextLabel(student: PreviewStudent) {
 export function BulkSeriesPreview({
   completionGated = false,
   controller,
-  collisionDecisions = [],
-  distribution = "split",
-  onClearCollisionDecision,
-  onCollisionDecision,
-  onCollisionDecisionChange,
   students,
 }: {
   completionGated?: boolean;
   controller: BulkAssignmentController;
-  collisionDecisions?: readonly VocabCollisionDecisionRecord[];
-  distribution?: VocabRangeDistribution;
-  onClearCollisionDecision?: (collisionId: string) => void;
-  onCollisionDecision?: (input: VocabCollisionDecisionInput) => void;
-  onCollisionDecisionChange?: (
-    collisionId: string,
-    mode: VocabCollisionDecisionMode,
-  ) => void;
   students: readonly PreviewStudent[];
 }) {
-  const { message, preview, previewLoading, state } = controller;
+  const { message, preview, previewLoading } = controller;
   const labelByStudentId = new Map(
     students.map((student) => [student.id, studentContextLabel(student)]),
   );
@@ -125,15 +104,6 @@ export function BulkSeriesPreview({
         </h3>
       </div>
 
-      {onClearCollisionDecision && onCollisionDecisionChange ? (
-        <CollisionDecisionList
-          decisions={collisionDecisions}
-          distribution={distribution}
-          onChange={onCollisionDecisionChange}
-          onClear={onClearCollisionDecision}
-        />
-      ) : null}
-
       {!preview ? (
         <div className={styles.previewList}>
           <article className={styles.previewRow}>
@@ -157,10 +127,7 @@ export function BulkSeriesPreview({
           </small>
           <BulkPreviewSessionList
             completionGated={completionGated}
-            includePendingReview={state.draft.review.mode === "pending"}
             item={singleItem}
-            onClearCollisionDecision={onClearCollisionDecision}
-            onCollisionDecision={onCollisionDecision}
           />
           {singleItem.error ? <small>{singleItem.error}</small> : null}
         </article>
@@ -183,7 +150,9 @@ export function BulkSeriesPreview({
                   <MetaTagList>
                     <MetaTag size="large">{session.unitLabel ?? "선택 범위"}</MetaTag>
                     <MetaTag size="large">
-                      {formatKoreanDateTime(session.availableFrom)} 공개
+                      {session.availableFrom
+                        ? `${formatKoreanDateTime(session.availableFrom)} 공개`
+                        : "바로 공개"}
                     </MetaTag>
                     {session.availableUntil ? (
                       <MetaTag size="large">
@@ -230,10 +199,7 @@ export function BulkSeriesPreview({
                 </small>
                 <BulkPreviewSessionList
                   completionGated={completionGated}
-                  includePendingReview={state.draft.review.mode === "pending"}
                   item={item}
-                  onClearCollisionDecision={onClearCollisionDecision}
-                  onCollisionDecision={onCollisionDecision}
                 />
                 {item.error ? <small>{item.error}</small> : null}
               </article>

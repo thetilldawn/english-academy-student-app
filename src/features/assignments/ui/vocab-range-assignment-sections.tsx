@@ -3,6 +3,7 @@
 import { toast } from "sonner";
 
 import { Button } from "@/design-system/primitives/button/button";
+import { Notice } from "@/design-system/patterns/feedback/feedback";
 import { FieldLabel, Select } from "@/design-system/primitives/form/field";
 import {
   HelpTip,
@@ -38,12 +39,20 @@ export function VocabRangeAssignmentSections({
   busy,
   controller,
   fieldErrors,
+  onRetryUnits = () => undefined,
   students,
+  unitLoadState = { datasetId: "", message: "", status: "idle" },
 }: {
   busy: boolean;
   controller: VocabAssignmentScreenController;
   fieldErrors: Partial<Record<VocabAssignmentFieldKey, string>>;
+  onRetryUnits?: () => void;
   students: readonly AssignmentStudentItem[];
+  unitLoadState?: {
+    datasetId: string;
+    message: string;
+    status: "idle" | "loading" | "ready" | "error";
+  };
 }) {
   const bulk = controller.bulk;
   const previousSourceStudent = students.find(
@@ -88,6 +97,20 @@ export function VocabRangeAssignmentSections({
           datasets={controller.readyDatasets}
           fieldErrors={fieldErrors}
         />
+        {unitLoadState.datasetId === controller.planner.datasetId &&
+        unitLoadState.status === "loading" ? (
+          <div aria-busy="true" className={styles.reviewCalculation} role="status">
+            범위를 불러오는 중…
+          </div>
+        ) : unitLoadState.datasetId === controller.planner.datasetId &&
+          unitLoadState.status === "error" ? (
+          <Notice role="alert" tone="danger">
+            {unitLoadState.message}
+            <Button onClick={onRetryUnits} size="small" variant="quiet">
+              다시 불러오기
+            </Button>
+          </Notice>
+        ) : null}
       </AssignmentSection>
       <AssignmentSection
         help="범위를 나누는 방법과 시험 문제 순서, 통과 기준을 정합니다."
@@ -138,13 +161,32 @@ export function VocabRangeAssignmentSections({
               </strong>
             )}
             <small>
-              {controller.previousExam
-                ? controller.previousExam.assignmentTitle
-                : "복사할 최근 시험 없음"}
+              {controller.previousExamStatus === "loading" ||
+              controller.previousExamStatus === "idle"
+                ? "최근 시험 확인 중…"
+                : controller.previousExamStatus === "error"
+                  ? controller.previousExamError
+                  : controller.previousExam
+                    ? controller.previousExam.assignmentTitle
+                    : "복사할 최근 시험 없음"}
             </small>
           </div>
+          {controller.previousExamStatus === "error" ? (
+            <Button
+              disabled={busy}
+              onClick={() => void controller.actions.retryPreviousExam()}
+              size="small"
+              variant="quiet"
+            >
+              다시 불러오기
+            </Button>
+          ) : null}
           <Button
-            disabled={!controller.hasPreviousExam || busy}
+            disabled={
+              !controller.hasPreviousExam ||
+              controller.previousExamStatus !== "ready" ||
+              busy
+            }
             onClick={() => {
               if (controller.actions.copyPreviousExam()) {
                 toast.success("최근 시험 조건을 적용했습니다.");
@@ -183,9 +225,8 @@ export function VocabRangeAssignmentSections({
       >
         {controller.commonPlan ? (
           <BulkSeriesPreview
-            completionGated={controller.distribution === "split"}
+            completionGated={controller.commonPlan.distribution === "split"}
             controller={bulk}
-            distribution={controller.distribution}
             students={students}
           />
         ) : (

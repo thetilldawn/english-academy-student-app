@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 
-import type { AssignmentHistorySummary } from "@/lib/admin/history";
 import type { StudentPendingReviewSummary } from "@/lib/admin/review-queue-summary";
 import { isoToKoreanDateTimeLocal } from "@/lib/deadline";
 
@@ -13,15 +12,14 @@ import type {
 } from "../catalog-types";
 import {
   toVocabTimeTemplate,
-  type VocabTimeTemplateRecord,
 } from "../api/vocab-time-template-adapter";
-import { selectCommonInitialDatasetId } from "../presentation/select-common-initial-dataset";
+import type { VocabTimeTemplateRecord } from "../contracts/vocab-time-template-contract";
+import { selectCommonInitialDatasetId } from "../domain/select-common-initial-dataset";
 import type { AssignmentTransport } from "../transport/assignment-transport";
 import { useVocabAssignmentPlanner } from "./use-vocab-assignment-planner";
 
 export type VocabAssignmentScreenData = {
   datasets: readonly AssignmentDatasetItem[];
-  history: readonly AssignmentHistorySummary[];
   pendingReviewSummaries?: readonly StudentPendingReviewSummary[];
   timeTemplates: readonly VocabTimeTemplateRecord[];
   units: readonly AssignmentUnitItem[];
@@ -46,6 +44,7 @@ export function summarizeVocabAssignmentResult(
 
 export function useVocabAssignmentScreen({
   data,
+  enabled = true,
   genericErrorMessage,
   initialDatasetId,
   previewErrorMessage,
@@ -54,6 +53,7 @@ export function useVocabAssignmentScreen({
   transport,
 }: {
   data: VocabAssignmentScreenData;
+  enabled?: boolean;
   genericErrorMessage: string;
   initialDatasetId: string;
   previewErrorMessage: string;
@@ -98,10 +98,10 @@ export function useVocabAssignmentScreen({
   );
   const planner = useVocabAssignmentPlanner({
     datasets: readyDatasets,
+    enabled,
     genericErrorMessage,
     initialDatasetId: resolvedInitialDatasetId,
     initialTimeTemplates,
-    previousExamHistory: data.history,
     previousExamSourceStudentId,
     previewErrorMessage,
     studentIds,

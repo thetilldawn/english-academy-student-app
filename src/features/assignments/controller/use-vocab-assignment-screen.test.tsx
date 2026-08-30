@@ -43,7 +43,6 @@ const students = [
 ] as AssignmentStudentItem[];
 const data = {
   datasets: [pendingDataset, readyDataset],
-  history: [],
   units: [],
   timeTemplates: [{
     id: "00000000-0000-4000-8000-000000000111",

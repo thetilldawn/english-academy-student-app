@@ -33,6 +33,10 @@ import { GET } from "./route";
 const studentId = "00000000-0000-4000-8000-000000000020";
 
 describe("GET /api/admin/students/[id]/direct-review-summaries", () => {
+  function expectPrivateNoStore(response: Response) {
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+  }
+
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getAdminContext.mockResolvedValue({ userId: "admin-id" });
@@ -52,7 +56,7 @@ describe("GET /api/admin/students/[id]/direct-review-summaries", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expectPrivateNoStore(response);
     expect(mocks.listSummaries).toHaveBeenCalledWith(
       studentId,
       { userId: "admin-id" },
@@ -64,15 +68,19 @@ describe("GET /api/admin/students/[id]/direct-review-summaries", () => {
 
   it("로그인과 올바른 학생 식별자를 요구한다", async () => {
     mocks.getAdminContext.mockResolvedValueOnce(null);
-    expect((await GET(
+    const authResponse = await GET(
       new Request("http://localhost/api/test"),
       { params: Promise.resolve({ id: studentId }) },
-    )).status).toBe(401);
+    );
+    expect(authResponse.status).toBe(401);
+    expectPrivateNoStore(authResponse);
 
-    expect((await GET(
+    const invalidStudentResponse = await GET(
       new Request("http://localhost/api/test"),
       { params: Promise.resolve({ id: "not-a-uuid" }) },
-    )).status).toBe(400);
+    );
+    expect(invalidStudentResponse.status).toBe(400);
+    expectPrivateNoStore(invalidStudentResponse);
     expect(mocks.listSummaries).not.toHaveBeenCalled();
   });
 
@@ -87,6 +95,7 @@ describe("GET /api/admin/students/[id]/direct-review-summaries", () => {
     );
 
     expect(response.status).toBe(404);
+    expectPrivateNoStore(response);
   });
 
   it.each([
@@ -103,5 +112,6 @@ describe("GET /api/admin/students/[id]/direct-review-summaries", () => {
     );
 
     expect(response.status).toBe(status);
+    expectPrivateNoStore(response);
   });
 });

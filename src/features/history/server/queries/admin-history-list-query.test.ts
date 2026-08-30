@@ -12,13 +12,6 @@ vi.mock("@/lib/auth/admin", () => ({
 vi.mock("@/lib/supabase/server", () => ({
   createServerSupabaseClient: mocks.createServerSupabaseClient,
 }));
-vi.mock("@/lib/services/admin-attempt-read-service", () => ({
-  getAdminAttemptDetail: vi.fn(),
-}));
-vi.mock("@/lib/services/learning-point-read-service", () => ({
-  getAdminAttemptPointSummary: vi.fn(),
-}));
-
 import { AdminHistoryCursorError } from "../admin-history-cursor";
 import {
   listAdminHistoryInitial,

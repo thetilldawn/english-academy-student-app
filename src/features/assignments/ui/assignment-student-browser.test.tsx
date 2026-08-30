@@ -22,8 +22,10 @@ function controllerStub(
       clearSearch: vi.fn(),
       clearBulkStudents: vi.fn(),
       closePlanner: vi.fn(),
+      loadMore: vi.fn(),
       openSingleAssignment: vi.fn(),
       prepareBulkAssignment: vi.fn(),
+      refresh: vi.fn(),
       resetFilters: vi.fn(),
       setEntryDatasetId: vi.fn(),
       setEntryMode: vi.fn(),
@@ -34,24 +36,69 @@ function controllerStub(
     allFilteredStudentsSelected: false,
     assignmentMode: "bulk",
     canPrepareBulk: false,
-    filteredStudents: [],
+    datasetDirectory: {
+      actions: { ensure: vi.fn(), retry: vi.fn() },
+      datasets: [],
+      error: "",
+      status: "idle",
+    },
+    directory: {
+      actions: {
+        loadMore: vi.fn(),
+        replaceFilters: vi.fn(),
+        replaceQuery: vi.fn(),
+      },
+      error: "",
+      filtering: false,
+      filters: {
+        classGroupId: "",
+        grade: "",
+        query: "",
+        school: "",
+        status: "active",
+        wordbook: "",
+        wrong: "all",
+      },
+      loadingMore: false,
+      snapshot: {
+        filterOptions: {
+          classGroups: [],
+          grades: [],
+          schools: [],
+          wordbooks: [],
+        },
+        filters: {
+          classGroupId: "",
+          grade: "",
+          query: "",
+          school: "",
+          status: "active",
+          wordbook: "",
+          wrong: "all",
+        },
+        page: { items: [], nextCursor: null },
+        snapshotAt: "2026-08-30T00:00:00.000Z",
+        totalCount: 0,
+      },
+    },
     filters: {
-      classGroup: "",
+      classGroupId: "",
       grade: "",
       query: "",
       school: "",
       status: "active",
       wordbook: "",
-      wrongWord: "all",
+      wrong: "all",
     },
     classGroupOptions: [],
     entryMode: "student",
     entryDatasetId: "",
     gradeOptions: [],
-    readyDatasets: [],
     schoolOptions: [],
-    selectedBulkStudentIds: ["student-1"],
+    selectedBulkStudentIds: [],
     selectedBulkStudents: [],
+    selectionError: "",
+    selectionLoading: false,
     wordbookOptions: [],
     ...overrides,
   } as unknown as AssignmentWorkspaceController;
@@ -81,7 +128,7 @@ describe("assignment student browser", () => {
     expect(screen.getByRole("button", { name: "필터 초기화" })).toBeDisabled();
   });
 
-  it("blocks assignment preparation when no assignable wordbook exists", () => {
+  it("blocks bulk assignment preparation when no student is selected", () => {
     render(<AssignmentStudentBrowser controller={controllerStub()} />);
 
     expect(
@@ -89,17 +136,13 @@ describe("assignment student browser", () => {
         name: adminLearningText.page.bulk.prepare,
       }),
     ).toBeDisabled();
-    expect(
-      screen.getByText(adminLearningText.page.bulk.noReadyDatasets),
-    ).toHaveAttribute("role", "status");
   });
 
-  it("enables assignment preparation only after students and an assignable wordbook exist", () => {
+  it("enables assignment preparation after the selected students are ready", () => {
     render(
       <AssignmentStudentBrowser
         controller={controllerStub({
           canPrepareBulk: true,
-          readyDatasets: [{ id: "dataset-1" }] as never,
         })}
       />,
     );

@@ -112,40 +112,18 @@ describe("buildBulkPlanAudience", () => {
     expect(audience.reference).toBeNull();
   });
 
-  it("distinguishes different, review-needed, and blocked student plans", () => {
+  it("distinguishes different and blocked student plans", () => {
     const normalStudentIds = new Set(["a"]);
     const item = {
       available: true,
       error: null,
       sessions: [
-        { available: true, error: null, warnings: [] },
+        { available: true, error: null },
       ],
       studentId: "b",
     };
 
     expect(bulkPlanItemStatus(item, normalStudentIds)).toBe("different");
-    expect(
-      bulkPlanItemStatus(
-        {
-          ...item,
-          sessions: [
-            { available: true, error: null, warnings: [{ resolved: false }] },
-          ],
-        },
-        normalStudentIds,
-      ),
-    ).toBe("needs_review");
-    expect(
-      bulkPlanItemStatus(
-        {
-          ...item,
-          sessions: [
-            { available: true, error: null, warnings: [{ resolved: true }] },
-          ],
-        },
-        normalStudentIds,
-      ),
-    ).toBe("different");
     expect(
       bulkPlanItemStatus({ ...item, available: false }, normalStudentIds),
     ).toBe("blocked");

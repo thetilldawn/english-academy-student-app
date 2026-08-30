@@ -194,16 +194,22 @@ describe("module boundary inspector", () => {
   });
 
   it("resolves alias and relative imports against forbidden roots", () => {
-    const servicesRoot = path.resolve("src/lib/services");
-    const importer = path.resolve("src/features/students/ui/panel.tsx");
+    const assignmentServerRoot = path.resolve("src/features/assignments/server");
+    const importer = path.resolve("src/features/history/ui/panel.tsx");
 
     expect(
-      resolvesInside(importer, "@/lib/services/admin-history-read-service", [servicesRoot]),
+      resolvesInside(
+        importer,
+        "@/features/assignments/server/use-cases/bulk-assignment-service",
+        [assignmentServerRoot],
+      ),
     ).toBe(true);
     expect(
-      resolvesInside(importer, "../../../lib/services/admin-history-read-service", [
-        servicesRoot,
-      ]),
+      resolvesInside(
+        importer,
+        "../../assignments/server/use-cases/bulk-assignment-service",
+        [assignmentServerRoot],
+      ),
     ).toBe(true);
   });
 });

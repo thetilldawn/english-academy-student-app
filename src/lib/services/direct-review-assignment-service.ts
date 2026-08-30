@@ -47,6 +47,7 @@ function directReviewRequestSha256(input: DirectReviewAssignmentInput) {
       retryEnabled: input.retryEnabled,
       retryPassingScore: input.retryPassingScore,
       questionOrderMode: input.questionOrderMode,
+      ...(input.availableFrom ? { availableFrom: input.availableFrom } : {}),
       availableUntil: input.availableUntil,
       timingMode: input.timingMode ?? "total",
       questionTimeLimitSeconds: input.questionTimeLimitSeconds ?? null,
@@ -176,7 +177,7 @@ export async function createDirectReviewAssignment(
   }
 
   const { data, error } = await supabase.rpc(
-    "create_current_wrong_review_assignment_v1",
+    "create_current_wrong_review_assignment_v2",
     {
       p_student_id: prepared.studentId,
       p_dataset_id: prepared.datasetId,
@@ -191,6 +192,7 @@ export async function createDirectReviewAssignment(
       p_retry_enabled: prepared.retryEnabled,
       p_retry_passing_score: prepared.retryPassingScore,
       p_question_order_mode: prepared.questionOrderMode,
+      p_available_from: prepared.availableFrom,
       p_available_until: prepared.availableUntil,
       p_timing_mode: prepared.timingMode,
       p_question_time_limit_seconds: prepared.questionTimeLimitSeconds,
@@ -204,7 +206,9 @@ export async function createDirectReviewAssignment(
       message: error.message,
       hint: error.hint ?? null,
     });
-    const deadlineFailure = error.code === "22023" &&
+    const scheduleOrderFailure = error.code === "22023" &&
+      error.message.includes("current_wrong_review_schedule");
+    const expiredDeadlineFailure = error.code === "22023" &&
       error.message.includes("assignment_deadline");
     const reason = isAssignmentPersistenceInvariantFailure(error)
       ? "database"
@@ -217,10 +221,14 @@ export async function createDirectReviewAssignment(
             : "database";
     throw new DirectReviewAssignmentError(
       reason,
-      deadlineFailure
-        ? "응시 마감 시간은 현재보다 뒤로 정해 주세요."
+      scheduleOrderFailure
+        ? "응시 마감은 공개 시각보다 뒤로 정해 주세요."
+        : expiredDeadlineFailure
+          ? "응시 마감 시간은 현재보다 뒤로 정해 주세요."
         : undefined,
-      deadlineFailure ? "deadline" : undefined,
+      scheduleOrderFailure || expiredDeadlineFailure
+        ? "deadline"
+        : undefined,
       error.code === "23505"
         ? "idempotency_key_reused"
         : error.code === "40001"

@@ -1594,7 +1594,6 @@ describe.sequential("final review-assignment database schema", () => {
         available_until: availableUntil,
         timing_mode: "total",
         question_time_limit_seconds: null,
-        allowed_collision_assignment_ids: [],
         session_number: sessionNumber,
         session_count: sessionCount,
         questions: JSON.parse(mixedQuestions),
@@ -1604,7 +1603,7 @@ describe.sequential("final review-assignment database schema", () => {
         requestHash: string,
         batch: ReturnType<typeof makeBatch>,
       ) => sparseDatabase.query(`
-        select public.create_bulk_vocab_assignments_v9(
+        select public.create_bulk_vocab_assignments_v10(
           '${requestId}',
           '${requestHash}',
           $batches$${JSON.stringify([batch])}$batches$::jsonb
@@ -1619,11 +1618,42 @@ describe.sequential("final review-assignment database schema", () => {
         from: "2030-01-08T00:00:00.000Z",
         until: "2030-01-08T14:00:00.000Z",
       };
+      const firstBatch = makeBatch(
+        "Sparse first",
+        firstWindow.from,
+        firstWindow.until,
+      );
       await createBulk(
         "00000000-0000-4000-8000-000000000501",
         "a".repeat(64),
-        makeBatch("Sparse first", firstWindow.from, firstWindow.until),
+        firstBatch,
       );
+      await expectPostgresError(
+        createBulk(
+          "00000000-0000-4000-8000-000000000501",
+          "a".repeat(64),
+          { ...firstBatch, retry_passing_score: 90 },
+        ),
+        "23505",
+        "idempotency_key_reused",
+      );
+      const firstBatchAfterRejectedReplay = await sparseDatabase.query<{
+        assignment_count: number;
+        retry_enabled: boolean;
+        retry_passing_score: number;
+      }>(`
+        select
+          count(*)::integer as assignment_count,
+          bool_and(assignment.retry_enabled) as retry_enabled,
+          min(assignment.retry_passing_score)::integer as retry_passing_score
+        from public.assignments as assignment
+        where assignment.title = 'Sparse first';
+      `);
+      expect(firstBatchAfterRejectedReplay.rows[0]).toEqual({
+        assignment_count: 1,
+        retry_enabled: true,
+        retry_passing_score: 80,
+      });
       await createBulk(
         "00000000-0000-4000-8000-000000000502",
         "b".repeat(64),
@@ -5464,7 +5494,6 @@ describe.sequential("admin deletion controls", () => {
       `);
 
       for (const targetCount of [1, 2, 3]) {
-        const draftId = `00000000-0000-4000-8000-00000000042${targetCount}`;
         const replacementKey =
           `00000000-0000-4000-8000-00000000082${targetCount}`;
         const selectedQueueIds = queueIds.slice(0, targetCount);
@@ -5480,85 +5509,89 @@ describe.sequential("admin deletion controls", () => {
           .map((queueId) => `'${queueId}'::uuid`)
           .join(",");
 
-        await exactReplacementDatabase.exec(`
-          insert into public.student_vocab_review_assignment_drafts (
-            id, student_id, dataset_id, status, created_by, expires_at
-          )
-          values (
-            '${draftId}', '${ids.student}', '${ids.dataset}', 'pending',
-            '${ids.admin}', clock_timestamp() + interval '1 hour'
-          );
-
-          update public.student_vocab_review_queue
-          set
-            reserved_review_draft_id = '${draftId}',
-            reserved_at = clock_timestamp()
-          where id = any(array[${queueSql}]::uuid[]);
-
-          insert into public.student_vocab_review_assignment_draft_items (
-            draft_id, queue_id, position
-          )
-          select '${draftId}', selected.queue_id, selected.position::integer
-          from unnest(array[${queueSql}]::uuid[]) with ordinality
-            as selected(queue_id, position);
-        `);
-
         const source = await exactReplacementDatabase.query<{
           assignment_id: string;
         }>(`
-          select private.create_exact_review_assignment_v4(
-            '${draftId}', 'Exact source ${targetCount}', 100::smallint,
-            600, 80::smallint, 'fixed', null,
+          select private.create_exact_review_assignment_v5(
+            '${ids.student}', '${ids.dataset}', array[${queueSql}]::uuid[],
+            'Exact source ${targetCount}', 100::smallint,
+            600, 80::smallint, 'fixed', null, 'total', null,
             $questions$${questions}$questions$::jsonb
           ) as assignment_id;
         `);
         const sourceAssignmentId = source.rows[0]!.assignment_id;
-
-        await exactReplacementDatabase.exec(`
-          insert into public.assignment_review_targets (
-            assignment_id,
-            student_id,
-            review_queue_id,
-            assignment_question_id,
-            dataset_id,
-            vocab_entry_id,
-            canonical_lexeme_id_snapshot
-          )
-          select
-            '${sourceAssignmentId}',
-            '${ids.student}',
-            queue.id,
-            question.id,
-            queue.dataset_id,
-            queue.vocab_entry_id,
-            queue.canonical_lexeme_id_snapshot
-          from unnest(array[${queueSql}]::uuid[]) with ordinality
-            as selected(queue_id, position)
-          join public.student_vocab_review_queue as queue
-            on queue.id = selected.queue_id
-          join public.assignment_questions as question
-            on question.assignment_id = '${sourceAssignmentId}'
-            and question.vocab_entry_id = queue.vocab_entry_id
-          order by selected.position;
-
-          update public.student_vocab_review_queue
-          set
-            status = 'pending',
-            consumed_assignment_id = null,
-            consumed_at = null
-          where id = any(array[${queueSql}]::uuid[])
-            and consumed_assignment_id = '${sourceAssignmentId}';
-
-          select private.link_pending_review_targets_v1(
-            '${sourceAssignmentId}',
-            array['${ids.student}'::uuid]
-          );
-          select private.configure_assignment_delivery_v1(
-            '${sourceAssignmentId}',
-            'total',
-            null
-          );
+        const storedQuestionPlan = await exactReplacementDatabase.query<{
+          questions: unknown;
+        }>(`
+          select coalesce(
+            jsonb_agg(
+              jsonb_build_object(
+                'vocab_entry_id', question.vocab_entry_id,
+                'base_order_index', question.base_order_index,
+                'direction', question.direction,
+                'choice_vocab_entry_ids', to_jsonb(question.choice_vocab_entry_ids)
+              )
+              order by question.base_order_index
+            ),
+            '[]'::jsonb
+          ) as questions
+          from public.assignment_questions as question
+          where question.assignment_id = '${sourceAssignmentId}';
         `);
+        const replacementQuestions = JSON.stringify(
+          storedQuestionPlan.rows[0]!.questions,
+        );
+        expect(storedQuestionPlan.rows[0]!.questions).toEqual(
+          JSON.parse(questions),
+        );
+
+        const changedChoiceKey =
+          `00000000-0000-4000-8000-00000000083${targetCount}`;
+        const changedChoiceQuestions = JSON.stringify(
+          JSON.parse(questions).map((question: {
+            choice_vocab_entry_ids: number[];
+          }, index: number) => index === 0
+            ? { ...question, choice_vocab_entry_ids: [2, 1, 3, 4] }
+            : question),
+        );
+        await exactReplacementDatabase.exec("set role authenticated;");
+        await expectPostgresError(
+          exactReplacementDatabase.query(`
+            select public.replace_student_assignment_v5(
+              '${sourceAssignmentId}', '${ids.student}', '${changedChoiceKey}',
+              repeat('c', 64), 'review', 'preserve',
+              'Changed exact choices ${targetCount}', '${ids.dataset}',
+              array[]::uuid[], ${targetCount}, 100::smallint, 600,
+              80::smallint, true, 80::smallint, 'fixed', null, 'total', null,
+              array[1]::smallint[], array[${queueSql}]::uuid[],
+              $questions$${changedChoiceQuestions}$questions$::jsonb
+            );
+          `),
+          "22023",
+          "assignment_edit_field_locked",
+        );
+        await exactReplacementDatabase.exec("reset role;");
+        const rejectedChoiceChange = await exactReplacementDatabase.query<{
+          ledger_count: number;
+          source_cancelled: boolean;
+        }>(`
+          select
+            (
+              select count(*)::integer
+              from private.assignment_replacement_requests
+              where idempotency_key = '${changedChoiceKey}'
+            ) as ledger_count,
+            (
+              select cancelled_at is not null
+              from public.assignment_students
+              where assignment_id = '${sourceAssignmentId}'
+                and student_id = '${ids.student}'
+            ) as source_cancelled;
+        `);
+        expect(rejectedChoiceChange.rows[0]).toEqual({
+          ledger_count: 0,
+          source_cancelled: false,
+        });
 
         await exactReplacementDatabase.exec("set role authenticated;");
         const replacement = await exactReplacementDatabase.query<{
@@ -5574,7 +5607,7 @@ describe.sequential("admin deletion controls", () => {
             array[]::uuid[], ${targetCount}, 100::smallint, 600,
             80::smallint, true, 80::smallint, 'fixed', null, 'total', null,
             array[1]::smallint[], array[${queueSql}]::uuid[],
-            $questions$${questions}$questions$::jsonb
+            $questions$${replacementQuestions}$questions$::jsonb
           ) as result;
         `);
         await exactReplacementDatabase.exec("reset role;");
@@ -7379,11 +7412,14 @@ describe.sequential("assignment retry rules", () => {
       });
       await directReviewDatabase.exec("set role authenticated;");
 
-      const createDirectReview = (availableUntil: string | null = null) =>
+      const createDirectReview = (
+        availableFrom: string | null,
+        availableUntil: string | null,
+      ) =>
         directReviewDatabase.query<{
         assignment_id: string;
       }>(
-        `select public.create_current_wrong_review_assignment_v1(
+        `select public.create_current_wrong_review_assignment_v2(
           $1::uuid,
           $2::uuid,
           array[1]::smallint[],
@@ -7398,6 +7434,7 @@ describe.sequential("assignment retry rules", () => {
             80::smallint,
             'fixed',
             $7::timestamptz,
+            $8::timestamptz,
             'total',
           null,
           $6::jsonb
@@ -7409,19 +7446,32 @@ describe.sequential("assignment retry rules", () => {
           requestKey,
           requestHash,
           directQuestion,
+          availableFrom,
           availableUntil,
         ],
       );
-      const firstCreation = await createDirectReview();
-      const replayedCreation = await createDirectReview();
+      const directSchedule = {
+        availableFrom: "2020-01-01T00:00:00.000Z",
+        availableUntil: "2030-01-03T00:00:00.000Z",
+      };
+      const firstCreation = await createDirectReview(
+        directSchedule.availableFrom,
+        directSchedule.availableUntil,
+      );
+      const replayedCreation = await createDirectReview(
+        directSchedule.availableFrom,
+        directSchedule.availableUntil,
+      );
       expect(replayedCreation.rows[0]?.assignment_id).toBe(
         firstCreation.rows[0]?.assignment_id,
       );
-      const replayedAfterDeadline = await createDirectReview(
-        "2000-01-01T00:00:00.000Z",
-      );
-      expect(replayedAfterDeadline.rows[0]?.assignment_id).toBe(
-        firstCreation.rows[0]?.assignment_id,
+      await expectPostgresError(
+        createDirectReview(
+          "2021-01-01T00:00:00.000Z",
+          directSchedule.availableUntil,
+        ),
+        "23505",
+        "idempotency_key_reused",
       );
       await expectPostgresError(
         directReviewDatabase.query(
@@ -7444,6 +7494,8 @@ describe.sequential("assignment retry rules", () => {
         completed_request_count: number;
         queue_count: number;
         target_count: number;
+        available_from_matches: boolean;
+        available_until_matches: boolean;
       }>(`
         select
           (
@@ -7474,7 +7526,19 @@ describe.sequential("assignment retry rules", () => {
             select count(*)::integer
             from public.assignment_review_targets
             where assignment_id = '${firstCreation.rows[0]!.assignment_id}'
-          ) as target_count;
+          ) as target_count,
+          (
+            select assignment.available_from =
+              '${directSchedule.availableFrom}'::timestamptz
+            from public.assignments as assignment
+            where assignment.id = '${firstCreation.rows[0]!.assignment_id}'
+          ) as available_from_matches,
+          (
+            select assignment.available_until =
+              '${directSchedule.availableUntil}'::timestamptz
+            from public.assignments as assignment
+            where assignment.id = '${firstCreation.rows[0]!.assignment_id}'
+          ) as available_until_matches;
       `);
       expect(persisted.rows[0]).toEqual({
         assignment_count: 1,
@@ -7482,6 +7546,8 @@ describe.sequential("assignment retry rules", () => {
         completed_request_count: 1,
         queue_count: 1,
         target_count: 1,
+        available_from_matches: true,
+        available_until_matches: true,
       });
 
       await directReviewDatabase.exec("set role authenticated;");

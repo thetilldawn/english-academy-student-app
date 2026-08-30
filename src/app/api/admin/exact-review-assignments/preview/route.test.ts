@@ -80,11 +80,20 @@ describe("POST /api/admin/exact-review-assignments/preview", () => {
   });
 
   it("다른 출처와 로그인하지 않은 요청을 차단한다", async () => {
-    expect((await POST(request(validInput, "https://evil.example"))).status)
-      .toBe(403);
+    const originResponse = await POST(
+      request(validInput, "https://evil.example"),
+    );
+    expect(originResponse.status).toBe(403);
+    expect(originResponse.headers.get("cache-control")).toBe(
+      "private, no-store",
+    );
 
     mocks.getAdminContext.mockResolvedValue(null);
-    expect((await POST(request(validInput))).status).toBe(401);
+    const authResponse = await POST(request(validInput));
+    expect(authResponse.status).toBe(401);
+    expect(authResponse.headers.get("cache-control")).toBe(
+      "private, no-store",
+    );
     expect(mocks.previewDirectReviewAssignment).not.toHaveBeenCalled();
   });
 
@@ -95,6 +104,7 @@ describe("POST /api/admin/exact-review-assignments/preview", () => {
     }));
 
     expect(response.status).toBe(400);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(mocks.previewDirectReviewAssignment).not.toHaveBeenCalled();
   });
 
@@ -109,6 +119,8 @@ describe("POST /api/admin/exact-review-assignments/preview", () => {
       new mocks.DirectReviewAssignmentError(reason),
     );
 
-    expect((await POST(request(validInput))).status).toBe(status);
+    const response = await POST(request(validInput));
+    expect(response.status).toBe(status);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
   });
 });

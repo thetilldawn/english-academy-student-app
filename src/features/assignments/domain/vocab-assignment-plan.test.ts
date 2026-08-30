@@ -16,7 +16,6 @@ import {
   planVocabSeriesTargetIds,
 } from "./vocab-series-target-planner";
 import {
-  applyCollisionDecisions,
   applyScheduleSlotOverride,
   applyTimeTemplate,
   copyPreviousExamConditions,
@@ -1231,53 +1230,4 @@ describe("단어 시험 공통 배정 계획", () => {
     expect(copied.exam.passingScore).toBe(90);
   });
 
-  it("겹침 결정은 새 후보만 건너뛰거나 이동하고 기존 자료는 건드리지 않는다", () => {
-    const candidates = [
-      {
-        id: "candidate-1",
-        studentId: "student-1",
-        sessionNumber: 1,
-        date: "2026-08-17",
-        unitIds: ["day-1"],
-      },
-      {
-        id: "candidate-2",
-        studentId: "student-1",
-        sessionNumber: 2,
-        date: "2026-08-19",
-        unitIds: ["day-2"],
-      },
-    ];
-    const collisions = [
-      {
-        id: "collision-1",
-        candidateId: "candidate-1",
-        existingAssignmentId: "existing-1",
-        message: "같은 날 시험 있음",
-      },
-      {
-        id: "collision-2",
-        candidateId: "candidate-2",
-        existingAssignmentId: "existing-2",
-        message: "같은 날 시험 있음",
-      },
-    ];
-    const before = structuredClone(collisions);
-    const result = applyCollisionDecisions({
-      candidates,
-      collisions,
-      decisions: [
-        { collisionId: "collision-1", mode: "skip" },
-        {
-          collisionId: "collision-2",
-          mode: "move",
-          movedDate: "2026-08-20",
-        },
-      ],
-    });
-    expect(result.candidates).toHaveLength(1);
-    expect(result.candidates[0]?.date).toBe("2026-08-20");
-    expect(result.skippedCandidateIds).toEqual(["candidate-1"]);
-    expect(collisions).toEqual(before);
-  });
 });

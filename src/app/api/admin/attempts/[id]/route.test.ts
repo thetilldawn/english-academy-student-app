@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/auth/admin", () => ({
   getAdminContext: mocks.getAdminContext,
 }));
-vi.mock("@/lib/services/admin-attempt-read-service", () => ({
+vi.mock("@/features/history/public-server", () => ({
   getAdminAttemptDetail: mocks.getAdminAttemptDetail,
 }));
 

@@ -10,10 +10,8 @@ import {
   requireAdmin,
   type AdminContext,
 } from "@/lib/auth/admin";
-import { createTargetedQuizQuestions } from "@/lib/quiz/question-generator";
 import {
   type AssignmentQuestionPlan,
-  type EditableSourceContext,
   requireEditableSourceContext,
 } from "@/lib/services/assignment-edit-source-service";
 import {
@@ -25,7 +23,6 @@ import {
   assertExactReviewShape,
   canReuseSourceQuestions,
 } from "@/lib/services/assignment-replacement-policy";
-import { loadEligibleVocabularyDataset } from "@/lib/services/eligible-vocabulary-service";
 import {
   calculateAssignmentCapacity,
   MixedAssignmentError,
@@ -35,58 +32,6 @@ import {
   AssignmentCreationError,
   prepareRegularAssignment,
 } from "@/lib/services/regular-assignment-service";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
-
-async function prepareExactReviewQuestions(
-  source: EditableSourceContext,
-  englishToKoreanRatio: 0 | 50 | 100,
-  deterministic = false,
-): Promise<AssignmentQuestionPlan[]> {
-  const supabase = await createServerSupabaseClient();
-  const candidates = await loadEligibleVocabularyDataset(
-    supabase,
-    source.draft.datasetId,
-    { includeExamUseProjection: true },
-  );
-  const candidateById = new Map(
-    candidates.map((candidate) => [candidate.id, candidate]),
-  );
-  const targets = source.selectedReviewVocabEntryIds.flatMap(
-    (vocabEntryId) => {
-      const candidate = candidateById.get(vocabEntryId);
-      return candidate ? [candidate] : [];
-    },
-  );
-  if (targets.length !== source.selectedReviewVocabEntryIds.length) {
-    throw new AssignmentReplacementError(
-      "invalid_selection",
-      "오답 시험 대상 중 현재 출제할 수 없는 단어가 있습니다.",
-    );
-  }
-
-  let drafts;
-  try {
-    drafts = createTargetedQuizQuestions(
-      targets,
-      candidates,
-      englishToKoreanRatio,
-      deterministic ? () => 0.5 : undefined,
-    );
-  } catch (error) {
-    throw new AssignmentReplacementError(
-      "invalid_selection",
-      error instanceof Error
-        ? error.message
-        : "오답 시험 문제를 다시 만들 수 없습니다.",
-    );
-  }
-  return drafts.map((question, index) => ({
-    vocab_entry_id: question.vocabEntryId,
-    base_order_index: index + 1,
-    direction: question.direction,
-    choice_vocab_entry_ids: question.choiceVocabEntryIds,
-  }));
-}
 
 export async function calculateStudentAssignmentReplacementCapacity(
   assignmentId: string,
@@ -115,22 +60,12 @@ export async function calculateStudentAssignmentReplacementCapacity(
       datasetId: input.datasetId,
       primaryUnitIds: input.primaryUnitIds,
       questionCount: source.draft.questionCount,
+      englishToKoreanRatio: input.englishToKoreanRatio,
       includePendingReview: input.includePendingReview,
       reviewLevels: input.reviewLevels,
       reviewScope: policyInput.reviewScope,
     });
-    const count =
-      source.questions &&
-      input.englishToKoreanRatio ===
-        source.draft.englishToKoreanRatio
-        ? source.questions.length
-        : (
-            await prepareExactReviewQuestions(
-              source,
-              input.englishToKoreanRatio,
-              true,
-            )
-          ).length;
+    const count = source.questions!.length;
     return {
       eligibleBeforeActiveAssignment: 0,
       activeAssignmentExcluded: 0,
@@ -236,6 +171,12 @@ export async function prepareStudentAssignmentReplacement(
     assertAssignmentEditFieldPolicy(source, input);
     if (source.draft.purpose === "review") {
       assertExactReviewShape(source, input);
+      if (!canReuseSourceQuestions(source, input)) {
+        throw new AssignmentReplacementError(
+          "invalid_selection",
+          "오답 시험은 기존 문제를 유지한 채 시험 조건과 일정만 수정할 수 있습니다.",
+        );
+      }
     }
     assertLegacyMixedContentShape(source, input);
     const effectiveReviewScope = input.includePendingReview
@@ -272,32 +213,6 @@ export async function prepareStudentAssignmentReplacement(
           ? source.selectedQueueIds
           : [],
         questions: source.questions!,
-      };
-    } else if (source.draft.purpose === "review") {
-      replacementKind = "review";
-      reviewSnapshotMode = "preserve";
-      prepared = {
-        title: input.title.trim(),
-        datasetId: input.datasetId,
-        primaryUnitIds: [],
-        questionCount: input.questionCount,
-        englishToKoreanRatio: input.englishToKoreanRatio,
-        timeLimitSeconds: input.timeLimitSeconds,
-        passingScore: input.passingScore,
-        retryEnabled: input.retryEnabled,
-        retryPassingScore: input.retryPassingScore,
-        questionOrderMode: input.questionOrderMode,
-        availableFrom: input.availableFrom,
-        availableUntil: input.availableUntil,
-        timingMode: input.timingMode,
-        questionTimeLimitSeconds: input.questionTimeLimitSeconds,
-        reviewLevels: [...input.reviewLevels].toSorted(),
-        reviewScope: effectiveReviewScope,
-        selectedQueueIds: source.selectedQueueIds,
-        questions: await prepareExactReviewQuestions(
-          source,
-          input.englishToKoreanRatio,
-        ),
       };
     } else if (input.includePendingReview) {
       replacementKind = "mixed";

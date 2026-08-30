@@ -1875,7 +1875,6 @@ describe.sequential("exam-use dictionary projection", () => {
       question_order_mode: "fixed",
       timing_mode: "total",
       question_time_limit_seconds: null,
-      allowed_collision_assignment_ids: [],
       session_count: 3,
       questions,
     };

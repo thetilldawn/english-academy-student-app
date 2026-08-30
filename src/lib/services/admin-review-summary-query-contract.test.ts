@@ -7,40 +7,25 @@ function source(relativePath: string) {
   return fs.readFileSync(path.resolve(relativePath), "utf8");
 }
 
-describe("admin pending-review summary query", () => {
-  it("학생별 상세 이력 N+1 대신 집계 RPC를 커서로 이어 읽는다", () => {
-    const adminService = source(
-      "src/lib/services/admin-student-read-service.ts",
+describe("admin direct-review summary query", () => {
+  it("loads review summaries only for the student whose assignment editor is open", () => {
+    const service = source(
+      "src/lib/services/direct-review-candidate-service.ts",
     );
-    const functionBody = adminService.slice(
-      adminService.indexOf(
-        "export async function listStudentPendingReviewSummaries",
+    const body = service.slice(
+      service.indexOf(
+        "export async function listStudentDirectReviewDatasetSummaries",
+      ),
+      service.indexOf(
+        "export async function listStudentDirectReviewCandidates",
       ),
     );
 
-    expect(functionBody).toContain(
-      '"list_student_vocab_review_queue_summaries"',
+    expect(body).toContain(
+      '"list_student_direct_review_dataset_summaries_v1"',
     );
-    expect(functionBody).toContain("const pageSize = 500");
-    expect(functionBody).toContain(
-      "p_after_student_id: afterStudentId",
-    );
-    expect(functionBody).toContain(
-      "p_after_dataset_id: afterDatasetId",
-    );
-    expect(functionBody).toContain("p_limit: pageSize");
-    expect(functionBody).toContain("if (page.length < pageSize) break");
-    expect(functionBody).toContain(
-      "afterStudentId = last.studentId",
-    );
-    expect(functionBody).toContain(
-      "afterDatasetId = last.datasetId",
-    );
-    expect(functionBody).not.toContain(
-      "getStudentWrongWordHistory(",
-    );
-    expect(functionBody).toContain(
-      "parseStudentPendingReviewSummaries(",
-    );
+    expect(body).toContain("p_student_id: studentId");
+    expect(body).toContain("parseDirectReviewDatasetSummaries(");
+    expect(body).not.toContain("pageSize");
   });
 });

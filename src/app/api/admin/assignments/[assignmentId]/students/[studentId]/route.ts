@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getAdminContext } from "@/lib/auth/admin";
 import {
   isSameOriginRequest,
-  jsonError,
+  privateJsonError,
   parseJson,
 } from "@/lib/http";
 import {
@@ -39,7 +39,7 @@ function replacementErrorResponse(error: AssignmentReplacementError) {
           : error.reason === "invalid_selection"
             ? 422
             : 409;
-  return jsonError(error.message, status, {
+  return privateJsonError(error.message, status, {
     code: error.code,
     fieldPath: error.fieldPath,
   });
@@ -61,11 +61,11 @@ export async function GET(
 ) {
   const admin = await getAdminContext();
   if (!admin) {
-    return jsonError("관리자 로그인이 필요합니다.", 401);
+    return privateJsonError("관리자 로그인이 필요합니다.", 401);
   }
   const parsedParams = await parseAssignmentParams(params);
   if (!parsedParams.success) {
-    return jsonError("배정 정보를 확인해 주세요.", 400);
+    return privateJsonError("배정 정보를 확인해 주세요.", 400);
   }
   const requestNowMilliseconds = Date.now();
   try {
@@ -82,7 +82,7 @@ export async function GET(
     if (error instanceof AssignmentReplacementError) {
       return replacementErrorResponse(error);
     }
-    return jsonError("수정할 배정 정보를 불러오지 못했습니다.", 503);
+    return privateJsonError("수정할 배정 정보를 불러오지 못했습니다.", 503);
   }
 }
 
@@ -95,22 +95,22 @@ export async function POST(
   },
 ) {
   if (!isSameOriginRequest(request)) {
-    return jsonError("허용되지 않은 요청입니다.", 403);
+    return privateJsonError("허용되지 않은 요청입니다.", 403);
   }
   const admin = await getAdminContext();
   if (!admin) {
-    return jsonError("관리자 로그인이 필요합니다.", 401);
+    return privateJsonError("관리자 로그인이 필요합니다.", 401);
   }
   const parsedParams = await parseAssignmentParams(params);
   if (!parsedParams.success) {
-    return jsonError("배정 정보를 확인해 주세요.", 400);
+    return privateJsonError("배정 정보를 확인해 주세요.", 400);
   }
   const input = await parseJson(
     request,
     assignmentReplacementPreviewSchema,
   );
   if (!input || input.studentId !== parsedParams.data.studentId) {
-    return jsonError("수정할 범위와 출제 조건을 확인해 주세요.", 400);
+    return privateJsonError("수정할 범위와 출제 조건을 확인해 주세요.", 400);
   }
   const requestNowMilliseconds = Date.now();
   try {
@@ -129,7 +129,7 @@ export async function POST(
     if (error instanceof AssignmentReplacementError) {
       return replacementErrorResponse(error);
     }
-    return jsonError("수정 가능한 문항 수를 계산하지 못했습니다.", 503);
+    return privateJsonError("수정 가능한 문항 수를 계산하지 못했습니다.", 503);
   }
 }
 
@@ -142,19 +142,19 @@ export async function PUT(
   },
 ) {
   if (!isSameOriginRequest(request)) {
-    return jsonError("허용되지 않은 요청입니다.", 403);
+    return privateJsonError("허용되지 않은 요청입니다.", 403);
   }
   const admin = await getAdminContext();
   if (!admin) {
-    return jsonError("관리자 로그인이 필요합니다.", 401);
+    return privateJsonError("관리자 로그인이 필요합니다.", 401);
   }
   const parsedParams = await parseAssignmentParams(params);
   if (!parsedParams.success) {
-    return jsonError("배정 정보를 확인해 주세요.", 400);
+    return privateJsonError("배정 정보를 확인해 주세요.", 400);
   }
   const input = await parseJson(request, assignmentReplacementSchema);
   if (!input) {
-    return jsonError("수정할 시험 범위와 설정을 확인해 주세요.", 400);
+    return privateJsonError("수정할 시험 범위와 설정을 확인해 주세요.", 400);
   }
   const commandNowMilliseconds = Date.now();
   try {
@@ -172,7 +172,7 @@ export async function PUT(
     if (error instanceof AssignmentReplacementError) {
       return replacementErrorResponse(error);
     }
-    return jsonError("배정을 수정하지 못했습니다. 잠시 후 다시 시도해 주세요.", 503);
+    return privateJsonError("배정을 수정하지 못했습니다. 잠시 후 다시 시도해 주세요.", 503);
   }
 }
 
@@ -188,15 +188,15 @@ export async function DELETE(
   },
 ) {
   if (!isSameOriginRequest(request)) {
-    return jsonError("허용되지 않은 요청입니다.", 403);
+    return privateJsonError("허용되지 않은 요청입니다.", 403);
   }
   const admin = await getAdminContext();
   if (!admin) {
-    return jsonError("관리자 로그인이 필요합니다.", 401);
+    return privateJsonError("관리자 로그인이 필요합니다.", 401);
   }
   const parsedParams = await parseAssignmentParams(params);
   if (!parsedParams.success) {
-    return jsonError("배정 정보를 확인해 주세요.", 400);
+    return privateJsonError("배정 정보를 확인해 주세요.", 400);
   }
 
   try {
@@ -218,9 +218,9 @@ export async function DELETE(
             : error.reason === "database"
               ? 503
               : 409;
-      return jsonError(error.message, status);
+      return privateJsonError(error.message, status);
     }
-    return jsonError(
+    return privateJsonError(
       "배정을 취소하지 못했습니다. 잠시 후 다시 시도해 주세요.",
       503,
     );

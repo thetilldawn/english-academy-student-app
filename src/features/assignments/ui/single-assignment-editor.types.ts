@@ -4,15 +4,16 @@ import type {
   AssignmentStudentItem,
   AssignmentUnitItem,
 } from "../catalog-types";
-import type { SingleAssignmentResult } from "../controller/use-assignment-controller";
+import type { AssignmentEditDraft } from "@/lib/admin/assignment-edit";
+import type {
+  SingleAssignmentResult,
+  SingleAssignmentSubmitPresentation,
+} from "../contracts/single-assignment-editor-contract";
 
-export type SingleAssignmentSubmitPresentation = {
-  blockedReason: string | null;
-  canSubmit: boolean;
-  dirty: boolean;
-  formId: string;
-  label: string;
-};
+export type {
+  SingleAssignmentResult,
+  SingleAssignmentSubmitPresentation,
+} from "../contracts/single-assignment-editor-contract";
 
 export type SingleAssignmentEditorProps = {
   datasets: readonly AssignmentDatasetItem[];
@@ -23,6 +24,7 @@ export type SingleAssignmentEditorProps = {
   } | null;
   formId?: string;
   initialDatasetId: string;
+  initialEditDraft?: AssignmentEditDraft;
   initialUnitIds?: readonly string[];
   onBusyChange?: (busy: boolean) => void;
   onConflict?: () => void;

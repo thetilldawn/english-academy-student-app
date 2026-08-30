@@ -6,7 +6,7 @@ import {
   parseHistoryEntryKey,
 } from "@/lib/admin/history-route";
 import { requireAdmin } from "@/lib/auth/admin";
-import { getAdminAttemptDetail } from "@/lib/services/admin-attempt-read-service";
+import { getAdminAttemptDetail } from "./admin-attempt-detail-query";
 import { getAdminAttemptPointSummary } from "@/lib/services/learning-point-read-service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 

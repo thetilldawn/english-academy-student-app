@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   bulkAssignmentPreviewSchema,
   bulkAssignmentSchema,
-} from "@/lib/admin/bulk-assignment-request";
+} from "@/features/assignments/contracts/bulk-assignment-request";
 import { assignmentContractIds } from "@/test-support/assignment-contract-fixtures";
 
 import {
@@ -80,17 +80,6 @@ function buildWeekdayDraft(
   return {
     kind: "bulk_series",
     studentIds,
-    range: {
-      mode: "fixed_span",
-      unitsPerSession: 1,
-      sessionCount: allocation.sessionUnitIds.length,
-    },
-    firstAvailableDateKorean: recurrenceSlots[0].date,
-    firstDeadline: {
-      mode: "at",
-      koreanLocalDateTime: recurrenceSlots[0].deadlineLocalDateTime,
-    },
-    dayInterval: 2,
     exam: {
       directionRatio: 50,
       questionOrderMode: "ascending",
@@ -99,7 +88,6 @@ function buildWeekdayDraft(
       retryPassingScore: 80,
       timing: { mode: "total", totalSeconds: 300 },
     },
-    review: { mode: "none", levels: [1, 2] },
     commonPlan: {
       datasetId: assignmentContractIds.dataset,
       distribution: "split",
@@ -127,7 +115,6 @@ function buildWeekdayDraft(
         availableLocalDateTime: `${sessionDates[index]}T00:00`,
         deadlineLocalDateTime: `${sessionDates[index]}T22:00`,
       })),
-      collisionDecisions: [],
     },
   };
 }

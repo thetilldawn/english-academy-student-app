@@ -25,22 +25,14 @@ import type {
 const DEFAULT_PREVIEW_FALLBACK = "학생별 범위를 계산하지 못했습니다.";
 const DEFAULT_SUBMISSION_FALLBACK = "일괄 배정을 저장하지 못했습니다.";
 
-export type BulkAssignmentFlowPolicy = {
-  commonPlanRequired?: boolean;
-  commonPlanRequiredMessage?: string;
-};
-
 function missingCommonPlanIssue(
   draft: BulkSeriesAssignmentDraft,
-  policy: BulkAssignmentFlowPolicy,
 ): AssignmentDraftIssue | null {
-  if (!policy.commonPlanRequired || draft.commonPlan) return null;
+  if (draft.commonPlan) return null;
   return {
     code: "required",
     path: "commonPlan",
-    message:
-      policy.commonPlanRequiredMessage ??
-      "단어장, 범위, 날짜를 먼저 정해 주세요.",
+    message: "단어장, 범위, 날짜를 먼저 정해 주세요.",
   };
 }
 
@@ -66,18 +58,16 @@ function invalidPreview(message: string): AssignmentOperationError {
 
 export function resolveBulkPreviewIssues(
   draft: BulkSeriesAssignmentDraft,
-  policy: BulkAssignmentFlowPolicy = {},
 ): AssignmentDraftIssue[] {
-  const missing = missingCommonPlanIssue(draft, policy);
+  const missing = missingCommonPlanIssue(draft);
   return missing ? [missing] : validateBulkPreviewProjection(draft);
 }
 
 export function resolveBulkSubmissionIssues(
   draft: BulkSeriesAssignmentDraft,
   nowMilliseconds: number,
-  policy: BulkAssignmentFlowPolicy = {},
 ): AssignmentDraftIssue[] {
-  const missing = missingCommonPlanIssue(draft, policy);
+  const missing = missingCommonPlanIssue(draft);
   return missing
     ? [missing]
     : validateBulkAssignmentSubmission(draft, nowMilliseconds);
@@ -120,16 +110,13 @@ export function bulkPreviewAllowsSubmission(
   return (
     preview.blockedCount === 0 &&
     preview.items.every((item) => !item.requiresExtraDateDecision) &&
-    (draft.commonPlan
-      ? preview.assignableCount > 0 &&
-        preview.assignmentCount > 0 &&
-        preview.assignmentCount === preview.items.reduce(
-          (count, item) => count + item.sessions.length,
-          0,
-        )
-      : preview.assignableCount === draft.studentIds.length &&
-        preview.assignmentCount ===
-          draft.studentIds.length * draft.range.sessionCount)
+    Boolean(draft.commonPlan) &&
+    preview.assignableCount > 0 &&
+    preview.assignmentCount > 0 &&
+    preview.assignmentCount === preview.items.reduce(
+      (count, item) => count + item.sessions.length,
+      0,
+    )
   );
 }
 

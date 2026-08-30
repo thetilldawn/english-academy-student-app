@@ -6,8 +6,9 @@ import { RoutedDetailDialog } from "@/components/routed-detail-dialog";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { adminHistoryText } from "@/content/ko/admin-history";
 import { DetailHeader } from "@/design-system/patterns/detail-header/detail-header";
-import { SingleAssignmentEditor } from "@/features/assignments/ui/single-assignment-editor";
-import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
+import { SingleAssignmentEditor } from "@/features/assignments/public-ui";
+import { Notice } from "@/design-system/patterns/feedback/feedback";
+import { Button } from "@/design-system/primitives/button/button";
 import type { AdminHistoryDetail } from "../model";
 
 import { AdminHistoryDetailContent } from "./admin-history-detail";
@@ -15,15 +16,9 @@ import { HistoryDetailActions } from "./history-detail-actions";
 import { HistoryDetailHeader } from "./history-detail-header";
 import { useEditableHistoryAssignment } from "@/features/history/controller/use-editable-history-assignment";
 
-export function EditableHistoryDetailDialog({
-  detail,
-  editorData,
-}: {
-  detail: AdminHistoryDetail;
-  editorData: AssignmentManagerData | null;
-}) {
+export function EditableHistoryDetailDialog({ detail }: { detail: AdminHistoryDetail }) {
   const router = useRouter();
-  const editor = useEditableHistoryAssignment(detail, editorData);
+  const editor = useEditableHistoryAssignment(detail);
 
   const heading = editor.editing ? (
     <DetailHeader
@@ -58,7 +53,7 @@ export function EditableHistoryDetailDialog({
           {...editor.editorModel}
           editTarget={{
             assignmentId: detail.summary.assignmentId,
-            purpose: detail.summary.assignmentPurpose,
+            purpose: editor.editorModel.initialEditDraft.purpose,
             studentId: detail.summary.studentId,
           }}
           formId={editor.formId}
@@ -70,11 +65,23 @@ export function EditableHistoryDetailDialog({
           placement="dialog"
           submitPlacement="footer"
         />
+      ) : editor.editing ? (
+        <div aria-busy={editor.loadStatus === "loading"} role="status">
+          {editor.loadStatus === "error" ? (
+            <Notice role="alert" tone="danger">
+              {editor.loadError}
+              <Button onClick={editor.retryLoad} size="small" variant="quiet">
+                다시 불러오기
+              </Button>
+            </Notice>
+          ) : (
+            "수정 준비 자료를 불러오는 중…"
+          )}
+        </div>
       ) : (
         <AdminHistoryDetailContent
           actions={
             <HistoryDetailActions
-              editorData={editorData}
               editButtonRef={editor.editButtonRef}
               item={detail.summary}
               mode="overlay"

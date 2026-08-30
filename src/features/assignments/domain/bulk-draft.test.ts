@@ -7,7 +7,6 @@ import {
 import type { BulkCommonAssignmentPlan } from "./model";
 
 const commonPlan: BulkCommonAssignmentPlan = {
-  collisionDecisions: [],
   datasetId: "00000000-0000-4000-8000-000000000001",
   distribution: "repeat",
   extraDatePolicy: "unconfirmed",
@@ -33,8 +32,6 @@ const commonPlan: BulkCommonAssignmentPlan = {
 
 function createDraft() {
   return createInitialBulkSeriesAssignmentDraft({
-    firstAvailableDateKorean: "2026-08-24",
-    includePendingReview: false,
     studentIds: ["00000000-0000-4000-8000-000000000004"],
   });
 }

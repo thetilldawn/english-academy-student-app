@@ -1,14 +1,75 @@
 // @vitest-environment jsdom
 
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { assignmentContractIds } from "@/test-support/assignment-contract-fixtures";
+import {
+  assignmentContractIds,
+  reverseUnitIds,
+} from "@/test-support/assignment-contract-fixtures";
 
-import type { AssignmentTransport } from "../transport/assignment-transport";
+import type { BulkCommonAssignmentPlan } from "../domain/model";
+import type {
+  AssignmentTransport,
+  AssignmentTransportRequest,
+} from "../transport/assignment-transport";
 import { useBulkAssignmentController } from "./use-bulk-assignment-controller";
 
 const NOW = Date.parse("2026-08-10T00:00:00.000Z");
+
+function scheduledPlan(
+  days: readonly number[] = [17, 19],
+): BulkCommonAssignmentPlan {
+  const schedule = days.map((day) => ({
+    availableLocalDateTime: `2099-08-${String(day).padStart(2, "0")}T09:00`,
+    deadlineLocalDateTime: `2099-08-${String(day).padStart(2, "0")}T21:00`,
+  }));
+  return {
+    datasetId: assignmentContractIds.dataset,
+    distribution: "split",
+    splitBasis: "question_count",
+    orderedUnitIds: [...reverseUnitIds],
+    rangeUnitCounts: [],
+    unitAllocationRule: null,
+    questionCount: { mode: "manual", value: 12 },
+    overflowPolicy: "leave",
+    extraDatePolicy: "unconfirmed",
+    selectedDateCount: days.length,
+    selectionMode: "source_order",
+    planNonce: assignmentContractIds.planNonce,
+    recurrenceSessions: schedule,
+    sessions: schedule.map((session) => ({
+      ...session,
+      unitIds: [...reverseUnitIds],
+    })),
+  };
+}
+
+function immediatePlan(): BulkCommonAssignmentPlan {
+  return {
+    datasetId: assignmentContractIds.dataset,
+    distribution: "repeat",
+    splitBasis: "question_count",
+    orderedUnitIds: [...reverseUnitIds],
+    rangeUnitCounts: [],
+    unitAllocationRule: null,
+    questionCount: { mode: "all" },
+    overflowPolicy: "leave",
+    extraDatePolicy: "unconfirmed",
+    selectedDateCount: 0,
+    selectionMode: "source_order",
+    planNonce: assignmentContractIds.planNonce,
+    recurrenceSessions: [{
+      availableLocalDateTime: null,
+      deadlineLocalDateTime: null,
+    }],
+    sessions: [{
+      availableLocalDateTime: null,
+      deadlineLocalDateTime: null,
+      unitIds: [...reverseUnitIds],
+    }],
+  };
+}
 
 function previewResponse(
   studentIds: readonly string[],
@@ -19,43 +80,44 @@ function previewResponse(
     assignmentCount: studentIds.length * sessionCount,
     blockedCount: 0,
     commonPlanSummary: null,
-    planSignature: assignmentContractIds.previewPlanSignature,
-    rangeLabel: "DAY 60",
     items: studentIds.map((studentId, studentIndex) => ({
       available: true,
       availableQuestionCount: 40,
       datasetId: assignmentContractIds.dataset,
-      datasetLabel: "능률 VOCA",
-      error: null as string | null,
+      datasetLabel: "VOCA",
       defaultSessionCount: sessionCount,
+      error: null,
       remainingQuestionCount: 0,
       requiresExtraDateDecision: false,
       scheduledQuestionCount: 40 * sessionCount,
       selectedQuestionCount: 40,
       sessions: Array.from({ length: sessionCount }, (_, index) => ({
         available: true,
-        availableFrom: `2099-08-${String(10 + index).padStart(2, "0")}T00:00:00.000Z`,
+        availableFrom: null,
         availableUntil: null,
+        cycleIndex: 0,
         error: null,
         questionCount: 40,
         rangeTruncated: false,
         sessionNumber: index + 1,
         sourceSessionNumber: index + 1,
-        cycleIndex: 0,
         unitId: assignmentContractIds.day60,
         unitIds: [assignmentContractIds.day60],
         unitLabel: `DAY ${60 - index}`,
         unitLabels: [`DAY ${60 - index}`],
-        wrongCount: index === 0 ? 2 : 0,
-        warnings: [],
       })),
       studentId,
       studentName: `학생 ${studentIndex + 1}`,
     })),
+    planSignature: assignmentContractIds.previewPlanSignature,
+    rangeLabel: "DAY 58-60",
   };
 }
 
-function creationResponse(studentIds: readonly string[], sessionCount: number) {
+function creationResponse(
+  studentIds: readonly string[],
+  sessionCount: number,
+) {
   return {
     assignments: studentIds.flatMap((studentId) =>
       Array.from({ length: sessionCount }, (_, index) => ({
@@ -67,47 +129,61 @@ function creationResponse(studentIds: readonly string[], sessionCount: number) {
   };
 }
 
-function renderController(
-  transport: AssignmentTransport,
-  studentIds: readonly string[] = [assignmentContractIds.studentA],
-  includePendingReview = true,
-) {
-  return renderHook(() =>
-    useBulkAssignmentController({
-      clock: () => NOW,
-      firstAvailableDateKorean: "2099-08-10",
-      genericErrorMessage: "일괄 배정을 저장하지 못했습니다.",
-      includePendingReview,
-      previewDelayMs: 0,
-      previewErrorMessage: "학생별 범위를 계산하지 못했습니다.",
-      studentIds,
-      transport,
-    }),
-  );
+function successTransport(
+  requests: AssignmentTransportRequest[] = [],
+): AssignmentTransport {
+  return vi.fn(async (request) => {
+    requests.push(request);
+    const body = request.body as {
+      commonPlan: { sessions: unknown[] };
+      studentIds: string[];
+    };
+    const sessionCount = body.commonPlan.sessions.length;
+    if (request.url.endsWith("/preview")) {
+      return {
+        data: previewResponse(body.studentIds, sessionCount),
+        ok: true,
+        status: 200,
+      };
+    }
+    return {
+      data: creationResponse(body.studentIds, sessionCount),
+      ok: true,
+      status: 201,
+    };
+  });
 }
 
-afterEach(() => vi.restoreAllMocks());
+function renderController(
+  transport: AssignmentTransport,
+  initialCommonPlan?: BulkCommonAssignmentPlan,
+) {
+  return renderHook(() => useBulkAssignmentController({
+    clock: () => NOW,
+    genericErrorMessage: "일괄 배정을 저장하지 못했습니다.",
+    initialCommonPlan,
+    previewDelayMs: 0,
+    previewErrorMessage: "학생별 범위를 계산하지 못했습니다.",
+    studentIds: [assignmentContractIds.studentA],
+    transport,
+  }));
+}
 
-describe("bulk assignment controller", () => {
-  it("does not fall back to the unrelated legacy preview while a common plan is required", async () => {
-    const transport: AssignmentTransport = vi.fn(async () => ({
-      data: previewResponse([assignmentContractIds.studentA], 1),
-      ok: true,
-      status: 200,
-    }));
-    const { result } = renderHook(() =>
-      useBulkAssignmentController({
-        clock: () => NOW,
-        commonPlanRequired: true,
-        firstAvailableDateKorean: "2099-08-10",
-        genericErrorMessage: "일괄 배정을 저장하지 못했습니다.",
-        includePendingReview: true,
-        previewDelayMs: 0,
-        previewErrorMessage: "학생별 범위를 계산하지 못했습니다.",
-        studentIds: [assignmentContractIds.studentA],
-        transport,
-      }),
-    );
+beforeEach(() => {
+  vi.stubGlobal("crypto", {
+    randomUUID: vi.fn(() => assignmentContractIds.idempotencyKey),
+  });
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
+
+describe("일괄 배정 controller", () => {
+  it("공통 계획이 없으면 미리보기를 요청하지 않는다", async () => {
+    const transport = successTransport();
+    const { result } = renderController(transport);
 
     await act(async () => Promise.resolve());
 
@@ -118,102 +194,13 @@ describe("bulk assignment controller", () => {
     ]);
   });
 
-  it("allows a common plan when one student deliberately skips every session and another still receives it", async () => {
-    const studentIds = [
-      assignmentContractIds.studentA,
-      assignmentContractIds.studentB,
-    ];
-    const transport: AssignmentTransport = vi.fn(async (request) => {
-      if (request.url.endsWith("/preview")) {
-        const preview = previewResponse(studentIds, 1);
-        preview.items[0] = {
-          ...preview.items[0]!,
-          available: true,
-          error: "모든 후보 회차를 건너뛰었습니다.",
-          sessions: [],
-        };
-        return {
-          data: {
-            ...preview,
-            assignableCount: 1,
-            assignmentCount: 1,
-          },
-          ok: true,
-          status: 200,
-        };
-      }
-      return {
-        data: creationResponse([assignmentContractIds.studentB], 1),
-        ok: true,
-        status: 201,
-      };
-    });
-    const { result } = renderHook(() => useBulkAssignmentController({
-      clock: () => NOW,
-      commonPlanRequired: true,
-      firstAvailableDateKorean: "2099-08-10",
-      genericErrorMessage: "일괄 배정을 저장하지 못했습니다.",
-      includePendingReview: false,
-      initialCommonPlan: {
-        datasetId: assignmentContractIds.dataset,
-        distribution: "split",
-        splitBasis: "question_count",
-        orderedUnitIds: [assignmentContractIds.day60],
-        rangeUnitCounts: [],
-        unitAllocationRule: null,
-        questionCount: { mode: "manual", value: 40 },
-      overflowPolicy: "leave",
-      extraDatePolicy: "unconfirmed",
-        selectedDateCount: 1,
-        selectionMode: "random",
-        planNonce: assignmentContractIds.idempotencyKey,
-        recurrenceSessions: [{
-          availableLocalDateTime: "2099-08-10T09:00",
-          deadlineLocalDateTime: "2099-08-11T22:00",
-        }],
-        sessions: [{
-          unitIds: [assignmentContractIds.day60],
-          availableLocalDateTime: "2099-08-10T09:00",
-          deadlineLocalDateTime: "2099-08-11T22:00",
-        }],
-        collisionDecisions: [],
-      },
-      previewDelayMs: 0,
-      previewErrorMessage: "학생별 범위를 계산하지 못했습니다.",
-      studentIds,
-      transport,
-    }));
+  it("시험 조건만 바꾸면 미리보기를 재사용하고 변경값으로 저장한다", async () => {
+    const requests: AssignmentTransportRequest[] = [];
+    const transport = successTransport(requests);
+    const { result } = renderController(transport, scheduledPlan());
 
     await waitFor(() => expect(result.current.canSubmit).toBe(true));
-    await act(async () => {
-      const outcome = await result.current.actions.submit();
-      expect(outcome.ok && outcome.result.assignments).toHaveLength(1);
-    });
-  });
-
-  it("keeps a ready preview for exam-only changes but submits the changed settings", async () => {
-    const requests: Parameters<AssignmentTransport>[0][] = [];
-    const transport: AssignmentTransport = vi.fn(async (request) => {
-      requests.push(request);
-      const body = request.body as {
-        sessionCount: number;
-        studentIds: string[];
-      };
-      return request.url.endsWith("/preview")
-        ? {
-            data: previewResponse(body.studentIds, body.sessionCount),
-            ok: true,
-            status: 200,
-          }
-        : {
-            data: creationResponse(body.studentIds, body.sessionCount),
-            ok: true,
-            status: 201,
-          };
-    });
-    const { result } = renderController(transport);
-    await waitFor(() => expect(result.current.canSubmit).toBe(true));
-    expect(requests.filter((request) => request.url.endsWith("/preview"))).toHaveLength(1);
+    expect(requests.filter(({ url }) => url.endsWith("/preview"))).toHaveLength(1);
 
     act(() => {
       result.current.actions.changePassingScore(90);
@@ -224,7 +211,7 @@ describe("bulk assignment controller", () => {
       });
     });
     await waitFor(() => expect(result.current.canSubmit).toBe(true));
-    expect(requests.filter((request) => request.url.endsWith("/preview"))).toHaveLength(1);
+    expect(requests.filter(({ url }) => url.endsWith("/preview"))).toHaveLength(1);
 
     await act(async () => {
       expect(await result.current.actions.submit()).toMatchObject({ ok: true });
@@ -240,397 +227,110 @@ describe("bulk assignment controller", () => {
     });
   });
 
-  it("invalidates stale preview when the 1-to-7 session schedule changes", async () => {
-    const previewBodies: unknown[] = [];
-    const transport: AssignmentTransport = vi.fn(async (request) => {
-      const body = request.body as {
-        sessionCount: number;
-        studentIds: string[];
-      };
-      if (request.url.endsWith("/preview")) {
-        previewBodies.push(body);
-        return {
-          data: previewResponse(body.studentIds, body.sessionCount),
-          ok: true,
-          status: 200,
-        };
-      }
-      return {
-        data: creationResponse(body.studentIds, body.sessionCount),
-        ok: true,
-        status: 201,
-      };
-    });
-    const { result } = renderController(transport);
+  it("공통 계획이 바뀌면 이전 미리보기를 버리고 새 계획을 요청한다", async () => {
+    const requests: AssignmentTransportRequest[] = [];
+    const transport = successTransport(requests);
+    const { result } = renderController(transport, scheduledPlan([17]));
     await waitFor(() => expect(result.current.canSubmit).toBe(true));
 
-    act(() => {
-      result.current.actions.changeRange({
-        mode: "fixed_span",
-        sessionCount: 7,
-        unitsPerSession: 1,
-      });
-      result.current.actions.changeInterval(2);
-    });
+    act(() => result.current.actions.changeCommonPlan(scheduledPlan([17, 19])));
     expect(result.current.preview).toBeNull();
     expect(result.current.canSubmit).toBe(false);
-    await waitFor(() =>
-      expect(result.current.preview?.assignmentCount).toBe(7),
-    );
-    expect(previewBodies.at(-1)).toMatchObject({
-      dayInterval: 2,
-      rangeMode: "fixed_span",
-      sessionCount: 7,
-    });
+
+    await waitFor(() => expect(result.current.preview?.assignmentCount).toBe(2));
+    expect(requests.filter(({ url }) => url.endsWith("/preview"))).toHaveLength(2);
   });
 
-  it("공통 계획을 세 회차로 바꾸면 미리보기 요청도 세 회차로 동기화한다", async () => {
-    const previewBodies: unknown[] = [];
-    const transport: AssignmentTransport = vi.fn(async (request) => {
-      const body = request.body as {
-        sessionCount: number;
-        studentIds: string[];
-      };
-      if (request.url.endsWith("/preview")) {
-        previewBodies.push(body);
-        return {
-          data: previewResponse(body.studentIds, body.sessionCount),
-          ok: true,
-          status: 200,
-        };
-      }
-      return {
-        data: creationResponse(body.studentIds, body.sessionCount),
-        ok: true,
-        status: 201,
-      };
-    });
-    const { result } = renderController(
-      transport,
-      [assignmentContractIds.studentA],
-      false,
-    );
+  it("시험일 없는 배정은 공개·마감 시각을 null로 보낸다", async () => {
+    const requests: AssignmentTransportRequest[] = [];
+    const transport = successTransport(requests);
+    const { result } = renderController(transport, immediatePlan());
+
     await waitFor(() => expect(result.current.canSubmit).toBe(true));
-
-    act(() => {
-      result.current.actions.changeCommonPlan({
-        collisionDecisions: [],
-        datasetId: assignmentContractIds.dataset,
-        distribution: "split",
-        splitBasis: "question_count",
-        orderedUnitIds: [assignmentContractIds.day60],
-        rangeUnitCounts: [],
-        unitAllocationRule: null,
-        questionCount: { mode: "manual", value: 40 },
-    overflowPolicy: "leave",
-    extraDatePolicy: "unconfirmed",
-        selectedDateCount: 3,
-        selectionMode: "random",
-        planNonce: assignmentContractIds.idempotencyKey,
-        recurrenceSessions: [10, 12, 14].map((day) => ({
-          availableLocalDateTime: `2099-08-${day}T09:00`,
-          deadlineLocalDateTime: `2099-08-${day + 1}T22:00`,
-        })),
-        sessions: [10, 12, 14].map((day) => ({
-          availableLocalDateTime: `2099-08-${day}T09:00`,
-          deadlineLocalDateTime: `2099-08-${day + 1}T22:00`,
-          unitIds: [assignmentContractIds.day60],
-        })),
-      });
-    });
-
-    await waitFor(() =>
-      expect(result.current.preview?.assignmentCount).toBe(3),
-    );
-    expect(previewBodies.at(-1)).toMatchObject({
+    expect(requests[0]?.body).toMatchObject({
       commonPlan: {
-        sessions: expect.any(Array),
+        recurrenceSessions: [{ availableFrom: null, availableUntil: null }],
+        selectedDateCount: 0,
+        sessions: [{ availableFrom: null, availableUntil: null }],
       },
-      sessionCount: 3,
     });
-  });
-
-  it("submits the independent default question order without changing target selection", async () => {
-    const requests: Parameters<AssignmentTransport>[0][] = [];
-    const transport: AssignmentTransport = vi.fn(async (request) => {
-      requests.push(request);
-      const body = request.body as {
-        sessionCount: number;
-        studentIds: string[];
-      };
-      return request.url.endsWith("/preview")
-        ? {
-            data: previewResponse(body.studentIds, body.sessionCount),
-            ok: true,
-            status: 200,
-          }
-        : {
-            data: creationResponse(body.studentIds, body.sessionCount),
-            ok: true,
-            status: 201,
-          };
-    });
-    const { result } = renderHook(() => useBulkAssignmentController({
-      clock: () => NOW,
-      commonPlanRequired: true,
-      firstAvailableDateKorean: "2099-08-10",
-      genericErrorMessage: "일괄 배정을 저장하지 못했습니다.",
-      includePendingReview: false,
-      initialCommonPlan: {
-        collisionDecisions: [],
-        datasetId: assignmentContractIds.dataset,
-        distribution: "repeat",
-        extraDatePolicy: "unconfirmed",
-        orderedUnitIds: [assignmentContractIds.day60],
-        overflowPolicy: "leave",
-        planNonce: assignmentContractIds.idempotencyKey,
-        questionCount: { mode: "all" },
-        rangeUnitCounts: [],
-        unitAllocationRule: null,
-        recurrenceSessions: [{
-          availableLocalDateTime: "2099-08-10T09:00",
-          deadlineLocalDateTime: "2099-08-11T22:00",
-        }],
-        selectedDateCount: 1,
-        selectionMode: "source_order",
-        sessions: [{
-          availableLocalDateTime: "2099-08-10T09:00",
-          deadlineLocalDateTime: "2099-08-11T22:00",
-          unitIds: [assignmentContractIds.day60],
-        }],
-        splitBasis: "question_count",
-      },
-      previewDelayMs: 0,
-      previewErrorMessage: "학생별 범위를 계산하지 못했습니다.",
-      studentIds: [assignmentContractIds.studentA],
-      transport,
-    }));
-    await waitFor(() => expect(result.current.canSubmit).toBe(true));
-    expect(result.current.state.draft.exam.questionOrderMode).toBe("ascending");
 
     await act(async () => {
       expect(await result.current.actions.submit()).toMatchObject({ ok: true });
     });
-    expect(requests.at(-1)).toMatchObject({
-      body: { questionOrderMode: "ascending" },
-      url: "/api/admin/bulk-assignments",
-    });
   });
 
-  it("submits the supported 30-student by 7-session boundary as 210 assignments", async () => {
-    const studentIds = Array.from(
-      { length: 30 },
-      (_, index) =>
-        `00000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
-    );
+  it("같은 저장을 재시도하면 멱등 키를 재사용한다", async () => {
+    const postBodies: Array<{ idempotencyKey: string }> = [];
+    let submissionAttempt = 0;
     const transport: AssignmentTransport = vi.fn(async (request) => {
       const body = request.body as {
-        sessionCount: number;
-        studentIds: string[];
-      };
-      return request.url.endsWith("/preview")
-        ? {
-            data: previewResponse(body.studentIds, body.sessionCount),
-            ok: true,
-            status: 200,
-          }
-        : {
-            data: creationResponse(body.studentIds, body.sessionCount),
-            ok: true,
-            status: 201,
-          };
-    });
-    const { result } = renderController(transport, studentIds);
-    await waitFor(() => expect(result.current.canSubmit).toBe(true));
-    act(() =>
-      result.current.actions.changeRange({
-        mode: "fixed_span",
-        sessionCount: 7,
-        unitsPerSession: 2,
-      }),
-    );
-    await waitFor(() =>
-      expect(result.current.preview?.assignmentCount).toBe(210),
-    );
-
-    await act(async () => {
-      const outcome = await result.current.actions.submit();
-      expect(outcome.ok && outcome.result.assignments).toHaveLength(210);
-    });
-  });
-
-  it("blocks same-tick duplicate submission and refreshes preview after a 409", async () => {
-    let submitCount = 0;
-    let conflict = true;
-    const transport: AssignmentTransport = vi.fn(async (request) => {
-      const body = request.body as {
-        sessionCount: number;
-        studentIds: string[];
-      };
-      if (request.url.endsWith("/preview")) {
-        return {
-          data: previewResponse(body.studentIds, body.sessionCount),
-          ok: true,
-          status: 200,
-        };
-      }
-      submitCount += 1;
-      if (conflict) {
-        conflict = false;
-        return {
-          data: { error: "다른 배정이 먼저 저장되었습니다." },
-          ok: false,
-          status: 409,
-        };
-      }
-      return {
-        data: creationResponse(body.studentIds, body.sessionCount),
-        ok: true,
-        status: 201,
-      };
-    });
-    const { result } = renderController(transport);
-    await waitFor(() => expect(result.current.canSubmit).toBe(true));
-
-    let outcomes: Awaited<ReturnType<typeof result.current.actions.submit>>[] = [];
-    await act(async () => {
-      outcomes = await Promise.all([
-        result.current.actions.submit(),
-        result.current.actions.submit(),
-      ]);
-    });
-    expect(submitCount).toBe(1);
-    expect(outcomes.some((outcome) => !outcome.ok && outcome.conflict)).toBe(true);
-    await waitFor(() => expect(result.current.canSubmit).toBe(true));
-
-    await act(async () => {
-      expect(await result.current.actions.submit()).toMatchObject({ ok: true });
-    });
-    expect(submitCount).toBe(2);
-  });
-
-  it("제출마다 현재 시각을 한 번만 읽고 503 재시도에는 같은 멱등키를 쓴다", async () => {
-    const keys: string[] = [];
-    let failSubmission = true;
-    const clock = vi.fn(() => NOW);
-    const transport: AssignmentTransport = vi.fn(async (request) => {
-      const body = request.body as {
+        commonPlan: { sessions: unknown[] };
         idempotencyKey?: string;
-        sessionCount: number;
         studentIds: string[];
       };
       if (request.url.endsWith("/preview")) {
         return {
-          data: previewResponse(body.studentIds, body.sessionCount),
+          data: previewResponse(body.studentIds, body.commonPlan.sessions.length),
           ok: true,
           status: 200,
         };
       }
-      keys.push(body.idempotencyKey ?? "missing");
-      if (failSubmission) {
-        failSubmission = false;
-        return {
-          data: { error: "잠시 뒤 다시 시도해 주세요." },
-          ok: false,
-          status: 503,
-        };
-      }
-      return {
-        data: creationResponse(body.studentIds, body.sessionCount),
-        ok: true,
-        status: 201,
-      };
+      postBodies.push({ idempotencyKey: body.idempotencyKey! });
+      submissionAttempt += 1;
+      return submissionAttempt === 1
+        ? { data: { error: "잠시 후 다시 시도해 주세요." }, ok: false, status: 503 }
+        : {
+            data: creationResponse(body.studentIds, body.commonPlan.sessions.length),
+            ok: true,
+            status: 201,
+          };
     });
-    const { result } = renderHook(() =>
-      useBulkAssignmentController({
-        clock,
-        firstAvailableDateKorean: "2099-08-10",
-        genericErrorMessage: "일괄 배정을 저장하지 못했습니다.",
-        includePendingReview: true,
-        previewDelayMs: 0,
-        previewErrorMessage: "학생별 범위를 계산하지 못했습니다.",
-        studentIds: [assignmentContractIds.studentA],
-        transport,
-      }),
-    );
+    const { result } = renderController(transport, scheduledPlan([17]));
     await waitFor(() => expect(result.current.canSubmit).toBe(true));
-    clock.mockClear();
 
     await act(async () => {
-      expect(await result.current.actions.submit()).toMatchObject({
-        conflict: false,
-        ok: false,
-      });
+      expect(await result.current.actions.submit()).toMatchObject({ ok: false });
     });
     await act(async () => {
       expect(await result.current.actions.submit()).toMatchObject({ ok: true });
     });
 
-    expect(clock).toHaveBeenCalledTimes(2);
-    expect(keys).toHaveLength(2);
-    expect(keys[0]).not.toBe("missing");
-    expect(keys[1]).toBe(keys[0]);
+    expect(postBodies).toHaveLength(2);
+    expect(postBodies[0]?.idempotencyKey).toBe(postBodies[1]?.idempotencyKey);
   });
 
-  it("keeps a submit-time deadline error attached to the deadline field", async () => {
-    const beforeDeadline = Date.parse("2099-08-10T00:00:00.000Z");
-    const afterDeadline = Date.parse("2099-08-10T02:00:00.000Z");
-    const clock = vi
-      .fn<() => number>()
-      .mockReturnValueOnce(beforeDeadline)
-      .mockReturnValue(afterDeadline);
-    let submissionCount = 0;
+  it("409 응답 뒤에는 같은 계획의 미리보기를 다시 확인한다", async () => {
+    let previewCount = 0;
     const transport: AssignmentTransport = vi.fn(async (request) => {
       const body = request.body as {
-        sessionCount: number;
+        commonPlan: { sessions: unknown[] };
         studentIds: string[];
       };
       if (request.url.endsWith("/preview")) {
+        previewCount += 1;
         return {
-          data: previewResponse(body.studentIds, body.sessionCount),
+          data: previewResponse(body.studentIds, body.commonPlan.sessions.length),
           ok: true,
           status: 200,
         };
       }
-      submissionCount += 1;
       return {
-        data: creationResponse(body.studentIds, body.sessionCount),
-        ok: true,
-        status: 201,
+        data: { error: "미리보기가 오래되었습니다." },
+        ok: false,
+        status: 409,
       };
     });
-    const { result } = renderHook(() =>
-      useBulkAssignmentController({
-        clock,
-        firstAvailableDateKorean: "2099-08-10",
-        genericErrorMessage: "배정하지 못했습니다.",
-        includePendingReview: true,
-        previewDelayMs: 0,
-        previewErrorMessage: "범위를 계산하지 못했습니다.",
-        studentIds: [assignmentContractIds.studentA],
-        transport,
-      }),
-    );
-
-    act(() => {
-      result.current.actions.changeDeadline({
-        koreanLocalDateTime: "2099-08-10T10:00",
-        mode: "at",
-      });
-    });
+    const { result } = renderController(transport, scheduledPlan([17]));
     await waitFor(() => expect(result.current.canSubmit).toBe(true));
 
     await act(async () => {
       expect(await result.current.actions.submit()).toMatchObject({
-        conflict: false,
+        conflict: true,
         ok: false,
       });
     });
 
-    expect(submissionCount).toBe(0);
-    expect(result.current.submissionIssues[0]).toMatchObject({
-      path: "firstDeadline",
-    });
-    expect(result.current.canSubmit).toBe(false);
+    await waitFor(() => expect(previewCount).toBe(2));
   });
 });

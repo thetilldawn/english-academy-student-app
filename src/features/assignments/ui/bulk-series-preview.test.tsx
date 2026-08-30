@@ -22,8 +22,6 @@ const schedule = {
   unitIds: ["unit-a"],
   unitLabel: "DAY 1~DAY 2",
   unitLabels: ["DAY 1", "DAY 2"],
-  warnings: [],
-  wrongCount: 0,
 };
 
 function controller() {
@@ -70,9 +68,6 @@ function controller() {
         studentId,
         studentName,
       })),
-    },
-    state: {
-      draft: { review: { mode: "none" } },
     },
   } as unknown as BulkAssignmentController;
 }

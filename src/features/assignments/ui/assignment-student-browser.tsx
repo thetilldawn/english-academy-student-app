@@ -1,5 +1,6 @@
 import { formatContentText } from "@/content/format";
 import { adminLearningText } from "@/content/ko/admin-learning";
+import { Notice } from "@/design-system/patterns/feedback/feedback";
 import { Button } from "@/design-system/primitives/button/button";
 import { Tabs } from "@/design-system/primitives/tabs/tabs";
 
@@ -15,6 +16,8 @@ export function AssignmentStudentBrowser({
 }: {
   controller: AssignmentWorkspaceController;
 }) {
+  const directory = controller.directory;
+  const students = directory.snapshot.page.items;
   return (
     <section aria-label="단어 시험 대상 선택" className={styles.browser}>
       <Tabs
@@ -28,78 +31,99 @@ export function AssignmentStudentBrowser({
         value={controller.assignmentMode}
       />
       <div className={styles.browserModePanel} key={controller.assignmentMode}>
-      {controller.assignmentMode === "bulk" ? (
-        <VocabAssignmentEntrySelector controller={controller} />
-      ) : null}
-      <AssignmentWorkspaceFilters controller={controller} />
-      {controller.assignmentMode === "bulk" ? (
-        <SelectedStudentBasket controller={controller} />
-      ) : null}
+        {controller.assignmentMode === "bulk" ? (
+          <VocabAssignmentEntrySelector controller={controller} />
+        ) : null}
+        <AssignmentWorkspaceFilters controller={controller} />
+        {controller.assignmentMode === "bulk" ? (
+          <SelectedStudentBasket controller={controller} />
+        ) : null}
 
-      {controller.assignmentMode === "bulk" ? (
-        <div className={styles.bulkBar}>
-          <div className={styles.bulkSummary}>
-            <strong>
-              {formatContentText(adminLearningText.page.bulk.selectedCount, {
-                count: controller.selectedBulkStudentIds.length,
-              })}
-            </strong>
-            <small>{adminLearningText.page.bulk.maximum}</small>
-            <Button
-              onClick={controller.actions.toggleFilteredStudents}
-              size="small"
-              variant="quiet"
-            >
-              {controller.allFilteredStudentsSelected
-                ? adminLearningText.page.bulk.clearVisible
-                : formatContentText(adminLearningText.page.bulk.selectVisible, {
-                    count: controller.filteredStudents.length,
-                  })}
-            </Button>
-            {controller.selectedBulkStudentIds.length > 0 ? (
+        {controller.assignmentMode === "bulk" ? (
+          <div className={styles.bulkBar}>
+            <div className={styles.bulkSummary}>
+              <strong>
+                {formatContentText(adminLearningText.page.bulk.selectedCount, {
+                  count: controller.selectedBulkStudentIds.length,
+                })}
+              </strong>
               <Button
-                onClick={controller.actions.clearBulkStudents}
+                disabled={
+                  controller.selectionLoading ||
+                  directory.filtering ||
+                  controller.filters.status !== "active" ||
+                  directory.snapshot.totalCount === 0
+                }
+                onClick={() => void controller.actions.toggleFilteredStudents()}
                 size="small"
                 variant="quiet"
               >
-                {adminLearningText.page.bulk.clearAll}
+                {controller.selectionLoading
+                  ? "학생 확인 중…"
+                  : controller.allFilteredStudentsSelected
+                    ? "필터 결과 선택 해제"
+                    : `필터 결과 ${directory.snapshot.totalCount}명 선택`}
               </Button>
-            ) : null}
+              {controller.selectedBulkStudentIds.length > 0 ? (
+                <Button
+                  disabled={controller.selectionLoading}
+                  onClick={controller.actions.clearBulkStudents}
+                  size="small"
+                  variant="quiet"
+                >
+                  {adminLearningText.page.bulk.clearAll}
+                </Button>
+              ) : null}
+            </div>
+            <div className={styles.bulkActions}>
+              <Button
+                disabled={!controller.canPrepareBulk}
+                onClick={controller.actions.prepareBulkAssignment}
+                size="small"
+                variant="primary"
+              >
+                {adminLearningText.page.bulk.prepare}
+              </Button>
+            </div>
           </div>
-          <div className={styles.bulkActions}>
+        ) : null}
+
+        {controller.selectionError ? (
+          <Notice role="alert" tone="danger">{controller.selectionError}</Notice>
+        ) : null}
+        {directory.error ? (
+          <Notice role="alert" tone="danger">{directory.error}</Notice>
+        ) : null}
+
+        {students.length === 0 && !directory.filtering ? (
+          <div className={styles.empty} role="status">
+            {adminLearningText.page.noStudents}
+          </div>
+        ) : (
+          <div
+            aria-busy={directory.filtering}
+            className={styles.studentList}
+          >
+            {students.map((student) => (
+              <AssignmentStudentRow
+                controller={controller}
+                key={student.id}
+                student={student}
+              />
+            ))}
+          </div>
+        )}
+        {directory.snapshot.page.nextCursor ? (
+          <div className={styles.loadMoreRow}>
             <Button
-              disabled={!controller.canPrepareBulk}
-              onClick={controller.actions.prepareBulkAssignment}
-              size="small"
-              variant="primary"
+              disabled={directory.loadingMore || directory.filtering}
+              onClick={() => void controller.actions.loadMore()}
+              variant="secondary"
             >
-              {adminLearningText.page.bulk.prepare}
+              {directory.loadingMore ? "불러오는 중…" : "10명 더보기"}
             </Button>
           </div>
-        </div>
-      ) : null}
-
-      {controller.readyDatasets.length === 0 ? (
-        <div className={styles.notice} role="status">
-          {adminLearningText.page.bulk.noReadyDatasets}
-        </div>
-      ) : null}
-
-      {controller.filteredStudents.length === 0 ? (
-        <div className={styles.empty} role="status">
-          {adminLearningText.page.noStudents}
-        </div>
-      ) : (
-        <div className={styles.studentList}>
-          {controller.filteredStudents.map((student) => (
-            <AssignmentStudentRow
-              controller={controller}
-              key={student.id}
-              student={student}
-            />
-          ))}
-        </div>
-      )}
+        ) : null}
       </div>
     </section>
   );

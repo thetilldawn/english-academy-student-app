@@ -7,7 +7,7 @@ import {
   cataloguedDatasetDisplayLabel,
   type CataloguedDataset,
 } from "@/lib/admin/dataset-catalog";
-import type { StudentVocabBookHistory } from "@/lib/admin/student-vocab-book-history";
+import type { StudentVocabBookHistory } from "../../public-contracts";
 import { formatKoreanDateTime } from "@/lib/format";
 import { formatContentText } from "@/content/format";
 import { adminStudentsText } from "@/content/ko/admin-students";

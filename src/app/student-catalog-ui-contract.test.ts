@@ -14,9 +14,6 @@ describe("student catalog and modal UI contract", () => {
   const buttonCss = source(
     "src/design-system/primitives/button/button.module.css",
   );
-  const assignmentEditorCss = source(
-    "src/components/assignment-editor-ui.module.css",
-  );
   const badgeCss = source(
     "src/design-system/primitives/badge/badge.module.css",
   );
@@ -33,7 +30,7 @@ describe("student catalog and modal UI contract", () => {
     "src/features/students/ui/panels/student-info-panel.tsx",
   );
   const bulkDialog = source(
-    "src/features/assignments/ui/bulk-assignment-editor.tsx",
+    "src/features/assignments/ui/vocab-assignment-planner.tsx",
   );
 
   it("keeps card tags content-sized and marks the active tab", () => {
@@ -84,12 +81,9 @@ describe("student catalog and modal UI contract", () => {
     );
     expect(css).not.toContain(".bulk-assignment-form");
     expect(
-      source(
-        "src/features/assignments/ui/bulk-assignment-editor.module.css",
-      ),
+      source("src/features/assignments/ui/vocab-assignment-form.module.css"),
     ).toContain(".form");
-    expect(assignmentEditorCss).toMatch(/\.layout\s*\{/);
-    expect(bulkDialog).toContain("<AssignmentEditorLayout>");
+    expect(bulkDialog).toContain("<DialogFrame");
     expect(bulkDialog).toContain(
       'from "@/design-system/primitives/button/button";',
     );
@@ -108,15 +102,15 @@ describe("student catalog and modal UI contract", () => {
   });
 
   it("현재 목록에서는 취소·삭제를 빼고 전체 내역에서만 보존한다", () => {
-    const service = source(
-      "src/lib/services/admin-history-read-service.ts",
+    const historyQuery = source(
+      "src/features/history/server/queries/admin-history-list-query.ts",
     );
     const activityList = source(
       "src/features/history/ui/student-learning-activity-list.tsx",
     );
 
-    expect(service).toContain(
-      'learningActivitySection(item) !== "archived"',
+    expect(historyQuery).toContain(
+      '(section) => !currentOnly || section !== "archived"',
     );
     expect(activityList).toContain(
       'learningActivitySection(item) !== "archived"',

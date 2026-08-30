@@ -46,6 +46,14 @@
   grid-column: 1 / -1;
 }
 
+.entryStatus {
+  min-height: 44px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  color: var(--text-secondary);
+}
+
 .selectionBasket {
   min-width: 0;
   display: grid;
@@ -71,6 +79,43 @@
 .studentList {
   align-items: start;
   gap: var(--space-2);
+}
+
+.loadMoreRow {
+  display: flex;
+  justify-content: center;
+  padding-block: var(--space-2);
+}
+
+.studentRowSummary {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(160px, 1.2fr) minmax(180px, 1fr) minmax(160px, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.studentIdentity,
+.studentBook,
+.studentRecentExam {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.studentIdentity strong,
+.studentBook strong,
+.studentRecentExam strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studentBook small,
+.studentRecentExam small {
+  color: var(--text-secondary);
+  font-size: 12px;
 }
 
 .placeholder,
@@ -302,6 +347,11 @@
 }
 
 @media (max-width: 767px) {
+  .studentRowSummary {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
   .bulkBar {
     bottom: calc(var(--admin-mobile-nav-height) + env(safe-area-inset-bottom));
     align-items: stretch;

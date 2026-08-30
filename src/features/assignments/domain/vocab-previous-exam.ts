@@ -21,6 +21,8 @@ export type PreviousVocabExamSource = {
   passingScore: number;
   questionOrderMode: "fixed" | "ascending" | "descending" | "random";
   questionTimeLimitSeconds: number | null;
+  retryEnabled?: boolean;
+  retryPassingScore?: number | null;
   status: "not_started" | "cancelled" | "missed" | "in_progress" | "completed" | "expired";
   studentId: string;
   studentName: string;
@@ -103,6 +105,8 @@ function toConditions(
     exam: {
       directionRatio: ratio,
       passingScore: item.passingScore,
+      retryEnabled: item.retryEnabled ?? true,
+      retryPassingScore: item.retryPassingScore ?? item.passingScore,
       questionOrderMode: item.questionOrderMode === "random"
         ? "random"
         : "ascending",

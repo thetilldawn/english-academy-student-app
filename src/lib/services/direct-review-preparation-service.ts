@@ -269,6 +269,17 @@ export async function prepareDirectReviewAssignmentBatch(
 ) {
   const nowMilliseconds = options?.nowMilliseconds ?? Date.now();
   if (
+    input.availableFrom &&
+    input.availableUntil &&
+    Date.parse(input.availableUntil) <= Date.parse(input.availableFrom)
+  ) {
+    throw new DirectReviewPreparationError(
+      "invalid_selection",
+      "응시 마감은 공개 시각보다 뒤로 정해 주세요.",
+      "deadline",
+    );
+  }
+  if (
     input.availableUntil &&
     Date.parse(input.availableUntil) <= nowMilliseconds
   ) {
@@ -305,6 +316,7 @@ export async function prepareDirectReviewAssignmentBatch(
     retryEnabled: input.retryEnabled,
     retryPassingScore: input.retryPassingScore,
     questionOrderMode: input.questionOrderMode,
+    availableFrom: input.availableFrom,
     availableUntil: input.availableUntil,
     timingMode: input.timingMode ?? "total",
     questionTimeLimitSeconds:

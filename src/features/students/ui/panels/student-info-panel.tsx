@@ -11,7 +11,7 @@ import {
 } from "@/design-system/primitives/form/field";
 import { CurrentPointSummary } from "@/features/learning-points/ui/point-summary";
 import type { StudentLearningSourceItem } from "@/lib/admin/learning-sources";
-import type { StudentVocabBookHistory } from "@/lib/admin/student-vocab-book-history";
+import type { StudentVocabBookHistory } from "../../public-contracts";
 
 import type { StudentDetailProfile } from "../../contracts/student-detail-read-model";
 import type { StudentProfileController } from "../../controller/use-student-profile-controller";

@@ -119,7 +119,7 @@ export function vocabAssignmentFieldKeyForIssue(
     return "deadlineOffset";
   }
   if (path === "commonPlan.schedule.deadlineTime") return "deadlineTime";
-  if (path === "commonPlan.sessions" || path === "range.sessionCount") {
+  if (path === "commonPlan.sessions") {
     return "weekdays";
   }
   const sessionMatch = path.match(

@@ -42,7 +42,7 @@ function controller(loadStatus: "loading" | "ready" | "error") {
     loadStatus,
     message: loadStatus === "error" ? "수정 정보를 불러오지 못했습니다." : "",
     state: {
-      draft: { review: { mode: "none" } },
+      draft: { range: { datasetId: "" }, review: { mode: "none" } },
       submission: { status: "idle" },
     },
     submitBlocker: { code: loadStatus === "error" ? "load_failed" : "loading" },

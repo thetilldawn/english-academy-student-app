@@ -13,6 +13,8 @@
   별도 `beforeRouteClose` 확인을 겹쳐 호출하지 않는다.
 - 목록과 상세 조회를 한 파일로 합치지 않는다. 목록은 구역별 10건+다음 행과 불투명 커서만,
   상세는 정확한 응시 ID 또는 배정 ID+학생 ID 한 건만 읽는다.
+- 응시 문항 상세 조회는 `server/queries/admin-attempt-detail-query.ts`가 소유한다. 다른 기능·Route
+  Handler는 `public-server.ts`로만 들어오며 예전 `lib/services/admin-attempt-read-service`를 되살리지 않는다.
 - 개인 내역은 공유 캐시와 `use cache`를 금지한다. 초기 RSC 조회는 보호 구역의 동적 요청에 두고,
   상호작용 응답에는 `Cache-Control: private, no-store`를 유지한다.
 - 커서는 `snapshotAt + 범위 + 구역 + 검색 지문 + effectiveAt + entryKey` 계약이다. 화면에서 임의로

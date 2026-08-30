@@ -7,32 +7,21 @@ function source(relativePath: string) {
   return fs.readFileSync(path.resolve(relativePath), "utf8");
 }
 
-describe("admin current-vocabulary wrong summary query", () => {
-  it("reads one paged aggregate RPC instead of loading every history", () => {
-    const adminService = source(
-      "src/lib/services/admin-student-read-service.ts",
+describe("admin student wrong-summary query", () => {
+  it("uses the student-detail snapshot instead of a separate all-student query", () => {
+    const query = source(
+      "src/features/students/server/queries/student-detail-query.ts",
     );
-    const start = adminService.indexOf(
-      "export async function listStudentCurrentVocabWrongSummaries",
-    );
-    const body = adminService.slice(
-      start,
-      adminService.length,
+    const schema = source(
+      "src/features/students/server/queries/student-detail-row-schema.ts",
     );
 
-    expect(body).toContain(
-      '"list_student_current_vocab_wrong_summaries"',
+    expect(query).toContain('"get_admin_student_detail_initial_v1"');
+    expect(query).toContain("wrongSummary: parsed.data.wrongSummary");
+    expect(schema).toContain("wrongSummary: z.object({");
+    expect(schema).toContain("wrongWordCount: z.coerce.number().int().nonnegative()");
+    expect(schema).toContain(
+      "repeatedWrongWordCount: z.coerce.number().int().nonnegative()",
     );
-    expect(body).toContain("const pageSize = 500");
-    expect(body).toContain(
-      "p_after_student_id: afterStudentId",
-    );
-    expect(body).toContain("p_limit: pageSize");
-    expect(body).toContain("if (page.length < pageSize) break");
-    expect(body).toContain("afterStudentId = last.studentId");
-    expect(body).toContain(
-      "parseStudentCurrentVocabWrongSummaries(",
-    );
-    expect(body).not.toContain("getStudentWrongWordHistory(");
   });
 });

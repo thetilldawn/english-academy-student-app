@@ -21,6 +21,7 @@ import {
   useAssignmentController,
   type AssignmentControllerSource,
 } from "../controller/use-assignment-controller";
+import { useAssignmentDatasetUnitCatalog } from "../controller/use-assignment-dataset-unit-catalog";
 import type { SingleAssignmentDraft } from "../domain/model";
 import { buildAutomaticAssignmentTitle } from "../presentation/assignment-automatic-title";
 import {
@@ -28,6 +29,7 @@ import {
   assignmentSubmitButtonLabel,
 } from "../presentation/assignment-submit-blocker";
 import { newAssignmentDraftDefaults } from "../presentation/new-assignment-defaults";
+import { hydrateSingleAssignmentDraftFromEditResponse } from "../api/edit-draft-adapter";
 import { SingleAssignmentEditorSections } from "./single-assignment-editor-sections";
 import { AssignmentSubmitAction } from "./assignment-submit-action";
 import type { SingleAssignmentEditorProps } from "./single-assignment-editor.types";
@@ -39,6 +41,7 @@ export function SingleAssignmentEditor({
   editTarget,
   formId: suppliedFormId,
   initialDatasetId,
+  initialEditDraft,
   initialUnitIds,
   onBusyChange,
   onConflict,
@@ -48,8 +51,10 @@ export function SingleAssignmentEditor({
   progress,
   student,
   submitPlacement = "footer",
-  units,
+  units: initialUnits,
 }: SingleAssignmentEditorProps) {
+  const unitCatalog = useAssignmentDatasetUnitCatalog(initialUnits);
+  const units = unitCatalog.units;
   const reactId = useId().replaceAll(":", "");
   const formId = suppliedFormId ?? `single-assignment-${reactId}`;
   const firstDatasetUnitId = useMemo(
@@ -82,17 +87,24 @@ export function SingleAssignmentEditor({
       }),
     [createDefaults, initialDatasetId, initialUnitIds, student.id],
   );
+  const hydratedEditDraft = useMemo(
+    () => initialEditDraft
+      ? hydrateSingleAssignmentDraftFromEditResponse(initialEditDraft)
+      : null,
+    [initialEditDraft],
+  );
   const source = useMemo<AssignmentControllerSource>(
     () =>
       editTarget
         ? {
             assignmentId: editTarget.assignmentId,
             fallbackDraft,
+            initialDraft: hydratedEditDraft ?? undefined,
             kind: "edit",
             studentId: editTarget.studentId,
           }
         : { initialDraft: fallbackDraft, kind: "create" },
-    [editTarget, fallbackDraft],
+    [editTarget, fallbackDraft, hydratedEditDraft],
   );
   const automaticTitleForDraft = useCallback(
     (
@@ -110,6 +122,15 @@ export function SingleAssignmentEditor({
     onConflict,
     source,
   });
+  const ensureDatasetUnits = unitCatalog.actions.ensureDataset;
+  useEffect(() => {
+    if (controller.loadStatus !== "ready") return;
+    void ensureDatasetUnits(controller.state.draft.range.datasetId);
+  }, [
+    controller.loadStatus,
+    controller.state.draft.range.datasetId,
+    ensureDatasetUnits,
+  ]);
   const busy = controller.state.submission.status === "submitting";
   const submitLabel = assignmentSubmitButtonLabel({
     busy,
@@ -218,10 +239,13 @@ export function SingleAssignmentEditor({
                 controller={controller}
                 datasets={datasets}
                 editPurpose={editTarget?.purpose ?? null}
+                editSnapshot={initialEditDraft}
                 fieldErrors={fieldErrors}
                 formId={formId}
                 progress={progress}
                 units={units}
+                unitLoadState={unitCatalog.state}
+                onRetryUnits={() => void unitCatalog.actions.retry()}
               />
             </fieldset>
           </form>

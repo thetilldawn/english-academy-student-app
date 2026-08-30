@@ -1,73 +1,81 @@
 "use client";
 
+import { useEffect } from "react";
+import dynamic from "next/dynamic";
 import { toast } from "sonner";
 
 import { formatContentText } from "@/content/format";
 import { adminLearningText } from "@/content/ko/admin-learning";
-import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
 
+import type { AssignmentWorkspaceInitial } from "../contracts/assignment-workspace-read-model";
 import {
   useAssignmentWorkspace,
   type AssignmentDialogView,
 } from "../controller/use-assignment-workspace";
-import { buildBulkStudentFilterLabels } from "../presentation/bulk-student-selection-summary";
+import { AssignmentPlannerLoadDialog } from "./assignment-planner-load-dialog";
 import { AssignmentStudentBrowser } from "./assignment-student-browser";
-import { VocabAssignmentPlanner } from "./vocab-assignment-planner";
+
+const VocabAssignmentPlanner = dynamic(
+  () => import("./vocab-assignment-planner").then(
+    (module) => module.VocabAssignmentPlanner,
+  ),
+  {
+    loading: () => (
+      <AssignmentPlannerLoadDialog closeDisabled onClose={() => undefined} />
+    ),
+    ssr: false,
+  },
+);
 
 export function AssignmentWorkspace({
-  data,
+  initial,
   initialDatasetId = "",
   initialDialogView = "overview",
   initialStudentId = "",
 }: {
-  data: AssignmentManagerData;
+  initial: AssignmentWorkspaceInitial;
   initialDatasetId?: string;
   initialDialogView?: AssignmentDialogView;
   initialStudentId?: string;
 }) {
   const controller = useAssignmentWorkspace({
-    data,
+    initial,
     initialDatasetId,
     initialDialogView,
     initialStudentId,
   });
-  const activeFilteredStudentIds = new Set(
-    controller.filteredStudents
-      .filter((student) => student.status === "active")
-      .map((student) => student.id),
-  );
-  const isWholeFilteredSelection =
-    activeFilteredStudentIds.size === controller.plannerStudents.length &&
-    controller.plannerStudents.every((student) =>
-      activeFilteredStudentIds.has(student.id)
-    );
-  const bulkFilterLabels = buildBulkStudentFilterLabels({
-    classGroupLabel: controller.classGroupOptions.find(
-      (option) => option.value === controller.filters.classGroup,
-    )?.label ?? null,
-    filters: controller.filters,
-    isWholeFilteredSelection,
-  });
+  const planner = controller.planner;
+
+  useEffect(() => {
+    if (planner.status === "loading") {
+      void import("./vocab-assignment-planner");
+    }
+  }, [planner.status]);
 
   return (
     <>
       <AssignmentStudentBrowser controller={controller} />
 
-      {controller.plannerOpen && controller.plannerStudents.length > 0 ? (
+      {planner.status === "loading" ? (
+        <AssignmentPlannerLoadDialog onClose={planner.actions.close} />
+      ) : planner.status === "error" ? (
+        <AssignmentPlannerLoadDialog
+          error={planner.error}
+          onClose={planner.actions.close}
+          onRetry={() => void planner.actions.retry()}
+        />
+      ) : planner.status === "ready" && planner.request ? (
         <VocabAssignmentPlanner
-          bulkFilterLabels={bulkFilterLabels}
-          data={controller.data}
-          initialDatasetId={
-            controller.assignmentMode === "bulk" &&
-              controller.entryMode === "dataset"
-              ? controller.entryDatasetId
-              : controller.assignmentMode === "single"
-                ? initialDatasetId
-                : ""
-          }
-          onClose={controller.actions.closePlanner}
+          bulkFilterLabels={planner.request.bulkFilterLabels}
+          data={{
+            datasets: planner.data.datasets,
+            timeTemplates: planner.data.timeTemplates,
+            units: planner.data.initialUnits,
+          }}
+          initialDatasetId={planner.data.initialDatasetId}
+          onClose={planner.actions.close}
           onSuccess={(assignmentCount, studentCount, queuedCount) => {
-            if (controller.assignmentMode === "bulk") {
+            if (planner.request?.selectionMode === "bulk") {
               controller.actions.clearBulkStudents();
             }
             toast.success(
@@ -75,17 +83,13 @@ export function AssignmentWorkspace({
                 queuedCount > 0
                   ? adminLearningText.page.bulk.queueSuccess
                   : adminLearningText.page.bulk.success,
-                {
-                  assignmentCount,
-                  queuedCount,
-                  studentCount,
-                },
+                { assignmentCount, queuedCount, studentCount },
               ),
             );
             controller.actions.refresh();
           }}
-          selectionMode={controller.assignmentMode}
-          students={controller.plannerStudents}
+          selectionMode={planner.request.selectionMode}
+          students={planner.data.students}
         />
       ) : null}
     </>

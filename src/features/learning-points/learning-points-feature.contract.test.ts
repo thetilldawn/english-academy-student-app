@@ -43,12 +43,14 @@ describe("learning point screen wiring", () => {
   });
 
   it("loads one admin attempt and its point breakdown together", () => {
-    const service = source("src/lib/services/admin-history-read-service.ts");
-    expect(service).toContain("const [attempt, pointSummary] = summary.attemptId");
-    expect(service).toContain("getAdminAttemptDetail(summary.attemptId)");
-    expect(service).toContain(
+    const query = source(
+      "src/features/history/server/queries/admin-history-detail-query.ts",
+    );
+    expect(query).toContain("const [attempt, pointSummary] = summary.attemptId");
+    expect(query).toContain("getAdminAttemptDetail(summary.attemptId, admin)");
+    expect(query).toContain(
       "getAdminAttemptPointSummary(summary.studentId, summary.attemptId)",
     );
-    expect(service).toContain("pointSummary,");
+    expect(query).toContain("pointSummary,");
   });
 });

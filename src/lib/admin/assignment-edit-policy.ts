@@ -51,10 +51,7 @@ const mixedPolicy = {
   review: "locked",
 } as const satisfies AssignmentEditFieldPolicy;
 
-const reviewPolicy = {
-  ...mixedPolicy,
-  direction: "editable",
-} as const satisfies AssignmentEditFieldPolicy;
+const reviewPolicy = mixedPolicy;
 
 const policies = {
   regular: regularPolicy,

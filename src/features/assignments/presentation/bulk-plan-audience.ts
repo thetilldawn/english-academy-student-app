@@ -31,7 +31,6 @@ export type BulkPlanAudience = {
 export type BulkPlanItemStatus =
   | "same"
   | "different"
-  | "needs_review"
   | "blocked"
   | "individual";
 
@@ -41,7 +40,6 @@ type StatusItem = {
   sessions: ReadonlyArray<{
     available: boolean;
     error: string | null;
-    warnings: ReadonlyArray<{ resolved?: boolean }>;
   }>;
   studentId: string;
 };
@@ -129,11 +127,6 @@ export function bulkPlanItemStatus(
     item.sessions.some((session) => !session.available || Boolean(session.error))
   ) {
     return "blocked";
-  }
-  if (item.sessions.some((session) =>
-    session.warnings.some((warning) => !warning.resolved)
-  )) {
-    return "needs_review";
   }
   if (!normalStudentIds) return "individual";
   return normalStudentIds.has(item.studentId) ? "same" : "different";

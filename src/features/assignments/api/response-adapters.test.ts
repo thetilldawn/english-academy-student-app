@@ -5,7 +5,7 @@ import type { AssignmentReplacementResult } from "@/lib/admin/assignment-edit";
 import type {
   BulkAssignmentPreview,
   BulkAssignmentResult,
-} from "@/lib/services/bulk-assignment-service";
+} from "@/features/assignments/contracts/bulk-assignment-response";
 import type { AssignmentCapacity } from "@/lib/services/mixed-assignment-service";
 import { assignmentContractIds } from "@/test-support/assignment-contract-fixtures";
 
@@ -153,10 +153,8 @@ describe("assignment response adapters", () => {
               unitLabels: ["DAY 60"],
               rangeTruncated: false,
               questionCount: 40,
-              wrongCount: 3,
               availableFrom: "2026-08-16T15:00:00.000Z",
               availableUntil: "2026-08-17T12:00:00.000Z",
-              warnings: [],
               error: null,
             },
           ],
@@ -195,25 +193,6 @@ describe("assignment response adapters", () => {
     };
     expect(parseBulkAssignmentPreviewResponse(response)).toStrictEqual(
       response,
-    );
-    expect(parseBulkAssignmentPreviewResponse({
-      ...response,
-      items: [{
-        ...response.items[0],
-        sessions: [{
-          ...response.items[0]!.sessions[0]!,
-          warnings: [{
-            id: "planned-order-warning",
-            kind: "planned_series_order",
-            existingAssignmentId: null,
-            existingAssignmentTitle: "이번 배정의 다른 회차",
-            message: "이동한 날짜가 이번 배정의 다른 회차와 겹칩니다.",
-            resolved: false,
-          }],
-        }],
-      }],
-    }).items[0]?.sessions[0]?.warnings[0]?.kind).toBe(
-      "planned_series_order",
     );
     expect(parseBulkAssignmentPreviewResponse({
       ...response,

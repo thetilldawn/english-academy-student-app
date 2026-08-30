@@ -18,17 +18,32 @@ const BEFORE_DEADLINE = Date.parse("2026-08-10T00:00:00.000Z");
 const AFTER_DEADLINE = Date.parse("2026-08-10T02:00:00.000Z");
 
 function draftFor(studentIds: readonly string[]): BulkSeriesAssignmentDraft {
-  return {
-    ...createInitialBulkSeriesAssignmentDraft({
-      firstAvailableDateKorean: "2026-08-10",
-      includePendingReview: false,
-      studentIds,
-    }),
-    firstDeadline: {
-      mode: "at",
-      koreanLocalDateTime: "2026-08-10T10:00",
+  return createInitialBulkSeriesAssignmentDraft({
+    studentIds,
+    commonPlan: {
+      datasetId: assignmentContractIds.dataset,
+      distribution: "repeat",
+      splitBasis: "question_count",
+      orderedUnitIds: [assignmentContractIds.day60],
+      rangeUnitCounts: [],
+      unitAllocationRule: null,
+      questionCount: { mode: "all" },
+      overflowPolicy: "leave",
+      extraDatePolicy: "unconfirmed",
+      selectedDateCount: 1,
+      selectionMode: "source_order",
+      planNonce: "88888888-8888-4888-8888-888888888888",
+      recurrenceSessions: [{
+        availableLocalDateTime: "2026-08-10T08:00",
+        deadlineLocalDateTime: "2026-08-10T10:00",
+      }],
+      sessions: [{
+        availableLocalDateTime: "2026-08-10T08:00",
+        deadlineLocalDateTime: "2026-08-10T10:00",
+        unitIds: [assignmentContractIds.day60],
+      }],
     },
-  };
+  });
 }
 
 function previewFor(studentIds: readonly string[]) {
@@ -62,8 +77,6 @@ function previewFor(studentIds: readonly string[]) {
         unitIds: [assignmentContractIds.day60],
         unitLabel: "DAY 60",
         unitLabels: ["DAY 60"],
-        warnings: [],
-        wrongCount: 0,
       }],
       studentId,
       studentName: `학생 ${index + 1}`,
@@ -125,7 +138,7 @@ describe("bulk assignment application adapter", () => {
       ),
     ).toEqual({
       error: expect.objectContaining({
-        fieldPath: "firstDeadline",
+        fieldPath: "commonPlan.sessions.0.deadlineLocalDateTime",
         kind: "invalid_request",
       }),
       ok: false,

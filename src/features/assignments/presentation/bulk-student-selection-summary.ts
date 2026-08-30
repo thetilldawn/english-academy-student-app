@@ -1,16 +1,7 @@
 import { commonText } from "@/content/ko/common";
+import type { StudentDirectoryFilters } from "@/features/students/public-contracts";
 
-type BulkStudentFilters = {
-  classGroup: string;
-  grade: string;
-  query: string;
-  school: string;
-  status: "active" | "blocked";
-  wordbook: string;
-  wrongWord: "all" | "wrong" | "repeated" | "retry";
-};
-
-function wrongWordFilterLabel(value: BulkStudentFilters["wrongWord"]) {
+function wrongWordFilterLabel(value: StudentDirectoryFilters["wrong"]) {
   if (value === "wrong") return commonText.filters.hasWrong;
   if (value === "repeated") return commonText.filters.repeatedWrong;
   if (value === "retry") return commonText.filters.retryNeeded;
@@ -23,7 +14,7 @@ export function buildBulkStudentFilterLabels({
   isWholeFilteredSelection,
 }: {
   classGroupLabel: string | null;
-  filters: BulkStudentFilters;
+  filters: StudentDirectoryFilters;
   isWholeFilteredSelection: boolean;
 }) {
   const query = filters.query.trim();
@@ -32,13 +23,14 @@ export function buildBulkStudentFilterLabels({
     filters.school || null,
     filters.grade || null,
     filters.wordbook || null,
-    filters.classGroup
+    filters.classGroupId
       ? classGroupLabel ?? commonText.filters.byClassGroup
       : null,
     filters.status === "blocked" ? commonText.filters.blocked : null,
-    wrongWordFilterLabel(filters.wrongWord),
+    wrongWordFilterLabel(filters.wrong),
   ].filter((label): label is string => Boolean(label));
 
+  if (!isWholeFilteredSelection) return ["직접 선택"];
   if (labels.length > 0) return labels;
-  return [isWholeFilteredSelection ? "전체 학생" : "직접 선택"];
+  return ["전체 학생"];
 }

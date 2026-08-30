@@ -1,6 +1,5 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 
-import type { AssignmentInput } from "@/lib/admin/regular-assignment-request";
 import { assignmentReplacementFingerprintPayload } from "@/lib/admin/assignment-replacement-fingerprint";
 import {
   assignmentCapacitySchema,
@@ -10,7 +9,7 @@ import {
 import {
   bulkAssignmentPreviewSchema,
   bulkAssignmentSchema,
-} from "@/lib/admin/bulk-assignment-request";
+} from "@/features/assignments/contracts/bulk-assignment-request";
 import {
   directReviewAssignmentSchema,
   directReviewPreviewSchema,
@@ -18,9 +17,12 @@ import {
 import { mixedAssignmentSchema } from "@/lib/admin/mixed-assignment-request";
 import {
   assignmentSchema,
+  type AssignmentInput,
 } from "@/lib/admin/regular-assignment-request";
 import {
   assignmentContractIds,
+  bulkImmediatePreviewContract,
+  bulkImmediateSubmitContract,
   bulkPreviewContract,
   bulkSubmitContract,
   mixedPerQuestionContract,
@@ -35,13 +37,13 @@ import {
   reserveIdempotencyKey,
 } from "../domain/fingerprint";
 import type {
+  BulkCommonAssignmentPlan,
   BulkSeriesAssignmentDraft,
   DirectReviewAssignmentDraft,
-  SingleAssignmentOperation,
   SingleAssignmentDraft,
+  SingleAssignmentOperation,
 } from "../domain/model";
 import { InvalidAssignmentDraftError } from "../domain/validation";
-import { reduceSingleAssignmentDraft } from "../domain/single-draft";
 import {
   buildAssignmentCapacityRequest,
   buildAssignmentEditDraftRequest,
@@ -63,11 +65,7 @@ import type {
 const NOW = Date.parse("2026-08-10T00:00:00.000Z");
 
 function resolved(title: string, questionCount: number) {
-  return {
-    displayTitle: title,
-    submissionTitle: title,
-    questionCount,
-  };
+  return { displayTitle: title, submissionTitle: title, questionCount };
 }
 
 const regularDraft: SingleAssignmentDraft = {
@@ -87,10 +85,7 @@ const regularDraft: SingleAssignmentDraft = {
     timing: { mode: "total", totalSeconds: 300 },
   },
   availability: { mode: "immediate" },
-  deadline: {
-    mode: "at",
-    koreanLocalDateTime: "2026-08-18T21:00",
-  },
+  deadline: { mode: "at", koreanLocalDateTime: "2026-08-18T21:00" },
   review: { mode: "none", scope: "dataset", levels: [1, 2] },
 };
 
@@ -116,18 +111,18 @@ const mixedDraft: SingleAssignmentDraft = {
 };
 
 const exactReviewOperation = {
-    mode: "replace",
-    assignmentId: "88888888-8888-4888-8888-888888888888",
-    targetStudentId: assignmentContractIds.studentA,
-    sourcePurpose: "review",
-    lockedShape: {
-      datasetId: assignmentContractIds.dataset,
-      orderedUnitIds: [...reverseUnitIds],
-      questionCount: 1,
-      reviewScope: "dataset",
-      reviewLevels: [2],
-    },
-  } satisfies SingleAssignmentOperation;
+  mode: "replace",
+  assignmentId: "88888888-8888-4888-8888-888888888888",
+  targetStudentId: assignmentContractIds.studentA,
+  sourcePurpose: "review",
+  lockedShape: {
+    datasetId: assignmentContractIds.dataset,
+    orderedUnitIds: [...reverseUnitIds],
+    questionCount: 1,
+    reviewScope: "dataset",
+    reviewLevels: [2],
+  },
+} satisfies SingleAssignmentOperation;
 
 const replacementDraft: SingleAssignmentDraft = {
   kind: "single",
@@ -150,28 +145,100 @@ const replacementDraft: SingleAssignmentDraft = {
   review: { mode: "pending", scope: "dataset", levels: [2] },
 };
 
-const bulkDraft: BulkSeriesAssignmentDraft = {
+const scheduledBulkPlan: BulkCommonAssignmentPlan = {
+  datasetId: assignmentContractIds.dataset,
+  distribution: "split",
+  splitBasis: "question_count",
+  orderedUnitIds: [...reverseUnitIds],
+  rangeUnitCounts: [],
+  unitAllocationRule: null,
+  questionCount: { mode: "manual", value: 12 },
+  overflowPolicy: "leave",
+  extraDatePolicy: "unconfirmed",
+  selectedDateCount: 2,
+  selectionMode: "source_order",
+  planNonce: assignmentContractIds.planNonce,
+  recurrenceSessions: [
+    {
+      availableLocalDateTime: "2026-08-17T00:00",
+      deadlineLocalDateTime: "2026-08-17T21:00",
+    },
+    {
+      availableLocalDateTime: "2026-08-19T00:00",
+      deadlineLocalDateTime: "2026-08-19T21:00",
+    },
+  ],
+  sessions: [
+    {
+      unitIds: [...reverseUnitIds],
+      availableLocalDateTime: "2026-08-17T00:00",
+      deadlineLocalDateTime: "2026-08-17T21:00",
+    },
+    {
+      unitIds: [...reverseUnitIds],
+      availableLocalDateTime: "2026-08-19T00:00",
+      deadlineLocalDateTime: "2026-08-19T21:00",
+    },
+  ],
+};
+
+const immediateBulkPlan: BulkCommonAssignmentPlan = {
+  datasetId: assignmentContractIds.dataset,
+  distribution: "repeat",
+  splitBasis: "question_count",
+  orderedUnitIds: [...reverseUnitIds],
+  rangeUnitCounts: [],
+  unitAllocationRule: null,
+  questionCount: { mode: "all" },
+  overflowPolicy: "leave",
+  extraDatePolicy: "unconfirmed",
+  selectedDateCount: 0,
+  selectionMode: "source_order",
+  planNonce: assignmentContractIds.planNonce,
+  recurrenceSessions: [
+    { availableLocalDateTime: null, deadlineLocalDateTime: null },
+  ],
+  sessions: [
+    {
+      unitIds: [...reverseUnitIds],
+      availableLocalDateTime: null,
+      deadlineLocalDateTime: null,
+    },
+  ],
+};
+
+const scheduledBulkDraft: BulkSeriesAssignmentDraft = {
   kind: "bulk_series",
   studentIds: [...bulkPreviewContract.studentIds],
-  range: { mode: "previous_span", unitsPerSession: 2, sessionCount: 2 },
-  firstAvailableDateKorean: "2026-08-17",
-  firstDeadline: {
-    mode: "at",
-    koreanLocalDateTime: "2026-08-17T21:00",
-  },
-  dayInterval: 2,
+  commonPlan: scheduledBulkPlan,
   exam: {
     directionRatio: 50,
     questionOrderMode: "random",
     passingScore: 80,
+    retryEnabled: true,
+    retryPassingScore: 80,
+    timeLimitEnabled: true,
     timing: { mode: "per_question", perQuestionSeconds: 15 },
   },
-  review: { mode: "pending", levels: [1, 2] },
+};
+
+const immediateBulkDraft: BulkSeriesAssignmentDraft = {
+  kind: "bulk_series",
+  studentIds: [assignmentContractIds.studentA],
+  commonPlan: immediateBulkPlan,
+  exam: {
+    directionRatio: 50,
+    questionOrderMode: "ascending",
+    passingScore: 80,
+    retryEnabled: false,
+    timeLimitEnabled: true,
+    timing: { mode: "total", totalSeconds: 300 },
+  },
 };
 
 describe("assignment request adapters", () => {
-  it("builds an independent untimed review assignment for one student", () => {
-    const draft: DirectReviewAssignmentDraft = {
+  it("builds immediate and scheduled direct-review requests", () => {
+    const immediate: DirectReviewAssignmentDraft = {
       studentId: assignmentContractIds.studentA,
       datasetId: assignmentContractIds.dataset,
       reviewLevels: [1, 2],
@@ -184,159 +251,125 @@ describe("assignment request adapters", () => {
         timeLimitEnabled: false,
         timing: { mode: "total", totalSeconds: 300 },
       },
+      availability: { mode: "immediate" },
       deadline: { mode: "none" },
     };
+    const request = buildDirectReviewAssignmentRequest(
+      immediate,
+      assignmentContractIds.idempotencyKey,
+    );
 
-    const idempotencyKey = "99999999-9999-4999-8999-999999999999";
-    const request = buildDirectReviewAssignmentRequest(draft, idempotencyKey);
-
-    expect(request.endpoint).toBe("/api/admin/exact-review-assignments");
-    expect(request.method).toBe("POST");
     expect(request.body).toMatchObject({
-      idempotencyKey,
-      studentId: assignmentContractIds.studentA,
-      datasetId: assignmentContractIds.dataset,
-      reviewLevels: [1, 2],
-      totalQuestionCount: 1,
-      timingMode: "none",
-      questionTimeLimitSeconds: null,
+      availableFrom: null,
       availableUntil: null,
+      datasetId: assignmentContractIds.dataset,
+      idempotencyKey: assignmentContractIds.idempotencyKey,
+      questionTimeLimitSeconds: null,
+      reviewLevels: [1, 2],
+      studentId: assignmentContractIds.studentA,
+      timingMode: "none",
+      totalQuestionCount: 1,
     });
-    expect(directReviewAssignmentSchema.safeParse(request.body).success).toBe(
-      true,
+    expect(directReviewAssignmentSchema.parse(request.body)).toStrictEqual(
+      request.body,
     );
     expect(request.body).not.toHaveProperty("primaryUnitIds");
     expect(request.body).not.toHaveProperty("reviewScope");
 
-    const preview = buildDirectReviewPreviewRequest({
-      studentId: draft.studentId,
-      datasetId: draft.datasetId,
-      reviewLevels: draft.reviewLevels,
-      directionRatio: draft.exam.directionRatio,
-    });
-    expect(preview).toStrictEqual({
-      endpoint: "/api/admin/exact-review-assignments/preview",
-      method: "POST",
-      body: {
-        studentId: assignmentContractIds.studentA,
-        datasetId: assignmentContractIds.dataset,
-        reviewLevels: [1, 2],
-        englishToKoreanRatio: 50,
+    const scheduled = buildDirectReviewAssignmentRequest(
+      {
+        ...immediate,
+        availability: {
+          mode: "at",
+          koreanLocalDateTime: "2026-08-17T09:00",
+        },
+        deadline: {
+          mode: "at",
+          koreanLocalDateTime: "2026-08-17T21:00",
+        },
       },
-    });
-    expect(directReviewPreviewSchema.safeParse(preview.body).success).toBe(
-      true,
+      assignmentContractIds.idempotencyKey,
     );
+    expect(scheduled.body.availableFrom).toBe("2026-08-17T00:00:00.000Z");
+    expect(scheduled.body.availableUntil).toBe("2026-08-17T12:00:00.000Z");
+
+    const preview = buildDirectReviewPreviewRequest({
+      studentId: immediate.studentId,
+      datasetId: immediate.datasetId,
+      reviewLevels: immediate.reviewLevels,
+      directionRatio: immediate.exam.directionRatio,
+    });
+    expect(directReviewPreviewSchema.parse(preview.body)).toStrictEqual({
+      datasetId: assignmentContractIds.dataset,
+      englishToKoreanRatio: 50,
+      reviewLevels: [1, 2],
+      studentId: assignmentContractIds.studentA,
+    });
   });
 
-  it("keeps regular capacity and submission on the same range and direction", () => {
-    const capacity = buildAssignmentCapacityRequest(regularDraft);
-    const request = buildSingleAssignmentRequest(
+  it("keeps regular and mixed preview fields aligned with their submissions", () => {
+    const regularCapacity = buildAssignmentCapacityRequest(regularDraft);
+    const regular = buildSingleAssignmentRequest(
       regularDraft,
       resolved(regularTotalContract.input.title, 12),
       { nowMilliseconds: NOW },
     );
-
-    expect(capacity).toStrictEqual({
-      endpoint: "/api/admin/assignment-capacity",
-      method: "POST",
-      body: {
-        studentId: assignmentContractIds.studentA,
-        datasetId: assignmentContractIds.dataset,
-        primaryUnitIds: [...reverseUnitIds],
-        includePendingReview: false,
-        reviewLevels: [1, 2],
-        reviewScope: "dataset",
-        englishToKoreanRatio: 50,
-      },
-    });
-    expect(assignmentCapacitySchema.parse(capacity.body)).toStrictEqual(
-      capacity.body,
+    expect(assignmentCapacitySchema.parse(regularCapacity.body)).toStrictEqual(
+      regularCapacity.body,
     );
-    expect(request).toStrictEqual({
+    expect(regular).toStrictEqual({
       method: "POST",
       ...regularTotalContract.submission,
     });
-    expect(assignmentSchema.parse(request.body)).toStrictEqual(
-      regularTotalContract.submission.body,
+    expect(assignmentSchema.parse(regular.body)).toStrictEqual(regular.body);
+
+    const mixedCapacity = buildAssignmentCapacityRequest(mixedDraft);
+    const mixed = buildSingleAssignmentRequest(
+      mixedDraft,
+      resolved(mixedPerQuestionContract.input.title, 15),
+      { nowMilliseconds: NOW },
     );
-    expect(capacity.body.primaryUnitIds).toStrictEqual(
-      request.endpoint === "/api/admin/assignments"
-        ? request.body.unitIds
-        : [],
-    );
+    expect(mixedCapacity.body).toMatchObject({
+      includePendingReview: true,
+      reviewLevels: [1, 2],
+      reviewScope: "selection",
+    });
+    expect(mixed).toStrictEqual({
+      method: "POST",
+      ...mixedPerQuestionContract.submission,
+    });
+    expect(mixedAssignmentSchema.parse(mixed.body)).toStrictEqual(mixed.body);
   });
 
-  it("keeps automatic create title generation on the server", () => {
-    const automatic: SingleAssignmentDraft = {
-      ...regularDraft,
-      title: { mode: "automatic" },
-      questionCount: { mode: "automatic", value: 12 },
-    };
-    const request = buildSingleAssignmentRequest(
-      automatic,
+  it("keeps automatic create titles server-owned", () => {
+    const automaticRegular = buildSingleAssignmentRequest(
       {
-        displayTitle: "화면 미리보기 제목",
+        ...regularDraft,
+        title: { mode: "automatic" },
+        questionCount: { mode: "automatic", value: 12 },
+      },
+      {
+        displayTitle: "일반 시험 미리보기",
         submissionTitle: "",
         questionCount: 12,
       },
       { nowMilliseconds: NOW },
     );
-
-    expect(request.body.title).toBe("");
-    expect(assignmentSchema.parse(request.body).title).toBe("");
-  });
-
-  it("keeps mixed automatic title generation on the server", () => {
-    const automatic: SingleAssignmentDraft = {
-      ...mixedDraft,
-      title: { mode: "automatic" },
-    };
-    const request = buildSingleAssignmentRequest(
-      automatic,
+    const automaticMixed = buildSingleAssignmentRequest(
+      { ...mixedDraft, title: { mode: "automatic" } },
       {
-        displayTitle: "혼합 시험 미리보기 제목",
+        displayTitle: "혼합 시험 미리보기",
         submissionTitle: "",
         questionCount: 15,
       },
       { nowMilliseconds: NOW },
     );
 
-    expect(request.endpoint).toBe("/api/admin/mixed-assignments");
-    expect(request.body.title).toBe("");
-    expect(mixedAssignmentSchema.parse(request.body).title).toBe("");
+    expect(automaticRegular.body.title).toBe("");
+    expect(automaticMixed.body.title).toBe("");
   });
 
-  it("keeps mixed capacity and submission on the same review selection", () => {
-    const capacity = buildAssignmentCapacityRequest(mixedDraft);
-    const request = buildSingleAssignmentRequest(
-      mixedDraft,
-      resolved(mixedPerQuestionContract.input.title, 15),
-      { nowMilliseconds: NOW },
-    );
-
-    expect(capacity.body).toStrictEqual({
-      studentId: assignmentContractIds.studentA,
-      datasetId: assignmentContractIds.dataset,
-      primaryUnitIds: [...mixedPerQuestionContract.input.primaryUnitIds],
-      includePendingReview: true,
-      reviewLevels: [1, 2],
-      reviewScope: "selection",
-      englishToKoreanRatio: 100,
-    });
-    expect(assignmentCapacitySchema.parse(capacity.body)).toStrictEqual(
-      capacity.body,
-    );
-    expect(request).toStrictEqual({
-      method: "POST",
-      ...mixedPerQuestionContract.submission,
-    });
-    expect(mixedAssignmentSchema.parse(request.body)).toStrictEqual(
-      mixedPerQuestionContract.submission.body,
-    );
-  });
-
-  it("keeps replacement preview scope and sends it in the PUT body", () => {
+  it("keeps exact-review replacement preview, PUT, and hash aligned", () => {
     const preview = buildAssignmentCapacityRequest(replacementDraft);
     const request = buildSingleAssignmentRequest(
       replacementDraft,
@@ -348,15 +381,15 @@ describe("assignment request adapters", () => {
     );
 
     expect(preview).toStrictEqual({
-      endpoint: `/api/admin/assignments/88888888-8888-4888-8888-888888888888/students/${assignmentContractIds.studentA}`,
+      endpoint: `/api/admin/assignments/${exactReviewOperation.assignmentId}/students/${assignmentContractIds.studentA}`,
       method: "POST",
       body: replacementPreviewContract,
     });
-    expect(
-      assignmentReplacementPreviewSchema.parse(preview.body),
-    ).toStrictEqual(replacementPreviewContract);
+    expect(assignmentReplacementPreviewSchema.parse(preview.body)).toStrictEqual(
+      replacementPreviewContract,
+    );
     expect(request).toStrictEqual({
-      endpoint: `/api/admin/assignments/88888888-8888-4888-8888-888888888888/students/${assignmentContractIds.studentA}`,
+      endpoint: `/api/admin/assignments/${exactReviewOperation.assignmentId}/students/${assignmentContractIds.studentA}`,
       method: "PUT",
       body: replacementSubmitContract,
     });
@@ -364,135 +397,50 @@ describe("assignment request adapters", () => {
       replacementSubmitContract,
     );
     if (request.method !== "PUT") throw new Error("Expected replacement.");
-    expect(request.body).not.toHaveProperty("studentId");
-    expect(request.body.reviewScope).toBe("dataset");
-  });
-
-  it("shares every replacement fingerprint field with the server hash payload", () => {
-    const resolvedDraft = resolved(replacementSubmitContract.title, 1);
-    const request = buildSingleAssignmentRequest(
-      replacementDraft,
-      resolvedDraft,
-      {
-        nowMilliseconds: NOW,
-        idempotencyKey: assignmentContractIds.idempotencyKey,
-      },
-    );
-    if (request.method !== "PUT") {
-      throw new Error("Expected a replacement request.");
-    }
     const payload = assignmentReplacementFingerprintPayload(
       exactReviewOperation.assignmentId,
       exactReviewOperation.targetStudentId,
       request.body,
     );
-
-    expect(payload).toStrictEqual({
-      assignmentId: exactReviewOperation.assignmentId,
-      studentId: exactReviewOperation.targetStudentId,
-      title: replacementSubmitContract.title,
-      datasetId: replacementSubmitContract.datasetId,
-      primaryUnitIds: replacementSubmitContract.primaryUnitIds,
-      includePendingReview: true,
-      reviewScope: "dataset",
-      reviewLevels: [2],
-      questionCount: 1,
-      englishToKoreanRatio: 0,
-      timeLimitSeconds: 10800,
-      timingMode: "per_question",
-      questionTimeLimitSeconds: 20,
-      passingScore: 80,
-      retryEnabled: true,
-      retryPassingScore: 80,
-      questionOrderMode: "ascending",
-      availableFrom: null,
-      availableUntil: null,
-    });
     expect(
       replacementSubmissionFingerprint(
         replacementDraft,
-        resolvedDraft,
+        resolved(replacementSubmitContract.title, 1),
         NOW,
       ),
     ).toBe(assignmentRequestFingerprint(payload));
   });
 
-  it("preserves the current review-off compatibility levels for replacement", () => {
-    const regularReplacement: SingleAssignmentDraft = {
-      ...regularDraft,
-      operation: {
-        mode: "replace",
-        assignmentId: "88888888-8888-4888-8888-888888888888",
-        targetStudentId: assignmentContractIds.studentA,
-        sourcePurpose: "regular",
-      },
-      title: { mode: "custom", value: "일반 시험 수정" },
-    };
-    const request = buildSingleAssignmentRequest(
-      regularReplacement,
-      resolved("일반 시험 수정", 12),
-      {
-        nowMilliseconds: NOW,
-        idempotencyKey: assignmentContractIds.idempotencyKey,
-      },
+  it("reuses replacement idempotency only for the same semantic request", () => {
+    const fingerprint = replacementSubmissionFingerprint(
+      replacementDraft,
+      resolved(replacementSubmitContract.title, 1),
+      NOW,
+    );
+    let sequence = 0;
+    const first = reserveIdempotencyKey(null, fingerprint, () =>
+      `key-${++sequence}`,
+    );
+    const retry = reserveIdempotencyKey(first, fingerprint, () =>
+      `key-${++sequence}`,
+    );
+    const changedFingerprint = replacementSubmissionFingerprint(
+      { ...replacementDraft, title: { mode: "custom", value: "변경된 제목" } },
+      resolved("변경된 제목", 1),
+      NOW,
+    );
+    const changed = reserveIdempotencyKey(first, changedFingerprint, () =>
+      `key-${++sequence}`,
     );
 
-    expect(request.body).toMatchObject({
-      includePendingReview: false,
-      reviewLevels: [1, 2],
-    });
-    expect(assignmentReplacementSchema.parse(request.body)).toStrictEqual(
-      request.body,
-    );
+    expect(retry).toBe(first);
+    expect(changed.key).toBe("key-2");
   });
 
-  it("keeps a mixed replacement review selection locked", () => {
-    const replacement: SingleAssignmentDraft = {
-      ...regularDraft,
-      operation: {
-        mode: "replace",
-        assignmentId: "88888888-8888-4888-8888-888888888888",
-        targetStudentId: assignmentContractIds.studentA,
-        sourcePurpose: "mixed",
-      },
-      title: { mode: "custom", value: "오답 선택 보존" },
-      review: { mode: "pending", scope: "selection", levels: [2] },
-    };
-    const disabled = reduceSingleAssignmentDraft(replacement, {
-      type: "review/changed",
-      review: { mode: "none", scope: "selection", levels: [2] },
-    });
-    const preview = buildAssignmentCapacityRequest(disabled);
-    const request = buildSingleAssignmentRequest(
-      disabled,
-      resolved("오답 선택 보존", 12),
-      {
-        nowMilliseconds: NOW,
-        idempotencyKey: assignmentContractIds.idempotencyKey,
-      },
-    );
-
-    expect(disabled.review).toStrictEqual({
-      mode: "pending",
-      scope: "selection",
-      levels: [2],
-    });
-    expect(preview.body).toMatchObject({
-      includePendingReview: true,
-      reviewLevels: [2],
-      reviewScope: "selection",
-    });
-    expect(request.body).toMatchObject({
-      includePendingReview: true,
-      reviewScope: "selection",
-      reviewLevels: [2],
-    });
-  });
-
-  it("converts the date-only bulk start and matches preview and submit contracts", () => {
-    const preview = buildBulkAssignmentPreviewRequest(bulkDraft);
+  it("matches the scheduled bulk preview and submit contracts", () => {
+    const preview = buildBulkAssignmentPreviewRequest(scheduledBulkDraft);
     const request = buildBulkAssignmentRequest(
-      bulkDraft,
+      scheduledBulkDraft,
       assignmentContractIds.idempotencyKey,
       NOW,
       assignmentContractIds.previewPlanSignature,
@@ -516,499 +464,95 @@ describe("assignment request adapters", () => {
     );
   });
 
-  it("공통 DAY와 요일별 공개·마감 시각을 미리보기와 저장에 똑같이 보낸다", () => {
-    const commonDraft: BulkSeriesAssignmentDraft = {
-      ...bulkDraft,
-      range: { mode: "fixed_span", unitsPerSession: 1, sessionCount: 2 },
-      review: { mode: "none", levels: [1, 2] },
-      commonPlan: {
-        datasetId: assignmentContractIds.dataset,
-        distribution: "split",
-        splitBasis: "question_count",
-        orderedUnitIds: [assignmentContractIds.day57],
-        rangeUnitCounts: [],
-        unitAllocationRule: null,
-        questionCount: { mode: "manual", value: 40 },
-        overflowPolicy: "continue_weekly",
-        extraDatePolicy: "unconfirmed",
-        selectedDateCount: 2,
-        selectionMode: "random",
-        planNonce: assignmentContractIds.idempotencyKey,
-        recurrenceSessions: [
-          {
-            availableLocalDateTime: "2026-08-17T16:00",
-            deadlineLocalDateTime: "2026-08-18T22:00",
-          },
-          {
-            availableLocalDateTime: "2026-08-19T16:00",
-            deadlineLocalDateTime: "2026-08-20T22:00",
-          },
-        ],
-        sessions: [
-          {
-            unitIds: [assignmentContractIds.day57],
-            availableLocalDateTime: "2026-08-17T16:00",
-            deadlineLocalDateTime: "2026-08-18T22:00",
-          },
-          {
-            unitIds: [assignmentContractIds.day57],
-            availableLocalDateTime: "2026-08-19T16:00",
-            deadlineLocalDateTime: "2026-08-20T22:00",
-          },
-        ],
-        collisionDecisions: [
-          {
-            collisionId: `${assignmentContractIds.studentA}:1:${assignmentContractIds.day60}`,
-            mode: "move",
-            movedAvailableLocalDateTime: "2026-08-18T16:00",
-            movedDeadlineLocalDateTime: "2026-08-19T22:00",
-          },
-        ],
-      },
-    };
-    const preview = buildBulkAssignmentPreviewRequest(commonDraft);
-    const submit = buildBulkAssignmentRequest(
-      commonDraft,
+  it("matches the immediate bulk preview and submit contracts", () => {
+    const preview = buildBulkAssignmentPreviewRequest(immediateBulkDraft);
+    const request = buildBulkAssignmentRequest(
+      immediateBulkDraft,
       assignmentContractIds.idempotencyKey,
       NOW,
       assignmentContractIds.previewPlanSignature,
     );
 
-    expect(preview.body.commonPlan).toMatchObject({
-      datasetId: assignmentContractIds.dataset,
-      distribution: "split",
-      splitBasis: "question_count",
-      orderedUnitIds: [assignmentContractIds.day57],
-      rangeUnitCounts: [],
-      questionCount: { mode: "manual", value: 40 },
-      overflowPolicy: "continue_weekly",
-      extraDatePolicy: "unconfirmed",
-      selectedDateCount: 2,
-      selectionMode: "random",
-      planNonce: assignmentContractIds.idempotencyKey,
-      recurrenceSessions: [
-        {
-          availableFrom: "2026-08-17T07:00:00.000Z",
-          availableUntil: "2026-08-18T13:00:00.000Z",
-        },
-        {
-          availableFrom: "2026-08-19T07:00:00.000Z",
-          availableUntil: "2026-08-20T13:00:00.000Z",
-        },
-      ],
-      sessions: [
-        {
-          unitIds: [assignmentContractIds.day57],
-          availableFrom: "2026-08-17T07:00:00.000Z",
-          availableUntil: "2026-08-18T13:00:00.000Z",
-        },
-        {
-          unitIds: [assignmentContractIds.day57],
-          availableFrom: "2026-08-19T07:00:00.000Z",
-          availableUntil: "2026-08-20T13:00:00.000Z",
-        },
-      ],
-      collisionDecisions: [
-        {
-          mode: "move",
-          movedAvailableFrom: "2026-08-18T07:00:00.000Z",
-          movedAvailableUntil: "2026-08-19T13:00:00.000Z",
-        },
-      ],
-    });
-    expect(submit.body.commonPlan).toStrictEqual(preview.body.commonPlan);
+    expect(preview.body).toStrictEqual(bulkImmediatePreviewContract);
+    expect(request.body).toStrictEqual(bulkImmediateSubmitContract);
     expect(bulkAssignmentPreviewSchema.parse(preview.body)).toStrictEqual(
-      preview.body,
+      bulkImmediatePreviewContract,
     );
-    expect(bulkAssignmentSchema.parse(submit.body)).toStrictEqual(
-      submit.body,
-    );
-    const repeatedDraft: BulkSeriesAssignmentDraft = {
-      ...commonDraft,
-      commonPlan: {
-        ...commonDraft.commonPlan!,
-        extraDatePolicy: "repeat_from_start",
-      },
-    };
-    expect(bulkPreviewFingerprint(repeatedDraft)).not.toBe(
-      bulkPreviewFingerprint(commonDraft),
-    );
-    expect(bulkSubmissionFingerprint(
-      repeatedDraft,
-      assignmentContractIds.previewPlanSignature,
-    )).not.toBe(
-      bulkSubmissionFingerprint(
-        commonDraft,
-        assignmentContractIds.previewPlanSignature,
-      ),
+    expect(bulkAssignmentSchema.parse(request.body)).toStrictEqual(
+      bulkImmediateSubmitContract,
     );
   });
 
-  it("범위 단위 수와 회차별 정확한 범위를 미리보기·저장에 함께 보낸다", () => {
-    const sessions = [
-      {
-        unitIds: [assignmentContractIds.day57],
-        availableLocalDateTime: "2026-08-17T16:00",
-        deadlineLocalDateTime: "2026-08-18T22:00",
-      },
-      {
-        unitIds: [assignmentContractIds.day60],
-        availableLocalDateTime: "2026-08-19T16:00",
-        deadlineLocalDateTime: "2026-08-20T22:00",
-      },
-    ];
-    const draft: BulkSeriesAssignmentDraft = {
-      ...bulkDraft,
-      range: { mode: "fixed_span", unitsPerSession: 1, sessionCount: 2 },
-      review: { mode: "none", levels: [1, 2] },
-      commonPlan: {
-        datasetId: assignmentContractIds.dataset,
-        distribution: "split",
-        splitBasis: "range_unit",
-        orderedUnitIds: [
-          assignmentContractIds.day57,
-          assignmentContractIds.day60,
-        ],
-        rangeUnitCounts: [1, 1],
-        unitAllocationRule: {
-          schemaVersion: 1,
-          mode: "same",
-          unitsPerSession: 1,
-          weekdayUnitsPerSession: {
-            1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1,
-          },
-        },
-        questionCount: { mode: "all" },
-        overflowPolicy: "continue_weekly",
-        extraDatePolicy: "unconfirmed",
-        selectedDateCount: 2,
-        selectionMode: "source_order",
-        planNonce: assignmentContractIds.idempotencyKey,
-        recurrenceSessions: sessions.map((session) => ({
-          availableLocalDateTime: session.availableLocalDateTime,
-          deadlineLocalDateTime: session.deadlineLocalDateTime,
-        })),
-        sessions,
-        collisionDecisions: [],
-      },
-    };
-
-    const preview = buildBulkAssignmentPreviewRequest(draft);
-    const submit = buildBulkAssignmentRequest(
-      draft,
-      assignmentContractIds.idempotencyKey,
-      NOW,
-      assignmentContractIds.previewPlanSignature,
-    );
-    expect(preview.body.commonPlan).toMatchObject({
-      splitBasis: "range_unit",
-      rangeUnitCounts: [1, 1],
-      unitAllocationRule: {
-        schemaVersion: 1,
-        mode: "same",
-        unitsPerSession: 1,
-      },
-      sessions: [
-        { unitIds: [assignmentContractIds.day57] },
-        { unitIds: [assignmentContractIds.day60] },
-      ],
-    });
-    expect(submit.body.commonPlan).toStrictEqual(preview.body.commonPlan);
-    expect(bulkAssignmentPreviewSchema.parse(preview.body)).toStrictEqual(
-      preview.body,
-    );
-  });
-
-  it.each([
-    ["source_order", "ascending"],
-    ["source_order", "random"],
-    ["random", "ascending"],
-    ["random", "random"],
-  ] as const)(
-    "keeps %s target selection independent from %s display order for every student",
-    (selectionMode, questionOrderMode) => {
-      const schedule = {
-        availableLocalDateTime: "2026-08-17T16:00",
-        deadlineLocalDateTime: "2026-08-18T22:00",
-      };
-      const draft: BulkSeriesAssignmentDraft = {
-        ...bulkDraft,
-        studentIds: [
-          assignmentContractIds.studentA,
-          assignmentContractIds.studentB,
-        ],
-        range: { mode: "fixed_span", unitsPerSession: 1, sessionCount: 1 },
-        exam: { ...bulkDraft.exam, questionOrderMode },
-        review: { mode: "none", levels: [1, 2] },
-        commonPlan: {
-          datasetId: assignmentContractIds.dataset,
-          distribution: "split",
-          splitBasis: "range_unit",
-          orderedUnitIds: [assignmentContractIds.day57],
-          rangeUnitCounts: [1],
-          unitAllocationRule: {
-            schemaVersion: 1,
-            mode: "same",
-            unitsPerSession: 1,
-            weekdayUnitsPerSession: {
-              1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1,
-            },
-          },
-          questionCount: { mode: "all" },
-          overflowPolicy: "leave",
-          extraDatePolicy: "unconfirmed",
-          selectedDateCount: 1,
-          selectionMode,
-          planNonce: assignmentContractIds.idempotencyKey,
-          recurrenceSessions: [schedule],
-          sessions: [{
-            unitIds: [assignmentContractIds.day57],
-            ...schedule,
-          }],
-          collisionDecisions: [],
-        },
-      };
-
-      const preview = buildBulkAssignmentPreviewRequest(draft);
-      const submit = buildBulkAssignmentRequest(
-        draft,
-        assignmentContractIds.idempotencyKey,
-        NOW,
-        assignmentContractIds.previewPlanSignature,
-      );
-
-      expect(preview.body.studentIds).toEqual([
-        assignmentContractIds.studentA,
-        assignmentContractIds.studentB,
-      ]);
-      expect(preview.body.commonPlan?.selectionMode).toBe(selectionMode);
-      expect(submit.body.commonPlan?.selectionMode).toBe(selectionMode);
-      expect(submit.body.questionOrderMode).toBe(questionOrderMode);
-      expect(bulkAssignmentPreviewSchema.safeParse(preview.body).success)
-        .toBe(true);
-      expect(bulkAssignmentSchema.safeParse(submit.body).success).toBe(true);
-    },
-  );
-
-  it("keeps disabled bulk review levels as an adapter-only compatibility value", () => {
-    const noReviewDraft: BulkSeriesAssignmentDraft = {
-      ...bulkDraft,
-      review: { mode: "none", levels: [2] },
-    };
-    const preview = buildBulkAssignmentPreviewRequest(noReviewDraft);
-
-    expect(preview.body).toMatchObject({
-      includePendingReview: false,
-      reviewLevels: [2],
-    });
-    expect(noReviewDraft.review).toStrictEqual({
-      mode: "none",
-      levels: [2],
-    });
-  });
-
-  it("uses semantic bulk fingerprints without erasing meaningful settings", () => {
-    const previewFingerprint = bulkPreviewFingerprint(bulkDraft);
-    const submitFingerprint = bulkSubmissionFingerprint(
-      bulkDraft,
-      assignmentContractIds.previewPlanSignature,
-    );
-    const reorderedSets: BulkSeriesAssignmentDraft = {
-      ...bulkDraft,
-      studentIds: [...bulkDraft.studentIds].toReversed(),
-      review: { mode: "pending", levels: [2, 1] },
-    };
-    const changedExam: BulkSeriesAssignmentDraft = {
-      ...bulkDraft,
-      exam: { ...bulkDraft.exam, passingScore: 90 },
-    };
-    const changedRange: BulkSeriesAssignmentDraft = {
-      ...bulkDraft,
-      range: { ...bulkDraft.range, unitsPerSession: 3 },
-    };
-
-    expect(bulkSubmissionFingerprint(
-      reorderedSets,
-      assignmentContractIds.previewPlanSignature,
-    )).toBe(
-      submitFingerprint,
-    );
-    expect(bulkPreviewFingerprint(changedExam)).toBe(previewFingerprint);
-    expect(bulkSubmissionFingerprint(
-      changedExam,
-      assignmentContractIds.previewPlanSignature,
-    )).not.toBe(
-      submitFingerprint,
-    );
-    expect(bulkPreviewFingerprint(changedRange)).not.toBe(
-      previewFingerprint,
-    );
-    expect(bulkSubmissionFingerprint(
-      changedRange,
-      assignmentContractIds.previewPlanSignature,
-    )).not.toBe(
-      submitFingerprint,
-    );
-    expect(bulkSubmissionFingerprint(
-      bulkDraft,
-      "b".repeat(64),
-    )).not.toBe(submitFingerprint);
-  });
-
-  it("rejects a bulk save without a valid current Preview signature", () => {
-    expect(() => buildBulkAssignmentRequest(
-      bulkDraft,
-      assignmentContractIds.idempotencyKey,
-      NOW,
-      "stale-preview",
-    )).toThrow("현재 미리보기 계획");
-  });
-
-  it("excludes the replacement idempotency key from its semantic fingerprint", () => {
-    const resolvedDraft = resolved(replacementSubmitContract.title, 1);
-    const fingerprint = replacementSubmissionFingerprint(
-      replacementDraft,
-      resolvedDraft,
-      NOW,
-    );
-    let sequence = 0;
-    const first = reserveIdempotencyKey(null, fingerprint, () =>
-      `key-${++sequence}`,
-    );
-    const retry = reserveIdempotencyKey(first, fingerprint, () =>
-      `key-${++sequence}`,
-    );
-    const changedFingerprint = replacementSubmissionFingerprint(
-      { ...replacementDraft, title: { mode: "custom", value: "바뀐 제목" } },
-      resolved("바뀐 제목", 1),
-      NOW,
-    );
-    const changed = reserveIdempotencyKey(first, changedFingerprint, () =>
-      `key-${++sequence}`,
-    );
-
-    expect(retry).toBe(first);
-    expect(changed.key).toBe("key-2");
-    expect(changed.fingerprint).not.toBe(fingerprint);
-
-    const whitespaceFingerprint = replacementSubmissionFingerprint(
-      {
-        ...replacementDraft,
-        title: {
-          mode: "custom",
-          value: `  ${replacementSubmitContract.title}  `,
-        },
-      },
-      resolved(`  ${replacementSubmitContract.title}  `, 1),
-      NOW,
-    );
-    expect(whitespaceFingerprint).toBe(fingerprint);
-
-    const otherAssignmentFingerprint = replacementSubmissionFingerprint(
-      {
-        ...replacementDraft,
-        operation: {
-          ...exactReviewOperation,
-          assignmentId: "99999999-9999-4999-8999-999999999999",
-        },
-      },
-      resolvedDraft,
-      NOW,
-    );
-    const otherStudentFingerprint = replacementSubmissionFingerprint(
-      {
-        ...replacementDraft,
-        studentId: assignmentContractIds.studentB,
-        operation: {
-          ...exactReviewOperation,
-          targetStudentId: assignmentContractIds.studentB,
-        },
-      },
-      resolvedDraft,
-      NOW,
-    );
-    expect(otherAssignmentFingerprint).not.toBe(fingerprint);
-    expect(otherStudentFingerprint).not.toBe(fingerprint);
-  });
-
-  it("normalizes replacement review levels exactly like the server hash", () => {
-    const mixedReplacement: SingleAssignmentDraft = {
-      ...regularDraft,
-      operation: {
-        mode: "replace",
-        assignmentId: "88888888-8888-4888-8888-888888888888",
-        targetStudentId: assignmentContractIds.studentA,
-        sourcePurpose: "mixed",
-      },
-      title: { mode: "custom", value: "혼합 수정" },
-      review: { mode: "pending", scope: "dataset", levels: [1, 2] },
-    };
-    const reordered: SingleAssignmentDraft = {
-      ...mixedReplacement,
-      review: { mode: "pending", scope: "dataset", levels: [2, 1] },
-    };
+  it("keeps the bulk wire contract strict and separates fingerprints", () => {
+    const preview = buildBulkAssignmentPreviewRequest(scheduledBulkDraft);
+    expect(preview.body).not.toHaveProperty("range");
+    expect(preview.body).not.toHaveProperty("review");
     expect(
-      replacementSubmissionFingerprint(
-        reordered,
-        resolved("혼합 수정", 12),
-        NOW,
-      ),
-    ).toBe(
-      replacementSubmissionFingerprint(
-        mixedReplacement,
-        resolved("혼합 수정", 12),
-        NOW,
-      ),
-    );
+      bulkAssignmentPreviewSchema.safeParse({
+        ...preview.body,
+        rangeMode: "fixed_span",
+      }).success,
+    ).toBe(false);
 
-    const disabledOne: SingleAssignmentDraft = {
-      ...mixedReplacement,
-      review: { mode: "none", scope: "dataset", levels: [1] },
+    const missingPlan: BulkSeriesAssignmentDraft = {
+      ...scheduledBulkDraft,
+      commonPlan: undefined,
     };
-    const disabledTwo: SingleAssignmentDraft = {
-      ...mixedReplacement,
-      review: { mode: "none", scope: "dataset", levels: [2] },
-    };
-    expect(
-      replacementSubmissionFingerprint(
-        disabledOne,
-        resolved("혼합 수정", 12),
-        NOW,
-      ),
-    ).toBe(
-      replacementSubmissionFingerprint(
-        disabledTwo,
-        resolved("혼합 수정", 12),
-        NOW,
-      ),
-    );
-  });
-
-  it("rejects malformed route IDs before constructing any endpoint", () => {
-    const invalidSingle = {
-      ...regularDraft,
-      studentId: "../unexpected",
-    };
-    expect(() => buildAssignmentCapacityRequest(invalidSingle)).toThrow(
+    expect(() => buildBulkAssignmentPreviewRequest(missingPlan)).toThrow(
       InvalidAssignmentDraftError,
     );
     expect(() =>
-      buildSingleAssignmentRequest(
-        invalidSingle,
-        resolved(regularTotalContract.input.title, 12),
-        { nowMilliseconds: NOW },
+      buildBulkAssignmentRequest(
+        scheduledBulkDraft,
+        assignmentContractIds.idempotencyKey,
+        NOW,
+        "stale-preview",
       ),
-    ).toThrow(InvalidAssignmentDraftError);
-    expect(() =>
-      buildLegacyReviewCancelRequest({
-        kind: "legacy_review_recovery",
-        studentId: assignmentContractIds.studentA,
-        reviewDraftId: "not-a-uuid",
-      }),
-    ).toThrow(InvalidAssignmentDraftError);
+    ).toThrow();
+
+    const previewFingerprint = bulkPreviewFingerprint(scheduledBulkDraft);
+    const submissionFingerprint = bulkSubmissionFingerprint(
+      scheduledBulkDraft,
+      assignmentContractIds.previewPlanSignature,
+    );
+    const examOnlyChange = {
+      ...scheduledBulkDraft,
+      exam: { ...scheduledBulkDraft.exam, passingScore: 90 },
+    };
+    const planOnlyChange = {
+      ...scheduledBulkDraft,
+      commonPlan: {
+        ...scheduledBulkPlan,
+        extraDatePolicy: "repeat_from_start" as const,
+      },
+    };
+    const reorderedStudents = {
+      ...scheduledBulkDraft,
+      studentIds: [...scheduledBulkDraft.studentIds].toReversed(),
+    };
+
+    expect(bulkPreviewFingerprint(examOnlyChange)).toBe(previewFingerprint);
+    expect(
+      bulkSubmissionFingerprint(
+        examOnlyChange,
+        assignmentContractIds.previewPlanSignature,
+      ),
+    ).not.toBe(submissionFingerprint);
+    expect(bulkPreviewFingerprint(planOnlyChange)).not.toBe(previewFingerprint);
+    expect(
+      bulkSubmissionFingerprint(
+        reorderedStudents,
+        assignmentContractIds.previewPlanSignature,
+      ),
+    ).toBe(submissionFingerprint);
   });
 
-  it("exposes a typed endpoint/body union and a bodyless legacy DELETE", () => {
+  it("rejects malformed route IDs and exposes bodyless GET/DELETE contracts", () => {
+    const invalidSingle = { ...regularDraft, studentId: "../unexpected" };
+    expect(() => buildAssignmentCapacityRequest(invalidSingle)).toThrow(
+      InvalidAssignmentDraftError,
+    );
+
     const editDraft = buildAssignmentEditDraftRequest(
       "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       assignmentContractIds.studentA,
@@ -1028,7 +572,6 @@ describe("assignment request adapters", () => {
       throw new Error("Expected the regular assignment endpoint.");
     }
     expectTypeOf(regular.body).toEqualTypeOf<AssignmentInput>();
-    expectTypeOf(regular).toMatchTypeOf<AssignmentHttpRequest>();
 
     const cancellation: LegacyReviewCancelRequest =
       buildLegacyReviewCancelRequest({

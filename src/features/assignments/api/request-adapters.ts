@@ -7,7 +7,7 @@ import type {
 import type {
   BulkAssignmentInput,
   BulkAssignmentPreviewInput,
-} from "@/lib/admin/bulk-assignment-request";
+} from "../contracts/bulk-assignment-request";
 import type {
   DirectReviewAssignmentInput,
   DirectReviewPreviewInput,
@@ -17,6 +17,7 @@ import type { AssignmentInput } from "@/lib/admin/regular-assignment-request";
 
 import { assignmentRequestFingerprint } from "../domain/fingerprint";
 import type {
+  AssignmentAvailability,
   AssignmentDirectionRatio,
   AssignmentDeadline,
   BulkSeriesAssignmentDraft,
@@ -143,7 +144,7 @@ function deadlineToIso(deadline: AssignmentDeadline): string | null {
 }
 
 function availabilityToIso(
-  availability: SingleAssignmentDraft["availability"],
+  availability: AssignmentAvailability,
 ): string | null {
   if (availability.mode === "immediate") return null;
   const value = koreanDateTimeLocalToIso(availability.koreanLocalDateTime);
@@ -166,6 +167,7 @@ export function buildDirectReviewAssignmentRequest(
       totalQuestionCount: draft.questionCount,
       title: draft.title,
       ...examSettingsToApi(draft.exam),
+      availableFrom: availabilityToIso(draft.availability),
       availableUntil: deadlineToIso(draft.deadline),
     },
   };
@@ -395,99 +397,66 @@ export function buildSingleAssignmentRequest(
 }
 
 function bulkSelectionBody(draft: BulkSeriesAssignmentDraft) {
-  const firstAvailableFrom = koreanDateTimeLocalToIso(
-    `${draft.firstAvailableDateKorean}T00:00`,
-  );
-  if (!firstAvailableFrom) {
-    throw new Error("검증되지 않은 한국시간 시작 시각입니다.");
+  if (!draft.commonPlan) {
+    throw new Error("공통 배정 계획을 먼저 확인해 주세요.");
   }
-  const commonPlan = draft.commonPlan
-    ? {
-        datasetId: draft.commonPlan.datasetId,
-        distribution: draft.commonPlan.distribution,
-        splitBasis: draft.commonPlan.splitBasis,
-        orderedUnitIds: [...draft.commonPlan.orderedUnitIds],
-        rangeUnitCounts: [...draft.commonPlan.rangeUnitCounts],
-        unitAllocationRule: draft.commonPlan.unitAllocationRule
-          ? {
-              ...draft.commonPlan.unitAllocationRule,
-              weekdayUnitsPerSession: {
-                ...draft.commonPlan.unitAllocationRule.weekdayUnitsPerSession,
-              },
-            }
-          : null,
-        questionCount: draft.commonPlan.questionCount,
-        overflowPolicy: draft.commonPlan.overflowPolicy,
-        extraDatePolicy: draft.commonPlan.extraDatePolicy,
-        selectedDateCount: draft.commonPlan.selectedDateCount,
-        selectionMode: draft.commonPlan.selectionMode,
-        planNonce: draft.commonPlan.planNonce,
-        recurrenceSessions: draft.commonPlan.recurrenceSessions.map(
-          (session) => {
-            const availableFrom = koreanDateTimeLocalToIso(
-              session.availableLocalDateTime,
-            );
-            const availableUntil = session.deadlineLocalDateTime
-              ? koreanDateTimeLocalToIso(session.deadlineLocalDateTime)
-              : null;
-            if (!availableFrom ||
-              (session.deadlineLocalDateTime && !availableUntil)) {
-              throw new Error("검증되지 않은 반복 일정 시각입니다.");
-            }
-            return { availableFrom, availableUntil };
+  const commonPlan = {
+    datasetId: draft.commonPlan.datasetId,
+    distribution: draft.commonPlan.distribution,
+    splitBasis: draft.commonPlan.splitBasis,
+    orderedUnitIds: [...draft.commonPlan.orderedUnitIds],
+    rangeUnitCounts: [...draft.commonPlan.rangeUnitCounts],
+    unitAllocationRule: draft.commonPlan.unitAllocationRule
+      ? {
+          ...draft.commonPlan.unitAllocationRule,
+          weekdayUnitsPerSession: {
+            ...draft.commonPlan.unitAllocationRule.weekdayUnitsPerSession,
           },
-        ),
-        sessions: draft.commonPlan.sessions.map((session) => {
-          const availableFrom = koreanDateTimeLocalToIso(
-            session.availableLocalDateTime,
-          );
-          const availableUntil = session.deadlineLocalDateTime
-            ? koreanDateTimeLocalToIso(session.deadlineLocalDateTime)
-            : null;
-          if (!availableFrom ||
-            (session.deadlineLocalDateTime && !availableUntil)) {
-            throw new Error("검증되지 않은 공통 배정 시각입니다.");
-          }
-          return {
-            unitIds: [...session.unitIds],
-            availableFrom,
-            availableUntil,
-          };
-        }),
-        collisionDecisions: draft.commonPlan.collisionDecisions.map(
-          (decision) => {
-            const movedAvailableFrom = decision.movedAvailableLocalDateTime
-              ? koreanDateTimeLocalToIso(
-                  decision.movedAvailableLocalDateTime,
-                )
-              : null;
-            const movedAvailableUntil = decision.movedDeadlineLocalDateTime
-              ? koreanDateTimeLocalToIso(
-                  decision.movedDeadlineLocalDateTime,
-                )
-              : null;
-            return {
-              collisionId: decision.collisionId,
-              mode: decision.mode,
-              movedAvailableFrom,
-              movedAvailableUntil,
-            };
-          },
-        ),
+        }
+      : null,
+    questionCount: draft.commonPlan.questionCount,
+    overflowPolicy: draft.commonPlan.overflowPolicy,
+    extraDatePolicy: draft.commonPlan.extraDatePolicy,
+    selectedDateCount: draft.commonPlan.selectedDateCount,
+    selectionMode: draft.commonPlan.selectionMode,
+    planNonce: draft.commonPlan.planNonce,
+    recurrenceSessions: draft.commonPlan.recurrenceSessions.map(
+      (session) => {
+        const availableFrom = session.availableLocalDateTime
+          ? koreanDateTimeLocalToIso(session.availableLocalDateTime)
+          : null;
+        const availableUntil = session.deadlineLocalDateTime
+          ? koreanDateTimeLocalToIso(session.deadlineLocalDateTime)
+          : null;
+        if ((session.availableLocalDateTime && !availableFrom) ||
+          (session.deadlineLocalDateTime && !availableUntil)) {
+          throw new Error("검증되지 않은 반복 일정 시각입니다.");
+        }
+        return { availableFrom, availableUntil };
+      },
+    ),
+    sessions: draft.commonPlan.sessions.map((session) => {
+      const availableFrom = session.availableLocalDateTime
+        ? koreanDateTimeLocalToIso(session.availableLocalDateTime)
+        : null;
+      const availableUntil = session.deadlineLocalDateTime
+        ? koreanDateTimeLocalToIso(session.deadlineLocalDateTime)
+        : null;
+      if ((session.availableLocalDateTime && !availableFrom) ||
+        (session.deadlineLocalDateTime && !availableUntil)) {
+        throw new Error("검증되지 않은 공통 배정 시각입니다.");
       }
-    : undefined;
+      return {
+        unitIds: [...session.unitIds],
+        availableFrom,
+        availableUntil,
+      };
+    }),
+  };
   return {
     studentIds: [...draft.studentIds],
-    rangeMode: draft.range.mode,
-    unitsPerSession: draft.range.unitsPerSession,
-    sessionCount: draft.range.sessionCount,
-    firstAvailableFrom,
-    dayInterval: draft.dayInterval,
-    firstAvailableUntil: deadlineToIso(draft.firstDeadline),
-    includePendingReview: draft.review.mode === "pending",
-    reviewLevels: [...draft.review.levels],
     englishToKoreanRatio: draft.exam.directionRatio,
-    ...(commonPlan ? { commonPlan } : {}),
+    commonPlan,
   };
 }
 
@@ -541,7 +510,6 @@ export function bulkSubmissionFingerprint(
   return assignmentRequestFingerprint({
     ...previewBody,
     studentIds: [...draft.studentIds].toSorted(),
-    reviewLevels: [...draft.review.levels].toSorted(),
     previewPlanSignature,
     ...examSettingsToApi(draft.exam),
   });

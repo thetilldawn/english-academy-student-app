@@ -195,6 +195,50 @@ export function createRegularAssignmentPreparationCache(): RegularAssignmentPrep
   };
 }
 
+export async function primeRegularAssignmentStudentCaches(
+  input: {
+    datasetId: string;
+    studentIds: readonly string[];
+  },
+  cache: RegularAssignmentPreparationCache,
+) {
+  const studentIds = [...new Set(input.studentIds)].toSorted();
+  if (studentIds.length === 0) return;
+  const supabase = await cache.supabase;
+  const combinedKey = regularPreparationCacheKey([
+    studentIds,
+    input.datasetId,
+    null,
+    null,
+  ]);
+  const combined = await memoizeRequestPreparation(
+    cache.activeAssignments,
+    combinedKey,
+    () => loadActiveReviewAssignments(supabase, studentIds, input.datasetId),
+  );
+  for (const studentId of studentIds) {
+    const snapshot = combined.byStudent.get(studentId) ?? {
+      identities: new Set<string>(),
+      queueIds: new Set<string>(),
+      reviewIdentities: new Set<string>(),
+      words: [],
+    };
+    const singleKey = regularPreparationCacheKey([
+      [studentId],
+      input.datasetId,
+      null,
+      null,
+    ]);
+    cache.activeAssignments.set(
+      singleKey,
+      Promise.resolve({
+        ...snapshot,
+        byStudent: new Map([[studentId, snapshot]]),
+      }),
+    );
+  }
+}
+
 export async function prepareRegularAssignment(
   input: RegularAssignmentInput,
   authenticatedAdmin?: AdminContext,

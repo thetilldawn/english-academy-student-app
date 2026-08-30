@@ -131,6 +131,7 @@ export function assertExactReviewShape(
     | "datasetId"
     | "primaryUnitIds"
     | "questionCount"
+    | "englishToKoreanRatio"
     | "includePendingReview"
     | "reviewLevels"
     | "reviewScope"
@@ -144,7 +145,7 @@ export function assertExactReviewShape(
   ) {
     throw new AssignmentReplacementError(
       "invalid_selection",
-      "오답 시험은 대상 단어를 유지한 채 제목·출제 방향·순서·시간·통과 점수·마감만 수정할 수 있습니다.",
+      "오답 시험은 기존 문제를 유지한 채 시험 순서·시간·통과 점수·재시험·일정만 수정할 수 있습니다.",
     );
   }
 }

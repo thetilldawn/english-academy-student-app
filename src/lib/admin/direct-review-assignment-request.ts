@@ -58,6 +58,7 @@ const directReviewAssignmentBaseSchema = z
     retryEnabled: z.boolean(),
     retryPassingScore: z.number().int().min(0).max(100).nullable(),
     questionOrderMode: z.enum(questionOrderModes).default("random"),
+    availableFrom: z.iso.datetime({ offset: true }).nullable().default(null),
     availableUntil: z.iso.datetime({ offset: true }).nullable(),
     timingMode: z.enum(timingModes).optional(),
     questionTimeLimitSeconds: z
@@ -79,6 +80,17 @@ export const directReviewAssignmentSchema = directReviewAssignmentBaseSchema
         code: "custom",
         path: ["totalQuestionCount"],
         message: "오답 시험은 한 번에 400개까지 배정할 수 있습니다.",
+      });
+    }
+    if (
+      value.availableFrom &&
+      value.availableUntil &&
+      Date.parse(value.availableUntil) <= Date.parse(value.availableFrom)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["availableUntil"],
+        message: "응시 마감은 공개 시각보다 뒤로 정해 주세요.",
       });
     }
     validateTimingSettings(value, context);

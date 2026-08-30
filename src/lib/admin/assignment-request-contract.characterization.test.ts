@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveBulkAssignmentSeries } from "@/lib/admin/bulk-assignment-range";
-import { resolveBulkAssignmentSchedule } from "@/lib/admin/bulk-assignment-schedule";
 import { buildAssignmentSubmission } from "@/lib/admin/assignment-submission";
 import {
   assignmentCapacitySchema,
@@ -11,7 +9,7 @@ import {
 import {
   bulkAssignmentPreviewSchema,
   bulkAssignmentSchema,
-} from "@/lib/admin/bulk-assignment-request";
+} from "@/features/assignments/contracts/bulk-assignment-request";
 import {
   mixedAssignmentPreviewSchema,
   mixedAssignmentSchema,
@@ -19,11 +17,11 @@ import {
 import { assignmentSchema } from "@/lib/admin/regular-assignment-request";
 import {
   assignmentContractIds,
+  bulkImmediatePreviewContract,
   bulkPreviewContract,
   bulkSubmitContract,
   forwardUnitIds,
   mixedPerQuestionContract,
-  orderedBulkUnits,
   regularTotalContract,
   replacementPreviewContract,
   replacementSubmitContract,
@@ -128,46 +126,44 @@ describe("배정 요청 현행 계약 특성화", () => {
     );
   });
 
-  it("일괄 역방향 2 DAY씩 2회와 날짜 간격을 손실 없이 계산한다", () => {
-    const series = resolveBulkAssignmentSeries(
-      mutable(orderedBulkUnits),
-      {
-        recommendedUnitIds: [
-          assignmentContractIds.day60,
-          assignmentContractIds.day59,
-        ],
-        recommendedDirection: -1,
-      },
-      "previous_span",
-      2,
-      2,
+  it("일괄 미리보기와 저장이 역순 범위와 회차 일정을 같은 공통 계획으로 보존한다", () => {
+    const preview = bulkAssignmentPreviewSchema.parse(
+      mutable(bulkPreviewContract),
     );
-    const schedule = resolveBulkAssignmentSchedule({
-      sessionCount: 2,
-      firstAvailableFrom: bulkPreviewContract.firstAvailableFrom,
-      firstAvailableUntil: bulkPreviewContract.firstAvailableUntil,
-      dayInterval: bulkPreviewContract.dayInterval,
-    });
+    const submission = bulkAssignmentSchema.parse(
+      mutable(bulkSubmitContract),
+    );
 
-    expect(series.direction).toBe(-1);
-    expect(
-      series.sessions.map((session) =>
-        session.units.map((unit) => unit.id),
-      ),
-    ).toStrictEqual([
-      [assignmentContractIds.day60, assignmentContractIds.day59],
-      [assignmentContractIds.day58, assignmentContractIds.day57],
+    expect(preview.commonPlan.orderedUnitIds).toStrictEqual([
+      assignmentContractIds.day60,
+      assignmentContractIds.day59,
+      assignmentContractIds.day58,
     ]);
-    expect(schedule).toStrictEqual([
+    expect(preview.commonPlan.sessions).toStrictEqual([
       {
-        sessionNumber: 1,
+        unitIds: [...reverseUnitIds],
         availableFrom: "2026-08-16T15:00:00.000Z",
         availableUntil: "2026-08-17T12:00:00.000Z",
       },
       {
-        sessionNumber: 2,
+        unitIds: [...reverseUnitIds],
         availableFrom: "2026-08-18T15:00:00.000Z",
         availableUntil: "2026-08-19T12:00:00.000Z",
+      },
+    ]);
+    expect(submission.commonPlan).toStrictEqual(preview.commonPlan);
+  });
+
+  it("시험일 없는 일괄 배정은 1회 NULL 일정만 허용한다", () => {
+    const parsed = bulkAssignmentPreviewSchema.parse(
+      mutable(bulkImmediatePreviewContract),
+    );
+    expect(parsed.commonPlan.selectedDateCount).toBe(0);
+    expect(parsed.commonPlan.sessions).toStrictEqual([
+      {
+        unitIds: [...reverseUnitIds],
+        availableFrom: null,
+        availableUntil: null,
       },
     ]);
   });

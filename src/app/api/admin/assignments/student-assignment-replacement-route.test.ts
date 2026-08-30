@@ -148,6 +148,10 @@ function request(method: "GET" | "POST" | "PUT", body?: unknown) {
   );
 }
 
+function expectPrivateNoStore(response: Response) {
+  expect(response.headers.get("cache-control")).toBe("private, no-store");
+}
+
 describe("student assignment replacement route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -184,6 +188,9 @@ describe("student assignment replacement route", () => {
     expect(getResponse.status).toBe(200);
     expect(previewResponse.status).toBe(200);
     expect(putResponse.status).toBe(200);
+    expectPrivateNoStore(getResponse);
+    expectPrivateNoStore(previewResponse);
+    expectPrivateNoStore(putResponse);
     expect(mocks.getStudentAssignmentEditDraft).toHaveBeenCalledWith(
       assignmentId,
       studentId,
@@ -205,9 +212,6 @@ describe("student assignment replacement route", () => {
       replacementInput,
       admin,
       { commandNowMilliseconds: expect.any(Number) },
-    );
-    expect(putResponse.headers.get("cache-control")).toBe(
-      "private, no-store",
     );
   });
 
@@ -302,6 +306,7 @@ describe("student assignment replacement route", () => {
       { params },
     );
     expect(response.status).toBe(status);
+    expectPrivateNoStore(response);
     expect(await response.json()).toHaveProperty("error");
   });
 
@@ -318,6 +323,7 @@ describe("student assignment replacement route", () => {
     const response = await PUT(request("PUT", replacementInput), { params });
 
     expect(response.status).toBe(422);
+    expectPrivateNoStore(response);
     await expect(response.json()).resolves.toMatchObject({
       code: "assignment_deadline_elapsed",
       fieldPath: "deadline",
@@ -340,6 +346,7 @@ describe("student assignment replacement route", () => {
     const response = await PUT(request("PUT", replacementInput), { params });
 
     expect(response.status).toBe(409);
+    expectPrivateNoStore(response);
     await expect(response.json()).resolves.toMatchObject({ code });
   });
 });

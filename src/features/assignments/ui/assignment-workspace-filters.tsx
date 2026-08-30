@@ -8,15 +8,13 @@ import {
 } from "@/design-system/primitives/badge/badge";
 import { Button } from "@/design-system/primitives/button/button";
 import { Input } from "@/design-system/primitives/form/field";
+import type { StudentDirectoryWrongFilter } from "@/features/students/public-contracts";
 
-import type {
-  AssignmentWorkspaceController,
-  WrongWordStudentFilter,
-} from "../controller/use-assignment-workspace";
+import type { AssignmentWorkspaceController } from "../controller/use-assignment-workspace";
 import styles from "./assignment-workspace.module.css";
 
 const wrongFilters: ReadonlyArray<
-  readonly [WrongWordStudentFilter, string]
+  readonly [StudentDirectoryWrongFilter, string]
 > = [
   ["all", commonText.filters.all],
   ["wrong", commonText.filters.hasWrong],
@@ -34,10 +32,14 @@ export function AssignmentWorkspaceFilters({
   controller: AssignmentWorkspaceController;
 }) {
   const { actions, filters } = controller;
-  const activeCount =
-    [filters.school, filters.grade, filters.wordbook, filters.classGroup].filter(Boolean).length +
+  const activeCount = [
+    filters.school,
+    filters.grade,
+    filters.wordbook,
+    filters.classGroupId,
+  ].filter(Boolean).length +
     (filters.status === "active" ? 0 : 1) +
-    (filters.wrongWord === "all" ? 0 : 1);
+    (filters.wrong === "all" ? 0 : 1);
   const resetDisabled = activeCount === 0;
   const searchDisabled = filters.query.trim().length === 0;
 
@@ -50,9 +52,7 @@ export function AssignmentWorkspaceFilters({
             <path d="m16 16 4 4" />
           </svg>
         </span>
-        <span className="sr-only">
-          {adminLearningText.page.searchAriaLabel}
-        </span>
+        <span className="sr-only">{adminLearningText.page.searchAriaLabel}</span>
         <Input
           leadingAdornment
           onChange={(event) => actions.setFilter("query", event.target.value)}
@@ -94,9 +94,9 @@ export function AssignmentWorkspaceFilters({
             <div className={styles.filterChips}>
               {wrongFilters.map(([value, label]) => (
                 <Button
-                  aria-pressed={filters.wrongWord === value}
+                  aria-pressed={filters.wrong === value}
                   key={value}
-                  onClick={() => actions.setFilter("wrongWord", value)}
+                  onClick={() => actions.setFilter("wrong", value)}
                   size="small"
                   variant="filter"
                 >
@@ -117,12 +117,12 @@ export function AssignmentWorkspaceFilters({
             label={commonText.filters.byClassGroup}
             onChange={(value) =>
               actions.setFilter(
-                "classGroup",
-                toggleValue(filters.classGroup, value),
+                "classGroupId",
+                toggleValue(filters.classGroupId, value),
               )
             }
             options={controller.classGroupOptions}
-            value={filters.classGroup}
+            value={filters.classGroupId}
           />
           <FilterGroup
             label={commonText.filters.byGrade}
@@ -151,21 +151,21 @@ export function AssignmentWorkspaceFilters({
           {filters.school ? <MetaTag>{filters.school}</MetaTag> : null}
           {filters.grade ? <MetaTag>{filters.grade}</MetaTag> : null}
           {filters.wordbook ? <MetaTag>{filters.wordbook}</MetaTag> : null}
-          {filters.classGroup ? (
+          {filters.classGroupId ? (
             <MetaTag>
               {controller.classGroupOptions.find(
-                (option) => option.value === filters.classGroup,
+                (option) => option.value === filters.classGroupId,
               )?.label ?? commonText.filters.byClassGroup}
             </MetaTag>
           ) : null}
           {filters.status === "blocked" ? (
             <MetaTag tone="warning">{commonText.filters.blocked}</MetaTag>
           ) : null}
-          {filters.wrongWord !== "all" ? (
+          {filters.wrong !== "all" ? (
             <MetaTag tone="warning">
-              {filters.wrongWord === "wrong"
+              {filters.wrong === "wrong"
                 ? commonText.filters.hasWrong
-                : filters.wrongWord === "repeated"
+                : filters.wrong === "repeated"
                   ? commonText.filters.repeatedWrong
                   : commonText.filters.retryNeeded}
             </MetaTag>
@@ -174,7 +174,7 @@ export function AssignmentWorkspaceFilters({
         <div className={styles.filterSummaryActions}>
           <strong>
             {formatContentText(commonText.filters.studentCount, {
-              count: controller.filteredStudents.length,
+              count: controller.directory.snapshot.totalCount,
             })}
           </strong>
           <Button

@@ -49,16 +49,18 @@ describe("regular assignment scope contract", () => {
 
   it("keeps regular preparation out of the integrated admin service", () => {
     const adminService = source(
-      "src/lib/services/admin-history-read-service.ts",
+      "src/features/history/server/queries/admin-history-detail-query.ts",
     );
-    const bulkService = source("src/lib/services/bulk-assignment-service.ts");
+    const bulkPreparation = source(
+      "src/features/assignments/server/use-cases/bulk-assignment-series-preparation.ts",
+    );
     const replacementPreparation = source(
       "src/lib/services/assignment-replacement-preparation-service.ts",
     );
 
     expect(adminService).not.toContain("prepareRegularAssignment");
     expect(adminService).not.toContain("createRegularAssignment");
-    expect(bulkService).toContain(
+    expect(bulkPreparation).toContain(
       'from "@/lib/services/regular-assignment-service"',
     );
     expect(replacementPreparation).toContain(
@@ -78,43 +80,48 @@ describe("regular assignment scope contract", () => {
   });
 
   it("uses the same deterministic series preparation for preview and save", () => {
-    const bulkService = compact(
-      source("src/lib/services/bulk-assignment-service.ts"),
+    const previewService = compact(
+      source("src/features/assignments/server/use-cases/bulk-assignment-preview.ts"),
+    );
+    const commandService = compact(
+      source("src/features/assignments/server/use-cases/bulk-assignment-command.ts"),
+    );
+    const preparationService = compact(
+      source("src/features/assignments/server/use-cases/bulk-assignment-series-preparation.ts"),
     );
 
-    expect(
-      bulkService.match(/prepareCommonPlanSeries\(/g),
-    ).toHaveLength(3);
-    expect(bulkService).toContain(
+    expect(previewService).toContain("prepareCommonPlanSeries({");
+    expect(commandService).toContain("prepareCommonPlanSeries({");
+    expect(previewService).toContain(
       "let seriesPreparationError: string | null = null",
     );
-    expect(bulkService).toContain(
+    expect(previewService).toContain(
       "seriesPreparationError === null && orderedSessions.length > 0",
     );
-    expect(bulkService).toContain(
-      "item.availableQuestionCount === null || item.sessions.length === 0",
+    expect(previewService).toContain(
+      "item.availableQuestionCount === null || item.selectedQuestionCount === null",
     );
-    expect(bulkService).toContain(
+    expect(preparationService).toContain(
       "planDirectionalVocabSeriesTargets({",
     );
-    expect(bulkService).toContain("materializeQuestions: false");
-    expect(bulkService).toContain("materializeQuestions: true");
-    expect(bulkService).toContain(
+    expect(previewService).toContain("materializeQuestions: false");
+    expect(commandService).toContain("materializeQuestions: true");
+    expect(commandService).toContain(
       "preview.items.filter((item) => item.sessions.length > 0)",
     );
-    expect(bulkService).toContain(
+    expect(commandService).toContain(
       "batches.length > MAXIMUM_BULK_ASSIGNMENT_COUNT",
     );
-    expect(bulkService).toContain(
+    expect(previewService).toContain(
       "maximumSessionCount: MAXIMUM_BULK_ASSIGNMENT_COUNT",
     );
-    expect(bulkService).toContain(
+    expect(commandService).toContain(
       "totalBatchQuestionCount > MAXIMUM_BULK_QUESTION_COUNT",
     );
-    expect(bulkService).not.toContain(
+    expect(previewService).not.toContain(
       "maximumSessionCount: Math.floor(210 / input.studentIds.length)",
     );
-    expect(bulkService).not.toContain(
+    expect(preparationService).not.toContain(
       "requiredTargetIds = requiredTargetIds.slice(0, -1)",
     );
   });

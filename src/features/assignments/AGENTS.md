@@ -1,52 +1,50 @@
 # 단어 시험 배정·수정 작업 안내
 
-## 먼저 출력할 기능 흐름
+## 먼저 확인할 흐름
 
-- 공통 작업공간 초기 자료: `npm run map:flow -- assignment-workspace-load`
-- 공통 학생 찾기·선택: `npm run map:flow -- assignment-workspace-selection`
-- 일반 단일·일괄 범위 배정: `npm run map:flow -- assignment-range-create`
-- 요일별 범위·단어 수: `npm run map:flow -- weekday-unit-allocation`
+- 첫 화면과 학생 선택: `npm run map:flow -- assignment-workspace-load`, `assignment-workspace-selection`
+- 배정 창 자료·범위·최근 시험: `npm run map:flow -- assignment-workspace-planning`
+- 단어 시험 배정: `npm run map:flow -- assignment-range-create`, `weekday-unit-allocation`
 - 독립 오답 시험: `npm run map:flow -- assignment-direct-review-create`
 - 기존 시험 수정: `npm run map:flow -- assignment-edit`
-- 완료 뒤 이어지는 배정: `npm run map:flow -- assignment-series`
+- 완료 뒤 자동 배정: `npm run map:flow -- assignment-series`
 
-위 목록은 업무 흐름 6개 중 배정 기능이 참여하는 5개와 공통 작업공간 흐름 2개다. 학생 시험 진행은
-`student-quiz-attempt`가 별도로 소유한다. 초기 자료와 학생 필터·선택은 서로 다른 공통 흐름을 먼저 보고,
-범위·요일·오답의 실제 저장 규칙과 한 흐름으로 섞지 않는다.
+## 현재 구조
 
-## 현재 실행 경로
+- `contracts/`는 브라우저·Route Handler·서버가 함께 쓰는 자료 모양과 요청 검증을 맡는다.
+- `domain/`은 일정·범위·문항 배분·선택·검증처럼 환경에 의존하지 않는 계산을 맡는다.
+- `application/`은 미리보기·저장·복구 절차를, `controller/`는 입력 상태·요청 수명·포커스를 맡는다.
+- `transport/`만 브라우저 HTTP를 실행한다. UI에서 `fetch`하지 않는다.
+- `server/queries/`는 읽기, `server/planning/`은 계획 계산, `server/persistence/`는 DB 저장,
+  `server/use-cases/`는 권한·검증·계획·저장을 조합한다.
+- 다른 기능은 용도에 맞는 `public-ui.ts`, `public-client.ts`, `public-server.ts`, `public-contracts.ts`만
+  사용한다. 존재하지 않는 공개 파일을 억지로 만들지 않으며 내부 폴더를 직접
+  가져와야 한다면 기능 지도에 이유와 제거 단계를 먼저 기록한다.
 
-- 단일 배정과 일괄 배정은 학생 선택 방식만 다르고 둘 다 `VocabAssignmentPlanner`와
-  `/api/admin/bulk-assignments[/preview]`를 사용한다.
-- 일반 단일·일괄 범위 배정, 요일별 범위 배정, 독립 오답 시험, 기존 시험 수정은 모두
-  `application`의 공통 미리보기·제출 흐름을 사용한다. controller는 입력·탭·focus·화면 진행 상태와
-  분류된 복구 실행을 소유한다. 각 흐름 adapter는 요청 생성·응답 해석·최신 시각 검증·멱등키와 충돌 뒤 복구 방식을
-  분류한다. `use-debounced-assignment-preview.ts`가 입력 지연·취소·최신 요청 정책을 실행하고,
-  controller가 분류된 원본 재조회·미리보기 새 계산을 실제로 실행한다.
-- 한 명 배정과 여러 명 배정은 별도 controller가 아니라 같은 `useBulkAssignmentController`에
-  학생 ID 배열만 다르게 전달한다. 단일 배정 전용 저장 경로를 새로 만들지 않는다.
-- 시험 수정은 `assignment-edit-flow-adapter.ts`, 범위 배정은 `bulk-assignment-flow-adapter.ts`,
-  오답 시험은 `direct-review-flow-adapter.ts`에서 시작한다. 입력 버튼 동작은
-  `single-assignment-controller-actions.ts`처럼 요청 수명과 분리한다.
-- 시험 수정은 배정 페이지가 아니라 관리자 개요·내역의 `EditableHistoryDetail*`에서 시작해
-  `SingleAssignmentEditor`를 사용한다.
-- `api` 폴더는 Route Handler가 아니라 직렬화 가능한 요청·응답 변환기다. 실제 HTTP 경로는
-  `src/app/api`다.
-- 서버 조합은 아직 `src/lib/services`, 서버 요청 계약은 `src/lib/admin`에 있다. 목표인
-  `server/{components,queries,commands,use-cases,actions,http}`와 `contracts`가 이미 구현됐다고
-  가정하지 않는다. 여기서 `server/http`는 실제 Route Handler가 아니라 인증 뒤 쓰는 서버 변환기다.
+## 읽기와 캐시 경계
 
-## 사용 중이 아닌 경로
+- 기본 진입의 첫 Server Component는 학생 목록 첫 10건만 읽는다. `reviewDraft` 복구 링크로 들어오면
+  해당 초안 한 건만 추가로 읽는다. 전체 학생·전체 범위·전체 이력·전체 오답을 초기 props에 넣지 않는다.
+- 선택 바구니는 화면 페이지와 독립 보존한다. 필터 전체 선택은 서버가 같은 조건으로 확정하며 최대
+  210명을 원자적으로 적용한다.
+- 배정 창을 열 때만 학생·단어장·시간 양식을 읽고, 단어장을 정한 뒤 그 범위만 읽는다.
+- 최근 시험은 학생 1명+단어장 1개, 오답은 학생 1명 기준으로 필요한 순간에만 읽는다.
+- 개인 자료 Route Handler는 성공과 오류 모두 `Cache-Control: private, no-store`를 유지한다.
+  개인 자료에 `use cache`나 공유 CDN 캐시를 붙이지 않는다.
+- 같은 입력의 성공 결과는 창 수명 동안 재사용하고, 입력 변경·명시 재시도·409 복구 때만 다시 읽는다.
+  느린 이전 응답은 AbortSignal과 요청 지문으로 버린다.
 
-- `BulkAssignmentEditor`는 현재 importer가 없는 구형 화면이다.
-- `/api/admin/assignments` POST와 `SingleAssignmentEditor` 생성 모드는 현재 단일 배정 화면의 실행 경로가 아니다.
-- `mixed-assignments`, `review-assignments`는 독립 오답 시험의 현재 경로가 아니라 호환·복구용 경로다.
+## 저장 불변식
 
-## 함께 지킬 불변식
-
-- UI와 server가 요일·범위·단어 수를 따로 계산하지 않고 같은 domain 계약을 사용한다.
-- 미래 공개 시각, 마감 이후 금지, 학생·자료 범위, 문항 snapshot, 멱등 요청 해시를 server에서 다시 검증한다.
-- 이어지는 배정은 생성(assignments), 표시·처리(assignment-queue), 시험 완료 촉발(quiz-player)에 걸친다.
-- R2-3에서는 구체적인 `unit_ids`뿐 아니라 `same/by_weekday`, 공통·요일별 단위 수 원래 규칙을
-  버전 자료로 보존해야 한다. 조건 복사와 큐 설명에서 역산하지 않는다.
-- DB 변경은 `supabase/AGENTS.md`를 함께 적용하고 최종 schema 통합 검사를 돌린다.
+- 단일·일괄 범위 배정은 학생 수만 다르고 같은 `BulkAssignmentCommonPlan` 미리보기·저장 계약을 쓴다.
+- 일정 미사용은 가짜 오늘 날짜가 아니라 정확히 1회, 공개·마감 모두 `NULL`인 즉시 배정이다.
+- 일정 사용은 회차마다 공개·마감이 모두 있어야 하고 마감이 공개보다 뒤여야 한다.
+- 같은 날 기존 시험과 겹쳐도 저장을 막거나 기존 시험을 자동 삭제하지 않는다.
+- 학생 수 × 회차 수는 최대 210, 전체 생성 문항은 서버·DB 제한을 함께 지킨다.
+- 완료 뒤 자동 배정은 예약 일정이 있는 나누기 계획만 허용한다. 즉시 배정은 큐를 만들지 않는다.
+- 독립 오답 시험은 일반 일괄 배정의 오답 포함 옵션과 다른 계약이다. 공개 시각은 v2 저장 경로로
+  전달하며, 같은 학생·단어장·오답 단계의 현재 큐를 저장 직전에 다시 확인한다.
+- 기존 독립 오답 시험 수정은 원래 문제·오답 큐·단어장·범위·단어 수·출제 방향을 그대로 유지한다.
+  화면 정책, 서버 준비, DB `replace_student_assignment_v7`이 같은 잠금을 적용한다.
+- DB 변경은 `supabase/AGENTS.md`를 함께 적용한다. 이전 공개 함수는 순차 배포 중 끊지 말고 새 함수로
+  위임한 뒤 Preview에 마이그레이션을 한 건씩 적용한다.

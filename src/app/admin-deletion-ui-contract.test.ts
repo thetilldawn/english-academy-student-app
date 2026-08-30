@@ -58,7 +58,10 @@ describe("admin deletion UI contract", () => {
       "src/lib/services/admin-student-read-service.ts",
     );
     const historyReadService = source(
-      "src/lib/services/admin-history-read-service.ts",
+      "supabase/migrations/20260829153000_add_admin_history_read_model.sql",
+    );
+    const historyListQuery = source(
+      "src/features/history/server/queries/admin-history-list-query.ts",
     );
     const dashboardReadModel = source(
       "supabase/migrations/20260829190000_add_student_dashboard_read_model.sql",
@@ -68,11 +71,12 @@ describe("admin deletion UI contract", () => {
     );
 
     expect(studentReadService).toContain('.is("deleted_at", null)');
-    expect(historyReadService).toContain('"삭제됨"');
+    expect(historyReadService).toContain("'삭제됨'");
     expect(historyReadService).toContain("admin_history_hidden_entries");
-    expect(historyReadService).toContain("HISTORY_PAGE_SIZE");
-    expect(historyReadService).toContain(
-      ".range(from, from + HISTORY_PAGE_SIZE - 1)",
+    expect(historyReadService).toContain("activity_section <> 'archived'");
+    expect(historyListQuery).toContain("const PAGE_SIZE = 10");
+    expect(historyListQuery).toContain(
+      "const DATABASE_PAGE_LIMIT = PAGE_SIZE + 1",
     );
     expect(dashboardReadModel).toContain("assignment.deleted_at is null");
     expect(dashboardReadModel).toContain("assignment.deleted_at > p_snapshot_at");

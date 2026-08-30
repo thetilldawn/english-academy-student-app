@@ -30,7 +30,6 @@ const state: VocabPlannerState = {
     deadlineTime: "22:00",
   },
   sessionScheduleOverrides: {},
-  collisionDecisionRecords: [],
 };
 
 describe("vocabPlannerReducer extra date decision", () => {

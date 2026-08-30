@@ -178,6 +178,7 @@ describe("prepareDirectReviewAssignmentBatch", () => {
   it("명령에서 확정한 시각으로 지난 마감을 조회 전에 거부한다", async () => {
     const assignmentInput: DirectReviewAssignmentInput = {
       ...input,
+      availableFrom: null,
       availableUntil: "2026-08-28T03:00:00.000Z",
       idempotencyKey: "33333333-3333-4333-8333-333333333333",
       passingScore: 80,

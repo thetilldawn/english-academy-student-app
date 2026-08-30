@@ -3,17 +3,19 @@
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { AssignmentHistorySummary } from "@/lib/admin/history";
-
 import type {
   AssignmentDatasetItem,
   AssignmentUnitItem,
 } from "../catalog-types";
+import type { PreviousVocabExamSource } from "../domain/vocab-previous-exam";
 import { useVocabAssignmentPlanner } from "./use-vocab-assignment-planner";
 
 const mocks = vi.hoisted(() => ({
   changeCommonPlan: vi.fn(),
   changeOrder: vi.fn(),
+  changeRetryEnabled: vi.fn(),
+  changeRetryPassingScore: vi.fn(),
+  previousExam: null as PreviousVocabExamSource | null,
   preview: null as null | {
     commonPlanSummary: null;
     items: Array<{
@@ -33,6 +35,8 @@ vi.mock("./use-bulk-assignment-controller", () => ({
       changeDirection: vi.fn(),
       changeOrder: mocks.changeOrder,
       changePassingScore: vi.fn(),
+      changeRetryEnabled: mocks.changeRetryEnabled,
+      changeRetryPassingScore: mocks.changeRetryPassingScore,
       changeTimeLimitEnabled: vi.fn(),
       changeTiming: vi.fn(),
       submit: vi.fn(),
@@ -60,6 +64,15 @@ vi.mock("./use-vocab-time-templates", () => ({
     saveCurrentTemplate: vi.fn(),
     saving: false,
     timeTemplates: [],
+  }),
+}));
+
+vi.mock("./use-assignment-previous-exam", () => ({
+  useAssignmentPreviousExam: () => ({
+    data: mocks.previousExam,
+    error: "",
+    retry: vi.fn(),
+    status: "ready",
   }),
 }));
 
@@ -103,14 +116,14 @@ const units: AssignmentUnitItem[] = Array.from({ length: 6 }, (_, index) => ({
 
 function renderPlanner(
   plannerUnits = units,
-  previousExamHistory: readonly AssignmentHistorySummary[] = [],
+  previousExam: PreviousVocabExamSource | null = null,
 ) {
+  mocks.previousExam = previousExam;
   return renderHook(() => useVocabAssignmentPlanner({
     datasets: [dataset],
     genericErrorMessage: "저장 실패",
     initialDatasetId: dataset.id,
-    previousExamHistory,
-    previousExamSourceStudentId: previousExamHistory[0]?.studentId ?? "",
+    previousExamSourceStudentId: "student-a",
     previewErrorMessage: "미리보기 실패",
     studentIds: ["student-a"],
     today: "2026-08-21",
@@ -136,10 +149,18 @@ function selectMondayWednesdayFriday(
   });
 }
 
+function scheduledLocalDate(value: string | null) {
+  if (!value) throw new Error("expected a scheduled local date-time");
+  return value.slice(0, 10);
+}
+
 describe("단어 배정 일정 controller", () => {
   beforeEach(() => {
     mocks.changeCommonPlan.mockReset();
     mocks.changeOrder.mockReset();
+    mocks.changeRetryEnabled.mockReset();
+    mocks.changeRetryPassingScore.mockReset();
+    mocks.previousExam = null;
     mocks.preview = null;
   });
 
@@ -148,7 +169,6 @@ describe("단어 배정 일정 controller", () => {
       datasets: [],
       genericErrorMessage: "저장 실패",
       initialDatasetId: "",
-      previousExamHistory: [],
       previousExamSourceStudentId: "",
       previewErrorMessage: "미리보기 실패",
       studentIds: [],
@@ -175,7 +195,6 @@ describe("단어 배정 일정 controller", () => {
       datasets: [],
       genericErrorMessage: "저장 실패",
       initialDatasetId: "",
-      previousExamHistory: [],
       previousExamSourceStudentId: "",
       previewErrorMessage: "미리보기 실패",
       studentIds: [],
@@ -210,7 +229,7 @@ describe("단어 배정 일정 controller", () => {
       questionCount: { mode: "all" },
       overflowPolicy: "leave",
       sessions: [{
-        availableLocalDateTime: "2026-08-21T00:00",
+        availableLocalDateTime: null,
         deadlineLocalDateTime: null,
         unitIds: units.map((unit) => unit.id),
       }],
@@ -241,7 +260,7 @@ describe("단어 배정 일정 controller", () => {
       questionCount: { mode: "manual", value: 4 },
       selectedDateCount: 0,
       sessions: [{
-        availableLocalDateTime: "2026-08-21T00:00",
+        availableLocalDateTime: null,
         deadlineLocalDateTime: null,
         unitIds: units.map((unit) => unit.id),
       }],
@@ -256,7 +275,7 @@ describe("단어 배정 일정 controller", () => {
 
     expect(result.current.commonPlan?.sessions).toHaveLength(3);
     expect(result.current.commonPlan?.sessions.map((session) => ({
-      date: session.availableLocalDateTime.slice(0, 10),
+      date: scheduledLocalDate(session.availableLocalDateTime),
       unitIds: session.unitIds,
     }))).toEqual([
       { date: "2026-08-21", unitIds: units.map((unit) => unit.id) },
@@ -272,7 +291,7 @@ describe("단어 배정 일정 controller", () => {
     act(() => result.current.actions.changeAssignmentMode("word_count"));
 
     expect(result.current.commonPlan?.sessions.map((session) => ({
-      date: session.availableLocalDateTime.slice(0, 10),
+      date: scheduledLocalDate(session.availableLocalDateTime),
       unitIds: session.unitIds,
     }))).toEqual([
       { date: "2026-08-21", unitIds: units.map((unit) => unit.id) },
@@ -344,7 +363,7 @@ describe("단어 배정 일정 controller", () => {
     act(() => result.current.actions.toggleWeekday(3));
     expect(result.current.commonPlan?.sessions).toHaveLength(2);
     expect(result.current.commonPlan?.sessions.map((session) =>
-      session.availableLocalDateTime.slice(0, 10))).toEqual([
+      scheduledLocalDate(session.availableLocalDateTime))).toEqual([
       "2026-08-21",
       "2026-08-24",
     ]);
@@ -379,13 +398,13 @@ describe("단어 배정 일정 controller", () => {
     });
 
     expect(result.current.commonPlan?.sessions.map((session) =>
-      session.availableLocalDateTime.slice(0, 10))).toEqual([
+      scheduledLocalDate(session.availableLocalDateTime))).toEqual([
       "2026-08-21",
       "2026-08-25",
       "2026-08-26",
     ]);
     expect(result.current.commonPlan?.recurrenceSessions.map((session) =>
-      session.availableLocalDateTime.slice(0, 10))).toEqual([
+      scheduledLocalDate(session.availableLocalDateTime))).toEqual([
       "2026-08-21",
       "2026-08-24",
       "2026-08-26",
@@ -503,7 +522,7 @@ describe("단어 배정 일정 controller", () => {
       overflowPolicy: "continue_weekly",
     });
     expect(result.current.commonPlan?.sessions.map((session) => ({
-      date: session.availableLocalDateTime.slice(0, 10),
+      date: scheduledLocalDate(session.availableLocalDateTime),
       unitIds: session.unitIds,
     }))).toEqual([
       { date: "2026-08-24", unitIds: ["unit-1"] },
@@ -545,7 +564,7 @@ describe("단어 배정 일정 controller", () => {
       },
     });
     expect(result.current.commonPlan?.sessions.map((session) => ({
-      date: session.availableLocalDateTime.slice(0, 10),
+      date: scheduledLocalDate(session.availableLocalDateTime),
       unitIds: session.unitIds,
     }))).toEqual([
       {
@@ -605,8 +624,8 @@ describe("단어 배정 일정 controller", () => {
         },
         overflowPolicy: "continue_weekly",
       },
-    } as AssignmentHistorySummary;
-    const { result } = renderPlanner(units, [previous]);
+    } as PreviousVocabExamSource;
+    const { result } = renderPlanner(units, previous);
     act(() => {
       result.current.actions.selectAllUnits(true);
       result.current.actions.toggleWeekday(1);
@@ -668,7 +687,7 @@ describe("단어 배정 일정 controller", () => {
 
     expect(result.current.commonPlan?.rangeUnitCounts).toEqual([1, 1]);
     expect(result.current.commonPlan?.sessions.map((session) => ({
-      date: session.availableLocalDateTime.slice(0, 10),
+      date: scheduledLocalDate(session.availableLocalDateTime),
       unitIds: session.unitIds,
     }))).toEqual([
       { date: "2026-08-24", unitIds: ["unit-1"] },

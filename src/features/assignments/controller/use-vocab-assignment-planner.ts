@@ -2,11 +2,7 @@
 
 import { useLayoutEffect, useMemo, useReducer } from "react";
 
-import type { AssignmentHistorySummary } from "@/lib/admin/history";
-import { isoToKoreanDateTimeLocal } from "@/lib/deadline";
-
 import type { AssignmentDatasetItem, AssignmentUnitItem } from "../catalog-types";
-import type { VocabCollisionDecisionInput } from "../domain/vocab-collision-decisions";
 import { selectPreviousVocabExamConditions } from "../domain/vocab-previous-exam";
 import {
   resolveExtraDateCancelSessionCount,
@@ -28,7 +24,6 @@ import {
 } from "../domain/vocab-planner-controls";
 import {
   keepFirstSelectedWeekdays,
-  shiftLocalDateTime,
 } from "../domain/vocab-schedule";
 import { buildVocabAssignmentFieldErrors } from "../presentation/vocab-assignment-field-errors";
 import { useBulkAssignmentController } from "./use-bulk-assignment-controller";
@@ -39,13 +34,14 @@ import {
   createInitialVocabPlannerState,
   vocabPlannerReducer,
 } from "./vocab-assignment-planner-state";
+import { useAssignmentPreviousExam } from "./use-assignment-previous-exam";
 
 export function useVocabAssignmentPlanner({
   datasets,
+  enabled = true,
   genericErrorMessage,
   initialDatasetId,
   initialTimeTemplates = [],
-  previousExamHistory,
   previousExamSourceStudentId,
   previewErrorMessage,
   studentIds,
@@ -55,10 +51,10 @@ export function useVocabAssignmentPlanner({
   units,
 }: {
   datasets: readonly AssignmentDatasetItem[];
+  enabled?: boolean;
   genericErrorMessage: string;
   initialDatasetId: string;
   initialTimeTemplates?: readonly VocabTimeTemplate[];
-  previousExamHistory: readonly AssignmentHistorySummary[];
   previousExamSourceStudentId: string;
   previewErrorMessage: string;
   studentIds: readonly string[];
@@ -89,16 +85,22 @@ export function useVocabAssignmentPlanner({
     () => resolveVocabUnitSelection(availableUnits, planner.range),
     [availableUnits, planner.range],
   );
+  const previousExamRead = useAssignmentPreviousExam({
+    datasetId: planner.datasetId,
+    enabled,
+    studentId: previousExamSourceStudentId,
+  });
   const previousExam = useMemo(
-    () =>
-      selectPreviousVocabExamConditions({
+    () => previousExamRead.data
+      ? selectPreviousVocabExamConditions({
         datasetId: planner.datasetId,
-        history: previousExamHistory,
+        history: [previousExamRead.data],
         studentId: previousExamSourceStudentId,
-      }),
+      })
+      : null,
     [
       planner.datasetId,
-      previousExamHistory,
+      previousExamRead.data,
       previousExamSourceStudentId,
     ],
   );
@@ -111,14 +113,9 @@ export function useVocabAssignmentPlanner({
     unitAllocation,
   } = useVocabAssignmentDerivedPlan({ planner, selectedUnits });
   const bulk = useBulkAssignmentController({
-    commonPlanRequired: true,
-    firstAvailableDateKorean:
-      planner.scheduleEnabled !== false
-        ? scheduleSlots[0]?.date ?? planner.schedule.startDate
-        : planner.immediateDate ?? planner.schedule.startDate,
     genericErrorMessage,
-    includePendingReview: false,
     initialCommonPlan: commonPlan,
+    enabled,
     previewErrorMessage,
     studentIds,
     transport,
@@ -191,73 +188,12 @@ export function useVocabAssignmentPlanner({
     bulk.actions.changeDirection(copied.exam.directionRatio);
     bulk.actions.changeOrder(copied.exam.questionOrderMode);
     bulk.actions.changePassingScore(copied.exam.passingScore);
+    bulk.actions.changeRetryEnabled(copied.exam.retryEnabled !== false);
+    bulk.actions.changeRetryPassingScore(
+      copied.exam.retryPassingScore ?? copied.exam.passingScore,
+    );
     bulk.actions.changeTimeLimitEnabled(copied.exam.timeLimitEnabled !== false);
     bulk.actions.changeTiming(copied.exam.timing);
-  }
-
-  function decideCollision(input: VocabCollisionDecisionInput) {
-    const availableLocal = isoToKoreanDateTimeLocal(input.availableFrom);
-    const deadlineLocal = isoToKoreanDateTimeLocal(input.availableUntil);
-    dispatch({
-      type: "decision/set",
-      value: {
-        ...input,
-        decision: {
-          collisionId: input.collisionId,
-          mode: input.mode,
-          ...(input.mode === "move"
-            ? {
-                movedAvailableLocalDateTime: shiftLocalDateTime(
-                  availableLocal,
-                  1,
-                ),
-                movedDeadlineLocalDateTime: shiftLocalDateTime(
-                  deadlineLocal,
-                  1,
-                ),
-              }
-            : {}),
-        },
-      },
-    });
-  }
-
-  function changeCollisionDecision(
-    collisionId: string,
-    mode: "skip" | "move" | "allow",
-  ) {
-    const record = planner.collisionDecisionRecords.find(
-      (candidate) => candidate.decision.collisionId === collisionId,
-    );
-    if (!record) return;
-    const currentAvailableLocal = record.decision.mode === "move"
-      ? record.decision.movedAvailableLocalDateTime ?? ""
-      : isoToKoreanDateTimeLocal(record.availableFrom);
-    const currentDeadlineLocal = record.decision.mode === "move"
-      ? record.decision.movedDeadlineLocalDateTime ?? ""
-      : isoToKoreanDateTimeLocal(record.availableUntil);
-    dispatch({
-      type: "decision/set",
-      value: {
-        ...record,
-        decision: {
-          collisionId,
-          mode,
-          ...(mode === "move"
-            ? {
-                movedAvailableLocalDateTime: shiftLocalDateTime(
-                  currentAvailableLocal,
-                  1,
-                ),
-                movedDeadlineLocalDateTime: shiftLocalDateTime(
-                  currentDeadlineLocal,
-                  1,
-                ),
-              }
-            : {}),
-        },
-      },
-    });
   }
 
   function copyPreviousExam() {
@@ -329,7 +265,6 @@ export function useVocabAssignmentPlanner({
     actions: {
       applyTemplate,
       changeDataset: (value: string) => dispatch({ type: "dataset", value }),
-      changeCollisionDecision,
       changeAssignmentMode: (value: VocabAssignmentMode) =>
         dispatch({ type: "assignment_mode", value }),
       changeUnitAllocationMode: (value: VocabUnitAllocationMode) =>
@@ -356,9 +291,7 @@ export function useVocabAssignmentPlanner({
         dispatch({ type: "selection_mode", value });
       },
       copyPreviousExam,
-      decideCollision,
-      clearCollisionDecision: (collisionId: string) =>
-        dispatch({ type: "decision/clear_from", collisionId }),
+      retryPreviousExam: previousExamRead.retry,
       cancelExtraDates: () => dispatch({
         type: "schedule/update",
         patch: { weekdays: keepFirstSelectedWeekdays(
@@ -390,9 +323,10 @@ export function useVocabAssignmentPlanner({
     distribution,
     canSubmit,
     customTemplates: timeTemplateController.customTemplates,
-    collisionDecisionRecords: planner.collisionDecisionRecords,
     hasPreviousExam: previousExam !== null,
     previousExam,
+    previousExamError: previousExamRead.error,
+    previousExamStatus: previousExamRead.status,
     planner,
     fieldErrors: fieldValidation.errors,
     firstFieldKey: fieldValidation.firstFieldKey,

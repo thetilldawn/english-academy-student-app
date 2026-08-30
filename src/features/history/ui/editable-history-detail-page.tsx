@@ -6,8 +6,8 @@ import { adminHistoryText } from "@/content/ko/admin-history";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { DetailHeader } from "@/design-system/patterns/detail-header/detail-header";
 import { Button, ButtonLink } from "@/design-system/primitives/button/button";
-import { SingleAssignmentEditor } from "@/features/assignments/ui/single-assignment-editor";
-import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
+import { SingleAssignmentEditor } from "@/features/assignments/public-ui";
+import { Notice } from "@/design-system/patterns/feedback/feedback";
 import type { AdminHistoryDetail } from "../model";
 
 import { AdminHistoryDetailContent } from "./admin-history-detail";
@@ -18,15 +18,9 @@ import {
 } from "./history-detail-header";
 import { useEditableHistoryAssignment } from "@/features/history/controller/use-editable-history-assignment";
 
-export function EditableHistoryDetailPage({
-  detail,
-  editorData,
-}: {
-  detail: AdminHistoryDetail;
-  editorData: AssignmentManagerData | null;
-}) {
+export function EditableHistoryDetailPage({ detail }: { detail: AdminHistoryDetail }) {
   const router = useRouter();
-  const editor = useEditableHistoryAssignment(detail, editorData);
+  const editor = useEditableHistoryAssignment(detail);
 
   return (
     <div>
@@ -70,7 +64,7 @@ export function EditableHistoryDetailPage({
           {...editor.editorModel}
           editTarget={{
             assignmentId: detail.summary.assignmentId,
-            purpose: detail.summary.assignmentPurpose,
+            purpose: editor.editorModel.initialEditDraft.purpose,
             studentId: detail.summary.studentId,
           }}
           formId={editor.formId}
@@ -82,11 +76,23 @@ export function EditableHistoryDetailPage({
           placement="inline"
           submitPlacement="footer"
         />
+      ) : editor.editing ? (
+        <div aria-busy={editor.loadStatus === "loading"} role="status">
+          {editor.loadStatus === "error" ? (
+            <Notice role="alert" tone="danger">
+              {editor.loadError}
+              <Button onClick={editor.retryLoad} size="small" variant="quiet">
+                다시 불러오기
+              </Button>
+            </Notice>
+          ) : (
+            "수정 준비 자료를 불러오는 중…"
+          )}
+        </div>
       ) : (
         <AdminHistoryDetailContent
           actions={
             <HistoryDetailActions
-              editorData={editorData}
               editButtonRef={editor.editButtonRef}
               item={detail.summary}
               mode="page"

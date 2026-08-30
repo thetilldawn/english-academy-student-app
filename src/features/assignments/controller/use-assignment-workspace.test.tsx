@@ -1,9 +1,16 @@
 // @vitest-environment jsdom
 
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
+import type {
+  StudentDirectoryListItem,
+  StudentDirectorySnapshot,
+} from "@/features/students/public-contracts";
+import {
+  loadStudentDirectorySnapshot,
+} from "@/features/students/public-client";
+import { loadAssignmentPlannerPreparation } from "../transport/assignment-workspace-reads";
 
 import { useAssignmentWorkspace } from "./use-assignment-workspace";
 
@@ -13,120 +20,144 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh }),
 }));
 
-const data = {
-  datasets: [
-    {
-      id: "dataset-1",
-      isActive: true,
-      isAssignable: true,
-      status: "ready",
-    },
-  ],
-  students: [
-    {
-      id: "student-1",
-      displayName: "김학생",
-      schoolName: "가학교",
-      gradeLabel: "중1",
-      currentVocabBook: "VOCA",
-      currentVocabDatasetId: null,
-      status: "active",
-    },
-    {
-      id: "student-2",
-      displayName: "이학생",
-      schoolName: "나학교",
-      gradeLabel: "중2",
-      currentVocabBook: "VOCA",
-      currentVocabDatasetId: null,
-      status: "active",
-    },
-  ],
-  units: [],
-  history: [],
-  progress: [],
-  pendingReviewSummaries: [],
-  currentVocabWrongSummaries: [],
-  learningSources: [],
-  classGroups: [],
-  timeTemplates: [],
-} as unknown as AssignmentManagerData;
+vi.mock("@/features/students/public-client", () => ({
+  loadStudentDirectoryNextPage: vi.fn(),
+  loadStudentDirectorySnapshot: vi.fn(),
+}));
 
-describe("단어 시험 배정 선택 바구니", () => {
-  beforeEach(() => refresh.mockReset());
+vi.mock("../transport/assignment-workspace-reads", () => ({
+  loadAssignmentDatasetDirectory: vi.fn(),
+  loadAssignmentDatasetUnits: vi.fn(),
+  loadAssignmentDirectorySelection: vi.fn(),
+  loadAssignmentEditContext: vi.fn(),
+  loadAssignmentPlannerPreparation: vi.fn(),
+  loadAssignmentPreviousExam: vi.fn(),
+}));
 
-  it("이름·학교 필터가 바뀌어 목록에서 사라져도 선택한 학생을 유지한다", () => {
+function student(
+  id: string,
+  displayName: string,
+  schoolName: string,
+): StudentDirectoryListItem {
+  return {
+    codeStatus: "active",
+    completedCount: 0,
+    currentVocabBook: "VOCA",
+    displayName,
+    gradeLabel: "중3",
+    id,
+    missedCount: 0,
+    notStartedCount: 0,
+    rawPoints: 0,
+    recentExamAt: null,
+    schoolName,
+    status: "active",
+  };
+}
+
+const students = [
+  student("student-1", "김학생", "가학교"),
+  student("student-2", "이학생", "나학교"),
+];
+
+function snapshot(
+  items: StudentDirectoryListItem[],
+  query = "",
+): StudentDirectorySnapshot {
+  return {
+    filterOptions: {
+      classGroups: [],
+      grades: ["중3"],
+      schools: ["가학교", "나학교"],
+      wordbooks: ["VOCA"],
+    },
+    filters: {
+      classGroupId: "",
+      grade: "",
+      query,
+      school: "",
+      status: "active",
+      wordbook: "",
+      wrong: "all",
+    },
+    page: { items, nextCursor: null },
+    snapshotAt: "2026-08-29T00:00:00.000Z",
+    totalCount: items.length,
+  };
+}
+
+describe("단어 시험 배정 작업공간", () => {
+  beforeEach(() => {
+    refresh.mockReset();
+    vi.clearAllMocks();
+    vi.mocked(loadAssignmentPlannerPreparation).mockResolvedValue({
+      datasets: [],
+      initialDatasetId: "",
+      initialUnits: [],
+      students: [],
+      timeTemplates: [],
+    });
+  });
+
+  it("검색 결과가 바뀌어도 선택 바구니를 유지한다", async () => {
+    vi.mocked(loadStudentDirectorySnapshot).mockResolvedValue(
+      snapshot([students[1]!], "이학생"),
+    );
     const { result } = renderHook(() => useAssignmentWorkspace({
-      data,
+      initial: { directory: snapshot(students) },
       initialDatasetId: "",
       initialDialogView: "overview",
       initialStudentId: "",
     }));
 
-    act(() => result.current.actions.toggleBulkStudent("student-1"));
+    act(() => result.current.actions.toggleBulkStudent(students[0]!));
     act(() => result.current.actions.setFilter("query", "이학생"));
-    act(() => result.current.actions.setFilter("school", "나학교"));
 
-    expect(result.current.filteredStudents.map((student) => student.id)).toEqual([
-      "student-2",
-    ]);
+    await waitFor(() => expect(result.current.directory.filtering).toBe(false));
+    expect(result.current.directory.snapshot.page.items.map(({ id }) => id))
+      .toEqual(["student-2"]);
     expect(result.current.selectedBulkStudentIds).toEqual(["student-1"]);
     expect(result.current.selectedBulkStudents[0]?.displayName).toBe("김학생");
   });
 
-  it("단일 배정과 일괄 배정이 같은 계획 창에 서로 정확한 학생을 전달한다", () => {
+  it("단일·일괄 배정이 같은 준비 흐름에 정확한 학생을 전달한다", async () => {
     const { result } = renderHook(() => useAssignmentWorkspace({
-      data,
+      initial: { directory: snapshot(students) },
       initialDatasetId: "",
       initialDialogView: "overview",
       initialStudentId: "",
     }));
 
     act(() => result.current.actions.openSingleAssignment("student-1"));
-    expect(result.current.plannerOpen).toBe(true);
-    expect(result.current.plannerStudents.map((student) => student.id)).toEqual([
-      "student-1",
-    ]);
+    expect(result.current.planner.request?.studentIds).toEqual(["student-1"]);
 
     act(() => result.current.actions.changeAssignmentMode("bulk"));
     act(() => {
-      result.current.actions.toggleBulkStudent("student-1");
-      result.current.actions.toggleBulkStudent("student-2");
+      result.current.actions.toggleBulkStudent(students[0]!);
+      result.current.actions.toggleBulkStudent(students[1]!);
     });
     act(() => result.current.actions.prepareBulkAssignment());
-    expect(result.current.plannerOpen).toBe(true);
-    expect(result.current.plannerStudents.map((student) => student.id)).toEqual([
-      "student-1",
-      "student-2",
-    ]);
+
+    expect(result.current.planner.request).toMatchObject({
+      selectionMode: "bulk",
+      studentIds: ["student-1", "student-2"],
+    });
+    await waitFor(() => expect(loadAssignmentPlannerPreparation).toHaveBeenCalled());
   });
 
-  it("검색어, 세부 필터, 선택 바구니를 서로 독립적으로 초기화한다", () => {
+  it("필터 초기화는 검색어와 선택 바구니를 보존한다", () => {
+    const initial = snapshot(students, "김학생");
     const { result } = renderHook(() => useAssignmentWorkspace({
-      data,
+      initial: { directory: initial },
       initialDatasetId: "",
       initialDialogView: "overview",
       initialStudentId: "",
     }));
 
-    act(() => {
-      result.current.actions.toggleBulkStudent("student-1");
-      result.current.actions.setFilter("query", "김학생");
-      result.current.actions.setFilter("school", "가학교");
-      result.current.actions.setFilter("grade", "중1");
-    });
+    act(() => result.current.actions.toggleBulkStudent(students[0]!));
     act(() => result.current.actions.resetFilters());
 
-    expect(result.current.filters).toMatchObject({
-      query: "김학생",
-      school: "",
-      grade: "",
-      status: "active",
-    });
-    expect(result.current.selectedBulkStudentIds).toEqual(["student-1"]);
-
-    act(() => result.current.actions.clearSearch());
-    expect(result.current.filters.query).toBe("");
+    expect(result.current.filters.query).toBe("김학생");
     expect(result.current.selectedBulkStudentIds).toEqual(["student-1"]);
   });
 });

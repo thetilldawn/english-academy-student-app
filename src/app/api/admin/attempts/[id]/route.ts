@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { getAdminContext } from "@/lib/auth/admin";
 import { privateJsonError } from "@/lib/http";
-import { getAdminAttemptDetail } from "@/lib/services/admin-attempt-read-service";
+import { getAdminAttemptDetail } from "@/features/history/public-server";
 
 const privateNoStoreHeaders = {
   "Cache-Control": "private, no-store",

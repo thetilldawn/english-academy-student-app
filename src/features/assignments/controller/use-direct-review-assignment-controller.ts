@@ -34,6 +34,7 @@ import {
   type DirectReviewDraftAction,
 } from "../domain/direct-review-draft";
 import type {
+  AssignmentAvailability,
   AssignmentDeadline,
   AssignmentDirectionRatio,
   AssignmentQuestionOrderMode,
@@ -59,13 +60,19 @@ export type DirectReviewFieldKey =
   | "passingScore"
   | "retryPassingScore"
   | "timing"
+  | "availability"
   | "deadline"
   | "preview";
 
 type CapacityState =
   | { status: "idle"; value: null; message: "" }
   | { status: "loading"; value: DirectReviewPreviewResponse | null; message: "" }
-  | { status: "ready"; value: DirectReviewPreviewResponse; message: "" }
+  | {
+      status: "ready";
+      value: DirectReviewPreviewResponse;
+      message: "";
+      fingerprint: string;
+    }
   | { status: "error"; value: null; message: string };
 
 type SummaryState =
@@ -103,6 +110,7 @@ function directReviewFieldKey(path: string): DirectReviewFieldKey | null {
   if (path === "exam.passingScore") return "passingScore";
   if (path === "exam.retryPassingScore") return "retryPassingScore";
   if (path.startsWith("exam.timing")) return "timing";
+  if (path === "availability") return "availability";
   if (path === "deadline") return "deadline";
   return null;
 }
@@ -117,6 +125,7 @@ function directReviewFieldErrorLabel(key: DirectReviewFieldKey): string {
     passingScore: "점수 확인",
     retryPassingScore: "점수 확인",
     timing: "시간 확인",
+    availability: "공개 확인",
     deadline: "마감 확인",
     preview: "계산 확인",
   };
@@ -209,6 +218,11 @@ export function useDirectReviewAssignmentController({
   const submissionSession = useAssignmentSubmissionSession();
   const interactionLockedRef = useRef(false);
   const previewRecoveryFingerprintRef = useRef<string | null>(null);
+  const readySummaryIdentityRef = useRef<{
+    refreshVersion: number;
+    studentId: string;
+    transport: AssignmentTransport;
+  } | null>(null);
   const submissionFlow = useMemo(
     () =>
       createAssignmentSubmissionFlow({
@@ -235,6 +249,14 @@ export function useDirectReviewAssignmentController({
 
   useEffect(() => {
     if (!enabled) return;
+    const readyIdentity = readySummaryIdentityRef.current;
+    if (
+      readyIdentity?.studentId === student.id &&
+      readyIdentity.refreshVersion === sourceRefreshVersion &&
+      readyIdentity.transport === transport
+    ) {
+      return;
+    }
     const abortController = new AbortController();
     void (async () => {
       await Promise.resolve();
@@ -249,12 +271,18 @@ export function useDirectReviewAssignmentController({
       });
       if (abortController.signal.aborted) return;
       if (result.ok) {
+        readySummaryIdentityRef.current = {
+          refreshVersion: sourceRefreshVersion,
+          studentId: student.id,
+          transport,
+        };
         setSummary({
           status: "ready",
           value: result.value.summaries,
           message: "",
         });
       } else if (result.error.kind !== "aborted") {
+        readySummaryIdentityRef.current = null;
         setSummary({
           status: "error",
           value: [],
@@ -318,6 +346,10 @@ export function useDirectReviewAssignmentController({
       draft.studentId,
     ],
   );
+  const currentPreviewFingerprint = previewPreparation?.fingerprint ?? null;
+  const previewAlreadyCurrent =
+    capacity.status === "ready" &&
+    capacity.fingerprint === currentPreviewFingerprint;
   const handlePreviewRequested = useCallback(() => {
     setCapacity((current) => ({
       status: "loading",
@@ -326,9 +358,17 @@ export function useDirectReviewAssignmentController({
     }));
   }, []);
   const handlePreviewSucceeded = useCallback(
-    (value: DirectReviewPreviewResponse) => {
+    (
+      value: DirectReviewPreviewResponse,
+      identity: AssignmentRequestIdentity,
+    ) => {
       previewRecoveryFingerprintRef.current = null;
-      setCapacity({ status: "ready", value, message: "" });
+      setCapacity({
+        status: "ready",
+        value,
+        message: "",
+        fingerprint: identity.fingerprint,
+      });
       dispatch({ type: "question_count_resolved", value: value.wrongEligible });
     },
     [],
@@ -355,7 +395,7 @@ export function useDirectReviewAssignmentController({
   );
   useDebouncedAssignmentPreview({
     delayMs: previewDelayMs,
-    enabled: calculationPrerequisitesReady,
+    enabled: calculationPrerequisitesReady && !previewAlreadyCurrent,
     onFailed: handlePreviewFailed,
     onRequested: handlePreviewRequested,
     onSucceeded: handlePreviewSucceeded,
@@ -406,6 +446,7 @@ export function useDirectReviewAssignmentController({
       "passingScore",
       "retryPassingScore",
       "timing",
+      "availability",
       "deadline",
       "preview",
     ] as const
@@ -529,6 +570,8 @@ export function useDirectReviewAssignmentController({
   return {
     actions: {
       changeDataset,
+      changeAvailability: (availability: AssignmentAvailability) =>
+        dispatchUserAction({ type: "availability_changed", availability }),
       changeDeadline: (deadline: AssignmentDeadline) =>
         dispatchUserAction({ type: "deadline_changed", deadline }),
       changeDirection,

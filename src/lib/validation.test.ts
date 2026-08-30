@@ -15,7 +15,7 @@ import {
 import {
   bulkAssignmentPreviewSchema,
   bulkAssignmentSchema,
-} from "@/lib/admin/bulk-assignment-request";
+} from "@/features/assignments/contracts/bulk-assignment-request";
 import {
   directReviewAssignmentSchema,
   directReviewPreviewSchema,
@@ -173,319 +173,183 @@ describe("학생별 배정 수정 입력 계약", () => {
 });
 
 describe("일괄 단어 시험 입력 계약", () => {
-  const studentIds = [
-    "11111111-1111-4111-8111-111111111111",
-    "22222222-2222-4222-8222-222222222222",
-  ];
-  const schedule = {
-    unitsPerSession: 3,
-    sessionCount: 5,
-    firstAvailableFrom: "2026-08-12T00:00:00.000Z",
-    dayInterval: 2,
-    firstAvailableUntil: "2026-08-12T12:00:00.000Z",
+  const studentId = "11111111-1111-4111-8111-111111111111";
+  const datasetId = "22222222-2222-4222-8222-222222222222";
+  const unitA = "33333333-3333-4333-8333-333333333333";
+  const unitB = "44444444-4444-4444-8444-444444444444";
+  const planNonce = "55555555-5555-4555-8555-555555555555";
+  const idempotencyKey = "66666666-6666-4666-8666-666666666666";
+  const previewPlanSignature = "a".repeat(64);
+  const first = {
+    availableFrom: "2026-08-24T00:00:00.000Z",
+    availableUntil: "2026-08-24T12:00:00.000Z",
+  };
+  const second = {
+    availableFrom: "2026-08-26T00:00:00.000Z",
+    availableUntil: "2026-08-26T12:00:00.000Z",
+  };
+  const scheduledPlan = {
+    datasetId,
+    distribution: "split" as const,
+    splitBasis: "question_count" as const,
+    orderedUnitIds: [unitA, unitB],
+    rangeUnitCounts: [],
+    unitAllocationRule: null,
+    questionCount: { mode: "manual" as const, value: 20 },
+    overflowPolicy: "leave" as const,
+    extraDatePolicy: "unconfirmed" as const,
+    selectedDateCount: 2,
+    selectionMode: "source_order" as const,
+    planNonce,
+    recurrenceSessions: [first, second],
+    sessions: [
+      { ...first, unitIds: [unitA, unitB] },
+      { ...second, unitIds: [unitA, unitB] },
+    ],
+  };
+  const preview = {
+    studentIds: [studentId],
+    englishToKoreanRatio: 50 as const,
+    commonPlan: scheduledPlan,
+  };
+  const submission = {
+    ...preview,
+    idempotencyKey,
+    previewPlanSignature,
+    timeLimitSeconds: 300,
+    passingScore: 80,
+    retryEnabled: true,
+    retryPassingScore: 80,
+    questionOrderMode: "ascending" as const,
+    timingMode: "total" as const,
+    questionTimeLimitSeconds: null,
   };
 
-  it("서로 다른 학생 1~210명만 미리보기 대상으로 받는다", () => {
-    expect(
-      bulkAssignmentPreviewSchema.parse({
-        studentIds,
-        ...schedule,
-        includePendingReview: false,
-        reviewLevels: [1, 2],
-        englishToKoreanRatio: 50,
-      }),
-    ).toMatchObject({ studentIds, rangeMode: "previous_span" });
-    expect(
-      bulkAssignmentPreviewSchema.parse({
-        studentIds,
-        ...schedule,
-        rangeMode: "fixed_span",
-        includePendingReview: false,
-        reviewLevels: [1, 2],
-        englishToKoreanRatio: 50,
-      }).rangeMode,
-    ).toBe("fixed_span");
-    expect(() =>
-      bulkAssignmentPreviewSchema.parse({
-        studentIds,
-        ...schedule,
-        rangeMode: "seven_assignments",
-        includePendingReview: false,
-        reviewLevels: [1, 2],
-        englishToKoreanRatio: 50,
-      }),
-    ).toThrow();
-    expect(
-      bulkAssignmentPreviewSchema.parse({
-        studentIds,
-        ...schedule,
-        includePendingReview: false,
-        reviewLevels: [1, 2],
-        englishToKoreanRatio: 50,
-      }).studentIds,
-    ).toEqual(studentIds);
-    expect(() =>
-      bulkAssignmentPreviewSchema.parse({
-        studentIds: [studentIds[0], studentIds[0]],
-        ...schedule,
-        includePendingReview: false,
-        reviewLevels: [1, 2],
-        englishToKoreanRatio: 50,
-      }),
-    ).toThrow("같은 학생을 두 번 선택할 수 없습니다.");
-    expect(() =>
-      bulkAssignmentPreviewSchema.parse({
-        studentIds: Array.from({ length: 211 }, (_, index) =>
-          `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
-        ),
-        ...schedule,
-        includePendingReview: false,
-        reviewLevels: [1, 2],
-        englishToKoreanRatio: 50,
-      }),
-    ).toThrow();
-  });
+  it("일정 배정과 시험일 없는 즉시 배정을 정확한 형태로 받는다", () => {
+    expect(bulkAssignmentPreviewSchema.parse(preview)).toStrictEqual(preview);
+    expect(bulkAssignmentSchema.parse(submission)).toStrictEqual(submission);
 
-  it("회차당 DAY 수·시험 횟수·날짜 간격을 검증한다", () => {
-    expect(() =>
-      bulkAssignmentPreviewSchema.parse({
-        studentIds,
-        ...schedule,
-        sessionCount: 8,
-        includePendingReview: false,
-        reviewLevels: [1, 2],
-        englishToKoreanRatio: 50,
-      }),
-    ).toThrow();
-    expect(() =>
-      bulkAssignmentPreviewSchema.parse({
-        studentIds,
-        ...schedule,
-        firstAvailableUntil: "2026-08-11T12:00:00.000Z",
-        includePendingReview: false,
-        reviewLevels: [1, 2],
-        englishToKoreanRatio: 50,
-      }),
-    ).toThrow("첫 시험 마감은 첫 배정 시간보다 뒤로 정해 주세요.");
-  });
-
-  it("날짜를 줄이지 않고 기본 회차만 쓰라는 우회 요청은 받지 않는다", () => {
-    const availableFrom = "2026-08-24T00:00:00.000Z";
-    const availableUntil = "2026-08-24T12:00:00.000Z";
-    expect(() => bulkAssignmentPreviewSchema.parse({
-      studentIds,
-      ...schedule,
-      includePendingReview: false,
-      reviewLevels: [1, 2],
-      englishToKoreanRatio: 50,
-      commonPlan: {
-        datasetId: studentIds[0],
-        distribution: "split",
-        questionCount: { mode: "manual", value: 45 },
-        overflowPolicy: "leave",
-        extraDatePolicy: "base_only",
-        selectedDateCount: 1,
-        selectionMode: "source_order",
-        planNonce: "33333333-3333-4333-8333-333333333333",
-        recurrenceSessions: [{ availableFrom, availableUntil }],
-        sessions: [{
-          unitIds: [studentIds[0]],
-          availableFrom,
-          availableUntil,
-        }],
-        collisionDecisions: [],
-      },
-    })).toThrow();
-  });
-
-  it("범위 단위 회차는 선택한 전체 순서와 요일별 단위 수를 정확히 지킨다", () => {
-    const unitIds = Array.from({ length: 4 }, (_, index) =>
-      `44444444-4444-4444-8444-${String(index).padStart(12, "0")}`
-    );
-    const sessions = [0, 1].map((index) => ({
-      unitIds: unitIds.slice(index * 2, index * 2 + 2),
-      availableFrom: `2026-08-${24 + index * 2}T07:00:00.000Z`,
-      availableUntil: `2026-08-${24 + index * 2}T13:00:00.000Z`,
-    }));
-    const input = {
-      studentIds,
-      ...schedule,
-      sessionCount: 2,
-      includePendingReview: false,
-      reviewLevels: [1, 2],
-      englishToKoreanRatio: 50,
-      commonPlan: {
-        datasetId: studentIds[0],
-        distribution: "split",
-        splitBasis: "range_unit",
-        orderedUnitIds: unitIds,
-        rangeUnitCounts: [2, 2],
-        unitAllocationRule: {
-          schemaVersion: 1,
-          mode: "same",
-          unitsPerSession: 2,
-          weekdayUnitsPerSession: {
-            1: 2, 2: 2, 3: 2, 4: 2, 5: 2, 6: 2, 7: 2,
-          },
-        },
-        questionCount: { mode: "all" },
-        overflowPolicy: "continue_weekly",
-        extraDatePolicy: "unconfirmed",
-        selectedDateCount: 2,
-        selectionMode: "source_order",
-        planNonce: "33333333-3333-4333-8333-333333333333",
-        recurrenceSessions: sessions.map(({ availableFrom, availableUntil }) => ({
-          availableFrom,
-          availableUntil,
-        })),
-        sessions,
-        collisionDecisions: [],
-      },
-    } as const;
-
-    expect(bulkAssignmentPreviewSchema.parse(input).commonPlan?.sessions)
-      .toHaveLength(2);
-    expect(() => bulkAssignmentPreviewSchema.parse({
-      ...input,
-      commonPlan: {
-        ...input.commonPlan,
-        unitAllocationRule: {
-          ...input.commonPlan.unitAllocationRule,
-          unitsPerSession: 1,
-        },
-      },
-    })).toThrow("요일별 단위 수가 원래 반복 일정의 규칙과 일치하지 않습니다.");
-    for (const invalidCount of [0, 31]) {
-      expect(() => bulkAssignmentPreviewSchema.parse({
-        ...input,
-        commonPlan: {
-          ...input.commonPlan,
-          unitAllocationRule: {
-            ...input.commonPlan.unitAllocationRule,
-            unitsPerSession: invalidCount,
-          },
-        },
-      })).toThrow();
-    }
-    expect(() => bulkAssignmentPreviewSchema.parse({
-      ...input,
-      commonPlan: {
-        ...input.commonPlan,
-        sessions: [sessions[1], sessions[0]],
-      },
-    })).toThrow("회차별 범위가 선택한 순서 또는 단위 수와 일치하지 않습니다.");
-    expect(() => bulkAssignmentPreviewSchema.parse({
-      ...input,
-      commonPlan: {
-        ...input.commonPlan,
-        sessions: [sessions[0], sessions[0]],
-      },
-    })).toThrow("회차별 범위가 선택한 순서 또는 단위 수와 일치하지 않습니다.");
-  });
-
-  it("배정된 시험은 31명도 허용하되 학생과 회차를 합쳐 210시험을 지킨다", () => {
-    const manyStudents = Array.from({ length: 31 }, (_, index) =>
-      `50000000-0000-4000-8000-${String(index).padStart(12, "0")}`
-    );
-    const availableFrom = "2026-08-24T07:00:00.000Z";
-    const availableUntil = "2026-08-24T13:00:00.000Z";
-    const unitId = "60000000-0000-4000-8000-000000000000";
-    const oneSessionPlan = {
-      datasetId: unitId,
-      distribution: "split",
-      splitBasis: "question_count",
-      orderedUnitIds: [unitId],
-      rangeUnitCounts: [],
-      unitAllocationRule: null,
-      questionCount: { mode: "manual", value: 20 },
-      overflowPolicy: "leave",
-      extraDatePolicy: "unconfirmed",
-      selectedDateCount: 1,
-      selectionMode: "source_order",
-      planNonce: "70000000-0000-4000-8000-000000000000",
-      recurrenceSessions: [{ availableFrom, availableUntil }],
-      sessions: [{ unitIds: [unitId], availableFrom, availableUntil }],
-      collisionDecisions: [],
-    } as const;
-    expect(bulkAssignmentPreviewSchema.parse({
-      studentIds: manyStudents,
-      ...schedule,
-      sessionCount: 1,
-      includePendingReview: false,
-      reviewLevels: [1, 2],
-      englishToKoreanRatio: 50,
-      commonPlan: oneSessionPlan,
-    }).studentIds).toHaveLength(31);
-
-    const sevenUnits = Array.from({ length: 7 }, (_, index) =>
-      `80000000-0000-4000-8000-${String(index).padStart(12, "0")}`
-    );
-    const sevenSessions = sevenUnits.map((id, index) => ({
-      unitIds: [id],
-      availableFrom: `2026-0${9 + Math.floor(index / 28)}-${String(1 + index).padStart(2, "0")}T07:00:00.000Z`,
-      availableUntil: `2026-0${9 + Math.floor(index / 28)}-${String(1 + index).padStart(2, "0")}T13:00:00.000Z`,
-    }));
-    expect(() => bulkAssignmentPreviewSchema.parse({
-      studentIds: manyStudents,
-      ...schedule,
-      sessionCount: 7,
-      includePendingReview: false,
-      reviewLevels: [1, 2],
-      englishToKoreanRatio: 50,
-      commonPlan: {
-        ...oneSessionPlan,
-        datasetId: sevenUnits[0],
-        splitBasis: "range_unit",
-        orderedUnitIds: sevenUnits,
-        rangeUnitCounts: [1],
-        unitAllocationRule: {
-          schemaVersion: 1,
-          mode: "same",
-          unitsPerSession: 1,
-          weekdayUnitsPerSession: {
-            1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1,
-          },
-        },
-        questionCount: { mode: "all" },
-        overflowPolicy: "continue_weekly",
-        recurrenceSessions: [{
-          availableFrom: sevenSessions[0]!.availableFrom,
-          availableUntil: sevenSessions[0]!.availableUntil,
-        }],
-        sessions: sevenSessions,
-      },
-    })).toThrow("한 번에 저장할 수 있는 시험은 전체 210개까지입니다.");
-  });
-
-  it("전체 시간과 문제당 시간을 동시에 저장하지 않는다", () => {
-    const base = {
-      studentIds,
-      ...schedule,
-      idempotencyKey: "33333333-3333-4333-8333-333333333333",
-      previewPlanSignature: "a".repeat(64),
-      includePendingReview: true,
-      reviewLevels: [1, 2] as const,
-      englishToKoreanRatio: 50 as const,
-      timeLimitSeconds: 300,
-      passingScore: 80,
-      retryEnabled: true,
-      retryPassingScore: 80,
-      questionOrderMode: "random" as const,
+    const immediatePlan = {
+      ...scheduledPlan,
+      distribution: "repeat" as const,
+      orderedUnitIds: [unitA],
+      questionCount: { mode: "all" as const },
+      selectedDateCount: 0,
+      recurrenceSessions: [
+        { availableFrom: null, availableUntil: null },
+      ],
+      sessions: [
+        { unitIds: [unitA], availableFrom: null, availableUntil: null },
+      ],
     };
-    expect(
-      bulkAssignmentSchema.parse({
-        ...base,
-        timingMode: "total",
-        questionTimeLimitSeconds: null,
-      }).timingMode,
-    ).toBe("total");
-    expect(() =>
-      bulkAssignmentSchema.parse({
-        ...base,
-        timingMode: "total",
-        questionTimeLimitSeconds: 20,
-      }),
-    ).toThrow("시간 제한 방식과 문제당 시간을 확인해주세요.");
+    const immediate = {
+      studentIds: [studentId],
+      englishToKoreanRatio: 50 as const,
+      commonPlan: immediatePlan,
+    };
+    expect(bulkAssignmentPreviewSchema.parse(immediate)).toStrictEqual(
+      immediate,
+    );
+  });
+
+  it("예전 분산 필드를 받지 않는다", () => {
+    expect(bulkAssignmentPreviewSchema.safeParse({
+      ...preview,
+      sessionCount: 2,
+    }).success).toBe(false);
+  });
+
+  it("학생은 210명까지, 학생과 회차를 곱한 시험도 210개까지만 받는다", () => {
+    const students = Array.from(
+      { length: 210 },
+      (_, index) =>
+        "70000000-0000-4000-8000-" + String(index).padStart(12, "0"),
+    );
+    const oneSessionPlan = {
+      ...scheduledPlan,
+      selectedDateCount: 1,
+      recurrenceSessions: [first],
+      sessions: [{ ...first, unitIds: [unitA, unitB] }],
+    };
+    expect(bulkAssignmentPreviewSchema.parse({
+      ...preview,
+      studentIds: students,
+      commonPlan: oneSessionPlan,
+    }).studentIds).toHaveLength(210);
+    expect(bulkAssignmentPreviewSchema.safeParse({
+      ...preview,
+      studentIds: students.slice(0, 106),
+    }).success).toBe(false);
+    expect(bulkAssignmentPreviewSchema.safeParse({
+      ...preview,
+      studentIds: [...students, studentId],
+      commonPlan: oneSessionPlan,
+    }).success).toBe(false);
+  });
+
+  it("일정 배정은 공개와 마감을 모두 요구하고 순서를 검증한다", () => {
+    expect(bulkAssignmentPreviewSchema.safeParse({
+      ...preview,
+      commonPlan: {
+        ...scheduledPlan,
+        recurrenceSessions: [{ availableFrom: null, availableUntil: null }, second],
+      },
+    }).success).toBe(false);
+    expect(bulkAssignmentPreviewSchema.safeParse({
+      ...preview,
+      commonPlan: {
+        ...scheduledPlan,
+        sessions: [
+          { ...first, availableUntil: first.availableFrom, unitIds: [unitA, unitB] },
+          { ...second, unitIds: [unitA, unitB] },
+        ],
+      },
+    }).success).toBe(false);
+  });
+
+  it("범위 단위 배정은 요일별 단위 수와 실제 회차 범위를 일치시킨다", () => {
+    const rangePlan = {
+      ...scheduledPlan,
+      splitBasis: "range_unit" as const,
+      rangeUnitCounts: [1, 1],
+      unitAllocationRule: {
+        schemaVersion: 1 as const,
+        mode: "same" as const,
+        unitsPerSession: 1,
+        weekdayUnitsPerSession: {
+          1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1,
+        },
+      },
+      questionCount: { mode: "all" as const },
+      sessions: [
+        { ...first, unitIds: [unitA] },
+        { ...second, unitIds: [unitB] },
+      ],
+    };
+    expect(bulkAssignmentPreviewSchema.parse({
+      ...preview,
+      commonPlan: rangePlan,
+    }).commonPlan.sessions).toHaveLength(2);
+    expect(bulkAssignmentPreviewSchema.safeParse({
+      ...preview,
+      commonPlan: {
+        ...rangePlan,
+        sessions: [rangePlan.sessions[1], rangePlan.sessions[0]],
+      },
+    }).success).toBe(false);
+  });
+
+  it("시험 시간과 재시험 설정을 서로 맞춰서 저장한다", () => {
+    expect(bulkAssignmentSchema.safeParse({
+      ...submission,
+      timingMode: "total",
+      questionTimeLimitSeconds: 15,
+    }).success).toBe(false);
+    expect(bulkAssignmentSchema.safeParse({
+      ...submission,
+      retryEnabled: false,
+      retryPassingScore: 80,
+    }).success).toBe(false);
   });
 });
 
@@ -668,6 +532,7 @@ describe("DAY+오답 혼합 시험 입력 계약", () => {
     retryEnabled: true,
     retryPassingScore: 80,
     questionOrderMode: "random" as const,
+    availableFrom: null,
     availableUntil: null,
     idempotencyKey: studentId,
   };

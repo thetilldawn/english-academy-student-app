@@ -71,6 +71,26 @@ export type ActiveAssignmentWord = {
   headwordNormalized: string | null;
 };
 
+export type ActiveReviewAssignmentSnapshot = {
+  identities: Set<string>;
+  queueIds: Set<string>;
+  reviewIdentities: Set<string>;
+  words: ActiveAssignmentWord[];
+};
+
+export type ActiveReviewAssignmentResult = ActiveReviewAssignmentSnapshot & {
+  byStudent: Map<string, ActiveReviewAssignmentSnapshot>;
+};
+
+function emptyActiveReviewAssignmentSnapshot(): ActiveReviewAssignmentSnapshot {
+  return {
+    identities: new Set(),
+    queueIds: new Set(),
+    reviewIdentities: new Set(),
+    words: [],
+  };
+}
+
 function chunks<T>(values: readonly T[], size: number): T[][] {
   const result: T[][] = [];
   for (let index = 0; index < values.length; index += size) {
@@ -138,30 +158,40 @@ export async function loadActiveReviewAssignments(
   datasetId: string,
   exclusion?: ActiveAssignmentExclusion,
 ) {
-  const queueIds = new Set<string>();
-  const identities = new Set<string>();
-  const reviewIdentities = new Set<string>();
+  const aggregate = emptyActiveReviewAssignmentSnapshot();
+  const { identities, queueIds, reviewIdentities, words } = aggregate;
   const reviewTargetRows: AssignmentReviewTargetRow[] = [];
-  const words: ActiveAssignmentWord[] = [];
   const uniqueStudentIds = [...new Set(studentIds)];
+  const byStudent = new Map(
+    uniqueStudentIds.map((studentId) => [
+      studentId,
+      emptyActiveReviewAssignmentSnapshot(),
+    ]),
+  );
   if (uniqueStudentIds.length === 0) {
-    return { queueIds, identities, reviewIdentities, words };
+    return { ...aggregate, byStudent };
   }
 
-  for (const studentId of uniqueStudentIds) {
+  for (const studentIdChunk of chunks(uniqueStudentIds, ID_CHUNK_SIZE)) {
     for (let offset = 0; ; offset += PAGE_SIZE) {
       let query = supabase
         .from("assignment_review_targets")
         .select(
           "assignment_id, student_id, review_queue_id, vocab_entry_id, canonical_lexeme_id_snapshot, canonical_dictionary_id_snapshot",
         )
-        .eq("student_id", studentId)
+        .in("student_id", studentIdChunk)
         .eq("dataset_id", datasetId)
         .is("released_at", null)
+        .order("student_id")
         .order("id")
         .range(offset, offset + PAGE_SIZE - 1);
-      if (exclusion?.studentId === studentId) {
-        query = query.neq("assignment_id", exclusion.assignmentId);
+      if (
+        exclusion &&
+        studentIdChunk.includes(exclusion.studentId)
+      ) {
+        query = query.or(
+          `assignment_id.neq.${exclusion.assignmentId},student_id.neq.${exclusion.studentId}`,
+        );
       }
       const { data, error } = await query;
       if (error) {
@@ -169,6 +199,7 @@ export async function loadActiveReviewAssignments(
       }
       for (const row of (data ?? []) as AssignmentReviewTargetRow[]) {
         queueIds.add(row.review_queue_id);
+        byStudent.get(row.student_id)?.queueIds.add(row.review_queue_id);
         reviewTargetRows.push(row);
       }
       if (!data || data.length < PAGE_SIZE) break;
@@ -200,6 +231,7 @@ export async function loadActiveReviewAssignments(
       row.canonical_dictionary_id_snapshot,
     )) {
       reviewIdentities.add(identity);
+      byStudent.get(row.student_id)?.reviewIdentities.add(identity);
     }
   }
 
@@ -239,7 +271,7 @@ export async function loadActiveReviewAssignments(
     ...new Set(linkRows.map((row) => row.assignment_id)),
   ];
   if (assignmentIds.length === 0) {
-    return { queueIds, identities, reviewIdentities, words };
+    return { ...aggregate, byStudent };
   }
 
   const assignmentRows: AssignmentRow[] = [];
@@ -367,8 +399,9 @@ export async function loadActiveReviewAssignments(
           canonicalDictionaryId,
         )) {
         identities.add(identity);
+        byStudent.get(link.student_id)?.identities.add(identity);
       }
-      words.push({
+      const word = {
         studentId: link.student_id,
         assignmentId: link.assignment_id,
         title: assignment.title,
@@ -380,9 +413,11 @@ export async function loadActiveReviewAssignments(
           question.canonical_lexeme_id_snapshot,
         headwordNormalized:
           question.headword_normalized_snapshot,
-      });
+      };
+      words.push(word);
+      byStudent.get(link.student_id)?.words.push(word);
     }
   }
 
-  return { queueIds, identities, reviewIdentities, words };
+  return { ...aggregate, byStudent };
 }

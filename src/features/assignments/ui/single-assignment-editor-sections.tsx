@@ -1,6 +1,7 @@
 import { Button } from "@/design-system/primitives/button/button";
 import { Notice } from "@/design-system/patterns/feedback/feedback";
 import { adminLearningText } from "@/content/ko/admin-learning";
+import type { AssignmentEditDraft } from "@/lib/admin/assignment-edit";
 
 import type {
   AssignmentDatasetItem,
@@ -10,6 +11,7 @@ import type {
 import type { SingleAssignmentController } from "../controller/use-assignment-controller";
 import type { AssignmentEditFieldErrors } from "../presentation/assignment-edit-field-errors";
 import { AssignmentRangeFields } from "./assignment-range-fields";
+import { AssignmentEditRangeSummary } from "./assignment-edit-range-summary";
 import { AssignmentSection } from "./assignment-section";
 import { AssignmentSettingsFields } from "./assignment-settings-fields";
 import { AssignmentSummaryPanel } from "./assignment-summary-panel";
@@ -20,17 +22,27 @@ export function SingleAssignmentEditorSections({
   controller,
   datasets,
   editPurpose,
+  editSnapshot,
   fieldErrors,
   formId,
+  onRetryUnits = () => undefined,
   progress,
+  unitLoadState = { datasetId: "", message: "", status: "idle" },
   units,
 }: {
   controller: SingleAssignmentController;
   datasets: readonly AssignmentDatasetItem[];
   editPurpose: "regular" | "mixed" | "review" | null;
+  editSnapshot?: AssignmentEditDraft;
   fieldErrors: AssignmentEditFieldErrors;
   formId: string;
+  onRetryUnits?: () => void;
   progress: AssignmentProgressItem | null;
+  unitLoadState?: {
+    datasetId: string;
+    message: string;
+    status: "idle" | "loading" | "ready" | "error";
+  };
   units: readonly AssignmentUnitItem[];
 }) {
   const rangeStatus = fieldErrors.dataset || fieldErrors.range
@@ -59,18 +71,15 @@ export function SingleAssignmentEditorSections({
           title="시험 종류는 수정할 수 없습니다."
         >
           <Button
-            aria-pressed={editPurpose !== "review"}
+            aria-pressed="true"
             disabled
             variant="filter"
           >
-            단어 시험
-          </Button>
-          <Button
-            aria-pressed={editPurpose === "review"}
-            disabled
-            variant="filter"
-          >
-            오답 시험
+            {editPurpose === "regular"
+              ? "단어 시험"
+              : editPurpose === "review"
+                ? "오답 시험"
+                : "단어+오답 시험"}
           </Button>
         </div>
       ) : null}
@@ -87,13 +96,35 @@ export function SingleAssignmentEditorSections({
           status={rangeStatus}
           title="시험 범위"
         >
-          <AssignmentRangeFields
-            controller={controller}
-            datasets={datasets}
-            fieldErrors={fieldErrors}
-            progress={progress}
-            units={units}
-          />
+          {(editPurpose === "review" || editPurpose === "mixed") && editSnapshot ? (
+            <AssignmentEditRangeSummary
+              datasets={datasets}
+              source={editSnapshot}
+              units={units}
+            />
+          ) : (
+            <AssignmentRangeFields
+              controller={controller}
+              datasets={datasets}
+              fieldErrors={fieldErrors}
+              progress={progress}
+              units={units}
+            />
+          )}
+          {editPurpose !== "review" && editPurpose !== "mixed" &&
+          unitLoadState.datasetId === controller.state.draft.range.datasetId &&
+          unitLoadState.status === "loading" ? (
+            <div aria-busy="true" role="status">범위를 불러오는 중…</div>
+          ) : editPurpose !== "review" && editPurpose !== "mixed" &&
+            unitLoadState.datasetId === controller.state.draft.range.datasetId &&
+            unitLoadState.status === "error" ? (
+            <Notice role="alert" tone="danger">
+              {unitLoadState.message}
+              <Button onClick={onRetryUnits} size="small" variant="quiet">
+                다시 불러오기
+              </Button>
+            </Notice>
+          ) : null}
         </AssignmentSection>
         <AssignmentSection
           help="단어 수와 시험 문제 순서, 통과 기준을 정합니다."

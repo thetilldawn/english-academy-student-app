@@ -59,6 +59,7 @@ const ids = {
 const admin = { displayName: "테스트 관리자", userId: "admin-id" };
 
 const input: DirectReviewAssignmentInput = {
+  availableFrom: null,
   availableUntil: null,
   datasetId: ids.dataset,
   englishToKoreanRatio: 50,
@@ -77,6 +78,7 @@ const input: DirectReviewAssignmentInput = {
 };
 
 const prepared = {
+  availableFrom: null,
   availableUntil: null,
   datasetId: ids.dataset,
   englishToKoreanRatio: 50,
@@ -167,8 +169,12 @@ describe("createDirectReviewAssignment", () => {
     );
     const lookupArgs = rpc.mock.calls[0]?.[1] as Record<string, unknown>;
     const createArgs = rpc.mock.calls[1]?.[1] as Record<string, unknown>;
+    expect(rpc.mock.calls[1]?.[0]).toBe(
+      "create_current_wrong_review_assignment_v2",
+    );
     expect(lookupArgs.p_request_sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(createArgs).toMatchObject({
+      p_available_from: null,
       p_idempotency_key: ids.idempotency,
       p_request_sha256: lookupArgs.p_request_sha256,
       p_review_levels: [1, 2],

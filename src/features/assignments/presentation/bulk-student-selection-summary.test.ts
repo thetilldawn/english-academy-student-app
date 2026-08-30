@@ -3,13 +3,13 @@ import { describe, expect, it } from "vitest";
 import { buildBulkStudentFilterLabels } from "./bulk-student-selection-summary";
 
 const filters = {
-  classGroup: "",
+  classGroupId: "",
   grade: "",
   query: "",
   school: "",
   status: "active" as const,
   wordbook: "",
-  wrongWord: "all" as const,
+  wrong: "all" as const,
 };
 
 describe("일괄 배정 대상 요약", () => {
@@ -18,12 +18,12 @@ describe("일괄 배정 대상 요약", () => {
       classGroupLabel: "월수금 A반",
       filters: {
         ...filters,
-        classGroup: "group-a",
+        classGroupId: "group-a",
         query: "김",
         school: "A고",
-        wrongWord: "repeated",
+        wrong: "repeated",
       },
-      isWholeFilteredSelection: false,
+      isWholeFilteredSelection: true,
     })).toEqual(["검색: 김", "A고", "월수금 A반", "2회 이상 오답"]);
   });
 

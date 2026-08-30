@@ -14,6 +14,7 @@ export function SelectedStudentBasket({
       <div className={styles.selectionBasketHeading}>
         <strong>선택 바구니 · {controller.selectedBulkStudents.length}명</strong>
         <Button
+          disabled={controller.selectionLoading}
           onClick={controller.actions.clearBulkStudents}
           size="small"
           variant="quiet"
@@ -25,8 +26,9 @@ export function SelectedStudentBasket({
         {controller.selectedBulkStudents.map((student) => (
           <Button
             aria-label={`${student.displayName} 선택 해제`}
+            disabled={controller.selectionLoading}
             key={student.id}
-            onClick={() => controller.actions.toggleBulkStudent(student.id)}
+            onClick={() => controller.actions.toggleBulkStudent(student)}
             size="small"
             variant="filter"
           >

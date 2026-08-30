@@ -5,9 +5,8 @@ import { Notice } from "@/design-system/patterns/feedback/feedback";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { AssignmentWorkspace } from "@/features/assignments/ui/assignment-workspace";
 import { LegacyReviewRecovery } from "@/features/assignments/ui/legacy-review-recovery";
-import {
-  loadAssignmentManagerData,
-} from "@/lib/services/assignment-manager-data";
+import { getStudentDirectoryInitial } from "@/features/students/public-server";
+import { emptyStudentDirectoryFilters } from "@/features/students/public-contracts";
 import { getReviewAssignmentDraftSummary } from "@/lib/services/review-assignment-draft-query";
 
 export const metadata: Metadata = {
@@ -36,8 +35,10 @@ export default async function AssignmentsPage({
   const validReviewDraftId = z
     .uuid()
     .safeParse(requestedReviewDraftId).success;
-  const [managerData, reviewDraft] = await Promise.all([
-    loadAssignmentManagerData(),
+  const [directory, reviewDraft] = await Promise.all([
+    getStudentDirectoryInitial({
+      filters: { ...emptyStudentDirectoryFilters, status: "active" },
+    }),
     requestedReviewDraftId && validReviewDraftId
       ? getReviewAssignmentDraftSummary(requestedReviewDraftId)
       : Promise.resolve(null),
@@ -51,14 +52,14 @@ export default async function AssignmentsPage({
         </Notice>
       )}
       <AssignmentWorkspace
-        data={managerData}
+        initial={{ directory }}
         initialDatasetId={initialDatasetId}
         initialDialogView={initialDialogView}
         initialStudentId={requestedReviewDraftId ? "" : initialStudentId}
         key={
           requestedReviewDraftId
             ? `legacy-review:${requestedReviewDraftId}`
-            : `assignment-workspace:${initialStudentId}:${initialDatasetId}:${initialDialogView}`
+            : `assignment-workspace:${directory.snapshotAt}:${initialStudentId}:${initialDatasetId}:${initialDialogView}`
         }
       />
       {reviewDraft && (

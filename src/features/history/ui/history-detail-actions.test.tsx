@@ -9,7 +9,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { adminHistoryText } from "@/content/ko/admin-history";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
-import type { AssignmentManagerData } from "@/lib/admin/assignment-manager-data";
 
 import { HistoryDetailActions } from "./history-detail-actions";
 
@@ -37,35 +36,10 @@ const item = {
   studentStatus: "active",
 } as unknown as AssignmentHistorySummary;
 
-const editorData = {
-  currentVocabWrongSummaries: [],
-  datasets: [
-    {
-      id: "dataset-1",
-      isActive: true,
-      isAssignable: true,
-      status: "ready",
-    },
-  ],
-  history: [],
-  learningSources: [],
-  pendingReviewSummaries: [],
-  progress: [],
-  students: [
-    {
-      currentVocabDatasetId: "dataset-1",
-      displayName: "미리보기 학생",
-      id: "student-1",
-    },
-  ],
-  units: [],
-} as unknown as AssignmentManagerData;
-
 describe("history detail actions", () => {
   it("opens the student through the ID-based detail route", () => {
     render(
       <HistoryDetailActions
-        editorData={editorData}
         item={item}
         mode="page"
         onEditRequested={vi.fn()}
@@ -83,7 +57,6 @@ describe("history detail actions", () => {
     const onEditRequested = vi.fn();
     render(
       <HistoryDetailActions
-        editorData={editorData}
         editButtonRef={editButtonRef}
         item={item}
         mode="overlay"

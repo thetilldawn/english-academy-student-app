@@ -1,4 +1,5 @@
 import type {
+  AssignmentAvailability,
   AssignmentDeadline,
   AssignmentDirectionRatio,
   AssignmentQuestionOrderMode,
@@ -19,6 +20,7 @@ export type DirectReviewDraftAction =
   | { type: "time_limit_changed"; enabled: boolean }
   | { type: "timing_changed"; timing: ExamTiming }
   | { type: "timing_mode_changed"; mode: ExamTiming["mode"] }
+  | { type: "availability_changed"; availability: AssignmentAvailability }
   | { type: "deadline_changed"; deadline: AssignmentDeadline };
 
 export function directReviewQuestionCountError(input: {
@@ -54,6 +56,7 @@ export function createInitialDirectReviewDraft(input: {
       timeLimitEnabled: true,
       timing: { mode: "total", totalSeconds: 300 },
     },
+    availability: { mode: "immediate" },
     deadline: { mode: "none" },
   };
 }
@@ -123,6 +126,8 @@ export function reduceDirectReviewDraft(
               : { mode: "per_question", perQuestionSeconds: 20 },
         },
       };
+    case "availability_changed":
+      return { ...draft, availability: action.availability };
     case "deadline_changed":
       return { ...draft, deadline: action.deadline };
   }

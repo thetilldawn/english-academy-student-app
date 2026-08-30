@@ -8,35 +8,18 @@ import {
   cataloguedDatasetFromMetadata,
   compareCataloguedDatasets,
   type CataloguedDataset,
-  type DatasetCatalogGroup,
-  type VocabUnitType,
 } from "@/lib/admin/dataset-catalog";
 import type {
   DatasetOption,
   DatasetSummary,
-  VocabUnitSummary,
 } from "@/lib/admin/dataset-summary";
-import { datasetDisplayLabel } from "@/lib/admin/dataset-display";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   queryDatasetCatalogRows,
   type DatasetCatalogRow,
-  type RawDataset,
 } from "@/lib/services/dataset-catalog-service";
 
 type AdminSupabase = Awaited<ReturnType<typeof createServerSupabaseClient>>;
-
-type UnitCatalogRow = {
-  unit_id: string;
-  catalog_group: DatasetCatalogGroup;
-  unit_type: VocabUnitType;
-  display_name: string;
-  academic_year: number | null;
-  exam_month: number | null;
-  agency: string | null;
-  item_range: string | null;
-  sort_index: number;
-};
 
 type DatasetSummaryRow = {
   id: string;
@@ -156,57 +139,6 @@ export async function loadAdminMaterialSnapshot(
   );
 }
 
-export async function loadAdminVocabUnits(
-  supabase: AdminSupabase,
-): Promise<VocabUnitSummary[]> {
-  const [unitResult, catalogResult] = await Promise.all([
-    supabase
-      .from("vocab_units")
-      .select(
-        "id, dataset_id, unit_label, unit_kind, unit_number, sort_index, entry_count",
-      )
-      .order("dataset_id")
-      .order("sort_index"),
-    supabase
-      .from("vocab_unit_catalog")
-      .select(
-        "unit_id, catalog_group, unit_type, display_name, academic_year, exam_month, agency, item_range, sort_index",
-      ),
-  ]);
-
-  if (unitResult.error || catalogResult.error) {
-    throw new Error("단어장 범위 목록을 불러오지 못했습니다.");
-  }
-
-  const catalogByUnitId = new Map(
-    ((catalogResult.data ?? []) as UnitCatalogRow[]).map((catalog) => [
-      catalog.unit_id,
-      catalog,
-    ]),
-  );
-
-  return (unitResult.data ?? []).map((unit) => {
-    const catalog = catalogByUnitId.get(unit.id);
-    return {
-      id: unit.id,
-      datasetId: unit.dataset_id,
-      label: unit.unit_label,
-      kind: unit.unit_kind,
-      number: unit.unit_number,
-      sortIndex: unit.sort_index,
-      entryCount: unit.entry_count,
-      catalogGroup: catalog?.catalog_group ?? null,
-      unitType: catalog?.unit_type ?? null,
-      displayName: catalog?.display_name ?? unit.unit_label,
-      academicYear: catalog?.academic_year ?? null,
-      examMonth: catalog?.exam_month ?? null,
-      agency: catalog?.agency ?? null,
-      itemRange: catalog?.item_range ?? null,
-      catalogSortIndex: catalog?.sort_index ?? unit.sort_index,
-    };
-  });
-}
-
 const loadAdminMaterialSnapshotForRscRequest = cache(
   async (adminUserId: string): Promise<AdminMaterialSnapshot> => {
     if (!adminUserId) {
@@ -217,53 +149,8 @@ const loadAdminMaterialSnapshotForRscRequest = cache(
   },
 );
 
-const loadAdminVocabUnitsForRscRequest = cache(
-  async (adminUserId: string): Promise<VocabUnitSummary[]> => {
-    if (!adminUserId) {
-      throw new Error("관리자 인증 정보가 필요합니다.");
-    }
-    const supabase = await createServerSupabaseClient();
-    return loadAdminVocabUnits(supabase);
-  },
-);
-
 /** 같은 React Server Component 렌더 안에서만 공용 자료를 재사용합니다. */
 export async function loadCurrentAdminMaterialSnapshotForRsc(): Promise<AdminMaterialSnapshot> {
   const admin = await requireAdmin();
   return loadAdminMaterialSnapshotForRscRequest(admin.userId);
-}
-
-/** 이력과 공용 자료가 같은 렌더에서 단어장 분류 조회를 공유합니다. */
-export async function loadCurrentAdminDatasetDisplayLabelMapForRsc(
-  datasets: readonly RawDataset[],
-) {
-  const admin = await requireAdmin();
-  const snapshot = await loadAdminMaterialSnapshotForRscRequest(admin.userId);
-  return new Map(
-    datasets.map((dataset) => [
-      dataset.id,
-      snapshot.datasetLabelById.get(dataset.id) ??
-        datasetDisplayLabel(dataset.title, dataset.edition),
-    ]),
-  );
-}
-
-/** 같은 React Server Component 렌더 안에서만 공용 범위를 재사용합니다. */
-export async function loadCurrentAdminVocabUnitsForRsc(): Promise<
-  VocabUnitSummary[]
-> {
-  const admin = await requireAdmin();
-  return loadAdminVocabUnitsForRscRequest(admin.userId);
-}
-
-export async function listDatasets(): Promise<DatasetSummary[]> {
-  await requireAdmin();
-  const supabase = await createServerSupabaseClient();
-  return (await loadAdminMaterialSnapshot(supabase)).allDatasets;
-}
-
-export async function listVocabUnits(): Promise<VocabUnitSummary[]> {
-  await requireAdmin();
-  const supabase = await createServerSupabaseClient();
-  return loadAdminVocabUnits(supabase);
 }

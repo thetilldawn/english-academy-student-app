@@ -69,4 +69,23 @@ describe("redesign 무중단 배포 migration 계약", () => {
       "grant execute on function public.replace_student_assignment_v5(",
     );
   });
+
+  it("keeps replacement v6 as a v7 compatibility wrapper during rolling deploy", () => {
+    const migration = source(
+      "supabase/migrations/20260830111500_lock_exact_review_assignment_snapshot.sql",
+    );
+
+    expect(migration).toContain(
+      "create or replace function public.replace_student_assignment_v6(",
+    );
+    expect(migration).toContain(
+      "select public.replace_student_assignment_v7(",
+    );
+    expect(migration).toContain(
+      "grant execute on function public.replace_student_assignment_v6(",
+    );
+    expect(migration).toContain(
+      "grant execute on function public.replace_student_assignment_v7(",
+    );
+  });
 });

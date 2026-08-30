@@ -11,9 +11,8 @@ import {
 
 import {
   type AssignmentCapacityResponse,
-  type AssignmentCreationResponse,
-  type AssignmentReplacementResponse,
 } from "../api/response-adapters";
+import type { SingleAssignmentResult } from "../contracts/single-assignment-editor-contract";
 import {
   loadSingleAssignmentEditDraft,
   prepareSingleAssignmentSubmission,
@@ -57,10 +56,6 @@ import {
 } from "./use-assignment-controller-runtime";
 import { useAssignmentPreview } from "./use-assignment-preview";
 
-export type SingleAssignmentResult =
-  | AssignmentCreationResponse
-  | AssignmentReplacementResponse;
-
 type ControllerState = AssignmentEditorState<
   SingleAssignmentDraft,
   AssignmentCapacityResponse,
@@ -83,6 +78,7 @@ export type AssignmentControllerSource =
   | {
       assignmentId: string;
       fallbackDraft: SingleAssignmentDraft;
+      initialDraft?: SingleAssignmentDraft;
       kind: "edit";
       studentId: string;
     };
@@ -165,7 +161,9 @@ export function useAssignmentController({
   transport?: AssignmentTransport;
 }) {
   const initialDraft =
-    source.kind === "create" ? source.initialDraft : source.fallbackDraft;
+    source.kind === "create"
+      ? source.initialDraft
+      : source.initialDraft ?? source.fallbackDraft;
   const [state, dispatch] = useReducer(
     reduceAssignmentEditorState<
       SingleAssignmentDraft,
@@ -182,10 +180,14 @@ export function useAssignmentController({
   );
   const stateRef = useRef<ControllerState>(state);
   const [baselineDraft, setBaselineDraft] =
-    useState<SingleAssignmentDraft | null>(null);
+    useState<SingleAssignmentDraft | null>(
+      source.kind === "edit" ? source.initialDraft ?? null : null,
+    );
   const [loadStatus, setLoadStatus] = useState<
     "loading" | "ready" | "error"
-  >(source.kind === "edit" ? "loading" : "ready");
+  >(
+    source.kind === "edit" && !source.initialDraft ? "loading" : "ready",
+  );
   const [feedback, setFeedback] = useState<AssignmentFeedback>({
     message: "",
     submissionIssue: null,
@@ -214,6 +216,7 @@ export function useAssignmentController({
   const sourceAssignmentId =
     source.kind === "edit" ? source.assignmentId : null;
   const sourceStudentId = source.kind === "edit" ? source.studentId : null;
+  const hasInitialEditDraft = source.kind === "edit" && Boolean(source.initialDraft);
   const submissionFlow = useMemo(
     () =>
       createAssignmentSubmissionFlow({
@@ -264,6 +267,7 @@ export function useAssignmentController({
     ) {
       return;
     }
+    if (hasInitialEditDraft && sourceReloadVersion === 0) return;
     const abortController = new AbortController();
     void loadSingleAssignmentEditDraft({
       assignmentId: sourceAssignmentId,
@@ -295,6 +299,7 @@ export function useAssignmentController({
   }, [
     apply,
     editLoadErrorMessage,
+    hasInitialEditDraft,
     rememberTiming,
     setMessage,
     setSubmissionIssue,

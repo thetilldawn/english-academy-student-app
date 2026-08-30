@@ -23,7 +23,6 @@ export type VocabAssignmentMode =
   | "word_count";
 export type VocabRangeDistribution = "split" | "repeat";
 export type VocabSplitBasis = "question_count" | "range_unit";
-export type CollisionDecisionMode = "skip" | "move" | "allow";
 export type VocabQuestionCountChoice =
   | { mode: "all" }
   | { mode: "manual"; value: number };
@@ -154,30 +153,3 @@ export type VocabScheduleSlotOverride = Pick<
   VocabScheduleSlot,
   "availableLocalDateTime" | "deadlineLocalDateTime"
 >;
-
-export type VocabPlanCandidate = {
-  id: string;
-  studentId: string;
-  sessionNumber: number;
-  date: string;
-  unitIds: readonly string[];
-};
-
-export type VocabPlanCollision = {
-  id: string;
-  candidateId: string;
-  existingAssignmentId: string;
-  message: string;
-};
-
-export type VocabCollisionDecision = {
-  collisionId: string;
-  mode: CollisionDecisionMode;
-  movedDate?: string;
-};
-
-export type ResolvedVocabPlan = {
-  candidates: VocabPlanCandidate[];
-  unresolvedCollisionIds: string[];
-  skippedCandidateIds: string[];
-};
