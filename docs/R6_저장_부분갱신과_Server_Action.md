@@ -1,8 +1,8 @@
 # R6 저장 결과 부분 갱신과 제한된 Server Action
 
-- 상태: `in_progress`
+- 상태: `completed`
 - 기준 브랜치: `codex/vocab-assignment-ux`
-- 기준 커밋: `3c3315d`
+- 기준 배포 커밋: `80a961a`
 - 적용 범위: Preview 코드·Preview DB·가짜 학생
 - 제외 범위: 시험 풀이 통신, 미리보기, 검색·더보기, 파일, 알림, Cache Components, Production
 
@@ -142,4 +142,23 @@ private 함수는 `PUBLIC`, `anon`, `authenticated`, `service_role` 실행이 �
 보안 advisor의 이번 함수 관련 경고 5건은 `authenticated`가 public `SECURITY DEFINER` 진입점을 호출할 수
 있다는 [항목](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable)이다.
 이는 private 구현을 외부에 열지 않고 public 진입점 내부에서 활성 관리자를 검사하기 위한 의도된 경계다.
-성능 advisor에는 이번 변경 관련 항목이 없다. 다음 단계는 코드 push, Vercel Preview와 실제 화면 확인이다.
+성능 advisor에는 이번 변경 관련 항목이 없다.
+
+## 10. 코드 배포와 실제 화면 확인
+
+- 구현·안전 보완·DB 적용 기록 커밋은 각각 `7ab26c8`, `9cd431c`, `80a961a`다.
+- `80a961aceff9bee158fc89de22463245e9801b3e`가 Vercel Preview에서 `Ready`가 된 것을 확인했다.
+- 검증 주소는
+  `https://english-academy-student-n9i6xpp0a-thetilldawn-3859s-projects.vercel.app`이다.
+- Preview 관리자 세션에서 가짜 학생 상세가 정상 로드됐고, 학교 입력에 공백만 더해 저장한 뒤 서버가
+  정리한 원래 값 `미리보기고`가 화면에 반영됐다. 전체 페이지 전환 없이 저장 버튼이 다시 비활성화됐다.
+- 저장 뒤 DB의 이름·학교·학년은 그대로이고 `profile_updated_at`과
+  `student.profile_updated` 감사 기록이 새로 발급됐다. 이 가짜 학생의 프로필 저장 감사 기록은
+  SQL smoke 1건과 브라우저 smoke 1건을 합쳐 2건이다.
+- 같은 학생의 `내역` 탭에서 오답 단어, 배정된 시험, 시험 내역 세 구역이 모두 로드됐다. 기존 큐의
+  다시 배정·건너뛰기·취소 명령은 누르지 않았다.
+- 브라우저 warning/error는 0건이고 검증 뒤 인앱 브라우저 탭을 모두 닫았다.
+- Production과 실제 학생 변경은 0건이다.
+
+R6 완료 조건을 충족했다. 다음 시작점은 R7-1의 공용 `학습 활동` 소유권 정리이며, R7-1~R7-5를
+순서대로 진행한다. Cache Components는 R8 canary 전까지 활성화하지 않는다.
