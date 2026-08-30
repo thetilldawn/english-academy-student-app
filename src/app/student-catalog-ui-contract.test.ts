@@ -81,10 +81,15 @@ describe("student catalog and modal UI contract", () => {
     );
     expect(css).not.toContain(".bulk-assignment-form");
     expect(
-      source("src/features/assignments/ui/vocab-assignment-form.module.css"),
+      source("src/features/assignments/ui/assignment-editor-shell.module.css"),
     ).toContain(".form");
     expect(bulkDialog).toContain("<DialogFrame");
     expect(bulkDialog).toContain(
+      'import { AssignmentSubmitAction } from "./assignment-submit-action";',
+    );
+    expect(
+      source("src/features/assignments/ui/assignment-submit-action.tsx"),
+    ).toContain(
       'from "@/design-system/primitives/button/button";',
     );
     expect(bulkDialog).toContain("<DialogHeader");

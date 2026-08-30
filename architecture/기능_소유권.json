@@ -2508,7 +2508,8 @@
       "touchpoints": {
         "route": [
           "src/app/api/admin/bulk-assignments/preview/route.ts",
-          "src/app/api/admin/bulk-assignments/route.ts"
+          "src/app/api/admin/bulk-assignments/route.ts",
+          "src/app/api/admin/mixed-assignments/route.ts"
         ],
         "serverComponent": [],
         "ui": [
@@ -2569,6 +2570,7 @@
         "server": [
           "src/app/api/admin/bulk-assignments/preview/route.ts",
           "src/app/api/admin/bulk-assignments/route.ts",
+          "src/app/api/admin/mixed-assignments/route.ts",
           "src/lib/services/active-review-assignment-service.ts",
           "src/lib/services/dataset-catalog-service.ts",
           "src/lib/services/eligible-vocabulary-service.ts",
@@ -2592,7 +2594,8 @@
         ],
         "cacheStreaming": [
           "src/app/api/admin/bulk-assignments/preview/route.ts",
-          "src/app/api/admin/bulk-assignments/route.ts"
+          "src/app/api/admin/bulk-assignments/route.ts",
+          "src/app/api/admin/mixed-assignments/route.ts"
         ],
         "tests": [
           "src/features/assignments/assignment-flow-contract.characterization.test.ts",
@@ -3040,11 +3043,15 @@
         "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/ui/vocab-range-assignment-sections.tsx": "같은 모달의 일반 범위 시험 탭은 assignment-range-create가 소유한다.",
         "src/features/assignments/ui/vocab-assignment-planner.tsx|src/features/assignments/controller/use-vocab-assignment-screen.ts": "오답 시험 탭에서는 일반 범위 시험 전용 화면 controller를 실행하지 않는다."
       },
+      "entryImportExceptions": {
+        "src/app/api/admin/review-assignments/route.ts": "종료된 옛 오답 배정 주소는 인증·동일 출처 확인 뒤 410 안내만 반환하는 폐쇄 진입점이라 현행 배정 실행 경로를 호출하지 않는다."
+      },
       "touchpoints": {
         "route": [
           "src/app/api/admin/students/[id]/direct-review-summaries/route.ts",
           "src/app/api/admin/exact-review-assignments/preview/route.ts",
-          "src/app/api/admin/exact-review-assignments/route.ts"
+          "src/app/api/admin/exact-review-assignments/route.ts",
+          "src/app/api/admin/review-assignments/route.ts"
         ],
         "serverComponent": [],
         "ui": [
@@ -3090,6 +3097,7 @@
           "src/app/api/admin/students/[id]/direct-review-summaries/route.ts",
           "src/app/api/admin/exact-review-assignments/preview/route.ts",
           "src/app/api/admin/exact-review-assignments/route.ts",
+          "src/app/api/admin/review-assignments/route.ts",
           "src/lib/services/direct-review-preparation-service.ts",
           "src/lib/services/direct-review-candidate-service.ts",
           "src/lib/services/direct-review-assignment-service.ts",
@@ -3107,7 +3115,8 @@
         "cacheStreaming": [
           "src/app/api/admin/students/[id]/direct-review-summaries/route.ts",
           "src/app/api/admin/exact-review-assignments/preview/route.ts",
-          "src/app/api/admin/exact-review-assignments/route.ts"
+          "src/app/api/admin/exact-review-assignments/route.ts",
+          "src/app/api/admin/review-assignments/route.ts"
         ],
         "tests": [
           "src/features/assignments/application/direct-review-flow-adapter.test.ts",
@@ -3119,6 +3128,8 @@
           "src/app/api/admin/exact-review-assignments/preview/route.test.ts",
           "src/app/api/admin/exact-review-assignments/route.test.ts",
           "src/app/api/admin/students/[id]/direct-review-summaries/route.test.ts",
+          "src/app/exact-review-assignment-ui-contract.test.ts",
+          "src/app/api/admin/legacy-review-routes.characterization.test.ts",
           "src/lib/services/direct-review-preparation-service.test.ts",
           "src/lib/services/direct-review-assignment-service.test.ts",
           "src/lib/assignment/question-planner.test.ts",
@@ -3605,6 +3616,7 @@
         "route": [
           "src/app/admin/(protected)/results/[id]/page.tsx",
           "src/app/admin/(protected)/@detail/(.)results/[entryKey]/page.tsx",
+          "src/app/api/admin/assignment-capacity/route.ts",
           "src/app/api/admin/assignments/[assignmentId]/students/[studentId]/route.ts",
           "src/app/api/admin/assignments/[assignmentId]/students/[studentId]/edit-context/route.ts"
         ],
@@ -3706,6 +3718,7 @@
           "src/features/assignments/transport/assignment-transport.ts"
         ],
         "server": [
+          "src/app/api/admin/assignment-capacity/route.ts",
           "src/app/api/admin/assignments/[assignmentId]/students/[studentId]/route.ts",
           "src/app/api/admin/assignments/[assignmentId]/students/[studentId]/edit-context/route.ts",
           "src/features/assignments/server/queries/assignment-dataset-units-query.ts",
@@ -3735,6 +3748,7 @@
           "src/app/admin/(protected)/results/[id]/page.tsx",
           "src/app/admin/(protected)/@detail/(.)results/[entryKey]/page.tsx",
           "src/app/admin/(protected)/loading.tsx",
+          "src/app/api/admin/assignment-capacity/route.ts",
           "src/app/api/admin/assignments/[assignmentId]/students/[studentId]/route.ts",
           "src/app/api/admin/assignments/[assignmentId]/students/[studentId]/edit-context/route.ts"
         ],
@@ -3935,6 +3949,7 @@
           "src/app/admin/(protected)/students/page.tsx",
           "src/app/admin/(protected)/students/[studentId]/page.tsx",
           "src/app/admin/(protected)/@detail/(.)students/[studentId]/page.tsx",
+          "src/app/api/admin/material-cache/revalidate/route.ts",
           "src/app/api/admin/students/directory/route.ts",
           "src/app/api/admin/students/[id]/history/route.ts",
           "src/app/api/admin/students/[id]/route.ts"
@@ -4007,6 +4022,10 @@
         ],
         "server": [
           "src/features/history/public-server.ts",
+          "src/app/api/admin/material-cache/revalidate/route.ts",
+          "src/lib/services/admin-material-query.ts",
+          "src/lib/services/admin-material-read-service.ts",
+          "src/lib/services/shared-vocab-material-cache.ts",
           "src/features/students/server/actions/update-student-profile-action.ts",
           "src/features/students/server/components/student-create-content.tsx",
           "src/features/students/server/components/student-detail-route-content.tsx",
@@ -4032,6 +4051,8 @@
           "src/app/admin/(protected)/students/[studentId]/loading.tsx",
           "src/app/admin/(protected)/@detail/(.)students/[studentId]/page.tsx",
           "src/app/admin/(protected)/@detail/(.)students/[studentId]/loading.tsx",
+          "src/app/api/admin/material-cache/revalidate/route.ts",
+          "src/lib/services/shared-vocab-material-cache.ts",
           "src/app/api/admin/students/directory/route.ts",
           "src/app/api/admin/students/[id]/history/route.ts"
         ],
@@ -4056,6 +4077,8 @@
           "src/lib/database/admin-student-directory-read-model.integration.test.ts",
           "src/lib/database/student-profile-version-command.integration.test.ts",
           "src/lib/services/admin-material-request-cache.test.ts",
+          "src/lib/services/shared-vocab-material-cache.test.ts",
+          "src/app/api/admin/material-cache/revalidate/route.test.ts",
           "src/lib/services/admin-wrong-summary-query-contract.test.ts"
         ]
       },
@@ -4242,6 +4265,7 @@
           "src/app/admin/(protected)/assignments/page.tsx",
           "src/app/api/admin/bulk-assignments/preview/route.ts",
           "src/app/api/admin/bulk-assignments/route.ts",
+          "src/app/api/admin/vocab-time-templates/route.ts",
           "src/app/api/admin/students/[id]/vocab-assignment-queues/route.ts",
           "src/app/api/admin/vocab-assignment-queues/[seriesId]/route.ts",
           "src/app/api/student/attempts/[id]/answers/route.ts",
@@ -4339,6 +4363,7 @@
         "server": [
           "src/app/api/admin/bulk-assignments/preview/route.ts",
           "src/app/api/admin/bulk-assignments/route.ts",
+          "src/app/api/admin/vocab-time-templates/route.ts",
           "src/app/api/admin/students/[id]/vocab-assignment-queues/route.ts",
           "src/app/api/admin/vocab-assignment-queues/[seriesId]/route.ts",
           "src/app/api/student/attempts/[id]/answers/route.ts",
@@ -4353,6 +4378,7 @@
           "src/lib/services/dataset-catalog-service.ts",
           "src/lib/services/eligible-vocabulary-service.ts",
           "src/lib/services/request-preparation-cache.ts",
+          "src/lib/services/vocab-time-template-service.ts",
           "src/features/assignments/server/use-cases/bulk-assignment-service.ts",
           "src/features/assignments/server/persistence/bulk-assignment-persistence.ts",
           "src/features/assignments/server/planning/bulk-assignment-plan-digest.ts",
@@ -4380,7 +4406,8 @@
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/assignments/page.tsx",
-          "src/app/admin/(protected)/loading.tsx"
+          "src/app/admin/(protected)/loading.tsx",
+          "src/app/api/admin/vocab-time-templates/route.ts"
         ],
         "tests": [
           "src/features/assignments/domain/vocab-assignment-plan.test.ts",
@@ -4392,6 +4419,8 @@
           "src/features/assignments/controller/use-vocab-assignment-planner.test.tsx",
           "src/features/assignments/controller/use-bulk-assignment-controller.test.tsx",
           "src/features/assignments/controller/use-vocab-assignment-screen.test.tsx",
+          "src/features/assignments/controller/use-vocab-time-templates.test.tsx",
+          "src/features/assignments/api/vocab-time-template-adapter.test.ts",
           "src/features/assignments/ui/bulk-series-preview.test.tsx",
           "src/features/assignments/ui/vocab-schedule-fields.test.tsx",
           "src/features/assignment-queue/ui/assignment-queue-history.test.tsx",

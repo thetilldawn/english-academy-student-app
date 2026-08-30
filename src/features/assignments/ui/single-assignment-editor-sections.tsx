@@ -72,6 +72,7 @@ export function SingleAssignmentEditorSections({
     <>
       {editPurpose ? (
         <AssignmentEditorLockedMode
+          ariaLabel="시험 종류"
           label={editPurposeLabel}
           title="시험 종류는 수정할 수 없습니다."
         />

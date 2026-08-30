@@ -67,14 +67,16 @@ export function AssignmentEditorModeTabs<Value extends string>({
 }
 
 export function AssignmentEditorLockedMode({
+  ariaLabel,
   label,
   title,
 }: {
+  ariaLabel: string;
   label: string;
   title: string;
 }) {
   return (
-    <MetaTagList className={styles.lockedMode}>
+    <MetaTagList aria-label={ariaLabel} className={styles.lockedMode}>
       <MetaTag title={title}>{label}</MetaTag>
     </MetaTagList>
   );

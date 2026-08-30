@@ -27,6 +27,9 @@ describe("mobile production regression UI contract", () => {
   const studentDirectory = source(
     "src/features/students/ui/student-directory.tsx",
   );
+  const studentDirectoryCard = source(
+    "src/features/students/ui/student-directory-card.tsx",
+  );
   const studentDirectoryCss = source(
     "src/features/students/ui/student-directory.module.css",
   );
@@ -43,9 +46,10 @@ describe("mobile production regression UI contract", () => {
     "src/features/students/controller/use-student-access-controller.ts",
   );
   it("keeps the student card to the requested summary fields", () => {
-    expect(studentDirectory).toContain("student.completedCount");
-    expect(studentDirectory).toContain("student.missedCount");
-    expect(studentDirectory).toContain("student.notStartedCount");
+    expect(studentDirectory).toContain("<StudentDirectoryList");
+    expect(studentDirectoryCard).toContain("student.completedCount");
+    expect(studentDirectoryCard).toContain("student.missedCount");
+    expect(studentDirectoryCard).toContain("student.notStartedCount");
     expect(studentDirectoryCss).toContain(".activityStats");
   });
 

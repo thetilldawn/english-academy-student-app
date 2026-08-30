@@ -46,7 +46,10 @@ describe("배정과 수정 화면 공통 계약", () => {
     const schedule = editor.indexOf('title="시험 일정"');
     const preview = editor.indexOf('title="미리보기"');
 
-    expect(editor).toContain('aria-label="시험 종류"');
+    expect(editor).toContain('ariaLabel="시험 종류"');
+    expect(
+      source("src/features/assignments/ui/assignment-editor-shell.tsx"),
+    ).toContain("aria-label={ariaLabel}");
     expect(editor).toContain("단어 시험");
     expect(editor).toContain("오답 시험");
     expect(range).toBeGreaterThan(-1);

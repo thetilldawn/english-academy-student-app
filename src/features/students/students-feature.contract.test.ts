@@ -9,6 +9,7 @@ function source(relativePath: string) {
 
 describe("student management feature boundary", () => {
   const directory = source("src/features/students/ui/student-directory.tsx");
+  const directoryCard = source("src/features/students/ui/student-directory-card.tsx");
   const directoryCss = source("src/features/students/ui/student-directory.module.css");
   const detailDialog = source("src/features/students/ui/student-detail-dialog.tsx");
   const detailPage = source("src/features/students/ui/student-detail-page.tsx");
@@ -58,13 +59,14 @@ describe("student management feature boundary", () => {
   });
 
   it("renders only the server directory summary and does not prefetch private details", () => {
-    expect(directory).toContain("student.completedCount");
-    expect(directory).toContain("student.missedCount");
-    expect(directory).toContain("student.notStartedCount");
-    expect(directory).toContain("student.rawPoints");
-    expect(directory).toContain("prefetch={false}");
-    expect(directory).not.toContain("AttemptScoreSummary");
-    expect(directory).not.toContain("ActivityStatusTimeline");
+    expect(directory).toContain("<StudentDirectoryList");
+    expect(directoryCard).toContain("student.completedCount");
+    expect(directoryCard).toContain("student.missedCount");
+    expect(directoryCard).toContain("student.notStartedCount");
+    expect(directoryCard).toContain("student.rawPoints");
+    expect(directoryCard).toContain("prefetch={false}");
+    expect(directoryCard).not.toContain("AttemptScoreSummary");
+    expect(directoryCard).not.toContain("ActivityStatusTimeline");
   });
 
   it("uses direct Server queries and one shared direct/intercepted detail route component", () => {
