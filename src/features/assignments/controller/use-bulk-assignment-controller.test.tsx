@@ -241,6 +241,19 @@ describe("일괄 배정 controller", () => {
     expect(requests.filter(({ url }) => url.endsWith("/preview"))).toHaveLength(2);
   });
 
+  it("같은 배정 계획을 다시 받아도 상태와 미리보기를 갱신하지 않는다", async () => {
+    const requests: AssignmentTransportRequest[] = [];
+    const transport = successTransport(requests);
+    const { result } = renderController(transport, scheduledPlan([17]));
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+
+    const revision = result.current.state.revision;
+    act(() => result.current.actions.changeCommonPlan(scheduledPlan([17])));
+
+    expect(result.current.state.revision).toBe(revision);
+    expect(requests.filter(({ url }) => url.endsWith("/preview"))).toHaveLength(1);
+  });
+
   it("시험일 없는 배정은 공개·마감 시각을 null로 보낸다", async () => {
     const requests: AssignmentTransportRequest[] = [];
     const transport = successTransport(requests);

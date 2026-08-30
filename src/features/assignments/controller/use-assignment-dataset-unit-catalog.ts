@@ -39,6 +39,10 @@ export function useAssignmentDatasetUnitCatalog(
     () => new Map([...loadedUnitsByDataset, ...initialByDataset]),
     [initialByDataset, loadedUnitsByDataset],
   );
+  const units = useMemo(
+    () => [...unitsByDataset.values()].flat(),
+    [unitsByDataset],
+  );
 
   const cancel = useCallback(() => {
     versionRef.current += 1;
@@ -86,7 +90,7 @@ export function useAssignmentDatasetUnitCatalog(
 
   return {
     state,
-    units: [...unitsByDataset.values()].flat(),
+    units,
     actions: {
       cancel,
       ensureDataset,

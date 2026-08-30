@@ -296,6 +296,48 @@
       "owner": "history",
       "retiredIn": "R5",
       "reason": "통합 요청 캐시를 목적형 목록·상세 query와 route 테스트로 대체"
+    },
+    {
+      "path": "src/lib/services/admin-history-query-contract.test.ts",
+      "owner": "history",
+      "retiredIn": "R5",
+      "reason": "features/history/server/queries/admin-history-query-contract.test.ts로 이동"
+    },
+    {
+      "path": "src/lib/services/bulk-assignment-persistence.test.ts",
+      "owner": "assignments",
+      "retiredIn": "R5",
+      "reason": "features/assignments/server/persistence/bulk-assignment-persistence.test.ts로 이동"
+    },
+    {
+      "path": "src/lib/services/bulk-assignment-plan-digest.test.ts",
+      "owner": "assignments",
+      "retiredIn": "R5",
+      "reason": "features/assignments/server/planning/bulk-assignment-plan-digest.test.ts로 이동"
+    },
+    {
+      "path": "src/lib/services/bulk-assignment-preparation-cache-contract.test.ts",
+      "owner": "assignments",
+      "retiredIn": "R5",
+      "reason": "배정 준비 캐시 계약을 목적형 query와 route 테스트로 대체"
+    },
+    {
+      "path": "src/lib/services/bulk-assignment-preparation-error.test.ts",
+      "owner": "assignments",
+      "retiredIn": "R5",
+      "reason": "features/assignments/server/use-cases/bulk-assignment-preparation-error.test.ts로 이동"
+    },
+    {
+      "path": "src/lib/services/progress-history-source-contract.test.ts",
+      "owner": "history",
+      "retiredIn": "R5",
+      "reason": "통합 진행 이력 계약을 목적형 관리자·학생 읽기 모델 테스트로 대체"
+    },
+    {
+      "path": "src/lib/services/vocab-assignment-queue-plan.test.ts",
+      "owner": "assignments",
+      "retiredIn": "R5",
+      "reason": "features/assignments/server/planning/vocab-assignment-queue-plan.test.ts로 이동"
     }
   ],
   "specialOwners": [
@@ -4656,6 +4698,7 @@
         ],
         "tests": [
           "src/features/assignments/controller/use-assignment-workspace.test.tsx",
+          "src/features/assignments/controller/use-assignment-dataset-unit-catalog.test.tsx",
           "src/features/assignments/controller/use-assignment-previous-exam.test.tsx",
           "src/features/assignments/domain/vocab-previous-exam.test.ts"
         ]

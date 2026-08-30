@@ -185,6 +185,13 @@ export function useBulkAssignmentController({
       );
       const currentFingerprint = bulkPreviewIdentity(currentDraft);
       const nextFingerprint = bulkPreviewIdentity(nextDraft);
+      if (
+        action.type === "common_plan/changed" &&
+        currentFingerprint !== null &&
+        currentFingerprint === nextFingerprint
+      ) {
+        return;
+      }
       setFeedback({ message: "", submissionIssue: null });
       apply({
         type: "draft/replaced",
