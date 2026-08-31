@@ -27,15 +27,24 @@ type AdminPointSummary = {
   wrongEffect: number;
 };
 
-async function loadAdminPointSummary(page: Page, attemptId: string) {
-  const response = await page.request.get(`/api/admin/attempts/${attemptId}`);
-  const responseText = await response.text();
-  expect(response.status(), responseText).toBe(200);
-  const payload = JSON.parse(responseText) as {
-    result?: { pointSummary?: AdminPointSummary | null };
-  };
-  expect(payload.result?.pointSummary).toBeTruthy();
-  return payload.result!.pointSummary!;
+function pointChangeText(value: number) {
+  return value > 0 ? `+${value}` : String(value);
+}
+
+async function expectAdminPointSummary(
+  page: Page,
+  attemptId: string,
+  expected: AdminPointSummary,
+) {
+  const response = await page.goto(`/admin/results/attempt.${attemptId}`);
+  expect(response?.status()).toBe(200);
+  const values = page.locator('[data-point-summary="admin-attempt"] dd');
+  await expect(values).toHaveText([
+    pointChangeText(expected.correctReward),
+    pointChangeText(expected.wrongEffect),
+    pointChangeText(expected.netChange),
+    String(expected.currentPoints),
+  ]);
 }
 
 async function loadQueue(
@@ -101,9 +110,7 @@ test.describe.serial("@authenticated Preview 인증 단어 배정 핵심 흐름"
     expect(regularAnswers.size).toBe(4);
     await finishRetry(studentPage, regularAnswers, "wrong");
     await expect(studentPage.getByText("재시험 후에도 다시 볼 단어가 남았습니다.")).toBeVisible();
-    await expect.poll(
-      () => loadAdminPointSummary(previewRun.adminPage, regularAttemptId),
-    ).toEqual({
+    await expectAdminPointSummary(previewRun.adminPage, regularAttemptId, {
       correctReward: 0,
       currentPoints: 0,
       netChange: -12,
@@ -117,9 +124,7 @@ test.describe.serial("@authenticated Preview 인증 단어 배정 핵심 흐름"
     expect(reviewAnswers.size).toBe(4);
     await finishRetry(studentPage, reviewAnswers, "correct");
     await expect(studentPage.getByText("재시험에서 틀린 단어를 모두 해결했습니다.")).toBeVisible();
-    await expect.poll(
-      () => loadAdminPointSummary(previewRun.adminPage, reviewAttemptId),
-    ).toEqual({
+    await expectAdminPointSummary(previewRun.adminPage, reviewAttemptId, {
       correctReward: 4,
       currentPoints: 0,
       netChange: 4,
@@ -163,9 +168,7 @@ test.describe.serial("@authenticated Preview 인증 단어 배정 핵심 흐름"
     const answers = await finishPhaseByTimeout(studentPage);
     expect(answers.size).toBe(4);
     await finishRetry(studentPage, answers, "correct");
-    await expect.poll(
-      () => loadAdminPointSummary(previewRun.adminPage, attemptId),
-    ).toEqual({
+    await expectAdminPointSummary(previewRun.adminPage, attemptId, {
       correctReward: 8,
       currentPoints: 0,
       netChange: -4,
