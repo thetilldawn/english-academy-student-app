@@ -168,9 +168,9 @@ export class PreviewRun {
       page.waitForURL(/\/student(?:\/)?$/),
       page.getByRole("button", { name: "인증", exact: true }).click(),
     ]);
-    await expect(page.getByRole("heading", { level: 1 })).toContainText(
-      student.displayName,
-    );
+    await expect(
+      page.getByRole("banner").getByText(student.displayName, { exact: false }),
+    ).toBeVisible();
     return page;
   }
 
