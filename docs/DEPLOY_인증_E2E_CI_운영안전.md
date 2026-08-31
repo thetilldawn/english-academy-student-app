@@ -82,6 +82,23 @@ API를 통과한다.
 로컬 인증 검사는 사용자가 승인한 현재 브랜치에 한해 로컬 HEAD와 대상 Preview의 Git ref/SHA를 모두
 일치시킨다. 서로 다른 브랜치나 커밋의 Preview에는 관리자 비밀을 전달하지 않는다.
 
+## 현재 운영화 상태
+
+- 2026-09-01 승인된 로컬 Preview 검사는 실행·검사 커밋
+  `cc118459ac892d48d34b4a00840d91f4d77dcab7`과 Exact Preview
+  `https://english-academy-student-eke7tym0x-thetilldawn-3859s-projects.vercel.app`의 일치를 확인하고
+  공개 3/3·인증 9/9를 통과했다.
+- 인증 실행 `e2e-mthsmji9-0-fb9716`에서 만든 가짜 학생 9명은 일반·복구 영수증 모두
+  `deleted 9 / pending 0 / failed 0`이다. 사용한 Vercel 자동화 우회 키도 회수해
+  `protectionBypass` 0개를 재확인했다.
+- 로컬 앱 구현과 승인된 Preview 검증은 끝났다. 운영 자동화는 세 workflow와 검사 도구를 신뢰된
+  기본 브랜치에 반영하고, `preview-smoke`·`preview-e2e` GitHub Environment의 변수·비밀·승인 규칙과
+  Vercel `repository_dispatch`를 연결한 뒤 GitHub smoke와 수동 전체 E2E를 각 1회 실행해야 완료다.
+- 주간 실행은 Production·기본 브랜치 반영을 별도 승인받기 전까지 비활성화한다. 이 단계에서는
+  Production 배포·운영 DB·migration·실제 학생 데이터를 변경하지 않았다.
+- 실행별 증거와 현재 우선순위는 프로젝트 루트
+  `00_작업지시/DEPLOY-20260824-01_학생앱_인증E2E_운영안전.md`를 기준으로 한다.
+
 ## 관측과 실패 증거
 
 - 공개 smoke: URL, Git SHA, 360·768·1440 프로젝트 결과, 실패 screenshot만 3일 보존한다.
