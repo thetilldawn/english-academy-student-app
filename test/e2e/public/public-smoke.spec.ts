@@ -1,27 +1,27 @@
-import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-async function expectNoSeriousAccessibilityViolations(page: Page) {
-  const results = await new AxeBuilder({ page }).analyze();
-  const serious = results.violations.filter((violation) =>
-    violation.impact === "serious" || violation.impact === "critical",
-  );
-  expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
-}
+import { establishVercelProtectionSession } from "../support/environment";
+import {
+  collectUnexpectedBrowserMessages,
+  expectKeyboardFocusVisible,
+  expectNoHorizontalOverflow,
+  expectNoSeriousAccessibilityViolations,
+} from "../support/page-quality";
 
-test("student and admin public login surfaces render and remain accessible", async ({ page }) => {
+test("학생·관리자 공개 로그인 화면은 세 화면 크기에서 접근 가능하다", async ({ page }) => {
+  await establishVercelProtectionSession(page.context());
+  const browserMessages = collectUnexpectedBrowserMessages(page);
   await page.emulateMedia({ colorScheme: "light" });
   await page.goto("/");
   await expect(page.locator("main#main-content")).toBeVisible();
   await expect(page.getByRole("heading", { name: "영어 학습실", level: 1 })).toBeVisible();
   await expect(page.getByRole("textbox", { name: "학생 접속코드" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "인증" })).toBeVisible();
-  const studentButton = page.getByRole("button", { name: "인증" });
-  const studentCode = page.getByRole("textbox", { name: "학생 접속코드" });
-  await expect(studentButton).toHaveCSS("height", "58px");
-  await studentCode.focus();
-  await expect(studentCode).toBeFocused();
-  expect(await studentCode.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+  await expect(page.getByRole("button", { name: "인증" })).toHaveCSS(
+    "height",
+    "58px",
+  );
+  await expectKeyboardFocusVisible(page);
+  await expectNoHorizontalOverflow(page);
   await expectNoSeriousAccessibilityViolations(page);
 
   const lightBackground = await page.locator("body").evaluate(
@@ -33,7 +33,7 @@ test("student and admin public login surfaces render and remain accessible", asy
     (element) => getComputedStyle(element).backgroundColor,
   );
   expect(darkBackground).not.toBe(lightBackground);
-  await expect(page.getByRole("button", { name: "인증" })).toHaveCSS("height", "58px");
+  await expectNoHorizontalOverflow(page);
   await expectNoSeriousAccessibilityViolations(page);
 
   await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
@@ -48,8 +48,7 @@ test("student and admin public login surfaces render and remain accessible", asy
   await expect(page.getByRole("heading", { name: "관리자 로그인", level: 1 })).toBeVisible();
   await expect(page.getByRole("textbox", { name: "관리자 이메일" })).toBeVisible();
   await expect(page.getByLabel("비밀번호")).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "관리자 로그인", exact: true }),
-  ).toHaveCSS("height", "58px");
+  await expectNoHorizontalOverflow(page);
   await expectNoSeriousAccessibilityViolations(page);
+  expect(browserMessages).toEqual([]);
 });

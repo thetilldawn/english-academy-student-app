@@ -1,0 +1,72 @@
+name: PR fast checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-fast-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - id: changes
+        name: 검사 범위 결정
+        shell: bash
+        run: |
+          files="$(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD")"
+          if grep -Eq '^(src/|test/|scripts/|supabase/|architecture/|\.github/|package(-lock)?\.json$|playwright\.config\.mjs$|next\.config\.)' <<<"$files"; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+          if grep -Eq '^(supabase/migrations/|package(-lock)?\.json$|vitest\.config\.|tsconfig\.json$|next\.config\.)' <<<"$files"; then
+            echo "full=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "full=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.changes.outputs.run == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.13.0
+          cache: npm
+
+      - if: steps.changes.outputs.run == 'true'
+        run: npm ci --ignore-scripts
+
+      - if: steps.changes.outputs.run == 'true'
+        run: npm run lint
+
+      - if: steps.changes.outputs.run == 'true'
+        run: npm run typecheck
+
+      - if: steps.changes.outputs.run == 'true'
+        run: npm run verify:architecture:static
+
+      - if: steps.changes.outputs.run == 'true' && steps.changes.outputs.full == 'false'
+        run: npm run test:safety
+
+      - if: steps.changes.outputs.run == 'true' && steps.changes.outputs.full == 'false'
+        run: npm run test:component
+
+      - if: steps.changes.outputs.run == 'true' && steps.changes.outputs.full == 'false'
+        run: npm run test -- --changed "origin/${GITHUB_BASE_REF}" --passWithNoTests
+
+      - if: steps.changes.outputs.run == 'true' && steps.changes.outputs.full == 'true'
+        run: npm run test
+
+      - if: steps.changes.outputs.run == 'false'
+        run: echo "문서 전용 변경이라 코드 검사를 생략했습니다."

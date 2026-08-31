@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": "24.x"
+    "node": ">=24.13.0 <25"
   },
   "packageManager": "npm@11.6.2",
   "scripts": {
@@ -15,7 +15,11 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --maxWorkers=4",
     "test:component": "vitest run src/test-support/component-testing.smoke.test.tsx",
-    "test:e2e": "playwright test",
+    "test:e2e": "node scripts/run-playwright-suite.mjs smoke",
+    "test:e2e:smoke": "node scripts/run-playwright-suite.mjs smoke",
+    "test:e2e:authenticated": "node scripts/run-playwright-suite.mjs authenticated",
+    "test:e2e:cleanup": "tsx scripts/cleanup-preview-e2e.ts",
+    "test:safety": "vitest run src/app/preview-environment-contract.test.mjs src/app/api/preview-identity/route.test.ts src/lib/deploy/verify-preview-environment.test.mjs src/test-support/staging-fixture-safety.test.ts src/test-support/preview-e2e-safety.test.ts src/lib/services/quiz-rpc-compatibility.test.ts",
     "test:watch": "vitest",
     "map:feature": "node scripts/check-feature-map.mjs --feature",
     "map:owner": "node scripts/check-feature-map.mjs --owner",
@@ -24,8 +28,9 @@
     "verify:feature-map": "node scripts/check-feature-map.mjs --verify",
     "verify:server-architecture": "vitest run src/app/application-layer-boundaries.test.ts src/app/server-architecture-ratchet.test.ts src/features/assignments/architecture-boundary.test.ts src/design-system/architecture-boundary.test.ts",
     "verify:react-request-cache": "node --conditions react-server scripts/verify-react-request-cache.mjs",
-    "verify:architecture": "node scripts/check-feature-map.mjs --verify --changed --base auto && node scripts/verify-ui-architecture.mjs && npm run verify:server-architecture",
-    "verify": "npm run lint && npm run typecheck && npm run test && npm run verify:architecture && npm run verify:react-request-cache && npm run build",
+    "verify:architecture:static": "node scripts/check-feature-map.mjs --verify --changed --base auto && node scripts/verify-ui-architecture.mjs",
+    "verify:architecture": "npm run verify:architecture:static && npm run verify:server-architecture",
+    "verify": "npm run lint && npm run typecheck && npm run test && npm run verify:architecture:static && npm run verify:react-request-cache && npm run build",
     "db:help": "supabase --help",
     "db:start": "supabase start",
     "db:stop": "supabase stop",

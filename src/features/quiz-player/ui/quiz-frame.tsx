@@ -222,6 +222,7 @@ export function QuizFrame({
             isEnglishPrompt ? styles.promptEnglish : styles.promptKorean,
             styles[`prompt-${promptDensity}`],
           ].join(" ")}
+          data-question-id={currentQuestion.id}
           id="quiz-prompt"
           ref={promptRef}
           tabIndex={-1}

@@ -1,0 +1,47 @@
+name: Preview public smoke
+
+on:
+  repository_dispatch:
+    types: [vercel.deployment.success]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: preview-smoke-${{ github.event.client_payload.id }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    if: >-
+      github.event.client_payload.environment == 'preview' &&
+      github.event.client_payload.git.ref != 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: preview-smoke
+    env:
+      PLAYWRIGHT_BASE_URL: ${{ github.event.client_payload.url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.13.0
+          cache: npm
+
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e:smoke
+        env:
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-public-smoke-screenshots
+          path: test-results/**/*.png
+          if-no-files-found: ignore
+          retention-days: 3
