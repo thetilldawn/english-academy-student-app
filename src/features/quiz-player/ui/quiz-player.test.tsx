@@ -1254,6 +1254,67 @@ describe("QuizPlayer", () => {
     expect(audioPlayCount()).toBe(1);
   });
 
+  it("locks at the conservative zero but waits for the server deadline before timing out", async () => {
+    let resolveRecovery: (value: unknown) => void = () => {};
+    const quizAttempt = attempt();
+    mocks.recover.mockReturnValue(
+      new Promise((resolve) => {
+        resolveRecovery = resolve;
+      }),
+    );
+    mocks.submit.mockResolvedValue(
+      successfulTransport({
+        correct: false,
+        correctChoiceIndex: 1,
+        nextPhase: "initial",
+        nextQuestionId: "question-2",
+        questionDeadlineAt: "2099-01-01T00:00:10.000Z",
+        timedOut: true,
+        timerRemainingMilliseconds: 10_000,
+      }),
+    );
+
+    render(
+      <QuizPlayer
+        initialAttempt={quizAttempt}
+        initialRemainingMilliseconds={60_000}
+      />,
+    );
+    act(() => vi.advanceTimersByTime(400));
+    await act(async () => {
+      resolveRecovery({
+        ok: true,
+        payload: {
+          attempt: quizAttempt,
+          timerRemainingMilliseconds: 1_000,
+        },
+        receivedAt: performance.now(),
+        roundTripMilliseconds: 400,
+      });
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(601);
+      await Promise.resolve();
+    });
+    expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:00");
+    expect(
+      screen.getByRole("button", { name: /question-1-one/ }),
+    ).toBeDisabled();
+    expect(mocks.submit).not.toHaveBeenCalled();
+
+    act(() => vi.advanceTimersByTime(399));
+    expect(mocks.submit).not.toHaveBeenCalled();
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+    });
+    expect(mocks.submit).toHaveBeenCalledWith(
+      expect.objectContaining({ choiceIndex: null }),
+    );
+  });
+
   it("keeps answers locked and lets the student retry a failed initial synchronization", async () => {
     const quizAttempt = attempt();
     mocks.recover

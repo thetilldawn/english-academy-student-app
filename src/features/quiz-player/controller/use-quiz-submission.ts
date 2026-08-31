@@ -49,6 +49,7 @@ function wait(milliseconds: number) {
 export function useQuizSubmission(input: {
   cancelPendingPromptAudio: () => void;
   currentQuestion: QuizQuestion | null;
+  deadlineSubmissionNotBeforeRef: { current: number };
   dispatch: Dispatch<QuizPlayerAction>;
   inFlightRequestRef: { current: string | null };
   mountedRef: { current: boolean };
@@ -228,6 +229,7 @@ export function useQuizSubmission(input: {
 
         queuedSubmissionRef.current = null;
         input.inFlightRequestRef.current = null;
+        input.deadlineSubmissionNotBeforeRef.current = 0;
         input.resetClock(activeMilliseconds);
         input.dispatch({
           type: "attempt-replaced",

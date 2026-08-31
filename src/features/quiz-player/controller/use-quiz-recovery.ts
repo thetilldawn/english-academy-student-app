@@ -11,6 +11,7 @@ type MutableValue<T> = { current: T };
 
 export function useQuizRecovery(input: {
   attemptId: string;
+  deadlineSubmissionNotBeforeRef: MutableValue<number>;
   dispatch: Dispatch<QuizPlayerAction>;
   expireStartedRef: MutableValue<boolean>;
   inFlightRequestRef: MutableValue<string | null>;
@@ -21,6 +22,7 @@ export function useQuizRecovery(input: {
   const { replace } = useRouter();
   const {
     attemptId,
+    deadlineSubmissionNotBeforeRef,
     dispatch,
     expireStartedRef,
     inFlightRequestRef,
@@ -31,7 +33,7 @@ export function useQuizRecovery(input: {
 
   return useCallback(async () => {
     try {
-      const { ok, payload, roundTripMilliseconds } =
+      const { ok, payload, receivedAt, roundTripMilliseconds } =
         await recoverQuizAttempt(attemptId);
       if (!mountedRef.current) return true;
       if (
@@ -65,6 +67,11 @@ export function useQuizRecovery(input: {
                 payload.attempt.questionTimeLimitSeconds * 1_000,
               )
             : elapsedAdjustedMilliseconds;
+      deadlineSubmissionNotBeforeRef.current = quizAttemptUsesDeadlineClock(
+        payload.attempt,
+      )
+        ? receivedAt + payload.timerRemainingMilliseconds
+        : 0;
       expireStartedRef.current = false;
       timeWarningAnnouncedRef.current = false;
       resetClock(safeRemainingMilliseconds);
@@ -79,6 +86,7 @@ export function useQuizRecovery(input: {
     }
   }, [
     attemptId,
+    deadlineSubmissionNotBeforeRef,
     dispatch,
     expireStartedRef,
     inFlightRequestRef,

@@ -38,6 +38,7 @@ export function useQuizPlayerController(input: {
         : 1,
     ),
   );
+  const deadlineSubmissionNotBefore = useRef(0);
   const expireStarted = useRef(false);
   const inFlightRequest = useRef<string | null>(null);
   const timeWarningAnnounced = useRef(false);
@@ -86,6 +87,7 @@ export function useQuizPlayerController(input: {
 
   const recoverFromServer = useQuizRecovery({
     attemptId: state.attempt.id,
+    deadlineSubmissionNotBeforeRef: deadlineSubmissionNotBefore,
     dispatch,
     expireStartedRef: expireStarted,
     inFlightRequestRef: inFlightRequest,
@@ -164,6 +166,7 @@ export function useQuizPlayerController(input: {
   const submitChoice = useQuizSubmission({
     cancelPendingPromptAudio,
     currentQuestion,
+    deadlineSubmissionNotBeforeRef: deadlineSubmissionNotBefore,
     dispatch,
     inFlightRequestRef: inFlightRequest,
     mountedRef: mounted,
@@ -186,13 +189,20 @@ export function useQuizPlayerController(input: {
     ) {
       return;
     }
+    const delayMilliseconds = Math.max(
+      0,
+      deadlineSubmissionNotBefore.current - performance.now(),
+    );
+    const timerDelayMilliseconds =
+      delayMilliseconds > 0 ? Math.ceil(delayMilliseconds) + 1 : 0;
     const timer = window.setTimeout(() => {
+      deadlineSubmissionNotBefore.current = 0;
       if (state.attempt.timingMode === "per_question") {
         void submitChoice(null);
       } else {
         void expireCurrentAttempt();
       }
-    }, 0);
+    }, timerDelayMilliseconds);
     return () => window.clearTimeout(timer);
   }, [
     attemptUsesDeadlineClock,
