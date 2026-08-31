@@ -149,7 +149,7 @@ export class PreviewRun {
       cleanup: "pending",
     });
     await this.writeManifest();
-    expect(payload.code).toMatch(/^[A-Z2-9]{12}$/);
+    expect(payload.code).toMatch(/^[A-Z2-9]{4}(?:-[A-Z2-9]{4}){2}$/);
     const student = {
       code: payload.code!,
       displayName,

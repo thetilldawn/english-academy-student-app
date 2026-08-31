@@ -22,11 +22,15 @@ if (suite !== "smoke" && suite !== "authenticated") {
 }
 
 function readGitValue(arguments_) {
-  const result = spawnSync("git", arguments_, {
-    cwd: process.cwd(),
-    encoding: "utf8",
-    windowsHide: true,
-  });
+  const result = spawnSync(
+    "git",
+    ["-c", `safe.directory=${process.cwd()}`, ...arguments_],
+    {
+      cwd: process.cwd(),
+      encoding: "utf8",
+      windowsHide: true,
+    },
+  );
   if (result.status !== 0) {
     throw new Error(`Git 실행 실패: ${result.stderr?.trim() || arguments_.join(" ")}`);
   }
