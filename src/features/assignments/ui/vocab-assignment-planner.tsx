@@ -90,6 +90,8 @@ export function VocabAssignmentPlanner({
     : reviewController.submitting;
   const reviewCalculationPending = assignmentPurpose === "review" &&
     reviewController.calculationPending;
+  const rangeCalculationPending = assignmentPurpose === "range" &&
+    bulk.previewLoading;
   const visibleErrors = submitAttempted ? controller.fieldErrors : {};
   const visibleReviewErrors = submitAttempted
     ? reviewController.fieldErrors
@@ -301,6 +303,7 @@ export function VocabAssignmentPlanner({
             blockedReason={null}
             canSubmit={
               !busy &&
+              !rangeCalculationPending &&
               !reviewCalculationPending &&
               (!submitAttempted || canSubmit)
             }

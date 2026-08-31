@@ -72,7 +72,13 @@ const data = {
   units: [],
 } as VocabAssignmentScreenData;
 
-function screenController() {
+function screenController({
+  canSubmit = false,
+  previewLoading = false,
+}: {
+  canSubmit?: boolean;
+  previewLoading?: boolean;
+} = {}) {
   return {
     actions: { submitPlan: mocks.screenSubmit },
     bulk: {
@@ -80,8 +86,9 @@ function screenController() {
         draft: {},
         submission: { status: "idle" },
       },
+      previewLoading,
     },
-    canSubmit: false,
+    canSubmit,
     fieldErrors: {},
     firstFieldKey: null,
     planner: {},
@@ -171,6 +178,30 @@ describe("오답 단일 배정 제출", () => {
         .disabled,
     ).toBe(true);
     expect(mocks.reviewSubmit).not.toHaveBeenCalled();
+  });
+
+  it("범위 미리보기를 계산하는 동안 배정 버튼을 활성화하지 않는다", () => {
+    mocks.useReview.mockReturnValue(reviewController("idle", false, false));
+    mocks.useScreen.mockReturnValue(screenController({
+      canSubmit: false,
+      previewLoading: true,
+    }));
+
+    render(
+      <VocabAssignmentPlanner
+        data={data}
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+        selectionMode="single"
+        students={[student]}
+      />,
+    );
+
+    expect(
+      (screen.getByRole("button", { name: "배정하기" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect(mocks.screenSubmit).not.toHaveBeenCalled();
   });
 
   it("시험 종류만 확인하고 닫을 때 변경 폐기 확인을 띄우지 않는다", () => {
