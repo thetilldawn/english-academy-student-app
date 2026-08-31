@@ -291,6 +291,7 @@ export async function finishInitialChoosingFirst(page: Page) {
   const correctChoices = new Map<string, number>();
   for (let guard = 0; guard < 500; guard += 1) {
     if (new URL(page.url()).pathname.includes("/student/result/")) {
+      await expect(page.locator('main a[href="/student"]').first()).toBeVisible();
       const retry = page.getByRole("button", { name: "재시험 시작" });
       if (await retry.isVisible()) {
         await finishRetry(page, correctChoices, "correct");
