@@ -1,9 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => {
-  class MockAdminHistoryReadError extends Error {}
+  class MockAdminHistoryReadError extends Error {
+    constructor(
+      message: string,
+      readonly reason: "contract" | "database" | "input" | "timeout" = "database",
+    ) {
+      super(message);
+    }
+  }
+  class MockAdminAuthenticationUnavailableError extends Error {
+    readonly code = "UPSTREAM_TIMEOUT";
+
+    constructor(message: string) {
+      super(message);
+      this.name = "AdminAuthenticationUnavailableError";
+    }
+  }
 
   return {
+    AdminAuthenticationUnavailableError: MockAdminAuthenticationUnavailableError,
     AdminHistoryReadError: MockAdminHistoryReadError,
     getAdminContext: vi.fn(),
     listAdminHistoryFreshSection: vi.fn(),
@@ -13,7 +29,10 @@ const mocks = vi.hoisted(() => {
 });
 
 vi.mock("@/lib/auth/admin", () => ({
+    AdminAuthenticationUnavailableError:
+    mocks.AdminAuthenticationUnavailableError,
   getAdminContext: mocks.getAdminContext,
+  getAdminContextOrThrow: mocks.getAdminContext,
 }));
 vi.mock("@/features/history/server/queries/admin-history-read-error", () => ({
   AdminHistoryReadError: mocks.AdminHistoryReadError,
@@ -79,6 +98,7 @@ describe("POST /api/admin/history", () => {
     expect(mocks.listAdminHistoryInitial).toHaveBeenCalledWith(
       input,
       { userId: "admin-id" },
+      expect.any(AbortSignal),
     );
   });
 
@@ -96,6 +116,7 @@ describe("POST /api/admin/history", () => {
     expect(mocks.listAdminHistoryNextPage).toHaveBeenCalledWith(
       input,
       { userId: "admin-id" },
+      expect.any(AbortSignal),
     );
 
     mocks.listAdminHistoryNextPage.mockRejectedValueOnce(
@@ -121,6 +142,7 @@ describe("POST /api/admin/history", () => {
     expect(mocks.listAdminHistoryFreshSection).toHaveBeenCalledWith(
       input,
       { userId: "admin-id" },
+      expect.any(AbortSignal),
     );
     expect(await response.json()).toMatchObject({
       section: { totalCount: 3 },
@@ -154,5 +176,38 @@ describe("POST /api/admin/history", () => {
     expect(invalid.status).toBe(400);
     expect(mocks.listAdminHistoryInitial).not.toHaveBeenCalled();
     expect(mocks.listAdminHistoryNextPage).not.toHaveBeenCalled();
+  });
+
+  it("인증과 내역 시간 초과를 503 재시도 응답으로 구분한다", async () => {
+    mocks.getAdminContext.mockRejectedValueOnce(
+      new mocks.AdminAuthenticationUnavailableError(
+        "관리자 인증 서버의 응답이 늦어지고 있습니다.",
+      ),
+    );
+    const input = {
+      currentOnly: false,
+      mode: "initial",
+      query: "",
+      statusFilter: "all",
+    } as const;
+    const authTimeout = await POST(request(input));
+    expect(authTimeout.status).toBe(503);
+    expect(authTimeout.headers.get("cache-control")).toBe("private, no-store");
+    expect(await authTimeout.json()).toMatchObject({
+      code: "upstream_timeout",
+    });
+
+    mocks.listAdminHistoryInitial.mockRejectedValueOnce(
+      new mocks.AdminHistoryReadError(
+        "시험 내역 응답이 늦어지고 있습니다. 다시 시도해 주세요.",
+        "timeout",
+      ),
+    );
+    const readTimeout = await POST(request(input));
+    expect(readTimeout.status).toBe(503);
+    expect(readTimeout.headers.get("cache-control")).toBe("private, no-store");
+    expect(await readTimeout.json()).toMatchObject({
+      code: "upstream_timeout",
+    });
   });
 });

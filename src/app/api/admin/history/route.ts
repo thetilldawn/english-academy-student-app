@@ -8,7 +8,12 @@ import {
   listAdminHistoryInitial,
   listAdminHistoryNextPage,
 } from "@/features/history/server/queries/admin-history-list-query";
-import { getAdminContext } from "@/lib/auth/admin";
+import {
+  AdminAuthenticationUnavailableError,
+  type AdminContext,
+  getAdminContext,
+  getAdminContextOrThrow,
+} from "@/lib/auth/admin";
 import {
   isSameOriginRequest,
   parseJson,
@@ -57,7 +62,27 @@ export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
     return privateJsonError("허용되지 않은 요청입니다.", 403);
   }
-  const admin = await getAdminContext();
+  let admin: AdminContext | null;
+  try {
+    admin = await getAdminContextOrThrow(request.signal);
+  } catch (error) {
+    if (error instanceof AdminAuthenticationUnavailableError) {
+      return privateJsonError(
+        error.message,
+        503,
+        {
+          code: error.code === "UPSTREAM_TIMEOUT"
+            ? "upstream_timeout"
+            : "admin_auth_unavailable",
+        },
+      );
+    }
+    return privateJsonError(
+      "관리자 인증을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      503,
+      { code: "admin_auth_unavailable" },
+    );
+  }
   if (!admin) {
     return privateJsonError("관리자 로그인이 필요합니다.", 401);
   }
@@ -68,21 +93,29 @@ export async function POST(request: Request) {
 
   try {
     if (input.mode === "initial") {
-      const snapshot = await listAdminHistoryInitial(input, admin);
+      const snapshot = await listAdminHistoryInitial(input, admin, request.signal);
       return Response.json({ snapshot }, { headers: privateNoStoreHeaders });
     }
     if (input.mode === "section") {
-      const section = await listAdminHistoryFreshSection(input, admin);
+      const section = await listAdminHistoryFreshSection(
+        input,
+        admin,
+        request.signal,
+      );
       return Response.json({ section }, { headers: privateNoStoreHeaders });
     }
-    const page = await listAdminHistoryNextPage(input, admin);
+    const page = await listAdminHistoryNextPage(input, admin, request.signal);
     return Response.json({ page }, { headers: privateNoStoreHeaders });
   } catch (error) {
     if (error instanceof AdminHistoryCursorError) {
       return privateJsonError(error.message, 400);
     }
     if (error instanceof AdminHistoryReadError) {
-      return privateJsonError(error.message, error.reason === "input" ? 400 : 503);
+      return privateJsonError(
+        error.message,
+        error.reason === "input" ? 400 : 503,
+        error.reason === "timeout" ? { code: "upstream_timeout" } : {},
+      );
     }
     return privateJsonError(
       "시험 내역을 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.",

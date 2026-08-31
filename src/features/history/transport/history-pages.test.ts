@@ -10,6 +10,7 @@ import {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 const snapshot: AdminHistorySnapshot = {
@@ -41,9 +42,54 @@ describe("admin history browser transport", () => {
         body: JSON.stringify(request),
         cache: "no-store",
         method: "POST",
-        signal,
+        signal: expect.any(AbortSignal),
       }),
     );
+  });
+
+  it("화면 전환 취소는 시간 초과 문구로 바꾸지 않는다", async () => {
+    const controller = new AbortController();
+    vi.stubGlobal("fetch", vi.fn((_input, init) => new Promise(
+      (_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(
+          new DOMException("aborted", "AbortError"),
+        ), { once: true });
+      },
+    )));
+    const result = loadAdminHistorySnapshot({
+      currentOnly: false,
+      mode: "initial",
+      query: "",
+      statusFilter: "all",
+    }, controller.signal);
+
+    controller.abort();
+
+    await expect(result).rejects.toMatchObject({ name: "AbortError" });
+  });
+
+  it("7초를 넘긴 요청은 다시 시도할 수 있는 문구로 끝낸다", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("fetch", vi.fn((_input, init) => new Promise(
+      (_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(
+          new DOMException("aborted", "AbortError"),
+        ), { once: true });
+      },
+    )));
+    const result = loadAdminHistorySnapshot({
+      currentOnly: false,
+      mode: "initial",
+      query: "",
+      statusFilter: "all",
+    });
+    const expectation = expect(result).rejects.toThrow(
+      "시험 내역 응답이 늦어지고 있습니다. 다시 시도해 주세요.",
+    );
+
+    await vi.advanceTimersByTimeAsync(7_000);
+
+    await expectation;
   });
 
   it("API 오류 문구와 잘못된 성공 응답을 구분한다", async () => {

@@ -4,9 +4,16 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 import { getPublicEnvironment } from "@/lib/env";
+import { createDeadlineFetch } from "@/lib/network/request-policy";
 import { adminAuthCookieOptions } from "@/lib/supabase/cookie-options";
 
-export async function createServerSupabaseClient() {
+type ServerSupabaseClientOptions = {
+  signal?: AbortSignal;
+};
+
+export async function createServerSupabaseClient(
+  options: ServerSupabaseClientOptions = {},
+) {
   const cookieStore = await cookies();
   const environment = getPublicEnvironment();
 
@@ -14,6 +21,9 @@ export async function createServerSupabaseClient() {
     environment.NEXT_PUBLIC_SUPABASE_URL,
     environment.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     {
+      ...(options.signal
+        ? { global: { fetch: createDeadlineFetch(options.signal) } }
+        : {}),
       cookies: {
         getAll() {
           return cookieStore.getAll();

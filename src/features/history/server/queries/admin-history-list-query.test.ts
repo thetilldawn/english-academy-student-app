@@ -1,7 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   createServerSupabaseClient: vi.fn(),
+  getCurrentRequestContext: vi.fn(),
+  logServerOperationTiming: vi.fn(),
   requireAdmin: vi.fn(),
   rpc: vi.fn(),
 }));
@@ -11,6 +13,12 @@ vi.mock("@/lib/auth/admin", () => ({
 }));
 vi.mock("@/lib/supabase/server", () => ({
   createServerSupabaseClient: mocks.createServerSupabaseClient,
+}));
+vi.mock("@/lib/observability/server-request-context", () => ({
+  getCurrentRequestContext: mocks.getCurrentRequestContext,
+}));
+vi.mock("@/lib/observability/request-timing", () => ({
+  logServerOperationTiming: mocks.logServerOperationTiming,
 }));
 import { AdminHistoryCursorError } from "../admin-history-cursor";
 import {
@@ -80,7 +88,15 @@ describe("admin history list query", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.requireAdmin.mockResolvedValue(undefined);
+    mocks.getCurrentRequestContext.mockResolvedValue({
+      absoluteDeadlineAt: null,
+      requestId: "request-1",
+    });
     mocks.createServerSupabaseClient.mockResolvedValue({ rpc: mocks.rpc });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("초기 11건 중 10건만 전달하고 같은 스냅샷 커서를 이어 쓴다", async () => {
@@ -129,6 +145,9 @@ describe("admin history list query", () => {
         p_status_filter: "all",
       },
     );
+    expect(mocks.createServerSupabaseClient).toHaveBeenCalledWith({
+      signal: expect.any(AbortSignal),
+    });
 
     const next = await listAdminHistoryNextPage({
       currentOnly: false,
@@ -151,6 +170,28 @@ describe("admin history list query", () => {
         p_snapshot_at: snapshotAt,
       }),
     );
+  });
+
+  it("DB 응답이 7초를 넘으면 복구 가능한 시간 초과로 끝낸다", async () => {
+    vi.useFakeTimers();
+    mocks.rpc.mockImplementationOnce(() => {
+      const signal = mocks.createServerSupabaseClient.mock.calls[0]?.[0]
+        ?.signal as AbortSignal;
+      return new Promise((resolve) => {
+        signal.addEventListener("abort", () => resolve({
+          data: null,
+          error: { message: "aborted" },
+        }), { once: true });
+      });
+    });
+
+    const result = listAdminHistoryInitial({ currentOnly: false });
+    const expectation = expect(result).rejects.toMatchObject({
+      reason: "timeout",
+    });
+    await vi.advanceTimersByTimeAsync(7_000);
+
+    await expectation;
   });
 
   it("응답 구역이 빠지거나 커서 조건이 바뀌면 DB 결과를 사용하지 않는다", async () => {

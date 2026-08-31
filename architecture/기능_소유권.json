@@ -64,6 +64,10 @@
       "role": "서버 오류 식별과 기록"
     },
     {
+      "path": "src/lib/network",
+      "role": "요청 취소와 전체 응답 시간 예산"
+    },
+    {
       "path": "src/lib/supabase",
       "role": "Supabase client 경계"
     },
@@ -466,6 +470,10 @@
     },
     {
       "path": "src/app/admin/(protected)/error.tsx",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/app/admin/error.tsx",
       "owner": "app-shell"
     },
     {
@@ -1600,8 +1608,8 @@
     {
       "path": "src/lib/auth",
       "owner": "auth",
-      "fileCount": 11,
-      "pathSetSha256": "03f09c900f099c5027e0fc64106ab0da97f0a43c87f7c9009cdd71f5e78aa28d"
+      "fileCount": 12,
+      "pathSetSha256": "e3fb7239646606506a3528da808ad850325a9b40cf6ed9d934240b79e7756de4"
     },
     {
       "path": "src/lib/database",
@@ -1616,16 +1624,22 @@
       "pathSetSha256": "dc2a718d7aa3b82dcfe7cbb34bebb9f1652012569722695eba91178f828efedf"
     },
     {
+      "path": "src/lib/network",
+      "owner": "shared-infra",
+      "fileCount": 2,
+      "pathSetSha256": "562392099fb73bf999de4e2ed36160f703fec8596a053bbee6c5ca900e43654b"
+    },
+    {
       "path": "src/lib/observability",
       "owner": "shared-infra",
-      "fileCount": 4,
-      "pathSetSha256": "a49155755451823887c266a6c35d74728b94ec2dde3aae8c4d44587394dcae87"
+      "fileCount": 7,
+      "pathSetSha256": "1d5f50e02406c3cfec04b202b1846ba8498aa6a7b985e1b6bf0ce154e7c1daee"
     },
     {
       "path": "src/lib/supabase",
       "owner": "shared-infra",
-      "fileCount": 4,
-      "pathSetSha256": "cb5a1aa8844d0679f66ab9427ebd45af8b70155cd243da9602ddaa46e5142d10"
+      "fileCount": 5,
+      "pathSetSha256": "a4dfdddc294718c7f43435f1204fe6dd3ef3bb011b89820c947e9956dca8966f"
     },
     {
       "path": "src/lib/ui",

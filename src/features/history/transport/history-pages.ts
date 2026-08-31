@@ -4,8 +4,13 @@ import type {
   AdminHistorySectionRefresh,
   AdminHistorySnapshot,
 } from "@/features/history/contracts/admin-history-read-model";
+import {
+  createRequestDeadline,
+  INTERACTIVE_READ_REQUEST_DEADLINE_MS,
+} from "@/lib/network/request-policy";
 
 type HistoryPageResponse = {
+  code?: string;
   error?: string;
   page?: AdminHistoryNextPage;
   section?: AdminHistorySectionRefresh["section"];
@@ -16,22 +21,38 @@ async function requestHistoryPage(
   request: AdminHistoryReadRequest,
   signal?: AbortSignal,
 ) {
-  const response = await fetch("/api/admin/history", {
-    body: JSON.stringify(request),
-    cache: "no-store",
-    headers: { "content-type": "application/json" },
-    method: "POST",
+  const deadline = createRequestDeadline(
+    INTERACTIVE_READ_REQUEST_DEADLINE_MS,
     signal,
-  });
-  const payload = await response.json().catch(() => null) as
-    | HistoryPageResponse
-    | null;
-  if (!response.ok || !payload) {
-    throw new Error(
-      payload?.error ?? "시험 내역을 불러오지 못했습니다.",
-    );
+  );
+
+  try {
+    const response = await fetch("/api/admin/history", {
+      body: JSON.stringify(request),
+      cache: "no-store",
+      headers: { "content-type": "application/json" },
+      method: "POST",
+      signal: deadline.signal,
+    });
+    const payload = await response.json().catch(() => null) as
+      | HistoryPageResponse
+      | null;
+    if (!response.ok || !payload) {
+      throw new Error(
+        payload?.error ?? "시험 내역을 불러오지 못했습니다.",
+      );
+    }
+    return payload;
+  } catch (error) {
+    if (deadline.expired) {
+      throw new Error(
+        "시험 내역 응답이 늦어지고 있습니다. 다시 시도해 주세요.",
+      );
+    }
+    throw error;
+  } finally {
+    deadline.dispose();
   }
-  return payload;
 }
 
 export async function loadAdminHistorySnapshot(
