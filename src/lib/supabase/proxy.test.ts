@@ -66,19 +66,10 @@ describe("admin session proxy", () => {
 
   it("인증 갱신이 5초를 넘으면 요청 식별자를 남기고 다음 권한 검사로 넘긴다", async () => {
     vi.useFakeTimers();
-    vi.stubGlobal("fetch", vi.fn((_input, init) => new Promise(
-      (_resolve, reject) => {
-        init?.signal?.addEventListener("abort", () => reject(
-          new DOMException("aborted", "AbortError"),
-        ), { once: true });
-      },
-    )));
     mocks.createServerClient.mockImplementation(
-      (_url: string, _key: string, options: MockServerClientOptions) => ({
+      () => ({
         auth: {
-          getClaims: () => options.global.fetch(
-            "https://supabase.example.test/auth/v1/user",
-          ),
+          getClaims: () => new Promise<never>(() => {}),
         },
       }),
     );

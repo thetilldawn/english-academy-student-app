@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  awaitWithAbortSignal,
   createDeadlineFetch,
   createRequestDeadline,
   INTERACTIVE_READ_REQUEST_DEADLINE_MS,
@@ -64,7 +65,7 @@ describe("request deadline policy", () => {
       implementation,
     );
 
-    const response = deadlineFetch("https://example.test", {
+    const response = await deadlineFetch("https://example.test", {
       signal: caller.signal,
     });
     expect(receivedSignal).toBeInstanceOf(AbortSignal);
@@ -73,7 +74,50 @@ describe("request deadline policy", () => {
 
     caller.abort();
     expect(receivedSignal?.aborted).toBe(true);
-    await expect(response).resolves.toBeInstanceOf(Response);
+    expect(response).toBeInstanceOf(Response);
+  });
+
+  it("작업이 취소 신호를 무시해도 제한 시각에 기다림을 끝낸다", async () => {
+    vi.useFakeTimers();
+    const deadline = createRequestDeadline(7_000);
+    const result = awaitWithAbortSignal(
+      new Promise<never>(() => {}),
+      deadline.signal,
+    );
+    const expectation = expect(result).rejects.toMatchObject({
+      name: "AbortError",
+    });
+
+    await vi.advanceTimersByTimeAsync(7_000);
+
+    await expectation;
+    expect(deadline.expired).toBe(true);
+    deadline.dispose();
+  });
+
+  it("제한시간 취소는 SDK가 재시도하지 않을 408 응답으로 정리한다", async () => {
+    const deadline = new AbortController();
+    const implementation = vi.fn<typeof fetch>((_input, init) => new Promise(
+      (_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(
+          new DOMException("aborted", "AbortError"),
+        ), { once: true });
+      },
+    ));
+    const deadlineFetch = createDeadlineFetch(
+      deadline.signal,
+      implementation,
+    );
+
+    const responsePromise = deadlineFetch("https://example.test");
+    deadline.abort();
+    const response = await responsePromise;
+
+    expect(response.status).toBe(408);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "request_timeout",
+    });
+    expect(implementation).toHaveBeenCalledTimes(1);
   });
 
   it("앞 단계가 쓴 시간을 빼고 남은 전체 요청 예산만 사용한다", () => {

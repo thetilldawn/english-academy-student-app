@@ -5,6 +5,7 @@ import { getPublicEnvironment, hasSupabaseEnvironment } from "@/lib/env";
 import {
   ADMIN_AUTH_REQUEST_DEADLINE_MS,
   ADMIN_INTERACTIVE_REQUEST_BUDGET_MS,
+  awaitWithAbortSignal,
   createDeadlineFetch,
   createRequestDeadline,
 } from "@/lib/network/request-policy";
@@ -82,7 +83,10 @@ export async function refreshAdminSession(request: NextRequest) {
   );
 
   try {
-    await supabase.auth.getClaims();
+    await awaitWithAbortSignal(
+      supabase.auth.getClaims(),
+      deadline.signal,
+    );
     if (deadline.expired) outcome = "timeout";
     else if (request.signal.aborted) outcome = "cancelled";
   } catch {

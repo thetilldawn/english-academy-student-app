@@ -14,6 +14,7 @@ import {
 import type { AdminHistoryStatusFilter } from "@/features/history/domain/learning-activity";
 import { requireAdmin, type AdminContext } from "@/lib/auth/admin";
 import {
+  awaitWithAbortSignal,
   createRequestDeadline,
   INTERACTIVE_READ_REQUEST_DEADLINE_MS,
   requestTimeoutWithinBudget,
@@ -66,7 +67,10 @@ async function runAdminHistoryRead<T>(input: {
     const supabase = await createServerSupabaseClient({
       signal: deadline.signal,
     });
-    const { data, error } = await input.read(supabase);
+    const { data, error } = await awaitWithAbortSignal(
+      input.read(supabase),
+      deadline.signal,
+    );
     if (deadline.expired) {
       outcome = "timeout";
       throw new AdminHistoryReadError(

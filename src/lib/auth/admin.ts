@@ -6,6 +6,7 @@ import { cache } from "react";
 
 import {
   ADMIN_AUTH_REQUEST_DEADLINE_MS,
+  awaitWithAbortSignal,
   createRequestDeadline,
   requestTimeoutWithinBudget,
 } from "@/lib/network/request-policy";
@@ -56,8 +57,10 @@ async function readAdminContext(
     const supabase = await createServerSupabaseClient({
       signal: deadline.signal,
     });
-    const { data: claimsData, error: claimsError } =
-      await supabase.auth.getClaims();
+    const { data: claimsData, error: claimsError } = await awaitWithAbortSignal(
+      supabase.auth.getClaims(),
+      deadline.signal,
+    );
     logServerOperationTiming({
       durationMs: performance.now() - operationStartedAt,
       operation,
@@ -89,11 +92,14 @@ async function readAdminContext(
 
     operation = "admin.auth.profile";
     operationStartedAt = performance.now();
-    const { data: profile, error: profileError } = await supabase
-      .from("admin_profiles")
-      .select("display_name, is_active")
-      .eq("user_id", userId)
-      .maybeSingle();
+    const { data: profile, error: profileError } = await awaitWithAbortSignal(
+      supabase
+        .from("admin_profiles")
+        .select("display_name, is_active")
+        .eq("user_id", userId)
+        .maybeSingle(),
+      deadline.signal,
+    );
     logServerOperationTiming({
       durationMs: performance.now() - operationStartedAt,
       operation,

@@ -69,16 +69,9 @@ describe("admin authentication", () => {
 
   it("인증 요청 제한 시간은 잘못된 로그인으로 위장하지 않는다", async () => {
     vi.useFakeTimers();
-    mocks.getClaims.mockImplementationOnce(() => {
-      const signal = mocks.createServerSupabaseClient.mock.calls[0]?.[0]
-        ?.signal as AbortSignal;
-      return new Promise((resolve) => {
-        signal.addEventListener("abort", () => resolve({
-          data: null,
-          error: new Error("aborted"),
-        }), { once: true });
-      });
-    });
+    mocks.getClaims.mockImplementationOnce(
+      () => new Promise<never>(() => {}),
+    );
 
     const result = getAdminContextOrThrow();
     const expectation = expect(result).rejects.toMatchObject({

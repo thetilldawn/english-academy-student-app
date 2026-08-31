@@ -174,16 +174,9 @@ describe("admin history list query", () => {
 
   it("DB 응답이 7초를 넘으면 복구 가능한 시간 초과로 끝낸다", async () => {
     vi.useFakeTimers();
-    mocks.rpc.mockImplementationOnce(() => {
-      const signal = mocks.createServerSupabaseClient.mock.calls[0]?.[0]
-        ?.signal as AbortSignal;
-      return new Promise((resolve) => {
-        signal.addEventListener("abort", () => resolve({
-          data: null,
-          error: { message: "aborted" },
-        }), { once: true });
-      });
-    });
+    mocks.rpc.mockImplementationOnce(
+      () => new Promise<never>(() => {}),
+    );
 
     const result = listAdminHistoryInitial({ currentOnly: false });
     const expectation = expect(result).rejects.toMatchObject({

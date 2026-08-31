@@ -33,27 +33,42 @@ function linkAbortSignals(
     };
   }
 
-  const controller = new AbortController();
-  const onAbort = () => {
-    if (!controller.signal.aborted) controller.abort();
-  };
-
-  for (const signal of signals) {
-    if (signal.aborted) {
-      onAbort();
-      break;
-    }
-    signal.addEventListener("abort", onAbort, { once: true });
-  }
-
   return {
-    signal: controller.signal,
-    dispose() {
-      for (const signal of signals) {
-        signal.removeEventListener("abort", onAbort);
-      }
-    },
+    // Native composition stays connected after fetch headers arrive, so an
+    // abort can still cancel a response body that Supabase is parsing.
+    signal: AbortSignal.any(signals),
+    dispose() {},
   };
+}
+
+function abortReason(signal: AbortSignal): unknown {
+  return signal.reason instanceof Error
+    ? signal.reason
+    : new DOMException("The operation was aborted.", "AbortError");
+}
+
+export function awaitWithAbortSignal<T>(
+  operation: PromiseLike<T>,
+  signal: AbortSignal,
+): Promise<T> {
+  if (signal.aborted) return Promise.reject(abortReason(signal));
+
+  return new Promise<T>((resolve, reject) => {
+    let settled = false;
+    const settle = (callback: () => void) => {
+      if (settled) return;
+      settled = true;
+      signal.removeEventListener("abort", onAbort);
+      callback();
+    };
+    const onAbort = () => settle(() => reject(abortReason(signal)));
+
+    signal.addEventListener("abort", onAbort, { once: true });
+    Promise.resolve(operation).then(
+      (value) => settle(() => resolve(value)),
+      (error) => settle(() => reject(error)),
+    );
+  });
 }
 
 export function createRequestDeadline(
@@ -135,6 +150,16 @@ export function createDeadlineFetch(
         ...(init ?? {}),
         signal: linked.signal,
       });
+    } catch (error) {
+      if (!deadlineSignal.aborted) throw error;
+
+      // Supabase Auth treats a thrown AbortError as retryable and may keep the
+      // outer getClaims() promise alive. A bounded 408 response stops that
+      // background retry while the caller's deadline wrapper exits at once.
+      return Response.json(
+        { code: "request_timeout", message: "Request timed out." },
+        { status: 408, statusText: "Request Timeout" },
+      );
     } finally {
       linked.dispose();
     }
