@@ -19,6 +19,7 @@
     "test:e2e:smoke": "node scripts/run-playwright-suite.mjs smoke",
     "test:e2e:authenticated": "node scripts/run-playwright-suite.mjs authenticated",
     "test:e2e:cleanup": "tsx scripts/cleanup-preview-e2e.ts",
+    "test:e2e:safety": "vitest run src/test-support/preview-e2e-safety.test.ts",
     "test:safety": "vitest run src/app/preview-environment-contract.test.mjs src/app/api/preview-identity/route.test.ts src/lib/deploy/verify-preview-environment.test.mjs src/test-support/staging-fixture-safety.test.ts src/test-support/preview-e2e-safety.test.ts src/lib/services/quiz-rpc-compatibility.test.ts",
     "test:watch": "vitest",
     "map:feature": "node scripts/check-feature-map.mjs --feature",

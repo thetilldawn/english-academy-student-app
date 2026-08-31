@@ -122,6 +122,16 @@ describe("Preview E2E 실행 경계", () => {
     });
   });
 
+  it("가짜 학생 생성 실패 로그에 응답 본문이나 접속코드를 포함하지 않는다", async () => {
+    const fixtureSource = await readFile(
+      path.join(process.cwd(), "test/e2e/fixtures/preview-run.ts"),
+      "utf8",
+    );
+    expect(fixtureSource).not.toContain("expect(response.status(), responseText)");
+    expect(fixtureSource).not.toContain("expect(payload.code).toMatch");
+    expect(fixtureSource).not.toMatch(/throw new Error\([^\n]*response\.text/);
+  });
+
   it("정리 manifest를 동시에 저장해도 완전한 스냅샷을 각각 남긴다", async () => {
     const directory = await mkdtemp(path.join(os.tmpdir(), "preview-e2e-json-"));
     try {

@@ -3,43 +3,124 @@ name: Preview public smoke
 on:
   repository_dispatch:
     types: [vercel.deployment.success]
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Exact approved Vercel Preview origin
+        required: true
+        type: string
+      deployment_sha:
+        description: Git SHA attached to the approved Vercel Preview
+        required: true
+        type: string
+      deployment_ref:
+        description: Git branch attached to the approved Vercel Preview
+        required: true
+        type: string
 
 permissions:
   contents: read
+  deployments: read
 
 concurrency:
-  group: preview-smoke-${{ github.event.client_payload.id }}
+  group: preview-smoke-${{ github.event.client_payload.id || github.run_id }}
   cancel-in-progress: true
 
 jobs:
   smoke:
     if: >-
-      github.event.client_payload.environment == 'preview' &&
-      github.event.client_payload.git.ref != 'main'
-    runs-on: ubuntu-latest
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.client_payload.environment == 'preview' &&
+      github.event.client_payload.git.ref != 'main')
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     environment: preview-smoke
     env:
-      PLAYWRIGHT_BASE_URL: ${{ github.event.client_payload.url }}
+      PLAYWRIGHT_BASE_URL: ${{ inputs.base_url || github.event.client_payload.url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: main
           persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - name: Preview 이벤트와 GitHub 배포 대조
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          EVENT_DEPLOYMENT_SHA: ${{ inputs.deployment_sha || github.event.client_payload.git.sha }}
+          EVENT_PREVIEW_REF: ${{ inputs.deployment_ref || github.event.client_payload.git.ref }}
+          EVENT_PREVIEW_ORIGIN: ${{ inputs.base_url || github.event.client_payload.url }}
+        with:
+          script: |
+            const expectedSha = process.env.EVENT_DEPLOYMENT_SHA;
+            const expectedRef = process.env.EVENT_PREVIEW_REF;
+            const rawUrl = process.env.EVENT_PREVIEW_ORIGIN;
+            if (!/^[0-9a-f]{40}$/i.test(expectedSha ?? "")) {
+              core.setFailed("Vercel 이벤트의 Git SHA가 올바르지 않습니다.");
+              return;
+            }
+            if (!expectedRef || expectedRef === "main") {
+              core.setFailed("Preview 전용 Git 브랜치가 필요합니다.");
+              return;
+            }
+            const expectedUrl = new URL(rawUrl);
+            if (
+              expectedUrl.protocol !== "https:" ||
+              expectedUrl.pathname !== "/" ||
+              expectedUrl.search ||
+              expectedUrl.hash ||
+              !/^english-academy-student-[a-z0-9]+-thetilldawn-3859s-projects\.vercel\.app$/.test(expectedUrl.hostname)
+            ) {
+              core.setFailed("승인된 Exact Preview origin 형식이 아닙니다.");
+              return;
+            }
+            const { data: deployments } = await github.rest.repos.listDeployments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: expectedSha,
+              per_page: 100,
+            });
+            let matched = false;
+            for (const deployment of deployments) {
+              if (
+                deployment.sha !== expectedSha ||
+                (deployment.ref !== expectedRef && deployment.ref !== expectedSha)
+              ) continue;
+              const { data: statuses } = await github.rest.repos.listDeploymentStatuses({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                deployment_id: deployment.id,
+                per_page: 100,
+              });
+              matched ||= statuses.some((status) =>
+                status.state === "success" &&
+                status.environment === "Preview" &&
+                status.environment_url &&
+                new URL(status.environment_url).origin === expectedUrl.origin
+              );
+            }
+            if (!matched) core.setFailed("이벤트 URL·SHA·브랜치와 일치하는 성공 Preview 배포가 없습니다.");
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: 24.13.0
           cache: npm
 
+      - name: 도구 버전 확인
+        shell: bash
+        run: |
+          test "$(node --version)" = "v24.13.0"
+          test "$(npm --version)" = "11.6.2"
+
       - run: npm ci --ignore-scripts
-      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e:safety
+      - run: test "$(npx --no-install playwright --version)" = "Version 1.62.1"
+      - run: npx --no-install playwright install --with-deps chromium
       - run: npm run test:e2e:smoke
         env:
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
       - if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: preview-public-smoke-screenshots
           path: test-results/**/*.png

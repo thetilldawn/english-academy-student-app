@@ -137,7 +137,10 @@ export class PreviewRun {
       },
     });
     const responseText = await response.text();
-    expect(response.status(), responseText).toBe(201);
+    expect(
+      response.status(),
+      `가짜 학생 생성 실패: HTTP ${response.status()}`,
+    ).toBe(201);
     const payload = JSON.parse(responseText) as {
       code?: string;
       studentId?: string;
@@ -149,7 +152,10 @@ export class PreviewRun {
       cleanup: "pending",
     });
     await this.writeManifest();
-    expect(payload.code).toMatch(/^[A-Z2-9]{4}(?:-[A-Z2-9]{4}){2}$/);
+    expect(
+      /^[A-Z2-9]{4}(?:-[A-Z2-9]{4}){2}$/.test(payload.code ?? ""),
+      "학생 접속코드 형식이 올바르지 않습니다.",
+    ).toBe(true);
     const student = {
       code: payload.code!,
       displayName,
@@ -195,7 +201,7 @@ export class PreviewRun {
           `/api/admin/students/${student.id}`,
         );
         if (response.status() !== 200 && response.status() !== 404) {
-          throw new Error(`HTTP ${response.status()}: ${await response.text()}`);
+          throw new Error(`가짜 학생 정리 실패: HTTP ${response.status()}`);
         }
         student.cleanup = "deleted";
       } catch {
