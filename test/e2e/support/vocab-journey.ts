@@ -103,12 +103,20 @@ async function configureRangeAssignment(page: Page, plan: AssignmentPlan = {}) {
     await setCheckbox(page, "timing", false);
   }
   await configureSchedule(page, plan.scheduleEnabled ?? false);
+
+  const preview = page.getByRole("region", { name: "배정 미리보기" });
+  await expect(preview).toBeVisible();
+  await expect(preview).toHaveAttribute("aria-busy", "false", {
+    timeout: 30_000,
+  });
+  await expect(preview.getByRole("status")).toHaveCount(0);
 }
 
 async function waitForAssignmentSave(page: Page, endpoint: RegExp) {
   const responsePromise = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" && endpoint.test(response.url()),
+    { timeout: 60_000 },
   );
   await page.getByRole("button", { name: "배정하기", exact: true }).click();
   const response = await responsePromise;
