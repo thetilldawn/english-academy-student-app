@@ -124,8 +124,13 @@ export async function openSingleAssignment(page: Page, student: PreviewStudent) 
   await page
     .getByRole("searchbox", { name: "학생 및 학습 자료 검색" })
     .fill(student.displayName);
-  await expect(page.getByText(student.displayName, { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "단어 배정", exact: true }).click();
+  const studentCard = page
+    .getByRole("article")
+    .filter({ hasText: student.displayName });
+  await expect(studentCard).toHaveCount(1);
+  await studentCard
+    .getByRole("button", { name: "단어 배정", exact: true })
+    .click();
   await expect(page.getByRole("dialog", { name: "단일 배정" })).toBeVisible();
 }
 
