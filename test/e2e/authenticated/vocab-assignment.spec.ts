@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import type { Page, Route } from "@playwright/test";
 
 import { expect, test } from "../fixtures/preview-run";
 import {
@@ -29,6 +29,43 @@ type AdminPointSummary = {
 
 function pointChangeText(value: number) {
   return value > 0 ? `+${value}` : String(value);
+}
+
+const assignmentMutationPaths = new Set([
+  "/api/admin/assignments",
+  "/api/admin/bulk-assignments",
+  "/api/admin/exact-review-assignments",
+  "/api/admin/mixed-assignments",
+]);
+
+async function trackAdminAssignmentMutations(page: Page) {
+  const requests: string[] = [];
+  const listener = async (route: Route) => {
+    const request = route.request();
+    const pathname = new URL(request.url()).pathname;
+    if (
+      request.method() === "POST" &&
+      assignmentMutationPaths.has(pathname)
+    ) {
+      requests.push(pathname);
+      await route.abort("blockedbyclient");
+      return;
+    }
+    await route.continue();
+  };
+  await page.route("**/api/admin/**", listener);
+  return {
+    async assertNone() {
+      await new Promise((resolve) => setTimeout(resolve, 750));
+      expect(
+        requests,
+        `검증 실패 뒤 저장 요청이 발생했습니다: ${requests.join(", ")}`,
+      ).toEqual([]);
+    },
+    async stop() {
+      await page.unroute("**/api/admin/**", listener);
+    },
+  };
 }
 
 async function expectAdminPointSummary(
@@ -278,32 +315,54 @@ test.describe.serial("@authenticated Preview 인증 단어 배정 핵심 흐름"
   }) => {
     const student = await previewRun.createStudent("failure-single-range");
     await openSingleAssignment(previewRun.adminPage, student);
-    await previewRun.adminPage.getByRole("button", { name: "배정하기" }).click();
-    await expect(previewRun.adminPage.getByText("범위 확인", { exact: true })).toBeVisible();
-    await expect(previewRun.adminPage.locator('[data-field-key="range"]')).toContainText(
-      /범위/,
-    );
-    await previewRun.adminPage.getByRole("button", { name: "닫기" }).click();
+    const mutations = await trackAdminAssignmentMutations(previewRun.adminPage);
+    try {
+      await previewRun.adminPage.getByRole("button", { name: "배정하기" }).click();
+      await expect(
+        previewRun.adminPage.getByText("범위 확인", { exact: true }),
+      ).toBeVisible();
+      await expect(
+        previewRun.adminPage.locator('[data-field-key="range"]'),
+      ).toContainText(/범위/);
+      await mutations.assertNone();
+      await previewRun.adminPage.getByRole("button", { name: "닫기" }).click();
+    } finally {
+      await mutations.stop();
+    }
   });
 
   test("실패 3 · 일괄 대상 없음과 오답 없음은 배정 전에 차단한다", async ({
     previewRun,
   }) => {
     await previewRun.adminPage.goto("/admin/assignments");
-    await previewRun.adminPage.getByRole("tab", { name: "일괄 배정" }).click();
-    await expect(
-      previewRun.adminPage.getByRole("button", { name: "단어 배정", exact: true }),
-    ).toBeDisabled();
+    const mutations = await trackAdminAssignmentMutations(previewRun.adminPage);
+    try {
+      await previewRun.adminPage.getByRole("tab", { name: "일괄 배정" }).click();
+      await expect(
+        previewRun.adminPage.getByRole("button", {
+          name: "단어 배정",
+          exact: true,
+        }),
+      ).toBeDisabled();
+      await mutations.assertNone();
 
-    const student = await previewRun.createStudent("failure-empty-review");
-    await openSingleAssignment(previewRun.adminPage, student);
-    await previewRun.adminPage.getByRole("tab", { name: "오답 시험" }).click();
-    await expect(
-      previewRun.adminPage.getByText("현재 배정할 오답이 없습니다."),
-    ).toBeVisible();
-    await previewRun.adminPage.getByRole("button", { name: "배정하기" }).click();
-    await expect(previewRun.adminPage.getByRole("dialog", { name: "단일 배정" })).toBeVisible();
-    await expect(previewRun.adminPage.getByText("범위 확인", { exact: true })).toBeVisible();
-    await previewRun.adminPage.getByRole("button", { name: "닫기" }).click();
+      const student = await previewRun.createStudent("failure-empty-review");
+      await openSingleAssignment(previewRun.adminPage, student);
+      await previewRun.adminPage.getByRole("tab", { name: "오답 시험" }).click();
+      await expect(
+        previewRun.adminPage.getByText("현재 배정할 오답이 없습니다."),
+      ).toBeVisible();
+      await previewRun.adminPage.getByRole("button", { name: "배정하기" }).click();
+      await expect(
+        previewRun.adminPage.getByRole("dialog", { name: "단일 배정" }),
+      ).toBeVisible();
+      await expect(
+        previewRun.adminPage.getByText("범위 확인", { exact: true }),
+      ).toBeVisible();
+      await mutations.assertNone();
+      await previewRun.adminPage.getByRole("button", { name: "닫기" }).click();
+    } finally {
+      await mutations.stop();
+    }
   });
 });

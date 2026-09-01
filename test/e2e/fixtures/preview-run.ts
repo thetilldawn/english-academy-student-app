@@ -15,6 +15,10 @@ import {
   assertPreviewRuntimeIdentity,
   establishVercelProtectionSession,
 } from "../support/environment";
+import {
+  cleanupPreviewStudent,
+  type PreviewCleanupStudent,
+} from "../support/preview-student-cleanup";
 
 export type PreviewStudent = {
   code: string;
@@ -22,12 +26,10 @@ export type PreviewStudent = {
   id: string;
 };
 
-type ReceiptStudent = Omit<PreviewStudent, "code"> & {
-  cleanup: "pending" | "deleted" | "failed";
-};
-
 function safeRunPart(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9-]/g, "-").slice(0, 28);
+  return (
+    value.toLowerCase().replace(/[^a-z0-9-]/g, "-").slice(0, 28) || "case"
+  );
 }
 
 export class PreviewRun {
@@ -40,7 +42,7 @@ export class PreviewRun {
   readonly targetGitRef: string;
   readonly browserMessages: string[] = [];
   private readonly browser: Browser;
-  private readonly students: ReceiptStudent[] = [];
+  private readonly students: PreviewCleanupStudent[] = [];
   private readonly studentContexts: BrowserContext[] = [];
 
   private constructor(input: {
@@ -126,7 +128,18 @@ export class PreviewRun {
 
   async createStudent(caseName: string): Promise<PreviewStudent> {
     const safeCase = safeRunPart(caseName);
-    const displayName = `[E2E] ${safeCase} ${this.runId}`.slice(0, 80);
+    const creationNonce = randomBytes(3).toString("hex");
+    const displayName = `[E2E] ${safeCase} ${this.runId} ${creationNonce}`.slice(
+      0,
+      80,
+    );
+    const receipt: PreviewCleanupStudent = {
+      cleanup: "intended",
+      displayName,
+      id: null,
+    };
+    this.students.push(receipt);
+    await this.writeManifest();
     const response = await this.adminContext.request.post("/api/admin/students", {
       data: {
         currentVocabDatasetId: null,
@@ -146,11 +159,8 @@ export class PreviewRun {
       studentId?: string;
     };
     expect(payload.studentId).toMatch(/^[0-9a-f-]{36}$/);
-    this.students.push({
-      displayName,
-      id: payload.studentId!,
-      cleanup: "pending",
-    });
+    receipt.id = payload.studentId!;
+    receipt.cleanup = "pending";
     await this.writeManifest();
     expect(
       /^[A-Z2-9]{4}(?:-[A-Z2-9]{4}){2}$/.test(payload.code ?? ""),
@@ -197,15 +207,14 @@ export class PreviewRun {
     await Promise.allSettled(this.studentContexts.map((context) => context.close()));
     for (const student of [...this.students].reverse()) {
       try {
-        const response = await this.adminContext.request.delete(
-          `/api/admin/students/${student.id}`,
+        await cleanupPreviewStudent(
+          this.adminContext.request,
+          student,
+          () => this.writeManifest(),
         );
-        if (response.status() !== 200 && response.status() !== 404) {
-          throw new Error(`가짜 학생 정리 실패: HTTP ${response.status()}`);
-        }
-        student.cleanup = "deleted";
       } catch {
         student.cleanup = "failed";
+        await this.writeManifest().catch(() => undefined);
       }
     }
     await this.writeManifest();
@@ -214,7 +223,9 @@ export class PreviewRun {
     const failed = this.students.filter((student) => student.cleanup === "failed");
     if (failed.length > 0) {
       throw new Error(
-        `Preview E2E 학생 ${failed.map((student) => student.id).join(", ")} 정리에 실패했습니다.`,
+        `Preview E2E 학생 ${failed
+          .map((student) => student.id ?? student.displayName)
+          .join(", ")} 정리에 실패했습니다.`,
       );
     }
     if (this.browserMessages.length > 0) {

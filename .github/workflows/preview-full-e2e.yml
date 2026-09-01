@@ -22,6 +22,7 @@ concurrency:
 
 jobs:
   authenticated:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     environment: preview-e2e
@@ -38,7 +39,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-          ref: main
+          ref: ${{ github.sha }}
 
       - name: 검사 도구 SHA 기록
         shell: bash
@@ -79,13 +80,8 @@ jobs:
               repo: context.repo.repo,
               branch: allowedRef,
             });
-            const { data: comparison } = await github.rest.repos.compareCommitsWithBasehead({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              basehead: `${expectedSha}...${branch.commit.sha}`,
-            });
-            if (comparison.status !== 'identical' && comparison.status !== 'ahead') {
-              core.setFailed('입력 SHA가 승인된 Preview 전용 브랜치의 현재 이력에 없습니다.');
+            if (branch.commit.sha.toLowerCase() !== expectedSha.toLowerCase()) {
+              core.setFailed('입력 SHA가 승인된 Preview 전용 브랜치의 현재 HEAD와 다릅니다.');
               return;
             }
             if (branch.protected !== true) {
@@ -151,6 +147,32 @@ jobs:
           PREVIEW_E2E_ADMIN_EMAIL: ${{ secrets.PREVIEW_E2E_ADMIN_EMAIL }}
           PREVIEW_E2E_ADMIN_PASSWORD: ${{ secrets.PREVIEW_E2E_ADMIN_PASSWORD }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+
+      - name: 완료 시점 Preview HEAD 재확인
+        if: >-
+          always() &&
+          steps.e2e.outcome != '' &&
+          steps.e2e.outcome != 'skipped'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          APPROVED_DEPLOYMENT_SHA: ${{ inputs.deployment_sha }}
+          APPROVED_PREVIEW_REF: ${{ vars.PREVIEW_E2E_ALLOWED_GIT_REF }}
+        with:
+          script: |
+            const expectedSha = process.env.APPROVED_DEPLOYMENT_SHA;
+            const allowedRef = process.env.APPROVED_PREVIEW_REF;
+            const { data: branch } = await github.rest.repos.getBranch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              branch: allowedRef,
+            });
+            if (branch.protected !== true) {
+              core.setFailed('완료 시점에 Preview 전용 브랜치 보호 규칙이 없습니다.');
+              return;
+            }
+            if (branch.commit.sha.toLowerCase() !== expectedSha.toLowerCase()) {
+              core.setFailed('검사 중 Preview 전용 브랜치 HEAD가 이동했습니다. 새 배포를 다시 검사해야 합니다.');
+            }
 
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

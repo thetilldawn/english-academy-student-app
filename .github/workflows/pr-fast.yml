@@ -27,12 +27,12 @@ jobs:
         shell: bash
         run: |
           files="$(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD")"
-          if grep -Eq '^(src/|test/|scripts/|supabase/|architecture/|\.github/|package(-lock)?\.json$|playwright\.config\.mjs$|next\.config\.|tsconfig\.json$|vitest\.config\.|eslint\.config\.)' <<<"$files"; then
+          if grep -Eq '^(src/|test/|scripts/|supabase/|architecture/|\.github/|package(-lock)?\.json$|playwright\.config\.mjs$|proxy\.ts$|vercel\.json$|next\.config\.|tsconfig\.json$|vitest\.config\.|eslint\.config\.)' <<<"$files"; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
-          if grep -Eq '^(supabase/migrations/|package(-lock)?\.json$|vitest\.config\.|tsconfig\.json$|next\.config\.)' <<<"$files"; then
+          if grep -Eq '^(supabase/migrations/|package(-lock)?\.json$|proxy\.ts$|vercel\.json$|vitest\.config\.|tsconfig\.json$|next\.config\.)' <<<"$files"; then
             echo "full=true" >> "$GITHUB_OUTPUT"
           else
             echo "full=false" >> "$GITHUB_OUTPUT"

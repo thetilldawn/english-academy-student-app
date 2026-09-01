@@ -1,6 +1,7 @@
 import { createRequire } from "node:module";
 import { once } from "node:events";
 import { spawn, spawnSync } from "node:child_process";
+import { createServer } from "node:net";
 
 const require = createRequire(import.meta.url);
 const playwrightCli = require.resolve("@playwright/test/cli");
@@ -66,16 +67,71 @@ const runs = suite === "smoke"
       environment: { E2E_SUITE: "authenticated", E2E_VIEWPORT: "desktop" },
     }];
 
-const localOrigin = `http://127.0.0.1:${process.env.PLAYWRIGHT_PORT ?? "3100"}`;
+const localHost = "127.0.0.1";
+const localPortText = process.env.PLAYWRIGHT_PORT ?? "3100";
+const localPort = Number(localPortText);
+if (!Number.isInteger(localPort) || localPort < 1 || localPort > 65_535) {
+  throw new Error(`PLAYWRIGHT_PORT가 올바르지 않습니다: ${localPortText}`);
+}
+const localOrigin = `http://${localHost}:${localPort}`;
 
-async function waitForServer(origin) {
+async function assertLocalPortAvailable(host, port) {
+  const probe = createServer();
+  try {
+    await new Promise((resolve, reject) => {
+      probe.once("error", reject);
+      probe.listen({ exclusive: true, host, port }, resolve);
+    });
+  } catch (error) {
+    if (error && typeof error === "object" && error.code === "EADDRINUSE") {
+      throw new Error(
+        `로컬 검사 포트 ${host}:${port}가 이미 사용 중입니다. 기존 서버를 검사 대상으로 재사용하지 않습니다.`,
+      );
+    }
+    throw error;
+  } finally {
+    if (probe.listening) {
+      await new Promise((resolve, reject) => {
+        probe.close((error) => (error ? reject(error) : resolve()));
+      });
+    }
+  }
+}
+
+async function waitForServer(origin, server) {
+  let spawnError = null;
+  let readyReported = false;
+  let startupOutput = "";
+  const captureStartup = (chunk) => {
+    startupOutput = `${startupOutput}${String(chunk)}`.slice(-4_096);
+    if (startupOutput.includes("Ready in")) readyReported = true;
+  };
+  server.stdout?.on("data", captureStartup);
+  server.stderr?.on("data", captureStartup);
+  server.once("error", (error) => {
+    spawnError = error;
+  });
   const deadline = Date.now() + 60_000;
   while (Date.now() < deadline) {
-    try {
-      const response = await fetch(origin, { redirect: "manual" });
-      if (response.status < 500) return;
-    } catch {
-      // The production server has not opened its socket yet.
+    if (spawnError) throw spawnError;
+    if (server.exitCode !== null || server.signalCode !== null) {
+      throw new Error(
+        `로컬 Next.js 서버가 준비 전에 종료되었습니다: exit=${server.exitCode ?? "none"}, signal=${server.signalCode ?? "none"}`,
+      );
+    }
+    if (readyReported) {
+      try {
+        const response = await fetch(origin, { redirect: "manual" });
+        if (
+          response.status < 500 &&
+          server.exitCode === null &&
+          server.signalCode === null
+        ) {
+          return;
+        }
+      } catch {
+        // The child reported ready but its socket is not reachable yet.
+      }
     }
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
@@ -99,19 +155,20 @@ try {
     if (suite !== "smoke") {
       throw new Error("인증 E2E에는 PLAYWRIGHT_BASE_URL이 필요합니다.");
     }
+    await assertLocalPortAvailable(localHost, localPort);
     localServer = spawn(
       process.execPath,
       [
         nextCli,
         "start",
         "--hostname",
-        "127.0.0.1",
+        localHost,
         "--port",
-        process.env.PLAYWRIGHT_PORT ?? "3100",
+        localPortText,
       ],
-      { env: process.env, stdio: "ignore", windowsHide: true },
+      { env: process.env, stdio: ["ignore", "pipe", "pipe"], windowsHide: true },
     );
-    await waitForServer(localOrigin);
+    await waitForServer(localOrigin, localServer);
   }
 
   for (const run of runs) {

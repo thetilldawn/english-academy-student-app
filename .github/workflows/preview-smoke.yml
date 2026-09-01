@@ -29,9 +29,10 @@ concurrency:
 jobs:
   smoke:
     if: >-
-      github.event_name == 'workflow_dispatch' ||
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'workflow_dispatch' ||
       (github.event.client_payload.environment == 'preview' &&
-      github.event.client_payload.git.ref != 'main')
+      github.event.client_payload.git.ref != 'main'))
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     environment: preview-smoke
@@ -40,12 +41,13 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: main
+          ref: ${{ github.sha }}
           persist-credentials: false
 
       - name: Preview 이벤트와 GitHub 배포 대조
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
+          APPROVED_PREVIEW_REF: ${{ vars.PREVIEW_SMOKE_ALLOWED_GIT_REF }}
           EVENT_DEPLOYMENT_SHA: ${{ inputs.deployment_sha || github.event.client_payload.git.sha }}
           EVENT_PREVIEW_REF: ${{ inputs.deployment_ref || github.event.client_payload.git.ref }}
           EVENT_PREVIEW_ORIGIN: ${{ inputs.base_url || github.event.client_payload.url }}
@@ -53,13 +55,31 @@ jobs:
           script: |
             const expectedSha = process.env.EVENT_DEPLOYMENT_SHA;
             const expectedRef = process.env.EVENT_PREVIEW_REF;
+            const allowedRef = process.env.APPROVED_PREVIEW_REF;
             const rawUrl = process.env.EVENT_PREVIEW_ORIGIN;
             if (!/^[0-9a-f]{40}$/i.test(expectedSha ?? "")) {
               core.setFailed("Vercel 이벤트의 Git SHA가 올바르지 않습니다.");
               return;
             }
-            if (!expectedRef || expectedRef === "main") {
-              core.setFailed("Preview 전용 Git 브랜치가 필요합니다.");
+            if (
+              !allowedRef ||
+              allowedRef === "main" ||
+              expectedRef !== allowedRef
+            ) {
+              core.setFailed("이벤트 브랜치가 승인된 Preview smoke 전용 브랜치와 다릅니다.");
+              return;
+            }
+            const { data: branch } = await github.rest.repos.getBranch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              branch: allowedRef,
+            });
+            if (branch.protected !== true) {
+              core.setFailed("승인된 Preview smoke 전용 브랜치에 GitHub 보호 규칙이 없습니다.");
+              return;
+            }
+            if (branch.commit.sha.toLowerCase() !== expectedSha.toLowerCase()) {
+              core.setFailed("이벤트 SHA가 승인된 Preview smoke 전용 브랜치의 현재 HEAD와 다릅니다.");
               return;
             }
             const expectedUrl = new URL(rawUrl);
@@ -115,9 +135,36 @@ jobs:
       - run: npm run test:e2e:safety
       - run: test "$(npx --no-install playwright --version)" = "Version 1.62.1"
       - run: npx --no-install playwright install --with-deps chromium
-      - run: npm run test:e2e:smoke
+      - id: smoke
+        run: npm run test:e2e:smoke
         env:
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+
+      - name: 완료 시점 Preview smoke HEAD 재확인
+        if: >-
+          always() &&
+          steps.smoke.outcome != '' &&
+          steps.smoke.outcome != 'skipped'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          APPROVED_DEPLOYMENT_SHA: ${{ inputs.deployment_sha || github.event.client_payload.git.sha }}
+          APPROVED_PREVIEW_REF: ${{ vars.PREVIEW_SMOKE_ALLOWED_GIT_REF }}
+        with:
+          script: |
+            const expectedSha = process.env.APPROVED_DEPLOYMENT_SHA;
+            const allowedRef = process.env.APPROVED_PREVIEW_REF;
+            const { data: branch } = await github.rest.repos.getBranch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              branch: allowedRef,
+            });
+            if (branch.protected !== true) {
+              core.setFailed("완료 시점에 Preview smoke 전용 브랜치 보호 규칙이 없습니다.");
+              return;
+            }
+            if (branch.commit.sha.toLowerCase() !== expectedSha.toLowerCase()) {
+              core.setFailed("검사 중 Preview smoke 전용 브랜치 HEAD가 이동했습니다. 새 배포를 다시 검사해야 합니다.");
+            }
 
       - if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

@@ -9,18 +9,16 @@ import {
   assertPreviewRuntimeIdentity,
   vercelProtectionHeaders,
 } from "../test/e2e/support/environment";
-
-type ManifestStudent = {
-  cleanup: "pending" | "deleted" | "failed";
-  displayName: string;
-  id: string;
-};
+import {
+  cleanupPreviewStudent,
+  type PreviewCleanupStudent,
+} from "../test/e2e/support/preview-student-cleanup";
 
 type Manifest = {
   checkRunnerSha?: string | null;
   origin: string;
   runId: string;
-  students: ManifestStudent[];
+  students: PreviewCleanupStudent[];
   targetDeploymentSha?: string | null;
   targetGitRef?: string | null;
 };
@@ -148,63 +146,19 @@ async function main() {
       try {
         for (const student of manifest.students) {
           if (student.cleanup === "deleted") continue;
-          if (
-            !/^\[E2E\] /.test(student.displayName) ||
-            !/^[0-9a-f-]{36}$/.test(student.id)
-          ) {
+          try {
+            await cleanupPreviewStudent(
+              api,
+              student,
+              () => persist(manifestDirectory, manifest),
+            );
+          } catch {
             student.cleanup = "failed";
-            failures.push(`${manifest.runId}:${student.id}`);
+            failures.push(
+              `${manifest.runId}:${student.id ?? student.displayName}`,
+            );
             await persist(manifestDirectory, manifest);
-            continue;
           }
-
-          const directory = await api.post("/api/admin/students/directory", {
-            data: {
-              filters: {
-                classGroupId: "",
-                grade: "",
-                query: student.displayName,
-                school: "",
-                status: "all",
-                wordbook: "",
-                wrong: "all",
-              },
-              mode: "initial",
-            },
-          });
-          if (directory.status() !== 200) {
-            student.cleanup = "failed";
-            failures.push(`${manifest.runId}:${student.id}`);
-            await persist(manifestDirectory, manifest);
-            continue;
-          }
-          const directoryPayload = await directory.json() as {
-            snapshot?: {
-              page?: { items?: Array<{ displayName: string; id: string }> };
-            };
-          };
-          const candidates = directoryPayload?.snapshot?.page?.items ?? [];
-          const exact = candidates.find((candidate) => candidate.id === student.id);
-          if (!exact) {
-            student.cleanup = "deleted";
-            await persist(manifestDirectory, manifest);
-            continue;
-          }
-          if (exact.displayName !== student.displayName) {
-            student.cleanup = "failed";
-            failures.push(`${manifest.runId}:${student.id}`);
-            await persist(manifestDirectory, manifest);
-            continue;
-          }
-
-          const deletion = await api.delete(`/api/admin/students/${student.id}`);
-          student.cleanup = deletion.status() === 200 || deletion.status() === 404
-            ? "deleted"
-            : "failed";
-          if (student.cleanup === "failed") {
-            failures.push(`${manifest.runId}:${student.id}`);
-          }
-          await persist(manifestDirectory, manifest);
         }
 
         await writeJsonSnapshot(
