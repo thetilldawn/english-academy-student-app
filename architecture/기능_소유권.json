@@ -3416,6 +3416,7 @@
           "src/features/history/server/queries/admin-history-list-query.test.ts",
           "src/features/history/transport/history-pages.test.ts",
           "src/features/history/ui/admin-history-list.test.tsx",
+          "src/features/history/ui/history-presentation.test.tsx",
           "src/features/history/ui/history-section-groups.test.tsx",
           "src/lib/database/admin-history-read-migration-contract.test.ts",
           "src/lib/database/review-assignment-final-schema.integration.test.ts",

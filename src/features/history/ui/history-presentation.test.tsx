@@ -5,6 +5,9 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
+import type {
+  NavigableRowLinkComponent,
+} from "@/design-system/patterns/activity-row/activity-row";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
 
 import type { ActivityTimelineInput } from "../presentation/activity-presentation";
@@ -172,5 +175,28 @@ describe("history presentation components", () => {
       "data-has-score",
       "false",
     );
+  });
+
+  it("does not prefetch every visible history detail row", () => {
+    const LinkProbe: NavigableRowLinkComponent = ({
+      prefetch,
+      scroll,
+      ...props
+    }) => (
+      <a
+        data-prefetch={String(prefetch)}
+        data-scroll={String(scroll)}
+        {...props}
+      />
+    );
+
+    render(
+      <HistoryActivityRow
+        item={historyItem()}
+        linkComponent={LinkProbe}
+      />,
+    );
+
+    expect(screen.getByRole("link")).toHaveAttribute("data-prefetch", "false");
   });
 });

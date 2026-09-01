@@ -12,6 +12,7 @@ export type NavigableRowLinkComponent = ComponentType<{
   className?: string;
   "data-tone"?: ActivityRowTone;
   href: string;
+  prefetch?: boolean;
   scroll?: boolean;
 }>;
 
@@ -50,6 +51,7 @@ export function NavigableRow({
   density = "default",
   href,
   linkComponent,
+  prefetch,
   tone = "neutral",
 }: {
   ariaLabel?: string;
@@ -57,6 +59,7 @@ export function NavigableRow({
   density?: "compact" | "default";
   href: string;
   linkComponent?: NavigableRowLinkComponent;
+  prefetch?: boolean;
   tone?: ActivityRowTone;
 }) {
   const LinkComponent = linkComponent ?? Link;
@@ -69,6 +72,7 @@ export function NavigableRow({
       )}
       data-tone={tone}
       href={href}
+      prefetch={prefetch}
       scroll={false}
     >
       {children}

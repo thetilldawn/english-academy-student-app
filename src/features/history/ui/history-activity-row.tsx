@@ -65,6 +65,7 @@ export function HistoryActivityRow({
       density={compact ? "compact" : "default"}
       href={detailHref}
       linkComponent={linkComponent}
+      prefetch={false}
       tone={presentation.tone}
     >
       <ActivityRow
