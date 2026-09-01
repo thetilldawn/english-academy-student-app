@@ -78,6 +78,34 @@ function controller(exactReview = false) {
 }
 
 describe("수정 시험 범위", () => {
+  it("비연속 범위를 처음 정한 역방향으로 정렬해 수정 요청에 보낸다", () => {
+    const value = controller();
+    value.value.state.draft.range.orderedUnitIds = [
+      units[2]!.id,
+      units[0]!.id,
+    ];
+    render(
+      <AssignmentRangeFields
+        capacity={value.value.capacity}
+        datasets={[dataset]}
+        draft={value.value.state.draft}
+        fieldPolicy={value.value.fieldPolicy}
+        isExactReview={value.value.isExactReview}
+        onChangeRange={value.value.actions.changeRange}
+        progress={null}
+        units={units}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "DAY 2" }));
+
+    expect(value.changeRange).toHaveBeenCalledWith(dataset.id, [
+      units[2]!.id,
+      units[1]!.id,
+      units[0]!.id,
+    ]);
+  });
+
   it("범위를 하나씩 켜고 끄며 전체 선택도 같은 자료 순서를 쓴다", () => {
     const value = controller();
     render(

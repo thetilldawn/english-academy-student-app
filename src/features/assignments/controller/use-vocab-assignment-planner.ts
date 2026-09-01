@@ -303,7 +303,7 @@ export function useVocabAssignmentPlanner({
       changeScheduleEnabled: (enabled: boolean) =>
         dispatch({ type: "schedule/enabled", enabled }),
       selectUnit: (unitId: string) =>
-        dispatch({ type: "range/toggle", unitId }),
+        dispatch({ type: "range/toggle", unitId, units: availableUnits }),
       selectAllUnits: (selectAll: boolean) => dispatch({
         type: "range/all",
         unitIds: availableUnits.map((unit) => unit.id),

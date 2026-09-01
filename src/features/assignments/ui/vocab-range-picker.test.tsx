@@ -122,6 +122,15 @@ function controller(input?: {
 afterEach(cleanup);
 
 describe("VocabRangePicker", () => {
+  it("역방향 선택을 요약에도 같은 방향으로 표시한다", () => {
+    const value = controller();
+    value.selectedUnits = [units[1]!, units[0]!];
+
+    render(<VocabRangePicker controller={value} datasets={[dataset]} />);
+
+    expect(screen.getByText("DAY 2~DAY 1 · 2개 선택")).toBeVisible();
+  });
+
   it("배정 방식을 전체 회차·회차별·단어 수로 제공한다", () => {
     const value = controller();
     render(<VocabRangePicker controller={value} datasets={[dataset]} />);

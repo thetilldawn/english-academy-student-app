@@ -271,7 +271,7 @@ describe("단어 시험 공통 배정 계획", () => {
     });
   });
 
-  it("범위를 각각 켜고 끄며 전체 선택을 자료 순서로 해석한다", () => {
+  it("범위를 각각 켜고 끄며 선택 방향과 전체 자료 순서를 보존한다", () => {
     const units = [1, 2, 3, 4].map((sortIndex) => ({
       id: `day-${sortIndex}`,
       sortIndex,
@@ -283,12 +283,13 @@ describe("단어 시험 공통 배정 계획", () => {
     const second = toggleVocabUnitSelection(first, "day-1");
     expect(
       resolveVocabUnitSelection(units, second).map((unit) => unit.id),
-    ).toEqual([
-      "day-1",
-      "day-3",
-    ]);
-    expect(toggleVocabUnitSelection(second, "day-3")).toEqual({
-      selectedUnitIds: ["day-1"],
+    ).toEqual(["day-3", "day-1"]);
+    const third = toggleVocabUnitSelection(second, "day-2");
+    expect(
+      resolveVocabUnitSelection(units, third).map((unit) => unit.id),
+    ).toEqual(["day-3", "day-2", "day-1"]);
+    expect(toggleVocabUnitSelection(third, "day-3")).toEqual({
+      selectedUnitIds: ["day-1", "day-2"],
     });
     expect(resolveVocabUnitSelection(
       units,
@@ -296,6 +297,9 @@ describe("단어 시험 공통 배정 계획", () => {
     ).map((unit) => unit.id)).toEqual([
       "day-1", "day-2", "day-3", "day-4",
     ]);
+    expect(resolveVocabUnitSelection(units, {
+      selectedUnitIds: ["day-3", "unknown", "day-3", "day-1"],
+    }).map((unit) => unit.id)).toEqual(["day-3", "day-1"]);
   });
 
   it("전체 문항은 실제 가능한 수를 선택 날짜에 균등하게 나눈다", () => {

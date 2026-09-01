@@ -13,6 +13,7 @@ import {
   type VocabWeekdayUnitCounts,
 } from "../domain/vocab-assignment-contract";
 import {
+  resolveVocabUnitSelection,
   selectAllVocabUnits,
   selectInitialVocabDatasetId,
   toggleVocabUnitSelection,
@@ -41,7 +42,11 @@ export type VocabPlannerState = {
 
 export type VocabPlannerAction =
   | { type: "dataset"; value: string }
-  | { type: "range/toggle"; unitId: string }
+  | {
+      type: "range/toggle";
+      unitId: string;
+      units: readonly { id: string; sortIndex: number }[];
+    }
   | { type: "range/all"; unitIds: readonly string[]; selectAll: boolean }
   | { type: "assignment_mode"; value: VocabAssignmentMode }
   | { type: "unit_allocation_mode"; value: VocabUnitAllocationMode }
@@ -81,13 +86,20 @@ export function vocabPlannerReducer(
         extraDatePolicy: "unconfirmed",
         sessionScheduleOverrides: {},
       };
-    case "range/toggle":
+    case "range/toggle": {
+      const toggledRange = toggleVocabUnitSelection(state.range, action.unitId);
       return {
         ...state,
-        range: toggleVocabUnitSelection(state.range, action.unitId),
+        range: {
+          selectedUnitIds: resolveVocabUnitSelection(
+            action.units,
+            toggledRange,
+          ).map((unit) => unit.id),
+        },
         extraDatePolicy: "unconfirmed",
         sessionScheduleOverrides: {},
       };
+    }
     case "range/all":
       return {
         ...state,

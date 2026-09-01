@@ -32,6 +32,11 @@ const state: VocabPlannerState = {
   sessionScheduleOverrides: {},
 };
 
+const units = [1, 2, 3].map((sortIndex) => ({
+  id: `unit-${sortIndex}`,
+  sortIndex,
+}));
+
 describe("vocabPlannerReducer extra date decision", () => {
   it("새 배정은 전체 회차·즉시 공개·당일 마감으로 시작한다", () => {
     expect(createInitialVocabPlannerState([], "", "2026-08-24")).toMatchObject({
@@ -62,6 +67,7 @@ describe("vocabPlannerReducer extra date decision", () => {
     expect(vocabPlannerReducer(state, {
       type: "range/toggle",
       unitId: "unit-2",
+      units,
     }).range).toEqual({ selectedUnitIds: ["unit-1"] });
     expect(vocabPlannerReducer(state, {
       type: "range/all",
@@ -75,6 +81,36 @@ describe("vocabPlannerReducer extra date decision", () => {
       unitIds: ["unit-1", "unit-2"],
       selectAll: false,
     }).range).toEqual({ selectedUnitIds: [] });
+  });
+
+  it("첫 두 선택의 방향으로 비연속 범위를 정규화해 상태에 저장한다", () => {
+    const initial = { ...state, range: { selectedUnitIds: [] } };
+    const first = vocabPlannerReducer(initial, {
+      type: "range/toggle",
+      unitId: "unit-3",
+      units,
+    });
+    const second = vocabPlannerReducer(first, {
+      type: "range/toggle",
+      unitId: "unit-1",
+      units,
+    });
+    const third = vocabPlannerReducer(second, {
+      type: "range/toggle",
+      unitId: "unit-2",
+      units,
+    });
+
+    expect(third.range).toEqual({
+      selectedUnitIds: ["unit-3", "unit-2", "unit-1"],
+    });
+    expect(vocabPlannerReducer(third, {
+      type: "range/toggle",
+      unitId: "unit-3",
+      units,
+    }).range).toEqual({
+      selectedUnitIds: ["unit-2", "unit-1"],
+    });
   });
 
   it("배정 방식을 바꿔도 직접 입력한 단어 수를 보존한다", () => {

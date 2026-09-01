@@ -650,7 +650,7 @@ describe("단어 배정 일정 controller", () => {
     expect(mocks.changeOrder).toHaveBeenCalledWith("ascending");
   });
 
-  it("비연속 범위도 원래 범위 순서로 회차별 배정한다", () => {
+  it("비연속 범위도 처음 정한 역방향으로 회차별 배정한다", () => {
     const { result } = renderPlanner();
     act(() => {
       result.current.actions.selectUnit(units[5]!.id);
@@ -665,9 +665,9 @@ describe("단어 배정 일정 controller", () => {
     expect(result.current.commonPlan?.rangeUnitCounts).toEqual([1, 1]);
     expect(result.current.commonPlan?.sessions.map((session) =>
       session.unitIds)).toEqual([
-      ["unit-1"],
-      ["unit-3"],
       ["unit-6"],
+      ["unit-3"],
+      ["unit-1"],
     ]);
   });
 

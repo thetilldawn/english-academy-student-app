@@ -5,6 +5,7 @@ import {
 } from "@/design-system/primitives/form/field";
 
 import type { AssignmentUnitItem } from "../catalog-types";
+import { resolveVocabUnitSelection } from "../domain/vocab-planner-controls";
 import { assignmentUnitRangeLabel } from "../presentation/assignment-unit-range-label";
 import { DayRangeRail } from "./day-range-rail";
 import styles from "./vocab-assignment-planner.module.css";
@@ -25,10 +26,13 @@ export function AssignmentUnitRangePicker({
   fieldKey?: string;
   onSelect: (unitId: string) => void;
   onToggleAll: (selected: boolean) => void;
-  selectedUnitIds: ReadonlySet<string>;
+  selectedUnitIds: readonly string[];
   units: readonly AssignmentUnitItem[];
 }) {
-  const selectedUnits = units.filter((unit) => selectedUnitIds.has(unit.id));
+  const selectedUnits = resolveVocabUnitSelection(units, {
+    selectedUnitIds,
+  });
+  const selectedUnitIdSet = new Set(selectedUnits.map((unit) => unit.id));
   const allSelected = units.length > 0 && selectedUnits.length === units.length;
   const selectedLabel = selectedUnits.length === 0
     ? "범위를 선택하세요"
@@ -60,7 +64,7 @@ export function AssignmentUnitRangePicker({
       <DayRangeRail
         disabled={disabled}
         onSelect={onSelect}
-        selectedUnitIds={selectedUnitIds}
+        selectedUnitIds={selectedUnitIdSet}
         units={units}
       />
       <span className={styles.rangeSummary}>

@@ -26,7 +26,6 @@ export function VocabRangeFields({
   datasets,
   fieldErrors = {},
 }: VocabPlannerFieldsProps) {
-  const selectedIds = new Set(controller.selectedUnits.map((unit) => unit.id));
   const groups = groupCataloguedDatasets(datasets);
   const datasetError = fieldErrors.dataset;
   const rangeError = fieldErrors.range;
@@ -64,7 +63,7 @@ export function VocabRangeFields({
         errorId="vocab-range-error"
         onSelect={controller.actions.selectUnit}
         onToggleAll={controller.actions.selectAllUnits}
-        selectedUnitIds={selectedIds}
+        selectedUnitIds={controller.selectedUnits.map((unit) => unit.id)}
         units={controller.availableUnits}
       />
     </div>

@@ -52,10 +52,22 @@ export function resolveVocabUnitSelection<
   units: readonly T[],
   selection: VocabUnitSelection,
 ): T[] {
-  const selectedIds = new Set(selection.selectedUnitIds);
-  return [...units].sort(
-    (left, right) => left.sortIndex - right.sortIndex,
-  ).filter((unit) => selectedIds.has(unit.id));
+  const unitById = new Map(units.map((unit) => [unit.id, unit]));
+  const seenUnitIds = new Set<string>();
+  const selectedUnits = selection.selectedUnitIds.flatMap((unitId) => {
+    if (seenUnitIds.has(unitId)) return [];
+    seenUnitIds.add(unitId);
+    const unit = unitById.get(unitId);
+    return unit ? [unit] : [];
+  });
+  if (selectedUnits.length < 2) return selectedUnits;
+
+  const direction = selectedUnits[1]!.sortIndex < selectedUnits[0]!.sortIndex
+    ? -1
+    : 1;
+  return selectedUnits.toSorted(
+    (left, right) => direction * (left.sortIndex - right.sortIndex),
+  );
 }
 
 export function applyTimeTemplate<T extends {

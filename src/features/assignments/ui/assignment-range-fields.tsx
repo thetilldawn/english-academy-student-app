@@ -18,6 +18,7 @@ import type {
   AssignmentUnitItem,
 } from "../catalog-types";
 import type { SingleAssignmentController } from "../controller/use-assignment-controller";
+import { resolveVocabUnitSelection } from "../domain/vocab-planner-controls";
 import type { AssignmentEditFieldErrors } from "../presentation/assignment-edit-field-errors";
 import { AssignmentCapacitySummary } from "./assignment-capacity-summary";
 import { AssignmentUnitRangePicker } from "./assignment-unit-range-picker";
@@ -54,8 +55,9 @@ export function AssignmentRangeFields({
   const datasetUnits = units
     .filter((unit) => unit.datasetId === draft.range.datasetId)
     .toSorted((left, right) => left.sortIndex - right.sortIndex);
-  const selectedUnitIds = new Set(draft.range.orderedUnitIds);
-  const selectedUnits = datasetUnits.filter((unit) => selectedUnitIds.has(unit.id));
+  const selectedUnits = resolveVocabUnitSelection(datasetUnits, {
+    selectedUnitIds: draft.range.orderedUnitIds,
+  });
   const sourceWordCount = selectedUnits.reduce(
     (total, unit) => total + unit.entryCount,
     0,
@@ -78,14 +80,15 @@ export function AssignmentRangeFields({
   }
 
   function toggleUnit(unitId: string) {
-    const nextSelected = new Set(selectedUnitIds);
-    if (nextSelected.has(unitId)) nextSelected.delete(unitId);
-    else nextSelected.add(unitId);
+    const nextSelected = draft.range.orderedUnitIds.includes(unitId)
+      ? draft.range.orderedUnitIds.filter((selectedId) => selectedId !== unitId)
+      : [...draft.range.orderedUnitIds, unitId];
+    const nextOrderedUnitIds = resolveVocabUnitSelection(datasetUnits, {
+      selectedUnitIds: nextSelected,
+    }).map((unit) => unit.id);
     onChangeRange(
       draft.range.datasetId,
-      datasetUnits
-        .filter((unit) => nextSelected.has(unit.id))
-        .map((unit) => unit.id),
+      nextOrderedUnitIds,
     );
   }
 
@@ -140,7 +143,7 @@ export function AssignmentRangeFields({
         errorId="edit-range-error"
         onSelect={toggleUnit}
         onToggleAll={toggleAll}
-        selectedUnitIds={selectedUnitIds}
+        selectedUnitIds={draft.range.orderedUnitIds}
         units={datasetUnits}
       />
       <AssignmentCapacitySummary
