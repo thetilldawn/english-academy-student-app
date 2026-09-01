@@ -14,19 +14,20 @@
 |---|---|---|
 | 실행 차단 | `test/e2e/support/environment.ts` | 고정 Preview 주소, Preview DB, 명시적 쓰기 승인, 관리자 비밀 존재 확인 |
 | 실제 배포 확인 | `src/app/api/preview-identity/route.ts` | Vercel 환경·배포 호스트·Git ref/SHA·실제 Supabase ref를 no-store로 확인. Preview 밖에서는 404 |
-| 가짜 학생 | `test/e2e/fixtures/preview-run.ts` | 관리자 로그인, 학생·코드 생성, 별도 학생 세션, 정확한 ID 정리, 비밀 없는 영수증 |
-| 중단 복구 | `scripts/cleanup-preview-e2e.ts` | 생성 직후 저장한 manifest의 정확한 ID만 재검증하고 관리자 API로 정리 |
+| 가짜 학생 | `test/e2e/fixtures/preview-run.ts` | 생성 요청 전 의도 기록, 관리자 로그인, 학생·코드 생성, 별도 학생 세션, 비밀 없는 영수증 |
+| 중단 복구 | `scripts/cleanup-preview-e2e.ts` | 정확한 이름 1건과 ID를 다시 맞추고 관리자 API로 정리. ID 미수신 상태는 재확인 뒤에도 성공으로 오인하지 않음 |
 | 업무 흐름 | `test/e2e/authenticated/vocab-assignment.spec.ts` | 단일·일괄·오답·재시험·후속 회차의 정상·경계·실패 9종 |
 | 화면 품질 | `test/e2e/public/` | 360·768·1440, Axe, 가로 넘침, 키보드, 다크 모드, 감소 모션, 브라우저 오류 |
-| PR 검사 | `.github/workflows/pr-fast.yml` | 비밀 없는 lint·typecheck·구조·안전·컴포넌트·변경 테스트 |
-| 배포 smoke | `.github/workflows/preview-smoke.yml` | Vercel `repository_dispatch`의 Preview 성공 뒤 공개 화면 읽기 검사 |
-| 인증 E2E | `.github/workflows/preview-full-e2e.yml` | 보호된 수동 실행 1묶음, 정상 종료 또는 복구 단계에서 정리 영수증 보존 |
+| PR 검사 | `.github/workflows/pr-fast.yml` | 비밀 없는 lint·typecheck·구조·안전·컴포넌트·변경 테스트. `proxy.ts`와 `vercel.json`도 전체 검사 대상으로 취급 |
+| 배포 smoke | `.github/workflows/preview-smoke.yml` | 보호된 전용 브랜치의 현재 HEAD인 Vercel Preview만 공개 읽기 검사 |
+| 인증 E2E | `.github/workflows/preview-full-e2e.yml` | 보호된 전용 브랜치의 현재 HEAD만 수동 검사하고 정상 종료 또는 복구 단계의 정리 영수증 보존 |
 
 ## 실행 단위와 비용 경계
 
 0. Playwright 실행기는 Node.js 24.13 이상 25 미만을 사용한다. Windows의 Node 24.11.0은
    Playwright 1.62.1 테스트 수집 중 프로세스가 종료되는 것을 재현했으므로 시작 전에 명시적으로
-   차단한다.
+   차단한다. 로컬 smoke는 지정 포트가 이미 사용 중이면 기존 서버를 재사용하지 않고 중단하며,
+   이번에 실행한 Next.js 자식 프로세스의 준비 신호·생존·HTTP 응답을 모두 확인한다.
 1. PR은 한 러너에서 `npm ci --ignore-scripts`를 한 번만 수행한다. Vercel Git 연동이 같은 커밋을 빌드하므로
    GitHub에서 `next build`를 중복하지 않는다.
 2. 일반 변경은 변경 영향 테스트를 사용한다. migration·패키지·핵심 설정 변경은 전체 Vitest를
@@ -39,9 +40,10 @@
 
 ## 데이터 수명과 정리
 
-- 실행 ID와 case 이름을 학생 이름·메모에 함께 기록하고, 학생 ID를 받은 즉시 비밀 없는 manifest를
-  완전한 추가형 스냅샷으로 남긴다. 복구기는 실행별 최신 정상본만 고르므로 중단된 파일 하나가 다른
-  실행의 정리를 막지 않는다.
+- 실행 ID·case·생성별 난수를 학생 이름·메모에 함께 기록한다. 학생 생성 POST 전에
+  `intended / id:null` 의도를 먼저 남기고, ID를 받은 즉시 `pending` 추가형 스냅샷을 남긴다.
+  ID를 받기 전 끊기면 정확한 이름 한 건을 제한 재조회해 ID를 먼저 기록한 뒤 삭제한다. 끝까지
+  보이지 않으면 `deleted`로 거짓 확정하지 않고 실패시켜 후속 정리를 다시 요구한다.
 - 학생 코드는 브라우저 메모리에서만 사용하며 console, trace, screenshot, JSON 영수증에 쓰지 않는다.
 - 인증 프로젝트는 로컬·CI 모두 screenshot과 trace를 끈다.
 - 모든 학생 브라우저 문맥을 먼저 닫은 뒤 관리자 `DELETE /api/admin/students/:id`를 호출한다.
@@ -49,13 +51,15 @@
 - 시험·포인트·오답 감사 이력은 제품 정책대로 보존된다. 영수증에는 가짜 학생 ID와 정리 성공 여부만
   남기고 7일 보존한다.
 - 정상 fixture 종료 뒤 정리하며, E2E 단계 실패·제한시간 종료 뒤에는 별도 `always()` 단계가 manifest의
-  이름·ID를 실제 학생 목록과 다시 대조한 뒤 같은 삭제 API를 호출한다.
+  정확한 이름 1건과 ID를 실제 학생 목록에서 다시 대조한 뒤 같은 ID 삭제 API를 호출한다. 이름 검색
+  결과가 일부이거나 복수이거나 ID가 다르면 삭제하지 않는다.
 - 하나라도 정리에 실패하면 E2E 작업은 실패한다. 넓은 이름 검색 삭제나 Production 정리는 하지 않는다.
 
 ## 비밀과 GitHub Environment
 
 `preview-smoke`:
 
+- Variable `PREVIEW_SMOKE_ALLOWED_GIT_REF=<보호된 Preview smoke 전용 브랜치>`
 - Secret `VERCEL_AUTOMATION_BYPASS_SECRET`
 
 `preview-e2e`:
@@ -70,10 +74,12 @@
 API를 통과한다.
 
 `preview-smoke` Environment는 `main`만 허용하되 승인자를 두지 않아 배포 뒤 자동 검사가 멈추지 않게
-한다. `preview-e2e` Environment에만 `main` 제한·필수 승인자·자기 승인 금지를 설정한다. Workflow는
-신뢰된 `main`의 검사 코드만 checkout하고 `npm ci`·구조 검사에는 비밀을 주지 않는다. 관리자 계정과
-우회 비밀은 인증 E2E 및 복구 단계에만 전달한다. 입력 SHA는 GitHub 보호 상태가 확인된 위 전용 브랜치의
-현재 HEAD이면서 성공한 Preview 배포여야 한다. 우회 비밀은 승인된 origin에 한 번만 보내 쿠키로 바꾼 뒤
+한다. `preview-e2e` Environment에만 `main` 제한·필수 승인자·자기 승인 금지를 설정한다. Workflow job은
+`refs/heads/main` 이벤트에서만 시작하고, 움직일 수 있는 브랜치 이름 대신 그 이벤트의 불변 SHA를
+checkout한다. `npm ci`·구조 검사에는 비밀을 주지 않으며 관리자 계정과 우회 비밀은 실제 브라우저
+검사 및 복구 단계에만 전달한다. 공개·인증 입력 SHA는 GitHub 보호 상태가 확인된 각 전용 브랜치의
+현재 HEAD이면서 성공한 Preview 배포여야 하고, 검사 종료 시에도 같은 HEAD인지 다시 확인한다.
+우회 비밀은 승인된 origin에 한 번만 보내 쿠키로 바꾼 뒤
 브라우저의 외부 요청에는 전달하지 않는다. 이 외부 설정을 확인하기 전에는 인증 workflow를 운영 완료로
 보지 않는다.
 세 workflow와 검사 도구가 `main`에 반영되기 전에는 GitHub에서 실행하지 않고, 현재 기능 브랜치는
@@ -96,6 +102,15 @@ API를 통과한다.
   Vercel `repository_dispatch`를 연결한 뒤 GitHub smoke와 수동 전체 E2E를 각 1회 실행해야 완료다.
 - 주간 실행은 Production·기본 브랜치 반영을 별도 승인받기 전까지 비활성화한다. 이 단계에서는
   Production 배포·운영 DB·migration·실제 학생 데이터를 변경하지 않았다.
+- 후속 검사 강화 코드는 `b7f2670e7642e87d093596254bd33533e408dc89`에 로컬 완료했다. PR의
+  `proxy.ts`·`vercel.json` 누락, 움직이는 runner checkout, 조상 SHA 허용, 생성-기록 사이 중단,
+  삭제 전 이름·ID 미대조, 기존 포트 서버 오인, 실패 UI 뒤 저장 요청 미확인, 초점 표시선 미검사를
+  회귀검사와 함께 막았다. 로컬 기본브랜치 준비본은
+  `fc7e918b5982362720fadbc4f2acd38e90dc287c`이며 원격 `main`에는 올리지 않았다.
+- 위 강화 뒤 로컬 Vitest 347파일·1,826건, 안전검사 16/16, 구조 4파일·65건, lint, typecheck,
+  React 요청 캐시, Next.js 16.2.12 build, 공개 smoke 3/3와 포트 선점 재현 검사가 통과했다.
+  현재 원격의 마지막 실제 Preview 증거는 여전히 위 `cc118459`이며, 새 강화 커밋의 push와 새 Exact
+  Preview 확인은 별도 외부 전송 승인 뒤 진행한다.
 - 실행별 증거와 현재 우선순위는 프로젝트 루트
   `00_작업지시/DEPLOY-20260824-01_학생앱_인증E2E_운영안전.md`를 기준으로 한다.
 
@@ -108,7 +123,7 @@ API를 통과한다.
 - 후속 회차는 답안 성공으로 대신 판정하지 않는다. 관리자 큐 API를 20초 이내 제한 재조회하여
   `완료 1회 + 서로 다른 배정 2개`를 확인한다.
 - 인증 E2E는 입력 URL·Git SHA가 보호된 전용 브랜치 HEAD 및 GitHub의 성공한 Preview deployment와
-  일치하는지 먼저 확인하고,
+  시작·종료 시 모두 일치하는지 확인하고,
   앱의 `/api/preview-identity`가 실제 `preview` 환경·Preview DB·동일 배포 호스트·Git ref/SHA를
   보고해야만 로그인한다.
 - Vercel runtime log 권한은 현재 확인되지 않았다. 로그를 읽었다고 기록하지 않으며 권한 복구 전에는
@@ -118,12 +133,17 @@ API를 통과한다.
 
 - 앱 코드 배포: 이 브랜치 push 뒤 Vercel Git Preview 자동 배포만 사용한다. `vercel deploy`를
   추가 실행하지 않는다.
+- 기본 브랜치에는 직접 push하지 않는다. 보호된 PR과 필수 검사를 거친다는 외부 규칙을 실제로
+  확인하기 전에는 Production 후보를 승인하지 않는다.
 - DB: 이번 배치는 migration이 없으므로 DB rollback SQL도 없다.
 - E2E 자체 문제: `preview-full-e2e.yml` 수동 실행을 중지하고 직전 코드 커밋으로 되돌린다. 생성된
   run ID의 정리 영수증을 먼저 확인한다.
 - 공개 smoke 문제: Preview 배포 SHA와 실패 화면 크기를 확인한 뒤 앱 코드를 직전 검증 커밋으로
   되돌린다.
 - Production 반영은 별도 승인 뒤 진행하며, Preview E2E 통과만으로 자동 승격하지 않는다.
+- 이 CI 강화 배치 자체의 migration은 0건이다. 다만 현재 기능 브랜치 전체를 `origin/main`과
+  비교하면 migration 파일 46개가 포함되므로, Production 전에는 실제 운영 적용 이력·파일 해시·
+  적용 순서·readback·중단 및 복구 기준을 별도 감사한다.
 
 ## 변경 영향 확인표
 
