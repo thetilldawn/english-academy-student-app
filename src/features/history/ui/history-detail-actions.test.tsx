@@ -4,13 +4,19 @@ import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createRef } from "react";
+import { createRef, type ComponentProps } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { adminHistoryText } from "@/content/ko/admin-history";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
 
 import { HistoryDetailActions } from "./history-detail-actions";
+
+vi.mock("next/link", () => ({
+  default: ({ prefetch, ...props }: ComponentProps<"a"> & {
+    prefetch?: boolean;
+  }) => <a data-prefetch={String(prefetch)} {...props} />,
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ back: vi.fn(), refresh: vi.fn(), replace: vi.fn() }),
@@ -37,7 +43,7 @@ const item = {
 } as unknown as AssignmentHistorySummary;
 
 describe("history detail actions", () => {
-  it("opens the student through the ID-based detail route", () => {
+  it("opens the student through the ID-based detail route without eager prefetch", () => {
     render(
       <HistoryDetailActions
         item={item}
@@ -46,9 +52,11 @@ describe("history detail actions", () => {
       />,
     );
 
-    expect(screen.getByRole("link", {
+    const studentLink = screen.getByRole("link", {
       name: adminHistoryText.detailModal.openStudent,
-    })).toHaveAttribute("href", "/admin/students/student-1");
+    });
+    expect(studentLink).toHaveAttribute("href", "/admin/students/student-1");
+    expect(studentLink).toHaveAttribute("data-prefetch", "false");
   });
 
   it("delegates editing to the owning detail surface", async () => {

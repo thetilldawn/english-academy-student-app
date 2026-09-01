@@ -47,7 +47,10 @@ export function HistoryDetailActions({
         showDetailLink={false}
       />
       {!item.studentDeleted ? (
-        <ButtonLink href={`/admin/students/${item.studentId}`}>
+        <ButtonLink
+          href={`/admin/students/${item.studentId}`}
+          prefetch={false}
+        >
           {adminHistoryText.detailModal.openStudent}
         </ButtonLink>
       ) : null}
