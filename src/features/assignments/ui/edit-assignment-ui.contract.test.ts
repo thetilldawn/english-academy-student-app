@@ -109,4 +109,34 @@ describe("배정과 수정 화면 공통 계약", () => {
       expect(value).not.toContain("이어 배정 시험 일정");
     }
   });
+
+  it("keeps fast panel motion for mode changes and turns it off for reduced motion", () => {
+    const planner = source(
+      "src/features/assignments/ui/vocab-assignment-planner.tsx",
+    );
+    const editorMotion = source(
+      "src/features/assignments/ui/assignment-editor-shell.module.css",
+    );
+    const browser = source(
+      "src/features/assignments/ui/assignment-student-browser.tsx",
+    );
+    const browserMotion = source(
+      "src/features/assignments/ui/assignment-workspace.module.css",
+    );
+
+    expect(planner).toContain("key={assignmentPurpose}");
+    expect(editorMotion).toContain(
+      "animation: assignmentEditorPanelIn var(--motion-standard) both;",
+    );
+    expect(editorMotion).toMatch(
+      /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.panel \{[\s\S]*?animation: none;/,
+    );
+    expect(browser).toContain("key={controller.assignmentMode}");
+    expect(browserMotion).toContain(
+      "animation: browserModePanelIn var(--motion-standard) both;",
+    );
+    expect(browserMotion).toMatch(
+      /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.browserModePanel \{[\s\S]*?animation: none;/,
+    );
+  });
 });

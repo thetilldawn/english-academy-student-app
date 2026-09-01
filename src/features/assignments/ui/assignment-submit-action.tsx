@@ -2,6 +2,7 @@ import { useId } from "react";
 
 import {
   Button,
+  ButtonSpinner,
   type ButtonSize,
 } from "@/design-system/primitives/button/button";
 import { ActionWithReason } from "@/design-system/patterns/action-reason/action-reason";
@@ -11,6 +12,7 @@ export function AssignmentSubmitAction({
   canSubmit,
   formId,
   label,
+  pending = false,
   reasonLayout = "inline",
   reasonPosition = "after",
   size = "large",
@@ -20,6 +22,7 @@ export function AssignmentSubmitAction({
   canSubmit: boolean;
   formId: string;
   label: string;
+  pending?: boolean;
   reasonLayout?: "inline" | "remaining-center";
   reasonPosition?: "before" | "after";
   size?: ButtonSize;
@@ -34,14 +37,16 @@ export function AssignmentSubmitAction({
       reasonPosition={reasonPosition}
     >
       <Button
+        aria-busy={pending || undefined}
         aria-describedby={blockedReason ? reasonId : undefined}
-        aria-disabled={!canSubmit}
-        disabled={!canSubmit && !focusableWhenBlocked}
+        aria-disabled={!canSubmit || pending}
+        disabled={pending || (!canSubmit && !focusableWhenBlocked)}
         form={formId}
         size={size}
         type="submit"
         variant="primary"
       >
+        {pending ? <ButtonSpinner /> : null}
         {label}
       </Button>
     </ActionWithReason>

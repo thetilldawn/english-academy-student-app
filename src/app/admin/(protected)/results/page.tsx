@@ -3,7 +3,6 @@ import { Suspense } from "react";
 
 import { AdminHistoryList } from "@/features/history/ui/admin-history-list";
 import { adminHistoryText } from "@/content/ko/admin-history";
-import { adminShellText } from "@/content/ko/admin-shell";
 import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import { listAdminHistoryInitial } from "@/features/history/server/queries/admin-history-list-query";
 
@@ -13,7 +12,9 @@ export const metadata: Metadata = {
 
 export default function ResultsPage() {
   return (
-    <Suspense fallback={<RouteLoadingState label={adminShellText.loading} />}>
+    <Suspense
+      fallback={<RouteLoadingState label={adminHistoryText.page.loading} />}
+    >
       <ResultsContent />
     </Suspense>
   );

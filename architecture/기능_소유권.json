@@ -469,6 +469,14 @@
       "owner": "app-shell"
     },
     {
+      "path": "src/app/admin/(protected)/assignments/error.tsx",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/app/admin/(protected)/assignments/loading.tsx",
+      "owner": "assignments"
+    },
+    {
       "path": "src/app/admin/(protected)/error.tsx",
       "owner": "app-shell"
     },
@@ -483,6 +491,14 @@
     {
       "path": "src/app/admin/(protected)/loading.tsx",
       "owner": "app-shell"
+    },
+    {
+      "path": "src/app/admin/(protected)/results/error.tsx",
+      "owner": "history"
+    },
+    {
+      "path": "src/app/admin/(protected)/results/loading.tsx",
+      "owner": "history"
     },
     {
       "path": "src/app/admin/(protected)/students/[studentId]/loading.tsx",
@@ -528,6 +544,14 @@
     }
   ],
   "appSupportOwners": [
+    {
+      "path": "src/app/admin/(protected)/admin-route-error.tsx",
+      "owner": "app-shell"
+    },
+    {
+      "path": "src/app/admin-route-error.test.tsx",
+      "owner": "app-shell"
+    },
     {
       "path": "src/app/admin-deletion-ui-contract.test.ts",
       "owner": "shared-admin-command"
@@ -1906,6 +1930,11 @@
       "path": "supabase/migrations/20260831102000_add_atomic_vocab_queue_resolution.sql",
       "owner": "assignment-queue",
       "flow": "assignment-series"
+    },
+    {
+      "path": "supabase/migrations/20260901141048_fix_admin_history_infinite_effective_at.sql",
+      "owner": "history",
+      "flow": "admin-history-read"
     }
   ],
   "features": [
@@ -2346,9 +2375,13 @@
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/assignments/page.tsx",
+          "src/app/admin/(protected)/assignments/loading.tsx",
+          "src/app/admin/(protected)/assignments/error.tsx",
           "src/app/admin/(protected)/loading.tsx"
         ],
         "tests": [
+          "src/app/admin-route-error.test.tsx",
+          "src/components/admin-navigation.contract.test.ts",
           "src/design-system/patterns/filter-workspace/filter-workspace.test.tsx",
           "src/features/assignments/controller/use-assignment-workspace.test.tsx"
         ]
@@ -3357,11 +3390,14 @@
         ],
         "database": [
           "supabase/migrations/20260829153000_add_admin_history_read_model.sql",
-          "supabase/migrations/20260831100000_return_admin_history_hidden_version.sql"
+          "supabase/migrations/20260831100000_return_admin_history_hidden_version.sql",
+          "supabase/migrations/20260901141048_fix_admin_history_infinite_effective_at.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/loading.tsx",
           "src/app/admin/(protected)/page.tsx",
+          "src/app/admin/(protected)/results/loading.tsx",
+          "src/app/admin/(protected)/results/error.tsx",
           "src/app/admin/(protected)/results/page.tsx",
           "src/app/admin/(protected)/results/[id]/page.tsx",
           "src/app/admin/(protected)/@detail/(.)results/[entryKey]/page.tsx",
@@ -3369,6 +3405,8 @@
           "src/app/api/admin/attempts/[id]/route.ts"
         ],
         "tests": [
+          "src/app/admin-route-error.test.tsx",
+          "src/components/admin-navigation.contract.test.ts",
           "src/features/history/history-public-boundary.contract.test.ts",
           "src/app/api/admin/attempts/[id]/route.test.ts",
           "src/app/api/admin/history/route.test.ts",

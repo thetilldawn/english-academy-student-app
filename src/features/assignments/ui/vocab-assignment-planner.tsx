@@ -90,6 +90,10 @@ export function VocabAssignmentPlanner({
     : reviewController.submitting;
   const reviewCalculationPending = assignmentPurpose === "review" &&
     reviewController.calculationPending;
+  const reviewCalculationFailed = assignmentPurpose === "review" && (
+    reviewController.summary.status === "error" ||
+    reviewController.capacity.status === "error"
+  );
   const rangeCalculationPending = assignmentPurpose === "range" &&
     bulk.previewLoading;
   const visibleErrors = submitAttempted ? controller.fieldErrors : {};
@@ -305,10 +309,12 @@ export function VocabAssignmentPlanner({
               !busy &&
               !rangeCalculationPending &&
               !reviewCalculationPending &&
+              !reviewCalculationFailed &&
               (!submitAttempted || canSubmit)
             }
             formId="vocab-assignment-plan-form"
             label={busy ? "배정 중…" : "배정하기"}
+            pending={busy}
           />
         </div>
       </DialogFooter>

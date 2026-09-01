@@ -255,6 +255,7 @@ export function SingleAssignmentEditor({
             canSubmit={validationCanSubmit}
             formId={formId}
             label={submitLabel}
+            pending={busy}
             reasonLayout="remaining-center"
             reasonPosition="before"
           />

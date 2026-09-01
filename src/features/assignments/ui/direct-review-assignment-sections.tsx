@@ -5,6 +5,7 @@ import {
   FieldLabel,
 } from "@/design-system/primitives/form/field";
 import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
+import { Notice } from "@/design-system/patterns/feedback/feedback";
 import { cataloguedDatasetDisplayLabel } from "@/lib/admin/dataset-catalog";
 import { koreanDateTimeLocalToIso } from "@/lib/deadline";
 import { formatKoreanDateTime } from "@/lib/format";
@@ -87,6 +88,11 @@ export function DirectReviewAssignmentSections({
           ? `단어 ${draft.questionCount}개`
           : "현재 배정할 오답이 없습니다."
         : "단어장과 오답 단계를 선택해 주세요.";
+  const calculationError = summary.status === "error"
+    ? summary.message
+    : capacity.status === "error"
+      ? capacity.message
+      : "";
   const deadlineIso = draft.deadline.mode === "at"
     ? koreanDateTimeLocalToIso(draft.deadline.koreanLocalDateTime)
     : null;
@@ -162,7 +168,7 @@ export function DirectReviewAssignmentSections({
                 return (
                   <Button
                     aria-pressed={selected}
-                    disabled={count === 0}
+                    disabled={summary.status !== "ready" || count === 0}
                     key={level}
                     onClick={() => controller.actions.toggleReviewLevel(level)}
                     size="small"
@@ -178,17 +184,42 @@ export function DirectReviewAssignmentSections({
             ) : null}
           </Field>
         </div>
-        <div data-field-key="preview" tabIndex={-1}>
-          <div
-            aria-live="polite"
-            className={styles.reviewCalculation}
-            data-field-key="questionCount"
-            data-status={summary.status === "ready" ? capacity.status : summary.status}
-            role="status"
-            tabIndex={-1}
-          >
-            {countText}
-          </div>
+        <div
+          className={styles.fieldStack}
+          data-field-key="preview"
+          tabIndex={-1}
+        >
+          {calculationError ? (
+            <>
+              <Notice role="alert" tone="danger">{calculationError}</Notice>
+              <div className={styles.warningActions}>
+                <Button
+                  onClick={summary.status === "error"
+                    ? controller.actions.retrySummary
+                    : controller.actions.retryPreview}
+                  size="small"
+                  variant="secondary"
+                >
+                  {summary.status === "error"
+                    ? "다시 불러오기"
+                    : "다시 계산하기"}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div
+              aria-live="polite"
+              className={styles.reviewCalculation}
+              data-field-key="questionCount"
+              data-status={summary.status === "ready"
+                ? capacity.status
+                : summary.status}
+              role="status"
+              tabIndex={-1}
+            >
+              {countText}
+            </div>
+          )}
           {fieldErrors.questionCount ? (
             <FieldError>{fieldErrors.questionCount}</FieldError>
           ) : null}

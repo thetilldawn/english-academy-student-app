@@ -6,6 +6,7 @@ import {
   DialogHeader,
 } from "@/design-system/primitives/dialog/dialog";
 import { Notice } from "@/design-system/patterns/feedback/feedback";
+import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 
 export function AssignmentPlannerLoadDialog({
   closeDisabled = false,
@@ -20,6 +21,7 @@ export function AssignmentPlannerLoadDialog({
 }) {
   return (
     <DialogFrame
+      aria-busy={!error}
       aria-labelledby="assignment-planner-loading-title"
       closeDisabled={closeDisabled}
       height="large"
@@ -34,9 +36,10 @@ export function AssignmentPlannerLoadDialog({
         {error ? (
           <Notice role="alert" tone="danger">{error}</Notice>
         ) : (
-          <div aria-busy="true" role="status">
-            배정 준비 자료를 불러오는 중…
-          </div>
+          <RouteLoadingState
+            label="배정 준비 자료를 불러오는 중…"
+            variant="compact"
+          />
         )}
       </DialogBody>
       <DialogFooter>

@@ -75,16 +75,18 @@ const data = {
 function screenController({
   canSubmit = false,
   previewLoading = false,
+  submitting = false,
 }: {
   canSubmit?: boolean;
   previewLoading?: boolean;
+  submitting?: boolean;
 } = {}) {
   return {
     actions: { submitPlan: mocks.screenSubmit },
     bulk: {
       state: {
         draft: {},
-        submission: { status: "idle" },
+        submission: { status: submitting ? "submitting" : "idle" },
       },
       previewLoading,
     },
@@ -97,24 +99,29 @@ function screenController({
 }
 
 function reviewController(
-  status: "idle" | "loading" | "ready",
+  status: "error" | "idle" | "loading" | "ready",
   canSubmit: boolean,
   calculationPending = status === "loading",
+  submitting = false,
 ) {
   return {
     actions: { submit: mocks.reviewSubmit },
     calculationPending,
     canSubmit,
     capacity: {
-      message: "",
+      message: status === "error" ? "오답 계산 오류" : "",
       status,
       value: status === "ready" ? { wrongEligible: 1 } : null,
     },
     draft: { questionCount: status === "ready" ? 1 : 0 },
     fieldErrors: {},
     firstFieldKey: null,
-    summary: { status, value: [], message: "" },
-    submitting: false,
+    summary: {
+      status,
+      value: [],
+      message: status === "error" ? "오답 계산 오류" : "",
+    },
+    submitting,
     userEdited: false,
   };
 }
@@ -177,6 +184,48 @@ describe("오답 단일 배정 제출", () => {
       (screen.getByRole("button", { name: "배정하기" }) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
+    expect(mocks.reviewSubmit).not.toHaveBeenCalled();
+  });
+
+  it("오답 계산 오류가 남아 있으면 배정 버튼을 활성화하지 않는다", () => {
+    mocks.useReview.mockReturnValue(reviewController("error", false, false));
+
+    render(
+      <VocabAssignmentPlanner
+        data={data}
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+        selectionMode="single"
+        students={[student]}
+      />,
+    );
+    fireEvent.click(screen.getByRole("tab", { name: "오답 시험" }));
+
+    expect(screen.getByRole("button", { name: "배정하기" })).toBeDisabled();
+    expect(mocks.reviewSubmit).not.toHaveBeenCalled();
+  });
+
+  it("배정 중에는 회전 표시와 접근 가능한 대기 상태를 보여 준다", () => {
+    mocks.useReview.mockReturnValue(
+      reviewController("ready", false, false, true),
+    );
+
+    render(
+      <VocabAssignmentPlanner
+        data={data}
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+        selectionMode="single"
+        students={[student]}
+      />,
+    );
+    fireEvent.click(screen.getByRole("tab", { name: "오답 시험" }));
+
+    const submit = screen.getByRole("button", { name: "배정 중…" });
+    expect(submit).toBeDisabled();
+    expect(submit).toHaveAttribute("aria-busy", "true");
+    expect(submit.querySelector('[aria-hidden="true"]')).not.toBeNull();
+    fireEvent.click(submit);
     expect(mocks.reviewSubmit).not.toHaveBeenCalled();
   });
 

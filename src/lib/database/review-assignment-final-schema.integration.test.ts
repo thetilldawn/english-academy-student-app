@@ -7762,13 +7762,41 @@ describe.sequential("admin history read model", () => {
       1,
       true
     )`).join(",");
+    const infiniteDeadlineAttemptValues = assignmentIds
+      .slice(0, 12)
+      .map((assignmentId, index) => `(
+        '20000000-0000-4000-8001-${String(index + 1).padStart(12, "0")}',
+        '${ids.student}',
+        '${assignmentId}',
+        1,
+        'expired',
+        'completed',
+        '2026-08-28T01:00:00Z',
+        'infinity',
+        '2026-08-29T00:00:00Z'::timestamptz + interval '${index} minutes',
+        1,
+        60,
+        80,
+        'initial',
+        0,
+        0,
+        1,
+        0,
+        0,
+        false,
+        10
+      )`)
+      .join(",");
 
     type InitialRow = {
       group_key: string;
       items: Array<{
         effectiveAt: string | Date;
         entryKey: string;
-        item: { assignmentTitle: string };
+        item: {
+          assignmentTitle: string;
+          completedAt?: string | Date | null;
+        };
       }>;
       snapshot_at: string | Date;
       total_count: number | bigint;
@@ -8008,6 +8036,90 @@ describe.sequential("admin history read model", () => {
         ) ->> 'assignmentTitle' as title
       `);
       expect(detail.rows[0]?.title).toContain("R3 one");
+
+      await database.exec(`
+        reset role;
+        insert into public.quiz_attempts (
+          id,
+          student_id,
+          assignment_id,
+          attempt_number,
+          status,
+          phase,
+          started_at,
+          deadline_at,
+          completed_at,
+          question_count_snapshot,
+          time_limit_seconds_snapshot,
+          passing_score_snapshot,
+          passing_basis_snapshot,
+          initial_correct_count,
+          retry_correct_count,
+          unresolved_wrong_count,
+          initial_score,
+          final_score,
+          passed,
+          elapsed_seconds
+        ) values ${infiniteDeadlineAttemptValues};
+        set role authenticated;
+      `);
+
+      const infiniteSnapshotAt = "2026-08-30T00:00:00.000Z";
+      const infiniteDeadlineInitial = await database.query<InitialRow>(`
+        select *
+        from public.get_admin_history_initial_v1(
+          'R3 twentyone',
+          'all',
+          false,
+          '${infiniteSnapshotAt}',
+          11
+        )
+      `);
+      const infiniteDeadlineSection = infiniteDeadlineInitial.rows.find(
+        (row) => row.group_key === "needs_attention",
+      )!;
+      expect(Number(infiniteDeadlineSection.total_count)).toBe(12);
+      expect(infiniteDeadlineSection.items).toHaveLength(11);
+      for (const item of infiniteDeadlineSection.items) {
+        const effectiveAt = new Date(item.effectiveAt);
+        const completedAt = new Date(item.item.completedAt!);
+        expect(Number.isFinite(effectiveAt.getTime())).toBe(true);
+        expect(effectiveAt.toISOString()).toBe(completedAt.toISOString());
+      }
+
+      const infiniteDeadlineCursor = infiniteDeadlineSection.items[9]!;
+      const infiniteDeadlineNextPage = await database.query<{
+        cursor_effective_at: string | Date;
+        cursor_entry_key: string;
+        item: { completedAt: string | Date | null };
+      }>(`
+        select *
+        from public.list_admin_history_page_v1(
+          'R3 twentyone',
+          'all',
+          false,
+          'needs_attention',
+          '${infiniteSnapshotAt}',
+          '${new Date(infiniteDeadlineCursor.effectiveAt).toISOString()}',
+          '${infiniteDeadlineCursor.entryKey}',
+          11
+        )
+      `);
+      expect(infiniteDeadlineNextPage.rows).toHaveLength(2);
+      for (const row of infiniteDeadlineNextPage.rows) {
+        const effectiveAt = new Date(row.cursor_effective_at);
+        const completedAt = new Date(row.item.completedAt!);
+        expect(Number.isFinite(effectiveAt.getTime())).toBe(true);
+        expect(effectiveAt.toISOString()).toBe(completedAt.toISOString());
+      }
+      const infiniteDeadlineVisibleKeys = [
+        ...infiniteDeadlineSection.items
+          .slice(0, 10)
+          .map((item) => item.entryKey),
+        ...infiniteDeadlineNextPage.rows.map((row) => row.cursor_entry_key),
+      ];
+      expect(infiniteDeadlineVisibleKeys).toHaveLength(12);
+      expect(new Set(infiniteDeadlineVisibleKeys).size).toBe(12);
 
       await database.exec(`
         reset role;

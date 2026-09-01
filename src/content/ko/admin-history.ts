@@ -2,6 +2,10 @@ export const adminHistoryText = {
   // 내역 페이지 > 브레드크럼과 브라우저 제목
   page: {
     title: "내역",
+    loading: "내역을 불러오는 중…",
+    errorTitle: "내역을 불러오지 못했습니다",
+    errorDescription:
+      "시험 내역은 변경되지 않았습니다. 잠시 뒤 다시 불러와 주세요.",
   },
 
   // 내역 페이지 > 날짜순 상태 구역

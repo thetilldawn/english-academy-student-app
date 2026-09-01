@@ -3,6 +3,10 @@ export const adminLearningText = {
   page: {
     title: "단어 시험",
     vocabularyTab: "배정",
+    loading: "단어 배정 화면을 불러오는 중…",
+    errorTitle: "단어 배정 화면을 불러오지 못했습니다",
+    errorDescription:
+      "입력 중이던 내용은 저장되지 않았습니다. 잠시 뒤 다시 불러와 주세요.",
     otherLearningTab: "다른 학습",
     otherLearningEmpty:
       "지문·해석·문법·모의고사 학습 구조가 확정되면 이곳에서 관리합니다.",

@@ -218,6 +218,8 @@ export function useDirectReviewAssignmentController({
   const submissionSession = useAssignmentSubmissionSession();
   const interactionLockedRef = useRef(false);
   const previewRecoveryFingerprintRef = useRef<string | null>(null);
+  const previewRetryLockedRef = useRef(false);
+  const summaryRetryLockedRef = useRef(false);
   const readySummaryIdentityRef = useRef<{
     refreshVersion: number;
     studentId: string;
@@ -270,6 +272,7 @@ export function useDirectReviewAssignmentController({
         transport,
       });
       if (abortController.signal.aborted) return;
+      summaryRetryLockedRef.current = false;
       if (result.ok) {
         readySummaryIdentityRef.current = {
           refreshVersion: sourceRefreshVersion,
@@ -362,6 +365,7 @@ export function useDirectReviewAssignmentController({
       value: DirectReviewPreviewResponse,
       identity: AssignmentRequestIdentity,
     ) => {
+      previewRetryLockedRef.current = false;
       previewRecoveryFingerprintRef.current = null;
       setCapacity({
         status: "ready",
@@ -378,6 +382,7 @@ export function useDirectReviewAssignmentController({
       error: AssignmentOperationError,
       identity: AssignmentRequestIdentity,
     ) => {
+      previewRetryLockedRef.current = false;
       if (
         error.recovery === "refresh_summary_and_preview" &&
         previewRecoveryFingerprintRef.current !== identity.fingerprint
@@ -501,6 +506,44 @@ export function useDirectReviewAssignmentController({
     dispatch(action);
   }
 
+  function retrySummary() {
+    if (
+      !enabled ||
+      summary.status !== "error" ||
+      summaryRetryLockedRef.current ||
+      interactionLockedRef.current
+    ) {
+      return;
+    }
+    summaryRetryLockedRef.current = true;
+    readySummaryIdentityRef.current = null;
+    previewRecoveryFingerprintRef.current = null;
+    previewRetryLockedRef.current = false;
+    setSubmission({ status: "idle", message: "" });
+    setSubmissionIssue(null);
+    setCapacity({ status: "idle", value: null, message: "" });
+    setSummary({ status: "loading", value: [], message: "" });
+    setPreviewRevision((revision) => revision + 1);
+    setSourceRefreshVersion((version) => version + 1);
+  }
+
+  function retryPreview() {
+    if (
+      !enabled ||
+      capacity.status !== "error" ||
+      previewRetryLockedRef.current ||
+      interactionLockedRef.current
+    ) {
+      return;
+    }
+    previewRetryLockedRef.current = true;
+    previewRecoveryFingerprintRef.current = null;
+    setSubmission({ status: "idle", message: "" });
+    setSubmissionIssue(null);
+    setCapacity({ status: "loading", value: null, message: "" });
+    setPreviewRevision((revision) => revision + 1);
+  }
+
   async function submit() {
     const alreadySubmitting = interactionLockedRef.current;
     if (
@@ -589,6 +632,8 @@ export function useDirectReviewAssignmentController({
         dispatchUserAction({ type: "timing_changed", timing }),
       changeTimingMode: (mode: ExamTiming["mode"]) =>
         dispatchUserAction({ type: "timing_mode_changed", mode }),
+      retryPreview,
+      retrySummary,
       submit,
       toggleReviewLevel,
     },

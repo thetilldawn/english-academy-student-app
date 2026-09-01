@@ -120,6 +120,121 @@ describe("direct review assignment controller", () => {
     ).toHaveLength(1);
   });
 
+  it("오답 요약 재시도를 연속 호출해도 한 요청만 보내고 끝날 때까지 잠근다", async () => {
+    let summaryCalls = 0;
+    let previewCalls = 0;
+    let createCalls = 0;
+    let releaseRetry!: (
+      value: { data: unknown; ok: boolean; status: number },
+    ) => void;
+    const transport: AssignmentTransport = vi.fn(async (request) => {
+      if (request.url.endsWith("/direct-review-summaries")) {
+        summaryCalls += 1;
+        if (summaryCalls === 1) {
+          return { data: { error: "일시 오류" }, ok: false, status: 503 };
+        }
+        return await new Promise<{
+          data: unknown;
+          ok: boolean;
+          status: number;
+        }>((resolve) => {
+          releaseRetry = resolve;
+        });
+      }
+      if (request.url === "/api/admin/exact-review-assignments/preview") {
+        previewCalls += 1;
+        return { data: capacityResponse, ok: true, status: 200 };
+      }
+      createCalls += 1;
+      return {
+        data: { assignmentId: ids.assignment },
+        ok: true,
+        status: 201,
+      };
+    });
+    const { result } = renderHook(() =>
+      useDirectReviewAssignmentController({
+        datasets: [dataset],
+        enabled: true,
+        initialDatasetId: ids.dataset,
+        previewDelayMs: 0,
+        student,
+        transport,
+      })
+    );
+
+    await waitFor(() => expect(result.current.summary.status).toBe("error"));
+    act(() => {
+      result.current.actions.retrySummary();
+      result.current.actions.retrySummary();
+    });
+    await waitFor(() => expect(summaryCalls).toBe(2));
+    expect(result.current.summary.status).toBe("loading");
+    expect(result.current.canSubmit).toBe(false);
+    await act(async () => {
+      expect(await result.current.actions.submit()).toMatchObject({ ok: false });
+    });
+    expect(createCalls).toBe(0);
+
+    await act(async () => {
+      releaseRetry({ data: summaryResponse, ok: true, status: 200 });
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    expect(summaryCalls).toBe(2);
+    expect(previewCalls).toBe(1);
+    expect(createCalls).toBe(0);
+  });
+
+  it("오답 미리보기 재계산을 연속 호출해도 한 요청만 보낸다", async () => {
+    let previewCalls = 0;
+    let releaseRetry!: (
+      value: { data: unknown; ok: boolean; status: number },
+    ) => void;
+    const transport: AssignmentTransport = vi.fn(async (request) => {
+      if (request.url.endsWith("/direct-review-summaries")) {
+        return { data: summaryResponse, ok: true, status: 200 };
+      }
+      previewCalls += 1;
+      if (previewCalls === 1) {
+        return { data: { error: "계산 오류" }, ok: false, status: 503 };
+      }
+      return await new Promise<{
+        data: unknown;
+        ok: boolean;
+        status: number;
+      }>((resolve) => {
+        releaseRetry = resolve;
+      });
+    });
+    const { result } = renderHook(() =>
+      useDirectReviewAssignmentController({
+        datasets: [dataset],
+        enabled: true,
+        initialDatasetId: ids.dataset,
+        previewDelayMs: 0,
+        student,
+        transport,
+      })
+    );
+
+    await waitFor(() => expect(result.current.capacity.status).toBe("error"));
+    act(() => {
+      result.current.actions.retryPreview();
+      result.current.actions.retryPreview();
+    });
+    expect(result.current.capacity.status).toBe("loading");
+    await waitFor(() => expect(previewCalls).toBe(2));
+    expect(result.current.canSubmit).toBe(false);
+
+    await act(async () => {
+      releaseRetry({ data: capacityResponse, ok: true, status: 200 });
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    expect(previewCalls).toBe(2);
+  });
+
   it("저장 재시도에는 같은 멱등키를 사용한다", async () => {
     vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(
       ids.idempotency,

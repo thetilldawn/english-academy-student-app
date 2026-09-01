@@ -9,6 +9,12 @@ const migration = fs.readFileSync(
   ),
   "utf8",
 );
+const effectiveAtFix = fs.readFileSync(
+  path.resolve(
+    "supabase/migrations/20260901141048_fix_admin_history_infinite_effective_at.sql",
+  ),
+  "utf8",
+);
 
 describe("admin history read migration contract", () => {
   it("keeps all four readers invoker-only with an empty search path", () => {
@@ -81,5 +87,46 @@ describe("admin history read migration contract", () => {
     expect(
       migration.slice(initialUnhidden, initialRanking),
     ).toContain("where not raw.is_hidden");
+  });
+
+  it("keeps expired sort and cursor timestamps finite without changing helper metadata", () => {
+    expect(effectiveAtFix).toContain("pg_get_functiondef(target_function)");
+    expect(effectiveAtFix).toContain(
+      "coalesce(kind.deadline_at, kind.activity_at)",
+    );
+    expect(effectiveAtFix).toContain(
+      "admin_history_effective_at_contract_changed",
+    );
+    expect(effectiveAtFix).toContain(
+      "admin_history_effective_at_rewrite_failed",
+    );
+
+    const finiteDeadline = effectiveAtFix.indexOf(
+      "pg_catalog.isfinite(kind.deadline_at)",
+    );
+    const finiteCompleted = effectiveAtFix.indexOf(
+      "pg_catalog.isfinite(kind.completed_at)",
+      finiteDeadline,
+    );
+    const activityFallback = effectiveAtFix.indexOf(
+      "kind.activity_at",
+      finiteCompleted,
+    );
+    expect(finiteDeadline).toBeGreaterThan(-1);
+    expect(finiteCompleted).toBeGreaterThan(finiteDeadline);
+    expect(activityFallback).toBeGreaterThan(finiteCompleted);
+
+    expect(effectiveAtFix).toContain(
+      "proacl is not distinct from acl_before",
+    );
+    expect(effectiveAtFix).toContain(
+      "proconfig is not distinct from config_before",
+    );
+    expect(effectiveAtFix).toContain("or security_definer_before");
+    expect(effectiveAtFix).toContain("search_path=\"\"");
+    expect(effectiveAtFix).toContain(
+      "grant execute on function private.admin_history_read_rows_v1(",
+    );
+    expect(effectiveAtFix).toContain("notify pgrst, 'reload schema';");
   });
 });
