@@ -74,6 +74,7 @@ describe("assignment feature dependency boundaries", () => {
       allowModule: (specifier, importer) =>
         specifier === "zod" ||
         specifier === "@/lib/deadline" ||
+        specifier === "@/lib/quiz/question-content-mode" ||
         specifier === "@/lib/admin/assignment-edit-policy" ||
         specifier === "@/lib/admin/vocab-unit-allocation" ||
         resolvesInside(importer, specifier, [domainRoot]),

@@ -2,6 +2,7 @@ import {
   isTrustedQuestionSnapshot,
   type QuestionProvenanceStatus,
 } from "@/lib/quiz/question-provenance";
+import type { QuizContentMode } from "@/lib/quiz/question-content-mode";
 
 export type ResultQuestionPresentationInput = {
   direction: "english_to_korean" | "korean_to_english";
@@ -19,10 +20,12 @@ export type ResultQuestionMetricInput = {
 
 export function getResultQuestionPresentation(
   question: ResultQuestionPresentationInput,
+  quizContentMode: QuizContentMode = "book_meaning_choice",
 ) {
   const headword = question.headword.trim();
   const primaryMeaning = question.primaryMeaning.trim();
   if (
+    quizContentMode === "book_meaning_choice" &&
     isTrustedQuestionSnapshot(question.provenanceStatus) &&
     headword &&
     primaryMeaning

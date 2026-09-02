@@ -209,6 +209,7 @@ const immediateBulkPlan: BulkCommonAssignmentPlan = {
 
 const scheduledBulkDraft: BulkSeriesAssignmentDraft = {
   kind: "bulk_series",
+  questionMode: "book_meaning_choice",
   studentIds: [...bulkPreviewContract.studentIds],
   commonPlan: scheduledBulkPlan,
   exam: {
@@ -224,6 +225,7 @@ const scheduledBulkDraft: BulkSeriesAssignmentDraft = {
 
 const immediateBulkDraft: BulkSeriesAssignmentDraft = {
   kind: "bulk_series",
+  questionMode: "book_meaning_choice",
   studentIds: [assignmentContractIds.studentA],
   commonPlan: immediateBulkPlan,
   exam: {
@@ -545,6 +547,19 @@ describe("assignment request adapters", () => {
         assignmentContractIds.previewPlanSignature,
       ),
     ).toBe(submissionFingerprint);
+
+    const definitionDraft: BulkSeriesAssignmentDraft = {
+      ...immediateBulkDraft,
+      questionMode: "canonical_definition_to_headword",
+      exam: { ...immediateBulkDraft.exam, directionRatio: 0 },
+    };
+    const exampleDraft: BulkSeriesAssignmentDraft = {
+      ...definitionDraft,
+      questionMode: "canonical_example_to_headword",
+    };
+    expect(bulkPreviewFingerprint(definitionDraft)).not.toBe(
+      bulkPreviewFingerprint(exampleDraft),
+    );
   });
 
   it("rejects malformed route IDs and exposes bodyless GET/DELETE contracts", () => {

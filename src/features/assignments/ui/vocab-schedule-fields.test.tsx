@@ -27,7 +27,10 @@ function controller() {
       changeWeekdayUnitsPerSession: vi.fn(),
     },
     fieldErrors: {},
-    bulk: { preview: null },
+    bulk: {
+      preview: null,
+      state: { draft: { questionMode: "book_meaning_choice" } },
+    },
     defaultSessionCount: 3,
     distribution: "split",
     scheduledQuestionCount: 60,

@@ -1,6 +1,7 @@
 import type { AttemptResultQuestion } from "@/features/results/model";
 import type { AdminAttemptPointSummary } from "@/features/learning-points/model";
 import type { AssignmentHistorySummary } from "@/lib/admin/history";
+import type { QuizContentMode } from "@/lib/quiz/question-content-mode";
 
 export type AttemptSummary = {
   id: string;
@@ -22,6 +23,7 @@ export type AttemptSummary = {
 
 export type AdminAttemptDetail = AttemptSummary & {
   elapsedSeconds: number | null;
+  quizContentMode: QuizContentMode;
   questions: AttemptResultQuestion[];
 };
 

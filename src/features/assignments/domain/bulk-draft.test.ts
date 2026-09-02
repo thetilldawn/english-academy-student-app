@@ -37,6 +37,24 @@ function createDraft() {
 }
 
 describe("일괄 단어 배정 초안", () => {
+  it("새 초안은 교재 뜻 시험으로 시작한다", () => {
+    expect(createDraft().questionMode).toBe("book_meaning_choice");
+  });
+
+  it("영영풀이 또는 예문 유형은 영어 선택 시험으로 고정한다", () => {
+    const mixed = reduceBulkSeriesAssignmentDraft(createDraft(), {
+      type: "exam/direction_changed",
+      value: 50,
+    });
+    const next = reduceBulkSeriesAssignmentDraft(mixed, {
+      type: "exam/question_mode_changed",
+      value: "canonical_example_to_headword",
+    });
+
+    expect(next.questionMode).toBe("canonical_example_to_headword");
+    expect(next.exam.directionRatio).toBe(0);
+  });
+
   it.each([
     ["source_order", "ascending"],
     ["source_order", "random"],

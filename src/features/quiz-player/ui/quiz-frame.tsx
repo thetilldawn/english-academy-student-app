@@ -9,6 +9,7 @@ import {
 } from "@/design-system/primitives/tooltip/help-tip";
 import { AudioButton } from "@/design-system/patterns/audio-button/audio-button";
 import type { PriorWrongIndicator } from "@/lib/quiz/prior-wrong";
+import type { QuizContentMode } from "@/lib/quiz/question-content-mode";
 
 import type { QuizChoiceLength } from "../domain/quiz-session";
 import type { QuizQuestion } from "../model";
@@ -50,6 +51,7 @@ export function QuizFrame({
   promptAudioUrl,
   promptDensity,
   promptRef,
+  quizContentMode,
   remainingSeconds,
   submitting,
   timerSynchronized,
@@ -75,6 +77,7 @@ export function QuizFrame({
   promptAudioUrl: string | null;
   promptDensity: QuizChoiceLength;
   promptRef: RefObject<HTMLHeadingElement | null>;
+  quizContentMode: QuizContentMode;
   remainingSeconds: number;
   submitting: boolean;
   timerSynchronized: boolean;
@@ -83,9 +86,13 @@ export function QuizFrame({
   timingMode: "none" | "total" | "per_question";
 }) {
   const isEnglishPrompt =
-    currentQuestion.direction === "english_to_korean";
+    currentQuestion.direction === "english_to_korean" ||
+    quizContentMode !== "book_meaning_choice";
   const isEnglishChoice =
     currentQuestion.direction === "korean_to_english";
+  const showPromptPronunciation =
+    quizContentMode === "book_meaning_choice" &&
+    currentQuestion.direction === "english_to_korean";
   const progressLabel =
     phase === "retry"
       ? formatContentText(studentAppText.attempt.retryProgress, {
@@ -173,9 +180,9 @@ export function QuizFrame({
           </HelpTip>
         </span>
         <span className="sr-only">
-          {isEnglishPrompt
-            ? studentAppText.attempt.chooseMeaning
-            : studentAppText.attempt.chooseEnglish}
+          {isEnglishChoice
+            ? studentAppText.attempt.chooseEnglish
+            : studentAppText.attempt.chooseMeaning}
         </span>
       </p>
 
@@ -228,7 +235,7 @@ export function QuizFrame({
           tabIndex={-1}
         >
           <span>{currentQuestion.prompt}</span>
-          {isEnglishPrompt && currentQuestion.pronunciation.displayKo ? (
+          {showPromptPronunciation && currentQuestion.pronunciation.displayKo ? (
             <PronunciationText className={styles.promptPronunciation} pronunciation={currentQuestion.pronunciation} />
           ) : null}
         </h1>

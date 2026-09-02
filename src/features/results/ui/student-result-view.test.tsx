@@ -56,6 +56,7 @@ function result(
   return {
     id: "attempt-1",
     title: "DAY 01 단어 시험",
+    quizContentMode: "book_meaning_choice",
     status: "completed",
     phase: "completed",
     attemptNumber: 1,

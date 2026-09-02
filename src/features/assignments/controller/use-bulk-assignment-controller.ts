@@ -40,6 +40,7 @@ import {
 } from "../domain/editor-state";
 import type {
   AssignmentDirectionRatio,
+  AssignmentQuestionMode,
   AssignmentQuestionOrderMode,
   BulkSeriesAssignmentDraft,
   ExamTiming,
@@ -467,6 +468,8 @@ export function useBulkAssignmentController({
     changeCommonPlan,
     changeDirection: (value: AssignmentDirectionRatio) =>
       changeDraft({ type: "exam/direction_changed", value }),
+    changeQuestionMode: (value: AssignmentQuestionMode) =>
+      changeDraft({ type: "exam/question_mode_changed", value }),
     changeOrder: (value: AssignmentQuestionOrderMode) =>
       changeDraft({ type: "exam/order_changed", value }),
     changePassingScore: (value: number) =>

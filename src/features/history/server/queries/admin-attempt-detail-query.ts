@@ -3,6 +3,7 @@ import "server-only";
 import type { AdminAttemptDetail } from "../../model";
 import { requireAdmin, type AdminContext } from "@/lib/auth/admin";
 import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
+import { normalizeQuizContentMode } from "@/lib/quiz/question-content-mode";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import { getAttemptQuestionResults } from "@/lib/services/quiz/attempt-result-query";
 
@@ -18,7 +19,7 @@ export async function getAdminAttemptDetail(
     supabase
       .from("quiz_attempts")
       .select(
-        "id, attempt_number, status, phase, question_count_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, elapsed_seconds, started_at, initial_completed_at, completed_at, students(display_name, deleted_at), assignments(title, deleted_at)",
+        "id, attempt_number, status, phase, question_count_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, elapsed_seconds, started_at, initial_completed_at, completed_at, students(display_name, deleted_at), assignments(title, deleted_at, quiz_content_mode)",
       )
       .eq("id", attemptId)
       .maybeSingle(),
@@ -86,6 +87,9 @@ export async function getAdminAttemptDetail(
     unresolvedWrongCount:
       reviewMetrics?.unresolvedWrongCount ?? data.unresolved_wrong_count,
     elapsedSeconds: reviewElapsedSeconds ?? data.elapsed_seconds,
+    quizContentMode: normalizeQuizContentMode(
+      assignment?.quiz_content_mode ?? "legacy_book_meaning_choice",
+    ),
     questions,
   };
 }

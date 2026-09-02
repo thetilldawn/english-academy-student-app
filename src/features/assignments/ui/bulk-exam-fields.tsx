@@ -8,10 +8,12 @@ import {
   Input,
 } from "@/design-system/primitives/form/field";
 import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
+import { Tabs } from "@/design-system/primitives/tabs/tabs";
 
 import type { BulkAssignmentController } from "../controller/use-bulk-assignment-controller";
 import type {
   AssignmentDirectionRatio,
+  AssignmentQuestionMode,
   ExamSettings,
 } from "../domain/model";
 import type { VocabAssignmentFieldKey } from "../presentation/vocab-assignment-field-errors";
@@ -245,14 +247,39 @@ export function ExamConditionFields({
 export function BulkExamFields({
   controller,
   fieldErrors = {},
+  onQuestionModeChange,
 }: {
   controller: BulkAssignmentController;
   fieldErrors?: Partial<Record<VocabAssignmentFieldKey, string>>;
+  onQuestionModeChange: (value: AssignmentQuestionMode) => void;
 }) {
   const { actions, state } = controller;
+  const questionMode = state.draft.questionMode;
 
   return (
     <div className={styles.fieldStack}>
+      <Field>
+        <FieldLabel as="span" id="bulk-question-mode-label">
+          출제 자료
+        </FieldLabel>
+        <Tabs
+          ariaLabel="출제 자료"
+          className={styles.modeButtons}
+          items={([
+            ["book_meaning_choice", "교재 뜻"],
+            ["canonical_definition_to_headword", "영영풀이 → 영어"],
+            ["canonical_example_to_headword", "예문 → 영어"],
+          ] as const).map(([value, label]) => ({ value, label }))}
+          onChange={onQuestionModeChange}
+          value={questionMode}
+        />
+        {questionMode !== "book_meaning_choice" ? (
+          <small role="status">
+            검수된 영어 선택지 4개로 바로 배정하는 Preview 전용 유형입니다.
+            현재는 시험일 없이 1회 배정만 지원합니다.
+          </small>
+        ) : null}
+      </Field>
       <ExamQuestionOrderField
         error={fieldErrors.questionOrder}
         onChange={(value) =>
@@ -263,6 +290,7 @@ export function BulkExamFields({
           : "sequential"}
       />
       <ExamConditionFields
+        directionDisabled={questionMode !== "book_meaning_choice"}
         exam={state.draft.exam}
         fieldErrors={fieldErrors}
         idPrefix="bulk"

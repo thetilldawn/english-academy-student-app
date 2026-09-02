@@ -43,6 +43,8 @@ export function VocabScheduleFields({
 }) {
   const schedule = controller.planner.schedule;
   const scheduleEnabled = controller.planner.scheduleEnabled !== false;
+  const canonicalQuestionMode =
+    controller.bulk.state.draft.questionMode !== "book_meaning_choice";
   const availableTimeEnabled = schedule.availableTimeEnabled !== false;
   const startDateError = fieldErrors.startDate;
   const weekdaysError = fieldErrors.weekdays;
@@ -92,6 +94,7 @@ export function VocabScheduleFields({
         <label className={styles.inlineToggle}>
           <Checkbox
             checked={scheduleEnabled}
+            disabled={canonicalQuestionMode}
             onChange={(event) =>
               controller.actions.changeScheduleEnabled(event.target.checked)
             }
@@ -99,6 +102,11 @@ export function VocabScheduleFields({
           <span>사용</span>
         </label>
       </div>
+      {canonicalQuestionMode ? (
+        <small role="status">
+          영영풀이·예문 시험은 현재 Preview에서 바로 배정 1회로 확인합니다.
+        </small>
+      ) : null}
       <ConditionalReveal open={scheduleEnabled}>
         <div className={styles.scheduleRevealContent}>
       <Field as="label">

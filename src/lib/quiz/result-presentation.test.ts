@@ -66,6 +66,25 @@ describe("getResultQuestionPresentation", () => {
       }),
     ).toEqual({ prompt: "준수하다", correctAnswer: "observe" });
   });
+
+  it("영영풀이와 예문 결과는 저장된 영어 문제를 그대로 유지한다", () => {
+    expect(
+      getResultQuestionPresentation(
+        {
+          direction: "korean_to_english",
+          prompt: "A person who watches an event carefully.",
+          correctAnswer: "observer",
+          headword: "observer",
+          primaryMeaning: "관찰자",
+          provenanceStatus: "preview_verified_v1",
+        },
+        "canonical_definition_to_headword",
+      ),
+    ).toEqual({
+      prompt: "A person who watches an event carefully.",
+      correctAnswer: "observer",
+    });
+  });
 });
 
 describe("deriveAttemptQuestionMetrics", () => {

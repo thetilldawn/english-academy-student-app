@@ -1,6 +1,7 @@
 import type { QuestionProvenanceStatus } from "@/lib/quiz/question-provenance";
 import type { QuizPronunciation } from "@/lib/quiz/pronunciation-snapshot";
 import type { StudentAttemptPointSummary } from "@/features/learning-points/model";
+import type { QuizContentMode } from "@/lib/quiz/question-content-mode";
 
 export type AttemptResultQuestion = {
   id: string;
@@ -23,6 +24,7 @@ export type AttemptResultQuestion = {
 export type StudentAttemptResult = {
   id: string;
   title: string;
+  quizContentMode: QuizContentMode;
   status: "in_progress" | "completed" | "expired";
   phase: "initial" | "review" | "retry" | "completed";
   attemptNumber: number;

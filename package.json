@@ -43,6 +43,7 @@
     "import:word-index": "tsx scripts/import-word-index.ts",
     "import:vocab-link": "tsx scripts/import-vocab-link-package.ts",
     "import:exam-use": "tsx scripts/import-exam-use-package.ts",
+    "import:canonical-question-preview": "tsx scripts/import-canonical-question-preview.ts",
     "import:voca-pronunciation": "tsx scripts/import-voca-pronunciation-package.ts",
     "import:voca-pronunciation-v2": "tsx scripts/import-vocab-pronunciation-release-v2.ts",
     "import:exam-webster-pronunciation-repair": "tsx scripts/import-exam-webster-pronunciation-repair.ts",

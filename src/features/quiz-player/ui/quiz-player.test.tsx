@@ -144,6 +144,7 @@ function question(id: string, orderIndex: number): QuizQuestion {
 function attempt(): QuizAttempt {
   return {
     assignmentTitle: "Stable quiz",
+    quizContentMode: "book_meaning_choice",
     currentQuestionId: "question-1",
     deadlineAt: "2099-01-01T00:10:00.000Z",
     id: "attempt-1",

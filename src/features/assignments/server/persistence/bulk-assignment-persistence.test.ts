@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { bulkAssignmentSchema } from "@/features/assignments/contracts/bulk-assignment-request";
 import {
   assignmentContractIds,
+  bulkImmediateSubmitContract,
   bulkSubmitContract,
 } from "@/test-support/assignment-contract-fixtures";
 
@@ -10,6 +11,9 @@ import {
   bulkAssignmentRequestSha256,
   bulkAssignmentResultHasValidShape,
   bulkAssignmentResultMatchesBatches,
+  lookupBulkAssignmentPersistence,
+  persistBulkAssignment,
+  usesCompletionQueue,
 } from "@/features/assignments/server/persistence/bulk-assignment-persistence";
 
 const assignmentA = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -29,6 +33,43 @@ describe("bulk assignment persistence contract", () => {
     expect(bulkAssignmentRequestSha256(input)).not.toBe(
       bulkAssignmentRequestSha256(changed),
     );
+  });
+
+  it("binds the request hash and RPC branch to the canonical question mode", async () => {
+    const definition = bulkAssignmentSchema.parse({
+      ...bulkImmediateSubmitContract,
+      questionMode: "canonical_definition_to_headword",
+      englishToKoreanRatio: 0,
+    });
+    const example = bulkAssignmentSchema.parse({
+      ...bulkImmediateSubmitContract,
+      questionMode: "canonical_example_to_headword",
+      englishToKoreanRatio: 0,
+    });
+    expect(bulkAssignmentRequestSha256(definition)).not.toBe(
+      bulkAssignmentRequestSha256(example),
+    );
+    expect(usesCompletionQueue(definition)).toBe(false);
+
+    const rpc = vi.fn().mockResolvedValue({ data: [], error: null });
+    const client = { rpc } as never;
+    await lookupBulkAssignmentPersistence({
+      client,
+      assignment: definition,
+      requestSha256: "a".repeat(64),
+    });
+    await persistBulkAssignment({
+      client,
+      assignment: definition,
+      requestSha256: "a".repeat(64),
+      batches: [{ kind: "canonical_preview" }],
+      queueSeries: null,
+    });
+
+    expect(rpc.mock.calls.map((call) => call[0])).toEqual([
+      "get_canonical_assignment_preview_result_v1",
+      "create_bulk_canonical_assignments_preview_v1",
+    ]);
   });
 
   it("accepts only the exact student and session result pairs", () => {

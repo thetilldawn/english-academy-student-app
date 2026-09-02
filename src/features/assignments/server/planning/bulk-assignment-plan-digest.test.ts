@@ -83,6 +83,41 @@ describe("resolved bulk plan digest", () => {
     );
   });
 
+  it("changes when a canonical item hash or release changes", () => {
+    const canonicalPlan = plan({
+      targets: [{
+        id: 101,
+        direction: "korean_to_english",
+        questionItemId: "question-1",
+        questionItemSha256: "a".repeat(64),
+      }],
+    });
+    const canonicalContext = sourceContext({
+      questionMode: "canonical_definition_to_headword",
+      canonicalReleaseId: "00000000-0000-4000-8000-000000000005",
+      canonicalPackageSha256: "b".repeat(64),
+    });
+    expect(resolvedBulkPlanSha256(canonicalPlan, canonicalContext)).not.toBe(
+      resolvedBulkPlanSha256(
+        plan({
+          targets: [{
+            id: 101,
+            direction: "korean_to_english",
+            questionItemId: "question-1",
+            questionItemSha256: "c".repeat(64),
+          }],
+        }),
+        canonicalContext,
+      ),
+    );
+    expect(resolvedBulkPlanSha256(canonicalPlan, canonicalContext)).not.toBe(
+      resolvedBulkPlanSha256(canonicalPlan, {
+        ...canonicalContext,
+        canonicalReleaseId: "00000000-0000-4000-8000-000000000006",
+      }),
+    );
+  });
+
   it("changes when the fixed immediate assignment instant changes", () => {
     expect(resolvedBulkPlanSha256(plan())).not.toBe(
       resolvedBulkPlanSha256(plan({

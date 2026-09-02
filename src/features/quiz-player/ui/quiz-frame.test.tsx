@@ -80,6 +80,7 @@ function renderFrame(
       }
       promptDensity="default"
       promptRef={createRef<HTMLHeadingElement>()}
+      quizContentMode="book_meaning_choice"
       remainingSeconds={10}
       submitting={false}
       timerSynchronized
@@ -95,6 +96,20 @@ function renderFrame(
 afterEach(cleanup);
 
 describe("QuizFrame", () => {
+  it("영영풀이 문제는 영어로 표시하되 정답 단어 발음은 문제 아래 노출하지 않는다", () => {
+    const current = question("korean_to_english");
+    current.prompt = "A person who watches an event carefully.";
+    renderFrame(current, {
+      quizContentMode: "canonical_definition_to_headword",
+      promptAudioUrl: null,
+    });
+
+    const prompt = screen.getByRole("heading", { level: 1 });
+    expect(prompt).toHaveTextContent(current.prompt);
+    expect(prompt).not.toHaveTextContent("발음");
+    expect(screen.getByText(studentAppText.attempt.chooseEnglish)).toBeInTheDocument();
+  });
+
   it("shows one prompt speaker and no Korean-choice speaker", () => {
     renderFrame(question("english_to_korean"));
 

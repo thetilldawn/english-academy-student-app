@@ -1,4 +1,9 @@
 import type { VocabUnitAllocationRuleV1 } from "./vocab-assignment-contract";
+import {
+  isCanonicalQuizContentMode,
+  quizContentModes,
+  type QuizContentMode,
+} from "@/lib/quiz/question-content-mode";
 
 export const assignmentQuestionOrderModes = [
   "ascending",
@@ -12,6 +17,14 @@ export const MAXIMUM_BULK_ASSIGNMENT_COUNT = 210;
 export type AssignmentQuestionOrderMode =
   (typeof assignmentQuestionOrderModes)[number];
 export type AssignmentDirectionRatio = 0 | 50 | 100;
+export const assignmentQuestionModes = quizContentModes;
+export type AssignmentQuestionMode = QuizContentMode;
+
+export function isCanonicalAssignmentQuestionMode(
+  value: AssignmentQuestionMode,
+): value is Exclude<AssignmentQuestionMode, "book_meaning_choice"> {
+  return isCanonicalQuizContentMode(value);
+}
 export type ReviewLevel = 1 | 2;
 export type ReviewScope = "dataset" | "selection";
 
@@ -146,6 +159,7 @@ export type BulkCommonAssignmentPlan = {
 
 export type BulkSeriesAssignmentDraft = {
   kind: "bulk_series";
+  questionMode: AssignmentQuestionMode;
   studentIds: readonly string[];
   exam: ExamSettings;
   commonPlan?: BulkCommonAssignmentPlan;

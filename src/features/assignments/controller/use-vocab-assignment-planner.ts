@@ -3,6 +3,7 @@
 import { useLayoutEffect, useMemo, useReducer } from "react";
 
 import type { AssignmentDatasetItem, AssignmentUnitItem } from "../catalog-types";
+import type { AssignmentQuestionMode } from "../domain/model";
 import { selectPreviousVocabExamConditions } from "../domain/vocab-previous-exam";
 import {
   resolveExtraDateCancelSessionCount,
@@ -185,7 +186,9 @@ export function useVocabAssignmentPlanner({
         value: previousExam.unitAllocation.overflowPolicy,
       });
     }
-    bulk.actions.changeDirection(copied.exam.directionRatio);
+    if (bulk.state.draft.questionMode === "book_meaning_choice") {
+      bulk.actions.changeDirection(copied.exam.directionRatio);
+    }
     bulk.actions.changeOrder(copied.exam.questionOrderMode);
     bulk.actions.changePassingScore(copied.exam.passingScore);
     bulk.actions.changeRetryEnabled(copied.exam.retryEnabled !== false);
@@ -275,6 +278,12 @@ export function useVocabAssignmentPlanner({
         dispatch({ type: "weekday_units_per_session", weekday, value }),
       changeQuestionCountMode: (value: VocabQuestionCountChoice["mode"]) =>
         dispatch({ type: "question_count_mode", value }),
+      changeQuestionMode: (value: AssignmentQuestionMode) => {
+        bulk.actions.changeQuestionMode(value);
+        if (value !== "book_meaning_choice") {
+          dispatch({ type: "schedule/enabled", enabled: false });
+        }
+      },
       activateManualQuestionCount: (defaultValue: number) => {
         if (planner.manualQuestionCount < 1) {
           dispatch({ type: "manual_question_count", value: defaultValue });

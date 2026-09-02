@@ -22,11 +22,19 @@ export type ResolvedBulkPlanDigestItem = {
     targets: ReadonlyArray<{
       id: number;
       direction: "english_to_korean" | "korean_to_english";
+      questionItemId?: string;
+      questionItemSha256?: string;
     }>;
   }>;
 };
 
 export type ResolvedBulkPlanSourceContext = {
+  questionMode?:
+    | "book_meaning_choice"
+    | "canonical_definition_to_headword"
+    | "canonical_example_to_headword";
+  canonicalReleaseId?: string | null;
+  canonicalPackageSha256?: string | null;
   distribution: "split" | "repeat";
   splitBasis: "question_count" | "range_unit";
   orderedUnitIds: readonly string[];
@@ -51,6 +59,9 @@ function canonicalSourceContext(
   if (!sourceContext) return null;
   const rule = sourceContext.unitAllocationRule;
   return {
+    questionMode: sourceContext.questionMode ?? "book_meaning_choice",
+    canonicalReleaseId: sourceContext.canonicalReleaseId ?? null,
+    canonicalPackageSha256: sourceContext.canonicalPackageSha256 ?? null,
     distribution: sourceContext.distribution,
     splitBasis: sourceContext.splitBasis,
     orderedUnitIds: [...sourceContext.orderedUnitIds],
@@ -102,6 +113,8 @@ export function resolvedBulkPlanSha256(
           targets: session.targets.map((target) => ({
             id: target.id,
             direction: target.direction,
+            questionItemId: target.questionItemId ?? null,
+            questionItemSha256: target.questionItemSha256 ?? null,
           })),
         }))
         .toSorted((left, right) => left.sessionNumber - right.sessionNumber),

@@ -75,6 +75,7 @@ const exactReview: SingleAssignmentDraft = {
 
 const baseBulk: BulkSeriesAssignmentDraft = {
   kind: "bulk_series",
+  questionMode: "book_meaning_choice",
   studentIds: [assignmentContractIds.studentA],
   exam: baseSingle.exam,
   commonPlan: {
@@ -609,6 +610,39 @@ describe("assignment draft validation", () => {
         "exam.timing.totalSeconds",
       ]),
     );
+  });
+
+  it("영영풀이·예문은 영어 선택·시험일 없는 1회 배정만 허용한다", () => {
+    const scheduledCanonical: BulkSeriesAssignmentDraft = {
+      ...baseBulk,
+      questionMode: "canonical_definition_to_headword",
+      exam: { ...baseBulk.exam, directionRatio: 0 },
+    };
+    expect(
+      validateBulkPreviewProjection(scheduledCanonical).map(
+        (issue) => issue.path,
+      ),
+    ).toContain("commonPlan.selectedDateCount");
+
+    const immediateCanonical: BulkSeriesAssignmentDraft = {
+      ...scheduledCanonical,
+      commonPlan: {
+        ...baseBulk.commonPlan!,
+        distribution: "repeat",
+        splitBasis: "question_count",
+        selectedDateCount: 0,
+        recurrenceSessions: [{
+          availableLocalDateTime: null,
+          deadlineLocalDateTime: null,
+        }],
+        sessions: [{
+          availableLocalDateTime: null,
+          deadlineLocalDateTime: null,
+          unitIds: [...baseBulk.commonPlan!.orderedUnitIds],
+        }],
+      },
+    };
+    expect(validateBulkPreviewProjection(immediateCanonical)).toStrictEqual([]);
   });
 
   it("allows a same-day bulk start that is already past when its deadline is still future", () => {

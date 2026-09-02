@@ -2,6 +2,7 @@ import "server-only";
 
 import type { StudentAttemptResult } from "@/features/results/model";
 import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
+import { normalizeQuizContentMode } from "@/lib/quiz/question-content-mode";
 import { getStudentAttemptPointSummary } from "@/lib/services/learning-point-read-service";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import {
@@ -94,7 +95,7 @@ export async function getAttemptResult(
   const { data, error } = await supabase
     .from("quiz_attempts")
     .select(
-      "id, assignment_id, status, phase, attempt_number, question_count_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, elapsed_seconds, started_at, initial_completed_at, completed_at, assignments(title)",
+      "id, assignment_id, status, phase, attempt_number, question_count_snapshot, initial_correct_count, retry_correct_count, unresolved_wrong_count, initial_score, final_score, passed, elapsed_seconds, started_at, initial_completed_at, completed_at, assignments(title, quiz_content_mode)",
     )
     .eq("id", attemptId)
     .eq("student_id", studentId)
@@ -131,6 +132,9 @@ export async function getAttemptResult(
   return {
     id: data.id,
     title: assignment?.title ?? "단어 시험",
+    quizContentMode: normalizeQuizContentMode(
+      assignment?.quiz_content_mode ?? "legacy_book_meaning_choice",
+    ),
     status: data.status as StudentAttemptResult["status"],
     phase: data.phase as AttemptState["phase"],
     attemptNumber: data.attempt_number,

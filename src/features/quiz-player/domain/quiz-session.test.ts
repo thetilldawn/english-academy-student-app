@@ -58,6 +58,7 @@ function question(
 function attempt(): QuizAttempt {
   return {
     assignmentTitle: "Quiz",
+    quizContentMode: "book_meaning_choice",
     currentQuestionId: "question-1",
     deadlineAt: "2099-01-01T00:10:00.000Z",
     id: "attempt-1",
@@ -187,6 +188,13 @@ describe("quiz session domain", () => {
     ).toBe("very-long");
     expect(
       quizPromptDensity("pneumonoultramicroscopics", "english_to_korean"),
+    ).toBe("very-long");
+    expect(
+      quizPromptDensity(
+        "A person who watches an event carefully.",
+        "korean_to_english",
+        "canonical_definition_to_headword",
+      ),
     ).toBe("very-long");
   });
 

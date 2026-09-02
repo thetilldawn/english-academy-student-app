@@ -209,6 +209,7 @@ describe("일괄 단어 시험 입력 계약", () => {
   };
   const preview = {
     studentIds: [studentId],
+    questionMode: "book_meaning_choice" as const,
     englishToKoreanRatio: 50 as const,
     commonPlan: scheduledPlan,
   };
@@ -244,6 +245,7 @@ describe("일괄 단어 시험 입력 계약", () => {
     };
     const immediate = {
       studentIds: [studentId],
+      questionMode: "book_meaning_choice" as const,
       englishToKoreanRatio: 50 as const,
       commonPlan: immediatePlan,
     };

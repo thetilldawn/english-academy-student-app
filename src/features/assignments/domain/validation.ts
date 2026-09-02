@@ -845,6 +845,38 @@ export function validateBulkPreviewProjection(
   }
   validateCommonPlan(draft, issues);
   validateDirection(draft.exam, issues);
+  if (draft.questionMode !== "book_meaning_choice") {
+    if (draft.exam.directionRatio !== 0) {
+      issues.push({
+        code: "invalid_order",
+        path: "exam.directionRatio",
+        message: "영영풀이·예문 시험은 영어 단어 고르기로만 출제합니다.",
+      });
+    }
+    const plan = draft.commonPlan;
+    if (
+      plan &&
+      (plan.selectedDateCount !== 0 ||
+        plan.distribution !== "repeat" ||
+        plan.splitBasis !== "question_count" ||
+        plan.sessions.length !== 1 ||
+        plan.recurrenceSessions.length !== 1 ||
+        plan.sessions.some((session) =>
+          session.availableLocalDateTime !== null ||
+          session.deadlineLocalDateTime !== null
+        ) ||
+        plan.recurrenceSessions.some((session) =>
+          session.availableLocalDateTime !== null ||
+          session.deadlineLocalDateTime !== null
+        ))
+    ) {
+      issues.push({
+        code: "invalid_order",
+        path: "commonPlan.selectedDateCount",
+        message: "영영풀이·예문 시험은 Preview에서 시험일 없이 1회만 바로 배정할 수 있습니다.",
+      });
+    }
+  }
   return issues;
 }
 

@@ -5,6 +5,7 @@ import { ButtonLink } from "@/design-system/primitives/button/button";
 import { StudentAttemptPointSummaryView } from "@/features/learning-points/public-ui";
 import { formatElapsed } from "@/lib/format";
 import { getResultQuestionPresentation } from "@/lib/quiz/result-presentation";
+import type { QuizContentMode } from "@/lib/quiz/question-content-mode";
 
 import type {
   AttemptResultQuestion,
@@ -32,10 +33,15 @@ function answerDensity(answer: string) {
 
 function QuestionReviewCard({
   question,
+  quizContentMode,
 }: {
   question: AttemptResultQuestion;
+  quizContentMode: QuizContentMode;
 }) {
-  const presentation = getResultQuestionPresentation(question);
+  const presentation = getResultQuestionPresentation(
+    question,
+    quizContentMode,
+  );
   const visibleWrongCount = Math.max(1, question.wrongCount);
   const wrongLevel = visibleWrongCount >= 2 ? 2 : 1;
 
@@ -230,7 +236,11 @@ export function StudentResultView({ result }: { result: StudentAttemptResult }) 
       ) : (
         <div className={resultLayoutStyles.list}>
           {unresolvedQuestions.map((question) => (
-            <QuestionReviewCard key={question.id} question={question} />
+            <QuestionReviewCard
+              key={question.id}
+              question={question}
+              quizContentMode={result.quizContentMode}
+            />
           ))}
         </div>
       )}
@@ -267,7 +277,11 @@ export function StudentResultView({ result }: { result: StudentAttemptResult }) 
           className={`${resultLayoutStyles.list} ${resultLayoutStyles.grid}`}
         >
           {resolvedQuestions.map((question) => (
-            <QuestionReviewCard key={question.id} question={question} />
+            <QuestionReviewCard
+              key={question.id}
+              question={question}
+              quizContentMode={result.quizContentMode}
+            />
           ))}
         </div>
       </ResultSection>

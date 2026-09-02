@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { TimingMode } from "@/lib/admin/assignment-settings";
+import { normalizeQuizContentMode } from "@/lib/quiz/question-content-mode";
 import {
   parseChoiceDictionaryIds,
   parseChoicePronunciations,
@@ -68,7 +69,9 @@ export async function getStudentAttempt(
     await Promise.all([
       supabase
         .from("assignments")
-        .select("title, timing_mode, question_time_limit_seconds")
+        .select(
+          "title, timing_mode, question_time_limit_seconds, quiz_content_mode",
+        )
         .eq("id", attemptData.assignment_id)
         .maybeSingle(),
       supabase
@@ -187,6 +190,9 @@ export async function getStudentAttempt(
   return {
     id: attemptData.id,
     assignmentTitle: assignmentData?.title ?? "단어 시험",
+    quizContentMode: normalizeQuizContentMode(
+      assignmentData.quiz_content_mode,
+    ),
     status: attemptData.status,
     phase,
     startedAt: attemptData.started_at,

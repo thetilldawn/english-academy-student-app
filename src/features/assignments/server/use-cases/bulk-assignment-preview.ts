@@ -44,6 +44,10 @@ import type {
 import {
   BulkAssignmentError,
 } from "./bulk-assignment-errors";
+import {
+  resolveCanonicalBulkAssignmentPreview,
+  type CanonicalPlannedQuestion,
+} from "./canonical-assignment-preview";
 import { MAXIMUM_BULK_QUESTION_COUNT } from "./bulk-assignment-limits";
 import {
   createBulkAssignmentPreparationContext,
@@ -216,6 +220,7 @@ function buildCommonPlanSummary(
 export type ResolvedBulkAssignmentPreview = {
   preview: BulkAssignmentPreview;
   targetPlansByStudent: Map<string, PlannedVocabSeriesTarget[][]>;
+  canonicalPlansByStudent?: Map<string, CanonicalPlannedQuestion[]>;
 };
 
 
@@ -226,6 +231,9 @@ export async function resolveBulkAssignmentPreview(
     createBulkAssignmentPreparationContext(),
 ): Promise<ResolvedBulkAssignmentPreview> {
   const admin = authenticatedAdmin ?? (await requireAdmin());
+  if (input.questionMode !== "book_meaning_choice") {
+    return resolveCanonicalBulkAssignmentPreview(input, admin);
+  }
   const commonPlan = input.commonPlan;
   const requestedSessionCount = commonPlan.sessions.length;
   if (
@@ -751,6 +759,7 @@ export async function resolveBulkAssignmentPreview(
         })),
       })),
       {
+        questionMode: input.questionMode,
         distribution: commonPlan.distribution,
         splitBasis: commonPlan.splitBasis,
         orderedUnitIds: commonPlan.orderedUnitIds,

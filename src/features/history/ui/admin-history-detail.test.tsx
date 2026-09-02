@@ -73,6 +73,7 @@ function detail(retryIsCorrect: boolean): AdminHistoryDetail {
       id: "attempt-1",
       studentName: "프리뷰 학생",
       assignmentTitle: "DAY 01",
+      quizContentMode: "book_meaning_choice",
       attemptNumber: 1,
       status: "completed",
       phase: "completed",

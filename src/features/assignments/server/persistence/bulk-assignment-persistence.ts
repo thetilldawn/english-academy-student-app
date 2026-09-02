@@ -10,7 +10,8 @@ export type BulkAssignmentPersistenceClient = Awaited<
 >;
 
 export function usesCompletionQueue(input: BulkAssignmentInput) {
-  return input.commonPlan?.distribution === "split" &&
+  return input.questionMode === "book_meaning_choice" &&
+    input.commonPlan?.distribution === "split" &&
     input.commonPlan.selectedDateCount > 0;
 }
 
@@ -19,6 +20,7 @@ export function bulkAssignmentRequestSha256(input: BulkAssignmentInput) {
     .update(
       JSON.stringify({
         studentIds: [...input.studentIds].toSorted(),
+        questionMode: input.questionMode,
         englishToKoreanRatio: input.englishToKoreanRatio,
         timeLimitSeconds: input.timeLimitSeconds,
         passingScore: input.passingScore,
@@ -118,6 +120,15 @@ export async function lookupBulkAssignmentPersistence(input: {
   assignment: BulkAssignmentInput;
   requestSha256: string;
 }) {
+  if (input.assignment.questionMode !== "book_meaning_choice") {
+    return input.client.rpc(
+      "get_canonical_assignment_preview_result_v1",
+      {
+        p_idempotency_key: input.assignment.idempotencyKey,
+        p_request_sha256: input.requestSha256,
+      },
+    );
+  }
   return input.client.rpc(
     usesCompletionQueue(input.assignment)
       ? "get_vocab_assignment_queue_result_v1"
@@ -136,6 +147,13 @@ export async function persistBulkAssignment(input: {
   batches: readonly Record<string, unknown>[];
   queueSeries: readonly Record<string, unknown>[] | null;
 }) {
+  if (input.assignment.questionMode !== "book_meaning_choice") {
+    return input.client.rpc("create_bulk_canonical_assignments_preview_v1", {
+      p_idempotency_key: input.assignment.idempotencyKey,
+      p_request_sha256: input.requestSha256,
+      p_batches: input.batches,
+    });
+  }
   return usesCompletionQueue(input.assignment)
     ? input.client.rpc("create_vocab_assignment_queues_v3", {
         p_idempotency_key: input.assignment.idempotencyKey,

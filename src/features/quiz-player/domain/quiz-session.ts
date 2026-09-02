@@ -139,9 +139,13 @@ export function quizChoicesDensity(
 export function quizPromptDensity(
   prompt: string,
   direction: QuizQuestion["direction"],
+  quizContentMode: QuizAttempt["quizContentMode"] = "book_meaning_choice",
 ): QuizChoiceLength {
   const length = Array.from(prompt).length;
-  if (direction === "english_to_korean") {
+  if (
+    direction === "english_to_korean" ||
+    quizContentMode !== "book_meaning_choice"
+  ) {
     if (length >= 24) return "very-long";
     if (length >= 15) return "long";
     return "default";

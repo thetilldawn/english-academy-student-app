@@ -455,6 +455,7 @@ function bulkSelectionBody(draft: BulkSeriesAssignmentDraft) {
   };
   return {
     studentIds: [...draft.studentIds],
+    questionMode: draft.questionMode,
     englishToKoreanRatio: draft.exam.directionRatio,
     commonPlan,
   };

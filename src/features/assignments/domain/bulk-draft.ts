@@ -1,5 +1,6 @@
 import type {
   AssignmentDirectionRatio,
+  AssignmentQuestionMode,
   AssignmentQuestionOrderMode,
   BulkSeriesAssignmentDraft,
   ExamTiming,
@@ -12,6 +13,7 @@ export type BulkSeriesAssignmentDraftAction =
       commonPlan: BulkSeriesAssignmentDraft["commonPlan"];
     }
   | { type: "exam/direction_changed"; value: AssignmentDirectionRatio }
+  | { type: "exam/question_mode_changed"; value: AssignmentQuestionMode }
   | {
       type: "exam/order_changed";
       value: AssignmentQuestionOrderMode;
@@ -31,6 +33,7 @@ export function createInitialBulkSeriesAssignmentDraft({
 }): BulkSeriesAssignmentDraft {
   return {
     kind: "bulk_series",
+    questionMode: "book_meaning_choice",
     studentIds: [...studentIds],
     exam: {
       directionRatio: 50,
@@ -81,6 +84,18 @@ export function reduceBulkSeriesAssignmentDraft(
       return {
         ...draft,
         exam: { ...draft.exam, directionRatio: action.value },
+      };
+    case "exam/question_mode_changed":
+      return {
+        ...draft,
+        questionMode: action.value,
+        exam: {
+          ...draft.exam,
+          directionRatio:
+            action.value === "book_meaning_choice"
+              ? draft.exam.directionRatio
+              : 0,
+        },
       };
     case "exam/order_changed":
       return {

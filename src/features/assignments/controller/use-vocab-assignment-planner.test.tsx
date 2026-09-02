@@ -13,6 +13,7 @@ import { useVocabAssignmentPlanner } from "./use-vocab-assignment-planner";
 const mocks = vi.hoisted(() => ({
   changeCommonPlan: vi.fn(),
   changeOrder: vi.fn(),
+  changeQuestionMode: vi.fn(),
   changeRetryEnabled: vi.fn(),
   changeRetryPassingScore: vi.fn(),
   previousExam: null as PreviousVocabExamSource | null,
@@ -35,6 +36,7 @@ vi.mock("./use-bulk-assignment-controller", () => ({
       changeDirection: vi.fn(),
       changeOrder: mocks.changeOrder,
       changePassingScore: vi.fn(),
+      changeQuestionMode: mocks.changeQuestionMode,
       changeRetryEnabled: mocks.changeRetryEnabled,
       changeRetryPassingScore: mocks.changeRetryPassingScore,
       changeTimeLimitEnabled: vi.fn(),
@@ -46,6 +48,7 @@ vi.mock("./use-bulk-assignment-controller", () => ({
     previewLoading: false,
     state: {
       draft: {
+        questionMode: "book_meaning_choice",
         exam: {
           directionRatio: 50,
           passingScore: 80,

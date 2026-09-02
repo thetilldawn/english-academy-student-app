@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { quizContentModes } from "@/lib/quiz/question-content-mode";
+
 import { QUIZ_REQUEST_TIMEOUT_MS } from "../domain/quiz-session";
 import type {
   QuizAnswerResponse,
@@ -42,6 +44,7 @@ const questionSchema = z.object({
 const attemptSchema = z.object({
   id: z.string().min(1),
   assignmentTitle: z.string(),
+  quizContentMode: z.enum(quizContentModes),
   status: z.enum(["in_progress", "completed", "expired"]),
   phase: z.enum(["initial", "review", "retry", "completed"]),
   startedAt: z.string().min(1),

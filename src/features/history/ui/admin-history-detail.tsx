@@ -173,7 +173,10 @@ export function AdminHistoryDetailContent({
             <div className={styles.flowList}>
               {wrongQuestions.map((question) => {
                 const resolved = question.retryIsCorrect === true;
-                const presentation = getResultQuestionPresentation(question);
+                const presentation = getResultQuestionPresentation(
+                  question,
+                  attempt.quizContentMode,
+                );
                 const status = questionStatus(
                   question.initialIsCorrect,
                   question.retryIsCorrect,

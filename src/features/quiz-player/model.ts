@@ -1,4 +1,5 @@
 import type { QuizDirection } from "@/lib/quiz/question-types";
+import type { QuizContentMode } from "@/lib/quiz/question-content-mode";
 import type { QuizPronunciation } from "@/lib/quiz/pronunciation-snapshot";
 
 export type { QuizPronunciation } from "@/lib/quiz/pronunciation-snapshot";
@@ -30,6 +31,7 @@ export type QuizQuestion = {
 export type QuizAttempt = {
   id: string;
   assignmentTitle: string;
+  quizContentMode: QuizContentMode;
   status: "in_progress" | "completed" | "expired";
   phase: QuizAttemptPhase;
   startedAt: string;

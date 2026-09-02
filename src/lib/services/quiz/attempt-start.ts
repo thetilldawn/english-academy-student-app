@@ -3,6 +3,10 @@ import "server-only";
 import type { AssignmentPurpose } from "@/lib/admin/history";
 import type { QuestionOrderMode, TimingMode } from "@/lib/admin/assignment-settings";
 import { createQuizQuestions } from "@/lib/quiz/question-generator";
+import {
+  isCanonicalQuizContentMode,
+  normalizeQuizContentMode,
+} from "@/lib/quiz/question-content-mode";
 import type { QuizVocabularyEntry } from "@/lib/quiz/question-types";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 
@@ -20,6 +24,7 @@ type AssignmentRow = {
   retake_allowed: boolean;
   range_basis: "source_rows" | "units";
   question_bank_version: number | null;
+  quiz_content_mode: string;
   question_order_mode: QuestionOrderMode;
   timing_mode: TimingMode;
   question_time_limit_seconds: number | null;
@@ -59,7 +64,7 @@ export async function startStudentAttempt(
       supabase
         .from("assignments")
         .select(
-          "id, title, assignment_purpose, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, timing_mode, question_time_limit_seconds, passing_score, retake_allowed, range_basis, question_bank_version, question_order_mode, status, available_from, available_until",
+          "id, title, assignment_purpose, dataset_id, range_start, range_end, question_count, english_to_korean_ratio, time_limit_seconds, timing_mode, question_time_limit_seconds, passing_score, retake_allowed, range_basis, question_bank_version, quiz_content_mode, question_order_mode, status, available_from, available_until",
         )
         .eq("id", assignmentId)
         .is("deleted_at", null)
@@ -82,6 +87,9 @@ export async function startStudentAttempt(
   ) {
     throw new Error("배정된 시험을 찾지 못했습니다.");
   }
+  const quizContentMode = normalizeQuizContentMode(
+    assignment.quiz_content_mode,
+  );
 
   const { data: existingAttempt, error: existingAttemptError } =
     await supabase
@@ -151,6 +159,10 @@ export async function startStudentAttempt(
     }
 
     return data;
+  }
+
+  if (isCanonicalQuizContentMode(quizContentMode)) {
+    throw new Error("이 시험의 검증된 문제를 찾지 못했습니다.");
   }
 
   const entryData: Array<{

@@ -7,6 +7,7 @@ import {
   timingModes,
 } from "@/lib/admin/assignment-settings";
 import {
+  assignmentQuestionModes,
   MAXIMUM_BULK_ASSIGNMENT_COUNT,
   MAXIMUM_BULK_STUDENT_COUNT,
 } from "@/features/assignments/domain/model";
@@ -307,6 +308,7 @@ const bulkCommonPlanSchema = z
 
 const bulkAssignmentSelectionFields = {
   studentIds: z.array(z.uuid()).min(1).max(MAXIMUM_BULK_STUDENT_COUNT),
+  questionMode: z.enum(assignmentQuestionModes).default("book_meaning_choice"),
   englishToKoreanRatio: z.union([
     z.literal(0),
     z.literal(50),
@@ -318,10 +320,41 @@ const bulkAssignmentSelectionFields = {
 function validateBulkAssignmentSelection(
   value: {
     studentIds: string[];
+    questionMode: (typeof assignmentQuestionModes)[number];
+    englishToKoreanRatio: 0 | 50 | 100;
     commonPlan: z.infer<typeof bulkCommonPlanSchema>;
   },
   context: z.RefinementCtx,
 ) {
+  if (value.questionMode !== "book_meaning_choice") {
+    if (value.englishToKoreanRatio !== 0) {
+      context.addIssue({
+        code: "custom",
+        path: ["englishToKoreanRatio"],
+        message: "영영풀이·예문 시험은 영어 단어 고르기로만 출제합니다.",
+      });
+    }
+    const plan = value.commonPlan;
+    if (
+      plan.selectedDateCount !== 0 ||
+      plan.distribution !== "repeat" ||
+      plan.splitBasis !== "question_count" ||
+      plan.sessions.length !== 1 ||
+      plan.recurrenceSessions.length !== 1 ||
+      plan.sessions.some((session) =>
+        session.availableFrom !== null || session.availableUntil !== null
+      ) ||
+      plan.recurrenceSessions.some((session) =>
+        session.availableFrom !== null || session.availableUntil !== null
+      )
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["commonPlan", "selectedDateCount"],
+        message: "영영풀이·예문 시험은 Preview에서 시험일 없이 1회만 바로 배정할 수 있습니다.",
+      });
+    }
+  }
   if (
     value.studentIds.length * value.commonPlan.sessions.length >
       MAXIMUM_BULK_ASSIGNMENT_COUNT

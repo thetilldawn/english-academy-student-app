@@ -46,6 +46,7 @@ export function QuizPlayer({
   const promptDensity = quizPromptDensity(
     currentQuestion.prompt,
     currentQuestion.direction,
+    state.attempt.quizContentMode,
   );
   const choose = (index: number) => {
     void controller.submitChoice(index);
@@ -92,6 +93,7 @@ export function QuizPlayer({
         promptAudioUrl={controller.audioPresentation.promptAudioUrl}
         promptDensity={promptDensity}
         promptRef={controller.promptRef}
+        quizContentMode={state.attempt.quizContentMode}
         remainingSeconds={state.remainingSeconds}
         submitting={
           state.submitting ||

@@ -1,4 +1,5 @@
 import type { TimingMode } from "@/lib/admin/assignment-settings";
+import type { QuizContentMode } from "@/lib/quiz/question-content-mode";
 import type { QuizPronunciation } from "@/lib/quiz/pronunciation-snapshot";
 import type { QuestionProvenanceStatus } from "@/lib/quiz/question-provenance";
 
@@ -23,6 +24,7 @@ export type AttemptQuestionState = {
 export type AttemptState = {
   id: string;
   assignmentTitle: string;
+  quizContentMode: QuizContentMode;
   status: "in_progress" | "completed" | "expired";
   phase: "initial" | "review" | "retry" | "completed";
   startedAt: string;

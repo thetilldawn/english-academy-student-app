@@ -139,6 +139,7 @@ export const replacementSubmitContract = {
 } as const;
 
 export const bulkPreviewContract = {
+  questionMode: "book_meaning_choice",
   studentIds: [studentA, studentB],
   englishToKoreanRatio: 50,
   commonPlan: {
@@ -180,6 +181,7 @@ export const bulkPreviewContract = {
 } as const;
 
 export const bulkImmediatePreviewContract = {
+  questionMode: "book_meaning_choice",
   studentIds: [studentA],
   englishToKoreanRatio: 50,
   commonPlan: {

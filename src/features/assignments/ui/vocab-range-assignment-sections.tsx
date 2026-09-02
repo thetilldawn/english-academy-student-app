@@ -127,6 +127,7 @@ export function VocabRangeAssignmentSections({
         <BulkExamFields
           controller={bulk}
           fieldErrors={fieldErrors}
+          onQuestionModeChange={controller.actions.changeQuestionMode}
         />
         <section aria-label="최근 시험 복사" className={styles.copyPanel}>
           <div className={styles.copySource}>

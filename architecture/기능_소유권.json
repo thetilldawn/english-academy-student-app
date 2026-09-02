@@ -1098,6 +1098,10 @@
       "owner": "shared-quiz-domain"
     },
     {
+      "path": "src/lib/quiz/question-content-mode.ts",
+      "owner": "shared-quiz-domain"
+    },
+    {
       "path": "src/lib/quiz/question-types.ts",
       "owner": "shared-quiz-domain"
     },
@@ -1682,8 +1686,8 @@
     {
       "path": "src/lib/vocab",
       "owner": "shared-contract",
-      "fileCount": 22,
-      "pathSetSha256": "1748726360d82ff536afbbef0898314e4bd1626060851802f832846ed891db50"
+      "fileCount": 23,
+      "pathSetSha256": "2d0073a20712be13bd94f4f39b41b71b8cf90630f0b2b0b8a3f8ad24783de9cc"
     }
   ],
   "serverOwners": [],
@@ -1750,6 +1754,10 @@
     },
     {
       "path": "src/features/assignments/server/use-cases/bulk-assignment-service.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/canonical-assignment-preview.ts",
       "owner": "assignments"
     },
     {
@@ -1935,6 +1943,11 @@
       "path": "supabase/migrations/20260901141048_fix_admin_history_infinite_effective_at.sql",
       "owner": "history",
       "flow": "admin-history-read"
+    },
+    {
+      "path": "supabase/migrations/20260902090557_add_canonical_question_preview.sql",
+      "owner": "assignments",
+      "flow": "assignment-range-create"
     }
   ],
   "features": [
@@ -2638,13 +2651,15 @@
           "src/features/assignments/server/use-cases/bulk-assignment-preview.ts",
           "src/features/assignments/server/use-cases/bulk-assignment-command.ts",
           "src/features/assignments/server/use-cases/bulk-assignment-series-preparation.ts",
-          "src/features/assignments/server/queries/bulk-assignment-planning-query.ts"
+          "src/features/assignments/server/queries/bulk-assignment-planning-query.ts",
+          "src/features/assignments/server/use-cases/canonical-assignment-preview.ts"
         ],
         "database": [
           "supabase/migrations/20260810123000_add_scheduled_bulk_assignment_series.sql",
           "supabase/migrations/20260822010300_add_vocab_assignment_completion_queue.sql",
           "supabase/migrations/20260824010000_add_assignment_retry_rules.sql",
-          "supabase/migrations/20260830101500_allow_immediate_bulk_assignments.sql"
+          "supabase/migrations/20260830101500_allow_immediate_bulk_assignments.sql",
+          "supabase/migrations/20260902090557_add_canonical_question_preview.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/bulk-assignments/preview/route.ts",

@@ -79,6 +79,7 @@ function buildWeekdayDraft(
 
   return {
     kind: "bulk_series",
+    questionMode: "book_meaning_choice",
     studentIds,
     exam: {
       directionRatio: 50,
