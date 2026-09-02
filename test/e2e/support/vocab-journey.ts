@@ -3,16 +3,27 @@ import { expect, type Page } from "@playwright/test";
 import type { PreviewStudent } from "../fixtures/preview-run";
 
 type AssignmentPlan = {
+  datasetId?: string;
   perQuestionSeconds?: number;
   questionCount?: number;
+  questionMode?:
+    | "book_meaning_choice"
+    | "canonical_definition_to_headword"
+    | "canonical_example_to_headword";
   rangeMode?: "all" | "first-unit" | "second-unit" | "two-units";
   scheduleEnabled?: boolean;
   timeLimit?: "none" | "per-question";
 };
 
-async function chooseFirstDataset(page: Page) {
+async function chooseDataset(page: Page, datasetId?: string) {
   const select = page.locator('select[data-field-key="dataset"]');
   await expect(select).toBeVisible();
+  if (datasetId) {
+    await expect(select.locator(`option[value="${datasetId}"]`)).toHaveCount(1);
+    await select.selectOption(datasetId);
+    await expect(select).toHaveValue(datasetId);
+    return;
+  }
   const value = await select.inputValue();
   if (value) return;
   const firstValue = await select.locator("option:not([disabled])").evaluateAll(
@@ -20,6 +31,24 @@ async function chooseFirstDataset(page: Page) {
   );
   if (!firstValue) throw new Error("Preview에 배정 가능한 단어장이 없습니다.");
   await select.selectOption(firstValue);
+}
+
+async function chooseQuestionMode(
+  page: Page,
+  mode: AssignmentPlan["questionMode"],
+) {
+  if (!mode || mode === "book_meaning_choice") return;
+  const label = mode === "canonical_definition_to_headword"
+    ? "영영풀이 → 영어"
+    : "예문 → 영어";
+  const tabs = page.getByRole("tablist", { name: "출제 자료" });
+  await expect(tabs.getByRole("tab")).toHaveCount(3);
+  const tab = tabs.getByRole("tab", { name: label, exact: true });
+  await tab.click();
+  await expect(tab).toHaveAttribute("aria-selected", "true");
+  await expect(
+    page.getByText("검수된 영어 선택지 4개로 바로 배정하는 Preview 전용 유형입니다."),
+  ).toBeVisible();
 }
 
 async function chooseRange(page: Page, mode: AssignmentPlan["rangeMode"]) {
@@ -86,8 +115,9 @@ async function configureSchedule(page: Page, enabled: boolean) {
 }
 
 async function configureRangeAssignment(page: Page, plan: AssignmentPlan = {}) {
-  await chooseFirstDataset(page);
+  await chooseDataset(page, plan.datasetId);
   await chooseRange(page, plan.rangeMode ?? "all");
+  await chooseQuestionMode(page, plan.questionMode);
   if (plan.questionCount && plan.questionCount !== 4) {
     await page
       .getByRole("spinbutton", { name: "회차당 단어 수" })
@@ -150,6 +180,59 @@ export async function assignSingleRange(
   await openSingleAssignment(page, student);
   await configureRangeAssignment(page, plan);
   return waitForAssignmentSave(page, /\/api\/admin\/bulk-assignments$/);
+}
+
+export async function assignCanonicalRange(
+  page: Page,
+  student: PreviewStudent,
+  input: {
+    datasetId: string;
+    questionMode:
+      | "canonical_definition_to_headword"
+      | "canonical_example_to_headword";
+  },
+) {
+  await openSingleAssignment(page, student);
+  await configureRangeAssignment(page, {
+    datasetId: input.datasetId,
+    perQuestionSeconds: 5,
+    questionCount: 4,
+    questionMode: input.questionMode,
+    rangeMode: "first-unit",
+    scheduleEnabled: false,
+    timeLimit: "per-question",
+  });
+  const directionButtons = page.locator('[data-field-key="direction"] button');
+  await expect(directionButtons).toHaveCount(3);
+  for (let index = 0; index < 3; index += 1) {
+    await expect(directionButtons.nth(index)).toBeDisabled();
+  }
+  await expect(
+    directionButtons.filter({ hasText: "뜻 → 영어" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  const scheduleCheckbox = page
+    .getByText("시험일 사용", { exact: true })
+    .locator("xpath=../label/input[@type='checkbox']");
+  await expect(scheduleCheckbox).toBeDisabled();
+  await expect(scheduleCheckbox).not.toBeChecked();
+
+  const response = await waitForAssignmentSave(
+    page,
+    /\/api\/admin\/bulk-assignments$/,
+  ) as {
+    assignments?: Array<{
+      assignment_id?: string | null;
+      status?: string;
+      student_id?: string;
+    }>;
+  };
+  const assigned = response.assignments?.find(
+    (item) => item.student_id === student.id && item.status === "assigned",
+  );
+  if (!assigned?.assignment_id) {
+    throw new Error("canonical Preview 배정 ID를 저장 응답에서 찾지 못했습니다.");
+  }
+  return assigned.assignment_id;
 }
 
 export async function assignBulkRange(
@@ -219,6 +302,20 @@ export async function startLatestAssignment(
   return assignmentId;
 }
 
+export async function startAssignmentById(page: Page, assignmentId: string) {
+  await page.goto("/student");
+  const card = page.locator(
+    `article[data-assignment-id="${assignmentId}"]`,
+  );
+  await expect(card).toHaveCount(1);
+  await expect(card.getByRole("button", { name: "시험 시작" })).toBeVisible();
+  await Promise.all([
+    page.waitForURL(/\/student\/attempt\/[0-9a-f-]+$/),
+    card.getByRole("button", { name: "시험 시작" }).click(),
+  ]);
+  await expect(page.locator("#quiz-prompt")).toBeVisible();
+}
+
 async function currentQuestionId(page: Page) {
   const questionId = await page.locator("#quiz-prompt").getAttribute("data-question-id");
   if (!questionId) throw new Error("현재 시험 문항 ID가 없습니다.");
@@ -282,6 +379,49 @@ export async function finishRetry(
     await page.locator('button[data-feedback="idle"]').nth(selectedIndex).click();
     const response = await responsePromise;
     expect(response.status()).toBe(200);
+    await waitForQuizTransition(page, questionId);
+  }
+  throw new Error("재시험 문항 수 안전 한도를 초과했습니다.");
+}
+
+export async function finishRetryKeepingOneWrong(
+  page: Page,
+  correctChoices: ReadonlyMap<string, number>,
+) {
+  await page.getByRole("button", { name: "재시험 시작" }).click();
+  await page.waitForURL(/\/student\/attempt\/[0-9a-f-]+$/);
+  let answered = 0;
+  for (let guard = 0; guard < 500; guard += 1) {
+    if (new URL(page.url()).pathname.includes("/student/result/")) {
+      return { correct: Math.max(0, answered - 1), total: answered, wrong: 1 };
+    }
+    const questionId = await currentQuestionId(page);
+    const correctIndex = correctChoices.get(questionId);
+    if (correctIndex === undefined) {
+      throw new Error(`재시험 문항 ${questionId}의 정답 위치를 찾지 못했습니다.`);
+    }
+    const shouldBeWrong = answered === 0;
+    const selectedIndex = shouldBeWrong
+      ? (correctIndex + 1) % 4
+      : correctIndex;
+    const choices = page.locator("button[data-feedback]");
+    await expect(choices).toHaveCount(4);
+    const selected = choices.nth(selectedIndex);
+    const responsePromise = page.waitForResponse(
+      (candidate) =>
+        candidate.request().method() === "POST" &&
+        /\/api\/student\/attempts\/[0-9a-f-]+\/answers$/.test(candidate.url()),
+    );
+    await selected.click();
+    const response = await responsePromise;
+    expect(response.status()).toBe(200);
+    const payload = (await response.json()) as { correct?: boolean };
+    expect(payload.correct).toBe(!shouldBeWrong);
+    await expect(selected).toHaveAttribute(
+      "data-feedback",
+      shouldBeWrong ? "wrong" : "correct",
+    );
+    answered += 1;
     await waitForQuizTransition(page, questionId);
   }
   throw new Error("재시험 문항 수 안전 한도를 초과했습니다.");

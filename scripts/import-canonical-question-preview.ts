@@ -73,7 +73,7 @@ async function main() {
     readFile(options.itemsPath, "utf8"),
   ]);
   const validated = validateCanonicalQuestionPreviewImport(
-    JSON.parse(manifestText) as unknown,
+    manifestText,
     itemJsonl,
   );
   if (!options.apply) {

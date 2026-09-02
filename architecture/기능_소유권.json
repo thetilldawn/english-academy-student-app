@@ -1650,8 +1650,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 87,
-      "pathSetSha256": "89afd406e2842c167954eb8065978693c3ced0e50da3aaf46d61360a2096f14f"
+      "fileCount": 88,
+      "pathSetSha256": "659da8454b9477e56becd31bd37a7586eb0fdbb7fa3093cad0617b4add9df330"
     },
     {
       "path": "src/lib/deploy",
@@ -1686,8 +1686,8 @@
     {
       "path": "src/lib/vocab",
       "owner": "shared-contract",
-      "fileCount": 23,
-      "pathSetSha256": "2d0073a20712be13bd94f4f39b41b71b8cf90630f0b2b0b8a3f8ad24783de9cc"
+      "fileCount": 24,
+      "pathSetSha256": "29e55162dfe4f81883d7197db2e763420a309f96af883110f58a48d3aa6da169"
     }
   ],
   "serverOwners": [],

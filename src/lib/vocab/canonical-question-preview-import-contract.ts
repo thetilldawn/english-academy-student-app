@@ -6,6 +6,8 @@ export const CANONICAL_QUESTION_PREVIEW_PROJECT_REF =
   "wojxpruvbjzbhrpmsbuy";
 export const CANONICAL_QUESTION_PREVIEW_PACKAGE_FILE_SHA256 =
   "e3a170879e18b233fcd6cd5e740bc0c09fd4a42cbf5d694a226d71159602e28a";
+export const CANONICAL_QUESTION_PREVIEW_MANIFEST_FILE_SHA256 =
+  "825c6873f2d1788a471af04f28531ba44b004b9d71285729bccc1c30049841cd";
 export const CANONICAL_QUESTION_PREVIEW_PACKAGE_CONTENT_HASH =
   "45156c1a74b6ffb32694520899b3a9e4ae22840d61e49b049a1650b337b9e1a0";
 export const CANONICAL_QUESTION_PREVIEW_MANIFEST_CONTENT_HASH =
@@ -14,6 +16,7 @@ export const CANONICAL_QUESTION_PREVIEW_ITEM_BINDING_SHA256 =
   "3a5db0dc770f5d8143ed4a35f4d18280da91cdab369b3447b014097e8135da5b";
 
 const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
+const supabaseProjectUrl = /^https:\/\/([a-z0-9]{20})\.supabase\.co\/?$/;
 
 const manifestSchema = z.object({
   contract: z.literal("oewn-app-preview-question-manifest-v1"),
@@ -90,20 +93,28 @@ export function sha256Utf8(value: string) {
 }
 
 export function projectRefFromSupabaseUrl(value: string) {
-  try {
-    const hostname = new URL(value).hostname;
-    return hostname.endsWith(".supabase.co")
-      ? (hostname.split(".")[0] ?? null)
-      : null;
-  } catch {
-    return null;
-  }
+  return supabaseProjectUrl.exec(value.trim())?.[1] ?? null;
 }
 
 export function validateCanonicalQuestionPreviewImport(
-  manifestInput: unknown,
+  manifestJson: string,
   itemJsonl: string,
 ) {
+  const manifestFileSha256 = sha256Utf8(manifestJson);
+  if (
+    manifestFileSha256 !==
+    CANONICAL_QUESTION_PREVIEW_MANIFEST_FILE_SHA256
+  ) {
+    throw new Error("Preview 문제 manifest 파일의 고정 해시가 일치하지 않습니다.");
+  }
+  let manifestInput: unknown;
+  try {
+    manifestInput = JSON.parse(manifestJson) as unknown;
+  } catch (error) {
+    throw new Error("Preview 문제 manifest JSON을 읽지 못했습니다.", {
+      cause: error,
+    });
+  }
   const manifest = manifestSchema.parse(manifestInput);
   const fileSha256 = sha256Utf8(itemJsonl);
   if (
@@ -175,6 +186,7 @@ export function validateCanonicalQuestionPreviewImport(
       itemCount: items.length,
       sourceEntryCount: sourceEntryIds.size,
       packageFileSha256: fileSha256,
+      manifestFileSha256,
       packageContentHash: manifest.package_content_hash,
       manifestContentHash: manifest.content_hash,
       itemBindingSha256,
