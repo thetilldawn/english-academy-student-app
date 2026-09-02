@@ -13,6 +13,16 @@ const migration = fs
   )
   .replace(/\r\n/g, "\n");
 
+const ambiguityFixMigration = fs
+  .readFileSync(
+    path.join(
+      process.cwd(),
+      "supabase/migrations/20260902123000_fix_canonical_question_unit_id_ambiguity.sql",
+    ),
+    "utf8",
+  )
+  .replace(/\r\n/g, "\n");
+
 describe("canonical question Preview migration contract", () => {
   it("keeps raw shadow tables closed to every API role", () => {
     expect(migration).toContain(
@@ -66,6 +76,18 @@ describe("canonical question Preview migration contract", () => {
         `grant execute on function ${signature} to authenticated;`,
       );
     }
+  });
+
+  it("qualifies the selected unit alias when a table-return column has the same name", () => {
+    expect(ambiguityFixMigration).toContain(
+      "select count(distinct selected.unit_id)",
+    );
+    expect(ambiguityFixMigration).toContain(
+      "where selected.unit_id is not null",
+    );
+    expect(ambiguityFixMigration).not.toContain(
+      "select count(distinct unit_id)",
+    );
   });
 
   it("binds the imported manifest and every item to fixed reviewed hashes", () => {

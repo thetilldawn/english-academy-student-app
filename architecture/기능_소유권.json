@@ -1948,6 +1948,11 @@
       "path": "supabase/migrations/20260902090557_add_canonical_question_preview.sql",
       "owner": "assignments",
       "flow": "assignment-range-create"
+    },
+    {
+      "path": "supabase/migrations/20260902123000_fix_canonical_question_unit_id_ambiguity.sql",
+      "owner": "assignments",
+      "flow": "assignment-range-create"
     }
   ],
   "features": [
@@ -2659,7 +2664,8 @@
           "supabase/migrations/20260822010300_add_vocab_assignment_completion_queue.sql",
           "supabase/migrations/20260824010000_add_assignment_retry_rules.sql",
           "supabase/migrations/20260830101500_allow_immediate_bulk_assignments.sql",
-          "supabase/migrations/20260902090557_add_canonical_question_preview.sql"
+          "supabase/migrations/20260902090557_add_canonical_question_preview.sql",
+          "supabase/migrations/20260902123000_fix_canonical_question_unit_id_ambiguity.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/bulk-assignments/preview/route.ts",

@@ -1,6 +1,9 @@
 import { getAdminContext } from "@/lib/auth/admin";
 import { privateJsonError, isSameOriginRequest, parseJson } from "@/lib/http";
-import { previewBulkAssignments } from "@/features/assignments/server/use-cases/bulk-assignment-service";
+import {
+  BulkAssignmentError,
+  previewBulkAssignments,
+} from "@/features/assignments/server/use-cases/bulk-assignment-service";
 import { bulkAssignmentPreviewSchema } from "@/features/assignments/contracts/bulk-assignment-request";
 
 export const maxDuration = 300;
@@ -22,7 +25,17 @@ export async function POST(request: Request) {
     return Response.json(await previewBulkAssignments(input, admin), {
       headers: { "Cache-Control": "private, no-store" },
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof BulkAssignmentError) {
+      return privateJsonError(
+        error.message,
+        error.reason === "invalid_selection"
+          ? 422
+          : error.reason === "conflict"
+            ? 409
+            : 503,
+      );
+    }
     return privateJsonError("학생별 다음 범위를 계산하지 못했습니다.", 503);
   }
 }
