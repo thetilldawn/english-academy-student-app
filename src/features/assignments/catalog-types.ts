@@ -2,8 +2,10 @@ import type {
   CataloguedDataset,
   CataloguedUnit,
 } from "@/lib/admin/dataset-catalog";
+import type { AssignmentQuestionMode } from "./domain/model";
 
 export type AssignmentDatasetItem = CataloguedDataset & {
+  availableQuestionModes?: readonly AssignmentQuestionMode[];
   isActive: boolean;
   rowCount: number;
   status: "pending_review" | "ready" | "retired";

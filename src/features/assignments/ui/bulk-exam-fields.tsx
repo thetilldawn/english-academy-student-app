@@ -16,6 +16,7 @@ import type {
   AssignmentQuestionMode,
   ExamSettings,
 } from "../domain/model";
+import { assignmentQuestionModes } from "../domain/model";
 import type { VocabAssignmentFieldKey } from "../presentation/vocab-assignment-field-errors";
 import styles from "./vocab-assignment-planner.module.css";
 
@@ -245,16 +246,24 @@ export function ExamConditionFields({
 }
 
 export function BulkExamFields({
+  availableQuestionModes = assignmentQuestionModes,
   controller,
   fieldErrors = {},
   onQuestionModeChange,
 }: {
+  availableQuestionModes?: readonly AssignmentQuestionMode[];
   controller: BulkAssignmentController;
   fieldErrors?: Partial<Record<VocabAssignmentFieldKey, string>>;
   onQuestionModeChange: (value: AssignmentQuestionMode) => void;
 }) {
   const { actions, state } = controller;
   const questionMode = state.draft.questionMode;
+  const definitionAvailable = availableQuestionModes.includes(
+    "canonical_definition_to_headword",
+  );
+  const exampleAvailable = availableQuestionModes.includes(
+    "canonical_example_to_headword",
+  );
 
   return (
     <div className={styles.fieldStack}>
@@ -265,11 +274,29 @@ export function BulkExamFields({
         <Tabs
           ariaLabel="출제 자료"
           className={styles.modeButtons}
-          items={([
-            ["book_meaning_choice", "교재 뜻"],
-            ["canonical_definition_to_headword", "영영풀이 → 영어"],
-            ["canonical_example_to_headword", "예문 → 영어"],
-          ] as const).map(([value, label]) => ({ value, label }))}
+          items={[
+            { value: "book_meaning_choice", label: "교재 뜻" },
+            {
+              value: "canonical_definition_to_headword",
+              label: definitionAvailable
+                ? "영영풀이 → 영어"
+                : "영영풀이 → 영어 · 검토 중",
+              disabled: !definitionAvailable,
+              describedBy: !definitionAvailable
+                ? "definition-mode-review-status"
+                : undefined,
+            },
+            {
+              value: "canonical_example_to_headword",
+              label: exampleAvailable
+                ? "예문 → 영어"
+                : "예문 → 영어 · 검토 중",
+              disabled: !exampleAvailable,
+              describedBy: !exampleAvailable
+                ? "example-mode-review-status"
+                : undefined,
+            },
+          ]}
           onChange={onQuestionModeChange}
           value={questionMode}
         />
@@ -277,6 +304,16 @@ export function BulkExamFields({
           <small role="status">
             검수된 영어 선택지 4개로 바로 배정하는 Preview 전용 유형입니다.
             현재는 시험일 없이 1회 배정만 지원합니다.
+          </small>
+        ) : null}
+        {!definitionAvailable ? (
+          <small id="definition-mode-review-status">
+            영영풀이 문제는 뜻과 영어 선택지 검토가 끝난 뒤 사용할 수 있습니다.
+          </small>
+        ) : null}
+        {!exampleAvailable ? (
+          <small id="example-mode-review-status">
+            예문 문제는 문장과 영어 선택지 검토가 끝난 뒤 사용할 수 있습니다.
           </small>
         ) : null}
       </Field>

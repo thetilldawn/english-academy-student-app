@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { AssignmentStudentItem } from "../../catalog-types";
+import type { AssignmentQuestionMode } from "../../domain/model";
 import type { AssignmentPlannerPreparation } from "../../contracts/assignment-workspace-read-model";
 import { selectCommonInitialDatasetId } from "../../domain/select-common-initial-dataset";
 import { storedDatasetDisplayLabel } from "@/lib/admin/dataset-display";
@@ -21,6 +22,23 @@ type PlanningStudentRow = {
   school_name: string | null;
   status: "active" | "blocked";
 };
+
+type QuestionModeAvailabilityRow = {
+  dataset_id: string;
+  definition_count: number | string;
+  example_count: number | string;
+};
+
+function availableQuestionModes(row?: QuestionModeAvailabilityRow) {
+  const modes: AssignmentQuestionMode[] = ["book_meaning_choice"];
+  if (Number(row?.definition_count ?? 0) > 0) {
+    modes.push("canonical_definition_to_headword");
+  }
+  if (Number(row?.example_count ?? 0) > 0) {
+    modes.push("canonical_example_to_headword");
+  }
+  return modes;
+}
 
 export class AssignmentPlannerPreparationError extends Error {
   constructor(
@@ -46,7 +64,7 @@ export async function getAssignmentPlannerPreparation(
     );
   }
   const supabase = await createServerSupabaseClient();
-  const [studentResult, material, timeTemplates] =
+  const [studentResult, material, timeTemplates, questionModeResult] =
     await Promise.all([
       supabase
         .from("students")
@@ -57,13 +75,27 @@ export async function getAssignmentPlannerPreparation(
         .is("deleted_at", null),
       loadAdminMaterialSnapshot(supabase),
       listVocabTimeTemplates(),
+      supabase.rpc("list_assignment_question_mode_availability_v1"),
     ]);
-  if (studentResult.error) {
+  if (studentResult.error || questionModeResult.error) {
     throw new AssignmentPlannerPreparationError(
       "unavailable",
-      "선택 학생 정보를 불러오지 못했습니다.",
+      studentResult.error
+        ? "선택 학생 정보를 불러오지 못했습니다."
+        : "시험 유형 준비 상태를 불러오지 못했습니다.",
     );
   }
+  const questionModeByDatasetId = new Map(
+    ((questionModeResult.data ?? []) as QuestionModeAvailabilityRow[]).map(
+      (row) => [row.dataset_id, row],
+    ),
+  );
+  const assignmentDatasets = material.allDatasets.map((dataset) => ({
+    ...dataset,
+    availableQuestionModes: availableQuestionModes(
+      questionModeByDatasetId.get(dataset.id),
+    ),
+  }));
   const rows = (studentResult.data ?? []) as PlanningStudentRow[];
   const rowById = new Map(rows.map((row) => [row.id, row]));
   const invalidStudentId = uniqueStudentIds.find((studentId) => {
@@ -95,7 +127,7 @@ export async function getAssignmentPlannerPreparation(
     };
   });
   const readyDatasetIds = new Set(
-    material.allDatasets
+    assignmentDatasets
       .filter(
         (dataset) =>
           dataset.status === "ready" &&
@@ -118,7 +150,7 @@ export async function getAssignmentPlannerPreparation(
     : [];
 
   return {
-    datasets: material.allDatasets,
+    datasets: assignmentDatasets,
     initialDatasetId,
     initialUnits,
     students,

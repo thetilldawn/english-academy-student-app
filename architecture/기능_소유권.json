@@ -1650,8 +1650,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 88,
-      "pathSetSha256": "659da8454b9477e56becd31bd37a7586eb0fdbb7fa3093cad0617b4add9df330"
+      "fileCount": 92,
+      "pathSetSha256": "4c79a378b1589653f9f803df2178ef3a7d91300ab7a8182c4809c2981df91e58"
     },
     {
       "path": "src/lib/deploy",
@@ -1686,8 +1686,8 @@
     {
       "path": "src/lib/vocab",
       "owner": "shared-contract",
-      "fileCount": 24,
-      "pathSetSha256": "29e55162dfe4f81883d7197db2e763420a309f96af883110f58a48d3aa6da169"
+      "fileCount": 28,
+      "pathSetSha256": "f091d4e054ddb1452bdb4449c7b1e38cc8dd5ed448c343861e9c0bb099eb5bcc"
     }
   ],
   "serverOwners": [],
@@ -1951,6 +1951,21 @@
     },
     {
       "path": "supabase/migrations/20260902123000_fix_canonical_question_unit_id_ambiguity.sql",
+      "owner": "assignments",
+      "flow": "assignment-range-create"
+    },
+    {
+      "path": "supabase/migrations/20260903190904_add_simseok_sem2_preview_vocab.sql",
+      "owner": "assignments",
+      "flow": "assignment-range-create"
+    },
+    {
+      "path": "supabase/migrations/20260903200316_add_simseok_sem2_definition_preview.sql",
+      "owner": "assignments",
+      "flow": "assignment-range-create"
+    },
+    {
+      "path": "supabase/migrations/20260904083500_extend_simseok_question_import_timeout.sql",
       "owner": "assignments",
       "flow": "assignment-range-create"
     }
@@ -2665,7 +2680,10 @@
           "supabase/migrations/20260824010000_add_assignment_retry_rules.sql",
           "supabase/migrations/20260830101500_allow_immediate_bulk_assignments.sql",
           "supabase/migrations/20260902090557_add_canonical_question_preview.sql",
-          "supabase/migrations/20260902123000_fix_canonical_question_unit_id_ambiguity.sql"
+          "supabase/migrations/20260902123000_fix_canonical_question_unit_id_ambiguity.sql",
+          "supabase/migrations/20260903190904_add_simseok_sem2_preview_vocab.sql",
+          "supabase/migrations/20260903200316_add_simseok_sem2_definition_preview.sql",
+          "supabase/migrations/20260904083500_extend_simseok_question_import_timeout.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/bulk-assignments/preview/route.ts",

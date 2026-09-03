@@ -121,6 +121,22 @@ export function useVocabAssignmentPlanner({
     studentIds,
     transport,
   });
+  const availableQuestionModes = useMemo<readonly AssignmentQuestionMode[]>(
+    () =>
+      datasets.find((dataset) => dataset.id === planner.datasetId)
+        ?.availableQuestionModes ?? ["book_meaning_choice"],
+    [datasets, planner.datasetId],
+  );
+  const changeQuestionMode = bulk.actions.changeQuestionMode;
+  useLayoutEffect(() => {
+    if (!availableQuestionModes.includes(bulk.state.draft.questionMode)) {
+      changeQuestionMode("book_meaning_choice");
+    }
+  }, [
+    availableQuestionModes,
+    bulk.state.draft.questionMode,
+    changeQuestionMode,
+  ]);
   const timeTemplateController = useVocabTimeTemplates({
     initialTemplates: initialTimeTemplates,
     schedule: planner.schedule,
@@ -279,6 +295,7 @@ export function useVocabAssignmentPlanner({
       changeQuestionCountMode: (value: VocabQuestionCountChoice["mode"]) =>
         dispatch({ type: "question_count_mode", value }),
       changeQuestionMode: (value: AssignmentQuestionMode) => {
+        if (!availableQuestionModes.includes(value)) return;
         bulk.actions.changeQuestionMode(value);
         if (value !== "book_meaning_choice") {
           dispatch({ type: "schedule/enabled", enabled: false });
@@ -327,6 +344,7 @@ export function useVocabAssignmentPlanner({
       updateSchedule,
     },
     availableUnits,
+    availableQuestionModes,
     bulk,
     commonPlan,
     distribution,

@@ -43,6 +43,11 @@ describe("BulkExamFields", () => {
     const onQuestionModeChange = vi.fn();
     render(
       <BulkExamFields
+        availableQuestionModes={[
+          "book_meaning_choice",
+          "canonical_definition_to_headword",
+          "canonical_example_to_headword",
+        ]}
         controller={controller("book_meaning_choice")}
         onQuestionModeChange={onQuestionModeChange}
       />,
@@ -53,6 +58,32 @@ describe("BulkExamFields", () => {
     expect(onQuestionModeChange).toHaveBeenCalledWith(
       "canonical_example_to_headword",
     );
+  });
+
+  it("준비되지 않은 예문 탭은 검토 중으로 잠그고 이유를 연결한다", () => {
+    const onQuestionModeChange = vi.fn();
+    render(
+      <BulkExamFields
+        availableQuestionModes={[
+          "book_meaning_choice",
+          "canonical_definition_to_headword",
+        ]}
+        controller={controller("book_meaning_choice")}
+        onQuestionModeChange={onQuestionModeChange}
+      />,
+    );
+
+    const exampleTab = screen.getByRole("tab", {
+      name: "예문 → 영어 · 검토 중",
+    });
+    expect(exampleTab).toBeDisabled();
+    expect(exampleTab).toHaveAttribute(
+      "aria-describedby",
+      "example-mode-review-status",
+    );
+    expect(screen.getByText(/예문 문제는 문장과 영어 선택지 검토/)).toBeVisible();
+    fireEvent.click(exampleTab);
+    expect(onQuestionModeChange).not.toHaveBeenCalled();
   });
 
   it("영영풀이·예문 유형에서는 기존 시험 방식 버튼을 잠근다", () => {

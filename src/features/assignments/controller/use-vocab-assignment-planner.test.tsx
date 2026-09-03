@@ -17,6 +17,10 @@ const mocks = vi.hoisted(() => ({
   changeRetryEnabled: vi.fn(),
   changeRetryPassingScore: vi.fn(),
   previousExam: null as PreviousVocabExamSource | null,
+  questionMode: "book_meaning_choice" as
+    | "book_meaning_choice"
+    | "canonical_definition_to_headword"
+    | "canonical_example_to_headword",
   preview: null as null | {
     commonPlanSummary: null;
     items: Array<{
@@ -48,7 +52,7 @@ vi.mock("./use-bulk-assignment-controller", () => ({
     previewLoading: false,
     state: {
       draft: {
-        questionMode: "book_meaning_choice",
+        questionMode: mocks.questionMode,
         exam: {
           directionRatio: 50,
           passingScore: 80,
@@ -161,10 +165,50 @@ describe("단어 배정 일정 controller", () => {
   beforeEach(() => {
     mocks.changeCommonPlan.mockReset();
     mocks.changeOrder.mockReset();
+    mocks.changeQuestionMode.mockReset();
     mocks.changeRetryEnabled.mockReset();
     mocks.changeRetryPassingScore.mockReset();
     mocks.previousExam = null;
+    mocks.questionMode = "book_meaning_choice";
     mocks.preview = null;
+  });
+
+  it("자료 전환 뒤 사용할 수 없는 시험 유형은 교재 뜻으로 되돌린다", () => {
+    mocks.questionMode = "canonical_example_to_headword";
+    const exampleReadyDataset = {
+      ...dataset,
+      availableQuestionModes: [
+        "book_meaning_choice",
+        "canonical_definition_to_headword",
+        "canonical_example_to_headword",
+      ],
+    } as const;
+    const definitionOnlyDataset: AssignmentDatasetItem = {
+      ...dataset,
+      id: "dataset-definition-only",
+      title: "영영풀이만 준비된 단어장",
+      displayName: "영영풀이만 준비된 단어장",
+      availableQuestionModes: [
+        "book_meaning_choice",
+        "canonical_definition_to_headword",
+      ],
+    };
+    const { result } = renderHook(() => useVocabAssignmentPlanner({
+      datasets: [exampleReadyDataset, definitionOnlyDataset],
+      genericErrorMessage: "저장 실패",
+      initialDatasetId: exampleReadyDataset.id,
+      previousExamSourceStudentId: "student-a",
+      previewErrorMessage: "미리보기 실패",
+      studentIds: ["student-a"],
+      today: "2026-08-21",
+      units,
+    }));
+
+    expect(mocks.changeQuestionMode).not.toHaveBeenCalled();
+    act(() => result.current.actions.changeDataset(definitionOnlyDataset.id));
+    expect(mocks.changeQuestionMode).toHaveBeenCalledWith(
+      "book_meaning_choice",
+    );
   });
 
   it("요일은 처음에 비어 있고 월수금을 고르면 가까운 세 날짜를 만든다", () => {
