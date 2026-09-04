@@ -131,6 +131,10 @@ export function VocabScheduleFields({
             {remainingSessionCount > 0
               ? ` · 남음 ${remainingSessionCount}회`
               : ""}
+            {!controller.requiresExtraDateDecision &&
+                controller.repeatCycleCount > 1
+              ? ` · 범위 ${controller.repeatCycleCount}바퀴`
+              : ""}
           </MetaTag>
         </div>
         <div
@@ -160,7 +164,7 @@ export function VocabScheduleFields({
       {controller.requiresExtraDateDecision ? (
         <div className={styles.warning} role="status">
           <span>
-            기본 {controller.extraDateDecisionSessionCount ?? controller.defaultSessionCount ?? 0}회보다 날짜가 많습니다. 추가 날짜에는 범위를 처음부터 반복할까요?
+            기본 {controller.extraDateDecisionSessionCount ?? controller.defaultSessionCount ?? 0}회보다 날짜가 많아 범위를 총 {controller.repeatCycleCount}바퀴 사용합니다. {controller.repeatCycleCount}번째 바퀴까지 처음부터 반복할까요?
           </span>
           <div className={styles.warningActions}>
             <Button

@@ -1,6 +1,7 @@
 import {
   ISO_WEEKDAYS,
   type IsoWeekday,
+  type VocabExtraDatePolicy,
   type VocabScheduleDraft,
   type VocabScheduleSlot,
   type VocabUnitAllocationMode,
@@ -70,6 +71,68 @@ export function keepFirstSelectedWeekdays(
     const parsed = parseCalendarDate(date);
     return parsed ? [isoWeekday(parsed)] : [];
   });
+}
+
+export function resolveVocabRepeatCycleCount(
+  selectedDateCount: number,
+  baseSessionCount: number,
+) {
+  if (
+    !Number.isInteger(selectedDateCount) ||
+    selectedDateCount < 0 ||
+    !Number.isInteger(baseSessionCount) ||
+    baseSessionCount < 1
+  ) {
+    return 1;
+  }
+  return Math.max(1, Math.ceil(selectedDateCount / baseSessionCount));
+}
+
+export function reconcileVocabRepeatCycleApproval(input: {
+  approvedCycleCount: number;
+  selectedDateCount: number;
+  baseSessionCount: number;
+}): {
+  approvedCycleCount: number;
+  extraDatePolicy: VocabExtraDatePolicy;
+  requiredCycleCount: number;
+} {
+  const requiredCycleCount = resolveVocabRepeatCycleCount(
+    input.selectedDateCount,
+    input.baseSessionCount,
+  );
+  const previousApprovedCycleCount =
+    Number.isInteger(input.approvedCycleCount) && input.approvedCycleCount > 0
+      ? input.approvedCycleCount
+      : 1;
+  const approvedCycleCount = Math.min(
+    previousApprovedCycleCount,
+    requiredCycleCount,
+  );
+  return {
+    approvedCycleCount,
+    extraDatePolicy:
+      requiredCycleCount > 1 && requiredCycleCount <= approvedCycleCount
+        ? "repeat_from_start"
+        : "unconfirmed",
+    requiredCycleCount,
+  };
+}
+
+export function approveVocabRepeatCycle(input: {
+  selectedDateCount: number;
+  baseSessionCount: number;
+}) {
+  const approvedCycleCount = resolveVocabRepeatCycleCount(
+    input.selectedDateCount,
+    input.baseSessionCount,
+  );
+  return {
+    approvedCycleCount,
+    extraDatePolicy: approvedCycleCount > 1
+      ? "repeat_from_start" as const
+      : "unconfirmed" as const,
+  };
 }
 
 export function shiftCalendarDate(value: string, days: number) {

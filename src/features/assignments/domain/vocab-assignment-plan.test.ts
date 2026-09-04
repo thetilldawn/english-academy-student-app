@@ -31,6 +31,9 @@ import {
   buildSelectedWeekdayDates,
   extendScheduleSlots,
   extendScheduleSlotsFromRecurrence,
+  approveVocabRepeatCycle,
+  reconcileVocabRepeatCycleApproval,
+  resolveVocabRepeatCycleCount,
   resolveVocabBaseSessionUnitCounts,
 } from "./vocab-schedule";
 import { resolveVocabUnitCycleAllocation } from "./vocab-unit-allocation";
@@ -59,6 +62,36 @@ function targetSetCanMeetEnglishCount(
 }
 
 describe("단어 시험 공통 배정 계획", () => {
+  it("날짜 수를 기본 회차 단위의 범위 바퀴로 계산한다", () => {
+    expect(resolveVocabRepeatCycleCount(4, 2)).toBe(2);
+    expect(resolveVocabRepeatCycleCount(5, 2)).toBe(3);
+    expect(approveVocabRepeatCycle({
+      selectedDateCount: 3,
+      baseSessionCount: 2,
+    })).toEqual({
+      approvedCycleCount: 2,
+      extraDatePolicy: "repeat_from_start",
+    });
+    expect(reconcileVocabRepeatCycleApproval({
+      approvedCycleCount: 2,
+      selectedDateCount: 5,
+      baseSessionCount: 2,
+    })).toEqual({
+      approvedCycleCount: 2,
+      extraDatePolicy: "unconfirmed",
+      requiredCycleCount: 3,
+    });
+    expect(reconcileVocabRepeatCycleApproval({
+      approvedCycleCount: 3,
+      selectedDateCount: 4,
+      baseSessionCount: 2,
+    })).toEqual({
+      approvedCycleCount: 2,
+      extraDatePolicy: "repeat_from_start",
+      requiredCycleCount: 2,
+    });
+  });
+
   it("세 배정 방식을 기존 저장 계약으로 변환한다", () => {
     expect(resolveVocabAssignmentMode("all_sessions")).toEqual({
       distribution: "repeat",

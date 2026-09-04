@@ -552,6 +552,57 @@ describe("단어 배정 일정 controller", () => {
     expect(result.current.planner.schedule.weekdays).toEqual([5, 1]);
   });
 
+  it("범위 반복은 승인한 바퀴 전체에 유지되고 다음 바퀴에서만 다시 묻는다", () => {
+    const { result } = renderPlanner(units.slice(0, 4));
+    act(() => {
+      result.current.actions.selectAllUnits(true);
+      result.current.actions.changeAssignmentMode("per_session");
+      result.current.actions.changeUnitsPerSession(2);
+      result.current.actions.toggleWeekday(1);
+      result.current.actions.toggleWeekday(2);
+      result.current.actions.toggleWeekday(3);
+    });
+    expect(result.current).toMatchObject({
+      defaultSessionCount: 2,
+      repeatCycleCount: 2,
+      requiresExtraDateDecision: true,
+    });
+
+    act(() => result.current.actions.changeExtraDatePolicy("repeat_from_start"));
+    expect(result.current.planner.approvedRepeatCycleCount).toBe(2);
+    expect(result.current.requiresExtraDateDecision).toBe(false);
+    expect(result.current.commonPlan?.sessions).toHaveLength(3);
+
+    act(() => result.current.actions.toggleWeekday(4));
+    expect(result.current).toMatchObject({
+      repeatCycleCount: 2,
+      requiresExtraDateDecision: false,
+    });
+    expect(result.current.commonPlan?.sessions).toHaveLength(4);
+
+    act(() => result.current.actions.toggleWeekday(5));
+    expect(result.current.planner.approvedRepeatCycleCount).toBe(2);
+    expect(result.current).toMatchObject({
+      repeatCycleCount: 3,
+      requiresExtraDateDecision: true,
+    });
+
+    act(() => result.current.actions.toggleWeekday(5));
+    expect(result.current.planner).toMatchObject({
+      approvedRepeatCycleCount: 2,
+      extraDatePolicy: "repeat_from_start",
+    });
+    expect(result.current.requiresExtraDateDecision).toBe(false);
+
+    act(() => result.current.actions.toggleWeekday(5));
+    act(() => result.current.actions.changeExtraDatePolicy("repeat_from_start"));
+    expect(result.current.planner.approvedRepeatCycleCount).toBe(3);
+    act(() => result.current.actions.toggleWeekday(5));
+    expect(result.current.planner.approvedRepeatCycleCount).toBe(2);
+    act(() => result.current.actions.toggleWeekday(5));
+    expect(result.current.requiresExtraDateDecision).toBe(true);
+  });
+
   it("회차별은 월·수에 범위를 하나씩 배정하고 남은 범위를 다음 주로 잇는다", () => {
     const { result } = renderPlanner();
     act(() => {

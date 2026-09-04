@@ -30,6 +30,7 @@ function controller() {
       state: { draft: { questionMode: "book_meaning_choice" } },
     },
     defaultSessionCount: 3,
+    repeatCycleCount: 1,
     distribution: "split",
     scheduledQuestionCount: 60,
     requiresExtraDateDecision: false,
@@ -147,10 +148,11 @@ describe("VocabScheduleFields", () => {
     const value = controller();
     value.defaultSessionCount = 3;
     value.extraDateDecisionSessionCount = 2;
+    value.repeatCycleCount = 2;
     value.requiresExtraDateDecision = true;
     render(<VocabScheduleFields controller={value} />);
 
-    expect(screen.getByText(/기본 2회보다 날짜가 많습니다/)).toBeVisible();
+    expect(screen.getByText(/범위를 총 2바퀴 사용합니다/)).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "범위 반복" }));
     expect(value.actions.changeExtraDatePolicy).toHaveBeenCalledWith(
       "repeat_from_start",
@@ -159,12 +161,24 @@ describe("VocabScheduleFields", () => {
     expect(value.actions.cancelExtraDates).toHaveBeenCalledOnce();
   });
 
+  it("승인된 반복 일정은 현재 범위 바퀴 수를 표시한다", () => {
+    const value = controller();
+    value.defaultSessionCount = 2;
+    value.repeatCycleCount = 2;
+    value.scheduleSlots = value.scheduleSlots.slice(0, 3);
+
+    render(<VocabScheduleFields controller={value} />);
+
+    expect(screen.getByText("배정 2회 · 범위 2바퀴")).toBeVisible();
+  });
+
   it("25단위를 회차당 5단위로 나눈 기본 5회를 일정에서 다시 25회로 세지 않는다", () => {
     const value = controller();
     value.planner.assignmentMode = "per_session";
     value.planner.unitsPerSession = 5;
     value.defaultSessionCount = 5;
     value.extraDateDecisionSessionCount = 5;
+    value.repeatCycleCount = 2;
     value.requiresExtraDateDecision = true;
     value.selectedUnits = Array.from({ length: 25 }, (_, index) => ({
       id: `unit-${index + 1}`,
@@ -181,7 +195,7 @@ describe("VocabScheduleFields", () => {
 
     expect(screen.getByText("배정 5회")).toBeVisible();
     expect(screen.queryByText(/남음 18회/)).not.toBeInTheDocument();
-    expect(screen.getByText(/기본 5회보다 날짜가 많습니다/)).toBeVisible();
+    expect(screen.getByText(/범위를 총 2바퀴 사용합니다/)).toBeVisible();
   });
 
   it("요일을 고르기 전에는 계산용 임시 날짜를 일정처럼 표시하지 않는다", () => {

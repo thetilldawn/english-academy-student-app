@@ -17,6 +17,10 @@ import {
   toggleVocabUnitSelection,
   toggleWeekday,
 } from "../domain/vocab-planner-controls";
+import {
+  approveVocabRepeatCycle,
+  reconcileVocabRepeatCycleApproval,
+} from "../domain/vocab-schedule";
 
 export type VocabPlannerState = {
   datasetId: string;
@@ -27,6 +31,7 @@ export type VocabPlannerState = {
   manualQuestionCount: number;
   overflowPolicy: VocabSplitOverflowPolicy;
   extraDatePolicy: VocabExtraDatePolicy;
+  approvedRepeatCycleCount: number;
   selectionMode: VocabTargetSelectionMode;
   planNonce: string;
   scheduleEnabled?: boolean;
@@ -49,12 +54,28 @@ export type VocabPlannerAction =
   | { type: "question_count_mode"; value: VocabQuestionCountChoice["mode"] }
   | { type: "manual_question_count"; value: number }
   | { type: "overflow_policy"; value: VocabSplitOverflowPolicy }
-  | { type: "extra_date_policy"; value: VocabExtraDatePolicy }
+  | {
+      type: "extra_date_policy";
+      value: VocabExtraDatePolicy;
+      baseSessionCount?: number;
+    }
   | { type: "selection_mode"; value: VocabTargetSelectionMode }
   | { type: "schedule/enabled"; enabled: boolean }
-  | { type: "schedule/update"; patch: Partial<VocabScheduleDraft> }
-  | { type: "schedule/replace"; value: VocabScheduleDraft }
-  | { type: "schedule/toggle_weekday"; weekday: IsoWeekday }
+  | {
+      type: "schedule/update";
+      patch: Partial<VocabScheduleDraft>;
+      baseSessionCount?: number;
+    }
+  | {
+      type: "schedule/replace";
+      value: VocabScheduleDraft;
+      baseSessionCount?: number;
+    }
+  | {
+      type: "schedule/toggle_weekday";
+      weekday: IsoWeekday;
+      baseSessionCount?: number;
+    }
   | {
       type: "session_schedule";
       sessionNumber: number;
@@ -74,6 +95,7 @@ export function vocabPlannerReducer(
         questionCountMode: "all",
         manualQuestionCount: 0,
         extraDatePolicy: "unconfirmed",
+        approvedRepeatCycleCount: 1,
         sessionScheduleOverrides: {},
       };
     case "range/toggle": {
@@ -87,6 +109,7 @@ export function vocabPlannerReducer(
           ).map((unit) => unit.id),
         },
         extraDatePolicy: "unconfirmed",
+        approvedRepeatCycleCount: 1,
         sessionScheduleOverrides: {},
       };
     }
@@ -95,6 +118,7 @@ export function vocabPlannerReducer(
         ...state,
         range: selectAllVocabUnits(action.unitIds, action.selectAll),
         extraDatePolicy: "unconfirmed",
+        approvedRepeatCycleCount: 1,
         sessionScheduleOverrides: {},
       };
     case "assignment_mode":
@@ -105,6 +129,7 @@ export function vocabPlannerReducer(
           ? "leave"
           : state.overflowPolicy,
         extraDatePolicy: "unconfirmed",
+        approvedRepeatCycleCount: 1,
         sessionScheduleOverrides: {},
       };
     case "units_per_session":
@@ -112,6 +137,7 @@ export function vocabPlannerReducer(
         ...state,
         unitsPerSession: action.value,
         extraDatePolicy: "unconfirmed",
+        approvedRepeatCycleCount: 1,
         sessionScheduleOverrides: {},
       };
     case "question_count_mode":
@@ -119,6 +145,7 @@ export function vocabPlannerReducer(
         ...state,
         questionCountMode: action.value,
         extraDatePolicy: "unconfirmed",
+        approvedRepeatCycleCount: 1,
         sessionScheduleOverrides: {},
       };
     case "manual_question_count":
@@ -126,6 +153,7 @@ export function vocabPlannerReducer(
         ...state,
         manualQuestionCount: action.value,
         extraDatePolicy: "unconfirmed",
+        approvedRepeatCycleCount: 1,
         sessionScheduleOverrides: {},
       };
     case "overflow_policy":
@@ -133,11 +161,24 @@ export function vocabPlannerReducer(
         ...state,
         overflowPolicy: action.value,
       };
-    case "extra_date_policy":
+    case "extra_date_policy": {
+      if (action.value !== "repeat_from_start") {
+        return {
+          ...state,
+          extraDatePolicy: "unconfirmed",
+          approvedRepeatCycleCount: 1,
+        };
+      }
+      const approval = approveVocabRepeatCycle({
+        selectedDateCount: state.schedule.weekdays.length,
+        baseSessionCount: action.baseSessionCount ?? 0,
+      });
       return {
         ...state,
-        extraDatePolicy: action.value,
+        extraDatePolicy: approval.extraDatePolicy,
+        approvedRepeatCycleCount: approval.approvedCycleCount,
       };
+    }
     case "selection_mode":
       return {
         ...state,
@@ -156,6 +197,7 @@ export function vocabPlannerReducer(
           ? "leave"
           : state.overflowPolicy,
         extraDatePolicy: "unconfirmed",
+        approvedRepeatCycleCount: 1,
         sessionScheduleOverrides: {},
       };
     }
@@ -163,12 +205,20 @@ export function vocabPlannerReducer(
       const scheduleShapeChanged =
         action.patch.weekdays !== undefined ||
         action.patch.startDate !== undefined;
+      const schedule = { ...state.schedule, ...action.patch };
+      const approval = action.patch.weekdays !== undefined
+        ? reconcileVocabRepeatCycleApproval({
+            approvedCycleCount: state.approvedRepeatCycleCount,
+            selectedDateCount: schedule.weekdays.length,
+            baseSessionCount: action.baseSessionCount ?? 0,
+          })
+        : null;
       return {
         ...state,
-        schedule: { ...state.schedule, ...action.patch },
-        extraDatePolicy: action.patch.weekdays !== undefined
-          ? "unconfirmed"
-          : state.extraDatePolicy,
+        schedule,
+        extraDatePolicy: approval?.extraDatePolicy ?? state.extraDatePolicy,
+        approvedRepeatCycleCount:
+          approval?.approvedCycleCount ?? state.approvedRepeatCycleCount,
         sessionScheduleOverrides: scheduleShapeChanged
           ? {}
           : state.sessionScheduleOverrides,
@@ -180,25 +230,43 @@ export function vocabPlannerReducer(
         state.schedule.weekdays.some(
           (weekday, index) => weekday !== action.value.weekdays[index],
         );
+      const approval = weekdaysChanged
+        ? reconcileVocabRepeatCycleApproval({
+            approvedCycleCount: state.approvedRepeatCycleCount,
+            selectedDateCount: action.value.weekdays.length,
+            baseSessionCount: action.baseSessionCount ?? 0,
+          })
+        : null;
       return {
         ...state,
         schedule: action.value,
-        extraDatePolicy: weekdaysChanged
-          ? "unconfirmed"
-          : state.extraDatePolicy,
+        extraDatePolicy: approval?.extraDatePolicy ?? state.extraDatePolicy,
+        approvedRepeatCycleCount:
+          approval?.approvedCycleCount ?? state.approvedRepeatCycleCount,
         sessionScheduleOverrides: {},
       };
     }
-    case "schedule/toggle_weekday":
+    case "schedule/toggle_weekday": {
+      const nextWeekdays = toggleWeekday(
+        state.schedule.weekdays,
+        action.weekday,
+      );
+      const approval = reconcileVocabRepeatCycleApproval({
+        approvedCycleCount: state.approvedRepeatCycleCount,
+        selectedDateCount: nextWeekdays.length,
+        baseSessionCount: action.baseSessionCount ?? 0,
+      });
       return {
         ...state,
         schedule: {
           ...state.schedule,
-          weekdays: toggleWeekday(state.schedule.weekdays, action.weekday),
+          weekdays: nextWeekdays,
         },
-        extraDatePolicy: "unconfirmed",
+        extraDatePolicy: approval.extraDatePolicy,
+        approvedRepeatCycleCount: approval.approvedCycleCount,
         sessionScheduleOverrides: {},
       };
+    }
     case "session_schedule":
       return {
         ...state,
@@ -230,6 +298,7 @@ export function createInitialVocabPlannerState(
     manualQuestionCount: 0,
     overflowPolicy: "leave",
     extraDatePolicy: "unconfirmed",
+    approvedRepeatCycleCount: 1,
     selectionMode: "source_order",
     planNonce: crypto.randomUUID(),
     scheduleEnabled: true,

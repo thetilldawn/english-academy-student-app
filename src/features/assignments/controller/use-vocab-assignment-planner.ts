@@ -24,6 +24,7 @@ import {
 } from "../domain/vocab-planner-controls";
 import {
   keepFirstSelectedWeekdays,
+  resolveVocabRepeatCycleCount,
 } from "../domain/vocab-schedule";
 import { buildVocabAssignmentFieldErrors } from "../presentation/vocab-assignment-field-errors";
 import { useBulkAssignmentController } from "./use-bulk-assignment-controller";
@@ -149,7 +150,7 @@ export function useVocabAssignmentPlanner({
   }, [changeCommonPlan, commonPlan]);
 
   function updateSchedule(patch: Partial<VocabScheduleDraft>) {
-    dispatch({ type: "schedule/update", patch });
+    dispatch({ type: "schedule/update", patch, baseSessionCount: defaultSessionCount });
   }
 
   function applyTemplate(template: VocabTimeTemplate) {
@@ -157,7 +158,11 @@ export function useVocabAssignmentPlanner({
       { schedule: planner.schedule, exam: bulk.state.draft.exam },
       template,
     );
-    dispatch({ type: "schedule/replace", value: applied.schedule });
+    dispatch({
+      type: "schedule/replace",
+      value: applied.schedule,
+      baseSessionCount: defaultSessionCount,
+    });
     bulk.actions.changeTimeLimitEnabled(applied.exam.timeLimitEnabled !== false);
     bulk.actions.changeTiming(applied.exam.timing);
   }
@@ -171,6 +176,7 @@ export function useVocabAssignmentPlanner({
     if (previousExam.scheduleRule) {
       dispatch({
         type: "schedule/update",
+        baseSessionCount: defaultSessionCount,
         patch: {
           ...previousExam.scheduleRule,
           availableTimeEnabled: true,
@@ -262,6 +268,10 @@ export function useVocabAssignmentPlanner({
     summary?.scheduledQuestionCount ??
     representative?.scheduledQuestionCount ??
     0;
+  const repeatCycleCount = resolveVocabRepeatCycleCount(
+    scheduleSlots.length,
+    extraDateDecisionSessionCount,
+  );
   const canSubmit =
     localIssues.length === 0 &&
     !requiresExtraDateDecision &&
@@ -295,7 +305,11 @@ export function useVocabAssignmentPlanner({
       changeOverflowPolicy: (value: VocabSplitOverflowPolicy) =>
         dispatch({ type: "overflow_policy", value }),
       changeExtraDatePolicy: (value: VocabExtraDatePolicy) =>
-        dispatch({ type: "extra_date_policy", value }),
+        dispatch({
+          type: "extra_date_policy",
+          value,
+          baseSessionCount: extraDateDecisionSessionCount,
+        }),
       changeSelectionMode: (value: VocabTargetSelectionMode) => {
         dispatch({ type: "selection_mode", value });
       },
@@ -303,6 +317,7 @@ export function useVocabAssignmentPlanner({
       retryPreviousExam: previousExamRead.retry,
       cancelExtraDates: () => dispatch({
         type: "schedule/update",
+        baseSessionCount: extraDateDecisionSessionCount,
         patch: { weekdays: keepFirstSelectedWeekdays(
           planner.schedule,
           extraDateDecisionSessionCount,
@@ -323,7 +338,11 @@ export function useVocabAssignmentPlanner({
         value: VocabScheduleSlotOverride,
       ) => dispatch({ type: "session_schedule", sessionNumber, value }),
       toggleWeekday: (weekday: IsoWeekday) =>
-        dispatch({ type: "schedule/toggle_weekday", weekday }),
+        dispatch({
+          type: "schedule/toggle_weekday",
+          weekday,
+          baseSessionCount: extraDateDecisionSessionCount,
+        }),
       updateSchedule,
     },
     availableUnits,
@@ -347,6 +366,7 @@ export function useVocabAssignmentPlanner({
     defaultSessionCount,
     extraDateDecisionSessionCount,
     scheduledQuestionCount,
+    repeatCycleCount,
     requiresExtraDateDecision,
     selectedUnits,
     templateSaving: timeTemplateController.saving,

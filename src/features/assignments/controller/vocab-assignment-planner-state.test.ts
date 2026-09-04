@@ -16,6 +16,7 @@ const state: VocabPlannerState = {
   manualQuestionCount: 45,
   overflowPolicy: "leave",
   extraDatePolicy: "repeat_from_start",
+  approvedRepeatCycleCount: 2,
   selectionMode: "source_order",
   planNonce: "11111111-1111-4111-8111-111111111111",
   schedule: {
@@ -224,5 +225,77 @@ describe("vocabPlannerReducer extra date decision", () => {
       type: "schedule/replace",
       value: { ...state.schedule, weekdays: [1, 5] },
     }).extraDatePolicy).toBe("unconfirmed");
+  });
+
+  it("승인한 범위 바퀴 안에서는 날짜를 늘리고 줄여도 다시 묻지 않는다", () => {
+    const pendingSecondCycle: VocabPlannerState = {
+      ...state,
+      approvedRepeatCycleCount: 1,
+      extraDatePolicy: "unconfirmed",
+      schedule: { ...state.schedule, weekdays: [1, 2, 3] },
+    };
+    const approvedSecondCycle = vocabPlannerReducer(pendingSecondCycle, {
+      type: "extra_date_policy",
+      value: "repeat_from_start",
+      baseSessionCount: 2,
+    });
+    expect(approvedSecondCycle).toMatchObject({
+      approvedRepeatCycleCount: 2,
+      extraDatePolicy: "repeat_from_start",
+    });
+
+    const filledSecondCycle = vocabPlannerReducer(approvedSecondCycle, {
+      type: "schedule/toggle_weekday",
+      weekday: 4,
+      baseSessionCount: 2,
+    });
+    expect(filledSecondCycle).toMatchObject({
+      approvedRepeatCycleCount: 2,
+      extraDatePolicy: "repeat_from_start",
+    });
+
+    const pendingThirdCycle = vocabPlannerReducer(filledSecondCycle, {
+      type: "schedule/toggle_weekday",
+      weekday: 5,
+      baseSessionCount: 2,
+    });
+    expect(pendingThirdCycle).toMatchObject({
+      approvedRepeatCycleCount: 2,
+      extraDatePolicy: "unconfirmed",
+    });
+
+    const backToSecondCycle = vocabPlannerReducer(pendingThirdCycle, {
+      type: "schedule/toggle_weekday",
+      weekday: 5,
+      baseSessionCount: 2,
+    });
+    expect(backToSecondCycle).toMatchObject({
+      approvedRepeatCycleCount: 2,
+      extraDatePolicy: "repeat_from_start",
+    });
+
+    const thirdCycleApproved = vocabPlannerReducer(pendingThirdCycle, {
+      type: "extra_date_policy",
+      value: "repeat_from_start",
+      baseSessionCount: 2,
+    });
+    expect(thirdCycleApproved.approvedRepeatCycleCount).toBe(3);
+    const shrunkAgain = vocabPlannerReducer(thirdCycleApproved, {
+      type: "schedule/toggle_weekday",
+      weekday: 5,
+      baseSessionCount: 2,
+    });
+    expect(shrunkAgain).toMatchObject({
+      approvedRepeatCycleCount: 2,
+      extraDatePolicy: "repeat_from_start",
+    });
+    expect(vocabPlannerReducer(shrunkAgain, {
+      type: "schedule/toggle_weekday",
+      weekday: 5,
+      baseSessionCount: 2,
+    })).toMatchObject({
+      approvedRepeatCycleCount: 2,
+      extraDatePolicy: "unconfirmed",
+    });
   });
 });
