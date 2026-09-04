@@ -1650,8 +1650,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 94,
-      "pathSetSha256": "9a1bb4b376459a9cdde4360b1c4467a9b8807d4161299f2e7d1fc21f05b9f52f"
+      "fileCount": 95,
+      "pathSetSha256": "7846f49df0c8ad305e105677b39d77dd6d822ea7cf0b49ce571a255ef2b74286"
     },
     {
       "path": "src/lib/deploy",
@@ -1973,6 +1973,11 @@
       "path": "supabase/migrations/20260904083500_extend_simseok_question_import_timeout.sql",
       "owner": "assignments",
       "flow": "assignment-range-create"
+    },
+    {
+      "path": "supabase/migrations/20260904155047_allow_immediate_bulk_assignment_sessions.sql",
+      "owner": "assignments",
+      "flow": "weekday-unit-allocation"
     }
   ],
   "features": [
@@ -2981,7 +2986,8 @@
           "supabase/migrations/20260810123000_add_scheduled_bulk_assignment_series.sql",
           "supabase/migrations/20260822010300_add_vocab_assignment_completion_queue.sql",
           "supabase/migrations/20260824010000_add_assignment_retry_rules.sql",
-          "supabase/migrations/20260829120000_preserve_vocab_weekday_unit_rules.sql"
+          "supabase/migrations/20260829120000_preserve_vocab_weekday_unit_rules.sql",
+          "supabase/migrations/20260904155047_allow_immediate_bulk_assignment_sessions.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/bulk-assignments/preview/route.ts",
@@ -3000,6 +3006,7 @@
           "src/lib/admin/vocab-unit-allocation-rule.test.ts",
           "src/lib/database/vocab-weekday-unit-rule.integration.test.ts",
           "src/lib/database/vocab-assignment-completion-queue-migration-contract.test.ts",
+          "src/lib/database/immediate-bulk-assignment-sessions-migration-contract.test.ts",
           "src/features/assignment-queue/ui/assignment-queue-history.test.tsx",
           "src/lib/admin/assignment-request-contract.characterization.test.ts",
           "src/lib/services/regular-assignment-scope-contract.test.ts",

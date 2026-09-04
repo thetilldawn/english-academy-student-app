@@ -185,15 +185,11 @@ export function vocabPlannerReducer(
         selectionMode: action.value,
       };
     case "schedule/enabled": {
-      const shouldNormalizeRangeSplit =
-        !action.enabled && state.assignmentMode === "per_session";
       return {
         ...state,
         scheduleEnabled: action.enabled,
-        assignmentMode: shouldNormalizeRangeSplit
-          ? "all_sessions"
-          : state.assignmentMode,
-        overflowPolicy: shouldNormalizeRangeSplit
+        assignmentMode: state.assignmentMode,
+        overflowPolicy: !action.enabled && state.assignmentMode === "per_session"
           ? "leave"
           : state.overflowPolicy,
         extraDatePolicy: "unconfirmed",

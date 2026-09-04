@@ -228,7 +228,10 @@ export function VocabRangeAssignmentSections({
       >
         {controller.commonPlan ? (
           <BulkSeriesPreview
-            completionGated={controller.commonPlan.distribution === "split"}
+            completionGated={
+              controller.commonPlan.distribution === "split" &&
+              controller.commonPlan.selectedDateCount > 0
+            }
             controller={bulk}
             students={students}
           />

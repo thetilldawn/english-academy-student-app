@@ -180,7 +180,7 @@ describe("vocabPlannerReducer extra date decision", () => {
     );
   });
 
-  it("시험일을 끄면 단순한 전체 범위 1회 배정으로 맞춘다", () => {
+  it("회차별 배정은 시험일을 꺼도 회차 구분을 보존한다", () => {
     const disabled = vocabPlannerReducer({
       ...state,
       assignmentMode: "per_session",
@@ -190,7 +190,7 @@ describe("vocabPlannerReducer extra date decision", () => {
       enabled: false,
     });
     expect(disabled).toMatchObject({
-      assignmentMode: "all_sessions",
+      assignmentMode: "per_session",
       overflowPolicy: "leave",
       scheduleEnabled: false,
     });

@@ -16,7 +16,10 @@ import {
   extendScheduleSlotsFromRecurrence,
   resolveVocabBaseSessionUnitCounts,
 } from "../domain/vocab-schedule";
-import { resolveVocabUnitCycleAllocation } from "../domain/vocab-unit-allocation";
+import {
+  resolveUndatedVocabUnitCycleAllocation,
+  resolveVocabUnitCycleAllocation,
+} from "../domain/vocab-unit-allocation";
 import type { VocabPlannerState } from "./vocab-assignment-planner-state";
 
 export function useVocabAssignmentDerivedPlan({
@@ -70,10 +73,7 @@ export function useVocabAssignmentDerivedPlan({
     planner.assignmentMode,
   );
   const distribution = assignmentModePlan.distribution;
-  const effectiveSplitBasis: VocabSplitBasis =
-    planner.scheduleEnabled !== false && distribution === "split"
-      ? assignmentModePlan.splitBasis
-      : "question_count";
+  const effectiveSplitBasis: VocabSplitBasis = assignmentModePlan.splitBasis;
   const unitAllocationRule = useMemo(() => {
     return {
       schemaVersion: 1 as const,
@@ -91,33 +91,45 @@ export function useVocabAssignmentDerivedPlan({
     };
   }, [planner.unitsPerSession]);
   const baseSessionUnitCounts = useMemo(
-    () => resolveVocabBaseSessionUnitCounts({
-      slots: allScheduleSlots,
-      mode: "same",
-      unitsPerSession: planner.unitsPerSession,
-      weekdayUnitsPerSession: unitAllocationRule.weekdayUnitsPerSession,
-    }),
+    () => planner.scheduleEnabled === false &&
+        effectiveSplitBasis === "range_unit"
+      ? [planner.unitsPerSession]
+      : resolveVocabBaseSessionUnitCounts({
+          slots: allScheduleSlots,
+          mode: "same",
+          unitsPerSession: planner.unitsPerSession,
+          weekdayUnitsPerSession: unitAllocationRule.weekdayUnitsPerSession,
+        }),
     [
       allScheduleSlots,
+      effectiveSplitBasis,
+      planner.scheduleEnabled,
       planner.unitsPerSession,
       unitAllocationRule.weekdayUnitsPerSession,
     ],
   );
   const unitAllocation = useMemo(
     () => effectiveSplitBasis === "range_unit"
-      ? resolveVocabUnitCycleAllocation({
-          orderedUnitIds: selectedUnits.map((unit) => unit.id),
-          baseSessionUnitCounts,
-          selectedDateCount: scheduleSlots.length,
-          overflowPolicy: planner.overflowPolicy,
-          extraDatePolicy: planner.extraDatePolicy,
-        })
+      ? planner.scheduleEnabled === false
+        ? resolveUndatedVocabUnitCycleAllocation({
+            orderedUnitIds: selectedUnits.map((unit) => unit.id),
+            unitsPerSession: planner.unitsPerSession,
+          })
+        : resolveVocabUnitCycleAllocation({
+            orderedUnitIds: selectedUnits.map((unit) => unit.id),
+            baseSessionUnitCounts,
+            selectedDateCount: scheduleSlots.length,
+            overflowPolicy: planner.overflowPolicy,
+            extraDatePolicy: planner.extraDatePolicy,
+          })
       : null,
     [
       baseSessionUnitCounts,
       effectiveSplitBasis,
       planner.extraDatePolicy,
       planner.overflowPolicy,
+      planner.scheduleEnabled,
+      planner.unitsPerSession,
       scheduleSlots.length,
       selectedUnits,
     ],
@@ -170,6 +182,36 @@ export function useVocabAssignmentDerivedPlan({
       const previewBlockingIssues = localIssues.filter(
         (issue) => issue.path !== "commonPlan.sessions",
       );
+      if (effectiveSplitBasis === "range_unit") {
+        return previewBlockingIssues.length === 0 &&
+            unitAllocation &&
+            !unitAllocation.issue &&
+            unitAllocation.sessionUnitIds.length > 0
+          ? {
+              datasetId: planner.datasetId,
+              distribution: "split" as const,
+              splitBasis: "range_unit" as const,
+              orderedUnitIds: unitIds,
+              rangeUnitCounts: baseSessionUnitCounts,
+              unitAllocationRule,
+              questionCount,
+              overflowPolicy: "leave" as const,
+              extraDatePolicy: "unconfirmed" as const,
+              selectedDateCount: 0,
+              selectionMode: planner.selectionMode,
+              planNonce: planner.planNonce,
+              sessions: unitAllocation.sessionUnitIds.map((sessionUnitIds) => ({
+                unitIds: sessionUnitIds,
+                availableLocalDateTime: null,
+                deadlineLocalDateTime: null,
+              })),
+              recurrenceSessions: [{
+                availableLocalDateTime: null,
+                deadlineLocalDateTime: null,
+              }],
+            }
+          : undefined;
+      }
       return previewBlockingIssues.length === 0 && unitIds.length > 0
         ? {
             datasetId: planner.datasetId,

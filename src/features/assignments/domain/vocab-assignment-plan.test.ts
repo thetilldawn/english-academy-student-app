@@ -36,7 +36,10 @@ import {
   resolveVocabRepeatCycleCount,
   resolveVocabBaseSessionUnitCounts,
 } from "./vocab-schedule";
-import { resolveVocabUnitCycleAllocation } from "./vocab-unit-allocation";
+import {
+  resolveUndatedVocabUnitCycleAllocation,
+  resolveVocabUnitCycleAllocation,
+} from "./vocab-unit-allocation";
 
 const exam: ExamSettings = {
   directionRatio: 50,
@@ -119,6 +122,28 @@ describe("단어 시험 공통 배정 계획", () => {
       remainingUnitIds: [],
       defaultSessionCount: 3,
       sessionCycleIndexes: [0, 0, 0],
+      issue: null,
+    });
+  });
+
+  it("날짜 없는 회차별 계획도 회차당 단위 수로 전체 범위를 완주한다", () => {
+    const orderedUnitIds = Array.from(
+      { length: 25 },
+      (_, index) => `${index + 1}`,
+    );
+    expect(resolveUndatedVocabUnitCycleAllocation({
+      orderedUnitIds,
+      unitsPerSession: 5,
+    })).toMatchObject({
+      defaultSessionCount: 5,
+      remainingUnitIds: [],
+      sessionUnitIds: [
+        ["1", "2", "3", "4", "5"],
+        ["6", "7", "8", "9", "10"],
+        ["11", "12", "13", "14", "15"],
+        ["16", "17", "18", "19", "20"],
+        ["21", "22", "23", "24", "25"],
+      ],
       issue: null,
     });
   });

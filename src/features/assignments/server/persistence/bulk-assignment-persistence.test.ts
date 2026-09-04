@@ -23,6 +23,24 @@ const queueItemA = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
 const queueItemB = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
 
 describe("bulk assignment persistence contract", () => {
+  it("uses the writer that accepts a fully immediate regular series", async () => {
+    const assignment = bulkAssignmentSchema.parse(bulkImmediateSubmitContract);
+    const rpc = vi.fn().mockResolvedValue({ data: [], error: null });
+
+    await persistBulkAssignment({
+      client: { rpc } as never,
+      assignment,
+      requestSha256: "a".repeat(64),
+      batches: [],
+      queueSeries: null,
+    });
+
+    expect(rpc).toHaveBeenCalledWith(
+      "create_bulk_vocab_assignments_v11",
+      expect.any(Object),
+    );
+  });
+
   it("binds the request hash to the Preview plan signature", () => {
     const input = bulkAssignmentSchema.parse(bulkSubmitContract);
     const changed = bulkAssignmentSchema.parse({

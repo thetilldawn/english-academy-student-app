@@ -283,6 +283,51 @@ describe("단어 배정 일정 controller", () => {
     });
   });
 
+  it("회차별은 시험일을 꺼도 선택 범위를 날짜 없는 여러 회차로 끝까지 나눈다", () => {
+    const adjectiveUnits = Array.from({ length: 25 }, (_, index) => ({
+      ...units[index % units.length]!,
+      id: `adjective-unit-${index + 1}`,
+      label: `DAY ${String(index + 1).padStart(2, "0")}`,
+      displayName: `DAY ${String(index + 1).padStart(2, "0")}`,
+      number: index + 1,
+      sortIndex: index + 1,
+    }));
+    const { result } = renderPlanner(adjectiveUnits);
+    selectWholeRange(result);
+
+    act(() => {
+      result.current.actions.changeAssignmentMode("per_session");
+      result.current.actions.changeUnitsPerSession(5);
+      result.current.actions.changeScheduleEnabled(false);
+    });
+
+    expect(result.current.scheduleSlots).toEqual([]);
+    expect(result.current.commonPlan).toMatchObject({
+      distribution: "split",
+      splitBasis: "range_unit",
+      rangeUnitCounts: [5],
+      selectedDateCount: 0,
+      overflowPolicy: "leave",
+      recurrenceSessions: [{
+        availableLocalDateTime: null,
+        deadlineLocalDateTime: null,
+      }],
+    });
+    expect(result.current.commonPlan?.sessions).toHaveLength(5);
+    expect(result.current.commonPlan?.sessions.map((session) => ({
+      unitIds: session.unitIds,
+      available: session.availableLocalDateTime,
+      deadline: session.deadlineLocalDateTime,
+    }))).toEqual(Array.from({ length: 5 }, (_, sessionIndex) => ({
+      unitIds: adjectiveUnits
+        .slice(sessionIndex * 5, sessionIndex * 5 + 5)
+        .map((unit) => unit.id),
+      available: null,
+      deadline: null,
+    })));
+    expect(result.current.defaultSessionCount).toBe(5);
+  });
+
   it("단어 수 배정은 시험일을 꺼도 입력한 수로 바로 시작하는 한 회차를 만든다", () => {
     const { result } = renderPlanner();
     selectWholeRange(result);

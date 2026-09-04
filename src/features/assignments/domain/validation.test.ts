@@ -645,6 +645,72 @@ describe("assignment draft validation", () => {
     expect(validateBulkPreviewProjection(immediateCanonical)).toStrictEqual([]);
   });
 
+  it("회차별 범위는 시험일 없이도 정해 둔 단위 수대로 여러 회차를 허용한다", () => {
+    const orderedUnitIds = [
+      assignmentContractIds.day57,
+      assignmentContractIds.day58,
+      assignmentContractIds.day59,
+      assignmentContractIds.day60,
+    ];
+    const immediateRangeSplit: BulkSeriesAssignmentDraft = {
+      ...baseBulk,
+      commonPlan: {
+        datasetId: assignmentContractIds.dataset,
+        distribution: "split",
+        splitBasis: "range_unit",
+        orderedUnitIds,
+        rangeUnitCounts: [2],
+        unitAllocationRule: {
+          schemaVersion: 1,
+          mode: "same",
+          unitsPerSession: 2,
+          weekdayUnitsPerSession: {
+            1: 2,
+            2: 2,
+            3: 2,
+            4: 2,
+            5: 2,
+            6: 2,
+            7: 2,
+          },
+        },
+        questionCount: { mode: "all" },
+        overflowPolicy: "leave",
+        extraDatePolicy: "unconfirmed",
+        selectedDateCount: 0,
+        selectionMode: "source_order",
+        planNonce: assignmentContractIds.planNonce,
+        recurrenceSessions: [{
+          availableLocalDateTime: null,
+          deadlineLocalDateTime: null,
+        }],
+        sessions: [
+          {
+            unitIds: orderedUnitIds.slice(0, 2),
+            availableLocalDateTime: null,
+            deadlineLocalDateTime: null,
+          },
+          {
+            unitIds: orderedUnitIds.slice(2),
+            availableLocalDateTime: null,
+            deadlineLocalDateTime: null,
+          },
+        ],
+      },
+    };
+
+    expect(validateBulkPreviewProjection(immediateRangeSplit)).toStrictEqual([]);
+    expect(
+      validateBulkPreviewProjection({
+        ...immediateRangeSplit,
+        commonPlan: {
+          ...immediateRangeSplit.commonPlan!,
+          sessions: immediateRangeSplit.commonPlan!.sessions.toReversed(),
+        },
+      }).map((issue) => issue.path),
+    ).toContain("commonPlan.sessions");
+  });
+
   it("allows a same-day bulk start that is already past when its deadline is still future", () => {
     const sameDay: BulkSeriesAssignmentDraft = {
       ...baseBulk,

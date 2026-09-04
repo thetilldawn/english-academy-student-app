@@ -22,6 +22,7 @@ export function VocabUnitAllocationFields({
   fieldErrors?: Partial<Record<VocabAssignmentFieldKey, string>>;
 }) {
   const usesRangeUnits = controller.planner.assignmentMode === "per_session";
+  const scheduleEnabled = controller.planner.scheduleEnabled !== false;
   const showsContinuation = usesRangeUnits ||
     controller.planner.assignmentMode === "word_count";
   if (!showsContinuation) {
@@ -78,7 +79,8 @@ export function VocabUnitAllocationFields({
         </Field>
       ) : null}
 
-      <Field>
+      {scheduleEnabled ? (
+        <Field>
           <FieldLabel as="span" id="vocab-overflow-policy-label">
             <HelpTip
               label="남은 범위 설명"
@@ -118,7 +120,8 @@ export function VocabUnitAllocationFields({
               {overflowError}
             </FieldError>
           ) : null}
-      </Field>
+        </Field>
+      ) : null}
 
       {usesRangeUnits ? (
         <span className={styles.candidateSummary} aria-live="polite">

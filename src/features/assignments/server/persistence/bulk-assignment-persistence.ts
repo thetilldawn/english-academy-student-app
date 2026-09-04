@@ -160,7 +160,7 @@ export async function persistBulkAssignment(input: {
         p_request_sha256: input.requestSha256,
         p_series: input.queueSeries,
       })
-    : input.client.rpc("create_bulk_vocab_assignments_v10", {
+    : input.client.rpc("create_bulk_vocab_assignments_v11", {
         p_idempotency_key: input.assignment.idempotencyKey,
         p_request_sha256: input.requestSha256,
         p_batches: input.batches,

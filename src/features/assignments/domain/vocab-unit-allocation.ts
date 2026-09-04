@@ -105,6 +105,26 @@ export function resolveVocabUnitCycleAllocation(input: {
 }
 
 /**
+ * Splits an ordered range into immediate, undated sessions. The one base
+ * count is repeated until every selected unit is assigned; calendar dates are
+ * deliberately not invented for this path.
+ */
+export function resolveUndatedVocabUnitCycleAllocation(input: {
+  orderedUnitIds: readonly string[];
+  unitsPerSession: number;
+  maximumSessionCount?: number;
+}): VocabUnitCycleAllocation {
+  return resolveVocabUnitCycleAllocation({
+    orderedUnitIds: input.orderedUnitIds,
+    baseSessionUnitCounts: [input.unitsPerSession],
+    selectedDateCount: 1,
+    overflowPolicy: "continue_weekly",
+    extraDatePolicy: "unconfirmed",
+    maximumSessionCount: input.maximumSessionCount,
+  });
+}
+
+/**
  * Converts one student's actual eligible question capacity into the concrete
  * question count for each scheduled quiz. It does not inspect DAY row counts.
  */

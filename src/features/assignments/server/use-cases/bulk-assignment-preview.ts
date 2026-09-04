@@ -23,7 +23,10 @@ import {
   resolveVocabQuestionCapacityScope,
   resolveVocabQuestionCycleAllocation,
 } from "@/features/assignments/domain/vocab-question-allocation";
-import { resolveVocabUnitCycleAllocation } from "@/features/assignments/domain/vocab-unit-allocation";
+import {
+  resolveUndatedVocabUnitCycleAllocation,
+  resolveVocabUnitCycleAllocation,
+} from "@/features/assignments/domain/vocab-unit-allocation";
 import {
   extendScheduleSlotsFromRecurrence,
 } from "@/features/assignments/domain/vocab-schedule";
@@ -426,12 +429,16 @@ export async function resolveBulkAssignmentPreview(
                 "회차별 범위 단위 규칙을 확인해 주세요.",
               );
             }
-            const recurrenceDates = commonPlan.recurrenceSessions.flatMap(
-              (session) => session.availableFrom
-                ? [isoToKoreanDateTimeLocal(session.availableFrom).slice(0, 10)]
-                : [],
-            );
+            const immediate = commonPlan.selectedDateCount === 0;
+            const recurrenceDates = immediate
+              ? []
+              : commonPlan.recurrenceSessions.flatMap(
+                  (session) => session.availableFrom
+                    ? [isoToKoreanDateTimeLocal(session.availableFrom).slice(0, 10)]
+                    : [],
+                );
             if (
+              !immediate &&
               recurrenceDates.length !== commonPlan.recurrenceSessions.length
             ) {
               throw new BulkAssignmentError(
@@ -439,11 +446,14 @@ export async function resolveBulkAssignmentPreview(
                 "범위 단위 배정의 공개 일정을 확인해 주세요.",
               );
             }
-            const serverRangeUnitCounts = resolveVocabUnitCountsForDates({
-              dates: recurrenceDates,
-              rule: unitAllocationRule,
-            });
+            const serverRangeUnitCounts = immediate
+              ? [unitAllocationRule.unitsPerSession]
+              : resolveVocabUnitCountsForDates({
+                  dates: recurrenceDates,
+                  rule: unitAllocationRule,
+                });
             if (
+              (immediate && unitAllocationRule.mode !== "same") ||
               JSON.stringify(serverRangeUnitCounts) !==
                 JSON.stringify(commonPlan.rangeUnitCounts)
             ) {
@@ -452,14 +462,20 @@ export async function resolveBulkAssignmentPreview(
                 "요일별 단위 수가 원래 반복 일정의 규칙과 일치하지 않습니다.",
               );
             }
-            const unitAllocation = resolveVocabUnitCycleAllocation({
-              orderedUnitIds: commonPlan.orderedUnitIds,
-              baseSessionUnitCounts: serverRangeUnitCounts,
-              selectedDateCount: commonPlan.selectedDateCount,
-              overflowPolicy: commonPlan.overflowPolicy,
-              extraDatePolicy: commonPlan.extraDatePolicy,
-              maximumSessionCount: MAXIMUM_BULK_ASSIGNMENT_COUNT,
-            });
+            const unitAllocation = immediate
+              ? resolveUndatedVocabUnitCycleAllocation({
+                  orderedUnitIds: commonPlan.orderedUnitIds,
+                  unitsPerSession: unitAllocationRule.unitsPerSession,
+                  maximumSessionCount: MAXIMUM_BULK_ASSIGNMENT_COUNT,
+                })
+              : resolveVocabUnitCycleAllocation({
+                  orderedUnitIds: commonPlan.orderedUnitIds,
+                  baseSessionUnitCounts: serverRangeUnitCounts,
+                  selectedDateCount: commonPlan.selectedDateCount,
+                  overflowPolicy: commonPlan.overflowPolicy,
+                  extraDatePolicy: commonPlan.extraDatePolicy,
+                  maximumSessionCount: MAXIMUM_BULK_ASSIGNMENT_COUNT,
+                });
             if (unitAllocation.issue) {
               throw new BulkAssignmentError(
                 "invalid_selection",

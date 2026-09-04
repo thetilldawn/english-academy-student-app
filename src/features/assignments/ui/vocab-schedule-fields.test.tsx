@@ -294,6 +294,32 @@ describe("VocabScheduleFields", () => {
     expect(screen.queryByLabelText("수요일 단위 수")).not.toBeInTheDocument();
   });
 
+  it("시험일 없는 회차별 배정은 회차 수만 보이고 일정 전용 선택은 숨긴다", () => {
+    const value = controller();
+    value.planner.assignmentMode = "per_session";
+    value.planner.scheduleEnabled = false;
+    value.planner.unitsPerSession = 5;
+    value.defaultSessionCount = 5;
+    value.unitAllocation = {
+      defaultSessionCount: 5,
+      issue: null,
+      remainingUnitIds: [],
+      requiresExtraDateDecision: false,
+      sessionCycleIndexes: [0, 0, 0, 0, 0],
+      sessionUnitIds: Array.from({ length: 5 }, (_, index) => [
+        `unit-${index + 1}`,
+      ]),
+    };
+
+    render(<VocabUnitAllocationFields controller={value} />);
+
+    expect(screen.getByText("회차당 단위 수")).toBeVisible();
+    expect(screen.getByText("기본 5회")).toBeVisible();
+    expect(screen.queryByText("남은 범위")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "같은 요일로 이어서" }))
+      .not.toBeInTheDocument();
+  });
+
   it("단어 수 직접 입력도 남은 범위를 다음 주로 잇는 선택을 제공한다", () => {
     const value = controller();
     value.planner.questionCountMode = "manual";

@@ -1,7 +1,10 @@
 import { z } from "zod";
 
 import { resolveVocabUnitCountsForDates } from "@/lib/admin/vocab-unit-allocation";
-import { resolveVocabUnitCycleAllocation } from "@/features/assignments/domain/vocab-unit-allocation";
+import {
+  resolveUndatedVocabUnitCycleAllocation,
+  resolveVocabUnitCycleAllocation,
+} from "@/features/assignments/domain/vocab-unit-allocation";
 import {
   questionOrderModes,
   timingModes,
@@ -82,18 +85,27 @@ const bulkCommonPlanSchema = z
   .strict()
   .superRefine((value, context) => {
     const immediate = value.selectedDateCount === 0;
+    const undatedUnitSplit = immediate &&
+      value.distribution === "split" &&
+      value.splitBasis === "range_unit";
     if (
       immediate &&
-      (value.distribution !== "repeat" ||
-        value.splitBasis !== "question_count" ||
-        value.overflowPolicy !== "leave" ||
-        value.sessions.length !== 1 ||
-        value.recurrenceSessions.length !== 1)
+      !(
+        (value.distribution === "repeat" &&
+          value.splitBasis === "question_count" &&
+          value.overflowPolicy === "leave" &&
+          value.sessions.length === 1 &&
+          value.recurrenceSessions.length === 1) ||
+        (undatedUnitSplit &&
+          value.overflowPolicy === "leave" &&
+          value.extraDatePolicy === "unconfirmed" &&
+          value.recurrenceSessions.length === 1)
+      )
     ) {
       context.addIssue({
         code: "custom",
         path: ["selectedDateCount"],
-        message: "시험일 없는 배정은 한 번만 바로 배정할 수 있습니다.",
+        message: "시험일 없는 배정의 회차 구성을 확인해 주세요.",
       });
     }
     if (
@@ -129,7 +141,9 @@ const bulkCommonPlanSchema = z
     }
     if (
       value.splitBasis === "range_unit" &&
-      value.rangeUnitCounts.length !== value.selectedDateCount
+      value.rangeUnitCounts.length !== (undatedUnitSplit
+        ? 1
+        : value.selectedDateCount)
     ) {
       context.addIssue({
         code: "custom",
@@ -257,6 +271,7 @@ const bulkCommonPlanSchema = z
     }
     if (
       value.splitBasis === "range_unit" &&
+      !immediate &&
       value.unitAllocationRule &&
       value.recurrenceSessions.length === value.selectedDateCount
     ) {
@@ -283,16 +298,28 @@ const bulkCommonPlanSchema = z
     }
     if (
       value.splitBasis === "range_unit" &&
-      value.rangeUnitCounts.length === value.selectedDateCount
+      value.rangeUnitCounts.length === (undatedUnitSplit
+        ? 1
+        : value.selectedDateCount)
     ) {
-      const allocation = resolveVocabUnitCycleAllocation({
-        orderedUnitIds: value.orderedUnitIds,
-        baseSessionUnitCounts: value.rangeUnitCounts,
-        selectedDateCount: value.selectedDateCount,
-        overflowPolicy: value.overflowPolicy,
-        extraDatePolicy: value.extraDatePolicy,
-      });
+      const rule = value.unitAllocationRule;
+      const allocation = undatedUnitSplit && rule
+        ? resolveUndatedVocabUnitCycleAllocation({
+            orderedUnitIds: value.orderedUnitIds,
+            unitsPerSession: rule.unitsPerSession,
+          })
+        : resolveVocabUnitCycleAllocation({
+            orderedUnitIds: value.orderedUnitIds,
+            baseSessionUnitCounts: value.rangeUnitCounts,
+            selectedDateCount: value.selectedDateCount,
+            overflowPolicy: value.overflowPolicy,
+            extraDatePolicy: value.extraDatePolicy,
+          });
       if (
+        (undatedUnitSplit &&
+          (rule?.mode !== "same" ||
+            JSON.stringify(value.rangeUnitCounts) !==
+              JSON.stringify([rule?.unitsPerSession]))) ||
         allocation.issue ||
         JSON.stringify(allocation.sessionUnitIds) !==
           JSON.stringify(value.sessions.map((session) => session.unitIds))

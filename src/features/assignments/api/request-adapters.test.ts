@@ -207,6 +207,42 @@ const immediateBulkPlan: BulkCommonAssignmentPlan = {
   ],
 };
 
+const immediateRangeSplitPlan: BulkCommonAssignmentPlan = {
+  datasetId: assignmentContractIds.dataset,
+  distribution: "split",
+  splitBasis: "range_unit",
+  orderedUnitIds: [...reverseUnitIds],
+  rangeUnitCounts: [1],
+  unitAllocationRule: {
+    schemaVersion: 1,
+    mode: "same",
+    unitsPerSession: 1,
+    weekdayUnitsPerSession: {
+      1: 1,
+      2: 1,
+      3: 1,
+      4: 1,
+      5: 1,
+      6: 1,
+      7: 1,
+    },
+  },
+  questionCount: { mode: "all" },
+  overflowPolicy: "leave",
+  extraDatePolicy: "unconfirmed",
+  selectedDateCount: 0,
+  selectionMode: "source_order",
+  planNonce: assignmentContractIds.planNonce,
+  recurrenceSessions: [
+    { availableLocalDateTime: null, deadlineLocalDateTime: null },
+  ],
+  sessions: reverseUnitIds.map((unitId) => ({
+    unitIds: [unitId],
+    availableLocalDateTime: null,
+    deadlineLocalDateTime: null,
+  })),
+};
+
 const scheduledBulkDraft: BulkSeriesAssignmentDraft = {
   kind: "bulk_series",
   questionMode: "book_meaning_choice",
@@ -482,6 +518,37 @@ describe("assignment request adapters", () => {
     );
     expect(bulkAssignmentSchema.parse(request.body)).toStrictEqual(
       bulkImmediateSubmitContract,
+    );
+  });
+
+  it("keeps undated range sessions separate through preview and submit", () => {
+    const draft: BulkSeriesAssignmentDraft = {
+      ...immediateBulkDraft,
+      commonPlan: immediateRangeSplitPlan,
+    };
+    const preview = buildBulkAssignmentPreviewRequest(draft);
+    const request = buildBulkAssignmentRequest(
+      draft,
+      assignmentContractIds.idempotencyKey,
+      NOW,
+      assignmentContractIds.previewPlanSignature,
+    );
+
+    expect(preview.body.commonPlan).toMatchObject({
+      distribution: "split",
+      splitBasis: "range_unit",
+      selectedDateCount: 0,
+      rangeUnitCounts: [1],
+    });
+    expect(preview.body.commonPlan.sessions).toHaveLength(3);
+    expect(preview.body.commonPlan.sessions.every((session) =>
+      session.availableFrom === null && session.availableUntil === null
+    )).toBe(true);
+    expect(bulkAssignmentPreviewSchema.parse(preview.body)).toStrictEqual(
+      preview.body,
+    );
+    expect(bulkAssignmentSchema.parse(request.body)).toStrictEqual(
+      request.body,
     );
   });
 

@@ -18,7 +18,10 @@ import {
 } from "./model";
 import { ISO_WEEKDAYS } from "./vocab-assignment-contract";
 import { resolveVocabUnitCountsForDates } from "./vocab-schedule";
-import { resolveVocabUnitCycleAllocation } from "./vocab-unit-allocation";
+import {
+  resolveUndatedVocabUnitCycleAllocation,
+  resolveVocabUnitCycleAllocation,
+} from "./vocab-unit-allocation";
 
 export type AssignmentDraftIssueCode =
   | "required"
@@ -512,6 +515,9 @@ function validateCommonPlan(
     return;
   }
   const immediate = plan.selectedDateCount === 0;
+  const undatedUnitSplit = immediate &&
+    plan.distribution === "split" &&
+    plan.splitBasis === "range_unit";
   validateId(plan.datasetId, "commonPlan.datasetId", issues);
   validateId(plan.planNonce, "commonPlan.planNonce", issues);
   validateUniqueIds(plan.orderedUnitIds, "commonPlan.orderedUnitIds", issues);
@@ -532,8 +538,11 @@ function validateCommonPlan(
         message: "회차별 범위 단위 규칙을 확인해 주세요.",
       });
     }
+    const expectedRangeUnitCountLength = undatedUnitSplit
+      ? 1
+      : plan.selectedDateCount;
     if (
-      plan.rangeUnitCounts.length !== plan.selectedDateCount ||
+      plan.rangeUnitCounts.length !== expectedRangeUnitCountLength ||
       plan.rangeUnitCounts.some((count) => !integerInRange(count, 1, 30))
     ) {
       issues.push({
@@ -543,6 +552,7 @@ function validateCommonPlan(
       });
     } else {
       if (
+        !immediate &&
         rule &&
         plan.recurrenceSessions.length === plan.selectedDateCount &&
         JSON.stringify(resolveVocabUnitCountsForDates({
@@ -558,14 +568,23 @@ function validateCommonPlan(
           message: "요일별 단위 수가 원래 반복 일정의 규칙과 일치하지 않습니다.",
         });
       }
-      const allocation = resolveVocabUnitCycleAllocation({
-        orderedUnitIds: plan.orderedUnitIds,
-        baseSessionUnitCounts: plan.rangeUnitCounts,
-        selectedDateCount: plan.selectedDateCount,
-        overflowPolicy: plan.overflowPolicy,
-        extraDatePolicy: plan.extraDatePolicy,
-      });
+      const allocation = undatedUnitSplit && rule
+        ? resolveUndatedVocabUnitCycleAllocation({
+            orderedUnitIds: plan.orderedUnitIds,
+            unitsPerSession: rule.unitsPerSession,
+          })
+        : resolveVocabUnitCycleAllocation({
+            orderedUnitIds: plan.orderedUnitIds,
+            baseSessionUnitCounts: plan.rangeUnitCounts,
+            selectedDateCount: plan.selectedDateCount,
+            overflowPolicy: plan.overflowPolicy,
+            extraDatePolicy: plan.extraDatePolicy,
+          });
       if (
+        (undatedUnitSplit &&
+          (rule?.mode !== "same" ||
+            JSON.stringify(plan.rangeUnitCounts) !==
+              JSON.stringify([rule?.unitsPerSession]))) ||
         allocation.issue ||
         JSON.stringify(allocation.sessionUnitIds) !==
           JSON.stringify(plan.sessions.map((session) => session.unitIds))
@@ -651,16 +670,22 @@ function validateCommonPlan(
   }
   if (
     immediate &&
-    (plan.distribution !== "repeat" ||
-      plan.splitBasis !== "question_count" ||
-      plan.overflowPolicy !== "leave" ||
-      plan.sessions.length !== 1 ||
-      plan.recurrenceSessions.length !== 1)
+    !(
+      (plan.distribution === "repeat" &&
+        plan.splitBasis === "question_count" &&
+        plan.overflowPolicy === "leave" &&
+        plan.sessions.length === 1 &&
+        plan.recurrenceSessions.length === 1) ||
+      (undatedUnitSplit &&
+        plan.overflowPolicy === "leave" &&
+        plan.extraDatePolicy === "unconfirmed" &&
+        plan.recurrenceSessions.length === 1)
+    )
   ) {
     issues.push({
       code: "invalid_order",
       path: "commonPlan.selectedDateCount",
-      message: "시험일 없는 배정은 한 번만 바로 배정할 수 있습니다.",
+      message: "시험일 없는 배정의 회차 구성을 확인해 주세요.",
     });
   }
   if (!["source_order", "random"].includes(plan.selectionMode)) {
