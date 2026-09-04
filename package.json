@@ -45,6 +45,7 @@
     "import:exam-use": "tsx scripts/import-exam-use-package.ts",
     "import:simseok-sem2-preview": "tsx scripts/import-simseok-sem2-preview.ts",
     "import:simseok-sem2-question-preview": "tsx scripts/import-simseok-sem2-question-preview.ts",
+    "import:simseok-g10-scope-correction-preview": "tsx scripts/import-simseok-g10-scope-correction-preview.ts",
     "import:canonical-question-preview": "tsx scripts/import-canonical-question-preview.ts",
     "import:voca-pronunciation": "tsx scripts/import-voca-pronunciation-package.ts",
     "import:voca-pronunciation-v2": "tsx scripts/import-vocab-pronunciation-release-v2.ts",

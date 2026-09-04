@@ -1650,8 +1650,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 92,
-      "pathSetSha256": "4c79a378b1589653f9f803df2178ef3a7d91300ab7a8182c4809c2981df91e58"
+      "fileCount": 94,
+      "pathSetSha256": "9a1bb4b376459a9cdde4360b1c4467a9b8807d4161299f2e7d1fc21f05b9f52f"
     },
     {
       "path": "src/lib/deploy",
@@ -1686,8 +1686,8 @@
     {
       "path": "src/lib/vocab",
       "owner": "shared-contract",
-      "fileCount": 28,
-      "pathSetSha256": "f091d4e054ddb1452bdb4449c7b1e38cc8dd5ed448c343861e9c0bb099eb5bcc"
+      "fileCount": 30,
+      "pathSetSha256": "8db99df21598a53cdd83586b7b1a0c19df2fc9399e761b79cc80078a5c4661c6"
     }
   ],
   "serverOwners": [],
@@ -1961,6 +1961,11 @@
     },
     {
       "path": "supabase/migrations/20260903200316_add_simseok_sem2_definition_preview.sql",
+      "owner": "assignments",
+      "flow": "assignment-range-create"
+    },
+    {
+      "path": "supabase/migrations/20260904021927_correct_simseok_g10_preview_scope.sql",
       "owner": "assignments",
       "flow": "assignment-range-create"
     },
@@ -2683,6 +2688,7 @@
           "supabase/migrations/20260902123000_fix_canonical_question_unit_id_ambiguity.sql",
           "supabase/migrations/20260903190904_add_simseok_sem2_preview_vocab.sql",
           "supabase/migrations/20260903200316_add_simseok_sem2_definition_preview.sql",
+          "supabase/migrations/20260904021927_correct_simseok_g10_preview_scope.sql",
           "supabase/migrations/20260904083500_extend_simseok_question_import_timeout.sql"
         ],
         "cacheStreaming": [
@@ -2701,6 +2707,9 @@
           "src/lib/assignment/question-planner.test.ts",
           "src/lib/admin/assignment-request-contract.characterization.test.ts",
           "src/lib/services/regular-assignment-scope-contract.test.ts",
+          "src/lib/database/simseok-g10-scope-correction-migration-contract.test.ts",
+          "src/lib/database/simseok-g10-scope-correction.integration.test.ts",
+          "src/lib/vocab/simseok-g10-scope-correction-preview-contract.test.ts",
           "src/app/mixed-assignment-api-contract.test.ts",
           "src/features/assignments/server/use-cases/bulk-assignment-preparation-error.test.ts"
         ]
