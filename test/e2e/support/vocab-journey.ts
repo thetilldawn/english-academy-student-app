@@ -4,6 +4,7 @@ import type { PreviewStudent } from "../fixtures/preview-run";
 
 type AssignmentPlan = {
   datasetId?: string;
+  direction?: "english_to_korean" | "korean_to_english" | "mixed";
   perQuestionSeconds?: number;
   questionCount?: number;
   questionMode?:
@@ -118,6 +119,17 @@ async function configureRangeAssignment(page: Page, plan: AssignmentPlan = {}) {
   await chooseDataset(page, plan.datasetId);
   await chooseRange(page, plan.rangeMode ?? "all");
   await chooseQuestionMode(page, plan.questionMode);
+  if (plan.direction) {
+    const label = plan.direction === "english_to_korean"
+      ? "영어 → 뜻"
+      : plan.direction === "korean_to_english"
+        ? "뜻 → 영어"
+        : "혼합";
+    await page
+      .locator('[data-field-key="direction"]')
+      .getByRole("button", { name: label, exact: true })
+      .click();
+  }
   if (plan.questionCount && plan.questionCount !== 4) {
     await page
       .getByRole("spinbutton", { name: "회차당 단어 수" })
@@ -187,6 +199,7 @@ export async function assignCanonicalRange(
   student: PreviewStudent,
   input: {
     datasetId: string;
+    perQuestionSeconds?: number;
     questionMode:
       | "canonical_definition_to_headword"
       | "canonical_example_to_headword";
@@ -195,7 +208,7 @@ export async function assignCanonicalRange(
   await openSingleAssignment(page, student);
   await configureRangeAssignment(page, {
     datasetId: input.datasetId,
-    perQuestionSeconds: 5,
+    perQuestionSeconds: input.perQuestionSeconds ?? 5,
     questionCount: 4,
     questionMode: input.questionMode,
     rangeMode: "first-unit",

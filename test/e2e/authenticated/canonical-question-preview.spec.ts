@@ -23,6 +23,10 @@ const scenarios = [
 
 type AttemptQuestion = {
   choices: string[];
+  choicePronunciations: Array<{
+    audioUrl: string | null;
+    available: boolean;
+  }>;
   direction: "english_to_korean" | "korean_to_english";
   id: string;
   prompt: string;
@@ -38,10 +42,23 @@ for (const scenario of scenarios) {
       student,
       {
         datasetId: canonicalDatasetId,
+        perQuestionSeconds: 8,
         questionMode: scenario.mode,
       },
     );
     const studentPage = await previewRun.openStudent(student);
+    await studentPage.setViewportSize({ width: 467, height: 986 });
+    await studentPage.addInitScript(() => {
+      const browserWindow = window as typeof window & {
+        __quizAudioPlayCalls?: string[];
+      };
+      browserWindow.__quizAudioPlayCalls = [];
+      const originalPlay = HTMLMediaElement.prototype.play;
+      HTMLMediaElement.prototype.play = function patchedPlay() {
+        browserWindow.__quizAudioPlayCalls?.push(this.currentSrc || this.src);
+        return originalPlay.call(this);
+      };
+    });
     await startAssignmentById(studentPage, assignmentId);
     const attemptId = new URL(studentPage.url()).pathname.split("/").at(-1);
     expect(attemptId).toMatch(/^[0-9a-f-]{36}$/);
@@ -66,6 +83,12 @@ for (const scenario of scenarios) {
 
     const firstQuestion = questions[0];
     expect(firstQuestion).toBeDefined();
+    expect(firstQuestion!.choicePronunciations).toHaveLength(4);
+    expect(
+      firstQuestion!.choicePronunciations.every(
+        (pronunciation) => pronunciation.available && pronunciation.audioUrl,
+      ),
+    ).toBe(true);
     await expect(studentPage.locator("#quiz-prompt > span").first()).toHaveText(
       firstQuestion!.prompt,
     );
@@ -80,8 +103,78 @@ for (const scenario of scenarios) {
             .querySelector("span:nth-child(2) > span:first-child")
             ?.textContent?.trim() ?? ""
         )
-      );
+    );
     expect(visibleChoices).toEqual(firstQuestion!.choices);
+    const speakerButtons = firstQuestion!.choices.map((choice) =>
+      studentPage.getByRole("button", {
+        name: choice + " 발음 듣기",
+        exact: true,
+      })
+    );
+    for (const speakerButton of speakerButtons) {
+      await expect(speakerButton).toBeVisible();
+    }
+    const firstQuestionId = await studentPage
+      .locator("#quiz-prompt")
+      .getAttribute("data-question-id");
+    await speakerButtons[0].click();
+    await expect.poll(() =>
+      studentPage.evaluate(() =>
+        (window as typeof window & { __quizAudioPlayCalls?: string[] })
+          .__quizAudioPlayCalls ?? []
+      )
+    ).toContain(firstQuestion!.choicePronunciations[0]!.audioUrl);
+    await expect(studentPage.locator("#quiz-prompt")).toHaveAttribute(
+      "data-question-id",
+      firstQuestionId!,
+    );
+    await expect(studentPage.locator('button[data-feedback="idle"]')).toHaveCount(4);
+
+    const headerMetrics = await studentPage.evaluate(() => {
+      const frame = document.querySelector("main section");
+      const topline = frame?.firstElementChild as HTMLElement | null;
+      const phase = topline?.querySelector("p") as HTMLElement | null;
+      const title = topline?.querySelector("strong") as HTMLElement | null;
+      const timer = topline?.querySelector('[data-testid="quiz-timer"]') as HTMLElement | null;
+      const topRect = topline?.getBoundingClientRect();
+      const timerRect = timer?.getBoundingClientRect();
+      return {
+        overflow: document.documentElement.scrollWidth - window.innerWidth,
+        phaseFont: phase ? Number.parseFloat(getComputedStyle(phase).fontSize) : 0,
+        timerCenterDelta: topRect && timerRect
+          ? Math.abs(
+              topRect.top + topRect.height / 2 -
+                (timerRect.top + timerRect.height / 2),
+            )
+          : 999,
+        timerFont: timer ? Number.parseFloat(getComputedStyle(timer).fontSize) : 0,
+        timerLineHeight: timer ? Number.parseFloat(getComputedStyle(timer).lineHeight) : 0,
+        titleFont: title ? Number.parseFloat(getComputedStyle(title).fontSize) : 0,
+      };
+    });
+    expect(headerMetrics).toMatchObject({
+      phaseFont: 16,
+      timerFont: 24,
+      timerLineHeight: 24,
+      titleFont: 18,
+    });
+    expect(headerMetrics.timerCenterDelta).toBeLessThan(1);
+    expect(headerMetrics.overflow).toBeLessThanOrEqual(1);
+
+    const audioUrls = [
+      ...new Set(
+        firstQuestion!.choicePronunciations.map(
+          (pronunciation) => pronunciation.audioUrl!,
+        ),
+      ),
+    ];
+    const audioResponses = await Promise.all(
+      audioUrls.map((audioUrl) => studentPage.request.get(audioUrl)),
+    );
+    for (const response of audioResponses) {
+      expect(response.status()).toBe(200);
+      expect(response.headers()["content-type"]).toContain("audio/mpeg");
+    }
     const blankCount = firstQuestion!.prompt.split("_____").length - 1;
     expect(blankCount).toBe(
       scenario.mode === "canonical_example_to_headword" ? 1 : 0,
