@@ -33,7 +33,7 @@
   color: var(--muted);
   background: var(--card);
   font: inherit;
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
   font-weight: 700;
   line-height: 1;
   cursor: help;
@@ -92,7 +92,7 @@
   border-radius: var(--radius);
   color: var(--text-primary);
   background: var(--card);
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
   font-weight: 600;
   line-height: 1.45;
   pointer-events: none;

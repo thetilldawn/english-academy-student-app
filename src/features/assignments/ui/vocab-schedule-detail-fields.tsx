@@ -88,13 +88,15 @@ export function VocabScheduleDetailFields({
                   className={styles.sessionTimeRow}
                   key={row.sessionNumber}
                 >
-                  <strong>
-                    {row.sessionNumber}회차 [{sessionDateLabel(row.date)}]
-                    {row.questionCount === null
-                      ? ""
-                      : ` ${row.questionCount}개`}
-                  </strong>
-                  {row.queued ? <MetaTag tone="neutral">완료 후 생성</MetaTag> : null}
+                  <span className={styles.sessionTimeIdentity}>
+                    <strong>
+                      {row.sessionNumber}회차 [{sessionDateLabel(row.date)}]
+                      {row.questionCount === null
+                        ? ""
+                        : ` ${row.questionCount}개`}
+                    </strong>
+                    {row.queued ? <MetaTag tone="neutral">완료 후 생성</MetaTag> : null}
+                  </span>
                   <span className={styles.generatedSessionTime}>
                     {availableTimeEnabled
                       ? `공개 ${row.availableLocalDateTime.slice(11, 16)}`
@@ -108,15 +110,17 @@ export function VocabScheduleDetailFields({
             }
             return (
               <div className={styles.sessionTimeRow} key={row.sessionNumber}>
-                <strong>
-                  {row.sessionNumber}회차 [{sessionDateLabel(row.date)}]
-                  {row.questionCount === null
-                    ? ""
-                    : ` ${row.questionCount}개`}
-                </strong>
-                {row.queued ? <MetaTag tone="neutral">완료 후 생성</MetaTag> : null}
+                <span className={styles.sessionTimeIdentity}>
+                  <strong>
+                    {row.sessionNumber}회차 [{sessionDateLabel(row.date)}]
+                    {row.questionCount === null
+                      ? ""
+                      : ` ${row.questionCount}개`}
+                  </strong>
+                  {row.queued ? <MetaTag tone="neutral">완료 후 생성</MetaTag> : null}
+                </span>
                 {availableTimeEnabled ? (
-                  <Field as="label">
+                  <Field as="label" className={styles.sessionAvailableField}>
                     <FieldLabel as="span">공개</FieldLabel>
                     <Input
                       aria-errormessage={availableError
@@ -143,7 +147,7 @@ export function VocabScheduleDetailFields({
                     ) : null}
                   </Field>
                 ) : null}
-                <Field as="label">
+                <Field as="label" className={styles.sessionDeadlineField}>
                   <FieldLabel as="span">마감</FieldLabel>
                   <Input
                     aria-errormessage={deadlineError

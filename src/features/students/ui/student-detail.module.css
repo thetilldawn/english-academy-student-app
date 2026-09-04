@@ -13,7 +13,7 @@
 
 .headerCopy p {
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
 }
 
 .body,
@@ -79,14 +79,14 @@
   display: grid;
   gap: var(--space-1);
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--ui-support-size);
   font-weight: 700;
 }
 
 .historySummary {
   min-height: 24px;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--ui-support-size);
 }
 
 .historyMore {
@@ -191,7 +191,7 @@
 
 .managementSummary > div > span {
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
 }
 
 .managementSummary strong {

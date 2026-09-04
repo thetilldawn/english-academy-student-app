@@ -24,7 +24,7 @@
 .planCounts {
   margin: 0;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--ui-support-size);
 }
 
 .previewList,
@@ -60,7 +60,7 @@
 .pending,
 .message {
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--ui-support-size);
 }
 
 .message {

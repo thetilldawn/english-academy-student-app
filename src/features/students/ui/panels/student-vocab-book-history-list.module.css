@@ -18,7 +18,7 @@
 
 .summary {
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
 }
 
 .list {
@@ -73,13 +73,13 @@
 
 .facts dt {
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
 }
 
 .facts dd {
   margin: 0;
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
   font-weight: 600;
   overflow-wrap: anywhere;
 }

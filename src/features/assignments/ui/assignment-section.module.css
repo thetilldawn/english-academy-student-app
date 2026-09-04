@@ -25,7 +25,7 @@
 .status {
   margin-inline-start: auto;
   color: var(--fail);
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
   font-weight: 700;
 }
 
@@ -38,6 +38,6 @@
   border-radius: var(--radius);
   color: var(--paper);
   background: var(--ink);
-  font-size: 13px;
+  font-size: var(--ui-support-size);
   font-weight: 700;
 }

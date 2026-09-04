@@ -67,7 +67,7 @@
 .groups legend {
   margin-bottom: 7px;
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
   font-weight: 700;
 }
 
@@ -102,14 +102,14 @@
 .summaryActions > strong {
   min-width: 40px;
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
   text-align: right;
 }
 
 .filteringStatus {
   min-width: 54px;
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
 }
 
 @media (max-width: 720px) {

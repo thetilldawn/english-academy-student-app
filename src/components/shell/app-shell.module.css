@@ -16,6 +16,12 @@
   min-height: 100vh;
 }
 
+.adminAppShell {
+  --ui-caption-size: 14px;
+  --ui-support-size: 15px;
+  --ui-label-size: 16px;
+}
+
 .adminSidebar {
   display: none;
 }
@@ -100,7 +106,7 @@
   max-width: 180px;
   overflow: hidden;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--ui-support-size);
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -168,7 +174,7 @@
   }
 
   .adminTopbar .brand > span:last-child {
-    font-size: 14px;
+    font-size: var(--ui-label-size);
   }
 
   .adminTabletBrand {

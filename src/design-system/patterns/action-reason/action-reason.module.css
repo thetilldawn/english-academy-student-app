@@ -18,7 +18,7 @@
   max-width: 10em;
   overflow: hidden;
   color: var(--no-ink);
-  font-size: 14px;
+  font-size: var(--ui-label-size);
   font-weight: 700;
   line-height: 1.55;
   text-overflow: ellipsis;

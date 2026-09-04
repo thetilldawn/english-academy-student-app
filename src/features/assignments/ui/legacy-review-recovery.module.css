@@ -25,7 +25,7 @@
 
 .details dt {
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
   font-weight: 700;
 }
 

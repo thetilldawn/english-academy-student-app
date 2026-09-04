@@ -6,7 +6,7 @@
   border: 1px solid var(--line);
   color: var(--text-secondary);
   background: var(--surface);
-  font-size: 14px;
+  font-size: var(--ui-label-size);
   line-height: 1.55;
 }
 
@@ -32,13 +32,13 @@
   border: 1px dashed var(--line);
   color: var(--text-secondary);
   background: transparent;
-  font-size: 14px;
+  font-size: var(--ui-label-size);
   line-height: 1.6;
   text-align: center;
 }
 
 .inlineError {
   color: var(--fail);
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
   line-height: 1.45;
 }

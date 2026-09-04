@@ -19,14 +19,14 @@
 .slot small {
   color: var(--text-secondary);
   font-family: var(--font-kr);
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
   font-weight: 400;
   white-space: nowrap;
 }
 
 .slot strong {
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: var(--ui-support-size);
   font-weight: 700;
   white-space: nowrap;
 }
@@ -45,10 +45,10 @@
 
 @media (min-width: 768px) {
   .slot small {
-    font-size: 12px;
+    font-size: var(--ui-caption-size);
   }
 
   .slot strong {
-    font-size: 14px;
+    font-size: var(--ui-label-size);
   }
 }

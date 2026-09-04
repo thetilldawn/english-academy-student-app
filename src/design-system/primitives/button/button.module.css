@@ -39,7 +39,7 @@
   min-height: var(--control-height-small);
   height: var(--control-height-small);
   padding: 7px 11px;
-  font-size: 13px;
+  font-size: var(--ui-support-size);
 }
 
 .large {

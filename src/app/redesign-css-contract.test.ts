@@ -118,11 +118,38 @@ describe("redesign CSS contract", () => {
     expect(resultCss).toMatch(/\.header h2\s*\{/);
     expect(resultCss).not.toMatch(/\.header h1\s*\{/);
     expect(badgeCss).not.toMatch(/font-size:\s*(?:10(?:\.5)?|11(?:\.5)?)px;/);
-    expect(fieldCss).toMatch(/\.requirement\s*\{[^}]*font-size:\s*12px;/);
+    expect(fieldCss).toMatch(
+      /\.requirement\s*\{[^}]*font-size:\s*var\(--ui-caption-size\);/,
+    );
     expect(assignmentCardCss).toMatch(/\.dataset\s*\{[^}]*font-size:\s*13px;/);
     expect(modulesCss).not.toMatch(
       /font-size:\s*(?:10(?:\.5)?|11(?:\.5)?)px;/,
     );
+  });
+
+  it("raises compact text through the admin typography scope", () => {
+    const adminShellCss = readCss(
+      "src/components/shell/app-shell.module.css",
+    );
+    expect(tokensCss).toContain("--ui-caption-size: 12px;");
+    expect(tokensCss).toContain("--ui-support-size: 13px;");
+    expect(tokensCss).toContain("--ui-label-size: 14px;");
+    expect(adminShellCss).toMatch(
+      /\.adminAppShell\s*\{[^}]*--ui-caption-size:\s*14px;[^}]*--ui-support-size:\s*15px;[^}]*--ui-label-size:\s*16px;/,
+    );
+
+    for (const relativePath of [
+      "src/components/shell/admin-navigation.module.css",
+      "src/features/assignments/ui/vocab-assignment-planner.module.css",
+      "src/features/assignments/ui/single-assignment-editor.module.css",
+      "src/features/history/ui/admin-history-detail.module.css",
+      "src/features/students/ui/student-detail.module.css",
+      "src/features/students/ui/student-directory.module.css",
+    ]) {
+      expect(readCss(relativePath)).not.toMatch(
+        /font-size:\s*(?:12|13)px;/,
+      );
+    }
   });
 
   it("supports an explicit dark theme and switch", () => {
@@ -234,6 +261,18 @@ describe("redesign CSS contract", () => {
       /\.timer\s*\{[\s\S]*?flex:\s*none;[\s\S]*?white-space:\s*nowrap;/,
     );
     expect(frameCss).toMatch(
+      /\.topline\s*\{[^}]*align-items:\s*center;/,
+    );
+    expect(frameCss).toMatch(
+      /\.phase\s*\{[^}]*font-size:\s*16px;/,
+    );
+    expect(frameCss).toMatch(
+      /\.title\s*\{[^}]*font-size:\s*18px;/,
+    );
+    expect(frameCss).toMatch(
+      /\.timer\s*\{[^}]*line-height:\s*1;/,
+    );
+    expect(frameCss).toMatch(
       /\.timerWarning\s*\{[\s\S]*?background:\s*var\(--no-bg\);[\s\S]*?color:\s*var\(--fail\);/,
     );
     expect(frameCss).toMatch(
@@ -244,6 +283,30 @@ describe("redesign CSS contract", () => {
     );
     expect(shellCss).toMatch(
       /@media \(min-width: 768px\)[\s\S]*?align-items:\s*center;/,
+    );
+  });
+
+  it("pins every assignment session field to the same desktop columns", () => {
+    const plannerCss = readCss(
+      "src/features/assignments/ui/vocab-assignment-planner.module.css",
+    );
+    const scheduleFields = readCss(
+      "src/features/assignments/ui/vocab-schedule-detail-fields.tsx",
+    );
+
+    expect(plannerCss).toMatch(
+      /\.sessionTimeIdentity\s*\{[^}]*grid-column:\s*1;/,
+    );
+    expect(plannerCss).toMatch(
+      /\.sessionAvailableField\s*\{[^}]*grid-column:\s*2;/,
+    );
+    expect(plannerCss).toMatch(
+      /\.sessionDeadlineField\s*\{[^}]*grid-column:\s*3;/,
+    );
+    expect(scheduleFields.match(/className=\{styles\.sessionTimeIdentity\}/g))
+      .toHaveLength(2);
+    expect(scheduleFields).toContain(
+      'className={styles.sessionDeadlineField}',
     );
   });
 

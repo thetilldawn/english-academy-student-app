@@ -113,7 +113,7 @@
 .studentBook small,
 .studentRecentExam small {
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
 }
 
 .placeholder,
@@ -171,12 +171,12 @@
 .bulkSummary > strong {
   min-width: 58px;
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
 }
 
 .bulkSummary > small {
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
 }
 
 .studentOverview {
@@ -206,7 +206,7 @@
 
 .sourceRow span {
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
 }
 
 .sourceRow strong {
@@ -248,7 +248,7 @@
 
 .sectionSummary {
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
 }
 
 @media (max-width: 767px) {

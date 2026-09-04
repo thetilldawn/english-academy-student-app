@@ -23,7 +23,7 @@
 .row span,
 .row small {
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
 }
 
 .row strong {

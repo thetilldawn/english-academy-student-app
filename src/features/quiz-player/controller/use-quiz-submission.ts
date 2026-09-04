@@ -16,7 +16,10 @@ import type {
   QuizPlayerState,
 } from "../domain/quiz-player-state";
 import type { QuizAttempt, QuizQuestion } from "../model";
-import type { QuizAudioCompletion } from "./quiz-audio-element";
+import type {
+  QuizAudioCompletion,
+  TimedQuizAudioCompletion,
+} from "./quiz-audio-element";
 import {
   activeNextQuestionMilliseconds,
   previewNextQuestionMilliseconds,
@@ -28,6 +31,7 @@ type QueuedSubmission = {
   choiceIndex: number | null;
   phase: "initial" | "retry";
   primed: boolean;
+  promptAudioCompletion: Promise<TimedQuizAudioCompletion> | null;
   questionId: string;
   submittedAt: number;
 };
@@ -35,6 +39,7 @@ type QueuedSubmission = {
 type RunSubmissionInput = {
   attempt: QuizAttempt;
   choiceIndex: number | null;
+  promptAudioCompletion: Promise<TimedQuizAudioCompletion> | null;
   question: QuizQuestion;
   primed?: boolean;
   submittedAt: number;
@@ -48,6 +53,7 @@ function wait(milliseconds: number) {
 
 export function useQuizSubmission(input: {
   cancelPendingPromptAudio: () => void;
+  captureActivePromptAudio: () => Promise<TimedQuizAudioCompletion> | null;
   currentQuestion: QuizQuestion | null;
   deadlineSubmissionNotBeforeRef: { current: number };
   dispatch: Dispatch<QuizPlayerAction>;
@@ -133,6 +139,7 @@ export function useQuizSubmission(input: {
             input.inFlightRequestRef.current === requestKey,
           payload,
           playAnswerAudio: input.playAnswerAudio,
+          promptAudioCompletion: submission.promptAudioCompletion,
           receivedAt,
           submittedAt: submission.submittedAt,
         });
@@ -242,6 +249,7 @@ export function useQuizSubmission(input: {
           void run({
             attempt: synchronizedAttempt,
             choiceIndex: queued.choiceIndex,
+            promptAudioCompletion: queued.promptAudioCompletion,
             question: nextQuestion,
             primed: queued.primed,
             submittedAt: queued.submittedAt,
@@ -286,6 +294,7 @@ export function useQuizSubmission(input: {
         ) {
           return;
         }
+        const promptAudioCompletion = input.captureActivePromptAudio();
         input.cancelPendingPromptAudio();
         const answerAudioUrl = quizAnswerAudioUrl(question, choiceIndex);
         input.primeChoiceAudio(answerAudioUrl);
@@ -294,6 +303,7 @@ export function useQuizSubmission(input: {
           choiceIndex,
           phase,
           primed: Boolean(answerAudioUrl),
+          promptAudioCompletion,
           questionId: question.id,
           submittedAt: performance.now(),
         };
@@ -316,6 +326,7 @@ export function useQuizSubmission(input: {
       void runSubmission({
         attempt: input.state.attempt,
         choiceIndex,
+        promptAudioCompletion: input.captureActivePromptAudio(),
         question,
         submittedAt: performance.now(),
       });

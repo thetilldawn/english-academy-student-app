@@ -10,6 +10,11 @@ export type QuizAudioCompletion =
   | "ended"
   | "timed-out";
 
+export type TimedQuizAudioCompletion = {
+  completedAt: number;
+  outcome: QuizAudioCompletion;
+};
+
 export function audioPlaybackFailure(error: unknown): QuizAudioPlayback {
   return typeof error === "object" &&
     error !== null &&

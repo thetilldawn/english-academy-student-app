@@ -9,7 +9,10 @@ import type {
   QuizAnswerResponse,
   QuizFeedbackResumeResponse,
 } from "../model";
-import type { QuizAudioCompletion } from "./quiz-audio-element";
+import type {
+  QuizAudioCompletion,
+  TimedQuizAudioCompletion,
+} from "./quiz-audio-element";
 
 export type QuizFeedbackSynchronization = {
   payload: QuizAnswerResponse &
@@ -31,20 +34,16 @@ function wait(milliseconds: number) {
   });
 }
 
-function fixedFeedbackRemaining(input: {
+function fixedFeedbackReadyAt(input: {
   receivedAt: number;
   submittedAt: number;
   timedOut: boolean;
 }) {
-  const now = performance.now();
-  const totalRemaining = Math.max(
-    0,
-    ANSWER_FEEDBACK_DELAY_MS - (now - input.submittedAt),
-  );
-  const resultVisibleRemaining = input.timedOut
-    ? 0
-    : Math.max(0, ANSWER_RESULT_VISIBLE_MS - (now - input.receivedAt));
-  return Math.max(totalRemaining, resultVisibleRemaining);
+  const totalReadyAt = input.submittedAt + ANSWER_FEEDBACK_DELAY_MS;
+  const resultVisibleReadyAt = input.timedOut
+    ? input.receivedAt
+    : input.receivedAt + ANSWER_RESULT_VISIBLE_MS;
+  return Math.max(totalReadyAt, resultVisibleReadyAt);
 }
 
 async function synchronizeNextQuestion(input: {
@@ -100,37 +99,46 @@ export async function resolveQuizFeedbackTransition(input: {
   isActive: () => boolean;
   payload: QuizAnswerResponse;
   playAnswerAudio: (audioUrl: string) => Promise<QuizAudioCompletion>;
+  promptAudioCompletion: Promise<TimedQuizAudioCompletion> | null;
   receivedAt: number;
   submittedAt: number;
 }): Promise<ResolvedQuizFeedbackTransition> {
-  let delayMilliseconds: number;
+  const fixedReadyAt = fixedFeedbackReadyAt({
+    receivedAt: input.receivedAt,
+    submittedAt: input.submittedAt,
+    timedOut: Boolean(input.payload.timedOut),
+  });
+  let readyAt = fixedReadyAt;
   if (input.payload.feedbackProtocol === "legacy") {
-    delayMilliseconds = fixedFeedbackRemaining({
-      receivedAt: input.receivedAt,
-      submittedAt: input.submittedAt,
-      timedOut: Boolean(input.payload.timedOut),
-    });
+    readyAt = fixedReadyAt;
   } else if (
     input.payload.correct === true &&
     input.payload.timedOut !== true &&
     input.answerAudioUrl
   ) {
     const playback = await input.playAnswerAudio(input.answerAudioUrl);
-    delayMilliseconds =
-      playback === "ended"
-        ? ANSWER_AUDIO_END_GRACE_MS
-        : fixedFeedbackRemaining({
-            receivedAt: input.receivedAt,
-            submittedAt: input.submittedAt,
-            timedOut: Boolean(input.payload.timedOut),
-          });
-  } else {
-    delayMilliseconds = fixedFeedbackRemaining({
-      receivedAt: input.receivedAt,
-      submittedAt: input.submittedAt,
-      timedOut: Boolean(input.payload.timedOut),
-    });
+    if (playback === "ended") {
+      // Keep the established answer-audio contract: once the selected English
+      // answer finishes, move on after the short grace instead of forcing the
+      // silent 750 ms fallback as well.
+      readyAt = performance.now() + ANSWER_AUDIO_END_GRACE_MS;
+    }
+  } else if (
+    input.payload.timedOut !== true &&
+    input.promptAudioCompletion
+  ) {
+    const playback = await input.promptAudioCompletion;
+    if (playback.outcome === "ended") {
+      readyAt = Math.max(
+        fixedReadyAt,
+        playback.completedAt + ANSWER_AUDIO_END_GRACE_MS,
+      );
+    }
   }
+  const delayMilliseconds = Math.max(
+    0,
+    readyAt - performance.now(),
+  );
   if (!input.isActive()) {
     return { synchronization: null };
   }

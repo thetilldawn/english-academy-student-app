@@ -59,6 +59,9 @@
   --font-kr: "Pretendard Variable", Pretendard, -apple-system, system-ui, sans-serif;
   --font-krs: var(--font-kr);
   --font-en: var(--font-serif-en), Georgia, serif;
+  --ui-caption-size: 12px;
+  --ui-support-size: 13px;
+  --ui-label-size: 14px;
 }
 
 @media (max-width: 767px) {

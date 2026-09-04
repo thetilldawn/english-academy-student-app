@@ -852,6 +852,71 @@ describe("QuizPlayer", () => {
     expect(audioPlayCount()).toBe(1);
   });
 
+  it("shows answer feedback immediately but waits for the active English prompt audio to end", async () => {
+    const audioAttempt = attempt();
+    audioAttempt.questionTimeLimitSeconds = 10;
+    const current = audioAttempt.questions[0];
+    current.direction = "english_to_korean";
+    current.prompt = "monitor";
+    current.pronunciation = availablePronunciation;
+    current.choices = ["관찰하다", "음력의", "지리", "거르다"];
+    mocks.submit.mockResolvedValue(
+      successfulTransport({
+        correct: true,
+        correctChoiceIndex: 0,
+        nextPhase: "initial",
+        nextQuestionId: "question-2",
+        questionDeadlineAt: "2099-01-01T00:00:10.000Z",
+        timerRemainingMilliseconds: 10_000,
+      }),
+    );
+
+    await renderReady(audioAttempt);
+    await act(async () => {
+      vi.advanceTimersByTime(250);
+      await Promise.resolve();
+    });
+    const player = audioInstances.find((audio) =>
+      audio.playStates.some((state) => !state.muted),
+    )!;
+
+    fireEvent.click(screen.getByRole("button", { name: /관찰하다/ }));
+    await act(async () => Promise.resolve());
+
+    expect(screen.getByText(studentAppText.attempt.correct)).toHaveClass(
+      "sr-only",
+    );
+    expect(screen.getByRole("button", { name: /관찰하다/ })).toHaveAttribute(
+      "data-feedback",
+      "correct",
+    );
+    expect(audibleAudioPlayCount()).toBe(1);
+
+    act(() => vi.advanceTimersByTime(1_000));
+    expect(screen.getByText("monitor")).toBeInTheDocument();
+    expect(mocks.resume).not.toHaveBeenCalled();
+
+    await act(async () => {
+      player.emit("ended");
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(mocks.resume).toHaveBeenCalledWith({
+      attemptId: "attempt-1",
+      nextPhase: "initial",
+      nextQuestionId: "question-2",
+      transitionRemainingMilliseconds: 150,
+    });
+    act(() => vi.advanceTimersByTime(149));
+    expect(screen.getByText("monitor")).toBeInTheDocument();
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+    });
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(audibleAudioPlayCount()).toBe(1);
+  });
+
   it("cancels the delayed English prompt when an answer is submitted before 250ms", async () => {
     const audioAttempt = attempt();
     const current = audioAttempt.questions[0];
@@ -986,7 +1051,18 @@ describe("QuizPlayer", () => {
     await act(async () => Promise.resolve());
     expect(player?.play).toHaveBeenCalledTimes(2);
     act(() => vi.advanceTimersByTime(750));
-    await act(async () => Promise.resolve());
+    expect(screen.getByText("english-1")).toBeInTheDocument();
+    await act(async () => {
+      player?.emit("ended");
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    act(() => vi.advanceTimersByTime(149));
+    expect(screen.getByText("english-1")).toBeInTheDocument();
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+    });
 
     expect(screen.getByText("english-2")).toBeInTheDocument();
     expect(player?.play).toHaveBeenCalledTimes(2);

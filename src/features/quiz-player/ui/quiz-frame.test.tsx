@@ -96,18 +96,43 @@ function renderFrame(
 afterEach(cleanup);
 
 describe("QuizFrame", () => {
-  it("영영풀이 문제는 영어로 표시하되 정답 단어 발음은 문제 아래 노출하지 않는다", () => {
+  it.each([
+    [
+      "영영풀이 → 영어",
+      "canonical_definition_to_headword",
+      "A person who watches an event carefully.",
+    ],
+    [
+      "예문 → 영어",
+      "canonical_example_to_headword",
+      "The guard continued to _____ the screen.",
+    ],
+  ] as const)("%s 문제는 영어 선택지마다 발음 버튼을 제공한다", (
+    _label,
+    quizContentMode,
+    prompt,
+  ) => {
     const current = question("korean_to_english");
-    current.prompt = "A person who watches an event carefully.";
-    renderFrame(current, {
-      quizContentMode: "canonical_definition_to_headword",
+    current.prompt = prompt;
+    const { onChoose, onPlayAudio } = renderFrame(current, {
+      quizContentMode,
       promptAudioUrl: null,
     });
 
-    const prompt = screen.getByRole("heading", { level: 1 });
-    expect(prompt).toHaveTextContent(current.prompt);
-    expect(prompt).not.toHaveTextContent("발음");
+    const promptHeading = screen.getByRole("heading", { level: 1 });
+    expect(promptHeading).toHaveTextContent(current.prompt);
+    expect(promptHeading).not.toHaveTextContent("발음");
     expect(screen.getByText(studentAppText.attempt.chooseEnglish)).toBeInTheDocument();
+    const audioButtons = current.choices.map((choice) =>
+      screen.getByRole("button", { name: `${choice} 발음 듣기` }),
+    );
+    expect(audioButtons).toHaveLength(4);
+
+    fireEvent.click(audioButtons[0]);
+    expect(onPlayAudio).toHaveBeenCalledWith(
+      current.choicePronunciations[0].audioUrl,
+    );
+    expect(onChoose).not.toHaveBeenCalled();
   });
 
   it("shows one prompt speaker and no Korean-choice speaker", () => {

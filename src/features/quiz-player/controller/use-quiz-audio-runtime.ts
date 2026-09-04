@@ -7,7 +7,13 @@ import {
   ANSWER_AUDIO_START_TIMEOUT_MS,
   PROMPT_AUDIO_AUTOPLAY_DELAY_MS,
 } from "../domain/quiz-session";
+import type { TimedQuizAudioCompletion } from "./quiz-audio-element";
 import { QuizAudioPlayer } from "./quiz-audio-player";
+
+type ActivePromptAudio = {
+  completion: Promise<TimedQuizAudioCompletion>;
+  playKey: string;
+};
 
 export function useQuizAudioRuntime(input: {
   attemptId: string;
@@ -21,6 +27,7 @@ export function useQuizAudioRuntime(input: {
   const playerRef = useRef<QuizAudioPlayer | null>(null);
   const autoPlayedQuestions = useRef(new Set<string>());
   const autoPlayTimer = useRef<number | null>(null);
+  const activePromptAudio = useRef<ActivePromptAudio | null>(null);
   const player = useCallback(() => {
     playerRef.current ??= new QuizAudioPlayer();
     return playerRef.current;
@@ -34,6 +41,32 @@ export function useQuizAudioRuntime(input: {
     ? [input.attemptId, input.phase, input.questionId].join(":")
     : null;
   const preloadKey = input.preloadAudioUrls.join("\u0000");
+  const playPromptUntilEnded = useCallback(
+    (audioUrl: string, promptPlayKey: string) => {
+      const active: ActivePromptAudio = {
+        playKey: promptPlayKey,
+        completion: player()
+          .playUntilEnded(
+            audioUrl,
+            "prompt",
+            ANSWER_AUDIO_END_TIMEOUT_MS,
+            ANSWER_AUDIO_START_TIMEOUT_MS,
+          )
+          .then((outcome) => ({
+            completedAt: performance.now(),
+            outcome,
+          })),
+      };
+      activePromptAudio.current = active;
+      void active.completion.then(() => {
+        if (activePromptAudio.current === active) {
+          activePromptAudio.current = null;
+        }
+      });
+      return active.completion;
+    },
+    [player],
+  );
 
   useEffect(() => {
     const preloadUrls = preloadKey ? preloadKey.split("\u0000") : [];
@@ -68,9 +101,11 @@ export function useQuizAudioRuntime(input: {
       autoPlayTimer.current = null;
       const promptAudioUrl = input.promptAudioUrl;
       if (!promptAudioUrl) return;
-      void player().play(promptAudioUrl, "prompt").then((result) => {
-        if (current && result === "started")
-          autoPlayedQuestions.current.add(playKey);
+      autoPlayedQuestions.current.add(playKey);
+      void playPromptUntilEnded(promptAudioUrl, playKey).then(({ outcome }) => {
+        if (current && ["blocked", "failed"].includes(outcome)) {
+          autoPlayedQuestions.current.delete(playKey);
+        }
       });
     }, PROMPT_AUDIO_AUTOPLAY_DELAY_MS);
     return () => {
@@ -83,19 +118,29 @@ export function useQuizAudioRuntime(input: {
     input.playbackReady,
     input.promptAudioUrl,
     playKey,
-    player,
+    playPromptUntilEnded,
   ]);
 
   const playAudio = useCallback((audioUrl: string | null) => {
     if (!audioUrl) return;
     const purpose = audioUrl === input.promptAudioUrl ? "prompt" : "choice";
     if (purpose === "prompt") clearAutoPlayTimer();
-    void player().play(audioUrl, purpose).then((result) => {
-      if (purpose === "prompt" && playKey && result === "started") {
-        autoPlayedQuestions.current.add(playKey);
-      }
-    });
-  }, [clearAutoPlayTimer, input.promptAudioUrl, playKey, player]);
+    if (purpose === "prompt" && playKey) {
+      autoPlayedQuestions.current.add(playKey);
+      void playPromptUntilEnded(audioUrl, playKey).then(({ outcome }) => {
+        if (["blocked", "failed"].includes(outcome)) {
+          autoPlayedQuestions.current.delete(playKey);
+        }
+      });
+      return;
+    }
+    void player().play(audioUrl, purpose);
+  }, [clearAutoPlayTimer, input.promptAudioUrl, playKey, playPromptUntilEnded, player]);
+
+  const captureActivePromptAudio = useCallback(() => {
+    const active = activePromptAudio.current;
+    return active && active.playKey === playKey ? active.completion : null;
+  }, [playKey]);
 
   const playAnswerAudio = useCallback(
     (audioUrl: string) =>
@@ -116,6 +161,7 @@ export function useQuizAudioRuntime(input: {
 
   return {
     cancelPendingPromptAudio: clearAutoPlayTimer,
+    captureActivePromptAudio,
     playAnswerAudio,
     playAudio,
     primeChoiceAudio,

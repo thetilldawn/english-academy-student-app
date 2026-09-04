@@ -51,8 +51,13 @@ export function useQuizPlayerController(input: {
   const audioPresentation = currentQuestion
     ? quizAudioPresentation(currentQuestion)
     : { promptAudioUrl: null, choiceAudioEnabled: false };
-  const { cancelPendingPromptAudio, playAnswerAudio, playAudio, primeChoiceAudio } =
-    useQuizAudio({
+  const {
+    cancelPendingPromptAudio,
+    captureActivePromptAudio,
+    playAnswerAudio,
+    playAudio,
+    primeChoiceAudio,
+  } = useQuizAudio({
     attemptId: state.attempt.id,
     autoPlayEnabled:
       state.timerSynchronized &&
@@ -165,6 +170,7 @@ export function useQuizPlayerController(input: {
 
   const submitChoice = useQuizSubmission({
     cancelPendingPromptAudio,
+    captureActivePromptAudio,
     currentQuestion,
     deadlineSubmissionNotBeforeRef: deadlineSubmissionNotBefore,
     dispatch,

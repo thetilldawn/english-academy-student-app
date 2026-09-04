@@ -16,19 +16,19 @@
 .small {
   min-height: 20px;
   padding: 2px 6px;
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
 }
 
 .default {
   min-height: 24px;
   padding: 3px 8px;
-  font-size: 12px;
+  font-size: var(--ui-caption-size);
 }
 
 .large {
   min-height: 28px;
   padding: 5px 9px;
-  font-size: 13px;
+  font-size: var(--ui-support-size);
 }
 
 .status {
