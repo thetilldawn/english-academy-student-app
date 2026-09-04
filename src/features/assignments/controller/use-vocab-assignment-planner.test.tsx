@@ -581,7 +581,7 @@ describe("단어 배정 일정 controller", () => {
     ]);
   });
 
-  it("월 2단위·수 3단위를 원래 요일 순서로 이어 배정한다", () => {
+  it("선택 요일과 무관하게 공통 회차당 단위 수로 이어 배정한다", () => {
     const eightUnits = Array.from({ length: 8 }, (_, index) => ({
       ...units[index % units.length]!,
       id: `weekday-unit-${index + 1}`,
@@ -596,18 +596,16 @@ describe("단어 배정 일정 controller", () => {
       result.current.actions.toggleWeekday(1);
       result.current.actions.toggleWeekday(3);
       result.current.actions.changeAssignmentMode("per_session");
-      result.current.actions.changeUnitAllocationMode("by_weekday");
-      result.current.actions.changeWeekdayUnitsPerSession(1, 2);
-      result.current.actions.changeWeekdayUnitsPerSession(3, 3);
+      result.current.actions.changeUnitsPerSession(2);
       result.current.actions.changeOverflowPolicy("continue_weekly");
     });
 
     expect(result.current.commonPlan).toMatchObject({
-      rangeUnitCounts: [2, 3],
+      rangeUnitCounts: [2, 2],
       unitAllocationRule: {
         schemaVersion: 1,
-        mode: "by_weekday",
-        weekdayUnitsPerSession: { 1: 2, 3: 3 },
+        mode: "same",
+        unitsPerSession: 2,
       },
     });
     expect(result.current.commonPlan?.sessions.map((session) => ({
@@ -620,27 +618,30 @@ describe("단어 배정 일정 controller", () => {
       },
       {
         date: "2026-08-26",
-        unitIds: ["weekday-unit-3", "weekday-unit-4", "weekday-unit-5"],
+        unitIds: ["weekday-unit-3", "weekday-unit-4"],
       },
       {
         date: "2026-08-31",
-        unitIds: ["weekday-unit-6", "weekday-unit-7"],
+        unitIds: ["weekday-unit-5", "weekday-unit-6"],
       },
-      { date: "2026-09-02", unitIds: ["weekday-unit-8"] },
+      {
+        date: "2026-09-02",
+        unitIds: ["weekday-unit-7", "weekday-unit-8"],
+      },
     ]);
 
     act(() => result.current.actions.updateSessionSchedule(2, {
       availableLocalDateTime: "2026-08-27T16:00",
       deadlineLocalDateTime: "2026-08-28T22:00",
     }));
-    expect(result.current.commonPlan?.rangeUnitCounts).toEqual([2, 3]);
+    expect(result.current.commonPlan?.rangeUnitCounts).toEqual([2, 2]);
     expect(result.current.commonPlan?.sessions[1]).toMatchObject({
       availableLocalDateTime: "2026-08-27T00:00",
-      unitIds: ["weekday-unit-3", "weekday-unit-4", "weekday-unit-5"],
+      unitIds: ["weekday-unit-3", "weekday-unit-4"],
     });
   });
 
-  it("최근 시험 복사는 저장된 요일별 원 규칙을 새 계획에 복원한다", () => {
+  it("최근 시험의 과거 요일별 규칙은 공통 회차당 단위 수로 정규화한다", () => {
     const previous = {
       assignmentDeleted: false,
       assignmentId: "assignment-previous",
@@ -688,12 +689,13 @@ describe("단어 배정 일정 controller", () => {
     expect(result.current.planner).toMatchObject({
       assignmentMode: "per_session",
       scheduleEnabled: true,
-      unitAllocationMode: "by_weekday",
       unitsPerSession: 2,
-      weekdayUnitsPerSession: { 1: 2, 3: 3 },
       overflowPolicy: "continue_weekly",
     });
-    expect(result.current.commonPlan?.rangeUnitCounts).toEqual([2, 3]);
+    expect(result.current.commonPlan).toMatchObject({
+      rangeUnitCounts: [2, 2],
+      unitAllocationRule: { mode: "same", unitsPerSession: 2 },
+    });
     expect(mocks.changeOrder).toHaveBeenCalledWith("ascending");
   });
 

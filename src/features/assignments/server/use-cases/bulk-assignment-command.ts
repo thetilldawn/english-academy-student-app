@@ -241,6 +241,9 @@ export async function createBulkAssignments(
           studentId: item.studentId,
           datasetId,
           availableQuestionCount: item.availableQuestionCount,
+          maximumSessionQuestionCount: Math.max(
+            ...item.sessions.map((session) => session.questionCount),
+          ),
           sessions: item.sessions,
           admin,
           cache: regularPreparationCache,

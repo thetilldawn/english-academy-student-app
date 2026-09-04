@@ -11,11 +11,7 @@ const state: VocabPlannerState = {
   datasetId: "dataset-a",
   range: { selectedUnitIds: ["unit-1", "unit-2"] },
   assignmentMode: "word_count",
-  unitAllocationMode: "same",
   unitsPerSession: 2,
-  weekdayUnitsPerSession: {
-    1: 2, 2: 2, 3: 3, 4: 2, 5: 2, 6: 2, 7: 2,
-  },
   questionCountMode: "manual",
   manualQuestionCount: 45,
   overflowPolicy: "leave",
@@ -138,32 +134,15 @@ describe("vocabPlannerReducer extra date decision", () => {
     });
   });
 
-  it("같은 단위 수와 요일별 단위 수를 오가도 양쪽 값을 보존한다", () => {
-    const byWeekday = vocabPlannerReducer(state, {
-      type: "unit_allocation_mode",
-      value: "by_weekday",
-    });
-    const changed = vocabPlannerReducer(byWeekday, {
-      type: "weekday_units_per_session",
-      weekday: 3,
-      value: 4,
-    });
-    const same = vocabPlannerReducer(changed, {
-      type: "unit_allocation_mode",
-      value: "same",
-    });
-    const commonChanged = vocabPlannerReducer(same, {
+  it("회차당 단위 수를 바꾸면 범위 반복 결정을 다시 받는다", () => {
+    const commonChanged = vocabPlannerReducer(state, {
       type: "units_per_session",
       value: 5,
     });
 
-    expect(vocabPlannerReducer(commonChanged, {
-      type: "unit_allocation_mode",
-      value: "by_weekday",
-    })).toMatchObject({
-      unitAllocationMode: "by_weekday",
+    expect(commonChanged).toMatchObject({
       unitsPerSession: 5,
-      weekdayUnitsPerSession: { 3: 4 },
+      extraDatePolicy: "unconfirmed",
     });
   });
 

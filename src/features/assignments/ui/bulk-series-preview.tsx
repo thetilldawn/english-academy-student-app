@@ -129,7 +129,13 @@ export function BulkSeriesPreview({
             completionGated={completionGated}
             item={singleItem}
           />
-          {singleItem.error ? <small>{singleItem.error}</small> : null}
+          {singleItem.error &&
+              singleItem.sessions.length > 0 &&
+              !singleItem.sessions.some(
+                (session) => session.error === singleItem.error,
+              )
+            ? <small>{singleItem.error}</small>
+            : null}
         </article>
       ) : null}
 
@@ -201,7 +207,13 @@ export function BulkSeriesPreview({
                   completionGated={completionGated}
                   item={item}
                 />
-                {item.error ? <small>{item.error}</small> : null}
+                {item.error &&
+                    item.sessions.length > 0 &&
+                    !item.sessions.some(
+                      (session) => session.error === item.error,
+                    )
+                  ? <small>{item.error}</small>
+                  : null}
               </article>
             );
           })}

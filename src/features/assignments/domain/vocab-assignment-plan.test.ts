@@ -6,6 +6,7 @@ import {
 } from "./vocab-assignment-contract";
 import {
   rebalanceHalfRatioSplitQuestionCounts,
+  resolveVocabQuestionCapacityScope,
   resolveVocabQuestionCycleAllocation,
   resolveVocabQuestionAllocation,
   splitVocabTargetPoolPreparationCounts,
@@ -163,7 +164,7 @@ describe("단어 시험 공통 배정 계획", () => {
     });
   });
 
-  it("범위를 반복할 때도 실제 날짜의 요일별 단위 수를 적용한다", () => {
+  it("저장된 과거 회차별 단위 규칙도 반복 계산에서 유지한다", () => {
     expect(resolveVocabUnitCycleAllocation({
       orderedUnitIds: ["1", "2", "3", "4", "5"],
       baseSessionUnitCounts: [2, 3, 4],
@@ -179,6 +180,35 @@ describe("단어 시험 공통 배정 계획", () => {
       sessionCycleIndexes: [0, 0, 1],
       defaultSessionCount: 2,
       requiresExtraDateDecision: false,
+    });
+  });
+
+  it("25단위를 5개씩 7회 배정하면 5회 완주 뒤 앞의 10단위를 반복한다", () => {
+    const orderedUnitIds = Array.from(
+      { length: 25 },
+      (_, index) => `${index + 1}`,
+    );
+    expect(resolveVocabUnitCycleAllocation({
+      orderedUnitIds,
+      baseSessionUnitCounts: Array.from({ length: 7 }, () => 5),
+      selectedDateCount: 7,
+      overflowPolicy: "leave",
+      extraDatePolicy: "repeat_from_start",
+    })).toMatchObject({
+      sessionUnitIds: [
+        ["1", "2", "3", "4", "5"],
+        ["6", "7", "8", "9", "10"],
+        ["11", "12", "13", "14", "15"],
+        ["16", "17", "18", "19", "20"],
+        ["21", "22", "23", "24", "25"],
+        ["1", "2", "3", "4", "5"],
+        ["6", "7", "8", "9", "10"],
+      ],
+      sessionCycleIndexes: [0, 0, 0, 0, 0, 1, 1],
+      defaultSessionCount: 5,
+      remainingUnitIds: [],
+      requiresExtraDateDecision: false,
+      issue: null,
     });
   });
 
@@ -459,12 +489,61 @@ describe("단어 시험 공통 배정 계획", () => {
 
   it("500개가 넘는 무작위 후보 풀도 마지막 준비 묶음을 최소 4문항으로 보존한다", () => {
     expect(splitVocabTargetPoolPreparationCounts(500)).toEqual([500]);
+    expect(splitVocabTargetPoolPreparationCounts(500, 463)).toEqual([463, 37]);
     expect(splitVocabTargetPoolPreparationCounts(501)).toEqual([497, 4]);
     expect(splitVocabTargetPoolPreparationCounts(1001)).toEqual([
       500,
       497,
       4,
     ]);
+  });
+
+  it("전체 후보 수와 한 회차 실제 상한을 나눠 회차를 계획한다", () => {
+    expect(resolveVocabQuestionCapacityScope({
+      distribution: "split",
+      maximumQuestionCount: 463,
+      seriesMaximumQuestionCount: 500,
+    })).toEqual({
+      availableQuestionCount: 500,
+      maximumSessionQuestionCount: 463,
+    });
+    expect(resolveVocabQuestionCapacityScope({
+      distribution: "repeat",
+      maximumQuestionCount: 463,
+      seriesMaximumQuestionCount: 500,
+    })).toEqual({
+      availableQuestionCount: 463,
+      maximumSessionQuestionCount: 463,
+    });
+
+    expect(resolveVocabQuestionCycleAllocation({
+      availableQuestionCount: 500,
+      distribution: "split",
+      questionCount: { mode: "all" },
+      selectedDateCount: 2,
+      overflowPolicy: "continue_weekly",
+      extraDatePolicy: "unconfirmed",
+      maximumSessionQuestionCount: 463,
+    })).toMatchObject({
+      baseSessionQuestionCounts: [463, 37],
+      defaultSessionCount: 2,
+      sessionQuestionCounts: [463, 37],
+      selectedQuestionCount: 500,
+      remainingQuestionCount: 0,
+      issue: null,
+    });
+  });
+
+  it("직접 입력한 회차당 문항 수가 실제 한 회차 상한을 넘으면 막는다", () => {
+    expect(resolveVocabQuestionCycleAllocation({
+      availableQuestionCount: 500,
+      distribution: "split",
+      questionCount: { mode: "manual", value: 500 },
+      selectedDateCount: 2,
+      overflowPolicy: "continue_weekly",
+      extraDatePolicy: "unconfirmed",
+      maximumSessionQuestionCount: 463,
+    }).issue).toBe("question_count_exceeds_capacity");
   });
 
   it("가능한 범위까지만은 선택한 날짜 안에서만 문항을 배정한다", () => {

@@ -9,8 +9,6 @@ import {
   type VocabScheduleSlotOverride,
   type VocabSplitOverflowPolicy,
   type VocabTargetSelectionMode,
-  type VocabUnitAllocationMode,
-  type VocabWeekdayUnitCounts,
 } from "../domain/vocab-assignment-contract";
 import {
   resolveVocabUnitSelection,
@@ -24,9 +22,7 @@ export type VocabPlannerState = {
   datasetId: string;
   range: VocabUnitSelection;
   assignmentMode: VocabAssignmentMode;
-  unitAllocationMode: VocabUnitAllocationMode;
   unitsPerSession: number;
-  weekdayUnitsPerSession: VocabWeekdayUnitCounts;
   questionCountMode: VocabQuestionCountChoice["mode"];
   manualQuestionCount: number;
   overflowPolicy: VocabSplitOverflowPolicy;
@@ -49,13 +45,7 @@ export type VocabPlannerAction =
     }
   | { type: "range/all"; unitIds: readonly string[]; selectAll: boolean }
   | { type: "assignment_mode"; value: VocabAssignmentMode }
-  | { type: "unit_allocation_mode"; value: VocabUnitAllocationMode }
   | { type: "units_per_session"; value: number }
-  | {
-      type: "weekday_units_per_session";
-      weekday: IsoWeekday;
-      value: number;
-    }
   | { type: "question_count_mode"; value: VocabQuestionCountChoice["mode"] }
   | { type: "manual_question_count"; value: number }
   | { type: "overflow_policy"; value: VocabSplitOverflowPolicy }
@@ -117,27 +107,10 @@ export function vocabPlannerReducer(
         extraDatePolicy: "unconfirmed",
         sessionScheduleOverrides: {},
       };
-    case "unit_allocation_mode":
-      return {
-        ...state,
-        unitAllocationMode: action.value,
-        extraDatePolicy: "unconfirmed",
-        sessionScheduleOverrides: {},
-      };
     case "units_per_session":
       return {
         ...state,
         unitsPerSession: action.value,
-        extraDatePolicy: "unconfirmed",
-        sessionScheduleOverrides: {},
-      };
-    case "weekday_units_per_session":
-      return {
-        ...state,
-        weekdayUnitsPerSession: {
-          ...state.weekdayUnitsPerSession,
-          [action.weekday]: action.value,
-        },
         extraDatePolicy: "unconfirmed",
         sessionScheduleOverrides: {},
       };
@@ -252,17 +225,7 @@ export function createInitialVocabPlannerState(
     datasetId,
     range: { selectedUnitIds: [] },
     assignmentMode: "all_sessions",
-    unitAllocationMode: "same",
     unitsPerSession: 1,
-    weekdayUnitsPerSession: {
-      1: 1,
-      2: 1,
-      3: 1,
-      4: 1,
-      5: 1,
-      6: 1,
-      7: 1,
-    },
     questionCountMode: "all",
     manualQuestionCount: 0,
     overflowPolicy: "leave",

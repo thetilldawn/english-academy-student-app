@@ -19,7 +19,10 @@ import {
   type PlannedVocabSeriesTarget,
   type VocabQuestionAllocationIssue,
 } from "@/features/assignments/domain/vocab-assignment-contract";
-import { resolveVocabQuestionCycleAllocation } from "@/features/assignments/domain/vocab-question-allocation";
+import {
+  resolveVocabQuestionCapacityScope,
+  resolveVocabQuestionCycleAllocation,
+} from "@/features/assignments/domain/vocab-question-allocation";
 import { resolveVocabUnitCycleAllocation } from "@/features/assignments/domain/vocab-unit-allocation";
 import {
   extendScheduleSlotsFromRecurrence,
@@ -384,6 +387,7 @@ export async function resolveBulkAssignmentPreview(
 
       let itemSchedule = schedule;
       let availableQuestionCount: number | null = null;
+      let maximumSessionQuestionCount: number | null = null;
       let selectedQuestionCount: number | null = null;
       let remainingQuestionCount: number | null = null;
       let defaultSessionCount: number | null = null;
@@ -406,7 +410,14 @@ export async function resolveBulkAssignmentPreview(
             admin,
             regularPreparationCache,
           );
-          availableQuestionCount = capacity.seriesMaximumQuestionCount;
+          const capacityScope = resolveVocabQuestionCapacityScope({
+            distribution: commonPlan.distribution,
+            maximumQuestionCount: capacity.maximumQuestionCount,
+            seriesMaximumQuestionCount: capacity.seriesMaximumQuestionCount,
+          });
+          availableQuestionCount = capacityScope.availableQuestionCount;
+          maximumSessionQuestionCount =
+            capacityScope.maximumSessionQuestionCount;
           if (commonPlan.splitBasis === "range_unit") {
             const unitAllocationRule = commonPlan.unitAllocationRule;
             if (!unitAllocationRule) {
@@ -484,6 +495,7 @@ export async function resolveBulkAssignmentPreview(
               selectedDateCount: commonPlan.selectedDateCount,
               overflowPolicy: commonPlan.overflowPolicy,
               extraDatePolicy: commonPlan.extraDatePolicy,
+              maximumSessionQuestionCount,
               maximumSessionCount: MAXIMUM_BULK_ASSIGNMENT_COUNT,
             });
             if (allocation.issue) {
@@ -640,6 +652,7 @@ export async function resolveBulkAssignmentPreview(
       if (
         dataset &&
         availableQuestionCount !== null &&
+        maximumSessionQuestionCount !== null &&
         orderedSessions.length > 0 &&
         orderedSessions.every((session) => session.available)
       ) {
@@ -650,6 +663,7 @@ export async function resolveBulkAssignmentPreview(
             studentId,
             datasetId: dataset.id,
             availableQuestionCount,
+            maximumSessionQuestionCount,
             sessions: orderedSessions,
             admin,
             cache: regularPreparationCache,

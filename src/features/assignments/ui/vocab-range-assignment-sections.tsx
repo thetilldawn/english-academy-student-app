@@ -135,8 +135,9 @@ export function VocabRangeAssignmentSections({
             <FieldLabel as="span" className={inlineHelpClassName}>
               <HelpTip label="최근 시험 설명" trigger="최근 시험">
                 최근 일반 시험의 시험 조건과 공개·마감 시간을 불러옵니다.
-                저장된 회차별 단위 규칙이 있으면 함께 적용하며, 범위와 날짜는
-                바뀌지 않습니다. 출제 단어 선택은 현재 설정을 유지합니다.
+                저장된 회차당 단위 수가 있으면 공통 값으로 적용하며, 범위와
+                날짜는 바뀌지 않습니다. 과거 요일별 값은 새 배정에 복사하지
+                않습니다. 출제 단어 선택은 현재 설정을 유지합니다.
               </HelpTip>
             </FieldLabel>
             {students.length > 1 ? (

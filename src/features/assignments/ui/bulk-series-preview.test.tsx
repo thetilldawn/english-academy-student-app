@@ -150,13 +150,47 @@ describe("BulkSeriesPreview", () => {
     expect(screen.getByRole("heading", { name: "시험 계획" })).toBeVisible();
     expect(screen.queryByRole("heading", { name: "학생별 계획" })).not.toBeInTheDocument();
     expect(screen.queryByText("학생 가")).not.toBeInTheDocument();
-    expect(screen.getAllByText("범위가 부족합니다.").length).toBeGreaterThan(0);
+    const visibleErrors = screen.getAllByText("범위가 부족합니다.").filter(
+      (element) => !element.classList.contains("sr-only"),
+    );
+    expect(visibleErrors).toHaveLength(1);
     expect(
       screen.getByRole("region", { name: "배정 미리보기" }),
     ).toHaveAttribute("aria-describedby", "bulk-series-preview-errors");
     expect(document.getElementById("bulk-series-preview-errors")).toHaveTextContent(
       "범위가 부족합니다.",
     );
+  });
+
+  it("회차 오류와 학생 계획 오류가 같으면 화면에 한 번만 표시한다", () => {
+    const value = controller();
+    value.preview!.items = [{
+      ...value.preview!.items[0]!,
+      available: false,
+      error: "현재 회차는 최대 463개까지 배정할 수 있습니다.",
+      sessions: [{
+        ...value.preview!.items[0]!.sessions[0]!,
+        available: false,
+        error: "현재 회차는 최대 463개까지 배정할 수 있습니다.",
+        questionCount: 0,
+      }],
+    }];
+    value.preview!.assignableCount = 0;
+    value.preview!.assignmentCount = 0;
+    value.preview!.blockedCount = 1;
+    value.preview!.commonPlanSummary = null;
+
+    render(
+      <BulkSeriesPreview
+        controller={value}
+        students={[{ id: "student-a", displayName: "학생 가" }]}
+      />,
+    );
+
+    const visibleErrors = screen.getAllByText(
+      "현재 회차는 최대 463개까지 배정할 수 있습니다.",
+    ).filter((element) => !element.classList.contains("sr-only"));
+    expect(visibleErrors).toHaveLength(1);
   });
 
   it("shows every plan when a one-person group cannot represent the batch", () => {

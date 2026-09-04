@@ -163,18 +163,41 @@ function allocationResult(input: {
   };
 }
 
+export function resolveVocabQuestionCapacityScope(input: {
+  distribution: VocabRangeDistribution;
+  maximumQuestionCount: number;
+  seriesMaximumQuestionCount: number;
+}) {
+  const maximumSessionQuestionCount = Math.min(
+    input.maximumQuestionCount,
+    MAXIMUM_VOCAB_SESSION_QUESTION_COUNT,
+  );
+  return {
+    availableQuestionCount: input.distribution === "repeat"
+      ? maximumSessionQuestionCount
+      : input.seriesMaximumQuestionCount,
+    maximumSessionQuestionCount,
+  };
+}
+
 export function splitVocabTargetPoolPreparationCounts(
   totalQuestionCount: number,
+  maximumQuestionCount = MAXIMUM_VOCAB_SESSION_QUESTION_COUNT,
 ): number[] {
   const minimum = MINIMUM_VOCAB_SESSION_QUESTION_COUNT;
-  const maximum = MAXIMUM_VOCAB_SESSION_QUESTION_COUNT;
-  if (!Number.isInteger(totalQuestionCount) || totalQuestionCount < minimum) {
+  if (
+    !Number.isInteger(totalQuestionCount) ||
+    totalQuestionCount < minimum ||
+    !Number.isInteger(maximumQuestionCount) ||
+    maximumQuestionCount < minimum ||
+    maximumQuestionCount > MAXIMUM_VOCAB_SESSION_QUESTION_COUNT
+  ) {
     return [];
   }
   const counts: number[] = [];
   let remaining = totalQuestionCount;
-  while (remaining > maximum) {
-    let current = maximum;
+  while (remaining > maximumQuestionCount) {
+    let current = maximumQuestionCount;
     const tail = remaining - current;
     if (tail < minimum) current -= minimum - tail;
     counts.push(current);
@@ -224,10 +247,12 @@ export function resolveVocabQuestionCycleAllocation(input: {
   selectedDateCount: number;
   overflowPolicy: VocabSplitOverflowPolicy;
   extraDatePolicy: VocabExtraDatePolicy;
+  maximumSessionQuestionCount?: number;
   maximumSessionCount?: number;
 }): VocabQuestionCycleAllocation {
   const minimum = MINIMUM_VOCAB_SESSION_QUESTION_COUNT;
-  const maximum = MAXIMUM_VOCAB_SESSION_QUESTION_COUNT;
+  const hardMaximum = MAXIMUM_VOCAB_SESSION_QUESTION_COUNT;
+  const maximum = input.maximumSessionQuestionCount ?? hardMaximum;
   const maximumSessionCount = input.maximumSessionCount ?? 210;
   const empty = (
     issue: VocabQuestionAllocationIssue,
@@ -241,7 +266,10 @@ export function resolveVocabQuestionCycleAllocation(input: {
   });
   if (
     !Number.isInteger(input.availableQuestionCount) ||
-    input.availableQuestionCount < minimum
+    input.availableQuestionCount < minimum ||
+    !Number.isInteger(maximum) ||
+    maximum < minimum ||
+    maximum > hardMaximum
   ) {
     return empty("invalid_available_count");
   }
@@ -258,9 +286,12 @@ export function resolveVocabQuestionCycleAllocation(input: {
     manualCount !== null &&
     (!Number.isInteger(manualCount) ||
       manualCount < minimum ||
-      manualCount > maximum)
+      manualCount > hardMaximum)
   ) {
     return empty("invalid_question_count");
+  }
+  if (manualCount !== null && manualCount > maximum) {
+    return empty("question_count_exceeds_capacity");
   }
 
   if (input.distribution === "repeat") {
@@ -292,7 +323,10 @@ export function resolveVocabQuestionCycleAllocation(input: {
   }
 
   const baseCounts = manualCount === null
-    ? splitVocabTargetPoolPreparationCounts(input.availableQuestionCount)
+    ? splitVocabTargetPoolPreparationCounts(
+        input.availableQuestionCount,
+        maximum,
+      )
     : splitManualVocabQuestionCounts(
         input.availableQuestionCount,
         manualCount,

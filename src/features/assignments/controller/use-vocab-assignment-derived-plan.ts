@@ -19,10 +19,6 @@ import {
 import { resolveVocabUnitCycleAllocation } from "../domain/vocab-unit-allocation";
 import type { VocabPlannerState } from "./vocab-assignment-planner-state";
 
-function keepValidInactiveUnitCount(value: number) {
-  return Number.isInteger(value) && value >= 1 && value <= 30 ? value : 1;
-}
-
 export function useVocabAssignmentDerivedPlan({
   planner,
   selectedUnits,
@@ -79,40 +75,32 @@ export function useVocabAssignmentDerivedPlan({
       ? assignmentModePlan.splitBasis
       : "question_count";
   const unitAllocationRule = useMemo(() => {
-    const selectedWeekdays = new Set(planner.schedule.weekdays);
     return {
       schemaVersion: 1 as const,
-      mode: planner.unitAllocationMode,
-      unitsPerSession: planner.unitAllocationMode === "same"
-        ? planner.unitsPerSession
-        : keepValidInactiveUnitCount(planner.unitsPerSession),
-      weekdayUnitsPerSession: Object.fromEntries(
-        Object.entries(planner.weekdayUnitsPerSession).map(([key, value]) => {
-          const weekday = Number(key) as IsoWeekday;
-          const active = planner.unitAllocationMode === "by_weekday" &&
-            selectedWeekdays.has(weekday);
-          return [weekday, active ? value : keepValidInactiveUnitCount(value)];
-        }),
-      ) as Record<IsoWeekday, number>,
+      mode: "same" as const,
+      unitsPerSession: planner.unitsPerSession,
+      weekdayUnitsPerSession: {
+        1: planner.unitsPerSession,
+        2: planner.unitsPerSession,
+        3: planner.unitsPerSession,
+        4: planner.unitsPerSession,
+        5: planner.unitsPerSession,
+        6: planner.unitsPerSession,
+        7: planner.unitsPerSession,
+      },
     };
-  }, [
-    planner.schedule.weekdays,
-    planner.unitAllocationMode,
-    planner.unitsPerSession,
-    planner.weekdayUnitsPerSession,
-  ]);
+  }, [planner.unitsPerSession]);
   const baseSessionUnitCounts = useMemo(
     () => resolveVocabBaseSessionUnitCounts({
       slots: allScheduleSlots,
-      mode: planner.unitAllocationMode,
+      mode: "same",
       unitsPerSession: planner.unitsPerSession,
-      weekdayUnitsPerSession: planner.weekdayUnitsPerSession,
+      weekdayUnitsPerSession: unitAllocationRule.weekdayUnitsPerSession,
     }),
     [
       allScheduleSlots,
-      planner.unitAllocationMode,
       planner.unitsPerSession,
-      planner.weekdayUnitsPerSession,
+      unitAllocationRule.weekdayUnitsPerSession,
     ],
   );
   const unitAllocation = useMemo(
@@ -151,9 +139,9 @@ export function useVocabAssignmentDerivedPlan({
       selectedUnitIds: selectedUnits.map((unit) => unit.id),
       distribution,
       splitBasis: effectiveSplitBasis,
-      unitAllocationMode: planner.unitAllocationMode,
+      unitAllocationMode: "same",
       unitsPerSession: planner.unitsPerSession,
-      weekdayUnitsPerSession: planner.weekdayUnitsPerSession,
+      weekdayUnitsPerSession: unitAllocationRule.weekdayUnitsPerSession,
       questionCount,
       overflowPolicy: planner.overflowPolicy,
       selectionMode: planner.selectionMode,
@@ -169,12 +157,11 @@ export function useVocabAssignmentDerivedPlan({
       planner.schedule,
       planner.selectionMode,
       planner.scheduleEnabled,
-      planner.unitAllocationMode,
       planner.unitsPerSession,
-      planner.weekdayUnitsPerSession,
       questionCount,
       scheduleSlots,
       selectedUnits,
+      unitAllocationRule.weekdayUnitsPerSession,
     ],
   );
   const commonPlan = useMemo(() => {

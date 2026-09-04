@@ -61,6 +61,7 @@ export async function prepareCommonPlanSeries(input: {
   studentId: string;
   datasetId: string;
   availableQuestionCount: number;
+  maximumSessionQuestionCount?: number;
   sessions: readonly BulkAssignmentPreviewSession[];
   admin: AdminContext;
   cache: RegularAssignmentPreparationCache;
@@ -76,6 +77,7 @@ export async function prepareCommonPlanSeries(input: {
     studentId,
     datasetId,
     availableQuestionCount,
+    maximumSessionQuestionCount = 500,
     sessions,
     admin,
     cache,
@@ -234,8 +236,11 @@ export async function prepareCommonPlanSeries(input: {
       request.englishToKoreanRatio === 50
     ) {
       const maximumQuestionCount = commonPlan.questionCount.mode === "manual"
-        ? commonPlan.questionCount.value
-        : 500;
+        ? Math.min(
+            commonPlan.questionCount.value,
+            maximumSessionQuestionCount,
+          )
+        : maximumSessionQuestionCount;
       const adjustedCounts = rebalanceHalfRatioSplitQuestionCounts(
         groupCounts,
         maximumQuestionCount,

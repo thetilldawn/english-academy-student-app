@@ -22,9 +22,7 @@ function controller() {
       cancelExtraDates: vi.fn(),
       changeExtraDatePolicy: vi.fn(),
       changeOverflowPolicy: vi.fn(),
-      changeUnitAllocationMode: vi.fn(),
       changeUnitsPerSession: vi.fn(),
-      changeWeekdayUnitsPerSession: vi.fn(),
     },
     fieldErrors: {},
     bulk: {
@@ -37,11 +35,7 @@ function controller() {
     requiresExtraDateDecision: false,
     planner: {
       assignmentMode: "word_count",
-      unitAllocationMode: "same",
       unitsPerSession: 1,
-      weekdayUnitsPerSession: {
-        1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1,
-      },
       questionCountMode: "all",
       overflowPolicy: "leave",
       schedule: {
@@ -165,6 +159,31 @@ describe("VocabScheduleFields", () => {
     expect(value.actions.cancelExtraDates).toHaveBeenCalledOnce();
   });
 
+  it("25단위를 회차당 5단위로 나눈 기본 5회를 일정에서 다시 25회로 세지 않는다", () => {
+    const value = controller();
+    value.planner.assignmentMode = "per_session";
+    value.planner.unitsPerSession = 5;
+    value.defaultSessionCount = 5;
+    value.extraDateDecisionSessionCount = 5;
+    value.requiresExtraDateDecision = true;
+    value.selectedUnits = Array.from({ length: 25 }, (_, index) => ({
+      id: `unit-${index + 1}`,
+      label: `DAY ${String(index + 1).padStart(2, "0")}`,
+    })) as never;
+    value.scheduleSlots = Array.from({ length: 7 }, (_, index) => ({
+      availableLocalDateTime: `2026-09-0${index + 1}T16:00`,
+      date: `2026-09-0${index + 1}`,
+      deadlineLocalDateTime: `2026-09-0${index + 1}T22:00`,
+      sessionNumber: index + 1,
+    }));
+
+    render(<VocabScheduleFields controller={value} />);
+
+    expect(screen.getByText("배정 5회")).toBeVisible();
+    expect(screen.queryByText(/남음 18회/)).not.toBeInTheDocument();
+    expect(screen.getByText(/기본 5회보다 날짜가 많습니다/)).toBeVisible();
+  });
+
   it("요일을 고르기 전에는 계산용 임시 날짜를 일정처럼 표시하지 않는다", () => {
     const value = controller();
     value.planner.schedule.weekdays = [];
@@ -241,31 +260,24 @@ describe("VocabScheduleFields", () => {
       .toBeVisible();
     expect(screen.getByRole("button", { name: "같은 요일로 이어서" }))
       .toBeVisible();
-    expect(screen.getByText("요일별 배정 방식")).toBeVisible();
     expect(screen.getByText("회차당 단위 수")).toBeVisible();
+    expect(screen.queryByText("요일별 단위 수")).not.toBeInTheDocument();
   });
 
-  it("요일별 단위 수를 선택한 요일마다 입력한다", () => {
+  it("새 배정은 공통 회차당 단위 수만 입력한다", () => {
     const value = controller();
     value.planner.assignmentMode = "per_session";
-    value.planner.unitAllocationMode = "by_weekday";
     value.planner.schedule.weekdays = [1, 3];
+    value.planner.unitsPerSession = 5;
 
     render(<VocabUnitAllocationFields controller={value} />);
 
-    expect(screen.getByLabelText("월요일 단위 수")).toHaveValue(1);
-    expect(screen.getByLabelText("수요일 단위 수")).toHaveValue(1);
-    expect(screen.queryByLabelText("금요일 단위 수")).not.toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("월요일 단위 수"), {
-      target: { value: "2" },
-    });
-    fireEvent.change(screen.getByLabelText("수요일 단위 수"), {
-      target: { value: "3" },
-    });
-    expect(value.actions.changeWeekdayUnitsPerSession)
-      .toHaveBeenNthCalledWith(1, 1, 2);
-    expect(value.actions.changeWeekdayUnitsPerSession)
-      .toHaveBeenNthCalledWith(2, 3, 3);
+    expect(screen.getByRole("spinbutton", {
+      name: /회차당 단위 수/,
+    })).toHaveValue(5);
+    expect(screen.queryByText("요일별 단위 수")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("월요일 단위 수")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("수요일 단위 수")).not.toBeInTheDocument();
   });
 
   it("단어 수 직접 입력도 남은 범위를 다음 주로 잇는 선택을 제공한다", () => {

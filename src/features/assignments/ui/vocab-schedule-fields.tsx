@@ -67,11 +67,9 @@ export function VocabScheduleFields({
         selectedUnits.map((unit) => unit.label),
         selectedUnits.map((unit) => unit.sortIndex),
       );
-  const baseSessionCount = controller.planner.assignmentMode === "per_session"
-    ? selectedUnits.length
-    : controller.requiresExtraDateDecision
-      ? controller.extraDateDecisionSessionCount ?? controller.defaultSessionCount
-      : controller.defaultSessionCount;
+  const baseSessionCount = controller.requiresExtraDateDecision
+    ? controller.extraDateDecisionSessionCount ?? controller.defaultSessionCount
+    : controller.defaultSessionCount;
   const currentScheduleCount = !scheduleEnabled
     ? 1
     : controller.distribution === "repeat"
