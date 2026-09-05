@@ -18,3 +18,17 @@
 - 현재 시험은 서버 렌더링을 유지하고 완료 내역만 작은 Client 영역으로 둔다.
   새 snapshot에서는 `key={snapshotAt}`으로 이전 더보기 상태를 버린다.
 - 이 흐름에는 별도 저장·복구 순서가 없으므로 빈 `application` 계층을 만들지 않는다.
+
+## 배정 단어장
+
+- `student-assignment-study-read` 흐름: 카드 → `/student/assignments/[id]/words` 또는
+  `@detail/(.)assignments/[id]/words` → `server/components/assignment-study-content.tsx`
+  → `server/queries/assignment-study-query.ts` → `get_student_assignment_study_v1`.
+- 현재 학생 세션과 취소·삭제되지 않은 수신 연결만 사용한다. 공개 예정도 공부할 수 있다.
+  표시만으로 시험을 시작·종료하거나 점수를 바꾸지 않는다.
+- 학습 범위는 실제 `assignment_questions` 대상이다. 선택지·정답 위치·시험 문항 순서는
+  직렬화하지 않는다. 예문은 해시로 연결된 완성 원문만, 발음은 대상 단어만 사용한다.
+- `assignment-study-words`와 `use-study-audio`는 공용 음성 버튼과 재생기 한 개를 사용한다.
+  결과 기능 내부 부품은 직접 가져오지 않는다. 모달 종료 시 재생기를 정리한다.
+- 모달 제목·닫기는 공용 `RoutedDetailDialog` header에 둔다. 로딩·오류에도 닫기를 유지한다.
+- 학생 단어장 링크는 `prefetch={false}`, `scroll={false}`이며 개인 자료 공유 캐시는 금지한다.

@@ -5,6 +5,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { pgcrypto } from "@electric-sql/pglite/contrib/pgcrypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { SIMSEOK_PRODUCTION_SETS, validateSimseokProductionPair } from "@/lib/vocab/simseok-production-release-contract";
+import { buildStudyExamples, buildStudyImportSql } from "../../../scripts/build-assignment-study-examples.mjs";
 
 const migrationsDirectory = path.resolve("supabase/migrations");
 const migrationPaths = fs
@@ -200,6 +201,27 @@ describe.sequential("심석고 운영 승인 경계", () => {
       await db.exec("reset role");
       await db.query("update private.simseok_production_receipts_v1 set status='active' where dataset_id=$1",[dataset]);
     }
+  });
+
+  it.skipIf(!hasSources)("학습 예문 926개를 정확한 원문으로 재실행 가능하게 연결하고 실제 배정 조회에만 공개한다", async () => {
+    await db.exec("reset role");
+    const examples = buildStudyExamples(sourceRoot, SIMSEOK_PRODUCTION_SETS);
+    expect(examples).toHaveLength(926);
+    await db.exec(buildStudyImportSql(examples));
+    const first = await db.query("select count(*)::int count from private.assignment_study_examples_v1");
+    expect(first.rows[0]).toEqual({ count: 926 });
+    await db.exec(buildStudyImportSql(examples));
+    expect((await db.query("select count(*)::int count from private.assignment_study_examples_v1")).rows).toEqual(first.rows);
+    const assignments = (await db.query<{id:string,student_id:string,quiz_content_mode:string}>("select a.id,s.student_id,a.quiz_content_mode from public.assignments a join public.assignment_students s on s.assignment_id=a.id where a.quiz_content_mode in ('canonical_definition_to_headword','canonical_example_to_headword')")).rows;
+    expect(assignments.length).toBeGreaterThan(0);
+    await role("xdxhswjgksukjmpbzqgz");
+    for (const assignment of assignments) {
+      const study = (await db.query<{result:{words:Array<{example:string|null,definition:string|null}>}}>("select public.get_student_assignment_study_v1($1,$2) result", [assignment.student_id,assignment.id])).rows[0]!.result;
+      expect(study.words).toHaveLength(4);
+      expect(JSON.stringify(study.words)).not.toMatch(/"choices"|correct_choice|base_order_index/u);
+      expect(study.words.every(word => assignment.quiz_content_mode.includes("example") ? Boolean(word.example && !word.example.includes("_____")) : Boolean(word.definition))).toBe(true);
+    }
+    await db.exec("reset role");
   });
 
   it.skipIf(!hasSources)("구 일괄 배정은 새 저장기로 생성하고 같은 요청·기존 원본 해시를 안전하게 재조회한다", async () => {

@@ -1,0 +1,19 @@
+.page { min-width: 0; width: min(920px, 100%); margin: 0 auto; background: var(--card); }
+.header { position: sticky; top: var(--student-topbar-offset, 71px); z-index: 4; display: flex; align-items: start; justify-content: space-between; gap: 16px; padding: 18px 20px; border-bottom: 1px solid var(--line); background: var(--card); }
+.header > a { flex-shrink: 0; }
+.title { margin: 0; font-size: 20px; line-height: 1.45; overflow-wrap: anywhere; }
+.body { padding: 18px 20px; }
+.summary { margin: 0 0 16px; color: var(--text-secondary); font-size: 15px; line-height: 1.6; }
+.words { display: grid; gap: 0; padding: 0; margin: 0; list-style: none; }
+.word { display: grid; gap: 8px; padding: 22px 0; border-top: 1px solid var(--line); }
+.word:first-child { border-top: 0; padding-top: 0; }
+.wordTop { display: flex; gap: 16px; align-items: center; justify-content: space-between; }
+.headword { margin: 0; font-size: 25px; line-height: 1.4; overflow-wrap: anywhere; }
+.pronunciation { font-size: 16px; line-height: 1.6; color: var(--text-secondary); }
+.meaning { margin: 0; font-size: 18px; line-height: 1.65; overflow-wrap: anywhere; }
+.context { display: grid; gap: 5px; margin-top: 6px; padding: 12px 14px; background: var(--surface); border-left: 3px solid var(--line); }
+.context > span { font-size: 14px; font-weight: 700; color: var(--text-secondary); }
+.context > p { margin: 0; font-size: 18px; line-height: 1.65; overflow-wrap: anywhere; }
+.notice { margin: 0; color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
+.loading { min-height: 160px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 16px; }
+@media (max-width: 480px) { .header, .body { padding: 16px; } .title { font-size: 18px; } }

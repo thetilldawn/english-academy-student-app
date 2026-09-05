@@ -114,6 +114,9 @@ export function StudentAssignmentCard({
       ) : null}
 
       <div className={styles.actions}>
+        <ButtonLink href={`/student/assignments/${assignment.id}/words`} prefetch={false} scroll={false} variant="secondary">
+          {studentAppText.study.open}
+        </ButtonLink>
         {lifecycle.actions.canReviewAndRetry && assignment.lastAttemptId ? (
           <ButtonLink href={`/student/result/${assignment.lastAttemptId}`}>
             {studentAppText.dashboard.resultAndRetry}

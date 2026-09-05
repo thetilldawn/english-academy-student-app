@@ -453,6 +453,22 @@
     {
       "path": "src/app/student/(protected)/result/[id]/page.tsx",
       "owner": "results"
+    },
+    {
+      "path": "src/app/student/(protected)/assignments/[id]/words/page.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/@detail/(.)assignments/[id]/words/page.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/@detail/page.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/@detail/[...catchAll]/page.tsx",
+      "owner": "student-dashboard"
     }
   ],
   "nextSpecialEntrypointOwners": [
@@ -535,6 +551,34 @@
     {
       "path": "src/instrumentation.ts",
       "owner": "app-shell"
+    },
+    {
+      "path": "src/app/student/(protected)/assignments/[id]/words/loading.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/assignments/[id]/words/error.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/assignments/[id]/words/not-found.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/@detail/(.)assignments/[id]/words/loading.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/@detail/(.)assignments/[id]/words/error.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/@detail/(.)assignments/[id]/words/not-found.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/student/(protected)/@detail/default.tsx",
+      "owner": "student-dashboard"
     }
   ],
   "nextConfigOwners": [
@@ -1650,8 +1694,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 96,
-      "pathSetSha256": "b584217d5a70c24eaf98e1f61120fdafcecd592016941fa513514b7ca5cfde45"
+      "fileCount": 97,
+      "pathSetSha256": "5a4fae69af9b00bb65c988fcaa8ac788cebbbc735263e1d244e729680f97d772"
     },
     {
       "path": "src/lib/deploy",
@@ -1863,6 +1907,14 @@
     {
       "path": "src/features/history/server/actions/hide-admin-history-entry-action.ts",
       "owner": "history"
+    },
+    {
+      "path": "src/features/student-dashboard/server/components/assignment-study-content.tsx",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-query.ts",
+      "owner": "student-dashboard"
     }
   ],
   "migrationOwnershipFrom": "20260828193000",
@@ -1988,6 +2040,11 @@
       "path": "supabase/migrations/20260905040904_preserve_production_rolling_deploy_compatibility.sql",
       "owner": "assignments",
       "flow": "assignment-range-create"
+    },
+    {
+      "path": "supabase/migrations/20260905051013_add_student_assignment_study.sql",
+      "owner": "student-dashboard",
+      "flow": "student-assignment-study-read"
     }
   ],
   "features": [
@@ -2086,7 +2143,9 @@
       "ownerPath": "src/features/student-dashboard",
       "localGuide": "src/features/student-dashboard/AGENTS.md",
       "entrypoints": [
-        "src/app/student/(protected)/page.tsx"
+        "src/app/student/(protected)/page.tsx",
+        "src/app/student/(protected)/assignments/[id]/words/page.tsx",
+        "src/app/student/(protected)/@detail/(.)assignments/[id]/words/page.tsx"
       ]
     },
     {
@@ -5011,6 +5070,88 @@
         "application": "각 읽기 controller가 전용 transport를 직접 호출한다.",
         "presentation": "표시 문구는 기존 UI와 domain 보조 함수가 담당한다."
       }
+    },
+    {
+      "id": "student-assignment-study-read",
+      "name": "학생 배정 단어장 모달과 원문 학습 조회",
+      "status": "active",
+      "owner": "student-dashboard",
+      "participants": [
+        "student-dashboard",
+        "quiz-player"
+      ],
+      "dataClass": "private",
+      "cachePolicy": "인증된 학생의 배정 범위만 클릭 시 조회, 공유 캐시와 목록 링크 일괄 prefetch 금지",
+      "streamingPolicy": "인증 후 직접 RSC 조회. 모달과 독립 페이지에 닫을 수 있는 loading/error 경계.",
+      "closedLocalLayers": [],
+      "touchpoints": {
+        "route": [
+          "src/app/student/(protected)/assignments/[id]/words/page.tsx",
+          "src/app/student/(protected)/@detail/(.)assignments/[id]/words/page.tsx"
+        ],
+        "serverComponent": [
+          "src/features/student-dashboard/server/components/assignment-study-content.tsx"
+        ],
+        "ui": [
+          "src/features/student-dashboard/ui/student-assignment-card.tsx",
+          "src/features/student-dashboard/ui/assignment-study-words.tsx",
+          "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+          "src/features/student-dashboard/ui/assignment-study-error.tsx"
+        ],
+        "clientState": [
+          "src/features/student-dashboard/controller/use-study-audio.ts"
+        ],
+        "application": [],
+        "domain": [
+          "src/lib/quiz/pronunciation-snapshot.ts",
+          "src/lib/quiz/question-content-mode.ts"
+        ],
+        "presentation": [],
+        "contract": [
+          "src/features/student-dashboard/contracts/assignment-study.ts"
+        ],
+        "transport": [],
+        "server": [
+          "src/features/student-dashboard/server/components/assignment-study-content.tsx",
+          "src/features/student-dashboard/server/queries/assignment-study-query.ts",
+          "src/lib/services/quiz/pronunciation-registry.ts"
+        ],
+        "database": [
+          "supabase/migrations/20260905051013_add_student_assignment_study.sql"
+        ],
+        "cacheStreaming": [
+          "src/app/student/(protected)/assignments/[id]/words/page.tsx",
+          "src/app/student/(protected)/assignments/[id]/words/loading.tsx",
+          "src/app/student/(protected)/assignments/[id]/words/error.tsx",
+          "src/app/student/(protected)/@detail/(.)assignments/[id]/words/page.tsx",
+          "src/app/student/(protected)/@detail/(.)assignments/[id]/words/loading.tsx",
+          "src/app/student/(protected)/@detail/(.)assignments/[id]/words/error.tsx"
+        ],
+        "tests": [
+          "src/features/student-dashboard/server/queries/assignment-study-query.test.ts",
+          "src/features/student-dashboard/ui/assignment-study-words.test.tsx",
+          "src/lib/database/assignment-study.integration.test.ts"
+        ]
+      },
+      "requiredImportEdges": [
+        {
+          "from": "src/features/student-dashboard/server/components/assignment-study-content.tsx",
+          "to": "src/features/student-dashboard/server/queries/assignment-study-query.ts",
+          "reason": "서버 세션으로 직접 학습 자료 조회"
+        },
+        {
+          "from": "src/features/student-dashboard/ui/assignment-study-words.tsx",
+          "to": "src/features/student-dashboard/controller/use-study-audio.ts",
+          "reason": "단어 음성 한 개 재생과 닫기 정리"
+        }
+      ],
+      "notApplicable": {
+        "application": "읽기 전용으로 저장 조정 없음",
+        "presentation": "화면 표시는 UI에서 수행",
+        "transport": "RSC가 서버 조회를 직접 호출"
+      },
+      "serverImportExceptions": {},
+      "flowImportExceptions": {}
     }
   ]
 }

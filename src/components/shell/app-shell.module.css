@@ -4,6 +4,7 @@
 
 .studentAppShell {
   min-width: 0;
+  --student-topbar-offset: 71px;
 }
 
 .studentAttemptShell {

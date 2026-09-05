@@ -81,6 +81,25 @@ export const studentAppText = {
     },
   },
 
+  study: {
+    title: "단어장",
+    open: "단어 보기",
+    close: "닫기",
+    countSuffix: "개 단어 · 시험 전에 뜻과 발음을 확인해 보세요.",
+    listLabel: "배정된 시험의 학습 단어",
+    pronunciationLabel: "단어 발음 듣기",
+    definition: "영영풀이",
+    example: "예문",
+    loading: "단어장을 불러오고 있습니다…",
+    notFound: "확인할 수 없는 단어장입니다. 현재 배정된 시험에서 다시 열어 주세요.",
+    loadError: "단어장을 불러오지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.",
+    retry: "다시 시도",
+    audioUnavailable: "이 단어의 발음 자료는 아직 준비되지 않았습니다.",
+    soundUnavailable: "이 단어의 음성은 아직 준비되지 않았습니다.",
+    audioError: "음성을 재생하지 못했습니다. 스피커 버튼을 다시 눌러 주세요.",
+    contextUnavailable: "원문 자료를 확인 중입니다.",
+  },
+
   // 학생 시험 응시 화면 > 문제 도움말
   attempt: {
     metadataTitle: "단어 시험",

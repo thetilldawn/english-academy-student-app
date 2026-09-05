@@ -4,6 +4,7 @@ import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import Link from "next/link";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { CollapsibleStatusSection } from "./collapsible-status-section";
@@ -15,7 +16,7 @@ describe("CollapsibleStatusSection", () => {
     const user = userEvent.setup();
     render(
       <CollapsibleStatusSection countLabel="3건" defaultOpen title="응시 전">
-        <a href="/student">첫 시험</a>
+        <Link href="/student">첫 시험</Link>
       </CollapsibleStatusSection>,
     );
 

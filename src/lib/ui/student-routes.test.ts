@@ -7,6 +7,8 @@ describe("student route presentation", () => {
     expect(studentPageTitleForPathname("/student")).toBe("내 단어 시험");
     expect(studentPageTitleForPathname("/student/result/result-id"))
       .toBe("시험 결과");
+    expect(studentPageTitleForPathname("/student/assignments/assignment-id/words"))
+      .toBe("단어장");
   });
 
   it("keeps the focused quiz as the only title exception", () => {
