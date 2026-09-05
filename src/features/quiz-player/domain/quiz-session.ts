@@ -4,6 +4,7 @@ import type {
   QuizAttempt,
   QuizAttemptPhase,
   QuizQuestion,
+  QuizPronunciation,
 } from "../model";
 
 export const ANSWER_FEEDBACK_DELAY_MS = 750;
@@ -57,6 +58,34 @@ export type QuizAudioPresentation = {
   choiceAudioEnabled: boolean;
 };
 
+export type QuizChoicePresentation =
+  | { kind: "korean-meaning"; text: string; audioUrl: null }
+  | {
+      kind: "english-word";
+      text: string;
+      pronunciation: QuizPronunciation | undefined;
+      audioUrl: string | null;
+    };
+
+// Definitions and examples also have English-word choices. Rendering, speaker
+// buttons and answer playback must all use this one language/audio contract.
+export function quizChoicePresentation(
+  question: QuizQuestion,
+  choiceIndex: number,
+): QuizChoicePresentation {
+  const text = question.choices[choiceIndex] ?? "";
+  if (question.direction === "english_to_korean") {
+    return { kind: "korean-meaning", text, audioUrl: null };
+  }
+  const pronunciation = question.choicePronunciations[choiceIndex];
+  return {
+    kind: "english-word",
+    text,
+    pronunciation,
+    audioUrl: pronunciation?.available ? pronunciation.audioUrl : null,
+  };
+}
+
 export function quizAudioPresentation(
   question: QuizQuestion,
 ): QuizAudioPresentation {
@@ -94,8 +123,7 @@ export function quizAnswerAudioUrl(
   ) {
     return null;
   }
-  const pronunciation = question.choicePronunciations[choiceIndex];
-  return pronunciation?.available ? pronunciation.audioUrl : null;
+  return quizChoicePresentation(question, choiceIndex).audioUrl;
 }
 
 export function quizPreloadAudioUrls(attempt: QuizAttempt) {

@@ -1249,7 +1249,7 @@ describe("QuizPlayer", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("announces a wrong answer without playing its English choice audio", async () => {
+  it.each(["book_meaning_choice", "canonical_definition_to_headword", "canonical_example_to_headword"] as const)("plays the selected wrong English word and waits for its end in %s", async (quizContentMode) => {
     mocks.submit.mockResolvedValue(
       successfulTransport({
         completed: true,
@@ -1258,6 +1258,7 @@ describe("QuizPlayer", () => {
       }),
     );
     const audioAttempt = attempt();
+    audioAttempt.quizContentMode = quizContentMode;
     audioAttempt.questions[0].choicePronunciations[0] =
       availablePronunciation;
     await renderReady(audioAttempt);
@@ -1269,12 +1270,22 @@ describe("QuizPlayer", () => {
     );
     await act(async () => Promise.resolve());
 
-    expect(audioPlayCount()).toBe(1);
-    expect(audibleAudioPlayCount()).toBe(0);
+    expect(audibleAudioPlayCount()).toBe(1);
     expect(screen.getByText(studentAppText.attempt.wrongInitial)).toHaveClass(
       "sr-only",
     );
     expect(document.querySelector(".quiz-error")).toBeNull();
+    act(() => vi.advanceTimersByTime(750));
+    expect(mocks.replace).not.toHaveBeenCalled();
+    await act(async () => {
+      audioInstances.find((audio) => !audio.muted && audio.play.mock.calls.length > 0)!.emit("ended");
+      await Promise.resolve();
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(150);
+      await Promise.resolve();
+    });
+    expect(mocks.replace).toHaveBeenCalled();
   });
 
   it("locks answers until the initial server timer is conservatively synchronized", async () => {

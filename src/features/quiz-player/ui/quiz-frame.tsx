@@ -11,7 +11,7 @@ import { AudioButton } from "@/design-system/patterns/audio-button/audio-button"
 import type { PriorWrongIndicator } from "@/lib/quiz/prior-wrong";
 import type { QuizContentMode } from "@/lib/quiz/question-content-mode";
 
-import type { QuizChoiceLength } from "../domain/quiz-session";
+import { quizChoicePresentation, type QuizChoiceLength } from "../domain/quiz-session";
 import type { QuizQuestion } from "../model";
 import { QuizChoice, type QuizChoiceFeedback } from "./quiz-choice";
 import { QuizSynchronizationError } from "./quiz-synchronization-error";
@@ -257,29 +257,21 @@ export function QuizFrame({
         className={styles.choiceList}
         role="group"
       >
-        {currentQuestion.choices.map((choice, index) => (
-          <QuizChoice
-            audioEnabled={
-              isEnglishChoice &&
-              currentQuestion.choicePronunciations[index]?.available === true
-            }
-            choice={choice}
-            density={choiceDensity}
-            disabled={submitting}
-            feedback={choiceFeedback(index)}
-            index={index}
-            isEnglish={isEnglishChoice}
-            key={`${currentQuestion.id}:${index}`}
-            onChoose={() => onChoose(index)}
-            onPlayAudio={() =>
-              onPlayAudio(
-                currentQuestion.choicePronunciations[index]?.audioUrl ??
-                  null,
-              )
-            }
-            pronunciation={currentQuestion.choicePronunciations[index]}
-          />
-        ))}
+        {currentQuestion.choices.map((_, index) => {
+          const content = quizChoicePresentation(currentQuestion, index);
+          return (
+            <QuizChoice
+              content={content}
+              density={choiceDensity}
+              disabled={submitting}
+              feedback={choiceFeedback(index)}
+              index={index}
+              key={`${currentQuestion.id}:${index}`}
+              onChoose={() => onChoose(index)}
+              onPlayAudio={() => onPlayAudio(content.audioUrl)}
+            />
+          );
+        })}
       </div>
 
       <span

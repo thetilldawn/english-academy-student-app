@@ -112,7 +112,6 @@ export async function resolveQuizFeedbackTransition(input: {
   if (input.payload.feedbackProtocol === "legacy") {
     readyAt = fixedReadyAt;
   } else if (
-    input.payload.correct === true &&
     input.payload.timedOut !== true &&
     input.answerAudioUrl
   ) {

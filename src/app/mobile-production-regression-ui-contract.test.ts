@@ -74,8 +74,11 @@ describe("mobile production regression UI contract", () => {
     );
     expect(quizDomain).toContain("pronunciation.available");
     expect(quizFrame).toContain(
-      "currentQuestion.choicePronunciations[index]?.available",
+      "quizChoicePresentation(currentQuestion, index)",
     );
+    expect(quizDomain).toContain('kind: "korean-meaning", text, audioUrl: null');
+    expect(quizDomain).toContain('kind: "english-word"');
+    expect(quizDomain).toContain("pronunciation?.available ? pronunciation.audioUrl : null");
     expect(quizFrame).not.toContain("placeholder");
     expect(quizFrameCss).toMatch(
       /\.promptRow\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/,

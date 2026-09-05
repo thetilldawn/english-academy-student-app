@@ -2,36 +2,33 @@ import { formatContentText } from "@/content/format";
 import { studentAppText } from "@/content/ko/student-app";
 import { PronunciationText } from "@/components/pronunciation-text";
 
-import type { QuizChoiceLength } from "../domain/quiz-session";
-import type { QuizPronunciation } from "../model";
+import type { QuizChoiceLength, QuizChoicePresentation } from "../domain/quiz-session";
 import { AudioButton } from "@/design-system/patterns/audio-button/audio-button";
 import styles from "./quiz-choice.module.css";
 
 export type QuizChoiceFeedback = "correct" | "selected" | "wrong" | null;
 
 export function QuizChoice({
-  audioEnabled,
-  choice,
+  content,
   density,
   disabled,
   feedback,
   index,
-  isEnglish,
   onChoose,
   onPlayAudio,
-  pronunciation,
 }: {
-  audioEnabled: boolean;
-  choice: string;
+  content: QuizChoicePresentation;
   density: QuizChoiceLength;
   disabled: boolean;
   feedback: QuizChoiceFeedback;
   index: number;
-  isEnglish: boolean;
   onChoose: () => void;
   onPlayAudio: () => void;
-  pronunciation: QuizPronunciation;
 }) {
+  const isEnglish = content.kind === "english-word";
+  const pronunciation = isEnglish ? content.pronunciation : undefined;
+  const audioEnabled = content.audioUrl !== null;
+  const choice = content.text;
   return (
     <div
       className={[
@@ -60,7 +57,7 @@ export function QuizChoice({
         <span className={styles.number}>{index + 1}</span>
         <span className={styles.copy}>
           <span className={styles.text}>{choice}</span>
-          {isEnglish && pronunciation.displayKo ? (
+          {pronunciation?.displayKo ? (
             <PronunciationText
               className={styles.pronunciation}
               pronunciation={pronunciation}
