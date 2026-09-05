@@ -33,10 +33,9 @@ export async function loadVocabPronunciationRegistry(
     const { data, error } = await supabase
       .from("vocab_entry_pronunciations")
       .select(
-        "vocab_entry_id, provider, status, review_status, listening_enabled, selected_variant_id, selected_audio_url, variants",
+        "vocab_entry_id, provider, status, review_status, listening_enabled, selected_variant_id, selected_audio_url, variants, display_snapshot",
       )
-      .in("vocab_entry_id", chunk)
-      .eq("listening_enabled", true);
+      .in("vocab_entry_id", chunk);
     if (error) {
       console.warn("[quiz-pronunciation] registry lookup failed", {
         code: error.code,
@@ -45,7 +44,7 @@ export async function loadVocabPronunciationRegistry(
     }
     for (const row of (data ?? []) as VocabPronunciationRegistryRow[]) {
       const pronunciation = parseRegistryPronunciation(row);
-      if (pronunciation.available) {
+      if (pronunciation.available || pronunciation.displayKo) {
         result.set(row.vocab_entry_id, pronunciation);
       }
     }
@@ -359,4 +358,3 @@ export async function loadApprovedKoreanPronunciationRegistry(
     ruleDerivedResult,
   );
 }
-

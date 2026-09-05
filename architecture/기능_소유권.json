@@ -2045,6 +2045,11 @@
       "path": "supabase/migrations/20260905051013_add_student_assignment_study.sql",
       "owner": "student-dashboard",
       "flow": "student-assignment-study-read"
+    },
+    {
+      "path": "supabase/migrations/20260905063836_add_reviewed_choice_repair_release.sql",
+      "owner": "assignments",
+      "flow": "assignment-range-create"
     }
   ],
   "features": [
@@ -2765,7 +2770,8 @@
           "supabase/migrations/20260904021927_correct_simseok_g10_preview_scope.sql",
           "supabase/migrations/20260904083500_extend_simseok_question_import_timeout.sql",
           "supabase/migrations/20260905040138_approve_simseok_production_release.sql",
-          "supabase/migrations/20260905040904_preserve_production_rolling_deploy_compatibility.sql"
+          "supabase/migrations/20260905040904_preserve_production_rolling_deploy_compatibility.sql",
+          "supabase/migrations/20260905063836_add_reviewed_choice_repair_release.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/bulk-assignments/preview/route.ts",
@@ -4781,6 +4787,7 @@
       "status": "active",
       "owner": "quiz-player",
       "participants": [
+        "assignments",
         "quiz-player",
         "assignment-queue",
         "students",
@@ -4887,7 +4894,8 @@
           "supabase/migrations/20260824010000_add_assignment_retry_rules.sql",
           "supabase/migrations/20260825083542_add_student_point_ledger.sql",
           "supabase/migrations/20260826001639_add_read_side_maintenance_workers.sql",
-          "supabase/migrations/20260826001648_preserve_untimed_assignment_deadlines.sql"
+          "supabase/migrations/20260826001648_preserve_untimed_assignment_deadlines.sql",
+          "supabase/migrations/20260905063836_add_reviewed_choice_repair_release.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/attempt/[id]/page.tsx"

@@ -58,6 +58,7 @@ export type VocabPronunciationRegistryRow = {
   selected_variant_id: unknown;
   selected_audio_url: unknown;
   variants: unknown;
+  display_snapshot?: unknown;
 };
 
 export type VocabSyntheticAudioAssetRow = {
@@ -311,32 +312,41 @@ export function parseRegistryPronunciation(
   if (
     !row ||
     row.provider !== "merriam_webster" ||
-    row.status !== "raw_first_variant_unreviewed" ||
-    row.review_status !== "raw_unreviewed" ||
-    row.listening_enabled !== true
+    !["raw_first_variant_unreviewed", "api_lookup_required"].includes(String(row.status)) ||
+    row.review_status !== "raw_unreviewed"
   ) {
     return unavailablePronunciation();
   }
   const variantId = optionalText(row.selected_variant_id);
   const audioUrl = optionalText(row.selected_audio_url);
+  const display = objectValue(row.display_snapshot);
+  const derivedDisplay = display?.display_derivation_status === "rule_derived" &&
+    display.display_engine_version === "cmudict-arpabet-hangul-nucleus-render-v2" &&
+    optionalText(display.pronunciation_variant_id) === variantId
+      ? optionalText(display.display_pronunciation_ko) : null;
+  const segments = parseKoreanPronunciationSegments(display?.ko_segments, derivedDisplay);
+  const displayValid = segments?.filter((segment) => segment.stress === "primary").length === 1;
+  const unavailable = () => unavailablePronunciation(displayValid ? derivedDisplay : null, displayValid ? segments : undefined, variantId);
   if (
+    row.listening_enabled !== true ||
+    row.status !== "raw_first_variant_unreviewed" ||
     !variantId ||
     !audioUrl ||
     !OFFICIAL_AUDIO_URL.test(audioUrl) ||
     !Array.isArray(row.variants)
   ) {
-    return unavailablePronunciation();
+    return unavailable();
   }
-  const selectionExists = row.variants.some((rawVariant) => {
-    const variant = objectValue(rawVariant);
+  const selected = row.variants.map(objectValue).find((variant) => {
     return (
       optionalText(variant?.variant_id) === variantId &&
       optionalText(variant?.audio_url) === audioUrl
     );
   });
-  return selectionExists
+  return selected
     ? {
-        displayKo: null,
+        displayKo: displayValid ? derivedDisplay : null,
+        ...(displayValid ? { segments } : {}),
         variantId,
         audioUrl,
         available: true,
@@ -655,7 +665,9 @@ export function preferredPronunciation(
             ? { segments: snapshot.segments }
             : {}),
       }
-    : unavailablePronunciation(snapshot.displayKo, snapshot.segments);
+    : snapshot.displayKo
+      ? unavailablePronunciation(snapshot.displayKo, snapshot.segments)
+      : unavailablePronunciation(officialRegistry?.displayKo ?? null, officialRegistry?.segments);
 }
 
 export function preferredPronunciationWithApprovedKorean(

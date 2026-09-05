@@ -298,6 +298,34 @@ describe("quiz pronunciation snapshots", () => {
     ).toMatchObject({ available: false });
   });
 
+  it("선택된 음원의 검증된 기존 변환 규칙에만 한글 발음과 주강세를 연결한다", () => {
+    const variant = {
+      variant_id: "mw:selected", audio_url: officialUrl,
+      display_derivation_status: "rule_derived",
+      pronunciation_variant_id: "mw:selected",
+      display_engine_version: "cmudict-arpabet-hangul-nucleus-render-v2",
+      display_pronunciation_ko: "테스트",
+      ko_segments: [{text:"테",stress:"primary"},{text:"스트",stress:"none"}],
+    };
+    const registry = {
+      vocab_entry_id:1,provider:"merriam_webster",status:"raw_first_variant_unreviewed",
+      review_status:"raw_unreviewed",listening_enabled:true,selected_variant_id:"mw:selected",
+      selected_audio_url:officialUrl,variants:[variant],display_snapshot:variant,
+    };
+    expect(parseRegistryPronunciation(registry)).toMatchObject({displayKo:"테스트",segments:variant.ko_segments,available:true});
+    for (const invalid of [
+      {...variant,display_engine_version:"unknown"},
+      {...variant,ko_segments:[{text:"다른표시",stress:"primary"}]},
+      {...variant,display_derivation_status:"pending"},
+    ]) {
+      expect(parseRegistryPronunciation({...registry,display_snapshot:invalid})).toMatchObject({displayKo:null,available:true});
+    }
+    expect(parseRegistryPronunciation({...registry,variants:[{...variant,variant_id:"mw:other"}]})).toMatchObject({displayKo:null,available:false});
+    expect(parseRegistryPronunciation({...registry,status:"api_lookup_required",listening_enabled:false,
+      selected_variant_id:null,selected_audio_url:null,variants:[],
+      display_snapshot:{...variant,pronunciation_variant_id:null}})).toMatchObject({displayKo:"테스트",available:false});
+  });
+
   it("승인·검증된 Google 합성 표현 자산만 현재 Supabase 공개 URL로 만든다", () => {
     const requestHash = "1".repeat(64);
     const row = {

@@ -6,6 +6,7 @@ import { pgcrypto } from "@electric-sql/pglite/contrib/pgcrypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { SIMSEOK_PRODUCTION_SETS, validateSimseokProductionPair } from "@/lib/vocab/simseok-production-release-contract";
 import { buildStudyExamples, buildStudyImportSql } from "../../../scripts/build-assignment-study-examples.mjs";
+import { parseRegistryPronunciation, type VocabPronunciationRegistryRow } from "@/lib/quiz/pronunciation-snapshot";
 
 const migrationsDirectory = path.resolve("supabase/migrations");
 const migrationPaths = fs
@@ -224,6 +225,41 @@ describe.sequential("심석고 운영 승인 경계", () => {
     await db.exec("reset role");
   });
 
+  it.skipIf(!hasSources)("선택지 교정은 별도 승인과 원판 결속 없이는 운영에서 사용하지 못한다", async () => {
+    await db.exec("reset role; begin");
+    const base = (await db.query<{release_id:string}>("select question_release_id release_id from private.simseok_production_receipts_v1 where dataset_key='simseok-g10-sem2-mid-adjective-500-v1'")).rows[0]!.release_id;
+    const revised = randomUUID();
+    const hash = "1".repeat(64), audit = "2".repeat(64);
+    const rowsBefore = await db.query("select jsonb_agg(q order by id) data from public.assignment_questions q");
+    await db.query(`insert into word_index.app_canonical_question_preview_release
+      select (jsonb_populate_record(null::word_index.app_canonical_question_preview_release,
+        to_jsonb(q)||jsonb_build_object('release_id',$2::text,'release_key',$2::text,'status','loading',
+          'package_file_sha256',$3::text,'independent_review_ledger_sha256',$4::text))).*
+      from word_index.app_canonical_question_preview_release q where release_id=$1`, [base,revised,hash,audit]);
+    const allowed = async () => (await db.query<{allowed:boolean}>("select private.canonical_question_release_runtime_allowed_v1($1) allowed",[revised])).rows[0]!.allowed;
+    expect(await allowed()).toBe(false);
+    await db.query(`insert into private.reviewed_choice_repair_releases_v1
+      (release_id,base_release_id,dataset_key,package_file_sha256,review_ledger_sha256,source_pdf_sha256,approval_id,status)
+      values($1,$2,'simseok-g10-sem2-mid-adjective-500-v1',$3,$4,
+      'a8898b3cd9993aae03c2321d23a7281ae041c1ee680a6b768730c28cd94e588c','DEPLOY-20260905-01-choice-repair','active')`,[revised,base,hash,audit]);
+    expect(await allowed()).toBe(true);
+    await db.query("update private.reviewed_choice_repair_releases_v1 set package_file_sha256=$2 where release_id=$1",[revised,"3".repeat(64)]);
+    expect(await allowed()).toBe(false);
+    await db.query("update private.reviewed_choice_repair_releases_v1 set package_file_sha256=$2,status='retired' where release_id=$1",[revised,hash]);
+    expect(await allowed()).toBe(false);
+    await db.query("update private.reviewed_choice_repair_releases_v1 set status='active' where release_id=$1",[revised]);
+    await db.query("update word_index.app_canonical_question_preview_release set status='retired' where release_id=$1",[base]);
+    await db.query("update word_index.app_canonical_question_preview_release set status='active' where release_id=$1",[revised]);
+    await db.query("select public.activate_approved_simseok_production_v1()");
+    expect((await db.query<{status:string}>("select status from word_index.app_canonical_question_preview_release where release_id=$1",[base])).rows[0]?.status).toBe("retired");
+    expect((await db.query<{status:string}>("select status from word_index.app_canonical_question_preview_release where release_id=$1",[revised])).rows[0]?.status).toBe("active");
+    for (const name of ["anon","authenticated","service_role"]) {
+      expect((await db.query<{allowed:boolean}>("select has_table_privilege($1,'private.reviewed_choice_repair_releases_v1','SELECT,INSERT,UPDATE,DELETE') allowed",[name])).rows[0]!.allowed).toBe(false);
+    }
+    expect((await db.query("select jsonb_agg(q order by id) data from public.assignment_questions q")).rows).toEqual(rowsBefore.rows);
+    await db.exec("rollback");
+  });
+
   it.skipIf(!hasSources)("구 일괄 배정은 새 저장기로 생성하고 같은 요청·기존 원본 해시를 안전하게 재조회한다", async () => {
     await db.exec("reset role");
     const dataset=(await db.query<{id:string}>("select id from public.vocab_datasets where dataset_key='simseok-g11-sem2-mid-mock-v1'")).rows[0]!.id;
@@ -254,4 +290,33 @@ describe.sequential("심석고 운영 승인 경계", () => {
     await db.exec("reset role");
     await db.query("select set_config('request.jwt.claim.sub',$1,false)",[ids.admin]);
   });
+
+  it.skipIf(!fs.existsSync(path.join(sourceRoot,"v5_운영_선택지보완/repair-sql-manifest.json")))("실제 교정 자료를 재실행해도 기존 배정은 보존하고 새 보기·발음·단어장만 정확히 연결한다", async () => {
+    await db.exec("reset role");
+    const directory=path.join(sourceRoot,"v5_운영_선택지보완");
+    const manifest=JSON.parse(fs.readFileSync(path.join(directory,"repair-sql-manifest.json"),"utf8")) as {files:Array<{file:string}>,release_key:string};
+    const protectedBefore=(await db.query("select jsonb_agg(q order by id) data from public.assignment_questions q")).rows;
+    for (let replay=0;replay<2;replay++) {
+      for(const file of manifest.files) {
+        try { await db.exec(fs.readFileSync(path.join(directory,file.file),"utf8")); }
+        catch(error) { throw new Error(`Repair SQL failed: ${file.file}: ${error instanceof Error ? error.message : String(error)}`); }
+      }
+    }
+    const revised=(await db.query<{release_id:string,dataset_id:string,status:string}>("select release_id,dataset_id,status from word_index.app_canonical_question_preview_release where release_key=$1",[manifest.release_key])).rows[0]!;
+    expect(revised.status).toBe("active");
+    expect((await db.query("select jsonb_agg(q order by id) data from public.assignment_questions q")).rows).toEqual(protectedBefore);
+    expect((await db.query("select count(*)::int all_count,count(*) filter(where listening_enabled)::int audio_count,count(*) filter(where display_snapshot is not null)::int display_count from public.vocab_entry_pronunciations where dataset_id=$1",[revised.dataset_id])).rows[0]).toEqual({all_count:500,audio_count:499,display_count:500});
+    const displayRows=(await db.query<VocabPronunciationRegistryRow & Record<string,unknown>>("select * from public.vocab_entry_pronunciations where dataset_id=$1",[revised.dataset_id])).rows.map(parseRegistryPronunciation);
+    expect(displayRows.filter(x=>x.available)).toHaveLength(499);
+    expect(displayRows.filter(x=>x.displayKo && x.segments?.some(segment=>segment.stress==="primary"))).toHaveLength(500);
+    expect((await db.query("select count(*)::int count from private.assignment_study_examples_v1 where release_id=$1",[revised.release_id])).rows[0]).toEqual({count:469});
+    const definition=(await db.query<{choice_headwords:string[]}>("select choice_headwords from word_index.app_canonical_question_preview_item where release_id=$1 and target_headword='brilliant' and quiz_mode='canonical_definition_to_headword'",[revised.release_id])).rows[0]!;
+    expect(definition.choice_headwords).not.toContain("intelligent");
+    expect(definition.choice_headwords).toContain("brilliant");
+    expect((await db.query("select count(*)::int count from word_index.app_canonical_question_preview_item where release_id=$1 and provenance->'choice_review'->>'choice_source'='provided_question_pdf'",[revised.release_id])).rows[0]).toEqual({count:469});
+    await role("xdxhswjgksukjmpbzqgz");
+    await db.query("select public.activate_approved_simseok_production_v1()");
+    await db.exec("reset role");
+    expect((await db.query<{status:string}>("select status from word_index.app_canonical_question_preview_release where release_id=$1",[revised.release_id])).rows[0]?.status).toBe("active");
+  },30_000);
 });
