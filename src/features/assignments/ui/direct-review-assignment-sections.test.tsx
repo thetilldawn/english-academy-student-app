@@ -132,7 +132,7 @@ describe("오답 시험 계산 오류 화면", () => {
   it("요약 조회 오류는 다시 불러오기 동작에 연결한다", () => {
     const testController = controller({ summaryError: "오답을 불러오지 못했습니다." });
     render(
-      <DirectReviewAssignmentSections
+      <DirectReviewAssignmentSections onOpenDatasetPicker={vi.fn()}
         controller={testController.value}
         datasets={[dataset]}
         fieldErrors={{}}
@@ -151,7 +151,7 @@ describe("오답 시험 계산 오류 화면", () => {
   it("미리보기 오류는 다시 계산하기 동작에 연결한다", () => {
     const testController = controller({ capacityError: "다시 계산해 주세요." });
     render(
-      <DirectReviewAssignmentSections
+      <DirectReviewAssignmentSections onOpenDatasetPicker={vi.fn()}
         controller={testController.value}
         datasets={[dataset]}
         fieldErrors={{}}

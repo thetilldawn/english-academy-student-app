@@ -18,6 +18,7 @@ import {
   type VocabAssignmentFieldKey,
 } from "../presentation/vocab-assignment-field-errors";
 import { AssignmentSection } from "./assignment-section";
+import type { AssignmentDatasetTriggerProps } from "./assignment-dataset-trigger";
 import { BulkExamFields } from "./bulk-exam-fields";
 import { BulkSeriesPreview } from "./bulk-series-preview";
 import { ExamTimingFields } from "./exam-timing-fields";
@@ -40,6 +41,8 @@ export function VocabRangeAssignmentSections({
   controller,
   fieldErrors,
   onRetryUnits = () => undefined,
+  onOpenDatasetPicker,
+  datasetTriggerRef,
   students,
   unitLoadState = { datasetId: "", message: "", status: "idle" },
 }: {
@@ -47,6 +50,8 @@ export function VocabRangeAssignmentSections({
   controller: VocabAssignmentScreenController;
   fieldErrors: Partial<Record<VocabAssignmentFieldKey, string>>;
   onRetryUnits?: () => void;
+  onOpenDatasetPicker: () => void;
+  datasetTriggerRef?: AssignmentDatasetTriggerProps["triggerRef"];
   students: readonly AssignmentStudentItem[];
   unitLoadState?: {
     datasetId: string;
@@ -96,6 +101,8 @@ export function VocabRangeAssignmentSections({
           controller={controller}
           datasets={controller.readyDatasets}
           fieldErrors={fieldErrors}
+          onOpenDatasetPicker={onOpenDatasetPicker}
+          datasetTriggerRef={datasetTriggerRef}
         />
         {unitLoadState.datasetId === controller.planner.datasetId &&
         unitLoadState.status === "loading" ? (

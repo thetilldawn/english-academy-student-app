@@ -1,17 +1,7 @@
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-  Select,
-} from "@/design-system/primitives/form/field";
-import {
-  cataloguedDatasetDisplayLabel,
-  groupCataloguedDatasets,
-} from "@/lib/admin/dataset-catalog";
-
 import type { AssignmentDatasetItem } from "../catalog-types";
 import type { VocabAssignmentPlannerController } from "../controller/use-vocab-assignment-planner";
 import type { VocabAssignmentFieldKey } from "../presentation/vocab-assignment-field-errors";
+import { AssignmentDatasetTrigger, type AssignmentDatasetTriggerProps } from "./assignment-dataset-trigger";
 import { AssignmentUnitRangePicker } from "./assignment-unit-range-picker";
 import styles from "./vocab-assignment-planner.module.css";
 
@@ -25,39 +15,24 @@ export function VocabRangeFields({
   controller,
   datasets,
   fieldErrors = {},
-}: VocabPlannerFieldsProps) {
-  const groups = groupCataloguedDatasets(datasets);
+  onOpenDatasetPicker,
+  datasetTriggerRef,
+}: VocabPlannerFieldsProps & {
+  onOpenDatasetPicker: () => void;
+  datasetTriggerRef?: AssignmentDatasetTriggerProps["triggerRef"];
+}) {
   const datasetError = fieldErrors.dataset;
   const rangeError = fieldErrors.range;
 
   return (
     <div className={styles.fieldStack}>
-      <Field as="label">
-        <FieldLabel as="span">단어장</FieldLabel>
-        <Select
-          aria-errormessage={datasetError ? "vocab-dataset-error" : undefined}
-          aria-invalid={Boolean(datasetError)}
-          data-field-key="dataset"
-          onChange={(event) => controller.actions.changeDataset(event.target.value)}
-          value={controller.planner.datasetId}
-        >
-          <option disabled value="">
-            단어장 선택
-          </option>
-          {groups.map((group) => (
-            <optgroup key={group.group} label={group.label}>
-              {group.datasets.map((dataset) => (
-                <option key={dataset.id} value={dataset.id}>
-                  {cataloguedDatasetDisplayLabel(dataset)}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </Select>
-        {datasetError ? (
-          <FieldError id="vocab-dataset-error">{datasetError}</FieldError>
-        ) : null}
-      </Field>
+      <AssignmentDatasetTrigger
+        dataset={datasets.find((dataset) => dataset.id === controller.planner.datasetId)}
+        error={datasetError}
+        errorId="vocab-dataset-error"
+        onOpen={onOpenDatasetPicker}
+        triggerRef={datasetTriggerRef}
+      />
       <AssignmentUnitRangePicker
         error={rangeError}
         errorId="vocab-range-error"

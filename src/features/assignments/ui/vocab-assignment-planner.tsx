@@ -13,6 +13,7 @@ import {
 import { prefersReducedMotion } from "@/lib/ui/motion";
 
 import type { AssignmentStudentItem } from "../catalog-types";
+import { useAssignmentDatasetPicker } from "../client/controllers/use-assignment-dataset-picker";
 import {
   useVocabAssignmentScreen,
   type VocabAssignmentScreenData,
@@ -20,6 +21,7 @@ import {
 import { useDirectReviewAssignmentController } from "../controller/use-direct-review-assignment-controller";
 import { useAssignmentDatasetUnitCatalog } from "../controller/use-assignment-dataset-unit-catalog";
 import { AssignmentSubmitAction } from "./assignment-submit-action";
+import { AssignmentDatasetPicker } from "./assignment-dataset-picker";
 import {
   AssignmentEditorForm,
   AssignmentEditorModeTabs,
@@ -83,6 +85,18 @@ export function VocabAssignmentPlanner({
     initialDatasetId,
     student: students[0]!,
   });
+  const selectedDatasetId = assignmentPurpose === "range"
+    ? controller.planner.datasetId
+    : reviewController.draft.datasetId;
+  const datasetPicker = useAssignmentDatasetPicker({
+    options: assignmentPurpose === "range"
+      ? controller.readyDatasets.map((dataset) => ({ dataset }))
+      : reviewController.datasetOptions.map(({ dataset, count }) => ({ dataset, reviewCount: count })),
+    selectedId: selectedDatasetId,
+    onSelect: assignmentPurpose === "range"
+      ? controller.actions.changeDataset
+      : reviewController.actions.changeDataset,
+  });
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const bulk = controller.bulk;
   const busy = assignmentPurpose === "range"
@@ -125,6 +139,10 @@ export function VocabAssignmentPlanner({
   ]);
   function requestClose() {
     if (busy) return;
+    if (datasetPicker.open) {
+      datasetPicker.actions.close();
+      return;
+    }
     const draftChanged =
       rangeDraftSignature !== initialRangeDraftSignatureRef.current ||
       reviewDraftSignature !== initialReviewDraftSignatureRef.current;
@@ -227,16 +245,20 @@ export function VocabAssignmentPlanner({
       aria-labelledby="vocab-assignment-plan-title"
       closeDisabled={busy}
       height="large"
-      layout="body-footer"
+      layout={datasetPicker.open ? "body" : "body-footer"}
       onRequestClose={requestClose}
       size="extra-wide"
     >
-      <DialogHeader closeLabel="닫기">
+      <DialogHeader
+        backLabel="배정 조건으로 돌아가기"
+        closeLabel={datasetPicker.open ? "선택 취소" : "닫기"}
+        onBack={datasetPicker.open ? datasetPicker.actions.close : undefined}
+      >
         <div>
           <h2 id="vocab-assignment-plan-title">
-            {selectionMode === "bulk" ? "일괄 배정" : "단일 배정"}
+            {datasetPicker.open ? "단어장 찾기" : selectionMode === "bulk" ? "일괄 배정" : "단일 배정"}
           </h2>
-          {selectionMode === "bulk" ? (
+          {datasetPicker.open ? <p>단어장을 선택하면 배정 조건으로 돌아갑니다.</p> : selectionMode === "bulk" ? (
             <MetaTagList>
               {(bulkFilterLabels.length > 0
                 ? bulkFilterLabels
@@ -250,6 +272,25 @@ export function VocabAssignmentPlanner({
         </div>
       </DialogHeader>
       <DialogBody>
+        {datasetPicker.open ? (
+          <AssignmentDatasetPicker
+            filters={datasetPicker.filters}
+            buttons={datasetPicker.buttons}
+            recent={datasetPicker.groups.recent}
+            remaining={datasetPicker.groups.remaining}
+            resultCount={datasetPicker.resultCount}
+            selectedId={selectedDatasetId}
+            searchRef={datasetPicker.searchRef}
+            onQuery={datasetPicker.actions.changeQuery}
+            onStage={datasetPicker.actions.changeStage}
+            onKind={datasetPicker.actions.changeKind}
+            onGrade={datasetPicker.actions.changeGrade}
+            onClear={datasetPicker.actions.clear}
+            onSelect={datasetPicker.actions.choose}
+            reviewOnly={assignmentPurpose === "review"}
+          />
+        ) : null}
+        <div hidden={datasetPicker.open}>
         <AssignmentEditorForm
           busy={busy}
           formId="vocab-assignment-plan-form"
@@ -284,6 +325,8 @@ export function VocabAssignmentPlanner({
                 controller={reviewController}
                 datasets={controller.readyDatasets}
                 fieldErrors={visibleReviewErrors}
+                onOpenDatasetPicker={datasetPicker.actions.open}
+                datasetTriggerRef={datasetPicker.triggerRef}
                 student={students[0]!}
               />
             ) : (
@@ -291,6 +334,8 @@ export function VocabAssignmentPlanner({
                 busy={busy}
                 controller={controller}
                 fieldErrors={visibleErrors}
+                onOpenDatasetPicker={datasetPicker.actions.open}
+                datasetTriggerRef={datasetPicker.triggerRef}
                 unitLoadState={unitCatalog.state}
                 onRetryUnits={() =>
                   void unitCatalog.actions.retry()
@@ -300,7 +345,9 @@ export function VocabAssignmentPlanner({
             )}
           </AssignmentEditorPanel>
         </AssignmentEditorForm>
+        </div>
       </DialogBody>
+      {!datasetPicker.open ? (
       <DialogFooter>
         <div className={styles.submitRow}>
           <AssignmentSubmitAction
@@ -318,6 +365,7 @@ export function VocabAssignmentPlanner({
           />
         </div>
       </DialogFooter>
+      ) : null}
     </DialogFrame>
   );
 }

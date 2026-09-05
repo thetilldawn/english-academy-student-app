@@ -126,14 +126,14 @@ describe("VocabRangePicker", () => {
     const value = controller();
     value.selectedUnits = [units[1]!, units[0]!];
 
-    render(<VocabRangePicker controller={value} datasets={[dataset]} />);
+    render(<VocabRangePicker onOpenDatasetPicker={vi.fn()} controller={value} datasets={[dataset]} />);
 
     expect(screen.getByText("DAY 2~DAY 1 · 2개 선택")).toBeVisible();
   });
 
   it("배정 방식을 전체 회차·회차별·단어 수로 제공한다", () => {
     const value = controller();
-    render(<VocabRangePicker controller={value} datasets={[dataset]} />);
+    render(<VocabRangePicker onOpenDatasetPicker={vi.fn()} controller={value} datasets={[dataset]} />);
 
     expect(screen.getByRole("button", { name: "전체 회차" })).toHaveAttribute(
       "aria-pressed",
@@ -151,7 +151,7 @@ describe("VocabRangePicker", () => {
 
   it("단어 수에서 전체와 숫자 입력을 함께 두고 전체 개수를 기본값으로 쓴다", () => {
     const value = controller({ assignmentMode: "word_count" });
-    render(<VocabRangePicker controller={value} datasets={[dataset]} />);
+    render(<VocabRangePicker onOpenDatasetPicker={vi.fn()} controller={value} datasets={[dataset]} />);
 
     const input = screen.getByRole("spinbutton", { name: "회차당 단어 수" });
     expect(input).toHaveValue(86);
@@ -170,7 +170,7 @@ describe("VocabRangePicker", () => {
       remaining: 46,
     });
     render(
-      <VocabRangePicker controller={withRemaining} datasets={[dataset]} />,
+      <VocabRangePicker onOpenDatasetPicker={vi.fn()} controller={withRemaining} datasets={[dataset]} />,
     );
     expect(screen.getByRole("group", { name: "출제 단어 선택" }))
       .toBeVisible();
@@ -204,7 +204,7 @@ describe("VocabRangePicker", () => {
     value.defaultSessionCount = 5;
     value.scheduledQuestionCount = 500;
     render(
-      <VocabRangePicker
+      <VocabRangePicker onOpenDatasetPicker={vi.fn()}
         controller={value}
         datasets={[dataset]}
         fieldErrors={value.fieldErrors}
@@ -244,7 +244,7 @@ describe("VocabRangePicker", () => {
       },
     ] as never;
 
-    render(<VocabRangePicker controller={value} datasets={[dataset]} />);
+    render(<VocabRangePicker onOpenDatasetPicker={vi.fn()} controller={value} datasets={[dataset]} />);
 
     expect(
       screen.getByText("학생별 계획을 마지막 미리보기에서 확인해 주세요."),

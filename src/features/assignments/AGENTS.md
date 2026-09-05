@@ -33,6 +33,12 @@
   개인 자료에 `use cache`나 공유 CDN 캐시를 붙이지 않는다.
 - 같은 입력의 성공 결과는 창 수명 동안 재사용하고, 입력 변경·명시 재시도·409 복구 때만 다시 읽는다.
   느린 이전 응답은 AbortSignal과 요청 지문으로 버린다.
+- 단어장 찾기는 `client/controllers/use-assignment-dataset-picker.ts`가 화면·초점·최근 ID를,
+  `domain/assignment-dataset-picker.ts`가 최근 ID 검증을, `presentation/assignment-dataset-picker-view.ts`가
+  메타데이터 기반 순수 검색·표시 변환을, `ui/assignment-dataset-picker.tsx`가
+  표시를 맡는다. 검색·필터·취소·현재 항목 재선택은 기존 배정 조건을 변경하지 않는다.
+  다른 항목을 확정한 경우만 기존 단어장 전환을 호출한다. 오답 후보는 기존 미배정 목록만
+  허용한다. 최근 저장은 브라우저당 최대6개 ID뿐이며 학생·시험·인증 자료를 저장하지 않는다.
 
 ## 저장 불변식
 

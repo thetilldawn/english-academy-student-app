@@ -10,6 +10,7 @@ import {
   VocabRangeFields,
   type VocabPlannerFieldsProps,
 } from "./vocab-range-fields";
+import type { AssignmentDatasetTriggerProps } from "./assignment-dataset-trigger";
 import styles from "./vocab-assignment-planner.module.css";
 import { VocabUnitAllocationFields } from "./vocab-unit-allocation-fields";
 
@@ -138,7 +139,10 @@ export function VocabQuestionFields({
   );
 }
 
-export function VocabRangePicker(props: VocabPlannerFieldsProps) {
+export function VocabRangePicker(props: VocabPlannerFieldsProps & {
+  onOpenDatasetPicker: () => void;
+  datasetTriggerRef?: AssignmentDatasetTriggerProps["triggerRef"];
+}) {
   return (
     <>
       <VocabRangeFields {...props} />

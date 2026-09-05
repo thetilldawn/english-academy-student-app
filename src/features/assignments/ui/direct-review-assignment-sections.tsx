@@ -22,6 +22,7 @@ import type { ReviewLevel } from "../domain/model";
 import { AssignmentAvailabilityFields } from "./assignment-availability-fields";
 import { AssignmentDeadlineFields } from "./assignment-deadline-fields";
 import { AssignmentSection } from "./assignment-section";
+import { AssignmentDatasetTrigger, type AssignmentDatasetTriggerProps } from "./assignment-dataset-trigger";
 import {
   ExamConditionFields,
   ExamQuestionOrderField,
@@ -52,11 +53,15 @@ export function DirectReviewAssignmentSections({
   controller,
   datasets,
   fieldErrors,
+  onOpenDatasetPicker,
+  datasetTriggerRef,
   student,
 }: {
   controller: DirectReviewAssignmentController;
   datasets: readonly AssignmentDatasetItem[];
   fieldErrors: Partial<Record<DirectReviewFieldKey, string>>;
+  onOpenDatasetPicker: () => void;
+  datasetTriggerRef?: AssignmentDatasetTriggerProps["triggerRef"];
   student: AssignmentStudentItem;
 }) {
   const { capacity, draft, knownLevelCounts, summary } = controller;
@@ -110,43 +115,17 @@ export function DirectReviewAssignmentSections({
         title="시험 범위"
       >
         <div className={styles.reviewRangeGrid}>
-          <Field>
-            <FieldLabel as="span" id="review-dataset-label">단어장</FieldLabel>
-            <div
-              aria-describedby={fieldErrors.dataset
-                ? "review-dataset-error"
-                : undefined}
-              aria-labelledby="review-dataset-label"
-              className={styles.reviewDatasetButtons}
-              data-field-key="dataset"
-              role="group"
-              tabIndex={-1}
-            >
-              <span className={styles.reviewDatasetTotal}>
-                전체 {controller.totalAvailableCount}개
-              </span>
-              {controller.datasetOptions.map(({ dataset: candidate, count }) => (
-                <Button
-                  aria-pressed={draft.datasetId === candidate.id}
-                  key={candidate.id}
-                  onClick={() => controller.actions.changeDataset(candidate.id)}
-                  size="small"
-                  variant="filter"
-                >
-                  {cataloguedDatasetDisplayLabel(candidate)} {count}개
-                </Button>
-              ))}
-            </div>
-            {fieldErrors.dataset ? (
-              <FieldError id="review-dataset-error">
-                {fieldErrors.dataset}
-              </FieldError>
-            ) : !draft.datasetId && controller.totalAvailableCount > 0 ? (
-              <small className={styles.rangeSummary}>
-                시험을 배정할 단어장을 선택하세요.
-              </small>
-            ) : null}
-          </Field>
+          <div className={styles.fieldStack}>
+            <AssignmentDatasetTrigger
+              dataset={dataset}
+              disabled={summary.status !== "ready" || controller.datasetOptions.length === 0}
+              error={fieldErrors.dataset}
+              errorId="review-dataset-error"
+              onOpen={onOpenDatasetPicker}
+              triggerRef={datasetTriggerRef}
+            />
+            <span className={styles.rangeSummary}>미배정 오답 전체 {controller.totalAvailableCount}개</span>
+          </div>
           <Field>
             <FieldLabel as="span" id="review-level-label">
               <HelpTip label="틀린 횟수 설명" trigger="틀린 횟수">

@@ -4999,14 +4999,14 @@
     },
     {
       "id": "assignment-workspace-planning",
-      "name": "단어 배정 자료·범위·직전 시험 지연 조회",
+      "name": "단어 배정 자료 검색·범위·직전 시험 지연 조회",
       "status": "active",
       "owner": "assignments",
       "participants": [
         "assignments"
       ],
       "dataClass": "private",
-      "cachePolicy": "학생·단어장별 준비 자료와 직전 시험은 private no-store이며 현재 열린 모달의 동일 요청만 재사용",
+      "cachePolicy": "학생·단어장별 준비 자료와 직전 시험은 private no-store이며 현재 열린 모달의 동일 요청만 재사용. 단어장 검색·분류는 받은 목록에서만 계산하며 최근 선택은 브라우저에 ID 최대6개만 저장",
       "streamingPolicy": "모달을 연 뒤 자료 목록, 범위 단위, 직전 시험을 필요한 시점에 각 구역 안에서 표시",
       "dependsOnFlows": [
         "assignment-workspace-selection"
@@ -5030,10 +5030,14 @@
         "serverComponent": [],
         "ui": [
           "src/features/assignments/ui/assignment-planner-load-dialog.tsx",
-          "src/features/assignments/ui/vocab-assignment-planner.tsx"
+          "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "src/features/assignments/ui/assignment-dataset-picker.tsx",
+          "src/features/assignments/ui/assignment-dataset-trigger.tsx",
+          "src/features/assignments/ui/assignment-dataset-picker.module.css"
         ],
         "clientState": [
           "src/features/assignments/controller/use-assignment-planner-preparation.ts",
+          "src/features/assignments/client/controllers/use-assignment-dataset-picker.ts",
           "src/features/assignments/controller/use-assignment-dataset-directory.ts",
           "src/features/assignments/controller/use-assignment-dataset-unit-catalog.ts",
           "src/features/assignments/controller/use-assignment-previous-exam.ts"
@@ -5041,9 +5045,12 @@
         "application": [],
         "domain": [
           "src/features/assignments/domain/select-common-initial-dataset.ts",
+          "src/features/assignments/domain/assignment-dataset-picker.ts",
           "src/features/assignments/domain/vocab-previous-exam.ts"
         ],
-        "presentation": [],
+        "presentation": [
+          "src/features/assignments/presentation/assignment-dataset-picker-view.ts"
+        ],
         "contract": [
           "src/features/assignments/contracts/assignment-workspace-read-model.ts",
           "src/features/assignments/contracts/vocab-time-template-contract.ts"
@@ -5068,6 +5075,9 @@
         ],
         "tests": [
           "src/features/assignments/controller/use-assignment-workspace.test.tsx",
+          "src/features/assignments/client/controllers/use-assignment-dataset-picker.test.tsx",
+          "src/features/assignments/domain/assignment-dataset-picker.test.ts",
+          "src/features/assignments/ui/vocab-assignment-planner.test.tsx",
           "src/features/assignments/controller/use-assignment-dataset-unit-catalog.test.tsx",
           "src/features/assignments/controller/use-assignment-previous-exam.test.tsx",
           "src/features/assignments/domain/vocab-previous-exam.test.ts"
@@ -5097,8 +5107,7 @@
       ],
       "notApplicable": {
         "serverComponent": "모달을 연 뒤 시작되는 지연 조회라 별도 Server Component가 없다.",
-        "application": "각 읽기 controller가 전용 transport를 직접 호출한다.",
-        "presentation": "표시 문구는 기존 UI와 domain 보조 함수가 담당한다."
+        "application": "각 읽기 controller가 전용 transport를 직접 호출한다. 단어장 선택은 외부 요청 없이 기존 확정 콜백만 실행한다."
       }
     },
     {

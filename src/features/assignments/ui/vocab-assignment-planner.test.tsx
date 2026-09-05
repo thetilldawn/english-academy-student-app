@@ -8,7 +8,10 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import type { Ref } from "react";
 import {
   afterEach,
   beforeAll,
@@ -19,7 +22,8 @@ import {
   vi,
 } from "vitest";
 
-import type { AssignmentStudentItem } from "../catalog-types";
+import { cataloguedDatasetFromMetadata } from "@/lib/admin/dataset-catalog";
+import type { AssignmentDatasetItem, AssignmentStudentItem } from "../catalog-types";
 import type { VocabAssignmentScreenData } from "../controller/use-vocab-assignment-screen";
 import { VocabAssignmentPlanner } from "./vocab-assignment-planner";
 
@@ -29,6 +33,8 @@ const mocks = vi.hoisted(() => ({
   toastError: vi.fn(),
   useReview: vi.fn(),
   useScreen: vi.fn(),
+  rangeDataset: vi.fn(),
+  reviewDataset: vi.fn(),
 }));
 
 vi.mock("sonner", () => ({
@@ -44,9 +50,13 @@ vi.mock("../controller/use-direct-review-assignment-controller", () => ({
 }));
 
 vi.mock("./direct-review-assignment-sections", () => ({
-  DirectReviewAssignmentSections: () => (
-    <div data-field-key="deadline">
-      <label>
+  DirectReviewAssignmentSections: ({ onOpenDatasetPicker, datasetTriggerRef }: {
+    onOpenDatasetPicker: () => void;
+    datasetTriggerRef: Ref<HTMLButtonElement>;
+  }) => (
+    <div>
+      <button type="button" onClick={onOpenDatasetPicker} ref={datasetTriggerRef}>오답 단어장 찾기</button>
+      <label data-field-key="deadline">
         마감 입력
         <input />
       </label>
@@ -55,7 +65,14 @@ vi.mock("./direct-review-assignment-sections", () => ({
 }));
 
 vi.mock("./vocab-range-assignment-sections", () => ({
-  VocabRangeAssignmentSections: () => <div>범위 배정 내용</div>,
+  VocabRangeAssignmentSections: ({ onOpenDatasetPicker, datasetTriggerRef }: {
+    onOpenDatasetPicker: () => void;
+    datasetTriggerRef: Ref<HTMLButtonElement>;
+  }) => <div>
+    <button type="button" onClick={onOpenDatasetPicker} ref={datasetTriggerRef}>범위 단어장 찾기</button>
+    <label>배정 조건 보존<input defaultValue="5회차" /></label>
+    <span>범위 배정 내용</span>
+  </div>,
 }));
 
 const student = {
@@ -72,6 +89,11 @@ const data = {
   units: [],
 } as VocabAssignmentScreenData;
 
+const datasets: AssignmentDatasetItem[] = ["심석 고1 형용사 500", "심석 고2 영어Ⅱ"].map((title, index) => ({
+  ...cataloguedDatasetFromMetadata({ id: `book-${index}`, title }, undefined),
+  isActive: true, rowCount: 500, status: "ready",
+}));
+
 function screenController({
   canSubmit = false,
   previewLoading = false,
@@ -82,7 +104,7 @@ function screenController({
   submitting?: boolean;
 } = {}) {
   return {
-    actions: { submitPlan: mocks.screenSubmit },
+    actions: { submitPlan: mocks.screenSubmit, changeDataset: mocks.rangeDataset },
     bulk: {
       state: {
         draft: {},
@@ -105,7 +127,8 @@ function reviewController(
   submitting = false,
 ) {
   return {
-    actions: { submit: mocks.reviewSubmit },
+    actions: { submit: mocks.reviewSubmit, changeDataset: mocks.reviewDataset },
+    datasetOptions: [],
     calculationPending,
     canSubmit,
     capacity: {
@@ -159,6 +182,9 @@ describe("오답 단일 배정 제출", () => {
     mocks.toastError.mockReset();
     mocks.useScreen.mockReset();
     mocks.useReview.mockReset();
+    mocks.rangeDataset.mockReset();
+    mocks.reviewDataset.mockReset();
+    window.localStorage.clear();
     mocks.useScreen.mockReturnValue(screenController());
   });
 
@@ -399,6 +425,71 @@ describe("오답 단일 배정 제출", () => {
         .disabled,
     ).toBe(true);
     expect(mocks.reviewSubmit).not.toHaveBeenCalled();
+  });
+
+  it.each(["single", "bulk"] as const)("%s 배정은 같은 창에서 검색하고 Escape로 조건과 초점을 보존한다", async (selectionMode) => {
+    mocks.useScreen.mockReturnValue({
+      ...screenController({ canSubmit: true }), readyDatasets: datasets, planner: { datasetId: "" },
+    });
+    mocks.useReview.mockReturnValue(reviewController("idle", false));
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+    render(<VocabAssignmentPlanner data={data} onClose={onClose} onSuccess={vi.fn()} selectionMode={selectionMode} students={[student]} />);
+    const condition = screen.getByRole("textbox", { name: "배정 조건 보존" });
+    await user.clear(condition);
+    await user.type(condition, "날짜 없이 5회차");
+    await user.click(screen.getByRole("button", { name: "범위 단어장 찾기" }));
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "배정하기" })).not.toBeInTheDocument();
+    const search = screen.getByRole("searchbox", { name: "단어장 검색" });
+    expect(search).toHaveFocus();
+    await user.type(search, "형용사{Enter}");
+    expect(screen.getByRole("status")).toHaveTextContent("검색 결과 1권");
+    expect(mocks.screenSubmit).not.toHaveBeenCalled();
+    await user.keyboard("{Escape}");
+    expect(condition).toBeVisible();
+    expect(condition).toHaveValue("날짜 없이 5회차");
+    expect(screen.getByRole("button", { name: "범위 단어장 찾기" })).toHaveFocus();
+    expect(mocks.rangeDataset).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("현재 단어장 재선택은 초기화하지 않고 다른 단어장 확정 때만 한 번 전환한다", () => {
+    mocks.useScreen.mockReturnValue({ ...screenController(), readyDatasets: datasets });
+    mocks.useReview.mockReturnValue({
+      ...reviewController("ready", true),
+      datasetOptions: datasets.map((dataset) => ({ dataset, count: 2 })),
+      draft: { datasetId: datasets[0]!.id, questionCount: 2 },
+    });
+    render(<VocabAssignmentPlanner data={data} onClose={vi.fn()} onSuccess={vi.fn()} selectionMode="single" students={[student]} />);
+    fireEvent.click(screen.getByRole("tab", { name: "오답 시험" }));
+    fireEvent.click(screen.getByRole("button", { name: "오답 단어장 찾기" }));
+    fireEvent.click(screen.getByRole("button", { name: /심석 고1 형용사 500/ }));
+    expect(mocks.reviewDataset).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "오답 단어장 찾기" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "오답 단어장 찾기" }));
+    fireEvent.click(screen.getByRole("button", { name: /심석 고2 영어Ⅱ/ }));
+    expect(mocks.reviewDataset).toHaveBeenCalledExactlyOnceWith(datasets[1]!.id);
+    expect(mocks.rangeDataset).not.toHaveBeenCalled();
+  });
+
+  it("오답 선택은 미배정 후보와 개수만 표시하며 취소는 배정창을 닫지 않는다", () => {
+    mocks.useScreen.mockReturnValue({ ...screenController(), readyDatasets: datasets });
+    mocks.useReview.mockReturnValue({
+      ...reviewController("ready", true), datasetOptions: [{ dataset: datasets[1], count: 7 }],
+    });
+    const onClose = vi.fn();
+    render(<VocabAssignmentPlanner data={data} onClose={onClose} onSuccess={vi.fn()} selectionMode="single" students={[student]} />);
+    fireEvent.click(screen.getByRole("tab", { name: "오답 시험" }));
+    fireEvent.click(screen.getByRole("button", { name: "오답 단어장 찾기" }));
+    const list = screen.getByRole("region", { name: "단어장 목록" });
+    expect(within(list).getAllByRole("button")).toHaveLength(1);
+    expect(list).toHaveTextContent("미배정 오답 7개");
+    expect(list).not.toHaveTextContent("형용사");
+    fireEvent.click(screen.getByRole("button", { name: "선택 취소" }));
+    expect(onClose).not.toHaveBeenCalled();
+    expect(mocks.reviewDataset).not.toHaveBeenCalled();
+    expect(screen.getByRole("tab", { name: "오답 시험" })).toHaveAttribute("aria-selected", "true");
   });
 
   it("일괄 배정은 학생이 한 명이어도 일괄 제목과 필터를 유지한다", () => {

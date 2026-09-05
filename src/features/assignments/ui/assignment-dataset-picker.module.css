@@ -1,0 +1,141 @@
+.picker {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  animation: picker-enter var(--motion-standard) both;
+}
+
+.trigger,
+.bookRow {
+  align-items: center;
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
+  min-height: 4.5rem;
+  height: auto;
+  padding: var(--space-3);
+  text-align: left;
+  white-space: normal;
+  width: 100%;
+}
+
+.bookText {
+  display: grid;
+  flex: 1;
+  gap: var(--space-1);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.bookText > strong {
+  font-size: max(16px, var(--ui-label-size));
+  line-height: 1.5;
+}
+
+.metadata,
+.bookStatus,
+.hint,
+.filterLabel,
+.moreFilters {
+  font-size: var(--ui-label-size);
+  line-height: 1.5;
+}
+
+.metadata,
+.hint {
+  color: var(--text-secondary);
+}
+
+.count { color: inherit; opacity: 0.8; }
+
+.bookRow[aria-pressed="true"] {
+  background: var(--selection-active);
+  border-inline-start: 3px solid var(--ink);
+}
+
+.triggerAction,
+.bookStatus {
+  flex-shrink: 0;
+}
+
+.bookStatus {
+  display: grid;
+  gap: var(--space-1);
+  text-align: right;
+}
+
+.filterGroup {
+  align-items: start;
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: 5rem minmax(0, 1fr);
+}
+
+.filterLabel { padding-block: var(--space-2); }
+
+.filterButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.filterButtons > button { min-height: 2.75rem; }
+
+.moreFilters > summary {
+  cursor: pointer;
+  padding-block: var(--space-2);
+}
+
+.moreFilters[open] > summary { margin-bottom: var(--space-2); }
+
+.resultsSection { min-width: 0; }
+
+.bookList {
+  display: grid;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sectionTitle {
+  font-size: var(--ui-label-size);
+  margin: 0 0 var(--space-2);
+}
+
+.resultHeading {
+  align-items: center;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: space-between;
+  padding-top: var(--space-2);
+}
+
+.resultHeading > p,
+.hint { margin: 0; }
+
+.empty {
+  background: var(--surface-muted);
+  padding: var(--space-4);
+  text-align: center;
+}
+
+@keyframes picker-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+  .filterGroup { grid-template-columns: minmax(0, 1fr); }
+  .filterLabel { padding-block: 0; }
+  .trigger,
+  .bookRow { align-items: stretch; flex-direction: column; gap: var(--space-2); }
+  .triggerAction { text-align: right; }
+  .bookStatus { display: flex; flex-wrap: wrap; justify-content: space-between; text-align: left; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .picker { animation: none; }
+}
