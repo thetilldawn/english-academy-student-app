@@ -378,7 +378,7 @@ function validateBulkAssignmentSelection(
       context.addIssue({
         code: "custom",
         path: ["commonPlan", "selectedDateCount"],
-        message: "영영풀이·예문 시험은 Preview에서 시험일 없이 1회만 바로 배정할 수 있습니다.",
+        message: "영영풀이·예문 시험은 현재 시험일 없이 1회만 바로 배정할 수 있습니다.",
       });
     }
   }

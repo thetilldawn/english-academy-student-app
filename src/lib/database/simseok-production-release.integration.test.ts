@@ -318,5 +318,16 @@ describe.sequential("심석고 운영 승인 경계", () => {
     await db.query("select public.activate_approved_simseok_production_v1()");
     await db.exec("reset role");
     expect((await db.query<{status:string}>("select status from word_index.app_canonical_question_preview_release where release_id=$1",[revised.release_id])).rows[0]?.status).toBe("active");
+    await role("xdxhswjgksukjmpbzqgz", "authenticated");
+    const available = (await db.query<{
+      dataset_id: string; definition_count: string; example_count: string;
+    }>("select * from public.list_assignment_question_mode_availability_v1()")).rows;
+    expect(available).toHaveLength(6);
+    expect(available.reduce((sum, item) => sum + Number(item.definition_count), 0)).toBe(840);
+    expect(available.reduce((sum, item) => sum + Number(item.example_count), 0)).toBe(926);
+    const adjective = available.find((item) => item.dataset_id === revised.dataset_id)!;
+    expect(Number(adjective.definition_count)).toBe(297);
+    expect(Number(adjective.example_count)).toBe(469);
+    await db.exec("reset role");
   },30_000);
 });

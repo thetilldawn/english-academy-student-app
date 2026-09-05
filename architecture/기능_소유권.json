@@ -5078,6 +5078,8 @@
           "src/features/assignments/client/controllers/use-assignment-dataset-picker.test.tsx",
           "src/features/assignments/domain/assignment-dataset-picker.test.ts",
           "src/features/assignments/ui/vocab-assignment-planner.test.tsx",
+          "src/features/assignments/ui/assignment-workspace.test.tsx",
+          "src/features/assignments/server/queries/assignment-planner-preparation-query.test.ts",
           "src/features/assignments/controller/use-assignment-dataset-unit-catalog.test.tsx",
           "src/features/assignments/controller/use-assignment-previous-exam.test.tsx",
           "src/features/assignments/domain/vocab-previous-exam.test.ts"

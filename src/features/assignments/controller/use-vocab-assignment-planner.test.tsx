@@ -205,10 +205,32 @@ describe("단어 배정 일정 controller", () => {
     }));
 
     expect(mocks.changeQuestionMode).not.toHaveBeenCalled();
+    expect(result.current.questionModeAvailability).toEqual(exampleReadyDataset.availableQuestionModes);
     act(() => result.current.actions.changeDataset(definitionOnlyDataset.id));
+    expect(result.current.questionModeAvailability).toEqual(definitionOnlyDataset.availableQuestionModes);
     expect(mocks.changeQuestionMode).toHaveBeenCalledWith(
       "book_meaning_choice",
     );
+  });
+
+  it("유형 정보 누락과 교재 뜻만 준비된 상태를 구분해 표시 계층으로 전달한다", () => {
+    const { result } = renderHook(() => useVocabAssignmentPlanner({
+      datasets: [dataset, { ...dataset, id: "meaning-only", availableQuestionModes: ["book_meaning_choice"] }],
+      genericErrorMessage: "저장 실패",
+      initialDatasetId: dataset.id,
+      previousExamSourceStudentId: "student-a",
+      previewErrorMessage: "미리보기 실패",
+      studentIds: ["student-a"],
+      today: "2026-09-05",
+      units,
+    }));
+    expect(result.current.questionModeAvailability).toBeUndefined();
+    expect(result.current.availableQuestionModes).toEqual(["book_meaning_choice"]);
+    act(() => result.current.actions.changeDataset("meaning-only"));
+    expect(result.current.questionModeAvailability).toEqual(["book_meaning_choice"]);
+    act(() => result.current.actions.changeDataset(""));
+    expect(result.current.questionModeAvailability).toBeUndefined();
+    expect(result.current.planner.datasetId).toBe("");
   });
 
   it("요일은 처음에 비어 있고 월수금을 고르면 가까운 세 날짜를 만든다", () => {

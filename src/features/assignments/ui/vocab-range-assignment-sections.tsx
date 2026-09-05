@@ -132,8 +132,9 @@ export function VocabRangeAssignmentSections({
           fieldErrors={fieldErrors}
         />
         <BulkExamFields
-          availableQuestionModes={controller.availableQuestionModes}
+          availableQuestionModes={controller.questionModeAvailability}
           controller={bulk}
+          datasetSelected={Boolean(controller.planner.datasetId)}
           fieldErrors={fieldErrors}
           onQuestionModeChange={controller.actions.changeQuestionMode}
         />

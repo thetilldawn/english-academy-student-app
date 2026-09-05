@@ -121,11 +121,12 @@ export function useVocabAssignmentPlanner({
     studentIds,
     transport,
   });
+  const questionModeAvailability = datasets.find(
+    (dataset) => dataset.id === planner.datasetId,
+  )?.availableQuestionModes;
   const availableQuestionModes = useMemo<readonly AssignmentQuestionMode[]>(
-    () =>
-      datasets.find((dataset) => dataset.id === planner.datasetId)
-        ?.availableQuestionModes ?? ["book_meaning_choice"],
-    [datasets, planner.datasetId],
+    () => questionModeAvailability ?? ["book_meaning_choice"],
+    [questionModeAvailability],
   );
   const changeQuestionMode = bulk.actions.changeQuestionMode;
   useLayoutEffect(() => {
@@ -357,6 +358,7 @@ export function useVocabAssignmentPlanner({
     previousExamError: previousExamRead.error,
     previousExamStatus: previousExamRead.status,
     planner,
+    questionModeAvailability,
     fieldErrors: fieldValidation.errors,
     firstFieldKey: fieldValidation.firstFieldKey,
     blockedReason:

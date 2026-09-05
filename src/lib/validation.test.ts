@@ -254,6 +254,19 @@ describe("일괄 단어 시험 입력 계약", () => {
     );
   });
 
+  it.each(["canonical_definition_to_headword", "canonical_example_to_headword"])(
+    "%s 일정 제한 오류는 배포 환경이 아닌 실제 지원 범위를 안내한다", (questionMode) => {
+      const result = bulkAssignmentPreviewSchema.safeParse({
+        ...preview, questionMode, englishToKoreanRatio: 0,
+      });
+      expect(result.success).toBe(false);
+      if (result.success) throw new Error("일정 제한 오류가 누락되었습니다.");
+      expect(result.error.issues.find(
+        (issue) => issue.path.join(".") === "commonPlan.selectedDateCount",
+      )?.message).toBe("영영풀이·예문 시험은 현재 시험일 없이 1회만 바로 배정할 수 있습니다.");
+    },
+  );
+
   it("예전 분산 필드를 받지 않는다", () => {
     expect(bulkAssignmentPreviewSchema.safeParse({
       ...preview,

@@ -618,11 +618,10 @@ describe("assignment draft validation", () => {
       questionMode: "canonical_definition_to_headword",
       exam: { ...baseBulk.exam, directionRatio: 0 },
     };
-    expect(
-      validateBulkPreviewProjection(scheduledCanonical).map(
-        (issue) => issue.path,
-      ),
-    ).toContain("commonPlan.selectedDateCount");
+    const issue = validateBulkPreviewProjection(scheduledCanonical).find(
+      (item) => item.path === "commonPlan.selectedDateCount",
+    );
+    expect(issue?.message).toBe("영영풀이·예문 시험은 현재 시험일 없이 1회만 바로 배정할 수 있습니다.");
 
     const immediateCanonical: BulkSeriesAssignmentDraft = {
       ...scheduledCanonical,

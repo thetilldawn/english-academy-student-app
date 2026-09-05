@@ -16,7 +16,6 @@ import type {
   AssignmentQuestionMode,
   ExamSettings,
 } from "../domain/model";
-import { assignmentQuestionModes } from "../domain/model";
 import type { VocabAssignmentFieldKey } from "../presentation/vocab-assignment-field-errors";
 import styles from "./vocab-assignment-planner.module.css";
 
@@ -246,24 +245,32 @@ export function ExamConditionFields({
 }
 
 export function BulkExamFields({
-  availableQuestionModes = assignmentQuestionModes,
+  availableQuestionModes,
   controller,
+  datasetSelected,
   fieldErrors = {},
   onQuestionModeChange,
 }: {
   availableQuestionModes?: readonly AssignmentQuestionMode[];
   controller: BulkAssignmentController;
+  datasetSelected: boolean;
   fieldErrors?: Partial<Record<VocabAssignmentFieldKey, string>>;
   onQuestionModeChange: (value: AssignmentQuestionMode) => void;
 }) {
   const { actions, state } = controller;
   const questionMode = state.draft.questionMode;
-  const definitionAvailable = availableQuestionModes.includes(
+  const modes = datasetSelected ? availableQuestionModes ?? [] : [];
+  const definitionAvailable = modes.includes(
     "canonical_definition_to_headword",
   );
-  const exampleAvailable = availableQuestionModes.includes(
+  const exampleAvailable = modes.includes(
     "canonical_example_to_headword",
   );
+  const sharedStatusId = !datasetSelected
+    ? "question-mode-dataset-required"
+    : availableQuestionModes === undefined
+      ? "question-mode-status-unavailable"
+      : undefined;
 
   return (
     <div className={styles.fieldStack}>
@@ -278,42 +285,47 @@ export function BulkExamFields({
             { value: "book_meaning_choice", label: "교재 뜻" },
             {
               value: "canonical_definition_to_headword",
-              label: definitionAvailable
-                ? "영영풀이 → 영어"
-                : "영영풀이 → 영어 · 검토 중",
+              label: "영영풀이 → 영어",
               disabled: !definitionAvailable,
               describedBy: !definitionAvailable
-                ? "definition-mode-review-status"
+                ? sharedStatusId ?? "definition-mode-unavailable"
                 : undefined,
             },
             {
               value: "canonical_example_to_headword",
-              label: exampleAvailable
-                ? "예문 → 영어"
-                : "예문 → 영어 · 검토 중",
+              label: "예문 → 영어",
               disabled: !exampleAvailable,
               describedBy: !exampleAvailable
-                ? "example-mode-review-status"
+                ? sharedStatusId ?? "example-mode-unavailable"
                 : undefined,
             },
           ]}
           onChange={onQuestionModeChange}
           value={questionMode}
         />
-        {questionMode !== "book_meaning_choice" ? (
+        {!datasetSelected ? (
+          <small id={sharedStatusId}>
+            단어장을 먼저 선택하면 사용할 수 있는 출제 자료가 표시됩니다.
+          </small>
+        ) : availableQuestionModes === undefined ? (
+          <small id={sharedStatusId} role="alert">
+            이 단어장의 출제 유형 정보를 확인하지 못했습니다. 배정 창을 닫고 다시 열어 주세요.
+          </small>
+        ) : null}
+        {modes.includes(questionMode) && questionMode !== "book_meaning_choice" ? (
           <small role="status">
-            검수된 영어 선택지 4개로 바로 배정하는 Preview 전용 유형입니다.
+            준비된 문항과 영어 선택지 4개를 사용합니다.
             현재는 시험일 없이 1회 배정만 지원합니다.
           </small>
         ) : null}
-        {!definitionAvailable ? (
-          <small id="definition-mode-review-status">
-            영영풀이 문제는 뜻과 영어 선택지 검토가 끝난 뒤 사용할 수 있습니다.
+        {!sharedStatusId && !definitionAvailable ? (
+          <small id="definition-mode-unavailable">
+            이 단어장에는 현재 배정 가능한 영영풀이 문항이 없습니다.
           </small>
         ) : null}
-        {!exampleAvailable ? (
-          <small id="example-mode-review-status">
-            예문 문제는 문장과 영어 선택지 검토가 끝난 뒤 사용할 수 있습니다.
+        {!sharedStatusId && !exampleAvailable ? (
+          <small id="example-mode-unavailable">
+            이 단어장에는 현재 배정 가능한 예문 문항이 없습니다.
           </small>
         ) : null}
       </Field>
