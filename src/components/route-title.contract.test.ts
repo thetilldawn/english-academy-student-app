@@ -41,4 +41,16 @@ describe("공통 상단바 제목 계약", () => {
     expect(source("src/components/shell/app-shell.module.css"))
       .toContain("margin-inline-start: auto");
   });
+
+  it("학생 정보는 모바일에서도 숨기지 않고 PC 본문 폭과 고정 제목 높이를 맞춘다", () => {
+    const css = source("src/components/shell/app-shell.module.css");
+    expect(css).toMatch(/\.studentTopbar\s*\{[^}]*--ui-label-size:\s*16px/);
+    expect(css).toMatch(/\.studentTopbarInner\s*\{[^}]*width:\s*min\(900px, calc\(100% - 36px\)\)/);
+    expect(css).toMatch(/@media \(max-width: 420px\)[\s\S]*?\.studentIdentity\s*\{[^}]*flex-basis:\s*100%/);
+    expect(css).not.toMatch(/\.studentUserLabel\s*\{[^}]*(?:display:\s*none|text-overflow:\s*ellipsis)/);
+    expect(css).toMatch(/\.studentUserLabel\s*\{[^}]*overflow-wrap:\s*anywhere/);
+    expect(source("src/components/student-shell.tsx")).toContain('shell.style.setProperty("--student-topbar-offset"');
+    expect(source("src/features/student-dashboard/ui/assignment-study.module.css"))
+      .toContain("var(--student-topbar-offset");
+  });
 });

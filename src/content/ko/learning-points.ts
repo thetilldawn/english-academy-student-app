@@ -1,5 +1,10 @@
 export const learningPointsText = {
   current: "현재 포인트",
+  header: {
+    label: "포인트",
+    loading: "확인 중",
+    unavailable: "확인 불가",
+  },
   studentAttempt: {
     aria: "시험 포인트",
     earned: "이번 시험 포인트",

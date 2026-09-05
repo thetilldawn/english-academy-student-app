@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 
 import type {
   AdminAttemptPointSummary,
@@ -57,10 +58,10 @@ export async function listStudentPointBalances(
   return balances;
 }
 
-export async function getStudentPointBalance(studentId: string) {
+export const getStudentPointBalance = cache(async (studentId: string) => {
   const balances = await listStudentPointBalances([studentId]);
   return balances.get(studentId) ?? 0;
-}
+});
 
 async function getAttemptPointSummaryRow(
   studentId: string,
@@ -86,10 +87,10 @@ async function getAttemptPointSummaryRow(
   return row;
 }
 
-export async function getStudentAttemptPointSummary(
+export const getStudentAttemptPointSummary = cache(async (
   studentId: string,
   attemptId: string,
-): Promise<StudentAttemptPointSummary | null> {
+): Promise<StudentAttemptPointSummary | null> => {
   const row = await getAttemptPointSummaryRow(studentId, attemptId);
   if (!row) return null;
 
@@ -103,7 +104,7 @@ export async function getStudentAttemptPointSummary(
       parseSafeInteger(row.current_points, "현재 합계"),
     ),
   };
-}
+});
 
 export async function getAdminAttemptPointSummary(
   studentId: string,

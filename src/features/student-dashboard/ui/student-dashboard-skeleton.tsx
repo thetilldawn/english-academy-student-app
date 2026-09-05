@@ -8,7 +8,6 @@ export function StudentDashboardSkeleton() {
       className={styles.page}
       id="main-content"
     >
-      <div className={styles.skeletonPoint} />
       <div className={styles.skeletonSection} />
       <div className={styles.skeletonSection} />
     </main>

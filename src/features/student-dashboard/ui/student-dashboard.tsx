@@ -1,7 +1,6 @@
 import { formatContentText } from "@/content/format";
 import { studentAppText } from "@/content/ko/student-app";
 import { CollapsibleStatusSection } from "@/design-system/patterns/collapsible-status-section/collapsible-status-section";
-import { CurrentPointSummary } from "@/features/learning-points/public-ui";
 import type { StudentDashboardInitialSnapshot } from "@/features/student-dashboard/contracts/student-dashboard-read-model";
 
 import {
@@ -21,10 +20,8 @@ const sectionTitles: Record<StudentAssignmentSectionId, string> = {
 };
 
 export function StudentDashboard({
-  currentPoints,
   snapshot,
 }: {
-  currentPoints: number;
   snapshot: StudentDashboardInitialSnapshot;
 }) {
   const nowMilliseconds = Date.parse(snapshot.snapshotAt);
@@ -47,9 +44,6 @@ export function StudentDashboard({
 
   return (
     <main className={styles.page} id="main-content">
-      <div className={styles.pointSummary}>
-        <CurrentPointSummary currentPoints={currentPoints} />
-      </div>
       {totalCount === 0 ? (
         <div className={styles.empty} role="status">
           {studentAppText.dashboard.emptyTitle}

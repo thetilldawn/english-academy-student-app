@@ -8,14 +8,31 @@ function source(relativePath: string) {
 }
 
 describe("learning point screen wiring", () => {
-  it("loads the student dashboard balance beside assignments", () => {
+  it("loads the balance in an independently authenticated parallel header slot", () => {
     const content = source(
       "src/features/student-dashboard/server/components/student-dashboard-content.tsx",
     );
-    expect(content).toContain("Promise.all([");
     expect(content).toContain("getStudentDashboardInitial(student)");
-    expect(content).toContain("getStudentPointBalance(student.studentId)");
-    expect(content).toContain("currentPoints={currentPoints}");
+    expect(content).not.toContain("getStudentPointBalance");
+    const header = source("src/features/learning-points/server/components/student-header-points.tsx");
+    expect(header).toContain("await requireStudentSession()");
+    expect(header).toContain("getStudentPointBalance(student.studentId)");
+    expect(header).toContain("getStudentAttemptPointSummary(student.studentId, segments[1])");
+    expect(source("src/app/student/(protected)/layout.tsx")).toContain("points={summary}");
+    expect(source("src/app/student/(protected)/@summary/[...catchAll]/page.tsx"))
+      .toContain("<StudentHeaderPoints segments={catchAll} />");
+    expect(source("src/app/student/(protected)/@summary/page.tsx"))
+      .toContain("<StudentHeaderPoints segments={[]} />");
+    expect(fs.existsSync(path.resolve("src/app/student/(protected)/@summary/[[...segments]]/page.tsx")))
+      .toBe(false);
+  });
+
+  it("deduplicates shared reads only inside an RSC request", () => {
+    const service = source("src/lib/services/learning-point-read-service.ts");
+    expect(service).toContain('import { cache } from "react"');
+    expect(service).toContain("getStudentPointBalance = cache(async");
+    expect(service).toContain("getStudentAttemptPointSummary = cache(async");
+    expect(service).not.toMatch(/unstable_cache|use cache|revalidateTag|localStorage/);
   });
 
   it("loads an owned attempt's questions and point summary together", () => {

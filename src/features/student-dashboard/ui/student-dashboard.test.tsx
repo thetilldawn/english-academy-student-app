@@ -87,7 +87,6 @@ describe("StudentDashboard", () => {
   it("renders the dedicated empty state for zero assignments", () => {
     render(
       <StudentDashboard
-        currentPoints={17}
         snapshot={snapshot()}
       />,
     );
@@ -95,7 +94,7 @@ describe("StudentDashboard", () => {
     expect(screen.getByRole("status")).toHaveTextContent(
       studentAppText.dashboard.emptyTitle,
     );
-    expect(screen.getByLabelText("현재 포인트")).toHaveTextContent("17");
+    expect(screen.queryByLabelText("현재 포인트")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { level: 2 })).not.toBeInTheDocument();
   });
 
@@ -126,7 +125,6 @@ describe("StudentDashboard", () => {
 
     const { container } = render(
       <StudentDashboard
-        currentPoints={0}
         snapshot={snapshot({
           completed: [completed],
           current: [
@@ -161,7 +159,6 @@ describe("StudentDashboard", () => {
       "아주 긴 이름의 고등학교 시험 대비 장문독해 단어장 ".repeat(6).trim();
     render(
       <StudentDashboard
-        currentPoints={0}
         snapshot={snapshot({
           current: [{
             assignment: assignment("long", {
@@ -183,7 +180,6 @@ describe("StudentDashboard", () => {
   it("keeps a completed-only section collapsed by default", () => {
     render(
       <StudentDashboard
-        currentPoints={0}
         snapshot={snapshot({
           completed: [assignment("completed-only", {
             lastAttemptId: "attempt-completed",

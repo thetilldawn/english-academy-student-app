@@ -51,6 +51,7 @@ const ROUTER_REFRESH_ALLOWLIST = new Map<
   [
     ["src/components/admin-logout-button.tsx", { maxCalls: 1, removeIn: "유지" }],
     ["src/components/student-logout-button.tsx", { maxCalls: 1, removeIn: "유지" }],
+    ["src/components/use-student-history-refresh.ts", { maxCalls: 2, removeIn: "history/BFCache 복원 한정; 일반 이동·시험 진행은 새 행동 검사로 갱신 금지" }],
     ["src/features/history/ui/editable-history-detail-dialog.tsx", { maxCalls: 1, removeIn: "충돌 복구" }],
     ["src/features/history/ui/editable-history-detail-page.tsx", { maxCalls: 1, removeIn: "충돌 복구" }],
     ["src/features/student-dashboard/ui/assignment-boundary-refresh.tsx", { maxCalls: 1, removeIn: "유지" }],

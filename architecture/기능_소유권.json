@@ -451,6 +451,14 @@
       "owner": "student-dashboard"
     },
     {
+      "path": "src/app/student/(protected)/@summary/[...catchAll]/page.tsx",
+      "owner": "learning-points"
+    },
+    {
+      "path": "src/app/student/(protected)/@summary/page.tsx",
+      "owner": "learning-points"
+    },
+    {
       "path": "src/app/student/(protected)/result/[id]/page.tsx",
       "owner": "results"
     },
@@ -547,6 +555,14 @@
     {
       "path": "src/app/student/(protected)/layout.tsx",
       "owner": "app-shell"
+    },
+    {
+      "path": "src/app/student/(protected)/@summary/default.tsx",
+      "owner": "learning-points"
+    },
+    {
+      "path": "src/app/student/(protected)/@summary/loading.tsx",
+      "owner": "learning-points"
     },
     {
       "path": "src/instrumentation.ts",
@@ -1396,6 +1412,10 @@
       "owner": "app-shell"
     },
     {
+      "path": "src/components/use-student-history-refresh.ts",
+      "owner": "app-shell"
+    },
+    {
       "path": "src/components/theme-toggle.module.css",
       "owner": "app-shell"
     },
@@ -1736,6 +1756,10 @@
   ],
   "serverOwners": [],
   "featureServerOwners": [
+    {
+      "path": "src/features/learning-points/server/components/student-header-points.tsx",
+      "owner": "learning-points"
+    },
     {
       "path": "src/features/assignments/server/persistence/bulk-assignment-persistence.ts",
       "owner": "assignments"
@@ -2100,8 +2124,8 @@
       "ownerPath": "src/features/learning-points",
       "localGuide": "src/features/learning-points/AGENTS.md",
       "entrypoints": [
-        "src/app/student/(protected)/page.tsx",
-        "src/app/api/student/dashboard/completed/route.ts"
+        "src/app/student/(protected)/@summary/page.tsx",
+        "src/app/student/(protected)/@summary/[...catchAll]/page.tsx"
       ]
     },
     {
@@ -2308,12 +2332,6 @@
       "removeIn": "공개 진입점으로 고정"
     },
     {
-      "from": "src/features/student-dashboard/ui/student-dashboard.tsx",
-      "to": "src/features/learning-points/public-ui.ts",
-      "reason": "학생 메인의 포인트 표시",
-      "removeIn": "공개 진입점으로 고정"
-    },
-    {
       "from": "src/features/students/contracts/student-detail-read-model.ts",
       "to": "src/features/history/public-contracts.ts",
       "reason": "학생 상세 초기 이력의 공개 읽기 계약",
@@ -2402,9 +2420,9 @@
       "removeIn": "R6 learning-points/server 공개 조회 진입점"
     },
     {
-      "from": "src/features/student-dashboard/server/components/student-dashboard-content.tsx",
+      "from": "src/features/learning-points/server/components/student-header-points.tsx",
       "to": "src/lib/services/learning-point-read-service.ts",
-      "reason": "학생 메인 서버 구성이 기존 현재 포인트 전용 조회를 시험 목록과 병렬 실행함",
+      "reason": "같은 포인트 기능의 상단 서버 구성이 기존 전용 집계 조회를 재사용함",
       "removeIn": "R6 learning-points/server 공개 조회 진입점"
     }
   ],
@@ -2435,15 +2453,6 @@
         "src/lib/services/learning-point-read-service.ts"
       ],
       "reason": "내역 상세가 기존 포인트 조회를 거쳐 포인트 표시 자료를 받음",
-      "removeIn": "R6 learning-points/server 공개 조회 진입점"
-    },
-    {
-      "from": "src/features/student-dashboard/server/components/student-dashboard-content.tsx",
-      "to": "src/features/learning-points/model.ts",
-      "via": [
-        "src/lib/services/learning-point-read-service.ts"
-      ],
-      "reason": "학생 메인 서버 구성이 기존 포인트 조회를 거쳐 학습 포인트 계약을 사용함",
       "removeIn": "R6 learning-points/server 공개 조회 진입점"
     }
   ],
@@ -3654,7 +3663,7 @@
       ],
       "dataClass": "private",
       "cachePolicy": "학생별 배정·응시·포인트는 요청 사이 공유 캐시를 쓰지 않고 완료 페이지도 private no-store로 조회",
-      "streamingPolicy": "학생 인증 뒤 초기 시험 목록과 포인트를 Server Component에서 병렬로 읽어 Suspense로 표시하고 완료 10개 이후만 Route Handler를 사용",
+      "streamingPolicy": "학생 인증 뒤 초기 시험 목록과 상단 병렬 slot의 포인트를 독립적으로 표시하고 완료 10개 이후만 Route Handler를 사용",
       "closedLocalLayers": [
         "ui",
         "controller",
@@ -3664,14 +3673,20 @@
       "touchpoints": {
         "route": [
           "src/app/student/(protected)/page.tsx",
+          "src/app/student/(protected)/@summary/page.tsx",
+          "src/app/student/(protected)/@summary/[...catchAll]/page.tsx",
           "src/app/api/student/dashboard/completed/route.ts"
         ],
         "serverComponent": [
           "src/app/student/(protected)/page.tsx",
+          "src/app/student/(protected)/@summary/page.tsx",
+          "src/app/student/(protected)/@summary/[...catchAll]/page.tsx",
+          "src/features/learning-points/server/components/student-header-points.tsx",
           "src/features/student-dashboard/server/components/student-dashboard-content.tsx"
         ],
         "ui": [
           "src/features/history/public-ui.ts",
+          "src/features/learning-points/ui/header-point-summary.tsx",
           "src/features/student-dashboard/ui/student-dashboard.tsx",
           "src/features/student-dashboard/ui/student-completed-assignments.tsx",
           "src/features/student-dashboard/ui/student-assignment-card.tsx",
@@ -3695,6 +3710,7 @@
           "src/features/student-dashboard/transport/student-dashboard-pages.ts"
         ],
         "server": [
+          "src/features/learning-points/server/components/student-header-points.tsx",
           "src/features/student-dashboard/server/components/student-dashboard-content.tsx",
           "src/features/student-dashboard/server/student-dashboard-cursor.ts",
           "src/features/student-dashboard/server/queries/student-dashboard-query.ts",
@@ -3706,11 +3722,17 @@
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/page.tsx",
+          "src/app/student/(protected)/@summary/loading.tsx",
+          "src/app/student/(protected)/@summary/default.tsx",
           "src/features/student-dashboard/server/components/student-dashboard-content.tsx",
           "src/features/student-dashboard/ui/student-dashboard-skeleton.tsx",
           "src/app/api/student/dashboard/completed/route.ts"
         ],
         "tests": [
+          "src/components/student-shell.test.tsx",
+          "src/components/route-title.contract.test.ts",
+          "src/features/learning-points/server/components/student-header-points.test.tsx",
+          "src/features/learning-points/ui/header-point-summary.test.tsx",
           "src/app/api/student/dashboard/completed/route.test.ts",
           "src/features/student-dashboard/controller/use-student-completed-assignments.test.tsx",
           "src/features/student-dashboard/server/student-dashboard-cursor.test.ts",
@@ -3733,9 +3755,9 @@
           "reason": "초기 Server Component가 앱 내부 HTTP 없이 학생 시험 읽기 모델을 직접 조회"
         },
         {
-          "from": "src/features/student-dashboard/server/components/student-dashboard-content.tsx",
+          "from": "src/features/learning-points/server/components/student-header-points.tsx",
           "to": "src/lib/services/learning-point-read-service.ts",
-          "reason": "현재 포인트 전용 조회를 시험 목록과 병렬 실행"
+          "reason": "상단 병렬 slot이 현재 학생 집계를 재사용하고 결과 요약과 RSC 요청 안에서 중복 제거"
         },
         {
           "from": "src/features/student-dashboard/ui/student-dashboard.tsx",

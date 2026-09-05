@@ -113,6 +113,46 @@
   white-space: nowrap;
 }
 
+.studentTopbar {
+  --ui-label-size: 16px;
+}
+
+.studentTopbarInner {
+  width: min(900px, calc(100% - 36px));
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding-block: 8px;
+}
+
+.studentIdentity {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-inline-start: auto;
+  color: var(--text-primary);
+  font-size: var(--ui-label-size);
+  line-height: 1.5;
+}
+
+.studentUserLabel {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 700;
+}
+
+.studentIdentityDivider {
+  flex: none;
+  color: var(--text-secondary);
+}
+
+.studentControls {
+  flex-shrink: 0;
+  margin-inline-start: 0;
+}
+
 @media (min-width: 1200px) {
   .adminAppShell {
     display: grid;
@@ -169,6 +209,10 @@
 }
 
 @media (max-width: 767px) {
+  .studentTopbarInner {
+    width: calc(100% - 24px);
+  }
+
   .adminTopbarInner {
     width: min(100% - 24px, 1180px);
     min-height: 62px;
@@ -203,14 +247,28 @@
     width: min(100% - 24px, 1180px);
   }
 
-  .studentUserLabel {
-    max-width: 130px;
-    display: block;
+  .studentTopbarInner {
+    width: calc(100% - 24px);
+    flex-wrap: wrap;
   }
 }
 
 @media (max-width: 420px) {
-  .studentUserLabel {
-    display: none;
+  .studentAppShell {
+    --student-topbar-offset: 93px;
+  }
+
+  .studentTopbarInner {
+    gap: 8px;
+  }
+
+  .studentIdentity {
+    flex-basis: 100%;
+  }
+}
+
+@media (max-width: 359px) {
+  .studentTopbarInner {
+    width: calc(100% - 16px);
   }
 }

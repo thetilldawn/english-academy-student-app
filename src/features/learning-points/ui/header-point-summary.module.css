@@ -1,0 +1,17 @@
+.summary {
+  min-width: 0;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 6px;
+  color: var(--text-primary);
+  font-size: var(--ui-label-size);
+  line-height: 1.5;
+}
+
+.value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}

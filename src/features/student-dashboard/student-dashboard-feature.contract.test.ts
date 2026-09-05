@@ -32,9 +32,10 @@ describe("student dashboard feature boundary", () => {
   it("leaves the route responsible only for server loading and feature composition", () => {
     expect(page).toContain("<Suspense");
     expect(page).toContain("<StudentDashboardContent student={session}");
-    expect(dashboardContent).toContain("Promise.all([");
     expect(dashboardContent).toContain("getStudentDashboardInitial(student)");
-    expect(dashboardContent).toContain("getStudentPointBalance(student.studentId)");
+    expect(dashboardContent).not.toContain("getStudentPointBalance");
+    expect(dashboard).not.toContain("CurrentPointSummary");
+    expect(dashboardCss).not.toMatch(/pointSummary|skeletonPoint/);
     expect(dashboardContent).toContain("<StudentDashboard");
     expect(page).not.toMatch(
       /function AssignmentCard|assignments\.filter|<article|activitySection/,

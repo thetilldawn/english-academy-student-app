@@ -14,7 +14,8 @@ import { redirect } from "next/navigation";
 export default function StudentProtectedLayout({
   children,
   detail,
-}: Readonly<{ children: React.ReactNode; detail: React.ReactNode }>) {
+  summary,
+}: Readonly<{ children: React.ReactNode; detail: React.ReactNode; summary: React.ReactNode }>) {
   return (
     <Suspense
       fallback={(
@@ -24,7 +25,7 @@ export default function StudentProtectedLayout({
         />
       )}
     >
-      <StudentProtectedShell detail={detail}>{children}</StudentProtectedShell>
+      <StudentProtectedShell detail={detail} summary={summary}>{children}</StudentProtectedShell>
     </Suspense>
   );
 }
@@ -32,7 +33,8 @@ export default function StudentProtectedLayout({
 async function StudentProtectedShell({
   children,
   detail,
-}: Readonly<{ children: React.ReactNode; detail: React.ReactNode }>) {
+  summary,
+}: Readonly<{ children: React.ReactNode; detail: React.ReactNode; summary: React.ReactNode }>) {
   const student = await getStudentSession();
   if (!student) {
     redirect("/");
@@ -49,6 +51,7 @@ async function StudentProtectedShell({
       <StudentShell
         displayName={student.displayName}
         gradeLabel={student.gradeLabel}
+        points={summary}
       >
         {children}
       </StudentShell>
