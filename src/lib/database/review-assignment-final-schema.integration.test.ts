@@ -935,7 +935,8 @@ describe.sequential("final review-assignment database schema", () => {
       authenticated_public_review_summary: true,
       authenticated_replace_v2: false,
       authenticated_replace_v3: false,
-      authenticated_replace_v4: false,
+      // The rolling-deploy bridge now forwards to v5/v7; the old private writer stays closed.
+      authenticated_replace_v4: true,
       authenticated_replace_v5: true,
       authenticated_replace_v6: true,
       authenticated_series_context_v1: true,

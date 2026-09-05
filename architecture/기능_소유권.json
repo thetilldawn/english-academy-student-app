@@ -1650,8 +1650,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 95,
-      "pathSetSha256": "7846f49df0c8ad305e105677b39d77dd6d822ea7cf0b49ce571a255ef2b74286"
+      "fileCount": 96,
+      "pathSetSha256": "b584217d5a70c24eaf98e1f61120fdafcecd592016941fa513514b7ca5cfde45"
     },
     {
       "path": "src/lib/deploy",
@@ -1686,8 +1686,8 @@
     {
       "path": "src/lib/vocab",
       "owner": "shared-contract",
-      "fileCount": 30,
-      "pathSetSha256": "8db99df21598a53cdd83586b7b1a0c19df2fc9399e761b79cc80078a5c4661c6"
+      "fileCount": 31,
+      "pathSetSha256": "424ac42634c0abf5bfe28731b4a1da51b700ea8e81357730a0b83114464110ac"
     }
   ],
   "serverOwners": [],
@@ -1978,6 +1978,16 @@
       "path": "supabase/migrations/20260904155047_allow_immediate_bulk_assignment_sessions.sql",
       "owner": "assignments",
       "flow": "weekday-unit-allocation"
+    },
+    {
+      "path": "supabase/migrations/20260905040138_approve_simseok_production_release.sql",
+      "owner": "assignments",
+      "flow": "assignment-range-create"
+    },
+    {
+      "path": "supabase/migrations/20260905040904_preserve_production_rolling_deploy_compatibility.sql",
+      "owner": "assignments",
+      "flow": "assignment-range-create"
     }
   ],
   "features": [
@@ -2694,7 +2704,9 @@
           "supabase/migrations/20260903190904_add_simseok_sem2_preview_vocab.sql",
           "supabase/migrations/20260903200316_add_simseok_sem2_definition_preview.sql",
           "supabase/migrations/20260904021927_correct_simseok_g10_preview_scope.sql",
-          "supabase/migrations/20260904083500_extend_simseok_question_import_timeout.sql"
+          "supabase/migrations/20260904083500_extend_simseok_question_import_timeout.sql",
+          "supabase/migrations/20260905040138_approve_simseok_production_release.sql",
+          "supabase/migrations/20260905040904_preserve_production_rolling_deploy_compatibility.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/bulk-assignments/preview/route.ts",
