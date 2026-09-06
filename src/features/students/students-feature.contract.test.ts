@@ -107,6 +107,17 @@ describe("student management feature boundary", () => {
     expect(interceptedPage).toContain("<StudentDetailRouteContent");
   });
 
+  it("등록 준비만 열기 뒤 공개 브라우저 경계로 읽고 목록 첫 서버 조회는 유지한다", () => {
+    const create = source("src/features/students/server/components/student-create-content.tsx");
+    const workspace = source("src/features/students/ui/student-create-workspace.tsx");
+    const preparation = source("src/features/students/controller/use-student-create-preparation.ts");
+    expect(create).not.toMatch(/loadCurrentAdminMaterial|datasets=/);
+    expect(preparation).toContain("@/features/assignments/public-client");
+    expect(workspace).not.toMatch(/\bfetch\s*\(/);
+    expect(workspace).toContain("preparation.actions.changeOpen");
+    expect(source("src/features/students/server/components/student-directory-content.tsx")).toContain("getStudentDirectoryInitial(");
+  });
+
   it("keeps long names and wrong-word rows inside 320 through 1440 pixels", () => {
     expect(directoryCss).toMatch(/\.card\s*\{[^}]*min-width:\s*0;[^}]*width:\s*100%;/);
     expect(directoryCss).toMatch(/@media \(max-width: 767px\)[\s\S]*?\.card\s*\{[^}]*grid-template-columns:\s*1fr;/);

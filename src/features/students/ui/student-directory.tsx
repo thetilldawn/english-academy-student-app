@@ -28,7 +28,10 @@ export function StudentDirectory({
         resultCount={snapshot.totalCount}
       />
       {controller.error ? (
-        <Notice role="alert" tone="danger">{controller.error}</Notice>
+        <Notice role="alert" tone="danger">
+          {controller.error}
+          <Button onClick={() => void controller.actions.retry()} variant="quiet">{adminStudentsText.page.retry}</Button>
+        </Notice>
       ) : null}
       <section className={styles.groupPane}>
         <StudentDirectoryList students={snapshot.page.items} />

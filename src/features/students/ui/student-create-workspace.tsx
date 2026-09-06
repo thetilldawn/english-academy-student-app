@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, type FormEvent } from "react";
+import Link from "next/link";
 
 import { adminStudentsText } from "@/content/ko/admin-students";
 import { commonText } from "@/content/ko/common";
@@ -25,22 +26,22 @@ import { HelpTip, inlineHelpClassName } from "@/design-system/primitives/tooltip
 import {
   cataloguedDatasetDisplayLabel,
   groupCataloguedDatasets,
-  type CataloguedDataset,
 } from "@/lib/admin/dataset-catalog";
 
 import { useStudentCreationController } from "../controller/use-student-creation-controller";
+import { useStudentCreatePreparation } from "../controller/use-student-create-preparation";
 import { StudentCodePanel } from "./panels/student-code-panel";
 import styles from "./student-directory.module.css";
 import detailStyles from "./student-detail.module.css";
 
 export function StudentCreateWorkspace({
   appOrigin,
-  datasets,
 }: {
   appOrigin: string;
-  datasets: readonly CataloguedDataset[];
 }) {
   const controller = useStudentCreationController(appOrigin);
+  const preparation = useStudentCreatePreparation();
+  const { datasets } = preparation;
   const datasetGroups = useMemo(
     () => groupCataloguedDatasets(datasets),
     [datasets],
@@ -48,16 +49,26 @@ export function StudentCreateWorkspace({
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (preparation.status !== "ready") return;
     void controller.actions.submit(event.currentTarget);
   }
 
   return (
     <>
-      <details className={styles.createDisclosure}>
+      <details className={styles.createDisclosure} onToggle={(event) => preparation.actions.changeOpen(event.currentTarget.open)}>
         <summary className={buttonRecipe({ variant: "primary" })}>
           {adminStudentsText.createStudent.open}
         </summary>
         <div className={styles.createContent}>
+          {preparation.status === "loading" ? <Notice role="status">{adminStudentsText.createStudent.preparationLoading}</Notice> : null}
+          {preparation.status === "error" ? <Notice role="alert" tone="danger">
+            {adminStudentsText.createStudent.preparationError}
+            <Button onClick={preparation.actions.retry} variant="quiet">{adminStudentsText.page.retry}</Button>
+          </Notice> : null}
+          {preparation.status === "auth-error" ? <Notice role="alert" tone="danger">
+            {adminStudentsText.createStudent.preparationAuthError}
+            <Link href="/admin/login" prefetch={false}>{adminStudentsText.createStudent.preparationLogin}</Link>
+          </Notice> : (
           <form
             aria-busy={controller.busy}
             className={styles.formStack}
@@ -133,6 +144,7 @@ export function StudentCreateWorkspace({
               </FieldLabelRow>
               <Select
                 defaultValue=""
+                disabled={preparation.status !== "ready"}
                 name="currentVocabDatasetId"
               >
                 <option value="">
@@ -148,7 +160,7 @@ export function StudentCreateWorkspace({
                   </optgroup>
                 ))}
               </Select>
-              {datasets.length === 0 ? (
+              {preparation.status === "ready" && datasets.length === 0 ? (
                 <FieldHelp>
                   {adminStudentsText.createStudent.noWordbookNotice}
                 </FieldHelp>
@@ -172,16 +184,16 @@ export function StudentCreateWorkspace({
             {controller.error ? (
               <Notice role="alert" tone="danger">{controller.error}</Notice>
             ) : null}
-            <Button disabled={controller.busy} type="submit" variant="primary">
+            <Button disabled={controller.busy || preparation.status !== "ready"} type="submit" variant="primary">
               {controller.busy
                 ? adminStudentsText.createStudent.submitting
                 : adminStudentsText.createStudent.submit}
             </Button>
-          </form>
+          </form>)}
         </div>
       </details>
 
-      {controller.code ? (
+      {controller.code && preparation.status !== "auth-error" ? (
         <DialogFrame
           aria-labelledby="new-student-code-title"
           height="auto"

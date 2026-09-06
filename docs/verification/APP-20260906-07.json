@@ -1,0 +1,1179 @@
+{
+  "id": "APP-20260906-07",
+  "at": "2026-09-05T23:24:00Z",
+  "fingerprint": "1abf4a1530a0c7658a74bdd49c7c643267843e6fe9c72c047c6770fad267f419",
+  "files": 682,
+  "tests": {
+    "files": 399,
+    "tests": 2413,
+    "durationSeconds": 114.34,
+    "finalTargetedTests": 9
+  },
+  "linkMeasurement": {
+    "sum": {
+      "/admin/students": {
+        "n": 10,
+        "median": 323.94999998807907,
+        "p95": 329.80000001192093
+      },
+      "/admin/assignments": {
+        "n": 11,
+        "median": 325.19999998807907,
+        "p95": 329.39999997615814
+      }
+    },
+    "counts": {
+      "http": 32,
+      "actualRsc": 25,
+      "prefetch": 7,
+      "data": {
+        "auth": 25,
+        "auth-profile": 25,
+        "directory": 25
+      },
+      "bytes": 134443
+    },
+    "raw": {
+      "http": [
+        {
+          "path": "/admin/students",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 5203,
+          "durationMs": 16.644599999999627,
+          "at": 1788650058593
+        },
+        {
+          "path": "/admin/assignments",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 4811,
+          "durationMs": 14.253900000010617,
+          "at": 1788650061651
+        },
+        {
+          "path": "/admin/students",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 5203,
+          "durationMs": 20.984800000092946,
+          "at": 1788650064725
+        },
+        {
+          "path": "/admin/assignments",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 4811,
+          "durationMs": 23.244199999957345,
+          "at": 1788650067788
+        },
+        {
+          "path": "/admin/students",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 5203,
+          "durationMs": 12.462100000004284,
+          "at": 1788650070838
+        },
+        {
+          "path": "/admin/assignments",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 4811,
+          "durationMs": 11.821699999971315,
+          "at": 1788650073898
+        },
+        {
+          "path": "/admin/students",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 5203,
+          "durationMs": 14.363000000012107,
+          "at": 1788650076968
+        },
+        {
+          "path": "/admin/assignments",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 4811,
+          "durationMs": 12.803900000057183,
+          "at": 1788650080030
+        },
+        {
+          "path": "/admin/students",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 5203,
+          "durationMs": 13.32660000002943,
+          "at": 1788650083085
+        },
+        {
+          "path": "/admin/assignments",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 4811,
+          "durationMs": 24.412500000093132,
+          "at": 1788650086158
+        },
+        {
+          "path": "/admin/students",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 5203,
+          "durationMs": 12.803300000028685,
+          "at": 1788650175572
+        },
+        {
+          "path": "/admin/assignments",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 4811,
+          "durationMs": 28.412099999957718,
+          "at": 1788650217425
+        },
+        {
+          "path": "/admin/students",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 5203,
+          "durationMs": 13.382000000099652,
+          "at": 1788650254111
+        },
+        {
+          "path": "/admin/assignments",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 4811,
+          "durationMs": 36.5946999998996,
+          "at": 1788650254335
+        },
+        {
+          "path": "/admin/students",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": true,
+          "status": 200,
+          "bytes": 396,
+          "durationMs": 2.791099999914877,
+          "at": 1788650290613
+        },
+        {
+          "path": "/admin/students",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 5203,
+          "durationMs": 18.27189999993425,
+          "at": 1788650290633
+        },
+        {
+          "path": "/admin/results",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": true,
+          "status": 200,
+          "bytes": 423,
+          "durationMs": 4.807299999985844,
+          "at": 1788650290635
+        },
+        {
+          "path": "/admin/assignments",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": true,
+          "status": 200,
+          "bytes": 431,
+          "durationMs": 5.709600000060163,
+          "at": 1788650290637
+        },
+        {
+          "path": "/admin",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": true,
+          "status": 200,
+          "bytes": 297,
+          "durationMs": 7.489000000059605,
+          "at": 1788650290640
+        },
+        {
+          "path": "/admin/results",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": true,
+          "status": 200,
+          "bytes": 2918,
+          "durationMs": 5.449599999934435,
+          "at": 1788650290644
+        },
+        {
+          "path": "/admin/assignments",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": true,
+          "status": 200,
+          "bytes": 2941,
+          "durationMs": 6.382499999948777,
+          "at": 1788650290648
+        },
+        {
+          "path": "/admin",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": true,
+          "status": 200,
+          "bytes": 1666,
+          "durationMs": 7.387299999943934,
+          "at": 1788650290651
+        },
+        {
+          "path": "/admin/assignments",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 4811,
+          "durationMs": 21.256800000090152,
+          "at": 1788650290835
+        },
+        {
+          "path": "/admin/students",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 5203,
+          "durationMs": 41.633700000005774,
+          "at": 1788650291036
+        },
+        {
+          "path": "/admin/assignments",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 4811,
+          "durationMs": 12.445900000049733,
+          "at": 1788650291196
+        },
+        {
+          "path": "/admin/students",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 5203,
+          "durationMs": 20.57150000007823,
+          "at": 1788650318456
+        },
+        {
+          "path": "/admin/assignments",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 4811,
+          "durationMs": 26.34429999999702,
+          "at": 1788650362027
+        },
+        {
+          "path": "/admin/students",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 5203,
+          "durationMs": 21.871799999964423,
+          "at": 1788650382289
+        },
+        {
+          "path": "/admin/assignments",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 4811,
+          "durationMs": 28.754599999985658,
+          "at": 1788650402701
+        },
+        {
+          "path": "/admin/students",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 5203,
+          "durationMs": 20.684499999973923,
+          "at": 1788650439017
+        },
+        {
+          "path": "/admin/assignments",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 4811,
+          "durationMs": 27.781500000040978,
+          "at": 1788650471589
+        },
+        {
+          "path": "/admin/students",
+          "method": "GET",
+          "rsc": true,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 5203,
+          "durationMs": 14.376399999950081,
+          "at": 1788650491733
+        }
+      ],
+      "data": [
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650058584
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650058586
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650058592
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650061644
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650061646
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650061650
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650064710
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650064712
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650064724
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650067772
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650067775
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650067787
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650070832
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650070834
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650070837
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650073892
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650073894
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650073897
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650076960
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650076962
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650076966
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650080023
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650080025
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650080028
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650083079
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650083081
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650083083
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650086140
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650086141
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650086156
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650175566
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650175568
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650175571
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650217403
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650217405
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650217423
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650254106
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650254107
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650254110
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650254305
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650254318
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650254334
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650290621
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650290624
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650290631
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650290819
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650290832
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650290834
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650291004
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650291020
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650291035
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650291190
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650291192
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650291194
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650318443
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650318445
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650318455
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650362009
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650362011
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650362026
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650382275
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650382277
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650382288
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650402679
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650402681
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650402699
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650439004
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650439006
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650439016
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650471569
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650471571
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650471588
+        },
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650491725
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650491727
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650491731
+        }
+      ],
+      "ui": [
+        {
+          "kind": "link",
+          "route": "/admin/students",
+          "durationMs": 323.5,
+          "at": 1788650058898
+        },
+        {
+          "kind": "link",
+          "route": "/admin/assignments",
+          "durationMs": 329.39999997615814,
+          "at": 1788650061964
+        },
+        {
+          "kind": "link",
+          "route": "/admin/students",
+          "durationMs": 322.5999999642372,
+          "at": 1788650065025
+        },
+        {
+          "kind": "link",
+          "route": "/admin/assignments",
+          "durationMs": 329,
+          "at": 1788650068092
+        },
+        {
+          "kind": "link",
+          "route": "/admin/students",
+          "durationMs": 322.5,
+          "at": 1788650071146
+        },
+        {
+          "kind": "link",
+          "route": "/admin/assignments",
+          "durationMs": 322.7999999523163,
+          "at": 1788650074207
+        },
+        {
+          "kind": "link",
+          "route": "/admin/students",
+          "durationMs": 322.10000002384186,
+          "at": 1788650077273
+        },
+        {
+          "kind": "link",
+          "route": "/admin/assignments",
+          "durationMs": 323.89999997615814,
+          "at": 1788650080340
+        },
+        {
+          "kind": "link",
+          "route": "/admin/students",
+          "durationMs": 329.80000001192093,
+          "at": 1788650083401
+        },
+        {
+          "kind": "link",
+          "route": "/admin/assignments",
+          "durationMs": 323.7000000476837,
+          "at": 1788650086456
+        },
+        {
+          "kind": "link",
+          "route": "/admin/students",
+          "durationMs": 323,
+          "at": 1788650175880
+        },
+        {
+          "kind": "link",
+          "route": "/admin/assignments",
+          "durationMs": 328.10000002384186,
+          "at": 1788650217723
+        },
+        {
+          "kind": "link",
+          "route": "/admin/assignments",
+          "durationMs": 322.5,
+          "at": 1788650254620
+        },
+        {
+          "kind": "link",
+          "route": "/admin/assignments",
+          "durationMs": 325.19999998807907,
+          "at": 1788650291507
+        },
+        {
+          "kind": "link",
+          "route": "/admin/students",
+          "durationMs": 326.69999998807907,
+          "at": 1788650318760
+        },
+        {
+          "kind": "link",
+          "route": "/admin/assignments",
+          "durationMs": 324.89999997615814,
+          "at": 1788650362324
+        },
+        {
+          "kind": "link",
+          "route": "/admin/students",
+          "durationMs": 324.89999997615814,
+          "at": 1788650382590
+        },
+        {
+          "kind": "link",
+          "route": "/admin/assignments",
+          "durationMs": 326.5,
+          "at": 1788650402996
+        },
+        {
+          "kind": "link",
+          "route": "/admin/students",
+          "durationMs": 329.30000001192093,
+          "at": 1788650439324
+        },
+        {
+          "kind": "link",
+          "route": "/admin/assignments",
+          "durationMs": 328.9000000357628,
+          "at": 1788650471888
+        },
+        {
+          "kind": "link",
+          "route": "/admin/students",
+          "durationMs": 324.39999997615814,
+          "at": 1788650492039
+        }
+      ]
+    },
+    "notes": [
+      "21 DOM-ready samples from 25 navigations; 4 fast navigation observations were superseded and not timed. All requests remain counted.",
+      "Before: student median332.7ms/assignment328.9ms. This is not a substantial speed improvement.",
+      "Closed registration material reads=0 across navigation. Lists still freshly read; current points retained.",
+      "Fake DB/auth only, not actual DB cost or Production performance."
+    ]
+  },
+  "registration": {
+    "opens": 10,
+    "reopens": 9,
+    "inputPreserved": true,
+    "submitted": false,
+    "raw": {
+      "http": [
+        {
+          "path": "/api/admin/assignment-workspace/datasets",
+          "method": "GET",
+          "rsc": false,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 840,
+          "durationMs": 17.662400000030175,
+          "at": 1788650516765
+        }
+      ],
+      "data": [
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650516756
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650516758
+        },
+        {
+          "path": "/rest/v1/vocab_dataset_catalog",
+          "method": "GET",
+          "category": "materials",
+          "status": 200,
+          "at": 1788650516763
+        },
+        {
+          "path": "/rest/v1/vocab_datasets",
+          "method": "GET",
+          "category": "materials",
+          "status": 200,
+          "at": 1788650516763
+        }
+      ],
+      "ui": []
+    }
+  },
+  "sameFilter": {
+    "normalization": "leading/trailing/repeated spaces normalize to same search",
+    "first": {
+      "http": [
+        {
+          "path": "/api/admin/students/directory",
+          "method": "POST",
+          "rsc": false,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 604,
+          "durationMs": 31.703299999935552,
+          "at": 1788650614752
+        }
+      ],
+      "data": [
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650614727
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650614729
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650614748
+        }
+      ],
+      "ui": [
+        {
+          "kind": "filter",
+          "route": "/admin/students",
+          "durationMs": 295,
+          "at": 1788650614761
+        }
+      ]
+    },
+    "after": {
+      "http": [
+        {
+          "path": "/api/admin/students/directory",
+          "method": "POST",
+          "rsc": false,
+          "prefetch": false,
+          "status": 200,
+          "bytes": 604,
+          "durationMs": 31.703299999935552,
+          "at": 1788650614752
+        }
+      ],
+      "data": [
+        {
+          "path": "/auth/v1/user",
+          "method": "GET",
+          "category": "auth",
+          "status": 200,
+          "at": 1788650614727
+        },
+        {
+          "path": "/rest/v1/admin_profiles",
+          "method": "GET",
+          "category": "auth-profile",
+          "status": 200,
+          "at": 1788650614729
+        },
+        {
+          "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+          "method": "POST",
+          "category": "directory",
+          "status": 200,
+          "at": 1788650614748
+        }
+      ],
+      "ui": [
+        {
+          "kind": "filter",
+          "route": "/admin/students",
+          "durationMs": 295,
+          "at": 1788650614761
+        },
+        {
+          "kind": "filter",
+          "route": "/admin/students",
+          "durationMs": 2,
+          "at": 1788650636822
+        }
+      ]
+    },
+    "note": "setValue reported non-retained requested whitespace because input normalized; actual AX shows original query, 1 result, additional HTTP0."
+  },
+  "limitations": [
+    "Overview RPC is intentionally unsupported by local fixture; its safe error boundary was visible before measured groups.",
+    "No real students/DB writes, no new dependency, no deployment.",
+    "Automated tests cover fault/permission branches; browser group covers successful intent/navigation/input retention only.",
+    "This evidence does not attest complete authorization security or all viewport rendering."
+  ]
+}

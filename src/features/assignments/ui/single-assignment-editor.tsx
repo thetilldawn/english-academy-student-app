@@ -54,7 +54,7 @@ export function SingleAssignmentEditor({
   submitPlacement = "footer",
   units: initialUnits,
 }: SingleAssignmentEditorProps) {
-  const unitCatalog = useAssignmentDatasetUnitCatalog(initialUnits);
+  const unitCatalog = useAssignmentDatasetUnitCatalog(initialUnits, initialDatasetId);
   const units = unitCatalog.units;
   const reactId = useId().replaceAll(":", "");
   const formId = suppliedFormId ?? `single-assignment-${reactId}`;

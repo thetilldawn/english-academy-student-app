@@ -7,6 +7,8 @@ import type {
   AssignmentPlannerPreparation,
   AssignmentPreviousExamResponse,
 } from "../contracts/assignment-workspace-read-model";
+import { assignmentDatasetDirectorySchema } from "../contracts/assignment-dataset-directory-schema";
+import { AssignmentWorkspaceReadError } from "../contracts/assignment-workspace-read-error";
 
 type ErrorPayload = { error?: string };
 
@@ -14,6 +16,7 @@ async function readJson<T>(
   input: RequestInfo | URL,
   init: RequestInit,
   fallback: string,
+  safeErrorOnly = false,
 ) {
   const response = await fetch(input, {
     ...init,
@@ -23,7 +26,7 @@ async function readJson<T>(
     | (T & ErrorPayload)
     | null;
   if (!response.ok || !payload) {
-    throw new Error(payload?.error ?? fallback);
+    throw new AssignmentWorkspaceReadError(response.status, safeErrorOnly ? fallback : payload?.error ?? fallback);
   }
   return payload;
 }
@@ -97,11 +100,15 @@ export async function loadAssignmentDatasetUnits(
 export async function loadAssignmentDatasetDirectory(
   signal?: AbortSignal,
 ) {
-  return readJson<AssignmentDatasetDirectoryResponse>(
+  const payload = await readJson<AssignmentDatasetDirectoryResponse>(
     "/api/admin/assignment-workspace/datasets",
     { method: "GET", signal },
     "단어장 목록을 불러오지 못했습니다.",
+    true,
   );
+  const result = assignmentDatasetDirectorySchema.safeParse(payload);
+  if (!result.success) throw new AssignmentWorkspaceReadError(200, "단어장 목록 응답을 확인하지 못했습니다.");
+  return result.data;
 }
 
 export async function loadAssignmentEditContext(

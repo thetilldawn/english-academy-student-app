@@ -1,3 +1,4 @@
 "use client";
 
-export { loadAssignmentEditContext } from "./transport/assignment-workspace-reads";
+export { loadAssignmentEditContext, loadAssignmentDatasetDirectory } from "./transport/assignment-workspace-reads";
+export { AssignmentWorkspaceReadError } from "./contracts/assignment-workspace-read-error";

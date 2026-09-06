@@ -73,55 +73,15 @@ export class AssignmentDatasetUnitsError extends Error {
   }
 }
 
-export async function loadAssignmentDatasetMaterial(
-  datasetId: string,
-  authenticatedAdmin?: AdminContext,
-  access: "assignable" | "historical" = "assignable",
-): Promise<AssignmentDatasetMaterial> {
-  if (!authenticatedAdmin) await requireAdmin();
-  const supabase = await createServerSupabaseClient();
-  const [datasetResult, catalogResult, unitResult] = await Promise.all([
-    supabase
-      .from("vocab_datasets")
-      .select("id, dataset_key, title, edition, row_count, status, is_active")
-      .eq("id", datasetId)
-      .maybeSingle(),
-    supabase
-      .from("vocab_dataset_catalog")
-      .select(
-        "display_name, catalog_group, material_kind, grade_code, publisher, series_title, academic_year, curriculum_revision, edition_label, is_assignable, sort_index",
-      )
-      .eq("dataset_id", datasetId)
-      .maybeSingle(),
-    supabase
-      .from("vocab_units")
-      .select(
-        "id, dataset_id, unit_label, unit_kind, unit_number, sort_index, entry_count",
-      )
-      .eq("dataset_id", datasetId)
-      .order("sort_index"),
-  ]);
-  if (datasetResult.error || catalogResult.error || unitResult.error) {
-    throw new AssignmentDatasetUnitsError(
-      "unavailable",
-      "시험 범위를 불러오지 못했습니다.",
-    );
-  }
-  const dataset = datasetResult.data as DatasetRow | null;
-  const catalog = catalogResult.data as DatasetCatalogRow | null;
-  if (
-    !dataset ||
-    (access === "assignable" &&
-      (dataset.status !== "ready" ||
-        !dataset.is_active ||
-        catalog?.is_assignable === false))
-  ) {
-    throw new AssignmentDatasetUnitsError(
-      "invalid_dataset",
-      "현재 배정할 수 없는 단어장입니다.",
-    );
-  }
-  const unitRows = (unitResult.data ?? []) as UnitRow[];
+type QueryClient = Awaited<ReturnType<typeof createServerSupabaseClient>>;
+
+function readUnitRows(supabase: QueryClient, datasetId: string) {
+  return supabase.from("vocab_units")
+    .select("id, dataset_id, unit_label, unit_kind, unit_number, sort_index, entry_count")
+    .eq("dataset_id", datasetId).order("sort_index");
+}
+
+async function loadCataloguedUnits(supabase: QueryClient, unitRows: UnitRow[]) {
   const unitIds = unitRows.map((unit) => unit.id);
   const unitCatalogResult = unitIds.length === 0
     ? { data: [], error: null }
@@ -163,6 +123,67 @@ export async function loadAssignmentDatasetMaterial(
       unitType: unitCatalog?.unit_type ?? null,
     };
   });
+  return units;
+}
+
+// Internal preparation path only: the caller already authenticated and read this dataset in this request.
+// Public units/edit/historical/final-validation paths continue to use loadAssignmentDatasetMaterial below.
+export async function getPreparedAssignmentDatasetUnits(
+  supabase: QueryClient,
+  dataset: DatasetSummary,
+): Promise<AssignmentDatasetUnitsResponse> {
+  if (dataset.status !== "ready" || !dataset.isActive || !dataset.isAssignable) {
+    throw new AssignmentDatasetUnitsError("invalid_dataset", "현재 배정할 수 없는 단어장입니다.");
+  }
+  const result = await readUnitRows(supabase, dataset.id);
+  if (result.error) throw new AssignmentDatasetUnitsError("unavailable", "시험 범위를 불러오지 못했습니다.");
+  return { datasetId: dataset.id, units: await loadCataloguedUnits(supabase, (result.data ?? []) as UnitRow[]) };
+}
+
+export async function loadAssignmentDatasetMaterial(
+  datasetId: string,
+  authenticatedAdmin?: AdminContext,
+  access: "assignable" | "historical" = "assignable",
+): Promise<AssignmentDatasetMaterial> {
+  if (!authenticatedAdmin) await requireAdmin();
+  const supabase = await createServerSupabaseClient();
+  const [datasetResult, catalogResult, unitResult] = await Promise.all([
+    supabase
+      .from("vocab_datasets")
+      .select("id, dataset_key, title, edition, row_count, status, is_active")
+      .eq("id", datasetId)
+      .maybeSingle(),
+    supabase
+      .from("vocab_dataset_catalog")
+      .select(
+        "display_name, catalog_group, material_kind, grade_code, publisher, series_title, academic_year, curriculum_revision, edition_label, is_assignable, sort_index",
+      )
+      .eq("dataset_id", datasetId)
+      .maybeSingle(),
+    readUnitRows(supabase, datasetId),
+  ]);
+  if (datasetResult.error || catalogResult.error || unitResult.error) {
+    throw new AssignmentDatasetUnitsError(
+      "unavailable",
+      "시험 범위를 불러오지 못했습니다.",
+    );
+  }
+  const dataset = datasetResult.data as DatasetRow | null;
+  const catalog = catalogResult.data as DatasetCatalogRow | null;
+  if (
+    !dataset ||
+    (access === "assignable" &&
+      (dataset.status !== "ready" ||
+        !dataset.is_active ||
+        catalog?.is_assignable === false))
+  ) {
+    throw new AssignmentDatasetUnitsError(
+      "invalid_dataset",
+      "현재 배정할 수 없는 단어장입니다.",
+    );
+  }
+  const unitRows = (unitResult.data ?? []) as UnitRow[];
+  const units = await loadCataloguedUnits(supabase, unitRows);
   return {
     dataset: {
       ...cataloguedDatasetFromMetadata(

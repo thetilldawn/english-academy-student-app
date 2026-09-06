@@ -11,7 +11,7 @@ import {
 } from "@/lib/services/admin-material-read-service";
 import { listVocabTimeTemplates } from "@/lib/services/vocab-time-template-service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { getAssignmentDatasetUnits } from "./assignment-dataset-units-query";
+import { getPreparedAssignmentDatasetUnits } from "./assignment-dataset-units-query";
 
 type PlanningStudentRow = {
   current_vocab_book: string | null;
@@ -146,7 +146,7 @@ export async function getAssignmentPlannerPreparation(
     ? requestedDatasetId
     : selectCommonInitialDatasetId(students, readyDatasetIds);
   const initialUnits = initialDatasetId
-    ? (await getAssignmentDatasetUnits(initialDatasetId, authenticatedAdmin)).units
+    ? (await getPreparedAssignmentDatasetUnits(supabase, assignmentDatasets.find((dataset) => dataset.id === initialDatasetId)!)).units
     : [];
 
   return {

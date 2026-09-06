@@ -1,5 +1,6 @@
 import { formatContentText } from "@/content/format";
 import { adminLearningText } from "@/content/ko/admin-learning";
+import { adminStudentsText } from "@/content/ko/admin-students";
 import { Notice } from "@/design-system/patterns/feedback/feedback";
 import { Button } from "@/design-system/primitives/button/button";
 import { Tabs } from "@/design-system/primitives/tabs/tabs";
@@ -102,10 +103,15 @@ export function AssignmentStudentBrowser({
           <Notice role="alert" tone="danger">{controller.selectionError}</Notice>
         ) : null}
         {directory.error ? (
-          <Notice role="alert" tone="danger">{directory.error}</Notice>
+          <Notice role="alert" tone="danger">
+            {directory.error}
+            <Button onClick={() => void directory.actions.reloadFirstPage()} variant="quiet">
+              {adminStudentsText.page.retry}
+            </Button>
+          </Notice>
         ) : null}
 
-        {students.length === 0 && !directory.filtering ? (
+        {students.length === 0 && !directory.filtering && !directory.error ? (
           <div className={styles.empty} role="status">
             {adminLearningText.page.noStudents}
           </div>
