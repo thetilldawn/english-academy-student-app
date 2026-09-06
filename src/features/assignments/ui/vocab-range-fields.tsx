@@ -1,33 +1,35 @@
-import type { AssignmentDatasetItem } from "../catalog-types";
-import type { VocabAssignmentPlannerController } from "../controller/use-vocab-assignment-planner";
-import type { VocabAssignmentFieldKey } from "../presentation/vocab-assignment-field-errors";
+import type { AssignmentDatasetItem, AssignmentUnitItem } from "../catalog-types";
 import { AssignmentDatasetTrigger, type AssignmentDatasetTriggerProps } from "./assignment-dataset-trigger";
 import { AssignmentUnitRangePicker } from "./assignment-unit-range-picker";
 import styles from "./vocab-assignment-planner.module.css";
 
-export type VocabPlannerFieldsProps = {
-  controller: VocabAssignmentPlannerController;
-  datasets: readonly AssignmentDatasetItem[];
-  fieldErrors?: Partial<Record<VocabAssignmentFieldKey, string>>;
+export type VocabRangeFieldsProps = {
+  dataset?: AssignmentDatasetItem;
+  units: readonly AssignmentUnitItem[];
+  selectedUnitIds: readonly string[];
+  datasetError?: string;
+  rangeError?: string;
+  onSelectUnit: (unitId: string) => void;
+  onToggleAllUnits: (selected: boolean) => void;
+  onOpenDatasetPicker: () => void;
+  datasetTriggerRef?: AssignmentDatasetTriggerProps["triggerRef"];
 };
 
 export function VocabRangeFields({
-  controller,
-  datasets,
-  fieldErrors = {},
+  dataset,
+  units,
+  selectedUnitIds,
+  datasetError,
+  rangeError,
+  onSelectUnit,
+  onToggleAllUnits,
   onOpenDatasetPicker,
   datasetTriggerRef,
-}: VocabPlannerFieldsProps & {
-  onOpenDatasetPicker: () => void;
-  datasetTriggerRef?: AssignmentDatasetTriggerProps["triggerRef"];
-}) {
-  const datasetError = fieldErrors.dataset;
-  const rangeError = fieldErrors.range;
-
+}: VocabRangeFieldsProps) {
   return (
     <div className={styles.fieldStack}>
       <AssignmentDatasetTrigger
-        dataset={datasets.find((dataset) => dataset.id === controller.planner.datasetId)}
+        dataset={dataset}
         error={datasetError}
         errorId="vocab-dataset-error"
         onOpen={onOpenDatasetPicker}
@@ -36,10 +38,10 @@ export function VocabRangeFields({
       <AssignmentUnitRangePicker
         error={rangeError}
         errorId="vocab-range-error"
-        onSelect={controller.actions.selectUnit}
-        onToggleAll={controller.actions.selectAllUnits}
-        selectedUnitIds={controller.selectedUnits.map((unit) => unit.id)}
-        units={controller.availableUnits}
+        onSelect={onSelectUnit}
+        onToggleAll={onToggleAllUnits}
+        selectedUnitIds={selectedUnitIds}
+        units={units}
       />
     </div>
   );

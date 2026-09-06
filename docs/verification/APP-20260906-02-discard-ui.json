@@ -1,0 +1,380 @@
+{
+  "workId": "APP-20260906-02",
+  "phase": "R5-discard-dialog",
+  "environment": "local isolated Next 16.2.12 fresh build; fake authentication and read-only data",
+  "date": "2026-09-06",
+  "priorEvidence": "APP-20260906-02-before-discard-ui.json",
+  "cases": [
+    {
+      "name": "single-confirmation",
+      "result": "pass",
+      "changedValue": "통과 점수 80 → 85",
+      "initialFocus": "계속 작성",
+      "openDialogs": 2
+    },
+    {
+      "name": "single-continue",
+      "result": "pass",
+      "preservedValue": 85,
+      "returnFocus": "닫기",
+      "openDialogs": 1
+    },
+    {
+      "name": "single-keyboard-Escape",
+      "result": "pass",
+      "openWith": "Enter",
+      "closeWith": "Escape",
+      "preservedValue": 85,
+      "returnFocus": "닫기",
+      "scrollBefore": 926.4000244140624,
+      "scrollAfter": 926.4000244140624,
+      "openDialogs": 1
+    },
+    {
+      "name": "single-explicit-discard",
+      "result": "pass",
+      "openDialogs": 0
+    },
+    {
+      "name": "bulk-confirmation",
+      "result": "pass",
+      "fakeStudentCount": 2,
+      "changedValue": "통과 점수 80 → 90",
+      "initialFocus": "계속 작성",
+      "openDialogs": 2
+    },
+    {
+      "name": "bulk-header-cancel",
+      "result": "pass",
+      "preservedValue": 90,
+      "returnFocus": "닫기",
+      "openDialogs": 1
+    },
+    {
+      "name": "bulk-explicit-discard",
+      "result": "pass",
+      "openDialogs": 0
+    }
+  ],
+  "limits": [
+    "Native confirm retry timed out; app versus automation cause remains unknown.",
+    "Backdrop cancellation, review edits, busy and same-batch duplicate protection verified by component tests, not physical browser actions.",
+    "No real account, DB write, deployment, business-rule or cache-policy change.",
+    "Metrics are observations of this functional check, not a performance comparison with warmed baseline."
+  ],
+  "metrics": {
+    "http": [
+      {
+        "path": "/admin/assignments",
+        "method": "GET",
+        "rsc": false,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 34875,
+        "durationMs": 329.3341999999975,
+        "at": 1788639922365
+      },
+      {
+        "path": "/_next/static/chunks/359v4nw0aptoa.js",
+        "method": "GET",
+        "rsc": false,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 37659,
+        "durationMs": 41.69409999999334,
+        "at": 1788639922367
+      },
+      {
+        "path": "/_next/static/chunks/3pkes-ulcaska.js",
+        "method": "GET",
+        "rsc": false,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 17649,
+        "durationMs": 34.71609999999055,
+        "at": 1788639922368
+      },
+      {
+        "path": "/admin/results",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": true,
+        "status": 200,
+        "bytes": 423,
+        "durationMs": 26.499100000000908,
+        "at": 1788639922714
+      },
+      {
+        "path": "/admin/students",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": true,
+        "status": 200,
+        "bytes": 396,
+        "durationMs": 38.57040000001143,
+        "at": 1788639922727
+      },
+      {
+        "path": "/admin",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": true,
+        "status": 200,
+        "bytes": 297,
+        "durationMs": 47.92750000000524,
+        "at": 1788639922737
+      },
+      {
+        "path": "/admin/assignments",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": true,
+        "status": 200,
+        "bytes": 1800,
+        "durationMs": 57.83139999999548,
+        "at": 1788639922747
+      },
+      {
+        "path": "/admin/results",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": true,
+        "status": 200,
+        "bytes": 2918,
+        "durationMs": 32.94080000001122,
+        "at": 1788639922755
+      },
+      {
+        "path": "/admin/students",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": true,
+        "status": 200,
+        "bytes": 1765,
+        "durationMs": 30.409700000003795,
+        "at": 1788639922761
+      },
+      {
+        "path": "/admin",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": true,
+        "status": 200,
+        "bytes": 1666,
+        "durationMs": 25.863100000002305,
+        "at": 1788639922767
+      },
+      {
+        "path": "/_next/static/chunks/0stm3_vz2hz8n.js",
+        "method": "GET",
+        "rsc": false,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 100956,
+        "durationMs": 43.21150000000489,
+        "at": 1788639938090
+      },
+      {
+        "path": "/api/admin/assignment-workspace/preparation",
+        "method": "POST",
+        "rsc": false,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 1224,
+        "durationMs": 77.00400000000081,
+        "at": 1788639938114
+      },
+      {
+        "path": "/api/admin/assignment-workspace/preparation",
+        "method": "POST",
+        "rsc": false,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 1422,
+        "durationMs": 25.36229999997886,
+        "at": 1788640076149
+      }
+    ],
+    "data": [
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788639922252
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788639922283
+      },
+      {
+        "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+        "method": "POST",
+        "category": "directory",
+        "status": 200,
+        "at": 1788639922297
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788639938070
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788639938076
+      },
+      {
+        "path": "/rest/v1/vocab_dataset_catalog",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788639938090
+      },
+      {
+        "path": "/rest/v1/vocab_datasets",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788639938091
+      },
+      {
+        "path": "/rest/v1/students",
+        "method": "GET",
+        "category": "preparation",
+        "status": 200,
+        "at": 1788639938092
+      },
+      {
+        "path": "/rest/v1/rpc/list_assignment_question_mode_availability_v1",
+        "method": "POST",
+        "category": "preparation",
+        "status": 200,
+        "at": 1788639938093
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788639938094
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788639938100
+      },
+      {
+        "path": "/rest/v1/admin_vocab_assignment_time_templates",
+        "method": "GET",
+        "category": "preparation",
+        "status": 200,
+        "at": 1788639938109
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788640076130
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788640076132
+      },
+      {
+        "path": "/rest/v1/vocab_dataset_catalog",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788640076137
+      },
+      {
+        "path": "/rest/v1/vocab_datasets",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788640076138
+      },
+      {
+        "path": "/rest/v1/students",
+        "method": "GET",
+        "category": "preparation",
+        "status": 200,
+        "at": 1788640076139
+      },
+      {
+        "path": "/rest/v1/rpc/list_assignment_question_mode_availability_v1",
+        "method": "POST",
+        "category": "preparation",
+        "status": 200,
+        "at": 1788640076139
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788640076139
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788640076144
+      },
+      {
+        "path": "/rest/v1/admin_vocab_assignment_time_templates",
+        "method": "GET",
+        "category": "preparation",
+        "status": 200,
+        "at": 1788640076147
+      }
+    ],
+    "ui": [
+      {
+        "kind": "initial",
+        "route": "/admin/assignments",
+        "durationMs": 645.7999999523163,
+        "at": 1788639922673
+      },
+      {
+        "kind": "modal-open",
+        "route": "/admin/assignments",
+        "durationMs": 446.5,
+        "at": 1788639938480
+      },
+      {
+        "kind": "modal-close",
+        "route": "/admin/assignments",
+        "durationMs": 286.19999998807907,
+        "at": 1788640014298
+      },
+      {
+        "kind": "modal-open",
+        "route": "/admin/assignments",
+        "durationMs": 59.09999996423721,
+        "at": 1788640076180
+      },
+      {
+        "kind": "modal-close",
+        "route": "/admin/assignments",
+        "durationMs": 281.80000001192093,
+        "at": 1788640100832
+      }
+    ]
+  }
+}

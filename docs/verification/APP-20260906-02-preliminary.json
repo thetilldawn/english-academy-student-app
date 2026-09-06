@@ -1,0 +1,932 @@
+{
+  "status": "preliminary-not-final",
+  "limitations": [
+    "old launcher revision; guarded UI/HTTP fixture only",
+    "initial is post-HTML parse observation, not first streamed paint",
+    "real DB and cost unmeasured"
+  ],
+  "link": {
+    "http": [
+      {
+        "path": "/admin/students",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 6052,
+        "durationMs": 16.111100000009174,
+        "at": 1788631240211
+      },
+      {
+        "path": "/admin/assignments",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 4811,
+        "durationMs": 18.248999999981606,
+        "at": 1788631243294
+      },
+      {
+        "path": "/admin/students",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 6052,
+        "durationMs": 17.93959999998333,
+        "at": 1788631246358
+      },
+      {
+        "path": "/admin/assignments",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 4811,
+        "durationMs": 14.713799999997718,
+        "at": 1788631249414
+      },
+      {
+        "path": "/admin/students",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 6052,
+        "durationMs": 22.724400000006426,
+        "at": 1788631252511
+      },
+      {
+        "path": "/admin/assignments",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 4811,
+        "durationMs": 18.792399999976624,
+        "at": 1788631255576
+      },
+      {
+        "path": "/admin/students",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 6052,
+        "durationMs": 15.236499999999069,
+        "at": 1788631258631
+      },
+      {
+        "path": "/admin/assignments",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 4811,
+        "durationMs": 20.142500000016298,
+        "at": 1788631261692
+      },
+      {
+        "path": "/admin/students",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 6052,
+        "durationMs": 16.584399999992456,
+        "at": 1788631264756
+      },
+      {
+        "path": "/admin/assignments",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 4811,
+        "durationMs": 16.893400000000838,
+        "at": 1788631267823
+      },
+      {
+        "path": "/admin/students",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 6052,
+        "durationMs": 16.53900000001886,
+        "at": 1788631270890
+      },
+      {
+        "path": "/admin/assignments",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 4811,
+        "durationMs": 12.214299999992363,
+        "at": 1788631273958
+      },
+      {
+        "path": "/admin/students",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 6052,
+        "durationMs": 20.331500000000233,
+        "at": 1788631277032
+      },
+      {
+        "path": "/admin/assignments",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 4811,
+        "durationMs": 28.30230000001029,
+        "at": 1788631280113
+      },
+      {
+        "path": "/admin/students",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 6052,
+        "durationMs": 14.369600000005448,
+        "at": 1788631283159
+      },
+      {
+        "path": "/admin/assignments",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 4811,
+        "durationMs": 12.114800000010291,
+        "at": 1788631286205
+      },
+      {
+        "path": "/admin/students",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 6052,
+        "durationMs": 16.05710000000545,
+        "at": 1788631289276
+      },
+      {
+        "path": "/admin/assignments",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 4811,
+        "durationMs": 20.16380000000936,
+        "at": 1788631292341
+      },
+      {
+        "path": "/admin/students",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 6052,
+        "durationMs": 13.93630000000121,
+        "at": 1788631295389
+      },
+      {
+        "path": "/admin/assignments",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 4811,
+        "durationMs": 20.550699999992503,
+        "at": 1788631298450
+      }
+    ],
+    "data": [
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788631240202
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788631240204
+      },
+      {
+        "path": "/rest/v1/vocab_dataset_catalog",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788631240209
+      },
+      {
+        "path": "/rest/v1/vocab_datasets",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788631240209
+      },
+      {
+        "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+        "method": "POST",
+        "category": "directory",
+        "status": 200,
+        "at": 1788631240209
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788631243284
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788631243288
+      },
+      {
+        "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+        "method": "POST",
+        "category": "directory",
+        "status": 200,
+        "at": 1788631243292
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788631246346
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788631246350
+      },
+      {
+        "path": "/rest/v1/vocab_dataset_catalog",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788631246354
+      },
+      {
+        "path": "/rest/v1/vocab_datasets",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788631246355
+      },
+      {
+        "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+        "method": "POST",
+        "category": "directory",
+        "status": 200,
+        "at": 1788631246355
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788631249407
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788631249409
+      },
+      {
+        "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+        "method": "POST",
+        "category": "directory",
+        "status": 200,
+        "at": 1788631249412
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788631252496
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788631252499
+      },
+      {
+        "path": "/rest/v1/vocab_dataset_catalog",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788631252505
+      },
+      {
+        "path": "/rest/v1/vocab_datasets",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788631252506
+      },
+      {
+        "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+        "method": "POST",
+        "category": "directory",
+        "status": 200,
+        "at": 1788631252507
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788631255564
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788631255567
+      },
+      {
+        "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+        "method": "POST",
+        "category": "directory",
+        "status": 200,
+        "at": 1788631255574
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788631258622
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788631258624
+      },
+      {
+        "path": "/rest/v1/vocab_dataset_catalog",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788631258629
+      },
+      {
+        "path": "/rest/v1/vocab_datasets",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788631258629
+      },
+      {
+        "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+        "method": "POST",
+        "category": "directory",
+        "status": 200,
+        "at": 1788631258629
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788631261679
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788631261681
+      },
+      {
+        "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+        "method": "POST",
+        "category": "directory",
+        "status": 200,
+        "at": 1788631261690
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788631264746
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788631264749
+      },
+      {
+        "path": "/rest/v1/vocab_dataset_catalog",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788631264753
+      },
+      {
+        "path": "/rest/v1/vocab_datasets",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788631264754
+      },
+      {
+        "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+        "method": "POST",
+        "category": "directory",
+        "status": 200,
+        "at": 1788631264754
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788631267813
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788631267815
+      },
+      {
+        "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+        "method": "POST",
+        "category": "directory",
+        "status": 200,
+        "at": 1788631267821
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788631270880
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788631270883
+      },
+      {
+        "path": "/rest/v1/vocab_dataset_catalog",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788631270887
+      },
+      {
+        "path": "/rest/v1/vocab_datasets",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788631270887
+      },
+      {
+        "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+        "method": "POST",
+        "category": "directory",
+        "status": 200,
+        "at": 1788631270888
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788631273951
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788631273953
+      },
+      {
+        "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+        "method": "POST",
+        "category": "directory",
+        "status": 200,
+        "at": 1788631273956
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788631277019
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788631277023
+      },
+      {
+        "path": "/rest/v1/vocab_dataset_catalog",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788631277028
+      },
+      {
+        "path": "/rest/v1/vocab_datasets",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788631277028
+      },
+      {
+        "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+        "method": "POST",
+        "category": "directory",
+        "status": 200,
+        "at": 1788631277029
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788631280091
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788631280093
+      },
+      {
+        "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+        "method": "POST",
+        "category": "directory",
+        "status": 200,
+        "at": 1788631280112
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788631283150
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788631283152
+      },
+      {
+        "path": "/rest/v1/vocab_dataset_catalog",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788631283156
+      },
+      {
+        "path": "/rest/v1/vocab_datasets",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788631283156
+      },
+      {
+        "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+        "method": "POST",
+        "category": "directory",
+        "status": 200,
+        "at": 1788631283157
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788631286198
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788631286200
+      },
+      {
+        "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+        "method": "POST",
+        "category": "directory",
+        "status": 200,
+        "at": 1788631286203
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788631289267
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788631289269
+      },
+      {
+        "path": "/rest/v1/vocab_dataset_catalog",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788631289272
+      },
+      {
+        "path": "/rest/v1/vocab_datasets",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788631289273
+      },
+      {
+        "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+        "method": "POST",
+        "category": "directory",
+        "status": 200,
+        "at": 1788631289274
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788631292327
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788631292329
+      },
+      {
+        "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+        "method": "POST",
+        "category": "directory",
+        "status": 200,
+        "at": 1788631292339
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788631295381
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788631295383
+      },
+      {
+        "path": "/rest/v1/vocab_dataset_catalog",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788631295386
+      },
+      {
+        "path": "/rest/v1/vocab_datasets",
+        "method": "GET",
+        "category": "materials",
+        "status": 200,
+        "at": 1788631295387
+      },
+      {
+        "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+        "method": "POST",
+        "category": "directory",
+        "status": 200,
+        "at": 1788631295387
+      },
+      {
+        "path": "/auth/v1/user",
+        "method": "GET",
+        "category": "auth",
+        "status": 200,
+        "at": 1788631298435
+      },
+      {
+        "path": "/rest/v1/admin_profiles",
+        "method": "GET",
+        "category": "auth-profile",
+        "status": 200,
+        "at": 1788631298438
+      },
+      {
+        "path": "/rest/v1/rpc/get_admin_student_directory_initial_v1",
+        "method": "POST",
+        "category": "directory",
+        "status": 200,
+        "at": 1788631298448
+      }
+    ],
+    "ui": [
+      {
+        "kind": "link",
+        "route": "/admin/students",
+        "durationMs": 327.7000000476837,
+        "at": 1788631240521
+      },
+      {
+        "kind": "link",
+        "route": "/admin/assignments",
+        "durationMs": 331.89999997615814,
+        "at": 1788631243606
+      },
+      {
+        "kind": "link",
+        "route": "/admin/students",
+        "durationMs": 328.19999998807907,
+        "at": 1788631246666
+      },
+      {
+        "kind": "link",
+        "route": "/admin/assignments",
+        "durationMs": 323.19999998807907,
+        "at": 1788631249721
+      },
+      {
+        "kind": "link",
+        "route": "/admin/students",
+        "durationMs": 325.60000002384186,
+        "at": 1788631252812
+      },
+      {
+        "kind": "link",
+        "route": "/admin/assignments",
+        "durationMs": 328.69999998807907,
+        "at": 1788631255884
+      },
+      {
+        "kind": "link",
+        "route": "/admin/students",
+        "durationMs": 323.89999997615814,
+        "at": 1788631258939
+      },
+      {
+        "kind": "link",
+        "route": "/admin/assignments",
+        "durationMs": 323.10000002384186,
+        "at": 1788631261994
+      },
+      {
+        "kind": "link",
+        "route": "/admin/students",
+        "durationMs": 322.19999998807907,
+        "at": 1788631265060
+      },
+      {
+        "kind": "link",
+        "route": "/admin/assignments",
+        "durationMs": 322.2999999523163,
+        "at": 1788631268127
+      },
+      {
+        "kind": "link",
+        "route": "/admin/students",
+        "durationMs": 327.89999997615814,
+        "at": 1788631271200
+      },
+      {
+        "kind": "link",
+        "route": "/admin/assignments",
+        "durationMs": 322.19999998807907,
+        "at": 1788631274266
+      },
+      {
+        "kind": "link",
+        "route": "/admin/students",
+        "durationMs": 344.5999999642372,
+        "at": 1788631277355
+      },
+      {
+        "kind": "link",
+        "route": "/admin/assignments",
+        "durationMs": 328.89999997615814,
+        "at": 1788631280412
+      },
+      {
+        "kind": "link",
+        "route": "/admin/students",
+        "durationMs": 322.9000000357628,
+        "at": 1788631283466
+      },
+      {
+        "kind": "link",
+        "route": "/admin/assignments",
+        "durationMs": 323.5,
+        "at": 1788631286515
+      },
+      {
+        "kind": "link",
+        "route": "/admin/students",
+        "durationMs": 322.60000002384186,
+        "at": 1788631289582
+      },
+      {
+        "kind": "link",
+        "route": "/admin/assignments",
+        "durationMs": 322.9000000357628,
+        "at": 1788631292642
+      },
+      {
+        "kind": "link",
+        "route": "/admin/students",
+        "durationMs": 322.80000001192093,
+        "at": 1788631295697
+      },
+      {
+        "kind": "link",
+        "route": "/admin/assignments",
+        "durationMs": 323.30000001192093,
+        "at": 1788631298751
+      }
+    ]
+  },
+  "history": {
+    "http": [],
+    "data": [],
+    "ui": [
+      {
+        "kind": "history",
+        "route": "/admin/students",
+        "durationMs": 8.100000023841858,
+        "at": 1788631372706
+      },
+      {
+        "kind": "history",
+        "route": "/admin/assignments",
+        "durationMs": 10.899999976158142,
+        "at": 1788631382752
+      },
+      {
+        "kind": "history",
+        "route": "/admin/students",
+        "durationMs": 7.399999976158142,
+        "at": 1788631392797
+      },
+      {
+        "kind": "history",
+        "route": "/admin/assignments",
+        "durationMs": 10.399999976158142,
+        "at": 1788631402845
+      },
+      {
+        "kind": "history",
+        "route": "/admin/students",
+        "durationMs": 7.5,
+        "at": 1788631412886
+      }
+    ]
+  }
+}
