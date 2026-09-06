@@ -2,7 +2,7 @@ import { AssignmentSessionRow } from "./assignment-editor-fields";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
-import { formatKoreanDateTime } from "@/lib/format";
+import { AssignmentSessionReleaseTags } from "./assignment-session-release-tags";
 
 import type { BulkAssignmentCommonPlanSummary, BulkAssignmentPreviewItem } from "../contracts/bulk-assignment-response";
 import {
@@ -37,7 +37,6 @@ function studentContextLabel(student: PreviewStudent) {
 }
 
 export type BulkSeriesPreviewProps = {
-  completionGated?: boolean;
   message: string | null;
   previewLoading: boolean;
   preview: { items: BulkAssignmentPreviewItem[]; commonPlanSummary: BulkAssignmentCommonPlanSummary | null } | null;
@@ -45,7 +44,6 @@ export type BulkSeriesPreviewProps = {
 };
 
 export function BulkSeriesPreview({
-  completionGated = false,
   message,
   preview,
   previewLoading,
@@ -131,7 +129,6 @@ export function BulkSeriesPreview({
               adminLearningText.bulkAssignmentModal.datasetPending}
           </small>
           <BulkPreviewSessionList
-            completionGated={completionGated}
             item={singleItem}
           />
           {singleItem.error &&
@@ -160,22 +157,15 @@ export function BulkSeriesPreview({
                 details={
                   <MetaTagList>
                     <MetaTag size="large">{session.unitLabel ?? "선택 범위"}</MetaTag>
-                    <MetaTag size="large">
-                      {session.availableFrom
-                        ? `${formatKoreanDateTime(session.availableFrom)} 공개`
-                        : "바로 공개"}
-                    </MetaTag>
-                    {session.availableUntil ? (
-                      <MetaTag size="large">
-                        {formatKoreanDateTime(session.availableUntil)} 마감
-                      </MetaTag>
-                    ) : null}
+                    <AssignmentSessionReleaseTags
+                      sessionNumber={session.sessionNumber}
+                      availableFrom={session.availableFrom}
+                      availableUntil={session.availableUntil}
+                      previousAvailableUntil={summary.sessions.find((previous) => previous.sessionNumber === session.sessionNumber - 1)?.availableUntil ?? null}
+                    />
                     <MetaTag size="large" tone="success">
                       {session.questionCount}개
                     </MetaTag>
-                    {completionGated && session.sessionNumber > 1 ? (
-                      <MetaTag size="large">완료 후 생성</MetaTag>
-                    ) : null}
                   </MetaTagList>
                 }
                 heading={<strong>{session.sessionNumber}회차</strong>}
@@ -209,7 +199,6 @@ export function BulkSeriesPreview({
                     adminLearningText.bulkAssignmentModal.datasetPending}
                 </small>
                 <BulkPreviewSessionList
-                  completionGated={completionGated}
                   item={item}
                 />
                 {item.error &&

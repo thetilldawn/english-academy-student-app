@@ -8,7 +8,7 @@ import {
 } from "@/lib/services/vocab-assignment-queue-command";
 
 const resolutionSchema = z
-  .object({ action: z.enum(["retry", "skip", "cancel"]) })
+  .object({ action: z.enum(["retry", "skip", "cancel"]), expectedItemId: z.uuid() })
   .strict();
 
 export async function PATCH(
@@ -35,6 +35,7 @@ export async function PATCH(
     const result = await resolveVocabAssignmentQueueAttention(
       seriesId,
       input.action,
+      input.expectedItemId,
       admin,
     );
     return Response.json(result, {

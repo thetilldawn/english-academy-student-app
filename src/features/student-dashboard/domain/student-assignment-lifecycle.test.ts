@@ -39,6 +39,26 @@ function assignment(
 }
 
 describe("deriveStudentAssignmentLifecycle", () => {
+  it.each(["waiting_initial", "waiting_time", "held", "schedule_conflict"] as const)(
+    "공개 조건 %s는 새 응시와 단어 보기를 함께 잠근다", (state) => {
+      const value = assignment({ release: { state, opensAt: state === "waiting_time" ? "2026-08-22T04:00:00Z" : null, hasDeadline: true } });
+      const life = deriveStudentAssignmentLifecycle(value, now);
+      expect(life.actions.canStart).toBe(false);
+      expect(life.actions.canViewWords).toBe(false);
+      expect(life.progress).toBe("not_started");
+      const resumed = deriveStudentAssignmentLifecycle({
+        ...value, lastAttemptId: "started", lastStatus: "in_progress", lastPhase: "retry",
+      }, now);
+      expect(resumed.actions.canResume).toBe(true);
+      expect(resumed.actions.canViewWords).toBe(true);
+      expect(resumed.actions.canStart).toBe(false);
+      const retake = deriveStudentAssignmentLifecycle({
+        ...value, lastAttemptId: "finished", lastStatus: "completed", lastPhase: "completed",
+      }, now);
+      expect(retake.actions.canStart).toBe(false);
+      expect(retake.actions.canViewResult).toBe(true);
+    },
+  );
   it("uses an inclusive opening and exclusive closing boundary", () => {
     expect(
       deriveStudentAssignmentLifecycle(

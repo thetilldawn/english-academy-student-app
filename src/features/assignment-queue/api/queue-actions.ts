@@ -5,6 +5,7 @@ export type QueueResolutionResult = {
   queue: VocabAssignmentQueueSummary;
   resolution: {
     action: QueueResolutionAction;
+    item_id: string;
     series_id: string;
     student_id: string;
   };
@@ -33,6 +34,7 @@ function isMatchingResolutionPayload(
   } | null,
   seriesId: string,
   action: QueueResolutionAction,
+  expectedItemId: string,
 ): payload is QueueResolutionResult {
   return Boolean(
     payload?.queue &&
@@ -41,6 +43,9 @@ function isMatchingResolutionPayload(
     payload.queue.seriesId === seriesId &&
     payload.resolution.series_id === seriesId &&
     payload.resolution.action === action &&
+    payload.resolution.item_id === expectedItemId &&
+    Array.isArray(payload.queue.items) &&
+    payload.queue.items.some((item) => item && typeof item === "object" && item.id === expectedItemId) &&
     payload.resolution.student_id === payload.queue.studentId &&
     payload.version === payload.queue.updatedAt,
   );
@@ -80,11 +85,12 @@ export async function loadStudentAssignmentQueuePage(
 export async function resolveAssignmentQueue(
   seriesId: string,
   action: QueueResolutionAction,
+  expectedItemId: string,
 ) {
   const response = await fetch(
     `/api/admin/vocab-assignment-queues/${seriesId}`,
     {
-      body: JSON.stringify({ action }),
+      body: JSON.stringify({ action, expectedItemId }),
       headers: { "content-type": "application/json" },
       method: "PATCH",
     },
@@ -101,7 +107,7 @@ export async function resolveAssignmentQueue(
       response.status,
     );
   }
-  if (!isMatchingResolutionPayload(payload, seriesId, action)) {
+  if (!isMatchingResolutionPayload(payload, seriesId, action, expectedItemId)) {
     throw new QueueResolutionError("변경된 배정 시험 상태를 확인하지 못했습니다.");
   }
   return payload;

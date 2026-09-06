@@ -1324,6 +1324,7 @@ describe.sequential("final review-assignment database schema", () => {
         set
           status = 'completed',
           phase = 'completed',
+          initial_completed_at = clock_timestamp(),
           completed_at = clock_timestamp(),
           initial_correct_count = question_count_snapshot,
           retry_correct_count = 0,

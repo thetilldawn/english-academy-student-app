@@ -1,6 +1,7 @@
 export type VocabAssignmentQueueStatus =
   | "active"
   | "attention"
+  | "deferred"
   | "completed"
   | "cancelled";
 
@@ -10,6 +11,7 @@ export type VocabAssignmentQueueItemStatus =
   | "assigned"
   | "completed"
   | "attention"
+  | "deferred"
   | "cancelled";
 
 export type VocabAssignmentQueueItem = {
@@ -68,6 +70,8 @@ export function vocabAssignmentQueueStatusLabel(
       return "완료";
     case "cancelled":
       return "취소";
+    case "deferred":
+      return "보류 포함";
   }
 }
 
@@ -113,6 +117,8 @@ export function vocabAssignmentQueueItemStatusLabel(
       return "확인 필요";
     case "cancelled":
       return "취소";
+    case "deferred":
+      return "보류";
   }
 }
 
@@ -126,6 +132,8 @@ export function vocabAssignmentQueueAttentionLabel(reason: string | null) {
       return "현재 시험 시간이 끝남";
     case "schedule_conflict":
       return "다음 일정이 다른 시험과 겹침";
+    case "release_schedule_conflict":
+      return "공개 조건과 마감이 맞지 않아 일정 확인 필요";
     case "schedule_invalid":
       return "다음 시험 일정 확인 필요";
     case "admin_inactive":

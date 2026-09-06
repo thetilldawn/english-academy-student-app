@@ -10,7 +10,9 @@ const migrationPaths = fs
   .sort()
   .map((name) => path.join(migrationsDirectory, name));
 
-export async function createFinalSchemaDatabase() {
+export async function createFinalSchemaDatabase(options: {
+  beforeMigration?: (database: PGlite, migrationName: string) => Promise<void>;
+} = {}) {
   const database = new PGlite({ extensions: { pgcrypto } });
   await database.exec(`
     create role anon nologin;
@@ -59,7 +61,16 @@ export async function createFinalSchemaDatabase() {
     $$;
   `);
   const rollout: string[] = [];
+  async function flushRollout() {
+    if (!rollout.length) return;
+    await database.exec(`begin;\n${rollout.join("\n\n")}\ncommit;`);
+    rollout.length = 0;
+  }
   for (const migrationPath of migrationPaths) {
+    if (options.beforeMigration) {
+      await flushRollout();
+      await options.beforeMigration(database, path.basename(migrationPath));
+    }
     const migration = fs
       .readFileSync(migrationPath, "utf8")
       .replace("create extension if not exists pg_cron;", "");
@@ -84,6 +95,6 @@ export async function createFinalSchemaDatabase() {
       );
     }
   }
-  await database.exec(`begin;\n${rollout.join("\n\n")}\ncommit;`);
+  await flushRollout();
   return database;
 }

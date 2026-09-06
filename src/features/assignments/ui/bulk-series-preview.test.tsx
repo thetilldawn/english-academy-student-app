@@ -213,7 +213,7 @@ describe("BulkSeriesPreview", () => {
     expect(screen.getByText("학생 다")).toBeVisible();
   });
 
-  it("완료 연동 배정에서만 두 번째 회차를 완료 후 생성으로 표시한다", () => {
+  it("날짜 사용 여부와 관계없이 후속 회차의 첫 시험 완료 조건을 표시한다", () => {
     const value = previewProps();
     const secondSession = {
       ...schedule,
@@ -241,10 +241,13 @@ describe("BulkSeriesPreview", () => {
       />,
     );
     expect(screen.queryByText("완료 후 생성")).not.toBeInTheDocument();
+    expect(screen.getAllByText("앞 회차 첫 시험 완료 · 앞 마감 12시간 후 공개")).toHaveLength(1);
+    value.preview!.commonPlanSummary!.sessions = [schedule, secondSession].map(
+      (session) => ({...session, availableFrom:null,availableUntil:null}),
+    );
 
     rerender(
       <BulkSeriesPreview
-        completionGated
         {...value}
         students={[
           { id: "student-a", displayName: "학생 가" },
@@ -253,6 +256,6 @@ describe("BulkSeriesPreview", () => {
         ]}
       />,
     );
-    expect(screen.getAllByText("완료 후 생성")).toHaveLength(1);
+    expect(screen.getAllByText("앞 회차 첫 시험 완료 후 공개")).toHaveLength(1);
   });
 });

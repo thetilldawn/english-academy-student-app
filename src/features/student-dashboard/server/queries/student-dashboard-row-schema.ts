@@ -1,6 +1,7 @@
 import "server-only";
 
 import { z } from "zod";
+import { assignmentReleaseSchema } from "@/lib/assignment/assignment-release";
 
 import type { StudentAssignmentSummary } from "@/features/student-dashboard/contracts/student-dashboard-read-model";
 import {
@@ -47,6 +48,7 @@ const rawDatasetSchema = z.object({
 });
 
 export const studentDashboardRawItemSchema = z.object({
+  release: assignmentReleaseSchema.optional(),
   _dataset: rawDatasetSchema,
   assignedAt: timestampSchema,
   assignmentPurpose: z.enum(["regular", "review", "mixed"]),

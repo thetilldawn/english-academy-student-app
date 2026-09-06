@@ -1,6 +1,7 @@
 import "server-only";
 
 import { z } from "zod";
+import { assignmentReleaseSchema, isAssignmentReleaseOpen } from "@/lib/assignment/assignment-release";
 import type { StudentSession } from "@/lib/auth/student-session";
 import { normalizeQuizContentMode } from "@/lib/quiz/question-content-mode";
 import {
@@ -16,7 +17,7 @@ import {
   loadVocabPronunciationRegistry,
 } from "@/lib/services/quiz/pronunciation-registry";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
-import type { AssignmentStudy } from "../../contracts/assignment-study";
+import type { AssignmentStudyResult } from "../../contracts/assignment-study";
 import { studyExampleRanges } from "../../domain/study-example-ranges";
 import { getStudyExamplePrompts } from "./assignment-study-example-query";
 
@@ -37,11 +38,14 @@ const studySchema = z.object({
   mode: z.string(),
   words: z.array(wordSchema).min(1).max(1000),
 });
+const lockedStudySchema = studySchema.omit({ words: true }).extend({
+  release: assignmentReleaseSchema,
+}).strict();
 
 export async function getAssignmentStudy(
   student: Pick<StudentSession, "studentId">,
   assignmentId: string,
-): Promise<AssignmentStudy | null> {
+): Promise<AssignmentStudyResult | null> {
   if (!z.uuid().safeParse(assignmentId).success) return null;
   const { data, error } = await getServiceSupabaseClient().rpc(
     "get_student_assignment_study_v1",
@@ -49,6 +53,14 @@ export async function getAssignmentStudy(
   );
   if (error) throw new Error("assignment_study_read_failed", { cause: error.code });
   if (data === null) return null;
+  if (typeof data === "object" && !Array.isArray(data) && "release" in data) {
+    const locked = lockedStudySchema.safeParse(data);
+    if (!locked.success || locked.data.assignmentId !== assignmentId ||
+        isAssignmentReleaseOpen(locked.data.release) || locked.data.release.state === "unavailable") {
+      throw new Error("assignment_study_data_invalid");
+    }
+    return { ...locked.data, mode: normalizeQuizContentMode(locked.data.mode) };
+  }
   const parsed = studySchema.safeParse(data);
   if (!parsed.success || parsed.data.assignmentId !== assignmentId) {
     throw new Error("assignment_study_data_invalid");

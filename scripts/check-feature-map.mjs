@@ -187,7 +187,9 @@ function verifyRegistry(registry) {
     .map(relative)
     .filter(
       (filePath) =>
-        ["scripts/check-feature-map.mjs", "scripts/check-work-records.mjs", "scripts/verify-ui-architecture.mjs", "src/app/work-records.test.mjs", "src/lib/quiz/cached-flow-contract.test.ts", "src/lib/quiz/pronunciation-snapshot.test.ts", "src/lib/quiz/pronunciation-storage.test.ts"].includes(filePath) ||
+        ["scripts/check-feature-map.mjs", "scripts/check-work-records.mjs", "scripts/verify-ui-architecture.mjs", "src/app/work-records.test.mjs", "src/lib/quiz/cached-flow-contract.test.ts", "src/lib/quiz/pronunciation-snapshot.test.ts", "src/lib/quiz/pronunciation-storage.test.ts",
+          "src/lib/assignment/assignment-release.test.ts", "src/lib/services/quiz/attempt-command.test.ts",
+          "src/lib/services/vocab-assignment-queue-command.test.ts"].includes(filePath) ||
         /^scripts\/(?:feature-map|work-records)\/[^/]+\.mjs$/.test(filePath) ||
         /^src\/test-support\/(module-boundary(?:\.test)?|server-architecture)\.ts$/.test(filePath) ||
         /\/(?:architecture-boundary|application-layer-boundaries|server-architecture-ratchet|ui-architecture-ratchet)\.test\.ts$/.test(filePath),

@@ -76,6 +76,16 @@ function queue(
 }
 
 describe("AssignmentQueueHistory", () => {
+  it("건너뛰기를 보류로 설명하고 확인을 취소하면 전송하지 않는다", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    render(<AssignmentQueueHistory queues={[queue("attention", "00000000-0000-4000-8000-000000000033")]} />);
+    await userEvent.setup().click(screen.getByRole("button", { name: "이 회차 건너뛰기" }));
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining("보류"));
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining("예약 시간과 마감은 유지"));
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
   it("진행 큐는 펼치고 완료 큐는 접은 채 핵심 정보만 요약한다", async () => {
     const user = userEvent.setup();
     render(
@@ -119,6 +129,7 @@ describe("AssignmentQueueHistory", () => {
       queue: resolvedQueue,
       resolution: {
         action: "retry" as const,
+        item_id: resolvedQueue.items[0]!.id,
         series_id: resolvedQueue.seriesId,
         student_id: resolvedQueue.studentId,
       },
@@ -147,7 +158,7 @@ describe("AssignmentQueueHistory", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/admin/vocab-assignment-queues/00000000-0000-4000-8000-000000000033",
       expect.objectContaining({
-        body: JSON.stringify({ action: "retry" }),
+        body: JSON.stringify({ action: "retry", expectedItemId: resolvedQueue.items[0]!.id }),
         method: "PATCH",
       }),
     );

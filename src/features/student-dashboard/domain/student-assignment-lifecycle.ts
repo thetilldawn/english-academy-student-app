@@ -1,9 +1,10 @@
 import type { StudentAssignmentSummary } from "../model";
+import { isAssignmentReleaseOpen } from "@/lib/assignment/assignment-release";
 
 export type StudentAssignmentWindow =
   | {
       kind: "scheduled";
-      opensAt: string;
+      opensAt: string | null;
       closesAt: string | null;
     }
   | {
@@ -15,7 +16,7 @@ export type StudentAssignmentWindow =
       kind: "closed";
       opensAt: string | null;
       closesAt: string | null;
-      reason: "admin" | "deadline" | "invalid_window";
+      reason: "admin" | "deadline" | "invalid_window" | "held" | "release_schedule";
     };
 
 export type StudentAssignmentProgress =
@@ -33,6 +34,7 @@ export type StudentAssignmentLifecycle = {
     canResume: boolean;
     canStart: boolean;
     canViewResult: boolean;
+    canViewWords: boolean;
   };
   progress: StudentAssignmentProgress;
   window: StudentAssignmentWindow;
@@ -48,6 +50,7 @@ type LifecycleInput = Pick<
   | "lastStatus"
   | "missedAt"
   | "retakeAllowed"
+  | "release"
 >;
 
 function boundary(value: string | null) {
@@ -86,6 +89,22 @@ function deriveWindow(
       reason: "admin",
     };
   }
+  // Existing attempts keep their original resume/retry/result lifecycle.
+  // A new INSERT (including a retake) is still checked separately below and in DB.
+  if (!assignment.lastAttemptId && !isAssignmentReleaseOpen(assignment.release)) {
+    const release = assignment.release!;
+    if (release.state === "waiting_initial" || release.state === "waiting_time") {
+      return {
+        kind: "scheduled",
+        opensAt: release.state === "waiting_time" ? release.opensAt : null,
+        closesAt: assignment.availableUntil,
+      };
+    }
+    return {
+      kind: "closed", opensAt: release.opensAt, closesAt: assignment.availableUntil,
+      reason: release.state === "cancelled" ? "admin" : release.state === "held" ? "held" : "release_schedule",
+    };
+  }
   if (opensAt !== null && opensAt > nowMilliseconds) {
     return {
       kind: "scheduled",
@@ -119,6 +138,10 @@ function deriveProgress(
   }
   if (assignment.lastStatus === "completed") return "completed";
   if (assignment.lastStatus === "expired") return "expired";
+  if (availabilityWindow.kind === "closed" &&
+      (availabilityWindow.reason === "held" || availabilityWindow.reason === "release_schedule")) {
+    return "not_started";
+  }
   if (
     assignment.missedAt !== null ||
     (availabilityWindow.kind === "closed" &&
@@ -137,6 +160,7 @@ export function deriveStudentAssignmentLifecycle(
   const progress = deriveProgress(assignment, availabilityWindow);
   const hasAttempt = assignment.lastAttemptId !== null;
   const canStart =
+    isAssignmentReleaseOpen(assignment.release) &&
     availabilityWindow.kind === "open" &&
     ((!hasAttempt && progress === "not_started") ||
       (hasAttempt && progress === "expired") ||
@@ -152,6 +176,7 @@ export function deriveStudentAssignmentLifecycle(
         (progress === "initial_in_progress" ||
           progress === "retry_in_progress"),
       canStart,
+      canViewWords: hasAttempt || isAssignmentReleaseOpen(assignment.release),
       canViewResult:
         hasAttempt && (progress === "completed" || progress === "expired"),
     },

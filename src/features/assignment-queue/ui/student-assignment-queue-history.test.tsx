@@ -140,6 +140,7 @@ describe("StudentAssignmentQueueHistory", () => {
           queue: resolved,
           resolution: {
             action: "retry",
+            item_id: resolved.items[0]!.id,
             series_id: resolved.seriesId,
             student_id: resolved.studentId,
           },

@@ -499,10 +499,10 @@ describe("VocabScheduleFields", () => {
     ).toBeVisible();
   });
 
-  it("나누기 두 번째 회차부터 완료 후 생성 상태를 표시한다", () => {
+  it("두 번째 회차부터 첫 시험과 앞 마감의 실제 공개 조건을 표시한다", () => {
     const value = controller();
     render(<ScheduleHarness value={value} />);
 
-    expect(screen.getAllByText("완료 후 생성")).toHaveLength(2);
+    expect(screen.getAllByText("앞 회차 첫 시험 완료 · 앞 마감 12시간 후 공개")).toHaveLength(2);
   });
 });

@@ -339,7 +339,7 @@
     {
       "path": "bulk-preview-session-list.tsx",
       "role": "pure",
-      "reason": "주어진 회차 결과 표시",
+      "reason": "APP14: 회차 표시 결과만 받으며 공통 공개 안내 부품을 재사용",
       "allowedImports": [
         "../api/response-adapters",
         "./assignment-editor-fields",
@@ -347,13 +347,13 @@
         "@/content/format",
         "@/content/ko/admin-learning",
         "@/design-system/primitives/badge/badge",
-        "@/lib/format"
+        "./assignment-session-release-tags"
       ]
     },
     {
       "path": "bulk-series-preview.tsx",
       "role": "pure",
-      "reason": "APP09: 미리보기 결과/진행/오류/학생 표시만 받는 독립 표시",
+      "reason": "APP14: 회차 표시 결과만 받으며 공통 공개 안내 부품을 재사용",
       "allowedImports": [
         "../contracts/bulk-assignment-response",
         "../presentation/bulk-plan-audience",
@@ -363,7 +363,7 @@
         "@/content/ko/admin-learning",
         "@/design-system/primitives/badge/badge",
         "@/design-system/primitives/tooltip/help-tip",
-        "@/lib/format"
+        "./assignment-session-release-tags"
       ]
     },
     {
@@ -677,7 +677,8 @@
         "@/design-system/primitives/badge/badge",
         "@/design-system/primitives/button/button",
         "@/design-system/primitives/form/field",
-        "@/design-system/primitives/tooltip/help-tip"
+        "@/design-system/primitives/tooltip/help-tip",
+        "../presentation/assignment-release-view"
       ]
     },
     {
@@ -723,6 +724,16 @@
         "@/design-system/patterns/feedback/feedback",
         "@/design-system/patterns/route-state/route-state",
         "./assignment-workspace"
+      ]
+    },
+    {
+      "path": "assignment-session-release-tags.tsx",
+      "role": "pure",
+      "reason": "APP14: 회차 번호와 공개·마감만 받는 공통 일정 안내",
+      "allowedImports": [
+        "@/design-system/primitives/badge/badge",
+        "@/lib/format",
+        "../presentation/assignment-release-view"
       ]
     }
   ]

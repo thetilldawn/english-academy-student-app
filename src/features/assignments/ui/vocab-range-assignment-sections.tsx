@@ -320,10 +320,6 @@ export function VocabRangeAssignmentSections({
       >
         {controller.commonPlan ? (
           <BulkSeriesPreview
-            completionGated={
-              controller.commonPlan.distribution === "split" &&
-              controller.commonPlan.selectedDateCount > 0
-            }
             message={bulk.message}
             preview={bulk.preview}
             previewLoading={bulk.previewLoading}

@@ -1,4 +1,5 @@
 import { studentAppText } from "@/content/ko/student-app";
+import { assignmentReleaseNotice } from "@/lib/assignment/assignment-release";
 import {
   millisecondsUntil,
   secondsUntil,
@@ -18,11 +19,13 @@ export function StudentAssignmentAvailability({
 }: {
   assignment: Pick<
     StudentAssignmentSummary,
-    "availableFrom" | "availableUntil"
+    "availableFrom" | "availableUntil" | "release" | "lastAttemptId"
   >;
   lifecycle: StudentAssignmentLifecycle;
   nowMilliseconds: number;
 }) {
+  const releaseNotice = !assignment.lastAttemptId ? assignmentReleaseNotice(assignment.release) : null;
+  const displayedOpensAt = lifecycle.window.opensAt;
   const openingRemainingMilliseconds =
     lifecycle.window.kind === "scheduled"
       ? millisecondsUntil(lifecycle.window.opensAt, nowMilliseconds)
@@ -39,16 +42,22 @@ export function StudentAssignmentAvailability({
   return (
     <>
       <dl className={styles.schedule}>
+        {!assignment.lastAttemptId && assignment.release?.state === "waiting_initial" && assignment.availableFrom ? (
+          <div>
+            <dt>{studentAppText.dashboard.release.reservedOpening}</dt>
+            <dd><time dateTime={assignment.availableFrom}>{formatKoreanActivityDateTime(assignment.availableFrom)}</time></dd>
+          </div>
+        ) : null}
         <div>
           <dt>{studentAppText.dashboard.availability.opensAt}</dt>
           <dd>
-            {assignment.availableFrom ? (
-              <time dateTime={assignment.availableFrom}>
-                {formatKoreanActivityDateTime(assignment.availableFrom)}
+            {releaseNotice ?? (displayedOpensAt ? (
+              <time dateTime={displayedOpensAt}>
+                {formatKoreanActivityDateTime(displayedOpensAt)}
               </time>
             ) : (
               studentAppText.dashboard.availability.availableNow
-            )}
+            ))}
           </dd>
         </div>
         <div>
@@ -66,6 +75,7 @@ export function StudentAssignmentAvailability({
       </dl>
 
       {lifecycle.window.kind === "scheduled" &&
+      lifecycle.window.opensAt &&
       openingRemainingMilliseconds !== null ? (
         <AssignmentBoundaryRefresh
           boundaryAt={lifecycle.window.opensAt}

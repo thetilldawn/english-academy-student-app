@@ -91,6 +91,18 @@ export function sortStudentAssignments(
   return assignments.toSorted(compareStudentAssignments);
 }
 
+function compareScheduledAssignments(left: StudentAssignmentSummary, right: StudentAssignmentSummary) {
+  const opening = (item: StudentAssignmentSummary) => {
+    const value = item.release?.state === "waiting_initial" ? null
+      : item.release?.opensAt ?? item.availableFrom;
+    const parsed = value === null ? Number.NaN : Date.parse(value);
+    return Number.isFinite(parsed) ? parsed : Number.POSITIVE_INFINITY;
+  };
+  const leftAt = opening(left);
+  const rightAt = opening(right);
+  return leftAt === rightAt ? compareStudentAssignments(left, right) : leftAt < rightAt ? -1 : 1;
+}
+
 export function selectStudentAssignmentSections(
   assignments: readonly StudentAssignmentSummary[],
   nowMilliseconds = Date.now(),
@@ -117,6 +129,10 @@ export function selectStudentAssignmentSections(
       lifecycle.window.kind === "scheduled"
         ? "scheduled"
         : lifecycle.progress === "not_started" &&
+            lifecycle.window.kind === "closed" &&
+            (lifecycle.window.reason === "held" || lifecycle.window.reason === "release_schedule")
+          ? "needs-attention"
+        : lifecycle.progress === "not_started" &&
             lifecycle.window.kind === "closed"
           ? "deadline-closed"
           : lifecycle.progress === "missed"
@@ -129,13 +145,7 @@ export function selectStudentAssignmentSections(
     sectionById.get(sectionId)?.assignments.push(assignment);
   }
 
-  sectionById.get("scheduled")?.assignments.sort((left, right) => {
-    const openingDifference = Date.parse(left.availableFrom ?? "") -
-      Date.parse(right.availableFrom ?? "");
-    return openingDifference !== 0
-      ? openingDifference
-      : compareStudentAssignments(left, right);
-  });
+  sectionById.get("scheduled")?.assignments.sort(compareScheduledAssignments);
 
   return sections;
 }
@@ -169,12 +179,6 @@ export function selectStudentDashboardCurrentSections(
   for (const section of sections) {
     section.assignments.sort(compareStudentAssignments);
   }
-  sectionById.get("scheduled")?.assignments.sort((left, right) => {
-    const openingDifference = Date.parse(left.availableFrom ?? "") -
-      Date.parse(right.availableFrom ?? "");
-    return openingDifference !== 0
-      ? openingDifference
-      : compareStudentAssignments(left, right);
-  });
+  sectionById.get("scheduled")?.assignments.sort(compareScheduledAssignments);
   return sections;
 }

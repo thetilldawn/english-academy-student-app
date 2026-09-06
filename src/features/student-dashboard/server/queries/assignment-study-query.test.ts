@@ -21,23 +21,36 @@ beforeEach(() => {
   mocks.prompts.mockResolvedValue(new Map([[7, ["She _____ the letters."]]]));
 });
 describe("배정 단어장 서버 조회", () => {
+  it.each(["waiting_initial", "waiting_time", "held", "schedule_conflict", "cancelled"])(
+    "%s는 원문·영영풀이·예문·발음을 읽지 않고 상태만 돌려준다", async (state) => {
+      const locked = { assignmentId: id, title: "2회차", mode: "canonical_example_to_headword",
+        release: { state, opensAt: state === "waiting_time" ? "2030-01-01T00:00:00Z" : null, hasDeadline: true } };
+      mocks.rpc.mockResolvedValue({ data: locked, error: null });
+      expect(await getAssignmentStudy(student, id)).toEqual(locked);
+      for (const fn of [mocks.registry, mocks.active, mocks.synthetic, mocks.approved, mocks.prompts]) {
+        expect(fn).not.toHaveBeenCalled();
+      }
+      mocks.rpc.mockResolvedValue({ data: { ...locked, words: [word] }, error: null });
+      await expect(getAssignmentStudy(student, id)).rejects.toThrow("assignment_study_data_invalid");
+    },
+  );
   it("세션 학생만 전달하고 발음 대상은 선택지가 아닌 배정 단어 ID뿐이다", async () => {
     const result = await getAssignmentStudy(student, id);
     expect(mocks.rpc).toHaveBeenCalledWith("get_student_assignment_study_v1", { p_assignment_id: id, p_student_id: student.studentId });
     expect(mocks.registry).toHaveBeenCalledWith([7]);
-    expect(result?.words[0]).toMatchObject({ headword: "collect", meaning: "모으다", definition: null, example: null });
-    expect(Object.keys(result!.words[0]!)).toEqual(["key", "headword", "meaning", "definition", "example", "exampleRanges", "pronunciation"]);
+    expect(result?.words?.[0]).toMatchObject({ headword: "collect", meaning: "모으다", definition: null, example: null });
+    expect(Object.keys(result!.words![0]!)).toEqual(["key", "headword", "meaning", "definition", "example", "exampleRanges", "pronunciation"]);
     expect(mocks.prompts).not.toHaveBeenCalled();
   });
   it.each(["canonical_definition_to_headword", "canonical_example_to_headword"])("%s에 해당하는 학습 원문만 공개한다", async (mode) => {
     mocks.rpc.mockResolvedValue({ data: { ...raw(mode), choices: ["secret"], correct_choice_index: 2 }, error: null });
     const result = await getAssignmentStudy(student, id);
-    expect(result?.words[0]?.definition).toBe(mode.includes("definition") ? word.definition : null);
-    expect(result?.words[0]?.example).toBe(mode.includes("example") ? "She collected the letters." : null);
+    expect(result?.words?.[0]?.definition).toBe(mode.includes("definition") ? word.definition : null);
+    expect(result?.words?.[0]?.example).toBe(mode.includes("example") ? "She collected the letters." : null);
     if (mode.includes("example")) {
       expect(mocks.prompts).toHaveBeenCalledExactlyOnceWith(id, [7]);
       expect(mocks.rpc.mock.invocationCallOrder[0]).toBeLessThan(mocks.prompts.mock.invocationCallOrder[0]!);
-      expect(result?.words[0]?.exampleRanges).toEqual([{ start: 4, end: 13 }]);
+      expect(result?.words?.[0]?.exampleRanges).toEqual([{ start: 4, end: 13 }]);
     } else expect(mocks.prompts).not.toHaveBeenCalled();
     expect(JSON.stringify(result)).not.toMatch(/secret|choice|entryId|Snapshot|releaseId|orderIndex/u);
   });
@@ -73,6 +86,6 @@ describe("배정 단어장 서버 조회", () => {
     await expect(getAssignmentStudy(student, id)).rejects.toThrow("assignment_study_example_read_failed");
     mocks.prompts.mockResolvedValueOnce(new Map());
     const result = await getAssignmentStudy(student, id);
-    expect(result?.words[0]).toMatchObject({ example: word.example, exampleRanges: null });
+    expect(result?.words?.[0]).toMatchObject({ example: word.example, exampleRanges: null });
   });
 });

@@ -2,7 +2,7 @@ import { AssignmentSessionRow } from "./assignment-editor-fields";
 import { formatContentText } from "@/content/format";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
-import { formatKoreanDateTime } from "@/lib/format";
+import { AssignmentSessionReleaseTags } from "./assignment-session-release-tags";
 
 import type { BulkAssignmentPreviewResponse } from "../api/response-adapters";
 import styles from "./vocab-assignment-form.module.css";
@@ -10,10 +10,8 @@ import styles from "./vocab-assignment-form.module.css";
 type PreviewItem = BulkAssignmentPreviewResponse["items"][number];
 
 export function BulkPreviewSessionList({
-  completionGated = false,
   item,
 }: {
-  completionGated?: boolean;
   item: PreviewItem;
 }) {
   if (item.sessions.length === 0) {
@@ -35,22 +33,12 @@ export function BulkPreviewSessionList({
                 {session.unitLabel ??
                   adminLearningText.bulkAssignmentModal.rangePending}
               </MetaTag>
-              <MetaTag size="large">
-                {session.availableFrom
-                  ? formatContentText(
-                      adminLearningText.bulkAssignmentModal.assignmentDateTag,
-                      { datetime: formatKoreanDateTime(session.availableFrom) },
-                    )
-                  : "바로 공개"}
-              </MetaTag>
-              {session.availableUntil ? (
-                <MetaTag size="large">
-                  {formatContentText(
-                    adminLearningText.bulkAssignmentModal.deadlineTag,
-                    { datetime: formatKoreanDateTime(session.availableUntil) },
-                  )}
-                </MetaTag>
-              ) : null}
+              <AssignmentSessionReleaseTags
+                sessionNumber={session.sessionNumber}
+                availableFrom={session.availableFrom}
+                availableUntil={session.availableUntil}
+                previousAvailableUntil={item.sessions.find((previous) => previous.sessionNumber === session.sessionNumber - 1)?.availableUntil ?? null}
+              />
               {session.rangeTruncated ? (
                 <MetaTag size="large" tone="warning">
                   {adminLearningText.bulkAssignmentModal.availableRangeOnly}
@@ -64,9 +52,6 @@ export function BulkPreviewSessionList({
                     )
                   : adminLearningText.bulkAssignmentModal.needsReview}
               </MetaTag>
-              {completionGated && session.sessionNumber > 1 ? (
-                <MetaTag size="large">완료 후 생성</MetaTag>
-              ) : null}
             </MetaTagList>
           }
           error={session.error ? <small>{session.error}</small> : null}

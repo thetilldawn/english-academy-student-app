@@ -119,7 +119,7 @@ describe("student dashboard query", () => {
     const result = await getStudentDashboardInitial({ studentId });
 
     expect(mocks.rpc).toHaveBeenCalledWith(
-      "get_student_dashboard_initial_v1",
+      "get_student_dashboard_initial_v2",
       { p_snapshot_at: null, p_student_id: studentId },
     );
     expect(result.currentAssignments).toHaveLength(1);
@@ -175,7 +175,7 @@ describe("student dashboard query", () => {
     const page = await getStudentDashboardCompletedPage(cursor, { studentId });
 
     expect(mocks.rpc).toHaveBeenCalledWith(
-      "list_student_dashboard_completed_page_v1",
+      "list_student_dashboard_completed_page_v2",
       expect.objectContaining({
         p_cursor_assignment_id: uuid(10),
         p_snapshot_at: snapshotAt,

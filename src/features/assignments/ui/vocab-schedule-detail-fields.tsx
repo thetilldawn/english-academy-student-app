@@ -12,6 +12,7 @@ import { HelpTip, inlineHelpClassName } from "@/design-system/primitives/tooltip
 
 import type { VocabScheduleSlotOverride, VocabTimeTemplate } from "../domain/vocab-assignment-contract";
 import type { VocabScheduleSessionRow } from "../presentation/vocab-schedule-view";
+import { followUpReleaseLabel } from "../presentation/assignment-release-view";
 import styles from "./vocab-assignment-planner.module.css";
 
 export type VocabScheduleDetailFieldsProps = {
@@ -37,6 +38,8 @@ export function VocabScheduleDetailFields({
           <FieldLabel as="span">회차별 시간</FieldLabel>
           {sessionRows.map((row) => {
             const { availableError, deadlineError } = row;
+            const followUp = followUpReleaseLabel(row.sessionNumber,
+              Boolean(sessionRows.find((previous) => previous.sessionNumber === row.sessionNumber - 1)?.deadlineLocalDateTime));
             if (!row.editable) {
               return (
                 <div
@@ -47,7 +50,7 @@ export function VocabScheduleDetailFields({
                     <strong>
                       {row.label}
                     </strong>
-                    {row.queued ? <MetaTag tone="neutral">완료 후 생성</MetaTag> : null}
+                    {followUp ? <MetaTag tone="neutral">{followUp}</MetaTag> : null}
                   </span>
                   <span className={styles.generatedSessionTime}>
                     {row.generatedTimeLabel}
@@ -61,7 +64,7 @@ export function VocabScheduleDetailFields({
                   <strong>
                     {row.label}
                   </strong>
-                  {row.queued ? <MetaTag tone="neutral">완료 후 생성</MetaTag> : null}
+                  {followUp ? <MetaTag tone="neutral">{followUp}</MetaTag> : null}
                 </span>
                 {availableTimeEnabled ? (
                   <Field as="label" className={styles.sessionAvailableField}>

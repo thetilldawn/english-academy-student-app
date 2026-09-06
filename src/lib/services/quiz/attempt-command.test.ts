@@ -33,6 +33,19 @@ beforeEach(() => {
 });
 
 describe("quiz attempt completion commands", () => {
+  it.each([answerStudentQuestion, timeoutStudentQuestion])("첫 시험 미달 응답도 다음 회차 준비를 촉발하되 재시험 중간 답변은 촉발하지 않는다", async (command) => {
+    mocks.answerRpc.mockResolvedValue({
+      data: { completed: false, needsRetry: true },
+      error: null, feedbackProtocol: "variable",
+    });
+    const input = { attemptId: "attempt-1", questionId: "question-1", studentId: "student-1", choiceIndex: 0 };
+    await command({ ...input, phase: "initial" });
+    expect(mocks.materialize).toHaveBeenCalledExactlyOnceWith("student-1");
+    mocks.materialize.mockClear();
+    await command({ ...input, phase: "retry" });
+    expect(mocks.materialize).not.toHaveBeenCalled();
+  });
+
   it("materializes the next queued assignment after an explicit expiry", async () => {
     mocks.rpc.mockResolvedValue({ data: null, error: null });
 

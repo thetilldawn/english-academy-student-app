@@ -25,6 +25,7 @@ const itemSchema = z
       "completed",
       "attention",
       "cancelled",
+      "deferred",
     ]),
     questionCount: z.number().int().min(4).max(500),
     unitLabels: z.array(z.string()),
@@ -43,7 +44,7 @@ const rowSchema = z
   .object({
     series_id: z.uuid(),
     student_id: z.uuid(),
-    status: z.enum(["active", "attention", "completed", "cancelled"]),
+    status: z.enum(["active", "attention", "completed", "cancelled", "deferred"]),
     attention_reason: z.string().nullable(),
     dataset_label: z.string(),
     range_label: z.string(),

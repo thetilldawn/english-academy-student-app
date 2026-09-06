@@ -12,6 +12,7 @@ import { parseVocabAssignmentQueueSummary } from "./vocab-assignment-queue-query
 const resolutionSchema = z
   .object({
     action: z.enum(["retry", "skip", "cancel"]),
+    item_id: z.uuid(),
     series_id: z.uuid(),
     student_id: z.uuid(),
   })
@@ -58,16 +59,17 @@ export async function materializeReadyVocabAssignmentQueue(
 export async function resolveVocabAssignmentQueueAttention(
   seriesId: string,
   action: VocabAssignmentQueueResolutionAction,
+  expectedItemId: string,
   authenticatedAdmin?: AdminContext,
 ) {
   if (!authenticatedAdmin) await requireAdmin();
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc(
-    "resolve_vocab_assignment_queue_attention_v2",
-    { p_action: action, p_series_id: seriesId },
+    "resolve_vocab_assignment_queue_attention_v3",
+    { p_action: action, p_series_id: seriesId, p_expected_item_id: expectedItemId },
   );
   if (error) {
-    if (error.code === "P0002" || error.code === "22023") {
+    if (error.code === "P0002" || error.code === "22023" || error.code === "40001") {
       throw new VocabAssignmentQueueCommandError(
         "conflict",
         "이미 처리되었거나 현재 처리할 수 없는 시험입니다.",
@@ -99,6 +101,8 @@ export async function resolveVocabAssignmentQueueAttention(
     queue.seriesId !== seriesId ||
     resolution.series_id !== seriesId ||
     resolution.action !== action ||
+    resolution.item_id !== expectedItemId ||
+    !queue.items.some((item) => item.id === expectedItemId) ||
     resolution.student_id !== queue.studentId
   ) {
     throw new VocabAssignmentQueueCommandError(

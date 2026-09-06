@@ -23,6 +23,7 @@ import {
 } from "./vocab-assignment-queue-command";
 
 const seriesId = "00000000-0000-4000-8000-000000000033";
+const itemId = "00000000-0000-4000-8000-000000000022";
 const studentId = "00000000-0000-4000-8000-000000000020";
 
 describe("vocab assignment queue command", () => {
@@ -32,12 +33,14 @@ describe("vocab assignment queue command", () => {
     mocks.parseSummary.mockReturnValue({
       seriesId,
       studentId,
+      items: [{ id: itemId }],
       updatedAt: "2026-08-31T00:00:00.000Z",
     });
     mocks.rpc.mockResolvedValue({
       data: {
         queue: { series_id: seriesId },
         resolution: {
+          item_id: itemId,
           action: "retry",
           series_id: seriesId,
           student_id: studentId,
@@ -47,10 +50,11 @@ describe("vocab assignment queue command", () => {
     });
   });
 
-  it("대상 회차를 원자 처리하는 v2 영수증만 성공으로 사용한다", async () => {
+  it("대상 회차를 원자 처리하는 v3 영수증만 성공으로 사용한다", async () => {
     await expect(resolveVocabAssignmentQueueAttention(
       seriesId,
       "retry",
+      itemId,
       { displayName: "관리자", userId: "admin-id" },
     )).resolves.toMatchObject({
       queue: { seriesId },
@@ -58,8 +62,8 @@ describe("vocab assignment queue command", () => {
       version: "2026-08-31T00:00:00.000Z",
     });
     expect(mocks.rpc).toHaveBeenCalledWith(
-      "resolve_vocab_assignment_queue_attention_v2",
-      { p_action: "retry", p_series_id: seriesId },
+      "resolve_vocab_assignment_queue_attention_v3",
+      { p_action: "retry", p_series_id: seriesId, p_expected_item_id: itemId },
     );
   });
 
@@ -71,6 +75,7 @@ describe("vocab assignment queue command", () => {
     await expect(resolveVocabAssignmentQueueAttention(
       seriesId,
       "retry",
+      itemId,
       { displayName: "관리자", userId: "admin-id" },
     )).rejects.toMatchObject({ reason: "database" });
 
@@ -82,6 +87,7 @@ describe("vocab assignment queue command", () => {
     await expect(resolveVocabAssignmentQueueAttention(
       seriesId,
       "retry",
+      itemId,
       { displayName: "관리자", userId: "admin-id" },
     )).rejects.toBeInstanceOf(VocabAssignmentQueueCommandError);
   });
@@ -91,6 +97,7 @@ describe("vocab assignment queue command", () => {
       data: {
         queue: { series_id: seriesId },
         resolution: {
+          item_id: itemId,
           action: "skip",
           series_id: seriesId,
           student_id: studentId,
@@ -101,6 +108,7 @@ describe("vocab assignment queue command", () => {
     await expect(resolveVocabAssignmentQueueAttention(
       seriesId,
       "retry",
+      itemId,
       { displayName: "관리자", userId: "admin-id" },
     )).rejects.toMatchObject({ reason: "database" });
 
@@ -108,6 +116,7 @@ describe("vocab assignment queue command", () => {
       data: {
         queue: { series_id: seriesId },
         resolution: {
+          item_id: itemId,
           action: "retry",
           series_id: seriesId,
           student_id: "00000000-0000-4000-8000-000000000099",
@@ -118,6 +127,7 @@ describe("vocab assignment queue command", () => {
     await expect(resolveVocabAssignmentQueueAttention(
       seriesId,
       "retry",
+      itemId,
       { displayName: "관리자", userId: "admin-id" },
     )).rejects.toMatchObject({ reason: "database" });
   });

@@ -1986,7 +1986,7 @@ describe.sequential("exam-use dictionary projection", () => {
       select set_config('request.jwt.claim.role', 'service_role', false);
       select set_config('request.jwt.claims', '{"role":"service_role"}', false);
     `);
-    const prematureMaterialize = await database.query<{ result: unknown[] }>(`
+    const afterFirstMaterialize = await database.query<{ result: Array<{ assignment_id: string }> }>(`
       select public.materialize_ready_vocab_assignment_queue_v1(
         '${ids.student}', 10
       ) as result;
@@ -1996,7 +1996,7 @@ describe.sequential("exam-use dictionary projection", () => {
       select set_config('request.jwt.claim.role', 'authenticated', false);
       select set_config('request.jwt.claims', '{"role":"authenticated"}', false);
     `);
-    expect(prematureMaterialize.rows[0]!.result).toEqual([]);
+    expect(afterFirstMaterialize.rows[0]!.result).toHaveLength(1);
 
     const waitingState = await database.query<{
       statuses: string[];
@@ -2009,8 +2009,8 @@ describe.sequential("exam-use dictionary projection", () => {
       where item.series_id = '${created.rows[0]!.result[0]!.queue_series_id}';
     `);
     expect(waitingState.rows[0]).toEqual({
-      statuses: ["assigned", "queued", "queued"],
-      assignment_count: 1,
+      statuses: ["completed", "assigned", "queued"],
+      assignment_count: 2,
     });
 
     await database.query(
@@ -2055,8 +2055,8 @@ describe.sequential("exam-use dictionary projection", () => {
       where item.series_id = '${created.rows[0]!.result[0]!.queue_series_id}';
     `);
     expect(readyState.rows[0]).toEqual({
-      statuses: ["completed", "ready", "queued"],
-      assignment_count: 1,
+      statuses: ["completed", "assigned", "queued"],
+      assignment_count: 2,
     });
 
     await database.exec(`
@@ -2081,7 +2081,7 @@ describe.sequential("exam-use dictionary projection", () => {
       select set_config('request.jwt.claim.role', 'authenticated', false);
       select set_config('request.jwt.claims', '{"role":"authenticated"}', false);
     `);
-    expect(firstMaterialize.rows[0]!.result).toHaveLength(1);
+    expect(firstMaterialize.rows[0]!.result).toEqual([]);
     expect(secondMaterialize.rows[0]!.result).toEqual([]);
 
     const assignedState = await database.query<{
@@ -2108,8 +2108,18 @@ describe.sequential("exam-use dictionary projection", () => {
     });
 
     const secondAssignmentId =
-      firstMaterialize.rows[0]!.result[0]!.assignment_id;
+      afterFirstMaterialize.rows[0]!.result[0]!.assignment_id;
+    const releaseBefore = await database.query<{ state: string }>(`
+      select private.student_assignment_release_v1(
+        '${ids.student}','${secondAssignmentId}',clock_timestamp())->>'state' state
+    `);
+    expect(releaseBefore.rows[0]!.state).toBe("waiting_time");
     await database.exec(`
+      -- Move only the fake predecessor window so the twelve-hour condition is met.
+      update public.assignments
+      set available_from = clock_timestamp() - interval '14 hours',
+          available_until = clock_timestamp() - interval '13 hours'
+      where id = '${firstAssignmentId}';
       update public.assignments
       set available_from = clock_timestamp() - interval '1 minute',
           available_until = clock_timestamp() + interval '1 hour'
@@ -2180,12 +2190,15 @@ describe.sequential("exam-use dictionary projection", () => {
       "queued",
     ]);
 
+    const attentionItem = (await database.query<{id:string}>(`
+      select id from private.vocab_assignment_series_items where assignment_id='${secondAssignmentId}'
+    `)).rows[0]!.id;
     await database.exec("set role authenticated;");
-    await database.query(
-      `select public.resolve_vocab_assignment_queue_attention_v1(
-        $1::uuid, 'retry'
-      )`,
-      [created.rows[0]!.result[0]!.queue_series_id],
+    const retryReceipt = await database.query<{result:{queue:{items:Array<{id:string,assignmentId:string}>}}}>(
+      `select public.resolve_vocab_assignment_queue_attention_v3(
+        $1::uuid, 'retry', $2::uuid
+      ) result`,
+      [created.rows[0]!.result[0]!.queue_series_id, attentionItem],
     );
     await database.exec("reset role;");
     const retriedQueue = await database.query<{
@@ -2204,8 +2217,8 @@ describe.sequential("exam-use dictionary projection", () => {
       group by series.status;
     `);
     expect(retriedQueue.rows[0]).toEqual({
-      statuses: ["completed", "ready", "queued"],
-      assignment_count: 1,
+      statuses: ["completed", "assigned", "queued"],
+      assignment_count: 2,
       series_status: "active",
     });
 
@@ -2226,7 +2239,7 @@ describe.sequential("exam-use dictionary projection", () => {
       select set_config('request.jwt.claim.role', 'authenticated', false);
       select set_config('request.jwt.claims', '{"role":"authenticated"}', false);
     `);
-    expect(retriedMaterialize.rows[0]!.result).toHaveLength(1);
+    expect(retriedMaterialize.rows[0]!.result).toEqual([]);
 
     await database.exec("set role authenticated;");
     await database.query(
@@ -2234,15 +2247,15 @@ describe.sequential("exam-use dictionary projection", () => {
         $1::uuid, $2::uuid, 'queue recovery test cleanup'
       )`,
       [
-        retriedMaterialize.rows[0]!.result[0]!.assignment_id,
+        retryReceipt.rows[0]!.result.queue.items.find(item => item.id === attentionItem)!.assignmentId,
         ids.student,
       ],
     );
     await database.query(
-      `select public.resolve_vocab_assignment_queue_attention_v1(
-        $1::uuid, 'cancel'
+      `select public.resolve_vocab_assignment_queue_attention_v3(
+        $1::uuid, 'cancel', $2::uuid
       )`,
-      [created.rows[0]!.result[0]!.queue_series_id],
+      [created.rows[0]!.result[0]!.queue_series_id, attentionItem],
     );
     await database.exec("reset role;");
     const cancelledQueue = await database.query<{

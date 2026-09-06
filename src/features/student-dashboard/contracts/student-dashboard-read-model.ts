@@ -1,3 +1,5 @@
+import type { AssignmentRelease } from "@/lib/assignment/assignment-release";
+
 export const studentDashboardSectionKeys = [
   "open",
   "scheduled",
@@ -15,6 +17,7 @@ export type StudentDashboardCurrentSectionKey = Exclude<
 >;
 
 export type StudentAssignmentSummary = {
+  release?: AssignmentRelease;
   id: string;
   assignmentStatus: "draft" | "active" | "closed";
   displayTitle: string;
@@ -67,4 +70,3 @@ export type StudentDashboardInitialSnapshot = {
 export type StudentDashboardCompletedPageResponse = {
   page: StudentDashboardCompletedPage;
 };
-

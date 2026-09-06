@@ -1,4 +1,5 @@
 import "server-only";
+import { assignmentReleaseStartError } from "@/lib/assignment/assignment-release";
 
 import type { AssignmentPurpose } from "@/lib/admin/history";
 import type { QuestionOrderMode, TimingMode } from "@/lib/admin/assignment-settings";
@@ -155,7 +156,7 @@ export async function startStudentAttempt(
         recoveredAttempt as ExistingAttemptRow | null,
       );
       if (recoveredAttemptId) return recoveredAttemptId;
-      throw new Error("시험을 시작하지 못했습니다.");
+      throw new Error(assignmentReleaseStartError(error?.message) ?? "시험을 시작하지 못했습니다.");
     }
 
     return data;
@@ -240,7 +241,7 @@ export async function startStudentAttempt(
       recoveredAttempt as ExistingAttemptRow | null,
     );
     if (recoveredAttemptId) return recoveredAttemptId;
-    throw new Error("시험을 시작하지 못했습니다.");
+    throw new Error(assignmentReleaseStartError(error?.message) ?? "시험을 시작하지 못했습니다.");
   }
 
   return data;

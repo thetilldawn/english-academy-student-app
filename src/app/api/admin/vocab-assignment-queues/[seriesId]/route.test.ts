@@ -25,6 +25,8 @@ import { PATCH } from "./route";
 
 const seriesId = "00000000-0000-4000-8000-000000000033";
 
+const expectedItemId = "00000000-0000-4000-8000-000000000022";
+
 function request(body: unknown, origin?: string) {
   return new Request(
     `http://localhost/api/admin/vocab-assignment-queues/${seriesId}`,
@@ -59,7 +61,7 @@ describe("PATCH /api/admin/vocab-assignment-queues/[seriesId]", () => {
 
   it("관리자가 확인 필요 큐의 같은 회차 재배정을 요청한다", async () => {
     const response = await PATCH(
-      request({ action: "retry" }),
+      request({ action: "retry", expectedItemId }),
       { params: Promise.resolve({ seriesId }) },
     );
 
@@ -68,6 +70,7 @@ describe("PATCH /api/admin/vocab-assignment-queues/[seriesId]", () => {
     expect(mocks.resolveAttention).toHaveBeenCalledWith(
       seriesId,
       "retry",
+      expectedItemId,
       { userId: "admin-id" },
     );
     expect(await response.json()).toMatchObject({
@@ -80,7 +83,7 @@ describe("PATCH /api/admin/vocab-assignment-queues/[seriesId]", () => {
     mocks.resolveAttention.mockRejectedValueOnce(
       new mocks.CommandError("conflict", "이미 처리된 시험입니다."),
     );
-    const conflict = await PATCH(request({ action: "retry" }), {
+    const conflict = await PATCH(request({ action: "retry", expectedItemId }), {
       params: Promise.resolve({ seriesId }),
     });
     expect(conflict.status).toBe(409);
@@ -88,7 +91,7 @@ describe("PATCH /api/admin/vocab-assignment-queues/[seriesId]", () => {
     mocks.resolveAttention.mockRejectedValueOnce(
       new mocks.CommandError("database", "시험 생성 실패"),
     );
-    const failed = await PATCH(request({ action: "retry" }), {
+    const failed = await PATCH(request({ action: "retry", expectedItemId }), {
       params: Promise.resolve({ seriesId }),
     });
     expect(failed.status).toBe(503);
@@ -98,7 +101,7 @@ describe("PATCH /api/admin/vocab-assignment-queues/[seriesId]", () => {
     expect(
       (
         await PATCH(
-          request({ action: "retry" }, "https://attacker.example"),
+          request({ action: "retry", expectedItemId }, "https://attacker.example"),
           { params: Promise.resolve({ seriesId }) },
         )
       ).status,
@@ -107,7 +110,7 @@ describe("PATCH /api/admin/vocab-assignment-queues/[seriesId]", () => {
     mocks.getAdminContext.mockResolvedValueOnce(null);
     expect(
       (
-        await PATCH(request({ action: "retry" }), {
+        await PATCH(request({ action: "retry", expectedItemId }), {
           params: Promise.resolve({ seriesId }),
         })
       ).status,

@@ -1191,6 +1191,10 @@
     {
       "path": "src/lib/assignment/question-planner.ts",
       "owner": "assignments"
+    },
+    {
+      "path": "src/lib/assignment/assignment-release.ts",
+      "owner": "shared-contract"
     }
   ],
   "adminContractOwners": [
@@ -1601,6 +1605,18 @@
       "owner": "shared-quiz-domain"
     },
     {
+      "path": "src/lib/assignment/assignment-release.test.ts",
+      "owner": "shared-contract"
+    },
+    {
+      "path": "src/lib/services/quiz/attempt-command.test.ts",
+      "owner": "quiz-player"
+    },
+    {
+      "path": "src/lib/services/vocab-assignment-queue-command.test.ts",
+      "owner": "assignment-queue"
+    },
+    {
       "path": "scripts/check-work-records.mjs",
       "owner": "architecture-meta"
     },
@@ -1755,8 +1771,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 98,
-      "pathSetSha256": "cf1d19fd753dcedc9fe45f12b230390d13797bea1f3ecc0bcd2c32159f340d26"
+      "fileCount": 99,
+      "pathSetSha256": "03086a985b538222cdb6dfae5fa3aa6496c7ffd789ad3fa196de163355ff204c"
     },
     {
       "path": "src/lib/deploy",
@@ -1994,6 +2010,11 @@
   "protectedMigrationCount": 136,
   "protectedMigrationSetSha256": "b4ea57697824cb8fece77250a50950e58bb4e2516235e485106f126a8b00c13f",
   "migrationOwners": [
+    {
+      "path": "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
+      "owner": "assignment-queue",
+      "flow": "assignment-series"
+    },
     {
       "path": "supabase/migrations/20260906103017_add_approved_school_pronunciation_scope.sql",
       "owner": "quiz-player",
@@ -2736,7 +2757,8 @@
       "owner": "assignments",
       "participants": [
         "assignments",
-        "history"
+        "history",
+        "assignment-queue"
       ],
       "dataClass": "mutation",
       "cachePolicy": "학생·배정·미리보기는 요청 사이 캐시 금지",
@@ -2862,7 +2884,8 @@
           "supabase/migrations/20260904083500_extend_simseok_question_import_timeout.sql",
           "supabase/migrations/20260905040138_approve_simseok_production_release.sql",
           "supabase/migrations/20260905040904_preserve_production_rolling_deploy_compatibility.sql",
-          "supabase/migrations/20260905063836_add_reviewed_choice_repair_release.sql"
+          "supabase/migrations/20260905063836_add_reviewed_choice_repair_release.sql",
+          "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/bulk-assignments/preview/route.ts",
@@ -2899,7 +2922,8 @@
           "src/features/assignments/ui/vocab-question-fields.test.tsx",
           "src/features/assignments/ui/vocab-unit-allocation-fields.test.tsx",
           "src/features/assignments/presentation/vocab-question-view.test.ts",
-          "src/features/assignments/ui-role-boundary.test.ts"
+          "src/features/assignments/ui-role-boundary.test.ts",
+          "src/lib/database/assignment-release-final-schema.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -3900,7 +3924,8 @@
       "participants": [
         "student-dashboard",
         "learning-points",
-        "history"
+        "history",
+        "assignment-queue"
       ],
       "dataClass": "private",
       "cachePolicy": "학생별 배정·응시·포인트는 요청 사이 공유 캐시를 쓰지 않고 완료 페이지도 private no-store로 조회",
@@ -3945,7 +3970,8 @@
         "contract": [
           "src/features/history/public-contracts.ts",
           "src/features/student-dashboard/contracts/student-dashboard-read-model.ts",
-          "src/features/student-dashboard/model.ts"
+          "src/features/student-dashboard/model.ts",
+          "src/lib/assignment/assignment-release.ts"
         ],
         "transport": [
           "src/features/student-dashboard/transport/student-dashboard-pages.ts"
@@ -3959,7 +3985,8 @@
           "src/features/student-dashboard/server/queries/student-dashboard-row-schema.ts"
         ],
         "database": [
-          "supabase/migrations/20260829190000_add_student_dashboard_read_model.sql"
+          "supabase/migrations/20260829190000_add_student_dashboard_read_model.sql",
+          "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/page.tsx",
@@ -3981,7 +4008,9 @@
           "src/features/student-dashboard/transport/student-dashboard-pages.test.ts",
           "src/features/student-dashboard/ui/student-dashboard.test.tsx",
           "src/lib/database/student-dashboard-read-model-migration-contract.test.ts",
-          "src/lib/database/student-dashboard-read-model.integration.test.ts"
+          "src/lib/database/student-dashboard-read-model.integration.test.ts",
+          "src/lib/assignment/assignment-release.test.ts",
+          "src/lib/database/assignment-release-final-schema.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -4053,7 +4082,8 @@
         "assignments",
         "results",
         "learning-points",
-        "quiz-player"
+        "quiz-player",
+        "assignment-queue"
       ],
       "dataClass": "mutation",
       "cachePolicy": "수정 원본·학생·배정·큐는 요청 사이 캐시 금지",
@@ -4198,7 +4228,8 @@
           "supabase/migrations/20260825083542_add_student_point_ledger.sql",
           "supabase/migrations/20260828193000_preserve_assignment_edit_metadata.sql",
           "supabase/migrations/20260829103000_fix_assignment_edit_preview_regressions.sql",
-          "supabase/migrations/20260830111500_lock_exact_review_assignment_snapshot.sql"
+          "supabase/migrations/20260830111500_lock_exact_review_assignment_snapshot.sql",
+          "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/results/[id]/page.tsx",
@@ -4257,7 +4288,8 @@
           "src/lib/database/review-assignment-final-schema.integration.test.ts",
           "src/lib/admin/assignment-request-contract.characterization.test.ts",
           "src/lib/services/regular-assignment-scope-contract.test.ts",
-          "src/features/assignments/ui/exam-condition-fields.test.tsx"
+          "src/features/assignments/ui/exam-condition-fields.test.tsx",
+          "src/lib/database/assignment-release-final-schema.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -4758,7 +4790,7 @@
     },
     {
       "id": "assignment-series",
-      "name": "완료 뒤 이어지는 배정",
+      "name": "첫 시험과 앞 마감에 연동되는 배정",
       "status": "active",
       "owner": "assignment-queue",
       "participants": [
@@ -4770,7 +4802,7 @@
         "learning-points"
       ],
       "dataClass": "mutation",
-      "cachePolicy": "큐·배정·응시 완료 자료는 요청 사이 캐시 금지",
+      "cachePolicy": "개인 큐·배정·응시는 공유 캐시 금지. 첫 시험 완료 신호와 관리자 보류 후 상태 갱신.",
       "streamingPolicy": "상태 태그만 소비 화면과 함께 표시하며 큐 명령은 stream하지 않음",
       "dependsOnFlows": [
         "assignment-range-create"
@@ -4941,7 +4973,8 @@
           "supabase/migrations/20260826001655_schedule_read_side_maintenance_jobs.sql",
           "supabase/migrations/20260828193000_preserve_assignment_edit_metadata.sql",
           "supabase/migrations/20260829103000_fix_assignment_edit_preview_regressions.sql",
-          "supabase/migrations/20260831102000_add_atomic_vocab_queue_resolution.sql"
+          "supabase/migrations/20260831102000_add_atomic_vocab_queue_resolution.sql",
+          "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/assignments/page.tsx",
@@ -4987,7 +5020,8 @@
           "src/features/assignments/ui/vocab-question-fields.test.tsx",
           "src/features/assignments/ui/vocab-unit-allocation-fields.test.tsx",
           "src/features/assignments/presentation/vocab-question-view.test.ts",
-          "src/features/assignments/ui-role-boundary.test.ts"
+          "src/features/assignments/ui-role-boundary.test.ts",
+          "src/lib/database/assignment-release-final-schema.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -5249,7 +5283,8 @@
         ],
         "presentation": [],
         "contract": [
-          "src/features/quiz-player/model.ts"
+          "src/features/quiz-player/model.ts",
+          "src/lib/assignment/assignment-release.ts"
         ],
         "transport": [
           "src/features/quiz-player/api/quiz-attempt.ts"
@@ -5284,7 +5319,8 @@
           "supabase/migrations/20260826001639_add_read_side_maintenance_workers.sql",
           "supabase/migrations/20260826001648_preserve_untimed_assignment_deadlines.sql",
           "supabase/migrations/20260906103017_add_approved_school_pronunciation_scope.sql",
-          "supabase/migrations/20260905063836_add_reviewed_choice_repair_release.sql"
+          "supabase/migrations/20260905063836_add_reviewed_choice_repair_release.sql",
+          "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/attempt/[id]/page.tsx"
@@ -5312,7 +5348,9 @@
           "src/lib/database/student-point-ledger-migration-contract.test.ts",
           "src/lib/database/student-point-ledger.integration.test.ts",
           "src/lib/database/quiz-feedback-timing.integration.test.ts",
-          "src/lib/database/retry-question-timer.integration.test.ts"
+          "src/lib/database/retry-question-timer.integration.test.ts",
+          "src/lib/assignment/assignment-release.test.ts",
+          "src/lib/database/assignment-release-final-schema.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -5502,7 +5540,8 @@
       "owner": "student-dashboard",
       "participants": [
         "student-dashboard",
-        "quiz-player"
+        "quiz-player",
+        "assignment-queue"
       ],
       "dataClass": "private",
       "cachePolicy": "인증된 학생의 배정 범위만 클릭 시 조회, 공유 캐시와 목록 링크 일괄 prefetch 금지",
@@ -5538,7 +5577,8 @@
         ],
         "presentation": [],
         "contract": [
-          "src/features/student-dashboard/contracts/assignment-study.ts"
+          "src/features/student-dashboard/contracts/assignment-study.ts",
+          "src/lib/assignment/assignment-release.ts"
         ],
         "transport": [],
         "server": [
@@ -5549,7 +5589,8 @@
         ],
         "database": [
           "supabase/migrations/20260905051013_add_student_assignment_study.sql",
-          "supabase/migrations/20260906103017_add_approved_school_pronunciation_scope.sql"
+          "supabase/migrations/20260906103017_add_approved_school_pronunciation_scope.sql",
+          "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/assignments/[id]/words/page.tsx",
@@ -5565,7 +5606,9 @@
           "src/features/student-dashboard/client/components/assignment-study-reader.test.tsx",
           "src/features/student-dashboard/domain/study-example-ranges.test.ts",
           "src/features/student-dashboard/server/queries/assignment-study-example-query.test.ts",
-          "src/lib/database/assignment-study.integration.test.ts"
+          "src/lib/database/assignment-study.integration.test.ts",
+          "src/lib/assignment/assignment-release.test.ts",
+          "src/lib/database/assignment-release-final-schema.integration.test.ts"
         ]
       },
       "requiredImportEdges": [

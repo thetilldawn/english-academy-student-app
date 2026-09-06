@@ -91,7 +91,7 @@ export async function getStudentDashboardInitial(
 ): Promise<StudentDashboardInitialSnapshot> {
   const supabase = getServiceSupabaseClient();
   const { data, error } = await supabase.rpc(
-    "get_student_dashboard_initial_v1",
+    "get_student_dashboard_initial_v2",
     {
       p_snapshot_at: null,
       p_student_id: student.studentId,
@@ -163,7 +163,7 @@ export async function getStudentDashboardCompletedPage(
   assertStudentDashboardCursorOwner(cursor, student.studentId);
   const supabase = getServiceSupabaseClient();
   const { data, error } = await supabase.rpc(
-    "list_student_dashboard_completed_page_v1",
+    "list_student_dashboard_completed_page_v2",
     {
       p_cursor_assignment_id: cursor.assignmentId,
       p_cursor_effective_at: cursor.effectiveAt,

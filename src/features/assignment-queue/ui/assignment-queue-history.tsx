@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/design-system/primitives/button/button";
@@ -37,22 +37,32 @@ function AssignmentQueueDisclosure({
     queue.status === "active" || queue.status === "attention",
   );
   const [resolving, setResolving] = useState(false);
+  const resolvingRef = useRef(false);
   const contentId = useId();
   const unitAllocation = vocabAssignmentQueueUnitAllocationLabel(
     queue.unitAllocation,
   );
 
   async function resolve(action: QueueResolutionAction) {
+    if (resolvingRef.current) return;
+    const expectedItem = queue.items.find((item) => item.status === "attention");
+    if (!expectedItem) {
+      const error = new Error("처리할 회차를 확인하지 못했습니다. 최신 내역을 확인해 주세요.");
+      onResolutionError?.(error);
+      toast.error(error.message);
+      return;
+    }
     const confirmation = {
       retry:
         "같은 회차를 새 일정으로 다시 배정할까요? 기존 시험은 이력에 남습니다.",
-      skip: "현재 회차를 건너뛰고 다음 회차로 넘어갈까요?",
+      skip: "이 회차를 보류하고 다음 회차로 넘어갈까요? 기록은 남고, 다음 회차의 예약 시간과 마감은 유지됩니다.",
       cancel: "남은 시험을 모두 취소할까요? 완료 내역은 남습니다.",
     }[action];
     if (!window.confirm(confirmation)) return;
+    resolvingRef.current = true;
     setResolving(true);
     try {
-      const result = await resolveAssignmentQueue(queue.seriesId, action);
+      const result = await resolveAssignmentQueue(queue.seriesId, action, expectedItem.id);
       toast.success("배정된 시험 상태를 처리했습니다.");
       onResolved?.(result);
     } catch (error) {
@@ -63,6 +73,7 @@ function AssignmentQueueDisclosure({
           : "배정된 시험 상태를 처리하지 못했습니다.",
       );
     } finally {
+      resolvingRef.current = false;
       setResolving(false);
     }
   }

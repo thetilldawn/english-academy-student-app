@@ -7,6 +7,8 @@
   더보기 요청 수명, `transport`는 브라우저 POST, `ui`는 표시만 맡는다.
 - 최초 시험 목록은 Server Component가 기능 `server` 조회를 직접 호출한다. 앱 자신의
   Route Handler를 서버에서 다시 호출하지 않는다.
+- 자동 공개를 지원하는 새 앱은 목록/완료 페이지 v2만 조회한다. 구 목록 v1은 구 배포·코드 복구의
+  호환용으로 보존한다. 새 앱에서 조회 실패를 구 v1로 자동 대체하지 않는다.
 - 완료 시험의 10개 더보기만
   `ui → controller → transport → /api/student/dashboard/completed → server`를 사용한다.
 - Route Handler와 서버 조회는 브라우저의 학생 ID를 받지 않고 반드시 현재
@@ -24,8 +26,16 @@
 - `student-assignment-study-read` 흐름: 카드 → `/student/assignments/[id]/words` 또는
   `@detail/(.)assignments/[id]/words` → `server/components/assignment-study-content.tsx`
   → `server/queries/assignment-study-query.ts` → `get_student_assignment_study_v1`.
-- 현재 학생 세션과 취소·삭제되지 않은 수신 연결만 사용한다. 공개 예정도 공부할 수 있다.
+- 현재 학생 세션과 취소·삭제되지 않은 수신 연결만 사용한다. 단독/첫 회차의 예약 공개 전
+  공부는 기존대로 허용한다. 후속 회차는 공용 서버 공개 판정이 열려야 학습 자료를 반환한다.
+  이미 시작한 응시의 학습·결과·재시험은 보존하되 새 응시는 다시 공개 조건을 확인한다.
   표시만으로 시험을 시작·종료하거나 점수를 바꾸지 않는다.
+- 공개 판정은 DB 공용 함수 → `lib/assignment/assignment-release.ts` 계약을 사용한다.
+  lifecycle/구역/카드/단어장에 첫 완료·앞 마감+12시간 규칙을 복사하지 않는다.
+  보류·일정 충돌과 첫 시험 대기를 미응시나 완료로 표시하지 않는다.
+- 잠긴 학습 RPC는 제목·종류·공개 상태만 반환한다. query는 엄격히 검증한 뒤
+  단어·발음·예문 후속 조회를 생략한다. 잠김 화면도 기존 제목·닫기를 유지한다.
+- 첫 완료 대기에는 반복 갱신하지 않는다. 확정된 공개 시각만 기존 시간 경계 갱신을 사용한다.
 - 학습 범위는 실제 `assignment_questions` 대상이다. 선택지·정답 위치·시험 문항 순서는
   직렬화하지 않는다. 예문은 해시로 연결된 완성 원문만, 발음은 대상 단어만 사용한다.
 - Client `assignment-study-reader`는 null/english/meaning 단일 표시 선택과 `use-study-audio` 수명을 소유한다. 영어와 뜻을 동시에 가리지 않는다.

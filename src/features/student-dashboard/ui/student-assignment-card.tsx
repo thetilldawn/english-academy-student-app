@@ -2,7 +2,7 @@ import { studentAppText } from "@/content/ko/student-app";
 import {
   StatusBadge,
 } from "@/design-system/primitives/badge/badge";
-import { ButtonLink } from "@/design-system/primitives/button/button";
+import { Button, ButtonLink } from "@/design-system/primitives/button/button";
 import { buildAttemptStatusPresentation } from "@/features/history/public-contracts";
 import {
   ActivityStatusTimeline,
@@ -70,7 +70,11 @@ export function StudentAssignmentCard({
                 ? studentAppText.dashboard.availability.open
                 : lifecycle.window.kind === "scheduled"
                   ? studentAppText.dashboard.availability.scheduled
-                  : studentAppText.dashboard.availability.closed}
+                  : lifecycle.window.reason === "held"
+                    ? studentAppText.dashboard.availability.held
+                    : lifecycle.window.reason === "release_schedule"
+                      ? studentAppText.dashboard.availability.checkSchedule
+                      : studentAppText.dashboard.availability.closed}
             </StatusBadge>
           ) : (
             <ActivityStatusTimeline
@@ -114,9 +118,9 @@ export function StudentAssignmentCard({
       ) : null}
 
       <div className={styles.actions}>
-        <ButtonLink href={`/student/assignments/${assignment.id}/words`} prefetch={false} scroll={false} variant="secondary">
+        {lifecycle.actions.canViewWords ? <ButtonLink href={`/student/assignments/${assignment.id}/words`} prefetch={false} scroll={false} variant="secondary">
           {studentAppText.study.open}
-        </ButtonLink>
+        </ButtonLink> : <Button disabled variant="secondary">{studentAppText.study.open}</Button>}
         {lifecycle.actions.canReviewAndRetry && assignment.lastAttemptId ? (
           <ButtonLink href={`/student/result/${assignment.lastAttemptId}`}>
             {studentAppText.dashboard.resultAndRetry}

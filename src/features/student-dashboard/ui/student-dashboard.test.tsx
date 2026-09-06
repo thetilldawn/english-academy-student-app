@@ -203,6 +203,55 @@ describe("StudentDashboard", () => {
 });
 
 describe("StudentAssignmentCard", () => {
+  it("앞 첫 시험 대기는 단어와 응시를 잠그고 자체 예약을 보여주며 반복 조회하지 않는다", async () => {
+    vi.useFakeTimers();
+    render(<StudentAssignmentCard assignment={assignment("first-wait", {
+      availableFrom: "2099-08-22T00:00:00.000Z",
+      release: { state: "waiting_initial", opensAt: null, hasDeadline: true },
+    })} />);
+    expect(screen.getByRole("button", { name: studentAppText.study.open })).toBeDisabled();
+    expect(screen.queryByRole("link", { name: studentAppText.study.open })).toBeNull();
+    expect(screen.queryByRole("button", { name: studentAppText.actions.start })).toBeNull();
+    expect(screen.getByText(studentAppText.dashboard.release.waitingInitialWithDeadline)).toBeVisible();
+    expect(screen.getByText(studentAppText.dashboard.release.reservedOpening)).toBeVisible();
+    expect(screen.getByText("8월 22일 [토] 오전 9시 00분")).toBeVisible();
+    await act(async () => { await vi.advanceTimersByTimeAsync(24 * 60 * 60 * 1000); });
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it("실제 공개 시각에는 한 번 갱신하지만 브라우저가 임의로 잠금을 풀지는 않는다", async () => {
+    vi.useFakeTimers();
+    const now = Date.parse("2026-08-22T00:00:00.000Z");
+    render(<StudentAssignmentCard nowMilliseconds={now} assignment={assignment("time-wait", {
+      release: { state: "waiting_time", opensAt: "2026-08-22T00:00:01.000Z", hasDeadline: true },
+    })} />);
+    expect(screen.getByRole("button", { name: studentAppText.study.open })).toBeDisabled();
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: studentAppText.actions.start })).toBeNull();
+  });
+
+  it.each(["held", "schedule_conflict"] as const)("과거 미응시 기록이 있어도 %s를 실패 점수로 오인 표시하지 않는다", (state) => {
+    render(<StudentAssignmentCard assignment={assignment("held", {
+      missedAt: "2026-08-01T00:00:00.000Z",
+      release: { state, opensAt: null, hasDeadline: true },
+    })} />);
+    expect(screen.getByText(state === "held" ? studentAppText.dashboard.availability.held : studentAppText.dashboard.availability.checkSchedule)).toBeVisible();
+    expect(screen.getByRole("button", { name: studentAppText.study.open })).toBeDisabled();
+    expect(screen.queryByText("0점")).toBeNull();
+    expect(screen.queryByRole("timer")).toBeNull();
+  });
+
+  it("이미 시작한 재시험과 단어 보기 경로는 후속 잠금 소급에도 보존한다", () => {
+    render(<StudentAssignmentCard assignment={assignment("retry-keep", {
+      lastAttemptId: "attempt-retry", lastStatus: "in_progress", lastPhase: "retry",
+      release: { state: "waiting_initial", opensAt: null, hasDeadline: false },
+    })} />);
+    expect(screen.getByRole("link", { name: studentAppText.study.open })).toHaveAttribute("href", "/student/assignments/retry-keep/words");
+    expect(screen.getByRole("link", { name: studentAppText.dashboard.resume })).toHaveAttribute("href", "/student/attempt/attempt-retry");
+    expect(screen.queryByRole("button", { name: studentAppText.actions.start })).toBeNull();
+  });
+
   it("keeps only the range as always-visible exam metadata", () => {
     render(<StudentAssignmentCard assignment={assignment("metadata")} />);
 

@@ -16,6 +16,8 @@ function statusTone(status: VocabAssignmentQueueSummary["status"]) {
       return "warning" as const;
     case "completed":
       return "neutral" as const;
+    case "deferred":
+      return "warning" as const;
     case "cancelled":
       return "danger" as const;
   }
