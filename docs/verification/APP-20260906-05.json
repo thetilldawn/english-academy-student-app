@@ -1,0 +1,55 @@
+{
+  "workId": "APP-20260906-05",
+  "ranAt": "2026-09-05T21:59:08.000Z",
+  "fingerprint": "d897197b24a59f82f88877f4faf842e3eaf7d9b777274fbf453f2529bf096ac2",
+  "inputFiles": 473,
+  "testFiles": 389,
+  "passedTests": 2290,
+  "runs": [
+    {
+      "checkId": "T1",
+      "result": "pass",
+      "environment": "local",
+      "ranAt": "2026-09-05T21:59:08.000Z",
+      "command": "npm run test",
+      "summary": "상태/시간 변환11검사, 전체회귀에 포함해 통과"
+    },
+    {
+      "checkId": "T2",
+      "result": "pass",
+      "environment": "local",
+      "ranAt": "2026-09-05T21:59:08.000Z",
+      "command": "npm run test",
+      "summary": "독립 범위3·요약1 통과; 오류/버튼/초점/재시도 연결"
+    },
+    {
+      "checkId": "T3",
+      "result": "pass",
+      "environment": "local",
+      "ranAt": "2026-09-05T21:59:08.000Z",
+      "command": "npm run test",
+      "summary": "실제 오답 연결부4 및 기존 제어기/요청/공개/시간/마감 회귀 통과. 연결부검사 내 공개/마감/시간 UI는 대역"
+    },
+    {
+      "checkId": "T4",
+      "result": "pass",
+      "environment": "local",
+      "ranAt": "2026-09-05T21:59:08.000Z",
+      "command": "npm run typecheck; npm run lint; npm run verify:architecture:static; verify-react-request-cache; isolated fresh next build; git diff --check",
+      "summary": "전체389파일2290개, 타입/lint/구조/요청캐시 calls2/격리 새 Next빌드/diff 통과; 서버exit0/포트0"
+    },
+    {
+      "checkId": "T5",
+      "result": "pass",
+      "environment": "local",
+      "ranAt": "2026-09-05T21:59:08.000Z",
+      "command": "read-only independent review",
+      "summary": "독립 읽기 리뷰 신규 P1/P2 0, 공개/마감/시간 대역 한계 명시"
+    }
+  ],
+  "limitations": [
+    "실제 DB/운영 인증/성능/전폭 시각 미검증",
+    "오답 연결부검사 내 공개/마감/시간 입력은 대역; 기존 부품/제어기 회귀 별도",
+    "APP05 새 앱브라우저 확인 없음, DOM/스타일 보존과 실제 연결부 렌더 검사"
+  ]
+}
