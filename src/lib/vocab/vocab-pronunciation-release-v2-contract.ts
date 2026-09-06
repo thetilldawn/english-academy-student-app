@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 import { z } from "zod";
+import { isVocabPronunciationStorageKey } from "../quiz/pronunciation-storage";
 
 const UPPER_SHA256 = /^[0-9A-F]{64}$/;
 const LOWER_SHA256 = /^[0-9a-f]{64}$/;
@@ -13,14 +14,18 @@ const DATASET_SOURCE_SHA256 =
   "9FB5B8307C5E695853E2E0E49DE07DD9CD20D29BC59C749DED4D2D07B4C92133";
 const LEGACY_ENGINE_VERSION = "cmudict-arpabet-hangul-render-v1";
 const NUCLEUS_ENGINE_VERSION = "cmudict-arpabet-hangul-nucleus-render-v2";
-const TTS_PROFILE_IDS = new Set([
-  "profile:75ca7f418d66e6ab",
-  "profile:1a77d56d47e26013",
-]);
 const TTS_BUCKET = "vocab-pronunciation-audio";
-function ttsPrefix(profileId: string) {
-  return `pronunciation/google_cloud_text_to_speech/${profileId.replace(":", "-")}/ability-voca-etymology-2025-v1/`;
-}
+
+export type PronunciationReleaseScope = {
+  datasetKey: string;
+  sourceSha256: string;
+  entryCount: number;
+  allowSharedNormalRate: boolean;
+};
+const VOCA_SCOPE: PronunciationReleaseScope = {
+  datasetKey: DATASET_KEY, sourceSha256: DATASET_SOURCE_SHA256,
+  entryCount: 3001, allowSharedNormalRate: false,
+};
 
 const nullableText = z.string().trim().min(1).max(500).nullable();
 const segmentSchema = z
@@ -63,6 +68,7 @@ const identitySchema = z.object({
   stress_evidence: z.enum([
     "selected_webster_lexical_stress",
     "cmudict_lexical_stress",
+    "cmudict_phrase_stress_rule_v1",
   ]),
   arpabet_phones: z.array(z.string().trim().min(1).max(12)).min(1),
   cmudict_sources: z.array(z.string().trim().min(1).max(500)),
@@ -93,8 +99,8 @@ const bindingSchema = z.object({
 });
 
 const summarySchema = z.object({
-  expected_entry_count: z.literal(3001),
-  binding_count: z.literal(3001),
+  expected_entry_count: z.number().int().positive().max(3001),
+  binding_count: z.number().int().positive().max(3001),
   identity_count: z.number().int().min(1).max(3001),
   webster_binding_count: z.number().int().min(0).max(3001),
   tts_binding_count: z.number().int().min(0).max(3001),
@@ -105,13 +111,13 @@ const summarySchema = z.object({
 
 const releaseSchema = z.object({
   schema_version: z.literal("vocab-pronunciation-release-v2"),
-  dataset_key: z.literal(DATASET_KEY),
-  dataset_source_sha256: z.literal(DATASET_SOURCE_SHA256),
+  dataset_key: z.string().min(1),
+  dataset_source_sha256: z.string().regex(UPPER_SHA256),
   source_plan_version: z.string().regex(UPPER_SHA256),
   source_tts_manifest_sha256: z.string().regex(UPPER_SHA256),
   engine_version: z.enum([LEGACY_ENGINE_VERSION, NUCLEUS_ENGINE_VERSION]),
   identities: z.array(identitySchema).min(1),
-  bindings: z.array(bindingSchema).length(3001),
+  bindings: z.array(bindingSchema).min(1).max(3001),
   summary: summarySchema,
   package_version: z.string().regex(UPPER_SHA256),
   release_id: z.string().regex(/^voca-release:[0-9a-f]{64}$/),
@@ -166,7 +172,10 @@ export function computeVocabPronunciationPackageVersion(
   return sha256CanonicalJson(hashInput);
 }
 
-function validateIdentity(identity: VocabPronunciationIdentityV2) {
+function validateIdentity(identity: VocabPronunciationIdentityV2, scope: PronunciationReleaseScope) {
+  if (!scope.allowSharedNormalRate && identity.stress_evidence === "cmudict_phrase_stress_rule_v1") {
+    throw new Error("이 묶음에는 구문 발음 근거를 사용할 수 없습니다.");
+  }
   const segmentText = identity.segments.map(({ text }) => text).join("");
   const primaryCount = identity.segments.filter(
     ({ stress }) => stress === "primary",
@@ -224,13 +233,12 @@ function validateIdentity(identity: VocabPronunciationIdentityV2) {
   if (
     !requestHash ||
     !profileId ||
-    !TTS_PROFILE_IDS.has(profileId) ||
     identity.pronunciation_variant_id !== `synthetic:${requestHash}` ||
     identity.official_audio_url !== null ||
     identity.sound_audio !== null ||
     identity.mw_notation !== null ||
     identity.storage_bucket !== TTS_BUCKET ||
-    identity.storage_object_key !== `${ttsPrefix(profileId)}${requestHash}.mp3` ||
+    !isVocabPronunciationStorageKey(profileId, requestHash, identity.storage_object_key, scope.allowSharedNormalRate) ||
     identity.audio_sha256 === null ||
     identity.byte_count === null ||
     identity.model !== "chirp3-hd" ||
@@ -241,13 +249,26 @@ function validateIdentity(identity: VocabPronunciationIdentityV2) {
 }
 
 export function validateVocabPronunciationReleaseV2(input: unknown) {
+  return validateScopedPronunciationRelease(input, VOCA_SCOPE);
+}
+
+// Internal contract: callers supply a trusted scope, never scope fields from input.
+export function validateScopedPronunciationRelease(input: unknown, scope: PronunciationReleaseScope) {
   const release = releaseSchema.parse(input);
+  if (release.dataset_key !== scope.datasetKey ||
+    release.dataset_source_sha256 !== scope.sourceSha256 ||
+    release.bindings.length !== scope.entryCount ||
+    release.summary.expected_entry_count !== scope.entryCount ||
+    release.summary.binding_count !== scope.entryCount ||
+    (scope.allowSharedNormalRate && release.engine_version !== NUCLEUS_ENGINE_VERSION)) {
+    throw new Error("승인한 발음 자료의 범위·원본 해시·개수가 다릅니다.");
+  }
   const identities = new Map<string, VocabPronunciationIdentityV2>();
   for (const identity of release.identities) {
     if (identities.has(identity.identity_id)) {
       throw new Error(`${identity.identity_id} 발음 묶음이 중복됐습니다.`);
     }
-    validateIdentity(identity);
+    validateIdentity(identity, scope);
     if (identity.engine_version !== release.engine_version) {
       throw new Error(`${identity.identity_id} 발음 엔진이 release와 다릅니다.`);
     }
@@ -268,7 +289,8 @@ export function validateVocabPronunciationReleaseV2(input: unknown) {
     if (
       !identity ||
       identity.headword_normalized !== binding.headword_normalized ||
-      identity.headword !== binding.headword
+      identity.headword !== binding.headword ||
+      identity.lexical_pos !== binding.lexical_pos
     ) {
       throw new Error(`${binding.source_row}번 VOCA 발음 묶음 연결이 다릅니다.`);
     }
@@ -288,8 +310,8 @@ export function validateVocabPronunciationReleaseV2(input: unknown) {
     }
   }
   if (
-    sourceRows.size !== 3001 ||
-    [...sourceRows].some((sourceRow) => sourceRow < 1 || sourceRow > 3001)
+    sourceRows.size !== scope.entryCount ||
+    [...sourceRows].some((sourceRow) => sourceRow < 1 || sourceRow > scope.entryCount)
   ) {
     throw new Error("VOCA 발음 연결은 1번부터 3,001번까지 정확히 있어야 합니다.");
   }
@@ -300,8 +322,8 @@ export function validateVocabPronunciationReleaseV2(input: unknown) {
     throw new Error("사용되지 않거나 누락된 발음 묶음이 있습니다.");
   }
   const actualSummary = {
-    expected_entry_count: 3001 as const,
-    binding_count: 3001 as const,
+    expected_entry_count: scope.entryCount,
+    binding_count: scope.entryCount,
     identity_count: identities.size,
     webster_binding_count: websterBindingCount,
     tts_binding_count: ttsBindingCount,

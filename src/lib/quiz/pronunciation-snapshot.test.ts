@@ -723,6 +723,17 @@ describe("quiz pronunciation snapshots", () => {
     ).toBeUndefined();
   });
 
+  it("같은 저장 음원의 누락 표시만 보강하고 다른 음원/기존 표시는 보존한다", () => {
+    const saved = { displayKo: null, variantId: `mw:${"8".repeat(20)}`, audioUrl: officialUrl, available: true };
+    const active = {...saved, displayKo: "테스트", segments: [{text:"테스트",stress:"primary" as const}]};
+    const select = (snapshot: typeof saved | typeof active, current: typeof active) =>
+      preferredPronunciationWithActiveVocaRelease(null, snapshot, current, undefined, undefined, new Map());
+    expect(select(saved, active).displayKo).toBe("테스트");
+    expect(select(saved, {...active, audioUrl: officialUrl + "?different"})).toBe(saved);
+    expect(select(saved, {...active, variantId: "mw:other"})).toBe(saved);
+    expect(select({...active, displayKo:"기존 표시"}, active).displayKo).toBe("기존 표시");
+  });
+
   it("모의고사 저장 발음 다음에 활성 VOCA 묶음을 사용한다", () => {
     const snapshot = parseTargetPronunciation({
       displayPronunciationKo: "시험 발음",

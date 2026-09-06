@@ -389,8 +389,8 @@
     {
       "path": "src/test-support",
       "owner": "architecture-meta",
-      "fileCount": 11,
-      "pathSetSha256": "bf63b9afee653a06deecc430e6e8cbdd0e5af8a1ee2ae99105d252425182489f"
+      "fileCount": 13,
+      "pathSetSha256": "40f5e2a85878038bafdcfe0d0626da0e248db565084b9920057748624d3c6023"
     }
   ],
   "pageOwners": [
@@ -1131,6 +1131,10 @@
   ],
   "quizCoreOwners": [
     {
+      "path": "src/lib/quiz/pronunciation-storage.ts",
+      "owner": "shared-quiz-domain"
+    },
+    {
       "path": "src/lib/quiz/choice-policy.ts",
       "owner": "shared-quiz-domain"
     },
@@ -1743,8 +1747,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 97,
-      "pathSetSha256": "5a4fae69af9b00bb65c988fcaa8ac788cebbbc735263e1d244e729680f97d772"
+      "fileCount": 98,
+      "pathSetSha256": "cf1d19fd753dcedc9fe45f12b230390d13797bea1f3ecc0bcd2c32159f340d26"
     },
     {
       "path": "src/lib/deploy",
@@ -1779,8 +1783,8 @@
     {
       "path": "src/lib/vocab",
       "owner": "shared-contract",
-      "fileCount": 31,
-      "pathSetSha256": "424ac42634c0abf5bfe28731b4a1da51b700ea8e81357730a0b83114464110ac"
+      "fileCount": 33,
+      "pathSetSha256": "e2d3ac2d5a4c5853de299a0a127db527bdce119538911c1c1251ad14d7de16b3"
     }
   ],
   "serverOwners": [],
@@ -1982,6 +1986,11 @@
   "protectedMigrationCount": 136,
   "protectedMigrationSetSha256": "b4ea57697824cb8fece77250a50950e58bb4e2516235e485106f126a8b00c13f",
   "migrationOwners": [
+    {
+      "path": "supabase/migrations/20260906103017_add_approved_school_pronunciation_scope.sql",
+      "owner": "quiz-player",
+      "flow": "student-quiz-attempt"
+    },
     {
       "path": "supabase/migrations/20260828193000_preserve_assignment_edit_metadata.sql",
       "owner": "assignments",
@@ -5222,6 +5231,7 @@
           "src/features/quiz-player/domain/quiz-player-state.ts",
           "src/lib/quiz/prior-wrong.ts",
           "src/lib/quiz/pronunciation-snapshot.ts",
+          "src/lib/quiz/pronunciation-storage.ts",
           "src/lib/quiz/question-generator.ts",
           "src/lib/quiz/choice-policy.ts",
           "src/lib/quiz/random.ts",
@@ -5265,6 +5275,7 @@
           "supabase/migrations/20260825083542_add_student_point_ledger.sql",
           "supabase/migrations/20260826001639_add_read_side_maintenance_workers.sql",
           "supabase/migrations/20260826001648_preserve_untimed_assignment_deadlines.sql",
+          "supabase/migrations/20260906103017_add_approved_school_pronunciation_scope.sql",
           "supabase/migrations/20260905063836_add_reviewed_choice_repair_release.sql"
         ],
         "cacheStreaming": [
@@ -5513,6 +5524,7 @@
         "application": [],
         "domain": [
           "src/lib/quiz/pronunciation-snapshot.ts",
+          "src/lib/quiz/pronunciation-storage.ts",
           "src/lib/quiz/question-content-mode.ts",
           "src/features/student-dashboard/domain/study-example-ranges.ts"
         ],
@@ -5528,7 +5540,8 @@
           "src/lib/services/quiz/pronunciation-registry.ts"
         ],
         "database": [
-          "supabase/migrations/20260905051013_add_student_assignment_study.sql"
+          "supabase/migrations/20260905051013_add_student_assignment_study.sql",
+          "supabase/migrations/20260906103017_add_approved_school_pronunciation_scope.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/assignments/[id]/words/page.tsx",

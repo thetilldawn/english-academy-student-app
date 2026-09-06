@@ -1,9 +1,11 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { loadEnvConfig } from "@next/env";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { validateSchoolPronunciationRelease } from "../src/lib/vocab/school-pronunciation-release-contract";
 
 import {
   validateVocabPronunciationReleaseV2,
@@ -79,6 +81,7 @@ function parseOptions(arguments_: string[]) {
     release,
     target: target as Target,
     envDir,
+    school: arguments_.includes("--school"),
     mode: arguments_.includes("--apply")
       ? ("apply" as const)
       : arguments_.includes("--preflight")
@@ -144,17 +147,19 @@ async function validateManifestFiles(
   manifestPath: string,
   rawManifest: unknown,
   rawRelease: unknown,
+  school = false,
 ) {
   const manifest = objectValue(rawManifest) as unknown as Manifest;
-  const { release } = validateVocabPronunciationReleaseV2(rawRelease);
+  const { release } = school ? validateSchoolPronunciationRelease(rawRelease) : validateVocabPronunciationReleaseV2(rawRelease);
   const expectedSpeakingRate =
+    school && manifest.profile_id === "approved-normal-rate-mixed" ? 1 :
     manifest.profile_id === "profile:75ca7f418d66e6ab"
       ? 0.88
       : manifest.profile_id === "profile:1a77d56d47e26013"
         ? 1
         : null;
   if (
-    manifest.schema_version !== "google-chirp-voca-word-audio-batch-v1" ||
+    manifest.schema_version !== (school ? "google-chirp-school-audio-batch-v1" : "google-chirp-voca-word-audio-batch-v1") ||
     manifest.status !== "complete" ||
     manifest.dataset_key !== release.dataset_key ||
     manifest.source_plan_version !== release.source_plan_version ||
@@ -205,7 +210,8 @@ async function validateManifestFiles(
       item.audio_sha256 !== identity.audio_sha256 ||
       item.byte_count !== identity.byte_count ||
       item.profile_id !== identity.profile_id ||
-      item.profile_id !== manifest.profile_id ||
+      (!school && item.profile_id !== manifest.profile_id) ||
+      (school && !["profile:1a77d56d47e26013", "profile:286866721f7f4ee8"].includes(item.profile_id)) ||
       item.speaking_rate !== expectedSpeakingRate ||
       item.model !== identity.model ||
       item.voice !== identity.voice ||
@@ -316,7 +322,18 @@ async function downloadAndVerify(supabase: SupabaseClient, asset: LocalAsset) {
   }
 }
 
-async function publishObjects(supabase: SupabaseClient, files: LocalAsset[]) {
+export async function publishObjects(supabase: SupabaseClient, files: LocalAsset[]) {
+  const groups = Map.groupBy(files, ({item}) => path.posix.dirname(item.storage_object_key));
+  let uploaded = 0, reused = 0;
+  for (const group of groups.values()) {
+    const result = await publishObjectGroup(supabase, group);
+    uploaded += result.uploaded;
+    reused += result.reused;
+  }
+  return {uploaded, reused};
+}
+
+async function publishObjectGroup(supabase: SupabaseClient, files: LocalAsset[]) {
   const prefix = path.posix.dirname(files[0].item.storage_object_key);
   if (
     files.some(
@@ -325,11 +342,15 @@ async function publishObjects(supabase: SupabaseClient, files: LocalAsset[]) {
   ) {
     throw new Error("Google TTS Storage 경로가 하나의 고정 prefix가 아닙니다.");
   }
-  const { data: listed, error: listError } = await supabase.storage
-    .from(BUCKET)
-    .list(prefix, { limit: 1000, sortBy: { column: "name", order: "asc" } });
-  if (listError) throw new Error(`Storage 객체 목록 조회 실패: ${listError.message}`);
-  const existingNames = new Set((listed ?? []).map(({ name }) => name));
+  const existingNames = new Set<string>();
+  for (let offset = 0; ; offset += 1000) {
+    const { data: listed, error: listError } = await supabase.storage
+      .from(BUCKET)
+      .list(prefix, { limit: 1000, offset, sortBy: { column: "name", order: "asc" } });
+    if (listError) throw new Error(`Storage 객체 목록 조회 실패: ${listError.message}`);
+    for (const { name } of listed ?? []) existingNames.add(name);
+    if (!listed || listed.length < 1000) break;
+  }
   let uploaded = 0;
   let reused = 0;
   await withConcurrency(files, 6, async (asset, index) => {
@@ -413,6 +434,7 @@ async function main() {
     options.manifest,
     rawManifest,
     rawRelease,
+    options.school,
   );
   if (options.mode === "dry-run") {
     console.log(
@@ -429,6 +451,13 @@ async function main() {
         2,
       ),
     );
+    return;
+  }
+  // An official-audio-only release has nothing to upload or register.
+  // Validate the complete package first, but do not require remote credentials.
+  if (validated.files.length === 0) {
+    console.log(JSON.stringify({ status: "ok", mode: options.mode, target: options.target,
+      assetCount: 0, bindingCount: 0, totalByteCount: 0, canary: null, noOp: true }));
     return;
   }
   loadEnvConfig(path.resolve(options.envDir));
@@ -505,7 +534,9 @@ async function main() {
   );
 }
 
-main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : error);
-  process.exitCode = 1;
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((error: unknown) => {
+    console.error(error instanceof Error ? error.message : error);
+    process.exitCode = 1;
+  });
+}

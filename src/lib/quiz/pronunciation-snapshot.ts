@@ -1,3 +1,5 @@
+import { isVocabPronunciationStorageKey } from "./pronunciation-storage";
+
 const OFFICIAL_AUDIO_URL =
   /^https:\/\/media\.merriam-webster\.com\/audio\/prons\/en\/us\/mp3\/[A-Za-z0-9_-]+\/[A-Za-z0-9_-]+\.mp3$/;
 const SUPABASE_URL = /^https:\/\/[a-z0-9]{20}\.supabase\.co$/;
@@ -30,9 +32,6 @@ const VOCAB_PRONUNCIATION_ENGINE_V2 = new Set([
   "cmudict-arpabet-hangul-render-v1",
   "cmudict-arpabet-hangul-nucleus-render-v2",
 ]);
-function vocabPronunciationTtsPrefix(profileId: string) {
-  return `pronunciation/google_cloud_text_to_speech/${profileId.replace(":", "-")}/ability-voca-etymology-2025-v1/`;
-}
 
 export type QuizPronunciation = {
   displayKo: string | null;
@@ -605,8 +604,7 @@ export function parseVocabPronunciationIdentityV2(
     row.sound_audio !== null ||
     row.storage_bucket !== SYNTHETIC_BUCKET ||
     !profileId ||
-    !WORD_SYNTHETIC_PROFILE_IDS.has(profileId) ||
-    objectKey !== `${vocabPronunciationTtsPrefix(profileId)}${requestHash}.mp3` ||
+    !isVocabPronunciationStorageKey(profileId, requestHash, objectKey, true) ||
     !audioHash ||
     !SYNTHETIC_REQUEST_HASH.test(audioHash) ||
     typeof row.byte_count !== "number" ||
@@ -702,6 +700,13 @@ export function preferredPronunciationWithActiveVocaRelease(
 ) {
   if (!snapshot.available && activeVocaRelease?.available) {
     return activeVocaRelease;
+  }
+  // Fill missing display only when both audio identity and URL match. A running
+  // attempt keeps its recorded audio, even if a later release chose another voice.
+  if (snapshot.available && !snapshot.displayKo && activeVocaRelease?.available &&
+    snapshot.variantId === activeVocaRelease.variantId &&
+    snapshot.audioUrl === activeVocaRelease.audioUrl) {
+    return { ...snapshot, displayKo: activeVocaRelease.displayKo, segments: activeVocaRelease.segments };
   }
   return preferredPronunciationWithApprovedKorean(
     dictionaryId,

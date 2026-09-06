@@ -8,6 +8,7 @@
 - 무작위 처리: `random.ts`
 - 단어 동일성·출제 가능 여부: `word-identity.ts`, `eligible-vocabulary.ts`
 - 발음·출처 snapshot: `pronunciation-snapshot.ts`, `question-provenance.ts`
+- 승인된 음원 저장 경로: `pronunciation-storage.ts`. 학교/VOCA 자료 해석과 가져오기가 같은 정확 경로 검사를 재사용한다.
 - 학생 풀이 표시 보조: `prior-wrong.ts`
 - 결과 표시 계산: `result-presentation.ts`
 

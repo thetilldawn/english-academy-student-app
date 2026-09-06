@@ -10,6 +10,9 @@
 
 ## 배포 안전선
 
+- 승인 학교 발음 범위는 `20260906103017_add_approved_school_pronunciation_scope.sql`에 한정한다.
+  기존 v3 identity/binding/verify/activate를 재사용하며 학생·응시나 옛 음원은 수정하지 않는다.
+
 - Preview ref는 `wojxpruvbjzbhrpmsbuy`, Production ref는 `xdxhswjgksukjmpbzqgz`다.
 - `supabase db push`를 쓰지 않는다. 현재 작업에 승인된 migration 한 건만 Preview에 적용한다.
 - 적용 전 migration 이름·SHA-256·영향 표·복구 방법을 기록한다.

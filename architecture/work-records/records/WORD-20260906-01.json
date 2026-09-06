@@ -1,0 +1,530 @@
+{
+  "schemaVersion": 1,
+  "id": "WORD-20260906-01",
+  "title": "승인된 학교 발음 자료 공용 연결",
+  "size": "full",
+  "gate": "design",
+  "guide": "docs/work-orders/WORD-20260906-01.md",
+  "baseline": "8bf834296a05ac6250a21993929940f2b2ffa4a5",
+  "owners": [
+    "shared-quiz-domain",
+    "shared-contract",
+    "quiz-player",
+    "database-contract",
+    "architecture-meta"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "public",
+    "personal",
+    "assessment-secret"
+  ],
+  "scope": [
+    {
+      "path": "src/lib/quiz/pronunciation-snapshot.ts",
+      "state": "existing",
+      "owner": "shared-quiz-domain",
+      "flowIds": [
+        "admin-history-read",
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/lib/quiz/pronunciation-snapshot.test.ts",
+      "state": "existing",
+      "owner": "shared-quiz-domain",
+      "flowIds": [
+        "admin-history-read",
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/lib/quiz/pronunciation-storage.ts",
+      "state": "existing",
+      "owner": "shared-quiz-domain",
+      "flowIds": [
+        "admin-history-read",
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/lib/quiz/pronunciation-storage.test.ts",
+      "state": "existing",
+      "owner": "shared-quiz-domain",
+      "flowIds": [
+        "admin-history-read",
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/lib/vocab/vocab-pronunciation-release-v2-contract.ts",
+      "state": "existing",
+      "owner": "shared-contract",
+      "flowIds": []
+    },
+    {
+      "path": "src/lib/vocab/vocab-pronunciation-release-v2-contract.test.ts",
+      "state": "existing",
+      "owner": "shared-contract",
+      "flowIds": []
+    },
+    {
+      "path": "src/lib/vocab/school-pronunciation-release-contract.ts",
+      "state": "existing",
+      "owner": "shared-contract",
+      "flowIds": []
+    },
+    {
+      "path": "src/lib/vocab/school-pronunciation-release-contract.test.ts",
+      "state": "existing",
+      "owner": "shared-contract",
+      "flowIds": []
+    },
+    {
+      "path": "supabase/migrations/20260906103017_add_approved_school_pronunciation_scope.sql",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/lib/database/school-pronunciation-scope.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": []
+    },
+    {
+      "path": "scripts/publish-vocab-pronunciation-audio-v2.ts",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "scripts/import-vocab-pronunciation-release-v2.ts",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/lib/quiz/AGENTS.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "supabase/AGENTS.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "architecture/기능_소유권.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/test-support/final-schema-database.ts",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/test-support/pronunciation-fixtures.ts",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/lib/database/simseok-production-release.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": []
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "승인된 심석고6묶음의 누락 음원과 발음·강세 표시를 함께 연결",
+      "acceptance": "6개 정확 source hash와1509행, 단어와 숙어 모두 기존 공식음원 우선·누락만 기존 Google 정상 속도 프로필",
+      "disposition": "required",
+      "owners": [
+        "shared-contract",
+        "quiz-player"
+      ],
+      "flowIds": [
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "문항·영어선택지·단어장에서 같은 발음 기능 재사용",
+      "acceptance": "기존 서버 권한 뒤 공용 parser, 새 경로/조회/페이지별 발음 구현 없음, 같은 음원 확인 없이 기존 표시를 교체하지 않음",
+      "disposition": "required",
+      "owners": [
+        "shared-quiz-domain"
+      ],
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T4",
+        "T5"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "engineering",
+      "text": "검증된 학교 자료만 활성화하고 기존 학생·VOCA·음원 보존",
+      "acceptance": "기존 identity immutable·재실행 안전·불완전 release 차단·원자료와 학생 데이터 Git 제외·이전 검증 재사용 금지",
+      "disposition": "required",
+      "owners": [
+        "database-contract"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T3",
+        "T5",
+        "T6"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "누락 음원과 발음 표시",
+      "answer": "기존 Webster raw/음원을 우선 재사용하고 없으면 제공된 Google 키로 생성. 발음 표시도 제공. 승인된 Preview/Production 범위.",
+      "source": "최신 사용자 발음 연결/발음 표시 요청 및 기존 배포 승인"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "자료 연결 재사용 경계",
+      "answer": "dictionary_id 하나에 고정된 옛 synthetic binding은 약화하지 않음. 기존 독립 MP3 asset/identity/release와 v3 import/verify/activate 재사용, 승인된 6개 범위 stage만 추가.",
+      "source": "현재 pronunciation v2/v3 SQL과 읽기 전용 독립 검토"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "캐시와 현재 시험 보존",
+      "answer": "기존 학생 권한 검사·서버 묶음조회·스냅샷 우선순위 유지. 새 MP3는 요청 해시의 immutable 경로로 업로드, 기존 파일 덮어쓰지 않음.",
+      "source": "현재 pronunciation-registry와 snapshot 계약"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "checked",
+      "reason": "기존 화면·상태·권한·복구·스타일 유지; 기능별 복사 없음"
+    },
+    "ui": {
+      "status": "checked",
+      "reason": "기존 화면·상태·권한·복구·스타일 유지; 기능별 복사 없음"
+    },
+    "state": {
+      "status": "checked",
+      "reason": "기존 화면·상태·권한·복구·스타일 유지; 기능별 복사 없음"
+    },
+    "domain": {
+      "status": "changed",
+      "reason": "공용 발음 자료의 허용 저장 경로와 정확 음원 결속 검증"
+    },
+    "data": {
+      "status": "changed",
+      "reason": "6개 승인 원자료에 대한 제한된 발음 연결만 추가"
+    },
+    "api": {
+      "status": "changed",
+      "reason": "service_role 전용 단계별 발음 자료 등록. 학생 API와 권한 유지"
+    },
+    "cache": {
+      "status": "checked",
+      "reason": "기존 서버 조회 수명 유지, 새 MP3만 내용 해시 immutable 캐시"
+    },
+    "asyncUi": {
+      "status": "checked",
+      "reason": "기존 화면·상태·권한·복구·스타일 유지; 기능별 복사 없음"
+    },
+    "security": {
+      "status": "checked",
+      "reason": "기존 화면·상태·권한·복구·스타일 유지; 기능별 복사 없음"
+    },
+    "styles": {
+      "status": "checked",
+      "reason": "기존 화면·상태·권한·복구·스타일 유지; 기능별 복사 없음"
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "로컬 계약/SQL/공용 표시/전체 회귀"
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "등록 권한과 학생 권한 보존, 발음 외 정답/개인정보 전송 금지",
+      "checkIds": [
+        "T3",
+        "T5"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "등록 권한과 학생 권한 보존, 발음 외 정답/개인정보 전송 금지",
+      "checkIds": [
+        "T3",
+        "T5"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "등록 권한과 학생 권한 보존, 발음 외 정답/개인정보 전송 금지",
+      "checkIds": [
+        "T3",
+        "T5"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "기존 개인자료 수명 보존·음원만 해시 경로 장기 캐시",
+      "checkIds": [
+        "T4",
+        "T5"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "자료 작업 원본 검산→승인 범위 header→기존 asset/identity/binding→verify→activate→현재 학생 권한→기존 묶음조회→공용 발음 표시/재생. 배정·응시·점수·조회검색삭제 업무 불변.",
+    "reuse": "v2 독립 음원 저장과 v3 검증/활성화 및 기존 AudioButton/PronunciationText 재사용. 새 저장 경로 판정은 순수 함수, 범위별 UI 분기 없음.",
+    "cache": "개인 자료 공용 캐시 추가 없음. MP3 요청 해시 경로는 immutable·업서트 금지. 기존 snapshot 음원 보존, 정확 같은 음원의 누락 표시만 보강.",
+    "compatibility": "Next16.2.12/React19.2.8 유지, 기존 VOCA3001 자료 검증은 여전히 엄격. 정상속도 단어/숙어 경로만 추가, 옛 프로필·학생 스냅샷 유지.",
+    "rollback": "새 scope release만 retired로 되돌리고 이전 활성 release 복원. 기존 MP3/identity/학생 자료 삭제나 덮어쓰기 없음. 앱은 이전 운영 커밋으로 복구."
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "단어장 첫 조회",
+      "message": "단어를 불러오고 있습니다.",
+      "behavior": "기존 로딩과 닫기 유지",
+      "recovery": "조회 완료 대기",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4",
+        "T5"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "기존 자료 다시 읽기",
+      "message": "단어를 다시 불러오고 있습니다.",
+      "behavior": "기존 갱신 상태 유지",
+      "recovery": "기존 재시도",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4",
+        "T5"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "배정 미선택",
+      "message": "단어장을 선택해 주세요.",
+      "behavior": "기존 배정 선택 유지",
+      "recovery": "배정 선택",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4",
+        "T5"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "정상 0건 응답",
+      "message": "표시할 단어가 없습니다.",
+      "behavior": "실패와 구분 유지",
+      "recovery": "목록으로 돌아가기",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4",
+        "T5"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "발음 자료 검증 실패",
+      "message": "이 단어의 발음 자료는 아직 준비되지 않았습니다.",
+      "behavior": "불명 자료 재생하지 않음",
+      "recovery": "검증된 자료 보완",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4",
+        "T5"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "자료 조회 실패",
+      "message": "단어를 불러오지 못했습니다. 다시 시도해 주세요.",
+      "behavior": "빈 결과로 위장하지 않음",
+      "recovery": "해당 영역 다시 읽기",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4",
+        "T5"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "이번 작업은 학생 저장 UI를 변경하지 않음",
+      "message": "저장하지 못했습니다. 다시 시도해 주세요.",
+      "behavior": "기존 입력 보존 정책 유지",
+      "recovery": "기존 저장 재시도",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4",
+        "T5"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "세션 만료",
+      "message": "다시 로그인해 주세요.",
+      "behavior": "기존 개인 자료 숨김",
+      "recovery": "로그인",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4",
+        "T5"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "없는 배정 경로",
+      "message": "페이지를 찾을 수 없습니다.",
+      "behavior": "기존 not-found 유지",
+      "recovery": "목록으로 돌아가기",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4",
+        "T5"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "재생기 실패",
+      "message": "음성을 재생하지 못했습니다. 스피커 버튼을 다시 눌러 주세요.",
+      "behavior": "내부 오류 원문 숨김",
+      "recovery": "스피커 재시도",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4",
+        "T5"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "Next16.2.12",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "서버 권한/자료와 순수 계약/재사용 표시 분리. 기존 공식문서·RDT·쉬운 복구 안내 유지"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "unit",
+      "target": "src/lib/quiz/pronunciation-storage.test.ts",
+      "scenario": "정상 속도 단어/숙어 경로와 기존 VOCA 경로, 잘못된 프로필·해시·외부 경로",
+      "expected": "승인된 정확 경로만 통과, 기존 경로 보존",
+      "topics": [
+        "behavior",
+        "data-leak"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "unit",
+      "target": "src/lib/vocab/school-pronunciation-release-contract.test.ts",
+      "scenario": "6개 승인 범위의 해시·총수·행·품사·발음 연결과 기존 VOCA 제한",
+      "expected": "누락/변조/범위 밖 자료 거절, 학교 음원 표시 모두 일치",
+      "topics": [
+        "behavior",
+        "data-leak",
+        "answer-leak"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "integration",
+      "target": "src/lib/database/school-pronunciation-scope.integration.test.ts",
+      "scenario": "단계별 import/verify/activate·권한·중복실행·다른 원자료·기존 identity 보존",
+      "expected": "불완전 묶음 활성 불가, service_role만 실행, 기존 시험·다른 release 불변",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "unit",
+      "target": "src/lib/quiz/pronunciation-snapshot.test.ts",
+      "scenario": "문항/선택지/단어장 공용 발음 해석, 기존 음원과 동일한 경우만 누락 표시 보강, 재생 불가·실패 구분",
+      "expected": "음원 바꿔치기 없음, 발음/강세 표시, 기존 쉬운 실패 문구·복구·인증/404 유지",
+      "topics": [
+        "behavior",
+        "error-ui",
+        "ui-copy",
+        "cache"
+      ]
+    },
+    {
+      "id": "T5",
+      "kind": "build",
+      "target": "package.json",
+      "scenario": "전체 단위·타입·lint·구조·빌드와 연결 지도 확인",
+      "expected": "현재 입력으로 모두 통과, 단어 원자료/키/학생정보 Git 미포함",
+      "topics": [
+        "structure",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T6",
+      "kind": "review",
+      "target": null,
+      "scenario": "별도 자료 작업의6묶음1509행·공식 MP3와 생성 MP3·표시강세·학생보호 전후 검증",
+      "expected": "해시 결속과 실제 음원 제공 확인, 미검증 소리 품질은 통과로 간주하지 않음",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak"
+      ]
+    }
+  ],
+  "verification": null
+}

@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { loadEnvConfig } from "@next/env";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { validateSchoolPronunciationRelease } from "../src/lib/vocab/school-pronunciation-release-contract";
 
 import {
   validateVocabPronunciationReleaseV2,
@@ -23,6 +24,7 @@ type Options = {
   target: Target;
   mode: Mode;
   activate: boolean;
+  school: boolean;
 };
 
 function optionValue(arguments_: string[], name: string) {
@@ -51,7 +53,7 @@ function parseOptions(arguments_: string[]): Options {
   if (activate && mode !== "apply") {
     throw new Error("--activate는 --apply와 함께만 사용할 수 있습니다.");
   }
-  return { file, envDir, target, mode, activate };
+  return { file, envDir, target, mode, activate, school: arguments_.includes("--school") };
 }
 
 function projectRef(supabaseUrl: string) {
@@ -152,7 +154,8 @@ async function releaseStatus(
 async function main() {
   const options = parseOptions(process.argv.slice(2));
   const raw = JSON.parse(await readFile(options.file, "utf8")) as unknown;
-  const { release, summary } = validateVocabPronunciationReleaseV2(raw);
+  const { release, summary } = options.school
+    ? validateSchoolPronunciationRelease(raw) : validateVocabPronunciationReleaseV2(raw);
   if (options.mode === "dry-run") {
     console.log(
       JSON.stringify(
@@ -211,6 +214,7 @@ async function main() {
   }
 
   const stageRpc =
+    options.school ? "stage_school_pronunciation_release_v1" :
     release.engine_version === "cmudict-arpabet-hangul-nucleus-render-v2"
       ? "stage_vocab_pronunciation_release_v3"
       : "stage_vocab_pronunciation_release_v2";
