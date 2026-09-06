@@ -15,6 +15,7 @@ import { useEffect } from "react";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { adminHistoryText } from "@/content/ko/admin-history";
+import { subscribeAdminPrivateCacheChanges } from "@/features/session/public-client";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import {
   NavigationExitGuardProvider,
@@ -291,7 +292,12 @@ describe("editable history detail dialog", () => {
     expect(screen.getByText("편집 양식")).toBeInTheDocument();
     expect(router.back).not.toHaveBeenCalled();
 
+    const changes = vi.fn();
+    const unsubscribe = subscribeAdminPrivateCacheChanges(changes);
     await user.click(screen.getByRole("button", { name: "저장 완료" }));
+    expect(changes).toHaveBeenCalledTimes(1);
+    expect(changes.mock.calls[0][0]).toBe("students");
+    unsubscribe();
     act(() => releaseRouteGuardSentinel());
 
     await waitFor(() => {

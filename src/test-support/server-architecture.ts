@@ -150,13 +150,36 @@ export function collectDirectDbWriteCalls(
 ): DirectDbWriteCall[] {
   const parsed = sourceFile(file, source);
   const calls: DirectDbWriteCall[] = [];
+  let checker: ts.TypeChecker | undefined;
+  function isLocalCollectionRemoval(node: ts.PropertyAccessExpression) {
+    if (node.name.text !== "delete" || !ts.isIdentifier(node.expression)) return false;
+    if (!/new\s+(?:Map|Set)\b/.test(source)) return false;
+    // Resolve the actual lexical binding, not a receiver name allowlist. No
+    // imported module or library is loaded; unrecognized receivers stay strict.
+    if (!checker) {
+      const options: ts.CompilerOptions = { noLib: true, noResolve: true, target: ts.ScriptTarget.Latest, jsx: ts.JsxEmit.Preserve };
+      const host = ts.createCompilerHost(options);
+      host.getSourceFile = name => path.resolve(name) === path.resolve(file) ? parsed : undefined;
+      host.readFile = () => undefined;
+      host.fileExists = name => path.resolve(name) === path.resolve(file);
+      checker = ts.createProgram([file], options, host).getTypeChecker();
+    }
+    const declaration = checker.getSymbolAtLocation(node.expression)?.valueDeclaration;
+    if (!declaration || !ts.isVariableDeclaration(declaration) ||
+      !ts.isVariableDeclarationList(declaration.parent) || !(declaration.parent.flags & ts.NodeFlags.Const)) return false;
+    const initializer = declaration.initializer;
+    return Boolean(initializer && ts.isNewExpression(initializer) && ts.isIdentifier(initializer.expression) &&
+      ["Map", "Set"].includes(initializer.expression.text) &&
+      // A user-defined/imported Map or Set is not the native collection.
+      !checker.getSymbolAtLocation(initializer.expression));
+  }
   const visit = (node: ts.Node) => {
     if (
       ts.isCallExpression(node) &&
       ts.isPropertyAccessExpression(node.expression) &&
       DIRECT_DB_WRITE_METHODS.has(
         node.expression.name.text as DirectDbWriteCall["method"],
-      )
+      ) && !isLocalCollectionRemoval(node.expression)
     ) {
       calls.push({
         file,

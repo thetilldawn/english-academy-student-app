@@ -45,6 +45,8 @@ vi.mock("@/features/history/server/queries/admin-history-list-query", () => ({
 
 import { POST } from "./route";
 import { AdminHistoryCursorError } from "@/features/history/server/admin-history-cursor";
+import { privateListCacheIdentity } from "@/lib/auth/private-cache-identity";
+import type { AdminContext } from "@/lib/auth/admin";
 
 function request(body: unknown, origin?: string) {
   return new Request("http://localhost/api/admin/history", {
@@ -66,6 +68,27 @@ const snapshot = {
 };
 
 describe("POST /api/admin/history", () => {
+  it("캐시 복원도 현재 인증 뒤에만 허용하고 첫 목록 RPC는 생략한다", async () => {
+    const admin = { userId: "00000000-0000-4000-8000-000000000999", sessionId: "current-session" } as AdminContext;
+    const identity = privateListCacheIdentity(admin, "history-list-v1");
+    mocks.getAdminContext.mockResolvedValue(admin);
+    const input = { mode: "cache", filters: { currentOnly: false, query: "", statusFilter: "all" }, identity };
+    const response = await POST(request(input));
+    expect(await response.json()).toEqual({ kind: "resume", identity, userId: admin.userId });
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(mocks.getAdminContext).toHaveBeenCalledTimes(1); expect(mocks.listAdminHistoryInitial).not.toHaveBeenCalled();
+    mocks.getAdminContext.mockResolvedValue(null);
+    expect((await POST(request(input))).status).toBe(401); expect(mocks.listAdminHistoryInitial).not.toHaveBeenCalled();
+  });
+  it("캐시 세대가 없거나 달라도 서버 현재 인증으로 첫 목록을 직접 읽는다", async () => {
+    const input = { mode: "cache", filters: { currentOnly: false, query: "", statusFilter: "all" }, identity: "a".repeat(64) };
+    const response = await POST(request(input));
+    expect(await response.json()).toMatchObject({ kind: "snapshot", identity: null, snapshot });
+    expect(mocks.listAdminHistoryInitial).toHaveBeenCalledTimes(1);
+    expect(mocks.listAdminHistoryInitial.mock.calls[0][0]).toEqual(input.filters);
+    expect((await POST(request({...input, filters:{...input.filters,currentOnly:true}}))).status).toBe(400);
+    expect((await POST(request({...input, identity:"untrusted"}))).status).toBe(400);
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getAdminContext.mockResolvedValue({ userId: "admin-id" });

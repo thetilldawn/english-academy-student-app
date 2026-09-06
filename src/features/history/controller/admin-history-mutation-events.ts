@@ -1,23 +1,9 @@
 import type { AdminHistoryMutationNotice } from "../contracts/admin-history-mutation";
+import { announceAdminPrivateCacheChange } from "@/features/session/public-client";
+import { ADMIN_HISTORY_CHANGED_EVENT } from "./history-change-listener";
 
-const ADMIN_HISTORY_MUTATED_EVENT = "admin-history:mutated";
-
-export function announceAdminHistoryMutation(
-  notice: AdminHistoryMutationNotice,
-) {
-  window.dispatchEvent(new CustomEvent(ADMIN_HISTORY_MUTATED_EVENT, {
-    detail: notice,
-  }));
+export function announceAdminHistoryMutation(notice: AdminHistoryMutationNotice) {
+  // Record the local DB minimum before the private invalidation signal.
+  window.dispatchEvent(new CustomEvent(ADMIN_HISTORY_CHANGED_EVENT, { detail: notice }));
+  announceAdminPrivateCacheChange("students");
 }
-
-export function subscribeAdminHistoryMutation(
-  listener: (notice: AdminHistoryMutationNotice) => void,
-) {
-  const handleMutation = (event: Event) => {
-    const notice = (event as CustomEvent<AdminHistoryMutationNotice>).detail;
-    if (notice?.receipt?.assignmentId) listener(notice);
-  };
-  window.addEventListener(ADMIN_HISTORY_MUTATED_EVENT, handleMutation);
-  return () => window.removeEventListener(ADMIN_HISTORY_MUTATED_EVENT, handleMutation);
-}
-

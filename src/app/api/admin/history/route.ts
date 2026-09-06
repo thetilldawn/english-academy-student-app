@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 import { adminHistoryStatusFilters } from "@/features/history/contracts/admin-history-read-model";
+import { historyCacheRequestSchema } from "@/features/history/contracts/history-list-cache-contract";
+import { privateListCacheIdentity } from "@/lib/auth/private-cache-identity";
 import { AdminHistoryCursorError } from "@/features/history/server/admin-history-cursor";
 import { AdminHistoryReadError } from "@/features/history/server/queries/admin-history-read-error";
 import {
@@ -39,6 +41,7 @@ const historyReadBaseSchema = z.object({
 });
 
 const historyReadSchema = z.discriminatedUnion("mode", [
+  historyCacheRequestSchema,
   historyReadBaseSchema.extend({
     mode: z.literal("initial"),
   }).strict(),
@@ -92,6 +95,14 @@ export async function POST(request: Request) {
   }
 
   try {
+    if (input.mode === "cache") {
+      const identity = privateListCacheIdentity(admin, "history-list-v1");
+      if (identity && input.identity === identity) {
+        return Response.json({ kind: "resume", identity, userId: admin.userId }, { headers: privateNoStoreHeaders });
+      }
+      const snapshot = await listAdminHistoryInitial(input.filters, admin, request.signal);
+      return Response.json({ kind: "snapshot", identity, userId: admin.userId, snapshot }, { headers: privateNoStoreHeaders });
+    }
     if (input.mode === "initial") {
       const snapshot = await listAdminHistoryInitial(input, admin, request.signal);
       return Response.json({ snapshot }, { headers: privateNoStoreHeaders });

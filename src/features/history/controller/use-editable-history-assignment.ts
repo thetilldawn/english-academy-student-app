@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useRouteExitGuard } from "@/components/use-route-exit-guard";
 import { adminHistoryText } from "@/content/ko/admin-history";
 import { loadAssignmentEditContext } from "@/features/assignments/public-client";
+import { announceAdminPrivateCacheChange } from "@/features/session/public-client";
 import type {
   AssignmentEditContext,
   SingleAssignmentResult,
@@ -134,6 +135,7 @@ export function useEditableHistoryAssignment(detail: AdminHistoryDetail) {
   }
 
   function handleSucceeded(result: SingleAssignmentResult) {
+    announceAdminPrivateCacheChange("students");
     routeGuard.forceExit(() => {
       setEditorLoadState(idleEditorLoadState);
       setSubmitPresentation(null);
