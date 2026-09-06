@@ -19,7 +19,7 @@ describe.each([
     Component: ResultsError,
     title: "내역을 불러오지 못했습니다",
     description:
-      "시험 내역은 변경되지 않았습니다. 잠시 뒤 다시 불러와 주세요.",
+      "시험 내역을 확인하지 못했습니다. 잠시 뒤 다시 불러와 주세요.",
     event: "client.admin_history_error_boundary",
   },
   {

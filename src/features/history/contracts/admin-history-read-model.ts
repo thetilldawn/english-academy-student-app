@@ -11,6 +11,14 @@ export const adminHistorySectionKeys = [
 export type AdminHistorySectionKey =
   (typeof adminHistorySectionKeys)[number];
 
+export function expectedAdminHistoryGroupKeys(
+  currentOnly: boolean,
+  statusFilter: AdminHistoryStatusFilter,
+): string[] {
+  if (statusFilter !== "all") return [`filter-${statusFilter}`];
+  return adminHistorySectionKeys.filter((section) => !currentOnly || section !== "archived");
+}
+
 export const adminHistoryStatusFilters = [
   "all",
   "open",

@@ -1,23 +1,27 @@
 // @vitest-environment jsdom
 
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { AdminHistoryListItem } from "@/features/history/contracts/admin-history-read-model";
 import {
   loadAdminHistoryFreshSection,
   loadAdminHistoryNextPage,
+  loadAdminHistorySnapshot,
 } from "@/features/history/transport/history-pages";
 
 import { useAdminHistorySectionPage } from "./use-admin-history-section-page";
+import { AdminHistoryRequestError } from "../contracts/admin-history-request-error";
 
 vi.mock("@/features/history/transport/history-pages", () => ({
   loadAdminHistoryFreshSection: vi.fn(),
   loadAdminHistoryNextPage: vi.fn(),
+  loadAdminHistorySnapshot: vi.fn(),
 }));
 
 afterEach(() => {
-  vi.clearAllMocks();
+  cleanup();
+  vi.resetAllMocks();
 });
 
 function item(id: string) {
@@ -34,6 +38,8 @@ function hiddenNotice(version: string) {
       completedAt: "2026-08-31T00:00:00.000Z",
       id: "hidden-entry",
       passingScore: 80,
+      passed: true,
+      finalScore: 100,
       status: "completed",
       studentId: "00000000-0000-4000-8000-000000000020",
     } as AdminHistoryListItem,
@@ -48,6 +54,74 @@ function hiddenNotice(version: string) {
 }
 
 describe("admin history section page controller", () => {
+
+  const context = { currentOnly: false, query: "", statusFilter: "all" } as const;
+  const initialSection = { groupKey: "completed", items: [item("old")], nextCursor: "old-cursor", totalCount: 11 };
+
+  it("더보기 실패는 현 목록 보존 후 같은 페이지 읽기로 재시도한다", async () => {
+    vi.mocked(loadAdminHistoryNextPage).mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValueOnce({ items: [item("more")], nextCursor: null });
+    const { result } = renderHook(() => useAdminHistorySectionPage({ loadMoreContext: context, section: initialSection }));
+    await act(() => result.current.loadMore());
+    expect(result.current.failure).toBe("unavailable");
+    expect(result.current.items.map((value) => value.id)).toEqual(["old"]);
+    await act(() => result.current.retry());
+    expect(result.current.failure).toBeNull();
+    expect(result.current.items.map((value) => value.id)).toEqual(["old", "more"]);
+    expect(vi.mocked(loadAdminHistoryNextPage).mock.calls.map(([request]) => request.cursor)).toEqual(["old-cursor", "old-cursor"]);
+  });
+
+  it("변경 후 실패는 옛 자료/개수/커서를 숨기고 같은 영수증의 읽기만 다시 시도한다", async () => {
+    vi.mocked(loadAdminHistoryFreshSection).mockRejectedValueOnce(new Error("private SQL"))
+      .mockResolvedValueOnce({ groupKey: "completed", items: [], nextCursor: null, totalCount: 0 });
+    const { result } = renderHook(() => useAdminHistorySectionPage({ loadMoreContext: context, section: initialSection }));
+    act(() => window.dispatchEvent(new CustomEvent("admin-history:mutated", {
+      detail: hiddenNotice("2026-08-31T00:00:03.000Z"),
+    })));
+    await waitFor(() => expect(result.current.failure).toBe("unavailable"));
+    expect(result.current.items).toEqual([]);
+    expect(result.current.countKnown).toBe(false);
+    expect(result.current.nextCursor).toBeNull();
+    await act(() => result.current.retry());
+    expect(result.current.failure).toBeNull();
+    expect(result.current.countKnown).toBe(true);
+    expect(result.current.totalCount).toBe(0);
+    expect(vi.mocked(loadAdminHistoryFreshSection).mock.calls.map(([request]) => request.snapshotAt))
+      .toEqual(["2026-08-31T00:00:03.000Z", "2026-08-31T00:00:03.000Z"]);
+    expect(loadAdminHistoryNextPage).not.toHaveBeenCalled();
+  });
+
+  it("거절된 페이지 커서는 재전송하지 않고 서버가 시각을 정한 처음 목록으로 복구한다", async () => {
+    vi.mocked(loadAdminHistoryNextPage).mockRejectedValueOnce(new AdminHistoryRequestError("invalid-request"));
+    vi.mocked(loadAdminHistorySnapshot).mockResolvedValueOnce({
+      ...context, snapshotAt: "2026-09-06T00:00:00.000Z",
+      sections: [{ ...initialSection, items: [item("fresh")], nextCursor: "fresh-cursor" }],
+    });
+    const { result } = renderHook(() => useAdminHistorySectionPage({ loadMoreContext: context, section: initialSection }));
+    await act(() => result.current.loadMore());
+    expect(result.current.nextCursor).toBeNull();
+    await act(() => result.current.retry());
+    expect(loadAdminHistorySnapshot).toHaveBeenCalledWith({ ...context, mode: "initial" }, expect.any(AbortSignal));
+    expect(loadAdminHistoryNextPage).toHaveBeenCalledOnce();
+    expect(result.current.nextCursor).toBe("fresh-cursor");
+    expect(result.current.items.map((value) => value.id)).toEqual(["fresh"]);
+  });
+
+  it("취소를 무시한 더보기 성공이 변경 뒤 새 구역을 덮지 않는다", async () => {
+    let finishOld: ((value: { items: AdminHistoryListItem[]; nextCursor: null }) => void) | undefined;
+    vi.mocked(loadAdminHistoryNextPage).mockImplementationOnce(() => new Promise((resolve) => { finishOld = resolve; }));
+    vi.mocked(loadAdminHistoryFreshSection).mockResolvedValueOnce({
+      groupKey: "completed", items: [item("fresh")], nextCursor: null, totalCount: 1,
+    });
+    const { result } = renderHook(() => useAdminHistorySectionPage({ loadMoreContext: context, section: initialSection }));
+    act(() => void result.current.loadMore());
+    act(() => window.dispatchEvent(new CustomEvent("admin-history:mutated", {
+      detail: hiddenNotice("2026-08-31T00:00:03.000Z"),
+    })));
+    await waitFor(() => expect(result.current.items[0]?.id).toBe("fresh"));
+    await act(async () => finishOld?.({ items: [item("late")], nextCursor: null }));
+    expect(result.current.items.map((value) => value.id)).toEqual(["fresh"]);
+  });
   it("다음 페이지를 중복 없이 붙이고 마지막 커서에서 끝낸다", async () => {
     vi.mocked(loadAdminHistoryNextPage).mockResolvedValue({
       items: [item("first"), item("second"), item("second")],
@@ -203,7 +277,7 @@ describe("admin history section page controller", () => {
     act(() => window.dispatchEvent(new CustomEvent("admin-history:mutated", {
       detail: hiddenNotice("2026-08-31T00:00:03.000Z"),
     })));
-    await waitFor(() => expect(result.current.error).toBe("새 목록 실패"));
+    await waitFor(() => expect(result.current.failure).toBe("unavailable"));
     expect(result.current.nextCursor).toBeNull();
 
     await act(() => result.current.loadMore());

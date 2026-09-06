@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
+import { expectedAdminHistoryGroupKeys } from "@/features/history/contracts/admin-history-read-model";
 
 function source(relativePath: string) {
   return fs.readFileSync(path.resolve(relativePath), "utf8");
@@ -114,9 +115,9 @@ describe("student catalog and modal UI contract", () => {
       "src/features/history/ui/student-learning-activity-list.tsx",
     );
 
-    expect(historyQuery).toContain(
-      '(section) => !currentOnly || section !== "archived"',
-    );
+    expect(historyQuery).toContain("expectedAdminHistoryGroupKeys(input.currentOnly");
+    expect(expectedAdminHistoryGroupKeys(true, "all")).toEqual(["open", "needs_attention", "completed"]);
+    expect(expectedAdminHistoryGroupKeys(false, "all")).toEqual(["open", "needs_attention", "completed", "archived"]);
     expect(activityList).toContain(
       'learningActivitySection(item) !== "archived"',
     );

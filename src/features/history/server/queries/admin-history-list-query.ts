@@ -8,7 +8,7 @@ import {
   type AdminHistoryReadScope,
   type AdminHistorySectionPage,
   type AdminHistorySnapshot,
-  adminHistorySectionKeys,
+  expectedAdminHistoryGroupKeys,
   normalizeAdminHistoryQuery,
 } from "@/features/history/contracts/admin-history-read-model";
 import type { AdminHistoryStatusFilter } from "@/features/history/domain/learning-activity";
@@ -140,16 +140,6 @@ function nextCursorFromNodes(input: {
   });
 }
 
-function expectedGroupKeys(
-  currentOnly: boolean,
-  statusFilter: AdminHistoryStatusFilter,
-) {
-  if (statusFilter !== "all") return [`filter-${statusFilter}`];
-  return adminHistorySectionKeys.filter(
-    (section) => !currentOnly || section !== "archived",
-  );
-}
-
 function buildInitialSnapshot(
   rows: readonly z.infer<typeof adminHistoryInitialRowSchema>[],
   input: {
@@ -158,7 +148,7 @@ function buildInitialSnapshot(
     statusFilter: AdminHistoryStatusFilter;
   },
 ): AdminHistorySnapshot {
-  const expected = expectedGroupKeys(input.currentOnly, input.statusFilter);
+  const expected = expectedAdminHistoryGroupKeys(input.currentOnly, input.statusFilter);
   const rowByGroup = new Map(rows.map((row) => [row.group_key, row]));
   const snapshotAt = rows[0]?.snapshot_at;
   if (
@@ -320,7 +310,7 @@ export async function listAdminHistoryFreshSection(input: {
   if (!authenticatedAdmin) await requireAdmin();
   const query = normalizeAdminHistoryQuery(input.query ?? "");
   const statusFilter = input.statusFilter ?? "all";
-  if (!expectedGroupKeys(input.currentOnly, statusFilter).includes(input.groupKey as never)) {
+  if (!expectedAdminHistoryGroupKeys(input.currentOnly, statusFilter).includes(input.groupKey)) {
     throw new AdminHistoryReadError(
       "새로 읽을 내역 구역을 확인하지 못했습니다.",
       "input",

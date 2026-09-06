@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -12,6 +12,7 @@ import type {
 } from "@/features/history/contracts/admin-history-read-model";
 
 import { AdminHistoryList } from "./admin-history-list";
+import { AdminHistoryRequestError } from "../contracts/admin-history-request-error";
 
 const loadAdminHistorySnapshot = vi.fn();
 
@@ -23,7 +24,7 @@ vi.mock("@/features/history/transport/history-pages", () => ({
 
 afterEach(() => {
   cleanup();
-  vi.clearAllMocks();
+  vi.resetAllMocks();
 });
 
 function historyItem(id: string): AdminHistoryListItem {
@@ -80,6 +81,79 @@ function snapshot(
 }
 
 describe("AdminHistoryList", () => {
+
+  it("실패 후 재시도 성공 0건만 없음으로 표시한다", async () => {
+    const user = userEvent.setup();
+    loadAdminHistorySnapshot
+      .mockRejectedValueOnce(new Error("private SQL"))
+      .mockResolvedValueOnce(snapshot([{ groupKey: "open" }], { query: "찾기" }));
+    render(<AdminHistoryList initialSnapshot={snapshot([{ groupKey: "open" }])} showFilters />);
+    await user.type(screen.getByRole("searchbox"), "찾기");
+    await screen.findByRole("alert");
+    await user.click(screen.getByRole("button", { name: "다시 시도" }));
+    expect(await screen.findByText("조건에 맞는 내역이 없습니다.")).toBeVisible();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByText(/private SQL/)).not.toBeInTheDocument();
+  });
+
+  it.each(["unauthenticated", "forbidden"] as const)("인증 실패 %s 후 조건 복원으로 내역을 재노출하지 않는다", async (kind) => {
+    const user = userEvent.setup();
+    loadAdminHistorySnapshot.mockRejectedValueOnce(new AdminHistoryRequestError(kind));
+    render(<AdminHistoryList initialSnapshot={snapshot([{ groupKey: "open", items: [historyItem("개인 시험")] }])} showFilters />);
+    await user.type(screen.getByRole("searchbox"), "새");
+    expect(screen.getByText("이전 검색 결과입니다.")).toBeVisible();
+    const login = await screen.findByRole("link", { name: "관리자 로그인" });
+    expect(login).toHaveAttribute("href", "/admin/login");
+    expect(screen.queryByRole("link", { name: /개인 시험.*상세/ })).not.toBeInTheDocument();
+    expect(screen.queryByText("1건")).not.toBeInTheDocument();
+    await user.clear(screen.getByRole("searchbox"));
+    expect(screen.getByRole("link", { name: "관리자 로그인" })).toBeVisible();
+    expect(screen.queryByRole("link", { name: /개인 시험.*상세/ })).not.toBeInTheDocument();
+    expect(loadAdminHistorySnapshot).toHaveBeenCalledTimes(1);
+  });
+
+  it("검색 A 실패 → B → A의 짧은 입력 전환에 옛 실패를 되살리지 않는다", async () => {
+    loadAdminHistorySnapshot.mockRejectedValueOnce(new Error("private"))
+      .mockImplementation(() => new Promise(() => undefined));
+    render(<AdminHistoryList initialSnapshot={snapshot([{ groupKey: "open" }])} showFilters />);
+    const input = screen.getByRole("searchbox");
+    fireEvent.change(input, { target: { value: "A" } });
+    await screen.findByRole("alert");
+    fireEvent.change(input, { target: { value: "B" } });
+    fireEvent.change(input, { target: { value: "A" } });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("시험 내역을 불러오는 중입니다.");
+  });
+
+  it("취소를 무시한 오래된 성공과 실패가 최신 결과를 덮지 않는다", async () => {
+    let finishOld: ((value: AdminHistorySnapshot) => void) | undefined;
+    loadAdminHistorySnapshot.mockImplementationOnce(() => new Promise<AdminHistorySnapshot>((resolve) => {
+      finishOld = resolve;
+    })).mockResolvedValueOnce(snapshot([{ groupKey: "open", items: [historyItem("최신 결과")] }], { query: "B" }));
+    render(<AdminHistoryList initialSnapshot={snapshot([{ groupKey: "open" }])} showFilters />);
+    const input = screen.getByRole("searchbox");
+    fireEvent.change(input, { target: { value: "A" } });
+    await waitFor(() => expect(loadAdminHistorySnapshot).toHaveBeenCalledTimes(1));
+    fireEvent.change(input, { target: { value: "B" } });
+    expect(await screen.findByRole("link", { name: /최신 결과.*상세/ })).toBeVisible();
+    await act(async () => finishOld?.(snapshot([{ groupKey: "open", items: [historyItem("오래된 결과")] }], { query: "A" })));
+    expect(screen.queryByRole("link", { name: /오래된 결과.*상세/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /최신 결과.*상세/ })).toBeVisible();
+  });
+  it("이전 0건 뒤 새 검색 대기와 실패를 없음으로 표시하지 않는다", async () => {
+    const user = userEvent.setup();
+    loadAdminHistorySnapshot.mockRejectedValueOnce(new TypeError("Failed to fetch private detail"));
+    render(<AdminHistoryList initialSnapshot={snapshot([{ groupKey: "open" }])} showFilters />);
+    expect(screen.getByText("배정된 학습이 없습니다.")).toBeVisible();
+    await user.type(screen.getByRole("searchbox"), "새 검색");
+    expect(screen.queryByText("배정된 학습이 없습니다.")).not.toBeInTheDocument();
+    expect(screen.getByText("시험 내역을 불러오는 중입니다.")).toBeVisible();
+    expect(await screen.findByRole("alert")).toHaveTextContent("시험 내역을 불러오지 못했습니다. 다시 시도해 주세요.");
+    expect(screen.queryByText(/없습니다\./)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Failed to fetch/)).not.toBeInTheDocument();
+    expect(screen.getByRole("searchbox")).toHaveValue("새 검색");
+  });
+
   it("서버가 정한 상태 구역과 개수를 그대로 표시한다", () => {
     render(
       <AdminHistoryList
@@ -224,11 +298,12 @@ describe("AdminHistoryList", () => {
     const search = screen.getByLabelText("학생·시험 검색");
 
     await user.type(search, "학생");
-    expect(await screen.findByText("계산 중...")).toBeVisible();
+    expect(await screen.findByText("시험 내역을 불러오는 중입니다.")).toBeVisible();
+    await waitFor(() => expect(loadAdminHistorySnapshot).toHaveBeenCalledOnce());
     await user.clear(search);
 
     await waitFor(() => {
-      expect(screen.queryByText("계산 중...")).not.toBeInTheDocument();
+      expect(screen.queryByText("시험 내역을 불러오는 중입니다.")).not.toBeInTheDocument();
     });
     expect(requestSignal?.aborted).toBe(true);
   });
@@ -342,7 +417,8 @@ describe("AdminHistoryList", () => {
     );
 
     await user.selectOptions(screen.getByRole("combobox"), "retried");
-    expect(await screen.findByText("temporary failure")).toBeVisible();
+    expect(await screen.findByRole("alert")).toHaveTextContent("시험 내역을 불러오지 못했습니다. 다시 시도해 주세요.");
+    expect(screen.queryByText("temporary failure")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "다시 시도" }));
 
     expect(
