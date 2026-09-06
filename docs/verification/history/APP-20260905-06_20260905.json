@@ -1,0 +1,705 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20260905-06",
+  "title": "개발 설계·지시서·검증 기준 정비",
+  "size": "full",
+  "gate": "verified",
+  "guide": "docs/work-orders/APP-20260905-06.md",
+  "baseline": "bc48313bc53840a44ab6505a8238eaabf7667eae",
+  "owners": [
+    "architecture-meta"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "none"
+  ],
+  "scope": [
+    {
+      "path": "eslint.config.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "tsconfig.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": ".github/workflows/pr-fast.yml",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "scripts/check-work-records.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "scripts/work-records/schema.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "scripts/work-records/context.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "scripts/work-records/evidence.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "scripts/work-records/validation.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "scripts/work-records/AGENTS.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "scripts/feature-map/change-impact.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "scripts/feature-map/AGENTS.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "scripts/check-feature-map.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/app/work-records.test.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/app/AGENTS.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "architecture/기능_소유권.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "package.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "AGENTS.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/코드_길찾기_및_변경영향.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/보안_및_시험규칙.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/개발_지시서와_검증_기록.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/양식/기능_작업지시서.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/양식/검증_기록.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/work-orders/APP-20260905-06.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/verification/APP-20260905-06.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "architecture/work-records/examples/작은_UI_수정.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "architecture/work-records/examples/문법_기능_설계.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "00_앱_인계서.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "기존 지시·길찾기·검증 양식과 기준 상태 정비",
+      "acceptance": "문서와 R/D/T 연결·철회 기준 정정·안전한 오류 표시 기준 확인",
+      "disposition": "required",
+      "owners": [
+        "architecture-meta"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T7"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "strict 형식 v1과 두 가상 예시",
+      "acceptance": "중복/잘못된 참조/미지원 값 거절 및 작은 UI·문법 설계 통과",
+      "disposition": "required",
+      "owners": [
+        "architecture-meta"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "user",
+      "text": "설계·미결정 관문과 기록 없는 구현 변경 탐지",
+      "acceptance": "기능 전체 미결정·요구/검사 누락·근거 없는 제외·영향 흐름 누락 차단",
+      "disposition": "required",
+      "owners": [
+        "architecture-meta"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "id": "R4",
+      "source": "user",
+      "text": "완료 증거와 실제 연결 확인",
+      "acceptance": "필수 검사 실제 통과·파일/소유/흐름·현재 코드와 증거 일치 확인",
+      "disposition": "required",
+      "owners": [
+        "architecture-meta"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "id": "R5",
+      "source": "user",
+      "text": "기록 순환 없이 기존 구조 검사 통합",
+      "acceptance": "증거 설명 수정은 지문 불변·코드 변경은 실패·Git 없는 호스팅 형식 검사 통과",
+      "disposition": "required",
+      "owners": [
+        "architecture-meta"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T1",
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "id": "R6",
+      "source": "user",
+      "text": "로컬 검증과 인계 완료",
+      "acceptance": "단위/구조/타입/lint/빌드/요청 캐시·독립 리뷰 및 문서 연결 확인",
+      "disposition": "required",
+      "owners": [
+        "architecture-meta"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6",
+        "T7",
+        "T8"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "문서만 또는 누락 검사 포함",
+      "answer": "문서·양식·필수 누락 검사 포함",
+      "source": "2026-09-05 사용자 전체 계획 구현 요청"
+    },
+    {
+      "id": "D2",
+      "owner": "user",
+      "state": "resolved",
+      "question": "사용자 미결정 처리 단위",
+      "answer": "하나라도 남으면 해당 기능 전체 구현 보류, 질문을 모아 플랜 모드 확인",
+      "source": "2026-09-05 사용자 확정 방향"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "내부 도구 구조",
+      "answer": "기존 zod와 변경 영향 재사용, 형식/설계/완료 분리",
+      "source": "기존 package 및 scripts/feature-map 확인; 새 외부 의존 없음"
+    },
+    {
+      "id": "D4",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "검사 근거 유효 범위",
+      "answer": "코드·검사·설정·설계 입력 해시, 기록 결과 자체 제외",
+      "source": "승인 계획의 오래된 증거/순환 방지 요구"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "not_applicable",
+      "reason": "앱 업무·학생 화면/데이터/캐시 변경 없이 개발 절차와 내부 검사만 추가"
+    },
+    "ui": {
+      "status": "not_applicable",
+      "reason": "앱 업무·학생 화면/데이터/캐시 변경 없이 개발 절차와 내부 검사만 추가"
+    },
+    "state": {
+      "status": "not_applicable",
+      "reason": "앱 업무·학생 화면/데이터/캐시 변경 없이 개발 절차와 내부 검사만 추가"
+    },
+    "domain": {
+      "status": "not_applicable",
+      "reason": "앱 업무·학생 화면/데이터/캐시 변경 없이 개발 절차와 내부 검사만 추가"
+    },
+    "data": {
+      "status": "not_applicable",
+      "reason": "앱 업무·학생 화면/데이터/캐시 변경 없이 개발 절차와 내부 검사만 추가"
+    },
+    "api": {
+      "status": "not_applicable",
+      "reason": "앱 업무·학생 화면/데이터/캐시 변경 없이 개발 절차와 내부 검사만 추가"
+    },
+    "cache": {
+      "status": "not_applicable",
+      "reason": "앱 업무·학생 화면/데이터/캐시 변경 없이 개발 절차와 내부 검사만 추가"
+    },
+    "asyncUi": {
+      "status": "not_applicable",
+      "reason": "앱 업무·학생 화면/데이터/캐시 변경 없이 개발 절차와 내부 검사만 추가"
+    },
+    "security": {
+      "status": "checked",
+      "reason": "검사 입력 경로 보호와 인증 파일의 변경 추적; 실제 인증 동작 미변경"
+    },
+    "styles": {
+      "status": "not_applicable",
+      "reason": "앱 업무·학생 화면/데이터/캐시 변경 없이 개발 절차와 내부 검사만 추가"
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "개발 기록 검사기와 기존 구조·검증 명령 연결"
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "not_applicable",
+      "reason": "학생/문제/DB/캐시를 다루지 않는 개발 도구. 실제 기능 동작 미변경",
+      "checkIds": []
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "내부 검사기의 입력이 앱 밖 경로·비밀 환경 파일로 확장되지 않음을 검사",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    "answer-leak": {
+      "status": "not_applicable",
+      "reason": "학생/문제/DB/캐시를 다루지 않는 개발 도구. 실제 기능 동작 미변경",
+      "checkIds": []
+    },
+    "cache": {
+      "status": "not_applicable",
+      "reason": "학생/문제/DB/캐시를 다루지 않는 개발 도구. 실제 기능 동작 미변경",
+      "checkIds": []
+    }
+  },
+  "design": {
+    "dataFlow": "앱 내부 작업 JSON·기능 지도·로컬/CI Git 변경 → 형식/설계/완료 오류 또는 요약. 학생 생성·배정·응시·조회·검색·수정·삭제·기록은 변경하지 않음.",
+    "reuse": "기존 zod, 변경 영향·소유권·실제 흐름 계산 재사용. 명령/형식/연결/판정/해시 5개 책임 분리. 상세 요청·응답은 사람 지시서에 연결.",
+    "cache": "런타임 캐시 변경 없음. 해시는 입력 묶음만 비교하고 과거 통과를 자동 재사용하지 않음.",
+    "compatibility": "기존 지도 출력과 구조 검사는 유지. prebuild 형식만, 로컬/CI 설계 변경 확인, 완료는 별도 지정 작업. 추적 시작점 이전 전체 소급 없음.",
+    "rollback": "신규 도구와 npm 연결을 독립 변경으로 복구 가능. DB·배포 복구는 필요 없음. 실패를 피하려 기존 업무 규칙이나 고정 추적 시작점을 바꾸지 않음."
+  },
+  "uiStates": [],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "APP-20260905-06 / v1 / Next16.2.12",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "사용자 승인 계획. 실제 구현과 검증 근거는 이 기록에 별도 연결"
+    },
+    {
+      "id": "S2",
+      "state": "retired",
+      "version": "R8 기존 기각 기록 / bc48313",
+      "reference": "docs/R8_공용_자료_Cache_Components_canary.md",
+      "reason": "공용 캐시 시험안 기각·롤백 사실을 현재 설정과 대조하여 안내 정정"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "unit",
+      "target": "src/app/work-records.test.mjs",
+      "scenario": "두 예시, 미결정/누락/제외/해시/흐름/경로·CLI 회귀",
+      "expected": "정상만 통과하고 계획에 명시한 누락과 불일치를 차단",
+      "topics": [
+        "structure",
+        "behavior",
+        "data-leak"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "unit",
+      "target": "vitest.config.ts",
+      "scenario": "전체 기존 단위·계약·컴포넌트 검사",
+      "expected": "기존 기능 회귀 없음",
+      "topics": [
+        "structure",
+        "behavior"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "static",
+      "target": "scripts/check-feature-map.mjs",
+      "scenario": "소유권·변경 기록 연결·UI/서버 구조",
+      "expected": "기존/신규 구조 보호선과 실제 등록 일치",
+      "topics": [
+        "structure"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "static",
+      "target": "tsconfig.json",
+      "scenario": "타입 검사",
+      "expected": "타입 오류 없음",
+      "topics": [
+        "structure"
+      ]
+    },
+    {
+      "id": "T5",
+      "kind": "static",
+      "target": "eslint.config.mjs",
+      "scenario": "lint",
+      "expected": "오류/경고 없음",
+      "topics": [
+        "structure"
+      ]
+    },
+    {
+      "id": "T6",
+      "kind": "build",
+      "target": "package.json",
+      "scenario": "로컬 production build 및 prebuild 형식 단계",
+      "expected": "Git/루트 대장/아직 미완료 빌드 결과 의존 없이 빌드 통과",
+      "topics": [
+        "structure"
+      ]
+    },
+    {
+      "id": "T7",
+      "kind": "review",
+      "target": "docs/개발_지시서와_검증_기록.md",
+      "scenario": "로컬 링크·R/D/T 대응·독립 문서/코드 리뷰",
+      "expected": "필수 문서 연결·상태 구분·주요 누락 보완",
+      "topics": [
+        "structure"
+      ]
+    },
+    {
+      "id": "T8",
+      "kind": "static",
+      "target": "scripts/verify-react-request-cache.mjs",
+      "scenario": "기존 요청 단위 React 캐시 검사",
+      "expected": "기존 동작 유지",
+      "topics": [
+        "structure"
+      ]
+    }
+  ],
+  "verification": {
+    "fingerprint": "5dd3aa4ae266e1db2f777c8ad818e0170aa0393c959083fa33bbdb51488e35db",
+    "files": [
+      {
+        "path": ".github/workflows/pr-fast.yml",
+        "sha256": "4de706fc59d043b12c43129926e52901a4eb9e17b9494dd87840390530c71dd2"
+      },
+      {
+        "path": "architecture/work-records/examples/문법_기능_설계.json",
+        "sha256": "0be4e346069963db8ee22b78050eb9dbeecfe131cd878dd7c0ac2be31af8404a"
+      },
+      {
+        "path": "architecture/work-records/examples/작은_UI_수정.json",
+        "sha256": "ff9b052312666b650ff1ff745f1a30db04ab989fbebdda8548a122b25e41496a"
+      },
+      {
+        "path": "architecture/기능_소유권.json",
+        "sha256": "c68d02c1bbefc1b2505cadb2c7dc1a48ef535cf6f7bdd3435cf4d13f4d6a2132"
+      },
+      {
+        "path": "eslint.config.mjs",
+        "sha256": "d8c244c819921bdb70982e51f8bb2c5b5e8a7620a70eca8cde1c89c760113e61"
+      },
+      {
+        "path": "next.config.ts",
+        "sha256": "c779b3730f9dcab3806d1ac9ab52c6363ad1994f6bb33d3bb2ca3b5f946b1405"
+      },
+      {
+        "path": "package-lock.json",
+        "sha256": "5561b1916cdbd9b1c087c6050e18223345a05cca9dcff9a8a2c3db383f8dd45b"
+      },
+      {
+        "path": "package.json",
+        "sha256": "52a577f51420d4a602f9c039de86269958bb551d378e7a48b04b3a25aa073e69"
+      },
+      {
+        "path": "scripts/check-feature-map.mjs",
+        "sha256": "a128bbbb9249c62cde642512e826e0b236d2402b103b2879bb34e9ff15454833"
+      },
+      {
+        "path": "scripts/check-work-records.mjs",
+        "sha256": "b8a95754aa77e329ffd748ca91587996be221ea471a117ba816d0c61a0e2881f"
+      },
+      {
+        "path": "scripts/feature-map/change-impact.mjs",
+        "sha256": "af8174ede2eaf8eb710f3bd67d0b684a6ce5a14c31d2b9955a1e29123ac48a2a"
+      },
+      {
+        "path": "scripts/feature-map/common.mjs",
+        "sha256": "69b9dad7ca7d05246233c00e0f10666486ed55890c120a6ebba7f496fb8130bc"
+      },
+      {
+        "path": "scripts/feature-map/flow-verification.mjs",
+        "sha256": "8cec86985fff2751e944ae60163c0f5ae8ab18e0a36981ae24eaebb66df4f0fd"
+      },
+      {
+        "path": "scripts/feature-map/import-graph.mjs",
+        "sha256": "82edb9b2bcc06ab69f6e7b545062e54a2b9b4363aa3e6dbc31a7298635622716"
+      },
+      {
+        "path": "scripts/feature-map/owner-output.mjs",
+        "sha256": "17d5ba87dc9b0796d84ca70703198e4bb8d150f56f0e3deda9e9c05fcc8ab187"
+      },
+      {
+        "path": "scripts/feature-map/ownership-catalog.mjs",
+        "sha256": "6c83e89e9dd85dd3b5b94d6d44885c35ea27f2582c7633640f67d310110566d3"
+      },
+      {
+        "path": "scripts/feature-map/runtime-flow.mjs",
+        "sha256": "9c2915e2b4be51b55840dbfda3ef8452f510412191980eeb4e914a5766317afc"
+      },
+      {
+        "path": "scripts/verify-react-request-cache.mjs",
+        "sha256": "e5f8642218139aa15f81a4f03edfaa8a33a466be6dc6abe12751c02c1d7839ab"
+      },
+      {
+        "path": "scripts/verify-ui-architecture.mjs",
+        "sha256": "dd7b31f9017f71e0777596a794c7e841c52923966881534666614935a39ed880"
+      },
+      {
+        "path": "scripts/work-records/context.mjs",
+        "sha256": "2d2b3f848e04db2b3ad76ba06fb480589e82243b51d714f0a98b37b70982adf8"
+      },
+      {
+        "path": "scripts/work-records/evidence.mjs",
+        "sha256": "d95c7d886a03dd96fe3dfb7fb67579b719063aa870c0131da21ce0967904874e"
+      },
+      {
+        "path": "scripts/work-records/schema.mjs",
+        "sha256": "3b66793fca041818663c61b3499d9beb1f5ca70df768ad1d54a2cc77c0894ad0"
+      },
+      {
+        "path": "scripts/work-records/validation.mjs",
+        "sha256": "b7495cad8d51991ad0fc5b857ab1012576c3083c57aba33268da47944c368d9a"
+      },
+      {
+        "path": "src/app/application-layer-boundaries.test.ts",
+        "sha256": "c3fbff0d6499cac6cb7d1fe515df9b188ffe66f8341cc0d02b9cb94055a91d98"
+      },
+      {
+        "path": "src/app/mobile-production-regression-ui-contract.test.ts",
+        "sha256": "550d45c996e7a2ce286b5ae5099969f7ba7d3a42995887371319732aba1403ad"
+      },
+      {
+        "path": "src/app/preview-environment-contract.test.mjs",
+        "sha256": "d0185efa87e4906df970c921903569cea252982578c64f5cd3d34175aa0a6344"
+      },
+      {
+        "path": "src/app/server-architecture-ratchet.test.ts",
+        "sha256": "2f3864f59c99c394b03c42c17fa65007381820a919c6b45b43f3ba6cecd53b02"
+      },
+      {
+        "path": "src/app/ui-architecture-ratchet.test.ts",
+        "sha256": "0157d6a24cb6a66dd4d0cb488aaa42a1d39b8266e29c2892475060f7f2d730ac"
+      },
+      {
+        "path": "src/app/work-records.test.mjs",
+        "sha256": "1df391692873327c23664276de947c1c664d83b0b91dc28843840552db377755"
+      },
+      {
+        "path": "src/design-system/architecture-boundary.test.ts",
+        "sha256": "4a7e637626250266989ba83e2aa14c9c89813d820491a2023d6ee0c796ef2fab"
+      },
+      {
+        "path": "src/features/assignments/architecture-boundary.test.ts",
+        "sha256": "c10089bf2b90fbb96a1fb6546d612bbb0e3037130619ee2d2d730ad0ec3161b0"
+      },
+      {
+        "path": "src/test-support/module-boundary.test.ts",
+        "sha256": "d6dc252bef406aec356629a8c71dd3b1a8769e028f1a87e37b7991b0cfb2faa9"
+      },
+      {
+        "path": "src/test-support/module-boundary.ts",
+        "sha256": "88caa81a7f9e912cb0e3fc3667c0d82352e46f0999d61fd546597950ffc3b0c3"
+      },
+      {
+        "path": "src/test-support/server-architecture.ts",
+        "sha256": "d9111ea50343b4a72f02a5d5b14216f021b07eaed832da6f1c24c69d50743bbd"
+      },
+      {
+        "path": "tsconfig.json",
+        "sha256": "5bec101c734eb97d36f3f49b122ad4d37b68d796bfa608760d266c57cd6c50ac"
+      },
+      {
+        "path": "vitest.config.ts",
+        "sha256": "705e16d57f8b528b676a87707bb71dea3ed2d1389303f53ef10902ff4e2726ec"
+      }
+    ],
+    "runs": [
+      {
+        "checkId": "T1",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-05T14:49:53Z",
+        "command": "npm run verify",
+        "summary": "전용 83개 포함: 작은 UI/문법 가상 설계, 누락·권한/경로·미결정·과거 근거·해시·호스팅 경계 통과."
+      },
+      {
+        "checkId": "T2",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-05T14:49:53Z",
+        "command": "npm run verify",
+        "summary": "전체 377파일·2,102개 검사 통과. 마지막 코드 보완 뒤 전부 재실행."
+      },
+      {
+        "checkId": "T3",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-05T14:49:53Z",
+        "command": "npm run verify",
+        "summary": "기능 지도·실제 변경 기록 연결·UI 구조 통과. 서버 경계 65개는 전체 검사 및 별도 verify:server-architecture에서 통과."
+      },
+      {
+        "checkId": "T4",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-05T14:49:53Z",
+        "command": "npm run verify",
+        "summary": "tsc --noEmit 통과. 빌드의 TypeScript 검사도 통과."
+      },
+      {
+        "checkId": "T5",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-05T14:49:53Z",
+        "command": "npm run verify",
+        "summary": "eslint . 오류·경고 0. Git 제외 임시 시안만 검사 범위에서 제외; 실제 앱 규칙 유지."
+      },
+      {
+        "checkId": "T6",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-05T14:49:53Z",
+        "command": "npm run verify",
+        "summary": "로컬 production build 통과. prebuild 지도·형식 검사, 33개 정적 페이지 생성 완료. 배포 없음."
+      },
+      {
+        "checkId": "T7",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-05T14:49:53Z",
+        "command": "문서 로컬 링크·R/D/T 대조 및 읽기 전용 독립 문서/코드 리뷰",
+        "summary": "7문서의 로컬 링크 28개·R/D/T 18개 대응 누락 0. 독립 리뷰 지적 보완 및 좁은 재검토 종결."
+      },
+      {
+        "checkId": "T8",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-05T14:49:53Z",
+        "command": "npm run verify",
+        "summary": "React 요청 캐시 실행 결과 status ok, calls 2. 캐시 정책 변경 없음."
+      }
+    ]
+  }
+}

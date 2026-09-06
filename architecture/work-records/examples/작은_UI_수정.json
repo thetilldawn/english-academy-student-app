@@ -1,0 +1,275 @@
+{
+  "schemaVersion": 1,
+  "id": "EXAMPLE-SMALL",
+  "title": "가상 작은 UI 수정: 제목 글자 크기",
+  "size": "small",
+  "gate": "design",
+  "guide": "docs/예시_검토.md",
+  "baseline": "bc48313bc53840a44ab6505a8238eaabf7667eae",
+  "owners": [
+    "example-ui"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "none"
+  ],
+  "scope": [
+    {
+      "path": "src/features/example-ui/title.tsx",
+      "state": "existing",
+      "owner": "example-ui",
+      "flowIds": [
+        "example-title"
+      ]
+    },
+    {
+      "path": "src/features/example-ui/title.test.tsx",
+      "state": "existing",
+      "owner": "example-ui",
+      "flowIds": [
+        "example-title"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "가상 예시: 제목을 읽기 쉽게 표시",
+      "acceptance": "작은 화면에서도 제목과 닫기 조작이 겹치지 않고 기존 상태 표시 유지",
+      "disposition": "required",
+      "owners": [
+        "example-ui"
+      ],
+      "flowIds": [
+        "example-title"
+      ],
+      "checkIds": [
+        "T1"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "예시에서의 수정 범위",
+      "answer": "제목 표시만 변경하는 가상 사례",
+      "source": "절차 검사용 가정이며 실제 기능 개발 승인이 아님"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "not_applicable",
+      "reason": "제목 표시만 변경하며 해당 업무/데이터 동작은 변경하지 않음"
+    },
+    "ui": {
+      "status": "changed",
+      "reason": "제목 표시와 기존 상태의 회귀만 확인"
+    },
+    "state": {
+      "status": "not_applicable",
+      "reason": "제목 표시만 변경하며 해당 업무/데이터 동작은 변경하지 않음"
+    },
+    "domain": {
+      "status": "not_applicable",
+      "reason": "제목 표시만 변경하며 해당 업무/데이터 동작은 변경하지 않음"
+    },
+    "data": {
+      "status": "not_applicable",
+      "reason": "제목 표시만 변경하며 해당 업무/데이터 동작은 변경하지 않음"
+    },
+    "api": {
+      "status": "not_applicable",
+      "reason": "제목 표시만 변경하며 해당 업무/데이터 동작은 변경하지 않음"
+    },
+    "cache": {
+      "status": "not_applicable",
+      "reason": "제목 표시만 변경하며 해당 업무/데이터 동작은 변경하지 않음"
+    },
+    "asyncUi": {
+      "status": "not_applicable",
+      "reason": "제목 표시만 변경하며 해당 업무/데이터 동작은 변경하지 않음"
+    },
+    "security": {
+      "status": "not_applicable",
+      "reason": "제목 표시만 변경하며 해당 업무/데이터 동작은 변경하지 않음"
+    },
+    "styles": {
+      "status": "changed",
+      "reason": "제목 표시와 기존 상태의 회귀만 확인"
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "제목 표시와 기존 상태의 회귀만 확인"
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "not_applicable",
+      "reason": "개인/평가 자료나 조회·저장을 취급하지 않는 가상 표시 부품",
+      "checkIds": []
+    },
+    "data-leak": {
+      "status": "not_applicable",
+      "reason": "개인/평가 자료나 조회·저장을 취급하지 않는 가상 표시 부품",
+      "checkIds": []
+    },
+    "answer-leak": {
+      "status": "not_applicable",
+      "reason": "개인/평가 자료나 조회·저장을 취급하지 않는 가상 표시 부품",
+      "checkIds": []
+    },
+    "cache": {
+      "status": "not_applicable",
+      "reason": "개인/평가 자료나 조회·저장을 취급하지 않는 가상 표시 부품",
+      "checkIds": []
+    }
+  },
+  "design": {
+    "dataFlow": "기존 제목 props → 표시 부품. 생성·배정·응시·조회·검색·수정·삭제·기록 흐름 변경 없음: 표시만 변경.",
+    "reuse": "기존 제목 및 공용 상태 부품을 유지하고 CSS만 조정. 새 만능 부품 없음.",
+    "cache": "조회 없는 표시 수정: 기존 캐시 보관·갱신·폐기 유지.",
+    "compatibility": "기존 props·조작·탭 이동 계약 유지.",
+    "rollback": "제목 스타일만 되돌리고 동일 상태 표시 검사 재실행."
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "권한 확인 뒤 첫 요청 진행 중; 아직 성공/실패 아님",
+      "message": "목록을 불러오는 중입니다.",
+      "behavior": "가상 상위 화면의 기존 상태 회귀만 확인; 제목 부품에 조회·업무 상태를 추가하지 않음. 기존 제목 공간과 로딩 표시 유지",
+      "recovery": "요청 결과에 따라 대기 종료; 초기 0건 안내를 미리 표시하지 않음",
+      "component": "src/design-system/patterns/route-state/route-state.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "같은 사용자·권한의 이전 성공 결과가 있고 갱신 요청 진행 중",
+      "message": "목록을 다시 불러오는 중입니다.",
+      "behavior": "가상 상위 화면의 기존 상태 회귀만 확인; 제목 부품에 조회·업무 상태를 추가하지 않음. 기존 내용 유지; 새 조회를 추가하지 않음",
+      "recovery": "안전한 이전 자료 보존; 완료 뒤 갱신 종료; 취소/늦은 응답이 새 결과를 덮지 않음",
+      "component": "src/design-system/patterns/route-state/route-state.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "필수 시험 범위 미선택이며 제출 검증 전; 선택 검색어 공백은 전체 조회로 구분",
+      "message": "시험 범위를 선택해 주세요.",
+      "behavior": "가상 상위 화면의 기존 상태 회귀만 확인; 제목 부품에 조회·업무 상태를 추가하지 않음. 입력 옆 FieldHelp; 제출 시 필수 누락은 FieldError",
+      "recovery": "범위 입력 선택 가능; 기존 입력 보존; 선택 검색어 공백을 필수 오류로 취급하지 않음",
+      "component": "src/design-system/primitives/form/field.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "현재 사용자·검색어·필터의 최신 유효 요청 성공, 정상 응답 0건",
+      "message": "전체 목록: 등록된 문제가 없습니다. 검색 결과: 조건에 맞는 문제가 없습니다.",
+      "behavior": "가상 상위 화면의 기존 상태 회귀만 확인; 제목 부품에 조회·업무 상태를 추가하지 않음. 해당 목록 영역의 EmptyState. 정상 0건/null과 실패를 구분하고 현재 조건 성공 여부로 표시",
+      "recovery": "검색 조건 변경 가능. 이전 0건 뒤 새 검색 실패에는 이 안내 금지. 선택 필드 null은 항목에 없음 표시; 필수 응답 누락은 조회 실패",
+      "component": "src/design-system/patterns/feedback/feedback.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "제출 시 필수값 누락 또는 계약상 잘못된 입력; 선택값 빈 입력 제외",
+      "message": "시험 범위를 선택해 주세요.",
+      "behavior": "가상 상위 화면의 기존 상태 회귀만 확인; 제목 부품에 조회·업무 상태를 추가하지 않음. 입력 없는 표시 부품이므로 새 입력 오류 없음. 상위 입력 오류 가리지 않음",
+      "recovery": "입력 보존; 해당 입력에 focus 이동 후 수정·재제출",
+      "component": "src/design-system/primitives/form/field.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "현재 요청 통신/서버 실패 또는 필수 응답 형식 불일치; 오래된 요청 취소는 제외",
+      "message": "문제 목록을 불러오지 못했습니다. 다시 시도해 주세요.",
+      "behavior": "가상 상위 화면의 기존 상태 회귀만 확인; 제목 부품에 조회·업무 상태를 추가하지 않음. 상위 영역 조회 실패 안내 가리지 않음",
+      "recovery": "다시 시도 버튼으로 같은 조건 재조회; 성공 뒤 오류 제거. 이전 자료 유지 시 이전 결과임을 표시; 새 조건의 빈 결과 동시 표시 금지",
+      "component": "src/design-system/patterns/route-state/route-state.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "저장 실패 확정 또는 응답 지연으로 결과 불명확",
+      "message": "실패 확정: 저장하지 못했습니다. 다시 시도해 주세요. 결과 불명확: 저장 결과를 확인하지 못했습니다. 목록에서 먼저 확인해 주세요.",
+      "behavior": "가상 상위 화면의 기존 상태 회귀만 확인; 제목 부품에 조회·업무 상태를 추가하지 않음. 폼의 InlineError. 입력 보존 및 저장 결과 확정/불명확을 구분",
+      "recovery": "입력 보존; 실패 확정 때 안전한 재시도. 결과 불명확 때 목록 확인과 중복 제출 방지",
+      "component": "src/design-system/patterns/feedback/feedback.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "로그인 만료 또는 서버 권한 거절",
+      "message": "만료: 다시 로그인해 주세요. 권한 거절: 이 화면을 볼 수 있는 권한이 없습니다.",
+      "behavior": "가상 상위 화면의 기존 상태 회귀만 확인; 제목 부품에 조회·업무 상태를 추가하지 않음. Notice의 인증 안내. 개인 자료 숨김과 실제 로그인/처음 이동 버튼 연결",
+      "recovery": "다시 로그인 또는 처음으로 이동; 개인 자료 숨김·이전 사용자 캐시 재노출 금지. 기존 숨김 404 정책 유지",
+      "component": "src/design-system/patterns/feedback/feedback.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "없는 주소 또는 권한 정책에 맞게 조회한 특정 대상 없음; 통신 실패/목록 0건과 구분",
+      "message": "페이지를 찾을 수 없습니다.",
+      "behavior": "가상 상위 화면의 기존 상태 회귀만 확인; 제목 부품에 조회·업무 상태를 추가하지 않음. 가장 가까운 not-found.tsx 안내와 공용 이동 버튼; 가상 문구이며 현재 앱 수정 아님",
+      "recovery": "처음으로 버튼으로 / 이동; 모달 진입·직접 주소·새로고침에서도 복구 가능",
+      "component": "src/app/not-found.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "예상 결과 계약에 포함되지 않은 렌더링 예외",
+      "message": "화면을 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.",
+      "behavior": "가상 상위 화면의 기존 상태 회귀만 확인; 제목 부품에 조회·업무 상태를 추가하지 않음. 상위 오류 경계와 안전한 식별번호 안내 유지",
+      "recovery": "다시 시도 버튼으로 경계 reset; 실제 진단과 연결된 오류번호만 보조 표시. 번호가 없어도 쉬운 안내 유지",
+      "component": "src/app/error.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "형식 v1 / 가상 예시",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "작은 UI 변경도 영향과 상태 회귀 검사를 생략하지 않음"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "component",
+      "target": "src/features/example-ui/title.test.tsx",
+      "scenario": "가상 부품의 모바일 제목·닫기·기존 상태 표시 검사; 미선택/선택 빈 검색어/현재 조건 성공 0건/null/필수 응답 누락/이전 0건 뒤 새 검색 실패/재시도 성공/404·모달 직접 접근/저장 결과 불명확",
+      "expected": "가상 상태별 실제 쉬운 한국어 문구·버튼·입력 보존·복구 일치. 실패와 새 조건의 빈 결과 동시 표시, 영어 오류 원문, 확인 못한 원인 단정 없음. 실제 앱 실행 증거가 아님.",
+      "topics": [
+        "behavior",
+        "error-ui",
+        "structure",
+        "ui-copy"
+      ]
+    }
+  ],
+  "verification": null
+}

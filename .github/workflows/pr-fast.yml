@@ -27,7 +27,7 @@ jobs:
         shell: bash
         run: |
           files="$(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD")"
-          if grep -Eq '^(src/|test/|scripts/|supabase/|architecture/|\.github/|package(-lock)?\.json$|playwright\.config\.mjs$|proxy\.ts$|vercel\.json$|next\.config\.|tsconfig\.json$|vitest\.config\.|eslint\.config\.)' <<<"$files"; then
+          if grep -Eq '^(src/|test/|e2e/|public/|scripts/|supabase/|architecture/|\.github/|[^/]+\.(cjs|mjs|js|jsx|cts|mts|ts|tsx|json)$)' <<<"$files"; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"

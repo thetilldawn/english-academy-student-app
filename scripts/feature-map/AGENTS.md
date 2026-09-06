@@ -8,7 +8,7 @@
 - `import-graph.mjs`: TypeScript import 분석과 기능 간 의존 관계 수집
 - `runtime-flow.mjs`: 사용자 행동 흐름의 UI→상태→서버→계약·계산 실행 경로 자동 추적
 - `flow-verification.mjs`: 흐름 메타자료·실제 import 간선·진입점·예외 검증
-- `change-impact.mjs`: Git 변경 파일을 소유 기능과 실행 흐름에 연결
+- `change-impact.mjs`: Git 변경 파일을 소유 기능과 실행 흐름에 연결. `collectChangedImpact`는 내부 검사에 같은 결과를 반환하고 `printChangedImpact`는 표시만 더한다. `buildFlowPathIndex`의 실제 흐름 연결도 개발 기록 검사에서 재사용한다.
 - `owner-output.mjs`: 기능·공용 소유 범주의 사람이 읽는 길찾기 출력
 - `ownership-catalog.mjs`: 검사·변경 영향·출력이 함께 쓰는 정확한 소유 목록과 표시 이름
 - 상위 `scripts/check-feature-map.mjs`: 등록부 전체 검증과 명령 진입점

@@ -1,0 +1,329 @@
+{
+  "schemaVersion": 1,
+  "id": "EXAMPLE-GRAMMAR",
+  "title": "가상 문법 기능 설계 (구현·승인 아님)",
+  "size": "full",
+  "gate": "design",
+  "guide": "docs/예시_검토.md",
+  "baseline": "bc48313bc53840a44ab6505a8238eaabf7667eae",
+  "owners": [
+    "example-grammar"
+  ],
+  "plannedOwners": [
+    "example-grammar"
+  ],
+  "plannedFlows": [
+    "grammar-manage",
+    "grammar-attempt"
+  ],
+  "dataClasses": [
+    "personal",
+    "assessment-secret"
+  ],
+  "scope": [
+    {
+      "path": "src/features/example-grammar/manage.tsx",
+      "state": "planned",
+      "owner": "example-grammar",
+      "flowIds": [
+        "grammar-manage"
+      ]
+    },
+    {
+      "path": "src/features/example-grammar/attempt.tsx",
+      "state": "planned",
+      "owner": "example-grammar",
+      "flowIds": [
+        "grammar-attempt"
+      ]
+    },
+    {
+      "path": "src/features/example-grammar/grammar.test.ts",
+      "state": "planned",
+      "owner": "example-grammar",
+      "flowIds": [
+        "grammar-manage",
+        "grammar-attempt"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "가상 생성·조회·검색·수정·삭제·배정 관리",
+      "acceptance": "권한 있는 사용자만 자료를 관리하고 배정과 변경 이력을 연결",
+      "disposition": "required",
+      "owners": [
+        "example-grammar"
+      ],
+      "flowIds": [
+        "grammar-manage"
+      ],
+      "checkIds": [
+        "T1",
+        "T2"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "가상 응시·결과·추적 흐름",
+      "acceptance": "본인 응시만 조회하며 제출 전 정답이 응답·HTML·브라우저 자료에 없음",
+      "disposition": "required",
+      "owners": [
+        "example-grammar"
+      ],
+      "flowIds": [
+        "grammar-attempt"
+      ],
+      "checkIds": [
+        "T1",
+        "T2"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "가상 문법 기능 설계의 범위",
+      "answer": "문법 문제 생성·배정·응시·조회·검색·수정·삭제·기록의 연결을 설계하는 가상 사례; 실제 구현 승인이 아님",
+      "source": "절차 검사용 가정이며 실제 기능 개발 승인이 아님"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "changed",
+      "reason": "가상 전체 기능 설계에서 routing의 기존 연결 및 상태를 검토"
+    },
+    "ui": {
+      "status": "changed",
+      "reason": "가상 전체 기능 설계에서 ui의 기존 연결 및 상태를 검토"
+    },
+    "state": {
+      "status": "changed",
+      "reason": "가상 전체 기능 설계에서 state의 기존 연결 및 상태를 검토"
+    },
+    "domain": {
+      "status": "changed",
+      "reason": "가상 전체 기능 설계에서 domain의 기존 연결 및 상태를 검토"
+    },
+    "data": {
+      "status": "changed",
+      "reason": "가상 전체 기능 설계에서 data의 기존 연결 및 상태를 검토"
+    },
+    "api": {
+      "status": "changed",
+      "reason": "가상 전체 기능 설계에서 api의 기존 연결 및 상태를 검토"
+    },
+    "cache": {
+      "status": "changed",
+      "reason": "가상 전체 기능 설계에서 cache의 기존 연결 및 상태를 검토"
+    },
+    "asyncUi": {
+      "status": "changed",
+      "reason": "가상 전체 기능 설계에서 asyncUi의 기존 연결 및 상태를 검토"
+    },
+    "security": {
+      "status": "changed",
+      "reason": "가상 전체 기능 설계에서 security의 기존 연결 및 상태를 검토"
+    },
+    "styles": {
+      "status": "changed",
+      "reason": "가상 전체 기능 설계에서 styles의 기존 연결 및 상태를 검토"
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "가상 전체 기능 설계에서 tests의 기존 연결 및 상태를 검토"
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "개인 응시 및 비공개 정답을 서버에서 보호하고 갱신 경계를 분리",
+      "checkIds": [
+        "T2"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "개인 응시 및 비공개 정답을 서버에서 보호하고 갱신 경계를 분리",
+      "checkIds": [
+        "T2"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "개인 응시 및 비공개 정답을 서버에서 보호하고 갱신 경계를 분리",
+      "checkIds": [
+        "T2"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "개인 응시 및 비공개 정답을 서버에서 보호하고 갱신 경계를 분리",
+      "checkIds": [
+        "T2"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "가상 관리자 생성·수정·삭제 → 서버 권한 및 검증 → 문제 소유 저장소 → 배정 → 학생 응시 → 서버 채점 → 결과/기록. 목록 조회·검색은 권한 범위와 페이지 단위. 정답은 학생 요청 응답에서 제외.",
+    "reuse": "공용 Field·Dialog·RouteLoadingState와 기존 인증·배정 계약을 우선 검토. 문법 고유 규칙은 별도 domain, 흐름 조합은 application, UI와 transport는 계산을 복제하지 않음.",
+    "cache": "권한과 개인 응시는 요청 단위로만 조회. 공개 가능한 목록만 별도 판정. 저장 후 해당 사용자 화면을 갱신하고 로그아웃/사용자 전환 때 개인 캐시 폐기. 숫자 TTL은 이 예시로 확정하지 않음.",
+    "compatibility": "기존 단어 시험 계약을 덮어쓰지 않고 시험 종류 계약 확장 여부를 실제 설계에서 확인. 가상 결정은 사용자 승인으로 전용하지 않음.",
+    "rollback": "실제 개발은 미착수. 도입 시 신규 진입점 차단·이전 계약 유지·데이터 보존을 검토하고 삭제/마이그레이션은 별도 승인."
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "권한 확인 뒤 첫 요청 진행 중; 아직 성공/실패 아님",
+      "message": "목록을 불러오는 중입니다.",
+      "behavior": "권한 확인 후 영역별 스켈레톤",
+      "recovery": "요청 결과에 따라 대기 종료; 초기 0건 안내를 미리 표시하지 않음",
+      "component": "src/design-system/patterns/route-state/route-state.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "같은 사용자·권한의 이전 성공 결과가 있고 갱신 요청 진행 중",
+      "message": "목록을 다시 불러오는 중입니다.",
+      "behavior": "기존 안전한 목록 유지 및 갱신 표시",
+      "recovery": "안전한 이전 자료 보존; 완료 뒤 갱신 종료; 취소/늦은 응답이 새 결과를 덮지 않음",
+      "component": "src/design-system/patterns/route-state/route-state.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "필수 시험 범위 미선택이며 제출 검증 전; 선택 검색어 공백은 전체 조회로 구분",
+      "message": "시험 범위를 선택해 주세요.",
+      "behavior": "입력 옆 FieldHelp; 제출 시 필수 누락은 FieldError",
+      "recovery": "범위 입력 선택 가능; 기존 입력 보존; 선택 검색어 공백을 필수 오류로 취급하지 않음",
+      "component": "src/design-system/primitives/form/field.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "현재 사용자·검색어·필터의 최신 유효 요청 성공, 정상 응답 0건",
+      "message": "전체 목록: 등록된 문제가 없습니다. 검색 결과: 조건에 맞는 문제가 없습니다.",
+      "behavior": "해당 목록 영역의 EmptyState. 정상 0건/null과 실패를 구분하고 현재 조건 성공 여부로 표시",
+      "recovery": "검색 조건 변경 가능. 이전 0건 뒤 새 검색 실패에는 이 안내 금지. 선택 필드 null은 항목에 없음 표시; 필수 응답 누락은 조회 실패",
+      "component": "src/design-system/patterns/feedback/feedback.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "제출 시 필수값 누락 또는 계약상 잘못된 입력; 선택값 빈 입력 제외",
+      "message": "시험 범위를 선택해 주세요.",
+      "behavior": "FieldError로 입력 부근 오류",
+      "recovery": "입력 보존; 해당 입력에 focus 이동 후 수정·재제출",
+      "component": "src/design-system/primitives/form/field.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "현재 요청 통신/서버 실패 또는 필수 응답 형식 불일치; 오래된 요청 취소는 제외",
+      "message": "문제 목록을 불러오지 못했습니다. 다시 시도해 주세요.",
+      "behavior": "PanelLoadFailure와 해당 영역 다시 시도",
+      "recovery": "다시 시도 버튼으로 같은 조건 재조회; 성공 뒤 오류 제거. 이전 자료 유지 시 이전 결과임을 표시; 새 조건의 빈 결과 동시 표시 금지",
+      "component": "src/design-system/patterns/route-state/route-state.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "저장 실패 확정 또는 응답 지연으로 결과 불명확",
+      "message": "실패 확정: 저장하지 못했습니다. 다시 시도해 주세요. 결과 불명확: 저장 결과를 확인하지 못했습니다. 목록에서 먼저 확인해 주세요.",
+      "behavior": "폼의 InlineError. 입력 보존 및 저장 결과 확정/불명확을 구분",
+      "recovery": "입력 보존; 실패 확정 때 안전한 재시도. 결과 불명확 때 목록 확인과 중복 제출 방지",
+      "component": "src/design-system/patterns/feedback/feedback.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "로그인 만료 또는 서버 권한 거절",
+      "message": "만료: 다시 로그인해 주세요. 권한 거절: 이 화면을 볼 수 있는 권한이 없습니다.",
+      "behavior": "Notice의 인증 안내. 개인 자료 숨김과 실제 로그인/처음 이동 버튼 연결",
+      "recovery": "다시 로그인 또는 처음으로 이동; 개인 자료 숨김·이전 사용자 캐시 재노출 금지. 기존 숨김 404 정책 유지",
+      "component": "src/design-system/patterns/feedback/feedback.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "없는 주소 또는 권한 정책에 맞게 조회한 특정 대상 없음; 통신 실패/목록 0건과 구분",
+      "message": "페이지를 찾을 수 없습니다.",
+      "behavior": "가장 가까운 not-found.tsx 안내와 공용 이동 버튼; 가상 문구이며 현재 앱 수정 아님",
+      "recovery": "처음으로 버튼으로 / 이동; 모달 진입·직접 주소·새로고침에서도 복구 가능",
+      "component": "src/app/not-found.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "예상 결과 계약에 포함되지 않은 렌더링 예외",
+      "message": "화면을 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.",
+      "behavior": "적절한 오류 경계에서 내부정보 없는 안내와 식별번호",
+      "recovery": "다시 시도 버튼으로 경계 reset; 실제 진단과 연결된 오류번호만 보조 표시. 번호가 없어도 쉬운 안내 유지",
+      "component": "src/app/error.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "형식 v1 / 가상 예시",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "작은 UI 변경도 영향과 상태 회귀 검사를 생략하지 않음"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "integration",
+      "target": "src/features/example-grammar/grammar.test.ts",
+      "scenario": "가상 관리·배정·응시·조회·검색·수정·삭제·이력 흐름, 실패시 입력 보존; 미선택/선택 빈 검색어/현재 조건 성공 0건/null/필수 응답 누락/이전 0건 뒤 새 검색 실패/재시도 성공/404·모달 직접 접근/저장 결과 불명확",
+      "expected": "가상 상태별 실제 쉬운 한국어 문구·버튼·입력 보존·복구 일치. 실패와 새 조건의 빈 결과 동시 표시, 영어 오류 원문, 확인 못한 원인 단정 없음. 실제 앱 실행 증거가 아님.",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "integration",
+      "target": "src/features/example-grammar/grammar.test.ts",
+      "scenario": "다른 학생 식별자·직접 API 접근·캐시 사용자 전환·제출 전 정답 노출 검사",
+      "expected": "개인 자료와 정답 노출 차단, 저장 후 해당 목록 갱신, 재인증 때 이전 개인자료 폐기",
+      "topics": [
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    }
+  ],
+  "verification": null
+}

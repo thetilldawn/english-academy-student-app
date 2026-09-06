@@ -9,6 +9,7 @@ export default defineConfig([
     ".next/**",
     "out/**",
     "coverage/**",
+    ".codex-tmp/**",
     "supabase/.temp/**",
     "next-env.d.ts",
   ]),
