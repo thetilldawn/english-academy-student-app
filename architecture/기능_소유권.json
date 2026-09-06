@@ -1589,6 +1589,14 @@
   ],
   "architectureGuardOwners": [
     {
+      "path": "src/lib/quiz/pronunciation-snapshot.test.ts",
+      "owner": "shared-quiz-domain"
+    },
+    {
+      "path": "src/lib/quiz/pronunciation-storage.test.ts",
+      "owner": "shared-quiz-domain"
+    },
+    {
       "path": "src/lib/quiz/cached-flow-contract.test.ts",
       "owner": "shared-quiz-domain"
     },
