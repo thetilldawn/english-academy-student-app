@@ -1,55 +1,27 @@
-"use client";
-
 import { Button } from "@/design-system/primitives/button/button";
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-  Input,
-} from "@/design-system/primitives/form/field";
+import { Field, FieldError, FieldLabel, Input } from "@/design-system/primitives/form/field";
 import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
-
-import type { VocabAssignmentPlannerController } from "../controller/use-vocab-assignment-planner";
-import type { VocabAssignmentFieldKey } from "../presentation/vocab-assignment-field-errors";
-import { assignmentUnitRangeLabel } from "../presentation/assignment-unit-range-label";
+import type { VocabSplitOverflowPolicy } from "../domain/vocab-assignment-contract";
+import type { VocabUnitAllocationView } from "../presentation/vocab-question-view";
 import styles from "./vocab-assignment-planner.module.css";
 
+export type VocabUnitAllocationFieldsProps = {
+  view: VocabUnitAllocationView;
+  unitsPerSession: number;
+  overflowPolicy: VocabSplitOverflowPolicy;
+  fieldErrors: { unitsPerSession?: string; overflowPolicy?: string };
+  onUnitsPerSessionChange: (value: number) => void;
+  onOverflowPolicyChange: (value: VocabSplitOverflowPolicy) => void;
+};
 export function VocabUnitAllocationFields({
-  controller,
-  fieldErrors = {},
-}: {
-  controller: VocabAssignmentPlannerController;
-  fieldErrors?: Partial<Record<VocabAssignmentFieldKey, string>>;
-}) {
-  const usesRangeUnits = controller.planner.assignmentMode === "per_session";
-  const scheduleEnabled = controller.planner.scheduleEnabled !== false;
-  const showsContinuation = usesRangeUnits ||
-    controller.planner.assignmentMode === "word_count";
-  if (!showsContinuation) {
-    return null;
-  }
-
+  view, unitsPerSession, overflowPolicy, fieldErrors, onUnitsPerSessionChange, onOverflowPolicyChange,
+}: VocabUnitAllocationFieldsProps) {
+  if (!view.visible) return null;
   const overflowError = fieldErrors.overflowPolicy;
   const commonCountError = fieldErrors.unitsPerSession;
-  const remainingUnitCount = controller.unitAllocation?.remainingUnitIds.length ?? 0;
-  const unitById = new Map(
-    controller.selectedUnits.map((unit) => [unit.id, unit]),
-  );
-  const remainingUnits = (
-    controller.unitAllocation?.remainingUnitIds ?? []
-  ).flatMap((unitId) => {
-    const unit = unitById.get(unitId);
-    return unit ? [unit] : [];
-  });
-  const remainingRangeLabel = remainingUnits.length === 0
-    ? ""
-    : assignmentUnitRangeLabel(
-        remainingUnits.map((unit) => unit.label),
-        remainingUnits.map((unit) => unit.sortIndex),
-      );
   return (
     <div className={styles.fieldStack}>
-      {usesRangeUnits ? (
+      {view.showUnitsPerSession ? (
         <Field as="label">
           <FieldLabel as="span">회차당 단위 수</FieldLabel>
           <Input
@@ -61,12 +33,12 @@ export function VocabUnitAllocationFields({
             max={30}
             min={1}
             onChange={(event) =>
-              controller.actions.changeUnitsPerSession(
+              onUnitsPerSessionChange(
                 Number(event.target.value),
               )
             }
             type="number"
-            value={controller.planner.unitsPerSession}
+            value={unitsPerSession}
           />
           <small>
             선택한 범위를 앞에서부터 이 수만큼씩 묶어 각 회차에 배정합니다.
@@ -79,7 +51,7 @@ export function VocabUnitAllocationFields({
         </Field>
       ) : null}
 
-      {scheduleEnabled ? (
+      {view.showOverflow ? (
         <Field>
           <FieldLabel as="span" id="vocab-overflow-policy-label">
             <HelpTip
@@ -99,16 +71,16 @@ export function VocabUnitAllocationFields({
             tabIndex={-1}
           >
             <Button
-              aria-pressed={controller.planner.overflowPolicy === "leave"}
-              onClick={() => controller.actions.changeOverflowPolicy("leave")}
+              aria-pressed={overflowPolicy === "leave"}
+              onClick={() => onOverflowPolicyChange("leave")}
               size="small"
               variant="filter"
             >
               가능한 범위까지만
             </Button>
             <Button
-              aria-pressed={controller.planner.overflowPolicy === "continue_weekly"}
-              onClick={() => controller.actions.changeOverflowPolicy("continue_weekly")}
+              aria-pressed={overflowPolicy === "continue_weekly"}
+              onClick={() => onOverflowPolicyChange("continue_weekly")}
               size="small"
               variant="filter"
             >
@@ -123,13 +95,8 @@ export function VocabUnitAllocationFields({
         </Field>
       ) : null}
 
-      {usesRangeUnits ? (
-        <span className={styles.candidateSummary} aria-live="polite">
-          기본 {controller.unitAllocation?.defaultSessionCount ?? 0}회
-          {remainingUnitCount > 0
-            ? ` · 남음 ${remainingRangeLabel} (${remainingUnitCount}단위)`
-            : ""}
-        </span>
+      {view.summary !== null ? (
+        <span className={styles.candidateSummary} aria-live="polite">{view.summary}</span>
       ) : null}
     </div>
   );

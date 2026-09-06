@@ -1,0 +1,55 @@
+{
+  "workId": "APP-20260906-06",
+  "ranAt": "2026-09-05T22:38:00.000Z",
+  "fingerprint": "0eb9fd74e182a43d1b6bbebc9867673f065b9bf8f653186dc02f4e22bc2aaf3e",
+  "inputFiles": 552,
+  "testFiles": 393,
+  "passedTests": 2356,
+  "runs": [
+    {
+      "checkId": "T1",
+      "result": "pass",
+      "environment": "local",
+      "ranAt": "2026-09-05T22:38:00.000Z",
+      "command": "npm run test",
+      "summary": "수량/단위 표시 변환9개 포함 전체 회귀 통과"
+    },
+    {
+      "checkId": "T2",
+      "result": "pass",
+      "environment": "local",
+      "ranAt": "2026-09-05T22:38:00.000Z",
+      "command": "npm run test",
+      "summary": "독립 수량2/단위1 및 전체 역할/호출부/별칭/타입지우기 경계53검사 통과"
+    },
+    {
+      "checkId": "T3",
+      "result": "pass",
+      "environment": "local",
+      "ranAt": "2026-09-05T22:38:00.000Z",
+      "command": "npm run test",
+      "summary": "실제 범위 조립 활성화→변경 순서와 기존 단일/일괄/회차/날짜/계산 회귀 통과"
+    },
+    {
+      "checkId": "T4",
+      "result": "pass",
+      "environment": "local",
+      "ranAt": "2026-09-05T22:38:00.000Z",
+      "command": "npm run test + typecheck + lint + verify:architecture:static + request-cache + isolated next build + git diff --check",
+      "summary": "전체393파일2356검사; 타입/lint/구조/요청캐시 calls2/새 빌드/diff 통과. 빌드 뒤 변경은 검사기와 기록이며 마지막 타입 재검사 통과. 서버exit0"
+    },
+    {
+      "checkId": "T5",
+      "result": "pass",
+      "environment": "local",
+      "ranAt": "2026-09-05T22:38:00.000Z",
+      "command": "independent read-only review + follow-up review",
+      "summary": "기존 수량 입력 회귀P1/P2없음; 호출부/타입지우기 검사 P2 보완 후 독립 재검토 종결"
+    }
+  ],
+  "unverified": [
+    "새 브라우저/전폭 시각",
+    "실DB/운영 인증/비용/성능"
+  ],
+  "externalWrites": false
+}
