@@ -1,6 +1,7 @@
 import {
   ISO_WEEKDAYS,
   type IsoWeekday,
+  type VocabRangeDistribution,
   type VocabExtraDatePolicy,
   type VocabScheduleDraft,
   type VocabScheduleSlot,
@@ -14,6 +15,42 @@ export { resolveVocabUnitCountsForDates } from "@/lib/admin/vocab-unit-allocatio
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
+
+export type VocabScheduleCounts = {
+  baseSessionCount: number;
+  currentScheduleCount: number;
+  remainingSessionCount: number;
+  requiresExtraDateDecision: boolean;
+  repeatCycleCount: number;
+};
+
+export function resolveVocabScheduleCounts(input: {
+  scheduleEnabled: boolean;
+  distribution: VocabRangeDistribution;
+  slotCount: number;
+  defaultSessionCount?: number | null;
+  extraDateDecisionSessionCount?: number | null;
+  requiresExtraDateDecision: boolean;
+  repeatCycleCount: number;
+}): VocabScheduleCounts {
+  const baseSessionCount = (input.requiresExtraDateDecision
+    ? input.extraDateDecisionSessionCount ?? input.defaultSessionCount
+    : input.defaultSessionCount) ?? 0;
+  const currentScheduleCount = !input.scheduleEnabled
+    ? 1
+    : input.distribution === "repeat"
+      ? input.slotCount
+      : Math.min(input.slotCount, baseSessionCount);
+  return {
+    baseSessionCount,
+    currentScheduleCount,
+    remainingSessionCount: input.distribution === "repeat"
+      ? 0
+      : Math.max(0, baseSessionCount - currentScheduleCount),
+    requiresExtraDateDecision: input.requiresExtraDateDecision,
+    repeatCycleCount: input.repeatCycleCount,
+  };
+}
 
 export function parseCalendarDate(value: string) {
   if (!DATE_PATTERN.test(value)) return null;

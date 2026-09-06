@@ -1,8 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { toast } from "sonner";
-
 import { Button } from "@/design-system/primitives/button/button";
 import { MetaTag } from "@/design-system/primitives/badge/badge";
 import {
@@ -12,77 +9,35 @@ import {
   Input,
 } from "@/design-system/primitives/form/field";
 import { HelpTip, inlineHelpClassName } from "@/design-system/primitives/tooltip/help-tip";
-import { isoToKoreanDateTimeLocal } from "@/lib/deadline";
 
-import type { VocabAssignmentScreenController } from "../controller/use-vocab-assignment-screen";
-import type {
-  VocabAssignmentFieldKey,
-} from "../presentation/vocab-assignment-field-errors";
+import type { VocabScheduleSlotOverride, VocabTimeTemplate } from "../domain/vocab-assignment-contract";
+import type { VocabScheduleSessionRow } from "../presentation/vocab-schedule-view";
 import styles from "./vocab-assignment-planner.module.css";
 
-function sessionDateLabel(date: string) {
-  const parsed = new Date(`${date}T00:00:00Z`);
-  return Number.isNaN(parsed.getTime())
-    ? date
-    : new Intl.DateTimeFormat("ko-KR", {
-        month: "long",
-        day: "numeric",
-        weekday: "short",
-        timeZone: "UTC",
-      }).format(parsed);
-}
+export type VocabScheduleDetailFieldsProps = {
+  availableTimeEnabled: boolean;
+  sessionRows: readonly VocabScheduleSessionRow[];
+  timeTemplates: readonly VocabTimeTemplate[];
+  templateName: string;
+  templateSaving: boolean;
+  onSessionScheduleChange: (session: number, value: VocabScheduleSlotOverride) => void;
+  onApplyTemplate: (template: VocabTimeTemplate) => void;
+  onTemplateNameChange: (name: string) => void;
+  onSaveTemplate: () => void;
+};
 
 export function VocabScheduleDetailFields({
-  controller,
-  fieldErrors,
-}: {
-  controller: VocabAssignmentScreenController;
-  fieldErrors: Partial<Record<VocabAssignmentFieldKey, string>>;
-}) {
-  const [templateName, setTemplateName] = useState("");
-  const availableTimeEnabled =
-    controller.planner.schedule.availableTimeEnabled !== false;
-  const summary = controller.bulk.preview?.commonPlanSummary ?? null;
-  const previewSessions = controller.planner.schedule.weekdays.length > 0
-    ? summary?.sessions ?? []
-    : [];
-  const sessionRowCount = Math.max(
-    controller.scheduleSlots.length,
-    previewSessions.length,
-  );
-  const sessionRows = Array.from({ length: sessionRowCount }, (_, index) => {
-    const slot = controller.scheduleSlots[index] ?? null;
-    const preview = previewSessions[index] ?? null;
-    const availableLocalDateTime = slot?.availableLocalDateTime ??
-      (preview ? isoToKoreanDateTimeLocal(preview.availableFrom) : "");
-    const deadlineLocalDateTime = slot?.deadlineLocalDateTime ??
-      (preview?.availableUntil
-        ? isoToKoreanDateTimeLocal(preview.availableUntil)
-        : "");
-    return {
-      availableLocalDateTime,
-      date: slot?.date ?? availableLocalDateTime.slice(0, 10),
-      deadlineLocalDateTime,
-      editableSlot: slot,
-      questionCount: preview?.questionCount ?? null,
-      queued:
-        controller.distribution === "split" &&
-        (preview?.sessionNumber ?? slot?.sessionNumber ?? index + 1) > 1,
-      sessionNumber: preview?.sessionNumber ?? slot?.sessionNumber ?? index + 1,
-    };
-  });
-
+  availableTimeEnabled, sessionRows, timeTemplates, templateName, templateSaving,
+  onSessionScheduleChange, onApplyTemplate, onTemplateNameChange, onSaveTemplate,
+}: VocabScheduleDetailFieldsProps) {
   return (
     <>
       {sessionRows.length > 0 ? (
         <div className={styles.sessionTimeArea}>
           <FieldLabel as="span">회차별 시간</FieldLabel>
           {sessionRows.map((row) => {
-            const availableError =
-              fieldErrors[`session-${row.sessionNumber}-available`];
-            const deadlineError =
-              fieldErrors[`session-${row.sessionNumber}-deadline`];
-            if (!row.editableSlot) {
+            const { availableError, deadlineError } = row;
+            if (!row.editable) {
               return (
                 <div
                   className={styles.sessionTimeRow}
@@ -90,20 +45,12 @@ export function VocabScheduleDetailFields({
                 >
                   <span className={styles.sessionTimeIdentity}>
                     <strong>
-                      {row.sessionNumber}회차 [{sessionDateLabel(row.date)}]
-                      {row.questionCount === null
-                        ? ""
-                        : ` ${row.questionCount}개`}
+                      {row.label}
                     </strong>
                     {row.queued ? <MetaTag tone="neutral">완료 후 생성</MetaTag> : null}
                   </span>
                   <span className={styles.generatedSessionTime}>
-                    {availableTimeEnabled
-                      ? `공개 ${row.availableLocalDateTime.slice(11, 16)}`
-                      : "즉시 공개"}
-                    {row.deadlineLocalDateTime
-                      ? ` / 마감 ${row.deadlineLocalDateTime.slice(0, 10)} ${row.deadlineLocalDateTime.slice(11, 16)}`
-                      : ""}
+                    {row.generatedTimeLabel}
                   </span>
                 </div>
               );
@@ -112,10 +59,7 @@ export function VocabScheduleDetailFields({
               <div className={styles.sessionTimeRow} key={row.sessionNumber}>
                 <span className={styles.sessionTimeIdentity}>
                   <strong>
-                    {row.sessionNumber}회차 [{sessionDateLabel(row.date)}]
-                    {row.questionCount === null
-                      ? ""
-                      : ` ${row.questionCount}개`}
+                    {row.label}
                   </strong>
                   {row.queued ? <MetaTag tone="neutral">완료 후 생성</MetaTag> : null}
                 </span>
@@ -129,7 +73,7 @@ export function VocabScheduleDetailFields({
                       aria-invalid={Boolean(availableError)}
                       data-field-key={`session-${row.sessionNumber}-available`}
                       onChange={(event) =>
-                        controller.actions.updateSessionSchedule(
+                        onSessionScheduleChange(
                           row.sessionNumber,
                           {
                             availableLocalDateTime: event.target.value,
@@ -156,7 +100,7 @@ export function VocabScheduleDetailFields({
                     aria-invalid={Boolean(deadlineError)}
                     data-field-key={`session-${row.sessionNumber}-deadline`}
                     onChange={(event) =>
-                      controller.actions.updateSessionSchedule(
+                      onSessionScheduleChange(
                         row.sessionNumber,
                         {
                           availableLocalDateTime: row.availableLocalDateTime,
@@ -184,12 +128,12 @@ export function VocabScheduleDetailFields({
             현재 공개·마감·제한시간을 저장해 다음 배정에서 바로 적용합니다.
           </HelpTip>
         </FieldLabel>
-        {controller.timeTemplates.length > 0 ? (
+        {timeTemplates.length > 0 ? (
           <div className={styles.templateButtons}>
-            {controller.timeTemplates.map((template) => (
+            {timeTemplates.map((template) => (
               <Button
                 key={template.id}
-                onClick={() => controller.actions.applyTemplate(template)}
+                onClick={() => onApplyTemplate(template)}
                 size="small"
                 variant="filter"
               >
@@ -202,24 +146,16 @@ export function VocabScheduleDetailFields({
           <Input
             aria-label="새 시간 템플릿 이름"
             maxLength={30}
-            onChange={(event) => setTemplateName(event.target.value)}
+            onChange={(event) => onTemplateNameChange(event.target.value)}
             placeholder="예: 중3 저녁반"
             value={templateName}
           />
           <Button
-            disabled={!templateName.trim() || controller.templateSaving}
-            onClick={async () => {
-              const result = await controller.actions.saveCurrentTemplate(
-                templateName,
-              );
-              if (result.ok) {
-                setTemplateName("");
-                toast.success("시간 템플릿을 저장했습니다.");
-              } else toast.error(result.message);
-            }}
+            disabled={!templateName.trim() || templateSaving}
+            onClick={onSaveTemplate}
             size="small"
           >
-            {controller.templateSaving ? "저장 중" : "저장"}
+            {templateSaving ? "저장 중" : "저장"}
           </Button>
         </div>
       </div>
