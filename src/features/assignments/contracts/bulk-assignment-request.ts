@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { assignmentQuestionModeErrors, assignmentQuestionModeIssues } from "../domain/assignment-question-mode-policy";
 
 import { resolveVocabUnitCountsForDates } from "@/lib/admin/vocab-unit-allocation";
 import {
@@ -353,35 +354,13 @@ function validateBulkAssignmentSelection(
   },
   context: z.RefinementCtx,
 ) {
-  if (value.questionMode !== "book_meaning_choice") {
-    if (value.englishToKoreanRatio !== 0) {
-      context.addIssue({
-        code: "custom",
-        path: ["englishToKoreanRatio"],
-        message: "영영풀이·예문 시험은 영어 단어 고르기로만 출제합니다.",
-      });
-    }
-    const plan = value.commonPlan;
-    if (
-      plan.selectedDateCount !== 0 ||
-      plan.distribution !== "repeat" ||
-      plan.splitBasis !== "question_count" ||
-      plan.sessions.length !== 1 ||
-      plan.recurrenceSessions.length !== 1 ||
-      plan.sessions.some((session) =>
-        session.availableFrom !== null || session.availableUntil !== null
-      ) ||
-      plan.recurrenceSessions.some((session) =>
-        session.availableFrom !== null || session.availableUntil !== null
-      )
-    ) {
-      context.addIssue({
-        code: "custom",
-        path: ["commonPlan", "selectedDateCount"],
-        message: "영영풀이·예문 시험은 현재 시험일 없이 1회만 바로 배정할 수 있습니다.",
-      });
-    }
-  }
+  const modeIssues = assignmentQuestionModeIssues(value.questionMode, value.englishToKoreanRatio, value.commonPlan);
+  if (modeIssues.direction) context.addIssue({
+    code: "custom", path: ["englishToKoreanRatio"], message: assignmentQuestionModeErrors.direction,
+  });
+  if (modeIssues.schedule) context.addIssue({
+    code: "custom", path: ["commonPlan", "selectedDateCount"], message: assignmentQuestionModeErrors.schedule,
+  });
   if (
     value.studentIds.length * value.commonPlan.sessions.length >
       MAXIMUM_BULK_ASSIGNMENT_COUNT

@@ -1,3 +1,4 @@
+import { assignmentQuestionModePolicy } from "./assignment-question-mode-policy";
 import type {
   AssignmentDirectionRatio,
   AssignmentQuestionMode,
@@ -91,10 +92,7 @@ export function reduceBulkSeriesAssignmentDraft(
         questionMode: action.value,
         exam: {
           ...draft.exam,
-          directionRatio:
-            action.value === "book_meaning_choice"
-              ? draft.exam.directionRatio
-              : 0,
+          directionRatio: assignmentQuestionModePolicy(action.value).fixedDirectionRatio ?? draft.exam.directionRatio,
         },
       };
     case "exam/order_changed":

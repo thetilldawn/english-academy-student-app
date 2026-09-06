@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { assignmentQuestionModeErrors, assignmentQuestionModeIssues } from "./assignment-question-mode-policy";
 
 import { koreanDateTimeLocalToIso } from "@/lib/deadline";
 
@@ -870,38 +871,26 @@ export function validateBulkPreviewProjection(
   }
   validateCommonPlan(draft, issues);
   validateDirection(draft.exam, issues);
-  if (draft.questionMode !== "book_meaning_choice") {
-    if (draft.exam.directionRatio !== 0) {
-      issues.push({
-        code: "invalid_order",
-        path: "exam.directionRatio",
-        message: "영영풀이·예문 시험은 영어 단어 고르기로만 출제합니다.",
-      });
-    }
-    const plan = draft.commonPlan;
-    if (
-      plan &&
-      (plan.selectedDateCount !== 0 ||
-        plan.distribution !== "repeat" ||
-        plan.splitBasis !== "question_count" ||
-        plan.sessions.length !== 1 ||
-        plan.recurrenceSessions.length !== 1 ||
-        plan.sessions.some((session) =>
-          session.availableLocalDateTime !== null ||
-          session.deadlineLocalDateTime !== null
-        ) ||
-        plan.recurrenceSessions.some((session) =>
-          session.availableLocalDateTime !== null ||
-          session.deadlineLocalDateTime !== null
-        ))
-    ) {
-      issues.push({
-        code: "invalid_order",
-        path: "commonPlan.selectedDateCount",
-        message: "영영풀이·예문 시험은 현재 시험일 없이 1회만 바로 배정할 수 있습니다.",
-      });
-    }
-  }
+  const modeIssues = assignmentQuestionModeIssues(
+    draft.questionMode, draft.exam.directionRatio,
+    draft.commonPlan ? {
+      selectedDateCount: draft.commonPlan.selectedDateCount,
+      distribution: draft.commonPlan.distribution,
+      splitBasis: draft.commonPlan.splitBasis,
+      sessions: draft.commonPlan.sessions.map((session) => ({
+        availableFrom: session.availableLocalDateTime, availableUntil: session.deadlineLocalDateTime,
+      })),
+      recurrenceSessions: draft.commonPlan.recurrenceSessions.map((session) => ({
+        availableFrom: session.availableLocalDateTime, availableUntil: session.deadlineLocalDateTime,
+      })),
+    } : null,
+  );
+  if (modeIssues.direction) issues.push({
+    code: "invalid_order", path: "exam.directionRatio", message: assignmentQuestionModeErrors.direction,
+  });
+  if (modeIssues.schedule) issues.push({
+    code: "invalid_order", path: "commonPlan.selectedDateCount", message: assignmentQuestionModeErrors.schedule,
+  });
   return issues;
 }
 

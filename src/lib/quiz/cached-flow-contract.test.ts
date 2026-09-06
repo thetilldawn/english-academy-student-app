@@ -18,6 +18,9 @@ describe("DAY 문제은행 응시 계약", () => {
     const bulkExamFields = source(
       "src/features/assignments/ui/bulk-exam-fields.tsx",
     );
+    const conditionFields = source(
+      "src/features/assignments/ui/exam-condition-fields.tsx",
+    );
     const regularAssignmentService = source(
       "src/lib/services/regular-assignment-service.ts",
     );
@@ -29,10 +32,11 @@ describe("DAY 문제은행 응시 계약", () => {
     expect(rangeFields).toContain("<AssignmentUnitRangePicker");
     expect(rangeFields).not.toContain("selectInclusiveUnitRange");
     expect(settingsFields).toContain("<ExamQuestionOrderField");
-    expect(bulkExamFields).toContain('trigger="시험 문제 순서"');
-    expect(bulkExamFields).toContain("순서대로");
-    expect(bulkExamFields).toContain("무작위");
-    expect(bulkExamFields).toContain('value === "random"');
+    expect(bulkExamFields).toContain("<ExamQuestionOrderField");
+    expect(conditionFields).toContain('trigger="시험 문제 순서"');
+    expect(conditionFields).toContain("순서대로");
+    expect(conditionFields).toContain("무작위");
+    expect(conditionFields).toContain('value === "random"');
     expect(copy).toContain('questionCount: "단어 수"');
     expect(regularAssignmentService).toContain(
       '"create_assignment_with_delivery_v7"',

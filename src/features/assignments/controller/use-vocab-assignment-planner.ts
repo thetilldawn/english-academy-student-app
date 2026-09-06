@@ -4,6 +4,7 @@ import { useLayoutEffect, useMemo, useReducer } from "react";
 
 import type { AssignmentDatasetItem, AssignmentUnitItem } from "../catalog-types";
 import type { AssignmentQuestionMode } from "../domain/model";
+import { assignmentQuestionModePolicy } from "../domain/assignment-question-mode-policy";
 import { selectPreviousVocabExamConditions } from "../domain/vocab-previous-exam";
 import {
   resolveExtraDateCancelSessionCount,
@@ -196,7 +197,7 @@ export function useVocabAssignmentPlanner({
         value: previousExam.unitAllocation.overflowPolicy,
       });
     }
-    if (bulk.state.draft.questionMode === "book_meaning_choice") {
+    if (assignmentQuestionModePolicy(bulk.state.draft.questionMode).fixedDirectionRatio === null) {
       bulk.actions.changeDirection(copied.exam.directionRatio);
     }
     bulk.actions.changeOrder(copied.exam.questionOrderMode);
@@ -291,7 +292,7 @@ export function useVocabAssignmentPlanner({
       changeQuestionMode: (value: AssignmentQuestionMode) => {
         if (!availableQuestionModes.includes(value)) return;
         bulk.actions.changeQuestionMode(value);
-        if (value !== "book_meaning_choice") {
+        if (assignmentQuestionModePolicy(value).schedule === "single-immediate") {
           dispatch({ type: "schedule/enabled", enabled: false });
         }
       },

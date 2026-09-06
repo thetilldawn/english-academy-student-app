@@ -1,6 +1,7 @@
 import "server-only";
 
 import { z } from "zod";
+import { assignmentQuestionModeErrors, assignmentQuestionModeIssues } from "../../domain/assignment-question-mode-policy";
 
 import { cataloguedDatasetDisplayLabel } from "@/lib/admin/dataset-catalog";
 import { resolveOrderedUnitSelection } from "@/lib/admin/unit-range";
@@ -125,17 +126,9 @@ export async function resolveCanonicalBulkAssignmentPreview(
     throw new BulkAssignmentError("invalid_selection");
   }
   const plan = input.commonPlan;
-  if (
-    input.englishToKoreanRatio !== 0 ||
-    plan.selectedDateCount !== 0 ||
-    plan.sessions.length !== 1 ||
-    plan.sessions[0]?.availableFrom !== null ||
-    plan.sessions[0]?.availableUntil !== null
-  ) {
-    throw new BulkAssignmentError(
-      "invalid_selection",
-      "영영풀이·예문 시험은 시험일 없이 1회만 바로 배정할 수 있습니다.",
-    );
+  const modeIssues = assignmentQuestionModeIssues(input.questionMode, input.englishToKoreanRatio, plan);
+  if (modeIssues.direction || modeIssues.schedule) {
+    throw new BulkAssignmentError("invalid_selection", assignmentQuestionModeErrors.serverSchedule);
   }
 
   const planning = await loadCommonBulkAssignmentPlanningData(
