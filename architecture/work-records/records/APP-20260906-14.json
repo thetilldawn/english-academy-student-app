@@ -1,0 +1,569 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20260906-14",
+  "title": "첫 시험과 앞 마감 연동 자동 공개",
+  "size": "full",
+  "gate": "draft",
+  "guide": "docs/work-orders/APP-20260906-14.md",
+  "baseline": "0c9142720644a1de781a828e7b8e7bf3ad93544f",
+  "owners": [
+    "assignment-queue",
+    "assignments",
+    "quiz-player",
+    "student-dashboard",
+    "database-contract",
+    "shared-contract",
+    "architecture-meta"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal",
+    "assessment-secret"
+  ],
+  "scope": [
+    {
+      "path": "src/features/assignments/ui/bulk-series-preview.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": ["assignment-series"]
+    },
+    {
+      "path": "src/lib/services/quiz/attempt-command.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "assignment-series",
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/lib/services/quiz/attempt-start.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/contracts/student-dashboard-read-model.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-dashboard-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/student-dashboard-row-schema.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-dashboard-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/domain/student-assignment-lifecycle.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-dashboard-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/domain/student-assignment-sections.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-dashboard-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/ui/student-assignment-card.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-dashboard-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/ui/student-assignment-availability.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-dashboard-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-query.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/server/components/assignment-study-content.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/lib/admin/vocab-assignment-queue.ts",
+      "state": "existing",
+      "owner": "assignment-queue",
+      "flowIds": [
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/content/ko/student-app.ts",
+      "state": "existing",
+      "owner": "shared-contract",
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-dashboard-read",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/lib/database/student-dashboard-read-model.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "student-dashboard-read"
+      ]
+    },
+    {
+      "path": "src/lib/database/assignment-study.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "앞 회차 첫 시험 완료만 다음 회차 완료 조건으로 사용",
+      "acceptance": "initial_completed_at 기준, 재시험·합격·답·점수 불변",
+      "disposition": "required",
+      "owners": [
+        "assignment-queue",
+        "quiz-player"
+      ],
+      "flowIds": [
+        "assignment-series",
+        "student-quiz-attempt",
+        "student-dashboard-read",
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T3"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "날짜가 있으면 앞 배정 실제 마감+12시간도 충족",
+      "acceptance": "시간 직전/정각/직후와 날짜없음 일치, 임의 마감 이동 없음",
+      "disposition": "required",
+      "owners": [
+        "assignment-queue",
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "assignment-series",
+        "student-quiz-attempt",
+        "student-dashboard-read",
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T2",
+        "T4",
+        "T5"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "user",
+      "text": "기존 미응시 회차에도 소급",
+      "acceptance": "실제 저장 관계만, 시작한 시험·재시험 보호, 동시시작 재확인",
+      "disposition": "required",
+      "owners": [
+        "database-contract",
+        "assignment-queue"
+      ],
+      "flowIds": [
+        "assignment-series",
+        "student-quiz-attempt",
+        "student-dashboard-read",
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T3",
+        "T7"
+      ]
+    },
+    {
+      "id": "R4",
+      "source": "user",
+      "text": "단일/일괄·목록·응시·단어 보기 동일 공개 판정과 쉬운 안내",
+      "acceptance": "직접 접근도 차단, 자료 미노출, 대기/실패/없음 구분, D4 확정 후 기존 수동 복구 연결",
+      "disposition": "required",
+      "owners": [
+        "student-dashboard",
+        "quiz-player",
+        "assignments"
+      ],
+      "flowIds": [
+        "assignment-series",
+        "student-quiz-attempt",
+        "student-dashboard-read",
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T3",
+        "T4",
+        "T5",
+        "T6",
+        "T7"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "첫 시험과 재시험 중 무엇을 기다리는가",
+      "answer": "첫 시험 종료만 기다리며 재시험은 모아 볼 수 있음",
+      "source": "2026-09-06 사용자: 1회차 끝나고 재시험은 모아서 볼 수도 있으니까"
+    },
+    {
+      "id": "D2",
+      "owner": "user",
+      "state": "resolved",
+      "question": "날짜 조건의12시간 기준",
+      "answer": "앞 시험 실제 배정 마감+12시간, 첫 완료도 필수. 날짜 없으면 첫 완료만",
+      "source": "2026-09-06 사용자: 날짜조건은 앞 시험 마감 시간기준"
+    },
+    {
+      "id": "D3",
+      "owner": "user",
+      "state": "resolved",
+      "question": "기존 미응시 회차에도 적용하는가",
+      "answer": "기존에 공개된 미응시도 적용, 이미 시작한 시험/재시험 보존",
+      "source": "기존 미응시 소급 설명 후 사용자 ㅇㅇ"
+    },
+    {
+      "id": "D4",
+      "owner": "user",
+      "state": "open",
+      "question": "관리자가 이번 회차 건너뛰기를 명시 실행하면 첫 시험 미완료여도 다음 회차를 열 것인가. 권장: 수동 처리에만 첫 완료 면제, 마감+12시간과 다음 예약/마감 유지. 아직 시험이 생성되지 않은 회차는 화면에 표시된 저장 일정의 마감(effective_available_until)을 기준으로 함"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "checked",
+      "reason": "기존 페이지·모달·API 경로 재사용"
+    },
+    "ui": {
+      "status": "changed",
+      "reason": "공용 공개 판정과 실제 사용처를 승인 후 함께 변경·검사할 계획"
+    },
+    "state": {
+      "status": "changed",
+      "reason": "공용 공개 판정과 실제 사용처를 승인 후 함께 변경·검사할 계획"
+    },
+    "domain": {
+      "status": "changed",
+      "reason": "공용 공개 판정과 실제 사용처를 승인 후 함께 변경·검사할 계획"
+    },
+    "data": {
+      "status": "changed",
+      "reason": "공용 공개 판정과 실제 사용처를 승인 후 함께 변경·검사할 계획"
+    },
+    "api": {
+      "status": "changed",
+      "reason": "공용 공개 판정과 실제 사용처를 승인 후 함께 변경·검사할 계획"
+    },
+    "cache": {
+      "status": "changed",
+      "reason": "개인 캐시 경계 보존·상태 변동과 시간경계 갱신 연결"
+    },
+    "asyncUi": {
+      "status": "changed",
+      "reason": "공용 공개 판정과 실제 사용처를 승인 후 함께 변경·검사할 계획"
+    },
+    "security": {
+      "status": "changed",
+      "reason": "공용 공개 판정과 실제 사용처를 승인 후 함께 변경·검사할 계획"
+    },
+    "styles": {
+      "status": "checked",
+      "reason": "기존 토큰/단어장틀/버튼 재사용"
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "공용 공개 판정과 실제 사용처를 승인 후 함께 변경·검사할 계획"
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "현재 학생 범위의 신규 공개 판정·원문/정답/개인정보 차단",
+      "checkIds": [
+        "T3",
+        "T7"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "현재 학생 범위의 신규 공개 판정·원문/정답/개인정보 차단",
+      "checkIds": [
+        "T3",
+        "T7"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "현재 학생 범위의 신규 공개 판정·원문/정답/개인정보 차단",
+      "checkIds": [
+        "T3",
+        "T7"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "개인 자료 공유 캐시 금지·시간/저장 후 최신 판정",
+      "checkIds": [
+        "T5",
+        "T6"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "기존 queue/bulk 결과와 교체관계→공용 서버 공개 판정→목록/신규응시/단어보기. first completed 신호→멱등 다음회차준비. D4 미결정으로 조사설계만.",
+    "reuse": "기존 RSC/query와 lifecycle/카드, RoutedDetailDialog·AssignmentStudyFrame·오류경계·한국어문구 재사용. 공통 뜻 없는 만능 부품 추가 없음.",
+    "cache": "학생세션검증·private/no-store 보존. 경계시각 갱신1회, 첫시험대기 반복갱신없음. 관리자처리후영향캐시신호.",
+    "compatibility": "Next16.2.12/React19.2.8 유지, 날짜 없는 즉시 생성은 유지하고 공개만 분리. 시험/재시험/점수·시작한응시 보존.",
+    "rollback": "신규 정책의 함수/관계 적용 전 정의·지문을 보관해 해당 정책만 복구. 학생·답·점수 삭제나 덮어쓰기 금지."
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "첫 목록/단어장 조회",
+      "message": "시험 정보를 불러오고 있습니다.",
+      "behavior": "기존로딩·제목·닫기 유지",
+      "recovery": "조회완료 대기",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "시간 경계/최신 조회",
+      "message": "시험 정보를 다시 확인하고 있습니다.",
+      "behavior": "안전한기존목록유지·계정전환숨김",
+      "recovery": "한 번 최신조회",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "배정 단어장 미선택",
+      "message": "단어장을 선택해 주세요.",
+      "behavior": "미선택과0건구분",
+      "recovery": "단어장선택",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "현재 요청 성공·배정0건",
+      "message": "아직 배정된 시험이 없습니다.",
+      "behavior": "실패를0건으로표시하지않음",
+      "recovery": "목록으로돌아가기",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "앞 첫시험미완료/시간대기/일정충돌",
+      "message": "앞 회차의 첫 시험을 마치면 열립니다. / 시험 일정을 확인해야 합니다. 선생님께 문의해 주세요.",
+      "behavior": "대기원인구분·응시/단어보기차단·정상대기에재시도요구없음",
+      "recovery": "첫 시험을 마치거나 표시한 시각까지 대기. 일정확인은 선생님",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "목록·단어장 조회 실패",
+      "message": "시험 정보를 불러오지 못했습니다. 다시 시도해 주세요.",
+      "behavior": "빈목록동시표시금지·모달닫기보존",
+      "recovery": "해당영역다시시도",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "관리자처리결과확인실패",
+      "message": "처리 결과를 확인하지 못했습니다. 최신 내역을 확인해 주세요.",
+      "behavior": "입력보존·명령자동반복금지",
+      "recovery": "현재학생최신큐첫페이지조회",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "학생 세션 만료/다른 학생",
+      "message": "다시 로그인해 주세요.",
+      "behavior": "개인자료숨김·권한범위밖존재노출금지",
+      "recovery": "로그인",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "없는주소/조회가능한배정없음",
+      "message": "페이지를 찾을 수 없습니다.",
+      "behavior": "미공개와404구분·기존숨김정책유지",
+      "recovery": "학생목록/모달닫기",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "예상 밖 서버/화면 오류",
+      "message": "시험 정보를 표시하지 못했습니다. 다시 시도해 주세요.",
+      "behavior": "안전한안내·진단에연결된식별번호·SQL원문금지",
+      "recovery": "오류경계재시도/닫기",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "Next16.2.12/기준v1.1",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "미결정시기능전체보류·서버권한·쉬운상태구분·자료최소화·실제근거없는완료금지"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "integration",
+      "target": "src/lib/database/review-assignment-final-schema.integration.test.ts",
+      "scenario": "첫완료 통과/미달/재시험없음/만료/중복/마지막회차",
+      "expected": "다음준비1회·재시험불변",
+      "topics": [
+        "behavior"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "integration",
+      "target": "src/lib/database/student-dashboard-read-model.integration.test.ts",
+      "scenario": "앞마감12h 직전/정각/직후·날짜없음·일정충돌·cron·D4",
+      "expected": "기준시각일치·임의이동/미공개미응시오판없음",
+      "topics": [
+        "behavior"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "integration",
+      "target": "src/lib/database/assignment-study.integration.test.ts",
+      "scenario": "새배정/기존소급/교체/동시시작·직접RPC/단어장·다른학생",
+      "expected": "정확관계·멱등·권한보호·원문/답/점수유출없음",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "component",
+      "target": "src/features/student-dashboard/ui/student-dashboard.test.tsx",
+      "scenario": "목록구역/버튼/안내와모달·인증/404/실패·관리자복구",
+      "expected": "공용판정과쉬운문구일치·잠김원문없음·닫기가능",
+      "topics": [
+        "behavior",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T5",
+      "kind": "component",
+      "target": "src/features/student-dashboard/ui/assignment-boundary-refresh.test.tsx",
+      "scenario": "시간경계1회·첫시험대기반복0·관리자변경신호1회",
+      "expected": "개인캐시최신화·공유캐시0·불명확명령재전송없음",
+      "topics": [
+        "cache",
+        "behavior"
+      ]
+    },
+    {
+      "id": "T6",
+      "kind": "build",
+      "target": "package.json",
+      "scenario": "전체단위·SQL통합·타입·lint·구조/지도·빌드",
+      "expected": "실제최종코드지문으로모두통과",
+      "topics": [
+        "structure",
+        "cache"
+      ]
+    },
+    {
+      "id": "T7",
+      "kind": "review",
+      "target": null,
+      "scenario": "Preview가짜학생→운영적용대상/진행중보호감사→한건적용/배포→재검증",
+      "expected": "시작한시험/답/점수불변·직접우회차단·실제화면검증",
+      "topics": [
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "behavior"
+      ]
+    }
+  ],
+  "verification": null
+}
