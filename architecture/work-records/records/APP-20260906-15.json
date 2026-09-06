@@ -3,7 +3,7 @@
   "id": "APP-20260906-15",
   "title": "시험 발음 대기 클릭·터치 중단",
   "size": "full",
-  "gate": "design",
+  "gate": "verified",
   "guide": "docs/work-orders/APP-20260906-15.md",
   "baseline": "5c9f0de03906f8c3afa93dee885859dbaeb92d12",
   "owners": [
@@ -389,7 +389,7 @@
       "state": "save-error",
       "trigger": "답 저장/시간동기화 결과 확인 실패",
       "message": "답안을 저장하지 못했습니다.",
-      "behavior": "기존서버복구부터·중단숨김·기존선택보존",
+      "behavior": "기존 서버복구 우선·최종 실패 시 중단 숨김과 선택 표시 초기화",
       "recovery": "기존 최신상태확인/안전안내",
       "component": "src/features/quiz-player/ui/quiz-player.tsx",
       "checkIds": [
@@ -514,7 +514,7 @@
     }
   ],
   "verification": {
-    "fingerprint": "a7837b30674fb1d52b1e9d035aad89806fe78faff0fba6198f474d0b56503f6d",
+    "fingerprint": "9bf474aceb232313a8ec3a5769f4f46d983c6fcda6a2d0d518c4e1107cf74ecd",
     "files": [
       {
         "path": "architecture/기능_소유권.json",
@@ -1184,11 +1184,11 @@
       },
       {
         "checkId": "T5",
-        "result": "not_run",
+        "result": "pass",
         "environment": "production",
-        "ranAt": "2026-09-06T19:12:23.156Z",
-        "command": "Codex IAB local six synthetic attempts; Preview/Production deployment pending",
-        "summary": "로컬6유형 실제음원 정지·답6/시간확인6·다음답0·브라우저warn/error0. 실제 손가락·누른상태 자연종료 경쟁은 미검증. Preview/운영은 아직 미실행."
+        "ranAt": "2026-09-06T19:41:25Z",
+        "command": "Codex IAB local six synthetic attempts + Preview/admin + Production/student; GitHub deployment statuses; public JS SHA; read-only protected13 SQL before/after15min",
+        "summary": "로컬6유형 답6/시간확인6/다음답0·실제Audio정지·콘솔0. 동일189e5d3 Preview/운영 success, 배포JS3개 로컬SHA일치, ready15분후 학생화면정상·양쪽보호13표불변·실학생응시0. 실터치장치/누른상태 자연종료는 미검증. Preview CI 사전브랜치 실패·운영 CI skipped·전체로그403은 통과로 계산하지 않음."
       }
     ]
   }
