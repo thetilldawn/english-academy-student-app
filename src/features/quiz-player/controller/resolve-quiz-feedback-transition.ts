@@ -13,6 +13,7 @@ import type {
   QuizAudioCompletion,
   TimedQuizAudioCompletion,
 } from "./quiz-audio-element";
+import type { WaitForFeedbackAudio } from "./use-quiz-feedback-interruption";
 
 export type QuizFeedbackSynchronization = {
   payload: QuizAnswerResponse &
@@ -102,6 +103,7 @@ export async function resolveQuizFeedbackTransition(input: {
   promptAudioCompletion: Promise<TimedQuizAudioCompletion> | null;
   receivedAt: number;
   submittedAt: number;
+  waitForAudio: WaitForFeedbackAudio;
 }): Promise<ResolvedQuizFeedbackTransition> {
   const fixedReadyAt = fixedFeedbackReadyAt({
     receivedAt: input.receivedAt,
@@ -115,8 +117,11 @@ export async function resolveQuizFeedbackTransition(input: {
     input.payload.timedOut !== true &&
     input.answerAudioUrl
   ) {
-    const playback = await input.playAnswerAudio(input.answerAudioUrl);
-    if (playback === "ended") {
+    const audioUrl = input.answerAudioUrl;
+    const result = await input.waitForAudio(() => input.playAnswerAudio(audioUrl));
+    if (result.skipped) {
+      readyAt = performance.now();
+    } else if (result.playback === "ended") {
       // Keep the established answer-audio contract: once the selected English
       // answer finishes, move on after the short grace instead of forcing the
       // silent 750 ms fallback as well.
@@ -126,11 +131,14 @@ export async function resolveQuizFeedbackTransition(input: {
     input.payload.timedOut !== true &&
     input.promptAudioCompletion
   ) {
-    const playback = await input.promptAudioCompletion;
-    if (playback.outcome === "ended") {
+    const completion = input.promptAudioCompletion;
+    const result = await input.waitForAudio(() => completion);
+    if (result.skipped) {
+      readyAt = performance.now();
+    } else if (result.playback.outcome === "ended") {
       readyAt = Math.max(
         fixedReadyAt,
-        playback.completedAt + ANSWER_AUDIO_END_GRACE_MS,
+        result.playback.completedAt + ANSWER_AUDIO_END_GRACE_MS,
       );
     }
   }

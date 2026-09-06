@@ -1,4 +1,5 @@
 .shell {
+  position: relative;
   min-height: 100dvh;
   display: grid;
   align-items: start;
@@ -7,6 +8,37 @@
     max(12px, env(safe-area-inset-top))
     10px
     max(14px, env(safe-area-inset-bottom));
+}
+
+.feedbackSkip {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.feedbackSkip:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -4px;
+}
+
+.feedbackSkipHint {
+  position: absolute;
+  inset-inline: 12px;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  width: fit-content;
+  max-width: calc(100% - 24px);
+  margin-inline: auto;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 .finalizing {

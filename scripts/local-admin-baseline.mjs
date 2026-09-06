@@ -7,9 +7,11 @@ import { Transform } from "node:stream";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { APP_ORIGIN, DATA_ORIGIN, NEXT_ORIGIN, PUBLIC_KEY, ACCOUNT, fixtureResponse } from "./local-admin-baseline-data.mjs";
 import { STUDY_TOKEN } from "./local-student-study-data.mjs";
+import { isLocalQuizRequest, localQuizSummary, localQuizWave, resetLocalQuizzes } from "./local-quiz-feedback-data.mjs";
 import { assertLocalBaselineEnvironment, assertNestedPath, waitForChild, stopOwnedChild, assertMayStart, isRestorationSafe } from "./local-admin-baseline-guard.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const quizFeedback = process.argv.includes("--quiz-feedback");
 const env = Object.fromEntries(["Path", "PATH", "SystemRoot", "SYSTEMROOT", "TEMP", "TMP", "USERPROFILE", "LOCALAPPDATA", "APPDATA"]
   .filter(key => process.env[key]).map(key => [key, process.env[key]]));
 if (process.env.VERCEL || process.env.VERCEL_ENV || process.env.CI) throw new Error("배포/CI 환경에서는 시작하지 않습니다.");
@@ -30,6 +32,7 @@ const guard = path.join(root, "scripts/local-admin-baseline-guard.mjs");
 const nextCli = path.join(root, "node_modules/next/dist/bin/next");
 const upstream = new URL(NEXT_ORIGIN);
 const metrics = { http: [], data: [], ui: [] };
+const audioMetrics = [];
 const children = new Map();
 let stopRequested = false;
 const generatedDirectory = path.join(root, ".next");
@@ -74,7 +77,7 @@ const dataServer = http.createServer(async (req, res) => {
   if (req.headers.host !== new URL(DATA_ORIGIN).host) return json(res, { error: "Local host required" }, 403);
   try {
     const result = fixtureResponse({ url: DATA_ORIGIN + req.url, method: req.method,
-      headers: new Headers(req.headers), body: await readBody(req) });
+      headers: new Headers(req.headers), body: await readBody(req), quizFeedback });
     metrics.data.push({ path: new URL(DATA_ORIGIN + req.url).pathname, method: req.method,
       category: result.category, status: result.status, at: Date.now() });
     json(res, result.body, result.status);
@@ -93,7 +96,29 @@ const proxy = http.createServer(async (req, res) => {
       "set-cookie": "__Host-ea_student_session=" + STUDY_TOKEN + "; Path=/; HttpOnly; SameSite=Lax; Secure" });
     return res.end();
   }
-  if (url.pathname === "/__baseline/metrics" && req.method === "GET") return json(res, metrics);
+  if (url.pathname === "/__baseline/metrics" && req.method === "GET") return json(res,
+    quizFeedback ? { ...metrics, audio: audioMetrics, quizzes: localQuizSummary() } : metrics);
+  if (quizFeedback && url.pathname === "/__baseline/quiz-observer.js" && req.method === "GET") {
+    res.writeHead(200, { "Content-Type": "text/javascript", "Cache-Control": "no-store" });
+    return res.end(fs.readFileSync(path.join(root, "scripts/local-quiz-feedback-observer.js")));
+  }
+  if (quizFeedback && url.pathname === "/__baseline/quiz-audio.wav" && req.method === "GET") {
+    const wave = localQuizWave();
+    res.writeHead(200, { "Content-Type": "audio/wav", "Content-Length": wave.length, "Cache-Control": "no-store" });
+    return res.end(wave);
+  }
+  if (quizFeedback && url.pathname === "/__baseline/quiz-observe" && req.method === "POST") {
+    if (req.headers.origin !== APP_ORIGIN) return json(res, {}, 403);
+    try {
+      const value = JSON.parse(await readBody(req));
+      if (!["playing", "pause", "ended", "error"].includes(value.kind) ||
+        !Number.isInteger(value.id) || value.id < 1 || !Number.isFinite(value.at) ||
+        !Number.isFinite(value.currentTime) || value.currentTime < 0 ||
+        typeof value.paused !== "boolean" || typeof value.muted !== "boolean") return json(res, {}, 403);
+      audioMetrics.push({ kind: value.kind, id: value.id, at: value.at, currentTime: value.currentTime, paused: value.paused, muted: value.muted });
+      return json(res, { ok: true });
+    } catch { return json(res, {}, 403); }
+  }
   if (url.pathname === "/__baseline/observer.js" && req.method === "GET") {
     res.writeHead(200, { "Content-Type": "text/javascript", "Cache-Control": "no-store" });
     return res.end(fs.readFileSync(path.join(root, "scripts/local-admin-baseline-observer.js")));
@@ -112,10 +137,13 @@ const proxy = http.createServer(async (req, res) => {
   }
   if (url.pathname === "/__baseline/reset" && req.method === "POST") {
     if (req.headers.origin !== APP_ORIGIN) return json(res, {}, 403);
-    metrics.http.length = 0; metrics.data.length = 0; metrics.ui.length = 0; return json(res, { ok: true });
+    metrics.http.length = 0; metrics.data.length = 0; metrics.ui.length = 0;
+    if (quizFeedback) { audioMetrics.length = 0; resetLocalQuizzes(); }
+    return json(res, { ok: true });
   }
   if (url.pathname === "/api/admin/notifications") return json(res, { error: "Notifications excluded from local read baseline" }, 403);
   if (url.pathname.startsWith("/api/") && (!allowedApi.has(url.pathname) &&
+      !(quizFeedback && isLocalQuizRequest(url.pathname, req.method)) &&
       !/^\/api\/admin\/assignment-workspace\/datasets\/00000000-0000-4000-8000-00000000001[01]\/units$/.test(url.pathname))) {
     return json(res, { error: "Application writes and unknown APIs are blocked" }, 403);
   }
@@ -148,7 +176,8 @@ const proxy = http.createServer(async (req, res) => {
         if (headAt < 0) return prefix.length > 16384 ? callback(new Error("Expected initial HTML head")) : callback();
         injected = true;
         callback(null, Buffer.concat([prefix.subarray(0, headAt + 6),
-          Buffer.from('<script src="/__baseline/observer.js" defer></script>'), prefix.subarray(headAt + 6)]));
+          Buffer.from((quizFeedback ? '<script src="/__baseline/quiz-observer.js"></script>' : '') +
+            '<script src="/__baseline/observer.js" defer></script>'), prefix.subarray(headAt + 6)]));
       } })).on("error", () => res.destroy()).pipe(res);
     } else response.pipe(res);
   });

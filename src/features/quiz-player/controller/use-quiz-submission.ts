@@ -25,6 +25,7 @@ import {
   previewNextQuestionMilliseconds,
 } from "./quiz-transition-timer";
 import { resolveQuizFeedbackTransition } from "./resolve-quiz-feedback-transition";
+import { useQuizFeedbackInterruption } from "./use-quiz-feedback-interruption";
 
 type QueuedSubmission = {
   attemptId: string;
@@ -52,6 +53,7 @@ function wait(milliseconds: number) {
 }
 
 export function useQuizSubmission(input: {
+  canInterruptFeedbackAudio: () => boolean;
   cancelPendingPromptAudio: () => void;
   captureActivePromptAudio: () => Promise<TimedQuizAudioCompletion> | null;
   currentQuestion: QuizQuestion | null;
@@ -65,9 +67,17 @@ export function useQuizSubmission(input: {
   recoverFromServer: () => Promise<boolean>;
   resetClock: (remainingMilliseconds: number) => void;
   state: QuizPlayerState;
+  stopFeedbackAudio: () => void;
   timeWarningAnnouncedRef: { current: boolean };
 }) {
   const queuedSubmissionRef = useRef<QueuedSubmission | null>(null);
+  const feedbackInterruption = useQuizFeedbackInterruption({
+    canInterruptAudio: input.canInterruptFeedbackAudio,
+    inFlightRequestRef: input.inFlightRequestRef,
+    mountedRef: input.mountedRef,
+    stopAudio: input.stopFeedbackAudio,
+  });
+  const { waitForAudio } = feedbackInterruption;
 
   useEffect(
     () => () => {
@@ -142,6 +152,7 @@ export function useQuizSubmission(input: {
           promptAudioCompletion: submission.promptAudioCompletion,
           receivedAt,
           submittedAt: submission.submittedAt,
+          waitForAudio: (play) => waitForAudio(requestKey, play),
         });
         if (
           !input.mountedRef.current ||
@@ -269,10 +280,10 @@ export function useQuizSubmission(input: {
         });
       }
     },
-    [input],
+    [input, waitForAudio],
   );
 
-  return useCallback(
+  const submitChoice = useCallback(
     (choiceIndex: number | null) => {
       const question = input.currentQuestion;
       const phase = input.state.attempt.phase;
@@ -333,4 +344,9 @@ export function useQuizSubmission(input: {
     },
     [input, runSubmission],
   );
+  return {
+    canInterruptFeedback: feedbackInterruption.canInterrupt,
+    interruptFeedback: feedbackInterruption.interrupt,
+    submitChoice,
+  };
 }

@@ -389,8 +389,8 @@
     {
       "path": "src/test-support",
       "owner": "architecture-meta",
-      "fileCount": 13,
-      "pathSetSha256": "40f5e2a85878038bafdcfe0d0626da0e248db565084b9920057748624d3c6023"
+      "fileCount": 14,
+      "pathSetSha256": "06e1fc46425c198a278aa906f9691c7d51d21fef8d26febc10e0f3b840e711f2"
     }
   ],
   "pageOwners": [
@@ -5242,6 +5242,7 @@
         ],
         "ui": [
           "src/features/quiz-player/ui/quiz-player.tsx",
+          "src/features/quiz-player/ui/quiz-feedback-skip.tsx",
           "src/features/quiz-player/ui/quiz-frame.tsx",
           "src/features/quiz-player/ui/quiz-choice.tsx",
           "src/design-system/patterns/audio-button/audio-button.tsx",
@@ -5252,6 +5253,7 @@
         "clientState": [
           "src/features/quiz-player/controller/use-quiz-player-controller.ts",
           "src/features/quiz-player/controller/use-quiz-submission.ts",
+          "src/features/quiz-player/controller/use-quiz-feedback-interruption.ts",
           "src/features/quiz-player/controller/use-quiz-clock.ts",
           "src/features/quiz-player/controller/use-quiz-clock-lifecycle.ts",
           "src/features/quiz-player/controller/use-quiz-recovery.ts",

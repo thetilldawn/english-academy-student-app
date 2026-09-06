@@ -4,6 +4,7 @@ import {
 } from "./quiz-audio-element";
 
 type QuizAudioCompletionRun = {
+  isPending: () => boolean;
   interrupt: () => void;
   result: Promise<QuizAudioCompletion>;
 };
@@ -14,8 +15,8 @@ export function waitForQuizAudioCompletion(
   startupTimeoutMilliseconds: number,
 ): QuizAudioCompletionRun {
   let interrupt = () => {};
+  let settled = false;
   const result = new Promise<QuizAudioCompletion>((resolve) => {
-    let settled = false;
     let timeout: number | null = null;
     let playbackWatchdogStarted = false;
     const startPlaybackWatchdog = () => {
@@ -51,5 +52,5 @@ export function waitForQuizAudioCompletion(
         finish(audioPlaybackFailure(error)),
       );
   });
-  return { interrupt, result };
+  return { interrupt, isPending: () => !settled, result };
 }

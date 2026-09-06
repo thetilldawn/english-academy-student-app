@@ -159,11 +159,23 @@ export function useQuizAudioRuntime(input: {
     player().primeChoice(audioUrl);
   }, [clearAutoPlayTimer, player]);
 
+  const stopFeedbackAudio = useCallback(() => {
+    clearAutoPlayTimer();
+    playerRef.current?.stop();
+    activePromptAudio.current = null;
+  }, [clearAutoPlayTimer]);
+  const canInterruptFeedbackAudio = useCallback(
+    () => playerRef.current?.canInterrupt() ?? false,
+    [],
+  );
+
   return {
     cancelPendingPromptAudio: clearAutoPlayTimer,
     captureActivePromptAudio,
     playAnswerAudio,
     playAudio,
     primeChoiceAudio,
+    stopFeedbackAudio,
+    canInterruptFeedbackAudio,
   };
 }

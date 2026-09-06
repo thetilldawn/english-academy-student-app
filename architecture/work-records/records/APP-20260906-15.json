@@ -1,0 +1,1195 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20260906-15",
+  "title": "시험 발음 대기 클릭·터치 중단",
+  "size": "full",
+  "gate": "design",
+  "guide": "docs/work-orders/APP-20260906-15.md",
+  "baseline": "5c9f0de03906f8c3afa93dee885859dbaeb92d12",
+  "owners": [
+    "quiz-player",
+    "shared-contract",
+    "architecture-meta"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal",
+    "assessment-secret"
+  ],
+  "scope": [
+    {
+      "path": "scripts/local-quiz-feedback-data.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "scripts/local-quiz-feedback-observer.js",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "scripts/local-admin-baseline-data.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "scripts/local-admin-baseline.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/test-support/local-quiz-feedback.test.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/quiz-player/controller/quiz-audio-completion.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/controller/use-quiz-submission.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/controller/use-quiz-player-controller.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/controller/use-quiz-audio-runtime.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/controller/quiz-audio-player.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/controller/resolve-quiz-feedback-transition.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/controller/use-quiz-feedback-interruption.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/ui/quiz-feedback-skip.tsx",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/ui/quiz-player.tsx",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/ui/quiz-player.module.css",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/ui/quiz-player.test.tsx",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/content/ko/student-app.ts",
+      "state": "existing",
+      "owner": "shared-contract",
+      "flowIds": []
+    },
+    {
+      "path": "architecture/기능_소유권.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "모든 학생 시험의 발음 대기 중 추가 클릭·터치로 음성을 멈추고 바로 진행",
+      "acceptance": "영어→뜻/영영풀이·예문→영어, 첫시험·재시험 공용 적용. 재생 시작 대기도 중단.",
+      "disposition": "required",
+      "owners": [
+        "quiz-player"
+      ],
+      "flowIds": [
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T5"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "engineering",
+      "text": "저장 성공과 현재 요청에만 중단 입력을 귀속하고 기존 판정·시간·복구를 보존",
+      "acceptance": "첫클릭/저장전/실패 중단0, 다음답 예약0, 서버resume유지, 자연종료150ms·무음750ms·Tab보존",
+      "disposition": "required",
+      "owners": [
+        "quiz-player"
+      ],
+      "flowIds": [
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "범위와 순서",
+      "answer": "모든 학생 시험에서 음성 대기 중 추가 클릭/터치 중단. APP14 먼저 완료한 뒤 진행.",
+      "source": "사용자 2026-09-06 후속 요청·순서 정정·계속 지시"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "현재 음원과 중단 입력 소유",
+      "answer": "공용 제출의 요청키에 묶인 중단 대기 훅, 공용 투명 클릭부품, 음원제어의 pause/세대갱신. 업무/API/DB/비용 변경없음.",
+      "source": "현재 코드506dc7d·독립 읽기검토·개발기준 v1.1"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "중단과 자연/내부 interruption 구분",
+      "answer": "명시적 중단 Promise 결과만 delay0. 자연 종료/실패는 ref를 먼저 닫고 기존대기. 같은 클릭은 stopPropagation/preventDefault로 소비; touch별도handler 없음. Tab 기본동작 유지.",
+      "source": "기존지시서와 React/MDN공식문서·독립검토"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "checked",
+      "reason": "기존 시험계약/서버판정/시간/개인자료/캐시 정책 유지; 영향회귀검사"
+    },
+    "ui": {
+      "status": "changed",
+      "reason": "공용 음원대기/표시·중단입력 수명과회귀검사"
+    },
+    "state": {
+      "status": "changed",
+      "reason": "공용 음원대기/표시·중단입력 수명과회귀검사"
+    },
+    "domain": {
+      "status": "checked",
+      "reason": "기존 시험계약/서버판정/시간/개인자료/캐시 정책 유지; 영향회귀검사"
+    },
+    "data": {
+      "status": "checked",
+      "reason": "기존 시험계약/서버판정/시간/개인자료/캐시 정책 유지; 영향회귀검사"
+    },
+    "api": {
+      "status": "checked",
+      "reason": "기존 시험계약/서버판정/시간/개인자료/캐시 정책 유지; 영향회귀검사"
+    },
+    "cache": {
+      "status": "checked",
+      "reason": "기존 시험계약/서버판정/시간/개인자료/캐시 정책 유지; 영향회귀검사"
+    },
+    "asyncUi": {
+      "status": "changed",
+      "reason": "공용 음원대기/표시·중단입력 수명과회귀검사"
+    },
+    "security": {
+      "status": "checked",
+      "reason": "기존 시험계약/서버판정/시간/개인자료/캐시 정책 유지; 영향회귀검사"
+    },
+    "styles": {
+      "status": "changed",
+      "reason": "공용 음원대기/표시·중단입력 수명과회귀검사"
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "공용 음원대기/표시·중단입력 수명과회귀검사"
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "기존 현재학생 서버판정과 저장성공후 정답 공개 보존",
+      "checkIds": [
+        "T3",
+        "T4",
+        "T5"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "기존 현재학생 서버판정과 저장성공후 정답 공개 보존",
+      "checkIds": [
+        "T3",
+        "T4",
+        "T5"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "기존 현재학생 서버판정과 저장성공후 정답 공개 보존",
+      "checkIds": [
+        "T3",
+        "T4",
+        "T5"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "시험 snapshot/시간/중단신호 캐시금지, 요청 수명만",
+      "checkIds": [
+        "T3",
+        "T4",
+        "T5"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "QuizPlayer→공용 controller→제출 성공→요청별 음원대기 훅→resolve feedback→기존 resume/복구/결과. 중단신호는 브라우저 일시값이며 서버 답/API변경없음.",
+    "reuse": "QuizFrame/선택지/기존음원·시간동기화 재사용. 좁은 visible/onInterrupt 클릭부품과 요청수명 훅만 분리; 유형별 분기복제없음.",
+    "cache": "메모리 ref는 현재 요청동안만; 완료/자연종료/오류/이탈 때폐기. 개인시험·타이머 공유/브라우저저장캐시없음.",
+    "compatibility": "Next16.2.12/React19.2.8 유지. DB/API계약불변, 구앱그대로 사용가능, 첫완료/자동공개·재시험서버흐름불변.",
+    "rollback": "APP15 코드만 직전506dc7d로 복원가능. 학생/답/점수/APP14 DB변경을 삭제하거나 되돌리지 않음."
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "최초 서버 시간 동기화 전",
+      "message": "--:--",
+      "behavior": "답과중단잠금",
+      "recovery": "기존 재시도 유지",
+      "component": "src/features/quiz-player/ui/quiz-player.tsx",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T5"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "저장 성공 뒤 음원 재생 또는 시작 대기",
+      "message": "화면을 누르면 음성을 멈추고 넘어갑니다.",
+      "behavior": "음성대기에만투명버튼·클릭소비; 자연종료/명시중단시해제",
+      "recovery": "추가클릭/터치 또는 자연종료",
+      "component": "src/features/quiz-player/ui/quiz-player.tsx",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T5"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "아직 답을 선택하지 않음",
+      "message": "알맞은 영어 단어를 고르세요",
+      "behavior": "현재문항유형별 기존안내·중단없음",
+      "recovery": "선택지/1~4로답선택",
+      "component": "src/features/quiz-player/ui/quiz-player.tsx",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T5"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "현재문항 없음·결과 정리",
+      "message": "시험 상태를 정리하는 중입니다.",
+      "behavior": "기존finalizing, 실패를 빈문제로변환하지않음",
+      "recovery": "기존 서버복구/결과경로",
+      "component": "src/features/quiz-player/ui/quiz-player.tsx",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T5"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "입력중복·현재문항키 불일치",
+      "message": "새 오류문구 없음: 같은 입력을 중복 처리하지 않습니다.",
+      "behavior": "중단입력을다음답으로전달0",
+      "recovery": "현재문항의별도답선택",
+      "component": "src/features/quiz-player/ui/quiz-player.tsx",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T5"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "초기 시간상태 조회 실패",
+      "message": "시험 상태를 확인하지 못했습니다. 연결을 확인한 뒤 다시 시도해주세요.",
+      "behavior": "기존 동기화오류 UI·중단숨김",
+      "recovery": "다시 시도",
+      "component": "src/features/quiz-player/ui/quiz-player.tsx",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T5"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "답 저장/시간동기화 결과 확인 실패",
+      "message": "답안을 저장하지 못했습니다.",
+      "behavior": "기존서버복구부터·중단숨김·기존선택보존",
+      "recovery": "기존 최신상태확인/안전안내",
+      "component": "src/features/quiz-player/ui/quiz-player.tsx",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T5"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "현재학생 인증/권한 실패",
+      "message": "기존 인증 안내와 개인자료 숨김 유지",
+      "behavior": "새 인증경로/권한범위없음",
+      "recovery": "학생 접속 재확인",
+      "component": "src/features/quiz-player/ui/quiz-player.tsx",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T5"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "없는 또는권한없는시험 직접주소",
+      "message": "페이지를 찾을 수 없습니다",
+      "behavior": "기존서버404·화면중단부품마운트없음",
+      "recovery": "시험목록으로복귀",
+      "component": "src/features/quiz-player/ui/quiz-player.tsx",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T5"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "예상외 실패",
+      "message": "시험 상태를 확인하지 못했습니다. 연결을 확인한 뒤 다시 시도해주세요.",
+      "behavior": "기존오류경계·내부정보노출0",
+      "recovery": "기존 복구/목록경로",
+      "component": "src/features/quiz-player/ui/quiz-player.tsx",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T5"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "개발기준 v1.1 / Next16.2.12 React19.2.8",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "기존client/server경계·캐시·안전안내·좁은재사용책임 유지; 새전역기준 없음"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "component",
+      "target": "src/features/quiz-player/ui/quiz-player.test.tsx",
+      "scenario": "세 출제 유형·첫시험/재시험, 저장 전 중단없음, 응답 뒤 재생/시작대기 클릭·터치, 다음답 자동/예약0",
+      "expected": "음원정지·다음화면1회·명시중단만 지연0",
+      "topics": [
+        "behavior"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "component",
+      "target": "src/features/quiz-player/ui/quiz-player.test.tsx",
+      "scenario": "자연종료150ms·무음/실패750ms·시간초과·늦은play/ended/error·이탈·Tab·마지막문항",
+      "expected": "기존fallback/접근성보존·오래된콜백무효·결과이동1회",
+      "topics": [
+        "behavior",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "component",
+      "target": "src/features/quiz-player/ui/quiz-player.test.tsx",
+      "scenario": "느린resume와중복클릭·두응답실패복구·저장실패·인증실패·정답선공개없음·진행캐시없음",
+      "expected": "현재문항귀속·서버시간보존·중단입력자동답0·기존안전오류/복구",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "build",
+      "target": "package.json",
+      "scenario": "관련/전체검사·지도·타입·lint·요청캐시·격리최적화빌드",
+      "expected": "최종코드에서모두통과",
+      "topics": [
+        "structure",
+        "cache"
+      ]
+    },
+    {
+      "id": "T5",
+      "kind": "browser",
+      "target": null,
+      "scenario": "로컬가짜자료 공용실제플레이어 클릭·터치·음원정지/다음입력, Preview/운영 배포 확인",
+      "expected": "실제학생응시0·코드검사뒤화면확인·배포성공",
+      "topics": [
+        "behavior",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak"
+      ]
+    }
+  ],
+  "verification": {
+    "fingerprint": "a7837b30674fb1d52b1e9d035aad89806fe78faff0fba6198f474d0b56503f6d",
+    "files": [
+      {
+        "path": "architecture/기능_소유권.json",
+        "sha256": "05288c7a33931abc746220debfd7ae78c1e3250835fb49edc2ba4357da68e4c2"
+      },
+      {
+        "path": "eslint.config.mjs",
+        "sha256": "d8c244c819921bdb70982e51f8bb2c5b5e8a7620a70eca8cde1c89c760113e61"
+      },
+      {
+        "path": "next.config.ts",
+        "sha256": "c779b3730f9dcab3806d1ac9ab52c6363ad1994f6bb33d3bb2ca3b5f946b1405"
+      },
+      {
+        "path": "package-lock.json",
+        "sha256": "5561b1916cdbd9b1c087c6050e18223345a05cca9dcff9a8a2c3db383f8dd45b"
+      },
+      {
+        "path": "package.json",
+        "sha256": "52a577f51420d4a602f9c039de86269958bb551d378e7a48b04b3a25aa073e69"
+      },
+      {
+        "path": "scripts/check-feature-map.mjs",
+        "sha256": "506a662070649178498b643fc052f5abccc7c0fb21d69012b70741e2a445860e"
+      },
+      {
+        "path": "scripts/check-work-records.mjs",
+        "sha256": "b8a95754aa77e329ffd748ca91587996be221ea471a117ba816d0c61a0e2881f"
+      },
+      {
+        "path": "scripts/feature-map/change-impact.mjs",
+        "sha256": "a081f65b5915daf08e0e635c49e744a6b02ef480a46ae5ad0e2b63f203b71444"
+      },
+      {
+        "path": "scripts/feature-map/common.mjs",
+        "sha256": "69b9dad7ca7d05246233c00e0f10666486ed55890c120a6ebba7f496fb8130bc"
+      },
+      {
+        "path": "scripts/feature-map/flow-verification.mjs",
+        "sha256": "8cec86985fff2751e944ae60163c0f5ae8ab18e0a36981ae24eaebb66df4f0fd"
+      },
+      {
+        "path": "scripts/feature-map/import-graph.mjs",
+        "sha256": "82edb9b2bcc06ab69f6e7b545062e54a2b9b4363aa3e6dbc31a7298635622716"
+      },
+      {
+        "path": "scripts/feature-map/owner-output.mjs",
+        "sha256": "17d5ba87dc9b0796d84ca70703198e4bb8d150f56f0e3deda9e9c05fcc8ab187"
+      },
+      {
+        "path": "scripts/feature-map/ownership-catalog.mjs",
+        "sha256": "3e483f5b12695d5df1b48b7eeb5cc012831a8ed8e2fd177bce9acc1fed972515"
+      },
+      {
+        "path": "scripts/feature-map/runtime-flow.mjs",
+        "sha256": "9c2915e2b4be51b55840dbfda3ef8452f510412191980eeb4e914a5766317afc"
+      },
+      {
+        "path": "scripts/local-admin-baseline-data.mjs",
+        "sha256": "8523db5ac4f7e15f06e48a66be76c2c99aa4442f1688d928dc3389b99f7e4f58"
+      },
+      {
+        "path": "scripts/local-admin-baseline.mjs",
+        "sha256": "ea9913a6c1ea0fcb67d67c27bd3f58643480587b1e1350b9800eb4081882d7bc"
+      },
+      {
+        "path": "scripts/local-quiz-feedback-data.mjs",
+        "sha256": "f83d1afdcaaa687cbf0b04b087928d9657f3486dff101bcf178c722aeb433b15"
+      },
+      {
+        "path": "scripts/local-quiz-feedback-observer.js",
+        "sha256": "d522f6645128cb08e51923b885a6177d9f58978f5bd2b53454d55e7e53c6be04"
+      },
+      {
+        "path": "scripts/verify-ui-architecture.mjs",
+        "sha256": "dd7b31f9017f71e0777596a794c7e841c52923966881534666614935a39ed880"
+      },
+      {
+        "path": "scripts/work-records/context.mjs",
+        "sha256": "2d2b3f848e04db2b3ad76ba06fb480589e82243b51d714f0a98b37b70982adf8"
+      },
+      {
+        "path": "scripts/work-records/evidence.mjs",
+        "sha256": "d95c7d886a03dd96fe3dfb7fb67579b719063aa870c0131da21ce0967904874e"
+      },
+      {
+        "path": "scripts/work-records/schema.mjs",
+        "sha256": "9c33b3ffd2e27ad73be3c16a5be4513d3b69837b42fac8c1d00aa5d4dad4e5cd"
+      },
+      {
+        "path": "scripts/work-records/validation.mjs",
+        "sha256": "5a18bed98744ef213f3893012a48d57b88e73dbfe5430b447634be4ac3f8bd0a"
+      },
+      {
+        "path": "src/app/api/student/assignments/[id]/attempts/route.ts",
+        "sha256": "6a96b67ad2c829d05f8558d7d0915b37c2c77eedc0685d0c609642682b09c870"
+      },
+      {
+        "path": "src/app/api/student/attempts/[id]/answers/route.ts",
+        "sha256": "bda5ec2f2730dd9cb0601b2d8aa66bcde89fbd99baad1de4a7d36fba56445794"
+      },
+      {
+        "path": "src/app/api/student/attempts/[id]/expire/route.ts",
+        "sha256": "851869eff002ba37c4650cef11bf641a91543954c20256bf0f8b666a552d4783"
+      },
+      {
+        "path": "src/app/api/student/attempts/[id]/feedback/route.ts",
+        "sha256": "0ab25b31bfdf476e92d80e6c79817c06e55da91ad6f74d8586c1fac17b2ab619"
+      },
+      {
+        "path": "src/app/api/student/attempts/[id]/retry/route.ts",
+        "sha256": "d74b965efb29425a02a104a9d99910defcc8d6b02e08e4efdb861c9736a8d614"
+      },
+      {
+        "path": "src/app/api/student/attempts/[id]/route.ts",
+        "sha256": "0d19b7a2c6d4901e9da1034a453e175c8db0dfb50cd312e9c3013a07bfff9227"
+      },
+      {
+        "path": "src/app/api/student/attempts/[id]/timeouts/route.ts",
+        "sha256": "b0805b583088587949704abd08a269d223c41e618d358eaa2d37e99370c1453c"
+      },
+      {
+        "path": "src/app/application-layer-boundaries.test.ts",
+        "sha256": "c3fbff0d6499cac6cb7d1fe515df9b188ffe66f8341cc0d02b9cb94055a91d98"
+      },
+      {
+        "path": "src/app/mobile-production-regression-ui-contract.test.ts",
+        "sha256": "550d45c996e7a2ce286b5ae5099969f7ba7d3a42995887371319732aba1403ad"
+      },
+      {
+        "path": "src/app/preview-environment-contract.test.mjs",
+        "sha256": "d0185efa87e4906df970c921903569cea252982578c64f5cd3d34175aa0a6344"
+      },
+      {
+        "path": "src/app/server-architecture-ratchet.test.ts",
+        "sha256": "2f3864f59c99c394b03c42c17fa65007381820a919c6b45b43f3ba6cecd53b02"
+      },
+      {
+        "path": "src/app/student/(protected)/attempt/[id]/page.tsx",
+        "sha256": "914fab8e43dc71a71bd33f7d7d9cf4542536f8bdb8aef21e8adebb930ed9364d"
+      },
+      {
+        "path": "src/app/ui-architecture-ratchet.test.ts",
+        "sha256": "0157d6a24cb6a66dd4d0cb488aaa42a1d39b8266e29c2892475060f7f2d730ac"
+      },
+      {
+        "path": "src/app/work-records.test.mjs",
+        "sha256": "8b3793e426fb2564b9e1a28e84dce2d12b44ada07305ae320ae83c235813be4b"
+      },
+      {
+        "path": "src/components/pronunciation-text.test.tsx",
+        "sha256": "18d85bc59dd42e84d0db66331292f20edc134be52517f82bbff7cc4d67262864"
+      },
+      {
+        "path": "src/components/pronunciation-text.tsx",
+        "sha256": "b0d6d28fabb9d2c459c02a35605c60989ffa2693d33103c9438d60fe44473c5f"
+      },
+      {
+        "path": "src/content/ko/student-app.ts",
+        "sha256": "5f1d7c345b258fe9f8691084a646bea7cca6b634d64676947c58e95429719f69"
+      },
+      {
+        "path": "src/design-system/architecture-boundary.test.ts",
+        "sha256": "4a7e637626250266989ba83e2aa14c9c89813d820491a2023d6ee0c796ef2fab"
+      },
+      {
+        "path": "src/design-system/patterns/audio-button/audio-button.tsx",
+        "sha256": "c31904cc3e4b1e72b6ea2dc43b96657ea8ae72469cfc557cb596d554e3ddccb5"
+      },
+      {
+        "path": "src/features/assignments/architecture-boundary.test.ts",
+        "sha256": "b38b04f8eee91e94414b10bbe4a48759d224fa2a80a1f0ff00a10959396cf040"
+      },
+      {
+        "path": "src/features/quiz-player/api/quiz-attempt.test.ts",
+        "sha256": "7fbe007b8115595ffffd14ca76a2917737f05d4592bc885b8d3580f2c06e8fd6"
+      },
+      {
+        "path": "src/features/quiz-player/api/quiz-attempt.ts",
+        "sha256": "801ec8de96208d00c6518c955bf782c3de22f3a391e30dfc8977b05558d9ad39"
+      },
+      {
+        "path": "src/features/quiz-player/controller/quiz-audio-completion.test.ts",
+        "sha256": "33eedd89bf6c26c05069a84bf392d4c1b2378605978a018952fad9ef6e6a7ec9"
+      },
+      {
+        "path": "src/features/quiz-player/controller/quiz-audio-completion.ts",
+        "sha256": "1e743764f7f36d7a955973e41120af3de0a60df88e35d268734c8953f4175008"
+      },
+      {
+        "path": "src/features/quiz-player/controller/quiz-audio-element.ts",
+        "sha256": "dab6bad1389d1ac609245499485d83c2c5afb12e2b8c1407eccae1ccc470861f"
+      },
+      {
+        "path": "src/features/quiz-player/controller/quiz-audio-player.ts",
+        "sha256": "d4506b1ffdc37369707a4e0cba495847112c2c192ac9ab2d111525534fc742f0"
+      },
+      {
+        "path": "src/features/quiz-player/controller/quiz-audio-preloaders.ts",
+        "sha256": "1672319b9b689af48881208c928bf7538d429b128b3eb90b68c602d194e97945"
+      },
+      {
+        "path": "src/features/quiz-player/controller/quiz-audio-source.ts",
+        "sha256": "739c5e3a24ca75f8aa98892976d5ed85ac6e95e455adc31681ba1e0f5179bc76"
+      },
+      {
+        "path": "src/features/quiz-player/controller/quiz-transition-timer.test.ts",
+        "sha256": "eac48f54f3c2a35e8126e72c269b965ab1eacf96f39cf43c1093507dd8dab998"
+      },
+      {
+        "path": "src/features/quiz-player/controller/quiz-transition-timer.ts",
+        "sha256": "47ade96796149a86c7f50ce38ce3627a9380fdbbdaa5062518cf31b9f46013d8"
+      },
+      {
+        "path": "src/features/quiz-player/controller/resolve-quiz-feedback-transition.ts",
+        "sha256": "9793af62dd79417dd0693b17552affd2ea53ec65605b4a74b840a7f9cb27296a"
+      },
+      {
+        "path": "src/features/quiz-player/controller/use-initial-quiz-synchronization.ts",
+        "sha256": "2d88a2621ff443525f12e8b494386e632526f2cd421352da56259477c70b4f47"
+      },
+      {
+        "path": "src/features/quiz-player/controller/use-quiz-audio-runtime.ts",
+        "sha256": "35550da952abb2b352821be4dbc7195a9444ba8384c4a3094fcef995b6a59484"
+      },
+      {
+        "path": "src/features/quiz-player/controller/use-quiz-audio.ts",
+        "sha256": "9f6610d49f51a4ec751a4f20c2d447a53ec67643acc313c2d9546ba18e51f207"
+      },
+      {
+        "path": "src/features/quiz-player/controller/use-quiz-clock-lifecycle.ts",
+        "sha256": "e7728d2013a998e3f6f8a80ee2b0c92dcd3023547999a346744a55af44ce800c"
+      },
+      {
+        "path": "src/features/quiz-player/controller/use-quiz-clock.ts",
+        "sha256": "7246bc9a7bf4f224a24cff6e757569acd53602175999198c424e8b336913e3b7"
+      },
+      {
+        "path": "src/features/quiz-player/controller/use-quiz-feedback-interruption.ts",
+        "sha256": "5fdd9f29e6fdb2086b63ece46aaa78eadd6ccf9c0065d444dffb2f602c7e5386"
+      },
+      {
+        "path": "src/features/quiz-player/controller/use-quiz-phase-snapshot.ts",
+        "sha256": "6a13f68805744e0ee6f7f6a46b0d11c4b6aa7c6e400552b991d34f3b7be5e2f1"
+      },
+      {
+        "path": "src/features/quiz-player/controller/use-quiz-player-controller.ts",
+        "sha256": "bf09c58afc59282af773cce7dfd3fc4b12222eedb7cdfb57594f2a18a9e4e06c"
+      },
+      {
+        "path": "src/features/quiz-player/controller/use-quiz-recovery.ts",
+        "sha256": "393decd544a8cdbaf11ee723dc93af51f22bd51f7987749d88ad182e8770ad74"
+      },
+      {
+        "path": "src/features/quiz-player/controller/use-quiz-submission.ts",
+        "sha256": "3512dfde1ad890491e0879777d7bec4e1a012b269f0b1c4bba46262676d29741"
+      },
+      {
+        "path": "src/features/quiz-player/domain/quiz-player-state.ts",
+        "sha256": "7091326faf5aa01a75c4a61b86580b58048737e1ccc9be0708d92c2180d0ab67"
+      },
+      {
+        "path": "src/features/quiz-player/domain/quiz-session.test.ts",
+        "sha256": "65e8fc38ff6fb0cc16b17db2dff3513971e8ca438b3cfe8e5045a5ddfeef92ed"
+      },
+      {
+        "path": "src/features/quiz-player/domain/quiz-session.ts",
+        "sha256": "f605d2795859a3ffc90c09a05aee206b53ba2c644f17cf07a91a90ce9abc2d7c"
+      },
+      {
+        "path": "src/features/quiz-player/model.ts",
+        "sha256": "48fb0a7fdd9b4d9303c5736f83c2d095c60f3d11bb476781a0261b77de0cb54e"
+      },
+      {
+        "path": "src/features/quiz-player/ui/quiz-choice.module.css",
+        "sha256": "d66e593b2ec21c3746a3008248d1b83d1f5a626a3ec45dab309b69f5ce42be7d"
+      },
+      {
+        "path": "src/features/quiz-player/ui/quiz-choice.tsx",
+        "sha256": "17bd41e726f2d1a0d789b1125ade01d8b36428ac64526ed71541aac09be85676"
+      },
+      {
+        "path": "src/features/quiz-player/ui/quiz-feedback-skip.tsx",
+        "sha256": "cbc951649b934bd2097c41e62a71c19f4b038efd13dffe97aefe7a8b195ca9e2"
+      },
+      {
+        "path": "src/features/quiz-player/ui/quiz-frame.module.css",
+        "sha256": "8b77f8ceb20a7f823e877f3af41da5f746a2b789f615ed4f2d652ad6968d2353"
+      },
+      {
+        "path": "src/features/quiz-player/ui/quiz-frame.test.tsx",
+        "sha256": "190b1582d116ec72d70a9eeaf5c8518cafbdaa40d9d0c4d680bcab04094237a1"
+      },
+      {
+        "path": "src/features/quiz-player/ui/quiz-frame.tsx",
+        "sha256": "51fe79ca367d561c3cf27f08a856a2fb2604564984287f2d9348147bd309a6b7"
+      },
+      {
+        "path": "src/features/quiz-player/ui/quiz-player.module.css",
+        "sha256": "5d7a5cb7f1aa512f7648475103373eb56b393cdf10bc45490ad4fc6e6cb847b6"
+      },
+      {
+        "path": "src/features/quiz-player/ui/quiz-player.test.tsx",
+        "sha256": "be3b95e4c8afec28d42a8ce84521c57c6f5e319e6df35f6674a1639399b7c916"
+      },
+      {
+        "path": "src/features/quiz-player/ui/quiz-player.tsx",
+        "sha256": "d3aa03ac615cda5dd82f753fde96d28cc0a0b8e7d7b4b3bbf99dcfdf8087bfa1"
+      },
+      {
+        "path": "src/features/quiz-player/ui/quiz-synchronization-error.module.css",
+        "sha256": "0df4b9f0d57b9dc4cdcd77172397d8f18ed0c6cd264284db54d7141e16e29ec9"
+      },
+      {
+        "path": "src/features/quiz-player/ui/quiz-synchronization-error.tsx",
+        "sha256": "8b8559cba5a229a9764aff5d177ed5d060bffaa4d2df36698f33d87fffe11503"
+      },
+      {
+        "path": "src/features/quiz-player/ui/quiz-timeout-overlay.tsx",
+        "sha256": "3aa5e8423cea926f68a10517126c89c5d9ae69063b295ab932bbd5c0cf3e98ac"
+      },
+      {
+        "path": "src/lib/admin/assignment-settings.ts",
+        "sha256": "0825a32db7d1e27c4368e3f830375da04bcb21999f63da253e9ab9c1e0c89e09"
+      },
+      {
+        "path": "src/lib/admin/dataset-catalog.ts",
+        "sha256": "1ce7d047b566bc0d886080c5763231f07bf304dccf24dc937e727779a4e83d08"
+      },
+      {
+        "path": "src/lib/admin/dataset-display.ts",
+        "sha256": "ef0a2dcb7528ba322cd52db80cf5cd51cbbdab1f261e50be03a80942b273f194"
+      },
+      {
+        "path": "src/lib/admin/dataset-summary.ts",
+        "sha256": "0b9fbcc0513e1ae47226f7c8501c9bf87e6a6a6284862d185ca06335c295f377"
+      },
+      {
+        "path": "src/lib/admin/review-queue-summary.ts",
+        "sha256": "5d814867a01ea1dda9eae299e744e62d6ad4a8e030efbcb3d311fd7bccf9e61f"
+      },
+      {
+        "path": "src/lib/admin/vocab-unit-allocation-rule.test.ts",
+        "sha256": "60cdd0caac4027d8a79205bbc7e07976470157cfd00093d8adcc081105d2b2a0"
+      },
+      {
+        "path": "src/lib/admin/vocab-unit-allocation-rule.ts",
+        "sha256": "7ef5433745b8446a4b7b1a8a6cd88dbfefc47fe8ae9ff3b9c0594a190bfe3ae2"
+      },
+      {
+        "path": "src/lib/admin/vocab-unit-allocation.ts",
+        "sha256": "c574ad01c58f6c9bfb34285095c0cc0312db62df745b645596c0f6cd75b9e873"
+      },
+      {
+        "path": "src/lib/admin/wrong-history-summary.ts",
+        "sha256": "56aa2e221841cc758db331e0604031ef0805f917666fd597c81fde67922d9ab0"
+      },
+      {
+        "path": "src/lib/assignment/assignment-release.test.ts",
+        "sha256": "3ce2a5e7dddfa392a93427d7b6ab8c1078a68f8b3205455ddc465f562293ceb2"
+      },
+      {
+        "path": "src/lib/assignment/assignment-release.ts",
+        "sha256": "77cb861ed066a9d982203a759f510596118f2356aea7680984494d278900a02f"
+      },
+      {
+        "path": "src/lib/constants.ts",
+        "sha256": "7b6804df9c29ec9e9885dc6f349c9806fa5e3dc95c34b2fc7fdd0e1c0244d20a"
+      },
+      {
+        "path": "src/lib/database/assignment-release-final-schema.integration.test.ts",
+        "sha256": "6bbef15fe91216a385c6a0c1834899f164ba9cf52e2ad3c6ba22e1c12a371445"
+      },
+      {
+        "path": "src/lib/database/assignment-settings-and-timing-contract.test.ts",
+        "sha256": "1e0c28766d8cd8dc7ae2220257108274793ca415b7326fdaf815110a9fb78b00"
+      },
+      {
+        "path": "src/lib/database/migration-contract.test.ts",
+        "sha256": "1392f617cbbc93bc7e2b162e28fbd270129995121e7ea1d10c0a88a2585689d4"
+      },
+      {
+        "path": "src/lib/database/quiz-feedback-timing.integration.test.ts",
+        "sha256": "3e07f3b8b23f7196cfd1f76bc8103e9973f9d5eb5fd572ec0fe675af868f7737"
+      },
+      {
+        "path": "src/lib/database/read-side-maintenance-jobs.integration.test.ts",
+        "sha256": "5ba04763cf8b159b6a9ce577e0823d0cc52b80c10dab14abe9bf61571aee3eba"
+      },
+      {
+        "path": "src/lib/database/retry-question-timer.integration.test.ts",
+        "sha256": "0cd26be0d01bbd67a0228ddcc5e734c440f82e22bae4c58e2b6896855dbc54b4"
+      },
+      {
+        "path": "src/lib/database/student-point-ledger-migration-contract.test.ts",
+        "sha256": "37d8539bae69748e592b570f5fda3dbabc78abac3b2df92d592fe428fad34edc"
+      },
+      {
+        "path": "src/lib/database/student-point-ledger.integration.test.ts",
+        "sha256": "5f23e794bec501623c087e387c2d52564aacf67aeee49052e59071d8f0e99ba5"
+      },
+      {
+        "path": "src/lib/database/wrong-event-history-migration-contract.test.ts",
+        "sha256": "8bdb58fe184bef966ff7a11d3ae5f955e05b7da5e8002ba7f76a24956c879932"
+      },
+      {
+        "path": "src/lib/deadline.test.ts",
+        "sha256": "50f5c8fe437c797335275e55c5f9c6fc450816d873e71366f7624771b978abec"
+      },
+      {
+        "path": "src/lib/deadline.ts",
+        "sha256": "8c48c51ea0ae9441577f413e53213d77d54ad8a8830a547f577dafaa260357ad"
+      },
+      {
+        "path": "src/lib/format.ts",
+        "sha256": "4b5954fab4d1f3e4524f9b38771a3528b72d4bfad515cb81ca8fa1469976762c"
+      },
+      {
+        "path": "src/lib/quiz/cached-flow-contract.test.ts",
+        "sha256": "e33c586561c8a08fe8e2861f75b9decce5481c2ebc568914ed634268d3b29193"
+      },
+      {
+        "path": "src/lib/quiz/choice-policy.ts",
+        "sha256": "a579b573edb2e50e2436dfaab0e51d20d9cc5e6eb1956547c79db0ba8441f22e"
+      },
+      {
+        "path": "src/lib/quiz/prior-wrong.test.ts",
+        "sha256": "f461ada95a04e3bfa2a50b281a70a9dd825396f2bf96dfb6c500fb74623c3f41"
+      },
+      {
+        "path": "src/lib/quiz/prior-wrong.ts",
+        "sha256": "1473f79b29278343306be07f7d845f64ec22a0bc650b02206594fd957136568f"
+      },
+      {
+        "path": "src/lib/quiz/pronunciation-snapshot.test.ts",
+        "sha256": "3f08fcf1cf8d7e406452a318b9fe7b327537639ae630d8f379ec651b867a8e56"
+      },
+      {
+        "path": "src/lib/quiz/pronunciation-snapshot.ts",
+        "sha256": "992e636661d2706ec5880aa41f36ae8500a757ee074d31c1a33af6e2ef6d182d"
+      },
+      {
+        "path": "src/lib/quiz/pronunciation-storage.test.ts",
+        "sha256": "853d024ea8e61ffad858ed474b7c34a805c61661983c04e7437b92ecd1b88505"
+      },
+      {
+        "path": "src/lib/quiz/pronunciation-storage.ts",
+        "sha256": "a400e9657d32d08ba7a2cbc4743c879e0baac8fe23c99b5ccb696e99f66c4669"
+      },
+      {
+        "path": "src/lib/quiz/question-content-mode.test.ts",
+        "sha256": "0c2551861145e732e7b2da9853291644375b8abb019a0658231e63bd1df221a8"
+      },
+      {
+        "path": "src/lib/quiz/question-content-mode.ts",
+        "sha256": "e735823ea395a944d1729887c86a4a212c1f9ffe3272aa687e5a5300715cdce7"
+      },
+      {
+        "path": "src/lib/quiz/question-engine-boundary-contract.test.ts",
+        "sha256": "785a73a5402e310b1213cc8188adcfe6bddf63bb0eb57d88c23d86cf1ef8e49b"
+      },
+      {
+        "path": "src/lib/quiz/question-engine.test.ts",
+        "sha256": "1f59fa6a177140985d6fd0b41a267b9e25448fb3e1ee9d5e3f5922120e048a4d"
+      },
+      {
+        "path": "src/lib/quiz/question-generator.ts",
+        "sha256": "25b0400942d0ca2fc61efc9978c29c909485c6792131f4b3555cca1915e5afd1"
+      },
+      {
+        "path": "src/lib/quiz/question-provenance.ts",
+        "sha256": "60465a37915b5e1d0b96cf5a903475678f51230e7367e96945d2f424757cc8ec"
+      },
+      {
+        "path": "src/lib/quiz/question-types.ts",
+        "sha256": "1a0704c060cc5330257b47c2e87094addec989e7761b1c96164fcbd466821053"
+      },
+      {
+        "path": "src/lib/quiz/random.ts",
+        "sha256": "7f0b80a5ca4b1337b2251a6c49d66d17c3eedf5ec96871148a7ae7e9919ff5a3"
+      },
+      {
+        "path": "src/lib/quiz/word-identity.ts",
+        "sha256": "aeddac95854823420e06f2b6c63bf80b5ac2f3b53e6163a4dd0dbac22280da5a"
+      },
+      {
+        "path": "src/lib/services/quiz-rpc-compatibility.test.ts",
+        "sha256": "d8150b3478470e982cd9ce665bc777c0ef34ff40e05cf72d35e445fd885bb8a8"
+      },
+      {
+        "path": "src/lib/services/quiz-rpc-compatibility.ts",
+        "sha256": "0c3e9a1673581877e7729570067794433d381784d71bc10de659b721566fdbc8"
+      },
+      {
+        "path": "src/lib/services/quiz/attempt-command.test.ts",
+        "sha256": "2e2a6b0249f02a1234459c162129a6cd33967d5574e6d60b623725bf7b08b597"
+      },
+      {
+        "path": "src/lib/services/quiz/attempt-command.ts",
+        "sha256": "a9d986e6a953a9780178b75a09a78eaa01542ef68c2eacdfbb56b5ddfafefd12"
+      },
+      {
+        "path": "src/lib/services/quiz/attempt-query.ts",
+        "sha256": "96985630554a9cc3f553275c63b3f1e546b864f6d5730c16260773632cf0f460"
+      },
+      {
+        "path": "src/lib/services/quiz/attempt-start.test.ts",
+        "sha256": "32d55edd68c3e496163ff5abdaac82c57aa0be446dadaac219c5df750f701678"
+      },
+      {
+        "path": "src/lib/services/quiz/attempt-start.ts",
+        "sha256": "b9c825c29452101acf82e8e0a064196b73dd68123997ecfded7fbf48a37e849b"
+      },
+      {
+        "path": "src/lib/services/quiz/pronunciation-registry.ts",
+        "sha256": "98fe781123c0cc19b7fede8b81a4bb4240593539f7bb2abbdb7a7140e619de68"
+      },
+      {
+        "path": "src/lib/services/quiz/question-mapping.test.ts",
+        "sha256": "b94350de4b16db0060e401d3d91e897230bd70f1e0af8fb233a49098a857d10a"
+      },
+      {
+        "path": "src/lib/services/quiz/question-snapshot.ts",
+        "sha256": "9a46111ac246b49cca4d64dd970a86593240863b1f9a24e712a62f0ee35723d6"
+      },
+      {
+        "path": "src/lib/services/quiz/quiz-service-boundary-contract.test.ts",
+        "sha256": "a78d9f5d586ff8e532d4fe03749c4b262fcd4795fa869739f9c554798a6d720a"
+      },
+      {
+        "path": "src/lib/services/vocab-assignment-queue-command.test.ts",
+        "sha256": "3af585a3c47d7b1add14d76ef1d87c557682dcfdf63c16ae9109b6501180da04"
+      },
+      {
+        "path": "src/lib/services/vocab-assignment-queue-command.ts",
+        "sha256": "1984cca5d843e5202d8b644b4974fd0dd2d94b48e95abc69e5e94dfda50cd7a4"
+      },
+      {
+        "path": "src/lib/services/vocab-assignment-queue-query.ts",
+        "sha256": "1e10a2465cbf8f41ae6fe41e6e02dab94e0a411b96abd7b7d8ad77e31a1a0617"
+      },
+      {
+        "path": "src/lib/services/vocab-assignment-queue-support.ts",
+        "sha256": "0e6bfbce9c2220502a204df14a484b1e51ab7cc686345095a299b85b7b9ba20e"
+      },
+      {
+        "path": "src/lib/validation.test.ts",
+        "sha256": "79817a766eb61a413406f3e6af6c167dc428022502c5fa420b9878d51845474c"
+      },
+      {
+        "path": "src/lib/validation.ts",
+        "sha256": "3b07c385a5ad3c20a925488bc87444fba5da9e75c97721a69f728db44b5e9517"
+      },
+      {
+        "path": "src/test-support/local-quiz-feedback.test.mjs",
+        "sha256": "9be2dcaa80dcb5b45e12d0337b7dabac81c71f7a5d4cde6eb8c7405aed51336a"
+      },
+      {
+        "path": "src/test-support/module-boundary.test.ts",
+        "sha256": "d6dc252bef406aec356629a8c71dd3b1a8769e028f1a87e37b7991b0cfb2faa9"
+      },
+      {
+        "path": "src/test-support/module-boundary.ts",
+        "sha256": "88caa81a7f9e912cb0e3fc3667c0d82352e46f0999d61fd546597950ffc3b0c3"
+      },
+      {
+        "path": "src/test-support/server-architecture.ts",
+        "sha256": "fa5baed3795dffb7b7b9c1f6caa61726e9485981297b4777f88f2d22f50eb5b7"
+      },
+      {
+        "path": "supabase/migrations/20260728162905_initial_student_app_mvp.sql",
+        "sha256": "547eca13ab6e047e19a677ead1ba8b51a1ab3bd9e9373792c72ea08e2ea2e05e"
+      },
+      {
+        "path": "supabase/migrations/20260730130000_add_vocab_wrong_event_history.sql",
+        "sha256": "027ba38da90b563e9b27a5865306ee7111532de97fbfa46c12ba04b9f4cd2499"
+      },
+      {
+        "path": "supabase/migrations/20260730235100_add_assignment_timing_and_order_behavior.sql",
+        "sha256": "8b7cf7c02d43003d29e6869c97f658b0f9c315a1e69c467467f1910f27c531d5"
+      },
+      {
+        "path": "supabase/migrations/20260730235200_harden_assignment_delivery_rpc.sql",
+        "sha256": "5483fb2e4d57ce923bcbef746454e2013ff5c57c4e02a275e70ca13bfbf8443f"
+      },
+      {
+        "path": "supabase/migrations/20260815123000_resume_quiz_after_variable_feedback.sql",
+        "sha256": "602f5c8ccab2b106eb24d1e82be6464bd9527d93b4720dc77f4d971f4e074c36"
+      },
+      {
+        "path": "supabase/migrations/20260822010300_add_vocab_assignment_completion_queue.sql",
+        "sha256": "8f5b3c4dcd13d7050643723ac801137157fd2b72aa62f3af82392f37b725d477"
+      },
+      {
+        "path": "supabase/migrations/20260822183000_add_untimed_vocab_assignments.sql",
+        "sha256": "a878526315f7c4203c9bdc68d2d181db941b4dae7fcdada64834faadd78e5a34"
+      },
+      {
+        "path": "supabase/migrations/20260824010000_add_assignment_retry_rules.sql",
+        "sha256": "6f6ce710727f0b89e8ce36a71ed2c1d3fceed96cc62fe3859f541cb00964837c"
+      },
+      {
+        "path": "supabase/migrations/20260825083542_add_student_point_ledger.sql",
+        "sha256": "11f608a1322f8c209440d4db8508f82d2b6642915a4ad226dff9dc0de8cc3d2a"
+      },
+      {
+        "path": "supabase/migrations/20260826001639_add_read_side_maintenance_workers.sql",
+        "sha256": "d006bb05406a8f773414441794ecc6b6cba70e527ac6d1eeb879beeb2f388d6c"
+      },
+      {
+        "path": "supabase/migrations/20260826001648_preserve_untimed_assignment_deadlines.sql",
+        "sha256": "7fa0cbf8199c3ca6da02b18df75818b800895a764557dbe2df26826974687073"
+      },
+      {
+        "path": "supabase/migrations/20260905063836_add_reviewed_choice_repair_release.sql",
+        "sha256": "512f6f08c61ecc26e4a51a7dd6dc452aef4f68e1169aa4f09d774a1aed0df448"
+      },
+      {
+        "path": "supabase/migrations/20260906103017_add_approved_school_pronunciation_scope.sql",
+        "sha256": "f9106bc08c2dd11e20a2f7e6720cb02e57b64d51d3b5e3ca72633edf8b25895f"
+      },
+      {
+        "path": "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
+        "sha256": "790a375052a12feafc678995100f73dd0ae73b823381029ac0bcbdc5e5cc8a06"
+      },
+      {
+        "path": "tsconfig.json",
+        "sha256": "5bec101c734eb97d36f3f49b122ad4d37b68d796bfa608760d266c57cd6c50ac"
+      },
+      {
+        "path": "vitest.config.ts",
+        "sha256": "705e16d57f8b528b676a87707bb71dea3ed2d1389303f53ef10902ff4e2726ec"
+      }
+    ],
+    "runs": [
+      {
+        "checkId": "T1",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-06T19:05:38Z",
+        "command": "node node_modules/vitest/vitest.mjs run --maxWorkers=4 --reporter=dot",
+        "summary": "공용 플레이어56검사: 세 유형×첫시험/재시험×정오12조합, 저장전·첫입력·시작대기·다음답0."
+      },
+      {
+        "checkId": "T2",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-06T19:05:38Z",
+        "command": "node node_modules/vitest/vitest.mjs run --maxWorkers=4 --reporter=dot",
+        "summary": "자연150ms·무음750ms·지연play/ended/error·이탈·Tab·마지막결과1회 및 기존음원 회귀 통과."
+      },
+      {
+        "checkId": "T3",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-06T19:05:38Z",
+        "command": "node node_modules/vitest/vitest.mjs run --maxWorkers=4 --reporter=dot; localhost real Next GET checks",
+        "summary": "전체시간/마감만/무제한3검사와 느린동기화·복구·저장실패, 로컬 보호39검사. 익명401·미응답 최초 문항 정답null. GET의 기존 응답헤더 미설정은 별도 기록."
+      },
+      {
+        "checkId": "T4",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-06T19:06:00Z",
+        "command": "vitest run --maxWorkers=4; tsc --noEmit; eslint .; check-work-records --phase design --changed; verify-ui-architecture; verify-react-request-cache; local-admin-baseline --quiz-feedback",
+        "summary": "426파일2730통과/기존 선택 외부자료1건skipped; 타입/lint·변경연결·UI구조·요청cache·최종격리Next빌드33정적페이지 통과."
+      },
+      {
+        "checkId": "T5",
+        "result": "not_run",
+        "environment": "production",
+        "ranAt": "2026-09-06T19:12:23.156Z",
+        "command": "Codex IAB local six synthetic attempts; Preview/Production deployment pending",
+        "summary": "로컬6유형 실제음원 정지·답6/시간확인6·다음답0·브라우저warn/error0. 실제 손가락·누른상태 자연종료 경쟁은 미검증. Preview/운영은 아직 미실행."
+      }
+    ]
+  }
+}

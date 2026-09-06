@@ -1,5 +1,6 @@
 // Synthetic HTTP fixtures only. Never import this module from application code.
 import { studentStudyFixture, STUDY_SECRET } from "./local-student-study-data.mjs";
+import { studentQuizFixture } from "./local-quiz-feedback-data.mjs";
 export const APP_ORIGIN = "http://127.0.0.1:3037";
 export const DATA_ORIGIN = "http://127.0.0.1:3038";
 export const NEXT_ORIGIN = "http://127.0.0.1:3040";
@@ -41,12 +42,18 @@ function filteredStudents(input) {
     (!input.p_status || input.p_status === "all" || input.p_status === "active") &&
     (!input.p_wrong || input.p_wrong === "all") && !input.p_class_group_id && !input.p_wordbook);
 }
-export function fixtureResponse({ url, method, headers, body = "" }) {
+export function fixtureResponse({ url, method, headers, body = "", quizFeedback = false }) {
   const target = new URL(url);
   const deny = { status: 403, body: { error: "Local fixture request rejected" }, category: "rejected" };
   if (target.origin !== DATA_ORIGIN || target.username || target.password) return deny;
   const input = parsedBody(body);
-  if (headers.get("apikey") === STUDY_SECRET) return studentStudyFixture({ target, method, headers, input });
+  if (headers.get("apikey") === STUDY_SECRET) {
+    if (quizFeedback) {
+      const quiz = studentQuizFixture({ target, method, headers, input });
+      if (quiz) return quiz;
+    }
+    return studentStudyFixture({ target, method, headers, input });
+  }
   if (input === null || !requireFakeIds(input, [uid(1), uid(2), uid(10), uid(11)])) return deny;
   if (headers.get("apikey") !== PUBLIC_KEY) return deny;
   const respond = (value, category) => ({ status: 200, body: value, category });

@@ -52,11 +52,13 @@ export function useQuizPlayerController(input: {
     ? quizAudioPresentation(currentQuestion)
     : { promptAudioUrl: null, choiceAudioEnabled: false };
   const {
+    canInterruptFeedbackAudio,
     cancelPendingPromptAudio,
     captureActivePromptAudio,
     playAnswerAudio,
     playAudio,
     primeChoiceAudio,
+    stopFeedbackAudio,
   } = useQuizAudio({
     attemptId: state.attempt.id,
     autoPlayEnabled:
@@ -168,7 +170,8 @@ export function useQuizPlayerController(input: {
     state.timerSynchronized,
   ]);
 
-  const submitChoice = useQuizSubmission({
+  const { canInterruptFeedback, interruptFeedback, submitChoice } = useQuizSubmission({
+    canInterruptFeedbackAudio,
     cancelPendingPromptAudio,
     captureActivePromptAudio,
     currentQuestion,
@@ -182,6 +185,7 @@ export function useQuizPlayerController(input: {
     recoverFromServer,
     resetClock,
     state,
+    stopFeedbackAudio,
     timeWarningAnnouncedRef: timeWarningAnnounced,
   });
   const attemptUsesDeadlineClock = quizAttemptUsesDeadlineClock(state.attempt);
@@ -236,8 +240,10 @@ export function useQuizPlayerController(input: {
   return {
     answerAnnouncement,
     audioPresentation,
+    canInterruptFeedback,
     completedInPhase: phaseSnapshot.completed,
     currentQuestion,
+    interruptFeedback,
     phaseQuestionCount: phaseSnapshot.questions.length,
     playAudio,
     priorWrongIndicator,

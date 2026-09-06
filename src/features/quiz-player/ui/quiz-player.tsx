@@ -11,6 +11,7 @@ import {
 import type { QuizAttempt } from "../model";
 import type { QuizChoiceFeedback } from "./quiz-choice";
 import { QuizFrame } from "./quiz-frame";
+import { QuizFeedbackSkip } from "./quiz-feedback-skip";
 import styles from "./quiz-player.module.css";
 
 export function formatQuizTime(seconds: number) {
@@ -105,6 +106,10 @@ export function QuizPlayer({
         timeWarning={state.timeWarning}
         timedOut={state.feedback?.timedOut ?? false}
         timingMode={state.attempt.timingMode}
+      />
+      <QuizFeedbackSkip
+        onInterrupt={controller.interruptFeedback}
+        visible={controller.canInterruptFeedback}
       />
     </main>
   );

@@ -130,6 +130,7 @@ export const studentAppText = {
       "시험 상태를 확인하지 못했습니다. 연결을 확인한 뒤 다시 시도해주세요.",
     synchronizationRetry: "다시 시도",
     finalizing: "시험 상태를 정리하는 중입니다.",
+    skipAudio: "화면을 누르면 음성을 멈추고 넘어갑니다.",
     retryPhase: "재시험",
     initialPhase: "첫 시험",
     perQuestionPrefix: "문제당 ",

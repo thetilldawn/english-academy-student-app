@@ -11,6 +11,7 @@ export class QuizAudioPlayer {
   private activePurpose: QuizAudioPurpose | null = null;
   private generation = 0;
   private interruptCompletion: (() => void) | null = null;
+  private isCompletionPending: (() => boolean) | null = null;
   private readonly preloaders = new QuizAudioPreloaders();
   private readonly source = new QuizAudioSource();
 
@@ -64,9 +65,11 @@ export class QuizAudioPlayer {
       startupTimeoutMilliseconds,
     );
     this.interruptCompletion = completion.interrupt;
+    this.isCompletionPending = completion.isPending;
     const result = await completion.result;
     if (this.interruptCompletion === completion.interrupt) {
       this.interruptCompletion = null;
+      this.isCompletionPending = null;
     }
     if (generation !== this.generation) return "interrupted";
     if (["failed", "blocked", "timed-out"].includes(result)) {
@@ -78,6 +81,14 @@ export class QuizAudioPlayer {
 
   stopPrompt() {
     if (this.activePurpose !== "prompt") return;
+    this.stop();
+  }
+
+  canInterrupt() {
+    return this.isCompletionPending?.() ?? false;
+  }
+
+  stop() {
     this.interruptActiveCompletion();
     this.source.pause();
     this.activePurpose = null;
@@ -95,6 +106,7 @@ export class QuizAudioPlayer {
   private interruptActiveCompletion() {
     const interrupt = this.interruptCompletion;
     this.interruptCompletion = null;
+    this.isCompletionPending = null;
     interrupt?.();
   }
 

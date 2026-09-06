@@ -1450,3 +1450,329 @@ describe("QuizPlayer", () => {
     ).not.toBeInTheDocument();
   });
 });
+function interruptibleAttempt(
+  mode: QuizAttempt["quizContentMode"] = "canonical_definition_to_headword",
+  phase: "initial" | "retry" = "initial",
+) {
+  const value = attempt();
+  value.phase = phase;
+  value.quizContentMode = mode;
+  value.questionTimeLimitSeconds = 10;
+  value.questions.forEach((item) => {
+    if (phase === "retry") {
+      item.initialChoiceIndex = 1;
+      item.initialIsCorrect = false;
+    }
+  });
+  if (mode === "book_meaning_choice") {
+    value.questions[0].direction = "english_to_korean";
+    value.questions[0].pronunciation = availablePronunciation;
+  } else {
+    value.questions[0].choicePronunciations[0] = availablePronunciation;
+  }
+  return value;
+}
+
+function nextAudioAnswer(phase: "initial" | "retry" = "initial", correct = true) {
+  return successfulTransport({
+    correct,
+    correctChoiceIndex: correct ? 0 : 1,
+    nextPhase: phase,
+    nextQuestionId: "question-2",
+    questionDeadlineAt: "2099-01-01T00:00:17.000Z",
+    timerRemainingMilliseconds: 17_000,
+  });
+}
+
+async function chooseFirstAnswer() {
+  fireEvent.click(firstAnswerButton());
+  await act(async () => Promise.resolve());
+}
+
+function firstAnswerButton() {
+  return screen.getByRole("group").querySelector<HTMLButtonElement>("[data-feedback]")!;
+}
+
+function feedbackSkipButton() {
+  return screen.getByRole("button", { name: studentAppText.attempt.skipAudio });
+}
+
+function currentAudiblePlayer() {
+  return audioInstances.find((audio) =>
+    audio.playStates.some((state) => !state.muted),
+  )!;
+}
+
+async function flushImmediateTransition() {
+  await act(async () => {
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(0);
+  });
+}
+
+describe("acknowledged feedback audio interruption", () => {
+  const cases = ([
+    "book_meaning_choice",
+    "canonical_definition_to_headword",
+    "canonical_example_to_headword",
+  ] as const).flatMap((mode) => (["initial", "retry"] as const).flatMap(
+    (phase) => [true, false].map((correct) => ({ mode, phase, correct })),
+  ));
+
+  it.each(cases)("skips $mode / $phase / correct=$correct without submitting the next answer", async ({ mode, phase, correct }) => {
+    mocks.submit.mockResolvedValueOnce(nextAudioAnswer(phase, correct));
+    await renderReady(interruptibleAttempt(mode, phase));
+    expect(screen.queryByText(studentAppText.attempt.skipAudio)).toBeNull();
+    if (mode === "book_meaning_choice") {
+      await act(async () => vi.advanceTimersByTimeAsync(250));
+    }
+    await chooseFirstAnswer();
+    const player = currentAudiblePlayer();
+    const pausedBefore = player.pause.mock.calls.length;
+    const skip = feedbackSkipButton();
+    expect(firstAnswerButton()).toBeDisabled();
+    expect(mocks.resume).not.toHaveBeenCalled();
+    // One browser click path for mouse, touch and synthesized clicks.
+    fireEvent.pointerDown(skip, { pointerType: "touch" });
+    fireEvent.pointerUp(skip, { pointerType: "touch" });
+    expect(mocks.resume).not.toHaveBeenCalled();
+    fireEvent.click(skip);
+    fireEvent.click(skip);
+    await flushImmediateTransition();
+    expect(player.pause.mock.calls.length).toBeGreaterThan(pausedBefore);
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(screen.queryByText(studentAppText.attempt.skipAudio)).toBeNull();
+    expect(mocks.resume).toHaveBeenCalledExactlyOnceWith({
+      attemptId: "attempt-1", nextPhase: phase, nextQuestionId: "question-2",
+      transitionRemainingMilliseconds: 0,
+    });
+    expect(mocks.submit).toHaveBeenCalledExactlyOnceWith({
+      attemptId: "attempt-1", questionId: "question-1", phase, choiceIndex: 0,
+    });
+    expect(screen.getByRole("button", { name: /question-2-one/ })).not.toHaveAttribute("data-feedback", "selected");
+    expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:10");
+    expect(mocks.replace).not.toHaveBeenCalled();
+  });
+
+  it("does not open before saving or reuse the first click as a skip", async () => {
+    let acknowledge!: (value: unknown) => void;
+    mocks.submit.mockReturnValue(new Promise((resolve) => { acknowledge = resolve; }));
+    await renderReady(interruptibleAttempt());
+    await chooseFirstAnswer();
+    fireEvent.click(screen.getByRole("main"));
+    expect(screen.queryByText(studentAppText.attempt.skipAudio)).toBeNull();
+    expect(firstAnswerButton()).toHaveAttribute("data-feedback", "selected");
+    expect(screen.queryByText(studentAppText.attempt.correct)).toBeNull();
+    await act(async () => { acknowledge(nextAudioAnswer()); });
+    expect(feedbackSkipButton()).toBeInTheDocument();
+    expect(mocks.resume).not.toHaveBeenCalled();
+    expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
+  });
+
+  it.each(["total", "none"] as const)("preserves the finite %s deadline after interruption", async (timingMode) => {
+    const value = interruptibleAttempt();
+    value.timingMode = timingMode;
+    value.questionTimeLimitSeconds = null;
+    value.timerDeadlineAt = value.deadlineAt;
+    mocks.submit.mockImplementationOnce(async () => successfulTransport({
+      correct: true, correctChoiceIndex: 0, nextPhase: "initial", nextQuestionId: "question-2",
+      questionDeadlineAt: value.deadlineAt,
+      timerRemainingMilliseconds: timingMode === "total" ? 9_000 : 2_000,
+    }));
+    mocks.resume.mockImplementation(async () => successfulTransport({
+      questionDeadlineAt: value.deadlineAt, questionStartsAt: value.startedAt,
+      timerRemainingMilliseconds: 1_000, transitionRemainingMilliseconds: 0,
+    }));
+    mocks.expire.mockResolvedValue({ ok: true });
+    await renderReady(value, 2_000);
+    await chooseFirstAnswer();
+    await act(async () => vi.advanceTimersByTimeAsync(1_000));
+    fireEvent.click(feedbackSkipButton());
+    await flushImmediateTransition();
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(mocks.resume).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ transitionRemainingMilliseconds: 0 }));
+    expect(mocks.submit).toHaveBeenCalledTimes(1);
+    expect(mocks.expire).not.toHaveBeenCalled();
+    if (timingMode === "total") expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:01");
+    else expect(screen.getByTestId("quiz-timer")).toHaveTextContent("제한 없음");
+    await act(async () => vi.advanceTimersByTimeAsync(999));
+    expect(mocks.expire).not.toHaveBeenCalled();
+    await act(async () => vi.advanceTimersByTimeAsync(2));
+    await flushImmediateTransition();
+    expect(mocks.expire).toHaveBeenCalledTimes(1);
+    expect(mocks.submit).toHaveBeenCalledTimes(1);
+    expect(mocks.replace).toHaveBeenCalledExactlyOnceWith("/student/result/attempt-1");
+  });
+
+  it("keeps a fully untimed attempt open after interruption", async () => {
+    const value = interruptibleAttempt();
+    value.timingMode = "none";
+    value.questionTimeLimitSeconds = null;
+    value.deadlineAt = value.timerDeadlineAt = "infinity";
+    mocks.submit.mockImplementationOnce(async () => successfulTransport({
+      correct: true, correctChoiceIndex: 0, nextPhase: "initial", nextQuestionId: "question-2",
+      questionDeadlineAt: "infinity", timerRemainingMilliseconds: 0,
+    }));
+    mocks.resume.mockImplementation(async () => successfulTransport({
+      questionDeadlineAt: "infinity", questionStartsAt: value.startedAt,
+      timerRemainingMilliseconds: 0, transitionRemainingMilliseconds: 0,
+    }));
+    await renderReady(value, 0);
+    await chooseFirstAnswer();
+    fireEvent.click(feedbackSkipButton());
+    await flushImmediateTransition();
+    await act(async () => vi.advanceTimersByTimeAsync(24 * 60 * 60 * 1_000));
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(screen.getByTestId("quiz-timer")).toHaveTextContent("제한 없음");
+    expect(mocks.expire).not.toHaveBeenCalled();
+    expect(mocks.submit).toHaveBeenCalledTimes(1);
+    expect(mocks.resume).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops startup delay and ignores late play/ended/error after the next audio starts", async () => {
+    audioPlayResults.push("pending", "pending");
+    mocks.submit.mockResolvedValueOnce(nextAudioAnswer());
+    const value = interruptibleAttempt();
+    value.questions[1].direction = "english_to_korean";
+    value.questions[1].pronunciation = { ...availablePronunciation, audioUrl: "https://example.com/next.mp3" };
+    await renderReady(value);
+    await chooseFirstAnswer();
+    const player = currentAudiblePlayer();
+    const oldHandlers = ["ended", "error"].flatMap((type) => [...(player.listeners.get(type) ?? [])]);
+    fireEvent.click(feedbackSkipButton());
+    await flushImmediateTransition();
+    await act(async () => vi.advanceTimersByTimeAsync(250));
+    const pauses = player.pause.mock.calls.length;
+    await act(async () => {
+      pendingAudioPlays.splice(0).forEach((resolve) => resolve());
+      oldHandlers.forEach((handler) => handler());
+    });
+    expect(player.pause).toHaveBeenCalledTimes(pauses);
+    expect(player.src).toBe("https://example.com/next.mp3");
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(mocks.submit).toHaveBeenCalledTimes(1);
+    expect(mocks.resume).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not treat natural ended plus a stale click as an explicit skip", async () => {
+    mocks.submit.mockResolvedValueOnce(nextAudioAnswer());
+    await renderReady(interruptibleAttempt());
+    await chooseFirstAnswer();
+    const skip = feedbackSkipButton();
+    await act(async () => {
+      currentAudiblePlayer().emit("ended");
+      fireEvent.click(skip);
+    });
+    expect(mocks.resume).toHaveBeenLastCalledWith(expect.objectContaining({ transitionRemainingMilliseconds: 150 }));
+    expect(screen.queryByText(studentAppText.attempt.skipAudio)).toBeNull();
+    act(() => vi.advanceTimersByTime(149));
+    expect(screen.getByText("question-1-prompt")).toBeInTheDocument();
+    await act(async () => vi.advanceTimersByTimeAsync(1));
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+  });
+
+  it("does not reopen a prompt which ended while the save was pending", async () => {
+    let acknowledge!: (value: unknown) => void;
+    mocks.submit.mockReturnValue(new Promise((resolve) => { acknowledge = resolve; }));
+    await renderReady(interruptibleAttempt("book_meaning_choice"));
+    await act(async () => vi.advanceTimersByTimeAsync(250));
+    await chooseFirstAnswer();
+    await act(async () => { currentAudiblePlayer().emit("ended"); });
+    await act(async () => { acknowledge(nextAudioAnswer()); });
+    expect(screen.queryByText(studentAppText.attempt.skipAudio)).toBeNull();
+    expect(mocks.resume).toHaveBeenLastCalledWith(expect.objectContaining({ transitionRemainingMilliseconds: 750 }));
+  });
+
+  it("does not consume the Tab key as an interruption", async () => {
+    mocks.submit.mockResolvedValueOnce(nextAudioAnswer());
+    await renderReady(interruptibleAttempt());
+    await chooseFirstAnswer();
+    const event = new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true });
+    act(() => { feedbackSkipButton().dispatchEvent(event); });
+    expect(event.defaultPrevented).toBe(false);
+    expect(feedbackSkipButton()).toBeInTheDocument();
+    expect(mocks.resume).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { completed: true, phase: "initial" as const },
+    { needsRetry: true, phase: "initial" as const },
+    { completed: true, phase: "retry" as const },
+  ])("navigates once for final outcome $phase/$completed/$needsRetry", async ({ phase, ...outcome }) => {
+    mocks.submit.mockResolvedValueOnce(successfulTransport({ ...outcome, correct: true, correctChoiceIndex: 0 }));
+    await renderReady(interruptibleAttempt("canonical_example_to_headword", phase));
+    await chooseFirstAnswer();
+    const skip = feedbackSkipButton();
+    const player = currentAudiblePlayer();
+    fireEvent.click(skip);
+    fireEvent.click(skip);
+    await flushImmediateTransition();
+    await act(async () => { player.emit("ended"); player.emit("error"); });
+    expect(mocks.replace).toHaveBeenCalledExactlyOnceWith("/student/result/attempt-1");
+    expect(mocks.resume).not.toHaveBeenCalled();
+    expect(mocks.submit).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the next question during a slow sync without queueing the interrupt", async () => {
+    let synchronize!: (value: unknown) => void;
+    mocks.submit.mockResolvedValueOnce(nextAudioAnswer());
+    mocks.resume.mockReturnValue(new Promise((resolve) => { synchronize = resolve; }));
+    await renderReady(interruptibleAttempt());
+    await chooseFirstAnswer();
+    fireEvent.click(feedbackSkipButton());
+    await flushImmediateTransition();
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(mocks.submit).toHaveBeenCalledTimes(1);
+    await act(async () => { synchronize(successfulTransport({
+      questionDeadlineAt: "2099-01-01T00:00:10.000Z",
+      questionStartsAt: "2099-01-01T00:00:00.000Z",
+      timerRemainingMilliseconds: 10_000, transitionRemainingMilliseconds: 0,
+    })); });
+    expect(mocks.submit).toHaveBeenCalledTimes(1);
+    mocks.submit.mockReturnValue(new Promise(() => {}));
+    fireEvent.click(screen.getByRole("button", { name: /question-2-one/ }));
+    expect(mocks.submit).toHaveBeenCalledTimes(2);
+    expect(mocks.submit).toHaveBeenLastCalledWith(expect.objectContaining({ questionId: "question-2", choiceIndex: 0 }));
+  });
+
+  it("recovers after interrupted feedback when both resume responses are lost", async () => {
+    const value = interruptibleAttempt();
+    mocks.submit.mockResolvedValueOnce(nextAudioAnswer());
+    mocks.resume.mockRejectedValue(new Error("lost"));
+    await renderReady(value);
+    const restored = structuredClone(value);
+    restored.currentQuestionId = "question-2";
+    restored.questions[0].initialChoiceIndex = 0;
+    restored.questions[0].initialIsCorrect = true;
+    mocks.recover.mockResolvedValue(successfulTransport({ attempt: restored, timerRemainingMilliseconds: 10_000 }));
+    await chooseFirstAnswer();
+    fireEvent.click(feedbackSkipButton());
+    await flushImmediateTransition();
+    expect(mocks.resume).toHaveBeenCalledTimes(2);
+    expect(mocks.recover).toHaveBeenCalledTimes(2);
+    expect(screen.getByText("question-2-prompt")).toBeInTheDocument();
+    expect(mocks.submit).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText(studentAppText.attempt.skipAudio)).toBeNull();
+  });
+
+  it("does not offer interruption after failed saving and recovery", async () => {
+    await renderReady(interruptibleAttempt());
+    mocks.submit.mockResolvedValueOnce({ ok: false, payload: { error: studentAppText.attempt.saveError }, receivedAt: performance.now() });
+    mocks.recover.mockRejectedValue(new Error("unavailable"));
+    await chooseFirstAnswer();
+    expect(screen.queryByText(studentAppText.attempt.skipAudio)).toBeNull();
+    expect(screen.getByText(studentAppText.attempt.saveError)).toBeInTheDocument();
+    expect(mocks.resume).not.toHaveBeenCalled();
+    expect(mocks.replace).not.toHaveBeenCalled();
+  });
+
+  it("discards an acknowledged interruption when unmounted before transition", async () => {
+    mocks.submit.mockResolvedValueOnce(nextAudioAnswer());
+    const view = await renderReady(interruptibleAttempt());
+    await chooseFirstAnswer();
+    act(() => { fireEvent.click(feedbackSkipButton()); view.unmount(); });
+    await flushImmediateTransition();
+    expect(mocks.resume).not.toHaveBeenCalled();
+    expect(mocks.replace).not.toHaveBeenCalled();
+  });
+});
