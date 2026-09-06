@@ -101,6 +101,16 @@ describe("실제 내역 첫 목록과 개인 캐시",()=>{
     await screen.findByRole("alert");expect(screen.queryByText("가짜 내역 학생")).not.toBeInTheDocument();expect(screen.queryByText(/private SQL/)).not.toBeInTheDocument();
     mocks.read.mockResolvedValue({...response(),userId:"00000000-0000-4000-8000-000000000888"});fireEvent.click(screen.getByRole("button",{name:"다시 시도"}));await screen.findByText("가짜 내역 학생");
   });
+  it("만료 뒤 조회 실패에서도 실제 오류를 만료 문구로 덮지 않는다", async () => {
+    vi.useFakeTimers(); render(view()); await act(async () => { await Promise.resolve(); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(60000); });
+    mocks.read.mockRejectedValue(new AdminHistoryRequestError("unavailable"));
+    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(screen.getByRole("alert")).not.toHaveTextContent("최신 시험 내역을 다시 확인해 주세요.");
+    expect(screen.getByRole("alert")).toHaveTextContent("불러오지 못했습니다");
+    expect(screen.queryByText("가짜 내역 학생")).not.toBeInTheDocument();
+  });
   it("StrictMode 재실행 후에도 표시/현재 재인증이 회복된다",async()=>{
     render(view(),{reactStrictMode:true});await screen.findByText("가짜 내역 학생");
     act(()=>window.dispatchEvent(new Event("pagehide")));expect(screen.queryByText("가짜 내역 학생")).not.toBeInTheDocument();

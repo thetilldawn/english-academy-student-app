@@ -714,8 +714,9 @@
     {
       "path": "cached-assignment-workspace.tsx",
       "role": "assembly",
-      "reason": "APP10 현재 인증/캐시 진입 및 표시/인증 경계 연결. 업무 계산 없음",
+      "reason": "APP10 인증/표시 연결. APP-20260907-01: 공통 한국어 안내를 가져와 오래된 목록/갱신/오류를 구분. UI 업무 계산/HTTP 없음",
       "allowedImports": [
+        "@/content/ko/admin-students",
         "@/features/students/public-contracts",
         "@/features/students/public-client",
         "../controller/assignment-authentication-boundary",

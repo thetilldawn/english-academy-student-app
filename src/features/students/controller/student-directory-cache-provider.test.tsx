@@ -88,6 +88,16 @@ describe("실제 학생 목록과 개인 캐시 연결", () => {
     mocks.read.mockResolvedValue(response()); act(() => announceStudentDirectoryRefresh());
     await screen.findByText("가짜 학생"); expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
+  it("만료 후 재조회 실패는 단순 만료 안내로 덮지 않는다", async () => {
+    vi.useFakeTimers(); render(view()); await act(async () => { await Promise.resolve(); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(60000); });
+    mocks.read.mockRejectedValue(new StudentDirectoryRequestError(503));
+    fireEvent.click(screen.getByRole("button", { name: "다시 불러오기" }));
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(screen.getByRole("alert")).toHaveTextContent("학생 목록을 불러오지 못했습니다. 다시 불러와 주세요.");
+    expect(screen.queryByText("최신 학생 목록을 다시 확인해 주세요.")).not.toBeInTheDocument();
+    expect(screen.queryByText("가짜 학생")).not.toBeInTheDocument();
+  });
   it("실패 재시도 후 정상 탭 복귀는 강제갱신이 아닌 캐시 복원이다", async () => {
     mocks.read.mockRejectedValue(new StudentDirectoryRequestError(503)); render(view()); await screen.findByRole("alert");
     mocks.read.mockResolvedValue(response()); fireEvent.click(screen.getByRole("button", { name: "다시 불러오기" })); await screen.findByText("가짜 학생");

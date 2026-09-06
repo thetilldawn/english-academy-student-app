@@ -20,6 +20,7 @@ export function usePrivateListEntry<Snapshot, Filters, Consumer extends string, 
   context: PrivateListEntryContext<Snapshot, Filters, Consumer> | null,
   initialResponse: PrivateListSeed<Snapshot> | undefined,
   consumer: Consumer, failureFor: (error: unknown) => Failure, expiredFailure: Failure,
+  options: { retainActiveSnapshot?: boolean } = {},
 ) {
   const hydrating = useSyncExternalStore(subscribeHydration, clientSnapshot, serverSnapshot);
   // Client navigation/restored RSC is not current authorization.
@@ -27,8 +28,14 @@ export function usePrivateListEntry<Snapshot, Filters, Consumer extends string, 
     ? { ticket: context.ticket, response: initialResponse } : null);
   const [retryRequest, setRetryRequest] = useState<{ ticket?: object; id: number }>({ id: 0 });
   const attempt = retryRequest.id;
-  const [state, setState] = useState<{ ticket: object; attempt: number; read?: PrivateListRead<Snapshot>; error?: Failure } | null>(() => seed
-    ? { ticket: seed.ticket, attempt: 0, read: { snapshot: seed.response.snapshot, savedAt: 0 } } : null);
+  const [state, setState] = useState<{
+    ticket: object; attempt: number; error?: Failure;
+    // A failed request must not re-label a previous success with a new ticket.
+    success?: { ticket: object; read: PrivateListRead<Snapshot> };
+  } | null>(() => seed ? {
+    ticket: seed.ticket, attempt: 0,
+    success: { ticket: seed.ticket, read: { snapshot: seed.response.snapshot, savedAt: 0 } },
+  } : null);
   const [expiredAt, setExpiredAt] = useState(0);
   const cache = context?.cache;
   const ticket = context?.ticket;
@@ -39,9 +46,9 @@ export function usePrivateListEntry<Snapshot, Filters, Consumer extends string, 
     if (seed && seed.ticket === ticket && attempt === 0) { cache.hydrate(seed.response, consumer); return; }
     const abort = new AbortController();
     void cache.read(cache.filtersFor(consumer), abort.signal, retryRequest.ticket === ticket, consumer).then(read => {
-      if (!abort.signal.aborted) setState({ ticket, attempt, read });
+      if (!abort.signal.aborted) setState({ ticket, attempt, success: { ticket, read } });
     }).catch(error => {
-      if (!abort.signal.aborted) setState(previous => ({ ticket, attempt, read: previous?.read, error: failureFor(error) }));
+      if (!abort.signal.aborted) setState(previous => ({ ticket, attempt, success: previous?.success, error: failureFor(error) }));
     });
     return () => abort.abort();
   }, [cache, ticket, visible, attempt, retryRequest.ticket, seed, consumer, failureFor]);
@@ -52,13 +59,20 @@ export function usePrivateListEntry<Snapshot, Filters, Consumer extends string, 
   }, [deadline]);
   const current = state && state.ticket === ticket && state.attempt === attempt ? state : null;
   const expired = Boolean(deadline && expiredAt >= deadline);
+  const activeRead = visible && !cache?.blocked && state?.success?.ticket === ticket ? state?.success?.read : undefined;
+  // An opted-in editor may outlive list freshness, but never its current entry
+  // authorization. Navigation/visibility/identity changes still require a read.
+  const snapshot = options.retainActiveSnapshot ? activeRead?.snapshot
+    : activeRead && current && !expired && !current.error ? activeRead.snapshot : undefined;
   return {
-    expired,
+    expired: expired && !current?.error,
+    stale: Boolean(snapshot && expired),
+    refreshing: Boolean(cache && ticket && visible && !cache.blocked && !current),
     blocked: cache?.blocked ?? false,
-    snapshot: visible && !cache?.blocked && !expired && !current?.error ? current?.read?.snapshot : undefined,
+    snapshot,
     // Only for hidden, non-interactive draft subtrees, never authorization.
-    retainedSnapshot: !cache?.blocked ? state?.read?.snapshot : undefined,
-    error: expired ? expiredFailure : current?.error,
+    retainedSnapshot: !cache?.blocked ? state?.success?.read.snapshot : undefined,
+    error: current?.error ?? (expired && !snapshot ? expiredFailure : undefined),
     retry: () => setRetryRequest(value => ({ ticket, id: value.id + 1 })),
   };
 }

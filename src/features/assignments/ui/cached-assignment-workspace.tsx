@@ -1,4 +1,5 @@
 "use client";
+import { adminStudentsText } from "@/content/ko/admin-students";
 import type { DirectoryCacheResponse } from "@/features/students/public-contracts";
 import { useCachedStudentDirectory, useStudentDirectoryCache } from "@/features/students/public-client";
 import { AssignmentAuthenticationBoundary } from "../controller/assignment-authentication-boundary";
@@ -16,12 +17,17 @@ export function CachedAssignmentWorkspace({ initialResponse, initialDatasetId, i
 }) {
   const entry = useCachedStudentDirectory(initialResponse, "assignments");
   const context = useStudentDirectoryCache();
-  if (entry.blocked) return <Notice role="alert" tone="danger">로그인을 다시 확인해 주세요.
-    <ButtonLink href="/admin/login" variant="quiet">관리자 로그인</ButtonLink></Notice>;
+  const text = adminStudentsText.page;
+  if (entry.blocked) return <Notice role="alert" tone="danger">{text.authError}
+    <ButtonLink href="/admin/login" variant="quiet">{text.login}</ButtonLink></Notice>;
   return <>
     {entry.error ? <Notice role="alert" tone="danger">{entry.error}
-      <Button onClick={entry.retry} variant="quiet">다시 불러오기</Button></Notice>
-      : !entry.snapshot ? <RouteLoadingState label="학생 목록을 불러오는 중…" variant="compact" /> : null}
+      <Button onClick={entry.retry} disabled={entry.refreshing} variant="quiet">{text.retry}</Button></Notice>
+      : !entry.snapshot ? <RouteLoadingState label={text.loading} variant="compact" />
+      : entry.stale || entry.refreshing ? <Notice role="status" tone="neutral">
+        {entry.refreshing ? text.refreshingList : text.retainedAssignmentList}
+        <Button onClick={entry.retry} disabled={entry.refreshing} variant="quiet">{text.retry}</Button>
+      </Notice> : null}
     <AssignmentAuthenticationBoundary onFailure={context?.cache.lock}>
     <DialogVisibilityBoundary visible={Boolean(entry.snapshot)}>
       {entry.retainedSnapshot ? <AssignmentWorkspace initial={{ directory: entry.retainedSnapshot }} cacheEnabled

@@ -86,10 +86,119 @@ beforeEach(() => {
   });
   vi.stubGlobal("fetch", fetchMock);
 });
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
-  const cached = () => <StudentDirectoryCacheProvider userId={uid(999)}><CachedAssignmentWorkspace initialDatasetId="" initialDialogView="overview" initialStudentId="" /></StudentDirectoryCacheProvider>;
+  const cached = (owner = uid(999)) => <StudentDirectoryCacheProvider userId={owner}><CachedAssignmentWorkspace initialDatasetId="" initialDialogView="overview" initialStudentId="" /></StudentDirectoryCacheProvider>;
+  async function openTimedDraft(mode: "single" | "bulk" = "single") {
+    // Preload the real planner before the fake clock; this is test compilation,
+    // not an application delay or a replacement for its UI/controller.
+    await import("./vocab-assignment-planner");
+    vi.useFakeTimers();
+    const { rerender } = render(cached());
+    await act(async () => { await Promise.resolve(); });
+    if (mode === "bulk") {
+      fireEvent.click(screen.getByRole("tab", { name: "일괄 배정" }));
+      for (const student of students) fireEvent.click(screen.getByRole("checkbox", { name: `${student.displayName} 일괄 배정 선택` }));
+    }
+    fireEvent.click(screen.getAllByRole("button", { name: "단어 배정" })[0]!);
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    const dialog = screen.getByRole("dialog", { name: mode === "bulk" ? /일괄 배정/ : /단일 배정/ });
+    const name = within(dialog).getByLabelText("새 시간 템플릿 이름");
+    fireEvent.change(name, { target: { value: "오래 작성하는 배정" } });
+    const score = within(dialog).getByRole("spinbutton", { name: "통과 점수" });
+    fireEvent.change(score, { target: { value: "85" } });
+    score.focus();
+    return { dialog, name, score, rerender };
+  }
+  it.each(["single", "bulk"] as const)("%s 배정은 60초와 120초 뒤에도 작성창·값·초점·선택을 유지한다", async mode => {
+    const { dialog, name, score } = await openTimedDraft(mode);
+    const requestCount = fetchMock.mock.calls.length;
+    for (const elapsed of [60000, 60001]) {
+      await act(async () => { await vi.advanceTimersByTimeAsync(elapsed); });
+      expect(dialog).toHaveAttribute("open"); expect(dialog).toBeVisible();
+      expect(name).toHaveValue("오래 작성하는 배정"); expect(score).toHaveValue(85); expect(score).toHaveFocus();
+      expect(fetchMock).toHaveBeenCalledTimes(requestCount);
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    }
+    fireEvent.click(within(dialog).getByRole("button", { name: "닫기" }));
+    if (mode === "bulk") for (const student of students) expect(screen.getByRole("checkbox", { name: `${student.displayName} 일괄 배정 선택` })).toBeChecked();
+  });
+  it("같은 화면의 목록 갱신 대기·503·성공은 배정 입력을 지우지 않고 실제 오류를 표시한다", async () => {
+    const { dialog, name, score } = await openTimedDraft();
+    await act(async () => { await vi.advanceTimersByTimeAsync(60000); });
+    let finish!: (value: Response) => void;
+    fetchMock.mockImplementationOnce(() => new Promise<Response>(resolve => { finish = resolve; }));
+    // Exercise the outer reload callback while the real dialog remains mounted.
+    // Native modal outside-click behavior is verified separately in the browser.
+    fireEvent.click(screen.getByRole("button", { name: "다시 불러오기" }));
+    expect(dialog).toHaveAttribute("open"); expect(name).toHaveValue("오래 작성하는 배정");
+    expect(screen.getByRole("button", { name: "다시 불러오기" })).toBeDisabled();
+    await act(async () => finish(Response.json({ error: "private internal failure" }, { status: 503 })));
+    expect(screen.getByRole("alert")).toHaveTextContent("학생 목록을 불러오지 못했습니다. 다시 불러와 주세요.");
+    expect(screen.queryByText("최신 학생 목록을 다시 확인해 주세요.")).not.toBeInTheDocument();
+    expect(screen.queryByText(/private internal failure/)).not.toBeInTheDocument();
+    expect(dialog).toHaveAttribute("open"); expect(score).toHaveValue(85); expect(score).toHaveFocus();
+    fireEvent.click(screen.getByRole("button", { name: "다시 불러오기" }));
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(dialog).toHaveAttribute("open"); expect(name).toHaveValue("오래 작성하는 배정");
+  });
+  it("복귀 요청이 실패하면 이전 성공 자료를 새 인증처럼 표시하지 않고 성공 뒤에만 초안을 복원한다", async () => {
+    const { dialog, name } = await openTimedDraft();
+    let finish!: (value: Response) => void;
+    fetchMock.mockImplementationOnce(() => new Promise<Response>(resolve => { finish = resolve; }));
+    act(() => window.dispatchEvent(new Event("pagehide")));
+    act(() => window.dispatchEvent(new Event("pageshow")));
+    expect(dialog).not.toHaveAttribute("open"); expect(name).not.toBeVisible();
+    await act(async () => finish(Response.json({}, { status: 503 })));
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(dialog).not.toHaveAttribute("open"); expect(name).not.toBeVisible();
+    expect(screen.queryByRole("checkbox", { name: /가짜 학생/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "다시 불러오기" }));
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(dialog).toHaveAttribute("open"); expect(name).toHaveValue("오래 작성하는 배정");
+  });
+  it.each([401, 403])("만료 뒤 현재 목록 갱신이 %s이면 보존 중인 배정도 제거한다", async status => {
+    const { dialog } = await openTimedDraft();
+    await act(async () => { await vi.advanceTimersByTimeAsync(60000); });
+    fetchMock.mockResolvedValueOnce(Response.json({}, { status }));
+    fireEvent.click(screen.getByRole("button", { name: "다시 불러오기" }));
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(dialog).not.toBeInTheDocument();
+    expect(screen.queryByText("가짜 학생 1")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "관리자 로그인" })).toBeVisible();
+  });
+  it.each(["logout", "account"] as const)("오래 열린 작성창도 %s 변경 뒤에는 노출하지 않는다", async change => {
+    const { dialog, name, rerender } = await openTimedDraft();
+    await act(async () => { await vi.advanceTimersByTimeAsync(120001); });
+    if (change === "logout") act(() => announceAdminPrivateCacheChange("identity"));
+    else {
+      fetchMock.mockImplementationOnce(() => new Promise<Response>(() => {}));
+      rerender(cached(uid(888)));
+    }
+    expect(dialog).not.toBeInTheDocument(); expect(name).not.toBeInTheDocument();
+    expect(screen.queryByText("가짜 학생 1")).not.toBeInTheDocument();
+  });
+  it.each([200, 401])("이전 복귀 요청의 늦은 %s는 현재 작성창과 최신 목록에 영향을 주지 않는다", async status => {
+    const { dialog, name } = await openTimedDraft();
+    let finishOld!: (value: Response) => void;
+    fetchMock.mockImplementationOnce(() => new Promise<Response>(resolve => { finishOld = resolve; }));
+    act(() => window.dispatchEvent(new Event("pagehide")));
+    act(() => window.dispatchEvent(new Event("pageshow")));
+    act(() => window.dispatchEvent(new Event("pagehide")));
+    act(() => window.dispatchEvent(new Event("pageshow")));
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(dialog).toHaveAttribute("open");
+    await act(async () => finishOld(Response.json(status === 401 ? {} : {
+      kind: "snapshot", userId: uid(999), identity: "b".repeat(64), snapshot: {
+        ...directory, page: { ...directory.page, items: [{ ...directory.page.items[0], displayName: "뒤늦게 들어온 학생" }] },
+      },
+    }, { status })));
+    expect(dialog).toHaveAttribute("open"); expect(name).toHaveValue("오래 작성하는 배정");
+    expect(screen.queryByText("뒤늦게 들어온 학생")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "관리자 로그인" })).not.toBeInTheDocument();
+  });
   it.each([401, 403, 503])("현재 준비 요청 실패 %s는 인증 실패와 일반 오류를 구분한다", async status => {
     render(cached()); await screen.findByText("가짜 학생 1");
     fetchMock.mockResolvedValueOnce(Response.json({ error: "배정 준비 자료를 불러오지 못했습니다." }, { status }));
