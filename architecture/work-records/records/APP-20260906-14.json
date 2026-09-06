@@ -3,7 +3,7 @@
   "id": "APP-20260906-14",
   "title": "첫 시험과 앞 마감 연동 자동 공개",
   "size": "full",
-  "gate": "design",
+  "gate": "verified",
   "guide": "docs/work-orders/APP-20260906-14.md",
   "baseline": "0c9142720644a1de781a828e7b8e7bf3ad93544f",
   "owners": [
@@ -4689,11 +4689,11 @@
       },
       {
         "checkId": "T7",
-        "result": "not_run",
-        "environment": "local",
-        "ranAt": "2026-09-06T16:52:30Z",
-        "command": "Preview/Production 단계 대기",
-        "summary": "2026-09-07 사용자 실행 승인. 실제 DB/배포 검증은 다음 단계이며 현재 통과로 계산하지 않음."
+        "result": "pass",
+        "environment": "production",
+        "ranAt": "2026-09-06T17:39:32Z",
+        "command": "Supabase migration + protected13 SHA audit + non-admin RPC rejection; GitHub deployment status; Codex IAB Preview/Production",
+        "summary": "506dc7d 양쪽 DB/앱 success. 보호13표 불변·잠김 원문노출0·Preview 정확 회차 보류/날짜보존·운영 학생 잠금/직접주소 확인. 운영 준비 뒤15분 관찰, 화면 warn/error0. 독립2연결 잠금 경쟁 미관측·기존 Preview CI 브랜치 조건 실패·서버 전체 지표 미측정은 검증문서에 분리."
       },
       {
         "checkId": "T8",
