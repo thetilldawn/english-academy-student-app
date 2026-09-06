@@ -4,7 +4,7 @@ import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
 import { formatKoreanDateTime } from "@/lib/format";
 
-import type { BulkAssignmentController } from "../controller/use-bulk-assignment-controller";
+import type { BulkAssignmentCommonPlanSummary, BulkAssignmentPreviewItem } from "../contracts/bulk-assignment-response";
 import {
   buildBulkPlanAudience,
   bulkPlanItemStatus,
@@ -36,16 +36,21 @@ function studentContextLabel(student: PreviewStudent) {
     .join(" · ");
 }
 
+export type BulkSeriesPreviewProps = {
+  completionGated?: boolean;
+  message: string | null;
+  previewLoading: boolean;
+  preview: { items: BulkAssignmentPreviewItem[]; commonPlanSummary: BulkAssignmentCommonPlanSummary | null } | null;
+  students: readonly PreviewStudent[];
+};
+
 export function BulkSeriesPreview({
   completionGated = false,
-  controller,
+  message,
+  preview,
+  previewLoading,
   students,
-}: {
-  completionGated?: boolean;
-  controller: BulkAssignmentController;
-  students: readonly PreviewStudent[];
-}) {
-  const { message, preview, previewLoading } = controller;
+}: BulkSeriesPreviewProps) {
   const labelByStudentId = new Map(
     students.map((student) => [student.id, studentContextLabel(student)]),
   );

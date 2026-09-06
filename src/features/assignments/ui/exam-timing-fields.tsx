@@ -13,25 +13,26 @@ import {
 import { ConditionalReveal } from "@/design-system/patterns/conditional-reveal/conditional-reveal";
 import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
 
-import type { ExamSettings, ExamTiming } from "../domain/model";
+import type { ExamTiming } from "../domain/model";
 import styles from "./exam-timing-fields.module.css";
 
 export function ExamTimingFields({
+  enabled,
   error,
-  exam,
+  timing,
   fieldKey = "timing",
   onEnabledChange,
   onModeChange,
   onTimingChange,
 }: {
+  enabled: boolean;
   error?: string;
-  exam: ExamSettings;
+  timing: ExamTiming;
   fieldKey?: string;
   onEnabledChange: (enabled: boolean) => void;
   onModeChange: (mode: ExamTiming["mode"]) => void;
   onTimingChange: (timing: ExamTiming) => void;
 }) {
-  const enabled = exam.timeLimitEnabled !== false;
   const errorId = error ? `${fieldKey}-error` : undefined;
 
   return (
@@ -57,7 +58,7 @@ export function ExamTimingFields({
               helpAriaLabel={adminLearningText.controls.timing.helpAria}
               helpText={adminLearningText.assignmentModal.conditions.timingHelp}
               label={adminLearningText.assignmentModal.conditions.timingMode}
-              mode={exam.timing.mode}
+              mode={timing.mode}
               onChange={onModeChange}
               perQuestionLabel={adminLearningText.controls.timing.perQuestion}
               totalLabel={adminLearningText.controls.timing.total}
@@ -65,11 +66,11 @@ export function ExamTimingFields({
           </div>
           <Field as="label" className={styles.control}>
             <FieldLabel as="span">
-              {exam.timing.mode === "total"
+              {timing.mode === "total"
                 ? adminLearningText.controls.timing.totalMinutes
                 : adminLearningText.controls.timing.perQuestionSeconds}
             </FieldLabel>
-            {exam.timing.mode === "total" ? (
+            {timing.mode === "total" ? (
               <Input
                 aria-errormessage={errorId}
                 aria-invalid={Boolean(error)}
@@ -84,7 +85,7 @@ export function ExamTimingFields({
                 required={enabled}
                 step={0.5}
                 type="number"
-                value={exam.timing.totalSeconds / 60}
+                value={timing.totalSeconds / 60}
               />
             ) : (
               <Input
@@ -100,7 +101,7 @@ export function ExamTimingFields({
                 }
                 required={enabled}
                 type="number"
-                value={exam.timing.perQuestionSeconds}
+                value={timing.perQuestionSeconds}
               />
             )}
             {error ? <FieldError id={errorId}>{error}</FieldError> : null}

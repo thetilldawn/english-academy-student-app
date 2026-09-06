@@ -5,7 +5,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { BulkAssignmentController } from "../controller/use-bulk-assignment-controller";
+import type { BulkSeriesPreviewProps } from "./bulk-series-preview";
 import { BulkSeriesPreview } from "./bulk-series-preview";
 
 const schedule = {
@@ -24,14 +24,11 @@ const schedule = {
   unitLabels: ["DAY 1", "DAY 2"],
 };
 
-function controller() {
+function previewProps(): Omit<BulkSeriesPreviewProps, "students"> {
   return {
     message: null,
     previewLoading: false,
     preview: {
-      assignableCount: 2,
-      assignmentCount: 2,
-      blockedCount: 1,
       commonPlanSummary: {
         availableQuestionCount: 86,
         defaultSessionCount: 2,
@@ -45,9 +42,9 @@ function controller() {
         sessions: [schedule],
       },
       items: [
-        ["student-a", "학생 가", true, null],
-        ["student-b", "학생 나", true, null],
-        ["student-c", "학생 다", false, "문항이 부족합니다."],
+        ["student-a", "학생 가", true, null] as const,
+        ["student-b", "학생 나", true, null] as const,
+        ["student-c", "학생 다", false, "문항이 부족합니다."] as const,
       ].map(([studentId, studentName, available, error]) => ({
         available,
         availableQuestionCount: 86,
@@ -69,16 +66,22 @@ function controller() {
         studentName,
       })),
     },
-  } as unknown as BulkAssignmentController;
+  };
 }
 
 afterEach(cleanup);
 
 describe("BulkSeriesPreview", () => {
+  it("최초 계산과 미선택을 작은 값만으로 구분한다", () => {
+    const { rerender } = render(<BulkSeriesPreview preview={null} previewLoading message={null} students={[]} />);
+    expect(screen.getByRole("status")).toHaveTextContent("실제 단어 수와 일정을 계산하고 있습니다.");
+    rerender(<BulkSeriesPreview preview={null} previewLoading={false} message={null} students={[]} />);
+    expect(screen.getByRole("status")).toHaveTextContent("범위와 일정을 정하면 배정 계획을 보여 줍니다.");
+  });
   it("공통 일정은 한 번만 보여 주고 예외 학생만 따로 펼친다", () => {
     render(
       <BulkSeriesPreview
-        controller={controller()}
+        {...previewProps()}
         students={[
           { id: "student-a", displayName: "학생 가" },
           { id: "student-b", displayName: "학생 나" },
@@ -100,11 +103,8 @@ describe("BulkSeriesPreview", () => {
   });
 
   it("shows one student's plan without bulk-only common labels", () => {
-    const value = controller();
+    const value = previewProps();
     value.preview!.items = [value.preview!.items[0]!];
-    value.preview!.assignableCount = 1;
-    value.preview!.assignmentCount = 1;
-    value.preview!.blockedCount = 0;
     value.preview!.commonPlanSummary = {
       ...value.preview!.commonPlanSummary!,
       normalStudentIds: ["student-a"],
@@ -113,7 +113,7 @@ describe("BulkSeriesPreview", () => {
 
     render(
       <BulkSeriesPreview
-        controller={value}
+        {...value}
         students={[{ id: "student-a", displayName: "학생 가" }]}
       />,
     );
@@ -126,7 +126,7 @@ describe("BulkSeriesPreview", () => {
   });
 
   it("keeps an invalid one-student preview in the single-plan layout", () => {
-    const value = controller();
+    const value = previewProps();
     value.preview!.items = [
       {
         ...value.preview!.items[0]!,
@@ -135,14 +135,11 @@ describe("BulkSeriesPreview", () => {
         sessions: [],
       },
     ];
-    value.preview!.assignableCount = 0;
-    value.preview!.assignmentCount = 0;
-    value.preview!.blockedCount = 1;
     value.preview!.commonPlanSummary = null;
 
     render(
       <BulkSeriesPreview
-        controller={value}
+        {...value}
         students={[{ id: "student-a", displayName: "학생 가" }]}
       />,
     );
@@ -163,7 +160,7 @@ describe("BulkSeriesPreview", () => {
   });
 
   it("회차 오류와 학생 계획 오류가 같으면 화면에 한 번만 표시한다", () => {
-    const value = controller();
+    const value = previewProps();
     value.preview!.items = [{
       ...value.preview!.items[0]!,
       available: false,
@@ -175,14 +172,11 @@ describe("BulkSeriesPreview", () => {
         questionCount: 0,
       }],
     }];
-    value.preview!.assignableCount = 0;
-    value.preview!.assignmentCount = 0;
-    value.preview!.blockedCount = 1;
     value.preview!.commonPlanSummary = null;
 
     render(
       <BulkSeriesPreview
-        controller={value}
+        {...value}
         students={[{ id: "student-a", displayName: "학생 가" }]}
       />,
     );
@@ -194,7 +188,7 @@ describe("BulkSeriesPreview", () => {
   });
 
   it("shows every plan when a one-person group cannot represent the batch", () => {
-    const value = controller();
+    const value = previewProps();
     value.preview!.commonPlanSummary = {
       ...value.preview!.commonPlanSummary!,
       normalStudentIds: ["student-a"],
@@ -203,7 +197,7 @@ describe("BulkSeriesPreview", () => {
 
     render(
       <BulkSeriesPreview
-        controller={value}
+        {...value}
         students={[
           { id: "student-a", displayName: "학생 가" },
           { id: "student-b", displayName: "학생 나" },
@@ -220,7 +214,7 @@ describe("BulkSeriesPreview", () => {
   });
 
   it("완료 연동 배정에서만 두 번째 회차를 완료 후 생성으로 표시한다", () => {
-    const value = controller();
+    const value = previewProps();
     const secondSession = {
       ...schedule,
       availableFrom: "2026-08-26T07:00:00.000Z",
@@ -238,7 +232,7 @@ describe("BulkSeriesPreview", () => {
 
     const { rerender } = render(
       <BulkSeriesPreview
-        controller={value}
+        {...value}
         students={[
           { id: "student-a", displayName: "학생 가" },
           { id: "student-b", displayName: "학생 나" },
@@ -251,7 +245,7 @@ describe("BulkSeriesPreview", () => {
     rerender(
       <BulkSeriesPreview
         completionGated
-        controller={value}
+        {...value}
         students={[
           { id: "student-a", displayName: "학생 가" },
           { id: "student-b", displayName: "학생 나" },
