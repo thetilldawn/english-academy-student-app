@@ -36,6 +36,20 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("DAY 버튼판", () => {
+  it("가로로 넘치지 않는 모바일 카드의 세로 이동은 가로채지 않는다", () => {
+    const onSelect = vi.fn();
+    render(<DayRangeRail onSelect={onSelect} selectedUnitIds={new Set()} units={units} />);
+    const rail = screen.getByRole("group", { name: "단어 범위" });
+    Object.defineProperties(rail, { scrollWidth: { value: 320 }, clientWidth: { value: 320 } });
+    const first = screen.getByRole("button", { name: "DAY 1" });
+    fireEvent.pointerDown(first, { button: 0, clientX: 100, pointerId: 1 });
+    fireEvent.pointerMove(first, { clientX: 75, pointerId: 1 });
+    fireEvent.pointerUp(rail, { pointerId: 1 });
+    expect(HTMLElement.prototype.setPointerCapture).not.toHaveBeenCalled();
+    fireEvent.click(first);
+    expect(onSelect).toHaveBeenCalledWith(units[0]!.id);
+    expect(first).toHaveAccessibleDescription("수록 20개");
+  });
   it("선택 범위를 aria-pressed로 표시하고 화살표 키로 이동한다", () => {
     const onSelect = vi.fn();
     render(
@@ -101,6 +115,7 @@ describe("DAY 버튼판", () => {
     const rail = screen.getByRole("group", { name: "단어 범위" });
     const first = screen.getByRole("button", { name: "DAY 1" });
     rail.scrollLeft = 40;
+    Object.defineProperties(rail, { scrollWidth: { value: 900 }, clientWidth: { value: 320 } });
     fireEvent.pointerDown(first, { button: 0, clientX: 100, pointerId: 1 });
     fireEvent.pointerMove(first, { clientX: 97, pointerId: 1 });
     expect(HTMLElement.prototype.setPointerCapture).not.toHaveBeenCalled();

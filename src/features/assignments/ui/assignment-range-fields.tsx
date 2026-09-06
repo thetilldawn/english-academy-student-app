@@ -22,6 +22,7 @@ import { resolveVocabUnitSelection } from "../domain/vocab-planner-controls";
 import type { AssignmentEditFieldErrors } from "../presentation/assignment-edit-field-errors";
 import { AssignmentCapacitySummary } from "./assignment-capacity-summary";
 import { AssignmentUnitRangePicker } from "./assignment-unit-range-picker";
+import { assignmentSourceWordCount } from "../presentation/assignment-unit-range-label";
 
 export function AssignmentRangeFields({
   capacity,
@@ -58,10 +59,7 @@ export function AssignmentRangeFields({
   const selectedUnits = resolveVocabUnitSelection(datasetUnits, {
     selectedUnitIds: draft.range.orderedUnitIds,
   });
-  const sourceWordCount = selectedUnits.reduce(
-    (total, unit) => total + unit.entryCount,
-    0,
-  );
+  const sourceWordCount = assignmentSourceWordCount(selectedUnits);
 
   function changeDataset(datasetId: string) {
     const nextUnits = units

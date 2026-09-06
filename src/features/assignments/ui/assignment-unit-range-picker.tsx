@@ -6,7 +6,7 @@ import {
 
 import type { AssignmentUnitItem } from "../catalog-types";
 import { resolveVocabUnitSelection } from "../domain/vocab-planner-controls";
-import { assignmentUnitRangeLabel } from "../presentation/assignment-unit-range-label";
+import { assignmentRangeSelectionSummary, assignmentUnitRangeLabel } from "../presentation/assignment-unit-range-label";
 import { DayRangeRail } from "./day-range-rail";
 import styles from "./vocab-assignment-planner.module.css";
 
@@ -61,16 +61,16 @@ export function AssignmentUnitRangePicker({
           {allSelected ? "전체 해제" : "전체 선택"}
         </Button>
       </div>
+      {selectedUnits.length > 0 || !error ? <div className={styles.rangeSelectionSummary} aria-live="polite" aria-atomic="true">
+        <strong>{assignmentRangeSelectionSummary(selectedUnits)}</strong>
+        {selectedUnits.length > 0 ? <span>{selectedLabel}</span> : null}
+      </div> : null}
       <DayRangeRail
         disabled={disabled}
         onSelect={onSelect}
         selectedUnitIds={selectedUnitIdSet}
         units={units}
       />
-      <span className={styles.rangeSummary}>
-        {selectedLabel}
-        {selectedUnits.length > 0 ? ` · ${selectedUnits.length}개 선택` : ""}
-      </span>
       {error ? <FieldError id={errorId}>{error}</FieldError> : null}
     </div>
   );

@@ -161,6 +161,7 @@
         "../controller/use-assignment-controller",
         "../domain/vocab-planner-controls",
         "../presentation/assignment-edit-field-errors",
+        "../presentation/assignment-unit-range-label",
         "./assignment-capacity-summary",
         "./assignment-unit-range-picker",
         "@/content/ko/admin-learning",
@@ -169,7 +170,7 @@
         "@/lib/admin/dataset-catalog",
         "@/lib/admin/new-assignment-range"
       ],
-      "legacySourceSha256": "9717c7ebb77eeedebaafe846325d2c8c5165056b1278cbd894fbe4301e08415f"
+      "legacySourceSha256": "d72d2630828fd9fd5a6870b30a519d33f270a5c61a9e4b50092604a8cbb8d2fa"
     },
     {
       "path": "assignment-section.tsx",

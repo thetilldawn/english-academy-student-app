@@ -34,12 +34,29 @@ describe("assignment application flow", () => {
     expect(result).toEqual({
       error: expect.objectContaining({
         kind,
-        message: "서버 문구",
+        message: status >= 500 ? "요청 실패" : "서버 문구",
         recovery,
         status,
       }),
       ok: false,
     });
+  });
+
+  it.each([500, 503, 502, 418])("HTTP %s의 내부 원문은 표시하지 않고 요청별 안내를 사용한다", async status => {
+    const result = await executeAssignmentRequest({
+      fallback: "출제 가능한 단어 수를 확인하지 못했습니다. 다시 시도해 주세요.",
+      parse: (data) => data,
+      request: { url: "/test" },
+      transport: vi.fn().mockResolvedValue({
+        data: { error: "private SQL stack trace", code: "reference-id" },
+        ok: false, status,
+      }),
+    });
+    expect(result).toMatchObject({ ok: false, error: {
+      code: "reference-id", status,
+      message: "출제 가능한 단어 수를 확인하지 못했습니다. 다시 시도해 주세요.",
+      retryable: status >= 500,
+    } });
   });
 
   it("깨진 성공 응답과 네트워크 상세를 일반 문구로 숨긴다", async () => {

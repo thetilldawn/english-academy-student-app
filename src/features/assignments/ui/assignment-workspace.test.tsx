@@ -89,6 +89,77 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
+  it.each(["single", "bulk"] as const)("%s의 실제 수량 대기·실패·재시도·범위변경은 수록 수와 작성값을 보존한다", async mode => {
+    const original = fetchMock.getMockImplementation()!;
+    const pending: Array<{ finish: (response: Response) => void; studentIds: string[] }> = [];
+    const success = (studentIds: string[], questionCount: number) => Response.json({
+      assignableCount: studentIds.length, assignmentCount: studentIds.length, blockedCount: 0,
+      commonPlanSummary: null, planSignature: "a".repeat(64), rangeLabel: "DAY 01",
+      items: studentIds.map(studentId => ({
+        available: true, availableQuestionCount: 16, datasetId: datasets[0]!.id, datasetLabel: "로컬 형용사",
+        defaultSessionCount: 1, error: null, remainingQuestionCount: 16 - questionCount, requiresExtraDateDecision: false,
+        scheduledQuestionCount: questionCount, selectedQuestionCount: questionCount, studentId, studentName: "가짜 학생",
+        sessions: [{ available: true, availableFrom: null, availableUntil: null, cycleIndex: 0,
+          error: null, questionCount, rangeTruncated: false, sessionNumber: 1, sourceSessionNumber: 1,
+          unitId: uid(100), unitIds: [uid(100)], unitLabel: "DAY 01", unitLabels: ["DAY 01"] }],
+      })),
+    });
+    fetchMock.mockImplementation((url: string, init?: RequestInit) => {
+      if (url !== "/api/admin/bulk-assignments/preview") return original(url, init);
+      return new Promise<Response>(finish => pending.push({ finish, studentIds: JSON.parse(String(init?.body)).studentIds }));
+    });
+    render(<AssignmentWorkspace initial={{ directory }} />);
+    if (mode === "bulk") {
+      fireEvent.click(screen.getByRole("tab", { name: "일괄 배정" }));
+      for (const student of students) fireEvent.click(screen.getByRole("checkbox", { name: `${student.displayName} 일괄 배정 선택` }));
+    }
+    fireEvent.click(screen.getAllByRole("button", { name: "단어 배정" })[0]!);
+    const trigger = await screen.findByRole("button", { name: /단어장 찾기/ }, { timeout: 5000 });
+    const dialog = screen.getByRole("dialog");
+    const schedule = within(within(dialog).getByText("시험일 사용").parentElement!).getByRole("checkbox");
+    if ((schedule as HTMLInputElement).checked) fireEvent.click(schedule);
+    fireEvent.click(trigger);
+    fireEvent.click(screen.getByRole("button", { name: /로컬 형용사.*선택/ }));
+    const unit = await within(dialog).findByRole("button", { name: "DAY 01" });
+    if (unit.getAttribute("aria-pressed") !== "true") fireEvent.click(unit);
+    fireEvent.click(within(dialog).getByRole("button", { name: "단어 수" }));
+    await waitFor(() => expect(pending.length).toBeGreaterThan(0));
+    const input = within(dialog).getByRole("spinbutton", { name: "회차당 단어 수" });
+    expect(within(dialog).getByText("선택한 범위 1개 · 수록 단어 20개")).toBeVisible();
+    expect(within(dialog).getByText("출제 가능 단어 수를 확인하는 중입니다.")).toBeVisible();
+    fireEvent.focus(input);
+    expect(input).not.toHaveValue(0);
+    expect(within(dialog).getByRole("button", { name: "전체 사용" })).toHaveAttribute("aria-pressed", "true");
+    await act(async () => pending.at(-1)!.finish(Response.json({ error: "private raw SQL error" }, { status: 503 })));
+    const retry = await within(dialog).findByRole("button", { name: "단어 수 다시 확인" });
+    expect(within(dialog).queryByText(/private raw SQL/)).not.toBeInTheDocument();
+    expect(within(dialog).getByText("선택한 범위 1개 · 수록 단어 20개")).toBeVisible();
+    const previousCalls = pending.length;
+    fireEvent.click(retry);
+    await waitFor(() => expect(pending.length).toBeGreaterThan(previousCalls));
+    expect(within(dialog).queryByRole("button", { name: "단어 수 다시 확인" })).not.toBeInTheDocument();
+    const retried = pending.at(-1)!;
+    await act(async () => retried.finish(success(retried.studentIds, 16)));
+    if (mode === "single") {
+      expect(within(dialog).getByRole("button", { name: "전체 사용 · 16개" })).toBeVisible();
+      expect(within(dialog).getByText(/출제 가능 16개/)).toBeVisible();
+      expect(input).toHaveValue(16);
+    } else {
+      expect(within(dialog).getByText("학생별 출제 가능 수는 마지막 미리보기에서 확인해 주세요.")).toBeVisible();
+      expect(within(dialog).queryByRole("button", { name: "전체 사용 · 16개" })).not.toBeInTheDocument();
+    }
+    expect(within(dialog).getByText("선택한 범위 1개 · 수록 단어 20개")).toBeVisible();
+    fireEvent.change(input, { target: { value: "8" } });
+    await waitFor(() => expect(pending.length).toBeGreaterThan(previousCalls + 1));
+    expect(input).toHaveValue(8);
+    const old = pending.at(-1)!;
+    fireEvent.click(unit);
+    await act(async () => old.finish(success(old.studentIds, 8)));
+    expect(within(dialog).queryByText(/출제 가능 16개/)).not.toBeInTheDocument();
+    expect(input).toHaveValue(8);
+    expect(unit).toHaveAttribute("aria-pressed", "false");
+    expect(fetchMock.mock.calls.some(([url]) => url === "/api/admin/bulk-assignments")).toBe(false);
+  });
   const cached = (owner = uid(999)) => <StudentDirectoryCacheProvider userId={owner}><CachedAssignmentWorkspace initialDatasetId="" initialDialogView="overview" initialStudentId="" /></StudentDirectoryCacheProvider>;
   async function openTimedDraft(mode: "single" | "bulk" = "single") {
     // Preload the real planner before the fake clock; this is test compilation,

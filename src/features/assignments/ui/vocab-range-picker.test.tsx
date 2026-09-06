@@ -129,6 +129,24 @@ function rangeFields(overrides: Partial<VocabRangeFieldsProps> = {}): VocabRange
 }
 
 describe("독립된 범위 표시 부품", () => {
+  it("선택 범위 개수와 수록 단어 합계를 미리보기 없이 표시한다", () => {
+    render(<VocabRangeFields {...rangeFields({ selectedUnitIds: units.map(unit => unit.id) })} />);
+    expect(screen.getByText("선택한 범위 2개 · 수록 단어 86개")).toBeInTheDocument();
+    expect(screen.getAllByText("수록 43개")).toHaveLength(2);
+  });
+  it("수량 미확정 시 초점만으로 직접 입력 0개를 저장하지 않는다", () => {
+    const value = controller({ assignmentMode: "word_count" });
+    value.bulk.preview = null;
+    value.bulk.previewLoading = true;
+    render(<VocabRangePicker controller={value} datasets={[dataset]} onOpenDatasetPicker={vi.fn()} />);
+    const input = screen.getByRole("spinbutton", { name: "회차당 단어 수" });
+    fireEvent.focus(input);
+    expect(value.actions.activateManualQuestionCount).not.toHaveBeenCalled();
+    expect(input).toHaveAttribute("placeholder", "직접 입력");
+    expect(screen.getByText("출제 가능 단어 수를 확인하는 중입니다.")).toBeInTheDocument();
+    fireEvent.change(input, { target: { value: "20" } });
+    expect(value.actions.changeManualQuestionCount).toHaveBeenCalledWith(20);
+  });
   it("전체 제어기 없이 필요한 입력과 선택 동작만 사용한다", () => {
     expectTypeOf<keyof VocabRangeFieldsProps>().toEqualTypeOf<
       "dataset" | "units" | "selectedUnitIds" | "datasetError" | "rangeError" |
@@ -147,7 +165,7 @@ describe("독립된 범위 표시 부품", () => {
     const ids = Object.freeze(["unit-2", "unit-1"]);
     const props = rangeFields({ units: Object.freeze([...units]), selectedUnitIds: ids });
     render(<VocabRangeFields {...props} />);
-    expect(screen.getByText("DAY 2~DAY 1 · 2개 선택")).toBeVisible();
+    expect(screen.getByText("DAY 2~DAY 1")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "전체 해제" }));
     expect(props.onToggleAllUnits).toHaveBeenCalledWith(false);
     expect(ids).toEqual(["unit-2", "unit-1"]);
@@ -168,7 +186,7 @@ describe("독립된 범위 표시 부품", () => {
     render(<VocabRangeFields {...rangeFields({ dataset: undefined, units: [] })} />);
     expect(screen.getByRole("button", { name: /단어장을 선택해 주세요.*단어장 찾기/ })).toHaveAttribute("aria-invalid", "false");
     expect(screen.getByRole("button", { name: "전체 선택" })).toBeDisabled();
-    expect(screen.getByText("범위를 선택하세요")).toBeVisible();
+    expect(screen.getByText("시험 범위를 선택해 주세요.")).toBeVisible();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });
@@ -189,7 +207,7 @@ describe("VocabRangePicker", () => {
 
     render(<VocabRangePicker onOpenDatasetPicker={vi.fn()} controller={value} datasets={[dataset]} />);
 
-    expect(screen.getByText("DAY 2~DAY 1 · 2개 선택")).toBeVisible();
+    expect(screen.getByText("DAY 2~DAY 1")).toBeVisible();
   });
 
   it("배정 방식을 전체 회차·회차별·단어 수로 제공한다", () => {
@@ -218,7 +236,7 @@ describe("VocabRangePicker", () => {
     expect(input).toHaveValue(86);
     fireEvent.focus(input);
     expect(value.actions.activateManualQuestionCount).toHaveBeenCalledWith(86);
-    fireEvent.click(screen.getByRole("button", { name: "전체" }));
+    fireEvent.click(screen.getByRole("button", { name: "전체 사용 · 86개" }));
     expect(value.actions.changeQuestionCountMode).toHaveBeenCalledWith(
       "all",
     );
@@ -235,7 +253,7 @@ describe("VocabRangePicker", () => {
     );
     expect(screen.getByRole("group", { name: "출제 단어 선택" }))
       .toBeVisible();
-    expect(screen.getByText("전체 86개 · 배정 40개 · 남음 46개 · 기본 3회"))
+    expect(screen.getByText("출제 가능 86개 · 배정 40개 · 남음 46개 · 기본 3회"))
       .toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "무작위" }));
     expect(withRemaining.actions.changeSelectionMode).toHaveBeenCalledWith(
@@ -272,7 +290,7 @@ describe("VocabRangePicker", () => {
       />,
     );
 
-    expect(screen.getByText("전체 640개 · 배정 500개 · 남음 140개 · 기본 5회"))
+    expect(screen.getByText("출제 가능 640개 · 배정 500개 · 남음 140개 · 기본 5회"))
       .toBeVisible();
     expect(screen.queryByText(/공통 1명/)).not.toBeInTheDocument();
     const group = screen.getByRole("group", { name: "단어 수" });
@@ -308,9 +326,9 @@ describe("VocabRangePicker", () => {
     render(<VocabRangePicker onOpenDatasetPicker={vi.fn()} controller={value} datasets={[dataset]} />);
 
     expect(
-      screen.getByText("학생별 계획을 마지막 미리보기에서 확인해 주세요."),
+      screen.getByText("학생별 출제 가능 수는 마지막 미리보기에서 확인해 주세요."),
     ).toBeVisible();
     expect(screen.queryByText(/별도 확인 2명/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/전체 640개/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/출제 가능 640개/)).not.toBeInTheDocument();
   });
 });

@@ -98,6 +98,8 @@ describe("수정 시험 범위", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "DAY 2" }));
+    expect(screen.getByText("선택한 범위 2개 · 수록 단어 40개")).toBeVisible();
+    expect(screen.getByRole("button", { name: "DAY 3" })).toHaveAccessibleDescription("수록 20개");
 
     expect(value.changeRange).toHaveBeenCalledWith(dataset.id, [
       units[2]!.id,

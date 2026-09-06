@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type KeyboardEvent, type PointerEvent } from "react";
+import { useId, useRef, type KeyboardEvent, type PointerEvent } from "react";
 
 import { Button, IconButton } from "@/design-system/primitives/button/button";
 import { prefersReducedMotion } from "@/lib/ui/motion";
@@ -20,6 +20,7 @@ export function DayRangeRail({
   units: readonly AssignmentUnitItem[];
 }) {
   const railRef = useRef<HTMLDivElement>(null);
+  const countId = useId();
   const buttonRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const dragRef = useRef({ active: false, moved: false, startX: 0, scrollLeft: 0 });
 
@@ -33,6 +34,11 @@ export function DayRangeRail({
   function startDrag(event: PointerEvent<HTMLDivElement>) {
     const rail = railRef.current;
     if (!rail || event.pointerType === "mouse" && event.button !== 0) return;
+    dragRef.current.moved = false;
+    if (rail.scrollWidth <= rail.clientWidth) {
+      dragRef.current.active = false;
+      return;
+    }
     dragRef.current = {
       active: true,
       moved: false,
@@ -95,8 +101,11 @@ export function DayRangeRail({
       >
         {units.map((unit, index) => (
           <Button
+            aria-label={unit.label}
+            aria-describedby={`${countId}-${index}`}
             aria-pressed={selectedUnitIds.has(unit.id)}
             className={styles.dayButton}
+            data-long-label={unit.label.length > 12}
             disabled={disabled}
             key={unit.id}
             onClick={() => {
@@ -110,7 +119,15 @@ export function DayRangeRail({
             size="small"
             variant={selectedUnitIds.has(unit.id) ? "primary" : "filter"}
           >
-            {unit.label}
+            <span className={styles.dayCardHeading}>
+              <span className={styles.dayCardCheck} aria-hidden="true">
+                {selectedUnitIds.has(unit.id) ? "✓" : ""}
+              </span>
+              <span className={styles.dayCardLabel}>{unit.label}</span>
+            </span>
+            <span className={styles.dayCardCount} id={`${countId}-${index}`}>
+              수록 {unit.entryCount.toLocaleString("ko-KR")}개
+            </span>
           </Button>
         ))}
       </div>

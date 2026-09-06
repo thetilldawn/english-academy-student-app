@@ -113,6 +113,7 @@ export function assignmentFailureFromResponse(
     return {
       ...common,
       kind: "temporary",
+      message: fallback,
       recovery: recovery ?? "none",
       retryable: true,
     };
@@ -120,6 +121,7 @@ export function assignmentFailureFromResponse(
   return {
     ...common,
     kind: "unknown",
+    message: fallback,
     recovery: recovery ?? "none",
     retryable: false,
   };

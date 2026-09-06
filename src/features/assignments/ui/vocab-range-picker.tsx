@@ -23,6 +23,10 @@ export function VocabQuestionSection({ controller, fieldErrors = {} }: Omit<Voca
     defaultSessionCount: controller.defaultSessionCount, distribution: controller.distribution,
     assignmentMode: planner.assignmentMode, questionCountMode: planner.questionCountMode,
     manualQuestionCount: planner.manualQuestionCount,
+    previewState: controller.selectedUnits.length === 0 ? "unselected"
+      : controller.bulk.preview ? "ready"
+      : controller.bulk.previewLoading ? "loading"
+      : controller.bulk.state?.preview.status === "error" ? "error" : "blocked",
   });
   const unitView = vocabUnitAllocationView({
     assignmentMode: planner.assignmentMode, scheduleEnabled: planner.scheduleEnabled,
@@ -39,7 +43,12 @@ export function VocabQuestionSection({ controller, fieldErrors = {} }: Omit<Voca
     onSelectionModeChange={controller.actions.changeSelectionMode}
     onUnitsPerSessionChange={controller.actions.changeUnitsPerSession}
     onOverflowPolicyChange={controller.actions.changeOverflowPolicy}
-    onActivateManualCount={() => controller.actions.activateManualQuestionCount(countView.manualActivationCount)}
+    onRetryCount={controller.bulk.actions?.refreshPreview}
+    onActivateManualCount={() => {
+      if (countView.manualActivationCount > 0) {
+        controller.actions.activateManualQuestionCount(countView.manualActivationCount);
+      }
+    }}
     onManualCountChange={(value) => {
       controller.actions.activateManualQuestionCount(countView.manualActivationCount);
       controller.actions.changeManualQuestionCount(value);

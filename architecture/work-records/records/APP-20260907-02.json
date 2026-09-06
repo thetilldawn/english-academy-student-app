@@ -1,0 +1,691 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20260907-02",
+  "title": "배정 단어 수 표시와 모바일 범위 카드",
+  "size": "full",
+  "gate": "design",
+  "guide": "docs/work-orders/APP-20260907-02.md",
+  "baseline": "8db511e078ef4f0c75071013df30ee0adcd2bb0f",
+  "owners": [
+    "assignments",
+    "architecture-meta"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal"
+  ],
+  "scope": [
+    {
+      "path": "scripts/local-admin-baseline-data.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/test-support/local-admin-baseline.test.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/assignments/application/assignment-operation-error.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/application/assignment-flow.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/presentation/vocab-question-view.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/presentation/vocab-question-view.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/presentation/assignment-unit-range-label.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/presentation/assignment-unit-range-label.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-unit-range-picker.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/day-range-rail.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/day-range-rail.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-word-count-field.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-question-fields.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-question-fields.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-range-picker.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-range-picker.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-assignment-planner.module.css",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-workspace.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-range-fields.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-edit"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-range-fields.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-edit"
+      ]
+    },
+    {
+      "path": "src/features/assignments/AGENTS.md",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": []
+    },
+    {
+      "path": "architecture/assignment-ui-roles.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "범위와 단어 수를 고르면 개수와 상태를 명확히 표시",
+      "acceptance": "수록/출제가능/희망 회차당 수량 구분, 미선택·대기·실패·정상0 구분, 미확정focus의0강제전환없음",
+      "disposition": "required",
+      "owners": [
+        "assignments"
+      ],
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-edit",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T5"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "모바일 범위를 단어 수가 있는 선택 카드로 개선",
+      "acceptance": "짧은범위2열/긴범위1열, 큰글자·선택표시·범위요약·터치/키보드, 가로스크롤 가로채기없음",
+      "disposition": "required",
+      "owners": [
+        "assignments"
+      ],
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-edit",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ],
+      "checkIds": [
+        "T2",
+        "T5"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "user",
+      "text": "단일·일괄·수정 공통 연결과 기존 업무 보호",
+      "acceptance": "같은표시부품 재사용·역방향/희망수 보존·유효한현재미리보기만 사용·새요청/API/DB0",
+      "disposition": "required",
+      "owners": [
+        "assignments"
+      ],
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-edit",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T6"
+      ]
+    },
+    {
+      "id": "R4",
+      "source": "user",
+      "text": "로컬 및 프리뷰 검증 후 프로덕션 반영",
+      "acceptance": "현재커밋 로컬 검사와 실화면 통과 후 기존Git/Vercel 배포, 앞APP01만료보완포함·실제학생시험/배정쓰기0·배포후확인",
+      "disposition": "required",
+      "owners": [
+        "assignments"
+      ],
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-edit",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ],
+      "checkIds": [
+        "T4",
+        "T5",
+        "T6",
+        "T7"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "개수 표시·모바일 카드 개선과 운영 반영",
+      "answer": "추천안 보고 뒤 '수정하고 프로덕션으로 올려'로 구현·프리뷰·운영 승인. 앞 배정창 만료 보완은 동일 배정 오류 수정의 선행 커밋으로 포함.",
+      "source": "2026-09-07 직전 개선안 및 사용자 최종 승인"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "계산과 표시 책임",
+      "answer": "수록 합계는 기존 범위 metadata의 표시 변환, 실제 가능수는 현재 bulk.preview만 사용. 새 서버조회/수량추정/배정규칙 변경 없음. 미확정focus 무동작, 실제 입력만 수량전환.",
+      "source": "현8db511e와 읽기전용 독립검토·개발기준v1.1"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "카드 배치와 키보드·모바일 터치",
+      "answer": "기존 공용Button/Field/CSS token과 선택콜백 사용. 모바일2열·긴이름전체행·44px이상, 실제 가로넘침이 없는 곳은 drag미사용. 이름전체표시·선택체크·수록수 보조설명.",
+      "source": "승인된 카드안·기존 shared UI·W3C 터치 기준"
+    },
+    {
+      "id": "D4",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "배포 및 복구 경계",
+      "answer": "기존 feature Git push로 Preview, 같은 검증 코드의 main push로 Production 환경 재빌드. Preview 별도DB를 운영에 alias 승격하지 않는다. 실패 시 사용자/DB보존하며 해당 앱 릴리스만 복구.",
+      "source": "기존 프로젝트 Preview/Production 분리·공식 Vercel environments"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "checked",
+      "reason": "기존 서버·API·DB·인증·개인캐시·배정/채점 규칙 유지"
+    },
+    "ui": {
+      "status": "changed",
+      "reason": "범위 카드/수량 상태/미확정focus와 연결 검사만 변경"
+    },
+    "state": {
+      "status": "changed",
+      "reason": "범위 카드/수량 상태/미확정focus와 연결 검사만 변경"
+    },
+    "domain": {
+      "status": "checked",
+      "reason": "기존 서버·API·DB·인증·개인캐시·배정/채점 규칙 유지"
+    },
+    "data": {
+      "status": "checked",
+      "reason": "기존 서버·API·DB·인증·개인캐시·배정/채점 규칙 유지"
+    },
+    "api": {
+      "status": "checked",
+      "reason": "기존 서버·API·DB·인증·개인캐시·배정/채점 규칙 유지"
+    },
+    "cache": {
+      "status": "checked",
+      "reason": "기존 서버·API·DB·인증·개인캐시·배정/채점 규칙 유지"
+    },
+    "asyncUi": {
+      "status": "changed",
+      "reason": "범위 카드/수량 상태/미확정focus와 연결 검사만 변경"
+    },
+    "security": {
+      "status": "checked",
+      "reason": "기존 서버·API·DB·인증·개인캐시·배정/채점 규칙 유지"
+    },
+    "styles": {
+      "status": "changed",
+      "reason": "범위 카드/수량 상태/미확정focus와 연결 검사만 변경"
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "범위 카드/수량 상태/미확정focus와 연결 검사만 변경"
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "현재학생/권한의 준비·미리보기만 표시·기존인증보호",
+      "checkIds": [
+        "T3",
+        "T4"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "이전범위/학생 미리보기 수량과 실제학생 자료를 새대상에 노출하지 않음",
+      "checkIds": [
+        "T1",
+        "T3",
+        "T4"
+      ]
+    },
+    "answer-leak": {
+      "status": "not_applicable",
+      "reason": "범위 라벨/합계만 변경하며 문항/정답/학생시험 조회/응시 경로 추가없음",
+      "checkIds": []
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "기존 현재미리보기 지문/취소/개인목록 유지·추가조회0",
+      "checkIds": [
+        "T3",
+        "T4",
+        "T5"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "기존 인증→단어장/단위 metadata→공용 범위 선택→표시 변환. 배정 조건→기존 현재미리보기→출제 가능 수. 생성/배정/수정 저장계약은 그대로; 응시/검색/삭제/기록 DB 변경 해당없음(표시수정).",
+    "reuse": "AssignmentUnitRangePicker/DayRangeRail을 단일·일괄·수정에서 재사용. 합계/문구는 presentation, 값/콜백만 표시부품에 전달. 새업무계산/만능제어기/공용UI의 기능의존 없음.",
+    "cache": "기존 브라우저 현재미리보기만 사용하며 raw state.preview.value 접근금지. 수록 합계는 이미받은단위에서 즉시표시. 새fetch/poll/CDN/use-cache0, 사용자변경폐기/현재권한실패 숨김 유지.",
+    "compatibility": "Next16.2.12 React19.2.8 공식 서버/클라이언트·예상오류 기준. 기존수량상한·역순·단일/일괄·회차·DB/API 불변. 이전검증은 당시해시보존.",
+    "rollback": "운영기준189e5d3 및 선행413c0a3을 기록. UI·정상배정/학생읽기 실패가재현되면 이번 배포만 기존앱으로복구, DB/계정/팀/요금설정 변경금지."
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "범위 준비 뒤 미리보기 대기",
+      "message": "출제 가능 단어 수를 확인하는 중입니다.",
+      "behavior": "수록 합계/직접입력 보존, 미확정0금지",
+      "recovery": "현재 요청 완료",
+      "component": "src/features/assignments/ui/vocab-question-fields.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "범위/학생/조건을 변경해 재계산 중",
+      "message": "출제 가능 단어 수를 확인하는 중입니다.",
+      "behavior": "이전 가능수 미표시·수록 합계 현재값·입력보존",
+      "recovery": "현재 요청 완료",
+      "component": "src/features/assignments/ui/vocab-question-fields.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "선택 범위 없음",
+      "message": "시험 범위를 선택해 주세요.",
+      "behavior": "미조회와0건을구분",
+      "recovery": "범위 카드 선택",
+      "component": "src/features/assignments/ui/vocab-question-fields.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "현재 유효 계산 정상0개",
+      "message": "출제 가능 0개",
+      "behavior": "미확정과구분·최종서버검증유지",
+      "recovery": "범위/출제조건 변경",
+      "component": "src/features/assignments/ui/vocab-question-fields.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "아직 조건 미완성 또는 직접입력 범위오류",
+      "message": "출제 가능 단어 수는 배정 조건을 정한 뒤 확인할 수 있습니다.",
+      "behavior": "기존 입력부근 FieldError 보존·희망수자동수정금지",
+      "recovery": "조건 입력",
+      "component": "src/features/assignments/ui/vocab-question-fields.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "현재미리보기 조회실패",
+      "message": "출제 가능 단어 수를 확인하지 못했습니다. 다시 시도해 주세요.",
+      "behavior": "빈값/정상0으로변환금지·수록합계/작성값 보존",
+      "recovery": "단어 수 다시 확인 버튼으로 기존 미리보기 재시도",
+      "component": "src/features/assignments/ui/vocab-question-fields.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "기존 저장 실패",
+      "message": "배정 결과를 확인하지 못했습니다. 목록을 확인한 뒤 다시 시도해 주세요.",
+      "behavior": "기존 저장실패 복구 안내·작성값 유지·자동재전송없음",
+      "recovery": "기존 목록 결과확인",
+      "component": "src/features/assignments/ui/vocab-question-fields.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "현재401/403·계정/로그아웃",
+      "message": "로그인을 다시 확인해 주세요.",
+      "behavior": "기존 개인목록/작성창 보호로 자료 숨김",
+      "recovery": "기존 관리자 로그인",
+      "component": "src/features/assignments/ui/vocab-question-fields.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "없는 페이지/배정 조회",
+      "message": "페이지를 찾을 수 없습니다",
+      "behavior": "기존 not-found 경계유지",
+      "recovery": "목록으로 돌아가기",
+      "component": "src/features/assignments/ui/vocab-question-fields.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "예상밖 준비/미리보기 오류",
+      "message": "출제 가능 단어 수를 확인하지 못했습니다. 다시 시도해 주세요.",
+      "behavior": "내부원문/토큰/정답노출금지",
+      "recovery": "기존 영역 재시도",
+      "component": "src/features/assignments/ui/vocab-question-fields.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "개발기준v1.1 / Next16.2.12 React19.2.8",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "쉬운상태구분·좁은공용표시·로컬선검증·배포환경분리. 새업무규칙없음"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "unit",
+      "target": "src/features/assignments/presentation/vocab-question-view.test.ts",
+      "scenario": "수록/가능/직접수량·미선택/대기/실패/0/학생별예외·범위합계/역순",
+      "expected": "현재가능수만사용·빈칸의상태안내·입력보존",
+      "topics": [
+        "behavior",
+        "error-ui",
+        "ui-copy",
+        "data-leak"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "component",
+      "target": "src/features/assignments/ui/vocab-range-picker.test.tsx",
+      "scenario": "범위카드·요약·키보드/터치·전체/직접·미확정focus·공통수정잠금",
+      "expected": "출제규칙변경0·수록수즉시·선택보존·미확정0전환0",
+      "topics": [
+        "behavior",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "component",
+      "target": "src/features/assignments/ui/assignment-workspace.test.tsx",
+      "scenario": "실제단일/일괄·대기/실패/재시도/범위전환·기존목록인증/초안유지",
+      "expected": "새조회를만들지않음·늦은응답/다른학생복원0·현재입력보존",
+      "topics": [
+        "behavior",
+        "cache",
+        "authorization",
+        "data-leak",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "static",
+      "target": "architecture/assignment-ui-roles.json",
+      "scenario": "기능지도/역할·변경기록·전체기존회귀·독립검토",
+      "expected": "UI복사/새API/DB변경0·현재연결확인",
+      "topics": [
+        "structure",
+        "cache",
+        "authorization",
+        "data-leak"
+      ]
+    },
+    {
+      "id": "T5",
+      "kind": "browser",
+      "target": null,
+      "scenario": "로컬 가짜자료 좁은모바일/PC 카드·수량·스크롤·닫기/초점·배정만료",
+      "expected": "카드가로넘침0·작은글자없음·입력보존·저장쓰기0",
+      "topics": [
+        "behavior",
+        "error-ui",
+        "ui-copy",
+        "cache"
+      ]
+    },
+    {
+      "id": "T6",
+      "kind": "build",
+      "target": "package.json",
+      "scenario": "최종코드 전체/타입/lint/구조/최적화빌드",
+      "expected": "필수검사통과·미실행/선택skipped구분",
+      "topics": [
+        "structure"
+      ]
+    },
+    {
+      "id": "T7",
+      "kind": "browser",
+      "target": null,
+      "scenario": "동일코드Preview/Production환경·Git배포·실제모바일관리자읽기·배포후15분 확인",
+      "expected": "배포성공·실제학생시험/배정저장0·오류조회가능범위와한계기록",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak"
+      ]
+    }
+  ],
+  "verification": null
+}

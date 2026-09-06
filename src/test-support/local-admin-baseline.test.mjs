@@ -48,6 +48,14 @@ describe("로컬 학생 학습 가짜 자료 보호", () => {
   });
 });
 describe("로컬 기준 계측 보호", () => {
+  it("긴 범위 이름도 가짜 5범위·100개 안에서만 확인한다", () => {
+    const result = read("/rest/v1/vocab_units?dataset_id=eq." + uid(10));
+    expect(result.status).toBe(200);
+    expect(result.body).toHaveLength(5);
+    expect(result.body.reduce((sum, unit) => sum + unit.entry_count, 0)).toBe(100);
+    expect(result.body.at(-1).unit_label).toBe("자이스토리 7회 29번 · 긴 범위 이름 확인");
+    expect(read("/rest/v1/vocab_units?dataset_id=eq." + uid(123)).status).toBe(403);
+  });
   it("부모가 먼저 비정상 종료하면 복구하지 않는다", async () => {
     expect(isRestorationSafe([{ kind: "build", exitCode: 1, signal: null }])).toBe(false);
     expect(isRestorationSafe([{ kind: "start", exitCode: 0, signal: null }])).toBe(false);

@@ -11,11 +11,13 @@ import styles from "./vocab-assignment-planner.module.css";
 
 export function AssignmentWordCountField({
   allSelected,
+  allLabel = "전체",
   disabled = false,
   error,
   errorId = "assignment-word-count-error",
   helpText,
   inputLabel = "단어 수",
+  inputPlaceholder,
   max,
   min,
   onChange,
@@ -24,11 +26,13 @@ export function AssignmentWordCountField({
   value,
 }: {
   allSelected: boolean;
+  allLabel?: string;
   disabled?: boolean;
   error?: string;
   errorId?: string;
   helpText: ReactNode;
   inputLabel?: string;
+  inputPlaceholder?: string;
   max: number;
   min: number;
   onChange: (value: number) => void;
@@ -58,7 +62,7 @@ export function AssignmentWordCountField({
           size="small"
           variant="filter"
         >
-          전체
+          {allLabel}
         </Button>
         <Input
           aria-errormessage={error ? errorId : undefined}
@@ -70,6 +74,7 @@ export function AssignmentWordCountField({
           min={min}
           onChange={(event) => onChange(Number(event.target.value))}
           onFocus={onFocus}
+          placeholder={inputPlaceholder}
           required
           type="number"
           value={value}

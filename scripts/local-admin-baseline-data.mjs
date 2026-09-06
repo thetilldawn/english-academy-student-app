@@ -87,7 +87,8 @@ export function fixtureResponse({ url, method, headers, body = "", quizFeedback 
     })), "preparation");
     if (table === "admin_vocab_assignment_time_templates") return respond([], "preparation");
     if (table === "vocab_units" && datasetId) return respond([1, 2, 3, 4, 5].map(n => ({
-      id: uid(100 + n), dataset_id: datasetId.slice(3), unit_label: "DAY " + n,
+      id: uid(100 + n), dataset_id: datasetId.slice(3),
+      unit_label: n === 5 ? "자이스토리 7회 29번 · 긴 범위 이름 확인" : "DAY " + n,
       unit_kind: "day", unit_number: n, sort_index: n, entry_count: 20,
     })), "units");
     if (table === "vocab_unit_catalog") return respond([], "units");

@@ -25,11 +25,12 @@ export type VocabQuestionFieldsProps = {
   onActivateManualCount: () => void;
   onManualCountChange: (value: number) => void;
   onSelectAllCount: () => void;
+  onRetryCount?: () => void;
 };
 
 export function VocabQuestionFields({
   assignmentMode, questionCountMode, selectionMode, unitsPerSession, overflowPolicy,
-  countView, unitView, fieldErrors, onAssignmentModeChange, onSelectionModeChange,
+  countView, unitView, fieldErrors, onAssignmentModeChange, onSelectionModeChange, onRetryCount,
   onUnitsPerSessionChange, onOverflowPolicyChange, onActivateManualCount, onManualCountChange, onSelectAllCount,
 }: VocabQuestionFieldsProps) {
   const questionCountError = fieldErrors.questionCount;
@@ -92,6 +93,7 @@ export function VocabQuestionFields({
       <ConditionalReveal open={assignmentMode === "word_count"}>
         <AssignmentWordCountField
           allSelected={questionCountMode === "all"}
+          allLabel={countView.allCountLabel}
           error={questionCountError}
           errorId="vocab-question-count-error"
           helpText={
@@ -99,6 +101,7 @@ export function VocabQuestionFields({
             개수씩 회차에 배정합니다.</>
           }
           inputLabel="회차당 단어 수"
+          inputPlaceholder="직접 입력"
           max={500}
           min={4}
           onChange={onManualCountChange}
@@ -117,6 +120,9 @@ export function VocabQuestionFields({
       <span className={styles.questionCountSummary} aria-live="polite">
         {countView.countSummary}
       </span>
+      {countView.canRetry && onRetryCount ? (
+        <Button onClick={onRetryCount} variant="secondary">단어 수 다시 확인</Button>
+      ) : null}
     </div>
   );
 }

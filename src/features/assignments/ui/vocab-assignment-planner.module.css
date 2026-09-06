@@ -232,7 +232,71 @@
 
 .dayButton {
   flex: 0 0 auto;
-  min-width: 78px;
+  min-width: 120px;
+  max-width: 320px;
+  min-height: 76px;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-color: var(--line);
+  font-size: 1rem;
+  text-align: left;
+  white-space: normal;
+}
+
+.dayButton[aria-pressed="true"] {
+  border-color: currentColor;
+}
+
+.dayCardHeading {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.dayCardCheck {
+  flex: 0 0 20px;
+  height: 20px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-small);
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.dayCardLabel {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+  line-height: 1.45;
+}
+
+.dayCardCount {
+  padding-left: calc(20px + var(--space-2));
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.rangeSelectionSummary {
+  display: grid;
+  gap: var(--space-2);
+  margin-block: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--card);
+  font-size: 1rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.rangeSelectionSummary > span {
+  color: var(--text-secondary);
 }
 
 .rangeSummary,
@@ -432,6 +496,23 @@
     display: none;
   }
 
+  .dayRail {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow-x: visible;
+    cursor: auto;
+  }
+
+  .dayButton {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
+
+  .dayButton[data-long-label="true"] {
+    grid-column: 1 / -1;
+  }
+
   .modeButtons > *,
   .templateButtons > * {
     flex: 1 1 120px;
@@ -444,6 +525,25 @@
   .reviewRangeGrid,
   .reviewPreview {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 359px) {
+  .dayButton {
+    padding: var(--space-2);
+  }
+
+  .dayCardHeading {
+    gap: var(--space-1);
+  }
+
+  .dayCardCheck {
+    height: 16px;
+    flex-basis: 16px;
+  }
+
+  .dayCardCount {
+    padding-left: 0;
   }
 }
 
