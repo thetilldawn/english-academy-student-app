@@ -1,4 +1,5 @@
 "use client";
+import { useAssignmentAuthenticationFailure } from "./assignment-authentication-boundary";
 
 import {
   useCallback,
@@ -151,6 +152,7 @@ export function useDirectReviewAssignmentController({
   student: AssignmentStudentItem;
   transport?: AssignmentTransport;
 }) {
+  const captureAuthenticationFailure = useAssignmentAuthenticationFailure();
   const [summary, setSummary] = useState<SummaryState>({
     status: "idle",
     value: [],
@@ -251,6 +253,7 @@ export function useDirectReviewAssignmentController({
 
   useEffect(() => {
     if (!enabled) return;
+    const reportAuthenticationFailure = captureAuthenticationFailure();
     const readyIdentity = readySummaryIdentityRef.current;
     if (
       readyIdentity?.studentId === student.id &&
@@ -285,6 +288,7 @@ export function useDirectReviewAssignmentController({
           message: "",
         });
       } else if (result.error.kind !== "aborted") {
+        reportAuthenticationFailure(result.error);
         readySummaryIdentityRef.current = null;
         setSummary({
           status: "error",
@@ -294,7 +298,7 @@ export function useDirectReviewAssignmentController({
       }
     })();
     return () => abortController.abort();
-  }, [enabled, sourceRefreshVersion, student.id, transport]);
+  }, [enabled, sourceRefreshVersion, student.id, transport, captureAuthenticationFailure]);
 
   useEffect(() => {
     if (!enabled || summary.status !== "ready") return;
@@ -545,6 +549,7 @@ export function useDirectReviewAssignmentController({
   }
 
   async function submit() {
+    const reportAuthenticationFailure = captureAuthenticationFailure();
     const alreadySubmitting = interactionLockedRef.current;
     if (
       !enabled ||
@@ -582,6 +587,7 @@ export function useDirectReviewAssignmentController({
       setSubmission({ status: "succeeded", message: "" });
       return { ok: true as const, result: outcome.value };
     }
+    reportAuthenticationFailure(outcome.error);
     if (outcome.error.kind === "busy") {
       return {
         conflict: false,

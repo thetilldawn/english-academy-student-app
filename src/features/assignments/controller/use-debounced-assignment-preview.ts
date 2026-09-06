@@ -12,6 +12,7 @@ import {
 } from "../application/request-lifecycle";
 import type { AssignmentOperationError } from "../application/assignment-operation-error";
 import type { AssignmentTransport } from "../transport/assignment-transport";
+import { useAssignmentAuthenticationFailure } from "./assignment-authentication-boundary";
 
 export function useDebouncedAssignmentPreview<Value>({
   delayMs,
@@ -40,7 +41,9 @@ export function useDebouncedAssignmentPreview<Value>({
   revision: number;
   transport: AssignmentTransport;
 }) {
+  const captureAuthenticationFailure = useAssignmentAuthenticationFailure();
   useEffect(() => {
+    const reportAuthenticationFailure = captureAuthenticationFailure();
     if (!enabled || !preparation) return;
     const abortController = new AbortController();
     const policy = createLatestRequestPolicy();
@@ -67,6 +70,7 @@ export function useDebouncedAssignmentPreview<Value>({
           return;
         }
         if (outcome.result.error.kind !== "aborted") {
+          reportAuthenticationFailure(outcome.result.error);
           onFailed(outcome.result.error, identity);
         }
       });
@@ -78,6 +82,7 @@ export function useDebouncedAssignmentPreview<Value>({
       abortController.abort();
     };
   }, [
+    captureAuthenticationFailure,
     delayMs,
     enabled,
     onFailed,

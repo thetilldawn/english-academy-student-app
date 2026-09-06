@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import type { PreviousVocabExamSource } from "../domain/vocab-previous-exam";
 import { loadAssignmentPreviousExam } from "../transport/assignment-workspace-reads";
+import { useAssignmentAuthenticationFailure } from "./assignment-authentication-boundary";
 
 type PreviousExamResult =
   | {
@@ -38,6 +39,7 @@ export function useAssignmentPreviousExam({
   enabled: boolean;
   studentId: string;
 }) {
+  const captureAuthenticationFailure = useAssignmentAuthenticationFailure();
   const [resultByRequestKey, setResultByRequestKey] = useState(
     () => new Map<string, PreviousExamResult>(),
   );
@@ -47,6 +49,7 @@ export function useAssignmentPreviousExam({
     : idleResult;
 
   useEffect(() => {
+    const reportAuthenticationFailure = captureAuthenticationFailure();
     if (!enabled || !requestKey || resultByRequestKey.has(requestKey)) return;
     const abort = new AbortController();
     void loadAssignmentPreviousExam(
@@ -67,6 +70,7 @@ export function useAssignmentPreviousExam({
       },
       (error: unknown) => {
         if (abort.signal.aborted) return;
+        reportAuthenticationFailure(error);
         setResultByRequestKey((results) => {
           const next = new Map(results);
           next.set(requestKey, {
@@ -81,7 +85,7 @@ export function useAssignmentPreviousExam({
       },
     );
     return () => abort.abort();
-  }, [datasetId, enabled, requestKey, resultByRequestKey, studentId]);
+  }, [datasetId, enabled, requestKey, resultByRequestKey, studentId, captureAuthenticationFailure]);
 
   return {
     ...current,

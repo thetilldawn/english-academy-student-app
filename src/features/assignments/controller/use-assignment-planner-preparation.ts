@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { AssignmentPlannerPreparation } from "../contracts/assignment-workspace-read-model";
 import { loadAssignmentPlannerPreparation } from "../transport/assignment-workspace-reads";
+import { useAssignmentAuthenticationFailure } from "./assignment-authentication-boundary";
 
 export type AssignmentPlannerRequest = {
   bulkFilterLabels: readonly string[];
@@ -41,6 +42,7 @@ const idleState: PreparationState = {
 };
 
 export function useAssignmentPlannerPreparation() {
+  const captureAuthenticationFailure = useAssignmentAuthenticationFailure();
   const [state, setState] = useState<PreparationState>(idleState);
   const abortRef = useRef<AbortController | null>(null);
   const versionRef = useRef(0);
@@ -53,6 +55,7 @@ export function useAssignmentPlannerPreparation() {
   }, []);
 
   const open = useCallback(async (request: AssignmentPlannerRequest) => {
+    const reportAuthenticationFailure = captureAuthenticationFailure();
     versionRef.current += 1;
     const version = versionRef.current;
     abortRef.current?.abort();
@@ -71,6 +74,7 @@ export function useAssignmentPlannerPreparation() {
       setState({ data, error: "", request, status: "ready" });
     } catch (error) {
       if (abort.signal.aborted || versionRef.current !== version) return;
+      reportAuthenticationFailure(error);
       setState({
         data: null,
         error: error instanceof Error
@@ -82,7 +86,7 @@ export function useAssignmentPlannerPreparation() {
     } finally {
       if (versionRef.current === version) abortRef.current = null;
     }
-  }, []);
+  }, [captureAuthenticationFailure]);
 
   useEffect(() => () => {
     versionRef.current += 1;

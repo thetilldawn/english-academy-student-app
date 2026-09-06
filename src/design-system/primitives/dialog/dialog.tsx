@@ -5,7 +5,7 @@ import {
   forwardRef,
   useCallback,
   useContext,
-  useEffect,
+  useLayoutEffect,
   useRef,
   type ComponentPropsWithoutRef,
   type ReactNode,
@@ -26,6 +26,14 @@ type DialogContextValue = {
 };
 
 const DialogContext = createContext<DialogContextValue | null>(null);
+const DialogVisibilityContext = createContext(true);
+
+/** Presentation only: the owning feature decides whether its content may be shown. */
+export function DialogVisibilityBoundary({ visible, children }: { visible: boolean; children: ReactNode }) {
+  return <DialogVisibilityContext.Provider value={visible}>
+    <div hidden={!visible} inert={!visible} style={{ display: visible ? "contents" : "none" }}>{children}</div>
+  </DialogVisibilityContext.Provider>;
+}
 
 let activeDialogCount = 0;
 let previousBodyOverflow = "";
@@ -94,12 +102,15 @@ export const DialogFrame = forwardRef<HTMLDialogElement, DialogFrameProps>(
       onAfterClose,
       onRequestClose,
       size = "default",
+      style,
       ...props
     },
     forwardedRef,
   ) {
     const localRef = useRef<HTMLDialogElement | null>(null);
+    const visible = useContext(DialogVisibilityContext);
     const returnFocusRef = useRef<HTMLElement | null>(null);
+    const pausedFocusRef = useRef<HTMLElement | null>(null);
     const escapeKeyRequestRef = useRef(false);
     const escapeResetTimerRef = useRef<number | null>(null);
 
@@ -122,19 +133,22 @@ export const DialogFrame = forwardRef<HTMLDialogElement, DialogFrameProps>(
       [closeDisabled, onRequestClose],
     );
 
-    useEffect(() => {
+    useLayoutEffect(() => {
+      if (!visible) return;
       const dialog = localRef.current;
-      returnFocusRef.current =
+      returnFocusRef.current ??=
         document.activeElement instanceof HTMLElement
           ? document.activeElement
           : null;
       if (dialog && !dialog.open) dialog.showModal();
+      if (pausedFocusRef.current?.isConnected) pausedFocusRef.current.focus({ preventScroll: true });
       lockDocumentScroll();
 
       return () => {
         if (escapeResetTimerRef.current !== null) {
           window.clearTimeout(escapeResetTimerRef.current);
         }
+        if (dialog?.contains(document.activeElement) && document.activeElement instanceof HTMLElement) pausedFocusRef.current = document.activeElement;
         if (dialog?.open) dialog.close();
         unlockDocumentScroll();
         const returnTarget = returnFocusRef.current;
@@ -142,7 +156,7 @@ export const DialogFrame = forwardRef<HTMLDialogElement, DialogFrameProps>(
           if (returnTarget?.isConnected && !dialog?.open) returnTarget.focus();
         });
       };
-    }, []);
+    }, [visible]);
 
     return (
       <DialogContext.Provider value={{ closeDisabled, requestClose }}>
@@ -167,7 +181,11 @@ export const DialogFrame = forwardRef<HTMLDialogElement, DialogFrameProps>(
               requestClose("backdrop");
             }
           }}
-          onClose={onAfterClose}
+          onClose={() => {
+            // A close event is queued. Do not treat a hide/reopen cycle as the
+            // user's final close if the same dialog has already reopened.
+            if (visible && !localRef.current?.open) onAfterClose?.();
+          }}
           onKeyDown={(event) => {
             if (
               event.key !== "Escape" ||
@@ -190,6 +208,7 @@ export const DialogFrame = forwardRef<HTMLDialogElement, DialogFrameProps>(
           }}
           ref={setRef}
           {...props}
+          style={{ ...style, ...(!visible ? { display: "none" } : {}) }}
         >
           {children}
         </dialog>

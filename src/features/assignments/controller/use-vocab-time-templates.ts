@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useAssignmentAuthenticationFailure } from "./assignment-authentication-boundary";
 
 import {
   buildVocabTimeTemplateRequest,
@@ -30,6 +31,7 @@ export function useVocabTimeTemplates({
   timing: ExamTiming;
   transport?: AssignmentTransport;
 }) {
+  const captureAuthenticationFailure = useAssignmentAuthenticationFailure();
   const [state, setState] = useState(() => ({
     saving: false,
     templates: [...initialTemplates],
@@ -37,6 +39,7 @@ export function useVocabTimeTemplates({
   const savingRef = useRef(false);
 
   async function saveCurrentTemplate(label: string) {
+    const reportAuthenticationFailure = captureAuthenticationFailure();
     const trimmed = label.trim();
     if (!trimmed || savingRef.current) {
       return { ok: false as const, message: "템플릿 이름을 확인해 주세요." };
@@ -67,6 +70,7 @@ export function useVocabTimeTemplates({
         url: "/api/admin/vocab-time-templates",
       });
       if (!response.ok) {
+        reportAuthenticationFailure(response);
         return {
           ok: false as const,
           message: assignmentTransportError(

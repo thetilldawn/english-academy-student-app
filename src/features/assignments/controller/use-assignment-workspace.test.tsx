@@ -21,6 +21,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/features/students/public-client", () => ({
+  useStudentDirectoryCache: () => null,
   loadStudentDirectoryNextPage: vi.fn(),
   loadStudentDirectorySnapshot: vi.fn(),
 }));

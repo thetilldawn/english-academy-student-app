@@ -20,6 +20,7 @@ import { useAssignmentDatasetDirectory } from "./use-assignment-dataset-director
 import { useAssignmentPlannerPreparation } from "./use-assignment-planner-preparation";
 import { useAssignmentSelectionBasket } from "./use-assignment-selection-basket";
 import { useAssignmentStudentDirectory } from "./use-assignment-student-directory";
+import { useAssignmentAuthenticationFailure } from "./assignment-authentication-boundary";
 
 export type AssignmentDialogView = "overview" | "assign";
 export type AssignmentEntryMode = "student" | "school" | "dataset";
@@ -37,13 +38,18 @@ export function useAssignmentWorkspace({
   initialDatasetId,
   initialDialogView,
   initialStudentId,
+  cacheEnabled = false,
+  interactionAllowed = true,
 }: {
   initial: AssignmentWorkspaceInitial;
   initialDatasetId: string;
   initialDialogView: AssignmentDialogView;
   initialStudentId: string;
+  cacheEnabled?: boolean;
+  interactionAllowed?: boolean;
 }) {
-  const directory = useAssignmentStudentDirectory(initial.directory);
+  const directory = useAssignmentStudentDirectory(initial.directory, cacheEnabled);
+  const captureAuthenticationFailure = useAssignmentAuthenticationFailure();
   const basket = useAssignmentSelectionBasket();
   const datasetDirectory = useAssignmentDatasetDirectory();
   const ensureDatasetDirectory = datasetDirectory.actions.ensure;
@@ -77,7 +83,7 @@ export function useAssignmentWorkspace({
   const selectedBulkStudentIds = selectedBulkStudents.map((student) => student.id);
   const entryDatasetAvailable = datasetDirectory.status === "ready" &&
     datasetDirectory.datasets.some((dataset) => dataset.id === entryDatasetId);
-  const canPrepareBulk = !selectionLoading &&
+  const canPrepareBulk = interactionAllowed && !selectionLoading &&
     selectedBulkStudents.length > 0 &&
     selectedBulkStudents.length <= MAXIMUM_BULK_STUDENT_COUNT &&
     (entryMode === "student" ||
@@ -120,6 +126,8 @@ export function useAssignmentWorkspace({
   }
 
   async function toggleFilteredStudents() {
+    const reportAuthenticationFailure = captureAuthenticationFailure();
+    if (!interactionAllowed) return;
     if (selectionLoading || directory.filtering || filters.status !== "active") return;
     const intent = allFilteredStudentsSelected ? "deselect" : "select";
     selectionAbortRef.current?.abort();
@@ -149,6 +157,7 @@ export function useAssignmentWorkspace({
       }
     } catch (error) {
       if (!abort.signal.aborted) {
+        reportAuthenticationFailure(error);
         setSelectionError(
           error instanceof Error
             ? error.message
@@ -173,6 +182,7 @@ export function useAssignmentWorkspace({
   }
 
   function openSingleAssignment(studentId: string) {
+    if (!interactionAllowed) return;
     void openPlanner({
       bulkFilterLabels: [],
       initialDatasetId,
@@ -199,6 +209,7 @@ export function useAssignmentWorkspace({
   }
 
   function toggleBulkStudent(student: AssignmentSelectionStudent) {
+    if (!interactionAllowed) return;
     if (selectionLoading) return;
     const isSelected = basket.selectedById.has(student.id);
     if (!isSelected && basket.students.length >= MAXIMUM_BULK_STUDENT_COUNT) {
@@ -222,6 +233,7 @@ export function useAssignmentWorkspace({
   }, [ensureDatasetDirectory, entryMode]);
 
   useEffect(() => {
+    if (!interactionAllowed) return;
     if (initialOpenHandledRef.current) return;
     initialOpenHandledRef.current = true;
     if (initialDialogView !== "assign" || !initialStudentId) return;
@@ -231,7 +243,7 @@ export function useAssignmentWorkspace({
       selectionMode: "single",
       studentIds: [initialStudentId],
     });
-  }, [initialDatasetId, initialDialogView, initialStudentId, openPlanner]);
+  }, [initialDatasetId, initialDialogView, initialStudentId, openPlanner, interactionAllowed]);
 
   useEffect(() => cancelDirectorySelection, [cancelDirectorySelection]);
 

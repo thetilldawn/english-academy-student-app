@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { DatasetOption } from "@/lib/admin/dataset-summary";
 import { loadAssignmentDatasetDirectory } from "../transport/assignment-workspace-reads";
+import { useAssignmentAuthenticationFailure } from "./assignment-authentication-boundary";
 
 type DatasetDirectoryState = {
   datasets: DatasetOption[];
@@ -18,6 +19,7 @@ const initialState: DatasetDirectoryState = {
 };
 
 export function useAssignmentDatasetDirectory() {
+  const captureAuthenticationFailure = useAssignmentAuthenticationFailure();
   const [state, setState] = useState(initialState);
   const abortRef = useRef<AbortController | null>(null);
   const versionRef = useRef(0);
@@ -30,6 +32,7 @@ export function useAssignmentDatasetDirectory() {
   }, []);
 
   const load = useCallback(async (force: boolean) => {
+    const reportAuthenticationFailure = captureAuthenticationFailure();
     if (!force && ["loading", "ready"].includes(statusRef.current)) return;
     cancel();
     const version = versionRef.current;
@@ -44,6 +47,7 @@ export function useAssignmentDatasetDirectory() {
       setState({ datasets: result.datasets, error: "", status: "ready" });
     } catch (error) {
       if (abort.signal.aborted || versionRef.current !== version) return;
+      reportAuthenticationFailure(error);
       statusRef.current = "error";
       setState({
         datasets: [],
@@ -55,7 +59,7 @@ export function useAssignmentDatasetDirectory() {
     } finally {
       if (versionRef.current === version) abortRef.current = null;
     }
-  }, [cancel]);
+  }, [cancel, captureAuthenticationFailure]);
   const ensure = useCallback(() => load(false), [load]);
   const retry = useCallback(() => load(true), [load]);
 

@@ -1,4 +1,5 @@
 "use client";
+import { useAssignmentAuthenticationFailure } from "./assignment-authentication-boundary";
 
 import {
   useCallback,
@@ -99,6 +100,7 @@ export function useBulkAssignmentController({
   clock?: () => number;
   transport?: AssignmentTransport;
 }) {
+  const captureAuthenticationFailure = useAssignmentAuthenticationFailure();
   const [initialDraft] = useState(() =>
     createInitialBulkSeriesAssignmentDraft({
       commonPlan: initialCommonPlan,
@@ -326,6 +328,7 @@ export function useBulkAssignmentController({
     bulkPreviewAllowsSubmission(state.draft, preview);
 
   const submit = useCallback(async (): Promise<BulkAssignmentSubmitOutcome> => {
+    const reportAuthenticationFailure = captureAuthenticationFailure();
     let current = stateRef.current;
     if (current.submission.status === "succeeded") {
       return { conflict: false, message: genericErrorMessage, ok: false };
@@ -370,6 +373,7 @@ export function useBulkAssignmentController({
       );
     if (current.submission.status === "submitting") {
       const duplicate = await runSubmission();
+      if (!duplicate.ok) reportAuthenticationFailure(duplicate.error);
       return duplicate.ok
         ? { ok: true, result: duplicate.value }
         : {
@@ -400,6 +404,7 @@ export function useBulkAssignmentController({
     });
 
     const outcome = await runSubmission();
+    if (!outcome.ok) reportAuthenticationFailure(outcome.error);
     if (outcome.ok) {
       apply({
         type: "submission/succeeded",
@@ -451,6 +456,7 @@ export function useBulkAssignmentController({
   }, [
     apply,
     genericErrorMessage,
+    captureAuthenticationFailure,
     nowMilliseconds,
     previewErrorMessage,
     setMessage,
