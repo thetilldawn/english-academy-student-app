@@ -1,142 +1,50 @@
-import { Button } from "@/design-system/primitives/button/button";
-import { Field, FieldLabel } from "@/design-system/primitives/form/field";
-import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
-import { ConditionalReveal } from "@/design-system/patterns/conditional-reveal/conditional-reveal";
-
+import type { AssignmentDatasetItem } from "../catalog-types";
+import type { VocabAssignmentPlannerController } from "../controller/use-vocab-assignment-planner";
+import type { VocabAssignmentFieldKey } from "../presentation/vocab-assignment-field-errors";
 import { buildBulkPlanAudience } from "../presentation/bulk-plan-audience";
-import { VocabTargetSelectionField } from "./bulk-exam-fields";
-import { AssignmentWordCountField } from "./assignment-word-count-field";
-import {
-  VocabRangeFields,
-  type VocabPlannerFieldsProps,
-} from "./vocab-range-fields";
+import { vocabQuestionView, vocabUnitAllocationView } from "../presentation/vocab-question-view";
 import type { AssignmentDatasetTriggerProps } from "./assignment-dataset-trigger";
-import styles from "./vocab-assignment-planner.module.css";
-import { VocabUnitAllocationFields } from "./vocab-unit-allocation-fields";
+import { VocabQuestionFields } from "./vocab-question-fields";
+import { VocabRangeFields } from "./vocab-range-fields";
 
 export { VocabRangeFields } from "./vocab-range-fields";
 
-export function VocabQuestionFields({
-  controller,
-  fieldErrors = {},
-}: VocabPlannerFieldsProps) {
-  const questionCountError = fieldErrors.questionCount;
-  const selectionModeError = fieldErrors.selectionMode;
-  const preview = controller.bulk.preview;
-  const audience = buildBulkPlanAudience(preview);
-  const reference = audience.reference;
-  const availableQuestionCount = reference?.availableQuestionCount ?? null;
-  const defaultSessionCount =
-    reference?.defaultSessionCount ?? controller.defaultSessionCount ?? 0;
-  const selectedQuestionCount =
-    reference?.selectedQuestionCount ?? 0;
-  const remainingQuestionCount =
-    reference?.remainingQuestionCount ?? 0;
-  const countSummary = preview && audience.totalCount > 1 && !reference
-    ? "학생별 계획을 마지막 미리보기에서 확인해 주세요."
-    : availableQuestionCount === null
-    ? "범위와 단어 수를 정하면 기본 회차를 계산합니다."
-    : controller.distribution === "repeat"
-      ? `전체 ${availableQuestionCount}개 · 배정 ${selectedQuestionCount}개 · 남음 ${remainingQuestionCount}개 · 회차당 ${selectedQuestionCount}개`
-      : controller.planner.assignmentMode === "per_session"
-        ? `전체 ${availableQuestionCount}개 · 범위별 배정 · 기본 ${defaultSessionCount}회`
-        : `전체 ${availableQuestionCount}개 · 배정 ${selectedQuestionCount}개 · 남음 ${remainingQuestionCount}개 · 기본 ${defaultSessionCount}회`;
-  const defaultManualCount = availableQuestionCount === null
-    ? 0
-    : Math.min(500, availableQuestionCount);
-  const manualCountValue = controller.planner.questionCountMode === "manual"
-    ? controller.planner.manualQuestionCount
-    : controller.planner.manualQuestionCount > 0
-      ? controller.planner.manualQuestionCount
-      : availableQuestionCount ?? "";
+type VocabPlannerFieldsProps = {
+  controller: VocabAssignmentPlannerController;
+  datasets: readonly AssignmentDatasetItem[];
+  fieldErrors?: Partial<Record<VocabAssignmentFieldKey, string>>;
+};
 
-  return (
-    <div className={styles.fieldStack}>
-      <Field>
-          <FieldLabel as="span" id="vocab-distribution-label">
-            <HelpTip label="배정 방식 설명" trigger="배정 방식">
-              전체 회차는 같은 범위를 매번, 회차별은 범위를 하나씩,
-              단어 수는 정한 개수씩 배정합니다.
-            </HelpTip>
-          </FieldLabel>
-          <div
-            aria-labelledby="vocab-distribution-label"
-            className={styles.modeButtons}
-            data-field-key="distribution"
-            role="group"
-            tabIndex={-1}
-          >
-            <Button
-              aria-pressed={controller.planner.assignmentMode === "all_sessions"}
-              onClick={() =>
-                controller.actions.changeAssignmentMode("all_sessions")
-              }
-              size="small"
-              variant="filter"
-            >
-              전체 회차
-            </Button>
-            <Button
-              aria-pressed={controller.planner.assignmentMode === "per_session"}
-              onClick={() =>
-                controller.actions.changeAssignmentMode("per_session")
-              }
-              size="small"
-              variant="filter"
-            >
-              회차별
-            </Button>
-            <Button
-              aria-pressed={controller.planner.assignmentMode === "word_count"}
-              onClick={() =>
-                controller.actions.changeAssignmentMode("word_count")
-              }
-              size="small"
-              variant="filter"
-            >
-              단어 수
-            </Button>
-          </div>
-      </Field>
-      <ConditionalReveal open={controller.planner.assignmentMode !== "all_sessions"}>
-        <VocabUnitAllocationFields
-          controller={controller}
-          fieldErrors={fieldErrors}
-        />
-      </ConditionalReveal>
-      <ConditionalReveal open={controller.planner.assignmentMode === "word_count"}>
-        <AssignmentWordCountField
-          allSelected={controller.planner.questionCountMode === "all"}
-          error={questionCountError}
-          errorId="vocab-question-count-error"
-          helpText={
-            <>전체는 선택한 범위의 단어를 모두 배정하고, 숫자를 누르면 입력한
-            개수씩 회차에 배정합니다.</>
-          }
-          inputLabel="회차당 단어 수"
-          max={500}
-          min={4}
-          onChange={(value) => {
-            controller.actions.activateManualQuestionCount(defaultManualCount);
-            controller.actions.changeManualQuestionCount(value);
-          }}
-          onFocus={() =>
-            controller.actions.activateManualQuestionCount(defaultManualCount)
-          }
-          onSelectAll={() => controller.actions.changeQuestionCountMode("all")}
-          value={manualCountValue}
-        />
-      </ConditionalReveal>
-      <VocabTargetSelectionField
-        error={selectionModeError}
-        onChange={controller.actions.changeSelectionMode}
-        value={controller.planner.selectionMode}
-      />
-      <span className={styles.questionCountSummary} aria-live="polite">
-        {countSummary}
-      </span>
-    </div>
-  );
+// This is an assembly boundary, not a reusable input component.
+export function VocabQuestionSection({ controller, fieldErrors = {} }: Omit<VocabPlannerFieldsProps, "datasets">) {
+  const planner = controller.planner;
+  const countView = vocabQuestionView({
+    audience: buildBulkPlanAudience(controller.bulk.preview),
+    defaultSessionCount: controller.defaultSessionCount, distribution: controller.distribution,
+    assignmentMode: planner.assignmentMode, questionCountMode: planner.questionCountMode,
+    manualQuestionCount: planner.manualQuestionCount,
+  });
+  const unitView = vocabUnitAllocationView({
+    assignmentMode: planner.assignmentMode, scheduleEnabled: planner.scheduleEnabled,
+    defaultSessionCount: controller.unitAllocation?.defaultSessionCount ?? 0,
+    remainingUnitIds: controller.unitAllocation?.remainingUnitIds ?? [],
+    selectedUnits: controller.selectedUnits,
+  });
+  return <VocabQuestionFields assignmentMode={planner.assignmentMode} questionCountMode={planner.questionCountMode}
+    selectionMode={planner.selectionMode} unitsPerSession={planner.unitsPerSession} overflowPolicy={planner.overflowPolicy}
+    countView={countView} unitView={unitView}
+    fieldErrors={{ questionCount: fieldErrors.questionCount, selectionMode: fieldErrors.selectionMode,
+      unitsPerSession: fieldErrors.unitsPerSession, overflowPolicy: fieldErrors.overflowPolicy }}
+    onAssignmentModeChange={controller.actions.changeAssignmentMode}
+    onSelectionModeChange={controller.actions.changeSelectionMode}
+    onUnitsPerSessionChange={controller.actions.changeUnitsPerSession}
+    onOverflowPolicyChange={controller.actions.changeOverflowPolicy}
+    onActivateManualCount={() => controller.actions.activateManualQuestionCount(countView.manualActivationCount)}
+    onManualCountChange={(value) => {
+      controller.actions.activateManualQuestionCount(countView.manualActivationCount);
+      controller.actions.changeManualQuestionCount(value);
+    }}
+    onSelectAllCount={() => controller.actions.changeQuestionCountMode("all")} />;
 }
 
 export function VocabRangePicker(props: VocabPlannerFieldsProps & {
@@ -145,8 +53,18 @@ export function VocabRangePicker(props: VocabPlannerFieldsProps & {
 }) {
   return (
     <>
-      <VocabRangeFields {...props} />
-      <VocabQuestionFields {...props} />
+      <VocabRangeFields
+        dataset={props.datasets.find((dataset) => dataset.id === props.controller.planner.datasetId)}
+        units={props.controller.availableUnits}
+        selectedUnitIds={props.controller.selectedUnits.map((unit) => unit.id)}
+        datasetError={props.fieldErrors?.dataset}
+        rangeError={props.fieldErrors?.range}
+        onSelectUnit={props.controller.actions.selectUnit}
+        onToggleAllUnits={props.controller.actions.selectAllUnits}
+        onOpenDatasetPicker={props.onOpenDatasetPicker}
+        datasetTriggerRef={props.datasetTriggerRef}
+      />
+      <VocabQuestionSection controller={props.controller} fieldErrors={props.fieldErrors} />
     </>
   );
 }

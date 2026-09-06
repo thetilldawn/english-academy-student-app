@@ -11,7 +11,12 @@ import {
 } from "@/design-system/primitives/tooltip/help-tip";
 
 import type { AssignmentStudentItem } from "../catalog-types";
+import { useVocabScheduleTemplateInput } from "../client/controllers/use-vocab-schedule-template-input";
 import type { useVocabAssignmentScreen } from "../controller/use-vocab-assignment-screen";
+import { resolveVocabScheduleCounts } from "../domain/vocab-schedule";
+import { assignmentQuestionModePolicy } from "../domain/assignment-question-mode-policy";
+import { assignmentQuestionModeView, assignmentQuestionModeScheduleMessage } from "../presentation/assignment-question-mode-view";
+import { vocabScheduleLabels, vocabScheduleSessionRows } from "../presentation/vocab-schedule-view";
 import {
   hasVocabAssignmentFieldError,
   hasVocabScheduleFieldError,
@@ -22,8 +27,10 @@ import type { AssignmentDatasetTriggerProps } from "./assignment-dataset-trigger
 import { BulkExamFields } from "./bulk-exam-fields";
 import { BulkSeriesPreview } from "./bulk-series-preview";
 import { ExamTimingFields } from "./exam-timing-fields";
-import { VocabQuestionFields, VocabRangeFields } from "./vocab-range-picker";
+import { VocabQuestionSection } from "./vocab-range-picker";
+import { VocabRangeFields } from "./vocab-range-fields";
 import { VocabScheduleFields } from "./vocab-schedule-fields";
+import { VocabScheduleDetailFields } from "./vocab-schedule-detail-fields";
 import styles from "./vocab-assignment-planner.module.css";
 
 type VocabAssignmentScreenController = ReturnType<
@@ -60,6 +67,41 @@ export function VocabRangeAssignmentSections({
   };
 }) {
   const bulk = controller.bulk;
+  const questionPolicy = assignmentQuestionModePolicy(bulk.state.draft.questionMode);
+  const questionModeView = assignmentQuestionModeView({
+    questionMode: bulk.state.draft.questionMode,
+    datasetSelected: Boolean(controller.planner.datasetId),
+    availableModes: controller.questionModeAvailability,
+  });
+  const templateInput = useVocabScheduleTemplateInput({
+    saving: controller.templateSaving,
+    onSave: controller.actions.saveCurrentTemplate,
+  });
+  const schedule = controller.planner.schedule;
+  const scheduleEnabled = controller.planner.scheduleEnabled !== false;
+  const availableTimeEnabled = schedule.availableTimeEnabled !== false;
+  const scheduleLabels = vocabScheduleLabels({
+    selectedDataset: controller.readyDatasets?.find(dataset => dataset.id === controller.planner.datasetId),
+    representativeDatasetLabel: bulk.preview?.items?.find(item => item.datasetLabel)?.datasetLabel,
+    selectedUnits: controller.selectedUnits ?? [],
+  });
+  const scheduleCounts = resolveVocabScheduleCounts({
+    scheduleEnabled,
+    distribution: controller.distribution,
+    slotCount: controller.scheduleSlots.length,
+    defaultSessionCount: controller.defaultSessionCount,
+    extraDateDecisionSessionCount: controller.extraDateDecisionSessionCount,
+    requiresExtraDateDecision: controller.requiresExtraDateDecision,
+    repeatCycleCount: controller.repeatCycleCount,
+  });
+  const scheduleRows = vocabScheduleSessionRows({
+    slots: controller.scheduleSlots,
+    hasSelectedWeekdays: schedule.weekdays.length > 0,
+    previewSessions: bulk.preview?.commonPlanSummary?.sessions ?? [],
+    distribution: controller.distribution,
+    availableTimeEnabled,
+    fieldErrors,
+  });
   const previousSourceStudent = students.find(
     (student) => student.id === controller.previousExamSourceStudentId,
   );
@@ -98,9 +140,13 @@ export function VocabRangeAssignmentSections({
         title="시험 범위"
       >
         <VocabRangeFields
-          controller={controller}
-          datasets={controller.readyDatasets}
-          fieldErrors={fieldErrors}
+          dataset={controller.readyDatasets.find((dataset) => dataset.id === controller.planner.datasetId)}
+          units={controller.availableUnits}
+          selectedUnitIds={controller.selectedUnits.map((unit) => unit.id)}
+          datasetError={fieldErrors.dataset}
+          rangeError={fieldErrors.range}
+          onSelectUnit={controller.actions.selectUnit}
+          onToggleAllUnits={controller.actions.selectAllUnits}
           onOpenDatasetPicker={onOpenDatasetPicker}
           datasetTriggerRef={datasetTriggerRef}
         />
@@ -126,17 +172,24 @@ export function VocabRangeAssignmentSections({
         status={conditionStatus}
         title="시험 조건"
       >
-        <VocabQuestionFields
+        <VocabQuestionSection
           controller={controller}
-          datasets={controller.readyDatasets}
           fieldErrors={fieldErrors}
         />
         <BulkExamFields
-          availableQuestionModes={controller.questionModeAvailability}
-          controller={bulk}
-          datasetSelected={Boolean(controller.planner.datasetId)}
-          fieldErrors={fieldErrors}
+          questionMode={questionModeView}
+          questionOrder={bulk.state.draft.exam.questionOrderMode === "random" ? "random" : "sequential"}
+          exam={{ directionRatio: bulk.state.draft.exam.directionRatio, passingScore: bulk.state.draft.exam.passingScore,
+            retryEnabled: bulk.state.draft.exam.retryEnabled, retryPassingScore: bulk.state.draft.exam.retryPassingScore }}
+          directionDisabled={questionPolicy.fixedDirectionRatio !== null}
+          fieldErrors={{ direction: fieldErrors.direction, passingScore: fieldErrors.passingScore,
+            retryPassingScore: fieldErrors.retryPassingScore, questionOrder: fieldErrors.questionOrder }}
           onQuestionModeChange={controller.actions.changeQuestionMode}
+          onQuestionOrderChange={(value) => bulk.actions.changeOrder(value === "random" ? "random" : "ascending")}
+          onDirectionChange={bulk.actions.changeDirection}
+          onPassingScoreChange={bulk.actions.changePassingScore}
+          onRetryEnabledChange={bulk.actions.changeRetryEnabled}
+          onRetryPassingScoreChange={bulk.actions.changeRetryPassingScore}
         />
         <section aria-label="최근 시험 복사" className={styles.copyPanel}>
           <div className={styles.copySource}>
@@ -218,14 +271,45 @@ export function VocabRangeAssignmentSections({
       >
         <ExamTimingFields
           error={fieldErrors.timing}
-          exam={bulk.state.draft.exam}
+          enabled={bulk.state.draft.exam.timeLimitEnabled !== false}
+          timing={bulk.state.draft.exam.timing}
           onEnabledChange={bulk.actions.changeTimeLimitEnabled}
           onModeChange={bulk.actions.changeTimingMode}
           onTimingChange={bulk.actions.changeTiming}
         />
         <VocabScheduleFields
-          controller={controller}
-          fieldErrors={fieldErrors}
+          schedule={schedule}
+          scheduleEnabled={scheduleEnabled}
+          scheduleAllowed={questionPolicy.schedule === "flexible"}
+          scheduleMessage={assignmentQuestionModeScheduleMessage(bulk.state.draft.questionMode)}
+          datasetLabel={scheduleLabels.datasetLabel}
+          rangeLabel={scheduleLabels.rangeLabel}
+          counts={scheduleCounts}
+          fieldErrors={{
+            startDate: fieldErrors.startDate,
+            weekdays: fieldErrors.weekdays,
+            availableTime: fieldErrors.availableTime,
+            deadlineOffset: fieldErrors.deadlineOffset,
+            deadlineTime: fieldErrors.deadlineTime,
+          }}
+          onScheduleEnabledChange={controller.actions.changeScheduleEnabled}
+          onScheduleChange={controller.actions.updateSchedule}
+          onWeekdayToggle={controller.actions.toggleWeekday}
+          onCancelExtraDates={controller.actions.cancelExtraDates}
+          onRepeatFromStart={() => controller.actions.changeExtraDatePolicy("repeat_from_start")}
+          details={
+            <VocabScheduleDetailFields
+              availableTimeEnabled={availableTimeEnabled}
+              sessionRows={scheduleRows}
+              timeTemplates={controller.timeTemplates}
+              templateName={templateInput.name}
+              templateSaving={controller.templateSaving}
+              onSessionScheduleChange={controller.actions.updateSessionSchedule}
+              onApplyTemplate={controller.actions.applyTemplate}
+              onTemplateNameChange={templateInput.setName}
+              onSaveTemplate={templateInput.save}
+            />
+          }
         />
       </AssignmentSection>
       <AssignmentSection
@@ -240,7 +324,9 @@ export function VocabRangeAssignmentSections({
               controller.commonPlan.distribution === "split" &&
               controller.commonPlan.selectedDateCount > 0
             }
-            controller={bulk}
+            message={bulk.message}
+            preview={bulk.preview}
+            previewLoading={bulk.previewLoading}
             students={students}
           />
         ) : (

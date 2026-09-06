@@ -51,6 +51,24 @@ const controllerRequestDetailPattern = new RegExp(
 );
 
 describe("assignment feature dependency boundaries", () => {
+  it.each(["bulk-exam-fields.tsx", "exam-condition-fields.tsx", "vocab-schedule-fields.tsx",
+    "direct-review-range-fields.tsx", "direct-review-preview.tsx"])(
+    "keeps reusable condition UI %s separate from full state and IO", (fileName) => {
+      const file = path.join(featureRoot, "ui", fileName);
+      const source = fs.readFileSync(file, "utf8");
+      const violations = inspectBoundarySource(file, source, {
+        root: path.dirname(file),
+        allowModule: (specifier, importer, typeOnly) =>
+          specifier.endsWith(".module.css") || specifier.startsWith("@/design-system/") ||
+          specifier.startsWith("@/content/") || specifier === "react" ||
+          (typeOnly && resolvesInside(importer, specifier, [domainRoot, path.join(featureRoot, "presentation")])) ||
+          resolvesInside(importer, specifier, [path.join(featureRoot, "ui")]),
+        forbidNetwork: true, forbidEndpointLiterals: true, forbidBrowserGlobals: true,
+      });
+      expect(violations, formatModuleBoundaryViolations(violations)).toEqual([]);
+      expect(source).not.toMatch(/ReturnType|\bcontroller\b|\buse(?:State|Effect|LayoutEffect|Reducer)\b/);
+    },
+  );
   it("recognizes concrete request details and aliased forbidden imports", () => {
     expect(
       [
@@ -202,12 +220,14 @@ describe("assignment feature dependency boundaries", () => {
         "use-debounced-assignment-preview.ts",
         new Set([
           "react",
+          "./assignment-authentication-boundary",
           "../application/assignment-operation-error",
           "../application/preview-flow",
           "../application/request-lifecycle",
           "../transport/assignment-transport",
         ]),
       ],
+      ["assignment-authentication-boundary.tsx", new Set(["react"])],
     ]);
 
     for (const [fileName, allowed] of allowedModules) {

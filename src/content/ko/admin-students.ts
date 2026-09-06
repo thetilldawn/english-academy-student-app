@@ -14,6 +14,9 @@ export const adminStudentsText = {
     loadingMore: "불러오는 중…",
     loadError: "학생 목록을 불러오지 못했습니다.",
     retry: "다시 불러오기",
+    loading: "학생 목록을 불러오는 중…",
+    authError: "로그인을 다시 확인해 주세요.",
+    login: "관리자 로그인",
   },
 
   // 학생 관리 > 학생 카드의 다음 범위
@@ -49,6 +52,10 @@ export const adminStudentsText = {
     noWordbookNotice: "단어장 없이 학생과 코드부터 만들 수 있습니다.",
     noCodeError: "새 접속코드를 받지 못했습니다.",
     loadError: "학생 추가 자료를 불러오지 못했습니다.",
+    preparationLoading: "학생 추가 자료를 불러오는 중…",
+    preparationError: "학생 추가 자료를 불러오지 못했습니다. 다시 불러와 주세요.",
+    preparationAuthError: "로그인을 다시 확인해 주세요.",
+    preparationLogin: "관리자 로그인",
     codeTitle: "{student} 새 접속코드",
     success: "학생과 접속 코드를 만들었습니다.",
     error: "학생을 만들지 못했습니다.",

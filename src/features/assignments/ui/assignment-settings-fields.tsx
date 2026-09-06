@@ -6,7 +6,7 @@ import { AssignmentWordCountField } from "./assignment-word-count-field";
 import {
   ExamConditionFields,
   ExamQuestionOrderField,
-} from "./bulk-exam-fields";
+} from "./exam-condition-fields";
 import { ExamTimingFields } from "./exam-timing-fields";
 
 export function AssignmentSettingsFields({
@@ -65,7 +65,8 @@ export function AssignmentSettingsFields({
         ) : null}
         <ExamTimingFields
           error={fieldErrors.timing}
-          exam={draft.exam}
+          enabled={draft.exam.timeLimitEnabled !== false}
+          timing={draft.exam.timing}
           onEnabledChange={actions.changeTimeLimitEnabled}
           onModeChange={actions.changeTimingMode}
           onTimingChange={actions.changeTiming}
@@ -108,8 +109,10 @@ export function AssignmentSettingsFields({
       />
       <ExamConditionFields
         directionDisabled={fieldPolicy.direction !== "editable"}
-        exam={draft.exam}
-        fieldErrors={fieldErrors}
+        exam={{ directionRatio: draft.exam.directionRatio, passingScore: draft.exam.passingScore,
+          retryEnabled: draft.exam.retryEnabled, retryPassingScore: draft.exam.retryPassingScore }}
+        fieldErrors={{ direction: fieldErrors.direction, passingScore: fieldErrors.passingScore,
+          retryPassingScore: fieldErrors.retryPassingScore }}
         idPrefix={fieldIdPrefix}
         onDirectionChange={actions.changeDirection}
         onPassingScoreChange={actions.changePassingScore}

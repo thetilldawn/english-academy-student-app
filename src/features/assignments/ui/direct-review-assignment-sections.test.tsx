@@ -28,13 +28,6 @@ vi.mock("./assignment-section", () => ({
     title: string;
   }) => <section><h2>{title}</h2>{children}</section>,
 }));
-vi.mock("./bulk-exam-fields", () => ({
-  ExamConditionFields: () => <div>시험 조건 설정</div>,
-  ExamQuestionOrderField: () => <div>문제 순서 설정</div>,
-}));
-vi.mock("./exam-timing-fields", () => ({
-  ExamTimingFields: () => <div>시간 설정</div>,
-}));
 
 const dataset = {
   displayName: "테스트 단어장",
@@ -129,6 +122,41 @@ function controller({
 afterEach(cleanup);
 
 describe("오답 시험 계산 오류 화면", () => {
+  it("실제 시간 부품으로 오답 시험의 사용 기본값과 변경을 전달한다", () => {
+    const { value } = controller({});
+    value.draft.exam.timeLimitEnabled = undefined;
+    render(<DirectReviewAssignmentSections onOpenDatasetPicker={vi.fn()} controller={value}
+      datasets={[dataset]} fieldErrors={{ timing: "제한 시간을 확인해 주세요." }} student={student} />);
+    const input = screen.getByRole("spinbutton", { name: /^전체 시간/ });
+    expect(input).toHaveValue(1); expect(input).toBeRequired();
+    fireEvent.change(input, { target: { value: "2" } });
+    expect(value.actions.changeTiming).toHaveBeenCalledWith({ mode: "total", totalSeconds: 120 });
+  });
+  it("범위 단계/단어장 찾기와 최종 요약도 실제 연결부를 거친다", () => {
+    const testController = controller({}); const open = vi.fn();
+    render(<DirectReviewAssignmentSections onOpenDatasetPicker={open} controller={testController.value}
+      datasets={[dataset]} fieldErrors={{}} student={student} />);
+    fireEvent.click(screen.getByRole("button", { name: "1회 1개" }));
+    expect(testController.value.actions.toggleReviewLevel).toHaveBeenCalledWith(1);
+    fireEvent.click(screen.getByRole("button", { name: /테스트 단어장.*단어장 찾기/ }));
+    expect(open).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("오답 · 1회")).toBeInTheDocument();
+    expect(screen.getByText("시간 제한 없음")).toBeInTheDocument();
+  });
+  it("실제 공통 시험 조건은 오답 전용 동작과 연결된다", () => {
+    const testController = controller({});
+    render(<DirectReviewAssignmentSections onOpenDatasetPicker={vi.fn()} controller={testController.value}
+      datasets={[dataset]} fieldErrors={{ passingScore: "점수를 확인해 주세요." }} student={student} />);
+    const score = screen.getByRole("spinbutton", { name: "통과 점수" });
+    expect(score).toHaveValue(80);
+    expect(score).toHaveAttribute("aria-errormessage", "review-passing-score-error");
+    fireEvent.change(score, { target: { value: "85" } });
+    expect(testController.value.actions.changePassingScore).toHaveBeenCalledWith(85);
+    fireEvent.click(screen.getByRole("button", { name: "뜻 → 영어" }));
+    expect(testController.value.actions.changeDirection).toHaveBeenCalledWith(0);
+    fireEvent.click(screen.getByRole("button", { name: "무작위" }));
+    expect(testController.value.actions.changeOrder).toHaveBeenCalledWith("random");
+  });
   it("요약 조회 오류는 다시 불러오기 동작에 연결한다", () => {
     const testController = controller({ summaryError: "오답을 불러오지 못했습니다." });
     render(

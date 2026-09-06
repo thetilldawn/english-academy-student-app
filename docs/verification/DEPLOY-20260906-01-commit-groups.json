@@ -1,0 +1,2147 @@
+{
+  "schemaVersion": 1,
+  "kind": "release-commit-accountability",
+  "baseline": "bc48313bc53840a44ab6505a8238eaabf7667eae",
+  "sourceReviewBase": "74e1a597f72dc9b8e72a41c215dd96a0390c79b7",
+  "intermediateCommitsIndependentlyVerified": false,
+  "files": [
+    {
+      "path": ".env.example",
+      "ids": [],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": ".github/workflows/pr-fast.yml",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "00_앱_인계서.md",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "AGENTS.md",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "architecture/assignment-ui-roles.json",
+      "ids": [
+        "APP-20260906-06",
+        "APP-20260906-07",
+        "APP-20260906-08",
+        "APP-20260906-09",
+        "APP-20260906-10"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "architecture/work-records/examples/문법_기능_설계.json",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "architecture/work-records/examples/작은_UI_수정.json",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "architecture/work-records/records/APP-20260905-06.json",
+      "ids": [],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "architecture/work-records/records/APP-20260906-01.json",
+      "ids": [],
+      "group": "APP-20260906-01"
+    },
+    {
+      "path": "architecture/work-records/records/APP-20260906-02.json",
+      "ids": [],
+      "group": "APP-20260906-02"
+    },
+    {
+      "path": "architecture/work-records/records/APP-20260906-03.json",
+      "ids": [],
+      "group": "APP-20260906-03"
+    },
+    {
+      "path": "architecture/work-records/records/APP-20260906-04.json",
+      "ids": [],
+      "group": "APP-20260906-04"
+    },
+    {
+      "path": "architecture/work-records/records/APP-20260906-05.json",
+      "ids": [],
+      "group": "APP-20260906-05"
+    },
+    {
+      "path": "architecture/work-records/records/APP-20260906-06.json",
+      "ids": [],
+      "group": "APP-20260906-06"
+    },
+    {
+      "path": "architecture/work-records/records/APP-20260906-07.json",
+      "ids": [],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "architecture/work-records/records/APP-20260906-08.json",
+      "ids": [],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "architecture/work-records/records/APP-20260906-09.json",
+      "ids": [],
+      "group": "APP-20260906-09"
+    },
+    {
+      "path": "architecture/work-records/records/APP-20260906-10.json",
+      "ids": [],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "architecture/work-records/records/APP-20260906-11.json",
+      "ids": [],
+      "group": "APP-20260906-11"
+    },
+    {
+      "path": "architecture/work-records/records/APP-20260906-12.json",
+      "ids": [],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "architecture/work-records/records/APP-20260906-13.json",
+      "ids": [],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "architecture/work-records/records/DEPLOY-20260906-01.json",
+      "ids": [],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "architecture/기능_소유권.json",
+      "ids": [
+        "APP-20260905-06",
+        "APP-20260906-01",
+        "APP-20260906-02",
+        "APP-20260906-03",
+        "APP-20260906-04",
+        "APP-20260906-05",
+        "APP-20260906-06",
+        "APP-20260906-07",
+        "APP-20260906-08",
+        "APP-20260906-09",
+        "APP-20260906-10",
+        "APP-20260906-11",
+        "APP-20260906-12",
+        "APP-20260906-13",
+        "DEPLOY-20260906-01"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "docs/APP_20260905_캐시와_컴포넌트_분리_실행계획.md",
+      "ids": [],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "docs/verification/APP-20260905-06.md",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "docs/verification/APP-20260906-01.md",
+      "ids": [],
+      "group": "APP-20260906-01"
+    },
+    {
+      "path": "docs/verification/APP-20260906-02-after.json",
+      "ids": [],
+      "group": "APP-20260906-02"
+    },
+    {
+      "path": "docs/verification/APP-20260906-02-baseline.json",
+      "ids": [],
+      "group": "APP-20260906-02"
+    },
+    {
+      "path": "docs/verification/APP-20260906-02-before-discard-ui.json",
+      "ids": [],
+      "group": "APP-20260906-02"
+    },
+    {
+      "path": "docs/verification/APP-20260906-02-discard-ui.json",
+      "ids": [],
+      "group": "APP-20260906-02"
+    },
+    {
+      "path": "docs/verification/APP-20260906-02-preliminary.json",
+      "ids": [],
+      "group": "APP-20260906-02"
+    },
+    {
+      "path": "docs/verification/APP-20260906-02.md",
+      "ids": [],
+      "group": "APP-20260906-02"
+    },
+    {
+      "path": "docs/verification/APP-20260906-03.json",
+      "ids": [],
+      "group": "APP-20260906-03"
+    },
+    {
+      "path": "docs/verification/APP-20260906-03.md",
+      "ids": [],
+      "group": "APP-20260906-03"
+    },
+    {
+      "path": "docs/verification/APP-20260906-04.json",
+      "ids": [],
+      "group": "APP-20260906-04"
+    },
+    {
+      "path": "docs/verification/APP-20260906-04.md",
+      "ids": [],
+      "group": "APP-20260906-04"
+    },
+    {
+      "path": "docs/verification/APP-20260906-05.json",
+      "ids": [],
+      "group": "APP-20260906-05"
+    },
+    {
+      "path": "docs/verification/APP-20260906-05.md",
+      "ids": [],
+      "group": "APP-20260906-05"
+    },
+    {
+      "path": "docs/verification/APP-20260906-06.json",
+      "ids": [],
+      "group": "APP-20260906-06"
+    },
+    {
+      "path": "docs/verification/APP-20260906-06.md",
+      "ids": [],
+      "group": "APP-20260906-06"
+    },
+    {
+      "path": "docs/verification/APP-20260906-07.json",
+      "ids": [],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "docs/verification/APP-20260906-07.md",
+      "ids": [],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "docs/verification/APP-20260906-08.json",
+      "ids": [],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "docs/verification/APP-20260906-08.md",
+      "ids": [],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "docs/verification/APP-20260906-09.md",
+      "ids": [],
+      "group": "APP-20260906-09"
+    },
+    {
+      "path": "docs/verification/APP-20260906-10.json",
+      "ids": [],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "docs/verification/APP-20260906-10.md",
+      "ids": [],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "docs/verification/APP-20260906-11.md",
+      "ids": [],
+      "group": "APP-20260906-11"
+    },
+    {
+      "path": "docs/verification/APP-20260906-12.json",
+      "ids": [],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "docs/verification/APP-20260906-12.md",
+      "ids": [],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "docs/verification/APP-20260906-13.json",
+      "ids": [],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "docs/verification/APP-20260906-13.md",
+      "ids": [],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "docs/verification/DEPLOY-20260906-01-commit-groups.json",
+      "ids": [],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "docs/verification/DEPLOY-20260906-01.md",
+      "ids": [],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "docs/verification/history/APP-20260905-06_20260905.json",
+      "ids": [],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "docs/work-orders/APP-20260905-06.md",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "docs/work-orders/APP-20260906-01.md",
+      "ids": [],
+      "group": "APP-20260906-01"
+    },
+    {
+      "path": "docs/work-orders/APP-20260906-02.md",
+      "ids": [],
+      "group": "APP-20260906-02"
+    },
+    {
+      "path": "docs/work-orders/APP-20260906-03.md",
+      "ids": [],
+      "group": "APP-20260906-03"
+    },
+    {
+      "path": "docs/work-orders/APP-20260906-04.md",
+      "ids": [],
+      "group": "APP-20260906-04"
+    },
+    {
+      "path": "docs/work-orders/APP-20260906-05.md",
+      "ids": [],
+      "group": "APP-20260906-05"
+    },
+    {
+      "path": "docs/work-orders/APP-20260906-06.md",
+      "ids": [],
+      "group": "APP-20260906-06"
+    },
+    {
+      "path": "docs/work-orders/APP-20260906-07.md",
+      "ids": [],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "docs/work-orders/APP-20260906-08.md",
+      "ids": [],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "docs/work-orders/APP-20260906-09.md",
+      "ids": [],
+      "group": "APP-20260906-09"
+    },
+    {
+      "path": "docs/work-orders/APP-20260906-10.md",
+      "ids": [],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "docs/work-orders/APP-20260906-11.md",
+      "ids": [],
+      "group": "APP-20260906-11"
+    },
+    {
+      "path": "docs/work-orders/APP-20260906-12.md",
+      "ids": [],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "docs/work-orders/APP-20260906-13.md",
+      "ids": [],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "docs/work-orders/DEPLOY-20260906-01.md",
+      "ids": [],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "docs/개발_지시서와_검증_기록.md",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "docs/보안_및_시험규칙.md",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "docs/양식/검증_기록.md",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "docs/양식/기능_작업지시서.md",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "docs/코드_길찾기_및_변경영향.md",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "eslint.config.mjs",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "package.json",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "scripts/check-feature-map.mjs",
+      "ids": [
+        "APP-20260905-06",
+        "APP-20260906-04"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "scripts/check-work-records.mjs",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "scripts/feature-map/AGENTS.md",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "scripts/feature-map/change-impact.mjs",
+      "ids": [
+        "APP-20260905-06",
+        "APP-20260906-08"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "scripts/feature-map/ownership-catalog.mjs",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "scripts/local-admin-baseline-data.mjs",
+      "ids": [
+        "APP-20260906-02",
+        "APP-20260906-08",
+        "APP-20260906-12",
+        "APP-20260906-13"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "scripts/local-admin-baseline-guard.mjs",
+      "ids": [
+        "APP-20260906-02"
+      ],
+      "group": "APP-20260906-02"
+    },
+    {
+      "path": "scripts/local-admin-baseline-observer.js",
+      "ids": [
+        "APP-20260906-02",
+        "APP-20260906-12"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "scripts/local-admin-baseline.mjs",
+      "ids": [
+        "APP-20260906-02",
+        "APP-20260906-08",
+        "APP-20260906-10",
+        "APP-20260906-12",
+        "APP-20260906-13"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "scripts/local-history-read-fixture.mjs",
+      "ids": [
+        "APP-20260906-01"
+      ],
+      "group": "APP-20260906-01"
+    },
+    {
+      "path": "scripts/local-student-study-data.mjs",
+      "ids": [
+        "APP-20260906-13"
+      ],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "scripts/work-records/AGENTS.md",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "scripts/work-records/context.mjs",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "scripts/work-records/evidence.mjs",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "scripts/work-records/schema.mjs",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "scripts/work-records/validation.mjs",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "src/app/AGENTS.md",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "src/app/admin-route-error.test.tsx",
+      "ids": [
+        "APP-20260906-01"
+      ],
+      "group": "APP-20260906-01"
+    },
+    {
+      "path": "src/app/admin/(protected)/assignments/page.tsx",
+      "ids": [
+        "APP-20260906-10",
+        "DEPLOY-20260906-01"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/app/admin/(protected)/layout.tsx",
+      "ids": [
+        "APP-20260906-08",
+        "APP-20260906-12",
+        "DEPLOY-20260906-01"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/app/admin/(protected)/results/page.tsx",
+      "ids": [
+        "APP-20260906-12",
+        "DEPLOY-20260906-01"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/app/api/admin/history/route.test.ts",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/app/api/admin/history/route.ts",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/app/api/admin/session/route.test.ts",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "src/app/api/admin/session/route.ts",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "src/app/api/admin/students/directory/route.test.ts",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "src/app/api/admin/students/directory/route.ts",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "src/app/student-catalog-ui-contract.test.ts",
+      "ids": [
+        "APP-20260906-01"
+      ],
+      "group": "APP-20260906-01"
+    },
+    {
+      "path": "src/app/work-records.test.mjs",
+      "ids": [
+        "APP-20260905-06",
+        "APP-20260906-08"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/components/admin-login-form.tsx",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "src/components/admin-logout-button.test.tsx",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "src/components/admin-logout-button.tsx",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "src/content/ko/README.md",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    },
+    {
+      "path": "src/content/ko/admin-history.ts",
+      "ids": [
+        "APP-20260906-01",
+        "APP-20260906-12"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/content/ko/admin-learning.ts",
+      "ids": [
+        "APP-20260906-02",
+        "APP-20260906-03",
+        "APP-20260906-04"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/content/ko/admin-students.ts",
+      "ids": [
+        "APP-20260906-07",
+        "APP-20260906-08"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/content/ko/student-app.ts",
+      "ids": [
+        "APP-20260906-13"
+      ],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "src/design-system/primitives/dialog/dialog.test.tsx",
+      "ids": [
+        "APP-20260906-10"
+      ],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "src/design-system/primitives/dialog/dialog.tsx",
+      "ids": [
+        "APP-20260906-10"
+      ],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "src/features/assignments/AGENTS.md",
+      "ids": [
+        "APP-20260906-05",
+        "APP-20260906-06",
+        "APP-20260906-07"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/assignments/architecture-boundary.test.ts",
+      "ids": [
+        "APP-20260906-04",
+        "APP-20260906-05",
+        "APP-20260906-06",
+        "APP-20260906-10"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/assignments/client/controllers/use-vocab-schedule-template-input.test.tsx",
+      "ids": [
+        "APP-20260906-03"
+      ],
+      "group": "APP-20260906-03"
+    },
+    {
+      "path": "src/features/assignments/client/controllers/use-vocab-schedule-template-input.ts",
+      "ids": [
+        "APP-20260906-03"
+      ],
+      "group": "APP-20260906-03"
+    },
+    {
+      "path": "src/features/assignments/contracts/assignment-dataset-directory-schema.ts",
+      "ids": [
+        "APP-20260906-07"
+      ],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "src/features/assignments/contracts/assignment-question-mode-policy.test.ts",
+      "ids": [
+        "APP-20260906-04"
+      ],
+      "group": "APP-20260906-04"
+    },
+    {
+      "path": "src/features/assignments/contracts/assignment-workspace-read-error.ts",
+      "ids": [
+        "APP-20260906-07"
+      ],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "src/features/assignments/contracts/bulk-assignment-request.ts",
+      "ids": [
+        "APP-20260906-04"
+      ],
+      "group": "APP-20260906-04"
+    },
+    {
+      "path": "src/features/assignments/controller/assignment-authentication-boundary.test.tsx",
+      "ids": [
+        "APP-20260906-10"
+      ],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "src/features/assignments/controller/assignment-authentication-boundary.tsx",
+      "ids": [
+        "APP-20260906-10"
+      ],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "src/features/assignments/controller/use-assignment-dataset-directory.ts",
+      "ids": [
+        "APP-20260906-10"
+      ],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "src/features/assignments/controller/use-assignment-dataset-unit-catalog.test.tsx",
+      "ids": [
+        "APP-20260906-07"
+      ],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "src/features/assignments/controller/use-assignment-dataset-unit-catalog.ts",
+      "ids": [
+        "APP-20260906-07",
+        "APP-20260906-10"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/assignments/controller/use-assignment-planner-preparation.ts",
+      "ids": [
+        "APP-20260906-10"
+      ],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "src/features/assignments/controller/use-assignment-previous-exam.ts",
+      "ids": [
+        "APP-20260906-10"
+      ],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "src/features/assignments/controller/use-assignment-student-directory.test.tsx",
+      "ids": [
+        "APP-20260906-07",
+        "APP-20260906-10"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/assignments/controller/use-assignment-student-directory.ts",
+      "ids": [
+        "APP-20260906-07",
+        "APP-20260906-10"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/assignments/controller/use-assignment-workspace.test.tsx",
+      "ids": [
+        "APP-20260906-10"
+      ],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "src/features/assignments/controller/use-assignment-workspace.ts",
+      "ids": [
+        "APP-20260906-10"
+      ],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+      "ids": [
+        "APP-20260906-10"
+      ],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "src/features/assignments/controller/use-debounced-assignment-preview.ts",
+      "ids": [
+        "APP-20260906-10"
+      ],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "src/features/assignments/controller/use-direct-review-assignment-controller.ts",
+      "ids": [
+        "APP-20260906-10"
+      ],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "src/features/assignments/controller/use-vocab-assignment-planner.ts",
+      "ids": [
+        "APP-20260906-04"
+      ],
+      "group": "APP-20260906-04"
+    },
+    {
+      "path": "src/features/assignments/controller/use-vocab-time-templates.ts",
+      "ids": [
+        "APP-20260906-10"
+      ],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "src/features/assignments/domain/assignment-question-mode-policy.test.ts",
+      "ids": [
+        "APP-20260906-04"
+      ],
+      "group": "APP-20260906-04"
+    },
+    {
+      "path": "src/features/assignments/domain/assignment-question-mode-policy.ts",
+      "ids": [
+        "APP-20260906-04"
+      ],
+      "group": "APP-20260906-04"
+    },
+    {
+      "path": "src/features/assignments/domain/bulk-draft.ts",
+      "ids": [
+        "APP-20260906-04"
+      ],
+      "group": "APP-20260906-04"
+    },
+    {
+      "path": "src/features/assignments/domain/validation.ts",
+      "ids": [
+        "APP-20260906-04"
+      ],
+      "group": "APP-20260906-04"
+    },
+    {
+      "path": "src/features/assignments/domain/vocab-schedule-summary.test.ts",
+      "ids": [
+        "APP-20260906-03"
+      ],
+      "group": "APP-20260906-03"
+    },
+    {
+      "path": "src/features/assignments/domain/vocab-schedule.ts",
+      "ids": [
+        "APP-20260906-03"
+      ],
+      "group": "APP-20260906-03"
+    },
+    {
+      "path": "src/features/assignments/presentation/assignment-question-mode-view.test.ts",
+      "ids": [
+        "APP-20260906-04"
+      ],
+      "group": "APP-20260906-04"
+    },
+    {
+      "path": "src/features/assignments/presentation/assignment-question-mode-view.ts",
+      "ids": [
+        "APP-20260906-04"
+      ],
+      "group": "APP-20260906-04"
+    },
+    {
+      "path": "src/features/assignments/presentation/direct-review-view.test.ts",
+      "ids": [
+        "APP-20260906-05"
+      ],
+      "group": "APP-20260906-05"
+    },
+    {
+      "path": "src/features/assignments/presentation/direct-review-view.ts",
+      "ids": [
+        "APP-20260906-05"
+      ],
+      "group": "APP-20260906-05"
+    },
+    {
+      "path": "src/features/assignments/presentation/vocab-question-view.test.ts",
+      "ids": [
+        "APP-20260906-06"
+      ],
+      "group": "APP-20260906-06"
+    },
+    {
+      "path": "src/features/assignments/presentation/vocab-question-view.ts",
+      "ids": [
+        "APP-20260906-06"
+      ],
+      "group": "APP-20260906-06"
+    },
+    {
+      "path": "src/features/assignments/presentation/vocab-schedule-view.test.ts",
+      "ids": [
+        "APP-20260906-03"
+      ],
+      "group": "APP-20260906-03"
+    },
+    {
+      "path": "src/features/assignments/presentation/vocab-schedule-view.ts",
+      "ids": [
+        "APP-20260906-03"
+      ],
+      "group": "APP-20260906-03"
+    },
+    {
+      "path": "src/features/assignments/public-client.ts",
+      "ids": [
+        "APP-20260906-07"
+      ],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "src/features/assignments/server/queries/assignment-dataset-units-query.test.ts",
+      "ids": [
+        "APP-20260906-07"
+      ],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "src/features/assignments/server/queries/assignment-dataset-units-query.ts",
+      "ids": [
+        "APP-20260906-07"
+      ],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "src/features/assignments/server/queries/assignment-planner-preparation-query.test.ts",
+      "ids": [
+        "APP-20260906-07"
+      ],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "src/features/assignments/server/queries/assignment-planner-preparation-query.ts",
+      "ids": [
+        "APP-20260906-07"
+      ],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/canonical-assignment-preview.test.ts",
+      "ids": [
+        "APP-20260906-04"
+      ],
+      "group": "APP-20260906-04"
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/canonical-assignment-preview.ts",
+      "ids": [
+        "APP-20260906-04"
+      ],
+      "group": "APP-20260906-04"
+    },
+    {
+      "path": "src/features/assignments/transport/assignment-workspace-reads.test.ts",
+      "ids": [
+        "APP-20260906-07"
+      ],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "src/features/assignments/transport/assignment-workspace-reads.ts",
+      "ids": [
+        "APP-20260906-07"
+      ],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "src/features/assignments/ui-role-boundary.test.ts",
+      "ids": [
+        "APP-20260906-06"
+      ],
+      "group": "APP-20260906-06"
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-discard-dialog.tsx",
+      "ids": [
+        "APP-20260906-02"
+      ],
+      "group": "APP-20260906-02"
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-settings-fields.tsx",
+      "ids": [
+        "APP-20260906-04",
+        "APP-20260906-09"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-student-browser.tsx",
+      "ids": [
+        "APP-20260906-07"
+      ],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-workspace.test.tsx",
+      "ids": [
+        "APP-20260906-03",
+        "APP-20260906-04",
+        "APP-20260906-06",
+        "APP-20260906-07",
+        "APP-20260906-10",
+        "APP-20260906-11"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-workspace.tsx",
+      "ids": [
+        "APP-20260906-08",
+        "APP-20260906-10"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/assignments/ui/bulk-exam-fields.test.tsx",
+      "ids": [
+        "APP-20260906-04"
+      ],
+      "group": "APP-20260906-04"
+    },
+    {
+      "path": "src/features/assignments/ui/bulk-exam-fields.tsx",
+      "ids": [
+        "APP-20260906-04"
+      ],
+      "group": "APP-20260906-04"
+    },
+    {
+      "path": "src/features/assignments/ui/bulk-series-preview.test.tsx",
+      "ids": [
+        "APP-20260906-09"
+      ],
+      "group": "APP-20260906-09"
+    },
+    {
+      "path": "src/features/assignments/ui/bulk-series-preview.tsx",
+      "ids": [
+        "APP-20260906-09"
+      ],
+      "group": "APP-20260906-09"
+    },
+    {
+      "path": "src/features/assignments/ui/cached-assignment-workspace.test.tsx",
+      "ids": [
+        "APP-20260906-10"
+      ],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "src/features/assignments/ui/cached-assignment-workspace.tsx",
+      "ids": [
+        "APP-20260906-10"
+      ],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "src/features/assignments/ui/direct-review-assignment-sections.test.tsx",
+      "ids": [
+        "APP-20260906-04",
+        "APP-20260906-05",
+        "APP-20260906-09"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/assignments/ui/direct-review-assignment-sections.tsx",
+      "ids": [
+        "APP-20260906-04",
+        "APP-20260906-05",
+        "APP-20260906-09"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/assignments/ui/direct-review-preview.test.tsx",
+      "ids": [
+        "APP-20260906-05"
+      ],
+      "group": "APP-20260906-05"
+    },
+    {
+      "path": "src/features/assignments/ui/direct-review-preview.tsx",
+      "ids": [
+        "APP-20260906-05"
+      ],
+      "group": "APP-20260906-05"
+    },
+    {
+      "path": "src/features/assignments/ui/direct-review-range-fields.test.tsx",
+      "ids": [
+        "APP-20260906-05"
+      ],
+      "group": "APP-20260906-05"
+    },
+    {
+      "path": "src/features/assignments/ui/direct-review-range-fields.tsx",
+      "ids": [
+        "APP-20260906-05"
+      ],
+      "group": "APP-20260906-05"
+    },
+    {
+      "path": "src/features/assignments/ui/exam-condition-fields.test.tsx",
+      "ids": [
+        "APP-20260906-04",
+        "APP-20260906-09"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/assignments/ui/exam-condition-fields.tsx",
+      "ids": [
+        "APP-20260906-04"
+      ],
+      "group": "APP-20260906-04"
+    },
+    {
+      "path": "src/features/assignments/ui/exam-timing-fields.test.tsx",
+      "ids": [
+        "APP-20260906-09"
+      ],
+      "group": "APP-20260906-09"
+    },
+    {
+      "path": "src/features/assignments/ui/exam-timing-fields.tsx",
+      "ids": [
+        "APP-20260906-09"
+      ],
+      "group": "APP-20260906-09"
+    },
+    {
+      "path": "src/features/assignments/ui/single-assignment-editor.tsx",
+      "ids": [
+        "APP-20260906-07"
+      ],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-assignment-planner.test.tsx",
+      "ids": [
+        "APP-20260906-02",
+        "APP-20260906-10"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+      "ids": [
+        "APP-20260906-02",
+        "APP-20260906-07",
+        "APP-20260906-10"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-question-fields.test.tsx",
+      "ids": [
+        "APP-20260906-06"
+      ],
+      "group": "APP-20260906-06"
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-question-fields.tsx",
+      "ids": [
+        "APP-20260906-06"
+      ],
+      "group": "APP-20260906-06"
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+      "ids": [
+        "APP-20260906-02",
+        "APP-20260906-03",
+        "APP-20260906-04",
+        "APP-20260906-06",
+        "APP-20260906-09"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-range-fields.tsx",
+      "ids": [
+        "APP-20260906-02"
+      ],
+      "group": "APP-20260906-02"
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-range-picker.test.tsx",
+      "ids": [
+        "APP-20260906-02",
+        "APP-20260906-06"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-range-picker.tsx",
+      "ids": [
+        "APP-20260906-02",
+        "APP-20260906-04",
+        "APP-20260906-06"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-schedule-detail-fields.tsx",
+      "ids": [
+        "APP-20260906-03"
+      ],
+      "group": "APP-20260906-03"
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-schedule-fields.test.tsx",
+      "ids": [
+        "APP-20260906-03",
+        "APP-20260906-04",
+        "APP-20260906-06"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-schedule-fields.tsx",
+      "ids": [
+        "APP-20260906-03",
+        "APP-20260906-04"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-unit-allocation-fields.test.tsx",
+      "ids": [
+        "APP-20260906-06"
+      ],
+      "group": "APP-20260906-06"
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-unit-allocation-fields.tsx",
+      "ids": [
+        "APP-20260906-06"
+      ],
+      "group": "APP-20260906-06"
+    },
+    {
+      "path": "src/features/history/AGENTS.md",
+      "ids": [
+        "APP-20260906-12",
+        "DEPLOY-20260906-01"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/history/api/history-read-response.ts",
+      "ids": [
+        "APP-20260906-01",
+        "APP-20260906-12"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/history/contracts/admin-history-read-model.ts",
+      "ids": [
+        "APP-20260906-01"
+      ],
+      "group": "APP-20260906-01"
+    },
+    {
+      "path": "src/features/history/contracts/admin-history-request-error.ts",
+      "ids": [
+        "APP-20260906-01"
+      ],
+      "group": "APP-20260906-01"
+    },
+    {
+      "path": "src/features/history/contracts/history-list-cache-contract.ts",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/features/history/controller/admin-history-mutation-events.ts",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/features/history/controller/history-change-listener.ts",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/features/history/controller/history-list-cache-provider.tsx",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/features/history/controller/history-list-cache.test.ts",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/features/history/controller/history-list-cache.ts",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/features/history/controller/history-refresh-coordinator.test.ts",
+      "ids": [
+        "APP-20260906-11"
+      ],
+      "group": "APP-20260906-11"
+    },
+    {
+      "path": "src/features/history/controller/history-refresh-coordinator.ts",
+      "ids": [
+        "APP-20260906-11"
+      ],
+      "group": "APP-20260906-11"
+    },
+    {
+      "path": "src/features/history/controller/use-admin-history-list-controller.ts",
+      "ids": [
+        "APP-20260906-01",
+        "APP-20260906-12"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/history/controller/use-admin-history-section-page.test.tsx",
+      "ids": [
+        "APP-20260906-01"
+      ],
+      "group": "APP-20260906-01"
+    },
+    {
+      "path": "src/features/history/controller/use-admin-history-section-page.ts",
+      "ids": [
+        "APP-20260906-01",
+        "APP-20260906-11",
+        "APP-20260906-12"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/history/controller/use-cached-history-list.ts",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/features/history/controller/use-editable-history-assignment.ts",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/features/history/domain/history-snapshot-version.ts",
+      "ids": [
+        "APP-20260906-11"
+      ],
+      "group": "APP-20260906-11"
+    },
+    {
+      "path": "src/features/history/presentation/history-read-failure.ts",
+      "ids": [
+        "APP-20260906-01"
+      ],
+      "group": "APP-20260906-01"
+    },
+    {
+      "path": "src/features/history/public-client.ts",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/features/history/server/queries/admin-history-list-query.ts",
+      "ids": [
+        "APP-20260906-01"
+      ],
+      "group": "APP-20260906-01"
+    },
+    {
+      "path": "src/features/history/server/queries/history-list-entry-query.test.ts",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/features/history/server/queries/history-list-entry-query.ts",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/features/history/transport/history-pages.test.ts",
+      "ids": [
+        "APP-20260906-01",
+        "APP-20260906-12"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/history/transport/history-pages.ts",
+      "ids": [
+        "APP-20260906-01",
+        "APP-20260906-12"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/history/ui/admin-history-list.test.tsx",
+      "ids": [
+        "APP-20260906-01"
+      ],
+      "group": "APP-20260906-01"
+    },
+    {
+      "path": "src/features/history/ui/admin-history-list.tsx",
+      "ids": [
+        "APP-20260906-01",
+        "APP-20260906-12"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/history/ui/cached-admin-history-list.test.tsx",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/features/history/ui/cached-admin-history-list.tsx",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/features/history/ui/editable-history-detail-dialog.test.tsx",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/features/history/ui/history-read-failure.tsx",
+      "ids": [
+        "APP-20260906-01",
+        "APP-20260906-12"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/history/ui/history-section-groups.test.tsx",
+      "ids": [
+        "APP-20260906-01",
+        "APP-20260906-11"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/history/ui/history-section-groups.tsx",
+      "ids": [
+        "APP-20260906-01",
+        "APP-20260906-11",
+        "APP-20260906-12"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/session/AGENTS.md",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/features/session/api/session.ts",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "src/features/session/controller/admin-private-cache-events.test.ts",
+      "ids": [
+        "APP-20260906-08",
+        "APP-20260906-10"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/session/controller/admin-private-cache-events.ts",
+      "ids": [
+        "APP-20260906-08",
+        "APP-20260906-10"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/session/controller/admin-session-commands.ts",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "src/features/session/controller/private-list-cache.ts",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/features/session/controller/use-private-list-entry.ts",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/features/session/controller/use-private-list-session.ts",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/features/session/public-client.ts",
+      "ids": [
+        "APP-20260906-08",
+        "APP-20260906-12"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/student-dashboard/AGENTS.md",
+      "ids": [
+        "APP-20260906-13"
+      ],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "src/features/student-dashboard/client/components/assignment-study-reader.test.tsx",
+      "ids": [
+        "APP-20260906-13"
+      ],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "src/features/student-dashboard/client/components/assignment-study-reader.tsx",
+      "ids": [
+        "APP-20260906-13"
+      ],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "src/features/student-dashboard/contracts/assignment-study.ts",
+      "ids": [
+        "APP-20260906-13"
+      ],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "src/features/student-dashboard/controller/use-study-audio.ts",
+      "ids": [
+        "APP-20260906-13"
+      ],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "src/features/student-dashboard/domain/study-example-ranges.test.ts",
+      "ids": [
+        "APP-20260906-13"
+      ],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "src/features/student-dashboard/domain/study-example-ranges.ts",
+      "ids": [
+        "APP-20260906-13"
+      ],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "src/features/student-dashboard/server/components/assignment-study-content.tsx",
+      "ids": [
+        "APP-20260906-13"
+      ],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-example-query.test.ts",
+      "ids": [
+        "APP-20260906-13"
+      ],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-example-query.ts",
+      "ids": [
+        "APP-20260906-13"
+      ],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-query.test.ts",
+      "ids": [
+        "APP-20260906-13"
+      ],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-query.ts",
+      "ids": [
+        "APP-20260906-13"
+      ],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "ids": [
+        "APP-20260906-13"
+      ],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "src/features/student-dashboard/ui/assignment-study-words.test.tsx",
+      "ids": [
+        "APP-20260906-13"
+      ],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "src/features/student-dashboard/ui/assignment-study-words.tsx",
+      "ids": [
+        "APP-20260906-13"
+      ],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "src/features/student-dashboard/ui/assignment-study.module.css",
+      "ids": [
+        "APP-20260906-13"
+      ],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "src/features/student-dashboard/ui/study-blur.tsx",
+      "ids": [
+        "APP-20260906-13"
+      ],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "src/features/student-dashboard/ui/study-visibility-controls.tsx",
+      "ids": [
+        "APP-20260906-13"
+      ],
+      "group": "APP-20260906-13"
+    },
+    {
+      "path": "src/features/students/AGENTS.md",
+      "ids": [
+        "APP-20260906-07",
+        "APP-20260906-08",
+        "DEPLOY-20260906-01"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/students/contracts/student-directory-cache-contract.ts",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "src/features/students/contracts/student-directory-read-model.ts",
+      "ids": [
+        "APP-20260906-07",
+        "APP-20260906-08"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/students/controller/student-directory-cache-provider.test.tsx",
+      "ids": [
+        "APP-20260906-08",
+        "APP-20260906-10"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/students/controller/student-directory-cache-provider.tsx",
+      "ids": [
+        "APP-20260906-08",
+        "APP-20260906-12"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/students/controller/student-directory-cache.test.ts",
+      "ids": [
+        "APP-20260906-08",
+        "APP-20260906-10"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/students/controller/student-directory-cache.ts",
+      "ids": [
+        "APP-20260906-08",
+        "APP-20260906-10",
+        "APP-20260906-11",
+        "APP-20260906-12"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/students/controller/student-directory-events.ts",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "src/features/students/controller/use-cached-student-directory.ts",
+      "ids": [
+        "APP-20260906-08",
+        "APP-20260906-10",
+        "APP-20260906-12"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/students/controller/use-student-create-preparation.test.tsx",
+      "ids": [
+        "APP-20260906-07"
+      ],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "src/features/students/controller/use-student-create-preparation.ts",
+      "ids": [
+        "APP-20260906-07"
+      ],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "src/features/students/controller/use-student-creation-controller.test.tsx",
+      "ids": [
+        "APP-20260906-07"
+      ],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "src/features/students/controller/use-student-directory-page.test.tsx",
+      "ids": [
+        "APP-20260906-07",
+        "APP-20260906-08"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/students/controller/use-student-directory-page.ts",
+      "ids": [
+        "APP-20260906-07",
+        "APP-20260906-08"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/students/public-client.ts",
+      "ids": [
+        "APP-20260906-08",
+        "APP-20260906-10"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/students/public-contracts.ts",
+      "ids": [
+        "APP-20260906-07",
+        "APP-20260906-10"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/students/public-server.ts",
+      "ids": [
+        "APP-20260906-10"
+      ],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "src/features/students/server/components/student-create-content.tsx",
+      "ids": [
+        "APP-20260906-02",
+        "APP-20260906-07"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/students/server/components/student-directory-content.tsx",
+      "ids": [
+        "APP-20260906-08",
+        "APP-20260906-10",
+        "DEPLOY-20260906-01"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/students/server/components/student-panel-failure.test.tsx",
+      "ids": [
+        "APP-20260906-07",
+        "APP-20260906-08",
+        "DEPLOY-20260906-01"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/students/server/queries/student-directory-entry-query.test.ts",
+      "ids": [
+        "APP-20260906-10"
+      ],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "src/features/students/server/queries/student-directory-entry-query.ts",
+      "ids": [
+        "APP-20260906-10"
+      ],
+      "group": "APP-20260906-10"
+    },
+    {
+      "path": "src/features/students/server/queries/student-directory-resume-query.test.ts",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "src/features/students/server/queries/student-directory-resume-query.ts",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "src/features/students/server/queries/student-directory-row-schema.ts",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "src/features/students/server/student-directory-cache-identity.ts",
+      "ids": [
+        "APP-20260906-08",
+        "APP-20260906-10",
+        "APP-20260906-12"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/features/students/students-feature.contract.test.ts",
+      "ids": [
+        "APP-20260906-07"
+      ],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "src/features/students/transport/student-directory-cache-read.test.ts",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "src/features/students/transport/student-directory-cache-read.ts",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "src/features/students/transport/student-directory-pages.ts",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "src/features/students/ui/cached-student-directory.test.tsx",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "src/features/students/ui/cached-student-directory.tsx",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "src/features/students/ui/student-create-workspace.test.tsx",
+      "ids": [
+        "APP-20260906-07"
+      ],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "src/features/students/ui/student-create-workspace.tsx",
+      "ids": [
+        "APP-20260906-07"
+      ],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "src/features/students/ui/student-directory.tsx",
+      "ids": [
+        "APP-20260906-07"
+      ],
+      "group": "APP-20260906-07"
+    },
+    {
+      "path": "src/lib/auth/admin.test.ts",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "src/lib/auth/admin.ts",
+      "ids": [
+        "APP-20260906-08"
+      ],
+      "group": "APP-20260906-08"
+    },
+    {
+      "path": "src/lib/auth/private-cache-identity.ts",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/lib/env.test.ts",
+      "ids": [
+        "DEPLOY-20260906-01"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/lib/env.ts",
+      "ids": [
+        "DEPLOY-20260906-01"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/lib/network/join-shared-read.ts",
+      "ids": [
+        "APP-20260906-11"
+      ],
+      "group": "APP-20260906-11"
+    },
+    {
+      "path": "src/lib/quiz/cached-flow-contract.test.ts",
+      "ids": [
+        "APP-20260906-04"
+      ],
+      "group": "APP-20260906-04"
+    },
+    {
+      "path": "src/test-support/local-admin-baseline.test.mjs",
+      "ids": [
+        "APP-20260906-02",
+        "APP-20260906-13"
+      ],
+      "group": "DEPLOY-20260906-01"
+    },
+    {
+      "path": "src/test-support/server-architecture.test.ts",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "src/test-support/server-architecture.ts",
+      "ids": [
+        "APP-20260906-12"
+      ],
+      "group": "APP-20260906-12"
+    },
+    {
+      "path": "tsconfig.json",
+      "ids": [
+        "APP-20260905-06"
+      ],
+      "group": "APP-20260905-06"
+    }
+  ],
+  "groups": {
+    "APP-20260905-06": 26,
+    "APP-20260906-01": 12,
+    "APP-20260906-02": 11,
+    "APP-20260906-03": 11,
+    "APP-20260906-04": 19,
+    "APP-20260906-05": 10,
+    "APP-20260906-06": 11,
+    "APP-20260906-07": 23,
+    "APP-20260906-08": 26,
+    "APP-20260906-09": 7,
+    "APP-20260906-10": 22,
+    "APP-20260906-11": 7,
+    "APP-20260906-12": 27,
+    "APP-20260906-13": 24,
+    "DEPLOY-20260906-01": 69
+  }
+}

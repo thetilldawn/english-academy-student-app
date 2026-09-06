@@ -2,6 +2,8 @@
 
 ## 먼저 확인할 흐름
 
+- APP07 준비 조회: 같은 서버요청에서 검증한 단어장에 한해 `getPreparedAssignmentDatasetUnits`를 사용한다. 별도 단위/수정/과거/최종 저장은 기존 인증·단어장 재검증 경로를 유지한다. 초기 빈 단위도 조회한 단어장 ID와 함께 전달한다.
+
 - 첫 화면과 학생 선택: `npm run map:flow -- assignment-workspace-load`, `assignment-workspace-selection`
 - 배정 창 자료·범위·최근 시험: `npm run map:flow -- assignment-workspace-planning`
 - 단어 시험 배정: `npm run map:flow -- assignment-range-create`, `weekday-unit-allocation`
@@ -41,6 +43,25 @@
   허용한다. 최근 저장은 브라우저당 최대6개 ID뿐이며 학생·시험·인증 자료를 저장하지 않는다.
 
 ## 저장 불변식
+
+- APP09의 미리보기는 결과/진행/오류/학생 표시만, 시간 입력은 사용/시간 값/콜백만 받는다. 신규 단일·일괄/오답/수정의 연결부에서 좁은 값을 전달하고 시간 기억·계산은 기존 제어기에 둔다.
+
+- 수량 연결은 `vocab-range-picker`의 `VocabQuestionSection`이 맡는다. `vocab-question-fields`와
+  `vocab-unit-allocation-fields`는 수량/방식/표시값/개별 콜백만 받으며, 요약은 `presentation/vocab-question-view`다.
+- `architecture/assignment-ui-roles.json`은 모든 UI TS/TSX의 역할·현재 의존을 등록한다. 순수/상호작용
+  부품은 전체 제어기·초안을 받을 수 없다. `ui-role-boundary.test.ts`가 타입 별칭/인덱스/Pick/ReturnType/펼치기를 검사한다.
+  후속 분리 파일은 등록한 소스 지문을 넘어 변경할 때 해당 작업의 의존/전체 상태 검토와 근거를 함께 갱신한다.
+  연결부 예외를 자식에 상속시키거나 후속 분리 파일을 완료된 공통 부품으로 표현하지 않는다.
+
+- 오답 전용 연결부는 `direct-review-assignment-sections`다. `direct-review-range-fields`와
+  `direct-review-preview`는 필요한 표시값/관련 오류/개별 콜백만 받는다. 준비·계산 상태/시각 문구는
+  `presentation/direct-review-view`에서 만든다. 미조회/실패를 정상0개로 표시하지 않는다.
+
+- 공통 시험 조건 표시는 `ui/exam-condition-fields.tsx`에서 신규 단일/일괄·독립 오답·기존 수정이 재사용한다.
+  값/관련 오류/개별 콜백만 전달하며, 수정 잠금은 기존 fieldPolicy를 따른다. 일괄 UI로 다시 의존시키지 않는다.
+- `domain/assignment-question-mode-policy.ts`는 유형의 방향·단일 즉시 일정 제한과 준비 상태를,
+  `presentation/assignment-question-mode-view.ts`는 한국어 안내와 탭 상태를 만든다. 초안·요청·서버의
+  제한 판정도 같은 정책을 사용한다. 유형 제한 확대와 전환 시 범위 자동변경은 별도 업무 결정이다.
 
 - 출제 유형의 활성 여부는 선택 단어장의 `availableQuestionModes`를 기준으로 한다. 단어장 미선택,
   준비 정보 누락, 정상 조회에서 문항 없음은 다른 상태다. 이 조회는 실제 검토 진행 상황을

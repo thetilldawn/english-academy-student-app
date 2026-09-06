@@ -389,8 +389,8 @@
     {
       "path": "src/test-support",
       "owner": "architecture-meta",
-      "fileCount": 9,
-      "pathSetSha256": "f2b6a800dfe9ccb666282bc8e57769cc47327523ccb85df20aa0e25dca609a9c"
+      "fileCount": 11,
+      "pathSetSha256": "bf63b9afee653a06deecc430e6e8cbdd0e5af8a1ee2ae99105d252425182489f"
     }
   ],
   "pageOwners": [
@@ -604,6 +604,7 @@
     }
   ],
   "appSupportOwners": [
+    { "path": "src/app/api/admin/session/route.test.ts", "owner": "session" },
     {
       "path": "src/app/admin/(protected)/admin-route-error.tsx",
       "owner": "app-shell"
@@ -1584,6 +1585,34 @@
   ],
   "architectureGuardOwners": [
     {
+      "path": "src/lib/quiz/cached-flow-contract.test.ts",
+      "owner": "shared-quiz-domain"
+    },
+    {
+      "path": "scripts/check-work-records.mjs",
+      "owner": "architecture-meta"
+    },
+    {
+      "path": "scripts/work-records/schema.mjs",
+      "owner": "architecture-meta"
+    },
+    {
+      "path": "scripts/work-records/evidence.mjs",
+      "owner": "architecture-meta"
+    },
+    {
+      "path": "scripts/work-records/context.mjs",
+      "owner": "architecture-meta"
+    },
+    {
+      "path": "scripts/work-records/validation.mjs",
+      "owner": "architecture-meta"
+    },
+    {
+      "path": "src/app/work-records.test.mjs",
+      "owner": "architecture-meta"
+    },
+    {
       "path": "scripts/check-feature-map.mjs",
       "owner": "architecture-meta"
     },
@@ -1708,8 +1737,8 @@
     {
       "path": "src/lib/auth",
       "owner": "auth",
-      "fileCount": 12,
-      "pathSetSha256": "e3fb7239646606506a3528da808ad850325a9b40cf6ed9d934240b79e7756de4"
+      "fileCount": 13,
+      "pathSetSha256": "ed7a09afc7051f5c86cef2e3da7ca42e42bc5624a8c25ca0bbb54c34172dcebc"
     },
     {
       "path": "src/lib/database",
@@ -1726,8 +1755,8 @@
     {
       "path": "src/lib/network",
       "owner": "shared-infra",
-      "fileCount": 2,
-      "pathSetSha256": "562392099fb73bf999de4e2ed36160f703fec8596a053bbee6c5ca900e43654b"
+      "fileCount": 3,
+      "pathSetSha256": "c7f3918042e3fa2c990f756aa05788c34efc9659eb61c489e1c564249f466fac"
     },
     {
       "path": "src/lib/observability",
@@ -1756,6 +1785,10 @@
   ],
   "serverOwners": [],
   "featureServerOwners": [
+    { "path": "src/features/history/server/queries/history-list-entry-query.ts", "owner": "history" },
+    { "path": "src/features/students/server/queries/student-directory-entry-query.ts", "owner": "students" },
+    { "path": "src/features/students/server/student-directory-cache-identity.ts", "owner": "students" },
+    { "path": "src/features/students/server/queries/student-directory-resume-query.ts", "owner": "students" },
     {
       "path": "src/features/learning-points/server/components/student-header-points.tsx",
       "owner": "learning-points"
@@ -1938,6 +1971,10 @@
     },
     {
       "path": "src/features/student-dashboard/server/queries/assignment-study-query.ts",
+      "owner": "student-dashboard"
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-example-query.ts",
       "owner": "student-dashboard"
     }
   ],
@@ -2193,6 +2230,18 @@
     }
   ],
   "currentCrossFeatureImports": [
+    {"from":"src/features/history/controller/admin-history-mutation-events.ts","to":"src/features/session/public-client.ts","reason":"APP12 개인 목록 공통 수명과 성공 변경 신호 재사용","removeIn":"공개 진입점으로 고정"},
+    {"from":"src/features/history/controller/history-list-cache-provider.tsx","to":"src/features/session/public-client.ts","reason":"APP12 개인 목록 공통 수명과 성공 변경 신호 재사용","removeIn":"공개 진입점으로 고정"},
+    {"from":"src/features/history/controller/history-list-cache.ts","to":"src/features/session/public-client.ts","reason":"APP12 개인 목록 공통 수명과 성공 변경 신호 재사용","removeIn":"공개 진입점으로 고정"},
+    {"from":"src/features/history/controller/use-cached-history-list.ts","to":"src/features/session/public-client.ts","reason":"APP12 개인 목록 공통 수명과 성공 변경 신호 재사용","removeIn":"공개 진입점으로 고정"},
+    {"from":"src/features/history/controller/use-editable-history-assignment.ts","to":"src/features/session/public-client.ts","reason":"APP12 개인 목록 공통 수명과 성공 변경 신호 재사용","removeIn":"공개 진입점으로 고정"},
+    {"from":"src/features/students/controller/student-directory-cache.ts","to":"src/features/session/public-client.ts","reason":"APP12 개인 목록 공통 수명과 성공 변경 신호 재사용","removeIn":"공개 진입점으로 고정"},
+    {"from":"src/features/students/controller/use-cached-student-directory.ts","to":"src/features/session/public-client.ts","reason":"APP12 개인 목록 공통 수명과 성공 변경 신호 재사용","removeIn":"공개 진입점으로 고정"},
+    { "from": "src/features/assignments/ui/cached-assignment-workspace.tsx", "to": "src/features/students/public-client.ts", "reason": "APP10 같은 학생 목록의 개인 캐시/현재 인증 읽기 재사용", "removeIn": "공개 진입점으로 고정" },
+    { "from": "src/features/assignments/ui/cached-assignment-workspace.tsx", "to": "src/features/students/public-contracts.ts", "reason": "APP10 최초 서버 목록 인계의 공개 계약", "removeIn": "공개 진입점으로 고정" },
+    { "from": "src/features/assignments/ui/assignment-workspace.tsx", "to": "src/features/students/public-client.ts", "reason": "APP08 배정 성공 뒤 공개 학생 목록 무효화 알림", "removeIn": "공개 진입점으로 고정" },
+    { "from": "src/features/students/controller/student-directory-cache-provider.tsx", "to": "src/features/session/public-client.ts", "reason": "APP08 세션 종료와 다른 탭 무효화 신호 구독", "removeIn": "공개 진입점으로 고정" },
+    { "from": "src/features/students/controller/student-directory-events.ts", "to": "src/features/session/public-client.ts", "reason": "APP08 학생 변경 성공의 개인 캐시 폐기 신호", "removeIn": "공개 진입점으로 고정" },
     {
       "from": "src/features/students/controller/use-student-history-page.ts",
       "to": "src/features/history/public-client.ts",
@@ -2383,6 +2432,12 @@
       "from": "src/features/students/ui/student-directory-card.tsx",
       "to": "src/features/learning-points/public-presentation.ts",
       "reason": "학생 목록의 포인트 문구 표시",
+      "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/students/controller/use-student-create-preparation.ts",
+      "to": "src/features/assignments/public-client.ts",
+      "reason": "등록창 열기 때 기존 단어장 목록 공개 브라우저 조회와 실패 분류 재사용",
       "removeIn": "공개 진입점으로 고정"
     }
   ],
@@ -2620,7 +2675,8 @@
         "tests": [
           "src/features/assignments/controller/use-assignment-workspace.test.tsx",
           "src/features/assignments/ui/assignment-student-browser.test.tsx",
-          "src/features/assignments/presentation/bulk-student-selection-summary.test.ts"
+          "src/features/assignments/presentation/bulk-student-selection-summary.test.ts",
+          "src/features/assignments/controller/use-assignment-student-directory.test.tsx"
         ]
       },
       "requiredImportEdges": [
@@ -2694,6 +2750,7 @@
         "serverComponent": [],
         "ui": [
           "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "src/features/assignments/ui/assignment-discard-dialog.tsx",
           "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
           "src/features/assignments/ui/assignment-section.tsx",
           "src/features/assignments/ui/assignment-submit-action.tsx",
@@ -2709,14 +2766,17 @@
           "src/features/assignments/ui/day-range-rail.tsx",
           "src/features/assignments/ui/vocab-unit-allocation-fields.tsx",
           "src/features/assignments/ui/vocab-schedule-fields.tsx",
-          "src/features/assignments/ui/vocab-schedule-detail-fields.tsx"
+          "src/features/assignments/ui/vocab-schedule-detail-fields.tsx",
+          "src/features/assignments/ui/exam-condition-fields.tsx",
+          "src/features/assignments/ui/vocab-question-fields.tsx"
         ],
         "clientState": [
           "src/features/assignments/controller/use-vocab-assignment-screen.ts",
           "src/features/assignments/controller/use-vocab-assignment-planner.ts",
           "src/features/assignments/controller/use-bulk-assignment-controller.ts",
           "src/features/assignments/controller/use-debounced-assignment-preview.ts",
-          "src/features/assignments/controller/use-assignment-controller-runtime.ts"
+          "src/features/assignments/controller/use-assignment-controller-runtime.ts",
+          "src/features/assignments/client/controllers/use-vocab-schedule-template-input.ts"
         ],
         "application": [
           "src/features/assignments/application/bulk-assignment-flow-adapter.ts",
@@ -2732,11 +2792,16 @@
           "src/features/assignments/domain/vocab-question-allocation.ts",
           "src/features/assignments/domain/vocab-unit-allocation.ts",
           "src/features/assignments/domain/unit-selection-label.ts",
-          "src/lib/assignment/question-planner.ts"
+          "src/lib/assignment/question-planner.ts",
+          "src/features/assignments/domain/assignment-question-mode-policy.ts",
+          "src/features/assignments/domain/validation.ts"
         ],
         "presentation": [
           "src/features/assignments/presentation/vocab-assignment-field-errors.ts",
-          "src/features/assignments/presentation/bulk-plan-audience.ts"
+          "src/features/assignments/presentation/bulk-plan-audience.ts",
+          "src/features/assignments/presentation/vocab-schedule-view.ts",
+          "src/features/assignments/presentation/assignment-question-mode-view.ts",
+          "src/features/assignments/presentation/vocab-question-view.ts"
         ],
         "contract": [
           "src/features/assignments/api/request-adapters.ts",
@@ -2802,7 +2867,22 @@
           "src/lib/database/simseok-g10-scope-correction.integration.test.ts",
           "src/lib/vocab/simseok-g10-scope-correction-preview-contract.test.ts",
           "src/app/mixed-assignment-api-contract.test.ts",
-          "src/features/assignments/server/use-cases/bulk-assignment-preparation-error.test.ts"
+          "src/features/assignments/server/use-cases/bulk-assignment-preparation-error.test.ts",
+          "src/features/assignments/domain/vocab-schedule-summary.test.ts",
+          "src/features/assignments/presentation/vocab-schedule-view.test.ts",
+          "src/features/assignments/client/controllers/use-vocab-schedule-template-input.test.tsx",
+          "src/features/assignments/ui/vocab-schedule-fields.test.tsx",
+          "src/features/assignments/ui/assignment-workspace.test.tsx",
+          "src/features/assignments/ui/exam-condition-fields.test.tsx",
+          "src/features/assignments/domain/assignment-question-mode-policy.test.ts",
+          "src/features/assignments/presentation/assignment-question-mode-view.test.ts",
+          "src/features/assignments/ui/bulk-exam-fields.test.tsx",
+          "src/features/assignments/contracts/assignment-question-mode-policy.test.ts",
+          "src/features/assignments/server/use-cases/canonical-assignment-preview.test.ts",
+          "src/features/assignments/ui/vocab-question-fields.test.tsx",
+          "src/features/assignments/ui/vocab-unit-allocation-fields.test.tsx",
+          "src/features/assignments/presentation/vocab-question-view.test.ts",
+          "src/features/assignments/ui-role-boundary.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -2945,6 +3025,71 @@
           "from": "src/features/assignments/server/use-cases/bulk-assignment-command.ts",
           "to": "src/features/assignments/server/use-cases/bulk-assignment-preview.ts",
           "reason": "저장 직전에도 같은 미리보기 계획을 다시 검증"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "to": "src/features/assignments/ui/assignment-discard-dialog.tsx",
+          "reason": "입력 폐기 확인 표시를 기존 대화상자 부품을 조합한 배정 전용 UI로 연결"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "to": "src/features/assignments/ui/vocab-schedule-detail-fields.tsx",
+          "reason": "조립 계층이 회차 표시 행과 이름 입력을 좁은 상세 UI로 전달"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "to": "src/features/assignments/domain/vocab-schedule.ts",
+          "reason": "요일·범위 숫자 요약을 공용 순수 계산으로 연결"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "to": "src/features/assignments/presentation/vocab-schedule-view.ts",
+          "reason": "단어장·범위·회차 표시 변환을 한 경로로 연결"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "to": "src/features/assignments/client/controllers/use-vocab-schedule-template-input.ts",
+          "reason": "이름 입력 수명·성공 비움·실패 보존은 전용 작은 훅이 소유"
+        },
+        {
+          "from": "src/features/assignments/ui/bulk-exam-fields.tsx",
+          "to": "src/features/assignments/ui/exam-condition-fields.tsx",
+          "reason": "기존 유형 제한과 공통 조건 표시를 단일 책임 경로로 연결"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "to": "src/features/assignments/presentation/assignment-question-mode-view.ts",
+          "reason": "기존 유형 제한과 공통 조건 표시를 단일 책임 경로로 연결"
+        },
+        {
+          "from": "src/features/assignments/domain/validation.ts",
+          "to": "src/features/assignments/domain/assignment-question-mode-policy.ts",
+          "reason": "기존 유형 제한과 공통 조건 표시를 단일 책임 경로로 연결"
+        },
+        {
+          "from": "src/features/assignments/contracts/bulk-assignment-request.ts",
+          "to": "src/features/assignments/domain/assignment-question-mode-policy.ts",
+          "reason": "기존 유형 제한과 공통 조건 표시를 단일 책임 경로로 연결"
+        },
+        {
+          "from": "src/features/assignments/server/use-cases/canonical-assignment-preview.ts",
+          "to": "src/features/assignments/domain/assignment-question-mode-policy.ts",
+          "reason": "기존 유형 제한과 공통 조건 표시를 단일 책임 경로로 연결"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-range-picker.tsx",
+          "to": "src/features/assignments/ui/vocab-question-fields.tsx",
+          "reason": "수량 조립부에서 좁은 입력/표시 변환으로 연결"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-range-picker.tsx",
+          "to": "src/features/assignments/presentation/vocab-question-view.ts",
+          "reason": "수량 조립부에서 좁은 입력/표시 변환으로 연결"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-question-fields.tsx",
+          "to": "src/features/assignments/ui/vocab-unit-allocation-fields.tsx",
+          "reason": "수량 조립부에서 좁은 입력/표시 변환으로 연결"
         }
       ],
       "notApplicable": {
@@ -2990,6 +3135,7 @@
         "serverComponent": [],
         "ui": [
           "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "src/features/assignments/ui/assignment-discard-dialog.tsx",
           "src/features/assignments/ui/assignment-submit-action.tsx",
           "src/features/assignments/ui/focus-invalid-assignment-field.ts",
           "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
@@ -3007,7 +3153,9 @@
           "src/features/assignments/ui/bulk-series-preview.tsx",
           "src/features/assignments/ui/bulk-preview-session-list.tsx",
           "src/features/assignment-queue/ui/assignment-queue-tags.tsx",
-          "src/features/assignment-queue/ui/assignment-queue-history.tsx"
+          "src/features/assignment-queue/ui/assignment-queue-history.tsx",
+          "src/features/assignments/ui/exam-condition-fields.tsx",
+          "src/features/assignments/ui/vocab-question-fields.tsx"
         ],
         "clientState": [
           "src/features/assignments/controller/vocab-assignment-planner-state.ts",
@@ -3015,7 +3163,8 @@
           "src/features/assignments/controller/use-vocab-assignment-derived-plan.ts",
           "src/features/assignments/controller/use-bulk-assignment-controller.ts",
           "src/features/assignments/controller/use-debounced-assignment-preview.ts",
-          "src/features/assignments/controller/use-assignment-controller-runtime.ts"
+          "src/features/assignments/controller/use-assignment-controller-runtime.ts",
+          "src/features/assignments/client/controllers/use-vocab-schedule-template-input.ts"
         ],
         "application": [
           "src/features/assignments/application/bulk-assignment-flow-adapter.ts",
@@ -3033,11 +3182,15 @@
           "src/features/assignments/domain/vocab-planner-validation.ts",
           "src/features/assignments/domain/bulk-draft.ts",
           "src/features/assignments/domain/vocab-previous-exam.ts",
-          "src/lib/assignment/question-planner.ts"
+          "src/lib/assignment/question-planner.ts",
+          "src/features/assignments/domain/assignment-question-mode-policy.ts"
         ],
         "presentation": [
           "src/features/assignments/presentation/vocab-assignment-field-errors.ts",
-          "src/features/assignments/presentation/bulk-plan-audience.ts"
+          "src/features/assignments/presentation/bulk-plan-audience.ts",
+          "src/features/assignments/presentation/vocab-schedule-view.ts",
+          "src/features/assignments/presentation/assignment-question-mode-view.ts",
+          "src/features/assignments/presentation/vocab-question-view.ts"
         ],
         "contract": [
           "src/features/assignments/api/request-adapters.ts",
@@ -3096,7 +3249,17 @@
           "src/features/assignment-queue/ui/assignment-queue-history.test.tsx",
           "src/lib/admin/assignment-request-contract.characterization.test.ts",
           "src/lib/services/regular-assignment-scope-contract.test.ts",
-          "src/features/assignments/server/use-cases/bulk-assignment-preparation-error.test.ts"
+          "src/features/assignments/server/use-cases/bulk-assignment-preparation-error.test.ts",
+          "src/features/assignments/domain/vocab-schedule-summary.test.ts",
+          "src/features/assignments/presentation/vocab-schedule-view.test.ts",
+          "src/features/assignments/client/controllers/use-vocab-schedule-template-input.test.tsx",
+          "src/features/assignments/ui/vocab-schedule-fields.test.tsx",
+          "src/features/assignments/ui/assignment-workspace.test.tsx",
+          "src/features/assignments/ui/exam-condition-fields.test.tsx",
+          "src/features/assignments/ui/vocab-question-fields.test.tsx",
+          "src/features/assignments/ui/vocab-unit-allocation-fields.test.tsx",
+          "src/features/assignments/presentation/vocab-question-view.test.ts",
+          "src/features/assignments/ui-role-boundary.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -3161,11 +3324,6 @@
           "reason": "요일별 배정의 현재 시각과 제출 세션을 공통으로 유지함"
         },
         {
-          "from": "src/features/assignments/ui/vocab-schedule-fields.tsx",
-          "to": "src/features/assignments/ui/vocab-schedule-detail-fields.tsx",
-          "reason": "요일 선택과 회차별 날짜·시간 상세 입력을 함께 구성함"
-        },
-        {
           "from": "src/features/assignments/server/use-cases/bulk-assignment-service.ts",
           "to": "src/features/assignments/server/use-cases/bulk-assignment-command.ts",
           "reason": "공개 일괄 배정 서버 진입점이 저장 명령을 노출"
@@ -3204,6 +3362,31 @@
           "from": "src/features/assignments/server/use-cases/bulk-assignment-command.ts",
           "to": "src/features/assignments/server/use-cases/bulk-assignment-preview.ts",
           "reason": "저장 직전에도 같은 미리보기 계획을 다시 검증"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "to": "src/features/assignments/ui/assignment-discard-dialog.tsx",
+          "reason": "입력 폐기 확인 표시를 기존 대화상자 부품을 조합한 배정 전용 UI로 연결"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "to": "src/features/assignments/ui/vocab-schedule-detail-fields.tsx",
+          "reason": "조립 계층이 회차 표시 행과 이름 입력을 좁은 상세 UI로 전달"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "to": "src/features/assignments/domain/vocab-schedule.ts",
+          "reason": "요일·범위 숫자 요약을 공용 순수 계산으로 연결"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "to": "src/features/assignments/presentation/vocab-schedule-view.ts",
+          "reason": "단어장·범위·회차 표시 변환을 한 경로로 연결"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "to": "src/features/assignments/client/controllers/use-vocab-schedule-template-input.ts",
+          "reason": "이름 입력 수명·성공 비움·실패 보존은 전용 작은 훅이 소유"
         }
       ],
       "notApplicable": {
@@ -3251,14 +3434,17 @@
         "serverComponent": [],
         "ui": [
           "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "src/features/assignments/ui/assignment-discard-dialog.tsx",
           "src/features/assignments/ui/assignment-submit-action.tsx",
           "src/features/assignments/ui/focus-invalid-assignment-field.ts",
           "src/features/assignments/ui/direct-review-assignment-sections.tsx",
           "src/features/assignments/ui/assignment-deadline-fields.tsx",
           "src/features/assignments/ui/assignment-date-time-toggle-field.tsx",
           "src/features/assignments/ui/assignment-section.tsx",
-          "src/features/assignments/ui/bulk-exam-fields.tsx",
-          "src/features/assignments/ui/exam-timing-fields.tsx"
+          "src/features/assignments/ui/exam-condition-fields.tsx",
+          "src/features/assignments/ui/exam-timing-fields.tsx",
+          "src/features/assignments/ui/direct-review-range-fields.tsx",
+          "src/features/assignments/ui/direct-review-preview.tsx"
         ],
         "clientState": [
           "src/features/assignments/controller/use-direct-review-assignment-controller.ts",
@@ -3275,10 +3461,12 @@
         ],
         "domain": [
           "src/features/assignments/domain/direct-review-draft.ts",
-          "src/lib/assignment/question-planner.ts"
+          "src/lib/assignment/question-planner.ts",
+          "src/features/assignments/domain/assignment-question-mode-policy.ts"
         ],
         "presentation": [
-          "src/features/assignments/presentation/vocab-assignment-field-errors.ts"
+          "src/features/assignments/presentation/vocab-assignment-field-errors.ts",
+          "src/features/assignments/presentation/direct-review-view.ts"
         ],
         "contract": [
           "src/features/assignments/api/request-adapters.ts",
@@ -3330,7 +3518,12 @@
           "src/lib/assignment/question-planner.test.ts",
           "src/lib/database/review-assignment-final-schema.integration.test.ts",
           "src/lib/services/admin-review-summary-query-contract.test.ts",
-          "src/app/mixed-assignment-api-contract.test.ts"
+          "src/app/mixed-assignment-api-contract.test.ts",
+          "src/features/assignments/ui/exam-condition-fields.test.tsx",
+          "src/features/assignments/ui/direct-review-range-fields.test.tsx",
+          "src/features/assignments/ui/direct-review-preview.test.tsx",
+          "src/features/assignments/presentation/direct-review-view.test.ts",
+          "src/features/assignments/ui/direct-review-assignment-sections.test.tsx"
         ]
       },
       "requiredImportEdges": [
@@ -3406,7 +3599,7 @@
         },
         {
           "from": "src/features/assignments/ui/direct-review-assignment-sections.tsx",
-          "to": "src/features/assignments/ui/bulk-exam-fields.tsx",
+          "to": "src/features/assignments/ui/exam-condition-fields.tsx",
           "reason": "오답 시험의 문제 순서와 시험 조건 UI"
         },
         {
@@ -3438,6 +3631,26 @@
           "from": "src/lib/services/direct-review-preparation-service.ts",
           "to": "src/lib/services/eligible-vocabulary-service.ts",
           "reason": "오답 단어의 현재 출제 가능 자료 조회"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "to": "src/features/assignments/ui/assignment-discard-dialog.tsx",
+          "reason": "입력 폐기 확인 표시를 기존 대화상자 부품을 조합한 배정 전용 UI로 연결"
+        },
+        {
+          "from": "src/features/assignments/ui/direct-review-assignment-sections.tsx",
+          "to": "src/features/assignments/ui/direct-review-range-fields.tsx",
+          "reason": "오답 전용 연결부에서 독립 표시/입력으로 연결"
+        },
+        {
+          "from": "src/features/assignments/ui/direct-review-assignment-sections.tsx",
+          "to": "src/features/assignments/ui/direct-review-preview.tsx",
+          "reason": "오답 전용 연결부에서 독립 표시/입력으로 연결"
+        },
+        {
+          "from": "src/features/assignments/ui/direct-review-assignment-sections.tsx",
+          "to": "src/features/assignments/presentation/direct-review-view.ts",
+          "reason": "오답 전용 연결부에서 독립 표시/입력으로 연결"
         }
       ],
       "notApplicable": {
@@ -3457,8 +3670,8 @@
         "quiz-player"
       ],
       "dataClass": "private",
-      "cachePolicy": "학생 이름·시험 상태·점수·포인트를 포함하므로 공유 캐시를 쓰지 않고 private no-store로 조회",
-      "streamingPolicy": "보호 layout과 loading 경계를 유지하고 초기 묶음은 Server Component가 직접 읽으며 검색·더보기만 Route Handler를 사용",
+      "cachePolicy": "공유 서버 캐시 금지/private no-store 유지. APP12 기본OFF 내역 첫 목록만 기능·사용자·로그인 세대별 메모리15/60/120초, 현재 인증 뒤 복원. 포인트/진행응시/상세/더보기 보관 안함. 변경/거절커서엔 첫목록+진입표 교체.",
+      "streamingPolicy": "보호 layout/loading 유지. OFF는 서버 직접조회, ON은 최초문서만 서버seed, Client 복귀는 현재 API인증. 검색/더보기 수명은 controller, 공통개인수명은 session 공개경계.",
       "closedLocalLayers": [
         "ui",
         "controller",
@@ -3489,12 +3702,16 @@
         "ui": [
           "src/features/history/public-ui.ts",
           "src/features/history/ui/admin-history-actions.tsx",
-          "src/features/history/ui/admin-history-list.tsx",
+        "src/features/history/ui/admin-history-list.tsx",
+        "src/features/history/ui/cached-admin-history-list.tsx",
           "src/features/history/ui/history-section-groups.tsx",
           "src/features/history/ui/overview-action-groups.tsx"
         ],
         "clientState": [
-          "src/features/history/controller/admin-history-mutation-events.ts",
+        "src/features/history/controller/admin-history-mutation-events.ts",
+        "src/features/history/controller/history-list-cache.ts",
+        "src/features/history/controller/history-list-cache-provider.tsx",
+        "src/features/history/controller/use-cached-history-list.ts",
           "src/features/history/controller/use-admin-history-list-controller.ts",
           "src/features/history/controller/use-admin-history-section-page.ts"
         ],
@@ -3508,8 +3725,11 @@
         ],
         "contract": [
           "src/features/history/public-contracts.ts",
-          "src/features/history/contracts/admin-history-mutation.ts",
+        "src/features/history/contracts/admin-history-mutation.ts",
+        "src/features/history/contracts/history-list-cache-contract.ts",
           "src/features/history/contracts/admin-history-read-model.ts",
+          "src/features/history/contracts/admin-history-request-error.ts",
+          "src/features/history/api/history-read-response.ts",
           "src/features/history/model.ts"
         ],
         "transport": [
@@ -3522,7 +3742,8 @@
           "src/features/history/server/actions/hide-admin-history-entry-action.ts",
           "src/features/history/server/admin-history-cursor.ts",
           "src/features/history/server/queries/admin-history-detail-query.ts",
-          "src/features/history/server/queries/admin-history-list-query.ts",
+        "src/features/history/server/queries/admin-history-list-query.ts",
+        "src/features/history/server/queries/history-list-entry-query.ts",
           "src/features/history/server/queries/admin-history-read-error.ts",
           "src/features/history/server/queries/admin-history-row-schema.ts",
           "src/features/history/server/queries/admin-attempt-detail-query.ts",
@@ -3556,7 +3777,10 @@
           "src/features/history/server/queries/admin-history-detail-query.test.ts",
           "src/features/history/server/queries/admin-history-list-query.test.ts",
           "src/features/history/transport/history-pages.test.ts",
-          "src/features/history/ui/admin-history-list.test.tsx",
+        "src/features/history/ui/admin-history-list.test.tsx",
+        "src/features/history/controller/history-list-cache.test.ts",
+        "src/features/history/ui/cached-admin-history-list.test.tsx",
+        "src/features/history/server/queries/history-list-entry-query.test.ts",
           "src/features/history/ui/history-presentation.test.tsx",
           "src/features/history/ui/history-section-groups.test.tsx",
           "src/lib/database/admin-history-read-migration-contract.test.ts",
@@ -3862,7 +4086,7 @@
           "src/features/assignments/ui/assignment-deadline-fields.tsx",
           "src/features/assignments/ui/assignment-date-time-toggle-field.tsx",
           "src/features/assignments/ui/assignment-word-count-field.tsx",
-          "src/features/assignments/ui/bulk-exam-fields.tsx",
+          "src/features/assignments/ui/exam-condition-fields.tsx",
           "src/features/assignments/ui/exam-timing-fields.tsx",
           "src/features/assignments/ui/assignment-summary-panel.tsx",
           "src/features/assignments/ui/assignment-edit-comparison.tsx",
@@ -3901,7 +4125,8 @@
           "src/features/assignments/domain/validation.ts",
           "src/lib/admin/assignment-edit-policy.ts",
           "src/lib/quiz/question-generator.ts",
-          "src/lib/assignment/question-planner.ts"
+          "src/lib/assignment/question-planner.ts",
+          "src/features/assignments/domain/assignment-question-mode-policy.ts"
         ],
         "presentation": [
           "src/features/assignments/presentation/assignment-automatic-title.ts",
@@ -4014,7 +4239,8 @@
           "src/lib/database/student-point-ledger-migration-contract.test.ts",
           "src/lib/database/review-assignment-final-schema.integration.test.ts",
           "src/lib/admin/assignment-request-contract.characterization.test.ts",
-          "src/lib/services/regular-assignment-scope-contract.test.ts"
+          "src/lib/services/regular-assignment-scope-contract.test.ts",
+          "src/features/assignments/ui/exam-condition-fields.test.tsx"
         ]
       },
       "requiredImportEdges": [
@@ -4149,8 +4375,8 @@
         "session"
       ],
       "dataClass": "private",
-      "cachePolicy": "학생 목록·상세·포인트·오답·시험 이력 조회는 요청 사이 공유 캐시를 쓰지 않고 브라우저 후속 조회도 private no-store로 처리한다. 같은 화면의 학생 변경 요청도 응답을 캐시하지 않는다.",
-      "streamingPolicy": "관리자 인증을 먼저 끝낸 뒤 목록과 생성 준비를 Suspense 형제로 표시하며 상세는 직접 주소와 인터셉트 모달이 같은 Server Component 조회를 공유",
+      "cachePolicy": "기본 학생 목록/상세/포인트/이력은 서버 공유 캐시 없이 private no-store. APP08 조건부 시험은 첫 문서 서버 응답을 최초 hydration에만 인계하고 Client 재진입은 현재 인증/포인트 확인 뒤 메타자료를 15초 재사용한다. 포인트 저장 제외, 60초 표시/120초 제거/20조건, 성공 변경·세대·로그아웃 폐기. 운영 기본 OFF, 고정 성능/안전 관문 통과 전 미채택.",
+      "streamingPolicy": "관리자 인증 뒤 첫 문서 목록은 독립 Suspense 서버 조회. APP08 Client 재진입만 캐시 읽기로 전환하며 첫 서버 자료와 이중조회하지 않는다. 옛 Client RSC 인계는 인증으로 사용하지 않는다. 접힌 등록 준비는 조회하지 않고 상세 직접/가로채기 조회는 공유한다.",
       "closedLocalLayers": [
         "ui",
         "controller",
@@ -4165,7 +4391,8 @@
           "src/app/admin/(protected)/@detail/(.)students/[studentId]/page.tsx",
           "src/app/api/admin/students/directory/route.ts",
           "src/app/api/admin/students/[id]/history/route.ts",
-          "src/app/api/admin/students/[id]/route.ts"
+          "src/app/api/admin/students/[id]/route.ts",
+          "src/app/api/admin/assignment-workspace/datasets/route.ts"
         ],
         "serverComponent": [
           "src/features/students/server/components/student-create-content.tsx",
@@ -4198,7 +4425,8 @@
           "src/features/learning-points/ui/point-summary.tsx",
           "src/features/assignment-queue/ui/student-assignment-queue-history.tsx",
           "src/components/routed-detail-dialog.tsx",
-          "src/design-system/patterns/route-detail-dialog/route-detail-dialog.tsx"
+          "src/design-system/patterns/route-detail-dialog/route-detail-dialog.tsx",
+          "src/features/students/ui/cached-student-directory.tsx"
         ],
         "clientState": [
           "src/features/students/controller/student-directory-events.ts",
@@ -4212,7 +4440,13 @@
           "src/features/students/controller/use-student-profile-controller.ts",
           "src/features/students/controller/use-student-wrong-word-actions.ts",
           "src/features/students/controller/use-student-wrong-word-cache.ts",
-          "src/features/students/controller/use-student-wrong-word-history.ts"
+          "src/features/students/controller/use-student-wrong-word-history.ts",
+          "src/features/students/controller/use-student-create-preparation.ts",
+          "src/features/students/controller/student-directory-cache.ts",
+          "src/features/students/controller/student-directory-cache-provider.tsx",
+          "src/features/students/controller/use-cached-student-directory.ts",
+          "src/features/session/controller/admin-private-cache-events.ts",
+          "src/features/session/controller/admin-session-commands.ts"
         ],
         "application": [],
         "domain": [
@@ -4223,7 +4457,10 @@
           "src/features/history/public-contracts.ts",
           "src/features/students/contracts/student-detail-read-model.ts",
           "src/features/students/contracts/student-directory-read-model.ts",
-          "src/features/students/contracts/student-mutation-result.ts"
+          "src/features/students/contracts/student-mutation-result.ts",
+          "src/features/assignments/contracts/assignment-dataset-directory-schema.ts",
+          "src/features/assignments/contracts/assignment-workspace-read-error.ts",
+          "src/features/students/contracts/student-directory-cache-contract.ts"
         ],
         "transport": [
           "src/features/students/actions/update-student-profile.ts",
@@ -4231,7 +4468,12 @@
           "src/features/students/api/wrong-word-transport.ts",
           "src/features/students/transport/student-directory-pages.ts",
           "src/features/students/transport/student-history-pages.ts",
-          "src/features/session/api/session.ts"
+          "src/features/session/api/session.ts",
+          "src/features/assignments/public-client.ts",
+          "src/features/assignments/transport/assignment-workspace-reads.ts",
+          "src/features/students/transport/student-directory-cache-read.ts",
+          "src/features/students/public-client.ts",
+          "src/features/session/public-client.ts"
         ],
         "server": [
           "src/features/history/public-server.ts",
@@ -4250,7 +4492,10 @@
           "src/features/students/server/queries/student-history-query.ts",
           "src/features/students/server/queries/student-history-row-schema.ts",
           "src/features/students/server/student-directory-cursor.ts",
-          "src/features/students/server/student-history-cursor.ts"
+          "src/features/students/server/student-history-cursor.ts",
+          "src/features/assignments/server/queries/assignment-dataset-directory-query.ts",
+          "src/features/students/server/queries/student-directory-resume-query.ts",
+          "src/features/students/server/student-directory-cache-identity.ts"
         ],
         "database": [
           "supabase/migrations/20260829213000_add_admin_student_directory_read_model.sql",
@@ -4286,7 +4531,18 @@
           "src/lib/database/admin-student-directory-read-model.integration.test.ts",
           "src/lib/database/student-profile-version-command.integration.test.ts",
           "src/lib/services/admin-material-request-cache.test.ts",
-          "src/lib/services/admin-wrong-summary-query-contract.test.ts"
+          "src/lib/services/admin-wrong-summary-query-contract.test.ts",
+          "src/features/students/server/components/student-panel-failure.test.tsx",
+          "src/features/students/controller/use-student-create-preparation.test.tsx",
+          "src/features/students/ui/student-create-workspace.test.tsx",
+          "src/features/students/controller/use-student-creation-controller.test.tsx",
+          "src/features/assignments/transport/assignment-workspace-reads.test.ts",
+          "src/features/students/controller/student-directory-cache.test.ts",
+          "src/features/students/controller/student-directory-cache-provider.test.tsx",
+          "src/features/students/ui/cached-student-directory.test.tsx",
+          "src/features/students/server/queries/student-directory-resume-query.test.ts",
+          "src/features/students/transport/student-directory-cache-read.test.ts",
+          "src/features/session/controller/admin-private-cache-events.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -4382,7 +4638,7 @@
         },
         {
           "from": "src/components/admin-logout-button.tsx",
-          "to": "src/features/session/api/session.ts",
+          "to": "src/features/session/public-client.ts",
           "reason": "로그아웃 성공과 실패를 공용 이탈 보호에 그대로 반환"
         },
         {
@@ -4424,6 +4680,56 @@
           "from": "src/features/students/server/queries/student-history-query.ts",
           "to": "src/features/students/server/student-history-cursor.ts",
           "reason": "학생별 이력 snapshot과 복합 커서를 함께 검증"
+        },
+        {
+          "from": "src/features/students/ui/student-create-workspace.tsx",
+          "to": "src/features/students/controller/use-student-create-preparation.ts",
+          "reason": "열기/닫기만 전달하고 조회 수명과 상태는 준비 제어기가 소유"
+        },
+        {
+          "from": "src/features/students/controller/use-student-create-preparation.ts",
+          "to": "src/features/assignments/public-client.ts",
+          "reason": "기존 단어장 API를 공개 브라우저 진입점에서 재사용"
+        },
+        {
+          "from": "src/features/assignments/public-client.ts",
+          "to": "src/features/assignments/transport/assignment-workspace-reads.ts",
+          "reason": "공개 조회는 기존 전송/no-store 경계로 연결"
+        },
+        {
+          "from": "src/app/admin/(protected)/layout.tsx",
+          "to": "src/features/students/public-client.ts",
+          "reason": "APP08 조건부 개인 캐시의 실제 인증/조회/표시 연결"
+        },
+        {
+          "from": "src/features/students/public-client.ts",
+          "to": "src/features/students/controller/student-directory-cache-provider.tsx",
+          "reason": "APP08 조건부 개인 캐시의 실제 인증/조회/표시 연결"
+        },
+        {
+          "from": "src/features/students/server/components/student-directory-content.tsx",
+          "to": "src/features/students/ui/cached-student-directory.tsx",
+          "reason": "APP08 조건부 개인 캐시의 실제 인증/조회/표시 연결"
+        },
+        {
+          "from": "src/features/students/ui/cached-student-directory.tsx",
+          "to": "src/features/students/controller/use-cached-student-directory.ts",
+          "reason": "APP08 조건부 개인 캐시의 실제 인증/조회/표시 연결"
+        },
+        {
+          "from": "src/features/students/controller/student-directory-cache-provider.tsx",
+          "to": "src/features/students/controller/student-directory-cache.ts",
+          "reason": "APP08 조건부 개인 캐시의 실제 인증/조회/표시 연결"
+        },
+        {
+          "from": "src/features/students/controller/student-directory-cache-provider.tsx",
+          "to": "src/features/students/transport/student-directory-cache-read.ts",
+          "reason": "APP08 조건부 개인 캐시의 실제 인증/조회/표시 연결"
+        },
+        {
+          "from": "src/app/api/admin/students/directory/route.ts",
+          "to": "src/features/students/server/queries/student-directory-resume-query.ts",
+          "reason": "APP08 조건부 개인 캐시의 실제 인증/조회/표시 연결"
         }
       ],
       "notApplicable": {
@@ -4492,6 +4798,7 @@
           "src/features/assignments/ui/assignment-student-row.tsx",
           "src/features/assignments/ui/selected-student-basket.tsx",
           "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "src/features/assignments/ui/assignment-discard-dialog.tsx",
           "src/features/assignments/ui/assignment-submit-action.tsx",
           "src/features/assignments/ui/focus-invalid-assignment-field.ts",
           "src/features/assignments/ui/vocab-assignment-entry-selector.tsx",
@@ -4515,7 +4822,9 @@
           "src/features/assignment-queue/ui/student-assignment-queue-history.tsx",
           "src/features/students/ui/student-detail-dialog.tsx",
           "src/features/students/ui/panels/student-history-panel.tsx",
-          "src/features/students/ui/student-detail-content.tsx"
+          "src/features/students/ui/student-detail-content.tsx",
+          "src/features/assignments/ui/exam-condition-fields.tsx",
+          "src/features/assignments/ui/vocab-question-fields.tsx"
         ],
         "clientState": [
           "src/features/assignments/controller/use-vocab-assignment-screen.ts",
@@ -4525,7 +4834,8 @@
           "src/features/assignments/controller/vocab-assignment-planner-state.ts",
           "src/features/assignments/controller/use-vocab-assignment-derived-plan.ts",
           "src/features/assignments/controller/use-debounced-assignment-preview.ts",
-          "src/features/assignments/controller/use-assignment-controller-runtime.ts"
+          "src/features/assignments/controller/use-assignment-controller-runtime.ts",
+          "src/features/assignments/client/controllers/use-vocab-schedule-template-input.ts"
         ],
         "application": [
           "src/features/assignments/application/bulk-assignment-flow-adapter.ts",
@@ -4548,13 +4858,17 @@
           "src/features/assignments/domain/vocab-planner-controls.ts",
           "src/features/assignments/domain/vocab-planner-validation.ts",
           "src/features/assignments/domain/vocab-previous-exam.ts",
-          "src/lib/assignment/question-planner.ts"
+          "src/lib/assignment/question-planner.ts",
+          "src/features/assignments/domain/assignment-question-mode-policy.ts"
         ],
         "presentation": [
           "src/features/assignments/presentation/assignment-unit-range-label.ts",
           "src/features/assignments/presentation/bulk-plan-audience.ts",
           "src/features/assignments/domain/select-common-initial-dataset.ts",
-          "src/features/assignments/presentation/vocab-assignment-field-errors.ts"
+          "src/features/assignments/presentation/vocab-assignment-field-errors.ts",
+          "src/features/assignments/presentation/vocab-schedule-view.ts",
+          "src/features/assignments/presentation/assignment-question-mode-view.ts",
+          "src/features/assignments/presentation/vocab-question-view.ts"
         ],
         "contract": [
           "src/features/assignments/api/request-adapters.ts",
@@ -4647,7 +4961,16 @@
           "src/lib/database/read-side-maintenance-jobs.integration.test.ts",
           "src/lib/admin/assignment-request-contract.characterization.test.ts",
           "src/lib/services/regular-assignment-scope-contract.test.ts",
-          "src/features/assignments/server/use-cases/bulk-assignment-preparation-error.test.ts"
+          "src/features/assignments/server/use-cases/bulk-assignment-preparation-error.test.ts",
+          "src/features/assignments/domain/vocab-schedule-summary.test.ts",
+          "src/features/assignments/presentation/vocab-schedule-view.test.ts",
+          "src/features/assignments/client/controllers/use-vocab-schedule-template-input.test.tsx",
+          "src/features/assignments/ui/assignment-workspace.test.tsx",
+          "src/features/assignments/ui/exam-condition-fields.test.tsx",
+          "src/features/assignments/ui/vocab-question-fields.test.tsx",
+          "src/features/assignments/ui/vocab-unit-allocation-fields.test.tsx",
+          "src/features/assignments/presentation/vocab-question-view.test.ts",
+          "src/features/assignments/ui-role-boundary.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -4800,6 +5123,31 @@
           "from": "src/features/assignments/server/use-cases/bulk-assignment-command.ts",
           "to": "src/features/assignments/server/use-cases/bulk-assignment-preview.ts",
           "reason": "저장 직전에도 같은 미리보기 계획을 다시 검증"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "to": "src/features/assignments/ui/assignment-discard-dialog.tsx",
+          "reason": "입력 폐기 확인 표시를 기존 대화상자 부품을 조합한 배정 전용 UI로 연결"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "to": "src/features/assignments/ui/vocab-schedule-detail-fields.tsx",
+          "reason": "조립 계층이 회차 표시 행과 이름 입력을 좁은 상세 UI로 전달"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "to": "src/features/assignments/domain/vocab-schedule.ts",
+          "reason": "요일·범위 숫자 요약을 공용 순수 계산으로 연결"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "to": "src/features/assignments/presentation/vocab-schedule-view.ts",
+          "reason": "단어장·범위·회차 표시 변환을 한 경로로 연결"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+          "to": "src/features/assignments/client/controllers/use-vocab-schedule-template-input.ts",
+          "reason": "이름 입력 수명·성공 비움·실패 보존은 전용 작은 훅이 소유"
         }
       ]
     },
@@ -5006,7 +5354,7 @@
         "assignments"
       ],
       "dataClass": "private",
-      "cachePolicy": "학생·단어장별 준비 자료와 직전 시험은 private no-store이며 현재 열린 모달의 동일 요청만 재사용. 단어장 검색·분류는 받은 목록에서만 계산하며 최근 선택은 브라우저에 ID 최대6개만 저장",
+      "cachePolicy": "학생·단어장별 준비 자료와 직전 시험은 private no-store이며 현재 열린 모달의 동일 요청만 재사용. 단어장 검색·분류는 받은 목록에서만 계산하며 최근 선택은 브라우저에 ID 최대6개만 저장 같은 인증 준비 요청의 단어장 자료를 단위 조회에 재사용. 정상 빈 초기범위도 단어장 ID와 연결한다. 별도 범위 API/최종 저장 최신성 유지.",
       "streamingPolicy": "모달을 연 뒤 자료 목록, 범위 단위, 직전 시험을 필요한 시점에 각 구역 안에서 표시",
       "dependsOnFlows": [
         "assignment-workspace-selection"
@@ -5031,6 +5379,7 @@
         "ui": [
           "src/features/assignments/ui/assignment-planner-load-dialog.tsx",
           "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "src/features/assignments/ui/assignment-discard-dialog.tsx",
           "src/features/assignments/ui/assignment-dataset-picker.tsx",
           "src/features/assignments/ui/assignment-dataset-trigger.tsx",
           "src/features/assignments/ui/assignment-dataset-picker.module.css"
@@ -5053,7 +5402,9 @@
         ],
         "contract": [
           "src/features/assignments/contracts/assignment-workspace-read-model.ts",
-          "src/features/assignments/contracts/vocab-time-template-contract.ts"
+          "src/features/assignments/contracts/vocab-time-template-contract.ts",
+          "src/features/assignments/contracts/assignment-dataset-directory-schema.ts",
+          "src/features/assignments/contracts/assignment-workspace-read-error.ts"
         ],
         "transport": [
           "src/features/assignments/transport/assignment-workspace-reads.ts"
@@ -5082,7 +5433,10 @@
           "src/features/assignments/server/queries/assignment-planner-preparation-query.test.ts",
           "src/features/assignments/controller/use-assignment-dataset-unit-catalog.test.tsx",
           "src/features/assignments/controller/use-assignment-previous-exam.test.tsx",
-          "src/features/assignments/domain/vocab-previous-exam.test.ts"
+          "src/features/assignments/domain/vocab-previous-exam.test.ts",
+          "src/features/assignments/server/queries/assignment-dataset-units-query.test.ts",
+          "src/features/assignments/transport/assignment-workspace-reads.test.ts",
+          "src/features/assignments/controller/use-assignment-student-directory.test.tsx"
         ]
       },
       "requiredImportEdges": [
@@ -5105,6 +5459,16 @@
           "from": "src/app/api/admin/assignment-workspace/previous-exam/route.ts",
           "to": "src/features/assignments/server/queries/assignment-previous-exam-query.ts",
           "reason": "직전 시험 Route Handler가 학생·자료 한 쌍만 조회"
+        },
+        {
+          "from": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+          "to": "src/features/assignments/ui/assignment-discard-dialog.tsx",
+          "reason": "입력 폐기 확인 표시를 기존 대화상자 부품을 조합한 배정 전용 UI로 연결"
+        },
+        {
+          "from": "src/features/assignments/server/queries/assignment-planner-preparation-query.ts",
+          "to": "src/features/assignments/server/queries/assignment-dataset-units-query.ts",
+          "reason": "현재 인증 요청의 단어장 자료와 같은 클라이언트로 단위 조회만 재사용"
         }
       ],
       "notApplicable": {
@@ -5137,15 +5501,20 @@
           "src/features/student-dashboard/ui/student-assignment-card.tsx",
           "src/features/student-dashboard/ui/assignment-study-words.tsx",
           "src/features/student-dashboard/ui/assignment-study-frame.tsx",
-          "src/features/student-dashboard/ui/assignment-study-error.tsx"
+          "src/features/student-dashboard/ui/assignment-study-error.tsx",
+          "src/features/student-dashboard/ui/study-blur.tsx",
+          "src/features/student-dashboard/ui/study-visibility-controls.tsx",
+          "src/features/student-dashboard/ui/assignment-study.module.css"
         ],
         "clientState": [
-          "src/features/student-dashboard/controller/use-study-audio.ts"
+          "src/features/student-dashboard/controller/use-study-audio.ts",
+          "src/features/student-dashboard/client/components/assignment-study-reader.tsx"
         ],
         "application": [],
         "domain": [
           "src/lib/quiz/pronunciation-snapshot.ts",
-          "src/lib/quiz/question-content-mode.ts"
+          "src/lib/quiz/question-content-mode.ts",
+          "src/features/student-dashboard/domain/study-example-ranges.ts"
         ],
         "presentation": [],
         "contract": [
@@ -5155,6 +5524,7 @@
         "server": [
           "src/features/student-dashboard/server/components/assignment-study-content.tsx",
           "src/features/student-dashboard/server/queries/assignment-study-query.ts",
+          "src/features/student-dashboard/server/queries/assignment-study-example-query.ts",
           "src/lib/services/quiz/pronunciation-registry.ts"
         ],
         "database": [
@@ -5171,6 +5541,9 @@
         "tests": [
           "src/features/student-dashboard/server/queries/assignment-study-query.test.ts",
           "src/features/student-dashboard/ui/assignment-study-words.test.tsx",
+          "src/features/student-dashboard/client/components/assignment-study-reader.test.tsx",
+          "src/features/student-dashboard/domain/study-example-ranges.test.ts",
+          "src/features/student-dashboard/server/queries/assignment-study-example-query.test.ts",
           "src/lib/database/assignment-study.integration.test.ts"
         ]
       },
@@ -5181,9 +5554,24 @@
           "reason": "서버 세션으로 직접 학습 자료 조회"
         },
         {
-          "from": "src/features/student-dashboard/ui/assignment-study-words.tsx",
+          "from": "src/features/student-dashboard/client/components/assignment-study-reader.tsx",
           "to": "src/features/student-dashboard/controller/use-study-audio.ts",
           "reason": "단어 음성 한 개 재생과 닫기 정리"
+        },
+        {
+          "from": "src/features/student-dashboard/server/components/assignment-study-content.tsx",
+          "to": "src/features/student-dashboard/client/components/assignment-study-reader.tsx",
+          "reason": "서버 최소 학습 자료를 로컬 표시 조립부로 전달"
+        },
+        {
+          "from": "src/features/student-dashboard/client/components/assignment-study-reader.tsx",
+          "to": "src/features/student-dashboard/ui/assignment-study-words.tsx",
+          "reason": "상호배타적 가리기 상태와 음성 동작 전달"
+        },
+        {
+          "from": "src/features/student-dashboard/server/queries/assignment-study-query.ts",
+          "to": "src/features/student-dashboard/server/queries/assignment-study-example-query.ts",
+          "reason": "현재 학생 권한 확인 후 같은 배정의 예문 위치 자료 읽기"
         }
       ],
       "notApplicable": {

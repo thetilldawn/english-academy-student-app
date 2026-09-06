@@ -3,6 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -149,7 +150,49 @@ function reviewController(
   };
 }
 
+function renderChangedAssignment(
+  selectionMode: "single" | "bulk" = "single",
+  purpose: "range" | "review" = "range",
+) {
+  const range = screenController({ canSubmit: true });
+  const review = reviewController("ready", true);
+  mocks.useScreen.mockReturnValue(range);
+  mocks.useReview.mockReturnValue(review);
+  const onClose = vi.fn();
+  const view = <VocabAssignmentPlanner
+    data={data}
+    onClose={onClose}
+    onSuccess={vi.fn()}
+    selectionMode={selectionMode}
+    students={[student]}
+  />;
+  const { rerender } = render(view);
+  if (purpose === "review") {
+    fireEvent.click(screen.getByRole("tab", { name: "오답 시험" }));
+  }
+  const condition = screen.getByRole("textbox", {
+    name: purpose === "range" ? "배정 조건 보존" : "마감 입력",
+  });
+  fireEvent.change(condition, { target: { value: "입력 보존 확인" } });
+  const changedDraft = Object.freeze({ datasetId: datasets[0]!.id });
+  const changedRange = {
+    ...range,
+    bulk: { ...range.bulk, state: { ...range.bulk.state, draft: changedDraft } },
+  };
+  if (purpose === "range") mocks.useScreen.mockReturnValue(changedRange);
+  else mocks.useReview.mockReturnValue({ ...review, draft: changedDraft, userEdited: true });
+  rerender(<VocabAssignmentPlanner {...view.props} />);
+  return { condition, onClose, changedRange, rerender, view };
+}
+
 describe("오답 단일 배정 제출", () => {
+  it.each(["range", "review"] as const)("권한 재확인 중에는 %s 직접 submit 이벤트도 저장하지 않는다", (purpose) => {
+    const { rerender, view } = renderChangedAssignment("single", purpose);
+    rerender(<VocabAssignmentPlanner {...view.props} interactionAllowed={false} />);
+    expect(screen.getByRole("button", { name: "배정하기" })).toBeDisabled();
+    fireEvent.submit(document.getElementById("vocab-assignment-plan-form")!);
+    expect(mocks.screenSubmit).not.toHaveBeenCalled(); expect(mocks.reviewSubmit).not.toHaveBeenCalled();
+  });
   beforeAll(() => {
     Object.defineProperty(HTMLDialogElement.prototype, "showModal", {
       configurable: true,
@@ -297,7 +340,94 @@ describe("오답 단일 배정 제출", () => {
     fireEvent.click(screen.getByRole("button", { name: "닫기" }));
 
     expect(confirm).not.toHaveBeenCalled();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     expect(onClose).toHaveBeenCalledTimes(1);
+    confirm.mockRestore();
+  });
+
+  it.each(["single", "bulk"] as const)("%s 범위 변경 후 확인창 취소는 입력을 보존하고 폐기만 한 번 닫는다", (selectionMode) => {
+    const { condition, onClose, changedRange } = renderChangedAssignment(selectionMode);
+    const close = screen.getByRole("button", { name: "닫기" });
+    close.focus();
+    fireEvent.click(close);
+    const dialog = screen.getByRole("alertdialog", { name: "배정 작성을 그만둘까요?" });
+    expect(dialog).toHaveAccessibleDescription("입력한 배정 내용을 버리고 닫을까요?");
+    expect(dialog.parentElement).toBe(screen.getByRole("dialog").parentElement);
+    expect(within(dialog).getByRole("button", { name: "계속 작성" })).toHaveFocus();
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.submit(document.getElementById("vocab-assignment-plan-form")!);
+    expect(mocks.screenSubmit).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "배정하기" })).toBeDisabled();
+    fireEvent.click(within(dialog).getByRole("button", { name: "계속 작성" }));
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(close).toHaveFocus();
+    expect(condition).toBeVisible();
+    expect(condition).toHaveValue("입력 보존 확인");
+    expect(changedRange.bulk.state.draft).toEqual({ datasetId: datasets[0]!.id });
+
+    fireEvent.click(close);
+    const discard = screen.getByRole("button", { name: "버리고 닫기" });
+    act(() => {
+      discard.click();
+      expect(discard).toBeInTheDocument();
+      discard.click();
+    });
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(mocks.screenSubmit).not.toHaveBeenCalled();
+    expect(mocks.reviewSubmit).not.toHaveBeenCalled();
+    expect(mocks.rangeDataset).not.toHaveBeenCalled();
+  });
+
+  it.each(["escape", "backdrop", "close-button"] as const)("확인창 %s 취소는 부모 입력과 초점을 보존한다", (reason) => {
+    const { condition, onClose } = renderChangedAssignment();
+    const close = screen.getByRole("button", { name: "닫기" });
+    close.focus();
+    fireEvent.click(close);
+    const dialog = screen.getByRole("alertdialog");
+    if (reason === "escape") fireEvent.keyDown(dialog, { key: "Escape" });
+    else if (reason === "backdrop") fireEvent.click(dialog);
+    else fireEvent.click(within(dialog).getByRole("button", { name: "확인 취소" }));
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(condition).toHaveValue("입력 보존 확인");
+    expect(close).toHaveFocus();
+    expect(document.body.style.overflow).toBe("hidden");
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("오답 변경도 확인창에서 취소하면 보존하고 명시적 폐기만 닫는다", () => {
+    const { condition, onClose } = renderChangedAssignment("single", "review");
+    fireEvent.click(screen.getByRole("button", { name: "닫기" }));
+    fireEvent.submit(document.getElementById("vocab-assignment-plan-form")!);
+    expect(mocks.reviewSubmit).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "계속 작성" }));
+    expect(condition).toHaveValue("입력 보존 확인");
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "닫기" }));
+    fireEvent.click(screen.getByRole("button", { name: "버리고 닫기" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(mocks.reviewSubmit).not.toHaveBeenCalled();
+  });
+
+  it("확인창이 열린 뒤 저장 중으로 바뀌어도 폐기나 재제출하지 않는다", () => {
+    const { changedRange, onClose, rerender, view } = renderChangedAssignment();
+    fireEvent.click(screen.getByRole("button", { name: "닫기" }));
+    mocks.useScreen.mockReturnValue({
+      ...changedRange,
+      bulk: { ...changedRange.bulk, state: {
+        ...changedRange.bulk.state, submission: { status: "submitting" },
+      } },
+    });
+    rerender(<VocabAssignmentPlanner {...view.props} />);
+    const dialog = screen.getByRole("alertdialog");
+    expect(within(dialog).getByRole("button", { name: "버리고 닫기" })).toBeDisabled();
+    expect(within(dialog).getByRole("button", { name: "계속 작성" })).toBeDisabled();
+    fireEvent.click(within(dialog).getByRole("button", { name: "버리고 닫기" }));
+    fireEvent.click(dialog);
+    fireEvent.keyDown(dialog, { key: "Escape" });
+    fireEvent.submit(document.getElementById("vocab-assignment-plan-form")!);
+    expect(dialog).toBeVisible();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(mocks.screenSubmit).not.toHaveBeenCalled();
   });
 
   it("계산이 끝난 1문항 오답 시험을 정확히 한 번 제출하고 닫는다", async () => {

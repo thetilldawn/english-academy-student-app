@@ -1,0 +1,729 @@
+{
+  "schemaVersion": 1,
+  "standard": "APP-20260906-06 / 실행계획1-E",
+  "notes": "재사용 경계 완료와 후속분리를 구분한다. 모든 import는 타입/재수출 포함 검토된 현재 경로다. 추가·역할 변경은 작업기록과 근거를 갱신한다. 후속 파일은 현재 의존보다 확대하지 않는다.",
+  "entries": [
+    {
+      "path": "assignment-availability-fields.tsx",
+      "role": "interaction",
+      "reason": "공개 토글의 현재 시각 기본값/값 변환",
+      "allowedImports": [
+        "../domain/model",
+        "./assignment-date-time-toggle-field",
+        "@/lib/deadline"
+      ]
+    },
+    {
+      "path": "assignment-capacity-summary.tsx",
+      "role": "pure",
+      "reason": "주어진 출제 가능 수 표시",
+      "allowedImports": [
+        "../api/response-adapters",
+        "./single-assignment-editor.module.css",
+        "@/content/format",
+        "@/content/ko/admin-learning",
+        "@/design-system/primitives/tooltip/help-tip"
+      ]
+    },
+    {
+      "path": "assignment-dataset-picker.tsx",
+      "role": "pure",
+      "reason": "검색 결과/필터 표시와 선택 전달",
+      "allowedImports": [
+        "../domain/assignment-dataset-picker",
+        "../presentation/assignment-dataset-picker-view",
+        "./assignment-dataset-picker.module.css",
+        "@/design-system/primitives/button/button",
+        "@/design-system/primitives/form/field",
+        "@/lib/admin/dataset-catalog",
+        "react"
+      ]
+    },
+    {
+      "path": "assignment-dataset-trigger.tsx",
+      "role": "pure",
+      "reason": "선택 단어장/오류/찾기 버튼",
+      "allowedImports": [
+        "../catalog-types",
+        "../presentation/assignment-dataset-picker-view",
+        "./assignment-dataset-picker.module.css",
+        "@/design-system/primitives/button/button",
+        "@/design-system/primitives/form/field",
+        "@/lib/admin/dataset-catalog",
+        "react"
+      ]
+    },
+    {
+      "path": "assignment-date-time-toggle-field.tsx",
+      "role": "interaction",
+      "reason": "시간 입력 켜기/끄기 이전 값과 초점 기억",
+      "allowedImports": [
+        "./exam-timing-fields.module.css",
+        "@/design-system/patterns/conditional-reveal/conditional-reveal",
+        "@/design-system/primitives/form/field",
+        "react"
+      ]
+    },
+    {
+      "path": "assignment-deadline-fields.tsx",
+      "role": "interaction",
+      "reason": "마감 토글의 기본 시각/값 변환",
+      "allowedImports": [
+        "../domain/model",
+        "./assignment-date-time-toggle-field",
+        "@/lib/deadline"
+      ]
+    },
+    {
+      "path": "assignment-discard-dialog.tsx",
+      "role": "interaction",
+      "reason": "폐기 취소 버튼 초점 및 확인 전달",
+      "allowedImports": [
+        "@/content/ko/admin-learning",
+        "@/design-system/primitives/button/button",
+        "@/design-system/primitives/dialog/dialog",
+        "react"
+      ]
+    },
+    {
+      "path": "assignment-edit-comparison.tsx",
+      "role": "deferred",
+      "reason": "전체 기준/현재 초안·지문 비교→비교 표시값 분리 필요",
+      "allowedImports": [
+        "../catalog-types",
+        "../controller/use-assignment-controller",
+        "../domain/fingerprint",
+        "../domain/model",
+        "../presentation/assignment-unit-range-label",
+        "./single-assignment-editor.module.css",
+        "@/content/format",
+        "@/content/ko/admin-learning",
+        "@/design-system/primitives/tooltip/help-tip",
+        "@/lib/admin/dataset-catalog",
+        "@/lib/deadline",
+        "@/lib/format"
+      ],
+      "legacySourceSha256": "948ac403b662657d176b8bc236bf4f4d551b866c1813a1747b2fb828354e30c4"
+    },
+    {
+      "path": "assignment-edit-range-summary.tsx",
+      "role": "deferred",
+      "reason": "저장 초안 전체→범위 요약값 분리 필요",
+      "allowedImports": [
+        "../catalog-types",
+        "./single-assignment-editor.module.css",
+        "@/lib/admin/assignment-edit",
+        "@/lib/admin/dataset-catalog"
+      ],
+      "legacySourceSha256": "5a09ae8622a62c6cf753f2bf9c6e8c3986be01f639836644a936f9c56a4174a9"
+    },
+    {
+      "path": "assignment-editor-fields.tsx",
+      "role": "pure",
+      "reason": "입력 배치·회차 행·선택 버튼",
+      "allowedImports": [
+        "./assignment-editor-fields.module.css",
+        "@/design-system/primitives/form/field",
+        "@/design-system/primitives/form/segmented-control",
+        "@/design-system/primitives/tooltip/help-tip",
+        "@/lib/admin/assignment-settings",
+        "react"
+      ]
+    },
+    {
+      "path": "assignment-editor-shell.tsx",
+      "role": "pure",
+      "reason": "폼·탭·잠금·패널 틀",
+      "allowedImports": [
+        "./assignment-editor-shell.module.css",
+        "@/design-system/primitives/badge/badge",
+        "@/design-system/primitives/tabs/tabs",
+        "react"
+      ]
+    },
+    {
+      "path": "assignment-planner-load-dialog.tsx",
+      "role": "pure",
+      "reason": "준비 중/실패/재시도 표시",
+      "allowedImports": [
+        "@/design-system/patterns/feedback/feedback",
+        "@/design-system/patterns/route-state/route-state",
+        "@/design-system/primitives/button/button",
+        "@/design-system/primitives/dialog/dialog"
+      ]
+    },
+    {
+      "path": "assignment-range-fields.tsx",
+      "role": "deferred",
+      "reason": "수정 제어기 인덱스 타입·전체 초안·추천 범위 계산 분리 필요",
+      "allowedImports": [
+        "../catalog-types",
+        "../controller/use-assignment-controller",
+        "../domain/vocab-planner-controls",
+        "../presentation/assignment-edit-field-errors",
+        "./assignment-capacity-summary",
+        "./assignment-unit-range-picker",
+        "@/content/ko/admin-learning",
+        "@/design-system/patterns/feedback/feedback",
+        "@/design-system/primitives/form/field",
+        "@/lib/admin/dataset-catalog",
+        "@/lib/admin/new-assignment-range"
+      ],
+      "legacySourceSha256": "9717c7ebb77eeedebaafe846325d2c8c5165056b1278cbd894fbe4301e08415f"
+    },
+    {
+      "path": "assignment-section.tsx",
+      "role": "pure",
+      "reason": "영역 제목·도움말·상태 틀",
+      "allowedImports": [
+        "./assignment-section.module.css",
+        "@/design-system/primitives/tooltip/help-tip",
+        "react"
+      ]
+    },
+    {
+      "path": "assignment-settings-fields.tsx",
+      "role": "deferred",
+      "reason": "수정 제어기 행동 묶음·전체 초안·일정 판정 분리 필요",
+      "allowedImports": [
+        "../controller/use-assignment-controller",
+        "../presentation/assignment-edit-field-errors",
+        "./assignment-availability-fields",
+        "./assignment-deadline-fields",
+        "./assignment-word-count-field",
+        "./exam-condition-fields",
+        "./exam-timing-fields"
+      ],
+      "legacySourceSha256": "9ad44be9eca126b73a66b64e42bb6baa703d3725417caab3e4de636722d9409f"
+    },
+    {
+      "path": "assignment-student-browser.tsx",
+      "role": "deferred",
+      "reason": "전체 화면 제어기를 행/바구니/진입 선택에 재전달",
+      "allowedImports": [
+        "../controller/use-assignment-workspace",
+        "./assignment-student-row",
+        "./assignment-workspace-filters",
+        "./assignment-workspace.module.css",
+        "./selected-student-basket",
+        "./vocab-assignment-entry-selector",
+        "@/content/format",
+        "@/content/ko/admin-learning",
+        "@/design-system/patterns/feedback/feedback",
+        "@/design-system/primitives/button/button",
+        "@/design-system/primitives/tabs/tabs",
+        "@/content/ko/admin-students"
+      ],
+      "legacySourceSha256": "66a1adf3c3dc45a348cc9f382643a1b555906762f22df253898aa988c0022276"
+    },
+    {
+      "path": "assignment-student-row.tsx",
+      "role": "deferred",
+      "reason": "한 학생 행에 전체 제어기 전달; 행 상태/동작으로 축소 필요",
+      "allowedImports": [
+        "../controller/use-assignment-workspace",
+        "./assignment-workspace.module.css",
+        "@/content/format",
+        "@/content/ko/admin-learning",
+        "@/design-system/patterns/action-reason/action-reason",
+        "@/design-system/patterns/activity-row/activity-row",
+        "@/design-system/primitives/badge/badge",
+        "@/design-system/primitives/button/button",
+        "@/features/students/public-contracts",
+        "@/lib/format"
+      ],
+      "legacySourceSha256": "49aef536e59765b6e2e88f6446320381a45ee3c1a54b12d4bb418f69fe37dc9a"
+    },
+    {
+      "path": "assignment-submit-action.tsx",
+      "role": "pure",
+      "reason": "제출 가능 여부·진행·사유 표시",
+      "allowedImports": [
+        "@/design-system/patterns/action-reason/action-reason",
+        "@/design-system/primitives/button/button",
+        "react"
+      ]
+    },
+    {
+      "path": "assignment-summary-panel.tsx",
+      "role": "deferred",
+      "reason": "전체 초안/제어기 타입→요약 행/표시 오류 분리 필요",
+      "allowedImports": [
+        "../catalog-types",
+        "../controller/use-assignment-controller",
+        "../presentation/assignment-edit-field-errors",
+        "../presentation/assignment-unit-range-label",
+        "./assignment-edit-comparison",
+        "./single-assignment-editor.module.css",
+        "@/content/format",
+        "@/content/ko/admin-learning",
+        "@/design-system/patterns/feedback/feedback",
+        "@/lib/admin/dataset-catalog",
+        "@/lib/deadline",
+        "@/lib/format"
+      ],
+      "legacySourceSha256": "c85210fa6aba973fd8679063972085922dc3d61a58098e5b2c7a9b7f2c850e94"
+    },
+    {
+      "path": "assignment-unit-range-picker.tsx",
+      "role": "pure",
+      "reason": "선택 단원·범위 표시와 선택 전달",
+      "allowedImports": [
+        "../catalog-types",
+        "../domain/vocab-planner-controls",
+        "../presentation/assignment-unit-range-label",
+        "./day-range-rail",
+        "./vocab-assignment-planner.module.css",
+        "@/design-system/primitives/button/button",
+        "@/design-system/primitives/form/field"
+      ]
+    },
+    {
+      "path": "assignment-word-count-field.tsx",
+      "role": "pure",
+      "reason": "주어진 최소/최대 수량 입력",
+      "allowedImports": [
+        "./vocab-assignment-planner.module.css",
+        "@/design-system/primitives/button/button",
+        "@/design-system/primitives/form/field",
+        "@/design-system/primitives/tooltip/help-tip",
+        "react"
+      ]
+    },
+    {
+      "path": "assignment-workspace-filters.tsx",
+      "role": "pure",
+      "reason": "검색 조건·선택지·개수 표시",
+      "allowedImports": [
+        "@/content/format",
+        "@/content/ko/admin-learning",
+        "@/content/ko/common",
+        "@/design-system/patterns/filter-workspace/filter-workspace",
+        "@/design-system/primitives/badge/badge",
+        "@/design-system/primitives/button/button",
+        "@/features/students/public-contracts"
+      ]
+    },
+    {
+      "path": "assignment-workspace.tsx",
+      "role": "assembly",
+      "reason": "학생 선택·준비 요청·모달·완료 갱신 연결, APP08 학생 공개 무효화 알림",
+      "allowedImports": [
+        "@/features/students/public-client",
+        "../contracts/assignment-workspace-read-model",
+        "../controller/use-assignment-workspace",
+        "./assignment-planner-load-dialog",
+        "./assignment-student-browser",
+        "@/content/format",
+        "@/content/ko/admin-learning",
+        "next/dynamic",
+        "react",
+        "sonner",
+        "./vocab-assignment-planner"
+      ]
+    },
+    {
+      "path": "bulk-exam-fields.tsx",
+      "role": "pure",
+      "reason": "준비된 유형 정책/시험 조건 입력",
+      "allowedImports": [
+        "../domain/model",
+        "../presentation/assignment-question-mode-view",
+        "./exam-condition-fields",
+        "./vocab-assignment-planner.module.css",
+        "@/content/ko/admin-learning",
+        "@/design-system/primitives/form/field",
+        "@/design-system/primitives/tabs/tabs"
+      ]
+    },
+    {
+      "path": "bulk-preview-session-list.tsx",
+      "role": "pure",
+      "reason": "주어진 회차 결과 표시",
+      "allowedImports": [
+        "../api/response-adapters",
+        "./assignment-editor-fields",
+        "./vocab-assignment-form.module.css",
+        "@/content/format",
+        "@/content/ko/admin-learning",
+        "@/design-system/primitives/badge/badge",
+        "@/lib/format"
+      ]
+    },
+    {
+      "path": "bulk-series-preview.tsx",
+      "role": "pure",
+      "reason": "APP09: 미리보기 결과/진행/오류/학생 표시만 받는 독립 표시",
+      "allowedImports": [
+        "../contracts/bulk-assignment-response",
+        "../presentation/bulk-plan-audience",
+        "./assignment-editor-fields",
+        "./bulk-preview-session-list",
+        "./vocab-assignment-form.module.css",
+        "@/content/ko/admin-learning",
+        "@/design-system/primitives/badge/badge",
+        "@/design-system/primitives/tooltip/help-tip",
+        "@/lib/format"
+      ]
+    },
+    {
+      "path": "day-range-rail.tsx",
+      "role": "interaction",
+      "reason": "단원 드래그·가로 이동·키보드 초점",
+      "allowedImports": [
+        "../catalog-types",
+        "./vocab-assignment-planner.module.css",
+        "@/design-system/primitives/button/button",
+        "@/lib/ui/motion",
+        "react"
+      ]
+    },
+    {
+      "path": "direct-review-assignment-sections.tsx",
+      "role": "assembly",
+      "reason": "오답 전용 상태·재시도를 독립 범위/요약에 연결",
+      "allowedImports": [
+        "../catalog-types",
+        "../controller/use-direct-review-assignment-controller",
+        "../presentation/direct-review-view",
+        "./assignment-availability-fields",
+        "./assignment-dataset-trigger",
+        "./assignment-deadline-fields",
+        "./assignment-section",
+        "./direct-review-preview",
+        "./direct-review-range-fields",
+        "./exam-condition-fields",
+        "./exam-timing-fields",
+        "./vocab-assignment-planner.module.css",
+        "@/lib/admin/dataset-catalog"
+      ]
+    },
+    {
+      "path": "direct-review-preview.tsx",
+      "role": "pure",
+      "reason": "오답 최종 요약의 제목/값 행 표시",
+      "allowedImports": [
+        "../presentation/direct-review-view",
+        "./vocab-assignment-planner.module.css"
+      ]
+    },
+    {
+      "path": "direct-review-range-fields.tsx",
+      "role": "pure",
+      "reason": "오답 표시값·선택·재시도 전달",
+      "allowedImports": [
+        "../domain/model",
+        "../presentation/direct-review-view",
+        "./assignment-dataset-trigger",
+        "./vocab-assignment-planner.module.css",
+        "@/design-system/patterns/feedback/feedback",
+        "@/design-system/primitives/button/button",
+        "@/design-system/primitives/form/field",
+        "@/design-system/primitives/tooltip/help-tip"
+      ]
+    },
+    {
+      "path": "exam-condition-fields.tsx",
+      "role": "pure",
+      "reason": "좁은 시험 조건 값 입력",
+      "allowedImports": [
+        "../domain/model",
+        "./vocab-assignment-planner.module.css",
+        "@/design-system/patterns/conditional-reveal/conditional-reveal",
+        "@/design-system/primitives/button/button",
+        "@/design-system/primitives/form/field",
+        "@/design-system/primitives/tooltip/help-tip"
+      ]
+    },
+    {
+      "path": "exam-timing-fields.tsx",
+      "role": "interaction",
+      "reason": "APP09: 시간 사용/시간 값/개별 콜백만 받는 입력 부품",
+      "allowedImports": [
+        "../domain/model",
+        "./assignment-editor-fields",
+        "./exam-timing-fields.module.css",
+        "@/content/ko/admin-learning",
+        "@/design-system/patterns/conditional-reveal/conditional-reveal",
+        "@/design-system/primitives/form/field",
+        "@/design-system/primitives/tooltip/help-tip"
+      ]
+    },
+    {
+      "path": "focus-invalid-assignment-field.ts",
+      "role": "interaction",
+      "reason": "오류 입력의 DOM 초점 이동 보조",
+      "allowedImports": []
+    },
+    {
+      "path": "legacy-review-recovery.tsx",
+      "role": "assembly",
+      "reason": "옛 초안 복구 명령과 주소 전환 연결",
+      "allowedImports": [
+        "../controller/use-legacy-review-recovery",
+        "./legacy-review-recovery.module.css",
+        "@/content/format",
+        "@/content/ko/admin-learning",
+        "@/design-system/primitives/badge/badge",
+        "@/design-system/primitives/button/button",
+        "@/design-system/primitives/dialog/dialog",
+        "@/lib/admin/review-assignment",
+        "@/lib/format",
+        "next/navigation",
+        "sonner"
+      ]
+    },
+    {
+      "path": "selected-student-basket.tsx",
+      "role": "deferred",
+      "reason": "전체 제어기→선택 학생·진행·해제 동작 분리 필요",
+      "allowedImports": [
+        "../controller/use-assignment-workspace",
+        "./assignment-workspace.module.css",
+        "@/design-system/primitives/button/button"
+      ],
+      "legacySourceSha256": "f99a4a5f78f1eecec7b3809f31a4c1d4113f5e4c4774f637998e3e813eed4d17"
+    },
+    {
+      "path": "single-assignment-editor-sections.tsx",
+      "role": "assembly",
+      "reason": "수정 종류별 잠금·영역·오류 조합",
+      "allowedImports": [
+        "../catalog-types",
+        "../controller/use-assignment-controller",
+        "../presentation/assignment-edit-field-errors",
+        "./assignment-edit-range-summary",
+        "./assignment-editor-shell",
+        "./assignment-range-fields",
+        "./assignment-section",
+        "./assignment-settings-fields",
+        "./assignment-summary-panel",
+        "@/content/ko/admin-learning",
+        "@/design-system/patterns/feedback/feedback",
+        "@/design-system/primitives/button/button",
+        "@/lib/admin/assignment-edit"
+      ]
+    },
+    {
+      "path": "single-assignment-editor.tsx",
+      "role": "assembly",
+      "reason": "수정 초안·제어기·저장 수명 연결",
+      "allowedImports": [
+        "../api/edit-draft-adapter",
+        "../controller/use-assignment-controller",
+        "../controller/use-assignment-dataset-unit-catalog",
+        "../domain/model",
+        "../presentation/assignment-automatic-title",
+        "../presentation/assignment-submit-blocker",
+        "../presentation/new-assignment-defaults",
+        "./assignment-editor-shell",
+        "./assignment-submit-action",
+        "./single-assignment-editor-sections",
+        "./single-assignment-editor.module.css",
+        "./single-assignment-editor.types",
+        "./use-edit-assignment-validation",
+        "@/content/format",
+        "@/content/ko/admin-learning",
+        "@/design-system/patterns/feedback/feedback",
+        "@/design-system/primitives/dialog/dialog",
+        "react",
+        "sonner"
+      ]
+    },
+    {
+      "path": "single-assignment-editor.types.ts",
+      "role": "assembly",
+      "reason": "수정 진입 계약의 타입 전용 경계; controller 직접 허용 아님",
+      "allowedImports": [
+        "../catalog-types",
+        "../contracts/single-assignment-editor-contract",
+        "@/lib/admin/assignment-edit"
+      ]
+    },
+    {
+      "path": "use-edit-assignment-validation.ts",
+      "role": "deferred",
+      "reason": "전체 제어기 받는 검증/초점 hook의 입력 축소 필요",
+      "allowedImports": [
+        "../controller/use-assignment-controller",
+        "../presentation/assignment-edit-field-errors",
+        "../presentation/assignment-edit-submit-presentation",
+        "./focus-invalid-assignment-field",
+        "@/lib/ui/motion",
+        "react"
+      ],
+      "legacySourceSha256": "f79dd94b16966d9f85b47dc090520e2ce7f4a5328d221d68f98ceafe22fdcd3d"
+    },
+    {
+      "path": "vocab-assignment-entry-selector.tsx",
+      "role": "deferred",
+      "reason": "전체 제어기→진입 방식·목록 상태·선택 동작 분리 필요",
+      "allowedImports": [
+        "../controller/use-assignment-workspace",
+        "./assignment-workspace.module.css",
+        "@/design-system/patterns/feedback/feedback",
+        "@/design-system/primitives/button/button",
+        "@/design-system/primitives/form/field",
+        "@/lib/admin/dataset-catalog"
+      ],
+      "legacySourceSha256": "eda3d066540ede1b582486ced6a70828d58c400d56992c163afd0928f9b69d4d"
+    },
+    {
+      "path": "vocab-assignment-planner.tsx",
+      "role": "assembly",
+      "reason": "일반/오답 제어기·범위/찾기·제출/폐기 수명 연결",
+      "allowedImports": [
+        "../catalog-types",
+        "../client/controllers/use-assignment-dataset-picker",
+        "../controller/use-assignment-dataset-unit-catalog",
+        "../controller/use-direct-review-assignment-controller",
+        "../controller/use-vocab-assignment-screen",
+        "./assignment-dataset-picker",
+        "./assignment-discard-dialog",
+        "./assignment-editor-shell",
+        "./assignment-submit-action",
+        "./direct-review-assignment-sections",
+        "./focus-invalid-assignment-field",
+        "./vocab-assignment-planner.module.css",
+        "./vocab-range-assignment-sections",
+        "@/design-system/primitives/badge/badge",
+        "@/design-system/primitives/dialog/dialog",
+        "@/lib/ui/motion",
+        "react",
+        "sonner"
+      ]
+    },
+    {
+      "path": "vocab-question-fields.tsx",
+      "role": "pure",
+      "reason": "수량/방식/선택의 값과 개별 동작",
+      "allowedImports": [
+        "../domain/vocab-assignment-contract",
+        "../presentation/vocab-question-view",
+        "./assignment-word-count-field",
+        "./exam-condition-fields",
+        "./vocab-assignment-planner.module.css",
+        "./vocab-unit-allocation-fields",
+        "@/design-system/patterns/conditional-reveal/conditional-reveal",
+        "@/design-system/primitives/button/button",
+        "@/design-system/primitives/form/field",
+        "@/design-system/primitives/tooltip/help-tip"
+      ]
+    },
+    {
+      "path": "vocab-range-assignment-sections.tsx",
+      "role": "assembly",
+      "reason": "범위·조건·일정 제어기를 좁은 표시/동작으로 연결",
+      "allowedImports": [
+        "../catalog-types",
+        "../client/controllers/use-vocab-schedule-template-input",
+        "../controller/use-vocab-assignment-screen",
+        "../domain/assignment-question-mode-policy",
+        "../domain/vocab-schedule",
+        "../presentation/assignment-question-mode-view",
+        "../presentation/vocab-assignment-field-errors",
+        "../presentation/vocab-schedule-view",
+        "./assignment-dataset-trigger",
+        "./assignment-section",
+        "./bulk-exam-fields",
+        "./bulk-series-preview",
+        "./exam-timing-fields",
+        "./vocab-assignment-planner.module.css",
+        "./vocab-range-fields",
+        "./vocab-range-picker",
+        "./vocab-schedule-detail-fields",
+        "./vocab-schedule-fields",
+        "@/design-system/patterns/feedback/feedback",
+        "@/design-system/primitives/button/button",
+        "@/design-system/primitives/form/field",
+        "@/design-system/primitives/tooltip/help-tip",
+        "sonner"
+      ]
+    },
+    {
+      "path": "vocab-range-fields.tsx",
+      "role": "pure",
+      "reason": "선택 단어장·범위 표시/입력",
+      "allowedImports": [
+        "../catalog-types",
+        "./assignment-dataset-trigger",
+        "./assignment-unit-range-picker",
+        "./vocab-assignment-planner.module.css"
+      ]
+    },
+    {
+      "path": "vocab-range-picker.tsx",
+      "role": "assembly",
+      "reason": "수량과 범위의 명시 조립부; 수량/단위 실제 UI에는 좁은 입력만 전달",
+      "allowedImports": [
+        "../catalog-types",
+        "../controller/use-vocab-assignment-planner",
+        "../presentation/bulk-plan-audience",
+        "../presentation/vocab-assignment-field-errors",
+        "../presentation/vocab-question-view",
+        "./assignment-dataset-trigger",
+        "./vocab-question-fields",
+        "./vocab-range-fields"
+      ]
+    },
+    {
+      "path": "vocab-schedule-detail-fields.tsx",
+      "role": "pure",
+      "reason": "회차 행·양식 이름 입력",
+      "allowedImports": [
+        "../domain/vocab-assignment-contract",
+        "../presentation/vocab-schedule-view",
+        "./vocab-assignment-planner.module.css",
+        "@/design-system/primitives/badge/badge",
+        "@/design-system/primitives/button/button",
+        "@/design-system/primitives/form/field",
+        "@/design-system/primitives/tooltip/help-tip"
+      ]
+    },
+    {
+      "path": "vocab-schedule-fields.tsx",
+      "role": "pure",
+      "reason": "받은 일정·계산 결과 표시/입력",
+      "allowedImports": [
+        "../domain/vocab-assignment-contract",
+        "../domain/vocab-schedule",
+        "../presentation/vocab-schedule-view",
+        "./assignment-editor-fields",
+        "./vocab-assignment-planner.module.css",
+        "@/design-system/patterns/conditional-reveal/conditional-reveal",
+        "@/design-system/primitives/badge/badge",
+        "@/design-system/primitives/button/button",
+        "@/design-system/primitives/form/field",
+        "react"
+      ]
+    },
+    {
+      "path": "vocab-unit-allocation-fields.tsx",
+      "role": "pure",
+      "reason": "단위 수/남은 범위의 값과 개별 동작",
+      "allowedImports": [
+        "../domain/vocab-assignment-contract",
+        "../presentation/vocab-question-view",
+        "./vocab-assignment-planner.module.css",
+        "@/design-system/primitives/button/button",
+        "@/design-system/primitives/form/field",
+        "@/design-system/primitives/tooltip/help-tip"
+      ]
+    },
+    {
+      "path": "cached-assignment-workspace.tsx",
+      "role": "assembly",
+      "reason": "APP10 현재 인증/캐시 진입 및 표시/인증 경계 연결. 업무 계산 없음",
+      "allowedImports": [
+        "@/features/students/public-contracts",
+        "@/features/students/public-client",
+        "../controller/assignment-authentication-boundary",
+        "@/design-system/primitives/dialog/dialog",
+        "@/design-system/primitives/button/button",
+        "@/design-system/patterns/feedback/feedback",
+        "@/design-system/patterns/route-state/route-state",
+        "./assignment-workspace"
+      ]
+    }
+  ]
+}

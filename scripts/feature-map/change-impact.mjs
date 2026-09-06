@@ -7,7 +7,7 @@ import {
   root,
 } from "./common.mjs";
 import { inferEffectiveFlow, inferredSiblingTests } from "./runtime-flow.mjs";
-import { exactOwnershipCollections } from "./ownership-catalog.mjs";
+import { exactOwnershipCollections, registeredOwnerForPath } from "./ownership-catalog.mjs";
 
 function gitLines(args) {
   const result = spawnSync("git", ["-c", "core.quotepath=false", ...args], {
@@ -90,7 +90,7 @@ function changedFileState(baseRef = null) {
   };
 }
 
-function buildFlowPathIndex(registry) {
+export function buildFlowPathIndex(registry) {
   const index = new Map();
   const flowById = new Map(registry.crossLayerFlows.map((flow) => [flow.id, flow]));
   const ownPathsByFlow = new Map();
@@ -157,6 +157,8 @@ function buildDeclaredFlowPathIndex(registry) {
 
 function ownersForPath(registry, filePath, flowPathIndex) {
   const owners = new Set();
+  const registeredOwner = registeredOwnerForPath(registry, filePath);
+  if (registeredOwner) owners.add(registeredOwner);
   const flows = flowPathIndex.get(filePath) ?? [];
   for (const { entries } of exactOwnershipCollections(registry)) {
     const match = entries.find((entry) => entry.path === filePath);
@@ -187,7 +189,7 @@ function ownersForPath(registry, filePath, flowPathIndex) {
   return { owners: [...owners], flows };
 }
 
-export function printChangedImpact(registry, baseRef = null) {
+export function collectChangedImpact(registry, baseRef = null, { print = false } = {}) {
   const { changed, deleted, deletedFromBase, deletedFromHead } = changedFileState(baseRef);
   const flowPathIndex = buildFlowPathIndex(registry);
   const baseSnapshotRef = mergeBase(baseRef);
@@ -250,7 +252,7 @@ export function printChangedImpact(registry, baseRef = null) {
     }
   }
 
-  console.log(`\n변경 파일 영향 지도${baseRef ? ` (${baseRef}...HEAD + 작업 트리)` : " (작업 트리)"}`);
+  if (print) console.log(`\n변경 파일 영향 지도${baseRef ? ` (${baseRef}...HEAD + 작업 트리)` : " (작업 트리)"}`);
   for (const change of mappedChanges) {
     const { filePath, current, previous, mapped } = change;
     const contextualFlows = change.deleted && mapped.flows.length === 0
@@ -265,7 +267,7 @@ export function printChangedImpact(registry, baseRef = null) {
       ...contextualFlows.map((flow) => `관련 변경 flow:${flow}`),
       ...(change.deleted ? ["삭제·이동 전 경로"] : []),
     ];
-    console.log(`- ${filePath}: ${labels.length > 0 ? labels.join(", ") : "지도 밖"}`);
+    if (print) console.log(`- ${filePath}: ${labels.length > 0 ? labels.join(", ") : "지도 밖"}`);
     const mustMap = /^(src|supabase\/migrations)\//.test(filePath);
     if (mustMap && mapped.owners.length === 0 && mapped.flows.length === 0) unmapped.push(filePath);
     const needsDetailedFlow =
@@ -285,4 +287,9 @@ export function printChangedImpact(registry, baseRef = null) {
         "해당 파일을 기존 crossLayerFlows에 연결하거나 새 기능 흐름을 등록하세요.",
     );
   }
+  return mappedChanges;
+}
+
+export function printChangedImpact(registry, baseRef = null) {
+  return collectChangedImpact(registry, baseRef, { print: true });
 }

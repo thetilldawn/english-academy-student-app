@@ -1,9 +1,13 @@
 export {
   emptyStudentDirectoryFilters,
   normalizeStudentDirectoryFilters,
+  studentDirectoryFilterKey,
   studentDirectoryStatuses,
   studentDirectoryWrongFilters,
 } from "./contracts/student-directory-read-model";
+
+export { StudentDirectoryRequestError } from "./contracts/student-directory-cache-contract";
+export type { DirectoryCacheResponse } from "./contracts/student-directory-cache-contract";
 
 export type {
   StudentDirectoryFilterOptions,

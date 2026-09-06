@@ -1,31 +1,11 @@
-import type {
-  AdminHistoryNextPage,
-  AdminHistoryReadRequest,
-  AdminHistorySectionRefresh,
-  AdminHistorySnapshot,
-} from "@/features/history/contracts/admin-history-read-model";
-import {
-  createRequestDeadline,
-  INTERACTIVE_READ_REQUEST_DEADLINE_MS,
-} from "@/lib/network/request-policy";
+import type { AdminHistoryReadRequest } from "../contracts/admin-history-read-model";
+import { AdminHistoryRequestError } from "../contracts/admin-history-request-error";
+import { parseHistoryCacheResponse, parseHistoryNextPage, parseHistorySection, parseHistorySnapshot } from "../api/history-read-response";
+import type { HistoryCacheRequest } from "../contracts/history-list-cache-contract";
+import { createRequestDeadline, INTERACTIVE_READ_REQUEST_DEADLINE_MS } from "@/lib/network/request-policy";
 
-type HistoryPageResponse = {
-  code?: string;
-  error?: string;
-  page?: AdminHistoryNextPage;
-  section?: AdminHistorySectionRefresh["section"];
-  snapshot?: AdminHistorySnapshot;
-};
-
-async function requestHistoryPage(
-  request: AdminHistoryReadRequest,
-  signal?: AbortSignal,
-) {
-  const deadline = createRequestDeadline(
-    INTERACTIVE_READ_REQUEST_DEADLINE_MS,
-    signal,
-  );
-
+async function requestHistoryPage(request: AdminHistoryReadRequest | HistoryCacheRequest, signal?: AbortSignal) {
+  const deadline = createRequestDeadline(INTERACTIVE_READ_REQUEST_DEADLINE_MS, signal);
   try {
     const response = await fetch("/api/admin/history", {
       body: JSON.stringify(request),
@@ -34,22 +14,23 @@ async function requestHistoryPage(
       method: "POST",
       signal: deadline.signal,
     });
-    const payload = await response.json().catch(() => null) as
-      | HistoryPageResponse
-      | null;
-    if (!response.ok || !payload) {
-      throw new Error(
-        payload?.error ?? "시험 내역을 불러오지 못했습니다.",
-      );
+    // Authentication must not depend on the error body being valid JSON.
+    if (response.status === 401) throw new AdminHistoryRequestError("unauthenticated");
+    if (response.status === 403) throw new AdminHistoryRequestError("forbidden");
+    const payload: unknown = await response.json().catch(() => null);
+    if (!response.ok) {
+      if (response.status === 400) throw new AdminHistoryRequestError("invalid-request");
+      if (payload && typeof payload === "object" && "code" in payload &&
+          payload.code === "upstream_timeout") throw new AdminHistoryRequestError("timeout");
+      throw new AdminHistoryRequestError("unavailable");
     }
+    if (!payload) throw new AdminHistoryRequestError("invalid-response");
     return payload;
   } catch (error) {
-    if (deadline.expired) {
-      throw new Error(
-        "시험 내역 응답이 늦어지고 있습니다. 다시 시도해 주세요.",
-      );
-    }
-    throw error;
+    if (signal?.aborted) throw error;
+    if (deadline.expired) throw new AdminHistoryRequestError("timeout");
+    if (error instanceof AdminHistoryRequestError) throw error;
+    throw new AdminHistoryRequestError("unavailable");
   } finally {
     deadline.dispose();
   }
@@ -59,31 +40,23 @@ export async function loadAdminHistorySnapshot(
   request: Extract<AdminHistoryReadRequest, { mode: "initial" }>,
   signal?: AbortSignal,
 ) {
-  const payload = await requestHistoryPage(request, signal);
-  if (!payload.snapshot) {
-    throw new Error("시험 내역 응답을 확인하지 못했습니다.");
-  }
-  return payload.snapshot;
+  return parseHistorySnapshot(await requestHistoryPage(request, signal), request);
+}
+
+export async function readHistoryListCache(request: HistoryCacheRequest, signal?: AbortSignal) {
+  return parseHistoryCacheResponse(await requestHistoryPage(request, signal), request);
 }
 
 export async function loadAdminHistoryNextPage(
   request: Extract<AdminHistoryReadRequest, { mode: "page" }>,
   signal?: AbortSignal,
 ) {
-  const payload = await requestHistoryPage(request, signal);
-  if (!payload.page) {
-    throw new Error("다음 시험 내역 응답을 확인하지 못했습니다.");
-  }
-  return payload.page;
+  return parseHistoryNextPage(await requestHistoryPage(request, signal));
 }
 
 export async function loadAdminHistoryFreshSection(
   request: Extract<AdminHistoryReadRequest, { mode: "section" }>,
   signal?: AbortSignal,
 ) {
-  const payload = await requestHistoryPage(request, signal);
-  if (!payload.section) {
-    throw new Error("시험 내역 구역 응답을 확인하지 못했습니다.");
-  }
-  return payload.section;
+  return parseHistorySection(await requestHistoryPage(request, signal), request.groupKey);
 }

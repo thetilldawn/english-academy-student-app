@@ -1,0 +1,449 @@
+{
+  "schemaVersion": 1,
+  "id": "DEPLOY-20260906-01",
+  "title": "검증된 캐시와 단어장 운영 반영",
+  "size": "full",
+  "gate": "design",
+  "guide": "docs/work-orders/DEPLOY-20260906-01.md",
+  "baseline": "bc48313bc53840a44ab6505a8238eaabf7667eae",
+  "owners": [
+    "shared-infra",
+    "app-shell",
+    "assignments",
+    "history",
+    "students",
+    "architecture-meta"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal"
+  ],
+  "scope": [
+    {
+      "path": "src/lib/env.ts",
+      "owner": "shared-infra",
+      "state": "existing",
+      "flowIds": []
+    },
+    {
+      "path": "src/lib/env.test.ts",
+      "owner": "shared-infra",
+      "state": "existing",
+      "flowIds": []
+    },
+    {
+      "path": "src/app/admin/(protected)/layout.tsx",
+      "owner": "app-shell",
+      "state": "existing",
+      "flowIds": [
+        "student-management-screen"
+      ]
+    },
+    {
+      "path": "src/app/admin/(protected)/assignments/page.tsx",
+      "owner": "assignments",
+      "state": "existing",
+      "flowIds": [
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ]
+    },
+    {
+      "path": "src/app/admin/(protected)/results/page.tsx",
+      "owner": "history",
+      "state": "existing",
+      "flowIds": [
+        "admin-history-read"
+      ]
+    },
+    {
+      "path": "src/features/students/server/components/student-directory-content.tsx",
+      "owner": "students",
+      "state": "existing",
+      "flowIds": [
+        "student-management-screen"
+      ]
+    },
+    {
+      "path": "src/features/students/server/components/student-panel-failure.test.tsx",
+      "owner": "students",
+      "state": "existing",
+      "flowIds": [
+        "student-management-screen"
+      ]
+    },
+    {
+      "path": "src/features/students/AGENTS.md",
+      "owner": "students",
+      "state": "existing",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/history/AGENTS.md",
+      "owner": "history",
+      "state": "existing",
+      "flowIds": []
+    },
+    {
+      "path": "architecture/기능_소유권.json",
+      "owner": "architecture-meta",
+      "state": "existing",
+      "flowIds": []
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "검증된 캐시가 실제 배포에서 동작",
+      "acceptance": "기본ON,0/잘못된 값은OFF, 공백은기본. 학생OFF면배정OFF·내역독립. 다섯 판정은 하나의 환경 해석으로 일치, 기존auth/수명/폐기 불변",
+      "disposition": "required",
+      "owners": [
+        "shared-infra",
+        "students",
+        "assignments",
+        "history"
+      ],
+      "flowIds": [
+        "student-management-screen",
+        "assignment-workspace-load",
+        "admin-history-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "engineering",
+      "text": "현재 통합 코드와 실제 검사 근거 일치",
+      "acceptance": "APP01~13 과거 결과 보존·현재 전체회귀/구조/타입/lint/build 검증. 실제학생/DB/새의존성 변화0, 마지막 기능 이전 작업 보존",
+      "disposition": "required",
+      "owners": [
+        "architecture-meta"
+      ],
+      "flowIds": [
+        "student-management-screen",
+        "assignment-workspace-load",
+        "admin-history-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "user",
+      "text": "기존 공개 GitHub를 통한 Preview와 Production",
+      "acceptance": "승인된 소스만 게시,키/학생/원자료0. 기존브랜치Preview 성공확인 후 main fast-forward. 새 production 환경으로 빌드; 정확SHA/환경·읽기검증. 새팀/유료/보호해제/DB변경없음",
+      "disposition": "required",
+      "owners": [
+        "architecture-meta"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "최종 운영 반영과 공개 소스",
+      "answer": "캐시·구조 먼저/마지막 가리기 후 문제 없으면 Preview와 Production. 직전 공개 GitHub 코드·문서 업로드 질문에 ㄱㄱ 승인.",
+      "source": "2026-09-06 사용자 승인 순서 및 공개 업로드 확인 답변"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "캐시 활성화 전달 경로",
+      "answer": "기존 Vercel MCP는 프로젝트 조회404, CLI 인증 실제토큰없음. 새접속/팀 없이 배포설정의 기본값을 검증된ON으로 전환하고 세 환경변수 0으로 복구. 학생OFF면배정OFF. 비정상문자열은OFF, 미설정/공백/1은ON. 기존 수명/권한/DB 동작 불변.",
+      "source": "APP08/10/12 성능·안전 관문, readonly 독립 배포 감사 및 사용자 운영 반영"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "캐시 시나리오와 과거근거",
+      "answer": "과거 기본OFF·측정 원시값은 그대로 보존. 현재 활성 기본값은 이 지시서와 env.example에 기록. 원격 명시0 가능성은 실제 Preview/Production의 개인캐시 진입으로 검증.",
+      "source": "현재 코드의다섯환경분기/로컬실험은이미0·1명시"
+    },
+    {
+      "id": "D4",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "소스 커밋 경계",
+      "answer": "작업 고유 파일은 해당 지시서에 귀속. 현재 재검산한 61개 중첩 파일은 최종 변경을 다시 임의 과거단계로 꾸미지 않고 변경 책임과 공통 연결을 별도 통합 검토한다. 중간 커밋 검증 주장 없이 최종 전체 트리만 출시 근거로 삼는다.",
+      "source": "실제dirty변경과 작업별scope 교차 감사"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "checked",
+      "reason": "기존검증기능의배포 활성화·회귀. 업무/DTO/권한/캐시수명/문구/DB 변경없음; 환경 기본값과 연결만 변경"
+    },
+    "ui": {
+      "status": "checked",
+      "reason": "기존검증기능의배포 활성화·회귀. 업무/DTO/권한/캐시수명/문구/DB 변경없음; 환경 기본값과 연결만 변경"
+    },
+    "state": {
+      "status": "checked",
+      "reason": "기존검증기능의배포 활성화·회귀. 업무/DTO/권한/캐시수명/문구/DB 변경없음; 환경 기본값과 연결만 변경"
+    },
+    "domain": {
+      "status": "checked",
+      "reason": "기존검증기능의배포 활성화·회귀. 업무/DTO/권한/캐시수명/문구/DB 변경없음; 환경 기본값과 연결만 변경"
+    },
+    "data": {
+      "status": "checked",
+      "reason": "기존검증기능의배포 활성화·회귀. 업무/DTO/권한/캐시수명/문구/DB 변경없음; 환경 기본값과 연결만 변경"
+    },
+    "api": {
+      "status": "checked",
+      "reason": "기존검증기능의배포 활성화·회귀. 업무/DTO/권한/캐시수명/문구/DB 변경없음; 환경 기본값과 연결만 변경"
+    },
+    "cache": {
+      "status": "changed",
+      "reason": "기존검증기능의배포 활성화·회귀. 업무/DTO/권한/캐시수명/문구/DB 변경없음; 환경 기본값과 연결만 변경"
+    },
+    "asyncUi": {
+      "status": "checked",
+      "reason": "기존검증기능의배포 활성화·회귀. 업무/DTO/권한/캐시수명/문구/DB 변경없음; 환경 기본값과 연결만 변경"
+    },
+    "security": {
+      "status": "checked",
+      "reason": "기존검증기능의배포 활성화·회귀. 업무/DTO/권한/캐시수명/문구/DB 변경없음; 환경 기본값과 연결만 변경"
+    },
+    "styles": {
+      "status": "checked",
+      "reason": "기존검증기능의배포 활성화·회귀. 업무/DTO/권한/캐시수명/문구/DB 변경없음; 환경 기본값과 연결만 변경"
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "기존검증기능의배포 활성화·회귀. 업무/DTO/권한/캐시수명/문구/DB 변경없음; 환경 기본값과 연결만 변경"
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "개인 캐시 ON의 인증·원문·정답 제외 및 격리 회귀, 공개소스안전",
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "개인 캐시 ON의 인증·원문·정답 제외 및 격리 회귀, 공개소스안전",
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "개인 캐시 ON의 인증·원문·정답 제외 및 격리 회귀, 공개소스안전",
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "개인 캐시 ON의 인증·원문·정답 제외 및 격리 회귀, 공개소스안전",
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "앱 환경 해석1곳→관리자layout Provider/학생·배정·내역RSC 일치→기존개인캐시. 생성/배정/응시/조회/검색/수정/삭제/기록의기존흐름변경없음: 검증된기능활성화와배포만.",
+    "reuse": "기존src/lib/env 환경 책임 재사용. 기능별 Client/DTO/Controller/서버Query 경계·디자인부품 불변. 환경 해석을화면마다복사하지않음.",
+    "cache": "기본ON은 서버공유캐시 도입이 아님. 현재인증 후 동일 사용자 브라우저 메모리15/60/120초 유지. 학생OFF는배정OFF,내역독립.0이면 기존 uncached조회로복구.",
+    "compatibility": "Next16.2.12/React19.2.8/기존lock 유지. Preview는staging/Production은production DB 환경으로별도빌드. 실제DB스키마/자료 변경없음.",
+    "rollback": "캐시만 세CANARY=0 설정 후재배포하거나 env기본값을OFF로복구하는소스커밋. 앱전체문제는정확이전Production SHA로일반복구배포; force-push/DB역변경금지."
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "현재 인증·최초 응답 대기",
+      "message": "목록을 불러오는 중입니다.",
+      "behavior": "기존 기능 문구·동작 유지, 새 배포 전용 UI 없음. 현재 인증 전 개인 자료 숨김, 기존 로더 유지",
+      "recovery": "응답 또는 해당 영역 실패",
+      "component": "src/design-system/patterns/route-state/route-state.tsx",
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "유효기간 만료·복귀 확인",
+      "message": "목록을 다시 불러오는 중입니다.",
+      "behavior": "기존 기능 문구·동작 유지, 새 배포 전용 UI 없음. 기존 current auth/15·60·120초 정책 그대로",
+      "recovery": "현재 권한의 새 응답",
+      "component": "src/design-system/patterns/route-state/route-state.tsx",
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "범위 미선택",
+      "message": "시험 범위를 선택해 주세요.",
+      "behavior": "기존 기능 문구·동작 유지, 새 배포 전용 UI 없음. 기존 FieldHelp 유지",
+      "recovery": "선택 후 다음 조작",
+      "component": "src/design-system/patterns/route-state/route-state.tsx",
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "현재 조건 성공0건",
+      "message": "조건에 맞는 학생이 없습니다.",
+      "behavior": "기존 기능 문구·동작 유지, 새 배포 전용 UI 없음. 성공0건과 조회 실패 분리",
+      "recovery": "조건 변경",
+      "component": "src/design-system/patterns/route-state/route-state.tsx",
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "잘못된 입력",
+      "message": "입력한 내용을 확인해 주세요.",
+      "behavior": "기존 기능 문구·동작 유지, 새 배포 전용 UI 없음. 새 입력 없음, 기존 필드 옆 안내 유지",
+      "recovery": "입력 보존 후 수정",
+      "component": "src/design-system/patterns/route-state/route-state.tsx",
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "조회 실패",
+      "message": "목록을 불러오지 못했습니다. 다시 시도해 주세요.",
+      "behavior": "기존 기능 문구·동작 유지, 새 배포 전용 UI 없음. 기존 기능별 안전한 조회 실패 안내 유지",
+      "recovery": "다시 시도, 옛 개인 자료 재노출 금지",
+      "component": "src/design-system/patterns/route-state/route-state.tsx",
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "기존 저장 실패",
+      "message": "저장하지 못했습니다. 다시 시도해 주세요.",
+      "behavior": "기존 기능 문구·동작 유지, 새 배포 전용 UI 없음. 저장 동작 변경없음·입력 보존",
+      "recovery": "실패 확정 시 기존 안전 재시도",
+      "component": "src/design-system/patterns/route-state/route-state.tsx",
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "현재 인증 거절",
+      "message": "다시 로그인해 주세요.",
+      "behavior": "기존 기능 문구·동작 유지, 새 배포 전용 UI 없음. 기존 redirect/개인자료 숨김·캐시폐기",
+      "recovery": "로그인",
+      "component": "src/design-system/patterns/route-state/route-state.tsx",
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "없는 주소",
+      "message": "페이지를 찾을 수 없습니다.",
+      "behavior": "기존 기능 문구·동작 유지, 새 배포 전용 UI 없음. 기존 not-found 유지",
+      "recovery": "처음으로",
+      "component": "src/design-system/patterns/route-state/route-state.tsx",
+      "checkIds": [
+        "T2"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "예상 밖 렌더 실패",
+      "message": "화면을 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.",
+      "behavior": "기존 기능 문구·동작 유지, 새 배포 전용 UI 없음. 기존 오류 경계/내부정보 숨김",
+      "recovery": "다시 시도",
+      "component": "src/design-system/patterns/route-state/route-state.tsx",
+      "checkIds": [
+        "T2"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "Next16.2.12/개발기준v1.1/APP12검증본",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "캐시실험 채택근거를 배포 기본값으로 연결, 사용자결정0건; 실제환경 완료는배포후 판정"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "unit",
+      "target": "src/lib/env.test.ts",
+      "scenario": "미설정·공백·1·0·잘못된값과세플래그의8조합; ON/OFF조회실패·redirect",
+      "expected": "Provider와화면판정 동일, 학생OFF면배정OFF, 내역독립; 실패복구와인증경계유지",
+      "topics": [
+        "behavior",
+        "cache",
+        "authorization",
+        "error-ui"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "build",
+      "target": "package.json",
+      "scenario": "최종통합전체검사·타입/lint/구조/요청캐시·로컬새빌드·공개소스검토·지시서연결",
+      "expected": "현재소스와증거일치·비밀/학생/원천0·DB변경0·개인격리/정답/오류문구 회귀0",
+      "topics": [
+        "behavior",
+        "structure",
+        "cache",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "browser",
+      "target": null,
+      "scenario": "정확SHA Preview빌드/identity·기존테스트학생 단어읽기·현재관리자캐시경로; Production별도빌드/읽기/previewidentity404",
+      "expected": "Preview/Production정확대상READY·정상로그인/읽기·운영캐시활성·실학생쓰기0",
+      "topics": [
+        "behavior",
+        "cache",
+        "authorization",
+        "data-leak",
+        "answer-leak"
+      ]
+    }
+  ],
+  "verification": null
+}

@@ -80,6 +80,8 @@ export type StudentDirectoryPageRequest = {
   cursor: string;
   filters: StudentDirectoryFilters;
   mode: "page";
+  cacheIdentity?: string | null;
+  cacheUserId?: string;
 };
 
 export type StudentDirectoryReadRequest =
@@ -105,4 +107,8 @@ export function normalizeStudentDirectoryFilters(
       ? filters.wrong
       : "all",
   };
+}
+
+export function studentDirectoryFilterKey(filters: StudentDirectoryFilters) {
+  return JSON.stringify(normalizeStudentDirectoryFilters(filters));
 }

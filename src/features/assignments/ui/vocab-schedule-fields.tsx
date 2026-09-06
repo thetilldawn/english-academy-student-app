@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { AssignmentFieldGrid } from "./assignment-editor-fields";
 import { Button } from "@/design-system/primitives/button/button";
 import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
@@ -12,16 +14,11 @@ import {
   Select,
 } from "@/design-system/primitives/form/field";
 import { ConditionalReveal } from "@/design-system/patterns/conditional-reveal/conditional-reveal";
-import { cataloguedDatasetDisplayLabel } from "@/lib/admin/dataset-catalog";
 
-import type { VocabAssignmentScreenController } from "../controller/use-vocab-assignment-screen";
-import type { IsoWeekday } from "../domain/vocab-assignment-contract";
-import type {
-  VocabAssignmentFieldKey,
-} from "../presentation/vocab-assignment-field-errors";
-import { assignmentUnitRangeLabel } from "../presentation/assignment-unit-range-label";
+import type { IsoWeekday, VocabScheduleDraft } from "../domain/vocab-assignment-contract";
+import type { VocabScheduleCounts } from "../domain/vocab-schedule";
+import type { VocabScheduleFieldErrors } from "../presentation/vocab-schedule-view";
 import styles from "./vocab-assignment-planner.module.css";
-import { VocabScheduleDetailFields } from "./vocab-schedule-detail-fields";
 
 const weekdays: ReadonlyArray<readonly [IsoWeekday, string]> = [
   [1, "월"],
@@ -34,50 +31,35 @@ const weekdays: ReadonlyArray<readonly [IsoWeekday, string]> = [
 ];
 const deadlineOffsets = Array.from({ length: 31 }, (_, offset) => offset);
 
+export type VocabScheduleFieldsProps = {
+  schedule: VocabScheduleDraft;
+  scheduleEnabled: boolean;
+  scheduleAllowed: boolean;
+  scheduleMessage: string | null;
+  datasetLabel: string;
+  rangeLabel: string;
+  counts: VocabScheduleCounts;
+  fieldErrors?: Pick<VocabScheduleFieldErrors, "startDate" | "weekdays" | "availableTime" | "deadlineOffset" | "deadlineTime">;
+  onScheduleEnabledChange: (enabled: boolean) => void;
+  onScheduleChange: (patch: Partial<VocabScheduleDraft>) => void;
+  onWeekdayToggle: (weekday: IsoWeekday) => void;
+  onCancelExtraDates: () => void;
+  onRepeatFromStart: () => void;
+  details: ReactNode;
+};
+
 export function VocabScheduleFields({
-  controller,
-  fieldErrors = {},
-}: {
-  controller: VocabAssignmentScreenController;
-  fieldErrors?: Partial<Record<VocabAssignmentFieldKey, string>>;
-}) {
-  const schedule = controller.planner.schedule;
-  const scheduleEnabled = controller.planner.scheduleEnabled !== false;
-  const canonicalQuestionMode =
-    controller.bulk.state.draft.questionMode !== "book_meaning_choice";
+  schedule, scheduleEnabled, scheduleAllowed, scheduleMessage, datasetLabel, rangeLabel,
+  counts, fieldErrors = {}, onScheduleEnabledChange, onScheduleChange,
+  onWeekdayToggle, onCancelExtraDates, onRepeatFromStart, details,
+}: VocabScheduleFieldsProps) {
   const availableTimeEnabled = schedule.availableTimeEnabled !== false;
   const startDateError = fieldErrors.startDate;
   const weekdaysError = fieldErrors.weekdays;
   const availableTimeError = fieldErrors.availableTime;
   const deadlineOffsetError = fieldErrors.deadlineOffset;
   const deadlineTimeError = fieldErrors.deadlineTime;
-  const representative = controller.bulk.preview?.items?.find(
-    (item) => item.datasetLabel,
-  ) ?? null;
-  const selectedDataset = controller.readyDatasets?.find(
-    (dataset) => dataset.id === controller.planner.datasetId,
-  ) ?? null;
-  const datasetLabel = selectedDataset
-    ? cataloguedDatasetDisplayLabel(selectedDataset)
-    : representative?.datasetLabel ?? "단어장 미선택";
-  const selectedUnits = controller.selectedUnits ?? [];
-  const rangeLabel = selectedUnits.length === 0
-    ? "범위 미선택"
-    : assignmentUnitRangeLabel(
-        selectedUnits.map((unit) => unit.label),
-        selectedUnits.map((unit) => unit.sortIndex),
-      );
-  const baseSessionCount = controller.requiresExtraDateDecision
-    ? controller.extraDateDecisionSessionCount ?? controller.defaultSessionCount
-    : controller.defaultSessionCount;
-  const currentScheduleCount = !scheduleEnabled
-    ? 1
-    : controller.distribution === "repeat"
-      ? controller.scheduleSlots.length
-      : Math.min(controller.scheduleSlots.length, baseSessionCount ?? 0);
-  const remainingSessionCount = controller.distribution === "repeat"
-    ? 0
-    : Math.max(0, (baseSessionCount ?? 0) - currentScheduleCount);
+  const { currentScheduleCount, remainingSessionCount } = counts;
 
   return (
     <div className={styles.fieldStack}>
@@ -92,17 +74,17 @@ export function VocabScheduleFields({
         <label className={styles.inlineToggle}>
           <Checkbox
             checked={scheduleEnabled}
-            disabled={canonicalQuestionMode}
+            disabled={!scheduleAllowed}
             onChange={(event) =>
-              controller.actions.changeScheduleEnabled(event.target.checked)
+              onScheduleEnabledChange(event.target.checked)
             }
           />
           <span>사용</span>
         </label>
       </div>
-      {canonicalQuestionMode ? (
+      {scheduleMessage ? (
         <small role="status">
-          영영풀이·예문 시험은 현재 Preview에서 바로 배정 1회로 확인합니다.
+          {scheduleMessage}
         </small>
       ) : null}
       <ConditionalReveal open={scheduleEnabled}>
@@ -114,7 +96,7 @@ export function VocabScheduleFields({
           aria-invalid={Boolean(startDateError)}
           data-field-key="startDate"
           onChange={(event) =>
-            controller.actions.updateSchedule({ startDate: event.target.value })
+            onScheduleChange({ startDate: event.target.value })
           }
           type="date"
           value={schedule.startDate}
@@ -131,9 +113,9 @@ export function VocabScheduleFields({
             {remainingSessionCount > 0
               ? ` · 남음 ${remainingSessionCount}회`
               : ""}
-            {!controller.requiresExtraDateDecision &&
-                controller.repeatCycleCount > 1
-              ? ` · 범위 ${controller.repeatCycleCount}바퀴`
+            {!counts.requiresExtraDateDecision &&
+                counts.repeatCycleCount > 1
+              ? ` · 범위 ${counts.repeatCycleCount}바퀴`
               : ""}
           </MetaTag>
         </div>
@@ -149,7 +131,7 @@ export function VocabScheduleFields({
             <Button
               aria-pressed={schedule.weekdays.includes(weekday)}
               key={weekday}
-              onClick={() => controller.actions.toggleWeekday(weekday)}
+              onClick={() => onWeekdayToggle(weekday)}
               size="small"
               variant="filter"
             >
@@ -161,23 +143,21 @@ export function VocabScheduleFields({
           <FieldError id="vocab-weekdays-error">{weekdaysError}</FieldError>
         ) : null}
       </Field>
-      {controller.requiresExtraDateDecision ? (
+      {counts.requiresExtraDateDecision ? (
         <div className={styles.warning} role="status">
           <span>
-            기본 {controller.extraDateDecisionSessionCount ?? controller.defaultSessionCount ?? 0}회보다 날짜가 많아 범위를 총 {controller.repeatCycleCount}바퀴 사용합니다. {controller.repeatCycleCount}번째 바퀴까지 처음부터 반복할까요?
+            기본 {counts.baseSessionCount}회보다 날짜가 많아 범위를 총 {counts.repeatCycleCount}바퀴 사용합니다. {counts.repeatCycleCount}번째 바퀴까지 처음부터 반복할까요?
           </span>
           <div className={styles.warningActions}>
             <Button
-              onClick={controller.actions.cancelExtraDates}
+              onClick={onCancelExtraDates}
               size="small"
               variant="secondary"
             >
               추가 취소
             </Button>
             <Button
-              onClick={() =>
-                controller.actions.changeExtraDatePolicy("repeat_from_start")
-              }
+              onClick={onRepeatFromStart}
               size="small"
               variant="primary"
             >
@@ -192,7 +172,7 @@ export function VocabScheduleFields({
           <Checkbox
             checked={availableTimeEnabled}
             onChange={(event) =>
-              controller.actions.updateSchedule({
+              onScheduleChange({
                 availableTimeEnabled: event.target.checked,
               })
             }
@@ -210,7 +190,7 @@ export function VocabScheduleFields({
             aria-invalid={Boolean(availableTimeError)}
             data-field-key="availableTime"
             onChange={(event) =>
-              controller.actions.updateSchedule({ availableTime: event.target.value })
+              onScheduleChange({ availableTime: event.target.value })
             }
             type="time"
             value={schedule.availableTime}
@@ -232,7 +212,7 @@ export function VocabScheduleFields({
             aria-invalid={Boolean(deadlineOffsetError)}
             data-field-key="deadlineOffset"
             onChange={(event) =>
-              controller.actions.updateSchedule({
+              onScheduleChange({
                 deadlineDayOffset: Number(event.target.value),
               })
             }
@@ -263,7 +243,7 @@ export function VocabScheduleFields({
             aria-invalid={Boolean(deadlineTimeError)}
             data-field-key="deadlineTime"
             onChange={(event) =>
-              controller.actions.updateSchedule({ deadlineTime: event.target.value })
+              onScheduleChange({ deadlineTime: event.target.value })
             }
             type="time"
             value={schedule.deadlineTime}
@@ -275,10 +255,7 @@ export function VocabScheduleFields({
           ) : null}
         </Field>
       </AssignmentFieldGrid>
-      <VocabScheduleDetailFields
-        controller={controller}
-        fieldErrors={fieldErrors}
-      />
+      {details}
         </div>
       </ConditionalReveal>
     </div>

@@ -6,10 +6,12 @@ import { Notice } from "@/design-system/patterns/feedback/feedback";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import { AssignmentWorkspace } from "@/features/assignments/ui/assignment-workspace";
+import { CachedAssignmentWorkspace } from "@/features/assignments/ui/cached-assignment-workspace";
 import { LegacyReviewRecovery } from "@/features/assignments/ui/legacy-review-recovery";
-import { getStudentDirectoryInitial } from "@/features/students/public-server";
+import { getStudentDirectoryInitial, getStudentDirectoryCacheSeed } from "@/features/students/public-server";
 import { emptyStudentDirectoryFilters } from "@/features/students/public-contracts";
 import { getReviewAssignmentDraftSummary } from "@/lib/services/review-assignment-draft-query";
+import { getAdminListCachePolicy } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: adminLearningText.page.vocabularyTab,
@@ -54,10 +56,12 @@ async function AssignmentsPageContent({
   const validReviewDraftId = z
     .uuid()
     .safeParse(requestedReviewDraftId).success;
-  const [directory, reviewDraft] = await Promise.all([
-    getStudentDirectoryInitial({
+  const cacheEnabled = getAdminListCachePolicy().assignments;
+  const [directory, initialResponse, reviewDraft] = await Promise.all([
+    cacheEnabled ? Promise.resolve(null) : getStudentDirectoryInitial({
       filters: { ...emptyStudentDirectoryFilters, status: "active" },
     }),
+    cacheEnabled ? getStudentDirectoryCacheSeed({ ...emptyStudentDirectoryFilters, status: "active" }) : Promise.resolve(undefined),
     requestedReviewDraftId && validReviewDraftId
       ? getReviewAssignmentDraftSummary(requestedReviewDraftId)
       : Promise.resolve(null),
@@ -70,17 +74,23 @@ async function AssignmentsPageContent({
           {adminLearningText.page.expiredReviewDraft}
         </Notice>
       )}
-      <AssignmentWorkspace
-        initial={{ directory }}
+      {cacheEnabled ? <CachedAssignmentWorkspace
+        initialResponse={initialResponse}
+        initialDatasetId={initialDatasetId}
+        initialDialogView={initialDialogView}
+        initialStudentId={requestedReviewDraftId ? "" : initialStudentId}
+        key={`cached-assignment:${requestedReviewDraftId}:${initialStudentId}:${initialDatasetId}:${initialDialogView}`}
+      /> : <AssignmentWorkspace
+        initial={{ directory: directory! }}
         initialDatasetId={initialDatasetId}
         initialDialogView={initialDialogView}
         initialStudentId={requestedReviewDraftId ? "" : initialStudentId}
         key={
           requestedReviewDraftId
             ? `legacy-review:${requestedReviewDraftId}`
-            : `assignment-workspace:${directory.snapshotAt}:${initialStudentId}:${initialDatasetId}:${initialDialogView}`
+            : `assignment-workspace:${directory!.snapshotAt}:${initialStudentId}:${initialDatasetId}:${initialDialogView}`
         }
-      />
+      />}
       {reviewDraft && (
         <LegacyReviewRecovery draft={reviewDraft} key={reviewDraft.id} />
       )}

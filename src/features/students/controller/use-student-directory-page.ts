@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { StudentDirectoryRequestError } from "../contracts/student-directory-cache-contract";
+import { useStudentDirectoryCache } from "./student-directory-cache-provider";
 
 import {
   normalizeStudentDirectoryFilters,
+  studentDirectoryFilterKey,
   type StudentDirectoryFilters,
   type StudentDirectoryListItem,
   type StudentDirectorySnapshot,
@@ -47,6 +50,10 @@ function appendUniqueStudents(
 export function useStudentDirectoryPage(
   initialSnapshot: StudentDirectorySnapshot,
 ) {
+  const cache = useStudentDirectoryCache()?.cache;
+  const readSnapshot = useCallback(async (filters: StudentDirectoryFilters, signal: AbortSignal, force = false) =>
+    cache ? (await cache.read(filters, signal, force)).snapshot
+      : loadStudentDirectorySnapshot({ filters, mode: "initial" }, signal), [cache]);
   const [snapshot, setSnapshot] = useState(initialSnapshot);
   const [filters, setFilters] = useState(initialSnapshot.filters);
   const [filtering, setFiltering] = useState(false);
@@ -57,6 +64,7 @@ export function useStudentDirectoryPage(
   const requestVersionRef = useRef(0);
   const acceptedFiltersRef = useRef(initialSnapshot.filters);
   const requestedFiltersRef = useRef(initialSnapshot.filters);
+  const filterRequestRef = useRef({ key: studentDirectoryFilterKey(initialSnapshot.filters), status: "ready" });
   const removedIdsRef = useRef(new Set<string>());
 
   const stopCurrentRequest = useCallback(() => {
@@ -75,6 +83,8 @@ export function useStudentDirectoryPage(
   const reloadCurrent = useCallback(async () => {
     const requestedFilters = requestedFiltersRef.current;
     stopCurrentRequest();
+    filterRequestRef.current = { key: studentDirectoryFilterKey(requestedFilters), status: "pending" };
+    setSnapshot((current) => ({ ...current, page: { ...current.page, nextCursor: null } }));
     const requestVersion = requestVersionRef.current;
     const abort = new AbortController();
     abortRef.current = abort;
@@ -84,20 +94,19 @@ export function useStudentDirectoryPage(
     setFilters(requestedFilters);
     try {
       const result = withoutRemovedStudents(
-        await loadStudentDirectorySnapshot(
-          { filters: requestedFilters, mode: "initial" },
-          abort.signal,
-        ),
+        await readSnapshot(requestedFilters, abort.signal, true),
         removedIdsRef.current,
       );
       if (requestVersionRef.current !== requestVersion) return;
       acceptedFiltersRef.current = result.filters;
       requestedFiltersRef.current = result.filters;
+      filterRequestRef.current = { key: studentDirectoryFilterKey(result.filters), status: "ready" };
       setFilters(result.filters);
       setSnapshot(result);
     } catch (requestError) {
       if (abort.signal.aborted || requestVersionRef.current !== requestVersion) return;
       requestedFiltersRef.current = acceptedFiltersRef.current;
+      filterRequestRef.current.status = "error";
       setFilters(acceptedFiltersRef.current);
       setError(
         requestError instanceof Error
@@ -110,20 +119,20 @@ export function useStudentDirectoryPage(
         abortRef.current = null;
       }
     }
-  }, [stopCurrentRequest]);
+  }, [stopCurrentRequest, readSnapshot]);
 
-  useEffect(() => subscribeStudentRemoved((studentId) => {
+  useEffect(() => cache ? undefined : subscribeStudentRemoved((studentId) => {
     removedIdsRef.current.add(studentId);
     setSnapshot((current) => withoutRemovedStudents(
       current,
       removedIdsRef.current,
     ));
     void reloadCurrent();
-  }), [reloadCurrent]);
+  }), [reloadCurrent, cache]);
 
   useEffect(
-    () => subscribeStudentDirectoryRefresh(() => void reloadCurrent()),
-    [reloadCurrent],
+    () => cache ? undefined : subscribeStudentDirectoryRefresh(() => void reloadCurrent()),
+    [reloadCurrent, cache],
   );
 
   const replaceFilters = useCallback((
@@ -131,6 +140,10 @@ export function useStudentDirectoryPage(
     delay = 0,
   ) => {
     const next = normalizeStudentDirectoryFilters(nextFilters);
+    cache?.rememberFilters(next);
+    const key = studentDirectoryFilterKey(next);
+    if (filterRequestRef.current.key === key && filterRequestRef.current.status !== "error") return;
+    filterRequestRef.current = { key, status: "pending" };
     requestedFiltersRef.current = next;
     setFilters(next);
     setError("");
@@ -144,20 +157,19 @@ export function useStudentDirectoryPage(
       abortRef.current = abort;
       try {
         const result = withoutRemovedStudents(
-          await loadStudentDirectorySnapshot(
-            { filters: next, mode: "initial" },
-            abort.signal,
-          ),
+          await readSnapshot(next, abort.signal),
           removedIdsRef.current,
         );
         if (requestVersionRef.current !== requestVersion) return;
         acceptedFiltersRef.current = result.filters;
         requestedFiltersRef.current = result.filters;
+        filterRequestRef.current = { key: studentDirectoryFilterKey(result.filters), status: "ready" };
         setFilters(result.filters);
         setSnapshot(result);
       } catch (requestError) {
         if (abort.signal.aborted || requestVersionRef.current !== requestVersion) return;
         requestedFiltersRef.current = acceptedFiltersRef.current;
+        filterRequestRef.current.status = "error";
         setFilters(acceptedFiltersRef.current);
         setError(
           requestError instanceof Error
@@ -171,7 +183,7 @@ export function useStudentDirectoryPage(
         }
       }
     }, delay);
-  }, [stopCurrentRequest]);
+  }, [stopCurrentRequest, readSnapshot, cache]);
 
   const loadMore = useCallback(async () => {
     const cursor = snapshot.page.nextCursor;
@@ -183,7 +195,7 @@ export function useStudentDirectoryPage(
     abortRef.current = abort;
     try {
       const page = await loadStudentDirectoryNextPage(
-        { cursor, filters: snapshot.filters, mode: "page" },
+        { cursor, filters: snapshot.filters, mode: "page", ...(cache ? { cacheIdentity: cache.identity, cacheUserId: cache.userId } : {}) },
         abort.signal,
       );
       if (requestVersionRef.current !== requestVersion) return;
@@ -203,6 +215,7 @@ export function useStudentDirectoryPage(
       });
     } catch (requestError) {
       if (!abort.signal.aborted && requestVersionRef.current === requestVersion) {
+        if (cache && requestError instanceof StudentDirectoryRequestError && [401, 403].includes(requestError.status)) cache.lock();
         setError(
           requestError instanceof Error
             ? requestError.message
@@ -215,7 +228,7 @@ export function useStudentDirectoryPage(
         abortRef.current = null;
       }
     }
-  }, [filtering, loadingMore, snapshot]);
+  }, [filtering, loadingMore, snapshot, cache]);
 
   return {
     error,
@@ -225,6 +238,7 @@ export function useStudentDirectoryPage(
     snapshot,
     actions: {
       loadMore,
+      retry: reloadCurrent,
       replaceFilters,
       replaceQuery: (query: string) =>
         replaceFilters({ ...filters, query }, 250),

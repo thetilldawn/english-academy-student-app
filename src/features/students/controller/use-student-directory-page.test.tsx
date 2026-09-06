@@ -74,6 +74,38 @@ afterEach(() => {
 });
 
 describe("useStudentDirectoryPage", () => {
+  it("이미 표시한 정규조건과 같은 검색은 초기 조회를 반복하지 않는다", async () => {
+    const { result } = renderHook(() => useStudentDirectoryPage(snapshot()));
+    await act(async () => result.current.actions.replaceFilters({ ...emptyStudentDirectoryFilters, query: "  \t " }));
+    expect(loadStudentDirectorySnapshot).not.toHaveBeenCalled();
+    expect(result.current.filtering).toBe(false);
+  });
+  it("같은 진행중 검색은 취소/재시작하지 않고 성공 뒤도 중복하지 않는다", async () => {
+    let resolve!: (value: StudentDirectorySnapshot) => void;
+    let signal: AbortSignal | undefined;
+    vi.mocked(loadStudentDirectorySnapshot).mockImplementation((_request, incoming) => {
+      signal = incoming; return new Promise((done) => { resolve = done; });
+    });
+    const { result } = renderHook(() => useStudentDirectoryPage(snapshot()));
+    act(() => result.current.actions.replaceFilters({ ...emptyStudentDirectoryFilters, query: "가람" }));
+    await waitFor(() => expect(loadStudentDirectorySnapshot).toHaveBeenCalledOnce());
+    act(() => result.current.actions.replaceFilters({ ...emptyStudentDirectoryFilters, query: "  가람  " }));
+    expect(signal?.aborted).toBe(false); expect(loadStudentDirectorySnapshot).toHaveBeenCalledOnce();
+    await act(async () => resolve(snapshot({ query: "가람" })));
+    act(() => result.current.actions.replaceFilters({ ...emptyStudentDirectoryFilters, query: "가람" }));
+    expect(loadStudentDirectorySnapshot).toHaveBeenCalledOnce();
+  });
+  it("명시 재시도와 변경 뒤 갱신은 같은조건도 새로 읽고 실패해도 옛 커서를 폐기한다", async () => {
+    vi.mocked(loadStudentDirectorySnapshot).mockRejectedValueOnce(new Error("다시 불러와 주세요."))
+      .mockResolvedValueOnce(snapshot({ nextCursor: "new-cursor", snapshotAt: "new-snapshot" }));
+    const { result } = renderHook(() => useStudentDirectoryPage(snapshot({ nextCursor: "old-cursor" })));
+    await act(() => result.current.actions.retry());
+    expect(result.current.snapshot.page.nextCursor).toBeNull();
+    await act(() => result.current.actions.loadMore()); expect(loadStudentDirectoryNextPage).not.toHaveBeenCalled();
+    await act(async () => announceStudentDirectoryRefresh());
+    await waitFor(() => expect(result.current.snapshot.snapshotAt).toBe("new-snapshot"));
+    expect(loadStudentDirectorySnapshot).toHaveBeenCalledTimes(2);
+  });
   it("이전 필터 요청을 취소하고 늦은 응답을 무시한다", async () => {
     const requests: Array<{
       query: string;

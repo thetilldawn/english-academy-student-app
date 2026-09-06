@@ -3,7 +3,8 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
+import { createRef } from "react";
 
 import type {
   AssignmentDatasetItem,
@@ -11,6 +12,7 @@ import type {
 } from "../catalog-types";
 import type { VocabAssignmentPlannerController } from "../controller/use-vocab-assignment-planner";
 import { VocabRangePicker } from "./vocab-range-picker";
+import { VocabRangeFields, type VocabRangeFieldsProps } from "./vocab-range-fields";
 
 const dataset: AssignmentDatasetItem = {
   academicYear: null,
@@ -121,7 +123,66 @@ function controller(input?: {
 
 afterEach(cleanup);
 
+function rangeFields(overrides: Partial<VocabRangeFieldsProps> = {}): VocabRangeFieldsProps {
+  return { dataset, units, selectedUnitIds: [], onSelectUnit: vi.fn(),
+    onToggleAllUnits: vi.fn(), onOpenDatasetPicker: vi.fn(), ...overrides };
+}
+
+describe("독립된 범위 표시 부품", () => {
+  it("전체 제어기 없이 필요한 입력과 선택 동작만 사용한다", () => {
+    expectTypeOf<keyof VocabRangeFieldsProps>().toEqualTypeOf<
+      "dataset" | "units" | "selectedUnitIds" | "datasetError" | "rangeError" |
+      "onSelectUnit" | "onToggleAllUnits" | "onOpenDatasetPicker" | "datasetTriggerRef"
+    >();
+    const props = rangeFields();
+    render(<VocabRangeFields {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: "DAY 2" }));
+    fireEvent.click(screen.getByRole("button", { name: "전체 선택" }));
+    fireEvent.click(screen.getByRole("button", { name: /테스트 단어장.*단어장 찾기/ }));
+    expect(props.onSelectUnit).toHaveBeenCalledWith("unit-2");
+    expect(props.onToggleAllUnits).toHaveBeenCalledWith(true);
+    expect(props.onOpenDatasetPicker).toHaveBeenCalledOnce();
+  });
+  it("역순 선택을 표시하고 원본 순서를 바꾸지 않는다", () => {
+    const ids = Object.freeze(["unit-2", "unit-1"]);
+    const props = rangeFields({ units: Object.freeze([...units]), selectedUnitIds: ids });
+    render(<VocabRangeFields {...props} />);
+    expect(screen.getByText("DAY 2~DAY 1 · 2개 선택")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "전체 해제" }));
+    expect(props.onToggleAllUnits).toHaveBeenCalledWith(false);
+    expect(ids).toEqual(["unit-2", "unit-1"]);
+    expect(props.units.map(unit => unit.id)).toEqual(["unit-1", "unit-2"]);
+  });
+  it("쉬운 오류 안내를 해당 입력과 연결하고 찾기 버튼 참조를 유지한다", () => {
+    const ref = createRef<HTMLButtonElement>();
+    render(<VocabRangeFields {...rangeFields({ datasetTriggerRef: ref,
+      datasetError: "단어장을 선택해 주세요.", rangeError: "시험 범위를 선택해 주세요." })} />);
+    expect(ref.current).toBe(screen.getByRole("button", { name: /테스트 단어장.*단어장 찾기/ }));
+    expect(ref.current).toHaveAttribute("aria-describedby", "vocab-dataset-error");
+    expect(ref.current).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByRole("group", { name: "시험 범위 선택" })).toHaveAttribute("aria-describedby", "vocab-range-error");
+    expect(screen.getByText("단어장을 선택해 주세요.")).toHaveAttribute("id", "vocab-dataset-error");
+    expect(screen.getByText("시험 범위를 선택해 주세요.")).toHaveAttribute("id", "vocab-range-error");
+  });
+  it("단어장 미선택과 빈 범위를 오류로 꾸미지 않는다", () => {
+    render(<VocabRangeFields {...rangeFields({ dataset: undefined, units: [] })} />);
+    expect(screen.getByRole("button", { name: /단어장을 선택해 주세요.*단어장 찾기/ })).toHaveAttribute("aria-invalid", "false");
+    expect(screen.getByRole("button", { name: "전체 선택" })).toBeDisabled();
+    expect(screen.getByText("범위를 선택하세요")).toBeVisible();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+});
+
 describe("VocabRangePicker", () => {
+  it("실제 연결부에서 직접 입력 활성화 후 값 변경을 실행한다", () => {
+    const value = controller({ assignmentMode: "word_count" });
+    render(<VocabRangePicker onOpenDatasetPicker={vi.fn()} controller={value} datasets={[dataset]} />);
+    fireEvent.change(screen.getByRole("spinbutton", { name: "회차당 단어 수" }), { target: { value: "20" } });
+    expect(value.actions.activateManualQuestionCount).toHaveBeenCalledWith(86);
+    expect(value.actions.changeManualQuestionCount).toHaveBeenCalledWith(20);
+    expect(vi.mocked(value.actions.activateManualQuestionCount).mock.invocationCallOrder[0])
+      .toBeLessThan(vi.mocked(value.actions.changeManualQuestionCount).mock.invocationCallOrder[0]);
+  });
   it("역방향 선택을 요약에도 같은 방향으로 표시한다", () => {
     const value = controller();
     value.selectedUnits = [units[1]!, units[0]!];

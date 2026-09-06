@@ -98,6 +98,19 @@ export function getPublicEnvironment() {
   return parseEnvironment(publicEnvironmentSchema, "공개 데이터 연결");
 }
 
+// The verified browser-only list caches are the release default. An explicit
+// opt-out or an unrecognized value keeps the existing uncached read path.
+export function getAdminListCachePolicy() {
+  const enabled = (value: string | undefined) =>
+    value === undefined || value.trim() === "" || value.trim() === "1";
+  const students = enabled(process.env.STUDENT_DIRECTORY_CACHE_CANARY);
+  return {
+    students,
+    assignments: students && enabled(process.env.ASSIGNMENT_DIRECTORY_CACHE_CANARY),
+    history: enabled(process.env.HISTORY_LIST_CACHE_CANARY),
+  };
+}
+
 export function getAppOrigin() {
   const configuredOrigin = process.env.APP_ORIGIN;
   if (configuredOrigin) {

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { formatContentText } from "@/content/format";
 import { adminLearningText } from "@/content/ko/admin-learning";
+import { announceStudentDirectoryRefresh } from "@/features/students/public-client";
 
 import type { AssignmentWorkspaceInitial } from "../contracts/assignment-workspace-read-model";
 import {
@@ -32,17 +33,23 @@ export function AssignmentWorkspace({
   initialDatasetId = "",
   initialDialogView = "overview",
   initialStudentId = "",
+  cacheEnabled = false,
+  interactionAllowed = true,
 }: {
   initial: AssignmentWorkspaceInitial;
   initialDatasetId?: string;
   initialDialogView?: AssignmentDialogView;
   initialStudentId?: string;
+  cacheEnabled?: boolean;
+  interactionAllowed?: boolean;
 }) {
   const controller = useAssignmentWorkspace({
     initial,
     initialDatasetId,
     initialDialogView,
     initialStudentId,
+    cacheEnabled,
+    interactionAllowed,
   });
   const planner = controller.planner;
 
@@ -73,8 +80,10 @@ export function AssignmentWorkspace({
             units: planner.data.initialUnits,
           }}
           initialDatasetId={planner.data.initialDatasetId}
+          interactionAllowed={interactionAllowed}
           onClose={planner.actions.close}
           onSuccess={(assignmentCount, studentCount, queuedCount) => {
+            announceStudentDirectoryRefresh();
             if (planner.request?.selectionMode === "bulk") {
               controller.actions.clearBulkStudents();
             }
@@ -86,7 +95,7 @@ export function AssignmentWorkspace({
                 { assignmentCount, queuedCount, studentCount },
               ),
             );
-            controller.actions.refreshDirectory();
+            if (!cacheEnabled) controller.actions.refreshDirectory();
           }}
           selectionMode={planner.request.selectionMode}
           students={planner.data.students}

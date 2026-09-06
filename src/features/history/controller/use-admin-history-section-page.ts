@@ -1,19 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-
 import type {
-  AdminHistoryListItem,
-  AdminHistorySectionPage,
-} from "@/features/history/contracts/admin-history-read-model";
-import type { AdminHistoryStatusFilter } from "@/features/history/domain/learning-activity";
-import { adminHistoryMutationImpact } from "@/features/history/domain/admin-history-mutation";
+  AdminHistoryListItem, AdminHistoryReadRequest, AdminHistorySectionPage,
+} from "../contracts/admin-history-read-model";
 import {
-  loadAdminHistoryFreshSection,
-  loadAdminHistoryNextPage,
-} from "@/features/history/transport/history-pages";
-
-import { subscribeAdminHistoryMutation } from "./admin-history-mutation-events";
+  AdminHistoryRequestError, historyFailureKind, isHistoryAccessFailure,
+  type AdminHistoryFailureKind,
+} from "../contracts/admin-history-request-error";
+import type { AdminHistoryStatusFilter } from "../domain/learning-activity";
+import { adminHistoryMutationImpact } from "../domain/admin-history-mutation";
+import {
+  loadAdminHistoryFreshSection, loadAdminHistoryNextPage, loadAdminHistorySnapshot,
+} from "../transport/history-pages";
+import { subscribeAdminHistoryMutation } from "./history-change-listener";
+import type { HistoryFreshSectionReader } from "./history-refresh-coordinator";
 
 export type AdminHistoryLoadMoreContext = {
   currentOnly: boolean;
@@ -21,134 +22,127 @@ export type AdminHistoryLoadMoreContext = {
   statusFilter: AdminHistoryStatusFilter;
 };
 
-function mergeUniqueItems(
-  current: readonly AdminHistoryListItem[],
-  incoming: readonly AdminHistoryListItem[],
-) {
+function mergeUniqueItems(current: readonly AdminHistoryListItem[], incoming: readonly AdminHistoryListItem[]) {
   const known = new Set(current.map((item) => item.id));
-  const appended = incoming.filter((item) => {
+  return [...current, ...incoming.filter((item) => {
     if (known.has(item.id)) return false;
     known.add(item.id);
     return true;
-  });
-  return [...current, ...appended];
+  })];
 }
 
 export function useAdminHistorySectionPage({
-  loadMoreContext,
-  section,
+  loadMoreContext, onAccessFailure, section, readFreshSection = loadAdminHistoryFreshSection,
+  onCursorRejected,
+  mutationRefreshEnabled = true,
 }: {
   loadMoreContext?: AdminHistoryLoadMoreContext;
+  onAccessFailure?: (kind: AdminHistoryFailureKind) => void;
+  onCursorRejected?: () => void;
   section: AdminHistorySectionPage;
+  readFreshSection?: HistoryFreshSectionReader;
+  mutationRefreshEnabled?: boolean;
 }) {
   const [items, setItems] = useState(section.items);
   const [nextCursor, setNextCursor] = useState(section.nextCursor);
   const [totalCount, setTotalCount] = useState(section.totalCount);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [invalidated, setInvalidated] = useState(false);
+  const [failure, setFailure] = useState<AdminHistoryFailureKind | null>(null);
   const requestRef = useRef<AbortController | null>(null);
-  const requestVersionRef = useRef(0);
+  const retryRequestRef = useRef<AdminHistoryReadRequest | null>(null);
+  const accessDeniedRef = useRef(false);
 
   useEffect(() => () => requestRef.current?.abort(), []);
 
-  useEffect(() => subscribeAdminHistoryMutation((notice) => {
-    if (!loadMoreContext) return;
-    const impact = adminHistoryMutationImpact(notice, loadMoreContext)
-      .find((candidate) => candidate.groupKey === section.groupKey);
-    if (!impact) return;
-
+  const runRequest = useCallback(async (request: AdminHistoryReadRequest) => {
+    if (accessDeniedRef.current) return;
     requestRef.current?.abort();
-    const requestVersion = ++requestVersionRef.current;
     const controller = new AbortController();
     requestRef.current = controller;
-    setLoading(false);
-    setError("");
-    // A mutation invalidates the old snapshot cursor immediately. If the
-    // replacement request fails, keeping that cursor would allow a stale page
-    // to be appended to the current list.
-    setNextCursor(null);
-    void loadAdminHistoryFreshSection(
-      {
-        ...loadMoreContext,
-        groupKey: section.groupKey,
-        mode: "section",
-        snapshotAt: notice.receipt.version,
-      },
-      controller.signal,
-    )
-      .then((freshSection) => {
-        if (
-          controller.signal.aborted ||
-          requestVersionRef.current !== requestVersion
-        ) return;
-        setItems(freshSection.items);
-        setNextCursor(freshSection.nextCursor);
-        setTotalCount(freshSection.totalCount);
-      })
-      .catch((requestError: unknown) => {
-        if (
-          controller.signal.aborted ||
-          requestVersionRef.current !== requestVersion
-        ) return;
-        setError(
-          requestError instanceof Error
-            ? requestError.message
-            : "변경된 시험 내역을 불러오지 못했습니다.",
-        );
-      })
-      .finally(() => {
-        if (
-          requestRef.current === controller &&
-          requestVersionRef.current === requestVersion
-        ) {
-          requestRef.current = null;
-        }
-      });
-  }), [loadMoreContext, section.groupKey]);
-
-  const loadMore = useCallback(async () => {
-    if (!loadMoreContext || !nextCursor || requestRef.current) return;
-    const controller = new AbortController();
-    const requestVersion = ++requestVersionRef.current;
-    requestRef.current = controller;
+    retryRequestRef.current = request;
     setLoading(true);
-    setError("");
+    setFailure(null);
+    if (request.mode !== "page") {
+      // A committed mutation invalidates BOTH old rows/counts and its cursor.
+      // Neither is presented as current if the replacement read fails.
+      setInvalidated(true);
+      setNextCursor(null);
+    }
     try {
-      const page = await loadAdminHistoryNextPage(
-        {
-          ...loadMoreContext,
-          cursor: nextCursor,
-          groupKey: section.groupKey,
-          mode: "page",
-        },
-        controller.signal,
-      );
-      if (
-        controller.signal.aborted ||
-        requestVersionRef.current !== requestVersion
-      ) return;
-      setItems((current) => mergeUniqueItems(current, page.items));
-      setNextCursor(page.nextCursor);
-    } catch (requestError) {
-      if (
-        controller.signal.aborted ||
-        requestVersionRef.current !== requestVersion
-      ) return;
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "다음 시험 내역을 불러오지 못했습니다.",
-      );
+      if (request.mode === "page") {
+        const page = await loadAdminHistoryNextPage(request, controller.signal);
+        if (controller.signal.aborted || requestRef.current !== controller) return;
+        setItems((current) => mergeUniqueItems(current, page.items));
+        setNextCursor(page.nextCursor);
+      } else {
+        const fresh = request.mode === "section"
+          ? await readFreshSection(request, controller.signal)
+          : (await loadAdminHistorySnapshot(request, controller.signal))
+            .sections.find((candidate) => candidate.groupKey === section.groupKey);
+        if (controller.signal.aborted || requestRef.current !== controller) return;
+        if (!fresh) throw new AdminHistoryRequestError("invalid-response");
+        setItems(fresh.items);
+        setNextCursor(fresh.nextCursor);
+        setTotalCount(fresh.totalCount);
+        setInvalidated(false);
+      }
+      retryRequestRef.current = null;
+    } catch (error: unknown) {
+      if (controller.signal.aborted || requestRef.current !== controller) return;
+      const kind = historyFailureKind(error);
+      if (kind === "invalid-request" && request.mode === "page") {
+        // A rejected cursor must not be retried forever. Read a new initial
+        // snapshot with a SERVER-assigned timestamp; do not invent one locally.
+        retryRequestRef.current = {
+          currentOnly: request.currentOnly, mode: "initial",
+          query: request.query, statusFilter: request.statusFilter,
+        };
+        setInvalidated(true);
+        setNextCursor(null);
+        if (onCursorRejected) { onCursorRejected(); return; }
+      }
+      setFailure(kind);
+      if (isHistoryAccessFailure(kind)) {
+        accessDeniedRef.current = true;
+        setNextCursor(null);
+        onAccessFailure?.(kind);
+      }
     } finally {
-      if (
-        requestRef.current === controller &&
-        requestVersionRef.current === requestVersion
-      ) {
+      if (requestRef.current === controller) {
         requestRef.current = null;
         if (!controller.signal.aborted) setLoading(false);
       }
     }
-  }, [loadMoreContext, nextCursor, section.groupKey]);
+  }, [onAccessFailure, onCursorRejected, section.groupKey, readFreshSection]);
 
-  return { error, items, loadMore, loading, nextCursor, totalCount };
+  useEffect(() => subscribeAdminHistoryMutation((notice) => {
+    if (!loadMoreContext || !mutationRefreshEnabled) return;
+    const impact = adminHistoryMutationImpact(notice, loadMoreContext)
+      .find((candidate) => candidate.groupKey === section.groupKey);
+    if (!impact) return;
+    void runRequest({
+      ...loadMoreContext, groupKey: section.groupKey,
+      mode: "section", snapshotAt: notice.receipt.version,
+    });
+  }), [loadMoreContext, runRequest, section.groupKey, mutationRefreshEnabled]);
+
+  const loadMore = useCallback(async () => {
+    if (!loadMoreContext || !nextCursor || requestRef.current) return;
+    await runRequest({
+      ...loadMoreContext, cursor: nextCursor, groupKey: section.groupKey, mode: "page",
+    });
+  }, [loadMoreContext, nextCursor, runRequest, section.groupKey]);
+
+  const retry = useCallback(() => {
+    if (requestRef.current || !retryRequestRef.current) return;
+    return runRequest(retryRequestRef.current);
+  }, [runRequest]);
+
+  return {
+    failure,
+    items: isHistoryAccessFailure(failure) || invalidated ? [] : items,
+    countKnown: !invalidated && !isHistoryAccessFailure(failure),
+    loadMore, loading, nextCursor, retry, totalCount,
+  };
 }

@@ -22,6 +22,7 @@ import { useDirectReviewAssignmentController } from "../controller/use-direct-re
 import { useAssignmentDatasetUnitCatalog } from "../controller/use-assignment-dataset-unit-catalog";
 import { AssignmentSubmitAction } from "./assignment-submit-action";
 import { AssignmentDatasetPicker } from "./assignment-dataset-picker";
+import { AssignmentDiscardDialog } from "./assignment-discard-dialog";
 import {
   AssignmentEditorForm,
   AssignmentEditorModeTabs,
@@ -36,6 +37,7 @@ export function VocabAssignmentPlanner({
   bulkFilterLabels = [],
   data,
   initialDatasetId = "",
+  interactionAllowed = true,
   onClose,
   onSuccess,
   selectionMode,
@@ -44,6 +46,7 @@ export function VocabAssignmentPlanner({
   bulkFilterLabels?: readonly string[];
   data: VocabAssignmentScreenData;
   initialDatasetId?: string;
+  interactionAllowed?: boolean;
   onClose: () => void;
   onSuccess: (
     assignmentCount: number,
@@ -56,7 +59,7 @@ export function VocabAssignmentPlanner({
   const [assignmentPurpose, setAssignmentPurpose] = useState<"range" | "review">(
     "range",
   );
-  const unitCatalog = useAssignmentDatasetUnitCatalog(data.units);
+  const unitCatalog = useAssignmentDatasetUnitCatalog(data.units, initialDatasetId);
   const cancelUnitRequest = unitCatalog.actions.cancel;
   const ensureDatasetUnits = unitCatalog.actions.ensureDataset;
   const controller = useVocabAssignmentScreen({
@@ -98,6 +101,8 @@ export function VocabAssignmentPlanner({
       : reviewController.actions.changeDataset,
   });
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [discardOpen, setDiscardOpen] = useState(false);
+  const discardConfirmedRef = useRef(false);
   const bulk = controller.bulk;
   const busy = assignmentPurpose === "range"
     ? bulk.state.submission.status === "submitting"
@@ -138,7 +143,7 @@ export function VocabAssignmentPlanner({
     reviewDraftSignature,
   ]);
   function requestClose() {
-    if (busy) return;
+    if (!interactionAllowed || busy || discardOpen) return;
     if (datasetPicker.open) {
       datasetPicker.actions.close();
       return;
@@ -146,10 +151,9 @@ export function VocabAssignmentPlanner({
     const draftChanged =
       rangeDraftSignature !== initialRangeDraftSignatureRef.current ||
       reviewDraftSignature !== initialReviewDraftSignatureRef.current;
-    if (
-      draftChanged &&
-      !window.confirm("입력한 배정 내용을 버리고 닫을까요?")
-    ) {
+    if (draftChanged) {
+      discardConfirmedRef.current = false;
+      setDiscardOpen(true);
       return;
     }
     onClose();
@@ -175,6 +179,7 @@ export function VocabAssignmentPlanner({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!interactionAllowed || busy || discardOpen) return;
     setSubmitAttempted(true);
     const canSubmit = assignmentPurpose === "range"
       ? controller.canSubmit
@@ -241,6 +246,7 @@ export function VocabAssignmentPlanner({
   ];
 
   return (
+    <>
     <DialogFrame
       aria-labelledby="vocab-assignment-plan-title"
       closeDisabled={busy}
@@ -353,7 +359,9 @@ export function VocabAssignmentPlanner({
           <AssignmentSubmitAction
             blockedReason={null}
             canSubmit={
+              interactionAllowed &&
               !busy &&
+              !discardOpen &&
               !rangeCalculationPending &&
               !reviewCalculationPending &&
               !reviewCalculationFailed &&
@@ -367,5 +375,20 @@ export function VocabAssignmentPlanner({
       </DialogFooter>
       ) : null}
     </DialogFrame>
+    {discardOpen ? (
+      <AssignmentDiscardDialog
+        busy={busy}
+        onCancel={() => {
+          if (!busy) setDiscardOpen(false);
+        }}
+        onDiscard={() => {
+          if (busy || discardConfirmedRef.current) return;
+          discardConfirmedRef.current = true;
+          setDiscardOpen(false);
+          onClose();
+        }}
+      />
+    ) : null}
+    </>
   );
 }

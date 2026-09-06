@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { AssignmentUnitItem } from "../catalog-types";
 import { loadAssignmentDatasetUnits } from "../transport/assignment-workspace-reads";
+import { useAssignmentAuthenticationFailure } from "./assignment-authentication-boundary";
 
 type UnitLoadState = {
   datasetId: string;
@@ -13,16 +14,19 @@ type UnitLoadState = {
 
 export function useAssignmentDatasetUnitCatalog(
   initialUnits: readonly AssignmentUnitItem[] = [],
+  initialDatasetId = "",
 ) {
+  const captureAuthenticationFailure = useAssignmentAuthenticationFailure();
   const initialByDataset = useMemo(() => {
     const result = new Map<string, AssignmentUnitItem[]>();
+    if (initialDatasetId) result.set(initialDatasetId, []);
     for (const unit of initialUnits) {
       const current = result.get(unit.datasetId) ?? [];
       current.push(unit);
       result.set(unit.datasetId, current);
     }
     return result;
-  }, [initialUnits]);
+  }, [initialUnits, initialDatasetId]);
   const [loadedUnitsByDataset, setLoadedUnitsByDataset] = useState(
     () => new Map<string, AssignmentUnitItem[]>(),
   );
@@ -34,6 +38,7 @@ export function useAssignmentDatasetUnitCatalog(
   const cacheRef = useRef(new Map<string, AssignmentUnitItem[]>());
   const abortRef = useRef<AbortController | null>(null);
   const versionRef = useRef(0);
+  const pendingDatasetRef = useRef("");
 
   const unitsByDataset = useMemo(
     () => new Map([...loadedUnitsByDataset, ...initialByDataset]),
@@ -48,9 +53,12 @@ export function useAssignmentDatasetUnitCatalog(
     versionRef.current += 1;
     abortRef.current?.abort();
     abortRef.current = null;
+    pendingDatasetRef.current = "";
   }, []);
 
   const ensureDataset = useCallback(async (datasetId: string) => {
+    const reportAuthenticationFailure = captureAuthenticationFailure();
+    if (datasetId && pendingDatasetRef.current === datasetId && abortRef.current && !abortRef.current.signal.aborted) return;
     cancel();
     if (!datasetId) {
       setState({ datasetId: "", message: "", status: "idle" });
@@ -63,6 +71,7 @@ export function useAssignmentDatasetUnitCatalog(
     const version = versionRef.current;
     const abort = new AbortController();
     abortRef.current = abort;
+    pendingDatasetRef.current = datasetId;
     setState({ datasetId, message: "", status: "loading" });
     try {
       const result = await loadAssignmentDatasetUnits(datasetId, abort.signal);
@@ -74,6 +83,7 @@ export function useAssignmentDatasetUnitCatalog(
       setState({ datasetId, message: "", status: "ready" });
     } catch (error) {
       if (abort.signal.aborted || versionRef.current !== version) return;
+      reportAuthenticationFailure(error);
       setState({
         datasetId,
         message: error instanceof Error
@@ -82,9 +92,12 @@ export function useAssignmentDatasetUnitCatalog(
         status: "error",
       });
     } finally {
-      if (versionRef.current === version) abortRef.current = null;
+      if (versionRef.current === version) {
+        abortRef.current = null;
+        pendingDatasetRef.current = "";
+      }
     }
-  }, [cancel, initialByDataset]);
+  }, [cancel, initialByDataset, captureAuthenticationFailure]);
 
   useEffect(() => () => cancel(), [cancel]);
 

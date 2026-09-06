@@ -1,14 +1,4 @@
-import { Button } from "@/design-system/primitives/button/button";
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-} from "@/design-system/primitives/form/field";
-import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
-import { Notice } from "@/design-system/patterns/feedback/feedback";
 import { cataloguedDatasetDisplayLabel } from "@/lib/admin/dataset-catalog";
-import { koreanDateTimeLocalToIso } from "@/lib/deadline";
-import { formatKoreanDateTime } from "@/lib/format";
 
 import type {
   AssignmentDatasetItem,
@@ -18,36 +8,19 @@ import type {
   DirectReviewAssignmentController,
   DirectReviewFieldKey,
 } from "../controller/use-direct-review-assignment-controller";
-import type { ReviewLevel } from "../domain/model";
 import { AssignmentAvailabilityFields } from "./assignment-availability-fields";
 import { AssignmentDeadlineFields } from "./assignment-deadline-fields";
 import { AssignmentSection } from "./assignment-section";
-import { AssignmentDatasetTrigger, type AssignmentDatasetTriggerProps } from "./assignment-dataset-trigger";
+import type { AssignmentDatasetTriggerProps } from "./assignment-dataset-trigger";
+import { directReviewRangeView, directReviewPreviewRows } from "../presentation/direct-review-view";
+import { DirectReviewRangeFields } from "./direct-review-range-fields";
+import { DirectReviewPreview } from "./direct-review-preview";
 import {
   ExamConditionFields,
   ExamQuestionOrderField,
-} from "./bulk-exam-fields";
+} from "./exam-condition-fields";
 import { ExamTimingFields } from "./exam-timing-fields";
 import styles from "./vocab-assignment-planner.module.css";
-
-function levelCountLabel(value: number | null) {
-  return value === null ? "계산 전" : `${value}개`;
-}
-
-function selectedLevelLabel(levels: readonly ReviewLevel[]) {
-  if (levels.length === 0) return "선택 안 함";
-  return levels
-    .map((level) => (level === 1 ? "1회" : "2회 이상"))
-    .join(" · ");
-}
-
-function timingLabel(controller: DirectReviewAssignmentController) {
-  const { exam } = controller.draft;
-  if (exam.timeLimitEnabled === false) return "시간 제한 없음";
-  return exam.timing.mode === "total"
-    ? `전체 ${exam.timing.totalSeconds / 60}분`
-    : `문제당 ${exam.timing.perQuestionSeconds}초`;
-}
 
 export function DirectReviewAssignmentSections({
   controller,
@@ -78,32 +51,21 @@ export function DirectReviewAssignmentSections({
       fieldErrors.deadline
     ? "일정 확인"
     : null;
-  const countText = summary.status === "loading" || summary.status === "idle"
-    ? "현재 오답 단어 계산 중…"
-    : summary.status === "error"
-      ? summary.message
-      : controller.totalAvailableCount === 0
-        ? "현재 배정할 오답이 없습니다."
-        : capacity.status === "loading"
-    ? "오답 단어 계산 중…"
-    : capacity.status === "error"
-      ? capacity.message
-      : capacity.status === "ready"
-        ? draft.questionCount > 0
-          ? `단어 ${draft.questionCount}개`
-          : "현재 배정할 오답이 없습니다."
-        : "단어장과 오답 단계를 선택해 주세요.";
-  const calculationError = summary.status === "error"
-    ? summary.message
-    : capacity.status === "error"
-      ? capacity.message
-      : "";
-  const deadlineIso = draft.deadline.mode === "at"
-    ? koreanDateTimeLocalToIso(draft.deadline.koreanLocalDateTime)
-    : null;
-  const availabilityIso = draft.availability.mode === "at"
-    ? koreanDateTimeLocalToIso(draft.availability.koreanLocalDateTime)
-    : null;
+  const rangeView = directReviewRangeView({
+    summary: { status: summary.status, message: summary.message },
+    capacity: { status: capacity.status, message: capacity.message },
+    hasDatasetOptions: controller.datasetOptions.length > 0,
+    totalAvailableCount: controller.totalAvailableCount,
+    questionCount: draft.questionCount, knownLevelCounts,
+    selectedLevels: draft.reviewLevels,
+  });
+  const previewRows = directReviewPreviewRows({
+    studentLabel: student.displayName,
+    datasetLabel: dataset ? cataloguedDatasetDisplayLabel(dataset) : "선택 전",
+    selectedLevels: draft.reviewLevels, questionCount: draft.questionCount,
+    availability: draft.availability, deadline: draft.deadline,
+    timeLimitEnabled: draft.exam.timeLimitEnabled, timing: draft.exam.timing,
+  });
 
   return (
     <div className={styles.plannerSections}>
@@ -114,95 +76,12 @@ export function DirectReviewAssignmentSections({
         status={rangeStatus}
         title="시험 범위"
       >
-        <div className={styles.reviewRangeGrid}>
-          <div className={styles.fieldStack}>
-            <AssignmentDatasetTrigger
-              dataset={dataset}
-              disabled={summary.status !== "ready" || controller.datasetOptions.length === 0}
-              error={fieldErrors.dataset}
-              errorId="review-dataset-error"
-              onOpen={onOpenDatasetPicker}
-              triggerRef={datasetTriggerRef}
-            />
-            <span className={styles.rangeSummary}>미배정 오답 전체 {controller.totalAvailableCount}개</span>
-          </div>
-          <Field>
-            <FieldLabel as="span" id="review-level-label">
-              <HelpTip label="틀린 횟수 설명" trigger="틀린 횟수">
-                단어 시험에서 틀린 횟수입니다.
-              </HelpTip>
-            </FieldLabel>
-            <div
-              aria-labelledby="review-level-label"
-              className={styles.reviewLevelButtons}
-              data-field-key="reviewLevels"
-              role="group"
-              tabIndex={-1}
-            >
-              {([1, 2] as const).map((level) => {
-                const count = level === 1
-                  ? knownLevelCounts.level1
-                  : knownLevelCounts.level2;
-                const selected = draft.reviewLevels.includes(level);
-                return (
-                  <Button
-                    aria-pressed={selected}
-                    disabled={summary.status !== "ready" || count === 0}
-                    key={level}
-                    onClick={() => controller.actions.toggleReviewLevel(level)}
-                    size="small"
-                    variant="filter"
-                  >
-                    {level === 1 ? "1회" : "2회 이상"} {levelCountLabel(count)}
-                  </Button>
-                );
-              })}
-            </div>
-            {fieldErrors.reviewLevels ? (
-              <FieldError>{fieldErrors.reviewLevels}</FieldError>
-            ) : null}
-          </Field>
-        </div>
-        <div
-          className={styles.fieldStack}
-          data-field-key="preview"
-          tabIndex={-1}
-        >
-          {calculationError ? (
-            <>
-              <Notice role="alert" tone="danger">{calculationError}</Notice>
-              <div className={styles.warningActions}>
-                <Button
-                  onClick={summary.status === "error"
-                    ? controller.actions.retrySummary
-                    : controller.actions.retryPreview}
-                  size="small"
-                  variant="secondary"
-                >
-                  {summary.status === "error"
-                    ? "다시 불러오기"
-                    : "다시 계산하기"}
-                </Button>
-              </div>
-            </>
-          ) : (
-            <div
-              aria-live="polite"
-              className={styles.reviewCalculation}
-              data-field-key="questionCount"
-              data-status={summary.status === "ready"
-                ? capacity.status
-                : summary.status}
-              role="status"
-              tabIndex={-1}
-            >
-              {countText}
-            </div>
-          )}
-          {fieldErrors.questionCount ? (
-            <FieldError>{fieldErrors.questionCount}</FieldError>
-          ) : null}
-        </div>
+        <DirectReviewRangeFields dataset={dataset} datasetTriggerRef={datasetTriggerRef}
+          view={rangeView} fieldErrors={{ dataset: fieldErrors.dataset,
+            reviewLevels: fieldErrors.reviewLevels, questionCount: fieldErrors.questionCount }}
+          onOpenDatasetPicker={onOpenDatasetPicker}
+          onToggleReviewLevel={controller.actions.toggleReviewLevel}
+          onRetryCalculation={summary.status === "error" ? controller.actions.retrySummary : controller.actions.retryPreview} />
       </AssignmentSection>
 
       <AssignmentSection
@@ -228,8 +107,10 @@ export function DirectReviewAssignmentSections({
             : "sequential"}
         />
         <ExamConditionFields
-          exam={draft.exam}
-          fieldErrors={fieldErrors}
+          exam={{ directionRatio: draft.exam.directionRatio, passingScore: draft.exam.passingScore,
+            retryEnabled: draft.exam.retryEnabled, retryPassingScore: draft.exam.retryPassingScore }}
+          fieldErrors={{ direction: fieldErrors.direction, passingScore: fieldErrors.passingScore,
+            retryPassingScore: fieldErrors.retryPassingScore }}
           idPrefix="review"
           onDirectionChange={controller.actions.changeDirection}
           onPassingScoreChange={controller.actions.changePassingScore}
@@ -256,7 +137,8 @@ export function DirectReviewAssignmentSections({
         />
         <ExamTimingFields
           error={fieldErrors.timing}
-          exam={draft.exam}
+          enabled={draft.exam.timeLimitEnabled !== false}
+          timing={draft.exam.timing}
           onEnabledChange={controller.actions.changeTimeLimitEnabled}
           onModeChange={controller.actions.changeTimingMode}
           onTimingChange={controller.actions.changeTiming}
@@ -275,24 +157,7 @@ export function DirectReviewAssignmentSections({
         index={4}
         title="미리보기"
       >
-        <dl className={styles.reviewPreview}>
-          <div><dt>학생</dt><dd>{student.displayName}</dd></div>
-          <div>
-            <dt>단어장</dt>
-            <dd>{dataset ? cataloguedDatasetDisplayLabel(dataset) : "선택 전"}</dd>
-          </div>
-          <div><dt>범위</dt><dd>오답 · {selectedLevelLabel(draft.reviewLevels)}</dd></div>
-          <div><dt>단어 수</dt><dd>{draft.questionCount}개</dd></div>
-          <div>
-            <dt>공개</dt>
-            <dd>{availabilityIso ? formatKoreanDateTime(availabilityIso) : "즉시"}</dd>
-          </div>
-          <div><dt>시간</dt><dd>{timingLabel(controller)}</dd></div>
-          <div>
-            <dt>마감</dt>
-            <dd>{deadlineIso ? formatKoreanDateTime(deadlineIso) : "마감 없음"}</dd>
-          </div>
-        </dl>
+        <DirectReviewPreview rows={previewRows} />
       </AssignmentSection>
     </div>
   );

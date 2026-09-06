@@ -187,8 +187,8 @@ function verifyRegistry(registry) {
     .map(relative)
     .filter(
       (filePath) =>
-        ["scripts/check-feature-map.mjs", "scripts/verify-ui-architecture.mjs"].includes(filePath) ||
-        /^scripts\/feature-map\/[^/]+\.mjs$/.test(filePath) ||
+        ["scripts/check-feature-map.mjs", "scripts/check-work-records.mjs", "scripts/verify-ui-architecture.mjs", "src/app/work-records.test.mjs", "src/lib/quiz/cached-flow-contract.test.ts"].includes(filePath) ||
+        /^scripts\/(?:feature-map|work-records)\/[^/]+\.mjs$/.test(filePath) ||
         /^src\/test-support\/(module-boundary(?:\.test)?|server-architecture)\.ts$/.test(filePath) ||
         /\/(?:architecture-boundary|application-layer-boundaries|server-architecture-ratchet|ui-architecture-ratchet)\.test\.ts$/.test(filePath),
     )

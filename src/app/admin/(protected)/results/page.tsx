@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { AdminHistoryList } from "@/features/history/ui/admin-history-list";
+import { CachedAdminHistoryList } from "@/features/history/ui/cached-admin-history-list";
+import { getHistoryListCacheSeed } from "@/features/history/server/queries/history-list-entry-query";
 import { adminHistoryText } from "@/content/ko/admin-history";
 import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import { listAdminHistoryInitial } from "@/features/history/server/queries/admin-history-list-query";
+import { getAdminListCachePolicy } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: adminHistoryText.page.title,
@@ -21,6 +24,9 @@ export default function ResultsPage() {
 }
 
 async function ResultsContent() {
+  if (getAdminListCachePolicy().history) {
+    return <CachedAdminHistoryList initialResponse={await getHistoryListCacheSeed()} />;
+  }
   const snapshot = await listAdminHistoryInitial({ currentOnly: false });
 
   return (

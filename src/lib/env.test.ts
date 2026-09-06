@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   AppConfigurationError,
+  getAdminListCachePolicy,
   getAppOrigin,
   getStudentCodeEnvironment,
 } from "@/lib/env";
@@ -13,6 +14,31 @@ const key32 = Buffer.alloc(32, 7).toString("base64");
 describe("기능별 서버 환경설정 계약", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
+  });
+
+  it.each([undefined, "", "  ", "1", " 1 "])("목록 캐시는 미설정·공백·1이면 켠다: %s", (value) => {
+    vi.stubEnv("STUDENT_DIRECTORY_CACHE_CANARY", value);
+    vi.stubEnv("ASSIGNMENT_DIRECTORY_CACHE_CANARY", value);
+    vi.stubEnv("HISTORY_LIST_CACHE_CANARY", value);
+    expect(getAdminListCachePolicy()).toEqual({ students: true, assignments: true, history: true });
+  });
+
+  it.each(["0", " 0 ", "true", "false", "2", "invalid"])("목록 캐시는 0·잘못된 설정이면 끈다: %s", (value) => {
+    vi.stubEnv("STUDENT_DIRECTORY_CACHE_CANARY", value);
+    vi.stubEnv("ASSIGNMENT_DIRECTORY_CACHE_CANARY", value);
+    vi.stubEnv("HISTORY_LIST_CACHE_CANARY", value);
+    expect(getAdminListCachePolicy()).toEqual({ students: false, assignments: false, history: false });
+  });
+
+  it.each(Array.from({ length: 8 }, (_, index) => ({
+    students: Boolean(index & 4), assignments: Boolean(index & 2), history: Boolean(index & 1),
+  })))("학생 캐시가 꺼지면 배정만 함께 끄고 내역은 독립이다: %j", (flags) => {
+    vi.stubEnv("STUDENT_DIRECTORY_CACHE_CANARY", flags.students ? "1" : "0");
+    vi.stubEnv("ASSIGNMENT_DIRECTORY_CACHE_CANARY", flags.assignments ? "1" : "0");
+    vi.stubEnv("HISTORY_LIST_CACHE_CANARY", flags.history ? "1" : "0");
+    expect(getAdminListCachePolicy()).toEqual({
+      ...flags, assignments: flags.students && flags.assignments,
+    });
   });
 
   it("학생 생성은 코드 생성에 필요한 두 비밀값만 검사한다", () => {

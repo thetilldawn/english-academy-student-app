@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { Button } from "@/design-system/primitives/button/button";
+import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import {
   Field,
   FieldLabel,
@@ -14,6 +14,8 @@ import { adminHistoryText } from "@/content/ko/admin-history";
 import type { AdminHistorySnapshot } from "@/features/history/contracts/admin-history-read-model";
 import { useAdminHistoryListController } from "@/features/history/controller/use-admin-history-list-controller";
 import type { AdminHistoryStatusFilter } from "@/features/history/domain/learning-activity";
+import { isHistoryAccessFailure } from "../contracts/admin-history-request-error";
+import { HistoryReadFailure } from "./history-read-failure";
 
 import {
   HistorySectionGroups,
@@ -58,10 +60,14 @@ function snapshotSections(snapshot: AdminHistorySnapshot): HistorySection[] {
 type AdminHistoryListProps = {
   initialSnapshot: AdminHistorySnapshot;
   showFilters?: boolean;
+  cacheEnabled?: boolean;
+  onCursorRejected?: () => void;
 };
 
 function AdminHistoryListContent({
   initialSnapshot,
+  cacheEnabled = false,
+  onCursorRejected,
   query,
   setQuery,
   setStatusFilter,
@@ -73,8 +79,8 @@ function AdminHistoryListContent({
   setStatusFilter: (value: AdminHistoryStatusFilter) => void;
   statusFilter: AdminHistoryStatusFilter;
 }) {
-  const { error, loading, retry, snapshot } =
-    useAdminHistoryListController(initialSnapshot, { query, statusFilter });
+  const { failure, isCurrentSnapshot, loading, reportAccessFailure, retry, snapshot } =
+    useAdminHistoryListController(initialSnapshot, { query, statusFilter }, cacheEnabled);
 
   const sections = useMemo(() => snapshotSections(snapshot), [snapshot]);
   const itemCount = sections.reduce(
@@ -136,27 +142,21 @@ function AdminHistoryListContent({
         </div>
       ) : null}
 
-      <p
-        aria-live="polite"
-        className={error ? styles.requestError : styles.requestState}
-        role={error ? "alert" : undefined}
-      >
-        {loading ? "계산 중..." : error || "\u00a0"}
-      </p>
-      {error ? (
-        <Button onClick={retry} type="button" variant="secondary">
-          다시 시도
-        </Button>
+      {loading ? <RouteLoadingState label={adminHistoryText.read.loading} variant="compact" /> : null}
+      {failure ? <HistoryReadFailure failure={failure} onRetry={retry} /> : null}
+      {!isCurrentSnapshot && itemCount > 0 && !isHistoryAccessFailure(failure) ? (
+        <p className={styles.requestState}>{adminHistoryText.read.previous}</p>
       ) : null}
 
-      {itemCount === 0 ? (
+      {isCurrentSnapshot && itemCount === 0 ? (
         <EmptyState>
           {hasActiveConditions
             ? adminHistoryText.emptyState.noMatches
             : adminHistoryText.emptyState.noAssignments}
         </EmptyState>
-      ) : (
+      ) : itemCount > 0 && !isHistoryAccessFailure(failure) ? (
         <HistorySectionGroups
+          key={JSON.stringify([snapshot.snapshotAt, snapshot.query, snapshot.statusFilter, snapshot.currentOnly])}
           countSuffix={adminHistoryText.sections.countSuffix}
           loadMoreContext={{
             currentOnly: snapshot.currentOnly,
@@ -165,8 +165,11 @@ function AdminHistoryListContent({
           }}
           revision={snapshot.snapshotAt}
           sections={sections}
+          onAccessFailure={reportAccessFailure}
+          mutationRefreshEnabled={!cacheEnabled}
+          onCursorRejected={onCursorRejected}
         />
-      )}
+      ) : null}
     </>
   );
 }

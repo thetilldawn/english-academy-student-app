@@ -10,6 +10,9 @@ import { NotificationBootstrap } from "@/components/notification-bootstrap";
 import { adminShellText } from "@/content/ko/admin-shell";
 import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import { requireAdmin } from "@/lib/auth/admin";
+import { getAdminListCachePolicy } from "@/lib/env";
+import { StudentDirectoryCacheProvider } from "@/features/students/public-client";
+import { HistoryListCacheProvider } from "@/features/history/public-client";
 
 import shellStyles from "@/components/shell/app-shell.module.css";
 
@@ -42,8 +45,9 @@ async function AdminProtectedShell({
   detail: React.ReactNode;
 }>) {
   const admin = await requireAdmin();
+  const cachePolicy = getAdminListCachePolicy();
 
-  return (
+  const content = (
     <NavigationExitGuardProvider>
       <div className={shellStyles.adminAppShell}>
       <NotificationBootstrap role="admin" />
@@ -104,4 +108,10 @@ async function AdminProtectedShell({
       </div>
     </NavigationExitGuardProvider>
   );
+  const directoryContent = cachePolicy.students
+    ? <StudentDirectoryCacheProvider key={admin.userId} userId={admin.userId}>{content}</StudentDirectoryCacheProvider>
+    : content;
+  return cachePolicy.history
+    ? <HistoryListCacheProvider key={admin.userId} userId={admin.userId}>{directoryContent}</HistoryListCacheProvider>
+    : directoryContent;
 }

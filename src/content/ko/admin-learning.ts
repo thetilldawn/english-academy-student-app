@@ -1,4 +1,27 @@
 export const adminLearningText = {
+  questionMode: {
+    label: "출제 자료",
+    book: "교재 뜻",
+    definition: "영영풀이 → 영어",
+    example: "예문 → 영어",
+    datasetRequired: "단어장을 먼저 선택하면 사용할 수 있는 출제 자료가 표시됩니다.",
+    statusUnavailable: "이 단어장의 출제 유형 정보를 확인하지 못했습니다. 배정 창을 닫고 다시 열어 주세요.",
+    definitionUnavailable: "이 단어장에는 현재 배정 가능한 영영풀이 문항이 없습니다.",
+    exampleUnavailable: "이 단어장에는 현재 배정 가능한 예문 문항이 없습니다.",
+    prepared: "준비된 문항과 영어 선택지 4개를 사용합니다. 현재는 시험일 없이 1회 배정만 지원합니다.",
+    scheduleRestriction: "영영풀이·예문 시험은 영어 단어 고르기로 출제하며, 현재 시험일 없이 1회만 바로 배정할 수 있습니다.",
+  },
+  timeTemplate: {
+    saved: "시간 템플릿을 저장했습니다.",
+    saveFailed: "시간 템플릿을 저장하지 못했습니다.",
+  },
+  discardAssignment: {
+    title: "배정 작성을 그만둘까요?",
+    description: "입력한 배정 내용을 버리고 닫을까요?",
+    cancel: "계속 작성",
+    confirm: "버리고 닫기",
+    close: "확인 취소",
+  },
   // 학습 관리 > 페이지·시험 종류 탭·검색
   page: {
     title: "단어 시험",
