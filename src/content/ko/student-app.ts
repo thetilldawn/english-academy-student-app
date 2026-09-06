@@ -87,6 +87,13 @@ export const studentAppText = {
     close: "닫기",
     countSuffix: "개 단어 · 시험 전에 뜻과 발음을 확인해 보세요.",
     listLabel: "배정된 시험의 학습 단어",
+    visibilityLabel: "단어 가리기 설정",
+    hideEnglish: "영어 가리기",
+    hideMeaning: "뜻 가리기",
+    englishHidden: "영어를 가렸습니다.",
+    meaningHidden: "뜻을 가렸습니다.",
+    exampleWordHidden: "가린 단어",
+    examplePositionUnavailable: "예문에서 가릴 단어 위치를 확인할 수 없습니다.",
     pronunciationLabel: "단어 발음 듣기",
     definition: "영영풀이",
     example: "예문",
@@ -97,7 +104,7 @@ export const studentAppText = {
     audioUnavailable: "이 단어의 발음 자료는 아직 준비되지 않았습니다.",
     soundUnavailable: "이 단어의 음성은 아직 준비되지 않았습니다.",
     audioError: "음성을 재생하지 못했습니다. 스피커 버튼을 다시 눌러 주세요.",
-    contextUnavailable: "원문 자료를 확인 중입니다.",
+    contextUnavailable: "등록된 학습 문장이 없습니다.",
   },
 
   // 학생 시험 응시 화면 > 문제 도움말

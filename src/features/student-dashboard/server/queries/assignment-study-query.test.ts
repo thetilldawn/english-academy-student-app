@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ rpc: vi.fn(), registry: vi.fn(), active: vi.fn(), synthetic: vi.fn(), approved: vi.fn() }));
+const mocks = vi.hoisted(() => ({ rpc: vi.fn(), registry: vi.fn(), active: vi.fn(), synthetic: vi.fn(), approved: vi.fn(), prompts: vi.fn() }));
+vi.mock("./assignment-study-example-query", () => ({ getStudyExamplePrompts: mocks.prompts }));
 vi.mock("@/lib/supabase/service", () => ({ getServiceSupabaseClient: () => ({ rpc: mocks.rpc }) }));
 vi.mock("@/lib/services/quiz/pronunciation-registry", () => ({
   loadVocabPronunciationRegistry: mocks.registry,
@@ -17,6 +18,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   for (const fn of [mocks.registry, mocks.active, mocks.synthetic, mocks.approved]) fn.mockResolvedValue(new Map());
   mocks.rpc.mockResolvedValue({ data: raw(), error: null });
+  mocks.prompts.mockResolvedValue(new Map([[7, ["She _____ the letters."]]]));
 });
 describe("배정 단어장 서버 조회", () => {
   it("세션 학생만 전달하고 발음 대상은 선택지가 아닌 배정 단어 ID뿐이다", async () => {
@@ -24,13 +26,19 @@ describe("배정 단어장 서버 조회", () => {
     expect(mocks.rpc).toHaveBeenCalledWith("get_student_assignment_study_v1", { p_assignment_id: id, p_student_id: student.studentId });
     expect(mocks.registry).toHaveBeenCalledWith([7]);
     expect(result?.words[0]).toMatchObject({ headword: "collect", meaning: "모으다", definition: null, example: null });
-    expect(Object.keys(result!.words[0]!)).toEqual(["key", "headword", "meaning", "definition", "example", "pronunciation"]);
+    expect(Object.keys(result!.words[0]!)).toEqual(["key", "headword", "meaning", "definition", "example", "exampleRanges", "pronunciation"]);
+    expect(mocks.prompts).not.toHaveBeenCalled();
   });
   it.each(["canonical_definition_to_headword", "canonical_example_to_headword"])("%s에 해당하는 학습 원문만 공개한다", async (mode) => {
     mocks.rpc.mockResolvedValue({ data: { ...raw(mode), choices: ["secret"], correct_choice_index: 2 }, error: null });
     const result = await getAssignmentStudy(student, id);
     expect(result?.words[0]?.definition).toBe(mode.includes("definition") ? word.definition : null);
     expect(result?.words[0]?.example).toBe(mode.includes("example") ? "She collected the letters." : null);
+    if (mode.includes("example")) {
+      expect(mocks.prompts).toHaveBeenCalledExactlyOnceWith(id, [7]);
+      expect(mocks.rpc.mock.invocationCallOrder[0]).toBeLessThan(mocks.prompts.mock.invocationCallOrder[0]!);
+      expect(result?.words[0]?.exampleRanges).toEqual([{ start: 4, end: 13 }]);
+    } else expect(mocks.prompts).not.toHaveBeenCalled();
     expect(JSON.stringify(result)).not.toMatch(/secret|choice|entryId|Snapshot|releaseId|orderIndex/u);
   });
   it("완전 중복만 제거하고 같은 철자의 다른 뜻을 보존한다", async () => {
@@ -45,6 +53,7 @@ describe("배정 단어장 서버 조회", () => {
     mocks.rpc.mockResolvedValue({ data: null, error: null });
     expect(await getAssignmentStudy(student, id)).toBeNull();
     expect(mocks.registry).not.toHaveBeenCalled();
+    expect(mocks.prompts).not.toHaveBeenCalled();
     expect(await getAssignmentStudy(student, "bad-id")).toBeNull();
     expect(mocks.rpc).toHaveBeenCalledTimes(1);
   });
@@ -57,5 +66,13 @@ describe("배정 단어장 서버 조회", () => {
   it("조회 장애를 빈 단어장으로 위장하지 않는다", async () => {
     mocks.rpc.mockResolvedValue({ data: null, error: { code: "timeout" } });
     await expect(getAssignmentStudy(student, id)).rejects.toThrow("assignment_study_read_failed");
+  });
+  it("예문 위치 자료의 조회 실패와 일치 자료 없음을 구분한다", async () => {
+    mocks.rpc.mockResolvedValue({ data: raw("canonical_example_to_headword"), error: null });
+    mocks.prompts.mockRejectedValueOnce(new Error("assignment_study_example_read_failed"));
+    await expect(getAssignmentStudy(student, id)).rejects.toThrow("assignment_study_example_read_failed");
+    mocks.prompts.mockResolvedValueOnce(new Map());
+    const result = await getAssignmentStudy(student, id);
+    expect(result?.words[0]).toMatchObject({ example: word.example, exampleRanges: null });
   });
 });

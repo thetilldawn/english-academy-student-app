@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireStudentSession } from "@/lib/auth/student-session";
 import type { StudyPresentation } from "../../contracts/assignment-study";
-import { AssignmentStudyFrame } from "../../ui/assignment-study-frame";
-import { AssignmentStudyWords } from "../../ui/assignment-study-words";
+import { AssignmentStudyReader } from "../../client/components/assignment-study-reader";
 import { getAssignmentStudy } from "../queries/assignment-study-query";
 
 export async function AssignmentStudyContent({ params, presentation }: {
@@ -13,7 +12,5 @@ export async function AssignmentStudyContent({ params, presentation }: {
   const { id } = await params;
   const study = await getAssignmentStudy(student, id);
   if (!study) notFound();
-  return <AssignmentStudyFrame presentation={presentation} title={study.title}>
-    <AssignmentStudyWords key={study.assignmentId} study={study} />
-  </AssignmentStudyFrame>;
+  return <AssignmentStudyReader key={`${study.assignmentId}:${study.mode}`} presentation={presentation} study={study} />;
 }

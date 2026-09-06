@@ -1,0 +1,1134 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20260906-13",
+  "title": "학생 단어장 유형별 블러 가리기",
+  "size": "small",
+  "gate": "verified",
+  "guide": "docs/work-orders/APP-20260906-13.md",
+  "baseline": "bc48313bc53840a44ab6505a8238eaabf7667eae",
+  "owners": [
+    "student-dashboard",
+    "shared-contract",
+    "architecture-meta"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal"
+  ],
+  "scope": [
+    {
+      "path": "src/features/student-dashboard/AGENTS.md",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/student-dashboard/server/components/assignment-study-content.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-query.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-query.test.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/contracts/assignment-study.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/controller/use-study-audio.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/ui/assignment-study-words.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/ui/assignment-study-words.test.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/ui/assignment-study.module.css",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/content/ko/student-app.ts",
+      "state": "existing",
+      "owner": "shared-contract",
+      "flowIds": []
+    },
+    {
+      "path": "architecture/기능_소유권.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/student-dashboard/client/components/assignment-study-reader.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/client/components/assignment-study-reader.test.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/ui/study-visibility-controls.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/ui/study-blur.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/domain/study-example-ranges.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/domain/study-example-ranges.test.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-example-query.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-example-query.test.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "scripts/local-admin-baseline.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "scripts/local-admin-baseline-data.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "scripts/local-student-study-data.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/test-support/local-admin-baseline.test.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "유형별 고정 상단 토글과 0.25초 블러",
+      "acceptance": "영어→뜻은 영어/뜻 별도 버튼으로 한쪽만 가릴 수 있고, 반대 버튼을 누르면 기존에 가린 열을 표시하며 예문 없음. 영영풀이/예문→영어는 단어 토글만. 요소·공간 유지 및 250ms blur, reduced-motion 존중, 제목·닫기 고정",
+      "disposition": "required",
+      "owners": [
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4",
+        "T5"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "예문 대상 단어만 가리고 원문·풀이 유지",
+      "acceptance": "영영풀이 자체는 항상 표시. 예문은 문장 전체가 아닌 승인 빈칸 대응 구간과 같은 대상 표현만 블러. 보이기시 원문 그대로. 숨긴 발음·스피커·접근성 단서 없고 숨김시 재생중지",
+      "disposition": "required",
+      "owners": [
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "engineering",
+      "text": "기존 조회·권한·모달·실패 구분 유지",
+      "acceptance": "현재 학생 권한/배정 확인 후 예문형에만 prompt 묶음 조회1회, 서버 span만 전송. 선택지/정답/순서 제외. 토글 추가조회0. 실패를 빈 목록으로 위장하지 않고 로딩/오류/404 닫기 유지",
+      "disposition": "required",
+      "owners": [
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T2",
+        "T3",
+        "T4",
+        "T5"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "진행 순서와 업로드",
+      "answer": "선행 캐시 마감 뒤 마지막 가리기. 안전검사 후 Preview/Production. 직전 공개 GitHub 코드·개발문서 업로드 질문에 ㄱㄱ 승인; 비밀키·실학생·원자료 제외",
+      "source": "2026-09-06 최신 사용자 ㄱㄱ 및 구체 가리기 답변/직전 두 확인 질문"
+    },
+    {
+      "id": "D2",
+      "owner": "user",
+      "state": "resolved",
+      "question": "가리기 규칙",
+      "answer": "250ms 블러로 공간유지. 영어→뜻 각각 숨김, 예문은 그 유형만. 영영풀이/예문 본문은 유지, 영어 단어 숨김만; 예문 속 해당 단어는 함께 가림. 최신 추가확정: 영어→뜻 둘 다 동시 숨김 금지, 반대쪽 숨김 선택 시 기존 열은 다시 표시.",
+      "source": "2026-09-06 사용자 최종 가리기 상세 지시"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "정확한 예문 위치",
+      "answer": "stem 추정·사전 정제 없이 현재 배정의 승인 prompt와 해시 결속된 완성 원문을 서버에서 대조. 권한 RPC 성공 후 예문형만 좁은 묶음 추가읽기1회. 정확히 한 빈칸과 일치하는 양끝을 요구하고 실패/누락은 위치 확인 안내. 위치 정수만 전달, DB변경없음.",
+      "source": "기존 assignment-study SQL/DTO와 독립 코드 검토"
+    },
+    {
+      "id": "D4",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "수명·접근성·재사용",
+      "answer": "Client 조립부 소유 단일 hiddenColumn 상태와 한 음성재생기, hook없는 Words/Blur/Controls, 기존 Frame과 공용Dialog 재사용. DOM/높이는 유지하되 숨긴 내용 aria-hidden/inert·선택금지, audio중지. 키별 초기화/영구보관없음. 블러는 학습표시 기능이며 데이터보안 장치가 아님.",
+      "source": "기존 개발기준/React 스킬과 사용자 블러 요청"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "checked",
+      "reason": "기존 가로채기/직접 페이지 및 닫기/오류/404 경로 보존"
+    },
+    "ui": {
+      "status": "changed",
+      "reason": "유형별 표시·블러·접근성·현재권한 회귀 범위 확인"
+    },
+    "state": {
+      "status": "changed",
+      "reason": "유형별 표시·블러·접근성·현재권한 회귀 범위 확인"
+    },
+    "domain": {
+      "status": "changed",
+      "reason": "유형별 표시·블러·접근성·현재권한 회귀 범위 확인"
+    },
+    "data": {
+      "status": "changed",
+      "reason": "유형별 표시·블러·접근성·현재권한 회귀 범위 확인"
+    },
+    "api": {
+      "status": "checked",
+      "reason": "새 URL/API/DB 변경없음. 승인 원문과 현재배정prompt 읽기 결과를 서버에서 span만 최소전송"
+    },
+    "cache": {
+      "status": "checked",
+      "reason": "토글 로컬상태만, 개인자료 공유/영구 캐시 없고 예문 위치 읽기는 클릭 조회 때1회"
+    },
+    "asyncUi": {
+      "status": "checked",
+      "reason": "유형별 표시·블러·접근성·현재권한 회귀 범위 확인"
+    },
+    "security": {
+      "status": "checked",
+      "reason": "유형별 표시·블러·접근성·현재권한 회귀 범위 확인"
+    },
+    "styles": {
+      "status": "changed",
+      "reason": "유형별 표시·블러·접근성·현재권한 회귀 범위 확인"
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "유형별 표시·블러·접근성·현재권한 회귀 범위 확인"
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "개인 학습 자료의 현재권한/정답필드 제외/토글 무조회와 표시 단서 보호",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "개인 학습 자료의 현재권한/정답필드 제외/토글 무조회와 표시 단서 보호",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "개인 학습 자료의 현재권한/정답필드 제외/토글 무조회와 표시 단서 보호",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "개인 학습 자료의 현재권한/정답필드 제외/토글 무조회와 표시 단서 보호",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T4"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "현재학생세션→기존getAssignmentStudy RPC→예문형의 같은 배정 prompt 한묶음+발음 병렬읽기→원문구간계산→ClientReader→Frame/Controls/Words. 생성·배정·응시·삭제·점수·검색 변경없음: 학습 표시만.",
+    "reuse": "기존RoutedDetailDialog/Button/AudioButton/PronunciationText, 소유CSS. 단일 표시 선택/음성수명은 client 조립, 순수 구간계산 domain, 자료권한과최소화 server.",
+    "cache": "새 개인/공용 캐시 없음. 토글 null/english/meaning 단일 상태만 현재단어장 수명, 새로운 배정/재열기 초기 표시. API 호출/저장 없이 즉시블러.",
+    "compatibility": "Next16.2.12 React19.2.8 유지. 기존studyDTO에 선택적 구간 추가, 기존 RPC/DB 불변. 기존direct/modal/loading/error/notFound 유지. 판정문구는카탈로그.",
+    "rollback": "APP13 가리기 조립·위치 추가읽기만 이전 화면으로 되돌림. 원문/배정/답안/DB 역변경없음."
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "처음 학습 자료를 기다림",
+      "message": "단어장을 불러오고 있습니다…",
+      "behavior": "기존 스피너와 제목·닫기 유지, 토글 아직 없음",
+      "recovery": "완료 시 목록, 실패 시 오류",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "오류의 다시 시도 또는 새 단어장 이동",
+      "message": "단어장을 불러오고 있습니다…",
+      "behavior": "기존 경로 대기 사용; 토글 자체는 로딩을 만들지 않음",
+      "recovery": "성공 후 새 목록 표시",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "아직 선택한 단어장 없이 학생 시험 목록",
+      "message": "단어 보기",
+      "behavior": "기존 카드의 단어 보기 링크 유지. 토글은 열린 단어장만",
+      "recovery": "카드에서 단어 보기",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "필수 단어 배열이0/필수필드누락은 잘못된 응답, 선택 문장null은 자료없음",
+      "message": "등록된 학습 문장이 없습니다.",
+      "behavior": "정상 null만 행 안 안내. 목록0/형식오류는 실패로 분리",
+      "recovery": "닫기 또는 오류 다시 시도",
+      "component": "src/features/student-dashboard/ui/assignment-study-words.tsx",
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "토글은 null/english/meaning만; 주소ID잘못됨",
+      "message": "확인할 수 없는 단어장입니다. 현재 배정된 시험에서 다시 열어 주세요.",
+      "behavior": "서버 ID검증과 not-found 유지, 새 입력오류 없음",
+      "recovery": "닫기→현재 배정에서 다시 열기",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "현재 조회실패 또는 예문 위치정렬 실패",
+      "message": "단어장을 불러오지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요. / 예문에서 가릴 단어 위치를 확인할 수 없습니다.",
+      "behavior": "조회실패는경로오류, 위치미확인은 해당예문안내. 영어오류원문·가짜0건없음. 승인 대상 위치를 못 찾은 예문은 숨김 때만 문장 전체를 임시 블러하고 위치 오류를 명시, 보이기는 원문 그대로.",
+      "recovery": "조회는 다시 시도, 위치는 영어표시로 원문확인",
+      "component": "src/features/student-dashboard/ui/assignment-study-error.tsx",
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "새 저장이 없는 학습표시 변경",
+      "message": "음성을 재생하지 못했습니다. 스피커 버튼을 다시 눌러 주세요.",
+      "behavior": "저장/답안/점수 요청 없음, 재생실패만 행의 쉬운 안내",
+      "recovery": "단어 표시 후 스피커 재시도",
+      "component": "src/features/student-dashboard/ui/assignment-study-words.tsx",
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "현재학생세션 없음/접근배정 없음",
+      "message": "학생 접속 / 확인할 수 없는 단어장입니다. 현재 배정된 시험에서 다시 열어 주세요.",
+      "behavior": "기존인증리다이렉트/숨김404, span추가읽기도 금지",
+      "recovery": "학생코드 접속 또는 현재 배정으로 돌아가기",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "없는ID 또는 현재학생이 접근할 수 없는배정",
+      "message": "확인할 수 없는 단어장입니다. 현재 배정된 시험에서 다시 열어 주세요.",
+      "behavior": "기존모달/직접 notFound, 제목닫기 유지",
+      "recovery": "닫기로 기존학생목록",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "학습 화면 렌더/필수자료 예외",
+      "message": "단어장을 불러오지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.",
+      "behavior": "기존 안전한 경로 오류 안내, 스택/SQL/개인값 없음",
+      "recovery": "다시 시도/닫기",
+      "component": "src/features/student-dashboard/ui/assignment-study-error.tsx",
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "개발기준v1.1/Next16.2.12/React19.2.8",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "기존모달/작은Client경계/안전한상태문구와 사용자확정블러. 새 의존성/DB 없음"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "unit",
+      "target": "src/features/student-dashboard/domain/study-example-ranges.test.ts",
+      "scenario": "정확 빈칸정렬/불규칙·구동사/반복어/대소문자/유사철자 비대상/누락/불일치",
+      "expected": "원문복원동일/대상span정확/틀린단어가림없음",
+      "topics": [
+        "behavior",
+        "data-leak",
+        "answer-leak"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "component",
+      "target": "src/features/student-dashboard/client/components/assignment-study-reader.test.tsx",
+      "scenario": "3유형·양쪽 동시숨김 금지/반대 선택시 복원/재클릭·250ms blur 계약/자리유지/접근성/inert/음성중지·늦은실패/재열기/닫기/쉬운오류·null·404",
+      "expected": "표제어와예문대상만가림/풀이유지/일반형예문없음/조회0/가짜없음없음",
+      "topics": [
+        "behavior",
+        "error-ui",
+        "ui-copy",
+        "cache",
+        "data-leak"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "integration",
+      "target": "src/features/student-dashboard/server/queries/assignment-study-example-query.test.ts",
+      "scenario": "현재학생권한 이후 예문형 묶음1조회, 일반형0, 실패/누락/오염/초과, span만전송, 기존RPC/404/원문보호",
+      "expected": "권한전읽기0/개인/선택지/정답필드추가전송0/원문값불변",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "build",
+      "target": "package.json",
+      "scenario": "전체·타입/lint/구조/요청캐시/새빌드/독립읽기검토. 격리된 실제 Next 경로 검사에 기존 가짜 서버를 재사용; 세션/예문 읽기만 허용하고 실제 연결·쓰기 차단 회귀.",
+      "expected": "기존캐시·배정·학생회귀0,현재소스근거일치",
+      "topics": [
+        "behavior",
+        "structure",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T5",
+      "kind": "browser",
+      "target": "src/features/student-dashboard/client/components/assignment-study-reader.tsx",
+      "scenario": "가짜 localhost 실제 Next모달/직접페이지·모바일/PC·스크롤고정·토글·원문복원·오류닫기",
+      "expected": "헤더토글닫기가보이고레이아웃튀지않음/새로고침없이조작/학생DB변경0",
+      "topics": [
+        "behavior",
+        "error-ui",
+        "ui-copy",
+        "cache"
+      ]
+    }
+  ],
+  "verification": {
+    "fingerprint": "02562dcb59a2c8605429448b52c5020a09919fc5cf7b2eaae2e95ae8c7ebfba4",
+    "files": [
+      {
+        "path": "architecture/기능_소유권.json",
+        "sha256": "308b54615e1d4d5051659eb30ffe347820adc5a6b63e64f89654c159d93dbe76"
+      },
+      {
+        "path": "eslint.config.mjs",
+        "sha256": "d8c244c819921bdb70982e51f8bb2c5b5e8a7620a70eca8cde1c89c760113e61"
+      },
+      {
+        "path": "next.config.ts",
+        "sha256": "c779b3730f9dcab3806d1ac9ab52c6363ad1994f6bb33d3bb2ca3b5f946b1405"
+      },
+      {
+        "path": "package-lock.json",
+        "sha256": "5561b1916cdbd9b1c087c6050e18223345a05cca9dcff9a8a2c3db383f8dd45b"
+      },
+      {
+        "path": "package.json",
+        "sha256": "52a577f51420d4a602f9c039de86269958bb551d378e7a48b04b3a25aa073e69"
+      },
+      {
+        "path": "scripts/check-feature-map.mjs",
+        "sha256": "a58fef490a46ec067ce11119e21b4775ad002db5e83dac9a3b6e6b9a8072ac8e"
+      },
+      {
+        "path": "scripts/check-work-records.mjs",
+        "sha256": "b8a95754aa77e329ffd748ca91587996be221ea471a117ba816d0c61a0e2881f"
+      },
+      {
+        "path": "scripts/feature-map/change-impact.mjs",
+        "sha256": "a081f65b5915daf08e0e635c49e744a6b02ef480a46ae5ad0e2b63f203b71444"
+      },
+      {
+        "path": "scripts/feature-map/common.mjs",
+        "sha256": "69b9dad7ca7d05246233c00e0f10666486ed55890c120a6ebba7f496fb8130bc"
+      },
+      {
+        "path": "scripts/feature-map/flow-verification.mjs",
+        "sha256": "8cec86985fff2751e944ae60163c0f5ae8ab18e0a36981ae24eaebb66df4f0fd"
+      },
+      {
+        "path": "scripts/feature-map/import-graph.mjs",
+        "sha256": "82edb9b2bcc06ab69f6e7b545062e54a2b9b4363aa3e6dbc31a7298635622716"
+      },
+      {
+        "path": "scripts/feature-map/owner-output.mjs",
+        "sha256": "17d5ba87dc9b0796d84ca70703198e4bb8d150f56f0e3deda9e9c05fcc8ab187"
+      },
+      {
+        "path": "scripts/feature-map/ownership-catalog.mjs",
+        "sha256": "3e483f5b12695d5df1b48b7eeb5cc012831a8ed8e2fd177bce9acc1fed972515"
+      },
+      {
+        "path": "scripts/feature-map/runtime-flow.mjs",
+        "sha256": "9c2915e2b4be51b55840dbfda3ef8452f510412191980eeb4e914a5766317afc"
+      },
+      {
+        "path": "scripts/local-admin-baseline-data.mjs",
+        "sha256": "f1474ac9d846c71f82f5c86515ee35be5d9f8b27f197b9e5f31d4842d42777f7"
+      },
+      {
+        "path": "scripts/local-admin-baseline.mjs",
+        "sha256": "0ea8e1a5ce4e1f3d78c50e1853bb28861af02f6d76976c453eb4114be476844d"
+      },
+      {
+        "path": "scripts/local-student-study-data.mjs",
+        "sha256": "d43f39f99d96d3f7689b14cdb76739a2aea015230b26598e053a22cd4c695c72"
+      },
+      {
+        "path": "scripts/verify-ui-architecture.mjs",
+        "sha256": "dd7b31f9017f71e0777596a794c7e841c52923966881534666614935a39ed880"
+      },
+      {
+        "path": "scripts/work-records/context.mjs",
+        "sha256": "2d2b3f848e04db2b3ad76ba06fb480589e82243b51d714f0a98b37b70982adf8"
+      },
+      {
+        "path": "scripts/work-records/evidence.mjs",
+        "sha256": "d95c7d886a03dd96fe3dfb7fb67579b719063aa870c0131da21ce0967904874e"
+      },
+      {
+        "path": "scripts/work-records/schema.mjs",
+        "sha256": "9c33b3ffd2e27ad73be3c16a5be4513d3b69837b42fac8c1d00aa5d4dad4e5cd"
+      },
+      {
+        "path": "scripts/work-records/validation.mjs",
+        "sha256": "5a18bed98744ef213f3893012a48d57b88e73dbfe5430b447634be4ac3f8bd0a"
+      },
+      {
+        "path": "src/app/api/student/dashboard/completed/route.test.ts",
+        "sha256": "4261b58016dd400d2c2a828bcfa8347d14ecfe622dfef931bf53dedcfb0bb7f8"
+      },
+      {
+        "path": "src/app/api/student/dashboard/completed/route.ts",
+        "sha256": "0e1e58d3388070e21646edd1fcb1e336fd69feb02e93c0aa50a0e7d345852811"
+      },
+      {
+        "path": "src/app/application-layer-boundaries.test.ts",
+        "sha256": "c3fbff0d6499cac6cb7d1fe515df9b188ffe66f8341cc0d02b9cb94055a91d98"
+      },
+      {
+        "path": "src/app/mobile-production-regression-ui-contract.test.ts",
+        "sha256": "550d45c996e7a2ce286b5ae5099969f7ba7d3a42995887371319732aba1403ad"
+      },
+      {
+        "path": "src/app/preview-environment-contract.test.mjs",
+        "sha256": "d0185efa87e4906df970c921903569cea252982578c64f5cd3d34175aa0a6344"
+      },
+      {
+        "path": "src/app/server-architecture-ratchet.test.ts",
+        "sha256": "2f3864f59c99c394b03c42c17fa65007381820a919c6b45b43f3ba6cecd53b02"
+      },
+      {
+        "path": "src/app/student/(protected)/@detail/(.)assignments/[id]/words/error.tsx",
+        "sha256": "16434c325ca7279adfb328ec05d25cc203869d1b0d227504b44e5105b40fef94"
+      },
+      {
+        "path": "src/app/student/(protected)/@detail/(.)assignments/[id]/words/loading.tsx",
+        "sha256": "cba7f123c52b07fa3114c6188759bb0ab4d2881baf1586c71ec356b35ee91bb9"
+      },
+      {
+        "path": "src/app/student/(protected)/@detail/(.)assignments/[id]/words/not-found.tsx",
+        "sha256": "cef66599f8cc2063623c84fcb7355568d1aadb0e816f27014dafbe705810be78"
+      },
+      {
+        "path": "src/app/student/(protected)/@detail/(.)assignments/[id]/words/page.tsx",
+        "sha256": "a42b6d1212e8a0424e8c01988c105a038571adb5316a072d8ea983d47cf4ce25"
+      },
+      {
+        "path": "src/app/student/(protected)/@detail/[...catchAll]/page.tsx",
+        "sha256": "6602726487feae3145241559118a6197e72a03054563f218e254eab2751934d3"
+      },
+      {
+        "path": "src/app/student/(protected)/@detail/default.tsx",
+        "sha256": "6602726487feae3145241559118a6197e72a03054563f218e254eab2751934d3"
+      },
+      {
+        "path": "src/app/student/(protected)/@detail/page.tsx",
+        "sha256": "6602726487feae3145241559118a6197e72a03054563f218e254eab2751934d3"
+      },
+      {
+        "path": "src/app/student/(protected)/assignments/[id]/words/error.tsx",
+        "sha256": "6e0ddab61f1badbab0e0e7cd3fbf6192e61226441ccf4a652cadd7ddc89e2da7"
+      },
+      {
+        "path": "src/app/student/(protected)/assignments/[id]/words/loading.tsx",
+        "sha256": "959af10b29c7a3c22a275409856a81173e2e83282567b9759ce5960433294b30"
+      },
+      {
+        "path": "src/app/student/(protected)/assignments/[id]/words/not-found.tsx",
+        "sha256": "087aec87203165a285f7977fb92eea465e20ad772efa075f48c77d20fa5dc23f"
+      },
+      {
+        "path": "src/app/student/(protected)/assignments/[id]/words/page.tsx",
+        "sha256": "6d13bb0137dbdf5925bdf5e2ca84696fc952efb5571177c26165e2816a8459a7"
+      },
+      {
+        "path": "src/app/student/(protected)/page.tsx",
+        "sha256": "146f17f9064d747f33ec41709a6284ca9f30c9357f8de91a0c4c1c27549453f9"
+      },
+      {
+        "path": "src/app/ui-architecture-ratchet.test.ts",
+        "sha256": "0157d6a24cb6a66dd4d0cb488aaa42a1d39b8266e29c2892475060f7f2d730ac"
+      },
+      {
+        "path": "src/app/work-records.test.mjs",
+        "sha256": "8b3793e426fb2564b9e1a28e84dce2d12b44ada07305ae320ae83c235813be4b"
+      },
+      {
+        "path": "src/content/ko/student-app.ts",
+        "sha256": "122a0912a664f6cc04b0e93e89f90e4ecd73a8871ac67cb9045b47a3dbbeef1b"
+      },
+      {
+        "path": "src/design-system/architecture-boundary.test.ts",
+        "sha256": "4a7e637626250266989ba83e2aa14c9c89813d820491a2023d6ee0c796ef2fab"
+      },
+      {
+        "path": "src/features/assignments/architecture-boundary.test.ts",
+        "sha256": "b38b04f8eee91e94414b10bbe4a48759d224fa2a80a1f0ff00a10959396cf040"
+      },
+      {
+        "path": "src/features/student-dashboard/api/start-attempt.ts",
+        "sha256": "e768b7324e65fc7712801a77d5201c1af53b797155250dfa657d63f96ac1f5d4"
+      },
+      {
+        "path": "src/features/student-dashboard/client/components/assignment-study-reader.test.tsx",
+        "sha256": "3eb02f0496a5f5bbca99dd42f400aee958b52480c269adcd8e87c16604ad6eda"
+      },
+      {
+        "path": "src/features/student-dashboard/client/components/assignment-study-reader.tsx",
+        "sha256": "951f2f0a206fb9f8560f5dbb2640c410bb884a3f9591e721df43272aa6e6f483"
+      },
+      {
+        "path": "src/features/student-dashboard/contracts/assignment-study.ts",
+        "sha256": "66a45e1509f7f8659b363db67acf1dddb306a9a72c676b383916a42fb9046175"
+      },
+      {
+        "path": "src/features/student-dashboard/contracts/student-dashboard-read-model.ts",
+        "sha256": "59bcf1d83d6b19f01520fc27846b12cde0073fb3ec6dc2dccf8167a41c56d371"
+      },
+      {
+        "path": "src/features/student-dashboard/controller/use-student-completed-assignments.test.tsx",
+        "sha256": "5ceda64a058fe56a11ac440df9875ce154014fc70dc3087ff3e90dcf390a8922"
+      },
+      {
+        "path": "src/features/student-dashboard/controller/use-student-completed-assignments.ts",
+        "sha256": "d9f9da935c9b4629e9aff765be226a854f5ef2065edee8df6f87b9b75a0cb21f"
+      },
+      {
+        "path": "src/features/student-dashboard/controller/use-study-audio.ts",
+        "sha256": "5fa40954e36a4d2601e0d7c124f1d6d7081bd794c1c4075393bdb091ae025647"
+      },
+      {
+        "path": "src/features/student-dashboard/domain/student-assignment-lifecycle.test.ts",
+        "sha256": "22835eab7dc2761d0290540644e637034b2a339d192013aa328a54eef766d01a"
+      },
+      {
+        "path": "src/features/student-dashboard/domain/student-assignment-lifecycle.ts",
+        "sha256": "a088412e80f6e6d99f93826da443651e20e9264f699f23148573429d3505dd57"
+      },
+      {
+        "path": "src/features/student-dashboard/domain/student-assignment-sections.test.ts",
+        "sha256": "5604685c45d750f6cf06c4dea17e04a856a1e84be3e2535433f19831c3706c76"
+      },
+      {
+        "path": "src/features/student-dashboard/domain/student-assignment-sections.ts",
+        "sha256": "32fbdbe16571345286b176b516709e7a981703f05c3eb7311322fc981829107a"
+      },
+      {
+        "path": "src/features/student-dashboard/domain/study-example-ranges.test.ts",
+        "sha256": "d1fa453bc3038a4fc06155707031841c003547d2d237d1f022288e86923defb4"
+      },
+      {
+        "path": "src/features/student-dashboard/domain/study-example-ranges.ts",
+        "sha256": "52673960f1f2158cda14da9673dfc060153cc940be503aebc63ccfbcd7486f10"
+      },
+      {
+        "path": "src/features/student-dashboard/model.ts",
+        "sha256": "4e54d440f03bc1240d21f9981d04cd033e6088145e877a0ab69b11e28adcd96a"
+      },
+      {
+        "path": "src/features/student-dashboard/server/components/assignment-study-content.tsx",
+        "sha256": "04da84d53f03bac23e36ddec6d3495f6f298bd119f2f822caae3a46f73c57e0f"
+      },
+      {
+        "path": "src/features/student-dashboard/server/components/student-dashboard-content.tsx",
+        "sha256": "193a03e417288536d2ace9f1ba20f581d1d02cb81e99a74054275896839008d9"
+      },
+      {
+        "path": "src/features/student-dashboard/server/queries/assignment-study-example-query.test.ts",
+        "sha256": "d639d9644b6d8303ea4a6c9108bba11b1bb407a731ff31e2af8a0b82908ac561"
+      },
+      {
+        "path": "src/features/student-dashboard/server/queries/assignment-study-example-query.ts",
+        "sha256": "3a2cd78f25f29c691e4af91cc930e41245c48a154c7784dc925730f035124531"
+      },
+      {
+        "path": "src/features/student-dashboard/server/queries/assignment-study-query.test.ts",
+        "sha256": "87af46ca62c90c86aad29d26eda5ad292936aa080a491307412544b60a46e388"
+      },
+      {
+        "path": "src/features/student-dashboard/server/queries/assignment-study-query.ts",
+        "sha256": "ed3ce6113d0daa3c1e45748733cc7d7dedeb6558f54b53927f8b8f4893e24b21"
+      },
+      {
+        "path": "src/features/student-dashboard/server/queries/student-dashboard-query.test.ts",
+        "sha256": "62e3960e0ad90bcc2954f774b6c160a1424cd26aed1b98312476389007789625"
+      },
+      {
+        "path": "src/features/student-dashboard/server/queries/student-dashboard-query.ts",
+        "sha256": "e9acdd35f4ac7ecb4e1d2bfd354b64974cb1da26b682b0eb0063b76879a9f4b8"
+      },
+      {
+        "path": "src/features/student-dashboard/server/queries/student-dashboard-read-error.ts",
+        "sha256": "6ccc1206c586dae2563ee5cd25e529d3804f6f65b9480382299316f79a736ff5"
+      },
+      {
+        "path": "src/features/student-dashboard/server/queries/student-dashboard-row-schema.ts",
+        "sha256": "a025b01b0f3dc288a7cc3379e5fd02c1d27225d90b96041e0ccc2aa4dfba4cfb"
+      },
+      {
+        "path": "src/features/student-dashboard/server/student-dashboard-cursor.test.ts",
+        "sha256": "7952cc03ff93d9a87f2917d71f4f5bc03a70945c906e94de2abcc51e43e86b77"
+      },
+      {
+        "path": "src/features/student-dashboard/server/student-dashboard-cursor.ts",
+        "sha256": "3d0687f9a3fcfe308c5ea4c3891d374f13520d48e6ce44ec17ed8f271a53cad9"
+      },
+      {
+        "path": "src/features/student-dashboard/student-dashboard-feature.contract.test.ts",
+        "sha256": "776b00d6b52c7e3567163f471046dfb2de896a2519ec8cbd2b29d8a0ec47cd3f"
+      },
+      {
+        "path": "src/features/student-dashboard/transport/student-dashboard-pages.test.ts",
+        "sha256": "869f87edf8a2c7771edb52a6198babba1161132f7e915f88889c72bbfe2e0d30"
+      },
+      {
+        "path": "src/features/student-dashboard/transport/student-dashboard-pages.ts",
+        "sha256": "6672175ad32474836e10ac64d30d1d3a132ba63a51c4e09ea409d1f1fada22c8"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/assignment-boundary-refresh.test.tsx",
+        "sha256": "92ef6efe93914d372439769a0a22fc10618c8bd26a138ee13a8bcd62eb3239d7"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/assignment-boundary-refresh.tsx",
+        "sha256": "4f9314a7363f783ff8564fbfaa7f0e34afe2a1fae48ecaa891ec2a999dd11c3f"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/assignment-study-error.tsx",
+        "sha256": "3791708339c37fe7f8a35467fa5f23da0460215f79d4c71841b17e1ae667cdbe"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+        "sha256": "cd1459776a916eeffd0f9afda1a674d025eddca8597005844e9aaf037f868a37"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/assignment-study-words.test.tsx",
+        "sha256": "bd3de53e0204dd27675e4866534f63d9ba2fb606f3d9ddd2b261a9f31020c7ad"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/assignment-study-words.tsx",
+        "sha256": "fc880d56101efc97b9379a6c6f59c5698772aaffc20ae0c4acecefcb8ee2b8e7"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/assignment-study.module.css",
+        "sha256": "b9620981dfde93e5be9bf025ef0c027a250b838373463d62ecf2f80d7579f272"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/deadline-countdown.module.css",
+        "sha256": "e2d68ad44aa00c2ae508e973b4fc05ef7a08e0229b5f660fea2ab86c2893b25c"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/deadline-countdown.test.tsx",
+        "sha256": "068fde99ca693ef83879c0949f4e7c46ecc05a28ed5bd1527cdca19d001a3bcd"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/deadline-countdown.tsx",
+        "sha256": "24e2cf360f6872acaf72f40f9070450ee5a83cd86da03f6154405b82aa333590"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/start-attempt-button.module.css",
+        "sha256": "efbd3e585fc2f7b6743eae57e5cb097fbc67b4d43deec0204c43ea97c7c341b8"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/start-attempt-button.tsx",
+        "sha256": "74792bcec5079a30ba976fc820547eb9b63018e0913b64082d85074d091e1b6f"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-assignment-availability.tsx",
+        "sha256": "00bcb2cea1be5eeb292affa2954e30acebe7e1804ad2acce3a0243675dad182f"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-assignment-card.module.css",
+        "sha256": "ba2caccdd707858e4117d7a18403923d6f8cd6f2fc32f8d266312553acf1e2f7"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-assignment-card.tsx",
+        "sha256": "111392e6a989ac6112b5c750eed16cb91efc66a16bab8d96af7dbe460dc16128"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-completed-assignments.tsx",
+        "sha256": "2325ead05ca31e1b1f4ac829f6f0a8a65bc1169c12be27d22813860eca074d65"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-dashboard-skeleton.tsx",
+        "sha256": "3d7bd8ca055730fc4be7c0f31c2744eb0a5eaf2d42bfd27db0b4861d7f30ca07"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-dashboard.module.css",
+        "sha256": "0dba840112d1fbe4c5e0eb2be756d51896600406793bd5819bcfd6b2717b82fe"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-dashboard.test.tsx",
+        "sha256": "e9e0216756b7fc1ab84b8a7b3b45d6796d3b7256aa4a2f74c1658da00cbf3211"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-dashboard.tsx",
+        "sha256": "f5709366528054d85395f715ce560e0cf7d8f7cb2f2bd2f7d49af82de09fb3ee"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/study-blur.tsx",
+        "sha256": "9e2d435075e46d5b012b9f2e95e6b3075d32dd7dd4ca3b971aac901d0153ad5f"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/study-visibility-controls.tsx",
+        "sha256": "a9535bb6ca9536d0861af9fcd1ca1862faa6c0201f35bc094ccfa5917dcecbbd"
+      },
+      {
+        "path": "src/lib/admin/assignment-settings.ts",
+        "sha256": "0825a32db7d1e27c4368e3f830375da04bcb21999f63da253e9ab9c1e0c89e09"
+      },
+      {
+        "path": "src/lib/admin/dataset-catalog.ts",
+        "sha256": "1ce7d047b566bc0d886080c5763231f07bf304dccf24dc937e727779a4e83d08"
+      },
+      {
+        "path": "src/lib/admin/dataset-display.ts",
+        "sha256": "ef0a2dcb7528ba322cd52db80cf5cd51cbbdab1f261e50be03a80942b273f194"
+      },
+      {
+        "path": "src/lib/admin/dataset-summary.ts",
+        "sha256": "0b9fbcc0513e1ae47226f7c8501c9bf87e6a6a6284862d185ca06335c295f377"
+      },
+      {
+        "path": "src/lib/admin/review-queue-summary.ts",
+        "sha256": "5d814867a01ea1dda9eae299e744e62d6ad4a8e030efbcb3d311fd7bccf9e61f"
+      },
+      {
+        "path": "src/lib/admin/vocab-unit-allocation-rule.ts",
+        "sha256": "7ef5433745b8446a4b7b1a8a6cd88dbfefc47fe8ae9ff3b9c0594a190bfe3ae2"
+      },
+      {
+        "path": "src/lib/admin/vocab-unit-allocation.ts",
+        "sha256": "c574ad01c58f6c9bfb34285095c0cc0312db62df745b645596c0f6cd75b9e873"
+      },
+      {
+        "path": "src/lib/admin/wrong-history-summary.ts",
+        "sha256": "56aa2e221841cc758db331e0604031ef0805f917666fd597c81fde67922d9ab0"
+      },
+      {
+        "path": "src/lib/constants.ts",
+        "sha256": "7b6804df9c29ec9e9885dc6f349c9806fa5e3dc95c34b2fc7fdd0e1c0244d20a"
+      },
+      {
+        "path": "src/lib/database/assignment-study.integration.test.ts",
+        "sha256": "022aef976808deb37e9f276c4a122635b728a29c2fda171679bfe8dc94e30747"
+      },
+      {
+        "path": "src/lib/deadline.test.ts",
+        "sha256": "50f5c8fe437c797335275e55c5f9c6fc450816d873e71366f7624771b978abec"
+      },
+      {
+        "path": "src/lib/deadline.ts",
+        "sha256": "8c48c51ea0ae9441577f413e53213d77d54ad8a8830a547f577dafaa260357ad"
+      },
+      {
+        "path": "src/lib/format.ts",
+        "sha256": "4b5954fab4d1f3e4524f9b38771a3528b72d4bfad515cb81ca8fa1469976762c"
+      },
+      {
+        "path": "src/lib/quiz/pronunciation-snapshot.test.ts",
+        "sha256": "058caacbe3741bfc0f039a096f3bfc139ad04ce1336715100f5189995beb4e10"
+      },
+      {
+        "path": "src/lib/quiz/pronunciation-snapshot.ts",
+        "sha256": "bd046820e78f9d3a360514577703c6b87d6d60c9827c170deb3b3dcb62deb397"
+      },
+      {
+        "path": "src/lib/quiz/question-content-mode.test.ts",
+        "sha256": "0c2551861145e732e7b2da9853291644375b8abb019a0658231e63bd1df221a8"
+      },
+      {
+        "path": "src/lib/quiz/question-content-mode.ts",
+        "sha256": "e735823ea395a944d1729887c86a4a212c1f9ffe3272aa687e5a5300715cdce7"
+      },
+      {
+        "path": "src/lib/services/quiz/pronunciation-registry.ts",
+        "sha256": "98fe781123c0cc19b7fede8b81a4bb4240593539f7bb2abbdb7a7140e619de68"
+      },
+      {
+        "path": "src/lib/validation.test.ts",
+        "sha256": "79817a766eb61a413406f3e6af6c167dc428022502c5fa420b9878d51845474c"
+      },
+      {
+        "path": "src/lib/validation.ts",
+        "sha256": "3b07c385a5ad3c20a925488bc87444fba5da9e75c97721a69f728db44b5e9517"
+      },
+      {
+        "path": "src/test-support/local-admin-baseline.test.mjs",
+        "sha256": "ce19e38065ee9322ac1604fc53c7194f5c0bf93ea995bc8a321abb3552a190f9"
+      },
+      {
+        "path": "src/test-support/module-boundary.test.ts",
+        "sha256": "d6dc252bef406aec356629a8c71dd3b1a8769e028f1a87e37b7991b0cfb2faa9"
+      },
+      {
+        "path": "src/test-support/module-boundary.ts",
+        "sha256": "88caa81a7f9e912cb0e3fc3667c0d82352e46f0999d61fd546597950ffc3b0c3"
+      },
+      {
+        "path": "src/test-support/server-architecture.ts",
+        "sha256": "fa5baed3795dffb7b7b9c1f6caa61726e9485981297b4777f88f2d22f50eb5b7"
+      },
+      {
+        "path": "supabase/migrations/20260829190000_add_student_dashboard_read_model.sql",
+        "sha256": "8cee56fd459d41f1a798549216cb5d2ecd1ce8d91cddc49a003908b4ab47d76e"
+      },
+      {
+        "path": "supabase/migrations/20260905051013_add_student_assignment_study.sql",
+        "sha256": "29ac0cc98c3d4add7047f585834e88049ad7820c10d18c4358d3484bed16b429"
+      },
+      {
+        "path": "tsconfig.json",
+        "sha256": "5bec101c734eb97d36f3f49b122ad4d37b68d796bfa608760d266c57cd6c50ac"
+      },
+      {
+        "path": "vitest.config.ts",
+        "sha256": "705e16d57f8b528b676a87707bb71dea3ed2d1389303f53ef10902ff4e2726ec"
+      }
+    ],
+    "runs": [
+      {
+        "checkId": "T1",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-06T05:52:37Z",
+        "command": "npm test",
+        "summary": "정확 구간/불규칙·구동사/공백/유사철자/상충 후보/좌표 실패 포함 전용 검사 통과. 원문 값 보존."
+      },
+      {
+        "checkId": "T2",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-06T05:52:37Z",
+        "command": "npm test",
+        "summary": "한쪽만 가리기·반대 선택 복원·동일 버튼 해제·단일 상태·음성 중지/늦은 실패 무시/재열기·오류와 자료없음 구분 통과. Words 기존회귀 포함 전용5파일46개."
+      },
+      {
+        "checkId": "T3",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-06T05:52:37Z",
+        "command": "npm test",
+        "summary": "권한확인 이후 예문1조회/일반0·최소2필드·허용IDs·1001행거절·null/장애 분리/선택지 제외 통과. 독립 읽기 검토 P1/P2없음."
+      },
+      {
+        "checkId": "T4",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-06T05:52:37Z",
+        "command": "npm test; npm run typecheck; npm run lint; npm run verify:architecture:static; node --conditions=react-server scripts/verify-react-request-cache.mjs; node scripts/local-admin-baseline.mjs --cache-canary --assignment-cache --history-cache",
+        "summary": "전체419파일2597검사·타입·lint·지도/구조·변경연결14건·요청캐시·격리 Next16.2.12 새 ON빌드 통과. 실제 DB/학생 쓰기0. 표시 CSS의 실제 흐름 연결 1건을 지도에 추가 후 지도 재검사 통과. 실행 코드/검사 파일 변화 없음."
+      },
+      {
+        "checkId": "T5",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-06T05:52:37Z",
+        "command": "Codex IAB localhost3037; node scripts/local-admin-baseline.mjs --cache-canary --assignment-cache --history-cache; __baseline/metrics",
+        "summary": "실제 가짜 학생 Next화면: 499x982 모바일 모달 영어/뜻 상호전환·고정제목/버튼/닫기, 예문 대상만 블러와 원문복원, 1440x900 직접페이지/모달 영영풀이 유지. 토글3회 HTTP/자료요청0, 콘솔오류경고0. 음성청취·250ms 실시간 계측은 제외(코드/단위검사 근거)."
+      }
+    ]
+  }
+}

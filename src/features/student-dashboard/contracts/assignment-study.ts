@@ -1,5 +1,6 @@
 import type { QuizContentMode } from "@/lib/quiz/question-content-mode";
 import type { QuizPronunciation } from "@/lib/quiz/pronunciation-snapshot";
+import type { StudyTextRange } from "../domain/study-example-ranges";
 
 export type AssignmentStudyWord = {
   key: string;
@@ -7,6 +8,7 @@ export type AssignmentStudyWord = {
   meaning: string;
   definition: string | null;
   example: string | null;
+  exampleRanges?: StudyTextRange[] | null;
   pronunciation: QuizPronunciation;
 };
 

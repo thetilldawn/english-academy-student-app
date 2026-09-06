@@ -17,6 +17,8 @@ import {
 } from "@/lib/services/quiz/pronunciation-registry";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import type { AssignmentStudy } from "../../contracts/assignment-study";
+import { studyExampleRanges } from "../../domain/study-example-ranges";
+import { getStudyExamplePrompts } from "./assignment-study-example-query";
 
 const wordSchema = z.object({
   entryId: z.number().int().positive(),
@@ -69,11 +71,12 @@ export async function getAssignmentStudy(
     ? [{ releaseId: word.releaseId, vocabEntryId: word.entryId }]
     : []);
   const dictionaryIds = rows.flatMap((word) => word.dictionaryId ? [word.dictionaryId] : []);
-  const [registry, active, synthetic, approved] = await Promise.all([
+  const [registry, active, synthetic, approved, examplePrompts] = await Promise.all([
     loadVocabPronunciationRegistry(ids),
     loadActiveVocabPronunciationReleaseRegistry(ids),
     loadSyntheticPronunciationRegistry(bindings),
     loadApprovedKoreanPronunciationRegistry(dictionaryIds),
+    mode === "canonical_example_to_headword" ? getStudyExamplePrompts(assignmentId, ids) : Promise.resolve(new Map<number, string[]>()),
   ]);
   return {
     assignmentId,
@@ -85,6 +88,8 @@ export async function getAssignmentStudy(
       meaning: word.meaning,
       definition: mode === "canonical_definition_to_headword" ? word.definition : null,
       example: mode === "canonical_example_to_headword" ? word.example : null,
+      exampleRanges: mode === "canonical_example_to_headword" && word.example
+        ? studyExampleRanges(word.example, word.headword, examplePrompts.get(word.entryId) ?? []) : null,
       pronunciation: preferredPronunciationWithActiveVocaRelease(
         word.dictionaryId,
         withPronunciationDisplay(parseTargetPronunciation(word.pronunciationSnapshot, word.displayKo), word.displayKo),

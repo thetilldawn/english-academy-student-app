@@ -5,12 +5,16 @@ import { ButtonLink, ButtonSpinner } from "@/design-system/primitives/button/but
 import type { StudyPresentation } from "../contracts/assignment-study";
 import styles from "./assignment-study.module.css";
 
-export function AssignmentStudyFrame({ children, presentation, title = studentAppText.study.title }: {
+export function AssignmentStudyFrame({ children, presentation, title = studentAppText.study.title, controls }: {
   children: ReactNode;
   presentation: StudyPresentation;
   title?: string;
+  controls?: ReactNode;
 }) {
-  const heading = <h2 className={styles.title} id="assignment-study-title">{title}</h2>;
+  const heading = <div className={styles.titleGroup}>
+    <h2 className={styles.title} id="assignment-study-title">{title}</h2>
+    {controls}
+  </div>;
   if (presentation === "dialog") return (
     <RoutedDetailDialog closeLabel={studentAppText.study.close} fullScreenMobile heading={heading}
       height="large" size="wide" titleId="assignment-study-title">

@@ -28,7 +28,8 @@
   표시만으로 시험을 시작·종료하거나 점수를 바꾸지 않는다.
 - 학습 범위는 실제 `assignment_questions` 대상이다. 선택지·정답 위치·시험 문항 순서는
   직렬화하지 않는다. 예문은 해시로 연결된 완성 원문만, 발음은 대상 단어만 사용한다.
-- `assignment-study-words`와 `use-study-audio`는 공용 음성 버튼과 재생기 한 개를 사용한다.
-  결과 기능 내부 부품은 직접 가져오지 않는다. 모달 종료 시 재생기를 정리한다.
+- Client `assignment-study-reader`는 null/english/meaning 단일 표시 선택과 `use-study-audio` 수명을 소유한다. 영어와 뜻을 동시에 가리지 않는다.
+- `assignment-study-words`/`study-blur`/`study-visibility-controls`는 hooks 없는 표시 부품이다. 기존 음성 버튼/재생기를 재사용하며 영어 숨김과 닫기에 재생을 정리한다.
+- 예문형만 기존 권한 RPC 성공 뒤 같은 배정의 승인 prompt를 읽고 `study-example-ranges`로 원문 좌표를 계산한다. 활용형을 추측하거나 원문을 바꾸지 않는다. 공유 캐시·토글 요청은 없다.
 - 모달 제목·닫기는 공용 `RoutedDetailDialog` header에 둔다. 로딩·오류에도 닫기를 유지한다.
 - 학생 단어장 링크는 `prefetch={false}`, `scroll={false}`이며 개인 자료 공유 캐시는 금지한다.

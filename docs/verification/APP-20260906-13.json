@@ -1,0 +1,342 @@
+{
+  "checkedAt": "2026-09-06T05:52:37Z",
+  "fingerprint": "02562dcb59a2c8605429448b52c5020a09919fc5cf7b2eaae2e95ae8c7ebfba4",
+  "files": 125,
+  "localOnly": true,
+  "full": {
+    "files": 419,
+    "tests": 2597
+  },
+  "browser": {
+    "http": [
+      {
+        "path": "/_next/static/chunks/1rnc1_01anfob.js",
+        "method": "GET",
+        "rsc": false,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 25335,
+        "durationMs": 42.10099999999511,
+        "at": 1788673435537
+      },
+      {
+        "path": "/student",
+        "method": "GET",
+        "rsc": false,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 33398,
+        "durationMs": 391.2835999999952,
+        "at": 1788673435540
+      },
+      {
+        "path": "/_next/static/chunks/1w-fq5oe6hw9l.css",
+        "method": "GET",
+        "rsc": false,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 118486,
+        "durationMs": 73.10399999999208,
+        "at": 1788673435541
+      },
+      {
+        "path": "/_next/static/chunks/07hxhl1gpropd.js",
+        "method": "GET",
+        "rsc": false,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 53773,
+        "durationMs": 42.114099999991595,
+        "at": 1788673435541
+      },
+      {
+        "path": "/_next/static/chunks/1lcmu6j9_yio8.js",
+        "method": "GET",
+        "rsc": false,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 5094,
+        "durationMs": 9.443100000004051,
+        "at": 1788673487361
+      },
+      {
+        "path": "/student/assignments/00000000-0000-4000-8000-000000000021/words",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 8058,
+        "durationMs": 37.53160000000207,
+        "at": 1788673487363
+      },
+      {
+        "path": "/_next/static/chunks/1tcd8b2vt1fds.js",
+        "method": "GET",
+        "rsc": false,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 7629,
+        "durationMs": 10.449599999992643,
+        "at": 1788673487363
+      },
+      {
+        "path": "/_next/static/chunks/07m_hpvon6t1j.js",
+        "method": "GET",
+        "rsc": false,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 13651,
+        "durationMs": 2.4375,
+        "at": 1788673487367
+      },
+      {
+        "path": "/student/assignments/00000000-0000-4000-8000-000000000023/words",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 8402,
+        "durationMs": 28.725299999990966,
+        "at": 1788673612066
+      },
+      {
+        "path": "/student/assignments/00000000-0000-4000-8000-000000000023/words",
+        "method": "GET",
+        "rsc": false,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 39878,
+        "durationMs": 46.75,
+        "at": 1788673681712
+      },
+      {
+        "path": "/_next/static/chunks/1gcsx_q84qpfh.js",
+        "method": "GET",
+        "rsc": false,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 7628,
+        "durationMs": 3.3147000000462867,
+        "at": 1788673681771
+      },
+      {
+        "path": "/icon.svg",
+        "method": "GET",
+        "rsc": false,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 257,
+        "durationMs": 11.360900000028778,
+        "at": 1788673681853
+      },
+      {
+        "path": "/student",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 10144,
+        "durationMs": 13.961100000014994,
+        "at": 1788673728072
+      },
+      {
+        "path": "/student/assignments/00000000-0000-4000-8000-000000000022/words",
+        "method": "GET",
+        "rsc": true,
+        "prefetch": false,
+        "status": 200,
+        "bytes": 8241,
+        "durationMs": 18.073299999989104,
+        "at": 1788673728948
+      }
+    ],
+    "data": [
+      {
+        "path": "/rest/v1/student_sessions",
+        "method": "GET",
+        "category": "student-auth",
+        "status": 200,
+        "at": 1788673435428
+      },
+      {
+        "path": "/rest/v1/rpc/list_student_point_totals_v1",
+        "method": "POST",
+        "category": "points",
+        "status": 200,
+        "at": 1788673435464
+      },
+      {
+        "path": "/rest/v1/rpc/get_student_dashboard_initial_v1",
+        "method": "POST",
+        "category": "student-dashboard",
+        "status": 200,
+        "at": 1788673435498
+      },
+      {
+        "path": "/rest/v1/student_sessions",
+        "method": "GET",
+        "category": "student-auth",
+        "status": 200,
+        "at": 1788673487348
+      },
+      {
+        "path": "/rest/v1/rpc/get_student_assignment_study_v1",
+        "method": "POST",
+        "category": "student-study",
+        "status": 200,
+        "at": 1788673487354
+      },
+      {
+        "path": "/rest/v1/vocab_entry_pronunciations",
+        "method": "GET",
+        "category": "study-pronunciation",
+        "status": 200,
+        "at": 1788673487359
+      },
+      {
+        "path": "/rest/v1/vocab_pronunciation_releases_v2",
+        "method": "GET",
+        "category": "study-pronunciation",
+        "status": 200,
+        "at": 1788673487360
+      },
+      {
+        "path": "/rest/v1/student_sessions",
+        "method": "GET",
+        "category": "student-auth",
+        "status": 200,
+        "at": 1788673612046
+      },
+      {
+        "path": "/rest/v1/rpc/get_student_assignment_study_v1",
+        "method": "POST",
+        "category": "student-study",
+        "status": 200,
+        "at": 1788673612050
+      },
+      {
+        "path": "/rest/v1/vocab_entry_pronunciations",
+        "method": "GET",
+        "category": "study-pronunciation",
+        "status": 200,
+        "at": 1788673612055
+      },
+      {
+        "path": "/rest/v1/vocab_pronunciation_releases_v2",
+        "method": "GET",
+        "category": "study-pronunciation",
+        "status": 200,
+        "at": 1788673612055
+      },
+      {
+        "path": "/rest/v1/assignment_questions",
+        "method": "GET",
+        "category": "study-prompts",
+        "status": 200,
+        "at": 1788673612056
+      },
+      {
+        "path": "/rest/v1/student_sessions",
+        "method": "GET",
+        "category": "student-auth",
+        "status": 200,
+        "at": 1788673681683
+      },
+      {
+        "path": "/rest/v1/rpc/list_student_point_totals_v1",
+        "method": "POST",
+        "category": "points",
+        "status": 200,
+        "at": 1788673681688
+      },
+      {
+        "path": "/rest/v1/rpc/get_student_assignment_study_v1",
+        "method": "POST",
+        "category": "student-study",
+        "status": 200,
+        "at": 1788673681689
+      },
+      {
+        "path": "/rest/v1/vocab_entry_pronunciations",
+        "method": "GET",
+        "category": "study-pronunciation",
+        "status": 200,
+        "at": 1788673681697
+      },
+      {
+        "path": "/rest/v1/vocab_pronunciation_releases_v2",
+        "method": "GET",
+        "category": "study-pronunciation",
+        "status": 200,
+        "at": 1788673681702
+      },
+      {
+        "path": "/rest/v1/assignment_questions",
+        "method": "GET",
+        "category": "study-prompts",
+        "status": 200,
+        "at": 1788673681703
+      },
+      {
+        "path": "/rest/v1/student_sessions",
+        "method": "GET",
+        "category": "student-auth",
+        "status": 200,
+        "at": 1788673728066
+      },
+      {
+        "path": "/rest/v1/rpc/list_student_point_totals_v1",
+        "method": "POST",
+        "category": "points",
+        "status": 200,
+        "at": 1788673728069
+      },
+      {
+        "path": "/rest/v1/rpc/get_student_dashboard_initial_v1",
+        "method": "POST",
+        "category": "student-dashboard",
+        "status": 200,
+        "at": 1788673728069
+      },
+      {
+        "path": "/rest/v1/student_sessions",
+        "method": "GET",
+        "category": "student-auth",
+        "status": 200,
+        "at": 1788673728937
+      },
+      {
+        "path": "/rest/v1/rpc/get_student_assignment_study_v1",
+        "method": "POST",
+        "category": "student-study",
+        "status": 200,
+        "at": 1788673728944
+      },
+      {
+        "path": "/rest/v1/vocab_pronunciation_releases_v2",
+        "method": "GET",
+        "category": "study-pronunciation",
+        "status": 200,
+        "at": 1788673728946
+      },
+      {
+        "path": "/rest/v1/vocab_entry_pronunciations",
+        "method": "GET",
+        "category": "study-pronunciation",
+        "status": 200,
+        "at": 1788673728947
+      }
+    ],
+    "ui": []
+  },
+  "toggleOnly": {
+    "http": [],
+    "data": [],
+    "ui": []
+  },
+  "unverified": [
+    "Real acoustic playback",
+    "Frame-by-frame transition timing",
+    "Production deployment (separate DEPLOY)"
+  ]
+}

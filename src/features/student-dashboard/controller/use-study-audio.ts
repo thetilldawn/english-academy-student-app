@@ -7,6 +7,11 @@ export function useStudyAudio() {
   const player = useMemo(() => new ManagedAudioPlayer(), []);
   const generation = useRef(0);
   const [failedWord, setFailedWord] = useState<string | null>(null);
+  const stop = useCallback(() => {
+    generation.current += 1;
+    player.dispose();
+    setFailedWord(null);
+  }, [player]);
   useEffect(() => () => {
     generation.current += 1;
     player.dispose();
@@ -19,5 +24,5 @@ export function useStudyAudio() {
       setFailedWord(key);
     }
   }, [player]);
-  return { failedWord, play };
+  return { failedWord, play, stop };
 }
