@@ -1,41 +1,38 @@
 import { z } from "zod";
 
-import {
-  studentDirectoryStatuses,
-  studentDirectoryWrongFilters,
-} from "@/features/students/contracts/student-directory-read-model";
+import { directoryCacheRequestSchema, directoryFiltersSchema } from "@/features/students/contracts/student-directory-cache-contract";
+import { getStudentDirectoryCacheRead, studentDirectoryCacheIdentity } from "@/features/students/server/queries/student-directory-resume-query";
 import {
   getStudentDirectoryInitial,
   getStudentDirectoryNextPage,
 } from "@/features/students/server/queries/student-directory-query";
 import { StudentDirectoryCursorError } from "@/features/students/server/student-directory-cursor";
-import { getAdminContext } from "@/lib/auth/admin";
+import { AdminAuthenticationUnavailableError, getAdminContextOrThrow } from "@/lib/auth/admin";
 import { isSameOriginRequest, privateJsonError } from "@/lib/http";
 
-const filtersSchema = z.object({
-  classGroupId: z.union([z.literal(""), z.uuid()]),
-  grade: z.string().max(40),
-  query: z.string().max(80),
-  school: z.string().max(120),
-  status: z.enum(studentDirectoryStatuses),
-  wordbook: z.string().max(160),
-  wrong: z.enum(studentDirectoryWrongFilters),
-});
-
 const requestSchema = z.discriminatedUnion("mode", [
-  z.object({ filters: filtersSchema, mode: z.literal("initial") }),
+  directoryCacheRequestSchema,
+  z.object({ filters: directoryFiltersSchema, mode: z.literal("initial") }),
   z.object({
     cursor: z.string().min(1).max(1600),
-    filters: filtersSchema,
+    filters: directoryFiltersSchema,
     mode: z.literal("page"),
-  }),
+    cacheIdentity: z.string().regex(/^[a-f0-9]{64}$/u).nullable().optional(),
+    cacheUserId: z.uuid().optional(),
+  }).refine(value => (value.cacheIdentity !== undefined) === (value.cacheUserId !== undefined)),
 ]);
 
 export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
     return privateJsonError("허용되지 않은 요청입니다.", 403);
   }
-  const admin = await getAdminContext();
+  let admin;
+  try {
+    admin = await getAdminContextOrThrow(request.signal);
+  } catch (error) {
+    if (!(error instanceof AdminAuthenticationUnavailableError)) throw error;
+    return privateJsonError("로그인 상태를 확인하지 못했습니다. 다시 불러와 주세요.", 503);
+  }
   if (!admin) {
     return privateJsonError("관리자 로그인이 필요합니다.", 401);
   }
@@ -46,6 +43,12 @@ export async function POST(request: Request) {
     return privateJsonError("학생 목록 조건을 확인해 주세요.", 400);
   }
   try {
+    if (parsed.data.mode === "page" && parsed.data.cacheUserId && (
+      parsed.data.cacheUserId !== admin.userId || parsed.data.cacheIdentity !== studentDirectoryCacheIdentity(admin)
+    )) return privateJsonError("로그인을 다시 확인해 주세요.", 401);
+    if (parsed.data.mode === "cache") {
+      return Response.json(await getStudentDirectoryCacheRead(parsed.data, admin), { headers: { "Cache-Control": "private, no-store" } });
+    }
     const body = parsed.data.mode === "initial"
       ? { snapshot: await getStudentDirectoryInitial(parsed.data, admin) }
       : { page: await getStudentDirectoryNextPage(parsed.data, admin) };

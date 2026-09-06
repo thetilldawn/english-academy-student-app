@@ -17,6 +17,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 export type AdminContext = {
   userId: string;
   displayName: string;
+  sessionId?: string;
 };
 
 export class AdminAuthenticationUnavailableError extends Error {
@@ -126,6 +127,8 @@ async function readAdminContext(
     return {
       userId,
       displayName: profile.display_name,
+      ...(typeof claimsData?.claims?.session_id === "string" && claimsData.claims.session_id
+        ? { sessionId: claimsData.claims.session_id } : {}),
     };
   } catch (error) {
     unstable_rethrow(error);

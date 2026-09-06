@@ -88,4 +88,9 @@ describe("admin authentication", () => {
 
     await expect(getAdminContext()).resolves.toBeNull();
   });
+  it("검증된 claim의 세대만 서버 문맥에 보관한다", async () => {
+    mocks.getClaims.mockResolvedValueOnce({ data: { claims: { sub: "admin-id", session_id: "server-session" } }, error: null });
+    expect(await getAdminContextOrThrow()).toEqual({ userId: "admin-id", displayName: "관리자", sessionId: "server-session" });
+    expect(await getAdminContextOrThrow()).toEqual({ userId: "admin-id", displayName: "관리자" });
+  });
 });

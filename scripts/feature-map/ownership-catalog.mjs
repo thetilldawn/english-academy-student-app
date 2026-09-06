@@ -31,6 +31,13 @@ export function registeredOwnerForPath(registry, filePath) {
     const match = entries.find((entry) => entry.path === filePath);
     if (match) return match.owner;
   }
+  // Co-located legacy component tests follow only their exact registered source.
+  // A similarly named file elsewhere, or a test without a source, stays unmapped.
+  if (/^src\/components\/[^/]+\.test\.[cm]?[jt]sx?$/.test(filePath)) {
+    const sourcePath = filePath.replace(/\.test(?=\.[cm]?[jt]sx?$)/, "");
+    const source = registry.componentOwners.find((entry) => entry.path === sourcePath);
+    if (source) return source.owner;
+  }
   for (const feature of registry.features) {
     if (filePath === feature.ownerPath || filePath.startsWith(`${feature.ownerPath}/`)) {
       return feature.id;

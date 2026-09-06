@@ -7,7 +7,7 @@ import { useGuardedNavigationRequest } from "@/components/navigation-exit-guard"
 import { adminShellText } from "@/content/ko/admin-shell";
 import { Button } from "@/design-system/primitives/button/button";
 import { InlineError } from "@/design-system/patterns/feedback/feedback";
-import { requestAdminLogout } from "@/features/session/api/session";
+import { requestAdminLogout } from "@/features/session/public-client";
 
 import styles from "./session-action.module.css";
 

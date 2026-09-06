@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     }
 
     return Response.json(
-      { admin },
+      { admin: { userId: admin.userId, displayName: admin.displayName } },
       { headers: privateResponseHeaders },
     );
   } catch {

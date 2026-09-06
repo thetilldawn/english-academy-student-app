@@ -1,14 +1,10 @@
 import type {
-  StudentDirectoryPage,
   StudentDirectoryReadRequest,
-  StudentDirectorySnapshot,
 } from "../contracts/student-directory-read-model";
-
-type StudentDirectoryResponse = {
-  error?: string;
-  page?: StudentDirectoryPage;
-  snapshot?: StudentDirectorySnapshot;
-};
+import { z } from "zod";
+import { directorySnapshotSchema, studentDirectoryListItemSchema, StudentDirectoryRequestError } from "../contracts/student-directory-cache-contract";
+const pageResponseSchema = z.object({ page: z.object({ items: z.array(studentDirectoryListItemSchema).max(10), nextCursor: z.string().nullable() }) });
+const snapshotResponseSchema = z.object({ snapshot: directorySnapshotSchema });
 
 async function requestStudentDirectory(
   request: StudentDirectoryReadRequest,
@@ -21,23 +17,17 @@ async function requestStudentDirectory(
     method: "POST",
     signal,
   });
-  const payload = await response.json().catch(() => null) as
-    | StudentDirectoryResponse
-    | null;
-  if (!response.ok || !payload) {
-    throw new Error(payload?.error ?? "학생 목록을 불러오지 못했습니다.");
-  }
-  return payload;
+  if (!response.ok) throw new StudentDirectoryRequestError(response.status);
+  return response.json().catch(() => null) as Promise<unknown>;
 }
 export async function loadStudentDirectorySnapshot(
   request: Extract<StudentDirectoryReadRequest, { mode: "initial" }>,
   signal?: AbortSignal,
 ) {
   const payload = await requestStudentDirectory(request, signal);
-  if (!payload.snapshot) {
-    throw new Error("학생 목록 응답을 확인하지 못했습니다.");
-  }
-  return payload.snapshot;
+  const parsed = snapshotResponseSchema.safeParse(payload);
+  if (!parsed.success) throw new StudentDirectoryRequestError(502);
+  return parsed.data.snapshot;
 }
 
 export async function loadStudentDirectoryNextPage(
@@ -45,8 +35,7 @@ export async function loadStudentDirectoryNextPage(
   signal?: AbortSignal,
 ) {
   const payload = await requestStudentDirectory(request, signal);
-  if (!payload.page) {
-    throw new Error("다음 학생 목록 응답을 확인하지 못했습니다.");
-  }
-  return payload.page;
+  const parsed = pageResponseSchema.safeParse(payload);
+  if (!parsed.success) throw new StudentDirectoryRequestError(502);
+  return parsed.data.page;
 }

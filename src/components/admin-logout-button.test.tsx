@@ -21,7 +21,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: mocks.refresh, replace: mocks.replace }),
 }));
 
-vi.mock("@/features/session/api/session", () => ({
+vi.mock("@/features/session/public-client", () => ({
   requestAdminLogout: mocks.requestAdminLogout,
 }));
 

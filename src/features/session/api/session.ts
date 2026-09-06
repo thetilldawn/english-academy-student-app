@@ -30,7 +30,7 @@ async function login(
   return { error, ok: response.ok };
 }
 
-export function requestAdminLogin(
+export async function requestAdminLogin(
   input: { email: FormDataEntryValue | null; password: FormDataEntryValue | null },
   signal: AbortSignal,
 ) {

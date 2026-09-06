@@ -1,13 +1,17 @@
+import { announceAdminPrivateCacheChange } from "@/features/session/public-client";
+
 const STUDENT_REMOVED_EVENT = "admin-student-directory:student-removed";
 const STUDENT_REFRESH_EVENT = "admin-student-directory:refresh-requested";
 
 export function announceStudentRemoved(studentId: string) {
+  announceAdminPrivateCacheChange("students");
   window.dispatchEvent(new CustomEvent(STUDENT_REMOVED_EVENT, {
     detail: { studentId },
   }));
 }
 
-export function announceStudentDirectoryRefresh() {
+export function announceStudentDirectoryRefresh(options: { broadcast?: boolean } = {}) {
+  if (options.broadcast !== false) announceAdminPrivateCacheChange("students");
   window.dispatchEvent(new Event(STUDENT_REFRESH_EVENT));
 }
 
