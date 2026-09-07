@@ -3,7 +3,7 @@
   "id": "APP-20260907-03",
   "title": "전체 가능 단어 수와 날짜 선택 전 회차 표시",
   "size": "full",
-  "gate": "design",
+  "gate": "verified",
   "guide": "docs/work-orders/APP-20260907-03.md",
   "baseline": "bcaac92f3e64bef160905f23aaae55a4b10ca85b",
   "requirements": [
@@ -446,11 +446,11 @@
     "personal"
   ],
   "verification": {
-    "fingerprint": "2ccc89f0d1009c2d8ecc752fa267924eb467e18defdf5eb39befc47253ae7836",
+    "fingerprint": "3faaaf8cc0d70a60b58e6fa146ca544589d73af06165561ebfba28904ff89afb",
     "files": [
       {
         "path": "architecture/기능_소유권.json",
-        "sha256": "05288c7a33931abc746220debfd7ae78c1e3250835fb49edc2ba4357da68e4c2"
+        "sha256": "a442cf92bdb668ef9f2f2bdfeaf94d4a8f828fb683946f91c564ce0f480f94d3"
       },
       {
         "path": "eslint.config.mjs",
@@ -1302,7 +1302,7 @@
       },
       {
         "path": "src/features/assignments/presentation/assignment-release-view.ts",
-        "sha256": "c8c5beb72fa272634dc280554e26f541be9bf41c754e0fce457eac5dc7180396"
+        "sha256": "b16190371d6efb9555cdb0c5c52c1cbafa451088bb4a6d25c9176bd57a98008e"
       },
       {
         "path": "src/features/assignments/presentation/assignment-submit-blocker.test.ts",
@@ -1449,6 +1449,10 @@
         "sha256": "b4fb10b0f7847f1647948937b1829d36efb10461506b9e132c8bb7c3862df79e"
       },
       {
+        "path": "src/features/assignments/server/queries/eligible-vocabulary-pagination.test.ts",
+        "sha256": "3ff17e08d2b7a929c199088677814683af07cb80c24d2379e2d0c12bc3d345b2"
+      },
+      {
         "path": "src/features/assignments/server/use-cases/bulk-assignment-command.ts",
         "sha256": "c95c415bb2cf002b80028dc24848b78d57352488cc1f251e005369bdf257f791"
       },
@@ -1590,7 +1594,7 @@
       },
       {
         "path": "src/features/assignments/ui/assignment-session-release-tags.tsx",
-        "sha256": "21a9f6a09b4a3a484bc59babaf67297adae3a385745584412ffd6a87765fecab"
+        "sha256": "5d626f31e231c0b46533e9e11bfddfb0ee89e877ff3eeeb757a8105f6ddd694a"
       },
       {
         "path": "src/features/assignments/ui/assignment-settings-fields.tsx",
@@ -1658,15 +1662,15 @@
       },
       {
         "path": "src/features/assignments/ui/bulk-preview-session-list.tsx",
-        "sha256": "3dbcaa576c64a7ff98348025242d1d5ff002e7a5e6d8a493ec85494488989b36"
+        "sha256": "2707d87c2406a253ed5b1ba6467c6ed3c55d61c315e019edcac0b6102d5025ae"
       },
       {
         "path": "src/features/assignments/ui/bulk-series-preview.test.tsx",
-        "sha256": "c3f62b3442b226875dd3001b65d5797c495a9e0048cf9c714b516527a1213343"
+        "sha256": "1aaea3fb0a8b9d320c48e36a772e364bba10a9899de12b61fb4dc4aa38413715"
       },
       {
         "path": "src/features/assignments/ui/bulk-series-preview.tsx",
-        "sha256": "227991cb863fd3325c8b217fde3fa8f43bc1bbe98b45a5b50b478bf4e4542371"
+        "sha256": "3849269834ee52c2a3dd2209ffad18494f2dfccecf251d4b666d9117068ce6e5"
       },
       {
         "path": "src/features/assignments/ui/cached-assignment-workspace.test.tsx",
@@ -1822,11 +1826,11 @@
       },
       {
         "path": "src/features/assignments/ui/vocab-schedule-detail-fields.tsx",
-        "sha256": "e6287c8810462157388b5c97c84617f67b21f0425e6a0a843d5240e9724d742a"
+        "sha256": "09302509fd1dfeba24f6991f00afa876e20b605c5024a2a1cd74d2ce1f7b0a6a"
       },
       {
         "path": "src/features/assignments/ui/vocab-schedule-fields.test.tsx",
-        "sha256": "f20f3517e1fd7552023cb6a3ac902033bcb75ccb0da3cec017b1c41c40521f0d"
+        "sha256": "aa426732b27be6b75de946a41b693f2bfcbf907fa50a7a2a0c4be3431a1db0de"
       },
       {
         "path": "src/features/assignments/ui/vocab-schedule-fields.tsx",
@@ -1898,15 +1902,15 @@
       },
       {
         "path": "src/features/history/ui/assignment-meta-tags.module.css",
-        "sha256": "43ea91b69e851e7a0e2ab5f5887dbff84db8505f33f575230febd017516cbc42"
+        "sha256": "4507c68fcdceaa6403ef879bbf0c74427fe74df1e7d1c986767297cec0e53bec"
       },
       {
         "path": "src/features/history/ui/assignment-meta-tags.test.tsx",
-        "sha256": "ccc909228ce40b8ba7ef621d36cb8d8a13188419dcf294f2c1b11941906349fb"
+        "sha256": "42265018ec6dd3a7ba8dfc4f0a5439844bc4a8436167e1cd990f5f801951a9e0"
       },
       {
         "path": "src/features/history/ui/assignment-meta-tags.tsx",
-        "sha256": "6d18ab535edd96574bf9f5b69c34bbf19274dd62fbdf2ff2a9944acd05dfd436"
+        "sha256": "72b03e2599c74c02a0da46b9e0b130a423502730fe33a829ee7e9c8e4da8097e"
       },
       {
         "path": "src/features/history/ui/attempt-score-summary.tsx",
@@ -2330,7 +2334,7 @@
       },
       {
         "path": "src/lib/database/assignment-release-final-schema.integration.test.ts",
-        "sha256": "6bbef15fe91216a385c6a0c1834899f164ba9cf52e2ad3c6ba22e1c12a371445"
+        "sha256": "60fb7a9173d18eec2ac5d75b8d34711a836a5c9122335766bd6dbe6ef1a9fdbe"
       },
       {
         "path": "src/lib/database/bulk-assignment-series-migration-contract.test.ts",
@@ -2518,7 +2522,7 @@
       },
       {
         "path": "src/lib/services/eligible-vocabulary-service.ts",
-        "sha256": "49e372323611d51fa21a11922fc07585d4e67efd9396ced8b9eeea20a52af9ef"
+        "sha256": "0bdfe04841241ff3f57a8dba17121640e040576144795b540144b0864298aa60"
       },
       {
         "path": "src/lib/services/learning-point-read-service.test.ts",
@@ -2761,6 +2765,10 @@
         "sha256": "790a375052a12feafc678995100f73dd0ae73b823381029ac0bcbdc5e5cc8a06"
       },
       {
+        "path": "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql",
+        "sha256": "a134db3dd30e1e32d3dcbc06046a899cb6dee1522ff6707171f068157ff4cef0"
+      },
+      {
         "path": "tsconfig.json",
         "sha256": "5bec101c734eb97d36f3f49b122ad4d37b68d796bfa608760d266c57cd6c50ac"
       },
@@ -2774,49 +2782,57 @@
         "checkId": "T1",
         "result": "pass",
         "environment": "local",
-        "ranAt": "2026-09-07T08:42:28.032Z",
-        "command": "vitest run --maxWorkers=4; eslint .; tsc --noEmit; check-work-records --phase design --changed; verify-ui-architecture; verify-react-request-cache; local-admin-baseline optimized build",
-        "summary": "전체2792통과·실패0, 기존 외부자료 선택1건 skipped는 통과 제외. 구조/타입/lint/최적화 빌드/독립 코드검토 통과. 상세 docs/verification/APP-20260907-03.md"
+        "ranAt": "2026-09-07T10:08:01.359Z",
+        "command": "vitest run --maxWorkers=4; eslint .; tsc --noEmit; feature-map --verify --changed; work-records --phase design --changed; verify-ui-architecture; verify-react-request-cache; isolated next build",
+        "summary": "전체2819통과/실패0/선택 외부자료1skipped 별도. 타입/lint/구조/지도/작업기록/요청캐시/Next16.2.12 최적화빌드33경로 통과. 읽기 전용 독립검토 확정결함0."
       },
       {
         "checkId": "T2",
         "result": "pass",
         "environment": "local",
-        "ranAt": "2026-09-07T08:42:28.034Z",
-        "command": "vitest run --maxWorkers=4; eslint .; tsc --noEmit; check-work-records --phase design --changed; verify-ui-architecture; verify-react-request-cache; local-admin-baseline optimized build",
-        "summary": "전체2792통과·실패0, 기존 외부자료 선택1건 skipped는 통과 제외. 구조/타입/lint/최적화 빌드/독립 코드검토 통과. 상세 docs/verification/APP-20260907-03.md"
+        "ranAt": "2026-09-07T10:08:01.359Z",
+        "command": "vitest run --maxWorkers=4; eslint .; tsc --noEmit; feature-map --verify --changed; work-records --phase design --changed; verify-ui-architecture; verify-react-request-cache; isolated next build",
+        "summary": "전체2819통과/실패0/선택 외부자료1skipped 별도. 타입/lint/구조/지도/작업기록/요청캐시/Next16.2.12 최적화빌드33경로 통과. 읽기 전용 독립검토 확정결함0."
       },
       {
         "checkId": "T3",
         "result": "pass",
         "environment": "local",
-        "ranAt": "2026-09-07T08:42:28.034Z",
-        "command": "vitest run --maxWorkers=4; eslint .; tsc --noEmit; check-work-records --phase design --changed; verify-ui-architecture; verify-react-request-cache; local-admin-baseline optimized build",
-        "summary": "전체2792통과·실패0, 기존 외부자료 선택1건 skipped는 통과 제외. 구조/타입/lint/최적화 빌드/독립 코드검토 통과. 상세 docs/verification/APP-20260907-03.md"
+        "ranAt": "2026-09-07T10:08:01.359Z",
+        "command": "vitest run --maxWorkers=4; eslint .; tsc --noEmit; feature-map --verify --changed; work-records --phase design --changed; verify-ui-architecture; verify-react-request-cache; isolated next build",
+        "summary": "전체2819통과/실패0/선택 외부자료1skipped 별도. 타입/lint/구조/지도/작업기록/요청캐시/Next16.2.12 최적화빌드33경로 통과. 읽기 전용 독립검토 확정결함0."
       },
       {
         "checkId": "T4",
         "result": "pass",
         "environment": "local",
-        "ranAt": "2026-09-07T08:42:28.034Z",
-        "command": "vitest run --maxWorkers=4; eslint .; tsc --noEmit; check-work-records --phase design --changed; verify-ui-architecture; verify-react-request-cache; local-admin-baseline optimized build",
-        "summary": "전체2792통과·실패0, 기존 외부자료 선택1건 skipped는 통과 제외. 구조/타입/lint/최적화 빌드/독립 코드검토 통과. 상세 docs/verification/APP-20260907-03.md"
+        "ranAt": "2026-09-07T10:08:01.359Z",
+        "command": "vitest run --maxWorkers=4; eslint .; tsc --noEmit; feature-map --verify --changed; work-records --phase design --changed; verify-ui-architecture; verify-react-request-cache; isolated next build",
+        "summary": "전체2819통과/실패0/선택 외부자료1skipped 별도. 타입/lint/구조/지도/작업기록/요청캐시/Next16.2.12 최적화빌드33경로 통과. 읽기 전용 독립검토 확정결함0."
       },
       {
         "checkId": "T5",
         "result": "pass",
-        "environment": "local",
-        "ranAt": "2026-09-07T08:42:28.034Z",
-        "command": "CUA in-app browser, local-admin-baseline --capacity-read-error, 390x844 and 1280x900",
-        "summary": "날짜0 가능3→선택1 남음2→해제3. 모바일 긴 안내 라벨 보존·숫자 입력 바로 아래·PC 입력100 보존. 조회실패503 표시, 정상601/500는 실제 작성창 통합검사로 별도 확인. 실학생/DB 쓰기0."
+        "environment": "preview",
+        "ranAt": "2026-09-07T10:08:01.359Z",
+        "command": "CUA Preview fbc79e4 read-only test-student draft; git diff 19c0794 -- assignment UI/controller/application/design-system/history",
+        "summary": "실제 Preview: 수록601/전체601/회차상한500,100개씩 가능7→월1선택/남음6/배정100/남음501→해제7. 영어→뜻/혼합 모두 확인.1280px 가로넘침0/콘솔오류0/저장0. 앞선390/1280px 로컬 UI 파일은19c0794와 동일함을 확인해 이력 보존; 원격390 검증은 아님."
       },
       {
         "checkId": "T6",
         "result": "pass",
         "environment": "local",
-        "ranAt": "2026-09-07T08:42:28.034Z",
-        "command": "vitest run --maxWorkers=4; eslint .; tsc --noEmit; check-work-records --phase design --changed; verify-ui-architecture; verify-react-request-cache; local-admin-baseline optimized build",
-        "summary": "전체2792통과·실패0, 기존 외부자료 선택1건 skipped는 통과 제외. 구조/타입/lint/최적화 빌드/독립 코드검토 통과. 상세 docs/verification/APP-20260907-03.md"
+        "ranAt": "2026-09-07T10:08:01.359Z",
+        "command": "vitest run --maxWorkers=4; eslint .; tsc --noEmit; feature-map --verify --changed; work-records --phase design --changed; verify-ui-architecture; verify-react-request-cache; isolated next build",
+        "summary": "전체2819통과/실패0/선택 외부자료1skipped 별도. 타입/lint/구조/지도/작업기록/요청캐시/Next16.2.12 최적화빌드33경로 통과. 읽기 전용 독립검토 확정결함0."
+      },
+      {
+        "checkId": "T7",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-07T10:08:01.359Z",
+        "command": "vitest run src/features/assignments/server/queries/eligible-vocabulary-pagination.test.ts",
+        "summary": "실제 클라이언트+격리HTTP12검사, 수정 전7실패를 재현한 뒤 최종12통과. 두 방향1202행/601ID 전체, 끝페이지·401/403·부분실패·null/중복/역순 검사."
       }
     ]
   },
