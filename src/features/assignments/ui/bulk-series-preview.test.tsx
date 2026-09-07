@@ -241,7 +241,7 @@ describe("BulkSeriesPreview", () => {
       />,
     );
     expect(screen.queryByText("완료 후 생성")).not.toBeInTheDocument();
-    expect(screen.getAllByText("앞 회차 첫 시험 완료 · 앞 마감 12시간 후 공개")).toHaveLength(1);
+    expect(screen.getAllByText("앞 회차 첫 시험 완료 후 공개")).toHaveLength(1);
     value.preview!.commonPlanSummary!.sessions = [schedule, secondSession].map(
       (session) => ({...session, availableFrom:null,availableUntil:null}),
     );

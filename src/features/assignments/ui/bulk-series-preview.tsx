@@ -161,7 +161,6 @@ export function BulkSeriesPreview({
                       sessionNumber={session.sessionNumber}
                       availableFrom={session.availableFrom}
                       availableUntil={session.availableUntil}
-                      previousAvailableUntil={summary.sessions.find((previous) => previous.sessionNumber === session.sessionNumber - 1)?.availableUntil ?? null}
                     />
                     <MetaTag size="large" tone="success">
                       {session.questionCount}개

@@ -503,6 +503,6 @@ describe("VocabScheduleFields", () => {
     const value = controller();
     render(<ScheduleHarness value={value} />);
 
-    expect(screen.getAllByText("앞 회차 첫 시험 완료 · 앞 마감 12시간 후 공개")).toHaveLength(2);
+    expect(screen.getAllByText("앞 회차 첫 시험 완료 후 공개")).toHaveLength(2);
   });
 });

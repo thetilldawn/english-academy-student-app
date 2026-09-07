@@ -604,7 +604,10 @@
     }
   ],
   "appSupportOwners": [
-    { "path": "src/app/api/admin/session/route.test.ts", "owner": "session" },
+    {
+      "path": "src/app/api/admin/session/route.test.ts",
+      "owner": "session"
+    },
     {
       "path": "src/app/admin/(protected)/admin-route-error.tsx",
       "owner": "app-shell"
@@ -1813,10 +1816,22 @@
   ],
   "serverOwners": [],
   "featureServerOwners": [
-    { "path": "src/features/history/server/queries/history-list-entry-query.ts", "owner": "history" },
-    { "path": "src/features/students/server/queries/student-directory-entry-query.ts", "owner": "students" },
-    { "path": "src/features/students/server/student-directory-cache-identity.ts", "owner": "students" },
-    { "path": "src/features/students/server/queries/student-directory-resume-query.ts", "owner": "students" },
+    {
+      "path": "src/features/history/server/queries/history-list-entry-query.ts",
+      "owner": "history"
+    },
+    {
+      "path": "src/features/students/server/queries/student-directory-entry-query.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/students/server/student-directory-cache-identity.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/students/server/queries/student-directory-resume-query.ts",
+      "owner": "students"
+    },
     {
       "path": "src/features/learning-points/server/components/student-header-points.tsx",
       "owner": "learning-points"
@@ -2010,6 +2025,11 @@
   "protectedMigrationCount": 136,
   "protectedMigrationSetSha256": "b4ea57697824cb8fece77250a50950e58bb4e2516235e485106f126a8b00c13f",
   "migrationOwners": [
+    {
+      "path": "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql",
+      "owner": "assignment-queue",
+      "flow": "assignment-series"
+    },
     {
       "path": "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
       "owner": "assignment-queue",
@@ -2268,18 +2288,78 @@
     }
   ],
   "currentCrossFeatureImports": [
-    {"from":"src/features/history/controller/admin-history-mutation-events.ts","to":"src/features/session/public-client.ts","reason":"APP12 개인 목록 공통 수명과 성공 변경 신호 재사용","removeIn":"공개 진입점으로 고정"},
-    {"from":"src/features/history/controller/history-list-cache-provider.tsx","to":"src/features/session/public-client.ts","reason":"APP12 개인 목록 공통 수명과 성공 변경 신호 재사용","removeIn":"공개 진입점으로 고정"},
-    {"from":"src/features/history/controller/history-list-cache.ts","to":"src/features/session/public-client.ts","reason":"APP12 개인 목록 공통 수명과 성공 변경 신호 재사용","removeIn":"공개 진입점으로 고정"},
-    {"from":"src/features/history/controller/use-cached-history-list.ts","to":"src/features/session/public-client.ts","reason":"APP12 개인 목록 공통 수명과 성공 변경 신호 재사용","removeIn":"공개 진입점으로 고정"},
-    {"from":"src/features/history/controller/use-editable-history-assignment.ts","to":"src/features/session/public-client.ts","reason":"APP12 개인 목록 공통 수명과 성공 변경 신호 재사용","removeIn":"공개 진입점으로 고정"},
-    {"from":"src/features/students/controller/student-directory-cache.ts","to":"src/features/session/public-client.ts","reason":"APP12 개인 목록 공통 수명과 성공 변경 신호 재사용","removeIn":"공개 진입점으로 고정"},
-    {"from":"src/features/students/controller/use-cached-student-directory.ts","to":"src/features/session/public-client.ts","reason":"APP12 개인 목록 공통 수명과 성공 변경 신호 재사용","removeIn":"공개 진입점으로 고정"},
-    { "from": "src/features/assignments/ui/cached-assignment-workspace.tsx", "to": "src/features/students/public-client.ts", "reason": "APP10 같은 학생 목록의 개인 캐시/현재 인증 읽기 재사용", "removeIn": "공개 진입점으로 고정" },
-    { "from": "src/features/assignments/ui/cached-assignment-workspace.tsx", "to": "src/features/students/public-contracts.ts", "reason": "APP10 최초 서버 목록 인계의 공개 계약", "removeIn": "공개 진입점으로 고정" },
-    { "from": "src/features/assignments/ui/assignment-workspace.tsx", "to": "src/features/students/public-client.ts", "reason": "APP08 배정 성공 뒤 공개 학생 목록 무효화 알림", "removeIn": "공개 진입점으로 고정" },
-    { "from": "src/features/students/controller/student-directory-cache-provider.tsx", "to": "src/features/session/public-client.ts", "reason": "APP08 세션 종료와 다른 탭 무효화 신호 구독", "removeIn": "공개 진입점으로 고정" },
-    { "from": "src/features/students/controller/student-directory-events.ts", "to": "src/features/session/public-client.ts", "reason": "APP08 학생 변경 성공의 개인 캐시 폐기 신호", "removeIn": "공개 진입점으로 고정" },
+    {
+      "from": "src/features/history/controller/admin-history-mutation-events.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "APP12 개인 목록 공통 수명과 성공 변경 신호 재사용",
+      "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/history/controller/history-list-cache-provider.tsx",
+      "to": "src/features/session/public-client.ts",
+      "reason": "APP12 개인 목록 공통 수명과 성공 변경 신호 재사용",
+      "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/history/controller/history-list-cache.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "APP12 개인 목록 공통 수명과 성공 변경 신호 재사용",
+      "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/history/controller/use-cached-history-list.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "APP12 개인 목록 공통 수명과 성공 변경 신호 재사용",
+      "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/history/controller/use-editable-history-assignment.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "APP12 개인 목록 공통 수명과 성공 변경 신호 재사용",
+      "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/students/controller/student-directory-cache.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "APP12 개인 목록 공통 수명과 성공 변경 신호 재사용",
+      "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/students/controller/use-cached-student-directory.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "APP12 개인 목록 공통 수명과 성공 변경 신호 재사용",
+      "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/assignments/ui/cached-assignment-workspace.tsx",
+      "to": "src/features/students/public-client.ts",
+      "reason": "APP10 같은 학생 목록의 개인 캐시/현재 인증 읽기 재사용",
+      "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/assignments/ui/cached-assignment-workspace.tsx",
+      "to": "src/features/students/public-contracts.ts",
+      "reason": "APP10 최초 서버 목록 인계의 공개 계약",
+      "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/assignments/ui/assignment-workspace.tsx",
+      "to": "src/features/students/public-client.ts",
+      "reason": "APP08 배정 성공 뒤 공개 학생 목록 무효화 알림",
+      "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/students/controller/student-directory-cache-provider.tsx",
+      "to": "src/features/session/public-client.ts",
+      "reason": "APP08 세션 종료와 다른 탭 무효화 신호 구독",
+      "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/students/controller/student-directory-events.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "APP08 학생 변경 성공의 개인 캐시 폐기 신호",
+      "removeIn": "공개 진입점으로 고정"
+    },
     {
       "from": "src/features/students/controller/use-student-history-page.ts",
       "to": "src/features/history/public-client.ts",
@@ -2885,7 +2965,8 @@
           "supabase/migrations/20260905040138_approve_simseok_production_release.sql",
           "supabase/migrations/20260905040904_preserve_production_rolling_deploy_compatibility.sql",
           "supabase/migrations/20260905063836_add_reviewed_choice_repair_release.sql",
-          "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql"
+          "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
+          "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/bulk-assignments/preview/route.ts",
@@ -3743,16 +3824,16 @@
         "ui": [
           "src/features/history/public-ui.ts",
           "src/features/history/ui/admin-history-actions.tsx",
-        "src/features/history/ui/admin-history-list.tsx",
-        "src/features/history/ui/cached-admin-history-list.tsx",
+          "src/features/history/ui/admin-history-list.tsx",
+          "src/features/history/ui/cached-admin-history-list.tsx",
           "src/features/history/ui/history-section-groups.tsx",
           "src/features/history/ui/overview-action-groups.tsx"
         ],
         "clientState": [
-        "src/features/history/controller/admin-history-mutation-events.ts",
-        "src/features/history/controller/history-list-cache.ts",
-        "src/features/history/controller/history-list-cache-provider.tsx",
-        "src/features/history/controller/use-cached-history-list.ts",
+          "src/features/history/controller/admin-history-mutation-events.ts",
+          "src/features/history/controller/history-list-cache.ts",
+          "src/features/history/controller/history-list-cache-provider.tsx",
+          "src/features/history/controller/use-cached-history-list.ts",
           "src/features/history/controller/use-admin-history-list-controller.ts",
           "src/features/history/controller/use-admin-history-section-page.ts"
         ],
@@ -3766,8 +3847,8 @@
         ],
         "contract": [
           "src/features/history/public-contracts.ts",
-        "src/features/history/contracts/admin-history-mutation.ts",
-        "src/features/history/contracts/history-list-cache-contract.ts",
+          "src/features/history/contracts/admin-history-mutation.ts",
+          "src/features/history/contracts/history-list-cache-contract.ts",
           "src/features/history/contracts/admin-history-read-model.ts",
           "src/features/history/contracts/admin-history-request-error.ts",
           "src/features/history/api/history-read-response.ts",
@@ -3783,8 +3864,8 @@
           "src/features/history/server/actions/hide-admin-history-entry-action.ts",
           "src/features/history/server/admin-history-cursor.ts",
           "src/features/history/server/queries/admin-history-detail-query.ts",
-        "src/features/history/server/queries/admin-history-list-query.ts",
-        "src/features/history/server/queries/history-list-entry-query.ts",
+          "src/features/history/server/queries/admin-history-list-query.ts",
+          "src/features/history/server/queries/history-list-entry-query.ts",
           "src/features/history/server/queries/admin-history-read-error.ts",
           "src/features/history/server/queries/admin-history-row-schema.ts",
           "src/features/history/server/queries/admin-attempt-detail-query.ts",
@@ -3818,10 +3899,10 @@
           "src/features/history/server/queries/admin-history-detail-query.test.ts",
           "src/features/history/server/queries/admin-history-list-query.test.ts",
           "src/features/history/transport/history-pages.test.ts",
-        "src/features/history/ui/admin-history-list.test.tsx",
-        "src/features/history/controller/history-list-cache.test.ts",
-        "src/features/history/ui/cached-admin-history-list.test.tsx",
-        "src/features/history/server/queries/history-list-entry-query.test.ts",
+          "src/features/history/ui/admin-history-list.test.tsx",
+          "src/features/history/controller/history-list-cache.test.ts",
+          "src/features/history/ui/cached-admin-history-list.test.tsx",
+          "src/features/history/server/queries/history-list-entry-query.test.ts",
           "src/features/history/ui/history-presentation.test.tsx",
           "src/features/history/ui/history-section-groups.test.tsx",
           "src/lib/database/admin-history-read-migration-contract.test.ts",
@@ -3986,7 +4067,8 @@
         ],
         "database": [
           "supabase/migrations/20260829190000_add_student_dashboard_read_model.sql",
-          "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql"
+          "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
+          "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/page.tsx",
@@ -4229,7 +4311,8 @@
           "supabase/migrations/20260828193000_preserve_assignment_edit_metadata.sql",
           "supabase/migrations/20260829103000_fix_assignment_edit_preview_regressions.sql",
           "supabase/migrations/20260830111500_lock_exact_review_assignment_snapshot.sql",
-          "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql"
+          "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
+          "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/results/[id]/page.tsx",
@@ -4974,7 +5057,8 @@
           "supabase/migrations/20260828193000_preserve_assignment_edit_metadata.sql",
           "supabase/migrations/20260829103000_fix_assignment_edit_preview_regressions.sql",
           "supabase/migrations/20260831102000_add_atomic_vocab_queue_resolution.sql",
-          "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql"
+          "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
+          "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/assignments/page.tsx",
@@ -5322,7 +5406,8 @@
           "supabase/migrations/20260826001648_preserve_untimed_assignment_deadlines.sql",
           "supabase/migrations/20260906103017_add_approved_school_pronunciation_scope.sql",
           "supabase/migrations/20260905063836_add_reviewed_choice_repair_release.sql",
-          "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql"
+          "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
+          "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/attempt/[id]/page.tsx"
@@ -5592,7 +5677,8 @@
         "database": [
           "supabase/migrations/20260905051013_add_student_assignment_study.sql",
           "supabase/migrations/20260906103017_add_approved_school_pronunciation_scope.sql",
-          "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql"
+          "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
+          "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/assignments/[id]/words/page.tsx",

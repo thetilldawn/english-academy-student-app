@@ -60,7 +60,7 @@ export const studentAppText = {
     },
     release: {
       waitingInitial: "앞 회차의 첫 시험을 마치면 열립니다. 예약 시간이 있으면 그 시각도 되어야 합니다.",
-      waitingInitialWithDeadline: "앞 회차의 첫 시험을 마치고, 그 회차 마감에서 12시간이 지나면 열립니다. 예약 시간이 있으면 그 시각도 되어야 합니다.",
+      waitingInitialWithDeadline: "앞 회차의 첫 시험을 마치면 열립니다. 예약 시간이 있으면 그 시각도 되어야 합니다.",
       reservedOpening: "예약 공개",
       waitingTime: "{datetime}에 열립니다.",
       waitingTimeUnknown: "아직 공개 시간이 되지 않았습니다. 시험 목록의 공개 시간을 확인해 주세요.",

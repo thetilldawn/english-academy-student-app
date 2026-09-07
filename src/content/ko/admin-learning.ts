@@ -415,7 +415,7 @@ export const adminLearningText = {
   },
   assignmentRelease: {
     afterFirst: "앞 회차 첫 시험 완료 후 공개",
-    afterDeadline: "앞 회차 첫 시험 완료 · 앞 마감 12시간 후 공개",
+    afterDeadline: "앞 회차 첫 시험 완료 후 공개",
   },
 
   // 학습 관리 > 검토 전용 단어장 패널

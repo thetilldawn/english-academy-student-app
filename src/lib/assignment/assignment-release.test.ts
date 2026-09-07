@@ -8,7 +8,10 @@ describe("서버 공개 상태 계약", () => {
   });
   it("보류와 정상 첫 시험 대기는 오류·완료·즉시 공개로 표시하지 않는다", () => {
     expect(assignmentReleaseNotice({ state: "held", opensAt: null, hasDeadline: false })).toContain("보류");
-    expect(assignmentReleaseNotice({ state: "waiting_initial", opensAt: null, hasDeadline: true })).toContain("12시간");
+    const legacyDeadline = assignmentReleaseNotice({ state: "waiting_initial", opensAt: null, hasDeadline: true });
+    expect(legacyDeadline).toContain("첫 시험을 마치면");
+    expect(legacyDeadline).not.toContain("12시간");
+    expect(legacyDeadline).toBe(assignmentReleaseNotice({ state: "waiting_initial", opensAt: null, hasDeadline: false }));
     expect(isAssignmentReleaseOpen({ state: "waiting_initial", opensAt: null, hasDeadline: false })).toBe(false);
     expect(isAssignmentReleaseOpen({ state: "open", opensAt: null, hasDeadline: false })).toBe(true);
   });

@@ -1,5 +1,6 @@
 import type { PGlite } from "@electric-sql/pglite";
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createFinalSchemaDatabase } from "@/test-support/final-schema-database";
 import { studentDashboardInitialRowSchema } from "@/features/student-dashboard/server/queries/student-dashboard-row-schema";
@@ -7,10 +8,11 @@ import { studentDashboardInitialRowSchema } from "@/features/student-dashboard/s
 const id = (n: number) => `10000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 type Release = { state: string; opensAt: string | null; hasDeadline: boolean };
 type QueueItem = { id: string; status: string; completed_at: Date | null; deferred_at: Date | null };
+const waitRemovalMigration = "20260907084627_remove_predecessor_twelve_hour_wait.sql";
 
 // Real final schema, fake students only. Sequential transaction/rollback tests;
 // this does not claim to simulate two independent PostgreSQL connections.
-describe.sequential("APP14 첫 시험·마감12시간·보류 전체 스키마", () => {
+describe.sequential("APP0704 첫 시험·자체 예약·보류 전체 스키마", () => {
   let db: PGlite;
   beforeAll(async () => { db = await createFinalSchemaDatabase(); }, 120_000);
   afterAll(async () => { await db?.close(); });
@@ -62,6 +64,16 @@ describe.sequential("APP14 첫 시험·마감12시간·보류 전체 스키마",
     await database.query(`update quiz_attempts set phase='review',initial_completed_at=$1,
       initial_correct_count=2,retry_correct_count=0,unresolved_wrong_count=2,
       initial_score=50,elapsed_seconds=1 where id=$2`, [at,id(attempt)]);
+  }
+  async function answeredQuestion(database: PGlite) {
+    await database.query(`with word as (
+      insert into vocab_entries(dataset_id,source_row,headword,headword_normalized,meanings,primary_meaning,row_sha256,
+        unit_id,position_in_unit,entry_type)
+        values($1,1,'sample','sample',array['예시'],'예시',repeat('B',64),$4,1,'word') returning id
+    ) insert into quiz_questions(id,attempt_id,vocab_entry_id,order_index,direction,prompt,choices,
+      correct_choice_index,initial_choice_index,initial_is_correct,initial_answered_at)
+      select $2,$3,id,1,'english_to_korean','sample','["예시","다른 뜻","가상 뜻","검사 뜻"]',0,1,false,clock_timestamp() from word`,
+    [id(4),id(80),id(60),id(100)]);
   }
   async function reject(operation: () => Promise<unknown>, pattern: RegExp) {
     await db.exec("savepoint expected_rejection");
@@ -231,18 +243,136 @@ describe.sequential("APP14 첫 시험·마감12시간·보류 전체 스키마",
       .toMatchObject({ status: "in_progress", phase: "review", initial_score: "50.00", final_score: null });
   });
 
-  it("앞 실제 마감12시간 직전·정각·직후를 지키고 응시 타이머는 기준으로 쓰지 않는다", async () => {
+  it("앞 마감12시간은 제거하고 다음 자체 예약 직전·정각·직후를 지킨다", async () => {
     await receipt();
     await start();
     await finishFirst("2030-01-01T00:00:00Z");
     await db.exec(`update assignments set available_until='2030-01-01T03:00:00Z' where id='${id(10)}';
       update assignments set available_from='2030-01-01T04:00:00Z', available_until='2030-01-02T00:00:00Z' where id='${id(11)}'`);
-    const before = await gate(11,"2030-01-01T14:59:59.999Z");
+    const before = await gate(11,"2030-01-01T03:59:59.999Z");
     expect(before.state).toBe("waiting_time");
-    expect(Date.parse(before.opensAt!)).toBe(Date.parse("2030-01-01T15:00:00Z"));
-    expect((await gate(11,"2030-01-01T15:00:00Z")).state).toBe("open");
-    expect((await gate(11,"2030-01-01T15:00:00.001Z")).state).toBe("open");
+    expect(before.hasDeadline).toBe(false);
+    expect(Date.parse(before.opensAt!)).toBe(Date.parse("2030-01-01T04:00:00Z"));
+    expect((await gate(11,"2030-01-01T04:00:00Z")).state).toBe("open");
+    expect((await gate(11,"2030-01-01T04:00:00.001Z")).state).toBe("open");
     expect((await gate(11,"2029-12-31T23:59:59Z")).state).toBe("waiting_initial");
+  });
+
+  it("자체 예약보다 늦은 첫 완료까지 기다리되 재시험·앞 마감은 기다리지 않는다", async () => {
+    await receipt();
+    await start();
+    await finishFirst("2030-01-01T06:00:00Z");
+    await db.exec(`update assignments set available_until='2030-01-02T00:00:00Z' where id='${id(10)}';
+      update assignments set available_from='2030-01-01T04:00:00Z', available_until='2030-01-02T00:00:00Z' where id='${id(11)}'`);
+    expect((await gate(11,"2030-01-01T05:59:59.999Z")).state).toBe("waiting_initial");
+    const release = await gate(11,"2030-01-01T06:00:00Z");
+    expect(release.state).toBe("open");
+    expect(Date.parse(release.opensAt!)).toBe(Date.parse("2030-01-01T06:00:00Z"));
+    expect((await db.query("select status,phase from quiz_attempts")).rows)
+      .toEqual([{status:"in_progress",phase:"review"}]);
+  });
+
+  it("앞 마감12시간과 겹치는 다음 회차도 자체 마감 전이면 준비하고 날짜는 이동하지 않는다", async () => {
+    await datedQueue();
+    await db.query(`update private.vocab_assignment_series_items set
+      effective_available_from=clock_timestamp()+interval '1 hour',
+      effective_available_until=clock_timestamp()+interval '2 hours' where id=$1`, [id(51)]);
+    const dates = (await db.query(`select planned_available_from,planned_available_until,
+      effective_available_from,effective_available_until from private.vocab_assignment_series_items order by id`)).rows;
+    await start();
+    await finishFirst();
+    expect((await items()).map(i=>i.status)).toEqual(["completed","ready"]);
+    expect((await db.query(`select planned_available_from,planned_available_until,
+      effective_available_from,effective_available_until from private.vocab_assignment_series_items order by id`)).rows).toEqual(dates);
+  });
+
+  it("기존 생성 시험은 날짜·진행응시를 바꾸지 않고 새 공개 조건을 즉시 따른다", async () => {
+    let before = "";
+    const legacy = await createFinalSchemaDatabase({beforeMigration: async (database,name) => {
+      if (name !== waitRemovalMigration) return;
+      await seed(database,false);
+      await receipt([10,11],40,database);
+      await start(10,60,1,database);
+      await answeredQuestion(database);
+      await finishFirst(new Date().toISOString(),60,database);
+      await database.exec(`update assignments set available_until=clock_timestamp()+interval '1 hour' where id='${id(10)}';
+        update assignments set available_from=clock_timestamp()-interval '1 hour',available_until=clock_timestamp()+interval '20 hours' where id='${id(11)}'`);
+      expect((await database.query(`select private.student_assignment_release_v1($1,$2,clock_timestamp())->>'state' state`,[id(2),id(11)])).rows)
+        .toEqual([{state:"waiting_time"}]);
+      before = await protectedFingerprint(database);
+    }});
+    try {
+      expect((await legacy.query(`select private.student_assignment_release_v1($1,$2,clock_timestamp())->>'state' state`,[id(2),id(11)])).rows)
+        .toEqual([{state:"open"}]);
+      expect(await protectedFingerprint(legacy)).toBe(before);
+    } finally { await legacy.close(); }
+  },30_000);
+
+  it.each(["exact", "expired", "different-reason", "missing-completion", "other-attention", "materialized", "held", "inactive"] as const)(
+    "옛12시간 충돌만 한정 복구하고 재실행은 변경하지 않는다: %s", async (scenario) => {
+      let before = "";
+      let dates: unknown;
+      let queueBefore: unknown;
+      const legacy = await createFinalSchemaDatabase({beforeMigration: async (database,name) => {
+        if (name !== waitRemovalMigration) return;
+        await seed(database,false);
+        await datedQueue("assigned",false,database);
+        await database.query(`update private.vocab_assignment_series_items set
+          effective_available_from=clock_timestamp()+interval '1 hour',
+          effective_available_until=clock_timestamp()+interval '2 hours' where id=$1`, [id(51)]);
+        await start(10,60,1,database);
+        await answeredQuestion(database);
+        await finishFirst(new Date().toISOString(),60,database);
+        expect((await database.query("select status from private.vocab_assignment_series_items order by sequence_number")).rows)
+          .toEqual([{status:"completed"},{status:"attention"}]);
+        if (scenario === "expired") await database.query(`update private.vocab_assignment_series_items set
+          effective_available_from=clock_timestamp()-interval '2 hours',effective_available_until=clock_timestamp()-interval '1 hour' where id=$1`,[id(51)]);
+        if (scenario === "different-reason") await database.query(`update private.vocab_assignment_series_items set attention_reason='assignment_expired' where id=$1`,[id(51)]);
+        if (scenario === "missing-completion") await database.query(`update private.vocab_assignment_series_items set completed_attempt_id=null where id=$1`,[id(50)]);
+        if (scenario === "other-attention") await database.query(`update private.vocab_assignment_series_items set status='attention',completed_at=null,completed_attempt_id=null,attention_reason='assignment_expired' where id=$1`,[id(50)]);
+        if (scenario === "materialized") await database.query(`update private.vocab_assignment_series_items set assignment_id=$1,materialized_at=clock_timestamp() where id=$2`,[id(11),id(51)]);
+        if (scenario === "held") await database.query(`update private.vocab_assignment_series_items set status='deferred',completed_at=null,completed_attempt_id=null,deferred_at=clock_timestamp() where id=$1`,[id(50)]);
+        if (scenario === "inactive") await database.query(`update students set status='blocked' where id=$1`,[id(2)]);
+        dates = (await database.query(`select planned_available_from,planned_available_until,
+          effective_available_from,effective_available_until from private.vocab_assignment_series_items order by id`)).rows;
+        queueBefore = (await database.query(`select to_jsonb(i) value from private.vocab_assignment_series_items i order by id`)).rows;
+        before = await protectedFingerprint(database);
+      }});
+      try {
+        expect(await protectedFingerprint(legacy)).toBe(before);
+        expect((await legacy.query(`select planned_available_from,planned_available_until,
+          effective_available_from,effective_available_until from private.vocab_assignment_series_items order by id`)).rows).toEqual(dates);
+        const repaired = scenario === "exact";
+        expect((await legacy.query("select status from private.vocab_assignment_series_items where id=$1",[id(51)])).rows)
+          .toEqual([{status:repaired ? "ready" : "attention"}]);
+        expect((await legacy.query("select status from private.vocab_assignment_series")).rows)
+          .toEqual([{status:repaired ? "active" : "attention"}]);
+        if (!repaired) expect((await legacy.query(`select to_jsonb(i) value from private.vocab_assignment_series_items i order by id`)).rows).toEqual(queueBefore);
+        const events = (await legacy.query<{details:Record<string,unknown>}>(`select details from private.vocab_assignment_series_events
+          where details->>'reason'='predecessor_wait_removed'`)).rows;
+        expect(events).toHaveLength(repaired ? 1 : 0);
+        if (repaired) expect(events[0]!.details).toMatchObject({workOrder:"APP-20260907-04",scheduleShifted:false,previousAttemptId:id(60)});
+        const firstRun = (await legacy.query(`select
+          (select jsonb_agg(to_jsonb(i) order by id) from private.vocab_assignment_series_items i) items,
+          (select jsonb_agg(to_jsonb(s) order by id) from private.vocab_assignment_series s) series,
+          (select jsonb_agg(to_jsonb(e) order by id) from private.vocab_assignment_series_events e) events`)).rows;
+        await legacy.exec(readFileSync(`supabase/migrations/${waitRemovalMigration}`,"utf8"));
+        expect((await legacy.query(`select
+          (select jsonb_agg(to_jsonb(i) order by id) from private.vocab_assignment_series_items i) items,
+          (select jsonb_agg(to_jsonb(s) order by id) from private.vocab_assignment_series s) series,
+          (select jsonb_agg(to_jsonb(e) order by id) from private.vocab_assignment_series_events e) events`)).rows).toEqual(firstRun);
+      } finally { await legacy.close(); }
+    },30_000,
+  );
+
+  it("복구 대상 ID는 최초 한 번 고정하고 모든 잠금·최종 조회가 그 범위를 유지한다", () => {
+    const sql = readFileSync(`supabase/migrations/${waitRemovalMigration}`,"utf8");
+    const repair = sql.slice(sql.indexOf("do $repair$"));
+    expect(repair.match(/into candidate_series_ids, candidate_student_ids/gu)).toHaveLength(1);
+    expect(repair.match(/series\.id = any\(candidate_series_ids\) and series\.student_id = any\(candidate_student_ids\)/gu)).toHaveLength(3);
+    expect(repair).toContain("where student.id = any(candidate_student_ids)");
+    expect(repair.match(/for update of (?:student|series|item) nowait/gu)).toHaveLength(3);
+    expect(sql).not.toMatch(/\b(?:update|delete from|insert into)\s+public\./giu);
   });
 
   it("첫 완료 신호만 다음 회차를 한 번 준비하며 재시험·답·점수는 그대로 둔다", async () => {
@@ -362,6 +492,7 @@ describe.sequential("APP14 첫 시험·마감12시간·보류 전체 스키마",
     }
     await db.exec("reset role");
     const signatures = [
+      "private.student_assignment_release_v1(uuid,uuid,timestamptz)",
       "private.student_dashboard_read_rows_v2(uuid,timestamptz)",
       "public.get_student_dashboard_initial_v2(uuid,timestamptz)",
       "public.list_student_dashboard_completed_page_v2(uuid,timestamptz,timestamptz,uuid)",
@@ -373,6 +504,11 @@ describe.sequential("APP14 첫 시험·마감12시간·보류 전체 스키마",
         has_function_privilege('service_role',$1,'execute') service`,[signature])).rows[0])
         .toEqual({anon:false,authenticated:false,service:true});
     }
+    expect((await db.query(`select
+      has_function_privilege('anon','private.ready_next_vocab_assignment_item_v1(uuid,integer,timestamptz)','execute') anon,
+      has_function_privilege('authenticated','private.ready_next_vocab_assignment_item_v1(uuid,integer,timestamptz)','execute') authenticated,
+      has_function_privilege('service_role','private.ready_next_vocab_assignment_item_v1(uuid,integer,timestamptz)','execute') service`)).rows)
+      .toEqual([{anon:false,authenticated:false,service:false}]);
     await reject(() => start(11), /assignment_release_waiting_initial/u);
   });
 });

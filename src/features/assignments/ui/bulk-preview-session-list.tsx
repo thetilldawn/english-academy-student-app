@@ -37,7 +37,6 @@ export function BulkPreviewSessionList({
                 sessionNumber={session.sessionNumber}
                 availableFrom={session.availableFrom}
                 availableUntil={session.availableUntil}
-                previousAvailableUntil={item.sessions.find((previous) => previous.sessionNumber === session.sessionNumber - 1)?.availableUntil ?? null}
               />
               {session.rangeTruncated ? (
                 <MetaTag size="large" tone="warning">

@@ -38,8 +38,7 @@ export function VocabScheduleDetailFields({
           <FieldLabel as="span">회차별 시간</FieldLabel>
           {sessionRows.map((row) => {
             const { availableError, deadlineError } = row;
-            const followUp = followUpReleaseLabel(row.sessionNumber,
-              Boolean(sessionRows.find((previous) => previous.sessionNumber === row.sessionNumber - 1)?.deadlineLocalDateTime));
+            const followUp = followUpReleaseLabel(row.sessionNumber);
             if (!row.editable) {
               return (
                 <div

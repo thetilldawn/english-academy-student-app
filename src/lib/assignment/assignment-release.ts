@@ -28,7 +28,7 @@ export function assignmentReleaseNotice(release: AssignmentRelease | undefined):
   const copy = studentAppText.dashboard.release;
   switch (release?.state) {
     case "waiting_initial":
-      return release.hasDeadline ? copy.waitingInitialWithDeadline : copy.waitingInitial;
+      return copy.waitingInitial;
     case "waiting_time":
       return release.opensAt
         ? copy.waitingTime.replace("{datetime}", formatKoreanActivityDateTime(release.opensAt))

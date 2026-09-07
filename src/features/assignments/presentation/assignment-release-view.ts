@@ -1,10 +1,9 @@
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { formatKoreanDateTime } from "@/lib/format";
 
-export function followUpReleaseLabel(sessionNumber: number, hasPreviousDeadline: boolean) {
+export function followUpReleaseLabel(sessionNumber: number) {
   if (sessionNumber <= 1) return null;
-  return hasPreviousDeadline ? adminLearningText.assignmentRelease.afterDeadline
-    : adminLearningText.assignmentRelease.afterFirst;
+  return adminLearningText.assignmentRelease.afterFirst;
 }
 
 export function plannedSessionOpeningLabel(sessionNumber: number, availableFrom: string | null) {
