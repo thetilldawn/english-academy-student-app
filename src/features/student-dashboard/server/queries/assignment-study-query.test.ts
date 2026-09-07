@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ rpc: vi.fn(), registry: vi.fn(), active: vi.fn(), synthetic: vi.fn(), approved: vi.fn(), prompts: vi.fn() }));
+const mocks = vi.hoisted(() => ({ rpc: vi.fn(), registry: vi.fn(), active: vi.fn(), synthetic: vi.fn(), approved: vi.fn(), entryApproved: vi.fn(), prompts: vi.fn() }));
 vi.mock("./assignment-study-example-query", () => ({ getStudyExamplePrompts: mocks.prompts }));
 vi.mock("@/lib/supabase/service", () => ({ getServiceSupabaseClient: () => ({ rpc: mocks.rpc }) }));
 vi.mock("@/lib/services/quiz/pronunciation-registry", () => ({
@@ -7,6 +7,7 @@ vi.mock("@/lib/services/quiz/pronunciation-registry", () => ({
   loadActiveVocabPronunciationReleaseRegistry: mocks.active,
   loadSyntheticPronunciationRegistry: mocks.synthetic,
   loadApprovedKoreanPronunciationRegistry: mocks.approved,
+  loadEntryApprovedKoreanPronunciationRegistry: mocks.entryApproved,
 }));
 import { getAssignmentStudy } from "./assignment-study-query";
 
@@ -16,7 +17,7 @@ const word = { entryId: 7, headword: "collect", meaning: "모으다", displayKo:
 const raw = (mode = "book_meaning_choice") => ({ assignmentId: id, title: "배정 단어", mode, words: [word] });
 beforeEach(() => {
   vi.clearAllMocks();
-  for (const fn of [mocks.registry, mocks.active, mocks.synthetic, mocks.approved]) fn.mockResolvedValue(new Map());
+  for (const fn of [mocks.registry, mocks.active, mocks.synthetic, mocks.approved, mocks.entryApproved]) fn.mockResolvedValue(new Map());
   mocks.rpc.mockResolvedValue({ data: raw(), error: null });
   mocks.prompts.mockResolvedValue(new Map([[7, ["She _____ the letters."]]]));
 });
@@ -27,7 +28,7 @@ describe("배정 단어장 서버 조회", () => {
         release: { state, opensAt: state === "waiting_time" ? "2030-01-01T00:00:00Z" : null, hasDeadline: true } };
       mocks.rpc.mockResolvedValue({ data: locked, error: null });
       expect(await getAssignmentStudy(student, id)).toEqual(locked);
-      for (const fn of [mocks.registry, mocks.active, mocks.synthetic, mocks.approved, mocks.prompts]) {
+      for (const fn of [mocks.registry, mocks.active, mocks.synthetic, mocks.approved, mocks.entryApproved, mocks.prompts]) {
         expect(fn).not.toHaveBeenCalled();
       }
       mocks.rpc.mockResolvedValue({ data: { ...locked, words: [word] }, error: null });
@@ -38,6 +39,7 @@ describe("배정 단어장 서버 조회", () => {
     const result = await getAssignmentStudy(student, id);
     expect(mocks.rpc).toHaveBeenCalledWith("get_student_assignment_study_v1", { p_assignment_id: id, p_student_id: student.studentId });
     expect(mocks.registry).toHaveBeenCalledWith([7]);
+    expect(mocks.entryApproved).toHaveBeenCalledWith([7]);
     expect(result?.words?.[0]).toMatchObject({ headword: "collect", meaning: "모으다", definition: null, example: null });
     expect(Object.keys(result!.words![0]!)).toEqual(["key", "headword", "meaning", "definition", "example", "exampleRanges", "pronunciation"]);
     expect(mocks.prompts).not.toHaveBeenCalled();
@@ -61,6 +63,16 @@ describe("배정 단어장 서버 조회", () => {
   it("legacy 일반형을 그대로 지원한다", async () => {
     mocks.rpc.mockResolvedValue({ data: raw("legacy_book_meaning_choice"), error: null });
     expect((await getAssignmentStudy(student, id))?.mode).toBe("book_meaning_choice");
+  });
+  it.each(["book_meaning_choice", "canonical_definition_to_headword", "canonical_example_to_headword"])("%s 공부 화면도 원음과 문맥을 보존하며 승인 표기를 사용한다", async (mode) => {
+    const pronunciation = { displayKo: "자동", variantId: "mw:sample", audioUrl: "https://media.merriam-webster.com/audio/prons/en/us/mp3/t/test0001.mp3", available: true };
+    const corrected = { ...pronunciation, displayKo: "승인", segments: [{ text: "승인", stress: "primary" }] };
+    mocks.active.mockResolvedValue(new Map([[7, pronunciation]]));
+    mocks.entryApproved.mockResolvedValue(new Map([[7, { dictionaryId: "word:sample", pronunciation: corrected }]]));
+    mocks.rpc.mockResolvedValue({ data: raw(mode), error: null });
+    const result = await getAssignmentStudy(student, id);
+    expect(result?.words?.[0]?.pronunciation).toEqual(corrected);
+    expect(JSON.stringify(result)).not.toMatch(/dictionaryId|entryId|source_content|identity_content|correct_choice/);
   });
   it("접근할 수 없는 배정은 원문과 발음을 조회하지 않는다", async () => {
     mocks.rpc.mockResolvedValue({ data: null, error: null });

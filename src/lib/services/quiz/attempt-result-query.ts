@@ -7,6 +7,7 @@ import { getStudentAttemptPointSummary } from "@/lib/services/learning-point-rea
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import {
   loadActiveVocabPronunciationReleaseRegistry,
+  loadEntryApprovedKoreanPronunciationRegistry,
   loadApprovedKoreanPronunciationRegistry,
   loadSyntheticPronunciationRegistry,
   loadVocabPronunciationRegistry,
@@ -70,11 +71,13 @@ export async function getAttemptQuestionResults(
     syntheticPronunciationRegistry,
     approvedKoreanPronunciationRegistry,
     activeVocaPronunciationRegistry,
+    entryApprovedRegistry,
   ] = await Promise.all([
     loadVocabPronunciationRegistry(registryIds),
     loadSyntheticPronunciationRegistry(syntheticBindings),
     loadApprovedKoreanPronunciationRegistry(approvedDictionaryIds),
     loadActiveVocabPronunciationReleaseRegistry(registryIds),
+    loadEntryApprovedKoreanPronunciationRegistry(registryIds),
   ]);
 
   return mapResultQuestions(
@@ -84,6 +87,7 @@ export async function getAttemptQuestionResults(
     new Map(),
     approvedKoreanPronunciationRegistry,
     activeVocaPronunciationRegistry,
+    entryApprovedRegistry,
   );
 }
 

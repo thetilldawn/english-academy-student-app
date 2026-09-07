@@ -88,7 +88,19 @@ export type VocabApprovedKoreanPronunciationRow = {
   display_pronunciation_ko: unknown;
   segments: unknown;
   review_status: unknown;
+  source_review_run_id?: unknown;
 };
+
+// Server lookup proves the entry/source/identity join. This proof is consumed
+// before serialization; clients still receive only QuizPronunciation.
+export type EntryApprovedKoreanPronunciation = {
+  dictionaryId: string;
+  pronunciation: QuizPronunciation;
+};
+
+export function isUserDirectedPronunciationReview(value: unknown) {
+  return typeof value === "string" && value.startsWith("user-directed:");
+}
 
 export type VocabRuleDerivedKoreanPronunciationRow = {
   dictionary_id: unknown;
@@ -697,24 +709,24 @@ export function preferredPronunciationWithActiveVocaRelease(
   officialRegistry: QuizPronunciation | undefined,
   syntheticRegistry: QuizPronunciation | undefined,
   approvedRegistry: ReadonlyMap<string, QuizPronunciation>,
+  entryApproved?: EntryApprovedKoreanPronunciation,
 ) {
+  let selected: QuizPronunciation;
   if (!snapshot.available && activeVocaRelease?.available) {
-    return activeVocaRelease;
-  }
-  // Fill missing display only when both audio identity and URL match. A running
-  // attempt keeps its recorded audio, even if a later release chose another voice.
-  if (snapshot.available && !snapshot.displayKo && activeVocaRelease?.available &&
+    selected = activeVocaRelease;
+    // Existing active-release display remains above legacy rule-derived values.
+  } else if (snapshot.available && !snapshot.displayKo && activeVocaRelease?.available &&
     snapshot.variantId === activeVocaRelease.variantId &&
     snapshot.audioUrl === activeVocaRelease.audioUrl) {
-    return { ...snapshot, displayKo: activeVocaRelease.displayKo, segments: activeVocaRelease.segments };
+    selected = { ...snapshot, displayKo: activeVocaRelease.displayKo, segments: activeVocaRelease.segments };
+  } else {
+    selected = preferredPronunciationWithApprovedKorean(dictionaryId, snapshot, officialRegistry, syntheticRegistry, approvedRegistry);
   }
-  return preferredPronunciationWithApprovedKorean(
-    dictionaryId,
-    snapshot,
-    officialRegistry,
-    syntheticRegistry,
-    approvedRegistry,
-  );
+  const approved = entryApproved?.pronunciation;
+  const exactEntry = approved?.available && selected.available &&
+    (!dictionaryId || dictionaryId === entryApproved?.dictionaryId) &&
+    selected.variantId === approved.variantId && selected.audioUrl === approved.audioUrl;
+  return withApprovedKoreanPronunciation(selected, exactEntry ? approved : undefined);
 }
 
 export function withPronunciationDisplay(

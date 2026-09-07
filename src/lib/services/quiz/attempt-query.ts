@@ -14,6 +14,7 @@ import {
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import {
   loadActiveVocabPronunciationReleaseRegistry,
+  loadEntryApprovedKoreanPronunciationRegistry,
   loadApprovedKoreanPronunciationRegistry,
   loadSyntheticPronunciationRegistry,
   loadVocabPronunciationDisplayRegistry,
@@ -143,12 +144,14 @@ export async function getStudentAttempt(
     pronunciationDisplayRegistry,
     approvedKoreanPronunciationRegistry,
     activeVocaPronunciationRegistry,
+    entryApprovedRegistry,
   ] = await Promise.all([
     loadVocabPronunciationRegistry(registryIds),
     loadSyntheticPronunciationRegistry(syntheticBindings),
     loadVocabPronunciationDisplayRegistry(registryIds),
     loadApprovedKoreanPronunciationRegistry(approvedDictionaryIds),
     loadActiveVocabPronunciationReleaseRegistry(registryIds),
+    loadEntryApprovedKoreanPronunciationRegistry(registryIds),
   ]);
   const initialCurrent = rows.find(
     (question) => question.initial_choice_index === null,
@@ -255,6 +258,7 @@ export async function getStudentAttempt(
             )
           : undefined,
         approvedKoreanPronunciationRegistry,
+        typeof targetVocabEntryId === "number" ? entryApprovedRegistry.get(targetVocabEntryId) : undefined,
       );
       const choiceVocabEntryIds = completeChoiceVocabEntryIds(
         bankQuestion?.choice_vocab_entry_ids,
@@ -289,6 +293,7 @@ export async function getStudentAttempt(
               )
             : undefined,
           approvedKoreanPronunciationRegistry,
+          typeof choiceVocabEntryId === "number" ? entryApprovedRegistry.get(choiceVocabEntryId) : undefined,
         );
       });
 

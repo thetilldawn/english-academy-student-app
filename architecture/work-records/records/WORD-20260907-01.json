@@ -1,0 +1,567 @@
+{
+  "schemaVersion": 1,
+  "id": "WORD-20260907-01",
+  "title": "사용자 승인 발음 교정과 공통 연결",
+  "size": "full",
+  "gate": "design",
+  "guide": "docs/work-orders/WORD-20260907-01.md",
+  "baseline": "c95f6c47ac81e60d823f7cefe8381aa257bebe29",
+  "owners": [
+    "shared-quiz-domain",
+    "quiz-player",
+    "results",
+    "student-dashboard",
+    "database-contract",
+    "architecture-meta"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "public",
+    "personal",
+    "assessment-secret"
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "표기 우선값과 작업 순서",
+      "answer": "앞선 두 지정값을 재질문하지 않고 적용. 대기시간/배지/수량 수정은 완료로 보존, 발음 교정을 재개.",
+      "source": "2026-09-07 정확한 발음 예시 및 고쳐 ㄱㄱ, 최신 재개"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "승인 데이터와 원음 분리",
+      "answer": "기존 approved table의 user-directed 작업 출처로 2행만 별도 검증 거래 삽입. source_content_sha256은 원음/POS/표제어/기존표기 포함 immutable identity hash. 구 독립2검토 importer는 변경하지 않음.",
+      "source": "기존 표/불변 identity 계약·독립 읽기 검토"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "과거 snapshot 없는 문항과 실패 복구",
+      "answer": "서버전용 단일 읽기 RPC로 현재 entry+원문+default binding+identity+승인 해시를 검증. 기존 dictionary 조회는 user-directed를 제외. 최종 선택 음원과 승인 variant/URL/사전ID가 같을 때 표시만 교체. 조회실패 시 기존 정상 발음 보존, 실패를 새 승인/발음없음으로 조작하지 않음.",
+      "source": "현재 attempt/study/result 조회와 공통 선택기 실코드"
+    },
+    {
+      "id": "D4",
+      "owner": "user",
+      "state": "resolved",
+      "question": "변경 한계와 배포",
+      "answer": "요청한 교정은 로컬 검사 후 Preview와 Production에 순서 적용. 음원 재생성/다른 표기 대량 교체/새 비용/학생 시험 재작성 없음.",
+      "source": "기존 운영수정 승인, 발음 고쳐 ㄱㄱ 및 재개"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "checked",
+      "reason": "기존 페이지/모달/UI/개인 캐시/권한/오류 계약을 보존; 조회된 표시 자료만 교정"
+    },
+    "ui": {
+      "status": "checked",
+      "reason": "기존 페이지/모달/UI/개인 캐시/권한/오류 계약을 보존; 조회된 표시 자료만 교정"
+    },
+    "state": {
+      "status": "checked",
+      "reason": "기존 페이지/모달/UI/개인 캐시/권한/오류 계약을 보존; 조회된 표시 자료만 교정"
+    },
+    "domain": {
+      "status": "changed",
+      "reason": "공통 승인 표기 선택과 정확 원자료 결속, 해당 회귀 검사"
+    },
+    "data": {
+      "status": "changed",
+      "reason": "공통 승인 표기 선택과 정확 원자료 결속, 해당 회귀 검사"
+    },
+    "api": {
+      "status": "checked",
+      "reason": "기존 페이지/모달/UI/개인 캐시/권한/오류 계약을 보존; 조회된 표시 자료만 교정"
+    },
+    "cache": {
+      "status": "checked",
+      "reason": "기존 페이지/모달/UI/개인 캐시/권한/오류 계약을 보존; 조회된 표시 자료만 교정"
+    },
+    "asyncUi": {
+      "status": "checked",
+      "reason": "기존 페이지/모달/UI/개인 캐시/권한/오류 계약을 보존; 조회된 표시 자료만 교정"
+    },
+    "security": {
+      "status": "checked",
+      "reason": "기존 페이지/모달/UI/개인 캐시/권한/오류 계약을 보존; 조회된 표시 자료만 교정"
+    },
+    "styles": {
+      "status": "checked",
+      "reason": "기존 페이지/모달/UI/개인 캐시/권한/오류 계약을 보존; 조회된 표시 자료만 교정"
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "공통 승인 표기 선택과 정확 원자료 결속, 해당 회귀 검사"
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "권한 확인 후 읽기 전용; 원음/학생/정답/개인 no-store 보존; user-directed 승인정보는 service-only",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T4",
+        "T5"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "권한 확인 후 읽기 전용; 원음/학생/정답/개인 no-store 보존; user-directed 승인정보는 service-only",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T4",
+        "T5"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "권한 확인 후 읽기 전용; 원음/학생/정답/개인 no-store 보존; user-directed 승인정보는 service-only",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T4",
+        "T5"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "권한 확인 후 읽기 전용; 원음/학생/정답/개인 no-store 보존; user-directed 승인정보는 service-only",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T4",
+        "T5"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "권한 확인→기존 entry목록→기존발음조회와 병렬 승인entry RPC→공통 최종음원 선택→표시/강세만 교정→기존 시험/선택지/학습/결과 UI. 생성/배정/검색/삭제/채점 흐름 변경 없음; 교정 삽입은 관리자 운영거래 별도.",
+    "reuse": "기존 approved 표와 pronunciation-snapshot 순수 선택기, pronunciation-registry server-only 및 기존 표시/음성 부품 재사용. 범용새승인서비스/컴포넌트/사용자API 없음.",
+    "cache": "추가 자료는 요청 범위의 고유 entry500개 묶음 읽기. 기존 조회와 Promise.all; 공유캐시/새폴링/브라우저요청 없음. 학생자료 private,no-store 유지.",
+    "compatibility": "원음 선택 우선순위와 기존v1 승인 계약 보존. 별도 user-directed 증거가 맞을 때만 overlay. 기존 문항 snapshot/정답은 업데이트하지 않음. 조회 실패는 기존 정상값을 유지하고 서버에 안전한 오류코드만 기록.",
+    "rollback": "추가 승인 두행 중 작업ID/해시/표시가 정확히 일치하는 것만 승인취소 거래로 복구 가능. 앱 이전 커밋 복구 시 읽기RPC는 미사용으로 보존. 학생/음원/원자료 되돌림 없음."
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "첫 단어장 조회",
+      "message": "단어장을 불러오고 있습니다…",
+      "behavior": "제목·닫기와 기존 로딩 표시 유지",
+      "recovery": "조회 완료 대기",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "예약 공개 시각 도달",
+      "message": "별도 문구 없음(현재 안내 유지)",
+      "behavior": "기존 단일 경계 갱신 유지, 반복 조회 추가 없음",
+      "recovery": "예약 시각에 기존 서버 목록 갱신",
+      "component": "src/features/student-dashboard/ui/assignment-boundary-refresh.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "관리자 범위 미선택",
+      "message": "단어장을 선택해 주세요.",
+      "behavior": "기존 미선택 표시 유지, 0건으로 계산하지 않음",
+      "recovery": "단어장 선택",
+      "component": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "정상 조회 결과 배정 0건",
+      "message": "아직 배정된 시험이 없습니다.",
+      "behavior": "정상 빈 결과와 실패를 구분하는 기존 표시 유지",
+      "recovery": "선생님이 배정하면 목록에 표시",
+      "component": "src/features/student-dashboard/ui/student-dashboard.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "교정 행의 variant/원음/출처 불일치",
+      "message": "기존 정상 발음 표시 유지",
+      "behavior": "일치하지 않는 승인 표기를 적용하지 않으며 시험 입력/답안 상태 불변",
+      "recovery": "운영 검수 기록에서 출처 확인",
+      "component": "src/lib/quiz/pronunciation-snapshot.ts",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "단어장 조회 실패",
+      "message": "단어장을 불러오지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.",
+      "behavior": "빈 결과로 바꾸지 않고 제목·닫기·재시도 보존",
+      "recovery": "다시 시도 버튼",
+      "component": "src/features/student-dashboard/ui/assignment-study-error.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "관리자 후속 회차 처리 오류",
+      "message": "처리할 회차를 확인하지 못했습니다. 최신 내역을 확인해 주세요.",
+      "behavior": "기존 오류 전달과 최신 내역 확인 유지; 명령 자동 반복 없음",
+      "recovery": "기존 최신 내역 조회",
+      "component": "src/features/assignment-queue/ui/assignment-queue-history.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "학생 세션 만료 또는 다른 학생 요청",
+      "message": "기존 로그인 화면으로 이동 또는 조회 불가 표시",
+      "behavior": "개인 자료를 표시하지 않는 서버 인증 유지",
+      "recovery": "학생 접속코드로 다시 로그인",
+      "component": "src/features/student-dashboard/server/components/assignment-study-content.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "조회할 수 없는 단어장",
+      "message": "확인할 수 없는 단어장입니다. 현재 배정된 시험에서 다시 열어 주세요.",
+      "behavior": "기존 404 경계와 닫기 보존; 공개 대기와 구분",
+      "recovery": "닫은 뒤 현재 배정에서 다시 열기",
+      "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "단어장 경계의 예상 밖 오류",
+      "message": "단어장을 불러오지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.",
+      "behavior": "기존 경계의 안전한 안내 유지; 내부 SQL 원문 표시 금지",
+      "recovery": "경계 재시도 또는 닫기",
+      "component": "src/features/student-dashboard/ui/assignment-study-error.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "개발기준v1.1/Next16.2.12/WORD0701",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "공식 Next 데이터 보안 및 Supabase 함수 권한 기준 대조. 사용자 지정 표기는 독립검토 승인으로 위장하지 않음."
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "unit",
+      "target": "src/lib/quiz/pronunciation-snapshot.test.ts",
+      "scenario": "활성/저장/미보유 음원, 승인 우선, 다른 variant/URL/사전ID, snapshot 없는 교정",
+      "expected": "표시/segments만 교체, 원음 불변 및 미일치 기존값 유지",
+      "topics": [
+        "behavior"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "integration",
+      "target": "src/lib/database/entry-approved-pronunciation.integration.test.ts",
+      "scenario": "요청범위/해시/source row/POS/default/활성/모호성/권한/재실행",
+      "expected": "정확 승인만 반환, 익명/일반사용자 실행 불가; 읽기쓰기0",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "integration",
+      "target": "src/lib/services/quiz/pronunciation-registry.test.ts",
+      "scenario": "chunk500/중복ID/잘못된 응답/실패/구approved보존/신승인분리/소비자 전달",
+      "expected": "공통선택기를 사용하고 실패시 안전한 기존음원 유지, 새 권한노출0",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache",
+        "error-ui"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "build",
+      "target": "package.json",
+      "scenario": "전체 단위·기존학습/선택지/결과·오류/404/권한/캐시 회귀·타입·lint·지도·구조·빌드",
+      "expected": "필수 통과, 기존 쉬운 상태 UI 유지, 건너뜀/미검증 명시",
+      "topics": [
+        "structure",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T5",
+      "kind": "review",
+      "target": "docs/verification/WORD-20260907-01.md",
+      "scenario": "Preview 후 운영 정확두행 readback·원음/학생보호 지문·실화면 또는 동일서버경로·독립검토",
+      "expected": "양쪽 지정값·원음 불변 확인, 외부상태 범위확대0",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T6",
+      "kind": "review",
+      "target": "docs/verification/WORD-20260907-01.md",
+      "scenario": "자료영역 1009행 출처/현재사전 정확일치 item-level 감사와 차이 재검토 목록",
+      "expected": "원자료해시/합계재현, 차이를 검수승인이나 음원오류로 간주하지 않음",
+      "topics": [
+        "behavior",
+        "structure"
+      ]
+    }
+  ],
+  "scope": [
+    {
+      "path": "src/lib/quiz/pronunciation-snapshot.ts",
+      "owner": "shared-quiz-domain",
+      "flowIds": [
+        "admin-history-read",
+        "student-quiz-attempt",
+        "student-assignment-study-read",
+        "assignment-edit"
+      ],
+      "state": "existing"
+    },
+    {
+      "path": "src/lib/quiz/pronunciation-snapshot.test.ts",
+      "owner": "shared-quiz-domain",
+      "flowIds": [
+        "admin-history-read",
+        "student-quiz-attempt",
+        "student-assignment-study-read",
+        "assignment-edit"
+      ],
+      "state": "existing"
+    },
+    {
+      "path": "src/lib/services/quiz/pronunciation-registry.ts",
+      "owner": "quiz-player",
+      "flowIds": [
+        "admin-history-read",
+        "student-quiz-attempt",
+        "student-assignment-study-read",
+        "assignment-edit"
+      ],
+      "state": "existing"
+    },
+    {
+      "path": "src/lib/services/quiz/pronunciation-registry.test.ts",
+      "owner": "quiz-player",
+      "flowIds": [
+        "admin-history-read",
+        "student-quiz-attempt",
+        "student-assignment-study-read",
+        "assignment-edit"
+      ],
+      "state": "existing"
+    },
+    {
+      "path": "src/lib/services/quiz/attempt-query.ts",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ],
+      "state": "existing"
+    },
+    {
+      "path": "src/lib/services/quiz/attempt-result-query.ts",
+      "owner": "results",
+      "flowIds": [
+        "admin-history-read",
+        "assignment-edit"
+      ],
+      "state": "existing"
+    },
+    {
+      "path": "src/lib/services/quiz/result-question-mapper.ts",
+      "owner": "results",
+      "flowIds": [
+        "admin-history-read",
+        "assignment-edit"
+      ],
+      "state": "existing"
+    },
+    {
+      "path": "src/lib/services/quiz/question-mapping.test.ts",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ],
+      "state": "existing"
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-query.ts",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ],
+      "state": "existing"
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-query.test.ts",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ],
+      "state": "existing"
+    },
+    {
+      "path": "supabase/migrations/20260907121138_add_entry_approved_korean_pronunciation.sql",
+      "owner": "quiz-player",
+      "flowIds": [
+        "admin-history-read",
+        "student-quiz-attempt",
+        "student-assignment-study-read",
+        "assignment-edit"
+      ],
+      "state": "existing"
+    },
+    {
+      "path": "src/lib/database/entry-approved-pronunciation.integration.test.ts",
+      "owner": "database-contract",
+      "flowIds": [
+        "admin-history-read",
+        "student-quiz-attempt",
+        "student-assignment-study-read",
+        "assignment-edit"
+      ],
+      "state": "existing"
+    },
+    {
+      "path": "architecture/기능_소유권.json",
+      "owner": "architecture-meta",
+      "flowIds": [],
+      "state": "existing"
+    }
+  ],
+  "verification": null,
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "사용자가 지정한 두 한글 발음을 교정하고 출처를 보존",
+      "acceptance": "지정 두 항목만 교정, 기존 음원과 사전 현재본 및 전체 원자료 불변",
+      "disposition": "required",
+      "owners": [
+        "shared-quiz-domain",
+        "quiz-player"
+      ],
+      "flowIds": [
+        "admin-history-read",
+        "student-quiz-attempt",
+        "student-assignment-study-read",
+        "assignment-edit"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T5"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "시험·영어선택지·단어보기·결과에서 공통 승인 표기 우선",
+      "acceptance": "사전 snapshot 없는 과거 문항도 정확한 entry/source/variant/audio 증거가 있으면 같은 표기, 음원 또는 사전 ID가 다르면 적용하지 않음",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "results",
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "admin-history-read",
+        "student-quiz-attempt",
+        "student-assignment-study-read",
+        "assignment-edit"
+      ],
+      "checkIds": [
+        "T1",
+        "T3",
+        "T4",
+        "T5"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "user",
+      "text": "전체 지정 단어장의 자동 표기·사전 출처 점검 및 재검토 목록 보존",
+      "acceptance": "1009행 원자료 해시와 정확 사전 일치/차이를 항목별 기록, 차이만으로 오류·승인으로 판정하지 않음",
+      "disposition": "required",
+      "owners": [
+        "architecture-meta"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T6"
+      ]
+    },
+    {
+      "id": "R4",
+      "source": "engineering",
+      "text": "학생 정보·정답·원음·시험 진행 보호",
+      "acceptance": "권한 확인 뒤 읽기 전용 조회, 공개 실행 차단, 기존 오류/빈결과/404 구분과 개인 no-store 보존",
+      "disposition": "required",
+      "owners": [
+        "quiz-player",
+        "student-dashboard",
+        "database-contract"
+      ],
+      "flowIds": [
+        "admin-history-read",
+        "student-quiz-attempt",
+        "student-assignment-study-read",
+        "assignment-edit"
+      ],
+      "checkIds": [
+        "T2",
+        "T3",
+        "T4",
+        "T5"
+      ]
+    }
+  ]
+}

@@ -1774,8 +1774,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 99,
-      "pathSetSha256": "03086a985b538222cdb6dfae5fa3aa6496c7ffd789ad3fa196de163355ff204c"
+      "fileCount": 100,
+      "pathSetSha256": "d930b0531bd8e5e81afb90688172b6d478ee8322e53e19fd007ecc6906078a94"
     },
     {
       "path": "src/lib/deploy",
@@ -2025,6 +2025,11 @@
   "protectedMigrationCount": 136,
   "protectedMigrationSetSha256": "b4ea57697824cb8fece77250a50950e58bb4e2516235e485106f126a8b00c13f",
   "migrationOwners": [
+    {
+      "path": "supabase/migrations/20260907121138_add_entry_approved_korean_pronunciation.sql",
+      "owner": "quiz-player",
+      "flow": "student-quiz-attempt"
+    },
     {
       "path": "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql",
       "owner": "assignment-queue",
@@ -5412,7 +5417,8 @@
           "supabase/migrations/20260906103017_add_approved_school_pronunciation_scope.sql",
           "supabase/migrations/20260905063836_add_reviewed_choice_repair_release.sql",
           "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
-          "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql"
+          "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql",
+          "supabase/migrations/20260907121138_add_entry_approved_korean_pronunciation.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/attempt/[id]/page.tsx"
@@ -5442,7 +5448,9 @@
           "src/lib/database/quiz-feedback-timing.integration.test.ts",
           "src/lib/database/retry-question-timer.integration.test.ts",
           "src/lib/assignment/assignment-release.test.ts",
-          "src/lib/database/assignment-release-final-schema.integration.test.ts"
+          "src/lib/database/assignment-release-final-schema.integration.test.ts",
+          "src/lib/database/entry-approved-pronunciation.integration.test.ts",
+          "src/lib/services/quiz/pronunciation-registry.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -5683,7 +5691,8 @@
           "supabase/migrations/20260905051013_add_student_assignment_study.sql",
           "supabase/migrations/20260906103017_add_approved_school_pronunciation_scope.sql",
           "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
-          "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql"
+          "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql",
+          "supabase/migrations/20260907121138_add_entry_approved_korean_pronunciation.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/assignments/[id]/words/page.tsx",
@@ -5701,7 +5710,9 @@
           "src/features/student-dashboard/server/queries/assignment-study-example-query.test.ts",
           "src/lib/database/assignment-study.integration.test.ts",
           "src/lib/assignment/assignment-release.test.ts",
-          "src/lib/database/assignment-release-final-schema.integration.test.ts"
+          "src/lib/database/assignment-release-final-schema.integration.test.ts",
+          "src/lib/database/entry-approved-pronunciation.integration.test.ts",
+          "src/lib/services/quiz/pronunciation-registry.test.ts"
         ]
       },
       "requiredImportEdges": [

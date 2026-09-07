@@ -2,6 +2,7 @@ import "server-only";
 
 import {
   approvedKoreanPronunciationKey,
+  isUserDirectedPronunciationReview,
   mergeKoreanPronunciationRegistries,
   parseApprovedKoreanPronunciation,
   parseRegistryPronunciation,
@@ -12,6 +13,7 @@ import {
   syntheticAudioProfilePriority,
   syntheticPronunciationBindingKey,
   type QuizPronunciation,
+  type EntryApprovedKoreanPronunciation,
   type VocabApprovedKoreanPronunciationRow,
   type VocabPronunciationIdentityV2Row,
   type VocabPronunciationRegistryRow,
@@ -19,6 +21,48 @@ import {
   type VocabSyntheticAudioAssetRow,
 } from "@/lib/quiz/pronunciation-snapshot";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
+
+export async function loadEntryApprovedKoreanPronunciationRegistry(
+  vocabEntryIds: readonly number[],
+): Promise<Map<number, EntryApprovedKoreanPronunciation>> {
+  const result = new Map<number, EntryApprovedKoreanPronunciation>();
+  const ids = [...new Set(vocabEntryIds.filter((id) => Number.isSafeInteger(id) && id > 0))];
+  if (ids.length === 0) return result;
+  const supabase = getServiceSupabaseClient();
+  try {
+    for (let offset = 0; offset < ids.length; offset += 500) {
+      const chunk = ids.slice(offset, offset + 500);
+      const { data, error } = await supabase.rpc("list_entry_approved_korean_pronunciations_v1", { p_vocab_entry_ids: chunk });
+      if (error || !Array.isArray(data)) throw new Error("entry_approved_lookup_failed");
+      for (const row of data) {
+        if (!row || !chunk.includes(row.vocab_entry_id) || result.has(row.vocab_entry_id) ||
+            typeof row.dictionary_id !== "string" ||
+            !row.approval || row.approval.dictionary_id !== row.dictionary_id ||
+            !isUserDirectedPronunciationReview(row.approval.source_review_run_id)) {
+          throw new Error("entry_approved_data_invalid");
+        }
+        const identity = parseVocabPronunciationIdentityV2(row.identity, process.env.NEXT_PUBLIC_SUPABASE_URL ?? "");
+        const approved = parseApprovedKoreanPronunciation(row.approval);
+        if (!identity || !approved || approved.variantId !== identity.variantId ||
+            approved.segments?.filter((part) => part.stress === "primary").length !== 1 ||
+            row.approval.source_content_sha256 !== row.identity.identity_content_sha256.toLowerCase()) {
+          throw new Error("entry_approved_data_invalid");
+        }
+        result.set(row.vocab_entry_id, {
+          dictionaryId: row.dictionary_id,
+          pronunciation: { ...identity, displayKo: approved.displayKo, segments: approved.segments },
+        });
+      }
+    }
+    return result;
+  } catch {
+    // Optional display correction failing must not erase known audio or fail a
+    // running exam. Do not log payloads, student identifiers, or raw SQL errors.
+    console.warn("[quiz-pronunciation] entry approved display unavailable");
+    return new Map();
+  }
+}
+
 
 export async function loadVocabPronunciationRegistry(
   vocabEntryIds: readonly number[],
@@ -300,7 +344,7 @@ export async function loadApprovedKoreanPronunciationRegistry(
     const { data, error } = await supabase
       .from("vocab_approved_korean_pronunciations")
       .select(
-        "dictionary_id, pronunciation_variant_id, display_pronunciation_ko, segments, review_status",
+        "dictionary_id, pronunciation_variant_id, display_pronunciation_ko, segments, review_status, source_review_run_id",
       )
       .in("dictionary_id", chunk)
       .eq("review_status", "approved");
@@ -311,6 +355,9 @@ export async function loadApprovedKoreanPronunciationRegistry(
       return new Map<string, QuizPronunciation>();
     }
     for (const row of (data ?? []) as VocabApprovedKoreanPronunciationRow[]) {
+      // User-directed rows bind to an exact immutable audio identity and must
+      // pass the entry lookup; dictionary/variant alone is not that proof.
+      if (isUserDirectedPronunciationReview(row.source_review_run_id)) continue;
       const pronunciation = parseApprovedKoreanPronunciation(row);
       if (
         pronunciation?.variantId &&

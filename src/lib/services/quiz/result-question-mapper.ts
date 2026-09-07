@@ -6,6 +6,7 @@ import {
   unavailablePronunciation,
   withPronunciationDisplay,
   type QuizPronunciation,
+  type EntryApprovedKoreanPronunciation,
 } from "@/lib/quiz/pronunciation-snapshot";
 import { isTrustedQuestionSnapshot } from "@/lib/quiz/question-provenance";
 import {
@@ -61,6 +62,7 @@ export function mapResultQuestions(
   > = new Map(),
   activeVocaPronunciationRegistry: ReadonlyMap<number, QuizPronunciation> =
     new Map(),
+  entryApprovedRegistry: ReadonlyMap<number, EntryApprovedKoreanPronunciation> = new Map(),
 ): AttemptQuestionResult[] {
   return rows.map((row) => {
     const choices = Array.isArray(row.choices)
@@ -111,6 +113,7 @@ export function mapResultQuestions(
           )
         : undefined,
       approvedKoreanPronunciationRegistry,
+      vocabEntryId === null ? undefined : entryApprovedRegistry.get(vocabEntryId),
     );
     const verifiedSnapshot = isTrustedQuestionSnapshot(
       bankQuestion?.provenance_status,
@@ -157,4 +160,3 @@ export function mapResultQuestions(
     };
   });
 }
-

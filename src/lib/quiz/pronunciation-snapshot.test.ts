@@ -18,6 +18,7 @@ import {
   syntheticAudioProfilePriority,
   sortSyntheticAudioBindingsByProfilePriority,
   withApprovedKoreanPronunciation,
+  unavailablePronunciation,
 } from "@/lib/quiz/pronunciation-snapshot";
 
 const officialUrl =
@@ -732,6 +733,34 @@ describe("quiz pronunciation snapshots", () => {
     expect(select(saved, {...active, audioUrl: officialUrl + "?different"})).toBe(saved);
     expect(select(saved, {...active, variantId: "mw:other"})).toBe(saved);
     expect(select({...active, displayKo:"기존 표시"}, active).displayKo).toBe("기존 표시");
+  });
+
+  it("활성 발음에서도 정확 사용자 승인은 적용하고 구형 자동 표기는 올리지 않는다", () => {
+    const active = { displayKo: "자동", variantId: "mw:sample", audioUrl: officialUrl, available: true };
+    const approved = { ...active, displayKo: "승인", segments: [{ text: "승인", stress: "primary" as const }] };
+    const registry = new Map([[approvedKoreanPronunciationKey("word:sample", active.variantId), approved]]);
+    expect(preferredPronunciationWithActiveVocaRelease("word:sample", unavailablePronunciation(), active, undefined, undefined, registry)).toBe(active);
+    const result = preferredPronunciationWithActiveVocaRelease("word:sample", unavailablePronunciation(), active, undefined, undefined, registry, { dictionaryId: "word:sample", pronunciation: approved });
+    expect(result.displayKo).toBe("승인");
+    expect(result.audioUrl).toBe(active.audioUrl);
+  });
+
+  it("사용자 지정은 같은 원음과 사전 연결에서만 표시를 교체한다", () => {
+    const active = { displayKo: "자동", variantId: "mw:sample", audioUrl: officialUrl, available: true };
+    const corrected = { ...active, displayKo: "승인", segments: [{ text: "승", stress: "primary" as const }, { text: "인", stress: "none" as const }] };
+    const approval = { dictionaryId: "word:sample", pronunciation: corrected };
+    for (const snapshot of [unavailablePronunciation(), active, { ...active, displayKo: null }]) {
+      for (const dictionaryId of [null, "word:sample"]) {
+        const result = preferredPronunciationWithActiveVocaRelease(dictionaryId, snapshot, active, undefined, undefined, new Map(), approval);
+        expect(result).toEqual(corrected);
+      }
+    }
+    for (const saved of [{ ...active, variantId: "mw:other" }, { ...active, audioUrl: officialUrl + "?old" }]) {
+      expect(preferredPronunciationWithActiveVocaRelease(null, saved, active, undefined, undefined, new Map(), approval)).toBe(saved);
+    }
+    expect(preferredPronunciationWithActiveVocaRelease("word:other", active, active, undefined, undefined, new Map(), approval)).toBe(active);
+    expect(active.displayKo).toBe("자동");
+    expect(preferredPronunciationWithActiveVocaRelease(null, unavailablePronunciation(), undefined, undefined, undefined, new Map(), approval).available).toBe(false);
   });
 
   it("모의고사 저장 발음 다음에 활성 VOCA 묶음을 사용한다", () => {
