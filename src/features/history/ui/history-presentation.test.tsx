@@ -97,6 +97,20 @@ function historyItem(
 }
 
 describe("history presentation components", () => {
+  it("keeps the shared row and link while applying a badge only to the wordbook title", () => {
+    const { container } = render(<HistoryActivityRow compact item={historyItem({
+      datasetTitle:"능률 VOCA 어원편 고등 · 2025개정",assignmentTitle:"",
+    })} />);
+    expect(screen.getByText("능률 VOCA 어원편 고등 · 2025개정")).toHaveAttribute("data-tone","neutral");
+    expect(screen.getByText("프리뷰 학생")).toBeVisible();
+    expect(screen.getByText("DAY 01")).toBeVisible();
+    expect(screen.getByText("마감")).toBeVisible();
+    expect(screen.getByText("응시 전")).toBeVisible();
+    expect(container.querySelectorAll("a")).toHaveLength(1);
+    expect(container.querySelector("a a, a button")).toBeNull();
+    expect(screen.getByRole("link")).toHaveAccessibleName("프리뷰 학생 능률 VOCA 어원편 고등 · 2025개정 상세");
+  });
+
   it("renders deadline before status with a machine-readable timestamp", () => {
     render(<ActivityStatusTimeline item={activity()} />);
 

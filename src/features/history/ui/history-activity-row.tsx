@@ -77,7 +77,7 @@ export function HistoryActivityRow({
                 <span className={styles.title}>{displayTitle}</span>
               ) : null}
             </span>
-            <AssignmentMetaTags {...item} compact />
+            <AssignmentMetaTags {...item} compact datasetAppearance="badge" />
           </>
         }
         score={

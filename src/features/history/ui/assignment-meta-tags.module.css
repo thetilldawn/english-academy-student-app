@@ -23,3 +23,13 @@
 .separator {
   flex: none;
 }
+
+.root[data-dataset-appearance="badge"] {
+  align-items: center;
+  column-gap: 8px;
+}
+
+.root .datasetBadge {
+  background: transparent;
+  text-align: start;
+}
