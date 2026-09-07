@@ -35,6 +35,7 @@ type UnitCatalogRow = {
 };
 
 type DatasetRow = {
+  metadata?: { questionBankKind?: string };
   dataset_key: string;
   edition: string | null;
   id: string;
@@ -150,7 +151,7 @@ export async function loadAssignmentDatasetMaterial(
   const [datasetResult, catalogResult, unitResult] = await Promise.all([
     supabase
       .from("vocab_datasets")
-      .select("id, dataset_key, title, edition, row_count, status, is_active")
+      .select("id, dataset_key, title, edition, row_count, status, is_active, metadata")
       .eq("id", datasetId)
       .maybeSingle(),
     supabase
@@ -205,6 +206,8 @@ export async function loadAssignmentDatasetMaterial(
           : undefined,
       ),
       datasetKey: dataset.dataset_key,
+      ...(dataset.metadata?.questionBankKind === "reviewed_exam_v1"
+        ? { questionBankKind: "reviewed_exam_v1" as const } : {}),
       isActive: dataset.is_active,
       rowCount: dataset.row_count,
       status: dataset.status,

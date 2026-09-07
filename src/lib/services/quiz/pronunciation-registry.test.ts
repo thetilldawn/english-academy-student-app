@@ -99,13 +99,23 @@ describe("exact entry pronunciation corrections", () => {
     tables.vocab_pronunciation_releases_v2 = [{ release_id: "active" }];
     tables.vocab_entry_pronunciation_bindings_v2 = [{ release_id: "active", vocab_entry_id: 7, identity_id: identity.identity_id }];
     tables.vocab_pronunciation_identities_v2 = [identity];
+    mocks.rpc.mockImplementation(async (name: string) => ({
+      data: name === "list_active_vocab_pronunciation_bindings_v3"
+        ? tables.vocab_entry_pronunciation_bindings_v2 : [row()],
+      error: null,
+    }));
     const result = await getStudentAttempt("test-student", "attempt");
-    expect(result?.questions[0].pronunciation.displayKo).toBe("승인");
+    expect(result?.questions[0].pronunciation.available).toBe(false);
     expect(result?.questions[0].choicePronunciations[0].displayKo).toBe("승인");
     expect(result?.questions[0].revealedCorrectChoiceIndex).toBeNull();
     expect(JSON.stringify(result)).not.toMatch(/source_content|source_review|identity_content|dictionaryId/);
     const results = await getAttemptQuestionResults("attempt");
     expect(results[0].pronunciation.displayKo).toBe("승인");
     expect(results[0].pronunciation.audioUrl).toBe(url);
+    tables.assignments = { title: "Fake", timing_mode: "none", quiz_content_mode: "canonical_headword_to_definition" };
+    (tables.quiz_questions as { direction: string }[])[0].direction = "english_to_korean";
+    const inverse = await getStudentAttempt("test-student", "attempt");
+    expect(inverse?.questions[0].pronunciation.displayKo).toBe("승인");
+    expect(inverse?.questions[0].choicePronunciations.every(p => !p.available && !p.audioUrl && !p.displayKo)).toBe(true);
   });
 });

@@ -21,6 +21,7 @@ import {
 import { loadDatasetDisplayLabel } from "@/lib/services/dataset-catalog-service";
 import { loadEligibleVocabularyDataset } from "@/lib/services/eligible-vocabulary-service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { buildReviewedDirectReviewSelection } from "./reviewed-direct-review-selection";
 
 const MAX_DIRECT_REVIEW_WORDS = 400;
 const MAX_ASSIGNMENT_TITLE_LENGTH = 160;
@@ -35,6 +36,7 @@ type DatasetRow = {
   edition: string | null;
   status: string;
   is_active: boolean;
+  metadata?: { questionBankKind?: string };
 };
 
 export class DirectReviewPreparationError extends Error {
@@ -191,7 +193,7 @@ async function loadDirectReviewSelection(
   const admin = authenticatedAdmin ?? await requireAdmin();
   const supabase = client ?? await createServerSupabaseClient();
   try {
-    const [studentResult, datasetResult, allCandidates, candidates] =
+    const [studentResult, datasetResult, candidates] =
       await Promise.all([
         supabase
           .from("students")
@@ -200,12 +202,9 @@ async function loadDirectReviewSelection(
           .maybeSingle(),
         supabase
           .from("vocab_datasets")
-          .select("id, title, edition, status, is_active")
+          .select("id, title, edition, status, is_active, metadata")
           .eq("id", input.datasetId)
           .maybeSingle(),
-        loadEligibleVocabularyDataset(supabase, input.datasetId, {
-          includeExamUseProjection: true,
-        }),
         listStudentDirectReviewCandidates(
           {
             datasetId: input.datasetId,
@@ -230,9 +229,20 @@ async function loadDirectReviewSelection(
     ) {
       throw new DirectReviewPreparationError("unavailable");
     }
+    let selection: DirectReviewSelection;
+    if (dataset.metadata?.questionBankKind === "reviewed_exam_v1") {
+      const { data, error } = await supabase.rpc("list_reviewed_exam_review_choices_v1", {
+        p_dataset_id: input.datasetId, p_vocab_entry_ids: candidates.map(c=>c.vocabEntryId),
+      });
+      if(error) throw new DirectReviewPreparationError("database");
+      selection=buildReviewedDirectReviewSelection(input,candidates,data);
+    } else {
+      const allCandidates=await loadEligibleVocabularyDataset(supabase,input.datasetId,{includeExamUseProjection:true});
+      selection=buildDirectReviewSelection(input,candidates,allCandidates);
+    }
     return {
       dataset,
-      selection: buildDirectReviewSelection(input, candidates, allCandidates),
+      selection,
       supabase,
     };
   } catch (error) {

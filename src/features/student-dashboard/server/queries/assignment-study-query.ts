@@ -100,7 +100,7 @@ export async function getAssignmentStudy(
       key: `word-${index}`,
       headword: word.headword,
       meaning: word.meaning,
-      definition: mode === "canonical_definition_to_headword" ? word.definition : null,
+      definition: (mode === "canonical_definition_to_headword" || mode === "canonical_headword_to_definition") ? word.definition : null,
       example: mode === "canonical_example_to_headword" ? word.example : null,
       exampleRanges: mode === "canonical_example_to_headword" && word.example
         ? studyExampleRanges(word.example, word.headword, examplePrompts.get(word.entryId) ?? []) : null,

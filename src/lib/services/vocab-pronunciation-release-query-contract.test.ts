@@ -20,9 +20,11 @@ describe("active vocabulary pronunciation release query", () => {
 
     expect(start).toBeGreaterThanOrEqual(0);
     expect(end).toBeGreaterThan(start);
-    expect(loader.indexOf('.from("vocab_pronunciation_releases_v2")')).toBeLessThan(
-      loader.indexOf('.from("vocab_entry_pronunciation_bindings_v2")'),
-    );
-    expect(loader).toContain('.in("release_id", activeReleaseIds)');
+    expect(loader).toContain('supabase.rpc("list_active_vocab_pronunciation_bindings_v3"');
+    expect(loader).toContain('offset += 400');
+    expect(loader).not.toContain('.from("vocab_entry_pronunciation_bindings_v2")');
+    const migration=await readFile(path.resolve("supabase/migrations/20260908020100_add_reviewed_exam_bank.sql"),"utf8");
+    expect(migration).toContain("r.status='active'");
+    expect(migration).toContain("from public.assignment_questions aq");
   });
 });

@@ -26,6 +26,7 @@ type PlanningStudentRow = {
 type QuestionModeAvailabilityRow = {
   dataset_id: string;
   definition_count: number | string;
+  reverse_definition_count?: number | string;
   example_count: number | string;
 };
 
@@ -33,6 +34,9 @@ function availableQuestionModes(row?: QuestionModeAvailabilityRow) {
   const modes: AssignmentQuestionMode[] = ["book_meaning_choice"];
   if (Number(row?.definition_count ?? 0) > 0) {
     modes.push("canonical_definition_to_headword");
+  }
+  if (Number(row?.reverse_definition_count ?? 0) > 0) {
+    modes.push("canonical_headword_to_definition");
   }
   if (Number(row?.example_count ?? 0) > 0) {
     modes.push("canonical_example_to_headword");
@@ -75,7 +79,7 @@ export async function getAssignmentPlannerPreparation(
         .is("deleted_at", null),
       loadAdminMaterialSnapshot(supabase),
       listVocabTimeTemplates(),
-      supabase.rpc("list_assignment_question_mode_availability_v1"),
+      supabase.rpc("list_assignment_question_mode_availability_v2"),
     ]);
   if (studentResult.error || questionModeResult.error) {
     throw new AssignmentPlannerPreparationError(

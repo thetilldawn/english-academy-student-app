@@ -18,21 +18,21 @@ const patches: [string, Partial<QuestionModeSchedulePlan>][] = [
   ["recurrence start", { recurrenceSessions: [{ availableFrom: "2026-09-10T00:00:00Z", availableUntil: null }] }],
   ["recurrence end", { recurrenceSessions: [{ availableFrom: null, availableUntil: "2026-09-11T00:00:00Z" }] }],
 ];
-// Frozen pre-extraction predicate is an independent regression oracle.
+// Example restrictions remain; definition directions now reuse the common schedule.
 function previousScheduleInvalid(mode: string, p: QuestionModeSchedulePlan) {
-  return mode !== "book_meaning_choice" && (p.selectedDateCount !== 0 || p.distribution !== "repeat" ||
+  return mode === "canonical_example_to_headword" && (p.selectedDateCount !== 0 || p.distribution !== "repeat" ||
     p.splitBasis !== "question_count" || p.sessions.length !== 1 || p.recurrenceSessions.length !== 1 ||
     p.sessions.some(s => s.availableFrom !== null || s.availableUntil !== null) ||
     p.recurrenceSessions.some(s => s.availableFrom !== null || s.availableUntil !== null));
 }
 
 describe("assignment question mode policy", () => {
-  it.each(patches)("keeps previous boundary: %s", (_name, patch) => {
+  it.each(patches)("keeps the mode-specific direction and schedule boundary: %s", (_name, patch) => {
     for (const mode of assignmentQuestionModes) for (const ratio of [0, 50, 100] as AssignmentDirectionRatio[]) {
       const plan = { ...immediate, ...patch };
       const before = JSON.stringify(plan);
       expect(assignmentQuestionModeIssues(mode, ratio, plan)).toEqual({
-        direction: mode !== "book_meaning_choice" && ratio !== 0,
+        direction: mode !== "book_meaning_choice" && ratio !== (mode === "canonical_headword_to_definition" ? 100 : 0),
         schedule: previousScheduleInvalid(mode, plan),
       });
       expect(JSON.stringify(plan)).toBe(before);
@@ -41,10 +41,10 @@ describe("assignment question mode policy", () => {
   it("leaves missing-plan validation with its existing owner", () => {
     expect(assignmentQuestionModeIssues("canonical_example_to_headword", 0)).toEqual({ direction: false, schedule: false });
   });
-  it("exposes unchanged UI and reducer restrictions", () => {
+  it("exposes the approved UI and reducer restrictions", () => {
     expect(assignmentQuestionModePolicy("book_meaning_choice")).toEqual({ fixedDirectionRatio: null, schedule: "flexible" });
     for (const mode of assignmentQuestionModes.slice(1)) {
-      expect(assignmentQuestionModePolicy(mode)).toEqual({ fixedDirectionRatio: 0, schedule: "single-immediate" });
+      expect(assignmentQuestionModePolicy(mode)).toEqual({ fixedDirectionRatio: mode === "canonical_headword_to_definition" ? 100 : 0, schedule: mode === "canonical_example_to_headword" ? "single-immediate" : "flexible" });
     }
   });
   it("separates no selection, missing preparation, valid empty and available modes", () => {

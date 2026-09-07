@@ -5,6 +5,7 @@ import type {
 
 export type DatasetSummary = CataloguedDataset & {
   datasetKey: string;
+  questionBankKind?: "reviewed_exam_v1";
   rowCount: number;
   status: "pending_review" | "ready" | "retired";
   isActive: boolean;

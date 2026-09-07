@@ -98,7 +98,7 @@ describe("regular assignment scope contract", () => {
     expect(previewService).toContain(
       "seriesPreparationError === null && orderedSessions.length > 0",
     );
-    expect(previewService).toContain(
+    expect(compact(source("src/features/assignments/server/planning/bulk-session-layout.ts"))).toContain(
       "item.availableQuestionCount === null || item.selectedQuestionCount === null",
     );
     expect(preparationService).toContain(

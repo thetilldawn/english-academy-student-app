@@ -10,6 +10,7 @@ import {
 import { AudioButton } from "@/design-system/patterns/audio-button/audio-button";
 import type { PriorWrongIndicator } from "@/lib/quiz/prior-wrong";
 import type { QuizContentMode } from "@/lib/quiz/question-content-mode";
+import { questionSemantics } from "@/lib/quiz/question-semantics";
 
 import { quizChoicePresentation, type QuizChoiceLength } from "../domain/quiz-session";
 import type { QuizQuestion } from "../model";
@@ -85,14 +86,10 @@ export function QuizFrame({
   timedOut: boolean;
   timingMode: "none" | "total" | "per_question";
 }) {
-  const isEnglishPrompt =
-    currentQuestion.direction === "english_to_korean" ||
-    quizContentMode !== "book_meaning_choice";
-  const isEnglishChoice =
-    currentQuestion.direction === "korean_to_english";
-  const showPromptPronunciation =
-    quizContentMode === "book_meaning_choice" &&
-    currentQuestion.direction === "english_to_korean";
+  const roles = questionSemantics(quizContentMode, currentQuestion.direction);
+  const isEnglishPrompt = roles.prompt !== "korean_meaning";
+  const isEnglishChoice = roles.choice === "headword";
+  const showPromptPronunciation = roles.prompt === "headword";
   const progressLabel =
     phase === "retry"
       ? formatContentText(studentAppText.attempt.retryProgress, {
@@ -258,7 +255,7 @@ export function QuizFrame({
         role="group"
       >
         {currentQuestion.choices.map((_, index) => {
-          const content = quizChoicePresentation(currentQuestion, index);
+          const content = quizChoicePresentation(currentQuestion, index, quizContentMode);
           return (
             <QuizChoice
               content={content}

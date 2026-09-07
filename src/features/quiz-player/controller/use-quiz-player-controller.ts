@@ -49,7 +49,7 @@ export function useQuizPlayerController(input: {
     state.attempt,
   );
   const audioPresentation = currentQuestion
-    ? quizAudioPresentation(currentQuestion)
+    ? quizAudioPresentation(currentQuestion, state.attempt.quizContentMode)
     : { promptAudioUrl: null, choiceAudioEnabled: false };
   const {
     canInterruptFeedbackAudio,

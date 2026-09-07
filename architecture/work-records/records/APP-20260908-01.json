@@ -1,0 +1,1037 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20260908-01",
+  "title": "영영풀이 양방향과 지문 단위 시험 회차",
+  "size": "full",
+  "gate": "design",
+  "guide": "docs/work-orders/APP-20260908-01.md",
+  "baseline": "718e3924e93ab94890ab3e0f3fb17db794d6fefa",
+  "owners": [
+    "architecture-meta",
+    "shared-contract",
+    "assignments",
+    "quiz-player",
+    "student-dashboard",
+    "database-contract",
+    "shared-quiz-domain"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal",
+    "assessment-secret"
+  ],
+  "scope": [
+    {
+      "path": "architecture/기능_소유권.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "scripts/check-feature-map.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/app/mobile-production-regression-ui-contract.test.ts",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/content/ko/admin-learning.ts",
+      "state": "existing",
+      "owner": "shared-contract",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/assignments/contracts/assignment-question-mode-policy.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/domain/assignment-question-mode-policy.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/domain/assignment-question-mode-policy.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/domain/validation.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/presentation/assignment-question-mode-view.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/presentation/assignment-question-mode-view.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/persistence/bulk-assignment-persistence.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/persistence/bulk-assignment-persistence.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/planning/bulk-assignment-plan-digest.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/queries/assignment-dataset-units-query.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-edit",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/queries/assignment-planner-preparation-query.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/queries/assignment-planner-preparation-query.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/bulk-assignment-command.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/bulk-assignment-preview.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/canonical-assignment-preview.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/canonical-assignment-preview.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-workspace.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/bulk-exam-fields.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/controller/use-quiz-player-controller.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/controller/use-quiz-submission.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/domain/quiz-session.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/ui/quiz-choice.tsx",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/ui/quiz-frame.tsx",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/ui/quiz-player.test.tsx",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/server/queries/assignment-study-query.ts",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/ui/assignment-study-words.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/lib/admin/dataset-summary.ts",
+      "state": "existing",
+      "owner": "shared-contract",
+      "flowIds": []
+    },
+    {
+      "path": "src/lib/database/assignment-release-final-schema.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "assignment-range-create",
+        "student-dashboard-read",
+        "assignment-edit",
+        "assignment-series",
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/lib/quiz/question-content-mode.ts",
+      "state": "existing",
+      "owner": "shared-quiz-domain",
+      "flowIds": [
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "admin-history-read",
+        "assignment-edit",
+        "assignment-series",
+        "student-quiz-attempt",
+        "assignment-workspace-planning",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/lib/quiz/question-provenance.ts",
+      "state": "existing",
+      "owner": "shared-quiz-domain",
+      "flowIds": [
+        "admin-history-read",
+        "assignment-edit",
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/lib/quiz/result-presentation.ts",
+      "state": "existing",
+      "owner": "shared-quiz-domain",
+      "flowIds": [
+        "admin-history-read",
+        "assignment-edit"
+      ]
+    },
+    {
+      "path": "src/lib/services/assignment-edit-source-service.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-edit"
+      ]
+    },
+    {
+      "path": "src/lib/services/assignment-replacement-preparation-service.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-edit"
+      ]
+    },
+    {
+      "path": "src/lib/services/direct-review-preparation-service.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-direct-review-create"
+      ]
+    },
+    {
+      "path": "src/lib/services/quiz/attempt-query.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/lib/services/quiz/pronunciation-registry.test.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "admin-history-read",
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/lib/services/quiz/pronunciation-registry.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "admin-history-read",
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/lib/services/regular-assignment-scope-contract.test.ts",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "admin-history-read",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/lib/services/vocab-pronunciation-release-query-contract.test.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/lib/validation.test.ts",
+      "state": "existing",
+      "owner": "shared-contract",
+      "flowIds": []
+    },
+    {
+      "path": "architecture/work-records/records/APP-20260908-01.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "docs/work-orders/APP-20260908-01.md",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/assignments/domain/vocab-plan-unit-allocation.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/planning/bulk-session-layout.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/lib/assignment/reviewed-question-planner.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-direct-review-create",
+        "assignment-edit"
+      ]
+    },
+    {
+      "path": "src/lib/assignment/reviewed-question-planner.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-direct-review-create",
+        "assignment-edit"
+      ]
+    },
+    {
+      "path": "src/lib/database/reviewed-exam-bank.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "assignment-direct-review-create",
+        "assignment-edit",
+        "assignment-series",
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/lib/quiz/question-semantics.test.ts",
+      "state": "existing",
+      "owner": "shared-quiz-domain",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/lib/quiz/question-semantics.ts",
+      "state": "existing",
+      "owner": "shared-quiz-domain",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/lib/services/reviewed-assignment-replacement-planning.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-edit"
+      ]
+    },
+    {
+      "path": "src/lib/services/reviewed-assignment-replacement-planning.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-edit"
+      ]
+    },
+    {
+      "path": "src/lib/services/reviewed-direct-review-selection.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-direct-review-create",
+        "assignment-edit"
+      ]
+    },
+    {
+      "path": "src/lib/services/reviewed-direct-review-selection.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-direct-review-create",
+        "assignment-edit"
+      ]
+    },
+    {
+      "path": "src/test-support/reviewed-exam-fixtures.ts",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "supabase/migrations/20260908020100_add_reviewed_exam_bank.sql",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260908020200_connect_reviewed_exam_assignments.sql",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260908020300_connect_reviewed_exam_study.sql",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260908020400_connect_reviewed_exam_review_and_edit.sql",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-direct-review-create",
+        "assignment-edit"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "네 방향 의미와 음성 역할 공통화",
+      "acceptance": "영어→뜻/뜻→영어/영영풀이→영어/영어→영영풀이; 풀이·예문은 발음없음",
+      "disposition": "required",
+      "owners": [
+        "shared-quiz-domain"
+      ],
+      "flowIds": [
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T1",
+        "T4"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "지문 수 기준 회차 배정",
+      "acceptance": "범위 단위 수로 즉시/예약 회차 분리; 기존 첫 완료 후 공개 유지",
+      "disposition": "required",
+      "owners": [
+        "assignments"
+      ],
+      "flowIds": [
+        "assignment-range-create",
+        "assignment-series"
+      ],
+      "checkIds": [
+        "T2",
+        "T3",
+        "T8"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "user",
+      "text": "검토된 문항과 원자료 연결",
+      "acceptance": "20지문278출현의 새 검토 묶음·정의 출처 구분·정답중복 배제; 이전 시험은 보존",
+      "disposition": "required",
+      "owners": [
+        "shared-contract"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T5",
+        "T3"
+      ]
+    },
+    {
+      "id": "R4",
+      "source": "user",
+      "text": "개인 자료·정답 노출과 오류 복구 보호",
+      "acceptance": "학습에는 단어/뜻/풀이만, 잠김/다른학생·미응시 정답 노출없음",
+      "disposition": "required",
+      "owners": [
+        "student-dashboard"
+      ],
+      "flowIds": [
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T3",
+        "T4",
+        "T8"
+      ]
+    },
+    {
+      "id": "R5",
+      "source": "user",
+      "text": "로컬 이후 Preview 및 Production 검사",
+      "acceptance": "검사 생략없이 실제 테스트학생과 보호값 대조 뒤 동일버전만 운영",
+      "disposition": "required",
+      "owners": [
+        "assignments"
+      ],
+      "flowIds": [
+        "assignment-range-create"
+      ],
+      "checkIds": [
+        "T6",
+        "T7"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "방향·회차·배포 범위",
+      "answer": "네 방향·지문 수 기준 회차, 표제어만 발음. 사전 보충 뒤 Preview→Production. 테스트학생 검사, 실제 학생 자동배정 없음.",
+      "source": "2026-09-08 02:01 KST 최신 요청과 기존 테스트학생 지정"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "구형 방향과 새 의미 역할",
+      "answer": "기존 방향 enum을 보존하고 새 내용 모드 canonical_headword_to_definition을 추가한다. 공유 순수 의미 함수가 표시·발음·학습을 결정한다. 새 문항계약은 choice_texts와역할을 쓰고 구형 choice_headwords는 읽기 호환한다.",
+      "source": "Next16.2.12/React19.2.8 설치 코드와 두 기존 canonical 모드·독립 구조 조사"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "회차·저장·공개 재사용",
+      "answer": "기존 단위 배분·일정·멱등 영수증·자동공개를 유지한다. 문항 bank 생성의 공통 경계에 검토문항 분기를 추가하고 확정 묶음/행 해시를 검증한다. 일반 writer에 정의를 뜻으로 넣거나 저장 후 메타만 붙이지 않는다.",
+      "source": "canonical/regular bank writer, 완료 큐와 첫시험공개 SQL 대조"
+    },
+    {
+      "id": "D4",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "제공 풀이 없는 자료",
+      "answer": "이번에 확인한 학교 스캔 모의고사1~4쪽에는 영어/한국어만 있으며 뒤 정의73개는교과서2과다. 해당 출처를 섞지 않고 새 작성한 시험 문맥 풀이를 독립검토·해시로 구별한다. 사전정식승인으로 표시하지 않는다.",
+      "source": "WORD-20260908-01의 PDF/기존 추출 독립 대조"
+    },
+    {
+      "id": "D5",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "검토된 시험 문항의 저장층",
+      "answer": "기존 canonical 표는 사전 shadow·Preview 고정 묶음과 choice_headwords 계약이므로 새 학교 문맥 네 방향을 위장하지 않는다. private 검토시험 release/items와 추가형 FK/상태를 분리하고 기존 일반/사전문항 writer·학생 snapshot은 보존한다. 내용 생성만 공통 delivery 경계에서 분기한다.",
+      "source": "기존 canonical 제약과 일반 writer의 뜻 재생성 코드 직접 대조; 새 검토시험 계약과 출처 경계"
+    },
+    {
+      "id": "D6",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "새 검토묶음의 계약 검사를 어디에 둘지",
+      "answer": "배포 전 가짜 묶음으로 최종 DB import 함수를 직접 검사한다. 같은 필드검사를 별도 TS importer에 중복하지 않는다. 자료 실제 묶음은 WORD 검토 기록과 해시로 별도 연결한다.",
+      "source": "최종스키마 import·승인·item FK검증 통합검사 및 WORD-20260908-01 후보해시"
+    },
+    {
+      "id": "D7",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "실제 동의어를 원문 그대로 보존하면서 복수정답을 차단하는 범위",
+      "answer": "새 private 검토은행만 완성문항 기준으로 검증한다. 같은 release 전체에서 같은 질문에 대응하는 다른 정답이 현재 문제의 선택지에도 있으면 거부한다. 서로 선택지에 없는 genuine synonym 문항은 보존한다. 기존 자동생성은행 전역 guard는 유지한다.",
+      "source": "M2024-35 cereal/grain 원문·독립 검토 대조; exact delivery 분기와 포함/미포함 상대문항 최종SQL검사"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "checked",
+      "reason": "기존 라우팅·개인 no-store·영역별 로딩/오류·공용 스타일 유지"
+    },
+    "ui": {
+      "status": "changed",
+      "reason": "내용 방향과 검토 문항 회차의 공통 책임·형식·검사 연결"
+    },
+    "state": {
+      "status": "changed",
+      "reason": "내용 방향과 검토 문항 회차의 공통 책임·형식·검사 연결"
+    },
+    "domain": {
+      "status": "changed",
+      "reason": "내용 방향과 검토 문항 회차의 공통 책임·형식·검사 연결"
+    },
+    "data": {
+      "status": "changed",
+      "reason": "내용 방향과 검토 문항 회차의 공통 책임·형식·검사 연결"
+    },
+    "api": {
+      "status": "changed",
+      "reason": "내용 방향과 검토 문항 회차의 공통 책임·형식·검사 연결"
+    },
+    "cache": {
+      "status": "checked",
+      "reason": "기존 라우팅·개인 no-store·영역별 로딩/오류·공용 스타일 유지"
+    },
+    "asyncUi": {
+      "status": "checked",
+      "reason": "기존 라우팅·개인 no-store·영역별 로딩/오류·공용 스타일 유지"
+    },
+    "security": {
+      "status": "changed",
+      "reason": "내용 방향과 검토 문항 회차의 공통 책임·형식·검사 연결"
+    },
+    "styles": {
+      "status": "checked",
+      "reason": "기존 라우팅·개인 no-store·영역별 로딩/오류·공용 스타일 유지"
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "내용 방향과 검토 문항 회차의 공통 책임·형식·검사 연결"
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "현재 세션·검토된 범위만 반환; 잠긴 학습과 진행중 snapshot 보존; 개인 응답 공유캐시 금지",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "현재 세션·검토된 범위만 반환; 잠긴 학습과 진행중 snapshot 보존; 개인 응답 공유캐시 금지",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "현재 세션·검토된 범위만 반환; 잠긴 학습과 진행중 snapshot 보존; 개인 응답 공유캐시 금지",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "현재 세션·검토된 범위만 반환; 잠긴 학습과 진행중 snapshot 보존; 개인 응답 공유캐시 금지",
+      "checkIds": [
+        "T4"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "관리자 요청→공통 범위/회차 계획→현재 검토 묶음 조회→해시 고정 미리보기→같은 계획 재검증→원자적 bank/회차 영수증→기존 첫완료 공개→학생 잠긴 snapshot/학습 DTO",
+    "reuse": "기존 단위 배분·최신응답 제어기·개인 조회·영수증·공개/채점/재시험과 모달·음성 부품을 재사용. 의미 역할만 새 공유 순수함수로 분리",
+    "cache": "개인 private,no-store 유지. 같은 요청의 조회 재사용과 창 수명만 사용. 정답/진행 snapshot 공유캐시 없음",
+    "compatibility": "구형 함수·문항·진행 snapshot 유지, 새로운 요청/묶음만 새버전 계약. 예문 기존 단일배정 제한 유지. 오답은 기존 영어↔뜻 정책과1~400개를 유지, 일반 배정4~500개와 실제 질문/정답 충돌 차단. 기존 뜻시험은 일반 단어장으로 변경 가능.",
+    "rollback": "신규 단어장/문항 묶음 비활성화 및 이전 앱 배포로 복구. 기존 snapshot/학생 점수 롤백 삭제 금지. DB 추가형 버전 유지"
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "처음 배정 자료 조회",
+      "message": "배정 정보를 불러오고 있습니다.",
+      "behavior": "기존 영역별 로딩/오류/접근 차단 부품 사용; 실패를 빈 목록으로 바꾸지 않음",
+      "recovery": "기존 다시 시도/닫기/로그인; 저장은 같은 요청 번호로 결과 확인",
+      "component": "src/features/assignments/ui/assignment-planner-load-dialog.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "범위/유형 변경 후 미리보기",
+      "message": "출제할 단어 수를 확인하고 있습니다.",
+      "behavior": "기존 영역별 로딩/오류/접근 차단 부품 사용; 실패를 빈 목록으로 바꾸지 않음",
+      "recovery": "기존 다시 시도/닫기/로그인; 저장은 같은 요청 번호로 결과 확인",
+      "component": "src/features/assignments/ui/bulk-series-preview.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "단어장 미선택",
+      "message": "먼저 단어장을 선택해 주세요.",
+      "behavior": "기존 영역별 로딩/오류/접근 차단 부품 사용; 실패를 빈 목록으로 바꾸지 않음",
+      "recovery": "기존 다시 시도/닫기/로그인; 저장은 같은 요청 번호로 결과 확인",
+      "component": "src/features/assignments/ui/bulk-series-preview.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "정상 조회에서 해당 범위 문항0",
+      "message": "선택한 범위에는 이 유형의 문제가 없습니다.",
+      "behavior": "기존 영역별 로딩/오류/접근 차단 부품 사용; 실패를 빈 목록으로 바꾸지 않음",
+      "recovery": "기존 다시 시도/닫기/로그인; 저장은 같은 요청 번호로 결과 확인",
+      "component": "src/features/assignments/ui/bulk-series-preview.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "부족·잘못된 방향/일정",
+      "message": "문제 수와 범위를 다시 확인해 주세요.",
+      "behavior": "기존 영역별 로딩/오류/접근 차단 부품 사용; 실패를 빈 목록으로 바꾸지 않음",
+      "recovery": "기존 다시 시도/닫기/로그인; 저장은 같은 요청 번호로 결과 확인",
+      "component": "src/features/assignments/ui/bulk-series-preview.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "조회/계약 실패",
+      "message": "시험 정보를 불러오지 못했습니다. 다시 시도해 주세요.",
+      "behavior": "기존 영역별 로딩/오류/접근 차단 부품 사용; 실패를 빈 목록으로 바꾸지 않음",
+      "recovery": "기존 다시 시도/닫기/로그인; 저장은 같은 요청 번호로 결과 확인",
+      "component": "src/features/assignments/ui/assignment-planner-load-dialog.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "저장 응답 실패",
+      "message": "배정 결과를 확인하지 못했습니다. 입력은 유지됩니다.",
+      "behavior": "기존 영역별 로딩/오류/접근 차단 부품 사용; 실패를 빈 목록으로 바꾸지 않음",
+      "recovery": "기존 다시 시도/닫기/로그인; 저장은 같은 요청 번호로 결과 확인",
+      "component": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "현재 권한 만료",
+      "message": "로그인이 필요합니다.",
+      "behavior": "기존 영역별 로딩/오류/접근 차단 부품 사용; 실패를 빈 목록으로 바꾸지 않음",
+      "recovery": "기존 다시 시도/닫기/로그인; 저장은 같은 요청 번호로 결과 확인",
+      "component": "src/features/assignments/ui/assignment-workspace.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "없는 시험",
+      "message": "시험을 찾을 수 없습니다.",
+      "behavior": "기존 영역별 로딩/오류/접근 차단 부품 사용; 실패를 빈 목록으로 바꾸지 않음",
+      "recovery": "기존 다시 시도/닫기/로그인; 저장은 같은 요청 번호로 결과 확인",
+      "component": "src/app/student/(protected)/@detail/(.)assignments/[id]/words/not-found.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "예상하지 못한 실행 오류",
+      "message": "화면을 불러오지 못했습니다. 다시 시도해 주세요.",
+      "behavior": "기존 영역별 로딩/오류/접근 차단 부품 사용; 실패를 빈 목록으로 바꾸지 않음",
+      "recovery": "기존 다시 시도/닫기/로그인; 저장은 같은 요청 번호로 결과 확인",
+      "component": "src/app/admin/(protected)/assignments/error.tsx",
+      "checkIds": [
+        "T4"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "implemented",
+      "version": "Next16.2.12 React19.2.8 / reviewed-exam-bundle-v1",
+      "reference": "docs/개발_지시서와_검증_기록.md 및 Next.js data-security 공식 문서",
+      "reason": "실제 경계·서버 검증·개인 no-store와 기존 공용 부품 유지"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "unit",
+      "target": "src/lib/quiz/question-semantics.test.ts",
+      "scenario": "네 방향과 기존 예문의 의미·발음 행렬; 고의 음원 삽입에도 정의/예문 재생 금지",
+      "expected": "표제어만 표시·수동/자동/선택/미리읽기 재생",
+      "topics": [
+        "behavior"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "unit",
+      "target": "src/features/assignments/server/use-cases/canonical-assignment-preview.test.ts",
+      "scenario": "20지문을1개씩20회차, 거꾸로 선택한 범위, 날짜 유무와500문항상한",
+      "expected": "순서와 대상 보존, 다른 회차 혼입0",
+      "topics": [
+        "behavior"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "integration",
+      "target": "src/lib/database/reviewed-exam-bank.integration.test.ts",
+      "scenario": "구형/신형 문항 계약·실제 저장·후속 공개·같은 요청 재시도",
+      "expected": "기존 snapshot 불변·앞 첫완료와 자체 일정 유지·중복0",
+      "topics": [
+        "authorization",
+        "answer-leak",
+        "data-leak"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "component",
+      "target": "src/features/quiz-player/ui/quiz-frame.test.tsx",
+      "scenario": "네 방향 문제/선택지·부족/오류/권한/복구의 안전한 한국어 안내",
+      "expected": "정의문 음성0, 기존 로딩·입력보존·정답비노출 유지",
+      "topics": [
+        "error-ui",
+        "ui-copy",
+        "cache"
+      ]
+    },
+    {
+      "id": "T5",
+      "kind": "integration",
+      "target": "src/lib/database/reviewed-exam-bank.integration.test.ts",
+      "scenario": "승인된 내용해시·출처·네방향1112항목 import; 잘못된권한/해시/다른학생/동일질문복수정답 거부",
+      "expected": "출처혼합·누락·잘못된형식·불일치 거부",
+      "topics": [
+        "behavior",
+        "data-leak",
+        "answer-leak"
+      ]
+    },
+    {
+      "id": "T6",
+      "kind": "static",
+      "target": null,
+      "scenario": "기능지도·변경영향·단위/전체·타입/lint/빌드·독립 코드 검토",
+      "expected": "실제 실행 결과·코드 해시 일치; 생략/실패를 성공 처리하지 않음",
+      "topics": [
+        "structure",
+        "cache"
+      ]
+    },
+    {
+      "id": "T7",
+      "kind": "browser",
+      "target": null,
+      "scenario": "로컬검사 후 Preview 테스트학생 네방향/지문회차·운영 재조회",
+      "expected": "검증된 동일 버전 배포·실제 학생 기록 보존",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak"
+      ]
+    },
+    {
+      "id": "T8",
+      "kind": "unit",
+      "target": "src/lib/services/reviewed-assignment-replacement-planning.test.ts",
+      "scenario": "오답1~400건 저장선택지 재사용·정의모드유지·기존 일반단어장 변경·구형 영수증재조회",
+      "expected": "확정오답 임의삭제0, 실제목적지종류에 따라 준비/저장분기",
+      "topics": [
+        "behavior",
+        "authorization"
+      ]
+    }
+  ],
+  "verification": null
+}

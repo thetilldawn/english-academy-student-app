@@ -1,6 +1,7 @@
 export const quizContentModes = [
   "book_meaning_choice",
   "canonical_definition_to_headword",
+  "canonical_headword_to_definition",
   "canonical_example_to_headword",
 ] as const;
 

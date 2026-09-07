@@ -3,6 +3,7 @@ import "server-only";
 import type { AssignmentEditDraft } from "@/lib/admin/assignment-edit";
 import { assignmentEditUnavailableReason } from "@/lib/admin/assignment-edit-policy";
 import type { TimingMode } from "@/lib/admin/assignment-settings";
+import { normalizeQuizContentMode, type QuizContentMode } from "@/lib/quiz/question-content-mode";
 import {
   requireAdmin,
   type AdminContext,
@@ -50,6 +51,8 @@ type AssignmentRelation = {
   available_until: string | null;
   review_scope: "dataset" | "selection";
   assignment_units: AssignmentUnitRelation[] | null;
+  quiz_content_mode?: string;
+  provenance_status?: string;
 };
 
 type AssignmentStudentRelation = {
@@ -97,6 +100,7 @@ export type AssignmentQuestionPlan = {
 };
 
 export type EditableSourceContext = {
+  reviewedContentMode?: QuizContentMode;
   draft: AssignmentEditDraft;
   questions: AssignmentQuestionPlan[] | null;
   selectedQueueIds: string[];
@@ -259,6 +263,8 @@ export async function requireEditableSourceContext(
               status,
               deleted_at,
               assignment_purpose,
+              quiz_content_mode,
+              provenance_status,
               dataset_id,
               question_count,
               english_to_korean_ratio,
@@ -385,6 +391,7 @@ export async function requireEditableSourceContext(
   }
 
   return {
+    ...(assignment.provenance_status === "exam_reviewed_v1" ? {reviewedContentMode:normalizeQuizContentMode(assignment.quiz_content_mode)} : {}),
     draft: {
       assignmentId,
       studentId,

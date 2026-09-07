@@ -1633,6 +1633,7 @@ describe("acknowledged feedback audio interruption", () => {
     audioPlayResults.push("pending", "pending");
     mocks.submit.mockResolvedValueOnce(nextAudioAnswer());
     const value = interruptibleAttempt();
+    value.quizContentMode = "book_meaning_choice";
     value.questions[1].direction = "english_to_korean";
     value.questions[1].pronunciation = { ...availablePronunciation, audioUrl: "https://example.com/next.mp3" };
     await renderReady(value);

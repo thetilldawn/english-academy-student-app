@@ -23,7 +23,7 @@ export function AssignmentStudyWords({ study, englishHidden, meaningHidden, fail
           const exampleParts = word.example ? splitStudyExample(word.example, word.exampleRanges) : null;
           return (
             <li className={styles.word} key={word.key}>
-              {study.mode === "canonical_definition_to_headword" ? <div className={styles.context}>
+              {(study.mode === "canonical_definition_to_headword" || study.mode === "canonical_headword_to_definition") ? <div className={styles.context}>
                 <span>{text.definition}</span><p lang={word.definition ? "en" : "ko"}>{word.definition ?? text.contextUnavailable}</p>
               </div> : null}
               {study.mode === "canonical_example_to_headword" ? <div className={styles.context}>

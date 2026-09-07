@@ -11,16 +11,16 @@ afterEach(cleanup);
 function props(mode: AssignmentQuestionMode = "book_meaning_choice", availableModes: readonly AssignmentQuestionMode[] | undefined = assignmentQuestionModes, datasetSelected = true): BulkExamFieldsProps {
   return {
     questionMode: assignmentQuestionModeView({ questionMode: mode, availableModes, datasetSelected }),
-    questionOrder: "sequential", exam: { directionRatio: mode === "book_meaning_choice" ? 50 : 0, passingScore: 80, retryEnabled: false },
+    questionOrder: "sequential", exam: { directionRatio: mode === "book_meaning_choice" ? 50 : mode === "canonical_headword_to_definition" ? 100 : 0, passingScore: 80, retryEnabled: false },
     directionDisabled: assignmentQuestionModePolicy(mode).fixedDirectionRatio !== null,
     onQuestionModeChange: vi.fn(), onQuestionOrderChange: vi.fn(), onDirectionChange: vi.fn(),
     onPassingScoreChange: vi.fn(), onRetryEnabledChange: vi.fn(), onRetryPassingScoreChange: vi.fn(),
   };
 }
 describe("BulkExamFields with explicit inputs", () => {
-  it("shows three modes and forwards selection without a controller", () => {
+  it("shows four content modes and forwards selection without a controller", () => {
     const input = props(); render(<BulkExamFields {...input} />);
-    expect(screen.getAllByRole("tab")).toHaveLength(3);
+    expect(screen.getAllByRole("tab")).toHaveLength(4);
     fireEvent.click(screen.getByRole("tab", { name: "예문 → 영어" }));
     expect(input.onQuestionModeChange).toHaveBeenCalledWith("canonical_example_to_headword");
   });
@@ -37,8 +37,14 @@ describe("BulkExamFields with explicit inputs", () => {
   it.each(assignmentQuestionModes.slice(1))("keeps direction locked for %s", mode => {
     render(<BulkExamFields {...props(mode)} />);
     for (const name of ["영어 → 뜻", "뜻 → 영어", "혼합"]) expect(screen.getByRole("button", { name })).toBeDisabled();
-    expect(screen.getByRole("status")).toHaveTextContent("영어 선택지 4개");
-    expect(screen.getByRole("status")).toHaveTextContent("시험일 없이 1회 배정");
+    if (mode === "canonical_example_to_headword") {
+      expect(screen.getByRole("status")).toHaveTextContent("영어 선택지 4개");
+      expect(screen.getByRole("status")).toHaveTextContent("시험일 없이 1회 배정");
+    } else {
+      expect(screen.queryByRole("status")).toBeNull();
+      const fixed = mode === "canonical_headword_to_definition" ? "영어 → 뜻" : "뜻 → 영어";
+      expect(screen.getByRole("button", { name: fixed })).toHaveAttribute("aria-pressed", "true");
+    }
   });
   it("keeps unselected separate from empty", () => {
     render(<BulkExamFields {...props("book_meaning_choice", assignmentQuestionModes, false)} />);

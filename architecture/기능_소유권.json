@@ -389,8 +389,8 @@
     {
       "path": "src/test-support",
       "owner": "architecture-meta",
-      "fileCount": 14,
-      "pathSetSha256": "06e1fc46425c198a278aa906f9691c7d51d21fef8d26febc10e0f3b840e711f2"
+      "fileCount": 15,
+      "pathSetSha256": "dfc776710c9cd00e35f0f12aae5fdbbf15fc565f1cc04a65aa914ea676b6d4d3"
     }
   ],
   "pageOwners": [
@@ -949,6 +949,14 @@
   ],
   "serviceOwners": [
     {
+      "path": "src/lib/services/reviewed-assignment-replacement-planning.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/lib/services/reviewed-direct-review-selection.ts",
+      "owner": "assignments"
+    },
+    {
       "path": "src/lib/services/active-review-assignment-service.ts",
       "owner": "assignments"
     },
@@ -1134,6 +1142,10 @@
   ],
   "quizCoreOwners": [
     {
+      "path": "src/lib/quiz/question-semantics.ts",
+      "owner": "shared-quiz-domain"
+    },
+    {
       "path": "src/lib/quiz/pronunciation-storage.ts",
       "owner": "shared-quiz-domain"
     },
@@ -1191,6 +1203,10 @@
     }
   ],
   "assignmentCoreOwners": [
+    {
+      "path": "src/lib/assignment/reviewed-question-planner.ts",
+      "owner": "assignments"
+    },
     {
       "path": "src/lib/assignment/question-planner.ts",
       "owner": "assignments"
@@ -1596,6 +1612,30 @@
   ],
   "architectureGuardOwners": [
     {
+      "path": "src/lib/quiz/question-semantics.test.ts",
+      "owner": "shared-quiz-domain"
+    },
+    {
+      "path": "src/lib/assignment/reviewed-question-planner.test.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/lib/services/reviewed-assignment-replacement-planning.test.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/lib/services/reviewed-direct-review-selection.test.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/lib/services/regular-assignment-scope-contract.test.ts",
+      "owner": "architecture-meta"
+    },
+    {
+      "path": "src/lib/services/vocab-pronunciation-release-query-contract.test.ts",
+      "owner": "quiz-player"
+    },
+    {
       "path": "src/lib/services/quiz/pronunciation-registry.test.ts",
       "owner": "quiz-player"
     },
@@ -1778,8 +1818,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 100,
-      "pathSetSha256": "d930b0531bd8e5e81afb90688172b6d478ee8322e53e19fd007ecc6906078a94"
+      "fileCount": 101,
+      "pathSetSha256": "32157e3ca8dc6d4b37076acfa86a0c9b7eee32f5c834e5e05f62ff4e050179a5"
     },
     {
       "path": "src/lib/deploy",
@@ -1820,6 +1860,7 @@
   ],
   "serverOwners": [],
   "featureServerOwners": [
+    { "path": "src/features/assignments/server/planning/bulk-session-layout.ts", "owner": "assignments" },
     {
       "path": "src/features/history/server/queries/history-list-entry-query.ts",
       "owner": "history"
@@ -2029,6 +2070,26 @@
   "protectedMigrationCount": 136,
   "protectedMigrationSetSha256": "b4ea57697824cb8fece77250a50950e58bb4e2516235e485106f126a8b00c13f",
   "migrationOwners": [
+    {
+      "path": "supabase/migrations/20260908020100_add_reviewed_exam_bank.sql",
+      "owner": "assignments",
+      "flow": "assignment-range-create"
+    },
+    {
+      "path": "supabase/migrations/20260908020200_connect_reviewed_exam_assignments.sql",
+      "owner": "assignments",
+      "flow": "assignment-series"
+    },
+    {
+      "path": "supabase/migrations/20260908020300_connect_reviewed_exam_study.sql",
+      "owner": "student-dashboard",
+      "flow": "student-assignment-study-read"
+    },
+    {
+      "path": "supabase/migrations/20260908020400_connect_reviewed_exam_review_and_edit.sql",
+      "owner": "assignments",
+      "flow": "assignment-edit"
+    },
     {
       "path": "supabase/migrations/20260907121138_add_entry_approved_korean_pronunciation.sql",
       "owner": "quiz-player",
@@ -3595,7 +3656,8 @@
         "domain": [
           "src/features/assignments/domain/direct-review-draft.ts",
           "src/lib/assignment/question-planner.ts",
-          "src/features/assignments/domain/assignment-question-mode-policy.ts"
+          "src/features/assignments/domain/assignment-question-mode-policy.ts",
+          "src/lib/assignment/reviewed-question-planner.ts"
         ],
         "presentation": [
           "src/features/assignments/presentation/vocab-assignment-field-errors.ts",
@@ -3618,7 +3680,8 @@
           "src/lib/services/direct-review-candidate-service.ts",
           "src/lib/services/direct-review-assignment-service.ts",
           "src/lib/services/dataset-catalog-service.ts",
-          "src/lib/services/eligible-vocabulary-service.ts"
+          "src/lib/services/eligible-vocabulary-service.ts",
+          "src/lib/services/reviewed-direct-review-selection.ts"
         ],
         "database": [
           "supabase/migrations/20260822183100_add_direct_review_assignments.sql",
@@ -3626,7 +3689,8 @@
           "supabase/migrations/20260824050000_list_direct_review_candidates.sql",
           "supabase/migrations/20260824051000_create_current_wrong_review_assignment.sql",
           "supabase/migrations/20260828174000_harden_current_wrong_review_deadline.sql",
-          "supabase/migrations/20260830100000_add_direct_review_availability.sql"
+          "supabase/migrations/20260830100000_add_direct_review_availability.sql",
+          "supabase/migrations/20260908020400_connect_reviewed_exam_review_and_edit.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/students/[id]/direct-review-summaries/route.ts",
@@ -3657,7 +3721,10 @@
           "src/features/assignments/ui/direct-review-preview.test.tsx",
           "src/features/assignments/presentation/direct-review-view.test.ts",
           "src/features/assignments/ui/direct-review-assignment-sections.test.tsx",
-          "src/features/assignments/server/queries/eligible-vocabulary-pagination.test.ts"
+          "src/features/assignments/server/queries/eligible-vocabulary-pagination.test.ts",
+          "src/lib/services/reviewed-direct-review-selection.test.ts",
+          "src/lib/assignment/reviewed-question-planner.test.ts",
+          "src/lib/database/reviewed-exam-bank.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -4269,7 +4336,8 @@
           "src/lib/admin/assignment-edit-policy.ts",
           "src/lib/quiz/question-generator.ts",
           "src/lib/assignment/question-planner.ts",
-          "src/features/assignments/domain/assignment-question-mode-policy.ts"
+          "src/features/assignments/domain/assignment-question-mode-policy.ts",
+          "src/lib/assignment/reviewed-question-planner.ts"
         ],
         "presentation": [
           "src/features/assignments/presentation/assignment-automatic-title.ts",
@@ -4317,7 +4385,8 @@
           "src/lib/services/eligible-vocabulary-service.ts",
           "src/lib/services/mixed-assignment-service.ts",
           "src/lib/services/regular-assignment-service.ts",
-          "src/lib/services/request-preparation-cache.ts"
+          "src/lib/services/request-preparation-cache.ts",
+          "src/lib/services/reviewed-assignment-replacement-planning.ts"
         ],
         "database": [
           "supabase/migrations/20260807221021_replace_student_assignment_v1.sql",
@@ -4326,7 +4395,8 @@
           "supabase/migrations/20260829103000_fix_assignment_edit_preview_regressions.sql",
           "supabase/migrations/20260830111500_lock_exact_review_assignment_snapshot.sql",
           "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
-          "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql"
+          "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql",
+          "supabase/migrations/20260908020400_connect_reviewed_exam_review_and_edit.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/results/[id]/page.tsx",
@@ -4387,7 +4457,9 @@
           "src/lib/services/regular-assignment-scope-contract.test.ts",
           "src/features/assignments/ui/exam-condition-fields.test.tsx",
           "src/lib/database/assignment-release-final-schema.integration.test.ts",
-          "src/features/assignments/server/queries/eligible-vocabulary-pagination.test.ts"
+          "src/features/assignments/server/queries/eligible-vocabulary-pagination.test.ts",
+          "src/lib/services/reviewed-assignment-replacement-planning.test.ts",
+          "src/lib/database/reviewed-exam-bank.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -5006,7 +5078,8 @@
           "src/features/assignments/domain/vocab-planner-validation.ts",
           "src/features/assignments/domain/vocab-previous-exam.ts",
           "src/lib/assignment/question-planner.ts",
-          "src/features/assignments/domain/assignment-question-mode-policy.ts"
+          "src/features/assignments/domain/assignment-question-mode-policy.ts",
+          "src/features/assignments/domain/vocab-plan-unit-allocation.ts"
         ],
         "presentation": [
           "src/features/assignments/presentation/assignment-unit-range-label.ts",
@@ -5056,7 +5129,8 @@
           "src/features/assignments/server/use-cases/bulk-assignment-preview.ts",
           "src/features/assignments/server/use-cases/bulk-assignment-command.ts",
           "src/features/assignments/server/use-cases/bulk-assignment-series-preparation.ts",
-          "src/features/assignments/server/queries/bulk-assignment-planning-query.ts"
+          "src/features/assignments/server/queries/bulk-assignment-planning-query.ts",
+          "src/features/assignments/server/planning/bulk-session-layout.ts"
         ],
         "database": [
           "supabase/migrations/20260810123000_add_scheduled_bulk_assignment_series.sql",
@@ -5073,7 +5147,9 @@
           "supabase/migrations/20260829103000_fix_assignment_edit_preview_regressions.sql",
           "supabase/migrations/20260831102000_add_atomic_vocab_queue_resolution.sql",
           "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
-          "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql"
+          "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql",
+          "supabase/migrations/20260908020100_add_reviewed_exam_bank.sql",
+          "supabase/migrations/20260908020200_connect_reviewed_exam_assignments.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/assignments/page.tsx",
@@ -5121,7 +5197,8 @@
           "src/features/assignments/presentation/vocab-question-view.test.ts",
           "src/features/assignments/ui-role-boundary.test.ts",
           "src/lib/database/assignment-release-final-schema.integration.test.ts",
-          "src/features/assignments/server/queries/eligible-vocabulary-pagination.test.ts"
+          "src/features/assignments/server/queries/eligible-vocabulary-pagination.test.ts",
+          "src/lib/database/reviewed-exam-bank.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -5381,7 +5458,8 @@
           "src/lib/quiz/random.ts",
           "src/lib/quiz/word-identity.ts",
           "src/lib/quiz/question-types.ts",
-          "src/lib/quiz/question-provenance.ts"
+          "src/lib/quiz/question-provenance.ts",
+          "src/lib/quiz/question-semantics.ts"
         ],
         "presentation": [],
         "contract": [
@@ -5431,6 +5509,7 @@
         ],
         "tests": [
           "src/features/quiz-player/api/quiz-attempt.test.ts",
+          "src/lib/services/vocab-pronunciation-release-query-contract.test.ts",
           "src/features/quiz-player/domain/quiz-session.test.ts",
           "src/features/quiz-player/ui/quiz-player.test.tsx",
           "src/features/quiz-player/ui/quiz-frame.test.tsx",
@@ -5456,7 +5535,8 @@
           "src/lib/assignment/assignment-release.test.ts",
           "src/lib/database/assignment-release-final-schema.integration.test.ts",
           "src/lib/database/entry-approved-pronunciation.integration.test.ts",
-          "src/lib/services/quiz/pronunciation-registry.test.ts"
+          "src/lib/services/quiz/pronunciation-registry.test.ts",
+          "src/lib/database/reviewed-exam-bank.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -5698,7 +5778,8 @@
           "supabase/migrations/20260906103017_add_approved_school_pronunciation_scope.sql",
           "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
           "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql",
-          "supabase/migrations/20260907121138_add_entry_approved_korean_pronunciation.sql"
+          "supabase/migrations/20260907121138_add_entry_approved_korean_pronunciation.sql",
+          "supabase/migrations/20260908020300_connect_reviewed_exam_study.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/assignments/[id]/words/page.tsx",
@@ -5718,7 +5799,8 @@
           "src/lib/assignment/assignment-release.test.ts",
           "src/lib/database/assignment-release-final-schema.integration.test.ts",
           "src/lib/database/entry-approved-pronunciation.integration.test.ts",
-          "src/lib/services/quiz/pronunciation-registry.test.ts"
+          "src/lib/services/quiz/pronunciation-registry.test.ts",
+          "src/lib/database/reviewed-exam-bank.integration.test.ts"
         ]
       },
       "requiredImportEdges": [

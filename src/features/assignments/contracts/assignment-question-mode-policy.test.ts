@@ -34,7 +34,7 @@ const changes: [string, (r: BulkAssignmentPreviewInput) => void][] = [
 ];
 describe("question mode policy at draft and request boundaries", () => {
   it.each(assignmentQuestionModes)("preserves valid %s serialization", mode => {
-    const input = request(); input.questionMode = mode;
+    const input = request(); input.questionMode = mode; input.englishToKoreanRatio = mode === "canonical_headword_to_definition" ? 100 : 0;
     const value = draft(input);
     expect(validateBulkPreviewProjection(value)).toEqual([]);
     expect(buildBulkAssignmentPreviewRequest(value)).toEqual({
@@ -44,13 +44,13 @@ describe("question mode policy at draft and request boundaries", () => {
   });
   it.each(changes)("keeps the same mode errors and field paths: %s", (name, change) => {
     for (const mode of assignmentQuestionModes) {
-      const input = request(); input.questionMode = mode; change(input);
+      const input = request(); input.questionMode = mode; input.englishToKoreanRatio = mode === "canonical_headword_to_definition" ? 100 : 0; change(input);
       const currentDraft = draft(input);
       const local = validateBulkPreviewProjection(currentDraft).filter(x => Object.values(assignmentQuestionModeErrors).includes(x.message as never));
       const parsed = bulkAssignmentPreviewSchema.safeParse(input);
       const remote = parsed.success ? [] : parsed.error.issues.filter(x => Object.values(assignmentQuestionModeErrors).includes(x.message as never));
       expect(remote.map(x => x.message)).toEqual(local.map(x => x.message));
-      if (mode !== "book_meaning_choice" && name !== "valid") {
+      if ((name === "direction" && mode !== "book_meaning_choice") || (mode === "canonical_example_to_headword" && name !== "valid")) {
         const direction = name === "direction";
         expect(remote).toContainEqual(expect.objectContaining({
           path: direction ? ["englishToKoreanRatio"] : ["commonPlan", "selectedDateCount"],

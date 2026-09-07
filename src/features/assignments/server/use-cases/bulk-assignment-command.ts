@@ -160,66 +160,34 @@ export async function createBulkAssignments(
 
   let batches: Record<string, unknown>[];
   try {
-    if (input.questionMode !== "book_meaning_choice") {
-      const canonicalPlans = resolvedPreview.canonicalPlansByStudent;
-      if (!canonicalPlans) {
-        throw new BulkAssignmentError("invalid_selection");
-      }
-      batches = preview.items.map((item) => {
-        const session = item.sessions[0];
-        const questionTargets = canonicalPlans.get(item.studentId) ?? [];
-        const firstTarget = questionTargets[0];
-        if (
-          !item.available ||
-          !item.datasetId ||
-          !session ||
-          session.sessionNumber !== 1 ||
-          questionTargets.length !== session.questionCount ||
-          !firstTarget ||
-          questionTargets.some((target) =>
-            target.releaseId !== firstTarget.releaseId ||
-            target.packageSha256 !== firstTarget.packageSha256
-          )
-        ) {
+    if (resolvedPreview.canonicalPlansByStudent) {
+      const bankPlans = resolvedPreview.canonicalPlansByStudent;
+      batches = preview.items.flatMap(item => item.sessions.map((session, sessionIndex) => {
+        const targets = bankPlans.get(item.studentId)?.[sessionIndex] ?? [];
+        const first = targets[0];
+        if (!item.available || !item.datasetId || !first || targets.length !== session.questionCount ||
+            targets.some(t => t.releaseId !== first.releaseId || t.packageSha256 !== first.packageSha256 || t.bankSource !== first.bankSource)) {
           throw new BulkAssignmentError("invalid_selection");
         }
-        const modeLabel = input.questionMode ===
-            "canonical_definition_to_headword"
-          ? "영영풀이"
-          : "예문";
-        const baseTitle = [item.datasetLabel, preview.rangeLabel, modeLabel]
-          .filter(Boolean)
-          .join(" · ");
         return {
-          kind: "canonical_preview",
-          student_id: item.studentId,
-          dataset_id: item.datasetId,
-          unit_ids: session.unitIds,
-          unit_labels: session.unitLabels,
-          title: baseTitle.slice(0, 160),
-          question_count: questionTargets.length,
-          quiz_content_mode: input.questionMode,
-          canonical_release_id: firstTarget.releaseId,
-          canonical_package_sha256: firstTarget.packageSha256,
-          time_limit_seconds: input.timeLimitSeconds,
-          passing_score: input.passingScore,
-          retry_enabled: input.retryEnabled,
-          retry_passing_score: input.retryPassingScore,
+          kind: "regular", student_id: item.studentId, dataset_id: item.datasetId,
+          unit_ids: session.unitIds, unit_labels: session.unitLabels,
+          title: [item.datasetLabel, session.unitLabel].filter(Boolean).join(" · ").slice(0,160),
+          question_count: targets.length, english_to_korean_ratio: input.englishToKoreanRatio,
+          time_limit_seconds: input.timeLimitSeconds, passing_score: input.passingScore,
+          retry_enabled: input.retryEnabled, retry_passing_score: input.retryPassingScore,
           question_order_mode: input.questionOrderMode,
-          available_from: null,
-          available_until: null,
-          timing_mode: input.timingMode,
-          question_time_limit_seconds: input.questionTimeLimitSeconds,
-          session_number: 1,
-          session_count: 1,
-          question_targets: questionTargets.map((target, index) => ({
-            vocab_entry_id: target.id,
-            base_order_index: index + 1,
-            question_item_id: target.questionItemId,
-            question_item_sha256: target.questionItemSha256,
+          available_from: session.availableFrom, available_until: session.availableUntil,
+          timing_mode: input.timingMode, question_time_limit_seconds: input.questionTimeLimitSeconds,
+          session_number: session.sessionNumber, session_count: item.sessions.length,
+          questions: targets.map((target,index) => ({
+            vocab_entry_id: target.id, base_order_index: index+1, direction: target.direction,
+            reviewed_bank: { source: target.bankSource, mode: input.questionMode,
+              release_id: target.releaseId, package_sha256: target.packageSha256,
+              question_item_id: target.questionItemId, question_item_sha256: target.questionItemSha256 },
           })),
         };
-      });
+      }));
     } else {
     const regularPreparationCache = preparationContext.regular;
     const commonPlan = input.commonPlan;
@@ -305,9 +273,7 @@ export async function createBulkAssignments(
 
   const totalBatchQuestionCount = batches.reduce((total, batch) => {
     const questionCount = batch.question_count;
-    const questions = input.questionMode === "book_meaning_choice"
-      ? batch.questions
-      : batch.question_targets;
+    const questions = batch.questions;
     if (
       typeof questionCount !== "number" ||
       !Number.isInteger(questionCount) ||

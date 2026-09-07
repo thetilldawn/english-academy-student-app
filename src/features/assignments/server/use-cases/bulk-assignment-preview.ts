@@ -12,7 +12,6 @@ import {
   calculateRegularAssignmentCapacity,
   primeRegularAssignmentStudentCaches,
 } from "@/lib/services/regular-assignment-service";
-import { isoToKoreanDateTimeLocal } from "@/lib/deadline";
 import { resolvedBulkPlanSha256 } from "../planning/bulk-assignment-plan-digest";
 import type { BulkAssignmentPreviewInput } from "@/features/assignments/contracts/bulk-assignment-request";
 import {
@@ -23,15 +22,8 @@ import {
   resolveVocabQuestionCapacityScope,
   resolveVocabQuestionCycleAllocation,
 } from "@/features/assignments/domain/vocab-question-allocation";
-import {
-  resolveUndatedVocabUnitCycleAllocation,
-  resolveVocabUnitCycleAllocation,
-} from "@/features/assignments/domain/vocab-unit-allocation";
-import {
-  extendScheduleSlotsFromRecurrence,
-} from "@/features/assignments/domain/vocab-schedule";
-import { resolveVocabUnitCountsForDates } from "@/lib/admin/vocab-unit-allocation";
-import { bulkPlanSignature } from "@/features/assignments/domain/bulk-plan-signature";
+import { resolvePlanUnitAllocation } from "../../domain/vocab-plan-unit-allocation";
+import { commonPlanSchedule, extendCommonPlanSchedule, buildCommonPlanSummary } from "../planning/bulk-session-layout";
 import {
   loadCommonBulkAssignmentPlanningData,
   type BulkPlanningStudent,
@@ -41,10 +33,8 @@ import type {
   VocabUnitSummary,
 } from "@/lib/admin/dataset-summary";
 import type {
-  BulkAssignmentCommonPlanSummary,
   BulkAssignmentPreview,
   BulkAssignmentPreviewFieldKey,
-  BulkAssignmentPreviewItem,
   BulkAssignmentPreviewSession,
 } from "../../contracts/bulk-assignment-response";
 import {
@@ -60,19 +50,10 @@ import {
   mapInBatches,
   prepareCommonPlanSeries,
   type BulkAssignmentPreparationContext,
-  type CommonPlanInput,
 } from "./bulk-assignment-series-preparation";
 
 function emptySessionError(sessionNumber: number) {
   return `${sessionNumber}회차에 배정할 다음 범위가 없습니다. 시험 횟수나 회차당 범위를 줄여 주세요.`;
-}
-
-function commonPlanSchedule(input: BulkAssignmentPreviewInput) {
-  return input.commonPlan.sessions.map((session, index) => ({
-    sessionNumber: index + 1,
-    availableFrom: session.availableFrom,
-    availableUntil: session.availableUntil,
-  }));
 }
 
 function allocationIssueMessage(issue: VocabQuestionAllocationIssue) {
@@ -111,124 +92,10 @@ function allocationIssueFieldKey(
   return "questionCount";
 }
 
-function extendCommonPlanSchedule(
-  schedule: ReturnType<typeof commonPlanSchedule>,
-  recurrenceSchedule: CommonPlanInput["recurrenceSessions"],
-  requiredSessionCount: number,
-) {
-  if (requiredSessionCount <= schedule.length) {
-    return schedule.slice(0, requiredSessionCount);
-  }
-  if (
-    schedule.some((slot) => !slot.availableFrom || !slot.availableUntil) ||
-    recurrenceSchedule.some(
-      (slot) => !slot.availableFrom || !slot.availableUntil,
-    )
-  ) {
-    throw new BulkAssignmentError(
-      "invalid_selection",
-      "같은 요일로 이어서 배정하려면 공개·마감 일정을 먼저 정해 주세요.",
-    );
-  }
-  const baseSchedule = schedule.map((slot) => ({
-    sessionNumber: slot.sessionNumber,
-    date: slot.availableFrom!.slice(0, 10),
-    availableLocalDateTime: slot.availableFrom!,
-    deadlineLocalDateTime: slot.availableUntil!,
-  }));
-  const recurrenceBase = recurrenceSchedule.map((slot, index) => ({
-    sessionNumber: index + 1,
-    date: slot.availableFrom!.slice(0, 10),
-    availableLocalDateTime: slot.availableFrom!,
-    deadlineLocalDateTime: slot.availableUntil!,
-  }));
-  const extended = extendScheduleSlotsFromRecurrence(
-    baseSchedule,
-    recurrenceBase,
-    requiredSessionCount,
-  );
-  return extended.map((slot) => ({
-    sessionNumber: slot.sessionNumber,
-    availableFrom: slot.availableLocalDateTime,
-    availableUntil: slot.deadlineLocalDateTime,
-  }));
-}
-
-function buildCommonPlanSummary(
-  items: readonly BulkAssignmentPreviewItem[],
-): BulkAssignmentCommonPlanSummary | null {
-  const groups = new Map<string, BulkAssignmentPreviewItem[]>();
-  for (const item of items) {
-    if (
-      !item.available ||
-      item.error ||
-      item.availableQuestionCount === null ||
-      item.selectedQuestionCount === null ||
-      item.remainingQuestionCount === null ||
-      item.defaultSessionCount === null ||
-      item.scheduledQuestionCount === null ||
-      item.sessions.length === 0 ||
-      item.sessions.some(
-        (session) =>
-          !session.available ||
-          Boolean(session.error),
-      )
-    ) {
-      continue;
-    }
-    const signature = bulkPlanSignature(item);
-    const group = groups.get(signature) ?? [];
-    group.push(item);
-    groups.set(signature, group);
-  }
-  const selectedGroup = [...groups.values()].toSorted(
-    (left, right) => right.length - left.length,
-  )[0];
-  const representative = selectedGroup?.[0];
-  if (
-    !selectedGroup ||
-    selectedGroup.length < 2 ||
-    !representative ||
-    representative.availableQuestionCount === null ||
-    representative.selectedQuestionCount === null ||
-    representative.remainingQuestionCount === null
-    || representative.defaultSessionCount === null
-    || representative.scheduledQuestionCount === null
-  ) {
-    return null;
-  }
-  const normalStudentIds = selectedGroup.map((item) => item.studentId);
-  const normalStudentIdSet = new Set(normalStudentIds);
-  return {
-    representativeStudentId: representative.studentId,
-    normalStudentIds,
-    exceptionStudentIds: items
-      .filter((item) => !normalStudentIdSet.has(item.studentId))
-      .map((item) => item.studentId),
-    availableQuestionCount: representative.availableQuestionCount,
-    totalAvailableQuestionCount: representative.totalAvailableQuestionCount ?? null,
-    maximumSessionQuestionCount: representative.maximumSessionQuestionCount ?? null,
-    selectedQuestionCount: representative.selectedQuestionCount,
-    remainingQuestionCount: representative.remainingQuestionCount,
-    defaultSessionCount: representative.defaultSessionCount,
-    scheduledQuestionCount: representative.scheduledQuestionCount,
-    requiresExtraDateDecision:
-      representative.requiresExtraDateDecision,
-    sessions: representative.sessions.map((session) => ({
-      sessionNumber: session.sessionNumber,
-      availableFrom: session.availableFrom,
-      availableUntil: session.availableUntil,
-      questionCount: session.questionCount,
-      cycleIndex: session.cycleIndex,
-      unitLabel: session.unitLabel,
-    })),
-  };
-}
-
 export type ResolvedBulkAssignmentPreview = {
   preview: BulkAssignmentPreview;
   targetPlansByStudent: Map<string, PlannedVocabSeriesTarget[][]>;
-  canonicalPlansByStudent?: Map<string, CanonicalPlannedQuestion[]>;
+  canonicalPlansByStudent?: Map<string, CanonicalPlannedQuestion[][]>;
 };
 
 
@@ -239,9 +106,6 @@ export async function resolveBulkAssignmentPreview(
     createBulkAssignmentPreparationContext(),
 ): Promise<ResolvedBulkAssignmentPreview> {
   const admin = authenticatedAdmin ?? (await requireAdmin());
-  if (input.questionMode !== "book_meaning_choice") {
-    return resolveCanonicalBulkAssignmentPreview(input, admin);
-  }
   const commonPlan = input.commonPlan;
   const requestedSessionCount = commonPlan.sessions.length;
   if (
@@ -261,6 +125,9 @@ export async function resolveBulkAssignmentPreview(
     },
     admin,
   );
+  if (input.questionMode !== "book_meaning_choice" || planning.dataset?.questionBankKind === "reviewed_exam_v1") {
+    return resolveCanonicalBulkAssignmentPreview(input, admin, planning);
+  }
   const students: BulkPlanningStudent[] = planning.students;
   const datasets: DatasetSummary[] = planning.dataset ? [planning.dataset] : [];
   const units: VocabUnitSummary[] = planning.units;
@@ -426,78 +293,7 @@ export async function resolveBulkAssignmentPreview(
           maximumSessionQuestionCount =
             capacityScope.maximumSessionQuestionCount;
           if (commonPlan.splitBasis === "range_unit") {
-            const unitAllocationRule = commonPlan.unitAllocationRule;
-            if (!unitAllocationRule) {
-              throw new BulkAssignmentError(
-                "invalid_selection",
-                "회차별 범위 단위 규칙을 확인해 주세요.",
-              );
-            }
-            const immediate = commonPlan.selectedDateCount === 0;
-            const recurrenceDates = immediate
-              ? []
-              : commonPlan.recurrenceSessions.flatMap(
-                  (session) => session.availableFrom
-                    ? [isoToKoreanDateTimeLocal(session.availableFrom).slice(0, 10)]
-                    : [],
-                );
-            if (
-              !immediate &&
-              recurrenceDates.length !== commonPlan.recurrenceSessions.length
-            ) {
-              throw new BulkAssignmentError(
-                "invalid_selection",
-                "범위 단위 배정의 공개 일정을 확인해 주세요.",
-              );
-            }
-            const serverRangeUnitCounts = immediate
-              ? [unitAllocationRule.unitsPerSession]
-              : resolveVocabUnitCountsForDates({
-                  dates: recurrenceDates,
-                  rule: unitAllocationRule,
-                });
-            if (
-              (immediate && unitAllocationRule.mode !== "same") ||
-              JSON.stringify(serverRangeUnitCounts) !==
-                JSON.stringify(commonPlan.rangeUnitCounts)
-            ) {
-              throw new BulkAssignmentError(
-                "invalid_selection",
-                "요일별 단위 수가 원래 반복 일정의 규칙과 일치하지 않습니다.",
-              );
-            }
-            const unitAllocation = immediate
-              ? resolveUndatedVocabUnitCycleAllocation({
-                  orderedUnitIds: commonPlan.orderedUnitIds,
-                  unitsPerSession: unitAllocationRule.unitsPerSession,
-                  maximumSessionCount: MAXIMUM_BULK_ASSIGNMENT_COUNT,
-                })
-              : resolveVocabUnitCycleAllocation({
-                  orderedUnitIds: commonPlan.orderedUnitIds,
-                  baseSessionUnitCounts: serverRangeUnitCounts,
-                  selectedDateCount: commonPlan.selectedDateCount,
-                  overflowPolicy: commonPlan.overflowPolicy,
-                  extraDatePolicy: commonPlan.extraDatePolicy,
-                  maximumSessionCount: MAXIMUM_BULK_ASSIGNMENT_COUNT,
-                });
-            if (unitAllocation.issue) {
-              throw new BulkAssignmentError(
-                "invalid_selection",
-                "범위 단위와 회차 일정을 다시 확인해 주세요.",
-              );
-            }
-            const actualSessionUnitIds = resolvedSessions.map((session) =>
-              session.units.map((unit) => unit.id)
-            );
-            if (
-              JSON.stringify(actualSessionUnitIds) !==
-                JSON.stringify(unitAllocation.sessionUnitIds)
-            ) {
-              throw new BulkAssignmentError(
-                "invalid_selection",
-                "회차별 범위가 선택한 순서 또는 단위 수와 일치하지 않습니다.",
-              );
-            }
+            const unitAllocation = resolvePlanUnitAllocation(commonPlan);
             defaultSessionCount = unitAllocation.defaultSessionCount;
             requiresExtraDateDecision =
               unitAllocation.requiresExtraDateDecision;

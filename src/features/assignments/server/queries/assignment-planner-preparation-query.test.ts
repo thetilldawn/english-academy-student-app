@@ -55,7 +55,7 @@ describe("배정 준비의 출제 유형 연결", () => {
     "%s 신규 배정은 승인 문항이 있는 같은 세 유형을 전달한다", async (_mode, studentIds) => {
       const result = await getAssignmentPlannerPreparation(studentIds);
       expect(mocks.requireAdmin).toHaveBeenCalledOnce();
-      expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith("list_assignment_question_mode_availability_v1");
+      expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith("list_assignment_question_mode_availability_v2");
       expect(result.students.map((item) => item.id)).toEqual(studentIds);
       expect(result.datasets[0]?.availableQuestionModes).toEqual([
         "book_meaning_choice", "canonical_definition_to_headword", "canonical_example_to_headword",

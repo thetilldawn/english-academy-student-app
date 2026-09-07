@@ -2,6 +2,7 @@ import "server-only";
 
 import type { TimingMode } from "@/lib/admin/assignment-settings";
 import { normalizeQuizContentMode } from "@/lib/quiz/question-content-mode";
+import { questionSemantics } from "@/lib/quiz/question-semantics";
 import {
   parseChoiceDictionaryIds,
   parseChoicePronunciations,
@@ -92,6 +93,7 @@ export async function getStudentAttempt(
 
   const assignmentData = assignmentResult.data;
   const questionData = questionResult.data;
+  const quizContentMode = normalizeQuizContentMode(assignmentData.quiz_content_mode);
 
   const rows = (questionData ?? []) as QuestionRow[];
   const registryIds = rows.flatMap((question) => {
@@ -102,7 +104,8 @@ export async function getStudentAttempt(
         : question.vocab_entry_id;
     return [
       targetVocabEntryId,
-      ...(bankQuestion?.choice_vocab_entry_ids ?? []),
+      ...(questionSemantics(quizContentMode, question.direction).choice === "headword"
+        ? bankQuestion?.choice_vocab_entry_ids ?? [] : []),
     ].filter((value): value is number => typeof value === "number");
   });
   const approvedDictionaryIds = rows.flatMap((question) => {
@@ -193,9 +196,7 @@ export async function getStudentAttempt(
   return {
     id: attemptData.id,
     assignmentTitle: assignmentData?.title ?? "단어 시험",
-    quizContentMode: normalizeQuizContentMode(
-      assignmentData.quiz_content_mode,
-    ),
+    quizContentMode,
     status: attemptData.status,
     phase,
     startedAt: attemptData.started_at,
@@ -205,6 +206,7 @@ export async function getStudentAttempt(
     questionTimeLimitSeconds,
     currentQuestionId,
     questions: rows.map((question) => {
+      const roles = questionSemantics(quizContentMode, question.direction);
       const answered =
         question.initial_choice_index !== null ||
         question.retry_choice_index !== null;
@@ -303,8 +305,9 @@ export async function getStudentAttempt(
         direction: question.direction,
         prompt: question.prompt,
         choices: question.choices,
-        pronunciation,
-        choicePronunciations,
+        // A target-only audio URL would identify the correct English choice.
+        pronunciation: roles.prompt === "headword" || answered ? pronunciation : unavailablePronunciation(),
+        choicePronunciations: roles.choice === "headword" ? choicePronunciations : question.choices.map(() => unavailablePronunciation()),
         initialChoiceIndex: question.initial_choice_index,
         initialIsCorrect: question.initial_is_correct,
         retryChoiceIndex: question.retry_choice_index,

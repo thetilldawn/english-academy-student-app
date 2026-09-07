@@ -27,6 +27,70 @@ const changes: [string, (r: BulkAssignmentPreviewInput) => void][] = [
   ["recurrence time", r => { r.commonPlan.recurrenceSessions[0]!.availableUntil = "2026-09-11T00:00:00Z"; }],
 ];
 beforeEach(() => { vi.clearAllMocks(); mocks.load.mockRejectedValue(new Error("LOCAL_READ_BOUNDARY")); });
+describe("reviewed mock exams share passage-session planning", () => {
+  const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+  const sizes = [12,24,14,18,14,8,10,14,10,17,13,9,9,24,16,12,21,11,12,10];
+  const modes = [["book_meaning_choice",100],["book_meaning_choice",0],
+    ["canonical_definition_to_headword",0],["canonical_headword_to_definition",100]] as const;
+  function setup(mode: typeof modes[number][0], ratio: 0 | 100) {
+    const input = request();
+    const units = sizes.map((entryCount, i) => ({ id:id(100+i), label:`가짜 지문 ${i+1}`, sortIndex:i+1, entryCount }));
+    input.questionMode=mode; input.englishToKoreanRatio=ratio;
+    input.commonPlan={...input.commonPlan,datasetId:id(10),distribution:"split",splitBasis:"range_unit",
+      orderedUnitIds:units.map(u=>u.id),rangeUnitCounts:[1],
+      unitAllocationRule:{schemaVersion:1,mode:"same",unitsPerSession:1,weekdayUnitsPerSession:{1:1,2:1,3:1,4:1,5:1,6:1,7:1}},
+      sessions:units.map(u=>({unitIds:[u.id],availableFrom:null,availableUntil:null}))};
+    mocks.load.mockResolvedValue({dataset:{id:id(10),title:"가짜 자료",displayName:"가짜 자료",status:"ready",isActive:true,isAssignable:true,questionBankKind:"reviewed_exam_v1"},
+      students:[{id:"fake-student",displayName:"가짜 학생",status:"active"}],units});
+    let sourceRow=0;
+    const rows=units.flatMap(unit=>Array.from({length:unit.entryCount},()=>{
+      const n=++sourceRow;
+      const directions=mode==="book_meaning_choice" ? ["english_to_korean","korean_to_english"] : [ratio===100?"english_to_korean":"korean_to_english"];
+      return directions.map(direction=>({release_id:id(12),package_sha256:"a".repeat(64),vocab_entry_id:n,
+        unit_id:unit.id,source_row:n,question_item_id:`fake-${n}-${direction}`,question_item_sha256:"b".repeat(64),direction}));
+    }).flat());
+    const rpc=vi.fn(async()=>({error:null,data:rows})); mocks.client.mockResolvedValue({rpc});
+    return {input,rows,rpc};
+  }
+  it.each(modes)("%s %i: 20 passages produce 20 undated sessions and 278 targets", async(mode,ratio)=>{
+    const {input,rpc}=setup(mode,ratio);
+    const result=await resolveCanonicalBulkAssignmentPreview(input,{} as AdminContext);
+    const item=result.preview.items[0]!;
+    expect(item.available,item.error ?? undefined).toBe(true);
+    expect(item).toMatchObject({defaultSessionCount:20,totalAvailableQuestionCount:278,selectedQuestionCount:278,remainingQuestionCount:0});
+    expect(item.sessions.map(s=>s.questionCount)).toEqual(sizes);
+    expect(item.sessions.every(s=>s.availableFrom===null && s.availableUntil===null)).toBe(true);
+    const questions=result.canonicalPlansByStudent.get("fake-student")!.flat();
+    expect(new Set(questions.map(q=>q.id)).size).toBe(278);
+    expect(questions.every(q=>q.bankSource==="reviewed_exam_v1" && q.direction===(ratio===100?"english_to_korean":"korean_to_english"))).toBe(true);
+    expect(rpc).toHaveBeenCalledWith("list_active_reviewed_exam_questions_v1",expect.objectContaining({p_quiz_mode:mode}));
+  });
+  it("rejects a missing direction or mixed release, never falls back to unreviewed questions",async()=>{
+    for(const invalid of ["missing-direction","mixed-release"]){
+      const {input,rows}=setup("book_meaning_choice",100);
+      if(invalid==="missing-direction") Reflect.deleteProperty(rows[0]!,"direction");
+      else rows[0]!.release_id=id(13);
+      await expect(resolveCanonicalBulkAssignmentPreview(input,{} as AdminContext)).rejects.toMatchObject({reason:"database"});
+    }
+  });
+  it("rejects a forged passage allocation before producing a usable plan",async()=>{
+    const {input}=setup("canonical_headword_to_definition",100);
+    input.commonPlan.sessions[0]!.unitIds=[input.commonPlan.orderedUnitIds[1]!];
+    const result=await resolveCanonicalBulkAssignmentPreview(input,{} as AdminContext);
+    expect(result.preview.items[0]).toMatchObject({available:false,sessions:[]});
+    expect(result.canonicalPlansByStudent.size).toBe(0);
+  });
+  it("source order follows the selected reverse passage range",async()=>{
+    const {input}=setup("canonical_headword_to_definition",100);
+    input.commonPlan.orderedUnitIds.reverse();
+    input.commonPlan.splitBasis="question_count";input.commonPlan.distribution="repeat";
+    input.commonPlan.questionCount={mode:"manual",value:4};
+    input.commonPlan.sessions=[{unitIds:[...input.commonPlan.orderedUnitIds],availableFrom:null,availableUntil:null}];
+    const result=await resolveCanonicalBulkAssignmentPreview(input,{} as AdminContext);
+    expect(result.canonicalPlansByStudent.get("fake-student")?.[0]?.map(q=>q.id)).toEqual([269,270,271,272]);
+  });
+});
+
 describe("canonical server restriction before data access", () => {
   it.each(["canonical_definition_to_headword", "canonical_example_to_headword"] as const)("%s의 전체 후보601과 회차500 상한을 구분한다", async questionMode => {
     const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -49,16 +113,16 @@ describe("canonical server restriction before data access", () => {
       available: true, totalAvailableQuestionCount: 601, maximumSessionQuestionCount: 500,
       selectedQuestionCount: 500, remainingQuestionCount: 101,
     });
-    expect(result.canonicalPlansByStudent.get("fake-student")).toHaveLength(500);
+    expect(result.canonicalPlansByStudent.get("fake-student")?.[0]).toHaveLength(500);
     input.commonPlan.questionCount = { mode: "manual", value: 501 };
     const rejected = await resolveCanonicalBulkAssignmentPreview(input, {} as AdminContext);
     expect(rejected.preview.items[0]).toMatchObject({ available: false, errorFieldKey: "questionCount" });
   });
   it.each(changes)("rejects %s before any query", async (_name, change) => {
-    for (const mode of ["canonical_definition_to_headword", "canonical_example_to_headword"] as const) {
+    for (const mode of ["canonical_example_to_headword"] as const) {
       const input = request(); input.questionMode = mode; change(input);
       await expect(resolveCanonicalBulkAssignmentPreview(input, {} as AdminContext))
-        .rejects.toMatchObject({ reason: "invalid_selection", message: "영영풀이·예문 시험은 시험일 없이 1회만 바로 배정할 수 있습니다." });
+        .rejects.toMatchObject({ reason: "invalid_selection", message: _name === "direction" ? "선택한 출제 자료에 맞는 시험 방향을 선택해 주세요." : "예문 시험은 시험일 없이 1회만 바로 배정할 수 있습니다." });
     }
     expect(mocks.load).not.toHaveBeenCalled(); expect(mocks.client).not.toHaveBeenCalled();
   });

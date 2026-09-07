@@ -26,6 +26,7 @@ export function getResultQuestionPresentation(
   const primaryMeaning = question.primaryMeaning.trim();
   if (
     quizContentMode === "book_meaning_choice" &&
+    question.provenanceStatus !== "exam_reviewed_v1" &&
     isTrustedQuestionSnapshot(question.provenanceStatus) &&
     headword &&
     primaryMeaning

@@ -26,6 +26,7 @@ export function assignmentQuestionModeView(input: {
   }
   const canonicalTabs = ([
     ["canonical_definition_to_headword", text.definition, "definition-mode-unavailable", text.definitionUnavailable],
+    ["canonical_headword_to_definition", text.reverseDefinition, "reverse-definition-mode-unavailable", text.reverseDefinitionUnavailable],
     ["canonical_example_to_headword", text.example, "example-mode-unavailable", text.exampleUnavailable],
   ] as const).map(([value, label, id, unavailableMessage]) => {
     const disabled = !availability.availableModes.includes(value);

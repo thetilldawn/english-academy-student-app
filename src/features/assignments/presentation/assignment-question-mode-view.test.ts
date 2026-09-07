@@ -19,14 +19,15 @@ describe("question mode view", () => {
     const view = assignmentQuestionModeView({ questionMode: "canonical_definition_to_headword", datasetSelected: true,
       availableModes: ["book_meaning_choice", "canonical_definition_to_headword"] });
     expect(view.tabs[1]!.disabled).toBe(false);
-    expect(view.tabs[2]).toMatchObject({ disabled: true, describedBy: "example-mode-unavailable" });
+    expect(view.tabs[2]).toMatchObject({ disabled: true, describedBy: "reverse-definition-mode-unavailable" });
+    expect(view.tabs[3]).toMatchObject({ disabled: true, describedBy: "example-mode-unavailable" });
     expect(view.notices).toHaveLength(2);
-    expect(view.notices[0]!.message).toContain("영어 선택지 4개");
+    expect(view.notices[0]!.message).toContain("영어를 보고 영영풀이를 고르는 문제");
     expect(view.notices[1]!.message).toContain("예문 문항이 없습니다");
   });
   it("uses the same restriction explanation without a Preview-only claim", () => {
-    expect(assignmentQuestionModeScheduleMessage("book_meaning_choice")).toBeNull();
-    for (const mode of assignmentQuestionModes.slice(1)) {
+    for (const mode of ["book_meaning_choice","canonical_definition_to_headword","canonical_headword_to_definition"] as const) expect(assignmentQuestionModeScheduleMessage(mode)).toBeNull();
+    for (const mode of ["canonical_example_to_headword"] as const) {
       expect(assignmentQuestionModeScheduleMessage(mode)).toContain("시험일 없이 1회만 바로 배정");
       expect(assignmentQuestionModeScheduleMessage(mode)).not.toContain("Preview");
     }

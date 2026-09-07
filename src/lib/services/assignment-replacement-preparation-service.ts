@@ -32,6 +32,7 @@ import {
   AssignmentCreationError,
   prepareRegularAssignment,
 } from "@/lib/services/regular-assignment-service";
+import { loadReviewedReplacementPlan, reviewedReplacementMode } from "./reviewed-assignment-replacement-planning";
 
 export async function calculateStudentAssignmentReplacementCapacity(
   assignmentId: string,
@@ -109,6 +110,13 @@ export async function calculateStudentAssignmentReplacementCapacity(
     };
   }
   try {
+    const reviewedMode=await reviewedReplacementMode(input.datasetId,source.draft.datasetId,source.reviewedContentMode);
+    if(reviewedMode){
+      const {maximum}=await loadReviewedReplacementPlan(input,reviewedMode);
+      return {eligibleBeforeActiveAssignment:maximum,activeAssignmentExcluded:0,questionPlanExcluded:0,unitEligible:maximum,
+        wrongEligible:0,wrongLevel1Eligible:0,wrongLevel2Eligible:0,overlap:0,alreadyAssigned:0,
+        maximumQuestionCount:maximum,recommendedQuestionCount:Math.min(maximum,source.draft.questionCount),minimumQuestionCount:4};
+    }
     return await calculateAssignmentCapacity(input, admin, {
       assignmentId,
       studentId,
@@ -182,6 +190,7 @@ export async function prepareStudentAssignmentReplacement(
     const effectiveReviewScope = input.includePendingReview
       ? input.reviewScope
       : source.draft.reviewScope;
+    const reviewedMode=await reviewedReplacementMode(input.datasetId,source.draft.datasetId,source.reviewedContentMode);
 
     if (canReuseSourceQuestions(source, input)) {
       const replacementPlan = preservedAssignmentReplacementPlan(
@@ -214,6 +223,10 @@ export async function prepareStudentAssignmentReplacement(
           : [],
         questions: source.questions!,
       };
+    } else if (reviewedMode && !input.includePendingReview) {
+      const reviewed=await loadReviewedReplacementPlan(input,reviewedMode);
+      replacementKind="regular";reviewSnapshotMode="none";
+      prepared={...input,title:input.title.trim(),reviewLevels:[],reviewScope:effectiveReviewScope,selectedQueueIds:[],questions:reviewed.questions};
     } else if (input.includePendingReview) {
       replacementKind = "mixed";
       reviewSnapshotMode = "recalculate";

@@ -95,6 +95,7 @@ export function useQuizSubmission(input: {
       const answerAudioUrl = quizAnswerAudioUrl(
         submission.question,
         submission.choiceIndex,
+        submission.attempt.quizContentMode,
       );
       if (!submission.primed) input.primeChoiceAudio(answerAudioUrl);
       const requestKey = [
@@ -307,7 +308,7 @@ export function useQuizSubmission(input: {
         }
         const promptAudioCompletion = input.captureActivePromptAudio();
         input.cancelPendingPromptAudio();
-        const answerAudioUrl = quizAnswerAudioUrl(question, choiceIndex);
+        const answerAudioUrl = quizAnswerAudioUrl(question, choiceIndex, input.state.attempt.quizContentMode);
         input.primeChoiceAudio(answerAudioUrl);
         queuedSubmissionRef.current = {
           attemptId: input.state.attempt.id,

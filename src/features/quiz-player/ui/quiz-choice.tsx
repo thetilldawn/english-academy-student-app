@@ -25,8 +25,8 @@ export function QuizChoice({
   onChoose: () => void;
   onPlayAudio: () => void;
 }) {
-  const isEnglish = content.kind === "english-word";
-  const pronunciation = isEnglish ? content.pronunciation : undefined;
+  const isEnglish = content.kind !== "korean-meaning";
+  const pronunciation = content.kind === "english-word" ? content.pronunciation : undefined;
   const audioEnabled = content.audioUrl !== null;
   const choice = content.text;
   return (

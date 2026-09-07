@@ -23,6 +23,13 @@ const queueItemA = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
 const queueItemB = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
 
 describe("bulk assignment persistence contract", () => {
+  it("checks the old canonical receipt only after the current writer has no result",async()=>{
+    const assignment=bulkAssignmentSchema.parse({...bulkImmediateSubmitContract,questionMode:"canonical_definition_to_headword",englishToKoreanRatio:0});
+    const rpc=vi.fn().mockResolvedValueOnce({data:null,error:null}).mockResolvedValueOnce({data:[{assignment_id:assignmentA}],error:null});
+    const result=await lookupBulkAssignmentPersistence({client:{rpc} as never,assignment,requestSha256:"a".repeat(64)});
+    expect(rpc).toHaveBeenNthCalledWith(2,"get_canonical_assignment_preview_result_v1",expect.any(Object));
+    expect(result.data).toEqual([{assignment_id:assignmentA}]);
+  });
   it("uses the writer that accepts a fully immediate regular series", async () => {
     const assignment = bulkAssignmentSchema.parse(bulkImmediateSubmitContract);
     const rpc = vi.fn().mockResolvedValue({ data: [], error: null });
@@ -85,8 +92,8 @@ describe("bulk assignment persistence contract", () => {
     });
 
     expect(rpc.mock.calls.map((call) => call[0])).toEqual([
-      "get_canonical_assignment_preview_result_v1",
-      "create_bulk_canonical_assignments_preview_v1",
+      "get_bulk_vocab_series_result_v1",
+      "create_bulk_vocab_assignments_v11",
     ]);
   });
 

@@ -2,10 +2,15 @@ import type { AssignmentDirectionRatio, AssignmentQuestionMode } from "./model";
 
 const flexiblePolicy = { fixedDirectionRatio: null, schedule: "flexible" } as const;
 const singleImmediatePolicy = { fixedDirectionRatio: 0, schedule: "single-immediate" } as const;
+const definitionForwardPolicy = { fixedDirectionRatio: 0, schedule: "flexible" } as const;
+const definitionReversePolicy = { fixedDirectionRatio: 100, schedule: "flexible" } as const;
 
 /** Assignment restrictions, not a claim that a selected DAY has eligible questions. */
 export function assignmentQuestionModePolicy(mode: AssignmentQuestionMode) {
-  return mode === "book_meaning_choice" ? flexiblePolicy : singleImmediatePolicy;
+  if (mode === "book_meaning_choice") return flexiblePolicy;
+  if (mode === "canonical_definition_to_headword") return definitionForwardPolicy;
+  if (mode === "canonical_headword_to_definition") return definitionReversePolicy;
+  return singleImmediatePolicy;
 }
 
 export function assignmentQuestionModeAvailability(input: {
@@ -49,7 +54,7 @@ export function assignmentQuestionModeIssues(
 
 // Validation messages are part of the existing request contract, not UI translations.
 export const assignmentQuestionModeErrors = {
-  direction: "영영풀이·예문 시험은 영어 단어 고르기로만 출제합니다.",
-  schedule: "영영풀이·예문 시험은 현재 시험일 없이 1회만 바로 배정할 수 있습니다.",
-  serverSchedule: "영영풀이·예문 시험은 시험일 없이 1회만 바로 배정할 수 있습니다.",
+  direction: "선택한 출제 자료에 맞는 시험 방향을 선택해 주세요.",
+  schedule: "예문 시험은 현재 시험일 없이 1회만 바로 배정할 수 있습니다.",
+  serverSchedule: "예문 시험은 시험일 없이 1회만 바로 배정할 수 있습니다.",
 } as const;

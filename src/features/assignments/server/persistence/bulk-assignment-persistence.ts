@@ -10,8 +10,7 @@ export type BulkAssignmentPersistenceClient = Awaited<
 >;
 
 export function usesCompletionQueue(input: BulkAssignmentInput) {
-  return input.questionMode === "book_meaning_choice" &&
-    input.commonPlan?.distribution === "split" &&
+  return input.commonPlan?.distribution === "split" &&
     input.commonPlan.selectedDateCount > 0;
 }
 
@@ -120,16 +119,7 @@ export async function lookupBulkAssignmentPersistence(input: {
   assignment: BulkAssignmentInput;
   requestSha256: string;
 }) {
-  if (input.assignment.questionMode !== "book_meaning_choice") {
-    return input.client.rpc(
-      "get_canonical_assignment_preview_result_v1",
-      {
-        p_idempotency_key: input.assignment.idempotencyKey,
-        p_request_sha256: input.requestSha256,
-      },
-    );
-  }
-  return input.client.rpc(
+  const current = await input.client.rpc(
     usesCompletionQueue(input.assignment)
       ? "get_vocab_assignment_queue_result_v1"
       : "get_bulk_vocab_series_result_v1",
@@ -138,6 +128,14 @@ export async function lookupBulkAssignmentPersistence(input: {
       p_request_sha256: input.requestSha256,
     },
   );
+  if (!current.error && current.data === null &&
+      (input.assignment.questionMode === "canonical_definition_to_headword" || input.assignment.questionMode === "canonical_example_to_headword")) {
+    return input.client.rpc("get_canonical_assignment_preview_result_v1", {
+      p_idempotency_key: input.assignment.idempotencyKey,
+      p_request_sha256: input.requestSha256,
+    });
+  }
+  return current;
 }
 
 export async function persistBulkAssignment(input: {
@@ -147,13 +145,6 @@ export async function persistBulkAssignment(input: {
   batches: readonly Record<string, unknown>[];
   queueSeries: readonly Record<string, unknown>[] | null;
 }) {
-  if (input.assignment.questionMode !== "book_meaning_choice") {
-    return input.client.rpc("create_bulk_canonical_assignments_preview_v1", {
-      p_idempotency_key: input.assignment.idempotencyKey,
-      p_request_sha256: input.requestSha256,
-      p_batches: input.batches,
-    });
-  }
   return usesCompletionQueue(input.assignment)
     ? input.client.rpc("create_vocab_assignment_queues_v3", {
         p_idempotency_key: input.assignment.idempotencyKey,

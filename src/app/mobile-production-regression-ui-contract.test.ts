@@ -67,16 +67,16 @@ describe("mobile production regression UI contract", () => {
 
   it("reserves pronunciation columns only where the visible text is English", () => {
     expect(quizDomain).toContain(
-      'question.direction === "english_to_korean"',
+      'roles.prompt === "headword"',
     );
     expect(quizDomain).toContain(
-      'question.direction === "korean_to_english"',
+      'roles.choice === "headword"',
     );
     expect(quizDomain).toContain("pronunciation.available");
     expect(quizFrame).toContain(
-      "quizChoicePresentation(currentQuestion, index)",
+      "quizChoicePresentation(currentQuestion, index, quizContentMode)",
     );
-    expect(quizDomain).toContain('kind: "korean-meaning", text, audioUrl: null');
+    expect(quizDomain).toContain('"english-definition" : "korean-meaning", text, audioUrl: null');
     expect(quizDomain).toContain('kind: "english-word"');
     expect(quizDomain).toContain("pronunciation?.available ? pronunciation.audioUrl : null");
     expect(quizFrame).not.toContain("placeholder");

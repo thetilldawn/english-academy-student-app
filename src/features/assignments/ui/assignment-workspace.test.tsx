@@ -472,7 +472,7 @@ describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
     const scheduleToggle = within(within(dialog).getByText("시험일 사용").parentElement!).getByRole("checkbox");
     expect(scheduleToggle).not.toBeChecked();
     expect(scheduleToggle).toBeDisabled();
-    expect(within(dialog).getByText(/영영풀이·예문 시험은 영어 단어 고르기로 출제하며/)).toBeVisible();
+    expect(within(dialog).getByText(/예문 시험은 영어 단어 고르기로 출제하며/)).toBeVisible();
     for (const label of ["영어 → 뜻", "뜻 → 영어", "혼합"]) {
       expect(within(dialog).getByRole("button", { name: label })).toBeDisabled();
     }

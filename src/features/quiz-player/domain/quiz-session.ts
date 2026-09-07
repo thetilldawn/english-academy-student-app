@@ -1,4 +1,6 @@
 import { studentAppText } from "@/content/ko/student-app";
+import type { QuizContentMode } from "@/lib/quiz/question-content-mode";
+import { questionSemantics } from "@/lib/quiz/question-semantics";
 import type {
   QuizAnswerResponse,
   QuizAttempt,
@@ -60,6 +62,7 @@ export type QuizAudioPresentation = {
 
 export type QuizChoicePresentation =
   | { kind: "korean-meaning"; text: string; audioUrl: null }
+  | { kind: "english-definition"; text: string; audioUrl: null }
   | {
       kind: "english-word";
       text: string;
@@ -72,10 +75,12 @@ export type QuizChoicePresentation =
 export function quizChoicePresentation(
   question: QuizQuestion,
   choiceIndex: number,
+  mode: QuizContentMode = "book_meaning_choice",
 ): QuizChoicePresentation {
   const text = question.choices[choiceIndex] ?? "";
-  if (question.direction === "english_to_korean") {
-    return { kind: "korean-meaning", text, audioUrl: null };
+  const role = questionSemantics(mode, question.direction).choice;
+  if (role !== "headword") {
+    return { kind: role === "english_definition" ? "english-definition" : "korean-meaning", text, audioUrl: null };
   }
   const pronunciation = question.choicePronunciations[choiceIndex];
   return {
@@ -88,14 +93,16 @@ export function quizChoicePresentation(
 
 export function quizAudioPresentation(
   question: QuizQuestion,
+  mode: QuizContentMode = "book_meaning_choice",
 ): QuizAudioPresentation {
+  const roles = questionSemantics(mode, question.direction);
   const promptAudioUrl =
-    question.direction === "english_to_korean" &&
+    roles.prompt === "headword" &&
     question.pronunciation.available
       ? question.pronunciation.audioUrl
       : null;
   const choiceAudioEnabled =
-    question.direction === "korean_to_english" &&
+    roles.choice === "headword" &&
     question.choicePronunciations.some(
       (pronunciation) => pronunciation.available,
     );
@@ -103,8 +110,8 @@ export function quizAudioPresentation(
   return { promptAudioUrl, choiceAudioEnabled };
 }
 
-export function quizChoiceAudioUrls(question: QuizQuestion) {
-  return question.direction === "korean_to_english"
+export function quizChoiceAudioUrls(question: QuizQuestion, mode: QuizContentMode = "book_meaning_choice") {
+  return questionSemantics(mode, question.direction).choice === "headword"
     ? question.choicePronunciations.flatMap((pronunciation) =>
         pronunciation.available && pronunciation.audioUrl
           ? [pronunciation.audioUrl]
@@ -116,27 +123,28 @@ export function quizChoiceAudioUrls(question: QuizQuestion) {
 export function quizAnswerAudioUrl(
   question: QuizQuestion,
   choiceIndex: number | null,
+  mode: QuizContentMode = "book_meaning_choice",
 ) {
   if (
     choiceIndex === null ||
-    question.direction !== "korean_to_english"
+    questionSemantics(mode, question.direction).choice !== "headword"
   ) {
     return null;
   }
-  return quizChoicePresentation(question, choiceIndex).audioUrl;
+  return quizChoicePresentation(question, choiceIndex, mode).audioUrl;
 }
 
 export function quizPreloadAudioUrls(attempt: QuizAttempt) {
   const current = currentQuizQuestion(attempt);
   if (!current) return [];
-  const urls = quizChoiceAudioUrls(current);
+  const urls = quizChoiceAudioUrls(current, attempt.quizContentMode);
   const phaseQuestions = quizPhaseQuestions(attempt);
   const currentIndex = phaseQuestions.findIndex(
     (question) => question.id === current.id,
   );
   const nextQuestion = phaseQuestions[currentIndex + 1];
   const nextPromptUrl = nextQuestion
-    ? quizAudioPresentation(nextQuestion).promptAudioUrl
+    ? quizAudioPresentation(nextQuestion, attempt.quizContentMode).promptAudioUrl
     : null;
   return nextPromptUrl ? [...new Set([...urls, nextPromptUrl])] : urls;
 }

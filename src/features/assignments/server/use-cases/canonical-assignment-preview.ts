@@ -1,351 +1,225 @@
 import "server-only";
-
 import { z } from "zod";
 import { assignmentQuestionModeErrors, assignmentQuestionModeIssues } from "../../domain/assignment-question-mode-policy";
-
 import { cataloguedDatasetDisplayLabel } from "@/lib/admin/dataset-catalog";
 import { resolveOrderedUnitSelection } from "@/lib/admin/unit-range";
-import { unitSelectionLabel } from "@/features/assignments/domain/unit-selection-label";
-import { planDirectionalVocabSeriesTargets } from "@/features/assignments/domain/vocab-series-target-planner";
-import type { PlannedVocabSeriesTarget } from "@/features/assignments/domain/vocab-assignment-contract";
-import { MAXIMUM_VOCAB_SESSION_QUESTION_COUNT } from "../../domain/vocab-assignment-contract";
+import { unitSelectionLabel } from "../../domain/unit-selection-label";
+import { planDirectionalVocabSeriesTargets } from "../../domain/vocab-series-target-planner";
+import type { PlannedVocabSeriesTarget, VocabTargetDirection } from "../../domain/vocab-assignment-contract";
+import { resolvePlanUnitAllocation } from "../../domain/vocab-plan-unit-allocation";
+import { resolveVocabQuestionCycleAllocation } from "../../domain/vocab-question-allocation";
 import type { AdminContext } from "@/lib/auth/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-
 import type { BulkAssignmentPreviewInput } from "../../contracts/bulk-assignment-request";
-import type {
-  BulkAssignmentPreview,
-  BulkAssignmentPreviewItem,
-} from "../../contracts/bulk-assignment-response";
-import { loadCommonBulkAssignmentPlanningData } from "../queries/bulk-assignment-planning-query";
+import type { BulkAssignmentPreview, BulkAssignmentPreviewItem, BulkAssignmentPreviewSession } from "../../contracts/bulk-assignment-response";
+import { loadCommonBulkAssignmentPlanningData, type CommonBulkAssignmentPlanningData } from "../queries/bulk-assignment-planning-query";
 import { resolvedBulkPlanSha256 } from "../planning/bulk-assignment-plan-digest";
+import { commonPlanSchedule, extendCommonPlanSchedule, buildCommonPlanSummary } from "../planning/bulk-session-layout";
 import { BulkAssignmentError } from "./bulk-assignment-errors";
+import { MAXIMUM_BULK_ASSIGNMENT_COUNT } from "../../domain/model";
+import { MAXIMUM_BULK_QUESTION_COUNT } from "./bulk-assignment-limits";
 
-const canonicalCandidateSchema = z.object({
-  release_id: z.uuid(),
-  package_sha256: z.string().regex(/^[0-9a-f]{64}$/i),
-  vocab_entry_id: z.coerce.number().int().positive(),
-  unit_id: z.uuid(),
-  source_row: z.coerce.number().int().positive(),
-  question_item_id: z.string().min(1),
+const candidateSchema = z.object({
+  release_id: z.uuid(), package_sha256: z.string().regex(/^[0-9a-f]{64}$/i),
+  vocab_entry_id: z.coerce.number().int().positive(), unit_id: z.uuid(),
+  source_row: z.coerce.number().int().positive(), question_item_id: z.string().min(1),
   question_item_sha256: z.string().regex(/^[0-9a-f]{64}$/i),
+  direction: z.enum(["english_to_korean", "korean_to_english"]).optional(),
 }).strict();
-
+type Candidate = z.infer<typeof candidateSchema> & { direction: VocabTargetDirection };
 export type CanonicalPlannedQuestion = {
-  id: number;
-  direction: "korean_to_english";
-  questionItemId: string;
-  questionItemSha256: string;
-  releaseId: string;
-  packageSha256: string;
+  id: number; direction: VocabTargetDirection;
+  questionItemId: string; questionItemSha256: string;
+  releaseId: string; packageSha256: string;
+  bankSource: "canonical_legacy" | "reviewed_exam_v1";
 };
-
 export type CanonicalResolvedBulkAssignmentPreview = {
   preview: BulkAssignmentPreview;
   targetPlansByStudent: Map<string, PlannedVocabSeriesTarget[][]>;
-  canonicalPlansByStudent: Map<string, CanonicalPlannedQuestion[]>;
+  canonicalPlansByStudent: Map<string, CanonicalPlannedQuestion[][]>;
 };
 
-async function loadCanonicalCandidates(input: {
-  datasetId: string;
-  unitIds: readonly string[];
-  quizMode: Exclude<
-    BulkAssignmentPreviewInput["questionMode"],
-    "book_meaning_choice"
-  >;
-}) {
-  const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase.rpc(
-    "list_active_canonical_question_preview_v1",
-    {
-      p_dataset_id: input.datasetId,
-      p_unit_ids: [...input.unitIds],
-      p_quiz_mode: input.quizMode,
-    },
+async function loadCandidates(input: BulkAssignmentPreviewInput, unitIds: string[], reviewed: boolean): Promise<Candidate[]> {
+  const client = await createServerSupabaseClient();
+  const { data, error } = await client.rpc(
+    reviewed ? "list_active_reviewed_exam_questions_v1" : "list_active_canonical_question_preview_v1",
+    { p_dataset_id: input.commonPlan.datasetId, p_unit_ids: unitIds, p_quiz_mode: input.questionMode },
   );
-  if (error) {
-    throw new BulkAssignmentError(
-      "database",
-      "검수된 영영풀이·예문 문제를 불러오지 못했습니다.",
-    );
+  if (error) throw new BulkAssignmentError("database", "검토된 시험 문제를 불러오지 못했습니다. 다시 시도해 주세요.");
+  const parsed = z.array(candidateSchema).safeParse(data);
+  if (!parsed.success) throw new BulkAssignmentError("database", "시험 문제 목록의 형식이 올바르지 않습니다.");
+  const candidates = parsed.data.map((candidate): Candidate => ({
+    ...candidate,
+    direction: candidate.direction ?? "korean_to_english",
+  }));
+  const keys = candidates.map(c => `${c.vocab_entry_id}:${c.direction}`);
+  if (new Set(keys).size !== keys.length ||
+      new Set(candidates.map(c => c.release_id)).size > 1 ||
+      new Set(candidates.map(c => c.package_sha256)).size > 1 ||
+      (reviewed && parsed.data.some(c => !c.direction))) {
+    throw new BulkAssignmentError("database", "시험 문제의 버전이나 출제 방향이 서로 맞지 않습니다.");
   }
-  const parsed = z.array(canonicalCandidateSchema).safeParse(data);
-  if (!parsed.success) {
-    throw new BulkAssignmentError(
-      "database",
-      "검수된 문제 목록의 형식이 올바르지 않습니다.",
-    );
-  }
-  const releaseIds = new Set(parsed.data.map((item) => item.release_id));
-  const packageHashes = new Set(parsed.data.map((item) => item.package_sha256));
-  const vocabIds = parsed.data.map((item) => item.vocab_entry_id);
-  if (
-    parsed.data.length > 0 &&
-    (releaseIds.size !== 1 ||
-      packageHashes.size !== 1 ||
-      new Set(vocabIds).size !== vocabIds.length)
-  ) {
-    throw new BulkAssignmentError(
-      "database",
-      "검수된 문제 묶음의 버전이 서로 섞여 있습니다.",
-    );
-  }
-  return parsed.data;
+  return candidates;
 }
 
-function unavailableItem(input: {
-  studentId: string;
-  studentName: string;
-  datasetId: string;
-  datasetLabel: string | null;
-  message: string;
-  field: "dataset" | "students" | "range" | "questionCount" | "preview";
-}): BulkAssignmentPreviewItem {
-  return {
-    studentId: input.studentId,
-    studentName: input.studentName,
-    available: false,
-    datasetId: input.datasetId,
-    datasetLabel: input.datasetLabel,
-    sessions: [],
-    availableQuestionCount: null,
-    selectedQuestionCount: null,
-    remainingQuestionCount: null,
-    defaultSessionCount: null,
-    scheduledQuestionCount: null,
-    requiresExtraDateDecision: false,
-    error: input.message,
-    errorFieldKey: input.field,
-  };
+function targetCandidates(candidates: readonly Candidate[]) {
+  const grouped = new Map<number, { id: number; eligibleDirections: VocabTargetDirection[] }>();
+  for (const candidate of candidates) {
+    const item = grouped.get(candidate.vocab_entry_id) ?? { id: candidate.vocab_entry_id, eligibleDirections: [] };
+    item.eligibleDirections.push(candidate.direction);
+    grouped.set(item.id, item);
+  }
+  return [...grouped.values()];
 }
 
 export async function resolveCanonicalBulkAssignmentPreview(
   input: BulkAssignmentPreviewInput,
   admin: AdminContext,
+  preparedPlanning?: CommonBulkAssignmentPlanningData,
 ): Promise<CanonicalResolvedBulkAssignmentPreview> {
-  if (input.questionMode === "book_meaning_choice") {
-    throw new BulkAssignmentError("invalid_selection");
-  }
   const plan = input.commonPlan;
-  const modeIssues = assignmentQuestionModeIssues(input.questionMode, input.englishToKoreanRatio, plan);
-  if (modeIssues.direction || modeIssues.schedule) {
-    throw new BulkAssignmentError("invalid_selection", assignmentQuestionModeErrors.serverSchedule);
+  const issues = assignmentQuestionModeIssues(input.questionMode, input.englishToKoreanRatio, plan);
+  if (issues.direction || issues.schedule) {
+    throw new BulkAssignmentError("invalid_selection", issues.direction ? assignmentQuestionModeErrors.direction : assignmentQuestionModeErrors.serverSchedule);
   }
-
-  const planning = await loadCommonBulkAssignmentPlanningData(
-    { datasetId: plan.datasetId, studentIds: input.studentIds },
-    admin,
-  );
-  const dataset = planning.dataset;
-  const studentById = new Map(
-    planning.students.map((student) => [student.id, student]),
-  );
+  const planning = preparedPlanning ?? await loadCommonBulkAssignmentPlanningData(
+    { datasetId: plan.datasetId, studentIds: input.studentIds }, admin);
+  const reviewed = planning.dataset?.questionBankKind === "reviewed_exam_v1";
+  if (!reviewed && (input.questionMode === "book_meaning_choice" || input.questionMode === "canonical_headword_to_definition")) {
+    throw new BulkAssignmentError("invalid_selection", "이 단어장에는 선택한 방향의 검토된 문제가 없습니다.");
+  }
+  const ready = Boolean(planning.dataset?.status === "ready" && planning.dataset.isActive && planning.dataset.isAssignable);
+  const datasetLabel = planning.dataset ? cataloguedDatasetDisplayLabel(planning.dataset) : null;
   let selectedUnits: typeof planning.units = [];
-  let rangeError: string | null = null;
+  let planningError: string | null = null;
+  try { selectedUnits = resolveOrderedUnitSelection(planning.units, plan.orderedUnitIds); }
+  catch { planningError = "선택한 시험 범위를 사용할 수 없습니다."; }
+  const unitRank = new Map(selectedUnits.map((unit,index)=>[unit.id,index]));
+  const candidates = ready && !planningError ? (await loadCandidates(input, selectedUnits.map(u => u.id), reviewed))
+    .sort((a,b)=>(unitRank.get(a.unit_id) ?? Infinity)-(unitRank.get(b.unit_id) ?? Infinity) || a.source_row-b.source_row) : [];
+  const directionsNeeded: VocabTargetDirection[] = input.englishToKoreanRatio === 100 ? ["english_to_korean"]
+    : input.englishToKoreanRatio === 0 ? ["korean_to_english"] : ["english_to_korean", "korean_to_english"];
+  const eligible = targetCandidates(candidates).filter(c => directionsNeeded.every(d => c.eligibleDirections.includes(d)));
+  const eligibleIds = new Set(eligible.map(c => c.id));
+  const usable = candidates.filter(c => eligibleIds.has(c.vocab_entry_id));
+  const availableCount = eligible.length;
+  const maximumCount = Math.min(availableCount, 500);
+  let schedule = commonPlanSchedule(input);
+  let defaultSessionCount = 1;
+  let requiresExtraDateDecision = false;
+  let cycleIndexes: number[] = [];
+  let sessionUnits: typeof planning.units[] = [];
+  let counts: number[] = [];
   try {
-    selectedUnits = resolveOrderedUnitSelection(
-      planning.units,
-      plan.orderedUnitIds,
-    );
-  } catch {
-    rangeError = "선택한 공통 범위를 사용할 수 없습니다.";
-  }
-  const datasetLabel = dataset
-    ? cataloguedDatasetDisplayLabel(dataset)
-    : null;
-  const datasetReady = Boolean(
-    dataset?.status === "ready" && dataset.isActive && dataset.isAssignable,
-  );
-  const candidates = datasetReady && !rangeError
-    ? await loadCanonicalCandidates({
-        datasetId: plan.datasetId,
-        unitIds: selectedUnits.map((unit) => unit.id),
-        quizMode: input.questionMode,
-      })
-    : [];
-  const availableQuestionCount = candidates.length;
-  const maximumSessionQuestionCount = Math.min(availableQuestionCount, MAXIMUM_VOCAB_SESSION_QUESTION_COUNT);
-  const requestedQuestionCount = plan.questionCount.mode === "all"
-    ? maximumSessionQuestionCount
-    : plan.questionCount.value;
-  const countError = availableQuestionCount < 4
-    ? "선택한 범위에 검수된 문제가 4개보다 적습니다."
-    : requestedQuestionCount > maximumSessionQuestionCount
-      ? `현재 회차에서는 검수된 문제를 최대 ${maximumSessionQuestionCount}개까지 배정할 수 있습니다.`
-      : null;
-
+    if (!ready) throw new Error("현재 배정할 수 없는 단어장입니다.");
+    if (planningError) throw new Error(planningError);
+    if (availableCount < 4) throw new Error("선택한 범위에 검토된 문제가 4개보다 적습니다.");
+    if (plan.splitBasis === "range_unit") {
+      const allocation = resolvePlanUnitAllocation(plan);
+      defaultSessionCount = allocation.defaultSessionCount;
+      requiresExtraDateDecision = allocation.requiresExtraDateDecision;
+      cycleIndexes = allocation.sessionCycleIndexes;
+      sessionUnits = plan.sessions.map(s => resolveOrderedUnitSelection(planning.units, s.unitIds));
+      counts = sessionUnits.map(units => {
+        const selected = new Set(units.map(u => u.id));
+        const capacity = new Set(usable.filter(c => selected.has(c.unit_id)).map(c => c.vocab_entry_id)).size;
+        const count = plan.questionCount.mode === "all" ? Math.min(capacity, 500) : plan.questionCount.value;
+        if (count < 4 || count > Math.min(capacity, 500)) throw new Error(`현재 회차는 검토된 문제를 최대 ${Math.min(capacity, 500)}개까지 배정할 수 있습니다.`);
+        return count;
+      });
+    } else {
+      const allocation = resolveVocabQuestionCycleAllocation({
+        availableQuestionCount: plan.distribution === "repeat" ? maximumCount : availableCount, distribution: plan.distribution, questionCount: plan.questionCount,
+        selectedDateCount: plan.selectedDateCount, overflowPolicy: plan.overflowPolicy, extraDatePolicy: plan.extraDatePolicy,
+        maximumSessionQuestionCount: maximumCount, maximumSessionCount: MAXIMUM_BULK_ASSIGNMENT_COUNT,
+      });
+      if (allocation.issue) throw new Error(allocation.issue === "missing_schedule"
+        ? "배정할 요일을 선택해 주세요."
+        : `회차별 단어 수와 날짜를 확인해 주세요. 한 회차에는 최대 ${maximumCount}개까지 배정할 수 있습니다.`);
+      counts = allocation.sessionQuestionCounts;
+      cycleIndexes = allocation.sessionCycleIndexes;
+      defaultSessionCount = allocation.defaultSessionCount;
+      requiresExtraDateDecision = allocation.requiresExtraDateDecision;
+      schedule = extendCommonPlanSchedule(schedule, plan.recurrenceSessions, counts.length);
+      sessionUnits = counts.map(() => selectedUnits);
+    }
+    if (counts.length !== schedule.length || counts.length === 0 ||
+        counts.length * input.studentIds.length > MAXIMUM_BULK_ASSIGNMENT_COUNT ||
+        counts.reduce((a,b) => a+b,0) * input.studentIds.length > MAXIMUM_BULK_QUESTION_COUNT) {
+      throw new Error("배정할 회차와 일정의 개수를 확인해 주세요.");
+    }
+  } catch (error) { planningError = error instanceof Error ? error.message : "시험 회차를 계산하지 못했습니다."; }
+  const candidateByKey = new Map(usable.map(c => [`${c.vocab_entry_id}:${c.direction}`, c]));
+  const studentById = new Map(planning.students.map(s => [s.id, s]));
   const targetPlansByStudent = new Map<string, PlannedVocabSeriesTarget[][]>();
-  const canonicalPlansByStudent = new Map<string, CanonicalPlannedQuestion[]>();
+  const canonicalPlansByStudent = new Map<string, CanonicalPlannedQuestion[][]>();
   const items = input.studentIds.map((studentId): BulkAssignmentPreviewItem => {
     const student = studentById.get(studentId);
-    const studentName = student?.displayName ?? "확인할 수 없는 학생";
-    if (!student || student.status !== "active") {
-      return unavailableItem({
-        studentId,
-        studentName,
-        datasetId: plan.datasetId,
-        datasetLabel,
-        message: "접속 가능한 학생이 아닙니다.",
-        field: "students",
+    const itemBase = { studentId, studentName: student?.displayName ?? "확인할 수 없는 학생",
+      datasetId: plan.datasetId, datasetLabel, availableQuestionCount: availableCount,
+      totalAvailableQuestionCount: availableCount, maximumSessionQuestionCount: maximumCount,
+      selectedQuestionCount: 0, remainingQuestionCount: availableCount, defaultSessionCount,
+      scheduledQuestionCount: 0, requiresExtraDateDecision };
+    const error = !student || student.status !== "active" ? "접속 가능한 학생이 아닙니다." : planningError;
+    if (error) return { ...itemBase, available: false, sessions: [], error,
+      errorFieldKey: error.includes("회차") ? "questionCount" : "range" };
+    const targets: PlannedVocabSeriesTarget[][] = counts.map(() => []);
+    if (plan.splitBasis === "range_unit") {
+      sessionUnits.forEach((units, index) => {
+        const selected = new Set(units.map(u => u.id));
+        targets[index] = planDirectionalVocabSeriesTargets({
+          candidates: targetCandidates(usable.filter(c => selected.has(c.unit_id))),
+          distribution: "repeat", selectionMode: plan.selectionMode, sessionQuestionCounts: [counts[index]!],
+          englishToKoreanRatio: input.englishToKoreanRatio,
+          seedScope: `${plan.planNonce}:${studentId}:${index}:${input.questionMode}`,
+        })[0] ?? [];
       });
+    } else {
+      for (const cycle of new Set(cycleIndexes)) {
+        const indexes = counts.map((_,i) => i).filter(i => cycleIndexes[i] === cycle);
+        const plans = planDirectionalVocabSeriesTargets({
+          candidates: eligible, distribution: plan.distribution, selectionMode: plan.selectionMode,
+          sessionQuestionCounts: indexes.map(i => counts[i]!), englishToKoreanRatio: input.englishToKoreanRatio,
+          seedScope: `${plan.planNonce}:${studentId}:${cycle}:${input.questionMode}`,
+        });
+        indexes.forEach((index, offset) => { targets[index] = plans[offset] ?? []; });
+      }
     }
-    if (!datasetReady) {
-      return unavailableItem({
-        studentId,
-        studentName,
-        datasetId: plan.datasetId,
-        datasetLabel,
-        message: "최근 단어장을 신규 배정 가능한 자료로 바꿔 주세요.",
-        field: "dataset",
-      });
-    }
-    if (rangeError) {
-      return unavailableItem({
-        studentId,
-        studentName,
-        datasetId: plan.datasetId,
-        datasetLabel,
-        message: rangeError,
-        field: "range",
-      });
-    }
-    if (countError) {
-      return {
-        ...unavailableItem({
-          studentId,
-          studentName,
-          datasetId: plan.datasetId,
-          datasetLabel,
-          message: countError,
-          field: "questionCount",
-        }),
-        availableQuestionCount,
-        totalAvailableQuestionCount: availableQuestionCount,
-        maximumSessionQuestionCount,
-        selectedQuestionCount: 0,
-        remainingQuestionCount: availableQuestionCount,
-      };
-    }
-
-    const planned = planDirectionalVocabSeriesTargets({
-      candidates: candidates.map((candidate) => ({
-        id: candidate.vocab_entry_id,
-        eligibleDirections: ["korean_to_english"],
-      })),
-      distribution: "repeat",
-      selectionMode: plan.selectionMode,
-      sessionQuestionCounts: [requestedQuestionCount],
-      englishToKoreanRatio: 0,
-      seedScope: `${plan.planNonce}:${studentId}:canonical:${input.questionMode}`,
-    })[0] ?? [];
-    const candidateById = new Map(
-      candidates.map((candidate) => [candidate.vocab_entry_id, candidate]),
-    );
-    const canonicalPlan = planned.flatMap((target) => {
-      const candidate = candidateById.get(target.id);
-      return candidate
-        ? [{
-            id: target.id,
-            direction: "korean_to_english" as const,
-            questionItemId: candidate.question_item_id,
-            questionItemSha256: candidate.question_item_sha256,
-            releaseId: candidate.release_id,
-            packageSha256: candidate.package_sha256,
-          }]
-        : [];
-    });
-    if (canonicalPlan.length !== requestedQuestionCount) {
-      return unavailableItem({
-        studentId,
-        studentName,
-        datasetId: plan.datasetId,
-        datasetLabel,
-        message: "검수된 문제의 출제 순서를 확정하지 못했습니다.",
-        field: "preview",
-      });
-    }
-    targetPlansByStudent.set(studentId, [planned]);
-    canonicalPlansByStudent.set(studentId, canonicalPlan);
-    const unitIds = selectedUnits.map((unit) => unit.id);
-    return {
-      studentId,
-      studentName,
-      available: true,
-      datasetId: plan.datasetId,
-      datasetLabel,
-      sessions: [{
-        sessionNumber: 1,
-        sourceSessionNumber: 1,
-        cycleIndex: 0,
-        available: true,
-        unitId: unitIds[0] ?? null,
-        unitLabel: unitSelectionLabel(selectedUnits),
-        unitIds,
-        unitLabels: selectedUnits.map((unit) => unit.label),
-        rangeTruncated: false,
-        questionCount: requestedQuestionCount,
-        availableFrom: null,
-        availableUntil: null,
-        error: null,
-      }],
-      availableQuestionCount,
-      totalAvailableQuestionCount: availableQuestionCount,
-      maximumSessionQuestionCount,
-      selectedQuestionCount: requestedQuestionCount,
-      remainingQuestionCount: availableQuestionCount - requestedQuestionCount,
-      defaultSessionCount: 1,
-      scheduledQuestionCount: requestedQuestionCount,
-      requiresExtraDateDecision: false,
-      error: null,
-    };
+    const bankPlans = targets.map((list): CanonicalPlannedQuestion[] => list.flatMap(target => {
+      const candidate = candidateByKey.get(`${target.id}:${target.direction}`);
+      return candidate ? [{ id: target.id, direction: target.direction,
+        questionItemId: candidate.question_item_id, questionItemSha256: candidate.question_item_sha256,
+        releaseId: candidate.release_id, packageSha256: candidate.package_sha256,
+        bankSource: reviewed ? "reviewed_exam_v1" as const : "canonical_legacy" as const }] : [];
+    }));
+    if (bankPlans.some((p,i) => p.length !== counts[i])) return { ...itemBase, available:false,sessions:[],
+      error:"회차별 출제 대상을 확정하지 못했습니다. 범위를 다시 확인해 주세요.",errorFieldKey:"preview" };
+    targetPlansByStudent.set(studentId, targets);
+    canonicalPlansByStudent.set(studentId, bankPlans);
+    const sessions: BulkAssignmentPreviewSession[] = counts.map((count,i) => ({
+      sessionNumber:i+1,sourceSessionNumber:i+1,cycleIndex:cycleIndexes[i] ?? 0,available:true,
+      unitId:sessionUnits[i]?.[0]?.id ?? null,unitLabel:unitSelectionLabel(sessionUnits[i] ?? []),
+      unitIds:(sessionUnits[i] ?? []).map(u=>u.id),unitLabels:(sessionUnits[i] ?? []).map(u=>u.label),
+      rangeTruncated:false,questionCount:count,availableFrom:schedule[i]!.availableFrom,
+      availableUntil:schedule[i]!.availableUntil,error:null,
+    }));
+    const scheduledCount = counts.reduce((a,b) => a+b,0);
+    const selectedCount = plan.distribution === "split" ? Math.min(availableCount, scheduledCount) : counts[0] ?? 0;
+    return { ...itemBase, available:true,sessions,error:null,selectedQuestionCount:selectedCount,
+      remainingQuestionCount:Math.max(0,availableCount-selectedCount),scheduledQuestionCount:scheduledCount };
   });
-
-  const validPlans = [...canonicalPlansByStudent.values()];
-  const releaseId = validPlans[0]?.[0]?.releaseId ?? null;
-  const packageSha256 = validPlans[0]?.[0]?.packageSha256 ?? null;
-  const assignmentCount = items.filter((item) => item.available).length;
+  const valid = [...canonicalPlansByStudent.values()].flat(2);
   const preview: BulkAssignmentPreview = {
-    items,
-    assignableCount: assignmentCount,
-    blockedCount: items.length - assignmentCount,
-    assignmentCount,
-    commonPlanSummary: null,
-    planSignature: resolvedBulkPlanSha256(
-      items.map((item) => ({
-        studentId: item.studentId,
-        datasetId: item.datasetId,
-        sessions: item.sessions.map((session) => ({
-          ...session,
-          targets: (canonicalPlansByStudent.get(item.studentId) ?? []).map(
-            (target) => ({
-              id: target.id,
-              direction: target.direction,
-              questionItemId: target.questionItemId,
-              questionItemSha256: target.questionItemSha256,
-            }),
-          ),
-        })),
-      })),
-      {
-        questionMode: input.questionMode,
-        canonicalReleaseId: releaseId,
-        canonicalPackageSha256: packageSha256,
-        distribution: plan.distribution,
-        splitBasis: plan.splitBasis,
-        orderedUnitIds: plan.orderedUnitIds,
-        rangeUnitCounts: plan.rangeUnitCounts,
-        unitAllocationRule: plan.unitAllocationRule,
-        questionCount: plan.questionCount,
-        overflowPolicy: plan.overflowPolicy,
-        extraDatePolicy: plan.extraDatePolicy,
-        selectedDateCount: plan.selectedDateCount,
-        selectionMode: plan.selectionMode,
-        recurrenceSessions: plan.recurrenceSessions,
-      },
-    ),
-    rangeLabel: selectedUnits.length > 0
-      ? unitSelectionLabel(selectedUnits)
-      : null,
+    items,assignableCount:items.filter(i=>i.available).length,blockedCount:items.filter(i=>!i.available).length,
+    assignmentCount:items.filter(i=>i.available).reduce((n,i)=>n+i.sessions.length,0),
+    commonPlanSummary:buildCommonPlanSummary(items),rangeLabel:selectedUnits.length?unitSelectionLabel(selectedUnits):null,
+    planSignature:resolvedBulkPlanSha256(items.map(item=>({
+      studentId:item.studentId,datasetId:item.datasetId,
+      sessions:item.sessions.map((s,i)=>({...s,targets:(canonicalPlansByStudent.get(item.studentId)?.[i] ?? []).map(t=>({
+        id:t.id,direction:t.direction,questionItemId:t.questionItemId,questionItemSha256:t.questionItemSha256,
+      }))})),
+    })), { ...plan, questionMode:input.questionMode,canonicalReleaseId:valid[0]?.releaseId ?? null,
+      canonicalPackageSha256:valid[0]?.packageSha256 ?? null }),
   };
-  return { preview, targetPlansByStudent, canonicalPlansByStudent };
+  return { preview,targetPlansByStudent,canonicalPlansByStudent };
 }

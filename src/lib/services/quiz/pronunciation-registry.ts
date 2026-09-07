@@ -104,24 +104,6 @@ export async function loadActiveVocabPronunciationReleaseRegistry(
   const supabase = getServiceSupabaseClient();
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const uniqueIds = [...new Set(vocabEntryIds)];
-  const { data: releaseData, error: releaseError } = await supabase
-    .from("vocab_pronunciation_releases_v2")
-    .select("release_id")
-    .eq("status", "active");
-  if (releaseError) {
-    console.warn("[quiz-pronunciation] active VOCA release lookup failed", {
-      code: releaseError.code,
-    });
-    return result;
-  }
-  const activeReleaseIds = [
-    ...new Set(
-      (releaseData ?? []).flatMap((row) =>
-        typeof row.release_id === "string" ? [row.release_id] : [],
-      ),
-    ),
-  ];
-  if (activeReleaseIds.length === 0) return result;
   const bindings: Array<{
     release_id: string;
     vocab_entry_id: number;
@@ -129,12 +111,7 @@ export async function loadActiveVocabPronunciationReleaseRegistry(
   }> = [];
   for (let offset = 0; offset < uniqueIds.length; offset += 400) {
     const chunk = uniqueIds.slice(offset, offset + 400);
-    const { data, error } = await supabase
-      .from("vocab_entry_pronunciation_bindings_v2")
-      .select("release_id, vocab_entry_id, identity_id")
-      .in("vocab_entry_id", chunk)
-      .in("release_id", activeReleaseIds)
-      .eq("is_entry_default", true);
+    const { data, error } = await supabase.rpc("list_active_vocab_pronunciation_bindings_v3", { p_vocab_entry_ids: chunk });
     if (error) {
       console.warn("[quiz-pronunciation] active VOCA binding lookup failed", {
         code: error.code,
