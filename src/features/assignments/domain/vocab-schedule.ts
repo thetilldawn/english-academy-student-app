@@ -17,11 +17,13 @@ const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
 
 export type VocabScheduleCounts = {
-  baseSessionCount: number;
+  baseSessionCount: number | null;
   currentScheduleCount: number;
-  remainingSessionCount: number;
+  remainingSessionCount: number | null;
   requiresExtraDateDecision: boolean;
   repeatCycleCount: number;
+  sameRangeEverySession?: boolean;
+  capacityStatus?: "loading" | "different" | "error" | "unselected" | "blocked";
 };
 
 export function resolveVocabScheduleCounts(input: {
@@ -32,21 +34,24 @@ export function resolveVocabScheduleCounts(input: {
   extraDateDecisionSessionCount?: number | null;
   requiresExtraDateDecision: boolean;
   repeatCycleCount: number;
+  capacityStatus?: VocabScheduleCounts["capacityStatus"];
 }): VocabScheduleCounts {
   const baseSessionCount = (input.requiresExtraDateDecision
     ? input.extraDateDecisionSessionCount ?? input.defaultSessionCount
-    : input.defaultSessionCount) ?? 0;
+    : input.defaultSessionCount) ?? null;
   const currentScheduleCount = !input.scheduleEnabled
     ? 1
     : input.distribution === "repeat"
       ? input.slotCount
-      : Math.min(input.slotCount, baseSessionCount);
+      : baseSessionCount === null ? input.slotCount : Math.min(input.slotCount, baseSessionCount);
   return {
+    sameRangeEverySession: input.distribution === "repeat",
+    ...(input.capacityStatus ? { capacityStatus: input.capacityStatus } : {}),
     baseSessionCount,
     currentScheduleCount,
     remainingSessionCount: input.distribution === "repeat"
       ? 0
-      : Math.max(0, baseSessionCount - currentScheduleCount),
+      : baseSessionCount === null ? null : Math.max(0, baseSessionCount - currentScheduleCount),
     requiresExtraDateDecision: input.requiresExtraDateDecision,
     repeatCycleCount: input.repeatCycleCount,
   };

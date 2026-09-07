@@ -1,6 +1,8 @@
 export type BulkPlanSignatureSource = {
   datasetId: string | null;
   availableQuestionCount: number | null;
+  totalAvailableQuestionCount?: number | null;
+  maximumSessionQuestionCount?: number | null;
   selectedQuestionCount: number | null;
   remainingQuestionCount: number | null;
   defaultSessionCount: number | null;
@@ -20,6 +22,8 @@ export function bulkPlanSignature(item: BulkPlanSignatureSource) {
   return JSON.stringify({
     datasetId: item.datasetId,
     availableQuestionCount: item.availableQuestionCount,
+    totalAvailableQuestionCount: item.totalAvailableQuestionCount ?? null,
+    maximumSessionQuestionCount: item.maximumSessionQuestionCount ?? null,
     selectedQuestionCount: item.selectedQuestionCount,
     remainingQuestionCount: item.remainingQuestionCount,
     defaultSessionCount: item.defaultSessionCount,

@@ -206,6 +206,8 @@ function buildCommonPlanSummary(
       .filter((item) => !normalStudentIdSet.has(item.studentId))
       .map((item) => item.studentId),
     availableQuestionCount: representative.availableQuestionCount,
+    totalAvailableQuestionCount: representative.totalAvailableQuestionCount ?? null,
+    maximumSessionQuestionCount: representative.maximumSessionQuestionCount ?? null,
     selectedQuestionCount: representative.selectedQuestionCount,
     remainingQuestionCount: representative.remainingQuestionCount,
     defaultSessionCount: representative.defaultSessionCount,
@@ -390,6 +392,7 @@ export async function resolveBulkAssignmentPreview(
 
       let itemSchedule = schedule;
       let availableQuestionCount: number | null = null;
+      let totalAvailableQuestionCount: number | null = null;
       let maximumSessionQuestionCount: number | null = null;
       let selectedQuestionCount: number | null = null;
       let remainingQuestionCount: number | null = null;
@@ -419,6 +422,7 @@ export async function resolveBulkAssignmentPreview(
             seriesMaximumQuestionCount: capacity.seriesMaximumQuestionCount,
           });
           availableQuestionCount = capacityScope.availableQuestionCount;
+          totalAvailableQuestionCount = capacityScope.totalAvailableQuestionCount;
           maximumSessionQuestionCount =
             capacityScope.maximumSessionQuestionCount;
           if (commonPlan.splitBasis === "range_unit") {
@@ -521,6 +525,8 @@ export async function resolveBulkAssignmentPreview(
                 sessions: [],
                 availableQuestionCount,
                 selectedQuestionCount: null,
+                totalAvailableQuestionCount,
+                maximumSessionQuestionCount,
                 remainingQuestionCount: null,
                 error: allocationIssueMessage(allocation.issue),
                 errorFieldKey: allocationIssueFieldKey(allocation.issue),
@@ -559,6 +565,8 @@ export async function resolveBulkAssignmentPreview(
             sessions: [],
             availableQuestionCount,
             selectedQuestionCount: null,
+            totalAvailableQuestionCount,
+            maximumSessionQuestionCount,
             remainingQuestionCount: null,
             error: error instanceof Error
               ? error.message
@@ -718,6 +726,8 @@ export async function resolveBulkAssignmentPreview(
           orderedSessions.every((session) => session.available),
         sessions: orderedSessions,
         availableQuestionCount,
+        totalAvailableQuestionCount,
+        maximumSessionQuestionCount,
         selectedQuestionCount,
         remainingQuestionCount,
         defaultSessionCount,

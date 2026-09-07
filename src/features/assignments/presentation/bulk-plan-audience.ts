@@ -1,4 +1,6 @@
 type CountReference = {
+  totalAvailableQuestionCount?: number | null;
+  maximumSessionQuestionCount?: number | null;
   availableQuestionCount: number | null;
   selectedQuestionCount: number | null;
   remainingQuestionCount: number | null;

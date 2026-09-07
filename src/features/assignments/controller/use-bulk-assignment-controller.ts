@@ -24,6 +24,8 @@ import {
   resolveBulkSubmissionIssues,
 } from "../application/bulk-assignment-flow-adapter";
 import type { AssignmentOperationError } from "../application/assignment-operation-error";
+import { bulkCapacityIdentity } from "../application/bulk-capacity-summary";
+import { useBulkCapacity } from "./use-bulk-capacity";
 import type { AssignmentRequestIdentity } from "../application/request-lifecycle";
 import {
   createAssignmentSubmissionFlow,
@@ -83,6 +85,7 @@ const systemClock = () => Date.now();
 
 export function useBulkAssignmentController({
   enabled = true,
+  submissionEnabled = true,
   genericErrorMessage,
   initialCommonPlan,
   previewDelayMs = 120,
@@ -92,6 +95,7 @@ export function useBulkAssignmentController({
   transport = browserAssignmentTransport,
 }: {
   enabled?: boolean;
+  submissionEnabled?: boolean;
   genericErrorMessage: string;
   initialCommonPlan?: BulkSeriesAssignmentDraft["commonPlan"];
   previewDelayMs?: number;
@@ -128,6 +132,9 @@ export function useBulkAssignmentController({
   });
   const [previewRefreshVersion, setPreviewRefreshVersion] = useState(0);
   const [handledRefreshVersion, setHandledRefreshVersion] = useState(0);
+  const { value: capacity, clear: clearCapacity, remember: rememberCapacity } = useBulkCapacity({
+    enabled, studentIds, draft: state.draft, submissionSucceeded: state.submission.status === "succeeded",
+  });
   const nowMilliseconds = useAssignmentMinuteClock({
     clock,
     initializeFromClock: true,
@@ -188,6 +195,9 @@ export function useBulkAssignmentController({
       );
       const currentFingerprint = bulkPreviewIdentity(currentDraft);
       const nextFingerprint = bulkPreviewIdentity(nextDraft);
+      if (bulkCapacityIdentity(currentDraft) !== bulkCapacityIdentity(nextDraft)) {
+        clearCapacity();
+      }
       if (
         action.type === "common_plan/changed" &&
         currentFingerprint !== null &&
@@ -206,7 +216,7 @@ export function useBulkAssignmentController({
             : "invalidate",
       });
     },
-    [apply],
+    [apply, clearCapacity],
   );
 
   const previewIssues = resolveBulkPreviewIssues(state.draft);
@@ -266,14 +276,23 @@ export function useBulkAssignmentController({
         fingerprint: identity.fingerprint,
         value,
       });
+      const accepted = stateRef.current;
+      const scopeKey = bulkCapacityIdentity(accepted.draft);
+      if (scopeKey && accepted.preview.status === "ready" &&
+          accepted.preview.revision === identity.revision &&
+          accepted.preview.fingerprint === identity.fingerprint &&
+          accepted.preview.value === value) {
+        rememberCapacity(accepted.draft, value);
+      }
     },
-    [apply],
+    [apply, rememberCapacity],
   );
   const handlePreviewFailed = useCallback(
     (
       error: AssignmentOperationError,
       identity: AssignmentRequestIdentity,
     ) => {
+      clearCapacity();
       if (
         error.recovery === "refresh_preview" &&
         previewRecoveryFingerprintRef.current !== identity.fingerprint
@@ -290,7 +309,7 @@ export function useBulkAssignmentController({
         message: error.message,
       });
     },
-    [apply],
+    [apply, clearCapacity],
   );
   useDebouncedAssignmentPreview({
     delayMs: previewDelayMs,
@@ -321,6 +340,7 @@ export function useBulkAssignmentController({
       : "");
   const canSubmit =
     enabled &&
+    submissionEnabled &&
     state.submission.status !== "submitting" &&
     state.submission.status !== "succeeded" &&
     submissionIssues.length === 0 &&
@@ -328,6 +348,9 @@ export function useBulkAssignmentController({
     bulkPreviewAllowsSubmission(state.draft, preview);
 
   const submit = useCallback(async (): Promise<BulkAssignmentSubmitOutcome> => {
+    if (!enabled || !submissionEnabled) {
+      return { conflict: false, message: "배정할 날짜와 조건을 먼저 확인해 주세요.", ok: false };
+    }
     const reportAuthenticationFailure = captureAuthenticationFailure();
     let current = stateRef.current;
     if (current.submission.status === "succeeded") {
@@ -404,6 +427,7 @@ export function useBulkAssignmentController({
     });
 
     const outcome = await runSubmission();
+    clearCapacity();
     if (!outcome.ok) reportAuthenticationFailure(outcome.error);
     if (outcome.ok) {
       apply({
@@ -455,6 +479,8 @@ export function useBulkAssignmentController({
     };
   }, [
     apply,
+    enabled,
+    submissionEnabled,
     genericErrorMessage,
     captureAuthenticationFailure,
     nowMilliseconds,
@@ -462,6 +488,7 @@ export function useBulkAssignmentController({
     setMessage,
     setSubmissionIssue,
     submissionFlow,
+    clearCapacity,
   ]);
 
   const changeCommonPlan = useCallback(
@@ -510,12 +537,15 @@ export function useBulkAssignmentController({
               },
       });
     },
-    refreshPreview: () =>
-      setPreviewRefreshVersion((version) => version + 1),
+    refreshPreview: () => {
+      clearCapacity();
+      setPreviewRefreshVersion((version) => version + 1);
+    },
     submit,
   };
 
   return {
+    capacity,
     actions,
     canSubmit,
     message: displayedMessage,

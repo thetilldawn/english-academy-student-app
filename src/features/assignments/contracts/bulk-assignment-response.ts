@@ -34,6 +34,8 @@ export type BulkAssignmentPreviewItem = {
   datasetLabel: string | null;
   sessions: BulkAssignmentPreviewSession[];
   availableQuestionCount: number | null;
+  totalAvailableQuestionCount?: number | null;
+  maximumSessionQuestionCount?: number | null;
   selectedQuestionCount: number | null;
   remainingQuestionCount: number | null;
   defaultSessionCount: number | null;
@@ -48,6 +50,8 @@ export type BulkAssignmentCommonPlanSummary = {
   normalStudentIds: string[];
   exceptionStudentIds: string[];
   availableQuestionCount: number;
+  totalAvailableQuestionCount?: number | null;
+  maximumSessionQuestionCount?: number | null;
   selectedQuestionCount: number;
   remainingQuestionCount: number;
   defaultSessionCount: number;

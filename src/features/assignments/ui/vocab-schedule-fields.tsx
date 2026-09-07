@@ -109,10 +109,18 @@ export function VocabScheduleFields({
         <div className={styles.weekdayFieldHeading}>
           <FieldLabel as="span">요일</FieldLabel>
           <MetaTag size="large">
-            배정 {currentScheduleCount}회
-            {remainingSessionCount > 0
-              ? ` · 남음 ${remainingSessionCount}회`
-              : ""}
+            {counts.sameRangeEverySession
+              ? `선택한 날짜 ${currentScheduleCount}회 · 같은 범위 반복`
+              : counts.baseSessionCount === null
+              ? counts.capacityStatus === "different" ? "학생별 가능 회차가 다릅니다"
+                : counts.capacityStatus === "error" ? "가능한 회차를 확인하지 못했습니다"
+                : counts.capacityStatus === "unselected" ? "범위를 먼저 선택해 주세요"
+                : counts.capacityStatus === "blocked" ? "배정 조건을 확인해 주세요"
+                : "가능한 회차 확인 중"
+              : `가능한 배정 ${counts.baseSessionCount}회`}
+            {!counts.sameRangeEverySession && currentScheduleCount > 0 ? ` · 선택 ${currentScheduleCount}회` : ""}
+            {!counts.sameRangeEverySession && currentScheduleCount > 0 && remainingSessionCount !== null
+              ? ` · 남음 ${remainingSessionCount}회` : ""}
             {!counts.requiresExtraDateDecision &&
                 counts.repeatCycleCount > 1
               ? ` · 범위 ${counts.repeatCycleCount}바퀴`

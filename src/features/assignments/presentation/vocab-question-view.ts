@@ -2,27 +2,47 @@ import type { AssignmentUnitItem } from "../catalog-types";
 import type { VocabAssignmentMode, VocabRangeDistribution } from "../domain/vocab-assignment-contract";
 import { assignmentUnitRangeLabel } from "./assignment-unit-range-label";
 import type { BulkPlanAudience } from "./bulk-plan-audience";
+import type { BulkCapacitySummary } from "../application/bulk-capacity-summary";
 
 export type VocabQuestionView = { countSummary: string; allCountLabel: string; canRetry: boolean; manualActivationCount: number; manualCountValue: number | "" };
 export type VocabUnitAllocationView = { visible: boolean; showUnitsPerSession: boolean; showOverflow: boolean; summary: string | null };
 
 export function vocabQuestionView(input: {
   audience: BulkPlanAudience;
-  defaultSessionCount: number;
+  defaultSessionCount: number | null;
+  capacity?: BulkCapacitySummary | null;
   distribution: VocabRangeDistribution;
   assignmentMode: VocabAssignmentMode;
   questionCountMode: "all" | "manual";
   manualQuestionCount: number;
   previewState: "unselected" | "loading" | "blocked" | "error" | "ready";
 }): VocabQuestionView {
-  // Only the current, validated preview may supply an assignable count.
+  // Retained capacity never supplies assigned counts or submission readiness.
   const reference = input.previewState === "ready" ? input.audience.reference : null;
-  const availableQuestionCount = reference?.availableQuestionCount ?? null;
-  const defaultSessionCount = reference?.defaultSessionCount ?? input.defaultSessionCount ?? 0;
+  const capacity = (input.previewState === "ready" || input.previewState === "loading") &&
+      input.capacity?.status === "ready" ? input.capacity : null;
+  const availableQuestionCount = capacity?.totalAvailableQuestionCount ??
+    reference?.totalAvailableQuestionCount ??
+    (input.distribution === "split" ? reference?.availableQuestionCount : null) ?? null;
+  const maximumSessionQuestionCount = capacity?.maximumSessionQuestionCount ??
+    reference?.maximumSessionQuestionCount ??
+    (input.distribution === "repeat" ? reference?.availableQuestionCount : null) ?? null;
+  const defaultSessionCount = capacity?.defaultSessionCount ??
+    reference?.defaultSessionCount ?? input.defaultSessionCount;
   const selectedQuestionCount = reference?.selectedQuestionCount ?? 0;
   const remainingQuestionCount = reference?.remainingQuestionCount ?? 0;
   const countSummary = input.previewState === "unselected"
     ? "시험 범위를 선택해 주세요."
+    : input.capacity?.status === "different" &&
+      (input.previewState === "ready" || input.previewState === "loading")
+    ? "학생별 출제 가능 단어 수와 회차가 다릅니다. 아래 미리보기에서 확인해 주세요."
+    : capacity && !reference
+    ? [
+        availableQuestionCount === null ? "전체 가능 단어 수는 다시 확인해 주세요." : `전체 출제 가능 ${availableQuestionCount}개`,
+        maximumSessionQuestionCount === null ? null : `회차당 최대 ${maximumSessionQuestionCount}개`,
+        defaultSessionCount === null ? null : `가능한 배정 ${defaultSessionCount}회`,
+        input.previewState === "loading" ? "일정을 다시 확인하는 중입니다." : null,
+      ].filter(Boolean).join(" · ")
     : input.previewState === "loading"
     ? "출제 가능 단어 수를 확인하는 중입니다."
     : input.previewState === "error"
@@ -32,9 +52,11 @@ export function vocabQuestionView(input: {
     : input.audience.totalCount > 1 && !reference
     ? "학생별 출제 가능 수는 마지막 미리보기에서 확인해 주세요."
     : availableQuestionCount === null
-    ? "출제 가능 단어 수를 확인하지 못했습니다. 아래 미리보기 안내를 확인해 주세요."
+    ? maximumSessionQuestionCount !== null
+      ? `회차당 최대 ${maximumSessionQuestionCount}개 · 전체 가능 단어 수는 다시 확인해 주세요.`
+      : "출제 가능 단어 수를 확인하지 못했습니다. 아래 미리보기 안내를 확인해 주세요."
     : input.distribution === "repeat"
-      ? `출제 가능 ${availableQuestionCount}개 · 배정 ${selectedQuestionCount}개 · 남음 ${remainingQuestionCount}개 · 회차당 ${selectedQuestionCount}개`
+      ? `전체 출제 가능 ${availableQuestionCount}개 · 회차당 최대 ${maximumSessionQuestionCount ?? 500}개 · 회차당 배정 ${selectedQuestionCount}개`
       : input.assignmentMode === "per_session"
         ? `출제 가능 ${availableQuestionCount}개 · 범위별 배정 · 기본 ${defaultSessionCount}회`
         : `출제 가능 ${availableQuestionCount}개 · 배정 ${selectedQuestionCount}개 · 남음 ${remainingQuestionCount}개 · 기본 ${defaultSessionCount}회`;
@@ -47,16 +69,17 @@ export function vocabQuestionView(input: {
       : hasExceptions ? "전체 사용 · 학생별 확인" : `전체 사용 · ${availableQuestionCount}개`,
     canRetry: input.previewState === "error",
     manualActivationCount: input.manualQuestionCount > 0 ? input.manualQuestionCount
-      : availableQuestionCount === null ? 0 : Math.min(500, availableQuestionCount),
+      : availableQuestionCount === null ? 0 : Math.min(500, maximumSessionQuestionCount ?? 500, availableQuestionCount),
     manualCountValue: input.questionCountMode === "manual" || input.manualQuestionCount > 0
-      ? input.manualQuestionCount : availableQuestionCount ?? "",
+      ? input.manualQuestionCount : availableQuestionCount === null ? ""
+        : Math.min(500, maximumSessionQuestionCount ?? 500, availableQuestionCount),
   };
 }
 
 export function vocabUnitAllocationView(input: {
   assignmentMode: VocabAssignmentMode;
   scheduleEnabled: boolean | undefined;
-  defaultSessionCount: number;
+  defaultSessionCount: number | null;
   remainingUnitIds: readonly string[];
   selectedUnits: readonly Pick<AssignmentUnitItem, "id" | "label" | "sortIndex">[];
 }): VocabUnitAllocationView {
@@ -71,7 +94,8 @@ export function vocabUnitAllocationView(input: {
     visible: usesRangeUnits || input.assignmentMode === "word_count",
     showUnitsPerSession: usesRangeUnits,
     showOverflow: input.scheduleEnabled !== false,
-    summary: usesRangeUnits ? `기본 ${input.defaultSessionCount}회` + (input.remainingUnitIds.length > 0
+    summary: usesRangeUnits ? (input.defaultSessionCount === null
+      ? "범위와 회차당 단위 수를 정해 주세요." : `기본 ${input.defaultSessionCount}회`) + (input.remainingUnitIds.length > 0
       ? ` · 남음 ${remainingRangeLabel} (${input.remainingUnitIds.length}단위)` : "") : null,
   };
 }

@@ -28,6 +28,8 @@ import {
   resolveVocabRepeatCycleCount,
 } from "../domain/vocab-schedule";
 import { buildVocabAssignmentFieldErrors } from "../presentation/vocab-assignment-field-errors";
+import { resolveUndatedVocabUnitCycleAllocation } from "../domain/vocab-unit-allocation";
+import { bulkCapacityIdentity } from "../application/bulk-capacity-summary";
 import { useBulkAssignmentController } from "./use-bulk-assignment-controller";
 import type { AssignmentTransport } from "../transport/assignment-transport";
 import { useVocabAssignmentDerivedPlan } from "./use-vocab-assignment-derived-plan";
@@ -107,6 +109,7 @@ export function useVocabAssignmentPlanner({
     ],
   );
   const {
+    capacityOnly,
     commonPlan,
     distribution,
     effectiveSplitBasis,
@@ -114,14 +117,23 @@ export function useVocabAssignmentPlanner({
     scheduleSlots,
     unitAllocation,
   } = useVocabAssignmentDerivedPlan({ planner, selectedUnits });
-  const bulk = useBulkAssignmentController({
+  const rawBulk = useBulkAssignmentController({
     genericErrorMessage,
     initialCommonPlan: commonPlan,
     enabled,
+    submissionEnabled: !capacityOnly && localIssues.length === 0,
     previewErrorMessage,
     studentIds,
     transport,
   });
+  const bulk = {
+    ...rawBulk,
+    capacityOnly,
+    // The capacity probe is not a date selected by the administrator.
+    preview: capacityOnly ? null : rawBulk.preview,
+    capacityError: capacityOnly
+      ? rawBulk.preview?.items.find(item => item.error)?.error ?? null : null,
+  };
   const questionModeAvailability = datasets.find(
     (dataset) => dataset.id === planner.datasetId,
   )?.availableQuestionModes;
@@ -152,7 +164,7 @@ export function useVocabAssignmentPlanner({
   }, [changeCommonPlan, commonPlan]);
 
   function updateSchedule(patch: Partial<VocabScheduleDraft>) {
-    dispatch({ type: "schedule/update", patch, baseSessionCount: defaultSessionCount });
+    dispatch({ type: "schedule/update", patch, baseSessionCount: defaultSessionCount ?? undefined });
   }
 
   function applyTemplate(template: VocabTimeTemplate) {
@@ -163,7 +175,7 @@ export function useVocabAssignmentPlanner({
     dispatch({
       type: "schedule/replace",
       value: applied.schedule,
-      baseSessionCount: defaultSessionCount,
+      baseSessionCount: defaultSessionCount ?? undefined,
     });
     bulk.actions.changeTimeLimitEnabled(applied.exam.timeLimitEnabled !== false);
     bulk.actions.changeTiming(applied.exam.timing);
@@ -178,7 +190,7 @@ export function useVocabAssignmentPlanner({
     if (previousExam.scheduleRule) {
       dispatch({
         type: "schedule/update",
-        baseSessionCount: defaultSessionCount,
+        baseSessionCount: defaultSessionCount ?? undefined,
         patch: {
           ...previousExam.scheduleRule,
           availableTimeEnabled: true,
@@ -216,7 +228,7 @@ export function useVocabAssignmentPlanner({
     return true;
   }
 
-  const previewFieldIssues = (bulk.preview?.items ?? []).flatMap((item) => {
+  const previewFieldIssues = (rawBulk.preview?.items ?? []).flatMap((item) => {
     if (!item.error || !item.errorFieldKey) return [];
     const path = item.errorFieldKey === "dataset"
       ? "commonPlan.datasetId"
@@ -258,13 +270,19 @@ export function useVocabAssignmentPlanner({
     (item) => item.defaultSessionCount !== null,
   ) ?? null;
   const defaultSessionCount = effectiveSplitBasis === "range_unit"
-    ? unitAllocation?.defaultSessionCount ?? 0
-    : summary?.defaultSessionCount ??
-      representative?.defaultSessionCount ??
-      0;
+    ? (() => {
+        const base = resolveUndatedVocabUnitCycleAllocation({
+          orderedUnitIds: selectedUnits.map(unit => unit.id),
+          unitsPerSession: planner.unitsPerSession,
+        });
+        return base.issue ? null : base.defaultSessionCount;
+      })()
+    : bulkCapacityIdentity({ ...bulk.state.draft, commonPlan }) ===
+        bulkCapacityIdentity(bulk.state.draft)
+      ? bulk.capacity?.defaultSessionCount ?? null : null;
   const extraDateDecisionSessionCount = resolveExtraDateCancelSessionCount(
     bulk.preview?.items ?? [],
-    defaultSessionCount,
+    defaultSessionCount ?? 0,
   );
   const scheduledQuestionCount =
     summary?.scheduledQuestionCount ??

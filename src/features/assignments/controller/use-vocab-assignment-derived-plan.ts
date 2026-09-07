@@ -244,17 +244,29 @@ export function useVocabAssignmentDerivedPlan({
     const recurrenceScheduleSlots = scheduleSlots.length > 0
       ? allScheduleSlots
       : previewScheduleSlots;
+    // With no weekday selected, the existing one-date probe is only used to
+    // calculate capacity. The controller hides its schedule and blocks submission.
+    const capacityOnly = scheduleSlots.length === 0;
+    const planUnitCounts = capacityOnly && effectiveSplitBasis === "range_unit"
+      ? [planner.unitsPerSession] : baseSessionUnitCounts;
+    const planAllocation = capacityOnly && effectiveSplitBasis === "range_unit"
+      ? resolveVocabUnitCycleAllocation({
+          orderedUnitIds: unitIds, baseSessionUnitCounts: planUnitCounts,
+          selectedDateCount: 1, overflowPolicy: planner.overflowPolicy,
+          extraDatePolicy: "unconfirmed",
+        })
+      : unitAllocation;
     const planScheduleSlots = effectiveSplitBasis === "range_unit" &&
-        unitAllocation && !unitAllocation.issue
+        planAllocation && !planAllocation.issue
       ? extendScheduleSlotsFromRecurrence(
           basePlanScheduleSlots,
           recurrenceScheduleSlots,
-          unitAllocation.sessionUnitIds.length,
+          planAllocation.sessionUnitIds.length,
         )
       : basePlanScheduleSlots;
     const sessions = planScheduleSlots.map((slot) => ({
       unitIds: effectiveSplitBasis === "range_unit"
-        ? unitAllocation?.sessionUnitIds[slot.sessionNumber - 1] ?? []
+        ? planAllocation?.sessionUnitIds[slot.sessionNumber - 1] ?? []
         : unitIds,
       availableLocalDateTime: slot.availableLocalDateTime,
       deadlineLocalDateTime: slot.deadlineLocalDateTime,
@@ -274,7 +286,7 @@ export function useVocabAssignmentDerivedPlan({
           splitBasis: effectiveSplitBasis,
           orderedUnitIds: unitIds,
           rangeUnitCounts: effectiveSplitBasis === "range_unit"
-            ? baseSessionUnitCounts
+            ? planUnitCounts
             : [],
           unitAllocationRule: effectiveSplitBasis === "range_unit"
             ? unitAllocationRule
@@ -285,7 +297,7 @@ export function useVocabAssignmentDerivedPlan({
               ? planner.overflowPolicy
               : "leave" as const,
           extraDatePolicy: planner.extraDatePolicy,
-          selectedDateCount: scheduleSlots.length,
+          selectedDateCount: capacityOnly ? previewScheduleSlots.length : scheduleSlots.length,
           selectionMode: planner.selectionMode,
           planNonce: planner.planNonce,
           sessions,
@@ -304,6 +316,7 @@ export function useVocabAssignmentDerivedPlan({
     planner.planNonce,
     planner.selectionMode,
     planner.scheduleEnabled,
+    planner.unitsPerSession,
     previewScheduleSlots,
     questionCount,
     scheduleSlots,
@@ -313,6 +326,7 @@ export function useVocabAssignmentDerivedPlan({
   ]);
 
   return {
+    capacityOnly: planner.scheduleEnabled !== false && scheduleSlots.length === 0,
     allScheduleSlots,
     baseSessionUnitCounts,
     commonPlan,

@@ -20,17 +20,19 @@ export function VocabQuestionSection({ controller, fieldErrors = {} }: Omit<Voca
   const planner = controller.planner;
   const countView = vocabQuestionView({
     audience: buildBulkPlanAudience(controller.bulk.preview),
+    capacity: controller.bulk.capacity,
     defaultSessionCount: controller.defaultSessionCount, distribution: controller.distribution,
     assignmentMode: planner.assignmentMode, questionCountMode: planner.questionCountMode,
     manualQuestionCount: planner.manualQuestionCount,
     previewState: controller.selectedUnits.length === 0 ? "unselected"
-      : controller.bulk.preview ? "ready"
+      : controller.bulk.capacityError ? "error"
+      : controller.bulk.preview || (controller.bulk.capacityOnly && controller.bulk.capacity) ? "ready"
       : controller.bulk.previewLoading ? "loading"
       : controller.bulk.state?.preview.status === "error" ? "error" : "blocked",
   });
   const unitView = vocabUnitAllocationView({
     assignmentMode: planner.assignmentMode, scheduleEnabled: planner.scheduleEnabled,
-    defaultSessionCount: controller.unitAllocation?.defaultSessionCount ?? 0,
+    defaultSessionCount: controller.defaultSessionCount,
     remainingUnitIds: controller.unitAllocation?.remainingUnitIds ?? [],
     selectedUnits: controller.selectedUnits,
   });

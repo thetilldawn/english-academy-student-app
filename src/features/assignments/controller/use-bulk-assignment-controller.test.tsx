@@ -83,6 +83,8 @@ function previewResponse(
     items: studentIds.map((studentId, studentIndex) => ({
       available: true,
       availableQuestionCount: 40,
+      totalAvailableQuestionCount: 601,
+      maximumSessionQuestionCount: 500,
       datasetId: assignmentContractIds.dataset,
       datasetLabel: "VOCA",
       defaultSessionCount: sessionCount,
@@ -157,12 +159,14 @@ function successTransport(
 function renderController(
   transport: AssignmentTransport,
   initialCommonPlan?: BulkCommonAssignmentPlan,
+  submissionEnabled = true,
 ) {
   return renderHook(() => useBulkAssignmentController({
     clock: () => NOW,
     genericErrorMessage: "일괄 배정을 저장하지 못했습니다.",
     initialCommonPlan,
     previewDelayMs: 0,
+    submissionEnabled,
     previewErrorMessage: "학생별 범위를 계산하지 못했습니다.",
     studentIds: [assignmentContractIds.studentA],
     transport,
@@ -181,6 +185,64 @@ afterEach(() => {
 });
 
 describe("일괄 배정 controller", () => {
+  it("날짜만 변경 중에는 집계만 유지하고 이전 미리보기로 저장하지 않는다", async () => {
+    const transport = successTransport();
+    const { result } = renderController(transport, scheduledPlan([17]));
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    expect(result.current.capacity?.totalAvailableQuestionCount).toBe(601);
+    act(() => result.current.actions.changeCommonPlan(scheduledPlan([17, 19])));
+    expect(result.current.capacity?.defaultSessionCount).toBe(1);
+    expect(result.current.preview).toBeNull();
+    expect(result.current.canSubmit).toBe(false);
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    act(() => result.current.actions.changeDirection(0));
+    expect(result.current.capacity).toBeNull();
+    expect(result.current.canSubmit).toBe(false);
+  });
+  it("명시적인 새로고침과 저장 성공은 용량 보관을 폐기한다", async () => {
+    const { result } = renderController(successTransport(), scheduledPlan([17]));
+    await waitFor(() => expect(result.current.capacity).not.toBeNull());
+    act(() => result.current.actions.refreshPreview());
+    expect(result.current.capacity).toBeNull();
+    await waitFor(() => expect(result.current.capacity).not.toBeNull());
+    await act(async () => { await result.current.actions.submit(); });
+    expect(result.current.capacity).toBeNull();
+  });
+  it.each([401, 403, 503])("날짜 재조회 %i 실패는 이전 숫자로 덮지 않는다", async status => {
+    let calls = 0;
+    const transport: AssignmentTransport = vi.fn(async () => ++calls === 1
+      ? { ok: true, status: 200, data: previewResponse([assignmentContractIds.studentA], 1) }
+      : { ok: false, status, data: { error: "다시 확인해 주세요." } });
+    const { result } = renderController(transport, scheduledPlan([17]));
+    await waitFor(() => expect(result.current.capacity).not.toBeNull());
+    act(() => result.current.actions.changeCommonPlan(scheduledPlan([19])));
+    await waitFor(() => expect(result.current.state.preview.status).toBe("error"));
+    expect(result.current.capacity).toBeNull();
+    expect(result.current.canSubmit).toBe(false);
+  });
+  it("늦게 도착한 이전 범위 응답은 용량을 복원하지 않는다", async () => {
+    let resolveOld!: (value: Awaited<ReturnType<AssignmentTransport>>) => void;
+    const transport: AssignmentTransport = vi.fn(() => new Promise<Awaited<ReturnType<AssignmentTransport>>>(resolve => { resolveOld = resolve; }));
+    const { result } = renderController(transport, scheduledPlan([17]));
+    await waitFor(() => expect(transport).toHaveBeenCalledOnce());
+    act(() => result.current.actions.changeCommonPlan(undefined));
+    await act(async () => resolveOld({ ok: true, status: 200, data: previewResponse([assignmentContractIds.studentA], 1) }));
+    expect(result.current.capacity).toBeNull();
+    expect(result.current.preview).toBeNull();
+  });
+  it("날짜 선택0인 성공 응답에서도 가능한 회차를 보존한다", async () => {
+    const data = previewResponse([assignmentContractIds.studentA], 0);
+    data.items[0]!.defaultSessionCount = 7;
+    data.items[0]!.available = false;
+    data.assignableCount = 0;
+    data.blockedCount = 1;
+    const transport: AssignmentTransport = vi.fn(async () => ({ ok: true, status: 200, data }));
+    const { result } = renderController(transport, scheduledPlan([17]), false);
+    await waitFor(() => expect(result.current.capacity?.defaultSessionCount).toBe(7));
+    expect(result.current.canSubmit).toBe(false);
+    await act(async () => expect(await result.current.actions.submit()).toMatchObject({ ok: false }));
+    expect(transport).toHaveBeenCalledOnce();
+  });
   it("공통 계획이 없으면 미리보기를 요청하지 않는다", async () => {
     const transport = successTransport();
     const { result } = renderController(transport);

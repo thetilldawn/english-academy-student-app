@@ -34,7 +34,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("./use-bulk-assignment-controller", () => ({
-  useBulkAssignmentController: () => ({
+  useBulkAssignmentController: ({ initialCommonPlan }: { initialCommonPlan: unknown }) => ({
     actions: {
       changeCommonPlan: mocks.changeCommonPlan,
       changeDirection: vi.fn(),
@@ -52,6 +52,8 @@ vi.mock("./use-bulk-assignment-controller", () => ({
     previewLoading: false,
     state: {
       draft: {
+        studentIds: ["student-a"],
+        commonPlan: initialCommonPlan,
         questionMode: mocks.questionMode,
         exam: {
           directionRatio: 50,
@@ -162,6 +164,22 @@ function scheduledLocalDate(value: string | null) {
 }
 
 describe("단어 배정 일정 controller", () => {
+  it("요일을 고르기 전에도 전체 범위의 기본 회차를 계산하고 저장은 막는다", () => {
+    const { result } = renderPlanner();
+    selectWholeRange(result);
+    act(() => {
+      result.current.actions.changeAssignmentMode("per_session");
+      result.current.actions.changeUnitsPerSession(2);
+    });
+    expect(result.current.scheduleSlots).toHaveLength(0);
+    expect(result.current.defaultSessionCount).toBe(3);
+    expect(result.current.canSubmit).toBe(false);
+    act(() => result.current.actions.toggleWeekday(1));
+    expect(result.current.defaultSessionCount).toBe(3);
+    act(() => result.current.actions.toggleWeekday(1));
+    expect(result.current.defaultSessionCount).toBe(3);
+    expect(result.current.scheduleSlots).toHaveLength(0);
+  });
   beforeEach(() => {
     mocks.changeCommonPlan.mockReset();
     mocks.changeOrder.mockReset();
@@ -437,9 +455,12 @@ describe("단어 배정 일정 controller", () => {
       questionCount: { mode: "all" },
       overflowPolicy: "leave",
       extraDatePolicy: "unconfirmed",
-      selectedDateCount: 0,
+      selectedDateCount: 1,
       selectionMode: "source_order",
     });
+    expect(result.current.bulk.capacityOnly).toBe(true);
+    expect(result.current.canSubmit).toBe(false);
+    expect(result.current.bulk.preview).toBeNull();
 
     act(() => {
       result.current.actions.activateManualQuestionCount(120);

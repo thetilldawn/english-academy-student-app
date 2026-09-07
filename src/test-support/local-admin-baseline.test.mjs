@@ -6,7 +6,7 @@ import { createHmac } from "node:crypto";
 import { STUDY_TOKEN, STUDY_SECRET, studyWords } from "../../scripts/local-student-study-data.mjs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ACCOUNT, ACCESS_TOKEN, APP_ORIGIN, DATA_ORIGIN, PUBLIC_KEY, fixtureResponse, summarizeSamples, uid } from "../../scripts/local-admin-baseline-data.mjs";
-import { assertLocalBaselineEnvironment, assertLocalFetchTarget, assertNestedPath, guardedFetch, waitForChild, stopOwnedChild, isRestorationSafe, assertMayStart } from "../../scripts/local-admin-baseline-guard.mjs";
+import { assertLocalBaselineEnvironment, assertLocalFetchTarget, assertNestedPath, guardedFetch, waitForChild, stopOwnedChild, isRestorationSafe, assertMayStart, shouldSimulateCapacityFailure } from "../../scripts/local-admin-baseline-guard.mjs";
 
 const roots = [];
 afterEach(() => { for (const root of roots.splice(0)) fs.rmSync(root, { recursive: true, force: true }); });
@@ -48,6 +48,14 @@ describe("로컬 학생 학습 가짜 자료 보호", () => {
   });
 });
 describe("로컬 기준 계측 보호", () => {
+  it("용량 조회 오류는 명시한 로컬 미리보기에만 적용하고 배정 쓰기를 열지 않는다", () => {
+    const preview = "/api/admin/bulk-assignments/preview";
+    expect(shouldSimulateCapacityFailure(true, preview, "POST", APP_ORIGIN)).toBe(true);
+    expect(shouldSimulateCapacityFailure(false, preview, "POST", APP_ORIGIN)).toBe(false);
+    expect(shouldSimulateCapacityFailure(true, preview, "POST", "https://example.com")).toBe(false);
+    expect(shouldSimulateCapacityFailure(true, preview, "GET", APP_ORIGIN)).toBe(false);
+    expect(shouldSimulateCapacityFailure(true, "/api/admin/bulk-assignments", "POST", APP_ORIGIN)).toBe(false);
+  });
   it("긴 범위 이름도 가짜 5범위·100개 안에서만 확인한다", () => {
     const result = read("/rest/v1/vocab_units?dataset_id=eq." + uid(10));
     expect(result.status).toBe(200);

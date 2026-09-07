@@ -155,7 +155,7 @@ describe("VocabScheduleFields", () => {
       onCancelExtraDates: vi.fn(), onRepeatFromStart: vi.fn(), details: <span>일정 상세 자리</span>,
     };
     render(<VocabScheduleFields {...props} />);
-    expect(screen.getByText("배정 1회 · 남음 1회")).toBeVisible();
+    expect(screen.getByText("가능한 배정 2회 · 선택 1회 · 남음 1회")).toBeVisible();
     const date = screen.getByLabelText(/^배정 기준일/);
     expect(date).toHaveAttribute("aria-invalid", "true");
     expect(date).toHaveAttribute("aria-errormessage", "vocab-start-date-error");
@@ -220,7 +220,7 @@ describe("VocabScheduleFields", () => {
     expect(screen.getByText(/1회차 \[8월 24일 \(월\)\]/)).toBeVisible();
     expect(screen.getByText(/2회차 \[8월 26일 \(수\)\]/)).toBeVisible();
     expect(screen.getByText(/3회차 \[8월 28일 \(금\)\]/)).toBeVisible();
-    expect(screen.getByText("배정 3회")).toBeVisible();
+    expect(screen.getByText("가능한 배정 3회 · 선택 3회 · 남음 0회")).toBeVisible();
 
     fireEvent.change(screen.getByDisplayValue("2026-08-21"), {
       target: { value: "2026-08-22" },
@@ -242,7 +242,7 @@ describe("VocabScheduleFields", () => {
     render(<ScheduleHarness value={value} />);
 
     expect(
-      screen.getByText("배정 3회"),
+      screen.getByText("가능한 배정 3회 · 선택 3회 · 남음 0회"),
     ).toBeVisible();
   });
 
@@ -287,7 +287,7 @@ describe("VocabScheduleFields", () => {
 
     render(<ScheduleHarness value={value} />);
 
-    expect(screen.getByText("배정 2회 · 범위 2바퀴")).toBeVisible();
+    expect(screen.getByText("가능한 배정 2회 · 선택 2회 · 남음 0회 · 범위 2바퀴")).toBeVisible();
   });
 
   it("25단위를 회차당 5단위로 나눈 기본 5회를 일정에서 다시 25회로 세지 않는다", () => {
@@ -311,7 +311,7 @@ describe("VocabScheduleFields", () => {
 
     render(<ScheduleHarness value={value} />);
 
-    expect(screen.getByText("배정 5회")).toBeVisible();
+    expect(screen.getByText("가능한 배정 5회 · 선택 5회 · 남음 0회")).toBeVisible();
     expect(screen.queryByText(/남음 18회/)).not.toBeInTheDocument();
     expect(screen.getByText(/범위를 총 2바퀴 사용합니다/)).toBeVisible();
   });
@@ -344,7 +344,7 @@ describe("VocabScheduleFields", () => {
 
     expect(screen.queryByText("회차별 시간")).not.toBeInTheDocument();
     expect(screen.queryByText(/배정 합계/)).not.toBeInTheDocument();
-    expect(screen.getByText("배정 0회 · 남음 3회")).toBeVisible();
+    expect(screen.getByText("가능한 배정 3회")).toBeVisible();
   });
 
   it("미리보기가 없어도 현재 선택한 단어장을 일정 태그에 표시한다", () => {

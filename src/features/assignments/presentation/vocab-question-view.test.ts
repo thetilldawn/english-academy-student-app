@@ -9,6 +9,22 @@ const base: Parameters<typeof vocabQuestionView>[0] = {
   previewState: "ready",
 };
 describe("수량 표시값", () => {
+  it("전체 후보601과 회차당500을 분리하고 날짜 재계산 중에도 용량만 유지한다", () => {
+    const capacity = { status: "ready" as const, totalAvailableQuestionCount: 601, maximumSessionQuestionCount: 500, defaultSessionCount: 7 };
+    const ready = vocabQuestionView({ ...base, capacity, distribution: "repeat", assignmentMode: "all_sessions" });
+    expect(ready.countSummary).toContain("전체 출제 가능 601개 · 회차당 최대 500개");
+    expect(ready.manualCountValue).toBe(500);
+    const loading = vocabQuestionView({ ...base, capacity, previewState: "loading" });
+    expect(loading.countSummary).toContain("가능한 배정 7회");
+    expect(loading.countSummary).toContain("일정을 다시 확인하는 중");
+    expect(loading.countSummary).not.toContain("배정 40개");
+    expect(vocabQuestionView({ ...base, capacity, previewState: "error" }).countSummary).not.toContain("601");
+  });
+  it("전체601이지만 한 회차463이면 focus의 기본값도463이다", () => {
+    expect(vocabQuestionView({ ...base, capacity: {
+      status: "ready", totalAvailableQuestionCount: 601, maximumSessionQuestionCount: 463, defaultSessionCount: 2,
+    } })).toMatchObject({ manualCountValue: 463, manualActivationCount: 463 });
+  });
   it.each([
     ["unselected", "시험 범위를 선택해 주세요."],
     ["loading", "출제 가능 단어 수를 확인하는 중입니다."],
@@ -32,7 +48,7 @@ describe("수량 표시값", () => {
     expect(common.countSummary).toContain("다른 1명");
   });
   it.each([
-    ["all_sessions", "repeat", "출제 가능 86개 · 배정 40개 · 남음 46개 · 회차당 40개"],
+    ["all_sessions", "repeat", "회차당 최대 86개 · 전체 가능 단어 수는 다시 확인해 주세요."],
     ["per_session", "split", "출제 가능 86개 · 범위별 배정 · 기본 3회"],
     ["word_count", "split", "출제 가능 86개 · 배정 40개 · 남음 46개 · 기본 3회"],
   ] as const)("%s의 기존 요약", (assignmentMode, distribution, expected) => {
@@ -44,7 +60,7 @@ describe("수량 표시값", () => {
     expect(vocabQuestionView({ ...base, questionCountMode: "manual" }).manualCountValue).toBe(0);
     expect(vocabQuestionView({ ...base, audience: { ...base.audience,
       reference: { ...base.audience.reference!, availableQuestionCount: 640 } } }))
-      .toMatchObject({ manualCountValue: 640, manualActivationCount: 500 });
+      .toMatchObject({ manualCountValue: 500, manualActivationCount: 500 });
   });
   it("미준비와 여러 학생의 서로 다른 값을 구분한다", () => {
     const empty = vocabQuestionView({ ...base, audience: buildBulkPlanAudience(null) });

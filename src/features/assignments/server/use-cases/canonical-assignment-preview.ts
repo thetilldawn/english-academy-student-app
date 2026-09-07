@@ -8,6 +8,7 @@ import { resolveOrderedUnitSelection } from "@/lib/admin/unit-range";
 import { unitSelectionLabel } from "@/features/assignments/domain/unit-selection-label";
 import { planDirectionalVocabSeriesTargets } from "@/features/assignments/domain/vocab-series-target-planner";
 import type { PlannedVocabSeriesTarget } from "@/features/assignments/domain/vocab-assignment-contract";
+import { MAXIMUM_VOCAB_SESSION_QUESTION_COUNT } from "../../domain/vocab-assignment-contract";
 import type { AdminContext } from "@/lib/auth/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -163,13 +164,14 @@ export async function resolveCanonicalBulkAssignmentPreview(
       })
     : [];
   const availableQuestionCount = candidates.length;
+  const maximumSessionQuestionCount = Math.min(availableQuestionCount, MAXIMUM_VOCAB_SESSION_QUESTION_COUNT);
   const requestedQuestionCount = plan.questionCount.mode === "all"
-    ? availableQuestionCount
+    ? maximumSessionQuestionCount
     : plan.questionCount.value;
   const countError = availableQuestionCount < 4
     ? "선택한 범위에 검수된 문제가 4개보다 적습니다."
-    : requestedQuestionCount > availableQuestionCount
-      ? `선택한 범위에서는 검수된 문제를 최대 ${availableQuestionCount}개까지 배정할 수 있습니다.`
+    : requestedQuestionCount > maximumSessionQuestionCount
+      ? `현재 회차에서는 검수된 문제를 최대 ${maximumSessionQuestionCount}개까지 배정할 수 있습니다.`
       : null;
 
   const targetPlansByStudent = new Map<string, PlannedVocabSeriesTarget[][]>();
@@ -218,6 +220,8 @@ export async function resolveCanonicalBulkAssignmentPreview(
           field: "questionCount",
         }),
         availableQuestionCount,
+        totalAvailableQuestionCount: availableQuestionCount,
+        maximumSessionQuestionCount,
         selectedQuestionCount: 0,
         remainingQuestionCount: availableQuestionCount,
       };
@@ -285,6 +289,8 @@ export async function resolveCanonicalBulkAssignmentPreview(
         error: null,
       }],
       availableQuestionCount,
+      totalAvailableQuestionCount: availableQuestionCount,
+      maximumSessionQuestionCount,
       selectedQuestionCount: requestedQuestionCount,
       remainingQuestionCount: availableQuestionCount - requestedQuestionCount,
       defaultSessionCount: 1,

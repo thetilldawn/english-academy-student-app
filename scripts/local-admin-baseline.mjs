@@ -8,7 +8,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { APP_ORIGIN, DATA_ORIGIN, NEXT_ORIGIN, PUBLIC_KEY, ACCOUNT, fixtureResponse } from "./local-admin-baseline-data.mjs";
 import { STUDY_TOKEN } from "./local-student-study-data.mjs";
 import { isLocalQuizRequest, localQuizSummary, localQuizWave, resetLocalQuizzes } from "./local-quiz-feedback-data.mjs";
-import { assertLocalBaselineEnvironment, assertNestedPath, waitForChild, stopOwnedChild, assertMayStart, isRestorationSafe } from "./local-admin-baseline-guard.mjs";
+import { assertLocalBaselineEnvironment, assertNestedPath, waitForChild, stopOwnedChild, assertMayStart, isRestorationSafe, shouldSimulateCapacityFailure } from "./local-admin-baseline-guard.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const quizFeedback = process.argv.includes("--quiz-feedback");
@@ -142,6 +142,10 @@ const proxy = http.createServer(async (req, res) => {
     return json(res, { ok: true });
   }
   if (url.pathname === "/api/admin/notifications") return json(res, { error: "Notifications excluded from local read baseline" }, 403);
+  if (shouldSimulateCapacityFailure(process.argv.includes("--capacity-read-error"), url.pathname, req.method, req.headers.origin)) {
+    metrics.http.push({ path: url.pathname, method: req.method, status: 503, category: "capacity-read-error", at: Date.now() });
+    return json(res, { error: "Local capacity read failure fixture" }, 503);
+  }
   if (url.pathname.startsWith("/api/") && (!allowedApi.has(url.pathname) &&
       !(quizFeedback && isLocalQuizRequest(url.pathname, req.method)) &&
       !/^\/api\/admin\/assignment-workspace\/datasets\/00000000-0000-4000-8000-00000000001[01]\/units$/.test(url.pathname))) {

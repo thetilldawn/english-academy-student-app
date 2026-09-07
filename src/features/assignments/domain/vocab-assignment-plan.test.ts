@@ -563,6 +563,7 @@ describe("단어 시험 공통 배정 계획", () => {
       seriesMaximumQuestionCount: 500,
     })).toEqual({
       availableQuestionCount: 500,
+      totalAvailableQuestionCount: 500,
       maximumSessionQuestionCount: 463,
     });
     expect(resolveVocabQuestionCapacityScope({
@@ -571,6 +572,7 @@ describe("단어 시험 공통 배정 계획", () => {
       seriesMaximumQuestionCount: 500,
     })).toEqual({
       availableQuestionCount: 463,
+      totalAvailableQuestionCount: 500,
       maximumSessionQuestionCount: 463,
     });
 

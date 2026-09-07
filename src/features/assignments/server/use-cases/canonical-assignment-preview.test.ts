@@ -28,6 +28,32 @@ const changes: [string, (r: BulkAssignmentPreviewInput) => void][] = [
 ];
 beforeEach(() => { vi.clearAllMocks(); mocks.load.mockRejectedValue(new Error("LOCAL_READ_BOUNDARY")); });
 describe("canonical server restriction before data access", () => {
+  it.each(["canonical_definition_to_headword", "canonical_example_to_headword"] as const)("%s의 전체 후보601과 회차500 상한을 구분한다", async questionMode => {
+    const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+    const input = request();
+    input.questionMode = questionMode;
+    input.commonPlan.datasetId = uuid(10);
+    input.commonPlan.orderedUnitIds = [uuid(11)];
+    input.commonPlan.sessions[0]!.unitIds = [uuid(11)];
+    mocks.load.mockResolvedValue({
+      dataset: { id: uuid(10), title: "가짜 자료", displayName: "가짜 자료", status: "ready", isActive: true, isAssignable: true },
+      students: [{ id: "fake-student", displayName: "가짜 학생", status: "active" }],
+      units: [{ id: uuid(11), label: "DAY 1", sortIndex: 1 }],
+    });
+    mocks.client.mockResolvedValue({ rpc: vi.fn(async () => ({ error: null, data: Array.from({ length: 601 }, (_, n) => ({
+      release_id: uuid(12), package_sha256: "a".repeat(64), vocab_entry_id: n + 1,
+      unit_id: uuid(11), source_row: n + 1, question_item_id: `fake-item-${n}`, question_item_sha256: "b".repeat(64),
+    })) })) });
+    const result = await resolveCanonicalBulkAssignmentPreview(input, {} as AdminContext);
+    expect(result.preview.items[0]).toMatchObject({
+      available: true, totalAvailableQuestionCount: 601, maximumSessionQuestionCount: 500,
+      selectedQuestionCount: 500, remainingQuestionCount: 101,
+    });
+    expect(result.canonicalPlansByStudent.get("fake-student")).toHaveLength(500);
+    input.commonPlan.questionCount = { mode: "manual", value: 501 };
+    const rejected = await resolveCanonicalBulkAssignmentPreview(input, {} as AdminContext);
+    expect(rejected.preview.items[0]).toMatchObject({ available: false, errorFieldKey: "questionCount" });
+  });
   it.each(changes)("rejects %s before any query", async (_name, change) => {
     for (const mode of ["canonical_definition_to_headword", "canonical_example_to_headword"] as const) {
       const input = request(); input.questionMode = mode; change(input);

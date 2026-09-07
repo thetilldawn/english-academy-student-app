@@ -83,13 +83,6 @@ export function VocabQuestionFields({
             </Button>
           </div>
       </Field>
-      <ConditionalReveal open={assignmentMode !== "all_sessions"}>
-        <VocabUnitAllocationFields
-          view={unitView} unitsPerSession={unitsPerSession} overflowPolicy={overflowPolicy}
-          fieldErrors={{ unitsPerSession: fieldErrors.unitsPerSession, overflowPolicy: fieldErrors.overflowPolicy }}
-          onUnitsPerSessionChange={onUnitsPerSessionChange} onOverflowPolicyChange={onOverflowPolicyChange}
-        />
-      </ConditionalReveal>
       <ConditionalReveal open={assignmentMode === "word_count"}>
         <AssignmentWordCountField
           allSelected={questionCountMode === "all"}
@@ -110,6 +103,13 @@ export function VocabQuestionFields({
           }
           onSelectAll={() => onSelectAllCount()}
           value={countView.manualCountValue}
+        />
+      </ConditionalReveal>
+      <ConditionalReveal open={assignmentMode !== "all_sessions"}>
+        <VocabUnitAllocationFields
+          view={unitView} unitsPerSession={unitsPerSession} overflowPolicy={overflowPolicy}
+          fieldErrors={{ unitsPerSession: fieldErrors.unitsPerSession, overflowPolicy: fieldErrors.overflowPolicy }}
+          onUnitsPerSessionChange={onUnitsPerSessionChange} onOverflowPolicyChange={onOverflowPolicyChange}
         />
       </ConditionalReveal>
       <VocabTargetSelectionField

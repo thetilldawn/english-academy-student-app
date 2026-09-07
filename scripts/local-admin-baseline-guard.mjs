@@ -3,6 +3,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { APP_ORIGIN, DATA_ORIGIN, NEXT_ORIGIN, PUBLIC_KEY } from "./local-admin-baseline-data.mjs";
 
+// A read failure fixture, never an authorization bypass or a successful preview.
+export function shouldSimulateCapacityFailure(enabled, pathname, method, origin) {
+  return enabled === true && pathname === "/api/admin/bulk-assignments/preview" &&
+    method === "POST" && origin === APP_ORIGIN;
+}
+
 export function assertLocalBaselineEnvironment(env, root) {
   if (env.VERCEL || env.VERCEL_ENV || env.CI || env.LOCAL_ADMIN_BASELINE !== "fake-read-only-v1") {
     throw new Error("명시적인 로컬 검사 환경에서만 실행할 수 있습니다.");

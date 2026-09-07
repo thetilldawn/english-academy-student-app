@@ -176,6 +176,7 @@ export function resolveVocabQuestionCapacityScope(input: {
     availableQuestionCount: input.distribution === "repeat"
       ? maximumSessionQuestionCount
       : input.seriesMaximumQuestionCount,
+    totalAvailableQuestionCount: input.seriesMaximumQuestionCount,
     maximumSessionQuestionCount,
   };
 }

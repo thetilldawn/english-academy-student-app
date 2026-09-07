@@ -8,6 +8,9 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import { cataloguedDatasetFromMetadata } from "@/lib/admin/dataset-catalog";
 import type { StudentDirectorySnapshot } from "@/features/students/public-contracts";
 import { assignmentQuestionModes } from "../domain/model";
+import { bulkAssignmentPreviewSchema } from "../contracts/bulk-assignment-request";
+import { resolveVocabQuestionCycleAllocation } from "../domain/vocab-question-allocation";
+import { resolveUndatedVocabUnitCycleAllocation } from "../domain/vocab-unit-allocation";
 import { AssignmentWorkspace } from "./assignment-workspace";
 import { StudentDirectoryCacheProvider, announceStudentDirectoryRefresh } from "@/features/students/public-client";
 import { announceAdminPrivateCacheChange } from "@/features/session/public-client";
@@ -89,6 +92,62 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
+  it.each(["single", "bulk"] as const)("%s에서 날짜를 고르기 전부터 회차별·단어 수 가능 회차를 표시한다", async mode => {
+    const original = fetchMock.getMockImplementation()!;
+    const previewRequests: unknown[] = [];
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (url.includes("/datasets/") && url.endsWith("/units")) {
+        return Response.json({ datasetId: datasets[0]!.id, units: Array.from({ length: 6 }, (_, index) => ({
+          id: uid(100 + index), datasetId: datasets[0]!.id, label: `DAY ${index + 1}`, displayName: `DAY ${index + 1}`,
+          entryCount: index === 5 ? 101 : 100, kind: "day", number: index + 1, sortIndex: index + 1,
+          catalogSortIndex: index + 1, catalogGroup: "high", unitType: "day",
+          academicYear: null, agency: null, examMonth: null, itemRange: null,
+        })) });
+      }
+      if (url !== "/api/admin/bulk-assignments/preview") return original(url, init);
+      // Validate the real HTTP contract, not just the component's invented shape.
+      const body = bulkAssignmentPreviewSchema.parse(JSON.parse(String(init?.body)));
+      previewRequests.push(body);
+      const plan = body.commonPlan;
+      const defaultSessionCount = plan.splitBasis === "range_unit"
+        ? resolveUndatedVocabUnitCycleAllocation({ orderedUnitIds: plan.orderedUnitIds, unitsPerSession: plan.unitAllocationRule!.unitsPerSession }).defaultSessionCount
+        : resolveVocabQuestionCycleAllocation({ ...plan, availableQuestionCount: 601, maximumSessionQuestionCount: 500 }).defaultSessionCount;
+      return Response.json({
+        assignableCount: 0, blockedCount: body.studentIds.length, assignmentCount: 0,
+        commonPlanSummary: null, planSignature: "a".repeat(64), rangeLabel: "DAY 1~DAY 6",
+        items: body.studentIds.map(studentId => ({
+          studentId, studentName: "가짜 학생", datasetId: plan.datasetId, datasetLabel: "가짜 자료",
+          available: false, sessions: [], availableQuestionCount: 601, totalAvailableQuestionCount: 601,
+          maximumSessionQuestionCount: 500, defaultSessionCount,
+          error: null, remainingQuestionCount: 601, selectedQuestionCount: 0, scheduledQuestionCount: 0, requiresExtraDateDecision: false,
+        })),
+      });
+    });
+    render(<AssignmentWorkspace initial={{ directory }} />);
+    if (mode === "bulk") {
+      fireEvent.click(screen.getByRole("tab", { name: "일괄 배정" }));
+      for (const student of students) fireEvent.click(screen.getByRole("checkbox", { name: `${student.displayName} 일괄 배정 선택` }));
+    }
+    fireEvent.click(screen.getAllByRole("button", { name: "단어 배정" })[0]!);
+    fireEvent.click(await screen.findByRole("button", { name: /단어장 찾기/ }, { timeout: 5000 }));
+    fireEvent.click(screen.getByRole("button", { name: /로컬 형용사.*선택/ }));
+    const dialog = screen.getByRole("dialog");
+    await within(dialog).findByRole("button", { name: "DAY 6" });
+    // Toggle all through the public control; do not manipulate hook state.
+    const all = within(dialog).getByRole("button", { name: "전체 선택" });
+    fireEvent.click(all);
+    fireEvent.click(within(dialog).getByRole("button", { name: "회차별" }));
+    fireEvent.change(await within(dialog).findByRole("spinbutton", { name: /^회차당 단위 수/ }), { target: { value: "2" } });
+    expect(await within(dialog).findByText("가능한 배정 3회")).toBeVisible();
+    fireEvent.click(within(dialog).getByRole("button", { name: "단어 수" }));
+    fireEvent.change(await within(dialog).findByRole("spinbutton", { name: "회차당 단어 수" }), { target: { value: "100" } });
+    expect(await within(dialog).findByText("가능한 배정 7회")).toBeVisible();
+    expect(within(dialog).getByText(/전체 출제 가능 601개 · 회차당 최대 500개/)).toBeVisible();
+    fireEvent.click(within(dialog).getByRole("button", { name: "배정하기" }));
+    expect(await within(dialog).findByText("배정할 요일을 하나 이상 선택해 주세요.")).toBeVisible();
+    expect(previewRequests.length).toBeGreaterThan(0);
+    expect(fetchMock.mock.calls.some(([url]) => url === "/api/admin/bulk-assignments")).toBe(false);
+  });
   it.each(["single", "bulk"] as const)("%s의 실제 수량 대기·실패·재시도·범위변경은 수록 수와 작성값을 보존한다", async mode => {
     const original = fetchMock.getMockImplementation()!;
     const pending: Array<{ finish: (response: Response) => void; studentIds: string[] }> = [];
@@ -145,7 +204,7 @@ describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
       expect(within(dialog).getByText(/출제 가능 16개/)).toBeVisible();
       expect(input).toHaveValue(16);
     } else {
-      expect(within(dialog).getByText("학생별 출제 가능 수는 마지막 미리보기에서 확인해 주세요.")).toBeVisible();
+      expect(within(dialog).getByText(/전체 가능 단어 수는 다시 확인해 주세요/)).toBeVisible();
       expect(within(dialog).queryByRole("button", { name: "전체 사용 · 16개" })).not.toBeInTheDocument();
     }
     expect(within(dialog).getByText("선택한 범위 1개 · 수록 단어 20개")).toBeVisible();
