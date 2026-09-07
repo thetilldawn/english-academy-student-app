@@ -1596,6 +1596,10 @@
   ],
   "architectureGuardOwners": [
     {
+      "path": "src/lib/services/quiz/pronunciation-registry.test.ts",
+      "owner": "quiz-player"
+    },
+    {
       "path": "src/lib/quiz/pronunciation-snapshot.test.ts",
       "owner": "shared-quiz-domain"
     },
@@ -3883,7 +3887,8 @@
         "database": [
           "supabase/migrations/20260829153000_add_admin_history_read_model.sql",
           "supabase/migrations/20260831100000_return_admin_history_hidden_version.sql",
-          "supabase/migrations/20260901141048_fix_admin_history_infinite_effective_at.sql"
+          "supabase/migrations/20260901141048_fix_admin_history_infinite_effective_at.sql",
+          "supabase/migrations/20260907121138_add_entry_approved_korean_pronunciation.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/loading.tsx",
@@ -3916,7 +3921,8 @@
           "src/lib/database/admin-history-read-migration-contract.test.ts",
           "src/lib/database/review-assignment-final-schema.integration.test.ts",
           "src/lib/services/regular-assignment-scope-contract.test.ts",
-          "src/features/history/server/queries/admin-history-query-contract.test.ts"
+          "src/features/history/server/queries/admin-history-query-contract.test.ts",
+          "src/lib/database/entry-approved-pronunciation.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
