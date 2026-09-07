@@ -3004,7 +3004,8 @@
           "src/features/assignments/ui/vocab-unit-allocation-fields.test.tsx",
           "src/features/assignments/presentation/vocab-question-view.test.ts",
           "src/features/assignments/ui-role-boundary.test.ts",
-          "src/lib/database/assignment-release-final-schema.integration.test.ts"
+          "src/lib/database/assignment-release-final-schema.integration.test.ts",
+          "src/features/assignments/server/queries/eligible-vocabulary-pagination.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -3381,7 +3382,8 @@
           "src/features/assignments/ui/vocab-question-fields.test.tsx",
           "src/features/assignments/ui/vocab-unit-allocation-fields.test.tsx",
           "src/features/assignments/presentation/vocab-question-view.test.ts",
-          "src/features/assignments/ui-role-boundary.test.ts"
+          "src/features/assignments/ui-role-boundary.test.ts",
+          "src/features/assignments/server/queries/eligible-vocabulary-pagination.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -3645,7 +3647,8 @@
           "src/features/assignments/ui/direct-review-range-fields.test.tsx",
           "src/features/assignments/ui/direct-review-preview.test.tsx",
           "src/features/assignments/presentation/direct-review-view.test.ts",
-          "src/features/assignments/ui/direct-review-assignment-sections.test.tsx"
+          "src/features/assignments/ui/direct-review-assignment-sections.test.tsx",
+          "src/features/assignments/server/queries/eligible-vocabulary-pagination.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -4372,7 +4375,8 @@
           "src/lib/admin/assignment-request-contract.characterization.test.ts",
           "src/lib/services/regular-assignment-scope-contract.test.ts",
           "src/features/assignments/ui/exam-condition-fields.test.tsx",
-          "src/lib/database/assignment-release-final-schema.integration.test.ts"
+          "src/lib/database/assignment-release-final-schema.integration.test.ts",
+          "src/features/assignments/server/queries/eligible-vocabulary-pagination.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -5105,7 +5109,8 @@
           "src/features/assignments/ui/vocab-unit-allocation-fields.test.tsx",
           "src/features/assignments/presentation/vocab-question-view.test.ts",
           "src/features/assignments/ui-role-boundary.test.ts",
-          "src/lib/database/assignment-release-final-schema.integration.test.ts"
+          "src/lib/database/assignment-release-final-schema.integration.test.ts",
+          "src/features/assignments/server/queries/eligible-vocabulary-pagination.test.ts"
         ]
       },
       "requiredImportEdges": [

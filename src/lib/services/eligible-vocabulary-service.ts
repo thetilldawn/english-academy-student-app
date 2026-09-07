@@ -17,6 +17,43 @@ type ServerSupabaseClient = Awaited<
   ReturnType<typeof createServerSupabaseClient>
 >;
 
+async function loadExamUseEligibility(
+  supabase: ServerSupabaseClient,
+  datasetId: string,
+) {
+  const rows: VocabularyEligibilitySourceRow[] = [];
+  let previous: VocabularyEligibilitySourceRow | null = null;
+  for (;;) {
+    // One vocabulary entry has two direction rows. A single RPC response can
+    // therefore truncate a 601-word book to 500 words at the API's row limit.
+    const { data, error } = await supabase
+      .rpc("list_active_exam_use_eligibility_v1", { p_dataset_id: datasetId })
+      .order("vocab_entry_id")
+      .order("quiz_mode")
+      .range(rows.length, rows.length + ELIGIBLE_VOCABULARY_PAGE_SIZE - 1);
+    if (error || !Array.isArray(data) || data.length > ELIGIBLE_VOCABULARY_PAGE_SIZE) {
+      throw new Error("검토된 단어사전 출제 정보를 불러오지 못했습니다.");
+    }
+    if (data.length === 0) return rows;
+    for (const row of data as VocabularyEligibilitySourceRow[]) {
+      if (
+        !row || !Number.isSafeInteger(row.vocab_entry_id) || row.vocab_entry_id < 1 ||
+        !["book_meaning_en_to_ko", "book_meaning_ko_to_en"].includes(row.quiz_mode) ||
+        (previous && (
+          row.vocab_entry_id < previous.vocab_entry_id ||
+          (row.vocab_entry_id === previous.vocab_entry_id && row.quiz_mode <= previous.quiz_mode)
+        ))
+      ) {
+        throw new Error("검토된 단어사전 출제 정보를 불러오지 못했습니다.");
+      }
+      rows.push(row);
+      previous = row;
+    }
+    // Advance by received rows, not requested page size; a smaller response
+    // limit must not skip records. Strict ordering also rejects repeated pages.
+  }
+}
+
 export async function loadEligibleVocabularyDataset(
   supabase: ServerSupabaseClient,
   datasetId: string,
@@ -56,18 +93,8 @@ export async function loadEligibleVocabularyDataset(
     })(),
     (async () => {
       if (options.includeExamUseProjection) {
-        const { data, error } = await supabase.rpc(
-          "list_active_exam_use_eligibility_v1",
-          { p_dataset_id: datasetId },
-        );
-        if (error) {
-          throw new Error(
-            "검토된 단어사전 출제 정보를 불러오지 못했습니다.",
-          );
-        }
-        if (data && data.length > 0) {
-          return data as VocabularyEligibilitySourceRow[];
-        }
+        const rows = await loadExamUseEligibility(supabase, datasetId);
+        if (rows.length > 0) return rows;
       }
 
       const rows: VocabularyEligibilitySourceRow[] = [];

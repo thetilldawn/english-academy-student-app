@@ -3,7 +3,7 @@
   "id": "APP-20260907-03",
   "title": "전체 가능 단어 수와 날짜 선택 전 회차 표시",
   "size": "full",
-  "gate": "verified",
+  "gate": "design",
   "guide": "docs/work-orders/APP-20260907-03.md",
   "baseline": "bcaac92f3e64bef160905f23aaae55a4b10ca85b",
   "requirements": [
@@ -20,12 +20,15 @@
         "assignment-range-create",
         "weekday-unit-allocation",
         "assignment-series",
-        "assignment-workspace-planning"
+        "assignment-workspace-planning",
+        "assignment-direct-review-create",
+        "assignment-edit"
       ],
       "checkIds": [
         "T1",
         "T2",
-        "T3"
+        "T3",
+        "T7"
       ]
     },
     {
@@ -105,6 +108,14 @@
       "question": "영영풀이/예문 후보501개 이상과 기존500상한",
       "answer": "기존 DB 4~500 제한을 보존하고 전체 모드도 한회차500까지만 출제한다. 총량601과 회차당500을 구분해 표시하며 나머지101을 감추지 않는다.",
       "source": "canonical-assignment-preview.ts 및 20260902090557_add_canonical_question_preview.sql:908-910"
+    },
+    {
+      "id": "D5",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "시험 사용 자격 RPC의1000행 제한 처리",
+      "answer": "단어당 두방향을 전체 조회하기 위해 결정적 순서와 실제받은수 기준 페이지 순회, 빈페이지 종료·부분오류/중복/역순 차단. 첫정상0행만 기존자격표 사용. DB/서버상한/권한 변경 없음.",
+      "source": "19c0794 실제 Preview601→500 재현, 양DB 승인601개 집계 및 공식Supabase range 문서"
     }
   ],
   "impacts": {
@@ -125,8 +136,8 @@
       "reason": "기존 용량 계산의 총량 노출·현재 범위 표시용 집계·초기 회차/입력 위치 개선"
     },
     "data": {
-      "status": "checked",
-      "reason": "인증·저장/배정/채점 규칙·DB·목록 전체 구조 유지"
+      "status": "changed",
+      "reason": "새 데이터/DB 변경 없이 기존 검토 자격 RPC의 누락 페이지를 읽어 전체 후보를 복원"
     },
     "api": {
       "status": "changed",
@@ -186,9 +197,9 @@
     }
   },
   "design": {
-    "dataFlow": "기존 관리자 인증과 범위 선택→서버 기존 후보 용량 계산→수량 집계 응답→표시용 현재 범위 한 건. 날짜 배치와 최종 저장은 기존 현재 미리보기 검증만 사용. 생성·배정 로직/응시/조회/검색/삭제 데이터 변경 없음.",
+    "dataFlow": "기존 관리자 인증과 범위 선택→서버 기존 후보 용량 계산→수량 집계 응답→표시용 현재 범위 한 건. 날짜 배치와 최종 저장은 기존 현재 미리보기 검증만 사용. 생성·배정 로직/응시/조회/검색/삭제 데이터 변경 없음. R1 재검증에서 RPC1202행 중1000행 절단을 발견해 등록자격 조회부터 후보병합까지 검사한다.",
     "reuse": "서버 후보 계산/500상한 유지. domain 기본 회차 계산과 공용 수량·일정 UI를 단일/일괄에서 재사용. 표시 집계 키·유효성은 application, 수명은 controller.",
-    "cache": "Next16.2.12 기존 서버/브라우저 경계 유지. 새 요청·폴링·공유 서버캐시 없음. 날짜만 변경할 때 집계 한 건 유지; 학생/범위/출제조건/원본 nonce 변경·인증/조회 실패·닫기·저장 성공·명시 갱신 폐기. 이전 전체 응답으로 제출하지 않음. 요일 미선택은 기존 한 날짜 계산용 계획을 유효한 조회로만 정리한다. capacityOnly 플래그로 일정 응답 숨김 및 실제 submit 함수를 차단하며 원래 날짜 필수 검사는 유지한다.",
+    "cache": "Next16.2.12 기존 서버/브라우저 경계 유지. 새 요청·폴링·공유 서버캐시 없음. 날짜만 변경할 때 집계 한 건 유지; 학생/범위/출제조건/원본 nonce 변경·인증/조회 실패·닫기·저장 성공·명시 갱신 폐기. 이전 전체 응답으로 제출하지 않음. 요일 미선택은 기존 한 날짜 계산용 계획을 유효한 조회로만 정리한다. capacityOnly 플래그로 일정 응답 숨김 및 실제 submit 함수를 차단하며 원래 날짜 필수 검사는 유지한다. RPC 미수집 페이지 호출은 추가하지만 개인 공유캐시나 폴링·서버API 상한 확대 없음.",
     "compatibility": "응답 집계는 선택 필드로 추가하여 이전 서버와 호환, 누락이면 모름으로 표시. 기본회차는 날짜 배치와 분리하되 미선택 날짜를 저장 일정으로 만들지 않음. 로컬 화면 검사에만 --capacity-read-error로 조회실패503을 모사한다. 성공 응답/DB 쓰기/인증 우회 없음, 기존 모든 쓰기403 유지.",
     "rollback": "표시·집계 코드만 이전 릴리스로 되돌림. DB 변경 및 학생 배정/응시/음원 변경 없음. 별도 릴리스 검증 전 운영 변경 없음."
   },
@@ -393,7 +404,7 @@
       "id": "T5",
       "kind": "browser",
       "target": null,
-      "scenario": "격리 로컬 가짜자료 390/1280px 입력 배치·요일 전후 회차와 실패 안내. 실제 미리보기 API는 로컬 도구에서503 오류로 차단하며, 정상601/500 단일·일괄 경로는 실제 작성창 통합검사 T3로 확인",
+      "scenario": "격리 로컬 가짜자료 390/1280px 입력 배치·요일 전후 회차와 실패 안내. 실제 미리보기 API는 로컬 도구에서503 오류로 차단하며, 정상601/500 단일·일괄 경로는 실제 작성창 통합검사 T3로 확인. RPC 페이지 보완 뒤 실제 Preview 테스트 학생으로601개·100개씩 기본7회·요일 선택/해제·입력 배치 재확인. 기존390/1280px UI 근거는 관련 UI 파일 동일성 확인 후 구분하여 보존",
       "expected": "실학생 쓰기0·가로넘침0·날짜 선택 전 가능회차·입력 보존",
       "topics": [
         "behavior",
@@ -409,6 +420,19 @@
       "expected": "필수 통과·미검증 구분·입력 파일 해시 결속",
       "topics": [
         "structure"
+      ]
+    },
+    {
+      "id": "T7",
+      "kind": "integration",
+      "target": "src/features/assignments/server/queries/eligible-vocabulary-pagination.test.ts",
+      "scenario": "실제Supabase클라이언트+가짜HTTP로1202행·정확1000행·작은페이지/홀수경계·빈자료·오류·권한거절·중복/역순",
+      "expected": "601ID/1202방향 누락0, 첫0행만 fallback, 부분실패는 전체실패, 반복응답 차단",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "error-ui"
       ]
     }
   ],
@@ -3151,6 +3175,36 @@
         "assignment-edit",
         "assignment-series"
       ]
+    },
+    {
+      "path": "src/lib/services/eligible-vocabulary-service.ts",
+      "owner": "assignments",
+      "state": "existing",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/queries/eligible-vocabulary-pagination.test.ts",
+      "owner": "assignments",
+      "state": "existing",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "architecture/기능_소유권.json",
+      "owner": "architecture-meta",
+      "state": "existing",
+      "flowIds": []
     }
   ]
 }
