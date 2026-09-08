@@ -345,13 +345,15 @@ describe("오답 단일 배정 제출", () => {
     confirm.mockRestore();
   });
 
-  it.each(["single", "bulk"] as const)("%s 범위 변경 후 확인창 취소는 입력을 보존하고 폐기만 한 번 닫는다", (selectionMode) => {
+  it.each(["single", "bulk"] as const)("%s 확인창의 두 버튼만 유지하고 취소는 입력 보존, 폐기는 한 번 닫는다", async (selectionMode) => {
     const { condition, onClose, changedRange } = renderChangedAssignment(selectionMode);
     const close = screen.getByRole("button", { name: "닫기" });
     close.focus();
     fireEvent.click(close);
     const dialog = screen.getByRole("alertdialog", { name: "배정 작성을 그만둘까요?" });
     expect(dialog).toHaveAccessibleDescription("입력한 배정 내용을 버리고 닫을까요?");
+    expect(within(dialog).getAllByRole("button").map((button) => button.textContent)).toEqual(["계속 작성", "버리고 닫기"]);
+    expect(within(dialog).queryByRole("button", { name: "확인 취소" })).not.toBeInTheDocument();
     expect(dialog.parentElement).toBe(screen.getByRole("dialog").parentElement);
     expect(within(dialog).getByRole("button", { name: "계속 작성" })).toHaveFocus();
     expect(onClose).not.toHaveBeenCalled();
@@ -360,7 +362,7 @@ describe("오답 단일 배정 제출", () => {
     expect(screen.getByRole("button", { name: "배정하기" })).toBeDisabled();
     fireEvent.click(within(dialog).getByRole("button", { name: "계속 작성" }));
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
-    expect(close).toHaveFocus();
+    await waitFor(() => expect(close).toHaveFocus());
     expect(condition).toBeVisible();
     expect(condition).toHaveValue("입력 보존 확인");
     expect(changedRange.bulk.state.draft).toEqual({ datasetId: datasets[0]!.id });
@@ -378,18 +380,17 @@ describe("오답 단일 배정 제출", () => {
     expect(mocks.rangeDataset).not.toHaveBeenCalled();
   });
 
-  it.each(["escape", "backdrop", "close-button"] as const)("확인창 %s 취소는 부모 입력과 초점을 보존한다", (reason) => {
+  it.each(["escape", "backdrop"] as const)("확인창 %s 취소는 부모 입력과 초점을 보존한다", async (reason) => {
     const { condition, onClose } = renderChangedAssignment();
     const close = screen.getByRole("button", { name: "닫기" });
     close.focus();
     fireEvent.click(close);
     const dialog = screen.getByRole("alertdialog");
     if (reason === "escape") fireEvent.keyDown(dialog, { key: "Escape" });
-    else if (reason === "backdrop") fireEvent.click(dialog);
-    else fireEvent.click(within(dialog).getByRole("button", { name: "확인 취소" }));
+    else fireEvent.click(dialog);
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     expect(condition).toHaveValue("입력 보존 확인");
-    expect(close).toHaveFocus();
+    await waitFor(() => expect(close).toHaveFocus());
     expect(document.body.style.overflow).toBe("hidden");
     expect(onClose).not.toHaveBeenCalled();
   });

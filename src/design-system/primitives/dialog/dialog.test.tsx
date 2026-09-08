@@ -3,12 +3,31 @@ import "@testing-library/jest-dom/vitest";
 import { fireEvent, cleanup, render, screen, waitFor } from "@testing-library/react";
 import { useEffect, useState } from "react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { DialogFrame, DialogVisibilityBoundary } from "./dialog";
+import { DialogFrame, DialogHeader, DialogVisibilityBoundary } from "./dialog";
 beforeAll(() => {
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value() { this.setAttribute("open", ""); } });
   Object.defineProperty(HTMLDialogElement.prototype, "close", { configurable: true, value() { this.removeAttribute("open"); } });
 });
 afterEach(cleanup);
+describe("대화상자 제목의 닫기 표시", () => {
+  it("기본 닫기는 유지하고 명시적으로 숨겨도 제목·별도 작업·Escape를 보존한다", () => {
+    const close = vi.fn();
+    const view = (showCloseButton?: boolean) => <DialogFrame aria-label="작성 확인" onRequestClose={close}>
+      <DialogHeader closeLabel="닫기" showCloseButton={showCloseButton} actions={<button>별도 작업</button>}>
+        <h2>작성 확인</h2>
+      </DialogHeader>
+    </DialogFrame>;
+    const { rerender } = render(view());
+    fireEvent.click(screen.getByRole("button", { name: "닫기" }));
+    expect(close).toHaveBeenLastCalledWith("close-button");
+    rerender(view(false));
+    expect(screen.queryByRole("button", { name: "닫기" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "작성 확인" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "별도 작업" })).toBeVisible();
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+    expect(close).toHaveBeenLastCalledWith("escape");
+  });
+});
 describe("대화상자 임시 표시 경계", () => {
   it("두 창을 함께 숨겼다 복원해도 입력/최상단 초점과 마지막 스크롤 해제가 맞다", async () => {
     const afterClose = vi.fn();

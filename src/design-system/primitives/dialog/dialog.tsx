@@ -223,12 +223,14 @@ export function DialogHeader({
   children,
   closeLabel,
   onBack,
+  showCloseButton = true,
 }: {
   actions?: ReactNode;
   backLabel?: string;
   children: ReactNode;
   closeLabel: string;
   onBack?: () => void;
+  showCloseButton?: boolean;
 }) {
   const { closeDisabled, requestClose } = useDialogContext();
 
@@ -247,9 +249,9 @@ export function DialogHeader({
         ) : null}
         <div className={styles.title}>{children}</div>
       </div>
-      <div className={styles.headerActions}>
+      {actions || showCloseButton ? <div className={styles.headerActions}>
         {actions}
-        <Button
+        {showCloseButton ? <Button
           aria-label={closeLabel}
           disabled={closeDisabled}
           onClick={() => requestClose("close-button")}
@@ -257,8 +259,8 @@ export function DialogHeader({
           variant="quiet"
         >
           {closeLabel}
-        </Button>
-      </div>
+        </Button> : null}
+      </div> : null}
     </header>
   );
 }

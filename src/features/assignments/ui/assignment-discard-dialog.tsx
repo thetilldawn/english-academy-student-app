@@ -39,7 +39,7 @@ export function AssignmentDiscardDialog({
       role="alertdialog"
       size="compact"
     >
-      <DialogHeader closeLabel={text.close}>
+      <DialogHeader closeLabel={text.cancel} showCloseButton={false}>
         <h2 id={`${id}-title`}>{text.title}</h2>
       </DialogHeader>
       <DialogBody>

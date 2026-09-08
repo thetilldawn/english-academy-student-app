@@ -22,7 +22,6 @@ export const adminLearningText = {
     description: "입력한 배정 내용을 버리고 닫을까요?",
     cancel: "계속 작성",
     confirm: "버리고 닫기",
-    close: "확인 취소",
   },
   // 학습 관리 > 페이지·시험 종류 탭·검색
   page: {
