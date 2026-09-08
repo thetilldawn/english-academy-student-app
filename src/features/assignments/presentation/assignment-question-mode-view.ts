@@ -4,7 +4,7 @@ import type { AssignmentQuestionMode } from "../domain/model";
 
 export type AssignmentQuestionModeView = {
   value: AssignmentQuestionMode;
-  tabs: { value: AssignmentQuestionMode; label: string; disabled?: boolean; describedBy?: string }[];
+  tabs: { value: AssignmentQuestionMode; label: string; disabled?: boolean; disabledReason?: string; describedBy?: string }[];
   notices: { id?: string; role?: "alert" | "status"; message: string }[];
 };
 
@@ -25,13 +25,13 @@ export function assignmentQuestionModeView(input: {
     notices.push({ role: "status", message: text.prepared });
   }
   const canonicalTabs = ([
-    ["canonical_definition_to_headword", text.definition, "definition-mode-unavailable", text.definitionUnavailable],
-    ["canonical_headword_to_definition", text.reverseDefinition, "reverse-definition-mode-unavailable", text.reverseDefinitionUnavailable],
-    ["canonical_example_to_headword", text.example, "example-mode-unavailable", text.exampleUnavailable],
-  ] as const).map(([value, label, id, unavailableMessage]) => {
+    ["canonical_definition_to_headword", text.definition, text.definitionUnavailable],
+    ["canonical_headword_to_definition", text.reverseDefinition, text.reverseDefinitionUnavailable],
+    ["canonical_example_to_headword", text.example, text.exampleUnavailable],
+  ] as const).map(([value, label, unavailableMessage]) => {
     const disabled = !availability.availableModes.includes(value);
-    if (!sharedId && disabled) notices.push({ id, message: unavailableMessage });
-    return { value, label, disabled, describedBy: disabled ? sharedId ?? id : undefined };
+    return { value, label, disabled, describedBy: disabled ? sharedId : undefined,
+      disabledReason: disabled && !sharedId ? unavailableMessage : undefined };
   });
   return { value: input.questionMode, tabs: [{ value: "book_meaning_choice", label: text.book }, ...canonicalTabs], notices };
 }

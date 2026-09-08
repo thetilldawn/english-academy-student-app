@@ -95,8 +95,8 @@ describe("BulkSeriesPreview", () => {
     expect(screen.queryByText("별도 확인 1명")).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "별도 확인" })).toBeVisible();
     expect(screen.getByText("배정 불가")).toBeVisible();
-    expect(screen.queryByText("학생 가")).not.toBeInTheDocument();
-    expect(screen.queryByText("학생 나")).not.toBeInTheDocument();
+    expect(screen.getByText("학생 가")).toBeVisible();
+    expect(screen.getByText("학생 나")).toBeVisible();
     expect(screen.getByText("학생 다 · 테스트고")).toBeVisible();
     expect(screen.getByText("배정 40개 · 남음 46개")).toBeVisible();
     expect(screen.getAllByText("1회차")).toHaveLength(2);
@@ -118,10 +118,10 @@ describe("BulkSeriesPreview", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "시험 계획" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "배정 학생" })).toBeVisible();
     expect(screen.queryByText(/공통 1명/)).not.toBeInTheDocument();
     expect(screen.queryByText(/별도 확인 0명/)).not.toBeInTheDocument();
-    expect(screen.queryByText("학생 가")).not.toBeInTheDocument();
+    expect(screen.getByText("학생 가")).toBeVisible();
     expect(screen.getByText("20개")).toBeVisible();
   });
 
@@ -144,9 +144,9 @@ describe("BulkSeriesPreview", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "시험 계획" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "배정 학생" })).toBeVisible();
     expect(screen.queryByRole("heading", { name: "학생별 계획" })).not.toBeInTheDocument();
-    expect(screen.queryByText("학생 가")).not.toBeInTheDocument();
+    expect(screen.getByText("학생 가")).toBeVisible();
     const visibleErrors = screen.getAllByText("범위가 부족합니다.").filter(
       (element) => !element.classList.contains("sr-only"),
     );
@@ -242,6 +242,7 @@ describe("BulkSeriesPreview", () => {
     );
     expect(screen.queryByText("완료 후 생성")).not.toBeInTheDocument();
     expect(screen.getAllByText("앞 회차 첫 시험 완료 후 공개")).toHaveLength(1);
+    value.preview!.items = value.preview!.items.map(item => ({ ...item, sessions: item.sessions.map(session => ({ ...session, availableFrom: null, availableUntil: null })) }));
     value.preview!.commonPlanSummary!.sessions = [schedule, secondSession].map(
       (session) => ({...session, availableFrom:null,availableUntil:null}),
     );

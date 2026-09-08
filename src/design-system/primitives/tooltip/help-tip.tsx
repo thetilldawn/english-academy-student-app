@@ -4,9 +4,12 @@ import {
   useCallback,
   useEffect,
   useId,
+  useImperativeHandle,
   useRef,
   useState,
   type ReactNode,
+  type ButtonHTMLAttributes,
+  type Ref,
 } from "react";
 
 import styles from "./help-tip.module.css";
@@ -65,15 +68,23 @@ export function HelpTip({
   label,
   children,
   trigger,
+  rootClassName,
+  buttonRef,
+  triggerProps = {},
 }: {
   label: string;
   children: ReactNode;
   trigger: ReactNode;
+  rootClassName?: string;
+  buttonRef?: Ref<HTMLButtonElement>;
+  triggerProps?: Pick<ButtonHTMLAttributes<HTMLButtonElement>,
+    "id" | "role" | "tabIndex" | "className" | "aria-controls" | "aria-selected" | "aria-disabled" | "aria-describedby" | "onKeyDown">;
 }) {
   const tooltipId = useId();
   const transientOpenRef = useRef(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const tooltipRef = useRef<HTMLSpanElement>(null);
+  useImperativeHandle(buttonRef, () => triggerRef.current!, []);
   const [open, setOpen] = useState(false);
 
   const positionTooltip = useCallback(() => {
@@ -151,11 +162,12 @@ export function HelpTip({
   }, [hide, open]);
 
   return (
-    <span className={styles.labelRoot}>
+    <span className={[styles.labelRoot, rootClassName].filter(Boolean).join(" ")}>
       <button
-        aria-describedby={open ? tooltipId : undefined}
+        {...triggerProps}
+        aria-describedby={[triggerProps["aria-describedby"], open ? tooltipId : undefined].filter(Boolean).join(" ") || undefined}
         aria-label={label}
-        className={styles.labelTrigger}
+        className={triggerProps.className ?? styles.labelTrigger}
         onBlur={() => {
           transientOpenRef.current = false;
           hide();
@@ -179,6 +191,7 @@ export function HelpTip({
           show();
         }}
         onKeyDown={(event) => {
+          triggerProps.onKeyDown?.(event);
           if (event.key !== "Escape" || !open) return;
           event.preventDefault();
           event.stopPropagation();

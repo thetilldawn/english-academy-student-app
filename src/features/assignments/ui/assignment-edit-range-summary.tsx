@@ -1,5 +1,6 @@
 import type { AssignmentEditDraft } from "@/lib/admin/assignment-edit";
 import { cataloguedDatasetDisplayLabel } from "@/lib/admin/dataset-catalog";
+import { unitRangeDisplayLabel } from "@/lib/admin/unit-range-display";
 
 import type {
   AssignmentDatasetItem,
@@ -24,14 +25,13 @@ export function AssignmentEditRangeSummary({
 }) {
   const dataset = datasets.find((item) => item.id === source.datasetId);
   const selectedUnitIds = new Set(source.primaryUnitIds);
-  const rangeLabel = units
+  const rangeLabel = unitRangeDisplayLabel(units
     .filter(
       (unit) =>
         unit.datasetId === source.datasetId && selectedUnitIds.has(unit.id),
     )
     .toSorted((left, right) => left.sortIndex - right.sortIndex)
-    .map((unit) => unit.displayName || unit.label)
-    .join(" · ");
+    .map((unit) => unit.displayName || unit.label));
   const purposeLabel = source.purpose === "review"
     ? "오답 시험"
     : "단어+오답 시험";

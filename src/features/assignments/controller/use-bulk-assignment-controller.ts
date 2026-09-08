@@ -512,9 +512,9 @@ export function useBulkAssignmentController({
     changeRetryPassingScore: (value: number) =>
       changeDraft({ type: "exam/retry_passing_score_changed", value }),
     changeTiming: (timing: ExamTiming) => {
-      if (timing.mode === "total") {
+      if (timing.mode === "total" && Number.isFinite(timing.totalSeconds)) {
         timingMemoryRef.current.totalSeconds = timing.totalSeconds;
-      } else {
+      } else if (timing.mode === "per_question" && Number.isFinite(timing.perQuestionSeconds)) {
         timingMemoryRef.current.perQuestionSeconds =
           timing.perQuestionSeconds;
       }

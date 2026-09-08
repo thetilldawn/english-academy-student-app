@@ -24,8 +24,10 @@ export function RoutedDetailDialog({
   const requestClose = useCallback(() => {
     if (closingRef.current) return;
     if (routeCloseGuard) {
-      const accepted = routeCloseGuard(() => router.back());
-      if (accepted !== false) closingRef.current = true;
+      routeCloseGuard(() => {
+        closingRef.current = true;
+        router.back();
+      });
       return;
     }
     closingRef.current = true;

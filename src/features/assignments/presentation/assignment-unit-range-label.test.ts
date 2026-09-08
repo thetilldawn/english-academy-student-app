@@ -20,9 +20,9 @@ describe("assignmentUnitRangeLabel", () => {
     ).toBe("DAY 03~DAY 02");
   });
 
-  it("shows separated selections as an exact selected count", () => {
+  it("shows separated selections without hiding any selected label", () => {
     expect(
       assignmentUnitRangeLabel(["DAY 01", "DAY 03"], [1, 3]),
-    ).toBe("DAY 01 외 1개");
+    ).toBe("DAY 01 · DAY 03");
   });
 });

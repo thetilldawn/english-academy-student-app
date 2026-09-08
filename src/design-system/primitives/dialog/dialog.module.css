@@ -12,6 +12,7 @@
 
 .frame::backdrop {
   background: var(--dialog-backdrop);
+  backdrop-filter: blur(3px);
 }
 
 .frame[open] {
@@ -51,7 +52,8 @@
 }
 
 .auto {
-  height: auto;
+  /* A fixed native dialog with inset: 0 stretches auto height in grid layout. */
+  height: fit-content;
 }
 
 .medium {
@@ -118,6 +120,7 @@
 }
 
 @media (max-width: 767px) {
+  .frame.compact { width: min(440px, calc(100vw - 32px)); }
   .frame {
     width: calc(100vw - 20px);
     max-height: calc(100dvh - 20px);

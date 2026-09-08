@@ -108,14 +108,15 @@
     {
       "path": "assignment-edit-range-summary.tsx",
       "role": "deferred",
-      "reason": "저장 초안 전체→범위 요약값 분리 필요",
+      "reason": "APP-20260908-03: 공용 순수 범위 표시 재사용. 저장 초안 전체 입력은 변경·확대 없이 유지하여 후속 요약 DTO 분리 대상",
       "allowedImports": [
         "../catalog-types",
         "./single-assignment-editor.module.css",
         "@/lib/admin/assignment-edit",
-        "@/lib/admin/dataset-catalog"
+        "@/lib/admin/dataset-catalog",
+        "@/lib/admin/unit-range-display"
       ],
-      "legacySourceSha256": "5a09ae8622a62c6cf753f2bf9c6e8c3986be01f639836644a936f9c56a4174a9"
+      "legacySourceSha256": "fe5c17add655e2a725b0bbe7653c9bc289870638319c669cc637f412c3f7c2fa"
     },
     {
       "path": "assignment-editor-fields.tsx",
@@ -200,7 +201,7 @@
     {
       "path": "assignment-student-browser.tsx",
       "role": "deferred",
-      "reason": "APP-20260908-02: 학생 행만 좁은 표시·콜백으로 분리. 바구니·진입 선택은 후속 분리 대상",
+      "reason": "APP-20260908-03: 행·바구니는 좁은 값과 콜백으로 분리. 진입 방식 선택은 여전히 전체 제어기에 의존하므로 후속 분리 유지",
       "allowedImports": [
         "../controller/use-assignment-workspace",
         "./assignment-student-row",
@@ -215,7 +216,7 @@
         "@/design-system/primitives/tabs/tabs",
         "@/content/ko/admin-students"
       ],
-      "legacySourceSha256": "0c55437aeda7375915cb2f96bd7b9b4372adc59c50c57c2ab16ad35e7f103482"
+      "legacySourceSha256": "11b385f66e5b8643c15779b20617e801658b1ccf65bd26ef47c0591fa80a3e58"
     },
     {
       "path": "assignment-student-row.tsx",
@@ -247,7 +248,7 @@
     {
       "path": "assignment-summary-panel.tsx",
       "role": "deferred",
-      "reason": "전체 초안/제어기 타입→요약 행/표시 오류 분리 필요",
+      "reason": "APP-20260908-03: 불완전 숫자의 NaN/이전 결과 표시 차단. 전체 초안/제어기 타입은 유지하므로 요약 DTO 분리는 후속 대상",
       "allowedImports": [
         "../catalog-types",
         "../controller/use-assignment-controller",
@@ -260,9 +261,10 @@
         "@/design-system/patterns/feedback/feedback",
         "@/lib/admin/dataset-catalog",
         "@/lib/deadline",
-        "@/lib/format"
+        "@/lib/format",
+        "../domain/validation"
       ],
-      "legacySourceSha256": "c85210fa6aba973fd8679063972085922dc3d61a58098e5b2c7a9b7f2c850e94"
+      "legacySourceSha256": "03abad83d183699403eeeaace09caaf09c65d5de251c2e4426a728273e9b67cf"
     },
     {
       "path": "assignment-unit-range-picker.tsx",
@@ -275,7 +277,9 @@
         "./day-range-rail",
         "./vocab-assignment-planner.module.css",
         "@/design-system/primitives/button/button",
-        "@/design-system/primitives/form/field"
+        "@/design-system/primitives/form/field",
+        "@/design-system/primitives/badge/badge",
+        "@/lib/admin/unit-range-display"
       ]
     },
     {
@@ -287,7 +291,8 @@
         "@/design-system/primitives/button/button",
         "@/design-system/primitives/form/field",
         "@/design-system/primitives/tooltip/help-tip",
-        "react"
+        "react",
+        "@/design-system/primitives/form/numeric-input"
       ]
     },
     {
@@ -347,7 +352,8 @@
         "@/content/format",
         "@/content/ko/admin-learning",
         "@/design-system/primitives/badge/badge",
-        "./assignment-session-release-tags"
+        "./assignment-session-release-tags",
+        "@/lib/admin/unit-range-display"
       ]
     },
     {
@@ -357,13 +363,11 @@
       "allowedImports": [
         "../contracts/bulk-assignment-response",
         "../presentation/bulk-plan-audience",
-        "./assignment-editor-fields",
         "./bulk-preview-session-list",
         "./vocab-assignment-form.module.css",
         "@/content/ko/admin-learning",
         "@/design-system/primitives/badge/badge",
-        "@/design-system/primitives/tooltip/help-tip",
-        "./assignment-session-release-tags"
+        "@/design-system/primitives/tooltip/help-tip"
       ]
     },
     {
@@ -432,7 +436,8 @@
         "@/design-system/patterns/conditional-reveal/conditional-reveal",
         "@/design-system/primitives/button/button",
         "@/design-system/primitives/form/field",
-        "@/design-system/primitives/tooltip/help-tip"
+        "@/design-system/primitives/tooltip/help-tip",
+        "@/design-system/primitives/form/numeric-input"
       ]
     },
     {
@@ -446,7 +451,8 @@
         "@/content/ko/admin-learning",
         "@/design-system/patterns/conditional-reveal/conditional-reveal",
         "@/design-system/primitives/form/field",
-        "@/design-system/primitives/tooltip/help-tip"
+        "@/design-system/primitives/tooltip/help-tip",
+        "@/design-system/primitives/form/numeric-input"
       ]
     },
     {
@@ -475,14 +481,13 @@
     },
     {
       "path": "selected-student-basket.tsx",
-      "role": "deferred",
-      "reason": "전체 제어기→선택 학생·진행·해제 동작 분리 필요",
+      "role": "pure",
+      "reason": "APP-20260908-03: 선택 학생 배열·진행 여부·해제 콜백만 받고 높이가 안정적인 선택 태그 표시",
       "allowedImports": [
-        "../controller/use-assignment-workspace",
         "./assignment-workspace.module.css",
-        "@/design-system/primitives/button/button"
-      ],
-      "legacySourceSha256": "f99a4a5f78f1eecec7b3809f31a4c1d4113f5e4c4774f637998e3e813eed4d17"
+        "@/design-system/primitives/button/button",
+        "../contracts/assignment-workspace-read-model"
+      ]
     },
     {
       "path": "single-assignment-editor-sections.tsx",
@@ -708,7 +713,8 @@
         "./vocab-assignment-planner.module.css",
         "@/design-system/primitives/button/button",
         "@/design-system/primitives/form/field",
-        "@/design-system/primitives/tooltip/help-tip"
+        "@/design-system/primitives/tooltip/help-tip",
+        "@/design-system/primitives/form/numeric-input"
       ]
     },
     {
@@ -734,7 +740,8 @@
       "allowedImports": [
         "@/design-system/primitives/badge/badge",
         "@/lib/format",
-        "../presentation/assignment-release-view"
+        "../presentation/assignment-release-view",
+        "@/design-system/patterns/activity-timeline/activity-timeline"
       ]
     }
   ]

@@ -86,6 +86,7 @@ const dataServer = http.createServer(async (req, res) => {
 });
 const allowedApi = new Set(["/api/admin/session", "/api/admin/students/directory",
   "/api/admin/history",
+  "/api/admin/bulk-assignments/preview",
   "/api/admin/assignment-workspace/preparation", "/api/admin/assignment-workspace/datasets",
   "/api/admin/assignment-workspace/previous-exam", "/api/admin/assignment-workspace/selection"]);
 const proxy = http.createServer(async (req, res) => {

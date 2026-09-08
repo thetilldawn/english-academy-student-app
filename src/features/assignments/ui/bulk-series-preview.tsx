@@ -1,8 +1,6 @@
-import { AssignmentSessionRow } from "./assignment-editor-fields";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
-import { AssignmentSessionReleaseTags } from "./assignment-session-release-tags";
 
 import type { BulkAssignmentCommonPlanSummary, BulkAssignmentPreviewItem } from "../contracts/bulk-assignment-response";
 import {
@@ -57,8 +55,14 @@ export function BulkSeriesPreview({
     studentName: labelByStudentId.get(item.studentId) ?? item.studentName,
   }));
   const audience = buildBulkPlanAudience(preview);
-  const summary =
+  const requestedSummary =
     audience.mode === "common" ? preview?.commonPlanSummary ?? null : null;
+  const representative = requestedSummary ? items.find(item => item.studentId === requestedSummary.representativeStudentId) : null;
+  const summary = requestedSummary && representative && representative.sessions.length === requestedSummary.sessions.length &&
+    requestedSummary.sessions.every(expected => representative.sessions.some(actual =>
+      actual.sessionNumber === expected.sessionNumber && actual.questionCount === expected.questionCount &&
+      actual.availableFrom === expected.availableFrom && actual.availableUntil === expected.availableUntil))
+    ? requestedSummary : null;
   const singleItem = audience.mode === "single" ? items[0] ?? null : null;
   const normalStudentIds = summary
     ? new Set(summary.normalStudentIds)
@@ -122,12 +126,9 @@ export function BulkSeriesPreview({
       {singleItem ? (
         <article className={styles.previewRow}>
           <div className={styles.studentHeading}>
-            <h4>시험 계획</h4>
+            <h4>배정 학생</h4>
+            <MetaTag>{singleItem.studentName}</MetaTag>
           </div>
-          <small>
-            {singleItem.datasetLabel ??
-              adminLearningText.bulkAssignmentModal.datasetPending}
-          </small>
           <BulkPreviewSessionList
             item={singleItem}
           />
@@ -144,34 +145,15 @@ export function BulkSeriesPreview({
       {summary ? (
         <article className={styles.previewRow}>
           <div className={styles.studentHeading}>
-            <h4>{commonPlanTitle}</h4>
+            <h4>배정 학생</h4>
+            <MetaTagList>{items.filter(item => normalStudentIds?.has(item.studentId)).map(item => <MetaTag key={item.studentId}>{item.studentName}</MetaTag>)}</MetaTagList>
           </div>
+          <small>{commonPlanTitle}</small>
           <p className={styles.planCounts}>
             배정 {summary.selectedQuestionCount}개 · 남음{" "}
             {summary.remainingQuestionCount}개
           </p>
-          <div className={styles.sessionList}>
-            {summary.sessions.map((session) => (
-              <AssignmentSessionRow
-                className={styles.sessionRow}
-                details={
-                  <MetaTagList>
-                    <MetaTag size="large">{session.unitLabel ?? "선택 범위"}</MetaTag>
-                    <AssignmentSessionReleaseTags
-                      sessionNumber={session.sessionNumber}
-                      availableFrom={session.availableFrom}
-                      availableUntil={session.availableUntil}
-                    />
-                    <MetaTag size="large" tone="success">
-                      {session.questionCount}개
-                    </MetaTag>
-                  </MetaTagList>
-                }
-                heading={<strong>{session.sessionNumber}회차</strong>}
-                key={session.sessionNumber}
-              />
-            ))}
-          </div>
+          {representative ? <BulkPreviewSessionList item={representative} /> : null}
         </article>
       ) : null}
 

@@ -108,25 +108,10 @@ function pairKey(assignmentId: string, studentId: string) {
 
 export function unitSelectionRangeLabel(
   labels: readonly string[],
-  sortIndexes?: readonly number[],
+  _sortIndexes?: readonly number[],
 ) {
-  if (labels.length === 0) return "범위 정보 없음";
-  if (labels.length === 1) return labels[0];
-  if (
-    !sortIndexes ||
-    sortIndexes.length !== labels.length ||
-    !sortIndexes.every(Number.isFinite)
-  ) {
-    return `${labels[0]}~${labels.at(-1)}`;
-  }
-  const direction = Math.sign(sortIndexes[1]! - sortIndexes[0]!);
-  const contiguous = Math.abs(direction) === 1 && sortIndexes.every(
-    (sortIndex, index) =>
-      index === 0 || sortIndex - sortIndexes[index - 1]! === direction,
-  );
-  return contiguous
-    ? `${labels[0]}~${labels.at(-1)}`
-    : `${labels[0]} 외 ${labels.length - 1}개`;
+  void _sortIndexes;
+  return unitRangeDisplayLabel(labels) ?? "범위 정보 없음";
 }
 
 export function assignmentTypeLabel(
@@ -379,3 +364,4 @@ export function projectCurrentAssignmentHistory(
   }
   return [...latestByRecipient.values()];
 }
+import { unitRangeDisplayLabel } from "./unit-range-display";

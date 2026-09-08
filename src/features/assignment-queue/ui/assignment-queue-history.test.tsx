@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -76,12 +76,37 @@ function queue(
 }
 
 describe("AssignmentQueueHistory", () => {
+  it("확인 직후 화면을 닫으면 이미 끝난 승인으로 요청하지 않는다", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const { unmount } = render(<AssignmentQueueHistory queues={[queue("attention", "00000000-0000-4000-8000-000000000033")]} />);
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "이 회차 보류" }));
+      unmount();
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("확인 도중 회차 버전이 바뀌면 이전 요청은 버리고 새 버튼은 사용할 수 있다", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const item = queue("attention", "00000000-0000-4000-8000-000000000033");
+    const { rerender } = render(<AssignmentQueueHistory queues={[item]} />);
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "이 회차 보류" }));
+      rerender(<AssignmentQueueHistory queues={[{ ...item, updatedAt: "2026-08-23T00:00:00.000Z" }]} />);
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "이 회차 보류" })).toBeEnabled();
+  });
   it("건너뛰기를 보류로 설명하고 확인을 취소하면 전송하지 않는다", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     render(<AssignmentQueueHistory queues={[queue("attention", "00000000-0000-4000-8000-000000000033")]} />);
-    await userEvent.setup().click(screen.getByRole("button", { name: "이 회차 건너뛰기" }));
+    await userEvent.setup().click(screen.getByRole("button", { name: "이 회차 보류" }));
     expect(confirm).toHaveBeenCalledWith(expect.stringContaining("보류"));
     expect(confirm).toHaveBeenCalledWith(expect.stringContaining("예약 시간과 마감은 유지"));
     expect(fetchMock).not.toHaveBeenCalled();
@@ -163,4 +188,9 @@ describe("AssignmentQueueHistory", () => {
       }),
     );
   });
+});
+// Business-flow tests inject a decision; confirmation rendering/cancellation has separate real-provider tests.
+vi.mock("@/design-system/patterns/confirmation/confirmation", async (importOriginal) => {
+  const decide = async (options: { message: string }) => window.confirm(options.message);
+  return { ...await importOriginal<typeof import("@/design-system/patterns/confirmation/confirmation")>(), useConfirmation: () => decide };
 });

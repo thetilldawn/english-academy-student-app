@@ -3,8 +3,8 @@ import {
   Field,
   FieldError,
   FieldLabel,
-  Input,
 } from "@/design-system/primitives/form/field";
+import { NumericInput } from "@/design-system/primitives/form/numeric-input";
 import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
 
 import styles from "./vocab-assignment-planner.module.css";
@@ -64,7 +64,7 @@ export function AssignmentWordCountField({
         >
           {allLabel}
         </Button>
-        <Input
+        <NumericInput
           aria-errormessage={error ? errorId : undefined}
           aria-invalid={Boolean(error)}
           aria-label={inputLabel}
@@ -72,11 +72,10 @@ export function AssignmentWordCountField({
           disabled={disabled}
           max={max}
           min={min}
-          onChange={(event) => onChange(Number(event.target.value))}
+          onValueChange={(value) => onChange(value ?? Number.NaN)}
           onFocus={onFocus}
           placeholder={inputPlaceholder}
           required
-          type="number"
           value={value}
         />
       </div>

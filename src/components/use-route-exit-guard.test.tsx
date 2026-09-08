@@ -1,297 +1,273 @@
 // @vitest-environment jsdom
-
-import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
+import "@testing-library/jest-dom/vitest";
+import { act, cleanup, fireEvent, renderHook, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
+import { flushSync } from "react-dom";
+import { ConfirmationProvider } from "@/design-system/patterns/confirmation/confirmation";
 import { useRouteExitGuard } from "./use-route-exit-guard";
 
 const BASE_KEY = "__routeExitGuardBase";
 const SENTINEL_KEY = "__routeExitGuardSentinel";
-
 function renderGuard({ busy = false, dirty = true } = {}) {
-  return renderHook(
-    ({ currentBusy, currentDirty }) => useRouteExitGuard({
-      busy: currentBusy,
-      confirmMessage: "변경 내용을 버리고 이동할까요?",
-      dirty: currentDirty,
-      idPrefix: "test-editor",
-    }),
-    { initialProps: { currentBusy: busy, currentDirty: dirty } },
-  );
+  return renderHook(({ currentBusy, currentDirty }) => useRouteExitGuard({
+    busy: currentBusy, dirty: currentDirty,
+    confirmMessage: "변경 내용을 버리고 이동할까요?", idPrefix: "test-editor",
+  }), { initialProps: { currentBusy: busy, currentDirty: dirty }, wrapper: ConfirmationProvider });
 }
-
 function currentBaseState() {
-  const state = { ...(window.history.state as Record<string, unknown>) };
+  const state = { ...window.history.state };
   delete state[SENTINEL_KEY];
   return state;
 }
-
-function dispatchPopState(state: Record<string, unknown>) {
-  window.history.replaceState(state, "", window.location.href);
+function pop(state: Record<string, unknown>, href = window.location.href) {
+  window.history.replaceState(state, "", href);
   window.dispatchEvent(new PopStateEvent("popstate", { state }));
 }
-
-function dispatchBeforeUnload() {
-  const event = new Event("beforeunload", {
-    cancelable: true,
-  }) as BeforeUnloadEvent;
+async function decide(accepted: boolean) {
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: accepted ? "그만두기" : "취소" })); });
+}
+function beforeUnload() {
+  const event = new Event("beforeunload", { cancelable: true });
   window.dispatchEvent(event);
   return event.defaultPrevented;
 }
-
 beforeEach(() => {
-  window.history.replaceState({}, "", "/admin/students/student-1");
+  window.history.replaceState({ __NA: true, route: "editor" }, "", "/admin/students/student-1");
+  HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", ""); };
+  HTMLDialogElement.prototype.close = function () { this.removeAttribute("open"); };
+  vi.stubGlobal("requestAnimationFrame", (fn: FrameRequestCallback) => { fn(0); return 1; });
 });
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); window.history.replaceState({}, "", "/"); });
 
-afterEach(() => {
-  cleanup();
-  vi.restoreAllMocks();
-  window.history.replaceState({}, "", "/");
-});
-
-describe("useRouteExitGuard", () => {
-  it("변경 내용을 버리지 않으면 프로그램 이동을 취소한다", () => {
+describe("asynchronous route exit guard", () => {
+  it("intercepts synchronously and preserves the draft when cancelled", async () => {
     const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     const exit = vi.fn();
     const { result } = renderGuard();
-
-    expect(result.current.requestExit(exit)).toBe(false);
-    expect(confirm).toHaveBeenCalledOnce();
-    expect(back).not.toHaveBeenCalled();
+    act(() => { expect(result.current.requestExit(exit)).toBe(true); });
     expect(exit).not.toHaveBeenCalled();
+    expect(back).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog")).toHaveTextContent("변경 내용을 버리고 이동할까요?");
+    await decide(false);
+    expect(exit).not.toHaveBeenCalled();
+    expect(back).not.toHaveBeenCalled();
+    expect(beforeUnload()).toBe(true);
+    act(() => { expect(result.current.requestExit(exit)).toBe(true); });
+    await decide(false);
   });
 
-  it("확인한 프로그램 이동은 보호 기록을 먼저 제거한 뒤 한 번 실행한다", async () => {
+  it("removes the sentinel before running one approved continuation", async () => {
     const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-    const exit = vi.fn();
+    const exit = vi.fn(() => { expect(beforeUnload()).toBe(false); });
     const { result } = renderGuard();
-    const baseState = currentBaseState();
-
-    expect(result.current.requestExit(exit)).toBe(true);
+    const base = currentBaseState();
+    act(() => { result.current.requestExit(exit); });
+    await decide(true);
     expect(back).toHaveBeenCalledOnce();
     expect(exit).not.toHaveBeenCalled();
-
-    act(() => dispatchPopState(baseState));
+    act(() => pop(base));
     await waitFor(() => expect(exit).toHaveBeenCalledOnce());
   });
 
-  it("does not warn again while an approved document exit continues", async () => {
+  it("blocks a second request both while asking and during navigation", async () => {
     vi.spyOn(window.history, "back").mockImplementation(() => {});
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-    const beforeUnloadBlocked = vi.fn();
     const { result } = renderGuard();
-    const baseState = currentBaseState();
-
-    expect(result.current.requestExit(() => {
-      beforeUnloadBlocked(dispatchBeforeUnload());
-    })).toBe(true);
-    act(() => dispatchPopState(baseState));
-
-    await waitFor(() => expect(beforeUnloadBlocked).toHaveBeenCalledWith(false));
-  });
-
-  it("keeps the document warning active when a guarded exit is cancelled", () => {
-    vi.spyOn(window.history, "back").mockImplementation(() => {});
-    vi.spyOn(window, "confirm").mockReturnValue(false);
-    const { result } = renderGuard();
-
+    act(() => {
+      expect(result.current.requestExit(vi.fn())).toBe(true);
+      expect(result.current.requestExit(vi.fn())).toBe(false);
+    });
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    await decide(true);
     expect(result.current.requestExit(vi.fn())).toBe(false);
-    expect(dispatchBeforeUnload()).toBe(true);
   });
 
-  it("저장 중에는 확인창 없이 모든 프로그램 이동을 막는다", () => {
+  it("does not ask or leave while saving", async () => {
     const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
-    const confirm = vi.spyOn(window, "confirm");
-    const exit = vi.fn();
-    const { result } = renderGuard({ busy: true, dirty: true });
-
-    expect(result.current.requestExit(exit)).toBe(false);
-    expect(result.current.canExit()).toBe(false);
-    expect(confirm).not.toHaveBeenCalled();
+    const { result } = renderGuard({ busy: true });
+    expect(result.current.requestExit(vi.fn())).toBe(false);
+    expect(await result.current.canExit()).toBe(false);
+    expect(screen.queryByRole("dialog")).toBeNull();
     expect(back).not.toHaveBeenCalled();
+  });
+
+  it("ignores an approval if saving starts before the navigation microtask", async () => {
+    const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
+    const exit = vi.fn();
+    const { result, rerender } = renderGuard();
+    act(() => result.current.requestExit(exit));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "그만두기" }));
+      queueMicrotask(() => flushSync(() => rerender({ currentBusy: true, currentDirty: true })));
+    });
+    expect(back).not.toHaveBeenCalled();
+    expect(exit).not.toHaveBeenCalled();
+    expect(beforeUnload()).toBe(true);
+  });
+
+  it("preserves a saved continuation while a multi-entry Back is being restored", async () => {
+    vi.spyOn(window.history, "forward").mockImplementation(() => {});
+    const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
+    const saved = vi.fn();
+    const { result } = renderGuard({ busy: true });
+    const sentinel = { ...window.history.state };
+    const base = currentBaseState();
+    act(() => pop({ __NA: true, route: "earlier" }, "/admin/results"));
+    act(() => { expect(result.current.forceExit(saved)).toBe(true); });
+    act(() => pop(base, "/admin/students/student-1"));
+    act(() => pop(sentinel));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(back).toHaveBeenCalledOnce();
+    act(() => pop(base));
+    await waitFor(() => expect(saved).toHaveBeenCalledOnce());
+  });
+
+  it.each(["false", "throw", "reject"] as const)("rearms after a %s continuation failure", async (mode) => {
+    vi.spyOn(window.history, "back").mockImplementation(() => {});
+    const push = vi.spyOn(window.history, "pushState");
+    const { result } = renderGuard();
+    const base = currentBaseState();
+    act(() => result.current.requestExit(() => {
+      if (mode === "throw") throw new Error("failure");
+      if (mode === "reject") return Promise.reject(new Error("failure"));
+      return false;
+    }));
+    await decide(true);
+    push.mockClear();
+    act(() => pop(base));
+    await waitFor(() => expect(push).toHaveBeenCalledOnce());
+    expect(beforeUnload()).toBe(true);
+    act(() => { expect(result.current.requestExit(vi.fn())).toBe(true); });
+    await decide(false);
+  });
+
+  it("does not rearm a departed document after a failed continuation", async () => {
+    vi.spyOn(window.history, "back").mockImplementation(() => {});
+    const push = vi.spyOn(window.history, "pushState");
+    const { result } = renderGuard();
+    const base = currentBaseState();
+    act(() => result.current.requestExit(() => { window.history.replaceState({}, "", "/admin/results"); return false; }));
+    await decide(true);
+    push.mockClear();
+    act(() => pop(base));
+    await waitFor(() => expect(window.location.pathname).toBe("/admin/results"));
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it("restores a browser Back before asking so Next cannot replace the backdrop", async () => {
+    const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
+    const nextPop = vi.fn();
+    window.addEventListener("popstate", nextPop);
+    renderGuard();
+    const base = currentBaseState();
+    act(() => pop(base));
+    expect(window.history.state[SENTINEL_KEY]).toEqual(expect.any(String));
+    expect(nextPop).not.toHaveBeenCalled();
+    expect(back).not.toHaveBeenCalled();
+    await decide(false);
+    expect(beforeUnload()).toBe(true);
+    window.removeEventListener("popstate", nextPop);
+  });
+
+  it("replays approved browser Back after restoring and removing its sentinel", async () => {
+    const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
+    renderGuard();
+    const base = currentBaseState();
+    act(() => pop(base));
+    await decide(true);
+    expect(back).toHaveBeenCalledOnce();
+    act(() => pop(base));
+    await waitFor(() => expect(back).toHaveBeenCalledTimes(2));
+  });
+
+  it.each([false, true])("restores multi-entry Back without copying another Next state; accepted=%s", async accepted => {
+    const forward = vi.spyOn(window.history, "forward").mockImplementation(() => {});
+    const go = vi.spyOn(window.history, "go").mockImplementation(() => {});
+    vi.spyOn(window.history, "back").mockImplementation(() => {});
+    const push = vi.spyOn(window.history, "pushState");
+    renderGuard();
+    const sentinel = { ...window.history.state };
+    const base = currentBaseState();
+    push.mockClear();
+    act(() => pop({ __NA: true, route: "other" }, "/admin/results"));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(forward).toHaveBeenCalledOnce();
+    expect(push).not.toHaveBeenCalled();
+    act(() => pop(base, "/admin/students/student-1"));
+    expect(forward).toHaveBeenCalledTimes(2);
+    act(() => pop(sentinel));
+    expect(window.history.state.route).toBe("editor");
+    await decide(accepted);
+    if (accepted) {
+      act(() => pop(base));
+      await waitFor(() => expect(go).toHaveBeenCalledWith(-1));
+    } else {
+      expect(go).not.toHaveBeenCalled();
+      expect(beforeUnload()).toBe(true);
+    }
+  });
+
+  it("cancels a pending decision on unmount or when saving starts", async () => {
+    vi.spyOn(window.history, "back").mockImplementation(() => {});
+    const exit = vi.fn();
+    const { result, rerender, unmount } = renderGuard();
+    act(() => result.current.requestExit(exit));
+    rerender({ currentBusy: true, currentDirty: true });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(exit).not.toHaveBeenCalled();
+    rerender({ currentBusy: false, currentDirty: true });
+    act(() => result.current.requestExit(exit));
+    unmount();
+    await Promise.resolve();
     expect(exit).not.toHaveBeenCalled();
   });
 
-  it("비동기 이동이 실패하면 보호 기록을 복구하고 다시 시도할 수 있다", async () => {
-    const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
-    const pushState = vi.spyOn(window.history, "pushState");
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-    const failedExit = vi.fn(async () => false);
-    const retryExit = vi.fn();
+  it("a completed save cancels the old confirmation and executes its own continuation", async () => {
+    vi.spyOn(window.history, "back").mockImplementation(() => {});
+    const oldExit = vi.fn(), savedExit = vi.fn();
     const { result } = renderGuard();
-    const baseState = currentBaseState();
-    pushState.mockClear();
-
-    expect(result.current.requestExit(failedExit)).toBe(true);
-    act(() => dispatchPopState(baseState));
-
-    await waitFor(() => expect(failedExit).toHaveBeenCalledOnce());
-    await waitFor(() => expect(pushState).toHaveBeenCalledOnce());
-    expect(window.history.state[SENTINEL_KEY]).toEqual(expect.any(String));
-    expect(dispatchBeforeUnload()).toBe(true);
-    expect(result.current.requestExit(retryExit)).toBe(true);
-    expect(back).toHaveBeenCalledTimes(2);
+    const base = currentBaseState();
+    act(() => result.current.requestExit(oldExit));
+    act(() => result.current.forceExit(savedExit));
+    act(() => pop(base));
+    await waitFor(() => expect(savedExit).toHaveBeenCalledOnce());
+    expect(oldExit).not.toHaveBeenCalled();
   });
 
-  it("비동기 이동이 예외로 끝나도 보호 기록을 복구한다", async () => {
-    vi.spyOn(window.history, "back").mockImplementation(() => {});
-    const pushState = vi.spyOn(window.history, "pushState");
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-    const { result } = renderGuard();
-    const baseState = currentBaseState();
-    pushState.mockClear();
-
-    result.current.requestExit(async () => {
-      throw new Error("logout failed");
-    });
-    act(() => dispatchPopState(baseState));
-
-    await waitFor(() => expect(pushState).toHaveBeenCalledOnce());
-    expect(window.history.state[SENTINEL_KEY]).toEqual(expect.any(String));
-  });
-
-  it("비동기 실패 전에 다른 화면으로 바뀌었으면 옛 편집 보호를 다시 세우지 않는다", async () => {
-    vi.spyOn(window.history, "back").mockImplementation(() => {});
-    const pushState = vi.spyOn(window.history, "pushState");
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-    const { result } = renderGuard();
-    const baseState = currentBaseState();
-    pushState.mockClear();
-
-    result.current.requestExit(async () => {
-      window.history.replaceState({}, "", "/admin/results");
-      return false;
-    });
-    act(() => dispatchPopState(baseState));
-
-    await waitFor(() => expect(window.location.pathname).toBe("/admin/results"));
-    expect(pushState).not.toHaveBeenCalled();
-  });
-
-  it("이탈 처리가 끝나기 전에는 중복 요청을 받지 않는다", () => {
-    vi.spyOn(window.history, "back").mockImplementation(() => {});
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-    const firstExit = vi.fn();
-    const secondExit = vi.fn();
-    const { result } = renderGuard();
-
-    expect(result.current.requestExit(firstExit)).toBe(true);
-    expect(result.current.requestExit(secondExit)).toBe(false);
-    expect(firstExit).not.toHaveBeenCalled();
-    expect(secondExit).not.toHaveBeenCalled();
-  });
-
-  it("브라우저 뒤로가기를 취소하면 같은 보호 기록을 다시 세운다", () => {
-    vi.spyOn(window.history, "back").mockImplementation(() => {});
-    const pushState = vi.spyOn(window.history, "pushState");
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
-    renderGuard();
-    const baseState = currentBaseState();
-    pushState.mockClear();
-
-    act(() => dispatchPopState(baseState));
-
-    expect(confirm).toHaveBeenCalledWith("변경 내용을 버리고 이동할까요?");
-    expect(pushState).toHaveBeenCalledOnce();
-  });
-
-  it("브라우저 뒤로가기를 확인하면 실제 이전 기록으로 한 번 더 이동한다", () => {
-    const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-    renderGuard();
-    const baseState = currentBaseState();
-
-    act(() => dispatchPopState(baseState));
-
-    expect(back).toHaveBeenCalledOnce();
-  });
-
-  it("예상 밖의 다단계 뒤로가기를 승인하면 더 뒤로 넘기지 않는다", () => {
-    const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-    renderGuard();
-
-    act(() => dispatchPopState({ nextRouteState: "other-route" }));
-
-    expect(back).not.toHaveBeenCalled();
-  });
-
-  it("예상 밖의 다단계 뒤로가기를 취소할 때 다른 Next 상태를 복사하지 않는다", () => {
-    vi.spyOn(window.history, "back").mockImplementation(() => {});
-    const forward = vi.spyOn(window.history, "forward").mockImplementation(() => {});
-    const pushState = vi.spyOn(window.history, "pushState");
-    vi.spyOn(window, "confirm").mockReturnValue(false);
-    renderGuard();
-    pushState.mockClear();
-
-    act(() => dispatchPopState({ nextRouteState: "other-route" }));
-
-    expect(forward).toHaveBeenCalledOnce();
-    expect(pushState).not.toHaveBeenCalled();
-    expect(window.history.state).toEqual({ nextRouteState: "other-route" });
-  });
-
-  it("같은 문서의 해시 링크는 보호 기록을 늘리지 않고 현재 기록만 바꾼다", () => {
-    vi.spyOn(window.history, "back").mockImplementation(() => {});
-    const confirm = vi.spyOn(window, "confirm");
-    const replaceState = vi.spyOn(window.history, "replaceState");
+  it("same-document hashes retain one protection entry", () => {
+    const push = vi.spyOn(window.history, "pushState");
     const target = document.createElement("main");
-    target.id = "main-content";
-    target.scrollIntoView = vi.fn();
-    document.body.append(target);
+    target.id = "main-content"; target.scrollIntoView = vi.fn();
     const anchor = document.createElement("a");
-    anchor.href = `${window.location.href.split("#")[0]}#main-content`;
-    document.body.append(anchor);
-    renderGuard();
-    replaceState.mockClear();
-
+    anchor.href = window.location.href + "#main-content";
+    document.body.append(target, anchor);
+    renderGuard(); push.mockClear();
     const event = new MouseEvent("click", { bubbles: true, cancelable: true });
     anchor.dispatchEvent(event);
-
     expect(event.defaultPrevented).toBe(true);
-    expect(confirm).not.toHaveBeenCalled();
-    expect(replaceState).toHaveBeenCalledOnce();
+    expect(push).not.toHaveBeenCalled();
     expect(target.scrollIntoView).toHaveBeenCalledOnce();
-    anchor.remove();
-    target.remove();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    anchor.remove(); target.remove();
   });
 
-  it("변경 상태가 해제되면 보호 기록만 제거한다", () => {
+  it("removes clean protection and skips an inactive leftover sentinel", () => {
     const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
-    const confirm = vi.spyOn(window, "confirm");
     const { rerender } = renderGuard();
-    const baseState = currentBaseState();
-
+    const id = window.history.state[SENTINEL_KEY], base = currentBaseState();
     rerender({ currentBusy: false, currentDirty: false });
     expect(back).toHaveBeenCalledOnce();
-    act(() => dispatchPopState(baseState));
-    expect(confirm).not.toHaveBeenCalled();
+    act(() => pop(base));
     expect(window.history.state[BASE_KEY]).toBeUndefined();
-  });
-
-  it("비활성 상태에서 남은 보호 기록을 만나면 해당 중복 기록을 건너뛴다", () => {
-    const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
-    const { rerender } = renderGuard();
-    const guardId = window.history.state[SENTINEL_KEY] as string;
-    const baseState = currentBaseState();
-    rerender({ currentBusy: false, currentDirty: false });
-    act(() => dispatchPopState(baseState));
     back.mockClear();
-
-    act(() => dispatchPopState({ [SENTINEL_KEY]: guardId }));
-
+    act(() => pop({ [SENTINEL_KEY]: id }));
     expect(back).toHaveBeenCalledOnce();
     expect(window.history.state[SENTINEL_KEY]).toBeUndefined();
   });
 
-  it("다른 편집기가 만든 보호 기록은 건드리지 않는다", () => {
+  it("never modifies another inactive editor's protection", () => {
     const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
     renderGuard({ dirty: false });
-
-    act(() => dispatchPopState({ [SENTINEL_KEY]: "another-editor" }));
-
+    act(() => pop({ [SENTINEL_KEY]: "another-editor" }));
     expect(back).not.toHaveBeenCalled();
     expect(window.history.state[SENTINEL_KEY]).toBe("another-editor");
   });

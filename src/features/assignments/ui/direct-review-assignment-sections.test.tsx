@@ -127,8 +127,8 @@ describe("오답 시험 계산 오류 화면", () => {
     value.draft.exam.timeLimitEnabled = undefined;
     render(<DirectReviewAssignmentSections onOpenDatasetPicker={vi.fn()} controller={value}
       datasets={[dataset]} fieldErrors={{ timing: "제한 시간을 확인해 주세요." }} student={student} />);
-    const input = screen.getByRole("spinbutton", { name: /^전체 시간/ });
-    expect(input).toHaveValue(1); expect(input).toBeRequired();
+    const input = screen.getByRole("textbox", { name: /^전체 시간/ });
+    expect(input).toHaveValue("1"); expect(input).toBeRequired();
     fireEvent.change(input, { target: { value: "2" } });
     expect(value.actions.changeTiming).toHaveBeenCalledWith({ mode: "total", totalSeconds: 120 });
   });
@@ -147,8 +147,8 @@ describe("오답 시험 계산 오류 화면", () => {
     const testController = controller({});
     render(<DirectReviewAssignmentSections onOpenDatasetPicker={vi.fn()} controller={testController.value}
       datasets={[dataset]} fieldErrors={{ passingScore: "점수를 확인해 주세요." }} student={student} />);
-    const score = screen.getByRole("spinbutton", { name: "통과 점수" });
-    expect(score).toHaveValue(80);
+    const score = screen.getByRole("textbox", { name: "통과 점수" });
+    expect(score).toHaveValue("80");
     expect(score).toHaveAttribute("aria-errormessage", "review-passing-score-error");
     fireEvent.change(score, { target: { value: "85" } });
     expect(testController.value.actions.changePassingScore).toHaveBeenCalledWith(85);

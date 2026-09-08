@@ -66,13 +66,14 @@ export function directReviewPreviewRows(input: {
   const levels = input.selectedLevels.length === 0 ? "선택 안 함"
     : input.selectedLevels.map((level) => level === 1 ? "1회" : "2회 이상").join(" · ");
   const time = input.timeLimitEnabled === false ? "시간 제한 없음"
+    : !Number.isFinite(input.timing.mode === "total" ? input.timing.totalSeconds : input.timing.perQuestionSeconds) ? "시간 입력 필요"
     : input.timing.mode === "total" ? `전체 ${input.timing.totalSeconds / 60}분`
     : `문제당 ${input.timing.perQuestionSeconds}초`;
   return [
     { label: "학생", value: input.studentLabel },
     { label: "단어장", value: input.datasetLabel },
     { label: "범위", value: `오답 · ${levels}` },
-    { label: "단어 수", value: `${input.questionCount}개` },
+    { label: "단어 수", value: Number.isFinite(input.questionCount) ? `${input.questionCount}개` : "단어 수 확인 필요" },
     { label: "공개", value: availabilityIso ? formatKoreanDateTime(availabilityIso) : "즉시" },
     { label: "시간", value: time },
     { label: "마감", value: deadlineIso ? formatKoreanDateTime(deadlineIso) : "마감 없음" },

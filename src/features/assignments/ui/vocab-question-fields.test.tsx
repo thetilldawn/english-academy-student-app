@@ -16,7 +16,7 @@ it("제어기 없이 모드/수량/선택/전체 동작을 개별 전달한다",
   const p = props(); render(<VocabQuestionFields {...p} />);
   fireEvent.click(screen.getByRole("button", { name: "회차별" }));
   expect(p.onAssignmentModeChange).toHaveBeenCalledWith("per_session");
-  const input = screen.getByRole("spinbutton", { name: "회차당 단어 수" });
+  const input = screen.getByRole("textbox", { name: "회차당 단어 수" });
   fireEvent.focus(input); expect(p.onActivateManualCount).toHaveBeenCalledTimes(1);
   fireEvent.change(input, { target: { value: "20" } }); expect(p.onManualCountChange).toHaveBeenCalledWith(20);
   fireEvent.click(screen.getByRole("button", { name: "전체 사용 · 86개" })); expect(p.onSelectAllCount).toHaveBeenCalledTimes(1);
@@ -28,7 +28,7 @@ it("단어 수 입력은 남은 범위 설정보다 먼저 나온다", () => {
   p.unitView = { ...p.unitView, showOverflow: true };
   render(<VocabQuestionFields {...p} />);
   const mode = screen.getByRole("group", { name: "배정 방식" });
-  const input = screen.getByRole("spinbutton", { name: "회차당 단어 수" });
+  const input = screen.getByRole("textbox", { name: "회차당 단어 수" });
   const overflow = screen.getByRole("group", { name: "남은 범위" });
   expect(mode.compareDocumentPosition(input) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(input.compareDocumentPosition(overflow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -45,7 +45,7 @@ it("계산 실패는 현재 입력을 보존하고 명시 재시도만 실행한
     manualCountValue: 20, countSummary: "출제 가능 단어 수를 확인하지 못했습니다. 다시 시도해 주세요." };
   p.onRetryCount = vi.fn();
   render(<VocabQuestionFields {...p} />);
-  expect(screen.getByRole("spinbutton", { name: "회차당 단어 수" })).toHaveValue(20);
+  expect(screen.getByRole("textbox", { name: "회차당 단어 수" })).toHaveValue("20");
   fireEvent.click(screen.getByRole("button", { name: "단어 수 다시 확인" }));
   expect(p.onRetryCount).toHaveBeenCalledOnce();
   expect(p.onManualCountChange).not.toHaveBeenCalled();

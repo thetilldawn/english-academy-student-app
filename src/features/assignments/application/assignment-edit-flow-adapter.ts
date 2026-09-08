@@ -16,6 +16,7 @@ import {
 } from "../api/response-adapters";
 import type { SingleAssignmentResult } from "../contracts/single-assignment-editor-contract";
 import { assignmentRequestFingerprint } from "../domain/fingerprint";
+import { incompleteAssignmentNumberIssues } from "../domain/validation";
 import type {
   ResolvedSingleAssignment,
   SingleAssignmentDraft,
@@ -164,6 +165,7 @@ export function prepareSingleAssignmentPreview(
 export function singleCapacityIdentity(
   draft: SingleAssignmentDraft,
 ): string | null {
+  if (incompleteAssignmentNumberIssues(draft).length > 0) return null;
   return prepareSingleAssignmentPreview(
     {
       directionRatio: draft.exam.directionRatio,

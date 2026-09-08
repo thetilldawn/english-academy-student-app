@@ -1,9 +1,13 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useId, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/design-system/primitives/button/button";
+import { useConfirmation } from "@/design-system/patterns/confirmation/confirmation";
+import { announceAdminPrivateCacheChange } from "@/features/session/public-client";
+import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
+import { unitRangeDisplayGroups } from "@/lib/admin/unit-range-display";
 import {
   resolveAssignmentQueue,
   type QueueResolutionAction,
@@ -36,8 +40,17 @@ function AssignmentQueueDisclosure({
   const [open, setOpen] = useState(
     queue.status === "active" || queue.status === "attention",
   );
-  const [resolving, setResolving] = useState(false);
+  const scopeKey = `${queue.seriesId}:${queue.updatedAt}:${queue.status}:${queue.items.find(item => item.status === "attention")?.id}`;
+  const [resolvingScope, setResolvingScope] = useState<string | null>(null);
+  const resolving = resolvingScope === scopeKey;
   const resolvingRef = useRef(false);
+  const versionRef = useRef(0);
+  const confirm = useConfirmation(scopeKey);
+  useLayoutEffect(() => {
+    versionRef.current += 1;
+    resolvingRef.current = false;
+    return () => { versionRef.current += 1; };
+  }, [scopeKey]);
   const contentId = useId();
   const unitAllocation = vocabAssignmentQueueUnitAllocationLabel(
     queue.unitAllocation,
@@ -58,14 +71,20 @@ function AssignmentQueueDisclosure({
       skip: "이 회차를 보류하고 다음 회차로 넘어갈까요? 기록은 남고, 다음 회차의 예약 시간과 마감은 유지됩니다.",
       cancel: "남은 시험을 모두 취소할까요? 완료 내역은 남습니다.",
     }[action];
-    if (!window.confirm(confirmation)) return;
     resolvingRef.current = true;
-    setResolving(true);
+    const version = versionRef.current;
+    setResolvingScope(scopeKey);
     try {
+      if (!await confirm({ message: confirmation }) || versionRef.current !== version) return;
       const result = await resolveAssignmentQueue(queue.seriesId, action, expectedItem.id);
-      toast.success("배정된 시험 상태를 처리했습니다.");
-      onResolved?.(result);
+      // A sent command can finish after closing. Invalidate shared reads, not a new screen's state.
+      announceAdminPrivateCacheChange("students");
+      if (versionRef.current === version) {
+        toast.success("배정된 시험 상태를 처리했습니다.");
+        onResolved?.(result);
+      }
     } catch (error) {
+      if (versionRef.current !== version) return;
       onResolutionError?.(error);
       toast.error(
         error instanceof Error
@@ -73,8 +92,10 @@ function AssignmentQueueDisclosure({
           : "배정된 시험 상태를 처리하지 못했습니다.",
       );
     } finally {
-      resolvingRef.current = false;
-      setResolving(false);
+      if (versionRef.current === version) {
+        resolvingRef.current = false;
+        setResolvingScope(null);
+      }
     }
   }
 
@@ -113,7 +134,7 @@ function AssignmentQueueDisclosure({
                     {vocabAssignmentQueueItemStatusLabel(item.status)}
                   </strong>
                   <span>
-                    {item.unitLabels.join(" · ")} · {item.questionCount}개
+                    <MetaTagList>{unitRangeDisplayGroups(item.unitLabels).map((group, index) => <MetaTag key={index}>{group.label}</MetaTag>)}<MetaTag>{item.questionCount}개</MetaTag></MetaTagList>
                   </span>
                   <span>
                     {localDateTime(item.effectiveAvailableFrom)} ~{" "}
@@ -143,7 +164,7 @@ function AssignmentQueueDisclosure({
                 size="small"
                 variant="quiet"
               >
-                이 회차 건너뛰기
+                이 회차 보류
               </Button>
               <Button
                 disabled={resolving}

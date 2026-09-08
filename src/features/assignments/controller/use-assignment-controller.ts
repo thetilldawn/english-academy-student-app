@@ -55,6 +55,7 @@ import {
   useAssignmentSubmissionSession,
 } from "./use-assignment-controller-runtime";
 import { useAssignmentPreview } from "./use-assignment-preview";
+import { assignmentNumbersComplete } from "../application/assignment-input-readiness";
 
 type ControllerState = AssignmentEditorState<
   SingleAssignmentDraft,
@@ -361,7 +362,8 @@ export function useAssignmentController({
     [apply, setMessage, setSubmissionIssue],
   );
 
-  const capacity = state.preview.status === "ready" ? state.preview.value : null;
+  const numbersComplete = assignmentNumbersComplete(state.draft);
+  const capacity = numbersComplete && state.preview.status === "ready" ? state.preview.value : null;
   const automaticTitle = automaticTitleForDraft(state.draft, capacity);
   const fieldPolicy = singleAssignmentFieldPolicy(state.draft);
   const resolved = resolveSingleAssignmentDraft(state.draft, {
@@ -396,6 +398,7 @@ export function useAssignmentController({
       )
     : true;
   const capacityReadyForCurrentDraft =
+    numbersComplete &&
     state.preview.status === "ready" &&
     state.preview.revision === state.revision;
   const submitBlocker = resolveSingleAssignmentSubmitBlocker({

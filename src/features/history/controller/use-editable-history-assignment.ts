@@ -122,16 +122,16 @@ export function useEditableHistoryAssignment(detail: AdminHistoryDetail) {
   }
 
   function closeEditor() {
-    if (!canCloseEditor()) return false;
-    requestVersionRef.current += 1;
-    abortRef.current?.abort();
-    abortRef.current = null;
-    restoreEditFocusRef.current = true;
-    setEditorContext(null);
-    setLoadStatus("idle");
-    setLoadError("");
-    setSubmitPresentation(null);
-    return true;
+    return routeGuard.requestExit(() => {
+      requestVersionRef.current += 1;
+      abortRef.current?.abort();
+      abortRef.current = null;
+      restoreEditFocusRef.current = true;
+      setEditorContext(null);
+      setLoadStatus("idle");
+      setLoadError("");
+      setSubmitPresentation(null);
+    });
   }
 
   function handleSucceeded(result: SingleAssignmentResult) {

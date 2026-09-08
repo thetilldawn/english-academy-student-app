@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { ZodError } from "zod";
 import { useAssignmentAuthenticationFailure } from "./assignment-authentication-boundary";
 
 import {
@@ -54,18 +55,18 @@ export function useVocabTimeTemplates({
         message: "같은 이름의 시간 버튼이 이미 있습니다.",
       };
     }
+    let body: ReturnType<typeof buildVocabTimeTemplateRequest>;
+    try {
+      body = buildVocabTimeTemplateRequest({ name: trimmed.slice(0, 30), availableTime: schedule.availableTime,
+        deadlineDayOffset: schedule.deadlineDayOffset, deadlineTime: schedule.deadlineTime, timeLimitEnabled, timing });
+    } catch {
+      return { ok: false as const, message: "시간과 마감 설정을 확인해 주세요." };
+    }
     savingRef.current = true;
     setState((current) => ({ ...current, saving: true }));
     try {
       const response = await transport({
-        body: buildVocabTimeTemplateRequest({
-          name: trimmed.slice(0, 30),
-          availableTime: schedule.availableTime,
-          deadlineDayOffset: schedule.deadlineDayOffset,
-          deadlineTime: schedule.deadlineTime,
-          timeLimitEnabled,
-          timing,
-        }),
+        body,
         method: "POST",
         url: "/api/admin/vocab-time-templates",
       });
@@ -85,10 +86,10 @@ export function useVocabTimeTemplates({
         templates: [...current.templates, template],
       }));
       return { ok: true as const, template };
-    } catch {
+    } catch (error) {
       return {
         ok: false as const,
-        message: "시간 템플릿을 저장하지 못했습니다.",
+        message: error instanceof ZodError ? "저장 결과를 확인하지 못했습니다. 시간 버튼 목록을 다시 확인해 주세요." : "시간 템플릿을 저장하지 못했습니다.",
       };
     } finally {
       savingRef.current = false;

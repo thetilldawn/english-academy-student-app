@@ -389,8 +389,8 @@
     {
       "path": "src/test-support",
       "owner": "architecture-meta",
-      "fileCount": 15,
-      "pathSetSha256": "dfc776710c9cd00e35f0f12aae5fdbbf15fc565f1cc04a65aa914ea676b6d4d3"
+      "fileCount": 16,
+      "pathSetSha256": "70a4d1d166ea6490c379cd451440f9c15bdcd040acacd215f286a81bd32cfbb3"
     }
   ],
   "pageOwners": [
@@ -1218,6 +1218,10 @@
   ],
   "adminContractOwners": [
     {
+      "path": "src/lib/admin/unit-range-display.ts",
+      "owner": "shared-contract"
+    },
+    {
       "path": "src/lib/admin/assignment-database-error.ts",
       "owner": "assignments"
     },
@@ -1453,6 +1457,14 @@
     }
   ],
   "designSystemOwners": [
+    {
+      "path": "src/design-system/primitives/form/numeric-input.tsx",
+      "owner": "shared-ui"
+    },
+    {
+      "path": "src/design-system/patterns/confirmation/confirmation.tsx",
+      "owner": "shared-ui"
+    },
     {
       "path": "src/design-system/patterns/audio-button/audio-button.module.css",
       "owner": "shared-ui"
@@ -2367,6 +2379,12 @@
   ],
   "currentCrossFeatureImports": [
     {
+      "from": "src/features/assignment-queue/ui/assignment-queue-history.tsx",
+      "to": "src/features/session/public-client.ts",
+      "reason": "APP03: 실제 회차 변경 응답 뒤에만 학생 목록을 갱신하며 이미 닫힌 화면은 변경하지 않음",
+      "removeIn": "공개 진입점으로 고정"
+    },
+    {
       "from": "src/features/students/api/student-mutations.ts",
       "to": "src/features/session/public-client.ts",
       "reason": "APP02 현재 미인증과 다른 탭 로그아웃의 상세 개인정보 잠금",
@@ -2970,6 +2988,13 @@
         ],
         "serverComponent": [],
         "ui": [
+          "src/design-system/primitives/dialog/dialog.tsx",
+          "src/design-system/patterns/confirmation/confirmation.tsx",
+          "src/design-system/primitives/form/numeric-input.tsx",
+          "src/design-system/primitives/tabs/tabs.tsx",
+          "src/design-system/primitives/tooltip/help-tip.tsx",
+          "src/design-system/patterns/activity-timeline/activity-timeline.tsx",
+          "src/design-system/patterns/activity-row/activity-row.tsx",
           "src/features/assignments/ui/vocab-assignment-planner.tsx",
           "src/features/assignments/ui/assignment-discard-dialog.tsx",
           "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
@@ -3659,6 +3684,11 @@
         ],
         "serverComponent": [],
         "ui": [
+          "src/design-system/primitives/dialog/dialog.tsx",
+          "src/design-system/patterns/confirmation/confirmation.tsx",
+          "src/design-system/primitives/form/numeric-input.tsx",
+          "src/design-system/primitives/tabs/tabs.tsx",
+          "src/design-system/primitives/tooltip/help-tip.tsx",
           "src/features/assignments/ui/vocab-assignment-planner.tsx",
           "src/features/assignments/ui/assignment-discard-dialog.tsx",
           "src/features/assignments/ui/assignment-submit-action.tsx",
@@ -3933,6 +3963,10 @@
           "src/app/admin/(protected)/@detail/(.)results/[entryKey]/page.tsx"
         ],
         "ui": [
+          "src/design-system/primitives/dialog/dialog.tsx",
+          "src/design-system/patterns/confirmation/confirmation.tsx",
+          "src/design-system/patterns/activity-timeline/activity-timeline.tsx",
+          "src/design-system/patterns/activity-row/activity-row.tsx",
           "src/features/history/public-ui.ts",
           "src/features/history/ui/admin-history-actions.tsx",
           "src/features/history/ui/admin-history-list.tsx",
@@ -4307,6 +4341,11 @@
           "src/app/admin/(protected)/@detail/(.)results/[entryKey]/page.tsx"
         ],
         "ui": [
+          "src/design-system/primitives/dialog/dialog.tsx",
+          "src/design-system/patterns/confirmation/confirmation.tsx",
+          "src/design-system/primitives/form/numeric-input.tsx",
+          "src/design-system/primitives/tabs/tabs.tsx",
+          "src/design-system/primitives/tooltip/help-tip.tsx",
           "src/features/assignments/public-ui.ts",
           "src/features/history/ui/editable-history-detail-page.tsx",
           "src/features/history/ui/editable-history-detail-dialog.tsx",
@@ -4653,6 +4692,10 @@
           "src/features/students/server/components/student-directory-content.tsx"
         ],
         "ui": [
+          "src/design-system/primitives/dialog/dialog.tsx",
+          "src/design-system/patterns/confirmation/confirmation.tsx",
+          "src/design-system/patterns/activity-timeline/activity-timeline.tsx",
+          "src/design-system/patterns/activity-row/activity-row.tsx",
           "src/design-system/patterns/filter-workspace/filter-workspace.tsx",
           "src/features/students/ui/student-create-workspace.tsx",
           "src/features/students/ui/student-detail-content.tsx",
@@ -5044,6 +5087,13 @@
           "src/app/admin/(protected)/assignments/page.tsx"
         ],
         "ui": [
+          "src/design-system/primitives/dialog/dialog.tsx",
+          "src/design-system/patterns/confirmation/confirmation.tsx",
+          "src/design-system/primitives/form/numeric-input.tsx",
+          "src/design-system/primitives/tabs/tabs.tsx",
+          "src/design-system/primitives/tooltip/help-tip.tsx",
+          "src/design-system/patterns/activity-timeline/activity-timeline.tsx",
+          "src/design-system/patterns/activity-row/activity-row.tsx",
           "src/design-system/patterns/filter-workspace/filter-workspace.tsx",
           "src/features/assignments/ui/assignment-workspace.tsx",
           "src/features/assignments/ui/assignment-editor-fields.tsx",

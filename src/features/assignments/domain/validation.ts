@@ -49,6 +49,27 @@ function integerInRange(value: number, minimum: number, maximum: number) {
   return Number.isInteger(value) && value >= minimum && value <= maximum;
 }
 
+// Only editing completeness here: initial automatic zero and inactive remembered values are valid.
+export function incompleteAssignmentNumberIssues(
+  draft: SingleAssignmentDraft | BulkSeriesAssignmentDraft | DirectReviewAssignmentDraft,
+): AssignmentDraftIssue[] {
+  const { exam } = draft;
+  const numbers: [string, number][] = [["exam.passingScore", exam.passingScore]];
+  if (exam.retryEnabled !== false) numbers.push(["exam.retryPassingScore", exam.retryPassingScore ?? exam.passingScore]);
+  if (exam.timeLimitEnabled !== false) numbers.push(exam.timing.mode === "total"
+    ? ["exam.timing.totalSeconds", exam.timing.totalSeconds]
+    : ["exam.timing.perQuestionSeconds", exam.timing.perQuestionSeconds]);
+  if ("kind" in draft && draft.kind === "single" && draft.questionCount.mode === "manual") {
+    numbers.push(["questionCount", draft.questionCount.value]);
+  }
+  if ("kind" in draft && draft.kind === "bulk_series" && draft.commonPlan?.questionCount.mode === "manual") {
+    numbers.push(["commonPlan.questionCount", draft.commonPlan.questionCount.value]);
+  }
+  return numbers.filter(([, value]) => !Number.isFinite(value)).map(([path]) => ({
+    code: "required", path, message: "숫자를 입력해 주세요.",
+  }));
+}
+
 function sameOrderedValues<T>(
   left: readonly T[],
   right: readonly T[],
@@ -849,7 +870,7 @@ function validateCommonPlan(
 export function validateBulkPreviewProjection(
   draft: BulkSeriesAssignmentDraft,
 ): AssignmentDraftIssue[] {
-  const issues: AssignmentDraftIssue[] = [];
+  const issues: AssignmentDraftIssue[] = incompleteAssignmentNumberIssues(draft);
   validateUniqueIds(draft.studentIds, "studentIds", issues);
   if (draft.studentIds.length > MAXIMUM_BULK_STUDENT_COUNT) {
     issues.push({

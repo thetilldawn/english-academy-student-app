@@ -164,6 +164,15 @@ function scheduledLocalDate(value: string | null) {
 }
 
 describe("단어 배정 일정 controller", () => {
+  it("단어 수를 비운 뒤 전체와 직접 입력을 오가면 유효한 기본 수로 복구한다", () => {
+    const { result } = renderPlanner();
+    selectWholeRange(result);
+    act(() => result.current.actions.activateManualQuestionCount(120));
+    act(() => result.current.actions.changeManualQuestionCount(Number.NaN));
+    act(() => result.current.actions.changeAssignmentMode("all_sessions"));
+    act(() => result.current.actions.activateManualQuestionCount(120));
+    expect(result.current.planner).toMatchObject({ questionCountMode: "manual", manualQuestionCount: 120 });
+  });
   it("요일을 고르기 전에도 전체 범위의 기본 회차를 계산하고 저장은 막는다", () => {
     const { result } = renderPlanner();
     selectWholeRange(result);

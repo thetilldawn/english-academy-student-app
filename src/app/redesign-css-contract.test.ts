@@ -26,6 +26,11 @@ const modulesCss = moduleFiles
 const css = [globalsCss, modulesCss].join("\n");
 
 describe("redesign CSS contract", () => {
+  it("sizes automatic native dialogs to content instead of stretching between both insets", () => {
+    const dialogCss = readCss("src/design-system/primitives/dialog/dialog.module.css");
+    expect(dialogCss).toMatch(/\.auto\s*\{[^}]*height:\s*fit-content;/);
+    expect(dialogCss).toMatch(/\.frame\.compact\s*\{[^}]*width:\s*min\(440px, calc\(100vw - 32px\)\);/);
+  });
   it("does not force horizontal scrolling at the narrowest viewport", () => {
     expect(resetCss).toMatch(/html\s*\{[^}]*min-width:\s*0;/);
     expect(resetCss).not.toMatch(/min-width:\s*320px;/);
@@ -57,7 +62,7 @@ describe("redesign CSS contract", () => {
     expect(values.size).toBeLessThanOrEqual(5);
   });
 
-  it("limits blur to navigation surfaces and the brief timeout notice", () => {
+  it("limits blur to navigation, modal backdrops and the brief timeout notice", () => {
     expect(css).not.toMatch(
       /(?:linear-gradient|radial-gradient|box-shadow)\s*:/,
     );
@@ -70,6 +75,7 @@ describe("redesign CSS contract", () => {
     expect(blurFiles).toEqual([
       "components/shell/admin-navigation.module.css",
       "components/shell/app-shell.module.css",
+      "design-system/primitives/dialog/dialog.module.css",
       "features/quiz-player/ui/quiz-frame.module.css",
     ]);
     expect(globalsCss).not.toMatch(/backdrop-filter\s*:/);

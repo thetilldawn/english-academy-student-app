@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useConfirmation } from "@/design-system/patterns/confirmation/confirmation";
 
 import { formatContentText } from "@/content/format";
 import { adminStudentsText } from "@/content/ko/admin-students";
@@ -27,6 +28,8 @@ export function useStudentAccessController(input: {
   student: StudentDetailProfile;
 }) {
   const studentId = input.student.id;
+  const confirm = useConfirmation(`${studentId}:${input.student.updatedAt}`);
+  const busyRef = useRef(false);
   const [busyState, setBusyState] = useState({ busyKey: "", studentId });
   const [codeState, setCodeState] = useState<{
     code: StudentCodeView;
@@ -37,6 +40,7 @@ export function useStudentAccessController(input: {
   const versionRef = useRef(0);
 
   useEffect(() => {
+    busyRef.current = false;
     versionRef.current += 1;
     return () => {
       versionRef.current += 1;
@@ -58,18 +62,13 @@ export function useStudentAccessController(input: {
   }
 
   async function runCodeAction(kind: "reveal" | "rotate") {
-    if (busyKey) return;
-    if (
-      kind === "rotate" &&
-      !window.confirm(formatContentText(adminStudentsText.account.rotateConfirm, {
-        student: input.student.displayName,
-      }))
-    ) {
-      return;
-    }
+    if (busyRef.current) return;
+    busyRef.current = true;
     const version = versionRef.current;
     setBusyState({ busyKey: kind, studentId });
     try {
+      if (kind === "rotate" && !await confirm({ message: formatContentText(adminStudentsText.account.rotateConfirm, { student: input.student.displayName }) })) return;
+      if (versionRef.current !== version) return;
       const payload = kind === "reveal"
         ? await revealStudentCode(input.student.id)
         : await rotateStudentCode(input.student.id);
@@ -102,23 +101,19 @@ export function useStudentAccessController(input: {
       );
     } finally {
       if (versionRef.current === version) {
+        busyRef.current = false;
         setBusyState({ busyKey: "", studentId });
       }
     }
   }
 
   async function block() {
-    if (
-      busyKey ||
-      !window.confirm(formatContentText(adminStudentsText.account.blockConfirm, {
-        student: input.student.displayName,
-      }))
-    ) {
-      return;
-    }
+    if (busyRef.current) return;
+    busyRef.current = true;
     const version = versionRef.current;
     setBusyState({ busyKey: "block", studentId });
     try {
+      if (!await confirm({ message: formatContentText(adminStudentsText.account.blockConfirm, { student: input.student.displayName }) }) || versionRef.current !== version) return;
       await blockStudent(input.student.id);
       if (versionRef.current !== version) return;
       setCodeState(null);
@@ -134,23 +129,19 @@ export function useStudentAccessController(input: {
       }
     } finally {
       if (versionRef.current === version) {
+        busyRef.current = false;
         setBusyState({ busyKey: "", studentId });
       }
     }
   }
 
   async function remove() {
-    if (
-      busyKey ||
-      !window.confirm(formatContentText(adminStudentsText.account.deleteConfirm, {
-        student: input.student.displayName,
-      }))
-    ) {
-      return;
-    }
+    if (busyRef.current) return;
+    busyRef.current = true;
     const version = versionRef.current;
     setBusyState({ busyKey: "delete", studentId });
     try {
+      if (!await confirm({ message: formatContentText(adminStudentsText.account.deleteConfirm, { student: input.student.displayName }) }) || versionRef.current !== version) return;
       await deleteStudent(input.student.id);
       announceStudentRemoved(input.student.id);
       if (versionRef.current !== version) return;
@@ -166,6 +157,7 @@ export function useStudentAccessController(input: {
       }
     } finally {
       if (versionRef.current === version) {
+        busyRef.current = false;
         setBusyState({ busyKey: "", studentId });
       }
     }

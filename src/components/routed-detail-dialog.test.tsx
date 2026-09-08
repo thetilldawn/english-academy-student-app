@@ -114,7 +114,7 @@ describe("RoutedDetailDialog", () => {
     );
 
     await user.dblClick(screen.getByRole("button", { name: "상세 닫기" }));
-    expect(routeCloseGuard).toHaveBeenCalledOnce();
+    expect(routeCloseGuard).toHaveBeenCalledTimes(2);
     expect(back).not.toHaveBeenCalled();
   });
 });

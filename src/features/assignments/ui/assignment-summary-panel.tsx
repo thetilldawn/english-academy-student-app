@@ -14,6 +14,7 @@ import { assignmentEditFieldKeyForPath } from "../presentation/assignment-edit-f
 import { AssignmentEditComparison } from "./assignment-edit-comparison";
 import { assignmentUnitRangeLabel } from "../presentation/assignment-unit-range-label";
 import styles from "./single-assignment-editor.module.css";
+import { incompleteAssignmentNumberIssues } from "../domain/validation";
 
 export function AssignmentSummaryPanel({
   baselineDraft,
@@ -30,6 +31,9 @@ export function AssignmentSummaryPanel({
   preview: SingleAssignmentController["state"]["preview"];
   units: readonly AssignmentUnitItem[];
 }) {
+  if (incompleteAssignmentNumberIssues(draft).length > 0) return (
+    <section className={styles.summaryPanel}><Notice role="status">숫자를 입력하면 배정 내용을 확인할 수 있습니다.</Notice></section>
+  );
   const dataset = datasets.find(
     (candidate) => candidate.id === draft.range.datasetId,
   );

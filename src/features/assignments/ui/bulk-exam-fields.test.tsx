@@ -3,6 +3,8 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BulkExamFields, type BulkExamFieldsProps } from "./bulk-exam-fields";
+import { installNativeOverlayFixture } from "@/test-support/native-overlay-fixture";
+installNativeOverlayFixture();
 import { assignmentQuestionModes, type AssignmentQuestionMode } from "../domain/model";
 import { assignmentQuestionModePolicy } from "../domain/assignment-question-mode-policy";
 import { assignmentQuestionModeView } from "../presentation/assignment-question-mode-view";
@@ -28,10 +30,17 @@ describe("BulkExamFields with explicit inputs", () => {
     const input = props("book_meaning_choice", ["book_meaning_choice", "canonical_definition_to_headword"]);
     render(<BulkExamFields {...input} />);
     const tab = screen.getByRole("tab", { name: "예문 → 영어" });
-    expect(tab).toBeDisabled(); expect(tab).toHaveAttribute("aria-describedby", "example-mode-unavailable");
-    expect(screen.getByText(/배정 가능한 예문 문항이 없습니다/)).toBeVisible();
+    expect(tab).toHaveAttribute("aria-disabled", "true");
+    const reason = screen.getByText(/배정 가능한 예문 문항이 없습니다/);
+    expect(reason).not.toHaveAttribute("data-popover-open");
+    fireEvent.mouseEnter(tab);
+    expect(reason).toHaveAttribute("data-popover-open");
+    fireEvent.focus(tab);
+    expect(tab.getAttribute("aria-describedby")).toContain(reason.id);
     expect(screen.getByRole("tab", { name: "영영풀이 → 영어" })).toBeEnabled();
     fireEvent.click(tab); expect(input.onQuestionModeChange).not.toHaveBeenCalled();
+    fireEvent.keyDown(tab, { key: "ArrowLeft" });
+    expect(input.onQuestionModeChange).toHaveBeenCalledWith("canonical_definition_to_headword");
     expect(screen.queryByText(/검토 중/)).not.toBeInTheDocument();
   });
   it.each(assignmentQuestionModes.slice(1))("keeps direction locked for %s", mode => {
@@ -66,7 +75,7 @@ describe("BulkExamFields with explicit inputs", () => {
     const input = props();
     input.fieldErrors = { passingScore: "통과 점수를 확인해 주세요.", questionOrder: "문제 순서를 선택해 주세요." };
     render(<BulkExamFields {...input} />);
-    const score = screen.getByRole("spinbutton", { name: "통과 점수" });
+    const score = screen.getByRole("textbox", { name: "통과 점수" });
     expect(score).toHaveAttribute("aria-errormessage", "bulk-passing-score-error");
     fireEvent.change(score, { target: { value: "90" } });
     fireEvent.click(screen.getByRole("button", { name: "무작위" }));

@@ -48,6 +48,17 @@ describe("로컬 학생 학습 가짜 자료 보호", () => {
   });
 });
 describe("로컬 기준 계측 보호", () => {
+  it("현재 준비 조회와 지정된 가짜 풀이 미리보기만 허용하고 저장은 닫아 둔다", () => {
+    const availability = read("/rest/v1/rpc/list_assignment_question_mode_availability_v2", { method: "POST" });
+    expect(availability.status).toBe(200);
+    expect(availability.body[1].definition_count).toBe(100);
+    const preview = "/rest/v1/rpc/list_active_canonical_question_preview_v1";
+    const body = { p_dataset_id: uid(11), p_unit_ids: [uid(101), uid(105)], p_quiz_mode: "canonical_definition_to_headword" };
+    expect(read(preview, { method: "POST", body: JSON.stringify(body) }).body).toHaveLength(40);
+    expect(read(preview, { method: "POST", body: JSON.stringify({ ...body, p_unit_ids: [uid(1)] }) }).status).toBe(403);
+    expect(read(preview, { method: "POST", body: JSON.stringify({ ...body, p_dataset_id: uid(333) }) }).status).toBe(403);
+    expect(read("/rest/v1/rpc/create_bulk_assignments_v1", { method: "POST", body: JSON.stringify(body) }).status).toBe(403);
+  });
   it("프로필 모드에서만 가짜 학생을 메모리에 저장하고 결과를 다시 읽는다", () => {
     const profile = { p_student_id: uid(1) };
     const request = { method: "POST", studentProfile: true, body: JSON.stringify(profile) };

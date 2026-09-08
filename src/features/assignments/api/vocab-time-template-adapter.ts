@@ -4,6 +4,7 @@ import type { ExamTiming } from "../domain/model";
 import type { VocabTimeTemplate } from "../domain/vocab-assignment-contract";
 import {
   vocabTimeTemplateRecordSchema,
+  vocabTimeTemplateInputSchema,
   type VocabTimeTemplateRecord,
 } from "../contracts/vocab-time-template-contract";
 
@@ -45,7 +46,7 @@ export function buildVocabTimeTemplateRequest(input: {
   timeLimitEnabled?: boolean;
   timing: ExamTiming;
 }) {
-  return {
+  return vocabTimeTemplateInputSchema.parse({
     name: input.name,
     availableTime: input.availableTime,
     deadlineDayOffset: input.deadlineDayOffset,
@@ -56,5 +57,5 @@ export function buildVocabTimeTemplateRequest(input: {
       input.timeLimitEnabled !== false && input.timing.mode === "per_question"
         ? input.timing.perQuestionSeconds
         : null,
-  };
+  });
 }

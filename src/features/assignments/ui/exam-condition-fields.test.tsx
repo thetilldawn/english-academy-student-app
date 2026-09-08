@@ -17,8 +17,8 @@ describe("neutral exam condition fields", () => {
   it("requires only condition values and preserves retry input while hidden", () => {
     const events = callbacks();
     const { rerender } = render(<ExamConditionFields exam={base} {...events} />);
-    const retry = screen.getByRole("spinbutton", { name: "재시험 통과 점수" });
-    expect(retry).toHaveValue(85);
+    const retry = screen.getByRole("textbox", { name: "재시험 통과 점수" });
+    expect(retry).toHaveValue("85");
     fireEvent.change(retry, { target: { value: "90" } });
     expect(events.onRetryPassingScoreChange).toHaveBeenCalledWith(90);
     rerender(<ExamConditionFields exam={{ ...base, retryEnabled: false }} {...events} />);
@@ -26,15 +26,15 @@ describe("neutral exam condition fields", () => {
     expect(retry).not.toBeRequired();
     rerender(<ExamConditionFields exam={base} {...events} />);
     expect(retry.closest('[aria-hidden="true"]')).toBeNull();
-    expect(retry).toHaveValue(85);
+    expect(retry).toHaveValue("85");
   });
   it("keeps independent error references and input values", () => {
     render(<ExamConditionFields exam={base} {...callbacks()} idPrefix="local" fieldErrors={{
       direction: "시험 방식을 확인해 주세요.", passingScore: "통과 점수를 확인해 주세요.", retryPassingScore: "재시험 점수를 확인해 주세요.",
     }} />);
     expect(screen.getByRole("group", { name: /^시험 방식/ })).toHaveAttribute("aria-describedby", "local-direction-error");
-    expect(screen.getByRole("spinbutton", { name: "통과 점수" })).toHaveAttribute("aria-errormessage", "local-passing-score-error");
-    expect(screen.getByRole("spinbutton", { name: "재시험 통과 점수" })).toHaveAttribute("aria-errormessage", "local-retry-passing-score-error");
+    expect(screen.getByRole("textbox", { name: "통과 점수" })).toHaveAttribute("aria-errormessage", "local-passing-score-error");
+    expect(screen.getByRole("textbox", { name: "재시험 통과 점수" })).toHaveAttribute("aria-errormessage", "local-retry-passing-score-error");
   });
   it.each(["regular", "review"] as const)("actual edit consumer preserves %s field policy", (purpose) => {
     const draft: SingleAssignmentDraft = {
@@ -60,12 +60,12 @@ describe("neutral exam condition fields", () => {
     expect(direction.hasAttribute("disabled")).toBe(policy.direction !== "editable");
     fireEvent.click(direction);
     expect(actions.changeDirection).toHaveBeenCalledTimes(policy.direction === "editable" ? 1 : 0);
-    fireEvent.change(screen.getByRole("spinbutton", { name: "통과 점수" }), { target: { value: "90" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "통과 점수" }), { target: { value: "90" } });
     expect(actions.changePassingScore).toHaveBeenCalledWith(90);
     rerender(<AssignmentSettingsFields actions={actions} capacity={null} draft={draft} fieldPolicy={policy}
       fieldIdPrefix="edit" minimumQuestionCount={1} part="schedule" />);
-    const time = screen.getByRole("spinbutton", { name: "전체 시간(분)" });
-    expect(time).toHaveValue(5); expect(time).toBeRequired();
+    const time = screen.getByRole("textbox", { name: "전체 시간(분)" });
+    expect(time).toHaveValue("5"); expect(time).toBeRequired();
     fireEvent.change(time, { target: { value: "6" } });
     expect(actions.changeTiming).toHaveBeenCalledWith({ mode: "total", totalSeconds: 360 });
   });

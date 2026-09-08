@@ -9,6 +9,25 @@ import { useVocabTimeTemplates } from "./use-vocab-time-templates";
 const templateId = "00000000-0000-4000-8000-000000000111";
 
 describe("영구 시간 템플릿", () => {
+  it.each([Number.NaN, Number.POSITIVE_INFINITY])("잘못된 시간 %s를 서버에 보내지 않는다", async totalSeconds => {
+    const transport = vi.fn();
+    const { result } = renderHook(() => useVocabTimeTemplates({ initialTemplates: [], transport,
+      schedule: { startDate: "2026-08-17", weekdays: [1], availableTime: "18:00", deadlineDayOffset: 1, deadlineTime: "22:00" },
+      timing: { mode: "total", totalSeconds } }));
+    await act(async () => expect(await result.current.saveCurrentTemplate("검사")).toEqual({ ok: false, message: "시간과 마감 설정을 확인해 주세요." }));
+    expect(transport).not.toHaveBeenCalled();
+  });
+
+  it("저장 응답이 잘못된 경우 입력 오류와 구분하고 임시 버튼을 만들지 않는다", async () => {
+    const transport = vi.fn(async () => ({ data: {}, ok: true, status: 201 }));
+    const { result } = renderHook(() => useVocabTimeTemplates({ initialTemplates: [], transport,
+      schedule: { startDate: "2026-08-17", weekdays: [1], availableTime: "18:00", deadlineDayOffset: 1, deadlineTime: "22:00" },
+      timing: { mode: "total", totalSeconds: 30 } }));
+    await act(async () => expect(await result.current.saveCurrentTemplate("30초")).toEqual({ ok: false,
+      message: "저장 결과를 확인하지 못했습니다. 시간 버튼 목록을 다시 확인해 주세요." }));
+    expect(transport).toHaveBeenCalledOnce();
+    expect(result.current.customTemplates).toHaveLength(0);
+  });
   it("저장한 템플릿이 없으면 기본 버튼을 미리 만들지 않는다", () => {
     const { result } = renderHook(() => useVocabTimeTemplates({
       initialTemplates: [],

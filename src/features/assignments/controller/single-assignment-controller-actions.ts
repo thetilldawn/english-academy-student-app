@@ -24,6 +24,7 @@ export function reduceSingleAssignmentTimingMemory(
   current: SingleAssignmentTimingMemory,
   timing: ExamTiming,
 ): SingleAssignmentTimingMemory {
+  if (!Number.isFinite(timing.mode === "total" ? timing.totalSeconds : timing.perQuestionSeconds)) return current;
   return timing.mode === "total"
     ? { ...current, totalSeconds: timing.totalSeconds }
     : { ...current, perQuestionSeconds: timing.perQuestionSeconds };
@@ -158,10 +159,9 @@ export function useSingleAssignmentControllerActions<
     restoreAutomaticCount() {
       const preview = currentState.current.preview;
       const capacity = preview.status === "ready" ? preview.value : null;
-      if (!capacity) return;
       changeDraft({
         type: "questionCount/restoreAutomatic",
-        recommendedQuestionCount: capacity.recommendedQuestionCount,
+        recommendedQuestionCount: capacity?.recommendedQuestionCount ?? 0,
       });
     },
     retryPreview,

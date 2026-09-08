@@ -15,10 +15,19 @@ describe("기존 공용 부품 검사 소유권", () => {
   it("등록된 동명 로그아웃 부품 테스트는 인증 기능에 연결한다", () => {
     expect(registeredOwnerForPath(registry, "src/components/admin-logout-button.test.tsx")).toBe("auth");
   });
-  it("원본이 없거나 다른 폴더/다른 확장자면 추측하지 않는다", () => {
+  it("원본이 없거나 다른 폴더면 추측하지 않는다", () => {
     expect(registeredOwnerForPath(registry, "src/components/missing.test.tsx")).toBeNull();
     expect(registeredOwnerForPath(registry, "src/components/nested/admin-logout-button.test.tsx")).toBeNull();
-    expect(registeredOwnerForPath(registry, "src/components/admin-logout-button.test.ts")).toBeNull();
+    expect(registeredOwnerForPath(registry, "src/components/admin-logout-button.test.ts")).toBe("auth");
+  });
+  it("유일한 공용 hook/계약 원본만 검사에 연결하고 모호한 원본은 거절한다", () => {
+    expect(registeredOwnerForPath(registry, "src/components/use-route-exit-guard.test.tsx")).toBe("app-shell");
+    expect(registeredOwnerForPath(registry, "src/lib/admin/history.test.ts")).toBe("history");
+    expect(registeredOwnerForPath(registry, "src/lib/admin/unit-range-display.test.ts")).toBe("shared-contract");
+    expect(registeredOwnerForPath(registry, "src/lib/admin/missing.test.ts")).toBeNull();
+    const ambiguous = { ...registry, componentOwners: [...registry.componentOwners,
+      { path: "src/components/use-route-exit-guard.tsx", owner: "other" }] };
+    expect(registeredOwnerForPath(ambiguous, "src/components/use-route-exit-guard.test.tsx")).toBeNull();
   });
   it("정확한 기존 등록이 추론보다 우선한다", () => {
     const exact = { ...registry, componentOwners: [...registry.componentOwners,

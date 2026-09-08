@@ -1,5 +1,6 @@
 import { Button } from "@/design-system/primitives/button/button";
-import { Field, FieldError, FieldLabel, Input } from "@/design-system/primitives/form/field";
+import { Field, FieldError, FieldLabel } from "@/design-system/primitives/form/field";
+import { NumericInput } from "@/design-system/primitives/form/numeric-input";
 import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
 import type { VocabSplitOverflowPolicy } from "../domain/vocab-assignment-contract";
 import type { VocabUnitAllocationView } from "../presentation/vocab-question-view";
@@ -24,7 +25,7 @@ export function VocabUnitAllocationFields({
       {view.showUnitsPerSession ? (
         <Field as="label">
           <FieldLabel as="span">회차당 단위 수</FieldLabel>
-          <Input
+          <NumericInput
             aria-errormessage={commonCountError
               ? "vocab-units-per-session-error"
               : undefined}
@@ -32,12 +33,12 @@ export function VocabUnitAllocationFields({
             data-field-key="unitsPerSession"
             max={30}
             min={1}
-            onChange={(event) =>
+            onValueChange={(value) =>
               onUnitsPerSessionChange(
-                Number(event.target.value),
+                value ?? Number.NaN,
               )
             }
-            type="number"
+            required
             value={unitsPerSession}
           />
           <small>

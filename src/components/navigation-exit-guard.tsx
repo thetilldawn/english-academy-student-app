@@ -1,4 +1,5 @@
 "use client";
+import { ConfirmationProvider } from "@/design-system/patterns/confirmation/confirmation";
 
 import {
   createContext,
@@ -53,7 +54,7 @@ export function NavigationExitGuardProvider({ children }: { children: ReactNode 
 
   return (
     <NavigationExitGuardContext.Provider value={value}>
-      {children}
+      <ConfirmationProvider>{children}</ConfirmationProvider>
     </NavigationExitGuardContext.Provider>
   );
 }

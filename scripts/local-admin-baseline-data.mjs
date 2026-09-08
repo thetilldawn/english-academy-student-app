@@ -55,7 +55,7 @@ export function fixtureResponse({ url, method, headers, body = "", quizFeedback 
     }
     return studentStudyFixture({ target, method, headers, input });
   }
-  if (input === null || !requireFakeIds(input, [uid(1), uid(2), uid(10), uid(11)])) return deny;
+  if (input === null || !requireFakeIds(input, [uid(1), uid(2), uid(10), uid(11), ...[101, 102, 103, 104, 105].map(uid)])) return deny;
   if (headers.get("apikey") !== PUBLIC_KEY) return deny;
   const respond = (value, category) => ({ status: 200, body: value, category });
   if (target.pathname === "/auth/v1/token" && method === "POST") {
@@ -137,8 +137,18 @@ export function fixtureResponse({ url, method, headers, body = "", quizFeedback 
     }
     if (rpc === "list_admin_assignment_directory_selection_v1") return respond(
       filteredStudents(input).map(item => ({ item, student_id: item.id })), "selection");
-    if (rpc === "list_assignment_question_mode_availability_v1") return respond(
-      datasets.map(d => ({ dataset_id: d.id, definition_count: 0, example_count: 0 })), "preparation");
+    if (["list_assignment_question_mode_availability_v1", "list_assignment_question_mode_availability_v2"].includes(rpc)) return respond(
+      datasets.map(d => ({ dataset_id: d.id, definition_count: d.id === uid(11) ? 100 : 0, reverse_definition_count: 0, example_count: 0 })), "preparation");
+    if (rpc === "list_active_canonical_question_preview_v1") {
+      if (input.p_dataset_id !== uid(11) || input.p_quiz_mode !== "canonical_definition_to_headword" ||
+          !Array.isArray(input.p_unit_ids) || !input.p_unit_ids.length ||
+          input.p_unit_ids.some(id => ![101, 102, 103, 104, 105].map(uid).includes(id))) return deny;
+      return respond(input.p_unit_ids.flatMap((unitId) => Array.from({ length: 20 }, (_, index) => ({
+        release_id: uid(500), package_sha256: "a".repeat(64), unit_id: unitId,
+        vocab_entry_id: Number(unitId.slice(-3)) * 100 + index + 1, source_row: index + 1,
+        question_item_id: unitId + "-" + index, question_item_sha256: "b".repeat(64),
+      }))), "preview-read");
+    }
     if (rpc === "get_admin_assignment_previous_exam_v1") return respond([], "previous-exam");
   }
   return deny;

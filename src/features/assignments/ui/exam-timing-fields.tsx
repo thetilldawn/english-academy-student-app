@@ -8,8 +8,8 @@ import {
   Field,
   FieldError,
   FieldLabel,
-  Input,
 } from "@/design-system/primitives/form/field";
+import { NumericInput } from "@/design-system/primitives/form/numeric-input";
 import { ConditionalReveal } from "@/design-system/patterns/conditional-reveal/conditional-reveal";
 import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
 
@@ -71,36 +71,35 @@ export function ExamTimingFields({
                 : adminLearningText.controls.timing.perQuestionSeconds}
             </FieldLabel>
             {timing.mode === "total" ? (
-              <Input
+              <NumericInput
                 aria-errormessage={errorId}
                 aria-invalid={Boolean(error)}
                 max={180}
                 min={0.5}
-                onChange={(event) =>
+                onValueChange={(value) =>
                   onTimingChange({
                     mode: "total",
-                    totalSeconds: Number(event.target.value) * 60,
+                    totalSeconds: (value ?? Number.NaN) * 60,
                   })
                 }
                 required={enabled}
                 step={0.5}
-                type="number"
+                decimal
                 value={timing.totalSeconds / 60}
               />
             ) : (
-              <Input
+              <NumericInput
                 aria-errormessage={errorId}
                 aria-invalid={Boolean(error)}
                 max={600}
                 min={5}
-                onChange={(event) =>
+                onValueChange={(value) =>
                   onTimingChange({
                     mode: "per_question",
-                    perQuestionSeconds: Number(event.target.value),
+                    perQuestionSeconds: value ?? Number.NaN,
                   })
                 }
                 required={enabled}
-                type="number"
                 value={timing.perQuestionSeconds}
               />
             )}

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const vocabTimeTemplateRecordSchema = z
+const vocabTimeTemplateShape = z
   .object({
     id: z.uuid(),
     name: z.string().min(1).max(30),
@@ -11,8 +11,9 @@ export const vocabTimeTemplateRecordSchema = z
     totalSeconds: z.number().int().min(30).max(10800).nullable(),
     perQuestionSeconds: z.number().int().min(5).max(600).nullable(),
   })
-  .strict()
-  .superRefine((value, context) => {
+  .strict();
+
+function validateTimingCombination(value: z.infer<typeof vocabTimeTemplateShape> | Omit<z.infer<typeof vocabTimeTemplateShape>, "id">, context: z.RefinementCtx) {
     const valid = value.timingMode === "none"
       ? value.totalSeconds === null && value.perQuestionSeconds === null
       : value.timingMode === "total"
@@ -25,8 +26,13 @@ export const vocabTimeTemplateRecordSchema = z
         message: "제한시간 조합이 올바르지 않습니다.",
       });
     }
-  });
+}
+
+export const vocabTimeTemplateRecordSchema = vocabTimeTemplateShape.superRefine(validateTimingCombination);
 
 export type VocabTimeTemplateRecord = z.infer<
   typeof vocabTimeTemplateRecordSchema
 >;
+
+// Preserve the record's timing combination checks on the existing write contract too.
+export const vocabTimeTemplateInputSchema = vocabTimeTemplateShape.omit({ id: true }).superRefine(validateTimingCombination);

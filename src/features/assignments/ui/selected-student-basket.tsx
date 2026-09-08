@@ -1,21 +1,23 @@
 import { Button } from "@/design-system/primitives/button/button";
 
-import type { AssignmentWorkspaceController } from "../controller/use-assignment-workspace";
+import type { AssignmentSelectionStudent } from "../contracts/assignment-workspace-read-model";
 import styles from "./assignment-workspace.module.css";
 
 export function SelectedStudentBasket({
-  controller,
+  students, busy, onClear, onToggle,
 }: {
-  controller: AssignmentWorkspaceController;
+  students: readonly AssignmentSelectionStudent[];
+  busy: boolean;
+  onClear: () => void;
+  onToggle: (student: AssignmentSelectionStudent) => void;
 }) {
-  if (controller.selectedBulkStudents.length === 0) return null;
   return (
     <section aria-label="선택 바구니" className={styles.selectionBasket}>
       <div className={styles.selectionBasketHeading}>
-        <strong>선택 바구니 · {controller.selectedBulkStudents.length}명</strong>
+        <strong aria-live="polite">선택 바구니 · {students.length}명</strong>
         <Button
-          disabled={controller.selectionLoading}
-          onClick={controller.actions.clearBulkStudents}
+          disabled={busy || students.length === 0}
+          onClick={onClear}
           size="small"
           variant="quiet"
         >
@@ -23,12 +25,13 @@ export function SelectedStudentBasket({
         </Button>
       </div>
       <div className={styles.selectionChips}>
-        {controller.selectedBulkStudents.map((student) => (
+        {students.length === 0 ? <span>배정할 학생을 선택해 주세요.</span> : null}
+        {students.map((student) => (
           <Button
             aria-label={`${student.displayName} 선택 해제`}
-            disabled={controller.selectionLoading}
+            disabled={busy}
             key={student.id}
-            onClick={() => controller.actions.toggleBulkStudent(student)}
+            onClick={() => onToggle(student)}
             size="small"
             variant="filter"
           >

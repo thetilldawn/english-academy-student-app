@@ -3,6 +3,7 @@ import { formatContentText } from "@/content/format";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 import { AssignmentSessionReleaseTags } from "./assignment-session-release-tags";
+import { unitRangeDisplayGroups } from "@/lib/admin/unit-range-display";
 
 import type { BulkAssignmentPreviewResponse } from "../api/response-adapters";
 import styles from "./vocab-assignment-form.module.css";
@@ -29,21 +30,19 @@ export function BulkPreviewSessionList({
           className={styles.sessionRow}
           details={
             <MetaTagList>
-              <MetaTag size="large">
-                {session.unitLabel ??
-                  adminLearningText.bulkAssignmentModal.rangePending}
-              </MetaTag>
-              <AssignmentSessionReleaseTags
-                sessionNumber={session.sessionNumber}
-                availableFrom={session.availableFrom}
-                availableUntil={session.availableUntil}
-              />
+              {session.unitLabels.length > 0
+                ? unitRangeDisplayGroups(session.unitLabels).map((group, index) => <MetaTag key={index}>{group.label}</MetaTag>)
+                : <span>{adminLearningText.bulkAssignmentModal.rangePending}</span>}
               {session.rangeTruncated ? (
                 <MetaTag size="large" tone="warning">
                   {adminLearningText.bulkAssignmentModal.availableRangeOnly}
                 </MetaTag>
               ) : null}
-              <MetaTag size="large" tone={session.available ? "success" : "danger"}>
+            </MetaTagList>
+          }
+          error={session.error ? <small>{session.error}</small> : null}
+          heading={<MetaTagList><strong>{session.sessionNumber}회차</strong>
+              <MetaTag tone={session.available ? "success" : "danger"}>
                 {session.available
                   ? formatContentText(
                       adminLearningText.bulkAssignmentModal.questionCount,
@@ -51,10 +50,8 @@ export function BulkPreviewSessionList({
                     )
                   : adminLearningText.bulkAssignmentModal.needsReview}
               </MetaTag>
-            </MetaTagList>
-          }
-          error={session.error ? <small>{session.error}</small> : null}
-          heading={<strong>{session.sessionNumber}회차</strong>}
+            </MetaTagList>}
+          timeline={<AssignmentSessionReleaseTags sessionNumber={session.sessionNumber} availableFrom={session.availableFrom} availableUntil={session.availableUntil} />}
           key={`${item.studentId}-${session.sessionNumber}`}
         />
       ))}

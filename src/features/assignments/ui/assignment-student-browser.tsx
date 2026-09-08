@@ -47,7 +47,7 @@ export function AssignmentStudentBrowser({
           wordbookOptions={controller.wordbookOptions}
         />
         {controller.assignmentMode === "bulk" ? (
-          <SelectedStudentBasket controller={controller} />
+          <SelectedStudentBasket students={controller.selectedBulkStudents} busy={controller.selectionLoading} onClear={controller.actions.clearBulkStudents} onToggle={controller.actions.toggleBulkStudent} />
         ) : null}
 
         {controller.assignmentMode === "bulk" ? (
@@ -75,16 +75,6 @@ export function AssignmentStudentBrowser({
                     ? "필터 결과 선택 해제"
                     : `필터 결과 ${directory.snapshot.totalCount}명 선택`}
               </Button>
-              {controller.selectedBulkStudentIds.length > 0 ? (
-                <Button
-                  disabled={controller.selectionLoading}
-                  onClick={controller.actions.clearBulkStudents}
-                  size="small"
-                  variant="quiet"
-                >
-                  {adminLearningText.page.bulk.clearAll}
-                </Button>
-              ) : null}
             </div>
             <div className={styles.bulkActions}>
               <Button

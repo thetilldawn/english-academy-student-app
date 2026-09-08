@@ -139,7 +139,7 @@ describe("독립된 범위 표시 부품", () => {
     value.bulk.preview = null;
     value.bulk.previewLoading = true;
     render(<VocabRangePicker controller={value} datasets={[dataset]} onOpenDatasetPicker={vi.fn()} />);
-    const input = screen.getByRole("spinbutton", { name: "회차당 단어 수" });
+    const input = screen.getByRole("textbox", { name: "회차당 단어 수" });
     fireEvent.focus(input);
     expect(value.actions.activateManualQuestionCount).not.toHaveBeenCalled();
     expect(input).toHaveAttribute("placeholder", "직접 입력");
@@ -195,7 +195,7 @@ describe("VocabRangePicker", () => {
   it("실제 연결부에서 직접 입력 활성화 후 값 변경을 실행한다", () => {
     const value = controller({ assignmentMode: "word_count" });
     render(<VocabRangePicker onOpenDatasetPicker={vi.fn()} controller={value} datasets={[dataset]} />);
-    fireEvent.change(screen.getByRole("spinbutton", { name: "회차당 단어 수" }), { target: { value: "20" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "회차당 단어 수" }), { target: { value: "20" } });
     expect(value.actions.activateManualQuestionCount).toHaveBeenCalledWith(86);
     expect(value.actions.changeManualQuestionCount).toHaveBeenCalledWith(20);
     expect(vi.mocked(value.actions.activateManualQuestionCount).mock.invocationCallOrder[0])
@@ -232,8 +232,8 @@ describe("VocabRangePicker", () => {
     const value = controller({ assignmentMode: "word_count" });
     render(<VocabRangePicker onOpenDatasetPicker={vi.fn()} controller={value} datasets={[dataset]} />);
 
-    const input = screen.getByRole("spinbutton", { name: "회차당 단어 수" });
-    expect(input).toHaveValue(86);
+    const input = screen.getByRole("textbox", { name: "회차당 단어 수" });
+    expect(input).toHaveValue("86");
     fireEvent.focus(input);
     expect(value.actions.activateManualQuestionCount).toHaveBeenCalledWith(86);
     fireEvent.click(screen.getByRole("button", { name: "전체 사용 · 86개" }));

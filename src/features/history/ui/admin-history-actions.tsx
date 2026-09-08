@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { useConfirmation } from "@/design-system/patterns/confirmation/confirmation";
 import { toast } from "sonner";
 
 import { formatContentText } from "@/content/format";
@@ -38,7 +39,17 @@ export function AdminHistoryActions({
   size?: "regular" | "small";
   summaryOnly?: boolean;
 }) {
-  const [busyAction, setBusyAction] = useState<ActionKey | null>(null);
+  const scopeKey = `${item.studentId}:${item.assignmentId}:${item.attemptId}:${item.status}`;
+  const [pendingAction, setPendingAction] = useState<{ scopeKey: string; action: ActionKey } | null>(null);
+  const busyAction = pendingAction?.scopeKey === scopeKey ? pendingAction.action : null;
+  const confirm = useConfirmation(scopeKey);
+  const busyRef = useRef(false);
+  const versionRef = useRef(0);
+  useLayoutEffect(() => {
+    versionRef.current += 1;
+    busyRef.current = false;
+    return () => { versionRef.current += 1; };
+  }, [scopeKey]);
   const buttonSize = size === "small" ? "small" : "default";
 
   async function run(
@@ -49,9 +60,12 @@ export function AdminHistoryActions({
       receipt: AdminHistoryMutationReceipt;
     }>,
   ) {
-    if (busyAction || !window.confirm(confirmation)) return;
-    setBusyAction(action);
+    if (busyRef.current) return;
+    busyRef.current = true;
+    const version = versionRef.current;
+    setPendingAction({ scopeKey, action });
     try {
+      if (!await confirm({ message: confirmation }) || versionRef.current !== version) return;
       const mutation = await request();
       announceAdminHistoryMutation({
         ...mutation,
@@ -62,7 +76,7 @@ export function AdminHistoryActions({
           ? adminHistoryText.actions.cancelSuccess
           : adminHistoryText.actions.deleteSuccess,
       );
-      onMutated?.();
+      if (versionRef.current === version) onMutated?.();
     } catch (requestError) {
       toast.error(
         requestError instanceof Error
@@ -70,7 +84,10 @@ export function AdminHistoryActions({
           : adminHistoryText.actions.genericError,
       );
     } finally {
-      setBusyAction(null);
+      if (versionRef.current === version) {
+        busyRef.current = false;
+        setPendingAction(null);
+      }
     }
   }
 

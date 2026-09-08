@@ -74,6 +74,19 @@
   justify-content: space-between;
 }
 
+.selectionChips {
+  height: 88px;
+  overflow-y: auto;
+  align-content: start;
+  scrollbar-gutter: stable;
+}
+
+.selectionChips > button { animation: browserModePanelIn var(--motion-standard) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .selectionChips > button { animation: none; }
+}
+
 .studentList {
   align-items: start;
   gap: var(--space-2);

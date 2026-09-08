@@ -17,6 +17,7 @@ const applicationRoot = path.join(featureRoot, "application");
 const contractsRoot = path.join(featureRoot, "contracts");
 const transportRoot = path.join(featureRoot, "transport");
 const pureSharedModules = new Map([
+  ["@/lib/admin/unit-range-display", path.resolve("src/lib/admin/unit-range-display.ts")],
   ["@/lib/deadline", path.resolve("src/lib/deadline.ts")],
   [
     "@/lib/admin/assignment-edit-policy",
@@ -95,6 +96,7 @@ describe("assignment feature dependency boundaries", () => {
         specifier === "@/lib/quiz/question-content-mode" ||
         specifier === "@/lib/admin/assignment-edit-policy" ||
         specifier === "@/lib/admin/vocab-unit-allocation" ||
+        specifier === "@/lib/admin/unit-range-display" ||
         resolvesInside(importer, specifier, [domainRoot]),
       forbidEndpointLiterals: true,
       forbidJsx: true,
@@ -209,6 +211,7 @@ describe("assignment feature dependency boundaries", () => {
           "../api/response-adapters",
           "../application/assignment-edit-flow-adapter",
           "../application/assignment-operation-error",
+          "../application/assignment-input-readiness",
           "../application/request-lifecycle",
           "../domain/editor-state",
           "../domain/model",

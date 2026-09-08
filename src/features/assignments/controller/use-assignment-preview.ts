@@ -15,6 +15,7 @@ import type {
   AssignmentEditorState,
 } from "../domain/editor-state";
 import type { SingleAssignmentDraft } from "../domain/model";
+import { assignmentNumbersComplete } from "../application/assignment-input-readiness";
 import type {
   AssignmentCapacityResponse,
 } from "../api/response-adapters";
@@ -58,13 +59,14 @@ export function useAssignmentPreview<Result>({
   const range = state.draft.range;
   const review = state.draft.review;
   const studentId = state.draft.studentId;
+  const numbersComplete = assignmentNumbersComplete(state.draft);
   const projection = useMemo(
     () =>
-      prepareSingleAssignmentPreview(
+      numbersComplete ? prepareSingleAssignmentPreview(
         { directionRatio, operation, range, review, studentId },
         errorMessage,
-      ),
-    [directionRatio, errorMessage, operation, range, review, studentId],
+      ) : null,
+    [numbersComplete, directionRatio, errorMessage, operation, range, review, studentId],
   );
   const handleRequested = useCallback(
     (identity: AssignmentRequestIdentity) => {

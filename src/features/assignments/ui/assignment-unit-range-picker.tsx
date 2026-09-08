@@ -1,4 +1,6 @@
 import { Button } from "@/design-system/primitives/button/button";
+import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
+import { unitRangeDisplayGroups } from "@/lib/admin/unit-range-display";
 import {
   FieldError,
   FieldLabel,
@@ -6,7 +8,7 @@ import {
 
 import type { AssignmentUnitItem } from "../catalog-types";
 import { resolveVocabUnitSelection } from "../domain/vocab-planner-controls";
-import { assignmentRangeSelectionSummary, assignmentUnitRangeLabel } from "../presentation/assignment-unit-range-label";
+import { assignmentRangeSelectionSummary } from "../presentation/assignment-unit-range-label";
 import { DayRangeRail } from "./day-range-rail";
 import styles from "./vocab-assignment-planner.module.css";
 
@@ -34,12 +36,7 @@ export function AssignmentUnitRangePicker({
   });
   const selectedUnitIdSet = new Set(selectedUnits.map((unit) => unit.id));
   const allSelected = units.length > 0 && selectedUnits.length === units.length;
-  const selectedLabel = selectedUnits.length === 0
-    ? "범위를 선택하세요"
-    : assignmentUnitRangeLabel(
-        selectedUnits.map((unit) => unit.label),
-        selectedUnits.map((unit) => unit.sortIndex),
-      );
+  const selectedRanges = unitRangeDisplayGroups(selectedUnits.map(unit => unit.label));
 
   return (
     <div
@@ -63,7 +60,7 @@ export function AssignmentUnitRangePicker({
       </div>
       {selectedUnits.length > 0 || !error ? <div className={styles.rangeSelectionSummary} aria-live="polite" aria-atomic="true">
         <strong>{assignmentRangeSelectionSummary(selectedUnits)}</strong>
-        {selectedUnits.length > 0 ? <span>{selectedLabel}</span> : null}
+        <MetaTagList>{selectedRanges.map((range, index) => <MetaTag key={index}>{range.label}</MetaTag>)}</MetaTagList>
       </div> : null}
       <DayRangeRail
         disabled={disabled}

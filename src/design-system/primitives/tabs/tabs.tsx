@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useRef, type KeyboardEvent } from "react";
+import { HelpTip } from "../tooltip/help-tip";
 
 import styles from "./tabs.module.css";
 
@@ -10,6 +11,7 @@ export type TabItem<Value extends string> = {
   controls?: string;
   describedBy?: string;
   disabled?: boolean;
+  disabledReason?: string;
   id?: string;
 };
 
@@ -66,6 +68,26 @@ export function Tabs<Value extends string>({
     >
       {items.map((item, index) => {
         const selected = item.value === value;
+        if (item.disabled && item.disabledReason) return (
+          <HelpTip
+            buttonRef={(node) => { tabRefs.current[index] = node; }}
+            key={item.value}
+            label={item.label}
+            rootClassName={styles.tabHint}
+            trigger={item.label}
+            triggerProps={{
+              "aria-controls": item.controls,
+              "aria-describedby": item.describedBy,
+              "aria-disabled": true,
+              "aria-selected": false,
+              className: styles.tab,
+              id: item.id ?? `${fallbackId}-${item.value}`,
+              onKeyDown: (event) => moveFocus(event, index),
+              role: "tab",
+              tabIndex: 0,
+            }}
+          >{item.disabledReason}</HelpTip>
+        );
         return (
           <button
             aria-controls={item.controls}

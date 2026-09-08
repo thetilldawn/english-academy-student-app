@@ -137,10 +137,10 @@ describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
     const all = within(dialog).getByRole("button", { name: "전체 선택" });
     fireEvent.click(all);
     fireEvent.click(within(dialog).getByRole("button", { name: "회차별" }));
-    fireEvent.change(await within(dialog).findByRole("spinbutton", { name: /^회차당 단위 수/ }), { target: { value: "2" } });
+    fireEvent.change(await within(dialog).findByRole("textbox", { name: /^회차당 단위 수/ }), { target: { value: "2" } });
     expect(await within(dialog).findByText("가능한 배정 3회")).toBeVisible();
     fireEvent.click(within(dialog).getByRole("button", { name: "단어 수" }));
-    fireEvent.change(await within(dialog).findByRole("spinbutton", { name: "회차당 단어 수" }), { target: { value: "100" } });
+    fireEvent.change(await within(dialog).findByRole("textbox", { name: "회차당 단어 수" }), { target: { value: "100" } });
     expect(await within(dialog).findByText("가능한 배정 7회")).toBeVisible();
     expect(within(dialog).getByText(/전체 출제 가능 601개 · 회차당 최대 500개/)).toBeVisible();
     fireEvent.click(within(dialog).getByRole("button", { name: "배정하기" }));
@@ -183,11 +183,11 @@ describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
     if (unit.getAttribute("aria-pressed") !== "true") fireEvent.click(unit);
     fireEvent.click(within(dialog).getByRole("button", { name: "단어 수" }));
     await waitFor(() => expect(pending.length).toBeGreaterThan(0));
-    const input = within(dialog).getByRole("spinbutton", { name: "회차당 단어 수" });
+    const input = within(dialog).getByRole("textbox", { name: "회차당 단어 수" });
     expect(within(dialog).getByText("선택한 범위 1개 · 수록 단어 20개")).toBeVisible();
     expect(within(dialog).getByText("출제 가능 단어 수를 확인하는 중입니다.")).toBeVisible();
     fireEvent.focus(input);
-    expect(input).not.toHaveValue(0);
+    expect(input).not.toHaveValue("0");
     expect(within(dialog).getByRole("button", { name: "전체 사용" })).toHaveAttribute("aria-pressed", "true");
     await act(async () => pending.at(-1)!.finish(Response.json({ error: "private raw SQL error" }, { status: 503 })));
     const retry = await within(dialog).findByRole("button", { name: "단어 수 다시 확인" });
@@ -202,7 +202,7 @@ describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
     if (mode === "single") {
       expect(within(dialog).getByRole("button", { name: "전체 사용 · 16개" })).toBeVisible();
       expect(within(dialog).getByText(/출제 가능 16개/)).toBeVisible();
-      expect(input).toHaveValue(16);
+      expect(input).toHaveValue("16");
     } else {
       expect(within(dialog).getByText(/전체 가능 단어 수는 다시 확인해 주세요/)).toBeVisible();
       expect(within(dialog).queryByRole("button", { name: "전체 사용 · 16개" })).not.toBeInTheDocument();
@@ -210,12 +210,12 @@ describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
     expect(within(dialog).getByText("선택한 범위 1개 · 수록 단어 20개")).toBeVisible();
     fireEvent.change(input, { target: { value: "8" } });
     await waitFor(() => expect(pending.length).toBeGreaterThan(previousCalls + 1));
-    expect(input).toHaveValue(8);
+    expect(input).toHaveValue("8");
     const old = pending.at(-1)!;
     fireEvent.click(unit);
     await act(async () => old.finish(success(old.studentIds, 8)));
     expect(within(dialog).queryByText(/출제 가능 16개/)).not.toBeInTheDocument();
-    expect(input).toHaveValue(8);
+    expect(input).toHaveValue("8");
     expect(unit).toHaveAttribute("aria-pressed", "false");
     expect(fetchMock.mock.calls.some(([url]) => url === "/api/admin/bulk-assignments")).toBe(false);
   });
@@ -236,7 +236,7 @@ describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
     const dialog = screen.getByRole("dialog", { name: mode === "bulk" ? /일괄 배정/ : /단일 배정/ });
     const name = within(dialog).getByLabelText("새 시간 템플릿 이름");
     fireEvent.change(name, { target: { value: "오래 작성하는 배정" } });
-    const score = within(dialog).getByRole("spinbutton", { name: "통과 점수" });
+    const score = within(dialog).getByRole("textbox", { name: "통과 점수" });
     fireEvent.change(score, { target: { value: "85" } });
     score.focus();
     return { dialog, name, score, rerender };
@@ -247,7 +247,7 @@ describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
     for (const elapsed of [60000, 60001]) {
       await act(async () => { await vi.advanceTimersByTimeAsync(elapsed); });
       expect(dialog).toHaveAttribute("open"); expect(dialog).toBeVisible();
-      expect(name).toHaveValue("오래 작성하는 배정"); expect(score).toHaveValue(85); expect(score).toHaveFocus();
+      expect(name).toHaveValue("오래 작성하는 배정"); expect(score).toHaveValue("85"); expect(score).toHaveFocus();
       expect(fetchMock).toHaveBeenCalledTimes(requestCount);
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     }
@@ -268,7 +268,7 @@ describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("학생 목록을 불러오지 못했습니다. 다시 불러와 주세요.");
     expect(screen.queryByText("최신 학생 목록을 다시 확인해 주세요.")).not.toBeInTheDocument();
     expect(screen.queryByText(/private internal failure/)).not.toBeInTheDocument();
-    expect(dialog).toHaveAttribute("open"); expect(score).toHaveValue(85); expect(score).toHaveFocus();
+    expect(dialog).toHaveAttribute("open"); expect(score).toHaveValue("85"); expect(score).toHaveFocus();
     fireEvent.click(screen.getByRole("button", { name: "다시 불러오기" }));
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -476,8 +476,8 @@ describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
     for (const label of ["영어 → 뜻", "뜻 → 영어", "혼합"]) {
       expect(within(dialog).getByRole("button", { name: label })).toBeDisabled();
     }
-    fireEvent.change(within(dialog).getByRole("spinbutton", { name: "통과 점수" }), { target: { value: "85" } });
-    expect(within(dialog).getByRole("spinbutton", { name: "통과 점수" })).toHaveValue(85);
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "통과 점수" }), { target: { value: "85" } });
+    expect(within(dialog).getByRole("textbox", { name: "통과 점수" })).toHaveValue("85");
     const preparations = fetchMock.mock.calls.filter(([url]) => url.endsWith("/preparation"));
     expect(preparations).toHaveLength(1);
     const request = JSON.parse(preparations[0]![1].body);

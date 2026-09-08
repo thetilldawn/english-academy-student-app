@@ -7,6 +7,7 @@ import {
   type NavigationContinuation,
 } from "@/components/navigation-exit-guard";
 import { useUnsavedChangesWarning } from "@/lib/ui/use-unsaved-changes-warning";
+import { useConfirmation } from "@/design-system/patterns/confirmation/confirmation";
 
 const HISTORY_BASE_KEY = "__routeExitGuardBase";
 const HISTORY_SENTINEL_KEY = "__routeExitGuardSentinel";
@@ -85,7 +86,7 @@ function isSameDocument(firstHref: string, secondHref: string) {
 }
 
 export type RouteExitGuard = {
-  canExit: () => boolean;
+  canExit: () => Promise<boolean>;
   forceExit: (continueNavigation: NavigationContinuation) => boolean;
   requestExit: (continueNavigation: NavigationContinuation) => boolean;
 };
@@ -107,6 +108,10 @@ export function useRouteExitGuard({
 }): RouteExitGuard {
   const reactId = useId();
   const guardId = `${idPrefix}-${reactId}`;
+  const confirm = useConfirmation(guardId);
+  const confirmationRef = useRef<AbortController | null>(null);
+  const decisionVersionRef = useRef(0);
+  const restoreBackStepsRef = useRef<number | null>(null);
   const active = busy || dirty;
   const activeRef = useRef(active);
   const busyRef = useRef(busy);
@@ -120,6 +125,7 @@ export function useRouteExitGuard({
   const exitInProgressRef = useRef(false);
   const protectedHrefRef = useRef("");
   const pendingExitRef = useRef<NavigationContinuation | null>(null);
+  const exitAfterRestorationRef = useRef<NavigationContinuation | null>(null);
 
   useUnsavedChangesWarning(active, activeRef);
 
@@ -166,13 +172,28 @@ export function useRouteExitGuard({
     }, restoreAfterFailedContinuation);
   }, [restoreAfterFailedContinuation]);
 
-  const canExit = useCallback(() => {
-    if (exitInProgressRef.current || busyRef.current) return false;
-    return !dirtyRef.current || window.confirm(confirmMessage);
-  }, [confirmMessage]);
+  const canExit = useCallback(async () => {
+    if (exitInProgressRef.current || busyRef.current || confirmationRef.current) return false;
+    if (!dirtyRef.current) return true;
+    const request = new AbortController();
+    confirmationRef.current = request;
+    try {
+      const accepted = await confirm({ title: "작성을 그만둘까요?", message: confirmMessage, confirmLabel: "그만두기", signal: request.signal });
+      return accepted && !request.signal.aborted && mountedRef.current && !busyRef.current;
+    } finally {
+      if (confirmationRef.current === request) confirmationRef.current = null;
+    }
+  }, [confirm, confirmMessage]);
 
   const forceExit = useCallback((continuation: NavigationContinuation) => {
+    if (restoringUnexpectedPopRef.current) {
+      if (exitAfterRestorationRef.current) return false;
+      confirmationRef.current?.abort();
+      exitAfterRestorationRef.current = continuation;
+      return true;
+    }
     if (exitInProgressRef.current) return false;
+    confirmationRef.current?.abort();
     exitInProgressRef.current = true;
     activeRef.current = false;
     if (!sentinelRef.current) {
@@ -187,8 +208,15 @@ export function useRouteExitGuard({
   }, [runContinuation]);
 
   const requestExit = useCallback((continuation: NavigationContinuation) => {
-    if (!canExit()) return false;
-    return forceExit(continuation);
+    if (exitInProgressRef.current || busyRef.current || confirmationRef.current) return false;
+    if (!dirtyRef.current) return forceExit(continuation);
+    const version = decisionVersionRef.current;
+    const stillAllowed = () => mountedRef.current && !busyRef.current && decisionVersionRef.current === version;
+    void canExit().then(accepted => {
+      if (accepted && stillAllowed()) forceExit(() => stillAllowed() ? continuation() : false);
+    });
+    // Synchronous interception, not approval. The continuation runs only after approval.
+    return true;
   }, [canExit, forceExit]);
 
   useNavigationExitGuardRegistration({
@@ -197,17 +225,21 @@ export function useRouteExitGuard({
     requestExit,
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      decisionVersionRef.current += 1;
+      confirmationRef.current?.abort();
     };
   }, []);
 
   useLayoutEffect(() => {
+    decisionVersionRef.current += 1;
     busyRef.current = busy;
     dirtyRef.current = dirty;
     desiredActiveRef.current = active;
+    if (!dirty || busy) confirmationRef.current?.abort();
     if (!exitInProgressRef.current) activeRef.current = active;
     if (active) {
       if (!sentinelRef.current && !exitInProgressRef.current) {
@@ -246,17 +278,32 @@ export function useRouteExitGuard({
       }
 
       if (restoringUnexpectedPopRef.current) {
+        event.stopImmediatePropagation();
         if (ownsSentinel(event.state, guardId)) {
           restoringUnexpectedPopRef.current = false;
           sentinelRef.current = true;
           exitInProgressRef.current = false;
+          const steps = restoreBackStepsRef.current;
+          restoreBackStepsRef.current = null;
+          const afterRestoration = exitAfterRestorationRef.current;
+          exitAfterRestorationRef.current = null;
+          if (afterRestoration) {
+            forceExit(afterRestoration);
+            return;
+          }
+          if (steps !== null && !busyRef.current) requestExit(() => {
+            browserBackApprovedRef.current = true;
+            window.history.go(-Math.max(1, steps - 1));
+          });
           return;
         }
+        if (restoreBackStepsRef.current !== null) restoreBackStepsRef.current += 1;
         window.history.forward();
         return;
       }
 
       if (awaitingBaseRef.current) {
+        event.stopImmediatePropagation();
         awaitingBaseRef.current = false;
         const pendingExit = pendingExitRef.current;
         pendingExitRef.current = null;
@@ -299,28 +346,26 @@ export function useRouteExitGuard({
       }
 
       if (ownsSentinel(event.state, guardId)) {
+        event.stopImmediatePropagation();
         sentinelRef.current = true;
         return;
       }
 
       sentinelRef.current = false;
+      // Restore before asking: otherwise Next's popstate handler unmounts the editor.
+      event.stopImmediatePropagation();
       const expectedBase = ownsExactBase(event.state, guardId);
-      if (busyRef.current || !window.confirm(confirmMessage)) {
-        if (expectedBase) {
-          pushSentinel();
-        } else {
-          restoringUnexpectedPopRef.current = true;
-          exitInProgressRef.current = true;
-          window.history.forward();
-        }
-        return;
-      }
-
-      activeRef.current = false;
-      exitInProgressRef.current = true;
       if (expectedBase) {
-        browserBackApprovedRef.current = true;
-        window.history.back();
+        pushSentinel();
+        if (!busyRef.current) requestExit(() => {
+          browserBackApprovedRef.current = true;
+          window.history.back();
+        });
+      } else {
+        restoreBackStepsRef.current = 1;
+        restoringUnexpectedPopRef.current = true;
+        exitInProgressRef.current = true;
+        window.history.forward();
       }
     }
 
@@ -339,10 +384,10 @@ export function useRouteExitGuard({
       moveToHashWithoutAddingHistory(link.destination);
     }
 
-    window.addEventListener("popstate", handlePopState);
+    window.addEventListener("popstate", handlePopState, true);
     document.addEventListener("click", handleDocumentClick, true);
     return () => {
-      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("popstate", handlePopState, true);
       document.removeEventListener("click", handleDocumentClick, true);
       const current = window.history.state;
       if (ownsBase(current, guardId) || ownsSentinel(current, guardId)) {
@@ -353,7 +398,7 @@ export function useRouteExitGuard({
         );
       }
     };
-  }, [confirmMessage, guardId, pushSentinel, runContinuation]);
+  }, [forceExit, guardId, pushSentinel, requestExit, runContinuation]);
 
   return { canExit, forceExit, requestExit };
 }

@@ -1,5 +1,6 @@
 import type { BulkAssignmentPreviewResponse } from "../api/response-adapters";
 import type { BulkSeriesAssignmentDraft } from "../domain/model";
+import { incompleteAssignmentNumberIssues } from "../domain/validation";
 
 export type BulkCapacitySummary = {
   status: "ready" | "different" | "unavailable";
@@ -11,6 +12,7 @@ export type BulkCapacitySummary = {
 // Display-only identity: dates never stand in for a validated submission plan.
 // Keep just one current scope, not a cache of students or previous previews.
 export function bulkCapacityIdentity(draft: BulkSeriesAssignmentDraft): string | null {
+  if (incompleteAssignmentNumberIssues(draft).length > 0) return null;
   const plan = draft.commonPlan;
   if (!plan || draft.studentIds.length === 0) return null;
   return JSON.stringify({

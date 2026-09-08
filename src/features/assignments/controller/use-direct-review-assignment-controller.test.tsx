@@ -68,6 +68,40 @@ afterEach(() => {
 });
 
 describe("direct review assignment controller", () => {
+  it.each(["score", "time"] as const)("does not submit an old preview after clearing and restoring %s in one event", async field => {
+    let previewCount = 0, writes = 0;
+    let release!: (value: { data: typeof capacityResponse; ok: boolean; status: number }) => void;
+    const transport: AssignmentTransport = vi.fn(async request => {
+      if (request.url.endsWith("/direct-review-summaries")) return { data: summaryResponse, ok: true, status: 200 };
+      if (request.url.endsWith("/preview")) {
+        previewCount += 1;
+        if (previewCount === 1) return { data: capacityResponse, ok: true, status: 200 };
+        return new Promise<{ data: typeof capacityResponse; ok: boolean; status: number }>(resolve => { release = resolve; });
+      }
+      writes += 1;
+      return { data: { assignmentId: ids.assignment }, ok: true, status: 201 };
+    });
+    const { result } = renderHook(() => useDirectReviewAssignmentController({ datasets: [dataset], enabled: true,
+      initialDatasetId: ids.dataset, previewDelayMs: 0, student, transport }));
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    await act(async () => {
+      if (field === "score") {
+        result.current.actions.changePassingScore(Number.NaN);
+        result.current.actions.changePassingScore(0);
+      } else {
+        result.current.actions.changeTiming({ mode: "total", totalSeconds: Number.NaN });
+        result.current.actions.changeTimeLimitEnabled(false);
+      }
+      expect((await result.current.actions.submit()).ok).toBe(false);
+    });
+    expect(writes).toBe(0);
+    expect(result.current.canSubmit).toBe(false);
+    await waitFor(() => expect(previewCount).toBe(2));
+    await act(async () => release({ data: capacityResponse, ok: true, status: 200 }));
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    await act(async () => { expect((await result.current.actions.submit()).ok).toBe(true); });
+    expect(writes).toBe(1);
+  });
   it("오답 탭을 열 때만 요약을 한 번 읽고 현재 오답으로 계산한다", async () => {
     const requests: Parameters<AssignmentTransport>[0][] = [];
     const transport: AssignmentTransport = vi.fn(async (request) => {

@@ -4,6 +4,7 @@ import { useAssignmentAuthenticationFailure } from "./assignment-authentication-
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useReducer,
   useRef,
@@ -51,6 +52,7 @@ import {
   useAssignmentSubmissionSession,
 } from "./use-assignment-controller-runtime";
 import { useDebouncedAssignmentPreview } from "./use-debounced-assignment-preview";
+import { assignmentNumbersComplete } from "../application/assignment-input-readiness";
 
 export type DirectReviewFieldKey =
   | "dataset"
@@ -73,6 +75,7 @@ type CapacityState =
       value: DirectReviewPreviewResponse;
       message: "";
       fingerprint: string;
+      revision: number;
     }
   | { status: "error"; value: null; message: string };
 
@@ -181,7 +184,7 @@ export function useDirectReviewAssignmentController({
     ),
     [datasets, initialDatasetId, student],
   );
-  const [draft, dispatch] = useReducer(
+  const [draft, dispatchDraft] = useReducer(
     reduceDirectReviewDraft,
     undefined,
     () =>
@@ -190,6 +193,12 @@ export function useDirectReviewAssignmentController({
         studentId: student.id,
       }),
   );
+  const draftRef = useRef(draft);
+  useLayoutEffect(() => { draftRef.current = draft; }, [draft]);
+  const dispatch = useCallback((action: DirectReviewDraftAction) => {
+    draftRef.current = reduceDirectReviewDraft(draftRef.current, action);
+    dispatchDraft(action);
+  }, []);
   const [capacity, setCapacity] = useState<CapacityState>({
     status: "idle",
     value: null,
@@ -216,6 +225,11 @@ export function useDirectReviewAssignmentController({
     initializeFromClock: true,
   });
   const [previewRevision, setPreviewRevision] = useState(0);
+  const previewRevisionRef = useRef(0);
+  const advancePreviewRevision = useCallback(() => {
+    previewRevisionRef.current += 1;
+    setPreviewRevision(previewRevisionRef.current);
+  }, []);
   const [sourceRefreshVersion, setSourceRefreshVersion] = useState(0);
   const submissionSession = useAssignmentSubmissionSession();
   const interactionLockedRef = useRef(false);
@@ -240,7 +254,8 @@ export function useDirectReviewAssignmentController({
       }),
     [clock, submissionSession, transport],
   );
-  const calculationPrerequisitesReady = enabled &&
+  const numbersComplete = assignmentNumbersComplete(draft);
+  const calculationPrerequisitesReady = enabled && numbersComplete &&
     summary.status === "ready" &&
     Boolean(draft.datasetId) &&
     draft.reviewLevels.length > 0;
@@ -315,7 +330,7 @@ export function useDirectReviewAssignmentController({
       void Promise.resolve().then(() => {
         if (cancelled) return;
         setCapacity({ status: "idle", value: null, message: "" });
-        setPreviewRevision((revision) => revision + 1);
+        advancePreviewRevision();
         dispatch({
           type: "dataset_changed",
           datasetId: nextDatasetId,
@@ -326,6 +341,8 @@ export function useDirectReviewAssignmentController({
       };
     }
   }, [
+    advancePreviewRevision,
+    dispatch,
     datasetOptions,
     draft.datasetId,
     enabled,
@@ -354,10 +371,13 @@ export function useDirectReviewAssignmentController({
     ],
   );
   const currentPreviewFingerprint = previewPreparation?.fingerprint ?? null;
+  const currentFingerprintRef = useRef(currentPreviewFingerprint);
+  useLayoutEffect(() => { currentFingerprintRef.current = currentPreviewFingerprint; }, [currentPreviewFingerprint]);
   const previewAlreadyCurrent =
     capacity.status === "ready" &&
     capacity.fingerprint === currentPreviewFingerprint;
-  const handlePreviewRequested = useCallback(() => {
+  const handlePreviewRequested = useCallback((identity: AssignmentRequestIdentity) => {
+    if (identity.revision !== previewRevisionRef.current || identity.fingerprint !== currentFingerprintRef.current) return;
     setCapacity((current) => ({
       status: "loading",
       value: current.value,
@@ -369,6 +389,7 @@ export function useDirectReviewAssignmentController({
       value: DirectReviewPreviewResponse,
       identity: AssignmentRequestIdentity,
     ) => {
+      if (identity.revision !== previewRevisionRef.current || identity.fingerprint !== currentFingerprintRef.current) return;
       previewRetryLockedRef.current = false;
       previewRecoveryFingerprintRef.current = null;
       setCapacity({
@@ -376,16 +397,18 @@ export function useDirectReviewAssignmentController({
         value,
         message: "",
         fingerprint: identity.fingerprint,
+        revision: identity.revision,
       });
       dispatch({ type: "question_count_resolved", value: value.wrongEligible });
     },
-    [],
+    [dispatch],
   );
   const handlePreviewFailed = useCallback(
     (
       error: AssignmentOperationError,
       identity: AssignmentRequestIdentity,
     ) => {
+      if (identity.revision !== previewRevisionRef.current || identity.fingerprint !== currentFingerprintRef.current) return;
       previewRetryLockedRef.current = false;
       if (
         error.recovery === "refresh_summary_and_preview" &&
@@ -393,14 +416,14 @@ export function useDirectReviewAssignmentController({
       ) {
         previewRecoveryFingerprintRef.current = identity.fingerprint;
         setCapacity({ status: "idle", value: null, message: "" });
-        setPreviewRevision((revision) => revision + 1);
+        advancePreviewRevision();
         setSourceRefreshVersion((version) => version + 1);
         return;
       }
       setCapacity({ status: "error", value: null, message: error.message });
       dispatch({ type: "question_count_resolved", value: 0 });
     },
-    [],
+    [advancePreviewRevision, dispatch],
   );
   useDebouncedAssignmentPreview({
     delayMs: previewDelayMs,
@@ -461,9 +484,11 @@ export function useDirectReviewAssignmentController({
     ] as const
   ).find((key) => fieldErrors[key]) ?? null;
   const canSubmit =
+    numbersComplete &&
     enabled &&
     summary.status === "ready" &&
     capacity.status === "ready" &&
+    capacity.revision === previewRevision &&
     Object.keys(fieldErrors).length === 0 &&
     submission.status !== "submitting" &&
     submission.status !== "succeeded";
@@ -474,7 +499,7 @@ export function useDirectReviewAssignmentController({
     setSubmission({ status: "idle", message: "" });
     setSubmissionIssue(null);
     setCapacity({ status: "idle", value: null, message: "" });
-    setPreviewRevision((revision) => revision + 1);
+    advancePreviewRevision();
     dispatch({ type: "dataset_changed", datasetId });
   }
 
@@ -488,7 +513,7 @@ export function useDirectReviewAssignmentController({
     setSubmission({ status: "idle", message: "" });
     setSubmissionIssue(null);
     setCapacity({ status: "idle", value: null, message: "" });
-    setPreviewRevision((revision) => revision + 1);
+    advancePreviewRevision();
     dispatch({ type: "review_level_toggled", level });
   }
 
@@ -498,12 +523,17 @@ export function useDirectReviewAssignmentController({
     setSubmission({ status: "idle", message: "" });
     setSubmissionIssue(null);
     setCapacity({ status: "idle", value: null, message: "" });
-    setPreviewRevision((revision) => revision + 1);
+    advancePreviewRevision();
     dispatch({ type: "direction_changed", value });
   }
 
   function dispatchUserAction(action: DirectReviewDraftAction) {
     if (interactionLockedRef.current) return;
+    const nextDraft = reduceDirectReviewDraft(draftRef.current, action);
+    if (assignmentNumbersComplete(draftRef.current) !== assignmentNumbersComplete(nextDraft)) {
+      setCapacity({ status: "idle", value: null, message: "" });
+      advancePreviewRevision();
+    }
     setUserEdited(true);
     setSubmission({ status: "idle", message: "" });
     setSubmissionIssue(null);
@@ -527,7 +557,7 @@ export function useDirectReviewAssignmentController({
     setSubmissionIssue(null);
     setCapacity({ status: "idle", value: null, message: "" });
     setSummary({ status: "loading", value: [], message: "" });
-    setPreviewRevision((revision) => revision + 1);
+    advancePreviewRevision();
     setSourceRefreshVersion((version) => version + 1);
   }
 
@@ -545,7 +575,7 @@ export function useDirectReviewAssignmentController({
     setSubmission({ status: "idle", message: "" });
     setSubmissionIssue(null);
     setCapacity({ status: "loading", value: null, message: "" });
-    setPreviewRevision((revision) => revision + 1);
+    advancePreviewRevision();
   }
 
   async function submit() {
@@ -554,8 +584,11 @@ export function useDirectReviewAssignmentController({
     if (
       !enabled ||
       submission.status === "succeeded" ||
+      !assignmentNumbersComplete(draftRef.current) ||
       summary.status !== "ready" ||
-      capacity.status !== "ready"
+      capacity.status !== "ready" ||
+      capacity.revision !== previewRevisionRef.current ||
+      capacity.fingerprint !== currentFingerprintRef.current
     ) {
       return {
         conflict: false,
@@ -576,7 +609,7 @@ export function useDirectReviewAssignmentController({
     try {
       outcome = await submissionFlow.run((now) =>
         prepareDirectReviewSubmission(
-          { draft, wrongEligible: capacity.value.wrongEligible },
+          { draft: draftRef.current, wrongEligible: capacity.value.wrongEligible },
           now,
         )
       );
@@ -605,7 +638,7 @@ export function useDirectReviewAssignmentController({
     setSubmission({ status: "error", message: outcome.error.message });
     if (outcome.error.recovery === "refresh_summary_and_preview") {
       setCapacity({ status: "idle", value: null, message: "" });
-      setPreviewRevision((revision) => revision + 1);
+      advancePreviewRevision();
       setSourceRefreshVersion((version) => version + 1);
     }
     return {
@@ -645,7 +678,7 @@ export function useDirectReviewAssignmentController({
     },
     calculationPending,
     canSubmit,
-    capacity,
+    capacity: numbersComplete ? capacity : { status: "idle" as const, value: null, message: "" as const },
     draft,
     fieldErrors,
     firstFieldKey,

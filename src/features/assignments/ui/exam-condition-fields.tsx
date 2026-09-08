@@ -5,8 +5,8 @@ import {
   Field,
   FieldError,
   FieldLabel,
-  Input,
 } from "@/design-system/primitives/form/field";
+import { NumericInput } from "@/design-system/primitives/form/numeric-input";
 import { HelpTip } from "@/design-system/primitives/tooltip/help-tip";
 
 import type {
@@ -180,16 +180,15 @@ export function ExamConditionFields({
               첫 시험에서 통과할 기준 점수입니다.
             </HelpTip>
           </FieldLabel>
-          <Input
+          <NumericInput
             aria-label="통과 점수"
             aria-errormessage={fieldErrors.passingScore ? scoreErrorId : undefined}
             aria-invalid={Boolean(fieldErrors.passingScore)}
             data-field-key="passingScore"
             max={100}
             min={0}
-            onChange={(event) => onPassingScoreChange(Number(event.target.value))}
+            onValueChange={(value) => onPassingScoreChange(value ?? Number.NaN)}
             required
-            type="number"
             value={exam.passingScore}
           />
           {fieldErrors.passingScore ? (
@@ -215,7 +214,7 @@ export function ExamConditionFields({
       <ConditionalReveal open={retryEnabled}>
         <Field className={styles.revealField}>
           <FieldLabel as="span">재시험 통과 점수</FieldLabel>
-          <Input
+          <NumericInput
             aria-label="재시험 통과 점수"
             aria-errormessage={fieldErrors.retryPassingScore
               ? retryScoreErrorId
@@ -224,11 +223,10 @@ export function ExamConditionFields({
             data-field-key="retryPassingScore"
             max={100}
             min={0}
-            onChange={(event) =>
-              onRetryPassingScoreChange(Number(event.target.value))
+            onValueChange={(value) =>
+              onRetryPassingScoreChange(value ?? Number.NaN)
             }
             required={retryEnabled}
-            type="number"
             value={exam.retryPassingScore ?? exam.passingScore}
           />
           {fieldErrors.retryPassingScore ? (

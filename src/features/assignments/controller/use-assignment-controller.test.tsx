@@ -55,6 +55,26 @@ function renderController(
 afterEach(() => vi.restoreAllMocks());
 
 describe("single assignment controller", () => {
+  it("allows clearing the count and returning to automatic without using the stale preview", async () => {
+    let reads = 0;
+    let release!: (value: { data: typeof capacity; ok: boolean; status: number }) => void;
+    const transport: AssignmentTransport = vi.fn(async () => {
+      reads += 1;
+      if (reads === 1) return { data: capacity, ok: true, status: 200 };
+      return new Promise<{ data: typeof capacity; ok: boolean; status: number }>(resolve => { release = resolve; });
+    });
+    const { result } = renderController(transport);
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    act(() => result.current.actions.changeQuestionCount(Number.NaN));
+    expect(result.current.canSubmit).toBe(false);
+    act(() => result.current.actions.restoreAutomaticCount());
+    expect(result.current.state.draft.questionCount).toEqual({ mode: "automatic", value: 0 });
+    expect(result.current.canSubmit).toBe(false);
+    await waitFor(() => expect(reads).toBe(2));
+    await act(async () => release({ data: capacity, ok: true, status: 200 }));
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    expect(result.current.state.draft.questionCount.value).toBe(40);
+  });
   it("creates a new draft from the complete inherited exam defaults", () => {
     expect(
       createInitialSingleAssignmentDraft({

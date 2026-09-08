@@ -37,14 +37,22 @@
   background: var(--surface);
 }
 
-.tab:disabled {
+.tab:disabled,
+.tab[aria-disabled="true"] {
   cursor: not-allowed;
   opacity: 0.5;
 }
 
-.tab:disabled:hover {
+.tab:disabled:hover,
+.tab[aria-disabled="true"]:hover {
   color: var(--muted);
   background: transparent;
+}
+
+.tabHint {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .tab[aria-selected="true"] {

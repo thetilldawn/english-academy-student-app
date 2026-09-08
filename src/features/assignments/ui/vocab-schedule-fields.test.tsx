@@ -404,9 +404,9 @@ describe("VocabScheduleFields", () => {
 
     render(<AllocationHarness value={value} />);
 
-    expect(screen.getByRole("spinbutton", {
+    expect(screen.getByRole("textbox", {
       name: /회차당 단위 수/,
-    })).toHaveValue(5);
+    })).toHaveValue("5");
     expect(screen.queryByText("요일별 단위 수")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("월요일 단위 수")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("수요일 단위 수")).not.toBeInTheDocument();

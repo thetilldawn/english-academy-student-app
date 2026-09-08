@@ -41,16 +41,19 @@ export function AssignmentSessionRow({
   details,
   error,
   heading,
+  timeline,
 }: {
   className?: string;
   details: ReactNode;
   error?: ReactNode;
   heading: ReactNode;
+  timeline?: ReactNode;
 }) {
   return (
-    <div className={classNames(styles.sessionRow, className)}>
+    <div className={classNames(styles.sessionRow, className)} data-has-timeline={Boolean(timeline)}>
       <div className={styles.sessionHeading}>{heading}</div>
       <div className={styles.sessionDetails}>{details}</div>
+      {timeline ? <div className={styles.sessionTimeline}>{timeline}</div> : null}
       {error ? <div className={styles.sessionError}>{error}</div> : null}
     </div>
   );

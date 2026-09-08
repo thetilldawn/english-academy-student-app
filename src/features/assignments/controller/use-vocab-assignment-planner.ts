@@ -315,7 +315,7 @@ export function useVocabAssignmentPlanner({
         }
       },
       activateManualQuestionCount: (defaultValue: number) => {
-        if (planner.manualQuestionCount < 1) {
+        if (!Number.isFinite(planner.manualQuestionCount) || planner.manualQuestionCount < 1) {
           dispatch({ type: "manual_question_count", value: defaultValue });
         }
         dispatch({ type: "question_count_mode", value: "manual" });

@@ -110,3 +110,8 @@ describe("AdminLogoutButton", () => {
     expect(mocks.refresh).not.toHaveBeenCalled();
   });
 });
+// Business-flow tests inject a decision; confirmation rendering/cancellation has separate real-provider tests.
+vi.mock("@/design-system/patterns/confirmation/confirmation", async (importOriginal) => {
+  const decide = async (options: { message: string }) => window.confirm(options.message);
+  return { ...await importOriginal<typeof import("@/design-system/patterns/confirmation/confirmation")>(), useConfirmation: () => decide };
+});

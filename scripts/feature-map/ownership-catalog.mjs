@@ -31,12 +31,13 @@ export function registeredOwnerForPath(registry, filePath) {
     const match = entries.find((entry) => entry.path === filePath);
     if (match) return match.owner;
   }
-  // Co-located legacy component tests follow only their exact registered source.
-  // A similarly named file elsewhere, or a test without a source, stays unmapped.
-  if (/^src\/components\/[^/]+\.test\.[cm]?[jt]sx?$/.test(filePath)) {
-    const sourcePath = filePath.replace(/\.test(?=\.[cm]?[jt]sx?$)/, "");
-    const source = registry.componentOwners.find((entry) => entry.path === sourcePath);
-    if (source) return source.owner;
+  // Only a uniquely registered, co-located source owns its test. A hook's DOM
+  // test may use TSX while the hook itself uses TS; ambiguity stays unmapped.
+  if (/^src\/(?:components|lib\/admin)\/[^/]+\.test\.[cm]?[jt]sx?$/.test(filePath)) {
+    const sourceStem = filePath.replace(/\.test\.[cm]?[jt]sx?$/, "");
+    const entries = filePath.startsWith("src/components/") ? registry.componentOwners : registry.adminContractOwners;
+    const sources = entries.filter((entry) => entry.path.replace(/\.[cm]?[jt]sx?$/, "") === sourceStem);
+    if (sources.length === 1) return sources[0].owner;
   }
   for (const feature of registry.features) {
     if (filePath === feature.ownerPath || filePath.startsWith(`${feature.ownerPath}/`)) {
