@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "id": "APP-20260909-02",
-  "title": "전체 단어의 원본 발음 교정 연결",
+  "id": "DEPLOY-20260909-02",
+  "title": "전체 단어 발음 교정 프리뷰와 운영 반영",
   "size": "full",
   "gate": "verified",
-  "guide": "docs/work-orders/APP-20260909-02.md",
-  "baseline": "fb329d32098909c79d129dce1ccd5e93b5554daa",
+  "guide": "docs/work-orders/DEPLOY-20260909-02.md",
+  "baseline": "be313fddd1c3bb32d60c8e59126ffd9124d73a1a",
   "owners": [
     "shared-quiz-domain",
     "quiz-player",
@@ -106,8 +106,8 @@
       "status": "applicable",
       "reason": "권한 확인 후 읽기 전용; 원음/학생/정답/개인 no-store 보존; user-directed 승인정보는 service-only",
       "checkIds": [
+        "T1",
         "T2",
-        "T3",
         "T4",
         "T5"
       ]
@@ -116,8 +116,8 @@
       "status": "applicable",
       "reason": "권한 확인 후 읽기 전용; 원음/학생/정답/개인 no-store 보존; user-directed 승인정보는 service-only",
       "checkIds": [
+        "T1",
         "T2",
-        "T3",
         "T4",
         "T5"
       ]
@@ -126,8 +126,8 @@
       "status": "applicable",
       "reason": "권한 확인 후 읽기 전용; 원음/학생/정답/개인 no-store 보존; user-directed 승인정보는 service-only",
       "checkIds": [
+        "T1",
         "T2",
-        "T3",
         "T4",
         "T5"
       ]
@@ -136,8 +136,8 @@
       "status": "applicable",
       "reason": "권한 확인 후 읽기 전용; 원음/학생/정답/개인 no-store 보존; user-directed 승인정보는 service-only",
       "checkIds": [
+        "T1",
         "T2",
-        "T3",
         "T4",
         "T5"
       ]
@@ -159,6 +159,7 @@
       "recovery": "조회 완료 대기",
       "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
       "checkIds": [
+        "T1",
         "T4"
       ]
     },
@@ -170,6 +171,7 @@
       "recovery": "예약 시각에 기존 서버 목록 갱신",
       "component": "src/features/student-dashboard/ui/assignment-boundary-refresh.tsx",
       "checkIds": [
+        "T1",
         "T4"
       ]
     },
@@ -181,6 +183,7 @@
       "recovery": "단어장 선택",
       "component": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
       "checkIds": [
+        "T1",
         "T4"
       ]
     },
@@ -192,6 +195,7 @@
       "recovery": "선생님이 배정하면 목록에 표시",
       "component": "src/features/student-dashboard/ui/student-dashboard.tsx",
       "checkIds": [
+        "T1",
         "T4"
       ]
     },
@@ -203,6 +207,7 @@
       "recovery": "운영 검수 기록에서 출처 확인",
       "component": "src/lib/quiz/pronunciation-snapshot.ts",
       "checkIds": [
+        "T1",
         "T4"
       ]
     },
@@ -214,6 +219,7 @@
       "recovery": "다시 시도 버튼",
       "component": "src/features/student-dashboard/ui/assignment-study-error.tsx",
       "checkIds": [
+        "T1",
         "T4"
       ]
     },
@@ -225,6 +231,7 @@
       "recovery": "기존 최신 내역 조회",
       "component": "src/features/assignment-queue/ui/assignment-queue-history.tsx",
       "checkIds": [
+        "T1",
         "T4"
       ]
     },
@@ -236,6 +243,7 @@
       "recovery": "학생 접속코드로 다시 로그인",
       "component": "src/features/student-dashboard/server/components/assignment-study-content.tsx",
       "checkIds": [
+        "T1",
         "T4"
       ]
     },
@@ -247,6 +255,7 @@
       "recovery": "닫은 뒤 현재 배정에서 다시 열기",
       "component": "src/features/student-dashboard/ui/assignment-study-frame.tsx",
       "checkIds": [
+        "T1",
         "T4"
       ]
     },
@@ -258,6 +267,7 @@
       "recovery": "경계 재시도 또는 닫기",
       "component": "src/features/student-dashboard/ui/assignment-study-error.tsx",
       "checkIds": [
+        "T1",
         "T4"
       ]
     }
@@ -274,55 +284,68 @@
   "checks": [
     {
       "id": "T1",
-      "kind": "unit",
-      "target": "src/lib/quiz/entry-source-pronunciation.test.ts",
-      "scenario": "실제 표제어/variant/URL/반환형식/중복/기존승인/저장음원 선택 불변",
-      "expected": "표시/segments만 교체, 원음 불변 및 미일치 기존값 유지",
+      "kind": "build",
+      "target": "package.json",
+      "scenario": "APP02 로컬 검사와 현재 구현 일치",
+      "expected": "3088 통과/선택1 미실행·타입/lint/구조/34페이지 빌드·849입력 재확인",
       "topics": [
-        "behavior"
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache",
+        "structure",
+        "error-ui",
+        "ui-copy"
       ]
     },
     {
       "id": "T2",
       "kind": "integration",
-      "target": "src/lib/database/entry-source-pronunciation.integration.test.ts",
-      "scenario": "최종스키마 identity/reviewed/occurrence/registry·행/POS/해시/재생허용/400상한/권한/쓰기0",
-      "expected": "정확 승인만 반환, 익명/일반사용자 실행 불가; 읽기쓰기0",
+      "target": "docs/verification/DEPLOY-20260909-02.md",
+      "scenario": "staging 정확324 적용·5389 최종조회",
+      "expected": "324출처/표시 일치·647승인 보호·5389음원 불변·23보호영역 동일",
       "topics": [
         "behavior",
         "authorization",
         "data-leak",
         "answer-leak",
-        "cache"
+        "cache",
+        "structure",
+        "error-ui",
+        "ui-copy"
       ]
     },
     {
       "id": "T3",
-      "kind": "integration",
-      "target": "src/lib/services/quiz/pronunciation-registry.test.ts",
-      "scenario": "source chunk400/잘못된응답/실패와 세 소비자 전달/개인자료 숨김",
-      "expected": "공통선택기를 사용하고 실패시 안전한 기존음원 유지, 새 권한노출0",
+      "kind": "review",
+      "target": "docs/verification/DEPLOY-20260909-02.md",
+      "scenario": "Preview 빌드와 확인 가능한 실제 응답",
+      "expected": "정확커밋/Ready/앱 로그인 화면. 인증된 학생/연결정보 미확인은 별도 명시하며 접근 설정 보존",
       "topics": [
         "behavior",
         "authorization",
         "data-leak",
         "answer-leak",
         "cache",
-        "error-ui"
+        "structure",
+        "error-ui",
+        "ui-copy"
       ]
     },
     {
       "id": "T4",
-      "kind": "build",
-      "target": "package.json",
-      "scenario": "전체 단위·기존학습/선택지/결과·오류/404/권한/캐시 회귀·타입·lint·지도·구조·빌드",
-      "expected": "필수 통과, 기존 쉬운 상태 UI 유지, 건너뜀/미검증 명시",
+      "kind": "review",
+      "target": "docs/verification/DEPLOY-20260909-02.md",
+      "scenario": "운영 별도 빌드·정확 자료·기존 테스트학생 읽기",
+      "expected": "동일커밋/Ready·324교정과5389최종선택·과거형용사/교과서/모고 단어보기 표시 확인",
       "topics": [
-        "structure",
+        "behavior",
         "authorization",
         "data-leak",
         "answer-leak",
         "cache",
+        "structure",
         "error-ui",
         "ui-copy"
       ]
@@ -330,26 +353,35 @@
     {
       "id": "T5",
       "kind": "review",
-      "target": "docs/verification/APP-20260909-02.md",
-      "scenario": "로컬 공통 연결 검사와 독립 검토; 원격 readback/보호/실화면은 별도 배포 검증에 연결",
-      "expected": "원본 복원값 전달, 기존 승인/음원/권한/학생 기록 보존",
+      "target": "docs/verification/DEPLOY-20260909-02.md",
+      "scenario": "운영 반영 뒤 보호값·실제 표시·관찰 가능한 오류 재확인",
+      "expected": "15분 뒤23보호영역/진행2건/교정324·원본해시 유지; 접근가능 로그만 확인 범위로 표현",
       "topics": [
         "behavior",
         "authorization",
         "data-leak",
         "answer-leak",
-        "cache"
+        "cache",
+        "structure",
+        "error-ui",
+        "ui-copy"
       ]
     },
     {
       "id": "T6",
       "kind": "review",
-      "target": "docs/verification/APP-20260909-02.md",
-      "scenario": "자료5389 출처/324 교정 및 보호·해시·음원3978 연결·거래검사",
-      "expected": "출처 불일치와 기존 승인 덮기 차단; 미확인 전수청음과 canonical 승격을 완료로 위장하지 않음",
+      "target": "docs/verification/DEPLOY-20260909-02.md",
+      "scenario": "독립 검토와 정확한 복구 범위",
+      "expected": "417원본+6입력 해시 일치·18제한거래 검사; 이번 정확키/작업/해시/표시만 취소 가능",
       "topics": [
         "behavior",
-        "structure"
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache",
+        "structure",
+        "error-ui",
+        "ui-copy"
       ]
     }
   ],
@@ -498,96 +530,8 @@
       "state": "existing"
     }
   ],
-  "requirements": [
-    {
-      "id": "R1",
-      "source": "user",
-      "text": "전체 9권의 검증된 원본 표기·강세를 정확 연결",
-      "acceptance": "5389개 누락/음원 연결 감사와 교정manifest 대조, 기존647보호/음원/사전불변",
-      "disposition": "required",
-      "owners": [
-        "shared-quiz-domain",
-        "quiz-player"
-      ],
-      "flowIds": [
-        "admin-history-read",
-        "student-quiz-attempt",
-        "student-assignment-study-read"
-      ],
-      "checkIds": [
-        "T1",
-        "T2",
-        "T5"
-      ]
-    },
-    {
-      "id": "R2",
-      "source": "user",
-      "text": "시험·영어선택지·단어보기·결과에서 공통 승인 표기 우선",
-      "acceptance": "사전 snapshot 없는 과거 문항도 정확한 entry/source/variant/audio 증거가 있으면 같은 표기, 음원 또는 사전 ID가 다르면 적용하지 않음",
-      "disposition": "required",
-      "owners": [
-        "quiz-player",
-        "results",
-        "student-dashboard"
-      ],
-      "flowIds": [
-        "admin-history-read",
-        "student-quiz-attempt",
-        "student-assignment-study-read"
-      ],
-      "checkIds": [
-        "T1",
-        "T3",
-        "T4",
-        "T5"
-      ]
-    },
-    {
-      "id": "R3",
-      "source": "user",
-      "text": "reviewed 모고와 legacy 장문/VOCA 누락 없이 현재·과거 소비자 공통 연결",
-      "acceptance": "identity/occurrence/registry별 증명 및 실제 문항 표제어·선택음원 일치. 기존500 복원·승인값 보존.",
-      "disposition": "required",
-      "owners": [
-        "shared-quiz-domain",
-        "quiz-player",
-        "database-contract"
-      ],
-      "flowIds": [],
-      "checkIds": [
-        "T1",
-        "T2",
-        "T3",
-        "T6"
-      ]
-    },
-    {
-      "id": "R4",
-      "source": "engineering",
-      "text": "학생 정보·정답·원음·시험 진행 보호",
-      "acceptance": "권한 확인 뒤 읽기 전용 조회, 공개 실행 차단, 기존 오류/빈결과/404 구분과 개인 no-store 보존",
-      "disposition": "required",
-      "owners": [
-        "quiz-player",
-        "student-dashboard",
-        "database-contract"
-      ],
-      "flowIds": [
-        "admin-history-read",
-        "student-quiz-attempt",
-        "student-assignment-study-read"
-      ],
-      "checkIds": [
-        "T2",
-        "T3",
-        "T4",
-        "T5"
-      ]
-    }
-  ],
   "verification": {
-    "fingerprint": "9c6a0cd45b57e82ecccfe49d8bde25717c5d01cfd21b5cf06bd7c71fe071f029",
+    "fingerprint": "9fda2a254cd5fe9e7736fecd26f650aac7d66116f55ad69c056b0aaec34e632e",
     "files": [
       {
         "path": "architecture/기능_소유권.json",
@@ -3991,50 +3935,128 @@
         "checkId": "T1",
         "result": "pass",
         "environment": "local",
-        "ranAt": "2026-09-08T21:24:55.107Z",
-        "command": "vitest entry-source-pronunciation.test.ts + full suite",
-        "summary": "정확 표제어/변이/URL·세그먼트 검증, 과거 영어 문항과 다른 현재 단어 적용 차단, 기존 승인 우선 통과."
+        "ranAt": "2026-09-08T22:01:39.325Z",
+        "command": "APP-20260909-02 complete gate and unchanged 849 implementation inputs; see APP02 local runs",
+        "summary": "기록된3088통과/선택1미실행·타입/lint/구조/격리34페이지 빌드와 같은849파일. 출처/순차배치 설명2곳만 정정했고 코드/검사 입력은 동일."
       },
       {
         "checkId": "T2",
         "result": "pass",
-        "environment": "local",
-        "ranAt": "2026-09-08T21:24:55.107Z",
-        "command": "vitest entry-source-pronunciation.integration.test.ts reviewed-exam-bank.integration.test.ts",
-        "summary": "최종 실제 DB 구조 26+37검사, v2/v3 승인 보존·권한·400상한·출처/품사/행/원음 변조·고정문항 경로 통과."
+        "environment": "preview",
+        "ranAt": "2026-09-08T21:29:46.401Z",
+        "command": "apply_migration + bounded324 SQL + actual RPC + 19_전체_최종연결_검사.mjs staging + protected23 hashes",
+        "summary": "324정확응답·5389음원불변·647승인보호·23개 전체행해시 불변. 서비스전용 실행권한과RLS 확인."
       },
       {
         "checkId": "T3",
         "result": "pass",
-        "environment": "local",
-        "ranAt": "2026-09-08T21:24:55.107Z",
-        "command": "vitest pronunciation-registry.test.ts assignment-study-query.test.ts",
-        "summary": "조회 400분할, 실패/중복 차단, 잠금 선확인, 단어보기·응시·영어선택지·결과 연결 및 정답/내부해시 숨김 통과."
+        "environment": "preview",
+        "ranAt": "2026-09-08T22:01:39.325Z",
+        "command": "GitHub status + Vercel deployment Ready/SHA + Preview root read",
+        "summary": "be313fd/Ready·프리뷰 로그인 화면 확인. 인증된 학생 화면/preview-identity는 미확인; 별도 인증 해제나 팀/환경 변경 없음. 미확인을 통과로 포함하지 않은 배포 범위 확인."
       },
       {
         "checkId": "T4",
         "result": "pass",
-        "environment": "local",
-        "ranAt": "2026-09-08T21:24:55.107Z",
-        "command": "vitest --maxWorkers=4; tsc --noEmit; eslint .; feature-map/UI architecture/request cache; isolated next build; equivalent full changed-coverage check",
-        "summary": "450파일3088통과/선택1미실행. 타입/lint/구조/request cache/34페이지 비밀값없는 격리빌드 통과. 전체34기록/변경609건 동등검사0오류;748반복지문을32개 실행내 캐시 후 모두 새 재계산하여 동일 확인. 완료 관문에서 새 단위검사 소유권/실제 흐름 누락을 보완하고 구조72개·작업기록113개 및 지도/lint를 다시 통과했다."
+        "environment": "production",
+        "ranAt": "2026-09-08T21:54:07.403Z",
+        "command": "separate main build + bounded324 SQL + RPC readback + 19 full selector + existing test-student read-only pages",
+        "summary": "be313fd 운영 별도Ready·324/5389/647 일치·23개 보호 불변. 기존5단어보기296항목 발음/영어스피커, 교정표본 반영·문장스피커0·브라우저경고오류0; 학생 시험 쓰기0."
       },
       {
         "checkId": "T5",
         "result": "pass",
-        "environment": "local",
-        "ranAt": "2026-09-08T21:24:55.107Z",
-        "command": "독립 읽기 전용 코드·원본·제한 거래 검토",
-        "summary": "과거 단어 대조·v2 승인 보호·재반영 집합 누락을 수정하고 재검토 결함0. 근거417파일/입력6해시/324대상/647기존승인 대조."
+        "environment": "production",
+        "ranAt": "2026-09-08T21:59:34.124Z",
+        "command": "protected23 + sourceRPC324 + shared-selector5389 + old100UI + deployment-filtered logs",
+        "summary": "반영15분40초 뒤23보호영역/324응답 동일·진행2/완료38/만료21 보존·5389/647재검사통과. 과거100표시 동일·브라우저오류0·관찰로그200=30/Warning/Error/Fatal0."
       },
       {
         "checkId": "T6",
         "result": "pass",
         "environment": "local",
-        "ranAt": "2026-09-08T21:24:55.107Z",
-        "command": "자료 v12/16_제한거래_검사.mjs; 15_제한거래.mjs",
-        "summary": "제한 거래18검사, 정상/재실행/정확되돌리기/행·원본·PK변조·부분실패전량취소 통과. 준비자료 검증이며 원격적용은 DEPLOY-20260909-02에서 확인."
+        "ranAt": "2026-09-08T22:01:39.325Z",
+        "command": "417 source + 6 input hash checks; bounded transaction18 prior pass with unchanged files; independent production324 proof comparison",
+        "summary": "417원본+6입력·운영324 전체필드 정확일치와23보호표를 독립대조.18제한거래 및PK변경재적용차단 통과근거 유지. source/cache설명2곳정정, 구현결함없음. MP3재생성·원본/정답/학생 쓰기0; 청음 승인으로 확대하지 않음."
       }
     ]
-  }
+  },
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "전체 단어 점검 후 정상 연결을 운영에 반영",
+      "acceptance": "9권5389연결·324원본표기 교정·647기존승인 보호·원음 생성/교체 없음",
+      "disposition": "required",
+      "owners": [
+        "quiz-player"
+      ],
+      "flowIds": [
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T4"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "이미 본 시험과 모고 등 기존 단어 보기에 반영",
+      "acceptance": "기존 테스트학생의 형용사/교과서/모고 단어보기에서 표시·영어 스피커 확인; 영영풀이/예문 문장 음성 추가 없음",
+      "disposition": "required",
+      "owners": [
+        "student-dashboard",
+        "results"
+      ],
+      "flowIds": [
+        "student-assignment-study-read",
+        "admin-history-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "engineering",
+      "text": "원본·기존학생·진행시험·권한 보호",
+      "acceptance": "23개 영역 전체행 해시 불변·기존 진행2건 보존·새 서비스전용 교정 읽기만 허용·정확행 복구",
+      "disposition": "required",
+      "owners": [
+        "database-contract",
+        "quiz-player"
+      ],
+      "flowIds": [
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T2",
+        "T4",
+        "T5",
+        "T6"
+      ]
+    },
+    {
+      "id": "R4",
+      "source": "engineering",
+      "text": "배포·검증 범위와 미확인 구분",
+      "acceptance": "환경별 동일코드 별도빌드·현재자료 실제조회·관찰/한계 기록; 전수청음/새프리뷰 학생 인증을 통과로 표현하지 않음",
+      "disposition": "required",
+      "owners": [
+        "architecture-meta"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T1",
+        "T3",
+        "T5",
+        "T6"
+      ]
+    }
+  ]
 }
