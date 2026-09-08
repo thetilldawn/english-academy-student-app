@@ -1,0 +1,573 @@
+{
+  "schemaVersion": 1,
+  "id": "DEPLOY-20260908-03",
+  "title": "학생·배정 개선 운영 반영",
+  "size": "full",
+  "gate": "design",
+  "guide": "docs/work-orders/DEPLOY-20260908-03.md",
+  "baseline": "17d3648d7500401b9d63b3bd56a822b8b98dd1af",
+  "owners": [
+    "architecture-meta",
+    "students",
+    "history",
+    "assignments",
+    "shared-ui"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal"
+  ],
+  "scope": [
+    {
+      "path": "package.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "scripts/verify-preview-environment.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/app/api/admin/schools/search/route.ts",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "student-management-screen"
+      ]
+    },
+    {
+      "path": "src/app/api/admin/schools/search/route.test.ts",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "student-management-screen"
+      ]
+    },
+    {
+      "path": "src/features/students/controller/use-school-search.test.tsx",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "student-management-screen"
+      ]
+    },
+    {
+      "path": "src/features/history/server/queries/admin-history-school-labels.integration.test.ts",
+      "state": "existing",
+      "owner": "history",
+      "flowIds": [
+        "admin-history-read"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260907235924_admin_history_school_labels.sql",
+      "state": "existing",
+      "owner": "history",
+      "flowIds": [
+        "admin-history-read"
+      ]
+    },
+    {
+      "path": "src/features/students/ui/student-detail-content.tsx",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "student-management-screen",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ]
+    },
+    {
+      "path": "src/features/assignments/presentation/assignment-dataset-picker-view.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ]
+    },
+    {
+      "path": "src/features/students/ui/panels/student-info-panel.tsx",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "student-management-screen",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/students/ui/school-search-field.tsx",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "student-management-screen",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/design-system/primitives/dialog/dialog.tsx",
+      "owner": "shared-ui",
+      "flowIds": [
+        "assignment-range-create",
+        "assignment-direct-review-create",
+        "admin-history-read",
+        "assignment-edit",
+        "student-management-screen",
+        "assignment-series"
+      ],
+      "state": "existing"
+    },
+    {
+      "path": "src/design-system/primitives/dialog/dialog.test.tsx",
+      "owner": "shared-ui",
+      "flowIds": [
+        "assignment-range-create",
+        "assignment-direct-review-create",
+        "admin-history-read",
+        "assignment-edit",
+        "student-management-screen",
+        "assignment-series"
+      ],
+      "state": "existing"
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-discard-dialog.tsx",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ],
+      "state": "existing"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "APP02/03/04와 R14 작은 수정까지 같은 최종 코드로 Preview/Production에 반영",
+      "acceptance": "현재 코드와 로컬 검사 입력 일치, 기존 운영 브랜치만 게시하고 main/운영 고정",
+      "disposition": "required",
+      "owners": [
+        "architecture-meta"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T1",
+        "T5"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "학교 검색의 운영 서버 연결",
+      "acceptance": "제공 키는 Production 서버 전용, 실제 학교 결과/0건/직접입력 확인과 키 비노출",
+      "disposition": "required",
+      "owners": [
+        "students"
+      ],
+      "flowIds": [
+        "student-management-screen"
+      ],
+      "checkIds": [
+        "T1",
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "user",
+      "text": "학교·학년 조회와 학생 정보 저장 실제 확인",
+      "acceptance": "승인 migration 하나만 Production 적용, 함수 권한/자료 보호, 테스트학생 학교 저장·읽기·복구",
+      "disposition": "required",
+      "owners": [
+        "history",
+        "students"
+      ],
+      "flowIds": [
+        "admin-history-read",
+        "student-management-screen"
+      ],
+      "checkIds": [
+        "T2",
+        "T4",
+        "T5"
+      ]
+    },
+    {
+      "id": "R4",
+      "source": "user",
+      "text": "배정·목록·모달·필터 실제 통합 확인",
+      "acceptance": "학생 왕복/목록·숫자/범위/미리보기/확인창·학교 필터를 모바일/PC Production에서 확인",
+      "disposition": "required",
+      "owners": [
+        "assignments",
+        "students"
+      ],
+      "flowIds": [
+        "assignment-range-create",
+        "student-management-screen"
+      ],
+      "checkIds": [
+        "T1",
+        "T4",
+        "T5"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "운영 반영 범위",
+      "answer": "확인 취소 제거 후 현재 검증한 프리뷰 개선 전체를 바로 Production에 반영한다.",
+      "source": "2026-09-08 사용자 최신 요청 바로 프로덕션으로 넘겨"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "프리뷰와 운영 연결 구분",
+      "answer": "기존 main으로 운영 환경 새 빌드. Production NEIS_API_KEY Secret만 추가, 기존 DB/세션/쿠키 키 복사·변경 없음. 프리뷰 빌드 alias 승격 금지.",
+      "source": "기존 환경 계약·공식 Vercel 환경 문서·독립 검토"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "조회 migration과 검사/복구",
+      "answer": "검증된 학교/학년 조회 migration1개만 운영 적용, 함수원본/ACL/집계 대조. 테스트학생 학교만 저장/원복, 정상감사이력 유지. 실제 학생·답안·기존진행2건 보존.",
+      "source": "사용자 테스트학생 승인·운영함수 SHA가 Preview 적용전과 동일·독립검토"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "checked",
+      "reason": "검증된 APP02/03/04 코드의 Preview/Production 통합, 새 로직 변경 없음"
+    },
+    "ui": {
+      "status": "checked",
+      "reason": "검증된 APP02/03/04 코드의 Preview/Production 통합, 새 로직 변경 없음"
+    },
+    "state": {
+      "status": "checked",
+      "reason": "검증된 APP02/03/04 코드의 Preview/Production 통합, 새 로직 변경 없음"
+    },
+    "domain": {
+      "status": "checked",
+      "reason": "검증된 APP02/03/04 코드의 Preview/Production 통합, 새 로직 변경 없음"
+    },
+    "data": {
+      "status": "checked",
+      "reason": "기존 학교 조회 JSON2필드만 지정 Production 적용; 실학생/태그/점수 변경 금지"
+    },
+    "api": {
+      "status": "checked",
+      "reason": "검증된 APP02/03/04 코드의 Preview/Production 통합, 새 로직 변경 없음"
+    },
+    "cache": {
+      "status": "checked",
+      "reason": "검증된 APP02/03/04 코드의 Preview/Production 통합, 새 로직 변경 없음"
+    },
+    "asyncUi": {
+      "status": "checked",
+      "reason": "검증된 APP02/03/04 코드의 Preview/Production 통합, 새 로직 변경 없음"
+    },
+    "security": {
+      "status": "checked",
+      "reason": "검증된 APP02/03/04 코드의 Preview/Production 통합, 새 로직 변경 없음"
+    },
+    "styles": {
+      "status": "checked",
+      "reason": "검증된 APP02/03/04 코드의 Preview/Production 통합, 새 로직 변경 없음"
+    },
+    "tests": {
+      "status": "checked",
+      "reason": "검증된 APP02/03/04 코드의 Preview/Production 통합, 새 로직 변경 없음"
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "Preview 관리자 인증·운영DB 오접속 차단",
+      "checkIds": [
+        "T1",
+        "T3",
+        "T4"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "서버 비밀과 실학생 Git/외부 유출 차단",
+      "checkIds": [
+        "T1",
+        "T3",
+        "T5"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "기존 정답 경계 회귀 유지",
+      "checkIds": [
+        "T1",
+        "T4"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "목록 왕복/저장후갱신/필터 추가 요청 확인",
+      "checkIds": [
+        "T1",
+        "T4"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "현재검증코드→프리뷰호스팅확인→기존main의운영환경새빌드. 학교검색서버→NEIS, 기존학생/내역query→운영DB. 새기능/자료생성 없음.",
+    "reuse": "APP02/03/04와 APP03-R14 검증코드 재사용. 서버연결·조회migration만 기존운영구조로 반영.",
+    "cache": "기존개인자료 private/no-store·사용자별조회보관/갱신/폐기 유지. 새로운 공유캐시 없음.",
+    "compatibility": "조회 JSON 학교/학년2필드 추가만. 권한/정렬/삭제학생 null/시험·오답·정답 규칙 불변. 익명 preview-identity 운영404 유지.",
+    "rollback": "앱문제시 이전운영 ee7be43로 전진복구/기존배포복구. DB문제시 적용직전 실제함수만 선택복구. 학생활동/감사이력/시험을 통째 되돌리지 않음."
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "현재 학교 입력 또는 해당 요청 상태",
+      "message": "학교 이름을 찾고 있습니다.",
+      "behavior": "입력은 유지, 실제 조회중만 표시",
+      "recovery": "입력 수정 또는 다시 검색",
+      "component": "src/features/students/ui/school-search-field.tsx",
+      "checkIds": [
+        "T1",
+        "T4"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "현재 학교 입력 또는 해당 요청 상태",
+      "message": "학교 이름을 찾고 있습니다.",
+      "behavior": "옛 검색결과 숨김",
+      "recovery": "입력 수정 또는 다시 검색",
+      "component": "src/features/students/ui/school-search-field.tsx",
+      "checkIds": [
+        "T1",
+        "T4"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "현재 학교 입력 또는 해당 요청 상태",
+      "message": "학교 이름을 입력해 검색하거나 직접 입력해 주세요.",
+      "behavior": "학교는 선택 입력",
+      "recovery": "입력 수정 또는 다시 검색",
+      "component": "src/features/students/ui/school-search-field.tsx",
+      "checkIds": [
+        "T1",
+        "T4"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "현재 학교 입력 또는 해당 요청 상태",
+      "message": "검색된 학교가 없습니다. 입력한 이름을 그대로 사용할 수 있습니다.",
+      "behavior": "빈 결과와 오류 구분",
+      "recovery": "입력 수정 또는 다시 검색",
+      "component": "src/features/students/ui/school-search-field.tsx",
+      "checkIds": [
+        "T1",
+        "T4"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "현재 학교 입력 또는 해당 요청 상태",
+      "message": "학교 이름을 두 글자 이상 입력해 주세요.",
+      "behavior": "짧은 검색 외부요청0",
+      "recovery": "입력 수정 또는 다시 검색",
+      "component": "src/features/students/ui/school-search-field.tsx",
+      "checkIds": [
+        "T1",
+        "T4"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "현재 학교 입력 또는 해당 요청 상태",
+      "message": "학교를 검색하지 못했습니다. 직접 입력하거나 다시 검색해 주세요.",
+      "behavior": "정상0건으로 바꾸지 않음",
+      "recovery": "입력 수정 또는 다시 검색",
+      "component": "src/features/students/ui/school-search-field.tsx",
+      "checkIds": [
+        "T1",
+        "T4"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "학생 프로필 저장 실패 또는 저장 결과 확인 불가",
+      "message": "학생 정보를 저장하지 못했습니다. 입력은 유지했습니다. 잠시 후 다시 저장해 주세요.",
+      "behavior": "입력을 유지한다. 결과불명은 별도 안내로 구분하고 저장 결과 확인 전 재저장을 차단한다.",
+      "recovery": "실패는 다시 저장, 결과불명은 저장 결과 확인 후 재시도",
+      "component": "src/features/students/ui/panels/student-info-panel.tsx",
+      "checkIds": [
+        "T1",
+        "T4"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "현재 학교 입력 또는 해당 요청 상태",
+      "message": "관리자 로그인이 필요합니다.",
+      "behavior": "현재 요청이면 개인정보 숨김",
+      "recovery": "다시 로그인",
+      "component": "src/features/students/ui/school-search-field.tsx",
+      "checkIds": [
+        "T1",
+        "T4"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "현재 학교 입력 또는 해당 요청 상태",
+      "message": "검색된 학교가 없습니다.",
+      "behavior": "없는학교는 직접입력허용, 페이지404와구분",
+      "recovery": "입력 수정 또는 다시 검색",
+      "component": "src/features/students/ui/school-search-field.tsx",
+      "checkIds": [
+        "T1",
+        "T4"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "현재 학교 입력 또는 해당 요청 상태",
+      "message": "학교를 검색하지 못했습니다. 직접 입력하거나 다시 검색해 주세요.",
+      "behavior": "내부정보대신안전안내",
+      "recovery": "입력 수정 또는 다시 검색",
+      "component": "src/features/students/ui/school-search-field.tsx",
+      "checkIds": [
+        "T1",
+        "T4"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "STD1",
+      "state": "adopted",
+      "version": "DEPLOY-20260908-03 / Next16.2.12",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "사용자 운영 반영 승인; 기존 Preview 검증 재사용과 현재 R14 로컬 검사"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "component",
+      "target": "src/features/students/controller/use-school-search.test.tsx",
+      "scenario": "최종3020 전체/관련/UI/구조/타입/lint/빌드·독립검토와 현재해시",
+      "expected": "최종3020검사·타입/lint/구조/빌드 입력 일치",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "integration",
+      "target": "src/features/history/server/queries/admin-history-school-labels.integration.test.ts",
+      "scenario": "지정 조회 학교필드/ACL/삭제학생",
+      "expected": "Preview migration1개·권한/자료보존·학교2필드",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "browser",
+      "target": null,
+      "scenario": "Preview Ready와 Production 새빌드/환경별NEIS Secret·관리자학교검색",
+      "expected": "Preview서버비밀·staging·최종SHA",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "browser",
+      "target": null,
+      "scenario": "운영 테스트학생 저장/목록/학교·학년/원복, 단일·일괄 초안과 중복 버튼·학생화면",
+      "expected": "모바일/PC 정상·테스트학교복구·실학생쓰기0",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T5",
+      "kind": "build",
+      "target": "package.json",
+      "scenario": "동일커밋운영Ready·기존진행2건·18영역집계/해시·15분후재확인·오류관측",
+      "expected": "실제학생/시험/정답/음원불변, 실제테스트학생학교원복/정상감사유지. 미측정관측은 별도 명시",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    }
+  ],
+  "verification": null
+}
