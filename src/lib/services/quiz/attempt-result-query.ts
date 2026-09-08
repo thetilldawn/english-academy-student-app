@@ -8,6 +8,7 @@ import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import {
   loadActiveVocabPronunciationReleaseRegistry,
   loadEntryApprovedKoreanPronunciationRegistry,
+  loadEntrySourcePronunciationRegistry,
   loadApprovedKoreanPronunciationRegistry,
   loadSyntheticPronunciationRegistry,
   loadVocabPronunciationRegistry,
@@ -72,12 +73,14 @@ export async function getAttemptQuestionResults(
     approvedKoreanPronunciationRegistry,
     activeVocaPronunciationRegistry,
     entryApprovedRegistry,
+    entrySourceRegistry,
   ] = await Promise.all([
     loadVocabPronunciationRegistry(registryIds),
     loadSyntheticPronunciationRegistry(syntheticBindings),
     loadApprovedKoreanPronunciationRegistry(approvedDictionaryIds),
     loadActiveVocabPronunciationReleaseRegistry(registryIds),
     loadEntryApprovedKoreanPronunciationRegistry(registryIds),
+    loadEntrySourcePronunciationRegistry(registryIds),
   ]);
 
   return mapResultQuestions(
@@ -88,6 +91,7 @@ export async function getAttemptQuestionResults(
     approvedKoreanPronunciationRegistry,
     activeVocaPronunciationRegistry,
     entryApprovedRegistry,
+    entrySourceRegistry,
   );
 }
 

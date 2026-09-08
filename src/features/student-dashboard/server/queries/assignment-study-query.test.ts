@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ rpc: vi.fn(), registry: vi.fn(), active: vi.fn(), synthetic: vi.fn(), approved: vi.fn(), entryApproved: vi.fn(), prompts: vi.fn() }));
+const mocks = vi.hoisted(() => ({ rpc: vi.fn(), registry: vi.fn(), active: vi.fn(), synthetic: vi.fn(), approved: vi.fn(), entryApproved: vi.fn(), source: vi.fn(), prompts: vi.fn() }));
 vi.mock("./assignment-study-example-query", () => ({ getStudyExamplePrompts: mocks.prompts }));
 vi.mock("@/lib/supabase/service", () => ({ getServiceSupabaseClient: () => ({ rpc: mocks.rpc }) }));
 vi.mock("@/lib/services/quiz/pronunciation-registry", () => ({
@@ -8,6 +8,7 @@ vi.mock("@/lib/services/quiz/pronunciation-registry", () => ({
   loadSyntheticPronunciationRegistry: mocks.synthetic,
   loadApprovedKoreanPronunciationRegistry: mocks.approved,
   loadEntryApprovedKoreanPronunciationRegistry: mocks.entryApproved,
+  loadEntrySourcePronunciationRegistry: mocks.source,
 }));
 import { getAssignmentStudy } from "./assignment-study-query";
 
@@ -17,18 +18,27 @@ const word = { entryId: 7, headword: "collect", meaning: "모으다", displayKo:
 const raw = (mode = "book_meaning_choice") => ({ assignmentId: id, title: "배정 단어", mode, words: [word] });
 beforeEach(() => {
   vi.clearAllMocks();
-  for (const fn of [mocks.registry, mocks.active, mocks.synthetic, mocks.approved, mocks.entryApproved]) fn.mockResolvedValue(new Map());
+  for (const fn of [mocks.registry, mocks.active, mocks.synthetic, mocks.approved, mocks.entryApproved, mocks.source]) fn.mockResolvedValue(new Map());
   mocks.rpc.mockResolvedValue({ data: raw(), error: null });
   mocks.prompts.mockResolvedValue(new Map([[7, ["She _____ the letters."]]]));
 });
 describe("배정 단어장 서버 조회", () => {
+  it("uses source proof for old completed study words, but not a different historical headword", async () => {
+    const audio={displayKo:"자동",variantId:"mw:fake",audioUrl:"https://media.merriam-webster.com/audio/prons/en/us/mp3/c/collec01.mp3",available:true};
+    mocks.active.mockResolvedValue(new Map([[7,audio]]));
+    mocks.source.mockResolvedValue(new Map([[7,[{entryId:7,headword:"collect",pronunciation:{...audio,displayKo:"컬렉트",segments:[{text:"컬",stress:"none"},{text:"렉",stress:"primary"},{text:"트",stress:"none"}]}}]]]));
+    expect((await getAssignmentStudy(student,id))?.words?.[0].pronunciation.displayKo).toBe("컬렉트");
+    mocks.rpc.mockResolvedValue({data:{...raw(),words:[{...word,headword:"different"}]},error:null});
+    expect((await getAssignmentStudy(student,id))?.words?.[0].pronunciation.displayKo).toBe("자동");
+    expect(mocks.source).toHaveBeenCalledWith([7]);
+  });
   it.each(["waiting_initial", "waiting_time", "held", "schedule_conflict", "cancelled"])(
     "%s는 원문·영영풀이·예문·발음을 읽지 않고 상태만 돌려준다", async (state) => {
       const locked = { assignmentId: id, title: "2회차", mode: "canonical_example_to_headword",
         release: { state, opensAt: state === "waiting_time" ? "2030-01-01T00:00:00Z" : null, hasDeadline: true } };
       mocks.rpc.mockResolvedValue({ data: locked, error: null });
       expect(await getAssignmentStudy(student, id)).toEqual(locked);
-      for (const fn of [mocks.registry, mocks.active, mocks.synthetic, mocks.approved, mocks.entryApproved, mocks.prompts]) {
+      for (const fn of [mocks.registry, mocks.active, mocks.synthetic, mocks.approved, mocks.entryApproved, mocks.source, mocks.prompts]) {
         expect(fn).not.toHaveBeenCalled();
       }
       mocks.rpc.mockResolvedValue({ data: { ...locked, words: [word] }, error: null });

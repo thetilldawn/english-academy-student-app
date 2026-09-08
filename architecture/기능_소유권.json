@@ -1144,6 +1144,10 @@
   ],
   "quizCoreOwners": [
     {
+      "path": "src/lib/quiz/entry-source-pronunciation.ts",
+      "owner": "shared-quiz-domain"
+    },
+    {
       "path": "src/lib/quiz/question-semantics.ts",
       "owner": "shared-quiz-domain"
     },
@@ -1626,6 +1630,10 @@
   ],
   "architectureGuardOwners": [
     {
+      "path": "src/lib/quiz/entry-source-pronunciation.test.ts",
+      "owner": "shared-quiz-domain"
+    },
+    {
       "path": "src/lib/quiz/question-semantics.test.ts",
       "owner": "shared-quiz-domain"
     },
@@ -1832,8 +1840,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 101,
-      "pathSetSha256": "32157e3ca8dc6d4b37076acfa86a0c9b7eee32f5c834e5e05f62ff4e050179a5"
+      "fileCount": 102,
+      "pathSetSha256": "473981eb811c1971f4acb67fb55fd74dc1632bb17e488f35f329e58d7b774ca8"
     },
     {
       "path": "src/lib/deploy",
@@ -2085,6 +2093,11 @@
   "protectedMigrationCount": 136,
   "protectedMigrationSetSha256": "b4ea57697824cb8fece77250a50950e58bb4e2516235e485106f126a8b00c13f",
   "migrationOwners": [
+    {
+      "path": "supabase/migrations/20260908203803_add_entry_source_pronunciation.sql",
+      "owner": "quiz-player",
+      "flow": "student-quiz-attempt"
+    },
     {
       "path": "supabase/migrations/20260907235924_admin_history_school_labels.sql",
       "owner": "history",
@@ -4030,6 +4043,7 @@
           "supabase/migrations/20260831100000_return_admin_history_hidden_version.sql",
           "supabase/migrations/20260901141048_fix_admin_history_infinite_effective_at.sql",
           "supabase/migrations/20260907121138_add_entry_approved_korean_pronunciation.sql",
+          "supabase/migrations/20260908203803_add_entry_source_pronunciation.sql",
           "supabase/migrations/20260908160633_add_source_restored_pronunciation.sql"
         ],
         "cacheStreaming": [
@@ -5559,6 +5573,7 @@
           "src/features/quiz-player/domain/quiz-session.ts",
           "src/features/quiz-player/domain/quiz-player-state.ts",
           "src/lib/quiz/prior-wrong.ts",
+          "src/lib/quiz/entry-source-pronunciation.ts",
           "src/lib/quiz/pronunciation-snapshot.ts",
           "src/lib/quiz/pronunciation-storage.ts",
           "src/lib/quiz/question-generator.ts",
@@ -5611,6 +5626,7 @@
           "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
           "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql",
           "supabase/migrations/20260907121138_add_entry_approved_korean_pronunciation.sql",
+          "supabase/migrations/20260908203803_add_entry_source_pronunciation.sql",
           "supabase/migrations/20260908160633_add_source_restored_pronunciation.sql"
         ],
         "cacheStreaming": [
@@ -5643,6 +5659,8 @@
           "src/lib/database/retry-question-timer.integration.test.ts",
           "src/lib/assignment/assignment-release.test.ts",
           "src/lib/database/assignment-release-final-schema.integration.test.ts",
+          "src/lib/quiz/entry-source-pronunciation.test.ts",
+          "src/lib/database/entry-source-pronunciation.integration.test.ts",
           "src/lib/database/entry-approved-pronunciation.integration.test.ts",
           "src/lib/services/quiz/pronunciation-registry.test.ts",
           "src/lib/database/reviewed-exam-bank.integration.test.ts"
@@ -5865,6 +5883,7 @@
         ],
         "application": [],
         "domain": [
+          "src/lib/quiz/entry-source-pronunciation.ts",
           "src/lib/quiz/pronunciation-snapshot.ts",
           "src/lib/quiz/pronunciation-storage.ts",
           "src/lib/quiz/question-content-mode.ts",
@@ -5887,6 +5906,7 @@
           "supabase/migrations/20260906103017_add_approved_school_pronunciation_scope.sql",
           "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
           "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql",
+          "supabase/migrations/20260908203803_add_entry_source_pronunciation.sql",
           "supabase/migrations/20260908160633_add_source_restored_pronunciation.sql",
           "supabase/migrations/20260907121138_add_entry_approved_korean_pronunciation.sql",
           "supabase/migrations/20260908020300_connect_reviewed_exam_study.sql"
@@ -5908,6 +5928,8 @@
           "src/lib/database/assignment-study.integration.test.ts",
           "src/lib/assignment/assignment-release.test.ts",
           "src/lib/database/assignment-release-final-schema.integration.test.ts",
+          "src/lib/quiz/entry-source-pronunciation.test.ts",
+          "src/lib/database/entry-source-pronunciation.integration.test.ts",
           "src/lib/database/entry-approved-pronunciation.integration.test.ts",
           "src/lib/services/quiz/pronunciation-registry.test.ts",
           "src/lib/database/reviewed-exam-bank.integration.test.ts"

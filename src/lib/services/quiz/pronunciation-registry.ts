@@ -1,4 +1,5 @@
 import "server-only";
+import { parseEntrySourcePronunciation, type EntrySourcePronunciation } from "@/lib/quiz/entry-source-pronunciation";
 
 import {
   approvedKoreanPronunciationKey,
@@ -22,6 +23,34 @@ import {
   type VocabSyntheticAudioAssetRow,
 } from "@/lib/quiz/pronunciation-snapshot";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
+
+export async function loadEntrySourcePronunciationRegistry(
+  vocabEntryIds: readonly number[],
+): Promise<Map<number, EntrySourcePronunciation[]>> {
+  const result = new Map<number, EntrySourcePronunciation[]>();
+  const ids = [...new Set(vocabEntryIds.filter(id => Number.isSafeInteger(id) && id > 0))];
+  if (!ids.length) return result;
+  const supabase = getServiceSupabaseClient();
+  try {
+    for (let offset = 0; offset < ids.length; offset += 400) {
+      const chunk = ids.slice(offset, offset + 400);
+      const { data, error } = await supabase.rpc("list_entry_source_pronunciations_v1", { p_vocab_entry_ids: chunk });
+      if (error || !Array.isArray(data)) throw new Error("entry_source_lookup_failed");
+      for (const value of data) {
+        const row = parseEntrySourcePronunciation(value, process.env.NEXT_PUBLIC_SUPABASE_URL ?? "");
+        if (!row || !chunk.includes(row.entryId)) throw new Error("entry_source_data_invalid");
+        const prior = result.get(row.entryId) ?? [];
+        if (prior.some(item => item.pronunciation.variantId === row.pronunciation.variantId &&
+            item.pronunciation.audioUrl === row.pronunciation.audioUrl)) throw new Error("entry_source_conflict");
+        result.set(row.entryId, [...prior, row]);
+      }
+    }
+    return result;
+  } catch {
+    console.warn("[quiz-pronunciation] source display unavailable");
+    return new Map();
+  }
+}
 
 export async function loadEntryApprovedKoreanPronunciationRegistry(
   vocabEntryIds: readonly number[],

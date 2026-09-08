@@ -1,7 +1,7 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ rpc: vi.fn(), from: vi.fn() }));
 vi.mock("@/lib/supabase/service", () => ({ getServiceSupabaseClient: () => mocks }));
-import { loadEntryApprovedKoreanPronunciationRegistry, loadApprovedKoreanPronunciationRegistry } from "./pronunciation-registry";
+import { loadEntryApprovedKoreanPronunciationRegistry, loadApprovedKoreanPronunciationRegistry, loadEntrySourcePronunciationRegistry } from "./pronunciation-registry";
 import { getStudentAttempt } from "./attempt-query";
 import { getAttemptQuestionResults } from "./attempt-result-query";
 
@@ -41,6 +41,57 @@ beforeEach(() => {
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); });
 
 describe("exact entry pronunciation corrections", () => {
+  it("source lookup chunks at 400 and refuses malformed/partial/duplicate proofs", async () => {
+    const source={vocab_entry_id:7,headword:"sample",entry_row_sha256:"a".repeat(64),variant_id:variant,audio_key:url,display_ko:"복원",
+      segments:[{text:"복원",stress:"primary"}],source_file_sha256:"b".repeat(64),manifest_sha256:"c".repeat(64)};
+    mocks.rpc.mockResolvedValue({data:[],error:null});
+    await loadEntrySourcePronunciationRegistry(Array.from({length:801},(_,i)=>i+1));
+    expect(mocks.rpc.mock.calls.map(([,a])=>a.p_vocab_entry_ids.length)).toEqual([400,400,1]);
+    for(const data of [[source,source],[{...source,vocab_entry_id:8}],[{...source,entry_row_sha256:"wrong"}],null]){
+      mocks.rpc.mockResolvedValueOnce({data,error:null});
+      expect((await loadEntrySourcePronunciationRegistry([7])).size).toBe(0);
+    }
+    mocks.rpc.mockResolvedValueOnce({data:[source],error:null}).mockRejectedValueOnce(new Error("secret SQL"));
+    expect((await loadEntrySourcePronunciationRegistry(Array.from({length:401},(_,i)=>i+1))).size).toBe(0);
+    expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain("secret SQL");
+  });
+  it.each(["canonical_definition_to_headword","canonical_example_to_headword"])("source proof reaches English choices and results in %s without target answer leakage",async(mode)=>{
+    const identity=row().identity;
+    const source={vocab_entry_id:7,headword:"sample",entry_row_sha256:"a".repeat(64),variant_id:variant,audio_key:url,display_ko:"복원",
+      segments:[{text:"복원",stress:"primary"}],source_file_sha256:"b".repeat(64),manifest_sha256:"c".repeat(64)};
+    tables.quiz_attempts={id:"attempt",assignment_id:"assignment",status:"in_progress",phase:"initial",started_at:"2026-01-01T00:00:00Z",deadline_at:null};
+    tables.assignments={title:"Fake",timing_mode:"none",quiz_content_mode:mode};
+    tables.quiz_questions=[{id:"question",vocab_entry_id:7,order_index:1,direction:"korean_to_english",prompt:"fake",
+      choices:["sample","other","another","last"],correct_choice_index:0,initial_choice_index:null,initial_is_correct:null,retry_choice_index:null,retry_is_correct:null,prior_wrong_count:0,
+      assignment_question:{vocab_entry_id:7,choice_vocab_entry_ids:[7,8,9,10],headword_snapshot:"sample",primary_meaning_snapshot:"가짜",provenance_status:"exam_reviewed_v1"}}];
+    tables.vocab_pronunciation_identities_v2=[identity];
+    mocks.rpc.mockImplementation(async(name:string)=>({data:name==="list_entry_source_pronunciations_v1"?[source]:
+      name==="list_active_vocab_pronunciation_bindings_v3"?[{release_id:"active",vocab_entry_id:7,identity_id:identity.identity_id}]:[],error:null}));
+    const result=await getStudentAttempt("test-student","attempt");
+    expect(result?.questions[0].choicePronunciations[0]).toMatchObject({displayKo:"복원",audioUrl:url});
+    expect(result?.questions[0].pronunciation.available).toBe(false);
+    expect(result?.questions[0].revealedCorrectChoiceIndex).toBeNull();
+    expect((await getAttemptQuestionResults("attempt"))[0].pronunciation.displayKo).toBe("복원");
+    expect(JSON.stringify(result)).not.toMatch(/sha256|entryId|manifest|source_file/);
+  });
+  it.each(["english_to_korean", "korean_to_english"] as const)("does not restore another headword into a historical %s question", async (direction) => {
+    const identity = row().identity;
+    const source = { vocab_entry_id: 7, headword: "sample", entry_row_sha256: "a".repeat(64), variant_id: variant, audio_key: url,
+      display_ko: "복원", segments: [{ text: "복원", stress: "primary" }], source_file_sha256: "b".repeat(64), manifest_sha256: "c".repeat(64) };
+    tables.quiz_attempts = { id: "attempt", assignment_id: "assignment", status: "in_progress", phase: "initial", started_at: "2026-01-01T00:00:00Z", deadline_at: null };
+    tables.assignments = { title: "Fake", timing_mode: "none", quiz_content_mode: "book_meaning_choice" };
+    tables.vocab_pronunciation_identities_v2 = [identity];
+    mocks.rpc.mockImplementation(async (name: string) => ({ data: name === "list_entry_source_pronunciations_v1" ? [source] :
+      name === "list_active_vocab_pronunciation_bindings_v3" ? [{ release_id: "active", vocab_entry_id: 7, identity_id: identity.identity_id }] : [], error: null }));
+    for (const assignmentQuestion of [null, { vocab_entry_id: 7, headword_snapshot: "sample", provenance_status: "exam_reviewed_v1" }]) {
+      tables.quiz_questions = [{ id: "question", vocab_entry_id: 7, order_index: 1, direction,
+        prompt: direction === "english_to_korean" ? "pastword" : "가짜", choices: ["pastword", "other", "another", "last"],
+        correct_choice_index: 0, initial_choice_index: null, initial_is_correct: null, retry_choice_index: null, retry_is_correct: null, prior_wrong_count: 0,
+        assignment_question: assignmentQuestion, vocab_entries: { headword: "sample", primary_meaning: "현재", pronunciation_ko: "현재" } }];
+      expect((await getAttemptQuestionResults("attempt"))[0].pronunciation.displayKo).toBe("자동");
+      expect((await getStudentAttempt("test-student", "attempt"))?.questions[0].pronunciation.displayKo).not.toBe("복원");
+    }
+  });
   it.each(["user-directed:TEST", "source-restored:TEST"])("validates immutable identity and returns display-only proof: %s", async (reviewRun) => {
     const restored = row();
     restored.approval.source_review_run_id = reviewRun;

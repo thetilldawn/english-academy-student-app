@@ -62,6 +62,20 @@ describe.sequential("reviewed exam bank final schema", () => {
     await db.query("select private.activate_reviewed_exam_release_v1($1,$2)",[releaseId,fixture.bundle.content_sha256]);
     expect(await scalar("select count(*)::int value from public.vocab_units where dataset_id=$1",[datasetId])).toBe(20);
   });
+  it("restores reviewed entry through its own fixed identity and rejects changed payload", async () => {
+    await db.exec("begin");
+    try {
+      const entry=(await db.query<{vocab_entry_id:number}>(`insert into private.entry_source_pronunciations_v1
+        (vocab_entry_id,entry_row_sha256,headword,lexical_pos,source_kind,identity_id,identity_content_sha256,variant_id,audio_key,display_ko,segments,source_file_sha256,manifest_sha256,review_work)
+        select re.vocab_entry_id,re.entry_sha256,re.payload->>'headword',re.payload->>'lexical_pos','identity',i.identity_id,lower(i.identity_content_sha256),
+          i.pronunciation_variant_id,i.official_audio_url,'교정','[{"text":"교정","stress":"primary"}]',repeat('a',64),repeat('b',64),'WORD-20260909-02'
+        from private.reviewed_exam_entries re join public.vocab_pronunciation_identities_v2 i on i.identity_id=re.pronunciation_identity_id
+        where re.release_id=$1 and re.source_row=1 returning vocab_entry_id`,[releaseId])).rows[0]!.vocab_entry_id;
+      expect((await db.query("select * from public.list_entry_source_pronunciations_v1($1::bigint[])",[[entry]])).rows).toMatchObject([{headword:"alpha",display_ko:"교정"}]);
+      await db.query("update private.reviewed_exam_entries set payload=jsonb_set(payload,'{lexical_pos}','\"verb\"') where vocab_entry_id=$1",[entry]);
+      expect((await db.query("select * from public.list_entry_source_pronunciations_v1($1::bigint[])",[[entry]])).rows).toHaveLength(0);
+    } finally { await db.exec("rollback"); }
+  });
   async function targets(mode:string,direction:string,unitLimit=1) {
     const units=(await db.query<{id:string}>("select id from public.vocab_units where dataset_id=$1 order by sort_index limit $2",[datasetId,unitLimit])).rows.map(r=>r.id);
     const rows=(await db.query<{vocab_entry_id:number;item_id:string;item_sha256:string}>(`select i.vocab_entry_id,i.item_id,i.item_sha256 from private.reviewed_exam_items i join public.vocab_entries e on e.id=i.vocab_entry_id

@@ -16,6 +16,7 @@ import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import {
   loadActiveVocabPronunciationReleaseRegistry,
   loadEntryApprovedKoreanPronunciationRegistry,
+  loadEntrySourcePronunciationRegistry,
   loadApprovedKoreanPronunciationRegistry,
   loadSyntheticPronunciationRegistry,
   loadVocabPronunciationDisplayRegistry,
@@ -148,6 +149,7 @@ export async function getStudentAttempt(
     approvedKoreanPronunciationRegistry,
     activeVocaPronunciationRegistry,
     entryApprovedRegistry,
+    entrySourceRegistry,
   ] = await Promise.all([
     loadVocabPronunciationRegistry(registryIds),
     loadSyntheticPronunciationRegistry(syntheticBindings),
@@ -155,6 +157,7 @@ export async function getStudentAttempt(
     loadApprovedKoreanPronunciationRegistry(approvedDictionaryIds),
     loadActiveVocabPronunciationReleaseRegistry(registryIds),
     loadEntryApprovedKoreanPronunciationRegistry(registryIds),
+    loadEntrySourcePronunciationRegistry(registryIds),
   ]);
   const initialCurrent = rows.find(
     (question) => question.initial_choice_index === null,
@@ -261,12 +264,14 @@ export async function getStudentAttempt(
           : undefined,
         approvedKoreanPronunciationRegistry,
         typeof targetVocabEntryId === "number" ? entryApprovedRegistry.get(targetVocabEntryId) : undefined,
+        { headword: roles.prompt === "headword" ? question.prompt : roles.choice === "headword" ? question.choices[question.correct_choice_index] : null,
+          restorations: typeof targetVocabEntryId === "number" ? entrySourceRegistry.get(targetVocabEntryId) : undefined },
       );
       const choiceVocabEntryIds = completeChoiceVocabEntryIds(
         bankQuestion?.choice_vocab_entry_ids,
         question.choices.length,
       );
-      const choicePronunciations = question.choices.map((_, index) => {
+      const choicePronunciations = question.choices.map((choice, index) => {
         const choiceVocabEntryId = choiceVocabEntryIds[index];
         const choiceDictionaryId = snapshotChoiceDictionaryIds[index];
         const choiceSnapshotPronunciation =
@@ -296,6 +301,7 @@ export async function getStudentAttempt(
             : undefined,
           approvedKoreanPronunciationRegistry,
           typeof choiceVocabEntryId === "number" ? entryApprovedRegistry.get(choiceVocabEntryId) : undefined,
+          { headword: choice, restorations: typeof choiceVocabEntryId === "number" ? entrySourceRegistry.get(choiceVocabEntryId) : undefined },
         );
       });
 

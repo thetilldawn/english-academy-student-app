@@ -190,6 +190,7 @@ function verifyRegistry(registry) {
         ["scripts/check-feature-map.mjs", "scripts/check-work-records.mjs", "scripts/verify-ui-architecture.mjs", "src/app/work-records.test.mjs", "src/lib/quiz/cached-flow-contract.test.ts", "src/lib/quiz/pronunciation-snapshot.test.ts", "src/lib/quiz/pronunciation-storage.test.ts",
           "src/lib/assignment/assignment-release.test.ts", "src/lib/services/quiz/attempt-command.test.ts",
           "src/lib/services/quiz/pronunciation-registry.test.ts",
+          "src/lib/quiz/entry-source-pronunciation.test.ts",
           "src/lib/services/vocab-assignment-queue-command.test.ts",
           "src/lib/quiz/question-semantics.test.ts", "src/lib/assignment/reviewed-question-planner.test.ts",
           "src/lib/services/reviewed-assignment-replacement-planning.test.ts", "src/lib/services/reviewed-direct-review-selection.test.ts",

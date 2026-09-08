@@ -1,4 +1,5 @@
 import { isVocabPronunciationStorageKey } from "./pronunciation-storage";
+import { withEntrySourcePronunciation, type EntrySourceContext } from "./entry-source-pronunciation";
 
 const OFFICIAL_AUDIO_URL =
   /^https:\/\/media\.merriam-webster\.com\/audio\/prons\/en\/us\/mp3\/[A-Za-z0-9_-]+\/[A-Za-z0-9_-]+\.mp3$/;
@@ -726,6 +727,7 @@ export function preferredPronunciationWithActiveVocaRelease(
   syntheticRegistry: QuizPronunciation | undefined,
   approvedRegistry: ReadonlyMap<string, QuizPronunciation>,
   entryApproved?: EntryApprovedKoreanPronunciation,
+  sourceContext?: EntrySourceContext,
 ) {
   let selected: QuizPronunciation;
   if (!snapshot.available && activeVocaRelease?.available) {
@@ -742,7 +744,8 @@ export function preferredPronunciationWithActiveVocaRelease(
   const exactEntry = approved?.available && selected.available &&
     (!dictionaryId || dictionaryId === entryApproved?.dictionaryId) &&
     selected.variantId === approved.variantId && selected.audioUrl === approved.audioUrl;
-  return withApprovedKoreanPronunciation(selected, exactEntry ? approved : undefined);
+  return exactEntry ? withApprovedKoreanPronunciation(selected, approved)
+    : withEntrySourcePronunciation(selected, sourceContext);
 }
 
 export function withPronunciationDisplay(

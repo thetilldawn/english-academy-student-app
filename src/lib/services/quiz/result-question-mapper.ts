@@ -1,4 +1,5 @@
 import type { AttemptResultQuestion } from "@/features/results/model";
+import type { EntrySourcePronunciation } from "@/lib/quiz/entry-source-pronunciation";
 import {
   parseTargetPronunciation,
   preferredPronunciationWithActiveVocaRelease,
@@ -63,6 +64,7 @@ export function mapResultQuestions(
   activeVocaPronunciationRegistry: ReadonlyMap<number, QuizPronunciation> =
     new Map(),
   entryApprovedRegistry: ReadonlyMap<number, EntryApprovedKoreanPronunciation> = new Map(),
+  entrySourceRegistry: ReadonlyMap<number, readonly EntrySourcePronunciation[]> = new Map(),
 ): AttemptQuestionResult[] {
   return rows.map((row) => {
     const choices = Array.isArray(row.choices)
@@ -114,6 +116,8 @@ export function mapResultQuestions(
         : undefined,
       approvedKoreanPronunciationRegistry,
       vocabEntryId === null ? undefined : entryApprovedRegistry.get(vocabEntryId),
+      { headword: row.direction === "english_to_korean" ? row.prompt : choices[row.correct_choice_index],
+        restorations: vocabEntryId === null ? undefined : entrySourceRegistry.get(vocabEntryId) },
     );
     const verifiedSnapshot = isTrustedQuestionSnapshot(
       bankQuestion?.provenance_status,

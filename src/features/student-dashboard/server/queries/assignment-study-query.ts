@@ -13,6 +13,7 @@ import {
 import {
   loadActiveVocabPronunciationReleaseRegistry,
   loadEntryApprovedKoreanPronunciationRegistry,
+  loadEntrySourcePronunciationRegistry,
   loadApprovedKoreanPronunciationRegistry,
   loadSyntheticPronunciationRegistry,
   loadVocabPronunciationRegistry,
@@ -84,13 +85,14 @@ export async function getAssignmentStudy(
     ? [{ releaseId: word.releaseId, vocabEntryId: word.entryId }]
     : []);
   const dictionaryIds = rows.flatMap((word) => word.dictionaryId ? [word.dictionaryId] : []);
-  const [registry, active, synthetic, approved, examplePrompts, entryApproved] = await Promise.all([
+  const [registry, active, synthetic, approved, examplePrompts, entryApproved, entrySource] = await Promise.all([
     loadVocabPronunciationRegistry(ids),
     loadActiveVocabPronunciationReleaseRegistry(ids),
     loadSyntheticPronunciationRegistry(bindings),
     loadApprovedKoreanPronunciationRegistry(dictionaryIds),
     mode === "canonical_example_to_headword" ? getStudyExamplePrompts(assignmentId, ids) : Promise.resolve(new Map<number, string[]>()),
     loadEntryApprovedKoreanPronunciationRegistry(ids),
+    loadEntrySourcePronunciationRegistry(ids),
   ]);
   return {
     assignmentId,
@@ -112,6 +114,7 @@ export async function getAssignmentStudy(
         word.releaseId ? synthetic.get(syntheticPronunciationBindingKey(word.releaseId, word.entryId)) : undefined,
         approved,
         entryApproved.get(word.entryId),
+        { headword: word.headword, restorations: entrySource.get(word.entryId) },
       ),
     })),
   };
