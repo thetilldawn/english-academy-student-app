@@ -97,6 +97,15 @@ function historyItem(
 }
 
 describe("history presentation components", () => {
+  it("이름과 학교는 한 칸으로 묶고 긴 시험 제목은 독립된 두 번째 칸에 둔다", () => {
+    render(<HistoryActivityRow item={historyItem({ assignmentTitle: "9월 첫째 주 모의고사 장문독해 단어 시험" })} />);
+    const identity = screen.getByText("프리뷰 학생").parentElement!;
+    const title = screen.getByText("9월 첫째 주 모의고사 장문독해 단어 시험");
+    expect(identity).toContainElement(screen.getByText("미리보기고"));
+    expect(identity).toContainElement(screen.getByText("고3"));
+    expect(title.parentElement?.children).toHaveLength(2);
+    expect(title.previousElementSibling).toBe(identity);
+  });
   it("keeps the shared row and link while applying a badge only to the wordbook title", () => {
     const { container } = render(<HistoryActivityRow compact item={historyItem({
       datasetTitle:"능률 VOCA 어원편 고등 · 2025개정",assignmentTitle:"",

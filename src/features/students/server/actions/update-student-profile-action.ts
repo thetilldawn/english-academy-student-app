@@ -3,7 +3,8 @@
 import { z } from "zod";
 
 import type { StudentProfileActionResult } from "../../contracts/student-mutation-result";
-import { getAdminContext } from "@/lib/auth/admin";
+import { unstable_rethrow } from "next/navigation";
+import { getAdminContextOrThrow } from "@/lib/auth/admin";
 import {
   getStudentProfileMutationSnapshot,
   StudentProfileUpdateError,
@@ -27,7 +28,12 @@ export async function updateStudentProfileAction(
     };
   }
 
-  const admin = await getAdminContext();
+  let admin;
+  try { admin = await getAdminContextOrThrow(); }
+  catch (error) {
+    unstable_rethrow(error);
+    return { ok: false, status: 503, error: "로그인 상태를 확인하지 못했습니다. 입력은 유지했습니다. 잠시 후 다시 저장해 주세요." };
+  }
   if (!admin) {
     return {
       error: "관리자 로그인이 필요합니다.",
@@ -56,6 +62,7 @@ export async function updateStudentProfileAction(
       },
     };
   } catch (error) {
+    unstable_rethrow(error);
     if (
       error instanceof StudentProfileUpdateError &&
       error.reason === "conflict"
@@ -71,7 +78,7 @@ export async function updateStudentProfileAction(
             student: current,
             version: current.updatedAt,
           },
-          error: error.message,
+          error: "다른 변경이 먼저 저장되었습니다. 현재 입력을 확인한 뒤 다시 저장해 주세요.",
           ok: false,
           status: 409,
         };
@@ -84,9 +91,25 @@ export async function updateStudentProfileAction(
       }
     }
     return {
-      error: "학생 정보를 저장하지 못했습니다.",
+      error: "학생 정보를 저장하지 못했습니다. 입력을 확인한 뒤 다시 시도해 주세요.",
       ok: false,
       status: 503,
+      ...(!(error instanceof StudentProfileUpdateError) || error.reason === "unknown" ? { outcome: "unknown" as const } : {}),
     };
+  }
+}
+
+// Read-only recovery: never repeat a possibly committed write automatically.
+export async function readStudentProfileSaveResultAction(input: unknown): Promise<StudentProfileActionResult> {
+  const parsed = z.object({ studentId: z.uuid() }).strict().safeParse(input);
+  if (!parsed.success) return { ok: false, status: 400, error: "학생을 확인해 주세요." };
+  try {
+    const admin = await getAdminContextOrThrow();
+    if (!admin) return { ok: false, status: 401, error: "관리자 로그인이 필요합니다." };
+    const student = await getStudentProfileMutationSnapshot(parsed.data.studentId, admin);
+    return { ok: true, receipt: { directoryEffect: "refresh-first-page", student, version: student.updatedAt } };
+  } catch (error) {
+    unstable_rethrow(error);
+    return { ok: false, status: 503, error: "저장 결과를 불러오지 못했습니다. 입력은 유지했습니다. 다시 확인해 주세요." };
   }
 }

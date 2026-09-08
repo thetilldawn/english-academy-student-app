@@ -122,8 +122,12 @@ export function AssignmentStudentBrowser({
           >
             {students.map((student) => (
               <AssignmentStudentRow
-                controller={controller}
+                assignmentMode={controller.assignmentMode}
+                checked={controller.selectedBulkStudentIds.includes(student.id)}
                 key={student.id}
+                onAssign={controller.actions.openSingleAssignment}
+                onToggle={controller.actions.toggleBulkStudent}
+                selectionLoading={controller.selectionLoading}
                 student={student}
               />
             ))}

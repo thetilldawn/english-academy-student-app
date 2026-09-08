@@ -60,7 +60,7 @@ export type AdminHistoryListItem = Pick<
   | "studentId"
   | "studentName"
   | "unitLabels"
->;
+> & Partial<Pick<AssignmentHistorySummary, "schoolName" | "gradeLabel">>;
 
 export type AdminHistorySectionPage = {
   groupKey: string;

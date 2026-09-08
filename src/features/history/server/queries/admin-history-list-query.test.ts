@@ -98,6 +98,16 @@ describe("admin history list query", () => {
   afterEach(() => {
     vi.useRealTimers();
   });
+  it("학교/학년은 첫 목록 RPC 하나에서 전달하고 추가 학생 조회를 하지 않는다", async () => {
+    const row = emptyInitialRow("filter-open");
+    const entry = node(1);
+    Object.assign(entry.item, { schoolName: "검사 고등학교", gradeLabel: "고1", privateSecret: "discard" });
+    mocks.rpc.mockResolvedValue({ data: [{ ...row, total_count: 1, items: [entry] }], error: null });
+    const result = await listAdminHistoryInitial({ currentOnly: false, statusFilter: "open" });
+    expect(result.sections[0].items[0]).toMatchObject({ schoolName: "검사 고등학교", gradeLabel: "고1" });
+    expect(result.sections[0].items[0]).not.toHaveProperty("privateSecret");
+    expect(mocks.rpc).toHaveBeenCalledTimes(1);
+  });
 
   it("초기 11건 중 10건만 전달하고 같은 스냅샷 커서를 이어 쓴다", async () => {
     mocks.rpc

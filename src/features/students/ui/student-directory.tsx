@@ -12,10 +12,12 @@ import styles from "./student-directory.module.css";
 
 export function StudentDirectory({
   initialSnapshot,
+  syncInitialSnapshot = false,
 }: {
   initialSnapshot: StudentDirectorySnapshot;
+  syncInitialSnapshot?: boolean;
 }) {
-  const controller = useStudentDirectoryPage(initialSnapshot);
+  const controller = useStudentDirectoryPage(initialSnapshot, syncInitialSnapshot);
   const { snapshot } = controller;
   return (
     <section aria-busy={controller.filtering}>

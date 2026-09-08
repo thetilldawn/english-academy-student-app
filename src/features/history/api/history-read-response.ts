@@ -42,6 +42,8 @@ const itemSchema = z.object({
   status: z.enum(["not_started", "cancelled", "missed", "in_progress", "completed", "expired"]),
   studentId: z.uuid(),
   studentName: z.string(),
+  schoolName: z.string().nullable().optional(),
+  gradeLabel: z.string().nullable().optional(),
   unitLabels: z.array(z.string()),
 }) satisfies z.ZodType<AdminHistoryListItem>;
 

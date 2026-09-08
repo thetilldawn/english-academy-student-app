@@ -31,7 +31,7 @@ export class StudentCreationError extends Error {
 
 export class StudentProfileUpdateError extends Error {
   constructor(
-    public readonly reason: "conflict" | "database",
+    public readonly reason: "conflict" | "database" | "unknown",
     message: string,
   ) {
     super(message);
@@ -140,13 +140,15 @@ export async function updateStudentProfile(
 }> {
   void _admin;
   const supabase = await createServerSupabaseClient();
-  const { data: updatedStudent, error: updateError } = await supabase
+  const { data: updatedStudent, error: updateError, status } = await supabase
     .rpc("update_admin_student_profile_v1", {
       p_base_version: input.baseVersion,
       p_display_name: input.displayName,
       p_grade_label: input.gradeLabel,
       p_school_name: input.schoolName,
       p_student_id: studentId,
+    }).then(result => result, () => {
+      throw new StudentProfileUpdateError("unknown", "학생 정보 저장 결과를 확인하지 못했습니다.");
     });
 
   const parsedStudent = studentProfileMutationSchema.safeParse(updatedStudent);
@@ -161,13 +163,13 @@ export async function updateStudentProfile(
       );
     }
     throw new StudentProfileUpdateError(
-      "database",
+      status === 0 || (status >= 200 && status < 300) || !updateError.code ? "unknown" : "database",
       "학생 정보를 저장하지 못했습니다.",
     );
   }
-  if (!parsedStudent.success) {
+  if (!parsedStudent.success || parsedStudent.data.id !== studentId) {
     throw new StudentProfileUpdateError(
-      "database",
+      "unknown",
       "학생 정보 저장 결과를 확인하지 못했습니다.",
     );
   }

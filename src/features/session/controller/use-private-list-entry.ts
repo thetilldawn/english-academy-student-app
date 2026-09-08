@@ -72,7 +72,7 @@ export function usePrivateListEntry<Snapshot, Filters, Consumer extends string, 
     snapshot,
     // Only for hidden, non-interactive draft subtrees, never authorization.
     retainedSnapshot: !cache?.blocked ? state?.success?.read.snapshot : undefined,
-    error: current?.error ?? (expired && !snapshot ? expiredFailure : undefined),
+    error: current?.error ?? (current && expired && !snapshot ? expiredFailure : undefined),
     retry: () => setRetryRequest(value => ({ ticket, id: value.id + 1 })),
   };
 }

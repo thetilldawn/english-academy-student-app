@@ -23,6 +23,10 @@ function shell(points = 12, gradeLabel: string | null = "고1") {
 }
 
 describe("StudentShell header", () => {
+  it("학교와 학년을 학생 정보 옆에 함께 표시한다", () => {
+    render(<StudentShell displayName="가짜 학생" schoolName="검사 고등학교" gradeLabel="고2" points={<span>포인트 0</span>}><main>목록</main></StudentShell>);
+    expect(screen.getByRole("banner")).toHaveTextContent("가짜 학생 · 검사 고등학교 · 고2");
+  });
   it("keeps student information, separator, points and both controls in the common header", () => {
     render(shell(12345));
     expect(screen.getByRole("banner")).toHaveTextContent("가상 검증 학생 이름이 아주 긴 경우 · 고1|포인트12,345");

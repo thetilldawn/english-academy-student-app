@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AdminHistoryListItem } from "../contracts/admin-history-read-model";
 import type { HistoryCacheSeed } from "../contracts/history-list-cache-contract";
 const mocks = vi.hoisted(() => ({ pathname: "/admin/results", read: vi.fn(), initial: vi.fn(), section: vi.fn(), more: vi.fn() }));
-vi.mock("next/navigation", () => ({ usePathname: () => mocks.pathname }));
+vi.mock("next/navigation", () => ({ usePathname: () => mocks.pathname, useSelectedLayoutSegments: () => mocks.pathname.split("/").slice(2) }));
 vi.mock("../transport/history-pages", () => ({ readHistoryListCache: mocks.read, loadAdminHistorySnapshot: mocks.initial, loadAdminHistoryFreshSection: mocks.section, loadAdminHistoryNextPage: mocks.more }));
 import { HistoryListCacheProvider } from "../controller/history-list-cache-provider";
 import { CachedAdminHistoryList } from "./cached-admin-history-list";

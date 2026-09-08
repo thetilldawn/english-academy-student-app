@@ -15,11 +15,13 @@ export function StudentShell({
   children,
   displayName,
   gradeLabel,
+  schoolName,
   points,
 }: {
   children: React.ReactNode;
   displayName: string;
   gradeLabel: string | null;
+  schoolName?: string | null;
   points: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -74,6 +76,7 @@ export function StudentShell({
             <div className={styles.studentIdentity}>
               <span className={styles.studentUserLabel}>
                 {displayName}
+                {schoolName ? ` · ${schoolName}` : ""}
                 {gradeLabel ? ` · ${gradeLabel}` : ""}
               </span>
               <span aria-hidden="true" className={styles.studentIdentityDivider}>|</span>

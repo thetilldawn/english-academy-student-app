@@ -51,6 +51,7 @@ async function StudentProtectedShell({
       <StudentShell
         displayName={student.displayName}
         gradeLabel={student.gradeLabel}
+        schoolName={student.schoolName}
         points={summary}
       >
         {children}

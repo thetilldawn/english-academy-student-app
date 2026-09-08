@@ -94,6 +94,8 @@ export const adminHistoryListItemSchema = z.object({
   status: activityStatusSchema,
   studentId: z.uuid(),
   studentName: z.string(),
+  schoolName: z.string().nullable().optional(),
+  gradeLabel: z.string().nullable().optional(),
   unitLabels: z.array(z.string()),
 });
 
@@ -217,6 +219,8 @@ export function projectAdminHistoryListItem(
     status: item.status,
     studentId: item.studentId,
     studentName: item.studentName,
+    schoolName: item.studentDeleted ? null : item.schoolName,
+    gradeLabel: item.studentDeleted ? null : item.gradeLabel,
     unitLabels: item.unitLabels,
   };
 }

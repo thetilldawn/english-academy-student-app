@@ -5,26 +5,31 @@ import { StudentDetailSkeleton } from "@/features/students/ui/student-detail-ske
 
 export default function InterceptedAdminStudentDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ studentId: string }>;
+  searchParams?: Promise<{ tab?: string | string[] }>;
 }) {
   return (
     <Suspense fallback={<StudentDetailSkeleton presentation="dialog" />}>
-      <InterceptedAdminStudentDetailContent params={params} />
+      <InterceptedAdminStudentDetailContent params={params} searchParams={searchParams} />
     </Suspense>
   );
 }
 
 async function InterceptedAdminStudentDetailContent({
   params,
+  searchParams,
 }: {
   params: Promise<{ studentId: string }>;
+  searchParams?: Promise<{ tab?: string | string[] }>;
 }) {
   const { studentId } = await params;
   return (
     <StudentDetailRouteContent
       presentation="dialog"
       studentId={studentId}
+      searchParams={searchParams}
     />
   );
 }

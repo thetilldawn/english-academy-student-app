@@ -42,7 +42,8 @@ function filteredStudents(input) {
     (!input.p_status || input.p_status === "all" || input.p_status === "active") &&
     (!input.p_wrong || input.p_wrong === "all") && !input.p_class_group_id && !input.p_wordbook);
 }
-export function fixtureResponse({ url, method, headers, body = "", quizFeedback = false }) {
+const profileVersions = new Map();
+export function fixtureResponse({ url, method, headers, body = "", quizFeedback = false, studentProfile = false }) {
   const target = new URL(url);
   const deny = { status: 403, body: { error: "Local fixture request rejected" }, category: "rejected" };
   if (target.origin !== DATA_ORIGIN || target.username || target.password) return deny;
@@ -95,6 +96,21 @@ export function fixtureResponse({ url, method, headers, body = "", quizFeedback 
   }
   if (method === "POST" && table.startsWith("rpc/")) {
     const rpc = table.slice(4);
+    if (studentProfile && ["get_admin_student_detail_initial_v2", "get_admin_student_profile_v1", "update_admin_student_profile_v1"].includes(rpc)) {
+      const student = students.find(value => value.id === input.p_student_id);
+      if (!student) return deny;
+      if (rpc === "update_admin_student_profile_v1") {
+        if (input.p_base_version !== (profileVersions.get(student.id) ?? stamp)) return { status: 409, category: "profile-conflict", body: { code: "40001", message: "student_profile_conflict" } };
+        if (typeof input.p_display_name !== "string" || !input.p_display_name.trim() || input.p_display_name.length > 80 ||
+          typeof input.p_school_name !== "string" || input.p_school_name.length > 120 || typeof input.p_grade_label !== "string" || input.p_grade_label.length > 40) return deny;
+        Object.assign(student, { displayName: input.p_display_name.trim(), schoolName: input.p_school_name.trim() || null, gradeLabel: input.p_grade_label.trim() || null });
+        profileVersions.set(student.id, new Date().toISOString());
+      }
+      const profile = { id: student.id, displayName: student.displayName, schoolName: student.schoolName, gradeLabel: student.gradeLabel, updatedAt: profileVersions.get(student.id) ?? stamp };
+      if (rpc !== "get_admin_student_detail_initial_v2") return respond(profile, rpc.startsWith("update") ? "profile-memory-write" : "profile-result-read");
+      return respond({ snapshotAt: new Date().toISOString(), student: { ...student, ...profile, createdAt: stamp, currentVocabDatasetId: null, readingContextSyncStatus: "not_configured", readingCurriculumStage: "undecided" },
+        history: { items: [], totalCount: 0 }, learningSources: [], vocabBookHistory: [], wrongSummary: { wrongWordCount: 0, repeatedWrongWordCount: 0 } }, "student-detail");
+    }
     if (rpc === "get_admin_history_initial_v1") {
       const keys = input.p_status_filter && input.p_status_filter !== "all" ? ["filter-" + input.p_status_filter]
         : ["open", "needs_attention", "completed", ...(input.p_current_only ? [] : ["archived"])];
@@ -108,7 +124,7 @@ export function fixtureResponse({ url, method, headers, body = "", quizFeedback 
           id: "assignment." + uid(20) + "." + s.id, initialCompletedAt: null, initialScore: null,
           missedAt: null, passed: null, passingScore: 80, phase: null, primaryUnitLabels: ["DAY 01"],
           questionCount: 20, retryStartedAt: null, startedAt: null, status: "not_started",
-          studentId: s.id, studentName: s.displayName, unitLabels: ["DAY 01"] },
+          studentId: s.id, studentName: s.displayName, schoolName: s.schoolName, gradeLabel: s.gradeLabel, unitLabels: ["DAY 01"] },
       }));
       return respond(keys.map(group_key => ({ group_key, items: ["open", "filter-open"].includes(group_key) ? items : [],
         snapshot_at: stamp, total_count: ["open", "filter-open"].includes(group_key) ? items.length : 0 })), "history");

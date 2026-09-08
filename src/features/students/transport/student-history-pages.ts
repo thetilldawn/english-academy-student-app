@@ -1,3 +1,4 @@
+import { announceAdminPrivateCacheChange } from "@/features/session/public-client";
 import type {
   StudentHistoryInitialRequest,
   StudentHistoryPage,
@@ -22,11 +23,17 @@ async function requestStudentHistory(
     method: "POST",
     signal,
   });
+  signal?.throwIfAborted();
+  if (response.status === 401 || response.status === 403) {
+    announceAdminPrivateCacheChange("identity");
+    throw new Error("관리자 로그인이 필요합니다.");
+  }
   const payload = await response.json().catch(() => null) as
     | StudentHistoryResponse
     | null;
+  signal?.throwIfAborted();
   if (!response.ok || !payload?.page) {
-    throw new Error(payload?.error ?? "학생 시험 내역을 불러오지 못했습니다.");
+    throw new Error("학생 시험 내역을 불러오지 못했습니다. 다시 시도해 주세요.");
   }
   return payload.page;
 }

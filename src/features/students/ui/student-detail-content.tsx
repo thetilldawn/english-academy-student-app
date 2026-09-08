@@ -1,11 +1,17 @@
 "use client";
 
+import Link from "next/link";
+
 import { useLayoutEffect } from "react";
 import dynamic from "next/dynamic";
 
 import { adminStudentsText } from "@/content/ko/admin-students";
 import { DialogBody } from "@/design-system/primitives/dialog/dialog";
 import { Tabs } from "@/design-system/primitives/tabs/tabs";
+import { Notice } from "@/design-system/patterns/feedback/feedback";
+import { GuardedLink } from "@/components/guarded-link";
+import { buttonRecipe } from "@/design-system/primitives/button/button";
+import type { StudentDetailTab } from "../controller/use-student-detail-view";
 
 import type { StudentDetailInitial } from "../contracts/student-detail-read-model";
 import { useStudentAccessController } from "../controller/use-student-access-controller";
@@ -39,6 +45,7 @@ export type StudentDetailPresentation = "dialog" | "page";
 export function StudentDetailContent({
   appOrigin,
   initial,
+  initialTab,
   onInteractionStateChange,
   onStudentRemoved,
   onStudentUpdated,
@@ -46,12 +53,13 @@ export function StudentDetailContent({
 }: {
   appOrigin: string;
   initial: StudentDetailInitial;
-  onInteractionStateChange?: (state: { busy: boolean; dirty: boolean }) => void;
+  initialTab?: StudentDetailTab;
+  onInteractionStateChange?: (state: { busy: boolean; dirty: boolean; locked?: boolean }) => void;
   onStudentRemoved: () => void;
   onStudentUpdated: (student: Partial<StudentDetailInitial["student"]>) => void;
   presentation: StudentDetailPresentation;
 }) {
-  const view = useStudentDetailView();
+  const view = useStudentDetailView(initialTab);
   const profile = useStudentProfileController({
     onUpdated: (receipt) => {
       onStudentUpdated(receipt.student);
@@ -59,6 +67,7 @@ export function StudentDetailContent({
     },
     student: initial.student,
   });
+  const locked = profile.locked;
   const access = useStudentAccessController({
     appOrigin,
     onRemoved: onStudentRemoved,
@@ -77,13 +86,15 @@ export function StudentDetailContent({
   useLayoutEffect(() => {
     onInteractionStateChange?.({
       busy: profile.busy || access.interactionBusy,
-      dirty: !profile.unchanged,
+      dirty: !locked && !profile.unchanged,
+      locked,
     });
   }, [
     access.interactionBusy,
     onInteractionStateChange,
     profile.busy,
     profile.unchanged,
+    locked,
   ]);
 
   const panel = (
@@ -101,6 +112,7 @@ export function StudentDetailContent({
       ) : null}
       {view.historyVisited ? (
         <div hidden={view.tab !== "history"}>
+          <GuardedLink className={buttonRecipe({ variant: "quiet" })} href={`/admin/assignments?student=${initial.student.id}&view=assign`} scroll={false}>단어 시험 배정</GuardedLink>
           <StudentHistoryPanel
             active={view.tab === "history"}
             historyController={history}
@@ -112,6 +124,8 @@ export function StudentDetailContent({
       ) : null}
     </>
   );
+
+  if (locked) return <Notice tone="danger">{adminStudentsText.info.profileAuthError} <Link href="/admin/login">관리자 로그인</Link></Notice>;
 
   return (
     <>

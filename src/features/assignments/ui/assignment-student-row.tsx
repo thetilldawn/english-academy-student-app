@@ -1,4 +1,5 @@
 import { formatContentText } from "@/content/format";
+import { GuardedLink } from "@/components/guarded-link";
 import { adminLearningText } from "@/content/ko/admin-learning";
 import {
   ActivityRow,
@@ -10,14 +11,21 @@ import { Button } from "@/design-system/primitives/button/button";
 import type { StudentDirectoryListItem } from "@/features/students/public-contracts";
 import { formatKoreanDateTime } from "@/lib/format";
 
-import type { AssignmentWorkspaceController } from "../controller/use-assignment-workspace";
 import styles from "./assignment-workspace.module.css";
 
 export function AssignmentStudentRow({
-  controller,
+  assignmentMode,
+  checked,
+  selectionLoading,
+  onAssign,
+  onToggle,
   student,
 }: {
-  controller: AssignmentWorkspaceController;
+  assignmentMode: "single" | "bulk";
+  checked: boolean;
+  selectionLoading: boolean;
+  onAssign: (studentId: string) => void;
+  onToggle: (student: StudentDirectoryListItem) => void;
   student: StudentDirectoryListItem;
 }) {
   const assignmentBlockedReason = student.status === "blocked"
@@ -26,11 +34,11 @@ export function AssignmentStudentRow({
   return (
     <SelectableRow
       actions={
-        controller.assignmentMode === "single" ? (
+        assignmentMode === "single" ? (
           <ActionWithReason reason={assignmentBlockedReason}>
             <Button
               disabled={assignmentBlockedReason !== null}
-              onClick={() => controller.actions.openSingleAssignment(student.id)}
+              onClick={() => onAssign(student.id)}
               size="small"
               variant="primary"
             >
@@ -39,21 +47,21 @@ export function AssignmentStudentRow({
           </ActionWithReason>
         ) : null
       }
-      checked={controller.selectedBulkStudentIds.includes(student.id)}
+      checked={checked}
       checkboxId={`bulk-student-${student.id}`}
-      disabled={student.status === "blocked" || controller.selectionLoading}
-      onToggle={() => controller.actions.toggleBulkStudent(student)}
+      disabled={student.status === "blocked" || selectionLoading}
+      onToggle={() => onToggle(student)}
       selectionAriaLabel={formatContentText(
         adminLearningText.page.bulk.selectStudentAria,
         { student: student.displayName },
       )}
-      selectionEnabled={controller.assignmentMode === "bulk"}
+      selectionEnabled={assignmentMode === "bulk"}
     >
       <ActivityRow
         main={
           <div className={styles.studentRowSummary}>
             <span className={styles.studentIdentity}>
-              <strong>{student.displayName}</strong>
+              <GuardedLink href={`/admin/students/${student.id}?tab=history`} scroll={false}><strong>{student.displayName}</strong></GuardedLink>
               <MetaTagList>
                 <MetaTag>
                   {student.schoolName ?? adminLearningText.page.studentCard.schoolMissing}

@@ -7,12 +7,18 @@
 }
 
 .title,
-.titleLine > strong {
+.studentIdentity > strong {
   min-width: 0;
   overflow: hidden;
   color: var(--text-primary);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.studentIdentity {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
 }
 
 .titleLine > :only-child {
@@ -25,7 +31,7 @@
     gap: 3px;
   }
 
-  .titleLine > strong,
+  .studentIdentity,
   .title {
     grid-column: 1;
   }

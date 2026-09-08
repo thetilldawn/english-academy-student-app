@@ -10,26 +10,31 @@ export const metadata: Metadata = {
 
 export default function AdminStudentDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ studentId: string }>;
+  searchParams?: Promise<{ tab?: string | string[] }>;
 }) {
   return (
     <Suspense fallback={<StudentDetailSkeleton presentation="page" />}>
-      <AdminStudentDetailContent params={params} />
+      <AdminStudentDetailContent params={params} searchParams={searchParams} />
     </Suspense>
   );
 }
 
 async function AdminStudentDetailContent({
   params,
+  searchParams,
 }: {
   params: Promise<{ studentId: string }>;
+  searchParams?: Promise<{ tab?: string | string[] }>;
 }) {
   const { studentId } = await params;
   return (
     <StudentDetailRouteContent
       presentation="page"
       studentId={studentId}
+      searchParams={searchParams}
     />
   );
 }

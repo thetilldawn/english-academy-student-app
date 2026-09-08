@@ -4,9 +4,9 @@ import { useState } from "react";
 
 export type StudentDetailTab = "info" | "account" | "history";
 
-export function useStudentDetailView() {
-  const [tab, setTab] = useState<StudentDetailTab>("info");
-  const [historyVisited, setHistoryVisited] = useState(false);
+export function useStudentDetailView(initialTab: StudentDetailTab = "info") {
+  const [tab, setTab] = useState<StudentDetailTab>(initialTab);
+  const [historyVisited, setHistoryVisited] = useState(initialTab === "history");
 
   function changeTab(nextTab: StudentDetailTab) {
     setTab(nextTab);

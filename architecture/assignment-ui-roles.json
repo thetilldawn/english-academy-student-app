@@ -200,7 +200,7 @@
     {
       "path": "assignment-student-browser.tsx",
       "role": "deferred",
-      "reason": "전체 화면 제어기를 행/바구니/진입 선택에 재전달",
+      "reason": "APP-20260908-02: 학생 행만 좁은 표시·콜백으로 분리. 바구니·진입 선택은 후속 분리 대상",
       "allowedImports": [
         "../controller/use-assignment-workspace",
         "./assignment-student-row",
@@ -215,14 +215,13 @@
         "@/design-system/primitives/tabs/tabs",
         "@/content/ko/admin-students"
       ],
-      "legacySourceSha256": "66a1adf3c3dc45a348cc9f382643a1b555906762f22df253898aa988c0022276"
+      "legacySourceSha256": "0c55437aeda7375915cb2f96bd7b9b4372adc59c50c57c2ab16ad35e7f103482"
     },
     {
       "path": "assignment-student-row.tsx",
-      "role": "deferred",
-      "reason": "한 학생 행에 전체 제어기 전달; 행 상태/동작으로 축소 필요",
+      "role": "pure",
+      "reason": "APP-20260908-02: 한 학생의 표시와 작은 상태·콜백만 전달. 배정 계산/전체 제어기 없음",
       "allowedImports": [
-        "../controller/use-assignment-workspace",
         "./assignment-workspace.module.css",
         "@/content/format",
         "@/content/ko/admin-learning",
@@ -231,9 +230,9 @@
         "@/design-system/primitives/badge/badge",
         "@/design-system/primitives/button/button",
         "@/features/students/public-contracts",
-        "@/lib/format"
-      ],
-      "legacySourceSha256": "49aef536e59765b6e2e88f6446320381a45ee3c1a54b12d4bb418f69fe37dc9a"
+        "@/lib/format",
+        "@/components/guarded-link"
+      ]
     },
     {
       "path": "assignment-submit-action.tsx",

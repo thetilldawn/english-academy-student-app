@@ -1860,7 +1860,10 @@
   ],
   "serverOwners": [],
   "featureServerOwners": [
-    { "path": "src/features/assignments/server/planning/bulk-session-layout.ts", "owner": "assignments" },
+    {
+      "path": "src/features/assignments/server/planning/bulk-session-layout.ts",
+      "owner": "assignments"
+    },
     {
       "path": "src/features/history/server/queries/history-list-entry-query.ts",
       "owner": "history"
@@ -2070,6 +2073,11 @@
   "protectedMigrationCount": 136,
   "protectedMigrationSetSha256": "b4ea57697824cb8fece77250a50950e58bb4e2516235e485106f126a8b00c13f",
   "migrationOwners": [
+    {
+      "path": "supabase/migrations/20260907235924_admin_history_school_labels.sql",
+      "owner": "history",
+      "flow": "admin-history-read"
+    },
     {
       "path": "supabase/migrations/20260908020100_add_reviewed_exam_bank.sql",
       "owner": "assignments",
@@ -2358,6 +2366,30 @@
     }
   ],
   "currentCrossFeatureImports": [
+    {
+      "from": "src/features/students/api/student-mutations.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "APP02 현재 미인증과 다른 탭 로그아웃의 상세 개인정보 잠금",
+      "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/students/transport/student-history-pages.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "APP02 현재 미인증과 다른 탭 로그아웃의 상세 개인정보 잠금",
+      "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/students/controller/use-student-detail-shell-state.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "APP02 현재 미인증과 다른 탭 로그아웃의 상세 개인정보 잠금",
+      "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/students/controller/use-student-profile-controller.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "APP02 확정 미인증 뒤 공용 개인 자료 잠금 신호",
+      "removeIn": "공개 진입점으로 고정"
+    },
     {
       "from": "src/features/history/controller/admin-history-mutation-events.ts",
       "to": "src/features/session/public-client.ts",
@@ -3952,6 +3984,7 @@
           "src/features/history/public-server-queries.ts"
         ],
         "database": [
+          "supabase/migrations/20260907235924_admin_history_school_labels.sql",
           "supabase/migrations/20260829153000_add_admin_history_read_model.sql",
           "supabase/migrations/20260831100000_return_admin_history_hidden_version.sql",
           "supabase/migrations/20260901141048_fix_admin_history_infinite_effective_at.sql",
@@ -3969,6 +4002,7 @@
           "src/app/api/admin/attempts/[id]/route.ts"
         ],
         "tests": [
+          "src/features/history/server/queries/admin-history-school-labels.integration.test.ts",
           "src/app/admin-route-error.test.tsx",
           "src/components/admin-navigation.contract.test.ts",
           "src/features/history/history-public-boundary.contract.test.ts",
@@ -4594,7 +4628,7 @@
         "session"
       ],
       "dataClass": "private",
-      "cachePolicy": "기본 학생 목록/상세/포인트/이력은 서버 공유 캐시 없이 private no-store. APP08 조건부 시험은 첫 문서 서버 응답을 최초 hydration에만 인계하고 Client 재진입은 현재 인증/포인트 확인 뒤 메타자료를 15초 재사용한다. 포인트 저장 제외, 60초 표시/120초 제거/20조건, 성공 변경·세대·로그아웃 폐기. 운영 기본 OFF, 고정 성능/안전 관문 통과 전 미채택.",
+      "cachePolicy": "개인 자료 공유 캐시 금지. DEPLOY-20260906-01에서 채택한 개인 메모리 캐시는 기본 ON이며 lib/env.ts에서 판정한다. 최초 hydration 인계/현재 인증/포인트 확인 뒤15초 재사용,60초 표시/120초 제거/20조건. APP02 보호 layout children 이동만 ticket/요청 취소 경계이며 @detail 왕복은 배경 목록을 보존한다. 복귀/계정/저장 변경의 인증·폐기는 유지한다.",
       "streamingPolicy": "관리자 인증 뒤 첫 문서 목록은 독립 Suspense 서버 조회. APP08 Client 재진입만 캐시 읽기로 전환하며 첫 서버 자료와 이중조회하지 않는다. 옛 Client RSC 인계는 인증으로 사용하지 않는다. 접힌 등록 준비는 조회하지 않고 상세 직접/가로채기 조회는 공유한다.",
       "closedLocalLayers": [
         "ui",
@@ -4730,6 +4764,8 @@
           "src/app/api/admin/students/[id]/history/route.ts"
         ],
         "tests": [
+          "src/features/students/server/actions/student-profile-command.test.ts",
+          "src/features/students/controller/student-detail-auth.test.ts",
           "src/design-system/patterns/filter-workspace/filter-workspace.test.tsx",
           "src/components/guarded-link.test.tsx",
           "src/components/admin-logout-button.test.tsx",

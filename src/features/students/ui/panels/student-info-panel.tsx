@@ -4,6 +4,7 @@ import type { FormEvent } from "react";
 
 import { adminStudentsText } from "@/content/ko/admin-students";
 import { Button } from "@/design-system/primitives/button/button";
+import { Notice } from "@/design-system/patterns/feedback/feedback";
 import {
   Field,
   FieldLabel,
@@ -80,6 +81,8 @@ export function StudentInfoPanel({
         <Button
           disabled={
             controller.busy ||
+            controller.needsCheck ||
+            controller.locked ||
             controller.unchanged ||
             !controller.draft.displayName.trim()
           }
@@ -89,6 +92,12 @@ export function StudentInfoPanel({
             ? adminStudentsText.info.savePending
             : adminStudentsText.info.save}
         </Button>
+        {controller.feedback ? <Notice role={controller.feedback.tone === "danger" ? "alert" : "status"} tone={controller.feedback.tone}>
+          {controller.feedback.message}
+          {controller.needsCheck ? <Button disabled={controller.busy} onClick={() => void controller.actions.checkResult()} type="button" variant="quiet">
+            {controller.checking ? adminStudentsText.info.profileChecking : adminStudentsText.info.profileCheck}
+          </Button> : null}
+        </Notice> : null}
       </form>
 
       <section className={styles.historySection}>

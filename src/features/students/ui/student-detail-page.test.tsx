@@ -20,6 +20,7 @@ import { NavigationExitGuardProvider } from "@/components/navigation-exit-guard"
 
 import type { StudentDetailInitial } from "../contracts/student-detail-read-model";
 import { StudentDetailPage } from "./student-detail-page";
+import { announceAdminPrivateCacheChange } from "@/features/session/public-client";
 
 const { navigateDocument, replace, softNavigate } = vi.hoisted(() => ({
   navigateDocument: vi.fn(),
@@ -115,6 +116,14 @@ afterEach(() => {
 });
 
 describe("StudentDetailPage", () => {
+  it("다른 탭의 로그아웃 신호에서 헤더와 상세 폼을 함께 숨긴다", () => {
+    renderPage();
+    expect(screen.getByRole("textbox", { name: "이름" })).toBeVisible();
+    act(() => announceAdminPrivateCacheChange("identity"));
+    expect(screen.queryByRole("textbox", { name: "이름" })).not.toBeInTheDocument();
+    expect(screen.queryByText(initial.student.displayName)).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("관리자 로그인이 필요합니다.");
+  });
   it("keeps an immediately edited profile when list navigation is cancelled", async () => {
     const user = userEvent.setup();
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);

@@ -9,6 +9,6 @@ import { useStudentDirectoryCache } from "./student-directory-cache-provider";
 const failureFor = (error: unknown) => error instanceof StudentDirectoryRequestError ? error.message : new StudentDirectoryRequestError(503).message;
 export function useCachedStudentDirectory(initialResponse?: Extract<DirectoryCacheResponse, { kind: "snapshot" }>, consumer: DirectoryCacheConsumer = "students") {
   return usePrivateListEntry(useStudentDirectoryCache(), initialResponse, consumer, failureFor, adminStudentsText.page.expired, {
-    retainActiveSnapshot: consumer === "assignments",
+    retainActiveSnapshot: true,
   });
 }

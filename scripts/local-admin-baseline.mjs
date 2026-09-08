@@ -12,6 +12,7 @@ import { assertLocalBaselineEnvironment, assertNestedPath, waitForChild, stopOwn
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const quizFeedback = process.argv.includes("--quiz-feedback");
+const studentProfile = process.argv.includes("--student-profile");
 const env = Object.fromEntries(["Path", "PATH", "SystemRoot", "SYSTEMROOT", "TEMP", "TMP", "USERPROFILE", "LOCALAPPDATA", "APPDATA"]
   .filter(key => process.env[key]).map(key => [key, process.env[key]]));
 if (process.env.VERCEL || process.env.VERCEL_ENV || process.env.CI) throw new Error("배포/CI 환경에서는 시작하지 않습니다.");
@@ -77,7 +78,7 @@ const dataServer = http.createServer(async (req, res) => {
   if (req.headers.host !== new URL(DATA_ORIGIN).host) return json(res, { error: "Local host required" }, 403);
   try {
     const result = fixtureResponse({ url: DATA_ORIGIN + req.url, method: req.method,
-      headers: new Headers(req.headers), body: await readBody(req), quizFeedback });
+      headers: new Headers(req.headers), body: await readBody(req), quizFeedback, studentProfile });
     metrics.data.push({ path: new URL(DATA_ORIGIN + req.url).pathname, method: req.method,
       category: result.category, status: result.status, at: Date.now() });
     json(res, result.body, result.status);
@@ -151,8 +152,10 @@ const proxy = http.createServer(async (req, res) => {
       !/^\/api\/admin\/assignment-workspace\/datasets\/00000000-0000-4000-8000-00000000001[01]\/units$/.test(url.pathname))) {
     return json(res, { error: "Application writes and unknown APIs are blocked" }, 403);
   }
+  const profileAction = studentProfile && req.method === "POST" && req.headers.origin === APP_ORIGIN &&
+    typeof req.headers["next-action"] === "string" && /^\/admin\/students\/00000000-0000-4000-8000-00000000000[12]$/.test(url.pathname);
   if (!["GET", "HEAD", "POST", "DELETE"].includes(req.method) ||
-      (req.method !== "GET" && req.method !== "HEAD" && !url.pathname.startsWith("/api/")) ||
+      (req.method !== "GET" && req.method !== "HEAD" && !url.pathname.startsWith("/api/") && !profileAction) ||
       (req.method === "DELETE" && url.pathname !== "/api/admin/session")) {
     return json(res, { error: "Unsupported local request" }, 403);
   }
@@ -238,5 +241,5 @@ try {
   await listen(proxy, 3037);
   assertMayStart(stopRequested);
   console.log(JSON.stringify({ url: APP_ORIGIN + "/admin/login", account: ACCOUNT,
-    note: "가짜 로그인/읽기 전용. 실제 인증·DB 비용 검증 아님. 등록/배정/수정/삭제 금지." }));
+    note: studentProfile ? "가짜 로그인. 지정된 가짜 학생 프로필만 메모리 안에서 수정 가능. 외부·실제 DB 요청은 차단됩니다." : "가짜 로그인/읽기 전용. 실제 인증·DB 비용 검증 아님. 등록/배정/수정/삭제 금지." }));
 } catch (error) { await stop(); throw error; }

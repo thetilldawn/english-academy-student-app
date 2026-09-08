@@ -15,7 +15,7 @@ import { AssignmentWorkspace } from "./assignment-workspace";
 import { StudentDirectoryCacheProvider, announceStudentDirectoryRefresh } from "@/features/students/public-client";
 import { announceAdminPrivateCacheChange } from "@/features/session/public-client";
 import { CachedAssignmentWorkspace } from "./cached-assignment-workspace";
-vi.mock("next/navigation", async importOriginal => ({ ...await importOriginal<typeof import("next/navigation")>(), usePathname: () => "/admin/assignments" }));
+vi.mock("next/navigation", async importOriginal => ({ ...await importOriginal<typeof import("next/navigation")>(), usePathname: () => "/admin/assignments", useSelectedLayoutSegments: () => ["assignments"] }));
 
 // Only the Next.js module loader and HTTP boundary are replaced. The student
 // row, preparation controller, planner, range fields and picker are real.

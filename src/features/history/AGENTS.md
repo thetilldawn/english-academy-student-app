@@ -40,6 +40,7 @@
   `public-ui.ts`, DB 행 검증·변환을 쓰면 `public-server.ts`로만 들어온다. 다른 기능에서
   `history/domain`, `history/presentation`, `history/ui`, `history/server`를 직접 가져오지 않는다.
 - 내역 조회와 표시 변환에 숨은 DB 쓰기를 넣지 않는다.
+- APP-20260908-02: 목록의 학교/학년은 기존 SQL 조회 열의 최소 JSON 표시 필드로 추가한다. 학생별 추가 조회를 만들지 않고 삭제된 학생은 두 필드를 null로 가린다. 새 migration 적용 전의 응답은 호환하되 실제 표시 완료로 기록하지 않는다.
 - 목록 구역 집합은 계약의 expectedAdminHistoryGroupKeys 한 곳에서 서버/브라우저가 함께 결정한다.
   api/history-read-response.ts는 필수 구역/행/조건을 확인하며 잘못된 성공 본문을 0건으로 만들지 않는다.
 - 통신 실패 종류는 contracts/admin-history-request-error.ts, 쉬운 안내는 presentation/카탈로그,

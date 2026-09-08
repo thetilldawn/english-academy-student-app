@@ -1,4 +1,5 @@
 import { adminStudentsText } from "@/content/ko/admin-students";
+import { announceAdminPrivateCacheChange } from "@/features/session/public-client";
 
 type StudentMutationResponse = {
   code?: string;
@@ -10,6 +11,11 @@ async function requestStudentMutation(
   options?: RequestInit,
 ): Promise<StudentMutationResponse> {
   const response = await fetch(url, options);
+  options?.signal?.throwIfAborted();
+  if (response.status === 401 || response.status === 403) {
+    announceAdminPrivateCacheChange("identity");
+    throw new Error("관리자 로그인이 필요합니다.");
+  }
   let payload: StudentMutationResponse = {};
   try {
     payload = (await response.json()) as StudentMutationResponse;

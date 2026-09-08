@@ -11,7 +11,17 @@ import type { DirectoryCacheResponse } from "../contracts/student-directory-cach
 export function CachedStudentDirectory({ initialResponse }: { initialResponse?: Extract<DirectoryCacheResponse, { kind: "snapshot" }> } = {}) {
   const controller = useCachedStudentDirectory(initialResponse);
   if (controller.blocked) return <Notice role="alert" tone="danger">{adminStudentsText.page.authError}<ButtonLink href="/admin/login" variant="quiet">{adminStudentsText.page.login}</ButtonLink></Notice>;
-  if (controller.error) return <Notice role="alert" tone="danger">{controller.error}<Button onClick={controller.retry} variant="quiet">{adminStudentsText.page.retry}</Button></Notice>;
-  if (!controller.snapshot) return <RouteLoadingState label={adminStudentsText.page.loading} variant="compact" />;
-  return <StudentDirectory initialSnapshot={controller.snapshot} />;
+  if (!controller.snapshot) return controller.error
+    ? <Notice role="alert" tone="danger">{controller.error}<Button onClick={controller.retry} variant="quiet">{adminStudentsText.page.retry}</Button></Notice>
+    : <RouteLoadingState label={adminStudentsText.page.loading} variant="compact" />;
+  const notice = controller.error || (controller.refreshing
+    ? adminStudentsText.page.refreshingList
+    : controller.stale ? adminStudentsText.page.retainedStudentList : "");
+  return <>
+    {notice ? <Notice role={controller.error ? "alert" : "status"} tone={controller.error ? "danger" : "neutral"}>
+      {notice}
+      <Button disabled={controller.refreshing} onClick={controller.retry} variant="quiet">{adminStudentsText.page.retry}</Button>
+    </Notice> : null}
+    <StudentDirectory initialSnapshot={controller.snapshot} syncInitialSnapshot />
+  </>;
 }

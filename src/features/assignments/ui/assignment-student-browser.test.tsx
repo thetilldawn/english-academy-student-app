@@ -10,6 +10,8 @@ import { adminLearningText } from "@/content/ko/admin-learning";
 
 import type { AssignmentWorkspaceController } from "../controller/use-assignment-workspace";
 import { AssignmentStudentBrowser } from "./assignment-student-browser";
+import { AssignmentStudentRow } from "./assignment-student-row";
+import type { StudentDirectoryListItem } from "@/features/students/public-contracts";
 
 afterEach(cleanup);
 
@@ -105,6 +107,25 @@ function controllerStub(
 }
 
 describe("assignment student browser", () => {
+  it("학생 이름은 공용 내역으로 연결하고 이름을 눌러도 일괄 선택은 바꾸지 않는다", async () => {
+    const user = userEvent.setup();
+    const onToggle = vi.fn();
+    const student: StudentDirectoryListItem = {
+      id: "00000000-0000-4000-8000-000000000001", displayName: "가짜 학생",
+      schoolName: "검사 학교", gradeLabel: "고1", status: "active", codeStatus: "active",
+      currentVocabBook: null, recentExamAt: null, rawPoints: 0,
+      completedCount: 0, missedCount: 0, notStartedCount: 0,
+    };
+    render(<AssignmentStudentRow assignmentMode="bulk" checked={false} selectionLoading={false} onAssign={vi.fn()} onToggle={onToggle} student={student} />);
+    const link = screen.getByRole("link", { name: "가짜 학생" });
+    expect(link).toHaveAttribute("href", `/admin/students/${student.id}?tab=history`);
+    // Observe the normal anchor/label interaction without navigating jsdom.
+    link.addEventListener("click", event => event.preventDefault());
+    await user.click(link);
+    expect(onToggle).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("checkbox"));
+    expect(onToggle).toHaveBeenCalledWith(student);
+  });
   it("lets a query-only search be cleared without resetting facet filters", async () => {
     const user = userEvent.setup();
     const clearSearch = vi.fn();

@@ -48,6 +48,21 @@ describe("로컬 학생 학습 가짜 자료 보호", () => {
   });
 });
 describe("로컬 기준 계측 보호", () => {
+  it("프로필 모드에서만 가짜 학생을 메모리에 저장하고 결과를 다시 읽는다", () => {
+    const profile = { p_student_id: uid(1) };
+    const request = { method: "POST", studentProfile: true, body: JSON.stringify(profile) };
+    const get = "/rest/v1/rpc/get_admin_student_profile_v1";
+    const update = "/rest/v1/rpc/update_admin_student_profile_v1";
+    expect(read(get, { ...request, studentProfile: false }).status).toBe(403);
+    const old = read(get, request).body;
+    const body = JSON.stringify({ ...profile, p_base_version: old.updatedAt, p_display_name: old.displayName, p_school_name: old.schoolName, p_grade_label: old.gradeLabel });
+    expect(read(update, { ...request, body, studentProfile: false }).status).toBe(403);
+    const saved = read(update, { ...request, body });
+    expect(saved.category).toBe("profile-memory-write");
+    expect(read(get, request).body).toEqual(saved.body);
+    expect(read(update, { ...request, body }).status).toBe(409);
+    expect(read(get, { ...request, body: JSON.stringify({ p_student_id: uid(333) }) }).status).toBe(403);
+  });
   it("용량 조회 오류는 명시한 로컬 미리보기에만 적용하고 배정 쓰기를 열지 않는다", () => {
     const preview = "/api/admin/bulk-assignments/preview";
     expect(shouldSimulateCapacityFailure(true, preview, "POST", APP_ORIGIN)).toBe(true);

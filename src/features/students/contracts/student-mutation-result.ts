@@ -27,4 +27,5 @@ export type StudentProfileActionResult =
       error: string;
       ok: false;
       status: 400 | 401 | 503;
+      outcome?: "unknown";
     };

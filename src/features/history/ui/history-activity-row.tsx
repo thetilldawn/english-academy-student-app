@@ -17,6 +17,7 @@ import { ActivityStatusTimeline } from "./activity-status-timeline";
 import { AssignmentMetaTags } from "./assignment-meta-tags";
 import { AttemptScoreSummary } from "./attempt-score-summary";
 import styles from "./history-activity-row.module.css";
+import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 
 export function HistoryActivityRow({
   compact = false,
@@ -72,7 +73,13 @@ export function HistoryActivityRow({
         main={
           <>
             <span className={styles.titleLine}>
-              {showStudent ? <strong>{item.studentName}</strong> : null}
+              {showStudent ? <span className={styles.studentIdentity}>
+                <strong>{item.studentName}</strong>
+                {(item.schoolName !== undefined || item.gradeLabel !== undefined) && item.studentName !== "삭제됨" ? <MetaTagList>
+                  <MetaTag>{item.schoolName || "학교 미등록"}</MetaTag>
+                  <MetaTag>{item.gradeLabel || "학년 미등록"}</MetaTag>
+                </MetaTagList> : null}
+              </span> : null}
               {displayTitle ? (
                 <span className={styles.title}>{displayTitle}</span>
               ) : null}

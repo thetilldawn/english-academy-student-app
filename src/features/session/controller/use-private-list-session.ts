@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { usePathname } from "next/navigation";
-import { subscribeAdminPrivateCacheChanges } from "./admin-private-cache-events";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useSelectedLayoutSegments } from "next/navigation";
+import { announceAdminPrivateCacheChange, subscribeAdminPrivateCacheChanges } from "./admin-private-cache-events";
 
 type SessionCache = {
+  readonly blocked: boolean;
   readonly revision: number;
   subscribe: (listener: () => void) => () => void;
   lock: () => void;
@@ -13,10 +14,19 @@ type SessionCache = {
 };
 
 export function usePrivateListSession<Cache extends SessionCache>(cache: Cache) {
-  const pathname = usePathname();
+  // The protected layout's main page owns the list. Opening @detail changes
+  // the URL, but must not cancel or re-authorize the still-mounted backdrop.
+  const pageKey = JSON.stringify(useSelectedLayoutSegments("children"));
   const [visibility, setVisibility] = useState({ visible: true, epoch: 0 });
   const revision = useSyncExternalStore(cache.subscribe, () => cache.revision, () => 0);
-  const ticket = useMemo(() => ({ pathname, epoch: visibility.epoch }), [pathname, visibility.epoch]);
+  const notifiedLock = useRef<Cache | null>(null);
+  useEffect(() => {
+    if (!cache.blocked || notifiedLock.current === cache) return;
+    notifiedLock.current = cache;
+    // Current access failure also hides any already-open private detail.
+    announceAdminPrivateCacheChange("identity");
+  }, [cache, revision]);
+  const ticket = useMemo(() => ({ pageKey, epoch: visibility.epoch }), [pageKey, visibility.epoch]);
   const refresh = useCallback(() => {
     cache.invalidate();
     setVisibility(current => ({ ...current, epoch: current.epoch + 1 }));
@@ -41,6 +51,6 @@ export function usePrivateListSession<Cache extends SessionCache>(cache: Cache) 
       document.removeEventListener("visibilitychange", visibilityChanged);
     };
   }, [cache, refresh]);
-  useEffect(() => () => cache.cancelRequests(), [cache, pathname]);
+  useEffect(() => () => cache.cancelRequests(), [cache, pageKey]);
   return useMemo(() => ({ cache, ticket, visible: visibility.visible, revision, refresh }), [cache, ticket, visibility.visible, revision, refresh]);
 }
