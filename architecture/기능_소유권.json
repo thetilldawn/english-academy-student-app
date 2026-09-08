@@ -2111,6 +2111,11 @@
       "flow": "assignment-edit"
     },
     {
+      "path": "supabase/migrations/20260908160633_add_source_restored_pronunciation.sql",
+      "owner": "quiz-player",
+      "flow": "student-quiz-attempt"
+    },
+    {
       "path": "supabase/migrations/20260907121138_add_entry_approved_korean_pronunciation.sql",
       "owner": "quiz-player",
       "flow": "student-quiz-attempt"
@@ -4024,7 +4029,8 @@
           "supabase/migrations/20260907235924_admin_history_school_labels.sql",
           "supabase/migrations/20260831100000_return_admin_history_hidden_version.sql",
           "supabase/migrations/20260901141048_fix_admin_history_infinite_effective_at.sql",
-          "supabase/migrations/20260907121138_add_entry_approved_korean_pronunciation.sql"
+          "supabase/migrations/20260907121138_add_entry_approved_korean_pronunciation.sql",
+          "supabase/migrations/20260908160633_add_source_restored_pronunciation.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/loading.tsx",
@@ -5604,7 +5610,8 @@
           "supabase/migrations/20260905063836_add_reviewed_choice_repair_release.sql",
           "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
           "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql",
-          "supabase/migrations/20260907121138_add_entry_approved_korean_pronunciation.sql"
+          "supabase/migrations/20260907121138_add_entry_approved_korean_pronunciation.sql",
+          "supabase/migrations/20260908160633_add_source_restored_pronunciation.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/attempt/[id]/page.tsx"
@@ -5880,6 +5887,7 @@
           "supabase/migrations/20260906103017_add_approved_school_pronunciation_scope.sql",
           "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
           "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql",
+          "supabase/migrations/20260908160633_add_source_restored_pronunciation.sql",
           "supabase/migrations/20260907121138_add_entry_approved_korean_pronunciation.sql",
           "supabase/migrations/20260908020300_connect_reviewed_exam_study.sql"
         ],

@@ -41,7 +41,10 @@ beforeEach(() => {
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); });
 
 describe("exact entry pronunciation corrections", () => {
-  it("validates immutable identity and returns display-only proof", async () => {
+  it.each(["user-directed:TEST", "source-restored:TEST"])("validates immutable identity and returns display-only proof: %s", async (reviewRun) => {
+    const restored = row();
+    restored.approval.source_review_run_id = reviewRun;
+    mocks.rpc.mockResolvedValueOnce({ data: [restored], error: null });
     const result = await loadEntryApprovedKoreanPronunciationRegistry([7, 7, 0, NaN]);
     expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith("list_entry_approved_korean_pronunciations_v1", { p_vocab_entry_ids: [7] });
     expect(result.get(7)).toMatchObject({ dictionaryId: "word:sample", pronunciation: { displayKo: "승인", audioUrl: url, variantId: variant } });
@@ -82,11 +85,23 @@ describe("exact entry pronunciation corrections", () => {
   });
   it("legacy dictionary read cannot bypass exact-entry proof", async () => {
     const user = row().approval;
-    tables.vocab_approved_korean_pronunciations = [user, { ...user, dictionary_id: "word:legacy", source_review_run_id: "review-a+review-b" }];
-    const result = await loadApprovedKoreanPronunciationRegistry(["word:sample", "word:legacy"]);
+    tables.vocab_approved_korean_pronunciations = [user,
+      { ...user, dictionary_id: "word:restored", source_review_run_id: "source-restored:TEST" },
+      { ...user, dictionary_id: "word:legacy", source_review_run_id: "review-a+review-b" }];
+    const result = await loadApprovedKoreanPronunciationRegistry(["word:sample", "word:restored", "word:legacy"]);
     expect([...result.keys()]).toEqual(["word:legacy\u0000" + variant]);
   });
-  it("attempt target and English choices without dictionary snapshots share corrections without answers", async () => {
+  it.each(["source-restored:", "source-restored: bad", "source-restored:TEST\n", " source-restored:TEST"])("malformed reserved source cannot fall through either lookup: %s", async (reviewRun) => {
+    const bad = row();
+    bad.approval.source_review_run_id = reviewRun;
+    mocks.rpc.mockResolvedValueOnce({ data: [bad], error: null });
+    expect((await loadEntryApprovedKoreanPronunciationRegistry([7])).size).toBe(0);
+    tables.vocab_approved_korean_pronunciations = [bad.approval];
+    expect((await loadApprovedKoreanPronunciationRegistry(["word:sample"])).size).toBe(0);
+  });
+  it.each(["user-directed:TEST", "source-restored:TEST"])("attempt, English choices and results share exact corrections without answers: %s", async (reviewRun) => {
+    const approvedRow = row();
+    approvedRow.approval.source_review_run_id = reviewRun;
     const identity = row().identity;
     tables.quiz_attempts = { id: "attempt", assignment_id: "assignment", status: "in_progress", phase: "initial", started_at: "2026-01-01T00:00:00Z", deadline_at: null };
     tables.assignments = { title: "Fake", timing_mode: "none", quiz_content_mode: "canonical_definition_to_headword" };
@@ -101,7 +116,7 @@ describe("exact entry pronunciation corrections", () => {
     tables.vocab_pronunciation_identities_v2 = [identity];
     mocks.rpc.mockImplementation(async (name: string) => ({
       data: name === "list_active_vocab_pronunciation_bindings_v3"
-        ? tables.vocab_entry_pronunciation_bindings_v2 : [row()],
+        ? tables.vocab_entry_pronunciation_bindings_v2 : [approvedRow],
       error: null,
     }));
     const result = await getStudentAttempt("test-student", "attempt");

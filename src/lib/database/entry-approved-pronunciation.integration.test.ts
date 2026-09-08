@@ -69,6 +69,23 @@ describe.sequential("exact entry approved pronunciation final schema", () => {
   it("rejects malformed or unbounded input", async () => {
     for (const ids of [null, [0], [-1], Array(501).fill(entryId)]) await expect(read(ids)).rejects.toThrow("entry_approved_input_invalid");
   });
+  it("accepts source restoration only through the same exact identity proof", async () => {
+    await db.exec("begin");
+    try {
+      await db.exec("update public.vocab_approved_korean_pronunciations set source_review_run_id='source-restored:TEST'");
+      expect((await read()).rows).toHaveLength(1);
+      await db.exec("update public.vocab_approved_korean_pronunciations set source_content_sha256=repeat('b',64)");
+      expect((await read()).rows).toHaveLength(0);
+    } finally { await db.exec("rollback"); }
+    expect((await read()).rows[0].approval.source_review_run_id).toBe("user-directed:TEST");
+  });
+  it.each(["source-restored:", "source-restored: bad", "source-restored-ish:TEST"])("rejects malformed restoration source %s", async (review) => {
+    await db.exec("begin");
+    try {
+      await db.query("update public.vocab_approved_korean_pronunciations set source_review_run_id=$1", [review]);
+      expect((await read()).rows).toHaveLength(0);
+    } finally { await db.exec("rollback"); }
+  });
   it.each([
     "update public.vocab_approved_korean_pronunciations set source_content_sha256=repeat('f',64)",
     "update public.vocab_approved_korean_pronunciations set source_review_run_id='legacy' where source_review_run_id='user-directed:TEST'",

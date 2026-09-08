@@ -102,6 +102,22 @@ export function isUserDirectedPronunciationReview(value: unknown) {
   return typeof value === "string" && value.startsWith("user-directed:");
 }
 
+// Both proof types are tied to an exact source/identity by the server RPC.
+// Neither may pass through the legacy dictionary-only lookup.
+export function isEntryScopedPronunciationReview(value: unknown) {
+  return isUserDirectedPronunciationReview(value) ||
+    (typeof value === "string" && value === value.trim() &&
+      /^source-restored:[A-Za-z0-9][A-Za-z0-9:._/-]*$/.test(value));
+}
+
+// A malformed reserved source is still forbidden from the weaker lookup.
+// Classification for exclusion must not double as approval validation.
+export function hasEntryScopedPronunciationSource(value: unknown) {
+  if (typeof value !== "string") return false;
+  const source = value.trimStart();
+  return source.startsWith("user-directed:") || source.startsWith("source-restored:");
+}
+
 export type VocabRuleDerivedKoreanPronunciationRow = {
   dictionary_id: unknown;
   pronunciation_variant_id: unknown;

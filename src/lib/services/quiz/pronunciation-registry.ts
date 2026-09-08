@@ -2,7 +2,8 @@ import "server-only";
 
 import {
   approvedKoreanPronunciationKey,
-  isUserDirectedPronunciationReview,
+  isEntryScopedPronunciationReview,
+  hasEntryScopedPronunciationSource,
   mergeKoreanPronunciationRegistries,
   parseApprovedKoreanPronunciation,
   parseRegistryPronunciation,
@@ -38,7 +39,7 @@ export async function loadEntryApprovedKoreanPronunciationRegistry(
         if (!row || !chunk.includes(row.vocab_entry_id) || result.has(row.vocab_entry_id) ||
             typeof row.dictionary_id !== "string" ||
             !row.approval || row.approval.dictionary_id !== row.dictionary_id ||
-            !isUserDirectedPronunciationReview(row.approval.source_review_run_id)) {
+            !isEntryScopedPronunciationReview(row.approval.source_review_run_id)) {
           throw new Error("entry_approved_data_invalid");
         }
         const identity = parseVocabPronunciationIdentityV2(row.identity, process.env.NEXT_PUBLIC_SUPABASE_URL ?? "");
@@ -334,7 +335,7 @@ export async function loadApprovedKoreanPronunciationRegistry(
     for (const row of (data ?? []) as VocabApprovedKoreanPronunciationRow[]) {
       // User-directed rows bind to an exact immutable audio identity and must
       // pass the entry lookup; dictionary/variant alone is not that proof.
-      if (isUserDirectedPronunciationReview(row.source_review_run_id)) continue;
+      if (hasEntryScopedPronunciationSource(row.source_review_run_id)) continue;
       const pronunciation = parseApprovedKoreanPronunciation(row);
       if (
         pronunciation?.variantId &&

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  isEntryScopedPronunciationReview,
   approvedKoreanPronunciationKey,
   allChoiceAudioAvailable,
   mergeKoreanPronunciationRegistries,
@@ -23,6 +24,15 @@ import {
 
 const officialUrl =
   "https://media.merriam-webster.com/audio/prons/en/us/mp3/t/test0001.mp3";
+
+describe("source-restored proof boundary", () => {
+  it.each(["source-restored:APP-TEST/sha-1", "user-directed:TEST"])("accepts only known exact-entry types: %s", (value) => {
+    expect(isEntryScopedPronunciationReview(value)).toBe(true);
+  });
+  it.each([null, "", "source-restored:", "source-restored: bad", "source-restored:TEST\n", "source-restored-ish:TEST", "legacy-review"])("rejects malformed or different types: %s", (value) => {
+    expect(isEntryScopedPronunciationReview(value)).toBe(false);
+  });
+});
 
 function choiceSnapshot(index: number, headword: string) {
   return {
