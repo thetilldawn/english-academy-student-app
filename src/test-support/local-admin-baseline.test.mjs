@@ -7,6 +7,7 @@ import { STUDY_TOKEN, STUDY_SECRET, studyWords } from "../../scripts/local-stude
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ACCOUNT, ACCESS_TOKEN, APP_ORIGIN, DATA_ORIGIN, PUBLIC_KEY, fixtureResponse, summarizeSamples, uid } from "../../scripts/local-admin-baseline-data.mjs";
 import { assertLocalBaselineEnvironment, assertLocalFetchTarget, assertNestedPath, guardedFetch, waitForChild, stopOwnedChild, isRestorationSafe, assertMayStart, shouldSimulateCapacityFailure } from "../../scripts/local-admin-baseline-guard.mjs";
+import { SCHOOL_FAKE_KEY, schoolSearchFixtureResponse } from "../../scripts/local-school-search-data.mjs";
 
 const roots = [];
 afterEach(() => { for (const root of roots.splice(0)) fs.rmSync(root, { recursive: true, force: true }); });
@@ -48,6 +49,19 @@ describe("로컬 학생 학습 가짜 자료 보호", () => {
   });
 });
 describe("로컬 기준 계측 보호", () => {
+  it("가짜 학교 모드는 실제 키/호출을 허용하지 않으며 정해진 검색만 응답한다", async () => {
+    const upstream = vi.fn();
+    const target = new URL("https://open.neis.go.kr/hub/schoolInfo");
+    target.search = new URLSearchParams({ KEY: SCHOOL_FAKE_KEY, Type: "json", pIndex: "1", pSize: "20", SCHUL_NM: "가짜" });
+    expect(() => guardedFetch(upstream)(target)).toThrow();
+    const response = await guardedFetch(upstream, true)(target);
+    expect((await response.json()).schoolInfo[1].row).toHaveLength(2); expect(upstream).not.toHaveBeenCalled();
+    target.searchParams.set("SCHUL_NM", "없는학교"); expect((await schoolSearchFixtureResponse(target).json()).RESULT.CODE).toBe("INFO-200");
+    target.searchParams.set("SCHUL_NM", "오류학교"); expect((await schoolSearchFixtureResponse(target).json()).RESULT.CODE).toBe("ERROR-500");
+    target.searchParams.set("KEY", "not-the-synthetic-key"); expect(() => guardedFetch(upstream, true)(target)).toThrow();
+    expect(() => assertLocalBaselineEnvironment({ ...env, NEIS_API_KEY: "not-the-synthetic-key", LOCAL_BASELINE_SCHOOL_SEARCH: "1" }, process.cwd())).toThrow();
+    expect(upstream).not.toHaveBeenCalled();
+  });
   it("현재 준비 조회와 지정된 가짜 풀이 미리보기만 허용하고 저장은 닫아 둔다", () => {
     const availability = read("/rest/v1/rpc/list_assignment_question_mode_availability_v2", { method: "POST" });
     expect(availability.status).toBe(200);

@@ -13,6 +13,7 @@ import type {
   DatasetSummary,
 } from "@/lib/admin/dataset-summary";
 import {
+  catalogMetadata,
   queryDatasetCatalogRows,
   type DatasetCatalogRow,
 } from "@/lib/services/dataset-catalog-service";
@@ -32,24 +33,6 @@ export type AdminMaterialSnapshot = {
   datasetLabelById: ReadonlyMap<string, string>;
   selectableDatasets: DatasetOption[];
 };
-
-function catalogMetadata(catalog: DatasetCatalogRow | undefined) {
-  return catalog
-    ? {
-        displayName: catalog.display_name,
-        catalogGroup: catalog.catalog_group,
-        materialKind: catalog.material_kind,
-        gradeCode: catalog.grade_code,
-        publisher: catalog.publisher,
-        seriesTitle: catalog.series_title,
-        academicYear: catalog.academic_year,
-        curriculumRevision: catalog.curriculum_revision,
-        editionLabel: catalog.edition_label,
-        isAssignable: catalog.is_assignable,
-        sortIndex: catalog.sort_index,
-      }
-    : undefined;
-}
 
 function toDatasetOption(dataset: CataloguedDataset): DatasetOption {
   return { ...dataset };

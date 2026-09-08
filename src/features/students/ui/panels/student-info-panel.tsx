@@ -16,17 +16,21 @@ import type { StudentVocabBookHistory } from "../../public-contracts";
 
 import type { StudentDetailProfile } from "../../contracts/student-detail-read-model";
 import type { StudentProfileController } from "../../controller/use-student-profile-controller";
+import type { SchoolSearchController } from "../../controller/use-school-search";
+import { SchoolSearchField } from "../school-search-field";
 import styles from "../student-detail.module.css";
 import { StudentLearningSourceList } from "./student-learning-source-list";
 import { StudentVocabBookHistoryList } from "./student-vocab-book-history-list";
 
 export function StudentInfoPanel({
   controller,
+  school,
   learningSources,
   student,
   vocabBookHistory,
 }: {
   controller: StudentProfileController;
+  school: SchoolSearchController;
   learningSources: StudentLearningSourceItem[];
   student: StudentDetailProfile;
   vocabBookHistory: StudentVocabBookHistory[];
@@ -57,16 +61,7 @@ export function StudentInfoPanel({
               value={controller.draft.displayName}
             />
           </Field>
-          <Field as="label">
-            <FieldLabel as="span">{adminStudentsText.info.school}</FieldLabel>
-            <Input
-              maxLength={120}
-              onChange={(event) =>
-                controller.actions.setField("schoolName", event.target.value)
-              }
-              value={controller.draft.schoolName}
-            />
-          </Field>
+          <SchoolSearchField controller={school} />
           <Field as="label">
             <FieldLabel as="span">{adminStudentsText.info.grade}</FieldLabel>
             <Input

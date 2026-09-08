@@ -29,9 +29,17 @@ export type DatasetCatalogRow = {
   edition_label: string | null;
   is_assignable: boolean;
   sort_index: number;
+  metadata?: unknown;
 };
 
-function catalogMetadata(catalog: DatasetCatalogRow | undefined) {
+export function catalogMetadata(catalog: Omit<DatasetCatalogRow, "dataset_id"> | null | undefined) {
+  const metadata = catalog?.metadata && typeof catalog.metadata === "object" && !Array.isArray(catalog.metadata)
+    ? catalog.metadata as Record<string, unknown> : {};
+  const school = typeof metadata.school === "string" ? metadata.school.trim() : "";
+  const schoolName = school && school.length <= 120 ? school : null;
+  // Only explicit provenance tags are public. Never infer a school/common audience from titles.
+  const schoolClassification = schoolName ? "school" as const : metadata.audience === "common" && metadata.school == null
+    ? "common" as const : "unclassified" as const;
   return catalog
     ? {
         displayName: catalog.display_name,
@@ -45,6 +53,8 @@ function catalogMetadata(catalog: DatasetCatalogRow | undefined) {
         editionLabel: catalog.edition_label,
         isAssignable: catalog.is_assignable,
         sortIndex: catalog.sort_index,
+        schoolName,
+        schoolClassification,
       }
     : undefined;
 }
@@ -56,7 +66,7 @@ export async function queryDatasetCatalogRows(
   let query = supabase
     .from("vocab_dataset_catalog")
     .select(
-      "dataset_id, display_name, catalog_group, material_kind, grade_code, publisher, series_title, academic_year, curriculum_revision, edition_label, is_assignable, sort_index",
+      "dataset_id, display_name, catalog_group, material_kind, grade_code, publisher, series_title, academic_year, curriculum_revision, edition_label, is_assignable, sort_index, metadata",
     );
   const uniqueDatasetIds = datasetIds
     ? [...new Set(datasetIds)]

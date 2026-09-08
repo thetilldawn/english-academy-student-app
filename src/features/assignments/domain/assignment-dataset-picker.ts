@@ -7,10 +7,11 @@ export type DatasetPickerFilters = {
   stage: DatasetPickerStage;
   kind: DatasetPickerKind;
   grade: string;
+  school?: string;
 };
 
 export const EMPTY_DATASET_FILTERS: DatasetPickerFilters = {
-  query: "", stage: "all", kind: "all", grade: "all",
+  query: "", stage: "all", kind: "all", grade: "all", school: "all",
 };
 export const RECENT_DATASET_LIMIT = 6;
 

@@ -18,6 +18,7 @@ import { useStudentAccessController } from "../controller/use-student-access-con
 import { useStudentDetailView } from "../controller/use-student-detail-view";
 import { useStudentHistoryPage } from "../controller/use-student-history-page";
 import { useStudentProfileController } from "../controller/use-student-profile-controller";
+import { useSchoolSearch } from "../controller/use-school-search";
 import { useStudentWrongWordCache } from "../controller/use-student-wrong-word-cache";
 import { announceStudentDirectoryRefresh } from "../controller/student-directory-events";
 import { StudentAccountPanel } from "./panels/student-account-panel";
@@ -67,7 +68,9 @@ export function StudentDetailContent({
     },
     student: initial.student,
   });
-  const locked = profile.locked;
+  const school = useSchoolSearch({ ownerKey: initial.student.id, value: profile.draft.schoolName,
+    onChange: value => profile.actions.setField("schoolName", value), active: view.tab === "info", locked: profile.locked });
+  const locked = profile.locked || school.locked;
   const access = useStudentAccessController({
     appOrigin,
     onRemoved: onStudentRemoved,
@@ -102,6 +105,7 @@ export function StudentDetailContent({
       {view.tab === "info" ? (
         <StudentInfoPanel
           controller={profile}
+          school={school}
           learningSources={initial.learningSources}
           student={initial.student}
           vocabBookHistory={initial.vocabBookHistory}

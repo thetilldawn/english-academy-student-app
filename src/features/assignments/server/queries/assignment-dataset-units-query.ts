@@ -5,12 +5,12 @@ import type { AssignmentDatasetUnitsResponse } from "../../contracts/assignment-
 import {
   cataloguedDatasetFromMetadata,
   type DatasetCatalogGroup,
-  type DatasetMaterialKind,
   type VocabUnitType,
 } from "@/lib/admin/dataset-catalog";
 import type { DatasetSummary } from "@/lib/admin/dataset-summary";
 import { requireAdmin, type AdminContext } from "@/lib/auth/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { catalogMetadata, type DatasetCatalogRow as SharedDatasetCatalogRow } from "@/lib/services/dataset-catalog-service";
 
 type UnitRow = {
   dataset_id: string;
@@ -45,19 +45,7 @@ type DatasetRow = {
   title: string;
 };
 
-type DatasetCatalogRow = {
-  academic_year: number | null;
-  catalog_group: DatasetCatalogGroup;
-  curriculum_revision: string | null;
-  display_name: string;
-  edition_label: string | null;
-  grade_code: string | null;
-  is_assignable: boolean;
-  material_kind: DatasetMaterialKind;
-  publisher: string | null;
-  series_title: string | null;
-  sort_index: number;
-};
+type DatasetCatalogRow = Omit<SharedDatasetCatalogRow, "dataset_id">;
 
 export type AssignmentDatasetMaterial = {
   dataset: DatasetSummary;
@@ -157,7 +145,7 @@ export async function loadAssignmentDatasetMaterial(
     supabase
       .from("vocab_dataset_catalog")
       .select(
-        "display_name, catalog_group, material_kind, grade_code, publisher, series_title, academic_year, curriculum_revision, edition_label, is_assignable, sort_index",
+        "display_name, catalog_group, material_kind, grade_code, publisher, series_title, academic_year, curriculum_revision, edition_label, is_assignable, sort_index, metadata",
       )
       .eq("dataset_id", datasetId)
       .maybeSingle(),
@@ -189,21 +177,7 @@ export async function loadAssignmentDatasetMaterial(
     dataset: {
       ...cataloguedDatasetFromMetadata(
         dataset,
-        catalog
-          ? {
-              academicYear: catalog.academic_year,
-              catalogGroup: catalog.catalog_group,
-              curriculumRevision: catalog.curriculum_revision,
-              displayName: catalog.display_name,
-              editionLabel: catalog.edition_label,
-              gradeCode: catalog.grade_code,
-              isAssignable: catalog.is_assignable,
-              materialKind: catalog.material_kind,
-              publisher: catalog.publisher,
-              seriesTitle: catalog.series_title,
-              sortIndex: catalog.sort_index,
-            }
-          : undefined,
+        catalogMetadata(catalog),
       ),
       datasetKey: dataset.dataset_key,
       ...(dataset.metadata?.questionBankKind === "reviewed_exam_v1"

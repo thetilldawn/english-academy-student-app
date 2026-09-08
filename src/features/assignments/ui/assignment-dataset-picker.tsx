@@ -1,11 +1,10 @@
 import type { Ref } from "react";
 
 import { Button } from "@/design-system/primitives/button/button";
-import { Field, FieldLabel, Input } from "@/design-system/primitives/form/field";
-import { cataloguedDatasetDisplayLabel } from "@/lib/admin/dataset-catalog";
+import { Field, FieldLabel, Input, Select } from "@/design-system/primitives/form/field";
 
 import type { DatasetPickerFilters } from "../domain/assignment-dataset-picker";
-import { datasetPickerMetadata, type DatasetFilterButton, type DatasetPickerOption } from "../presentation/assignment-dataset-picker-view";
+import { datasetPickerTitle, datasetSchoolGroup, type DatasetFilterButton, type DatasetPickerOption } from "../presentation/assignment-dataset-picker-view";
 import styles from "./assignment-dataset-picker.module.css";
 
 function FilterButtons<Value extends string>({
@@ -58,8 +57,7 @@ function BookList({
               onClick={() => onSelect(dataset.id)}
             >
               <span className={styles.bookText}>
-                <strong>{cataloguedDatasetDisplayLabel(dataset)}</strong>
-                <span className={styles.metadata}>{datasetPickerMetadata(dataset)}</span>
+                <strong>{datasetPickerTitle(dataset)}</strong>
               </span>
               <span className={styles.bookStatus}>
                 <span>{reviewCount === undefined ? `수록 ${dataset.rowCount}개` : `미배정 오답 ${reviewCount}개`}</span>
@@ -73,15 +71,23 @@ function BookList({
   );
 }
 
+function ClassifiedBooks(props: Parameters<typeof BookList>[0]) {
+  const labels = { school: "학교 전용", common: "공통 자료", unclassified: "학교 미분류" } as const;
+  return <>{(Object.keys(labels) as (keyof typeof labels)[]).map(group => <BookList {...props}
+    key={group} title={`${props.title} — ${labels[group]}`}
+    options={props.options.filter(({ dataset }) => datasetSchoolGroup(dataset) === group)} />)}</>;
+}
+
 export function AssignmentDatasetPicker({
   filters, buttons, recent, remaining, resultCount, selectedId, searchRef,
-  onQuery, onStage, onKind, onGrade, onClear, onSelect, reviewOnly,
+  onQuery, onStage, onKind, onGrade, onSchool, onClear, onSelect, reviewOnly,
 }: {
   filters: DatasetPickerFilters;
   buttons: {
     stage: readonly DatasetFilterButton<DatasetPickerFilters["stage"]>[];
     kind: readonly DatasetFilterButton<DatasetPickerFilters["kind"]>[];
     grade: readonly DatasetFilterButton[];
+    school: readonly DatasetFilterButton[];
   };
   recent: readonly DatasetPickerOption[];
   remaining: readonly DatasetPickerOption[];
@@ -92,6 +98,7 @@ export function AssignmentDatasetPicker({
   onStage: (stage: DatasetPickerFilters["stage"]) => void;
   onKind: (kind: DatasetPickerFilters["kind"]) => void;
   onGrade: (grade: string) => void;
+  onSchool: (school: string) => void;
   onClear: () => void;
   onSelect: (id: string) => void;
   reviewOnly: boolean;
@@ -112,12 +119,16 @@ export function AssignmentDatasetPicker({
         />
       </Field>
       <FilterButtons label="학교급" options={buttons.stage} value={filters.stage} onChange={onStage} />
+      <Field>
+        <FieldLabel htmlFor="assignment-dataset-school">학교</FieldLabel>
+        <Select id="assignment-dataset-school" value={filters.school ?? "all"} onChange={event => onSchool(event.target.value)}>
+          {buttons.school.map(option => <option key={option.value} value={option.value}>{option.label} · {option.count}권</option>)}
+        </Select>
+      </Field>
+      {filters.school?.startsWith("school:") ? <p className={styles.hint}>선택한 학교 자료와 확인된 공통 자료를 함께 표시합니다.</p> : null}
       <FilterButtons label="자료 종류" options={buttons.kind} value={filters.kind} onChange={onKind} />
       {buttons.grade.length > 1 ? (
-        <details className={styles.moreFilters}>
-          <summary>학년 상세 조건{filters.grade !== "all" ? " · 적용 중" : ""}</summary>
-          <FilterButtons label="학년" options={buttons.grade} value={filters.grade} onChange={onGrade} />
-        </details>
+        <FilterButtons label="학년" options={buttons.grade} value={filters.grade} onChange={onGrade} />
       ) : null}
       {reviewOnly ? <p className={styles.hint}>이 학생에게 미배정 오답이 있는 단어장만 표시합니다.</p> : null}
       <div className={styles.resultHeading}>
@@ -128,8 +139,8 @@ export function AssignmentDatasetPicker({
         <p className={styles.empty}>조건에 맞는 단어장이 없습니다. 검색어나 필터를 바꿔 주세요.</p>
       ) : (
         <>
-          <BookList title="최근 선택" options={recent} selectedId={selectedId} onSelect={onSelect} />
-          <BookList title={recent.length ? "그 외 단어장" : "단어장 목록"} options={remaining} selectedId={selectedId} onSelect={onSelect} />
+          <ClassifiedBooks title="최근 선택" options={recent} selectedId={selectedId} onSelect={onSelect} />
+          <ClassifiedBooks title={recent.length ? "그 외 단어장" : "단어장 목록"} options={remaining} selectedId={selectedId} onSelect={onSelect} />
         </>
       )}
     </div>

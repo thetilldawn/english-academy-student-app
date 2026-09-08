@@ -7,6 +7,7 @@ import { Transform } from "node:stream";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { APP_ORIGIN, DATA_ORIGIN, NEXT_ORIGIN, PUBLIC_KEY, ACCOUNT, fixtureResponse } from "./local-admin-baseline-data.mjs";
 import { STUDY_TOKEN } from "./local-student-study-data.mjs";
+import { SCHOOL_FAKE_KEY } from "./local-school-search-data.mjs";
 import { isLocalQuizRequest, localQuizSummary, localQuizWave, resetLocalQuizzes } from "./local-quiz-feedback-data.mjs";
 import { assertLocalBaselineEnvironment, assertNestedPath, waitForChild, stopOwnedChild, assertMayStart, isRestorationSafe, shouldSimulateCapacityFailure } from "./local-admin-baseline-guard.mjs";
 
@@ -17,6 +18,7 @@ const env = Object.fromEntries(["Path", "PATH", "SystemRoot", "SYSTEMROOT", "TEM
   .filter(key => process.env[key]).map(key => [key, process.env[key]]));
 if (process.env.VERCEL || process.env.VERCEL_ENV || process.env.CI) throw new Error("배포/CI 환경에서는 시작하지 않습니다.");
 Object.assign(env, {
+  ...(process.argv.includes("--school-search") ? { LOCAL_BASELINE_SCHOOL_SEARCH: "1", NEIS_API_KEY: SCHOOL_FAKE_KEY } : {}),
   LOCAL_ADMIN_BASELINE: "fake-read-only-v1", APP_ORIGIN,
   STUDENT_DIRECTORY_CACHE_CANARY: process.argv.includes("--cache-canary") ? "1" : "0",
   ASSIGNMENT_DIRECTORY_CACHE_CANARY: process.argv.includes("--assignment-cache") ? "1" : "0",
@@ -85,6 +87,7 @@ const dataServer = http.createServer(async (req, res) => {
   } catch { json(res, { error: "Local fixture request rejected" }, 403); }
 });
 const allowedApi = new Set(["/api/admin/session", "/api/admin/students/directory",
+  "/api/admin/schools/search",
   "/api/admin/history",
   "/api/admin/bulk-assignments/preview",
   "/api/admin/assignment-workspace/preparation", "/api/admin/assignment-workspace/datasets",

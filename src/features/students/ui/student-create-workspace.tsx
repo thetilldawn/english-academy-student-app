@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 
 import { adminStudentsText } from "@/content/ko/admin-students";
@@ -31,6 +31,8 @@ import {
 import { useStudentCreationController } from "../controller/use-student-creation-controller";
 import { useStudentCreatePreparation } from "../controller/use-student-create-preparation";
 import { StudentCodePanel } from "./panels/student-code-panel";
+import { useSchoolSearch } from "../controller/use-school-search";
+import { SchoolSearchField } from "./school-search-field";
 import styles from "./student-directory.module.css";
 import detailStyles from "./student-detail.module.css";
 
@@ -41,6 +43,11 @@ export function StudentCreateWorkspace({
 }) {
   const controller = useStudentCreationController(appOrigin);
   const preparation = useStudentCreatePreparation();
+  const [open, setOpen] = useState(false);
+  const [schoolName, setSchoolName] = useState("");
+  const school = useSchoolSearch({ ownerKey: "student-create", value: schoolName, onChange: setSchoolName,
+    active: open, locked: preparation.status === "auth-error" });
+  const locked = preparation.status === "auth-error" || school.locked;
   const { datasets } = preparation;
   const datasetGroups = useMemo(
     () => groupCataloguedDatasets(datasets),
@@ -49,13 +56,13 @@ export function StudentCreateWorkspace({
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (preparation.status !== "ready") return;
+    if (preparation.status !== "ready" || locked) return;
     void controller.actions.submit(event.currentTarget);
   }
 
   return (
     <>
-      <details className={styles.createDisclosure} onToggle={(event) => preparation.actions.changeOpen(event.currentTarget.open)}>
+      <details className={styles.createDisclosure} onToggle={(event) => { setOpen(event.currentTarget.open); preparation.actions.changeOpen(event.currentTarget.open); }}>
         <summary className={buttonRecipe({ variant: "primary" })}>
           {adminStudentsText.createStudent.open}
         </summary>
@@ -65,7 +72,7 @@ export function StudentCreateWorkspace({
             {adminStudentsText.createStudent.preparationError}
             <Button onClick={preparation.actions.retry} variant="quiet">{adminStudentsText.page.retry}</Button>
           </Notice> : null}
-          {preparation.status === "auth-error" ? <Notice role="alert" tone="danger">
+          {locked ? <Notice role="alert" tone="danger">
             {adminStudentsText.createStudent.preparationAuthError}
             <Link href="/admin/login" prefetch={false}>{adminStudentsText.createStudent.preparationLogin}</Link>
           </Notice> : (
@@ -73,6 +80,7 @@ export function StudentCreateWorkspace({
             aria-busy={controller.busy}
             className={styles.formStack}
             onSubmit={submit}
+            onReset={() => { setSchoolName(""); school.actions.reset(); }}
           >
             <Field>
               <FieldLabelRow>
@@ -97,21 +105,7 @@ export function StudentCreateWorkspace({
               />
             </Field>
             <div className={styles.formGrid}>
-              <Field as="label">
-                <FieldLabelRow>
-                  <FieldLabel as="span">
-                    {adminStudentsText.createStudent.schoolLabel}
-                  </FieldLabel>
-                  <FieldRequirement>
-                    {adminStudentsText.createStudent.optional}
-                  </FieldRequirement>
-                </FieldLabelRow>
-                <Input
-                  maxLength={120}
-                  name="schoolName"
-                  placeholder={adminStudentsText.createStudent.schoolPlaceholder}
-                />
-              </Field>
+              <SchoolSearchField controller={school} />
               <Field as="label">
                 <FieldLabelRow>
                   <FieldLabel as="span">
@@ -193,7 +187,7 @@ export function StudentCreateWorkspace({
         </div>
       </details>
 
-      {controller.code && preparation.status !== "auth-error" ? (
+      {controller.code && !locked ? (
         <DialogFrame
           aria-labelledby="new-student-code-title"
           height="auto"

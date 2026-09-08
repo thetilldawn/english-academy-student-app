@@ -612,7 +612,7 @@ describe("오답 단일 배정 제출", () => {
     render(<VocabAssignmentPlanner data={data} onClose={onClose} onSuccess={vi.fn()} selectionMode="single" students={[student]} />);
     fireEvent.click(screen.getByRole("tab", { name: "오답 시험" }));
     fireEvent.click(screen.getByRole("button", { name: "오답 단어장 찾기" }));
-    const list = screen.getByRole("region", { name: "단어장 목록" });
+    const list = screen.getByRole("region", { name: "단어장 목록 — 학교 미분류" });
     expect(within(list).getAllByRole("button")).toHaveLength(1);
     expect(list).toHaveTextContent("미배정 오답 7개");
     expect(list).not.toHaveTextContent("형용사");

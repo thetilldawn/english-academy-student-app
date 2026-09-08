@@ -291,6 +291,7 @@ export function VocabAssignmentPlanner({
             onStage={datasetPicker.actions.changeStage}
             onKind={datasetPicker.actions.changeKind}
             onGrade={datasetPicker.actions.changeGrade}
+            onSchool={datasetPicker.actions.changeSchool}
             onClear={datasetPicker.actions.clear}
             onSelect={datasetPicker.actions.choose}
             reviewOnly={assignmentPurpose === "review"}

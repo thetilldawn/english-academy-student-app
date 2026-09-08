@@ -2,10 +2,9 @@ import type { Ref } from "react";
 
 import { Button } from "@/design-system/primitives/button/button";
 import { Field, FieldError, FieldLabel } from "@/design-system/primitives/form/field";
-import { cataloguedDatasetDisplayLabel } from "@/lib/admin/dataset-catalog";
 
 import type { AssignmentDatasetItem } from "../catalog-types";
-import { datasetPickerMetadata } from "../presentation/assignment-dataset-picker-view";
+import { datasetPickerTitle } from "../presentation/assignment-dataset-picker-view";
 import styles from "./assignment-dataset-picker.module.css";
 
 export type AssignmentDatasetTriggerProps = {
@@ -33,8 +32,7 @@ export function AssignmentDatasetTrigger({
         ref={triggerRef}
       >
         <span className={styles.bookText}>
-          <strong>{dataset ? cataloguedDatasetDisplayLabel(dataset) : "단어장을 선택해 주세요"}</strong>
-          {dataset ? <span className={styles.metadata}>{datasetPickerMetadata(dataset)}</span> : null}
+          <strong>{dataset ? datasetPickerTitle(dataset) : "단어장을 선택해 주세요"}</strong>
         </span>
         <span className={styles.triggerAction}>단어장 찾기 <span aria-hidden="true">→</span></span>
       </Button>

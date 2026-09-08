@@ -93,6 +93,7 @@ export function useAssignmentDatasetPicker({
       changeKind: (kind: DatasetPickerFilters["kind"]) =>
         setFilters((current) => ({ ...current, kind })),
       changeGrade: (grade: string) => setFilters((current) => ({ ...current, grade })),
+      changeSchool: (school: string) => setFilters((current) => ({ ...current, school })),
     },
   };
 }

@@ -44,6 +44,8 @@ describe("StudentInfoPanel", () => {
     render(
       <StudentInfoPanel
         controller={controller}
+        school={{ value: student.schoolName ?? "", status: "idle", locked: false, items: [], hasMore: false, message: "학교 이름을 입력해 검색하거나 직접 입력해 주세요.",
+          actions: { change: vi.fn(), choose: vi.fn(), retry: vi.fn(), reset: vi.fn() } }}
         learningSources={[]}
         student={student}
         vocabBookHistory={[]}

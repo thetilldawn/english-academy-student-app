@@ -13,6 +13,7 @@
   Route Handler를 다시 HTTP로 호출하지 않는다. APP-20260906-08 시험도 문서 최초 진입은 서버 자료를 hydration에 인계한다. Client 재진입만 캐시 읽기를 사용한다. 옛 RSC의 자료를 최초 인증처럼 다시 받지 않는다. 실험 당시 기본 OFF였으며 검증 후 DEPLOY-20260906-01에서 기본 ON으로 채택했다. 세 플래그 해석은 `lib/env.ts#getAdminListCachePolicy` 한 곳만 사용한다. 미설정·공백·1은 ON, 0·잘못된 값은 OFF이며 학생 OFF이면 배정도 OFF다.
 - 검색·필터·더보기·이력 더보기만 `controller → transport → Route Handler → server query` 순서로 간다.
 - 등록 준비도 열 때 `use-student-create-preparation → assignments/public-client`로 기존 API를 읽는다. 접힌 준비자료를 서버에서 미리 읽지 않는다. 성공 빈배열/미조회/실패/권한을 구분하고 입력은 접기/펼치기에도 보존한다.
+- 학교 검색은 `use-school-search → transport/school-search → /api/admin/schools/search → school-search-query` 순서다. 등록/정보 수정은 같은 `SchoolSearchField`를 사용하며 선택값은 기존 schoolName에만 연결한다. 키는 서버 환경 전용, 외부 전달은 검색어만,350ms 입력 합치기와 전체 남은7초/본문 취소를 적용한다. 현재 요청 인증 거절만 개인정보를 숨긴다. 없음/장애는 구분하고 직접 입력을 유지하며 기존 값 자동 검색/자동 저장/학년 추정은 하지 않는다.
 - 동일 정규조건의 성공/진행중 검색만 생략하고 재시도/학생 변경 뒤 갱신은 실제로 다시 읽는다. 강제 갱신 시작 시 옛 커서를 폐기한다. 화면 이동 간 개인 캐시는 아니다.
 - 시험 캐시는 Provider 한 개가 소유한다. 계정 변경은 재마운트, 세대/로그아웃은 잠금, 학생 성공 변경은 폐기 후 새 첫 목록으로 교체한다. 활성 시험에서는 Provider가 변경 알림을 맡고 기존 목록 hook의 중복 구독은 끈다. 기존 SSR 경로의 구독은 유지한다.
 - 시험 캐시에는 포인트를 넣지 않는다. 재진입/탭 복귀는 인증·포인트 확인 전 숨기고, 15초 내 첫 목록만 재사용한다. 신선도 안내 60초, 미사용 제거 120초, 최대 20조건이다. 일반 자동 재시도나 주기 조회를 추가하지 않는다.

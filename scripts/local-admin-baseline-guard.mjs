@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { APP_ORIGIN, DATA_ORIGIN, NEXT_ORIGIN, PUBLIC_KEY } from "./local-admin-baseline-data.mjs";
+import { SCHOOL_FAKE_KEY, schoolSearchFixtureResponse } from "./local-school-search-data.mjs";
 
 // A read failure fixture, never an authorization bypass or a successful preview.
 export function shouldSimulateCapacityFailure(enabled, pathname, method, origin) {
@@ -10,6 +11,7 @@ export function shouldSimulateCapacityFailure(enabled, pathname, method, origin)
 }
 
 export function assertLocalBaselineEnvironment(env, root) {
+  if (env.NEIS_API_KEY && (env.NEIS_API_KEY !== SCHOOL_FAKE_KEY || env.LOCAL_BASELINE_SCHOOL_SEARCH !== "1")) throw new Error("실제 학교 인증키는 격리 검사에서 사용하지 않습니다.");
   if (env.VERCEL || env.VERCEL_ENV || env.CI || env.LOCAL_ADMIN_BASELINE !== "fake-read-only-v1") {
     throw new Error("명시적인 로컬 검사 환경에서만 실행할 수 있습니다.");
   }
@@ -29,8 +31,12 @@ export function assertLocalFetchTarget(input) {
   }
   return target;
 }
-export function guardedFetch(originalFetch) {
+export function guardedFetch(originalFetch, schoolSearch = false) {
   return (input, init) => {
+    if (schoolSearch) {
+      const fixture = schoolSearchFixtureResponse(input, init);
+      if (fixture) return Promise.resolve(fixture);
+    }
     assertLocalFetchTarget(input);
     return originalFetch(input, { ...init, redirect: "error" });
   };
@@ -72,5 +78,5 @@ export async function stopOwnedChild(child, { spawn, platform = process.platform
 if (process.env.LOCAL_ADMIN_BASELINE) {
   assertLocalBaselineEnvironment(process.env, path.resolve(process.cwd()));
   const originalFetch = globalThis.fetch;
-  globalThis.fetch = guardedFetch(originalFetch);
+  globalThis.fetch = guardedFetch(originalFetch, process.env.LOCAL_BASELINE_SCHOOL_SEARCH === "1");
 }

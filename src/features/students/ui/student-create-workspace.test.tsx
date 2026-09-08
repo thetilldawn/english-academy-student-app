@@ -6,15 +6,37 @@ import { AssignmentWorkspaceReadError, loadAssignmentDatasetDirectory } from "@/
 import { cataloguedDatasetFromMetadata } from "@/lib/admin/dataset-catalog";
 import { adminStudentsText as copy } from "@/content/ko/admin-students";
 import { StudentCreateWorkspace } from "./student-create-workspace";
+import { loadSchoolSearch } from "../transport/school-search";
+import { SchoolSearchRequestError } from "../contracts/school-search-contract";
+vi.mock("../transport/school-search", () => ({ loadSchoolSearch: vi.fn() }));
 const mocks = vi.hoisted(() => ({ submit: vi.fn(), code: null as null | { code: string; label: string } }));
 vi.mock("@/features/assignments/public-client", async (original) => ({ ...await original<typeof import("@/features/assignments/public-client")>(), loadAssignmentDatasetDirectory: vi.fn() }));
 vi.mock("../controller/use-student-creation-controller", () => ({ useStudentCreationController: () => ({
   busy: false, error: "", code: mocks.code, actions: { submit: mocks.submit, closeCode: vi.fn(), copyCode: vi.fn(), shareCode: vi.fn() },
 }) }));
 beforeEach(() => {
+  vi.mocked(loadSchoolSearch).mockResolvedValue({ items: [], hasMore: false });
   mocks.code = null;
   HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", ""); };
   HTMLDialogElement.prototype.close = function () { this.removeAttribute("open"); };
+});
+it("등록 성공의 기존 form.reset은 controlled 학교 입력도 비운다", async () => {
+  vi.mocked(loadAssignmentDatasetDirectory).mockResolvedValue({ datasets: [] });
+  mocks.submit.mockImplementation((form: HTMLFormElement) => form.reset());
+  const { container } = render(<StudentCreateWorkspace appOrigin="https://example.invalid" />); toggle(container, true);
+  await waitFor(() => expect(screen.getByRole("button", { name: copy.createStudent.submit })).toBeEnabled());
+  fireEvent.change(screen.getByRole("textbox", { name: "학교" }), { target: { value: "가짜학교" } });
+  fireEvent.submit(container.querySelector("form")!);
+  expect(screen.getByRole("textbox", { name: "학교" })).toHaveValue("");
+});
+it("현재 학교 검색 인증 실패도 등록폼과 접속코드를 숨긴다", async () => {
+  vi.mocked(loadAssignmentDatasetDirectory).mockResolvedValue({ datasets: [] });
+  vi.mocked(loadSchoolSearch).mockRejectedValue(new SchoolSearchRequestError(401));
+  mocks.code = { code: "fake-code-only", label: "가짜 접속 코드" };
+  const { container } = render(<StudentCreateWorkspace appOrigin="https://example.invalid" />); toggle(container, true);
+  fireEvent.change(screen.getByRole("textbox", { name: "학교" }), { target: { value: "가짜학교" } });
+  await waitFor(() => expect(container.querySelector("form")).toBeNull());
+  expect(screen.queryByText("fake-code-only")).not.toBeInTheDocument();
 });
 afterEach(() => { cleanup(); vi.resetAllMocks(); });
 function toggle(container: HTMLElement, open: boolean) {

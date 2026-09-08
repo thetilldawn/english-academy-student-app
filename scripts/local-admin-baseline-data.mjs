@@ -28,6 +28,7 @@ export const catalogs = datasets.map((d, index) => ({
   dataset_id: d.id, display_name: d.title, catalog_group: "high", material_kind: "wordbook",
   grade_code: "H1", publisher: null, series_title: null, academic_year: null,
   curriculum_revision: null, edition_label: null, is_assignable: true, sort_index: index + 1,
+  metadata: index === 0 ? { school: "가짜고등학교" } : { audience: "common" },
 }));
 function parsedBody(body) {
   try { return body ? JSON.parse(body) : {}; } catch { return null; }
