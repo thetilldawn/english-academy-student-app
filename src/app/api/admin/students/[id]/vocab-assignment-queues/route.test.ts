@@ -19,6 +19,13 @@ const seriesId = "00000000-0000-4000-8000-000000000033";
 const updatedAt = "2026-08-22T01:00:00.000Z";
 
 describe("GET /api/admin/students/[id]/vocab-assignment-queues", () => {
+  it("조회 예외는 비공개500으로 표시하고 내부 오류를 노출하지 않는다", async () => {
+    mocks.listPage.mockRejectedValue(new Error("42501 private database detail"));
+    const response = await GET(new Request("http://localhost/api/test"), { params: Promise.resolve({ id: studentId }) });
+    expect(response.status).toBe(500);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(await response.json()).toEqual({ error: "배정된 시험 내역을 불러오지 못했습니다." });
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getAdminContext.mockResolvedValue({ userId: "admin-id" });

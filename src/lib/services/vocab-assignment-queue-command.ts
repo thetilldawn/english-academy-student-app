@@ -46,7 +46,7 @@ export async function materializeReadyVocabAssignmentQueue(
     { p_student_id: studentId, p_limit: 10 },
   );
   if (error) {
-    if (isVocabAssignmentQueueUnavailable(error)) return [];
+    if (isVocabAssignmentQueueUnavailable(error, "materialize_ready_vocab_assignment_queue_v1")) return [];
     console.error("[vocab-assignment-queue] materialization failed", {
       code: error.code,
       message: error.message,

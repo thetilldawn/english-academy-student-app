@@ -1,8 +1,7 @@
 export function isVocabAssignmentQueueUnavailable(error: {
   code?: string;
   message: string;
-}) {
-  return error.code === "42883" ||
-    error.code === "PGRST202" ||
-    error.message.includes("list_vocab_assignment_queue_summaries_v1");
+}, functionName: string) {
+  return ["42883", "PGRST202"].includes(error.code ?? "") &&
+    error.message.toLowerCase().split(/[^a-z0-9_]+/).includes(functionName.toLowerCase());
 }

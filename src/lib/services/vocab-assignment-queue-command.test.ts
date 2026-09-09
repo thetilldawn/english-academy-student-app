@@ -18,6 +18,7 @@ vi.mock("./vocab-assignment-queue-query", () => ({
 }));
 
 import {
+  materializeReadyVocabAssignmentQueue,
   resolveVocabAssignmentQueueAttention,
   VocabAssignmentQueueCommandError,
 } from "./vocab-assignment-queue-command";
@@ -27,6 +28,16 @@ const itemId = "00000000-0000-4000-8000-000000000022";
 const studentId = "00000000-0000-4000-8000-000000000020";
 
 describe("vocab assignment queue command", () => {
+  it("자동 공개의 기존 실패반환은 보존하되 권한 오류의 기록을 숨기지 않는다", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    mocks.getServiceSupabaseClient.mockReturnValue({ rpc: mocks.rpc });
+    mocks.rpc.mockResolvedValueOnce({ data: null, error: { code: "42501", message: "permission denied for materialize_ready_vocab_assignment_queue_v1" } });
+    expect(await materializeReadyVocabAssignmentQueue(studentId)).toEqual([]);
+    expect(log).toHaveBeenCalledTimes(1); log.mockClear();
+    mocks.rpc.mockResolvedValueOnce({ data: null, error: { code: "42883", message: "function materialize_ready_vocab_assignment_queue_v1 does not exist" } });
+    expect(await materializeReadyVocabAssignmentQueue(studentId)).toEqual([]);
+    expect(log).not.toHaveBeenCalled(); log.mockRestore();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.createServerSupabaseClient.mockResolvedValue({ rpc: mocks.rpc });

@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -14,7 +14,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
 }));
 vi.mock("sonner", () => ({
-  toast: { error: vi.fn(), success: vi.fn() },
+  toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() },
 }));
 
 afterEach(() => {
@@ -63,6 +63,94 @@ function queue(seriesId: string, datasetLabel: string, updatedAt: string) {
 }
 
 describe("StudentAssignmentQueueHistory", () => {
+  it.each([false, true])("복구 GET이 먼저 끝나도 2페이지 처리 중 묶음을 보존한다: 응답유실%s", async lost => {
+    const user = userEvent.setup();
+    const attention = (id: string, label: string): VocabAssignmentQueueSummary => {
+      const base = queue(id, label, "2026-09-10T00:00:00.000Z");
+      return { ...base, status: "attention", items: base.items.map(item => ({ ...item, status: "attention" })) };
+    };
+    const a = attention("00000000-0000-4000-8000-000000000031", "A페이지"), b = attention("00000000-0000-4000-8000-000000000032", "B페이지");
+    const freshB: VocabAssignmentQueueSummary = { ...b, status: "deferred", updatedAt: "2026-09-10T01:00:00.000Z",
+      items: b.items.map(item => ({ ...item, status: "deferred" })) };
+    let finishB!: (response: unknown) => void, failB!: (error: Error) => void;
+    const fetchMock = vi.fn().mockResolvedValueOnce({ ok: true, json: async () => ({ queues: [a], nextCursor: { seriesId: a.seriesId, updatedAt: a.updatedAt } }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ queues: [b] }) })
+      .mockImplementationOnce(() => new Promise((resolve, reject) => { finishB = resolve; failB = reject; }))
+      .mockRejectedValueOnce(new Error("A 응답 유실"))
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ queues: [a] }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ queues: [freshB, a] }) });
+    vi.stubGlobal("fetch", fetchMock); vi.spyOn(window, "confirm").mockReturnValue(true);
+    const changed = vi.fn(); render(<StudentAssignmentQueueHistory studentId={a.studentId} onHistoryChanged={changed} />);
+    await user.click(await screen.findByRole("button", { name: "이전 이력 더 보기" }));
+    const article = (name: RegExp) => within(screen.getByRole("button", { name }).closest("article")!);
+    await user.click(article(/B페이지/).getByRole("button", { name: "이 회차 보류" }));
+    await user.click(article(/A페이지/).getByRole("button", { name: "이 회차 보류" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(5));
+    await waitFor(() => expect(screen.queryByText("최신 배정 내역을 확인하는 중입니다.")).toBeNull());
+    expect(screen.getByRole("button", { name: /B페이지/ })).toBeInTheDocument();
+    await act(async () => {
+      if (lost) failB(new Error("B 응답 유실"));
+      else finishB({ ok: true, json: async () => ({ queue: freshB, version: freshB.updatedAt,
+        resolution: { action: "skip", item_id: b.items[0]!.id, series_id: b.seriesId, student_id: b.studentId } }) });
+    });
+    await waitFor(() => expect(article(/B페이지/).queryByRole("button", { name: "이 회차 보류" })).toBeNull());
+    expect(fetchMock).toHaveBeenCalledTimes(lost ? 6 : 5);
+    expect(fetchMock.mock.calls.filter(c => c[1]?.method === "PATCH")).toHaveLength(2);
+    // A recovery and B completion/recovery each refresh the separate exam list.
+    expect(changed).toHaveBeenCalledTimes(2);
+  });
+  it("이미 보낸 다른 묶음의 성공 결과를 늦은 복구 조회가 되돌리지 않는다", async () => {
+    const user = userEvent.setup();
+    const attention = (n: string, label: string): VocabAssignmentQueueSummary => {
+      const base = queue("00000000-0000-4000-8000-0000000000" + n, label, "2026-09-10T00:00:00.000Z");
+      return { ...base, status: "attention", attentionReason: "assignment_expired", items: base.items.map(item => ({ ...item, status: "attention", attentionReason: "assignment_expired" })) };
+    };
+    const a = attention("31", "A단어장"), b = attention("32", "B단어장");
+    const freshB: VocabAssignmentQueueSummary = { ...b, status: "deferred", attentionReason: null, updatedAt: "2026-09-10T01:00:00.000Z",
+      items: b.items.map(item => ({ ...item, status: "deferred", attentionReason: null })) };
+    let finishB!: (response: unknown) => void, finishGet!: (response: unknown) => void;
+    const fetchMock = vi.fn().mockResolvedValueOnce({ ok: true, json: async () => ({ queues: [a, b] }) })
+      .mockImplementationOnce(() => new Promise(resolve => { finishB = resolve; }))
+      .mockRejectedValueOnce(new Error("통신이 끊겼습니다"))
+      .mockImplementationOnce(() => new Promise(resolve => { finishGet = resolve; }));
+    vi.stubGlobal("fetch", fetchMock); vi.spyOn(window, "confirm").mockReturnValue(true);
+    render(<StudentAssignmentQueueHistory studentId={a.studentId} />);
+    const article = (name: RegExp) => within(screen.getByRole("button", { name }).closest("article")!);
+    await screen.findByRole("button", { name: /B단어장/ });
+    await user.click(article(/B단어장/).getByRole("button", { name: "이 회차 보류" }));
+    await user.click(article(/A단어장/).getByRole("button", { name: "이 회차 보류" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(4));
+    expect(article(/A단어장/).getByRole("button", { name: "이 회차 보류" })).toBeDisabled();
+    await act(async () => finishB({ ok: true, json: async () => ({ queue: freshB, version: freshB.updatedAt,
+      resolution: { action: "skip", item_id: b.items[0]!.id, series_id: b.seriesId, student_id: b.studentId } }) }));
+    expect(article(/B단어장/).queryByRole("button", { name: "이 회차 보류" })).toBeNull();
+    await act(async () => finishGet({ ok: true, json: async () => ({ queues: [a, b] }) }));
+    expect(article(/B단어장/).queryByRole("button", { name: "이 회차 보류" })).toBeNull();
+    expect(article(/A단어장/).getByRole("button", { name: "이 회차 보류" })).toBeEnabled();
+    expect(fetchMock.mock.calls.filter(c => c[1]?.method === "PATCH")).toHaveLength(2);
+  });
+
+  it("기존 내역이 있어도 복구 실패 후 GET만 다시 불러오며 처리를 잠근다", async () => {
+    const user = userEvent.setup(); const base = queue("00000000-0000-4000-8000-000000000034", "재조회 단어장", "2026-09-10T00:00:00.000Z");
+    const attention: VocabAssignmentQueueSummary = { ...base, status: "attention", items: base.items.map(item => ({ ...item, status: "attention" })) };
+    const fetchMock = vi.fn().mockResolvedValueOnce({ ok: true, json: async () => ({ queues: [attention] }) })
+      .mockRejectedValueOnce(new Error("명령 응답 유실"))
+      .mockRejectedValueOnce(new Error("내역 조회 실패"))
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ queues: [base] }) });
+    vi.stubGlobal("fetch", fetchMock); vi.spyOn(window, "confirm").mockReturnValue(true);
+    const changed = vi.fn();
+    render(<StudentAssignmentQueueHistory studentId={base.studentId} onHistoryChanged={changed} />);
+    await user.click(await screen.findByRole("button", { name: "이 회차 보류" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("내역 조회 실패");
+    expect(changed).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "이 회차 보류" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "다시 불러오기" }));
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+    expect(screen.queryByRole("button", { name: "이 회차 보류" })).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(fetchMock.mock.calls.filter(c => c[1]?.method === "PATCH")).toHaveLength(1);
+    expect(changed).toHaveBeenCalledTimes(1);
+  });
   it("학생별 이력을 묶음 단위로 더 불러와 기존 목록 뒤에 붙인다", async () => {
     const user = userEvent.setup();
     const first = queue(
@@ -183,11 +271,16 @@ describe("StudentAssignmentQueueHistory", () => {
         status: "attention" as const,
       })),
     };
-    const recovered = queue(
+    const recoveredBase = queue(
       base.seriesId,
       "복구 완료",
       "2026-08-22T03:00:00.000Z",
     );
+    const recovered: VocabAssignmentQueueSummary = {
+      ...recoveredBase, status: "active",
+      items: recoveredBase.items.map(item => ({ ...item, status: "assigned",
+        assignmentId: "00000000-0000-4000-8000-000000000035", completedAt: null })),
+    };
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({
         json: async () => ({ nextCursor: null, queues: [attention] }),
@@ -201,7 +294,8 @@ describe("StudentAssignmentQueueHistory", () => {
     vi.stubGlobal("fetch", fetchMock);
     vi.spyOn(window, "confirm").mockReturnValue(true);
 
-    render(<StudentAssignmentQueueHistory studentId={base.studentId} />);
+    const changed = vi.fn();
+    render(<StudentAssignmentQueueHistory studentId={base.studentId} onHistoryChanged={changed} />);
     await user.click(await screen.findByRole("button", {
       name: "같은 회차 다시 배정",
     }));
@@ -211,6 +305,7 @@ describe("StudentAssignmentQueueHistory", () => {
     expect(fetchMock.mock.calls.filter(([, options]) =>
       (options as RequestInit | undefined)?.method === "PATCH"
     )).toHaveLength(1);
+    expect(changed).toHaveBeenCalledTimes(1);
   });
 });
 // Business-flow tests inject a decision; confirmation rendering/cancellation has separate real-provider tests.

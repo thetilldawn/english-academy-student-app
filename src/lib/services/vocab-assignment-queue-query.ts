@@ -142,7 +142,7 @@ export async function listVocabAssignmentQueueSummaries(options?: {
     "list_vocab_assignment_queue_summaries_v2",
     parameters,
   );
-  if (error?.code === "42883" || error?.code === "PGRST202") {
+  if (error && isVocabAssignmentQueueUnavailable(error, "list_vocab_assignment_queue_summaries_v2")) {
     const fallback = await supabase.rpc(
       "list_vocab_assignment_queue_summaries_v1",
       parameters,
@@ -151,10 +151,9 @@ export async function listVocabAssignmentQueueSummaries(options?: {
     error = fallback.error;
   }
   if (error) {
-    if (isVocabAssignmentQueueUnavailable(error)) return [];
-    throw new Error("배정된 시험 상태를 불러오지 못했습니다.");
+    throw new Error("배정된 시험 내역을 불러오지 못했습니다. 다시 불러와 주세요.");
   }
-  const parsed = z.array(rowSchema).safeParse(data ?? []);
+  const parsed = z.array(rowSchema).safeParse(data);
   if (!parsed.success) {
     throw new Error("배정된 시험 상태 응답을 확인하지 못했습니다.");
   }

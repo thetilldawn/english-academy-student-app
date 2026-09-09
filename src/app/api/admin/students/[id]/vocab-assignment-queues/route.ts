@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { getAdminContext } from "@/lib/auth/admin";
-import { jsonError } from "@/lib/http";
+import { privateJsonError } from "@/lib/http";
 import { listStudentVocabAssignmentQueuePage } from "@/lib/services/vocab-assignment-queue-query";
 
 const cursorSchema = z
@@ -20,12 +20,12 @@ export async function GET(
 ) {
   const admin = await getAdminContext();
   if (!admin) {
-    return jsonError("관리자 로그인이 필요합니다.", 401);
+    return privateJsonError("관리자 로그인이 필요합니다.", 401);
   }
 
   const { id } = await context.params;
   if (!z.uuid().safeParse(id).success) {
-    return jsonError("학생 정보를 확인해 주세요.", 400);
+    return privateJsonError("학생 정보를 확인해 주세요.", 400);
   }
 
   const url = new URL(request.url);
@@ -34,7 +34,7 @@ export async function GET(
     beforeUpdatedAt: url.searchParams.get("beforeUpdatedAt") ?? undefined,
   });
   if (!cursor.success) {
-    return jsonError("배정된 시험 내역 위치를 확인해 주세요.", 400);
+    return privateJsonError("배정된 시험 내역 위치를 확인해 주세요.", 400);
   }
 
   try {
@@ -52,6 +52,6 @@ export async function GET(
       headers: { "Cache-Control": "private, no-store" },
     });
   } catch {
-    return jsonError("배정된 시험 내역을 불러오지 못했습니다.", 500);
+    return privateJsonError("배정된 시험 내역을 불러오지 못했습니다.", 500);
   }
 }

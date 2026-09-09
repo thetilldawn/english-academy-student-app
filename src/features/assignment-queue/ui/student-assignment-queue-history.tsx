@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { Button } from "@/design-system/primitives/button/button";
 import {
@@ -29,9 +29,18 @@ function StudentAssignmentQueueHistoryPage({
   const [initialLoading, setInitialLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
+  const [recovering, setRecovering] = useState(false);
   const [reloadRevision, setReloadRevision] = useState(0);
   const requestRef = useRef<AbortController | null>(null);
   const requestVersionRef = useRef(0);
+  const receiptsRef = useRef(new Map<string, VocabAssignmentQueueSummary>());
+  const pendingSeriesRef = useRef(new Map<string, number>());
+  const historyRecoveryNeededRef = useRef(false);
+  const onHistoryChangedRef = useRef(onHistoryChanged);
+
+  useLayoutEffect(() => {
+    onHistoryChangedRef.current = onHistoryChanged;
+  }, [onHistoryChanged]);
 
   useEffect(() => {
     requestRef.current?.abort();
@@ -44,8 +53,27 @@ function StudentAssignmentQueueHistoryPage({
           controller.signal.aborted ||
           requestVersionRef.current !== requestVersion
         ) return;
-        setQueues(page.queues);
+        // A different command may finish while this snapshot is in flight.
+        const merged = new Map(page.queues.map(queue => [queue.seriesId, queue]));
+        for (const [seriesId, receipt] of receiptsRef.current) {
+          const queried = merged.get(seriesId);
+          if (!queried || queried.updatedAt < receipt.updatedAt) merged.set(seriesId, receipt);
+          else receiptsRef.current.delete(seriesId);
+        }
+        setQueues(current => {
+          // Keep a command's disclosure alive even when a first-page recovery
+          // omits the older page that originally contained it.
+          const next = new Map(merged);
+          for (const queue of current) {
+            if (pendingSeriesRef.current.has(queue.seriesId) && !next.has(queue.seriesId)) next.set(queue.seriesId, queue);
+          }
+          return [...next.values()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || b.seriesId.localeCompare(a.seriesId));
+        });
         setNextCursor(page.nextCursor);
+        if (historyRecoveryNeededRef.current) {
+          historyRecoveryNeededRef.current = false;
+          onHistoryChangedRef.current?.();
+        }
       })
       .catch((requestError: unknown) => {
         if (controller.signal.aborted) return;
@@ -61,7 +89,7 @@ function StudentAssignmentQueueHistoryPage({
           requestVersionRef.current === requestVersion
         ) {
           requestRef.current = null;
-          if (!controller.signal.aborted) setInitialLoading(false);
+          if (!controller.signal.aborted) { setInitialLoading(false); setRecovering(false); }
         }
       });
     return () => {
@@ -75,15 +103,19 @@ function StudentAssignmentQueueHistoryPage({
       error.status === 409 ||
       error.status === 503;
     if (!shouldRecover) return;
+    historyRecoveryNeededRef.current = true;
 
     // The command may have committed before its response was lost. Reload the
     // receipt view, but never repeat the command automatically.
     setError("");
+    setRecovering(true);
     setLoadingMore(false);
     setReloadRevision((current) => current + 1);
   }
 
   function applyResolution(result: QueueResolutionResult) {
+    const previous = receiptsRef.current.get(result.queue.seriesId);
+    if (!previous || previous.updatedAt <= result.version) receiptsRef.current.set(result.queue.seriesId, result.queue);
     setQueues((current) => {
       const currentQueue = current.find(
         (queue) => queue.seriesId === result.queue.seriesId,
@@ -103,7 +135,7 @@ function StudentAssignmentQueueHistoryPage({
   }
 
   async function loadMore() {
-    if (!nextCursor || loadingMore || requestRef.current) return;
+    if (!nextCursor || loadingMore || recovering || error || requestRef.current) return;
     setLoadingMore(true);
     setError("");
     const controller = new AbortController();
@@ -148,21 +180,28 @@ function StudentAssignmentQueueHistoryPage({
   if (initialLoading) {
     return <p className={styles.state}>배정된 시험 내역을 불러오는 중...</p>;
   }
-  if (queues.length === 0 && !error) return null;
+  if (queues.length === 0 && !error && !recovering) return null;
 
   return (
     <div className={styles.wrapper}>
       <AssignmentQueueHistory
+        processingDisabled={recovering || Boolean(error)}
+        onResolutionPending={(seriesId, pending) => {
+          const count = (pendingSeriesRef.current.get(seriesId) ?? 0) + (pending ? 1 : -1);
+          if (count > 0) pendingSeriesRef.current.set(seriesId, count);
+          else pendingSeriesRef.current.delete(seriesId);
+        }}
         headingLevel={headingLevel}
         onResolutionError={recoverLatestPage}
         onResolved={applyResolution}
         queues={queues}
       />
       {error ? <p className={styles.error} role="alert">{error}</p> : null}
-      {queues.length === 0 ? (
+      {recovering ? <p className={styles.state} role="status">최신 배정 내역을 확인하는 중입니다.</p> : null}
+      {error ? (
         <Button
           onClick={() => {
-            setInitialLoading(true);
+            setRecovering(true);
             setError("");
             setReloadRevision((current) => current + 1);
           }}
@@ -174,7 +213,7 @@ function StudentAssignmentQueueHistoryPage({
       ) : null}
       {nextCursor ? (
         <Button
-          disabled={loadingMore}
+          disabled={loadingMore || recovering || Boolean(error)}
           onClick={() => void loadMore()}
           size="small"
           variant="quiet"

@@ -604,7 +604,10 @@
     }
   ],
   "appSupportOwners": [
-    { "path": "src/app/api/admin/schools/search/route.test.ts", "owner": "students" },
+    {
+      "path": "src/app/api/admin/schools/search/route.test.ts",
+      "owner": "students"
+    },
     {
       "path": "src/app/api/admin/session/route.test.ts",
       "owner": "session"
@@ -755,7 +758,10 @@
     }
   ],
   "routeOwners": [
-    { "path": "src/app/api/admin/schools/search/route.ts", "owner": "students" },
+    {
+      "path": "src/app/api/admin/schools/search/route.ts",
+      "owner": "students"
+    },
     {
       "path": "src/app/api/admin/assignment-capacity/route.ts",
       "owner": "assignments"
@@ -1840,8 +1846,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 102,
-      "pathSetSha256": "473981eb811c1971f4acb67fb55fd74dc1632bb17e488f35f329e58d7b774ca8"
+      "fileCount": 104,
+      "pathSetSha256": "79f2d3ac681903cf24d5d499e5eb0b3c3a9210080af3a39369d6fac23ebc15b9"
     },
     {
       "path": "src/lib/deploy",
@@ -1882,8 +1888,14 @@
   ],
   "serverOwners": [],
   "featureServerOwners": [
-    { "path": "src/features/students/server/queries/school-search-query.ts", "owner": "students" },
-    { "path": "src/features/assignments/server/planning/bulk-session-layout.ts", "owner": "assignments" },
+    {
+      "path": "src/features/students/server/queries/school-search-query.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/assignments/server/planning/bulk-session-layout.ts",
+      "owner": "assignments"
+    },
     {
       "path": "src/features/history/server/queries/history-list-entry-query.ts",
       "owner": "history"
@@ -2397,7 +2409,12 @@
     }
   ],
   "currentCrossFeatureImports": [
-    { "from": "src/features/students/controller/use-school-search.ts", "to": "src/features/session/public-client.ts", "reason": "APP04 현재 학교 조회의 인증 거절만 공용 개인정보 숨김으로 전달", "removeIn": "공개 진입점으로 고정" },
+    {
+      "from": "src/features/students/controller/use-school-search.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "APP04 현재 학교 조회의 인증 거절만 공용 개인정보 숨김으로 전달",
+      "removeIn": "공개 진입점으로 고정"
+    },
     {
       "from": "src/features/assignment-queue/ui/assignment-queue-history.tsx",
       "to": "src/features/session/public-client.ts",
@@ -3152,7 +3169,11 @@
           "src/features/assignments/presentation/vocab-question-view.test.ts",
           "src/features/assignments/ui-role-boundary.test.ts",
           "src/lib/database/assignment-release-final-schema.integration.test.ts",
-          "src/features/assignments/server/queries/eligible-vocabulary-pagination.test.ts"
+          "src/features/assignments/server/queries/eligible-vocabulary-pagination.test.ts",
+          "src/features/assignments/server/use-cases/bulk-undated-assignment-preview.test.ts",
+          "src/features/assignments/server/planning/bulk-session-layout.test.ts",
+          "src/lib/database/undated-assignment-sequence.integration.test.ts",
+          "src/lib/database/example-assignment-sequence.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -3460,7 +3481,8 @@
           "src/features/assignments/presentation/bulk-plan-audience.ts",
           "src/features/assignments/presentation/vocab-schedule-view.ts",
           "src/features/assignments/presentation/assignment-question-mode-view.ts",
-          "src/features/assignments/presentation/vocab-question-view.ts"
+          "src/features/assignments/presentation/vocab-question-view.ts",
+          "src/features/assignment-queue/presentation/queue-resolution-view.ts"
         ],
         "contract": [
           "src/features/assignments/api/request-adapters.ts",
@@ -3530,7 +3552,8 @@
           "src/features/assignments/ui/vocab-unit-allocation-fields.test.tsx",
           "src/features/assignments/presentation/vocab-question-view.test.ts",
           "src/features/assignments/ui-role-boundary.test.ts",
-          "src/features/assignments/server/queries/eligible-vocabulary-pagination.test.ts"
+          "src/features/assignments/server/queries/eligible-vocabulary-pagination.test.ts",
+          "src/features/assignment-queue/presentation/queue-resolution-view.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -5016,10 +5039,26 @@
           "to": "src/features/students/controller/use-student-create-preparation.ts",
           "reason": "열기/닫기만 전달하고 조회 수명과 상태는 준비 제어기가 소유"
         },
-        { "from": "src/features/students/ui/student-create-workspace.tsx", "to": "src/features/students/controller/use-school-search.ts", "reason": "등록 학교 검색 수명과 수동 입력 연결" },
-        { "from": "src/features/students/ui/student-detail-content.tsx", "to": "src/features/students/controller/use-school-search.ts", "reason": "상세도 같은 검색 제어기와 기존 프로필 초안을 연결" },
-        { "from": "src/features/students/controller/use-school-search.ts", "to": "src/features/students/transport/school-search.ts", "reason": "최신 입력만 관리하는 제어기와 HTTP 분리" },
-        { "from": "src/app/api/admin/schools/search/route.ts", "to": "src/features/students/server/queries/school-search-query.ts", "reason": "관리자 인증과 전체 시간 예산 이후 공식 학교 최소 조회" },
+        {
+          "from": "src/features/students/ui/student-create-workspace.tsx",
+          "to": "src/features/students/controller/use-school-search.ts",
+          "reason": "등록 학교 검색 수명과 수동 입력 연결"
+        },
+        {
+          "from": "src/features/students/ui/student-detail-content.tsx",
+          "to": "src/features/students/controller/use-school-search.ts",
+          "reason": "상세도 같은 검색 제어기와 기존 프로필 초안을 연결"
+        },
+        {
+          "from": "src/features/students/controller/use-school-search.ts",
+          "to": "src/features/students/transport/school-search.ts",
+          "reason": "최신 입력만 관리하는 제어기와 HTTP 분리"
+        },
+        {
+          "from": "src/app/api/admin/schools/search/route.ts",
+          "to": "src/features/students/server/queries/school-search-query.ts",
+          "reason": "관리자 인증과 전체 시간 예산 이후 공식 학교 최소 조회"
+        },
         {
           "from": "src/features/students/controller/use-student-create-preparation.ts",
           "to": "src/features/assignments/public-client.ts",
@@ -5210,7 +5249,8 @@
           "src/features/assignments/presentation/vocab-assignment-field-errors.ts",
           "src/features/assignments/presentation/vocab-schedule-view.ts",
           "src/features/assignments/presentation/assignment-question-mode-view.ts",
-          "src/features/assignments/presentation/vocab-question-view.ts"
+          "src/features/assignments/presentation/vocab-question-view.ts",
+          "src/features/assignment-queue/presentation/queue-resolution-view.ts"
         ],
         "contract": [
           "src/features/assignments/api/request-adapters.ts",
@@ -5320,7 +5360,14 @@
           "src/features/assignments/ui-role-boundary.test.ts",
           "src/lib/database/assignment-release-final-schema.integration.test.ts",
           "src/features/assignments/server/queries/eligible-vocabulary-pagination.test.ts",
-          "src/lib/database/reviewed-exam-bank.integration.test.ts"
+          "src/lib/database/reviewed-exam-bank.integration.test.ts",
+          "src/features/assignments/server/use-cases/bulk-undated-assignment-preview.test.ts",
+          "src/features/assignments/server/planning/bulk-session-layout.test.ts",
+          "src/lib/database/undated-assignment-sequence.integration.test.ts",
+          "src/lib/database/example-assignment-sequence.integration.test.ts",
+          "src/features/assignment-queue/server/queue-query.test.ts",
+          "src/features/assignment-queue/server/queue-support.test.ts",
+          "src/features/assignment-queue/presentation/queue-resolution-view.test.ts"
         ]
       },
       "requiredImportEdges": [

@@ -23,16 +23,21 @@ import {
 import { isoToKoreanDateTimeLocal } from "@/lib/deadline";
 
 import styles from "./assignment-queue-history.module.css";
+import { queueAttentionView, queueResolutionView } from "../presentation/queue-resolution-view";
 
 function localDateTime(value: string) {
   return isoToKoreanDateTimeLocal(value).replace("T", " ");
 }
 
 function AssignmentQueueDisclosure({
+  processingDisabled = false,
+  onResolutionPending,
   onResolutionError,
   onResolved,
   queue,
 }: {
+  processingDisabled?: boolean;
+  onResolutionPending?: (seriesId: string, pending: boolean) => void;
   onResolutionError?: (error: unknown) => void;
   onResolved?: (result: QueueResolutionResult) => void;
   queue: VocabAssignmentQueueSummary;
@@ -44,6 +49,8 @@ function AssignmentQueueDisclosure({
   const [resolvingScope, setResolvingScope] = useState<string | null>(null);
   const resolving = resolvingScope === scopeKey;
   const resolvingRef = useRef(false);
+  const processingDisabledRef = useRef(processingDisabled);
+  useLayoutEffect(() => { processingDisabledRef.current = processingDisabled; }, [processingDisabled]);
   const versionRef = useRef(0);
   const confirm = useConfirmation(scopeKey);
   useLayoutEffect(() => {
@@ -57,7 +64,7 @@ function AssignmentQueueDisclosure({
   );
 
   async function resolve(action: QueueResolutionAction) {
-    if (resolvingRef.current) return;
+    if (resolvingRef.current || processingDisabled) return;
     const expectedItem = queue.items.find((item) => item.status === "attention");
     if (!expectedItem) {
       const error = new Error("처리할 회차를 확인하지 못했습니다. 최신 내역을 확인해 주세요.");
@@ -74,13 +81,18 @@ function AssignmentQueueDisclosure({
     resolvingRef.current = true;
     const version = versionRef.current;
     setResolvingScope(scopeKey);
+    let sent = false;
     try {
-      if (!await confirm({ message: confirmation }) || versionRef.current !== version) return;
+      if (!await confirm({ message: confirmation }) || versionRef.current !== version || processingDisabledRef.current) return;
+      sent = true;
+      onResolutionPending?.(queue.seriesId, true);
       const result = await resolveAssignmentQueue(queue.seriesId, action, expectedItem.id);
       // A sent command can finish after closing. Invalidate shared reads, not a new screen's state.
       announceAdminPrivateCacheChange("students");
       if (versionRef.current === version) {
-        toast.success("배정된 시험 상태를 처리했습니다.");
+        const view = queueResolutionView(result);
+        if (view.warning) toast.warning(view.message);
+        else toast.success(view.message);
         onResolved?.(result);
       }
     } catch (error) {
@@ -92,6 +104,7 @@ function AssignmentQueueDisclosure({
           : "배정된 시험 상태를 처리하지 못했습니다.",
       );
     } finally {
+      if (sent) onResolutionPending?.(queue.seriesId, false);
       if (versionRef.current === version) {
         resolvingRef.current = false;
         setResolvingScope(null);
@@ -151,15 +164,16 @@ function AssignmentQueueDisclosure({
           </ol>
           {queue.status === "attention" ? (
             <div aria-label="배정된 시험 처리" className={styles.actions}>
+              <p role="status">{queueAttentionView(queue) ?? "현재 회차를 확인해 주세요."}</p>
               <Button
-                disabled={resolving}
+                disabled={resolving || processingDisabled}
                 onClick={() => void resolve("retry")}
                 size="small"
               >
                 같은 회차 다시 배정
               </Button>
               <Button
-                disabled={resolving}
+                disabled={resolving || processingDisabled}
                 onClick={() => void resolve("skip")}
                 size="small"
                 variant="quiet"
@@ -167,7 +181,7 @@ function AssignmentQueueDisclosure({
                 이 회차 보류
               </Button>
               <Button
-                disabled={resolving}
+                disabled={resolving || processingDisabled}
                 onClick={() => void resolve("cancel")}
                 size="small"
                 variant="danger"
@@ -183,11 +197,15 @@ function AssignmentQueueDisclosure({
 }
 
 export function AssignmentQueueHistory({
+  processingDisabled = false,
+  onResolutionPending,
   headingLevel = 2,
   onResolutionError,
   onResolved,
   queues,
 }: {
+  processingDisabled?: boolean;
+  onResolutionPending?: (seriesId: string, pending: boolean) => void;
   headingLevel?: 2 | 3;
   onResolutionError?: (error: unknown) => void;
   onResolved?: (result: QueueResolutionResult) => void;
@@ -206,6 +224,8 @@ export function AssignmentQueueHistory({
       <div className={styles.list}>
         {queues.map((queue) => (
           <AssignmentQueueDisclosure
+            processingDisabled={processingDisabled}
+            onResolutionPending={onResolutionPending}
             key={queue.seriesId}
             onResolutionError={onResolutionError}
             onResolved={onResolved}

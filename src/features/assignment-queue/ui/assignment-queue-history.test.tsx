@@ -5,13 +5,14 @@ import "@testing-library/jest-dom/vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { toast } from "sonner";
 
 import type { VocabAssignmentQueueSummary } from "@/lib/admin/vocab-assignment-queue";
 
 import { AssignmentQueueHistory } from "./assignment-queue-history";
 
 vi.mock("sonner", () => ({
-  toast: { error: vi.fn(), success: vi.fn() },
+  toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() },
 }));
 
 afterEach(() => {
@@ -76,6 +77,21 @@ function queue(
 }
 
 describe("AssignmentQueueHistory", () => {
+  it("정상 응답이어도 재배정이 멈춰 있으면 성공 대신 확인 안내와 최신 상태를 반영한다", async () => {
+    const user = userEvent.setup(); const before = queue("attention", "00000000-0000-4000-8000-000000000033");
+    const after = { ...before, attentionReason: "release_schedule_conflict", updatedAt: "2026-09-10T01:00:00.000Z",
+      items: before.items.map(item => ({ ...item, attentionReason: "release_schedule_conflict" })) };
+    const onResolved = vi.fn(), onError = vi.fn();
+    const receipt = { queue: after, version: after.updatedAt, resolution: { action: "retry", item_id: after.items[0]!.id,
+      series_id: after.seriesId, student_id: after.studentId } };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => receipt }));
+    vi.spyOn(window, "confirm").mockReturnValue(true); vi.mocked(toast.warning).mockClear(); vi.mocked(toast.success).mockClear();
+    render(<AssignmentQueueHistory queues={[before]} onResolved={onResolved} onResolutionError={onError} />);
+    await user.click(screen.getByRole("button", { name: "같은 회차 다시 배정" }));
+    await waitFor(() => expect(onResolved).toHaveBeenCalledWith(receipt));
+    expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining("처리가 완료되지 않았습니다"));
+    expect(toast.success).not.toHaveBeenCalled(); expect(onError).not.toHaveBeenCalled();
+  });
   it("확인 직후 화면을 닫으면 이미 끝난 승인으로 요청하지 않는다", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
