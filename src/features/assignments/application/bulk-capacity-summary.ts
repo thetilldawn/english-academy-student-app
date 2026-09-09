@@ -18,7 +18,7 @@ export function bulkCapacityIdentity(draft: BulkSeriesAssignmentDraft): string |
   return JSON.stringify({
     studentIds: [...draft.studentIds].sort(),
     questionMode: draft.questionMode,
-    exam: draft.exam,
+    directionRatio: draft.exam.directionRatio,
     datasetId: plan.datasetId,
     orderedUnitIds: plan.orderedUnitIds,
     distribution: plan.distribution,

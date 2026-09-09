@@ -185,6 +185,117 @@ afterEach(() => {
 });
 
 describe("일괄 배정 controller", () => {
+  it.each([
+    { label: "요일 선택", plan: scheduledPlan([17]), submissionEnabled: true },
+    { label: "요일 선택 전 수량 조회", plan: scheduledPlan([17]), submissionEnabled: false },
+    { label: "시험일 미사용", plan: immediatePlan(), submissionEnabled: true },
+  ])("$label: 시간·점수·재시험·문항 순서만 바꾸면 집계와 미리보기를 보존한다", async ({ plan, submissionEnabled }) => {
+    const requests: AssignmentTransportRequest[] = [];
+    const { result } = renderController(successTransport(requests), plan, submissionEnabled);
+    await waitFor(() => expect(result.current.capacity?.status).toBe("ready"));
+    const capacity = result.current.capacity;
+    const preview = result.current.preview;
+    const transitions = [
+      () => result.current.actions.changeTiming({ mode: "total", totalSeconds: 420 }),
+      () => result.current.actions.changeTiming({ mode: "per_question", perQuestionSeconds: 17 }),
+      () => result.current.actions.changeTimeLimitEnabled(false),
+      () => result.current.actions.changeTimeLimitEnabled(true),
+      () => result.current.actions.changePassingScore(90),
+      () => result.current.actions.changeRetryEnabled(false),
+      () => result.current.actions.changeRetryEnabled(true),
+      () => result.current.actions.changeRetryPassingScore(85),
+      () => result.current.actions.changeOrder("descending"),
+    ];
+    for (const change of transitions) {
+      act(change);
+      expect(result.current.capacity).toEqual(capacity);
+      expect(result.current.preview).toEqual(preview);
+      expect(result.current.canSubmit).toBe(submissionEnabled);
+    }
+    expect(requests.filter(request => request.url.endsWith("/preview"))).toHaveLength(1);
+    if (submissionEnabled) {
+      await act(async () => { expect(await result.current.actions.submit()).toMatchObject({ ok: true }); });
+      expect(requests.at(-1)?.body).toMatchObject({ passingScore: 90, retryPassingScore: 85,
+        questionOrderMode: "descending", timingMode: "per_question", questionTimeLimitSeconds: 17 });
+    }
+  });
+
+  it.each([false, true])("숫자 비움 후 복원은 같은 이벤트 여부=%s와 관계없이 새 집계를 확인한다", async (sameEvent) => {
+    const requests: AssignmentTransportRequest[] = [];
+    const { result } = renderController(successTransport(requests), scheduledPlan([17]));
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    act(() => {
+      result.current.actions.changePassingScore(Number.NaN);
+      if (sameEvent) result.current.actions.changePassingScore(80);
+    });
+    expect(result.current.capacity).toBeNull();
+    expect(result.current.preview).toBeNull();
+    expect(result.current.canSubmit).toBe(false);
+    expect(requests).toHaveLength(1);
+    if (!sameEvent) act(() => result.current.actions.changePassingScore(80));
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    expect(result.current.capacity?.totalAvailableQuestionCount).toBe(601);
+    expect(requests.filter(request => request.url.endsWith("/preview"))).toHaveLength(2);
+  });
+
+  it("출제 방향을 바꾸면 이전 집계를 버리고 새 결과를 조회한다", async () => {
+    const requests: AssignmentTransportRequest[] = [];
+    const { result } = renderController(successTransport(requests), scheduledPlan([17]));
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    act(() => result.current.actions.changeDirection(100));
+    expect(result.current.capacity).toBeNull();
+    expect(result.current.canSubmit).toBe(false);
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    expect(requests.filter(request => request.url.endsWith("/preview"))).toHaveLength(2);
+  });
+
+  it("시간 입력을 비운 뒤 제한 없음으로 바꾸면 유효한 새 집계를 확인한다", async () => {
+    const requests: AssignmentTransportRequest[] = [];
+    const { result } = renderController(successTransport(requests), immediatePlan());
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    act(() => result.current.actions.changeTiming({ mode: "total", totalSeconds: Number.NaN }));
+    expect(result.current.capacity).toBeNull();
+    expect(result.current.canSubmit).toBe(false);
+    act(() => result.current.actions.changeTimeLimitEnabled(false));
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    expect(result.current.capacity?.status).toBe("ready");
+    expect(requests.filter(request => request.url.endsWith("/preview"))).toHaveLength(2);
+    await act(async () => { expect(await result.current.actions.submit()).toMatchObject({ ok: true }); });
+    expect(requests.at(-1)?.body).toMatchObject({ timingMode: "none" });
+  });
+
+  it("점수가 허용 범위를 벗어나면 집계는 유지해도 저장은 막는다", async () => {
+    const requests: AssignmentTransportRequest[] = [];
+    const { result } = renderController(successTransport(requests), immediatePlan());
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    const capacity = result.current.capacity;
+    act(() => result.current.actions.changePassingScore(101));
+    expect(result.current.capacity).toEqual(capacity);
+    expect(result.current.canSubmit).toBe(false);
+    expect(result.current.submissionIssues.some(issue => issue.path === "exam.passingScore")).toBe(true);
+    act(() => result.current.actions.changePassingScore(80));
+    expect(result.current.canSubmit).toBe(true);
+    expect(requests.filter(request => request.url.endsWith("/preview"))).toHaveLength(1);
+  });
+
+  it("미리보기의 입력 오류를 표시하고 같은 조건의 재시도 성공 후 해제한다", async () => {
+    let calls = 0;
+    const transport: AssignmentTransport = vi.fn(async () => ++calls === 1
+      ? { ok: false, status: 400, data: { error: "회차당 단어 수를 먼저 입력해 주세요.",
+          code: "invalid_assignment_condition", fieldPath: "commonPlan.overflowPolicy" } }
+      : { ok: true, status: 200, data: previewResponse([assignmentContractIds.studentA], 1) });
+    const { result } = renderController(transport, scheduledPlan([17]));
+    await waitFor(() => expect(result.current.state.preview.status).toBe("error"));
+    expect(result.current.submissionIssues).toContainEqual({ code: "invalid_order",
+      path: "commonPlan.overflowPolicy", message: "회차당 단어 수를 먼저 입력해 주세요." });
+    expect(result.current.canSubmit).toBe(false);
+    const draft = result.current.state.draft;
+    act(() => result.current.actions.refreshPreview());
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    expect(result.current.submissionIssues).toEqual([]);
+    expect(result.current.state.draft).toEqual(draft);
+  });
+
   it("날짜만 변경 중에는 집계만 유지하고 이전 미리보기로 저장하지 않는다", async () => {
     const transport = successTransport();
     const { result } = renderController(transport, scheduledPlan([17]));
