@@ -1,4 +1,7 @@
 import { z } from "zod";
+export const BULK_PREVIEW_COUNTS_HEADER = "x-assignment-preview-counts";
+import type { AssignmentCountBreakdown } from "../domain/assignment-count-breakdown";
+export { assignmentCountBreakdownSchema, type AssignmentCountBreakdown } from "../domain/assignment-count-breakdown";
 
 export type BulkAssignmentPreviewFieldKey =
   | "dataset"
@@ -27,6 +30,8 @@ export type BulkAssignmentPreviewSession = {
 };
 
 export type BulkAssignmentPreviewItem = {
+  countBreakdown?: AssignmentCountBreakdown | null;
+  uniqueScheduledQuestionCount?: number | null;
   studentId: string;
   studentName: string;
   available: boolean;
@@ -46,6 +51,7 @@ export type BulkAssignmentPreviewItem = {
 };
 
 export type BulkAssignmentCommonPlanSummary = {
+  uniqueScheduledQuestionCount?: number | null;
   representativeStudentId: string;
   normalStudentIds: string[];
   exceptionStudentIds: string[];

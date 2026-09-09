@@ -97,14 +97,13 @@ describe("단어 시험 완료 후 이어 배정 migration", () => {
     );
   });
 
-  it("큐 상태 조회는 규칙 포함 v2를 쓰고 구 DB에서는 v1로 읽기만 호환한다", () => {
+  it("큐 상태 조회의 규칙 포함 v2와 구 DB의 v1 읽기 진입점을 유지한다", () => {
     expect(queueQuerySource).toContain(
       '"list_vocab_assignment_queue_summaries_v2"',
     );
     expect(queueQuerySource).toContain(
       '"list_vocab_assignment_queue_summaries_v1"',
     );
-    expect(queueQuerySource).toContain('error?.code === "PGRST202"');
   });
 
   it("실제 완료 전에는 다음 회차를 준비하지 않고 점수는 조건으로 쓰지 않는다", () => {

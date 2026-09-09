@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { bulkPreviewContract } from "@/test-support/assignment-contract-fixtures";
 
 const mocks = vi.hoisted(() => {
   class MockBulkAssignmentError extends Error {
@@ -16,7 +17,6 @@ const mocks = vi.hoisted(() => {
   return {
     BulkAssignmentError: MockBulkAssignmentError,
     getAdminContext: vi.fn(),
-    parseJson: vi.fn(),
     previewBulkAssignments: vi.fn(),
   };
 });
@@ -25,18 +25,6 @@ vi.mock("@/lib/auth/admin", () => ({
   getAdminContext: mocks.getAdminContext,
 }));
 
-vi.mock("@/lib/http", () => ({
-  isSameOriginRequest: (request: Request) => {
-    const origin = request.headers.get("origin");
-    return origin === null || origin === new URL(request.url).origin;
-  },
-  parseJson: mocks.parseJson,
-  privateJsonError: (message: string, status: number) =>
-    Response.json(
-      { error: message },
-      { status, headers: { "Cache-Control": "private, no-store" } },
-    ),
-}));
 
 vi.mock(
   "@/features/assignments/server/use-cases/bulk-assignment-service",
@@ -48,14 +36,14 @@ vi.mock(
 
 import { POST } from "./route";
 
-function request(origin?: string) {
+function request(origin?: string, body: unknown = bulkPreviewContract) {
   return new Request("http://localhost/api/admin/bulk-assignments/preview", {
     method: "POST",
     headers: {
       "content-type": "application/json",
       ...(origin ? { origin } : {}),
     },
-    body: "{}",
+    body: JSON.stringify(body),
   });
 }
 
@@ -64,10 +52,64 @@ function expectPrivateNoStore(response: Response) {
 }
 
 describe("POST /api/admin/bulk-assignments/preview", () => {
+  it.each([undefined, "unknown"])("구 화면과 미지원 버전(%s)에는 기존 수량 응답을 유지한다", async (version) => {
+    mocks.getAdminContext.mockResolvedValue({ userId: "admin-id" });
+    const preview = {
+      items: [{ studentId: "student-id", sessions: [], availableQuestionCount: 108,
+        countBreakdown: { selectedSourceCount: 118 }, uniqueScheduledQuestionCount: 108 }],
+      commonPlanSummary: { scheduledQuestionCount: 108, uniqueScheduledQuestionCount: 108 },
+      planSignature: "same-plan",
+    };
+    mocks.previewBulkAssignments.mockResolvedValue(preview);
+    const legacyRequest = request();
+    if (version) legacyRequest.headers.set("x-assignment-preview-counts", version);
+    const response = await POST(legacyRequest);
+    expect(response.status).toBe(200);
+    expectPrivateNoStore(response);
+    expect(await response.json()).toEqual({
+      items: [{ studentId: "student-id", sessions: [], availableQuestionCount: 108 }],
+      commonPlanSummary: { scheduledQuestionCount: 108 }, planSignature: "same-plan",
+    });
+    expect(preview.items[0].uniqueScheduledQuestionCount).toBe(108);
+    expect(preview.commonPlanSummary.uniqueScheduledQuestionCount).toBe(108);
+  });
+
+  it("새 화면에는 항목과 공통 요약의 수량 상세를 그대로 전달한다", async () => {
+    mocks.getAdminContext.mockResolvedValue({ userId: "admin-id" });
+    const preview = { items: [{ countBreakdown: null, uniqueScheduledQuestionCount: 108 }],
+      commonPlanSummary: { uniqueScheduledQuestionCount: 108 }, planSignature: "same-plan" };
+    mocks.previewBulkAssignments.mockResolvedValue(preview);
+    const currentRequest = request();
+    currentRequest.headers.set("x-assignment-preview-counts", "1");
+    const response = await POST(currentRequest);
+    expect(response.status).toBe(200);
+    expectPrivateNoStore(response);
+    expect(await response.json()).toEqual(preview);
+  });
+
+  it("서버가 거부한 이어가기 조건을 입력 위치와 함께 반환한다", async () => {
+    mocks.getAdminContext.mockResolvedValue({ userId: "admin-id" });
+    const response = await POST(request(undefined, {
+      ...bulkPreviewContract, commonPlan: { ...bulkPreviewContract.commonPlan,
+        questionCount: { mode: "all" }, overflowPolicy: "continue_weekly" },
+    }));
+    expect(response.status).toBe(400);
+    expectPrivateNoStore(response);
+    expect(await response.json()).toEqual({ error: "회차당 단어 수를 먼저 입력해 주세요.",
+      code: "invalid_assignment_condition", fieldPath: "commonPlan.overflowPolicy" });
+    expect(mocks.previewBulkAssignments).not.toHaveBeenCalled();
+  });
+
+  it("잘못된 요청 본문에는 내부 검증 원문을 반환하지 않는다", async () => {
+    mocks.getAdminContext.mockResolvedValue({ userId: "admin-id" });
+    const response = await POST(request(undefined, { commonPlan: "private-source" }));
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "학생 선택과 출제 조건을 확인해 주세요." });
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getAdminContext.mockResolvedValue(null);
-    mocks.parseJson.mockResolvedValue({ request: "valid" });
     mocks.previewBulkAssignments.mockResolvedValue({ items: [] });
   });
 

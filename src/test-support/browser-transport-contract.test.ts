@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { browserAssignmentTransport } from "@/features/assignments/transport/assignment-transport";
 
 import { cancelStudentAssignment } from "@/features/history/api/history-mutations";
 import { requestNotificationDelivery } from "@/features/notifications/api/notification-delivery";
@@ -12,6 +13,22 @@ afterEach(() => {
 });
 
 describe("shared browser transport contracts", () => {
+  it("새 수량 응답 지원은 배정 미리보기 요청에만 알리고 본문은 보존한다", async () => {
+    const fetchMock = vi.fn().mockImplementation(async () => Response.json({ items: [] }));
+    vi.stubGlobal("fetch", fetchMock);
+    const body = { studentIds: ["fake-student"] };
+    const signal = new AbortController().signal;
+    await browserAssignmentTransport({ url: "/api/admin/bulk-assignments/preview", method: "POST", body, signal });
+    expect(fetchMock).toHaveBeenLastCalledWith("/api/admin/bulk-assignments/preview", expect.objectContaining({
+      body: JSON.stringify(body), method: "POST", signal,
+      headers: { "content-type": "application/json", "x-assignment-preview-counts": "1" },
+    }));
+    await browserAssignmentTransport({ url: "/api/admin/bulk-assignments", method: "POST", body });
+    expect(fetchMock).toHaveBeenLastCalledWith("/api/admin/bulk-assignments", expect.objectContaining({
+      headers: { "content-type": "application/json" }, body: JSON.stringify(body),
+    }));
+  });
+
   it("keeps a successful empty login response successful", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(null, { status: 204 }),

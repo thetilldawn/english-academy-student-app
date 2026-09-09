@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { assignmentCountBreakdownSchema } from "../contracts/bulk-assignment-response";
+import type { BulkAssignmentPreview } from "../contracts/bulk-assignment-response";
 
 const nonNegativeInteger = z.number().int().nonnegative();
 
@@ -199,6 +201,8 @@ const bulkAssignmentPreviewResponseSchema = z
           sessions: z.array(bulkPreviewSessionSchema),
           availableQuestionCount: nonNegativeInteger.nullable(),
           totalAvailableQuestionCount: nonNegativeInteger.nullable().optional(),
+          countBreakdown: assignmentCountBreakdownSchema.nullable().optional(),
+          uniqueScheduledQuestionCount: nonNegativeInteger.nullable().optional(),
           maximumSessionQuestionCount: nonNegativeInteger.nullable().optional(),
           selectedQuestionCount: nonNegativeInteger.nullable(),
           remainingQuestionCount: nonNegativeInteger.nullable(),
@@ -218,7 +222,16 @@ const bulkAssignmentPreviewResponseSchema = z
             ])
             .optional(),
         })
-        .strict(),
+        .strict().superRefine((item, context) => {
+          if (item.countBreakdown && item.totalAvailableQuestionCount != null &&
+              item.countBreakdown.availableCount !== item.totalAvailableQuestionCount) {
+            context.addIssue({ code: "custom", path: ["countBreakdown"], message: "출제 가능 수와 수량 내역이 맞지 않습니다." });
+          }
+          if (item.uniqueScheduledQuestionCount != null &&
+              item.uniqueScheduledQuestionCount > item.sessions.reduce((sum, session) => sum + session.questionCount, 0)) {
+            context.addIssue({ code: "custom", path: ["uniqueScheduledQuestionCount"], message: "배정 대상 수와 회차 합계가 맞지 않습니다." });
+          }
+        }),
     ),
     assignableCount: nonNegativeInteger,
     blockedCount: nonNegativeInteger,
@@ -232,6 +245,7 @@ const bulkAssignmentPreviewResponseSchema = z
         exceptionStudentIds: z.array(z.uuid()),
         availableQuestionCount: nonNegativeInteger,
         totalAvailableQuestionCount: nonNegativeInteger.nullable().optional(),
+        uniqueScheduledQuestionCount: nonNegativeInteger.nullable().optional(),
         maximumSessionQuestionCount: nonNegativeInteger.nullable().optional(),
         selectedQuestionCount: nonNegativeInteger,
         remainingQuestionCount: nonNegativeInteger,
@@ -363,4 +377,24 @@ export function parseLegacyReviewCancelResponse(
   value: unknown,
 ): LegacyReviewCancelResponse {
   return legacyReviewCancelResponseSchema.parse(value);
+}
+export function serializeBulkAssignmentPreview(
+  preview: BulkAssignmentPreview,
+  includeCountDetails: boolean,
+): BulkAssignmentPreview {
+  if (includeCountDetails) return preview;
+  const commonPlanSummary = preview.commonPlanSummary
+    ? { ...preview.commonPlanSummary }
+    : preview.commonPlanSummary;
+  if (commonPlanSummary) delete commonPlanSummary.uniqueScheduledQuestionCount;
+  return {
+    ...preview,
+    commonPlanSummary,
+    items: preview.items.map((item) => {
+      const legacyItem = { ...item };
+      delete legacyItem.countBreakdown;
+      delete legacyItem.uniqueScheduledQuestionCount;
+      return legacyItem;
+    }),
+  };
 }

@@ -1,0 +1,1324 @@
+{
+  "schemaVersion": 1,
+  "id": "DEPLOY-20260910-01",
+  "title": "단어 배정 패치의 구 화면 호환과 운영 반영",
+  "size": "full",
+  "gate": "design",
+  "guide": "docs/work-orders/DEPLOY-20260910-01.md",
+  "baseline": "80df9b2654eaf363c6dd88262082f86c9956ad33",
+  "owners": [
+    "assignments",
+    "database-contract",
+    "architecture-meta",
+    "shared-contract",
+    "student-dashboard",
+    "assignment-queue",
+    "students"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal",
+    "assessment-secret"
+  ],
+  "scope": [
+    {
+      "path": "src/features/assignments/domain/vocab-assignment-contract.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-edit",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ]
+    },
+    {
+      "path": "src/features/assignments/domain/vocab-planner-validation.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/domain/validation.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/contracts/bulk-assignment-request.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/controller/vocab-assignment-planner-state.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/controller/vocab-assignment-planner-state.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/controller/use-bulk-assignment-controller.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/controller/use-vocab-assignment-planner.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/presentation/vocab-question-view.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/presentation/vocab-question-view.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-range-picker.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-unit-allocation-fields.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-unit-allocation-fields.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-question-fields.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/api/request-adapters.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/domain/vocab-planner-validation.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/app/api/admin/bulk-assignments/preview/route.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/app/api/admin/bulk-assignments/preview/route.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/app/api/admin/bulk-assignments/route.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/app/api/admin/bulk-assignments/route.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-schedule-fields.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/application/bulk-capacity-summary.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/controller/use-vocab-assignment-derived-plan.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/controller/use-vocab-assignment-planner.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/domain/vocab-schedule.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-edit",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ]
+    },
+    {
+      "path": "src/features/assignments/domain/vocab-schedule-summary.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/domain/vocab-question-allocation.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/domain/vocab-assignment-plan.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/domain/validation.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/planning/bulk-session-layout.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/planning/bulk-session-layout.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/canonical-assignment-preview.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-schedule-fields.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/AGENTS.md",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": []
+    },
+    {
+      "path": "src/lib/database/undated-assignment-sequence.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "assignment-range-create",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-workspace.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/bulk-assignment-preview.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "architecture/assignment-ui-roles.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-range-picker.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/bulk-undated-assignment-preview.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "architecture/기능_소유권.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/assignments/domain/assignment-question-mode-policy.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/domain/assignment-question-mode-policy.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/presentation/assignment-question-mode-view.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/presentation/assignment-question-mode-view.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/bulk-exam-fields.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/content/ko/admin-learning.ts",
+      "state": "existing",
+      "owner": "shared-contract",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/assignments/contracts/assignment-question-mode-policy.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/canonical-assignment-preview.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/lib/database/example-assignment-sequence.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "assignment-range-create",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/domain/bulk-draft.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/contracts/bulk-assignment-response.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/api/response-adapters.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/api/response-adapters.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/queries/bulk-assignment-planning-query.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/queries/bulk-assignment-planning-query.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/lib/services/regular-assignment-service.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/lib/services/regular-assignment-scope-contract.test.ts",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "admin-history-read",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/domain/assignment-count-breakdown.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/domain/assignment-count-breakdown.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/presentation/bulk-count-view.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/presentation/bulk-count-view.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/presentation/bulk-plan-audience.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/bulk-preview-session-list.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/bulk-series-preview.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/bulk-series-preview.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-range-fields.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/ui/assignment-study-words.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/student-dashboard/ui/assignment-study-words.test.tsx",
+      "state": "existing",
+      "owner": "student-dashboard",
+      "flowIds": [
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/content/ko/student-app.ts",
+      "state": "existing",
+      "owner": "shared-contract",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/assignment-queue/presentation/queue-resolution-view.ts",
+      "state": "existing",
+      "owner": "assignment-queue",
+      "flowIds": [
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignment-queue/presentation/queue-resolution-view.test.ts",
+      "state": "existing",
+      "owner": "assignment-queue",
+      "flowIds": [
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignment-queue/ui/assignment-queue-history.tsx",
+      "state": "existing",
+      "owner": "assignment-queue",
+      "flowIds": [
+        "weekday-unit-allocation",
+        "student-management-screen",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignment-queue/ui/assignment-queue-history.test.tsx",
+      "state": "existing",
+      "owner": "assignment-queue",
+      "flowIds": [
+        "weekday-unit-allocation",
+        "student-management-screen",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignment-queue/ui/student-assignment-queue-history.tsx",
+      "state": "existing",
+      "owner": "assignment-queue",
+      "flowIds": [
+        "student-management-screen",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignment-queue/ui/student-assignment-queue-history.test.tsx",
+      "state": "existing",
+      "owner": "assignment-queue",
+      "flowIds": [
+        "student-management-screen",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/lib/services/vocab-assignment-queue-query.ts",
+      "state": "existing",
+      "owner": "assignment-queue",
+      "flowIds": [
+        "assignment-series",
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/assignment-queue/server/queue-query.test.ts",
+      "state": "existing",
+      "owner": "assignment-queue",
+      "flowIds": [
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/lib/services/vocab-assignment-queue-support.ts",
+      "state": "existing",
+      "owner": "assignment-queue",
+      "flowIds": [
+        "assignment-series",
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/features/assignment-queue/server/queue-support.test.ts",
+      "state": "existing",
+      "owner": "assignment-queue",
+      "flowIds": [
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/lib/services/vocab-assignment-queue-command.ts",
+      "state": "existing",
+      "owner": "assignment-queue",
+      "flowIds": [
+        "assignment-series",
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/lib/services/vocab-assignment-queue-command.test.ts",
+      "state": "existing",
+      "owner": "assignment-queue",
+      "flowIds": [
+        "assignment-series",
+        "student-quiz-attempt"
+      ]
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/vocab-assignment-queues/route.test.ts",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/lib/database/assignment-release-final-schema.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "assignment-range-create",
+        "student-dashboard-read",
+        "assignment-edit",
+        "assignment-series",
+        "student-quiz-attempt",
+        "student-assignment-study-read"
+      ]
+    },
+    {
+      "path": "src/features/assignment-queue/AGENTS.md",
+      "state": "existing",
+      "owner": "assignment-queue",
+      "flowIds": []
+    },
+    {
+      "path": "src/app/api/admin/students/[id]/vocab-assignment-queues/route.ts",
+      "state": "existing",
+      "owner": "students",
+      "flowIds": [
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/transport/assignment-transport.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-edit",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/test-support/browser-transport-contract.test.ts",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/lib/validation.test.ts",
+      "state": "existing",
+      "owner": "shared-contract",
+      "flowIds": []
+    },
+    {
+      "path": "src/lib/database/vocab-assignment-completion-queue-migration-contract.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "검사한 A1~A6 패치를 기존 운영 사이트에 반영한다",
+      "acceptance": "같은 최종 실행 코드의 Preview와 Production 빌드 및 주요 읽기 화면 확인. DB 구조나 실제 학생 자료 변경 없음",
+      "disposition": "required",
+      "owners": [
+        "assignments",
+        "database-contract",
+        "architecture-meta",
+        "shared-contract",
+        "student-dashboard",
+        "assignment-queue",
+        "students"
+      ],
+      "flowIds": [
+        "assignment-range-create",
+        "assignment-series"
+      ],
+      "checkIds": [
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6",
+        "T7"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "engineering",
+      "text": "배포 전에 열어 둔 관리자 화면도 새 미리보기 응답을 읽을 수 있어야 한다",
+      "acceptance": "새 화면이 명시한 요청만 추가 수량 필드를 받고 구 요청에는 기존 strict 응답 모양을 유지. 계산·저장 계약은 동일",
+      "disposition": "required",
+      "owners": [
+        "assignments"
+      ],
+      "flowIds": [
+        "assignment-range-create"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T7"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "운영 반영 승인",
+      "answer": "이미 검토한 단어배정 A1~A6 패치를 기존 저장소에 올리고 Preview 검증 뒤 운영까지 배포한다.",
+      "source": "2026-09-10 사용자 “운영사이트까지 배포 ㄱㄱ”"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "기존 화면과 새 서버의 응답 호환",
+      "answer": "브라우저 HTTP 계층이 미리보기 요청에 수량 상세 지원 헤더를 붙이고, 응답 변환기가 지원 없는 요청에서 새 선택 필드만 제거한다. 기존 요청 본문과 실제 선택·저장·공개 계산은 변경하지 않는다.",
+      "source": "독립 검토: 기존 운영 be313fd 응답 검증기의 strict 계약"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "배포 데이터와 검사 범위",
+      "answer": "이번 변경은 DB migration이 없다. 영어 원자료·W 후보·tmp 검사 자료는 앱 Git에 포함하지 않는다. 단어장 원본이나 실제 학생의 배정/응시/답안을 변경하지 않고 실제 인증 읽기 화면을 확인한다.",
+      "source": "A1~A6 범위·DB 계약 독립 검토 및 기존 배포 경계"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "checked",
+      "reason": "A1~A6 최종 코드 반영, 기존 운영 계약과 권한/캐시/자료 보존 확인"
+    },
+    "ui": {
+      "status": "checked",
+      "reason": "A1~A6 최종 코드 반영, 기존 운영 계약과 권한/캐시/자료 보존 확인"
+    },
+    "state": {
+      "status": "checked",
+      "reason": "A1~A6 최종 코드 반영, 기존 운영 계약과 권한/캐시/자료 보존 확인"
+    },
+    "domain": {
+      "status": "checked",
+      "reason": "A1~A6 최종 코드 반영, 기존 운영 계약과 권한/캐시/자료 보존 확인"
+    },
+    "data": {
+      "status": "checked",
+      "reason": "A1~A6 최종 코드 반영, 기존 운영 계약과 권한/캐시/자료 보존 확인"
+    },
+    "api": {
+      "status": "changed",
+      "reason": "배포 중 구 화면 응답 호환과 회귀 검사"
+    },
+    "cache": {
+      "status": "checked",
+      "reason": "A1~A6 최종 코드 반영, 기존 운영 계약과 권한/캐시/자료 보존 확인"
+    },
+    "asyncUi": {
+      "status": "checked",
+      "reason": "A1~A6 최종 코드 반영, 기존 운영 계약과 권한/캐시/자료 보존 확인"
+    },
+    "security": {
+      "status": "checked",
+      "reason": "A1~A6 최종 코드 반영, 기존 운영 계약과 권한/캐시/자료 보존 확인"
+    },
+    "styles": {
+      "status": "checked",
+      "reason": "A1~A6 최종 코드 반영, 기존 운영 계약과 권한/캐시/자료 보존 확인"
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "배포 중 구 화면 응답 호환과 회귀 검사"
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "기존 관리자 인증과 비공개 DTO, 안전한 오류 안내 보존",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T5",
+        "T6"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "기존 관리자 인증과 비공개 DTO, 안전한 오류 안내 보존",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T5",
+        "T6"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "기존 관리자 인증과 비공개 DTO, 안전한 오류 안내 보존",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T5",
+        "T6"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "미리보기 수명과 요청 순서 보존",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T5",
+        "T6"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "현재 입력→기존 미리보기 계산→요청의 상세 수량 지원 여부→기존/새 응답 모양→해당 화면 파서. Git Preview 빌드→검증→동일 실행 코드 Production 별도 빌드→운영 읽기 확인",
+    "reuse": "기존 transport/응답 변환기/Route Handler 및 기존 GitHub-Vercel 배포 연결 재사용",
+    "cache": "성공·실패 private,no-store 보존. 새 응답 헤더는 개인 요청의 기능 협상만 담당하며 캐시나 추가 DB 요청을 만들지 않는다",
+    "compatibility": "기존 화면에는 countBreakdown와 uniqueScheduledQuestionCount를 제거해 strict 파서를 만족한다. 새 화면은 기존 optional 계약도 읽는다. 새 기능 사용에는 배포 후 최신 화면 사용; DB 계약 불변 전체 회귀 검사에서 확인한 예문 1회 제한과 인라인 오류 비교의 구 검사 2개는 승인된 A4/A6 계약으로 갱신한다. 오류를 없애기 위한 실행 코드 변경은 하지 않는다.",
+    "rollback": "운영 기준 be313fddd1c3bb32d60c8e59126ffd9124d73a1a의 배포로 되돌릴 수 있다. 신규 migration·자료 수정이 없어 DB 되돌리기 없음"
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "범위 조회 전",
+      "message": "출제 가능 단어 수를 확인하는 중입니다.",
+      "behavior": "기존 영역 로딩, 학생 선택 보존",
+      "recovery": "최신 응답 뒤 내용 표시",
+      "component": "src/features/assignments/ui/bulk-series-preview.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T5",
+        "T6"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "범위 변경 후 재조회",
+      "message": "출제 가능 단어 수를 확인하는 중입니다.",
+      "behavior": "이전 요청의 늦은 응답 무시",
+      "recovery": "현재 조건 성공 시 표시",
+      "component": "src/features/assignments/ui/bulk-series-preview.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T5",
+        "T6"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "범위를 고르지 않음",
+      "message": "시험 범위를 선택해 주세요.",
+      "behavior": "필수 범위 옆 안내",
+      "recovery": "범위 선택",
+      "component": "src/features/assignments/ui/bulk-series-preview.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T5",
+        "T6"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "정상 응답에서 출제 가능한 문항 없음",
+      "message": "현재 조건으로 배정할 수 있는 단어가 없습니다.",
+      "behavior": "오류/미조회와 구분하는 기존 처리 보존",
+      "recovery": "범위 또는 유형 변경",
+      "component": "src/features/assignments/ui/bulk-series-preview.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T5",
+        "T6"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "배정 조건 부족 또는 수량 불일치",
+      "message": "배정 합계는 조건을 확인한 뒤 표시합니다.",
+      "behavior": "기존 조건오류 유지,불일치진단은확정숫자로쓰지않음",
+      "recovery": "범위·유형을 수정하거나 단어 수 다시 확인",
+      "component": "src/features/assignments/ui/bulk-series-preview.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T5",
+        "T6"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "세부 수량 조회 또는 전체 미리보기 실패",
+      "message": "제외 사유별 수량을 확인하지 못했습니다. 단어 수를 다시 확인해 주세요.",
+      "behavior": "입력·학생 보존, 알려진 입력 오류는 해당 칸 연결",
+      "recovery": "조건 수정 또는 다시 시도",
+      "component": "src/features/assignments/ui/bulk-series-preview.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T5",
+        "T6"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "저장 실패 또는 결과 미확인",
+      "message": "일괄 단어 시험을 배정하지 못했습니다.",
+      "behavior": "기존 멱등키·중복 제출 차단·입력 보존",
+      "recovery": "기존 결과 확인과 재시도 절차",
+      "component": "src/features/assignments/ui/bulk-series-preview.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T5",
+        "T6"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "인증 만료",
+      "message": "관리자 로그인이 필요합니다.",
+      "behavior": "기존 인증 실패 처리로 개인 자료 숨김",
+      "recovery": "다시 로그인",
+      "component": "src/features/assignments/ui/bulk-series-preview.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T5",
+        "T6"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "조회 가능한 대상 없음",
+      "message": "기존 없는 대상 안내 유지",
+      "behavior": "새 경로/대상 조회를 추가하지 않음",
+      "recovery": "기존 목록 복귀",
+      "component": "src/features/assignments/ui/bulk-series-preview.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T5",
+        "T6"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "알 수 없는 서버 오류",
+      "message": "학생별 다음 범위를 계산하지 못했습니다.",
+      "behavior": "서버 원문·SQL·정답을 표시하지 않음",
+      "recovery": "다시 시도",
+      "component": "src/features/assignments/ui/bulk-series-preview.tsx",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T5",
+        "T6"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "v1.1",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "사용자 확정 범위·기존 계약을 R/D/T로 연결하고 실제 검증과 배포 구분"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "integration",
+      "target": "src/app/api/admin/bulk-assignments/preview/route.test.ts",
+      "scenario": "지원 헤더 없음/알 수 없음/새 버전 및 실제 브라우저 HTTP 요청",
+      "expected": "구 요청은 기존 응답과 동일, 새 요청만 상세 수량, 성공/오류 비공개 캐시와 인증 유지",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "integration",
+      "target": "src/lib/database/undated-assignment-sequence.integration.test.ts",
+      "scenario": "최종 코드 전체 회귀 검사",
+      "expected": "배정·순차공개·큐복구·학생화면·기존 서비스 검사 통과",
+      "topics": [
+        "behavior"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "static",
+      "target": null,
+      "scenario": "타입/lint/구조/작업 기록 설계 및 완료 관문",
+      "expected": "필수 검사 통과 및 임시/원자료 혼입 없음",
+      "topics": [
+        "structure"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "build",
+      "target": null,
+      "scenario": "같은 실행 코드의 Preview와 Production 별도 빌드",
+      "expected": "각 배포 성공과 Git SHA 일치",
+      "topics": [
+        "structure"
+      ]
+    },
+    {
+      "id": "T5",
+      "kind": "browser",
+      "target": null,
+      "scenario": "Preview의 실제 로그인/배정 미리보기/학생 이력 읽기",
+      "expected": "단어장·날짜·시간 전환 후 미리보기와 읽기 화면 정상",
+      "topics": [
+        "behavior",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T6",
+      "kind": "browser",
+      "target": null,
+      "scenario": "운영 로그인/배정 미리보기/학생 이력과 오류 확인",
+      "expected": "운영 주소에서 패치 적용, 실제 학생 저장 없이 주요 읽기 흐름 확인",
+      "topics": [
+        "behavior",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T7",
+      "kind": "review",
+      "target": null,
+      "scenario": "독립 배포 범위/DB호환/새 구화면 호환 검토",
+      "expected": "필요 파일 누락과 추가 배포 차단 결함 없음",
+      "topics": [
+        "structure",
+        "behavior"
+      ]
+    }
+  ],
+  "verification": null
+}

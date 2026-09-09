@@ -1,3 +1,5 @@
+import { BULK_PREVIEW_COUNTS_HEADER } from "../contracts/bulk-assignment-response";
+
 export type AssignmentTransportRequest = {
   body?: unknown;
   method?: "DELETE" | "GET" | "POST" | "PUT";
@@ -24,8 +26,12 @@ export const browserAssignmentTransport: AssignmentTransport = async ({
   const response = await fetch(url, {
     body: body === undefined ? undefined : JSON.stringify(body),
     cache: method === "GET" ? "no-store" : undefined,
-    headers:
-      body === undefined ? undefined : { "content-type": "application/json" },
+    headers: {
+      ...(body === undefined ? {} : { "content-type": "application/json" }),
+      ...(url === "/api/admin/bulk-assignments/preview"
+        ? { [BULK_PREVIEW_COUNTS_HEADER]: "1" }
+        : {}),
+    },
     method,
     signal,
   });

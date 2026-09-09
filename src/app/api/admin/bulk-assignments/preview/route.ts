@@ -1,10 +1,12 @@
 import { getAdminContext } from "@/lib/auth/admin";
-import { privateJsonError, isSameOriginRequest, parseJson } from "@/lib/http";
+import { privateJsonError, isSameOriginRequest } from "@/lib/http";
 import {
   BulkAssignmentError,
   previewBulkAssignments,
 } from "@/features/assignments/server/use-cases/bulk-assignment-service";
-import { bulkAssignmentPreviewSchema } from "@/features/assignments/contracts/bulk-assignment-request";
+import { bulkAssignmentInputError, bulkAssignmentPreviewSchema } from "@/features/assignments/contracts/bulk-assignment-request";
+import { BULK_PREVIEW_COUNTS_HEADER } from "@/features/assignments/contracts/bulk-assignment-response";
+import { serializeBulkAssignmentPreview } from "@/features/assignments/api/response-adapters";
 
 export const maxDuration = 300;
 
@@ -16,13 +18,19 @@ export async function POST(request: Request) {
   if (!admin) {
     return privateJsonError("관리자 로그인이 필요합니다.", 401);
   }
-  const input = await parseJson(request, bulkAssignmentPreviewSchema);
-  if (!input) {
-    return privateJsonError("학생 선택과 출제 조건을 확인해 주세요.", 400);
+  const parsed = bulkAssignmentPreviewSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    const issue = bulkAssignmentInputError(parsed.error);
+    return privateJsonError(issue?.message ?? "학생 선택과 출제 조건을 확인해 주세요.", 400,
+      issue ? { code: issue.code, fieldPath: issue.fieldPath } : {});
   }
+  const input = parsed.data;
 
   try {
-    return Response.json(await previewBulkAssignments(input, admin), {
+    const preview = await previewBulkAssignments(input, admin);
+    return Response.json(serializeBulkAssignmentPreview(
+      preview, request.headers.get(BULK_PREVIEW_COUNTS_HEADER) === "1",
+    ), {
       headers: { "Cache-Control": "private, no-store" },
     });
   } catch (error) {
