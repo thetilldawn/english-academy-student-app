@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { vocabContinueWeeklyDisabledReason, vocabOverflowMessages } from "../domain/vocab-assignment-contract";
 import { assignmentQuestionModeErrors, assignmentQuestionModeIssues } from "../domain/assignment-question-mode-policy";
 
 import { resolveVocabUnitCountsForDates } from "@/lib/admin/vocab-unit-allocation";
@@ -16,6 +17,18 @@ import {
   MAXIMUM_BULK_STUDENT_COUNT,
 } from "@/features/assignments/domain/model";
 import { isoToKoreanDateTimeLocal } from "@/lib/deadline";
+
+// Only return catalogued input messages, never arbitrary schema/server text.
+export function bulkAssignmentInputError(error: z.ZodError) {
+  const issue = error.issues.find((item) =>
+    item.path.join(".") === "commonPlan.overflowPolicy" &&
+    Object.values(vocabOverflowMessages).some((message) => message === item.message));
+  return issue ? {
+    message: issue.message,
+    code: "invalid_assignment_condition",
+    fieldPath: "commonPlan.overflowPolicy",
+  } : null;
+}
 
 const vocabUnitCountSchema = z.number().int().min(1).max(30);
 const vocabUnitAllocationRuleSchema = z
@@ -92,9 +105,9 @@ const bulkCommonPlanSchema = z
     if (
       immediate &&
       !(
-        (value.distribution === "repeat" &&
-          value.splitBasis === "question_count" &&
+        (value.splitBasis === "question_count" &&
           value.overflowPolicy === "leave" &&
+          value.extraDatePolicy === "unconfirmed" &&
           value.sessions.length === 1 &&
           value.recurrenceSessions.length === 1) ||
         (undatedUnitSplit &&
@@ -109,25 +122,12 @@ const bulkCommonPlanSchema = z
         message: "시험일 없는 배정의 회차 구성을 확인해 주세요.",
       });
     }
-    if (
-      value.distribution !== "split" &&
-      value.overflowPolicy === "continue_weekly"
-    ) {
+    const overflowReason = vocabContinueWeeklyDisabledReason(value);
+    if (value.overflowPolicy === "continue_weekly" && overflowReason) {
       context.addIssue({
         code: "custom",
         path: ["overflowPolicy"],
-        message: "같은 요일로 이어서는 나누기에서만 사용할 수 있습니다.",
-      });
-    }
-    if (
-      value.splitBasis === "question_count" &&
-      value.questionCount.mode !== "manual" &&
-      value.overflowPolicy === "continue_weekly"
-    ) {
-      context.addIssue({
-        code: "custom",
-        path: ["overflowPolicy"],
-        message: "단어 수 기준은 직접 입력한 단어 수가 있을 때만 다음 주로 이어갈 수 있습니다.",
+        message: overflowReason,
       });
     }
     if (
@@ -357,9 +357,6 @@ function validateBulkAssignmentSelection(
   const modeIssues = assignmentQuestionModeIssues(value.questionMode, value.englishToKoreanRatio, value.commonPlan);
   if (modeIssues.direction) context.addIssue({
     code: "custom", path: ["englishToKoreanRatio"], message: assignmentQuestionModeErrors.direction,
-  });
-  if (modeIssues.schedule) context.addIssue({
-    code: "custom", path: ["commonPlan", "selectedDateCount"], message: assignmentQuestionModeErrors.schedule,
   });
   if (
     value.studentIds.length * value.commonPlan.sessions.length >

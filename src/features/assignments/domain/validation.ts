@@ -655,14 +655,12 @@ function validateCommonPlan(
       message: "단어 수는 4개부터 500개까지 입력해 주세요.",
     });
   }
-  if (
-    plan.overflowPolicy === "continue_weekly" &&
-    plan.distribution !== "split"
-  ) {
+  const overflowReason = vocabContinueWeeklyDisabledReason(plan);
+  if (plan.overflowPolicy === "continue_weekly" && overflowReason) {
     issues.push({
       code: "invalid_order",
       path: "commonPlan.overflowPolicy",
-      message: "같은 요일로 이어서는 회차별 또는 단어 수 배정에서 선택할 수 있습니다.",
+      message: overflowReason,
     });
   }
   if (plan.distribution !== "split" && plan.splitBasis === "range_unit") {
@@ -693,9 +691,9 @@ function validateCommonPlan(
   if (
     immediate &&
     !(
-      (plan.distribution === "repeat" &&
-        plan.splitBasis === "question_count" &&
+      (plan.splitBasis === "question_count" &&
         plan.overflowPolicy === "leave" &&
+        plan.extraDatePolicy === "unconfirmed" &&
         plan.sessions.length === 1 &&
         plan.recurrenceSessions.length === 1) ||
       (undatedUnitSplit &&
@@ -909,9 +907,6 @@ export function validateBulkPreviewProjection(
   if (modeIssues.direction) issues.push({
     code: "invalid_order", path: "exam.directionRatio", message: assignmentQuestionModeErrors.direction,
   });
-  if (modeIssues.schedule) issues.push({
-    code: "invalid_order", path: "commonPlan.selectedDateCount", message: assignmentQuestionModeErrors.schedule,
-  });
   return issues;
 }
 
@@ -989,3 +984,4 @@ export function assertValidBulkAssignmentSubmission(
 ): void {
   assertNoIssues(validateBulkAssignmentSubmission(draft, nowMilliseconds));
 }
+import { vocabContinueWeeklyDisabledReason } from "./vocab-assignment-contract";

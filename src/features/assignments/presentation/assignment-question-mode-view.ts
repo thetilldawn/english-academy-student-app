@@ -1,5 +1,5 @@
 import { adminLearningText } from "@/content/ko/admin-learning";
-import { assignmentQuestionModeAvailability, assignmentQuestionModePolicy } from "../domain/assignment-question-mode-policy";
+import { assignmentQuestionModeAvailability } from "../domain/assignment-question-mode-policy";
 import type { AssignmentQuestionMode } from "../domain/model";
 
 export type AssignmentQuestionModeView = {
@@ -21,7 +21,7 @@ export function assignmentQuestionModeView(input: {
   if (availability.status === "unselected") notices.push({ id: sharedId, message: text.datasetRequired });
   if (availability.status === "unavailable") notices.push({ id: sharedId, role: "alert", message: text.statusUnavailable });
   if (availability.availableModes.includes(input.questionMode) &&
-      assignmentQuestionModePolicy(input.questionMode).schedule === "single-immediate") {
+      input.questionMode === "canonical_example_to_headword") {
     notices.push({ role: "status", message: text.prepared });
   }
   const canonicalTabs = ([
@@ -37,6 +37,6 @@ export function assignmentQuestionModeView(input: {
 }
 
 export function assignmentQuestionModeScheduleMessage(mode: AssignmentQuestionMode) {
-  return assignmentQuestionModePolicy(mode).schedule === "single-immediate"
+  return mode === "canonical_example_to_headword"
     ? adminLearningText.questionMode.scheduleRestriction : null;
 }

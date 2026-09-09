@@ -50,11 +50,10 @@ describe("question mode policy at draft and request boundaries", () => {
       const parsed = bulkAssignmentPreviewSchema.safeParse(input);
       const remote = parsed.success ? [] : parsed.error.issues.filter(x => Object.values(assignmentQuestionModeErrors).includes(x.message as never));
       expect(remote.map(x => x.message)).toEqual(local.map(x => x.message));
-      if ((name === "direction" && mode !== "book_meaning_choice") || (mode === "canonical_example_to_headword" && name !== "valid")) {
-        const direction = name === "direction";
+      if (name === "direction" && mode !== "book_meaning_choice") {
         expect(remote).toContainEqual(expect.objectContaining({
-          path: direction ? ["englishToKoreanRatio"] : ["commonPlan", "selectedDateCount"],
-          message: direction ? assignmentQuestionModeErrors.direction : assignmentQuestionModeErrors.schedule,
+          path: ["englishToKoreanRatio"],
+          message: assignmentQuestionModeErrors.direction,
         }));
       }
     }

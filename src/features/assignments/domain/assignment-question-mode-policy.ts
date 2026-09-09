@@ -1,7 +1,6 @@
 import type { AssignmentDirectionRatio, AssignmentQuestionMode } from "./model";
 
 const flexiblePolicy = { fixedDirectionRatio: null, schedule: "flexible" } as const;
-const singleImmediatePolicy = { fixedDirectionRatio: 0, schedule: "single-immediate" } as const;
 const definitionForwardPolicy = { fixedDirectionRatio: 0, schedule: "flexible" } as const;
 const definitionReversePolicy = { fixedDirectionRatio: 100, schedule: "flexible" } as const;
 
@@ -10,7 +9,7 @@ export function assignmentQuestionModePolicy(mode: AssignmentQuestionMode) {
   if (mode === "book_meaning_choice") return flexiblePolicy;
   if (mode === "canonical_definition_to_headword") return definitionForwardPolicy;
   if (mode === "canonical_headword_to_definition") return definitionReversePolicy;
-  return singleImmediatePolicy;
+  return definitionForwardPolicy;
 }
 
 export function assignmentQuestionModeAvailability(input: {
@@ -41,20 +40,12 @@ export function assignmentQuestionModeIssues(
   const policy = assignmentQuestionModePolicy(mode);
   const direction = policy.fixedDirectionRatio !== null &&
     directionRatio !== policy.fixedDirectionRatio;
-  const hasTimes = (session: QuestionModeSchedulePlan["sessions"][number]) =>
-    session.availableFrom !== null || session.availableUntil !== null;
-  const schedule = policy.schedule === "single-immediate" && !!plan && (
-    plan.selectedDateCount !== 0 || plan.distribution !== "repeat" ||
-    plan.splitBasis !== "question_count" || plan.sessions.length !== 1 ||
-    plan.recurrenceSessions.length !== 1 || plan.sessions.some(hasTimes) ||
-    plan.recurrenceSessions.some(hasTimes)
-  );
-  return { direction, schedule };
+  // Every supported question mode uses the common plan's schedule validation.
+  void plan;
+  return { direction, schedule: false };
 }
 
 // Validation messages are part of the existing request contract, not UI translations.
 export const assignmentQuestionModeErrors = {
   direction: "선택한 출제 자료에 맞는 시험 방향을 선택해 주세요.",
-  schedule: "예문 시험은 현재 시험일 없이 1회만 바로 배정할 수 있습니다.",
-  serverSchedule: "예문 시험은 시험일 없이 1회만 바로 배정할 수 있습니다.",
 } as const;

@@ -48,7 +48,7 @@ describe("BulkExamFields with explicit inputs", () => {
     for (const name of ["영어 → 뜻", "뜻 → 영어", "혼합"]) expect(screen.getByRole("button", { name })).toBeDisabled();
     if (mode === "canonical_example_to_headword") {
       expect(screen.getByRole("status")).toHaveTextContent("영어 선택지 4개");
-      expect(screen.getByRole("status")).toHaveTextContent("시험일 없이 1회 배정");
+      expect(screen.getByRole("status")).toHaveTextContent("준비된 예문과 영어 선택지 4개");
     } else {
       expect(screen.queryByRole("status")).toBeNull();
       const fixed = mode === "canonical_headword_to_definition" ? "영어 → 뜻" : "뜻 → 영어";

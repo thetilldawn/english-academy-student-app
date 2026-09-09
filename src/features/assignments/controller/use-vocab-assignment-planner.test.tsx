@@ -126,10 +126,11 @@ const units: AssignmentUnitItem[] = Array.from({ length: 6 }, (_, index) => ({
 function renderPlanner(
   plannerUnits = units,
   previousExam: PreviousVocabExamSource | null = null,
+  plannerDataset = dataset,
 ) {
   mocks.previousExam = previousExam;
   return renderHook(() => useVocabAssignmentPlanner({
-    datasets: [dataset],
+    datasets: [plannerDataset],
     genericErrorMessage: "저장 실패",
     initialDatasetId: dataset.id,
     previousExamSourceStudentId: "student-a",
@@ -164,6 +165,42 @@ function scheduledLocalDate(value: string | null) {
 }
 
 describe("단어 배정 일정 controller", () => {
+  it.each(["per_session", "word_count"] as const)("%s에서 예문 선택은 범위·날짜·수량·시간 입력을 보존한다", mode => {
+    const { result } = renderPlanner(units, null, { ...dataset, availableQuestionModes: ["book_meaning_choice", "canonical_example_to_headword"] }); selectWholeRange(result);
+    act(() => { result.current.actions.changeAssignmentMode(mode); result.current.actions.toggleWeekday(1); result.current.actions.changeUnitsPerSession(2); });
+    const before = structuredClone(result.current.planner);
+    const plan = structuredClone(result.current.commonPlan);
+    act(() => result.current.actions.changeQuestionMode("canonical_example_to_headword"));
+    expect(mocks.changeQuestionMode).toHaveBeenCalledWith("canonical_example_to_headword");
+    expect(result.current.planner).toEqual(before);
+    expect(result.current.commonPlan).toEqual(plan);
+  });
+  it("회차별 이어가기의 날짜 계획은 시험일 OFF/ON 뒤 복원한다", () => {
+    const { result } = renderPlanner(); selectWholeRange(result);
+    act(() => { result.current.actions.changeAssignmentMode("per_session"); result.current.actions.changeUnitsPerSession(1); result.current.actions.toggleWeekday(1); result.current.actions.changeOverflowPolicy("continue_weekly"); });
+    const dated = structuredClone(result.current.commonPlan);
+    expect(dated?.sessions).toHaveLength(6);
+    act(() => result.current.actions.changeScheduleEnabled(false));
+    expect(result.current.commonPlan?.sessions).toHaveLength(6);
+    expect(result.current.commonPlan?.sessions.every(session => session.availableLocalDateTime === null && session.deadlineLocalDateTime === null)).toBe(true);
+    act(() => result.current.actions.changeScheduleEnabled(true));
+    expect(result.current.commonPlan).toEqual(dated);
+  });
+  it.each(["per_session", "word_count"] as const)("%s: 요일0·시험일 해제는 같은 계획이며 날짜 사용을 왕복해도 범위를 보존한다", assignmentMode => {
+    const { result } = renderPlanner(); selectWholeRange(result);
+    act(() => { result.current.actions.changeAssignmentMode(assignmentMode); result.current.actions.changeUnitsPerSession(2); });
+    const undated = structuredClone(result.current.commonPlan);
+    expect(result.current.fieldErrors).toEqual({});
+    act(() => result.current.actions.toggleWeekday(1));
+    expect(result.current.commonPlan?.selectedDateCount).toBe(1);
+    act(() => result.current.actions.changeScheduleEnabled(false));
+    expect(result.current.commonPlan).toEqual(undated);
+    act(() => result.current.actions.changeScheduleEnabled(true));
+    expect(result.current.commonPlan?.selectedDateCount).toBe(1);
+    act(() => result.current.actions.toggleWeekday(1));
+    expect(result.current.commonPlan).toEqual(undated);
+    expect(result.current.fieldErrors).toEqual({});
+  });
   it("단어 수를 비운 뒤 전체와 직접 입력을 오가면 유효한 기본 수로 복구한다", () => {
     const { result } = renderPlanner();
     selectWholeRange(result);
@@ -173,7 +210,7 @@ describe("단어 배정 일정 controller", () => {
     act(() => result.current.actions.activateManualQuestionCount(120));
     expect(result.current.planner).toMatchObject({ questionCountMode: "manual", manualQuestionCount: 120 });
   });
-  it("요일을 고르기 전에도 전체 범위의 기본 회차를 계산하고 저장은 막는다", () => {
+  it("요일을 고르기 전에도 전체 범위를 날짜 없는 회차로 나눈다", () => {
     const { result } = renderPlanner();
     selectWholeRange(result);
     act(() => {
@@ -182,7 +219,9 @@ describe("단어 배정 일정 controller", () => {
     });
     expect(result.current.scheduleSlots).toHaveLength(0);
     expect(result.current.defaultSessionCount).toBe(3);
-    expect(result.current.canSubmit).toBe(false);
+    expect(result.current.commonPlan?.selectedDateCount).toBe(0);
+    expect(result.current.commonPlan?.sessions).toHaveLength(3);
+    expect(result.current.fieldErrors).toEqual({});
     act(() => result.current.actions.toggleWeekday(1));
     expect(result.current.defaultSessionCount).toBe(3);
     act(() => result.current.actions.toggleWeekday(1));
@@ -377,7 +416,7 @@ describe("단어 배정 일정 controller", () => {
     expect(result.current.defaultSessionCount).toBe(5);
   });
 
-  it("단어 수 배정은 시험일을 꺼도 입력한 수로 바로 시작하는 한 회차를 만든다", () => {
+  it("단어 수 배정은 날짜 없는 기준 회차에 전체 범위를 보내 서버가 끝까지 나누게 한다", () => {
     const { result } = renderPlanner();
     selectWholeRange(result);
 
@@ -397,7 +436,7 @@ describe("단어 배정 일정 controller", () => {
       scheduleEnabled: false,
     });
     expect(result.current.commonPlan).toMatchObject({
-      distribution: "repeat",
+      distribution: "split",
       questionCount: { mode: "manual", value: 4 },
       selectedDateCount: 0,
       sessions: [{
@@ -464,10 +503,11 @@ describe("단어 배정 일정 controller", () => {
       questionCount: { mode: "all" },
       overflowPolicy: "leave",
       extraDatePolicy: "unconfirmed",
-      selectedDateCount: 1,
+      selectedDateCount: 0,
       selectionMode: "source_order",
     });
-    expect(result.current.bulk.capacityOnly).toBe(true);
+    expect(result.current.commonPlan?.sessions.every(session =>
+      session.availableLocalDateTime === null && session.deadlineLocalDateTime === null)).toBe(true);
     expect(result.current.canSubmit).toBe(false);
     expect(result.current.bulk.preview).toBeNull();
 

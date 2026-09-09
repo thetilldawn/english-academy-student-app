@@ -109,7 +109,6 @@ export function useVocabAssignmentPlanner({
     ],
   );
   const {
-    capacityOnly,
     commonPlan,
     distribution,
     effectiveSplitBasis,
@@ -117,23 +116,15 @@ export function useVocabAssignmentPlanner({
     scheduleSlots,
     unitAllocation,
   } = useVocabAssignmentDerivedPlan({ planner, selectedUnits });
-  const rawBulk = useBulkAssignmentController({
+  const bulk = useBulkAssignmentController({
     genericErrorMessage,
     initialCommonPlan: commonPlan,
     enabled,
-    submissionEnabled: !capacityOnly && localIssues.length === 0,
+    submissionEnabled: localIssues.length === 0,
     previewErrorMessage,
     studentIds,
     transport,
   });
-  const bulk = {
-    ...rawBulk,
-    capacityOnly,
-    // The capacity probe is not a date selected by the administrator.
-    preview: capacityOnly ? null : rawBulk.preview,
-    capacityError: capacityOnly
-      ? rawBulk.preview?.items.find(item => item.error)?.error ?? null : null,
-  };
   const questionModeAvailability = datasets.find(
     (dataset) => dataset.id === planner.datasetId,
   )?.availableQuestionModes;
@@ -228,7 +219,7 @@ export function useVocabAssignmentPlanner({
     return true;
   }
 
-  const previewFieldIssues = (rawBulk.preview?.items ?? []).flatMap((item) => {
+  const previewFieldIssues = (bulk.preview?.items ?? []).flatMap((item) => {
     if (!item.error || !item.errorFieldKey) return [];
     const path = item.errorFieldKey === "dataset"
       ? "commonPlan.datasetId"
@@ -310,9 +301,6 @@ export function useVocabAssignmentPlanner({
       changeQuestionMode: (value: AssignmentQuestionMode) => {
         if (!availableQuestionModes.includes(value)) return;
         bulk.actions.changeQuestionMode(value);
-        if (assignmentQuestionModePolicy(value).schedule === "single-immediate") {
-          dispatch({ type: "schedule/enabled", enabled: false });
-        }
       },
       activateManualQuestionCount: (defaultValue: number) => {
         if (!Number.isFinite(planner.manualQuestionCount) || planner.manualQuestionCount < 1) {

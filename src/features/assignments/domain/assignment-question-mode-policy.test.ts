@@ -18,14 +18,6 @@ const patches: [string, Partial<QuestionModeSchedulePlan>][] = [
   ["recurrence start", { recurrenceSessions: [{ availableFrom: "2026-09-10T00:00:00Z", availableUntil: null }] }],
   ["recurrence end", { recurrenceSessions: [{ availableFrom: null, availableUntil: "2026-09-11T00:00:00Z" }] }],
 ];
-// Example restrictions remain; definition directions now reuse the common schedule.
-function previousScheduleInvalid(mode: string, p: QuestionModeSchedulePlan) {
-  return mode === "canonical_example_to_headword" && (p.selectedDateCount !== 0 || p.distribution !== "repeat" ||
-    p.splitBasis !== "question_count" || p.sessions.length !== 1 || p.recurrenceSessions.length !== 1 ||
-    p.sessions.some(s => s.availableFrom !== null || s.availableUntil !== null) ||
-    p.recurrenceSessions.some(s => s.availableFrom !== null || s.availableUntil !== null));
-}
-
 describe("assignment question mode policy", () => {
   it.each(patches)("keeps the mode-specific direction and schedule boundary: %s", (_name, patch) => {
     for (const mode of assignmentQuestionModes) for (const ratio of [0, 50, 100] as AssignmentDirectionRatio[]) {
@@ -33,7 +25,7 @@ describe("assignment question mode policy", () => {
       const before = JSON.stringify(plan);
       expect(assignmentQuestionModeIssues(mode, ratio, plan)).toEqual({
         direction: mode !== "book_meaning_choice" && ratio !== (mode === "canonical_headword_to_definition" ? 100 : 0),
-        schedule: previousScheduleInvalid(mode, plan),
+        schedule: false,
       });
       expect(JSON.stringify(plan)).toBe(before);
     }
@@ -44,7 +36,7 @@ describe("assignment question mode policy", () => {
   it("exposes the approved UI and reducer restrictions", () => {
     expect(assignmentQuestionModePolicy("book_meaning_choice")).toEqual({ fixedDirectionRatio: null, schedule: "flexible" });
     for (const mode of assignmentQuestionModes.slice(1)) {
-      expect(assignmentQuestionModePolicy(mode)).toEqual({ fixedDirectionRatio: mode === "canonical_headword_to_definition" ? 100 : 0, schedule: mode === "canonical_example_to_headword" ? "single-immediate" : "flexible" });
+      expect(assignmentQuestionModePolicy(mode)).toEqual({ fixedDirectionRatio: mode === "canonical_headword_to_definition" ? 100 : 0, schedule: "flexible" });
     }
   });
   it("separates no selection, missing preparation, valid empty and available modes", () => {

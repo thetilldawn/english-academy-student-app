@@ -612,7 +612,7 @@ describe("assignment draft validation", () => {
     );
   });
 
-  it("예문은 영어 선택·시험일 없는 1회 배정만 허용한다", () => {
+  it("예문은 영어 선택 방향을 유지하며 공통 날짜 계획을 허용한다", () => {
     const scheduledCanonical: BulkSeriesAssignmentDraft = {
       ...baseBulk,
       questionMode: "canonical_example_to_headword",
@@ -621,7 +621,7 @@ describe("assignment draft validation", () => {
     const issue = validateBulkPreviewProjection(scheduledCanonical).find(
       (item) => item.path === "commonPlan.selectedDateCount",
     );
-    expect(issue?.message).toBe("예문 시험은 현재 시험일 없이 1회만 바로 배정할 수 있습니다.");
+    expect(issue).toBeUndefined();
 
     const immediateCanonical: BulkSeriesAssignmentDraft = {
       ...scheduledCanonical,

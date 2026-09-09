@@ -23,10 +23,10 @@ describe("question mode view", () => {
     expect(view.tabs[3]).toMatchObject({ disabled: true, disabledReason: expect.stringContaining("예문 문항이 없습니다") });
     expect(view.notices).toHaveLength(0);
   });
-  it("uses the same restriction explanation without a Preview-only claim", () => {
+  it("explains the shared schedule without a Preview-only claim", () => {
     for (const mode of ["book_meaning_choice","canonical_definition_to_headword","canonical_headword_to_definition"] as const) expect(assignmentQuestionModeScheduleMessage(mode)).toBeNull();
     for (const mode of ["canonical_example_to_headword"] as const) {
-      expect(assignmentQuestionModeScheduleMessage(mode)).toContain("시험일 없이 1회만 바로 배정");
+      expect(assignmentQuestionModeScheduleMessage(mode)).toContain("회차별 또는 단어 수별");
       expect(assignmentQuestionModeScheduleMessage(mode)).not.toContain("Preview");
     }
   });

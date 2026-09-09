@@ -37,6 +37,12 @@ function createDraft() {
 }
 
 describe("일괄 단어 배정 초안", () => {
+  it.each([true, false])("예문 전환은 시간제한 사용%s와 문제당시간·공통계획을 보존한다", enabled => {
+    const draft = { ...createDraft(), commonPlan, exam: { ...createDraft().exam, timeLimitEnabled: enabled, timing: { mode: "per_question" as const, perQuestionSeconds: 17 } } };
+    const next = reduceBulkSeriesAssignmentDraft(draft, { type: "exam/question_mode_changed", value: "canonical_example_to_headword" });
+    expect(next.exam).toEqual({ ...draft.exam, directionRatio: 0 });
+    expect(next.commonPlan).toEqual(commonPlan);
+  });
   it("새 초안은 교재 뜻 시험으로 시작한다", () => {
     expect(createDraft().questionMode).toBe("book_meaning_choice");
   });
