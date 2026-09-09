@@ -4,6 +4,14 @@ import { buildVocabAssignmentFieldErrors } from "../presentation/vocab-assignmen
 import { validateVocabPlannerInputs } from "./vocab-planner-validation";
 
 describe("vocab planner field validation", () => {
+  it.each([false, true])("시험일 사용 %s·요일0에서는 기억한 잘못된 날짜/시각을 무날짜 배정에 적용하지 않는다", scheduleEnabled => {
+    expect(validateVocabPlannerInputs({
+      datasetId: "fake-dataset", selectedUnitIds: ["fake-unit"], distribution: "split", splitBasis: "question_count",
+      unitAllocationMode: "same", unitsPerSession: 1, weekdayUnitsPerSession: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1 },
+      questionCount: { mode: "manual", value: 20 }, overflowPolicy: "leave", selectionMode: "source_order", scheduleEnabled,
+      schedule: { availableTime: "25:00", deadlineDayOffset: -1, deadlineTime: "bad", startDate: "bad", weekdays: [] }, scheduleSlots: [],
+    })).toEqual([]);
+  });
   it("maps a past session deadline to that exact deadline input", () => {
     expect(buildVocabAssignmentFieldErrors([{
       code: "invalid_order",
@@ -34,7 +42,7 @@ describe("vocab planner field validation", () => {
         deadlineDayOffset: 0,
         deadlineTime: "bad",
         startDate: "bad",
-        weekdays: [],
+        weekdays: [1],
       },
       scheduleSlots: [],
     });
@@ -48,7 +56,6 @@ describe("vocab planner field validation", () => {
       questionCount: "단어 수는 4개부터 500개까지 입력해 주세요.",
       range: "시험 범위를 선택해 주세요.",
       startDate: "배정 기준일을 확인해 주세요.",
-      weekdays: "배정할 요일을 하나 이상 선택해 주세요.",
     });
   });
 

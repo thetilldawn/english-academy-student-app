@@ -91,7 +91,7 @@ export function VocabRangeAssignmentSections({
     slotCount: controller.scheduleSlots.length,
     defaultSessionCount: controller.defaultSessionCount,
     capacityStatus: controller.selectedUnits.length === 0 ? "unselected"
-      : bulk.state?.preview?.status === "error" || bulk.capacityError ? "error"
+      : bulk.state?.preview?.status === "error" ? "error"
       : bulk.capacity?.status === "different" ? "different"
       : bulk.previewLoading ? "loading" : "blocked",
     extraDateDecisionSessionCount: controller.extraDateDecisionSessionCount,
@@ -324,9 +324,7 @@ export function VocabRangeAssignmentSections({
       >
         {controller.commonPlan ? (
           <BulkSeriesPreview
-            message={bulk.capacityOnly
-              ? bulk.capacityError ?? "가능한 회차를 확인한 뒤 배정할 요일을 선택해 주세요."
-              : bulk.message}
+            message={bulk.message}
             preview={bulk.preview}
             previewLoading={bulk.previewLoading}
             students={students}

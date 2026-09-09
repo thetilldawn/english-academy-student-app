@@ -1,4 +1,11 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { createInitialVocabPlannerState, vocabPlannerReducer, type VocabPlannerAction, type VocabPlannerState } from "../controller/vocab-assignment-planner-state";
+import { resolveVocabUnitSelection } from "../domain/vocab-planner-controls";
+import { useVocabAssignmentDerivedPlan } from "../controller/use-vocab-assignment-derived-plan";
+import { createInitialBulkSeriesAssignmentDraft } from "../domain/bulk-draft";
+import { validateBulkPreviewProjection } from "../domain/validation";
 
 import { assignmentReplacementFingerprintPayload } from "@/lib/admin/assignment-replacement-fingerprint";
 import {
@@ -63,6 +70,40 @@ import type {
 } from "./request-adapters";
 
 const NOW = Date.parse("2026-08-10T00:00:00.000Z");
+
+describe("배정 설정 전환과 실제 요청 계약 연결", () => {
+  const paths: VocabPlannerAction[][] = [
+    [{ type: "assignment_mode", value: "word_count" }, { type: "overflow_policy", value: "continue_weekly" }],
+    [{ type: "assignment_mode", value: "per_session" }, { type: "overflow_policy", value: "continue_weekly" }, { type: "assignment_mode", value: "word_count" }],
+    [{ type: "assignment_mode", value: "word_count" }, { type: "question_count_mode", value: "manual" }, { type: "overflow_policy", value: "continue_weekly" }, { type: "question_count_mode", value: "all" }],
+    [{ type: "assignment_mode", value: "word_count" }, { type: "question_count_mode", value: "manual" }, { type: "overflow_policy", value: "continue_weekly" }, { type: "dataset", value: assignmentContractIds.dataset }],
+  ];
+  it.each(paths.map((actions, index) => ({ actions, index })))("전환 $index 뒤 단일/일괄 계획이 같은 서버 검증을 통과한다", ({ actions }) => {
+    let planner: VocabPlannerState = { ...createInitialVocabPlannerState([], "", "2099-08-17"),
+      datasetId: assignmentContractIds.dataset, planNonce: assignmentContractIds.planNonce,
+      manualQuestionCount: 20, scheduleEnabled: true,
+      schedule: { startDate: "2099-08-17", weekdays: [1] as const, availableTime: "09:00", deadlineDayOffset: 0, deadlineTime: "22:00" },
+    };
+    for (const action of actions) planner = vocabPlannerReducer(planner, action);
+    planner = vocabPlannerReducer(planner, { type: "range/all", unitIds: reverseUnitIds, selectAll: true });
+    const units = reverseUnitIds.map((id, index) => ({ id, datasetId: assignmentContractIds.dataset,
+      entryCount: 20, label: `DAY ${index + 1}`, kind: "day" as const, number: index + 1, sortIndex: index + 1,
+      catalogGroup: null, unitType: null, displayName: `DAY ${index + 1}`, academicYear: null,
+      examMonth: null, agency: null, itemRange: null, catalogSortIndex: index + 1 }));
+    const selectedUnits = resolveVocabUnitSelection(units, planner.range);
+    let derived: ReturnType<typeof useVocabAssignmentDerivedPlan> | undefined;
+    function Probe() { derived = useVocabAssignmentDerivedPlan({ planner, selectedUnits }); return null; }
+    renderToStaticMarkup(createElement(Probe));
+    expect(planner.overflowPolicy).toBe("leave");
+    expect(derived!.localIssues).toEqual([]);
+    expect(derived!.commonPlan).toBeDefined();
+    for (const studentIds of [[assignmentContractIds.studentA], [assignmentContractIds.studentA, assignmentContractIds.studentB]]) {
+      const draft = createInitialBulkSeriesAssignmentDraft({ studentIds, commonPlan: derived!.commonPlan });
+      expect(validateBulkPreviewProjection(draft)).toEqual([]);
+      expect(bulkAssignmentPreviewSchema.safeParse(buildBulkAssignmentPreviewRequest(draft).body).success).toBe(true);
+    }
+  });
+});
 
 function resolved(title: string, questionCount: number) {
   return { displayTitle: title, submissionTitle: title, questionCount };

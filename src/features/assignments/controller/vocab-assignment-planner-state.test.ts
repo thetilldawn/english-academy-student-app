@@ -35,6 +35,17 @@ const units = [1, 2, 3].map((sortIndex) => ({
 }));
 
 describe("vocabPlannerReducer extra date decision", () => {
+  it("회차별 전체 사용과 단어 수 직접 입력의 이어가기는 보존한다", () => {
+    const continued = vocabPlannerReducer(state, { type: "overflow_policy", value: "continue_weekly" });
+    expect(continued.overflowPolicy).toBe("continue_weekly");
+    const perSession = vocabPlannerReducer(continued, { type: "assignment_mode", value: "per_session" });
+    expect(vocabPlannerReducer(perSession, { type: "question_count_mode", value: "all" }).overflowPolicy).toBe("continue_weekly");
+    expect(vocabPlannerReducer(perSession, { type: "dataset", value: "dataset-b" }).overflowPolicy).toBe("continue_weekly");
+    expect(vocabPlannerReducer(continued, { type: "question_count_mode", value: "all" })).toMatchObject({
+      overflowPolicy: "leave", manualQuestionCount: 45, range: state.range,
+    });
+  });
+
   it("새 배정은 전체 회차·즉시 공개·당일 마감으로 시작한다", () => {
     expect(createInitialVocabPlannerState([], "", "2026-08-24")).toMatchObject({
       assignmentMode: "all_sessions",
@@ -180,19 +191,27 @@ describe("vocabPlannerReducer extra date decision", () => {
     );
   });
 
-  it("회차별 배정은 시험일을 꺼도 회차 구분을 보존한다", () => {
+  it("회차별 배정은 시험일을 껐다 켜도 이어가기와 회차별 수정 시각을 보존한다", () => {
+    const overrides = { 1: { availableLocalDateTime: "2026-08-24T10:00", deadlineLocalDateTime: "2026-08-25T22:00" } };
     const disabled = vocabPlannerReducer({
       ...state,
       assignmentMode: "per_session",
       overflowPolicy: "continue_weekly",
+      sessionScheduleOverrides: overrides,
     }, {
       type: "schedule/enabled",
       enabled: false,
     });
     expect(disabled).toMatchObject({
       assignmentMode: "per_session",
-      overflowPolicy: "leave",
+      overflowPolicy: "continue_weekly",
       scheduleEnabled: false,
+      sessionScheduleOverrides: overrides,
+      extraDatePolicy: "unconfirmed",
+      approvedRepeatCycleCount: 1,
+    });
+    expect(vocabPlannerReducer(disabled, { type: "schedule/enabled", enabled: true })).toMatchObject({
+      scheduleEnabled: true, overflowPolicy: "continue_weekly", sessionScheduleOverrides: overrides,
     });
   });
 

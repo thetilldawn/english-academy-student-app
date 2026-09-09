@@ -1,5 +1,6 @@
 import type { AssignmentDatasetItem } from "../catalog-types";
 import {
+  normalizeVocabOverflowPolicy,
   type IsoWeekday,
   type VocabAssignmentMode,
   type VocabUnitSelection,
@@ -93,6 +94,7 @@ export function vocabPlannerReducer(
         datasetId: action.value,
         range: { selectedUnitIds: [] },
         questionCountMode: "all",
+        overflowPolicy: normalizeVocabOverflowPolicy({ ...state, questionCountMode: "all" }),
         manualQuestionCount: 0,
         extraDatePolicy: "unconfirmed",
         approvedRepeatCycleCount: 1,
@@ -125,9 +127,7 @@ export function vocabPlannerReducer(
       return {
         ...state,
         assignmentMode: action.value,
-        overflowPolicy: action.value === "all_sessions"
-          ? "leave"
-          : state.overflowPolicy,
+        overflowPolicy: normalizeVocabOverflowPolicy({ ...state, assignmentMode: action.value }),
         extraDatePolicy: "unconfirmed",
         approvedRepeatCycleCount: 1,
         sessionScheduleOverrides: {},
@@ -144,6 +144,7 @@ export function vocabPlannerReducer(
       return {
         ...state,
         questionCountMode: action.value,
+        overflowPolicy: normalizeVocabOverflowPolicy({ ...state, questionCountMode: action.value }),
         extraDatePolicy: "unconfirmed",
         approvedRepeatCycleCount: 1,
         sessionScheduleOverrides: {},
@@ -159,7 +160,7 @@ export function vocabPlannerReducer(
     case "overflow_policy":
       return {
         ...state,
-        overflowPolicy: action.value,
+        overflowPolicy: normalizeVocabOverflowPolicy({ ...state, overflowPolicy: action.value }),
       };
     case "extra_date_policy": {
       if (action.value !== "repeat_from_start") {
@@ -188,13 +189,8 @@ export function vocabPlannerReducer(
       return {
         ...state,
         scheduleEnabled: action.enabled,
-        assignmentMode: state.assignmentMode,
-        overflowPolicy: !action.enabled && state.assignmentMode === "per_session"
-          ? "leave"
-          : state.overflowPolicy,
         extraDatePolicy: "unconfirmed",
         approvedRepeatCycleCount: 1,
-        sessionScheduleOverrides: {},
       };
     }
     case "schedule/update": {

@@ -195,16 +195,18 @@ export function splitVocabTargetPoolPreparationCounts(
   ) {
     return [];
   }
-  const counts: number[] = [];
-  let remaining = totalQuestionCount;
-  while (remaining > maximumQuestionCount) {
-    let current = maximumQuestionCount;
-    const tail = remaining - current;
-    if (tail < minimum) current -= minimum - tail;
-    counts.push(current);
-    remaining -= current;
+  const sessionCount = Math.ceil(totalQuestionCount / maximumQuestionCount);
+  if (sessionCount * minimum > totalQuestionCount) return [];
+  const counts = Array<number>(sessionCount).fill(maximumQuestionCount);
+  const lastIndex = sessionCount - 1;
+  counts[lastIndex] = totalQuestionCount - maximumQuestionCount * lastIndex;
+  let deficit = Math.max(0, minimum - counts[lastIndex]);
+  counts[lastIndex] += deficit;
+  for (let index = lastIndex - 1; deficit > 0 && index >= 0; index--) {
+    const borrowed = Math.min(deficit, counts[index] - minimum);
+    counts[index] -= borrowed;
+    deficit -= borrowed;
   }
-  counts.push(remaining);
   return counts;
 }
 
@@ -212,29 +214,7 @@ function splitManualVocabQuestionCounts(
   totalQuestionCount: number,
   maximumQuestionCount: number,
 ) {
-  const minimum = MINIMUM_VOCAB_SESSION_QUESTION_COUNT;
-  if (
-    !Number.isInteger(totalQuestionCount) ||
-    totalQuestionCount < minimum ||
-    !Number.isInteger(maximumQuestionCount) ||
-    maximumQuestionCount < minimum ||
-    maximumQuestionCount > MAXIMUM_VOCAB_SESSION_QUESTION_COUNT
-  ) {
-    return [];
-  }
-  const counts: number[] = [];
-  let remaining = totalQuestionCount;
-  while (remaining > maximumQuestionCount) {
-    let current = maximumQuestionCount;
-    const tail = remaining - current;
-    if (tail < minimum) current -= minimum - tail;
-    if (current < minimum) return [];
-    counts.push(current);
-    remaining -= current;
-  }
-  if (remaining < minimum) return [];
-  counts.push(remaining);
-  return counts;
+  return splitVocabTargetPoolPreparationCounts(totalQuestionCount, maximumQuestionCount);
 }
 
 /**
@@ -341,9 +321,11 @@ export function resolveVocabQuestionCycleAllocation(input: {
   const shouldRepeat =
     input.selectedDateCount > baseCounts.length &&
     input.extraDatePolicy === "repeat_from_start";
-  const sessionCount = shouldRepeat
-    ? input.selectedDateCount
-    : input.overflowPolicy === "continue_weekly"
+  const sessionCount = input.selectedDateCount === 0
+    ? baseCounts.length
+    : shouldRepeat
+      ? input.selectedDateCount
+      : input.overflowPolicy === "continue_weekly"
       ? baseCounts.length
       : Math.min(baseCounts.length, input.selectedDateCount);
   if (sessionCount > maximumSessionCount) {

@@ -16,6 +16,13 @@ const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
 
+export function hasVocabScheduleDates(input: {
+  scheduleEnabled?: boolean;
+  schedule: Pick<VocabScheduleDraft, "weekdays">;
+}) {
+  return input.scheduleEnabled !== false && input.schedule.weekdays.length > 0;
+}
+
 export type VocabScheduleCounts = {
   baseSessionCount: number | null;
   currentScheduleCount: number;
@@ -39,8 +46,8 @@ export function resolveVocabScheduleCounts(input: {
   const baseSessionCount = (input.requiresExtraDateDecision
     ? input.extraDateDecisionSessionCount ?? input.defaultSessionCount
     : input.defaultSessionCount) ?? null;
-  const currentScheduleCount = !input.scheduleEnabled
-    ? 1
+  const currentScheduleCount = !input.scheduleEnabled || input.slotCount === 0
+    ? input.distribution === "repeat" ? 1 : baseSessionCount ?? 0
     : input.distribution === "repeat"
       ? input.slotCount
       : baseSessionCount === null ? input.slotCount : Math.min(input.slotCount, baseSessionCount);

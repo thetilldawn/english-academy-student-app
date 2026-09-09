@@ -48,6 +48,46 @@ const exam: ExamSettings = {
   timing: { mode: "total", totalSeconds: 300 },
 };
 
+describe("날짜 없는 단어 수 분할", () => {
+  it.each([
+    [320, 100, [100, 100, 100, 20]],
+    [120, 20, [20, 20, 20, 20, 20, 20]],
+    [118, 20, [20, 20, 20, 20, 20, 18]],
+    [601, 100, [100, 100, 100, 100, 100, 97, 4]],
+    [101, 100, [97, 4]], [102, 100, [98, 4]], [103, 100, [99, 4]],
+  ] as const)("%i개를 %i개씩 날짜 없이 전량 배정한다", (total, perSession, expected) => {
+    const result = resolveVocabQuestionCycleAllocation({
+      availableQuestionCount: total, distribution: "split", questionCount: { mode: "manual", value: perSession },
+      selectedDateCount: 0, overflowPolicy: "leave", extraDatePolicy: "unconfirmed",
+    });
+    expect(result.issue).toBeNull(); expect(result.sessionQuestionCounts).toEqual(expected);
+    expect(result.scheduledQuestionCount).toBe(total); expect(result.remainingQuestionCount).toBe(0);
+  });
+  it("전체 사용도500상한으로 전량 배정하고 불가능한 최소문항 조합은 거부한다", () => {
+    const base = { distribution: "split" as const, selectedDateCount: 0, overflowPolicy: "leave" as const, extraDatePolicy: "unconfirmed" as const };
+    expect(resolveVocabQuestionCycleAllocation({ ...base, availableQuestionCount: 601, questionCount: { mode: "all" } }).sessionQuestionCounts).toEqual([500, 101]);
+    for (const count of [0, 1, 2, 3]) expect(resolveVocabQuestionCycleAllocation({ ...base, availableQuestionCount: count, questionCount: { mode: "all" } }).issue).toBe("invalid_available_count");
+    expect(resolveVocabQuestionCycleAllocation({ ...base, availableQuestionCount: 4, questionCount: { mode: "manual", value: 4 } }).sessionQuestionCounts).toEqual([4]);
+    expect(resolveVocabQuestionCycleAllocation({ ...base, availableQuestionCount: 5, questionCount: { mode: "manual", value: 4 } }).issue).toBe("insufficient_for_selected_dates");
+    expect(splitVocabTargetPoolPreparationCounts(5, 4)).toEqual([]);
+    expect(resolveVocabQuestionCycleAllocation({ ...base, availableQuestionCount: 840, questionCount: { mode: "manual", value: 4 } }).sessionQuestionCounts).toHaveLength(210);
+    expect(resolveVocabQuestionCycleAllocation({ ...base, availableQuestionCount: 844, questionCount: { mode: "manual", value: 4 } }).issue).toBe("series_session_limit_exceeded");
+  });
+  it("작은 잔여를 포함한 가능한 분할은 원래 합계·최소4·회차상한을 모두 지킨다", () => {
+    for (const maximum of [4, 5, 20, 100, 500]) {
+      for (let total = 4; total <= 650; total++) {
+        const counts = splitVocabTargetPoolPreparationCounts(total, maximum);
+        const possible = Math.ceil(total / maximum) * 4 <= total;
+        expect(counts.length > 0, `${total}/${maximum}`).toBe(possible);
+        if (possible) {
+          expect(counts.reduce((a, b) => a + b, 0)).toBe(total);
+          expect(counts.every(count => count >= 4 && count <= maximum)).toBe(true);
+        }
+      }
+    }
+  });
+});
+
 function targetSetCanMeetEnglishCount(
   ids: readonly number[],
   englishCount: number,

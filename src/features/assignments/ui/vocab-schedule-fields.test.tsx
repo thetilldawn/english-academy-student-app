@@ -20,6 +20,7 @@ import { vocabUnitAllocationView } from "../presentation/vocab-question-view";
 function AllocationHarness({ value }: { value: VocabAssignmentScreenController }) {
   return <VocabUnitAllocationFields view={vocabUnitAllocationView({
     assignmentMode: value.planner.assignmentMode, scheduleEnabled: value.planner.scheduleEnabled,
+    questionCountMode: value.planner.questionCountMode,
     defaultSessionCount: value.unitAllocation?.defaultSessionCount ?? 0,
     remainingUnitIds: value.unitAllocation?.remainingUnitIds ?? [], selectedUnits: value.selectedUnits,
   })} unitsPerSession={value.planner.unitsPerSession} overflowPolicy={value.planner.overflowPolicy}
@@ -344,7 +345,8 @@ describe("VocabScheduleFields", () => {
 
     expect(screen.queryByText("회차별 시간")).not.toBeInTheDocument();
     expect(screen.queryByText(/배정 합계/)).not.toBeInTheDocument();
-    expect(screen.getByText("가능한 배정 3회")).toBeVisible();
+    expect(screen.getByText("날짜 없이 3회 배정")).toBeVisible();
+    expect(screen.getByText("요일을 선택하지 않으면 날짜 없이 순서대로 배정합니다.")).toBeVisible();
   });
 
   it("미리보기가 없어도 현재 선택한 단어장을 일정 태그에 표시한다", () => {

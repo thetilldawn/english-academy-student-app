@@ -1,4 +1,6 @@
 import type { AssignmentDraftIssue } from "./validation";
+import { vocabContinueWeeklyDisabledReason } from "./vocab-assignment-contract";
+import { hasVocabScheduleDates } from "./vocab-schedule";
 import type {
   VocabQuestionCountChoice,
   VocabRangeDistribution,
@@ -44,6 +46,7 @@ export function validateVocabPlannerInputs(input: {
   scheduleSlots: readonly VocabScheduleSlot[];
 }): AssignmentDraftIssue[] {
   const issues: AssignmentDraftIssue[] = [];
+  const usesDates = hasVocabScheduleDates(input);
   if (!input.datasetId) {
     issues.push({
       code: "required",
@@ -70,14 +73,12 @@ export function validateVocabPlannerInputs(input: {
       message: "단어 수는 4개부터 500개까지 입력해 주세요.",
     });
   }
-  if (
-    input.overflowPolicy === "continue_weekly" &&
-    input.distribution !== "split"
-  ) {
+  const overflowReason = vocabContinueWeeklyDisabledReason(input);
+  if (input.overflowPolicy === "continue_weekly" && overflowReason) {
     issues.push({
       code: "invalid_order",
       path: "commonPlan.overflowPolicy",
-      message: "같은 요일로 이어서는 회차별 또는 단어 수 배정에서 선택할 수 있습니다.",
+      message: overflowReason,
     });
   }
   if (
@@ -133,22 +134,15 @@ export function validateVocabPlannerInputs(input: {
       message: "출제 단어 선택 방식을 골라 주세요.",
     });
   }
-  if (input.scheduleEnabled !== false && !isCalendarDate(input.schedule.startDate)) {
+  if (usesDates && !isCalendarDate(input.schedule.startDate)) {
     issues.push({
       code: "invalid_datetime",
       path: "commonPlan.schedule.startDate",
       message: "배정 기준일을 확인해 주세요.",
     });
   }
-  if (input.scheduleEnabled !== false && input.schedule.weekdays.length === 0) {
-    issues.push({
-      code: "required",
-      path: "commonPlan.sessions",
-      message: "배정할 요일을 하나 이상 선택해 주세요.",
-    });
-  }
   if (
-    input.scheduleEnabled !== false &&
+    usesDates &&
     input.schedule.availableTimeEnabled !== false &&
     !TIME_PATTERN.test(input.schedule.availableTime)
   ) {
@@ -159,7 +153,7 @@ export function validateVocabPlannerInputs(input: {
     });
   }
   if (
-    input.scheduleEnabled !== false &&
+    usesDates &&
     (!Number.isInteger(input.schedule.deadlineDayOffset) ||
     input.schedule.deadlineDayOffset < 0 ||
     input.schedule.deadlineDayOffset > 30)
@@ -170,14 +164,14 @@ export function validateVocabPlannerInputs(input: {
       message: "마감일은 당일부터 30일 뒤까지 선택해 주세요.",
     });
   }
-  if (input.scheduleEnabled !== false && !TIME_PATTERN.test(input.schedule.deadlineTime)) {
+  if (usesDates && !TIME_PATTERN.test(input.schedule.deadlineTime)) {
     issues.push({
       code: "invalid_datetime",
       path: "commonPlan.schedule.deadlineTime",
       message: "마감 시각을 확인해 주세요.",
     });
   }
-  if (input.scheduleEnabled !== false) input.scheduleSlots.forEach((slot, index) => {
+  if (usesDates) input.scheduleSlots.forEach((slot, index) => {
     const availableValid = isLocalDateTime(slot.availableLocalDateTime);
     const deadlineValid = isLocalDateTime(slot.deadlineLocalDateTime);
     if (!availableValid) {
