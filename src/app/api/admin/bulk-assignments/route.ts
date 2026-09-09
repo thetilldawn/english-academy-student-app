@@ -1,10 +1,10 @@
 import { getAdminContext } from "@/lib/auth/admin";
-import { privateJsonError, isSameOriginRequest, parseJson } from "@/lib/http";
+import { privateJsonError, isSameOriginRequest } from "@/lib/http";
 import {
   BulkAssignmentError,
   createBulkAssignments,
 } from "@/features/assignments/server/use-cases/bulk-assignment-service";
-import { bulkAssignmentSchema } from "@/features/assignments/contracts/bulk-assignment-request";
+import { bulkAssignmentInputError, bulkAssignmentSchema } from "@/features/assignments/contracts/bulk-assignment-request";
 
 export const maxDuration = 300;
 
@@ -16,10 +16,13 @@ export async function POST(request: Request) {
   if (!admin) {
     return privateJsonError("관리자 로그인이 필요합니다.", 401);
   }
-  const input = await parseJson(request, bulkAssignmentSchema);
-  if (!input) {
-    return privateJsonError("일괄 배정 조건을 확인해 주세요.", 400);
+  const parsed = bulkAssignmentSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    const issue = bulkAssignmentInputError(parsed.error);
+    return privateJsonError(issue?.message ?? "일괄 배정 조건을 확인해 주세요.", 400,
+      issue ? { code: issue.code, fieldPath: issue.fieldPath } : {});
   }
+  const input = parsed.data;
 
   try {
     const assignments = await createBulkAssignments(input, admin);

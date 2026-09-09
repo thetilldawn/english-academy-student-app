@@ -282,10 +282,11 @@ export function useBulkAssignmentController({
           accepted.preview.revision === identity.revision &&
           accepted.preview.fingerprint === identity.fingerprint &&
           accepted.preview.value === value) {
+        setSubmissionIssue(null);
         rememberCapacity(accepted.draft, value);
       }
     },
-    [apply, rememberCapacity],
+    [apply, rememberCapacity, setSubmissionIssue],
   );
   const handlePreviewFailed = useCallback(
     (
@@ -308,8 +309,16 @@ export function useBulkAssignmentController({
         fingerprint: identity.fingerprint,
         message: error.message,
       });
+      const accepted = stateRef.current;
+      if (accepted.preview.status === "error" &&
+          accepted.preview.revision === identity.revision &&
+          accepted.preview.requestId === identity.requestId) {
+        setSubmissionIssue(error.fieldPath ? {
+          code: "invalid_order", path: error.fieldPath, message: error.message,
+        } : null);
+      }
     },
-    [apply, clearCapacity],
+    [apply, clearCapacity, setSubmissionIssue],
   );
   useDebouncedAssignmentPreview({
     delayMs: previewDelayMs,

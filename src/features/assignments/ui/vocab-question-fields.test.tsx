@@ -8,7 +8,7 @@ function props(): VocabQuestionFieldsProps {
   return { assignmentMode: "word_count", questionCountMode: "all", selectionMode: "source_order",
     unitsPerSession: 5, overflowPolicy: "leave", fieldErrors: {},
     countView: { allCountLabel: "전체 사용 · 86개", canRetry: false, countSummary: "단어 수 확인", manualActivationCount: 86, manualCountValue: 86 },
-    unitView: { visible: true, showUnitsPerSession: false, showOverflow: false, summary: null },
+    unitView: { visible: true, showUnitsPerSession: false, continueWeeklyDisabledReason: null, showOverflow: false, summary: null },
     onAssignmentModeChange: vi.fn(), onSelectionModeChange: vi.fn(), onUnitsPerSessionChange: vi.fn(),
     onOverflowPolicyChange: vi.fn(), onActivateManualCount: vi.fn(), onManualCountChange: vi.fn(), onSelectAllCount: vi.fn() };
 }
@@ -25,7 +25,7 @@ it("제어기 없이 모드/수량/선택/전체 동작을 개별 전달한다",
 });
 it("단어 수 입력은 남은 범위 설정보다 먼저 나온다", () => {
   const p = props();
-  p.unitView = { ...p.unitView, showOverflow: true };
+  p.unitView = { ...p.unitView, continueWeeklyDisabledReason: null, showOverflow: true };
   render(<VocabQuestionFields {...p} />);
   const mode = screen.getByRole("group", { name: "배정 방식" });
   const input = screen.getByRole("textbox", { name: "회차당 단어 수" });

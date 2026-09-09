@@ -81,6 +81,8 @@ export function VocabUnitAllocationFields({
             </Button>
             <Button
               aria-pressed={overflowPolicy === "continue_weekly"}
+              aria-describedby={view.continueWeeklyDisabledReason ? "vocab-overflow-policy-help" : undefined}
+              disabled={Boolean(view.continueWeeklyDisabledReason)}
               onClick={() => onOverflowPolicyChange("continue_weekly")}
               size="small"
               variant="filter"
@@ -88,6 +90,11 @@ export function VocabUnitAllocationFields({
               같은 요일로 이어서
             </Button>
           </div>
+          {view.continueWeeklyDisabledReason ? (
+            <small id="vocab-overflow-policy-help" aria-live="polite">
+              {view.continueWeeklyDisabledReason} 전체 사용에서는 ‘가능한 범위까지만’으로 배정합니다.
+            </small>
+          ) : null}
           {overflowError ? (
             <FieldError id="vocab-overflow-policy-error">
               {overflowError}

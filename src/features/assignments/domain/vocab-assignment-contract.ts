@@ -49,6 +49,33 @@ export function resolveVocabAssignmentMode(
       return { distribution: "split", splitBasis: "question_count" };
   }
 }
+
+export const vocabOverflowMessages = {
+  requiresSplit: "같은 요일로 이어서는 회차별 또는 단어 수 배정에서 선택할 수 있습니다.",
+  requiresManualCount: "회차당 단어 수를 먼저 입력해 주세요.",
+} as const;
+
+export function vocabContinueWeeklyDisabledReason(input: {
+  distribution: VocabRangeDistribution;
+  splitBasis: VocabSplitBasis;
+  questionCount: Pick<VocabQuestionCountChoice, "mode">;
+}): string | null {
+  if (input.distribution !== "split") return vocabOverflowMessages.requiresSplit;
+  return input.splitBasis === "question_count" && input.questionCount.mode !== "manual"
+    ? vocabOverflowMessages.requiresManualCount : null;
+}
+
+export function normalizeVocabOverflowPolicy(input: {
+  assignmentMode: VocabAssignmentMode;
+  questionCountMode: VocabQuestionCountChoice["mode"];
+  overflowPolicy: VocabSplitOverflowPolicy;
+}): VocabSplitOverflowPolicy {
+  return input.overflowPolicy === "continue_weekly" && vocabContinueWeeklyDisabledReason({
+    ...resolveVocabAssignmentMode(input.assignmentMode),
+    questionCount: { mode: input.questionCountMode },
+  }) !== null ? "leave" : input.overflowPolicy;
+}
+
 export type VocabSeriesTarget = {
   id: number;
   eligibleDirections: readonly VocabTargetDirection[];
