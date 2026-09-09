@@ -27,6 +27,7 @@ describe("단어장 음성·학습 표시", () => {
   });
   it("완성 예문과 단어 발음을 보여주고 단어 스피커만 만든다", async () => {
     const view = render(<AssignmentStudyReader study={study} presentation="page" />);
+    expect(screen.getByText(/이 시험에 배정된 학습 단어 1개/)).toHaveTextContent("단어장 전체 수록 수와 다를 수 있습니다.");
     expect(screen.getByText("collected").closest("p")).toHaveTextContent("She collected the letters.");
     expect(screen.queryByText("모으다")).toBeNull();
     expect(screen.getAllByRole("button", { name: /단어 발음 듣기/u })).toHaveLength(1);

@@ -194,6 +194,19 @@ describe("assignment response adapters", () => {
     expect(parseBulkAssignmentPreviewResponse(response)).toStrictEqual(
       response,
     );
+    const breakdown = { sourceCount: 118, outsideCandidateListCount: 6, activeReviewExcludedCount: 1,
+      directionExcludedCount: 1, choiceExcludedCount: 1, allocationExcludedCount: 1, availableCount: 108 };
+    const withCounts = (countBreakdown: unknown, uniqueScheduledQuestionCount = 40, totalAvailableQuestionCount = 108) => ({
+      ...response, items: [{ ...response.items[0], countBreakdown, uniqueScheduledQuestionCount, totalAvailableQuestionCount }],
+    });
+    expect(parseBulkAssignmentPreviewResponse(withCounts(breakdown)).items[0]?.countBreakdown).toEqual(breakdown);
+    expect(parseBulkAssignmentPreviewResponse(withCounts(null)).items[0]?.countBreakdown).toBeNull();
+    expect(() => parseBulkAssignmentPreviewResponse(withCounts({ ...breakdown, sourceCount: 117 }))).toThrow();
+    expect(() => parseBulkAssignmentPreviewResponse(withCounts({ ...breakdown, sourceWords: ["private"] }))).toThrow();
+    expect(() => parseBulkAssignmentPreviewResponse(withCounts(breakdown, 41))).toThrow();
+    expect(() => parseBulkAssignmentPreviewResponse(withCounts(breakdown, 40, 107))).toThrow();
+    // Repeated sessions may use more distinct targets than the balanced single-cycle limit.
+    expect(parseBulkAssignmentPreviewResponse(withCounts(null, 12, 9)).items[0]?.uniqueScheduledQuestionCount).toBe(12);
     expect(parseBulkAssignmentPreviewResponse({
       ...response,
       blockedCount: 1,

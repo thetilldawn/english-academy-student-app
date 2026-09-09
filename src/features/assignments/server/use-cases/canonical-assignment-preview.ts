@@ -1,4 +1,6 @@
 import "server-only";
+import { checkedAssignmentCountBreakdown } from "../../domain/assignment-count-breakdown";
+import { loadSelectedVocabularyRowCount } from "../queries/bulk-assignment-planning-query";
 import { z } from "zod";
 import { assignmentQuestionModeErrors, assignmentQuestionModeIssues } from "../../domain/assignment-question-mode-policy";
 import { cataloguedDatasetDisplayLabel } from "@/lib/admin/dataset-catalog";
@@ -11,7 +13,7 @@ import { resolveVocabQuestionCycleAllocation } from "../../domain/vocab-question
 import type { AdminContext } from "@/lib/auth/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { BulkAssignmentPreviewInput } from "../../contracts/bulk-assignment-request";
-import type { BulkAssignmentPreview, BulkAssignmentPreviewItem, BulkAssignmentPreviewSession } from "../../contracts/bulk-assignment-response";
+import type { BulkAssignmentPreview, BulkAssignmentPreviewFieldKey, BulkAssignmentPreviewItem, BulkAssignmentPreviewSession } from "../../contracts/bulk-assignment-response";
 import { loadCommonBulkAssignmentPlanningData, type CommonBulkAssignmentPlanningData } from "../queries/bulk-assignment-planning-query";
 import { resolvedBulkPlanSha256 } from "../planning/bulk-assignment-plan-digest";
 import { commonPlanSchedule, extendCommonPlanSchedule, buildCommonPlanSummary } from "../planning/bulk-session-layout";
@@ -79,8 +81,8 @@ export async function resolveCanonicalBulkAssignmentPreview(
 ): Promise<CanonicalResolvedBulkAssignmentPreview> {
   const plan = input.commonPlan;
   const issues = assignmentQuestionModeIssues(input.questionMode, input.englishToKoreanRatio, plan);
-  if (issues.direction || issues.schedule) {
-    throw new BulkAssignmentError("invalid_selection", issues.direction ? assignmentQuestionModeErrors.direction : assignmentQuestionModeErrors.serverSchedule);
+  if (issues.direction) {
+    throw new BulkAssignmentError("invalid_selection", assignmentQuestionModeErrors.direction);
   }
   const planning = preparedPlanning ?? await loadCommonBulkAssignmentPlanningData(
     { datasetId: plan.datasetId, studentIds: input.studentIds }, admin);
@@ -92,6 +94,11 @@ export async function resolveCanonicalBulkAssignmentPreview(
   const datasetLabel = planning.dataset ? cataloguedDatasetDisplayLabel(planning.dataset) : null;
   let selectedUnits: typeof planning.units = [];
   let planningError: string | null = null;
+  let planningErrorFieldKey: BulkAssignmentPreviewFieldKey = "range";
+  const failPlanning = (field: BulkAssignmentPreviewFieldKey, message: string): never => {
+    planningErrorFieldKey = field;
+    throw new Error(message);
+  };
   try { selectedUnits = resolveOrderedUnitSelection(planning.units, plan.orderedUnitIds); }
   catch { planningError = "선택한 시험 범위를 사용할 수 없습니다."; }
   const unitRank = new Map(selectedUnits.map((unit,index)=>[unit.id,index]));
@@ -103,6 +110,15 @@ export async function resolveCanonicalBulkAssignmentPreview(
   const eligibleIds = new Set(eligible.map(c => c.id));
   const usable = candidates.filter(c => eligibleIds.has(c.vocab_entry_id));
   const availableCount = eligible.length;
+  const countBreakdown = ready && !planningError ? checkedAssignmentCountBreakdown({
+    sourceCount: await loadSelectedVocabularyRowCount(plan.datasetId, selectedUnits.map(unit => unit.id)),
+    candidateCount: targetCandidates(candidates).length,
+    activeReviewExcludedCount: 0,
+    directionExcludedCount: targetCandidates(candidates).length - availableCount,
+    choiceExcludedCount: 0,
+    allocationExcludedCount: 0,
+    availableCount,
+  }) : null;
   const maximumCount = Math.min(availableCount, 500);
   let schedule = commonPlanSchedule(input);
   let defaultSessionCount = 1;
@@ -111,7 +127,7 @@ export async function resolveCanonicalBulkAssignmentPreview(
   let sessionUnits: typeof planning.units[] = [];
   let counts: number[] = [];
   try {
-    if (!ready) throw new Error("현재 배정할 수 없는 단어장입니다.");
+    if (!ready) failPlanning("dataset", "현재 배정할 수 없는 단어장입니다.");
     if (planningError) throw new Error(planningError);
     if (availableCount < 4) throw new Error("선택한 범위에 검토된 문제가 4개보다 적습니다.");
     if (plan.splitBasis === "range_unit") {
@@ -124,7 +140,7 @@ export async function resolveCanonicalBulkAssignmentPreview(
         const selected = new Set(units.map(u => u.id));
         const capacity = new Set(usable.filter(c => selected.has(c.unit_id)).map(c => c.vocab_entry_id)).size;
         const count = plan.questionCount.mode === "all" ? Math.min(capacity, 500) : plan.questionCount.value;
-        if (count < 4 || count > Math.min(capacity, 500)) throw new Error(`현재 회차는 검토된 문제를 최대 ${Math.min(capacity, 500)}개까지 배정할 수 있습니다.`);
+        if (count < 4 || count > Math.min(capacity, 500)) failPlanning("range", `현재 회차는 검토된 문제를 최대 ${Math.min(capacity, 500)}개까지 배정할 수 있습니다. 회차당 단위 수를 늘리거나 범위를 조정해 주세요.`);
         return count;
       });
     } else {
@@ -133,8 +149,9 @@ export async function resolveCanonicalBulkAssignmentPreview(
         selectedDateCount: plan.selectedDateCount, overflowPolicy: plan.overflowPolicy, extraDatePolicy: plan.extraDatePolicy,
         maximumSessionQuestionCount: maximumCount, maximumSessionCount: MAXIMUM_BULK_ASSIGNMENT_COUNT,
       });
-      if (allocation.issue) throw new Error(allocation.issue === "missing_schedule"
-        ? "배정할 요일을 선택해 주세요."
+      if (allocation.issue) failPlanning(allocation.issue === "series_session_limit_exceeded" ? "preview" : plan.questionCount.mode === "manual" ? "questionCount" : "range", allocation.issue === "series_session_limit_exceeded"
+        ? `한 번에 배정할 수 있는 시험은 ${MAXIMUM_BULK_ASSIGNMENT_COUNT}회까지입니다. 회차당 단어 수를 늘리거나 범위를 줄여 주세요.`
+        : allocation.issue === "missing_schedule" ? "배정할 요일을 선택해 주세요."
         : `회차별 단어 수와 날짜를 확인해 주세요. 한 회차에는 최대 ${maximumCount}개까지 배정할 수 있습니다.`);
       counts = allocation.sessionQuestionCounts;
       cycleIndexes = allocation.sessionCycleIndexes;
@@ -143,10 +160,10 @@ export async function resolveCanonicalBulkAssignmentPreview(
       schedule = extendCommonPlanSchedule(schedule, plan.recurrenceSessions, counts.length);
       sessionUnits = counts.map(() => selectedUnits);
     }
-    if (counts.length !== schedule.length || counts.length === 0 ||
-        counts.length * input.studentIds.length > MAXIMUM_BULK_ASSIGNMENT_COUNT ||
+    if (counts.length !== schedule.length || counts.length === 0) failPlanning("preview", "배정할 회차와 일정의 개수를 확인해 주세요.");
+    if (counts.length * input.studentIds.length > MAXIMUM_BULK_ASSIGNMENT_COUNT ||
         counts.reduce((a,b) => a+b,0) * input.studentIds.length > MAXIMUM_BULK_QUESTION_COUNT) {
-      throw new Error("배정할 회차와 일정의 개수를 확인해 주세요.");
+      failPlanning("preview", "한 번에 배정할 수 있는 시험은 전체 210회, 문항은 전체 10,000개까지입니다. 학생이나 범위·회차 수를 줄여 주세요.");
     }
   } catch (error) { planningError = error instanceof Error ? error.message : "시험 회차를 계산하지 못했습니다."; }
   const candidateByKey = new Map(usable.map(c => [`${c.vocab_entry_id}:${c.direction}`, c]));
@@ -156,13 +173,15 @@ export async function resolveCanonicalBulkAssignmentPreview(
   const items = input.studentIds.map((studentId): BulkAssignmentPreviewItem => {
     const student = studentById.get(studentId);
     const itemBase = { studentId, studentName: student?.displayName ?? "확인할 수 없는 학생",
+      countBreakdown,
       datasetId: plan.datasetId, datasetLabel, availableQuestionCount: availableCount,
       totalAvailableQuestionCount: availableCount, maximumSessionQuestionCount: maximumCount,
       selectedQuestionCount: 0, remainingQuestionCount: availableCount, defaultSessionCount,
       scheduledQuestionCount: 0, requiresExtraDateDecision };
-    const error = !student || student.status !== "active" ? "접속 가능한 학생이 아닙니다." : planningError;
+    const studentUnavailable = !student || student.status !== "active";
+    const error = studentUnavailable ? "접속 가능한 학생이 아닙니다." : planningError;
     if (error) return { ...itemBase, available: false, sessions: [], error,
-      errorFieldKey: error.includes("회차") ? "questionCount" : "range" };
+      errorFieldKey: studentUnavailable ? "students" : planningErrorFieldKey };
     const targets: PlannedVocabSeriesTarget[][] = counts.map(() => []);
     if (plan.splitBasis === "range_unit") {
       sessionUnits.forEach((units, index) => {
@@ -206,6 +225,7 @@ export async function resolveCanonicalBulkAssignmentPreview(
     const scheduledCount = counts.reduce((a,b) => a+b,0);
     const selectedCount = plan.distribution === "split" ? Math.min(availableCount, scheduledCount) : counts[0] ?? 0;
     return { ...itemBase, available:true,sessions,error:null,selectedQuestionCount:selectedCount,
+      uniqueScheduledQuestionCount: new Set(targets.flat().map(target => target.id)).size,
       remainingQuestionCount:Math.max(0,availableCount-selectedCount),scheduledQuestionCount:scheduledCount };
   });
   const valid = [...canonicalPlansByStudent.values()].flat(2);

@@ -85,6 +85,11 @@ export function BulkSeriesPreview({
     message ? "bulk-series-preview-message" : null,
     previewErrorMessages.length > 0 ? "bulk-series-preview-errors" : null,
   ].filter(Boolean).join(" ") || undefined;
+  const completeItems = items.length > 0 && !previewLoading && items.every(item => item.available && !item.error &&
+    item.sessions.length > 0 && item.sessions.every(session => session.available && !session.error));
+  const totalSessions = completeItems ? items.reduce((sum, item) => sum + item.sessions.length, 0) : null;
+  const totalQuestions = completeItems ? items.reduce((sum, item) =>
+    sum + item.sessions.reduce((count, session) => count + session.questionCount, 0), 0) : null;
 
   return (
     <section
@@ -110,6 +115,12 @@ export function BulkSeriesPreview({
           </HelpTip>
         </h3>
       </div>
+
+      {items.length > 1 ? <p className={styles.planCounts} aria-live="polite">
+        {completeItems
+          ? `전체 ${items.length}명 · ${totalSessions}회 · ${totalQuestions}문항 (반복 포함)`
+          : "전체 합계는 모든 학생의 조건을 확인한 뒤 표시합니다."}
+      </p> : null}
 
       {!preview ? (
         <div className={styles.previewList}>
@@ -149,10 +160,6 @@ export function BulkSeriesPreview({
             <MetaTagList>{items.filter(item => normalStudentIds?.has(item.studentId)).map(item => <MetaTag key={item.studentId}>{item.studentName}</MetaTag>)}</MetaTagList>
           </div>
           <small>{commonPlanTitle}</small>
-          <p className={styles.planCounts}>
-            배정 {summary.selectedQuestionCount}개 · 남음{" "}
-            {summary.remainingQuestionCount}개
-          </p>
           {representative ? <BulkPreviewSessionList item={representative} /> : null}
         </article>
       ) : null}

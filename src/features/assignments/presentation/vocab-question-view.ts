@@ -1,11 +1,12 @@
 import type { AssignmentUnitItem } from "../catalog-types";
 import type { VocabAssignmentMode, VocabRangeDistribution } from "../domain/vocab-assignment-contract";
+import { resolveVocabAssignmentMode, vocabContinueWeeklyDisabledReason } from "../domain/vocab-assignment-contract";
 import { assignmentUnitRangeLabel } from "./assignment-unit-range-label";
 import type { BulkPlanAudience } from "./bulk-plan-audience";
 import type { BulkCapacitySummary } from "../application/bulk-capacity-summary";
 
 export type VocabQuestionView = { countSummary: string; allCountLabel: string; canRetry: boolean; manualActivationCount: number; manualCountValue: number | "" };
-export type VocabUnitAllocationView = { visible: boolean; showUnitsPerSession: boolean; showOverflow: boolean; summary: string | null };
+export type VocabUnitAllocationView = { visible: boolean; showUnitsPerSession: boolean; showOverflow: boolean; continueWeeklyDisabledReason: string | null; summary: string | null };
 
 export function vocabQuestionView(input: {
   audience: BulkPlanAudience;
@@ -16,6 +17,7 @@ export function vocabQuestionView(input: {
   questionCountMode: "all" | "manual";
   manualQuestionCount: number;
   previewState: "unselected" | "loading" | "blocked" | "error" | "ready";
+  diagnosticsUnavailable?: boolean;
 }): VocabQuestionView {
   // Retained capacity never supplies assigned counts or submission readiness.
   const reference = input.previewState === "ready" ? input.audience.reference : null;
@@ -30,7 +32,6 @@ export function vocabQuestionView(input: {
   const defaultSessionCount = capacity?.defaultSessionCount ??
     reference?.defaultSessionCount ?? input.defaultSessionCount;
   const selectedQuestionCount = reference?.selectedQuestionCount ?? 0;
-  const remainingQuestionCount = reference?.remainingQuestionCount ?? 0;
   const countSummary = input.previewState === "unselected"
     ? "시험 범위를 선택해 주세요."
     : input.capacity?.status === "different" &&
@@ -38,7 +39,7 @@ export function vocabQuestionView(input: {
     ? "학생별 출제 가능 단어 수와 회차가 다릅니다. 아래 미리보기에서 확인해 주세요."
     : capacity && !reference
     ? [
-        availableQuestionCount === null ? "전체 가능 단어 수는 다시 확인해 주세요." : `전체 출제 가능 ${availableQuestionCount}개`,
+        availableQuestionCount === null ? "전체 가능 단어 수는 다시 확인해 주세요." : `한 번씩 나눌 때 출제 가능 ${availableQuestionCount}개`,
         maximumSessionQuestionCount === null ? null : `회차당 최대 ${maximumSessionQuestionCount}개`,
         defaultSessionCount === null ? null : `가능한 배정 ${defaultSessionCount}회`,
         input.previewState === "loading" ? "일정을 다시 확인하는 중입니다." : null,
@@ -56,18 +57,20 @@ export function vocabQuestionView(input: {
       ? `회차당 최대 ${maximumSessionQuestionCount}개 · 전체 가능 단어 수는 다시 확인해 주세요.`
       : "출제 가능 단어 수를 확인하지 못했습니다. 아래 미리보기 안내를 확인해 주세요."
     : input.distribution === "repeat"
-      ? `전체 출제 가능 ${availableQuestionCount}개 · 회차당 최대 ${maximumSessionQuestionCount ?? 500}개 · 회차당 배정 ${selectedQuestionCount}개`
+      ? `한 번씩 나눌 때 출제 가능 ${availableQuestionCount}개 · 회차당 최대 ${maximumSessionQuestionCount ?? 500}개 · 회차당 배정 ${selectedQuestionCount}개`
       : input.assignmentMode === "per_session"
-        ? `출제 가능 ${availableQuestionCount}개 · 범위별 배정 · 기본 ${defaultSessionCount}회`
-        : `출제 가능 ${availableQuestionCount}개 · 배정 ${selectedQuestionCount}개 · 남음 ${remainingQuestionCount}개 · 기본 ${defaultSessionCount}회`;
+        ? `한 번씩 나눌 때 출제 가능 ${availableQuestionCount}개 · 범위별 배정 · 기본 ${defaultSessionCount}회`
+        : `한 번씩 나눌 때 출제 가능 ${availableQuestionCount}개 · 기본 ${defaultSessionCount}회`;
   const hasExceptions = reference !== null && input.audience.separateCount > 0;
   return {
     countSummary: hasExceptions
-      ? `공통 ${input.audience.sameCount}명 기준 · ${countSummary} · 다른 ${input.audience.separateCount}명은 아래 미리보기에서 확인해 주세요.`
-      : countSummary,
+      ? `공통 ${input.audience.sameCount}명 · 학생 1명 기준 · ${countSummary} · 다른 ${input.audience.separateCount}명은 아래 미리보기에서 확인해 주세요.`
+      : (input.audience.totalCount > 1 && reference ? "학생 1명 기준 · " : "") + countSummary + (reference?.scheduledQuestionCount != null
+        ? ` · 이번 배정 합계 ${reference.scheduledQuestionCount}문항 (반복 포함)` : ""),
     allCountLabel: availableQuestionCount === null ? "전체 사용"
       : hasExceptions ? "전체 사용 · 학생별 확인" : `전체 사용 · ${availableQuestionCount}개`,
-    canRetry: input.previewState === "error",
+    canRetry: input.previewState === "error" ||
+      (input.previewState === "ready" && input.diagnosticsUnavailable === true),
     manualActivationCount: input.manualQuestionCount > 0 ? input.manualQuestionCount
       : availableQuestionCount === null ? 0 : Math.min(500, maximumSessionQuestionCount ?? 500, availableQuestionCount),
     manualCountValue: input.questionCountMode === "manual" || input.manualQuestionCount > 0
@@ -78,6 +81,7 @@ export function vocabQuestionView(input: {
 
 export function vocabUnitAllocationView(input: {
   assignmentMode: VocabAssignmentMode;
+  questionCountMode: "all" | "manual";
   scheduleEnabled: boolean | undefined;
   defaultSessionCount: number | null;
   remainingUnitIds: readonly string[];
@@ -94,6 +98,10 @@ export function vocabUnitAllocationView(input: {
     visible: usesRangeUnits || input.assignmentMode === "word_count",
     showUnitsPerSession: usesRangeUnits,
     showOverflow: input.scheduleEnabled !== false,
+    continueWeeklyDisabledReason: vocabContinueWeeklyDisabledReason({
+      ...resolveVocabAssignmentMode(input.assignmentMode),
+      questionCount: { mode: input.questionCountMode },
+    }),
     summary: usesRangeUnits ? (input.defaultSessionCount === null
       ? "범위와 회차당 단위 수를 정해 주세요." : `기본 ${input.defaultSessionCount}회`) + (input.remainingUnitIds.length > 0
       ? ` · 남음 ${remainingRangeLabel} (${input.remainingUnitIds.length}단위)` : "") : null,

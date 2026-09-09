@@ -3,6 +3,7 @@ import type { VocabAssignmentPlannerController } from "../controller/use-vocab-a
 import type { VocabAssignmentFieldKey } from "../presentation/vocab-assignment-field-errors";
 import { buildBulkPlanAudience } from "../presentation/bulk-plan-audience";
 import { vocabQuestionView, vocabUnitAllocationView } from "../presentation/vocab-question-view";
+import { hasVocabScheduleDates } from "../domain/vocab-schedule";
 import type { AssignmentDatasetTriggerProps } from "./assignment-dataset-trigger";
 import { VocabQuestionFields } from "./vocab-question-fields";
 import { VocabRangeFields } from "./vocab-range-fields";
@@ -24,14 +25,15 @@ export function VocabQuestionSection({ controller, fieldErrors = {} }: Omit<Voca
     defaultSessionCount: controller.defaultSessionCount, distribution: controller.distribution,
     assignmentMode: planner.assignmentMode, questionCountMode: planner.questionCountMode,
     manualQuestionCount: planner.manualQuestionCount,
+    diagnosticsUnavailable: controller.bulk.preview?.items?.some(item => item.countBreakdown === null),
     previewState: controller.selectedUnits.length === 0 ? "unselected"
-      : controller.bulk.capacityError ? "error"
-      : controller.bulk.preview || (controller.bulk.capacityOnly && controller.bulk.capacity) ? "ready"
+      : controller.bulk.preview ? "ready"
       : controller.bulk.previewLoading ? "loading"
       : controller.bulk.state?.preview.status === "error" ? "error" : "blocked",
   });
   const unitView = vocabUnitAllocationView({
-    assignmentMode: planner.assignmentMode, scheduleEnabled: planner.scheduleEnabled,
+    assignmentMode: planner.assignmentMode, scheduleEnabled: hasVocabScheduleDates(planner),
+    questionCountMode: planner.questionCountMode,
     defaultSessionCount: controller.defaultSessionCount,
     remainingUnitIds: controller.unitAllocation?.remainingUnitIds ?? [],
     selectedUnits: controller.selectedUnits,

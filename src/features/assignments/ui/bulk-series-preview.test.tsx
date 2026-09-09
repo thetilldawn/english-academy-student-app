@@ -72,6 +72,20 @@ function previewProps(): Omit<BulkSeriesPreviewProps, "students"> {
 afterEach(cleanup);
 
 describe("BulkSeriesPreview", () => {
+  it("공통 학생 한 명의 회차 합계와 전체 학생 합계를 구분한다", () => {
+    const value = previewProps();
+    const sessions = [schedule, { ...schedule, sessionNumber: 2, sourceSessionNumber: 2 }];
+    value.preview!.items = value.preview!.items.map(item => ({ ...item, available: true, error: null, sessions }));
+    value.preview!.commonPlanSummary = { ...value.preview!.commonPlanSummary!,
+      normalStudentIds: ["student-a", "student-b", "student-c"], exceptionStudentIds: [], sessions };
+    const { rerender } = render(<BulkSeriesPreview {...value} students={[]} />);
+    expect(screen.getByText("전체 3명 · 6회 · 120문항 (반복 포함)")).toBeVisible();
+    expect(screen.getByText("학생 1명 기준")).toBeVisible();
+    expect(screen.getByText("이번 배정 합계 40문항 · 2회 (반복 포함)")).toBeVisible();
+    rerender(<BulkSeriesPreview {...value} previewLoading students={[]} />);
+    expect(screen.queryByText("전체 3명 · 6회 · 120문항 (반복 포함)")).toBeNull();
+    expect(screen.getByText("전체 합계는 모든 학생의 조건을 확인한 뒤 표시합니다.")).toBeVisible();
+  });
   it("최초 계산과 미선택을 작은 값만으로 구분한다", () => {
     const { rerender } = render(<BulkSeriesPreview preview={null} previewLoading message={null} students={[]} />);
     expect(screen.getByRole("status")).toHaveTextContent("실제 단어 수와 일정을 계산하고 있습니다.");
@@ -98,7 +112,7 @@ describe("BulkSeriesPreview", () => {
     expect(screen.getByText("학생 가")).toBeVisible();
     expect(screen.getByText("학생 나")).toBeVisible();
     expect(screen.getByText("학생 다 · 테스트고")).toBeVisible();
-    expect(screen.getByText("배정 40개 · 남음 46개")).toBeVisible();
+    expect(screen.getByText("이번 배정 합계 20문항 · 1회 (반복 포함)")).toBeVisible();
     expect(screen.getAllByText("1회차")).toHaveLength(2);
   });
 

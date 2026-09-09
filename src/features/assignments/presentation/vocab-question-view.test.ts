@@ -12,7 +12,7 @@ describe("수량 표시값", () => {
   it("전체 후보601과 회차당500을 분리하고 날짜 재계산 중에도 용량만 유지한다", () => {
     const capacity = { status: "ready" as const, totalAvailableQuestionCount: 601, maximumSessionQuestionCount: 500, defaultSessionCount: 7 };
     const ready = vocabQuestionView({ ...base, capacity, distribution: "repeat", assignmentMode: "all_sessions" });
-    expect(ready.countSummary).toContain("전체 출제 가능 601개 · 회차당 최대 500개");
+    expect(ready.countSummary).toContain("한 번씩 나눌 때 출제 가능 601개 · 회차당 최대 500개");
     expect(ready.manualCountValue).toBe(500);
     const loading = vocabQuestionView({ ...base, capacity, previewState: "loading" });
     expect(loading.countSummary).toContain("가능한 배정 7회");
@@ -44,13 +44,13 @@ describe("수량 표시값", () => {
     expect(zero.countSummary).toContain("출제 가능 0개");
     expect(zero.allCountLabel).toBe("전체 사용 · 0개");
     const common = vocabQuestionView({ ...base, audience: { ...base.audience, mode: "common", sameCount: 2, separateCount: 1, totalCount: 3 } });
-    expect(common.countSummary).toContain("공통 2명 기준");
+    expect(common.countSummary).toContain("공통 2명 · 학생 1명 기준");
     expect(common.countSummary).toContain("다른 1명");
   });
   it.each([
     ["all_sessions", "repeat", "회차당 최대 86개 · 전체 가능 단어 수는 다시 확인해 주세요."],
-    ["per_session", "split", "출제 가능 86개 · 범위별 배정 · 기본 3회"],
-    ["word_count", "split", "출제 가능 86개 · 배정 40개 · 남음 46개 · 기본 3회"],
+    ["per_session", "split", "한 번씩 나눌 때 출제 가능 86개 · 범위별 배정 · 기본 3회"],
+    ["word_count", "split", "한 번씩 나눌 때 출제 가능 86개 · 기본 3회"],
   ] as const)("%s의 기존 요약", (assignmentMode, distribution, expected) => {
     expect(vocabQuestionView({ ...base, assignmentMode, distribution }).countSummary).toBe(expected);
   });
@@ -74,18 +74,21 @@ describe("수량 표시값", () => {
 describe("단위 배분 표시", () => {
   const units = [1, 2, 3].map((n) => ({ id: `u${n}`, label: `DAY ${n}`, sortIndex: n }));
   it("날짜 없는5회 분할은 시각 선택 없이 회차를 표시한다", () => {
-    expect(vocabUnitAllocationView({ assignmentMode: "per_session", scheduleEnabled: false,
+    expect(vocabUnitAllocationView({ questionCountMode: 'all', assignmentMode: "per_session", scheduleEnabled: false,
       defaultSessionCount: 5, remainingUnitIds: [], selectedUnits: units }))
-      .toEqual({ visible: true, showUnitsPerSession: true, showOverflow: false, summary: "기본 5회" });
+      .toEqual({ visible: true, showUnitsPerSession: true, continueWeeklyDisabledReason: null, showOverflow: false, summary: "기본 5회" });
   });
   it("남은 범위의 역순을 정렬하지 않는다", () => {
-    expect(vocabUnitAllocationView({ assignmentMode: "per_session", scheduleEnabled: true,
+    expect(vocabUnitAllocationView({ questionCountMode: 'all', assignmentMode: "per_session", scheduleEnabled: true,
       defaultSessionCount: 3, remainingUnitIds: ["u3", "u2"], selectedUnits: units }).summary)
       .toBe("기본 3회 · 남음 DAY 3~DAY 2 (2단위)");
   });
   it.each(["all_sessions", "word_count"] as const)("%s에서 단위 수 요약을 숨긴다", (assignmentMode) => {
-    expect(vocabUnitAllocationView({ assignmentMode, scheduleEnabled: undefined,
+    expect(vocabUnitAllocationView({ questionCountMode: 'all', assignmentMode, scheduleEnabled: undefined,
       defaultSessionCount: 3, remainingUnitIds: [], selectedUnits: units }))
-      .toMatchObject({ visible: assignmentMode === "word_count", showUnitsPerSession: false, showOverflow: true, summary: null });
+      .toMatchObject({ visible: assignmentMode === "word_count", showUnitsPerSession: false,
+        continueWeeklyDisabledReason: assignmentMode === "word_count" ? "회차당 단어 수를 먼저 입력해 주세요."
+          : "같은 요일로 이어서는 회차별 또는 단어 수 배정에서 선택할 수 있습니다.",
+        showOverflow: true, summary: null });
   });
 });

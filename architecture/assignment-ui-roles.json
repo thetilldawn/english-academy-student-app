@@ -344,7 +344,7 @@
     {
       "path": "bulk-preview-session-list.tsx",
       "role": "pure",
-      "reason": "APP14: 회차 표시 결과만 받으며 공통 공개 안내 부품을 재사용",
+      "reason": "확정 회차와 검산된 수량 진단을 순수 표시하며 사용자 입력·요청·저장을 소유하지 않는다 (APP-20260910-01)",
       "allowedImports": [
         "../api/response-adapters",
         "./assignment-editor-fields",
@@ -353,7 +353,8 @@
         "@/content/ko/admin-learning",
         "@/design-system/primitives/badge/badge",
         "./assignment-session-release-tags",
-        "@/lib/admin/unit-range-display"
+        "@/lib/admin/unit-range-display",
+        "../presentation/bulk-count-view"
       ]
     },
     {
@@ -659,10 +660,11 @@
     {
       "path": "vocab-range-picker.tsx",
       "role": "assembly",
-      "reason": "수량과 범위의 명시 조립부; 수량/단위 실제 UI에는 좁은 입력만 전달",
+      "reason": "범위·수량을 좁은 입력으로 연결하고 실제 날짜 선택 여부로 일정 전용 옵션 표시",
       "allowedImports": [
         "../catalog-types",
         "../controller/use-vocab-assignment-planner",
+        "../domain/vocab-schedule",
         "../presentation/bulk-plan-audience",
         "../presentation/vocab-assignment-field-errors",
         "../presentation/vocab-question-view",

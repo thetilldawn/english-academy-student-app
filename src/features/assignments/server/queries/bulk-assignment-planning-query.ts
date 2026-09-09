@@ -28,6 +28,22 @@ type PlanningStudentRow = {
   status: "active" | "blocked";
 };
 
+/** Call only after the existing admin/material/selected-unit checks. No rows leave the server. */
+export async function loadSelectedVocabularyRowCount(datasetId: string, unitIds: readonly string[]): Promise<number | null> {
+  if (unitIds.length === 0) return null;
+  try {
+    const client = await createServerSupabaseClient();
+    const result = await client.from("vocab_entries")
+      .select("id", { count: "exact", head: true })
+      .eq("dataset_id", datasetId).in("unit_id", [...unitIds]);
+    return !result.error && Number.isSafeInteger(result.count) && result.count! >= 0
+      ? result.count : null;
+  } catch {
+    // Optional diagnostics fail visibly; do not turn a failed count into zero.
+    return null;
+  }
+}
+
 export class BulkAssignmentPlanningQueryError extends Error {
   constructor(message = "배정 검토 자료를 불러오지 못했습니다.") {
     super(message);

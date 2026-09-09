@@ -19,6 +19,17 @@ export function extendCommonPlanSchedule(
   recurrenceSchedule: CommonPlanInput["recurrenceSessions"],
   requiredSessionCount: number,
 ) {
+  const undated = schedule.length > 0 && recurrenceSchedule.length > 0 &&
+    [...schedule, ...recurrenceSchedule].every(
+      (slot) => slot.availableFrom === null && slot.availableUntil === null,
+    );
+  if (undated) {
+    return Array.from({ length: requiredSessionCount }, (_, index) => ({
+      sessionNumber: index + 1,
+      availableFrom: null,
+      availableUntil: null,
+    }));
+  }
   if (requiredSessionCount <= schedule.length) {
     return schedule.slice(0, requiredSessionCount);
   }
@@ -79,7 +90,9 @@ export function buildCommonPlanSummary(
     ) {
       continue;
     }
-    const signature = bulkPlanSignature(item);
+    // Equal plans can still have different student-specific exclusion reasons.
+    const signature = JSON.stringify([bulkPlanSignature(item), item.countBreakdown ?? null,
+      item.uniqueScheduledQuestionCount ?? null]);
     const group = groups.get(signature) ?? [];
     group.push(item);
     groups.set(signature, group);
@@ -115,6 +128,7 @@ export function buildCommonPlanSummary(
     remainingQuestionCount: representative.remainingQuestionCount,
     defaultSessionCount: representative.defaultSessionCount,
     scheduledQuestionCount: representative.scheduledQuestionCount,
+    uniqueScheduledQuestionCount: representative.uniqueScheduledQuestionCount ?? null,
     requiresExtraDateDecision:
       representative.requiresExtraDateDecision,
     sessions: representative.sessions.map((session) => ({

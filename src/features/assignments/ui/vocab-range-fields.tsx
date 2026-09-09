@@ -43,6 +43,9 @@ export function VocabRangeFields({
         selectedUnitIds={selectedUnitIds}
         units={units}
       />
+      {dataset && Number.isSafeInteger(dataset.rowCount) ? (
+        <p className={styles.questionCountSummary}>단어장 전체 수록 {dataset.rowCount}개 · 선택 범위와 출제 유형에 따라 실제 배정 수는 달라집니다.</p>
+      ) : null}
     </div>
   );
 }

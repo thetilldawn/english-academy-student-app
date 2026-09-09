@@ -104,6 +104,8 @@ function controller(input?: {
     scheduledQuestionCount: input?.remaining ? 40 : 86,
     planner: {
       assignmentMode,
+      scheduleEnabled: true,
+      schedule: { weekdays: [1, 3, 5] },
       datasetId: dataset.id,
       manualQuestionCount: input?.manual ? 20 : 0,
       overflowPolicy: input?.overflowPolicy ?? "leave",
@@ -253,7 +255,7 @@ describe("VocabRangePicker", () => {
     );
     expect(screen.getByRole("group", { name: "출제 단어 선택" }))
       .toBeVisible();
-    expect(screen.getByText("출제 가능 86개 · 배정 40개 · 남음 46개 · 기본 3회"))
+    expect(screen.getByText("한 번씩 나눌 때 출제 가능 86개 · 기본 3회 · 이번 배정 합계 40문항 (반복 포함)"))
       .toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "무작위" }));
     expect(withRemaining.actions.changeSelectionMode).toHaveBeenCalledWith(
@@ -290,7 +292,7 @@ describe("VocabRangePicker", () => {
       />,
     );
 
-    expect(screen.getByText("출제 가능 640개 · 배정 500개 · 남음 140개 · 기본 5회"))
+    expect(screen.getByText("한 번씩 나눌 때 출제 가능 640개 · 기본 5회 · 이번 배정 합계 500문항 (반복 포함)"))
       .toBeVisible();
     expect(screen.queryByText(/공통 1명/)).not.toBeInTheDocument();
     const group = screen.getByRole("group", { name: "단어 수" });

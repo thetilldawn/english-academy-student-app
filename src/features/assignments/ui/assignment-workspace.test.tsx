@@ -8,7 +8,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import { cataloguedDatasetFromMetadata } from "@/lib/admin/dataset-catalog";
 import type { StudentDirectorySnapshot } from "@/features/students/public-contracts";
 import { assignmentQuestionModes } from "../domain/model";
-import { bulkAssignmentPreviewSchema } from "../contracts/bulk-assignment-request";
+import { bulkAssignmentPreviewSchema, type BulkAssignmentPreviewInput } from "../contracts/bulk-assignment-request";
 import { resolveVocabQuestionCycleAllocation } from "../domain/vocab-question-allocation";
 import { resolveUndatedVocabUnitCycleAllocation } from "../domain/vocab-unit-allocation";
 import { AssignmentWorkspace } from "./assignment-workspace";
@@ -94,7 +94,7 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
   it.each(["single", "bulk"] as const)("%s에서 날짜를 고르기 전부터 회차별·단어 수 가능 회차를 표시한다", async mode => {
     const original = fetchMock.getMockImplementation()!;
-    const previewRequests: unknown[] = [];
+    const previewRequests: BulkAssignmentPreviewInput[] = [];
     fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
       if (url.includes("/datasets/") && url.endsWith("/units")) {
         return Response.json({ datasetId: datasets[0]!.id, units: Array.from({ length: 6 }, (_, index) => ({
@@ -138,14 +138,16 @@ describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
     fireEvent.click(all);
     fireEvent.click(within(dialog).getByRole("button", { name: "회차별" }));
     fireEvent.change(await within(dialog).findByRole("textbox", { name: /^회차당 단위 수/ }), { target: { value: "2" } });
-    expect(await within(dialog).findByText("가능한 배정 3회")).toBeVisible();
+    expect(await within(dialog).findByText("날짜 없이 3회 배정")).toBeVisible();
     fireEvent.click(within(dialog).getByRole("button", { name: "단어 수" }));
     fireEvent.change(await within(dialog).findByRole("textbox", { name: "회차당 단어 수" }), { target: { value: "100" } });
-    expect(await within(dialog).findByText("가능한 배정 7회")).toBeVisible();
-    expect(within(dialog).getByText(/전체 출제 가능 601개 · 회차당 최대 500개/)).toBeVisible();
+    expect(await within(dialog).findByText("날짜 없이 7회 배정")).toBeVisible();
+    expect(within(dialog).getByText(/한 번씩 나눌 때 출제 가능 601개 · 회차당 최대 500개/)).toBeVisible();
     fireEvent.click(within(dialog).getByRole("button", { name: "배정하기" }));
-    expect(await within(dialog).findByText("배정할 요일을 하나 이상 선택해 주세요.")).toBeVisible();
+    expect(within(dialog).queryByText("배정할 요일을 하나 이상 선택해 주세요.")).not.toBeInTheDocument();
     expect(previewRequests.length).toBeGreaterThan(0);
+    expect(previewRequests.every(body => body.commonPlan.selectedDateCount === 0
+      && body.commonPlan.sessions.every(session => session.availableFrom === null && session.availableUntil === null))).toBe(true);
     expect(fetchMock.mock.calls.some(([url]) => url === "/api/admin/bulk-assignments")).toBe(false);
   });
   it.each(["single", "bulk"] as const)("%s의 실제 수량 대기·실패·재시도·범위변경은 수록 수와 작성값을 보존한다", async mode => {
@@ -470,9 +472,9 @@ describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
     }
     expect(within(dialog).queryByText(/검토 중|Preview/)).not.toBeInTheDocument();
     const scheduleToggle = within(within(dialog).getByText("시험일 사용").parentElement!).getByRole("checkbox");
-    expect(scheduleToggle).not.toBeChecked();
-    expect(scheduleToggle).toBeDisabled();
-    expect(within(dialog).getByText(/예문 시험은 영어 단어 고르기로 출제하며/)).toBeVisible();
+    expect(scheduleToggle).toBeChecked();
+    expect(scheduleToggle).toBeEnabled();
+    expect(within(dialog).getByText(/예문 시험도 회차별 또는 단어 수별로/)).toBeVisible();
     for (const label of ["영어 → 뜻", "뜻 → 영어", "혼합"]) {
       expect(within(dialog).getByRole("button", { name: label })).toBeDisabled();
     }

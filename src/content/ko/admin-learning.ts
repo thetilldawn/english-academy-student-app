@@ -10,8 +10,8 @@ export const adminLearningText = {
     definitionUnavailable: "이 단어장에는 현재 배정 가능한 영영풀이 문항이 없습니다.",
     reverseDefinitionUnavailable: "이 단어장에는 현재 영어를 보고 영영풀이를 고르는 문제가 없습니다.",
     exampleUnavailable: "이 단어장에는 현재 배정 가능한 예문 문항이 없습니다.",
-    prepared: "준비된 문항과 영어 선택지 4개를 사용합니다. 현재는 시험일 없이 1회 배정만 지원합니다.",
-    scheduleRestriction: "예문 시험은 영어 단어 고르기로 출제하며, 현재 시험일 없이 1회만 바로 배정할 수 있습니다.",
+    prepared: "준비된 예문과 영어 선택지 4개를 사용합니다.",
+    scheduleRestriction: "예문 시험도 회차별 또는 단어 수별로 나누고, 시험일을 정하거나 날짜 없이 순서대로 배정할 수 있습니다.",
   },
   timeTemplate: {
     saved: "시간 템플릿을 저장했습니다.",

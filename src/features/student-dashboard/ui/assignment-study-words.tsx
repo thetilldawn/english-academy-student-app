@@ -16,7 +16,7 @@ export function AssignmentStudyWords({ study, englishHidden, meaningHidden, fail
   const text = studentAppText.study;
   return (
     <>
-      <p className={styles.summary}>{study.words.length}{text.countSuffix}</p>
+      <p className={styles.summary}>{text.countPrefix}{study.words.length}{text.countSuffix}</p>
       <ul className={styles.words} aria-label={text.listLabel}>
         {study.words.map((word) => {
           const audioUrl = word.pronunciation.available ? word.pronunciation.audioUrl : null;

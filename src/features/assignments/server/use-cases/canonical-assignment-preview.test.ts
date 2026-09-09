@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AdminContext } from "@/lib/auth/admin";
 import type { BulkAssignmentPreviewInput } from "../../contracts/bulk-assignment-request";
-const mocks = vi.hoisted(() => ({ load: vi.fn(), client: vi.fn() }));
+const mocks = vi.hoisted(() => ({ load: vi.fn(), client: vi.fn(), count: vi.fn() }));
 vi.mock("server-only", () => ({}));
-vi.mock("../queries/bulk-assignment-planning-query", () => ({ loadCommonBulkAssignmentPlanningData: mocks.load }));
+vi.mock("../queries/bulk-assignment-planning-query", () => ({ loadCommonBulkAssignmentPlanningData: mocks.load, loadSelectedVocabularyRowCount: mocks.count }));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: mocks.client }));
 import { resolveCanonicalBulkAssignmentPreview } from "./canonical-assignment-preview";
 
@@ -15,18 +15,45 @@ function request(): BulkAssignmentPreviewInput {
       sessions: [{ unitIds: ["fake-unit"], availableFrom: null, availableUntil: null }],
       recurrenceSessions: [{ availableFrom: null, availableUntil: null }] } };
 }
-const changes: [string, (r: BulkAssignmentPreviewInput) => void][] = [
-  ["direction", r => { r.englishToKoreanRatio = 50; }],
-  ["date", r => { r.commonPlan.selectedDateCount = 1; }],
-  ["distribution", r => { r.commonPlan.distribution = "split"; }],
-  ["split basis", r => { r.commonPlan.splitBasis = "range_unit"; }],
-  ["second session", r => { r.commonPlan.sessions.push({ ...r.commonPlan.sessions[0]! }); }],
-  ["second recurrence", r => { r.commonPlan.recurrenceSessions.push({ ...r.commonPlan.recurrenceSessions[0]! }); }],
-  ["start", r => { r.commonPlan.sessions[0]!.availableFrom = "2026-09-10T00:00:00Z"; }],
-  ["end", r => { r.commonPlan.sessions[0]!.availableUntil = "2026-09-11T00:00:00Z"; }],
-  ["recurrence time", r => { r.commonPlan.recurrenceSessions[0]!.availableUntil = "2026-09-11T00:00:00Z"; }],
-];
-beforeEach(() => { vi.clearAllMocks(); mocks.load.mockRejectedValue(new Error("LOCAL_READ_BOUNDARY")); });
+beforeEach(() => { vi.clearAllMocks(); mocks.count.mockResolvedValue(null); mocks.load.mockRejectedValue(new Error("LOCAL_READ_BOUNDARY")); });
+describe("예문도 공통 회차 규칙과 보이는 오류 위치를 사용한다", () => {
+  function setup(splitBasis: "range_unit" | "question_count", dated: boolean) {
+    const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+    const units = [0, 1, 2].map(i => ({ id: id(100 + i), label: `DAY ${i + 1}`, sortIndex: i + 1 }));
+    const input = request(); const count = dated ? 2 : 3;
+    const slots = Array.from({ length: dated ? 2 : 1 }, (_, i) => ({ availableFrom: dated ? `2099-09-${14 + i}T00:00:00Z` : null, availableUntil: dated ? `2099-09-${14 + i}T13:00:00Z` : null }));
+    input.commonPlan = { ...input.commonPlan, datasetId: id(10), orderedUnitIds: units.map(u => u.id), distribution: "split", splitBasis,
+      selectedDateCount: dated ? 2 : 0, questionCount: splitBasis === "range_unit" ? { mode: "all" } : { mode: "manual", value: 4 },
+      rangeUnitCounts: splitBasis === "range_unit" ? Array(dated ? 2 : 1).fill(1) : [],
+      unitAllocationRule: splitBasis === "range_unit" ? { schemaVersion: 1, mode: "same", unitsPerSession: 1, weekdayUnitsPerSession: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1 } } : null,
+      recurrenceSessions: slots,
+      sessions: splitBasis === "range_unit" ? units.slice(0, count).map((u, i) => ({ unitIds: [u.id], ...slots[dated ? i : 0]! })) : slots.map(slot => ({ unitIds: units.map(u => u.id), ...slot })) };
+    const planning = { dataset: { id: id(10), title: "가짜 예문", displayName: "가짜 예문", status: "ready", isActive: true, isAssignable: true }, students: [{ id: "fake-student", displayName: "가짜 학생", status: "active" }], units };
+    const rows = Array.from({ length: 12 }, (_, n) => ({ release_id: id(20), package_sha256: "a".repeat(64), vocab_entry_id: n + 1, unit_id: units[Math.floor(n / 4)]!.id, source_row: n + 1, question_item_id: `example-${n}`, question_item_sha256: "b".repeat(64) }));
+    mocks.load.mockResolvedValue(planning); mocks.client.mockResolvedValue({ rpc: vi.fn(async () => ({ data: rows, error: null })) });
+    return { input, planning, rows };
+  }
+  it.each([["range_unit", false], ["range_unit", true], ["question_count", false], ["question_count", true]] as const)("%s 날짜%s의 예문 회차와 문항 합계", async (basis, dated) => {
+    const { input } = setup(basis, dated);
+    mocks.count.mockResolvedValue(111);
+    const result = await resolveCanonicalBulkAssignmentPreview(input, {} as AdminContext);
+    expect(mocks.count).toHaveBeenCalledExactlyOnceWith(input.commonPlan.datasetId, input.commonPlan.orderedUnitIds);
+    expect(result.preview.items[0]!.countBreakdown).toEqual({ sourceCount: 111, outsideCandidateListCount: 99,
+      activeReviewExcludedCount: 0, directionExcludedCount: 0, choiceExcludedCount: 0, allocationExcludedCount: 0, availableCount: 12 });
+    expect(result.preview.items[0]!.uniqueScheduledQuestionCount).toBe(dated ? 8 : 12);
+    expect(result.preview.items[0]).toMatchObject({ available: true, scheduledQuestionCount: dated ? 8 : 12, remainingQuestionCount: dated ? 4 : 0 });
+    expect(result.preview.items[0]!.sessions.map(s => s.questionCount)).toEqual(Array(dated ? 2 : 3).fill(4));
+    expect(result.preview.items[0]!.sessions.every(s => dated ? s.availableFrom !== null : s.availableFrom === null && s.availableUntil === null)).toBe(true);
+    expect(new Set(result.canonicalPlansByStudent.get("fake-student")!.flat().map(q => q.id)).size).toBe(dated ? 8 : 12);
+  });
+  it.each(["range", "dataset", "students"] as const)("%s 오류를 숨은 단어수 입력으로 보내지 않는다", async field => {
+    const { input, planning, rows } = setup("range_unit", false);
+    if (field === "range") rows.pop();
+    if (field === "dataset") planning.dataset.isAssignable = false;
+    if (field === "students") planning.students[0]!.status = "disabled";
+    expect((await resolveCanonicalBulkAssignmentPreview(input, {} as AdminContext)).preview.items[0]).toMatchObject({ available: false, sessions: [], errorFieldKey: field });
+  });
+});
 describe("reviewed mock exams share passage-session planning", () => {
   const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
   const sizes = [12,24,14,18,14,8,10,14,10,17,13,9,9,24,16,12,21,11,12,10];
@@ -92,6 +119,29 @@ describe("reviewed mock exams share passage-session planning", () => {
 });
 
 describe("canonical server restriction before data access", () => {
+  it.each([[840, 4, 1, true], [844, 4, 1, false], [12, 4, 70, true], [12, 4, 71, false], [500, 500, 20, true], [500, 500, 21, false]] as const)(
+    "무날짜 전체 %i개·회차당%i·학생%i명의 실제 확장 상한", async (total, perSession, studentCount, allowed) => {
+      const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+      const input = request();
+      input.questionMode = "canonical_definition_to_headword";
+      input.studentIds = Array.from({ length: studentCount }, (_, i) => uuid(100 + i));
+      input.commonPlan = { ...input.commonPlan, datasetId: uuid(10), orderedUnitIds: [uuid(11)], distribution: "split",
+        questionCount: { mode: "manual", value: perSession }, sessions: [{ unitIds: [uuid(11)], availableFrom: null, availableUntil: null }] };
+      mocks.load.mockResolvedValue({ dataset: { id: uuid(10), title: "가짜 자료", displayName: "가짜 자료", status: "ready", isActive: true, isAssignable: true },
+        students: input.studentIds.map(id => ({ id, displayName: "가짜 학생", status: "active" })),
+        units: [{ id: uuid(11), label: "DAY 1", sortIndex: 1 }] });
+      mocks.client.mockResolvedValue({ rpc: vi.fn(async () => ({ error: null, data: Array.from({ length: total }, (_, n) => ({
+        release_id: uuid(12), package_sha256: "a".repeat(64), vocab_entry_id: n + 1, unit_id: uuid(11), source_row: n + 1,
+        question_item_id: `fake-${n}`, question_item_sha256: "b".repeat(64),
+      })) })) });
+      const result = await resolveCanonicalBulkAssignmentPreview(input, {} as AdminContext);
+      expect(result.preview.items.every(item => item.available === allowed)).toBe(true);
+      if (allowed) {
+        expect(result.preview.assignmentCount).toBe(total / perSession * studentCount);
+        expect(result.preview.items.every(item => item.scheduledQuestionCount === total && item.remainingQuestionCount === 0)).toBe(true);
+        expect(result.preview.items.flatMap(item => item.sessions).every(session => session.availableFrom === null && session.availableUntil === null)).toBe(true);
+      } else expect(result.canonicalPlansByStudent.size).toBe(0);
+    });
   it.each(["canonical_definition_to_headword", "canonical_example_to_headword"] as const)("%s의 전체 후보601과 회차500 상한을 구분한다", async questionMode => {
     const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
     const input = request();
@@ -118,12 +168,9 @@ describe("canonical server restriction before data access", () => {
     const rejected = await resolveCanonicalBulkAssignmentPreview(input, {} as AdminContext);
     expect(rejected.preview.items[0]).toMatchObject({ available: false, errorFieldKey: "questionCount" });
   });
-  it.each(changes)("rejects %s before any query", async (_name, change) => {
-    for (const mode of ["canonical_example_to_headword"] as const) {
-      const input = request(); input.questionMode = mode; change(input);
-      await expect(resolveCanonicalBulkAssignmentPreview(input, {} as AdminContext))
-        .rejects.toMatchObject({ reason: "invalid_selection", message: _name === "direction" ? "선택한 출제 자료에 맞는 시험 방향을 선택해 주세요." : "예문 시험은 시험일 없이 1회만 바로 배정할 수 있습니다." });
-    }
+  it("rejects example direction mismatch before any query", async () => {
+    const input = request(); input.englishToKoreanRatio = 50;
+    await expect(resolveCanonicalBulkAssignmentPreview(input, {} as AdminContext)).rejects.toMatchObject({ reason: "invalid_selection" });
     expect(mocks.load).not.toHaveBeenCalled(); expect(mocks.client).not.toHaveBeenCalled();
   });
   it.each(["canonical_definition_to_headword", "canonical_example_to_headword"] as const)("allows valid %s through the unchanged read boundary", async mode => {

@@ -26,6 +26,7 @@ import { resolvePlanUnitAllocation } from "../../domain/vocab-plan-unit-allocati
 import { commonPlanSchedule, extendCommonPlanSchedule, buildCommonPlanSummary } from "../planning/bulk-session-layout";
 import {
   loadCommonBulkAssignmentPlanningData,
+  loadSelectedVocabularyRowCount,
   type BulkPlanningStudent,
 } from "@/features/assignments/server/queries/bulk-assignment-planning-query";
 import type {
@@ -45,6 +46,8 @@ import {
   type CanonicalPlannedQuestion,
 } from "./canonical-assignment-preview";
 import { MAXIMUM_BULK_QUESTION_COUNT } from "./bulk-assignment-limits";
+import { checkedAssignmentCountBreakdown } from "../../domain/assignment-count-breakdown";
+import type { AssignmentCountBreakdown } from "../../contracts/bulk-assignment-response";
 import {
   createBulkAssignmentPreparationContext,
   mapInBatches,
@@ -67,7 +70,7 @@ function allocationIssueMessage(issue: VocabQuestionAllocationIssue) {
     return "배정할 요일을 하나 이상 선택해 주세요.";
   }
   if (issue === "insufficient_for_selected_dates") {
-    return "선택한 모든 날짜에 최소 4개씩 배정할 수 없습니다. 날짜를 줄이거나 범위를 넓혀 주세요.";
+    return "선택 범위를 회차마다 최소 4개씩 나눌 수 없습니다. 회차당 단어 수를 늘리거나 범위를 조정해 주세요.";
   }
   if (issue === "question_count_exceeds_capacity") {
     return "직접 입력한 단어 수가 현재 배정 가능한 단어 수보다 많습니다.";
@@ -82,7 +85,7 @@ function allocationIssueFieldKey(
   issue: VocabQuestionAllocationIssue,
 ): BulkAssignmentPreviewFieldKey {
   if (issue === "missing_schedule") return "weekdays";
-  if (issue === "series_session_limit_exceeded") return "overflowPolicy";
+  if (issue === "series_session_limit_exceeded") return "preview";
   if (
     issue === "invalid_available_count" ||
     issue === "insufficient_for_selected_dates"
@@ -160,6 +163,8 @@ export async function resolveBulkAssignmentPreview(
     rangeLabel = null;
   }
   const schedule = commonPlanSchedule(input);
+  const sourceCount = rangeLabel && planning.dataset?.isAssignable
+    ? await loadSelectedVocabularyRowCount(commonPlan.datasetId, commonPlan.orderedUnitIds) : null;
 
   const targetPlansByStudent = new Map<
     string,
@@ -258,6 +263,7 @@ export async function resolveBulkAssignmentPreview(
       }
 
       let itemSchedule = schedule;
+      let countBreakdown: AssignmentCountBreakdown | null = null;
       let availableQuestionCount: number | null = null;
       let totalAvailableQuestionCount: number | null = null;
       let maximumSessionQuestionCount: number | null = null;
@@ -279,6 +285,7 @@ export async function resolveBulkAssignmentPreview(
               unitIds: commonUnits.map((unit) => unit.id),
               studentIds: [studentId],
               englishToKoreanRatio: input.englishToKoreanRatio,
+              includeCountDiagnostics: true,
             },
             admin,
             regularPreparationCache,
@@ -288,6 +295,8 @@ export async function resolveBulkAssignmentPreview(
             maximumQuestionCount: capacity.maximumQuestionCount,
             seriesMaximumQuestionCount: capacity.seriesMaximumQuestionCount,
           });
+          countBreakdown = capacity.countStages
+            ? checkedAssignmentCountBreakdown({ sourceCount, ...capacity.countStages }) : null;
           availableQuestionCount = capacityScope.availableQuestionCount;
           totalAvailableQuestionCount = capacityScope.totalAvailableQuestionCount;
           maximumSessionQuestionCount =
@@ -317,6 +326,7 @@ export async function resolveBulkAssignmentPreview(
             if (allocation.issue) {
               return {
                 ...itemBase,
+                countBreakdown,
                 available: false,
                 sessions: [],
                 availableQuestionCount,
@@ -357,6 +367,7 @@ export async function resolveBulkAssignmentPreview(
         } catch (error) {
           return {
             ...itemBase,
+            countBreakdown,
             available: false,
             sessions: [],
             availableQuestionCount,
@@ -516,6 +527,9 @@ export async function resolveBulkAssignmentPreview(
       }
       return {
         ...itemBase,
+        countBreakdown,
+        uniqueScheduledQuestionCount: targetPlansByStudent.has(studentId)
+          ? new Set(targetPlansByStudent.get(studentId)!.flat().map(target => target.id)).size : null,
         available:
           seriesPreparationError === null &&
           orderedSessions.length > 0 &&

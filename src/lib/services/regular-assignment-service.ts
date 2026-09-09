@@ -7,6 +7,7 @@ import {
   calculateAssignmentSeriesQuestionCapacity,
 } from "@/lib/assignment/question-planner";
 import {
+  canUseDirection,
   quizIndependentTargetDirectionEligibility,
 } from "@/lib/quiz/choice-policy";
 import {
@@ -569,6 +570,7 @@ export async function calculateRegularAssignmentCapacity(
     unitIds: readonly string[];
     studentIds: readonly string[];
     englishToKoreanRatio: 0 | 50 | 100;
+    includeCountDiagnostics?: boolean;
   },
   authenticatedAdmin?: AdminContext,
   cache?: RegularAssignmentPreparationCache,
@@ -627,15 +629,32 @@ export async function calculateRegularAssignmentCapacity(
     allCandidates: choiceCandidates,
     englishToKoreanRatio: input.englishToKoreanRatio,
   });
+  const seriesMaximumQuestionCount = calculateAssignmentSeriesQuestionCapacity({
+    requiredTargets: [], primaryCandidates: choiceCandidates, allCandidates: choiceCandidates,
+    englishToKoreanRatio: input.englishToKoreanRatio,
+  });
+  const countStages = input.includeCountDiagnostics ? (() => {
+    const candidateCount = preparation.allCandidates.filter(candidate => requestedUnitIds.has(candidate.unitId)).length;
+    const requestedDirections = input.englishToKoreanRatio === 100 ? ["english_to_korean" as const]
+      : input.englishToKoreanRatio === 0 ? ["korean_to_english" as const]
+      : ["english_to_korean" as const, "korean_to_english" as const];
+    const directionCandidates = choiceCandidates.filter(candidate => requestedDirections.some(direction => canUseDirection(candidate, direction)));
+    const independentlyEligibleCount = quizIndependentTargetDirectionEligibility(directionCandidates, choiceCandidates)
+      .filter(candidate => requestedDirections.some(direction => candidate.eligibleDirections.includes(direction))).length;
+    return {
+      candidateCount,
+      activeReviewExcludedCount: candidateCount - choiceCandidates.length,
+      directionExcludedCount: choiceCandidates.length - directionCandidates.length,
+      choiceExcludedCount: directionCandidates.length - independentlyEligibleCount,
+      allocationExcludedCount: independentlyEligibleCount - seriesMaximumQuestionCount,
+      availableCount: seriesMaximumQuestionCount,
+    };
+  })() : undefined;
   return {
     ...range,
     recommendedQuestionCount: range.maximumQuestionCount,
-    seriesMaximumQuestionCount: calculateAssignmentSeriesQuestionCapacity({
-      requiredTargets: [],
-      primaryCandidates: choiceCandidates,
-      allCandidates: choiceCandidates,
-      englishToKoreanRatio: input.englishToKoreanRatio,
-    }),
+    seriesMaximumQuestionCount,
+    countStages,
   };
 }
 
