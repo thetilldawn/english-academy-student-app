@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -8,9 +8,15 @@ import { validateVocaPronunciationPackage } from "@/lib/vocab/voca-pronunciation
 const packagePath = resolve(
   "../../영어/90_이관 기록/단어시스템/app_bridge/ability-voca-etymology-2025/20260812_pronunciation_v1/webster-raw-audio-package.json",
 );
+// Keep incomplete local sources as failures, but do not publish them to CI.
+const hasLocalMaterials = existsSync(resolve("../..", "영어"));
 
 describe("VOCA Webster raw 발음 연결 자료", () => {
-  it("3,001행과 재생·보충·검토 수치를 해시까지 검증한다", () => {
+  it("원자료 없이도 불완전한 입력은 거부한다", () => {
+    expect(() => validateVocaPronunciationPackage({})).toThrow();
+  });
+
+  it.skipIf(!hasLocalMaterials)("3,001행과 재생·보충·검토 수치를 해시까지 검증한다", () => {
     const input = JSON.parse(readFileSync(packagePath, "utf8")) as unknown;
     const result = validateVocaPronunciationPackage(input);
     expect(result.summary).toEqual({

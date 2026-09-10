@@ -16,6 +16,7 @@ import {
   parseAssignmentReplacementResponse,
   parseBulkAssignmentCreationResponse,
   parseBulkAssignmentPreviewResponse,
+  serializeBulkAssignmentPreview,
   parseLegacyReviewCancelResponse,
 } from "./response-adapters";
 import type {
@@ -194,6 +195,14 @@ describe("assignment response adapters", () => {
     expect(parseBulkAssignmentPreviewResponse(response)).toStrictEqual(
       response,
     );
+    const gradeReview = { audienceMode: "bulk" as const, datasetId: assignmentContractIds.dataset, datasetGrade: "고1",
+      studentIds: [assignmentContractIds.studentA], mismatches: [{ studentId: assignmentContractIds.studentA,
+        displayName: "가짜 학생", gradeLabel: "고2" }], unknownStudentIds: [], token: "c".repeat(64) };
+    const reviewed = { ...response, gradeReview };
+    expect(serializeBulkAssignmentPreview(reviewed, true)).not.toHaveProperty("gradeReview");
+    expect(parseBulkAssignmentPreviewResponse(serializeBulkAssignmentPreview(reviewed, true, true)).gradeReview).toEqual(gradeReview);
+    expect(() => parseBulkAssignmentPreviewResponse({ ...reviewed, gradeReview: { ...gradeReview, answer: "secret" } })).toThrow();
+    expect(reviewed.gradeReview).toEqual(gradeReview);
     const breakdown = { sourceCount: 118, outsideCandidateListCount: 6, activeReviewExcludedCount: 1,
       directionExcludedCount: 1, choiceExcludedCount: 1, allocationExcludedCount: 1, availableCount: 108 };
     const withCounts = (countBreakdown: unknown, uniqueScheduledQuestionCount = 40, totalAvailableQuestionCount = 108) => ({

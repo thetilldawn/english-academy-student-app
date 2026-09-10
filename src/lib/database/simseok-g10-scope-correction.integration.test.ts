@@ -16,6 +16,9 @@ import { SIMSEOK_SEM2_EXPECTED_SETS } from
   "@/lib/vocab/simseok-sem2-preview-import-contract";
 
 const projectRoot = path.resolve("../..");
+// The app repository excludes private materials. Partial local material remains
+// an error; schema and permission checks still run without any source bundle.
+const hasLocalMaterials = fs.existsSync(path.join(projectRoot, "영어"));
 const v2ExamDirectory = path.join(
   projectRoot,
   "영어/00_자료투입함/[시안] 제작중/심석고_2학기_단어시험/v2_최신범위/02_앱전달묶음",
@@ -138,11 +141,12 @@ async function stageCorrection(
 
 describe.sequential("심석고 고1 공통영어Ⅱ 1·2과 Preview 원자 교체", () => {
   let database: PGlite;
-  let newExamPackageTexts: string[];
-  let newQuestionPackageTexts: string[];
+  let newExamPackageTexts: string[] = [];
+  let newQuestionPackageTexts: string[] = [];
 
   beforeAll(async () => {
     database = await createFinalSchemaDatabase();
+    if (!hasLocalMaterials) return;
     const oldExamPackageTexts = SIMSEOK_SEM2_EXPECTED_SETS.map((item) =>
       fs.readFileSync(path.join(v2ExamDirectory, item.packagePath), "utf8"),
     );
@@ -194,7 +198,7 @@ describe.sequential("심석고 고1 공통영어Ⅱ 1·2과 Preview 원자 교�
     await database.exec("reset role;");
   });
 
-  it("두 파일 중 하나라도 변조되면 신규 데이터가 하나도 남지 않는다", async () => {
+  it.skipIf(!hasLocalMaterials)("두 파일 중 하나라도 변조되면 신규 데이터가 하나도 남지 않는다", async () => {
     const tampered = [...newQuestionPackageTexts];
     tampered[1] = tampered[1]!.replace("condition", "tampered-condition");
     await expect(
@@ -219,7 +223,7 @@ describe.sequential("심석고 고1 공통영어Ⅱ 1·2과 Preview 원자 교�
     expect(remaining.rows[0]).toEqual({ dataset_count: 0, release_count: 0 });
   }, 30_000);
 
-  it("신규 1·2과를 숨김 상태로 넣고 동일 stage 재실행은 무변경이다", async () => {
+  it.skipIf(!hasLocalMaterials)("신규 1·2과를 숨김 상태로 넣고 동일 stage 재실행은 무변경이다", async () => {
     const first = await stageCorrection(
       database,
       newExamPackageTexts,
@@ -292,7 +296,7 @@ describe.sequential("심석고 고1 공통영어Ⅱ 1·2과 Preview 원자 교�
     );
   }, 45_000);
 
-  it("기존 3·4과에 학생 참조가 하나라도 있으면 컷오버 전체를 거부한다", async () => {
+  it.skipIf(!hasLocalMaterials)("기존 3·4과에 학생 참조가 하나라도 있으면 컷오버 전체를 거부한다", async () => {
     const oldDataset = await database.query<{ id: string }>(`
       select id from public.vocab_datasets
       where dataset_key =
@@ -348,7 +352,7 @@ describe.sequential("심석고 고1 공통영어Ⅱ 1·2과 Preview 원자 교�
     });
   });
 
-  it("참조 0건이면 기존 3·4과를 보존 퇴역하고 신규 1·2과를 한 번에 활성화한다", async () => {
+  it.skipIf(!hasLocalMaterials)("참조 0건이면 기존 3·4과를 보존 퇴역하고 신규 1·2과를 한 번에 활성화한다", async () => {
     await assumeRole(database, "service_role");
     const cutover = await database.query<{ result: Record<string, unknown> }>(
       "select public.cutover_simseok_g10_scope_correction_preview_v3() as result",
@@ -474,7 +478,7 @@ describe.sequential("심석고 고1 공통영어Ⅱ 1·2과 Preview 원자 교�
     });
   }, 45_000);
 
-  it("활성화 뒤 stage와 cutover를 다시 실행해도 상태·행 수가 변하지 않는다", async () => {
+  it.skipIf(!hasLocalMaterials)("활성화 뒤 stage와 cutover를 다시 실행해도 상태·행 수가 변하지 않는다", async () => {
     const restage = await stageCorrection(
       database,
       newExamPackageTexts,

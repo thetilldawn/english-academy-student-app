@@ -1,0 +1,1017 @@
+{
+  "schemaVersion": 1,
+  "id": "DEPLOY-20260910-02",
+  "title": "일괄배정 학년 확인 운영 반영",
+  "size": "full",
+  "gate": "design",
+  "guide": "docs/work-orders/DEPLOY-20260910-02.md",
+  "baseline": "babe7328ce95f6d41e48bb9d3279ff2b457a6f97",
+  "owners": [
+    "assignments",
+    "architecture-meta",
+    "database-contract",
+    "shared-contract"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal",
+    "assessment-secret"
+  ],
+  "scope": [
+    {
+      "path": "src/features/assignments/application/bulk-assignment-flow-adapter.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-assignment-planner.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-assignment-planner.module.css",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load",
+        "assignment-edit"
+      ]
+    },
+    {
+      "path": "src/features/assignments/controller/use-vocab-assignment-screen.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/controller/use-vocab-assignment-screen.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/controller/use-vocab-assignment-planner.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/controller/use-bulk-assignment-controller.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/controller/use-bulk-assignment-controller.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/domain/model.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load",
+        "assignment-edit"
+      ]
+    },
+    {
+      "path": "src/features/assignments/domain/bulk-draft.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/api/request-adapters.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load",
+        "assignment-edit"
+      ]
+    },
+    {
+      "path": "src/features/assignments/api/response-adapters.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load",
+        "assignment-edit"
+      ]
+    },
+    {
+      "path": "src/features/assignments/contracts/bulk-assignment-request.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/contracts/bulk-assignment-response.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/queries/bulk-assignment-planning-query.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/queries/bulk-assignment-planning-query.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/bulk-assignment-preview.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/use-cases/bulk-assignment-command.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/persistence/bulk-assignment-persistence.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/planning/bulk-assignment-plan-digest.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/presentation/bulk-plan-audience.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/presentation/bulk-plan-audience.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/bulk-series-preview.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/vocab-range-assignment-sections.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/AGENTS.md",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/app/api/admin/bulk-assignments/preview/route.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/app/api/admin/bulk-assignments/route.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/domain/assignment-grade-review.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/domain/assignment-grade-review.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/contracts/assignment-grade-review.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/planning/assignment-grade-review.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/server/planning/assignment-grade-review.test.ts",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-grade-dialog.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-grade-dialog.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-series",
+        "assignment-direct-review-create",
+        "assignment-workspace-planning",
+        "assignment-workspace-selection",
+        "assignment-workspace-load"
+      ]
+    },
+    {
+      "path": "architecture/기능_소유권.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "architecture/assignment-ui-roles.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "package-lock.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/lib/database/simseok-g10-scope-correction.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "assignment-range-create",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/lib/vocab/simseok-g10-scope-correction-preview-contract.test.ts",
+      "state": "existing",
+      "owner": "shared-contract",
+      "flowIds": [
+        "assignment-range-create",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/lib/vocab/voca-pronunciation-import-contract.test.ts",
+      "state": "existing",
+      "owner": "shared-contract",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-workspace.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
+        "assignment-workspace-planning"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "APP03 학년 확인 수정만 운영에 반영한다.",
+      "acceptance": "동일 실행 코드의 Preview/Production 별도 빌드 및 실제 운영 버전 확인.",
+      "disposition": "required",
+      "owners": [
+        "assignments",
+        "architecture-meta"
+      ],
+      "flowIds": [
+        "assignment-range-create"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T5"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "운영 테스트학생으로 단일 허용과 일괄 포함·제외를 확인한다.",
+      "acceptance": "기존 테스트학생만 사용하여 일괄1명·전원제외 차단·되돌리기/초점·신규 배정/학생 접근을 확인하고 테스트 학년 원복.",
+      "disposition": "required",
+      "owners": [
+        "assignments"
+      ],
+      "flowIds": [
+        "assignment-range-create"
+      ],
+      "checkIds": [
+        "T1",
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "engineering",
+      "text": "실학생의 진행 중 시험과 기존 배정·답안·점수·원자료를 보존한다.",
+      "acceptance": "배포 전후 보호자료 수치/해시 대조, 새 배정은 테스트학생만. 기존 시험·계정·정답·사전 변경 없음.",
+      "disposition": "required",
+      "owners": [
+        "assignments"
+      ],
+      "flowIds": [
+        "assignment-range-create"
+      ],
+      "checkIds": [
+        "T4",
+        "T5"
+      ]
+    },
+    {
+      "id": "R4",
+      "source": "engineering",
+      "text": "기존 설치 목록 불일치로 중단된 PR 자동검사를 복구한다.",
+      "acceptance": "개발용 선택 WASM 의존성 한 항목만 npm11.6.2 계산값에 맞추고 깨끗한 설치와 회귀검사 통과. 직접 앱 의존성과 학생 데이터는 그대로.",
+      "disposition": "required",
+      "owners": [
+        "architecture-meta"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T1",
+        "T6"
+      ]
+    },
+    {
+      "id": "R5",
+      "source": "engineering",
+      "text": "CI에 보내지 않는 로컬 원자료 검사와 실제 앱 회귀검사를 구분한다.",
+      "acceptance": "영어 자료 구역이 없는 서버에서 원자료 검산만 명시적으로 미실행한다. 로컬 구역이 있으면 일부 누락도 실패한다. 자료 없는 환경의 인증·환경 경계와 모든 앱 검사는 유지하며 UI 첫 조립 검사 한 곳만 컴파일 포함 시간 예산을 조정한다.",
+      "disposition": "required",
+      "owners": [
+        "database-contract",
+        "shared-contract",
+        "assignments"
+      ],
+      "flowIds": [
+        "assignment-workspace-load"
+      ],
+      "checkIds": [
+        "T1",
+        "T7"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "운영 반영과 테스트학생 검증",
+      "answer": "APP03을 운영 반영하고 기존 테스트학생으로 확인한다. APP04는 포함하지 않는다.",
+      "source": "2026-09-10 사용자: 운영에 반영하고 테스트학생으로 확인하면될듯?"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "배포와 복구",
+      "answer": "기존 Git Preview 뒤 동일 실행 코드 Production 별도 빌드. 이전 운영72de501 Ready 보존. DB migration·환경·직접 앱 의존성 변경 없음. 설치 목록의 개발용 선택 WASM 한 항목 보정은 D5를 따른다.",
+      "source": "원격 두 브랜치72de501 및 독립 범위 검토"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "테스트 범위",
+      "answer": "기존 이름 테스트·active 계정만 사용. 학년 테스트는 비교 불가이므로 관리자 화면에서 고2로 임시 설정해 고1 단어장과 비교 후 원복. 신규 검사 배정은 최소 수량 두 건 이내. 기존 시험 삭제·계정/코드 변경 없음.",
+      "source": "운영 테스트학생 한 건 읽기 확인 및 최소 기능 검증"
+    },
+    {
+      "id": "D4",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "남은 로컬 화면 검사",
+      "answer": "기존 로컬 PC/모바일·2→1명 근거를 보존하고 남은 1명/0명/포함/초점은 승인된 운영 테스트학생으로 확인. 인증이 없으면 해당 검사를 완료로 표시하지 않는다.",
+      "source": "APP03 T8 부분 검증과 이번 사용자 승인"
+    },
+    {
+      "id": "D5",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "기존 PR 설치 오류 보정",
+      "answer": "npm11.6.2 격리 재계산으로 @emnapi/wasi-threads 2.0.1→2.1.0 불일치를 확인했다. 해당 개발용 선택 항목의 버전/배포주소/무결성 세 값만 수정하고 jsdom/vitest의 부수 metadata 변화는 반영하지 않는다. package.json·Next/React/Supabase·학생 기능은 변경하지 않는다.",
+      "source": "PR34473049912 설치 단계 EUSAGE, 이전 운영과 lock 차이0, 격리 npm 계산 결과"
+    },
+    {
+      "id": "D6",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "PR 전체검사의 비공개 원자료 경로와 첫 UI 조립 제한시간",
+      "answer": "PR34474528014의 원자료 ENOENT 3파일은 기존 로컬 전용 검사 규칙에 맞춘다. 영어 구역 자체가 없을 때만 데이터 의존 검사를 건너뛰고 부분 자료 누락은 실패한다. 원자료가 필요 없는 환경 차단은 계속 실행한다. single/bulk 첫 전체 UI 시나리오에만 15초를 부여하며 assertion, UI 대기 5초, 전역 제한은 유지한다. 원본 업로드·운영 코드·workflow 생략 변경 없음.",
+      "source": "Linux 전체검사 실패 로그와 로컬 동일 UI 3.8초 통과, 기존 선택적 원자료 검사 관례"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "checked",
+      "reason": "APP03 검증 코드 재변경 없이 배포하고 기존 계약 확인"
+    },
+    "ui": {
+      "status": "checked",
+      "reason": "APP03 검증 코드 재변경 없이 배포하고 기존 계약 확인"
+    },
+    "state": {
+      "status": "checked",
+      "reason": "APP03 검증 코드 재변경 없이 배포하고 기존 계약 확인"
+    },
+    "domain": {
+      "status": "checked",
+      "reason": "APP03 검증 코드 재변경 없이 배포하고 기존 계약 확인"
+    },
+    "data": {
+      "status": "checked",
+      "reason": "APP03 검증 코드 재변경 없이 배포하고 기존 계약 확인"
+    },
+    "api": {
+      "status": "checked",
+      "reason": "APP03 검증 코드 재변경 없이 배포하고 기존 계약 확인"
+    },
+    "cache": {
+      "status": "checked",
+      "reason": "APP03 검증 코드 재변경 없이 배포하고 기존 계약 확인"
+    },
+    "asyncUi": {
+      "status": "checked",
+      "reason": "APP03 검증 코드 재변경 없이 배포하고 기존 계약 확인"
+    },
+    "security": {
+      "status": "checked",
+      "reason": "APP03 검증 코드 재변경 없이 배포하고 기존 계약 확인"
+    },
+    "styles": {
+      "status": "checked",
+      "reason": "APP03 검증 코드 재변경 없이 배포하고 기존 계약 확인"
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "원자료 유무에 따른 기존 검사의 실행 구분, 첫 전체 UI 조립 한 곳의 제한시간 보정, 실제 배포·테스트학생·보존 대조 기록"
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "기존 관리자 인증·삭제 학생 제외 유지",
+      "checkIds": [
+        "T1",
+        "T3",
+        "T4"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "확인 목록은 관리자 전용이고 개인 캐시 공유 금지",
+      "checkIds": [
+        "T1",
+        "T3",
+        "T4"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "확인 응답에 정답·문항 내용 추가 없음",
+      "checkIds": [
+        "T1",
+        "T3",
+        "T4"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "학생·단어장 변경은 최신 미리보기와 확인 무효화",
+      "checkIds": [
+        "T1",
+        "T3",
+        "T4"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "검증 APP03 → Git Preview → 배포 확인 → 동일 실행 코드 Production 별도 빌드 → 테스트학생 확인 → 자료 대조",
+    "reuse": "기존 GitHub/Vercel 연결과 관리자/학생 UI. 전체 Preview E2E 도구의 운영 차단 해제 금지.",
+    "cache": "기존 private,no-store 유지. 배포 후 새로고침한 관리자 화면 사용.",
+    "compatibility": "구 요청에는 새 학년 필드를 반환하지 않음. 구 화면의 학년 차이 일괄 저장에는 새 확인이 필요하며 학생 기존 시험 영향 없음.",
+    "rollback": "운영 실패/실학생 시험 장애 시 이전72de501 Ready 배포로 복구. DB 일괄 되돌림 없음. 검사 배정과 정상 감사 기록은 기존 자료와 구분."
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "최초 미리보기 대기",
+      "message": "배정 후보를 계산하고 있습니다.",
+      "behavior": "기존 계산 영역·저장 차단",
+      "recovery": "응답 완료 또는 다시 시도",
+      "component": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "학생 제외 뒤 계산",
+      "message": "배정 후보를 계산하고 있습니다.",
+      "behavior": "이전 대상의 저장 차단",
+      "recovery": "최신 응답만 적용",
+      "component": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "이번 배정 학생 0명",
+      "message": "배정할 학생을 선택해 주세요.",
+      "behavior": "저장 차단·입력 보존",
+      "recovery": "돌아가서 학생 선택",
+      "component": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "확실한 학년 차이 없음",
+      "message": "학년 확인이 필요한 학생이 없습니다.",
+      "behavior": "확인창을 생략하고 기존 배정",
+      "recovery": "조건 변경 가능",
+      "component": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "일괄에서 명확한 학년 차이",
+      "message": "학년이 다른 학생이 있습니다.",
+      "behavior": "목록과 포함하기/제외하기/돌아가기",
+      "recovery": "대상 선택 뒤 재미리보기",
+      "component": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "준비·미리보기 조회 실패",
+      "message": "배정 후보를 계산하지 못했습니다.",
+      "behavior": "실패를 0명으로 바꾸지 않음",
+      "recovery": "입력 보존하고 다시 시도",
+      "component": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "저장 실패·낡은 확인",
+      "message": "학생이나 단어장 정보가 바뀌었습니다. 다시 확인해 주세요.",
+      "behavior": "입력 보존·재미리보기",
+      "recovery": "최신 확인 뒤 재시도",
+      "component": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "관리자 인증 실패",
+      "message": "관리자 로그인이 필요합니다.",
+      "behavior": "기존 인증 경계에서 개인 자료 숨김",
+      "recovery": "다시 로그인",
+      "component": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "조회 가능한 대상 없음",
+      "message": "배정할 학생 정보를 다시 확인해 주세요.",
+      "behavior": "기존 삭제/권한 대상을 노출하지 않음",
+      "recovery": "목록 새로고침",
+      "component": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "분류 불가 저장 실패",
+      "message": "단어 시험 배정을 저장하지 못했습니다.",
+      "behavior": "서버 원문 없이 기존 안전 안내",
+      "recovery": "결과 확인 후 재시도",
+      "component": "src/features/assignments/ui/vocab-assignment-planner.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "v1.1",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "사용자 미결정 해소·R/D/T·실행과 화면 구분"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "static",
+      "target": null,
+      "scenario": "APP03 검사·현재 확인값·빌드·변경 범위와 배포 설계",
+      "expected": "검사 코드와 동일, tmp/조사자료/비밀/원자료 전송 제외",
+      "topics": [
+        "structure",
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "build",
+      "target": null,
+      "scenario": "Preview/Production 별도 빌드와 SHA",
+      "expected": "동일 코드 두 배포 Ready 및 운영 연결",
+      "topics": [
+        "structure"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "browser",
+      "target": null,
+      "scenario": "운영 테스트학생 PC/모바일 일괄1명 확인·포함·제외0·복귀초점·단일학년차이·신규 시험 접근",
+      "expected": "최신 확인으로 저장, 입력/모드 보존, 실학생 대상0, 테스트 학년 원복",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "integration",
+      "target": "docs/verification/DEPLOY-20260910-02.md",
+      "scenario": "운영 전후 기존 학생·배정·진행응시·답안·점수·자료 수치/해시와 신규 대상 대조",
+      "expected": "실학생·기존자료 보존, 신규 배정 테스트학생만. 정상 사용자 활동은 별도 근거로 구분",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak"
+      ]
+    },
+    {
+      "id": "T5",
+      "kind": "review",
+      "target": null,
+      "scenario": "독립 배포 범위 검토와 실제 오류·배포15분 뒤 읽기 대조",
+      "expected": "추가 차단 결함 없음. 관찰 범위의 오류와 보호자료 확인, 전체 장기 무오류로 확대 금지",
+      "topics": [
+        "structure",
+        "behavior",
+        "data-leak",
+        "answer-leak"
+      ]
+    },
+    {
+      "id": "T6",
+      "kind": "integration",
+      "target": "package-lock.json",
+      "scenario": "npm11.6.2 격리 계산과 CI 깨끗한 설치·수정 뒤 전체 검사",
+      "expected": "lock 불일치 해소, scripts 생략 설치 성공, 앱 회귀 통과",
+      "topics": [
+        "structure",
+        "behavior"
+      ]
+    },
+    {
+      "id": "T7",
+      "kind": "integration",
+      "target": "docs/verification/DEPLOY-20260910-02.md",
+      "scenario": "원자료 있는 로컬 3파일 검산, 자료 없는 격리 사본의 환경 검사 및 전체 앱 CI, 첫 UI single/bulk 재실행",
+      "expected": "교재 원문 전송 없이 두 환경에서 의도대로 실행/미실행 구분. 앱 assertion 유지 및 전체 CI success.",
+      "topics": [
+        "structure",
+        "behavior",
+        "authorization",
+        "data-leak"
+      ]
+    }
+  ],
+  "verification": null
+}

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { assignmentGradeReviewSchema } from "../contracts/assignment-grade-review";
 import { assignmentCountBreakdownSchema } from "../contracts/bulk-assignment-response";
 import type { BulkAssignmentPreview } from "../contracts/bulk-assignment-response";
 
@@ -237,6 +238,7 @@ const bulkAssignmentPreviewResponseSchema = z
     blockedCount: nonNegativeInteger,
     assignmentCount: nonNegativeInteger,
     planSignature: z.string().regex(/^[0-9a-f]{64}$/),
+    gradeReview: assignmentGradeReviewSchema.optional(),
     rangeLabel: z.string().nullable(),
     commonPlanSummary: z
       .object({
@@ -381,7 +383,12 @@ export function parseLegacyReviewCancelResponse(
 export function serializeBulkAssignmentPreview(
   preview: BulkAssignmentPreview,
   includeCountDetails: boolean,
+  includeGradeReview = false,
 ): BulkAssignmentPreview {
+  if (!includeGradeReview && preview.gradeReview) {
+    preview = { ...preview };
+    delete preview.gradeReview;
+  }
   if (includeCountDetails) return preview;
   const commonPlanSummary = preview.commonPlanSummary
     ? { ...preview.commonPlanSummary }

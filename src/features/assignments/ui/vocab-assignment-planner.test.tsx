@@ -26,6 +26,7 @@ import {
 import { cataloguedDatasetFromMetadata } from "@/lib/admin/dataset-catalog";
 import type { AssignmentDatasetItem, AssignmentStudentItem } from "../catalog-types";
 import type { VocabAssignmentScreenData } from "../controller/use-vocab-assignment-screen";
+import type { AssignmentGradeReview } from "../contracts/assignment-grade-review";
 import { VocabAssignmentPlanner } from "./vocab-assignment-planner";
 
 const mocks = vi.hoisted(() => ({
@@ -36,6 +37,8 @@ const mocks = vi.hoisted(() => ({
   useScreen: vi.fn(),
   rangeDataset: vi.fn(),
   reviewDataset: vi.fn(),
+  excludeStudents: vi.fn(),
+  restoreStudents: vi.fn(),
 }));
 
 vi.mock("sonner", () => ({
@@ -99,19 +102,24 @@ function screenController({
   canSubmit = false,
   previewLoading = false,
   submitting = false,
+  gradeReview,
 }: {
   canSubmit?: boolean;
   previewLoading?: boolean;
   submitting?: boolean;
+  gradeReview?: AssignmentGradeReview;
 } = {}) {
   return {
-    actions: { submitPlan: mocks.screenSubmit, changeDataset: mocks.rangeDataset },
+    actions: { submitPlan: mocks.screenSubmit, changeDataset: mocks.rangeDataset, excludeStudents: mocks.excludeStudents, restoreExcludedStudents: mocks.restoreStudents },
+    selectedStudents: [student],
+    excludedStudentCount: 0,
     bulk: {
       state: {
         draft: {},
         submission: { status: submitting ? "submitting" : "idle" },
       },
       previewLoading,
+      preview: gradeReview ? { gradeReview } : null,
     },
     canSubmit,
     fieldErrors: {},
@@ -186,6 +194,59 @@ function renderChangedAssignment(
 }
 
 describe("오답 단일 배정 제출", () => {
+  const gradeReview: AssignmentGradeReview = { audienceMode: "bulk", datasetId: "fake-book", datasetGrade: "고1",
+    studentIds: [student.id], mismatches: [{ studentId: student.id, displayName: student.displayName, gradeLabel: "고2" }],
+    unknownStudentIds: [], token: "a".repeat(64) };
+  function renderGradeReview(mode: "single" | "bulk" = "bulk") {
+    mocks.useScreen.mockReturnValue(screenController({ canSubmit: true, gradeReview: { ...gradeReview, audienceMode: mode } }));
+    mocks.useReview.mockReturnValue(reviewController("ready", true));
+    mocks.screenSubmit.mockResolvedValue({ ok: true, result: { assignmentCount: 1, studentCount: 1, queuedCount: 0 } });
+    const props = { data, onClose: vi.fn(), onSuccess: vi.fn(), selectionMode: mode, students: [student] };
+    const view = render(<VocabAssignmentPlanner {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: "배정하기" }));
+    return { ...view, props };
+  }
+  it("단일 학년 차이는 확인 없이 저장한다", async () => {
+    renderGradeReview("single");
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    await waitFor(() => expect(mocks.screenSubmit).toHaveBeenCalledWith(undefined));
+  });
+  it("일괄 1명도 확인하고 포함한 단어장 기준으로 저장한다", async () => {
+    renderGradeReview();
+    expect(screen.getByRole("alertdialog")).toBeVisible();
+    expect(mocks.screenSubmit).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "포함하기" }));
+    await waitFor(() => expect(mocks.screenSubmit).toHaveBeenCalledWith(gradeReview.token));
+  });
+  it("제외는 이번 대상만 바꾸고 저장하지 않으며 조건 입력을 보존한다", () => {
+    renderGradeReview();
+    const condition = screen.getByRole("textbox", { name: "배정 조건 보존" });
+    fireEvent.change(condition, { target: { value: "7회차" } });
+    fireEvent.click(screen.getByRole("button", { name: "제외하기" }));
+    expect(mocks.excludeStudents).toHaveBeenCalledWith([student.id]);
+    expect(mocks.screenSubmit).not.toHaveBeenCalled();
+    expect(condition).toHaveValue("7회차");
+  });
+  it.each(["포함하기", "제외하기"])("확인 중 대상이 바뀌면 낡은 %s를 실행하지 않는다", label => {
+    const { rerender, props } = renderGradeReview();
+    mocks.useScreen.mockReturnValue(screenController({ canSubmit: true, gradeReview: { ...gradeReview, token: "b".repeat(64) } }));
+    rerender(<VocabAssignmentPlanner {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: label }));
+    expect(mocks.excludeStudents).not.toHaveBeenCalled();
+    expect(mocks.screenSubmit).not.toHaveBeenCalled();
+    expect(mocks.toastError).toHaveBeenCalledWith(expect.stringContaining("다시 확인"));
+  });
+  it("전원 제외 시 저장을 막고 되돌리기를 제공한다", () => {
+    const { rerender, props } = renderGradeReview();
+    fireEvent.click(screen.getByRole("button", { name: "제외하기" }));
+    mocks.useScreen.mockReturnValue({ ...screenController(), selectedStudents: [], excludedStudentCount: 1 });
+    rerender(<VocabAssignmentPlanner {...props} />);
+    expect(screen.getByRole("button", { name: "배정하기" })).toBeDisabled();
+    expect(screen.getByText("배정할 학생을 선택해 주세요.")).toBeVisible();
+    expect(screen.getByRole("button", { name: "제외 되돌리기" })).toHaveFocus();
+    fireEvent.click(screen.getByRole("button", { name: "제외 되돌리기" }));
+    expect(mocks.restoreStudents).toHaveBeenCalledOnce();
+  });
   it.each(["range", "review"] as const)("권한 재확인 중에는 %s 직접 submit 이벤트도 저장하지 않는다", (purpose) => {
     const { rerender, view } = renderChangedAssignment("single", purpose);
     rerender(<VocabAssignmentPlanner {...view.props} interactionAllowed={false} />);
@@ -227,6 +288,8 @@ describe("오답 단일 배정 제출", () => {
     mocks.useReview.mockReset();
     mocks.rangeDataset.mockReset();
     mocks.reviewDataset.mockReset();
+    mocks.excludeStudents.mockReset();
+    mocks.restoreStudents.mockReset();
     window.localStorage.clear();
     mocks.useScreen.mockReturnValue(screenController());
   });

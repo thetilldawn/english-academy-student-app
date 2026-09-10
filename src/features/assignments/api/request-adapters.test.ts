@@ -560,6 +560,15 @@ describe("assignment request adapters", () => {
     expect(bulkAssignmentSchema.parse(request.body)).toStrictEqual(
       bulkImmediateSubmitContract,
     );
+    const bulk = { ...immediateBulkDraft, audienceMode: "bulk" as const };
+    const acknowledged = { ...bulk, gradeReviewToken: "e".repeat(64) };
+    expect(buildBulkAssignmentPreviewRequest(acknowledged).body).toMatchObject({ audienceMode: "bulk" });
+    expect(buildBulkAssignmentPreviewRequest(acknowledged).body).not.toHaveProperty("gradeReviewToken");
+    expect(bulkPreviewFingerprint(acknowledged)).toBe(bulkPreviewFingerprint(bulk));
+    expect(bulkSubmissionFingerprint(acknowledged, assignmentContractIds.previewPlanSignature)).not.toBe(
+      bulkSubmissionFingerprint(bulk, assignmentContractIds.previewPlanSignature));
+    expect(buildBulkAssignmentRequest(acknowledged, assignmentContractIds.idempotencyKey, NOW,
+      assignmentContractIds.previewPlanSignature).body).toMatchObject({ audienceMode: "bulk", gradeReviewToken: "e".repeat(64) });
   });
 
   it("keeps undated range sessions separate through preview and submit", () => {

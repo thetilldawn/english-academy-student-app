@@ -1,4 +1,6 @@
 import "server-only";
+import type { AssignmentGradeReview } from "../../contracts/assignment-grade-review";
+import { bindAssignmentGradeReview, buildAssignmentGradeReview } from "../planning/assignment-grade-review";
 
 import { MAXIMUM_BULK_ASSIGNMENT_COUNT } from "@/features/assignments/domain/model";
 import { unitSelectionLabel } from "@/features/assignments/domain/unit-selection-label";
@@ -96,6 +98,7 @@ function allocationIssueFieldKey(
 }
 
 export type ResolvedBulkAssignmentPreview = {
+  gradeReview?: AssignmentGradeReview;
   preview: BulkAssignmentPreview;
   targetPlansByStudent: Map<string, PlannedVocabSeriesTarget[][]>;
   canonicalPlansByStudent?: Map<string, CanonicalPlannedQuestion[][]>;
@@ -128,8 +131,16 @@ export async function resolveBulkAssignmentPreview(
     },
     admin,
   );
+  const gradeReview = buildAssignmentGradeReview(input, planning);
+  const withGradeReview = (resolved: ResolvedBulkAssignmentPreview): ResolvedBulkAssignmentPreview => ({
+    ...resolved, gradeReview,
+    preview: { ...resolved.preview, gradeReview,
+      planSignature: input.audienceMode
+        ? bindAssignmentGradeReview(resolved.preview.planSignature, gradeReview)
+        : resolved.preview.planSignature },
+  });
   if (input.questionMode !== "book_meaning_choice" || planning.dataset?.questionBankKind === "reviewed_exam_v1") {
-    return resolveCanonicalBulkAssignmentPreview(input, admin, planning);
+    return withGradeReview(await resolveCanonicalBulkAssignmentPreview(input, admin, planning));
   }
   const students: BulkPlanningStudent[] = planning.students;
   const datasets: DatasetSummary[] = planning.dataset ? [planning.dataset] : [];
@@ -625,10 +636,7 @@ export async function resolveBulkAssignmentPreview(
     ),
     rangeLabel,
   };
-  return {
-    preview,
-    targetPlansByStudent,
-  };
+  return withGradeReview({ preview, targetPlansByStudent });
 }
 
 export async function previewBulkAssignments(

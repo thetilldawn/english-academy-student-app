@@ -107,6 +107,12 @@ export function bulkPreviewAllowsSubmission(
   draft: BulkSeriesAssignmentDraft,
   preview: BulkAssignmentPreviewResponse,
 ): boolean {
+  if (draft.audienceMode && (!preview.gradeReview ||
+      preview.gradeReview.audienceMode !== draft.audienceMode ||
+      preview.gradeReview.datasetId !== draft.commonPlan?.datasetId ||
+      JSON.stringify([...preview.gradeReview.studentIds].toSorted()) !== JSON.stringify([...draft.studentIds].toSorted()))) {
+    return false;
+  }
   return (
     preview.blockedCount === 0 &&
     preview.items.every((item) => !item.requiresExtraDateDecision) &&

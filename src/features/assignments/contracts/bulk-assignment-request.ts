@@ -335,6 +335,7 @@ const bulkCommonPlanSchema = z
   });
 
 const bulkAssignmentSelectionFields = {
+  audienceMode: z.enum(["single", "bulk"]).optional(),
   studentIds: z.array(z.uuid()).min(1).max(MAXIMUM_BULK_STUDENT_COUNT),
   questionMode: z.enum(assignmentQuestionModes).default("book_meaning_choice"),
   englishToKoreanRatio: z.union([
@@ -347,6 +348,7 @@ const bulkAssignmentSelectionFields = {
 
 function validateBulkAssignmentSelection(
   value: {
+    audienceMode?: "single" | "bulk";
     studentIds: string[];
     questionMode: (typeof assignmentQuestionModes)[number];
     englishToKoreanRatio: 0 | 50 | 100;
@@ -354,6 +356,9 @@ function validateBulkAssignmentSelection(
   },
   context: z.RefinementCtx,
 ) {
+  if (value.audienceMode === "single" && value.studentIds.length !== 1) {
+    context.addIssue({ code: "custom", path: ["studentIds"], message: "단일 배정은 학생 한 명만 선택해 주세요." });
+  }
   const modeIssues = assignmentQuestionModeIssues(value.questionMode, value.englishToKoreanRatio, value.commonPlan);
   if (modeIssues.direction) context.addIssue({
     code: "custom", path: ["englishToKoreanRatio"], message: assignmentQuestionModeErrors.direction,
@@ -454,6 +459,7 @@ export const bulkAssignmentPreviewSchema = z
 export const bulkAssignmentSchema = z
   .object({
     ...bulkAssignmentSelectionFields,
+    gradeReviewToken: z.string().regex(/^[0-9a-f]{64}$/).optional(),
     idempotencyKey: z.uuid(),
     previewPlanSignature: z.string().regex(/^[0-9a-f]{64}$/),
     timeLimitSeconds: z.number().int().min(30).max(10800),

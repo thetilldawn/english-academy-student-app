@@ -575,10 +575,23 @@
       "legacySourceSha256": "eda3d066540ede1b582486ced6a70828d58c400d56992c163afd0928f9b69d4d"
     },
     {
+      "path": "assignment-grade-dialog.tsx",
+      "role": "pure",
+      "reason": "확인 대상 표시와 포함·제외·취소 동작",
+      "allowedImports": [
+        "@/design-system/primitives/button/button",
+        "@/design-system/primitives/dialog/dialog",
+        "./vocab-assignment-planner.module.css"
+      ]
+    },
+    {
       "path": "vocab-assignment-planner.tsx",
       "role": "assembly",
       "reason": "일반/오답 제어기·범위/찾기·제출/폐기 수명 연결",
       "allowedImports": [
+        "../contracts/assignment-grade-review",
+        "./assignment-grade-dialog",
+        "@/design-system/primitives/button/button",
         "../catalog-types",
         "../client/controllers/use-assignment-dataset-picker",
         "../controller/use-assignment-dataset-unit-catalog",

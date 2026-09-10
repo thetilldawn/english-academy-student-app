@@ -1,4 +1,5 @@
 import "server-only";
+import { assertAssignmentGradeAcknowledged } from "../planning/assignment-grade-review";
 
 import { MAXIMUM_BULK_ASSIGNMENT_COUNT } from "@/features/assignments/domain/model";
 import {
@@ -129,6 +130,7 @@ export async function createBulkAssignments(
     throw error;
   }
   const preview = resolvedPreview.preview;
+  assertAssignmentGradeAcknowledged(input, resolvedPreview.gradeReview);
   if (preview.planSignature !== input.previewPlanSignature) {
     throw new BulkAssignmentError(
       "conflict",
