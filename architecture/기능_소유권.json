@@ -1921,6 +1921,10 @@
       "owner": "assignments"
     },
     {
+      "path": "src/features/assignments/server/planning/assignment-grade-review.ts",
+      "owner": "assignments"
+    },
+    {
       "path": "src/features/assignments/server/planning/bulk-assignment-plan-digest.ts",
       "owner": "assignments"
     },
@@ -3088,6 +3092,7 @@
         ],
         "contract": [
           "src/features/assignments/api/request-adapters.ts",
+          "src/features/assignments/contracts/assignment-grade-review.ts",
           "src/features/assignments/contracts/bulk-assignment-request.ts",
           "src/features/assignments/contracts/bulk-assignment-response.ts",
           "src/features/assignments/contracts/vocab-time-template-contract.ts"

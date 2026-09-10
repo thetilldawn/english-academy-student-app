@@ -4,6 +4,9 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
+import { Button } from "@/design-system/primitives/button/button";
+import type { AssignmentGradeReview } from "../contracts/assignment-grade-review";
+import { AssignmentGradeDialog } from "./assignment-grade-dialog";
 import {
   DialogBody,
   DialogFooter,
@@ -63,6 +66,7 @@ export function VocabAssignmentPlanner({
   const cancelUnitRequest = unitCatalog.actions.cancel;
   const ensureDatasetUnits = unitCatalog.actions.ensureDataset;
   const controller = useVocabAssignmentScreen({
+    audienceMode: selectionMode,
     data: { ...data, units: unitCatalog.units },
     enabled: assignmentPurpose === "range",
     genericErrorMessage: "단어 시험 배정을 저장하지 못했습니다.",
@@ -102,6 +106,7 @@ export function VocabAssignmentPlanner({
   });
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
+  const [gradeReview, setGradeReview] = useState<AssignmentGradeReview | null>(null);
   const discardConfirmedRef = useRef(false);
   const bulk = controller.bulk;
   const busy = assignmentPurpose === "range"
@@ -120,6 +125,15 @@ export function VocabAssignmentPlanner({
     ? reviewController.fieldErrors
     : {};
   const formRef = useRef<HTMLFormElement>(null);
+  const excludedUndoRef = useRef<HTMLButtonElement>(null);
+  const previousExcludedCountRef = useRef(controller.excludedStudentCount);
+  useEffect(() => {
+    if (previousExcludedCountRef.current === controller.excludedStudentCount) return;
+    previousExcludedCountRef.current = controller.excludedStudentCount;
+    const target = controller.excludedStudentCount > 0 ? excludedUndoRef.current : datasetPicker.triggerRef.current;
+    const frame = window.requestAnimationFrame(() => target?.focus({ preventScroll: true }));
+    return () => window.cancelAnimationFrame(frame);
+  }, [controller.excludedStudentCount, datasetPicker.triggerRef]);
   const rangeDraftSignature = JSON.stringify({
     exam: bulk.state.draft,
     planner: controller.planner,
@@ -143,7 +157,7 @@ export function VocabAssignmentPlanner({
     reviewDraftSignature,
   ]);
   function requestClose() {
-    if (!interactionAllowed || busy || discardOpen) return;
+    if (!interactionAllowed || busy || discardOpen || gradeReview) return;
     if (datasetPicker.open) {
       datasetPicker.actions.close();
       return;
@@ -179,7 +193,7 @@ export function VocabAssignmentPlanner({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!interactionAllowed || busy || discardOpen) return;
+    if (!interactionAllowed || busy || discardOpen || gradeReview) return;
     setSubmitAttempted(true);
     const canSubmit = assignmentPurpose === "range"
       ? controller.canSubmit
@@ -188,8 +202,20 @@ export function VocabAssignmentPlanner({
       focusFirstInvalidField();
       return;
     }
+    const review = bulk.preview?.gradeReview;
+    if (assignmentPurpose === "range" && selectionMode === "bulk" && review && review.mismatches.length > 0) {
+      setGradeReview(review);
+      return;
+    }
+    await submitReady();
+  }
+
+  async function submitReady(gradeReviewToken?: string) {
+    if (!interactionAllowed || busy || discardOpen) return;
+    if (gradeReviewToken && !isCurrentGradeReview(gradeReviewToken)) return;
+    setGradeReview(null);
     const outcome = assignmentPurpose === "range"
-      ? await controller.actions.submitPlan()
+      ? await controller.actions.submitPlan(gradeReviewToken)
       : await reviewController.actions.submit();
     if (!outcome.ok) {
       toast.error(outcome.message);
@@ -217,6 +243,13 @@ export function VocabAssignmentPlanner({
     onClose();
   }
 
+  function isCurrentGradeReview(token: string) {
+    if (controller.canSubmit && bulk.preview?.gradeReview?.token === token) return true;
+    setGradeReview(null);
+    toast.error("학생이나 단어장 정보가 바뀌었습니다. 다시 확인해 주세요.");
+    return false;
+  }
+
   const canSubmit = assignmentPurpose === "range"
     ? controller.canSubmit
     : reviewController.canSubmit;
@@ -225,7 +258,7 @@ export function VocabAssignmentPlanner({
   const singleStudent = selectionMode === "single" ? students[0] ?? null : null;
   const headerDetail = singleStudent
     ? `${singleStudent.displayName} · ${singleStudent.schoolName || "학교 미입력"}`
-    : `${students.length}명 선택`;
+    : `${controller.selectedStudents.length}명 선택`;
   const purposeTabs = [
     {
       controls: "vocab-assignment-range-panel",
@@ -314,6 +347,11 @@ export function VocabAssignmentPlanner({
             }}
             value={assignmentPurpose}
           />
+          {controller.excludedStudentCount > 0 ? <div className={styles.gradeNotice} role="status">
+            <span>학년이 다른 {controller.excludedStudentCount}명을 이번 배정에서 제외했습니다.</span>
+            <Button disabled={busy} ref={excludedUndoRef} onClick={controller.actions.restoreExcludedStudents}>제외 되돌리기</Button>
+          </div> : null}
+          {controller.selectedStudents.length === 0 ? <p role="alert">배정할 학생을 선택해 주세요.</p> : null}
           {!reviewAssignmentAvailable ? (
             <p
               className={styles.assignmentKindHint}
@@ -347,7 +385,7 @@ export function VocabAssignmentPlanner({
                 onRetryUnits={() =>
                   void unitCatalog.actions.retry()
                 }
-                students={students}
+                students={controller.selectedStudents}
               />
             )}
           </AssignmentEditorPanel>
@@ -363,6 +401,8 @@ export function VocabAssignmentPlanner({
               interactionAllowed &&
               !busy &&
               !discardOpen &&
+              !gradeReview &&
+              controller.selectedStudents.length > 0 &&
               !rangeCalculationPending &&
               !reviewCalculationPending &&
               !reviewCalculationFailed &&
@@ -376,6 +416,20 @@ export function VocabAssignmentPlanner({
       </DialogFooter>
       ) : null}
     </DialogFrame>
+    {gradeReview ? <AssignmentGradeDialog
+      busy={busy}
+      datasetGrade={gradeReview.datasetGrade}
+      students={gradeReview.mismatches}
+      unknownCount={gradeReview.unknownStudentIds.length}
+      onCancel={() => setGradeReview(null)}
+      onExclude={() => {
+        if (!interactionAllowed || busy || !isCurrentGradeReview(gradeReview.token)) return;
+        controller.actions.excludeStudents(gradeReview.mismatches.map(s => s.studentId));
+        setGradeReview(null);
+        setSubmitAttempted(false);
+      }}
+      onInclude={() => void submitReady(gradeReview.token)}
+    /> : null}
     {discardOpen ? (
       <AssignmentDiscardDialog
         busy={busy}

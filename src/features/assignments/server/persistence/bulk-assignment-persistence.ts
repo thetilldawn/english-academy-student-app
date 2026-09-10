@@ -18,6 +18,8 @@ export function bulkAssignmentRequestSha256(input: BulkAssignmentInput) {
   return createHash("sha256")
     .update(
       JSON.stringify({
+        ...(input.audienceMode ? { audienceMode: input.audienceMode } : {}),
+        ...(input.gradeReviewToken ? { gradeReviewToken: input.gradeReviewToken } : {}),
         studentIds: [...input.studentIds].toSorted(),
         questionMode: input.questionMode,
         englishToKoreanRatio: input.englishToKoreanRatio,

@@ -8,6 +8,8 @@ import type {
 } from "./model";
 
 export type BulkSeriesAssignmentDraftAction =
+  | { type: "audience/changed"; audienceMode: "single" | "bulk" | undefined }
+  | { type: "grade/acknowledged"; token: string }
   | { type: "students/changed"; studentIds: readonly string[] }
   | {
       type: "common_plan/changed";
@@ -26,13 +28,16 @@ export type BulkSeriesAssignmentDraftAction =
   | { type: "exam/retry_passing_score_changed"; value: number };
 
 export function createInitialBulkSeriesAssignmentDraft({
+  audienceMode,
   commonPlan,
   studentIds,
 }: {
+  audienceMode?: "single" | "bulk";
   commonPlan?: BulkSeriesAssignmentDraft["commonPlan"];
   studentIds: readonly string[];
 }): BulkSeriesAssignmentDraft {
   return {
+    ...(audienceMode ? { audienceMode } : {}),
     kind: "bulk_series",
     questionMode: "book_meaning_choice",
     studentIds: [...studentIds],
@@ -54,11 +59,17 @@ export function reduceBulkSeriesAssignmentDraft(
   action: BulkSeriesAssignmentDraftAction,
 ): BulkSeriesAssignmentDraft {
   switch (action.type) {
+    case "audience/changed":
+      return { ...draft, audienceMode: action.audienceMode, gradeReviewToken: undefined };
+    case "grade/acknowledged":
+      return { ...draft, gradeReviewToken: action.token };
     case "students/changed":
-      return { ...draft, studentIds: [...action.studentIds] };
+      return { ...draft, studentIds: [...action.studentIds], gradeReviewToken: undefined };
     case "common_plan/changed":
       return {
         ...draft,
+        gradeReviewToken: draft.commonPlan?.datasetId === action.commonPlan?.datasetId
+          ? draft.gradeReviewToken : undefined,
         commonPlan: action.commonPlan
           ? {
               ...action.commonPlan,

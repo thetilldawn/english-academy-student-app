@@ -9,6 +9,7 @@ import {
 } from "./assignment-dataset-units-query";
 
 export type BulkPlanningStudent = {
+  gradeLabel?: string | null;
   currentVocabDatasetId: string | null;
   displayName: string;
   id: string;
@@ -22,6 +23,7 @@ export type CommonBulkAssignmentPlanningData = {
 };
 
 type PlanningStudentRow = {
+  grade_label?: string | null;
   current_vocab_dataset_id: string | null;
   display_name: string;
   id: string;
@@ -85,7 +87,7 @@ export async function loadCommonBulkAssignmentPlanningData(
   const [studentResult, material] = await Promise.all([
     supabase
       .from("students")
-      .select("id, display_name, status, current_vocab_dataset_id")
+      .select("id, display_name, status, current_vocab_dataset_id, grade_label")
       .in("id", studentIds)
       .is("deleted_at", null),
     loadOptionalPlanningMaterial(input.datasetId, authenticatedAdmin),
@@ -98,6 +100,7 @@ export async function loadCommonBulkAssignmentPlanningData(
   const students = ((studentResult.data ?? []) as PlanningStudentRow[]).map(
     (row) => ({
       currentVocabDatasetId: row.current_vocab_dataset_id,
+      gradeLabel: row.grade_label ?? null,
       displayName: row.display_name,
       id: row.id,
       status: row.status,

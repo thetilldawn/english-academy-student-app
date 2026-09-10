@@ -13,6 +13,10 @@ const counts = {
 };
 
 describe("buildBulkPlanAudience", () => {
+  it("explicit bulk stays bulk for one remaining student", () => {
+    expect(buildBulkPlanAudience({ gradeReview: { audienceMode: "bulk" },
+      items: [{ ...counts, available: true, error: null }], commonPlanSummary: null })).toMatchObject({ mode: "common", totalCount: 1 });
+  });
   it("uses the explicit common and exception groups", () => {
     expect(
       buildBulkPlanAudience({

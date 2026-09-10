@@ -4,6 +4,7 @@ import { useAssignmentAuthenticationFailure } from "./assignment-authentication-
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useReducer,
   useRef,
@@ -84,6 +85,7 @@ export type BulkAssignmentSubmitOutcome =
 const systemClock = () => Date.now();
 
 export function useBulkAssignmentController({
+  audienceMode,
   enabled = true,
   submissionEnabled = true,
   genericErrorMessage,
@@ -94,6 +96,7 @@ export function useBulkAssignmentController({
   clock = systemClock,
   transport = browserAssignmentTransport,
 }: {
+  audienceMode?: "single" | "bulk";
   enabled?: boolean;
   submissionEnabled?: boolean;
   genericErrorMessage: string;
@@ -107,6 +110,7 @@ export function useBulkAssignmentController({
   const captureAuthenticationFailure = useAssignmentAuthenticationFailure();
   const [initialDraft] = useState(() =>
     createInitialBulkSeriesAssignmentDraft({
+      audienceMode,
       commonPlan: initialCommonPlan,
       studentIds,
     }),
@@ -218,6 +222,16 @@ export function useBulkAssignmentController({
     },
     [apply, clearCapacity],
   );
+
+  useLayoutEffect(() => {
+    const previous = stateRef.current.draft.studentIds;
+    if (previous.length !== studentIds.length || previous.some((id, index) => id !== studentIds[index])) {
+      changeDraft({ type: "students/changed", studentIds });
+    }
+    if (stateRef.current.draft.audienceMode !== audienceMode) {
+      changeDraft({ type: "audience/changed", audienceMode });
+    }
+  }, [audienceMode, studentIds, changeDraft]);
 
   const previewIssues = resolveBulkPreviewIssues(state.draft);
   const currentSubmissionIssues = resolveBulkSubmissionIssues(
@@ -356,11 +370,15 @@ export function useBulkAssignmentController({
     preview !== null &&
     bulkPreviewAllowsSubmission(state.draft, preview);
 
-  const submit = useCallback(async (): Promise<BulkAssignmentSubmitOutcome> => {
+  const submit = useCallback(async (gradeReviewToken?: string): Promise<BulkAssignmentSubmitOutcome> => {
     if (!enabled || !submissionEnabled) {
       return { conflict: false, message: "배정할 날짜와 조건을 먼저 확인해 주세요.", ok: false };
     }
     const reportAuthenticationFailure = captureAuthenticationFailure();
+    if (gradeReviewToken && stateRef.current.submission.status !== "submitting" &&
+        stateRef.current.submission.status !== "succeeded") {
+      changeDraft({ type: "grade/acknowledged", token: gradeReviewToken });
+    }
     let current = stateRef.current;
     if (current.submission.status === "succeeded") {
       return { conflict: false, message: genericErrorMessage, ok: false };
@@ -389,6 +407,12 @@ export function useBulkAssignmentController({
       setMessage(previewErrorMessage);
       setPreviewRefreshVersion((version) => version + 1);
       return { conflict: false, message: previewErrorMessage, ok: false };
+    }
+    const review = currentPreview.gradeReview;
+    if (review?.audienceMode === "bulk" && review.mismatches.length > 0 && current.draft.gradeReviewToken !== review.token) {
+      const message = "학년이 다른 학생의 포함 여부를 확인해 주세요.";
+      setMessage(message);
+      return { conflict: false, message, ok: false };
     }
     const runSubmission = () =>
       submissionFlow.run((now) =>
@@ -498,6 +522,7 @@ export function useBulkAssignmentController({
     setSubmissionIssue,
     submissionFlow,
     clearCapacity,
+    changeDraft,
   ]);
 
   const changeCommonPlan = useCallback(
@@ -507,6 +532,7 @@ export function useBulkAssignmentController({
   );
 
   const actions = {
+    changeStudents: (studentIds: readonly string[]) => changeDraft({ type: "students/changed", studentIds }),
     changeCommonPlan,
     changeDirection: (value: AssignmentDirectionRatio) =>
       changeDraft({ type: "exam/direction_changed", value }),

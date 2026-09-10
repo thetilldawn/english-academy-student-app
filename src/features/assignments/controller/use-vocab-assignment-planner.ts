@@ -41,6 +41,7 @@ import {
 import { useAssignmentPreviousExam } from "./use-assignment-previous-exam";
 
 export function useVocabAssignmentPlanner({
+  audienceMode,
   datasets,
   enabled = true,
   genericErrorMessage,
@@ -54,6 +55,7 @@ export function useVocabAssignmentPlanner({
   transport,
   units,
 }: {
+  audienceMode?: "single" | "bulk";
   datasets: readonly AssignmentDatasetItem[];
   enabled?: boolean;
   genericErrorMessage: string;
@@ -117,6 +119,7 @@ export function useVocabAssignmentPlanner({
     unitAllocation,
   } = useVocabAssignmentDerivedPlan({ planner, selectedUnits });
   const bulk = useBulkAssignmentController({
+    audienceMode,
     genericErrorMessage,
     initialCommonPlan: commonPlan,
     enabled,

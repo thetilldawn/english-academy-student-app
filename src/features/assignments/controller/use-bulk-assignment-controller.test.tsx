@@ -185,6 +185,67 @@ afterEach(() => {
 });
 
 describe("일괄 배정 controller", () => {
+  it("일괄 1명의 포함 확인을 저장에 전달하며 실패 후에도 재시도할 수 있다", async () => {
+    const requests: AssignmentTransportRequest[] = [];
+    let attempts = 0;
+    const token = "c".repeat(64);
+    const transport: AssignmentTransport = async request => {
+      requests.push(request);
+      if (request.url.endsWith("/preview")) return { ok: true, status: 200, data: {
+        ...previewResponse([assignmentContractIds.studentA], 1), gradeReview: { audienceMode: "bulk", datasetId: assignmentContractIds.dataset,
+          datasetGrade: "고1", studentIds: [assignmentContractIds.studentA], unknownStudentIds: [], token,
+          mismatches: [{ studentId: assignmentContractIds.studentA, displayName: "가짜 학생", gradeLabel: "고2" }] },
+      } };
+      attempts++;
+      return attempts === 1 ? { ok: false, status: 503, data: { error: "다시 시도해 주세요." } }
+        : { ok: true, status: 201, data: creationResponse([assignmentContractIds.studentA], 1) };
+    };
+    const { result } = renderHook(() => useBulkAssignmentController({ audienceMode: "bulk", clock: () => NOW,
+      genericErrorMessage: "저장 실패", initialCommonPlan: immediatePlan(), previewDelayMs: 0, previewErrorMessage: "미리보기 실패",
+      studentIds: [assignmentContractIds.studentA], transport }));
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    await act(async () => { expect(await result.current.actions.submit()).toMatchObject({ ok: false, message: expect.stringContaining("포함 여부") }); });
+    expect(attempts).toBe(0);
+    await act(async () => { expect(await result.current.actions.submit(token)).toMatchObject({ ok: false }); });
+    await act(async () => { expect(await result.current.actions.submit(token)).toMatchObject({ ok: true }); });
+    const saves = requests.filter(r => !r.url.endsWith("/preview"));
+    expect(saves).toHaveLength(2);
+    expect(saves[1]!.body).toMatchObject({ audienceMode: "bulk", studentIds: [assignmentContractIds.studentA], gradeReviewToken: token,
+      commonPlan: { datasetId: assignmentContractIds.dataset } });
+  });
+
+  it("제외 후 새 대상을 미리보기와 저장에 사용하고 일괄 1명도 유지한다", async () => {
+    const requests: AssignmentTransportRequest[] = [];
+    const transport: AssignmentTransport = async request => {
+      requests.push(request);
+      const body = request.body as { studentIds: string[] };
+      return request.url.endsWith("/preview") ? { ok: true, status: 200, data: { ...previewResponse(body.studentIds, 1),
+        gradeReview: { audienceMode: "bulk", datasetId: assignmentContractIds.dataset, datasetGrade: "고1",
+          studentIds: body.studentIds, mismatches: [], unknownStudentIds: [], token: "d".repeat(64) } } }
+        : { ok: true, status: 201, data: creationResponse(body.studentIds, 1) };
+    };
+    const { result, rerender } = renderHook(({ studentIds }) => useBulkAssignmentController({ audienceMode: "bulk", clock: () => NOW,
+      genericErrorMessage: "저장 실패", initialCommonPlan: immediatePlan(), previewDelayMs: 0, previewErrorMessage: "미리보기 실패",
+      studentIds, transport }), { initialProps: { studentIds: [assignmentContractIds.studentA, assignmentContractIds.studentB] as string[] } });
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    act(() => { result.current.actions.changeStudents([assignmentContractIds.studentB]); });
+    rerender({ studentIds: [assignmentContractIds.studentB] });
+    await waitFor(() => expect(result.current.preview?.items.map(s => s.studentId)).toEqual([assignmentContractIds.studentB]));
+    await act(async () => { expect(await result.current.actions.submit()).toMatchObject({ ok: true }); });
+    expect(requests.at(-1)?.body).toMatchObject({ audienceMode: "bulk", studentIds: [assignmentContractIds.studentB] });
+  });
+
+  it("새 화면에서 학년 확인 정보가 누락된 응답은 저장에 사용하지 않는다", async () => {
+    const requests: AssignmentTransportRequest[] = [];
+    const { result } = renderHook(() => useBulkAssignmentController({ audienceMode: "bulk", clock: () => NOW,
+      genericErrorMessage: "저장 실패", initialCommonPlan: immediatePlan(), previewDelayMs: 0, previewErrorMessage: "미리보기 실패",
+      studentIds: [assignmentContractIds.studentA], transport: successTransport(requests) }));
+    await waitFor(() => expect(result.current.preview).not.toBeNull());
+    expect(result.current.canSubmit).toBe(false);
+    await act(async () => { expect(await result.current.actions.submit()).toMatchObject({ ok: false }); });
+    expect(requests.every(r => r.url.endsWith("/preview"))).toBe(true);
+  });
+
   it.each([
     { label: "요일 선택", plan: scheduledPlan([17]), submissionEnabled: true },
     { label: "요일 선택 전 수량 조회", plan: scheduledPlan([17]), submissionEnabled: false },

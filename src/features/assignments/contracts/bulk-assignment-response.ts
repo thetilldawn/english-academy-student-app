@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { AssignmentGradeReview } from "./assignment-grade-review";
 export const BULK_PREVIEW_COUNTS_HEADER = "x-assignment-preview-counts";
 import type { AssignmentCountBreakdown } from "../domain/assignment-count-breakdown";
 export { assignmentCountBreakdownSchema, type AssignmentCountBreakdown } from "../domain/assignment-count-breakdown";
@@ -74,6 +75,7 @@ export type BulkAssignmentCommonPlanSummary = {
 };
 
 export type BulkAssignmentPreview = {
+  gradeReview?: AssignmentGradeReview;
   items: BulkAssignmentPreviewItem[];
   assignableCount: number;
   blockedCount: number;

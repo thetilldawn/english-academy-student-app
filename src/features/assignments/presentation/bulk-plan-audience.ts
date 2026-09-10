@@ -9,6 +9,7 @@ type CountReference = {
 };
 
 type AudiencePreview = {
+  gradeReview?: { audienceMode: "single" | "bulk" };
   items?: Array<
     CountReference & {
       available: boolean;
@@ -74,7 +75,7 @@ export function buildBulkPlanAudience(
     if (totalCount === 1) {
       const complete = completeReference(preview.commonPlanSummary);
       return {
-        mode: "single",
+        mode: preview.gradeReview?.audienceMode === "bulk" ? "common" : "single",
         reference: complete ? preview.commonPlanSummary : null,
         separateCount: complete ? 0 : 1,
         sameCount: complete ? 1 : 0,
@@ -103,7 +104,7 @@ export function buildBulkPlanAudience(
     const item = items[0]!;
     const common = item.available && !item.error && completeReference(item);
     return {
-      mode: "single",
+      mode: preview.gradeReview?.audienceMode === "bulk" ? "common" : "single",
       reference: common ? item : null,
       separateCount: common ? 0 : 1,
       sameCount: common ? 1 : 0,

@@ -13,6 +13,7 @@ import {
 const mocks = vi.hoisted(() => ({
   submit: vi.fn(),
   usePlanner: vi.fn(),
+  changeStudents: vi.fn(),
 }));
 
 vi.mock("./use-vocab-assignment-planner", () => ({
@@ -60,9 +61,10 @@ describe("단어 시험 배정 화면과 기능 경계", () => {
   beforeEach(() => {
     mocks.submit.mockReset();
     mocks.usePlanner.mockReset();
+    mocks.changeStudents.mockReset();
     mocks.usePlanner.mockReturnValue({
       actions: {},
-      bulk: { actions: { submit: mocks.submit } },
+      bulk: { actions: { submit: mocks.submit, changeStudents: mocks.changeStudents } },
       planner: { schedule: { startDate: "2026-08-21" } },
     });
   });
@@ -96,6 +98,23 @@ describe("단어 시험 배정 화면과 기능 경계", () => {
     expect(mocks.usePlanner).toHaveBeenLastCalledWith(expect.objectContaining({
       previousExamSourceStudentId: "student-2",
     }));
+  });
+
+  it("제외 후 대상·기준 학생이 함께 바뀌고 일괄 모드와 원본 학생은 유지된다", () => {
+    const { result } = renderHook(() => useVocabAssignmentScreen({ audienceMode: "bulk", data, genericErrorMessage: "저장 실패",
+      initialDatasetId: readyDataset.id, previewErrorMessage: "미리보기 실패", students, today: "2026-08-21" }));
+    act(() => result.current.actions.excludeStudents(["student-1"]));
+    expect(result.current.selectedStudents).toEqual([students[1]]);
+    expect(result.current.previousExamSourceStudentId).toBe("student-2");
+    expect(mocks.changeStudents).toHaveBeenLastCalledWith(["student-2"]);
+    expect(mocks.usePlanner).toHaveBeenLastCalledWith(expect.objectContaining({ audienceMode: "bulk", studentIds: ["student-2"], previousExamSourceStudentId: "student-2" }));
+    act(() => result.current.actions.excludeStudents(["student-2"]));
+    expect(result.current.selectedStudents).toEqual([]);
+    expect(result.current.previousExamSourceStudentId).toBe("");
+    act(() => result.current.actions.restoreExcludedStudents());
+    expect(result.current.selectedStudents).toEqual(students);
+    expect(result.current.excludedStudentCount).toBe(0);
+    expect(students).toHaveLength(2);
   });
 
   it("저장 응답의 학생·시험 수 집계를 UI에 맡기지 않는다", async () => {

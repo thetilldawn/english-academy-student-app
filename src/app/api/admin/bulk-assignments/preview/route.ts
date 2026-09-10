@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   try {
     const preview = await previewBulkAssignments(input, admin);
     return Response.json(serializeBulkAssignmentPreview(
-      preview, request.headers.get(BULK_PREVIEW_COUNTS_HEADER) === "1",
+      preview, request.headers.get(BULK_PREVIEW_COUNTS_HEADER) === "1", input.audienceMode !== undefined,
     ), {
       headers: { "Cache-Control": "private, no-store" },
     });

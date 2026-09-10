@@ -43,6 +43,7 @@ export function summarizeVocabAssignmentResult(
 }
 
 export function useVocabAssignmentScreen({
+  audienceMode,
   data,
   enabled = true,
   genericErrorMessage,
@@ -52,6 +53,7 @@ export function useVocabAssignmentScreen({
   today: todayOverride,
   transport,
 }: {
+  audienceMode?: "single" | "bulk";
   data: VocabAssignmentScreenData;
   enabled?: boolean;
   genericErrorMessage: string;
@@ -68,8 +70,15 @@ export function useVocabAssignmentScreen({
         : isoToKoreanDateTimeLocal(new Date().toISOString()).slice(0, 16),
   );
   const today = initialLocalDateTime.slice(0, 10);
-  const [previousExamSourceStudentId, setPreviousExamSourceStudentId] =
-    useState(() => students[0]?.id ?? "");
+  const [selection, setSelection] = useState(() => ({
+    excludedStudentIds: [] as readonly string[],
+    previousExamSourceStudentId: students[0]?.id ?? "",
+  }));
+  const { excludedStudentIds, previousExamSourceStudentId } = selection;
+  const selectedStudents = useMemo(
+    () => students.filter(student => !excludedStudentIds.includes(student.id)),
+    [students, excludedStudentIds],
+  );
   const readyDatasets = useMemo(
     () =>
       data.datasets.filter(
@@ -93,16 +102,19 @@ export function useVocabAssignmentScreen({
     [data.timeTemplates],
   );
   const studentIds = useMemo(
-    () => students.map((student) => student.id),
-    [students],
+    () => selectedStudents.map((student) => student.id),
+    [selectedStudents],
   );
+  const selectedPreviousExamSourceStudentId = studentIds.includes(previousExamSourceStudentId)
+    ? previousExamSourceStudentId : studentIds[0] ?? "";
   const planner = useVocabAssignmentPlanner({
+    audienceMode,
     datasets: readyDatasets,
     enabled,
     genericErrorMessage,
     initialDatasetId: resolvedInitialDatasetId,
     initialTimeTemplates,
-    previousExamSourceStudentId,
+    previousExamSourceStudentId: selectedPreviousExamSourceStudentId,
     previewErrorMessage,
     studentIds,
     today,
@@ -111,7 +123,7 @@ export function useVocabAssignmentScreen({
     units: data.units,
   });
 
-  async function submitPlan() {
+  async function submitPlan(gradeReviewToken?: string) {
     if (planner.canSubmit === false) {
       return {
         conflict: false,
@@ -119,7 +131,7 @@ export function useVocabAssignmentScreen({
         ok: false as const,
       };
     }
-    const outcome = await planner.bulk.actions.submit();
+    const outcome = await planner.bulk.actions.submit(gradeReviewToken);
     return outcome.ok
       ? {
           ok: true as const,
@@ -130,12 +142,23 @@ export function useVocabAssignmentScreen({
 
   return {
     ...planner,
+    selectedStudents,
+    excludedStudentCount: students.length - selectedStudents.length,
     actions: {
       ...planner.actions,
-      changePreviousExamSourceStudentId: setPreviousExamSourceStudentId,
+      excludeStudents: (ids: readonly string[]) => {
+        const excluded = [...new Set([...excludedStudentIds, ...ids])];
+        planner.bulk.actions.changeStudents(students.filter(s => !excluded.includes(s.id)).map(s => s.id));
+        setSelection(current => ({ ...current, excludedStudentIds: excluded }));
+      },
+      restoreExcludedStudents: () => {
+        planner.bulk.actions.changeStudents(students.map(s => s.id));
+        setSelection(current => ({ ...current, excludedStudentIds: [] }));
+      },
+      changePreviousExamSourceStudentId: (id: string) => setSelection(current => ({ ...current, previousExamSourceStudentId: id })),
       submitPlan,
     },
-    previousExamSourceStudentId,
+    previousExamSourceStudentId: selectedPreviousExamSourceStudentId,
     readyDatasets,
   };
 }

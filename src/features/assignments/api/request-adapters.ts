@@ -455,6 +455,7 @@ function bulkSelectionBody(draft: BulkSeriesAssignmentDraft) {
   };
   return {
     studentIds: [...draft.studentIds],
+    ...(draft.audienceMode ? { audienceMode: draft.audienceMode } : {}),
     questionMode: draft.questionMode,
     englishToKoreanRatio: draft.exam.directionRatio,
     commonPlan,
@@ -488,6 +489,7 @@ export function buildBulkAssignmentRequest(
     method: "POST",
     body: {
       ...bulkSelectionBody(draft),
+      ...(draft.gradeReviewToken ? { gradeReviewToken: draft.gradeReviewToken } : {}),
       idempotencyKey,
       previewPlanSignature,
       ...examSettingsToApi(draft.exam),
@@ -511,6 +513,7 @@ export function bulkSubmissionFingerprint(
   return assignmentRequestFingerprint({
     ...previewBody,
     studentIds: [...draft.studentIds].toSorted(),
+    ...(draft.gradeReviewToken ? { gradeReviewToken: draft.gradeReviewToken } : {}),
     previewPlanSignature,
     ...examSettingsToApi(draft.exam),
   });

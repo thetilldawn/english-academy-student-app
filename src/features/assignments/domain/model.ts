@@ -158,6 +158,8 @@ export type BulkCommonAssignmentPlan = {
 };
 
 export type BulkSeriesAssignmentDraft = {
+  audienceMode?: "single" | "bulk";
+  gradeReviewToken?: string;
   kind: "bulk_series";
   questionMode: AssignmentQuestionMode;
   studentIds: readonly string[];
