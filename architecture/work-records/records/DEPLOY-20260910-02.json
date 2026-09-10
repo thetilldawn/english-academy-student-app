@@ -531,13 +531,19 @@
       "path": "src/lib/database/simseok-g10-scope-correction.integration.test.ts",
       "state": "existing",
       "owner": "database-contract",
-      "flowIds": []
+      "flowIds": [
+        "assignment-range-create",
+        "assignment-series"
+      ]
     },
     {
       "path": "src/lib/vocab/simseok-g10-scope-correction-preview-contract.test.ts",
       "state": "existing",
       "owner": "shared-contract",
-      "flowIds": []
+      "flowIds": [
+        "assignment-range-create",
+        "assignment-series"
+      ]
     },
     {
       "path": "src/lib/vocab/voca-pronunciation-import-contract.test.ts",
@@ -551,6 +557,11 @@
       "owner": "assignments",
       "flowIds": [
         "assignment-workspace-load",
+        "assignment-workspace-selection",
+        "assignment-range-create",
+        "weekday-unit-allocation",
+        "assignment-direct-review-create",
+        "assignment-series",
         "assignment-workspace-planning"
       ]
     }
