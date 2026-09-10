@@ -149,7 +149,9 @@ describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
     expect(previewRequests.every(body => body.commonPlan.selectedDateCount === 0
       && body.commonPlan.sessions.every(session => session.availableFrom === null && session.availableUntil === null))).toBe(true);
     expect(fetchMock.mock.calls.some(([url]) => url === "/api/admin/bulk-assignments")).toBe(false);
-  });
+  // This first complete scenario includes the real planner's cold compilation
+  // plus several interactions. Individual UI waits remain at most five seconds.
+  }, 15_000);
   it.each(["single", "bulk"] as const)("%s의 실제 수량 대기·실패·재시도·범위변경은 수록 수와 작성값을 보존한다", async mode => {
     const original = fetchMock.getMockImplementation()!;
     const pending: Array<{ finish: (response: Response) => void; studentIds: string[] }> = [];

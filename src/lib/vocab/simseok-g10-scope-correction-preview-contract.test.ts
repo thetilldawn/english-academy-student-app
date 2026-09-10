@@ -17,6 +17,9 @@ const bundleRoot = path.resolve(
 );
 const examDirectory = path.join(bundleRoot, "02_앱전달묶음");
 const questionDirectory = path.join(bundleRoot, "03_통합문항_앱전달묶음");
+// Private source material is not published with the app. A partial local bundle
+// must still fail; skip only when the entire material area is absent.
+const hasLocalMaterials = fs.existsSync(path.resolve("../..", "영어"));
 
 function readInput() {
   return {
@@ -48,7 +51,7 @@ function readInput() {
 }
 
 describe("심석고 고1 공통영어Ⅱ 1·2과 Preview 정정 계약", () => {
-  it("여섯 세트를 전부 검산하되 DB 단계 반영은 고1 1·2과만 고정한다", () => {
+  it.skipIf(!hasLocalMaterials)("여섯 세트를 전부 검산하되 DB 단계 반영은 고1 1·2과만 고정한다", () => {
     const validated = validateSimseokG10ScopeCorrectionPreview(readInput());
 
     expect(validated.summary).toMatchObject({
@@ -74,7 +77,7 @@ describe("심석고 고1 공통영어Ⅱ 1·2과 Preview 정정 계약", () => {
     ).toEqual([111, 111]);
   });
 
-  it("manifest나 개별 package 한 글자 변조도 로컬에서 먼저 거부한다", () => {
+  it.skipIf(!hasLocalMaterials)("manifest나 개별 package 한 글자 변조도 로컬에서 먼저 거부한다", () => {
     const manifestTampered = readInput();
     manifestTampered.examManifestText = manifestTampered.examManifestText.replace(
       "[공통영어 II] 오선영 1과 단어",

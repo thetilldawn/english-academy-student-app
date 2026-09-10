@@ -8,7 +8,9 @@
   "baseline": "babe7328ce95f6d41e48bb9d3279ff2b457a6f97",
   "owners": [
     "assignments",
-    "architecture-meta"
+    "architecture-meta",
+    "database-contract",
+    "shared-contract"
   ],
   "plannedOwners": [],
   "plannedFlows": [],
@@ -524,6 +526,33 @@
       "state": "existing",
       "owner": "architecture-meta",
       "flowIds": []
+    },
+    {
+      "path": "src/lib/database/simseok-g10-scope-correction.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": []
+    },
+    {
+      "path": "src/lib/vocab/simseok-g10-scope-correction-preview-contract.test.ts",
+      "state": "existing",
+      "owner": "shared-contract",
+      "flowIds": []
+    },
+    {
+      "path": "src/lib/vocab/voca-pronunciation-import-contract.test.ts",
+      "state": "existing",
+      "owner": "shared-contract",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/assignments/ui/assignment-workspace.test.tsx",
+      "state": "existing",
+      "owner": "assignments",
+      "flowIds": [
+        "assignment-workspace-load",
+        "assignment-workspace-planning"
+      ]
     }
   ],
   "requirements": [
@@ -595,6 +624,25 @@
         "T1",
         "T6"
       ]
+    },
+    {
+      "id": "R5",
+      "source": "engineering",
+      "text": "CI에 보내지 않는 로컬 원자료 검사와 실제 앱 회귀검사를 구분한다.",
+      "acceptance": "영어 자료 구역이 없는 서버에서 원자료 검산만 명시적으로 미실행한다. 로컬 구역이 있으면 일부 누락도 실패한다. 자료 없는 환경의 인증·환경 경계와 모든 앱 검사는 유지하며 UI 첫 조립 검사 한 곳만 컴파일 포함 시간 예산을 조정한다.",
+      "disposition": "required",
+      "owners": [
+        "database-contract",
+        "shared-contract",
+        "assignments"
+      ],
+      "flowIds": [
+        "assignment-workspace-load"
+      ],
+      "checkIds": [
+        "T1",
+        "T7"
+      ]
     }
   ],
   "decisions": [
@@ -637,6 +685,14 @@
       "question": "기존 PR 설치 오류 보정",
       "answer": "npm11.6.2 격리 재계산으로 @emnapi/wasi-threads 2.0.1→2.1.0 불일치를 확인했다. 해당 개발용 선택 항목의 버전/배포주소/무결성 세 값만 수정하고 jsdom/vitest의 부수 metadata 변화는 반영하지 않는다. package.json·Next/React/Supabase·학생 기능은 변경하지 않는다.",
       "source": "PR34473049912 설치 단계 EUSAGE, 이전 운영과 lock 차이0, 격리 npm 계산 결과"
+    },
+    {
+      "id": "D6",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "PR 전체검사의 비공개 원자료 경로와 첫 UI 조립 제한시간",
+      "answer": "PR34474528014의 원자료 ENOENT 3파일은 기존 로컬 전용 검사 규칙에 맞춘다. 영어 구역 자체가 없을 때만 데이터 의존 검사를 건너뛰고 부분 자료 누락은 실패한다. 원자료가 필요 없는 환경 차단은 계속 실행한다. single/bulk 첫 전체 UI 시나리오에만 15초를 부여하며 assertion, UI 대기 5초, 전역 제한은 유지한다. 원본 업로드·운영 코드·workflow 생략 변경 없음.",
+      "source": "Linux 전체검사 실패 로그와 로컬 동일 UI 3.8초 통과, 기존 선택적 원자료 검사 관례"
     }
   ],
   "impacts": {
@@ -682,7 +738,7 @@
     },
     "tests": {
       "status": "changed",
-      "reason": "실제 배포·테스트학생·보존 대조 기록"
+      "reason": "원자료 유무에 따른 기존 검사의 실행 구분, 첫 전체 UI 조립 한 곳의 제한시간 보정, 실제 배포·테스트학생·보존 대조 기록"
     }
   },
   "policies": {
@@ -930,6 +986,19 @@
       "topics": [
         "structure",
         "behavior"
+      ]
+    },
+    {
+      "id": "T7",
+      "kind": "integration",
+      "target": "docs/verification/DEPLOY-20260910-02.md",
+      "scenario": "원자료 있는 로컬 3파일 검산, 자료 없는 격리 사본의 환경 검사 및 전체 앱 CI, 첫 UI single/bulk 재실행",
+      "expected": "교재 원문 전송 없이 두 환경에서 의도대로 실행/미실행 구분. 앱 assertion 유지 및 전체 CI success.",
+      "topics": [
+        "structure",
+        "behavior",
+        "authorization",
+        "data-leak"
       ]
     }
   ],
