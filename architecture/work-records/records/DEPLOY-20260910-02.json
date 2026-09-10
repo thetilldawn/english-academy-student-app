@@ -518,6 +518,12 @@
       "state": "existing",
       "owner": "architecture-meta",
       "flowIds": []
+    },
+    {
+      "path": "package-lock.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
     }
   ],
   "requirements": [
@@ -574,6 +580,21 @@
         "T4",
         "T5"
       ]
+    },
+    {
+      "id": "R4",
+      "source": "engineering",
+      "text": "기존 설치 목록 불일치로 중단된 PR 자동검사를 복구한다.",
+      "acceptance": "개발용 선택 WASM 의존성 한 항목만 npm11.6.2 계산값에 맞추고 깨끗한 설치와 회귀검사 통과. 직접 앱 의존성과 학생 데이터는 그대로.",
+      "disposition": "required",
+      "owners": [
+        "architecture-meta"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T1",
+        "T6"
+      ]
     }
   ],
   "decisions": [
@@ -590,7 +611,7 @@
       "owner": "engineering",
       "state": "resolved",
       "question": "배포와 복구",
-      "answer": "기존 Git Preview 뒤 동일 실행 코드 Production 별도 빌드. 이전 운영72de501 Ready 배포 보존. DB migration·환경·의존성 변경 없음.",
+      "answer": "기존 Git Preview 뒤 동일 실행 코드 Production 별도 빌드. 이전 운영72de501 Ready 보존. DB migration·환경·직접 앱 의존성 변경 없음. 설치 목록의 개발용 선택 WASM 한 항목 보정은 D5를 따른다.",
       "source": "원격 두 브랜치72de501 및 독립 범위 검토"
     },
     {
@@ -608,6 +629,14 @@
       "question": "남은 로컬 화면 검사",
       "answer": "기존 로컬 PC/모바일·2→1명 근거를 보존하고 남은 1명/0명/포함/초점은 승인된 운영 테스트학생으로 확인. 인증이 없으면 해당 검사를 완료로 표시하지 않는다.",
       "source": "APP03 T8 부분 검증과 이번 사용자 승인"
+    },
+    {
+      "id": "D5",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "기존 PR 설치 오류 보정",
+      "answer": "npm11.6.2 격리 재계산으로 @emnapi/wasi-threads 2.0.1→2.1.0 불일치를 확인했다. 해당 개발용 선택 항목의 버전/배포주소/무결성 세 값만 수정하고 jsdom/vitest의 부수 metadata 변화는 반영하지 않는다. package.json·Next/React/Supabase·학생 기능은 변경하지 않는다.",
+      "source": "PR34473049912 설치 단계 EUSAGE, 이전 운영과 lock 차이0, 격리 npm 계산 결과"
     }
   ],
   "impacts": {
@@ -890,6 +919,17 @@
         "behavior",
         "data-leak",
         "answer-leak"
+      ]
+    },
+    {
+      "id": "T6",
+      "kind": "integration",
+      "target": "package-lock.json",
+      "scenario": "npm11.6.2 격리 계산과 CI 깨끗한 설치·수정 뒤 전체 검사",
+      "expected": "lock 불일치 해소, scripts 생략 설치 성공, 앱 회귀 통과",
+      "topics": [
+        "structure",
+        "behavior"
       ]
     }
   ],
