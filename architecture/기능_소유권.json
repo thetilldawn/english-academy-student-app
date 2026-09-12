@@ -3995,7 +3995,8 @@
         "history",
         "learning-points",
         "results",
-        "quiz-player"
+        "quiz-player",
+        "assignments"
       ],
       "dataClass": "private",
       "cachePolicy": "공유 서버 캐시 금지/private no-store 유지. APP12 기본OFF 내역 첫 목록만 기능·사용자·로그인 세대별 메모리15/60/120초, 현재 인증 뒤 복원. 포인트/진행응시/상세/더보기 보관 안함. 변경/거절커서엔 첫목록+진입표 교체.",
@@ -5930,7 +5931,8 @@
       "participants": [
         "student-dashboard",
         "quiz-player",
-        "assignment-queue"
+        "assignment-queue",
+        "assignments"
       ],
       "dataClass": "private",
       "cachePolicy": "인증된 학생의 배정 범위만 클릭 시 조회, 공유 캐시와 목록 링크 일괄 prefetch 금지",

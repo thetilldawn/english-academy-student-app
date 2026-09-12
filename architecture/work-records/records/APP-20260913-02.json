@@ -349,11 +349,11 @@
     }
   ],
   "verification": {
-    "fingerprint": "853845a6d98a37ac33e36ede0e4bd53431430d7cce18d8fee83b6d937690edad",
+    "fingerprint": "8218ae20176dfbc91958ead79fb4c65f90872b51dfc7e8a00bc2df2d9fb613c1",
     "files": [
       {
         "path": "architecture/기능_소유권.json",
-        "sha256": "4048749310603e635011d8e6f49d5e1212db0a152dc3664ce2e53bfa72e675ce"
+        "sha256": "f791332f8b90dfb07784b28a4eed6be24e67871ba11b1df8fad6b9ea41a2e041"
       },
       {
         "path": "eslint.config.mjs",
@@ -3565,9 +3565,9 @@
         "checkId": "T3",
         "result": "pass",
         "environment": "preview",
-        "ranAt": "2026-09-12T17:44:56.654Z",
+        "ranAt": "2026-09-12T21:11:06.876Z",
         "command": "tsc; eslint scoped paths; feature-map; UI architecture; work-records design and changed; Preview readback for APP02",
-        "summary": "Preview351행/1404문항 원문 전수 일치·발음341/표시278 일치·구판7권 원문/ready/release 불변. 함수6개 비공개. 타입/lint/기능지도/UI구조·47기록 연결 통과. Production 미반영."
+        "summary": "Preview351행/1404문항 원문 전수 일치·발음341/표시278 일치·구판7권 원문/ready/release 불변. 함수6개 비공개. 타입/lint/기능지도/UI구조·47기록 연결 통과. Production 미반영. 추가 재검사: Preview 첫 빌드에서 발견한 공통 발음 조회의 참여기능 누락 2곳을 보완. 지도 전체/기록 형식 47개 재검사 통과. 독립 검토에서 수정 제거 시 오류2개 재현, 수정 후 오류0개. SQL/화면/문항 내용은 동일하여 기존3326 검사 근거 유지. 실제 Preview 재빌드는 별도 확인한다."
       }
     ]
   }

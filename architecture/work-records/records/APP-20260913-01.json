@@ -599,11 +599,11 @@
     }
   ],
   "verification": {
-    "fingerprint": "980a07cae5b4aea48dd6931e27a61dd359737f82f93761a8aabdf34e649d64b6",
+    "fingerprint": "29b6d26116b8306d85c79e1c6d4ed062f0b8caa11c301788911c3efc0cc589db",
     "files": [
       {
         "path": "architecture/기능_소유권.json",
-        "sha256": "4048749310603e635011d8e6f49d5e1212db0a152dc3664ce2e53bfa72e675ce"
+        "sha256": "f791332f8b90dfb07784b28a4eed6be24e67871ba11b1df8fad6b9ea41a2e041"
       },
       {
         "path": "eslint.config.mjs",
@@ -4183,9 +4183,9 @@
         "checkId": "T3",
         "result": "pass",
         "environment": "local",
-        "ranAt": "2026-09-12T17:44:56.654Z",
+        "ranAt": "2026-09-12T21:11:06.871Z",
         "command": "vitest run --reporter=json --outputFile=tmp/school-final-tests-20260913.json",
-        "summary": "전체3327 중3326통과·0실패·1기존 전체원자료 발음 등록검사 미실행. 신규학교SQL46 및 변경영역195 포함. 최초 통합시나리오5초 초과를 해당 검사15초로 조정 후 전체 재검사 통과. 학생 실데이터 저장/응시0."
+        "summary": "전체3327 중3326통과·0실패·1기존 전체원자료 발음 등록검사 미실행. 신규학교SQL46 및 변경영역195 포함. 최초 통합시나리오5초 초과를 해당 검사15초로 조정 후 전체 재검사 통과. 학생 실데이터 저장/응시0. 추가 재검사: Preview 첫 빌드에서 발견한 공통 발음 조회의 참여기능 누락 2곳을 보완. 지도 전체/기록 형식 47개 재검사 통과. 독립 검토에서 수정 제거 시 오류2개 재현, 수정 후 오류0개. SQL/화면/문항 내용은 동일하여 기존3326 검사 근거 유지. 실제 Preview 재빌드는 별도 확인한다."
       },
       {
         "checkId": "T4",
