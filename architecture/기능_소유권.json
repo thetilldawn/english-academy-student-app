@@ -389,8 +389,8 @@
     {
       "path": "src/test-support",
       "owner": "architecture-meta",
-      "fileCount": 16,
-      "pathSetSha256": "70a4d1d166ea6490c379cd451440f9c15bdcd040acacd215f286a81bd32cfbb3"
+      "fileCount": 17,
+      "pathSetSha256": "edb73f73a8e77dbfcd0394c18f396147ccf040ac69c95322e0900e296ce8b7e2"
     }
   ],
   "pageOwners": [
@@ -1846,8 +1846,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 104,
-      "pathSetSha256": "79f2d3ac681903cf24d5d499e5eb0b3c3a9210080af3a39369d6fac23ebc15b9"
+      "fileCount": 105,
+      "pathSetSha256": "442d83ca0d80a42b6d25f1064faee61cd14da476b5f2474a3c14d59dfe83ab9d"
     },
     {
       "path": "src/lib/deploy",
@@ -2109,6 +2109,21 @@
   "protectedMigrationCount": 136,
   "protectedMigrationSetSha256": "b4ea57697824cb8fece77250a50950e58bb4e2516235e485106f126a8b00c13f",
   "migrationOwners": [
+    {
+      "path": "supabase/migrations/20260913020000_add_school_handout_reviewed_import.sql",
+      "owner": "assignments",
+      "flow": "assignment-range-create"
+    },
+    {
+      "path": "supabase/migrations/20260910194539_match_reviewed_pronunciation_source_headword.sql",
+      "owner": "quiz-player",
+      "flow": "student-quiz-attempt"
+    },
+    {
+      "path": "supabase/migrations/20260910193008_match_reviewed_pronunciation_source_pos.sql",
+      "owner": "quiz-player",
+      "flow": "student-quiz-attempt"
+    },
     {
       "path": "supabase/migrations/20260908203803_add_entry_source_pronunciation.sql",
       "owner": "quiz-player",
@@ -3135,7 +3150,8 @@
           "supabase/migrations/20260905040904_preserve_production_rolling_deploy_compatibility.sql",
           "supabase/migrations/20260905063836_add_reviewed_choice_repair_release.sql",
           "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
-          "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql"
+          "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql",
+          "supabase/migrations/20260913020000_add_school_handout_reviewed_import.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/bulk-assignments/preview/route.ts",
@@ -3178,7 +3194,8 @@
           "src/features/assignments/server/use-cases/bulk-undated-assignment-preview.test.ts",
           "src/features/assignments/server/planning/bulk-session-layout.test.ts",
           "src/lib/database/undated-assignment-sequence.integration.test.ts",
-          "src/lib/database/example-assignment-sequence.integration.test.ts"
+          "src/lib/database/example-assignment-sequence.integration.test.ts",
+          "src/lib/database/school-handout-reviewed.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -4071,8 +4088,11 @@
           "supabase/migrations/20260831100000_return_admin_history_hidden_version.sql",
           "supabase/migrations/20260901141048_fix_admin_history_infinite_effective_at.sql",
           "supabase/migrations/20260907121138_add_entry_approved_korean_pronunciation.sql",
+          "supabase/migrations/20260910194539_match_reviewed_pronunciation_source_headword.sql",
+          "supabase/migrations/20260910193008_match_reviewed_pronunciation_source_pos.sql",
           "supabase/migrations/20260908203803_add_entry_source_pronunciation.sql",
-          "supabase/migrations/20260908160633_add_source_restored_pronunciation.sql"
+          "supabase/migrations/20260908160633_add_source_restored_pronunciation.sql",
+          "supabase/migrations/20260913020000_add_school_handout_reviewed_import.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/loading.tsx",
@@ -5678,8 +5698,11 @@
           "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
           "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql",
           "supabase/migrations/20260907121138_add_entry_approved_korean_pronunciation.sql",
+          "supabase/migrations/20260910194539_match_reviewed_pronunciation_source_headword.sql",
+          "supabase/migrations/20260910193008_match_reviewed_pronunciation_source_pos.sql",
           "supabase/migrations/20260908203803_add_entry_source_pronunciation.sql",
-          "supabase/migrations/20260908160633_add_source_restored_pronunciation.sql"
+          "supabase/migrations/20260908160633_add_source_restored_pronunciation.sql",
+          "supabase/migrations/20260913020000_add_school_handout_reviewed_import.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/attempt/[id]/page.tsx"
@@ -5715,7 +5738,8 @@
           "src/lib/database/entry-source-pronunciation.integration.test.ts",
           "src/lib/database/entry-approved-pronunciation.integration.test.ts",
           "src/lib/services/quiz/pronunciation-registry.test.ts",
-          "src/lib/database/reviewed-exam-bank.integration.test.ts"
+          "src/lib/database/reviewed-exam-bank.integration.test.ts",
+          "src/lib/database/school-handout-reviewed.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -5958,10 +5982,13 @@
           "supabase/migrations/20260906103017_add_approved_school_pronunciation_scope.sql",
           "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
           "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql",
+          "supabase/migrations/20260910194539_match_reviewed_pronunciation_source_headword.sql",
+          "supabase/migrations/20260910193008_match_reviewed_pronunciation_source_pos.sql",
           "supabase/migrations/20260908203803_add_entry_source_pronunciation.sql",
           "supabase/migrations/20260908160633_add_source_restored_pronunciation.sql",
           "supabase/migrations/20260907121138_add_entry_approved_korean_pronunciation.sql",
-          "supabase/migrations/20260908020300_connect_reviewed_exam_study.sql"
+          "supabase/migrations/20260908020300_connect_reviewed_exam_study.sql",
+          "supabase/migrations/20260913020000_add_school_handout_reviewed_import.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/assignments/[id]/words/page.tsx",
@@ -5984,7 +6011,8 @@
           "src/lib/database/entry-source-pronunciation.integration.test.ts",
           "src/lib/database/entry-approved-pronunciation.integration.test.ts",
           "src/lib/services/quiz/pronunciation-registry.test.ts",
-          "src/lib/database/reviewed-exam-bank.integration.test.ts"
+          "src/lib/database/reviewed-exam-bank.integration.test.ts",
+          "src/lib/database/school-handout-reviewed.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
