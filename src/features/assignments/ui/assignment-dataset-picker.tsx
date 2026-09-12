@@ -80,7 +80,7 @@ function ClassifiedBooks(props: Parameters<typeof BookList>[0]) {
 
 export function AssignmentDatasetPicker({
   filters, buttons, recent, remaining, resultCount, selectedId, searchRef,
-  onQuery, onStage, onKind, onGrade, onSchool, onClear, onSelect, reviewOnly,
+  onQuery, onStage, onKind, onGrade, onSchool, onSemester, onClear, onSelect, reviewOnly,
 }: {
   filters: DatasetPickerFilters;
   buttons: {
@@ -88,6 +88,7 @@ export function AssignmentDatasetPicker({
     kind: readonly DatasetFilterButton<DatasetPickerFilters["kind"]>[];
     grade: readonly DatasetFilterButton[];
     school: readonly DatasetFilterButton[];
+    semester: readonly DatasetFilterButton<NonNullable<DatasetPickerFilters["semester"]>>[];
   };
   recent: readonly DatasetPickerOption[];
   remaining: readonly DatasetPickerOption[];
@@ -99,6 +100,7 @@ export function AssignmentDatasetPicker({
   onKind: (kind: DatasetPickerFilters["kind"]) => void;
   onGrade: (grade: string) => void;
   onSchool: (school: string) => void;
+  onSemester: (semester: DatasetPickerFilters["semester"]) => void;
   onClear: () => void;
   onSelect: (id: string) => void;
   reviewOnly: boolean;
@@ -125,11 +127,14 @@ export function AssignmentDatasetPicker({
           {buttons.school.map(option => <option key={option.value} value={option.value}>{option.label} · {option.count}권</option>)}
         </Select>
       </Field>
-      {filters.school?.startsWith("school:") ? <p className={styles.hint}>선택한 학교 자료와 확인된 공통 자료를 함께 표시합니다.</p> : null}
+      {filters.school?.startsWith("school:") ? <p className={styles.hint}>{filters.kind === "exam_prep"
+        ? "선택한 학교의 직전대비 자료를 표시합니다."
+        : "선택한 학교 자료와 확인된 공통 자료를 함께 표시합니다."}</p> : null}
       <FilterButtons label="자료 종류" options={buttons.kind} value={filters.kind} onChange={onKind} />
       {buttons.grade.length > 1 ? (
         <FilterButtons label="학년" options={buttons.grade} value={filters.grade} onChange={onGrade} />
       ) : null}
+      <FilterButtons label="학기" options={buttons.semester} value={filters.semester ?? "all"} onChange={onSemester} />
       {reviewOnly ? <p className={styles.hint}>이 학생에게 미배정 오답이 있는 단어장만 표시합니다.</p> : null}
       <div className={styles.resultHeading}>
         <p aria-live="polite" role="status">검색 결과 {resultCount}권</p>

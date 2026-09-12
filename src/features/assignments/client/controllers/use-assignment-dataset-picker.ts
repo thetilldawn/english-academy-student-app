@@ -94,6 +94,7 @@ export function useAssignmentDatasetPicker({
         setFilters((current) => ({ ...current, kind })),
       changeGrade: (grade: string) => setFilters((current) => ({ ...current, grade })),
       changeSchool: (school: string) => setFilters((current) => ({ ...current, school })),
+      changeSemester: (semester: DatasetPickerFilters["semester"]) => setFilters((current) => ({ ...current, semester })),
     },
   };
 }

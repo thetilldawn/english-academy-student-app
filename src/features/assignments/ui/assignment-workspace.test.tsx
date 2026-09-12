@@ -92,6 +92,43 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
+  it("학교·고2·직전대비·2학기 필터를 실제 선택창에 연결하고 기존 배정 입력을 유지한다", async () => {
+    const sample = ["1과", "2과", "모고", "다른 학기", "다른 학교", "형용사"].map((title, index) => ({
+      ...datasets[0]!, id: uid(30 + index), title: `검사 ${title}`, displayName: `검사 ${title}`,
+      catalogGroup: "high" as const, materialKind: "textbook" as const,
+      schoolClassification: "school" as const, schoolName: index === 4 ? "다른 학교" : "검사 학교",
+      purpose: "exam_prep" as const, semester: index === 3 ? 1 as const : 2 as const,
+      gradeCode: index === 5 ? "g10" : "g11",
+    }));
+    const original = fetchMock.getMockImplementation()!;
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+      const response = await original(url, init);
+      if (url !== "/api/admin/assignment-workspace/preparation") return response;
+      const body = await response.json();
+      return Response.json({ ...body, preparation: { ...body.preparation, datasets: sample } });
+    });
+    render(<AssignmentWorkspace initial={{ directory }} />);
+    fireEvent.click(screen.getAllByRole("button", { name: "단어 배정" })[0]!);
+    fireEvent.click(await screen.findByRole("button", { name: /단어장 찾기/ }, { timeout: 5000 }));
+    expect(screen.queryByRole("button", { name: /^교과서 / })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByRole("combobox", { name: "학교" }), { target: { value: "school:검사 학교" } });
+    fireEvent.click(within(screen.getByRole("group", { name: "자료 종류" })).getByRole("button", { name: /^직전대비 / }));
+    fireEvent.click(within(screen.getByRole("group", { name: "학년" })).getByRole("button", { name: /^고2 / }));
+    fireEvent.click(within(screen.getByRole("group", { name: "학기" })).getByRole("button", { name: /^2학기 / }));
+    expect(screen.getByText("검색 결과 3권")).toBeVisible();
+    expect(screen.getByText("선택한 학교의 직전대비 자료를 표시합니다.")).toBeVisible();
+    for (const title of ["1과", "2과", "모고"]) expect(screen.getByRole("button", { name: new RegExp(`검사 ${title}.*선택`) })).toBeVisible();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: /검사 2과.*선택/ }));
+    const dialog = screen.getByRole("dialog");
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "통과 점수" }), { target: { value: "85" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: /단어장 찾기/ }));
+    fireEvent.click(within(screen.getByRole("group", { name: "학기" })).getByRole("button", { name: /^1학기 / }));
+    fireEvent.click(screen.getByRole("button", { name: "검색·필터 초기화" }));
+    fireEvent.click(screen.getByRole("button", { name: /검사 2과.*현재 선택/ }));
+    expect(within(dialog).getByRole("textbox", { name: "통과 점수" })).toHaveValue("85");
+    expect(fetchMock.mock.calls.filter(([url]) => url.endsWith("/units"))).toHaveLength(1);
+  }, 15_000);
   it.each(["single", "bulk"] as const)("%s에서 날짜를 고르기 전부터 회차별·단어 수 가능 회차를 표시한다", async mode => {
     const original = fetchMock.getMockImplementation()!;
     const previewRequests: BulkAssignmentPreviewInput[] = [];

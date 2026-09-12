@@ -12,5 +12,7 @@ export const assignmentDatasetDirectorySchema = z.object({
     isAssignable: z.boolean(), catalogSortIndex: z.number(),
     schoolName: z.string().trim().min(1).max(120).nullable().optional(),
     schoolClassification: z.enum(["school", "common", "unclassified"]).optional(),
+    purpose: z.literal("exam_prep").nullable().optional(),
+    semester: z.union([z.literal(1), z.literal(2)]).nullable().optional(),
   })),
 });

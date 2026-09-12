@@ -297,7 +297,7 @@ export function VocabAssignmentPlanner({
           <h2 id="vocab-assignment-plan-title">
             {datasetPicker.open ? "단어장 찾기" : selectionMode === "bulk" ? "일괄 배정" : "단일 배정"}
           </h2>
-          {datasetPicker.open ? <p>단어장을 선택하면 배정 조건으로 돌아갑니다.</p> : selectionMode === "bulk" ? (
+          {datasetPicker.open ? <p>단어장을 골라주세요.</p> : selectionMode === "bulk" ? (
             <MetaTagList>
               {(bulkFilterLabels.length > 0
                 ? bulkFilterLabels
@@ -325,6 +325,7 @@ export function VocabAssignmentPlanner({
             onKind={datasetPicker.actions.changeKind}
             onGrade={datasetPicker.actions.changeGrade}
             onSchool={datasetPicker.actions.changeSchool}
+            onSemester={datasetPicker.actions.changeSemester}
             onClear={datasetPicker.actions.clear}
             onSelect={datasetPicker.actions.choose}
             reviewOnly={assignmentPurpose === "review"}

@@ -37,6 +37,8 @@ export function catalogMetadata(catalog: Omit<DatasetCatalogRow, "dataset_id"> |
     ? catalog.metadata as Record<string, unknown> : {};
   const school = typeof metadata.school === "string" ? metadata.school.trim() : "";
   const schoolName = school && school.length <= 120 ? school : null;
+  const purpose = metadata.purpose === "exam_prep" ? "exam_prep" as const : null;
+  const semester: 1 | 2 | null = metadata.semester === 1 || metadata.semester === 2 ? metadata.semester : null;
   // Only explicit provenance tags are public. Never infer a school/common audience from titles.
   const schoolClassification = schoolName ? "school" as const : metadata.audience === "common" && metadata.school == null
     ? "common" as const : "unclassified" as const;
@@ -55,6 +57,8 @@ export function catalogMetadata(catalog: Omit<DatasetCatalogRow, "dataset_id"> |
         sortIndex: catalog.sort_index,
         schoolName,
         schoolClassification,
+        purpose,
+        semester,
       }
     : undefined;
 }

@@ -19,7 +19,12 @@ export function datasetPickerStage(dataset: AssignmentDatasetItem): Exclude<Data
 }
 
 export function datasetPickerKind(dataset: AssignmentDatasetItem): Exclude<DatasetPickerKind, "all"> {
+  if (dataset.purpose === "exam_prep") return "exam_prep";
   return dataset.materialKind ?? "unclassified";
+}
+
+function datasetPickerSemester(dataset: AssignmentDatasetItem) {
+  return dataset.semester === 1 || dataset.semester === 2 ? String(dataset.semester) : "unclassified";
 }
 
 export function datasetPickerGrade(dataset: AssignmentDatasetItem): string | null {
@@ -60,18 +65,22 @@ export function filterDatasetPickerOptions(
     if (filters.stage !== "all" && datasetPickerStage(dataset) !== filters.stage) return false;
     if (filters.kind !== "all" && datasetPickerKind(dataset) !== filters.kind) return false;
     if (filters.grade !== "all" && datasetPickerGrade(dataset) !== filters.grade) return false;
+    const semester = filters.semester ?? "all";
+    if (semester !== "all" && datasetPickerSemester(dataset) !== semester) return false;
     const school = filters.school ?? "all";
     const schoolGroup = datasetSchoolGroup(dataset);
     if (school === "common" && schoolGroup !== "common") return false;
     if (school === "unclassified" && schoolGroup !== "unclassified") return false;
     if (school !== "all" && school !== "common" && school !== "unclassified"
-      && !(schoolGroup === "common" || schoolGroup === "school" && school === `school:${dataset.schoolName}`)) return false;
+      && !(schoolGroup === "common" && filters.kind !== "exam_prep"
+        || schoolGroup === "school" && school === `school:${dataset.schoolName}`)) return false;
     const text = searchable([
       cataloguedDatasetDisplayLabel(dataset), dataset.title, dataset.edition,
       datasetPickerTitle(dataset),
       dataset.publisher, dataset.seriesTitle, dataset.academicYear,
       dataset.curriculumRevision, dataset.editionLabel, dataset.gradeCode,
       dataset.schoolName,
+      dataset.semester ? `${dataset.semester}학기` : null,
     ].filter((part) => part !== null && part !== undefined).join(" "));
     return terms.every((term) => text.includes(term));
   }).toSorted((left, right) => compareCataloguedDatasets(left.dataset, right.dataset));
@@ -82,7 +91,7 @@ const stageLabels: Record<DatasetPickerStage, string> = {
 };
 const kindLabels: Record<DatasetPickerKind, string> = {
   all: "전체", wordbook: "단어장", textbook: "교과서",
-  exam_collection: "모의고사·문제집", exam_prep: "시험 대비",
+  exam_collection: "모의고사·문제집", exam_prep: "직전대비",
   supplement: "보충 자료", unclassified: "미분류",
 };
 const gradeLabels: Record<string, string> = {
@@ -96,10 +105,11 @@ export type DatasetFilterButton<Value extends string = string> = {
 export function datasetPickerMetadata(dataset: AssignmentDatasetItem) {
   return [
     stageLabels[datasetPickerStage(dataset)],
-    dataset.materialKind ? kindLabels[dataset.materialKind] : null,
+    dataset.materialKind ? kindLabels[datasetPickerKind(dataset)] : null,
     gradeLabels[datasetPickerGrade(dataset) ?? ""],
     dataset.catalogGroup === "csat" ? "수능" : null,
     dataset.publisher,
+    dataset.semester ? `${dataset.semester}학기` : null,
   ].filter(Boolean).join(" · ");
 }
 
@@ -116,6 +126,7 @@ export function datasetPickerFilterButtons(
       count: filterDatasetPickerOptions(options, { ...filters, stage: value, grade: "all" }).length,
     }));
   const kind = (Object.keys(kindLabels) as DatasetPickerKind[])
+    .filter((value) => value !== "textbook")
     .filter((value) => value === "all" || kindValues.has(value) || filters.kind === value)
     .map((value) => ({
       value, label: kindLabels[value],
@@ -138,5 +149,13 @@ export function datasetPickerFilterButtons(
     { value: "common", label: "공통 자료만" },
     { value: "unclassified", label: "학교 미분류" },
   ].map(option => ({ ...option, count: filterDatasetPickerOptions(options, { ...filters, school: option.value }).length }));
-  return { stage, kind, grade, school };
+  const semester = ([
+    { value: "all", label: "전체" },
+    { value: "1", label: "1학기" },
+    { value: "2", label: "2학기" },
+    { value: "unclassified", label: "학기 미분류" },
+  ] as const).map(option => ({ ...option,
+    count: filterDatasetPickerOptions(options, { ...filters, semester: option.value }).length,
+  }));
+  return { stage, kind, grade, school, semester };
 }

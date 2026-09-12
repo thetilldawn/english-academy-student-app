@@ -41,6 +41,8 @@ export type CataloguedDataset = {
   catalogSortIndex: number;
   schoolName?: string | null;
   schoolClassification?: "school" | "common" | "unclassified";
+  purpose?: "exam_prep" | null;
+  semester?: 1 | 2 | null;
 };
 
 export type RawCataloguedDataset = {
@@ -63,6 +65,8 @@ export type DatasetCatalogMetadata = {
   sortIndex: number;
   schoolName?: string | null;
   schoolClassification?: "school" | "common" | "unclassified";
+  purpose?: "exam_prep" | null;
+  semester?: 1 | 2 | null;
 };
 
 export type CataloguedUnit = {
@@ -110,6 +114,8 @@ export function cataloguedDatasetFromMetadata(
     catalogSortIndex: catalog?.sortIndex ?? 1000,
     schoolName: catalog?.schoolName ?? null,
     schoolClassification: catalog?.schoolClassification ?? "unclassified",
+    purpose: catalog?.purpose ?? null,
+    semester: catalog?.semester ?? null,
   };
 }
 

@@ -18,10 +18,14 @@ describe("배정 단어장 선택 수명", () => {
     act(() => result.current.actions.open());
     act(() => result.current.actions.changeQuery("단어장"));
     act(() => result.current.actions.changeKind("unclassified"));
+    act(() => result.current.actions.changeSemester("2"));
+    act(() => result.current.actions.changeSchool("school:심석고등학교"));
     act(() => result.current.actions.close());
     expect(onSelect).not.toHaveBeenCalled();
     act(() => result.current.actions.open());
     expect(result.current.filters.query).toBe("");
+    expect(result.current.filters.semester).toBe("all");
+    expect(result.current.filters.school).toBe("all");
     act(() => result.current.actions.choose("a"));
     expect(onSelect).not.toHaveBeenCalled();
     act(() => result.current.actions.open());
