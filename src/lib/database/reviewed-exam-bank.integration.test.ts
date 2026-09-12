@@ -76,6 +76,56 @@ describe.sequential("reviewed exam bank final schema", () => {
       expect((await db.query("select * from public.list_entry_source_pronunciations_v1($1::bigint[])",[[entry]])).rows).toHaveLength(0);
     } finally { await db.exec("rollback"); }
   });
+  it.each([
+    ["exact explicit source POS", "", 1],
+    ["missing explicit source POS", "update private.entry_source_pronunciations_v1 set identity_lexical_pos=null", 0],
+    ["wrong explicit source POS", "update private.entry_source_pronunciations_v1 set identity_lexical_pos='verb'", 0],
+    ["entry POS mismatch with intact payload hash", "update private.entry_source_pronunciations_v1 set lexical_pos='verb'", 0],
+    ["changed reviewed POS", "update private.reviewed_exam_entries set payload=jsonb_set(payload,'{lexical_pos}','\"verb\"')", 0],
+    ["wrong identity hash", "update private.entry_source_pronunciations_v1 set identity_content_sha256=repeat('e',64)", 0],
+    ["wrong variant", "update private.entry_source_pronunciations_v1 set variant_id='mw:wrong'", 0],
+    ["wrong audio", "update private.entry_source_pronunciations_v1 set audio_key='https://evil.example/wrong.mp3'", 0],
+    ["changed source POS", "update public.vocab_pronunciation_identities_v2 set lexical_pos='adjective'", 0],
+    ["protected identity", "update public.vocab_pronunciation_identities_v2 set display_source='user_approved_display_nucleus_projection_v2'", 0],
+    ["inactive unreferenced release", "update private.reviewed_exam_releases set status='retired'", 0],
+  ])("separates reviewed and source POS: %s", async (_label, mutation, expected) => {
+    await db.exec("begin");
+    try {
+      await db.query(`update public.vocab_pronunciation_identities_v2 set lexical_pos='other'
+        where identity_id=(select pronunciation_identity_id from private.reviewed_exam_entries where release_id=$1 and source_row=1)`, [releaseId]);
+      const entry=(await db.query<{vocab_entry_id:number}>(`insert into private.entry_source_pronunciations_v1
+        (vocab_entry_id,entry_row_sha256,headword,lexical_pos,identity_lexical_pos,source_kind,identity_id,identity_content_sha256,variant_id,audio_key,display_ko,segments,source_file_sha256,manifest_sha256,review_work)
+        select re.vocab_entry_id,re.entry_sha256,re.payload->>'headword',re.payload->>'lexical_pos',i.lexical_pos,'identity',i.identity_id,lower(i.identity_content_sha256),
+          i.pronunciation_variant_id,i.official_audio_url,'교정','[{"text":"교정","stress":"primary"}]',repeat('a',64),repeat('b',64),'WORD-20260911-01'
+        from private.reviewed_exam_entries re join public.vocab_pronunciation_identities_v2 i on i.identity_id=re.pronunciation_identity_id
+        where re.release_id=$1 and re.source_row=1 returning vocab_entry_id`,[releaseId])).rows[0]!.vocab_entry_id;
+      if (mutation) await db.exec(String(mutation));
+      expect((await db.query("select * from public.list_entry_source_pronunciations_v1($1::bigint[])",[[entry]])).rows).toHaveLength(Number(expected));
+    } finally { await db.exec("rollback"); }
+  });
+  it.each([
+    ["exact source headword", "", 1],
+    ["both explicit source name and POS", "update public.vocab_pronunciation_identities_v2 set lexical_pos='other'; update private.entry_source_pronunciations_v1 set identity_lexical_pos='other'", 1],
+    ["missing source headword", "update private.entry_source_pronunciations_v1 set identity_headword=null", 0],
+    ["wrong source headword", "update private.entry_source_pronunciations_v1 set identity_headword='wrong'", 0],
+    ["changed identity headword", "update public.vocab_pronunciation_identities_v2 set headword='wrong'", 0],
+    ["reviewed headword mismatch with intact payload hash", "update public.vocab_entries set headword='different'; update private.entry_source_pronunciations_v1 set headword='different'", 0],
+    ["changed payload headword", "update private.reviewed_exam_entries set payload=jsonb_set(payload,'{headword}','\"different\"')", 0],
+  ])("separates reviewed and source headword: %s", async (_label, mutation, expected) => {
+    await db.exec("begin");
+    try {
+      await db.query(`update public.vocab_pronunciation_identities_v2 set headword='alpha/alternative'
+        where identity_id=(select pronunciation_identity_id from private.reviewed_exam_entries where release_id=$1 and source_row=1)`, [releaseId]);
+      const entry=(await db.query<{vocab_entry_id:number}>(`insert into private.entry_source_pronunciations_v1
+        (vocab_entry_id,entry_row_sha256,headword,identity_headword,lexical_pos,source_kind,identity_id,identity_content_sha256,variant_id,audio_key,display_ko,segments,source_file_sha256,manifest_sha256,review_work)
+        select re.vocab_entry_id,re.entry_sha256,re.payload->>'headword',i.headword,re.payload->>'lexical_pos','identity',i.identity_id,lower(i.identity_content_sha256),
+          i.pronunciation_variant_id,i.official_audio_url,'교정','[{"text":"교정","stress":"primary"}]',repeat('a',64),repeat('b',64),'WORD-20260911-01'
+        from private.reviewed_exam_entries re join public.vocab_pronunciation_identities_v2 i on i.identity_id=re.pronunciation_identity_id
+        where re.release_id=$1 and re.source_row=1 returning vocab_entry_id`,[releaseId])).rows[0]!.vocab_entry_id;
+      if (mutation) await db.exec(String(mutation));
+      expect((await db.query("select * from public.list_entry_source_pronunciations_v1($1::bigint[])",[[entry]])).rows).toHaveLength(Number(expected));
+    } finally { await db.exec("rollback"); }
+  });
   async function targets(mode:string,direction:string,unitLimit=1) {
     const units=(await db.query<{id:string}>("select id from public.vocab_units where dataset_id=$1 order by sort_index limit $2",[datasetId,unitLimit])).rows.map(r=>r.id);
     const rows=(await db.query<{vocab_entry_id:number;item_id:string;item_sha256:string}>(`select i.vocab_entry_id,i.item_id,i.item_sha256 from private.reviewed_exam_items i join public.vocab_entries e on e.id=i.vocab_entry_id

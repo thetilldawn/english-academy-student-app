@@ -142,6 +142,34 @@ describe.sequential("entry source pronunciation final schema", () => {
       expect((await read()).rows).toHaveLength(0);
     } finally { await db.exec("rollback"); }
   });
+  it("does not allow an explicit identity POS to bypass an ordinary binding", async () => {
+    await db.exec("begin");
+    try {
+      await db.exec("update public.vocab_pronunciation_identities_v2 set lexical_pos='other'");
+      await db.exec("update private.entry_source_pronunciations_v1 set identity_lexical_pos='other' where source_kind='identity'");
+      expect((await read()).rows).toHaveLength(0);
+    } finally { await db.exec("rollback"); }
+  });
+  it.each(["occurrence", "registry"])("rejects explicit identity POS for %s", async (kind) => {
+    await expect(db.query("update private.entry_source_pronunciations_v1 set identity_lexical_pos='other' where source_kind=$1", [kind])).rejects.toThrow();
+  });
+  it("does not allow an explicit source headword to bypass an ordinary binding", async () => {
+    await db.exec("begin");
+    try {
+      await db.exec("update public.vocab_pronunciation_identities_v2 set headword='test/alternative'");
+      await db.exec("update private.entry_source_pronunciations_v1 set identity_headword='test/alternative' where source_kind='identity'");
+      expect((await read()).rows).toHaveLength(0);
+    } finally { await db.exec("rollback"); }
+  });
+  it.each(["occurrence", "registry"])("rejects explicit source headword for %s", async (kind) => {
+    await expect(db.query("update private.entry_source_pronunciations_v1 set identity_headword='test/alternative' where source_kind=$1", [kind])).rejects.toThrow();
+  });
+  it.each(["", " test ", "test"])("rejects invalid or redundant source headword: %s", async (value) => {
+    await expect(db.query("update private.entry_source_pronunciations_v1 set identity_headword=$1 where source_kind='identity'", [value])).rejects.toThrow();
+  });
+  it.each(["", " noun ", "noun"])("rejects invalid or redundant identity POS: %s", async (value) => {
+    await expect(db.query("update private.entry_source_pronunciations_v1 set identity_lexical_pos=$1 where source_kind='identity'", [value])).rejects.toThrow();
+  });
   it("limits access to the service reader and leaves exams/identities unchanged",async()=>{
     const before=(await db.query("select (select count(*) from quiz_questions) q,(select jsonb_agg(to_jsonb(i)) from vocab_pronunciation_identities_v2 i) i")).rows;
     for(const role of ["anon","authenticated","service_role"]){
