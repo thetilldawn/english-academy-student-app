@@ -1,0 +1,22 @@
+.page { max-width: 880px; margin: 0 auto; padding: 24px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-card); }
+.editor { min-width: 0; color: var(--ink); padding: 8px 0; font-size: var(--ui-support-size); }
+.editor label { display: block; font-weight: 700; line-height: 1.6; min-width: 0; }
+.editor input:not([type="radio"]), .editor select { display: block; width: 100%; min-width: 0; max-width: 100%; margin-top: 6px; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--card); color: var(--ink); font: inherit; font-weight: 400; }
+.editor button { padding: 10px 14px; border: 1px solid var(--line-strong); border-radius: var(--radius); font: inherit; font-weight: 700; }
+.editor button:disabled, .editor fieldset:disabled { opacity: .65; }
+.selection { display: grid; grid-template-columns: minmax(0, 1fr) 130px; gap: 14px; }
+.eventSelect { margin: 18px 0; }
+.form { display: grid; gap: 18px; }
+.form fieldset { display: grid; gap: 14px; border: 1px solid var(--line); border-radius: var(--radius); padding: 15px; margin: 0; min-width: 0; }
+.form legend { font-weight: 800; padding: 0 6px; }
+.columns { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; min-width: 0; }
+.kindOptions { display: flex; flex-wrap: wrap; gap: 12px; }
+.kindOptions label { display: flex; align-items: center; gap: 7px; padding: 8px 12px; border: 1px solid var(--ok-line); border-radius: var(--radius); background: var(--ok-bg); color: var(--ok-ink); }
+.kindOptions label[data-kind="written"] { color: var(--schedule-written-ink); background: var(--schedule-written-bg); border-color: var(--schedule-written-line); }
+.required { display: inline-block; font-size: var(--ui-caption-size); padding: 1px 5px; margin-left: 5px; border: 1px solid var(--line-strong); border-radius: var(--radius-small); background: var(--surface); }
+.help { line-height: 1.7; font-size: var(--ui-caption-size); margin: 10px 0; color: var(--ink); }
+.help a { text-decoration: underline; }
+.notice { padding: 12px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--surface); line-height: 1.7; margin: 0; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; padding: 8px 0; }
+.actions .save { background: var(--ink); color: var(--card); }
+@media(max-width: 480px) { .selection, .columns { grid-template-columns: minmax(0,1fr); } .page { padding: 16px; } .form fieldset { padding: 12px; } }

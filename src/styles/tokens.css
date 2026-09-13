@@ -1,4 +1,14 @@
 :root {
+  --schedule-performance-ink: #245d35;
+  --schedule-performance-bg: #e8f5eb;
+  --schedule-performance-line: #278348;
+  --schedule-written-ink: #694d00;
+  --schedule-written-bg: #fff3bf;
+  --schedule-written-line: #c49813;
+  --schedule-written-accent: #e0b324;
+  --schedule-csat-ink: #56308a;
+  --schedule-csat-bg: #f0e8fb;
+  --schedule-csat-line: #8860af;
   --paper: #fcfbf7;
   --card: #ffffff;
   --surface: #f1efe6;

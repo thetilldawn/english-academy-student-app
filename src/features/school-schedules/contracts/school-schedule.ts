@@ -38,7 +38,7 @@ export const schoolScheduleBundleSchema = z.object({
 });
 export type SchoolEvent = z.infer<typeof schoolEventSchema>;
 export type SchoolScheduleBundle = z.infer<typeof schoolScheduleBundleSchema>;
-export type SchoolScheduleEvent = SchoolEvent & { semester: number; academicYear: number; checkedOn: string };
+export type SchoolScheduleEvent = Omit<SchoolEvent, "kind"> & { kind: SchoolEvent["kind"] | "csat"; semester: number; academicYear: number; checkedOn: string };
 export type SchoolScheduleSummary = {
   status: "ready" | "missing-profile" | "unlinked" | "unregistered" | "error";
   schoolKey: string | null; schoolName: string | null; gradeLabel: string | null;
@@ -48,9 +48,22 @@ export type SchoolScheduleGroup = { summary: SchoolScheduleSummary; studentCount
 export type SchoolScheduleOverview = { status: "ready" | "error"; today: string; groups: SchoolScheduleGroup[] };
 
 // This also validates summaries restored from the existing private directory cache.
+const displayedEventSchema = z.object({ ...schoolEventSchema.shape, kind: z.enum(["written", "performance", "csat"]),
+  semester: z.number().int().min(1).max(2), academicYear: z.number().int(), checkedOn: date,
+}).strict().superRefine((event, context) => {
+  if (event.kind === "csat") {
+    if (event.grade !== 3 || event.round !== null || event.precision !== "day" || event.status !== "confirmed"
+      || !event.startDate || event.endDate !== event.startDate || event.semester !== 2 || event.applicability !== "grade")
+      context.addIssue({ code: "custom", message: "수능 일정을 확인해 주세요." });
+  } else {
+    const source = Object.fromEntries(Object.entries(event).filter(([key]) => !["semester", "academicYear", "checkedOn"].includes(key)));
+    const parsed = schoolEventSchema.safeParse(source);
+    if (!parsed.success) context.addIssue({ code: "custom", message: "학교 일정을 확인해 주세요." });
+  }
+});
 export const schoolScheduleSummarySchema = z.object({
   status: z.enum(["ready", "missing-profile", "unlinked", "unregistered", "error"]),
   schoolKey: schoolKeySchema.nullable(), schoolName: z.string().nullable(), gradeLabel: z.string().nullable(),
   today: date,
-  events: z.array(schoolEventSchema.safeExtend({ semester: z.number().int().min(1).max(2), academicYear: z.number().int(), checkedOn: date })),
+  events: z.array(displayedEventSchema),
 }).strict();

@@ -1,5 +1,6 @@
 import { differenceInCalendarDays, format, parseISO, startOfWeek } from "date-fns";
 import type { SchoolScheduleBundle, SchoolScheduleSummary } from "../contracts/school-schedule";
+import { nationalExams } from "./national-exams";
 
 export function schoolToday(now = new Date()) {
   const parts = new Intl.DateTimeFormat("en", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(now);
@@ -11,12 +12,12 @@ export function schoolDisplayPeriod(today: string) {
   return { academicYear: Number(today.slice(0, 4)) - (month < 3 ? 1 : 0), semester: month < 3 || month >= 8 ? 2 : 1 };
 }
 export function buildSchoolSummary(profile: { schoolKey: string | null; schoolName: string | null; gradeLabel: string | null }, bundles: SchoolScheduleBundle[], today: string): SchoolScheduleSummary {
-  const base = { ...profile, today, events: [] };
+  const { academicYear, semester: currentSemester } = schoolDisplayPeriod(today);
+  const base = { ...profile, today, events: nationalExams(academicYear, profile.gradeLabel) };
   if (!profile.schoolName || !profile.gradeLabel) return { ...base, status: "missing-profile" };
   if (!profile.schoolKey) return { ...base, status: "unlinked" };
   const grade = /^(중|고)([123])(?:학년)?$/.exec(profile.gradeLabel.replace(/\s/g, ""));
   if (!grade) return { ...base, status: "missing-profile" };
-  const { academicYear, semester: currentSemester } = schoolDisplayPeriod(today);
   const applicable = bundles.filter(bundle => bundle.schoolKey === profile.schoolKey && bundle.schoolLevel === grade[1]
     && bundle.academicYear === academicYear);
   if (!applicable.length) return { ...base, status: "unregistered" };
@@ -25,18 +26,18 @@ export function buildSchoolSummary(profile: { schoolKey: string | null; schoolNa
   const events = applicable.flatMap(bundle =>
     bundle.events.filter(event => event.grade === Number(grade[2]) && (event.startDate !== null || bundle.semester === currentSemester))
       .map(event => ({ ...event, semester: bundle.semester, academicYear: bundle.academicYear, checkedOn: bundle.checkedOn })));
-  return { ...base, status: "ready", events };
+  return { ...base, status: "ready", events: [...events, ...base.events] };
 }
 export function nearestSchoolExam(summary: SchoolScheduleSummary) {
-  if (summary.status !== "ready") return null;
-  const exam = summary.events.filter(event => event.kind === "written" && event.status === "confirmed"
+  if (summary.status === "error") return null;
+  const exam = summary.events.filter(event => (event.kind === "written" || event.kind === "csat") && event.status === "confirmed"
     && event.startDate && event.endDate && event.endDate >= summary.today)
     .sort((a, b) => a.startDate!.localeCompare(b.startDate!) || a.id.localeCompare(b.id))[0];
   if (!exam) return null;
   const days = Math.max(0, differenceInCalendarDays(parseISO(exam.startDate!), parseISO(summary.today)));
   const weeks = Number((days / 7).toFixed(1));
   const during = exam.startDate! <= summary.today;
-  return { exam, days, weeks, label: `${exam.semester}-${exam.round} | ${during ? "시험 중" : `${days}일 [${weeks}주]`}` };
+  return { exam, days, weeks, label: `${exam.kind === "csat" ? "수능" : `${exam.semester}-${exam.round}`} | ${during ? "시험 중" : `${days}일 [${weeks}주]`}` };
 }
 export function scheduleWeek(date: string) { return format(startOfWeek(parseISO(date), { weekStartsOn: 1 }), "yyyy-MM-dd"); }
 export function shortSchoolDate(date: string) { return format(parseISO(date), "M/d"); }

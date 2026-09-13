@@ -159,8 +159,10 @@ const proxy = http.createServer(async (req, res) => {
   }
   const profileAction = studentProfile && req.method === "POST" && req.headers.origin === APP_ORIGIN &&
     typeof req.headers["next-action"] === "string" && /^\/admin\/students\/00000000-0000-4000-8000-00000000000[12]$/.test(url.pathname);
+  const scheduleAction = schoolSchedules && req.method === "POST" && req.headers.origin === APP_ORIGIN &&
+    typeof req.headers["next-action"] === "string" && ["/admin", "/admin/school-schedules/edit"].includes(url.pathname);
   if (!["GET", "HEAD", "POST", "DELETE"].includes(req.method) ||
-      (req.method !== "GET" && req.method !== "HEAD" && !url.pathname.startsWith("/api/") && !profileAction) ||
+      (req.method !== "GET" && req.method !== "HEAD" && !url.pathname.startsWith("/api/") && !profileAction && !scheduleAction) ||
       (req.method === "DELETE" && url.pathname !== "/api/admin/session")) {
     return json(res, { error: "Unsupported local request" }, 403);
   }

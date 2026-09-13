@@ -11,7 +11,7 @@ export function SchoolExamIdentity({ children, summary, refreshNeeded = false, a
   const label = refreshNeeded ? "일정 갱신 필요" : next?.label ?? (summary?.status === "error" ? "일정 확인 실패" : summary?.status === "unlinked" ? "학교 연결 필요" : summary?.status === "ready" ? unknownExam ? "시험 날짜 확인 중" : "예정 시험 없음" : summary?.status === "missing-profile" ? "학교·학년 미등록" : "일정 미등록");
   return <Tag className={styles.identityContainer}><Tag className={styles.identity}>
     {summary ? <span className={styles.countdown} data-urgent={next !== null && next.days <= 14}
-      title={next ? `${next.exam.title} · ${next.exam.startDate}~${next.exam.endDate} · 학교 시험기간 첫날 기준` : label}>
+      title={next ? `${next.exam.title} / ${next.exam.startDate}~${next.exam.endDate} / ${next.exam.kind === "csat" ? "수능 시행일 기준" : "학교 시험기간 첫날 기준"}` : label}>
       {label}
     </span> : null}
     <Tag className={styles.name}>{children}</Tag>

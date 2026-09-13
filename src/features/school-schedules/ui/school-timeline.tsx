@@ -1,48 +1,61 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import type { SchoolScheduleOverview } from "../contracts/school-schedule";
-import { nearestSchoolExam, scheduleStatusText, scheduleWeek, shortSchoolDate } from "../domain/school-schedule";
+import { scheduleStatusText, shortSchoolDate } from "../domain/school-schedule";
+import { schoolTimeline, scheduleKindLabel, schoolScheduleEditHref, type DateCluster, type TimelineEntry } from "../domain/school-timeline";
 import styles from "./school-schedule.module.css";
 
+function Source({ entry }: { entry: TimelineEntry }) {
+  const { event } = entry;
+  return event.sourceUrl ? <a href={event.sourceUrl} target="_blank" rel="noreferrer">{event.sourceLabel ?? "학교 공지"}</a> : <span>{event.sourceLabel}</span>;
+}
+function EventInfo({ entry, highlighted, student, canEdit }: { entry: TimelineEntry; highlighted: boolean; student: boolean; canEdit: boolean }) {
+  const { event, group } = entry;
+  const uncertain = event.applicability === "enrollment-unconfirmed";
+  return <div className={styles.eventRow} data-kind={event.kind} data-highlighted={highlighted}>
+    <span className={styles.kind} data-kind={event.kind}>{scheduleKindLabel[event.kind]}</span>
+    <div className={styles.eventInfo}>
+      <div className={styles.tags}>
+        <span>{event.kind === "csat" ? "전국" : group.summary.schoolName}</span><span>{event.grade}학년</span>
+        {event.subject ? <span>{event.subject}</span> : null}
+        {!student && !uncertain ? <span>{group.studentCount}명</span> : null}
+        {uncertain ? <span className={styles.elective}>선택 과목</span> : null}
+      </div>
+      <strong className={styles.eventTitle}>{event.title}{event.maxPoints !== null ? " (" + event.maxPoints + "점 만점)" : ""}</strong>
+      <div className={styles.eventMeta}>
+        {event.startDate ? <time dateTime={event.startDate}>{shortSchoolDate(event.startDate)}{event.endDate !== event.startDate ? "–" + shortSchoolDate(event.endDate!) : ""}</time> :
+          canEdit && group.summary.schoolKey ? <Link className={styles.dateButton} href={schoolScheduleEditHref(entry)} scroll={false}>{["week", "month"].includes(event.precision) ? event.dateText + " / 날짜 입력" : "날짜 확인 필요"}</Link> : <span>{["week", "month"].includes(event.precision) ? event.dateText : "날짜 확인 중"}</span>}
+        {event.status === "planned" ? <span className={styles.metaTag}>예정</span> : null}
+        {event.kind === "written" ? <span className={styles.metaTag}>학교 시험기간</span> : null}
+        <Source entry={entry} />
+        {canEdit && event.startDate && event.kind !== "csat" && group.summary.schoolKey ? <Link href={schoolScheduleEditHref(entry)} scroll={false}>수정</Link> : null}
+      </div>
+    </div>
+  </div>;
+}
+function DateGroup({ cluster, highlighted, student, canEdit }: { cluster: DateCluster; highlighted: boolean; student: boolean; canEdit: boolean }) {
+  return <li className={styles.dateGroup}>
+    <div className={styles.dateLabel}><time dateTime={cluster.startDate}>{shortSchoolDate(cluster.startDate)}</time>{cluster.endDate !== cluster.startDate ? <small>~ {shortSchoolDate(cluster.endDate)}</small> : null}</div>
+    <article className={styles.event} aria-label={shortSchoolDate(cluster.startDate) + " 일정"}>
+      {highlighted ? <div className={styles.nearestLabel}>가장 가까운 일정</div> : null}
+      {cluster.entries.map(entry => <EventInfo key={entry.groupKey + "-" + entry.event.id} entry={entry} highlighted={highlighted} student={student} canEdit={canEdit} />)}
+    </article>
+  </li>;
+}
 export function SchoolTimeline({ overview, retry, student = false, studentViewer = false, refreshNeeded = false }: { overview: SchoolScheduleOverview; retry?: ReactNode; student?: boolean; studentViewer?: boolean; refreshNeeded?: boolean }) {
-  const entries = overview.groups.flatMap(group => group.summary.events.map(event => ({ group, event })));
-  const dated = entries.filter(({ event }) => event.startDate && event.endDate && event.endDate >= overview.today && event.status !== "not-held")
-    .sort((a, b) => a.event.startDate!.localeCompare(b.event.startDate!) || (a.group.summary.schoolName ?? "").localeCompare(b.group.summary.schoolName ?? ""));
-  const weeks = [...new Set(dated.map(({ event }) => scheduleWeek(event.startDate!)))];
-  const pending = entries.filter(({ event }) => !event.startDate);
+  const { clusters, pending, counts } = schoolTimeline(overview);
+  const canEdit = !studentViewer;
+  const failed = refreshNeeded || overview.status === "error";
   return <section className={styles.panel} aria-label={student ? "우리 학교 시험 일정" : "학교별 시험 일정"}>
-    <div className={styles.panelHeading}><h2>{student ? "우리 학교 시험 일정" : "학교별 시험 일정"}</h2><span>기준 {overview.today}</span></div>
-    {refreshNeeded || overview.status === "error" ? <div role="alert"><p>{refreshNeeded ? "새 학기 일정을 다시 확인해 주세요." : scheduleStatusText("error")}</p>{retry}</div> : <>
+    <div className={styles.panelHeading}><h2>{student ? "우리 학교 시험 일정" : "학교별 시험 일정"}</h2>
+      <div className={styles.panelActions}><span>기준 {overview.today}</span>{canEdit ? <Link className={styles.manualButton} href={schoolScheduleEditHref()} scroll={false}>수동입력</Link> : null}</div></div>
+    {failed ? <div role="alert"><p>{refreshNeeded ? "새 학기 일정을 다시 확인해 주세요." : scheduleStatusText("error")}</p>{retry}</div> : <>
+      {!student && overview.groups.length ? <div className={styles.typeCounts} aria-label="평가 유형별 학생 수">{Object.entries(scheduleKindLabel).map(([kind,label]) => <span key={kind} className={styles.countTag} data-kind={kind}>{label} <strong>{counts[kind as keyof typeof counts]}명</strong></span>)}</div> : null}
       {overview.groups.length === 0 ? <p className={styles.hint}>등록된 학생의 학교 일정이 없습니다.</p> : null}
-      <div className={styles.schoolSummaries}>{overview.groups.map((group, index) => {
-        const next = nearestSchoolExam(group.summary);
-        return <div key={`${group.summary.schoolKey}-${group.summary.gradeLabel}-${index}`} className={styles.schoolSummary}>
-          <strong>{group.summary.schoolName || "학교 미등록"} · {group.summary.gradeLabel || "학년 미등록"}</strong>
-          {!student ? <span>{group.studentCount}명</span> : null}
-          <span className={styles.summaryDate}>{next?.label ?? scheduleStatusText(group.summary.status, studentViewer)}</span>
-        </div>;
-      })}</div>
-      <ol className={styles.timeline}>{weeks.map(week => <li key={week} className={styles.week}>
-        <div className={styles.weekLabel}><span>{shortSchoolDate(week)}</span><small>시작 주</small></div>
-        <div className={styles.weekEvents}>{dated.filter(({ event }) => scheduleWeek(event.startDate!) === week).map(({ group, event }) =>
-          <article key={`${group.summary.schoolKey}-${event.id}`} className={styles.event}>
-            <div className={styles.eventHeading}><strong>{group.summary.schoolName} · {event.grade}학년</strong><span className={styles.kind}>{event.kind === "written" ? "지필" : "수행"}</span></div>
-            <p>{event.subject ? `${event.subject} · ` : ""}{event.title}</p>
-            <div className={styles.eventMeta}><time dateTime={event.startDate!}>{shortSchoolDate(event.startDate!)}{event.endDate !== event.startDate ? `–${shortSchoolDate(event.endDate!)}` : ""}</time>
-              {event.status === "planned" ? <span>예정</span> : null}
-              {event.kind === "written" ? <span>학교 시험기간</span> : null}
-              {event.applicability === "enrollment-unconfirmed" ? <span>수강 여부 확인 필요</span> : null}
-              {event.sourceUrl ? <a href={event.sourceUrl} target="_blank" rel="noreferrer">{event.sourceLabel ?? "학교 공지"}</a> : <span>{event.sourceLabel}</span>}
-            </div>
-          </article>)}</div>
-      </li>)}</ol>
-      {pending.length ? <details className={styles.pending} open><summary>수행평가·미확정 일정 ({pending.length})</summary>
-        <ul>{pending.map(({ group, event }) => <li key={`${group.summary.schoolKey}-${event.id}`}>
-          <div><strong>{group.summary.schoolName} · {event.grade}학년{event.subject ? ` · ${event.subject}` : ""}</strong><p>{event.title}{event.maxPoints !== null ? ` (${event.maxPoints}점 만점)` : ""}</p>
-            {event.applicability === "enrollment-unconfirmed" ? <small>수강 여부 확인 필요</small> : null}</div>
-          <span>{event.status === "not-held" ? "미실시" : ["month", "week"].includes(event.precision) ? `${event.dateText} · 예정` : "날짜 확인 중"}</span>
-          {event.sourceUrl ? <a href={event.sourceUrl} target="_blank" rel="noreferrer">{event.sourceLabel ?? "학교 공지"}</a> : <span>{event.sourceLabel}</span>}
-        </li>)}</ul>
-      </details> : null}
+      {!clusters.length && !pending.length && overview.groups.length ? <p className={styles.hint}>{student ? scheduleStatusText(overview.groups[0].summary.status, studentViewer) : "확인된 예정 일정이 없습니다. 수동입력에서 학교 일정을 등록할 수 있습니다."}</p> : null}
+      {clusters[0] ? <ol className={styles.timeline}><DateGroup cluster={clusters[0]} highlighted student={student} canEdit={canEdit} /></ol> : null}
+      {clusters.length > 1 ? <details className={styles.later}><summary>이후 일정 {clusters.length - 1}개 날짜 묶음</summary><ol className={styles.timeline}>{clusters.slice(1).map(cluster => <DateGroup key={cluster.startDate} cluster={cluster} highlighted={false} student={student} canEdit={canEdit} />)}</ol></details> : null}
+      {pending.length ? <details className={styles.pending} open><summary>날짜 확인 필요 ({pending.length})</summary><div className={styles.pendingEvents}>{pending.map(entry => <EventInfo key={entry.groupKey + "-" + entry.event.id} entry={entry} highlighted={false} student={student} canEdit={canEdit} />)}</div></details> : null}
     </>}
   </section>;
 }

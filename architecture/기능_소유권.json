@@ -389,8 +389,8 @@
     {
       "path": "src/test-support",
       "owner": "architecture-meta",
-      "fileCount": 17,
-      "pathSetSha256": "edb73f73a8e77dbfcd0394c18f396147ccf040ac69c95322e0900e296ce8b7e2"
+      "fileCount": 18,
+      "pathSetSha256": "41d520e87862b1ab079618f549a0a16093f1db0bb8b0d7c7671e498c9a1e4c97"
     }
   ],
   "pageOwners": [
@@ -477,6 +477,14 @@
     {
       "path": "src/app/student/(protected)/@detail/[...catchAll]/page.tsx",
       "owner": "student-dashboard"
+    },
+    {
+      "path": "src/app/admin/(protected)/school-schedules/edit/page.tsx",
+      "owner": "school-schedules"
+    },
+    {
+      "path": "src/app/admin/(protected)/@detail/(.)school-schedules/edit/page.tsx",
+      "owner": "school-schedules"
     }
   ],
   "nextSpecialEntrypointOwners": [
@@ -2111,6 +2119,18 @@
     {
       "path": "src/features/school-schedules/server/queries/school-schedule-query.ts",
       "owner": "school-schedules"
+    },
+    {
+      "path": "src/features/school-schedules/server/components/school-schedule-editor-content.tsx",
+      "owner": "school-schedules"
+    },
+    {
+      "path": "src/features/school-schedules/server/queries/school-schedule-editor-query.ts",
+      "owner": "school-schedules"
+    },
+    {
+      "path": "src/features/school-schedules/server/actions/school-schedule-edit-actions.ts",
+      "owner": "school-schedules"
     }
   ],
   "migrationOwnershipFrom": "20260828193000",
@@ -2321,6 +2341,11 @@
       "path": "supabase/migrations/20260913092302_add_school_schedule_and_student_school_key.sql",
       "owner": "school-schedules",
       "flow": "school-schedule-read"
+    },
+    {
+      "path": "supabase/migrations/20260913221810_add_school_schedule_manual_edits.sql",
+      "owner": "school-schedules",
+      "flow": "school-schedule-edit"
     }
   ],
   "features": [
@@ -2818,6 +2843,18 @@
       "from": "src/features/students/ui/student-directory-card.tsx",
       "to": "src/features/school-schedules/public-ui.ts",
       "reason": "APP-20260913-03 학교 일정의 공용 계약·조회·표시 연결",
+      "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/school-schedules/client/use-school-schedule-editor.ts",
+      "to": "src/features/session/public-client.ts",
+      "reason": "수동 일정 저장 후 개인 캐시 무효화 및 인증 실패 숨김",
+      "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/school-schedules/client/components/live-school-schedule.tsx",
+      "to": "src/features/session/public-client.ts",
+      "reason": "수동 일정 저장 후 개인 캐시 무효화 및 인증 실패 숨김",
       "removeIn": "공개 진입점으로 고정"
     }
   ],
@@ -6163,7 +6200,8 @@
       "status": "active",
       "owner": "school-schedules",
       "participants": [
-        "school-schedules"
+        "school-schedules",
+        "session"
       ],
       "dataClass": "private",
       "cachePolicy": "개인 학교 연결은 공유 캐시 없음. 학생 조회의 React cache는 요청 내부만. 한국 자정에 날짜 표시만 갱신한다.",
@@ -6183,7 +6221,9 @@
           "src/features/school-schedules/ui/school-schedule.module.css",
           "src/features/school-schedules/ui/school-timeline.tsx",
           "src/features/school-schedules/client/components/live-school-schedule.tsx",
-          "src/features/school-schedules/client/components/schedule-retry.tsx"
+          "src/features/school-schedules/client/components/schedule-retry.tsx",
+          "src/styles/tokens.css",
+          "src/styles/theme.css"
         ],
         "clientState": [
           "src/features/school-schedules/client/components/live-school-schedule.tsx",
@@ -6191,7 +6231,9 @@
         ],
         "application": [],
         "domain": [
-          "src/features/school-schedules/domain/school-schedule.ts"
+          "src/features/school-schedules/domain/school-schedule.ts",
+          "src/features/school-schedules/domain/national-exams.ts",
+          "src/features/school-schedules/domain/school-timeline.ts"
         ],
         "presentation": [],
         "contract": [
@@ -6236,6 +6278,94 @@
           "from": "src/features/school-schedules/client/components/live-school-schedule.tsx",
           "to": "src/features/school-schedules/domain/school-schedule.ts",
           "reason": "한국 날짜 표시를 동일 계산으로 갱신"
+        }
+      ],
+      "flowImportExceptions": {},
+      "serverImportExceptions": {}
+    },
+    {
+      "id": "school-schedule-edit",
+      "name": "관리자 학교 일정 수동 입력과 원천 보존",
+      "status": "active",
+      "owner": "school-schedules",
+      "participants": [
+        "school-schedules",
+        "session"
+      ],
+      "dataClass": "private",
+      "cachePolicy": "개인 공유 캐시 없음. 서버 저장/복구 영수증 확인 후 Next refresh()로 탐색 보관값 갱신. 기존 개인 캐시 신호로 학생 목록도 다시 조회.",
+      "streamingPolicy": "경로 모달과 직접 페이지는 같은 편집기. 초안·충돌·결과 불명 보존.",
+      "closedLocalLayers": [
+        "ui",
+        "domain"
+      ],
+      "touchpoints": {
+        "route": [
+          "src/app/admin/(protected)/school-schedules/edit/page.tsx",
+          "src/app/admin/(protected)/@detail/(.)school-schedules/edit/page.tsx"
+        ],
+        "serverComponent": [
+          "src/features/school-schedules/server/components/school-schedule-editor-content.tsx"
+        ],
+        "ui": [
+          "src/features/school-schedules/client/components/school-schedule-editor.tsx",
+          "src/features/school-schedules/ui/school-schedule-editor.module.css"
+        ],
+        "clientState": [
+          "src/features/school-schedules/client/use-school-schedule-editor.ts"
+        ],
+        "application": [],
+        "domain": [
+          "src/features/school-schedules/domain/school-schedule-edit.ts"
+        ],
+        "presentation": [],
+        "contract": [
+          "src/features/school-schedules/contracts/school-schedule-edit.ts",
+          "src/features/school-schedules/contracts/school-schedule.ts"
+        ],
+        "transport": [
+          "src/features/school-schedules/actions/edit-school-schedule.ts"
+        ],
+        "server": [
+          "src/features/school-schedules/public-server.ts",
+          "src/features/school-schedules/server/queries/school-schedule-editor-query.ts",
+          "src/features/school-schedules/server/actions/school-schedule-edit-actions.ts"
+        ],
+        "database": [
+          "supabase/migrations/20260913221810_add_school_schedule_manual_edits.sql"
+        ],
+        "cacheStreaming": [
+          "src/features/school-schedules/client/components/live-school-schedule.tsx",
+          "src/features/school-schedules/client/use-school-schedule-editor.ts"
+        ],
+        "tests": [
+          "src/features/school-schedules/domain/school-schedule-edit.test.ts",
+          "src/features/school-schedules/server/school-schedule-edit-migration.test.ts",
+          "src/features/school-schedules/server/actions/school-schedule-edit-actions.test.ts",
+          "src/features/school-schedules/client/use-school-schedule-editor.test.tsx",
+          "src/features/school-schedules/actions/edit-school-schedule.test.ts",
+          "src/test-support/local-school-schedule-edit.test.mjs"
+        ]
+      },
+      "notApplicable": {
+        "application": "현재 feature controller와 Server Action이 작은 편집 명령을 직접 조합한다.",
+        "presentation": "검증된 일정 필드가 편집기와 표시 컴포넌트로 직접 전달된다."
+      },
+      "requiredImportEdges": [
+        {
+          "from": "src/features/school-schedules/client/use-school-schedule-editor.ts",
+          "to": "src/features/school-schedules/actions/edit-school-schedule.ts",
+          "reason": "검증된 관리자 저장과 읽기 복구"
+        },
+        {
+          "from": "src/features/school-schedules/server/components/school-schedule-editor-content.tsx",
+          "to": "src/features/school-schedules/server/queries/school-schedule-editor-query.ts",
+          "reason": "현재 관리자 범위 초기값"
+        },
+        {
+          "from": "src/features/school-schedules/actions/edit-school-schedule.ts",
+          "to": "src/features/school-schedules/server/actions/school-schedule-edit-actions.ts",
+          "reason": "공개 Server Action에서 권한 검사와 업무 처리 연결"
         }
       ],
       "flowImportExceptions": {},

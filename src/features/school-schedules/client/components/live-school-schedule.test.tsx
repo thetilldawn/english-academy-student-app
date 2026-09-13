@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, render, renderHook, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
+vi.mock("../../actions/edit-school-schedule", () => ({ refreshSchoolScheduleOverviewAction: vi.fn() }));
 import { LiveSchoolExamIdentity, LiveSchoolTimeline, useSchoolDisplayDate } from "./live-school-schedule";
 import { buildSchoolSummary } from "../../domain/school-schedule";
 import { fakeSchoolBundle as bundle } from "../../school-schedule.fixture";

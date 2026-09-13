@@ -16,7 +16,8 @@ describe("학교 날짜 계산", () => {
   it("끝난 시험과 고3 미실시를 다음 시험으로 계산하지 않는다", () => {
     expect(nearestSchoolExam(summary("2026-10-17"))).toBeNull();
     const third = buildSchoolSummary({ ...profile, gradeLabel: "고3" }, [bundle], "2026-09-13");
-    expect(third.events).toHaveLength(1); expect(third.events[0].status).toBe("not-held"); expect(nearestSchoolExam(third)).toBeNull();
+    expect(third.events.filter(event => event.kind === "written")).toHaveLength(1);
+    expect(third.events[0].status).toBe("not-held"); expect(nearestSchoolExam(third)?.exam.kind).toBe("csat");
   });
   it("등록 누락·학교 미연결·자료 없음·다른 학교급/연도를 구별한다", () => {
     expect(buildSchoolSummary({...profile,gradeLabel:null},[bundle],"2026-09-13").status).toBe("missing-profile");

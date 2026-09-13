@@ -1,0 +1,2979 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20260914-01",
+  "title": "학교 일정 표시와 수동 입력",
+  "size": "full",
+  "gate": "verified",
+  "guide": "docs/work-orders/APP-20260914-01.md",
+  "baseline": "001f8a8aeb298dee36beaed603d4c94f5f8c4a84",
+  "owners": [
+    "school-schedules",
+    "architecture-meta",
+    "shared-ui"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "public",
+    "personal"
+  ],
+  "scope": [
+    {
+      "path": "src/features/school-schedules/contracts/school-schedule.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read",
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/domain/school-schedule.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read",
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/ui/school-timeline.tsx",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/ui/school-schedule.module.css",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/ui/school-exam-identity.tsx",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/client/components/live-school-schedule.tsx",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read",
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/public-server.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read",
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/AGENTS.md",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/school-schedules/contracts/school-schedule-edit.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/domain/national-exams.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read",
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/domain/school-timeline.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/domain/school-schedule-edit.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/server/queries/school-schedule-editor-query.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read",
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/server/actions/school-schedule-edit-actions.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/server/components/school-schedule-editor-content.tsx",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read",
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/client/components/school-schedule-editor.tsx",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/client/use-school-schedule-editor.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/ui/school-schedule-editor.module.css",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/domain/school-timeline.test.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/domain/school-schedule-edit.test.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/server/school-schedule-edit-migration.test.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/server/actions/school-schedule-edit-actions.test.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/client/use-school-schedule-editor.test.tsx",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/domain/school-schedule.test.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read",
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/ui/school-timeline.test.tsx",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/client/components/live-school-schedule.test.tsx",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read",
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/app/admin/(protected)/school-schedules/edit/page.tsx",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/app/admin/(protected)/@detail/(.)school-schedules/edit/page.tsx",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260913221810_add_school_schedule_manual_edits.sql",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "scripts/local-school-schedule-data.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "scripts/local-admin-baseline-data.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "scripts/local-admin-baseline.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "architecture/기능_소유권.json",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/school-schedules/actions/edit-school-schedule.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/styles/tokens.css",
+      "state": "existing",
+      "owner": "shared-ui",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read"
+      ]
+    },
+    {
+      "path": "src/styles/theme.css",
+      "state": "existing",
+      "owner": "shared-ui",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/actions/edit-school-schedule.test.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/client/components/schedule-retry.test.tsx",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/client/components/schedule-retry.tsx",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/contracts/school-schedule-import.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/public-contracts.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/public-ui.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/school-schedule.fixture.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/school-schedules/server/components/school-schedule-content.tsx",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read",
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/server/queries/school-schedule-query.test.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read",
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/server/queries/school-schedule-query.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read",
+        "school-schedule-edit"
+      ]
+    },
+    {
+      "path": "src/features/school-schedules/server/school-schedule-migration.test.ts",
+      "state": "existing",
+      "owner": "school-schedules",
+      "flowIds": [
+        "admin-history-read",
+        "student-dashboard-read",
+        "student-management-screen",
+        "school-schedule-read"
+      ]
+    },
+    {
+      "path": "src/test-support/local-school-schedule-edit.test.mjs",
+      "state": "existing",
+      "owner": "architecture-meta",
+      "flowIds": [
+        "school-schedule-edit"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "유형 태그와 대비, 학교 카드 제거, 관련 학생 중복 없는 집계",
+      "acceptance": "수행 초록·지필 노랑 태그가 왼쪽에 있고 학교 미등록 수 카드가 없다",
+      "disposition": "required",
+      "owners": [
+        "school-schedules"
+      ],
+      "flowIds": [
+        "school-schedule-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T4"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "겹친 날짜를 한 요소에 나열하고 가까운 하나를 강조",
+      "acceptance": "겹친 기간이 한 묶음이며 나머지 일정은 펼쳐 볼 수 있다",
+      "disposition": "required",
+      "owners": [
+        "school-schedules"
+      ],
+      "flowIds": [
+        "school-schedule-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T4"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "user",
+      "text": "수동입력과 날짜 확인 필요에서 같은 편집 모달",
+      "acceptance": "학교·학년·학생 수 및 일정 정보를 편집하고 직접 주소로도 동작한다",
+      "disposition": "required",
+      "owners": [
+        "school-schedules"
+      ],
+      "flowIds": [
+        "school-schedule-edit",
+        "school-schedule-read"
+      ],
+      "checkIds": [
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "id": "R4",
+      "source": "user",
+      "text": "수동 수정 원천 보존 및 충돌·중복·응답 유실 복구",
+      "acceptance": "원천 불변, 같은 범위 잠금·두 버전 비교·요청 ID 영수증·초안 보존",
+      "disposition": "required",
+      "owners": [
+        "school-schedules"
+      ],
+      "flowIds": [
+        "school-schedule-edit",
+        "school-schedule-read"
+      ],
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "id": "R5",
+      "source": "user",
+      "text": "학생 본인과 관리자 일정 일치 및 현재 권한 확인",
+      "acceptance": "관리자만 저장, 학생 본인 범위만 조회, 기존 개인 캐시 갱신",
+      "disposition": "required",
+      "owners": [
+        "school-schedules"
+      ],
+      "flowIds": [
+        "school-schedule-edit",
+        "school-schedule-read"
+      ],
+      "checkIds": [
+        "T2",
+        "T3",
+        "T5"
+      ]
+    },
+    {
+      "id": "R6",
+      "source": "user",
+      "text": "학교 지정과 학생 선택 과목을 실제 편제표로 구분",
+      "acceptance": "학년 기본 대상은 불필요한 안내 없고 선택 과목만 표시",
+      "disposition": "required",
+      "owners": [
+        "school-schedules"
+      ],
+      "flowIds": [
+        "school-schedule-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T4",
+        "T5"
+      ]
+    },
+    {
+      "id": "R7",
+      "source": "user",
+      "text": "공식 수능을 고3 일정과 가까운 시험에 포함",
+      "acceptance": "시행연도별 고3에만 표시하고 확인하지 않은 날짜는 생성하지 않는다",
+      "disposition": "required",
+      "owners": [
+        "school-schedules"
+      ],
+      "flowIds": [
+        "school-schedule-read"
+      ],
+      "checkIds": [
+        "T1",
+        "T4"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "유형·색·그룹·모달·수능 범위",
+      "answer": "사용자 후속 요청대로 수행 초록·지필 노랑, 겹친 날짜 한 칸, 수동 편집 모달 및 수능 추가",
+      "source": "2026-09-14 사용자 요청"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "강조할 가까운 일정 단위",
+      "answer": "추가 선택 질문은 비차단 기본값으로 전체에서 가장 가까운 날짜 묶음 1개를 먼저 강조하고 이후 일정은 접는다. 사용자 확정으로 간주하지 않으며 응답 시 반영한다.",
+      "source": "사용자 가장 가까운 하나 및 선택 답 전 구현 판단"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "의존성과 저장·복구 구조",
+      "answer": "기존 모달·date-fns 재사용. 원천 불변/수동 이력 우선/요청별 멱등 영수증 및 출처 기준 변화 안내. 수능은 공식 전국 공개 자료를 고3에 결합. 실제 브라우저에서 저장 후 앞으로가기의 과거 초기값 복원을 확인했다. Next16.2.12의 refresh()를 저장/복구 성공 Server Action에 적용하여 탐색 보관값을 갱신한다. 미확인 저장은 갱신하거나 재전송하지 않는다.",
+      "source": "현재 코드 및 독립 설계 검토"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "changed",
+      "reason": "경로 모달 수동 일정 저장과 실제 표시값, 권한·원천·초안 보호를 연결한다."
+    },
+    "ui": {
+      "status": "changed",
+      "reason": "경로 모달 수동 일정 저장과 실제 표시값, 권한·원천·초안 보호를 연결한다."
+    },
+    "state": {
+      "status": "changed",
+      "reason": "경로 모달 수동 일정 저장과 실제 표시값, 권한·원천·초안 보호를 연결한다."
+    },
+    "domain": {
+      "status": "changed",
+      "reason": "경로 모달 수동 일정 저장과 실제 표시값, 권한·원천·초안 보호를 연결한다."
+    },
+    "data": {
+      "status": "changed",
+      "reason": "경로 모달 수동 일정 저장과 실제 표시값, 권한·원천·초안 보호를 연결한다."
+    },
+    "api": {
+      "status": "changed",
+      "reason": "경로 모달 수동 일정 저장과 실제 표시값, 권한·원천·초안 보호를 연결한다."
+    },
+    "cache": {
+      "status": "changed",
+      "reason": "경로 모달 수동 일정 저장과 실제 표시값, 권한·원천·초안 보호를 연결한다."
+    },
+    "asyncUi": {
+      "status": "changed",
+      "reason": "경로 모달 수동 일정 저장과 실제 표시값, 권한·원천·초안 보호를 연결한다."
+    },
+    "security": {
+      "status": "changed",
+      "reason": "경로 모달 수동 일정 저장과 실제 표시값, 권한·원천·초안 보호를 연결한다."
+    },
+    "styles": {
+      "status": "changed",
+      "reason": "경로 모달 수동 일정 저장과 실제 표시값, 권한·원천·초안 보호를 연결한다."
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "경로 모달 수동 일정 저장과 실제 표시값, 권한·원천·초안 보호를 연결한다."
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "현재 활성 관리자만 저장, 학생 본인 조회 경계 유지",
+      "checkIds": [
+        "T2",
+        "T3"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "실제 학교 운영 자료·개인정보는 Git 밖에 보관하고 화면 인증 실패 시 숨김",
+      "checkIds": [
+        "T2",
+        "T3",
+        "T5"
+      ]
+    },
+    "answer-leak": {
+      "status": "not_applicable",
+      "reason": "시험 정답을 처리하지 않는 일정 기능",
+      "checkIds": []
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "개인 공유 캐시 없음. 저장 뒤 학생 캐시 무효화와 일정만 갱신",
+      "checkIds": [
+        "T3",
+        "T4",
+        "T5"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "현재 관리자 인증→학교/학년 집계→원천+수동 이력→초안→서버/DB 검증→범위 잠금/원천·수동 버전 비교/요청 중복 확인→append-only 저장→영수증·현재 일정 재조회",
+    "reuse": "RoutedDetailDialog, useRouteExitGuard, 기존 개인 캐시 변경 신호 및 date-fns. 새 라이브러리 없음.",
+    "cache": "학교 개인 연결의 공유 캐시는 추가하지 않음. 저장 성공 후 해당 일정과 학생 목록 개인 캐시 갱신, 저장 중 refresh로 초안 덮기 금지.",
+    "compatibility": "원천 등록 구조와 개인 세션 경계 유지. 수능 화면 계약은 학교 원천 계약과 별도. 수동 DDL 적용 전 새 앱 활성화하지 않음.",
+    "rollback": "앱을 이전 배포로 복구하되 수동 이력과 원천 및 학생 기록을 보존한다."
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "일정 최초 조회",
+      "message": "학교 일정을 불러오고 있습니다.",
+      "behavior": "기존 단어시험 내역 유지",
+      "recovery": "응답 후 표시",
+      "component": "src/features/school-schedules/client/components/school-schedule-editor.tsx",
+      "checkIds": [
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "수동 갱신",
+      "message": "학교 일정을 불러오고 있습니다.",
+      "behavior": "인증된 이전 상태만 유지",
+      "recovery": "현재 요청만 반영",
+      "component": "src/features/school-schedules/client/components/school-schedule-editor.tsx",
+      "checkIds": [
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "학교 또는 학년 미등록",
+      "message": "학교·학년을 등록하면 시험 일정을 확인할 수 있습니다.",
+      "behavior": "가짜 날짜 없음",
+      "recovery": "학생 정보에서 학교 선택",
+      "component": "src/features/school-schedules/client/components/school-schedule-editor.tsx",
+      "checkIds": [
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "조회 성공 0건",
+      "message": "등록된 학교 일정이 없습니다.",
+      "behavior": "수행 날짜 미확인을 0건으로 합치지 않음",
+      "recovery": "일정 정보 갱신",
+      "component": "src/features/school-schedules/client/components/school-schedule-editor.tsx",
+      "checkIds": [
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "잘못된 제목/날짜",
+      "message": "일정 이름과 날짜를 확인해 주세요.",
+      "behavior": "입력 유지·저장 차단",
+      "recovery": "입력 수정",
+      "component": "src/features/school-schedules/client/components/school-schedule-editor.tsx",
+      "checkIds": [
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "일정 조회 실패",
+      "message": "학교 일정을 불러오지 못했습니다. 다시 시도해 주세요.",
+      "behavior": "실패를 0건으로 바꾸지 않음",
+      "recovery": "다시 시도",
+      "component": "src/features/school-schedules/client/components/school-schedule-editor.tsx",
+      "checkIds": [
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "결과 불명 또는 충돌",
+      "message": "저장 결과를 확인하지 못했습니다. 입력은 유지했습니다.",
+      "behavior": "초안 보존·자동 재저장 금지",
+      "recovery": "저장 결과 확인",
+      "component": "src/features/school-schedules/client/components/school-schedule-editor.tsx",
+      "checkIds": [
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "권한 오류",
+      "message": "관리자 로그인이 필요합니다.",
+      "behavior": "개인자료 즉시 숨김",
+      "recovery": "다시 로그인",
+      "component": "src/features/school-schedules/client/components/school-schedule-editor.tsx",
+      "checkIds": [
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "삭제된 학생",
+      "message": "학생 정보를 찾을 수 없습니다.",
+      "behavior": "다른 학생 정보 비노출",
+      "recovery": "학생 목록으로 이동",
+      "component": "src/features/school-schedules/client/components/school-schedule-editor.tsx",
+      "checkIds": [
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "분류할 수 없는 예외",
+      "message": "자료를 불러오지 못했습니다. 다시 시도해 주세요.",
+      "behavior": "내부 원문 비노출",
+      "recovery": "새로고침",
+      "component": "src/features/school-schedules/client/components/school-schedule-editor.tsx",
+      "checkIds": [
+        "T3",
+        "T4"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "work-record-v1",
+      "state": "adopted",
+      "version": "1.1",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "요구·결정·구현·검증 연결"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "unit",
+      "target": "src/features/school-schedules/domain/school-timeline.test.ts",
+      "scenario": "기간 겹침/집계/고3 수능/선택과목과 가독성",
+      "expected": "중복 없는 집계, 근거 있는 날짜·유형과 대상 표시",
+      "topics": [
+        "behavior",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "integration",
+      "target": "src/features/school-schedules/server/school-schedule-edit-migration.test.ts",
+      "scenario": "권한·원천 불변·버전 충돌·멱등·새 원천/신규 일정",
+      "expected": "허용 관리자만 변경하며 충돌·중복을 안전하게 처리",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "component",
+      "target": "src/features/school-schedules/client/use-school-schedule-editor.test.tsx",
+      "scenario": "저장 성공/입력 실패/권한 오류/충돌/응답 유실/캐시",
+      "expected": "초안 유지와 결과 확인, 인증 실패 숨김, 성공 뒤만 갱신",
+      "topics": [
+        "behavior",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "cache",
+        "data-leak"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "browser",
+      "target": null,
+      "scenario": "두 모달 진입점·직접 경로·뒤로/앞으로·수동 입력·좁은 화면",
+      "expected": "가짜 자료로 실제 화면과 저장·복구·정렬 확인",
+      "topics": [
+        "behavior",
+        "error-ui",
+        "ui-copy",
+        "cache"
+      ]
+    },
+    {
+      "id": "T5",
+      "kind": "static",
+      "target": null,
+      "scenario": "기능지도·RDT·타입·경계·l​int·빌드·독립 검토",
+      "expected": "현재 변경 범위 검사와 실제 실행 근거 연결, 비공개 자료 유출 없음",
+      "topics": [
+        "structure",
+        "authorization",
+        "data-leak",
+        "cache"
+      ]
+    }
+  ],
+  "verification": {
+    "fingerprint": "53e529654782737bd4ef55cf0296f6d20865337ab8b2bff1b6a4202ad09411c1",
+    "files": [
+      {
+        "path": "architecture/기능_소유권.json",
+        "sha256": "499d24c7ae203d063b5dbf214b5f80366fded890e16712d77fd1af8504652247"
+      },
+      {
+        "path": "eslint.config.mjs",
+        "sha256": "d8c244c819921bdb70982e51f8bb2c5b5e8a7620a70eca8cde1c89c760113e61"
+      },
+      {
+        "path": "next.config.ts",
+        "sha256": "c779b3730f9dcab3806d1ac9ab52c6363ad1994f6bb33d3bb2ca3b5f946b1405"
+      },
+      {
+        "path": "package-lock.json",
+        "sha256": "3a4e58c471c0c8f2f3139349f4cb06d8f6d9d25df974b45877ed323aef0c769c"
+      },
+      {
+        "path": "package.json",
+        "sha256": "f7779499ba259f680619c3f3c8148747d80d0eaf7b2da1c5cd75198e91bbf7df"
+      },
+      {
+        "path": "scripts/check-feature-map.mjs",
+        "sha256": "15d5859c539c8e4f9eb1e989313f6e68fb0f062938e61330b9ecfd0369be4de9"
+      },
+      {
+        "path": "scripts/check-work-records.mjs",
+        "sha256": "b8a95754aa77e329ffd748ca91587996be221ea471a117ba816d0c61a0e2881f"
+      },
+      {
+        "path": "scripts/feature-map/change-impact.mjs",
+        "sha256": "a081f65b5915daf08e0e635c49e744a6b02ef480a46ae5ad0e2b63f203b71444"
+      },
+      {
+        "path": "scripts/feature-map/common.mjs",
+        "sha256": "69b9dad7ca7d05246233c00e0f10666486ed55890c120a6ebba7f496fb8130bc"
+      },
+      {
+        "path": "scripts/feature-map/flow-verification.mjs",
+        "sha256": "8cec86985fff2751e944ae60163c0f5ae8ab18e0a36981ae24eaebb66df4f0fd"
+      },
+      {
+        "path": "scripts/feature-map/import-graph.mjs",
+        "sha256": "82edb9b2bcc06ab69f6e7b545062e54a2b9b4363aa3e6dbc31a7298635622716"
+      },
+      {
+        "path": "scripts/feature-map/owner-output.mjs",
+        "sha256": "17d5ba87dc9b0796d84ca70703198e4bb8d150f56f0e3deda9e9c05fcc8ab187"
+      },
+      {
+        "path": "scripts/feature-map/ownership-catalog.mjs",
+        "sha256": "03524035a90c62262226bb2aed14d8e17132a5f003f8624f723e1d90b99daac6"
+      },
+      {
+        "path": "scripts/feature-map/runtime-flow.mjs",
+        "sha256": "9c2915e2b4be51b55840dbfda3ef8452f510412191980eeb4e914a5766317afc"
+      },
+      {
+        "path": "scripts/local-admin-baseline-data.mjs",
+        "sha256": "97a9b3ad28bdc8a977a2a398e1b72260f81e0a4f3b9f231d0f1659c558dc26f7"
+      },
+      {
+        "path": "scripts/local-admin-baseline.mjs",
+        "sha256": "fdac68202df945a5e679fed17ef4fea91fbd787d0f3caa16ed6143bf8e1ac68e"
+      },
+      {
+        "path": "scripts/local-school-schedule-data.mjs",
+        "sha256": "8daf6d62da49f5968daa4d2ae54c2c39272e0a91bc93d89bc7037aa6ca0ee615"
+      },
+      {
+        "path": "scripts/verify-ui-architecture.mjs",
+        "sha256": "dd7b31f9017f71e0777596a794c7e841c52923966881534666614935a39ed880"
+      },
+      {
+        "path": "scripts/work-records/context.mjs",
+        "sha256": "2d2b3f848e04db2b3ad76ba06fb480589e82243b51d714f0a98b37b70982adf8"
+      },
+      {
+        "path": "scripts/work-records/evidence.mjs",
+        "sha256": "d95c7d886a03dd96fe3dfb7fb67579b719063aa870c0131da21ce0967904874e"
+      },
+      {
+        "path": "scripts/work-records/schema.mjs",
+        "sha256": "9c33b3ffd2e27ad73be3c16a5be4513d3b69837b42fac8c1d00aa5d4dad4e5cd"
+      },
+      {
+        "path": "scripts/work-records/validation.mjs",
+        "sha256": "5a18bed98744ef213f3893012a48d57b88e73dbfe5430b447634be4ac3f8bd0a"
+      },
+      {
+        "path": "src/app/admin-route-error.test.tsx",
+        "sha256": "4afbcab5a1135a24a18918ed7004414d8dcbd9e8772eb0b1d717e98e5b2acbb5"
+      },
+      {
+        "path": "src/app/admin/(protected)/@detail/(.)results/[entryKey]/page.tsx",
+        "sha256": "a42ae3f9f4df038d1382f12aee89088bb72feb28fe641ea2a4cd3d79630c38a6"
+      },
+      {
+        "path": "src/app/admin/(protected)/@detail/(.)school-schedules/edit/page.tsx",
+        "sha256": "85a21dcb681cd7e7305127ffe83159ded87474bef7025d374a62dded18f1d6f6"
+      },
+      {
+        "path": "src/app/admin/(protected)/@detail/(.)students/[studentId]/loading.tsx",
+        "sha256": "58eb370e52eb10b827b9bd32bfa4bb29eee28ef9db77b50cb9fe704b0a4ee7de"
+      },
+      {
+        "path": "src/app/admin/(protected)/@detail/(.)students/[studentId]/page.tsx",
+        "sha256": "a1d3756af75b32085ed3dba1234b75a5c774852baade4892e4868487995a4e6a"
+      },
+      {
+        "path": "src/app/admin/(protected)/layout.tsx",
+        "sha256": "63c524ff2b76e377810e10be2a306a18b1f2423f4c83ef92177d41ad2ff48cd5"
+      },
+      {
+        "path": "src/app/admin/(protected)/loading.tsx",
+        "sha256": "c7586a72dc3f7aa42535301851bf9af69d5f2df3e5edea562735b4562f5e630a"
+      },
+      {
+        "path": "src/app/admin/(protected)/page.tsx",
+        "sha256": "d498db68ff25f23d13b463b99a7a3b328f74713c73bf166989b050dcf3631380"
+      },
+      {
+        "path": "src/app/admin/(protected)/results/[id]/page.tsx",
+        "sha256": "477e1f464428883d1c74e8373774140226688f2ff007435cf6322a411a648998"
+      },
+      {
+        "path": "src/app/admin/(protected)/results/error.tsx",
+        "sha256": "ecb04c13d11606a94e613233024e4dbd3ace2e9e51ccf86b14d499cf4b68b3d9"
+      },
+      {
+        "path": "src/app/admin/(protected)/results/loading.tsx",
+        "sha256": "26869798a16e02049c505f43b77bbaee0576f2652901548a10e62033ae6768a2"
+      },
+      {
+        "path": "src/app/admin/(protected)/results/page.tsx",
+        "sha256": "2cab6a073cd1a71cf08bc4205636c91a6b8ecc6eef6f58ec3fd45d0d8b9d5ae9"
+      },
+      {
+        "path": "src/app/admin/(protected)/school-schedules/edit/page.tsx",
+        "sha256": "f008c8620431f851c703d15592a8cec83370da7516b8055909dec6da72ac0f6d"
+      },
+      {
+        "path": "src/app/admin/(protected)/students/[studentId]/loading.tsx",
+        "sha256": "cb7809aebec41ea63a9f5adc3de2f1869493d839c7042dbffcd918d4b5e3567e"
+      },
+      {
+        "path": "src/app/admin/(protected)/students/[studentId]/page.tsx",
+        "sha256": "01536d0b05ba0dee68ac81711fd8def94d362cdc141be853ead8cd1e34bdb759"
+      },
+      {
+        "path": "src/app/admin/(protected)/students/page.tsx",
+        "sha256": "545dd6d6453eea8e8ff7aa92cf5d272512b6993e3e079106c3b94befd4842d38"
+      },
+      {
+        "path": "src/app/api/admin/assignment-workspace/datasets/route.ts",
+        "sha256": "cbfac4b5ba4ab7f71afe5c0db069a0767bbcee9409c9a32d5d35d63b4c1321f3"
+      },
+      {
+        "path": "src/app/api/admin/attempts/[id]/route.test.ts",
+        "sha256": "9bc3edb81c62aff89c1e9e0c90eff5dc37809f8f86bb1aadaf3274a4493c9816"
+      },
+      {
+        "path": "src/app/api/admin/attempts/[id]/route.ts",
+        "sha256": "30b074c7ca0424d49cba1029656090565c4ab3c09c2ca6cfce3cadfd4ac7b926"
+      },
+      {
+        "path": "src/app/api/admin/history/route.test.ts",
+        "sha256": "427daacd49d3989c0ca8f2218b3441bb1b6b5c3eb57ca28bbccb615072ec4f7e"
+      },
+      {
+        "path": "src/app/api/admin/history/route.ts",
+        "sha256": "2ac0747dc774c2255a9455f18935ef9872702e7446c5491f656fc68f4e8c2836"
+      },
+      {
+        "path": "src/app/api/admin/schools/search/route.test.ts",
+        "sha256": "dbf7eb588e9257cad91a0a9a9e6513d25afb051a5200d30e5060ea91650786dd"
+      },
+      {
+        "path": "src/app/api/admin/schools/search/route.ts",
+        "sha256": "81149e4a75bcfc5a4614e3e0c7c48e55715d36d8e3547dd26cc7c2ef96a08e9f"
+      },
+      {
+        "path": "src/app/api/admin/students/[id]/history/route.test.ts",
+        "sha256": "970a4c8f7ab64519e33e5d8926c3e3b35f55c4e9716beddfd3ad707706e0e47a"
+      },
+      {
+        "path": "src/app/api/admin/students/[id]/history/route.ts",
+        "sha256": "687c5c0eb3d69d42604d74cbd76e50c418bd3b8b463c4030cdecefe9512517e9"
+      },
+      {
+        "path": "src/app/api/admin/students/[id]/route.ts",
+        "sha256": "424ff7fcb0972a9ec8bb034073ecd2058e33fec2ffab6d51bb1dfc0ddc8e9910"
+      },
+      {
+        "path": "src/app/api/admin/students/directory/route.test.ts",
+        "sha256": "7492f46106365f8665f54d7283f69ade607166ffbe7ee124d9425f5b4d244b80"
+      },
+      {
+        "path": "src/app/api/admin/students/directory/route.ts",
+        "sha256": "814a945c4f515eab9ea6471b616af7849bf06bb10acc2d36510b9d70a40caedd"
+      },
+      {
+        "path": "src/app/api/student/dashboard/completed/route.test.ts",
+        "sha256": "4261b58016dd400d2c2a828bcfa8347d14ecfe622dfef931bf53dedcfb0bb7f8"
+      },
+      {
+        "path": "src/app/api/student/dashboard/completed/route.ts",
+        "sha256": "0e1e58d3388070e21646edd1fcb1e336fd69feb02e93c0aa50a0e7d345852811"
+      },
+      {
+        "path": "src/app/application-layer-boundaries.test.ts",
+        "sha256": "c3fbff0d6499cac6cb7d1fe515df9b188ffe66f8341cc0d02b9cb94055a91d98"
+      },
+      {
+        "path": "src/app/mobile-production-regression-ui-contract.test.ts",
+        "sha256": "cf577a5c06bcb7f305d93ff6e64aab763616026f9ad9f5717a26234ab2162e01"
+      },
+      {
+        "path": "src/app/preview-environment-contract.test.mjs",
+        "sha256": "d0185efa87e4906df970c921903569cea252982578c64f5cd3d34175aa0a6344"
+      },
+      {
+        "path": "src/app/redesign-css-contract.test.ts",
+        "sha256": "f23615719be0727e6f8da38aa93030ab6ac44f308894e69a6ab8196b86b6d6fe"
+      },
+      {
+        "path": "src/app/server-architecture-ratchet.test.ts",
+        "sha256": "f689169488d158b9003b6e779df71cc0299b41b1265e344a8d248c66844431e8"
+      },
+      {
+        "path": "src/app/student/(protected)/@summary/[...catchAll]/page.tsx",
+        "sha256": "d9ec952833e9dd8b9f276bbbce6ed81eca1536b063d0db3dcc9e16dee22fc2e1"
+      },
+      {
+        "path": "src/app/student/(protected)/@summary/default.tsx",
+        "sha256": "abe73acf20601fee34f869a542e56084907f9a49c20b06e1bc136c5b8465de77"
+      },
+      {
+        "path": "src/app/student/(protected)/@summary/loading.tsx",
+        "sha256": "937746b73b10ef939368622853cce31caa0dbae9621ba0bdd72b1a40d3558680"
+      },
+      {
+        "path": "src/app/student/(protected)/@summary/page.tsx",
+        "sha256": "e02c3c9bf907e33385cdb5ca0ed9a8a128fa02c7c65b33196338ee9ea9d72adf"
+      },
+      {
+        "path": "src/app/student/(protected)/page.tsx",
+        "sha256": "146f17f9064d747f33ec41709a6284ca9f30c9357f8de91a0c4c1c27549453f9"
+      },
+      {
+        "path": "src/app/ui-architecture-ratchet.test.ts",
+        "sha256": "0157d6a24cb6a66dd4d0cb488aaa42a1d39b8266e29c2892475060f7f2d730ac"
+      },
+      {
+        "path": "src/app/work-records.test.mjs",
+        "sha256": "766e7e95b338f30212516c77a6c6aa4b6271f49ffa854ef735dc708d9b8ac123"
+      },
+      {
+        "path": "src/components/admin-logout-button.test.tsx",
+        "sha256": "e4eaea0fdfeeff0f9ff8615817a426303c9a64b6053e27583d01a476acd02d00"
+      },
+      {
+        "path": "src/components/admin-logout-button.tsx",
+        "sha256": "a20774d973100ad2f6d3c40293b0305f31d9d56e1ba13e7fb5557344d001a8a1"
+      },
+      {
+        "path": "src/components/admin-navigation.contract.test.ts",
+        "sha256": "0e40ae40f59b09de25c44ff0a042ffde8a989398d5520cf003aff3b7c39a9fe8"
+      },
+      {
+        "path": "src/components/admin-navigation.tsx",
+        "sha256": "7301d7d17783e4254ae7e4bf1d298a26a95d985144bd8ff1826c37cc2648d626"
+      },
+      {
+        "path": "src/components/document-navigation.ts",
+        "sha256": "02c364ccd26d8936cdcc157619f85040771e68c3ef0a08aa7579f3f9debff497"
+      },
+      {
+        "path": "src/components/guarded-link.test.tsx",
+        "sha256": "5833a167cf92ad3cda1ad3b7cc6c494fb8ef55a3a5689cbf8a58a64b254cb54d"
+      },
+      {
+        "path": "src/components/guarded-link.tsx",
+        "sha256": "06c7b4414a02d57073f746c3288909b0ece08a5cb8aef0b45824c758191821a6"
+      },
+      {
+        "path": "src/components/navigation-exit-guard.tsx",
+        "sha256": "491b56469d832c44b6366c5cc98dae0e497ccb2c6d29985e6322f7ea0691c940"
+      },
+      {
+        "path": "src/components/pronunciation-text.tsx",
+        "sha256": "b0d6d28fabb9d2c459c02a35605c60989ffa2693d33103c9438d60fe44473c5f"
+      },
+      {
+        "path": "src/components/route-title.contract.test.ts",
+        "sha256": "4f6492b47bc728d3d8cd28024c50cef16fcc704aa664833a44d531f1a4fe7017"
+      },
+      {
+        "path": "src/components/routed-detail-dialog.test.tsx",
+        "sha256": "b7f2f901d366819bd62f5b45b654c0f16afd51d674de5575de70d1089b956794"
+      },
+      {
+        "path": "src/components/routed-detail-dialog.tsx",
+        "sha256": "7ad9817b65a90f7f5a72d7bb44738d8ffb9c3f106cdfabd657c1517abd7f2121"
+      },
+      {
+        "path": "src/components/student-shell.test.tsx",
+        "sha256": "759a764db262c52b57547be0efc5c45f5e7a6201b450464b1d8076d38aa45d51"
+      },
+      {
+        "path": "src/components/use-route-exit-guard.test.tsx",
+        "sha256": "293dc8d63795e901e576c1955a3b35b96ac1aca79e55d2957dc2fdd54fb38d71"
+      },
+      {
+        "path": "src/components/use-route-exit-guard.ts",
+        "sha256": "c64773393bb96214a78db2b4cfeb7366f0afa7f8f98b5c0cdd407006e21ee86d"
+      },
+      {
+        "path": "src/design-system/architecture-boundary.test.ts",
+        "sha256": "4a7e637626250266989ba83e2aa14c9c89813d820491a2023d6ee0c796ef2fab"
+      },
+      {
+        "path": "src/design-system/patterns/action-reason/action-reason.module.css",
+        "sha256": "b1b7734a64d2c53bc637dcecf5290441e73c312f66fc303b4d6b682dc215b0f4"
+      },
+      {
+        "path": "src/design-system/patterns/action-reason/action-reason.tsx",
+        "sha256": "65222975419d932a649a3c047a5d19a84555607eb3d3cc99886b0255f9903308"
+      },
+      {
+        "path": "src/design-system/patterns/activity-row/activity-row.module.css",
+        "sha256": "b46836cb93aacc2a87df740c17c9b02854d618c0d986520671f1a05e631a7783"
+      },
+      {
+        "path": "src/design-system/patterns/activity-row/activity-row.test.tsx",
+        "sha256": "6e7be28350d72a01aa57b63d03d74484cfdb809043ff3aa25f29707adb50eba3"
+      },
+      {
+        "path": "src/design-system/patterns/activity-row/activity-row.tsx",
+        "sha256": "e8ce067661467df24b2b53fa9f3ee68d66324fe2fa1ab838cce80685f5a996dd"
+      },
+      {
+        "path": "src/design-system/patterns/activity-timeline/activity-timeline.module.css",
+        "sha256": "f1d91b5d713ea97855589d046277fbdfc1d5929c36862c668c1a96192ab275ab"
+      },
+      {
+        "path": "src/design-system/patterns/activity-timeline/activity-timeline.tsx",
+        "sha256": "8b72f58a07e94b6dfcfa6c2329578f5020f00d4849afd4a4b868758000c940b3"
+      },
+      {
+        "path": "src/design-system/patterns/audio-button/audio-button.module.css",
+        "sha256": "a88241f02124efa974194ee7941fcbcb2fc062cc80484d0c7e36554804b83d93"
+      },
+      {
+        "path": "src/design-system/patterns/audio-button/audio-button.tsx",
+        "sha256": "c31904cc3e4b1e72b6ea2dc43b96657ea8ae72469cfc557cb596d554e3ddccb5"
+      },
+      {
+        "path": "src/design-system/patterns/auth/auth-layout.module.css",
+        "sha256": "487731a8627f1dc43301d2ca4f84f8c8b2317f348a561a91b94e8503889e0033"
+      },
+      {
+        "path": "src/design-system/patterns/collapsible-status-section/collapsible-status-section.module.css",
+        "sha256": "f7f481b5ac7c4956e0008b1dfbc6ffe5f71a7fe9fb19abc9c9d1c87545bcf5bb"
+      },
+      {
+        "path": "src/design-system/patterns/collapsible-status-section/collapsible-status-section.tsx",
+        "sha256": "7db217ea39066861bd3ee21b5cfa4b55ddca44c88117480cc23d7dba9179bb14"
+      },
+      {
+        "path": "src/design-system/patterns/conditional-reveal/conditional-reveal.module.css",
+        "sha256": "eeec70b0c9c5252de9a237743a04a215305fec17c6a901c4be0d35060c61b047"
+      },
+      {
+        "path": "src/design-system/patterns/conditional-reveal/conditional-reveal.tsx",
+        "sha256": "8a51b5f3c71054d1c4418fd0701de25ab8a211748d761aa818f538cabbcc4524"
+      },
+      {
+        "path": "src/design-system/patterns/confirmation/confirmation.test.tsx",
+        "sha256": "ee9f534a100c7319defe413ef9f7d62e751aac6a7de6c7bf5bbafe8e96b423aa"
+      },
+      {
+        "path": "src/design-system/patterns/confirmation/confirmation.tsx",
+        "sha256": "6223035de4a2662870ee55def262bb54212375cf3a9a6f19f3088e5dc6a8a6ee"
+      },
+      {
+        "path": "src/design-system/patterns/detail-header/detail-header.module.css",
+        "sha256": "e23df6ee36f9fb42143eac0a2a6395604f07e03b0ad1f0e4a009c516790dbb7f"
+      },
+      {
+        "path": "src/design-system/patterns/detail-header/detail-header.tsx",
+        "sha256": "e251d0c6a2e82fd0e972c2d9116fa229f916152bebef02406697c343cc17a498"
+      },
+      {
+        "path": "src/design-system/patterns/feedback/feedback.module.css",
+        "sha256": "0e272517b019a5bdf03d36d772000fae07514c0f8eb6fc01f25cae546bf8fee1"
+      },
+      {
+        "path": "src/design-system/patterns/feedback/feedback.tsx",
+        "sha256": "f52ecf0729cfdb088fec1902f30c0a1c67fc0ff8443bcb5e54f7215d85cd1298"
+      },
+      {
+        "path": "src/design-system/patterns/filter-workspace/filter-workspace.module.css",
+        "sha256": "1057969bbb6a58a2a806a2e317a4a0afcbe0f16792b0f97f91cfcc3b4da22c8a"
+      },
+      {
+        "path": "src/design-system/patterns/filter-workspace/filter-workspace.test.tsx",
+        "sha256": "09f8c8997f8bd2bffda85ccb5c8708fdd50cf3bee423fd7278a68cb47712edfe"
+      },
+      {
+        "path": "src/design-system/patterns/filter-workspace/filter-workspace.tsx",
+        "sha256": "c76297f51f8b9740bd46deab5261aa4caee71d92c01fab1821a2bcbbc25a5dc4"
+      },
+      {
+        "path": "src/design-system/patterns/route-detail-dialog/route-detail-dialog.test.tsx",
+        "sha256": "5c6428e16c1823af48940afca58b9e61f2a23b12ef8f5bf26d5c74a457610b74"
+      },
+      {
+        "path": "src/design-system/patterns/route-detail-dialog/route-detail-dialog.tsx",
+        "sha256": "0fbee3a92dad55c9267e6dc02dbc12ef394c82e8ebd0b53cfda261c607ebc1a0"
+      },
+      {
+        "path": "src/design-system/patterns/route-state/route-state.module.css",
+        "sha256": "67c0c003e4db1b6c75e0e9cfd7bd8345a791e6a87dfdba1953930c60c2685b52"
+      },
+      {
+        "path": "src/design-system/patterns/route-state/route-state.tsx",
+        "sha256": "6918cd34345bf62b7be9e0b1f5ab10c45146732af72e6592591ac4d558d1f16b"
+      },
+      {
+        "path": "src/design-system/patterns/score-summary/score-summary.module.css",
+        "sha256": "b62ee3a6860c3a42ccf6f29b4587c1a722cbc70d94860ec379cb7af917995357"
+      },
+      {
+        "path": "src/design-system/patterns/score-summary/score-summary.tsx",
+        "sha256": "3d01d32de888c2b46d7f9cf685b5e9a45cedb69f0be29e1ea333071ef0db2ccd"
+      },
+      {
+        "path": "src/design-system/primitives/badge/badge.module.css",
+        "sha256": "e78f842d8cc1fc555018e28c248eedafb94841f7edd4e94db63f57fc70a83932"
+      },
+      {
+        "path": "src/design-system/primitives/badge/badge.tsx",
+        "sha256": "ffffaa933a4718a1c4c32e9f2e020ccbfd33b90235fdf939974317cb2b2b0167"
+      },
+      {
+        "path": "src/design-system/primitives/badge/tone.ts",
+        "sha256": "92bd24645903f79d0957b95350ad8f89d76339beaf7eedb3d4aef6d088e0031b"
+      },
+      {
+        "path": "src/design-system/primitives/button/button.module.css",
+        "sha256": "51367c4810e891486ae6a45ecef82f762b40a3014645e02c4cce426c2ad2dfd1"
+      },
+      {
+        "path": "src/design-system/primitives/button/button.tsx",
+        "sha256": "7ed70a22675d87e10c48faef74d8bcd537abd1717242bbff7c5102bb010c25ae"
+      },
+      {
+        "path": "src/design-system/primitives/dialog/dialog.module.css",
+        "sha256": "5dc80002a1ee1a8ac56c305f12a181ad54fa4cce12832e488d7b66f10f36066d"
+      },
+      {
+        "path": "src/design-system/primitives/dialog/dialog.test.tsx",
+        "sha256": "70695212baaa290d96ae8dbf236ca329caa6a0289209d04c652ae115fc4228f6"
+      },
+      {
+        "path": "src/design-system/primitives/dialog/dialog.tsx",
+        "sha256": "d4fd4447ae17d47eec95b43195468a2e7edf0c0c5c59e901345d1e96fff46af8"
+      },
+      {
+        "path": "src/design-system/primitives/form/field.module.css",
+        "sha256": "1407cbf70c320ad3dd63f86440ddd1cebdc2b4b52f9079aa6985cbd56e4f2230"
+      },
+      {
+        "path": "src/design-system/primitives/form/field.tsx",
+        "sha256": "f6624871ca10b3859f72a4a303ed9a518a482c2f1867308a76eb896753383b63"
+      },
+      {
+        "path": "src/design-system/primitives/form/numeric-input.tsx",
+        "sha256": "95378c2255e80763588d49b23a743222a1d57ee14bdf6317ab0abd3985fa9f95"
+      },
+      {
+        "path": "src/design-system/primitives/form/segmented-control.module.css",
+        "sha256": "637e5dd1d40b917e643d321e248d0e17de65ce0185fa3ecd3e02d7303fc5c135"
+      },
+      {
+        "path": "src/design-system/primitives/form/segmented-control.tsx",
+        "sha256": "18f6291d77a1cff4059133ef1ccb1c36025c735f824e376be3fa872e547aafb2"
+      },
+      {
+        "path": "src/design-system/primitives/tabs/tabs.module.css",
+        "sha256": "7e0e5bfd7c1f121a1301fd2d1bf323e18799bb8fde25f9e1839f6285f5bc7e5f"
+      },
+      {
+        "path": "src/design-system/primitives/tabs/tabs.tsx",
+        "sha256": "976d06a11894159dd6cbefe9bd3b267de1ec4b64b671e9651ae39cb53efc706e"
+      },
+      {
+        "path": "src/design-system/primitives/tooltip/help-tip.module.css",
+        "sha256": "2791993cc6f7e92d8554cfd0a225571464586754165544f56903cbca5147fa47"
+      },
+      {
+        "path": "src/design-system/primitives/tooltip/help-tip.tsx",
+        "sha256": "a6a4aca606e929891434af856177e286b9ac45b049a1136666df9fbb2039b0e6"
+      },
+      {
+        "path": "src/features/assignment-queue/ui/assignment-queue-history.module.css",
+        "sha256": "bbc850cf7935dea15c103e8772b6f55ad31a495d5e0288fd28d53d8cb9408011"
+      },
+      {
+        "path": "src/features/assignment-queue/ui/assignment-queue-history.test.tsx",
+        "sha256": "bf5690a99be4c81f3ac6d5abbf94a8fc14a90989afb8373759dedecf845eae59"
+      },
+      {
+        "path": "src/features/assignment-queue/ui/assignment-queue-history.tsx",
+        "sha256": "0a2c258295fd383f0d8598a66453ea73ce588faa1ab8853f16e482380a7d62f7"
+      },
+      {
+        "path": "src/features/assignment-queue/ui/assignment-queue-tags.module.css",
+        "sha256": "d5e0684c243682441cf483c67db2c230c6924b2e877ae26674bd3aef0b9af95d"
+      },
+      {
+        "path": "src/features/assignment-queue/ui/assignment-queue-tags.tsx",
+        "sha256": "f1d1a12cbf38a3a36a6a411141c448429d08e4d54a1b6b450d1a6e9bc2ab552d"
+      },
+      {
+        "path": "src/features/assignment-queue/ui/student-assignment-queue-history.module.css",
+        "sha256": "5a8101b088aeaec991f9c10faf4070b6b1930f33ca8efa0a3e3fbbed26e84ba4"
+      },
+      {
+        "path": "src/features/assignment-queue/ui/student-assignment-queue-history.test.tsx",
+        "sha256": "1bf624c57170bb9107bc9bbce15eaf36b9c0fdb5d232024c151726c4adc0fda1"
+      },
+      {
+        "path": "src/features/assignment-queue/ui/student-assignment-queue-history.tsx",
+        "sha256": "4c39498a32452541aaad95f0a90b8b5757bda36d64c3a98fb54cf495a340ee6b"
+      },
+      {
+        "path": "src/features/assignments/architecture-boundary.test.ts",
+        "sha256": "75f3cd1e5cc1c8547ebcad341ecd1a17c4ee95f9041efdcae47123cfc380647a"
+      },
+      {
+        "path": "src/features/assignments/contracts/assignment-dataset-directory-schema.ts",
+        "sha256": "7714aca35a4d74e91e88141ed0d9042cbf8028f183f24c92167604e622f697e7"
+      },
+      {
+        "path": "src/features/assignments/contracts/assignment-workspace-read-error.ts",
+        "sha256": "a8b7ae352900cd26f5c6b0aa8733b2611b282708653f0dcf366e2fa81a73c7a0"
+      },
+      {
+        "path": "src/features/assignments/public-client.ts",
+        "sha256": "1156e535dd7703b864ee580ddd6ba894e2056732545c222b0ec690a013503a94"
+      },
+      {
+        "path": "src/features/assignments/server/queries/assignment-dataset-directory-query.ts",
+        "sha256": "5aa94d0d1972d6fd440a8e116ee93713e9d4534d696b28b5a272026b0909babe"
+      },
+      {
+        "path": "src/features/assignments/transport/assignment-workspace-reads.test.ts",
+        "sha256": "40fff9d34f944915b904656b477ee1238b4e9fcd8701899dc0c248ffa6e7b483"
+      },
+      {
+        "path": "src/features/assignments/transport/assignment-workspace-reads.ts",
+        "sha256": "d30d3b74745dc88d6b4b0cee86e6d7a2b493ed074ddf7f3a8ee153c28d3317f6"
+      },
+      {
+        "path": "src/features/history/actions/hide-admin-history-entry.ts",
+        "sha256": "72051d50815c6fc30652cad9beaa18e2761fa9ce2d05e00d7b4f3d5c058e9454"
+      },
+      {
+        "path": "src/features/history/api/history-mutations.ts",
+        "sha256": "cf89d11fe755282bda287a9c5917a305bacd1fd4e13e11d11f6885ce1feb9da3"
+      },
+      {
+        "path": "src/features/history/api/history-read-response.ts",
+        "sha256": "35ee90cf09f12b20374d4fa3b3670854265032b6652a86c616ed6c3cd182ae1c"
+      },
+      {
+        "path": "src/features/history/contracts/admin-history-mutation.ts",
+        "sha256": "213d5c4d1861e56f8da50038ca9d8a7fd6a1ca7fed4f901e36a8facf6bc44d3b"
+      },
+      {
+        "path": "src/features/history/contracts/admin-history-read-model.ts",
+        "sha256": "85a9ea0dd1f58144ec16620194f664314998f48d0bd808f2fda699a119e5e1a9"
+      },
+      {
+        "path": "src/features/history/contracts/admin-history-request-error.ts",
+        "sha256": "a4fd3b947b80bb4fb8d104ecb9cbc60f311422e0b21bc6fe914587d3424ccbc4"
+      },
+      {
+        "path": "src/features/history/contracts/history-list-cache-contract.ts",
+        "sha256": "6a470eb3c45e959c33d667d64e994d829afa4a24e39979fb69211c06ddc14c0d"
+      },
+      {
+        "path": "src/features/history/controller/admin-history-mutation-events.ts",
+        "sha256": "b341178f17d12734a0b6892d33448a27a299141f27fdcb3918d4c3aaad0d9d71"
+      },
+      {
+        "path": "src/features/history/controller/history-change-listener.ts",
+        "sha256": "a7686224fa5cb114d1033863c3dfdbde0fce0b977f586f0eee62722cbcb9ce0c"
+      },
+      {
+        "path": "src/features/history/controller/history-list-cache-provider.tsx",
+        "sha256": "dfb873c9f3c1512ff7fadd172a9e9383e50ae23ee754473d8c58d6c702e50de1"
+      },
+      {
+        "path": "src/features/history/controller/history-list-cache.test.ts",
+        "sha256": "e0ea8d5257c702dd7372486df40d18acd6110c20a2891b8a7d630e4f6497167d"
+      },
+      {
+        "path": "src/features/history/controller/history-list-cache.ts",
+        "sha256": "923f0b2ca58874861633677b309b8185f42fbe4891799a7dc5921c0a269d8a70"
+      },
+      {
+        "path": "src/features/history/controller/history-refresh-coordinator.test.ts",
+        "sha256": "7d8b8990a3deb7e965b50e3cf6b0aab080cfc177475af5a3c7635b5037be580d"
+      },
+      {
+        "path": "src/features/history/controller/history-refresh-coordinator.ts",
+        "sha256": "d5860969000f91f7a3081dad25d8c40d4d93d3fa847f86a2dda5b8c6b195e562"
+      },
+      {
+        "path": "src/features/history/controller/use-admin-history-list-controller.ts",
+        "sha256": "bcb8ec5367f4058391ea510a88982f3be5db1295d4d98a3ce9d59c0653515282"
+      },
+      {
+        "path": "src/features/history/controller/use-admin-history-section-page.test.tsx",
+        "sha256": "a416dd41df700f07865117e0951033801fd6b3b2c4d02328b7aff8350459c2bc"
+      },
+      {
+        "path": "src/features/history/controller/use-admin-history-section-page.ts",
+        "sha256": "1aedcf9eb23d968d52f547eb70f4f84a45f78ad9327749e16515b88f88208650"
+      },
+      {
+        "path": "src/features/history/controller/use-cached-history-list.ts",
+        "sha256": "c522c66bba430a4622f2d734545fdc65847da83f13e78f69af65f2d5367bbfb0"
+      },
+      {
+        "path": "src/features/history/controller/use-editable-history-assignment.ts",
+        "sha256": "264ffe15614abdab1677b09565ed000018539f435614e38c7f7043d2c43cabf1"
+      },
+      {
+        "path": "src/features/history/domain/admin-history-mutation.ts",
+        "sha256": "3c01cc4866c555f85554e794805122c1e044ea39ebd11330037c017b6aae8999"
+      },
+      {
+        "path": "src/features/history/domain/history-snapshot-version.ts",
+        "sha256": "b960a23c91a6e06e9a0c73a2b3fe3d11771ab97b4229f24f195136dff244a315"
+      },
+      {
+        "path": "src/features/history/domain/learning-activity.ts",
+        "sha256": "b4e7d9e9f59666ec27361303a35394d1e93ac78298c9766cf004e3420f12a33c"
+      },
+      {
+        "path": "src/features/history/history-public-boundary.contract.test.ts",
+        "sha256": "d99f388e59ec4df1a94ed69c893ccb548b527f9b4c10cc5cef6d9cd51b0b4cd8"
+      },
+      {
+        "path": "src/features/history/model.ts",
+        "sha256": "5fe7afe619018f09d739a00652b29bfa4c75a03d8c15ef96db3e780bd069ce5a"
+      },
+      {
+        "path": "src/features/history/presentation/activity-presentation.ts",
+        "sha256": "eba427846710db2fa600684a37fd678b00d0888faf005150f04f3267d1ee414d"
+      },
+      {
+        "path": "src/features/history/presentation/attempt-presentation.ts",
+        "sha256": "c14d90219179f1b44ee86a5980b2393e7c8826c235dd68ea8a410b74663a990c"
+      },
+      {
+        "path": "src/features/history/presentation/history-read-failure.ts",
+        "sha256": "cde4313dd01a155f695c71083e472bbe2406462379617e08edff3e19ab65864c"
+      },
+      {
+        "path": "src/features/history/public-client.ts",
+        "sha256": "279bcacf9066df7660ea0f0f75779b81762c73f5bf4a64b78e35e58cfab7fb39"
+      },
+      {
+        "path": "src/features/history/public-contracts.ts",
+        "sha256": "a5256ee277ffc9de89b992da795dbbd7b7998bd366a900bdafe583e493cb6dab"
+      },
+      {
+        "path": "src/features/history/public-server-queries.ts",
+        "sha256": "60c5002887734f931a2edb7faaa0c2fd87ed4c7fca6737594194800668ae250e"
+      },
+      {
+        "path": "src/features/history/public-server.ts",
+        "sha256": "d1417292194d46062f371098e81fd6190e38daae148a689ee73a8ca619d33daa"
+      },
+      {
+        "path": "src/features/history/public-ui.ts",
+        "sha256": "89308c49263b21867f30dabe7607945ec90a6092c8070340888c01118d45ca37"
+      },
+      {
+        "path": "src/features/history/server/actions/hide-admin-history-entry-action.ts",
+        "sha256": "938fdb5952e28cca07ed5e8ae38950cf76f239dd7370c145d4c854b25df361bb"
+      },
+      {
+        "path": "src/features/history/server/admin-history-cursor.test.ts",
+        "sha256": "0ac489f37c5cb3eb68d8d9aa15075c5e2cb9d6a8fe75f44763fd769aa69244df"
+      },
+      {
+        "path": "src/features/history/server/admin-history-cursor.ts",
+        "sha256": "4917ebe9a05000a0168ff213b63657f8d7712806463a389df15393e47fdadbd2"
+      },
+      {
+        "path": "src/features/history/server/queries/admin-attempt-detail-query.test.ts",
+        "sha256": "b6303202cc31de2d71ceb9e392e77b1c359e957c1c40cd94485c30c6e6ca2879"
+      },
+      {
+        "path": "src/features/history/server/queries/admin-attempt-detail-query.ts",
+        "sha256": "58f64727894630607a530a0a2c1129615272bbae5599643582263482d1a3f52c"
+      },
+      {
+        "path": "src/features/history/server/queries/admin-history-detail-query.test.ts",
+        "sha256": "f2f1cd8cc8d1015e1340277c229f3497bac9db434acb318318e211a9c947c85c"
+      },
+      {
+        "path": "src/features/history/server/queries/admin-history-detail-query.ts",
+        "sha256": "ced82af698af506fb7a49b3548faa92ed65155bb98c3ab79a14427c217156ea8"
+      },
+      {
+        "path": "src/features/history/server/queries/admin-history-list-query.test.ts",
+        "sha256": "21b0c475a4be19e9b334c922aa15e3c1c0e9efc96230dfa7ab9402a66f60e887"
+      },
+      {
+        "path": "src/features/history/server/queries/admin-history-list-query.ts",
+        "sha256": "5e182d9ed36a0afd7808bbbf28fe39a601744a1b2c4cb0a86817132a1b6797ce"
+      },
+      {
+        "path": "src/features/history/server/queries/admin-history-query-contract.test.ts",
+        "sha256": "89055f8ebe3bf1d8c94b082558c2fa5b31e8f7dce8c77457062be9688156b526"
+      },
+      {
+        "path": "src/features/history/server/queries/admin-history-read-error.ts",
+        "sha256": "b482129045aec562340edecc5ea7e94d42a414cf756167a4c2acabfed994979b"
+      },
+      {
+        "path": "src/features/history/server/queries/admin-history-row-schema.ts",
+        "sha256": "76f57b7c6c340012e608834fe7cb6dc687a28ac4f73187db452af2b89abc7272"
+      },
+      {
+        "path": "src/features/history/server/queries/admin-history-school-labels.integration.test.ts",
+        "sha256": "8baab64ae9e8409679b0d782ed845b6dd252ccc96cb673afcb3ca2282bffbbbe"
+      },
+      {
+        "path": "src/features/history/server/queries/history-list-entry-query.test.ts",
+        "sha256": "d714fef33a492ec735245824e4b063f1ff7d5bd8c5803d947da61337900e8da6"
+      },
+      {
+        "path": "src/features/history/server/queries/history-list-entry-query.ts",
+        "sha256": "8cc3ffb90f3c81ae9153d57fc61ef1263425f0cc30862fdd237a450f411118b2"
+      },
+      {
+        "path": "src/features/history/transport/history-pages.test.ts",
+        "sha256": "286d9c11f2ecf1f7212a57042b15ea379655a56e7f27716931ff41f53f5b0e12"
+      },
+      {
+        "path": "src/features/history/transport/history-pages.ts",
+        "sha256": "805c1041a0607bd931414650703c3507d91b2d5a7904b35411f5f55c5389602a"
+      },
+      {
+        "path": "src/features/history/ui/activity-status-timeline.tsx",
+        "sha256": "dddada58eda2552451e825acabeeacf2415a468ec48d954f1ba16002e7568441"
+      },
+      {
+        "path": "src/features/history/ui/admin-history-actions.module.css",
+        "sha256": "69b650fb29d097981433b8de78dba14b7bf7cceae8ccebba6bbe29bf8935035e"
+      },
+      {
+        "path": "src/features/history/ui/admin-history-actions.test.tsx",
+        "sha256": "0f1082f8980081541fcb9c974135b8dca22bafbf70f17eb654e6ebe6bafd1820"
+      },
+      {
+        "path": "src/features/history/ui/admin-history-actions.tsx",
+        "sha256": "20228784b5b07db8b20a79551719abb69ac1a71737758ee5747644e8dae5bade"
+      },
+      {
+        "path": "src/features/history/ui/admin-history-detail.module.css",
+        "sha256": "dbf56f42f6f9ae402880a13de10b75f20be07f4c4b60d8a4183a3074c9e77c1e"
+      },
+      {
+        "path": "src/features/history/ui/admin-history-detail.test.tsx",
+        "sha256": "f82d21ce2ae66d748fe3fb0f247efd59bda38701dd511aad4d07190f84e4381a"
+      },
+      {
+        "path": "src/features/history/ui/admin-history-detail.tsx",
+        "sha256": "2c9a503006d6ff48de9206ffb448770f4380eb062fcf85e8d4662615c9e2e0e2"
+      },
+      {
+        "path": "src/features/history/ui/admin-history-list.test.tsx",
+        "sha256": "219774a2f76bd21a6ab55d55d8a2aee8577cef6258dd28e659ad2b4b46b1c623"
+      },
+      {
+        "path": "src/features/history/ui/admin-history-list.tsx",
+        "sha256": "16f709d9f4d0814063649805337df6cd1dcf7cee1ad56b7321bfac4a76ce72c7"
+      },
+      {
+        "path": "src/features/history/ui/assignment-meta-tags.module.css",
+        "sha256": "4507c68fcdceaa6403ef879bbf0c74427fe74df1e7d1c986767297cec0e53bec"
+      },
+      {
+        "path": "src/features/history/ui/assignment-meta-tags.test.tsx",
+        "sha256": "42265018ec6dd3a7ba8dfc4f0a5439844bc4a8436167e1cd990f5f801951a9e0"
+      },
+      {
+        "path": "src/features/history/ui/assignment-meta-tags.tsx",
+        "sha256": "72b03e2599c74c02a0da46b9e0b130a423502730fe33a829ee7e9c8e4da8097e"
+      },
+      {
+        "path": "src/features/history/ui/attempt-score-summary.tsx",
+        "sha256": "03f907c4cc6849a864e5711fa7daa1b949f762ab6b3c5b1fb70b44254d0ba130"
+      },
+      {
+        "path": "src/features/history/ui/cached-admin-history-list.test.tsx",
+        "sha256": "a70e3729455d9c6c226fa828a24be2a49f9163ac651f0d90f2dce98c1e70ae85"
+      },
+      {
+        "path": "src/features/history/ui/cached-admin-history-list.tsx",
+        "sha256": "0cd772eb5ba058d90fd8825d8ee1fdaf116b37d7554c13dc0472a59d89635344"
+      },
+      {
+        "path": "src/features/history/ui/editable-history-detail-dialog.test.tsx",
+        "sha256": "9933788f8ebadefa255993fc93ea29c6fdf867c024be99289655ba588d6082ea"
+      },
+      {
+        "path": "src/features/history/ui/editable-history-detail-dialog.tsx",
+        "sha256": "73ad4e15fd9bf9793d6684cae7fe8b7fd23f24b3202a2cce9348ae637164566c"
+      },
+      {
+        "path": "src/features/history/ui/editable-history-detail-page.tsx",
+        "sha256": "0484eab3dc72c02d9795ff511abb5c5e8afa6d61584a67c489f1033fa72d0998"
+      },
+      {
+        "path": "src/features/history/ui/history-activity-row.module.css",
+        "sha256": "9361f8c440c49b615262964cacb78d3ad2120d444668e5dd5db2bec1a5dba8ad"
+      },
+      {
+        "path": "src/features/history/ui/history-activity-row.tsx",
+        "sha256": "5a12925200e519abc2ebff6079539224e75f0517d3e4c79744ea668778fcc075"
+      },
+      {
+        "path": "src/features/history/ui/history-detail-actions.module.css",
+        "sha256": "61dd8adb770b793397e6826702b4a6bcd0b738aeff2f36c85142e90af6c3cfa5"
+      },
+      {
+        "path": "src/features/history/ui/history-detail-actions.test.tsx",
+        "sha256": "b43f6ba2b2f9a78c77368802417872b18b002fde797646fd41c74b5f8bb93227"
+      },
+      {
+        "path": "src/features/history/ui/history-detail-actions.tsx",
+        "sha256": "c4ab5cbc3033943093565721d46ef80e21117572cf5218a98eb820d6b5e224ea"
+      },
+      {
+        "path": "src/features/history/ui/history-detail-header.module.css",
+        "sha256": "4e555bd436a100acfc60cd48f90f0797d8c7c6b2189c1cbd3404c1120a08b6d7"
+      },
+      {
+        "path": "src/features/history/ui/history-detail-header.tsx",
+        "sha256": "e9a4384b4e66c63d2d70c56960dc8d6f0be491d224b2712c750bed96cc112d84"
+      },
+      {
+        "path": "src/features/history/ui/history-list.module.css",
+        "sha256": "0d35f22b873766392e10f94db1c240e8ffeae90069a3a5cbac1b02fee610d7ef"
+      },
+      {
+        "path": "src/features/history/ui/history-presentation.test.tsx",
+        "sha256": "4542ee1787f96a2e79004568825e00964c26ead19f2be25d68f1d5f4c3c4c232"
+      },
+      {
+        "path": "src/features/history/ui/history-read-failure.tsx",
+        "sha256": "9a5c374bdff65343f826e9b8bea04db2c1454585f01c495a6b10863a30901a5a"
+      },
+      {
+        "path": "src/features/history/ui/history-rows.tsx",
+        "sha256": "519249276febbbf8a5ae8a06c53f5899b9368a5f7c82ead190f19501d42ca0a0"
+      },
+      {
+        "path": "src/features/history/ui/history-section-groups.module.css",
+        "sha256": "81ec9d59b9e53e89361e6ca77c14a63644e4fe933252afc4eba793aa0b1d92b8"
+      },
+      {
+        "path": "src/features/history/ui/history-section-groups.test.tsx",
+        "sha256": "561eb0b3c29196f42463007fc7ae080edd8fa8737281a4a3a36c1902022a3c0e"
+      },
+      {
+        "path": "src/features/history/ui/history-section-groups.tsx",
+        "sha256": "9cad569972297b57736e944e2a888e41f53cc8ce3afe8ae97b373963d9ecd6f9"
+      },
+      {
+        "path": "src/features/history/ui/overview-action-groups.module.css",
+        "sha256": "75f14268fa054290426b2a236b36fefeb80c8d944a9a630d5b9c37ee7af72288"
+      },
+      {
+        "path": "src/features/history/ui/overview-action-groups.tsx",
+        "sha256": "ff92d4b737986b30e52633b01867f36f2bd31d112cd452f554012cb8a844fe44"
+      },
+      {
+        "path": "src/features/history/ui/student-learning-activity-list.module.css",
+        "sha256": "c6949ab77bc8f2c4d595b470989a9a492f323545d9c64e4c999982bec67b7b4c"
+      },
+      {
+        "path": "src/features/history/ui/student-learning-activity-list.test.tsx",
+        "sha256": "dddb242f5e2a4b3faed232dc1044813d18b12e38831a6473577ab87defb5ac87"
+      },
+      {
+        "path": "src/features/history/ui/student-learning-activity-list.tsx",
+        "sha256": "523e7c4b1b52f49d88e5902adc5a5c59b9c8aaaea355cae1037790a8a1abd2f9"
+      },
+      {
+        "path": "src/features/learning-points/server/components/student-header-points.test.tsx",
+        "sha256": "4a9a7cc57fc6247f55a535c96b0e3e870d6997b41a1edf4ba1fbbab8c615bb63"
+      },
+      {
+        "path": "src/features/learning-points/server/components/student-header-points.tsx",
+        "sha256": "2966918495c2f013f1daa175cde91c99815fcb0c15836a1b2f48ede9dfe38c41"
+      },
+      {
+        "path": "src/features/learning-points/ui/header-point-summary.module.css",
+        "sha256": "5670d15c9a85932c5c972efde21cde6f7c960053b18898e9a59d7ac05cb5eb42"
+      },
+      {
+        "path": "src/features/learning-points/ui/header-point-summary.test.tsx",
+        "sha256": "b64be67d92f3c32e6066ca70d7b43db1a08faeeb99ff936fa77cbe0bae1b0f45"
+      },
+      {
+        "path": "src/features/learning-points/ui/header-point-summary.tsx",
+        "sha256": "502d18d6d5c8f9aaeb94a54ab4b03c1cde79799cd51f367da79fbba6d80b9a26"
+      },
+      {
+        "path": "src/features/learning-points/ui/point-summary.module.css",
+        "sha256": "493da4ebe8ab9f66c928479d37ce7a3315eb10a5ed9391f79d49887c81301b7a"
+      },
+      {
+        "path": "src/features/learning-points/ui/point-summary.test.tsx",
+        "sha256": "20169a6b1dcadcf43894fd7a5785fc17b03bedbce7d8d2f84af312e0f9cf89eb"
+      },
+      {
+        "path": "src/features/learning-points/ui/point-summary.tsx",
+        "sha256": "ddd5f22d34f05e8001231830aa9c3fe75d9ec94437c80ca2d77e12ef22dc2737"
+      },
+      {
+        "path": "src/features/school-schedules/actions/edit-school-schedule.test.ts",
+        "sha256": "c2642618028e894c525c32ebab0a525e492707097a75c25ce6345c1231187ea7"
+      },
+      {
+        "path": "src/features/school-schedules/actions/edit-school-schedule.ts",
+        "sha256": "7f60c2b394aab4574a58ee1a497342763ea90ac9a7b8a7351514c111e315d37b"
+      },
+      {
+        "path": "src/features/school-schedules/client/components/live-school-schedule.test.tsx",
+        "sha256": "7aec49acbdf0ff7047dc7fb944aeb3616890cbf30929aa1aca5201842dc302c5"
+      },
+      {
+        "path": "src/features/school-schedules/client/components/live-school-schedule.tsx",
+        "sha256": "7a4f4c6733b6dfc60fd3de113ba6e4543ea72556b6e3c88c58af8d88d87b176a"
+      },
+      {
+        "path": "src/features/school-schedules/client/components/schedule-retry.test.tsx",
+        "sha256": "9d262948b66ba82d327fa8c6463757ce7d6707d3d06392710032936e99026b54"
+      },
+      {
+        "path": "src/features/school-schedules/client/components/schedule-retry.tsx",
+        "sha256": "97e990d2268768f5745e51faf2fca0723436e339b9762f9981b6a5a727f36e2b"
+      },
+      {
+        "path": "src/features/school-schedules/client/components/school-schedule-editor.tsx",
+        "sha256": "5e2cfacf87cfdc9652df12ddac49cbb3feced269965ae8e725745def0b2510de"
+      },
+      {
+        "path": "src/features/school-schedules/client/use-school-schedule-editor.test.tsx",
+        "sha256": "99fb59803ae69fec00fc335ae61ff22cb130bb367907c855e42bf88dd1f2a9df"
+      },
+      {
+        "path": "src/features/school-schedules/client/use-school-schedule-editor.ts",
+        "sha256": "576d70c6c67fba0d17c52c33c35645f3c959acf737d2d3d77b41bfedff833153"
+      },
+      {
+        "path": "src/features/school-schedules/contracts/school-schedule-edit.ts",
+        "sha256": "92dc7c8f33bf079714ff6ca50f7012b3ececcda508c206aa3501ca69d6115c97"
+      },
+      {
+        "path": "src/features/school-schedules/contracts/school-schedule-import.ts",
+        "sha256": "a5b956e4563c67349249e392577a89ef586caa6026c3e05d746337d3f00a6760"
+      },
+      {
+        "path": "src/features/school-schedules/contracts/school-schedule.ts",
+        "sha256": "c5c463ac46b1db6c0cfa2995f0c3fbae6bb7e5c63726df3e4fa5563ee04404ac"
+      },
+      {
+        "path": "src/features/school-schedules/domain/national-exams.ts",
+        "sha256": "f1645ebda2bdb433771ef66837851e7dbd15062a46e5c5a2ce36d1bf6e7b277d"
+      },
+      {
+        "path": "src/features/school-schedules/domain/school-schedule-edit.test.ts",
+        "sha256": "91816ca89cea7e06685b52795f4439038de529006531112d012161cd72a36177"
+      },
+      {
+        "path": "src/features/school-schedules/domain/school-schedule-edit.ts",
+        "sha256": "a1168310bdb1c01098e26ef964db444490be2784305a020a33280d1af4c16c54"
+      },
+      {
+        "path": "src/features/school-schedules/domain/school-schedule.test.ts",
+        "sha256": "26daf3d3ad7e1645dc5d2221a45902c29a3fd624c01f4aa0acab39c8392c462e"
+      },
+      {
+        "path": "src/features/school-schedules/domain/school-schedule.ts",
+        "sha256": "e8d2b33feffee75a97f07f8606f0ec402c87c71991e372abd034b12ff8803d4c"
+      },
+      {
+        "path": "src/features/school-schedules/domain/school-timeline.test.ts",
+        "sha256": "aa4dfc3ff2ef9d592336c43156fbde2dfca50f414cedded53d0d697ab13837fd"
+      },
+      {
+        "path": "src/features/school-schedules/domain/school-timeline.ts",
+        "sha256": "7c52f0509f9323c9b9003066453d03c719cdc9e3d320d83cabeae335bc99a962"
+      },
+      {
+        "path": "src/features/school-schedules/public-contracts.ts",
+        "sha256": "57bf559e18ab7739ad4e5d21b14038189ac1cdaf95b203cb718af708d0a4794e"
+      },
+      {
+        "path": "src/features/school-schedules/public-server.ts",
+        "sha256": "e914de0914a3648e210222b122e2b9047b107edb0fcfddd018cbae7b7011a562"
+      },
+      {
+        "path": "src/features/school-schedules/public-ui.ts",
+        "sha256": "89b1fafb41e326aa790fdba88e6cb0ae1e51c276ae87a09d29c0711dcacaf86a"
+      },
+      {
+        "path": "src/features/school-schedules/school-schedule.fixture.ts",
+        "sha256": "b78797ee4d9e495dd8c2ec367feac2d05305167d47e41d2bbb9924ebce4ca9f6"
+      },
+      {
+        "path": "src/features/school-schedules/server/actions/school-schedule-edit-actions.test.ts",
+        "sha256": "9dac3507070c98ce07320d2d72a4e6e691c825e47065a40d1ba135c9e961844e"
+      },
+      {
+        "path": "src/features/school-schedules/server/actions/school-schedule-edit-actions.ts",
+        "sha256": "19ade100b534ea66496586eab3dc5b8f0ca67fb0f268362ec3a1ec7cb9004ee2"
+      },
+      {
+        "path": "src/features/school-schedules/server/components/school-schedule-content.tsx",
+        "sha256": "046f86e3e6aece624eccbd41d891ade0fecd6e707c4ff31099b909f2e71b9e78"
+      },
+      {
+        "path": "src/features/school-schedules/server/components/school-schedule-editor-content.tsx",
+        "sha256": "876b3e8f09762de25661a32101817a61bfd3af38151acaf447a1ca72d26513af"
+      },
+      {
+        "path": "src/features/school-schedules/server/queries/school-schedule-editor-query.ts",
+        "sha256": "ca177311dcb08c2ac81a2bad5f39c055d7a7b8b32ccbdc1db57b61cdeac467f0"
+      },
+      {
+        "path": "src/features/school-schedules/server/queries/school-schedule-query.test.ts",
+        "sha256": "d332bc24b2af5c42d92ed4059c871b3a289032a3244263d67f4d68fd2daa572e"
+      },
+      {
+        "path": "src/features/school-schedules/server/queries/school-schedule-query.ts",
+        "sha256": "eac2c00f155314210c793be67e277c78dc8cd85ce06b62635a6cba70e5b9190e"
+      },
+      {
+        "path": "src/features/school-schedules/server/school-schedule-edit-migration.test.ts",
+        "sha256": "bec95c1d45ccabc30ad9f3373e172b030e17aa8da5a72b45c29cb3c01a83ecfe"
+      },
+      {
+        "path": "src/features/school-schedules/server/school-schedule-migration.test.ts",
+        "sha256": "560486d9985783692821a8fcb0b7545b33975058b9df54c25ef559eb3166bf6c"
+      },
+      {
+        "path": "src/features/school-schedules/ui/school-exam-identity.tsx",
+        "sha256": "49a950375f86dc9078c300ceae8049f0ff959c3c129e5adeabd27e2b1b480357"
+      },
+      {
+        "path": "src/features/school-schedules/ui/school-schedule-editor.module.css",
+        "sha256": "bf83cef776f4ef6af610562f1d9c152e81139efc88f85dd7adade216aabc308a"
+      },
+      {
+        "path": "src/features/school-schedules/ui/school-schedule.module.css",
+        "sha256": "587bfcfa21c366ca4840abf2a0f4255fcb870df52732de248b500fd4872863d9"
+      },
+      {
+        "path": "src/features/school-schedules/ui/school-timeline.test.tsx",
+        "sha256": "c0c3acc3ebdcf9b5eb506be2fa2b91ee931ca7ef38eeeac244e2133b0d5214b3"
+      },
+      {
+        "path": "src/features/school-schedules/ui/school-timeline.tsx",
+        "sha256": "8ecb0835fc132f311966001c175575ba4fd849e30721a78cae9743685000406a"
+      },
+      {
+        "path": "src/features/session/api/session.ts",
+        "sha256": "9f2aa248f8f930fff11d0b2f9c0139aec51e27640dc7e7689dc8dd688f9b0de8"
+      },
+      {
+        "path": "src/features/session/controller/admin-private-cache-events.test.ts",
+        "sha256": "15698334cd933b2367d77d012e4626c816f7e8ec42cdedb4ae43550783ffa82c"
+      },
+      {
+        "path": "src/features/session/controller/admin-private-cache-events.ts",
+        "sha256": "9909418ed2980f6f2d2394a93da23b58dcaad6f2b8c5046509643ba5f270abf2"
+      },
+      {
+        "path": "src/features/session/controller/admin-session-commands.ts",
+        "sha256": "45fc09aca7f063f2023c6753245b06825b1fe5404980f030887b2bd2ec175486"
+      },
+      {
+        "path": "src/features/session/controller/private-list-cache.ts",
+        "sha256": "dda91804f12a3508eb1d8b3e4ef67711f3295bf97c5be6dabbca4c19b86608f5"
+      },
+      {
+        "path": "src/features/session/controller/use-private-list-entry.ts",
+        "sha256": "7b5bf3a250cd0de300b3958430515d84f2a4aaddd397aef39aecac75051f89cb"
+      },
+      {
+        "path": "src/features/session/controller/use-private-list-session.ts",
+        "sha256": "b452fc53e96fa62a1cbe1b8bf7965ab40b4484b1631273b619e8495b6777f482"
+      },
+      {
+        "path": "src/features/session/public-client.ts",
+        "sha256": "9b6d32eb712b1ec92a7b207695620fc3ed7c33b42f04a8b26e519493792f3e09"
+      },
+      {
+        "path": "src/features/student-dashboard/contracts/student-dashboard-read-model.ts",
+        "sha256": "e354f500f238931f8472efe6c8909b3ffe8c5448d11c188523e955a01c059e4f"
+      },
+      {
+        "path": "src/features/student-dashboard/controller/use-student-completed-assignments.test.tsx",
+        "sha256": "5ceda64a058fe56a11ac440df9875ce154014fc70dc3087ff3e90dcf390a8922"
+      },
+      {
+        "path": "src/features/student-dashboard/controller/use-student-completed-assignments.ts",
+        "sha256": "d9f9da935c9b4629e9aff765be226a854f5ef2065edee8df6f87b9b75a0cb21f"
+      },
+      {
+        "path": "src/features/student-dashboard/domain/student-assignment-lifecycle.test.ts",
+        "sha256": "3ac07e6c7eb1f7eb99237fd283bdb1467d5153f022b5c8cff8180c18e300dfd9"
+      },
+      {
+        "path": "src/features/student-dashboard/domain/student-assignment-lifecycle.ts",
+        "sha256": "9305c99cd2e351566a2ddc51b16788d636183736b31558683468883f2fc754f6"
+      },
+      {
+        "path": "src/features/student-dashboard/domain/student-assignment-sections.test.ts",
+        "sha256": "5604685c45d750f6cf06c4dea17e04a856a1e84be3e2535433f19831c3706c76"
+      },
+      {
+        "path": "src/features/student-dashboard/domain/student-assignment-sections.ts",
+        "sha256": "4063b9a832b92c0933293dda7a1518d1151f153c2dbad7b01c3b1e33599d141a"
+      },
+      {
+        "path": "src/features/student-dashboard/model.ts",
+        "sha256": "4e54d440f03bc1240d21f9981d04cd033e6088145e877a0ab69b11e28adcd96a"
+      },
+      {
+        "path": "src/features/student-dashboard/server/components/student-dashboard-content.tsx",
+        "sha256": "a16298ac0ed589cb03a7c56530a9c1498355429d7bedc1f662712bcd1f9ddca6"
+      },
+      {
+        "path": "src/features/student-dashboard/server/queries/student-dashboard-query.test.ts",
+        "sha256": "acbf85d1a5c75be307a97fad71f67ffd38b3ef2de6cbeacc6c43ae990b583b1d"
+      },
+      {
+        "path": "src/features/student-dashboard/server/queries/student-dashboard-query.ts",
+        "sha256": "60be7e6cb2a2eba97c6ade868320de445cf9e29be7faf711bea95c32300f1607"
+      },
+      {
+        "path": "src/features/student-dashboard/server/queries/student-dashboard-read-error.ts",
+        "sha256": "6ccc1206c586dae2563ee5cd25e529d3804f6f65b9480382299316f79a736ff5"
+      },
+      {
+        "path": "src/features/student-dashboard/server/queries/student-dashboard-row-schema.ts",
+        "sha256": "33ddd28bbacf46c0bec40ee9c29be28f0728b67fa76d8432b3dcb191c91f2019"
+      },
+      {
+        "path": "src/features/student-dashboard/server/student-dashboard-cursor.test.ts",
+        "sha256": "7952cc03ff93d9a87f2917d71f4f5bc03a70945c906e94de2abcc51e43e86b77"
+      },
+      {
+        "path": "src/features/student-dashboard/server/student-dashboard-cursor.ts",
+        "sha256": "3d0687f9a3fcfe308c5ea4c3891d374f13520d48e6ce44ec17ed8f271a53cad9"
+      },
+      {
+        "path": "src/features/student-dashboard/transport/student-dashboard-pages.test.ts",
+        "sha256": "869f87edf8a2c7771edb52a6198babba1161132f7e915f88889c72bbfe2e0d30"
+      },
+      {
+        "path": "src/features/student-dashboard/transport/student-dashboard-pages.ts",
+        "sha256": "6672175ad32474836e10ac64d30d1d3a132ba63a51c4e09ea409d1f1fada22c8"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/assignment-boundary-refresh.test.tsx",
+        "sha256": "92ef6efe93914d372439769a0a22fc10618c8bd26a138ee13a8bcd62eb3239d7"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/assignment-boundary-refresh.tsx",
+        "sha256": "4f9314a7363f783ff8564fbfaa7f0e34afe2a1fae48ecaa891ec2a999dd11c3f"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/deadline-countdown.module.css",
+        "sha256": "e2d68ad44aa00c2ae508e973b4fc05ef7a08e0229b5f660fea2ab86c2893b25c"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/deadline-countdown.test.tsx",
+        "sha256": "068fde99ca693ef83879c0949f4e7c46ecc05a28ed5bd1527cdca19d001a3bcd"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/deadline-countdown.tsx",
+        "sha256": "24e2cf360f6872acaf72f40f9070450ee5a83cd86da03f6154405b82aa333590"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/start-attempt-button.module.css",
+        "sha256": "efbd3e585fc2f7b6743eae57e5cb097fbc67b4d43deec0204c43ea97c7c341b8"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/start-attempt-button.tsx",
+        "sha256": "74792bcec5079a30ba976fc820547eb9b63018e0913b64082d85074d091e1b6f"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-assignment-availability.tsx",
+        "sha256": "ae7ee700a34e2acf7ffd223593f81afab92b0356c30aac6db9c8e8835a83260c"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-assignment-card.module.css",
+        "sha256": "ba2caccdd707858e4117d7a18403923d6f8cd6f2fc32f8d266312553acf1e2f7"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-assignment-card.tsx",
+        "sha256": "07123f885e9b2a19cca0119821fc688b59cbf7e8fe12b2f44ce8cd37e890cf8c"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-completed-assignments.tsx",
+        "sha256": "2325ead05ca31e1b1f4ac829f6f0a8a65bc1169c12be27d22813860eca074d65"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-dashboard-skeleton.tsx",
+        "sha256": "3d7bd8ca055730fc4be7c0f31c2744eb0a5eaf2d42bfd27db0b4861d7f30ca07"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-dashboard.module.css",
+        "sha256": "0dba840112d1fbe4c5e0eb2be756d51896600406793bd5819bcfd6b2717b82fe"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-dashboard.test.tsx",
+        "sha256": "e138d0b60cca446055bf8a267ab9a1a1d0a96ba3842ac1ccc5d0cf886b45e593"
+      },
+      {
+        "path": "src/features/student-dashboard/ui/student-dashboard.tsx",
+        "sha256": "5fc664f4ea3b41d7e22aa1852c07f673c765299f27f81139f38a4c60ca8dc3d8"
+      },
+      {
+        "path": "src/features/students/actions/update-student-profile.ts",
+        "sha256": "d3741a6d172f359d8609e06dca1030293a888b5ff90c55b07a26c6a9018bff47"
+      },
+      {
+        "path": "src/features/students/api/student-mutations.ts",
+        "sha256": "60505037244b0429d34253755b265fcc4efffdb976944d909cd1c5e836c090b7"
+      },
+      {
+        "path": "src/features/students/api/wrong-word-transport.ts",
+        "sha256": "41ae8ae12844a7902bf7f8ef29e8804010e0de67ce852a34e77379269fcb45a0"
+      },
+      {
+        "path": "src/features/students/contracts/school-search-contract.ts",
+        "sha256": "1e3aab87c5936489b7751897cae7bb61f8f5c0d3d66dea3cd69216c0fcf3c367"
+      },
+      {
+        "path": "src/features/students/contracts/student-detail-read-model.ts",
+        "sha256": "9a62ce85c7367ddde0aedff4d2ef7809548860e5f5e9f171089d9435337cd382"
+      },
+      {
+        "path": "src/features/students/contracts/student-directory-cache-contract.ts",
+        "sha256": "878c40b625f9292952cc2143bcdc4f4168326f5ac9f8b2b914264bff69a58487"
+      },
+      {
+        "path": "src/features/students/contracts/student-directory-read-model.ts",
+        "sha256": "e6de086afb55da0f88d375fc3fc7b0887e70fd9a7b13bde25b2b3b25d9785aa6"
+      },
+      {
+        "path": "src/features/students/contracts/student-mutation-result.ts",
+        "sha256": "d33e45678bd42658c8d37244ad3906d4d86ed4c7fbbc7a3c1b4698f0cb283c4b"
+      },
+      {
+        "path": "src/features/students/controller/student-detail-auth.test.ts",
+        "sha256": "1da38a7b78001a47df5f33b00c3cc0724c4d8c59a650e06037721169571b202d"
+      },
+      {
+        "path": "src/features/students/controller/student-directory-cache-provider.test.tsx",
+        "sha256": "8445f182f00404e01077fc8c79f19dcdb3cf7142626563eca3551589d6152921"
+      },
+      {
+        "path": "src/features/students/controller/student-directory-cache-provider.tsx",
+        "sha256": "4b41c7a95e4b94c5182214b7b79d66da67b669d8e517ab4bc3e7424e69776859"
+      },
+      {
+        "path": "src/features/students/controller/student-directory-cache.test.ts",
+        "sha256": "c2c616364519df9806580ee6ea6b96b6ac446b521bdd7427e720ddfecdf8f7b7"
+      },
+      {
+        "path": "src/features/students/controller/student-directory-cache.ts",
+        "sha256": "9d24f889f5745ce5e1031185c7fbd15b1346cbf3a1378c65197e17f0332e48bb"
+      },
+      {
+        "path": "src/features/students/controller/student-directory-events.ts",
+        "sha256": "c24644f244f5ae4f2b2a98bfb8f3d4ad81511e8912d85dfd0dc64e0e846f4e9f"
+      },
+      {
+        "path": "src/features/students/controller/use-cached-student-directory.ts",
+        "sha256": "c5bb5345a54e275d99c5a04e85d02af005fe5b1b3018d7ac1e4f119363d02b17"
+      },
+      {
+        "path": "src/features/students/controller/use-school-search.test.tsx",
+        "sha256": "24672cc5675422135835f4c20d1b00a452ff333476c4b569525bc508550f9db9"
+      },
+      {
+        "path": "src/features/students/controller/use-school-search.ts",
+        "sha256": "1958f40901fb4782071c2fe3ce9b2dfec4e6d8c784ddcab07a12ba12fa602621"
+      },
+      {
+        "path": "src/features/students/controller/use-student-access-controller.test.tsx",
+        "sha256": "c0054f3c932fbd5a899053952796eddb57d66fc9d8b9c3d8b6d5b81ec9b7a5eb"
+      },
+      {
+        "path": "src/features/students/controller/use-student-access-controller.ts",
+        "sha256": "ee77e6b6ddc4ec43af1b24276d0188d23cb493e6b9d9567eca5794cc75f2ad0e"
+      },
+      {
+        "path": "src/features/students/controller/use-student-create-preparation.test.tsx",
+        "sha256": "618a5311391b27390cd2bf19611dc16843b3e206293cfbfee0722ee7e5f024c8"
+      },
+      {
+        "path": "src/features/students/controller/use-student-create-preparation.ts",
+        "sha256": "fc9febf2d21d886c2a86970e0526d45ac27e7ab326b23802375329306ba6a575"
+      },
+      {
+        "path": "src/features/students/controller/use-student-creation-controller.test.tsx",
+        "sha256": "16757a492bceff88bfb99ffaedc6e07aab4afd77648b3c19cf0a032985bd3b78"
+      },
+      {
+        "path": "src/features/students/controller/use-student-creation-controller.ts",
+        "sha256": "0e1ee4722ceb09e8a92fd5a526c03e84eb8a012fdf301b4b50091760b195cd35"
+      },
+      {
+        "path": "src/features/students/controller/use-student-detail-shell-state.ts",
+        "sha256": "8edcb5ae737b7e57c81a73132ff453f080a654c22464026c94a3c24f789580d3"
+      },
+      {
+        "path": "src/features/students/controller/use-student-detail-view.test.tsx",
+        "sha256": "094a1b02caf1cc133924c37b5b13d6c8bdd65f0be0f255eb4a4b64ef710547b1"
+      },
+      {
+        "path": "src/features/students/controller/use-student-detail-view.ts",
+        "sha256": "68e9e0b018303a094da7266b3909155c42612e0cb6387e76f9f36c0af5750603"
+      },
+      {
+        "path": "src/features/students/controller/use-student-directory-page.test.tsx",
+        "sha256": "b04a11dbd02c561ca5a5186310480b40214086652a4f06ba346e34a414001ccc"
+      },
+      {
+        "path": "src/features/students/controller/use-student-directory-page.ts",
+        "sha256": "5ec6afe7b0b038c37a91c4b6d49db524d6fe3c12ab6b9c27f456b1bf5d778c6f"
+      },
+      {
+        "path": "src/features/students/controller/use-student-history-page.test.tsx",
+        "sha256": "4099e36349a5b18453c8d41b0d1652d9a77a08869af960b43c21235b550a7af4"
+      },
+      {
+        "path": "src/features/students/controller/use-student-history-page.ts",
+        "sha256": "e8a8d2bfd6fdb7fddf5731f8c00c99e01293f0829e47fca7d190db2f3bfb62a2"
+      },
+      {
+        "path": "src/features/students/controller/use-student-profile-controller.test.tsx",
+        "sha256": "4bbeb73f9bca85a08edeb8b2aeeeb77faa2af6c6d8ed5acc6bf78c049d984b90"
+      },
+      {
+        "path": "src/features/students/controller/use-student-profile-controller.ts",
+        "sha256": "4886eaa8c6e5f7c4c7920f8fcaf1714d6a67743b2ceb0f1b6ca9db21cabd6853"
+      },
+      {
+        "path": "src/features/students/controller/use-student-wrong-word-actions.ts",
+        "sha256": "9a4e926c215c075427f88a6c0524efae2e83720a603af5e1189a77a4bbb5219b"
+      },
+      {
+        "path": "src/features/students/controller/use-student-wrong-word-cache.ts",
+        "sha256": "a624ed3250b3df4ea7996b43d71abc10fe7f5f38661e54a1afa25ac38ae422c3"
+      },
+      {
+        "path": "src/features/students/controller/use-student-wrong-word-draft-action.ts",
+        "sha256": "0d0b6aca26deb17505d39b3480b17bf48ba30bd8da2136e3eafff361800a6d93"
+      },
+      {
+        "path": "src/features/students/controller/use-student-wrong-word-history.ts",
+        "sha256": "1a6ef186829a003e37d838322bb5474fdb5ac25fe2a18eb4f87eefc1b2b78237"
+      },
+      {
+        "path": "src/features/students/controller/use-student-wrong-word-queue-action.ts",
+        "sha256": "f1fd0ab0ebfdb1bed55702554851b507340323a9d8c201401212066a11d77d76"
+      },
+      {
+        "path": "src/features/students/controller/use-student-wrong-word-worksheet-action.ts",
+        "sha256": "8c5e3c69e781182a2009f359b4d59c6ee50cca361a15e2fe27727264b58670f1"
+      },
+      {
+        "path": "src/features/students/controller/use-wrong-word-panel-selection.ts",
+        "sha256": "1833fb36354a6958ae5cfd11eab795ca68dc77717b102d5b642841ce59a37dad"
+      },
+      {
+        "path": "src/features/students/domain/wrong-word-selection.test.ts",
+        "sha256": "f91b9df708e52d79cfaa529166de45ef6fc8b6c26aa55c90aac71690ff75c125"
+      },
+      {
+        "path": "src/features/students/domain/wrong-word-selection.ts",
+        "sha256": "ae4795a49677fb5f1aedbd36ebc504b924cfe7ee1e9e25135b9441eb3b454a47"
+      },
+      {
+        "path": "src/features/students/public-client.ts",
+        "sha256": "a595677827a0bb09edf6847a68e764a8aca762df402b4d667450c83de2184fa6"
+      },
+      {
+        "path": "src/features/students/server/actions/student-profile-command.test.ts",
+        "sha256": "c564489e68dd14efbaededf3df189938cfffafb846f97e8b707361677c84da34"
+      },
+      {
+        "path": "src/features/students/server/actions/update-student-profile-action.test.ts",
+        "sha256": "ea250b39c16422463754b27c4961af8270c80d2ec60233c7587cce64f92b144a"
+      },
+      {
+        "path": "src/features/students/server/actions/update-student-profile-action.ts",
+        "sha256": "7fe836a79d2845bf63b8d506e1b7807d43ad6a372e8d740723c639fad041410f"
+      },
+      {
+        "path": "src/features/students/server/components/student-create-content.tsx",
+        "sha256": "195888053b21556a23e5abdd2c6ea4c996b9d5e97b7a2cc824c24c020661223f"
+      },
+      {
+        "path": "src/features/students/server/components/student-detail-route-content.tsx",
+        "sha256": "cd29395d2b90641898c0f80961543ec9bcf503edc9d0fb00dec4fd0927de7228"
+      },
+      {
+        "path": "src/features/students/server/components/student-directory-content.tsx",
+        "sha256": "404a3b09a35427d5872d7212abe6e77c9f75b9b5ca830f3d2e085342987657dd"
+      },
+      {
+        "path": "src/features/students/server/components/student-panel-failure.test.tsx",
+        "sha256": "b2d0c1aca874eae01d4d1cb84aaaec5b2bb98f5697b3a6c7b8cd60ac194fe32e"
+      },
+      {
+        "path": "src/features/students/server/queries/school-search-query.test.ts",
+        "sha256": "ef79f89773395e9f9d1a31ebf8eb6ab2b04250e7fef676970b8aa4f5b9f59b84"
+      },
+      {
+        "path": "src/features/students/server/queries/school-search-query.ts",
+        "sha256": "21099529e9a641613b6e19231c6f730f30a97d2060b62e05108210eca015f11d"
+      },
+      {
+        "path": "src/features/students/server/queries/student-detail-query.ts",
+        "sha256": "2b1feb843d2ff2339504f59cf019bee7393f291a04c2c095a037a4f4d933afc1"
+      },
+      {
+        "path": "src/features/students/server/queries/student-detail-read-error.ts",
+        "sha256": "a093057ff82111db684e6ccb5ab4b5db339f727a08ccff979ed58b9c5c33b758"
+      },
+      {
+        "path": "src/features/students/server/queries/student-detail-row-schema.ts",
+        "sha256": "a30c91d4924da670e6b0b8d0743b2c1e61a3270e925a09b846aad32647367751"
+      },
+      {
+        "path": "src/features/students/server/queries/student-directory-entry-query.test.ts",
+        "sha256": "f11cf5d389061b0251b116d26d36413bc09137aad14e078769257b8716cebc60"
+      },
+      {
+        "path": "src/features/students/server/queries/student-directory-entry-query.ts",
+        "sha256": "80da33124b190e3bf3244afb050e8fff568d3f4734b32650929cf15faf3d1eb2"
+      },
+      {
+        "path": "src/features/students/server/queries/student-directory-query.ts",
+        "sha256": "692a4bea928e29b00b7bbaa4a184acef6bceeb6bae923d04df53e116f14c1899"
+      },
+      {
+        "path": "src/features/students/server/queries/student-directory-read-error.ts",
+        "sha256": "5ddbe7df2dc7f2e62ee2105d62d7101a5dc21bdb525202a14b375ea114e2ce54"
+      },
+      {
+        "path": "src/features/students/server/queries/student-directory-resume-query.test.ts",
+        "sha256": "bd07351614c70ba04cbe237af636aca5d6770b15ce1dd73de12cf953824f9945"
+      },
+      {
+        "path": "src/features/students/server/queries/student-directory-resume-query.ts",
+        "sha256": "5881fe6502bacbec9be39b722fa5fd62db1f004b49b513b28cf4893d945fd256"
+      },
+      {
+        "path": "src/features/students/server/queries/student-directory-row-schema.ts",
+        "sha256": "783629ead49a7bb0a2fccd5d64405aa811cc50f08f0199bb49451170736065a7"
+      },
+      {
+        "path": "src/features/students/server/queries/student-history-query.ts",
+        "sha256": "1648fa71ab31130257b2f7e706de373192ad4bacd8e39434cda15ae662b17986"
+      },
+      {
+        "path": "src/features/students/server/queries/student-history-row-schema.ts",
+        "sha256": "0f90817bbeccea52a7303c98d36f8a82ec34a5e7e23c5a4d06a8b92f97faf52e"
+      },
+      {
+        "path": "src/features/students/server/student-directory-cache-identity.ts",
+        "sha256": "cf27c2ff66a161bafe7aa778426d58a0880649e6916a9add0b878ae3abf10384"
+      },
+      {
+        "path": "src/features/students/server/student-directory-cursor.test.ts",
+        "sha256": "345af6719c5242d3843f67d3b393abfdfbac51a4c38088dcdaff7053ace2f106"
+      },
+      {
+        "path": "src/features/students/server/student-directory-cursor.ts",
+        "sha256": "7cc2042650b026295b7c51e762f0423899bcf307e6b2fddebbfb3218cc12394f"
+      },
+      {
+        "path": "src/features/students/server/student-history-cursor.test.ts",
+        "sha256": "e5b6e59527824368c0b38f2a8d95924449aaa76cd1cdda94355d4eade1b43f02"
+      },
+      {
+        "path": "src/features/students/server/student-history-cursor.ts",
+        "sha256": "8458b526d3adbba112f511a09c3d3257c55893395fc38b5c5ad4be32c20c49da"
+      },
+      {
+        "path": "src/features/students/students-feature.contract.test.ts",
+        "sha256": "7b9bef5750d3327ca8153c76101018c8b79101e4e7576f1becae5435eb227923"
+      },
+      {
+        "path": "src/features/students/transport/school-search.test.ts",
+        "sha256": "5370f9660a3f0806e628aedd2db57808a54b1b7d4831b3f0c71410c60d1e6212"
+      },
+      {
+        "path": "src/features/students/transport/school-search.ts",
+        "sha256": "735ba6bed8a41343b8a931a819eaced2087d8143c7e7b7caf738e4369c3a6fe1"
+      },
+      {
+        "path": "src/features/students/transport/student-directory-cache-read.test.ts",
+        "sha256": "7961ecb7ec4e33c20598f6fc8d71fcb31ad3383fec711ac0459ad9add3d51409"
+      },
+      {
+        "path": "src/features/students/transport/student-directory-cache-read.ts",
+        "sha256": "e62e181a4759b415a4e5c965b43e93b2e73525c3711b12e1dae49deb3ba23990"
+      },
+      {
+        "path": "src/features/students/transport/student-directory-pages.ts",
+        "sha256": "fdd7f7e19501a208dfab9b979af44ad71152a31362807fbe1138398cb5ad60fc"
+      },
+      {
+        "path": "src/features/students/transport/student-history-pages.ts",
+        "sha256": "f2f18530d8d8bcb45e7fcf9579afaf8f8980e1133acd8651abe2490c40474984"
+      },
+      {
+        "path": "src/features/students/ui/cached-student-directory.test.tsx",
+        "sha256": "ff3235723223d466c8a5a4a2de73314dadd47bebf0dd853ad6171044011099f1"
+      },
+      {
+        "path": "src/features/students/ui/cached-student-directory.tsx",
+        "sha256": "1e1509c689a0a41f20e238d36da0d846176c413ddd752bdb16c7c0676a657369"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-account-panel.tsx",
+        "sha256": "af3246ad952b7befa1d9784e7e52ebc1f5ed345cdd5312a39fad3d4b555f23bf"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-code-panel.tsx",
+        "sha256": "835e92fd80668e105f9a891a0eec9130986b847f31edc170c6e9fd30bf7bf680"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-history-panel.tsx",
+        "sha256": "566601f2c6f985b28672a20e057e54837588cfbd3b15fac688036a949697a154"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-info-panel.test.tsx",
+        "sha256": "6a342216d4ee2a002c6480298b8cc4490477fffcd3422449f9521b2dc37feadd"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-info-panel.tsx",
+        "sha256": "cabf430aa4f5a08e57d828d3c4dd245e9037c1f4858370a37bed075a79450108"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-learning-history.test.tsx",
+        "sha256": "fff794d79e3d5a3e4e0a857fd7b9d5e7ac7adbb51f2dbf4bafdba5c8508d93c9"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-learning-history.tsx",
+        "sha256": "ef213ac0191f480b4d74e2b21b2ffb36acedcf8e1ae3fd58d1770ce1683d23c3"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-learning-source-list.module.css",
+        "sha256": "603f2b5ea09bfbe0e619c007e00f7144ab22049c7ef89c71ca58bbd8e9dedcd3"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-learning-source-list.tsx",
+        "sha256": "7f503b9c4115d70be21af091dfabb62300b2c28f75e6b98be8127970433e9e5e"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-vocab-book-history-list.module.css",
+        "sha256": "f2ad3ab411bac85b3d6b82ec2051b0464c42bdb6f435465d1f9afd18bd22eb87"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-vocab-book-history-list.tsx",
+        "sha256": "f12907c910dccd8d74998150928e55ecd27f7d0788a30ff719dc5d8335fbeafe"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-wrong-word-panel.module.css",
+        "sha256": "77d93813462aa9f91779a4989d065509c52c0d4e29886067be33ca0cb9f83441"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-wrong-word-panel.tsx",
+        "sha256": "940153b396b63e8ec49d10e3a7473f3e49c0a477867d9b8b55576edf94f3e1de"
+      },
+      {
+        "path": "src/features/students/ui/panels/wrong-word-control-section.tsx",
+        "sha256": "d4d9aacc37b7c4a6a20ff0df47fe9fe991416920ed61a64c94cddd182a069285"
+      },
+      {
+        "path": "src/features/students/ui/panels/wrong-word-filter-section.tsx",
+        "sha256": "557ae8da2a83c9c6fb5f1967a2c4a01a75e6db3472740d5a9bcc5bf503b77095"
+      },
+      {
+        "path": "src/features/students/ui/panels/wrong-word-list.tsx",
+        "sha256": "b09fb9fcfe9da961cf8c7c37b00d3a005f94cc021f4f47860e65c5db326cad45"
+      },
+      {
+        "path": "src/features/students/ui/panels/wrong-word-purpose-section.tsx",
+        "sha256": "8c59db7f0442eb0a59786f24d1891a95cacac64d3ff57982f8dac7dcfa075f93"
+      },
+      {
+        "path": "src/features/students/ui/panels/wrong-word-selection-controls.tsx",
+        "sha256": "0b1e73b7283475943c72cda833afc654b4a5e9bcb65c696bfa49efbc6b666f45"
+      },
+      {
+        "path": "src/features/students/ui/school-search-field.module.css",
+        "sha256": "b15768d326118bed904707e54e882945a7bfd2e0143f5f850926d4796a7945cc"
+      },
+      {
+        "path": "src/features/students/ui/school-search-field.test.tsx",
+        "sha256": "025e0cd1eccb1987663b49602f558448b126d66c70e759beb37c446233452cf6"
+      },
+      {
+        "path": "src/features/students/ui/school-search-field.tsx",
+        "sha256": "1dd5a58639eb378978be2433d3b6c5e692f11503650ad67fcb0749515686b077"
+      },
+      {
+        "path": "src/features/students/ui/student-create-workspace.test.tsx",
+        "sha256": "94f92279a8a968f7fa38862b59c59fde4cfae89b4a30ec1629f800e3a8e28ad9"
+      },
+      {
+        "path": "src/features/students/ui/student-create-workspace.tsx",
+        "sha256": "34aa4955073cb680da5d160b8367d4eb008ce96466b39d1c4df67aa5a008905c"
+      },
+      {
+        "path": "src/features/students/ui/student-detail-content.tsx",
+        "sha256": "93bb9f2b912c8c15ee26a67be80115009911fbfdd1ddb0cc6fbadd4e9dea1a14"
+      },
+      {
+        "path": "src/features/students/ui/student-detail-dialog.tsx",
+        "sha256": "1ae1f433de5aa53cb74f142b5c16e9f27c35099019822cf1d6d9f9af4627eaed"
+      },
+      {
+        "path": "src/features/students/ui/student-detail-header.tsx",
+        "sha256": "7668eca2bfdd3b09e9ecd92fe9990e92d1a78e0c7b8cc6ee5e5b0c3a2a8b837f"
+      },
+      {
+        "path": "src/features/students/ui/student-detail-page.test.tsx",
+        "sha256": "1f664c940093b9c554892681bb60c6e42c75edde72fdf3228f2bba369d3cc0e0"
+      },
+      {
+        "path": "src/features/students/ui/student-detail-page.tsx",
+        "sha256": "255161cea3c1b8244a30029b5d32f4050dc5ba28dbda4baace924417c9944245"
+      },
+      {
+        "path": "src/features/students/ui/student-detail-skeleton.tsx",
+        "sha256": "d373919481cde0d7ab46e0c6963254d9adda5a3be706eb6e1817f4d9e5e9bd8b"
+      },
+      {
+        "path": "src/features/students/ui/student-detail.module.css",
+        "sha256": "a33679f200102ec3fce030dca52c3067d1dad7d7e2cfe44933d7d41afebeeb66"
+      },
+      {
+        "path": "src/features/students/ui/student-directory-card.tsx",
+        "sha256": "7373d644ee6d15149ccd04d46a5c157717767a72598900e6e6530c64ba95c7ea"
+      },
+      {
+        "path": "src/features/students/ui/student-directory-filters.tsx",
+        "sha256": "cf133b67502a246f83f7a483faefe8cc41478e293f4ed875b064c115cd322e84"
+      },
+      {
+        "path": "src/features/students/ui/student-directory-list.tsx",
+        "sha256": "b4f50472c66e75bff2fd9ad268bc9b1a8feb67133553664742295109338c0138"
+      },
+      {
+        "path": "src/features/students/ui/student-directory-skeleton.tsx",
+        "sha256": "000aae69bd25e2010bd04f336fe6d7393ad36fb84fa8be9b0ef676450cba63de"
+      },
+      {
+        "path": "src/features/students/ui/student-directory.module.css",
+        "sha256": "6ab8c9936e829ca4ab3a41b59aef81f625b54d496afecc6b71d019ca228b23bc"
+      },
+      {
+        "path": "src/features/students/ui/student-directory.test.tsx",
+        "sha256": "3b6bf1c9c59b720e41df8ea541110a98c8e97e6c98530621f5d32c572eda7bb0"
+      },
+      {
+        "path": "src/features/students/ui/student-directory.tsx",
+        "sha256": "911eba125388f9c1c797721344bf6f1ef837fb81b3be1d00d9c20cf5d9b07583"
+      },
+      {
+        "path": "src/lib/admin/assignment-settings.test.ts",
+        "sha256": "c63fb5f118a307b27ee8e82bc62bce2f2cd0256f3a0f7c0ab1ab774997a729cf"
+      },
+      {
+        "path": "src/lib/admin/assignment-settings.ts",
+        "sha256": "0825a32db7d1e27c4368e3f830375da04bcb21999f63da253e9ab9c1e0c89e09"
+      },
+      {
+        "path": "src/lib/admin/dataset-catalog.test.ts",
+        "sha256": "b516cbfff1e7776aefdaa109800c15e8da570371aa74283e906eca4e80a8b0aa"
+      },
+      {
+        "path": "src/lib/admin/dataset-catalog.ts",
+        "sha256": "7dd3b024c7319992462868e092178b8602d89dc28eaea9595140b8c9ab20c83d"
+      },
+      {
+        "path": "src/lib/admin/dataset-display.ts",
+        "sha256": "ef0a2dcb7528ba322cd52db80cf5cd51cbbdab1f261e50be03a80942b273f194"
+      },
+      {
+        "path": "src/lib/admin/history-route.test.ts",
+        "sha256": "f09dc7c27208f3b5ea3e627b325bee909bbc8a2f3866ff3971add189eaa25796"
+      },
+      {
+        "path": "src/lib/admin/history-route.ts",
+        "sha256": "f336f50c237f0449b6d8eabc05f3ed2720137cb4d97986bf8fabfd5fbc4489c4"
+      },
+      {
+        "path": "src/lib/admin/history.test.ts",
+        "sha256": "fe6f7877c69d77e349bcc313328be09a7b26f513da8c3931d7c2c6389f7a66ee"
+      },
+      {
+        "path": "src/lib/admin/history.ts",
+        "sha256": "a350fa5dc7468d96733bd8d08bef0cb9917abc961d8aed285024ae9ea16a473d"
+      },
+      {
+        "path": "src/lib/admin/learning-sources.test.ts",
+        "sha256": "a9809dfb9e4d914eae97692d00579d4da14f81e8765b26afdd8d4095d08bd490"
+      },
+      {
+        "path": "src/lib/admin/learning-sources.ts",
+        "sha256": "998f201423687581883483c00608ed472184289cc6ef02c221763047d30394b4"
+      },
+      {
+        "path": "src/lib/admin/reading-curriculum.ts",
+        "sha256": "e3ba02836ca5c8c7c8a9d561f84538c8454682cd413a3e92d19b63c65aa95445"
+      },
+      {
+        "path": "src/lib/admin/unit-range-display.test.ts",
+        "sha256": "58e80feb0c9545e0b4702d3b5b3a63d23f7e7445ef12da1a856e88a840a41c20"
+      },
+      {
+        "path": "src/lib/admin/unit-range-display.ts",
+        "sha256": "f6a9fb487325fd071dfcf27158541a97375f16dbad01e52cf9c5eb524eeb9445"
+      },
+      {
+        "path": "src/lib/admin/vocab-assignment-queue.ts",
+        "sha256": "d078f51dfdae9246d48acd7300d371cb2fc004950a4fe02d973b5213c2324ee2"
+      },
+      {
+        "path": "src/lib/assignment/assignment-release.test.ts",
+        "sha256": "c3c6b4412e728128a7d73447ce3eb54d4d65d179812f0a376399e09c82ff2c2e"
+      },
+      {
+        "path": "src/lib/assignment/assignment-release.ts",
+        "sha256": "92c0f90b764745aa1debf3c98115ee70cf52bc8f1fdab8f66ea7d2d1e44c2b6c"
+      },
+      {
+        "path": "src/lib/database/admin-history-read-migration-contract.test.ts",
+        "sha256": "9aebf4565c0f0071656948e2fae708bab334cfddb89d4aa30769d805ffc3c471"
+      },
+      {
+        "path": "src/lib/database/admin-student-directory-read-model.integration.test.ts",
+        "sha256": "cae95e1ad00a6c41c6652d8cee877105d30a1e0d876e4c4b8deb9b8eb897a8f5"
+      },
+      {
+        "path": "src/lib/database/assignment-release-final-schema.integration.test.ts",
+        "sha256": "737f55e80a0c61470f244f42ea16415e14bee468428425a8ed90e447da36cb14"
+      },
+      {
+        "path": "src/lib/database/entry-approved-pronunciation.integration.test.ts",
+        "sha256": "8255fb5f3fed99685921aed9045e90c034853f8da218af0d7f202feaf81a0ddc"
+      },
+      {
+        "path": "src/lib/database/review-assignment-final-schema.integration.test.ts",
+        "sha256": "7ffa0c111245ab248ce147b5bdc81ad657b56cf5b0d5b2b59ead80f864692d02"
+      },
+      {
+        "path": "src/lib/database/student-dashboard-read-model-migration-contract.test.ts",
+        "sha256": "bc2f11f729d40e6f321623567fdca5ea9f11107ef419eb295843be31a95a5dbc"
+      },
+      {
+        "path": "src/lib/database/student-dashboard-read-model.integration.test.ts",
+        "sha256": "d7095274638577349f46fe6f4e2678813aaa0c5102c2d68a4db22c91db413fc1"
+      },
+      {
+        "path": "src/lib/database/student-profile-version-command.integration.test.ts",
+        "sha256": "6f3ffd530d81add7928925c3c50a6477a9829b6e503ee40c0205703652854fdb"
+      },
+      {
+        "path": "src/lib/quiz/entry-source-pronunciation.test.ts",
+        "sha256": "68fa7119e92165db78746f953c7b24f3b6ba5940c58a8d0b943ad321262762de"
+      },
+      {
+        "path": "src/lib/quiz/entry-source-pronunciation.ts",
+        "sha256": "1c2d2086f62075067113e526713d8a68edfaeca0f3fc99991ede9bbd8b88176b"
+      },
+      {
+        "path": "src/lib/quiz/pronunciation-snapshot.test.ts",
+        "sha256": "1709144383cdd1cd6002c082e293561961a8a0a0a71b62db7c8f65893ae56e37"
+      },
+      {
+        "path": "src/lib/quiz/pronunciation-snapshot.ts",
+        "sha256": "edeef6f735bfd2196d7417d24af9b5f35b5ca484a8df7991c3f380ded70b815f"
+      },
+      {
+        "path": "src/lib/quiz/pronunciation-storage.test.ts",
+        "sha256": "853d024ea8e61ffad858ed474b7c34a805c61661983c04e7437b92ecd1b88505"
+      },
+      {
+        "path": "src/lib/quiz/pronunciation-storage.ts",
+        "sha256": "a400e9657d32d08ba7a2cbc4743c879e0baac8fe23c99b5ccb696e99f66c4669"
+      },
+      {
+        "path": "src/lib/quiz/question-content-mode.test.ts",
+        "sha256": "0c2551861145e732e7b2da9853291644375b8abb019a0658231e63bd1df221a8"
+      },
+      {
+        "path": "src/lib/quiz/question-content-mode.ts",
+        "sha256": "8ffd70fa0991b31ffc5b314ed550080d0b26cc865433fd8adfdb6464114d3251"
+      },
+      {
+        "path": "src/lib/quiz/question-provenance.ts",
+        "sha256": "5fe70381fe029af6ace56f63dd4069c6afc88ee030918df5063d8ca29fb65617"
+      },
+      {
+        "path": "src/lib/quiz/result-presentation.test.ts",
+        "sha256": "8530f5c517f3be408a52d72439c9046a5c0b5d38a7cb69ad94f22c7eba480b03"
+      },
+      {
+        "path": "src/lib/quiz/result-presentation.ts",
+        "sha256": "d62d9a0ecb787e39ad0db7107bd4452a8432f774f8b5249e61095ce495cd5c30"
+      },
+      {
+        "path": "src/lib/services/admin-deletion-service.ts",
+        "sha256": "9ffc24b389e7e376b53e3b880bac5a20f2414a4785e77657d6421b9116831615"
+      },
+      {
+        "path": "src/lib/services/admin-material-query.ts",
+        "sha256": "045323f9781c1f55202c3ce809db4d07410583aefc950e5adcccd5c391786f80"
+      },
+      {
+        "path": "src/lib/services/admin-material-read-service.ts",
+        "sha256": "6a5d3f255740ccfcd1511370b2be152292171d23494d81af251a18a15b7648d7"
+      },
+      {
+        "path": "src/lib/services/admin-material-request-cache.test.ts",
+        "sha256": "7bced50d93a5ab03d9e3b1b5d2ec91369c645c9b7bd0df6cb7ee146b06d365fd"
+      },
+      {
+        "path": "src/lib/services/admin-student-command-service.ts",
+        "sha256": "ea4cee3ff13f960d40247f7cfe14d45555985a5b09858ea672f29b36b5da8fa0"
+      },
+      {
+        "path": "src/lib/services/admin-wrong-summary-query-contract.test.ts",
+        "sha256": "6fc858d122f0cd86843fc43d58c71e6f2d3655bc118e3e6a5ccf75c5588eb613"
+      },
+      {
+        "path": "src/lib/services/dataset-catalog-service.ts",
+        "sha256": "54e02bfbd5240b5bd9ad6518da06414ef11f544efc54e445a7d4d55858a15320"
+      },
+      {
+        "path": "src/lib/services/learning-point-read-service.test.ts",
+        "sha256": "c4a23fd40db565026b3bc7cdbdbe1f9dbdac434d1421a39e363c7f428b4b1dfd"
+      },
+      {
+        "path": "src/lib/services/learning-point-read-service.ts",
+        "sha256": "5e91c0744fe3e84d9447ae5aa700ecc9c64768c70bee88736e0dacb3f2812d56"
+      },
+      {
+        "path": "src/lib/services/quiz/attempt-result-query.test.ts",
+        "sha256": "77ca72408a7396ffcf6097606ae1198431b6817d2f195e4de58827cd912ff3db"
+      },
+      {
+        "path": "src/lib/services/quiz/attempt-result-query.ts",
+        "sha256": "878722781044704b9a23a3109748ead14dd8025a048280bc41addd450ff300d7"
+      },
+      {
+        "path": "src/lib/services/quiz/pronunciation-registry.test.ts",
+        "sha256": "8cd877406291e2357fff49aa57c3a17c966f5da1807bd51dee98fdd83540b3bd"
+      },
+      {
+        "path": "src/lib/services/quiz/pronunciation-registry.ts",
+        "sha256": "58b8d17c693a4d33f186f8896b2566d61e3092006857121f847667e04f6119b1"
+      },
+      {
+        "path": "src/lib/services/quiz/question-snapshot.ts",
+        "sha256": "9a46111ac246b49cca4d64dd970a86593240863b1f9a24e712a62f0ee35723d6"
+      },
+      {
+        "path": "src/lib/services/quiz/result-question-mapper.ts",
+        "sha256": "9bae0785763c6fd1626252d26ec27c407a80323706f3baefea2fdac22ebaf61a"
+      },
+      {
+        "path": "src/lib/services/regular-assignment-scope-contract.test.ts",
+        "sha256": "df05754c0933ff191b8d3aa7a5fd6cbeb71e07e3cda04e9f94ba532659c878b4"
+      },
+      {
+        "path": "src/styles/theme.css",
+        "sha256": "b8b531a742fd2647b8e83d6197cc759c9f544aa60e1a640a23fee53fc13c6840"
+      },
+      {
+        "path": "src/styles/tokens.css",
+        "sha256": "069040f318f41f14018564090afd8759e19daab78c6b57bb3439af20d9e55d5f"
+      },
+      {
+        "path": "src/test-support/local-school-schedule-edit.test.mjs",
+        "sha256": "b0df7d570bbd1cfecd9140f1eb4df0dd335a72ee761bad7eefd7b05493342f04"
+      },
+      {
+        "path": "src/test-support/module-boundary.test.ts",
+        "sha256": "d6dc252bef406aec356629a8c71dd3b1a8769e028f1a87e37b7991b0cfb2faa9"
+      },
+      {
+        "path": "src/test-support/module-boundary.ts",
+        "sha256": "88caa81a7f9e912cb0e3fc3667c0d82352e46f0999d61fd546597950ffc3b0c3"
+      },
+      {
+        "path": "src/test-support/server-architecture.ts",
+        "sha256": "fa5baed3795dffb7b7b9c1f6caa61726e9485981297b4777f88f2d22f50eb5b7"
+      },
+      {
+        "path": "supabase/migrations/20260829153000_add_admin_history_read_model.sql",
+        "sha256": "084111b9bea95b7847ecebd88cdc24f83361fd6774d02fd342b521adac55bc8b"
+      },
+      {
+        "path": "supabase/migrations/20260829190000_add_student_dashboard_read_model.sql",
+        "sha256": "8cee56fd459d41f1a798549216cb5d2ecd1ce8d91cddc49a003908b4ab47d76e"
+      },
+      {
+        "path": "supabase/migrations/20260829213000_add_admin_student_directory_read_model.sql",
+        "sha256": "54bb2b0b21d5a96d7610577a90b8b8bd6a760d1e7fc331f89119788f762dd43a"
+      },
+      {
+        "path": "supabase/migrations/20260831100000_return_admin_history_hidden_version.sql",
+        "sha256": "c0907d83dabf42895bf31166e32966586079f330ec92ad3d6c641f25a1bdb395"
+      },
+      {
+        "path": "supabase/migrations/20260831101000_add_student_profile_version_command.sql",
+        "sha256": "fd52f9467b9bb38fe5341859b5f69f8ce53562058d196851d7f562629db87498"
+      },
+      {
+        "path": "supabase/migrations/20260901141048_fix_admin_history_infinite_effective_at.sql",
+        "sha256": "e1f497f7d3dd511504379c73d1d5f76137f9b62e7fdfba62bf34458a066e8aa3"
+      },
+      {
+        "path": "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
+        "sha256": "790a375052a12feafc678995100f73dd0ae73b823381029ac0bcbdc5e5cc8a06"
+      },
+      {
+        "path": "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql",
+        "sha256": "a134db3dd30e1e32d3dcbc06046a899cb6dee1522ff6707171f068157ff4cef0"
+      },
+      {
+        "path": "supabase/migrations/20260907121138_add_entry_approved_korean_pronunciation.sql",
+        "sha256": "71c2d28f628f8b5510b272c7b995a0f0356dcb094dc195e9216c98b67a63f0fb"
+      },
+      {
+        "path": "supabase/migrations/20260907235924_admin_history_school_labels.sql",
+        "sha256": "b18ca25cffd49128a8432a66045b1c7ffb7276b055f7f9c93156a83150fb154d"
+      },
+      {
+        "path": "supabase/migrations/20260908160633_add_source_restored_pronunciation.sql",
+        "sha256": "91c1286fbbb9abfbf701b6e1daff5755284ad8e4ab20f6af5b0e7b8b1a03f801"
+      },
+      {
+        "path": "supabase/migrations/20260908203803_add_entry_source_pronunciation.sql",
+        "sha256": "ba3b91b211da24073d11b4857f5a0f868410fd5f19c6f8b85c514728d7d204a8"
+      },
+      {
+        "path": "supabase/migrations/20260910193008_match_reviewed_pronunciation_source_pos.sql",
+        "sha256": "d27a0be9285ab37c5c564009d82ec40c42c9008d6e2fc62935dd8bfe64cae3e3"
+      },
+      {
+        "path": "supabase/migrations/20260910194539_match_reviewed_pronunciation_source_headword.sql",
+        "sha256": "21fc0f23dc453e7e6bd98cc9c17b44f0a2b7893bcc0df0041417d71fc0f5ae58"
+      },
+      {
+        "path": "supabase/migrations/20260913020000_add_school_handout_reviewed_import.sql",
+        "sha256": "816d7de54356939722640f7e737e119b5220206d1ed7bda815c5d6a27190a4c2"
+      },
+      {
+        "path": "supabase/migrations/20260913092302_add_school_schedule_and_student_school_key.sql",
+        "sha256": "892fd7408e19c395ecac17e43ea64882b1a9818f4719e418c2130b1bafee3e76"
+      },
+      {
+        "path": "supabase/migrations/20260913221810_add_school_schedule_manual_edits.sql",
+        "sha256": "c7aacdc71a352d2a923471e9f44cef3600baf497bb72bc717e1becee690bc9ca"
+      },
+      {
+        "path": "tsconfig.json",
+        "sha256": "5bec101c734eb97d36f3f49b122ad4d37b68d796bfa608760d266c57cd6c50ac"
+      },
+      {
+        "path": "vitest.config.ts",
+        "sha256": "705e16d57f8b528b676a87707bb71dea3ed2d1389303f53ef10902ff4e2726ec"
+      }
+    ],
+    "runs": [
+      {
+        "checkId": "T1",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-13T23:22:02.791Z",
+        "command": "vitest run --maxWorkers=4 --reporter=json --outputFile=tmp/schedule-final-all-tests.json",
+        "summary": "전체3401통과/0실패/1기존제외. 학교 일정63검사와 가상 환경33검사 포함. 운영 데이터와 배정·응시 변경0."
+      },
+      {
+        "checkId": "T2",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-13T23:22:02.791Z",
+        "command": "vitest run --maxWorkers=4 --reporter=json --outputFile=tmp/schedule-final-all-tests.json",
+        "summary": "전체3401통과/0실패/1기존제외. 학교 일정63검사와 가상 환경33검사 포함. 운영 데이터와 배정·응시 변경0."
+      },
+      {
+        "checkId": "T3",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-13T23:22:02.791Z",
+        "command": "vitest run --maxWorkers=4 --reporter=json --outputFile=tmp/schedule-final-all-tests.json",
+        "summary": "전체3401통과/0실패/1기존제외. 학교 일정63검사와 가상 환경33검사 포함. 운영 데이터와 배정·응시 변경0."
+      },
+      {
+        "checkId": "T4",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-13T23:22:02.791Z",
+        "command": "CUA isolated local Next build: modal/day save/back/forward/direct/mobile",
+        "summary": "PC·390×844 모바일, 두 진입점·날짜 저장·개요 갱신·앞으로가기 최신값·직접 주소/새로고침·미저장 취소·자료 없는 학기 신규 입력. 가로 넘침0, 최종 탭 콘솔 오류0. 가상 데이터만 저장."
+      },
+      {
+        "checkId": "T5",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-13T23:22:02.791Z",
+        "command": "eslint src scripts; tsc; feature-map; UI architecture; request-cache; isolated Next build; independent read review",
+        "summary": "제품 타입·lint·기능지도·구조·요청 캐시·격리 빌드 통과. 의존성 추가0. SQL/원천/UI 독립 검토 필수 미해결0."
+      }
+    ]
+  }
+}
