@@ -1,6 +1,7 @@
 // Synthetic HTTP fixtures only. Never import this module from application code.
 import { studentStudyFixture, STUDY_SECRET } from "./local-student-study-data.mjs";
 import { studentQuizFixture } from "./local-quiz-feedback-data.mjs";
+import { LOCAL_SCHOOL_KEY, localSchoolSchedulePayload } from "./local-school-schedule-data.mjs";
 export const APP_ORIGIN = "http://127.0.0.1:3037";
 export const DATA_ORIGIN = "http://127.0.0.1:3038";
 export const NEXT_ORIGIN = "http://127.0.0.1:3040";
@@ -44,7 +45,7 @@ function filteredStudents(input) {
     (!input.p_wrong || input.p_wrong === "all") && !input.p_class_group_id && !input.p_wordbook);
 }
 const profileVersions = new Map();
-export function fixtureResponse({ url, method, headers, body = "", quizFeedback = false, studentProfile = false }) {
+export function fixtureResponse({ url, method, headers, body = "", quizFeedback = false, studentProfile = false, schoolSchedules = false }) {
   const target = new URL(url);
   const deny = { status: 403, body: { error: "Local fixture request rejected" }, category: "rejected" };
   if (target.origin !== DATA_ORIGIN || target.username || target.password) return deny;
@@ -97,17 +98,20 @@ export function fixtureResponse({ url, method, headers, body = "", quizFeedback 
   }
   if (method === "POST" && table.startsWith("rpc/")) {
     const rpc = table.slice(4);
-    if (studentProfile && ["get_admin_student_detail_initial_v2", "get_admin_student_profile_v1", "update_admin_student_profile_v1"].includes(rpc)) {
+    if (schoolSchedules && rpc === "get_admin_school_schedules_v1") return respond(localSchoolSchedulePayload(students,input.p_student_ids),"school-schedule");
+    if (studentProfile && ["get_admin_student_detail_initial_v2", "get_admin_student_profile_v1", "update_admin_student_profile_v1", "update_admin_student_profile_v2"].includes(rpc)) {
       const student = students.find(value => value.id === input.p_student_id);
       if (!student) return deny;
-      if (rpc === "update_admin_student_profile_v1") {
+      if (rpc === "update_admin_student_profile_v1" || rpc === "update_admin_student_profile_v2") {
         if (input.p_base_version !== (profileVersions.get(student.id) ?? stamp)) return { status: 409, category: "profile-conflict", body: { code: "40001", message: "student_profile_conflict" } };
         if (typeof input.p_display_name !== "string" || !input.p_display_name.trim() || input.p_display_name.length > 80 ||
           typeof input.p_school_name !== "string" || input.p_school_name.length > 120 || typeof input.p_grade_label !== "string" || input.p_grade_label.length > 40) return deny;
         Object.assign(student, { displayName: input.p_display_name.trim(), schoolName: input.p_school_name.trim() || null, gradeLabel: input.p_grade_label.trim() || null });
+        if (schoolSchedules && rpc === "update_admin_student_profile_v2") student.schoolKey = input.p_school_key;
         profileVersions.set(student.id, new Date().toISOString());
       }
       const profile = { id: student.id, displayName: student.displayName, schoolName: student.schoolName, gradeLabel: student.gradeLabel, updatedAt: profileVersions.get(student.id) ?? stamp };
+      if (schoolSchedules) profile.schoolKey = student.schoolKey === undefined ? LOCAL_SCHOOL_KEY : student.schoolKey;
       if (rpc !== "get_admin_student_detail_initial_v2") return respond(profile, rpc.startsWith("update") ? "profile-memory-write" : "profile-result-read");
       return respond({ snapshotAt: new Date().toISOString(), student: { ...student, ...profile, createdAt: stamp, currentVocabDatasetId: null, readingContextSyncStatus: "not_configured", readingCurriculumStage: "undecided" },
         history: { items: [], totalCount: 0 }, learningSources: [], vocabBookHistory: [], wrongSummary: { wrongWordCount: 0, repeatedWrongWordCount: 0 } }, "student-detail");

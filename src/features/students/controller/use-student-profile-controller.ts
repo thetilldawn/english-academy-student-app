@@ -8,13 +8,13 @@ import { readStudentProfileSaveResult, updateStudentProfile } from "../actions/u
 import type { StudentDetailProfile } from "../contracts/student-detail-read-model";
 import type { StudentProfileMutationReceipt } from "../contracts/student-mutation-result";
 
-type StudentProfileDraft = { displayName: string; gradeLabel: string; schoolName: string };
+type StudentProfileDraft = { displayName: string; gradeLabel: string; schoolName: string; schoolKey: string | null };
 type Feedback = { message: string; tone: "danger" | "success" | "neutral" };
-function draftFromStudent(student: Pick<StudentDetailProfile, "displayName" | "schoolName" | "gradeLabel">): StudentProfileDraft {
-  return { displayName: student.displayName, gradeLabel: student.gradeLabel ?? "", schoolName: student.schoolName ?? "" };
+function draftFromStudent(student: Pick<StudentDetailProfile, "displayName" | "schoolName" | "gradeLabel" | "schoolKey">): StudentProfileDraft {
+  return { displayName: student.displayName, gradeLabel: student.gradeLabel ?? "", schoolName: student.schoolName ?? "", schoolKey: student.schoolKey ?? null };
 }
 function equalDraft(a: StudentProfileDraft, b: StudentProfileDraft) {
-  return a.displayName === b.displayName && a.schoolName === b.schoolName && a.gradeLabel === b.gradeLabel;
+  return a.displayName === b.displayName && a.schoolName === b.schoolName && a.gradeLabel === b.gradeLabel && a.schoolKey === b.schoolKey;
 }
 
 export function useStudentProfileController(input: {
@@ -84,10 +84,11 @@ export function useStudentProfileController(input: {
       }
       const matches = equalDraft(draftFromStudent(result.receipt.student), {
         displayName: submitted.displayName.trim(), schoolName: submitted.schoolName.trim(), gradeLabel: submitted.gradeLabel.trim(),
+        schoolKey: submitted.schoolKey,
       });
       adopt(result.receipt, !checking || matches ? submitted : undefined);
-      show({ tone: checking && !matches ? "neutral" : "success",
-        message: checking && !matches ? adminStudentsText.info.profileChecked : adminStudentsText.info.profileSuccess }, { needsCheck: false });
+      show({ tone: checking ? "neutral" : "success",
+        message: checking ? matches ? "저장된 내용을 확인했습니다." : adminStudentsText.info.profileChecked : adminStudentsText.info.profileSuccess }, { needsCheck: false });
       if (!checking) toast.success(adminStudentsText.info.profileSuccess);
     } catch {
       if (requestVersionRef.current !== version) return;
@@ -100,16 +101,25 @@ export function useStudentProfileController(input: {
     }
   }
   return {
-    busy, draft, unchanged, needsCheck, locked, checking: own && operation.checking, feedback: own ? operation.feedback : null,
+    busy, draft, unchanged, needsCheck, locked, checking: own && operation.checking,
+    feedback: own ? operation.feedback?.tone === "success" && !unchanged
+      ? { tone: "neutral" as const, message: "제출한 내용은 저장했습니다. 추가 변경사항은 아직 저장되지 않았습니다." } : operation.feedback : null,
     actions: {
       save: () => run(false),
       checkResult: () => run(true),
+      selectSchool: (school: { id: string; name: string }) => {
+        if (guardRef.current.studentId !== student.id || guardRef.current.locked) return;
+        setDraftState(current => ({ ...current, draft: { ...current.draft, schoolName: school.name, schoolKey: school.id } }));
+      },
       setField: (field: keyof StudentProfileDraft, value: string) => {
         if (guardRef.current.studentId !== student.id || guardRef.current.locked) return;
         setDraftState(current => ({
           ...(current.studentId === student.id ? current : freshState()),
-          draft: { ...(current.studentId === student.id ? current.draft : draftFromStudent(student)), [field]: value },
+          draft: { ...(current.studentId === student.id ? current.draft : draftFromStudent(student)), [field]: value,
+            ...(field === "schoolName" ? { schoolKey: null } : {}) },
         }));
+        setOperation(current => current.studentId === student.id && current.feedback?.tone === "success" && !current.needsCheck
+          ? { ...current, feedback: null } : current);
       },
     },
   };

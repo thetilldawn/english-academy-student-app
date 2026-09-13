@@ -33,6 +33,7 @@ import { useStudentCreatePreparation } from "../controller/use-student-create-pr
 import { StudentCodePanel } from "./panels/student-code-panel";
 import { useSchoolSearch } from "../controller/use-school-search";
 import { SchoolSearchField } from "./school-search-field";
+import type { SchoolSearchItem } from "../contracts/school-search-contract";
 import styles from "./student-directory.module.css";
 import detailStyles from "./student-detail.module.css";
 
@@ -45,7 +46,11 @@ export function StudentCreateWorkspace({
   const preparation = useStudentCreatePreparation();
   const [open, setOpen] = useState(false);
   const [schoolName, setSchoolName] = useState("");
-  const school = useSchoolSearch({ ownerKey: "student-create", value: schoolName, onChange: setSchoolName,
+  const [selectedSchool, setSelectedSchool] = useState<SchoolSearchItem | null>(null);
+  const [grade, setGrade] = useState("");
+  const school = useSchoolSearch({ ownerKey: "student-create", value: schoolName,
+    onChange: value => { setSchoolName(value); setSelectedSchool(null); setGrade(""); },
+    onChoose: setSelectedSchool,
     active: open, locked: preparation.status === "auth-error" });
   const locked = preparation.status === "auth-error" || school.locked;
   const { datasets } = preparation;
@@ -80,8 +85,9 @@ export function StudentCreateWorkspace({
             aria-busy={controller.busy}
             className={styles.formStack}
             onSubmit={submit}
-            onReset={() => { setSchoolName(""); school.actions.reset(); }}
+            onReset={() => { setSchoolName(""); setSelectedSchool(null); setGrade(""); school.actions.reset(); }}
           >
+            <input type="hidden" name="schoolKey" value={selectedSchool?.id ?? ""} />
             <Field>
               <FieldLabelRow>
                 <FieldLabel as="span" className={inlineHelpClassName}>
@@ -92,7 +98,7 @@ export function StudentCreateWorkspace({
                     {adminStudentsText.createStudent.nameHelp}
                   </HelpTip>
                 </FieldLabel>
-                <FieldRequirement data-kind="required">
+                <FieldRequirement data-kind="required" className={styles.requiredTag}>
                   {adminStudentsText.createStudent.required}
                 </FieldRequirement>
               </FieldLabelRow>
@@ -115,11 +121,12 @@ export function StudentCreateWorkspace({
                     {adminStudentsText.createStudent.optional}
                   </FieldRequirement>
                 </FieldLabelRow>
-                <Input
-                  maxLength={40}
-                  name="gradeLabel"
-                  placeholder={adminStudentsText.createStudent.gradePlaceholder}
-                />
+                <Select name="gradeLabel" disabled={!selectedSchool?.level} value={grade}
+                  onChange={event => setGrade(event.target.value)}>
+                  <option value="">학년 선택</option>
+                  {[1, 2, 3].map(value => <option key={value} value={`${selectedSchool?.level ?? ""}${value}`}>{value}학년</option>)}
+                </Select>
+                <FieldHelp>{selectedSchool?.level ? "학년은 나중에 등록할 수도 있습니다." : "학교를 검색해 선택한 뒤 학년을 골라 주세요."}</FieldHelp>
               </Field>
             </div>
             <Field>

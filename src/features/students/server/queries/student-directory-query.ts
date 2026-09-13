@@ -1,6 +1,7 @@
 import "server-only";
 
 import { z } from "zod";
+import { getAdminSchoolScheduleMap } from "@/features/school-schedules/public-server";
 
 import {
   normalizeStudentDirectoryFilters,
@@ -55,13 +56,15 @@ function nextCursorFromNodes(input: {
   });
 }
 
-function pageFromNodes(input: {
+async function pageFromNodes(input: {
   filters: StudentDirectoryFilters;
   nodes: readonly StudentDirectoryNode[];
   snapshotAt: string;
-}): StudentDirectoryPage {
+}): Promise<StudentDirectoryPage> {
+  const visible = input.nodes.slice(0, PAGE_SIZE).map(node => node.item);
+  const schedules = await getAdminSchoolScheduleMap(visible.map(item => item.id), visible);
   return {
-    items: input.nodes.slice(0, PAGE_SIZE).map((node) => node.item),
+    items: visible.map(item => ({ ...item, ...(schedules[item.id] ? { schoolSchedule: schedules[item.id] } : {}) })),
     nextCursor: nextCursorFromNodes(input),
   };
 }
@@ -101,7 +104,7 @@ export async function getStudentDirectoryInitial(
   return {
     filterOptions: row.filter_options,
     filters,
-    page: pageFromNodes({
+    page: await pageFromNodes({
       filters,
       nodes: row.items,
       snapshotAt: row.snapshot_at,

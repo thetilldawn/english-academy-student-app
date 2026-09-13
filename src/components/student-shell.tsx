@@ -17,12 +17,14 @@ export function StudentShell({
   gradeLabel,
   schoolName,
   points,
+  identity,
 }: {
   children: React.ReactNode;
   displayName: string;
   gradeLabel: string | null;
   schoolName?: string | null;
   points: React.ReactNode;
+  identity?: React.ReactNode;
 }) {
   const pathname = usePathname();
   const focusedAttempt = pathname.startsWith("/student/attempt/");
@@ -74,11 +76,11 @@ export function StudentShell({
           <div className={[styles.topbarInner, styles.studentTopbarInner].join(" ")}>
             {pageTitle ? <RouteScreenReaderTitle title={pageTitle} /> : null}
             <div className={styles.studentIdentity}>
-              <span className={styles.studentUserLabel}>
+              {identity ?? <span className={styles.studentUserLabel}>
                 {displayName}
                 {schoolName ? ` · ${schoolName}` : ""}
                 {gradeLabel ? ` · ${gradeLabel}` : ""}
-              </span>
+              </span>}
               <span aria-hidden="true" className={styles.studentIdentityDivider}>|</span>
               {points}
             </div>

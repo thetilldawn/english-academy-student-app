@@ -37,6 +37,7 @@ export const emptyStudentDirectoryFilters: StudentDirectoryFilters = {
 };
 
 export type StudentDirectoryListItem = {
+  schoolSchedule?: SchoolScheduleSummary;
   codeStatus: "active" | "blocked" | "expired" | "missing";
   completedCount: number;
   currentVocabBook: string | null;
@@ -112,3 +113,4 @@ export function normalizeStudentDirectoryFilters(
 export function studentDirectoryFilterKey(filters: StudentDirectoryFilters) {
   return JSON.stringify(normalizeStudentDirectoryFilters(filters));
 }
+import type { SchoolScheduleSummary } from "@/features/school-schedules/public-contracts";

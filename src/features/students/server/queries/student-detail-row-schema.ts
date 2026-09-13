@@ -34,6 +34,7 @@ export const studentDetailInitialRowSchema = z.object({
   })),
   snapshotAt: timestampSchema,
   student: z.object({
+    schoolKey: z.string().nullable().optional(),
     codeStatus: z.enum(["active", "blocked", "expired", "missing"]),
     createdAt: timestampSchema,
     currentVocabBook: z.string().nullable(),

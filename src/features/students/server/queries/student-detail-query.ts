@@ -1,4 +1,5 @@
 import "server-only";
+import { getAdminSchoolScheduleMap } from "@/features/school-schedules/public-server";
 
 import { mapAdminHistoryDetailItem } from "@/features/history/public-server";
 import { requireAdmin } from "@/lib/auth/admin";
@@ -78,7 +79,7 @@ export async function getStudentDetailInitial(
     history,
     learningSources: parsed.data.learningSources,
     snapshotAt: parsed.data.snapshotAt,
-    student: parsed.data.student,
+    student: { ...parsed.data.student, schoolSchedule: (await getAdminSchoolScheduleMap([studentId], [parsed.data.student]))[studentId] },
     vocabBookHistory,
     wrongSummary: parsed.data.wrongSummary,
   };

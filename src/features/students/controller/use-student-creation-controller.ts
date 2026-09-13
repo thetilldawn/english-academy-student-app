@@ -27,9 +27,10 @@ export function useStudentCreationController(appOrigin: string) {
       const payload = await createStudent({
         currentVocabDatasetId: form.get("currentVocabDatasetId"),
         displayName,
-        gradeLabel: form.get("gradeLabel"),
+        gradeLabel: form.get("gradeLabel") ?? "",
         note: form.get("note"),
         schoolName: form.get("schoolName"),
+        schoolKey: form.get("schoolKey") || null,
       });
       if (!payload.code) {
         throw new Error(adminStudentsText.createStudent.noCodeError);

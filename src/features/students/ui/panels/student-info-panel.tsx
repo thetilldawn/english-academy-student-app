@@ -11,6 +11,7 @@ import {
   Input,
 } from "@/design-system/primitives/form/field";
 import { CurrentPointSummary } from "@/features/learning-points/public-ui";
+import { SchoolTimeline } from "@/features/school-schedules/public-ui";
 import type { StudentLearningSourceItem } from "@/lib/admin/learning-sources";
 import type { StudentVocabBookHistory } from "../../public-contracts";
 
@@ -83,10 +84,13 @@ export function StudentInfoPanel({
           }
           type="submit"
         >
-          {controller.busy
+          {controller.checking ? adminStudentsText.info.profileChecking : controller.busy
             ? adminStudentsText.info.savePending
             : adminStudentsText.info.save}
         </Button>
+        {!controller.busy && !controller.needsCheck && !controller.locked && !controller.unchanged ? <Notice role="status">
+          저장하지 않은 변경사항이 있습니다.
+        </Notice> : null}
         {controller.feedback ? <Notice role={controller.feedback.tone === "danger" ? "alert" : "status"} tone={controller.feedback.tone}>
           {controller.feedback.message}
           {controller.needsCheck ? <Button disabled={controller.busy} onClick={() => void controller.actions.checkResult()} type="button" variant="quiet">
@@ -94,6 +98,9 @@ export function StudentInfoPanel({
           </Button> : null}
         </Notice> : null}
       </form>
+      {student.schoolSchedule ? <SchoolTimeline overview={{ status: student.schoolSchedule.status === "error" ? "error" : "ready",
+        today: student.schoolSchedule.today, groups: [{ summary: student.schoolSchedule, studentCount: 1 }] }} student
+        retry={<Button disabled={controller.busy || controller.locked} onClick={() => void controller.actions.checkResult()} variant="quiet">{controller.checking ? "확인 중…" : "다시 시도"}</Button>} /> : null}
 
       <section className={styles.historySection}>
         <h3>{adminStudentsText.info.currentWordbook}</h3>

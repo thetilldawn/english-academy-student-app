@@ -1,4 +1,5 @@
 import { GuardedLink } from "@/components/guarded-link";
+import { SchoolExamIdentity } from "@/features/school-schedules/public-ui";
 import { adminStudentsText } from "@/content/ko/admin-students";
 import { learningPointsText } from "@/content/ko/learning-points";
 import {
@@ -27,6 +28,7 @@ export function StudentDirectoryCard({
       prefetch={false}
     >
       <span className={styles.cardHeading}>
+        <SchoolExamIdentity as="span" summary={student.schoolSchedule}>
         <span className={styles.cardTitleRow}>
           <strong className={styles.cardName}>{student.displayName}</strong>
           <span className={styles.accountStatuses}>
@@ -44,6 +46,7 @@ export function StudentDirectoryCard({
             ) : null}
           </span>
         </span>
+        </SchoolExamIdentity>
         <MetaTagList>
           <MetaTag>
             {student.schoolName ?? adminStudentsText.card.schoolMissing}

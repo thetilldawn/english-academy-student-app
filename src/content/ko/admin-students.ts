@@ -78,7 +78,7 @@ export const adminStudentsText = {
     school: "학교",
     grade: "학년",
     savePending: "저장 중…",
-    save: "학생 정보 저장",
+    save: "변경사항 저장",
     currentWordbook: "현재 단어장",
     chooseLater: "나중에 선택",
     previousWordbook: "이전 단어장",

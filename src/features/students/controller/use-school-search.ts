@@ -5,8 +5,8 @@ import { loadSchoolSearch } from "../transport/school-search";
 import { SchoolSearchRequestError, schoolSearchMessages, type SchoolSearchResponse } from "../contracts/school-search-contract";
 
 type State = SchoolSearchResponse & { ownerKey: string; active: boolean; externallyLocked: boolean; query: string; status: "idle" | "loading" | "ready" | "error" | "auth-error" };
-export function useSchoolSearch({ ownerKey, value, onChange, active = true, locked = false }: {
-  ownerKey: string; value: string; onChange: (value: string) => void; active?: boolean; locked?: boolean;
+export function useSchoolSearch({ ownerKey, value, onChange, onChoose, active = true, locked = false }: {
+  ownerKey: string; value: string; onChange: (value: string) => void; onChoose?: (item: SchoolSearchResponse["items"][number]) => void; active?: boolean; locked?: boolean;
 }) {
   const [state, setState] = useState<State>({ ownerKey, active, externallyLocked: locked, query: "", status: "idle", items: [], hasMore: false });
   const generation = useRef(0);
@@ -63,7 +63,7 @@ export function useSchoolSearch({ ownerKey, value, onChange, active = true, lock
     actions: {
       change: (next: string) => { if (ownLocked || !active || next === value) return; onChange(next); search(next, 350); },
       choose: (id: string) => { if (!active || ownLocked) return; const item = current?.items.find(item => item.id === id); if (!item) return;
-        cancel(); expectedQuery.current = null; onChange(item.name); setState({ ownerKey, active, externallyLocked: locked, query: item.name, status: "idle", items: [], hasMore: false }); },
+        cancel(); expectedQuery.current = null; onChange(item.name); onChoose?.(item); setState({ ownerKey, active, externallyLocked: locked, query: item.name, status: "idle", items: [], hasMore: false }); },
       retry: () => search(value),
       reset: () => { cancel(); expectedQuery.current = null; setState({ ownerKey, active, externallyLocked: locked, query: "", status: ownLocked ? "auth-error" : "idle", items: [], hasMore: false }); },
     },

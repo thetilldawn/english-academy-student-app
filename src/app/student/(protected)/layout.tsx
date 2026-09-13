@@ -10,6 +10,7 @@ import {
   studentSessionRenewalDelay,
 } from "@/lib/auth/student-session";
 import { redirect } from "next/navigation";
+import { StudentSchoolIdentity } from "@/features/school-schedules/public-server";
 
 export default function StudentProtectedLayout({
   children,
@@ -53,6 +54,9 @@ async function StudentProtectedShell({
         gradeLabel={student.gradeLabel}
         schoolName={student.schoolName}
         points={summary}
+        identity={<Suspense fallback={<span>{student.displayName}</span>}><StudentSchoolIdentity>
+          <span>{[student.displayName, student.schoolName, student.gradeLabel].filter(Boolean).join(" · ")}</span>
+        </StudentSchoolIdentity></Suspense>}
       >
         {children}
       </StudentShell>

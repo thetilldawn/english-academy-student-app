@@ -1,12 +1,28 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { schoolSearchMessages } from "../../contracts/school-search-contract";
-import { searchSchoolDirectory } from "./school-search-query";
+import { searchSchoolDirectory, verifySelectedStudentSchool } from "./school-search-query";
 
 const fetchMock = vi.fn();
 const row = { ATPT_OFCDC_SC_CODE: "J10", SD_SCHUL_CODE: "12345", SCHUL_NM: "가짜고등학교", ORG_RDNMA: "가짜 지역", PRIVATE: "must-not-return" };
 const payload = (rows = [row], total = rows.length) => ({ schoolInfo: [{ head: [{ list_total_count: total }, { RESULT: { CODE: "INFO-000" } }] }, { row: rows }] });
+const officialRow = { ...row, SD_SCHUL_CODE: "1234567", SCHUL_KND_SC_NM: "고등학교" };
 beforeEach(() => { vi.stubEnv("NEIS_API_KEY", "synthetic-key-for-tests"); vi.stubGlobal("fetch", fetchMock); fetchMock.mockReset(); });
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); vi.useRealTimers(); });
+it("학교 저장은 공식 선택 키·이름·학교급에 맞는 학년만 인정한다", async () => {
+  fetchMock.mockImplementation(async () => Response.json(payload([officialRow])));
+  const selected = { schoolKey: "J10:1234567", schoolName: row.SCHUL_NM, gradeLabel: "고2" };
+  await expect(verifySelectedStudentSchool(selected, true)).resolves.toBeUndefined();
+  for (const changed of [{ schoolKey: "J10:7654321" }, { schoolName: "다른고등학교" }, { gradeLabel: "중2" }, { gradeLabel: "고4" }]) {
+    await expect(verifySelectedStudentSchool({ ...selected, ...changed }, true)).rejects.toMatchObject({ status: 400 });
+  }
+});
+it("신규 학생의 미선택 학년은 거절하고 기존 자유입력은 보존하며 공식 조회 실패 때 저장을 진행하지 않는다", async () => {
+  await expect(verifySelectedStudentSchool({ schoolKey: null, schoolName: "", gradeLabel: "고2" }, true)).rejects.toMatchObject({ status: 400 });
+  await expect(verifySelectedStudentSchool({ schoolName: "기존 학교", gradeLabel: "기존 값" })).resolves.toBeUndefined();
+  expect(fetchMock).not.toHaveBeenCalled();
+  fetchMock.mockRejectedValue(new Error("provider unavailable"));
+  await expect(verifySelectedStudentSchool({ schoolKey: "J10:1234567", schoolName: row.SCHUL_NM, gradeLabel: "고2" }, true)).rejects.toMatchObject({ status: 503 });
+});
 it("고정 공식 주소로 검색어만 보내고 최소 학교 정보만 반환한다", async () => {
   fetchMock.mockResolvedValue(Response.json(payload()));
   const result = await searchSchoolDirectory(" 가짜 ", new AbortController().signal);

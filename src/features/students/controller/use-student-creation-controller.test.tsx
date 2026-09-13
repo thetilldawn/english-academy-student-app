@@ -21,7 +21,7 @@ it("기존 다섯 필드와 빈 단어장을 전송하고 성공때만 초기화
   const input = form(), reset = vi.spyOn(input, "reset");
   const { result } = renderHook(() => useStudentCreationController("https://example.invalid"));
   await act(() => result.current.actions.submit(input));
-  expect(createStudent).toHaveBeenCalledExactlyOnceWith({ displayName: "가짜 학생", schoolName: "가짜 학교", gradeLabel: "고1", note: "가짜 메모", currentVocabDatasetId: "" });
+  expect(createStudent).toHaveBeenCalledExactlyOnceWith({ displayName: "가짜 학생", schoolName: "가짜 학교", schoolKey: null, gradeLabel: "고1", note: "가짜 메모", currentVocabDatasetId: "" });
   expect(reset).toHaveBeenCalledOnce(); expect(announceStudentDirectoryRefresh).toHaveBeenCalledOnce();
   expect(result.current.code).toMatchObject({ code: "fake-only" });
 });

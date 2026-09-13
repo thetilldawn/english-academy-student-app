@@ -2,10 +2,11 @@ import { z } from "zod";
 
 export const schoolSearchRequestSchema = z.object({ query: z.string().trim().min(2).max(120) }).strict();
 export const schoolSearchResponseSchema = z.object({
-  items: z.array(z.object({ id: z.string().min(1).max(40), name: z.string().min(1).max(120), region: z.string().max(240) }).strict()).max(20),
+  items: z.array(z.object({ id: z.string().min(1).max(40), name: z.string().min(1).max(120), region: z.string().max(240), level: z.enum(["중", "고"]).nullable().optional() }).strict()).max(20),
   hasMore: z.boolean(),
 }).strict();
 export type SchoolSearchResponse = z.infer<typeof schoolSearchResponseSchema>;
+export type SchoolSearchItem = SchoolSearchResponse["items"][number];
 export const schoolSearchMessages = {
   idle: "학교 이름을 입력해 검색하거나 직접 입력해 주세요.",
   loading: "학교 이름을 찾고 있습니다.",

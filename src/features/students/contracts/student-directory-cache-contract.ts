@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { schoolScheduleSummarySchema } from "@/features/school-schedules/public-contracts";
 
 import { studentDirectoryStatuses, studentDirectoryWrongFilters } from "./student-directory-read-model";
 
@@ -12,6 +13,7 @@ export const directoryIntegerSchema = z.union([z.number(), z.string().regex(/^-?
   .pipe(z.number().int().min(Number.MIN_SAFE_INTEGER).max(Number.MAX_SAFE_INTEGER));
 const nonnegativeInteger = directoryIntegerSchema.refine(value => value >= 0);
 export const studentDirectoryListItemSchema = z.object({
+  schoolSchedule: schoolScheduleSummarySchema.optional(),
   codeStatus: z.enum(["active", "blocked", "expired", "missing"]),
   completedCount: nonnegativeInteger, currentVocabBook: z.string().nullable(),
   displayName: z.string().min(1), gradeLabel: z.string().nullable(), id: z.uuid(),

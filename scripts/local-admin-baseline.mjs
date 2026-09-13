@@ -14,6 +14,7 @@ import { assertLocalBaselineEnvironment, assertNestedPath, waitForChild, stopOwn
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const quizFeedback = process.argv.includes("--quiz-feedback");
 const studentProfile = process.argv.includes("--student-profile");
+const schoolSchedules = process.argv.includes("--school-schedules");
 const env = Object.fromEntries(["Path", "PATH", "SystemRoot", "SYSTEMROOT", "TEMP", "TMP", "USERPROFILE", "LOCALAPPDATA", "APPDATA"]
   .filter(key => process.env[key]).map(key => [key, process.env[key]]));
 if (process.env.VERCEL || process.env.VERCEL_ENV || process.env.CI) throw new Error("배포/CI 환경에서는 시작하지 않습니다.");
@@ -80,7 +81,7 @@ const dataServer = http.createServer(async (req, res) => {
   if (req.headers.host !== new URL(DATA_ORIGIN).host) return json(res, { error: "Local host required" }, 403);
   try {
     const result = fixtureResponse({ url: DATA_ORIGIN + req.url, method: req.method,
-      headers: new Headers(req.headers), body: await readBody(req), quizFeedback, studentProfile });
+      headers: new Headers(req.headers), body: await readBody(req), quizFeedback, studentProfile, schoolSchedules });
     metrics.data.push({ path: new URL(DATA_ORIGIN + req.url).pathname, method: req.method,
       category: result.category, status: result.status, at: Date.now() });
     json(res, result.body, result.status);

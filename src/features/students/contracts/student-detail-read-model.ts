@@ -2,6 +2,7 @@ import type { AdminHistoryListItem } from "@/features/history/public-contracts";
 import type { ReadingCurriculumStage } from "@/lib/admin/reading-curriculum";
 import type { StudentLearningSourceItem } from "@/lib/admin/learning-sources";
 import type { StudentVocabBookHistory } from "./student-vocab-book-history";
+import type { SchoolScheduleSummary } from "@/features/school-schedules/public-contracts";
 
 export type StudentCodeView = {
   code: string;
@@ -9,6 +10,8 @@ export type StudentCodeView = {
 };
 
 export type StudentDetailProfile = {
+  schoolKey?: string | null;
+  schoolSchedule?: SchoolScheduleSummary;
   codeStatus: "active" | "blocked" | "expired" | "missing";
   createdAt: string;
   currentVocabBook: string | null;

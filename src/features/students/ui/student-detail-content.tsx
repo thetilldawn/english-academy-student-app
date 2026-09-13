@@ -69,7 +69,8 @@ export function StudentDetailContent({
     student: initial.student,
   });
   const school = useSchoolSearch({ ownerKey: initial.student.id, value: profile.draft.schoolName,
-    onChange: value => profile.actions.setField("schoolName", value), active: view.tab === "info", locked: profile.locked });
+    onChange: value => profile.actions.setField("schoolName", value), onChoose: profile.actions.selectSchool,
+    active: view.tab === "info", locked: profile.locked });
   const locked = profile.locked || school.locked;
   const access = useStudentAccessController({
     appOrigin,

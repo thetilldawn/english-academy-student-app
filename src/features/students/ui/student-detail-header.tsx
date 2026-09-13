@@ -1,4 +1,5 @@
 import { DetailHeader } from "@/design-system/patterns/detail-header/detail-header";
+import { SchoolExamIdentity } from "@/features/school-schedules/public-ui";
 
 import type { StudentDetailProfile } from "../contracts/student-detail-read-model";
 
@@ -16,11 +17,13 @@ export function StudentDetailHeader({
     .join(" · ");
 
   return (
+    <SchoolExamIdentity summary={student.schoolSchedule}>
     <DetailHeader
       headingLevel={headingLevel}
       subtitle={subtitle || undefined}
       title={student.displayName}
       titleId={titleId}
     />
+    </SchoolExamIdentity>
   );
 }

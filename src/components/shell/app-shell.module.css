@@ -126,15 +126,20 @@
 
 .studentIdentity {
   min-width: 0;
+  flex: 1 1 auto;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   flex-wrap: wrap;
   gap: 4px 10px;
-  margin-inline-start: auto;
+  margin-inline-start: 0;
   color: var(--text-primary);
   font-size: var(--ui-label-size);
   line-height: 1.5;
+}
+
+.studentIdentity > :first-child {
+  flex: 1 1 280px;
 }
 
 .studentUserLabel {
@@ -243,6 +248,10 @@
 }
 
 @media (max-width: 580px) {
+  .studentIdentityDivider {
+    display: none;
+  }
+
   .topbarInner {
     width: min(100% - 24px, 1180px);
   }

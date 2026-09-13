@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => {
     getSnapshot: vi.fn(),
     ProfileError,
     updateProfile: vi.fn(),
+    scheduleMap: vi.fn(),
   };
 });
 
@@ -27,6 +28,8 @@ vi.mock("@/lib/services/admin-student-command-service", () => ({
 }));
 
 import { readStudentProfileSaveResultAction, updateStudentProfileAction } from "./update-student-profile-action";
+import { buildSchoolSummary } from "@/features/school-schedules/domain/school-schedule";
+vi.mock("@/features/school-schedules/public-server", () => ({ getAdminSchoolScheduleMap: mocks.scheduleMap }));
 
 const studentId = "00000000-0000-4000-8000-000000000001";
 const input = {
@@ -38,7 +41,22 @@ const input = {
 };
 
 describe("update student profile action", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); mocks.scheduleMap.mockResolvedValue({}); });
+  it.each(['saved','conflict','read'])("%s 결과는 해당 최신 프로필의 학교 일정도 함께 전달한다", async mode => {
+    const current={id:studentId,displayName:input.displayName,schoolName:input.schoolName,gradeLabel:input.gradeLabel,updatedAt:'2026-09-13T10:00:00Z'};
+    const schedule=buildSchoolSummary({schoolKey:null,schoolName:current.schoolName,gradeLabel:current.gradeLabel},[],'2026-09-13');
+    mocks.getAdminContext.mockResolvedValue({userId:'admin-id'});
+    mocks.scheduleMap.mockResolvedValue({[studentId]:schedule});
+    mocks.getSnapshot.mockResolvedValue(current);
+    mocks.updateProfile.mockResolvedValue({student:current,version:current.updatedAt});
+    if(mode==='conflict') mocks.updateProfile.mockRejectedValueOnce(new mocks.ProfileError('conflict','changed'));
+    const result=mode==='read'?await readStudentProfileSaveResultAction({studentId}):await updateStudentProfileAction(input);
+    expect(mocks.scheduleMap).toHaveBeenCalledWith([studentId],[current]);
+    if(result.ok) expect(result.receipt.student.schoolSchedule).toEqual(schedule);
+    else if(result.status===409) expect(result.current.student.schoolSchedule).toEqual(schedule);
+    else throw new Error('missing profile receipt');
+    if(mode==='read') expect(mocks.updateProfile).not.toHaveBeenCalled();
+  });
 
   it("인증 서버 장애는 미인증이 아니며 저장하지 않는다", async () => {
     mocks.getAdminContext.mockRejectedValueOnce(new Error("private auth error"));

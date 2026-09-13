@@ -38,6 +38,7 @@ function jsonRequest(method: "PATCH" | "POST", body: unknown): RequestInit {
 }
 
 export function createStudent(input: {
+  schoolKey?: FormDataEntryValue | null;
   currentVocabDatasetId: FormDataEntryValue | null;
   displayName: FormDataEntryValue | null;
   gradeLabel: FormDataEntryValue | null;

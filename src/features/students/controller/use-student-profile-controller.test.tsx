@@ -50,6 +50,14 @@ function receipt(
 afterEach(() => vi.resetAllMocks());
 
 describe("useStudentProfileController", () => {
+  it("일정 재조회가 저장 동작으로 안내되지 않는다", async () => {
+    vi.mocked(readStudentProfileSaveResult).mockResolvedValue({ok:true,receipt:receipt(student.displayName)});
+    const {result}=renderHook(()=>useStudentProfileController({onUpdated:vi.fn(),student}));
+    await act(()=>result.current.actions.checkResult());
+    expect(updateStudentProfile).not.toHaveBeenCalled();
+    expect(result.current.feedback).toEqual({tone:'neutral',message:'저장된 내용을 확인했습니다.'});
+    expect(result.current.unchanged).toBe(true);
+  });
   it("재렌더 전 오래된 콜백도 불명확한 저장을 다시 보내지 못한다", async () => {
     vi.mocked(updateStudentProfile).mockRejectedValue(new Error("lost"));
     const { result } = renderHook(() => useStudentProfileController({ student, onUpdated: vi.fn() }));
@@ -120,6 +128,7 @@ describe("useStudentProfileController", () => {
     await act(async () => result.current.actions.save());
 
     expect(updateStudentProfile).toHaveBeenCalledWith({
+      schoolKey: null,
       baseVersion: student.updatedAt,
       displayName: "학생 A 수정",
       gradeLabel: "고3",
@@ -158,6 +167,15 @@ describe("useStudentProfileController", () => {
 
     expect(result.current.draft.displayName).toBe("저장 중 새 입력");
     expect(result.current.unchanged).toBe(false);
+    expect(result.current.feedback?.message).toContain("추가 변경사항은 아직 저장되지 않았습니다");
+  });
+  it("저장 뒤 재편집은 성공 안내를 지우고 원복은 변경 없음으로 돌아간다", async () => {
+    vi.mocked(updateStudentProfile).mockResolvedValue({ok:true,receipt:receipt()});
+    const {result}=renderHook(()=>useStudentProfileController({onUpdated:vi.fn(),student}));
+    act(()=>result.current.actions.setField("displayName","학생 A 수정"));
+    await act(()=>result.current.actions.save()); expect(result.current.feedback?.tone).toBe("success");
+    act(()=>result.current.actions.setField("displayName","추가 수정")); expect(result.current.unchanged).toBe(false); expect(result.current.feedback).toBeNull();
+    act(()=>result.current.actions.setField("displayName","학생 A 수정")); expect(result.current.unchanged).toBe(true);
   });
 
   it("충돌이면 초안을 유지하고 같은 틱 중복 제출은 한 번만 보낸다", async () => {

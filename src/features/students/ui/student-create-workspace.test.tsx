@@ -39,11 +39,27 @@ it("현재 학교 검색 인증 실패도 등록폼과 접속코드를 숨긴다
   expect(screen.queryByText("fake-code-only")).not.toBeInTheDocument();
 });
 afterEach(() => { cleanup(); vi.resetAllMocks(); });
+it.each(["중", "고"] as const)("%s학교 선택 뒤 1~3학년만 선택하며 직접 학교명 변경은 선택과 학년을 지운다", async level => {
+  vi.mocked(loadAssignmentDatasetDirectory).mockResolvedValue({datasets:[]});
+  vi.mocked(loadSchoolSearch).mockResolvedValue({items:[{id:"J10:9999999",name:"가상 학교",region:"가상 지역",level}],hasMore:false});
+  const {container}=render(<StudentCreateWorkspace appOrigin="https://example.invalid" />); toggle(container,true);
+  const grade=container.querySelector<HTMLSelectElement>('[name="gradeLabel"]')!;
+  expect(grade).toBeDisabled();
+  expect(container.querySelector('[data-kind="required"]')).toHaveTextContent("필수");
+  fireEvent.change(screen.getByRole("textbox",{name:"학교"}),{target:{value:"가상 학교"}});
+  fireEvent.click(await screen.findByRole("button",{name:"가상 학교 가상 지역"}));
+  expect(grade).toBeEnabled(); expect([...grade.options].map(option=>option.value)).toEqual(["",`${level}1`,`${level}2`,`${level}3`]);
+  fireEvent.change(grade,{target:{value:`${level}2`}});
+  expect(container.querySelector('[name="schoolKey"]')).toHaveValue("J10:9999999");
+  fireEvent.change(screen.getByRole("textbox",{name:"학교"}),{target:{value:"다른 이름"}});
+  expect(grade).toBeDisabled(); expect(grade).toHaveValue(""); expect(container.querySelector('[name="schoolKey"]')).toHaveValue("");
+});
 function toggle(container: HTMLElement, open: boolean) {
   const details = container.querySelector("details")!;
   act(() => { details.open = open; fireEvent(details, new Event("toggle")); });
 }
 it("첫 열기 준비 뒤 작성한 모든 입력과 선택을 접었다 펴도 보존한다", async () => {
+  vi.mocked(loadSchoolSearch).mockResolvedValue({items:[{id:"J10:9999999",name:"가짜 학교",region:"가상 지역",level:"고"}],hasMore:false});
   const dataset = cataloguedDatasetFromMetadata({ id: "fake-book", title: "가짜 단어장" }, undefined);
   vi.mocked(loadAssignmentDatasetDirectory).mockResolvedValue({ datasets: [dataset] });
   const { container } = render(<StudentCreateWorkspace appOrigin="https://example.invalid" />);
@@ -55,7 +71,9 @@ it("첫 열기 준비 뒤 작성한 모든 입력과 선택을 접었다 펴도 
   await waitFor(() => expect(screen.getByRole("button", { name: copy.createStudent.submit })).toBeEnabled());
   const fields = ["displayName", "schoolName", "gradeLabel", "note", "currentVocabDatasetId"];
   const values = ["가짜 학생", "가짜 학교", "고1", "입력 보존", "fake-book"];
-  fields.forEach((name, i) => fireEvent.change(form.querySelector(`[name="${name}"]`)!, { target: { value: values[i] } }));
+  fireEvent.change(form.querySelector('[name="schoolName"]')!,{target:{value:"가짜 학교"}});
+  fireEvent.click(await screen.findByRole("button",{name:"가짜 학교 가상 지역"}));
+  fields.forEach((name, i) => { if(name!=="schoolName") fireEvent.change(form.querySelector(`[name="${name}"]`)!, { target: { value: values[i] } }); });
   toggle(container, false); toggle(container, true);
   fields.forEach((name, i) => expect(form.elements.namedItem(name)).toHaveValue(values[i]));
   expect(loadAssignmentDatasetDirectory).toHaveBeenCalledOnce();

@@ -1,5 +1,6 @@
 // Synthetic, read-only localhost study fixtures. Never imported by application code.
 import { createHmac } from "node:crypto";
+import { localSchoolSchedulePayload } from "./local-school-schedule-data.mjs";
 const uid = (n) => "00000000-0000-4000-8000-" + String(n).padStart(12, "0");
 export const STUDY_TOKEN = "local-student-study-not-a-real-session";
 export const STUDY_SECRET = "local-server-placeholder-not-a-real-key";
@@ -46,6 +47,7 @@ export function studentStudyFixture({ target, method, headers, input }) {
   if (method === "POST" && table === "rpc/list_student_point_totals_v1" &&
     JSON.stringify(input?.p_student_ids) === JSON.stringify([uid(1)])) return ok([{ student_id: uid(1), current_points: 123 }], "points");
   if (method !== "POST" || input?.p_student_id !== uid(1)) return deny;
+  if (table === "rpc/get_student_school_schedule_v1") return ok(localSchoolSchedulePayload([{id:uid(1),schoolName:"검사 학교",gradeLabel:"고1"}]),"school-schedule");
   if (table === "rpc/get_student_assignment_study_v1") {
     const index = [21, 22, 23].findIndex(n => uid(n) === input.p_assignment_id);
     return ok(index < 0 ? null : { assignmentId: input.p_assignment_id, title: "로컬 단어장 · " + labels[index], mode: modes[index], words: studyWords });

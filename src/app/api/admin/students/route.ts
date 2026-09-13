@@ -7,6 +7,8 @@ import {
 } from "@/lib/services/admin-student-command-service";
 import { listStudents } from "@/lib/services/admin-student-read-service";
 import { createStudentSchema } from "@/lib/validation";
+import { verifySelectedStudentSchool } from "@/features/students/server/queries/school-search-query";
+import { SchoolSearchRequestError } from "@/features/students/contracts/school-search-contract";
 
 export async function GET() {
   if (!(await getAdminContext())) {
@@ -39,11 +41,13 @@ export async function POST(request: Request) {
   }
 
   try {
+    await verifySelectedStudentSchool(input, true);
     return Response.json(await createStudent(input), {
       headers: { "Cache-Control": "private, no-store" },
       status: 201,
     });
   } catch (error) {
+    if (error instanceof SchoolSearchRequestError) return jsonError(error.message, error.status);
     console.error("[students-api] create failed", {
       name: error instanceof Error ? error.name : "UnknownError",
       message: error instanceof Error ? error.message : "unknown",

@@ -25,6 +25,7 @@ export const studentCodeLoginSchema = z.object({
 export const createStudentSchema = z.object({
   displayName: z.string().trim().min(1).max(80),
   schoolName: z.string().trim().max(120).default(""),
+  schoolKey: z.string().regex(/^[A-Z][0-9]{2}:[0-9]{7}$/).nullable().optional(),
   gradeLabel: z.string().trim().max(40).default(""),
   currentVocabDatasetId: z
     .union([z.uuid(), z.literal(""), z.null()])
@@ -43,6 +44,7 @@ export const updateStudentProfileSchema = z
   .object({
     displayName: z.string().trim().min(1).max(80),
     schoolName: z.string().trim().max(120),
+    schoolKey: z.string().regex(/^[A-Z][0-9]{2}:[0-9]{7}$/).nullable().optional(),
     gradeLabel: z.string().trim().max(40),
   })
   .strict();

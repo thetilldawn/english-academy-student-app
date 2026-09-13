@@ -11,6 +11,9 @@ import {
   updateStudentProfile,
 } from "@/lib/services/admin-student-command-service";
 import { updateStudentProfileCommandSchema } from "@/lib/validation";
+import { verifySelectedStudentSchool } from "../queries/school-search-query";
+import { SchoolSearchRequestError } from "../../contracts/school-search-contract";
+import { getAdminSchoolScheduleMap } from "@/features/school-schedules/public-server";
 
 const inputSchema = updateStudentProfileCommandSchema.extend({
   studentId: z.uuid(),
@@ -43,6 +46,7 @@ export async function updateStudentProfileAction(
   }
 
   try {
+    await verifySelectedStudentSchool(parsed.data);
     const receipt = await updateStudentProfile(
       parsed.data.studentId,
       {
@@ -50,6 +54,7 @@ export async function updateStudentProfileAction(
         displayName: parsed.data.displayName,
         gradeLabel: parsed.data.gradeLabel,
         schoolName: parsed.data.schoolName,
+        ...(parsed.data.schoolKey !== undefined ? { schoolKey: parsed.data.schoolKey } : {}),
       },
       admin,
     );
@@ -57,12 +62,13 @@ export async function updateStudentProfileAction(
       ok: true,
       receipt: {
         directoryEffect: "refresh-first-page",
-        student: receipt.student,
+        student: { ...receipt.student, schoolSchedule: (await getAdminSchoolScheduleMap([parsed.data.studentId], [receipt.student]))[parsed.data.studentId] },
         version: receipt.version,
       },
     };
   } catch (error) {
     unstable_rethrow(error);
+    if (error instanceof SchoolSearchRequestError) return { ok: false, status: error.status === 400 ? 400 : 503, error: error.message };
     if (
       error instanceof StudentProfileUpdateError &&
       error.reason === "conflict"
@@ -75,7 +81,7 @@ export async function updateStudentProfileAction(
         return {
           current: {
             directoryEffect: "refresh-first-page",
-            student: current,
+            student: { ...current, schoolSchedule: (await getAdminSchoolScheduleMap([parsed.data.studentId], [current]))[parsed.data.studentId] },
             version: current.updatedAt,
           },
           error: "다른 변경이 먼저 저장되었습니다. 현재 입력을 확인한 뒤 다시 저장해 주세요.",
@@ -107,7 +113,8 @@ export async function readStudentProfileSaveResultAction(input: unknown): Promis
     const admin = await getAdminContextOrThrow();
     if (!admin) return { ok: false, status: 401, error: "관리자 로그인이 필요합니다." };
     const student = await getStudentProfileMutationSnapshot(parsed.data.studentId, admin);
-    return { ok: true, receipt: { directoryEffect: "refresh-first-page", student, version: student.updatedAt } };
+    return { ok: true, receipt: { directoryEffect: "refresh-first-page", student: { ...student,
+      schoolSchedule: (await getAdminSchoolScheduleMap([parsed.data.studentId], [student]))[parsed.data.studentId] }, version: student.updatedAt } };
   } catch (error) {
     unstable_rethrow(error);
     return { ok: false, status: 503, error: "저장 결과를 불러오지 못했습니다. 입력은 유지했습니다. 다시 확인해 주세요." };

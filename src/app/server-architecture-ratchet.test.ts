@@ -54,6 +54,7 @@ const ROUTER_REFRESH_ALLOWLIST = new Map<
     ["src/components/use-student-history-refresh.ts", { maxCalls: 2, removeIn: "history/BFCache 복원 한정; 일반 이동·시험 진행은 새 행동 검사로 갱신 금지" }],
     ["src/features/history/ui/editable-history-detail-dialog.tsx", { maxCalls: 1, removeIn: "충돌 복구" }],
     ["src/features/history/ui/editable-history-detail-page.tsx", { maxCalls: 1, removeIn: "충돌 복구" }],
+    ["src/features/school-schedules/client/components/schedule-retry.tsx", { maxCalls: 1, removeIn: "APP-20260913-03: 일정 조회 실패 후 사용자의 명시적 재시도만 허용; 자동 날짜 갱신·학생 편집에는 사용 금지" }],
     ["src/features/student-dashboard/ui/assignment-boundary-refresh.tsx", { maxCalls: 1, removeIn: "유지" }],
     ["src/features/student-dashboard/ui/deadline-countdown.tsx", { maxCalls: 1, removeIn: "유지" }],
   ] as const,

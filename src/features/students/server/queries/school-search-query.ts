@@ -10,6 +10,7 @@ const neisSchema = z.object({
     row: z.array(z.object({
       ATPT_OFCDC_SC_CODE: z.string().min(1).max(10), SD_SCHUL_CODE: z.string().min(1).max(20),
       SCHUL_NM: z.string().trim().min(1).max(120),
+      SCHUL_KND_SC_NM: z.string().max(80).optional(),
       ORG_RDNMA: z.string().max(240).optional(), LCTN_SC_NM: z.string().max(80).optional(),
     })).max(20).optional(),
   })).optional(),
@@ -35,11 +36,24 @@ export async function searchSchoolDirectory(query: string, signal: AbortSignal) 
     const rows = parsed.schoolInfo?.flatMap(part => part.row ?? []) ?? [];
     if (code !== "INFO-000" || total === undefined || rows.length !== Math.min(total, 20)
       || heads.filter(head => head.RESULT).length !== 1 || heads.filter(head => head.list_total_count !== undefined).length !== 1) throw new Error("school-response-shape");
-    const items = rows.map(row => ({ id: `${row.ATPT_OFCDC_SC_CODE}:${row.SD_SCHUL_CODE}`, name: row.SCHUL_NM, region: row.ORG_RDNMA?.trim() || row.LCTN_SC_NM?.trim() || "" }));
+    const items = rows.map(row => ({ id: `${row.ATPT_OFCDC_SC_CODE}:${row.SD_SCHUL_CODE}`, name: row.SCHUL_NM, region: row.ORG_RDNMA?.trim() || row.LCTN_SC_NM?.trim() || "",
+      ...(row.SCHUL_KND_SC_NM !== undefined ? { level: row.SCHUL_KND_SC_NM === "고등학교" ? "고" : row.SCHUL_KND_SC_NM === "중학교" ? "중" : null } : {}) }));
     if (new Set(items.map(item => item.id)).size !== items.length) throw new Error("school-duplicate-id");
     return schoolSearchResponseSchema.parse({ items, hasMore: total > items.length });
   } catch {
     // Never return/log a fetch error containing the authenticated URL or raw provider payload.
     throw new SchoolSearchRequestError(503);
+  }
+}
+
+export async function verifySelectedStudentSchool(input: { schoolKey?: string | null; schoolName: string; gradeLabel: string }, creating = false) {
+  if (!input.schoolKey) {
+    if (creating && input.schoolKey !== undefined && input.gradeLabel) throw new SchoolSearchRequestError(400, "학교를 검색해 선택한 뒤 학년을 골라 주세요.");
+    return;
+  }
+  const response = await searchSchoolDirectory(input.schoolName, AbortSignal.timeout(7000));
+  const school = response.items.find(item => item.id === input.schoolKey && item.name === input.schoolName);
+  if (!school || (creating && input.gradeLabel && (!school.level || !new RegExp(`^${school.level}[123]$`).test(input.gradeLabel)))) {
+    throw new SchoolSearchRequestError(400, "학교와 학년을 다시 선택해 주세요.");
   }
 }

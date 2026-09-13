@@ -8,6 +8,7 @@ import { adminOverviewText } from "@/content/ko/admin-overview";
 import { adminShellText } from "@/content/ko/admin-shell";
 import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import { listAdminHistoryInitial } from "@/features/history/server/queries/admin-history-list-query";
+import { AdminSchoolScheduleContent } from "@/features/school-schedules/public-server";
 
 export const metadata: Metadata = {
   title: adminOverviewText.page.title,
@@ -15,9 +16,14 @@ export const metadata: Metadata = {
 
 export default function AdminDashboardPage() {
   return (
+    <>
+    <Suspense fallback={<RouteLoadingState label="학교 일정을 불러오고 있습니다." />}>
+      <AdminSchoolScheduleContent />
+    </Suspense>
     <Suspense fallback={<RouteLoadingState label={adminShellText.loading} />}>
       <AdminDashboardContent />
     </Suspense>
+    </>
   );
 }
 

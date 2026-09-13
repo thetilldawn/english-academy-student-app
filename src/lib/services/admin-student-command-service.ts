@@ -40,6 +40,7 @@ export class StudentProfileUpdateError extends Error {
 }
 
 const studentProfileMutationSchema = z.object({
+  schoolKey: z.string().nullable().optional(),
   displayName: z.string().min(1),
   gradeLabel: z.string().nullable(),
   id: z.uuid(),
@@ -52,6 +53,7 @@ export type StudentProfileMutationSnapshot = z.infer<
 >;
 
 export async function createStudent(input: {
+  schoolKey?: string | null;
   displayName: string;
   schoolName: string;
   gradeLabel: string;
@@ -66,7 +68,8 @@ export async function createStudent(input: {
     code,
     environment.STUDENT_CODE_ENCRYPTION_KEY,
   );
-  const { data, error } = await supabase.rpc("create_student_with_code_v2", {
+  const { data, error } = await supabase.rpc(input.schoolKey !== undefined ? "create_student_with_code_v3" : "create_student_with_code_v2", {
+    ...(input.schoolKey !== undefined ? { p_school_key: input.schoolKey } : {}),
     p_display_name: input.displayName,
     p_school_name: input.schoolName,
     p_grade_label: input.gradeLabel,
@@ -122,6 +125,7 @@ export async function setStudentCurrentDataset(
 export async function updateStudentProfile(
   studentId: string,
   input: {
+    schoolKey?: string | null;
     baseVersion: string;
     displayName: string;
     schoolName: string;
@@ -130,6 +134,7 @@ export async function updateStudentProfile(
   _admin: AdminContext,
 ): Promise<{
   student: {
+    schoolKey?: string | null;
     displayName: string;
     gradeLabel: string | null;
     id: string;
@@ -141,7 +146,8 @@ export async function updateStudentProfile(
   void _admin;
   const supabase = await createServerSupabaseClient();
   const { data: updatedStudent, error: updateError, status } = await supabase
-    .rpc("update_admin_student_profile_v1", {
+    .rpc(input.schoolKey !== undefined ? "update_admin_student_profile_v2" : "update_admin_student_profile_v1", {
+      ...(input.schoolKey !== undefined ? { p_school_key: input.schoolKey } : {}),
       p_base_version: input.baseVersion,
       p_display_name: input.displayName,
       p_grade_label: input.gradeLabel,
@@ -176,6 +182,7 @@ export async function updateStudentProfile(
 
   return {
     student: {
+      ...(parsedStudent.data.schoolKey !== undefined ? { schoolKey: parsedStudent.data.schoolKey } : {}),
       displayName: parsedStudent.data.displayName,
       gradeLabel: parsedStudent.data.gradeLabel,
       id: parsedStudent.data.id,

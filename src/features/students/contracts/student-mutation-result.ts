@@ -1,4 +1,7 @@
+import type { SchoolScheduleSummary } from "@/features/school-schedules/public-contracts";
 export type StudentProfilePatch = {
+  schoolKey?: string | null;
+  schoolSchedule?: SchoolScheduleSummary;
   displayName: string;
   gradeLabel: string | null;
   id: string;

@@ -30,10 +30,11 @@ const student: StudentDetailProfile = {
 describe("StudentInfoPanel", () => {
   it("shows the selected student's raw balance through the visible point formatter", () => {
     const controller = {
-      actions: { save: vi.fn(), checkResult: vi.fn(), setField: vi.fn() },
+      actions: { save: vi.fn(), checkResult: vi.fn(), setField: vi.fn(), selectSchool: vi.fn() },
       checking: false, needsCheck: false, locked: false, feedback: null,
       busy: false,
       draft: {
+        schoolKey: null,
         displayName: student.displayName,
         gradeLabel: student.gradeLabel ?? "",
         schoolName: student.schoolName ?? "",

@@ -1,4 +1,5 @@
 import { formatContentText } from "@/content/format";
+import type { ReactNode } from "react";
 import { studentAppText } from "@/content/ko/student-app";
 import { CollapsibleStatusSection } from "@/design-system/patterns/collapsible-status-section/collapsible-status-section";
 import type { StudentDashboardInitialSnapshot } from "@/features/student-dashboard/contracts/student-dashboard-read-model";
@@ -21,8 +22,10 @@ const sectionTitles: Record<StudentAssignmentSectionId, string> = {
 
 export function StudentDashboard({
   snapshot,
+  schoolSchedule,
 }: {
   snapshot: StudentDashboardInitialSnapshot;
+  schoolSchedule?: ReactNode;
 }) {
   const nowMilliseconds = Date.parse(snapshot.snapshotAt);
   const sections = selectStudentDashboardCurrentSections(
@@ -44,6 +47,7 @@ export function StudentDashboard({
 
   return (
     <main className={styles.page} id="main-content">
+      {schoolSchedule}
       {totalCount === 0 ? (
         <div className={styles.empty} role="status">
           {studentAppText.dashboard.emptyTitle}
