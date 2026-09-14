@@ -1,0 +1,22 @@
+# Local verification artifacts, credentials, and source material never deploy.
+.codex-tmp/
+.tmp/
+tmp/
+.git/
+.vercel/
+.next/
+node_modules/
+coverage/
+test-results/
+playwright-report/
+.supabase/
+supabase/.branches/
+supabase/.temp/
+.env
+.env.*
+data/import/
+data/private/
+*.secret.csv
+*.secret.json
+*.log
+*.tsbuildinfo
