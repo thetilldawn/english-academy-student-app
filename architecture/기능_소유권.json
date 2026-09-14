@@ -2346,6 +2346,11 @@
       "path": "supabase/migrations/20260913221810_add_school_schedule_manual_edits.sql",
       "owner": "school-schedules",
       "flow": "school-schedule-edit"
+    },
+    {
+      "path": "supabase/migrations/20260914020502_add_school_subject_exam_date.sql",
+      "owner": "school-schedules",
+      "flow": "school-schedule-edit"
     }
   ],
   "features": [
@@ -6332,7 +6337,8 @@
           "src/features/school-schedules/server/actions/school-schedule-edit-actions.ts"
         ],
         "database": [
-          "supabase/migrations/20260913221810_add_school_schedule_manual_edits.sql"
+          "supabase/migrations/20260913221810_add_school_schedule_manual_edits.sql",
+          "supabase/migrations/20260914020502_add_school_subject_exam_date.sql"
         ],
         "cacheStreaming": [
           "src/features/school-schedules/client/components/live-school-schedule.tsx",

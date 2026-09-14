@@ -3,15 +3,26 @@ import { schoolScheduleBundleSchema } from "../contracts/school-schedule";
 import { fakeSchoolBundle as bundle } from "../school-schedule.fixture";
 import { buildSchoolSummary, nearestSchoolExam, scheduleWeek, schoolToday } from "./school-schedule";
 const profile = { schoolKey: bundle.schoolKey, schoolName: bundle.schoolName, gradeLabel: "고2" };
-const summary = (today: string) => buildSchoolSummary(profile, [bundle], today);
+const datedBundle = { ...bundle, events: bundle.events.map(event => event.id === "fake-W1" ? { ...event, subjectDate: "2026-10-14" } : event) };
+const summary = (today: string) => buildSchoolSummary(profile, [datedBundle], today);
 describe("학교 날짜 계산", () => {
   it("한국 자정 전후를 날짜 문자열로 계산한다", () => {
     expect(schoolToday(new Date("2026-09-12T14:59:59Z"))).toBe("2026-09-12");
     expect(schoolToday(new Date("2026-09-12T15:00:00Z"))).toBe("2026-09-13");
-    expect(nearestSchoolExam(summary("2026-09-13"))?.label).toBe("2-1 | 29일 [4.1주]");
+    expect(nearestSchoolExam(summary("2026-09-13"))?.label).toBe("2-1 | 31일 [4.4주]");
   });
-  it.each(["2026-10-12","2026-10-14","2026-10-16"])("시험기간 %s에는 진행 중으로 유지한다", today => {
-    expect(nearestSchoolExam(summary(today))?.label).toBe("2-1 | 시험 중");
+  it("학교 시험기간 안에서도 영어 시험일만 남은 일수와 당일을 결정한다", () => {
+    expect(nearestSchoolExam(summary("2026-10-12"))?.label).toBe("2-1 | 2일 [0.3주]");
+    expect(nearestSchoolExam(summary("2026-10-14"))?.label).toBe("2-1 | 시험 당일");
+    expect(nearestSchoolExam(summary("2026-10-16"))).toBeNull();
+  });
+  it("구버전 학교기간만 있는 자료는 영어 시험일을 대신하지 않는다", () => {
+    const legacy = buildSchoolSummary(profile, [bundle], "2026-10-12");
+    expect(nearestSchoolExam(legacy)).toBeNull();
+    const onlySubject = { ...bundle.events[0], startDate: null, endDate: null, precision: "unknown" as const, status: "unknown" as const, subjectDate: "2026-10-14" };
+    const current = buildSchoolSummary(profile, [{ ...bundle, events: [onlySubject] }], "2026-10-12");
+    expect(schoolScheduleBundleSchema.safeParse({ ...bundle, events: [onlySubject] }).success).toBe(true);
+    expect(nearestSchoolExam(current)?.days).toBe(2);
   });
   it("끝난 시험과 고3 미실시를 다음 시험으로 계산하지 않는다", () => {
     expect(nearestSchoolExam(summary("2026-10-17"))).toBeNull();
@@ -29,7 +40,7 @@ describe("학교 날짜 계산", () => {
     expect(buildSchoolSummary(profile,[{...bundle,semester:1,versionId:"old",events:[{...bundle.events[1],id:"old"}]},bundle],"2026-09-13").events.some(event=>event.id==="old")).toBe(false);
   });
   it("자료를 미리 검토해도 가까운 1학기 시험을 누락하지 않는다", () => {
-    const first = {...bundle,semester:1,checkedOn:"2026-04-01",versionId:"first",events:[{...bundle.events[0],id:"June",startDate:"2026-06-20",endDate:"2026-06-23"}]};
+    const first = {...bundle,semester:1,checkedOn:"2026-04-01",versionId:"first",events:[{...bundle.events[0],id:"June",startDate:"2026-06-20",endDate:"2026-06-23",subjectDate:"2026-06-22"}]};
     const second = {...bundle,checkedOn:"2026-06-01"};
     const result = buildSchoolSummary(profile,[first,second],"2026-06-10");
     expect(nearestSchoolExam(result)?.exam.id).toBe("June");

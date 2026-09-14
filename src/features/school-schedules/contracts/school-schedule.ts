@@ -7,6 +7,8 @@ export const schoolEventSchema = z.object({
   kind: z.enum(["written", "performance"]), round: z.number().int().min(1).max(2).nullable(),
   title: z.string().min(1).max(240), subject: z.string().max(80).nullable(),
   startDate: date.nullable(), endDate: date.nullable(),
+  // Written start/end describe the school-wide period; only this confirmed date is the English exam day.
+  subjectDate: date.nullable().optional(),
   precision: z.enum(["day", "range", "week", "month", "unknown", "none"]),
   status: z.enum(["confirmed", "planned", "unknown", "not-held"]),
   dateText: z.string().max(300), maxPoints: z.number().min(0).max(1000).nullable(),
@@ -25,6 +27,7 @@ export const schoolEventSchema = z.object({
   if (event.precision === "none" && event.status !== "not-held") fail("미실시 상태를 확인해 주세요.");
   if (event.precision === "unknown" && event.status !== "unknown") fail("미확인 상태를 확인해 주세요.");
   if (event.kind === "written" && event.round === null) fail("시험 차수를 확인해 주세요.");
+  if (event.subjectDate && (event.kind !== "written" || event.status === "not-held")) fail("영어 시험일은 실시하는 지필평가에만 입력해 주세요.");
 });
 export const schoolScheduleBundleSchema = z.object({
   schoolKey: schoolKeySchema, schoolName: z.string().min(1).max(120), schoolLevel: z.enum(["중", "고"]),
@@ -53,7 +56,7 @@ const displayedEventSchema = z.object({ ...schoolEventSchema.shape, kind: z.enum
 }).strict().superRefine((event, context) => {
   if (event.kind === "csat") {
     if (event.grade !== 3 || event.round !== null || event.precision !== "day" || event.status !== "confirmed"
-      || !event.startDate || event.endDate !== event.startDate || event.semester !== 2 || event.applicability !== "grade")
+      || !event.startDate || event.endDate !== event.startDate || event.semester !== 2 || event.applicability !== "grade" || event.subjectDate)
       context.addIssue({ code: "custom", message: "수능 일정을 확인해 주세요." });
   } else {
     const source = Object.fromEntries(Object.entries(event).filter(([key]) => !["semester", "academicYear", "checkedOn"].includes(key)));

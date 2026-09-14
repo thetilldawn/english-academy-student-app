@@ -6,6 +6,7 @@ import { scheduleEditorSnapshotSchema } from "../contracts/school-schedule-edit"
 import { schoolScheduleBundleSchema } from "../contracts/school-schedule";
 const original = fs.readFileSync("supabase/migrations/20260913092302_add_school_schedule_and_student_school_key.sql","utf8");
 const migration = fs.readFileSync("supabase/migrations/20260913221810_add_school_schedule_manual_edits.sql","utf8");
+const subjectDates = fs.readFileSync("supabase/migrations/20260914020502_add_school_subject_exam_date.sql", "utf8");
 let db: PGlite;
 const student = "00000000-0000-4000-8000-000000000001";
 const actor = "00000000-0000-4000-8000-000000000099";
@@ -25,9 +26,30 @@ beforeAll(async () => {
   const sourceTable=original.slice(original.indexOf("create table private.school_schedule_versions"),original.indexOf("create or replace function private.get_admin_student_profile"));
   const readAndRegister=original.slice(original.indexOf("create function private.school_schedule_payload"));
   await db.exec("begin;\n"+sourceTable+"\n"+readAndRegister);
-  await db.exec(migration); await register(bundle);
+  await db.exec(migration); await db.exec(subjectDates); await register(bundle);
 },30000);
 afterAll(async()=>{ await db?.close(); });
+it("원천·수동 양쪽이 영어 날짜를 기간과 별도로 검증하고 이전 입력도 받는다",async()=>{
+  const written={...bundle.events[0],subjectDate:"2026-10-15"};
+  await db.exec("begin");
+  try {
+    const payload={...bundle,schoolKey:"J10:7777777",versionId:"subject-date-contract",events:[written]};
+    await register(payload);
+    const saved=(await db.query<{payload:typeof payload}>("select payload from private.school_schedule_versions where version_id='subject-date-contract'")).rows[0].payload;
+    expect(saved.events[0]).toEqual(written);
+    const validate=(event:unknown)=>db.query("select private.validate_school_schedule_manual_event($1::jsonb)",[JSON.stringify(event)]);
+    const manual={...written,sourceUrl:null,sourceLabel:"관리자 수동 입력"};
+    await validate(manual);
+    await validate({...manual,startDate:null,endDate:null,precision:"unknown",status:"unknown"});
+  } finally { await db.exec("rollback"); }
+  for(const event of [
+    {...written,subjectDate:"2026-02-30"},{...written,subjectDate:42},{...written,subjectDate:"2026-9-1"},
+    {...bundle.events[1],subjectDate:"2026-10-15"},{...bundle.events[2],subjectDate:"2026-10-15"},
+  ]) {
+    await expect(register({...bundle,versionId:"subject-invalid",events:[event]})).rejects.toThrow();
+    await expect(db.query("select private.validate_school_schedule_manual_event($1::jsonb)",[JSON.stringify({...event,sourceUrl:null,sourceLabel:"관리자 수동 입력"})])).rejects.toThrow();
+  }
+});
 it("원천 날짜는 유지하고 수동 변경은 관리자와 본인 조회에 같이 전달한다",async()=>{
   const before=(await db.query("select payload from private.school_schedule_versions")).rows;
   const result=await save(command); expect(result.rows[0].v.eventId).toBe(manualEvent.id);

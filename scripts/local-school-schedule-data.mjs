@@ -9,6 +9,7 @@ function sourceEvents() {
     status: startDate ? 'confirmed' : 'unknown', dateText: '', maxPoints: kind === 'written' ? null : 25,
     applicability: 'grade', sourceUrl: 'https://school.example.invalid/notice' });
   return [event('fake-written',1,'written','2학기 1차 시험','2026-10-12','2026-10-16'),
+    event('fake-september',1,'performance','9월 가상 어휘 평가','2026-09-15','2026-09-15'),
     event('fake-performance',1,'performance','가상 글쓰기 평가',null,null),
     event('fake-overlap',1,'performance','같은 주 영어 발표','2026-10-14','2026-10-14'),
     event('fake-senior',3,'written','고3 1차 시험','2026-10-12','2026-10-16')];

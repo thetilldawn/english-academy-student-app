@@ -42,14 +42,14 @@ export function SchoolScheduleEditor({ initial, presentation }: { initial: Sched
       <label className={styles.eventSelect}>일정 <select aria-label="일정 선택" value={editor.draft.id} disabled={editor.busy || editor.unresolved} onChange={async event => {
         const id = event.target.value; if (await guard.canExit()) editor.selectEvent(id);
       }}><option value="">새 일정 입력</option>{editor.snapshot.events.filter(event => event.grade === editor.grade).map(event => <option key={event.id} value={event.id}>
-        {event.kind === "written" ? "지필" : "수행"} / {event.subject ? event.subject + " / " : ""}{event.title} / {event.startDate ?? (event.dateText || "날짜 확인 필요")}
+        {event.kind === "written" ? "지필" : "수행"} / {event.subject ? event.subject + " / " : ""}{event.title} / {event.kind === "written" ? event.subjectDate ?? "영어 시험일 확인 필요" : event.startDate ?? (event.dateText || "날짜 확인 필요")}
       </option>)}</select></label>
       {editor.sourceChanged ? <p role="status" className={styles.notice}>새 학교 자료가 있습니다. 수동 입력 내용을 확인해 주세요.</p> : null}
       <form onSubmit={event => { event.preventDefault(); void editor.save(); }} className={styles.form}>
         <fieldset disabled={disabled}><legend>평가 정보</legend>
           <div className={styles.kindOptions}>
-            <label data-kind="performance"><input type="radio" name={titleId + "-kind"} checked={editor.draft.kind === "performance"} onChange={() => editor.change({ kind: "performance" })} />수행평가</label>
-            <label data-kind="written"><input type="radio" name={titleId + "-kind"} checked={editor.draft.kind === "written"} onChange={() => editor.change({ kind: "written" })} />지필평가</label>
+            <label data-kind="performance"><input type="radio" name={titleId + "-kind"} checked={editor.draft.kind === "performance"} onChange={() => editor.change({ kind: "performance", subjectDate: "", startDate: "", endDate: "", dateText: "", precision: "unknown" })} />수행평가</label>
+            <label data-kind="written"><input type="radio" name={titleId + "-kind"} checked={editor.draft.kind === "written"} onChange={() => editor.change({ kind: "written", subjectDate: "", startDate: "", endDate: "", dateText: "", precision: "unknown" })} />지필평가</label>
           </div>
           <label>일정 이름 <span className={styles.required}>필수</span><input aria-label="일정 이름" required maxLength={240} value={editor.draft.title} onChange={event => editor.change({ title: event.target.value })} /></label>
           <div className={styles.columns}>
@@ -60,15 +60,19 @@ export function SchoolScheduleEditor({ initial, presentation }: { initial: Sched
           <label>대상<select aria-label="평가 대상" value={editor.draft.applicability} onChange={event => editor.change({ applicability: event.target.value as "grade" | "enrollment-unconfirmed" })}>
             <option value="grade">학년 공통·학교 지정 과목</option><option value="enrollment-unconfirmed">학생 선택 과목</option></select></label>
         </fieldset>
-        <fieldset disabled={disabled}><legend>날짜</legend>
-          <label>날짜 입력 방식<select aria-label="날짜 입력 방식" value={editor.draft.precision} onChange={event => editor.change({ precision: event.target.value as typeof editor.draft.precision })}>
+        {editor.draft.kind === "written" ? <fieldset disabled={disabled || editor.draft.precision === "none"}><legend>영어 시험일</legend>
+          <label>영어 시험일<input aria-label="영어 시험일" type="date" value={editor.draft.subjectDate} onChange={event => editor.change({ subjectDate: event.target.value })} /></label>
+          <p className={styles.help}>날짜가 정해졌을 때 입력하세요. 비워 두면 날짜 확인 필요로 표시합니다.</p>
+        </fieldset> : null}
+        <fieldset disabled={disabled}><legend>{editor.draft.kind === "written" ? "학교 시험기간 · 보조 정보" : "날짜"}</legend>
+          <label>{editor.draft.kind === "written" ? "학교 시험기간 입력 방식" : "날짜 입력 방식"}<select aria-label={editor.draft.kind === "written" ? "학교 시험기간 입력 방식" : "날짜 입력 방식"} value={editor.draft.precision} onChange={event => editor.change({ precision: event.target.value as typeof editor.draft.precision, ...(event.target.value === "none" ? { subjectDate: "" } : {}) })}>
             <option value="day">하루</option><option value="range">시작일 ~ 종료일</option><option value="week">주차 예정</option><option value="month">월 예정</option><option value="unknown">날짜 확인 필요</option><option value="none">미실시</option>
           </select></label>
           {["day","range"].includes(editor.draft.precision) ? <div className={styles.columns}>
             <label>{editor.draft.precision === "range" ? "시작일" : "시행일"}<input aria-label="시작일" type="date" required value={editor.draft.startDate} onChange={event => editor.change({ startDate: event.target.value })} /></label>
             {editor.draft.precision === "range" ? <label>종료일<input aria-label="종료일" type="date" required min={editor.draft.startDate} value={editor.draft.endDate} onChange={event => editor.change({ endDate: event.target.value })} /></label> : null}
           </div> : ["week","month"].includes(editor.draft.precision) ? <label>예정 시기<input aria-label="예정 시기" required maxLength={300} placeholder="예: 10월 4주" value={editor.draft.dateText} onChange={event => editor.change({ dateText: event.target.value })} /></label> : null}
-          {!["unknown","none"].includes(editor.draft.precision) ? <label>확인 상태<select aria-label="확인 상태" value={editor.draft.status} onChange={event => editor.change({ status: event.target.value as "confirmed" | "planned" })}><option value="confirmed">확인됨</option><option value="planned">예정</option></select></label> : null}
+          {!["unknown","none"].includes(editor.draft.precision) ? <label>{editor.draft.kind === "written" ? "학교 시험기간 확인 상태" : "확인 상태"}<select aria-label={editor.draft.kind === "written" ? "학교 시험기간 확인 상태" : "확인 상태"} value={editor.draft.status} onChange={event => editor.change({ status: event.target.value as "confirmed" | "planned" })}><option value="confirmed">확인됨</option><option value="planned">예정</option></select></label> : null}
         </fieldset>
         <p className={styles.help}>수동으로 저장한 정보는 학교 자료를 갱신해도 유지됩니다.</p>
         {editor.message ? <p role={editor.problem ? "alert" : "status"} className={styles.notice}>{editor.message}</p> : null}
