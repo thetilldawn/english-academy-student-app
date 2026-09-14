@@ -15,7 +15,9 @@ import {
 } from "@/design-system/primitives/dialog/dialog";
 import { prefersReducedMotion } from "@/lib/ui/motion";
 
-import type { AssignmentStudentItem } from "../catalog-types";
+import type { AssignmentStudentItem, AssignmentDatasetItem } from "../catalog-types";
+import { WordbookComposer } from "@/features/wordbook-compositions/public-ui";
+import type { CreatedComposition } from "@/features/wordbook-compositions/public-contracts";
 import { useAssignmentDatasetPicker } from "../client/controllers/use-assignment-dataset-picker";
 import {
   useVocabAssignmentScreen,
@@ -23,6 +25,7 @@ import {
 } from "../controller/use-vocab-assignment-screen";
 import { useDirectReviewAssignmentController } from "../controller/use-direct-review-assignment-controller";
 import { useAssignmentDatasetUnitCatalog } from "../controller/use-assignment-dataset-unit-catalog";
+import { useAssignmentAuthenticationFailure } from "../controller/assignment-authentication-boundary";
 import { AssignmentSubmitAction } from "./assignment-submit-action";
 import { AssignmentDatasetPicker } from "./assignment-dataset-picker";
 import { AssignmentDiscardDialog } from "./assignment-discard-dialog";
@@ -59,15 +62,20 @@ export function VocabAssignmentPlanner({
   selectionMode: "single" | "bulk";
   students: readonly AssignmentStudentItem[];
 }) {
+  const captureAuthenticationFailure = useAssignmentAuthenticationFailure();
   const [assignmentPurpose, setAssignmentPurpose] = useState<"range" | "review">(
     "range",
   );
+  const [composedDatasets, setComposedDatasets] = useState<AssignmentDatasetItem[]>([]);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [composerStarted, setComposerStarted] = useState(false);
+  const [composerLocked, setComposerLocked] = useState(false);
   const unitCatalog = useAssignmentDatasetUnitCatalog(data.units, initialDatasetId);
   const cancelUnitRequest = unitCatalog.actions.cancel;
   const ensureDatasetUnits = unitCatalog.actions.ensureDataset;
   const controller = useVocabAssignmentScreen({
     audienceMode: selectionMode,
-    data: { ...data, units: unitCatalog.units },
+    data: { ...data, datasets: [...data.datasets, ...composedDatasets.filter(book => !data.datasets.some(existing => existing.id === book.id))], units: unitCatalog.units },
     enabled: assignmentPurpose === "range",
     genericErrorMessage: "단어 시험 배정을 저장하지 못했습니다.",
     initialDatasetId,
@@ -104,6 +112,19 @@ export function VocabAssignmentPlanner({
       ? controller.actions.changeDataset
       : reviewController.actions.changeDataset,
   });
+  function receiveCreatedBook(book: CreatedComposition) {
+    setComposedDatasets(current => [...current.filter(d => d.id !== book.datasetId), {
+      id: book.datasetId, title: book.title, displayName: book.title, edition: "composition-v1",
+      catalogGroup: "high_mock", materialKind: "wordbook", gradeCode: "g12", publisher: null, seriesTitle: null,
+      academicYear: null, curriculumRevision: null, editionLabel: null, isAssignable: true, catalogSortIndex: 0,
+      isActive: true, rowCount: book.includedEntryCount, status: "ready", schoolClassification: "common",
+      availableQuestionModes: ["book_meaning_choice"],
+    }]);
+    controller.actions.changeDataset(book.datasetId);
+    datasetPicker.actions.rememberSelection(book.datasetId);
+    datasetPicker.actions.close();
+    setComposerOpen(false); setComposerStarted(false); setComposerLocked(false);
+  }
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
   const [gradeReview, setGradeReview] = useState<AssignmentGradeReview | null>(null);
@@ -158,6 +179,13 @@ export function VocabAssignmentPlanner({
   ]);
   function requestClose() {
     if (!interactionAllowed || busy || discardOpen || gradeReview) return;
+    if (composerOpen) {
+      if (!composerLocked) {
+        setComposerOpen(false);
+        requestAnimationFrame(() => datasetPicker.searchRef.current?.focus());
+      }
+      return;
+    }
     if (datasetPicker.open) {
       datasetPicker.actions.close();
       return;
@@ -282,22 +310,22 @@ export function VocabAssignmentPlanner({
     <>
     <DialogFrame
       aria-labelledby="vocab-assignment-plan-title"
-      closeDisabled={busy}
+      closeDisabled={busy || composerLocked}
       height="large"
       layout={datasetPicker.open ? "body" : "body-footer"}
       onRequestClose={requestClose}
       size="extra-wide"
     >
       <DialogHeader
-        backLabel="배정 조건으로 돌아가기"
+        backLabel={composerOpen ? "단어장 찾기로 돌아가기" : "배정 조건으로 돌아가기"}
         closeLabel={datasetPicker.open ? "선택 취소" : "닫기"}
-        onBack={datasetPicker.open ? datasetPicker.actions.close : undefined}
+        onBack={datasetPicker.open ? requestClose : undefined}
       >
         <div>
           <h2 id="vocab-assignment-plan-title">
-            {datasetPicker.open ? "단어장 찾기" : selectionMode === "bulk" ? "일괄 배정" : "단일 배정"}
+            {composerOpen ? "모의고사 단어장" : datasetPicker.open ? "단어장 찾기" : selectionMode === "bulk" ? "일괄 배정" : "단일 배정"}
           </h2>
-          {datasetPicker.open ? <p>단어장을 골라주세요.</p> : selectionMode === "bulk" ? (
+          {datasetPicker.open ? <p>{composerOpen ? "시험에 넣을 범위를 담아 주세요." : "단어장을 골라주세요."}</p> : selectionMode === "bulk" ? (
             <MetaTagList>
               {(bulkFilterLabels.length > 0
                 ? bulkFilterLabels
@@ -311,7 +339,12 @@ export function VocabAssignmentPlanner({
         </div>
       </DialogHeader>
       <DialogBody>
-        {datasetPicker.open ? (
+        {composerStarted ? <div hidden={!composerOpen}>
+          <WordbookComposer active={composerOpen} captureAuthenticationFailure={captureAuthenticationFailure} onSaved={receiveCreatedBook} onBack={requestClose} onLockChange={setComposerLocked} />
+        </div> : null}
+        {datasetPicker.open && !composerOpen ? (
+          <>
+          {assignmentPurpose === "range" ? <Button onClick={() => { setComposerStarted(true); setComposerOpen(true); }}>모의고사 범위로 단어장 만들기</Button> : null}
           <AssignmentDatasetPicker
             filters={datasetPicker.filters}
             buttons={datasetPicker.buttons}
@@ -330,6 +363,7 @@ export function VocabAssignmentPlanner({
             onSelect={datasetPicker.actions.choose}
             reviewOnly={assignmentPurpose === "review"}
           />
+          </>
         ) : null}
         <div hidden={datasetPicker.open}>
         <AssignmentEditorForm

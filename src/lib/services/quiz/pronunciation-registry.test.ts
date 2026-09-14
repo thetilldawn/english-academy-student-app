@@ -1,6 +1,9 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ rpc: vi.fn(), from: vi.fn() }));
-vi.mock("@/lib/supabase/service", () => ({ getServiceSupabaseClient: () => mocks }));
+const mocks = vi.hoisted(() => ({ rpc: vi.fn(), from: vi.fn(), lineage: vi.fn() }));
+vi.mock("@/lib/supabase/service", () => ({ getServiceSupabaseClient: () => ({
+  from: mocks.from,
+  rpc: (name: string, args: unknown) => name === "list_mock_composition_lineage_v1" ? mocks.lineage(args) : mocks.rpc(name, args),
+}) }));
 import { loadEntryApprovedKoreanPronunciationRegistry, loadApprovedKoreanPronunciationRegistry, loadEntrySourcePronunciationRegistry } from "./pronunciation-registry";
 import { getStudentAttempt } from "./attempt-query";
 import { getAttemptQuestionResults } from "./attempt-result-query";
@@ -25,6 +28,7 @@ function row(id = 7) {
 let tables: Record<string, unknown> = {};
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.lineage.mockResolvedValue({ data: [], error: null });
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://wojxpruvbjzbhrpmsbuy.supabase.co");
   vi.spyOn(console, "warn").mockImplementation(() => {});
   tables = {};

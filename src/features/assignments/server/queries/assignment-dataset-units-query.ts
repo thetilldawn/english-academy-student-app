@@ -1,4 +1,5 @@
 import "server-only";
+import { scopeMetadataSchema } from "@/features/wordbook-compositions/public-contracts";
 
 import type { AssignmentUnitItem } from "../../catalog-types";
 import type { AssignmentDatasetUnitsResponse } from "../../contracts/assignment-workspace-read-model";
@@ -23,6 +24,7 @@ type UnitRow = {
 };
 
 type UnitCatalogRow = {
+  metadata?: { mockScope?: unknown };
   academic_year: number | null;
   agency: string | null;
   catalog_group: DatasetCatalogGroup;
@@ -77,7 +79,7 @@ async function loadCataloguedUnits(supabase: QueryClient, unitRows: UnitRow[]) {
     : await supabase
         .from("vocab_unit_catalog")
         .select(
-          "unit_id, catalog_group, unit_type, display_name, academic_year, exam_month, agency, item_range, sort_index",
+          "unit_id, catalog_group, unit_type, display_name, academic_year, exam_month, agency, item_range, sort_index, metadata",
         )
         .in("unit_id", unitIds);
   if (unitCatalogResult.error) {
@@ -94,7 +96,10 @@ async function loadCataloguedUnits(supabase: QueryClient, unitRows: UnitRow[]) {
   );
   const units: AssignmentUnitItem[] = unitRows.map((unit) => {
     const unitCatalog = catalogByUnitId.get(unit.id);
+    const mockScope = unitCatalog?.metadata?.mockScope === undefined ? null : scopeMetadataSchema.safeParse(unitCatalog.metadata.mockScope);
+    if (mockScope && !mockScope.success) throw new AssignmentDatasetUnitsError("unavailable", "시험 범위 분류를 확인하지 못했습니다.");
     return {
+      ...(mockScope?.success ? { mockScope: mockScope.data } : {}),
       academicYear: unitCatalog?.academic_year ?? null,
       agency: unitCatalog?.agency ?? null,
       catalogGroup: unitCatalog?.catalog_group ?? null,

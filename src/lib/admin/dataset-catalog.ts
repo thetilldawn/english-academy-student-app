@@ -70,6 +70,10 @@ export type DatasetCatalogMetadata = {
 };
 
 export type CataloguedUnit = {
+  mockScope?: {
+    executionYear: number; examMonth: number; examKind: "mock" | "csat"; academicYear: number | null;
+    agency: string; typeCode: string; typeLabel: string; questionNumbers: number[]; sharedPassage: boolean;
+  };
   catalogGroup: DatasetCatalogGroup | null;
   unitType: VocabUnitType | null;
   displayName: string;

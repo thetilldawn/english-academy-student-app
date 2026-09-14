@@ -26,6 +26,7 @@ export function bulkCountView(item: CountItem) {
     details.push("선택 범위의 실제 수록 " + breakdown.sourceCount + "개");
     if (breakdown.outsideCandidateListCount > 0) details.push("현재 유형의 출제 목록에 없는 항목 " + breakdown.outsideCandidateListCount + "개 · 미작성·검토 제외·중복 연결 등 세부 사유는 미확인");
     if (breakdown.activeReviewExcludedCount > 0) details.push("활성 오답 시험에 포함 " + breakdown.activeReviewExcludedCount + "개");
+    if ((breakdown.duplicateExcludedCount ?? 0) > 0) details.push("같은 품사·뜻으로 확인된 중복 수록 " + breakdown.duplicateExcludedCount + "개 정리 · 원출처는 모두 보존됩니다.");
     if (breakdown.directionExcludedCount > 0) details.push("선택한 출제 방향에 맞는 문제 없음 " + breakdown.directionExcludedCount + "개");
     if (breakdown.choiceExcludedCount > 0) details.push("서로 다른 보기 4개를 만들 수 없음 " + breakdown.choiceExcludedCount + "개");
     if (breakdown.allocationExcludedCount > 0) details.push("한 번씩 나눌 때 출제 방향 비율·최소 문항 조건으로 제외 " + breakdown.allocationExcludedCount + "개 · 반복 배정에서는 다른 회차에 사용될 수 있습니다.");

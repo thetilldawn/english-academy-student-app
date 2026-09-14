@@ -1298,6 +1298,35 @@ describe("createMixedQuizQuestions", () => {
   });
 });
 
+describe("제공 뜻 일부가 겹치는 오답 방지", () => {
+  const target = { id: 9001, headword: "allow", primaryMeaning: "허락하다" };
+  const safe = [
+    { id: 9004, headword: "apple", primaryMeaning: "사과" },
+    { id: 9005, headword: "book", primaryMeaning: "책" },
+    { id: 9006, headword: "walk", primaryMeaning: "걷다" },
+  ];
+  it.each(["승인하다, 허락하다", "승인하다; 허락하다", "승인하다 / 허락하다"])("나열뜻 %s를 양방향 오답에서 제외한다", (meaning) => {
+    const candidates = [target, { id: 9002, headword: "permit", primaryMeaning: "허락하다" },
+      { id: 9003, headword: "grant", primaryMeaning: meaning }, ...safe];
+    for (const ratio of [0, 100]) {
+      const [question] = createTargetedQuizQuestions([target], candidates, ratio, seededRandom());
+      expect(question!.choiceVocabEntryIds.sort()).toEqual([9001, 9004, 9005, 9006]);
+    }
+  });
+  it("같은 뜻을 빼면 오답이 부족한 경우 수량 검사와 생성이 함께 거절한다", () => {
+    const candidates = [target, { id: 9003, headword: "grant", primaryMeaning: "승인하다, 허락하다" }, ...safe.slice(0, 2)];
+    expect(quizIndependentTargetDirectionEligibility([target], candidates)[0]!.eligibleDirections).toEqual([]);
+    expect(() => createTargetedQuizQuestions([target], candidates, 0, seededRandom())).toThrow();
+  });
+  it("괄호 안 구분자나 부정 표현을 같은 뜻으로 추측하지 않는다", () => {
+    const candidates = [target,
+      { id: 9002, headword: "deny", primaryMeaning: "허락하지 않다" },
+      { id: 9003, headword: "example", primaryMeaning: "예시 (허락하다, 승인하다)" }, safe[0]!];
+    expect(quizIndependentTargetDirectionEligibility([target], candidates)[0]!.eligibleDirections).toHaveLength(2);
+    expect(createTargetedQuizQuestions([target], candidates, 0, seededRandom())[0]!.choiceVocabEntryIds).toHaveLength(4);
+  });
+});
+
 describe("calculateQuizScore", () => {
   it("최초 점수와 재시도 해결·미해결을 분리한다", () => {
     expect(

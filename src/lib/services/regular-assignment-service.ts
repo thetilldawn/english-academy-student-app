@@ -1,4 +1,5 @@
 import "server-only";
+import { compositionExclusionPredicate, uniqueCompositionTargets } from "@/lib/assignment/composition-targets";
 
 import {
   buildAssignmentQuestionPlan,
@@ -313,6 +314,7 @@ export async function prepareRegularAssignment(
   );
   const unitIdSet = new Set(orderedUnitIds);
   const excludedTargetIds = new Set(input.excludedTargetIds ?? []);
+  const isExcludedTarget = compositionExclusionPredicate(allCandidates, excludedTargetIds);
   const choiceCandidates = allCandidates.filter(
     (candidate) =>
       unitIdSet.has(candidate.unitId) &&
@@ -326,7 +328,7 @@ export async function prepareRegularAssignment(
       ),
   );
   const primaryCandidates = choiceCandidates.filter(
-    (candidate) => !excludedTargetIds.has(candidate.id),
+    (candidate) => !isExcludedTarget(candidate),
   );
   const requiredTargetIds = input.requiredTargetIds ?? [];
   const requiredTargetIdSet = new Set(requiredTargetIds);
@@ -344,13 +346,13 @@ export async function prepareRegularAssignment(
       exactTargetDirections.length !== exactTargetIds.length) ||
     requiredTargetIds.some(
       (targetId) =>
-        excludedTargetIds.has(targetId) ||
-        !choiceCandidateById.has(targetId),
+        !choiceCandidateById.has(targetId) ||
+        isExcludedTarget(choiceCandidateById.get(targetId)!),
     ) ||
     exactTargetIds.some(
       (targetId) =>
-        excludedTargetIds.has(targetId) ||
-        !choiceCandidateById.has(targetId),
+        !choiceCandidateById.has(targetId) ||
+        isExcludedTarget(choiceCandidateById.get(targetId)!),
     ) ||
     (exactTargetIds.length > 0 && exactTargetIds.length !== input.questionCount)
   ) {
@@ -545,7 +547,7 @@ export async function loadRegularAssignmentSeriesCandidates(
     orderedCandidates.map((candidate) => [candidate.id, candidate]),
   );
   return quizIndependentTargetDirectionEligibility(
-    orderedCandidates,
+    uniqueCompositionTargets(orderedCandidates),
     choiceCandidates,
   )
     .filter((candidate) => candidate.eligibleDirections.length > 0)
@@ -623,6 +625,7 @@ export async function calculateRegularAssignmentCapacity(
         activeAssignments.reviewIdentities.has(identity)
       ),
   );
+  const uniqueCandidates = uniqueCompositionTargets(choiceCandidates);
   const range = calculateAssignmentQuestionRange({
     requiredTargets: [],
     primaryCandidates: choiceCandidates,
@@ -638,13 +641,14 @@ export async function calculateRegularAssignmentCapacity(
     const requestedDirections = input.englishToKoreanRatio === 100 ? ["english_to_korean" as const]
       : input.englishToKoreanRatio === 0 ? ["korean_to_english" as const]
       : ["english_to_korean" as const, "korean_to_english" as const];
-    const directionCandidates = choiceCandidates.filter(candidate => requestedDirections.some(direction => canUseDirection(candidate, direction)));
+    const directionCandidates = uniqueCandidates.filter(candidate => requestedDirections.some(direction => canUseDirection(candidate, direction)));
     const independentlyEligibleCount = quizIndependentTargetDirectionEligibility(directionCandidates, choiceCandidates)
       .filter(candidate => requestedDirections.some(direction => candidate.eligibleDirections.includes(direction))).length;
     return {
       candidateCount,
       activeReviewExcludedCount: candidateCount - choiceCandidates.length,
-      directionExcludedCount: choiceCandidates.length - directionCandidates.length,
+      ...(choiceCandidates.length > uniqueCandidates.length ? { duplicateExcludedCount: choiceCandidates.length - uniqueCandidates.length } : {}),
+      directionExcludedCount: uniqueCandidates.length - directionCandidates.length,
       choiceExcludedCount: directionCandidates.length - independentlyEligibleCount,
       allocationExcludedCount: independentlyEligibleCount - seriesMaximumQuestionCount,
       availableCount: seriesMaximumQuestionCount,

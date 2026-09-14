@@ -39,6 +39,8 @@ export function resolveReviewCandidate(
   scope: "dataset" | "selection",
   selectedUnitIds: ReadonlySet<string>,
 ) {
+  const original = candidates.find(candidate => candidate.id === review.vocabEntryId);
+  const compositionKey = original?.compositionTargetKey;
   return candidates
     .filter(
       (candidate) =>
@@ -46,7 +48,9 @@ export function resolveReviewCandidate(
           scope,
           candidate.unitId,
           selectedUnitIds,
-        ) && candidateMatchesReviewIdentity(candidate, review),
+        ) && (candidate.compositionTargetKey
+          ? Boolean(compositionKey && candidate.compositionTargetKey === compositionKey)
+          : candidateMatchesReviewIdentity(candidate, review)),
     )
     .sort(
       (left, right) =>

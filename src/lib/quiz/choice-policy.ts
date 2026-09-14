@@ -4,6 +4,29 @@ import { shuffle } from "./random";
 
 export const DISTRACTOR_POLICY_VERSION = "shape-v1";
 
+function meaningParts(meaning: string): ReadonlySet<string> {
+  const normalized = normalizeQuizChoice(meaning).replace(/\s+/g, " ");
+  if (!/[가-힣]/.test(normalized)) return new Set([normalized]);
+  const parts: string[] = [];
+  let depth = 0;
+  let current = "";
+  for (const character of normalized) {
+    if ("([{".includes(character)) depth += 1;
+    if (")]}".includes(character)) depth = Math.max(0, depth - 1);
+    if (depth === 0 && ",;/|".includes(character)) {
+      if (current.trim()) parts.push(current.trim());
+      current = "";
+    } else current += character;
+  }
+  if (current.trim()) parts.push(current.trim());
+  return new Set(parts);
+}
+
+function shareMeaning(left: ReadonlySet<string>, right: ReadonlySet<string>) {
+  for (const meaning of left) if (right.has(meaning)) return true;
+  return false;
+}
+
 export function canUseDirection(
   entry: QuizVocabularyEntry,
   direction: QuizDirection,
@@ -186,6 +209,7 @@ function hasMinimumDistinctDistractors(
 ) {
   const correctKey = normalizeQuizChoice(display(target));
   const correctIdentity = quizVocabularyIdentity(target);
+  const targetMeanings = meaningParts(target.primaryMeaning);
   const promptKey = direction === "english_to_korean"
     ? normalizeQuizHeadword(target.headword)
     : normalizeQuizChoice(target.primaryMeaning);
@@ -223,7 +247,8 @@ function hasMinimumDistinctDistractors(
       candidate.id === target.id ||
       identity === correctIdentity ||
       displayKey === correctKey ||
-      candidatePromptKey === promptKey
+      candidatePromptKey === promptKey ||
+      shareMeaning(targetMeanings, meaningParts(candidate.primaryMeaning))
     ) {
       continue;
     }
@@ -244,6 +269,7 @@ type QuizChoiceCandidateMetadata = {
   identity: string;
   headwordKey: string;
   meaningKey: string;
+  meaningParts: ReadonlySet<string>;
   recordType: ReturnType<typeof inferredRecordType>;
   meaningShape: ReturnType<typeof meaningShape>;
   headwordShape: ReturnType<typeof headwordShape>;
@@ -298,7 +324,8 @@ function buildDistractorCandidates(
       candidate.id === target.id ||
       identity === correctIdentity ||
       displayKey === correctKey ||
-      candidatePromptKey === promptKey
+      candidatePromptKey === promptKey ||
+      shareMeaning(targetMetadata.meaningParts, metadata.meaningParts)
     ) {
       continue;
     }
@@ -437,6 +464,7 @@ function quizChoiceCandidateMetadata(
     identity: quizVocabularyIdentity(entry),
     headwordKey: normalizeQuizHeadword(entry.headword),
     meaningKey: normalizeQuizChoice(entry.primaryMeaning),
+    meaningParts: meaningParts(entry.primaryMeaning),
     recordType: inferredRecordType(entry),
     meaningShape: meaningShape(entry.primaryMeaning),
     headwordShape: headwordShape(entry.headword),
@@ -519,4 +547,3 @@ export function createChoices(
     ),
   };
 }
-

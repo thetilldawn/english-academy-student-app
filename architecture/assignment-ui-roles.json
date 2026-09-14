@@ -589,24 +589,27 @@
       "role": "assembly",
       "reason": "일반/오답 제어기·범위/찾기·제출/폐기 수명 연결",
       "allowedImports": [
-        "../contracts/assignment-grade-review",
-        "./assignment-grade-dialog",
-        "@/design-system/primitives/button/button",
         "../catalog-types",
         "../client/controllers/use-assignment-dataset-picker",
+        "../contracts/assignment-grade-review",
+        "../controller/assignment-authentication-boundary",
         "../controller/use-assignment-dataset-unit-catalog",
         "../controller/use-direct-review-assignment-controller",
         "../controller/use-vocab-assignment-screen",
         "./assignment-dataset-picker",
         "./assignment-discard-dialog",
         "./assignment-editor-shell",
+        "./assignment-grade-dialog",
         "./assignment-submit-action",
         "./direct-review-assignment-sections",
         "./focus-invalid-assignment-field",
         "./vocab-assignment-planner.module.css",
         "./vocab-range-assignment-sections",
         "@/design-system/primitives/badge/badge",
+        "@/design-system/primitives/button/button",
         "@/design-system/primitives/dialog/dialog",
+        "@/features/wordbook-compositions/public-contracts",
+        "@/features/wordbook-compositions/public-ui",
         "@/lib/ui/motion",
         "react",
         "sonner"
@@ -661,13 +664,17 @@
     },
     {
       "path": "vocab-range-fields.tsx",
-      "role": "pure",
-      "reason": "선택 단어장·범위 표시/입력",
+      "role": "interaction",
+      "reason": "저장 단어장의 연도·월·유형 필터 입력과 보이는 범위 선택; 숨은 선택 유지",
       "allowedImports": [
         "../catalog-types",
         "./assignment-dataset-trigger",
         "./assignment-unit-range-picker",
-        "./vocab-assignment-planner.module.css"
+        "./vocab-assignment-planner.module.css",
+        "@/design-system/primitives/button/button",
+        "@/features/wordbook-compositions/public-contracts",
+        "@/features/wordbook-compositions/public-ui",
+        "react"
       ]
     },
     {

@@ -1,4 +1,5 @@
 import "server-only";
+import { readCompositionLineage, readMappedEntryResources } from "@/features/wordbook-compositions/public-server";
 import { parseEntrySourcePronunciation, type EntrySourcePronunciation } from "@/lib/quiz/entry-source-pronunciation";
 
 import {
@@ -24,7 +25,39 @@ import {
 } from "@/lib/quiz/pronunciation-snapshot";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 
-export async function loadEntrySourcePronunciationRegistry(
+export function loadEntrySourcePronunciationRegistry(ids: readonly number[]) {
+  return readMappedEntryResources(ids, readEntrySourcePronunciationRegistry, (rows, targetId) => rows.map(row => ({ ...row, entryId: targetId })));
+}
+export function loadEntryApprovedKoreanPronunciationRegistry(ids: readonly number[]) {
+  return readMappedEntryResources(ids, readEntryApprovedKoreanPronunciationRegistry);
+}
+export function loadVocabPronunciationRegistry(ids: readonly number[]) {
+  return readMappedEntryResources(ids, readVocabPronunciationRegistry);
+}
+export function loadActiveVocabPronunciationReleaseRegistry(ids: readonly number[]) {
+  return readMappedEntryResources(ids, readActiveVocabPronunciationReleaseRegistry);
+}
+export function loadVocabPronunciationDisplayRegistry(ids: readonly number[]) {
+  return readMappedEntryResources(ids, readVocabPronunciationDisplayRegistry);
+}
+export async function loadSyntheticPronunciationRegistry(bindings: readonly { releaseId: string; vocabEntryId: number }[]) {
+  if (!bindings.length) return new Map<string, QuizPronunciation>();
+  const lineage = await readCompositionLineage(bindings.map(b => b.vocabEntryId));
+  const mapped = bindings.map(binding => {
+    const source = lineage.get(binding.vocabEntryId);
+    return source && source.compositionReleaseId === binding.releaseId
+      ? { releaseId: source.sourceReleaseId, vocabEntryId: source.sourceEntryId } : binding;
+  });
+  const original = await readSyntheticPronunciationRegistry(mapped);
+  const result = new Map<string, QuizPronunciation>();
+  for (let i = 0; i < bindings.length; i++) {
+    const resource = original.get(syntheticPronunciationBindingKey(mapped[i]!.releaseId, mapped[i]!.vocabEntryId));
+    if (resource) result.set(syntheticPronunciationBindingKey(bindings[i]!.releaseId, bindings[i]!.vocabEntryId), resource);
+  }
+  return result;
+}
+
+async function readEntrySourcePronunciationRegistry(
   vocabEntryIds: readonly number[],
 ): Promise<Map<number, EntrySourcePronunciation[]>> {
   const result = new Map<number, EntrySourcePronunciation[]>();
@@ -52,7 +85,7 @@ export async function loadEntrySourcePronunciationRegistry(
   }
 }
 
-export async function loadEntryApprovedKoreanPronunciationRegistry(
+async function readEntryApprovedKoreanPronunciationRegistry(
   vocabEntryIds: readonly number[],
 ): Promise<Map<number, EntryApprovedKoreanPronunciation>> {
   const result = new Map<number, EntryApprovedKoreanPronunciation>();
@@ -94,7 +127,7 @@ export async function loadEntryApprovedKoreanPronunciationRegistry(
 }
 
 
-export async function loadVocabPronunciationRegistry(
+async function readVocabPronunciationRegistry(
   vocabEntryIds: readonly number[],
 ) {
   const result = new Map<number, QuizPronunciation>();
@@ -126,7 +159,7 @@ export async function loadVocabPronunciationRegistry(
   return result;
 }
 
-export async function loadActiveVocabPronunciationReleaseRegistry(
+async function readActiveVocabPronunciationReleaseRegistry(
   vocabEntryIds: readonly number[],
 ) {
   const result = new Map<number, QuizPronunciation>();
@@ -197,7 +230,7 @@ export async function loadActiveVocabPronunciationReleaseRegistry(
   return result;
 }
 
-export async function loadVocabPronunciationDisplayRegistry(
+async function readVocabPronunciationDisplayRegistry(
   vocabEntryIds: readonly number[],
 ) {
   const result = new Map<number, string>();
@@ -230,7 +263,7 @@ export async function loadVocabPronunciationDisplayRegistry(
   return result;
 }
 
-export async function loadSyntheticPronunciationRegistry(
+async function readSyntheticPronunciationRegistry(
   bindings: readonly { releaseId: string; vocabEntryId: number }[],
 ) {
   const result = new Map<string, QuizPronunciation>();

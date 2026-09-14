@@ -15,6 +15,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const quizFeedback = process.argv.includes("--quiz-feedback");
 const studentProfile = process.argv.includes("--student-profile");
 const schoolSchedules = process.argv.includes("--school-schedules");
+const mockWordbooks = process.argv.includes("--mock-wordbooks");
 const env = Object.fromEntries(["Path", "PATH", "SystemRoot", "SYSTEMROOT", "TEMP", "TMP", "USERPROFILE", "LOCALAPPDATA", "APPDATA"]
   .filter(key => process.env[key]).map(key => [key, process.env[key]]));
 if (process.env.VERCEL || process.env.VERCEL_ENV || process.env.CI) throw new Error("배포/CI 환경에서는 시작하지 않습니다.");
@@ -81,9 +82,10 @@ const dataServer = http.createServer(async (req, res) => {
   if (req.headers.host !== new URL(DATA_ORIGIN).host) return json(res, { error: "Local host required" }, 403);
   try {
     const result = fixtureResponse({ url: DATA_ORIGIN + req.url, method: req.method,
-      headers: new Headers(req.headers), body: await readBody(req), quizFeedback, studentProfile, schoolSchedules });
+      headers: new Headers(req.headers), body: await readBody(req), quizFeedback, studentProfile, schoolSchedules, mockWordbooks });
     metrics.data.push({ path: new URL(DATA_ORIGIN + req.url).pathname, method: req.method,
       category: result.category, status: result.status, at: Date.now() });
+    if (Number.isSafeInteger(result.count) && result.count >= 0) res.setHeader("Content-Range", "*/" + result.count);
     json(res, result.body, result.status);
   } catch { json(res, { error: "Local fixture request rejected" }, 403); }
 });
@@ -93,6 +95,7 @@ const allowedApi = new Set(["/api/admin/session", "/api/admin/students/directory
   "/api/admin/bulk-assignments/preview",
   "/api/admin/assignment-workspace/preparation", "/api/admin/assignment-workspace/datasets",
   "/api/admin/assignment-workspace/previous-exam", "/api/admin/assignment-workspace/selection"]);
+if (mockWordbooks) allowedApi.add("/api/admin/wordbook-compositions");
 const proxy = http.createServer(async (req, res) => {
   if (req.headers.host !== new URL(APP_ORIGIN).host) return json(res, { error: "Local host required" }, 403);
   const url = new URL(req.url, APP_ORIGIN);
@@ -154,6 +157,7 @@ const proxy = http.createServer(async (req, res) => {
   }
   if (url.pathname.startsWith("/api/") && (!allowedApi.has(url.pathname) &&
       !(quizFeedback && isLocalQuizRequest(url.pathname, req.method)) &&
+      !(mockWordbooks && url.pathname === "/api/admin/assignment-workspace/datasets/00000000-0000-4000-8000-000000000012/units") &&
       !/^\/api\/admin\/assignment-workspace\/datasets\/00000000-0000-4000-8000-00000000001[01]\/units$/.test(url.pathname))) {
     return json(res, { error: "Application writes and unknown APIs are blocked" }, 403);
   }
@@ -237,7 +241,7 @@ try {
   assertMayStart(stopRequested);
   preserveBuildDirectory();
   // Fresh build is mandatory: never reuse NEXT_PUBLIC values from an older build.
-  const build = runNext(["build"]);
+  const build = runNext(["build", ...(process.argv.includes("--webpack") ? ["--webpack"] : [])]);
   const buildCode = await waitForChild(build);
   assertMayStart(stopRequested);
   if (buildCode !== 0) throw new Error("격리된 로컬 빌드 실패");

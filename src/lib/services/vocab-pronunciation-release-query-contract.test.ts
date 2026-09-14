@@ -10,10 +10,10 @@ describe("active vocabulary pronunciation release query", () => {
       "utf8",
     );
     const start = source.indexOf(
-      "export async function loadActiveVocabPronunciationReleaseRegistry",
+      "async function readActiveVocabPronunciationReleaseRegistry",
     );
     const end = source.indexOf(
-      "export async function loadVocabPronunciationDisplayRegistry",
+      "async function readVocabPronunciationDisplayRegistry",
       start,
     );
     const loader = source.slice(start, end);

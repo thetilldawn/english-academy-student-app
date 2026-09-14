@@ -55,8 +55,7 @@ export function useAssignmentDatasetPicker({
     setOpen(false);
   }
 
-  function choose(id: string) {
-    if (!options.some((option) => option.dataset.id === id)) return;
+  function rememberSelection(id: string) {
     const next = rememberDatasetSelection(recentIds, id);
     setRecentIds(next);
     try {
@@ -64,6 +63,11 @@ export function useAssignmentDatasetPicker({
     } catch {
       // Selection remains usable in browsers with storage disabled or full.
     }
+  }
+
+  function choose(id: string) {
+    if (!options.some((option) => option.dataset.id === id)) return;
+    rememberSelection(id);
     // The existing reducer resets range/session fields even for the same id.
     if (id !== selectedId) onSelect(id);
     closePicker();
@@ -86,6 +90,7 @@ export function useAssignmentDatasetPicker({
       },
       close: closePicker,
       choose,
+      rememberSelection,
       clear: () => setFilters(EMPTY_DATASET_FILTERS),
       changeQuery: (query: string) => setFilters((current) => ({ ...current, query })),
       changeStage: (stage: DatasetPickerFilters["stage"]) =>

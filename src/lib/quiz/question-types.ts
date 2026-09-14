@@ -3,6 +3,8 @@ export type QuizDirection =
   | "korean_to_english";
 
 export type QuizVocabularyEntry = {
+  /** Composed books only: shared for reviewed meanings, unique per unreviewed occurrence. */
+  compositionTargetKey?: string;
   id: number;
   headword: string;
   primaryMeaning: string;
@@ -21,4 +23,3 @@ export type QuizQuestionDraft = {
 };
 
 export type RandomSource = () => number;
-

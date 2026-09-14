@@ -27,7 +27,7 @@ async function loadExamUseEligibility(
     // One vocabulary entry has two direction rows. A single RPC response can
     // therefore truncate a 601-word book to 500 words at the API's row limit.
     const { data, error } = await supabase
-      .rpc("list_active_exam_use_eligibility_v1", { p_dataset_id: datasetId })
+      .rpc("list_active_exam_use_eligibility_v2", { p_dataset_id: datasetId })
       .order("vocab_entry_id")
       .order("quiz_mode")
       .range(rows.length, rows.length + ELIGIBLE_VOCABULARY_PAGE_SIZE - 1);

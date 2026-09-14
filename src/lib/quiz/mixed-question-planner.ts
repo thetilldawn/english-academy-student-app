@@ -1,7 +1,7 @@
 import type { QuizQuestionDraft, QuizVocabularyEntry, RandomSource } from "./question-types";
 import { buildDirectionalQuestionSets } from "./choice-policy";
 import { createTargetedQuizQuestions } from "./question-generator";
-import { quizVocabularyIdentity } from "./word-identity";
+import { assignmentTargetIdentity } from "@/lib/assignment/composition-targets";
 import { secureRandom, shuffle } from "./random";
 
 type MixedCapacityDirection =
@@ -151,7 +151,7 @@ export function calculateMixedQuizQuestionRange(
   const primary = trustedPrimary as QuizVocabularyEntry[];
   const requiredIds = new Set(required.map((entry) => entry.id));
   const requiredIdentities = new Set(
-    required.map(quizVocabularyIdentity),
+    required.map(assignmentTargetIdentity),
   );
   if (requiredIdentities.size !== required.length) {
     return emptyRange;
@@ -159,7 +159,7 @@ export function calculateMixedQuizQuestionRange(
   const availablePrimary = primary.filter(
     (entry) =>
       !requiredIds.has(entry.id) &&
-      !requiredIdentities.has(quizVocabularyIdentity(entry)),
+      !requiredIdentities.has(assignmentTargetIdentity(entry)),
   );
   const targetScope = [...required, ...availablePrimary];
   const { englishCandidateIds, koreanCandidateIds } =
@@ -251,13 +251,13 @@ export function selectMixedQuizTargetsInSourceOrder(
     (target) => candidateById.get(target.id)!,
   );
   const requiredIds = new Set(required.map((entry) => entry.id));
-  const requiredIdentities = new Set(required.map(quizVocabularyIdentity));
+  const requiredIdentities = new Set(required.map(assignmentTargetIdentity));
   const availablePrimary = primaryCandidates
     .map((candidate) => candidateById.get(candidate.id)!)
     .filter(
       (entry) =>
         !requiredIds.has(entry.id) &&
-        !requiredIdentities.has(quizVocabularyIdentity(entry)),
+        !requiredIdentities.has(assignmentTargetIdentity(entry)),
     );
   const targetScope = [...required, ...availablePrimary];
   const { englishCandidateIds, koreanCandidateIds } =
@@ -397,7 +397,7 @@ export function createMixedQuizQuestions(
     trustedRequired.map((entry) => entry.id),
   );
   const requiredIdentities = new Set(
-    trustedRequired.map(quizVocabularyIdentity),
+    trustedRequired.map(assignmentTargetIdentity),
   );
   if (requiredIdentities.size !== trustedRequired.length) {
     throw new Error("혼합 시험 오답 대상 표제어가 중복되었습니다.");
@@ -416,7 +416,7 @@ export function createMixedQuizQuestions(
   const availablePrimary = trustedPrimary.filter(
     (entry) =>
       !requiredIds.has(entry.id) &&
-      !requiredIdentities.has(quizVocabularyIdentity(entry)),
+      !requiredIdentities.has(assignmentTargetIdentity(entry)),
   );
 
   const targetScope = [...trustedRequired, ...availablePrimary];

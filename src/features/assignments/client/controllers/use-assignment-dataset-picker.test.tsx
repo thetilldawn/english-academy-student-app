@@ -63,6 +63,16 @@ describe("배정 단어장 선택 수명", () => {
     act(() => result.current.actions.open());
     expect(result.current.groups.recent.map(({ dataset }) => dataset.id)).toEqual(["b"]);
   });
+  it("저장 응답으로 추가된 단어장도 목록 갱신 전에 최근 선택을 보존한다", () => {
+    const onSelect = vi.fn();
+    const { result, rerender } = renderHook(({ list }) => useAssignmentDatasetPicker({ options: list, selectedId: "a", onSelect }), { initialProps: { list: [options[0]!] } });
+    act(() => result.current.actions.open());
+    act(() => result.current.actions.rememberSelection("b"));
+    rerender({ list: options });
+    expect(result.current.groups.recent.map(({ dataset }) => dataset.id)).toEqual(["b"]);
+    expect(JSON.parse(window.localStorage.getItem(RECENT_DATASET_STORAGE_KEY)!)).toEqual({ version: 1, ids: ["b"] });
+    expect(onSelect).not.toHaveBeenCalled();
+  });
   it("학교급 변경 시 이전 학년 조건을 해제하고 후보 변경은 자동 반영한다", () => {
     const { result, rerender } = renderHook(({ list }) => useAssignmentDatasetPicker({ options: list, selectedId: "a", onSelect: vi.fn() }), { initialProps: { list: options } });
     act(() => result.current.actions.changeGrade("H1"));

@@ -191,6 +191,7 @@ function verifyRegistry(registry) {
           "src/lib/assignment/assignment-release.test.ts", "src/lib/services/quiz/attempt-command.test.ts",
           "src/lib/services/quiz/pronunciation-registry.test.ts",
           "src/lib/quiz/entry-source-pronunciation.test.ts",
+          "src/lib/quiz/question-engine.test.ts",
           "src/lib/services/vocab-assignment-queue-command.test.ts",
           "src/lib/quiz/question-semantics.test.ts", "src/lib/assignment/reviewed-question-planner.test.ts",
           "src/lib/services/reviewed-assignment-replacement-planning.test.ts", "src/lib/services/reviewed-direct-review-selection.test.ts",

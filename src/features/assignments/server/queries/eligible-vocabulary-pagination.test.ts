@@ -48,7 +48,7 @@ function fixture(options: {
     if (url.pathname === "/rest/v1/vocab_entry_quiz_eligibility") {
       return json(eligibility.slice(offset, offset + Math.min(requested, 1000)));
     }
-    if (url.pathname !== "/rest/v1/rpc/list_active_exam_use_eligibility_v1") {
+    if (url.pathname !== "/rest/v1/rpc/list_active_exam_use_eligibility_v2") {
       throw new Error("Unexpected API or write request");
     }
     expect(init?.method).toBe("POST"); // Existing stable read-only RPC.

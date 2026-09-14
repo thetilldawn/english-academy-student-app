@@ -13,6 +13,7 @@ export type VocabularyEntrySourceRow = {
 };
 
 export type VocabularyEligibilitySourceRow = {
+  composition_identity_key?: string | null;
   vocab_entry_id: number;
   quiz_mode:
     | "book_meaning_en_to_ko"
@@ -69,6 +70,7 @@ export function mergeEligibleVocabularyRows(
       dictionaryKeys: Set<string>;
       directions: Set<QuizDirection>;
       modes: Set<VocabularyEligibilitySourceRow["quiz_mode"]>;
+      compositionKeys: Set<string | null>;
     }
   >();
   for (const row of eligibilityRows) {
@@ -78,11 +80,13 @@ export function mergeEligibleVocabularyRows(
       dictionaryKeys: new Set<string>(),
       directions: new Set<QuizDirection>(),
       modes: new Set<VocabularyEligibilitySourceRow["quiz_mode"]>(),
+      compositionKeys: new Set<string | null>(),
     };
     if (current.modes.has(row.quiz_mode)) {
       throw new Error("한 단어의 출제 가능 모드가 중복되었습니다.");
     }
     current.modes.add(row.quiz_mode);
+    current.compositionKeys.add(row.composition_identity_key ?? null);
     current.directions.add(
       row.quiz_mode === "book_meaning_en_to_ko"
         ? "english_to_korean"
@@ -113,7 +117,12 @@ export function mergeEligibleVocabularyRows(
     }
     const canonicalDictionaryId = [...eligibility.dictionaryKeys][0] ?? null;
     const canonicalLexemeId = [...eligibility.canonicalKeys][0] ?? null;
+    const compositionKeys = eligibility.compositionKeys;
+    if (compositionKeys.size > 1) throw new Error("출제 방향별 단어 출처 연결이 다릅니다.");
+    const compositionTargetKey = [...compositionKeys][0];
+    if (compositionTargetKey && !/^[a-f0-9]{64}$/.test(compositionTargetKey)) throw new Error("단어 출처 연결을 확인하지 못했습니다.");
     candidates.push({
+      ...(compositionTargetKey ? { compositionTargetKey } : {}),
       id: entry.id,
       unitId: entry.unit_id,
       sourceRow: entry.source_row,

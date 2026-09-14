@@ -1,3 +1,4 @@
+import { uniqueCompositionTargets, assertUniqueCompositionTargets } from "./composition-targets";
 import {
   calculateMixedQuizQuestionRange,
   createMixedQuizQuestions,
@@ -78,6 +79,7 @@ export function buildAssignmentQuestionPlan(
   input: AssignmentQuestionPlanInput,
   random?: RandomSource,
 ): QuizQuestionDraft[] {
+  input = { ...input, primaryCandidates: uniqueCompositionTargets(input.primaryCandidates, input.requiredTargets) };
   const args = [
     input.requiredTargets ?? [],
     input.primaryCandidates,
@@ -128,6 +130,7 @@ export function buildAssignmentQuestionPlan(
 export function buildExactAssignmentQuestionPlan(
   input: ExactAssignmentQuestionPlanInput,
 ) {
+  assertUniqueCompositionTargets(input.targets);
   const randomInput: AssignmentQuestionPlanInput = {
     requiredTargets: [],
     primaryCandidates: input.targets,
@@ -179,7 +182,7 @@ export function calculateAssignmentQuestionRange(
   const requiredTargets = input.requiredTargets ?? [];
   return calculateMixedQuizQuestionRange(
     requiredTargets,
-    input.primaryCandidates,
+    uniqueCompositionTargets(input.primaryCandidates, requiredTargets),
     input.allCandidates,
     input.englishToKoreanRatio,
   );
@@ -196,7 +199,7 @@ export function calculateAssignmentSeriesQuestionCapacity(
 ) {
   const requiredTargets = input.requiredTargets ?? [];
   const requiredIds = new Set(requiredTargets.map((target) => target.id));
-  const primaryCandidates = input.primaryCandidates.filter(
+  const primaryCandidates = uniqueCompositionTargets(input.primaryCandidates, requiredTargets).filter(
     (candidate) => !requiredIds.has(candidate.id),
   );
   const allTargets = [...requiredTargets, ...primaryCandidates];

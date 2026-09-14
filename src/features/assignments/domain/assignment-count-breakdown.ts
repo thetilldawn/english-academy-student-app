@@ -4,12 +4,13 @@ export const assignmentCountBreakdownSchema = z.object({
   sourceCount: z.number().int().nonnegative(),
   outsideCandidateListCount: z.number().int().nonnegative(),
   activeReviewExcludedCount: z.number().int().nonnegative(),
+  duplicateExcludedCount: z.number().int().nonnegative().optional(),
   directionExcludedCount: z.number().int().nonnegative(),
   choiceExcludedCount: z.number().int().nonnegative(),
   allocationExcludedCount: z.number().int().nonnegative(),
   availableCount: z.number().int().nonnegative(),
 }).strict().refine(value => value.sourceCount === value.outsideCandidateListCount +
-  value.activeReviewExcludedCount + value.directionExcludedCount + value.choiceExcludedCount +
+  value.activeReviewExcludedCount + (value.duplicateExcludedCount ?? 0) + value.directionExcludedCount + value.choiceExcludedCount +
   value.allocationExcludedCount + value.availableCount, "출제 수량의 단계별 합계가 맞지 않습니다.");
 
 export type AssignmentCountBreakdown = z.infer<typeof assignmentCountBreakdownSchema>;
