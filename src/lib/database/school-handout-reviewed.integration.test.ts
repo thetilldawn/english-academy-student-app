@@ -15,11 +15,12 @@ describe.sequential("학교 원문 직접 등록과 기존 시험 보호", () =>
   async function approve(f: SchoolFixture, overrides: { file?: string; project?: string; layout?: string } = {}) {
     await db.query(`insert into private.school_handout_import_approvals_v1
       (approval_id,target_project_ref,dataset_key,bundle_file_sha256,content_sha256,source_file_sha256,scope_sha256,inputs_sha256,reviews_sha256,source_layout,entry_count,question_count,catalog_template_key,hide_dataset_keys)
-      values($1,$2,$3,$4,$5,$6,$7,$8,$9,$12,73,292,$10,$11)`,
+      values($1,$2,$3,$4,$5,$6,$7,$8,$9,$12,$13,$14,$10,$11)`,
       ["fake:" + f.bundle.dataset.key, overrides.project ?? "wojxpruvbjzbhrpmsbuy", f.bundle.dataset.key,
         overrides.file ?? sha256Text(JSON.stringify(f.bundle)), f.bundle.content_sha256, f.bundle.source_file_sha256,
         reviewedHash(f.source.scope), reviewedHash(f.source.inputs), reviewedHash(f.bundle.reviews),
-        f.bundle.dataset.catalog_template_key, f.bundle.dataset.hide_dataset_keys, overrides.layout ?? "school_compact_v1"]);
+        f.bundle.dataset.catalog_template_key, f.bundle.dataset.hide_dataset_keys, overrides.layout ?? "school_compact_v1",
+        f.bundle.entries.length, f.bundle.questions.length]);
   }
   function reseal(f: SchoolFixture) {
     for (const e of f.bundle.entries) e.entry_row_sha256 = reviewedHash(Object.fromEntries(Object.entries(e).filter(([key]) => key !== "entry_row_sha256")));
@@ -31,6 +32,28 @@ describe.sequential("학교 원문 직접 등록과 기존 시험 보호", () =>
       q.item_sha256 = reviewedHash(Object.fromEntries(Object.entries(q).filter(([key]) => key !== "item_sha256")));
     }
     return sealSchoolFixture(f);
+  }
+  function meaningFixture() {
+    const f = structuredClone(fixture);
+    f.bundle.dataset.key = "fake-school-meaning-only";
+    f.bundle.dataset.hide_dataset_keys = [];
+    f.bundle.questions = f.bundle.questions.filter(q => q.mode === "book_meaning_choice");
+    f.bundle.units = [20, 20, 20, 13].map((count, index) => ({
+      ...f.bundle.units[0]!, key: `fake-part-${index}`, label: `가짜 회차 ${index + 1}`,
+      sort_index: index + 1, entry_count: count,
+    }));
+    f.bundle.entries.forEach((e, index) => {
+      const group = Math.min(3, Math.floor(index / 20));
+      e.unit_key = f.bundle.units[group]!.key;
+      e.position_in_unit = index - group * 20 + 1;
+      e.pronunciation_donor = null; e.pronunciation_ko = null;
+      if (index % 2 === 0) {
+        Object.assign(f.source.entries[index]!, { d: null });
+        Object.assign(e, { school_english_definition: null, english_definition: null,
+          definition_provenance: { kind: "school_not_provided", provided_definition_found: false } });
+      }
+    });
+    return reseal(f);
   }
   beforeAll(async () => {
     db = await createFinalSchemaDatabase();
@@ -62,6 +85,69 @@ describe.sequential("학교 원문 직접 등록과 기존 시험 보호", () =>
     }
   }, 60_000);
   afterAll(async () => { await db?.close(); });
+
+  it("두 방향 네 회차를 추가하고 기존 교재·양방향 배정·공부 조회를 보존한다", async () => {
+    const f = meaningFixture();
+    const before = await scalar("select md5(jsonb_agg(to_jsonb(c) order by c.dataset_id)::text) value from public.vocab_dataset_catalog c");
+    await db.exec("begin");
+    try {
+      await approve(f);
+      const imported = await importSchool(f);
+      expect(imported).toMatchObject({ entries: 73, questions: 146 });
+      expect(await importSchool(f)).toMatchObject({ reused: true, dataset_id: imported.dataset_id });
+      await db.query("select private.activate_school_handout_reviewed_release_v1($1)", [imported.release_id]);
+      const units = (await db.query<{ id: string }>("select id from public.vocab_units where dataset_id=$1 order by sort_index", [imported.dataset_id])).rows.map(x => x.id);
+      expect(units).toHaveLength(4);
+      expect(await scalar("select count(*)::int value from public.list_active_reviewed_exam_questions_v1($1,$2,'canonical_definition_to_headword')", [imported.dataset_id, units])).toBe(0);
+      expect(await scalar("select count(*)::int value from public.list_active_reviewed_exam_questions_v1($1,$2,'book_meaning_choice')", [imported.dataset_id, units])).toBe(146);
+      expect(await scalar("select count(*)::int value from public.vocab_entries where dataset_id=$1 and english_definition is null", [imported.dataset_id])).toBe(37);
+      expect(await scalar("select md5(jsonb_agg(to_jsonb(c) order by c.dataset_id)::text) value from public.vocab_dataset_catalog c where dataset_id<>$1", [imported.dataset_id])).toBe(before);
+      for (const direction of ["english_to_korean", "korean_to_english"] as const) {
+        const rows = (await db.query<{ vocab_entry_id: number; item_id: string; item_sha256: string }>("select vocab_entry_id,item_id,item_sha256 from private.reviewed_exam_items where release_id=$1 and direction=$2 order by vocab_entry_id limit 12", [imported.release_id, direction])).rows;
+        const questions = rows.map((r, i) => ({ vocab_entry_id: r.vocab_entry_id, base_order_index: i + 1, direction,
+          reviewed_bank: { source: "reviewed_exam_v1", mode: "book_meaning_choice", release_id: imported.release_id,
+            package_sha256: sha256Text(JSON.stringify(f.bundle)), question_item_id: r.item_id, question_item_sha256: r.item_sha256 } }));
+        const assignment = await scalar<string>(`select private.create_assignment_with_delivery_v7('가짜 두방향',$1::uuid,$2::uuid[],12,$3::smallint,300,80::smallint,'fixed',null,array['${id(2)}']::uuid[],'none',null,$4::jsonb) value`, [imported.dataset_id, units, direction === "english_to_korean" ? 100 : 0, JSON.stringify(questions)]);
+        const study = await scalar<{ words: Record<string, unknown>[] }>("select public.get_student_assignment_study_v1($1,$2) value", [id(2), assignment]);
+        expect(study.words).toHaveLength(12);
+        expect(study.words.every(w => w.definition === null)).toBe(true);
+      }
+      await expect(db.query("update public.vocab_entries set primary_meaning='changed' where dataset_id=$1", [imported.dataset_id])).rejects.toThrow("school_active_content_immutable");
+    } finally { await db.exec("rollback"); }
+  }, 15_000);
+
+  it.each(["definition-mode", "missing-direction", "extra-direction", "hide-old", "invented-definition", "changed-school-definition", "missing-definition-key", "three-modes", "four-empty-hide", "four-null-definition"])("%s를 승인하거나 등록하지 않는다", async kind => {
+    const f = kind.startsWith("four-") ? structuredClone(fixture) : meaningFixture();
+    if (kind === "definition-mode") Object.assign(f.bundle.questions[2]!, {
+      mode: "canonical_headword_to_definition", choice_role: "english_definition", choice_source_rows: [2, 4, 6, 8],
+    });
+    if (kind === "missing-direction") f.bundle.questions.pop();
+    if (kind === "extra-direction") Object.assign(f.bundle.questions[1]!, { direction: "english_to_korean", prompt_role: "headword", choice_role: "korean_meaning" });
+    if (kind === "hide-old") f.bundle.dataset.hide_dataset_keys = [fixture.old.voice.dataset_key];
+    if (kind === "invented-definition") f.bundle.entries[0]!.english_definition = "invented";
+    if (kind === "changed-school-definition") f.bundle.entries[1]!.english_definition = "changed";
+    if (kind === "missing-definition-key") Reflect.deleteProperty(f.bundle.entries[0]!, "english_definition");
+    if (kind === "three-modes") f.bundle.questions.push(...structuredClone(fixture.bundle.questions.filter(q => q.mode === "canonical_definition_to_headword")));
+    if (kind === "four-empty-hide") f.bundle.dataset.hide_dataset_keys = [];
+    if (kind === "four-null-definition") Object.assign(f.bundle.entries[0]!, { english_definition: null });
+    reseal(f);
+    await db.exec("begin");
+    try { await expect((async () => { await approve(f); await importSchool(f); })()).rejects.toThrow(kind === "definition-mode" ? "school_registered_question_mismatch" : undefined); }
+    finally { await db.exec("rollback"); }
+  });
+
+  it.each(["meaning", "publisher", "metadata"])("두 방향도 활성화 직전 %s 변경을 거절한다", async kind => {
+    const f = meaningFixture();
+    await db.exec("begin");
+    try {
+      await approve(f); const imported = await importSchool(f);
+      const sql = kind === "meaning" ? "update public.vocab_entries set primary_meaning='changed' where dataset_id=$1 and source_row=1"
+        : kind === "publisher" ? "update public.vocab_dataset_catalog set publisher='wrong publisher' where dataset_id=$1"
+          : "update public.vocab_dataset_catalog set metadata=metadata||'{\"productionApprovalId\":\"unrelated\"}'::jsonb where dataset_id=$1";
+      await db.query(sql, [imported.dataset_id]);
+      await expect(db.query("select private.activate_school_handout_reviewed_release_v1($1)", [imported.release_id])).rejects.toThrow(kind === "meaning" ? "school_registered_entry_mismatch" : "school_meaning_catalog_mismatch");
+    } finally { await db.exec("rollback"); }
+  });
 
   it.each(["anon", "authenticated", "service_role"])("%s는 학교 승인·정답·등록·활성화에 직접 접근할 수 없다", async role => {
     await db.exec("set role " + role);
