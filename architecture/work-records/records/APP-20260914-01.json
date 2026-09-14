@@ -479,6 +479,12 @@
       "flowIds": [
         "school-schedule-edit"
       ]
+    },
+    {
+      "path": "src/design-system/primitives/dialog/dialog.module.css",
+      "state": "existing",
+      "owner": "shared-ui",
+      "flowIds": []
     }
   ],
   "requirements": [
@@ -606,6 +612,21 @@
         "T1",
         "T4"
       ]
+    },
+    {
+      "id": "R8",
+      "source": "user",
+      "text": "이름 옆 가까운 시험과 학생 상세의 읽기 쉬운 정렬 유지",
+      "acceptance": "상세 모달 이름 폭을 확보하고 넓을 때 이름 왼쪽, 좁을 때 위에 남은 기간 표시",
+      "disposition": "required",
+      "owners": [
+        "shared-ui"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T6",
+        "T5"
+      ]
     }
   ],
   "decisions": [
@@ -632,6 +653,14 @@
       "question": "의존성과 저장·복구 구조",
       "answer": "기존 모달·date-fns 재사용. 원천 불변/수동 이력 우선/요청별 멱등 영수증 및 출처 기준 변화 안내. 수능은 공식 전국 공개 자료를 고3에 결합. 실제 브라우저에서 저장 후 앞으로가기의 과거 초기값 복원을 확인했다. Next16.2.12의 refresh()를 저장/복구 성공 Server Action에 적용하여 탐색 보관값을 갱신한다. 미확인 저장은 갱신하거나 재전송하지 않는다.",
       "source": "현재 코드 및 독립 설계 검토"
+    },
+    {
+      "id": "D4",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "공통 모달 제목 안의 크기 기준 영역이 폭 0으로 접히는 배치 오류",
+      "answer": "공통 Dialog 제목 행과 제목 본체에 flex:1을 주어 닫기 버튼 외 남는 공간을 확보한다. 학교별 조건이나 데이터 변경 없이 기존 400px 컨테이너 기준을 보존한다.",
+      "source": "운영 실제 학생 상세에서 제목과 부모폭0을 확인한 같은 기능의 배치 보완"
     }
   ],
   "impacts": {
@@ -715,7 +744,7 @@
   },
   "design": {
     "dataFlow": "현재 관리자 인증→학교/학년 집계→원천+수동 이력→초안→서버/DB 검증→범위 잠금/원천·수동 버전 비교/요청 중복 확인→append-only 저장→영수증·현재 일정 재조회",
-    "reuse": "RoutedDetailDialog, useRouteExitGuard, 기존 개인 캐시 변경 신호 및 date-fns. 새 라이브러리 없음.",
+    "reuse": "RoutedDetailDialog, useRouteExitGuard, 기존 개인 캐시 변경 신호 및 date-fns. 새 라이브러리 없음. 공통 Dialog 제목 배치가 남는 공간을 차지하도록 보완한다.",
     "cache": "학교 개인 연결의 공유 캐시는 추가하지 않음. 저장 성공 후 해당 일정과 학생 목록 개인 캐시 갱신, 저장 중 refresh로 초안 덮기 금지.",
     "compatibility": "원천 등록 구조와 개인 세션 경계 유지. 수능 화면 계약은 학교 원천 계약과 별도. 수동 DDL 적용 전 새 앱 활성화하지 않음.",
     "rollback": "앱을 이전 배포로 복구하되 수동 이력과 원천 및 학생 기록을 보존한다."
@@ -915,10 +944,21 @@
         "data-leak",
         "cache"
       ]
+    },
+    {
+      "id": "T6",
+      "kind": "browser",
+      "target": null,
+      "scenario": "가상 학생 상세와 일정 입력 모달의 PC·태블릿·모바일 및 두 테마 제목 폭·닫기·이름 줄바꿈",
+      "expected": "제목 영역 폭이 양수이고 학생 이름 정상 표시, 좁은 폭에서 시험 안내만 위로 이동, 가로 넘침 없음",
+      "topics": [
+        "behavior",
+        "ui-copy"
+      ]
     }
   ],
   "verification": {
-    "fingerprint": "53e529654782737bd4ef55cf0296f6d20865337ab8b2bff1b6a4202ad09411c1",
+    "fingerprint": "e74e961869dacbfef61b43c02a80cbe8231755f7d88973d79ef7b9d54a745819",
     "files": [
       {
         "path": "architecture/기능_소유권.json",
@@ -1378,7 +1418,7 @@
       },
       {
         "path": "src/design-system/primitives/dialog/dialog.module.css",
-        "sha256": "5dc80002a1ee1a8ac56c305f12a181ad54fa4cce12832e488d7b66f10f36066d"
+        "sha256": "006306fa07a2f6c15c9b853ec088def74e0bf297cc2c26938f339f59efee3ced"
       },
       {
         "path": "src/design-system/primitives/dialog/dialog.test.tsx",
@@ -2973,6 +3013,14 @@
         "ranAt": "2026-09-13T23:22:02.791Z",
         "command": "eslint src scripts; tsc; feature-map; UI architecture; request-cache; isolated Next build; independent read review",
         "summary": "제품 타입·lint·기능지도·구조·요청 캐시·격리 빌드 통과. 의존성 추가0. SQL/원천/UI 독립 검토 필수 미해결0."
+      },
+      {
+        "checkId": "T6",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-14T01:15:07.882Z",
+        "command": "CUA isolated local build: student detail 1280/768/390px; light/dark; schedule editor; title bounding rect",
+        "summary": "학생 제목 폭0 오류 수정 후 683.3/493.3/300.86px, 모두 한 줄. 390px에서는 안내 위/이름 아래 유지. 일반 일정 모달 제목812.86px, 닫기 정상, 가로 넘침0·콘솔 오류0. 대표 공용Dialog/학생/학교/경계 검사120통과, 타입·격리빌드·지도·UI 구조 및 독립 코드검토 통과."
       }
     ]
   }
