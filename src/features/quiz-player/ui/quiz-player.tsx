@@ -53,7 +53,9 @@ export function QuizPlayer({
     void controller.submitChoice(index);
   };
   const choiceFeedback = (index: number): QuizChoiceFeedback => {
-    if (!state.feedback) return null;
+    if (!state.feedback) {
+      return state.pendingChoice === index ? "selected" : null;
+    }
     if (state.feedback.correct === null) {
       return state.feedback.selectedChoice === index ? "selected" : null;
     }

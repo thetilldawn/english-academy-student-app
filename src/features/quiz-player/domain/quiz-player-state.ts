@@ -16,6 +16,8 @@ export type QuizPlayerState = {
   attempt: QuizAttempt;
   remainingSeconds: number;
   feedback: QuizFeedback | null;
+  pendingChoice: number | null;
+  selectionVersion: number;
   submitting: boolean;
   error: string;
   timerSynchronized: boolean;
@@ -27,6 +29,7 @@ export type QuizPlayerAction =
   | { type: "timer-ticked"; remainingSeconds: number }
   | { type: "time-warning"; message: string }
   | { type: "synchronization-started" }
+  | { type: "choice-pending"; choiceIndex: number | null }
   | {
       type: "submission-started";
       phase: QuizAttemptPhase;
@@ -37,13 +40,9 @@ export type QuizPlayerAction =
       type: "attempt-replaced";
       attempt: QuizAttempt;
       remainingSeconds: number;
+      preservePendingChoice?: boolean;
     }
   | { type: "feedback-transitioned"; attempt: QuizAttempt }
-  | {
-      type: "transition-choice-queued";
-      phase: QuizAttemptPhase;
-      choiceIndex: number | null;
-    }
   | { type: "submission-failed"; message: string };
 
 export function createQuizPlayerState(
@@ -54,6 +53,8 @@ export function createQuizPlayerState(
     attempt,
     remainingSeconds,
     feedback: null,
+    pendingChoice: null,
+    selectionVersion: 0,
     submitting: false,
     error: "",
     timerSynchronized: false,
@@ -78,6 +79,8 @@ export function quizPlayerReducer(
     case "synchronization-started":
       return {
         ...state,
+        pendingChoice: null,
+        selectionVersion: state.selectionVersion + 1,
         feedback: null,
         submitting: false,
         error: "",
@@ -85,9 +88,12 @@ export function quizPlayerReducer(
         transitionPending: false,
         timeWarning: "",
       };
+    case "choice-pending":
+      return { ...state, pendingChoice: action.choiceIndex };
     case "submission-started":
       return {
         ...state,
+        pendingChoice: null,
         feedback: {
           phase: action.phase,
           selectedChoice: action.choiceIndex,
@@ -117,6 +123,8 @@ export function quizPlayerReducer(
     case "attempt-replaced":
       return {
         ...state,
+        pendingChoice: action.preservePendingChoice ? state.pendingChoice : null,
+        selectionVersion: state.selectionVersion + (action.preservePendingChoice ? 0 : 1),
         attempt: action.attempt,
         remainingSeconds: action.remainingSeconds,
         feedback: null,
@@ -129,6 +137,7 @@ export function quizPlayerReducer(
     case "feedback-transitioned":
       return {
         ...state,
+        pendingChoice: null,
         attempt: action.attempt,
         feedback: null,
         submitting: false,
@@ -137,22 +146,11 @@ export function quizPlayerReducer(
         transitionPending: true,
         timeWarning: "",
       };
-    case "transition-choice-queued":
-      return {
-        ...state,
-        feedback: {
-          phase: action.phase,
-          selectedChoice: action.choiceIndex,
-          correctChoice: null,
-          correct: null,
-          timedOut: action.choiceIndex === null,
-        },
-        submitting: true,
-        error: "",
-      };
     case "submission-failed":
       return {
         ...state,
+        pendingChoice: null,
+        selectionVersion: state.selectionVersion + 1,
         feedback: null,
         submitting: false,
         error: action.message,

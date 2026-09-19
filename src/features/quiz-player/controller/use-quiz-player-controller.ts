@@ -65,6 +65,7 @@ export function useQuizPlayerController(input: {
       state.timerSynchronized &&
       state.remainingSeconds > 0 &&
       !state.submitting &&
+      state.pendingChoice === null &&
       state.feedback === null,
     phase: state.attempt.phase,
     playbackReady: state.timerSynchronized,
@@ -170,7 +171,7 @@ export function useQuizPlayerController(input: {
     state.timerSynchronized,
   ]);
 
-  const { canInterruptFeedback, interruptFeedback, submitChoice } = useQuizSubmission({
+  const { canInterruptFeedback, hasPendingChoice, interruptFeedback, submitChoice } = useQuizSubmission({
     canInterruptFeedbackAudio,
     cancelPendingPromptAudio,
     captureActivePromptAudio,
@@ -206,6 +207,7 @@ export function useQuizPlayerController(input: {
     const timerDelayMilliseconds =
       delayMilliseconds > 0 ? Math.ceil(delayMilliseconds) + 1 : 0;
     const timer = window.setTimeout(() => {
+      if (hasPendingChoice()) return;
       deadlineSubmissionNotBefore.current = 0;
       if (state.attempt.timingMode === "per_question") {
         void submitChoice(null);
@@ -217,6 +219,7 @@ export function useQuizPlayerController(input: {
   }, [
     attemptUsesDeadlineClock,
     expireCurrentAttempt,
+    hasPendingChoice,
     state.attempt.status,
     state.attempt.timingMode,
     state.remainingSeconds,

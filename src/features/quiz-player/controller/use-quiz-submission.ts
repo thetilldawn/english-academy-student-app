@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, type Dispatch } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, type Dispatch } from "react";
 
 import { studentAppText } from "@/content/ko/student-app";
 
 import { submitQuizAnswer } from "../api/quiz-attempt";
 import {
+  ANSWER_SELECTION_DELAY_MS,
   applyQuizAnswerTransition,
   quizAnswerAudioUrl,
   quizAnswerDisposition,
@@ -27,14 +28,15 @@ import {
 import { resolveQuizFeedbackTransition } from "./resolve-quiz-feedback-transition";
 import { useQuizFeedbackInterruption } from "./use-quiz-feedback-interruption";
 
-type QueuedSubmission = {
+type PendingSubmission = {
   attemptId: string;
   choiceIndex: number | null;
   phase: "initial" | "retry";
   primed: boolean;
   promptAudioCompletion: Promise<TimedQuizAudioCompletion> | null;
   questionId: string;
-  submittedAt: number;
+  selectionVersion: number;
+  notBefore: number;
 };
 
 type RunSubmissionInput = {
@@ -70,21 +72,97 @@ export function useQuizSubmission(input: {
   stopFeedbackAudio: () => void;
   timeWarningAnnouncedRef: { current: boolean };
 }) {
-  const queuedSubmissionRef = useRef<QueuedSubmission | null>(null);
+  const { inFlightRequestRef, deadlineSubmissionNotBeforeRef, timeWarningAnnouncedRef } = input;
+  const pendingSubmissionRef = useRef<PendingSubmission | null>(null);
+  const pendingTimerRef = useRef<number | null>(null);
+  const latestInputRef = useRef(input);
+  const runSubmissionRef = useRef<((submission: RunSubmissionInput) => Promise<void>) | null>(null);
+  useLayoutEffect(() => {
+    latestInputRef.current = input;
+  });
+
+  const clearPendingTimer = useCallback(() => {
+    if (pendingTimerRef.current !== null) {
+      window.clearTimeout(pendingTimerRef.current);
+      pendingTimerRef.current = null;
+    }
+  }, []);
+  const cancelPending = useCallback(() => {
+    clearPendingTimer();
+    pendingSubmissionRef.current = null;
+  }, [clearPendingTimer]);
+  const hasPendingChoice = useCallback(() => {
+    const pending = pendingSubmissionRef.current;
+    const current = latestInputRef.current;
+    return Boolean(
+      pending &&
+      current.mountedRef.current &&
+      current.state.attempt.status === "in_progress" &&
+      pending.attemptId === current.state.attempt.id &&
+      pending.phase === current.state.attempt.phase &&
+      pending.questionId === current.currentQuestion?.id &&
+      pending.selectionVersion === current.state.selectionVersion,
+    );
+  }, []);
+  const schedulePending = useCallback(() => {
+    clearPendingTimer();
+    const pending = pendingSubmissionRef.current;
+    if (!pending) return;
+    pendingTimerRef.current = window.setTimeout(() => {
+      pendingTimerRef.current = null;
+      if (!hasPendingChoice()) {
+        cancelPending();
+        return;
+      }
+      const current = latestInputRef.current;
+      if (
+        !current.state.timerSynchronized ||
+        current.state.transitionPending ||
+        current.state.submitting ||
+        current.state.feedback !== null ||
+        current.inFlightRequestRef.current !== null ||
+        !current.currentQuestion
+      ) {
+        // Readiness changes re-arm the same deadline; they do not restart the selection delay.
+        return;
+      }
+      pendingSubmissionRef.current = null;
+      void runSubmissionRef.current?.({
+        attempt: current.state.attempt,
+        question: current.currentQuestion,
+        choiceIndex: pending.choiceIndex,
+        primed: pending.primed,
+        promptAudioCompletion: current.captureActivePromptAudio() ?? pending.promptAudioCompletion,
+        submittedAt: performance.now(),
+      });
+    }, Math.max(0, Math.ceil(pending.notBefore - performance.now())));
+  }, [cancelPending, clearPendingTimer, hasPendingChoice]);
   const feedbackInterruption = useQuizFeedbackInterruption({
     canInterruptAudio: input.canInterruptFeedbackAudio,
-    inFlightRequestRef: input.inFlightRequestRef,
+    inFlightRequestRef: inFlightRequestRef,
     mountedRef: input.mountedRef,
     stopAudio: input.stopFeedbackAudio,
   });
   const { waitForAudio } = feedbackInterruption;
 
-  useEffect(
-    () => () => {
-      queuedSubmissionRef.current = null;
-    },
-    [],
-  );
+  useEffect(() => cancelPending, [cancelPending]);
+  useEffect(() => {
+    if (!hasPendingChoice()) cancelPending();
+    else schedulePending();
+  }, [
+    cancelPending,
+    hasPendingChoice,
+    schedulePending,
+    input.currentQuestion?.id,
+    input.state.attempt.id,
+    input.state.attempt.phase,
+    input.state.attempt.status,
+    input.state.selectionVersion,
+    input.state.timerSynchronized,
+    input.state.transitionPending,
+    input.state.submitting,
+    input.state.feedback,
+  ]);
 
   const runSubmission = useCallback(
     async function run(submission: RunSubmissionInput): Promise<void> {
@@ -103,7 +181,7 @@ export function useQuizSubmission(input: {
         answeredPhase,
         submission.question.id,
       ].join(":");
-      input.inFlightRequestRef.current = requestKey;
+      inFlightRequestRef.current = requestKey;
       input.dispatch({
         type: "submission-started",
         phase: answeredPhase,
@@ -113,6 +191,8 @@ export function useQuizSubmission(input: {
       const tryRecover = async () => {
         if (recoveryAttempted) return false;
         recoveryAttempted = true;
+        cancelPending();
+        input.dispatch({ type: "choice-pending", choiceIndex: null });
         return input.recoverFromServer();
       };
 
@@ -125,7 +205,7 @@ export function useQuizSubmission(input: {
         });
         if (
           !input.mountedRef.current ||
-          input.inFlightRequestRef.current !== requestKey
+          inFlightRequestRef.current !== requestKey
         ) {
           return;
         }
@@ -134,7 +214,7 @@ export function useQuizSubmission(input: {
           throw new Error(payload.error ?? studentAppText.attempt.saveError);
         }
         if (payload.expired) {
-          input.inFlightRequestRef.current = null;
+          inFlightRequestRef.current = null;
           input.onResult(submission.attempt.id);
           return;
         }
@@ -147,7 +227,7 @@ export function useQuizSubmission(input: {
           disposition,
           isActive: () =>
             input.mountedRef.current &&
-            input.inFlightRequestRef.current === requestKey,
+            inFlightRequestRef.current === requestKey,
           payload,
           playAnswerAudio: input.playAnswerAudio,
           promptAudioCompletion: submission.promptAudioCompletion,
@@ -157,17 +237,16 @@ export function useQuizSubmission(input: {
         });
         if (
           !input.mountedRef.current ||
-          input.inFlightRequestRef.current !== requestKey
+          inFlightRequestRef.current !== requestKey
         ) {
           return;
         }
         if (disposition === "result") {
-          input.inFlightRequestRef.current = null;
+          inFlightRequestRef.current = null;
           input.onResult(submission.attempt.id);
           return;
         }
         if (disposition === "recover" || !transition.synchronization) {
-          queuedSubmissionRef.current = null;
           if (await tryRecover()) return;
           throw new Error(studentAppText.attempt.stateError);
         }
@@ -194,12 +273,11 @@ export function useQuizSubmission(input: {
         const synchronized = await transition.synchronization;
         if (
           !input.mountedRef.current ||
-          input.inFlightRequestRef.current !== requestKey
+          inFlightRequestRef.current !== requestKey
         ) {
           return;
         }
         if (synchronized.recoverFromServer) {
-          queuedSubmissionRef.current = null;
           if (await tryRecover()) return;
           throw new Error(studentAppText.attempt.stateError);
         }
@@ -214,7 +292,7 @@ export function useQuizSubmission(input: {
         }
         if (
           !input.mountedRef.current ||
-          input.inFlightRequestRef.current !== requestKey
+          inFlightRequestRef.current !== requestKey
         ) {
           return;
         }
@@ -235,43 +313,22 @@ export function useQuizSubmission(input: {
             synchronized.payload.timerRemainingMilliseconds!,
           serverReceivedAt: synchronized.receivedAt,
         });
-        const queued = queuedSubmissionRef.current;
-        const nextQuestion = synchronizedAttempt.questions.find(
-          (question) => question.id === synchronizedAttempt.currentQuestionId,
-        );
-        const canSubmitQueued =
-          queued &&
-          nextQuestion &&
-          queued.attemptId === synchronizedAttempt.id &&
-          queued.phase === synchronizedAttempt.phase &&
-          queued.questionId === nextQuestion.id;
-
-        queuedSubmissionRef.current = null;
-        input.inFlightRequestRef.current = null;
-        input.deadlineSubmissionNotBeforeRef.current = 0;
+        inFlightRequestRef.current = null;
+        deadlineSubmissionNotBeforeRef.current = 0;
         input.resetClock(activeMilliseconds);
         input.dispatch({
           type: "attempt-replaced",
           attempt: synchronizedAttempt,
           remainingSeconds: Math.ceil(activeMilliseconds / 1_000),
+          preservePendingChoice: true,
         });
-        input.timeWarningAnnouncedRef.current = false;
+        timeWarningAnnouncedRef.current = false;
 
-        if (canSubmitQueued) {
-          void run({
-            attempt: synchronizedAttempt,
-            choiceIndex: queued.choiceIndex,
-            promptAudioCompletion: queued.promptAudioCompletion,
-            question: nextQuestion,
-            primed: queued.primed,
-            submittedAt: queued.submittedAt,
-          });
-        }
       } catch (requestError) {
-        queuedSubmissionRef.current = null;
+        cancelPending();
         if (await tryRecover()) return;
         if (!input.mountedRef.current) return;
-        input.inFlightRequestRef.current = null;
+        inFlightRequestRef.current = null;
         input.dispatch({
           type: "submission-failed",
           message:
@@ -281,8 +338,12 @@ export function useQuizSubmission(input: {
         });
       }
     },
-    [input, waitForAudio],
+    [cancelPending, deadlineSubmissionNotBeforeRef, inFlightRequestRef, input, timeWarningAnnouncedRef, waitForAudio],
   );
+
+  useLayoutEffect(() => {
+    runSubmissionRef.current = runSubmission;
+  }, [runSubmission]);
 
   const submitChoice = useCallback(
     (choiceIndex: number | null) => {
@@ -290,7 +351,9 @@ export function useQuizSubmission(input: {
       const phase = input.state.attempt.phase;
       if (
         !question ||
+        input.state.attempt.status !== "in_progress" ||
         (phase !== "initial" && phase !== "retry") ||
+        (choiceIndex !== null && (!Number.isInteger(choiceIndex) || choiceIndex < 0 || choiceIndex >= question.choices.length)) ||
         (choiceIndex !== null &&
           quizAttemptUsesDeadlineClock(input.state.attempt) &&
           input.state.remainingSeconds === 0)
@@ -298,55 +361,51 @@ export function useQuizSubmission(input: {
         return;
       }
 
-      if (input.state.transitionPending) {
-        if (
-          queuedSubmissionRef.current ||
-          input.state.submitting ||
-          input.state.feedback !== null
-        ) {
-          return;
-        }
-        const promptAudioCompletion = input.captureActivePromptAudio();
-        input.cancelPendingPromptAudio();
-        const answerAudioUrl = quizAnswerAudioUrl(question, choiceIndex, input.state.attempt.quizContentMode);
-        input.primeChoiceAudio(answerAudioUrl);
-        queuedSubmissionRef.current = {
-          attemptId: input.state.attempt.id,
-          choiceIndex,
-          phase,
-          primed: Boolean(answerAudioUrl),
-          promptAudioCompletion,
-          questionId: question.id,
-          submittedAt: performance.now(),
-        };
-        input.dispatch({
-          type: "transition-choice-queued",
-          phase,
-          choiceIndex,
-        });
-        return;
-      }
-
       if (
         !input.state.timerSynchronized ||
-        input.inFlightRequestRef.current !== null ||
+        (!input.state.transitionPending && inFlightRequestRef.current !== null) ||
         input.state.submitting ||
         input.state.feedback !== null
       ) {
         return;
       }
-      void runSubmission({
-        attempt: input.state.attempt,
+      if (choiceIndex === null && hasPendingChoice()) return;
+      if (choiceIndex === null && !input.state.transitionPending) {
+        void runSubmission({
+          attempt: input.state.attempt,
+          choiceIndex,
+          promptAudioCompletion: input.captureActivePromptAudio(),
+          question,
+          submittedAt: performance.now(),
+        });
+        return;
+      }
+
+      const previous = hasPendingChoice() ? pendingSubmissionRef.current : null;
+      const promptAudioCompletion = previous
+        ? previous.promptAudioCompletion
+        : input.captureActivePromptAudio();
+      input.cancelPendingPromptAudio();
+      const answerAudioUrl = quizAnswerAudioUrl(question, choiceIndex, input.state.attempt.quizContentMode);
+      input.primeChoiceAudio(answerAudioUrl);
+      pendingSubmissionRef.current = {
+        attemptId: input.state.attempt.id,
+        questionId: question.id,
+        phase,
+        selectionVersion: input.state.selectionVersion,
         choiceIndex,
-        promptAudioCompletion: input.captureActivePromptAudio(),
-        question,
-        submittedAt: performance.now(),
-      });
+        primed: Boolean(answerAudioUrl),
+        promptAudioCompletion,
+        notBefore: performance.now() + (choiceIndex === null ? 0 : ANSWER_SELECTION_DELAY_MS),
+      };
+      input.dispatch({ type: "choice-pending", choiceIndex });
+      schedulePending();
     },
-    [input, runSubmission],
+    [hasPendingChoice, inFlightRequestRef, input, runSubmission, schedulePending],
   );
   return {
     canInterruptFeedback: feedbackInterruption.canInterrupt,
+    hasPendingChoice,
     interruptFeedback: feedbackInterruption.interrupt,
     submitChoice,
   };

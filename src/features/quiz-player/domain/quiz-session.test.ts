@@ -3,11 +3,13 @@ import { describe, expect, it } from "vitest";
 import { unavailablePronunciation } from "@/lib/quiz/pronunciation-snapshot";
 
 import type { QuizAttempt, QuizQuestion } from "../model";
+import { createQuizPlayerState, quizPlayerReducer } from "./quiz-player-state";
 import {
   ANSWER_AUDIO_END_GRACE_MS,
   ANSWER_AUDIO_END_TIMEOUT_MS,
   ANSWER_AUDIO_START_TIMEOUT_MS,
   ANSWER_FEEDBACK_DELAY_MS,
+  ANSWER_SELECTION_DELAY_MS,
   ANSWER_RESULT_VISIBLE_MS,
   ANSWER_SERVER_FEEDBACK_RESERVATION_MS,
   QUIZ_REQUEST_TIMEOUT_MS,
@@ -73,6 +75,25 @@ function attempt(): QuizAttempt {
 }
 
 describe("quiz session domain", () => {
+  it("keeps pending selection separate from feedback and invalidates same-question recovery", () => {
+    const value = attempt();
+    const pending = quizPlayerReducer(createQuizPlayerState(value, 60), { type: "choice-pending", choiceIndex: 2 });
+    expect(pending.feedback).toBeNull();
+    expect(pending.submitting).toBe(false);
+    const synchronized = quizPlayerReducer(pending, {
+      type: "attempt-replaced", attempt: value, remainingSeconds: 60, preservePendingChoice: true,
+    });
+    expect(synchronized.pendingChoice).toBe(2);
+    expect(synchronized.selectionVersion).toBe(pending.selectionVersion);
+    const recovered = quizPlayerReducer(synchronized, {
+      type: "attempt-replaced", attempt: value, remainingSeconds: 59,
+    });
+    expect(recovered.pendingChoice).toBeNull();
+    expect(recovered.selectionVersion).toBe(pending.selectionVersion + 1);
+    expect(quizPlayerReducer(pending, { type: "synchronization-started" }).pendingChoice).toBeNull();
+    expect(quizPlayerReducer(pending, { type: "submission-failed", message: "retry" }).pendingChoice).toBeNull();
+  });
+
   it("uses a hidden deadline clock only when an untimed assignment has a deadline", () => {
     expect(
       quizAttemptUsesDeadlineClock({
@@ -224,6 +245,7 @@ describe("quiz session domain", () => {
       ),
     ).toBe("next-question");
     expect(ANSWER_FEEDBACK_DELAY_MS).toBe(750);
+    expect(ANSWER_SELECTION_DELAY_MS).toBe(150);
     expect(ANSWER_AUDIO_END_GRACE_MS).toBe(150);
     expect(ANSWER_AUDIO_END_TIMEOUT_MS).toBe(3_000);
     expect(ANSWER_AUDIO_START_TIMEOUT_MS).toBe(1_000);
