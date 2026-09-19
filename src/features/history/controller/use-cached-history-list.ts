@@ -6,6 +6,8 @@ import { useHistoryListCache } from "./history-list-cache-provider";
 
 export function useCachedHistoryList(seed?: HistoryCacheSeed) {
   const context = useHistoryListCache();
-  const entry = usePrivateListEntry(context, seed, "history", historyFailureKind, "unavailable" as AdminHistoryFailureKind);
+  const entry = usePrivateListEntry(context, seed, "history", historyFailureKind, "unavailable" as AdminHistoryFailureKind, {
+    retainActiveSnapshot: true,
+  });
   return { ...entry, refresh: context?.refresh ?? entry.retry };
 }

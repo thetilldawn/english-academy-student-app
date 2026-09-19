@@ -49,6 +49,20 @@ describe("로컬 학생 학습 가짜 자료 보호", () => {
   });
 });
 describe("로컬 기준 계측 보호", () => {
+  it("실제 모달 검사용 가짜 배정과 두 학생의 상세만 조회한다", () => {
+    const rpc = "/rest/v1/rpc/get_admin_history_detail_v1";
+    const request = { p_assignment_id: uid(20), p_attempt_id: null, p_student_id: uid(1) };
+    const detail = read(rpc, { method: "POST", body: JSON.stringify(request) });
+    expect(detail.status).toBe(200);
+    expect(detail.body).toMatchObject({ assignmentId: uid(20), studentId: uid(1), attemptId: null, studentName: "가짜 학생 1" });
+    expect(read(rpc, { method: "POST", body: JSON.stringify({ ...request, p_student_id: uid(2) }) }).status).toBe(200);
+    for (const invalid of [{ p_student_id: uid(3) }, { p_assignment_id: uid(21) }, { p_attempt_id: uid(20) }]) {
+      expect(read(rpc, { method: "POST", body: JSON.stringify({ ...request, ...invalid }) }).status).toBe(403);
+    }
+    expect(read(rpc, { method: "GET", body: JSON.stringify(request) }).status).toBe(403);
+    expect(read("/rest/v1/rpc/create_bulk_assignments_v1", { method: "POST", body: JSON.stringify(request) }).status).toBe(403);
+  });
+
   it("가짜 학교 모드는 실제 키/호출을 허용하지 않으며 정해진 검색만 응답한다", async () => {
     const upstream = vi.fn();
     const target = new URL("https://open.neis.go.kr/hub/schoolInfo");

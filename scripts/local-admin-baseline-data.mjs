@@ -69,7 +69,7 @@ export function fixtureResponse({ url, method, headers, body = "", quizFeedback 
     }
     if (target.pathname === "/rest/v1/rpc/get_admin_school_schedule_edit_result_v1") delete checkedIds.p_request_id;
   }
-  if (input === null || !requireFakeIds(checkedIds, [uid(1), uid(2), uid(10), uid(11), ...[101, 102, 103, 104, 105].map(uid), ...(mockWordbooks ? [MOCK_DATASET_ID, ...MOCK_SCOPE_IDS, ...MOCK_UNIT_IDS] : [])])) return deny;
+  if (input === null || !requireFakeIds(checkedIds, [uid(1), uid(2), uid(10), uid(11), ...(target.pathname === "/rest/v1/rpc/get_admin_history_detail_v1" ? [uid(20)] : []), ...[101, 102, 103, 104, 105].map(uid), ...(mockWordbooks ? [MOCK_DATASET_ID, ...MOCK_SCOPE_IDS, ...MOCK_UNIT_IDS] : [])])) return deny;
   if (headers.get("apikey") !== PUBLIC_KEY) return deny;
   const respond = (value, category) => ({ status: 200, body: value, category });
   if (target.pathname === "/auth/v1/token" && method === "POST") {
@@ -132,6 +132,20 @@ export function fixtureResponse({ url, method, headers, body = "", quizFeedback 
       if (rpc !== "get_admin_student_detail_initial_v2") return respond(profile, rpc.startsWith("update") ? "profile-memory-write" : "profile-result-read");
       return respond({ snapshotAt: new Date().toISOString(), student: { ...student, ...profile, createdAt: stamp, currentVocabDatasetId: null, readingContextSyncStatus: "not_configured", readingCurriculumStage: "undecided" },
         history: { items: [], totalCount: 0 }, learningSources: [], vocabBookHistory: [], wrongSummary: { wrongWordCount: 0, repeatedWrongWordCount: 0 } }, "student-detail");
+    }
+    if (rpc === "get_admin_history_detail_v1") {
+      if (input.p_assignment_id !== uid(20) || input.p_attempt_id !== null ||
+          ![uid(1), uid(2)].includes(input.p_student_id)) return deny;
+      const initial = fixtureResponse({ url: DATA_ORIGIN + "/rest/v1/rpc/get_admin_history_initial_v1",
+        method, headers, body: JSON.stringify({ p_status_filter: "open" }) });
+      const summary = initial.body[0].items.find(row => row.item.studentId === input.p_student_id).item;
+      return respond({ ...summary, assignmentDeleted: false, assignmentStatus: "active",
+        attemptNumber: null, availableFrom: null, cancellationReason: null, datasetId: uid(10),
+        englishToKoreanRatio: 100, initialCorrectCount: null, primaryUnitIds: [uid(101)],
+        primaryUnitSortIndexes: [1], questionOrderMode: "fixed", questionTimeLimitSeconds: null,
+        retryCorrectCount: null, studentDeleted: false, studentStatus: "active", timeLimitSeconds: 60,
+        timingMode: "total", unitIds: [uid(101)], unitSortIndexes: [1], unresolvedWrongCount: null,
+      }, "history-detail");
     }
     if (rpc === "get_admin_history_initial_v1") {
       const keys = input.p_status_filter && input.p_status_filter !== "all" ? ["filter-" + input.p_status_filter]

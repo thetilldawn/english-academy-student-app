@@ -6,8 +6,8 @@ import { hydrateRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AdminHistoryListItem } from "../contracts/admin-history-read-model";
 import type { HistoryCacheSeed } from "../contracts/history-list-cache-contract";
-const mocks = vi.hoisted(() => ({ pathname: "/admin/results", read: vi.fn(), initial: vi.fn(), section: vi.fn(), more: vi.fn() }));
-vi.mock("next/navigation", () => ({ usePathname: () => mocks.pathname, useSelectedLayoutSegments: () => mocks.pathname.split("/").slice(2) }));
+const mocks = vi.hoisted(() => ({ pathname: "/admin/results", mainPathname: null as string | null, read: vi.fn(), initial: vi.fn(), section: vi.fn(), more: vi.fn() }));
+vi.mock("next/navigation", () => ({ usePathname: () => mocks.pathname, useSelectedLayoutSegments: () => (mocks.mainPathname ?? mocks.pathname).split("/").slice(2) }));
 vi.mock("../transport/history-pages", () => ({ readHistoryListCache: mocks.read, loadAdminHistorySnapshot: mocks.initial, loadAdminHistoryFreshSection: mocks.section, loadAdminHistoryNextPage: mocks.more }));
 import { HistoryListCacheProvider } from "../controller/history-list-cache-provider";
 import { CachedAdminHistoryList } from "./cached-admin-history-list";
@@ -27,9 +27,9 @@ function response(version=stamp): HistoryCacheSeed {
     sections:["open","needs_attention","completed","archived"].map(groupKey=>({groupKey,items:groupKey==="open"?[item]:[],nextCursor:groupKey==="open"?"old-cursor":null,totalCount:groupKey==="open"?11:0}))} };
 }
 function view(seed?: HistoryCacheSeed, owner=userId) {
-  return <HistoryListCacheProvider userId={owner}>{mocks.pathname==="/admin/results"?<CachedAdminHistoryList initialResponse={seed}/>:<p>다른 화면</p>}</HistoryListCacheProvider>;
+  return <HistoryListCacheProvider userId={owner}>{(mocks.mainPathname ?? mocks.pathname)==="/admin/results"?<CachedAdminHistoryList initialResponse={seed}/>:<p>다른 화면</p>}{mocks.pathname.startsWith("/admin/results/") ? <aside role="dialog" aria-label="내역 상세">상세 확인</aside> : null}</HistoryListCacheProvider>;
 }
-beforeEach(()=>{vi.clearAllMocks();mocks.pathname="/admin/results";mocks.read.mockImplementation(async input=>({...response(),snapshot:{...response().snapshot,...input.filters}}));});
+beforeEach(()=>{vi.clearAllMocks();mocks.pathname="/admin/results";mocks.mainPathname=null;mocks.read.mockImplementation(async input=>({...response(),snapshot:{...response().snapshot,...input.filters}}));});
 afterEach(()=>{cleanup();vi.useRealTimers();});
 describe("실제 내역 첫 목록과 개인 캐시",()=>{
   it.each([false,true])("거절된 커서의 복구 실패=%s 후 왕복에도 옛 커서를 복원하지 않는다",async fail=>{
@@ -89,11 +89,37 @@ describe("실제 내역 첫 목록과 개인 캐시",()=>{
     expect(screen.queryByRole("button",{name:"10개 더보기"})).not.toBeInTheDocument();
     const count=mocks.read.mock.calls.length;act(()=>announceAdminPrivateCacheChange("identity"));expect(mocks.read).toHaveBeenCalledTimes(count);
   });
-  it("표시 만료는 주기 조회를 만들지 않고 새로 확인할 안내를 준다",async()=>{
-    vi.useFakeTimers();render(view());await act(async()=>{await Promise.resolve();});expect(screen.getByText("가짜 내역 학생")).toBeVisible();
-    const count=mocks.read.mock.calls.length;await act(async()=>{await vi.advanceTimersByTimeAsync(60000);});
-    expect(screen.queryByText("가짜 내역 학생")).not.toBeInTheDocument();expect(mocks.read).toHaveBeenCalledTimes(count);expect(screen.getByRole("button",{name:"다시 시도"})).toBeVisible();
-    expect(screen.getByText("최신 시험 내역을 다시 확인해 주세요.")).toBeVisible();
+  it("60초와 120초 이후에도 검색·더보기·같은 목록을 유지하고 조회나 새 버튼을 만들지 않는다",async()=>{
+    vi.useFakeTimers();render(view());await act(async()=>{await Promise.resolve();});
+    fireEvent.change(screen.getByRole("searchbox"),{target:{value:"검색 유지"}});
+    await act(async()=>{await vi.advanceTimersByTimeAsync(400);});
+    mocks.more.mockResolvedValue({items:[{...item,id:"second",studentName:"더 본 학생"}],nextCursor:null});
+    fireEvent.click(screen.getByRole("button",{name:"10개 더보기"}));
+    await act(async()=>{await Promise.resolve();});
+    const input=screen.getByRole("searchbox"), row=screen.getByText("더 본 학생"), count=mocks.read.mock.calls.length;
+    for (const duration of [60000,60001]) {
+      await act(async()=>{await vi.advanceTimersByTimeAsync(duration);});
+      expect(screen.getByRole("searchbox")).toBe(input);expect(input).toHaveValue("검색 유지");
+      expect(screen.getByText("더 본 학생")).toBe(row);expect(row).toBeVisible();
+      expect(mocks.read).toHaveBeenCalledTimes(count);expect(mocks.more).toHaveBeenCalledTimes(1);
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button",{name:/새로고침|다시 시도|다시 불러오기/})).not.toBeInTheDocument();
+    }
+  });
+  it("상세 모달 뒤에서 60초가 지나고 닫아도 배경 목록과 입력을 유지한다",async()=>{
+    vi.useFakeTimers();mocks.mainPathname="/admin/results";
+    const {rerender}=render(view());await act(async()=>{await Promise.resolve();});
+    fireEvent.change(screen.getByRole("searchbox"),{target:{value:"상세 왕복"}});
+    await act(async()=>{await vi.advanceTimersByTimeAsync(400);});
+    const input=screen.getByRole("searchbox"), row=screen.getByText("가짜 내역 학생"), count=mocks.read.mock.calls.length;
+    mocks.pathname="/admin/results/local-first";rerender(view());
+    expect(screen.getByRole("dialog")).toBeVisible();
+    await act(async()=>{await vi.advanceTimersByTimeAsync(120001);});
+    mocks.pathname="/admin/results";rerender(view());
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("searchbox")).toBe(input);expect(input).toHaveValue("상세 왕복");
+    expect(screen.getByText("가짜 내역 학생")).toBe(row);expect(row).toBeVisible();
+    expect(mocks.read).toHaveBeenCalledTimes(count);expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
   it("계정 교체/일반 실패/재시도도 예전 목록을 개인 인증 근거로 쓰지 않는다",async()=>{
     const {rerender}=render(view());await screen.findByText("가짜 내역 학생");
@@ -101,15 +127,19 @@ describe("실제 내역 첫 목록과 개인 캐시",()=>{
     await screen.findByRole("alert");expect(screen.queryByText("가짜 내역 학생")).not.toBeInTheDocument();expect(screen.queryByText(/private SQL/)).not.toBeInTheDocument();
     mocks.read.mockResolvedValue({...response(),userId:"00000000-0000-4000-8000-000000000888"});fireEvent.click(screen.getByRole("button",{name:"다시 시도"}));await screen.findByText("가짜 내역 학생");
   });
-  it("만료 뒤 조회 실패에서도 실제 오류를 만료 문구로 덮지 않는다", async () => {
+  it("오래 열어 둔 뒤 실제 탭 복귀 조회가 실패하면 오류를 표시하고 읽기만 재시도한다", async () => {
     vi.useFakeTimers(); render(view()); await act(async () => { await Promise.resolve(); });
     await act(async () => { await vi.advanceTimersByTimeAsync(60000); });
     mocks.read.mockRejectedValue(new AdminHistoryRequestError("unavailable"));
-    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    act(()=>window.dispatchEvent(new Event("pageshow")));
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     expect(screen.getByRole("alert")).not.toHaveTextContent("최신 시험 내역을 다시 확인해 주세요.");
     expect(screen.getByRole("alert")).toHaveTextContent("불러오지 못했습니다");
     expect(screen.queryByText("가짜 내역 학생")).not.toBeInTheDocument();
+    mocks.read.mockResolvedValue(response());
+    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    await act(async()=>{await Promise.resolve();});
+    expect(screen.getByText("가짜 내역 학생")).toBeVisible();
   });
   it("StrictMode 재실행 후에도 표시/현재 재인증이 회복된다",async()=>{
     render(view(),{reactStrictMode:true});await screen.findByText("가짜 내역 학생");
