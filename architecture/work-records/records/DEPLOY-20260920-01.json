@@ -1,0 +1,365 @@
+{
+  "schemaVersion": 1,
+  "id": "DEPLOY-20260920-01",
+  "title": "내역 유지와 마지막 답 선택 0.15초 운영 반영",
+  "size": "small",
+  "gate": "design",
+  "guide": "docs/work-orders/DEPLOY-20260920-01.md",
+  "baseline": "84ff7cf5e74e280ecfe8667d31d04fef66445b69",
+  "owners": [
+    "history",
+    "quiz-player"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal",
+    "assessment-secret"
+  ],
+  "scope": [
+    {
+      "path": "src/features/history/controller/use-cached-history-list.ts",
+      "state": "existing",
+      "owner": "history",
+      "flowIds": [
+        "admin-history-read"
+      ]
+    },
+    {
+      "path": "src/features/quiz-player/domain/quiz-session.ts",
+      "state": "existing",
+      "owner": "quiz-player",
+      "flowIds": [
+        "student-quiz-attempt"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "내역 유지와 마지막 입력 0.15초를 운영에 반영한다.",
+      "acceptance": "APP-20260919-01/02의 검증 코드와 동일한 SHA가 Preview와 Production에서 각각 올바른 환경으로 Ready.",
+      "disposition": "required",
+      "owners": [
+        "history",
+        "quiz-player"
+      ],
+      "flowIds": [
+        "admin-history-read",
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "engineering",
+      "text": "기존 학생·사전·음원·DB·인증·환경 설정을 바꾸지 않는다.",
+      "acceptance": "변경 파일은 승인된 클라이언트/가짜 검사/근거만 포함. 실제 학생 배정·응시·답 제출 없이 공개 인증 경계와 배포 로그 확인.",
+      "disposition": "required",
+      "owners": [
+        "history",
+        "quiz-player"
+      ],
+      "flowIds": [
+        "admin-history-read",
+        "student-quiz-attempt"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "마무리할 범위",
+      "answer": "기존 운영 반영 요청과 이번 0.15초 수정·마무리 요청에 따라 두 앱 수정의 배포를 완료한다. 새 DB 변경이나 실제 학생 시험은 실행하지 않는다.",
+      "source": "현재 대화의 기존 운영 반영 지시 및 2026-09-20 0.15초로 하고 마저 마무리 요청"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "배포 및 복구 방식",
+      "answer": "비운영 브랜치의 Git Preview를 확인한 후 같은 SHA를 main으로 fast-forward해 Production 환경에서 새로 빌드한다. Preview 아티팩트를 운영으로 승격하지 않는다. 이상이면 기존84ff7cf/BPXHLBV1V 배포로 되돌리고 DB는 유지.",
+      "source": "2026-09-20 Vercel 실제 대시보드 Ready·main84ff7cf·기존 환경 가드"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "운영 검증 경계",
+      "answer": "150ms 입력·연타·모달 왕복은 격리 가짜 실제Next 화면에서 검사하고 배포 후 공개 페이지·보호 API·오류로그를 읽기 전용으로 확인한다. 실제 학생 로그인 후 시험 제출 검사는 포함하지 않으며 그 한계를 보고한다.",
+      "source": "실제 학생 응시와 학습 기록 보존; 로컬 동작 검증과 운영 반영 구분"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "checked",
+      "reason": "별도 구현 없음. APP-20260919-01/02에서 검증한 변경의 배포 대상과 기존 계약을 확인한다."
+    },
+    "ui": {
+      "status": "checked",
+      "reason": "별도 구현 없음. APP-20260919-01/02에서 검증한 변경의 배포 대상과 기존 계약을 확인한다."
+    },
+    "state": {
+      "status": "checked",
+      "reason": "별도 구현 없음. APP-20260919-01/02에서 검증한 변경의 배포 대상과 기존 계약을 확인한다."
+    },
+    "domain": {
+      "status": "checked",
+      "reason": "별도 구현 없음. APP-20260919-01/02에서 검증한 변경의 배포 대상과 기존 계약을 확인한다."
+    },
+    "data": {
+      "status": "checked",
+      "reason": "별도 구현 없음. APP-20260919-01/02에서 검증한 변경의 배포 대상과 기존 계약을 확인한다."
+    },
+    "api": {
+      "status": "checked",
+      "reason": "별도 구현 없음. APP-20260919-01/02에서 검증한 변경의 배포 대상과 기존 계약을 확인한다."
+    },
+    "cache": {
+      "status": "checked",
+      "reason": "별도 구현 없음. APP-20260919-01/02에서 검증한 변경의 배포 대상과 기존 계약을 확인한다."
+    },
+    "asyncUi": {
+      "status": "checked",
+      "reason": "별도 구현 없음. APP-20260919-01/02에서 검증한 변경의 배포 대상과 기존 계약을 확인한다."
+    },
+    "security": {
+      "status": "checked",
+      "reason": "별도 구현 없음. APP-20260919-01/02에서 검증한 변경의 배포 대상과 기존 계약을 확인한다."
+    },
+    "styles": {
+      "status": "checked",
+      "reason": "별도 구현 없음. APP-20260919-01/02에서 검증한 변경의 배포 대상과 기존 계약을 확인한다."
+    },
+    "tests": {
+      "status": "checked",
+      "reason": "별도 구현 없음. APP-20260919-01/02에서 검증한 변경의 배포 대상과 기존 계약을 확인한다."
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "기존 권한·비공개 응답·정답 비노출·개인 캐시 정책 보존. 배포 검사는 실제 학생 쓰기 없이 수행.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "기존 권한·비공개 응답·정답 비노출·개인 캐시 정책 보존. 배포 검사는 실제 학생 쓰기 없이 수행.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "기존 권한·비공개 응답·정답 비노출·개인 캐시 정책 보존. 배포 검사는 실제 학생 쓰기 없이 수행.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "기존 권한·비공개 응답·정답 비노출·개인 캐시 정책 보존. 배포 검사는 실제 학생 쓰기 없이 수행.",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "로컬 검증 코드 → Git Preview(Staging) → 동일 SHA의 main Production 빌드 → 공개 페이지·보호 API·오류 로그 읽기. 생성·배정·응시·수정·삭제·DB는 검사용으로 실행하지 않는다.",
+    "reuse": "기존 Git 자동 배포, 환경 가드, APP 두 건의 검증, 기존 Vercel 대시보드만 사용한다.",
+    "cache": "새 캐시 도입 없음. APP01의 내역 유지와 실제 변경 무효화만 반영하며 개인 응답은 기존 no-store.",
+    "compatibility": "DB·API·패키지·세션·음원 원본·서버 채점은 그대로다. Preview와 운영의 환경 연결을 분리한다.",
+    "rollback": "문제 발생 시 기존 운영84ff7cf/BPXHLBV1V로 배포 주소를 복구한다. 필요하면 두 수정만 되돌리는 새 커밋을 올린다. 학생 데이터나 단어 자료는 되돌리거나 삭제하지 않는다."
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "첫 현재 응시 인증/상태 조회 대기",
+      "message": "--:--",
+      "behavior": "답 버튼 비활성, 현재 서버 동기화 전 제출 금지",
+      "recovery": "기존 재확인",
+      "component": "src/features/quiz-player/ui/quiz-player.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "전송 또는 다음 문항 서버 시각 동기화",
+      "message": "새 문구 없음; 기존 선택/시간 표시",
+      "behavior": "정상 전환의 예약은 보존하되 서버 준비 전 전송 금지",
+      "recovery": "기존 서버 동기화/회복",
+      "component": "src/features/quiz-player/ui/quiz-player.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "아직 답을 고르지 않음 또는150ms 예약 중",
+      "message": "새 문구 없음; 선택한 보기만 즉시 강조",
+      "behavior": "대기 중 변경 가능, 서버정답 수신 전 정오답 표시 금지",
+      "recovery": "다른 보기를 누르면150ms 다시 계산",
+      "component": "src/features/quiz-player/ui/quiz-player.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "현재 문항이 없고 결과로 전환 중",
+      "message": "시험 상태를 정리하는 중입니다.",
+      "behavior": "기존 최종 처리 유지; 빈 문제를 제출하지 않음",
+      "recovery": "기존 결과 경로 이동",
+      "component": "src/features/quiz-player/ui/quiz-player.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "0초 이후 또는 현재 문항에 속하지 않는 클릭",
+      "message": "새 오류 문구 없음",
+      "behavior": "새 선택 차단·오래된 예약 폐기·중복 전송 없음",
+      "recovery": "현재 서버 상태 회복",
+      "component": "src/features/quiz-player/ui/quiz-player.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "초기 또는 복구 조회 실패",
+      "message": "시험 상태를 확인하지 못했습니다. 연결을 확인한 뒤 다시 시도해주세요.",
+      "behavior": "기존 오류 표시와 재확인 유지",
+      "recovery": "기존 다시 확인 버튼",
+      "component": "src/features/quiz-player/ui/quiz-player.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "답 저장 실패/응답 유실",
+      "message": "답안을 저장하지 못했습니다.",
+      "behavior": "예약 폐기, 기존 서버 상태 확인을 먼저 시행; 임의 다른답 재전송 없음",
+      "recovery": "기존 회복/안내",
+      "component": "src/features/quiz-player/ui/quiz-player.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "서버가 현재 응시 권한을 거절",
+      "message": "기존 시험 상태 확인 안내",
+      "behavior": "서버 인증/응시 확인을 우회하지 않음",
+      "recovery": "기존 로그인/복구 경계",
+      "component": "src/features/quiz-player/ui/quiz-player.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "존재하지 않거나 접근할 수 없는 시험 경로",
+      "message": "페이지를 찾을 수 없습니다.",
+      "behavior": "기존 서버 경로·권한 정책 유지",
+      "recovery": "기존 처음 이동",
+      "component": "src/features/quiz-player/ui/quiz-player.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "예상 밖 화면 예외",
+      "message": "화면을 불러오지 못했습니다.",
+      "behavior": "기존 오류 경계, 예약은 해제 때 폐기",
+      "recovery": "기존 경계 다시 시도",
+      "component": "src/features/quiz-player/ui/quiz-player.tsx",
+      "checkIds": [
+        "T1"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "개발 기준 v1.1 / 배포 검증 분리",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "로컬 검사·배포 완료·실제 학생 검증을 구별한다."
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "review",
+      "target": null,
+      "scenario": "현재 두 APP의 전체/관련 검사·타입/lint·구조·빌드·가짜 실제 화면·독립 검토 및 커밋 선별",
+      "expected": "필수 검사 통과, 149ms 전송0/150ms 최종답1회·내역 보존. 학생·DB·기존 다른 문서 변경 미포함.",
+      "topics": [
+        "behavior",
+        "structure",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "browser",
+      "target": null,
+      "scenario": "Git Preview Ready/SHA/환경 가드·실제 공개 로그인·식별 및 비로그인 보호",
+      "expected": "Staging 연결의 동일 SHA. 개인 정보나 정답을 비로그인에 노출하지 않음.",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "browser",
+      "target": null,
+      "scenario": "Production 새 빌드 Ready/Current/SHA·공개 페이지·보호 응답·반영 후15분 오류 로그",
+      "expected": "운영 환경 동일 SHA·공개 로그인 정상·개인 API 차단/no-store·새 오류 없음. 실제 학생 시험 쓰기0.",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    }
+  ],
+  "verification": null
+}
