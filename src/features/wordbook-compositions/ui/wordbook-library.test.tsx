@@ -58,6 +58,96 @@ async function start() {
   fireEvent.change(screen.getByLabelText("템플릿 이름"), { target: { value: "나의 템플릿" } });
 }
 describe("library real controls", () => {
+  const prepared = (): LibraryCommand => ({ action: "create", requestId: id(90), metadata,
+    recipe: { filters: EMPTY_LIBRARY_FILTERS, scopes: [catalog.scopes[2]!, catalog.scopes[0]!].map(s => ({ id: s.id, version: s.version })), excludedOccurrenceKeys: [], scopeStatus: "confirmed" } });
+  const choosePrepared = (value: unknown, size = 100) => {
+    const file = { size, text: vi.fn(async () => JSON.stringify(value)) };
+    fireEvent.change(screen.getByLabelText("준비한 구성 불러오기"), { target: { files: [file] } });
+    return file;
+  };
+  it("previews a prepared composition in its exact order without saving until requested", async () => {
+    await start(); const command = prepared(); choosePrepared(command);
+    await screen.findByText("준비한 구성을 불러왔습니다. 이름과 담은 범위를 확인한 뒤 저장해 주세요.");
+    expect(screen.getByLabelText("템플릿 이름")).toHaveValue(metadata.title);
+    expect(requests).toHaveLength(0);
+    fireEvent.click(screen.getByRole("button", { name: "템플릿 저장" }));
+    await screen.findByText("템플릿을 저장했습니다.");
+    expect(requests).toEqual([command]);
+  });
+  it("keeps the prepared request id when a save response is uncertain", async () => {
+    await start(); const command = prepared(); choosePrepared(command);
+    await screen.findByText("준비한 구성을 불러왔습니다. 이름과 담은 범위를 확인한 뒤 저장해 주세요.");
+    postFailure = 503; fireEvent.click(screen.getByRole("button", { name: "템플릿 저장" }));
+    fireEvent.click(await screen.findByRole("button", { name: "같은 내용으로 저장 확인" }));
+    await screen.findByText("템플릿을 저장했습니다."); expect(requests).toEqual([command, command]);
+  });
+  it("preserves the prepared request when tags lose focus without any change", async () => {
+    await start(); const command = prepared(); choosePrepared(command);
+    await screen.findByText("준비한 구성을 불러왔습니다. 이름과 담은 범위를 확인한 뒤 저장해 주세요.");
+    fireEvent.focus(screen.getByLabelText("찾기 태그 (쉼표로 구분)"));
+    fireEvent.blur(screen.getByLabelText("찾기 태그 (쉼표로 구분)"));
+    fireEvent.click(screen.getByRole("button", { name: "템플릿 저장" })); await screen.findByText("템플릿을 저장했습니다.");
+    expect(requests).toEqual([command]);
+  });
+  it("preserves the prepared request when an already selected filter is clicked again", async () => {
+    await start(); const command = prepared(); choosePrepared(command);
+    await screen.findByText("준비한 구성을 불러왔습니다. 이름과 담은 범위를 확인한 뒤 저장해 주세요.");
+    fireEvent.click(screen.getAllByRole("button", { name: "전체" })[0]!);
+    fireEvent.click(screen.getByRole("button", { name: "템플릿 저장" })); await screen.findByText("템플릿을 저장했습니다.");
+    expect(requests).toEqual([command]);
+  });
+  it("locks edits and saving while a prepared file is still being read", async () => {
+    await start(); const command = prepared(); let finish!: (text: string) => void;
+    fireEvent.change(screen.getByLabelText("준비한 구성 불러오기"), { target: { files: [{ size: 100, text: () => new Promise<string>(resolve => { finish = resolve; }) }] } });
+    await screen.findByText("준비한 구성을 읽는 중…");
+    expect(screen.getByLabelText("템플릿 이름")).toBeDisabled(); expect(screen.getByRole("button", { name: "템플릿 저장" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "템플릿 저장" })); expect(requests).toHaveLength(0);
+    await act(async () => { finish(JSON.stringify(command)); });
+    await screen.findByText("준비한 구성을 불러왔습니다. 이름과 담은 범위를 확인한 뒤 저장해 주세요.");
+    expect(screen.getByRole("button", { name: "템플릿 저장" })).toBeEnabled();
+  });
+  it.each(["unmount", "new-reader"])("discards late file contents after %s", async kind => {
+    const onBack = vi.fn(); const view = render(<WordbookLibrary onBack={onBack} />);
+    await screen.findByText("이 조건에 맞는 자료가 없습니다."); fireEvent.click(screen.getByRole("button", { name: "범위로 새로 만들기" }));
+    fireEvent.change(screen.getByLabelText("템플릿 이름"), { target: { value: "남겨 둔 입력" } });
+    let finish!: (text: string) => void; const command = prepared();
+    fireEvent.change(screen.getByLabelText("준비한 구성 불러오기"), { target: { files: [{ size: 100, text: () => new Promise<string>(resolve => { finish = resolve; }) }] } });
+    await screen.findByText("준비한 구성을 읽는 중…");
+    if (kind === "unmount") view.unmount();
+    else { view.rerender(<WordbookLibrary onBack={onBack} captureAuthenticationFailure={() => () => undefined} />); await act(async () => undefined); }
+    await act(async () => { finish(JSON.stringify(command)); });
+    expect(screen.queryByText("준비한 구성을 불러왔습니다. 이름과 담은 범위를 확인한 뒤 저장해 주세요.")).not.toBeInTheDocument();
+    if (kind === "new-reader") expect(screen.getByLabelText("템플릿 이름")).toHaveValue("남겨 둔 입력");
+    expect(requests).toHaveLength(0);
+  });
+  it("uses edited contents and a new request id after changing an imported draft", async () => {
+    await start(); choosePrepared(prepared());
+    await screen.findByText("준비한 구성을 불러왔습니다. 이름과 담은 범위를 확인한 뒤 저장해 주세요.");
+    fireEvent.change(screen.getByLabelText("템플릿 이름"), { target: { value: "수정한 준비본" } });
+    fireEvent.click(screen.getByRole("button", { name: "템플릿 저장" })); await screen.findByText("템플릿을 저장했습니다.");
+    expect(requests[0]!.requestId).not.toBe(id(90));
+    expect(requests[0]!.action === "create" && requests[0]!.metadata.title).toBe("수정한 준비본");
+  });
+  it.each(["wrong-environment", "changed-version", "unavailable", "not-create", "too-large"])("rejects %s and preserves the previous draft", async kind => {
+    if (kind === "unavailable") catalog.scopes[2]!.availability = "changed";
+    await start(); const command = prepared();
+    if (command.action !== "create") throw new Error("fixture");
+    if (kind === "wrong-environment") command.recipe.scopes[0]!.id = id(999);
+    if (kind === "changed-version") command.recipe.scopes[0]!.version = "0".repeat(64);
+    const value = kind === "not-create" ? { action: "copy", requestId: id(90), sourceVersionId: id(1), metadata } : command;
+    const file = choosePrepared(value, kind === "too-large" ? 3 * 1024 * 1024 : 100);
+    await screen.findByText("준비한 구성을 읽지 못했습니다. 현재 자료에 맞는 파일인지 확인해 주세요.");
+    expect(screen.getByLabelText("템플릿 이름")).toHaveValue("나의 템플릿"); expect(requests).toHaveLength(0);
+    if (kind === "too-large") expect(file.text).not.toHaveBeenCalled();
+  });
+  it("can load an unconfirmed empty template while keeping assignment unavailable", async () => {
+    await start(); const command = prepared(); if (command.action !== "create") throw new Error("fixture");
+    command.recipe.scopes = []; command.recipe.scopeStatus = "unconfirmed"; choosePrepared(command);
+    await screen.findByText("준비한 구성을 불러왔습니다. 이름과 담은 범위를 확인한 뒤 저장해 주세요.");
+    expect(screen.getByLabelText("아직 시험 범위를 정하지 않은 틀로 저장")).toBeChecked();
+    fireEvent.click(screen.getByRole("button", { name: "템플릿 저장" })); await screen.findByText("템플릿을 저장했습니다.");
+    expect(requests).toEqual([command]); expect(requests.some(r => r.action === "materialize")).toBe(false);
+  });
   it("retries only the connection to exam settings after a confirmed save callback fails", async () => {
     catalog.templates = [existing()]; const onSaved = vi.fn().mockRejectedValueOnce(new Error("local callback")).mockResolvedValue(undefined);
     render(<WordbookLibrary onBack={vi.fn()} onSaved={onSaved} />); await screen.findByRole("heading", { name: metadata.title });

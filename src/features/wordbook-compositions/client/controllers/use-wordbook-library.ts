@@ -27,11 +27,13 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
   const [notice, setNotice] = useState("");
   const [authenticationFailed, setAuthenticationFailed] = useState(false);
   const [differentAdministrator, setDifferentAdministrator] = useState(false);
+  const [readingPrepared, setReadingPrepared] = useState(false);
+  const reading = useRef(false);
   const pending = useRef<LibraryCommand | null>(null), saving = useRef(false), mounted = useRef(true);
   const confirmedBook = useRef<CreatedLibraryBook | null>(null);
   const pendingAdministrator = useRef<string | null>(null);
   const requestEpoch = useRef(0);
-  const locked = saveState.status === "saving" || Boolean(saveState.uncertain);
+  const locked = readingPrepared || saveState.status === "saving" || Boolean(saveState.uncertain);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   useEffect(() => {
     const controller = new AbortController(); const epoch = ++requestEpoch.current;
@@ -61,7 +63,7 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
   const conflictingTemplate = newestTemplate && newestTemplate.revision !== editor.template?.revision ? newestTemplate : null;
   const scopesLocked = locked || editor.mode === "metadata" || editor.mode === "copy";
   function edit(change: () => void) {
-    if (locked || saving.current) return;
+    if (locked || saving.current || reading.current) return;
     pending.current = null; confirmedBook.current = null; pendingAdministrator.current = null; setSaveState({ status: "idle" }); setNotice(""); change();
   }
   function open(template: LibraryTemplate, version: LibraryVersion, mode: "metadata" | "version" | "copy") {
@@ -76,8 +78,28 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
     setRecipe(r => ({ ...r, scopes, scopeStatus: scopes.length ? "confirmed" : r.scopeStatus,
       excludedOccurrenceKeys: r.excludedOccurrenceKeys.filter(key => reachable.has(key)) }));
   }
+  async function loadPrepared(file: File) {
+    if (locked || saving.current || reading.current || loadState !== "ready") return;
+    reading.current = true; setReadingPrepared(true);
+    const epoch = requestEpoch.current;
+    try {
+      if (file.size > 2 * 1024 * 1024) throw new Error("file-size");
+      const command = libraryCommandSchema.parse(JSON.parse(await file.text()));
+      if (!mounted.current || epoch !== requestEpoch.current) return;
+      if (command.action !== "create") throw new Error("create-only");
+      resolveLibraryRecipe(catalog.scopes, command.recipe);
+      setEditorRevision(v => v + 1); setEditor({ mode: "create" });
+      setMetadata(command.metadata); setRecipe(command.recipe); setTab("sources");
+      pending.current = command; pendingAdministrator.current = catalog.viewerId; confirmedBook.current = null;
+      setSaveState({ status: "idle" }); setNotice("준비한 구성을 불러왔습니다. 이름과 담은 범위를 확인한 뒤 저장해 주세요.");
+    } catch {
+      if (mounted.current && epoch === requestEpoch.current) setSaveState({ status: "error", error: "준비한 구성을 읽지 못했습니다. 현재 자료에 맞는 파일인지 확인해 주세요." });
+    } finally {
+      reading.current = false; if (mounted.current) setReadingPrepared(false);
+    }
+  }
   async function save(override?: LibraryCommand) {
-    if (saving.current) return;
+    if (saving.current || reading.current) return;
     if (confirmedBook.current) {
       saving.current = true;
       try { await onSaved?.(confirmedBook.current); confirmedBook.current = null; setSaveState({ status: "idle" }); }
@@ -130,11 +152,11 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
       }
     } finally { saving.current = false; }
   }
-  return { catalog, loadState, loadError, tab, search, editor, editorRevision, metadata, recipe, saveState, notice, authenticationFailed, differentAdministrator, locked, scopesLocked, visible, templates, selection, difference, conflictingTemplate,
+  return { catalog, loadState, loadError, tab, search, editor, editorRevision, metadata, recipe, saveState, notice, authenticationFailed, differentAdministrator, locked, scopesLocked, visible, templates, selection, difference, conflictingTemplate, readingPrepared,
     actions: {
       setTab: (value: "saved" | "sources") => { if (!locked) setTab(value); }, setSearch,
-      setMetadata: (value: TemplateMetadata) => edit(() => setMetadata(value)),
-      setFilters: (filters: LibraryFilters) => { if (!scopesLocked) edit(() => setRecipe(r => ({ ...r, filters }))); },
+      setMetadata: (value: TemplateMetadata) => { if (JSON.stringify(value) !== JSON.stringify(metadata)) edit(() => setMetadata(value)); },
+      setFilters: (filters: LibraryFilters) => { if (!scopesLocked && JSON.stringify(filters) !== JSON.stringify(recipe.filters)) edit(() => setRecipe(r => ({ ...r, filters }))); },
       setScopeStatus: (scopeStatus: LibraryRecipe["scopeStatus"]) => { if (!scopesLocked) edit(() => setRecipe(r => scopeStatus === "unconfirmed" ? { ...r, scopeStatus, scopes: [], excludedOccurrenceKeys: [] } : { ...r, scopeStatus })); },
       toggle: (id: string) => { if (!scopesLocked) edit(() => { const s = catalog.scopes.find(s => s.id === id); const ids = recipe.scopes.map(s => s.id);
         if (ids.includes(id) || s?.availability === "available") setSelected(changeVisibleSelection(ids, [id], !ids.includes(id))); }); },
@@ -144,6 +166,7 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
         if (from >= 0 && to >= 0 && to < ids.length) { [ids[from], ids[to]] = [ids[to]!, ids[from]!]; setSelected(ids); } }); },
       exclude: (key: string) => { if (!scopesLocked) edit(() => setRecipe(r => ({ ...r, excludedOccurrenceKeys: changeVisibleSelection(r.excludedOccurrenceKeys, [key], !r.excludedOccurrenceKeys.includes(key)) }))); },
       newTemplate: () => edit(() => { setEditorRevision(v => v + 1); setEditor({ mode: "create" }); setMetadata(emptyMetadata()); setRecipe(emptyRecipe()); setTab("sources"); }),
+      loadPrepared,
       open,
       rebase: () => { if (conflictingTemplate) edit(() => { setEditor(e => ({ ...e, template: conflictingTemplate, version: latestLibraryVersion(conflictingTemplate) }));
         setNotice("최신 버전을 기준으로 변경 내용을 다시 확인해 주세요."); }); },

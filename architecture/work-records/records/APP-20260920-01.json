@@ -923,6 +923,14 @@
       "question": "회차별 문맥 충돌과 전체 선택 수량",
       "answer": "실제 회차 단원 집합별 후보와 배정하지 않은 첫 바퀴 범위를 같은 단위 규칙으로 계산. 저장 성공 뒤 화면 연결 실패는 확정 결과로만 복구",
       "source": "독립 회귀 검토 및 R3 R6 R7 R8"
+    },
+    {
+      "id": "D12",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "준비한 범위 순서와 요청 번호를 화면에 전달",
+      "answer": "create 계약 파일을 현재 범위와 대조해 편집기에 불러온 뒤 기존 저장 버튼 사용. 자동 저장 없음, 오류 때 입력 보존, 미확정 저장과 동일 요청 재시도 유지",
+      "source": "온라인 등록 연결 검토 및 기존 R3 R4 R7 T7 T8"
     }
   ],
   "impacts": {
@@ -1271,7 +1279,7 @@
     }
   ],
   "verification": {
-    "fingerprint": "dafe5a4db5d92c53626a17734fad91ca5b77a4162ee719710af603f2196c1d8a",
+    "fingerprint": "0faca7cd89c8030f008c7346e818701aa1a47ed64cbb37ec89fb807f91aa59e3",
     "files": [
       {
         "path": "architecture/기능_소유권.json",
@@ -4467,7 +4475,7 @@
       },
       {
         "path": "src/features/wordbook-compositions/client/controllers/use-wordbook-library.ts",
-        "sha256": "62bc6dd191df1c041717006391e75d8e2de291c03a6744aa1e7307a200d668a1"
+        "sha256": "f08078ead25be383384b52cd4566740c538a1993af78b7b5b4fe1f283654891b"
       },
       {
         "path": "src/features/wordbook-compositions/client/transport/composition-transport.ts",
@@ -4607,11 +4615,11 @@
       },
       {
         "path": "src/features/wordbook-compositions/ui/wordbook-library.test.tsx",
-        "sha256": "db4d7e91a39056adf9c37dc6e6bf869a94d9649a4f1a0dadfc989b30be7ed291"
+        "sha256": "fa3cd4d1c24570f8b00e399e3fe78893fc4b16c0fb7ef982f5103f68293f714d"
       },
       {
         "path": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
-        "sha256": "bee197b595f4dcf4857dda24fca2464df8f9e69acb6c58c38463592937196b2c"
+        "sha256": "b8b5273452bae1cd87497800b667129470fdcea7ba96c569ea4cc62526ddb458"
       },
       {
         "path": "src/lib/admin/assignment-database-error.test.ts",
@@ -5747,33 +5755,33 @@
         "checkId": "T7",
         "result": "pass",
         "environment": "local",
-        "ranAt": "2026-09-20T00:29:21Z",
-        "command": "node node_modules/vitest/vitest.mjs run src/features/wordbook-compositions/domain/library-selection.test.ts src/features/wordbook-compositions/domain/template-version.test.ts src/lib/services/quiz/pronunciation-registry.test.ts src/features/wordbook-compositions/ui/wordbook-library.test.tsx src/features/wordbook-compositions/server/library-service.test.ts --maxWorkers=2 --reporter=dot",
-        "summary": "최종5파일52검사통과. 129통과. 선택 보존·검색·편집·버전·권한·확정저장 후 callback 복구 포함. 실제 PC/모바일 T10 별도."
+        "ranAt": "2026-09-20T04:08:38Z",
+        "command": "node node_modules/vitest/vitest.mjs run src/features/wordbook-compositions/ui/wordbook-library.test.tsx src/features/wordbook-compositions/server/library-service.test.ts --maxWorkers=2 --reporter=dot",
+        "summary": "D12 후속 2파일40검사 통과. 준비 파일 원순서와 요청 번호, 내용 편집, 초점 이동/동일 필터, 오류/재시도, 지연 읽기 잠금/종료 보존을 확인. 이전 전체 회귀 근거 유지."
       },
       {
         "checkId": "T8",
         "result": "pass",
         "environment": "local",
-        "ranAt": "2026-09-20T00:29:21Z",
-        "command": "node node_modules/vitest/vitest.mjs run src/features/wordbook-compositions/domain/library-selection.test.ts src/features/wordbook-compositions/domain/template-version.test.ts src/lib/services/quiz/pronunciation-registry.test.ts src/features/wordbook-compositions/ui/wordbook-library.test.tsx src/features/wordbook-compositions/server/library-service.test.ts --maxWorkers=2 --reporter=dot",
-        "summary": "최종5파일52검사통과. 관리자 API/6MB 이상 연속전송/불일치거절/늦은응답/재시도 통과. 성공오류 private no-store."
+        "ranAt": "2026-09-20T04:08:38Z",
+        "command": "node node_modules/vitest/vitest.mjs run src/features/wordbook-compositions/ui/wordbook-library.test.tsx src/features/wordbook-compositions/server/library-service.test.ts --maxWorkers=2 --reporter=dot",
+        "summary": "D12 후속 2파일40검사 통과. 준비 파일 원순서와 요청 번호, 내용 편집, 초점 이동/동일 필터, 오류/재시도, 지연 읽기 잠금/종료 보존을 확인. 이전 전체 회귀 근거 유지."
       },
       {
         "checkId": "T9",
         "result": "pass",
         "environment": "local",
-        "ranAt": "2026-09-20T00:28:02.910964Z",
-        "command": "tsc --noEmit --incremental false; eslint; check-feature-map --verify --changed --base d611b187ab72f38ba98eb7663c51d73f5c328f3b; verify-ui-architecture; local-admin-baseline --vocabulary-library --webpack",
-        "summary": "타입·전체 lint0오류0경고·마지막검사 lint·기능 지도·UI 구조·격리 Next 빌드·독립검토 통과. 전체495파일3615통과14실패1기존skip 후 실패수정관련129/37/64통과. 완료관문 별도실행."
+        "ranAt": "2026-09-20T04:11:00Z",
+        "command": "tsc --noEmit; eslint changed controller/ui/test; check-feature-map --verify --changed --base 34400cc; verify-ui-architecture; local-admin-baseline --vocabulary-library --webpack",
+        "summary": "마지막 타입/lint/설계/기능 지도/화면 구조 통과. 마지막 보완 코드를 격리 Next production 빌드했고 독립 재검토 미해결0. 검사 조회 옵션의 타입 오류는 수정 후 통과."
       },
       {
         "checkId": "T10",
         "result": "pass",
         "environment": "local",
-        "ranAt": "2026-09-20T00:13:00Z",
-        "command": "CUA actual Next local-browser stories at 127.0.0.1:3037, viewport 1280x900 and 390x844",
-        "summary": "3개년주제12+장문4→1판16, 태그편집불변, 교과서/DAY추가→2판24, 모바일1판복사/태그검색/단어장16행배정설정연결 확인. 가로넘침0. 실제배정/학생쓰기0. 원래뷰포트와빌드복원·서버종료."
+        "ranAt": "2026-09-20T04:11:00Z",
+        "command": "CUA actual Next local browser; prepared-import-fake.json; default viewport and 390x844",
+        "summary": "가짜 준비 파일→태그 초점 이동/동일 전체 필터 재클릭→2026/2024 순서2범위8개→1판8개 저장. 브라우저 오류/경고0, 모바일 문서390/390. 실제 요청 ID는 컴포넌트에서 확인. viewport 복원·서버 종료·기존 빌드 복원. 외부/학생 쓰기0."
       }
     ]
   }

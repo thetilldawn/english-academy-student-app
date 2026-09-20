@@ -103,6 +103,12 @@ export function WordbookLibrary({ onBack, onLockChange, captureAuthenticationFai
     </> : <>
       <h4>{({ create: "새 템플릿", metadata: "이름·태그 수정", version: "범위를 바꿔 새 버전 저장", copy: "선택한 버전 복사" })[c.editor.mode]}</h4>
       <Button size="small" disabled={c.locked} onClick={c.actions.newTemplate}>빈 틀로 새로 시작</Button>
+      <Field><FieldLabel htmlFor="library-prepared-file">준비한 구성 불러오기</FieldLabel>
+        <Input id="library-prepared-file" type="file" accept=".json,application/json" disabled={c.locked || c.loadState !== "ready"}
+          onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void c.actions.loadPrepared(file); }} />
+        <p className={styles.hint}>미리 준비한 템플릿 파일의 이름·태그·범위와 순서를 불러옵니다. 확인한 뒤 아래 저장 버튼을 눌러 주세요.</p>
+      </Field>
+      {c.readingPrepared ? <p role="status">준비한 구성을 읽는 중…</p> : null}
       <MetadataFields key={c.editorRevision} value={c.metadata} onChange={c.actions.setMetadata} disabled={c.locked || c.editor.mode === "version"} />
       {c.conflictingTemplate ? <aside className={styles.summary} aria-label="다른 곳에서 수정한 최신 템플릿">
         <strong>최신 수정: {c.conflictingTemplate.metadata.title}</strong><p>태그: {c.conflictingTemplate.metadata.tags.join(", ") || "없음"}</p>
@@ -137,7 +143,7 @@ export function WordbookLibrary({ onBack, onLockChange, captureAuthenticationFai
             <Button size="small" disabled={c.scopesLocked} onClick={() => c.actions.toggle(s.id)}>빼기</Button>
           </div></div>)}<Button disabled={c.scopesLocked} onClick={c.actions.clear}>담은 범위 모두 비우기</Button></details> : null}
       </div>
-      <Button disabled={c.saveState.status === "saving" || (!c.saveState.uncertain && c.loadState !== "ready")} onClick={() => void c.actions.save()}>
+      <Button disabled={c.readingPrepared || c.saveState.status === "saving" || (!c.saveState.uncertain && c.loadState !== "ready")} onClick={() => void c.actions.save()}>
         {c.saveState.status === "saving" ? "저장 확인 중…" : c.saveState.uncertain ? "같은 내용으로 저장 확인" : c.editor.mode === "version" ? "새 버전 저장" : "템플릿 저장"}
       </Button>
     </>}
