@@ -391,7 +391,7 @@ export async function requireEditableSourceContext(
   }
 
   return {
-    ...(assignment.provenance_status === "exam_reviewed_v1" ? {reviewedContentMode:normalizeQuizContentMode(assignment.quiz_content_mode)} : {}),
+    ...(["exam_reviewed_v1", "composition_verified_v1"].includes(assignment.provenance_status ?? "") ? {reviewedContentMode:normalizeQuizContentMode(assignment.quiz_content_mode)} : {}),
     draft: {
       assignmentId,
       studentId,

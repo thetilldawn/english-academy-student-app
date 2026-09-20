@@ -288,6 +288,7 @@ export function createExplicitTargetedQuizQuestions(
   targets: readonly { id: number; direction: QuizDirection }[],
   candidates: readonly QuizVocabularyEntry[],
   random: RandomSource = secureRandom,
+  options: { choiceIndex?: ReturnType<typeof buildQuizChoiceIndex> } = {},
 ): QuizQuestionDraft[] {
   if (
     targets.length < 1 ||
@@ -339,7 +340,10 @@ export function createExplicitTargetedQuizQuestions(
       "확정 출제 대상에 같은 문제 문구의 다른 정답이 있거나 4지선다 보기가 부족합니다.",
     );
   }
-  const choiceIndex = buildQuizChoiceIndex(candidates);
+  const choiceIndex = options.choiceIndex ?? buildQuizChoiceIndex(candidates);
+  if (choiceIndex.byId.size !== candidates.length || candidates.some(candidate => choiceIndex.byId.get(candidate.id)?.entry !== candidate)) {
+    throw new Error("보기 후보 색인이 현재 원행과 다릅니다.");
+  }
 
   return plannedTargets.map(({ entry, direction }) => {
     const display = direction === "english_to_korean"
@@ -364,4 +368,3 @@ export function createExplicitTargetedQuizQuestions(
     };
   });
 }
-

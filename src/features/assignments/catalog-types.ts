@@ -5,6 +5,7 @@ import type {
 import type { AssignmentQuestionMode } from "./domain/model";
 
 export type AssignmentDatasetItem = CataloguedDataset & {
+  questionBankKind?: "reviewed_exam_v1" | "vocabulary_composition_v1";
   availableQuestionModes?: readonly AssignmentQuestionMode[];
   isActive: boolean;
   rowCount: number;

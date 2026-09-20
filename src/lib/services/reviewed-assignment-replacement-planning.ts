@@ -11,7 +11,7 @@ export async function reviewedReplacementMode(datasetId:string,sourceDatasetId:s
   const client=await createServerSupabaseClient();
   const {data,error}=await client.from("vocab_datasets").select("metadata").eq("id",datasetId).maybeSingle();
   if(error || !data) throw new AssignmentReplacementError("database");
-  if(data.metadata?.questionBankKind==="reviewed_exam_v1") return sourceMode??"book_meaning_choice";
+  if(["reviewed_exam_v1","vocabulary_composition_v1"].includes(data.metadata?.questionBankKind)) return sourceMode??"book_meaning_choice";
   if(sourceMode && sourceMode!=="book_meaning_choice") throw new AssignmentReplacementError("invalid_selection","선택한 단어장에는 이 방향으로 검토된 문제가 없습니다. 다른 단어장을 선택해 주세요.");
   return null;
 }
@@ -19,6 +19,9 @@ export async function reviewedReplacementMode(datasetId:string,sourceDatasetId:s
 export async function loadReviewedReplacementPlan(input:{datasetId:string;primaryUnitIds:readonly string[];englishToKoreanRatio:0|50|100;questionCount?:number},mode:QuizContentMode){
   if((mode==="canonical_definition_to_headword" && input.englishToKoreanRatio!==0) || (mode==="canonical_headword_to_definition" && input.englishToKoreanRatio!==100)) throw new AssignmentReplacementError("invalid_selection","이 출제 자료에 맞는 시험 방향을 유지해 주세요.");
   const client=await createServerSupabaseClient();
+  const dataset=await client.from("vocab_datasets").select("metadata").eq("id",input.datasetId).maybeSingle();
+  if(dataset.error || !dataset.data) throw new AssignmentReplacementError("database");
+  const composition=dataset.data.metadata?.questionBankKind==="vocabulary_composition_v1";
   const entries:{id:number;unit_id:string;source_row:number}[]=[];
   for(let offset=0;;offset+=1000){
     const {data,error}=await client.from("vocab_entries").select("id,unit_id,source_row").eq("dataset_id",input.datasetId).in("unit_id",[...input.primaryUnitIds]).order("source_row").range(offset,offset+999);
@@ -29,7 +32,7 @@ export async function loadReviewedReplacementPlan(input:{datasetId:string;primar
   entries.sort((a,b)=>(rank.get(a.unit_id)??Infinity)-(rank.get(b.unit_id)??Infinity)||a.source_row-b.source_row);
   const plans:z.infer<typeof reviewedChoicePlanRowSchema>[]=[];
   for(let offset=0;offset<entries.length;offset+=500){
-    const {data,error}=await client.rpc("list_reviewed_exam_review_choices_v1",{p_dataset_id:input.datasetId,p_vocab_entry_ids:entries.slice(offset,offset+500).map(e=>e.id),p_quiz_mode:mode});
+    const {data,error}=await client.rpc(composition?"list_vocabulary_composition_review_choices_v1":"list_reviewed_exam_review_choices_v1",{p_dataset_id:input.datasetId,p_vocab_entry_ids:entries.slice(offset,offset+500).map(e=>e.id),p_quiz_mode:mode,...(composition?{p_scope_unit_ids:[...input.primaryUnitIds]}:{})});
     const parsed=z.array(reviewedChoicePlanRowSchema).safeParse(data);
     if(error || !parsed.success) throw new AssignmentReplacementError("database");
     plans.push(...parsed.data);

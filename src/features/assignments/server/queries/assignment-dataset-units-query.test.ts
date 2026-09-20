@@ -2,10 +2,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { beforeEach, expect, it, vi } from "vitest";
 import { cataloguedDatasetFromMetadata } from "@/lib/admin/dataset-catalog";
-const mocks = vi.hoisted(() => ({ requireAdmin: vi.fn(), from: vi.fn(), order: vi.fn(), filter: vi.fn(), rows: {} as Record<string, { data: unknown; error: null | { message: string } }> }));
+const mocks = vi.hoisted(() => ({ requireAdmin: vi.fn(), from: vi.fn(), rpc: vi.fn(), order: vi.fn(), filter: vi.fn(), rows: {} as Record<string, { data: unknown; error: null | { message: string } }> }));
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/auth/admin", () => ({ requireAdmin: mocks.requireAdmin }));
-vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: async () => ({ from: mocks.from }) }));
+vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: async () => ({ from: mocks.from, rpc: mocks.rpc }) }));
 import { getPreparedAssignmentDatasetUnits, loadAssignmentDatasetMaterial } from "./assignment-dataset-units-query";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 const rawDataset = { id: "fake-book", dataset_key: "fake", title: "가짜", edition: null, row_count: 0, status: "ready", is_active: true };
@@ -17,6 +17,7 @@ const dataset = { ...cataloguedDatasetFromMetadata({ id: "fake-book", title: "�
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.requireAdmin.mockResolvedValue({ userId: "fake-admin" });
+  mocks.rpc.mockResolvedValue({ data: [], error: null });
   mocks.rows = {
     vocab_datasets: { data: { ...rawDataset }, error: null }, vocab_dataset_catalog: { data: null, error: null },
     vocab_units: { data: units, error: null }, vocab_unit_catalog: { data: [], error: null },
@@ -47,7 +48,7 @@ it("선택 자료/단위 ID로만 같은 클라이언트를 조회하고 분류 
   mocks.rows.vocab_unit_catalog.data = [{ unit_id: "b", academic_year: 0, agency: "분류 기관", catalog_group: "high_mock", sort_index: 99,
     display_name: "분류 표시", exam_month: 0, item_range: "29", unit_type: "exam_scope" }];
   const scopedFrom = vi.fn(mocks.from);
-  const client = { from: scopedFrom } as unknown as Awaited<ReturnType<typeof createServerSupabaseClient>>;
+  const client = { from: scopedFrom, rpc: mocks.rpc } as unknown as Awaited<ReturnType<typeof createServerSupabaseClient>>;
   const result = await getPreparedAssignmentDatasetUnits(client, dataset);
   expect(scopedFrom.mock.calls.map(([table]) => table)).toEqual(["vocab_units", "vocab_unit_catalog"]);
   expect(mocks.filter).toHaveBeenCalledWith("vocab_units", "dataset_id", "fake-book");
@@ -98,4 +99,20 @@ it("새 내부 준비 경로는 준비 query에서만 사용하고 공개 최종
   }
   walk(root);
   expect(uses.sort()).toEqual(["assignment-dataset-units-query.ts", "assignment-planner-preparation-query.ts"]);
+});
+it("기존 장문과 수능 태그를 공통 조회로 전달하고 미분류 단원도 유지한다", async () => {
+  const unitIds = [1, 2, 3].map(n => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`);
+  mocks.rows.vocab_units.data = unitIds.map((id, i) => ({ ...units[0], id, unit_label: `기존 범위 ${i}`, sort_index: i, entry_count: 4 }));
+  const long = { executionYear: 2025, examMonth: 9, examKind: "mock", academicYear: null, agency: "가짜", typeCode: "long", typeLabel: "장문독해", questionNumbers: [41, 42], sharedPassage: true };
+  const csat = { ...long, examMonth: 11, examKind: "csat", academicYear: 2026, questionNumbers: [43, 44, 45] };
+  mocks.rpc.mockResolvedValue({ data: [{ unit_id: unitIds[0], metadata: long }, { unit_id: unitIds[1], metadata: csat }], error: null });
+  const result = await loadAssignmentDatasetMaterial("fake-book");
+  expect(mocks.rpc).toHaveBeenCalledWith("list_vocabulary_unit_source_classifications_v1", { p_dataset_id: "fake-book" });
+  expect(result.units.map(u => u.id)).toEqual(unitIds);
+  expect(result.units.map(u => u.mockScope)).toEqual([long, csat, undefined]);
+  expect((await getPreparedAssignmentDatasetUnits(await createServerSupabaseClient(), dataset)).units).toEqual(result.units);
+});
+it("장문 원범위 조회 실패를 태그 없는 정상 자료로 숨기지 않는다", async () => {
+  mocks.rpc.mockResolvedValue({ data: null, error: { message: "private SQL" } });
+  await expect(loadAssignmentDatasetMaterial("fake-book")).rejects.toMatchObject({ reason: "unavailable" });
 });

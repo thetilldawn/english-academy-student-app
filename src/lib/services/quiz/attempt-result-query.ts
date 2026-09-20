@@ -20,6 +20,7 @@ import {
 } from "./result-question-mapper";
 import {
   oneRelation,
+  compositionQuestionPronunciation,
   reviewedExamUseSnapshot,
   type AttemptState,
 } from "./question-snapshot";
@@ -31,7 +32,7 @@ export async function getAttemptQuestionResults(
   const { data, error } = await supabase
     .from("quiz_questions")
     .select(
-      "id, vocab_entry_id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, prior_wrong_count, initial_timed_out, retry_timed_out, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(vocab_entry_id, headword_snapshot, primary_meaning_snapshot, provenance_status, exam_use_snapshot:assignment_question_exam_use_snapshot!assignment_question_exam_use_snapshot_question_fkey(release_id, occurrence_id, dictionary_id, pronunciation_variant_id, headword_snapshot, primary_meaning_snapshot, display_pronunciation_ko_snapshot, pronunciation_snapshot, choice_dictionary_snapshots, provenance_status)), vocab_entries(headword, primary_meaning, pronunciation_ko)",
+      "id, vocab_entry_id, order_index, direction, prompt, choices, correct_choice_index, initial_choice_index, initial_is_correct, retry_choice_index, retry_is_correct, prior_wrong_count, initial_timed_out, retry_timed_out, assignment_question:assignment_questions!quiz_questions_assignment_question_id_fkey(vocab_entry_id, headword_snapshot, primary_meaning_snapshot, provenance_status, composition_pronunciation_snapshot, exam_use_snapshot:assignment_question_exam_use_snapshot!assignment_question_exam_use_snapshot_question_fkey(release_id, occurrence_id, dictionary_id, pronunciation_variant_id, headword_snapshot, primary_meaning_snapshot, display_pronunciation_ko_snapshot, pronunciation_snapshot, choice_dictionary_snapshots, provenance_status)), vocab_entries(headword, primary_meaning, pronunciation_ko)",
     )
     .eq("attempt_id", attemptId)
     .order("order_index");
@@ -43,6 +44,7 @@ export async function getAttemptQuestionResults(
   const rows = (data ?? []) as ResultQuestionRow[];
   const registryIds = rows.flatMap((row) => {
     const bankQuestion = oneRelation(row.assignment_question);
+    if (compositionQuestionPronunciation(bankQuestion, Array.isArray(row.choices) ? row.choices.length : 0)) return [];
     const vocabEntryId =
       typeof bankQuestion?.vocab_entry_id === "number"
         ? bankQuestion.vocab_entry_id

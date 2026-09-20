@@ -16,8 +16,8 @@ import {
 import { prefersReducedMotion } from "@/lib/ui/motion";
 
 import type { AssignmentStudentItem, AssignmentDatasetItem } from "../catalog-types";
-import { WordbookComposer } from "@/features/wordbook-compositions/public-ui";
-import type { CreatedComposition } from "@/features/wordbook-compositions/public-contracts";
+import { WordbookLibrary } from "@/features/wordbook-compositions/public-ui";
+import type { CreatedLibraryBook } from "@/features/wordbook-compositions/public-contracts";
 import { useAssignmentDatasetPicker } from "../client/controllers/use-assignment-dataset-picker";
 import {
   useVocabAssignmentScreen,
@@ -75,7 +75,7 @@ export function VocabAssignmentPlanner({
   const ensureDatasetUnits = unitCatalog.actions.ensureDataset;
   const controller = useVocabAssignmentScreen({
     audienceMode: selectionMode,
-    data: { ...data, datasets: [...data.datasets, ...composedDatasets.filter(book => !data.datasets.some(existing => existing.id === book.id))], units: unitCatalog.units },
+    data: { ...data, datasets: [...data.datasets.filter(book => !composedDatasets.some(updated => updated.id === book.id)), ...composedDatasets], units: unitCatalog.units },
     enabled: assignmentPurpose === "range",
     genericErrorMessage: "단어 시험 배정을 저장하지 못했습니다.",
     initialDatasetId,
@@ -112,16 +112,10 @@ export function VocabAssignmentPlanner({
       ? controller.actions.changeDataset
       : reviewController.actions.changeDataset,
   });
-  function receiveCreatedBook(book: CreatedComposition) {
-    setComposedDatasets(current => [...current.filter(d => d.id !== book.datasetId), {
-      id: book.datasetId, title: book.title, displayName: book.title, edition: "composition-v1",
-      catalogGroup: "high_mock", materialKind: "wordbook", gradeCode: "g12", publisher: null, seriesTitle: null,
-      academicYear: null, curriculumRevision: null, editionLabel: null, isAssignable: true, catalogSortIndex: 0,
-      isActive: true, rowCount: book.includedEntryCount, status: "ready", schoolClassification: "common",
-      availableQuestionModes: ["book_meaning_choice"],
-    }]);
-    controller.actions.changeDataset(book.datasetId);
-    datasetPicker.actions.rememberSelection(book.datasetId);
+  function receiveCreatedBook(book: CreatedLibraryBook) {
+    setComposedDatasets(current => [...current.filter(d => d.id !== book.dataset.id), book.dataset]);
+    controller.actions.changeDataset(book.dataset.id);
+    datasetPicker.actions.rememberSelection(book.dataset.id);
     datasetPicker.actions.close();
     setComposerOpen(false); setComposerStarted(false); setComposerLocked(false);
   }
@@ -323,7 +317,7 @@ export function VocabAssignmentPlanner({
       >
         <div>
           <h2 id="vocab-assignment-plan-title">
-            {composerOpen ? "모의고사 단어장" : datasetPicker.open ? "단어장 찾기" : selectionMode === "bulk" ? "일괄 배정" : "단일 배정"}
+            {composerOpen ? "단어장과 템플릿" : datasetPicker.open ? "단어장 찾기" : selectionMode === "bulk" ? "일괄 배정" : "단일 배정"}
           </h2>
           {datasetPicker.open ? <p>{composerOpen ? "시험에 넣을 범위를 담아 주세요." : "단어장을 골라주세요."}</p> : selectionMode === "bulk" ? (
             <MetaTagList>
@@ -340,11 +334,11 @@ export function VocabAssignmentPlanner({
       </DialogHeader>
       <DialogBody>
         {composerStarted ? <div hidden={!composerOpen}>
-          <WordbookComposer active={composerOpen} captureAuthenticationFailure={captureAuthenticationFailure} onSaved={receiveCreatedBook} onBack={requestClose} onLockChange={setComposerLocked} />
+          <WordbookLibrary active={composerOpen} captureAuthenticationFailure={captureAuthenticationFailure} onSaved={receiveCreatedBook} onBack={requestClose} onLockChange={setComposerLocked} />
         </div> : null}
         {datasetPicker.open && !composerOpen ? (
           <>
-          {assignmentPurpose === "range" ? <Button onClick={() => { setComposerStarted(true); setComposerOpen(true); }}>모의고사 범위로 단어장 만들기</Button> : null}
+          {assignmentPurpose === "range" ? <Button onClick={() => { setComposerStarted(true); setComposerOpen(true); }}>템플릿 찾기·범위로 새로 만들기</Button> : null}
           <AssignmentDatasetPicker
             filters={datasetPicker.filters}
             buttons={datasetPicker.buttons}

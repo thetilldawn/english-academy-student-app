@@ -1,4 +1,5 @@
 import type { TimingMode } from "@/lib/admin/assignment-settings";
+import { frozenQuestionPronunciationSchema } from "@/features/wordbook-compositions/public-contracts";
 import type { QuizContentMode } from "@/lib/quiz/question-content-mode";
 import type { QuizPronunciation } from "@/lib/quiz/pronunciation-snapshot";
 import type { QuestionProvenanceStatus } from "@/lib/quiz/question-provenance";
@@ -66,6 +67,7 @@ export type ExamUseQuestionSnapshot = {
 };
 
 export type AssignmentQuestionSnapshot = {
+  composition_pronunciation_snapshot?: unknown;
   vocab_entry_id?: number;
   choice_vocab_entry_ids?: number[] | null;
   headword_snapshot: string | null;
@@ -76,6 +78,16 @@ export type AssignmentQuestionSnapshot = {
     | ExamUseQuestionSnapshot[]
     | null;
 };
+
+export function compositionQuestionPronunciation(question: AssignmentQuestionSnapshot | null, choiceCount = 4) {
+  if (question?.provenance_status !== "composition_verified_v1") {
+    if (question?.composition_pronunciation_snapshot != null) throw new Error("단어장의 고정 학습정보를 확인하지 못했습니다.");
+    return null;
+  }
+  const parsed = frozenQuestionPronunciationSchema.safeParse(question.composition_pronunciation_snapshot);
+  if (!parsed.success || parsed.data.choices.length !== choiceCount) throw new Error("단어장의 고정 학습정보를 확인하지 못했습니다.");
+  return parsed.data;
+}
 
 export function oneRelation<T>(value: T | T[] | null): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : value;

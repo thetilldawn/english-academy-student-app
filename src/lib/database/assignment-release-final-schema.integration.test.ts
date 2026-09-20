@@ -120,10 +120,12 @@ describe.sequential("APP0704 첫 시험·자체 예약·보류 전체 스키마"
     [id(request),id(1),id(from),id(2),id(to)]);
   }
   async function protectedFingerprint(database: PGlite) {
-    // New nullable review-source columns must stay null on every legacy row.
+    // New nullable review/composition source columns must stay null on legacy rows.
     const added=await database.query<{count:number}>(`select count(*)::int count from assignments a where
       to_jsonb(a)->>'reviewed_exam_release_id_snapshot' is not null or
-      to_jsonb(a)->>'reviewed_exam_file_sha256_snapshot' is not null`);
+      to_jsonb(a)->>'reviewed_exam_file_sha256_snapshot' is not null or
+      to_jsonb(a)->>'composition_version_id_snapshot' is not null or
+      to_jsonb(a)->>'composition_content_sha256_snapshot' is not null`);
     expect(added.rows[0].count).toBe(0);
     // A new nullable school link is not a change to legacy student values.
     // Assert it remains empty before excluding only that added key from the hash.
@@ -133,7 +135,7 @@ describe.sequential("APP0704 첫 시험·자체 예약·보류 전체 스키마"
     expect(schoolLinks.rows[0].count).toBe(0);
     const snapshot = await database.query(`select
       (select jsonb_agg(to_jsonb(s)-'school_key' order by id) from students s) students,
-      (select jsonb_agg(to_jsonb(a)-array['reviewed_exam_release_id_snapshot','reviewed_exam_file_sha256_snapshot'] order by id) from assignments a) assignments,
+      (select jsonb_agg(to_jsonb(a)-array['reviewed_exam_release_id_snapshot','reviewed_exam_file_sha256_snapshot','composition_version_id_snapshot','composition_content_sha256_snapshot'] order by id) from assignments a) assignments,
       (select jsonb_agg(to_jsonb(r) order by assignment_id,student_id) from assignment_students r) recipients,
       (select jsonb_agg(to_jsonb(a) order by id) from quiz_attempts a) attempts,
       (select jsonb_agg(to_jsonb(q) order by id) from quiz_questions q) questions,

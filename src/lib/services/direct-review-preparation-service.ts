@@ -230,8 +230,8 @@ async function loadDirectReviewSelection(
       throw new DirectReviewPreparationError("unavailable");
     }
     let selection: DirectReviewSelection;
-    if (dataset.metadata?.questionBankKind === "reviewed_exam_v1") {
-      const { data, error } = await supabase.rpc("list_reviewed_exam_review_choices_v1", {
+    if (dataset.metadata?.questionBankKind === "reviewed_exam_v1" || dataset.metadata?.questionBankKind === "vocabulary_composition_v1") {
+      const { data, error } = await supabase.rpc(dataset.metadata.questionBankKind === "vocabulary_composition_v1" ? "list_vocabulary_composition_review_choices_v1" : "list_reviewed_exam_review_choices_v1", {
         p_dataset_id: input.datasetId, p_vocab_entry_ids: candidates.map(c=>c.vocabEntryId),
       });
       if(error) throw new DirectReviewPreparationError("database");

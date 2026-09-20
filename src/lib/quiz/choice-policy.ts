@@ -258,6 +258,12 @@ function hasMinimumDistinctDistractors(
     displaysByIdentity.set(identity, displayKeys);
     if (!matchedDisplayByIdentity.has(identity)) {
       assignIdentity(identity, new Set());
+    } else {
+      // A newly seen alternate display for an already matched identity can
+      // free its old display for a previously unmatched identity.
+      for (const pending of displaysByIdentity.keys()) {
+        if (!matchedDisplayByIdentity.has(pending) && assignIdentity(pending, new Set())) break;
+      }
     }
     if (matchedIdentityByDisplay.size >= minimum) return true;
   }
@@ -281,6 +287,7 @@ type QuizChoiceIndex = {
   byId: ReadonlyMap<number, QuizChoiceCandidateMetadata>;
   englishCandidates: readonly QuizChoiceCandidateMetadata[];
   koreanCandidates: readonly QuizChoiceCandidateMetadata[];
+  similarityGroups?: ReadonlyMap<QuizDirection, readonly (readonly QuizChoiceCandidateMetadata[])[]>;
 };
 
 function buildDistractorCandidates(
@@ -308,9 +315,9 @@ function buildDistractorCandidates(
     tieBreaker: number;
   };
   const edgeByKey = new Map<string, DistractorEdge>();
-  const indexedCandidates = direction === "english_to_korean"
-    ? choiceIndex.englishCandidates
-    : choiceIndex.koreanCandidates;
+  const indexedCandidates = choiceIndex.similarityGroups
+    ? selectSimilarQuizChoicePool(target, direction, choiceIndex).map(entry => choiceIndex.byId.get(entry.id)!)
+    : direction === "english_to_korean" ? choiceIndex.englishCandidates : choiceIndex.koreanCandidates;
   for (const metadata of indexedCandidates) {
     const candidate = metadata.entry;
     const identity = metadata.identity;
@@ -475,9 +482,23 @@ function quizChoiceCandidateMetadata(
 
 export function buildQuizChoiceIndex(
   candidates: readonly QuizVocabularyEntry[],
+  options: { groupBySimilarity?: boolean } = {},
 ): QuizChoiceIndex {
   const metadata = candidates.map(quizChoiceCandidateMetadata);
+  const similarityGroups = new Map<QuizDirection, QuizChoiceCandidateMetadata[][]>();
+  if (options.groupBySimilarity) {
+    for (const direction of ["english_to_korean", "korean_to_english"] as const) {
+      const groups = new Map<string, QuizChoiceCandidateMetadata[]>();
+      for (const value of metadata) {
+        if (!canUseDirection(value.entry, direction)) continue;
+        const key = JSON.stringify([value.recordType, value.meaningShape, value.headwordShape, value.headwordLength, value.meaningLength]);
+        const group = groups.get(key) ?? []; group.push(value); groups.set(key, group);
+      }
+      similarityGroups.set(direction, [...groups.values()]);
+    }
+  }
   return {
+    ...(options.groupBySimilarity ? { similarityGroups } : {}),
     byId: new Map(metadata.map((candidate) => [candidate.entry.id, candidate])),
     englishCandidates: metadata.filter((candidate) =>
       canUseDirection(candidate.entry, "english_to_korean")
@@ -486,6 +507,26 @@ export function buildQuizChoiceIndex(
       canUseDirection(candidate.entry, "korean_to_english")
     ),
   };
+}
+
+/** Keep every candidate at the score threshold needed for three distinct
+ * distractors. Scores and eligibility are exactly the shared policy; this is
+ * an index over the full pool, not a sample that can drop eligible targets. */
+export function selectSimilarQuizChoicePool(target: QuizVocabularyEntry, direction: QuizDirection, index: QuizChoiceIndex): QuizVocabularyEntry[] {
+  const groups = index.similarityGroups?.get(direction);
+  if (!groups) throw new Error("보기 유사도 색인이 필요합니다.");
+  const targetMetadata = index.byId.get(target.id) ?? quizChoiceCandidateMetadata(target);
+  const byScore = new Map<number, (readonly QuizChoiceCandidateMetadata[])[]>();
+  for (const group of groups) {
+    const score = indexedDistractorSimilarityScore(targetMetadata, group[0]!, direction);
+    const sameScore = byScore.get(score) ?? []; sameScore.push(group); byScore.set(score, sameScore);
+  }
+  const selected: QuizVocabularyEntry[] = [target];
+  for (const score of [...byScore.keys()].sort((a, b) => b - a)) {
+    for (const group of byScore.get(score)!) for (const candidate of group) if (candidate.entry.id !== target.id) selected.push(candidate.entry);
+    if (hasMinimumDistinctDistractors(target, selected, direction, direction === "english_to_korean" ? e => e.primaryMeaning : e => e.headword)) break;
+  }
+  return selected;
 }
 
 function indexedDistractorSimilarityScore(

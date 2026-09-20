@@ -1,6 +1,7 @@
 import "server-only";
 
 import { z } from "zod";
+import { frozenPronunciationSchema } from "@/features/wordbook-compositions/public-contracts";
 import { assignmentReleaseSchema, isAssignmentReleaseOpen } from "@/lib/assignment/assignment-release";
 import type { StudentSession } from "@/lib/auth/student-session";
 import { normalizeQuizContentMode } from "@/lib/quiz/question-content-mode";
@@ -24,6 +25,7 @@ import { studyExampleRanges } from "../../domain/study-example-ranges";
 import { getStudyExamplePrompts } from "./assignment-study-example-query";
 
 const wordSchema = z.object({
+  compositionPronunciation: frozenPronunciationSchema.nullable().optional(),
   entryId: z.number().int().positive(),
   headword: z.string().trim().min(1),
   meaning: z.string().trim().min(1),
@@ -80,11 +82,12 @@ export async function getAssignmentStudy(
   if (rows.some((word) => word.example && /_{2,}/u.test(word.example))) {
     throw new Error("assignment_study_example_incomplete");
   }
-  const ids = [...new Set(rows.map((word) => word.entryId))];
-  const bindings = rows.flatMap((word) => word.releaseId
+  const legacyRows = rows.filter(word => !word.compositionPronunciation);
+  const ids = [...new Set(legacyRows.map((word) => word.entryId))];
+  const bindings = legacyRows.flatMap((word) => word.releaseId
     ? [{ releaseId: word.releaseId, vocabEntryId: word.entryId }]
     : []);
-  const dictionaryIds = rows.flatMap((word) => word.dictionaryId ? [word.dictionaryId] : []);
+  const dictionaryIds = legacyRows.flatMap((word) => word.dictionaryId ? [word.dictionaryId] : []);
   const [registry, active, synthetic, approved, examplePrompts, entryApproved, entrySource] = await Promise.all([
     loadVocabPronunciationRegistry(ids),
     loadActiveVocabPronunciationReleaseRegistry(ids),
@@ -106,7 +109,7 @@ export async function getAssignmentStudy(
       example: mode === "canonical_example_to_headword" ? word.example : null,
       exampleRanges: mode === "canonical_example_to_headword" && word.example
         ? studyExampleRanges(word.example, word.headword, examplePrompts.get(word.entryId) ?? []) : null,
-      pronunciation: preferredPronunciationWithActiveVocaRelease(
+      pronunciation: word.compositionPronunciation ?? preferredPronunciationWithActiveVocaRelease(
         word.dictionaryId,
         withPronunciationDisplay(parseTargetPronunciation(word.pronunciationSnapshot, word.displayKo), word.displayKo),
         active.get(word.entryId),

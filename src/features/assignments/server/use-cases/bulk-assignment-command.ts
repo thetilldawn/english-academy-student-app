@@ -184,9 +184,10 @@ export async function createBulkAssignments(
           session_number: session.sessionNumber, session_count: item.sessions.length,
           questions: targets.map((target,index) => ({
             vocab_entry_id: target.id, base_order_index: index+1, direction: target.direction,
-            reviewed_bank: { source: target.bankSource, mode: input.questionMode,
+            ...(target.bankSource === "vocabulary_composition_v1" ? { composition_bank: { mode: input.questionMode, version_id: target.releaseId, content_sha256: target.packageSha256,
+              question_item_id: target.questionItemId, question_item_sha256: target.questionItemSha256 } } : { reviewed_bank: { source: target.bankSource, mode: input.questionMode,
               release_id: target.releaseId, package_sha256: target.packageSha256,
-              question_item_id: target.questionItemId, question_item_sha256: target.questionItemSha256 },
+              question_item_id: target.questionItemId, question_item_sha256: target.questionItemSha256 } }),
           })),
         };
       }));

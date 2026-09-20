@@ -1,4 +1,5 @@
 import "server-only";
+import { z } from "zod";
 import { scopeMetadataSchema } from "@/features/wordbook-compositions/public-contracts";
 
 import type { AssignmentUnitItem } from "../../catalog-types";
@@ -24,7 +25,7 @@ type UnitRow = {
 };
 
 type UnitCatalogRow = {
-  metadata?: { mockScope?: unknown };
+  metadata?: { mockScope?: unknown; librarySourceScopes?: unknown };
   academic_year: number | null;
   agency: string | null;
   catalog_group: DatasetCatalogGroup;
@@ -94,12 +95,23 @@ async function loadCataloguedUnits(supabase: QueryClient, unitRows: UnitRow[]) {
       row,
     ]),
   );
+  const sourceMetadata = new Map<string, unknown>();
+  if (unitRows.length && unitRows.some(unit => catalogByUnitId.get(unit.id)?.metadata?.mockScope == null)) {
+    const response = await supabase.rpc("list_vocabulary_unit_source_classifications_v1", { p_dataset_id: unitRows[0]!.dataset_id });
+    const parsed = z.array(z.object({ unit_id: z.uuid(), metadata: scopeMetadataSchema }).strict()).safeParse(response.data);
+    if (response.error || !parsed.success || new Set(parsed.data.map(r => r.unit_id)).size !== parsed.data.length || parsed.data.some(r => !unitIds.includes(r.unit_id))) throw new AssignmentDatasetUnitsError("unavailable", "원자료의 범위 분류를 불러오지 못했습니다.");
+    for (const row of parsed.data) sourceMetadata.set(row.unit_id, row.metadata);
+  }
   const units: AssignmentUnitItem[] = unitRows.map((unit) => {
     const unitCatalog = catalogByUnitId.get(unit.id);
-    const mockScope = unitCatalog?.metadata?.mockScope === undefined ? null : scopeMetadataSchema.safeParse(unitCatalog.metadata.mockScope);
+    const metadata = unitCatalog?.metadata?.mockScope ?? sourceMetadata.get(unit.id);
+    const mockScope = metadata == null ? null : scopeMetadataSchema.safeParse(metadata);
     if (mockScope && !mockScope.success) throw new AssignmentDatasetUnitsError("unavailable", "시험 범위 분류를 확인하지 못했습니다.");
+    const sourceScopes = unitCatalog?.metadata?.librarySourceScopes == null ? null : z.array(z.object({ id: z.uuid(), name: z.string().min(1) }).strict()).min(1).safeParse(unitCatalog.metadata.librarySourceScopes);
+    if (sourceScopes && !sourceScopes.success) throw new AssignmentDatasetUnitsError("unavailable", "선택 범위의 원자료 연결을 확인하지 못했습니다.");
     return {
       ...(mockScope?.success ? { mockScope: mockScope.data } : {}),
+      ...(sourceScopes?.success ? { librarySourceScopes: sourceScopes.data } : {}),
       academicYear: unitCatalog?.academic_year ?? null,
       agency: unitCatalog?.agency ?? null,
       catalogGroup: unitCatalog?.catalog_group ?? null,
@@ -185,8 +197,8 @@ export async function loadAssignmentDatasetMaterial(
         catalogMetadata(catalog),
       ),
       datasetKey: dataset.dataset_key,
-      ...(dataset.metadata?.questionBankKind === "reviewed_exam_v1"
-        ? { questionBankKind: "reviewed_exam_v1" as const } : {}),
+      ...(dataset.metadata?.questionBankKind === "reviewed_exam_v1" || dataset.metadata?.questionBankKind === "vocabulary_composition_v1"
+        ? { questionBankKind: dataset.metadata.questionBankKind } : {}),
       isActive: dataset.is_active,
       rowCount: dataset.row_count,
       status: dataset.status,

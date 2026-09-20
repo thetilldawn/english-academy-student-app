@@ -9,6 +9,7 @@ import { unitSelectionLabel } from "../../domain/unit-selection-label";
 import { planDirectionalVocabSeriesTargets } from "../../domain/vocab-series-target-planner";
 import type { PlannedVocabSeriesTarget, VocabTargetDirection } from "../../domain/vocab-assignment-contract";
 import { resolvePlanUnitAllocation } from "../../domain/vocab-plan-unit-allocation";
+import { resolveVocabUnitCycleAllocation } from "../../domain/vocab-unit-allocation";
 import { resolveVocabQuestionCycleAllocation } from "../../domain/vocab-question-allocation";
 import type { AdminContext } from "@/lib/auth/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -33,7 +34,7 @@ export type CanonicalPlannedQuestion = {
   id: number; direction: VocabTargetDirection;
   questionItemId: string; questionItemSha256: string;
   releaseId: string; packageSha256: string;
-  bankSource: "canonical_legacy" | "reviewed_exam_v1";
+  bankSource: "canonical_legacy" | "reviewed_exam_v1" | "vocabulary_composition_v1";
 };
 export type CanonicalResolvedBulkAssignmentPreview = {
   preview: BulkAssignmentPreview;
@@ -41,10 +42,27 @@ export type CanonicalResolvedBulkAssignmentPreview = {
   canonicalPlansByStudent: Map<string, CanonicalPlannedQuestion[][]>;
 };
 
-async function loadCandidates(input: BulkAssignmentPreviewInput, unitIds: string[], reviewed: boolean): Promise<Candidate[]> {
+async function loadCandidates(input: BulkAssignmentPreviewInput, unitIds: string[], bankSource: CanonicalPlannedQuestion["bankSource"]): Promise<Candidate[]> {
   const client = await createServerSupabaseClient();
+  if (bankSource === "vocabulary_composition_v1") {
+    const rows: Candidate[] = [];
+    for (;;) {
+      const response = await client.rpc("list_active_vocabulary_composition_questions_v1", { p_dataset_id: input.commonPlan.datasetId, p_unit_ids: unitIds, p_quiz_mode: input.questionMode })
+        .order("source_row").order("direction").range(rows.length, rows.length + 999);
+      const parsed = z.array(candidateSchema).safeParse(response.data);
+      if (response.error || !parsed.success || parsed.data.length > 1000 || rows.length + parsed.data.length > 40000) throw new BulkAssignmentError("database", "단어장의 시험 문제를 불러오지 못했습니다. 다시 시도해 주세요.");
+      if (!parsed.data.length) break;
+      for (const row of parsed.data) {
+        const previous = rows.at(-1);
+        if (!row.direction || !unitIds.includes(row.unit_id) || previous && (row.source_row < previous.source_row || row.source_row === previous.source_row && row.direction <= previous.direction)) throw new BulkAssignmentError("database", "단어장의 문항 순서를 확인하지 못했습니다.");
+        rows.push({ ...row, direction: row.direction });
+      }
+    }
+    if (new Set(rows.map(c => `${c.vocab_entry_id}:${c.direction}`)).size !== rows.length || new Set(rows.map(c => c.release_id)).size > 1 || new Set(rows.map(c => c.package_sha256)).size > 1) throw new BulkAssignmentError("database", "시험 문제의 버전이나 출제 방향이 서로 맞지 않습니다.");
+    return rows;
+  }
   const { data, error } = await client.rpc(
-    reviewed ? "list_active_reviewed_exam_questions_v1" : "list_active_canonical_question_preview_v1",
+    bankSource === "reviewed_exam_v1" ? "list_active_reviewed_exam_questions_v1" : "list_active_canonical_question_preview_v1",
     { p_dataset_id: input.commonPlan.datasetId, p_unit_ids: unitIds, p_quiz_mode: input.questionMode },
   );
   if (error) throw new BulkAssignmentError("database", "검토된 시험 문제를 불러오지 못했습니다. 다시 시도해 주세요.");
@@ -58,7 +76,7 @@ async function loadCandidates(input: BulkAssignmentPreviewInput, unitIds: string
   if (new Set(keys).size !== keys.length ||
       new Set(candidates.map(c => c.release_id)).size > 1 ||
       new Set(candidates.map(c => c.package_sha256)).size > 1 ||
-      (reviewed && parsed.data.some(c => !c.direction))) {
+      (bankSource !== "canonical_legacy" && parsed.data.some(c => !c.direction))) {
     throw new BulkAssignmentError("database", "시험 문제의 버전이나 출제 방향이 서로 맞지 않습니다.");
   }
   return candidates;
@@ -86,7 +104,8 @@ export async function resolveCanonicalBulkAssignmentPreview(
   }
   const planning = preparedPlanning ?? await loadCommonBulkAssignmentPlanningData(
     { datasetId: plan.datasetId, studentIds: input.studentIds }, admin);
-  const reviewed = planning.dataset?.questionBankKind === "reviewed_exam_v1";
+  const bankSource: CanonicalPlannedQuestion["bankSource"] = planning.dataset?.questionBankKind ?? "canonical_legacy";
+  const reviewed = bankSource !== "canonical_legacy";
   if (!reviewed && (input.questionMode === "book_meaning_choice" || input.questionMode === "canonical_headword_to_definition")) {
     throw new BulkAssignmentError("invalid_selection", "이 단어장에는 선택한 방향의 검토된 문제가 없습니다.");
   }
@@ -102,13 +121,62 @@ export async function resolveCanonicalBulkAssignmentPreview(
   try { selectedUnits = resolveOrderedUnitSelection(planning.units, plan.orderedUnitIds); }
   catch { planningError = "선택한 시험 범위를 사용할 수 없습니다."; }
   const unitRank = new Map(selectedUnits.map((unit,index)=>[unit.id,index]));
-  const candidates = ready && !planningError ? (await loadCandidates(input, selectedUnits.map(u => u.id), reviewed))
-    .sort((a,b)=>(unitRank.get(a.unit_id) ?? Infinity)-(unitRank.get(b.unit_id) ?? Infinity) || a.source_row-b.source_row) : [];
   const directionsNeeded: VocabTargetDirection[] = input.englishToKoreanRatio === 100 ? ["english_to_korean"]
     : input.englishToKoreanRatio === 0 ? ["korean_to_english"] : ["english_to_korean", "korean_to_english"];
-  const eligible = targetCandidates(candidates).filter(c => directionsNeeded.every(d => c.eligibleDirections.includes(d)));
-  const eligibleIds = new Set(eligible.map(c => c.id));
-  const usable = candidates.filter(c => eligibleIds.has(c.vocab_entry_id));
+  const eligibleRows = (rows: Candidate[]) => {
+    const ids = new Set(targetCandidates(rows).filter(c => directionsNeeded.every(d => c.eligibleDirections.includes(d))).map(c => c.id));
+    return rows.filter(c => ids.has(c.vocab_entry_id));
+  };
+  const scopeKey = (ids: string[]) => [...ids].sort().join(",");
+  const usableByScope = new Map<string, Candidate[]>();
+  let candidates: Candidate[] = [];
+  let usable: Candidate[] = [];
+  if (ready && !planningError) {
+    if (bankSource === "vocabulary_composition_v1" && plan.splitBasis === "range_unit") {
+      // Ambiguity is evaluated against the same units that the writer will save.
+      // Separate passage sessions must not discard each other's contextual senses.
+      let scopes: string[][] = [];
+      try {
+        resolvePlanUnitAllocation(plan);
+        scopes = plan.sessions.map(s => resolveOrderedUnitSelection(planning.units, s.unitIds).map(u => u.id));
+        if (scopes.length * input.studentIds.length > MAXIMUM_BULK_ASSIGNMENT_COUNT) failPlanning("preview", "한 번에 배정할 수 있는 시험은 전체 210회까지입니다.");
+        // Count the unassigned remainder using the same future unit grouping;
+        // this does not create more sessions or invent additional dates.
+        const completeCycle = resolveVocabUnitCycleAllocation({ orderedUnitIds: plan.orderedUnitIds, baseSessionUnitCounts: plan.rangeUnitCounts,
+          selectedDateCount: plan.rangeUnitCounts.length, overflowPolicy: "continue_weekly", extraDatePolicy: "unconfirmed", maximumSessionCount: plan.orderedUnitIds.length });
+        if (completeCycle.issue) throw new Error("전체 범위의 회차 구성을 확인하지 못했습니다.");
+        scopes.push(...completeCycle.sessionUnitIds);
+      } catch (error) { planningError = error instanceof Error ? error.message : "시험 회차를 계산하지 못했습니다."; }
+      if (!planningError) {
+        const uniqueScopes = [...new Map(scopes.map(ids => [scopeKey(ids), ids])).entries()];
+        for (let offset = 0; offset < uniqueScopes.length; offset += 8) {
+          const loaded = await Promise.all(uniqueScopes.slice(offset, offset + 8).map(async ([key, ids]) => ({ key, rows: await loadCandidates(input, ids, bankSource) })));
+          for (const { key, rows } of loaded) { candidates.push(...rows); usableByScope.set(key, eligibleRows(rows)); }
+        }
+        const distinct = (rows: Candidate[]) => {
+          const byKey = new Map<string, Candidate>();
+          for (const row of rows) {
+            const key = `${row.vocab_entry_id}:${row.direction}`, previous = byKey.get(key);
+            if (previous && JSON.stringify(previous) !== JSON.stringify(row)) throw new BulkAssignmentError("database", "회차 사이의 고정 문항 정보가 다릅니다.");
+            byKey.set(key, row);
+          }
+          return [...byKey.values()];
+        };
+        candidates = distinct(candidates); usable = distinct([...usableByScope.values()].flat());
+        if (new Set(candidates.map(c => c.release_id)).size > 1 || new Set(candidates.map(c => c.package_sha256)).size > 1) throw new BulkAssignmentError("database", "회차 사이의 단어장 버전이 다릅니다.");
+      }
+    } else {
+      candidates = await loadCandidates(input, selectedUnits.map(u => u.id), bankSource);
+      usable = eligibleRows(candidates);
+    }
+  }
+  const sortCandidates = (a: Candidate, b: Candidate) => (unitRank.get(a.unit_id) ?? Infinity) - (unitRank.get(b.unit_id) ?? Infinity) || a.source_row - b.source_row;
+  candidates.sort(sortCandidates); usable.sort(sortCandidates);
+  const eligible = targetCandidates(usable);
+  const inSession = (units: typeof planning.units) => {
+    const ids = units.map(u => u.id), selected = new Set(ids);
+    return (usableByScope.get(scopeKey(ids)) ?? usable.filter(c => selected.has(c.unit_id))).slice().sort(sortCandidates);
+  };
   const availableCount = eligible.length;
   const countBreakdown = ready && !planningError ? checkedAssignmentCountBreakdown({
     sourceCount: await loadSelectedVocabularyRowCount(plan.datasetId, selectedUnits.map(unit => unit.id)),
@@ -137,8 +205,7 @@ export async function resolveCanonicalBulkAssignmentPreview(
       cycleIndexes = allocation.sessionCycleIndexes;
       sessionUnits = plan.sessions.map(s => resolveOrderedUnitSelection(planning.units, s.unitIds));
       counts = sessionUnits.map(units => {
-        const selected = new Set(units.map(u => u.id));
-        const capacity = new Set(usable.filter(c => selected.has(c.unit_id)).map(c => c.vocab_entry_id)).size;
+        const capacity = new Set(inSession(units).map(c => c.vocab_entry_id)).size;
         const count = plan.questionCount.mode === "all" ? Math.min(capacity, 500) : plan.questionCount.value;
         if (count < 4 || count > Math.min(capacity, 500)) failPlanning("range", `현재 회차는 검토된 문제를 최대 ${Math.min(capacity, 500)}개까지 배정할 수 있습니다. 회차당 단위 수를 늘리거나 범위를 조정해 주세요.`);
         return count;
@@ -185,9 +252,8 @@ export async function resolveCanonicalBulkAssignmentPreview(
     const targets: PlannedVocabSeriesTarget[][] = counts.map(() => []);
     if (plan.splitBasis === "range_unit") {
       sessionUnits.forEach((units, index) => {
-        const selected = new Set(units.map(u => u.id));
         targets[index] = planDirectionalVocabSeriesTargets({
-          candidates: targetCandidates(usable.filter(c => selected.has(c.unit_id))),
+          candidates: targetCandidates(inSession(units)),
           distribution: "repeat", selectionMode: plan.selectionMode, sessionQuestionCounts: [counts[index]!],
           englishToKoreanRatio: input.englishToKoreanRatio,
           seedScope: `${plan.planNonce}:${studentId}:${index}:${input.questionMode}`,
@@ -209,7 +275,7 @@ export async function resolveCanonicalBulkAssignmentPreview(
       return candidate ? [{ id: target.id, direction: target.direction,
         questionItemId: candidate.question_item_id, questionItemSha256: candidate.question_item_sha256,
         releaseId: candidate.release_id, packageSha256: candidate.package_sha256,
-        bankSource: reviewed ? "reviewed_exam_v1" as const : "canonical_legacy" as const }] : [];
+        bankSource }] : [];
     }));
     if (bankPlans.some((p,i) => p.length !== counts[i])) return { ...itemBase, available:false,sessions:[],
       error:"회차별 출제 대상을 확정하지 못했습니다. 범위를 다시 확인해 주세요.",errorFieldKey:"preview" };

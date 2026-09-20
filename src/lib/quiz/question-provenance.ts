@@ -3,7 +3,8 @@ export type QuestionProvenanceStatus =
   | "verified_v2"
   | "reviewed_for_preview_v1"
   | "preview_verified_v1"
-  | "exam_reviewed_v1";
+  | "exam_reviewed_v1"
+  | "composition_verified_v1";
 
 export function isTrustedQuestionSnapshot(
   status: QuestionProvenanceStatus | null | undefined,
@@ -12,6 +13,7 @@ export function isTrustedQuestionSnapshot(
     status === "verified_v2" ||
     status === "reviewed_for_preview_v1" ||
     status === "preview_verified_v1" ||
-    status === "exam_reviewed_v1"
+    status === "exam_reviewed_v1" ||
+    status === "composition_verified_v1"
   );
 }

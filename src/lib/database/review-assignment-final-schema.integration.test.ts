@@ -6113,8 +6113,13 @@ describe.sequential("assignment retry rules", () => {
   it("backfills retry rules when deleted assignments already exist", async () => {
     let deletedAssignmentId: string | null = null;
     let deletedAssignmentUpdatedAt: string | null = null;
+    let beforeLibraryQuestions: unknown[] | null = null;
+    const addedCompositionKeys = ["composition_version_id_snapshot", "composition_item_id_snapshot", "composition_item_sha256_snapshot", "composition_pronunciation_snapshot"];
     const database = await createFinalSchemaDatabase({
       beforeMigration: async (pendingDatabase, migrationName) => {
+        if (migrationName === "20260919212837_add_vocabulary_library_templates.sql") {
+          beforeLibraryQuestions = (await pendingDatabase.query("select to_jsonb(q) value from public.assignment_questions q order by id")).rows;
+        }
         if (
           migrationName !== "20260824010000_add_assignment_retry_rules.sql"
         ) {
@@ -6167,6 +6172,12 @@ describe.sequential("assignment retry rules", () => {
 
     try {
       expect(deletedAssignmentId).not.toBeNull();
+      expect(beforeLibraryQuestions).toHaveLength(1);
+      const afterQuestions = (await database.query<{ value: Record<string, unknown> }>("select to_jsonb(q) value from public.assignment_questions q order by id")).rows;
+      for (const { value } of afterQuestions) {
+        for (const key of addedCompositionKeys) expect(value[key]).toBeNull();
+      }
+      expect(afterQuestions.map(({ value }) => ({ value: Object.fromEntries(Object.entries(value).filter(([key]) => !addedCompositionKeys.includes(key))) }))).toEqual(beforeLibraryQuestions);
       const state = await database.query<{
         deleted_at: string;
         passing_score: number;

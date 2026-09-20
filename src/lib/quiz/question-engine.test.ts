@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   quizIndependentTargetDirectionEligibility,
   quizTargetDirectionEligibility,
+  buildQuizChoiceIndex,
+  selectSimilarQuizChoicePool,
 } from "@/lib/quiz/choice-policy";
 import {
   createExplicitTargetedQuizQuestions,
@@ -34,6 +36,31 @@ function seededRandom(seed = 123456789) {
 }
 
 describe("createQuizQuestions", () => {
+  it("finds an alternate matching regardless of where a repeated identity's second meaning appears", () => {
+    const candidates = [
+      { id: 1, headword: "target", primaryMeaning: "W" }, { id: 2, headword: "alpha", primaryMeaning: "X" },
+      { id: 3, headword: "beta", primaryMeaning: "Y" }, { id: 4, headword: "gamma", primaryMeaning: "X" }, { id: 5, headword: "alpha", primaryMeaning: "Z" },
+    ];
+    for (const order of [candidates, [candidates[0]!, candidates[4]!, candidates[2]!, candidates[3]!, candidates[1]!]]) {
+      expect(quizIndependentTargetDirectionEligibility([order[0]!], order)[0]!.eligibleDirections).toContain("english_to_korean");
+      const index=buildQuizChoiceIndex(order,{groupBySimilarity:true});
+      const questions=createExplicitTargetedQuizQuestions([{id:1,direction:"english_to_korean"}],order,seededRandom(),{choiceIndex:index});
+      expect([...questions[0]!.choices].sort()).toEqual(["W","X","Y","Z"]);
+    }
+  });
+  it("keeps every tied high-similarity candidate and expands when their displays collide", () => {
+    const target={id:1,headword:"create",primaryMeaning:"창조하다"};
+    const similar=[{id:2,headword:"invent",primaryMeaning:"발명하다"},{id:3,headword:"design",primaryMeaning:"설계하다"},{id:4,headword:"repair",primaryMeaning:"수리하다"},{id:5,headword:"repair",primaryMeaning:"수리하다"}];
+    const low=[{id:6,headword:"a very long phrase",primaryMeaning:"매우 긴 명사구"}];
+    const all=[target,...similar,...low],index=buildQuizChoiceIndex(all,{groupBySimilarity:true});
+    const pool=selectSimilarQuizChoicePool(target,"english_to_korean",index);
+    expect(pool.map(e=>e.id)).toEqual(expect.arrayContaining(similar.map(e=>e.id)));expect(pool.some(e=>e.id===6)).toBe(false);
+    expect(()=>createExplicitTargetedQuizQuestions([{id:1,direction:"english_to_korean"}],all,seededRandom(),{choiceIndex:index})).not.toThrow();
+    const collisions=all.map(e=>e.id>1&&e.id<6?{...e,primaryMeaning:"같은뜻이다"}:e);
+    const expanded=selectSimilarQuizChoicePool(collisions[0]!,"english_to_korean",buildQuizChoiceIndex(collisions,{groupBySimilarity:true}));
+    expect(expanded.map(e=>e.id)).toContain(6);
+    expect(()=>createExplicitTargetedQuizQuestions([{id:1,direction:"english_to_korean"}],all.map(e=>({...e})),seededRandom(),{choiceIndex:index})).toThrow("색인");
+  });
   it("서로 다른 회차 후보의 같은 철자·다른 뜻은 독립 방향 자격에서 제거하지 않는다", () => {
     const senseEntries: QuizVocabularyEntry[] = [
       { id: 101, headword: "observe", primaryMeaning: "관찰하다" },

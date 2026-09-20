@@ -12,6 +12,7 @@ import {
 import { isTrustedQuestionSnapshot } from "@/lib/quiz/question-provenance";
 import {
   oneRelation,
+  compositionQuestionPronunciation,
   reviewedExamUseSnapshot,
   type AssignmentQuestionSnapshot,
 } from "./question-snapshot";
@@ -96,7 +97,7 @@ export function mapResultQuestions(
         : unavailablePronunciation(),
       displayFallback,
     );
-    const pronunciation = preferredPronunciationWithActiveVocaRelease(
+    const pronunciation = compositionQuestionPronunciation(bankQuestion, choices.length)?.target ?? preferredPronunciationWithActiveVocaRelease(
       examUseSnapshot?.dictionary_id,
       snapshotPronunciation,
       vocabEntryId === null

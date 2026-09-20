@@ -965,6 +965,10 @@
     {
       "path": "src/app/api/admin/wordbook-compositions/route.ts",
       "owner": "wordbook-compositions"
+    },
+    {
+      "path": "src/app/api/admin/wordbook-library/route.ts",
+      "owner": "wordbook-compositions"
     }
   ],
   "serviceOwners": [
@@ -1866,8 +1870,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 109,
-      "pathSetSha256": "941bd3421d668a1d27ac2eb9cfaf1d75c71c936ed8dd52df684705969a03e56e"
+      "fileCount": 111,
+      "pathSetSha256": "be6c2354a50df27c1d9cc02f7e7075e6d07d050c4e749424ade6cd26c6224027"
     },
     {
       "path": "src/lib/deploy",
@@ -2155,6 +2159,26 @@
     {
       "path": "src/features/wordbook-compositions/server/queries/composition-lineage.ts",
       "owner": "wordbook-compositions"
+    },
+    {
+      "path": "src/features/wordbook-compositions/server/queries/library-catalog.ts",
+      "owner": "wordbook-compositions"
+    },
+    {
+      "path": "src/features/wordbook-compositions/server/commands/library-command.ts",
+      "owner": "wordbook-compositions"
+    },
+    {
+      "path": "src/features/wordbook-compositions/server/commands/materialize-composition.ts",
+      "owner": "wordbook-compositions"
+    },
+    {
+      "path": "src/features/wordbook-compositions/server/library-json-response.ts",
+      "owner": "wordbook-compositions"
+    },
+    {
+      "path": "src/features/wordbook-compositions/server/use-cases/composition-question-plan.ts",
+      "owner": "wordbook-compositions"
     }
   ],
   "migrationOwnershipFrom": "20260828193000",
@@ -2405,6 +2429,16 @@
       "path": "supabase/migrations/20260914223254_guard_reviewed_mock_source_key_normalization.sql",
       "owner": "wordbook-compositions",
       "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20260919212837_add_vocabulary_library_templates.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20260919212838_connect_vocabulary_composition_question_snapshots.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
     }
   ],
   "features": [
@@ -2532,11 +2566,12 @@
     },
     {
       "id": "wordbook-compositions",
-      "name": "모의고사 범위 단어장 저장",
+      "name": "단어장 범위 조합과 템플릿",
       "ownerPath": "src/features/wordbook-compositions",
       "localGuide": "src/features/wordbook-compositions/AGENTS.md",
       "entrypoints": [
-        "src/app/api/admin/wordbook-compositions/route.ts"
+        "src/app/api/admin/wordbook-compositions/route.ts",
+        "src/app/api/admin/wordbook-library/route.ts"
       ]
     }
   ],
@@ -2954,6 +2989,12 @@
       "to": "src/features/school-schedules/public-ui.ts",
       "reason": "APP-20260913-03 학교 일정의 공용 계약·조회·표시 연결",
       "removeIn": "공개 진입점으로 고정"
+    },
+    {
+      "from": "src/features/student-dashboard/server/queries/assignment-study-query.ts",
+      "to": "src/features/wordbook-compositions/public-contracts.ts",
+      "reason": "배정 당시 고정된 발음 계약만 검증하며 현재 사전으로 대체하지 않는다",
+      "removeIn": "공개 고정 발음 계약을 유지하는 동안 보존"
     }
   ],
   "currentLibToFeatureImports": [
@@ -2980,6 +3021,12 @@
       "to": "src/features/results/model.ts",
       "reason": "현재 문항 변환기가 결과 화면 자료형을 만듦",
       "removeIn": "R6 results/server 이동"
+    },
+    {
+      "from": "src/lib/services/quiz/question-snapshot.ts",
+      "to": "src/features/wordbook-compositions/public-contracts.ts",
+      "reason": "기존 시험 및 결과 조회가 구성 문항의 고정 발음 계약을 함께 검증",
+      "removeIn": "시험 조회의 기능 이동 때 공개 계약 경계 재검토"
     }
   ],
   "currentFeatureToLibBridges": [
@@ -3055,6 +3102,16 @@
       ],
       "reason": "검토된 모의고사 범위와 원출처 정보의 공개 경계 연결",
       "removeIn": "공개 경계로 유지"
+    },
+    {
+      "from": "src/features/history/server/queries/admin-attempt-detail-query.ts",
+      "to": "src/features/wordbook-compositions/public-contracts.ts",
+      "via": [
+        "src/lib/services/quiz/attempt-result-query.ts",
+        "src/lib/services/quiz/question-snapshot.ts"
+      ],
+      "reason": "기존 내역 조회도 동일한 고정 문항 계약으로 발음과 표시값 검증",
+      "removeIn": "내역 조회의 시험 공개 진입점 이동 때 재검토"
     }
   ],
   "crossLayerFlows": [
@@ -6533,43 +6590,58 @@
     },
     {
       "id": "mock-wordbook-compose",
-      "name": "모의고사 여러 범위 단어장 저장과 내부 범위 선택",
+      "name": "원범위 탐색과 템플릿 버전 및 고정 단어장 생성",
       "status": "active",
       "owner": "wordbook-compositions",
       "participants": [
         "wordbook-compositions",
         "assignments",
-        "quiz-player"
+        "quiz-player",
+        "student-dashboard",
+        "results"
       ],
       "dataClass": "mutation",
       "cachePolicy": "관리자 자료 private no-store, 저장 거래 안에서 원출처와 버전 재검증",
-      "streamingPolicy": "만들기 화면을 열 때 목록 조회, 입력과 담은 범위 보존, 실패 영역에서 재시도",
+      "streamingPolicy": "관리자 검증 뒤 JSON을 64KiB 조각으로 전달. 입력 보존, 같은 요청 재확인과 권한 변경 처리",
       "closedLocalLayers": [],
       "touchpoints": {
         "route": [
-          "src/app/api/admin/wordbook-compositions/route.ts"
+          "src/app/api/admin/wordbook-compositions/route.ts",
+          "src/app/api/admin/wordbook-library/route.ts"
         ],
         "serverComponent": [],
         "ui": [
           "src/features/wordbook-compositions/ui/wordbook-composer.tsx",
           "src/features/wordbook-compositions/ui/mock-scope-filters.tsx",
-          "src/features/wordbook-compositions/ui/wordbook-composer.module.css"
+          "src/features/wordbook-compositions/ui/wordbook-composer.module.css",
+          "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+          "src/features/wordbook-compositions/ui/library-source-filters.tsx",
+          "src/features/wordbook-compositions/ui/wordbook-library.module.css",
+          "src/features/assignments/ui/vocab-range-fields.tsx"
         ],
         "clientState": [
-          "src/features/wordbook-compositions/client/controllers/use-wordbook-composer.ts"
+          "src/features/wordbook-compositions/client/controllers/use-wordbook-composer.ts",
+          "src/features/wordbook-compositions/client/controllers/use-wordbook-library.ts"
         ],
         "application": [],
         "domain": [
           "src/features/wordbook-compositions/domain/scope-selection.ts",
-          "src/lib/assignment/composition-targets.ts"
+          "src/lib/assignment/composition-targets.ts",
+          "src/features/wordbook-compositions/domain/library-selection.ts",
+          "src/features/wordbook-compositions/domain/template-version.ts"
         ],
         "presentation": [],
         "contract": [
           "src/features/wordbook-compositions/contracts/composition.ts",
-          "src/lib/vocab/reviewed-mock-import-contract.ts"
+          "src/lib/vocab/reviewed-mock-import-contract.ts",
+          "src/features/wordbook-compositions/contracts/library.ts",
+          "src/features/wordbook-compositions/contracts/library-import.ts",
+          "src/features/wordbook-compositions/contracts/library-resources.ts",
+          "src/features/wordbook-compositions/contracts/library-materialization.ts"
         ],
         "transport": [
-          "src/features/wordbook-compositions/client/transport/composition-transport.ts"
+          "src/features/wordbook-compositions/client/transport/composition-transport.ts",
+          "src/features/wordbook-compositions/client/transport/library-transport.ts"
         ],
         "server": [
           "src/app/api/admin/wordbook-compositions/route.ts",
@@ -6577,15 +6649,25 @@
           "src/features/wordbook-compositions/server/commands/create-composition.ts",
           "src/features/wordbook-compositions/server/queries/composition-catalog.ts",
           "src/features/wordbook-compositions/server/queries/composition-lineage.ts",
-          "scripts/import-reviewed-mock-wordbook.ts"
+          "scripts/import-reviewed-mock-wordbook.ts",
+          "src/features/wordbook-compositions/server/queries/library-catalog.ts",
+          "src/features/wordbook-compositions/server/commands/library-command.ts",
+          "src/features/wordbook-compositions/server/commands/materialize-composition.ts",
+          "src/features/wordbook-compositions/server/use-cases/composition-question-plan.ts",
+          "src/features/wordbook-compositions/server/library-json-response.ts",
+          "scripts/import-vocabulary-library.ts"
         ],
         "database": [
           "supabase/migrations/20260914140753_add_mock_wordbook_compositions.sql",
           "supabase/migrations/20260914214202_add_reviewed_mock_wordbook_import.sql",
-          "supabase/migrations/20260914223254_guard_reviewed_mock_source_key_normalization.sql"
+          "supabase/migrations/20260914223254_guard_reviewed_mock_source_key_normalization.sql",
+          "supabase/migrations/20260919212837_add_vocabulary_library_templates.sql",
+          "supabase/migrations/20260919212838_connect_vocabulary_composition_question_snapshots.sql"
         ],
         "cacheStreaming": [
-          "src/app/api/admin/wordbook-compositions/route.ts"
+          "src/app/api/admin/wordbook-compositions/route.ts",
+          "src/app/api/admin/wordbook-library/route.ts",
+          "src/features/wordbook-compositions/server/library-json-response.ts"
         ],
         "tests": [
           "src/features/wordbook-compositions/domain/composition-targets.test.ts",
@@ -6595,7 +6677,13 @@
           "src/features/wordbook-compositions/ui/wordbook-composer.test.tsx",
           "src/lib/database/wordbook-compositions.integration.test.ts",
           "src/lib/vocab/reviewed-mock-import-contract.test.ts",
-          "src/lib/database/reviewed-mock-wordbook.integration.test.ts"
+          "src/lib/database/reviewed-mock-wordbook.integration.test.ts",
+          "src/features/wordbook-compositions/domain/library-selection.test.ts",
+          "src/features/wordbook-compositions/domain/template-version.test.ts",
+          "src/features/wordbook-compositions/server/library-service.test.ts",
+          "src/features/wordbook-compositions/ui/wordbook-library.test.tsx",
+          "src/lib/database/vocabulary-library.integration.test.ts",
+          "src/lib/database/vocabulary-composition-questions.integration.test.ts"
         ]
       },
       "requiredImportEdges": [],

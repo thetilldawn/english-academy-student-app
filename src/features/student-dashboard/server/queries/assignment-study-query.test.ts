@@ -23,6 +23,18 @@ beforeEach(() => {
   mocks.prompts.mockResolvedValue(new Map([[7, ["She _____ the letters."]]]));
 });
 describe("배정 단어장 서버 조회", () => {
+  it("preserves frozen pronunciation and source meaning while requesting current registries only for legacy rows", async () => {
+    const frozen = { displayKo: "저장 발음", variantId: "fixed", audioUrl: null, available: false };
+    const fixedWord = { ...word, entryId: 8, headword: "fixed", meaning: "저장 뜻", compositionPronunciation: frozen };
+    mocks.active.mockResolvedValue(new Map([[8, { ...frozen, displayKo: "현재 발음" }]]));
+    mocks.rpc.mockResolvedValue({ data: { ...raw("canonical_headword_to_definition"), words: [word, fixedWord] }, error: null });
+    const result = await getAssignmentStudy(student, id);
+    expect(result?.words?.[1]).toMatchObject({ headword: "fixed", meaning: "저장 뜻", definition: word.definition, pronunciation: frozen });
+    for (const fn of [mocks.registry, mocks.active, mocks.entryApproved, mocks.source]) expect(fn).toHaveBeenCalledWith([7]);
+    expect(JSON.stringify(result)).not.toMatch(/entryId|releaseId|Snapshot|correct_choice|choices/);
+    mocks.rpc.mockResolvedValue({ data: { ...raw(), words: [{ ...fixedWord, compositionPronunciation: { ...frozen, available: true } }] }, error: null });
+    await expect(getAssignmentStudy(student, id)).rejects.toThrow("assignment_study_data_invalid");
+  });
   it("uses source proof for old completed study words, but not a different historical headword", async () => {
     const audio={displayKo:"자동",variantId:"mw:fake",audioUrl:"https://media.merriam-webster.com/audio/prons/en/us/mp3/c/collec01.mp3",available:true};
     mocks.active.mockResolvedValue(new Map([[7,audio]]));

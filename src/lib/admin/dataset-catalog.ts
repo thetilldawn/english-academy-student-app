@@ -70,6 +70,7 @@ export type DatasetCatalogMetadata = {
 };
 
 export type CataloguedUnit = {
+  librarySourceScopes?: { id: string; name: string }[];
   mockScope?: {
     executionYear: number; examMonth: number; examKind: "mock" | "csat"; academicYear: number | null;
     agency: string; typeCode: string; typeLabel: string; questionNumbers: number[]; sharedPassage: boolean;

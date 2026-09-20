@@ -45,6 +45,30 @@ beforeEach(() => {
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); });
 
 describe("exact entry pronunciation corrections", () => {
+  it.each(["english_to_korean", "korean_to_english"] as const)("composition %s keeps frozen target/choice voices without live dictionary reads or premature answers", async direction => {
+    const frozen: { displayKo: string | null; variantId: string | null; audioUrl: string | null; available: boolean } = { displayKo: "저장 발음", variantId: variant, audioUrl: url, available: true };
+    const empty = { displayKo: null, variantId: null, audioUrl: null, available: false };
+    const assignmentQuestion = { vocab_entry_id: 7, choice_vocab_entry_ids: [7, 8, 9, 10], headword_snapshot: "savedword", primary_meaning_snapshot: "저장 뜻", provenance_status: "composition_verified_v1",
+      composition_pronunciation_snapshot: { target: frozen, choices: [frozen, empty, empty, empty] } };
+    tables.quiz_attempts = { id: "attempt", assignment_id: "assignment", status: "in_progress", phase: "initial", started_at: "2026-01-01T00:00:00Z", deadline_at: null };
+    tables.assignments = { title: "가짜", timing_mode: "none", quiz_content_mode: "book_meaning_choice" };
+    tables.quiz_questions = [{ id: "question", vocab_entry_id: 7, order_index: 1, direction, prompt: direction === "english_to_korean" ? "savedword" : "저장 뜻",
+      choices: direction === "english_to_korean" ? ["저장 뜻", "다른 뜻", "그 밖", "마지막"] : ["savedword", "other", "another", "last"],
+      correct_choice_index: 0, initial_choice_index: null, initial_is_correct: null, retry_choice_index: null, retry_is_correct: null, prior_wrong_count: 0,
+      assignment_question: assignmentQuestion, vocab_entries: { headword: "changed", primary_meaning: "현재 뜻", pronunciation_ko: "현재 발음" } }];
+    const quiz = (await getStudentAttempt("fake-student", "attempt"))!.questions[0]!;
+    expect(quiz.revealedCorrectChoiceIndex).toBeNull();
+    expect(quiz.pronunciation).toEqual(direction === "english_to_korean" ? frozen : empty);
+    if (direction === "korean_to_english") expect(quiz.choicePronunciations).toEqual([frozen, empty, empty, empty]);
+    expect((await getAttemptQuestionResults("attempt"))[0]).toMatchObject({ headword: "savedword", primaryMeaning: "저장 뜻", pronunciation: frozen });
+    expect(mocks.rpc).not.toHaveBeenCalled(); expect(mocks.lineage).not.toHaveBeenCalled();
+    expect(mocks.from.mock.calls.map(([name]) => name)).not.toContain("vocab_pronunciation_identities_v2");
+    assignmentQuestion.composition_pronunciation_snapshot.target = empty;
+    expect((await getAttemptQuestionResults("attempt"))[0].pronunciation).toEqual(empty);
+    Reflect.deleteProperty(assignmentQuestion, "composition_pronunciation_snapshot");
+    await expect(getStudentAttempt("fake-student", "attempt")).rejects.toThrow("고정 학습정보");
+    await expect(getAttemptQuestionResults("attempt")).rejects.toThrow("고정 학습정보");
+  });
   it("source lookup chunks at 400 and refuses malformed/partial/duplicate proofs", async () => {
     const source={vocab_entry_id:7,headword:"sample",entry_row_sha256:"a".repeat(64),variant_id:variant,audio_key:url,display_ko:"복원",
       segments:[{text:"복원",stress:"primary"}],source_file_sha256:"b".repeat(64),manifest_sha256:"c".repeat(64)};

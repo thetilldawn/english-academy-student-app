@@ -2,10 +2,15 @@ import type { MockScopeMetadata, SourceScope } from "../contracts/composition";
 
 export type ScopeFilters = {
   years: readonly number[]; months: readonly number[]; types: readonly string[];
+  yearFrom?: number | null; yearTo?: number | null; questions?: readonly number[]; examKinds?: readonly ("mock" | "csat")[];
 };
 export const EMPTY_SCOPE_FILTERS: ScopeFilters = { years: [], months: [], types: [] };
 export function matchesScope(scope: MockScopeMetadata, filters: ScopeFilters) {
   return (!filters.years.length || filters.years.includes(scope.executionYear)) &&
+    (filters.yearFrom == null || scope.executionYear >= filters.yearFrom) &&
+    (filters.yearTo == null || scope.executionYear <= filters.yearTo) &&
+    (!filters.questions?.length || scope.questionNumbers.some(n => filters.questions!.includes(n))) &&
+    (!filters.examKinds?.length || filters.examKinds.includes(scope.examKind)) &&
     (!filters.months.length || filters.months.includes(scope.examMonth)) &&
     (!filters.types.length || filters.types.includes(scope.typeCode));
 }

@@ -19,8 +19,9 @@ export function buildReviewedDirectReviewSelection(input:DirectReviewPreviewInpu
     new Set(selected.map(c=>c.headwordNormalized)).size!==selected.length) throw new Error("오답 목록이 바뀌었습니다. 다시 확인해 주세요.");
   const ids=new Set(selected.map(c=>c.vocabEntryId));
   const byKey=new Map(parsed.map(r=>[`${r.vocab_entry_id}:${r.direction}`,r]));
+  const requiredDirections=input.englishToKoreanRatio===100?["english_to_korean"]:input.englishToKoreanRatio===0?["korean_to_english"]:["english_to_korean","korean_to_english"];
   if(byKey.size!==parsed.length || parsed.some(r=>!ids.has(r.vocab_entry_id) || new Set(r.choice_vocab_entry_ids).size!==4 || !r.choice_vocab_entry_ids.includes(r.vocab_entry_id)) ||
-    selected.some(c=>!["english_to_korean","korean_to_english"].every(d=>byKey.has(`${c.vocabEntryId}:${d}`)))) throw new Error("검토된 오답 문제가 부족하거나 연결이 바뀌었습니다.");
+    selected.some(c=>!requiredDirections.every(d=>byKey.has(`${c.vocabEntryId}:${d}`)))) throw new Error("검토된 오답 문제가 부족하거나 연결이 바뀌었습니다.");
   const levels=countReviewLevels(selected.map(c=>c.reasonLevel));
   return {sourceQuestionIds:selected.map(c=>c.sourceQuestionId),reviewLevels:[...input.reviewLevels].sort((a,b)=>a-b),
     wrongLevel1Eligible:levels.level1,wrongLevel2Eligible:levels.level2,

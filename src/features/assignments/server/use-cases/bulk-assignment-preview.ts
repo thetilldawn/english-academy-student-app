@@ -139,7 +139,7 @@ export async function resolveBulkAssignmentPreview(
         ? bindAssignmentGradeReview(resolved.preview.planSignature, gradeReview)
         : resolved.preview.planSignature },
   });
-  if (input.questionMode !== "book_meaning_choice" || planning.dataset?.questionBankKind === "reviewed_exam_v1") {
+  if (input.questionMode !== "book_meaning_choice" || planning.dataset?.questionBankKind === "reviewed_exam_v1" || planning.dataset?.questionBankKind === "vocabulary_composition_v1") {
     return withGradeReview(await resolveCanonicalBulkAssignmentPreview(input, admin, planning));
   }
   const students: BulkPlanningStudent[] = planning.students;

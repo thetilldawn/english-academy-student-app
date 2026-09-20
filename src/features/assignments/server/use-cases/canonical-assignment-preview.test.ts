@@ -16,6 +16,58 @@ function request(): BulkAssignmentPreviewInput {
       recurrenceSessions: [{ availableFrom: null, availableUntil: null }] } };
 }
 beforeEach(() => { vi.clearAllMocks(); mocks.count.mockResolvedValue(null); mocks.load.mockRejectedValue(new Error("LOCAL_READ_BOUNDARY")); });
+
+describe("composition scope and paginated candidates", () => {
+  const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+  function setup(size = 12, pageCap = 1000) {
+    const units = [0, 1, 2].map(i => ({ id: id(100 + i), label: `가짜 ${i + 1}번`, sortIndex: i + 1 }));
+    const input = request(); input.questionMode = "book_meaning_choice"; input.englishToKoreanRatio = 100;
+    input.commonPlan = { ...input.commonPlan, datasetId: id(10), orderedUnitIds: units.map(u => u.id), distribution: "split", splitBasis: "range_unit",
+      rangeUnitCounts: [1], unitAllocationRule: { schemaVersion: 1, mode: "same", unitsPerSession: 1, weekdayUnitsPerSession: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1 } },
+      sessions: units.map(u => ({ unitIds: [u.id], availableFrom: null, availableUntil: null })) };
+    mocks.load.mockResolvedValue({ dataset: { id: id(10), title: "가짜", displayName: "가짜", status: "ready", isActive: true, isAssignable: true, questionBankKind: "vocabulary_composition_v1" },
+      students: [{ id: "fake-student", displayName: "가짜 학생", status: "active" }], units });
+    const all = Array.from({ length: size }, (_, i) => ({ release_id: id(20), package_sha256: "a".repeat(64), vocab_entry_id: i + 1, unit_id: units[Math.min(2, Math.floor(i / Math.ceil(size / 3)))]!.id,
+      source_row: i + 1, question_item_id: `fake-${i}`, question_item_sha256: "b".repeat(64), direction: "english_to_korean" }));
+    const ranges: number[][] = [];
+    const rpc = vi.fn((_name: string, args: { p_unit_ids: string[] }) => {
+      // The first word in each passage has the same prompt and a different sense.
+      const rows = all.filter(r => args.p_unit_ids.includes(r.unit_id) && (args.p_unit_ids.length === 1 || ![1, 5, 9].includes(r.vocab_entry_id)));
+      const chain = { order: () => chain, range: async (from: number, to: number) => { ranges.push([from, to]); return { data: rows.slice(from, Math.min(to + 1, from + pageCap)), error: null }; } };
+      return chain;
+    });
+    mocks.client.mockResolvedValue({ rpc }); mocks.count.mockResolvedValue(size);
+    return { input, units, rpc, ranges };
+  }
+  it("keeps different contextual senses in separate sessions but excludes ambiguity within a whole-range session", async () => {
+    const { input, units, rpc } = setup();
+    const split = await resolveCanonicalBulkAssignmentPreview(input, {} as AdminContext);
+    expect(split.preview.items[0]).toMatchObject({ available: true, totalAvailableQuestionCount: 12, scheduledQuestionCount: 12, remainingQuestionCount: 0 });
+    expect(split.canonicalPlansByStudent.get("fake-student")!.map(rows => rows.map(r => r.id))).toEqual([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]);
+    expect(rpc.mock.calls.every(([, args]) => args.p_unit_ids.length === 1)).toBe(true);
+    input.commonPlan.splitBasis = "question_count"; input.commonPlan.distribution = "repeat"; input.commonPlan.sessions = [{ unitIds: units.map(u => u.id), availableFrom: null, availableUntil: null }];
+    const whole = await resolveCanonicalBulkAssignmentPreview(input, {} as AdminContext);
+    expect(whole.preview.items[0]).toMatchObject({ available: true, totalAvailableQuestionCount: 9, selectedQuestionCount: 9 });
+  });
+  it("counts the unassigned future passage without adding a date or reloading identical scope groups", async () => {
+    const { input, rpc } = setup();
+    input.commonPlan.selectedDateCount = 2; input.commonPlan.rangeUnitCounts = [1, 1];
+    input.commonPlan.recurrenceSessions = [1, 2].map(day => ({ availableFrom: `2099-09-0${day}T00:00:00Z`, availableUntil: `2099-09-0${day}T10:00:00Z` }));
+    input.commonPlan.sessions = input.commonPlan.sessions.slice(0, 2).map((s, i) => ({ ...s, ...input.commonPlan.recurrenceSessions[i]! }));
+    const result = await resolveCanonicalBulkAssignmentPreview(input, {} as AdminContext);
+    expect(result.preview.items[0]).toMatchObject({ available: true, totalAvailableQuestionCount: 12, scheduledQuestionCount: 8, remainingQuestionCount: 4 });
+    expect(result.preview.items[0]!.sessions).toHaveLength(2);
+    expect(rpc.mock.calls).toHaveLength(6); // one data page plus a terminal page per distinct scope
+  });
+  it("reads beyond 1000 and continues after a shorter server-capped page", async () => {
+    const { input, units, ranges } = setup(1506, 300);
+    input.commonPlan.splitBasis = "question_count"; input.commonPlan.distribution = "repeat";
+    input.commonPlan.sessions = [{ unitIds: units.map(u => u.id), availableFrom: null, availableUntil: null }];
+    const result = await resolveCanonicalBulkAssignmentPreview(input, {} as AdminContext);
+    expect(result.preview.items[0]).toMatchObject({ available: true, totalAvailableQuestionCount: 1503, selectedQuestionCount: 500, remainingQuestionCount: 1003 });
+    expect(ranges.map(([from]) => from)).toEqual([0, 300, 600, 900, 1200, 1500, 1503]);
+  });
+});
 describe("예문도 공통 회차 규칙과 보이는 오류 위치를 사용한다", () => {
   function setup(splitBasis: "range_unit" | "question_count", dated: boolean) {
     const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
