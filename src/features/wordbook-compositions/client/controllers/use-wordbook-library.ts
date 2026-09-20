@@ -123,7 +123,7 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
     pending.current = parsed.data; saving.current = true; const wasUncertain = Boolean(saveState.uncertain);
     const reportAuth = captureAuthenticationFailure?.(); setSaveState({ status: "saving" });
     try {
-      const result = await sendLibraryCommand(parsed.data);
+      const result = await sendLibraryCommand(parsed.data, pendingAdministrator.current ?? catalog.viewerId);
       if (mounted.current) {
         // A read begun before this save cannot replace the confirmed result.
         requestEpoch.current++; setCatalog(c => ({ ...c, templates: [result.template, ...c.templates.filter(t => t.id !== result.template.id)] }));
@@ -144,7 +144,7 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
     } catch (error) {
       if (mounted.current) {
         const auth = error instanceof LibraryRequestError && [401, 403].includes(error.status);
-        const definitive = error instanceof LibraryRequestError && [400, 401, 403, 404, 409, 422].includes(error.status) && !(wasUncertain && auth);
+        const definitive = error instanceof LibraryRequestError && [400, 401, 403, 404, 409, 422].includes(error.status) && !((wasUncertain || error.progressConfirmed) && auth);
         if (definitive) { pending.current = null; pendingAdministrator.current = null; }
         if (auth) { requestEpoch.current++; setAuthenticationFailed(true); setLoadState("error"); setCatalog(c => ({ viewerId: c.viewerId, scopes: [], templates: [] })); }
         reportAuth?.(error);

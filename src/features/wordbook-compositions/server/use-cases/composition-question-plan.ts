@@ -3,11 +3,11 @@ import { createExplicitTargetedQuizQuestions } from "@/lib/quiz/question-generat
 import { buildDirectionalQuestionSets, buildQuizChoiceIndex } from "@/lib/quiz/choice-policy";
 import { normalizeQuizChoice, normalizeQuizHeadword } from "@/lib/quiz/word-identity";
 import type { QuizQuestionDraft, QuizVocabularyEntry } from "@/lib/quiz/question-types";
-import type { CompositionPreparation } from "../../contracts/library-materialization";
+import type { CompositionQuestionInput } from "../../contracts/library-materialization";
 
 /** Freeze usable generated questions. Scope-specific ambiguity is checked again
  * when querying candidates and writing the exact assignment, not across units. */
-export function planCompositionQuestions(preparation: CompositionPreparation): QuizQuestionDraft[] {
+export function planCompositionQuestions(preparation: CompositionQuestionInput): QuizQuestionDraft[] {
   const entries: QuizVocabularyEntry[] = preparation.entries.filter(e => e.sourceKind !== "reviewed_exam");
   const questions: QuizQuestionDraft[] = [];
   const choiceIndex = buildQuizChoiceIndex(entries, { groupBySimilarity: true });

@@ -669,6 +669,118 @@
         "admin-history-read",
         "assignment-edit"
       ]
+    },
+    {
+      "path": "supabase/migrations/20260920054353_vocabulary_library_management_registration.sql",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260920060402_vocabulary_library_management_transfer.sql",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260920060911_preserve_uncatalogued_legacy_vocabulary.sql",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260920102705_vocabulary_composition_management_verification.sql",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260920104109_compact_vocabulary_composition_references.sql",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260920110018_resume_large_vocabulary_compositions.sql",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260920112203_optimize_vocabulary_composition_checks.sql",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260920113756_bound_vocabulary_composition_join_work.sql",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260920114825_cache_vocabulary_composition_scope_headers.sql",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260920115818_narrow_vocabulary_source_state_arguments.sql",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260920120200_batch_vocabulary_source_state_checks.sql",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260920121225_resume_vocabulary_composition_in_bounded_steps.sql",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/lib/database/vocabulary-composition-steps.integration.test.ts",
+      "state": "existing",
+      "owner": "database-contract",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260920131206_bound_vocabulary_question_plan_comparisons.sql",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
     }
   ],
   "requirements": [
@@ -729,7 +841,8 @@
         "T1",
         "T3",
         "T7",
-        "T10"
+        "T10",
+        "T11"
       ]
     },
     {
@@ -789,7 +902,8 @@
       "checkIds": [
         "T4",
         "T5",
-        "T6"
+        "T6",
+        "T11"
       ]
     },
     {
@@ -831,7 +945,8 @@
         "T5",
         "T6",
         "T8",
-        "T9"
+        "T9",
+        "T11"
       ]
     }
   ],
@@ -931,6 +1046,110 @@
       "question": "준비한 범위 순서와 요청 번호를 화면에 전달",
       "answer": "create 계약 파일을 현재 범위와 대조해 편집기에 불러온 뒤 기존 저장 버튼 사용. 자동 저장 없음, 오류 때 입력 보존, 미확정 저장과 동일 요청 재시도 유지",
       "source": "온라인 등록 연결 검토 및 기존 R3 R4 R7 T7 T8"
+    },
+    {
+      "id": "D13",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "브라우저 로그인 없는 MCP 관리 등록",
+      "answer": "실제 postgres 관리 세션만 승인 원고를 같은 검증 본체로 등록. 초기 create만 별도 불변 관리 영수증에 기록하고 웹 사용자 작성자와 구별. 기존 앱 권한과 사용자 저장 함수 보존.",
+      "source": "2026-09-20 사용자 로그인안해도 mcp로 될듯 ㄱㄱ 및 실제 MCP 세션 current_user/session_user postgres 확인"
+    },
+    {
+      "id": "D14",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "큰 원고의 MCP 전달 한도",
+      "answer": "승인된 파일의 원문을 전송 조각으로 저장한 뒤 전체 순번/수량/원문 SHA를 대조해 한 번 등록. 의미상 묶음 분할이나 JSON 재직렬화 없음. 임시 조각은 성공한 동일 거래에서 정리.",
+      "source": "실제 MCP Request body is too large 및 원문 검증 유지"
+    },
+    {
+      "id": "D15",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "분류표 없는 기존 DAY 자료의 사용 상태",
+      "answer": "기존 앱과 같이 분류표가 없는 legacy_vocab만 사용 가능 기본값을 보존. 명시적 is_assignable=false와 검토등록판의 분류표 누락은 계속 거절. 기존 분류표/사용상태는 쓰지 않음.",
+      "source": "실제 ability-voca-etymology-2025 분류표 없음과 cataloguedDatasetFromMetadata의 기본 true 재현"
+    },
+    {
+      "id": "D16",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "MCP로 승인된 검토용 대표 단어장 생성 확인",
+      "answer": "기존 준비/문항 확정 본체를 권한과 분리해 재사용. 실제 postgres만 프로젝트·판·내용해시로 승인된 최대5개를 관리 요청 FK로 생성. Node 기존 생성기를 한 번 실행해 질문 JSON/해시를 고정하고 조각 전달·완료 영수증으로 재시도. 웹 권한·학생 경로는 유지.",
+      "source": "DEPLOY 승인 대표5개 생성 및 사용자 MCP 진행 지시, 독립 준비/확정 함수 검토"
+    },
+    {
+      "id": "D17",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "원뜻과 근거를 보존하면서 큰 범위를 저장하는 방법",
+      "answer": "새 고정판은 불변 범위의 UUID·버전과 출현별 최초 범위·합친 연결 해시를 참조하는 명시적 v2로 저장한다. 원행 전체의 JSONB 충돌 비교와 실시간 원자료 잠금·변경 확인은 유지한다. 생성할 때 원행별 고정 자료를 읽으며 이미 저장된 v1과 해시는 그대로 둔다. 기존 고정판은 불변 참조와 현재 원자료 검증으로 재검사하고 전체 JSON 재조립을 피한다. 원문항 검사·작성자 권한은 유지. 실제 전체 범위의 저장·생성 시간을 재검증한다.",
+      "source": "실제 Preview 4486행 저장66.369초, 38.7MB 복제·직렬화 병목에 대한 독립 읽기 전용 실측"
+    },
+    {
+      "id": "D18",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "전체14329행 생성 준비의 시간 초과",
+      "answer": "기존 원자적 거래와 내용 보호를 유지하며 포함 순서·기존 block_key 변경·단원 내 위치를 집합 계산하고 단원/단어/분류/출처를 일괄 기록한다. 원자료·학습 근거·적격성·학교 원문항 검증을 유지한다. 실제55초 초과가 확인된 관리 생성의 전체 rollback을 확인했고 성능 변경 뒤 다시 검증한다. 작업을 쪼개 노출하는 신규 중간 상태는 집합 처리를 실제 측정한 뒤 필요할 때만 설계한다.",
+      "source": "Preview 전체14329행 준비55초 취소와 새 구성0건 확인, 독립 보호 트리거 검토"
+    },
+    {
+      "id": "D19",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "실측된 원자료 재검사·반복조회 및 불필요한 준비자료 응답",
+      "answer": "전체 원자료의 실제 행 JSON 비교와 잠금을 그대로 유지한다. 집합 상태 검사는 두 순서 실측에서 두 번째 실행만 빨라 개선 근거가 없어 채택하지 않았다. 준비의 원행 문서는 이미 연결된 행에서 같은 필드로 작성한다. 앱의 문항 생성 입력과 완료 응답은 필요한 필드만 전달하는 별도 계약으로 줄이되 기존 전체 준비 API는 호환 유지한다. 검토 환경의 거래 원복 실측으로 성능과 내용 보존을 재확인한다.",
+      "source": "D18 전체 준비80.27초: 원자료검사25.28초/원행조회9.70초/기록본체36.40초. transaction-local 압축변경도73초로불충분하여전역설정변경없음"
+    },
+    {
+      "id": "D20",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "원문 결합의 실제14329행을2행으로 예상해 임시자료를 반복 읽는 조인 계획",
+      "answer": "큰 원문을 읽기 전에 위치·단원·생성된 단원 RETURNING 결과만 연결한 작은 assigned_positions CTE를 고정한다. 원문·단어·출처 생성식과 원자성·역순 재시도·권한은 유지한다. 별도 전역 메모리/압축 설정을 변경하지 않는다. 두행 예상과 약11GB 임시 읽기를 확인한 계획을 근거로 적용하고 실제 전체 범위55초 검증을 다시 진행한다.",
+      "source": "D19 실제69초 및 EXPLAIN의 inserted_entries 예상2행, temp_blks_read1410423/written9789"
+    },
+    {
+      "id": "D21",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "큰 저장 JSON과 범위 payload를 행마다 다시 읽는 비용",
+      "answer": "rowScopes와includedKeys를각1회펼치고범위별작은분류·이름정보를1회만고정한다. 기존행순서와범위배열순서,연속단원경계,원문전체대조,RETURNING의존과전체원복을보존한다. 전역메모리·압축은변경하지않는다.",
+      "source": "외부SQL의toasted저장본positions호출115초초과와PLpgSQL변수호출1.1초차이,독립코드검토"
+    },
+    {
+      "id": "D22",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "원자료검사에큰범위복합레코드를반복전달하는비용",
+      "answer": "기존원자료상태검사본문을필요한6개스칼라값만받는private함수로이동하고기존복합형함수는위임한다. 전체to_jsonb비교와retired/changed판정순서,권한과잠금은그대로유지한다. 큰payload는행별SQL매개변수에포함하지않는다. 실제성능은적용후검증한다.",
+      "source": "D21기록47.16초와별도원자료대조22초실측,복합매개변수코드검토"
+    },
+    {
+      "id": "D23",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "한번의전체준비경로에서원자료검사437회가13초이상소요",
+      "answer": "실제준비경로에서D22작은인수화로개선되지않음을확인했으므로같은전체JSON비교를한SQL묶음으로계산한다. 앞선단독함수측정에서불충분했던근거를실제호출경로와분리해다시검증한다. retired/changed우선순위와누락범위/판본대조,기존공유잠금을유지하며원문비교를생략하지않는다.",
+      "source": "D22동일assert경로20.69초중437개원자료검사13.72초;순수기록D21은47.16초"
+    },
+    {
+      "id": "D24",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "전체14329행 생성이 단일 요청55초를 넘는 문제와 중단 후 안전한 재개",
+      "answer": "기존 preparing·pending_review·배정불가 상태에서 불변 생성계획과 진행표를 두고 한 거래당최대500개 원행/문항을처리한다. 첫단계전체출처검사→단원/계획→전체원행→학교원문항→처음수락한불변생성문항→마지막출처/적격성/전체일치검사→ready공개순서다. 기존버전별잠금과행잠금을유지하고private쓰기context는backend/transaction/version/dataset/단계/행범위에고정하여새자료INSERT만허용한다. UPDATE/DELETE/ready쓰기는금지한다. 서버는최대4단계처리후명시적진행응답을주고브라우저는같은요청으로이어간다. 통신실패의무조건재전송은하지않고기존결과불명확복구를유지한다. 관리승인5권과기존4권/원자료/학생보존기준은변경하지않는다. 첫 계획 고정 전에 전체 문항 구조·대상·보기·행 해시를 검사한다. 일반 앱은 기존 공용 템플릿의 관리자 공동 재개를 유지하고 실제 관리 경로는 최초 요청 ID를 독점한다. 후속 자동 요청은 최초 화면의 관리자 ID를 헤더에 고정하고 서버가 쓰기 전에 현재 세션과 대조한다. 최초 계획 동시 제출의 plan_changed만 저장된 동일 버전 계획으로 이어가고, 원자료 충돌은 재시도하지 않는다.",
+      "source": "D21순수기록47.16초+D23검사14.75초,16MB/LZ4일시진단도55초초과;독립설계검토의학교보기후순서·최초동시성·범위별쓰기·완성판정반영"
+    },
+    {
+      "id": "D25",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "전체28658문항 보기 검사에서 EXISTS가 반복 조인을 선택하여55초 초과",
+      "answer": "마지막 보기 검사의 조건과 UNION ALL을 그대로 보존하고 전체 불일치 count>0으로 판단한다. 전체 비교용 해시 조인이 선택되도록 하며 검사를 생략하거나 허용 범위를 변경하지 않는다.",
+      "source": "독립 읽기 전용 EXPLAIN에서 예상비용43825233 대9153, 후보 실제6076ms에28658문항/114632보기 불일치0"
     }
   ],
   "impacts": {
@@ -1184,8 +1403,8 @@
       "id": "T3",
       "kind": "integration",
       "target": "src/lib/database/vocabulary-library.integration.test.ts",
-      "scenario": "원범위등록과템플릿거래·기대버전·멱등·차단",
-      "expected": "원자료 상태보존·재전송중복0·충돌거절",
+      "scenario": "원범위등록과템플릿거래·기대버전·멱등·차단·실제 관리 세션/웹 권한 분리·관리 작성 이후 일반 편집·관리 영수증 불변",
+      "expected": "원자료 상태보존·재전송중복0·충돌거절·잘못된 환경/원고 거절·관리 작업을 사용자로 위장하지 않음",
       "topics": [
         "behavior",
         "authorization",
@@ -1276,14 +1495,26 @@
         "ui-copy",
         "authorization"
       ]
+    },
+    {
+      "id": "T11",
+      "kind": "integration",
+      "target": "src/lib/database/vocabulary-composition-steps.integration.test.ts",
+      "scenario": "501행과문항 경계, 실패 조각 원복, 계획 전체 검증, 관리 요청과 완료 영수증",
+      "expected": "미완성 배정불가, 같은 요청 재개, 원자료 변경 거절, 최종 검증 후에만 공개",
+      "topics": [
+        "behavior",
+        "authorization",
+        "answer-leak"
+      ]
     }
   ],
   "verification": {
-    "fingerprint": "0faca7cd89c8030f008c7346e818701aa1a47ed64cbb37ec89fb807f91aa59e3",
+    "fingerprint": "7625f089892138cc7f8b2246ce60da87dddabfe1c43721080778cd6f2beb0587",
     "files": [
       {
         "path": "architecture/기능_소유권.json",
-        "sha256": "08d5744f109b41ff0a80fc2e8633aa4e4ad5a05de2b3006e84d1c279c873683c"
+        "sha256": "dabf6dba406308e630b9e460a5bddc2a46922b00a908bc720fb4c4b1d599f28e"
       },
       {
         "path": "eslint.config.mjs",
@@ -1615,7 +1846,7 @@
       },
       {
         "path": "src/app/api/admin/wordbook-library/route.ts",
-        "sha256": "fac9e9bd7018b4aec0e294a1445ffcbc52fb2344e613d7825bfb4befaf977b2d"
+        "sha256": "bcee24e183348d3445c453446075eb1c1b27edcbcb201d51e57c3c9632ef79ed"
       },
       {
         "path": "src/app/api/student/assignments/[id]/attempts/route.ts",
@@ -4475,7 +4706,7 @@
       },
       {
         "path": "src/features/wordbook-compositions/client/controllers/use-wordbook-library.ts",
-        "sha256": "f08078ead25be383384b52cd4566740c538a1993af78b7b5b4fe1f283654891b"
+        "sha256": "ca2deb5e165311c36d35f00a7318dac56765122cfd3b72f8699dd5edf016acb4"
       },
       {
         "path": "src/features/wordbook-compositions/client/transport/composition-transport.ts",
@@ -4483,7 +4714,7 @@
       },
       {
         "path": "src/features/wordbook-compositions/client/transport/library-transport.ts",
-        "sha256": "0a1227d52f4f38726f200b7855a2ca4e13c19cac272e7cc68a35454d97ba6659"
+        "sha256": "c74a24b25cc7bbc4a6a179113a307229bbc0ece9a32fde07af929ec54c23bd61"
       },
       {
         "path": "src/features/wordbook-compositions/contracts/composition.ts",
@@ -4495,7 +4726,7 @@
       },
       {
         "path": "src/features/wordbook-compositions/contracts/library-materialization.ts",
-        "sha256": "85b06b8ccae9e43aa9a1c4d7cdc78a7dedbcb678f66c72e4588c20ce7bc64ed4"
+        "sha256": "216394695457cc5ce71224d4e2f496fa772ea0ec8d6699cdeb0adea185de3fd8"
       },
       {
         "path": "src/features/wordbook-compositions/contracts/library-resources.ts",
@@ -4551,11 +4782,11 @@
       },
       {
         "path": "src/features/wordbook-compositions/server/commands/library-command.ts",
-        "sha256": "7d659b5b4c4baa414166ca3b0762d20c2058a0ddd25f346807595ba7f4e71b2a"
+        "sha256": "bbc3e840b4c1023711d7ec91d5e24b22542fc8a632794168f863a5d7616184f0"
       },
       {
         "path": "src/features/wordbook-compositions/server/commands/materialize-composition.ts",
-        "sha256": "1d154da7a79ce952a8d263385ae9375d63451e04a819bcad6c64527754e9ae11"
+        "sha256": "ad63d73882bc608847027e73397da40234047f72e85db2bab8eef6b6139b3693"
       },
       {
         "path": "src/features/wordbook-compositions/server/composition-lineage.test.ts",
@@ -4571,7 +4802,7 @@
       },
       {
         "path": "src/features/wordbook-compositions/server/library-service.test.ts",
-        "sha256": "3bb56e8de763c1313b67925ae32b7834e8491a8e0ccac5b2b38c781702c7f77d"
+        "sha256": "1ca11657c8a87bdb42647cfb6983fd12b322186883b4fa956db5f65d6856e391"
       },
       {
         "path": "src/features/wordbook-compositions/server/queries/composition-catalog.ts",
@@ -4587,7 +4818,7 @@
       },
       {
         "path": "src/features/wordbook-compositions/server/use-cases/composition-question-plan.ts",
-        "sha256": "a7ad7ec0ff1a9f8b6cca0fad6ae171ea654a31d90951543c4be643c3dcd6d225"
+        "sha256": "fa8f8219bcb6d6d63a819981a5da6a3d9115bbc127ef5a67e06f4e33ba86ffef"
       },
       {
         "path": "src/features/wordbook-compositions/ui/library-source-filters.tsx",
@@ -4983,11 +5214,15 @@
       },
       {
         "path": "src/lib/database/vocabulary-composition-questions.integration.test.ts",
-        "sha256": "6489b31c356768c92fbf1cd32345aff41fa8e78bda77df13b6f6638c5ce12409"
+        "sha256": "3c0f3f8c426324b9004a857a351f4097350f2637c4e2029c04e52719f22fb7a5"
+      },
+      {
+        "path": "src/lib/database/vocabulary-composition-steps.integration.test.ts",
+        "sha256": "ed4e47580f99763c4f13cb67593137628d5575e565b50b749215240bf3d04912"
       },
       {
         "path": "src/lib/database/vocabulary-library.integration.test.ts",
-        "sha256": "0a7792b93040d9557c6235d25fb6faa1713e86781e281d546ae9f71277735e23"
+        "sha256": "d76c8a99d0b128a9339f0e76d1e20f6474acec7c326415ecb712fc90ed0798ea"
       },
       {
         "path": "src/lib/database/wordbook-compositions.integration.test.ts",
@@ -5694,6 +5929,58 @@
         "sha256": "5265a7de16c6e2218133200a28406cd8dd5e5369f0ab47cf4d8669d8793ea10e"
       },
       {
+        "path": "supabase/migrations/20260920054353_vocabulary_library_management_registration.sql",
+        "sha256": "0b79d5df62f25331a47a0b02420267ef008f3281951126dbd1ff2a6d732373c0"
+      },
+      {
+        "path": "supabase/migrations/20260920060402_vocabulary_library_management_transfer.sql",
+        "sha256": "9d98b6236f1efd8d927a8068427ea93b739db8f6065a2819228bbb08f191047d"
+      },
+      {
+        "path": "supabase/migrations/20260920060911_preserve_uncatalogued_legacy_vocabulary.sql",
+        "sha256": "d3fec2620c06753d38bf715d92a5117934e180a55c719b0b84629e450784c847"
+      },
+      {
+        "path": "supabase/migrations/20260920102705_vocabulary_composition_management_verification.sql",
+        "sha256": "2db164eb2373e0b6438f9c0632654e61b4db4a8b9134f4498d37900a9ccff8ed"
+      },
+      {
+        "path": "supabase/migrations/20260920104109_compact_vocabulary_composition_references.sql",
+        "sha256": "5c4fe10880622165a5d7eca356e771c7b79cc195e0b0fc1c4ba96334b05805fa"
+      },
+      {
+        "path": "supabase/migrations/20260920110018_resume_large_vocabulary_compositions.sql",
+        "sha256": "0c0b6703f3053f9bc6d08fae5433de0212c5fa3398f709f9e438fbccc829e5cb"
+      },
+      {
+        "path": "supabase/migrations/20260920112203_optimize_vocabulary_composition_checks.sql",
+        "sha256": "161861d54c85e23c5705f905bbcf847e829cec89f17702fc4bdd762393dffe9c"
+      },
+      {
+        "path": "supabase/migrations/20260920113756_bound_vocabulary_composition_join_work.sql",
+        "sha256": "af30d4c5491524bb4fa693d28483d9a21776d1f3c2901812b88b09656789fc59"
+      },
+      {
+        "path": "supabase/migrations/20260920114825_cache_vocabulary_composition_scope_headers.sql",
+        "sha256": "20847c7238e4b75af199d4a9452d04ad362d85e928a3a8128fb6f5910ec46a95"
+      },
+      {
+        "path": "supabase/migrations/20260920115818_narrow_vocabulary_source_state_arguments.sql",
+        "sha256": "1c15de728f26c5a246fa2c4897f6b1dea7e9dc5bdf4abcd40715d0734611b3ab"
+      },
+      {
+        "path": "supabase/migrations/20260920120200_batch_vocabulary_source_state_checks.sql",
+        "sha256": "76e05bf58750c00c7035b234336acf889cca919c96459db92f95051bd434096d"
+      },
+      {
+        "path": "supabase/migrations/20260920121225_resume_vocabulary_composition_in_bounded_steps.sql",
+        "sha256": "71bda76caf80f536faefcbc085eca88bd17cea4b173d2271d3fa1dda7e300476"
+      },
+      {
+        "path": "supabase/migrations/20260920131206_bound_vocabulary_question_plan_comparisons.sql",
+        "sha256": "09e3212b4ed9c880ba19ed813e911cf423dac4563e5f967539d17f542fd89cb5"
+      },
+      {
         "path": "tsconfig.json",
         "sha256": "5bec101c734eb97d36f3f49b122ad4d37b68d796bfa608760d266c57cd6c50ac"
       },
@@ -5707,73 +5994,73 @@
         "checkId": "T1",
         "result": "pass",
         "environment": "local",
-        "ranAt": "2026-09-20T00:29:21Z",
-        "command": "node node_modules/vitest/vitest.mjs run src/features/wordbook-compositions/domain/library-selection.test.ts src/features/wordbook-compositions/domain/template-version.test.ts src/lib/services/quiz/pronunciation-registry.test.ts src/features/wordbook-compositions/ui/wordbook-library.test.tsx src/features/wordbook-compositions/server/library-service.test.ts --maxWorkers=2 --reporter=dot",
-        "summary": "최종5파일52검사통과. 선택 계산 파일 통과. 전체 실행의 별도14실패는 CSS/기존 열 추가 확인값으로 분리하고129/37/64건 재검사로 해소."
+        "ranAt": "2026-09-20T13:34:04Z",
+        "command": "node node_modules/vitest/vitest.mjs run src/features/wordbook-compositions/domain/library-selection.test.ts src/features/wordbook-compositions/domain/template-version.test.ts src/lib/services/quiz/pronunciation-registry.test.ts src/features/wordbook-compositions/ui/wordbook-library.test.tsx src/features/wordbook-compositions/server/library-service.test.ts src/lib/database/vocabulary-library.integration.test.ts src/lib/database/vocabulary-composition-questions.integration.test.ts src/lib/database/vocabulary-composition-steps.integration.test.ts --maxWorkers=2 --reporter=dot",
+        "summary": "최종 D25/관리자 세션 보완 코드의 8파일117검사 통과. 연도 구간/복수 필터/범위/제외/중복 계산 포함."
       },
       {
         "checkId": "T2",
         "result": "pass",
         "environment": "local",
-        "ranAt": "2026-09-20T00:29:21Z",
-        "command": "node node_modules/vitest/vitest.mjs run src/features/wordbook-compositions/domain/library-selection.test.ts src/features/wordbook-compositions/domain/template-version.test.ts src/lib/services/quiz/pronunciation-registry.test.ts src/features/wordbook-compositions/ui/wordbook-library.test.tsx src/features/wordbook-compositions/server/library-service.test.ts --maxWorkers=2 --reporter=dot",
-        "summary": "최종5파일52검사통과. 템플릿 버전 계산 파일 통과. 표시 편집과 범위 새 버전/이전 버전 복사를 실제 화면에서도 확인."
+        "ranAt": "2026-09-20T13:34:04Z",
+        "command": "node node_modules/vitest/vitest.mjs run src/features/wordbook-compositions/domain/library-selection.test.ts src/features/wordbook-compositions/domain/template-version.test.ts src/lib/services/quiz/pronunciation-registry.test.ts src/features/wordbook-compositions/ui/wordbook-library.test.tsx src/features/wordbook-compositions/server/library-service.test.ts src/lib/database/vocabulary-library.integration.test.ts src/lib/database/vocabulary-composition-questions.integration.test.ts src/lib/database/vocabulary-composition-steps.integration.test.ts --maxWorkers=2 --reporter=dot",
+        "summary": "같은 최종117검사. 표시 편집/범위 새 판/복사와 미확정 상태 계산 통과."
       },
       {
         "checkId": "T3",
         "result": "pass",
         "environment": "local",
-        "ranAt": "2026-09-20T00:21:38Z",
-        "command": "node node_modules/vitest/vitest.mjs run src/features/assignments/server/queries/assignment-dataset-units-query.test.ts src/lib/database/vocabulary-library.integration.test.ts src/lib/database/review-assignment-final-schema.integration.test.ts --maxWorkers=2 --reporter=dot",
-        "summary": "3파일64통과. 원범위 등록/거래/멱등/전체 부모 장문 태그와 불일치 차단 포함."
+        "ranAt": "2026-09-20T13:34:04Z",
+        "command": "node node_modules/vitest/vitest.mjs run src/features/wordbook-compositions/domain/library-selection.test.ts src/features/wordbook-compositions/domain/template-version.test.ts src/lib/services/quiz/pronunciation-registry.test.ts src/features/wordbook-compositions/ui/wordbook-library.test.tsx src/features/wordbook-compositions/server/library-service.test.ts src/lib/database/vocabulary-library.integration.test.ts src/lib/database/vocabulary-composition-questions.integration.test.ts src/lib/database/vocabulary-composition-steps.integration.test.ts --maxWorkers=2 --reporter=dot",
+        "summary": "같은 최종117검사. 실제 관리 세션과 웹 권한 분리, 파일 승인, 관리 작성 뒤 일반 편집, 영수증 불변과 원자료 등록 검사 통과."
       },
       {
         "checkId": "T4",
         "result": "pass",
         "environment": "local",
-        "ranAt": "2026-09-20T00:29:21Z",
-        "command": "node node_modules/vitest/vitest.mjs run src/features/wordbook-compositions/domain/library-selection.test.ts src/features/wordbook-compositions/domain/template-version.test.ts src/lib/services/quiz/pronunciation-registry.test.ts src/features/wordbook-compositions/ui/wordbook-library.test.tsx src/features/wordbook-compositions/server/library-service.test.ts --maxWorkers=2 --reporter=dot",
-        "summary": "최종5파일52검사통과. 고정 발음/역방향 미응답 숨김, 학생 학습 원뜻과 현재 사전 조회 분리 포함92건통과. 실제 음원 청음 미실시."
+        "ranAt": "2026-09-20T13:34:04Z",
+        "command": "node node_modules/vitest/vitest.mjs run src/features/wordbook-compositions/domain/library-selection.test.ts src/features/wordbook-compositions/domain/template-version.test.ts src/lib/services/quiz/pronunciation-registry.test.ts src/features/wordbook-compositions/ui/wordbook-library.test.tsx src/features/wordbook-compositions/server/library-service.test.ts src/lib/database/vocabulary-library.integration.test.ts src/lib/database/vocabulary-composition-questions.integration.test.ts src/lib/database/vocabulary-composition-steps.integration.test.ts --maxWorkers=2 --reporter=dot",
+        "summary": "같은 최종117검사. 원발음/학교 보완 선택, 고정 자료 실패와 미응답 역방향 숨김 유지. 실제 음원 전수 청음은 별도."
       },
       {
         "checkId": "T5",
         "result": "pass",
         "environment": "local",
-        "ranAt": "2026-09-20T00:07:34Z",
-        "command": "node node_modules/vitest/vitest.mjs run src/lib/database/assignment-release-final-schema.integration.test.ts src/lib/database/vocabulary-composition-questions.integration.test.ts --maxWorkers=2 --reporter=dot",
-        "summary": "37통과. 구성11건은 일반 생성/검토 학교문항/범위밖 보기와 고정 발음/원판 비활성화 보존 포함."
+        "ranAt": "2026-09-20T13:34:04Z",
+        "command": "node node_modules/vitest/vitest.mjs run src/features/wordbook-compositions/domain/library-selection.test.ts src/features/wordbook-compositions/domain/template-version.test.ts src/lib/services/quiz/pronunciation-registry.test.ts src/features/wordbook-compositions/ui/wordbook-library.test.tsx src/features/wordbook-compositions/server/library-service.test.ts src/lib/database/vocabulary-library.integration.test.ts src/lib/database/vocabulary-composition-questions.integration.test.ts src/lib/database/vocabulary-composition-steps.integration.test.ts --maxWorkers=2 --reporter=dot",
+        "summary": "같은 최종117검사. 일반 문항/학교 검토 문항/범위 밖 보기/발음/출처 증명/기존 문항 보존 통과."
       },
       {
         "checkId": "T6",
         "result": "pass",
         "environment": "local",
-        "ranAt": "2026-09-20T00:07:34Z",
-        "command": "node node_modules/vitest/vitest.mjs run src/lib/database/assignment-release-final-schema.integration.test.ts src/lib/database/vocabulary-composition-questions.integration.test.ts --maxWorkers=2 --reporter=dot",
-        "summary": "직접 배정/공통 전달/오답1과3/설정수정/재전송/실패원복 통과. 실제 학생 쓰기0."
+        "ranAt": "2026-09-20T13:34:04Z",
+        "command": "node node_modules/vitest/vitest.mjs run src/features/wordbook-compositions/domain/library-selection.test.ts src/features/wordbook-compositions/domain/template-version.test.ts src/lib/services/quiz/pronunciation-registry.test.ts src/features/wordbook-compositions/ui/wordbook-library.test.tsx src/features/wordbook-compositions/server/library-service.test.ts src/lib/database/vocabulary-library.integration.test.ts src/lib/database/vocabulary-composition-questions.integration.test.ts src/lib/database/vocabulary-composition-steps.integration.test.ts --maxWorkers=2 --reporter=dot",
+        "summary": "같은 최종117검사. 구성 문항을 기존 배정/예약/오답/설정 수정/학생 학습에 전달하는 계약 통과. 실제 학생 쓰기0."
       },
       {
         "checkId": "T7",
         "result": "pass",
         "environment": "local",
-        "ranAt": "2026-09-20T04:08:38Z",
-        "command": "node node_modules/vitest/vitest.mjs run src/features/wordbook-compositions/ui/wordbook-library.test.tsx src/features/wordbook-compositions/server/library-service.test.ts --maxWorkers=2 --reporter=dot",
-        "summary": "D12 후속 2파일40검사 통과. 준비 파일 원순서와 요청 번호, 내용 편집, 초점 이동/동일 필터, 오류/재시도, 지연 읽기 잠금/종료 보존을 확인. 이전 전체 회귀 근거 유지."
+        "ranAt": "2026-09-20T13:34:04Z",
+        "command": "node node_modules/vitest/vitest.mjs run src/features/wordbook-compositions/domain/library-selection.test.ts src/features/wordbook-compositions/domain/template-version.test.ts src/lib/services/quiz/pronunciation-registry.test.ts src/features/wordbook-compositions/ui/wordbook-library.test.tsx src/features/wordbook-compositions/server/library-service.test.ts src/lib/database/vocabulary-library.integration.test.ts src/lib/database/vocabulary-composition-questions.integration.test.ts src/lib/database/vocabulary-composition-steps.integration.test.ts --maxWorkers=2 --reporter=dot",
+        "summary": "같은 최종117검사. 검색/담기/복사/새 버전/준비 파일과 화면 복구 통과. 내부 단계 뒤 인증 오류에도 원래 요청을 보존."
       },
       {
         "checkId": "T8",
         "result": "pass",
         "environment": "local",
-        "ranAt": "2026-09-20T04:08:38Z",
-        "command": "node node_modules/vitest/vitest.mjs run src/features/wordbook-compositions/ui/wordbook-library.test.tsx src/features/wordbook-compositions/server/library-service.test.ts --maxWorkers=2 --reporter=dot",
-        "summary": "D12 후속 2파일40검사 통과. 준비 파일 원순서와 요청 번호, 내용 편집, 초점 이동/동일 필터, 오류/재시도, 지연 읽기 잠금/종료 보존을 확인. 이전 전체 회귀 근거 유지."
+        "ranAt": "2026-09-20T13:34:04Z",
+        "command": "node node_modules/vitest/vitest.mjs run src/features/wordbook-compositions/domain/library-selection.test.ts src/features/wordbook-compositions/domain/template-version.test.ts src/lib/services/quiz/pronunciation-registry.test.ts src/features/wordbook-compositions/ui/wordbook-library.test.tsx src/features/wordbook-compositions/server/library-service.test.ts src/lib/database/vocabulary-library.integration.test.ts src/lib/database/vocabulary-composition-questions.integration.test.ts src/lib/database/vocabulary-composition-steps.integration.test.ts --maxWorkers=2 --reporter=dot",
+        "summary": "같은 최종117검사. 서버 요청당 최대4단계, 명시 진행 응답만 다음 요청, 관리자 변경의 선제 차단, 내부 부분 저장 뒤 인증 오류 표시, 동시 생성/계획 경합 복구 통과."
       },
       {
         "checkId": "T9",
         "result": "pass",
         "environment": "local",
-        "ranAt": "2026-09-20T04:11:00Z",
-        "command": "tsc --noEmit; eslint changed controller/ui/test; check-feature-map --verify --changed --base 34400cc; verify-ui-architecture; local-admin-baseline --vocabulary-library --webpack",
-        "summary": "마지막 타입/lint/설계/기능 지도/화면 구조 통과. 마지막 보완 코드를 격리 Next production 빌드했고 독립 재검토 미해결0. 검사 조회 옵션의 타입 오류는 수정 후 통과."
+        "ranAt": "2026-09-20T13:22:26Z",
+        "command": "tsc --noEmit; eslint changed 11 files; check-feature-map --verify --changed --base 18c81a7; check-work-records --phase design; verify-ui-architecture; local-admin-baseline --vocabulary-library --webpack",
+        "summary": "후속 타입/변경 lint/설계/기능 지도/화면 구조 통과. 격리 Next production38페이지 빌드 성공. 독립 관리 세션/부분 저장/동시 생성 재검토 결함0. 검사 서버의 자체 종료는 권한 오류였으며 소유 프로세스를 확인해 종료하고 기존 빌드 복원·3개 포트0 확인. 실제 원자료 DB 검증은 외부 적용 기록과 구별."
       },
       {
         "checkId": "T10",
@@ -5781,7 +6068,15 @@
         "environment": "local",
         "ranAt": "2026-09-20T04:11:00Z",
         "command": "CUA actual Next local browser; prepared-import-fake.json; default viewport and 390x844",
-        "summary": "가짜 준비 파일→태그 초점 이동/동일 전체 필터 재클릭→2026/2024 순서2범위8개→1판8개 저장. 브라우저 오류/경고0, 모바일 문서390/390. 실제 요청 ID는 컴포넌트에서 확인. viewport 복원·서버 종료·기존 빌드 복원. 외부/학생 쓰기0."
+        "summary": "가짜 준비 파일→태그 초점 이동/동일 전체 필터 재클릭→2026/2024 순서2범위8개→1판8개 저장. 브라우저 오류/경고0, 모바일 문서390/390. 실제 요청 ID는 컴포넌트에서 확인. viewport 복원·서버 종료·기존 빌드 복원. 외부/학생 쓰기0. 후속 D13~D25는 화면 배치를 바꾸지 않았으며 진행/세션 변경은 최종 컴포넌트·실제 서버 함수 검사로 확인했다. 이 브라우저 실행을 후속 실제 관리자 로그인 검증으로 확대하지 않는다."
+      },
+      {
+        "checkId": "T11",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-20T13:34:04Z",
+        "command": "node node_modules/vitest/vitest.mjs run src/features/wordbook-compositions/domain/library-selection.test.ts src/features/wordbook-compositions/domain/template-version.test.ts src/lib/services/quiz/pronunciation-registry.test.ts src/features/wordbook-compositions/ui/wordbook-library.test.tsx src/features/wordbook-compositions/server/library-service.test.ts src/lib/database/vocabulary-library.integration.test.ts src/lib/database/vocabulary-composition-questions.integration.test.ts src/lib/database/vocabulary-composition-steps.integration.test.ts --maxWorkers=2 --reporter=dot",
+        "summary": "같은 최종117검사. 501행/501문항 경계, 실패 조각 원복, 잘못된 마지막 문항의 계획 저장 전 거절, 같은 계획 재개, 변경 원자료/자격 최종 차단, 관리 요청 소유권/영수증/전송 조각 정리 통과."
       }
     ]
   }

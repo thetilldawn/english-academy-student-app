@@ -1870,8 +1870,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 111,
-      "pathSetSha256": "be6c2354a50df27c1d9cc02f7e7075e6d07d050c4e749424ade6cd26c6224027"
+      "fileCount": 112,
+      "pathSetSha256": "c2905fcf84dc948cd766c55d752e5edb877b0eb84688eb750f3b09c8704bdf89"
     },
     {
       "path": "src/lib/deploy",
@@ -2437,6 +2437,71 @@
     },
     {
       "path": "supabase/migrations/20260919212838_connect_vocabulary_composition_question_snapshots.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20260920054353_vocabulary_library_management_registration.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20260920060402_vocabulary_library_management_transfer.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20260920060911_preserve_uncatalogued_legacy_vocabulary.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20260920102705_vocabulary_composition_management_verification.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20260920104109_compact_vocabulary_composition_references.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20260920110018_resume_large_vocabulary_compositions.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20260920112203_optimize_vocabulary_composition_checks.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20260920113756_bound_vocabulary_composition_join_work.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20260920114825_cache_vocabulary_composition_scope_headers.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20260920115818_narrow_vocabulary_source_state_arguments.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20260920120200_batch_vocabulary_source_state_checks.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20260920121225_resume_vocabulary_composition_in_bounded_steps.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20260920131206_bound_vocabulary_question_plan_comparisons.sql",
       "owner": "wordbook-compositions",
       "flow": "mock-wordbook-compose"
     }
@@ -6662,7 +6727,20 @@
           "supabase/migrations/20260914214202_add_reviewed_mock_wordbook_import.sql",
           "supabase/migrations/20260914223254_guard_reviewed_mock_source_key_normalization.sql",
           "supabase/migrations/20260919212837_add_vocabulary_library_templates.sql",
-          "supabase/migrations/20260919212838_connect_vocabulary_composition_question_snapshots.sql"
+          "supabase/migrations/20260919212838_connect_vocabulary_composition_question_snapshots.sql",
+          "supabase/migrations/20260920054353_vocabulary_library_management_registration.sql",
+          "supabase/migrations/20260920060402_vocabulary_library_management_transfer.sql",
+          "supabase/migrations/20260920060911_preserve_uncatalogued_legacy_vocabulary.sql",
+          "supabase/migrations/20260920102705_vocabulary_composition_management_verification.sql",
+          "supabase/migrations/20260920104109_compact_vocabulary_composition_references.sql",
+          "supabase/migrations/20260920110018_resume_large_vocabulary_compositions.sql",
+          "supabase/migrations/20260920112203_optimize_vocabulary_composition_checks.sql",
+          "supabase/migrations/20260920113756_bound_vocabulary_composition_join_work.sql",
+          "supabase/migrations/20260920114825_cache_vocabulary_composition_scope_headers.sql",
+          "supabase/migrations/20260920115818_narrow_vocabulary_source_state_arguments.sql",
+          "supabase/migrations/20260920120200_batch_vocabulary_source_state_checks.sql",
+          "supabase/migrations/20260920121225_resume_vocabulary_composition_in_bounded_steps.sql",
+          "supabase/migrations/20260920131206_bound_vocabulary_question_plan_comparisons.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/wordbook-compositions/route.ts",
@@ -6683,7 +6761,8 @@
           "src/features/wordbook-compositions/server/library-service.test.ts",
           "src/features/wordbook-compositions/ui/wordbook-library.test.tsx",
           "src/lib/database/vocabulary-library.integration.test.ts",
-          "src/lib/database/vocabulary-composition-questions.integration.test.ts"
+          "src/lib/database/vocabulary-composition-questions.integration.test.ts",
+          "src/lib/database/vocabulary-composition-steps.integration.test.ts"
         ]
       },
       "requiredImportEdges": [],

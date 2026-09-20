@@ -3,7 +3,7 @@ import type { PGlite } from "@electric-sql/pglite";
 import { beforeAll, afterAll, describe, it, expect, vi } from "vitest";
 import { createFinalSchemaDatabase } from "@/test-support/final-schema-database";
 import { EMPTY_LIBRARY_FILTERS, libraryCatalogSchema, libraryCommandResultSchema, type LibraryTemplate } from "@/features/wordbook-compositions/contracts/library";
-import { compositionPreparationSchema, type CompositionPreparation } from "@/features/wordbook-compositions/contracts/library-materialization";
+import { compositionPreparationSchema, compositionQuestionInputSchema, compositionCompletionSummarySchema, type CompositionPreparation } from "@/features/wordbook-compositions/contracts/library-materialization";
 import { planCompositionQuestions } from "@/features/wordbook-compositions/server/use-cases/composition-question-plan";
 import { planLibraryUnits } from "@/features/wordbook-compositions/domain/library-selection";
 import { reviewedExamFixture } from "@/test-support/reviewed-exam-fixtures";
@@ -57,7 +57,15 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
   afterAll(async () => { await db?.close(); });
   it("materializes consecutive disjoint units while keeping overlap membership and source order", async () => {
     const v = template.versions[0]!;
+    const command = { action: "materialize", requestId: randomUUID(), templateId: template.id, versionId: v.id, contentHash: v.contentHash };
+    const slim = compositionQuestionInputSchema.parse(await scalar("select public.prepare_vocabulary_template_question_input_v1($1::jsonb) value", [JSON.stringify(command)]));
     prepared = compositionPreparationSchema.parse(await scalar("select public.prepare_vocabulary_composition_v1($1,$2) value", [v.id, v.contentHash]));
+    expect(slim).toEqual({ ...prepared, entries: prepared.entries.map(e => Object.fromEntries(Object.entries(e).filter(([key]) => key !== "resources"))) });
+    expect(JSON.stringify(slim)).not.toMatch(/resources|correct_choice|choice_texts/);
+    expect(planCompositionQuestions(slim)).toHaveLength(12);
+    expect(await scalar("select public.prepare_vocabulary_template_question_input_v1($1::jsonb) value", [JSON.stringify(command)])).toEqual(slim);
+    expect(await scalar("select public.prepare_vocabulary_template_book_v1($1::jsonb) value", [JSON.stringify(command)])).toEqual(prepared);
+    await expect(db.query("select public.prepare_vocabulary_template_question_input_v1($1::jsonb)", [JSON.stringify({ ...command, contentHash: "f".repeat(64) })])).rejects.toThrow("library_request_reused");
     expect(prepared.entries).toHaveLength(6); expect(prepared.state).toBe("preparing");
     expect(prepared.entries.map(e => e.headword)).toEqual(["testword1", "testword2", "testword3", "testword5", "testword6", "testword4"]);
     const catalog = libraryCatalogSchema.parse(await scalar("select public.list_vocabulary_library_v1() value"));
@@ -80,7 +88,9 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
   });
   it("publishes the existing generator's frozen question bank once and preserves rows/resources", async () => {
     const v = template.versions[0]!; await service();
-    prepared = compositionPreparationSchema.parse(await scalar("select public.finalize_vocabulary_composition_v1($1,$2,$3::jsonb) value", [v.id, v.contentHash, JSON.stringify(planCompositionQuestions(prepared))]));
+    const summary = compositionCompletionSummarySchema.parse(await scalar("select public.finalize_vocabulary_composition_summary_v1($1,$2,$3::jsonb) value", [v.id, v.contentHash, JSON.stringify(planCompositionQuestions(prepared))]));
+    expect(summary).toEqual({ versionId: v.id, datasetId: prepared.datasetId, contentHash: v.contentHash, state: "ready", entryCount: 6, questionCount: 12 });
+    prepared = compositionPreparationSchema.parse(await scalar("select public.finalize_vocabulary_composition_v1($1,$2,'[]') value", [v.id, v.contentHash]));
     expect(prepared.state).toBe("ready");
     expect(await scalar("select public.finalize_vocabulary_composition_v1($1,$2,'[]') value", [v.id, v.contentHash])).toEqual(prepared);
     await admin(); const catalog = libraryCatalogSchema.parse(await scalar("select public.list_vocabulary_library_v1() value"));
@@ -98,6 +108,20 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
     return { units, questions: rows.map((q, index) => ({ vocab_entry_id: q.vocab_entry_id, base_order_index: index + 1, direction: q.direction,
       composition_bank: { mode: "book_meaning_choice", version_id: prepared.versionId, content_sha256: prepared.contentHash, question_item_id: q.question_item_id, question_item_sha256: q.question_item_sha256 } })) };
   }
+  it("keeps the smaller preparation and completion APIs behind the original role boundaries", async () => {
+    const v = template.versions[0]!;
+    const command = JSON.stringify({ action: "materialize", requestId: randomUUID(), templateId: template.id, versionId: v.id, contentHash: v.contentHash });
+    await db.exec("reset role; set role anon");
+    await expect(db.query("select public.prepare_vocabulary_template_question_input_v1($1::jsonb)", [command])).rejects.toThrow(/permission denied/);
+    await expect(db.query("select public.finalize_vocabulary_composition_summary_v1($1,$2,'[]')", [v.id, v.contentHash])).rejects.toThrow(/permission denied/);
+    await db.exec(`reset role; set role authenticated; select set_config('request.jwt.claim.sub','${studentId}',false);`);
+    await expect(db.query("select public.prepare_vocabulary_template_question_input_v1($1::jsonb)", [command])).rejects.toThrow("admin_required");
+    await admin();
+    await expect(db.query("select public.finalize_vocabulary_composition_summary_v1($1,$2,'[]')", [v.id, v.contentHash])).rejects.toThrow(/permission denied/);
+    await service();
+    await expect(db.query("select public.prepare_vocabulary_template_question_input_v1($1::jsonb)", [command])).rejects.toThrow(/permission denied/);
+    await admin();
+  });
   it("creates an actual direct assignment through the public retry-preserving entry point", async () => {
     const plan = await bankPlan(); expect(plan.questions).toHaveLength(6);
     const assignment = await scalar<string>(`select public.create_assignment_with_delivery_v7('가짜 새 조합 시험',$1::uuid,$2::uuid[],$3::int,100::smallint,300,80::smallint,false,null,'fixed',null,array['${studentId}']::uuid[],'none',null,$4::jsonb) value`,
@@ -238,7 +262,145 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
     await scalar("select public.save_vocabulary_library_template_v1($1::jsonb) value", [JSON.stringify({ action: "metadata", requestId: randomUUID(), templateId: template.id, expectedRevision: template.revision, metadata: { ...template.metadata, title: "가짜 새 이름", school: "가짜학교", targetGrade: "g11", semester: 2 } })]);
     const summary = libraryCommandResultSchema.parse(await scalar("select public.get_vocabulary_composition_summary_v1($1) value", [v.id]));
     expect(summary.createdBook).toMatchObject({ contentHash: v.contentHash, dataset: { title: "가짜 새 이름", gradeCode: "g11", schoolName: "가짜학교", semester: 2 } });
+    expect(await scalar("select title value from public.vocab_datasets where id=$1", [prepared.datasetId])).toBe("가짜 새 이름");
+    expect(await scalar("select jsonb_build_object('name',display_name,'school',metadata->'school','semester',metadata->'semester') value from public.vocab_dataset_catalog where dataset_id=$1", [prepared.datasetId]))
+      .toEqual({ name: "가짜 새 이름", school: "가짜학교", semester: 2 });
     expect(await scalar("select jsonb_agg(title order by id) value from public.assignments where dataset_id=$1", [prepared.datasetId])).toEqual(sourceTitles);
     expect((await db.query("select * from public.list_vocabulary_unit_source_classifications_v1($1)", [prepared.datasetId])).rows).toEqual([]);
+  });
+  it("keeps historical full snapshots and their exact hashes readable, copyable and materializable", async () => {
+    await db.exec("reset role");
+    const legacy = await scalar<{ id: string; hash: string; templateId: string }>(`with original as (
+      select recipe,private.resolve_vocabulary_library_recipe_v1(recipe) fixed from private.vocabulary_library_versions where id=$1
+    ), t as (insert into private.vocabulary_library_templates(metadata,created_by) values($2::jsonb,$3) returning id),
+    v as (insert into private.vocabulary_library_versions(template_id,number,content_sha256,recipe,fixed_composition,created_by)
+      select t.id,1,private.reviewed_exam_sha256_v1(original.fixed),original.recipe,original.fixed,$3 from t,original returning *)
+    select jsonb_build_object('id',id,'hash',content_sha256,'templateId',template_id) value from v`, [template.versions[0]!.id, JSON.stringify(template.metadata), adminId]);
+    await admin();
+    const copied = libraryCommandResultSchema.parse(await scalar("select public.save_vocabulary_library_template_v1($1::jsonb) value", [JSON.stringify({
+      action: "copy", requestId: randomUUID(), sourceVersionId: legacy.id, metadata: template.metadata,
+    })])).template.versions[0]!;
+    expect(copied.contentHash).toBe(legacy.hash);
+    const legacyPrepared = compositionPreparationSchema.parse(await scalar("select public.prepare_vocabulary_composition_v1($1,$2) value", [legacy.id, legacy.hash]));
+    expect(legacyPrepared.entries.map(e => [e.headword, e.primaryMeaning, e.sourceEntryId, e.resources])).toEqual(prepared.entries.map(e => [e.headword, e.primaryMeaning, e.sourceEntryId, e.resources]));
+    await service();
+    expect(await scalar("select public.finalize_vocabulary_composition_v1($1,$2,$3::jsonb) value", [legacy.id, legacy.hash, JSON.stringify(planCompositionQuestions(legacyPrepared))])).toMatchObject({ state: "ready", contentHash: legacy.hash });
+    await db.exec("reset role");
+    expect(await scalar("select a.fixed_composition=b.fixed_composition value from private.vocabulary_library_versions a,private.vocabulary_library_versions b where a.id=$1 and b.id=$2", [legacy.id, copied.id])).toBe(true);
+    await db.exec("begin");
+    try {
+      await db.query("update public.vocab_entries set pronunciation_ko='변경 검출용' where id=$1", [prepared.entries[0]!.sourceEntryId]);
+      await expect(db.query("select private.assert_vocabulary_library_version_current_v1(v) from private.vocabulary_library_versions v where id=$1", [legacy.id])).rejects.toThrow("library_scope_changed");
+    } finally { await db.exec("rollback"); }
+  });
+  describe.sequential("database-owner verification without a browser identity", () => {
+    const project = "wojxpruvbjzbhrpmsbuy", approval = "fake-management-verification", requestId = randomUUID();
+    let version: LibraryTemplate["versions"][number], management: CompositionPreparation, questionsText: string, questionsHash: string;
+    const owner = () => db.exec("reset role; select set_config('request.jwt.claim.sub','',false); select set_config('request.jwt.claim.role','',false); select set_config('request.jwt.claims','{}',false);");
+    const prepareSql = "select private.prepare_vocabulary_composition_management_v1($1,$2,$3,$4,$5) value";
+    const finishSql = "select private.finish_vocabulary_composition_management_v1($1,$2) value";
+    const preserved = () => scalar(`select jsonb_build_object('source',(select jsonb_agg(to_jsonb(e) order by id) from public.vocab_entries e where dataset_id='${originalDataset}'),
+      'students',(select jsonb_agg(to_jsonb(s) order by id) from public.students s),'assignments',(select jsonb_agg(to_jsonb(a) order by id) from public.assignments a),
+      'attempts',(select jsonb_agg(to_jsonb(q) order by id) from public.quiz_attempts q)) value`);
+    it("requires an exact approved version and keeps app roles out of management and core functions", async () => {
+      await admin();
+      version = libraryCommandResultSchema.parse(await scalar("select public.save_vocabulary_library_template_v1($1::jsonb) value", [JSON.stringify({
+        action: "copy", requestId: randomUUID(), sourceVersionId: template.versions[0]!.id, metadata: template.metadata,
+      })])).template.versions[0]!;
+      await owner();
+      await expect(db.query(prepareSql, [project, approval, requestId, version.id, version.contentHash])).rejects.toThrow("composition_management_not_approved");
+      await db.query("insert into private.vocabulary_composition_management_approvals(project_ref,approval_id,version_id,content_sha256) values($1,$2,$3,$4)", [project, approval, version.id, version.contentHash]);
+      await expect(db.query(prepareSql, ["x".repeat(20), approval, requestId, version.id, version.contentHash])).rejects.toThrow("composition_management_not_approved");
+      await expect(db.query(prepareSql, [project, approval, requestId, version.id, "f".repeat(64)])).rejects.toThrow("composition_management_not_approved");
+      for (const role of ["anon", "authenticated", "service_role"]) {
+        await db.exec(`set role ${role}`);
+        await expect(db.query(prepareSql, [project, approval, requestId, version.id, version.contentHash])).rejects.toThrow(/permission denied/);
+        await expect(db.query("select private.prepare_vocabulary_composition_core_v1($1,$2,null,null)", [version.id, version.contentHash])).rejects.toThrow(/permission denied/);
+        await expect(db.query("select private.prepare_vocabulary_composition_data_v1($1,$2,null,null)", [version.id, version.contentHash])).rejects.toThrow(/permission denied/);
+        await expect(db.query("select private.vocabulary_composition_question_input_v1($1)", [version.id])).rejects.toThrow(/permission denied/);
+        await expect(db.query("select private.finalize_vocabulary_composition_core_v1($1,$2,'[]',true)", [version.id, version.contentHash])).rejects.toThrow(/permission denied/);
+        await expect(db.query("select * from private.vocabulary_composition_management_inputs")).rejects.toThrow(/permission denied/);
+        await owner();
+      }
+      expect(await scalar("select count(*)::int value from private.vocabulary_composition_management_requests")).toBe(0);
+    });
+    it("records the real database actor without an admin identity and preserves original/student data", async () => {
+      const before = await preserved();
+      const result = await scalar(prepareSql, [project, approval, requestId, version.id, version.contentHash]);
+      expect(result).toMatchObject({ versionId: version.id, contentHash: version.contentHash, state: "preparing", entryCount: 6, questionCount: 0 });
+      expect(await scalar(prepareSql, [project, approval, requestId, version.id, version.contentHash])).toEqual(result);
+      management = compositionPreparationSchema.parse(await scalar("select private.vocabulary_composition_preparation_v1($1) value", [version.id]));
+      expect(management.entries.map(e => e.headword)).toEqual(prepared.entries.map(e => e.headword));
+      expect(await scalar(`select jsonb_build_object('author',c.created_by,'request',c.management_request_id,'importer',d.imported_by,'actor',r.executed_by,'session',r.session_role) value
+        from private.vocabulary_compositions c join public.vocab_datasets d on d.id=c.dataset_id join private.vocabulary_composition_management_requests r on r.id=c.management_request_id where c.version_id=$1`, [version.id]))
+        .toEqual({ author: null, request: requestId, importer: null, actor: "postgres", session: "postgres" });
+      expect(await preserved()).toEqual(before);
+      await expect(db.query(prepareSql, [project, approval, randomUUID(), version.id, version.contentHash])).rejects.toThrow("composition_management_owner_changed");
+      await expect(db.query("update private.vocabulary_compositions set created_by=$1 where version_id=$2", [adminId, version.id])).rejects.toThrow("composition_author_immutable");
+      await expect(db.query("update private.vocabulary_composition_management_requests set approval_id='changed' where id=$1", [requestId])).rejects.toThrow("immutable");
+    });
+    it("rejects missing, changed, and incomplete transport before publishing any question", async () => {
+      questionsText = JSON.stringify(planCompositionQuestions(management)); questionsHash = hash(questionsText);
+      await expect(db.query(finishSql, [requestId, questionsHash])).rejects.toThrow("composition_management_input_changed");
+      await db.query("insert into private.vocabulary_composition_management_inputs(request_id,file_sha256,byte_count,question_count) values($1,$2,$3,12)", [requestId, questionsHash, Buffer.byteLength(questionsText)]);
+      await expect(db.query(finishSql, [requestId, questionsHash])).rejects.toThrow("composition_questions_incomplete");
+      const midpoint = Math.floor(questionsText.length / 2);
+      await db.query("select private.stage_vocabulary_composition_questions_v1($1,1,2,$2)", [requestId, questionsText.slice(0, midpoint)]);
+      await db.query("select private.stage_vocabulary_composition_questions_v1($1,1,2,$2)", [requestId, questionsText.slice(0, midpoint)]);
+      await expect(db.query("select private.stage_vocabulary_composition_questions_v1($1,1,2,'changed')", [requestId])).rejects.toThrow("composition_question_chunk_changed");
+      await expect(db.query(finishSql, [requestId, questionsHash])).rejects.toThrow("composition_questions_incomplete");
+      await db.query("select private.stage_vocabulary_composition_questions_v1($1,2,2,$2)", [requestId, questionsText.slice(midpoint)]);
+      await service();
+      await expect(db.query("select public.finalize_vocabulary_composition_v1($1,$2,$3::jsonb)", [version.id, version.contentHash, questionsText])).rejects.toThrow("composition_management_completion_required");
+      await expect(db.query("select public.finalize_vocabulary_composition_summary_v1($1,$2,$3::jsonb)", [version.id, version.contentHash, questionsText])).rejects.toThrow("composition_management_completion_required");
+      await owner();
+      await expect(db.query(finishSql, [requestId, "f".repeat(64)])).rejects.toThrow("composition_management_input_changed");
+      expect(await scalar("select state value from private.vocabulary_compositions where version_id=$1", [version.id])).toBe("preparing");
+      expect(await scalar("select count(*)::int value from private.vocabulary_composition_items where version_id=$1", [version.id])).toBe(0);
+      await expect(db.query("update private.vocabulary_composition_management_inputs set question_count=1 where request_id=$1", [requestId])).rejects.toThrow("immutable");
+    });
+    it("uses the unchanged question validator and makes successful retries independent of deleted chunks", async () => {
+      const before = await preserved();
+      await db.exec("begin");
+      try {
+        await db.query("update private.vocabulary_compositions set state='ready',question_sha256=repeat('a',64) where version_id=$1", [version.id]);
+        await expect(db.query(finishSql, [requestId, questionsHash])).rejects.toThrow("composition_management_unrecorded_completion");
+      } finally { await db.exec("rollback"); }
+      const result = await scalar(finishSql, [requestId, questionsHash]);
+      expect(result).toMatchObject({ versionId: version.id, datasetId: management.datasetId, state: "ready", entryCount: 6, questionCount: 12 });
+      expect(await scalar("select count(*)::int value from private.vocabulary_composition_management_chunks where request_id=$1", [requestId])).toBe(0);
+      expect(await scalar(finishSql, [requestId, questionsHash])).toEqual(result);
+      await expect(db.query("select private.stage_vocabulary_composition_questions_v1($1,1,1,$2)", [requestId, questionsText])).rejects.toThrow("composition_questions_already_finished");
+      expect(await scalar("select count(*)::int value from private.vocabulary_composition_management_chunks where request_id=$1", [requestId])).toBe(0);
+      await expect(db.query(finishSql, [requestId, "f".repeat(64)])).rejects.toThrow("composition_management_input_changed");
+      expect(await scalar("select is_assignable value from public.vocab_dataset_catalog where dataset_id=$1", [management.datasetId])).toBe(true);
+      expect(await preserved()).toEqual(before);
+      await expect(db.query("delete from private.vocabulary_composition_management_results where request_id=$1", [requestId])).rejects.toThrow("immutable");
+    });
+    it("rejects a six-version approval set and rolls back an unconfirmed scope with no orphan book", async () => {
+      await db.exec("begin");
+      try {
+        const versions: typeof version[] = [];
+        await admin();
+        for (let i = 0; i < 6; i++) versions.push(libraryCommandResultSchema.parse(await scalar("select public.save_vocabulary_library_template_v1($1::jsonb) value", [JSON.stringify({
+          action: "copy", requestId: randomUUID(), sourceVersionId: template.versions[0]!.id, metadata: template.metadata,
+        })])).template.versions[0]!);
+        await owner();
+        for (const v of versions) await db.query("insert into private.vocabulary_composition_management_approvals(project_ref,approval_id,version_id,content_sha256) values($1,'fake-too-many',$2,$3)", [project, v.id, v.contentHash]);
+        await db.exec("savepoint capacity");
+        await expect(db.query(prepareSql, [project, "fake-too-many", randomUUID(), versions[0]!.id, versions[0]!.contentHash])).rejects.toThrow("composition_management_capacity");
+        await db.exec("rollback to savepoint capacity");
+        expect(await scalar("select count(*)::int value from private.vocabulary_composition_management_requests where approval_id='fake-too-many'")).toBe(0);
+      } finally { await db.exec("rollback"); }
+      await admin();
+      const empty = libraryCommandResultSchema.parse(await scalar("select public.save_vocabulary_library_template_v1($1::jsonb) value", [JSON.stringify({ action: "create", requestId: randomUUID(), metadata: template.metadata,
+        recipe: { filters: EMPTY_LIBRARY_FILTERS, scopes: [], excludedOccurrenceKeys: [], scopeStatus: "unconfirmed" } })])).template.versions[0]!;
+      await owner();
+      await db.query("insert into private.vocabulary_composition_management_approvals(project_ref,approval_id,version_id,content_sha256) values($1,'fake-unconfirmed',$2,$3)", [project, empty.id, empty.contentHash]);
+      const before = await scalar("select count(*)::int value from public.vocab_datasets");
+      await expect(db.query(prepareSql, [project, "fake-unconfirmed", randomUUID(), empty.id, empty.contentHash])).rejects.toThrow("composition_scope_unconfirmed");
+      expect(await scalar("select count(*)::int value from public.vocab_datasets")).toBe(before);
+      expect(await scalar("select count(*)::int value from private.vocabulary_composition_management_requests where approval_id='fake-unconfirmed'")).toBe(0);
+    });
   });
 });

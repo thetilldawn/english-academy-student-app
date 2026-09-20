@@ -273,9 +273,28 @@ describe.sequential("vocabulary library: reviewed source ranges and immutable te
     expect(await save(command)).toEqual(saved);
     await expect(save({ ...command, metadata: { ...meta, title: "변경" } })).rejects.toThrow("library_request_reused");
     await db.exec("reset role");
-    const proof = await db.query<{ hashes: string[] }>(`select fixed_composition->'occurrences'->1->'resources'->'linkRecordHashes' hashes
+    const proof = await db.query<{ hashes: string[] }>(`select private.expand_vocabulary_library_occurrence_v1(fixed_composition->'occurrences'->1)->'resources'->'linkRecordHashes' hashes
       from private.vocabulary_library_versions where id=$1`, [saved.versions[0]!.id]);
     expect(proof.rows[0]!.hashes).toEqual(["c".repeat(64), "d".repeat(64)]);
+    await admin();
+  });
+  it("expands compact references to the exact original snapshot including overlap, held rows and resource proofs", async () => {
+    await db.exec("reset role");
+    const result = (await db.query<{ equal: boolean; cached: number; rows: number }>(`with snapshots as (
+      select private.resolve_vocabulary_library_recipe_v1($1::jsonb) original,private.resolve_vocabulary_library_recipe_compact_v1($1::jsonb) compact
+    ) select jsonb_set(compact-'schemaVersion','{occurrences}',(select jsonb_agg(private.expand_vocabulary_library_occurrence_v1(value) order by ordinality)
+      from jsonb_array_elements(compact->'occurrences') with ordinality))=original equal,
+      (select count(*)::int from private.vocabulary_library_row_fingerprints) cached,(select count(*)::int from private.vocabulary_library_scope_rows) rows from snapshots`, [JSON.stringify(recipe())])).rows[0]!;
+    expect(result.equal).toBe(true); expect(result.cached).toBe(result.rows);
+    await expect(db.query("update private.vocabulary_library_row_fingerprints set document_sha256=repeat('f',64)")).rejects.toThrow("immutable");
+    const row = (await db.query<{ value: unknown }>("select fixed_composition->'occurrences'->0 value from private.vocabulary_library_versions where id=$1", [saved.versions[0]!.id])).rows[0]!.value;
+    await expect(db.query("select private.expand_vocabulary_library_occurrence_v1($1::jsonb || jsonb_build_object('documentHash',repeat('f',64)))", [JSON.stringify(row)])).rejects.toThrow("composition_reference_changed");
+    for (const role of ["anon", "authenticated", "service_role"]) {
+      await db.exec(`set role ${role}`);
+      await expect(db.query("select * from private.vocabulary_library_row_fingerprints")).rejects.toThrow(/permission denied/);
+      await expect(db.query("select private.cache_vocabulary_library_row_fingerprints_v1('{}')")).rejects.toThrow(/permission denied/);
+      await db.exec("reset role");
+    }
     await admin();
   });
   it("renames/tags without rewriting content, rejects old revision, and creates a smaller immutable version", async () => {
@@ -304,7 +323,7 @@ describe.sequential("vocabulary library: reviewed source ranges and immutable te
     await expect(save({ action: "create", requestId: randomUUID(), metadata: meta, recipe: changed })).rejects.toThrow("library_scope_changed");
     expect((await list()).templates).toHaveLength(count);
     await db.exec("reset role");
-    const frozen = await db.query<{ audio: string; entries: number }>(`select fixed_composition->'occurrences'->0->'resources'->'selected'->'audio'->>'value' audio,
+    const frozen = await db.query<{ audio: string; entries: number }>(`select private.expand_vocabulary_library_occurrence_v1(fixed_composition->'occurrences'->0)->'resources'->'selected'->'audio'->>'value' audio,
       (select count(*)::integer from public.vocab_entries) entries from private.vocabulary_library_versions where id=$1`, [saved.versions[0]!.id]);
     expect(frozen.rows[0]).toEqual({ audio: "fake-audio", entries: 4 });
     await expect(db.query("update private.vocabulary_library_versions set content_sha256=repeat('f',64) where id=$1", [saved.versions[0]!.id])).rejects.toThrow("immutable");
@@ -323,7 +342,7 @@ describe.sequential("vocabulary library: reviewed source ranges and immutable te
       values('fake-library-day','가짜 DAY','fake',repeat('A',64),4,'ready',true) returning id`)).rows[0]!.id;
     const u = (await db.query<{ id: string }>(`insert into public.vocab_units(dataset_id,unit_label,normalized_label,unit_kind,unit_number,sort_index,entry_count)
       values($1,'DAY 1','day:1','day',1,1,4) returning id`, [d])).rows[0]!.id;
-    await db.query("insert into public.vocab_dataset_catalog(dataset_id,display_name,catalog_group,material_kind,grade_code) values($1,'가짜 DAY','high','wordbook',null)", [d]);
+    // Existing directly registered DAY books can have no catalog metadata row.
     await db.query(`insert into public.vocab_entries(dataset_id,source_row,headword,headword_normalized,meanings,primary_meaning,row_sha256,unit_id,position_in_unit,entry_type)
       select $1,n,'same','same',array['가짜 뜻 '||n],'가짜 뜻 '||n,upper(encode(extensions.digest('fake:'||n,'sha256'),'hex')),$2,n,'word' from generate_series(1,4) n`, [d, u]);
     const rows = (await db.query<{ source_row: number; hash: string }>("select source_row,lower(row_sha256) hash from public.vocab_entries where dataset_id=$1 order by source_row", [d])).rows;
@@ -340,6 +359,14 @@ describe.sequential("vocabulary library: reviewed source ranges and immutable te
     expect(day.source).toMatchObject({ kind: "legacy_vocab", releaseId: null }); expect(day.classification.day).toBe(1);
     const t = await save({ action: "create", requestId: randomUUID(), metadata: { ...meta, title: "가짜 DAY 선택" }, recipe: { ...recipe([]), scopes: [{ id: day.id, version: day.version }] } });
     expect(t.versions[0]!.includedKeys).toHaveLength(4);
+    await db.exec("reset role");
+    expect((await db.query("select private.vocabulary_library_catalog_available_v1($1,'exam_use') allowed", [d])).rows[0]).toEqual({ allowed: false });
+    await db.query("insert into public.vocab_dataset_catalog(dataset_id,display_name,catalog_group,material_kind,grade_code,is_assignable) values($1,'가짜 DAY','high','wordbook',null,false)", [d]);
+    await admin(); expect((await list()).scopes.find(s => s.id === day.id)!.availability).toBe("retired");
+    await expect(save({ action: "create", requestId: randomUUID(), metadata: meta, recipe: { ...recipe([]), scopes: [{ id: day.id, version: day.version }] } })).rejects.toThrow("library_scope_changed");
+    await service(); await expect(db.query("select public.import_vocabulary_library_v1($1)", [text])).rejects.toThrow("library_source_unavailable");
+    await db.exec("reset role"); await db.query("delete from public.vocab_dataset_catalog where dataset_id=$1", [d]);
+    await admin(); expect((await list()).scopes.find(s => s.id === day.id)!.availability).toBe("available");
   });
   it("blocks changed source data and retirement for new saves while historical versions remain readable", async () => {
     await db.exec("reset role");
@@ -357,5 +384,142 @@ describe.sequential("vocabulary library: reviewed source ranges and immutable te
     await expect(save({ action: "create", requestId: randomUUID(), metadata: meta, recipe: recipe() })).rejects.toThrow("admin_required");
     await expect(db.query("select * from private.vocabulary_library_versions")).rejects.toThrow(/permission denied/);
     await service(); await expect(db.query("select public.list_vocabulary_library_v1()")).rejects.toThrow(/permission denied/);
+  });
+
+  const managementProject = "wojxpruvbjzbhrpmsbuy";
+  const managementApproval = "fake-management-approval";
+  let managed: LibraryTemplate;
+  let managementCommand: { action: string; requestId: string; metadata: typeof meta; recipe: ReturnType<typeof recipe> };
+  async function management() {
+    await db.exec("reset role; select set_config('request.jwt.claim.sub','',false),set_config('request.jwt.claim.role','',false),set_config('request.jwt.claims','{}',false),set_config('request.headers','{}',false);");
+  }
+  async function managedCreate(input: unknown, key = "fake-initial-template", project = managementProject) {
+    const r = await db.query<{ result: unknown }>("select private.create_vocabulary_library_template_management_v1($1,$2,$3,$4::jsonb) result", [project, managementApproval, key, JSON.stringify(input)]);
+    return libraryCommandResultSchema.parse(r.rows[0]!.result).template;
+  }
+  async function approveTemplate(input: unknown, key: string, project = managementProject) {
+    await management();
+    await db.query(`insert into private.vocabulary_library_template_approvals(project_ref,approval_id,template_key,command_sha256)
+      values($1,$2,$3,private.reviewed_exam_sha256_v1(jsonb_build_array($1::text,$2::text,$3::text,$4::jsonb)))`, [project, managementApproval, key, JSON.stringify(input)]);
+    return input;
+  }
+  it("imports through the actual database owner without HTTP claims, preserving project/file/row checks", async () => {
+    await management();
+    await db.query("update public.vocab_datasets set is_active=true where id=$1", [bundle.scopes[0]!.source.datasetId]);
+    const identity = await db.query("select current_user,session_user,auth.uid() uid,auth.role() role");
+    expect(identity.rows[0]).toEqual({ current_user: "postgres", session_user: "postgres", uid: null, role: null });
+    const input = structuredClone(bundle); input.scopes.forEach(s => { s.key = `management-${s.key}`; });
+    const text = await approve(input); await management();
+    const invoke = (body = text, project = managementProject) => db.query("select private.import_vocabulary_library_management_v1($1,$2) result", [body, project]);
+    await expect(invoke(text, "xdxhswjgksukjmpbzqgz")).rejects.toThrow("library_import_not_approved");
+    await expect(invoke(`${text} `)).rejects.toThrow("library_import_not_approved");
+    const altered = structuredClone(input); altered.scopes[0]!.rows[0]!.rowHash = "f".repeat(64);
+    const alteredText = await approve(altered); await management();
+    await expect(invoke(alteredText)).rejects.toThrow("library_row_or_reference_changed");
+    expect((await db.query("select id from private.vocabulary_library_scopes where scope_key like 'management-%'")).rows).toHaveLength(0);
+    const first = await invoke(); expect((await invoke()).rows).toEqual(first.rows);
+    const states = await db.query("select r.state,count(*)::integer n from private.vocabulary_library_scope_rows r join private.vocabulary_library_scopes s on s.id=r.scope_id where s.scope_key like 'management-%' group by r.state order by r.state");
+    expect(states.rows).toEqual([{ state: "excluded", n: 1 }, { state: "held", n: 1 }, { state: "included", n: 5 }]);
+    await expect(db.query("select public.import_vocabulary_library_v1($1)", [text])).rejects.toThrow("service_role_required");
+    await service(); await expect(db.query("select public.import_vocabulary_library_v1($1)", [text])).rejects.toThrow();
+  });
+  it("keeps management and shared import functions inaccessible to application roles", async () => {
+    await management();
+    const grants = await db.query<{ role: string; name: string; allowed: boolean }>(`select r.role,p.proname name,has_function_privilege(r.role,p.oid,'EXECUTE') allowed
+      from pg_proc p join pg_namespace n on n.oid=p.pronamespace cross join (values('anon'),('authenticated'),('service_role')) r(role)
+      where n.nspname='private' and p.proname in('import_vocabulary_library_core_v1','import_vocabulary_library_management_v1','create_vocabulary_library_template_management_v1')`);
+    expect(grants.rows).toHaveLength(9); expect(grants.rows.every(r => !r.allowed)).toBe(true);
+    for (const role of ["anon", "authenticated", "service_role"]) {
+      await db.exec(`reset role; set role ${role};`);
+      await expect(db.query("select private.import_vocabulary_library_management_v1('{}',$1)", [managementProject])).rejects.toThrow(/permission denied/);
+      await expect(managedCreate({})).rejects.toThrow(/permission denied/);
+      await expect(db.query("select * from private.vocabulary_library_management_requests")).rejects.toThrow(/permission denied/);
+    }
+  });
+  it("records management-created templates honestly and returns the original result on retries", async () => {
+    await management();
+    managementCommand = { action: "create", requestId: randomUUID(), metadata: { ...meta, title: "관리 등록한 가짜 틀" }, recipe: recipe() };
+    await expect(managedCreate(managementCommand)).rejects.toThrow("library_template_not_approved");
+    await approveTemplate(managementCommand, "fake-initial-template");
+    await expect(managedCreate({ ...managementCommand, metadata: { ...meta, title: "승인과 다른 이름" } })).rejects.toThrow("library_template_not_approved");
+    await expect(managedCreate({ ...managementCommand, recipe: { ...recipe(), scopes: [...recipe().scopes].reverse() } })).rejects.toThrow("library_template_not_approved");
+    await expect(managedCreate(managementCommand, "unapproved-key")).rejects.toThrow("library_template_not_approved");
+    await expect(db.query("select private.create_vocabulary_library_template_management_v1($1,'unknown-approval',$2,$3::jsonb)", [managementProject, "fake-initial-template", JSON.stringify(managementCommand)])).rejects.toThrow("library_template_not_approved");
+    managed = await managedCreate(managementCommand);
+    expect(managed.versions[0]).toMatchObject({ number: 1, sourceCount: 6 });
+    expect(managed.versions[0]!.includedKeys).toHaveLength(4);
+    expect(await managedCreate(managementCommand)).toEqual(managed);
+    await expect(managedCreate({ ...managementCommand, metadata: { ...meta, title: "다른 요청" } })).rejects.toThrow("library_request_reused");
+    await expect(managedCreate({ ...managementCommand, requestId: randomUUID() })).rejects.toThrow("library_template_not_approved");
+    await expect(managedCreate(managementCommand, "unapproved-key")).rejects.toThrow("library_request_reused");
+    const authors = await db.query(`select t.created_by template_author,v.created_by version_author,t.management_request_id request_id,
+      v.management_request_id version_request,r.executed_by,r.session_role,(r.command->>'requestId')::uuid command_id
+      from private.vocabulary_library_templates t join private.vocabulary_library_versions v on v.template_id=t.id
+      join private.vocabulary_library_management_requests r on r.id=t.management_request_id where t.id=$1`, [managed.id]);
+    expect(authors.rows[0]).toEqual({ template_author: null, version_author: null, request_id: managementCommand.requestId,
+      version_request: managementCommand.requestId, executed_by: "postgres", session_role: "postgres", command_id: managementCommand.requestId });
+    await expect(db.query("update private.vocabulary_library_management_requests set template_key='changed' where id=$1", [managementCommand.requestId])).rejects.toThrow("immutable");
+    await expect(db.query("delete from private.vocabulary_library_management_results where request_id=$1", [managementCommand.requestId])).rejects.toThrow("immutable");
+    await expect(db.query("update private.vocabulary_library_templates set created_by=$1,management_request_id=null where id=$2", [ids.admin, managed.id])).rejects.toThrow("library_template_author_immutable");
+    await expect(db.query("insert into private.vocabulary_library_templates(metadata) values($1::jsonb)", [JSON.stringify(meta)])).rejects.toThrow("vocabulary_library_template_author");
+  });
+  it("rejects unsupported management actions, wrong environments and invalid recipes without partial receipts", async () => {
+    const counts = () => db.query("select (select count(*)::integer from private.vocabulary_library_templates) templates,(select count(*)::integer from private.vocabulary_library_versions) versions,(select count(*)::integer from private.vocabulary_library_management_requests) requests,(select count(*)::integer from private.vocabulary_library_management_results) results");
+    const before = await counts();
+    const command = { ...managementCommand, requestId: randomUUID() };
+    await expect(managedCreate({ ...command, action: "metadata" }, "invalid-action")).rejects.toThrow("invalid_library_management_create");
+    await expect(managedCreate(command, "wrong-project", "xdxhswjgksukjmpbzqgz")).rejects.toThrow("management_project_not_approved");
+    await db.exec("insert into private.vocabulary_library_import_approvals(target_project_ref,file_sha256,content_sha256,scope_count,approval_id) values('xdxhswjgksukjmpbzqgz',repeat('9',64),repeat('8',64),1,'fake-other-project')");
+    await approveTemplate(command, "wrong-scope-project", "xdxhswjgksukjmpbzqgz");
+    await expect(managedCreate(command, "wrong-scope-project", "xdxhswjgksukjmpbzqgz")).rejects.toThrow("management_scope_project_mismatch");
+    await expect(managedCreate(await approveTemplate({ ...command, recipe: { ...recipe(), excludedOccurrenceKeys: ["f".repeat(64)] } }, "invalid-recipe"), "invalid-recipe")).rejects.toThrow("library_exclusion_outside_scope");
+    await expect(managedCreate(await approveTemplate({ ...command, metadata: { ...meta, tags: ["x", "x"] } }, "invalid-metadata"), "invalid-metadata")).rejects.toThrow("invalid_library_tags");
+    expect((await counts()).rows).toEqual(before.rows);
+    const empty = await managedCreate(await approveTemplate({ ...command, recipe: { ...recipe([]), scopeStatus: "unconfirmed" } }, "empty-confirmation-pending"), "empty-confirmation-pending");
+    expect(empty.versions[0]).toMatchObject({ sourceCount: 0, includedKeys: [], recipe: { scopeStatus: "unconfirmed" } });
+  });
+  it("reassembles exact transport fragments only after every chunk and original hash match", async () => {
+    const input = structuredClone(bundle); input.scopes.forEach(s => { s.key = `transfer-${s.key}`; });
+    const raw = await approve(input); await management();
+    const hash = createHash("sha256").update(raw).digest("hex");
+    const cut = Math.floor(raw.length / 2), first = raw.slice(0, cut), second = raw.slice(cut);
+    const stage = (index: number, text: string) => db.query("select private.stage_vocabulary_library_import_chunk_v1($1,$2,$3,2,$4)", [managementProject, hash, index, text]);
+    const finish = () => db.query<{ result: { scopes: unknown[] } }>("select private.finish_vocabulary_library_import_chunks_v1($1,$2) result", [managementProject, hash]);
+    await stage(2, second); await stage(2, second);
+    await expect(stage(2, `${second} `)).rejects.toThrow("library_transfer_chunk_changed");
+    await expect(finish()).rejects.toThrow("library_transfer_incomplete");
+    await stage(1, `${first} `);
+    await expect(finish()).rejects.toThrow("library_transfer_hash_mismatch");
+    expect((await db.query("select id from private.vocabulary_library_scopes where scope_key like 'transfer-%'")).rows).toHaveLength(0);
+    await db.query("delete from private.vocabulary_library_import_chunks where file_sha256=$1 and chunk_index=1", [hash]);
+    await stage(1, first);
+    expect((await finish()).rows[0]!.result.scopes).toHaveLength(3);
+    expect((await db.query("select * from private.vocabulary_library_import_chunks where file_sha256=$1", [hash])).rows).toHaveLength(0);
+    await stage(1, first); await stage(2, second); await finish();
+    expect((await db.query("select id from private.vocabulary_library_scopes where scope_key like 'transfer-%'")).rows).toHaveLength(3);
+    for (const role of ["anon", "authenticated", "service_role"]) {
+      await db.exec(`reset role; set role ${role};`);
+      await expect(stage(1, first)).rejects.toThrow(/permission denied/);
+      await expect(finish()).rejects.toThrow(/permission denied/);
+      await expect(db.query("select * from private.vocabulary_library_import_chunks")).rejects.toThrow(/permission denied/);
+    }
+    await management();
+  });
+  it("allows normal administrator edits, versions and copies of management-created templates with real user authorship", async () => {
+    await admin();
+    expect((await list()).templates.find(t => t.id === managed.id)).toEqual(managed);
+    const firstVersion = managed.versions[0]!;
+    const updated = await save({ action: "metadata", requestId: randomUUID(), templateId: managed.id, expectedRevision: 1, metadata: { ...meta, title: "앱에서 수정", tags: ["기말 대비"] } });
+    expect(updated.versions).toEqual(managed.versions);
+    const next = await save({ action: "version", requestId: randomUUID(), templateId: managed.id, expectedRevision: 2, expectedContentHash: firstVersion.contentHash, recipe: recipe([0]) });
+    expect(next.versions[1]).toEqual(firstVersion);
+    const copy = await save({ action: "copy", requestId: randomUUID(), sourceVersionId: firstVersion.id, metadata: { ...meta, title: "앱에서 복사" } });
+    expect(copy.versions[0]!.contentHash).toBe(firstVersion.contentHash);
+    await management();
+    const authors = await db.query<{ created_by: string; management_request_id: null }>("select created_by,management_request_id from private.vocabulary_library_versions where id=any($1::uuid[])", [[next.versions[0]!.id, copy.versions[0]!.id]]);
+    expect(authors.rows).toHaveLength(2); expect(authors.rows.every(r => r.created_by === ids.admin && r.management_request_id === null)).toBe(true);
+    const copiedAuthor = await db.query("select created_by,management_request_id from private.vocabulary_library_templates where id=$1", [copy.id]);
+    expect(copiedAuthor.rows[0]).toEqual({ created_by: ids.admin, management_request_id: null });
+    expect(await managedCreate(managementCommand)).toEqual(managed);
   });
 });
