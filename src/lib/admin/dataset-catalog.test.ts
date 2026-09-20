@@ -1,4 +1,17 @@
 import { describe, expect, it } from "vitest";
+import { datasetVocabularyRole } from "./dataset-catalog";
+
+describe("단어장 원본과 조합 역할", () => {
+  it("uses source metadata rather than the title and leaves unobserved metadata unclassified", () => {
+    expect(datasetVocabularyRole(undefined)).toBeUndefined();
+    expect(datasetVocabularyRole(null)).toBe("original");
+    expect(datasetVocabularyRole({})).toBe("original");
+    expect(datasetVocabularyRole({questionBankKind:"vocabulary_composition_v1"})).toBe("composition");
+    expect(datasetVocabularyRole({compositionVersion:"mock_wordbook_composition_v1"})).toBe("composition");
+    expect(datasetVocabularyRole({compositionVersion:"unknown-future-format"})).toBeUndefined();
+    expect(cataloguedDatasetFromMetadata({id:"fake",title:"2025년 3월",metadata:{questionBankKind:"vocabulary_composition_v1"}},undefined).vocabularyRole).toBe("composition");
+  });
+});
 
 import {
   cataloguedDatasetDisplayLabel,

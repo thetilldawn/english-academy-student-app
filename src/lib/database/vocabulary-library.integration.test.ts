@@ -315,6 +315,38 @@ describe.sequential("vocabulary library: reviewed source ranges and immutable te
     const empty = await save({ action: "create", requestId: randomUUID(), metadata: { ...meta, title: "기말 미확정" }, recipe: { ...recipe([]), scopeStatus: "unconfirmed" } });
     expect(empty.versions[0]).toMatchObject({ sourceCount: 0, includedKeys: [], datasetId: null });
   });
+
+  it("rejects new empty confirmed versions and all-excluded selections atomically", async () => {
+    const before = await list();
+    await expect(save({action:"create",requestId:randomUUID(),metadata:meta,recipe:recipe([])})).rejects.toThrow("library_confirmed_range_empty");
+    const allExcluded=recipe(); allExcluded.excludedOccurrenceKeys=before.templates.find(t=>t.id===saved.id)!.versions[1]!.includedKeys;
+    await expect(save({action:"create",requestId:randomUUID(),metadata:meta,recipe:allExcluded})).rejects.toThrow("library_confirmed_range_empty");
+    await expect(save({action:"version",requestId:randomUUID(),templateId:saved.id,expectedRevision:saved.revision,expectedContentHash:saved.versions[0]!.contentHash,recipe:recipe([]),metadata:{...meta,title:"실패해야 할 변경"}})).rejects.toThrow("library_confirmed_range_empty");
+    expect(await list()).toEqual(before);
+  });
+  it("saves version metadata in the same transaction and retains the previous content", async () => {
+    const created=await save({action:"create",requestId:randomUUID(),metadata:meta,recipe:recipe()});
+    const nextMetadata={...meta,title:"새 이름과 새 범위",tags:["자동 주제"]};
+    const cmd={action:"version",requestId:randomUUID(),templateId:created.id,expectedRevision:created.revision,expectedContentHash:created.versions[0]!.contentHash,recipe:recipe([0]),metadata:nextMetadata};
+    const updated=await save(cmd);expect(updated.metadata).toEqual(nextMetadata);expect(updated.versions[1]).toEqual(created.versions[0]);
+    expect(await save(cmd)).toEqual(updated);
+    await db.exec("reset role");
+    const config=(await db.query<{proconfig:string[]}>("select proconfig from pg_proc where oid='public.save_vocabulary_library_template_v1(jsonb)'::regprocedure")).rows[0]!.proconfig;
+    expect(config).toContain("statement_timeout=55s");await admin();
+  });
+  it("reads and replays historical confirmed-empty receipts without allowing new copies", async () => {
+    // This isolated fake database simulates a version saved before the new guard.
+    const cmd={action:"create",requestId:randomUUID(),metadata:{...meta,title:"구판 빈 확정 틀"},recipe:recipe([])};
+    await db.exec("reset role; alter table private.vocabulary_library_versions disable trigger guard_new_vocabulary_library_version_v1");
+    let legacy!: LibraryTemplate;
+    try { await admin(); legacy=await save(cmd); }
+    finally { await db.exec("reset role; alter table private.vocabulary_library_versions enable trigger guard_new_vocabulary_library_version_v1");await admin(); }
+    expect((await list()).templates.some(t=>t.id===legacy.id)).toBe(true);expect(await save(cmd)).toEqual(legacy);
+    await expect(save({...cmd,requestId:randomUUID()})).rejects.toThrow("library_confirmed_range_empty");
+    await expect(save({action:"copy",requestId:randomUUID(),sourceVersionId:legacy.versions[0]!.id,metadata:meta})).rejects.toThrow("library_confirmed_range_empty");
+    const fixed=await save({action:"version",requestId:randomUUID(),templateId:legacy.id,expectedRevision:1,expectedContentHash:legacy.versions[0]!.contentHash,recipe:recipe([0])});
+    expect(fixed.versions[1]).toEqual(legacy.versions[0]);expect(fixed.versions[0]!.includedKeys.length).toBeGreaterThan(0);
+  });
   it("rejects unknown selections/exclusions atomically and does not overwrite source rows or frozen resources", async () => {
     const count = (await list()).templates.length;
     const r = recipe(); r.excludedOccurrenceKeys = ["f".repeat(64)];

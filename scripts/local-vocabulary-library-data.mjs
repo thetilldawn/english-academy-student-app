@@ -17,6 +17,10 @@ scopes.push(...["textbook", "wordbook", "unclassified"].map((kind, i) => ({ ...s
   sourceTitle: "가짜 학교 자료", classification: { ...baseClass, kind, sourceGrade: "g11", lesson: i === 0 ? 1 : null, day: i === 1 ? 1 : null },
   occurrences: scopes[0].occurrences.map((r, j) => ({ ...r, key: hash([kind, j]), state: i === 2 && j === 0 ? "held" : "included" })) })));
 let seq = 2000;
+// Separate CSAT fixture: academic year is not its execution year or a month label.
+scopes.push({ ...structuredClone(scopes[1]), id: uid(630), version: hash("csat"), name: "가짜 2025년 11월 장문", sourceTitle: "가짜 수능 원고",
+  classification: { ...baseClass, kind: "csat", exam: { ...scopes[1].classification.exam, executionYear: 2025, academicYear: 2026, examMonth: 11, examKind: "csat" } },
+  occurrences: scopes[1].occurrences.map((r,i)=>({ ...r,key:hash(["csat",i]) })) });
 const templates = [], requests = new Map(), materialized = new Map();
 const metadata = title => ({ title, tags: ["화면 검사"], school: "가짜고", targetGrade: "g11", schoolYear: 2026, semester: 2, assessment: "기말", purpose: "직전 대비" });
 function version(recipe, number, sourceVersionId = null) {
@@ -42,7 +46,7 @@ export function vocabularyLibraryFixture({ url, method, headers, body }) {
     if (c.action === "metadata" || c.action === "version") {
       if (!t || t.revision !== c.expectedRevision) return deny("40001");
       if (c.action === "metadata") t.metadata = c.metadata;
-      else { if (t.versions[0].contentHash !== c.expectedContentHash) return deny("40001"); t.versions.unshift(version(c.recipe, t.versions[0].number + 1, t.versions[0].id)); }
+      else { if (t.versions[0].contentHash !== c.expectedContentHash) return deny("40001"); t.versions.unshift(version(c.recipe, t.versions[0].number + 1, t.versions[0].id)); if(c.metadata) t.metadata=c.metadata; }
       t.revision++;
     } else if (c.action === "create") { t = { id: uid(++seq), revision: 1, metadata: c.metadata, versions: [version(c.recipe, 1)] }; templates.push(t); }
     else if (c.action === "copy") { const source = templates.flatMap(t => t.versions).find(v => v.id === c.sourceVersionId); if (!source) return deny(); t = { id: uid(++seq), revision: 1, metadata: c.metadata, versions: [version(source.recipe, 1, source.id)] }; templates.push(t); }

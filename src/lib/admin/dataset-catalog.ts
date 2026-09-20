@@ -25,6 +25,7 @@ export type VocabUnitType =
   | "supplement";
 
 export type CataloguedDataset = {
+  vocabularyRole?: "original" | "composition";
   id: string;
   title: string;
   edition: string | null;
@@ -46,6 +47,7 @@ export type CataloguedDataset = {
 };
 
 export type RawCataloguedDataset = {
+  metadata?: unknown;
   id: string;
   title: string;
   edition?: string | null;
@@ -101,6 +103,7 @@ export function cataloguedDatasetFromMetadata(
   catalog: DatasetCatalogMetadata | undefined,
 ): CataloguedDataset {
   return {
+    ...(datasetVocabularyRole(dataset.metadata) ? { vocabularyRole: datasetVocabularyRole(dataset.metadata) } : {}),
     id: dataset.id,
     title: dataset.title,
     edition: dataset.edition ?? null,
@@ -122,6 +125,16 @@ export function cataloguedDatasetFromMetadata(
     purpose: catalog?.purpose ?? null,
     semester: catalog?.semester ?? null,
   };
+}
+
+export function datasetVocabularyRole(metadata: unknown): CataloguedDataset["vocabularyRole"] {
+  if (metadata === undefined) return undefined;
+  if (metadata === null) return "original";
+  if (typeof metadata !== "object" || Array.isArray(metadata)) return undefined;
+  const source = metadata as Record<string, unknown>;
+  if (source.questionBankKind === "vocabulary_composition_v1" || source.compositionVersion === "mock_wordbook_composition_v1") return "composition";
+  if ("compositionVersion" in source || "templateVersionId" in source) return undefined;
+  return "original";
 }
 
 function prefixLabel(dataset: CataloguedDataset) {

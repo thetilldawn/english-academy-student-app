@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { EMPTY_LIBRARY_FILTERS, libraryCommandSchema, type LibraryCatalog, type LibraryCommand, type LibraryFilters,
+import { EMPTY_LIBRARY_FILTERS, libraryCommandSchema, newLibraryCommandSchema, type LibraryCatalog, type LibraryCommand, type LibraryFilters,
   type LibraryRecipe, type LibraryTemplate, type LibraryVersion, type TemplateMetadata, type CreatedLibraryBook } from "../../contracts/library";
-import { matchesLibraryScope, resolveLibraryRecipe } from "../../domain/library-selection";
+import { resolveLibraryRecipe } from "../../domain/library-selection";
+import { groupMatches, groupsRecipe, kindFilters, libraryAutomaticTags, libraryEditorErrors, newLibraryGroup, recalculateGroup, restoreLibraryGroups, suggestedLibraryTitle, type LibraryGroup, type LibraryKind } from "../../domain/library-editor";
 import { changeVisibleSelection } from "../../domain/scope-selection";
 import { compareLibraryVersions, latestLibraryVersion, matchesTemplate } from "../../domain/template-version";
 import { LibraryRequestError, readLibrary, sendLibraryCommand } from "../transport/library-transport";
@@ -21,19 +22,22 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
   const [search, setSearch] = useState("");
   const [editor, setEditor] = useState<Editor>({ mode: "create" });
   const [editorRevision, setEditorRevision] = useState(0);
-  const [metadata, setMetadata] = useState<TemplateMetadata>(emptyMetadata);
+  const [metadataInput, setMetadata] = useState<TemplateMetadata>(emptyMetadata);
+  const [legacyTags, setLegacyTags] = useState<string[]>([]);
+  const [titleEdited, setTitleEdited] = useState(false);
+  const [groups, setGroups] = useState<LibraryGroup[]>([]);
+  const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
   const [recipe, setRecipe] = useState<LibraryRecipe>(emptyRecipe);
   const [saveState, setSaveState] = useState<{ status: "idle" | "saving" | "error"; error?: string; uncertain?: boolean }>({ status: "idle" });
   const [notice, setNotice] = useState("");
   const [authenticationFailed, setAuthenticationFailed] = useState(false);
   const [differentAdministrator, setDifferentAdministrator] = useState(false);
-  const [readingPrepared, setReadingPrepared] = useState(false);
-  const reading = useRef(false);
   const pending = useRef<LibraryCommand | null>(null), saving = useRef(false), mounted = useRef(true);
   const confirmedBook = useRef<CreatedLibraryBook | null>(null);
   const pendingAdministrator = useRef<string | null>(null);
   const requestEpoch = useRef(0);
-  const locked = readingPrepared || saveState.status === "saving" || Boolean(saveState.uncertain);
+  const locked = saveState.status === "saving" || Boolean(saveState.uncertain);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   useEffect(() => {
     const controller = new AbortController(); const epoch = ++requestEpoch.current;
@@ -52,8 +56,18 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
     return () => controller.abort();
   }, [reload, captureAuthenticationFailure]);
 
-  const visible = useMemo(() => catalog.scopes.filter(s => matchesLibraryScope(s, recipe.filters)), [catalog.scopes, recipe.filters]);
-  const templates = useMemo(() => catalog.templates.filter(t => matchesTemplate(t, search)), [catalog.templates, search]);
+  const activeGroup = groups.find(g => g.id === activeGroupId) ?? null;
+  const visible = useMemo(() => activeGroup ? groupMatches(catalog.scopes, activeGroup) : [], [catalog.scopes, activeGroup]);
+  const automaticTags = useMemo(() => libraryAutomaticTags(catalog.scopes, recipe, metadataInput), [catalog.scopes, recipe, metadataInput]);
+  const metadata = useMemo(() => ({ ...metadataInput,
+    school: metadataInput.school?.trim() ? metadataInput.school : null,
+    assessment: metadataInput.assessment?.trim() ? metadataInput.assessment : null,
+    purpose: metadataInput.purpose?.trim() ? metadataInput.purpose : null,
+    title: titleEdited ? metadataInput.title : suggestedLibraryTitle(catalog.scopes, recipe, metadataInput),
+    tags: [...new Set([...legacyTags, ...automaticTags])].slice(0, 30),
+  }), [catalog.scopes, metadataInput, recipe, titleEdited, legacyTags, automaticTags]);
+  const templates = useMemo(() => catalog.templates.filter(t => matchesTemplate({ ...t, metadata: { ...t.metadata,
+    tags: [...new Set([...t.metadata.tags, ...libraryAutomaticTags(catalog.scopes, latestLibraryVersion(t).recipe, t.metadata)])] } }, search)), [catalog.scopes, catalog.templates, search]);
   const selection = useMemo(() => {
     try { return { result: resolveLibraryRecipe(catalog.scopes, recipe), error: false }; }
     catch { return { result: null, error: true }; }
@@ -62,44 +76,36 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
   const newestTemplate = editor.template && catalog.templates.find(t => t.id === editor.template!.id);
   const conflictingTemplate = newestTemplate && newestTemplate.revision !== editor.template?.revision ? newestTemplate : null;
   const scopesLocked = locked || editor.mode === "metadata" || editor.mode === "copy";
+  const errors = libraryEditorErrors(metadata, recipe, groups, selection.result?.includedCount ?? null, selection.error);
+  if (editor.mode === "metadata" || editor.mode === "copy") delete errors.range;
+  if (editor.mode === "copy" && editor.version?.recipe.scopeStatus === "confirmed" && !editor.version.includedKeys.length)
+    errors.range = "저장된 범위가 비어 있습니다. 먼저 범위를 수정해 주세요.";
+  const canSave = loadState === "ready" && !Object.keys(errors).length && !conflictingTemplate;
   function edit(change: () => void) {
-    if (locked || saving.current || reading.current) return;
-    pending.current = null; confirmedBook.current = null; pendingAdministrator.current = null; setSaveState({ status: "idle" }); setNotice(""); change();
+    if (locked || saving.current) return;
+    pending.current = null; confirmedBook.current = null; pendingAdministrator.current = null; setSaveState({ status: "idle" }); setNotice(""); setDirty(true); change();
+  }
+  function legacyTemplateTags(template: LibraryTemplate) {
+    const generated = new Set(libraryAutomaticTags(catalog.scopes, latestLibraryVersion(template).recipe, template.metadata));
+    return template.metadata.tags.filter(tag => !generated.has(tag));
   }
   function open(template: LibraryTemplate, version: LibraryVersion, mode: "metadata" | "version" | "copy") {
     edit(() => { setEditorRevision(v => v + 1); setEditor({ template, version, mode }); setMetadata({ ...template.metadata, title: mode === "copy" ? `${template.metadata.title.slice(0, 95)} 복사` : template.metadata.title });
+      setLegacyTags(legacyTemplateTags(template));
+      const restored = restoreLibraryGroups(catalog.scopes, version.recipe);
+      setGroups(restored); setActiveGroupId(restored[0]?.id ?? null); setTitleEdited(true); setDirty(false);
       setRecipe(structuredClone(version.recipe)); setTab("sources"); });
   }
-  function setSelected(ids: string[]) {
-    const previous = new Map(recipe.scopes.map(s => [s.id, s]));
-    const current = new Map(catalog.scopes.map(s => [s.id, s]));
-    const scopes = ids.flatMap(id => { const s = previous.get(id) ?? current.get(id); return s ? [{ id: s.id, version: s.version }] : []; });
-    const reachable = new Set(scopes.flatMap(s => current.get(s.id)?.occurrences.map(r => r.key) ?? []));
-    setRecipe(r => ({ ...r, scopes, scopeStatus: scopes.length ? "confirmed" : r.scopeStatus,
-      excludedOccurrenceKeys: r.excludedOccurrenceKeys.filter(key => reachable.has(key)) }));
+  function updateGroups(next: LibraryGroup[]) {
+    setGroups(next); setRecipe(r => groupsRecipe(catalog.scopes, next, r));
   }
-  async function loadPrepared(file: File) {
-    if (locked || saving.current || reading.current || loadState !== "ready") return;
-    reading.current = true; setReadingPrepared(true);
-    const epoch = requestEpoch.current;
-    try {
-      if (file.size > 2 * 1024 * 1024) throw new Error("file-size");
-      const command = libraryCommandSchema.parse(JSON.parse(await file.text()));
-      if (!mounted.current || epoch !== requestEpoch.current) return;
-      if (command.action !== "create") throw new Error("create-only");
-      resolveLibraryRecipe(catalog.scopes, command.recipe);
-      setEditorRevision(v => v + 1); setEditor({ mode: "create" });
-      setMetadata(command.metadata); setRecipe(command.recipe); setTab("sources");
-      pending.current = command; pendingAdministrator.current = catalog.viewerId; confirmedBook.current = null;
-      setSaveState({ status: "idle" }); setNotice("준비한 구성을 불러왔습니다. 이름과 담은 범위를 확인한 뒤 저장해 주세요.");
-    } catch {
-      if (mounted.current && epoch === requestEpoch.current) setSaveState({ status: "error", error: "준비한 구성을 읽지 못했습니다. 현재 자료에 맞는 파일인지 확인해 주세요." });
-    } finally {
-      reading.current = false; if (mounted.current) setReadingPrepared(false);
-    }
+  function updateGroup(change: (g: LibraryGroup) => LibraryGroup) {
+    if (scopesLocked || !activeGroup) return;
+    const next = change(activeGroup);
+    if (JSON.stringify(next) !== JSON.stringify(activeGroup)) edit(() => updateGroups(groups.map(g => g.id === activeGroup.id ? next : g)));
   }
   async function save(override?: LibraryCommand) {
-    if (saving.current || reading.current) return;
+    if (saving.current || authenticationFailed || (loadState !== "ready" && !pending.current && !confirmedBook.current)) return;
     if (confirmedBook.current) {
       saving.current = true;
       try { await onSaved?.(confirmedBook.current); confirmedBook.current = null; setSaveState({ status: "idle" }); }
@@ -107,15 +113,16 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
       finally { saving.current = false; }
       return;
     }
+    if (!pending.current && !override && !canSave) { setSaveState({ status: "error", error: "입력한 이름과 범위를 확인해 주세요." }); return; }
     const requestId = crypto.randomUUID();
     let raw: unknown;
     if (pending.current) raw = pending.current;
     else if (override) raw = override;
     else if (editor.mode === "metadata" && editor.template) raw = { action: "metadata", requestId, templateId: editor.template.id, expectedRevision: editor.template.revision, metadata };
-    else if (editor.mode === "version" && editor.template && editor.version) raw = { action: "version", requestId, templateId: editor.template.id, expectedRevision: editor.template.revision, expectedContentHash: latestLibraryVersion(editor.template).contentHash, recipe };
+    else if (editor.mode === "version" && editor.template && editor.version) raw = { action: "version", requestId, templateId: editor.template.id, expectedRevision: editor.template.revision, expectedContentHash: latestLibraryVersion(editor.template).contentHash, recipe, metadata };
     else if (editor.mode === "copy" && editor.version) raw = { action: "copy", requestId, sourceVersionId: editor.version.id, metadata };
     else raw = { action: "create", requestId, metadata, recipe };
-    const parsed = libraryCommandSchema.safeParse(raw);
+    const parsed = (pending.current ? libraryCommandSchema : newLibraryCommandSchema).safeParse(raw);
     if (!parsed.success || (!pending.current && ["create", "version"].includes(parsed.data.action) && selection.error)) {
       setSaveState({ status: "error", error: "이름과 선택한 범위를 확인해 주세요." }); return;
     }
@@ -130,6 +137,8 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
         setLoadState("ready"); setEditorRevision(v => v + 1);
         setEditor({ mode: "metadata", template: result.template, version: latestLibraryVersion(result.template) });
         setMetadata(result.template.metadata); setRecipe(latestLibraryVersion(result.template).recipe);
+        setLegacyTags(legacyTemplateTags(result.template));
+        setGroups(restoreLibraryGroups(catalog.scopes, latestLibraryVersion(result.template).recipe)); setTitleEdited(true); setDirty(false);
         setSaveState({ status: "idle" }); pending.current = null; pendingAdministrator.current = null; setTab("saved");
         if (result.createdBook) {
           const available = result.createdBook.dataset.status === "ready" && result.createdBook.dataset.isActive && result.createdBook.dataset.isAssignable && result.createdBook.dataset.availableQuestionModes.length > 0;
@@ -152,21 +161,33 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
       }
     } finally { saving.current = false; }
   }
-  return { catalog, loadState, loadError, tab, search, editor, editorRevision, metadata, recipe, saveState, notice, authenticationFailed, differentAdministrator, locked, scopesLocked, visible, templates, selection, difference, conflictingTemplate, readingPrepared,
+  return { catalog, loadState, loadError, tab, search, editor, editorRevision, metadata, automaticTags, legacyTags, recipe, saveState, notice, authenticationFailed, differentAdministrator, locked, scopesLocked, visible, templates, selection, difference, conflictingTemplate, groups, activeGroup, dirty, errors, canSave,
     actions: {
       setTab: (value: "saved" | "sources") => { if (!locked) setTab(value); }, setSearch,
-      setMetadata: (value: TemplateMetadata) => { if (JSON.stringify(value) !== JSON.stringify(metadata)) edit(() => setMetadata(value)); },
-      setFilters: (filters: LibraryFilters) => { if (!scopesLocked && JSON.stringify(filters) !== JSON.stringify(recipe.filters)) edit(() => setRecipe(r => ({ ...r, filters }))); },
-      setScopeStatus: (scopeStatus: LibraryRecipe["scopeStatus"]) => { if (!scopesLocked) edit(() => setRecipe(r => scopeStatus === "unconfirmed" ? { ...r, scopeStatus, scopes: [], excludedOccurrenceKeys: [] } : { ...r, scopeStatus })); },
-      toggle: (id: string) => { if (!scopesLocked) edit(() => { const s = catalog.scopes.find(s => s.id === id); const ids = recipe.scopes.map(s => s.id);
-        if (ids.includes(id) || s?.availability === "available") setSelected(changeVisibleSelection(ids, [id], !ids.includes(id))); }); },
-      toggleVisible: (include: boolean) => { if (!scopesLocked) edit(() => setSelected(changeVisibleSelection(recipe.scopes.map(s => s.id), visible.filter(s => s.availability === "available").map(s => s.id), include))); },
-      clear: () => { if (!scopesLocked) edit(() => setSelected([])); },
+      setMetadata: (value: TemplateMetadata) => { if (JSON.stringify(value) !== JSON.stringify(metadata)) edit(() => { if (value.title !== metadata.title) setTitleEdited(true); setMetadata(value); }); },
+      suggestTitle: () => edit(() => setTitleEdited(false)),
+      setFilters: (filters: LibraryFilters) => updateGroup(g => {
+        const next = kindFilters(g.kind, filters);
+        if (next.yearFrom !== g.filters.yearFrom || next.yearTo !== g.filters.yearTo) next.years = [];
+        else if (JSON.stringify(next.years) !== JSON.stringify(g.filters.years)) { next.yearFrom = null; next.yearTo = null; }
+        if (JSON.stringify(next.types) !== JSON.stringify(g.filters.types)) next.questions = [];
+        if (JSON.stringify(next) === JSON.stringify(g.filters)) return g;
+        return recalculateGroup(catalog.scopes, { ...g, filters: next });
+      }),
+      setDataset: (datasetId: string | null) => updateGroup(g => datasetId === g.datasetId ? g : recalculateGroup(catalog.scopes, { ...g, datasetId, filters: kindFilters(g.kind) })),
+      selectGroup: (id: string) => { if (!locked) setActiveGroupId(id); },
+      addGroup: (kind: LibraryKind) => { if (!scopesLocked) edit(() => { const g = newLibraryGroup(catalog.scopes, kind, crypto.randomUUID()); setRecipe(r => ({ ...r, scopeStatus: "confirmed" })); updateGroups([...groups, g]); setActiveGroupId(g.id); }); },
+      removeGroup: (id: string) => { if (!scopesLocked) edit(() => { const next = groups.filter(g => g.id !== id); updateGroups(next); if (id === activeGroupId) setActiveGroupId(next[0]?.id ?? null); }); },
+      restoreConditions: () => { if (!scopesLocked) edit(() => { const next = recipe.filters.kinds.map(kind => recalculateGroup(catalog.scopes, { ...newLibraryGroup(catalog.scopes, kind, crypto.randomUUID()), filters: kindFilters(kind, recipe.filters) })); updateGroups(next); setActiveGroupId(next[0]?.id ?? null); }); },
+      setScopeStatus: (scopeStatus: LibraryRecipe["scopeStatus"]) => { if (!scopesLocked) edit(() => { setRecipe(r => scopeStatus === "unconfirmed" ? { ...r, scopeStatus, scopes: [], excludedOccurrenceKeys: [] } : { ...r, scopeStatus }); if (scopeStatus === "unconfirmed") { setGroups([]); setActiveGroupId(null); } }); },
+      toggle: (id: string) => updateGroup(g => { const s = catalog.scopes.find(s => s.id === id), has = g.scopes.some(r => r.id === id); return { ...g, manual: true, scopes: has ? g.scopes.filter(r => r.id !== id) : s?.availability === "available" ? [...g.scopes, { id: s.id, version: s.version }] : g.scopes }; }),
+      removeScope: (id: string) => { if (!scopesLocked) edit(() => updateGroups(groups.map(g => ({ ...g, manual: true, scopes: g.scopes.filter(s => s.id !== id) })))); },
+      toggleVisible: (include: boolean) => updateGroup(g => ({ ...g, manual: true, scopes: include ? [...new Map([...g.scopes, ...visible.map(s => ({ id: s.id, version: s.version }))].map(s => [s.id, s])).values()] : g.scopes.filter(s => !visible.some(v => v.id === s.id)) })),
+      clear: () => { if (!scopesLocked) edit(() => { updateGroups([]); setActiveGroupId(null); }); },
       move: (id: string, offset: -1 | 1) => { if (!scopesLocked) edit(() => { const ids = recipe.scopes.map(s => s.id), from = ids.indexOf(id), to = from + offset;
-        if (from >= 0 && to >= 0 && to < ids.length) { [ids[from], ids[to]] = [ids[to]!, ids[from]!]; setSelected(ids); } }); },
+        if (from >= 0 && to >= 0 && to < ids.length) { [ids[from], ids[to]] = [ids[to]!, ids[from]!]; const r = { ...recipe, scopes: ids.map(id => recipe.scopes.find(s => s.id === id)!) }; setRecipe(r); const restored = restoreLibraryGroups(catalog.scopes, r); setGroups(restored); setActiveGroupId(restored[0]?.id ?? null); } }); },
       exclude: (key: string) => { if (!scopesLocked) edit(() => setRecipe(r => ({ ...r, excludedOccurrenceKeys: changeVisibleSelection(r.excludedOccurrenceKeys, [key], !r.excludedOccurrenceKeys.includes(key)) }))); },
-      newTemplate: () => edit(() => { setEditorRevision(v => v + 1); setEditor({ mode: "create" }); setMetadata(emptyMetadata()); setRecipe(emptyRecipe()); setTab("sources"); }),
-      loadPrepared,
+      newTemplate: () => edit(() => { setEditorRevision(v => v + 1); setEditor({ mode: "create" }); setMetadata(emptyMetadata()); setLegacyTags([]); setTitleEdited(false); setRecipe(emptyRecipe()); setGroups([]); setActiveGroupId(null); setDirty(false); setTab("sources"); }),
       open,
       rebase: () => { if (conflictingTemplate) edit(() => { setEditor(e => ({ ...e, template: conflictingTemplate, version: latestLibraryVersion(conflictingTemplate) }));
         setNotice("최신 버전을 기준으로 변경 내용을 다시 확인해 주세요."); }); },

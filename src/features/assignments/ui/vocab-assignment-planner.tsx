@@ -70,6 +70,7 @@ export function VocabAssignmentPlanner({
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerStarted, setComposerStarted] = useState(false);
   const [composerLocked, setComposerLocked] = useState(false);
+  const [composerDirty, setComposerDirty] = useState(false);
   const unitCatalog = useAssignmentDatasetUnitCatalog(data.units, initialDatasetId);
   const cancelUnitRequest = unitCatalog.actions.cancel;
   const ensureDatasetUnits = unitCatalog.actions.ensureDataset;
@@ -113,11 +114,11 @@ export function VocabAssignmentPlanner({
       : reviewController.actions.changeDataset,
   });
   function receiveCreatedBook(book: CreatedLibraryBook) {
-    setComposedDatasets(current => [...current.filter(d => d.id !== book.dataset.id), book.dataset]);
+    setComposedDatasets(current => [...current.filter(d => d.id !== book.dataset.id), { ...book.dataset, vocabularyRole: "composition" }]);
     controller.actions.changeDataset(book.dataset.id);
     datasetPicker.actions.rememberSelection(book.dataset.id);
     datasetPicker.actions.close();
-    setComposerOpen(false); setComposerStarted(false); setComposerLocked(false);
+    setComposerOpen(false); setComposerStarted(false); setComposerLocked(false); setComposerDirty(false);
   }
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
@@ -185,6 +186,7 @@ export function VocabAssignmentPlanner({
       return;
     }
     const draftChanged =
+      composerDirty ||
       rangeDraftSignature !== initialRangeDraftSignatureRef.current ||
       reviewDraftSignature !== initialReviewDraftSignatureRef.current;
     if (draftChanged) {
@@ -334,7 +336,7 @@ export function VocabAssignmentPlanner({
       </DialogHeader>
       <DialogBody>
         {composerStarted ? <div hidden={!composerOpen}>
-          <WordbookLibrary active={composerOpen} captureAuthenticationFailure={captureAuthenticationFailure} onSaved={receiveCreatedBook} onBack={requestClose} onLockChange={setComposerLocked} />
+          <WordbookLibrary active={composerOpen} captureAuthenticationFailure={captureAuthenticationFailure} onSaved={receiveCreatedBook} onBack={requestClose} onLockChange={setComposerLocked} onDirtyChange={setComposerDirty} />
         </div> : null}
         {datasetPicker.open && !composerOpen ? (
           <>

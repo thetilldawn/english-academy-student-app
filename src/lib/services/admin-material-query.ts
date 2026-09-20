@@ -19,6 +19,7 @@ import {
 } from "@/lib/services/dataset-catalog-service";
 
 type DatasetSummaryRow = {
+  metadata?: unknown;
   id: string;
   dataset_key: string;
   title: string;
@@ -90,7 +91,7 @@ export async function loadAdminMaterialSnapshot(
   const [datasetResult, catalogResult] = await Promise.all([
     supabase
       .from("vocab_datasets")
-      .select("id, dataset_key, title, edition, row_count, status, is_active")
+      .select("id, dataset_key, title, edition, row_count, status, is_active, metadata")
       .order("title"),
     queryDatasetCatalogRows(supabase),
   ]);

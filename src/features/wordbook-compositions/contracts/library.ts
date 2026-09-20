@@ -119,11 +119,17 @@ const expected = { templateId: z.uuid(), expectedRevision: z.number().int().posi
 export const libraryCommandSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("create"), requestId, metadata: templateMetadataSchema, recipe: libraryRecipeSchema }).strict(),
   z.object({ action: z.literal("metadata"), requestId, ...expected, metadata: templateMetadataSchema }).strict(),
-  z.object({ action: z.literal("version"), requestId, ...expected, expectedContentHash: libraryHashSchema, recipe: libraryRecipeSchema }).strict(),
+  z.object({ action: z.literal("version"), requestId, ...expected, expectedContentHash: libraryHashSchema, recipe: libraryRecipeSchema, metadata: templateMetadataSchema.optional() }).strict(),
   z.object({ action: z.literal("copy"), requestId, sourceVersionId: z.uuid(), metadata: templateMetadataSchema }).strict(),
   z.object({ action: z.literal("materialize"), requestId, templateId: z.uuid(), versionId: z.uuid(), contentHash: libraryHashSchema }).strict(),
 ]);
 export type LibraryCommand = z.infer<typeof libraryCommandSchema>;
+// Keep the transport/read contract compatible with already completed requests.
+// The database checks new inserts after returning any existing request receipt.
+export const newLibraryCommandSchema = libraryCommandSchema.superRefine((c, ctx) => {
+  if ((c.action === "create" || c.action === "version") && c.recipe.scopeStatus === "confirmed" && !c.recipe.scopes.length)
+    ctx.addIssue({ code: "custom", path: ["recipe", "scopes"], message: "자료 종류와 범위를 선택해 주세요." });
+});
 export const createdLibraryBookSchema = z.object({
   versionId: z.uuid(), contentHash: libraryHashSchema,
   dataset: z.object({

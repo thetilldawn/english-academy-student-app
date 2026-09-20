@@ -58,6 +58,7 @@ function BookList({
             >
               <span className={styles.bookText}>
                 <strong>{datasetPickerTitle(dataset)}</strong>
+                {dataset.vocabularyRole ? <small>{dataset.vocabularyRole === "composition" ? "범위로 만든 단어장" : "원본 단어장"}</small> : null}
               </span>
               <span className={styles.bookStatus}>
                 <span>{reviewCount === undefined ? `수록 ${dataset.rowCount}개` : `미배정 오답 ${reviewCount}개`}</span>

@@ -2504,6 +2504,11 @@
       "path": "supabase/migrations/20260920131206_bound_vocabulary_question_plan_comparisons.sql",
       "owner": "wordbook-compositions",
       "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20260921000000_guard_vocabulary_library_templates.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
     }
   ],
   "features": [
@@ -6682,7 +6687,8 @@
           "src/features/wordbook-compositions/ui/wordbook-library.tsx",
           "src/features/wordbook-compositions/ui/library-source-filters.tsx",
           "src/features/wordbook-compositions/ui/wordbook-library.module.css",
-          "src/features/assignments/ui/vocab-range-fields.tsx"
+          "src/features/assignments/ui/vocab-range-fields.tsx",
+          "src/features/wordbook-compositions/ui/library-editor-fields.tsx"
         ],
         "clientState": [
           "src/features/wordbook-compositions/client/controllers/use-wordbook-composer.ts",
@@ -6693,7 +6699,8 @@
           "src/features/wordbook-compositions/domain/scope-selection.ts",
           "src/lib/assignment/composition-targets.ts",
           "src/features/wordbook-compositions/domain/library-selection.ts",
-          "src/features/wordbook-compositions/domain/template-version.ts"
+          "src/features/wordbook-compositions/domain/template-version.ts",
+          "src/features/wordbook-compositions/domain/library-editor.ts"
         ],
         "presentation": [],
         "contract": [
@@ -6740,7 +6747,8 @@
           "supabase/migrations/20260920115818_narrow_vocabulary_source_state_arguments.sql",
           "supabase/migrations/20260920120200_batch_vocabulary_source_state_checks.sql",
           "supabase/migrations/20260920121225_resume_vocabulary_composition_in_bounded_steps.sql",
-          "supabase/migrations/20260920131206_bound_vocabulary_question_plan_comparisons.sql"
+          "supabase/migrations/20260920131206_bound_vocabulary_question_plan_comparisons.sql",
+          "supabase/migrations/20260921000000_guard_vocabulary_library_templates.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/wordbook-compositions/route.ts",
@@ -6762,7 +6770,8 @@
           "src/features/wordbook-compositions/ui/wordbook-library.test.tsx",
           "src/lib/database/vocabulary-library.integration.test.ts",
           "src/lib/database/vocabulary-composition-questions.integration.test.ts",
-          "src/lib/database/vocabulary-composition-steps.integration.test.ts"
+          "src/lib/database/vocabulary-composition-steps.integration.test.ts",
+          "src/features/wordbook-compositions/domain/library-editor.test.ts"
         ]
       },
       "requiredImportEdges": [],
