@@ -1,4 +1,5 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import { hasRequiredStudentProfile, STUDENT_PROFILE_REQUIRED_MESSAGE } from "@/lib/admin/student-profile-requirements";
 
 import type { AdminContext } from "@/lib/auth/admin";
@@ -11,6 +12,7 @@ import type {
   DirectReviewAssignmentInput,
   DirectReviewPreviewInput,
 } from "@/lib/admin/direct-review-assignment-request";
+import type { DirectReviewUnavailableItem } from "@/features/assignments/public-contracts";
 import type { DirectReviewCandidate } from "@/lib/admin/direct-review-candidate";
 import { buildExactAssignmentQuestionPlan } from "@/lib/assignment/question-planner";
 import type { EligibleVocabularyEntry } from "@/lib/quiz/eligible-vocabulary";
@@ -22,7 +24,8 @@ import {
 import { loadDatasetDisplayLabel } from "@/lib/services/dataset-catalog-service";
 import { loadEligibleVocabularyDataset } from "@/lib/services/eligible-vocabulary-service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { buildReviewedDirectReviewSelection } from "./reviewed-direct-review-selection";
+import { buildReviewedDirectReviewSelection, diagnoseReviewedDirectReviewSelection } from "./reviewed-direct-review-selection";
+import { quizIndependentTargetDirectionEligibility } from "@/lib/quiz/choice-policy";
 
 const MAX_DIRECT_REVIEW_WORDS = 400;
 const MAX_ASSIGNMENT_TITLE_LENGTH = 160;
@@ -68,6 +71,28 @@ type DirectReviewSelection = {
     choice_vocab_entry_ids: number[];
   }[];
 };
+
+export function diagnoseDirectReviewSelection(input: DirectReviewPreviewInput, candidates: readonly DirectReviewCandidate[], allCandidates: readonly EligibleVocabularyEntry[]) {
+  if (candidates.some(candidate => candidate.datasetId !== input.datasetId || !input.reviewLevels.includes(candidate.reasonLevel)) ||
+    new Set(candidates.map(candidate => candidate.sourceQuestionId)).size !== candidates.length) throw new DirectReviewPreparationError("conflict");
+  const targets = new Map(candidates.map(candidate => [candidate.sourceQuestionId, resolveReviewCandidate(allCandidates, candidate, "dataset", new Set())]));
+  const eligibility = new Map(quizIndependentTargetDirectionEligibility([...targets.values()].filter((entry): entry is EligibleVocabularyEntry => !!entry), allCandidates).map(entry => [entry.id, entry.eligibleDirections]));
+  const directions = input.englishToKoreanRatio === 100 ? ["english_to_korean" as const] : input.englishToKoreanRatio === 0 ? ["korean_to_english" as const] : ["english_to_korean" as const, "korean_to_english" as const];
+  const unavailableItems: DirectReviewUnavailableItem[] = [];
+  const eligibleCandidates = candidates.filter(candidate => {
+    const target = targets.get(candidate.sourceQuestionId);
+    const reason = !target ? "target_unavailable" :
+      (candidate.canonicalDictionaryId !== null && candidate.canonicalDictionaryId !== target.canonicalDictionaryId) ||
+      (candidate.canonicalLexemeId !== null && candidate.canonicalLexemeId !== target.canonicalLexemeId) ? "identity_changed" :
+      !directions.every(direction => !target.eligibleDirections || target.eligibleDirections.includes(direction)) ? "direction_unavailable" :
+      !directions.every(direction => eligibility.get(target.id)?.includes(direction)) ? "insufficient_choices" : null;
+    if (!reason) return true;
+    unavailableItems.push({sourceQuestionId: candidate.sourceQuestionId, vocabEntryId: candidate.vocabEntryId,
+      headword: target?.headword ?? candidate.headwordNormalized, primaryMeaning: target?.primaryMeaning ?? null, reason});
+    return false;
+  });
+  return { eligibleCandidates, unavailableItems };
+}
 
 export function validateDirectReviewSelectionCount(
   expectedQuestionCount: number,
@@ -218,7 +243,7 @@ async function loadDirectReviewSelection(
         ),
       ]);
     if (studentResult.error || datasetResult.error) {
-      throw new DirectReviewPreparationError("database");
+      throw new DirectReviewPreparationError(studentResult.error?.code === "42501" || datasetResult.error?.code === "42501" ? "forbidden" : "database");
     }
     const dataset = datasetResult.data as DatasetRow | null;
     if (
@@ -235,20 +260,34 @@ async function loadDirectReviewSelection(
       throw new DirectReviewPreparationError("invalid_selection", STUDENT_PROFILE_REQUIRED_MESSAGE, "studentId");
     }
     let selection: DirectReviewSelection;
+    let unavailableItems: DirectReviewUnavailableItem[];
+    const emptySelection: DirectReviewSelection = { sourceQuestionIds: [], reviewLevels: [...input.reviewLevels].sort(), wrongLevel1Eligible: 0, wrongLevel2Eligible: 0, questions: [] };
     if (dataset.metadata?.questionBankKind === "reviewed_exam_v1" || dataset.metadata?.questionBankKind === "vocabulary_composition_v1") {
       const { data, error } = await supabase.rpc(dataset.metadata.questionBankKind === "vocabulary_composition_v1" ? "list_vocabulary_composition_review_choices_v1" : "list_reviewed_exam_review_choices_v1", {
         p_dataset_id: input.datasetId, p_vocab_entry_ids: candidates.map(c=>c.vocabEntryId),
       });
-      if(error) throw new DirectReviewPreparationError("database");
-      selection=buildReviewedDirectReviewSelection(input,candidates,data);
+      if(error) throw new DirectReviewPreparationError(error.code === "42501" ? "forbidden" : "database");
+      const diagnosis = diagnoseReviewedDirectReviewSelection(input,candidates,data);
+      unavailableItems = diagnosis.unavailableItems;
+      selection = diagnosis.eligibleCandidates.length ? buildReviewedDirectReviewSelection(input,diagnosis.eligibleCandidates,diagnosis.rows) : emptySelection;
     } else {
       const allCandidates=await loadEligibleVocabularyDataset(supabase,input.datasetId,{includeExamUseProjection:true});
-      selection=buildDirectReviewSelection(input,candidates,allCandidates);
+      const diagnosis = diagnoseDirectReviewSelection(input,candidates,allCandidates);
+      unavailableItems = diagnosis.unavailableItems;
+      selection = diagnosis.eligibleCandidates.length ? buildDirectReviewSelection(input,diagnosis.eligibleCandidates,allCandidates) : emptySelection;
     }
+    if (selection.sourceQuestionIds.length + unavailableItems.length !== candidates.length) throw new DirectReviewPreparationError("conflict", "오답 자료 연결이 겹칩니다. 다시 확인해 주세요.");
+    const material = await supabase.rpc("get_current_wrong_review_material_fingerprint_v1", { p_dataset_id: input.datasetId, p_questions: selection.questions, p_source_question_ids: candidates.map(candidate => candidate.sourceQuestionId) });
+    if (material.error || typeof material.data !== "string" || !/^[a-f0-9]{64}$/.test(material.data)) throw new DirectReviewPreparationError(material.error?.code === "42501" ? "forbidden" : "database");
+    const selectionFingerprint = createHash("sha256").update(JSON.stringify({
+      studentId: input.studentId, datasetId: input.datasetId, reviewLevels: selection.reviewLevels,
+      direction: input.englishToKoreanRatio, candidates, unavailableItems, questions: selection.questions, material: material.data,
+    })).digest("hex");
     return {
       dataset,
       selection,
       supabase,
+      candidates, unavailableItems, selectionFingerprint, materialFingerprint: material.data,
     };
   } catch (error) {
     if (error instanceof DirectReviewPreparationError) throw error;
@@ -264,7 +303,7 @@ export async function calculateDirectReviewPreview(
   authenticatedAdmin?: AdminContext,
   client?: ServerSupabaseClient,
 ) {
-  const { selection } = await loadDirectReviewSelection(
+  const { selection, candidates, unavailableItems, selectionFingerprint } = await loadDirectReviewSelection(
     input,
     authenticatedAdmin,
     client,
@@ -273,6 +312,7 @@ export async function calculateDirectReviewPreview(
     wrongEligible: selection.questions.length,
     wrongLevel1Eligible: selection.wrongLevel1Eligible,
     wrongLevel2Eligible: selection.wrongLevel2Eligible,
+    candidateCount: candidates.length, unavailableCount: unavailableItems.length, unavailableItems, selectionFingerprint,
   };
 }
 
@@ -304,11 +344,17 @@ export async function prepareDirectReviewAssignmentBatch(
       "deadline",
     );
   }
-  const { dataset, selection, supabase } = await loadDirectReviewSelection(
+  const { dataset, selection, supabase, candidates, unavailableItems, selectionFingerprint, materialFingerprint } = await loadDirectReviewSelection(
     input,
     authenticatedAdmin,
     client,
   );
+  if (input.selectionFingerprint && input.selectionFingerprint !== selectionFingerprint) {
+    throw new DirectReviewPreparationError("conflict", "오답 목록이나 문제가 바뀌었습니다. 다시 계산해 주세요.", "preview");
+  }
+  if (unavailableItems.length && (!input.selectionFingerprint || !input.excludeUnavailableConfirmed)) {
+    throw new DirectReviewPreparationError("invalid_selection", "출제에서 제외할 단어를 먼저 확인해 주세요.", "preview");
+  }
   validateDirectReviewSelectionCount(input.totalQuestionCount, selection);
   let datasetLabel;
   try {
@@ -321,6 +367,8 @@ export async function prepareDirectReviewAssignmentBatch(
     datasetId: input.datasetId,
     reviewLevels: selection.reviewLevels,
     sourceQuestionIds: selection.sourceQuestionIds,
+    ...(input.selectionFingerprint ? { expectedSourceQuestionIds: candidates.map(candidate => candidate.sourceQuestionId),
+      excludedSourceQuestionIds: unavailableItems.map(item => item.sourceQuestionId), selectionFingerprint, materialFingerprint } : {}),
     title: (
       input.title ||
       `${datasetLabel} · 오답 시험 · ${selection.questions.length}문항`

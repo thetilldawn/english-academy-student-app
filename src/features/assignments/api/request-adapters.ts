@@ -155,6 +155,7 @@ function availabilityToIso(
 export function buildDirectReviewAssignmentRequest(
   draft: DirectReviewAssignmentDraft,
   idempotencyKey: string,
+  selection?: Pick<DirectReviewAssignmentInput, "selectionFingerprint" | "excludeUnavailableConfirmed">,
 ): DirectReviewAssignmentRequest {
   return {
     endpoint: "/api/admin/exact-review-assignments",
@@ -165,6 +166,7 @@ export function buildDirectReviewAssignmentRequest(
       datasetId: draft.datasetId,
       reviewLevels: [...draft.reviewLevels],
       totalQuestionCount: draft.questionCount,
+      ...selection,
       title: draft.title,
       ...examSettingsToApi(draft.exam),
       availableFrom: availabilityToIso(draft.availability),
@@ -175,10 +177,12 @@ export function buildDirectReviewAssignmentRequest(
 
 export function directReviewSubmissionFingerprint(
   draft: DirectReviewAssignmentDraft,
+  selection?: Pick<DirectReviewAssignmentInput, "selectionFingerprint" | "excludeUnavailableConfirmed">,
 ): string {
   const payload = buildDirectReviewAssignmentRequest(
     draft,
     "fingerprint-only",
+    selection,
   ).body;
   return assignmentRequestFingerprint({
     ...payload,

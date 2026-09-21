@@ -2,10 +2,10 @@
 
 import { useCallback, useState } from "react";
 
-import type { StudentWrongWordHistory } from "@/lib/admin/wrong-word-history";
+import type { WrongWordPageView } from "../contracts/wrong-word-page";
 
 type WrongWordCacheEntry = {
-  history: StudentWrongWordHistory;
+  history: WrongWordPageView;
   loadedAt: number;
   studentId: string;
 };
@@ -14,9 +14,9 @@ export function useStudentWrongWordCache(studentId: string) {
   const [cachedEntry, setCachedEntry] = useState<WrongWordCacheEntry | null>(null);
   const entry = cachedEntry?.studentId === studentId ? cachedEntry : null;
 
-  const cache = useCallback((loadedStudentId: string, history: StudentWrongWordHistory) => {
+  const cache = useCallback((loadedStudentId: string, history: WrongWordPageView | null) => {
     if (loadedStudentId !== studentId) return;
-    setCachedEntry({ history, loadedAt: Date.now(), studentId });
+    setCachedEntry(history ? { history, loadedAt: Date.now(), studentId } : null);
   }, [studentId]);
 
   return { entry, actions: { cache } };

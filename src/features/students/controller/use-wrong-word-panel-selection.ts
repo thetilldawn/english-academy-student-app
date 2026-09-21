@@ -2,13 +2,11 @@
 
 import { useCallback, useMemo, useState } from "react";
 
-import type { StudentWrongWordHistory } from "@/lib/admin/wrong-word-history";
+import type { WrongWordPageView } from "../contracts/wrong-word-page";
 
 import {
-  filterWrongWords,
   keepSelectableQuestionIds,
   selectableWrongWordQuestionIds,
-  wrongWordDatasetOptions,
   type WrongWordLevelFilter,
   type WrongWordSelectionPurpose,
 } from "../domain/wrong-word-selection";
@@ -17,7 +15,7 @@ export function useWrongWordPanelSelection({
   history,
   initialDatasetId,
 }: {
-  history: StudentWrongWordHistory | null;
+  history: WrongWordPageView | null;
   initialDatasetId: string;
 }) {
   const [levelFilter, setLevelFilter] = useState<WrongWordLevelFilter>("all");
@@ -28,16 +26,12 @@ export function useWrongWordPanelSelection({
   const [worksheetQuestionIds, setWorksheetQuestionIds] = useState<string[]>([]);
 
   const datasetOptions = useMemo(
-    () => wrongWordDatasetOptions(history),
+    () => history?.datasetOptions ?? [],
     [history],
   );
   const filteredWords = useMemo(
-    () => filterWrongWords({
-      history,
-      datasetId: datasetFilter,
-      level: levelFilter,
-      query,
-    }),
+    () => history && history.filters.datasetId === datasetFilter && history.filters.level === levelFilter && history.filters.query === query.trim()
+      ? history.items : [],
     [datasetFilter, history, levelFilter, query],
   );
   const selectableQueuedIds = useMemo(
@@ -134,6 +128,7 @@ export function useWrongWordPanelSelection({
     selectedWorksheetIds,
     worksheetSelectionLimitReached: selectedWorksheetIds.length >= 50,
     actions: {
+      clearSelections,
       changeLevelFilter,
       clearQueuedSelection: () => setQueuedQuestionIds([]),
       clearWorksheetSelection: () => setWorksheetQuestionIds([]),

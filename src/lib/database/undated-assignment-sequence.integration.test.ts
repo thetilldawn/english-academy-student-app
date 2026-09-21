@@ -38,7 +38,7 @@ describe.sequential("무날짜 계획부터 실제 저장·첫 시험·다음 �
     db = await createFinalSchemaDatabase();
     await db.exec(`insert into auth.users(id) values('${id(1)}');
       insert into public.admin_profiles(user_id,display_name) values('${id(1)}','가짜 관리자');
-      insert into public.students(id,display_name,created_by) values('${id(2)}','가짜 학생','${id(1)}'),('${id(3)}','다른 가짜 학생','${id(1)}');
+      insert into public.students(id,display_name,created_by,school_name,grade_label) values('${id(2)}','가짜 학생','${id(1)}','가짜 고등학교','고2'),('${id(3)}','다른 가짜 학생','${id(1)}','가짜 고등학교','고2');
       select set_config('request.jwt.claim.sub','${id(1)}',false);
       select set_config('request.jwt.claim.role','authenticated',false);
       select set_config('request.jwt.claims','{"role":"authenticated","ref":"wojxpruvbjzbhrpmsbuy"}',false);`);
@@ -63,7 +63,7 @@ describe.sequential("무날짜 계획부터 실제 저장·첫 시험·다음 �
     units = rows.map(row => ({ ...row, datasetId, kind: "day", number: row.sortIndex, catalogGroup: null, unitType: null, displayName: row.label, academicYear: null, examMonth: null, agency: null, itemRange: null, catalogSortIndex: row.sortIndex }));
     mocks.load.mockImplementation(async () => ({
       dataset: { id: datasetId, title: "가짜 자료", displayName: "가짜 자료", status: "ready", isActive: true, isAssignable: true, questionBankKind: "reviewed_exam_v1" },
-      students: [{ id: id(2), displayName: "가짜 학생", status: "active" }], units,
+      students: [{ id: id(2), displayName: "가짜 학생", schoolName: "가짜 고등학교", gradeLabel: "고2", status: "active" }], units,
     }));
     const allowed = new Set(["list_active_reviewed_exam_questions_v1", "get_bulk_vocab_series_result_v1", "get_canonical_assignment_preview_result_v1", "create_bulk_vocab_assignments_v11"]);
     mocks.client.mockResolvedValue({ rpc: async (name: string, params: Record<string, unknown>) => {

@@ -257,7 +257,7 @@ describe.sequential("saved mock wordbooks", () => {
   });
   it("creates a real assignment with fixed source, meaning and pronunciation snapshots and rejects repeated reviewed targets",async()=>{
     await db.exec('reset role');
-    await db.query("insert into public.students(id,display_name,status,created_by) values($1,'가짜 배정 학생','active',$2)",[ids.student,ids.admin]);
+    await db.query("insert into public.students(id,display_name,status,created_by,school_name,grade_label) values($1,'가짜 배정 학생','active',$2,'가짜 고등학교','고2')",[ids.student,ids.admin]);
     const entries=await db.query<{id:number;unit_id:string}>("select id,unit_id from public.vocab_entries where dataset_id=$1 order by source_row",[saved.datasetId]);
     const units=[...new Set(entries.rows.map(e=>e.unit_id))];
     const first=entries.rows.filter(e=>e.unit_id===units[0]);

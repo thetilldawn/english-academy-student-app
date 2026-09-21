@@ -1,3 +1,5 @@
+export type { DirectReviewUnavailableItem } from "./domain/direct-review-diagnosis";
+
 export type {
   AssignmentDatasetUnitsResponse,
   AssignmentDirectorySelectionRequest,

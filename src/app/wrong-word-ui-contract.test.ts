@@ -15,7 +15,8 @@ describe("wrong-word admin UI contract", () => {
     expect(route).not.toContain('export const dynamic = "force-dynamic"');
     expect(route).toContain("getAdminContext()");
     expect(route).toContain("z.uuid()");
-    expect(route).toContain("getStudentWrongWordHistory(id, admin)");
+    expect(route).toContain("getStudentWrongWordPage(id,");
+    expect(route).not.toContain("getStudentWrongWordHistory");
     expect(route).toContain('"Cache-Control": "private, no-store"');
   });
 
@@ -207,13 +208,13 @@ describe("wrong-word admin UI contract", () => {
     );
     expect(transport).toContain('cache: "no-store"');
     expect(loader).toContain("AbortController");
-    expect(loader).toContain("WRONG_HISTORY_CACHE_TTL_MS");
-    expect(loader).toContain("requestSequenceRef");
+    expect(loader).toContain("30_000");
+    expect(loader).toContain("sequence.current");
     expect(panel).toContain(
       "adminStudentsText.learning.wrongWordsPanel.refresh",
     );
     expect(panel).toContain("useWrongWordPanelSelection({");
-    expect(panel).toContain("initialDatasetId,");
+    expect(panel).toContain("initialDatasetId }");
     expect(selectionController).toContain("useState(initialDatasetId)");
     expect(filter).toContain('["repeated", copy.repeated]');
     expect(list).toContain("<Checkbox");
@@ -235,7 +236,7 @@ describe("wrong-word admin UI contract", () => {
     expect(transport).toContain('method: "POST"');
     expect(controls).toContain("copy.addToNextExam");
     expect(controls).toContain('aria-live="polite"');
-    expect(loader).toContain("refreshAfterRequestRef");
+    expect(loader).toContain("followup.current");
     expect(panel).toContain("disabled={loading || busy}");
     expect(panel).not.toContain("router.refresh");
   });

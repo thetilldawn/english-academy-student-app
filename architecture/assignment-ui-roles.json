@@ -405,11 +405,14 @@
     },
     {
       "path": "direct-review-preview.tsx",
-      "role": "pure",
-      "reason": "오답 최종 요약의 제목/값 행 표시",
+      "role": "interaction",
+      "reason": "표시 행과 출제 불가 진단, 제외 확인 값/콜백만 전달받는다.",
       "allowedImports": [
         "../presentation/direct-review-view",
-        "./vocab-assignment-planner.module.css"
+        "./vocab-assignment-planner.module.css",
+        "@/design-system/patterns/feedback/feedback",
+        "@/design-system/primitives/form/field",
+        "../domain/direct-review-diagnosis"
       ]
     },
     {
@@ -587,7 +590,7 @@
     {
       "path": "vocab-assignment-planner.tsx",
       "role": "assembly",
-      "reason": "일반/오답 제어기·범위/찾기·제출/폐기 수명 연결; APP-20260920-01 검토: 단어장 선택 연결만 범용 템플릿으로 교체, 전체 제어기 분리는 미완료",
+      "reason": "기존 배정 구성에 학생 기본조건/필수정보 안내와 오답 제외 확인 상태를 조합한다. 계산과 저장은 controller 경계를 유지한다.",
       "allowedImports": [
         "../catalog-types",
         "../client/controllers/use-assignment-dataset-picker",
@@ -612,7 +615,11 @@
         "@/features/wordbook-compositions/public-ui",
         "@/lib/ui/motion",
         "react",
-        "sonner"
+        "sonner",
+        "@/components/guarded-link",
+        "@/design-system/patterns/feedback/feedback",
+        "@/lib/admin/student-profile-requirements",
+        "../domain/assignment-student-context"
       ]
     },
     {

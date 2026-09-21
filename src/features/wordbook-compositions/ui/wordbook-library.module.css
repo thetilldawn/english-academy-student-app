@@ -21,7 +21,7 @@
 .editor, .step, .groupEditor { display: grid; gap: 1rem; min-width: 0; }
 .step { border: 1px solid var(--border); border-radius: var(--radius-card); padding: 1rem; }
 .step > h4 { display: flex; gap: .65rem; align-items: center; }
-.stepNumber { display: inline-grid; place-items: center; width: 1.7rem; height: 1.7rem; border-radius: 50%; background: var(--selection-active); font-size: .9rem; }
+.stepNumber { display: inline-grid; place-items: center; width: 1.7rem; height: 1.7rem; border-radius: 999px; background: var(--selection-active); font-size: .9rem; }
 .groupList { display: grid; gap: .5rem; }
 .groupRow { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; }
 .groupEditor { border-top: 1px solid var(--border); padding-top: 1rem; }

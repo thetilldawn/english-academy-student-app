@@ -6,6 +6,100 @@ import { pgcrypto } from "@electric-sql/pglite/contrib/pgcrypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const migrationsDirectory = path.resolve("supabase/migrations");
+
+describe("confirmed partial current wrong review", () => {
+  let db: PGlite;
+  let sources: string[];
+  let questions: string;
+  let material: string;
+  const digest = "c".repeat(64);
+  beforeAll(async () => {
+    db = await createFinalSchemaDatabase();
+    await seedReviewAssignmentScenario(db);
+    await db.exec("delete from public.student_vocab_review_queue; set role authenticated;");
+    const assignment = await db.query<{id:string}>(`select public.create_assignment_with_delivery_v7(
+      'Partial review source','${ids.dataset}',array['${ids.units[0]}'::uuid,'${ids.units[4]}'::uuid],
+      4,100::smallint,300,80::smallint,false,null,'fixed',null,array['${ids.student}'::uuid],
+      'total',null,$q$${mixedQuestions}$q$::jsonb) id`);
+    await db.exec("reset role");
+    const attempt = await db.query<{id:string}>(`select public.create_quiz_attempt_from_bank('${ids.student}','${assignment.rows[0].id}') id`);
+    const original = await db.query<{id:string;correct_choice_index:number}>(`select id,correct_choice_index from public.quiz_questions where attempt_id='${attempt.rows[0].id}' order by order_index`);
+    for (const [index, question] of original.rows.entries()) {
+      await db.query(`select public.answer_quiz_question_v4($1,$2,$3,'initial',$4::smallint,false)`,[ids.student,attempt.rows[0].id,question.id,(question.correct_choice_index+1)%4]);
+      if(original.rows[index+1]) await db.query(`select public.resume_quiz_after_feedback_v2($1,$2,$3,'initial',0)`,[ids.student,attempt.rows[0].id,original.rows[index+1].id]);
+    }
+    await db.exec("set role authenticated");
+    const candidates = await db.query<{source_question_id:string;vocab_entry_id:number}>(`select source_question_id,vocab_entry_id from public.list_student_direct_review_candidates_v1('${ids.student}','${ids.dataset}',array[1]::smallint[],400)`);
+    expect(candidates.rows).toHaveLength(4);
+    sources=candidates.rows.map(c=>c.source_question_id);
+    questions=JSON.stringify(candidates.rows.slice(0,2).map((c,index)=>({vocab_entry_id:c.vocab_entry_id,base_order_index:index+1,direction:"english_to_korean",choice_vocab_entry_ids:[1,2,3,4]})));
+    material=await fingerprint();
+  },60000);
+  afterAll(async()=>{await db?.close();});
+  async function fingerprint() {
+    return (await db.query<{hash:string}>("select public.get_current_wrong_review_material_fingerprint_v1($1,$2::jsonb,$3::uuid[]) hash",[ids.dataset,questions,`{${sources.join(",")}}`])).rows[0].hash;
+  }
+  const key="00000000-0000-4000-8000-000000000898";
+  async function create(overrides:Record<string,unknown>={}) {
+    const args:Record<string,unknown>={p_student_id:ids.student,p_dataset_id:ids.dataset,p_review_levels:"{1}",
+      p_source_question_ids:`{${sources.slice(0,2).join(",")}}`,p_idempotency_key:key,p_request_sha256:digest,
+      p_title:"Confirmed partial fixture",p_english_to_korean_ratio:100,p_time_limit_seconds:300,p_passing_score:80,
+      p_retry_enabled:true,p_retry_passing_score:80,p_question_order_mode:"ascending",p_available_from:null,p_available_until:null,
+      p_timing_mode:"total",p_question_time_limit_seconds:null,p_questions:questions,
+      p_expected_source_question_ids:`{${sources.join(",")}}`,p_excluded_source_question_ids:`{${sources.slice(2).join(",")}}`,p_selection_sha256:digest,p_material_sha256:material,...overrides};
+    const names=Object.keys(args);
+    return (await db.query<{id:string}>(`select public.create_current_wrong_review_assignment_v3(${names.map((name,i)=>`${name}=>$${i+1}`).join(",")}) id`,Object.values(args))).rows[0].id;
+  }
+  async function counts() {
+    await db.exec("reset role");
+    const result=(await db.query("select (select count(*) from public.assignments) assignments,(select count(*) from public.student_vocab_review_queue) queue,(select count(*) from private.current_wrong_review_assignment_requests) receipts")).rows;
+    await db.exec("set role authenticated");return result;
+  }
+  it("rejects wrong partitions, replaced source IDs and changed material without partial writes", async()=>{
+    const before=await counts();
+    await expect(create({p_excluded_source_question_ids:`{${sources[0]},${sources[2]}}`})).rejects.toMatchObject({code:"22023",message:"invalid_current_wrong_review_selection"});
+    const changed=[...sources];changed[3]=ids.units[3];
+    await expect(create({p_expected_source_question_ids:`{${changed.join(",")}}`,p_excluded_source_question_ids:`{${changed.slice(2).join(",")}}`})).rejects.toMatchObject({code:"40001"});
+    await db.exec(`reset role;update public.vocab_entries set primary_meaning=primary_meaning||' changed' where id=4;set role authenticated;`);
+    expect(await fingerprint()).not.toBe(material);
+    await expect(create()).rejects.toMatchObject({code:"40001",message:"current_wrong_review_material_changed"});
+    await db.exec(`reset role;update public.vocab_entries set primary_meaning=replace(primary_meaning,' changed','') where id=4;set role authenticated;`);
+    // Restoring text still advances the row's update evidence; a fresh preview is required.
+    material=await fingerprint();
+    // An unused choice-pool entry can make an excluded candidate eligible. It must
+    // invalidate confirmation even though no planned question references it.
+    await db.exec("reset role");
+    const poolChange=await db.query("update public.vocab_entries set primary_meaning=primary_meaning||' pool-change' where id=5 returning id");
+    expect(poolChange.rows).toHaveLength(1);
+    expect(JSON.parse(questions).every((q:{vocab_entry_id:number;choice_vocab_entry_ids:number[]})=>q.vocab_entry_id!==5&&!q.choice_vocab_entry_ids.includes(5))).toBe(true);
+    await db.exec("set role authenticated");
+    expect(await fingerprint()).not.toBe(material);
+    await expect(create()).rejects.toMatchObject({code:"40001",message:"current_wrong_review_material_changed"});
+    await db.exec("reset role;update public.vocab_entries set primary_meaning=replace(primary_meaning,' pool-change','') where id=5;set role authenticated;");
+    material=await fingerprint();
+    // The legacy API still rejects a subset, even though the new API permits a confirmed partition.
+    await expect(db.query(`select public.create_current_wrong_review_assignment_v1($1,$2,array[1]::smallint[],$3::uuid[],$4,$5,'Legacy partial',100::smallint,300,80::smallint,true,80::smallint,'ascending',null,'total',null,$6::jsonb)`,[ids.student,ids.dataset,`{${sources.slice(0,2).join(",")}}`,key,digest,questions])).rejects.toMatchObject({code:"40001",message:"current_wrong_review_snapshot_changed"});
+    expect(await counts()).toEqual(before);
+  });
+  it("creates only confirmed targets, leaves excluded wrong words available, and replays the original receipt first",async()=>{
+    const assignmentId=await create();
+    const candidates=await db.query<{source_question_id:string}>(`select source_question_id from public.list_student_direct_review_candidates_v1('${ids.student}','${ids.dataset}',array[1]::smallint[],400)`);
+    expect(candidates.rows.map(c=>c.source_question_id)).toEqual(sources.slice(2));
+    await db.exec("reset role");
+    const queued=await db.query<{source_question_id:string}>(`select source_question_id from public.student_vocab_review_queue where student_id='${ids.student}'`);
+    expect(queued.rows.map(q=>q.source_question_id).sort()).toEqual(sources.slice(0,2).toSorted());
+    const bank=await db.query<{count:number}>(`select count(*)::integer count from public.assignment_questions where assignment_id='${assignmentId}'`);
+    expect(bank.rows[0].count).toBe(2);
+    await db.exec(`update public.students set school_name=null where id='${ids.student}';update public.vocab_entries set primary_meaning=primary_meaning||' later' where id=4;set role authenticated;`);
+    const before=await counts();
+    expect(await create()).toBe(assignmentId);
+    await expect(create({p_selection_sha256:"d".repeat(64)})).rejects.toMatchObject({code:"23505",message:"idempotency_key_reused"});
+    expect(await counts()).toEqual(before);
+    await db.exec("reset role");
+    const helpers=await db.query<{allowed:boolean}>(`select has_function_privilege('authenticated',p.oid,'execute') allowed from pg_proc p join pg_namespace n on p.pronamespace=n.oid where n.nspname='private' and p.proname in ('current_wrong_review_material_fingerprint_v1','create_current_wrong_review_selection_v1','current_wrong_review_selection_sha256_v1')`);
+    expect(helpers.rows).toHaveLength(3);expect(helpers.rows.every(row=>!row.allowed)).toBe(true);
+  });
+});
 const migrationPaths = fs
   .readdirSync(migrationsDirectory)
   .filter((name) => name.endsWith(".sql"))
@@ -8653,7 +8747,7 @@ describe.sequential("student profile required for new assignments", () => {
       where n.nspname='public' and p.proname like 'create_%assignment%'
         and has_function_privilege('authenticated',p.oid,'execute')
       order by p.proname`);
-    expect(creators.rows).toHaveLength(17);
+    expect(creators.rows).toHaveLength(18);
     const batch = { kind: "regular", student_id: ids.student, dataset_id: ids.dataset,
       unit_ids: [ids.units[0], ids.units[4]], unit_labels: ["DAY 1", "DAY 5"], title: "가상 필수 검사",
       question_count: 4, english_to_korean_ratio: 100, time_limit_seconds: 300, passing_score: 100,
@@ -8676,6 +8770,8 @@ describe.sequential("student profile required for new assignments", () => {
       p_available_from: null, p_available_until: null, p_timing_mode: "none", p_question_time_limit_seconds: null,
       p_review_levels: "{1,2}", p_review_scope: "dataset", p_selected_queue_ids: `{${ids.selectedQueue}}`,
       p_source_question_ids: `{${ids.units.slice(0, 4).join(",")}}`, p_questions: mixedQuestions,
+      p_expected_source_question_ids: `{${ids.units.slice(0, 4).join(",")}}`, p_excluded_source_question_ids: "{}",
+      p_selection_sha256: "c".repeat(64), p_material_sha256: "d".repeat(64),
       p_idempotency_key: ids.rollbackDraft, p_request_sha256: "e".repeat(64), p_series: JSON.stringify(series),
     };
     const counts = () => database.query(`select (select count(*) from public.assignments) assignments,

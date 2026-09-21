@@ -57,12 +57,13 @@ export function DirectReviewAssignmentSections({
     hasDatasetOptions: controller.datasetOptions.length > 0,
     totalAvailableCount: controller.totalAvailableCount,
     questionCount: draft.questionCount, knownLevelCounts,
+    candidateCount: capacity.status === "ready" ? capacity.value.candidateCount : undefined,
     selectedLevels: draft.reviewLevels,
   });
   const previewRows = directReviewPreviewRows({
     studentLabel: student.displayName,
     datasetLabel: dataset ? cataloguedDatasetDisplayLabel(dataset) : "선택 전",
-    selectedLevels: draft.reviewLevels, questionCount: draft.questionCount,
+    selectedLevels: draft.reviewLevels, questionCount: capacity.status === "ready" ? draft.questionCount : Number.NaN,
     availability: draft.availability, deadline: draft.deadline,
     timeLimitEnabled: draft.exam.timeLimitEnabled, timing: draft.exam.timing,
   });
@@ -93,7 +94,7 @@ export function DirectReviewAssignmentSections({
       >
         <div className={styles.reviewQuestionCount}>
           <span>단어 수</span>
-          <strong>{draft.questionCount}개</strong>
+          <strong>{capacity.status === "ready" ? `${draft.questionCount}개` : "계산 전"}</strong>
         </div>
         <ExamQuestionOrderField
           error={fieldErrors.questionOrder}
@@ -157,7 +158,8 @@ export function DirectReviewAssignmentSections({
         index={4}
         title="미리보기"
       >
-        <DirectReviewPreview rows={previewRows} />
+        <DirectReviewPreview rows={previewRows} diagnosis={capacity.status === "ready" ? capacity.value : undefined}
+          confirmed={controller.exclusionConfirmed} onConfirm={controller.actions.confirmUnavailable} />
       </AssignmentSection>
     </div>
   );

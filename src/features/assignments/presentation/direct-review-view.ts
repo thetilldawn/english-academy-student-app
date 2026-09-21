@@ -12,6 +12,7 @@ export function directReviewRangeView(input: {
   hasDatasetOptions: boolean;
   totalAvailableCount: number;
   questionCount: number;
+  candidateCount?: number;
   knownLevelCounts: { level1: number | null; level2: number | null };
   selectedLevels: readonly ReviewLevel[];
 }) {
@@ -25,7 +26,7 @@ export function directReviewRangeView(input: {
     : capacity.status === "loading" ? "오답 단어 계산 중…"
     : capacity.status === "error" ? capacity.message
     : capacity.status === "ready" ? input.questionCount > 0
-      ? `단어 ${input.questionCount}개` : "현재 배정할 오답이 없습니다."
+      ? `단어 ${input.questionCount}개` : (input.candidateCount ?? 0) > 0 ? "오답은 있지만 현재 조건으로 출제할 수 없습니다." : "현재 배정할 오답이 없습니다."
     : "단어장과 오답 단계를 선택해 주세요.";
 
   return {

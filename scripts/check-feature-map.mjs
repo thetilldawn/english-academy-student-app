@@ -195,6 +195,8 @@ function verifyRegistry(registry) {
           "src/lib/services/vocab-assignment-queue-command.test.ts",
           "src/lib/quiz/question-semantics.test.ts", "src/lib/assignment/reviewed-question-planner.test.ts",
           "src/lib/services/reviewed-assignment-replacement-planning.test.ts", "src/lib/services/reviewed-direct-review-selection.test.ts",
+          "src/lib/services/direct-review-preview-selection.test.ts", "src/lib/services/direct-review-preparation-service.test.ts",
+          "src/lib/services/direct-review-assignment-service.test.ts",
           "src/lib/services/regular-assignment-scope-contract.test.ts", "src/lib/services/vocab-pronunciation-release-query-contract.test.ts"].includes(filePath) ||
         /^scripts\/(?:feature-map|work-records)\/[^/]+\.mjs$/.test(filePath) ||
         /^src\/test-support\/(module-boundary(?:\.test)?|server-architecture)\.ts$/.test(filePath) ||

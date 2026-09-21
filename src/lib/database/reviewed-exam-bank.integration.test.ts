@@ -15,7 +15,7 @@ describe.sequential("reviewed exam bank final schema", () => {
     db = await createFinalSchemaDatabase();
     await db.exec(`insert into auth.users(id) values('${id(1)}');
       insert into public.admin_profiles(user_id,display_name) values('${id(1)}','가짜 관리자');
-      insert into public.students(id,display_name,created_by) values('${id(2)}','가짜 학생','${id(1)}'),('${id(3)}','다른 가짜 학생','${id(1)}');
+      insert into public.students(id,display_name,created_by,school_name,grade_label) values('${id(2)}','가짜 학생','${id(1)}','가짜 고등학교','고2'),('${id(3)}','다른 가짜 학생','${id(1)}','가짜 고등학교','고2');
       select set_config('request.jwt.claim.sub','${id(1)}',false);
       select set_config('request.jwt.claim.role','authenticated',false);
       select set_config('request.jwt.claims','{"role":"authenticated","ref":"wojxpruvbjzbhrpmsbuy"}',false);`);

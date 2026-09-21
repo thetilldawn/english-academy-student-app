@@ -35,7 +35,7 @@ beforeAll(async () => {
   db = await createFinalSchemaDatabase();
   await db.exec(`insert into auth.users(id) values('${id(1)}');
     insert into public.admin_profiles(user_id,display_name) values('${id(1)}','가짜 관리자');
-    insert into public.students(id,display_name,created_by) values('${id(2)}','가짜 예문 학생','${id(1)}');
+    insert into public.students(id,display_name,created_by,school_name,grade_label) values('${id(2)}','가짜 예문 학생','${id(1)}','가짜 고등학교','고2');
     select set_config('request.jwt.claim.sub','${id(1)}',false);
     select set_config('request.jwt.claim.role','authenticated',false);
     select set_config('request.jwt.claims','{"role":"authenticated","ref":"wojxpruvbjzbhrpmsbuy"}',false);`);
@@ -68,7 +68,7 @@ beforeAll(async () => {
     });
   }
   units = Array.from({ length: 3 }, (_, i) => ({ id: id(50 + i), datasetId, label: `DAY ${i + 1}`, displayName: `DAY ${i + 1}`, sortIndex: i + 1, entryCount: 4, kind: "day", number: i + 1, catalogGroup: null, unitType: null, academicYear: null, examMonth: null, agency: null, itemRange: null, catalogSortIndex: i + 1 }));
-  mocks.load.mockResolvedValue({ dataset: { id: datasetId, title: "가짜 예문", displayName: "가짜 예문", status: "ready", isActive: true, isAssignable: true }, students: [{ id: id(2), displayName: "가짜 학생", status: "active" }], units });
+  mocks.load.mockResolvedValue({ dataset: { id: datasetId, title: "가짜 예문", displayName: "가짜 예문", status: "ready", isActive: true, isAssignable: true }, students: [{ id: id(2), displayName: "가짜 학생", schoolName: "가짜 고등학교", gradeLabel: "고2", status: "active" }], units });
   const allowed = new Set(["list_active_canonical_question_preview_v1", "get_bulk_vocab_series_result_v1", "get_canonical_assignment_preview_result_v1", "create_bulk_vocab_assignments_v11", "get_vocab_assignment_queue_result_v1", "create_vocab_assignment_queues_v3"]);
   mocks.client.mockResolvedValue({ rpc: async (name: string, params: Record<string, unknown>) => {
     if (!allowed.has(name)) throw new Error("Unexpected isolated RPC: " + name);

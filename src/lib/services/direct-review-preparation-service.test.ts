@@ -11,6 +11,7 @@ import type { EligibleVocabularyEntry } from "@/lib/quiz/eligible-vocabulary";
 
 import {
   buildDirectReviewSelection,
+  diagnoseDirectReviewSelection,
   DirectReviewPreparationError,
   prepareDirectReviewAssignmentBatch,
   validateDirectReviewSelectionCount,
@@ -64,6 +65,22 @@ function candidate(
 }
 
 const allCandidates = Array.from({ length: 6 }, (_, index) => entry(index + 1));
+
+describe("direct review candidate diagnosis", () => {
+  it("keeps usable candidates and reports each unavailable reason", () => {
+    const pool = [entry(1), entry(2, { eligibleDirections: ["english_to_korean"] }), ...allCandidates.slice(2)];
+    const result = diagnoseDirectReviewSelection(input, [candidate(pool[0], "ok", 1), candidate(pool[1], "direction", 2), candidate(entry(99), "missing", 1), candidate(pool[2], "changed", 1, { canonicalLexemeId: "old-lexeme" })], pool);
+    expect(result.eligibleCandidates.map(c => c.sourceQuestionId)).toEqual(["ok"]);
+    expect(result.unavailableItems.map(c => [c.sourceQuestionId, c.reason])).toEqual([["direction", "direction_unavailable"], ["missing", "target_unavailable"], ["changed", "identity_changed"]]);
+  });
+  it("diagnoses insufficient distinct choices and does not silently drop conflicting candidates", () => {
+    const short = allCandidates.slice(0, 3);
+    const result = diagnoseDirectReviewSelection(input, [candidate(short[0], "short", 1)], short);
+    expect(result.eligibleCandidates).toEqual([]);
+    expect(result.unavailableItems[0].reason).toBe("insufficient_choices");
+    expect(() => diagnoseDirectReviewSelection(input, [candidate(short[0], "same", 1), candidate(short[1], "same", 1)], allCandidates)).toThrow();
+  });
+});
 
 function expectReason(
   reason: DirectReviewPreparationError["reason"],

@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { Button } from "@/design-system/primitives/button/button";
+
 import { StudentAssignmentQueueHistory } from "@/features/assignment-queue/public-ui";
 import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 import { formatContentText } from "@/content/format";
@@ -28,6 +31,7 @@ export function StudentHistoryPanel({
   wrongCache: StudentWrongWordCacheController;
   wrongSummary: StudentCurrentWrongSummary;
 }) {
+  const [wrongExpanded, setWrongExpanded] = useState(false);
   return (
     <section
       aria-labelledby="student-history-tab"
@@ -54,9 +58,13 @@ export function StudentHistoryPanel({
               )}
             </MetaTag>
           </MetaTagList>
+          <Button aria-expanded={wrongExpanded} aria-controls="student-wrong-word-details" onClick={() => setWrongExpanded(value => !value)} variant="quiet" size="small">
+            {wrongExpanded ? "오답 단어 접기" : "오답 단어 펼치기"}
+          </Button>
         </div>
+        <div id="student-wrong-word-details" hidden={!wrongExpanded}>
         <StudentWrongWordPanel
-          active={active}
+          active={active && wrongExpanded}
           cachedAt={wrongCache.entry?.loadedAt ?? null}
           cachedHistory={wrongCache.entry?.history ?? null}
           initialCurriculumStage={student.readingCurriculumStage}
@@ -66,6 +74,7 @@ export function StudentHistoryPanel({
           onLoaded={wrongCache.actions.cache}
           studentId={student.id}
         />
+        </div>
       </section>
       <StudentAssignmentQueueHistory
         headingLevel={3}

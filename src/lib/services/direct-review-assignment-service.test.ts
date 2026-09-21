@@ -184,6 +184,16 @@ describe("createDirectReviewAssignment", () => {
     });
     expect(createArgs.p_questions).toEqual(prepared.questions);
   });
+  it("binds confirmed exclusions to the v3 save and the request receipt", async()=>{
+    const rpc=vi.fn().mockResolvedValueOnce({data:null,error:null}).mockResolvedValueOnce({data:ids.assignment,error:null});
+    mocks.createServerSupabaseClient.mockResolvedValue({rpc});
+    const selectionFingerprint="a".repeat(64),materialFingerprint="b".repeat(64);
+    mocks.prepare.mockResolvedValue({...prepared,selectionFingerprint,materialFingerprint,expectedSourceQuestionIds:[ids.questionA,ids.questionB],excludedSourceQuestionIds:[ids.questionB],sourceQuestionIds:[ids.questionA],questions:prepared.questions.slice(0,1)});
+    const confirmed={...input,totalQuestionCount:1,selectionFingerprint,excludeUnavailableConfirmed:true};
+    await expect(createDirectReviewAssignment(confirmed,admin,{commandNowMilliseconds:Date.parse("2026-08-28T02:00:00Z")})).resolves.toBe(ids.assignment);
+    expect(rpc).toHaveBeenLastCalledWith("create_current_wrong_review_assignment_v3",expect.objectContaining({p_expected_source_question_ids:[ids.questionA,ids.questionB],p_excluded_source_question_ids:[ids.questionB],p_selection_sha256:selectionFingerprint,p_material_sha256:materialFingerprint}));
+    expect(rpc.mock.calls[1][1].p_request_sha256).toBe(rpc.mock.calls[0][1].p_request_sha256);
+  });
 
   it("준비 중 같은 멱등 요청이 완료되면 준비 오류 대신 기존 결과를 돌려준다", async () => {
     const rpc = vi.fn()

@@ -97,7 +97,7 @@ describe.sequential("심석고 운영 승인 경계", () => {
     await db.exec("reset role");
     const dataset=(await db.query<{id:string}>("select id from public.vocab_datasets where dataset_key='simseok-g10-sem2-mid-adjective-500-v1'")).rows[0]!.id;
     const student=randomUUID();
-    await db.query("insert into public.students(id,display_name,created_by,current_vocab_dataset_id) values($1,'Release fixture',$2,$3)",[student,ids.admin,dataset]);
+    await db.query("insert into public.students(id,display_name,created_by,current_vocab_dataset_id,school_name,grade_label) values($1,'Release fixture',$2,$3,'가짜 고등학교','고1')",[student,ids.admin,dataset]);
     const units=(await db.query<{id:string}>("select id from public.vocab_units where dataset_id=$1 order by sort_index",[dataset])).rows.map(x=>x.id);
     for(const mode of ["canonical_definition_to_headword","canonical_example_to_headword"]) {
       await role("xdxhswjgksukjmpbzqgz","authenticated");
@@ -180,7 +180,7 @@ describe.sequential("심석고 운영 승인 경계", () => {
     await db.exec("reset role");
     const dataset=(await db.query<{id:string}>("select id from public.vocab_datasets where dataset_key='simseok-g11-sem2-mid-mock-v1'")).rows[0]!.id;
     const student=randomUUID();
-    await db.query("insert into public.students(id,display_name,created_by,current_vocab_dataset_id) values($1,'Legacy release fixture',$2,$3)",[student,ids.admin,dataset]);
+    await db.query("insert into public.students(id,display_name,created_by,current_vocab_dataset_id,school_name,grade_label) values($1,'Legacy release fixture',$2,$3,'가짜 고등학교','고2')",[student,ids.admin,dataset]);
     const entries=(await db.query<{id:number,unit_id:string}>("select id,unit_id from public.vocab_entries where dataset_id=$1 order by source_row limit 4",[dataset])).rows;
     const entryIds=entries.map(x=>Number(x.id));
     const batch={kind:"regular",student_id:student,dataset_id:dataset,unit_ids:[entries[0]!.unit_id],unit_labels:["자이 7회 29번"],title:"Legacy release fixture",question_count:4,english_to_korean_ratio:100,

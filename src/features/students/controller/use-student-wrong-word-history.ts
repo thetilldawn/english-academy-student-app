@@ -1,124 +1,93 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import type { WrongWordPageFilters, WrongWordPageView } from "../contracts/wrong-word-page";
+import { loadStudentWrongWords, WrongWordRequestError } from "../api/wrong-word-transport";
 
-import type { StudentWrongWordHistory } from "@/lib/admin/wrong-word-history";
+const TTL = 30_000;
+const filterKey = (filters: WrongWordPageFilters) => JSON.stringify([filters.datasetId, filters.level, filters.query.trim()]);
 
-import { loadStudentWrongWords } from "../api/wrong-word-transport";
-
-const WRONG_HISTORY_CACHE_TTL_MS = 30_000;
-
-export function useStudentWrongWordHistory({
-  active,
-  cachedAt,
-  cachedHistory,
-  loadErrorMessage,
-  onLoaded,
-  studentId,
-}: {
-  active: boolean;
-  cachedAt: number | null;
-  cachedHistory: StudentWrongWordHistory | null;
-  loadErrorMessage: string;
-  onLoaded: (studentId: string, history: StudentWrongWordHistory) => void;
-  studentId: string;
+export function useStudentWrongWordHistory({ active, cachedAt, cachedHistory, filters, loadErrorMessage, onLoaded, studentId }: {
+  active: boolean; cachedAt: number | null; cachedHistory: WrongWordPageView | null;
+  filters: WrongWordPageFilters; loadErrorMessage: string;
+  onLoaded: (studentId: string, history: WrongWordPageView | null) => void; studentId: string;
 }) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [requestVersion, setRequestVersion] = useState(0);
-  const [forceRefresh, setForceRefresh] = useState(false);
-  const requestingRef = useRef(false);
-  const requestSequenceRef = useRef(0);
-  const refreshAfterRequestRef = useRef(false);
+  const [{ loading, error, locked, invalidated }, updateStatus] = useReducer(
+    (state: { loading: boolean; error: string; locked: boolean; invalidated: boolean }, patch: Partial<typeof state>) => ({ ...state, ...patch }),
+    { loading: false, error: "", locked: false, invalidated: false },
+  );
+  const [request, setRequest] = useState({ version: 0, cursor: null as string | null, force: false });
+  const requesting = useRef(false);
+  const sequence = useRef(0);
+  const followup = useRef(false);
+  const failedAttempt = useRef("");
+  const invalidatedCache = useRef<WrongWordPageView | null>(null);
+  const key = filterKey(filters);
+  const matching = cachedHistory && filterKey(cachedHistory.filters) === key ? cachedHistory : null;
+  const { datasetId, level, query } = filters;
 
   useEffect(() => {
-    const cacheIsFresh =
-      cachedHistory !== null &&
-      cachedAt !== null &&
-      Date.now() - cachedAt < WRONG_HISTORY_CACHE_TTL_MS;
-    if (
-      !active ||
-      (cacheIsFresh && !forceRefresh) ||
-      requestingRef.current
-    ) {
+    if (!active || locked || requesting.current) return;
+    const attemptKey = JSON.stringify([studentId, key, request.version]);
+    if (!request.force && failedAttempt.current === attemptKey) return;
+    if (matching && matching !== invalidatedCache.current && cachedAt !== null && Date.now() - cachedAt < TTL && !request.force) {
+      updateStatus({ loading: false, error: "", invalidated: false });
       return;
     }
-    const controller = new AbortController();
-    const requestSequence = requestSequenceRef.current + 1;
-    requestSequenceRef.current = requestSequence;
-    requestingRef.current = true;
-    setLoading(true);
-    setError("");
-
-    void loadStudentWrongWords(studentId, controller.signal)
-      .then((payload) => {
-        if (
-          controller.signal.aborted ||
-          requestSequenceRef.current !== requestSequence
-        ) {
-          return;
+    const abort = new AbortController();
+    const current = ++sequence.current;
+    requesting.current = true;
+    updateStatus({ loading: true, error: "" });
+    const pageCursor = matching ? request.cursor : null;
+    if (!pageCursor) {
+      if (matching) invalidatedCache.current = matching;
+      updateStatus({ invalidated: true });
+    }
+    const applied = { datasetId, level, query: query.trim() };
+    const timer = setTimeout(() => {
+      void loadStudentWrongWords(studentId, abort.signal, applied, pageCursor).then(page => {
+        if (abort.signal.aborted || sequence.current !== current) return;
+        let view: WrongWordPageView;
+        if (pageCursor) {
+          if (!matching || matching.nextCursor !== pageCursor) throw new Error("첫 목록부터 다시 확인해 주세요.");
+          const ids = new Set(matching.items.map(item => item.key));
+          view = { ...matching, items: [...matching.items, ...page.items.filter(item => !ids.has(item.key))], nextCursor: page.nextCursor };
+        } else {
+          if (page.summary === null || page.totalCount === null || page.datasetOptions === null || page.reviewDrafts === null) throw new Error(loadErrorMessage);
+          view = { ...page, filters: applied, summary: page.summary, totalCount: page.totalCount, datasetOptions: page.datasetOptions, reviewDrafts: page.reviewDrafts };
         }
-        if (!payload.history) {
-          throw new Error(payload.error ?? loadErrorMessage);
+        updateStatus({ invalidated: false });
+        invalidatedCache.current = null;
+        failedAttempt.current = "";
+        onLoaded(studentId, view);
+      }).catch((failure: unknown) => {
+        if (abort.signal.aborted || sequence.current !== current) return;
+        failedAttempt.current = attemptKey;
+        if (failure instanceof WrongWordRequestError && (failure.status === 401 || failure.status === 403)) {
+          updateStatus({ locked: true }); onLoaded(studentId, null);
         }
-        onLoaded(studentId, payload.history);
-        setForceRefresh(false);
-      })
-      .catch((requestError: unknown) => {
-        if (
-          controller.signal.aborted ||
-          requestSequenceRef.current !== requestSequence
-        ) {
-          return;
-        }
-        setError(
-          requestError instanceof Error
-            ? requestError.message
-            : loadErrorMessage,
-        );
-        setForceRefresh(false);
-      })
-      .finally(() => {
-        if (requestSequenceRef.current !== requestSequence) return;
-        requestingRef.current = false;
-        if (!controller.signal.aborted) {
-          setLoading(false);
-          if (refreshAfterRequestRef.current) {
-            refreshAfterRequestRef.current = false;
-            setForceRefresh(true);
-            setRequestVersion((value) => value + 1);
-          }
-        }
+        updateStatus({ error: failure instanceof Error ? failure.message : loadErrorMessage });
+      }).finally(() => {
+        if (abort.signal.aborted || sequence.current !== current) return;
+        requesting.current = false; updateStatus({ loading: false });
+        const again = followup.current; followup.current = false;
+        setRequest(value => ({ version: value.version + (again ? 1 : 0), cursor: null, force: again }));
       });
-
-    return () => {
-      controller.abort();
-      if (requestSequenceRef.current === requestSequence) {
-        requestSequenceRef.current += 1;
-        requestingRef.current = false;
-      }
-    };
-  }, [
-    active,
-    cachedAt,
-    cachedHistory,
-    forceRefresh,
-    loadErrorMessage,
-    onLoaded,
-    requestVersion,
-    studentId,
-  ]);
+    }, query.trim() && !request.force ? 250 : 0);
+    return () => { clearTimeout(timer); abort.abort(); requesting.current = false; };
+  }, [active, cachedAt, datasetId, key, level, loadErrorMessage, locked, matching, onLoaded, query, request, studentId]);
 
   const refresh = useCallback(() => {
-    if (requestingRef.current) {
-      refreshAfterRequestRef.current = true;
-      return;
-    }
-    setForceRefresh(true);
-    setRequestVersion((value) => value + 1);
+    updateStatus({ invalidated: true });
+    if (requesting.current) { followup.current = true; return; }
+    setRequest(value => ({ version: value.version + 1, cursor: null, force: true }));
   }, []);
+  const loadMore = useCallback(() => {
+    if (requesting.current || invalidated || locked || !matching?.nextCursor) return;
+    setRequest(value => ({ version: value.version + 1, cursor: matching.nextCursor, force: true }));
+  }, [invalidated, locked, matching]);
 
-  const isRequesting = useCallback(() => requestingRef.current, []);
-
-  return { error, isRequesting, loading, refresh };
+  return { error, loading, loadingMore: loading && !!request.cursor, locked, invalidated,
+    history: locked ? null : matching, canLoadMore: !invalidated && !locked && !!matching?.nextCursor,
+    isRequesting: useCallback(() => requesting.current, []), refresh, loadMore };
 }

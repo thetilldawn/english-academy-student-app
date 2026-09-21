@@ -118,9 +118,10 @@ afterEach(() => {
 describe("StudentDetailPage", () => {
   it("다른 탭의 로그아웃 신호에서 헤더와 상세 폼을 함께 숨긴다", () => {
     renderPage();
-    expect(screen.getByRole("textbox", { name: "이름" })).toBeVisible();
+    expect(screen.getByRole("textbox", { name: /^이름\s*필수$/ })).toBeVisible();
+    expect(screen.getByRole("textbox", { name: /^이름\s*필수$/ })).toBeRequired();
     act(() => announceAdminPrivateCacheChange("identity"));
-    expect(screen.queryByRole("textbox", { name: "이름" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: /^이름\s*필수$/ })).not.toBeInTheDocument();
     expect(screen.queryByText(initial.student.displayName)).not.toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveTextContent("관리자 로그인이 필요합니다.");
   });
@@ -129,7 +130,7 @@ describe("StudentDetailPage", () => {
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     renderPage();
 
-    const name = screen.getByRole("textbox", { name: "이름" });
+    const name = screen.getByRole("textbox", { name: /^이름\s*필수$/ });
     await user.clear(name);
     await user.type(name, "수정 중 학생");
     await user.click(screen.getByRole("link", { name: "학생 목록" }));
@@ -147,7 +148,7 @@ describe("StudentDetailPage", () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
     renderPage();
 
-    const name = screen.getByRole("textbox", { name: "이름" });
+    const name = screen.getByRole("textbox", { name: /^이름\s*필수$/ });
     await user.clear(name);
     await user.type(name, "수정 중 학생");
     const baseState = currentBaseState();

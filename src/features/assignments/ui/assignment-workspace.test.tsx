@@ -33,6 +33,7 @@ const uid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0"
 const datasets = ["로컬 형용사", "로컬 공통영어"].map((title, index) => ({
   ...cataloguedDatasetFromMetadata({ id: uid(index + 10), title }, undefined),
   availableQuestionModes: assignmentQuestionModes,
+  schoolClassification: "common" as const, schoolName: null,
   rowCount: 20, status: "ready" as const, isActive: true,
 }));
 const students = [1, 2].map((n) => ({

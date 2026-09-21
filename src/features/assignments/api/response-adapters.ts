@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { directReviewUnavailableItemSchema } from "../domain/direct-review-diagnosis";
 import { assignmentGradeReviewSchema } from "../contracts/assignment-grade-review";
 import { assignmentCountBreakdownSchema } from "../contracts/bulk-assignment-response";
 import type { BulkAssignmentPreview } from "../contracts/bulk-assignment-response";
@@ -27,9 +28,19 @@ const directReviewPreviewResponseSchema = z
     wrongEligible: nonNegativeInteger,
     wrongLevel1Eligible: nonNegativeInteger,
     wrongLevel2Eligible: nonNegativeInteger,
+    candidateCount: nonNegativeInteger.optional(),
+    unavailableCount: nonNegativeInteger.optional(),
+    unavailableItems: z.array(directReviewUnavailableItemSchema).max(400).optional(),
+    selectionFingerprint: z.string().regex(/^[a-f0-9]{64}$/).optional(),
   })
   .strict()
   .superRefine((value, context) => {
+    if ([value.candidateCount, value.unavailableCount, value.unavailableItems, value.selectionFingerprint].some(item => item !== undefined) &&
+      (value.candidateCount === undefined || value.unavailableCount === undefined || !value.unavailableItems || !value.selectionFingerprint ||
+        value.candidateCount !== value.wrongEligible + value.unavailableCount || value.unavailableItems.length !== value.unavailableCount ||
+        new Set(value.unavailableItems.map(item => item.sourceQuestionId)).size !== value.unavailableCount)) {
+      context.addIssue({ code: "custom", path: ["unavailableItems"], message: "출제 가능 수와 제외 항목을 확인하지 못했습니다." });
+    }
     if (
       value.wrongLevel1Eligible + value.wrongLevel2Eligible !==
       value.wrongEligible

@@ -52,6 +52,8 @@ const directReviewAssignmentBaseSchema = z
       z.literal(100),
     ]),
     totalQuestionCount: z.number().int().min(1).max(500),
+    selectionFingerprint: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+    excludeUnavailableConfirmed: z.boolean().optional(),
     title: z.string().trim().max(160).default(""),
     timeLimitSeconds: z.number().int().min(30).max(10800),
     passingScore: z.number().int().min(0).max(100),

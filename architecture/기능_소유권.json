@@ -1810,6 +1810,18 @@
     {
       "path": "src/lib/quiz/question-engine.test.ts",
       "owner": "shared-quiz-domain"
+    },
+    {
+      "path": "src/lib/services/direct-review-preview-selection.test.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/lib/services/direct-review-preparation-service.test.ts",
+      "owner": "assignments"
+    },
+    {
+      "path": "src/lib/services/direct-review-assignment-service.test.ts",
+      "owner": "assignments"
     }
   ],
   "libRootOwners": [
@@ -1874,8 +1886,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 112,
-      "pathSetSha256": "c2905fcf84dc948cd766c55d752e5edb877b0eb84688eb750f3b09c8704bdf89"
+      "fileCount": 113,
+      "pathSetSha256": "55742cc8b24587cb02795a63b75b1a0f447f257949b4f7d4c12b7cf2a76aac09"
     },
     {
       "path": "src/lib/deploy",
@@ -2183,6 +2195,14 @@
     {
       "path": "src/features/wordbook-compositions/server/use-cases/composition-question-plan.ts",
       "owner": "wordbook-compositions"
+    },
+    {
+      "path": "src/features/students/server/queries/wrong-word-page-query.ts",
+      "owner": "students"
+    },
+    {
+      "path": "src/features/students/server/wrong-word-cursor.ts",
+      "owner": "students"
     }
   ],
   "migrationOwnershipFrom": "20260828193000",
@@ -2518,6 +2538,16 @@
       "path": "supabase/migrations/20260921010000_require_student_profile_for_new_assignments.sql",
       "owner": "students",
       "flow": "student-management-screen"
+    },
+    {
+      "path": "supabase/migrations/20260921020000_page_student_wrong_words.sql",
+      "owner": "students",
+      "flow": "student-management-screen"
+    },
+    {
+      "path": "supabase/migrations/20260921030000_confirm_partial_wrong_review.sql",
+      "owner": "assignments",
+      "flow": "assignment-direct-review-create"
     }
   ],
   "features": [
@@ -3112,6 +3142,18 @@
       "to": "src/features/wordbook-compositions/public-contracts.ts",
       "reason": "기존 시험 및 결과 조회가 구성 문항의 고정 발음 계약을 함께 검증",
       "removeIn": "시험 조회의 기능 이동 때 공개 계약 경계 재검토"
+    },
+    {
+      "from": "src/lib/services/direct-review-preparation-service.ts",
+      "to": "src/features/assignments/public-contracts.ts",
+      "reason": "오답 후보 진단의 순수 공개 계약을 서버 준비와 선택 계산이 공유",
+      "removeIn": "오답 서비스의 기능 server 이동 때 재검토"
+    },
+    {
+      "from": "src/lib/services/reviewed-direct-review-selection.ts",
+      "to": "src/features/assignments/public-contracts.ts",
+      "reason": "오답 후보 진단의 순수 공개 계약을 서버 준비와 선택 계산이 공유",
+      "removeIn": "오답 서비스의 기능 server 이동 때 재검토"
     }
   ],
   "currentFeatureToLibBridges": [
@@ -4196,7 +4238,9 @@
         "contract": [
           "src/features/assignments/api/request-adapters.ts",
           "src/features/assignments/api/response-adapters.ts",
-          "src/lib/admin/direct-review-assignment-request.ts"
+          "src/lib/admin/direct-review-assignment-request.ts",
+          "src/features/assignments/domain/direct-review-diagnosis.ts",
+          "src/features/assignments/public-contracts.ts"
         ],
         "transport": [
           "src/features/assignments/transport/assignment-transport.ts"
@@ -4222,7 +4266,8 @@
           "supabase/migrations/20260830100000_add_direct_review_availability.sql",
           "supabase/migrations/20260908020400_connect_reviewed_exam_review_and_edit.sql",
           "supabase/migrations/20260914140753_add_mock_wordbook_compositions.sql",
-          "supabase/migrations/20260921010000_require_student_profile_for_new_assignments.sql"
+          "supabase/migrations/20260921010000_require_student_profile_for_new_assignments.sql",
+          "supabase/migrations/20260921030000_confirm_partial_wrong_review.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/students/[id]/direct-review-summaries/route.ts",
@@ -4256,7 +4301,8 @@
           "src/features/assignments/server/queries/eligible-vocabulary-pagination.test.ts",
           "src/lib/services/reviewed-direct-review-selection.test.ts",
           "src/lib/assignment/reviewed-question-planner.test.ts",
-          "src/lib/database/reviewed-exam-bank.integration.test.ts"
+          "src/lib/database/reviewed-exam-bank.integration.test.ts",
+          "src/lib/services/direct-review-preview-selection.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -5179,7 +5225,8 @@
           "src/app/api/admin/students/[id]/history/route.ts",
           "src/app/api/admin/students/[id]/route.ts",
           "src/app/api/admin/assignment-workspace/datasets/route.ts",
-          "src/app/api/admin/schools/search/route.ts"
+          "src/app/api/admin/schools/search/route.ts",
+          "src/app/api/admin/students/[id]/wrong-words/route.ts"
         ],
         "serverComponent": [
           "src/features/students/server/components/student-create-content.tsx",
@@ -5255,7 +5302,8 @@
           "src/features/students/contracts/student-mutation-result.ts",
           "src/features/assignments/contracts/assignment-dataset-directory-schema.ts",
           "src/features/assignments/contracts/assignment-workspace-read-error.ts",
-          "src/features/students/contracts/student-directory-cache-contract.ts"
+          "src/features/students/contracts/student-directory-cache-contract.ts",
+          "src/features/students/contracts/wrong-word-page.ts"
         ],
         "transport": [
           "src/features/students/actions/update-student-profile.ts",
@@ -5293,13 +5341,17 @@
           "src/features/assignments/server/queries/assignment-dataset-directory-query.ts",
           "src/features/students/server/queries/student-directory-resume-query.ts",
           "src/features/students/server/student-directory-cache-identity.ts",
-          "src/features/school-schedules/public-server.ts"
+          "src/features/school-schedules/public-server.ts",
+          "src/app/api/admin/students/[id]/wrong-words/route.ts",
+          "src/features/students/server/queries/wrong-word-page-query.ts",
+          "src/features/students/server/wrong-word-cursor.ts"
         ],
         "database": [
           "supabase/migrations/20260829213000_add_admin_student_directory_read_model.sql",
           "supabase/migrations/20260831101000_add_student_profile_version_command.sql",
           "supabase/migrations/20260913092302_add_school_schedule_and_student_school_key.sql",
-          "supabase/migrations/20260921010000_require_student_profile_for_new_assignments.sql"
+          "supabase/migrations/20260921010000_require_student_profile_for_new_assignments.sql",
+          "supabase/migrations/20260921020000_page_student_wrong_words.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/students/page.tsx",
@@ -5308,7 +5360,8 @@
           "src/app/admin/(protected)/@detail/(.)students/[studentId]/page.tsx",
           "src/app/admin/(protected)/@detail/(.)students/[studentId]/loading.tsx",
           "src/app/api/admin/students/directory/route.ts",
-          "src/app/api/admin/students/[id]/history/route.ts"
+          "src/app/api/admin/students/[id]/history/route.ts",
+          "src/app/api/admin/students/[id]/wrong-words/route.ts"
         ],
         "tests": [
           "src/design-system/patterns/filter-workspace/filter-workspace.test.tsx",
@@ -5348,7 +5401,13 @@
           "src/features/students/ui/cached-student-directory.test.tsx",
           "src/features/students/server/queries/student-directory-resume-query.test.ts",
           "src/features/students/transport/student-directory-cache-read.test.ts",
-          "src/features/session/controller/admin-private-cache-events.test.ts"
+          "src/features/session/controller/admin-private-cache-events.test.ts",
+          "src/features/students/controller/use-student-wrong-word-history.test.tsx",
+          "src/features/students/ui/panels/student-history-panel.test.tsx",
+          "src/features/students/api/wrong-word-transport.test.ts",
+          "src/features/students/server/queries/wrong-word-page-query.test.ts",
+          "src/features/students/server/wrong-word-cursor.test.ts",
+          "src/lib/database/wrong-word-page.integration.test.ts"
         ]
       },
       "requiredImportEdges": [

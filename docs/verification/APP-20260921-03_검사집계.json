@@ -1,0 +1,31 @@
+{
+  "runs": [
+    {
+      "report": "app03-full-tests-final.json",
+      "sha256": "7f78d05c7443e762bda92dc7570b2b15496da8be2bfd2b417c0bbc9659824bfb",
+      "passed": 3727,
+      "failed": 6,
+      "pending": 1
+    },
+    {
+      "report": "app03-regressions-final.json",
+      "sha256": "977422c496c0ca9facfd43445f48c958e1af65fac73668d8aa27cd5470c84eaf",
+      "passed": 125,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "report": "app03-pool-proof.json",
+      "sha256": "1945a268ba7784862971920adcb9b432e213e81e747eec63398fd99dca58c4fb",
+      "passed": 2,
+      "failed": 0,
+      "pending": 37
+    }
+  ],
+  "combined": {
+    "passed": 3735,
+    "failed": 0,
+    "pending": 1
+  },
+  "note": "전체 검사 뒤 실패 파일과 추가 회귀검사를 재실행한 합계. 단일 전체 실행의 전부 통과를 뜻하지 않음."
+}

@@ -142,6 +142,9 @@ export function VocabAssignmentPlanner({
     reviewController.summary.status === "error" ||
     reviewController.capacity.status === "error"
   );
+  const reviewSelectionBlocked = assignmentPurpose === "review" &&
+    reviewController.capacity.status === "ready" &&
+    (!reviewController.exclusionConfirmed || reviewController.capacity.value.wrongEligible === 0);
   const rangeCalculationPending = assignmentPurpose === "range" &&
     bulk.previewLoading;
   const visibleErrors = submitAttempted ? controller.fieldErrors : {};
@@ -452,6 +455,7 @@ export function VocabAssignmentPlanner({
               !rangeCalculationPending &&
               !reviewCalculationPending &&
               !reviewCalculationFailed &&
+              !reviewSelectionBlocked &&
               (!submitAttempted || canSubmit)
             }
             formId="vocab-assignment-plan-form"

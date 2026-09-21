@@ -225,6 +225,7 @@ export function useDirectReviewAssignmentController({
     initializeFromClock: true,
   });
   const [previewRevision, setPreviewRevision] = useState(0);
+  const [confirmedSelection, setConfirmedSelection] = useState<string | null>(null);
   const previewRevisionRef = useRef(0);
   const advancePreviewRevision = useCallback(() => {
     previewRevisionRef.current += 1;
@@ -483,7 +484,12 @@ export function useDirectReviewAssignmentController({
       "preview",
     ] as const
   ).find((key) => fieldErrors[key]) ?? null;
+  const confirmationKey = capacity.status === "ready" && capacity.value.selectionFingerprint
+    ? `${capacity.revision}:${capacity.value.selectionFingerprint}` : null;
+  const exclusionConfirmed = capacity.status === "ready" && (capacity.value.unavailableCount ?? 0) > 0
+    ? confirmationKey !== null && confirmedSelection === confirmationKey : true;
   const canSubmit =
+    exclusionConfirmed &&
     numbersComplete &&
     enabled &&
     summary.status === "ready" &&
@@ -583,6 +589,7 @@ export function useDirectReviewAssignmentController({
     const alreadySubmitting = interactionLockedRef.current;
     if (
       !enabled ||
+      !exclusionConfirmed ||
       submission.status === "succeeded" ||
       !assignmentNumbersComplete(draftRef.current) ||
       summary.status !== "ready" ||
@@ -609,7 +616,9 @@ export function useDirectReviewAssignmentController({
     try {
       outcome = await submissionFlow.run((now) =>
         prepareDirectReviewSubmission(
-          { draft: draftRef.current, wrongEligible: capacity.value.wrongEligible },
+          { draft: draftRef.current, wrongEligible: capacity.value.wrongEligible,
+            ...(capacity.value.selectionFingerprint ? { selection: { selectionFingerprint: capacity.value.selectionFingerprint,
+              excludeUnavailableConfirmed: (capacity.value.unavailableCount ?? 0) > 0 && exclusionConfirmed } } : {}) },
           now,
         )
       );
@@ -651,6 +660,7 @@ export function useDirectReviewAssignmentController({
 
   return {
     actions: {
+      confirmUnavailable: (confirmed: boolean) => { if (!interactionLockedRef.current) setConfirmedSelection(confirmed ? confirmationKey : null); },
       changeDataset,
       changeAvailability: (availability: AssignmentAvailability) =>
         dispatchUserAction({ type: "availability_changed", availability }),
@@ -678,6 +688,7 @@ export function useDirectReviewAssignmentController({
     },
     calculationPending,
     canSubmit,
+    exclusionConfirmed,
     capacity: numbersComplete ? capacity : { status: "idle" as const, value: null, message: "" as const },
     draft,
     fieldErrors,

@@ -146,6 +146,7 @@ function reviewController(
       status,
       value: status === "ready" ? { wrongEligible: 1 } : null,
     },
+    exclusionConfirmed: true,
     draft: { questionCount: status === "ready" ? 1 : 0 },
     fieldErrors: {},
     firstFieldKey: null,
@@ -195,6 +196,20 @@ function renderChangedAssignment(
 }
 
 describe("오답 단일 배정 제출", () => {
+  it("제외 확인 전에는 준비된 오답 시험의 배정 버튼도 비활성화한다", () => {
+    mocks.useScreen.mockReturnValue(screenController());
+    const review = { ...reviewController("ready", true), exclusionConfirmed: false };
+    mocks.useReview.mockReturnValue(review);
+    const props = { data, onClose: vi.fn(), onSuccess: vi.fn(), selectionMode: "single" as const, students: [student] };
+    const { rerender } = render(<VocabAssignmentPlanner {...props} />);
+    fireEvent.click(screen.getByRole("tab", { name: "오답 시험" }));
+    expect(screen.getByRole("button", { name: "배정하기" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "배정하기" }));
+    expect(mocks.reviewSubmit).not.toHaveBeenCalled();
+    mocks.useReview.mockReturnValue({ ...review, exclusionConfirmed: true });
+    rerender(<VocabAssignmentPlanner {...props} />);
+    expect(screen.getByRole("button", { name: "배정하기" })).toBeEnabled();
+  });
   it("필수 정보 보완 전 배정을 막고 보완 뒤에는 작성 중인 조건을 유지한다", () => {
     const incomplete = { ...student, schoolName: null };
     mocks.useScreen.mockReturnValue({ ...screenController({ canSubmit: true }), selectedStudents: [incomplete] });

@@ -353,8 +353,8 @@ describe.sequential("exam-use dictionary projection", () => {
       insert into auth.users (id) values ('${ids.admin}');
       insert into public.admin_profiles (user_id, display_name, is_active)
       values ('${ids.admin}', 'Preview admin', true);
-      insert into public.students (id, display_name, status, created_by)
-      values ('${ids.student}', 'Preview student', 'active', '${ids.admin}');
+      insert into public.students (id, display_name, status, created_by, school_name, grade_label)
+      values ('${ids.student}', 'Preview student', 'active', '${ids.admin}', '가짜 고등학교', '고2');
     `);
 
     const directions = [

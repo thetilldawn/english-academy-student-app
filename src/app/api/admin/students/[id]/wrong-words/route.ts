@@ -1,16 +1,18 @@
 import { z } from "zod";
 
 import { getAdminContext } from "@/lib/auth/admin";
-import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
+import { privateJsonError as jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
 import {
   queueStudentWrongWords,
   WrongWordQueueError,
 } from "@/lib/services/wrong-word-command";
-import { getStudentWrongWordHistory } from "@/lib/services/wrong-word-query";
+import { getStudentWrongWordPage, WrongWordPageForbiddenError } from "@/features/students/server/queries/wrong-word-page-query";
+import { WrongWordCursorError } from "@/features/students/server/wrong-word-cursor";
+import { wrongWordFiltersSchema } from "@/features/students/contracts/wrong-word-page";
 import { queueWrongWordsSchema } from "@/lib/validation";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
   const admin = await getAdminContext();
@@ -24,19 +26,26 @@ export async function GET(
   }
 
   try {
-    const history = await getStudentWrongWordHistory(id, admin);
-    if (!history) {
+    const params = new URL(request.url).searchParams;
+    const filters = wrongWordFiltersSchema.safeParse({
+      datasetId: params.get("datasetId") ?? "", level: params.get("level") ?? "all", query: params.get("query") ?? "",
+    });
+    if (!filters.success) return jsonError("오답 조회 조건을 확인해 주세요.", 400);
+    const page = await getStudentWrongWordPage(id, { filters: filters.data, cursor: params.get("cursor") }, admin);
+    if (!page) {
       return jsonError("학생을 찾지 못했습니다.", 404);
     }
     return Response.json(
-      { history },
+      { page },
       {
         headers: {
           "Cache-Control": "private, no-store",
         },
       },
     );
-  } catch {
+  } catch (error) {
+    if (error instanceof WrongWordPageForbiddenError) return jsonError(error.message, 403);
+    if (error instanceof WrongWordCursorError) return jsonError(error.message, 400);
     return jsonError("오답 단어 이력을 불러오지 못했습니다.", 500);
   }
 }

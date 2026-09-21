@@ -61,6 +61,7 @@ export function resolveDirectReviewSubmissionIssues(
   input: {
     draft: DirectReviewAssignmentDraft;
     wrongEligible: number;
+    selection?: { selectionFingerprint: string; excludeUnavailableConfirmed: boolean };
   },
   nowMilliseconds: number,
 ) {
@@ -100,6 +101,7 @@ export function prepareDirectReviewSubmission(
   input: {
     draft: DirectReviewAssignmentDraft;
     wrongEligible: number;
+    selection?: { selectionFingerprint: string; excludeUnavailableConfirmed: boolean };
   },
   nowMilliseconds: number,
 ): AssignmentSubmissionPreparationResult<AssignmentCreationResponse> {
@@ -119,7 +121,7 @@ export function prepareDirectReviewSubmission(
     ok: true,
     value: {
       fallback: SUBMISSION_FALLBACK,
-      fingerprint: directReviewSubmissionFingerprint(input.draft),
+      fingerprint: directReviewSubmissionFingerprint(input.draft, input.selection),
       parse: parseAssignmentCreationResponse,
       recoveryForResponse: (response) => {
         if (response.status !== 409) return undefined;
@@ -131,6 +133,7 @@ export function prepareDirectReviewSubmission(
         const request = buildDirectReviewAssignmentRequest(
           input.draft,
           idempotencyKey,
+          input.selection,
         );
         return {
           body: request.body,

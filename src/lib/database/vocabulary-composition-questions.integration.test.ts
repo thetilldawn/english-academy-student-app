@@ -24,7 +24,7 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
   beforeAll(async () => {
     db = await createFinalSchemaDatabase();
     await db.exec(`insert into auth.users(id) values('${adminId}'); insert into public.admin_profiles(user_id,display_name) values('${adminId}','가짜 관리자');
-      insert into public.students(id,display_name,created_by) values('${studentId}','가짜 학생','${adminId}');
+      insert into public.students(id,display_name,created_by,school_name,grade_label) values('${studentId}','가짜 학생','${adminId}','가짜 고등학교','고2');
       select set_config('request.jwt.claims','{"ref":"wojxpruvbjzbhrpmsbuy"}',false);`);
     originalDataset = await scalar<string>(`insert into public.vocab_datasets(dataset_key,title,source_label,source_sha256,row_count,status,is_active)
       values('fake-compose-day','가짜 일반 자료','fake',repeat('A',64),6,'ready',true) returning id value`);

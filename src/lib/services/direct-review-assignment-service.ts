@@ -52,6 +52,8 @@ function directReviewRequestSha256(input: DirectReviewAssignmentInput) {
       availableUntil: input.availableUntil,
       timingMode: input.timingMode ?? "total",
       questionTimeLimitSeconds: input.questionTimeLimitSeconds ?? null,
+      ...(input.selectionFingerprint ? { selectionFingerprint: input.selectionFingerprint,
+        excludeUnavailableConfirmed: input.excludeUnavailableConfirmed === true } : {}),
     }), "utf8")
     .digest("hex");
 }
@@ -178,7 +180,7 @@ export async function createDirectReviewAssignment(
   }
 
   const { data, error } = await supabase.rpc(
-    "create_current_wrong_review_assignment_v2",
+    prepared.selectionFingerprint ? "create_current_wrong_review_assignment_v3" : "create_current_wrong_review_assignment_v2",
     {
       p_student_id: prepared.studentId,
       p_dataset_id: prepared.datasetId,
@@ -198,6 +200,12 @@ export async function createDirectReviewAssignment(
       p_timing_mode: prepared.timingMode,
       p_question_time_limit_seconds: prepared.questionTimeLimitSeconds,
       p_questions: prepared.questions,
+      ...(prepared.selectionFingerprint ? {
+        p_expected_source_question_ids: prepared.expectedSourceQuestionIds,
+        p_excluded_source_question_ids: prepared.excludedSourceQuestionIds,
+        p_selection_sha256: prepared.selectionFingerprint,
+        p_material_sha256: prepared.materialFingerprint,
+      } : {}),
     },
   );
 

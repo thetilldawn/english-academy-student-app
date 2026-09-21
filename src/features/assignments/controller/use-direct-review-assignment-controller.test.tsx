@@ -68,6 +68,30 @@ afterEach(() => {
 });
 
 describe("direct review assignment controller", () => {
+  it("requires exclusion confirmation for the current preview and clears it after direction changes", async () => {
+    const writes: unknown[] = [];
+    let revision=0;
+    const transport: AssignmentTransport=vi.fn(async request=>{
+      if(request.url.endsWith("/direct-review-summaries")) return {data:summaryResponse,ok:true,status:200};
+      if(request.url.endsWith("/preview")) return {data:{...capacityResponse,candidateCount:3,unavailableCount:1,selectionFingerprint:(++revision%2?"a":"b").repeat(64),unavailableItems:[{sourceQuestionId:"00000000-0000-4000-8000-000000000061",vocabEntryId:3,headword:"unavailable",primaryMeaning:null,reason:"target_unavailable"}]},ok:true,status:200};
+      writes.push(request.body);return {data:{assignmentId:ids.assignment},ok:true,status:201};
+    });
+    const {result}=renderHook(()=>useDirectReviewAssignmentController({datasets:[dataset],enabled:true,initialDatasetId:ids.dataset,previewDelayMs:0,student,transport}));
+    await waitFor(()=>expect(result.current.capacity.status).toBe("ready"));
+    expect(result.current.canSubmit).toBe(false);
+    await act(async()=>{expect((await result.current.actions.submit()).ok).toBe(false);});
+    expect(writes).toHaveLength(0);
+    act(()=>result.current.actions.confirmUnavailable(true));
+    expect(result.current.canSubmit).toBe(true);
+    act(()=>result.current.actions.changeDirection(100));
+    await waitFor(()=>expect(revision).toBe(2));
+    await waitFor(()=>expect(result.current.capacity.status).toBe("ready"));
+    expect(result.current.exclusionConfirmed).toBe(false);
+    expect(result.current.canSubmit).toBe(false);
+    act(()=>result.current.actions.confirmUnavailable(true));
+    await act(async()=>{expect((await result.current.actions.submit()).ok).toBe(true);});
+    expect(writes).toEqual([expect.objectContaining({selectionFingerprint:"b".repeat(64),excludeUnavailableConfirmed:true,totalQuestionCount:2})]);
+  });
   it.each(["score", "time"] as const)("does not submit an old preview after clearing and restoring %s in one event", async field => {
     let previewCount = 0, writes = 0;
     let release!: (value: { data: typeof capacityResponse; ok: boolean; status: number }) => void;

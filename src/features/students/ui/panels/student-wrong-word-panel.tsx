@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import type { StudentWrongWordHistory } from "@/lib/admin/wrong-word-history";
+import type { WrongWordPageView } from "../../contracts/wrong-word-page";
 import { HelpTip, inlineHelpClassName } from "@/design-system/primitives/tooltip/help-tip";
 import { adminStudentsText } from "@/content/ko/admin-students";
 import { formatContentText } from "@/content/format";
@@ -14,7 +14,6 @@ import type { ReadingCurriculumStage } from "@/lib/admin/reading-curriculum";
 import { useStudentWrongWordActions } from "../../controller/use-student-wrong-word-actions";
 import { useStudentWrongWordHistory } from "../../controller/use-student-wrong-word-history";
 import { useWrongWordPanelSelection } from "../../controller/use-wrong-word-panel-selection";
-import { activeWrongWordReviewDrafts } from "../../domain/wrong-word-selection";
 import styles from "./student-wrong-word-panel.module.css";
 import { WrongWordControlSection } from "./wrong-word-control-section";
 import { WrongWordFilterSection } from "./wrong-word-filter-section";
@@ -35,7 +34,7 @@ export function StudentWrongWordPanel({
 }: {
   active: boolean;
   cachedAt: number | null;
-  cachedHistory: StudentWrongWordHistory | null;
+  cachedHistory: WrongWordPageView | null;
   initialDatasetId?: string;
   initialCurriculumStage?: ReadingCurriculumStage;
   initialReadingContextSyncStatus?:
@@ -46,23 +45,17 @@ export function StudentWrongWordPanel({
   onDataUpdated?: () => void;
   onLoaded: (
     studentId: string,
-    history: StudentWrongWordHistory,
+    history: WrongWordPageView | null,
   ) => void;
   studentId: string;
 }) {
-  const {
-    error,
-    isRequesting,
-    loading,
-    refresh: refreshHistory,
-  } = useStudentWrongWordHistory({
-    active,
-    cachedAt,
-    cachedHistory,
-    loadErrorMessage: adminStudentsText.learning.wrongWordsPanel.loadError,
-    onLoaded,
-    studentId,
-  });
+  const selection = useWrongWordPanelSelection({ history: cachedHistory, initialDatasetId });
+  const page = useStudentWrongWordHistory({ active, cachedAt, cachedHistory,
+    filters: { datasetId: selection.datasetFilter, level: selection.levelFilter, query: selection.query },
+    loadErrorMessage: adminStudentsText.learning.wrongWordsPanel.loadError, onLoaded, studentId });
+  const { error, isRequesting, loading } = page;
+  const history = page.history ?? cachedHistory;
+  function refreshHistory() { selection.actions.clearSelections(); page.refresh(); }
   const {
     busy,
     cancelDraft,
@@ -85,10 +78,6 @@ export function StudentWrongWordPanel({
     useState<ReadingCurriculumStage>(initialCurriculumStage);
   const [readingContextSyncStatus, setReadingContextSyncStatus] =
     useState(initialReadingContextSyncStatus);
-  const selection = useWrongWordPanelSelection({
-    history: cachedHistory,
-    initialDatasetId,
-  });
   const datasetLabelById = useMemo(
     () =>
       new Map(
@@ -100,12 +89,10 @@ export function StudentWrongWordPanel({
     [selection.datasetOptions],
   );
 
-  const activeDrafts = useMemo(
-    () => activeWrongWordReviewDrafts(cachedHistory),
-    [cachedHistory],
-  );
+  const activeDrafts = history?.reviewDrafts ?? [];
 
   async function queueSelectedWords() {
+    if (page.invalidated || page.locked || isRequesting()) return;
     try {
       const queueIds = await queueWords(
         selection.selectedQueuedIds,
@@ -130,6 +117,7 @@ export function StudentWrongWordPanel({
   }
 
   async function createWorksheetRequest() {
+    if (page.invalidated || page.locked || isRequesting()) return;
     try {
       const payload = await requestWorksheet({
         questionIds: selection.selectedWorksheetIds,
@@ -197,7 +185,9 @@ export function StudentWrongWordPanel({
     }
   }
 
-  if (loading && !cachedHistory) {
+  if (page.locked) return <Notice tone="danger" role="alert">관리자 로그인을 다시 확인해 주세요.</Notice>;
+
+  if (loading && !history) {
     return (
       <section
         aria-busy="true"
@@ -208,7 +198,7 @@ export function StudentWrongWordPanel({
     );
   }
 
-  if (error && !cachedHistory) {
+  if (error && !history) {
     return (
       <section className={styles.panel}>
         <Notice role="alert" tone="danger">
@@ -223,7 +213,7 @@ export function StudentWrongWordPanel({
     );
   }
 
-  if (!cachedHistory) {
+  if (!history) {
     return (
       <section className={`${styles.emptyPanel} ${styles.panel}`}>
         {adminStudentsText.learning.wrongWordsPanel.openToLoad}
@@ -268,7 +258,7 @@ export function StudentWrongWordPanel({
           <strong>
             {formatContentText(
               adminStudentsText.learning.wrongWordsPanel.summary.times,
-              { count: cachedHistory.wrongEventCount },
+              { count: history.summary.wrongEventCount },
             )}
           </strong>
         </div>
@@ -279,7 +269,7 @@ export function StudentWrongWordPanel({
           <strong>
             {formatContentText(
               adminStudentsText.learning.wrongWordsPanel.summary.count,
-              { count: cachedHistory.uniqueWordCount },
+              { count: history.summary.uniqueWordCount },
             )}
           </strong>
         </div>
@@ -288,7 +278,7 @@ export function StudentWrongWordPanel({
           <strong>
             {formatContentText(
               adminStudentsText.learning.wrongWordsPanel.summary.count,
-              { count: cachedHistory.onceWrongWordCount },
+              { count: history.summary.onceWrongWordCount },
             )}
           </strong>
         </div>
@@ -299,7 +289,7 @@ export function StudentWrongWordPanel({
           <strong>
             {formatContentText(
               adminStudentsText.learning.wrongWordsPanel.summary.count,
-              { count: cachedHistory.repeatedWrongWordCount },
+              { count: history.summary.repeatedWrongWordCount },
             )}
           </strong>
         </div>
@@ -310,7 +300,7 @@ export function StudentWrongWordPanel({
           <strong>
             {formatContentText(
               adminStudentsText.learning.wrongWordsPanel.summary.count,
-              { count: cachedHistory.pendingReviewCount },
+              { count: history.summary.pendingReviewCount },
             )}
           </strong>
         </div>
@@ -330,7 +320,7 @@ export function StudentWrongWordPanel({
                       datasetLabelById.get(draft.datasetId) ??
                       adminStudentsText.learning.wrongWordsPanel
                         .wordbookFallback,
-                    count: draft.questionIds.length,
+                    count: draft.questionCount,
                   },
                 )}
               </span>
@@ -354,6 +344,7 @@ export function StudentWrongWordPanel({
         </Notice>
       )}
 
+      <p aria-live="polite">{page.history && !page.invalidated ? `최신순 · ${history.totalCount}개 중 ${history.items.length}개 표시` : "선택한 조건의 목록을 다시 확인해 주세요."}</p>
       <div id="wrong-word-aggregate-panel">
         <WrongWordFilterSection
           datasetFilter={selection.datasetFilter}
@@ -377,12 +368,12 @@ export function StudentWrongWordPanel({
             allVisibleSelected={selection.allVisibleSelected}
             busy={busy}
             curriculumStage={readingCurriculumStage}
-            loading={loading}
+            loading={loading || page.invalidated}
             onCreateWorksheet={() => void createWorksheetRequest()}
             onCurriculumStageChange={setReadingCurriculumStage}
             onQueueWords={() => void queueSelectedWords()}
             onToggleVisible={() => {
-              if (isRequesting() || busy) return;
+              if (isRequesting() || busy || page.invalidated) return;
               selection.actions.toggleVisible();
             }}
             purpose={selection.purpose}
@@ -392,11 +383,11 @@ export function StudentWrongWordPanel({
             selectedCount={selection.selectedIds.length}
             worksheetRequesting={worksheetRequesting}
           />
-          <WrongWordList
+          {!page.history ? <Notice role="status">{loading ? "선택한 조건의 오답 단어를 불러오는 중…" : "목록을 확인하지 못했습니다. 다시 불러와 주세요."}</Notice> : <WrongWordList
             datasetFilter={selection.datasetFilter}
-            disabled={loading || busy}
+            disabled={loading || busy || page.invalidated}
             onToggleQuestion={(questionId) => {
-              if (isRequesting() || busy) return;
+              if (isRequesting() || busy || page.invalidated) return;
               selection.actions.toggleQuestion(questionId);
             }}
             purpose={selection.purpose}
@@ -405,8 +396,9 @@ export function StudentWrongWordPanel({
               selection.worksheetSelectionLimitReached
             }
             words={selection.filteredWords}
-          />
+          />}
         </WrongWordControlSection>
+        {page.canLoadMore && <Button disabled={loading || busy} onClick={page.loadMore}>{page.loadingMore ? "불러오는 중…" : "10개 더 보기"}</Button>}
       </div>
     </section>
   );
