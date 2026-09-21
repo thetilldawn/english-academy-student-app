@@ -72,6 +72,36 @@ function addTextbook() {
   s.occurrences = [{ ...s.occurrences[0]!,key:"5".repeat(64),sourceEntryId:5 }]; catalog.scopes.push(s);
 }
 describe("library source editor controls", () => {
+  it("학생 기본 대상만 갱신하고 수동 대상과 선택 범위를 보존한다", async () => {
+    const onBack = vi.fn();
+    const target = { school: "가상고", targetGrade: "g11", semester: 2 as const, schoolYear: 2026 };
+    const { rerender } = render(<WordbookLibrary onBack={onBack} initialTarget={target} />);
+    await screen.findByText("이 조건에 맞는 자료가 없습니다.");
+    fireEvent.click(screen.getByRole("button", { name: "범위로 새로 만들기" }));
+    expect(screen.getByLabelText("학교")).toHaveValue("가상고");
+    expect(screen.getByLabelText("사용 대상 학년")).toHaveValue("g11");
+    fireEvent.click(screen.getByRole("button", { name: "모의고사 추가" }));
+    fireEvent.change(screen.getByLabelText("학교"), { target: { value: "수동 학교" } });
+    rerender(<WordbookLibrary onBack={onBack} initialTarget={{ ...target, school: "전학고", targetGrade: "g12", semester: 1 }} />);
+    expect(screen.getByLabelText("학교")).toHaveValue("수동 학교");
+    expect(screen.getByLabelText("사용 대상 학년")).toHaveValue("g12");
+    expect(screen.getByLabelText("학기")).toHaveValue("1");
+    expect(screen.getByText(/담은 범위 3개/)).toBeVisible();
+    expect(requests).toHaveLength(0);
+  });
+  it("저장한 템플릿에는 현재 학생의 기본 대상을 덮어쓰지 않는다", async () => {
+    catalog.templates = [existing()];
+    const onBack = vi.fn();
+    const target = { school: "다른고", targetGrade: "g12", semester: 1 as const, schoolYear: 2027 };
+    const { rerender } = render(<WordbookLibrary onBack={onBack} initialTarget={target} />);
+    await screen.findByRole("heading", { name: metadata.title });
+    fireEvent.click(screen.getByRole("button", { name: "이름·대상 수정" }));
+    rerender(<WordbookLibrary onBack={onBack} initialTarget={{ ...target, school: "새 학교" }} />);
+    expect(screen.getByLabelText("학교")).toHaveValue(metadata.school);
+    expect(screen.getByLabelText("사용 대상 학년")).toHaveValue(metadata.targetGrade);
+    expect(screen.getByLabelText("학기")).toHaveValue("2");
+    expect(requests).toHaveLength(0);
+  });
   it("keeps a correlated manual selection on an already selected All click", async () => {
     addGist(); const extra=structuredClone(catalog.scopes.at(-1)!);extra.id=id(6);extra.classification.exam!.executionYear=2026;catalog.scopes.push(extra);
     const t=existing();t.versions[0]!.recipe.scopes=[catalog.scopes[0]!,extra].map(s=>({id:s.id,version:s.version}));catalog.templates=[t];

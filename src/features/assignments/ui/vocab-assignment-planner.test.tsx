@@ -83,6 +83,7 @@ const student = {
   id: "student-1",
   displayName: "프리뷰 학생",
   schoolName: "미리보기고",
+  gradeLabel: "고2",
 } as AssignmentStudentItem;
 
 const data = {
@@ -194,6 +195,22 @@ function renderChangedAssignment(
 }
 
 describe("오답 단일 배정 제출", () => {
+  it("필수 정보 보완 전 배정을 막고 보완 뒤에는 작성 중인 조건을 유지한다", () => {
+    const incomplete = { ...student, schoolName: null };
+    mocks.useScreen.mockReturnValue({ ...screenController({ canSubmit: true }), selectedStudents: [incomplete] });
+    mocks.useReview.mockReturnValue(reviewController("idle", false));
+    const props = { data, onClose: vi.fn(), onSuccess: vi.fn(), selectionMode: "single" as const, students: [incomplete] };
+    const { rerender } = render(<VocabAssignmentPlanner {...props} />);
+    expect(screen.getByRole("button", { name: "배정하기" })).toBeDisabled();
+    expect(screen.getByRole("link", { name: "프리뷰 학생 정보 수정" })).toHaveAttribute("href", "/admin/students/student-1");
+    const input = screen.getByLabelText("배정 조건 보존");
+    fireEvent.change(input, { target: { value: "유지할 7회차" } });
+    mocks.useScreen.mockReturnValue(screenController({ canSubmit: true }));
+    rerender(<VocabAssignmentPlanner {...props} students={[student]} />);
+    expect(screen.getByRole("button", { name: "배정하기" })).toBeEnabled();
+    expect(input).toHaveValue("유지할 7회차");
+    expect(mocks.screenSubmit).not.toHaveBeenCalled();
+  });
   const gradeReview: AssignmentGradeReview = { audienceMode: "bulk", datasetId: "fake-book", datasetGrade: "고1",
     studentIds: [student.id], mismatches: [{ studentId: student.id, displayName: student.displayName, gradeLabel: "고2" }],
     unknownStudentIds: [], token: "a".repeat(64) };
@@ -637,6 +654,9 @@ describe("오답 단일 배정 제출", () => {
     expect(screen.queryByRole("button", { name: "배정하기" })).not.toBeInTheDocument();
     const search = screen.getByRole("searchbox", { name: "단어장 검색" });
     expect(search).toHaveFocus();
+    expect(screen.getByLabelText("학교")).toHaveValue("school:미리보기고");
+    expect(within(screen.getByRole("group", { name: "학년" })).getByRole("button", { pressed: true })).toHaveTextContent("고2");
+    await user.click(screen.getByRole("button", { name: "검색·필터 초기화" }));
     await user.type(search, "형용사{Enter}");
     expect(screen.getByRole("status")).toHaveTextContent("검색 결과 1권");
     expect(mocks.screenSubmit).not.toHaveBeenCalled();
@@ -658,6 +678,7 @@ describe("오답 단일 배정 제출", () => {
     render(<VocabAssignmentPlanner data={data} onClose={vi.fn()} onSuccess={vi.fn()} selectionMode="single" students={[student]} />);
     fireEvent.click(screen.getByRole("tab", { name: "오답 시험" }));
     fireEvent.click(screen.getByRole("button", { name: "오답 단어장 찾기" }));
+    fireEvent.click(screen.getByRole("button", { name: "검색·필터 초기화" }));
     fireEvent.click(screen.getByRole("button", { name: /심석 고1 형용사 500/ }));
     expect(mocks.reviewDataset).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "오답 단어장 찾기" })).toBeVisible();
@@ -676,6 +697,7 @@ describe("오답 단일 배정 제출", () => {
     render(<VocabAssignmentPlanner data={data} onClose={onClose} onSuccess={vi.fn()} selectionMode="single" students={[student]} />);
     fireEvent.click(screen.getByRole("tab", { name: "오답 시험" }));
     fireEvent.click(screen.getByRole("button", { name: "오답 단어장 찾기" }));
+    fireEvent.click(screen.getByRole("button", { name: "검색·필터 초기화" }));
     const list = screen.getByRole("region", { name: "단어장 목록 — 학교 미분류" });
     expect(within(list).getAllByRole("button")).toHaveLength(1);
     expect(list).toHaveTextContent("미배정 오답 7개");

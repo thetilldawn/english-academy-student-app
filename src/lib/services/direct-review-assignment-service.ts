@@ -1,4 +1,5 @@
 import "server-only";
+import { STUDENT_PROFILE_REQUIRED_MESSAGE } from "@/lib/admin/student-profile-requirements";
 
 import { createHash } from "node:crypto";
 import { z } from "zod";
@@ -201,6 +202,9 @@ export async function createDirectReviewAssignment(
   );
 
   if (error) {
+    if (error.code === "22023" && error.message === "student_profile_required") {
+      throw new DirectReviewAssignmentError("invalid_selection", STUDENT_PROFILE_REQUIRED_MESSAGE, "studentId");
+    }
     console.error("[direct-review-assignment] database operation failed", {
       code: error.code,
       message: error.message,

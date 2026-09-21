@@ -46,7 +46,7 @@ it("허용된 직전대비 용도와 숫자 학기만 공개 목록 계약을 �
   for (const purpose of ["school_handout", "wordbook", {}, true]) expect(book("invalid", { purpose }).dataset.purpose).toBeNull();
   expect(assignmentDatasetDirectorySchema.safeParse({ datasets: [{ ...dataset, semester: 3 }] }).success).toBe(false);
 });
-it("고2·학교·직전대비·2학기에서 해당 세 자료만 표시하고 교과서 버튼을 만들지 않는다", () => {
+it("학생 조건에 맞는 학교 자료와 공통·학기 미분류 자료를 함께 표시한다", () => {
   const school = { school: "심석고등학교", purpose: "exam_prep", semester: 2 };
   const options = [
     ...["lesson1", "lesson2", "mock"].map(id => ({ dataset: { ...book(id, school, "g11").dataset, materialKind: id === "mock" ? "exam_prep" as const : "textbook" as const } })),
@@ -57,11 +57,11 @@ it("고2·학교·직전대비·2학기에서 해당 세 자료만 표시하고 
     book("unknownSemester", { school: "심석고등학교", purpose: "exam_prep" }, "g11"),
   ];
   const filters = { ...EMPTY_DATASET_FILTERS, stage: "high" as const, kind: "exam_prep" as const, grade: "g11", school: "school:심석고등학교", semester: "2" as const };
-  expect(filterDatasetPickerOptions(options, filters).map(({ dataset }) => dataset.id).sort()).toEqual(["lesson1", "lesson2", "mock"]);
+  expect(filterDatasetPickerOptions(options, filters).map(({ dataset }) => dataset.id).sort()).toEqual(["commonExam", "lesson1", "lesson2", "mock", "unknownSemester"]);
   const buttons = datasetPickerFilterButtons(options, filters);
   expect(buttons.kind.map(button => button.value)).not.toContain("textbook");
   expect(buttons.kind.map(button => button.label)).not.toContain("교과서");
-  expect(buttons.semester.find(button => button.value === "2")?.count).toBe(3);
+  expect(buttons.semester.find(button => button.value === "2")?.count).toBe(5);
   expect(filterDatasetPickerOptions(options, { ...filters, grade: "g10" }).map(({ dataset }) => dataset.id)).toEqual(["adjectives500"]);
   expect(filterDatasetPickerOptions(options, { ...filters, kind: "wordbook" }).map(({ dataset }) => dataset.id)).toEqual(["general"]);
   expect(filterDatasetPickerOptions(options, { ...filters, semester: "unclassified" }).map(({ dataset }) => dataset.id)).toEqual(["unknownSemester"]);

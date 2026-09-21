@@ -64,15 +64,17 @@ export function filterDatasetPickerOptions(
   return options.filter(({ dataset }) => {
     if (filters.stage !== "all" && datasetPickerStage(dataset) !== filters.stage) return false;
     if (filters.kind !== "all" && datasetPickerKind(dataset) !== filters.kind) return false;
-    if (filters.grade !== "all" && datasetPickerGrade(dataset) !== filters.grade) return false;
+    const grade = datasetPickerGrade(dataset);
+    if (filters.grade !== "all" && grade !== null && grade !== filters.grade) return false;
     const semester = filters.semester ?? "all";
-    if (semester !== "all" && datasetPickerSemester(dataset) !== semester) return false;
+    if (semester !== "all" && datasetPickerSemester(dataset) !== semester
+      && !(semester !== "unclassified" && datasetPickerSemester(dataset) === "unclassified")) return false;
     const school = filters.school ?? "all";
     const schoolGroup = datasetSchoolGroup(dataset);
     if (school === "common" && schoolGroup !== "common") return false;
     if (school === "unclassified" && schoolGroup !== "unclassified") return false;
     if (school !== "all" && school !== "common" && school !== "unclassified"
-      && !(schoolGroup === "common" && filters.kind !== "exam_prep"
+      && !(schoolGroup === "common"
         || schoolGroup === "school" && school === `school:${dataset.schoolName}`)) return false;
     const text = searchable([
       cataloguedDatasetDisplayLabel(dataset), dataset.title, dataset.edition,
@@ -138,11 +140,12 @@ export function datasetPickerFilterButtons(
   const grades = [...new Set(gradeOptions.flatMap(({ dataset }) =>
     datasetPickerGrade(dataset) ? [datasetPickerGrade(dataset)!] : [],
   ))].sort((left, right) => Number(left.slice(1)) - Number(right.slice(1)));
-  const grade = ["all", ...grades].map((value) => ({
+  const grade = [...new Set(["all", ...grades, filters.grade])].map((value) => ({
     value, label: value === "all" ? "전체" : gradeLabels[value] ?? value,
     count: filterDatasetPickerOptions(options, { ...filters, grade: value }).length,
   }));
-  const schools = [...new Set(options.flatMap(({ dataset }) => datasetSchoolGroup(dataset) === "school" ? [dataset.schoolName!] : []))].sort((a, b) => a.localeCompare(b, "ko-KR"));
+  const schools = [...new Set([...options.flatMap(({ dataset }) => datasetSchoolGroup(dataset) === "school" ? [dataset.schoolName!] : []),
+    ...(filters.school?.startsWith("school:") ? [filters.school.slice(7)] : [])])].sort((a, b) => a.localeCompare(b, "ko-KR"));
   const school = [
     { value: "all", label: "전체 학교" },
     ...schools.map(name => ({ value: `school:${name}`, label: name })),

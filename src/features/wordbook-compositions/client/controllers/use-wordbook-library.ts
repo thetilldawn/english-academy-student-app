@@ -13,7 +13,8 @@ const emptyMetadata = (): TemplateMetadata => ({ title: "", tags: [], school: nu
 const emptyRecipe = (): LibraryRecipe => ({ filters: EMPTY_LIBRARY_FILTERS, scopes: [], excludedOccurrenceKeys: [], scopeStatus: "confirmed" });
 type Editor = { mode: "create" | "metadata" | "version" | "copy"; template?: LibraryTemplate; version?: LibraryVersion };
 
-export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: unknown) => void, onSaved?: (book: CreatedLibraryBook) => void) {
+export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: unknown) => void, onSaved?: (book: CreatedLibraryBook) => void,
+  initialTarget?: Pick<TemplateMetadata, "school" | "targetGrade" | "semester" | "schoolYear">) {
   const [catalog, setCatalog] = useState<LibraryCatalog>({ viewerId: "00000000-0000-0000-0000-000000000000", scopes: [], templates: [] });
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
   const [loadError, setLoadError] = useState("");
@@ -22,7 +23,19 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
   const [search, setSearch] = useState("");
   const [editor, setEditor] = useState<Editor>({ mode: "create" });
   const [editorRevision, setEditorRevision] = useState(0);
-  const [metadataInput, setMetadata] = useState<TemplateMetadata>(emptyMetadata);
+  const [metadataInput, setMetadata] = useState<TemplateMetadata>(() => ({ ...emptyMetadata(), ...initialTarget }));
+  const [previousTarget, setPreviousTarget] = useState(initialTarget);
+  if (JSON.stringify(previousTarget) !== JSON.stringify(initialTarget)) {
+    const previous = previousTarget;
+    setPreviousTarget(initialTarget);
+    if (editor.mode === "create") setMetadata(current => {
+      const next = { ...current };
+      for (const key of ["school", "targetGrade", "semester", "schoolYear"] as const) {
+        if (current[key] === (previous?.[key] ?? null)) Object.assign(next, { [key]: initialTarget?.[key] ?? null });
+      }
+      return next;
+    });
+  }
   const [legacyTags, setLegacyTags] = useState<string[]>([]);
   const [titleEdited, setTitleEdited] = useState(false);
   const [groups, setGroups] = useState<LibraryGroup[]>([]);
@@ -187,7 +200,7 @@ export function useWordbookLibrary(captureAuthenticationFailure?: () => (error: 
       move: (id: string, offset: -1 | 1) => { if (!scopesLocked) edit(() => { const ids = recipe.scopes.map(s => s.id), from = ids.indexOf(id), to = from + offset;
         if (from >= 0 && to >= 0 && to < ids.length) { [ids[from], ids[to]] = [ids[to]!, ids[from]!]; const r = { ...recipe, scopes: ids.map(id => recipe.scopes.find(s => s.id === id)!) }; setRecipe(r); const restored = restoreLibraryGroups(catalog.scopes, r); setGroups(restored); setActiveGroupId(restored[0]?.id ?? null); } }); },
       exclude: (key: string) => { if (!scopesLocked) edit(() => setRecipe(r => ({ ...r, excludedOccurrenceKeys: changeVisibleSelection(r.excludedOccurrenceKeys, [key], !r.excludedOccurrenceKeys.includes(key)) }))); },
-      newTemplate: () => edit(() => { setEditorRevision(v => v + 1); setEditor({ mode: "create" }); setMetadata(emptyMetadata()); setLegacyTags([]); setTitleEdited(false); setRecipe(emptyRecipe()); setGroups([]); setActiveGroupId(null); setDirty(false); setTab("sources"); }),
+      newTemplate: () => edit(() => { setEditorRevision(v => v + 1); setEditor({ mode: "create" }); setMetadata({ ...emptyMetadata(), ...initialTarget }); setLegacyTags([]); setTitleEdited(false); setRecipe(emptyRecipe()); setGroups([]); setActiveGroupId(null); setDirty(false); setTab("sources"); }),
       open,
       rebase: () => { if (conflictingTemplate) edit(() => { setEditor(e => ({ ...e, template: conflictingTemplate, version: latestLibraryVersion(conflictingTemplate) }));
         setNotice("최신 버전을 기준으로 변경 내용을 다시 확인해 주세요."); }); },

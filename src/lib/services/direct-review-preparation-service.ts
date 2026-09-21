@@ -1,4 +1,5 @@
 import "server-only";
+import { hasRequiredStudentProfile, STUDENT_PROFILE_REQUIRED_MESSAGE } from "@/lib/admin/student-profile-requirements";
 
 import type { AdminContext } from "@/lib/auth/admin";
 import { requireAdmin } from "@/lib/auth/admin";
@@ -197,7 +198,7 @@ async function loadDirectReviewSelection(
       await Promise.all([
         supabase
           .from("students")
-          .select("id, status")
+          .select("id, status, display_name, school_name, grade_label")
           .eq("id", input.studentId)
           .maybeSingle(),
         supabase
@@ -228,6 +229,10 @@ async function loadDirectReviewSelection(
       !dataset.is_active
     ) {
       throw new DirectReviewPreparationError("unavailable");
+    }
+    if (!hasRequiredStudentProfile({ displayName: studentResult.data.display_name,
+      schoolName: studentResult.data.school_name, gradeLabel: studentResult.data.grade_label })) {
+      throw new DirectReviewPreparationError("invalid_selection", STUDENT_PROFILE_REQUIRED_MESSAGE, "studentId");
     }
     let selection: DirectReviewSelection;
     if (dataset.metadata?.questionBankKind === "reviewed_exam_v1" || dataset.metadata?.questionBankKind === "vocabulary_composition_v1") {

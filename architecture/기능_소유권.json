@@ -1384,6 +1384,10 @@
     {
       "path": "src/lib/admin/wrong-word-history.ts",
       "owner": "students"
+    },
+    {
+      "path": "src/lib/admin/student-profile-requirements.ts",
+      "owner": "shared-contract"
     }
   ],
   "componentOwners": [
@@ -2509,6 +2513,11 @@
       "path": "supabase/migrations/20260921000000_guard_vocabulary_library_templates.sql",
       "owner": "wordbook-compositions",
       "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20260921010000_require_student_profile_for_new_assignments.sql",
+      "owner": "students",
+      "flow": "student-management-screen"
     }
   ],
   "features": [
@@ -3065,6 +3074,12 @@
       "to": "src/features/wordbook-compositions/public-contracts.ts",
       "reason": "배정 당시 고정된 발음 계약만 검증하며 현재 사전으로 대체하지 않는다",
       "removeIn": "공개 고정 발음 계약을 유지하는 동안 보존"
+    },
+    {
+      "from": "src/features/assignments/controller/use-assignment-planner-preparation.ts",
+      "to": "src/features/students/public-client.ts",
+      "reason": "학생 프로필 저장 응답을 열린 배정에 반영해 범위 입력을 보존",
+      "removeIn": "공개 진입점으로 고정"
     }
   ],
   "currentLibToFeatureImports": [
@@ -3394,6 +3409,7 @@
       "owner": "assignments",
       "participants": [
         "assignments",
+        "students",
         "history",
         "assignment-queue",
         "wordbook-compositions"
@@ -3535,7 +3551,8 @@
           "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql",
           "supabase/migrations/20260913020000_add_school_handout_reviewed_import.sql",
           "supabase/migrations/20260914140753_add_mock_wordbook_compositions.sql",
-          "supabase/migrations/20260914085457_allow_school_handout_meaning_only.sql"
+          "supabase/migrations/20260914085457_allow_school_handout_meaning_only.sql",
+          "supabase/migrations/20260921010000_require_student_profile_for_new_assignments.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/bulk-assignments/preview/route.ts",
@@ -4204,7 +4221,8 @@
           "supabase/migrations/20260828174000_harden_current_wrong_review_deadline.sql",
           "supabase/migrations/20260830100000_add_direct_review_availability.sql",
           "supabase/migrations/20260908020400_connect_reviewed_exam_review_and_edit.sql",
-          "supabase/migrations/20260914140753_add_mock_wordbook_compositions.sql"
+          "supabase/migrations/20260914140753_add_mock_wordbook_compositions.sql",
+          "supabase/migrations/20260921010000_require_student_profile_for_new_assignments.sql"
         ],
         "cacheStreaming": [
           "src/app/api/admin/students/[id]/direct-review-summaries/route.ts",
@@ -5280,7 +5298,8 @@
         "database": [
           "supabase/migrations/20260829213000_add_admin_student_directory_read_model.sql",
           "supabase/migrations/20260831101000_add_student_profile_version_command.sql",
-          "supabase/migrations/20260913092302_add_school_schedule_and_student_school_key.sql"
+          "supabase/migrations/20260913092302_add_school_schedule_and_student_school_key.sql",
+          "supabase/migrations/20260921010000_require_student_profile_for_new_assignments.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/students/page.tsx",
@@ -5750,7 +5769,8 @@
           "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql",
           "supabase/migrations/20260908020100_add_reviewed_exam_bank.sql",
           "supabase/migrations/20260908020200_connect_reviewed_exam_assignments.sql",
-          "supabase/migrations/20260914140753_add_mock_wordbook_compositions.sql"
+          "supabase/migrations/20260914140753_add_mock_wordbook_compositions.sql",
+          "supabase/migrations/20260921010000_require_student_profile_for_new_assignments.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/assignments/page.tsx",
@@ -6218,7 +6238,8 @@
       "owner": "assignments",
       "participants": [
         "assignments",
-        "wordbook-compositions"
+        "wordbook-compositions",
+        "students"
       ],
       "dataClass": "private",
       "cachePolicy": "학생·단어장별 준비 자료와 직전 시험은 private no-store이며 현재 열린 모달의 동일 요청만 재사용. 단어장 검색·분류는 받은 목록에서만 계산하며 최근 선택은 브라우저에 ID 최대6개만 저장 같은 인증 준비 요청의 단어장 자료를 단위 조회에 재사용. 정상 빈 초기범위도 단어장 ID와 연결한다. 별도 범위 API/최종 저장 최신성 유지.",
@@ -6262,7 +6283,8 @@
         "domain": [
           "src/features/assignments/domain/select-common-initial-dataset.ts",
           "src/features/assignments/domain/assignment-dataset-picker.ts",
-          "src/features/assignments/domain/vocab-previous-exam.ts"
+          "src/features/assignments/domain/vocab-previous-exam.ts",
+          "src/features/assignments/domain/assignment-student-context.ts"
         ],
         "presentation": [
           "src/features/assignments/presentation/assignment-dataset-picker-view.ts"
@@ -6303,7 +6325,9 @@
           "src/features/assignments/domain/vocab-previous-exam.test.ts",
           "src/features/assignments/server/queries/assignment-dataset-units-query.test.ts",
           "src/features/assignments/transport/assignment-workspace-reads.test.ts",
-          "src/features/assignments/controller/use-assignment-student-directory.test.tsx"
+          "src/features/assignments/controller/use-assignment-student-directory.test.tsx",
+          "src/features/assignments/domain/assignment-student-context.test.ts",
+          "src/features/assignments/controller/use-assignment-planner-preparation.test.tsx"
         ]
       },
       "requiredImportEdges": [

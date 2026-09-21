@@ -54,7 +54,7 @@ it.each([[12, 5, [4, 4, 4]], [320, 100, [100, 100, 100, 20]], [601, 100, [100, 1
       activeAssignments: new Map([[JSON.stringify([[student], dataset, null, null]), Promise.resolve({ ...snapshot, byStudent: new Map([[student, snapshot]]) })]]),
     } as unknown as RegularAssignmentPreparationCache;
     mocks.load.mockResolvedValue({ dataset: { id: dataset, title: "가짜 단어장", displayName: "가짜 단어장", edition: null, status: "ready", isActive: true, isAssignable: true },
-      students: [{ id: student, displayName: "가짜 학생", status: "active", currentVocabDatasetId: dataset }],
+      students: [{ id: student, displayName: "가짜 학생", status: "active", schoolName: "가상고", gradeLabel: "고2", currentVocabDatasetId: dataset }],
       units: [{ id: unit, datasetId: dataset, label: "DAY 1", sortIndex: 1, entryCount: total }] });
     const admin = { userId: id(1), displayName: "가짜 관리자" };
     const input = bulkAssignmentPreviewSchema.parse({ questionMode: "book_meaning_choice", englishToKoreanRatio: 100, studentIds: [student],

@@ -197,12 +197,16 @@ async function seedReviewAssignmentScenario(database: PGlite) {
     insert into public.students (
       id,
       display_name,
+      school_name,
+      grade_label,
       status,
       created_by
     )
     values (
       '${ids.student}',
       'Test student',
+      '가상고',
+      '고2',
       'active',
       '${ids.admin}'
     );
@@ -1865,12 +1869,12 @@ describe.sequential("final review-assignment database schema", () => {
           id,
           display_name,
           status,
-          created_by
+          created_by, school_name, grade_label
         ) values (
           '${weekdayRuleStudentId}',
           'Weekday rule student',
           'active',
-          '${ids.admin}'
+          '${ids.admin}', '가상고', '고2'
         );
       `);
 
@@ -2344,12 +2348,12 @@ describe.sequential("final review-assignment database schema", () => {
           id,
           display_name,
           status,
-          created_by
+          created_by, school_name, grade_label
         ) values ${boundaryStudentIds.map((studentId, index) => `(
           '${studentId}',
           'Queue boundary ${index + 1}',
           'active',
-          '${ids.admin}'
+          '${ids.admin}', '가상고', '고2'
         )`).join(",")};
       `);
       const boundaryWindow = {
@@ -4090,13 +4094,13 @@ describe.sequential("admin deletion controls", () => {
           id,
           display_name,
           status,
-          created_by
+          created_by, school_name, grade_label
         )
         values (
           '${peerStudent}',
           'Peer student',
           'active',
-          '${ids.admin}'
+          '${ids.admin}', '가상고', '고2'
         );
 
         update public.students
@@ -4538,8 +4542,8 @@ describe.sequential("admin deletion controls", () => {
     try {
       await seedReviewAssignmentScenario(database);
       await database.exec(`
-        insert into public.students (id, display_name, status, created_by)
-        values ('${peerStudent}', 'Deletion peer', 'active', '${ids.admin}');
+        insert into public.students (id, display_name, status, created_by, school_name, grade_label)
+        values ('${peerStudent}', 'Deletion peer', 'active', '${ids.admin}', '가상고', '고2');
       `);
       const target = await createRegularPointAttempt(
         database,
@@ -4792,8 +4796,8 @@ describe.sequential("admin deletion controls", () => {
     try {
       await seedReviewAssignmentScenario(database);
       await database.exec(`
-        insert into public.students (id, display_name, status, created_by)
-        values ('${peerStudent}', 'Assignment peer', 'active', '${ids.admin}');
+        insert into public.students (id, display_name, status, created_by, school_name, grade_label)
+        values ('${peerStudent}', 'Assignment peer', 'active', '${ids.admin}', '가상고', '고2');
       `);
       const target = await createRegularPointAttempt(
         database,
@@ -5706,20 +5710,20 @@ describe.sequential("admin deletion controls", () => {
           id,
           display_name,
           status,
-          created_by
+          created_by, school_name, grade_label
         )
         values
           (
             '${secondStudent}',
             'Shared recipient',
             'active',
-            '${ids.admin}'
+            '${ids.admin}', '가상고', '고2'
           ),
           (
             '${rollbackStudent}',
             'Rollback recipient',
             'active',
-            '${ids.admin}'
+            '${ids.admin}', '가상고', '고2'
           );
       `);
 
@@ -6381,12 +6385,12 @@ describe.sequential("assignment retry rules", () => {
     try {
       await seedReviewAssignmentScenario(database);
       await database.exec(`
-        insert into public.students (id, display_name, status, created_by)
+        insert into public.students (id, display_name, status, created_by, school_name, grade_label)
         values
-          ('${cases[0].studentId}', 'Timer case 1', 'active', '${ids.admin}'),
-          ('${cases[1].studentId}', 'Timer case 2', 'active', '${ids.admin}'),
-          ('${cases[2].studentId}', 'Timer case 3', 'active', '${ids.admin}'),
-          ('${cases[3].studentId}', 'Timer case 4', 'active', '${ids.admin}');
+          ('${cases[0].studentId}', 'Timer case 1', 'active', '${ids.admin}', '가상고', '고2'),
+          ('${cases[1].studentId}', 'Timer case 2', 'active', '${ids.admin}', '가상고', '고2'),
+          ('${cases[2].studentId}', 'Timer case 3', 'active', '${ids.admin}', '가상고', '고2'),
+          ('${cases[3].studentId}', 'Timer case 4', 'active', '${ids.admin}', '가상고', '고2');
       `);
 
       for (const testCase of cases) {
@@ -8605,4 +8609,139 @@ describe.sequential("admin history read model", () => {
       await database.close();
     }
   }, 60_000);
+});
+
+
+describe.sequential("student profile required for new assignments", () => {
+  let database: PGlite;
+  beforeAll(async () => { database = await createFinalSchemaDatabase(); await seedReviewAssignmentScenario(database); }, 120_000);
+  afterAll(async () => database?.close());
+  it("keeps old empty profiles readable and rejects new incomplete profile values", async () => {
+    await database.exec(`update public.students set school_name = null where id = '${ids.student}';`);
+    const before = await database.query(`select display_name,school_name,grade_label,profile_updated_at from public.students where id='${ids.student}'`);
+    await expectPostgresError(database.query(`select private.require_complete_student_profiles_v1(array['${ids.student}'::uuid])`), "22023", "student_profile_required");
+    expect((await database.query(`select display_name,school_name,grade_label,profile_updated_at from public.students where id='${ids.student}'`)).rows).toEqual(before.rows);
+    for (const value of ["", " ", "\t\n", "\u00a0"]) {
+      await expectPostgresError(database.query(`select private.require_student_profile_values_v1('가상 학생',$1,'고2')`, [value]), "22023", "student_profile_required");
+    }
+    await database.exec(`update public.students set school_name='가상고' where id='${ids.student}';`);
+    await expect(database.query(`select private.require_complete_student_profiles_v1(array['${ids.student}'::uuid])`)).resolves.toBeDefined();
+  });
+  it("guards current and compatibility entry points after completed receipts", async () => {
+    const result = await database.query<{ name: string; schema: string; body: string }>(`select p.proname name,n.nspname schema,p.prosrc body from pg_proc p join pg_namespace n on n.oid=p.pronamespace where p.prosrc like '%perform private.require_%student_profile%' and n.nspname in ('private','public')`);
+    const body = (name: string, schema: string) => result.rows.find(row => row.name === name && row.schema === schema)!.body;
+    for (const name of ['create_assignment_with_delivery_v6','create_assignment_with_delivery_v7','create_mixed_review_assignment_v9','create_mixed_review_assignment_v10','create_current_wrong_review_assignment_v1']) expect(body(name,'public')).toContain('require_complete_student_profiles_v1');
+    for (const name of ['create_student_with_code_v2','update_admin_student_profile_v1','update_admin_student_profile_v2']) expect(body(name,'private')).toContain('require_student_profile_values_v1');
+    for (const [name, schema, receipt] of [['create_vocab_assignment_queues_v1','private','return request_row.result;'], ['create_bulk_vocab_assignments_v11','private','return request_row.result;'], ['create_current_wrong_review_assignment_v1','public','return request_row.assignment_id;']]) {
+      const source = body(name!,schema!);
+      expect(source.indexOf(receipt!)).toBeGreaterThan(-1);
+      expect(source.indexOf('perform private.require_complete_student_profiles_v1')).toBeGreaterThan(source.indexOf(receipt!));
+    }
+  });
+  it("keeps shared replacement writers unchanged and does not expose new helpers", async () => {
+    const grants = await database.query<{ allowed: boolean }>(`select has_function_privilege(role, 'private.require_complete_student_profiles_v1(uuid[])','execute') allowed from unnest(array['anon','authenticated','service_role']) role`);
+    expect(grants.rows.every(row => !row.allowed)).toBe(true);
+    const writers = await database.query<{ body: string }>(`select p.prosrc body from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='private' and p.proname in ('create_assignment_with_delivery_v6','create_mixed_review_assignment_v9','create_assignment_with_delivery_system_v1')`);
+    expect(writers.rows.length).toBeGreaterThan(0);
+    expect(writers.rows.every(row => !row.body.includes('require_complete_student_profiles_v1'))).toBe(true);
+  });
+  it("rejects missing profiles through every executable public creation entry point without persisting anything", async () => {
+    const creators = await database.query<{ name: string; names: string[]; types: string[] }>(`
+      select p.proname name,p.proargnames names,
+        array(select format_type(t,null) from unnest(p.proargtypes::oid[]) t) types
+      from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+      where n.nspname='public' and p.proname like 'create_%assignment%'
+        and has_function_privilege('authenticated',p.oid,'execute')
+      order by p.proname`);
+    expect(creators.rows).toHaveLength(17);
+    const batch = { kind: "regular", student_id: ids.student, dataset_id: ids.dataset,
+      unit_ids: [ids.units[0], ids.units[4]], unit_labels: ["DAY 1", "DAY 5"], title: "가상 필수 검사",
+      question_count: 4, english_to_korean_ratio: 100, time_limit_seconds: 300, passing_score: 100,
+      retry_enabled: false, retry_passing_score: null, question_order_mode: "ascending", timing_mode: "none",
+      question_time_limit_seconds: null, available_from: "2031-01-06T00:00:00Z", available_until: "2031-01-06T14:00:00Z",
+      session_number: 1, session_count: 1, questions: JSON.parse(mixedQuestions) };
+    const canonicalBase = Object.fromEntries(Object.entries(batch).filter(([key]) => !["english_to_korean_ratio", "questions"].includes(key)));
+    const canonical = { ...canonicalBase, kind: "canonical_preview", available_from: null, available_until: null,
+      quiz_content_mode: "canonical_definition_to_headword", canonical_release_id: ids.dataset,
+      canonical_package_sha256: "a".repeat(64), question_targets: [1, 2, 3, 4].map(n => ({
+        vocab_entry_id: n, base_order_index: n, question_item_id: `fake-${n}`, question_item_sha256: "b".repeat(64) })) };
+    const series = [{ student_id: ids.student, dataset_id: ids.dataset, dataset_label: "가상 자료", range_label: "DAY 1, DAY 5",
+      split_basis: "question_count", allocation_rule: null, resolved_plan_sha256: "b".repeat(64),
+      recurrence_slots: [{ isodow: 1, local_time: "09:00:00", duration_seconds: 3600 }], items: [batch] }];
+    const parameters: Record<string, unknown> = {
+      p_student_id: ids.student, p_student_ids: `{${ids.student}}`, p_dataset_id: ids.dataset,
+      p_unit_ids: `{${ids.units[0]},${ids.units[4]}}`, p_primary_unit_ids: `{${ids.units[0]},${ids.units[4]}}`,
+      p_title: "가상 필수 검사", p_question_count: 4, p_english_to_korean_ratio: 100, p_time_limit_seconds: 300,
+      p_passing_score: 100, p_retry_enabled: false, p_retry_passing_score: null, p_question_order_mode: "ascending",
+      p_available_from: null, p_available_until: null, p_timing_mode: "none", p_question_time_limit_seconds: null,
+      p_review_levels: "{1,2}", p_review_scope: "dataset", p_selected_queue_ids: `{${ids.selectedQueue}}`,
+      p_source_question_ids: `{${ids.units.slice(0, 4).join(",")}}`, p_questions: mixedQuestions,
+      p_idempotency_key: ids.rollbackDraft, p_request_sha256: "e".repeat(64), p_series: JSON.stringify(series),
+    };
+    const counts = () => database.query(`select (select count(*) from public.assignments) assignments,
+      (select count(*) from private.bulk_vocab_series_requests) bulk,
+      (select count(*) from private.vocab_assignment_queue_requests) queue,
+      (select count(*) from private.current_wrong_review_assignment_requests) review,
+      (select count(*) from private.bulk_canonical_question_preview_requests) canonical`);
+    const before = (await counts()).rows;
+    await database.exec(`update public.students set school_name=null where id='${ids.student}';
+      select set_config('request.jwt.claims','{"role":"authenticated","ref":"wojxpruvbjzbhrpmsbuy"}',false);
+      set role authenticated;`);
+    const failures: { name: string; code?: string; message: string }[] = [];
+    try {
+      for (const creator of creators.rows) {
+        const args = creator.names.map((name, i) => `${name}=>$${i + 1}::${creator.types[i]}`);
+        const selectedBatch = creator.name.includes("canonical") ? canonical
+          : creator.name === "create_bulk_vocab_assignments_v5"
+            ? Object.fromEntries(Object.entries(batch).filter(([key]) => !key.startsWith("retry_"))) : batch;
+        const values = creator.names.map(name => name === "p_batches"
+          ? JSON.stringify([selectedBatch]) : parameters[name]);
+        expect(values, creator.name).not.toContain(undefined);
+        try {
+          await database.query(`select public.${creator.name}(${args.join(",")})`, values);
+          failures.push({ name: creator.name, message: "unexpected success" });
+        } catch (error) {
+          const e = error as Error & { code: string };
+          if (e.code !== "22023" || e.message !== "student_profile_required") failures.push({ name: creator.name, code: e.code, message: e.message });
+        }
+      }
+    } finally {
+      await database.exec(`reset role; update public.students set school_name='가상고' where id='${ids.student}';`);
+    }
+    expect(failures, JSON.stringify(failures)).toEqual([]);
+    expect((await counts()).rows).toEqual(before);
+
+    // Model receipts from an earlier completed request, including one whose
+    // student is incomplete today. Replaying it must never create another exam.
+    const completed = await createRegularPointAttempt(database, "Completed profile fixture");
+    const receipt = [{ assignment_id: completed.assignmentId, student_id: ids.student, session_number: 1 }];
+    for (const [table, payload] of [
+      ["bulk_vocab_series_requests", [batch]], ["vocab_assignment_queue_requests", series],
+      ["bulk_canonical_question_preview_requests", [canonical]],
+    ] as const) {
+      await database.query(`insert into private.${table}
+        (idempotency_key,request_sha256,payload_sha256,actor_admin_id,result,completed_at)
+        values ($1,$2,encode(extensions.digest(convert_to($3::jsonb::text,'UTF8'),'sha256'),'hex'),$4,$5::jsonb,now())`,
+      [ids.rollbackDraft, parameters.p_request_sha256, JSON.stringify(payload), ids.admin, JSON.stringify(receipt)]);
+    }
+    await database.query(`insert into private.current_wrong_review_assignment_requests
+      (idempotency_key,request_sha256,student_id,dataset_id,assignment_id,created_by,completed_at)
+      values ($1,$2,$3,$4,$5,$6,now())`,
+    [ids.rollbackDraft, parameters.p_request_sha256, ids.student, ids.dataset, completed.assignmentId, ids.admin]);
+    const completedCounts = (await counts()).rows;
+    await database.exec(`update public.students set school_name=null where id='${ids.student}'; set role authenticated;`);
+    try {
+      for (const name of ["create_bulk_vocab_assignments_v11", "create_vocab_assignment_queues_v1",
+        "create_bulk_canonical_assignments_preview_v1", "create_current_wrong_review_assignment_v1"]) {
+        const creator = creators.rows.find(row => row.name === name)!;
+        const args = creator.names.map((key, i) => `${key}=>$${i + 1}::${creator.types[i]}`);
+        const values = creator.names.map(key => key === "p_batches" ? JSON.stringify([name.includes("canonical") ? canonical : batch]) : parameters[key]);
+        const result = await database.query<{ result: unknown }>(`select public.${name}(${args.join(",")}) result`, values);
+        expect(result.rows[0]?.result, name).toEqual(name.includes("current_wrong") ? completed.assignmentId : receipt);
+      }
+    } finally {
+      await database.exec(`reset role; update public.students set school_name='가상고' where id='${ids.student}';`);
+    }
+    expect((await counts()).rows).toEqual(completedCounts);
+  });
 });

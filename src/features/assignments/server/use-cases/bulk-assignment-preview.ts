@@ -1,4 +1,5 @@
 import "server-only";
+import { hasRequiredStudentProfile, STUDENT_PROFILE_REQUIRED_MESSAGE } from "@/lib/admin/student-profile-requirements";
 import type { AssignmentGradeReview } from "../../contracts/assignment-grade-review";
 import { bindAssignmentGradeReview, buildAssignmentGradeReview } from "../planning/assignment-grade-review";
 
@@ -230,7 +231,7 @@ export async function resolveBulkAssignmentPreview(
         requiresExtraDateDecision: false,
       };
 
-      if (!student || student.status !== "active") {
+      if (!student || student.status !== "active" || !hasRequiredStudentProfile(student)) {
         return {
           ...itemBase,
           available: false,
@@ -238,7 +239,7 @@ export async function resolveBulkAssignmentPreview(
           availableQuestionCount: null,
           selectedQuestionCount: null,
           remainingQuestionCount: null,
-          error: "접속 가능한 학생이 아닙니다.",
+          error: student?.status === "active" ? STUDENT_PROFILE_REQUIRED_MESSAGE : "접속 가능한 학생이 아닙니다.",
           errorFieldKey: "students" as const,
         };
       }

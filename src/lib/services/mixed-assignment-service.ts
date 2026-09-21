@@ -1,4 +1,5 @@
 import "server-only";
+import { STUDENT_PROFILE_REQUIRED_MESSAGE } from "@/lib/admin/student-profile-requirements";
 
 import { z } from "zod";
 
@@ -766,6 +767,7 @@ export async function createMixedAssignment(
     });
     throw new MixedAssignmentError(
       mixedAssignmentDatabaseErrorReason(error),
+      error.code === "22023" && error.message === "student_profile_required" ? STUDENT_PROFILE_REQUIRED_MESSAGE : undefined,
     );
   }
   if (!z.uuid().safeParse(data).success) {

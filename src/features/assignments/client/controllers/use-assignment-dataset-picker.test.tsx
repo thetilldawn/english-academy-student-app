@@ -3,6 +3,8 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cataloguedDatasetFromMetadata } from "@/lib/admin/dataset-catalog";
 import { RECENT_DATASET_STORAGE_KEY, useAssignmentDatasetPicker } from "./use-assignment-dataset-picker";
+import { assignmentStudentContext } from "../../domain/assignment-student-context";
+import { EMPTY_DATASET_FILTERS } from "../../domain/assignment-dataset-picker";
 
 const options = ["a", "b"].map((id) => ({ dataset: {
   ...cataloguedDatasetFromMetadata({ id, title: `단어장 ${id}` }, undefined),
@@ -12,6 +14,32 @@ beforeEach(() => window.localStorage.clear());
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe("배정 단어장 선택 수명", () => {
+  it("학생 기본 조건과 수동 선택을 보존하고 대상 변경 때만 초기화한다", () => {
+    const first = assignmentStudentContext([{ id: "one", schoolName: "가상고", gradeLabel: "고2" }]);
+    const second = assignmentStudentContext([{ id: "two", schoolName: "다른고", gradeLabel: "고1" }]);
+    const { result, rerender } = renderHook(({ context }) => useAssignmentDatasetPicker({ options, selectedId: "a", onSelect: vi.fn(), contextKey: context.key, initialFilters: context.filters }), { initialProps: { context: first } });
+    expect(result.current.filters).toMatchObject({ school: "school:가상고", grade: "g11" });
+    act(() => result.current.actions.changeGrade("g12"));
+    act(() => result.current.actions.open());
+    act(() => result.current.actions.close());
+    act(() => result.current.actions.open());
+    expect(result.current.filters.grade).toBe("g12");
+    rerender({ context: second });
+    expect(result.current.filters).toMatchObject({ school: "school:다른고", grade: "g10" });
+    expect(result.current.buttons.school.some(option => option.label === "다른고")).toBe(true);
+  });
+  it("학생 정보 보완은 검색어와 수동 조건을 보존하며 자동 조건만 갱신한다", () => {
+    const { result, rerender } = renderHook(({ initialFilters }) => useAssignmentDatasetPicker({
+      options, selectedId: "a", onSelect: vi.fn(), contextKey: "student", initialFilters,
+    }), { initialProps: { initialFilters: { ...EMPTY_DATASET_FILTERS } } });
+    act(() => result.current.actions.changeQuery("주제"));
+    act(() => result.current.actions.changeSemester("1"));
+    rerender({ initialFilters: { ...EMPTY_DATASET_FILTERS, school: "school:가상고", grade: "g11", semester: "2" } });
+    expect(result.current.filters).toMatchObject({ query: "주제", school: "school:가상고", grade: "g11", semester: "1" });
+    act(() => result.current.actions.changeSchool("all"));
+    rerender({ initialFilters: { ...EMPTY_DATASET_FILTERS, school: "school:전학고", grade: "g12", semester: "2" } });
+    expect(result.current.filters).toMatchObject({ query: "주제", school: "all", grade: "g12", semester: "1" });
+  });
   it("검색·필터·취소·동일 선택은 배정 전환을 호출하지 않는다", () => {
     const onSelect = vi.fn();
     const { result } = renderHook(() => useAssignmentDatasetPicker({ options, selectedId: "a", onSelect }));
@@ -23,9 +51,9 @@ describe("배정 단어장 선택 수명", () => {
     act(() => result.current.actions.close());
     expect(onSelect).not.toHaveBeenCalled();
     act(() => result.current.actions.open());
-    expect(result.current.filters.query).toBe("");
-    expect(result.current.filters.semester).toBe("all");
-    expect(result.current.filters.school).toBe("all");
+    expect(result.current.filters.query).toBe("단어장");
+    expect(result.current.filters.semester).toBe("2");
+    expect(result.current.filters.school).toBe("school:심석고등학교");
     act(() => result.current.actions.choose("a"));
     expect(onSelect).not.toHaveBeenCalled();
     act(() => result.current.actions.open());

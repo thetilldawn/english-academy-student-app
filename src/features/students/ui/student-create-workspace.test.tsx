@@ -24,8 +24,11 @@ it("등록 성공의 기존 form.reset은 controlled 학교 입력도 비운다"
   vi.mocked(loadAssignmentDatasetDirectory).mockResolvedValue({ datasets: [] });
   mocks.submit.mockImplementation((form: HTMLFormElement) => form.reset());
   const { container } = render(<StudentCreateWorkspace appOrigin="https://example.invalid" />); toggle(container, true);
-  await waitFor(() => expect(screen.getByRole("button", { name: copy.createStudent.submit })).toBeEnabled());
+  await screen.findByText(copy.createStudent.noWordbookNotice);
+  fireEvent.change(container.querySelector('[name="displayName"]')!, { target: { value: "가짜 학생" } });
   fireEvent.change(screen.getByRole("textbox", { name: "학교" }), { target: { value: "가짜학교" } });
+  fireEvent.change(container.querySelector('[name="gradeLabel"]')!, { target: { value: "고2" } });
+  expect(screen.getByRole("button", { name: copy.createStudent.submit })).toBeEnabled();
   fireEvent.submit(container.querySelector("form")!);
   expect(screen.getByRole("textbox", { name: "학교" })).toHaveValue("");
 });
@@ -52,7 +55,8 @@ it.each(["중", "고"] as const)("%s학교 선택 뒤 1~3학년만 선택하며 
   fireEvent.change(grade,{target:{value:`${level}2`}});
   expect(container.querySelector('[name="schoolKey"]')).toHaveValue("J10:9999999");
   fireEvent.change(screen.getByRole("textbox",{name:"학교"}),{target:{value:"다른 이름"}});
-  expect(grade).toBeDisabled(); expect(grade).toHaveValue(""); expect(container.querySelector('[name="schoolKey"]')).toHaveValue("");
+  expect(grade).toBeEnabled(); expect(grade).toHaveValue(""); expect(container.querySelector('[name="schoolKey"]')).toHaveValue("");
+  expect([...grade.options].map(option => option.value)).toEqual(["", "중1", "중2", "중3", "고1", "고2", "고3"]);
 });
 function toggle(container: HTMLElement, open: boolean) {
   const details = container.querySelector("details")!;
@@ -68,7 +72,8 @@ it("첫 열기 준비 뒤 작성한 모든 입력과 선택을 접었다 펴도 
   const form = container.querySelector("form")!;
   fireEvent.submit(form); expect(mocks.submit).not.toHaveBeenCalled();
   toggle(container, true);
-  await waitFor(() => expect(screen.getByRole("button", { name: copy.createStudent.submit })).toBeEnabled());
+  await waitFor(() => expect(form.querySelector('[name="currentVocabDatasetId"]')).toBeEnabled());
+  expect(screen.getByRole("button", { name: copy.createStudent.submit })).toBeDisabled();
   const fields = ["displayName", "schoolName", "gradeLabel", "note", "currentVocabDatasetId"];
   const values = ["가짜 학생", "가짜 학교", "고1", "입력 보존", "fake-book"];
   fireEvent.change(form.querySelector('[name="schoolName"]')!,{target:{value:"가짜 학교"}});
@@ -90,7 +95,7 @@ it("대기/실패는 0개 안내로 바꾸지 않고 직접 제출도 차단하�
   fireEvent.change(form.querySelector('[name="displayName"]')!, { target: { value: "보존 학생" } });
   fireEvent.submit(form); expect(mocks.submit).not.toHaveBeenCalled();
   await act(async () => reject(new Error("SQL internal secret")));
-  expect(screen.getByRole("alert")).toHaveTextContent(copy.createStudent.preparationError);
+  expect(screen.getByText(copy.createStudent.preparationError)).toBeVisible();
   expect(screen.queryByText(/SQL internal/)).not.toBeInTheDocument();
   expect(screen.queryByText(copy.createStudent.noWordbookNotice)).not.toBeInTheDocument();
   fireEvent.submit(form); expect(mocks.submit).not.toHaveBeenCalled();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useId, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 
 import { adminStudentsText } from "@/content/ko/admin-students";
@@ -13,6 +13,7 @@ import {
 } from "@/design-system/primitives/dialog/dialog";
 import {
   Field,
+  FieldError,
   FieldHelp,
   FieldLabel,
   FieldLabelRow,
@@ -22,6 +23,7 @@ import {
   Textarea,
 } from "@/design-system/primitives/form/field";
 import { Notice } from "@/design-system/patterns/feedback/feedback";
+import { studentProfileFieldErrors } from "@/lib/admin/student-profile-requirements";
 import { HelpTip, inlineHelpClassName } from "@/design-system/primitives/tooltip/help-tip";
 import {
   cataloguedDatasetDisplayLabel,
@@ -45,9 +47,13 @@ export function StudentCreateWorkspace({
   const controller = useStudentCreationController(appOrigin);
   const preparation = useStudentCreatePreparation();
   const [open, setOpen] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+  const fieldId = useId();
   const [schoolName, setSchoolName] = useState("");
   const [selectedSchool, setSelectedSchool] = useState<SchoolSearchItem | null>(null);
   const [grade, setGrade] = useState("");
+  const errors = studentProfileFieldErrors({ displayName, schoolName, gradeLabel: grade });
+  const invalid = Object.keys(errors).length > 0;
   const school = useSchoolSearch({ ownerKey: "student-create", value: schoolName,
     onChange: value => { setSchoolName(value); setSelectedSchool(null); setGrade(""); },
     onChoose: setSelectedSchool,
@@ -61,7 +67,7 @@ export function StudentCreateWorkspace({
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (preparation.status !== "ready" || locked) return;
+    if (preparation.status !== "ready" || locked || invalid) return;
     void controller.actions.submit(event.currentTarget);
   }
 
@@ -85,7 +91,7 @@ export function StudentCreateWorkspace({
             aria-busy={controller.busy}
             className={styles.formStack}
             onSubmit={submit}
-            onReset={() => { setSchoolName(""); setSelectedSchool(null); setGrade(""); school.actions.reset(); }}
+            onReset={() => { setDisplayName(""); setSchoolName(""); setSelectedSchool(null); setGrade(""); school.actions.reset(); }}
           >
             <input type="hidden" name="schoolKey" value={selectedSchool?.id ?? ""} />
             <Field>
@@ -106,27 +112,35 @@ export function StudentCreateWorkspace({
                 aria-label={adminStudentsText.createStudent.nameLabel}
                 maxLength={80}
                 name="displayName"
+                value={displayName}
+                onChange={event => setDisplayName(event.target.value)}
+                aria-invalid={!!errors.displayName}
+                aria-describedby={errors.displayName ? `${fieldId}-name-error` : undefined}
                 placeholder={adminStudentsText.createStudent.namePlaceholder}
                 required
               />
+              {errors.displayName ? <FieldError id={`${fieldId}-name-error`}>{errors.displayName}</FieldError> : null}
             </Field>
             <div className={styles.formGrid}>
-              <SchoolSearchField controller={school} />
+              <SchoolSearchField controller={school} required error={errors.schoolName} />
               <Field as="label">
                 <FieldLabelRow>
                   <FieldLabel as="span">
                     {adminStudentsText.createStudent.gradeLabel}
                   </FieldLabel>
-                  <FieldRequirement>
-                    {adminStudentsText.createStudent.optional}
+                  <FieldRequirement data-kind="required" className={styles.requiredTag}>
+                    {adminStudentsText.createStudent.required}
                   </FieldRequirement>
                 </FieldLabelRow>
-                <Select name="gradeLabel" disabled={!selectedSchool?.level} value={grade}
+                <Select name="gradeLabel" required disabled={!schoolName.trim()} value={grade}
+                  aria-invalid={!!errors.gradeLabel} aria-describedby={`${fieldId}-grade-help${errors.gradeLabel ? ` ${fieldId}-grade-error` : ""}`}
                   onChange={event => setGrade(event.target.value)}>
                   <option value="">학년 선택</option>
-                  {[1, 2, 3].map(value => <option key={value} value={`${selectedSchool?.level ?? ""}${value}`}>{value}학년</option>)}
+                  {(selectedSchool?.level ? [selectedSchool.level] : ["중", "고"]).flatMap(level => [1, 2, 3].map(value =>
+                    <option key={`${level}${value}`} value={`${level}${value}`}>{selectedSchool?.level ? `${value}학년` : `${level}${value}`}</option>))}
                 </Select>
-                <FieldHelp>{selectedSchool?.level ? "학년은 나중에 등록할 수도 있습니다." : "학교를 검색해 선택한 뒤 학년을 골라 주세요."}</FieldHelp>
+                {errors.gradeLabel ? <FieldError id={`${fieldId}-grade-error`}>{errors.gradeLabel}</FieldError> : null}
+                <FieldHelp id={`${fieldId}-grade-help`}>{selectedSchool?.level ? "학생의 학년을 선택해 주세요." : "학교를 직접 입력했다면 중등·고등과 학년을 함께 골라 주세요."}</FieldHelp>
               </Field>
             </div>
             <Field>
@@ -185,7 +199,7 @@ export function StudentCreateWorkspace({
             {controller.error ? (
               <Notice role="alert" tone="danger">{controller.error}</Notice>
             ) : null}
-            <Button disabled={controller.busy || preparation.status !== "ready"} type="submit" variant="primary">
+            <Button disabled={controller.busy || preparation.status !== "ready" || invalid} type="submit" variant="primary">
               {controller.busy
                 ? adminStudentsText.createStudent.submitting
                 : adminStudentsText.createStudent.submit}

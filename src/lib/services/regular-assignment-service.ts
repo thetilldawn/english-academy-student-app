@@ -1,4 +1,5 @@
 import "server-only";
+import { STUDENT_PROFILE_REQUIRED_MESSAGE } from "@/lib/admin/student-profile-requirements";
 import { compositionExclusionPredicate, uniqueCompositionTargets } from "@/lib/assignment/composition-targets";
 
 import {
@@ -698,6 +699,9 @@ export async function createRegularAssignment(
   );
 
   if (error || typeof data !== "string") {
+    if (error?.code === "22023" && error.message === "student_profile_required") {
+      throw new AssignmentCreationError("invalid_selection", STUDENT_PROFILE_REQUIRED_MESSAGE);
+    }
     console.error("[regular-assignment] database operation failed", {
       code: error?.code ?? "missing_result",
       message: error?.message ?? "assignment id was not returned",

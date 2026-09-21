@@ -1,4 +1,5 @@
 import "server-only";
+import { STUDENT_PROFILE_REQUIRED_MESSAGE } from "@/lib/admin/student-profile-requirements";
 import { assertAssignmentGradeAcknowledged } from "../planning/assignment-grade-review";
 
 import { MAXIMUM_BULK_ASSIGNMENT_COUNT } from "@/features/assignments/domain/model";
@@ -346,6 +347,9 @@ export async function createBulkAssignments(
       requestSha256,
     );
     if (concurrent) return concurrent;
+    if (error.code === "22023" && error.message === "student_profile_required") {
+      throw new BulkAssignmentError("invalid_selection", STUDENT_PROFILE_REQUIRED_MESSAGE);
+    }
     throw bulkDatabaseError(error);
   }
 

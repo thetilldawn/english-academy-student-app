@@ -1,5 +1,7 @@
 # 학생 관리 기능 안내
 
+- APP-20260921-02: 신규·프로필 저장의 이름/학교/학년은 필수다. 학교 직접 입력 시 중1~고3를 명시적으로 선택할 수 있다. 검증된 프로필 저장 결과는 `student-directory-events`의 최소 변경 알림과 `public-client`로 열린 배정에 전달하며 자료·범위 초안을 다시 읽거나 초기화하지 않는다. 필수 정보 SQL 검사는 새 저장/배정 명령만 보완하고 기존 기록·완료 응답·자동 후속 회차는 보존한다.
+
 - 시작 전에 `npm run map:feature -- students`와 `npm run map:flow -- student-management-screen`을
   실행해 화면, 서버 조회, Route Handler, DB 함수, 다른 기능 연결을 함께 확인한다.
 - `student-management-screen`은 목록·상세 읽기와 같은 화면에서 쓰는 생성·프로필·접근·오답 변경

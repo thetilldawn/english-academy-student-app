@@ -29,13 +29,23 @@ export function useAssignmentDatasetPicker({
   options,
   selectedId,
   onSelect,
+  initialFilters = EMPTY_DATASET_FILTERS,
+  contextKey = "default",
 }: {
   options: readonly DatasetPickerOption[];
   selectedId: string;
   onSelect: (id: string) => void;
+  initialFilters?: DatasetPickerFilters;
+  contextKey?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [filters, setFilters] = useState<DatasetPickerFilters>(EMPTY_DATASET_FILTERS);
+  const [filterState, setFilterState] = useState<{ contextKey: string; overrides: Partial<DatasetPickerFilters> }>(() => ({ contextKey, overrides: {} }));
+  const filters = { ...initialFilters, ...(filterState.contextKey === contextKey ? filterState.overrides : {}) };
+  function setFilters(value: Partial<DatasetPickerFilters>) {
+    setFilterState(current => ({ contextKey, overrides: {
+      ...(current.contextKey === contextKey ? current.overrides : {}), ...value,
+    } }));
+  }
   const [recentIds, setRecentIds] = useState<string[]>([]);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
@@ -85,21 +95,20 @@ export function useAssignmentDatasetPicker({
           setRecentIds(readRecentDatasetIds());
           recentLoaded.current = true;
         }
-        setFilters(EMPTY_DATASET_FILTERS);
         setOpen(true);
       },
       close: closePicker,
       choose,
       rememberSelection,
       clear: () => setFilters(EMPTY_DATASET_FILTERS),
-      changeQuery: (query: string) => setFilters((current) => ({ ...current, query })),
+      changeQuery: (query: string) => setFilters({ query }),
       changeStage: (stage: DatasetPickerFilters["stage"]) =>
-        setFilters((current) => ({ ...current, stage, grade: "all" })),
+        setFilters({ stage, grade: "all" }),
       changeKind: (kind: DatasetPickerFilters["kind"]) =>
-        setFilters((current) => ({ ...current, kind })),
-      changeGrade: (grade: string) => setFilters((current) => ({ ...current, grade })),
-      changeSchool: (school: string) => setFilters((current) => ({ ...current, school })),
-      changeSemester: (semester: DatasetPickerFilters["semester"]) => setFilters((current) => ({ ...current, semester })),
+        setFilters({ kind }),
+      changeGrade: (grade: string) => setFilters({ grade }),
+      changeSchool: (school: string) => setFilters({ school }),
+      changeSemester: (semester: DatasetPickerFilters["semester"]) => setFilters({ semester }),
     },
   };
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { subscribeStudentProfileUpdated } from "@/features/students/public-client";
 
 import type { AssignmentPlannerPreparation } from "../contracts/assignment-workspace-read-model";
 import { loadAssignmentPlannerPreparation } from "../transport/assignment-workspace-reads";
@@ -46,6 +47,12 @@ export function useAssignmentPlannerPreparation() {
   const [state, setState] = useState<PreparationState>(idleState);
   const abortRef = useRef<AbortController | null>(null);
   const versionRef = useRef(0);
+
+  useEffect(() => subscribeStudentProfileUpdated(profile => {
+    setState(current => current.status !== "ready" || !current.data.students.some(student => student.id === profile.id)
+      ? current : { ...current, data: { ...current.data, students: current.data.students.map(student =>
+        student.id === profile.id ? { ...student, ...profile } : student) } });
+  }), []);
 
   const close = useCallback(() => {
     versionRef.current += 1;

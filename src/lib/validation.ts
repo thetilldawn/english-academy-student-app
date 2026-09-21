@@ -23,10 +23,10 @@ export const studentCodeLoginSchema = z.object({
 });
 
 export const createStudentSchema = z.object({
-  displayName: z.string().trim().min(1).max(80),
-  schoolName: z.string().trim().max(120).default(""),
+  displayName: z.string().trim().min(1, "이름을 입력해 주세요.").max(80),
+  schoolName: z.string().trim().min(1, "학교를 입력해 주세요.").max(120),
   schoolKey: z.string().regex(/^[A-Z][0-9]{2}:[0-9]{7}$/).nullable().optional(),
-  gradeLabel: z.string().trim().max(40).default(""),
+  gradeLabel: z.string().trim().min(1, "학년을 선택해 주세요.").max(40),
   currentVocabDatasetId: z
     .union([z.uuid(), z.literal(""), z.null()])
     .optional()
@@ -42,10 +42,10 @@ export const updateStudentVocabSchema = z.object({
 
 export const updateStudentProfileSchema = z
   .object({
-    displayName: z.string().trim().min(1).max(80),
-    schoolName: z.string().trim().max(120),
+    displayName: z.string().trim().min(1, "이름을 입력해 주세요.").max(80),
+    schoolName: z.string().trim().min(1, "학교를 입력해 주세요.").max(120),
     schoolKey: z.string().regex(/^[A-Z][0-9]{2}:[0-9]{7}$/).nullable().optional(),
-    gradeLabel: z.string().trim().max(40),
+    gradeLabel: z.string().trim().min(1, "학년을 선택해 주세요.").max(40),
   })
   .strict();
 

@@ -1,18 +1,22 @@
 "use client";
 
-import type { FormEvent } from "react";
+import { useId, type FormEvent } from "react";
 
 import { adminStudentsText } from "@/content/ko/admin-students";
 import { Button } from "@/design-system/primitives/button/button";
 import { Notice } from "@/design-system/patterns/feedback/feedback";
 import {
   Field,
+  FieldError,
   FieldLabel,
+  FieldLabelRow,
+  FieldRequirement,
   Input,
 } from "@/design-system/primitives/form/field";
 import { CurrentPointSummary } from "@/features/learning-points/public-ui";
 import { SchoolTimeline } from "@/features/school-schedules/public-ui";
 import type { StudentLearningSourceItem } from "@/lib/admin/learning-sources";
+import { studentProfileFieldErrors } from "@/lib/admin/student-profile-requirements";
 import type { StudentVocabBookHistory } from "../../public-contracts";
 
 import type { StudentDetailProfile } from "../../contracts/student-detail-read-model";
@@ -36,6 +40,8 @@ export function StudentInfoPanel({
   student: StudentDetailProfile;
   vocabBookHistory: StudentVocabBookHistory[];
 }) {
+  const id = useId();
+  const errors = studentProfileFieldErrors(controller.draft);
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     void controller.actions.save();
@@ -52,26 +58,32 @@ export function StudentInfoPanel({
       <form className={styles.profileForm} onSubmit={submit}>
         <div className={styles.profileGrid}>
           <Field as="label">
-            <FieldLabel as="span">{adminStudentsText.info.name}</FieldLabel>
+            <FieldLabelRow><FieldLabel as="span">{adminStudentsText.info.name}</FieldLabel><FieldRequirement data-kind="required">필수</FieldRequirement></FieldLabelRow>
             <Input
               maxLength={80}
               onChange={(event) =>
                 controller.actions.setField("displayName", event.target.value)
               }
               required
+              aria-invalid={!!errors.displayName}
+              aria-describedby={errors.displayName ? `${id}-name-error` : undefined}
               value={controller.draft.displayName}
             />
+            {errors.displayName ? <FieldError id={`${id}-name-error`}>{errors.displayName}</FieldError> : null}
           </Field>
-          <SchoolSearchField controller={school} />
+          <SchoolSearchField controller={school} required error={errors.schoolName} />
           <Field as="label">
-            <FieldLabel as="span">{adminStudentsText.info.grade}</FieldLabel>
+            <FieldLabelRow><FieldLabel as="span">{adminStudentsText.info.grade}</FieldLabel><FieldRequirement data-kind="required">필수</FieldRequirement></FieldLabelRow>
             <Input
               maxLength={40}
+              required aria-invalid={!!errors.gradeLabel}
+              aria-describedby={errors.gradeLabel ? `${id}-grade-error` : undefined}
               onChange={(event) =>
                 controller.actions.setField("gradeLabel", event.target.value)
               }
               value={controller.draft.gradeLabel}
             />
+            {errors.gradeLabel ? <FieldError id={`${id}-grade-error`}>{errors.gradeLabel}</FieldError> : null}
           </Field>
         </div>
         <Button
@@ -80,7 +92,7 @@ export function StudentInfoPanel({
             controller.needsCheck ||
             controller.locked ||
             controller.unchanged ||
-            !controller.draft.displayName.trim()
+            Object.keys(errors).length > 0
           }
           type="submit"
         >

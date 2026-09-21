@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/design-system/primitives/button/button";
 import { Field, FieldError, FieldHelp, FieldLabel, Input } from "@/design-system/primitives/form/field";
-import { libraryFiltersSchema, type LibraryTemplate, type LibraryVersion, type CreatedLibraryBook, type LibraryScope } from "../contracts/library";
+import { libraryFiltersSchema, type LibraryTemplate, type LibraryVersion, type CreatedLibraryBook, type LibraryScope, type TemplateMetadata } from "../contracts/library";
 import { useWordbookLibrary } from "../client/controllers/use-wordbook-library";
 import { latestLibraryVersion } from "../domain/template-version";
 import { LibrarySourceFilters } from "./library-source-filters";
@@ -56,11 +56,12 @@ function TemplateCard({ template, scopes, disabled, onOpen, onUse }: {
   </article>;
 }
 
-export function WordbookLibrary({ onBack, onLockChange, onDirtyChange, captureAuthenticationFailure, onSaved, active = true }: {
+export function WordbookLibrary({ onBack, onLockChange, onDirtyChange, captureAuthenticationFailure, onSaved, active = true, initialTarget }: {
   onBack: () => void; onLockChange?: (locked: boolean) => void; onDirtyChange?: (dirty: boolean) => void; captureAuthenticationFailure?: () => (error: unknown) => void;
   onSaved?: (book: CreatedLibraryBook) => void; active?: boolean;
+  initialTarget?: Pick<TemplateMetadata, "school" | "targetGrade" | "semester" | "schoolYear">;
 }) {
-  const c = useWordbookLibrary(captureAuthenticationFailure, onSaved);
+  const c = useWordbookLibrary(captureAuthenticationFailure, onSaved, initialTarget);
   const heading = useRef<HTMLHeadingElement>(null), form = useRef<HTMLDivElement>(null), transition = useRef<(() => void) | null>(null);
   const [discard, setDiscard] = useState(false);
   useEffect(() => { if (active) heading.current?.focus(); }, [active]);

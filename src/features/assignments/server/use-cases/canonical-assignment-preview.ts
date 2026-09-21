@@ -1,4 +1,5 @@
 import "server-only";
+import { hasRequiredStudentProfile, STUDENT_PROFILE_REQUIRED_MESSAGE } from "@/lib/admin/student-profile-requirements";
 import { checkedAssignmentCountBreakdown } from "../../domain/assignment-count-breakdown";
 import { loadSelectedVocabularyRowCount } from "../queries/bulk-assignment-planning-query";
 import { z } from "zod";
@@ -245,8 +246,8 @@ export async function resolveCanonicalBulkAssignmentPreview(
       totalAvailableQuestionCount: availableCount, maximumSessionQuestionCount: maximumCount,
       selectedQuestionCount: 0, remainingQuestionCount: availableCount, defaultSessionCount,
       scheduledQuestionCount: 0, requiresExtraDateDecision };
-    const studentUnavailable = !student || student.status !== "active";
-    const error = studentUnavailable ? "접속 가능한 학생이 아닙니다." : planningError;
+    const studentUnavailable = !student || student.status !== "active" || !hasRequiredStudentProfile(student);
+    const error = studentUnavailable ? student?.status === "active" ? STUDENT_PROFILE_REQUIRED_MESSAGE : "접속 가능한 학생이 아닙니다." : planningError;
     if (error) return { ...itemBase, available: false, sessions: [], error,
       errorFieldKey: studentUnavailable ? "students" : planningErrorFieldKey };
     const targets: PlannedVocabSeriesTarget[][] = counts.map(() => []);

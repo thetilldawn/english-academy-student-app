@@ -2,6 +2,10 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import { GuardedLink } from "@/components/guarded-link";
+import { Notice } from "@/design-system/patterns/feedback/feedback";
+import { hasRequiredStudentProfile, STUDENT_PROFILE_REQUIRED_MESSAGE } from "@/lib/admin/student-profile-requirements";
+import { assignmentStudentContext } from "../domain/assignment-student-context";
 
 import { MetaTag, MetaTagList } from "@/design-system/primitives/badge/badge";
 import { Button } from "@/design-system/primitives/button/button";
@@ -104,7 +108,11 @@ export function VocabAssignmentPlanner({
   const selectedDatasetId = assignmentPurpose === "range"
     ? controller.planner.datasetId
     : reviewController.draft.datasetId;
+  const studentContext = assignmentStudentContext(controller.selectedStudents);
+  const incompleteStudents = controller.selectedStudents.filter(student => !hasRequiredStudentProfile(student));
   const datasetPicker = useAssignmentDatasetPicker({
+    contextKey: studentContext.key,
+    initialFilters: studentContext.filters,
     options: assignmentPurpose === "range"
       ? controller.readyDatasets.map((dataset) => ({ dataset }))
       : reviewController.datasetOptions.map(({ dataset, count }) => ({ dataset, reviewCount: count })),
@@ -217,7 +225,7 @@ export function VocabAssignmentPlanner({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!interactionAllowed || busy || discardOpen || gradeReview) return;
+    if (!interactionAllowed || busy || discardOpen || gradeReview || incompleteStudents.length) return;
     setSubmitAttempted(true);
     const canSubmit = assignmentPurpose === "range"
       ? controller.canSubmit
@@ -235,7 +243,7 @@ export function VocabAssignmentPlanner({
   }
 
   async function submitReady(gradeReviewToken?: string) {
-    if (!interactionAllowed || busy || discardOpen) return;
+    if (!interactionAllowed || busy || discardOpen || incompleteStudents.length) return;
     if (gradeReviewToken && !isCurrentGradeReview(gradeReviewToken)) return;
     setGradeReview(null);
     const outcome = assignmentPurpose === "range"
@@ -336,7 +344,7 @@ export function VocabAssignmentPlanner({
       </DialogHeader>
       <DialogBody>
         {composerStarted ? <div hidden={!composerOpen}>
-          <WordbookLibrary active={composerOpen} captureAuthenticationFailure={captureAuthenticationFailure} onSaved={receiveCreatedBook} onBack={requestClose} onLockChange={setComposerLocked} onDirtyChange={setComposerDirty} />
+          <WordbookLibrary key={studentContext.key} initialTarget={studentContext.target} active={composerOpen} captureAuthenticationFailure={captureAuthenticationFailure} onSaved={receiveCreatedBook} onBack={requestClose} onLockChange={setComposerLocked} onDirtyChange={setComposerDirty} />
         </div> : null}
         {datasetPicker.open && !composerOpen ? (
           <>
@@ -369,6 +377,12 @@ export function VocabAssignmentPlanner({
           legend="단어 시험 배정 조건"
           onSubmit={submit}
         >
+          {incompleteStudents.length ? <Notice tone="danger" role="alert">
+            <p>{STUDENT_PROFILE_REQUIRED_MESSAGE}</p>
+            {incompleteStudents.map(student => <p key={student.id}><GuardedLink href={`/admin/students/${student.id}`} prefetch={false}>
+              {student.displayName || "학생"} 정보 수정
+            </GuardedLink></p>)}
+          </Notice> : null}
           <AssignmentEditorModeTabs
             ariaLabel="시험 종류"
             items={purposeTabs}
@@ -433,6 +447,7 @@ export function VocabAssignmentPlanner({
               !busy &&
               !discardOpen &&
               !gradeReview &&
+              incompleteStudents.length === 0 &&
               controller.selectedStudents.length > 0 &&
               !rangeCalculationPending &&
               !reviewCalculationPending &&

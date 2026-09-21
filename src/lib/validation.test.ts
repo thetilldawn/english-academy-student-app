@@ -362,16 +362,18 @@ describe("일괄 단어 시험 입력 계약", () => {
 describe("학생 정보 입력 계약", () => {
   const datasetId = "11111111-1111-4111-8111-111111111111";
 
-  it("학생 이름만 필수이고 단어장과 나머지는 선택 사항으로 둔다", () => {
+  it("이름·학교·학년은 필수이며 현재 단어장과 메모는 선택 사항이다", () => {
     expect(
       createStudentSchema.parse({
         displayName: "  테스트 학생  ",
+        schoolName: " 가상고 ",
+        gradeLabel: " 고2 ",
         currentVocabDatasetId: datasetId,
       }),
     ).toEqual({
       displayName: "테스트 학생",
-      schoolName: "",
-      gradeLabel: "",
+      schoolName: "가상고",
+      gradeLabel: "고2",
       currentVocabDatasetId: datasetId,
       note: "",
     });
@@ -381,11 +383,13 @@ describe("학생 정보 입력 계약", () => {
     expect(
       createStudentSchema.parse({
         displayName: "테스트 학생",
+        schoolName: "가상고",
+        gradeLabel: "고2",
       }),
     ).toEqual({
       displayName: "테스트 학생",
-      schoolName: "",
-      gradeLabel: "",
+      schoolName: "가상고",
+      gradeLabel: "고2",
       currentVocabDatasetId: null,
       note: "",
     });
@@ -398,6 +402,12 @@ describe("학생 정보 입력 계약", () => {
         currentVocabDatasetId: datasetId,
       }),
     ).toThrow();
+  });
+
+  it.each(["displayName", "schoolName", "gradeLabel"])("신규와 수정 모두 빈 %s를 거절한다", field => {
+    const input = { displayName: "가상 학생", schoolName: "가상고", gradeLabel: "고2", [field]: " \t\u00a0" };
+    expect(createStudentSchema.safeParse(input).success).toBe(false);
+    expect(updateStudentProfileSchema.safeParse(input).success).toBe(false);
   });
 
   it("임의 단어장 문자열 입력은 거절한다", () => {

@@ -70,7 +70,8 @@
   outline-offset: 2px;
 }
 
-.input[aria-invalid="true"] {
+.input[aria-invalid="true"],
+.select[aria-invalid="true"] {
   border-color: var(--fail);
   background: var(--no-bg);
 }

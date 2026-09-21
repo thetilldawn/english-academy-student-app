@@ -2,6 +2,21 @@ import { announceAdminPrivateCacheChange } from "@/features/session/public-clien
 
 const STUDENT_REMOVED_EVENT = "admin-student-directory:student-removed";
 const STUDENT_REFRESH_EVENT = "admin-student-directory:refresh-requested";
+const STUDENT_PROFILE_EVENT = "admin-student-directory:profile-updated";
+type StudentProfileChange = { id: string; displayName: string; schoolName: string | null; gradeLabel: string | null };
+
+/** A validated save receipt updates an open assignment without reloading its draft. */
+export function announceStudentProfileUpdated(profile: StudentProfileChange) {
+  window.dispatchEvent(new CustomEvent(STUDENT_PROFILE_EVENT, { detail: {
+    id: profile.id, displayName: profile.displayName, schoolName: profile.schoolName, gradeLabel: profile.gradeLabel,
+  } }));
+}
+
+export function subscribeStudentProfileUpdated(listener: (profile: StudentProfileChange) => void) {
+  const receive = (event: Event) => listener((event as CustomEvent<StudentProfileChange>).detail);
+  window.addEventListener(STUDENT_PROFILE_EVENT, receive);
+  return () => window.removeEventListener(STUDENT_PROFILE_EVENT, receive);
+}
 
 export function announceStudentRemoved(studentId: string) {
   announceAdminPrivateCacheChange("students");

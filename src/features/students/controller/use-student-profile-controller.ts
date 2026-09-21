@@ -3,10 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { adminStudentsText } from "@/content/ko/admin-students";
+import { hasRequiredStudentProfile } from "@/lib/admin/student-profile-requirements";
 import { announceAdminPrivateCacheChange } from "@/features/session/public-client";
 import { readStudentProfileSaveResult, updateStudentProfile } from "../actions/update-student-profile";
 import type { StudentDetailProfile } from "../contracts/student-detail-read-model";
 import type { StudentProfileMutationReceipt } from "../contracts/student-mutation-result";
+import { announceStudentProfileUpdated } from "./student-directory-events";
 
 type StudentProfileDraft = { displayName: string; gradeLabel: string; schoolName: string; schoolKey: string | null };
 type Feedback = { message: string; tone: "danger" | "success" | "neutral" };
@@ -54,10 +56,11 @@ export function useStudentProfileController(input: {
       draft: submitted && equalDraft(current.draft, submitted) ? savedDraft : current.draft,
     });
     input.onUpdated(receipt);
+    announceStudentProfileUpdated(receipt.student);
   }
   async function run(checking: boolean) {
     const guard = guardRef.current;
-    if (guard.studentId !== student.id || busy || inFlightRef.current || guard.locked || (!checking && (guard.needsCheck || unchanged || !draft.displayName.trim()))) return;
+    if (guard.studentId !== student.id || busy || inFlightRef.current || guard.locked || (!checking && (guard.needsCheck || unchanged || !hasRequiredStudentProfile(draft)))) return;
     inFlightRef.current = true;
     const version = ++requestVersionRef.current;
     const submitted = { ...draft };

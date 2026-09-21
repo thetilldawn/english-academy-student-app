@@ -26,7 +26,7 @@ describe("composition scope and paginated candidates", () => {
       rangeUnitCounts: [1], unitAllocationRule: { schemaVersion: 1, mode: "same", unitsPerSession: 1, weekdayUnitsPerSession: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1 } },
       sessions: units.map(u => ({ unitIds: [u.id], availableFrom: null, availableUntil: null })) };
     mocks.load.mockResolvedValue({ dataset: { id: id(10), title: "가짜", displayName: "가짜", status: "ready", isActive: true, isAssignable: true, questionBankKind: "vocabulary_composition_v1" },
-      students: [{ id: "fake-student", displayName: "가짜 학생", status: "active" }], units });
+      students: [{ id: "fake-student", displayName: "가짜 학생", status: "active", schoolName: "가상고", gradeLabel: "고2" }], units });
     const all = Array.from({ length: size }, (_, i) => ({ release_id: id(20), package_sha256: "a".repeat(64), vocab_entry_id: i + 1, unit_id: units[Math.min(2, Math.floor(i / Math.ceil(size / 3)))]!.id,
       source_row: i + 1, question_item_id: `fake-${i}`, question_item_sha256: "b".repeat(64), direction: "english_to_korean" }));
     const ranges: number[][] = [];
@@ -80,7 +80,7 @@ describe("예문도 공통 회차 규칙과 보이는 오류 위치를 사용한
       unitAllocationRule: splitBasis === "range_unit" ? { schemaVersion: 1, mode: "same", unitsPerSession: 1, weekdayUnitsPerSession: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1 } } : null,
       recurrenceSessions: slots,
       sessions: splitBasis === "range_unit" ? units.slice(0, count).map((u, i) => ({ unitIds: [u.id], ...slots[dated ? i : 0]! })) : slots.map(slot => ({ unitIds: units.map(u => u.id), ...slot })) };
-    const planning = { dataset: { id: id(10), title: "가짜 예문", displayName: "가짜 예문", status: "ready", isActive: true, isAssignable: true }, students: [{ id: "fake-student", displayName: "가짜 학생", status: "active" }], units };
+    const planning = { dataset: { id: id(10), title: "가짜 예문", displayName: "가짜 예문", status: "ready", isActive: true, isAssignable: true }, students: [{ id: "fake-student", displayName: "가짜 학생", status: "active", schoolName: "가상고", gradeLabel: "고2" }], units };
     const rows = Array.from({ length: 12 }, (_, n) => ({ release_id: id(20), package_sha256: "a".repeat(64), vocab_entry_id: n + 1, unit_id: units[Math.floor(n / 4)]!.id, source_row: n + 1, question_item_id: `example-${n}`, question_item_sha256: "b".repeat(64) }));
     mocks.load.mockResolvedValue(planning); mocks.client.mockResolvedValue({ rpc: vi.fn(async () => ({ data: rows, error: null })) });
     return { input, planning, rows };
@@ -120,7 +120,7 @@ describe("reviewed mock exams share passage-session planning", () => {
       unitAllocationRule:{schemaVersion:1,mode:"same",unitsPerSession:1,weekdayUnitsPerSession:{1:1,2:1,3:1,4:1,5:1,6:1,7:1}},
       sessions:units.map(u=>({unitIds:[u.id],availableFrom:null,availableUntil:null}))};
     mocks.load.mockResolvedValue({dataset:{id:id(10),title:"가짜 자료",displayName:"가짜 자료",status:"ready",isActive:true,isAssignable:true,questionBankKind:"reviewed_exam_v1"},
-      students:[{id:"fake-student",displayName:"가짜 학생",status:"active"}],units});
+      students:[{id:"fake-student",displayName:"가짜 학생",status:"active",schoolName:"가상고",gradeLabel:"고2"}],units});
     let sourceRow=0;
     const rows=units.flatMap(unit=>Array.from({length:unit.entryCount},()=>{
       const n=++sourceRow;
@@ -180,7 +180,7 @@ describe("canonical server restriction before data access", () => {
       input.commonPlan = { ...input.commonPlan, datasetId: uuid(10), orderedUnitIds: [uuid(11)], distribution: "split",
         questionCount: { mode: "manual", value: perSession }, sessions: [{ unitIds: [uuid(11)], availableFrom: null, availableUntil: null }] };
       mocks.load.mockResolvedValue({ dataset: { id: uuid(10), title: "가짜 자료", displayName: "가짜 자료", status: "ready", isActive: true, isAssignable: true },
-        students: input.studentIds.map(id => ({ id, displayName: "가짜 학생", status: "active" })),
+        students: input.studentIds.map(id => ({ id, displayName: "가짜 학생", status: "active", schoolName: "가상고", gradeLabel: "고2" })),
         units: [{ id: uuid(11), label: "DAY 1", sortIndex: 1 }] });
       mocks.client.mockResolvedValue({ rpc: vi.fn(async () => ({ error: null, data: Array.from({ length: total }, (_, n) => ({
         release_id: uuid(12), package_sha256: "a".repeat(64), vocab_entry_id: n + 1, unit_id: uuid(11), source_row: n + 1,
@@ -203,7 +203,7 @@ describe("canonical server restriction before data access", () => {
     input.commonPlan.sessions[0]!.unitIds = [uuid(11)];
     mocks.load.mockResolvedValue({
       dataset: { id: uuid(10), title: "가짜 자료", displayName: "가짜 자료", status: "ready", isActive: true, isAssignable: true },
-      students: [{ id: "fake-student", displayName: "가짜 학생", status: "active" }],
+      students: [{ id: "fake-student", displayName: "가짜 학생", status: "active", schoolName: "가상고", gradeLabel: "고2" }],
       units: [{ id: uuid(11), label: "DAY 1", sortIndex: 1 }],
     });
     mocks.client.mockResolvedValue({ rpc: vi.fn(async () => ({ error: null, data: Array.from({ length: 601 }, (_, n) => ({
