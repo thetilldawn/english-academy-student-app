@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 import { z } from "zod";
+import { compileReviewedChoiceSafety } from "@/lib/quiz/choice-safety";
 
 const HEX64_LOWER = /^[0-9a-f]{64}$/;
 const HEX64_UPPER = /^[0-9A-F]{64}$/;
@@ -99,7 +100,14 @@ export const examUseEntrySchema = z.object({
   include_in_exam: z.boolean(),
   manual_review_flags: z.array(z.string().min(1)),
   day: z.null(),
-}).strict();
+}).strict().superRefine((entry, context) => {
+  if (entry.context_evidence.choice_safety !== undefined) {
+    try {
+      compileReviewedChoiceSafety({ headword: entry.display_headword, primaryMeaning: entry.display_gloss_ko,
+        choiceSafety: entry.context_evidence.choice_safety as Parameters<typeof compileReviewedChoiceSafety>[0]["choiceSafety"] });
+    } catch { context.addIssue({ code: "custom", path: ["context_evidence", "choice_safety"], message: "보기 검토 정보를 확인하지 못했습니다." }); }
+  }
+});
 
 export const examUsePackageSchema = z.object({
   schema_version: z.literal("1.0"),

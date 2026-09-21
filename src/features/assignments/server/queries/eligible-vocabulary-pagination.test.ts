@@ -15,6 +15,7 @@ function fixture(options: {
   failureStatus?: number;
   repeatPage?: boolean;
   reversePage?: boolean;
+  safety?: "present" | "error" | "missing" | "wrong_target" | "second_error";
 } = {}) {
   const count = options.count ?? 601;
   const entries = Array.from({ length: count }, (_, index) => ({
@@ -48,6 +49,19 @@ function fixture(options: {
     if (url.pathname === "/rest/v1/vocab_entry_quiz_eligibility") {
       return json(eligibility.slice(offset, offset + Math.min(requested, 1000)));
     }
+    if (url.pathname === "/rest/v1/rpc/list_vocabulary_choice_safety_v1") {
+      const body = JSON.parse(init?.body as string);
+      expect(body).toMatchObject({ p_dataset_id: datasetId, p_limit: 1000 });
+      if (options.safety === "error" || (options.safety === "second_error" && body.p_after_entry_id > 0)) return json({ message: "private" }, 500);
+      if (options.safety === "missing") return json([]);
+      return json(entries.filter(e => e.id > body.p_after_entry_id).slice(0, options.pageCap ?? 1000).map(e => ({
+        vocab_entry_id: e.id, choice_safety: options.safety ? {
+          version: "reviewed-choice-conflicts-v1", evidenceSha256: "a".repeat(64),
+          target: { headword: options.safety === "wrong_target" ? "wrong" : e.headword, primaryMeaning: e.primary_meaning },
+          exclusions: [{ direction: "english_to_korean", choice: "별도 검토된 가짜 뜻" }],
+        } : null,
+      })));
+    }
     if (url.pathname !== "/rest/v1/rpc/list_active_exam_use_eligibility_v2") {
       throw new Error("Unexpected API or write request");
     }
@@ -69,7 +83,8 @@ function fixture(options: {
   return {
     load: (projection = true) => loadEligibleVocabularyDataset(client, datasetId, { includeExamUseProjection: projection }),
     observed,
-    rpc: () => observed.filter(row => row.path.includes("/rpc/")),
+    rpc: () => observed.filter(row => row.path.endsWith("/list_active_exam_use_eligibility_v2")),
+    safety: () => observed.filter(row => row.path.endsWith("/list_vocabulary_choice_safety_v1")),
     fallback: () => observed.filter(row => row.path.endsWith("/vocab_entry_quiz_eligibility")),
   };
 }
@@ -107,10 +122,23 @@ describe("출제 자격 조회부터 전체 단어 병합까지", () => {
     expect(source.fallback().map(row => row.offset)).toEqual([0, 1000]);
   });
 
-  it("기존 자격표 전용 사용처는 RPC를 호출하지 않는다", async () => {
+  it("기존 자격표 전용 사용처도 보기 검토는 별도로 확인한다", async () => {
     const source = fixture();
     expect(await source.load(false)).toHaveLength(601);
     expect(source.rpc()).toHaveLength(0);
+    expect(source.safety()).toHaveLength(2);
+  });
+
+  it("작은 페이지의 검토 근거를 모든 대상에 연결한다", async () => {
+    const source = fixture({ count: 8, pageCap: 3, safety: "present" });
+    const rows = await source.load(false);
+    expect(rows.every(r => r.choiceSafety?.target.headword === r.headword)).toBe(true);
+    expect(source.safety()).toHaveLength(4);
+  });
+
+  it.each(["error", "missing", "wrong_target", "second_error"] as const)("보기 근거 %s를 빈 정책으로 처리하지 않는다", async safety => {
+    const source = fixture({ count: 8, pageCap: 3, safety });
+    await expect(source.load(false)).rejects.toThrow("보기 검토 정보");
   });
 
   it.each([0, 1000])("%s행부터 실패하면 부분 성공이나 기존 자료로 대체하지 않는다", async failAt => {

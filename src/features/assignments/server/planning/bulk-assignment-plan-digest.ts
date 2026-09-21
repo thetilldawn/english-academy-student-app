@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
+import { DISTRACTOR_POLICY_VERSION } from "@/lib/quiz/choice-policy";
 
 import {
   ISO_WEEKDAYS,
@@ -124,6 +125,7 @@ export function resolvedBulkPlanSha256(
 
   return createHash("sha256")
     .update(JSON.stringify({
+      choicePolicyVersion: DISTRACTOR_POLICY_VERSION,
       canonical,
       sourceContext: canonicalSourceContext(sourceContext),
     }), "utf8")

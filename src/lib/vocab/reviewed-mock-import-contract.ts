@@ -131,6 +131,9 @@ export function validateReviewedMockBundle(input: unknown) {
   if (!mockKey && !csatKey) {
     throw new Error("검토 대상 고3 모의고사 또는 수능 자료 키가 필요합니다.");
   }
+  if (csatKey && pkg.entries.some(entry => entry.context_evidence.choice_safety === undefined)) {
+    throw new Error("수능 원고의 보기 검토 정보가 필요합니다.");
+  }
   const calculated = sha256CanonicalJson(Object.fromEntries(Object.entries(bundle).filter(([key]) => key !== "content_sha256")) as Parameters<typeof sha256CanonicalJson>[0]);
   if (calculated !== bundle.content_sha256) throw new Error("검토 원고 확인값이 일치하지 않습니다.");
   if (pkg.exam_review_ledger_sha256 !== sha256CanonicalJson([...bundle.resources].sort((a, b) => a.source_row - b.source_row).map(row => row.review_records)) ||

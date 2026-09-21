@@ -1236,6 +1236,10 @@
     {
       "path": "src/lib/quiz/word-identity.ts",
       "owner": "shared-quiz-domain"
+    },
+    {
+      "path": "src/lib/quiz/choice-safety.ts",
+      "owner": "shared-quiz-domain"
     }
   ],
   "assignmentCoreOwners": [
@@ -1668,6 +1672,10 @@
   ],
   "architectureGuardOwners": [
     {
+      "path": "src/lib/quiz/choice-safety.test.ts",
+      "owner": "shared-quiz-domain"
+    },
+    {
       "path": "src/lib/quiz/entry-source-pronunciation.test.ts",
       "owner": "shared-quiz-domain"
     },
@@ -1894,8 +1902,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 115,
-      "pathSetSha256": "432e50c66910cfac2f9dfd1b45b4f0752f39b244b99dc47f1ad5589c60674f47"
+      "fileCount": 116,
+      "pathSetSha256": "c9c20e681f077f4862735feebb55f2936836407c9f13c27b7cbdf4becb0dbe80"
     },
     {
       "path": "src/lib/deploy",
@@ -2581,6 +2589,11 @@
     },
     {
       "path": "supabase/migrations/20260921060000_add_reviewed_csat_wordbooks.sql",
+      "owner": "wordbook-compositions",
+      "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20260921070000_preserve_reviewed_choice_conflicts.sql",
       "owner": "wordbook-compositions",
       "flow": "mock-wordbook-compose"
     }
@@ -6911,7 +6924,9 @@
           "src/features/wordbook-compositions/client/controllers/use-library-page.test.tsx",
           "src/features/wordbook-compositions/server/library-query-command.test.ts",
           "src/lib/database/vocabulary-library-on-demand.integration.test.ts",
-          "src/lib/database/reviewed-csat-wordbook.integration.test.ts"
+          "src/lib/database/reviewed-csat-wordbook.integration.test.ts",
+          "src/lib/database/reviewed-choice-safety.integration.test.ts",
+          "src/lib/quiz/choice-safety.test.ts"
         ]
       },
       "requiredImportEdges": [],

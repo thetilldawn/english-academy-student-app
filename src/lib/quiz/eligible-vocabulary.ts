@@ -2,8 +2,10 @@ import type {
   QuizDirection,
   QuizVocabularyEntry,
 } from "@/lib/quiz/question-types";
+import { compileReviewedChoiceSafety, type ReviewedChoiceSafety } from "./choice-safety";
 
 export type VocabularyEntrySourceRow = {
+  choice_safety?: ReviewedChoiceSafety;
   id: number;
   unit_id: string;
   source_row: number;
@@ -121,7 +123,9 @@ export function mergeEligibleVocabularyRows(
     if (compositionKeys.size > 1) throw new Error("출제 방향별 단어 출처 연결이 다릅니다.");
     const compositionTargetKey = [...compositionKeys][0];
     if (compositionTargetKey && !/^[a-f0-9]{64}$/.test(compositionTargetKey)) throw new Error("단어 출처 연결을 확인하지 못했습니다.");
+    if (entry.choice_safety !== undefined) compileReviewedChoiceSafety({ headword: entry.headword, primaryMeaning: entry.primary_meaning, choiceSafety: entry.choice_safety });
     candidates.push({
+      ...(entry.choice_safety !== undefined ? { choiceSafety: entry.choice_safety } : {}),
       ...(compositionTargetKey ? { compositionTargetKey } : {}),
       id: entry.id,
       unitId: entry.unit_id,

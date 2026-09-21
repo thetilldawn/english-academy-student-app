@@ -88,6 +88,10 @@ export function buildReviewedCsatFixture(year: 2023 | 2024 | 2025 = 2025, versio
         occurrence_id: `occ:${sourceId}`, exam_review_id: `exam-review:${sourceId}`, source_entry_id: sourceId,
         entry_row_sha256: n.toString(16).toUpperCase().padStart(64, "B"),
         context_evidence: { source: "source_entries", source_entry_id: sourceId, source_entry_sha256: sha } });
+      entry.context_evidence.choice_safety = {
+        version: "reviewed-choice-conflicts-v1", evidenceSha256: sha,
+        target: { headword: entry.display_headword, primaryMeaning: entry.display_gloss_ko }, exclusions: [],
+      };
       const resource = structuredClone(seedResource);
       Object.assign(resource, { source_row: n, original_headword: entry.display_headword,
         original_gloss: entry.display_gloss_ko, source_occurrence_id: sourceId,

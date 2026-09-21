@@ -1,8 +1,9 @@
 import type { QuizDirection, QuizVocabularyEntry, RandomSource } from "./question-types";
 import { normalizeQuizChoice, normalizeQuizHeadword, quizVocabularyIdentity } from "./word-identity";
 import { shuffle } from "./random";
+import { compileReviewedChoiceSafety, isReviewedChoiceExcluded } from "./choice-safety";
 
-export const DISTRACTOR_POLICY_VERSION = "shape-v1";
+export const DISTRACTOR_POLICY_VERSION = "shape-v2-reviewed-conflicts";
 
 function meaningParts(meaning: string): ReadonlySet<string> {
   const normalized = normalizeQuizChoice(meaning).replace(/\s+/g, " ");
@@ -206,6 +207,7 @@ function hasMinimumDistinctDistractors(
   direction: QuizDirection,
   display: (entry: QuizVocabularyEntry) => string,
   minimum = 3,
+  reviewedSafety = compileReviewedChoiceSafety(target),
 ) {
   const correctKey = normalizeQuizChoice(display(target));
   const correctIdentity = quizVocabularyIdentity(target);
@@ -248,6 +250,7 @@ function hasMinimumDistinctDistractors(
       identity === correctIdentity ||
       displayKey === correctKey ||
       candidatePromptKey === promptKey ||
+      isReviewedChoiceExcluded(reviewedSafety, candidate, direction) ||
       shareMeaning(targetMeanings, meaningParts(candidate.primaryMeaning))
     ) {
       continue;
@@ -271,6 +274,7 @@ function hasMinimumDistinctDistractors(
 }
 
 type QuizChoiceCandidateMetadata = {
+  reviewedSafety: ReturnType<typeof compileReviewedChoiceSafety>;
   entry: QuizVocabularyEntry;
   identity: string;
   headwordKey: string;
@@ -332,6 +336,7 @@ function buildDistractorCandidates(
       identity === correctIdentity ||
       displayKey === correctKey ||
       candidatePromptKey === promptKey ||
+      isReviewedChoiceExcluded(targetMetadata.reviewedSafety, candidate, direction) ||
       shareMeaning(targetMetadata.meaningParts, metadata.meaningParts)
     ) {
       continue;
@@ -468,6 +473,7 @@ function quizChoiceCandidateMetadata(
 ): QuizChoiceCandidateMetadata {
   return {
     entry,
+    reviewedSafety: compileReviewedChoiceSafety(entry),
     identity: quizVocabularyIdentity(entry),
     headwordKey: normalizeQuizHeadword(entry.headword),
     meaningKey: normalizeQuizChoice(entry.primaryMeaning),
@@ -524,7 +530,7 @@ export function selectSimilarQuizChoicePool(target: QuizVocabularyEntry, directi
   const selected: QuizVocabularyEntry[] = [target];
   for (const score of [...byScore.keys()].sort((a, b) => b - a)) {
     for (const group of byScore.get(score)!) for (const candidate of group) if (candidate.entry.id !== target.id) selected.push(candidate.entry);
-    if (hasMinimumDistinctDistractors(target, selected, direction, direction === "english_to_korean" ? e => e.primaryMeaning : e => e.headword)) break;
+    if (hasMinimumDistinctDistractors(target, selected, direction, direction === "english_to_korean" ? e => e.primaryMeaning : e => e.headword, 3, targetMetadata.reviewedSafety)) break;
   }
   return selected;
 }

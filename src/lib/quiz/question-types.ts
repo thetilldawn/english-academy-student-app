@@ -1,8 +1,11 @@
+import type { ReviewedChoiceSafety } from "./choice-safety";
+
 export type QuizDirection =
   | "english_to_korean"
   | "korean_to_english";
 
 export type QuizVocabularyEntry = {
+  choiceSafety?: ReviewedChoiceSafety;
   /** Composed books only: shared for reviewed meanings, unique per unreviewed occurrence. */
   compositionTargetKey?: string;
   id: number;

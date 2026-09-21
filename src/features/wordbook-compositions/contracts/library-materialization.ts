@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { libraryHashSchema } from "./library";
 import { libraryResourceSchema } from "./library-resources";
+import { reviewedChoiceSafetySchema } from "@/lib/quiz/choice-safety";
 
 export const materializeLibrarySchema = z.object({
   action: z.literal("materialize"), versionId: z.uuid(), contentHash: libraryHashSchema,
@@ -10,6 +11,7 @@ const compositionHeaderSchema = z.object({
   versionId: z.uuid(), datasetId: z.uuid(), contentHash: libraryHashSchema, state: z.enum(["preparing", "ready"]),
 }).strict();
 const compositionEntrySchema = z.object({
+  choiceSafety: reviewedChoiceSafetySchema.optional(),
   id: z.number().int().positive().safe(), unitId: z.uuid(), sourceRow: z.number().int().positive(),
   headword: z.string().min(1), primaryMeaning: z.string().min(1),
   sourceKind: z.enum(["legacy_vocab", "exam_use", "reviewed_exam"]), sourceEntryId: z.number().int().positive().safe(),

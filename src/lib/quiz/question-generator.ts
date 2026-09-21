@@ -1,6 +1,6 @@
 import type { QuizDirection, QuizQuestionDraft, QuizVocabularyEntry, RandomSource } from "./question-types";
 import { buildDirectionalQuestionSets, buildQuizChoiceIndex, canUseDirection, createChoices } from "./choice-policy";
-import { quizVocabularyIdentity } from "./word-identity";
+import { normalizeQuizChoice, normalizeQuizHeadword, quizVocabularyIdentity } from "./word-identity";
 import { secureRandom, shuffle } from "./random";
 
 export function createQuizQuestions(
@@ -341,7 +341,13 @@ export function createExplicitTargetedQuizQuestions(
     );
   }
   const choiceIndex = options.choiceIndex ?? buildQuizChoiceIndex(candidates);
-  if (choiceIndex.byId.size !== candidates.length || candidates.some(candidate => choiceIndex.byId.get(candidate.id)?.entry !== candidate)) {
+  if (choiceIndex.byId.size !== candidates.length || candidates.some(candidate => {
+    const indexed = choiceIndex.byId.get(candidate.id);
+    return indexed?.entry !== candidate ||
+      indexed.reviewedSafety.signature !== JSON.stringify(candidate.choiceSafety ?? null) ||
+      indexed.headwordKey !== normalizeQuizHeadword(candidate.headword) ||
+      indexed.meaningKey !== normalizeQuizChoice(candidate.primaryMeaning);
+  })) {
     throw new Error("보기 후보 색인이 현재 원행과 다릅니다.");
   }
 

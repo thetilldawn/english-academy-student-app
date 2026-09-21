@@ -6,6 +6,7 @@ import {
   type VocabularyEntrySourceRow,
 } from "@/lib/quiz/eligible-vocabulary";
 import type { createServerSupabaseClient } from "@/lib/supabase/server";
+import { reviewedChoiceSafetySchema, type ReviewedChoiceSafety } from "@/lib/quiz/choice-safety";
 
 export const ELIGIBLE_VOCABULARY_PAGE_SIZE = 1000;
 
@@ -16,6 +17,28 @@ type EligibleVocabularyLoadOptions = {
 type ServerSupabaseClient = Awaited<
   ReturnType<typeof createServerSupabaseClient>
 >;
+
+async function loadChoiceSafety(supabase: ServerSupabaseClient, datasetId: string) {
+  const result = new Map<number, ReviewedChoiceSafety | null>();
+  let previousId = 0;
+  for (;;) {
+    const { data, error } = await supabase.rpc("list_vocabulary_choice_safety_v1", {
+      p_dataset_id: datasetId, p_after_entry_id: previousId, p_limit: ELIGIBLE_VOCABULARY_PAGE_SIZE,
+    });
+    if (error || !Array.isArray(data) || data.length > ELIGIBLE_VOCABULARY_PAGE_SIZE) {
+      throw new Error("보기 검토 정보를 불러오지 못했습니다.");
+    }
+    if (!data.length) return result;
+    for (const row of data) {
+      const parsed = reviewedChoiceSafetySchema.nullable().safeParse(row?.choice_safety);
+      if (!Number.isSafeInteger(row?.vocab_entry_id) || row.vocab_entry_id <= previousId || !parsed.success) {
+        throw new Error("보기 검토 정보를 확인하지 못했습니다.");
+      }
+      previousId = row.vocab_entry_id;
+      result.set(row.vocab_entry_id, parsed.data);
+    }
+  }
+}
 
 async function loadExamUseEligibility(
   supabase: ServerSupabaseClient,
@@ -59,7 +82,7 @@ export async function loadEligibleVocabularyDataset(
   datasetId: string,
   options: EligibleVocabularyLoadOptions = {},
 ) {
-  const [entries, eligibilityRows] = await Promise.all([
+  const [entries, eligibilityRows, safetyByEntry] = await Promise.all([
     (async () => {
       const rows: VocabularyEntrySourceRow[] = [];
       for (
@@ -133,7 +156,12 @@ export async function loadEligibleVocabularyDataset(
       }
       return rows;
     })(),
+    loadChoiceSafety(supabase, datasetId),
   ]);
 
-  return mergeEligibleVocabularyRows(entries, eligibilityRows);
+  const entryIds = new Set(entries.map(entry => entry.id));
+  if (safetyByEntry.size !== entries.length || [...safetyByEntry.keys()].some(id => !entryIds.has(id))) throw new Error("보기 검토 정보의 단어 범위가 다릅니다.");
+  return mergeEligibleVocabularyRows(entries.map(entry => ({ ...entry,
+    ...(safetyByEntry.get(entry.id) ? { choice_safety: safetyByEntry.get(entry.id)! } : {}),
+  })), eligibilityRows);
 }
