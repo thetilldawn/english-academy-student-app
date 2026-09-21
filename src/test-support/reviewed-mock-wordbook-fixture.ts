@@ -64,3 +64,41 @@ export function buildReviewedMockFixture(version = 1): ReviewedMockBundle {
   };
   return resealMockReview(bundle);
 }
+
+export function buildReviewedCsatFixture(year: 2023 | 2024 | 2025 = 2025, version = 1): ReviewedMockBundle {
+  const bundle = buildReviewedMockFixture(version);
+  const seedEntry = bundle.package.entries[0]!;
+  const seedResource = bundle.resources[0]!;
+  const seedScope = bundle.scopes[0]!;
+  bundle.approval_id = `csat-fixture-${year}-${version}`;
+  bundle.package.dataset_key = `g12-csat-${year}-v${version}`;
+  bundle.package.wordbook_id = `fake-csat-${year}`;
+  bundle.package.title = `가짜 ${year + 1}학년도 수능`;
+  bundle.package.entries = [];
+  bundle.resources = [];
+  const questions = [...Array.from({ length: 23 }, (_, i) => [i + 18]), [41, 42], [43, 44, 45]];
+  bundle.scopes = questions.map((numbers, index) => {
+    const unit = `${year + 1}학년도 수능 [${numbers.join(",")}]`;
+    for (let position = 1; position <= 4; position += 1) {
+      const n = index * 4 + position;
+      const sourceId = `csat-${year}-${version}-${n}`;
+      const entry = structuredClone(seedEntry);
+      Object.assign(entry, { source_row: n, sequence_no: n, position_in_unit: position, unit,
+        dictionary_id: `word:fixture-${n}`, display_headword: `fixture${n}`, display_gloss_ko: `가짜 뜻 ${n}`,
+        occurrence_id: `occ:${sourceId}`, exam_review_id: `exam-review:${sourceId}`, source_entry_id: sourceId,
+        entry_row_sha256: n.toString(16).toUpperCase().padStart(64, "B"),
+        context_evidence: { source: "source_entries", source_entry_id: sourceId, source_entry_sha256: sha } });
+      const resource = structuredClone(seedResource);
+      Object.assign(resource, { source_row: n, original_headword: entry.display_headword,
+        original_gloss: entry.display_gloss_ko, source_occurrence_id: sourceId,
+        dictionary: linked({ dictionary_id: entry.dictionary_id, legacy_id: null, sense_id: null, canonical_approved: false as const }) });
+      if (n !== 1) { resource.definition = { ...missing }; resource.example = { ...missing }; }
+      bundle.package.entries.push(entry);
+      bundle.resources.push(resource);
+    }
+    return { ...seedScope, unit_label: unit, display_name: unit,
+      metadata: { ...seedScope.metadata, executionYear: year, examMonth: 11 as const, academicYear: year + 1,
+        examKind: "csat" as const, questionNumbers: numbers, sharedPassage: numbers[0]! >= 41 } };
+  });
+  return resealMockReview(bundle);
+}

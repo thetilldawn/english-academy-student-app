@@ -1,11 +1,38 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 
-import { buildReviewedMockFixture, resealMockReview } from "@/test-support/reviewed-mock-wordbook-fixture";
+import { buildReviewedCsatFixture, buildReviewedMockFixture, resealMockReview } from "@/test-support/reviewed-mock-wordbook-fixture";
 import { assertReviewedMockEnvironment, sealReviewedMockBundle, validateReviewedMockBundle, verifyReviewedMockRawPronunciations } from "./reviewed-mock-import-contract";
 import { sha256CanonicalJson } from "./exam-use-import-contract";
 
 describe("reviewed monthly mock source contract", () => {
+  it.each([2023, 2024, 2025] as const)("accepts all 25 reviewed CSAT scopes for execution year %i", year => {
+    const { bundle, summary } = validateReviewedMockBundle(buildReviewedCsatFixture(year));
+    expect(summary.scopeCount).toBe(25);
+    expect(bundle.scopes.every(s => s.metadata.examKind === "csat" && s.metadata.academicYear === year + 1)).toBe(true);
+  });
+  it("rejects a CSAT with a mismatched academic year, kind, future execution, or month", () => {
+    const academic = buildReviewedCsatFixture();
+    academic.scopes[0]!.metadata.academicYear = 2025;
+    expect(() => validateReviewedMockBundle(sealReviewedMockBundle(academic))).toThrow("학년도");
+    const kind = buildReviewedCsatFixture();
+    kind.scopes[0]!.metadata = { ...buildReviewedMockFixture().scopes[0]!.metadata, executionYear: 2025, examMonth: 11 };
+    expect(() => validateReviewedMockBundle(sealReviewedMockBundle(kind))).toThrow("종류");
+    const future = buildReviewedCsatFixture(); future.package.dataset_key = "g12-csat-2026-v1";
+    expect(() => validateReviewedMockBundle(sealReviewedMockBundle(future))).toThrow("자료 키");
+    const month = JSON.parse(JSON.stringify(buildReviewedCsatFixture()));
+    month.scopes[0].metadata.examMonth = 9;
+    expect(() => validateReviewedMockBundle(sealReviewedMockBundle(month))).toThrow();
+  });
+  it("rejects missing and repeated CSAT question groups even when the row counts still match", () => {
+    const duplicate = buildReviewedCsatFixture(); duplicate.scopes[1]!.metadata.questionNumbers = [18];
+    expect(() => validateReviewedMockBundle(sealReviewedMockBundle(duplicate))).toThrow("25개");
+    const missing = buildReviewedCsatFixture();
+    const unit = missing.scopes.pop()!.unit_label;
+    missing.package.entries = missing.package.entries.filter(e => e.unit !== unit);
+    missing.resources = missing.resources.filter(r => missing.package.entries.some(e => e.source_row === r.source_row));
+    expect(() => validateReviewedMockBundle(resealMockReview(missing))).toThrow("25개");
+  });
   it("keeps original POS absent while recording supplemental fields and both independent reviews", () => {
     const { bundle, summary } = validateReviewedMockBundle(buildReviewedMockFixture());
     expect(summary.links).toEqual({ dictionary: 6, pos: 6, pronunciation: 0, definition: 1, example: 1 });

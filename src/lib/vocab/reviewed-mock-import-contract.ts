@@ -69,21 +69,33 @@ export const reviewedMockResourceSchema = z.object({
   review_records: z.array(review).min(2),
 }).strict();
 
+const scopeDetails = {
+  agency: text(120),
+  typeCode: text(80),
+  typeLabel: text(100),
+  questionNumbers: z.array(z.int().min(18).max(45)).min(1).max(3),
+  sharedPassage: z.boolean(),
+};
 const scopeSchema = z.object({
   unit_label: text(160),
   display_name: text(300),
   review_evidence_sha256: sha,
-  metadata: z.object({
-    executionYear: z.union([z.literal(2024), z.literal(2025), z.literal(2026)]),
-    examMonth: z.int().min(1).max(12),
-    examKind: z.literal("mock"),
-    academicYear: z.null(),
-    agency: text(120),
-    typeCode: text(80),
-    typeLabel: text(100),
-    questionNumbers: z.array(z.int().min(18).max(45)).min(1).max(3),
-    sharedPassage: z.boolean(),
-  }).strict(),
+  metadata: z.discriminatedUnion("examKind", [
+    z.object({
+      ...scopeDetails,
+      executionYear: z.union([z.literal(2024), z.literal(2025), z.literal(2026)]),
+      examMonth: z.int().min(1).max(12),
+      examKind: z.literal("mock"),
+      academicYear: z.null(),
+    }).strict(),
+    z.object({
+      ...scopeDetails,
+      executionYear: z.union([z.literal(2023), z.literal(2024), z.literal(2025)]),
+      examMonth: z.literal(11),
+      examKind: z.literal("csat"),
+      academicYear: z.int().min(2024).max(2026),
+    }).strict(),
+  ]),
 }).strict();
 
 const bundleSchema = z.object({
@@ -114,8 +126,10 @@ export function computeReviewedMockInputHash(entry: Record<string, unknown>, res
 export function validateReviewedMockBundle(input: unknown) {
   const bundle = bundleSchema.parse(input);
   const { package: pkg, summary } = validateExamUsePackage(bundle.package);
-  if (!/^g12-mock-(2024|2025|2026)-(03|05|06|07|09|10)-v[1-9][0-9]*$/.test(pkg.dataset_key)) {
-    throw new Error("고3 모의고사 월별 자료 키가 필요합니다.");
+  const mockKey = /^g12-mock-(2024|2025|2026)-(03|05|06|07|09|10)-v[1-9][0-9]*$/.exec(pkg.dataset_key);
+  const csatKey = /^g12-csat-(2023|2024|2025)-v[1-9][0-9]*$/.exec(pkg.dataset_key);
+  if (!mockKey && !csatKey) {
+    throw new Error("검토 대상 고3 모의고사 또는 수능 자료 키가 필요합니다.");
   }
   const calculated = sha256CanonicalJson(Object.fromEntries(Object.entries(bundle).filter(([key]) => key !== "content_sha256")) as Parameters<typeof sha256CanonicalJson>[0]);
   if (calculated !== bundle.content_sha256) throw new Error("검토 원고 확인값이 일치하지 않습니다.");
@@ -137,8 +151,21 @@ export function validateReviewedMockBundle(input: unknown) {
       (scope.metadata.sharedPassage !== (q[0]! >= 41)) ||
       (q[0]! >= 41 && !["41,42", "43,44,45"].includes(q.join(","))) ||
       (q[0]! < 41 && q.length !== 1)) throw new Error("문항과 공유지문 범위가 올바르지 않습니다.");
-    const [, year, month] = pkg.dataset_key.match(/^g12-mock-(\d{4})-(\d{2})-/)!;
-    if (scope.metadata.executionYear !== Number(year) || scope.metadata.examMonth !== Number(month)) throw new Error("자료와 출처 연도·월이 다릅니다.");
+    const year = Number((mockKey ?? csatKey)![1]);
+    const month = mockKey ? Number(mockKey[2]) : 11;
+    if (scope.metadata.executionYear !== year || scope.metadata.examMonth !== month ||
+      scope.metadata.examKind !== (csatKey ? "csat" : "mock") ||
+      scope.metadata.academicYear !== (csatKey ? year + 1 : null)) {
+      throw new Error("자료와 출처 연도·월·학년도·종류가 다릅니다.");
+    }
+  }
+  if (csatKey) {
+    const expected = new Set([
+      ...Array.from({ length: 23 }, (_, i) => String(i + 18)), "41,42", "43,44,45",
+    ]);
+    const actual = new Set(bundle.scopes.map(scope => scope.metadata.questionNumbers.join(",")));
+    if (bundle.scopes.length !== expected.size || actual.size !== expected.size ||
+      [...actual].some(key => !expected.has(key))) throw new Error("수능의 25개 문항 범위가 빠짐없이 한 번씩 필요합니다.");
   }
   const links = { dictionary: 0, pos: 0, pronunciation: 0, definition: 0, example: 0 };
   for (const resource of bundle.resources) {
