@@ -9,12 +9,12 @@ import styles from "./vocab-assignment-planner.module.css";
 
 export type BulkExamFieldsProps = {
   questionMode: AssignmentQuestionModeView;
-  questionOrder: "sequential" | "random";
+  questionOrder: "ascending" | "descending" | "random";
   exam: ExamConditionValues;
   directionDisabled: boolean;
   fieldErrors?: ExamConditionErrors & { questionOrder?: string };
   onQuestionModeChange: (value: AssignmentQuestionMode) => void;
-  onQuestionOrderChange: (value: "sequential" | "random") => void;
+  onQuestionOrderChange: (value: "ascending" | "descending" | "random") => void;
   onDirectionChange: (value: AssignmentDirectionRatio) => void;
   onPassingScoreChange: (value: number) => void;
   onRetryEnabledChange: (value: boolean) => void;

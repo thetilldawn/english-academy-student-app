@@ -96,7 +96,7 @@ describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
   it("shows original/generated roles and protects a hidden library draft when closing the parent", async () => {
     const original=fetchMock.getMockImplementation()!;
     fetchMock.mockImplementation(async (url:string,init?:RequestInit)=>{
-      if(url==="/api/admin/wordbook-library")return Response.json({viewerId:uid(999),scopes:[],templates:[]});
+      if(url==="/api/admin/wordbook-library/query")return Response.json({kind:"templates",viewerId:uid(999),items:[],nextCursor:null});
       const response=await original(url,init);
       if(url!=="/api/admin/assignment-workspace/preparation")return response;
       const body=await response.json();return Response.json({...body,preparation:{...body.preparation,datasets:datasets.map((d,i)=>({...d,vocabularyRole:i?"composition":"original"}))}});
@@ -105,12 +105,12 @@ describe("실제 신규 배정 진입에서 단어장 검색까지", () => {
     fireEvent.click(screen.getAllByRole("button",{name:"단어 배정"})[0]!);
     fireEvent.click(await screen.findByRole("button",{name:/단어장 찾기/},{timeout:5000}));
     expect(screen.getByText("원본 단어장")).toBeVisible();expect(screen.getByText("범위로 만든 단어장")).toBeVisible();
-    fireEvent.click(screen.getByRole("button",{name:"템플릿 찾기·범위로 새로 만들기"}));await screen.findByText("이 조건에 맞는 자료가 없습니다.");
+    fireEvent.click(screen.getByRole("button",{name:"템플릿 찾기·범위로 새로 만들기"}));await screen.findByText("이 조건에 맞는 템플릿이 없습니다.");
     fireEvent.click(screen.getByRole("button",{name:"범위로 새로 만들기"}));fireEvent.change(screen.getByLabelText("템플릿 이름"),{target:{value:"보존할 가짜 초안"}});
     fireEvent.click(screen.getAllByRole("button",{name:"단어장 찾기로 돌아가기"})[0]!);
     fireEvent.click(screen.getByRole("button",{name:"배정 조건으로 돌아가기"}));fireEvent.click(screen.getByRole("button",{name:"닫기"}));
     expect(screen.getByRole("alertdialog")).toBeVisible();
-    expect(fetchMock.mock.calls.filter(([url,init])=>url==="/api/admin/wordbook-library" && init?.method==="POST")).toHaveLength(0);
+    expect(fetchMock.mock.calls.filter(([url])=>url==="/api/admin/wordbook-library/commands")).toHaveLength(0);
   },15_000);
   it("학교·고2·직전대비·2학기 필터를 실제 선택창에 연결하고 기존 배정 입력을 유지한다", async () => {
     const sample = ["1과", "2과", "모고", "다른 학기", "다른 학교", "형용사"].map((title, index) => ({

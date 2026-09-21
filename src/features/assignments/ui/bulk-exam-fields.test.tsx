@@ -13,13 +13,20 @@ afterEach(cleanup);
 function props(mode: AssignmentQuestionMode = "book_meaning_choice", availableModes: readonly AssignmentQuestionMode[] | undefined = assignmentQuestionModes, datasetSelected = true): BulkExamFieldsProps {
   return {
     questionMode: assignmentQuestionModeView({ questionMode: mode, availableModes, datasetSelected }),
-    questionOrder: "sequential", exam: { directionRatio: mode === "book_meaning_choice" ? 50 : mode === "canonical_headword_to_definition" ? 100 : 0, passingScore: 80, retryEnabled: false },
+    questionOrder: "ascending", exam: { directionRatio: mode === "book_meaning_choice" ? 50 : mode === "canonical_headword_to_definition" ? 100 : 0, passingScore: 80, retryEnabled: false },
     directionDisabled: assignmentQuestionModePolicy(mode).fixedDirectionRatio !== null,
     onQuestionModeChange: vi.fn(), onQuestionOrderChange: vi.fn(), onDirectionChange: vi.fn(),
     onPassingScoreChange: vi.fn(), onRetryEnabledChange: vi.fn(), onRetryPassingScoreChange: vi.fn(),
   };
 }
 describe("BulkExamFields with explicit inputs", () => {
+  it.each([["ascending", "오름차순"], ["descending", "내림차순"], ["random", "무작위"]] as const)("preserves %s and forwards each original-source order", (mode, label) => {
+    const input = { ...props(), questionOrder: mode }; render(<BulkExamFields {...input} />);
+    expect(screen.getByRole("button", { name: label })).toHaveAttribute("aria-pressed", "true");
+    for (const [value, name] of [["ascending", "오름차순"], ["descending", "내림차순"], ["random", "무작위"]]) {
+      fireEvent.click(screen.getByRole("button", { name })); expect(input.onQuestionOrderChange).toHaveBeenLastCalledWith(value);
+    }
+  });
   it("shows four content modes and forwards selection without a controller", () => {
     const input = props(); render(<BulkExamFields {...input} />);
     expect(screen.getAllByRole("tab")).toHaveLength(4);

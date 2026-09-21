@@ -182,14 +182,14 @@ export function VocabRangeAssignmentSections({
         />
         <BulkExamFields
           questionMode={questionModeView}
-          questionOrder={bulk.state.draft.exam.questionOrderMode === "random" ? "random" : "sequential"}
+          questionOrder={bulk.state.draft.exam.questionOrderMode}
           exam={{ directionRatio: bulk.state.draft.exam.directionRatio, passingScore: bulk.state.draft.exam.passingScore,
             retryEnabled: bulk.state.draft.exam.retryEnabled, retryPassingScore: bulk.state.draft.exam.retryPassingScore }}
           directionDisabled={questionPolicy.fixedDirectionRatio !== null}
           fieldErrors={{ direction: fieldErrors.direction, passingScore: fieldErrors.passingScore,
             retryPassingScore: fieldErrors.retryPassingScore, questionOrder: fieldErrors.questionOrder }}
           onQuestionModeChange={controller.actions.changeQuestionMode}
-          onQuestionOrderChange={(value) => bulk.actions.changeOrder(value === "random" ? "random" : "ascending")}
+          onQuestionOrderChange={bulk.actions.changeOrder}
           onDirectionChange={bulk.actions.changeDirection}
           onPassingScoreChange={bulk.actions.changePassingScore}
           onRetryEnabledChange={bulk.actions.changeRetryEnabled}

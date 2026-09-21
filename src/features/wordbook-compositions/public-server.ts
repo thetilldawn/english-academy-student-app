@@ -6,3 +6,5 @@ export { getLibraryCatalog, LibraryCatalogError } from "./server/queries/library
 export { saveLibraryTemplate, LibraryCommandError } from "./server/commands/library-command";
 export { materializeLibraryComposition } from "./server/commands/materialize-composition";
 export { libraryJsonResponse } from "./server/library-json-response";
+export { queryLibrary } from "./server/queries/library-query";
+export { saveLibraryTemplateV2 } from "./server/commands/library-command-v2";

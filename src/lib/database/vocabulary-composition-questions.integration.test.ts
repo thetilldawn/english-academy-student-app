@@ -139,6 +139,20 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
       [prepared.datasetId, plan.units, targets.length, JSON.stringify(targets)])).rejects.toThrow("composition_assignment_payload_not_id_only");
     expect(await scalar("select count(*)::int value from public.assignments")).toBe(before);
   });
+  it.each(["ascending", "descending", "random"])("delivers %s question order from the saved source plan", async mode => {
+    await db.exec("begin");
+    try {
+      const plan = await bankPlan();
+      const assignment = await scalar<string>(`select public.create_assignment_with_delivery_v7('가짜 순서 확인',$1::uuid,$2::uuid[],$3::int,100::smallint,300,80::smallint,false,null,$5::public.question_order_mode,null,array['${studentId}']::uuid[],'none',null,$4::jsonb) value`,
+        [prepared.datasetId, plan.units, plan.questions.length, JSON.stringify(plan.questions), mode]);
+      await db.exec("reset role");
+      const attempt = await scalar<string>("select public.create_quiz_attempt_from_bank($1,$2) value", [studentId, assignment]);
+      const delivered = await scalar<number[]>("select jsonb_agg(vocab_entry_id order by order_index) value from public.quiz_questions where attempt_id=$1", [attempt]);
+      const expected = plan.questions.map(q => q.vocab_entry_id);
+      if (mode === "random") expect([...delivered].sort((a,b)=>a-b)).toEqual([...expected].sort((a,b)=>a-b));
+      else expect(delivered).toEqual(mode === "descending" ? [...expected].reverse() : expected);
+    } finally { await db.exec("rollback"); await admin(); }
+  });
   it("preserves reviewed source questions and outside choice resources after partial selection and source retirement", async () => {
     await db.exec("reset role");
     const fixture = reviewedExamFixture(), voice = fixture.voice;
@@ -292,6 +306,31 @@ describe.sequential("vocabulary compositions: source resources, questions, and r
       await db.query("update public.vocab_entries set pronunciation_ko='변경 검출용' where id=$1", [prepared.entries[0]!.sourceEntryId]);
       await expect(db.query("select private.assert_vocabulary_library_version_current_v1(v) from private.vocabulary_library_versions v where id=$1", [legacy.id])).rejects.toThrow("library_scope_changed");
     } finally { await db.exec("rollback"); }
+  });
+  it("deletes the template while preserving generated books, student delivery, attempts and submitted answers", async () => {
+    await db.exec("reset role; begin");
+    try {
+      const target = await scalar<{ id: string; revision: number }>("select jsonb_build_object('id',t.id,'revision',t.revision) value from private.vocabulary_library_templates t join private.vocabulary_library_versions v on v.template_id=t.id where v.id=$1", [schoolPrepared.versionId]);
+      await db.exec("update public.quiz_questions set initial_choice_index=correct_choice_index,initial_is_correct=true,initial_answered_at=now() where id=(select id from public.quiz_questions order by id limit 1)");
+      const preserved = () => scalar(`select jsonb_build_object(
+        'books',(select jsonb_agg(to_jsonb(d) order by id) from public.vocab_datasets d),
+        'catalog',(select jsonb_agg(to_jsonb(c) order by dataset_id) from public.vocab_dataset_catalog c),
+        'sources',(select jsonb_agg(to_jsonb(e) order by id) from public.vocab_entries e),
+        'students',(select jsonb_agg(to_jsonb(s) order by id) from public.students s),
+        'assignments',(select jsonb_agg(to_jsonb(a) order by id) from public.assignments a),
+        'questions',(select jsonb_agg(to_jsonb(q) order by id) from public.assignment_questions q),
+        'attempts',(select jsonb_agg(to_jsonb(a) order by id) from public.quiz_attempts a),
+        'answers',(select jsonb_agg(to_jsonb(q) order by id) from public.quiz_questions q),
+        'queue',(select jsonb_agg(to_jsonb(q) order by id) from public.student_vocab_review_queue q)) value`);
+      const before = await preserved();
+      expect(await scalar("select count(*)::int value from public.quiz_questions where initial_answered_at is not null")).toBeGreaterThan(0);
+      expect(await scalar("select count(*)::int value from public.assignments where dataset_id=$1", [schoolPrepared.datasetId])).toBeGreaterThan(0);
+      await admin();
+      await scalar("select public.save_vocabulary_library_template_v2($1::jsonb) value", [JSON.stringify({ action: "delete", requestId: randomUUID(), templateId: target.id, expectedRevision: target.revision })]);
+      await db.exec("reset role"); expect(await preserved()).toEqual(before);
+      await service(); const study = await scalar<{ words: unknown[] }>("select public.get_student_assignment_study_v1($1,$2) value", [studentId, schoolAssignment]);
+      expect(study.words).toHaveLength(4);
+    } finally { await db.exec("rollback"); await admin(); }
   });
   describe.sequential("database-owner verification without a browser identity", () => {
     const project = "wojxpruvbjzbhrpmsbuy", approval = "fake-management-verification", requestId = randomUUID();

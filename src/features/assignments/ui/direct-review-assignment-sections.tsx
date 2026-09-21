@@ -98,14 +98,8 @@ export function DirectReviewAssignmentSections({
         </div>
         <ExamQuestionOrderField
           error={fieldErrors.questionOrder}
-          onChange={(value) =>
-            controller.actions.changeOrder(
-              value === "random" ? "random" : "ascending",
-            )
-          }
-          value={draft.exam.questionOrderMode === "random"
-            ? "random"
-            : "sequential"}
+          onChange={controller.actions.changeOrder}
+          value={draft.exam.questionOrderMode}
         />
         <ExamConditionFields
           exam={{ directionRatio: draft.exam.directionRatio, passingScore: draft.exam.passingScore,

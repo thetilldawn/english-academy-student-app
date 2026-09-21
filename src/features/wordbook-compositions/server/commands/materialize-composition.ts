@@ -6,8 +6,9 @@ import { libraryCommandSchema, libraryCommandResultSchema } from "../../contract
 import { compositionQuestionInputSchema, compositionStepSchema, compositionProgressSchema } from "../../contracts/library-materialization";
 import { planCompositionQuestions } from "../use-cases/composition-question-plan";
 import { LibraryCommandError } from "./library-command";
+import { libraryCommandV2ResultSchema } from "../../contracts/library-command-v2";
 
-export async function materializeLibraryComposition(input: unknown, admin?: AdminContext) {
+export async function materializeLibraryComposition(input: unknown, admin?: AdminContext, compact = false) {
   if (!admin) await requireAdmin();
   const parsed = libraryCommandSchema.safeParse(input);
   if (!parsed.success || parsed.data.action !== "materialize") throw new LibraryCommandError(422);
@@ -58,8 +59,8 @@ export async function materializeLibraryComposition(input: unknown, admin?: Admi
     step = checkedStep(response);
   }
   if (step.state !== "ready") return compositionProgressSchema.parse({ ...step, kind: "materializing", requestId: command.requestId, templateId: command.templateId });
-  const response = await client.rpc("get_vocabulary_composition_summary_v1", { p_version_id: command.versionId });
-  const result = libraryCommandResultSchema.safeParse(response.data);
-  if (response.error || !result.success || result.data.template.id !== command.templateId || result.data.createdBook?.versionId !== command.versionId || result.data.createdBook.contentHash !== command.contentHash || result.data.createdBook.dataset.id !== datasetId) throw new LibraryCommandError(503);
+  const response = await client.rpc(compact ? "get_vocabulary_composition_summary_v2" : "get_vocabulary_composition_summary_v1", { p_version_id: command.versionId });
+  const result = (compact ? libraryCommandV2ResultSchema : libraryCommandResultSchema).safeParse(response.data);
+  if (response.error || !result.success || !("template" in result.data) || result.data.template.id !== command.templateId || result.data.createdBook?.versionId !== command.versionId || result.data.createdBook.contentHash !== command.contentHash || result.data.createdBook.dataset.id !== datasetId) throw new LibraryCommandError(503);
   return result.data;
 }

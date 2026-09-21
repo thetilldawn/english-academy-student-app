@@ -83,7 +83,7 @@ export function groupsRecipe(catalog: readonly LibraryScope[], groups: LibraryGr
     excludedOccurrenceKeys: previous.excludedOccurrenceKeys.filter(k => reachable.has(k)) };
 }
 
-export function libraryScopeLabel(scope: LibraryScope) {
+export function libraryScopeLabel(scope: Pick<LibraryScope, "name" | "classification">) {
   const exam = scope.classification.exam;
   if (!exam || scope.classification.kind !== "csat") return scope.name;
   return `${exam.academicYear ? `${exam.academicYear}학년도 수능` : "수능"} (${exam.executionYear}년 시행) · ${exam.typeLabel} [${exam.questionNumbers.join("·")}번]`;
@@ -99,7 +99,11 @@ function numbers(values: number[]) {
 export function libraryAutomaticTags(catalog: readonly LibraryScope[], recipe: LibraryRecipe, metadata: TemplateMetadata): string[] {
   const refs = new Map(recipe.scopes.map(r => [r.id, r.version]));
   const excluded = new Set(recipe.excludedOccurrenceKeys);
-  const scopes = catalog.filter(s => refs.get(s.id) === s.version && s.occurrences.some(r => r.state === "included" && !excluded.has(r.key))), c = scopes.map(s => s.classification);
+  const scopes = catalog.filter(s => refs.get(s.id) === s.version && s.occurrences.some(r => r.state === "included" && !excluded.has(r.key)));
+  return libraryTagsFromClassifications(scopes.map(s => s.classification), metadata);
+}
+
+export function libraryTagsFromClassifications(c: LibraryClassification[], metadata: TemplateMetadata): string[] {
   const mock = c.flatMap(v => v.kind === "mock" && v.exam ? [v.exam] : []);
   const csat = c.flatMap(v => v.kind === "csat" && v.exam ? [v.exam] : []);
   const compact = (prefix: string, values: number[], suffix: string) => values.length ? `${prefix}${numbers(values)}${suffix}` : null;

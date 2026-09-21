@@ -1,0 +1,63 @@
+{
+  "kind": "latest-result-per-test-not-single-full-green",
+  "runs": [
+    {
+      "name": "app04-full-suite.json",
+      "sha256": "7e787844dd4f6e9070e1af6c5cbc5dde5edd5d881dca6eececebe9cd13f263a7",
+      "passed": 3761,
+      "failed": 5,
+      "pending": 1
+    },
+    {
+      "name": "app04-regressions-final.json",
+      "sha256": "9c1a630fb70043ab87cc19e8cea8404293c4bb4b66138545abeca3cf801811ee",
+      "passed": 152,
+      "failed": 1,
+      "pending": 0
+    },
+    {
+      "name": "app04-final-fixes.json",
+      "sha256": "3c9b4807b21c68e915206d80123b1ed77774a5db662e417a81ce48d176e84e0d",
+      "passed": 59,
+      "failed": 0,
+      "pending": 0
+    }
+  ],
+  "latest": {
+    "passed": 3769,
+    "failed": 0,
+    "pending": 0,
+    "skipped": 1
+  },
+  "remaining": [
+    {
+      "file": "src/lib/database/school-pronunciation-scope.integration.test.ts",
+      "name": "approved school pronunciation final schema imports all current local releases against the complete schema and existing identity bytes",
+      "case": 1,
+      "status": "skipped"
+    }
+  ],
+  "browser": {
+    "environment": "local synthetic",
+    "viewports": [
+      "1440x1000",
+      "390x844"
+    ],
+    "initialQuery": {
+      "templates": 1,
+      "scopes": 0,
+      "words": 0,
+      "versions": 0
+    },
+    "wordPages": [
+      50,
+      59
+    ],
+    "scopeChange": "2024..2025 topic 59 words -> long reading 8 words",
+    "delete": "notice and cancellation only; no browser writes",
+    "reuse": "change confirmation false->true->false on condition edit",
+    "overflow": 0,
+    "finalBuildPages": 40
+  },
+  "externalWrites": 0
+}

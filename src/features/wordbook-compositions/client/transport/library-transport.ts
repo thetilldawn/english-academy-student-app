@@ -1,5 +1,7 @@
 import { libraryCatalogSchema, libraryCommandResultSchema, type LibraryCommand } from "../../contracts/library";
 import { compositionProgressSchema } from "../../contracts/library-materialization";
+import { libraryQueryResultSchema, type LibraryQuery, type LibraryQueryResultOf } from "../../contracts/library-query";
+import { libraryCommandV2ResultSchema, type LibraryCommandV2 } from "../../contracts/library-command-v2";
 
 export class LibraryRequestError extends Error {
   constructor(readonly status: number, message: string, readonly progressConfirmed = false) { super(message); }
@@ -40,6 +42,45 @@ export async function sendLibraryCommand(command: LibraryCommand, viewerId: stri
     if (!parsed.success) throw failure(503, true);
     if (command.action === "materialize" && (parsed.data.template.id !== command.templateId || parsed.data.createdBook?.versionId !== command.versionId || parsed.data.createdBook.contentHash !== command.contentHash || (datasetId && parsed.data.createdBook.dataset.id !== datasetId))) throw failure(503, true);
     if (command.action !== "materialize" && parsed.data.createdBook) throw failure(503, true);
+    return parsed.data;
+  }
+  throw failure(503, true);
+}
+
+export async function readLibraryPage<K extends LibraryQuery["kind"]>(query: Extract<LibraryQuery, { kind: K }>, signal: AbortSignal, viewerId?: string) {
+  const response = await fetch(`${endpoint}/query`, { method: "POST", headers: { "Content-Type": "application/json", ...(viewerId ? { "X-Wordbook-Viewer": viewerId } : {}) },
+    body: JSON.stringify(query), signal: AbortSignal.any([signal, AbortSignal.timeout(65000)]), cache: "no-store" });
+  if (!response.ok) throw failure(response.status, false);
+  const parsed = libraryQueryResultSchema.safeParse(await response.json());
+  if (!parsed.success || parsed.data.kind !== query.kind) throw failure(503, false);
+  if (viewerId && parsed.data.viewerId !== viewerId) throw failure(403, false);
+  return parsed.data as LibraryQueryResultOf<K>;
+}
+
+export async function sendLibraryCommandV2(command: LibraryCommandV2, viewerId: string) {
+  let datasetId: string | undefined, previousProgress: string | undefined;
+  for (let attempt = 0; attempt < 160; attempt++) {
+    const response = await fetch(`${endpoint}/commands`, { method: "POST", headers: { "Content-Type": "application/json", "X-Wordbook-Viewer": viewerId },
+      body: JSON.stringify(command), cache: "no-store", signal: AbortSignal.timeout(command.action === "materialize" ? 295000 : 65000) });
+    if (!response.ok) throw failure(response.status, true, Boolean(previousProgress) || response.headers.get("X-Wordbook-Progress") === "confirmed");
+    const body: unknown = await response.json();
+    const progress = compositionProgressSchema.safeParse(body);
+    if (progress.success) {
+      const p = progress.data, signature = JSON.stringify(p);
+      if (command.action !== "materialize" || p.requestId !== command.requestId || p.templateId !== command.templateId || p.versionId !== command.versionId || p.contentHash !== command.contentHash ||
+        (datasetId && datasetId !== p.datasetId) || signature === previousProgress) throw failure(503, true);
+      datasetId = p.datasetId; previousProgress = signature; continue;
+    }
+    const parsed = libraryCommandV2ResultSchema.safeParse(body);
+    if (!parsed.success) throw failure(503, true);
+    if (command.action === "delete") {
+      if (!("deleted" in parsed.data) || parsed.data.deleted.templateId !== command.templateId || parsed.data.deleted.revision !== command.expectedRevision + 1) throw failure(503, true);
+    } else {
+      if (!("template" in parsed.data) || ("templateId" in command && parsed.data.template.id !== command.templateId)) throw failure(503, true);
+      if (command.action === "materialize" && (parsed.data.createdBook?.versionId !== command.versionId || parsed.data.createdBook.contentHash !== command.contentHash ||
+        (datasetId && parsed.data.createdBook.dataset.id !== datasetId))) throw failure(503, true);
+      if (command.action !== "materialize" && parsed.data.createdBook) throw failure(503, true);
+    }
     return parsed.data;
   }
   throw failure(503, true);

@@ -99,7 +99,7 @@ describe("직전 단어 시험 조건", () => {
       exam: {
         directionRatio: 100,
         passingScore: 85,
-        questionOrderMode: "ascending",
+        questionOrderMode: "descending",
         timing: { mode: "per_question", perQuestionSeconds: 15 },
       },
       scheduleRule: {
@@ -126,6 +126,7 @@ describe("직전 단어 시험 조건", () => {
       history: [history({ availableFrom: null, availableUntil: null })],
     });
     expect(result?.scheduleRule).toBeNull();
+    expect(result?.exam.questionOrderMode).toBe("ascending");
   });
 
   it("시간 제한이 없는 최근 시험도 복사 후보로 유지한다", () => {

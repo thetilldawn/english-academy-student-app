@@ -4,9 +4,8 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { libraryCommandResultSchema, libraryCommandSchema } from "../../contracts/library";
 import { latestLibraryVersion } from "../../domain/template-version";
 
-export class LibraryCommandError extends Error {
-  constructor(readonly status: 403 | 404 | 409 | 422 | 503, readonly progressConfirmed = false) { super("library_save_failed"); }
-}
+import { LibraryCommandError } from "../library-error";
+export { LibraryCommandError } from "../library-error";
 
 export async function saveLibraryTemplate(input: unknown, admin?: AdminContext) {
   if (!admin) await requireAdmin();

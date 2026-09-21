@@ -107,9 +107,8 @@ function toConditions(
       passingScore: item.passingScore,
       retryEnabled: item.retryEnabled ?? true,
       retryPassingScore: item.retryPassingScore ?? item.passingScore,
-      questionOrderMode: item.questionOrderMode === "random"
-        ? "random"
-        : "ascending",
+      questionOrderMode: item.questionOrderMode === "random" || item.questionOrderMode === "descending"
+        ? item.questionOrderMode : "ascending",
       timeLimitEnabled: item.timingMode !== "none",
       timing,
     },

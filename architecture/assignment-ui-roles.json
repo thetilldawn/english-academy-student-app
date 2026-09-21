@@ -186,7 +186,7 @@
     {
       "path": "assignment-settings-fields.tsx",
       "role": "deferred",
-      "reason": "수정 제어기 행동 묶음·전체 초안·일정 판정 분리 필요",
+      "reason": "APP-20260921-04: 문항 순서 세 값 전달만 변경, 기존 import/전체 초안 의존은 유지하여 후속 분리 대상으로 둔다.",
       "allowedImports": [
         "../controller/use-assignment-controller",
         "../presentation/assignment-edit-field-errors",
@@ -196,7 +196,7 @@
         "./exam-condition-fields",
         "./exam-timing-fields"
       ],
-      "legacySourceSha256": "9ad44be9eca126b73a66b64e42bb6baa703d3725417caab3e4de636722d9409f"
+      "legacySourceSha256": "2841ab6023f462e2c35016f5d8510ca34afa43355f4bdaa236cb42a5f6e80f33"
     },
     {
       "path": "assignment-student-browser.tsx",

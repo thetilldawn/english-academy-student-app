@@ -34,7 +34,8 @@ describe("DAY 문제은행 응시 계약", () => {
     expect(settingsFields).toContain("<ExamQuestionOrderField");
     expect(bulkExamFields).toContain("<ExamQuestionOrderField");
     expect(conditionFields).toContain('trigger="시험 문제 순서"');
-    expect(conditionFields).toContain("순서대로");
+    expect(conditionFields).toContain("오름차순");
+    expect(conditionFields).toContain("내림차순");
     expect(conditionFields).toContain("무작위");
     expect(conditionFields).toContain('value === "random"');
     expect(copy).toContain('questionCount: "단어 수"');

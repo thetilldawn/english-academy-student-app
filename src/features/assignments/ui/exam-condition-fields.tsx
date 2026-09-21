@@ -27,14 +27,14 @@ export function ExamQuestionOrderField({
   value,
 }: {
   error?: string;
-  onChange: (value: "sequential" | "random") => void;
-  value: "sequential" | "random";
+  onChange: (value: "ascending" | "descending" | "random") => void;
+  value: "ascending" | "descending" | "random";
 }) {
   return (
     <Field>
       <FieldLabel as="span" id="exam-question-order-label">
         <HelpTip label="시험 문제 순서 설명" trigger="시험 문제 순서">
-          단어를 범위 순서대로 낼지, 시험마다 무작위로 섞을지 정합니다.
+          원자료의 앞에서부터, 뒤에서부터, 또는 무작위로 문제를 냅니다.
         </HelpTip>
       </FieldLabel>
       <div
@@ -45,13 +45,14 @@ export function ExamQuestionOrderField({
         tabIndex={-1}
       >
         <Button
-          aria-pressed={value === "sequential"}
-          onClick={() => onChange("sequential")}
+          aria-pressed={value === "ascending"}
+          onClick={() => onChange("ascending")}
           size="small"
           variant="filter"
         >
-          순서대로
+          오름차순
         </Button>
+        <Button aria-pressed={value === "descending"} onClick={() => onChange("descending")} size="small" variant="filter">내림차순</Button>
         <Button
           aria-pressed={value === "random"}
           onClick={() => onChange("random")}
