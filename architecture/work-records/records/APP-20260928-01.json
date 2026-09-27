@@ -1,0 +1,431 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20260928-01",
+  "title": "단어장 인증 조회 오류와 입력 보존",
+  "size": "small",
+  "gate": "design",
+  "guide": "docs/work-orders/APP-20260928-01.md",
+  "baseline": "dcca16846c077ed7ed939c959a1c88849a95470e",
+  "owners": [
+    "wordbook-compositions"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal"
+  ],
+  "scope": [
+    {
+      "path": "src/app/api/admin/wordbook-library/route.ts",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/app/api/admin/wordbook-library/query/route.ts",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/app/api/admin/wordbook-library/commands/route.ts",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/features/wordbook-compositions/server/library-service.test.ts",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/features/wordbook-compositions/server/library-query-command.test.ts",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/features/wordbook-compositions/ui/wordbook-library.test.tsx",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "engineering",
+      "text": "인증 조회 장애와 실제 인증·권한 거절을 구분한다.",
+      "acceptance": "장애503, 비로그인401, 관리자 불일치403; 인증 실패 뒤 업무 호출0.",
+      "disposition": "required",
+      "owners": [
+        "wordbook-compositions"
+      ],
+      "flowIds": [
+        "mock-wordbook-compose"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "요청한 범위 구성을 정상 저장할 수 있도록 일시 조회 장애 때 편집 내용을 보존한다.",
+      "acceptance": "읽기 실패503 뒤 이름·조건·범위 유지와 재시도 성공. 미확정 저장은 동일 요청만 확인.",
+      "disposition": "required",
+      "owners": [
+        "wordbook-compositions"
+      ],
+      "flowIds": [
+        "mock-wordbook-compose"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "engineering",
+      "text": "기존 인증 보호·응답 계약·원자료·학생 기록을 유지한다.",
+      "acceptance": "기존 성공/오류/진행 헤더·no-store·실제401/403 차단 유지. DB·배정·응시 변경0.",
+      "disposition": "required",
+      "owners": [
+        "wordbook-compositions"
+      ],
+      "flowIds": [
+        "mock-wordbook-compose"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "이미 승인된 업무 범위",
+      "answer": "지정한 시행연도·문제 범위로 템플릿을 만들고 정해진 조건으로 배정한다. 이 기록에는 개인정보와 실제 원고를 넣지 않는다.",
+      "source": "현재 대화 2026-09-28 맞춰서 ㄱㄱ 및 앞선 템플릿 구성·입력 보존 요구"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "인증 장애 처리 방식",
+      "answer": "getAdminContextOrThrow를 기존 API try 안에서 호출한다. 공통 인증 helper와401/403 클라이언트 보호는 유지하며 기존503 안내·복구 재사용.",
+      "source": "현재 코드와 독립 읽기 검토; 새로운 사용자 업무 선택 없음"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "변경 경계",
+      "answer": "운영dcca168 격리본의 단어장3경로와 검사만 수정. 다른 미배포 작업과 분리. DB/자료/학생 기록 변경 없음; 외부 반영 별도 근거.",
+      "source": "현재 코드·작업 인계 확인"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "checked",
+      "reason": "기존 구현과 연결을 확인하고 변경하지 않음"
+    },
+    "ui": {
+      "status": "checked",
+      "reason": "기존 구현과 연결을 확인하고 변경하지 않음"
+    },
+    "state": {
+      "status": "checked",
+      "reason": "기존 구현과 연결을 확인하고 변경하지 않음"
+    },
+    "domain": {
+      "status": "checked",
+      "reason": "기존 구현과 연결을 확인하고 변경하지 않음"
+    },
+    "data": {
+      "status": "checked",
+      "reason": "기존 구현과 연결을 확인하고 변경하지 않음"
+    },
+    "api": {
+      "status": "changed",
+      "reason": "Route Handler에서 인증 조회 장애를503으로 구분"
+    },
+    "cache": {
+      "status": "checked",
+      "reason": "개인 no-store 및 인증 오류 폐기 정책 유지"
+    },
+    "asyncUi": {
+      "status": "changed",
+      "reason": "기존503 복구 흐름으로 입력 유지; 401/403의 차단은 보존"
+    },
+    "security": {
+      "status": "checked",
+      "reason": "검증된 관리자 없이 조회/저장0; 진짜401/403 보호 유지"
+    },
+    "styles": {
+      "status": "checked",
+      "reason": "기존 구현과 연결을 확인하고 변경하지 않음"
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "두 서버 검사와 편집 중 읽기 실패 보존 검사 추가"
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "검증한 관리자만 조회·변경",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "실제401/403 숨김 및 내부 오류 비노출 보존",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "answer-leak": {
+      "status": "not_applicable",
+      "reason": "응답 DTO와 출제/정답 값 변경 없음",
+      "checkIds": []
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "no-store와 실제 인증 거절의 캐시 차단 유지",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "관리자 인증 조회→검증한 컨텍스트→기존 목록/검색/저장/수정/삭제/생성 흐름. 조회 장애는503에서 종료. 배정·응시·채점·기록 흐름 변경 없음.",
+    "reuse": "기존 getAdminContextOrThrow, privateJsonError, 503 복구와 동일 명령 확인 재사용; 새 추상화 없음.",
+    "cache": "기존 private no-store. 인증 조회 실패를 캐시하지 않고 실제401/403이면 화면 보호 유지. 공유 캐시 추가 없음.",
+    "compatibility": "성공 응답·viewer 헤더·입력 검증·멱등/진행·404/409/422 유지. DB migration 없음.",
+    "rollback": "이번 세 API와 검사 변경만 되돌릴 수 있다. 기존 데이터·학생 기록 변경 없음."
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "템플릿 조회/조건 편집/삭제의 initial-loading",
+      "message": "템플릿을 불러오는 중…",
+      "behavior": "목록/선택 범위/단어를 구별하고 계산 전·조회 실패를0건으로 표시하지 않는다. 저장/삭제는 확인한 대상과 범위만 실행한다.",
+      "recovery": "읽기 재시도·조건 첫 페이지·초안 보존·자료 변경 확인·같은 저장 결과 재확인. 인증 거절은 관리자 자료를 숨긴다.",
+      "component": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "템플릿 조회/조건 편집/삭제의 refreshing",
+      "message": "선택한 범위를 확인하는 중…",
+      "behavior": "목록/선택 범위/단어를 구별하고 계산 전·조회 실패를0건으로 표시하지 않는다. 저장/삭제는 확인한 대상과 범위만 실행한다.",
+      "recovery": "읽기 재시도·조건 첫 페이지·초안 보존·자료 변경 확인·같은 저장 결과 재확인. 인증 거절은 관리자 자료를 숨긴다.",
+      "component": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "템플릿 조회/조건 편집/삭제의 unselected",
+      "message": "자료 종류와 범위를 선택해 주세요.",
+      "behavior": "목록/선택 범위/단어를 구별하고 계산 전·조회 실패를0건으로 표시하지 않는다. 저장/삭제는 확인한 대상과 범위만 실행한다.",
+      "recovery": "읽기 재시도·조건 첫 페이지·초안 보존·자료 변경 확인·같은 저장 결과 재확인. 인증 거절은 관리자 자료를 숨긴다.",
+      "component": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "템플릿 조회/조건 편집/삭제의 empty",
+      "message": "이 조건에 맞는 템플릿이 없습니다.",
+      "behavior": "목록/선택 범위/단어를 구별하고 계산 전·조회 실패를0건으로 표시하지 않는다. 저장/삭제는 확인한 대상과 범위만 실행한다.",
+      "recovery": "읽기 재시도·조건 첫 페이지·초안 보존·자료 변경 확인·같은 저장 결과 재확인. 인증 거절은 관리자 자료를 숨긴다.",
+      "component": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "템플릿 조회/조건 편집/삭제의 validation",
+      "message": "이름과 선택한 범위를 확인해 주세요.",
+      "behavior": "목록/선택 범위/단어를 구별하고 계산 전·조회 실패를0건으로 표시하지 않는다. 저장/삭제는 확인한 대상과 범위만 실행한다.",
+      "recovery": "읽기 재시도·조건 첫 페이지·초안 보존·자료 변경 확인·같은 저장 결과 재확인. 인증 거절은 관리자 자료를 숨긴다.",
+      "component": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "템플릿 조회/조건 편집/삭제의 load-error",
+      "message": "자료를 불러오지 못했습니다. 다시 시도해 주세요.",
+      "behavior": "목록/선택 범위/단어를 구별하고 계산 전·조회 실패를0건으로 표시하지 않는다. 저장/삭제는 확인한 대상과 범위만 실행한다.",
+      "recovery": "읽기 재시도·조건 첫 페이지·초안 보존·자료 변경 확인·같은 저장 결과 재확인. 인증 거절은 관리자 자료를 숨긴다.",
+      "component": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "템플릿 조회/조건 편집/삭제의 save-error",
+      "message": "저장 결과를 확인하지 못했습니다. 같은 내용으로 다시 확인해 주세요.",
+      "behavior": "목록/선택 범위/단어를 구별하고 계산 전·조회 실패를0건으로 표시하지 않는다. 저장/삭제는 확인한 대상과 범위만 실행한다.",
+      "recovery": "읽기 재시도·조건 첫 페이지·초안 보존·자료 변경 확인·같은 저장 결과 재확인. 인증 거절은 관리자 자료를 숨긴다.",
+      "component": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "템플릿 조회/조건 편집/삭제의 auth-error",
+      "message": "관리자 로그인이 필요합니다.",
+      "behavior": "목록/선택 범위/단어를 구별하고 계산 전·조회 실패를0건으로 표시하지 않는다. 저장/삭제는 확인한 대상과 범위만 실행한다.",
+      "recovery": "읽기 재시도·조건 첫 페이지·초안 보존·자료 변경 확인·같은 저장 결과 재확인. 인증 거절은 관리자 자료를 숨긴다.",
+      "component": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "템플릿 조회/조건 편집/삭제의 not-found",
+      "message": "템플릿을 찾을 수 없습니다. 목록을 다시 확인해 주세요.",
+      "behavior": "목록/선택 범위/단어를 구별하고 계산 전·조회 실패를0건으로 표시하지 않는다. 저장/삭제는 확인한 대상과 범위만 실행한다.",
+      "recovery": "읽기 재시도·조건 첫 페이지·초안 보존·자료 변경 확인·같은 저장 결과 재확인. 인증 거절은 관리자 자료를 숨긴다.",
+      "component": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "템플릿 조회/조건 편집/삭제의 unexpected-error",
+      "message": "자료를 불러오지 못했습니다. 다시 시도해 주세요. / 저장 결과를 확인하지 못했습니다. 같은 내용으로 다시 확인해 주세요.",
+      "behavior": "조회/저장 API의 알 수 없는 실패는 안전한 기존503 문구로 구분. 렌더 예외 경계는 기존 동작 유지.",
+      "recovery": "조회는 다시 불러오기, 저장은 같은 내용으로 저장 확인. 인증 거절은 기존 로그인 복구 경로.",
+      "component": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "개발 기준 v1.1",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "일시 조회 실패를 인증 실패나 정상0건으로 바꾸지 않고 입력·기존 권한 보호를 유지"
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "unit",
+      "target": "src/features/wordbook-compositions/server/library-service.test.ts",
+      "scenario": "legacy GET/POST 인증 조회 지연·장애, 실제 비로그인 및 관리자 불일치",
+      "expected": "조회 장애503/no-store/업무 호출0/내부 오류 비노출; 실제401·403 보호와 생성·진행·저장 결과 계약 유지",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "unit",
+      "target": "src/features/wordbook-compositions/server/library-query-command.test.ts",
+      "scenario": "query/commands 인증 조회 지연·장애 및 실제401·403, 기존200/404/409/422",
+      "expected": "지연·장애503, 실제401·403 유지, DB 호출0, no-store, 쉬운 한국어 오류; 입력·멱등 결과 보존",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "component",
+      "target": "src/features/wordbook-compositions/ui/wordbook-library.test.tsx",
+      "scenario": "편집 중 범위 미리보기503 후 이름·조건 유지와 읽기 재시도; 기존 저장 결과 불명확 복구·401/403 숨김·빈 결과·404·취소 회귀",
+      "expected": "편집 입력 보존과 읽기 재시도 성공, 실제 인증 실패의 개인 자료 숨김. 범위 패널의 실패 중 0개 표시는 기존 한계로 별도 기록하며 이번 수정에서 해결했다고 주장하지 않음.",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "static",
+      "target": "scripts/check-work-records.mjs",
+      "scenario": "기능 지도·UI/server 구조·설계와 변경 연결·타입·lint·빌드",
+      "expected": "현재 변경6파일의 소유·R/D/T 일치 및 지정 로컬 검사 통과",
+      "topics": [
+        "structure"
+      ]
+    },
+    {
+      "id": "T5",
+      "kind": "review",
+      "target": "docs/work-orders/APP-20260928-01.md",
+      "scenario": "읽기 전용 독립 코드 및 설계 검토",
+      "expected": "진짜401/403 보호를 약화하지 않으며 새 업무 결정·DB 변경 없음; 운영 로그 미확보를 원인 확정으로 과장하지 않음",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "error-ui",
+        "ui-copy"
+      ]
+    }
+  ],
+  "verification": null
+}

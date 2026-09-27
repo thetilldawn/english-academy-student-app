@@ -210,6 +210,29 @@ describe("library editor with on-demand query boundaries", () => {
   it("distinguishes query failures from empty data and hides private fields after authorization failure", async () => {
     getFailure=503;render(<WordbookLibrary onBack={vi.fn()} />);await screen.findByText("자료를 불러오지 못했습니다. 다시 시도해 주세요.");expect(screen.queryByText("이 조건에 맞는 템플릿이 없습니다.")).not.toBeInTheDocument();getFailure=401;fireEvent.click(screen.getByRole("button",{name:"다시 불러오기"}));await screen.findByText(/처음 저장한 관리자 계정으로 로그인한 뒤 확인/);expect(screen.queryByLabelText("템플릿 검색")).not.toBeInTheDocument();
   });
+  it("preserves the template draft through a preview outage and retries the selected range", async () => {
+    await start();
+    const original = fetch;
+    let unavailable = true;
+    vi.stubGlobal("fetch", vi.fn((url, init) => {
+      if (String(url).endsWith("/query") && JSON.parse(init.body).kind === "preview" && unavailable) {
+        return Promise.resolve(new Response("{}", { status: 503 }));
+      }
+      return original(url, init);
+    }));
+    fireEvent.change(screen.getByLabelText("시행연도 구간 시작"), { target: { value: "2025" } });
+    await screen.findAllByText("자료를 불러오지 못했습니다. 다시 시도해 주세요.");
+    expect(screen.getByLabelText("템플릿 이름")).toHaveValue("나의 템플릿");
+    expect(screen.getByLabelText("시행연도 구간 시작")).toHaveValue(2025);
+    expect(screen.getByRole("button", { name: "템플릿 저장" })).toBeDisabled();
+    expect(screen.queryByText(/처음 저장한 관리자 계정으로 로그인한 뒤 확인/)).not.toBeInTheDocument();
+    expect(requests).toHaveLength(0);
+    unavailable = false;
+    fireEvent.click(screen.getByRole("button", { name: "다시 불러오기" }));
+    await clickSave();
+    await screen.findByText("템플릿을 저장했습니다.");
+    expect(requests[0]).toMatchObject({ action: "create", metadata: { title: "나의 템플릿" }, recipe: { scopes: [{ id: id(2) }, { id: id(3) }] } });
+  });
   it("preserves edits through a conflict and explicitly rebases the saved revision", async () => {
     catalog.templates=[existing()];await openExisting();fireEvent.change(screen.getByLabelText("템플릿 이름"),{target:{value:"보존할 입력"}});postFailure=409;await clickSave();await screen.findByText("자료가 변경되었습니다. 변경 내용을 다시 확인해 주세요.");catalog.templates[0]!.revision=3;catalog.templates[0]!.metadata.title="다른 곳의 수정";
     fireEvent.click(screen.getByRole("button",{name:"최신 자료 다시 확인"}));await screen.findByText("다른 곳의 수정");expect(screen.getByLabelText("템플릿 이름")).toHaveValue("보존할 입력");fireEvent.click(screen.getByRole("button",{name:"현재 입력을 최신 버전에 이어서 검토"}));await clickSave();await screen.findByText("템플릿을 저장했습니다.");expect(requests.map(r=>"expectedRevision" in r?r.expectedRevision:null)).toEqual([2,3]);
