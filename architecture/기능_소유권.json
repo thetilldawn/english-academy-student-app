@@ -1704,6 +1704,10 @@
       "owner": "quiz-player"
     },
     {
+      "path": "src/lib/services/quiz-rpc-compatibility.test.ts",
+      "owner": "quiz-player"
+    },
+    {
       "path": "src/lib/services/quiz/pronunciation-registry.test.ts",
       "owner": "quiz-player"
     },
@@ -1902,8 +1906,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 116,
-      "pathSetSha256": "c9c20e681f077f4862735feebb55f2936836407c9f13c27b7cbdf4becb0dbe80"
+      "fileCount": 118,
+      "pathSetSha256": "73ef9bde2e81305ffa2c1517810e23bd9bf292a8fcd014fa3590632e33ecc643"
     },
     {
       "path": "src/lib/deploy",
@@ -2237,6 +2241,16 @@
   "protectedMigrationCount": 136,
   "protectedMigrationSetSha256": "b4ea57697824cb8fece77250a50950e58bb4e2516235e485106f126a8b00c13f",
   "migrationOwners": [
+    {
+      "path": "supabase/migrations/20260927080438_declare_quiz_feedback_protocol.sql",
+      "owner": "quiz-player",
+      "flow": "student-quiz-attempt"
+    },
+    {
+      "path": "supabase/migrations/20260927080447_add_exact_pronunciation_audio_corrections.sql",
+      "owner": "quiz-player",
+      "flow": "student-quiz-attempt"
+    },
     {
       "path": "supabase/migrations/20260913020000_add_school_handout_reviewed_import.sql",
       "owner": "assignments",
@@ -4598,7 +4612,8 @@
           "supabase/migrations/20260910193008_match_reviewed_pronunciation_source_pos.sql",
           "supabase/migrations/20260908203803_add_entry_source_pronunciation.sql",
           "supabase/migrations/20260908160633_add_source_restored_pronunciation.sql",
-          "supabase/migrations/20260913020000_add_school_handout_reviewed_import.sql"
+          "supabase/migrations/20260913020000_add_school_handout_reviewed_import.sql",
+          "supabase/migrations/20260927080447_add_exact_pronunciation_audio_corrections.sql"
         ],
         "cacheStreaming": [
           "src/app/admin/(protected)/loading.tsx",
@@ -4633,7 +4648,8 @@
           "src/lib/database/review-assignment-final-schema.integration.test.ts",
           "src/lib/services/regular-assignment-scope-contract.test.ts",
           "src/features/history/server/queries/admin-history-query-contract.test.ts",
-          "src/lib/database/entry-approved-pronunciation.integration.test.ts"
+          "src/lib/database/entry-approved-pronunciation.integration.test.ts",
+          "src/lib/database/pronunciation-audio-corrections.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -6249,7 +6265,9 @@
           "supabase/migrations/20260913020000_add_school_handout_reviewed_import.sql",
           "supabase/migrations/20260914140753_add_mock_wordbook_compositions.sql",
           "supabase/migrations/20260914125508_add_reviewed_entry_resource_links.sql",
-          "supabase/migrations/20260914213654_add_reviewed_pronunciation_assets.sql"
+          "supabase/migrations/20260914213654_add_reviewed_pronunciation_assets.sql",
+          "supabase/migrations/20260927080447_add_exact_pronunciation_audio_corrections.sql",
+          "supabase/migrations/20260927080438_declare_quiz_feedback_protocol.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/attempt/[id]/page.tsx"
@@ -6288,7 +6306,10 @@
           "src/lib/database/reviewed-exam-bank.integration.test.ts",
           "src/lib/database/school-handout-reviewed.integration.test.ts",
           "src/lib/database/reviewed-entry-resources.integration.test.ts",
-          "src/lib/database/reviewed-pronunciation-assets.integration.test.ts"
+          "src/lib/database/reviewed-pronunciation-assets.integration.test.ts",
+          "src/lib/database/pronunciation-audio-corrections.integration.test.ts",
+          "src/lib/services/quiz-rpc-compatibility.test.ts",
+          "src/lib/database/quiz-feedback-protocol.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
@@ -6547,7 +6568,8 @@
           "supabase/migrations/20260913020000_add_school_handout_reviewed_import.sql",
           "supabase/migrations/20260914140753_add_mock_wordbook_compositions.sql",
           "supabase/migrations/20260914125508_add_reviewed_entry_resource_links.sql",
-          "supabase/migrations/20260914213654_add_reviewed_pronunciation_assets.sql"
+          "supabase/migrations/20260914213654_add_reviewed_pronunciation_assets.sql",
+          "supabase/migrations/20260927080447_add_exact_pronunciation_audio_corrections.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/assignments/[id]/words/page.tsx",
@@ -6573,7 +6595,8 @@
           "src/lib/database/reviewed-exam-bank.integration.test.ts",
           "src/lib/database/school-handout-reviewed.integration.test.ts",
           "src/lib/database/reviewed-entry-resources.integration.test.ts",
-          "src/lib/database/reviewed-pronunciation-assets.integration.test.ts"
+          "src/lib/database/reviewed-pronunciation-assets.integration.test.ts",
+          "src/lib/database/pronunciation-audio-corrections.integration.test.ts"
         ]
       },
       "requiredImportEdges": [
