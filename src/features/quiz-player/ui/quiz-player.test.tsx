@@ -227,6 +227,69 @@ afterEach(() => {
 });
 
 describe("QuizPlayer", () => {
+  it.each(["initial", "retry"] as const)("waits out unrecovered feedback without adding it to total time in %s", async phase => {
+    const value = attempt();
+    value.phase = phase; value.timingMode = "total"; value.questionTimeLimitSeconds = null;
+    if (phase === "retry") value.questions.forEach(q => { q.initialChoiceIndex = 1; q.initialIsCorrect = false; });
+    mocks.recover.mockImplementation(async () => successfulTransport({
+      attempt: value, timerRemainingMilliseconds: 240_000, transitionRemainingMilliseconds: 6_000,
+    }));
+    await act(async () => { render(<QuizPlayer initialAttempt={value} initialRemainingMilliseconds={240_000} />); });
+    expect(screen.getByTestId("quiz-timer")).toHaveTextContent("--:--");
+    const choice = screen.getByRole("button", { name: /question-1-one/ });
+    expect(choice).toBeDisabled();
+    fireEvent.click(choice);
+    await waitForAnswerSelection(5_999);
+    expect(choice).toBeDisabled();
+    expect(mocks.submit).not.toHaveBeenCalled();
+    await waitForAnswerSelection(1);
+    expect(screen.getByTestId("quiz-timer")).toHaveTextContent("3:54");
+    expect(choice).toBeEnabled();
+  });
+
+  it.each([5, 8, 10])("keeps the full %s-second question budget after a reserved transition", async seconds => {
+    const value = attempt(); value.questionTimeLimitSeconds = seconds;
+    mocks.recover.mockImplementation(async () => successfulTransport({
+      attempt: value, timerRemainingMilliseconds: seconds * 1_000 + 6_000, transitionRemainingMilliseconds: 6_000,
+    }));
+    await act(async () => { render(<QuizPlayer initialAttempt={value} initialRemainingMilliseconds={99_000} />); });
+    await waitForAnswerSelection(6_000);
+    expect(screen.getByTestId("quiz-timer")).toHaveTextContent(seconds === 10 ? "0:10" : "0:0" + seconds);
+    expect(screen.getByRole("button", { name: /question-1-one/ })).toBeEnabled();
+  });
+
+  it("does not deduct the reservation again after the server acknowledged but its response was lost", async () => {
+    const value = attempt(); value.timingMode = "total";
+    mocks.recover.mockImplementation(async () => successfulTransport({
+      attempt: value, timerRemainingMilliseconds: 234_000, transitionRemainingMilliseconds: 0,
+    }));
+    await act(async () => { render(<QuizPlayer initialAttempt={value} initialRemainingMilliseconds={240_000} />); });
+    expect(screen.getByTestId("quiz-timer")).toHaveTextContent("3:54");
+    expect(screen.getByRole("button", { name: /question-1-one/ })).toBeEnabled();
+  });
+
+  it("does not resume or send anything after leaving during recovery waiting", async () => {
+    mocks.recover.mockImplementation(async () => successfulTransport({
+      attempt: attempt(), timerRemainingMilliseconds: 16_000, transitionRemainingMilliseconds: 6_000,
+    }));
+    let view!: ReturnType<typeof render>;
+    await act(async () => { view = render(<QuizPlayer initialAttempt={attempt()} initialRemainingMilliseconds={16_000} />); });
+    await waitForAnswerSelection(1_000);
+    view.unmount();
+    await waitForAnswerSelection(10_000);
+    expect(mocks.submit).not.toHaveBeenCalled(); expect(mocks.expire).not.toHaveBeenCalled();
+    expect(mocks.replace).not.toHaveBeenCalled();
+  });
+
+  it("refuses a recovery reservation outside the server limit", async () => {
+    mocks.recover.mockImplementation(async () => successfulTransport({
+      attempt: attempt(), timerRemainingMilliseconds: 99_000, transitionRemainingMilliseconds: 7_251,
+    }));
+    await act(async () => { render(<QuizPlayer initialAttempt={attempt()} initialRemainingMilliseconds={99_000} />); });
+    await waitForAnswerSelection(10_000);
+    expect(screen.getByRole("button", { name: /question-1-one/ })).toBeDisabled();
+    expect(mocks.submit).not.toHaveBeenCalled();
+  });
   it.each(["initial", "retry"] as const)("sends only the last choice 100ms after the last click in %s", async (phase) => {
     const value = attempt();
     value.phase = phase;

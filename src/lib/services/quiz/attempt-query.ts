@@ -207,6 +207,7 @@ export async function getStudentAttempt(
     startedAt: attemptData.started_at,
     deadlineAt: attemptData.deadline_at,
     timerDeadlineAt,
+    currentQuestionStartsAt: attemptData.current_question_started_at,
     timingMode,
     questionTimeLimitSeconds,
     currentQuestionId,

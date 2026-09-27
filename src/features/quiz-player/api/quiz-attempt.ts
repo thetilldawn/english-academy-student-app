@@ -113,6 +113,7 @@ const answerResponseSchema = z
 const attemptResponseSchema = z.object({
   attempt: attemptSchema,
   timerRemainingMilliseconds: z.number().int().nonnegative(),
+  transitionRemainingMilliseconds: z.number().int().min(0).max(7_250).optional(),
 });
 
 const feedbackResumeResponseSchema = z.object({

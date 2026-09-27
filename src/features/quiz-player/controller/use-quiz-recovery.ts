@@ -43,19 +43,33 @@ export function useQuizRecovery(input: {
       ) {
         return false;
       }
-      inFlightRequestRef.current = null;
       if (
         payload.attempt.status !== "in_progress" ||
         payload.attempt.phase === "review" ||
         payload.attempt.phase === "completed"
       ) {
+        inFlightRequestRef.current = null;
         replace("/student/result/" + attemptId);
         return true;
       }
 
+      const transitionRemaining = payload.transitionRemainingMilliseconds ?? 0;
+      if (!Number.isFinite(transitionRemaining) || transitionRemaining < 0 ||
+          transitionRemaining > 7_250) return false;
+      if (transitionRemaining > 0) {
+        // A failed feedback acknowledgement can leave the server's reservation
+        // outstanding. It is waiting time, not extra time to answer questions.
+        dispatch({ type: "synchronization-started" });
+        const waitMilliseconds = Math.max(0,
+          transitionRemaining - (performance.now() - receivedAt));
+        await new Promise<void>(resolve => window.setTimeout(resolve, waitMilliseconds));
+        if (!mountedRef.current) return true;
+      }
+      inFlightRequestRef.current = null;
       const elapsedAdjustedMilliseconds = Math.max(
         0,
-        payload.timerRemainingMilliseconds - roundTripMilliseconds,
+        payload.timerRemainingMilliseconds - roundTripMilliseconds -
+          (performance.now() - receivedAt),
       );
       const safeRemainingMilliseconds =
         !quizAttemptUsesDeadlineClock(payload.attempt)

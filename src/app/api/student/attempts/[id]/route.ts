@@ -27,12 +27,15 @@ export async function GET(
     return jsonError("시험을 찾지 못했습니다.", 404);
   }
 
+  const now = currentTimeMilliseconds();
   return Response.json({
     attempt,
     timerRemainingMilliseconds:
       millisecondsUntil(
         attempt.timerDeadlineAt,
-        currentTimeMilliseconds(),
+        now,
       ) ?? 0,
+    transitionRemainingMilliseconds:
+      millisecondsUntil(attempt.currentQuestionStartsAt ?? null, now) ?? 0,
   });
 }

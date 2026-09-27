@@ -12,6 +12,15 @@ const parameters = {
 };
 
 describe("quiz RPC deployment compatibility", () => {
+  it("keeps the variable protocol of modern v2 when v4/v3 are missing", async () => {
+    const rpc = vi.fn<QuizRpc>().mockImplementation(async name =>
+      name === "answer_quiz_question_v2"
+        ? { data: { correct: true, feedbackProtocol: "variable" }, error: null }
+        : { data: null, error: { code: "PGRST202", message: name + " missing" } });
+    const result = await answerQuizQuestionWithCompatibleRpc(rpc, parameters);
+    expect(result.feedbackProtocol).toBe("variable");
+    expect(rpc).toHaveBeenCalledTimes(3);
+  });
   it("uses v4 when the current production function is available", async () => {
     const rpc = vi.fn<QuizRpc>().mockResolvedValue({
       data: { correct: true },

@@ -72,6 +72,7 @@ export type QuizFeedbackResumeResponse = {
 export type QuizAttemptResponse = {
   attempt: QuizAttempt;
   timerRemainingMilliseconds: number;
+  transitionRemainingMilliseconds?: number;
 };
 
 export type QuizTransportResult<T> =

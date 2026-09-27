@@ -31,6 +31,7 @@ export type AttemptState = {
   startedAt: string;
   deadlineAt: string;
   timerDeadlineAt: string;
+  currentQuestionStartsAt?: string;
   timingMode: TimingMode;
   questionTimeLimitSeconds: number | null;
   questions: AttemptQuestionState[];

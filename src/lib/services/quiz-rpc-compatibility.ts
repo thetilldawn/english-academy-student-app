@@ -42,7 +42,11 @@ export async function answerQuizQuestionWithCompatibleRpc(
     return { ...previous, feedbackProtocol: "variable" as const };
   }
   const legacy = await rpc("answer_quiz_question_v2", parameters);
-  return { ...legacy, feedbackProtocol: "legacy" as const };
+  // v2 was also upgraded to reserve variable feedback time. Its explicit
+  // marker survives a stale schema cache where v4/v3 cannot yet be called.
+  const variable = legacy.data !== null && typeof legacy.data === "object" &&
+    "feedbackProtocol" in legacy.data && legacy.data.feedbackProtocol === "variable";
+  return { ...legacy, feedbackProtocol: variable ? "variable" as const : "legacy" as const };
 }
 
 export async function startQuizRetryWithCompatibleRpc(
