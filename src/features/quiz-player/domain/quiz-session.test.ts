@@ -245,7 +245,7 @@ describe("quiz session domain", () => {
       ),
     ).toBe("next-question");
     expect(ANSWER_FEEDBACK_DELAY_MS).toBe(750);
-    expect(ANSWER_SELECTION_DELAY_MS).toBe(150);
+    expect(ANSWER_SELECTION_DELAY_MS).toBe(100);
     expect(ANSWER_AUDIO_END_GRACE_MS).toBe(150);
     expect(ANSWER_AUDIO_END_TIMEOUT_MS).toBe(3_000);
     expect(ANSWER_AUDIO_START_TIMEOUT_MS).toBe(1_000);

@@ -170,7 +170,7 @@ function successfulTransport<T>(
   };
 }
 
-async function waitForAnswerSelection(milliseconds = 150) {
+async function waitForAnswerSelection(milliseconds = 100) {
   await act(async () => vi.advanceTimersByTimeAsync(milliseconds));
 }
 
@@ -227,7 +227,7 @@ afterEach(() => {
 });
 
 describe("QuizPlayer", () => {
-  it.each(["initial", "retry"] as const)("sends only the last choice 150ms after the last click in %s", async (phase) => {
+  it.each(["initial", "retry"] as const)("sends only the last choice 100ms after the last click in %s", async (phase) => {
     const value = attempt();
     value.phase = phase;
     if (phase === "retry") value.questions.forEach((item) => {
@@ -239,14 +239,14 @@ describe("QuizPlayer", () => {
     const first = screen.getByRole("button", { name: /question-1-one/ });
     const last = screen.getByRole("button", { name: /question-1-three/ });
     fireEvent.click(first);
-    await waitForAnswerSelection(149);
+    await waitForAnswerSelection(99);
     expect(mocks.submit).not.toHaveBeenCalled();
     fireEvent.click(last);
     expect(first).not.toHaveAttribute("data-feedback", "selected");
     expect(last).toHaveAttribute("data-feedback", "selected");
     expect(last).toBeEnabled();
     expect(screen.queryByText(studentAppText.attempt.correct)).toBeNull();
-    await waitForAnswerSelection(149);
+    await waitForAnswerSelection(99);
     expect(mocks.submit).not.toHaveBeenCalled();
     await waitForAnswerSelection(1);
     expect(mocks.submit).toHaveBeenCalledExactlyOnceWith({
@@ -261,7 +261,7 @@ describe("QuizPlayer", () => {
   it("cancels an unsent selection on unmount", async () => {
     const view = await renderReady();
     fireEvent.click(screen.getByRole("button", { name: /question-1-one/ }));
-    await waitForAnswerSelection(149);
+    await waitForAnswerSelection(99);
     view.unmount();
     await waitForAnswerSelection(1_000);
     expect(mocks.submit).not.toHaveBeenCalled();
@@ -272,9 +272,9 @@ describe("QuizPlayer", () => {
     const value = attempt();
     value.timingMode = timingMode;
     mocks.submit.mockReturnValue(new Promise(() => {}));
-    await renderReady(value, 100);
+    await renderReady(value, 50);
     fireEvent.click(screen.getByRole("button", { name: /question-1-two/ }));
-    await waitForAnswerSelection(101);
+    await waitForAnswerSelection(51);
     const other = screen.getByRole("button", { name: /question-1-three/ });
     expect(other).toBeDisabled();
     fireEvent.click(other);
@@ -557,7 +557,7 @@ describe("QuizPlayer", () => {
     });
     expect(screen.getByTestId("quiz-timer")).toHaveTextContent("0:10");
     expect(mocks.submit).toHaveBeenCalledTimes(1);
-    await waitForAnswerSelection(149);
+    await waitForAnswerSelection(99);
     expect(mocks.submit).toHaveBeenCalledTimes(1);
     await waitForAnswerSelection(1);
     expect(mocks.submit).toHaveBeenCalledTimes(2);
@@ -847,7 +847,7 @@ describe("QuizPlayer", () => {
     );
   });
 
-  it("restarts 150ms for the same choice and locks only after sending", async () => {
+  it("restarts 100ms for the same choice and locks only after sending", async () => {
     let resolveRequest: (value: unknown) => void = () => {};
     mocks.submit.mockReturnValue(
       new Promise((resolve) => {
@@ -863,9 +863,9 @@ describe("QuizPlayer", () => {
       .getByRole("group")
       .firstElementChild!.querySelectorAll("button")[0];
     fireEvent.click(firstChoice);
-    await waitForAnswerSelection(100);
+    await waitForAnswerSelection(50);
     fireEvent.click(firstChoice);
-    await waitForAnswerSelection(149);
+    await waitForAnswerSelection(99);
     expect(mocks.submit).not.toHaveBeenCalled();
     expect(firstChoice).toBeEnabled();
     expect(firstChoice).toHaveAttribute("data-feedback", "selected");
@@ -1592,7 +1592,7 @@ describe("acknowledged feedback audio interruption", () => {
     mocks.submit.mockResolvedValueOnce(nextAudioAnswer());
     await renderReady(interruptibleAttempt("book_meaning_choice"));
     fireEvent.click(firstAnswerButton());
-    await waitForAnswerSelection(100);
+    await waitForAnswerSelection(50);
     fireEvent.click(screen.getByRole("button", { name: /question-1-prompt 발음/ }));
     await waitForAnswerSelection(50);
     expect(mocks.submit).toHaveBeenCalledTimes(1);
@@ -1613,7 +1613,7 @@ describe("acknowledged feedback audio interruption", () => {
     fireEvent.click(feedbackSkipButton());
     await flushImmediateTransition();
     fireEvent.click(screen.getByRole("button", { name: /question-2-one/ }));
-    await waitForAnswerSelection(100);
+    await waitForAnswerSelection(50);
     fireEvent.click(screen.getByRole("button", { name: /question-2-three/ }));
     await waitForAnswerSelection(500);
     expect(mocks.submit).toHaveBeenCalledTimes(1);
