@@ -42,6 +42,52 @@ export type QuizPronunciation = {
   available: boolean;
 };
 
+export type PronunciationAudioCorrection = {
+  headword: string;
+  priorVariantId: string;
+  priorAudioUrl: string;
+  replacementVariantId: string;
+  replacementAudioUrl: string;
+};
+
+export function parsePronunciationAudioCorrection(
+  value: unknown, supabaseUrl: string,
+): PronunciationAudioCorrection | null {
+  if (!value || typeof value !== "object") return null;
+  const row = value as Record<string, unknown>;
+  if (typeof row.headword !== "string" || !row.headword.trim() ||
+      typeof row.prior_variant_id !== "string" ||
+      typeof row.prior_audio_key !== "string" ||
+      typeof row.replacement_variant_id !== "string" ||
+      !/^mw:[a-f0-9]{20}$/.test(row.replacement_variant_id) ||
+      typeof row.replacement_audio_url !== "string" ||
+      !OFFICIAL_AUDIO_URL.test(row.replacement_audio_url) ||
+      !SUPABASE_URL.test(supabaseUrl)) return null;
+  const prefix = "/storage/v1/object/public/vocab-pronunciation-audio/";
+  const key = row.prior_audio_key.startsWith(prefix) ? row.prior_audio_key.slice(prefix.length) : "";
+  const profile = /\/profile-([a-f0-9]{16})\//.exec(key)?.[1];
+  const request = /\/([a-f0-9]{64})\.mp3$/.exec(key)?.[1];
+  if (!profile || !request || row.prior_variant_id !== `synthetic:${request}` ||
+      !isVocabPronunciationStorageKey(`profile:${profile}`, request, key, true)) return null;
+  return { headword: row.headword, priorVariantId: row.prior_variant_id,
+    priorAudioUrl: supabaseUrl + row.prior_audio_key,
+    replacementVariantId: row.replacement_variant_id, replacementAudioUrl: row.replacement_audio_url };
+}
+
+export function withCorrectedPronunciationAudio(
+  selected: QuizPronunciation,
+  headword: string | null | undefined,
+  corrections: readonly PronunciationAudioCorrection[],
+): QuizPronunciation {
+  if (!selected.available || !headword) return selected;
+  const matches = corrections.filter(c =>
+    c.headword.normalize("NFC").trim().toLowerCase() === headword.normalize("NFC").trim().toLowerCase() &&
+    c.priorVariantId === selected.variantId && c.priorAudioUrl === selected.audioUrl);
+  if (matches.length !== 1) return selected;
+  // Preserve school display and historical snapshots; only the audio changes.
+  return { ...selected, variantId: matches[0].replacementVariantId, audioUrl: matches[0].replacementAudioUrl };
+}
+
 export type KoreanPronunciationStress = "none" | "secondary" | "primary";
 
 export type KoreanPronunciationSegment = {

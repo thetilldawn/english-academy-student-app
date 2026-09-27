@@ -3,6 +3,7 @@ import "server-only";
 import type { StudentAttemptResult } from "@/features/results/model";
 import { deriveAttemptQuestionMetrics } from "@/lib/quiz/result-presentation";
 import { normalizeQuizContentMode } from "@/lib/quiz/question-content-mode";
+import { withCorrectedPronunciationAudio } from "@/lib/quiz/pronunciation-snapshot";
 import { getStudentAttemptPointSummary } from "@/lib/services/learning-point-read-service";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import {
@@ -12,6 +13,7 @@ import {
   loadApprovedKoreanPronunciationRegistry,
   loadSyntheticPronunciationRegistry,
   loadVocabPronunciationRegistry,
+  loadPronunciationAudioCorrections,
 } from "./pronunciation-registry";
 import {
   mapResultQuestions,
@@ -76,6 +78,7 @@ export async function getAttemptQuestionResults(
     activeVocaPronunciationRegistry,
     entryApprovedRegistry,
     entrySourceRegistry,
+    audioCorrections,
   ] = await Promise.all([
     loadVocabPronunciationRegistry(registryIds),
     loadSyntheticPronunciationRegistry(syntheticBindings),
@@ -83,6 +86,7 @@ export async function getAttemptQuestionResults(
     loadActiveVocabPronunciationReleaseRegistry(registryIds),
     loadEntryApprovedKoreanPronunciationRegistry(registryIds),
     loadEntrySourcePronunciationRegistry(registryIds),
+    loadPronunciationAudioCorrections(),
   ]);
 
   return mapResultQuestions(
@@ -94,7 +98,12 @@ export async function getAttemptQuestionResults(
     activeVocaPronunciationRegistry,
     entryApprovedRegistry,
     entrySourceRegistry,
-  );
+  ).map((question) => {
+    const originalHeadword = question.direction === "english_to_korean"
+      ? question.prompt : question.correctAnswer;
+    return { ...question, pronunciation:
+      withCorrectedPronunciationAudio(question.pronunciation, originalHeadword, audioCorrections) };
+  });
 }
 
 export async function getAttemptResult(

@@ -11,6 +11,7 @@ import {
   syntheticPronunciationBindingKey,
   unavailablePronunciation,
   withPronunciationDisplay,
+  withCorrectedPronunciationAudio,
 } from "@/lib/quiz/pronunciation-snapshot";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import {
@@ -21,6 +22,7 @@ import {
   loadSyntheticPronunciationRegistry,
   loadVocabPronunciationDisplayRegistry,
   loadVocabPronunciationRegistry,
+  loadPronunciationAudioCorrections,
 } from "./pronunciation-registry";
 import {
   completeChoiceVocabEntryIds,
@@ -152,6 +154,7 @@ export async function getStudentAttempt(
     activeVocaPronunciationRegistry,
     entryApprovedRegistry,
     entrySourceRegistry,
+    audioCorrections,
   ] = await Promise.all([
     loadVocabPronunciationRegistry(registryIds),
     loadSyntheticPronunciationRegistry(syntheticBindings),
@@ -160,6 +163,7 @@ export async function getStudentAttempt(
     loadActiveVocabPronunciationReleaseRegistry(registryIds),
     loadEntryApprovedKoreanPronunciationRegistry(registryIds),
     loadEntrySourcePronunciationRegistry(registryIds),
+    loadPronunciationAudioCorrections(),
   ]);
   const initialCurrent = rows.find(
     (question) => question.initial_choice_index === null,
@@ -316,8 +320,13 @@ export async function getStudentAttempt(
         prompt: question.prompt,
         choices: question.choices,
         // A target-only audio URL would identify the correct English choice.
-        pronunciation: roles.prompt === "headword" || answered ? pronunciation : unavailablePronunciation(),
-        choicePronunciations: roles.choice === "headword" ? choicePronunciations : question.choices.map(() => unavailablePronunciation()),
+        pronunciation: roles.prompt === "headword" || answered
+          ? withCorrectedPronunciationAudio(pronunciation,
+              roles.prompt === "headword" ? question.prompt : question.choices[question.correct_choice_index],
+              audioCorrections) : unavailablePronunciation(),
+        choicePronunciations: roles.choice === "headword"
+          ? choicePronunciations.map((voice, index) => withCorrectedPronunciationAudio(voice, question.choices[index], audioCorrections))
+          : question.choices.map(() => unavailablePronunciation()),
         initialChoiceIndex: question.initial_choice_index,
         initialIsCorrect: question.initial_is_correct,
         retryChoiceIndex: question.retry_choice_index,

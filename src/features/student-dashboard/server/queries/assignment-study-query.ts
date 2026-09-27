@@ -10,6 +10,7 @@ import {
   preferredPronunciationWithActiveVocaRelease,
   syntheticPronunciationBindingKey,
   withPronunciationDisplay,
+  withCorrectedPronunciationAudio,
 } from "@/lib/quiz/pronunciation-snapshot";
 import {
   loadActiveVocabPronunciationReleaseRegistry,
@@ -18,6 +19,7 @@ import {
   loadApprovedKoreanPronunciationRegistry,
   loadSyntheticPronunciationRegistry,
   loadVocabPronunciationRegistry,
+  loadPronunciationAudioCorrections,
 } from "@/lib/services/quiz/pronunciation-registry";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
 import type { AssignmentStudyResult } from "../../contracts/assignment-study";
@@ -88,7 +90,7 @@ export async function getAssignmentStudy(
     ? [{ releaseId: word.releaseId, vocabEntryId: word.entryId }]
     : []);
   const dictionaryIds = legacyRows.flatMap((word) => word.dictionaryId ? [word.dictionaryId] : []);
-  const [registry, active, synthetic, approved, examplePrompts, entryApproved, entrySource] = await Promise.all([
+  const [registry, active, synthetic, approved, examplePrompts, entryApproved, entrySource, audioCorrections] = await Promise.all([
     loadVocabPronunciationRegistry(ids),
     loadActiveVocabPronunciationReleaseRegistry(ids),
     loadSyntheticPronunciationRegistry(bindings),
@@ -96,6 +98,7 @@ export async function getAssignmentStudy(
     mode === "canonical_example_to_headword" ? getStudyExamplePrompts(assignmentId, ids) : Promise.resolve(new Map<number, string[]>()),
     loadEntryApprovedKoreanPronunciationRegistry(ids),
     loadEntrySourcePronunciationRegistry(ids),
+    loadPronunciationAudioCorrections(),
   ]);
   return {
     assignmentId,
@@ -109,7 +112,7 @@ export async function getAssignmentStudy(
       example: mode === "canonical_example_to_headword" ? word.example : null,
       exampleRanges: mode === "canonical_example_to_headword" && word.example
         ? studyExampleRanges(word.example, word.headword, examplePrompts.get(word.entryId) ?? []) : null,
-      pronunciation: word.compositionPronunciation ?? preferredPronunciationWithActiveVocaRelease(
+      pronunciation: withCorrectedPronunciationAudio(word.compositionPronunciation ?? preferredPronunciationWithActiveVocaRelease(
         word.dictionaryId,
         withPronunciationDisplay(parseTargetPronunciation(word.pronunciationSnapshot, word.displayKo), word.displayKo),
         active.get(word.entryId),
@@ -118,7 +121,7 @@ export async function getAssignmentStudy(
         approved,
         entryApproved.get(word.entryId),
         { headword: word.headword, restorations: entrySource.get(word.entryId) },
-      ),
+      ), word.headword, audioCorrections),
     })),
   };
 }

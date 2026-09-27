@@ -12,6 +12,8 @@ import {
   parseRuleDerivedKoreanPronunciation,
   parseSyntheticRegistryPronunciation,
   parseVocabPronunciationIdentityV2,
+  parsePronunciationAudioCorrection,
+  type PronunciationAudioCorrection,
   sortSyntheticAudioBindingsByProfilePriority,
   syntheticAudioProfilePriority,
   syntheticPronunciationBindingKey,
@@ -24,6 +26,25 @@ import {
   type VocabSyntheticAudioAssetRow,
 } from "@/lib/quiz/pronunciation-snapshot";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
+
+export async function loadPronunciationAudioCorrections(): Promise<PronunciationAudioCorrection[]> {
+  try {
+    const { data, error } = await getServiceSupabaseClient().rpc("list_pronunciation_audio_corrections_v1");
+    if (error || !Array.isArray(data) || data.length > 500) throw new Error("audio_corrections_unavailable");
+    const rows = data.map(value => parsePronunciationAudioCorrection(value, process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""));
+    const pairs = new Set<string>();
+    for (const row of rows) {
+      if (!row) throw new Error("audio_corrections_invalid");
+      const key = JSON.stringify([row.priorVariantId, row.priorAudioUrl]);
+      if (pairs.has(key)) throw new Error("audio_corrections_conflict");
+      pairs.add(key);
+    }
+    return rows as PronunciationAudioCorrection[];
+  } catch {
+    console.warn("[quiz-pronunciation] audio correction unavailable");
+    return [];
+  }
+}
 
 export function loadEntrySourcePronunciationRegistry(ids: readonly number[]) {
   return readMappedEntryResources(ids, readEntrySourcePronunciationRegistry, (rows, targetId) => rows.map(row => ({ ...row, entryId: targetId })));

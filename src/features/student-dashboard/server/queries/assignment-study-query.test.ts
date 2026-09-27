@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ rpc: vi.fn(), registry: vi.fn(), active: vi.fn(), synthetic: vi.fn(), approved: vi.fn(), entryApproved: vi.fn(), source: vi.fn(), prompts: vi.fn() }));
+const mocks = vi.hoisted(() => ({ rpc: vi.fn(), registry: vi.fn(), active: vi.fn(), synthetic: vi.fn(), approved: vi.fn(), entryApproved: vi.fn(), source: vi.fn(), prompts: vi.fn(), corrections: vi.fn() }));
 vi.mock("./assignment-study-example-query", () => ({ getStudyExamplePrompts: mocks.prompts }));
 vi.mock("@/lib/supabase/service", () => ({ getServiceSupabaseClient: () => ({ rpc: mocks.rpc }) }));
 vi.mock("@/lib/services/quiz/pronunciation-registry", () => ({
@@ -9,6 +9,7 @@ vi.mock("@/lib/services/quiz/pronunciation-registry", () => ({
   loadApprovedKoreanPronunciationRegistry: mocks.approved,
   loadEntryApprovedKoreanPronunciationRegistry: mocks.entryApproved,
   loadEntrySourcePronunciationRegistry: mocks.source,
+  loadPronunciationAudioCorrections: mocks.corrections,
 }));
 import { getAssignmentStudy } from "./assignment-study-query";
 
@@ -18,11 +19,24 @@ const word = { entryId: 7, headword: "collect", meaning: "모으다", displayKo:
 const raw = (mode = "book_meaning_choice") => ({ assignmentId: id, title: "배정 단어", mode, words: [word] });
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.corrections.mockResolvedValue([]);
   for (const fn of [mocks.registry, mocks.active, mocks.synthetic, mocks.approved, mocks.entryApproved, mocks.source]) fn.mockResolvedValue(new Map());
   mocks.rpc.mockResolvedValue({ data: raw(), error: null });
   mocks.prompts.mockResolvedValue(new Map([[7, ["She _____ the letters."]]]));
 });
 describe("배정 단어장 서버 조회", () => {
+  it("applies an exact audio correction to a frozen voice without replacing its school display", async () => {
+    const voice = { available: true, displayKo: "학교 표기", variantId: "synthetic:" + "a".repeat(64),
+      audioUrl: "https://wojxpruvbjzbhrpmsbuy.supabase.co/storage/v1/object/public/vocab-pronunciation-audio/old.mp3" };
+    const target = "https://media.merriam-webster.com/audio/prons/en/us/mp3/c/collec01.mp3";
+    mocks.corrections.mockResolvedValue([{ headword: "collect", priorVariantId: voice.variantId,
+      priorAudioUrl: voice.audioUrl, replacementVariantId: "mw:" + "b".repeat(20), replacementAudioUrl: target }]);
+    mocks.rpc.mockResolvedValue({ data: { ...raw(), words: [{ ...word, compositionPronunciation: voice }] }, error: null });
+    const result = await getAssignmentStudy(student, id);
+    expect(result?.words?.[0].pronunciation).toMatchObject({ audioUrl: target, displayKo: "학교 표기" });
+    expect(voice.audioUrl).not.toBe(target);
+    expect(JSON.stringify(result)).not.toMatch(/priorVariant|priorAudio|correct_choice/);
+  });
   it("preserves frozen pronunciation and source meaning while requesting current registries only for legacy rows", async () => {
     const frozen = { displayKo: "저장 발음", variantId: "fixed", audioUrl: null, available: false };
     const fixedWord = { ...word, entryId: 8, headword: "fixed", meaning: "저장 뜻", compositionPronunciation: frozen };

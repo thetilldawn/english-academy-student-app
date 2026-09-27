@@ -4,7 +4,7 @@ vi.mock("@/lib/supabase/service", () => ({ getServiceSupabaseClient: () => ({
   from: mocks.from,
   rpc: (name: string, args: unknown) => name === "list_mock_composition_lineage_v1" ? mocks.lineage(args) : mocks.rpc(name, args),
 }) }));
-import { loadEntryApprovedKoreanPronunciationRegistry, loadApprovedKoreanPronunciationRegistry, loadEntrySourcePronunciationRegistry } from "./pronunciation-registry";
+import { loadEntryApprovedKoreanPronunciationRegistry, loadApprovedKoreanPronunciationRegistry, loadEntrySourcePronunciationRegistry, loadPronunciationAudioCorrections } from "./pronunciation-registry";
 import { getStudentAttempt } from "./attempt-query";
 import { getAttemptQuestionResults } from "./attempt-result-query";
 
@@ -44,6 +44,94 @@ beforeEach(() => {
 });
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); });
 
+function audioCorrectionFixture(request = "a".repeat(64)) {
+  const key = "pronunciation/google_cloud_text_to_speech/profile-1a77d56d47e26013/" + request + ".mp3";
+  const correction = { headword: "sample", prior_variant_id: "synthetic:" + request,
+    prior_audio_key: "/storage/v1/object/public/vocab-pronunciation-audio/" + key,
+    replacement_variant_id: variant, replacement_audio_url: url };
+  const identity = { ...row().identity, pronunciation_variant_id: correction.prior_variant_id,
+    audio_provider: "google_cloud_text_to_speech", official_audio_url: null, sound_audio: null,
+    storage_bucket: "vocab-pronunciation-audio", storage_object_key: key, audio_sha256: "d".repeat(64),
+    byte_count: 1000, profile_id: "profile:1a77d56d47e26013", request_sha256: request,
+    model: "chirp3-hd", voice: "en-US-Chirp3-HD-Despina" };
+  const oldVoice = { available: true, displayKo: "자동", segments: [{ text: "자동", stress: "primary" }],
+    variantId: correction.prior_variant_id, audioUrl: "https://wojxpruvbjzbhrpmsbuy.supabase.co" + correction.prior_audio_key };
+  return { correction, identity, oldVoice };
+}
+
+describe("audio corrections at final read boundaries", () => {
+  for (const frozen of [false, true]) {
+    for (const direction of ["english_to_korean", "korean_to_english"] as const) {
+      it.each(["a", "c"])(`${frozen ? "frozen" : "live"} ${direction} corrects source %s without leaking the answer`, async source => {
+        const { correction, identity, oldVoice } = audioCorrectionFixture(source.repeat(64));
+        const empty = { available: false, displayKo: null, variantId: null, audioUrl: null };
+        const assignmentQuestion = { vocab_entry_id: 7, choice_vocab_entry_ids: [7, 8, 9, 10],
+          headword_snapshot: "sample", primary_meaning_snapshot: "가짜",
+          provenance_status: frozen ? "composition_verified_v1" : "exam_reviewed_v1",
+          ...(frozen ? { composition_pronunciation_snapshot: { target: oldVoice, choices: [oldVoice, empty, empty, empty] } } : {}) };
+        const question = { id: "question", vocab_entry_id: 7, order_index: 1, direction,
+          prompt: direction === "english_to_korean" ? "sample" : "가짜 정의",
+          choices: direction === "english_to_korean" ? ["가짜", "다른", "그 밖", "마지막"] : ["sample", "other", "another", "last"],
+          correct_choice_index: 0, initial_choice_index: null as number | null, initial_is_correct: null as boolean | null,
+          retry_choice_index: null, retry_is_correct: null, prior_wrong_count: 0,
+          assignment_question: assignmentQuestion, vocab_entries: { headword: "sample", primary_meaning: "가짜", pronunciation_ko: "자동" } };
+        tables.quiz_attempts = { id: "attempt", assignment_id: "assignment", status: "in_progress", phase: "initial", started_at: "2026-01-01T00:00:00Z", deadline_at: null };
+        tables.assignments = { title: "Fake", timing_mode: "none", quiz_content_mode: direction === "english_to_korean" ? "canonical_headword_to_definition" : "canonical_definition_to_headword" };
+        tables.quiz_questions = [question];
+        tables.vocab_pronunciation_identities_v2 = [identity];
+        let failCorrection = false;
+        mocks.rpc.mockImplementation(async (name: string) => {
+          if (name === "list_pronunciation_audio_corrections_v1") {
+            if (failCorrection) throw new Error("private token");
+            return { data: [correction], error: null };
+          }
+          return { data: name === "list_active_vocab_pronunciation_bindings_v3"
+            ? [{ release_id: "active", vocab_entry_id: 7, identity_id: identity.identity_id }] : [], error: null };
+        });
+        const before = JSON.stringify(question);
+        const changed = { ...oldVoice, variantId: variant, audioUrl: url };
+        const quiz = (await getStudentAttempt("fake-student", "attempt"))!.questions[0];
+        expect(quiz.pronunciation).toEqual(direction === "english_to_korean" ? changed : empty);
+        expect(quiz.revealedCorrectChoiceIndex).toBeNull();
+        if (direction === "korean_to_english") expect(quiz.choicePronunciations[0]).toEqual(changed);
+        else expect(quiz.choicePronunciations.every(p => !p.available && !p.audioUrl)).toBe(true);
+        expect((await getAttemptQuestionResults("attempt"))[0].pronunciation).toEqual(changed);
+        expect(JSON.stringify(quiz)).not.toMatch(/identity_id|prior_variant|sha256|approval_reason|correct_choice_index/);
+        expect(JSON.stringify(question)).toBe(before);
+
+        // The historical English text, not today's vocabulary label, is authoritative.
+        if (direction === "english_to_korean") question.prompt = "pastword";
+        else question.choices[0] = "pastword";
+        expect((await getAttemptQuestionResults("attempt"))[0].pronunciation).toEqual(oldVoice);
+        const historical = (await getStudentAttempt("fake-student", "attempt"))!.questions[0];
+        expect(direction === "english_to_korean" ? historical.pronunciation : historical.choicePronunciations[0]).toEqual(oldVoice);
+
+        if (direction === "english_to_korean") question.prompt = "sample";
+        else question.choices[0] = "sample";
+        question.initial_choice_index = 0; question.initial_is_correct = true;
+        tables.quiz_questions = [question, { ...question, id: "next", order_index: 2, initial_choice_index: null, initial_is_correct: null }];
+        expect((await getStudentAttempt("fake-student", "attempt"))!.questions[0].pronunciation).toEqual(changed);
+        failCorrection = true;
+        expect((await getAttemptQuestionResults("attempt"))[0].pronunciation).toEqual(oldVoice);
+        expect((await getStudentAttempt("fake-student", "attempt"))!.questions[0].pronunciation).toEqual(oldVoice);
+        expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain("private token");
+      });
+    }
+  }
+  it("loader rejects partial, duplicate, excessive or malformed corrections and preserves known audio", async () => {
+    const { correction } = audioCorrectionFixture();
+    mocks.rpc.mockResolvedValueOnce({ data: [correction], error: null });
+    expect(await loadPronunciationAudioCorrections()).toHaveLength(1);
+    for (const data of [null, [correction, correction], [correction, { ...correction, replacement_audio_url: "https://evil.test/a.mp3" }], Array(501).fill(correction)]) {
+      mocks.rpc.mockResolvedValueOnce({ data, error: null });
+      expect(await loadPronunciationAudioCorrections()).toEqual([]);
+    }
+    mocks.rpc.mockResolvedValueOnce({ data: [correction], error: { message: "private SQL" } });
+    expect(await loadPronunciationAudioCorrections()).toEqual([]);
+    expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain("private SQL");
+  });
+});
+
 describe("exact entry pronunciation corrections", () => {
   it.each(["english_to_korean", "korean_to_english"] as const)("composition %s keeps frozen target/choice voices without live dictionary reads or premature answers", async direction => {
     const frozen: { displayKo: string | null; variantId: string | null; audioUrl: string | null; available: boolean } = { displayKo: "저장 발음", variantId: variant, audioUrl: url, available: true };
@@ -61,7 +149,8 @@ describe("exact entry pronunciation corrections", () => {
     expect(quiz.pronunciation).toEqual(direction === "english_to_korean" ? frozen : empty);
     if (direction === "korean_to_english") expect(quiz.choicePronunciations).toEqual([frozen, empty, empty, empty]);
     expect((await getAttemptQuestionResults("attempt"))[0]).toMatchObject({ headword: "savedword", primaryMeaning: "저장 뜻", pronunciation: frozen });
-    expect(mocks.rpc).not.toHaveBeenCalled(); expect(mocks.lineage).not.toHaveBeenCalled();
+    expect(mocks.rpc.mock.calls.every(([name]) => name === "list_pronunciation_audio_corrections_v1")).toBe(true);
+    expect(mocks.lineage).not.toHaveBeenCalled();
     expect(mocks.from.mock.calls.map(([name]) => name)).not.toContain("vocab_pronunciation_identities_v2");
     assignmentQuestion.composition_pronunciation_snapshot.target = empty;
     expect((await getAttemptQuestionResults("attempt"))[0].pronunciation).toEqual(empty);

@@ -20,10 +20,45 @@ import {
   sortSyntheticAudioBindingsByProfilePriority,
   withApprovedKoreanPronunciation,
   unavailablePronunciation,
+  parsePronunciationAudioCorrection,
+  withCorrectedPronunciationAudio,
 } from "@/lib/quiz/pronunciation-snapshot";
 
 const officialUrl =
   "https://media.merriam-webster.com/audio/prons/en/us/mp3/t/test0001.mp3";
+
+describe("audio-only correction proof", () => {
+  const origin = "https://wojxpruvbjzbhrpmsbuy.supabase.co";
+  const request = "a".repeat(64);
+  const source = { headword: "sample", prior_variant_id: "synthetic:" + request,
+    prior_audio_key: "/storage/v1/object/public/vocab-pronunciation-audio/pronunciation/google_cloud_text_to_speech/profile-1a77d56d47e26013/" + request + ".mp3",
+    replacement_variant_id: "mw:" + "b".repeat(20), replacement_audio_url: officialUrl };
+  const selected = { available: true, displayKo: "그대로", segments: [{ text: "그대로", stress: "primary" as const }],
+    variantId: source.prior_variant_id, audioUrl: origin + source.prior_audio_key };
+  it("changes only the exact old voice's audio and variant without mutating the snapshot", () => {
+    const correction = parsePronunciationAudioCorrection(source, origin)!;
+    const before = structuredClone(selected);
+    const fixed = withCorrectedPronunciationAudio(selected, "Sample", [correction]);
+    expect(fixed).toEqual({ ...selected, audioUrl: officialUrl, variantId: source.replacement_variant_id });
+    expect(selected).toEqual(before); expect(fixed.segments).toBe(selected.segments);
+  });
+  it("keeps unavailable, mismatched word, variant, origin and duplicate approvals unchanged", () => {
+    const c = parsePronunciationAudioCorrection(source, origin)!;
+    for (const [p, word, corrections] of [
+      [{ ...selected, available: false }, "sample", [c]], [selected, "different", [c]],
+      [{ ...selected, variantId: "other" }, "sample", [c]],
+      [{ ...selected, audioUrl: selected.audioUrl + "?different" }, "sample", [c]],
+      [selected, "sample", [c, c]],
+    ] as const) expect(withCorrectedPronunciationAudio(p, word, corrections)).toBe(p);
+  });
+  it("refuses untrusted audio locations and broken exact identities", () => {
+    expect(parsePronunciationAudioCorrection(source, "https://evil.test")).toBeNull();
+    for (const changed of [{ replacement_audio_url: "https://evil.test/test.mp3" },
+      { prior_variant_id: "synthetic:" + "c".repeat(64) }, { prior_audio_key: source.prior_audio_key + "?x=1" },
+      { replacement_variant_id: "mw:bad" }])
+      expect(parsePronunciationAudioCorrection({ ...source, ...changed }, origin)).toBeNull();
+  });
+});
 
 describe("source-restored proof boundary", () => {
   it.each(["source-restored:APP-TEST/sha-1", "user-directed:TEST"])("accepts only known exact-entry types: %s", (value) => {
