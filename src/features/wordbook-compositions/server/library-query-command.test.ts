@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ rpc: vi.fn(), requireAdmin: vi.fn(), getAdminContext: vi.fn() }));
-vi.mock("@/lib/auth/admin", () => ({ requireAdmin: mocks.requireAdmin, getAdminContext: mocks.getAdminContext }));
+const mocks = vi.hoisted(() => ({ rpc: vi.fn(), requireAdmin: vi.fn(), getAdminContextOrThrow: vi.fn() }));
+vi.mock("@/lib/auth/admin", () => ({ requireAdmin: mocks.requireAdmin, getAdminContextOrThrow: mocks.getAdminContextOrThrow }));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: async () => ({ rpc: mocks.rpc }) }));
 import { EMPTY_LIBRARY_FILTERS } from "../contracts/library";
 import { queryLibrary } from "./queries/library-query";
@@ -19,13 +19,23 @@ const template = { id:id(2),revision:1,metadata,latestVersion:version };
 const create = { action:"create" as const,requestId:id(1),metadata,recipe,criteria,previewHash:hash };
 const csat = { kind:"csat",sourceGrade:"g12",exam:{executionYear:2025,examMonth:11,examKind:"csat",academicYear:2026,agency:"가짜",typeCode:"long_reading",typeLabel:"장문독해",questionNumbers:[41,42],sharedPassage:true},lesson:null,day:null,publisher:null,school:null,targetGrade:null,schoolYear:null,semester:null,assessment:null,purpose:null };
 const request = (value: unknown, actor: string | null = viewerId) => new Request("http://localhost/api/admin/wordbook-library",{method:"POST",headers:actor?{"X-Wordbook-Viewer":actor}:{},body:JSON.stringify(value)});
-beforeEach(()=>{vi.resetAllMocks();mocks.requireAdmin.mockResolvedValue({userId:viewerId});mocks.getAdminContext.mockResolvedValue({userId:viewerId});});
+beforeEach(()=>{vi.resetAllMocks();mocks.requireAdmin.mockResolvedValue({userId:viewerId});mocks.getAdminContextOrThrow.mockResolvedValue({userId:viewerId});});
 afterEach(()=>vi.unstubAllGlobals());
 describe("paged library server contracts",()=>{
+  it.each(["UPSTREAM_TIMEOUT", "AUTH_UPSTREAM_UNAVAILABLE"])("keeps %s recoverable before any database operation", async (code) => {
+    mocks.getAdminContextOrThrow.mockRejectedValue(Object.assign(new Error("private-auth-upstream"), { code }));
+    for (const response of [await queryRoute(request({ kind: "templates", search: "" })), await commandRoute(request(create))]) {
+      expect(response.status).toBe(503);
+      expect(response.headers.get("cache-control")).toBe("private, no-store");
+      expect(response.headers.has("X-Wordbook-Progress")).toBe(false);
+      expect(await response.text()).not.toContain("private-auth-upstream");
+    }
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
   it("checks authentication and continuation identity before either database boundary",async()=>{
-    mocks.getAdminContext.mockResolvedValue(null);
+    mocks.getAdminContextOrThrow.mockResolvedValue(null);
     for(const route of [queryRoute,commandRoute]) expect((await route(request({}))).status).toBe(401);
-    mocks.getAdminContext.mockResolvedValue({userId:viewerId});
+    mocks.getAdminContextOrThrow.mockResolvedValue({userId:viewerId});
     for(const route of [queryRoute,commandRoute]) expect((await route(request({},id(98)))).status).toBe(403);
     expect((await commandRoute(request(create,null))).status).toBe(403);expect(mocks.rpc).not.toHaveBeenCalled();
   });

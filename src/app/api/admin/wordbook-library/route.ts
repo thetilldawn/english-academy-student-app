@@ -1,23 +1,25 @@
-import { getAdminContext } from "@/lib/auth/admin";
+import { getAdminContextOrThrow } from "@/lib/auth/admin";
 import { privateJsonError } from "@/lib/http";
 import { getLibraryCatalog, LibraryCatalogError, saveLibraryTemplate, materializeLibraryComposition, LibraryCommandError, libraryJsonResponse } from "@/features/wordbook-compositions/public-server";
 
 export const maxDuration = 300;
 
 export async function GET() {
-  const admin = await getAdminContext();
-  if (!admin) return privateJsonError("관리자 로그인이 필요합니다.", 401);
-  try { return libraryJsonResponse(await getLibraryCatalog(admin)); }
+  try {
+    const admin = await getAdminContextOrThrow();
+    if (!admin) return privateJsonError("관리자 로그인이 필요합니다.", 401);
+    return libraryJsonResponse(await getLibraryCatalog(admin));
+  }
   catch (error) { return privateJsonError("자료를 불러오지 못했습니다. 다시 시도해 주세요.", error instanceof LibraryCatalogError ? error.status : 503); }
 }
 
 export async function POST(request: Request) {
-  const admin = await getAdminContext();
-  if (!admin) return privateJsonError("관리자 로그인이 필요합니다.", 401);
-  const expectedViewer = request.headers.get("X-Wordbook-Viewer");
-  if (expectedViewer !== null && expectedViewer !== admin.userId) return privateJsonError("관리자 로그인이 필요합니다.", 403);
-  const input: unknown = await request.json().catch(() => null);
   try {
+    const admin = await getAdminContextOrThrow();
+    if (!admin) return privateJsonError("관리자 로그인이 필요합니다.", 401);
+    const expectedViewer = request.headers.get("X-Wordbook-Viewer");
+    if (expectedViewer !== null && expectedViewer !== admin.userId) return privateJsonError("관리자 로그인이 필요합니다.", 403);
+    const input: unknown = await request.json().catch(() => null);
     const materialize = input && typeof input === "object" && "action" in input && input.action === "materialize";
     return libraryJsonResponse(await (materialize ? materializeLibraryComposition(input, admin) : saveLibraryTemplate(input, admin)));
   }

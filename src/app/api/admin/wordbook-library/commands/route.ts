@@ -1,14 +1,14 @@
-import { getAdminContext } from "@/lib/auth/admin";
+import { getAdminContextOrThrow } from "@/lib/auth/admin";
 import { privateJsonError } from "@/lib/http";
 import { saveLibraryTemplateV2, materializeLibraryComposition, LibraryCommandError, libraryJsonResponse } from "@/features/wordbook-compositions/public-server";
 
 export const maxDuration = 300;
 export async function POST(request: Request) {
-  const admin = await getAdminContext();
-  if (!admin) return privateJsonError("관리자 로그인이 필요합니다.", 401);
-  if (request.headers.get("X-Wordbook-Viewer") !== admin.userId) return privateJsonError("관리자 로그인이 필요합니다.", 403);
-  const input: unknown = await request.json().catch(() => null);
   try {
+    const admin = await getAdminContextOrThrow();
+    if (!admin) return privateJsonError("관리자 로그인이 필요합니다.", 401);
+    if (request.headers.get("X-Wordbook-Viewer") !== admin.userId) return privateJsonError("관리자 로그인이 필요합니다.", 403);
+    const input: unknown = await request.json().catch(() => null);
     const materialize = input && typeof input === "object" && "action" in input && input.action === "materialize";
     return libraryJsonResponse(await (materialize ? materializeLibraryComposition(input, admin, true) : saveLibraryTemplateV2(input, admin)));
   } catch (error) {

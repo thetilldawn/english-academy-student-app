@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ rpc: vi.fn(), finalize: vi.fn(), plan: vi.fn(), requireAdmin: vi.fn(), getAdminContext: vi.fn() }));
-vi.mock("@/lib/auth/admin", () => ({ requireAdmin: mocks.requireAdmin, getAdminContext: mocks.getAdminContext }));
+const mocks = vi.hoisted(() => ({ rpc: vi.fn(), finalize: vi.fn(), plan: vi.fn(), requireAdmin: vi.fn(), getAdminContextOrThrow: vi.fn() }));
+vi.mock("@/lib/auth/admin", () => ({ requireAdmin: mocks.requireAdmin, getAdminContextOrThrow: mocks.getAdminContextOrThrow }));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: async () => ({ rpc: mocks.rpc }) }));
 vi.mock("@/lib/supabase/service", () => ({ getServiceSupabaseClient: () => ({ rpc: mocks.finalize }) }));
 vi.mock("./use-cases/composition-question-plan", () => ({ planCompositionQuestions: mocks.plan }));
@@ -20,8 +20,20 @@ const template = { id: "00000000-0000-4000-8000-000000000002", revision: 1, meta
   versions: [{ id: "00000000-0000-4000-8000-000000000003", number: 1, contentHash: "a".repeat(64), recipe: request.recipe,
     includedKeys: [], sourceCount: 0, sourceVersionId: null, datasetId: null, createdAt: "2026-09-20T00:00:00Z" }],
 };
-beforeEach(() => { vi.resetAllMocks(); mocks.requireAdmin.mockResolvedValue({ userId: "admin" }); mocks.getAdminContext.mockResolvedValue({ userId: "admin" }); });
+beforeEach(() => { vi.resetAllMocks(); mocks.requireAdmin.mockResolvedValue({ userId: "admin" }); mocks.getAdminContextOrThrow.mockResolvedValue({ userId: "admin" }); });
 describe("library server and API boundaries", () => {
+  it.each(["UPSTREAM_TIMEOUT", "AUTH_UPSTREAM_UNAVAILABLE"])("keeps %s recoverable without reading or writing private data", async (code) => {
+    mocks.getAdminContextOrThrow.mockRejectedValue(Object.assign(new Error("private-auth-upstream"), { code }));
+    for (const response of [await GET(), await POST(new Request("http://localhost", { method: "POST", body: JSON.stringify(request) }))]) {
+      expect(response.status).toBe(503);
+      expect(response.headers.get("cache-control")).toBe("private, no-store");
+      expect(response.headers.has("X-Wordbook-Progress")).toBe(false);
+      expect(await response.text()).not.toContain("private-auth-upstream");
+    }
+    expect(mocks.rpc).not.toHaveBeenCalled();
+    expect(mocks.finalize).not.toHaveBeenCalled();
+    expect(mocks.plan).not.toHaveBeenCalled();
+  });
   it("requires authentication, rejects invalid catalogs, and never converts a failure to an empty success", async () => {
     mocks.rpc.mockResolvedValue({ data: { viewerId: "00000000-0000-4000-8000-000000000099", scopes: [], templates: [] }, error: null });
     expect(await getLibraryCatalog()).toEqual({ viewerId: "00000000-0000-4000-8000-000000000099", scopes: [], templates: [] }); expect(mocks.requireAdmin).toHaveBeenCalledOnce();
@@ -45,14 +57,14 @@ describe("library server and API boundaries", () => {
     expect(await response.text()).not.toContain("secret-source-sql");
   });
   it("does not read or write anything for an unauthenticated request", async () => {
-    mocks.getAdminContext.mockResolvedValue(null);
+    mocks.getAdminContextOrThrow.mockResolvedValue(null);
     for (const r of [await GET(), await POST(new Request("http://localhost", { method: "POST", body: "{}" }))]) {
       expect(r.status).toBe(401); expect(r.headers.get("cache-control")).toBe("private, no-store");
     }
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
   it("rejects a continuation belonging to the previous login before any database operation", async () => {
-    mocks.getAdminContext.mockResolvedValue({ userId: "00000000-0000-4000-8000-000000000098" });
+    mocks.getAdminContextOrThrow.mockResolvedValue({ userId: "00000000-0000-4000-8000-000000000098" });
     const response = await POST(new Request("http://localhost", { method: "POST", headers: { "X-Wordbook-Viewer": "00000000-0000-4000-8000-000000000099" }, body: JSON.stringify(request) }));
     expect(response.status).toBe(403); expect(mocks.rpc).not.toHaveBeenCalled(); expect(mocks.finalize).not.toHaveBeenCalled();
   });

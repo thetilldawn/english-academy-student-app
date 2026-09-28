@@ -1,0 +1,913 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20260928-01",
+  "title": "단어장 인증 조회 오류와 입력 보존",
+  "size": "small",
+  "gate": "verified",
+  "guide": "docs/work-orders/APP-20260928-01.md",
+  "baseline": "dcca16846c077ed7ed939c959a1c88849a95470e",
+  "owners": [
+    "wordbook-compositions"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal"
+  ],
+  "scope": [
+    {
+      "path": "src/app/api/admin/wordbook-library/route.ts",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/app/api/admin/wordbook-library/query/route.ts",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/app/api/admin/wordbook-library/commands/route.ts",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/features/wordbook-compositions/server/library-service.test.ts",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/features/wordbook-compositions/server/library-query-command.test.ts",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    },
+    {
+      "path": "src/features/wordbook-compositions/ui/wordbook-library.test.tsx",
+      "state": "existing",
+      "owner": "wordbook-compositions",
+      "flowIds": [
+        "mock-wordbook-compose"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "engineering",
+      "text": "인증 조회 장애와 실제 인증·권한 거절을 구분한다.",
+      "acceptance": "장애503, 비로그인401, 관리자 불일치403; 인증 실패 뒤 업무 호출0.",
+      "disposition": "required",
+      "owners": [
+        "wordbook-compositions"
+      ],
+      "flowIds": [
+        "mock-wordbook-compose"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "user",
+      "text": "요청한 범위 구성을 정상 저장할 수 있도록 일시 조회 장애 때 편집 내용을 보존한다.",
+      "acceptance": "읽기 실패503 뒤 이름·조건·범위 유지와 재시도 성공. 미확정 저장은 동일 요청만 확인.",
+      "disposition": "required",
+      "owners": [
+        "wordbook-compositions"
+      ],
+      "flowIds": [
+        "mock-wordbook-compose"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "id": "R3",
+      "source": "engineering",
+      "text": "기존 인증 보호·응답 계약·원자료·학생 기록을 유지한다.",
+      "acceptance": "기존 성공/오류/진행 헤더·no-store·실제401/403 차단 유지. DB·배정·응시 변경0.",
+      "disposition": "required",
+      "owners": [
+        "wordbook-compositions"
+      ],
+      "flowIds": [
+        "mock-wordbook-compose"
+      ],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "이미 승인된 업무 범위",
+      "answer": "지정한 시행연도·문제 범위로 템플릿을 만들고 정해진 조건으로 배정한다. 이 기록에는 개인정보와 실제 원고를 넣지 않는다.",
+      "source": "현재 대화 2026-09-28 맞춰서 ㄱㄱ 및 앞선 템플릿 구성·입력 보존 요구"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "인증 장애 처리 방식",
+      "answer": "getAdminContextOrThrow를 기존 API try 안에서 호출한다. 공통 인증 helper와401/403 클라이언트 보호는 유지하며 기존503 안내·복구 재사용.",
+      "source": "현재 코드와 독립 읽기 검토; 새로운 사용자 업무 선택 없음"
+    },
+    {
+      "id": "D3",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "변경 경계",
+      "answer": "운영dcca168 격리본의 단어장3경로와 검사만 수정. 다른 미배포 작업과 분리. DB/자료/학생 기록 변경 없음; 외부 반영 별도 근거.",
+      "source": "현재 코드·작업 인계 확인"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "checked",
+      "reason": "기존 구현과 연결을 확인하고 변경하지 않음"
+    },
+    "ui": {
+      "status": "checked",
+      "reason": "기존 구현과 연결을 확인하고 변경하지 않음"
+    },
+    "state": {
+      "status": "checked",
+      "reason": "기존 구현과 연결을 확인하고 변경하지 않음"
+    },
+    "domain": {
+      "status": "checked",
+      "reason": "기존 구현과 연결을 확인하고 변경하지 않음"
+    },
+    "data": {
+      "status": "checked",
+      "reason": "기존 구현과 연결을 확인하고 변경하지 않음"
+    },
+    "api": {
+      "status": "changed",
+      "reason": "Route Handler에서 인증 조회 장애를503으로 구분"
+    },
+    "cache": {
+      "status": "checked",
+      "reason": "개인 no-store 및 인증 오류 폐기 정책 유지"
+    },
+    "asyncUi": {
+      "status": "changed",
+      "reason": "기존503 복구 흐름으로 입력 유지; 401/403의 차단은 보존"
+    },
+    "security": {
+      "status": "checked",
+      "reason": "검증된 관리자 없이 조회/저장0; 진짜401/403 보호 유지"
+    },
+    "styles": {
+      "status": "checked",
+      "reason": "기존 구현과 연결을 확인하고 변경하지 않음"
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "두 서버 검사와 편집 중 읽기 실패 보존 검사 추가"
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "검증한 관리자만 조회·변경",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "실제401/403 숨김 및 내부 오류 비노출 보존",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "answer-leak": {
+      "status": "not_applicable",
+      "reason": "응답 DTO와 출제/정답 값 변경 없음",
+      "checkIds": []
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "no-store와 실제 인증 거절의 캐시 차단 유지",
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "관리자 인증 조회→검증한 컨텍스트→기존 목록/검색/저장/수정/삭제/생성 흐름. 조회 장애는503에서 종료. 배정·응시·채점·기록 흐름 변경 없음.",
+    "reuse": "기존 getAdminContextOrThrow, privateJsonError, 503 복구와 동일 명령 확인 재사용; 새 추상화 없음.",
+    "cache": "기존 private no-store. 인증 조회 실패를 캐시하지 않고 실제401/403이면 화면 보호 유지. 공유 캐시 추가 없음.",
+    "compatibility": "성공 응답·viewer 헤더·입력 검증·멱등/진행·404/409/422 유지. DB migration 없음.",
+    "rollback": "이번 세 API와 검사 변경만 되돌릴 수 있다. 기존 데이터·학생 기록 변경 없음."
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "템플릿 조회/조건 편집/삭제의 initial-loading",
+      "message": "템플릿을 불러오는 중…",
+      "behavior": "해당 목록/범위의 읽기 대기를 표시하며 미리보기 확인 전 저장을 막는다. 기존 로딩 부품은 변경하지 않는다.",
+      "recovery": "읽기 재시도·조건 첫 페이지·초안 보존·자료 변경 확인·같은 저장 결과 재확인. 인증 거절은 관리자 자료를 숨긴다.",
+      "component": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "템플릿 조회/조건 편집/삭제의 refreshing",
+      "message": "선택한 범위를 확인하는 중…",
+      "behavior": "편집한 조건과 이름을 유지하고 현재 요청의 응답만 적용한다. 늦은 이전 요청은 무시한다.",
+      "recovery": "읽기 재시도·조건 첫 페이지·초안 보존·자료 변경 확인·같은 저장 결과 재확인. 인증 거절은 관리자 자료를 숨긴다.",
+      "component": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "템플릿 조회/조건 편집/삭제의 unselected",
+      "message": "자료 종류와 범위를 선택해 주세요.",
+      "behavior": "필수 자료 종류와 범위를 선택하지 않은 상태에서는 저장을 막고 입력 위치의 안내를 유지한다.",
+      "recovery": "읽기 재시도·조건 첫 페이지·초안 보존·자료 변경 확인·같은 저장 결과 재확인. 인증 거절은 관리자 자료를 숨긴다.",
+      "component": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "템플릿 조회/조건 편집/삭제의 empty",
+      "message": "이 조건에 맞는 템플릿이 없습니다.",
+      "behavior": "정상 완료된 목록은 기존 빈 결과 안내를 사용한다. 미리보기 실패 중 범위 패널의0개 표시 한계는 이번 수정 밖이다.",
+      "recovery": "읽기 재시도·조건 첫 페이지·초안 보존·자료 변경 확인·같은 저장 결과 재확인. 인증 거절은 관리자 자료를 숨긴다.",
+      "component": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "템플릿 조회/조건 편집/삭제의 validation",
+      "message": "이름과 선택한 범위를 확인해 주세요.",
+      "behavior": "입력값과 선택 범위를 보존하고 기존 필드 오류 및 저장 비활성 처리를 유지한다.",
+      "recovery": "읽기 재시도·조건 첫 페이지·초안 보존·자료 변경 확인·같은 저장 결과 재확인. 인증 거절은 관리자 자료를 숨긴다.",
+      "component": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "템플릿 조회/조건 편집/삭제의 load-error",
+      "message": "자료를 불러오지 못했습니다. 다시 시도해 주세요.",
+      "behavior": "인증 조회 장애를503으로 전달하여 이름/조건 입력을 보존하고 저장을 막는다. 실패한 미리보기를 다시 읽어 복구한다. 범위 패널의0개 표시 개선은 포함하지 않는다.",
+      "recovery": "읽기 재시도·조건 첫 페이지·초안 보존·자료 변경 확인·같은 저장 결과 재확인. 인증 거절은 관리자 자료를 숨긴다.",
+      "component": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "템플릿 조회/조건 편집/삭제의 save-error",
+      "message": "저장 결과를 확인하지 못했습니다. 같은 내용으로 다시 확인해 주세요.",
+      "behavior": "미확정 명령의 요청 내용과 식별자를 보존하고 새 명령 대신 같은 요청의 결과를 확인한다.",
+      "recovery": "읽기 재시도·조건 첫 페이지·초안 보존·자료 변경 확인·같은 저장 결과 재확인. 인증 거절은 관리자 자료를 숨긴다.",
+      "component": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "템플릿 조회/조건 편집/삭제의 auth-error",
+      "message": "관리자 로그인이 필요합니다.",
+      "behavior": "실제401/403에는 기존 인증 차단 경로로 개인 내용과 편집 입력을 숨긴다. 일시 인증 조회 장애503과 구별한다.",
+      "recovery": "읽기 재시도·조건 첫 페이지·초안 보존·자료 변경 확인·같은 저장 결과 재확인. 인증 거절은 관리자 자료를 숨긴다.",
+      "component": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "템플릿 조회/조건 편집/삭제의 not-found",
+      "message": "템플릿을 찾을 수 없습니다. 목록을 다시 확인해 주세요.",
+      "behavior": "없는 템플릿404는 기존 목록 확인 안내로 처리하고 잘못된 대상으로 저장하지 않는다.",
+      "recovery": "읽기 재시도·조건 첫 페이지·초안 보존·자료 변경 확인·같은 저장 결과 재확인. 인증 거절은 관리자 자료를 숨긴다.",
+      "component": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "템플릿 조회/조건 편집/삭제의 unexpected-error",
+      "message": "자료를 불러오지 못했습니다. 다시 시도해 주세요. / 저장 결과를 확인하지 못했습니다. 같은 내용으로 다시 확인해 주세요.",
+      "behavior": "조회/저장 API의 알 수 없는 실패는 안전한 기존503 문구로 구분. 렌더 예외 경계는 기존 동작 유지.",
+      "recovery": "조회는 다시 불러오기, 저장은 같은 내용으로 저장 확인. 인증 거절은 기존 로그인 복구 경로.",
+      "component": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+      "checkIds": [
+        "T3"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "개발 기준 v1.1",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "일시 인증 조회 장애와 실제 인증 거절을 구분하고 입력 보존·재시도·기존 권한 보호를 검증한다. 다른 기존 표시 개선은 이번 범위 밖이다."
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "unit",
+      "target": "src/features/wordbook-compositions/server/library-service.test.ts",
+      "scenario": "legacy GET/POST 인증 조회 지연·장애, 실제 비로그인 및 관리자 불일치",
+      "expected": "조회 장애503/no-store/업무 호출0/내부 오류 비노출; 실제401·403 보호와 생성·진행·저장 결과 계약 유지",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "unit",
+      "target": "src/features/wordbook-compositions/server/library-query-command.test.ts",
+      "scenario": "query/commands 인증 조회 지연·장애 및 실제401·403, 기존200/404/409/422",
+      "expected": "지연·장애503, 실제401·403 유지, DB 호출0, no-store, 쉬운 한국어 오류; 입력·멱등 결과 보존",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "component",
+      "target": "src/features/wordbook-compositions/ui/wordbook-library.test.tsx",
+      "scenario": "편집 중 범위 미리보기503 후 이름·조건 유지와 읽기 재시도; 기존 저장 결과 불명확 복구·401/403 숨김·빈 결과·404·취소 회귀",
+      "expected": "편집 입력 보존과 읽기 재시도 성공, 실제 인증 실패의 개인 자료 숨김. 범위 패널의 실패 중 0개 표시는 기존 한계로 별도 기록하며 이번 수정에서 해결했다고 주장하지 않음.",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "cache",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "static",
+      "target": "scripts/check-work-records.mjs",
+      "scenario": "기능 지도·UI/server 구조·설계와 변경 연결·타입·lint·빌드",
+      "expected": "현재 변경6파일의 소유·R/D/T 일치 및 지정 로컬 검사 통과",
+      "topics": [
+        "structure"
+      ]
+    },
+    {
+      "id": "T5",
+      "kind": "review",
+      "target": "docs/work-orders/APP-20260928-01.md",
+      "scenario": "읽기 전용 독립 코드 및 설계 검토",
+      "expected": "진짜401/403 보호를 약화하지 않으며 새 업무 결정·DB 변경 없음. 확보한 운영 로그의 인증 지연→401 사례와 별도503/504 조회 지연의 미해결 범위를 구분한다.",
+      "topics": [
+        "behavior",
+        "authorization",
+        "data-leak",
+        "error-ui",
+        "ui-copy"
+      ]
+    }
+  ],
+  "verification": {
+    "fingerprint": "d5b3848ac42959dc0dcb12023ba96e5cf2b1ae1c786dbdc7acbc83c62e6783fc",
+    "files": [
+      {
+        "path": "architecture/기능_소유권.json",
+        "sha256": "ff4d9f1dac3eb7778bc5aef4df4cc7444e8d024a13d870b8849201270c8406a1"
+      },
+      {
+        "path": "eslint.config.mjs",
+        "sha256": "d8c244c819921bdb70982e51f8bb2c5b5e8a7620a70eca8cde1c89c760113e61"
+      },
+      {
+        "path": "next.config.ts",
+        "sha256": "c779b3730f9dcab3806d1ac9ab52c6363ad1994f6bb33d3bb2ca3b5f946b1405"
+      },
+      {
+        "path": "package-lock.json",
+        "sha256": "3a4e58c471c0c8f2f3139349f4cb06d8f6d9d25df974b45877ed323aef0c769c"
+      },
+      {
+        "path": "package.json",
+        "sha256": "f7779499ba259f680619c3f3c8148747d80d0eaf7b2da1c5cd75198e91bbf7df"
+      },
+      {
+        "path": "scripts/check-work-records.mjs",
+        "sha256": "b8a95754aa77e329ffd748ca91587996be221ea471a117ba816d0c61a0e2881f"
+      },
+      {
+        "path": "scripts/import-reviewed-mock-wordbook.ts",
+        "sha256": "269d1373650ea6df09b2452b956ff347bc11ced34b9d6687649b7d5e5a7ac695"
+      },
+      {
+        "path": "scripts/import-vocabulary-library.ts",
+        "sha256": "51d3db4865b822c8e5b0797a572fd4e561b9aa952be16161c6f051627757b7ef"
+      },
+      {
+        "path": "src/app/api/admin/wordbook-compositions/route.ts",
+        "sha256": "ffd958556792b3a10f942dba3831caf33592ac35e5aee3294a4460eab60712a4"
+      },
+      {
+        "path": "src/app/api/admin/wordbook-library/commands/route.ts",
+        "sha256": "9c0cf005ab413378057018b1b146f3ba3f862f70d91a36314d06dab47a67a259"
+      },
+      {
+        "path": "src/app/api/admin/wordbook-library/query/route.ts",
+        "sha256": "f467195506912deb9d5938ce67142aa7d08793e0dded664bff469275aff81179"
+      },
+      {
+        "path": "src/app/api/admin/wordbook-library/route.ts",
+        "sha256": "e2704a9c606827e647a0f11c0127033bcebae8e4563444806ba597893a2bf329"
+      },
+      {
+        "path": "src/features/assignments/ui/vocab-range-fields.test.tsx",
+        "sha256": "804bb2994a15bcf1c3e47ed9c7dc92276a1773863b0d726bd0e3bc714ee5778d"
+      },
+      {
+        "path": "src/features/assignments/ui/vocab-range-fields.tsx",
+        "sha256": "869e3bff8166a7ef484c671cfdd5fa2a12e5ab9665057d096b1c3488e3c875dd"
+      },
+      {
+        "path": "src/features/wordbook-compositions/client/controllers/use-library-command.ts",
+        "sha256": "254f298c62526ade0a42c1b824f7c9cc905b5a73841a2f28bfd334a7bafc2332"
+      },
+      {
+        "path": "src/features/wordbook-compositions/client/controllers/use-library-page.test.tsx",
+        "sha256": "a853244bc79bc146b8d978d3073e912dcc6a8e08141c0c316610dcd3dfeb1da0"
+      },
+      {
+        "path": "src/features/wordbook-compositions/client/controllers/use-library-page.ts",
+        "sha256": "605a167eaf1b40292b0640619c57588b899e3c3c9dee015b166fcd71a2aac2ef"
+      },
+      {
+        "path": "src/features/wordbook-compositions/client/controllers/use-wordbook-composer.ts",
+        "sha256": "6683574bf63e35dceb9476350d5bd034425eedc03499b8a652644613ecc2c1e5"
+      },
+      {
+        "path": "src/features/wordbook-compositions/client/controllers/use-wordbook-library.ts",
+        "sha256": "0c2f7ca70829b0acba382d6261cbf90466f436ead673e3c67f0ef9a73c665f46"
+      },
+      {
+        "path": "src/features/wordbook-compositions/client/transport/composition-transport.ts",
+        "sha256": "6a1c60aa85230806848098de24e8a1ec34a6b47ab668b2160d66de58b9c39307"
+      },
+      {
+        "path": "src/features/wordbook-compositions/client/transport/library-transport.ts",
+        "sha256": "00cbef020e4818037f6bca8891eef979bbcde30854215dae6bc51e6fa4063a09"
+      },
+      {
+        "path": "src/features/wordbook-compositions/contracts/composition.ts",
+        "sha256": "db9d4ff13bd8b602214c302602939f0efffb42c55f44a66128450237c6315a0b"
+      },
+      {
+        "path": "src/features/wordbook-compositions/contracts/library-command-v2.ts",
+        "sha256": "cab8510ec6b514edefbd3ac4ae2240148b1e2b0648faf3aa711b90fb290e05a3"
+      },
+      {
+        "path": "src/features/wordbook-compositions/contracts/library-import.ts",
+        "sha256": "9cd31886220ebbcf1358724c95075576132c1cb21f2e4322d74ca740c1a178f4"
+      },
+      {
+        "path": "src/features/wordbook-compositions/contracts/library-materialization.ts",
+        "sha256": "144f1da72611d6b9836cebcf56419fccb046e0eb720463f0824c0a24c2d8603f"
+      },
+      {
+        "path": "src/features/wordbook-compositions/contracts/library-query.ts",
+        "sha256": "d8a44aead500855f23794982ffe5588804d6d799b2d61a5e86fb80973e3d0a5d"
+      },
+      {
+        "path": "src/features/wordbook-compositions/contracts/library-resources.ts",
+        "sha256": "bdd52cce8835a10a42dfe173c869383578e14c296149bef729a4ec287a6da12a"
+      },
+      {
+        "path": "src/features/wordbook-compositions/contracts/library.ts",
+        "sha256": "b25dd6d9ce9029d9c8cc6326d7dc75c03e964138bf7e4823bc0327239dd8193a"
+      },
+      {
+        "path": "src/features/wordbook-compositions/domain/composition-targets.test.ts",
+        "sha256": "1f52777ccc275f6fc8362adeee8be5af7b365155213fffe8d347609fe3fbf50e"
+      },
+      {
+        "path": "src/features/wordbook-compositions/domain/library-criteria.ts",
+        "sha256": "02f28fedead993e89b917564b5fcfe9569bbc7733221c4d343f324cdfb12ddd7"
+      },
+      {
+        "path": "src/features/wordbook-compositions/domain/library-editor.test.ts",
+        "sha256": "8c4649d00a42e775c1eae69127b39aea1305685653910ac44ef4b26158cb2b7d"
+      },
+      {
+        "path": "src/features/wordbook-compositions/domain/library-editor.ts",
+        "sha256": "5daec895a985ce6bb0eb6eccf0f2a23b50f830157d9acf4cda9fef2750c565fc"
+      },
+      {
+        "path": "src/features/wordbook-compositions/domain/library-selection.test.ts",
+        "sha256": "6c08b5d46f2e09eb4d336a31d622b943da9a17695b1718dccfc5da59f080b506"
+      },
+      {
+        "path": "src/features/wordbook-compositions/domain/library-selection.ts",
+        "sha256": "a00afd22f88266562070bfdd9863ebeb6952fb72922dfcdc4cab00bf8c7a154f"
+      },
+      {
+        "path": "src/features/wordbook-compositions/domain/scope-selection.test.ts",
+        "sha256": "fd98b2ca6b5b3e65a49480ececc5952c8aa78e1a3d03616a450aaa2aac3b0df0"
+      },
+      {
+        "path": "src/features/wordbook-compositions/domain/scope-selection.ts",
+        "sha256": "f6ba5309b62d212661ff63f236564a10b2e3ab7bd0b009834a8d71a908483a06"
+      },
+      {
+        "path": "src/features/wordbook-compositions/domain/template-version.test.ts",
+        "sha256": "729200ca90574bac4d8f1d56b95da12a0b79583fc7689032efac50ae7006c756"
+      },
+      {
+        "path": "src/features/wordbook-compositions/domain/template-version.ts",
+        "sha256": "f2aa17c8daff005ddc8720345ae967f9a739b6c3cfbf9dd038d742e851b8eeb2"
+      },
+      {
+        "path": "src/features/wordbook-compositions/public-contracts.ts",
+        "sha256": "da8de20d11979f3b7ddf03e7dc39064dcc8499385230c06ddffa728e42078edb"
+      },
+      {
+        "path": "src/features/wordbook-compositions/public-server.ts",
+        "sha256": "39d564238469b0220fdc9d8cb533fd0ee91d82f63255c5ae822af33e614220cc"
+      },
+      {
+        "path": "src/features/wordbook-compositions/public-ui.ts",
+        "sha256": "09ed624912dcea2603fca5fa8ccda98132cfd6aac49130df2325fd40f516d133"
+      },
+      {
+        "path": "src/features/wordbook-compositions/server/commands/create-composition.ts",
+        "sha256": "d14bd969f19cb99fd556702c1383db992703c713af5ebad0a357f16035d39d0b"
+      },
+      {
+        "path": "src/features/wordbook-compositions/server/commands/library-command-v2.ts",
+        "sha256": "a2319781d44ccb61ea19745757ac1452ba93f92b148dd4284edacc5a03fe2bfb"
+      },
+      {
+        "path": "src/features/wordbook-compositions/server/commands/library-command.ts",
+        "sha256": "cafa557492ca4bdc7c26aba9d7a04db3b4ccb395f76cd5091fa0df814a987b49"
+      },
+      {
+        "path": "src/features/wordbook-compositions/server/commands/materialize-composition.ts",
+        "sha256": "eafb3144aa94446cd4f1b61a5cebca6f51b13fc9c9ed6019d6f1bb1fe3e41b94"
+      },
+      {
+        "path": "src/features/wordbook-compositions/server/composition-lineage.test.ts",
+        "sha256": "86fda4a2613dd2e70a6f6d3b8d36a389d08feb5ac37c2b73948b9f6c8a91a316"
+      },
+      {
+        "path": "src/features/wordbook-compositions/server/composition-service.test.ts",
+        "sha256": "4c047b509c927844924156d28d04b4666ac34f1d7621d64d4dd0434230038089"
+      },
+      {
+        "path": "src/features/wordbook-compositions/server/library-error.ts",
+        "sha256": "e9c5fa3e91b77b30f7eac1c48c66196e9b6614521d05d44e77c5427e5cf1d415"
+      },
+      {
+        "path": "src/features/wordbook-compositions/server/library-json-response.ts",
+        "sha256": "71f1a3c439bb714cbd82b43b4357e07d68b83ecbaecb26ed6617554fad00f6bc"
+      },
+      {
+        "path": "src/features/wordbook-compositions/server/library-query-command.test.ts",
+        "sha256": "056bbae751f79dbd86ca8afeed4c5bb2244054ee948a6c2befff97e1bde2b283"
+      },
+      {
+        "path": "src/features/wordbook-compositions/server/library-service.test.ts",
+        "sha256": "655e77918a712161c03194ce68a061e0c0487cd8996b7fd66059a8d5b8a04aa6"
+      },
+      {
+        "path": "src/features/wordbook-compositions/server/queries/composition-catalog.ts",
+        "sha256": "8d4884342c5ccf46e6b6e9333645231ed0d3a7c6c0bca213d7bc99649ebd567a"
+      },
+      {
+        "path": "src/features/wordbook-compositions/server/queries/composition-lineage.ts",
+        "sha256": "0a58479a1d5c3aaa37e8c46b3ebcf2f77b46b139bb59bcddfb7b89707c6724b5"
+      },
+      {
+        "path": "src/features/wordbook-compositions/server/queries/library-catalog.ts",
+        "sha256": "3bfc2a1c4ed1ef7c9470805a1faadf90d58d50c83cd1653e089c314408ffee14"
+      },
+      {
+        "path": "src/features/wordbook-compositions/server/queries/library-query.ts",
+        "sha256": "ca39d4d575e3804ba08a729d9e4bfb0af505ca96c5bc59b377869915a05e5d0d"
+      },
+      {
+        "path": "src/features/wordbook-compositions/server/use-cases/composition-question-plan.ts",
+        "sha256": "fa8f8219bcb6d6d63a819981a5da6a3d9115bbc127ef5a67e06f4e33ba86ffef"
+      },
+      {
+        "path": "src/features/wordbook-compositions/ui/library-editor-fields.tsx",
+        "sha256": "4cf0356547e31cda3a3b6fb90ec4601322053703a8f5622a7ceef86c12350fe6"
+      },
+      {
+        "path": "src/features/wordbook-compositions/ui/library-query-panels.tsx",
+        "sha256": "507dcb343a49aa3a85aecd5be0a7e3c7c53d2e64b2e6b9c33715a1945297a3a2"
+      },
+      {
+        "path": "src/features/wordbook-compositions/ui/library-query.fixture.ts",
+        "sha256": "facb87175051f3785fa4b22bc6defb428953950399b05cc6927fc8d821bd50fd"
+      },
+      {
+        "path": "src/features/wordbook-compositions/ui/library-source-filters.tsx",
+        "sha256": "770ea4057db0c77c80b06a2c92695e4c9517014a964012bc5ab66d9a1ed0b67b"
+      },
+      {
+        "path": "src/features/wordbook-compositions/ui/mock-scope-filters.tsx",
+        "sha256": "61461207f16caa2b498c44604370a7442c198cf7b339e24a1335899aa00ad295"
+      },
+      {
+        "path": "src/features/wordbook-compositions/ui/wordbook-composer.module.css",
+        "sha256": "39485cf36afe3a4d32240e0a2c1bac4c1d6d699ba872928e9b71d75990f51e6f"
+      },
+      {
+        "path": "src/features/wordbook-compositions/ui/wordbook-composer.test.tsx",
+        "sha256": "f8fdaf98cf70759d4050525252221d5f5fd1417bb31b25bdbe2ac276110e1226"
+      },
+      {
+        "path": "src/features/wordbook-compositions/ui/wordbook-composer.tsx",
+        "sha256": "848bfae8b670b3f94d52af65ed2f8c133a804b89a0686b073b407dd8241f3d26"
+      },
+      {
+        "path": "src/features/wordbook-compositions/ui/wordbook-library.module.css",
+        "sha256": "92acc74815125116b59758144d9bbd6bb9cace24de9090abe1729704fc4d93b0"
+      },
+      {
+        "path": "src/features/wordbook-compositions/ui/wordbook-library.test.tsx",
+        "sha256": "a5b5d1e715c33dbabda8b70891ae9865b79319d761cd9d6684268d7a00d3087b"
+      },
+      {
+        "path": "src/features/wordbook-compositions/ui/wordbook-library.tsx",
+        "sha256": "b19e19eadc2b6f4fa381fa43cba4258bf607331e185a0e6815ab3e503815b39e"
+      },
+      {
+        "path": "src/lib/assignment/composition-targets.ts",
+        "sha256": "4bd7249674348a9c96b4c0c147df2bd65f98eb2f75f8353e48ccf7a196f96255"
+      },
+      {
+        "path": "src/lib/database/reviewed-choice-safety.integration.test.ts",
+        "sha256": "90b622b4ed2e804c2a9c2c7362c8ae899f73faf1d338d3854297cdff6ac5810b"
+      },
+      {
+        "path": "src/lib/database/reviewed-csat-wordbook.integration.test.ts",
+        "sha256": "c2e4b007209819250df50a92daebf763ef3eed04b16bf96f48f8424e8e0a7401"
+      },
+      {
+        "path": "src/lib/database/reviewed-mock-wordbook.integration.test.ts",
+        "sha256": "17988ff69808b6dd96e9c6322de9b131916b1ee1d1c97c5642a45c1ffa0fd1ea"
+      },
+      {
+        "path": "src/lib/database/vocabulary-composition-questions.integration.test.ts",
+        "sha256": "087773189443905adab0b55cecd337fa2b4a4cef85aa93cef4d3abd560cec702"
+      },
+      {
+        "path": "src/lib/database/vocabulary-composition-steps.integration.test.ts",
+        "sha256": "ed4e47580f99763c4f13cb67593137628d5575e565b50b749215240bf3d04912"
+      },
+      {
+        "path": "src/lib/database/vocabulary-library-on-demand.integration.test.ts",
+        "sha256": "dbdb8bd5b0a3f52dc87875f71b835a9ca43bd72559138f331b4b824edb759e5c"
+      },
+      {
+        "path": "src/lib/database/vocabulary-library.integration.test.ts",
+        "sha256": "c109e34116a51a0b97dc3181d3084ec29cc64db20930f5e7e4bc747446612b08"
+      },
+      {
+        "path": "src/lib/database/wordbook-compositions.integration.test.ts",
+        "sha256": "d18d4d9bd2a21b439125d69679cdf2e50b1ba6e08fd0f64347561fe5f575de39"
+      },
+      {
+        "path": "src/lib/quiz/choice-policy.ts",
+        "sha256": "1ef10b7d6c5da40385da4ae389afc788d62a8d15d9f7a246ea98908666c47cc4"
+      },
+      {
+        "path": "src/lib/quiz/choice-safety.test.ts",
+        "sha256": "2257809286f3baf076c183c134c8f8816844a26171d41e7c54aee0a2a0b464eb"
+      },
+      {
+        "path": "src/lib/quiz/choice-safety.ts",
+        "sha256": "d3c00cbcbadc855f287b9d98bf0c491ed04f8e87ddd6c556080bbe5dbbd15ffc"
+      },
+      {
+        "path": "src/lib/quiz/question-generator.ts",
+        "sha256": "9de699ab6b73a51d47148799ff7bcced748a9cc45fdeaee9e6ed4119b9594ae7"
+      },
+      {
+        "path": "src/lib/quiz/random.ts",
+        "sha256": "7f0b80a5ca4b1337b2251a6c49d66d17c3eedf5ec96871148a7ae7e9919ff5a3"
+      },
+      {
+        "path": "src/lib/quiz/word-identity.ts",
+        "sha256": "aeddac95854823420e06f2b6c63bf80b5ac2f3b53e6163a4dd0dbac22280da5a"
+      },
+      {
+        "path": "src/lib/vocab/reviewed-mock-import-contract.test.ts",
+        "sha256": "aa3b89a71ba7d0d9bea8e3f8b06d70d7ca54e3b53ba6914567cfc053a726bbad"
+      },
+      {
+        "path": "src/lib/vocab/reviewed-mock-import-contract.ts",
+        "sha256": "63a4c0224d5567fbd9a56517b5998cf932ce52253097f1f503e7c8ea1d59047f"
+      },
+      {
+        "path": "supabase/migrations/20260914140753_add_mock_wordbook_compositions.sql",
+        "sha256": "f51ddcacf6c3cff7573448cf8690abd3d76844a144ecc43b641daacf5e8199fc"
+      },
+      {
+        "path": "supabase/migrations/20260914214202_add_reviewed_mock_wordbook_import.sql",
+        "sha256": "153d8313e4019e81fd8094b76cab59d7316d999198ee22e81cef3e6d6a18fdf2"
+      },
+      {
+        "path": "supabase/migrations/20260914223254_guard_reviewed_mock_source_key_normalization.sql",
+        "sha256": "7851a5aea69003e29b1713155d3017ed333c6b46eea695a63bd33bded1793868"
+      },
+      {
+        "path": "supabase/migrations/20260919212837_add_vocabulary_library_templates.sql",
+        "sha256": "cc725a51f2060900d4332f27adab79f85ca5a24f86864a1917ddddb2771ca061"
+      },
+      {
+        "path": "supabase/migrations/20260919212838_connect_vocabulary_composition_question_snapshots.sql",
+        "sha256": "5265a7de16c6e2218133200a28406cd8dd5e5369f0ab47cf4d8669d8793ea10e"
+      },
+      {
+        "path": "supabase/migrations/20260920054353_vocabulary_library_management_registration.sql",
+        "sha256": "0b79d5df62f25331a47a0b02420267ef008f3281951126dbd1ff2a6d732373c0"
+      },
+      {
+        "path": "supabase/migrations/20260920060402_vocabulary_library_management_transfer.sql",
+        "sha256": "9d98b6236f1efd8d927a8068427ea93b739db8f6065a2819228bbb08f191047d"
+      },
+      {
+        "path": "supabase/migrations/20260920060911_preserve_uncatalogued_legacy_vocabulary.sql",
+        "sha256": "d3fec2620c06753d38bf715d92a5117934e180a55c719b0b84629e450784c847"
+      },
+      {
+        "path": "supabase/migrations/20260920102705_vocabulary_composition_management_verification.sql",
+        "sha256": "2db164eb2373e0b6438f9c0632654e61b4db4a8b9134f4498d37900a9ccff8ed"
+      },
+      {
+        "path": "supabase/migrations/20260920104109_compact_vocabulary_composition_references.sql",
+        "sha256": "5c4fe10880622165a5d7eca356e771c7b79cc195e0b0fc1c4ba96334b05805fa"
+      },
+      {
+        "path": "supabase/migrations/20260920110018_resume_large_vocabulary_compositions.sql",
+        "sha256": "0c0b6703f3053f9bc6d08fae5433de0212c5fa3398f709f9e438fbccc829e5cb"
+      },
+      {
+        "path": "supabase/migrations/20260920112203_optimize_vocabulary_composition_checks.sql",
+        "sha256": "161861d54c85e23c5705f905bbcf847e829cec89f17702fc4bdd762393dffe9c"
+      },
+      {
+        "path": "supabase/migrations/20260920113756_bound_vocabulary_composition_join_work.sql",
+        "sha256": "af30d4c5491524bb4fa693d28483d9a21776d1f3c2901812b88b09656789fc59"
+      },
+      {
+        "path": "supabase/migrations/20260920114825_cache_vocabulary_composition_scope_headers.sql",
+        "sha256": "20847c7238e4b75af199d4a9452d04ad362d85e928a3a8128fb6f5910ec46a95"
+      },
+      {
+        "path": "supabase/migrations/20260920115818_narrow_vocabulary_source_state_arguments.sql",
+        "sha256": "1c15de728f26c5a246fa2c4897f6b1dea7e9dc5bdf4abcd40715d0734611b3ab"
+      },
+      {
+        "path": "supabase/migrations/20260920120200_batch_vocabulary_source_state_checks.sql",
+        "sha256": "76e05bf58750c00c7035b234336acf889cca919c96459db92f95051bd434096d"
+      },
+      {
+        "path": "supabase/migrations/20260920121225_resume_vocabulary_composition_in_bounded_steps.sql",
+        "sha256": "71bda76caf80f536faefcbc085eca88bd17cea4b173d2271d3fa1dda7e300476"
+      },
+      {
+        "path": "supabase/migrations/20260920131206_bound_vocabulary_question_plan_comparisons.sql",
+        "sha256": "09e3212b4ed9c880ba19ed813e911cf423dac4563e5f967539d17f542fd89cb5"
+      },
+      {
+        "path": "supabase/migrations/20260921000000_guard_vocabulary_library_templates.sql",
+        "sha256": "012fc400f5913dc81946f066666f06b76aa3fc5bc4baab440faaca4b51b3cc9e"
+      },
+      {
+        "path": "supabase/migrations/20260921040000_query_vocabulary_library_on_demand.sql",
+        "sha256": "3739ccb63b0fc636a8a4bb27a5b24ea9dbebda9a981b0766b190d86bc4ef119d"
+      },
+      {
+        "path": "supabase/migrations/20260921050000_save_vocabulary_filter_templates.sql",
+        "sha256": "bd86ed6524467617c1f75e70526a2175b96845841f0d8aa09282618b696c0b46"
+      },
+      {
+        "path": "supabase/migrations/20260921060000_add_reviewed_csat_wordbooks.sql",
+        "sha256": "7f4f0457933455a069b50618d7efc6d11393222c55d6323214c9f989055feafb"
+      },
+      {
+        "path": "supabase/migrations/20260921070000_preserve_reviewed_choice_conflicts.sql",
+        "sha256": "1f82c114080511967f02c60bce19866df1aed60bd5f01a5f714b16fe66aef70c"
+      },
+      {
+        "path": "tsconfig.json",
+        "sha256": "5bec101c734eb97d36f3f49b122ad4d37b68d796bfa608760d266c57cd6c50ac"
+      },
+      {
+        "path": "vitest.config.ts",
+        "sha256": "705e16d57f8b528b676a87707bb71dea3ed2d1389303f53ef10902ff4e2726ec"
+      }
+    ],
+    "runs": [
+      {
+        "checkId": "T1",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-27T16:39:53.000Z",
+        "command": "Node24.19.0 vitest targeted7files --maxWorkers=4",
+        "summary": "library-service23검사 통과. 인증지연/장애503, 실제401/403, 인증미확인 뒤업무0, no-store·내부원문비노출·생성진행복구 유지."
+      },
+      {
+        "checkId": "T2",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-27T16:39:53.000Z",
+        "command": "Node24.19.0 vitest targeted7files --maxWorkers=4",
+        "summary": "library-query-command13검사 통과. 인증장애503와 기존성공/권한/입력/충돌·멱등계약 유지."
+      },
+      {
+        "checkId": "T3",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-27T16:39:53.000Z",
+        "command": "Node24.19.0 vitest wordbook-library/use-library-page/admin/assignment-authentication-boundary/cached-assignment-workspace",
+        "summary": "대상7파일80개중 UI/인증/배정경계44개 통과. 미리보기503 후 이름·연도범위 유지/저장차단/재조회/같은입력 저장. 실제401/403보호·취소·미확정저장복구. 문서한계정정 뒤관련검사 재실행. 가짜자료 검사이며 실운영 저장아님."
+      },
+      {
+        "checkId": "T4",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-27T16:36:08.000Z",
+        "command": "tsc --noEmit; eslint 6changedfiles; npm run build -- --webpack; feature-map --verify --changed --base auto; verify-ui-architecture; work-records --phase design --changed; architecture vitest4files; verify-react-request-cache",
+        "summary": "타입/lint·Node24.19/Next16.2.12 TypeScript와40페이지빌드·기능/변경지도·UI구조·65작업설계+변경연결·구조76검사·요청캐시2회 통과. 코드변경은 이 검사 이후0. 초반directory lint 지연은중단후명시6파일검사로통과. 자료/학생/배포쓰기0."
+      },
+      {
+        "checkId": "T5",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-27T16:41:55.718Z",
+        "command": "read-only independent review and main final documentation review",
+        "summary": "독립검토: 실행3파일 새확정결함없음,401/403·viewer·진행/멱등계약보존. 지적받은 상태별0건표시보장9곳과 기준·일반오류문구·로그확인시점을 메인이최종대조·정정. 운영로그에서 인증약5초초과→401사례확보; 별도조회504미해결을명시."
+      }
+    ]
+  }
+}
