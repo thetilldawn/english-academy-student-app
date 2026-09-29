@@ -41,9 +41,13 @@ export function AssignmentQueueTags({
           {vocabAssignmentQueueStatusLabel(queue.status)}
         </MetaTag>
         <span className={styles.summary}>
-          {queue.datasetLabel} · {queue.rangeLabel}
-          {unitAllocation ? ` · ${unitAllocation}` : ""}
-          {` · ${queue.remainingSessionCount}회 · ${queue.remainingQuestionCount}개 남음`}
+          <span className={styles.range}>
+            {queue.datasetLabel} · {queue.rangeLabel}
+          </span>
+          <span>
+            {unitAllocation ? `${unitAllocation} · ` : ""}
+            {`${queue.remainingSessionCount}회 · ${queue.remainingQuestionCount}개 남음`}
+          </span>
         </span>
         {attention ? (
           <span className={styles.attention}>{attention}</span>

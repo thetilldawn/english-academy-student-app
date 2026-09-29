@@ -11,7 +11,8 @@
     "history",
     "database-contract",
     "architecture-meta",
-    "shared-contract"
+    "shared-contract",
+    "assignment-queue"
   ],
   "plannedOwners": [],
   "plannedFlows": [],
@@ -309,6 +310,36 @@
       "owner": "architecture-meta",
       "state": "existing",
       "flowIds": []
+    },
+    {
+      "path": "src/features/assignment-queue/ui/assignment-queue-tags.tsx",
+      "owner": "assignment-queue",
+      "state": "existing",
+      "flowIds": [
+        "weekday-unit-allocation",
+        "student-management-screen",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignment-queue/ui/assignment-queue-tags.module.css",
+      "owner": "assignment-queue",
+      "state": "existing",
+      "flowIds": [
+        "weekday-unit-allocation",
+        "student-management-screen",
+        "assignment-series"
+      ]
+    },
+    {
+      "path": "src/features/assignment-queue/ui/assignment-queue-history.test.tsx",
+      "owner": "assignment-queue",
+      "state": "existing",
+      "flowIds": [
+        "weekday-unit-allocation",
+        "student-management-screen",
+        "assignment-series"
+      ]
     }
   ],
   "requirements": [
@@ -320,15 +351,18 @@
       "disposition": "required",
       "owners": [
         "student-dashboard",
-        "history"
+        "history",
+        "assignment-queue"
       ],
       "flowIds": [
         "student-dashboard-read",
-        "admin-history-read"
+        "admin-history-read",
+        "assignment-series"
       ],
       "checkIds": [
         "T1",
-        "T4"
+        "T4",
+        "T6"
       ]
     },
     {
@@ -676,10 +710,21 @@
         "structure",
         "behavior"
       ]
+    },
+    {
+      "id": "T6",
+      "kind": "component",
+      "target": "src/features/assignment-queue/ui/assignment-queue-history.test.tsx",
+      "scenario": "관리자 배정된 시험 머리의 긴 범위와 남은 횟수 분리",
+      "expected": "범위만 두 줄, 횟수 유지, 기존 전체 접근 이름과 펼침 보존",
+      "topics": [
+        "behavior",
+        "ui-copy"
+      ]
     }
   ],
   "verification": {
-    "fingerprint": "83aa922d6d42b68a0b726c1e6198d6797399f35a91d5c94ef13b2d70f09eea63",
+    "fingerprint": "7d9ed9c95c8df6fef55672bb4917350ea7973d700d39b17dbca03c7d5781dbdd",
     "files": [
       {
         "path": "architecture/기능_소유권.json",
@@ -739,7 +784,7 @@
       },
       {
         "path": "scripts/local-dashboard-logout-fixture.mjs",
-        "sha256": "feeee131e0b61d0e3eb3f2a5b3c9395074fced81fdc42c15d2156e4919015905"
+        "sha256": "7450dd48da5d244ec28fab98c915885e0c19feaade06ff5eda20372ade39da28"
       },
       {
         "path": "scripts/verify-ui-architecture.mjs",
@@ -1279,7 +1324,7 @@
       },
       {
         "path": "src/features/assignment-queue/ui/assignment-queue-history.test.tsx",
-        "sha256": "bf5690a99be4c81f3ac6d5abbf94a8fc14a90989afb8373759dedecf845eae59"
+        "sha256": "134f9780506634ab88ce66b076763abd684724c1ffe5b2b04212ccf3d4a17c3c"
       },
       {
         "path": "src/features/assignment-queue/ui/assignment-queue-history.tsx",
@@ -1287,11 +1332,11 @@
       },
       {
         "path": "src/features/assignment-queue/ui/assignment-queue-tags.module.css",
-        "sha256": "d5e0684c243682441cf483c67db2c230c6924b2e877ae26674bd3aef0b9af95d"
+        "sha256": "4cd6bfffc72d81ea6bba6d9da81ac192fae5b3d0a342e36be4ba186cdf293110"
       },
       {
         "path": "src/features/assignment-queue/ui/assignment-queue-tags.tsx",
-        "sha256": "f1d1a12cbf38a3a36a6a411141c448429d08e4d54a1b6b450d1a6e9bc2ab552d"
+        "sha256": "0901a1525e0c012510af7db37400a996b7d81f7c61cbcc7e82dc6323e0fdf6d1"
       },
       {
         "path": "src/features/assignment-queue/ui/student-assignment-queue-history.module.css",
@@ -4865,7 +4910,15 @@
         "environment": "local",
         "ranAt": "2026-09-29T11:50:54.922Z",
         "command": "tsc; eslint .; map verify; UI architecture; next build --webpack; independent review",
-        "summary": "타입·전체 lint·기능 지도·화면 구조·설계 연결 및 Webpack41/41 통과. 전체4142통과·1시간초과·1기존건너뜀 후 해당22검사 단독 전부통과. 검사 삭제/제한 완화 없음."
+        "summary": "타입·전체 lint·기능 지도·화면 구조·설계 연결 및 Webpack41/41 통과. 전체 재실행531파일/4143검사 통과·기존 건너뜀1. 마지막 배정 머리 표시 보완 후 타입·관련lint·지도 재통과."
+      },
+      {
+        "checkId": "T6",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-29T12:14:56.393Z",
+        "command": "Vitest assignment-queue-history; 독립 queue 검사; CUA 가짜 PC/390px 너비",
+        "summary": "관련2파일14검사, 범위만 두 줄·남은 횟수 유지·전체 접근 이름·펼침 보존. 실제 로컬 브라우저 PC와390px 너비 확인."
       }
     ]
   }

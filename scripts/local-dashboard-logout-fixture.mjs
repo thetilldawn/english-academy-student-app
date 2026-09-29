@@ -10,6 +10,7 @@ const fixture=`
 import React,{useState} from "react";
 import {createRoot} from "react-dom/client";
 import {StudentDashboard} from "@/features/student-dashboard/ui/student-dashboard";
+import {AssignmentQueueTags} from "@/features/assignment-queue/ui/assignment-queue-tags";
 import {SessionLogoutBoundary} from "@/features/session/public-client";
 import {StudentLogoutButton} from "@/components/student-logout-button";
 import {AdminLogoutButton} from "@/components/admin-logout-button";
@@ -53,6 +54,7 @@ function Fixture(){
  <button onClick={()=>setWidth("390px")}>모바일 폭</button><button onClick={()=>setWidth("100%")}>PC 폭</button>
  <button onClick={()=>mode="slow"}>느린 종료</button><button onClick={()=>mode="fail"}>종료 실패</button><button onClick={()=>mode="success"}>정상 종료</button>
  <SessionLogoutBoundary role={role}><header style={{padding:20}}>가짜 학생 · 개인 점수 {role==="admin"?<AdminLogoutButton/>:<StudentLogoutButton/>}</header>
+ {role==="admin"?<section style={{padding:20}}><h2>배정된 시험 머리</h2><div style={{display:"flex",width:"100%"}}><AssignmentQueueTags compact queue={{status:"completed",attentionReason:null,unitAllocation:null,datasetLabel:"고3 모의고사",rangeLabel:scope,remainingSessionCount:2,remainingQuestionCount:40}}/><span>▾</span></div></section>:null}
  <StudentDashboard snapshot={snapshot}/></SessionLogoutBoundary></div>;
 }
 createRoot(document.getElementById("root")).render(<Fixture/>);

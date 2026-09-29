@@ -77,6 +77,19 @@ function queue(
 }
 
 describe("AssignmentQueueHistory", () => {
+  it("긴 범위는 별도 요약에 두고 남은 횟수와 전체 접근 이름은 보존한다", () => {
+    const item = queue("completed", "00000000-0000-4000-8000-000000000032");
+    item.rangeLabel = Array.from({ length: 40 }, (_, index) => `2024년 모의고사 ${index + 20}번`).join(" · ");
+    render(<AssignmentQueueHistory queues={[item]} />);
+    const heading = screen.getByRole("button", { name: /완료/ });
+    expect(heading).toHaveAccessibleName(expect.stringContaining(item.rangeLabel));
+    const range = screen.getByText(`${item.datasetLabel} · ${item.rangeLabel}`);
+    const count = screen.getByText("0회 · 0개 남음");
+    expect(range).not.toContainElement(count);
+    expect(count.parentElement).toBe(range.parentElement);
+    expect(heading).toHaveAttribute("aria-expanded", "false");
+  });
+
   it("정상 응답이어도 재배정이 멈춰 있으면 성공 대신 확인 안내와 최신 상태를 반영한다", async () => {
     const user = userEvent.setup(); const before = queue("attention", "00000000-0000-4000-8000-000000000033");
     const after = { ...before, attentionReason: "release_schedule_conflict", updatedAt: "2026-09-10T01:00:00.000Z",

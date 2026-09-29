@@ -1,5 +1,6 @@
 .compact {
   min-width: 0;
+  flex: 1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -8,10 +9,20 @@
 
 .summary {
   min-width: 0;
+  flex: 1 1 14rem;
+  display: grid;
+  gap: 4px;
   color: var(--text-secondary);
   font-size: 12px;
   font-weight: 700;
   overflow-wrap: anywhere;
+}
+
+.range {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .attention {
