@@ -46,7 +46,8 @@ describe("student dashboard feature boundary", () => {
     expect(dashboard).toContain(
       "selectStudentDashboardCurrentSections(",
     );
-    expect(dashboard).toContain("<StudentAssignmentCard");
+    expect(dashboard).toContain("<StudentCurrentAssignments");
+    expect(source("src/features/student-dashboard/ui/student-current-assignments.tsx")).toContain("<StudentAssignmentCard");
     expect(dashboard).toContain("<StudentCompletedAssignments");
     expect(completed).toContain('"use client"');
     expect(card).toContain("<article");

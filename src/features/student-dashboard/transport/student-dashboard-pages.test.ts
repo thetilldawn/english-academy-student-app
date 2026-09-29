@@ -33,9 +33,9 @@ describe("student dashboard browser transport", () => {
       .mockResolvedValueOnce(Response.json({ ok: true })));
 
     await expect(loadStudentDashboardCompletedPage("bad"))
-      .rejects.toMatchObject({ status: 400, message: "다음 완료 시험을 불러오지 못했습니다." });
+      .rejects.toMatchObject({ status: 400, message: "다음 시험 목록을 불러오지 못했습니다. 다시 시도해 주세요." });
     await expect(loadStudentDashboardCompletedPage("missing"))
-      .rejects.toThrow("다음 완료 시험을 불러오지 못했습니다.");
+      .rejects.toThrow("다음 시험 목록을 불러오지 못했습니다. 다시 시도해 주세요.");
   });
 
   it.each([401, 403])("JSON이 아닌 %s도 실제 인증 거절로 전달한다", async (status) => {

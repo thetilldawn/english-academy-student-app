@@ -15,9 +15,17 @@ export async function loadStudentDashboardCompletedPage(
   cursor: string,
   signal?: AbortSignal,
 ): Promise<StudentDashboardCompletedPage> {
+  return loadPage("/api/student/dashboard/completed", cursor, signal);
+}
+
+export async function loadStudentDashboardSectionPage(cursor: string, signal?: AbortSignal): Promise<StudentDashboardCompletedPage> {
+  return loadPage("/api/student/dashboard/sections", cursor, signal);
+}
+
+async function loadPage(url: string, cursor: string, signal?: AbortSignal): Promise<StudentDashboardCompletedPage> {
   const deadline = createRequestDeadline(INTERACTIVE_READ_REQUEST_DEADLINE_MS, signal);
   try {
-    const response = await awaitWithAbortSignal(fetch("/api/student/dashboard/completed", {
+    const response = await awaitWithAbortSignal(fetch(url, {
       body: JSON.stringify({ cursor }),
       cache: "no-store",
       headers: { "content-type": "application/json" },

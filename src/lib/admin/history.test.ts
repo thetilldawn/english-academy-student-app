@@ -426,3 +426,11 @@ describe("projectCurrentAssignmentHistory", () => {
     ).toEqual([]);
   });
 });
+it("긴 모고 범위의 160자 자동제목과 전체 범위 반복을 제거하고 자유제목은 보존한다", () => {
+  const labels=Array.from({length:20},(_,i)=>`2024년 3월 · 모의고사 · 주장 [${i+20}번]`);
+  const dataset="고3 모의고사";
+  const full=[dataset,labels.join(" · ")].join(" · ");
+  expect(assignmentDisplayTitleForUnits(full.slice(0,160),labels,dataset)).toBe("");
+  expect(assignmentDisplayTitleForUnits(full,labels,dataset)).toBe("");
+  expect(assignmentDisplayTitleForUnits("금요일 누적 복습",labels,dataset)).toBe("금요일 누적 복습");
+});

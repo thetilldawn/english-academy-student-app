@@ -71,6 +71,7 @@ function snapshot(input: {
     current.filter((node) => node.section === section).length;
   return {
     completedPage: { items: completed, nextCursor: null },
+    currentCursors: { open: null, scheduled: null, needs_attention: null, deadline_closed: null },
     currentAssignments: current,
     sectionCounts: {
       completed: completed.length,

@@ -91,6 +91,16 @@ export function sortStudentAssignments(
   return assignments.toSorted(compareStudentAssignments);
 }
 
+function compareFinishedAssignments(left: StudentAssignmentSummary, right: StudentAssignmentSummary) {
+  const endedAt = (item: StudentAssignmentSummary) => {
+    const value = item.lastStatus === "expired" ? item.lastDeadlineAt ?? item.lastStartedAt
+      : item.lastPhase === "review" ? item.lastInitialCompletedAt ?? item.lastStartedAt
+      : item.lastCompletedAt ?? item.missedAt ?? item.availableUntil ?? item.assignedAt;
+    return Date.parse(value ?? item.assignedAt);
+  };
+  return endedAt(right) - endedAt(left) || left.id.localeCompare(right.id);
+}
+
 function compareScheduledAssignments(left: StudentAssignmentSummary, right: StudentAssignmentSummary) {
   const opening = (item: StudentAssignmentSummary) => {
     const value = item.release?.state === "waiting_initial" ? null
@@ -146,6 +156,9 @@ export function selectStudentAssignmentSections(
   }
 
   sectionById.get("scheduled")?.assignments.sort(compareScheduledAssignments);
+  for (const id of ["needs-attention", "completed", "deadline-closed"]) {
+    sectionById.get(id as StudentAssignmentSectionId)?.assignments.sort(compareFinishedAssignments);
+  }
 
   return sections;
 }
@@ -176,9 +189,6 @@ export function selectStudentDashboardCurrentSections(
       .get(dashboardSectionIdByReadSection[node.section])
       ?.assignments.push(node.assignment);
   }
-  for (const section of sections) {
-    section.assignments.sort(compareStudentAssignments);
-  }
-  sectionById.get("scheduled")?.assignments.sort(compareScheduledAssignments);
+  // DB order and cursor order are one contract; do not reorder each page.
   return sections;
 }

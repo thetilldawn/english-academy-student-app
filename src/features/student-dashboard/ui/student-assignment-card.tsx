@@ -31,7 +31,9 @@ export function StudentAssignmentCard({
   const timeline = studentAssignmentTimeline(assignment);
   const outcome = buildAttemptStatusPresentation(timeline).outcome;
   const heading = assignment.displayTitle || assignment.datasetTitle;
-  const showDatasetSubtitle = assignment.displayTitle.length > 0;
+  const showDatasetSubtitle = assignment.displayTitle.length > 0 && heading !== assignment.datasetTitle;
+  const scope = assignment.assignmentPurpose === "review"
+    ? `오답 시험 · ${assignment.questionCount}문항` : assignment.scopeLabel;
 
   return (
     <article
@@ -90,11 +92,15 @@ export function StudentAssignmentCard({
         </div>
       </div>
 
-      <p className={styles.scope}>
-        {assignment.assignmentPurpose === "review"
-          ? `오답 시험 · ${assignment.questionCount}문항`
-          : assignment.scopeLabel}
-      </p>
+      <div className={styles.scopeBlock}>
+        <p className={styles.scope} title={scope}>{scope}</p>
+        {scope.length > 40 ? (
+          <details className={styles.scopeDetails}>
+            <summary>전체 범위 보기</summary>
+            <p>{scope}</p>
+          </details>
+        ) : null}
+      </div>
 
       <StudentAssignmentAvailability
         assignment={assignment}

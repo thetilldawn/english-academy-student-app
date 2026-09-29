@@ -198,6 +198,14 @@ export function assignmentDisplayTitleForUnits(
   unitLabels: string[],
   datasetTitle?: string,
 ) {
+  // Generated names can be cut in the middle of a unit at the 160-character
+  // storage limit. Match the whole generated value before splitting metadata;
+  // unit names themselves can contain the same middle-dot separator.
+  const range = unitRangeDisplayLabel([...new Set(unitLabels)]);
+  const title = assignmentTitle.trim();
+  const generated = range ? [range, [datasetTitle?.trim(), range].filter(Boolean).join(" · ")] : [];
+  if (generated.some((value) => value === title ||
+      (title.length === 160 && value.length > 160 && value.startsWith(title)))) return "";
   const unitLabelSet = new Set(unitLabels);
   if (unitLabels.length > 1) {
     unitLabelSet.add(`${unitLabels[0]}~${unitLabels.at(-1)}`);

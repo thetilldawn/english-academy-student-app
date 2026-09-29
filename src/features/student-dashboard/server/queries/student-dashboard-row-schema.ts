@@ -2,6 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 import { assignmentReleaseSchema } from "@/lib/assignment/assignment-release";
+import { studentDashboardSortTimeSchema } from "../student-dashboard-section-cursor";
 
 import type { StudentAssignmentSummary } from "@/features/student-dashboard/contracts/student-dashboard-read-model";
 import {
@@ -94,6 +95,9 @@ const pageNodeBaseSchema = z.object({
 });
 
 export const studentDashboardCurrentNodeSchema = pageNodeBaseSchema.safeExtend({
+  sortBucket: z.number().int().min(0).max(2),
+  sortAt: studentDashboardSortTimeSchema,
+  secondarySortAt: studentDashboardSortTimeSchema,
   dashboardSection: z.enum([
     "open",
     "scheduled",
@@ -107,7 +111,7 @@ export const studentDashboardCompletedNodeSchema = pageNodeBaseSchema;
 export const studentDashboardInitialRowSchema = z.object({
   completed_count: z.coerce.number().int().nonnegative(),
   completed_items: z.array(studentDashboardCompletedNodeSchema).max(11),
-  current_items: z.array(studentDashboardCurrentNodeSchema),
+  current_items: z.array(studentDashboardCurrentNodeSchema).max(44),
   deadline_closed_count: z.coerce.number().int().nonnegative(),
   needs_attention_count: z.coerce.number().int().nonnegative(),
   open_count: z.coerce.number().int().nonnegative(),

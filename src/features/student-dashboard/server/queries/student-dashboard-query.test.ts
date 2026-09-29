@@ -9,9 +9,11 @@ vi.mock("@/lib/supabase/service", () => ({
 import {
   getStudentDashboardCompletedPage,
   getStudentDashboardInitial,
+  getStudentDashboardSectionPage,
 } from "./student-dashboard-query";
 import { StudentDashboardReadError } from "./student-dashboard-read-error";
 import { encodeStudentDashboardCursor, studentDashboardStudentFingerprint } from "../student-dashboard-cursor";
+import { decodeStudentDashboardSectionCursor, encodeStudentDashboardSectionCursor } from "../student-dashboard-section-cursor";
 
 const studentId = "11111111-1111-4111-8111-111111111111";
 const snapshotAt = "2026-08-29T00:00:00.000Z";
@@ -99,6 +101,9 @@ function initialRow() {
     current_items: [{
       assignmentId: uuid(50),
       dashboardSection: "open",
+      sortBucket: 1,
+      sortAt: "infinity",
+      secondarySortAt: "-infinity",
       effectiveAt: "2026-08-01T00:00:00.000Z",
       item: rawItem(50, { lastDeadlineAt: "infinity" }),
     }],
@@ -119,7 +124,7 @@ describe("student dashboard query", () => {
     const result = await getStudentDashboardInitial({ studentId });
 
     expect(mocks.rpc).toHaveBeenCalledWith(
-      "get_student_dashboard_initial_v2",
+      "get_student_dashboard_initial_v3",
       { p_snapshot_at: null, p_student_id: studentId },
     );
     expect(result.currentAssignments).toHaveLength(1);
@@ -184,6 +189,41 @@ describe("student dashboard query", () => {
     );
     expect(page.items).toHaveLength(10);
     expect(page.nextCursor).not.toBeNull();
+  });
+
+  it.each([0, 1, 10, 11, 21])("현재 구역 %i건도 처음 10개만 반환하고 전체 개수를 보존한다", async (count) => {
+    const row = initialRow();
+    const template = row.current_items[0]!;
+    row.open_count = count;
+    row.current_items = Array.from({ length: Math.min(count, 11) }, (_, index) => ({
+      ...template, assignmentId: uuid(50 + index), item: rawItem(50 + index),
+    }));
+    mocks.rpc.mockResolvedValue({ data: [row], error: null });
+    const result = await getStudentDashboardInitial({ studentId });
+    expect(result.currentAssignments).toHaveLength(Math.min(count, 10));
+    expect(result.sectionCounts.open).toBe(count);
+    if (count > 10) {
+      expect(decodeStudentDashboardSectionCursor(result.currentCursors.open!, studentId))
+        .toMatchObject({ assignmentId: uuid(59), section: "open", snapshotAt });
+    } else {
+      expect(result.currentCursors.open).toBeNull();
+    }
+  });
+
+  it("더보기의 null 응답을 정상 빈 목록으로 오인하지 않는다", async () => {
+    const base = {
+      assignmentId: uuid(10), effectiveAt: "2026-08-18T00:00:00.000Z", snapshotAt,
+      studentFingerprint: studentDashboardStudentFingerprint(studentId),
+    };
+    const completed = encodeStudentDashboardCursor({ ...base, version: 1 });
+    const current = encodeStudentDashboardSectionCursor({ ...base, version: 3,
+      section: "open", sortBucket: 1, sortAt: "infinity", secondarySortAt: "-infinity" });
+    mocks.rpc.mockResolvedValue({ data: null, error: null });
+    await expect(getStudentDashboardCompletedPage(completed, { studentId })).rejects.toThrow(StudentDashboardReadError);
+    await expect(getStudentDashboardSectionPage(current, { studentId })).rejects.toThrow(StudentDashboardReadError);
+    mocks.rpc.mockResolvedValue({ data: [], error: null });
+    await expect(getStudentDashboardCompletedPage(completed, { studentId })).resolves.toEqual({ items: [], nextCursor: null });
+    await expect(getStudentDashboardSectionPage(current, { studentId })).resolves.toEqual({ items: [], nextCursor: null });
   });
 
   it("구역 개수 불일치와 DB 오류를 빈 화면으로 바꾸지 않는다", async () => {

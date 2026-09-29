@@ -4,16 +4,17 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { StudentAssignmentSummary } from "@/features/student-dashboard/contracts/student-dashboard-read-model";
-import { loadStudentDashboardCompletedPage } from "@/features/student-dashboard/transport/student-dashboard-pages";
+import { loadStudentDashboardSectionPage } from "@/features/student-dashboard/transport/student-dashboard-pages";
 import { StudentDashboardRequestError } from "../contracts/student-dashboard-request-error";
 
-import { useStudentCompletedAssignments } from "./use-student-completed-assignments";
+import { useStudentAssignmentPage } from "./use-student-assignment-page";
 
+function useStudentCurrentPage(page: Parameters<typeof useStudentAssignmentPage>[0]) { return useStudentAssignmentPage(page, "current"); }
 const navigation = vi.hoisted(() => ({ replace: vi.fn() }));
 vi.mock("@/components/document-navigation", () => ({ navigateDocument: navigation.replace }));
 
 vi.mock("@/features/student-dashboard/transport/student-dashboard-pages", () => ({
-  loadStudentDashboardCompletedPage: vi.fn(),
+  loadStudentDashboardSectionPage: vi.fn(),
 }));
 
 afterEach(() => vi.clearAllMocks());
@@ -24,7 +25,7 @@ function assignment(id: string) {
 
 describe("student completed assignments controller", () => {
   it("21건을 10건, 10건, 1건으로 중복 없이 연결한다", async () => {
-    vi.mocked(loadStudentDashboardCompletedPage)
+    vi.mocked(loadStudentDashboardSectionPage)
       .mockResolvedValueOnce({
         items: Array.from({ length: 10 }, (_, index) =>
           assignment(`item-${index + 11}`)),
@@ -34,7 +35,7 @@ describe("student completed assignments controller", () => {
         items: [assignment("item-21")],
         nextCursor: null,
       });
-    const { result } = renderHook(() => useStudentCompletedAssignments({
+    const { result } = renderHook(() => useStudentCurrentPage({
       items: Array.from({ length: 10 }, (_, index) =>
         assignment(`item-${index + 1}`)),
       nextCursor: "page-2",
@@ -46,21 +47,21 @@ describe("student completed assignments controller", () => {
     expect(result.current.items).toHaveLength(21);
     expect(new Set(result.current.items.map((item) => item.id)).size).toBe(21);
     expect(result.current.nextCursor).toBeNull();
-    expect(vi.mocked(loadStudentDashboardCompletedPage).mock.calls.map(
+    expect(vi.mocked(loadStudentDashboardSectionPage).mock.calls.map(
       ([cursor]) => cursor,
     )).toEqual(["page-2", "page-3"]);
   });
 
   it("중복 클릭을 막고 화면을 닫으면 진행 요청을 취소한다", async () => {
     let signal: AbortSignal | undefined;
-    vi.mocked(loadStudentDashboardCompletedPage).mockImplementation(
+    vi.mocked(loadStudentDashboardSectionPage).mockImplementation(
       (_cursor, requestSignal) => {
         signal = requestSignal;
         return new Promise(() => undefined);
       },
     );
     const { result, unmount } = renderHook(() =>
-      useStudentCompletedAssignments({
+      useStudentCurrentPage({
         items: [assignment("first")],
         nextCursor: "page-2",
       })
@@ -71,16 +72,16 @@ describe("student completed assignments controller", () => {
       void result.current.loadMore();
     });
     await waitFor(() => expect(result.current.loading).toBe(true));
-    expect(loadStudentDashboardCompletedPage).toHaveBeenCalledTimes(1);
+    expect(loadStudentDashboardSectionPage).toHaveBeenCalledTimes(1);
     unmount();
     expect(signal?.aborted).toBe(true);
   });
 
   it("실패 뒤 같은 커서로 다시 시도할 수 있다", async () => {
-    vi.mocked(loadStudentDashboardCompletedPage)
+    vi.mocked(loadStudentDashboardSectionPage)
       .mockRejectedValueOnce(new Error("연결 실패"))
       .mockResolvedValueOnce({ items: [assignment("second")], nextCursor: null });
-    const { result } = renderHook(() => useStudentCompletedAssignments({
+    const { result } = renderHook(() => useStudentCurrentPage({
       items: [assignment("first")],
       nextCursor: "page-2",
     }));
@@ -95,20 +96,20 @@ describe("student completed assignments controller", () => {
   });
 
   it.each([401, 403])("실제 %s에는 기존 개인 내역·커서를 지우고 접속 화면으로 이동한다", async (status) => {
-    vi.mocked(loadStudentDashboardCompletedPage).mockRejectedValueOnce(new StudentDashboardRequestError(status));
-    const { result } = renderHook(() => useStudentCompletedAssignments({ items: [assignment("private")], nextCursor: "private-cursor" }));
+    vi.mocked(loadStudentDashboardSectionPage).mockRejectedValueOnce(new StudentDashboardRequestError(status));
+    const { result } = renderHook(() => useStudentCurrentPage({ items: [assignment("private")], nextCursor: "private-cursor" }));
     await act(() => result.current.loadMore());
     expect(result.current).toMatchObject({ items: [], nextCursor: null, navigationRequired: true, loading: false });
     expect(navigation.replace).toHaveBeenCalledExactlyOnceWith("/", true);
     await act(() => result.current.loadMore());
-    expect(loadStudentDashboardCompletedPage).toHaveBeenCalledOnce();
+    expect(loadStudentDashboardSectionPage).toHaveBeenCalledOnce();
   });
 
   it("503은 로그인 만료가 아니며 같은 목록·커서로 복구한다", async () => {
-    vi.mocked(loadStudentDashboardCompletedPage)
+    vi.mocked(loadStudentDashboardSectionPage)
       .mockRejectedValueOnce(new StudentDashboardRequestError(503))
       .mockResolvedValueOnce({ items: [assignment("next")], nextCursor: null });
-    const { result } = renderHook(() => useStudentCompletedAssignments({ items: [assignment("first")], nextCursor: "cursor" }));
+    const { result } = renderHook(() => useStudentCurrentPage({ items: [assignment("first")], nextCursor: "cursor" }));
     await act(() => result.current.loadMore());
     expect(result.current).toMatchObject({ items: [assignment("first")], nextCursor: "cursor", navigationRequired: false });
     expect(navigation.replace).not.toHaveBeenCalled();
@@ -119,24 +120,23 @@ describe("student completed assignments controller", () => {
 
   it("옛 화면을 닫은 뒤 늦게 온 응답은 새 학생 화면에 섞이지 않는다", async () => {
     let resolve!: (page: { items: StudentAssignmentSummary[]; nextCursor: null }) => void;
-    vi.mocked(loadStudentDashboardCompletedPage).mockReturnValueOnce(new Promise(done => { resolve = done; }));
-    const old = renderHook(() => useStudentCompletedAssignments({ items: [assignment("old")], nextCursor: "old-cursor" }));
+    vi.mocked(loadStudentDashboardSectionPage).mockReturnValueOnce(new Promise(done => { resolve = done; }));
+    const old = renderHook(() => useStudentCurrentPage({ items: [assignment("old")], nextCursor: "old-cursor" }));
     let request!: Promise<void>;
     act(() => { request = old.result.current.loadMore(); });
     old.unmount();
-    const current = renderHook(() => useStudentCompletedAssignments({ items: [assignment("new")], nextCursor: null }));
+    const current = renderHook(() => useStudentCurrentPage({ items: [assignment("new")], nextCursor: null }));
     await act(async () => { resolve({ items: [assignment("late-private")], nextCursor: null }); await request; });
     expect(current.result.current.items).toEqual([assignment("new")]);
     expect(navigation.replace).not.toHaveBeenCalled();
   });
 
   it("같은 화면에서 학생이 바뀌어409를 받으면 옛 카드와커서를 버리고 새 문서로 이동한다", async () => {
-    vi.mocked(loadStudentDashboardCompletedPage).mockRejectedValueOnce(new StudentDashboardRequestError(409));
-    const { result } = renderHook(() => useStudentCompletedAssignments({ items: [assignment("student-a-private")], nextCursor: "student-a-cursor" }));
+    vi.mocked(loadStudentDashboardSectionPage).mockRejectedValueOnce(new StudentDashboardRequestError(409));
+    const { result } = renderHook(() => useStudentCurrentPage({ items: [assignment("student-a-private")], nextCursor: "student-a-cursor" }));
     await act(() => result.current.loadMore());
     expect(result.current).toMatchObject({ items: [], nextCursor: null, navigationRequired: true });
     expect(result.current.error).toContain("접속한 학생이 바뀌었습니다.");
     expect(navigation.replace).toHaveBeenCalledExactlyOnceWith("/student", true);
   });
 });
-

@@ -62,6 +62,7 @@ export type StudentDashboardCompletedPage = {
 
 export type StudentDashboardInitialSnapshot = {
   completedPage: StudentDashboardCompletedPage;
+  currentCursors: Record<StudentDashboardCurrentSectionKey, string | null>;
   currentAssignments: StudentDashboardCurrentNode[];
   sectionCounts: StudentDashboardSectionCounts;
   snapshotAt: string;

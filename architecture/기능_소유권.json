@@ -771,6 +771,10 @@
     {
       "path": "src/app/fonts/SourceSerif4Variable-Roman.ttf.woff2",
       "owner": "app-shell"
+    },
+    {
+      "path": "src/app/api/student/dashboard/sections/route.test.ts",
+      "owner": "student-dashboard"
     }
   ],
   "routeOwners": [
@@ -985,6 +989,10 @@
     {
       "path": "src/app/api/admin/wordbook-library/commands/route.ts",
       "owner": "wordbook-compositions"
+    },
+    {
+      "path": "src/app/api/student/dashboard/sections/route.ts",
+      "owner": "student-dashboard"
     }
   ],
   "serviceOwners": [
@@ -1914,8 +1922,8 @@
     {
       "path": "src/lib/database",
       "owner": "database-contract",
-      "fileCount": 119,
-      "pathSetSha256": "bd9817311ec6f667f61e09dc01761b3878e0c75cec7834bbc7a35010550499ed"
+      "fileCount": 120,
+      "pathSetSha256": "436d296c9c1a4900a4b5f7d6d961edc86c4c569d55849204b6487babc182b7be"
     },
     {
       "path": "src/lib/deploy",
@@ -2243,6 +2251,10 @@
     {
       "path": "src/features/wordbook-compositions/server/library-error.ts",
       "owner": "wordbook-compositions"
+    },
+    {
+      "path": "src/features/student-dashboard/server/student-dashboard-section-cursor.ts",
+      "owner": "student-dashboard"
     }
   ],
   "migrationOwnershipFrom": "20260828193000",
@@ -2623,6 +2635,11 @@
       "path": "supabase/migrations/20260921070000_preserve_reviewed_choice_conflicts.sql",
       "owner": "wordbook-compositions",
       "flow": "mock-wordbook-compose"
+    },
+    {
+      "path": "supabase/migrations/20260929110037_paginate_student_dashboard_sections.sql",
+      "owner": "student-dashboard",
+      "flow": "student-dashboard-read"
     }
   ],
   "features": [
@@ -4759,7 +4776,7 @@
     },
     {
       "id": "student-dashboard-read",
-      "name": "학생 메인 시험 목록과 완료 내역 조회",
+      "name": "학생 메인 시험 목록과 구역별 10개 더보기",
       "status": "active",
       "owner": "student-dashboard",
       "participants": [
@@ -4772,8 +4789,8 @@
         "notifications"
       ],
       "dataClass": "private",
-      "cachePolicy": "학생별 배정·응시·포인트는 요청 사이 공유 캐시를 쓰지 않고 완료 페이지도 private no-store로 조회",
-      "streamingPolicy": "학생 인증 뒤 초기 시험 목록과 상단 병렬 slot의 포인트를 독립적으로 표시하고 완료 10개 이후만 Route Handler를 사용",
+      "cachePolicy": "학생별 배정·응시는 공유캐시 금지, 모든 구역 페이지 private,no-store, 새 snapshot 키로 기존 더보기 폐기",
+      "streamingPolicy": "학생 인증 뒤 초기 구역별10개와 상단 포인트를 독립 표시. 각 구역 다음10개만 Route Handler로 읽으며 서버 정렬을 보존",
       "closedLocalLayers": [
         "ui",
         "controller",
@@ -4785,7 +4802,8 @@
           "src/app/student/(protected)/page.tsx",
           "src/app/student/(protected)/@summary/page.tsx",
           "src/app/student/(protected)/@summary/[...catchAll]/page.tsx",
-          "src/app/api/student/dashboard/completed/route.ts"
+          "src/app/api/student/dashboard/completed/route.ts",
+          "src/app/api/student/dashboard/sections/route.ts"
         ],
         "serverComponent": [
           "src/app/student/(protected)/page.tsx",
@@ -4801,10 +4819,12 @@
           "src/features/student-dashboard/ui/student-completed-assignments.tsx",
           "src/features/student-dashboard/ui/student-assignment-card.tsx",
           "src/features/student-dashboard/ui/student-dashboard-skeleton.tsx",
-          "src/features/school-schedules/public-ui.ts"
+          "src/features/school-schedules/public-ui.ts",
+          "src/features/student-dashboard/ui/student-current-assignments.tsx"
         ],
         "clientState": [
-          "src/features/student-dashboard/controller/use-student-completed-assignments.ts"
+          "src/features/student-dashboard/controller/use-student-completed-assignments.ts",
+          "src/features/student-dashboard/controller/use-student-assignment-page.ts"
         ],
         "application": [],
         "domain": [
@@ -4828,13 +4848,15 @@
           "src/features/student-dashboard/server/queries/student-dashboard-query.ts",
           "src/features/student-dashboard/server/queries/student-dashboard-read-error.ts",
           "src/features/student-dashboard/server/queries/student-dashboard-row-schema.ts",
-          "src/features/school-schedules/public-server.ts"
+          "src/features/school-schedules/public-server.ts",
+          "src/features/student-dashboard/server/student-dashboard-section-cursor.ts"
         ],
         "database": [
           "supabase/migrations/20260829190000_add_student_dashboard_read_model.sql",
           "supabase/migrations/20260906130402_add_first_attempt_assignment_release.sql",
           "supabase/migrations/20260907084627_remove_predecessor_twelve_hour_wait.sql",
-          "supabase/migrations/20260929054833_gate_student_notifications_on_assignment_release.sql"
+          "supabase/migrations/20260929054833_gate_student_notifications_on_assignment_release.sql",
+          "supabase/migrations/20260929110037_paginate_student_dashboard_sections.sql"
         ],
         "cacheStreaming": [
           "src/app/student/(protected)/page.tsx",
@@ -4842,7 +4864,8 @@
           "src/app/student/(protected)/@summary/default.tsx",
           "src/features/student-dashboard/server/components/student-dashboard-content.tsx",
           "src/features/student-dashboard/ui/student-dashboard-skeleton.tsx",
-          "src/app/api/student/dashboard/completed/route.ts"
+          "src/app/api/student/dashboard/completed/route.ts",
+          "src/app/api/student/dashboard/sections/route.ts"
         ],
         "tests": [
           "src/components/student-shell.test.tsx",
@@ -4859,7 +4882,12 @@
           "src/lib/database/student-dashboard-read-model.integration.test.ts",
           "src/lib/assignment/assignment-release.test.ts",
           "src/lib/database/assignment-release-final-schema.integration.test.ts",
-          "src/lib/database/notification-release-final-schema.integration.test.ts"
+          "src/lib/database/notification-release-final-schema.integration.test.ts",
+          "src/app/api/student/dashboard/sections/route.test.ts",
+          "src/features/student-dashboard/server/student-dashboard-section-cursor.test.ts",
+          "src/features/student-dashboard/controller/use-student-assignment-page.test.tsx",
+          "src/lib/database/student-dashboard-sections-final-schema.integration.test.ts",
+          "src/features/student-dashboard/ui/student-current-assignments.test.tsx"
         ]
       },
       "requiredImportEdges": [
@@ -4889,7 +4917,7 @@
           "reason": "완료 목록 표시와 더보기 요청 수명을 분리"
         },
         {
-          "from": "src/features/student-dashboard/controller/use-student-completed-assignments.ts",
+          "from": "src/features/student-dashboard/controller/use-student-assignment-page.ts",
           "to": "src/features/student-dashboard/transport/student-dashboard-pages.ts",
           "reason": "완료 더보기 제어가 전용 브라우저 전송 함수를 호출"
         },
@@ -4912,6 +4940,11 @@
           "from": "src/features/student-dashboard/server/queries/student-dashboard-query.ts",
           "to": "src/features/student-dashboard/domain/student-assignment-sections.ts",
           "reason": "DB 구역과 기존 학생 상태 계산이 같은 snapshot에서 일치하는지 검산"
+        },
+        {
+          "from": "src/features/student-dashboard/ui/student-current-assignments.tsx",
+          "to": "src/features/student-dashboard/controller/use-student-assignment-page.ts",
+          "reason": "공개예정 등 구역별 요청취소·중복클릭방지·인증숨김을 공통 더보기 수명으로 처리"
         }
       ],
       "notApplicable": {

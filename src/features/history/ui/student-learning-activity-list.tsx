@@ -67,8 +67,7 @@ export function StudentLearningActivityList({
     const periodDays = periodFilter === "all" ? null : Number(periodFilter);
     const since =
       periodDays === null ? null : filterNow - periodDays * 86_400_000;
-    return sortLearningActivities(
-      items.filter(
+    const filtered = items.filter(
         (item) =>
           (includeArchived || learningActivitySection(item) !== "archived") &&
           matchesLearningHistoryFilters(item, {
@@ -76,10 +75,13 @@ export function StudentLearningActivityList({
             status: statusFilter,
             since,
           }),
-      ),
-    );
+      );
+    // Paginated history is already globally ordered by the server's finish
+    // timestamp and cursor key. Re-sorting a loaded page breaks that order.
+    return displayMode === "all-loaded" ? filtered : sortLearningActivities(filtered);
   }, [
     filterNow,
+    displayMode,
     includeArchived,
     items,
     periodFilter,
@@ -97,9 +99,10 @@ export function StudentLearningActivityList({
     : sectionDefinitions;
   const visibleSections = availableSections
     .map((section) => {
-      const allItems = sorted.filter(
+      const sectionItems = sorted.filter(
         (item) => learningActivitySection(item) === section.id,
       );
+      const allItems = section.id === "open" ? sortLearningActivities(sectionItems) : sectionItems;
       return {
         ...section,
         items:

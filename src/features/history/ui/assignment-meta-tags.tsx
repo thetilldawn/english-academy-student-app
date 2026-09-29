@@ -10,6 +10,7 @@ export function AssignmentMetaTags({
   assignmentPurpose,
   datasetTitle,
   datasetAppearance = "text",
+  compact = false,
   primaryUnitLabels,
   questionCount,
   unitLabels,
@@ -29,7 +30,7 @@ export function AssignmentMetaTags({
   });
 
   return (
-    <span aria-label="단어장과 범위" className={styles.root} data-dataset-appearance={datasetAppearance} role="group">
+    <span aria-label="단어장과 범위" className={styles.root} data-compact={compact || undefined} data-dataset-appearance={datasetAppearance} role="group">
       {datasetAppearance === "badge" ? (
         <MetaTag className={styles.datasetBadge} overflow="wrap" size="default" tone="neutral">
           {datasetTitle}
@@ -40,7 +41,7 @@ export function AssignmentMetaTags({
           <span aria-hidden="true" className={styles.separator}>·</span>
         </>
       )}
-      <span className={styles.range}>{rangeLabel}</span>
+      <span className={styles.range} title={rangeLabel}>{rangeLabel}</span>
     </span>
   );
 }

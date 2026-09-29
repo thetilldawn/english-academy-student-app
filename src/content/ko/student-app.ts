@@ -89,7 +89,7 @@ export const studentAppText = {
     history: {
       loadMore: "10개 더보기",
       loading: "불러오는 중...",
-      loadError: "다음 완료 시험을 불러오지 못했습니다.",
+      loadError: "다음 시험 목록을 불러오지 못했습니다. 다시 시도해 주세요.",
       authRequired: "로그인이 필요합니다. 접속 화면으로 이동합니다.",
       studentChanged: "접속한 학생이 바뀌었습니다. 현재 학생의 시험 목록을 다시 불러옵니다.",
     },

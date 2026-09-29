@@ -25,7 +25,7 @@ export function HistoryDetailHeader({
     <DetailHeader
       metadata={
         <>
-          <AssignmentMetaTags {...summary} compact />
+          <AssignmentMetaTags {...summary} />
           <MetaTagList>
             {attempt ? (
               <MetaTag>

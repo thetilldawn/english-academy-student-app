@@ -2,13 +2,21 @@ import type { PGlite } from "@electric-sql/pglite";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { z } from "zod";
 import { createFinalSchemaDatabase } from "@/test-support/final-schema-database";
-import { studentDashboardInitialRowSchema } from "@/features/student-dashboard/server/queries/student-dashboard-row-schema";
+import { studentDashboardCompletedNodeSchema, studentDashboardInitialRowSchema } from "@/features/student-dashboard/server/queries/student-dashboard-row-schema";
 
 const id = (n: number) => `10000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 type Release = { state: string; opensAt: string | null; hasDeadline: boolean };
 type QueueItem = { id: string; status: string; completed_at: Date | null; deferred_at: Date | null };
 const waitRemovalMigration = "20260907084627_remove_predecessor_twelve_hour_wait.sql";
+// The old RPCs deliberately keep their original unpaged current-item contract.
+// Do not validate their rollback compatibility against v3-only cursor fields.
+const legacyDashboardInitialRowSchema = studentDashboardInitialRowSchema.extend({
+  current_items: z.array(studentDashboardCompletedNodeSchema.safeExtend({
+    dashboardSection: z.enum(["open", "scheduled", "needs_attention", "deadline_closed"]),
+  })),
+});
 
 // Real final schema, fake students only. Sequential transaction/rollback tests;
 // this does not claim to simulate two independent PostgreSQL connections.
@@ -485,10 +493,10 @@ describe.sequential("APP0704 첫 시험·자체 예약·보류 전체 스키마"
     // anon/authenticated retain the production grants and RLS restrictions.
     await db.exec("alter role service_role bypassrls");
     await db.exec("set local role service_role");
-    const oldRow = studentDashboardInitialRowSchema.parse((await db.query<{ value: unknown }>(
+    const oldRow = legacyDashboardInitialRowSchema.parse((await db.query<{ value: unknown }>(
       "select to_jsonb(r) value from public.get_student_dashboard_initial_v1($1,null) r", [id(2)],
     )).rows[0]!.value);
-    const newRow = studentDashboardInitialRowSchema.parse((await db.query<{ value: unknown }>(
+    const newRow = legacyDashboardInitialRowSchema.parse((await db.query<{ value: unknown }>(
       "select to_jsonb(r) value from public.get_student_dashboard_initial_v2($1,null) r", [id(2)],
     )).rows[0]!.value);
     const oldNext = oldRow.current_items.find(item => item.assignmentId === id(11))!;

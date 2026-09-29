@@ -1,14 +1,12 @@
-import { formatContentText } from "@/content/format";
 import type { ReactNode } from "react";
 import { studentAppText } from "@/content/ko/student-app";
-import { CollapsibleStatusSection } from "@/design-system/patterns/collapsible-status-section/collapsible-status-section";
 import type { StudentDashboardInitialSnapshot } from "@/features/student-dashboard/contracts/student-dashboard-read-model";
 
 import {
   selectStudentDashboardCurrentSections,
   type StudentAssignmentSectionId,
 } from "../domain/student-assignment-sections";
-import { StudentAssignmentCard } from "./student-assignment-card";
+import { StudentCurrentAssignments } from "./student-current-assignments";
 import { StudentCompletedAssignments } from "./student-completed-assignments";
 import styles from "./student-dashboard.module.css";
 
@@ -68,32 +66,17 @@ export function StudentDashboard({
               ) : null;
             }
             if (section.assignments.length === 0) return null;
+            const readSection = section.id === "needs-attention" ? "needs_attention"
+              : section.id === "deadline-closed" ? "deadline_closed" : section.id;
             return (
-              <div
-                className={styles.section}
-                data-assignment-section={section.id}
-                key={section.id}
-              >
-                <CollapsibleStatusSection
-                  countLabel={formatContentText(
-                    studentAppText.dashboard.meta.sectionCount,
-                    { count: sectionCount(section.id) },
-                  )}
-                  defaultOpen={section.id === "open"}
-                  id={`student-assignment-${section.id}`}
-                  title={sectionTitles[section.id]}
-                >
-                  <div className={styles.grid}>
-                    {section.assignments.map((assignment) => (
-                      <StudentAssignmentCard
-                        assignment={assignment}
-                        key={assignment.id}
-                        nowMilliseconds={nowMilliseconds}
-                      />
-                    ))}
-                  </div>
-                </CollapsibleStatusSection>
-              </div>
+              <StudentCurrentAssignments
+                initialPage={{ items: section.assignments, nextCursor: snapshot.currentCursors[readSection] }}
+                key={`${snapshot.snapshotAt}:${section.id}`}
+                sectionId={section.id}
+                title={sectionTitles[section.id]}
+                nowMilliseconds={nowMilliseconds}
+                totalCount={sectionCount(section.id)}
+              />
             );
           })}
         </div>

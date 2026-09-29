@@ -15,6 +15,15 @@
   overflow-wrap: anywhere;
 }
 
+.root[data-compact] .range,
+.root[data-compact] .dataset,
+.root[data-compact] .datasetBadge {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
 .range {
   color: var(--text-primary);
   font-weight: 700;
