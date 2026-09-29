@@ -1,0 +1,1727 @@
+{
+  "schemaVersion": 1,
+  "id": "APP-20260929-09",
+  "title": "로그아웃 중 오류목록 없이 접속화면 이동",
+  "size": "full",
+  "gate": "verified",
+  "guide": "docs/verification/APP-20260929-09_로그아웃_설계와검증.md",
+  "baseline": "02a2d65efc0bc0483eb9af9d099be4188b176850",
+  "owners": [
+    "session",
+    "app-shell",
+    "auth"
+  ],
+  "plannedOwners": [],
+  "plannedFlows": [],
+  "dataClasses": [
+    "personal"
+  ],
+  "scope": [
+    {
+      "path": "src/components/admin-logout-button.tsx",
+      "owner": "auth",
+      "state": "existing",
+      "flowIds": [
+        "student-management-screen"
+      ]
+    },
+    {
+      "path": "src/components/student-logout-button.tsx",
+      "owner": "auth",
+      "state": "existing",
+      "flowIds": []
+    },
+    {
+      "path": "src/components/admin-logout-button.test.tsx",
+      "owner": "auth",
+      "state": "existing",
+      "flowIds": [
+        "student-management-screen"
+      ]
+    },
+    {
+      "path": "src/app/admin/(protected)/layout.tsx",
+      "owner": "app-shell",
+      "state": "existing",
+      "flowIds": [
+        "student-management-screen"
+      ]
+    },
+    {
+      "path": "src/app/student/(protected)/layout.tsx",
+      "owner": "app-shell",
+      "state": "existing",
+      "flowIds": []
+    },
+    {
+      "path": "src/features/session/controller/use-logout-transition.ts",
+      "owner": "session",
+      "state": "existing",
+      "flowIds": [
+        "student-management-screen"
+      ]
+    },
+    {
+      "path": "src/features/session/ui/session-logout-boundary.tsx",
+      "owner": "session",
+      "state": "existing",
+      "flowIds": [
+        "student-management-screen"
+      ]
+    },
+    {
+      "path": "src/features/session/ui/session-logout-boundary.test.tsx",
+      "owner": "session",
+      "state": "existing",
+      "flowIds": [
+        "student-management-screen"
+      ]
+    },
+    {
+      "path": "src/features/session/ui/session-logout-boundary.module.css",
+      "owner": "session",
+      "state": "existing",
+      "flowIds": [
+        "student-management-screen"
+      ]
+    },
+    {
+      "path": "src/features/session/public-client.ts",
+      "owner": "session",
+      "state": "existing",
+      "flowIds": [
+        "student-management-screen"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "source": "user",
+      "text": "로그아웃 클릭 후 목록오류가 아니라 인덱스로 이동",
+      "acceptance": "DELETE지연동안 개인정보/오류목록 노출없고 성공시 /로 문서이동1회·refresh0",
+      "disposition": "required",
+      "owners": [
+        "session",
+        "app-shell"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    {
+      "id": "R2",
+      "source": "engineering",
+      "text": "요청 실패/취소/연속클릭에도 개인정보 즉시숨김과 서버로그아웃 확정구분",
+      "acceptance": "취소는쓰기0, 실패는재시도만·자료복원0, pending중 요청1회",
+      "disposition": "required",
+      "owners": [
+        "session",
+        "app-shell"
+      ],
+      "flowIds": [],
+      "checkIds": [
+        "T1",
+        "T2"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "state": "resolved",
+      "question": "로그아웃 후 목적지",
+      "answer": "바로 인덱스 /",
+      "source": "현재 사용자 로그아웃 오류 수정 요청"
+    },
+    {
+      "id": "D2",
+      "owner": "engineering",
+      "state": "resolved",
+      "question": "캐시삭제 신호를 늦출지",
+      "answer": "기존즉시삭제 유지, 공용 보호셸 경계가 pending/failed동안개인자료를unmount. 성공시 document replace1회",
+      "source": "독립조사에서 DELETE전 lock이조회오류로표시되는것 확인"
+    }
+  ],
+  "impacts": {
+    "routing": {
+      "status": "changed",
+      "reason": "로그아웃 전환과실패재시도 경계만수정; 기존인증/캐시즉시폐기/학생기록보존"
+    },
+    "ui": {
+      "status": "changed",
+      "reason": "로그아웃 전환과실패재시도 경계만수정; 기존인증/캐시즉시폐기/학생기록보존"
+    },
+    "state": {
+      "status": "changed",
+      "reason": "로그아웃 전환과실패재시도 경계만수정; 기존인증/캐시즉시폐기/학생기록보존"
+    },
+    "domain": {
+      "status": "checked",
+      "reason": "로그아웃 전환과실패재시도 경계만수정; 기존인증/캐시즉시폐기/학생기록보존"
+    },
+    "data": {
+      "status": "checked",
+      "reason": "로그아웃 전환과실패재시도 경계만수정; 기존인증/캐시즉시폐기/학생기록보존"
+    },
+    "api": {
+      "status": "changed",
+      "reason": "로그아웃 전환과실패재시도 경계만수정; 기존인증/캐시즉시폐기/학생기록보존"
+    },
+    "cache": {
+      "status": "checked",
+      "reason": "로그아웃 전환과실패재시도 경계만수정; 기존인증/캐시즉시폐기/학생기록보존"
+    },
+    "asyncUi": {
+      "status": "changed",
+      "reason": "로그아웃 전환과실패재시도 경계만수정; 기존인증/캐시즉시폐기/학생기록보존"
+    },
+    "security": {
+      "status": "checked",
+      "reason": "로그아웃 전환과실패재시도 경계만수정; 기존인증/캐시즉시폐기/학생기록보존"
+    },
+    "styles": {
+      "status": "changed",
+      "reason": "로그아웃 전환과실패재시도 경계만수정; 기존인증/캐시즉시폐기/학생기록보존"
+    },
+    "tests": {
+      "status": "changed",
+      "reason": "로그아웃 전환과실패재시도 경계만수정; 기존인증/캐시즉시폐기/학생기록보존"
+    }
+  },
+  "policies": {
+    "authorization": {
+      "status": "applicable",
+      "reason": "관리자·학생 보호 화면을 종료 전에 제거한다. 개인 캐시와 다른 탭 폐기 신호를 유지하며 실패해도 이름·점수·상세 모달을 다시 표시하지 않는다.",
+      "checkIds": [
+        "T1",
+        "T2"
+      ]
+    },
+    "data-leak": {
+      "status": "applicable",
+      "reason": "관리자·학생 보호 화면을 종료 전에 제거한다. 개인 캐시와 다른 탭 폐기 신호를 유지하며 실패해도 이름·점수·상세 모달을 다시 표시하지 않는다.",
+      "checkIds": [
+        "T1",
+        "T2"
+      ]
+    },
+    "answer-leak": {
+      "status": "applicable",
+      "reason": "관리자·학생 보호 화면을 종료 전에 제거한다. 개인 캐시와 다른 탭 폐기 신호를 유지하며 실패해도 이름·점수·상세 모달을 다시 표시하지 않는다.",
+      "checkIds": [
+        "T1",
+        "T2"
+      ]
+    },
+    "cache": {
+      "status": "applicable",
+      "reason": "관리자·학생 보호 화면을 종료 전에 제거한다. 개인 캐시와 다른 탭 폐기 신호를 유지하며 실패해도 이름·점수·상세 모달을 다시 표시하지 않는다.",
+      "checkIds": [
+        "T1",
+        "T2"
+      ]
+    }
+  },
+  "design": {
+    "dataFlow": "이탈 확인 승인 → flushSync로 보호된 본문·모달을 먼저 제거 → 기존 개인 캐시 즉시 삭제와 DELETE → 성공 시 /로 한 번 이동, 실패 시 개인정보를 숨긴 채 재시도",
+    "reuse": "기존 requestAdminLogout/requestStudentLogout, navigateDocument, 이탈확인 재사용. Next router refresh 제거",
+    "cache": "로그아웃요청전에 현재 개인캐시삭제·다른탭신호 보존. 실패때원자료복원금지",
+    "compatibility": "역할별 서버DELETE·쿠키보존/삭제판정 그대로. 버튼진입이탈확인취소시요청없음",
+    "rollback": "해당UI경계/버튼/셸배치를되돌림; DB변경없음"
+  },
+  "uiStates": [
+    {
+      "state": "initial-loading",
+      "trigger": "로그아웃 클릭 또는 이탈 확인 승인",
+      "message": "로그아웃 중입니다.",
+      "behavior": "기존 목록의 인증 오류가 보이기 전에 본문과 모달 제거",
+      "recovery": "성공하면 인덱스로 한 번 이동. 대기 중 재요청하지 않음",
+      "component": "src/features/session/ui/session-logout-boundary.tsx",
+      "checkIds": [
+        "T1",
+        "T2"
+      ]
+    },
+    {
+      "state": "refreshing",
+      "trigger": "로그아웃 전의 기존 보호된 화면 상태",
+      "message": "기존 해당 화면 안내 유지",
+      "behavior": "이 상태의 의미·표시는 바꾸지 않는다. 명시적 로그아웃이 시작되면 종료 안내가 보호 화면 전체를 대신한다.",
+      "recovery": "기존 복구 유지. 로그아웃 실패는 별도 종료 재시도 안내",
+      "component": "src/features/session/ui/session-logout-boundary.tsx",
+      "checkIds": [
+        "T1",
+        "T2"
+      ]
+    },
+    {
+      "state": "unselected",
+      "trigger": "로그아웃 전의 기존 보호된 화면 상태",
+      "message": "기존 해당 화면 안내 유지",
+      "behavior": "이 상태의 의미·표시는 바꾸지 않는다. 명시적 로그아웃이 시작되면 종료 안내가 보호 화면 전체를 대신한다.",
+      "recovery": "기존 복구 유지. 로그아웃 실패는 별도 종료 재시도 안내",
+      "component": "src/features/session/ui/session-logout-boundary.tsx",
+      "checkIds": [
+        "T1",
+        "T2"
+      ]
+    },
+    {
+      "state": "empty",
+      "trigger": "로그아웃 전의 기존 보호된 화면 상태",
+      "message": "기존 해당 화면 안내 유지",
+      "behavior": "이 상태의 의미·표시는 바꾸지 않는다. 명시적 로그아웃이 시작되면 종료 안내가 보호 화면 전체를 대신한다.",
+      "recovery": "기존 복구 유지. 로그아웃 실패는 별도 종료 재시도 안내",
+      "component": "src/features/session/ui/session-logout-boundary.tsx",
+      "checkIds": [
+        "T1",
+        "T2"
+      ]
+    },
+    {
+      "state": "validation",
+      "trigger": "로그아웃 전의 기존 보호된 화면 상태",
+      "message": "기존 해당 화면 안내 유지",
+      "behavior": "이 상태의 의미·표시는 바꾸지 않는다. 명시적 로그아웃이 시작되면 종료 안내가 보호 화면 전체를 대신한다.",
+      "recovery": "기존 복구 유지. 로그아웃 실패는 별도 종료 재시도 안내",
+      "component": "src/features/session/ui/session-logout-boundary.tsx",
+      "checkIds": [
+        "T1",
+        "T2"
+      ]
+    },
+    {
+      "state": "load-error",
+      "trigger": "로그아웃 전의 기존 보호된 화면 상태",
+      "message": "기존 해당 화면 안내 유지",
+      "behavior": "이 상태의 의미·표시는 바꾸지 않는다. 명시적 로그아웃이 시작되면 종료 안내가 보호 화면 전체를 대신한다.",
+      "recovery": "기존 복구 유지. 로그아웃 실패는 별도 종료 재시도 안내",
+      "component": "src/features/session/ui/session-logout-boundary.tsx",
+      "checkIds": [
+        "T1",
+        "T2"
+      ]
+    },
+    {
+      "state": "save-error",
+      "trigger": "승인한 로그아웃 요청 실패",
+      "message": "로그아웃하지 못했습니다. 다시 시도해 주세요.",
+      "behavior": "이름·점수·목록·상세 모달을 숨긴 상태 유지",
+      "recovery": "다시 로그아웃 버튼",
+      "component": "src/features/session/ui/session-logout-boundary.tsx",
+      "checkIds": [
+        "T1",
+        "T2"
+      ]
+    },
+    {
+      "state": "auth-error",
+      "trigger": "로그아웃 전의 기존 보호된 화면 상태",
+      "message": "기존 해당 화면 안내 유지",
+      "behavior": "이 상태의 의미·표시는 바꾸지 않는다. 명시적 로그아웃이 시작되면 종료 안내가 보호 화면 전체를 대신한다.",
+      "recovery": "기존 복구 유지. 로그아웃 실패는 별도 종료 재시도 안내",
+      "component": "src/features/session/ui/session-logout-boundary.tsx",
+      "checkIds": [
+        "T1",
+        "T2"
+      ]
+    },
+    {
+      "state": "not-found",
+      "trigger": "로그아웃 전의 기존 보호된 화면 상태",
+      "message": "기존 해당 화면 안내 유지",
+      "behavior": "이 상태의 의미·표시는 바꾸지 않는다. 명시적 로그아웃이 시작되면 종료 안내가 보호 화면 전체를 대신한다.",
+      "recovery": "기존 복구 유지. 로그아웃 실패는 별도 종료 재시도 안내",
+      "component": "src/features/session/ui/session-logout-boundary.tsx",
+      "checkIds": [
+        "T1",
+        "T2"
+      ]
+    },
+    {
+      "state": "unexpected-error",
+      "trigger": "로그아웃 전의 기존 보호된 화면 상태",
+      "message": "기존 해당 화면 안내 유지",
+      "behavior": "이 상태의 의미·표시는 바꾸지 않는다. 명시적 로그아웃이 시작되면 종료 안내가 보호 화면 전체를 대신한다.",
+      "recovery": "기존 복구 유지. 로그아웃 실패는 별도 종료 재시도 안내",
+      "component": "src/features/session/ui/session-logout-boundary.tsx",
+      "checkIds": [
+        "T1",
+        "T2"
+      ]
+    }
+  ],
+  "standards": [
+    {
+      "id": "S1",
+      "state": "adopted",
+      "version": "Next.js 16.2.12 / 기록 v1",
+      "reference": "docs/개발_지시서와_검증_기록.md",
+      "reason": "얇은HTTP경계·직접서버조회·현재세션과기존복구보존"
+    },
+    {
+      "id": "S2",
+      "state": "adopted",
+      "version": "React 19.2.8",
+      "reference": "https://react.dev/reference/react-dom/flushSync",
+      "reason": "명시적인 로그아웃 클릭과 비동기 이탈 확인 승인에서만 사용. 캐시 신호보다 보호 화면 제거가 앞서야 하며 실제 훅으로 검증했다. render/effect 및 일반 조회에는 사용하지 않는다."
+    }
+  ],
+  "checks": [
+    {
+      "id": "T1",
+      "kind": "component",
+      "target": "src/features/session/ui/session-logout-boundary.test.tsx",
+      "scenario": "실제identity신호·캐시lock과지연DELETE, 성공/false/예외·반복클릭·학생/관리자",
+      "expected": "개인정보/중간오류숨김·목적지/1회·실패재시도·refresh0",
+      "topics": [
+        "behavior",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "component",
+      "target": "src/components/admin-logout-button.test.tsx",
+      "scenario": "dirty이탈취소/승인·pending중재클릭·재시도",
+      "expected": "취소시DELETE/폐기0, 승인때1회, 실패개인자료복원없음",
+      "topics": [
+        "behavior",
+        "error-ui",
+        "ui-copy",
+        "authorization",
+        "data-leak",
+        "answer-leak",
+        "cache"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "browser",
+      "target": null,
+      "scenario": "가짜학생/관리자 보호본문과모달에서느린로그아웃",
+      "expected": "중간목록오류없음·종료후인덱스·실학생쓰기없음",
+      "topics": [
+        "behavior",
+        "error-ui",
+        "ui-copy"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "static",
+      "target": null,
+      "scenario": "타입/lint/지도/구조/빌드·독립검토",
+      "expected": "현재입력에서통과;기존기록/다른기능보존",
+      "topics": [
+        "structure",
+        "behavior"
+      ]
+    }
+  ],
+  "verification": {
+    "fingerprint": "4e664a21cee6455f2cd23e7181ca1486d65dfbdddfd4a3f1fcd77ebda5e6ce12",
+    "files": [
+      {
+        "path": "architecture/기능_소유권.json",
+        "sha256": "16c8680736976c01b24893c3399861f223dbbad9e241a777a42f5874c490a6d7"
+      },
+      {
+        "path": "eslint.config.mjs",
+        "sha256": "d8c244c819921bdb70982e51f8bb2c5b5e8a7620a70eca8cde1c89c760113e61"
+      },
+      {
+        "path": "next.config.ts",
+        "sha256": "c779b3730f9dcab3806d1ac9ab52c6363ad1994f6bb33d3bb2ca3b5f946b1405"
+      },
+      {
+        "path": "package-lock.json",
+        "sha256": "3a4e58c471c0c8f2f3139349f4cb06d8f6d9d25df974b45877ed323aef0c769c"
+      },
+      {
+        "path": "package.json",
+        "sha256": "f7779499ba259f680619c3f3c8148747d80d0eaf7b2da1c5cd75198e91bbf7df"
+      },
+      {
+        "path": "proxy.ts",
+        "sha256": "dece1f529f8bc74d7af365ddee4c7d6f500e62131c888899feaf88255cdbf1a9"
+      },
+      {
+        "path": "src/app/admin-route-error.test.tsx",
+        "sha256": "2de428bb836919d99ffce43eaa0aba4d8f4fa29d54c4b9addf5bfe37156b3347"
+      },
+      {
+        "path": "src/app/admin/(protected)/@detail/(.)students/[studentId]/loading.tsx",
+        "sha256": "58eb370e52eb10b827b9bd32bfa4bb29eee28ef9db77b50cb9fe704b0a4ee7de"
+      },
+      {
+        "path": "src/app/admin/(protected)/@detail/(.)students/[studentId]/page.tsx",
+        "sha256": "a1d3756af75b32085ed3dba1234b75a5c774852baade4892e4868487995a4e6a"
+      },
+      {
+        "path": "src/app/admin/(protected)/@detail/[...catchAll]/page.tsx",
+        "sha256": "47296a218b630c66817aaffce1345c4ae390b888a9288d4f80bac16a421fccf4"
+      },
+      {
+        "path": "src/app/admin/(protected)/@detail/default.tsx",
+        "sha256": "6f93730b94b3f6865125663f84d93b9592626f8002b0f70f51b10d36afa3548d"
+      },
+      {
+        "path": "src/app/admin/(protected)/@detail/page.tsx",
+        "sha256": "ff8461d0c1b7593a076c9e53cd4d103ba49eb2b3ae1a461ee652f6cfdce932a1"
+      },
+      {
+        "path": "src/app/admin/(protected)/admin-route-error.tsx",
+        "sha256": "c9c90965584372b0f7481556f8cf932fece1e717ca25931dd5266a87260dd499"
+      },
+      {
+        "path": "src/app/admin/(protected)/error.tsx",
+        "sha256": "fbaf1e9fc7319f2b01a6222ca5964ae798e835ebde6042d7ba3f880cec5b83ae"
+      },
+      {
+        "path": "src/app/admin/(protected)/layout.tsx",
+        "sha256": "20e3018ab6ffcbf49d63a4d2542814e5d37a9eb6a36f8bf3dec8b120da5a1716"
+      },
+      {
+        "path": "src/app/admin/(protected)/loading.tsx",
+        "sha256": "c7586a72dc3f7aa42535301851bf9af69d5f2df3e5edea562735b4562f5e630a"
+      },
+      {
+        "path": "src/app/admin/(protected)/route-state.module.css",
+        "sha256": "17a8be6b1854003716a74779793176d2b3b5a662422398512d0b9604f0f43a16"
+      },
+      {
+        "path": "src/app/admin/(protected)/students/[studentId]/loading.tsx",
+        "sha256": "cb7809aebec41ea63a9f5adc3de2f1869493d839c7042dbffcd918d4b5e3567e"
+      },
+      {
+        "path": "src/app/admin/(protected)/students/[studentId]/page.tsx",
+        "sha256": "01536d0b05ba0dee68ac81711fd8def94d362cdc141be853ead8cd1e34bdb759"
+      },
+      {
+        "path": "src/app/admin/(protected)/students/page.tsx",
+        "sha256": "545dd6d6453eea8e8ff7aa92cf5d272512b6993e3e079106c3b94befd4842d38"
+      },
+      {
+        "path": "src/app/admin/error.tsx",
+        "sha256": "06b9bdae2c8991d38892c64a9c67c4eace832e7431ea9d26d749b14846b02693"
+      },
+      {
+        "path": "src/app/admin/login/page.tsx",
+        "sha256": "cd71507ebdbed3da3663472236ee0ef861f6ee0d62bc9a2a6c740d7cce89ed06"
+      },
+      {
+        "path": "src/app/api/admin/assignment-workspace/datasets/route.ts",
+        "sha256": "42eb75563225ad8bc0d8b6fcea630981c67108f1b6deafb32760b80a240d5e7e"
+      },
+      {
+        "path": "src/app/api/admin/schools/search/route.test.ts",
+        "sha256": "dbf7eb588e9257cad91a0a9a9e6513d25afb051a5200d30e5060ea91650786dd"
+      },
+      {
+        "path": "src/app/api/admin/schools/search/route.ts",
+        "sha256": "bd9a2501cce75cd2977a249b535eccf4a275a9855a0d3d449a2a97be65545fe0"
+      },
+      {
+        "path": "src/app/api/admin/session/route.test.ts",
+        "sha256": "1df5ae88872e1683ce50532d94942876296767df9741272c190e5178b1587f5d"
+      },
+      {
+        "path": "src/app/api/admin/session/route.ts",
+        "sha256": "e5f3914a7e84892cec5e9fb65a48a3b2ad33f88ca4d52d15865e5b66551606e8"
+      },
+      {
+        "path": "src/app/api/admin/students/[id]/history/route.test.ts",
+        "sha256": "970a4c8f7ab64519e33e5d8926c3e3b35f55c4e9716beddfd3ad707706e0e47a"
+      },
+      {
+        "path": "src/app/api/admin/students/[id]/history/route.ts",
+        "sha256": "d32e93f029b5e7a076407dcc32abf1e6ad24d4cb3ed998486bac2f36117e4fbb"
+      },
+      {
+        "path": "src/app/api/admin/students/[id]/route.ts",
+        "sha256": "6ee4c3edc02a8e64cf8d31e2c4ae6267cd8a7b12673ef6d5d45c9fbf74b7714d"
+      },
+      {
+        "path": "src/app/api/admin/students/[id]/wrong-words/route.ts",
+        "sha256": "6e22a5330ac9e5884828027fe03dfd312a50359195d343546e7f4e17dfa4cb89"
+      },
+      {
+        "path": "src/app/api/admin/students/directory/route.test.ts",
+        "sha256": "7492f46106365f8665f54d7283f69ade607166ffbe7ee124d9425f5b4d244b80"
+      },
+      {
+        "path": "src/app/api/admin/students/directory/route.ts",
+        "sha256": "587889739b196716225287f3539c29c2ce0abee55ab3c3ee0c867e96868877b3"
+      },
+      {
+        "path": "src/app/api/student/session/route.test.ts",
+        "sha256": "31992f8ab5206999e0d33e64aa5c88b9811a69b4cc47e7d8ba9096232e16cdff"
+      },
+      {
+        "path": "src/app/api/student/session/route.ts",
+        "sha256": "73adcd6a84400b8815964ca356dadcc6caf51b490ddbd857e599fb9b5b0f966b"
+      },
+      {
+        "path": "src/app/code/page.tsx",
+        "sha256": "62118ccaf4084eede85e03e2241200a9f28b6c4d68ca26e052c57a3432f720f4"
+      },
+      {
+        "path": "src/app/error.tsx",
+        "sha256": "e0b22496b631caab4253be72d882da5df034966f683bf9260d5a60f01f0c2457"
+      },
+      {
+        "path": "src/app/fonts/SourceSerif4Variable-Roman.ttf.woff2",
+        "sha256": "940a76eda1388de39d38c8e7a79bf6ea058a387faee0a9f33c8d25c6ba05e1be"
+      },
+      {
+        "path": "src/app/global-error-contract.test.ts",
+        "sha256": "0b9a7ce789cb2c3a364c4ffe82dadf37e87f35ded9d121ba0c8bbf0ba5a78271"
+      },
+      {
+        "path": "src/app/global-error.tsx",
+        "sha256": "e74b1b8da467529cda4b36b61953256c4a1477ec2b1d4a0dcdf1e3d5189b6693"
+      },
+      {
+        "path": "src/app/globals.css",
+        "sha256": "d4dbb5dd85498dca6678447fe8a06ae5ddf9038bb6bb8da388121a081d0a6cbe"
+      },
+      {
+        "path": "src/app/icon.svg",
+        "sha256": "1a9a071b9f411c0e80b0fbb34780076d2aa1d9a19d3be7b15c1c8f53725e6b77"
+      },
+      {
+        "path": "src/app/layout.tsx",
+        "sha256": "600926d272cad6d79a48965a951d7467c97aa3d073d7162cde0856b70032e290"
+      },
+      {
+        "path": "src/app/not-found.tsx",
+        "sha256": "aa0571ad435e3c5cccac37dce0e9bf73928fc874476b0d2a290fd90dc3612103"
+      },
+      {
+        "path": "src/app/page.tsx",
+        "sha256": "fe7fa6d322e2c563c1dd64e97e8d97e98b688553a6843520fc9cd346bf571835"
+      },
+      {
+        "path": "src/app/student/(protected)/layout.tsx",
+        "sha256": "618dcc2bd52958477e3fd54e061be096673f6656fcb53f6acbc809f15aa70079"
+      },
+      {
+        "path": "src/app/student/(protected)/loading.tsx",
+        "sha256": "179cc8bb299ac1520a29373fdd378320d6d1732c99e53380d7a86456e5ba8c0f"
+      },
+      {
+        "path": "src/components/admin-login-form.tsx",
+        "sha256": "79af4e121fbbe3b25399cf7ab14ade802bf57a6a620820ba14e332529b30236c"
+      },
+      {
+        "path": "src/components/admin-logout-button.test.tsx",
+        "sha256": "c3a62b142662446d50cbbd7d17e13ec3d0e2274d8ad4f55c96ae81e5d1faef38"
+      },
+      {
+        "path": "src/components/admin-logout-button.tsx",
+        "sha256": "fc98fc7712c08530866e1e49794a05ef5acce1dc185a7d944e63bbaf81015a63"
+      },
+      {
+        "path": "src/components/admin-navigation.tsx",
+        "sha256": "7301d7d17783e4254ae7e4bf1d298a26a95d985144bd8ff1826c37cc2648d626"
+      },
+      {
+        "path": "src/components/admin-route-screen-reader-title.tsx",
+        "sha256": "907215fbbdf176e27217db56cdcf13610453d2d883f155fef424aad699f56570"
+      },
+      {
+        "path": "src/components/app-toaster.tsx",
+        "sha256": "c6a305ff5eedbca15f879edf9c975343c9ce8db6452bbb5c0632c3dfa647bbde"
+      },
+      {
+        "path": "src/components/document-navigation.ts",
+        "sha256": "02c364ccd26d8936cdcc157619f85040771e68c3ef0a08aa7579f3f9debff497"
+      },
+      {
+        "path": "src/components/guarded-link.test.tsx",
+        "sha256": "5833a167cf92ad3cda1ad3b7cc6c494fb8ef55a3a5689cbf8a58a64b254cb54d"
+      },
+      {
+        "path": "src/components/guarded-link.tsx",
+        "sha256": "06c7b4414a02d57073f746c3288909b0ece08a5cb8aef0b45824c758191821a6"
+      },
+      {
+        "path": "src/components/login-form.module.css",
+        "sha256": "c6be88ca437d635372ec35f29138a2d2c412461565286c5e597eff50d33d7649"
+      },
+      {
+        "path": "src/components/navigation-exit-guard.tsx",
+        "sha256": "491b56469d832c44b6366c5cc98dae0e497ccb2c6d29985e6322f7ea0691c940"
+      },
+      {
+        "path": "src/components/route-screen-reader-title.tsx",
+        "sha256": "f67292b652cf0eb2e55a39f61881205bc6cd09bdc4fe2df2b0c88bb450adb5a9"
+      },
+      {
+        "path": "src/components/routed-detail-dialog.test.tsx",
+        "sha256": "b7f2f901d366819bd62f5b45b654c0f16afd51d674de5575de70d1089b956794"
+      },
+      {
+        "path": "src/components/routed-detail-dialog.tsx",
+        "sha256": "7ad9817b65a90f7f5a72d7bb44738d8ffb9c3f106cdfabd657c1517abd7f2121"
+      },
+      {
+        "path": "src/components/session-action.module.css",
+        "sha256": "a614d776f2f8a16c92cc4075f03ddf109ae201a30439c85aaec8c250b09fe689"
+      },
+      {
+        "path": "src/components/shell/admin-navigation.module.css",
+        "sha256": "b893735449bb926d57403b5201d5dc7a863ae498659d2d90ead4c53329fc3580"
+      },
+      {
+        "path": "src/components/shell/app-shell.module.css",
+        "sha256": "bf9e56fd4c5edebcf51d1578e7b3d28727837702a61af18cb72a06694fdc56aa"
+      },
+      {
+        "path": "src/components/student-login-form.tsx",
+        "sha256": "06a4d8ea4a82531173e68dc00f70a6152d12f8a561a05f8bc5de6483c8c7f357"
+      },
+      {
+        "path": "src/components/student-logout-button.tsx",
+        "sha256": "0e9102525a5f88926b65169d99c82a1a7b9935c2711437e7c97c112ab7d0f97b"
+      },
+      {
+        "path": "src/components/student-shell.tsx",
+        "sha256": "0ca3b53e022e8d7f40df8c70c6d02a683e99cfb7cdc8baf2f472026d5281a771"
+      },
+      {
+        "path": "src/components/theme-toggle.module.css",
+        "sha256": "8e260e46d7940e46643ea81a3b2cc191e68db5b28878db71577b1021ef4e5665"
+      },
+      {
+        "path": "src/components/theme-toggle.tsx",
+        "sha256": "0fec5dcbf967ffcc172790a8587b90bd197b8c3fff528339acf45d08e9ee7012"
+      },
+      {
+        "path": "src/components/use-route-exit-guard.test.tsx",
+        "sha256": "293dc8d63795e901e576c1955a3b35b96ac1aca79e55d2957dc2fdd54fb38d71"
+      },
+      {
+        "path": "src/components/use-route-exit-guard.ts",
+        "sha256": "c64773393bb96214a78db2b4cfeb7366f0afa7f8f98b5c0cdd407006e21ee86d"
+      },
+      {
+        "path": "src/components/use-student-history-refresh.ts",
+        "sha256": "92e3e7ce37c6c4672ad60f35e6d423110cc2c2fa426b58ca4fe072a7ee3945fa"
+      },
+      {
+        "path": "src/design-system/patterns/activity-row/activity-row.test.tsx",
+        "sha256": "6e7be28350d72a01aa57b63d03d74484cfdb809043ff3aa25f29707adb50eba3"
+      },
+      {
+        "path": "src/design-system/patterns/activity-row/activity-row.tsx",
+        "sha256": "e8ce067661467df24b2b53fa9f3ee68d66324fe2fa1ab838cce80685f5a996dd"
+      },
+      {
+        "path": "src/design-system/patterns/activity-timeline/activity-timeline.tsx",
+        "sha256": "8b72f58a07e94b6dfcfa6c2329578f5020f00d4849afd4a4b868758000c940b3"
+      },
+      {
+        "path": "src/design-system/patterns/confirmation/confirmation.test.tsx",
+        "sha256": "ee9f534a100c7319defe413ef9f7d62e751aac6a7de6c7bf5bbafe8e96b423aa"
+      },
+      {
+        "path": "src/design-system/patterns/confirmation/confirmation.tsx",
+        "sha256": "6223035de4a2662870ee55def262bb54212375cf3a9a6f19f3088e5dc6a8a6ee"
+      },
+      {
+        "path": "src/design-system/patterns/filter-workspace/filter-workspace.test.tsx",
+        "sha256": "09f8c8997f8bd2bffda85ccb5c8708fdd50cf3bee423fd7278a68cb47712edfe"
+      },
+      {
+        "path": "src/design-system/patterns/filter-workspace/filter-workspace.tsx",
+        "sha256": "c76297f51f8b9740bd46deab5261aa4caee71d92c01fab1821a2bcbbc25a5dc4"
+      },
+      {
+        "path": "src/design-system/patterns/route-detail-dialog/route-detail-dialog.test.tsx",
+        "sha256": "5c6428e16c1823af48940afca58b9e61f2a23b12ef8f5bf26d5c74a457610b74"
+      },
+      {
+        "path": "src/design-system/patterns/route-detail-dialog/route-detail-dialog.tsx",
+        "sha256": "0fbee3a92dad55c9267e6dc02dbc12ef394c82e8ebd0b53cfda261c607ebc1a0"
+      },
+      {
+        "path": "src/design-system/primitives/dialog/dialog.test.tsx",
+        "sha256": "70695212baaa290d96ae8dbf236ca329caa6a0289209d04c652ae115fc4228f6"
+      },
+      {
+        "path": "src/design-system/primitives/dialog/dialog.tsx",
+        "sha256": "d4fd4447ae17d47eec95b43195468a2e7edf0c0c5c59e901345d1e96fff46af8"
+      },
+      {
+        "path": "src/features/assignment-queue/ui/assignment-queue-history.module.css",
+        "sha256": "bbc850cf7935dea15c103e8772b6f55ad31a495d5e0288fd28d53d8cb9408011"
+      },
+      {
+        "path": "src/features/assignment-queue/ui/assignment-queue-history.test.tsx",
+        "sha256": "bf5690a99be4c81f3ac6d5abbf94a8fc14a90989afb8373759dedecf845eae59"
+      },
+      {
+        "path": "src/features/assignment-queue/ui/assignment-queue-history.tsx",
+        "sha256": "0a2c258295fd383f0d8598a66453ea73ce588faa1ab8853f16e482380a7d62f7"
+      },
+      {
+        "path": "src/features/assignment-queue/ui/assignment-queue-tags.module.css",
+        "sha256": "d5e0684c243682441cf483c67db2c230c6924b2e877ae26674bd3aef0b9af95d"
+      },
+      {
+        "path": "src/features/assignment-queue/ui/assignment-queue-tags.tsx",
+        "sha256": "f1d1a12cbf38a3a36a6a411141c448429d08e4d54a1b6b450d1a6e9bc2ab552d"
+      },
+      {
+        "path": "src/features/assignment-queue/ui/student-assignment-queue-history.module.css",
+        "sha256": "5a8101b088aeaec991f9c10faf4070b6b1930f33ca8efa0a3e3fbbed26e84ba4"
+      },
+      {
+        "path": "src/features/assignment-queue/ui/student-assignment-queue-history.test.tsx",
+        "sha256": "1bf624c57170bb9107bc9bbce15eaf36b9c0fdb5d232024c151726c4adc0fda1"
+      },
+      {
+        "path": "src/features/assignment-queue/ui/student-assignment-queue-history.tsx",
+        "sha256": "4c39498a32452541aaad95f0a90b8b5757bda36d64c3a98fb54cf495a340ee6b"
+      },
+      {
+        "path": "src/features/assignments/contracts/assignment-dataset-directory-schema.ts",
+        "sha256": "3531e508f786798c2a19e09d223040e8ccdbc20e177c767b013d1ed56720f353"
+      },
+      {
+        "path": "src/features/assignments/contracts/assignment-workspace-read-error.ts",
+        "sha256": "a8b7ae352900cd26f5c6b0aa8733b2611b282708653f0dcf366e2fa81a73c7a0"
+      },
+      {
+        "path": "src/features/assignments/public-client.ts",
+        "sha256": "1156e535dd7703b864ee580ddd6ba894e2056732545c222b0ec690a013503a94"
+      },
+      {
+        "path": "src/features/assignments/server/queries/assignment-dataset-directory-query.ts",
+        "sha256": "5aa94d0d1972d6fd440a8e116ee93713e9d4534d696b28b5a272026b0909babe"
+      },
+      {
+        "path": "src/features/assignments/transport/assignment-workspace-reads.test.ts",
+        "sha256": "40fff9d34f944915b904656b477ee1238b4e9fcd8701899dc0c248ffa6e7b483"
+      },
+      {
+        "path": "src/features/assignments/transport/assignment-workspace-reads.ts",
+        "sha256": "d30d3b74745dc88d6b4b0cee86e6d7a2b493ed074ddf7f3a8ee153c28d3317f6"
+      },
+      {
+        "path": "src/features/history/domain/learning-activity.ts",
+        "sha256": "b4e7d9e9f59666ec27361303a35394d1e93ac78298c9766cf004e3420f12a33c"
+      },
+      {
+        "path": "src/features/history/public-contracts.ts",
+        "sha256": "a5256ee277ffc9de89b992da795dbbd7b7998bd366a900bdafe583e493cb6dab"
+      },
+      {
+        "path": "src/features/history/public-server.ts",
+        "sha256": "d1417292194d46062f371098e81fd6190e38daae148a689ee73a8ca619d33daa"
+      },
+      {
+        "path": "src/features/history/public-ui.ts",
+        "sha256": "89308c49263b21867f30dabe7607945ec90a6092c8070340888c01118d45ca37"
+      },
+      {
+        "path": "src/features/history/server/queries/admin-history-row-schema.ts",
+        "sha256": "76f57b7c6c340012e608834fe7cb6dc687a28ac4f73187db452af2b89abc7272"
+      },
+      {
+        "path": "src/features/history/ui/activity-status-timeline.tsx",
+        "sha256": "dddada58eda2552451e825acabeeacf2415a468ec48d954f1ba16002e7568441"
+      },
+      {
+        "path": "src/features/history/ui/assignment-meta-tags.module.css",
+        "sha256": "2ac39afc88f39785cfd040a8dc6f0b9ac176b6fab908391bee56364b82d8486a"
+      },
+      {
+        "path": "src/features/history/ui/assignment-meta-tags.test.tsx",
+        "sha256": "42265018ec6dd3a7ba8dfc4f0a5439844bc4a8436167e1cd990f5f801951a9e0"
+      },
+      {
+        "path": "src/features/history/ui/assignment-meta-tags.tsx",
+        "sha256": "fdd630d5d7208c67b86006dfd4fe06186feea3959c994ea4424cfbe04a8cb413"
+      },
+      {
+        "path": "src/features/history/ui/attempt-score-summary.tsx",
+        "sha256": "03f907c4cc6849a864e5711fa7daa1b949f762ab6b3c5b1fb70b44254d0ba130"
+      },
+      {
+        "path": "src/features/history/ui/history-activity-row.module.css",
+        "sha256": "9361f8c440c49b615262964cacb78d3ad2120d444668e5dd5db2bec1a5dba8ad"
+      },
+      {
+        "path": "src/features/history/ui/history-activity-row.tsx",
+        "sha256": "5a12925200e519abc2ebff6079539224e75f0517d3e4c79744ea668778fcc075"
+      },
+      {
+        "path": "src/features/history/ui/student-learning-activity-list.module.css",
+        "sha256": "c6949ab77bc8f2c4d595b470989a9a492f323545d9c64e4c999982bec67b7b4c"
+      },
+      {
+        "path": "src/features/history/ui/student-learning-activity-list.test.tsx",
+        "sha256": "dddb242f5e2a4b3faed232dc1044813d18b12e38831a6473577ab87defb5ac87"
+      },
+      {
+        "path": "src/features/history/ui/student-learning-activity-list.tsx",
+        "sha256": "3edcd5df242b107efe244446d19e6083fa04653bc14250947bac933f5934b123"
+      },
+      {
+        "path": "src/features/learning-points/ui/point-summary.module.css",
+        "sha256": "493da4ebe8ab9f66c928479d37ce7a3315eb10a5ed9391f79d49887c81301b7a"
+      },
+      {
+        "path": "src/features/learning-points/ui/point-summary.test.tsx",
+        "sha256": "20169a6b1dcadcf43894fd7a5785fc17b03bedbce7d8d2f84af312e0f9cf89eb"
+      },
+      {
+        "path": "src/features/learning-points/ui/point-summary.tsx",
+        "sha256": "ddd5f22d34f05e8001231830aa9c3fe75d9ec94437c80ca2d77e12ef22dc2737"
+      },
+      {
+        "path": "src/features/school-schedules/client/components/live-school-schedule.test.tsx",
+        "sha256": "7aec49acbdf0ff7047dc7fb944aeb3616890cbf30929aa1aca5201842dc302c5"
+      },
+      {
+        "path": "src/features/school-schedules/client/components/live-school-schedule.tsx",
+        "sha256": "7a4f4c6733b6dfc60fd3de113ba6e4543ea72556b6e3c88c58af8d88d87b176a"
+      },
+      {
+        "path": "src/features/school-schedules/client/components/schedule-retry.test.tsx",
+        "sha256": "9d262948b66ba82d327fa8c6463757ce7d6707d3d06392710032936e99026b54"
+      },
+      {
+        "path": "src/features/school-schedules/client/components/schedule-retry.tsx",
+        "sha256": "97e990d2268768f5745e51faf2fca0723436e339b9762f9981b6a5a727f36e2b"
+      },
+      {
+        "path": "src/features/school-schedules/contracts/school-schedule-import.ts",
+        "sha256": "3803334a36430a7e8f85e02b4a2bcd022045d6da7b814d78838e7eb0e6276810"
+      },
+      {
+        "path": "src/features/school-schedules/contracts/school-schedule.ts",
+        "sha256": "58df3df325602739857d578fc3b01b5f74d4f55a5613e7a25ed390afb023a05a"
+      },
+      {
+        "path": "src/features/school-schedules/domain/national-exams.ts",
+        "sha256": "f1645ebda2bdb433771ef66837851e7dbd15062a46e5c5a2ce36d1bf6e7b277d"
+      },
+      {
+        "path": "src/features/school-schedules/domain/school-schedule.test.ts",
+        "sha256": "d1f2f825c9b3af1fe6a50de3b660aa81a6daa30571e10f40d23c4f1bdc3f021d"
+      },
+      {
+        "path": "src/features/school-schedules/domain/school-schedule.ts",
+        "sha256": "437a8551177476b3a536be28cdfc05b2b2dc201604f214037009ee828a4407fa"
+      },
+      {
+        "path": "src/features/school-schedules/domain/school-timeline.test.ts",
+        "sha256": "77f6481d2369f296b65d4af96965c9325a921f92e8fcfe34437ec7e3f85992da"
+      },
+      {
+        "path": "src/features/school-schedules/domain/school-timeline.ts",
+        "sha256": "cb5e1758a9969aa95733c16f0edea85d068ed659a45463976c2ff1836bccac8b"
+      },
+      {
+        "path": "src/features/school-schedules/public-contracts.ts",
+        "sha256": "57bf559e18ab7739ad4e5d21b14038189ac1cdaf95b203cb718af708d0a4794e"
+      },
+      {
+        "path": "src/features/school-schedules/public-server.ts",
+        "sha256": "e914de0914a3648e210222b122e2b9047b107edb0fcfddd018cbae7b7011a562"
+      },
+      {
+        "path": "src/features/school-schedules/public-ui.ts",
+        "sha256": "89b1fafb41e326aa790fdba88e6cb0ae1e51c276ae87a09d29c0711dcacaf86a"
+      },
+      {
+        "path": "src/features/school-schedules/server/components/school-schedule-content.tsx",
+        "sha256": "046f86e3e6aece624eccbd41d891ade0fecd6e707c4ff31099b909f2e71b9e78"
+      },
+      {
+        "path": "src/features/school-schedules/server/components/school-schedule-editor-content.tsx",
+        "sha256": "876b3e8f09762de25661a32101817a61bfd3af38151acaf447a1ca72d26513af"
+      },
+      {
+        "path": "src/features/school-schedules/server/queries/school-schedule-editor-query.ts",
+        "sha256": "ca177311dcb08c2ac81a2bad5f39c055d7a7b8b32ccbdc1db57b61cdeac467f0"
+      },
+      {
+        "path": "src/features/school-schedules/server/queries/school-schedule-query.test.ts",
+        "sha256": "d332bc24b2af5c42d92ed4059c871b3a289032a3244263d67f4d68fd2daa572e"
+      },
+      {
+        "path": "src/features/school-schedules/server/queries/school-schedule-query.ts",
+        "sha256": "eac2c00f155314210c793be67e277c78dc8cd85ce06b62635a6cba70e5b9190e"
+      },
+      {
+        "path": "src/features/school-schedules/server/school-schedule-migration.test.ts",
+        "sha256": "560486d9985783692821a8fcb0b7545b33975058b9df54c25ef559eb3166bf6c"
+      },
+      {
+        "path": "src/features/school-schedules/ui/school-exam-identity.tsx",
+        "sha256": "a12ac071fe0c67ce82119fbb006c778baa109f7dd0003d3e8ae4c103df7041be"
+      },
+      {
+        "path": "src/features/school-schedules/ui/school-schedule.module.css",
+        "sha256": "fca7f3ecadd410ba36a79b1fdf8da3cf639477ef463e8678e1128044bfbee387"
+      },
+      {
+        "path": "src/features/school-schedules/ui/school-timeline.test.tsx",
+        "sha256": "19ea4ebe4b6b276ce0d9904e1762e28ccce5610c3bdd8cdf4913dded030c7608"
+      },
+      {
+        "path": "src/features/school-schedules/ui/school-timeline.tsx",
+        "sha256": "3f31a059d478624066f224af5f4ea5e7094f5ccdd6c74bf35c353f8b81b0bac7"
+      },
+      {
+        "path": "src/features/session/api/session.test.ts",
+        "sha256": "911efb80b232064cb92e0ecfafb72e2ea44fff934bf31dfc958ede57731a4cd4"
+      },
+      {
+        "path": "src/features/session/api/session.ts",
+        "sha256": "9b303f29d0a9451bccf4963e17f859024d88f7c5bbe85eb962e790db86a588f2"
+      },
+      {
+        "path": "src/features/session/controller/admin-private-cache-events.test.ts",
+        "sha256": "15698334cd933b2367d77d012e4626c816f7e8ec42cdedb4ae43550783ffa82c"
+      },
+      {
+        "path": "src/features/session/controller/admin-private-cache-events.ts",
+        "sha256": "9909418ed2980f6f2d2394a93da23b58dcaad6f2b8c5046509643ba5f270abf2"
+      },
+      {
+        "path": "src/features/session/controller/admin-session-commands.ts",
+        "sha256": "45fc09aca7f063f2023c6753245b06825b1fe5404980f030887b2bd2ec175486"
+      },
+      {
+        "path": "src/features/session/controller/private-list-cache.ts",
+        "sha256": "dda91804f12a3508eb1d8b3e4ef67711f3295bf97c5be6dabbca4c19b86608f5"
+      },
+      {
+        "path": "src/features/session/controller/use-logout-transition.ts",
+        "sha256": "aeab9aa9d0f20f09203222a258e366b1a6573a9f635c4c01790acfbf77bfaad7"
+      },
+      {
+        "path": "src/features/session/controller/use-private-list-entry.ts",
+        "sha256": "7b5bf3a250cd0de300b3958430515d84f2a4aaddd397aef39aecac75051f89cb"
+      },
+      {
+        "path": "src/features/session/controller/use-private-list-session.ts",
+        "sha256": "b452fc53e96fa62a1cbe1b8bf7965ab40b4484b1631273b619e8495b6777f482"
+      },
+      {
+        "path": "src/features/session/public-client.ts",
+        "sha256": "5ee89ce3b6c7c35142b1ef9ad907becaa60fe5db7020d6aaccf472a671c1a3c0"
+      },
+      {
+        "path": "src/features/session/ui/session-logout-boundary.module.css",
+        "sha256": "1baf98adf5be9fbba0b518dffca1de7aabd94d0fb30d13e250d8174adc2b41b6"
+      },
+      {
+        "path": "src/features/session/ui/session-logout-boundary.test.tsx",
+        "sha256": "a6a35227f5fb9f409e81d9cefb240998cd70e5779d73d4daef3366e937c208ce"
+      },
+      {
+        "path": "src/features/session/ui/session-logout-boundary.tsx",
+        "sha256": "dc6737445ffc806c116be1f82276c2fb1428010c24d27756ce6b349ff03114e0"
+      },
+      {
+        "path": "src/features/session/ui/student-session-renewal.test.tsx",
+        "sha256": "b9d65c9ad98eada0e7725d6c471ed4233ed03a332ac3c17b15bfd4fc29afb014"
+      },
+      {
+        "path": "src/features/session/ui/student-session-renewal.tsx",
+        "sha256": "9b123cd2c05ee724202404e25d74864b76a031978038a7df6217b8243252aefb"
+      },
+      {
+        "path": "src/features/students/actions/update-student-profile.ts",
+        "sha256": "d3741a6d172f359d8609e06dca1030293a888b5ff90c55b07a26c6a9018bff47"
+      },
+      {
+        "path": "src/features/students/api/student-mutations.ts",
+        "sha256": "60505037244b0429d34253755b265fcc4efffdb976944d909cd1c5e836c090b7"
+      },
+      {
+        "path": "src/features/students/api/wrong-word-transport.test.ts",
+        "sha256": "7cda0d00c7375ef4ebea016bf7760aa97ef347061496a619518fdd65d688089d"
+      },
+      {
+        "path": "src/features/students/api/wrong-word-transport.ts",
+        "sha256": "cf6f36fbde17a6a0550ffe773d1f1ce55a301502a417d5f1139cf695ecf772f3"
+      },
+      {
+        "path": "src/features/students/contracts/school-search-contract.ts",
+        "sha256": "1e3aab87c5936489b7751897cae7bb61f8f5c0d3d66dea3cd69216c0fcf3c367"
+      },
+      {
+        "path": "src/features/students/contracts/student-detail-read-model.ts",
+        "sha256": "9a62ce85c7367ddde0aedff4d2ef7809548860e5f5e9f171089d9435337cd382"
+      },
+      {
+        "path": "src/features/students/contracts/student-directory-cache-contract.ts",
+        "sha256": "878c40b625f9292952cc2143bcdc4f4168326f5ac9f8b2b914264bff69a58487"
+      },
+      {
+        "path": "src/features/students/contracts/student-directory-read-model.ts",
+        "sha256": "e6de086afb55da0f88d375fc3fc7b0887e70fd9a7b13bde25b2b3b25d9785aa6"
+      },
+      {
+        "path": "src/features/students/contracts/student-mutation-result.ts",
+        "sha256": "d33e45678bd42658c8d37244ad3906d4d86ed4c7fbbc7a3c1b4698f0cb283c4b"
+      },
+      {
+        "path": "src/features/students/contracts/wrong-word-page.ts",
+        "sha256": "11a5dd495696ff50ce2c81185d33603eaeb6d634bf56bc91a3eaf6457be1cf4f"
+      },
+      {
+        "path": "src/features/students/controller/student-detail-auth.test.ts",
+        "sha256": "1da38a7b78001a47df5f33b00c3cc0724c4d8c59a650e06037721169571b202d"
+      },
+      {
+        "path": "src/features/students/controller/student-directory-cache-provider.test.tsx",
+        "sha256": "8445f182f00404e01077fc8c79f19dcdb3cf7142626563eca3551589d6152921"
+      },
+      {
+        "path": "src/features/students/controller/student-directory-cache-provider.tsx",
+        "sha256": "4b41c7a95e4b94c5182214b7b79d66da67b669d8e517ab4bc3e7424e69776859"
+      },
+      {
+        "path": "src/features/students/controller/student-directory-cache.test.ts",
+        "sha256": "c2c616364519df9806580ee6ea6b96b6ac446b521bdd7427e720ddfecdf8f7b7"
+      },
+      {
+        "path": "src/features/students/controller/student-directory-cache.ts",
+        "sha256": "9d24f889f5745ce5e1031185c7fbd15b1346cbf3a1378c65197e17f0332e48bb"
+      },
+      {
+        "path": "src/features/students/controller/student-directory-events.ts",
+        "sha256": "edc4593e164fda468a222865339d17d8ec6fdd8764a087a5a19bdbf6ea927e4c"
+      },
+      {
+        "path": "src/features/students/controller/use-cached-student-directory.ts",
+        "sha256": "c5bb5345a54e275d99c5a04e85d02af005fe5b1b3018d7ac1e4f119363d02b17"
+      },
+      {
+        "path": "src/features/students/controller/use-school-search.test.tsx",
+        "sha256": "24672cc5675422135835f4c20d1b00a452ff333476c4b569525bc508550f9db9"
+      },
+      {
+        "path": "src/features/students/controller/use-school-search.ts",
+        "sha256": "1958f40901fb4782071c2fe3ce9b2dfec4e6d8c784ddcab07a12ba12fa602621"
+      },
+      {
+        "path": "src/features/students/controller/use-student-access-controller.test.tsx",
+        "sha256": "c0054f3c932fbd5a899053952796eddb57d66fc9d8b9c3d8b6d5b81ec9b7a5eb"
+      },
+      {
+        "path": "src/features/students/controller/use-student-access-controller.ts",
+        "sha256": "ee77e6b6ddc4ec43af1b24276d0188d23cb493e6b9d9567eca5794cc75f2ad0e"
+      },
+      {
+        "path": "src/features/students/controller/use-student-create-preparation.test.tsx",
+        "sha256": "618a5311391b27390cd2bf19611dc16843b3e206293cfbfee0722ee7e5f024c8"
+      },
+      {
+        "path": "src/features/students/controller/use-student-create-preparation.ts",
+        "sha256": "fc9febf2d21d886c2a86970e0526d45ac27e7ab326b23802375329306ba6a575"
+      },
+      {
+        "path": "src/features/students/controller/use-student-creation-controller.test.tsx",
+        "sha256": "16757a492bceff88bfb99ffaedc6e07aab4afd77648b3c19cf0a032985bd3b78"
+      },
+      {
+        "path": "src/features/students/controller/use-student-creation-controller.ts",
+        "sha256": "0e1ee4722ceb09e8a92fd5a526c03e84eb8a012fdf301b4b50091760b195cd35"
+      },
+      {
+        "path": "src/features/students/controller/use-student-detail-shell-state.ts",
+        "sha256": "8edcb5ae737b7e57c81a73132ff453f080a654c22464026c94a3c24f789580d3"
+      },
+      {
+        "path": "src/features/students/controller/use-student-detail-view.test.tsx",
+        "sha256": "094a1b02caf1cc133924c37b5b13d6c8bdd65f0be0f255eb4a4b64ef710547b1"
+      },
+      {
+        "path": "src/features/students/controller/use-student-detail-view.ts",
+        "sha256": "68e9e0b018303a094da7266b3909155c42612e0cb6387e76f9f36c0af5750603"
+      },
+      {
+        "path": "src/features/students/controller/use-student-directory-page.test.tsx",
+        "sha256": "b04a11dbd02c561ca5a5186310480b40214086652a4f06ba346e34a414001ccc"
+      },
+      {
+        "path": "src/features/students/controller/use-student-directory-page.ts",
+        "sha256": "5ec6afe7b0b038c37a91c4b6d49db524d6fe3c12ab6b9c27f456b1bf5d778c6f"
+      },
+      {
+        "path": "src/features/students/controller/use-student-history-page.test.tsx",
+        "sha256": "4099e36349a5b18453c8d41b0d1652d9a77a08869af960b43c21235b550a7af4"
+      },
+      {
+        "path": "src/features/students/controller/use-student-history-page.ts",
+        "sha256": "e8a8d2bfd6fdb7fddf5731f8c00c99e01293f0829e47fca7d190db2f3bfb62a2"
+      },
+      {
+        "path": "src/features/students/controller/use-student-profile-controller.test.tsx",
+        "sha256": "4bbeb73f9bca85a08edeb8b2aeeeb77faa2af6c6d8ed5acc6bf78c049d984b90"
+      },
+      {
+        "path": "src/features/students/controller/use-student-profile-controller.ts",
+        "sha256": "3e49a9ae102784700f254719c16f33f68f7b3af7ec0fc7ab50501c37e9911d0f"
+      },
+      {
+        "path": "src/features/students/controller/use-student-wrong-word-actions.ts",
+        "sha256": "9a4e926c215c075427f88a6c0524efae2e83720a603af5e1189a77a4bbb5219b"
+      },
+      {
+        "path": "src/features/students/controller/use-student-wrong-word-cache.ts",
+        "sha256": "205a498fba4dfbde5c4c5f307c8a326b2e3668a9a88a6e558d7c5a0dd0fa03f8"
+      },
+      {
+        "path": "src/features/students/controller/use-student-wrong-word-draft-action.ts",
+        "sha256": "0d0b6aca26deb17505d39b3480b17bf48ba30bd8da2136e3eafff361800a6d93"
+      },
+      {
+        "path": "src/features/students/controller/use-student-wrong-word-history.test.tsx",
+        "sha256": "126f271c532947a1b9f535aee3ed7973e55934d28b650b248f78d168ce99df68"
+      },
+      {
+        "path": "src/features/students/controller/use-student-wrong-word-history.ts",
+        "sha256": "0fb4c440ba81ec6e0c46496d5dc604f6373beff9af0b930e71d9227a3f669f59"
+      },
+      {
+        "path": "src/features/students/controller/use-student-wrong-word-queue-action.ts",
+        "sha256": "f1fd0ab0ebfdb1bed55702554851b507340323a9d8c201401212066a11d77d76"
+      },
+      {
+        "path": "src/features/students/controller/use-student-wrong-word-worksheet-action.ts",
+        "sha256": "8c5e3c69e781182a2009f359b4d59c6ee50cca361a15e2fe27727264b58670f1"
+      },
+      {
+        "path": "src/features/students/controller/use-wrong-word-panel-selection.ts",
+        "sha256": "5dd9aa11bde3fbc9a7a85afc1e04c1fc67404914692b00e77ee658ff3f4b74c0"
+      },
+      {
+        "path": "src/features/students/domain/wrong-word-selection.test.ts",
+        "sha256": "f91b9df708e52d79cfaa529166de45ef6fc8b6c26aa55c90aac71690ff75c125"
+      },
+      {
+        "path": "src/features/students/domain/wrong-word-selection.ts",
+        "sha256": "ae4795a49677fb5f1aedbd36ebc504b924cfe7ee1e9e25135b9441eb3b454a47"
+      },
+      {
+        "path": "src/features/students/public-client.ts",
+        "sha256": "d0ee8aeca0d71ff6f0c82ce3d00dda4f8d2472e3b73756b86cb65f2025ad6b60"
+      },
+      {
+        "path": "src/features/students/server/actions/student-profile-command.test.ts",
+        "sha256": "c564489e68dd14efbaededf3df189938cfffafb846f97e8b707361677c84da34"
+      },
+      {
+        "path": "src/features/students/server/actions/update-student-profile-action.test.ts",
+        "sha256": "ea250b39c16422463754b27c4961af8270c80d2ec60233c7587cce64f92b144a"
+      },
+      {
+        "path": "src/features/students/server/actions/update-student-profile-action.ts",
+        "sha256": "7fe836a79d2845bf63b8d506e1b7807d43ad6a372e8d740723c639fad041410f"
+      },
+      {
+        "path": "src/features/students/server/components/student-create-content.tsx",
+        "sha256": "195888053b21556a23e5abdd2c6ea4c996b9d5e97b7a2cc824c24c020661223f"
+      },
+      {
+        "path": "src/features/students/server/components/student-detail-route-content.tsx",
+        "sha256": "cd29395d2b90641898c0f80961543ec9bcf503edc9d0fb00dec4fd0927de7228"
+      },
+      {
+        "path": "src/features/students/server/components/student-directory-content.tsx",
+        "sha256": "404a3b09a35427d5872d7212abe6e77c9f75b9b5ca830f3d2e085342987657dd"
+      },
+      {
+        "path": "src/features/students/server/components/student-panel-failure.test.tsx",
+        "sha256": "b2d0c1aca874eae01d4d1cb84aaaec5b2bb98f5697b3a6c7b8cd60ac194fe32e"
+      },
+      {
+        "path": "src/features/students/server/queries/school-search-query.test.ts",
+        "sha256": "ef79f89773395e9f9d1a31ebf8eb6ab2b04250e7fef676970b8aa4f5b9f59b84"
+      },
+      {
+        "path": "src/features/students/server/queries/school-search-query.ts",
+        "sha256": "21099529e9a641613b6e19231c6f730f30a97d2060b62e05108210eca015f11d"
+      },
+      {
+        "path": "src/features/students/server/queries/student-detail-query.ts",
+        "sha256": "2b1feb843d2ff2339504f59cf019bee7393f291a04c2c095a037a4f4d933afc1"
+      },
+      {
+        "path": "src/features/students/server/queries/student-detail-read-error.ts",
+        "sha256": "a093057ff82111db684e6ccb5ab4b5db339f727a08ccff979ed58b9c5c33b758"
+      },
+      {
+        "path": "src/features/students/server/queries/student-detail-row-schema.ts",
+        "sha256": "a30c91d4924da670e6b0b8d0743b2c1e61a3270e925a09b846aad32647367751"
+      },
+      {
+        "path": "src/features/students/server/queries/student-directory-entry-query.test.ts",
+        "sha256": "f11cf5d389061b0251b116d26d36413bc09137aad14e078769257b8716cebc60"
+      },
+      {
+        "path": "src/features/students/server/queries/student-directory-entry-query.ts",
+        "sha256": "80da33124b190e3bf3244afb050e8fff568d3f4734b32650929cf15faf3d1eb2"
+      },
+      {
+        "path": "src/features/students/server/queries/student-directory-query.ts",
+        "sha256": "692a4bea928e29b00b7bbaa4a184acef6bceeb6bae923d04df53e116f14c1899"
+      },
+      {
+        "path": "src/features/students/server/queries/student-directory-read-error.ts",
+        "sha256": "5ddbe7df2dc7f2e62ee2105d62d7101a5dc21bdb525202a14b375ea114e2ce54"
+      },
+      {
+        "path": "src/features/students/server/queries/student-directory-resume-query.test.ts",
+        "sha256": "bd07351614c70ba04cbe237af636aca5d6770b15ce1dd73de12cf953824f9945"
+      },
+      {
+        "path": "src/features/students/server/queries/student-directory-resume-query.ts",
+        "sha256": "5881fe6502bacbec9be39b722fa5fd62db1f004b49b513b28cf4893d945fd256"
+      },
+      {
+        "path": "src/features/students/server/queries/student-directory-row-schema.ts",
+        "sha256": "783629ead49a7bb0a2fccd5d64405aa811cc50f08f0199bb49451170736065a7"
+      },
+      {
+        "path": "src/features/students/server/queries/student-history-query.ts",
+        "sha256": "1648fa71ab31130257b2f7e706de373192ad4bacd8e39434cda15ae662b17986"
+      },
+      {
+        "path": "src/features/students/server/queries/student-history-row-schema.ts",
+        "sha256": "0f90817bbeccea52a7303c98d36f8a82ec34a5e7e23c5a4d06a8b92f97faf52e"
+      },
+      {
+        "path": "src/features/students/server/queries/wrong-word-page-query.test.ts",
+        "sha256": "330c7c8861a77c30cbccdb9c72332dbd3c10a655594be1322625e1f56472fe99"
+      },
+      {
+        "path": "src/features/students/server/queries/wrong-word-page-query.ts",
+        "sha256": "8d9f32aa726d1aadade858bfa422e394fe3b48ff5868f46a0bf87c121da6f193"
+      },
+      {
+        "path": "src/features/students/server/student-directory-cache-identity.ts",
+        "sha256": "cf27c2ff66a161bafe7aa778426d58a0880649e6916a9add0b878ae3abf10384"
+      },
+      {
+        "path": "src/features/students/server/student-directory-cursor.test.ts",
+        "sha256": "345af6719c5242d3843f67d3b393abfdfbac51a4c38088dcdaff7053ace2f106"
+      },
+      {
+        "path": "src/features/students/server/student-directory-cursor.ts",
+        "sha256": "7cc2042650b026295b7c51e762f0423899bcf307e6b2fddebbfb3218cc12394f"
+      },
+      {
+        "path": "src/features/students/server/student-history-cursor.test.ts",
+        "sha256": "e5b6e59527824368c0b38f2a8d95924449aaa76cd1cdda94355d4eade1b43f02"
+      },
+      {
+        "path": "src/features/students/server/student-history-cursor.ts",
+        "sha256": "8458b526d3adbba112f511a09c3d3257c55893395fc38b5c5ad4be32c20c49da"
+      },
+      {
+        "path": "src/features/students/server/wrong-word-cursor.test.ts",
+        "sha256": "2729071eae0a871454dbe81d3bbbf22860ffad4c9e988493cd6a1c0af01afe68"
+      },
+      {
+        "path": "src/features/students/server/wrong-word-cursor.ts",
+        "sha256": "5bc479e4ff77316663e85a5329a161111049e39387c36d4a4f8da1fe607e3270"
+      },
+      {
+        "path": "src/features/students/students-feature.contract.test.ts",
+        "sha256": "7b9bef5750d3327ca8153c76101018c8b79101e4e7576f1becae5435eb227923"
+      },
+      {
+        "path": "src/features/students/transport/school-search.test.ts",
+        "sha256": "5370f9660a3f0806e628aedd2db57808a54b1b7d4831b3f0c71410c60d1e6212"
+      },
+      {
+        "path": "src/features/students/transport/school-search.ts",
+        "sha256": "735ba6bed8a41343b8a931a819eaced2087d8143c7e7b7caf738e4369c3a6fe1"
+      },
+      {
+        "path": "src/features/students/transport/student-directory-cache-read.test.ts",
+        "sha256": "7961ecb7ec4e33c20598f6fc8d71fcb31ad3383fec711ac0459ad9add3d51409"
+      },
+      {
+        "path": "src/features/students/transport/student-directory-cache-read.ts",
+        "sha256": "e62e181a4759b415a4e5c965b43e93b2e73525c3711b12e1dae49deb3ba23990"
+      },
+      {
+        "path": "src/features/students/transport/student-directory-pages.ts",
+        "sha256": "fdd7f7e19501a208dfab9b979af44ad71152a31362807fbe1138398cb5ad60fc"
+      },
+      {
+        "path": "src/features/students/transport/student-history-pages.ts",
+        "sha256": "f2f18530d8d8bcb45e7fcf9579afaf8f8980e1133acd8651abe2490c40474984"
+      },
+      {
+        "path": "src/features/students/ui/cached-student-directory.test.tsx",
+        "sha256": "ff3235723223d466c8a5a4a2de73314dadd47bebf0dd853ad6171044011099f1"
+      },
+      {
+        "path": "src/features/students/ui/cached-student-directory.tsx",
+        "sha256": "1e1509c689a0a41f20e238d36da0d846176c413ddd752bdb16c7c0676a657369"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-account-panel.tsx",
+        "sha256": "af3246ad952b7befa1d9784e7e52ebc1f5ed345cdd5312a39fad3d4b555f23bf"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-code-panel.tsx",
+        "sha256": "835e92fd80668e105f9a891a0eec9130986b847f31edc170c6e9fd30bf7bf680"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-history-panel.test.tsx",
+        "sha256": "fd93c76dba161dafcdac190a66b60fdd125089061af96a72651a7a7e78cda751"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-history-panel.tsx",
+        "sha256": "cc11e11025b3f1134c88986523ead3fa070c62904b280554fb6167203cd108cb"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-info-panel.test.tsx",
+        "sha256": "6a342216d4ee2a002c6480298b8cc4490477fffcd3422449f9521b2dc37feadd"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-info-panel.tsx",
+        "sha256": "844a33de6c1997bc5eda98ddd534e127a65474f5da4dada652e3b583704c6b0b"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-learning-history.test.tsx",
+        "sha256": "fff794d79e3d5a3e4e0a857fd7b9d5e7ac7adbb51f2dbf4bafdba5c8508d93c9"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-learning-history.tsx",
+        "sha256": "ef213ac0191f480b4d74e2b21b2ffb36acedcf8e1ae3fd58d1770ce1683d23c3"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-learning-source-list.module.css",
+        "sha256": "603f2b5ea09bfbe0e619c007e00f7144ab22049c7ef89c71ca58bbd8e9dedcd3"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-learning-source-list.tsx",
+        "sha256": "7f503b9c4115d70be21af091dfabb62300b2c28f75e6b98be8127970433e9e5e"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-vocab-book-history-list.module.css",
+        "sha256": "f2ad3ab411bac85b3d6b82ec2051b0464c42bdb6f435465d1f9afd18bd22eb87"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-vocab-book-history-list.tsx",
+        "sha256": "f12907c910dccd8d74998150928e55ecd27f7d0788a30ff719dc5d8335fbeafe"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-wrong-word-panel.module.css",
+        "sha256": "77d93813462aa9f91779a4989d065509c52c0d4e29886067be33ca0cb9f83441"
+      },
+      {
+        "path": "src/features/students/ui/panels/student-wrong-word-panel.tsx",
+        "sha256": "29db5a4b2da970070fffee4c85266efb667c8e0038596db05e28d8f4edd95021"
+      },
+      {
+        "path": "src/features/students/ui/panels/wrong-word-control-section.tsx",
+        "sha256": "d4d9aacc37b7c4a6a20ff0df47fe9fe991416920ed61a64c94cddd182a069285"
+      },
+      {
+        "path": "src/features/students/ui/panels/wrong-word-filter-section.tsx",
+        "sha256": "557ae8da2a83c9c6fb5f1967a2c4a01a75e6db3472740d5a9bcc5bf503b77095"
+      },
+      {
+        "path": "src/features/students/ui/panels/wrong-word-list.tsx",
+        "sha256": "b09fb9fcfe9da961cf8c7c37b00d3a005f94cc021f4f47860e65c5db326cad45"
+      },
+      {
+        "path": "src/features/students/ui/panels/wrong-word-purpose-section.tsx",
+        "sha256": "8c59db7f0442eb0a59786f24d1891a95cacac64d3ff57982f8dac7dcfa075f93"
+      },
+      {
+        "path": "src/features/students/ui/panels/wrong-word-selection-controls.tsx",
+        "sha256": "0b1e73b7283475943c72cda833afc654b4a5e9bcb65c696bfa49efbc6b666f45"
+      },
+      {
+        "path": "src/features/students/ui/school-search-field.module.css",
+        "sha256": "b15768d326118bed904707e54e882945a7bfd2e0143f5f850926d4796a7945cc"
+      },
+      {
+        "path": "src/features/students/ui/school-search-field.test.tsx",
+        "sha256": "025e0cd1eccb1987663b49602f558448b126d66c70e759beb37c446233452cf6"
+      },
+      {
+        "path": "src/features/students/ui/school-search-field.tsx",
+        "sha256": "b3e18209fcda0d291efb061931835f346d8d093ae4e0f8d1a456dd7070ecdec9"
+      },
+      {
+        "path": "src/features/students/ui/student-create-workspace.test.tsx",
+        "sha256": "d711cc91a1e41c7164bd6da72f4605cce77952545f28a927e3229af3be6acbd6"
+      },
+      {
+        "path": "src/features/students/ui/student-create-workspace.tsx",
+        "sha256": "75621b2f523ddb8bccf98af508c3a971f2b3019d1f1633cd0950b77ab0de8477"
+      },
+      {
+        "path": "src/features/students/ui/student-detail-content.tsx",
+        "sha256": "93bb9f2b912c8c15ee26a67be80115009911fbfdd1ddb0cc6fbadd4e9dea1a14"
+      },
+      {
+        "path": "src/features/students/ui/student-detail-dialog.tsx",
+        "sha256": "1ae1f433de5aa53cb74f142b5c16e9f27c35099019822cf1d6d9f9af4627eaed"
+      },
+      {
+        "path": "src/features/students/ui/student-detail-header.tsx",
+        "sha256": "7668eca2bfdd3b09e9ecd92fe9990e92d1a78e0c7b8cc6ee5e5b0c3a2a8b837f"
+      },
+      {
+        "path": "src/features/students/ui/student-detail-page.test.tsx",
+        "sha256": "0a0dc9e5c0e6713ac00dc72e0f0383c9009029c0138ec24573b724125831f198"
+      },
+      {
+        "path": "src/features/students/ui/student-detail-page.tsx",
+        "sha256": "255161cea3c1b8244a30029b5d32f4050dc5ba28dbda4baace924417c9944245"
+      },
+      {
+        "path": "src/features/students/ui/student-detail-skeleton.tsx",
+        "sha256": "d373919481cde0d7ab46e0c6963254d9adda5a3be706eb6e1817f4d9e5e9bd8b"
+      },
+      {
+        "path": "src/features/students/ui/student-detail.module.css",
+        "sha256": "a33679f200102ec3fce030dca52c3067d1dad7d7e2cfe44933d7d41afebeeb66"
+      },
+      {
+        "path": "src/features/students/ui/student-directory-card.tsx",
+        "sha256": "7373d644ee6d15149ccd04d46a5c157717767a72598900e6e6530c64ba95c7ea"
+      },
+      {
+        "path": "src/features/students/ui/student-directory-filters.tsx",
+        "sha256": "cf133b67502a246f83f7a483faefe8cc41478e293f4ed875b064c115cd322e84"
+      },
+      {
+        "path": "src/features/students/ui/student-directory-list.tsx",
+        "sha256": "b4f50472c66e75bff2fd9ad268bc9b1a8feb67133553664742295109338c0138"
+      },
+      {
+        "path": "src/features/students/ui/student-directory-skeleton.tsx",
+        "sha256": "000aae69bd25e2010bd04f336fe6d7393ad36fb84fa8be9b0ef676450cba63de"
+      },
+      {
+        "path": "src/features/students/ui/student-directory.module.css",
+        "sha256": "6ab8c9936e829ca4ab3a41b59aef81f625b54d496afecc6b71d019ca228b23bc"
+      },
+      {
+        "path": "src/features/students/ui/student-directory.test.tsx",
+        "sha256": "3b6bf1c9c59b720e41df8ea541110a98c8e97e6c98530621f5d32c572eda7bb0"
+      },
+      {
+        "path": "src/features/students/ui/student-directory.tsx",
+        "sha256": "911eba125388f9c1c797721344bf6f1ef837fb81b3be1d00d9c20cf5d9b07583"
+      },
+      {
+        "path": "src/instrumentation.ts",
+        "sha256": "32d81e568d8f3bd7e8374a4dc91a082642a470d97b351f0bd2553f43d83d3b19"
+      },
+      {
+        "path": "src/lib/admin/dataset-catalog.test.ts",
+        "sha256": "394763e4374d5afe8a55dde5250b040f410c7d10e94bd533b3040010d8c9da82"
+      },
+      {
+        "path": "src/lib/admin/dataset-catalog.ts",
+        "sha256": "9216f0b9efb51917ffccab32a3e811cf763905a7a19c84ee8bc8a7d2109469a9"
+      },
+      {
+        "path": "src/lib/admin/dataset-display.ts",
+        "sha256": "ef0a2dcb7528ba322cd52db80cf5cd51cbbdab1f261e50be03a80942b273f194"
+      },
+      {
+        "path": "src/lib/admin/history-route.test.ts",
+        "sha256": "f09dc7c27208f3b5ea3e627b325bee909bbc8a2f3866ff3971add189eaa25796"
+      },
+      {
+        "path": "src/lib/admin/history-route.ts",
+        "sha256": "f336f50c237f0449b6d8eabc05f3ed2720137cb4d97986bf8fabfd5fbc4489c4"
+      },
+      {
+        "path": "src/lib/admin/history.test.ts",
+        "sha256": "b244a11a2b617cffa35b4356f6bdad45475681dda180f15a0a3abd8e1fed19da"
+      },
+      {
+        "path": "src/lib/admin/history.ts",
+        "sha256": "c7db44daf37f430dde883843cac2b4ef654358bc02d5761df4a9889159f91df5"
+      },
+      {
+        "path": "src/lib/admin/learning-sources.test.ts",
+        "sha256": "a9809dfb9e4d914eae97692d00579d4da14f81e8765b26afdd8d4095d08bd490"
+      },
+      {
+        "path": "src/lib/admin/learning-sources.ts",
+        "sha256": "998f201423687581883483c00608ed472184289cc6ef02c221763047d30394b4"
+      },
+      {
+        "path": "src/lib/admin/reading-curriculum.ts",
+        "sha256": "e3ba02836ca5c8c7c8a9d561f84538c8454682cd413a3e92d19b63c65aa95445"
+      },
+      {
+        "path": "src/lib/admin/student-profile-requirements.test.ts",
+        "sha256": "87f848df6865c5d508f5d3b87dac535704fb04e5b80cf441e573e50417262170"
+      },
+      {
+        "path": "src/lib/admin/student-profile-requirements.ts",
+        "sha256": "53573b5f07bbe111bba6738dde9f3fdf2041c4b7732e035797dd304431db8024"
+      },
+      {
+        "path": "src/lib/admin/unit-range-display.test.ts",
+        "sha256": "58e80feb0c9545e0b4702d3b5b3a63d23f7e7445ef12da1a856e88a840a41c20"
+      },
+      {
+        "path": "src/lib/admin/unit-range-display.ts",
+        "sha256": "f6a9fb487325fd071dfcf27158541a97375f16dbad01e52cf9c5eb524eeb9445"
+      },
+      {
+        "path": "src/lib/admin/vocab-assignment-queue.ts",
+        "sha256": "d078f51dfdae9246d48acd7300d371cb2fc004950a4fe02d973b5213c2324ee2"
+      },
+      {
+        "path": "src/lib/database/admin-student-directory-read-model.integration.test.ts",
+        "sha256": "cae95e1ad00a6c41c6652d8cee877105d30a1e0d876e4c4b8deb9b8eb897a8f5"
+      },
+      {
+        "path": "src/lib/database/student-profile-version-command.integration.test.ts",
+        "sha256": "6f3ffd530d81add7928925c3c50a6477a9829b6e503ee40c0205703652854fdb"
+      },
+      {
+        "path": "src/lib/database/wrong-word-page.integration.test.ts",
+        "sha256": "9a700612fa66d5f65b8e54bc2191bca83e41a56d3f3642223cd581ef0c7c1abf"
+      },
+      {
+        "path": "src/lib/kakao-share.ts",
+        "sha256": "7d0e190e1f26101bf6e40319fa79129f5ec73d7562e04013dafe46eee96db7af"
+      },
+      {
+        "path": "src/lib/services/admin-deletion-service.ts",
+        "sha256": "9ffc24b389e7e376b53e3b880bac5a20f2414a4785e77657d6421b9116831615"
+      },
+      {
+        "path": "src/lib/services/admin-material-query.ts",
+        "sha256": "e1ed791a69326486ab80230418c3333954171fd2a6ad53a9bd58a9cf01a9fe36"
+      },
+      {
+        "path": "src/lib/services/admin-material-read-service.ts",
+        "sha256": "6a5d3f255740ccfcd1511370b2be152292171d23494d81af251a18a15b7648d7"
+      },
+      {
+        "path": "src/lib/services/admin-material-request-cache.test.ts",
+        "sha256": "7bced50d93a5ab03d9e3b1b5d2ec91369c645c9b7bd0df6cb7ee146b06d365fd"
+      },
+      {
+        "path": "src/lib/services/admin-student-command-service.ts",
+        "sha256": "ea4cee3ff13f960d40247f7cfe14d45555985a5b09858ea672f29b36b5da8fa0"
+      },
+      {
+        "path": "src/lib/services/admin-wrong-summary-query-contract.test.ts",
+        "sha256": "6fc858d122f0cd86843fc43d58c71e6f2d3655bc118e3e6a5ccf75c5588eb613"
+      },
+      {
+        "path": "src/lib/services/dataset-catalog-service.ts",
+        "sha256": "54e02bfbd5240b5bd9ad6518da06414ef11f544efc54e445a7d4d55858a15320"
+      },
+      {
+        "path": "src/lib/services/student-login-service.ts",
+        "sha256": "1db100c1918d7159a6fd69bbe2ba19d5e686eea077699040b958eb31ed55fd6c"
+      },
+      {
+        "path": "src/lib/services/wrong-word-command.ts",
+        "sha256": "ad36123b595c221cd2eafcc1403ef54174dc506cc23b753dcbb7a6db3f9d1100"
+      },
+      {
+        "path": "src/styles/theme.css",
+        "sha256": "b8b531a742fd2647b8e83d6197cc759c9f544aa60e1a640a23fee53fc13c6840"
+      },
+      {
+        "path": "src/styles/tokens.css",
+        "sha256": "069040f318f41f14018564090afd8759e19daab78c6b57bb3439af20d9e55d5f"
+      },
+      {
+        "path": "supabase/migrations/20260829213000_add_admin_student_directory_read_model.sql",
+        "sha256": "54bb2b0b21d5a96d7610577a90b8b8bd6a760d1e7fc331f89119788f762dd43a"
+      },
+      {
+        "path": "supabase/migrations/20260831101000_add_student_profile_version_command.sql",
+        "sha256": "fd52f9467b9bb38fe5341859b5f69f8ce53562058d196851d7f562629db87498"
+      },
+      {
+        "path": "supabase/migrations/20260913092302_add_school_schedule_and_student_school_key.sql",
+        "sha256": "892fd7408e19c395ecac17e43ea64882b1a9818f4719e418c2130b1bafee3e76"
+      },
+      {
+        "path": "supabase/migrations/20260921010000_require_student_profile_for_new_assignments.sql",
+        "sha256": "b72fff0de64c08432e84166838ec5e45d7853925518585cdc4e6a20a4be2855e"
+      },
+      {
+        "path": "supabase/migrations/20260921020000_page_student_wrong_words.sql",
+        "sha256": "fc17c2ff90593df91e1e84be3219b9ee9f77019b0b01f786964a920f89c9637f"
+      },
+      {
+        "path": "tsconfig.json",
+        "sha256": "5bec101c734eb97d36f3f49b122ad4d37b68d796bfa608760d266c57cd6c50ac"
+      },
+      {
+        "path": "vitest.config.ts",
+        "sha256": "705e16d57f8b528b676a87707bb71dea3ed2d1389303f53ef10902ff4e2726ec"
+      }
+    ],
+    "runs": [
+      {
+        "checkId": "T1",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-29T11:51:01.549Z",
+        "command": "Vitest src/features/session/ui/session-logout-boundary.test.tsx; 상세 연결 검사는 guide 참고",
+        "summary": "실제 종료 함수와 신호·캐시 정리를 연결한 경계 검사 통과. 느린 성공·실패·예외·중복요청·개인정보 숨김."
+      },
+      {
+        "checkId": "T2",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-29T11:51:01.549Z",
+        "command": "Vitest src/components/admin-logout-button.test.tsx; 상세 연결 검사는 guide 참고",
+        "summary": "관리자 이탈 취소/승인·실패재시도 검사 통과. 독립 실제 훅 비동기 승인·모달 제거·반복호출을 포함한3파일25검사 통과."
+      },
+      {
+        "checkId": "T3",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-29T11:51:01.549Z",
+        "command": "CUA localhost 가짜 자료 화면 검사",
+        "summary": "가짜 브라우저에서 학생 느린 로그아웃→접속 화면, 관리자 실패→재시도→접속 화면 확인. 실제 학생 요청 없음."
+      },
+      {
+        "checkId": "T4",
+        "result": "pass",
+        "environment": "local",
+        "ranAt": "2026-09-29T11:51:01.549Z",
+        "command": "tsc; eslint .; map verify; UI architecture; next build --webpack; independent review",
+        "summary": "타입·전체 lint·구조/지도·설계 연결·Webpack41/41 통과. 전체4142통과·1시간초과·1기존건너뜀; 시간초과 파일22검사 단독 통과."
+      }
+    ]
+  }
+}

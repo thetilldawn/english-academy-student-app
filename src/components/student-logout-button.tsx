@@ -1,50 +1,10 @@
 "use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/design-system/primitives/button/button";
-import { InlineError } from "@/design-system/patterns/feedback/feedback";
 import { studentAppText } from "@/content/ko/student-app";
-import { requestStudentLogout } from "@/features/session/api/session";
-
-import styles from "./session-action.module.css";
-
+import { useSessionLogout } from "@/features/session/public-client";
 export function StudentLogoutButton() {
-  const router = useRouter();
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-
-  async function logout() {
-    setError("");
-    setSubmitting(true);
-    try {
-      const ok = await requestStudentLogout();
-      if (!ok) {
-        setError(studentAppText.shell.logoutError);
-        return;
-      }
-      router.replace("/");
-      router.refresh();
-    } catch {
-      setError(studentAppText.shell.logoutError);
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  return (
-    <div className={styles.stack}>
-      <Button
-        disabled={submitting}
-        onClick={logout}
-        size="small"
-        variant="quiet"
-      >
-        {submitting
-          ? studentAppText.shell.logoutPending
-          : studentAppText.shell.logout}
-      </Button>
-      {error ? <InlineError>{error}</InlineError> : null}
-    </div>
-  );
+  const { state, logout } = useSessionLogout();
+  return <Button disabled={state !== "idle"} onClick={() => void logout()} size="small" variant="quiet">
+    {state === "idle" ? studentAppText.shell.logout : studentAppText.shell.logoutPending}
+  </Button>;
 }

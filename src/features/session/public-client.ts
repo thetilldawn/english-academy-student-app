@@ -6,3 +6,5 @@ export { usePrivateListEntry } from "./controller/use-private-list-entry";
 
 export { announceAdminPrivateCacheChange, subscribeAdminPrivateCacheChanges } from "./controller/admin-private-cache-events";
 export { requestAdminLogin, requestAdminLogout } from "./controller/admin-session-commands";
+export { SessionLogoutBoundary } from "./ui/session-logout-boundary";
+export { useSessionLogout } from "./controller/use-logout-transition";

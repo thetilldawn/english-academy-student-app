@@ -1,60 +1,18 @@
 "use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-
 import { useGuardedNavigationRequest } from "@/components/navigation-exit-guard";
 import { adminShellText } from "@/content/ko/admin-shell";
 import { Button } from "@/design-system/primitives/button/button";
-import { InlineError } from "@/design-system/patterns/feedback/feedback";
-import { requestAdminLogout } from "@/features/session/public-client";
-
-import styles from "./session-action.module.css";
-
+import { useSessionLogout } from "@/features/session/public-client";
 export function AdminLogoutButton() {
-  const router = useRouter();
   const requestNavigation = useGuardedNavigationRequest();
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-
-  async function performLogout() {
-    setError("");
-    setSubmitting(true);
-    try {
-      const ok = await requestAdminLogout();
-      if (!ok) {
-        setError(adminShellText.logout.error);
-        return false;
-      }
-      router.replace("/admin/login");
-      router.refresh();
-      return true;
-    } catch {
-      setError(adminShellText.logout.error);
-      return false;
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  function logout() {
+  const { state, logout } = useSessionLogout();
+  const performLogout = () => logout();
+  function requestLogout() {
+    if (state !== "idle") return;
     if (requestNavigation(performLogout)) return;
     void performLogout();
   }
-
-  return (
-    <div className={styles.stack}>
-      <Button
-        disabled={submitting}
-        onClick={logout}
-        size="small"
-        variant="quiet"
-      >
-        {submitting
-          ? adminShellText.logout.pending
-          : adminShellText.logout.idle}
-      </Button>
-      {error ? <InlineError>{error}</InlineError> : null}
-    </div>
-  );
+  return <Button disabled={state !== "idle"} onClick={requestLogout} size="small" variant="quiet">
+    {state === "idle" ? adminShellText.logout.idle : adminShellText.logout.pending}
+  </Button>;
 }

@@ -13,6 +13,7 @@ import { requireAdmin } from "@/lib/auth/admin";
 import { getAdminListCachePolicy } from "@/lib/env";
 import { StudentDirectoryCacheProvider } from "@/features/students/public-client";
 import { HistoryListCacheProvider } from "@/features/history/public-client";
+import { SessionLogoutBoundary } from "@/features/session/public-client";
 
 import shellStyles from "@/components/shell/app-shell.module.css";
 
@@ -111,7 +112,8 @@ async function AdminProtectedShell({
   const directoryContent = cachePolicy.students
     ? <StudentDirectoryCacheProvider key={admin.userId} userId={admin.userId}>{content}</StudentDirectoryCacheProvider>
     : content;
-  return cachePolicy.history
+  const protectedContent = cachePolicy.history
     ? <HistoryListCacheProvider key={admin.userId} userId={admin.userId}>{directoryContent}</HistoryListCacheProvider>
     : directoryContent;
+  return <SessionLogoutBoundary key={admin.userId} role="admin">{protectedContent}</SessionLogoutBoundary>;
 }

@@ -5,6 +5,7 @@ import { NotificationBootstrap } from "@/components/notification-bootstrap";
 import { studentAppText } from "@/content/ko/student-app";
 import { RouteLoadingState } from "@/design-system/patterns/route-state/route-state";
 import { StudentSessionRenewal } from "@/features/session/ui/student-session-renewal";
+import { SessionLogoutBoundary } from "@/features/session/public-client";
 import {
   getStudentSession,
   studentSessionRenewalDelay,
@@ -42,7 +43,7 @@ async function StudentProtectedShell({
   }
 
   return (
-    <>
+    <SessionLogoutBoundary key={student.studentId} role="student">
       <StudentSessionRenewal
         initialDelayMilliseconds={studentSessionRenewalDelay(
           student.lastSeenAt,
@@ -61,6 +62,6 @@ async function StudentProtectedShell({
         {children}
       </StudentShell>
       {detail}
-    </>
+    </SessionLogoutBoundary>
   );
 }
