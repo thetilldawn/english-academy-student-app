@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { awaitWithAbortSignal, createRequestDeadline } from "@/lib/network/request-policy";
 import { quizContentModes } from "@/lib/quiz/question-content-mode";
 
 import { QUIZ_REQUEST_TIMEOUT_MS } from "../domain/quiz-session";
@@ -127,27 +128,26 @@ const errorResponseSchema = z.object({
   error: z.string().optional(),
 });
 
-async function boundedFetch(
+async function boundedRequest<T>(
   resource: RequestInfo | URL,
-  options?: RequestInit,
+  options: RequestInit,
+  read: (response: Response) => Promise<T>,
 ) {
-  const controller = new AbortController();
-  const timeout = window.setTimeout(
-    () => controller.abort(),
-    QUIZ_REQUEST_TIMEOUT_MS,
-  );
+  const deadline = createRequestDeadline(QUIZ_REQUEST_TIMEOUT_MS, options.signal);
   try {
-    return await fetch(resource, {
+    const response = await awaitWithAbortSignal(fetch(resource, {
       ...options,
-      signal: controller.signal,
-    });
+      signal: deadline.signal,
+    }), deadline.signal);
+    return await awaitWithAbortSignal(read(response), deadline.signal);
   } finally {
-    window.clearTimeout(timeout);
+    deadline.dispose();
   }
 }
 
-async function responsePayload(response: Response) {
-  return response.json().catch(() => ({})) as Promise<unknown>;
+async function readPayload(response: Response) {
+  const payload: unknown = await response.json().catch(() => ({}));
+  return { response, payload };
 }
 
 function errorPayload(value: unknown) {
@@ -162,7 +162,7 @@ export async function submitQuizAnswer(input: {
   choiceIndex: number | null;
 }): Promise<QuizTransportResult<QuizAnswerResponse>> {
   const requestStartedAt = performance.now();
-  const response = await boundedFetch(
+  const { response, payload } = await boundedRequest(
     `/api/student/attempts/${input.attemptId}/${
       input.choiceIndex === null ? "timeouts" : "answers"
     }`,
@@ -177,8 +177,8 @@ export async function submitQuizAnswer(input: {
           : { choiceIndex: input.choiceIndex }),
       }),
     },
+    readPayload,
   );
-  const payload = await responsePayload(response);
   const receivedAt = performance.now();
   const timing = {
     receivedAt,
@@ -198,10 +198,9 @@ export async function recoverQuizAttempt(
   attemptId: string,
 ): Promise<QuizTransportResult<QuizAttemptResponse>> {
   const requestStartedAt = performance.now();
-  const response = await boundedFetch(`/api/student/attempts/${attemptId}`, {
+  const { response, payload } = await boundedRequest(`/api/student/attempts/${attemptId}`, {
     cache: "no-store",
-  });
-  const payload = await responsePayload(response);
+  }, readPayload);
   const receivedAt = performance.now();
   const timing = {
     receivedAt,
@@ -224,7 +223,7 @@ export async function resumeQuizAfterFeedback(input: {
   transitionRemainingMilliseconds: number;
 }): Promise<QuizTransportResult<QuizFeedbackResumeResponse>> {
   const requestStartedAt = performance.now();
-  const response = await boundedFetch(
+  const { response, payload } = await boundedRequest(
     `/api/student/attempts/${input.attemptId}/feedback`,
     {
       method: "POST",
@@ -236,8 +235,8 @@ export async function resumeQuizAfterFeedback(input: {
           input.transitionRemainingMilliseconds,
       }),
     },
+    readPayload,
   );
-  const payload = await responsePayload(response);
   const receivedAt = performance.now();
   const timing = {
     receivedAt,
@@ -256,7 +255,7 @@ export async function resumeQuizAfterFeedback(input: {
 }
 
 export async function expireQuizAttempt(attemptId: string) {
-  return fetch(`/api/student/attempts/${attemptId}/expire`, {
+  return boundedRequest(`/api/student/attempts/${attemptId}/expire`, {
     method: "POST",
-  });
+  }, async (response) => response);
 }
