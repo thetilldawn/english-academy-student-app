@@ -209,6 +209,8 @@ export function validateRecord(input, context, phase = "format") {
 export function validateChangedCoverage(changes, records, context) {
   const errors = [];
   const validation = new Map();
+  // Keep this cache inside one check. A later invocation must read new bytes.
+  const snapshots = new Map();
   const invalid = records.flatMap((record) => validateRecord(record, context, "format"));
   if (invalid.length) return invalid;
   for (const change of changes.filter((item) => isImplementationPath(item.filePath))) {
@@ -233,11 +235,20 @@ export function validateChangedCoverage(changes, records, context) {
       if (change.mapped.owners.length && !change.mapped.owners.includes(scope.owner)) continue;
       if (change.mapped.flows.some((id) => !scope.flowIds.includes(id))) continue;
       if (record.gate === "verified") {
-        const current = captureFingerprint(record, context).files.find((item) => item.path === change.filePath);
-        const prior = record.verification?.files.find((item) => item.path === change.filePath);
+          if (!snapshots.has(record)) {
+            snapshots.set(record, {
+              current: new Map(captureFingerprint(record, context).files.map(item => [item.path, item])),
+              prior: new Map((record.verification?.files ?? []).map(item => [item.path, item])),
+            });
+          }
+          const { current: currentFiles, prior: priorFiles } = snapshots.get(record);
+          const current = currentFiles.get(change.filePath);
+          const prior = priorFiles.get(change.filePath);
         if (!current || !prior || current.sha256 !== prior.sha256) continue;
       }
       covered = true;
+      // Do not stop at the first match: later candidates must still reject
+      // unsafe paths or unreadable inputs rather than hiding those failures.
     }
     if (!covered) errors.push("유효한 설계/현재 변경 근거 없음: " + change.filePath);
   }

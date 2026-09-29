@@ -34,6 +34,17 @@ describe("기존 공용 부품 검사 소유권", () => {
       { path: "src/components/admin-logout-button.test.tsx", owner: "test-owner" }] };
     expect(registeredOwnerForPath(exact, "src/components/admin-logout-button.test.tsx")).toBe("test-owner");
   });
+  it("등록된 서비스와 같은 위치의 검사만 원본 소유에 연결한다", () => {
+    expect(registeredOwnerForPath(registry, "src/lib/services/quiz/attempt-result-query.test.ts")).toBe("results");
+    expect(registeredOwnerForPath(registry, "src/lib/services/attempt-result-query.test.ts")).toBeNull();
+    expect(registeredOwnerForPath(registry, "src/lib/services/quiz/missing.test.ts")).toBeNull();
+    const ambiguous = { ...registry, serviceOwners: [...registry.serviceOwners,
+      { path: "src/lib/services/quiz/attempt-result-query.tsx", owner: "other" }] };
+    expect(registeredOwnerForPath(ambiguous, "src/lib/services/quiz/attempt-result-query.test.ts")).toBeNull();
+    const exact = { ...registry, serviceOwners: [...registry.serviceOwners,
+      { path: "src/lib/services/quiz/attempt-result-query.test.ts", owner: "explicit" }] };
+    expect(registeredOwnerForPath(exact, "src/lib/services/quiz/attempt-result-query.test.ts")).toBe("explicit");
+  });
 });
 const folders = [];
 const readExample = (name) => JSON.parse(fs.readFileSync(path.join(appRoot, "architecture/work-records/examples", name), "utf8"));
@@ -290,6 +301,40 @@ describe("완료 근거와 현재 코드", () => {
 });
 
 describe("Git 변경의 기록 연결", () => {
+
+  it("같은 실행은 기록별1회만 읽고 다음 실행은 새 내용을 확인한다", () => {
+    const { record, context } = fixture();
+    const second = structuredClone(record); second.id = "SECOND";
+    seal(record, context); seal(second, context);
+    const reads = [];
+    context.inputPaths = value => { reads.push(value.id); return []; };
+    const changes = record.scope.map(item => change(item.path));
+    expect(changes.length).toBeGreaterThan(1);
+    expect(validateChangedCoverage(changes, [record, second], context)).toEqual([]);
+    expect(reads).toEqual([record.id, second.id]);
+    write(context.root, record.scope[0].path, "changed after previous check");
+    expect(validateChangedCoverage(changes, [record, second], context).join()).toContain("현재 변경 근거 없음");
+    expect(reads).toEqual([record.id, second.id, record.id, second.id]);
+  });
+  it("앞 기록의 낡은 근거가 다른 기록의 올바른 근거를 덮지 않는다", () => {
+    const { record, context } = fixture(); seal(record, context);
+    const second = structuredClone(record); second.id = "SECOND";
+    write(context.root, record.scope[0].path, "new verified implementation");
+    seal(second, context);
+    expect(validateChangedCoverage(record.scope.map(item => change(item.path)), [record, second], context)).toEqual([]);
+    expect(validateChangedCoverage(record.scope.map(item => change(item.path)), [second, record], context)).toEqual([]);
+  });
+  it("앞 기록이 통과해도 뒤 후보의 앱 밖 입력 경로를 거절한다", () => {
+    const { record, context } = fixture();
+    const second = structuredClone(record); second.id = "UNSAFE-LATER";
+    context.inputPaths = value => value === second ? ["src/escape/input.ts"] : [];
+    seal(record, context); seal(second, context);
+    const outside = fs.mkdtempSync(path.join(os.tmpdir(), "work-record-outside-"));
+    folders.push(outside);
+    write(outside, "input.ts", "outside");
+    fs.symlinkSync(outside, path.join(context.root, "src/escape"), process.platform === "win32" ? "junction" : "dir");
+    expect(() => validateChangedCoverage([change(record.scope[0].path)], [record, second], context)).toThrow("앱 밖");
+  });
   it("기록 없는 코드 변경을 차단하고 문서만 변경은 강제 소급하지 않는다", () => {
     const { context } = fixture();
     expect(validateChangedCoverage([change("src/new.ts")], [], context).join()).toContain("작업 기록 없는");

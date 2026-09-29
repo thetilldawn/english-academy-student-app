@@ -104,7 +104,7 @@ describe("DAY 문제은행 응시 계약", () => {
     expect(controller).not.toContain("router.refresh()");
     expect(
       transport.match(
-        /boundedFetch\(`\/api\/student\/attempts\/\$\{attemptId\}`/g,
+        /boundedRequest\(\s*`\/api\/student\/attempts\/\$\{attemptId\}`/g,
       ),
     ).toHaveLength(1);
   });
