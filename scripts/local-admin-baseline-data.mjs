@@ -179,11 +179,16 @@ export function fixtureResponse({ url, method, headers, body = "", quizFeedback 
       if (input.p_dataset_id !== uid(11) || input.p_quiz_mode !== "canonical_definition_to_headword" ||
           !Array.isArray(input.p_unit_ids) || !input.p_unit_ids.length ||
           input.p_unit_ids.some(id => ![101, 102, 103, 104, 105].map(uid).includes(id))) return deny;
-      return respond(input.p_unit_ids.flatMap((unitId) => Array.from({ length: 20 }, (_, index) => ({
+      const order = target.searchParams.get("order"), offsetText = target.searchParams.get("offset") ?? "0", limitText = target.searchParams.get("limit") ?? "1000";
+      if (order && order !== "source_row.asc,question_item_id.asc" || !/^\d+$/.test(offsetText) || !/^\d+$/.test(limitText)) return deny;
+      const offset = Number(offsetText), limit = Number(limitText);
+      if (!Number.isSafeInteger(offset) || !Number.isSafeInteger(limit) || limit < 1 || limit > 1000) return deny;
+      const rows = input.p_unit_ids.flatMap((unitId) => Array.from({ length: 20 }, (_, index) => ({
         release_id: uid(500), package_sha256: "a".repeat(64), unit_id: unitId,
         vocab_entry_id: Number(unitId.slice(-3)) * 100 + index + 1, source_row: index + 1,
         question_item_id: unitId + "-" + index, question_item_sha256: "b".repeat(64),
-      }))), "preview-read");
+      }))).sort((a, b) => a.source_row - b.source_row || (a.question_item_id < b.question_item_id ? -1 : 1));
+      return respond(rows.slice(offset, offset + limit), "preview-read");
     }
     if (rpc === "get_admin_assignment_previous_exam_v1") return respond([], "previous-exam");
   }

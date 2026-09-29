@@ -62,23 +62,56 @@ async function loadCandidates(input: BulkAssignmentPreviewInput, unitIds: string
     if (new Set(rows.map(c => `${c.vocab_entry_id}:${c.direction}`)).size !== rows.length || new Set(rows.map(c => c.release_id)).size > 1 || new Set(rows.map(c => c.package_sha256)).size > 1) throw new BulkAssignmentError("database", "시험 문제의 버전이나 출제 방향이 서로 맞지 않습니다.");
     return rows;
   }
-  const { data, error } = await client.rpc(
-    bankSource === "reviewed_exam_v1" ? "list_active_reviewed_exam_questions_v1" : "list_active_canonical_question_preview_v1",
-    { p_dataset_id: input.commonPlan.datasetId, p_unit_ids: unitIds, p_quiz_mode: input.questionMode },
-  );
-  if (error) throw new BulkAssignmentError("database", "검토된 시험 문제를 불러오지 못했습니다. 다시 시도해 주세요.");
-  const parsed = z.array(candidateSchema).safeParse(data);
-  if (!parsed.success) throw new BulkAssignmentError("database", "시험 문제 목록의 형식이 올바르지 않습니다.");
-  const candidates = parsed.data.map((candidate): Candidate => ({
-    ...candidate,
-    direction: candidate.direction ?? "korean_to_english",
-  }));
-  const keys = candidates.map(c => `${c.vocab_entry_id}:${c.direction}`);
-  if (new Set(keys).size !== keys.length ||
-      new Set(candidates.map(c => c.release_id)).size > 1 ||
-      new Set(candidates.map(c => c.package_sha256)).size > 1 ||
-      (bankSource !== "canonical_legacy" && parsed.data.some(c => !c.direction))) {
-    throw new BulkAssignmentError("database", "시험 문제의 버전이나 출제 방향이 서로 맞지 않습니다.");
+  const reviewed = bankSource === "reviewed_exam_v1";
+  const readPage = async (from: number, to: number): Promise<Candidate[]> => {
+    let query = client.rpc(
+      reviewed ? "list_active_reviewed_exam_questions_v1" : "list_active_canonical_question_preview_v1",
+      { p_dataset_id: input.commonPlan.datasetId, p_unit_ids: unitIds, p_quiz_mode: input.questionMode },
+    ).order("source_row");
+    if (reviewed) query = query.order("direction");
+    const { data, error } = await query.order("question_item_id").range(from, to);
+    const parsed = z.array(candidateSchema).safeParse(data);
+    if (error || !parsed.success || parsed.data.length > to - from + 1) {
+      throw new BulkAssignmentError("database", "검토된 시험 문제를 불러오지 못했습니다. 다시 시도해 주세요.");
+    }
+    return parsed.data.map(row => {
+      if (!unitIds.includes(row.unit_id) || reviewed && !row.direction) {
+        throw new BulkAssignmentError("database", "시험 문제의 범위나 출제 방향이 서로 맞지 않습니다.");
+      }
+      return { ...row, direction: row.direction ?? "korean_to_english" };
+    });
+  };
+  const candidates: Candidate[] = [];
+  const keys = new Set<string>();
+  const questionIds = new Set<string>();
+  for (;;) {
+    const page = await readPage(candidates.length, candidates.length + 999);
+    if (candidates.length + page.length > 40_000) {
+      throw new BulkAssignmentError("database", "시험 문제 목록이 너무 큽니다. 범위를 줄여 주세요.");
+    }
+    if (page.length === 0) break; // The server may cap a nonempty page below 1000.
+    for (const row of page) {
+      const first = candidates[0], previous = candidates.at(-1);
+      const key = `${row.vocab_entry_id}:${row.direction}`;
+      const order = previous
+        ? row.source_row - previous.source_row ||
+          (reviewed && row.direction !== previous.direction ? (row.direction < previous.direction ? -1 : 1) : 0) ||
+          (row.question_item_id === previous.question_item_id ? 0 : row.question_item_id < previous.question_item_id ? -1 : 1)
+        : 1;
+      if (keys.has(key) || questionIds.has(row.question_item_id) || order <= 0 ||
+          first && (first.release_id !== row.release_id || first.package_sha256 !== row.package_sha256)) {
+        throw new BulkAssignmentError("database", "시험 문제의 버전이나 순서가 서로 맞지 않습니다.");
+      }
+      keys.add(key); questionIds.add(row.question_item_id); candidates.push(row);
+    }
+  }
+  if (candidates.length > 0) {
+    // Releases are immutable. Recheck the active head after all pages so a
+    // release disappearing or switching to a shorter one cannot look complete.
+    const head = await readPage(0, 0);
+    if (head.length !== 1 || JSON.stringify(head[0]) !== JSON.stringify(candidates[0])) {
+      throw new BulkAssignmentError("database", "조회 중 시험 문제가 변경되었습니다. 다시 확인해 주세요.");
+    }
   }
   return candidates;
 }

@@ -83,6 +83,13 @@ describe("로컬 기준 계측 보호", () => {
     const preview = "/rest/v1/rpc/list_active_canonical_question_preview_v1";
     const body = { p_dataset_id: uid(11), p_unit_ids: [uid(101), uid(105)], p_quiz_mode: "canonical_definition_to_headword" };
     expect(read(preview, { method: "POST", body: JSON.stringify(body) }).body).toHaveLength(40);
+    const page = (offset, limit) => read(preview + `?order=source_row.asc,question_item_id.asc&offset=${offset}&limit=${limit}`, { method: "POST", body: JSON.stringify(body) });
+    const rows = [...page(0, 20).body, ...page(20, 20).body];
+    expect(new Set(rows.map(row => row.question_item_id)).size).toBe(40);
+    expect(rows.map(row => row.source_row)).toEqual(Array.from({ length: 40 }, (_, i) => Math.floor(i / 2) + 1));
+    expect(page(40, 20).body).toEqual([]);
+    expect(page(0, 1).body).toEqual([rows[0]]);
+    expect(page(-1, 20).status).toBe(403); expect(page(0, 1001).status).toBe(403);
     expect(read(preview, { method: "POST", body: JSON.stringify({ ...body, p_unit_ids: [uid(1)] }) }).status).toBe(403);
     expect(read(preview, { method: "POST", body: JSON.stringify({ ...body, p_dataset_id: uid(333) }) }).status).toBe(403);
     expect(read("/rest/v1/rpc/create_bulk_assignments_v1", { method: "POST", body: JSON.stringify(body) }).status).toBe(403);

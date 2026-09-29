@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { paginatedRpc } from "@/test-support/paginated-rpc";
 import type { AdminContext } from "@/lib/auth/admin";
 import type { BulkAssignmentPreviewInput } from "../../contracts/bulk-assignment-request";
 const mocks = vi.hoisted(() => ({ load: vi.fn(), client: vi.fn(), count: vi.fn() }));
@@ -82,7 +83,7 @@ describe("예문도 공통 회차 규칙과 보이는 오류 위치를 사용한
       sessions: splitBasis === "range_unit" ? units.slice(0, count).map((u, i) => ({ unitIds: [u.id], ...slots[dated ? i : 0]! })) : slots.map(slot => ({ unitIds: units.map(u => u.id), ...slot })) };
     const planning = { dataset: { id: id(10), title: "가짜 예문", displayName: "가짜 예문", status: "ready", isActive: true, isAssignable: true }, students: [{ id: "fake-student", displayName: "가짜 학생", status: "active", schoolName: "가상고", gradeLabel: "고2" }], units };
     const rows = Array.from({ length: 12 }, (_, n) => ({ release_id: id(20), package_sha256: "a".repeat(64), vocab_entry_id: n + 1, unit_id: units[Math.floor(n / 4)]!.id, source_row: n + 1, question_item_id: `example-${n}`, question_item_sha256: "b".repeat(64) }));
-    mocks.load.mockResolvedValue(planning); mocks.client.mockResolvedValue({ rpc: vi.fn(async () => ({ data: rows, error: null })) });
+    mocks.load.mockResolvedValue(planning); mocks.client.mockResolvedValue({ rpc: vi.fn(() => paginatedRpc(() => ({ data: rows, error: null }))) });
     return { input, planning, rows };
   }
   it.each([["range_unit", false], ["range_unit", true], ["question_count", false], ["question_count", true]] as const)("%s 날짜%s의 예문 회차와 문항 합계", async (basis, dated) => {
@@ -128,7 +129,7 @@ describe("reviewed mock exams share passage-session planning", () => {
       return directions.map(direction=>({release_id:id(12),package_sha256:"a".repeat(64),vocab_entry_id:n,
         unit_id:unit.id,source_row:n,question_item_id:`fake-${n}-${direction}`,question_item_sha256:"b".repeat(64),direction}));
     }).flat());
-    const rpc=vi.fn(async()=>({error:null,data:rows})); mocks.client.mockResolvedValue({rpc});
+    const rpc=vi.fn(()=>paginatedRpc(()=>({error:null,data:rows}))); mocks.client.mockResolvedValue({rpc});
     return {input,rows,rpc};
   }
   it.each(modes)("%s %i: 20 passages produce 20 undated sessions and 278 targets", async(mode,ratio)=>{
@@ -170,6 +171,90 @@ describe("reviewed mock exams share passage-session planning", () => {
   });
 });
 
+describe("기존·검토 문항 전체 페이지 계약", () => {
+  const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+  function setup(size: number, reviewed = false, cap = 1000) {
+    const input = request();
+    input.questionMode = reviewed ? "book_meaning_choice" : "canonical_example_to_headword";
+    input.commonPlan.datasetId = id(10); input.commonPlan.orderedUnitIds = [id(11)];
+    input.commonPlan.sessions[0]!.unitIds = [id(11)];
+    mocks.load.mockResolvedValue({
+      dataset: { id: id(10), title: "가짜", displayName: "가짜", status: "ready", isActive: true, isAssignable: true,
+        ...(reviewed ? { questionBankKind: "reviewed_exam_v1" } : {}) },
+      students: [{ id: "fake-student", displayName: "가짜", status: "active", schoolName: "가상고", gradeLabel: "고2" }],
+      units: [{ id: id(11), label: "DAY 1", sortIndex: 1 }],
+    });
+    const rows: Record<string, unknown>[] = Array.from({ length: size }, (_, n) => {
+      const index = reviewed ? Math.floor(n / 2) : n;
+      return { release_id: id(12), package_sha256: "a".repeat(64), vocab_entry_id: index + 1, unit_id: id(11),
+        source_row: index + 1, question_item_id: `fake-${n}`, question_item_sha256: "b".repeat(64),
+        ...(reviewed ? { direction: n % 2 ? "korean_to_english" : "english_to_korean" } : {}) };
+    });
+    const ranges: number[][] = [], orders: string[][] = [];
+    let read = (from: number, to: number): { data: unknown; error: unknown } =>
+      ({ data: rows.slice(from, Math.min(to + 1, from + cap)), error: null });
+    const rpc = vi.fn(() => {
+      const columns: string[] = []; orders.push(columns);
+      const chain = { order: (key: string) => { columns.push(key); return chain; },
+        range: async (from: number, to: number) => { ranges.push([from, to]); return read(from, to); } };
+      return chain;
+    });
+    mocks.client.mockResolvedValue({ rpc });
+    return { input, rows, ranges, orders, rpc, setRead: (fn: typeof read) => { read = fn; } };
+  }
+  it.each([1000, 300])("기존 예문 1001행·서버상한 %i: 끝까지 읽고 회차500 상한은 유지", async cap => {
+    const { input, ranges, orders } = setup(1001, false, cap);
+    const result = await resolveCanonicalBulkAssignmentPreview(input, {} as AdminContext);
+    expect(result.preview.items[0]).toMatchObject({ available: true, totalAvailableQuestionCount: 1001, selectedQuestionCount: 500, remainingQuestionCount: 501 });
+    expect(ranges.map(r => r[0])).toEqual(cap === 1000 ? [0, 1000, 1001, 0] : [0, 300, 600, 900, 1001, 0]);
+    expect(orders.every(o => o.join(",") === "source_row,question_item_id")).toBe(true);
+    expect(ranges.at(-1)).toEqual([0, 0]);
+  });
+  it.each([0, 50, 100] as const)("검토문항 1002행: 양방향을 합쳐 501단어·비율%i", async ratio => {
+    const { input, orders } = setup(1002, true, 300); input.englishToKoreanRatio = ratio;
+    const result = await resolveCanonicalBulkAssignmentPreview(input, {} as AdminContext);
+    expect(result.preview.items[0]).toMatchObject({ available: true, totalAvailableQuestionCount: 501, selectedQuestionCount: 500, remainingQuestionCount: 1 });
+    expect(orders.every(o => o.join(",") === "source_row,direction,question_item_id")).toBe(true);
+    expect(new Set(result.canonicalPlansByStudent.get("fake-student")![0]!.map(q => q.id)).size).toBe(500);
+  });
+  it("정확히1000행도 빈 페이지를 확인하고 0행은 정상적인 출제불가", async () => {
+    const full = setup(1000); await resolveCanonicalBulkAssignmentPreview(full.input, {} as AdminContext);
+    expect(full.ranges.map(r => r[0])).toEqual([0, 1000, 0]);
+    const empty = setup(0);
+    expect((await resolveCanonicalBulkAssignmentPreview(empty.input, {} as AdminContext)).preview.items[0]!.available).toBe(false);
+    expect(empty.ranges).toHaveLength(1);
+  });
+  it.each(["error", "null", "shape", "unit", "duplicate-word", "duplicate-question", "backwards", "release", "hash", "repeat", "too-many"])("중간페이지 %s이면 일부 결과도 반환하지 않는다", async fault => {
+    const { input, rows, setRead } = setup(1001);
+    setRead((from, to) => {
+      if (from === 0) return { data: rows.slice(0, to + 1), error: null };
+      if (fault === "error") return { data: [], error: { message: "synthetic" } };
+      if (fault === "null") return { data: null, error: null };
+      const row = { ...rows[1000] };
+      if (fault === "shape") delete row.question_item_sha256;
+      if (fault === "unit") row.unit_id = id(99);
+      if (fault === "duplicate-word") row.vocab_entry_id = 1;
+      if (fault === "duplicate-question") row.question_item_id = rows[0]!.question_item_id;
+      if (fault === "backwards") row.source_row = 1;
+      if (fault === "release") row.release_id = id(99);
+      if (fault === "hash") row.package_sha256 = "c".repeat(64);
+      return { data: fault === "repeat" ? rows.slice(0, 1000) : fault === "too-many" ? rows : [row], error: null };
+    });
+    await expect(resolveCanonicalBulkAssignmentPreview(input, {} as AdminContext)).rejects.toMatchObject({ reason: "database" });
+  });
+  it.each(["removed", "replaced"])("마지막 빈페이지 이후 첫행 %s도 거절한다", async change => {
+    const { input, rows, setRead } = setup(1000);
+    setRead((from, to) => ({ data: to === 0 ? (change === "removed" ? [] : [{ ...rows[0], release_id: id(99) }]) : rows.slice(from, to + 1), error: null }));
+    await expect(resolveCanonicalBulkAssignmentPreview(input, {} as AdminContext)).rejects.toMatchObject({ reason: "database" });
+  });
+  it("검토문항 방향 누락과 40000행 초과를 거절한다", async () => {
+    const reviewed = setup(10, true); delete reviewed.rows[0]!.direction;
+    await expect(resolveCanonicalBulkAssignmentPreview(reviewed.input, {} as AdminContext)).rejects.toMatchObject({ reason: "database" });
+    const oversized = setup(40001);
+    await expect(resolveCanonicalBulkAssignmentPreview(oversized.input, {} as AdminContext)).rejects.toMatchObject({ reason: "database" });
+  });
+});
+
 describe("canonical server restriction before data access", () => {
   it.each([[840, 4, 1, true], [844, 4, 1, false], [12, 4, 70, true], [12, 4, 71, false], [500, 500, 20, true], [500, 500, 21, false]] as const)(
     "무날짜 전체 %i개·회차당%i·학생%i명의 실제 확장 상한", async (total, perSession, studentCount, allowed) => {
@@ -182,10 +267,10 @@ describe("canonical server restriction before data access", () => {
       mocks.load.mockResolvedValue({ dataset: { id: uuid(10), title: "가짜 자료", displayName: "가짜 자료", status: "ready", isActive: true, isAssignable: true },
         students: input.studentIds.map(id => ({ id, displayName: "가짜 학생", status: "active", schoolName: "가상고", gradeLabel: "고2" })),
         units: [{ id: uuid(11), label: "DAY 1", sortIndex: 1 }] });
-      mocks.client.mockResolvedValue({ rpc: vi.fn(async () => ({ error: null, data: Array.from({ length: total }, (_, n) => ({
+      mocks.client.mockResolvedValue({ rpc: vi.fn(() => paginatedRpc(() => ({ error: null, data: Array.from({ length: total }, (_, n) => ({
         release_id: uuid(12), package_sha256: "a".repeat(64), vocab_entry_id: n + 1, unit_id: uuid(11), source_row: n + 1,
         question_item_id: `fake-${n}`, question_item_sha256: "b".repeat(64),
-      })) })) });
+      })) }))) });
       const result = await resolveCanonicalBulkAssignmentPreview(input, {} as AdminContext);
       expect(result.preview.items.every(item => item.available === allowed)).toBe(true);
       if (allowed) {
@@ -206,10 +291,10 @@ describe("canonical server restriction before data access", () => {
       students: [{ id: "fake-student", displayName: "가짜 학생", status: "active", schoolName: "가상고", gradeLabel: "고2" }],
       units: [{ id: uuid(11), label: "DAY 1", sortIndex: 1 }],
     });
-    mocks.client.mockResolvedValue({ rpc: vi.fn(async () => ({ error: null, data: Array.from({ length: 601 }, (_, n) => ({
+    mocks.client.mockResolvedValue({ rpc: vi.fn(() => paginatedRpc(() => ({ error: null, data: Array.from({ length: 601 }, (_, n) => ({
       release_id: uuid(12), package_sha256: "a".repeat(64), vocab_entry_id: n + 1,
       unit_id: uuid(11), source_row: n + 1, question_item_id: `fake-item-${n}`, question_item_sha256: "b".repeat(64),
-    })) })) });
+    })) }))) });
     const result = await resolveCanonicalBulkAssignmentPreview(input, {} as AdminContext);
     expect(result.preview.items[0]).toMatchObject({
       available: true, totalAvailableQuestionCount: 601, maximumSessionQuestionCount: 500,

@@ -4,6 +4,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterAll, afterEach, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { createFinalSchemaDatabase } from "@/test-support/final-schema-database";
+import { paginatedRpc } from "@/test-support/paginated-rpc";
 import type { AssignmentUnitItem } from "@/features/assignments/catalog-types";
 import { createInitialVocabPlannerState, vocabPlannerReducer } from "@/features/assignments/controller/vocab-assignment-planner-state";
 import { useVocabAssignmentDerivedPlan } from "@/features/assignments/controller/use-vocab-assignment-derived-plan";
@@ -70,13 +71,14 @@ beforeAll(async () => {
   units = Array.from({ length: 3 }, (_, i) => ({ id: id(50 + i), datasetId, label: `DAY ${i + 1}`, displayName: `DAY ${i + 1}`, sortIndex: i + 1, entryCount: 4, kind: "day", number: i + 1, catalogGroup: null, unitType: null, academicYear: null, examMonth: null, agency: null, itemRange: null, catalogSortIndex: i + 1 }));
   mocks.load.mockResolvedValue({ dataset: { id: datasetId, title: "가짜 예문", displayName: "가짜 예문", status: "ready", isActive: true, isAssignable: true }, students: [{ id: id(2), displayName: "가짜 학생", schoolName: "가짜 고등학교", gradeLabel: "고2", status: "active" }], units });
   const allowed = new Set(["list_active_canonical_question_preview_v1", "get_bulk_vocab_series_result_v1", "get_canonical_assignment_preview_result_v1", "create_bulk_vocab_assignments_v11", "get_vocab_assignment_queue_result_v1", "create_vocab_assignment_queues_v3"]);
-  mocks.client.mockResolvedValue({ rpc: async (name: string, params: Record<string, unknown>) => {
+  mocks.client.mockResolvedValue({ rpc: (name: string, params: Record<string, unknown>) => {
     if (!allowed.has(name)) throw new Error("Unexpected isolated RPC: " + name);
     const entries = Object.entries(params); if (entries.some(([key]) => !/^p_[a-z0-9_]+$/.test(key))) throw new Error("Invalid parameter");
     if (name === "create_bulk_vocab_assignments_v11") savedBatches = structuredClone(params.p_batches as Record<string, unknown>[]);
     const values = entries.map(([key, value]) => ["p_batches", "p_series"].includes(key) ? JSON.stringify(value) : value);
     const call = `public.${name}(${entries.map(([key], i) => `${key} => $${i + 1}`).join(",")})`;
-    return { data: name.startsWith("list_") ? (await db.query(`select * from ${call}`, values)).rows : await scalar(`select ${call} value`, values), error: null };
+    if (name.startsWith("list_")) return paginatedRpc(async () => ({ data: (await db.query<Record<string, unknown>>(`select * from ${call}`, values)).rows, error: null }));
+    return scalar(`select ${call} value`, values).then(data => ({ data, error: null }));
   } });
 }, 120_000);
 afterAll(async () => { await db?.close(); });

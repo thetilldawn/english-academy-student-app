@@ -3,6 +3,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createFinalSchemaDatabase } from "@/test-support/final-schema-database";
+import { paginatedRpc } from "@/test-support/paginated-rpc";
 import { reviewedExamFixture, reviewedFixtureId as id } from "@/test-support/reviewed-exam-fixtures";
 import { vocabPronunciationReleaseHeader } from "@/lib/vocab/vocab-pronunciation-release-v2-contract";
 import type { AdminContext } from "@/lib/auth/admin";
@@ -66,14 +67,14 @@ describe.sequential("무날짜 계획부터 실제 저장·첫 시험·다음 �
       students: [{ id: id(2), displayName: "가짜 학생", schoolName: "가짜 고등학교", gradeLabel: "고2", status: "active" }], units,
     }));
     const allowed = new Set(["list_active_reviewed_exam_questions_v1", "get_bulk_vocab_series_result_v1", "get_canonical_assignment_preview_result_v1", "create_bulk_vocab_assignments_v11"]);
-    mocks.client.mockResolvedValue({ rpc: async (name: string, params: Record<string, unknown>) => {
+    mocks.client.mockResolvedValue({ rpc: (name: string, params: Record<string, unknown>) => {
       if (!allowed.has(name)) throw new Error(`Unexpected isolated RPC: ${name}`);
       const entries = Object.entries(params);
       if (entries.some(([key]) => !/^p_[a-z0-9_]+$/.test(key))) throw new Error("Invalid parameter name");
       const values = entries.map(([key, value]) => key === "p_batches" ? JSON.stringify(value) : value);
       const call = `public.${name}(${entries.map(([key], i) => `${key} => $${i + 1}`).join(",")})`;
-      if (name.startsWith("list_")) return { data: (await db.query(`select * from ${call}`, values)).rows, error: null };
-      return { data: await scalar(`select ${call} value`, values), error: null };
+      if (name.startsWith("list_")) return paginatedRpc(async () => ({ data: (await db.query<Record<string, unknown>>(`select * from ${call}`, values)).rows, error: null }));
+      return scalar(`select ${call} value`, values).then(data => ({ data, error: null }));
     } });
   }, 120_000);
   afterAll(async () => { await db?.close(); });
