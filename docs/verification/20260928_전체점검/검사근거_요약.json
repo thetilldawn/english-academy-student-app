@@ -1,0 +1,342 @@
+{
+  "workId": "OPS-20260928-01",
+  "capturedAt": "2026-09-28T15:57:04.530Z",
+  "baseline": {
+    "files": 514,
+    "total": 3854,
+    "passed": 3853,
+    "failed": 0,
+    "skipped": 1,
+    "skippedCases": [
+      {
+        "file": "src/lib/database/school-pronunciation-scope.integration.test.ts",
+        "name": "approved school pronunciation final schema imports all current local releases against the complete schema and existing identity bytes",
+        "status": "skipped"
+      }
+    ]
+  },
+  "additional": {
+    "files": 9,
+    "total": 25,
+    "passed": 8,
+    "failed": 17,
+    "skipped": 0,
+    "independentCauses": 9,
+    "filesAndCases": [
+      {
+        "file": ".codex-tmp/전체점검_20260928/bulk-ambiguous-save.test.tsx",
+        "sha256": "6bdbec09cce64426f58a0516c79ca562acaf54fd272e946a386da98c70337f20",
+        "cases": [
+          {
+            "name": "ambiguous save, changed input=false must not create a second receipt",
+            "status": "passed",
+            "failure": []
+          },
+          {
+            "name": "ambiguous save, changed input=true must not create a second receipt",
+            "status": "failed",
+            "failure": [
+              "AssertionError: different idempotency keys created two server receipts after lost response: expected 2 to be 1 // Object.is equality"
+            ]
+          }
+        ]
+      },
+      {
+        "file": ".codex-tmp/전체점검_20260928/completed-auth.test.tsx",
+        "sha256": "4d8d413d5185486a55241cf8336cecd6a2832e4b0f3c079b2a6030f7b7ebbd51",
+        "cases": [
+          {
+            "name": "audit completed-history authorization failure 401 must hide old personal results",
+            "status": "failed",
+            "failure": [
+              "AssertionError: previous private history still remains after known authorization failure: expected [ { id: 'private-student-A-result' } ] to deeply equal []"
+            ]
+          },
+          {
+            "name": "audit completed-history authorization failure 403 must hide old personal results",
+            "status": "failed",
+            "failure": [
+              "AssertionError: previous private history still remains after known authorization failure: expected [ { id: 'private-student-A-result' } ] to deeply equal []"
+            ]
+          },
+          {
+            "name": "audit completed-history authorization failure control: transient 503 preserves already loaded rows",
+            "status": "passed",
+            "failure": []
+          }
+        ]
+      },
+      {
+        "file": ".codex-tmp/전체점검_20260928/notification-release.test.ts",
+        "sha256": "4650bfb051323ee2473c2d8569181e0c848ed63424a8518f2c2e8ee1ea78b64d",
+        "cases": [
+          {
+            "name": "locked later assignment must not consume its new-assignment notification",
+            "status": "failed",
+            "failure": [
+              "AssertionError: only one assignment is open but both notifications were consumed: expected 2 to be 1 // Object.is equality"
+            ]
+          },
+          {
+            "name": "newly opened second assignment must still have its notification",
+            "status": "failed",
+            "failure": [
+              "AssertionError: second notification was already consumed while its exam was locked: expected +0 to be 1 // Object.is equality"
+            ]
+          }
+        ]
+      },
+      {
+        "file": ".codex-tmp/전체점검_20260928/points-malformed.test.ts",
+        "sha256": "b5d91b5b4e5847a93c0356c6df873731fba23474efcc944152c6683ea9965e93",
+        "cases": [
+          {
+            "name": "malformed or missing balance null must not be treated as confirmed zero",
+            "status": "failed",
+            "failure": [
+              "Error: promise resolved \"Map{ 'fake-A' => +0 }\" instead of rejecting"
+            ]
+          },
+          {
+            "name": "malformed or missing balance [] must not be treated as confirmed zero",
+            "status": "failed",
+            "failure": [
+              "Error: promise resolved \"Map{ 'fake-A' => +0 }\" instead of rejecting"
+            ]
+          },
+          {
+            "name": "malformed or missing balance [ { student_id: 'fake-A', …(1) } ] must not be treated as confirmed zero",
+            "status": "failed",
+            "failure": [
+              "Error: promise resolved \"Map{ 'fake-A' => +0 }\" instead of rejecting"
+            ]
+          },
+          {
+            "name": "malformed or missing balance [ { student_id: 'fake-A', …(1) } ] must not be treated as confirmed zero",
+            "status": "failed",
+            "failure": [
+              "Error: promise resolved \"Map{ 'fake-A' => +0 }\" instead of rejecting"
+            ]
+          },
+          {
+            "name": "control: confirmed numeric zero is valid",
+            "status": "passed",
+            "failure": []
+          }
+        ]
+      },
+      {
+        "file": ".codex-tmp/전체점검_20260928/quiz-body-stall.test.ts",
+        "sha256": "ce306f94cf1c1aec94f45c6b757210875e35bb8afd6af6f0eeb5a09298297fea",
+        "cases": [
+          {
+            "name": "audit response-body timeout submit must settle after timeout even if headers arrived and body stalled",
+            "status": "failed",
+            "failure": [
+              "AssertionError: response body remained pending after the promised request timeout: expected false to be true // Object.is equality"
+            ]
+          },
+          {
+            "name": "audit response-body timeout recover must settle after timeout even if headers arrived and body stalled",
+            "status": "failed",
+            "failure": [
+              "AssertionError: response body remained pending after the promised request timeout: expected false to be true // Object.is equality"
+            ]
+          },
+          {
+            "name": "audit response-body timeout feedback must settle after timeout even if headers arrived and body stalled",
+            "status": "failed",
+            "failure": [
+              "AssertionError: response body remained pending after the promised request timeout: expected false to be true // Object.is equality"
+            ]
+          },
+          {
+            "name": "audit response-body timeout control: the existing timeout does reject when headers never arrive",
+            "status": "passed",
+            "failure": []
+          }
+        ]
+      },
+      {
+        "file": ".codex-tmp/전체점검_20260928/quiz-three-clicks.test.tsx",
+        "sha256": "96f28d4410a76c3bf46f03385a43e5d7a8b7688508b1d2fec3d865cddbbec0d9",
+        "cases": [
+          {
+            "name": "three choices within 100ms sends only C in initial",
+            "status": "passed",
+            "failure": []
+          },
+          {
+            "name": "three choices within 100ms sends only C in retry",
+            "status": "passed",
+            "failure": []
+          }
+        ]
+      },
+      {
+        "file": ".codex-tmp/전체점검_20260928/result-db-error.test.ts",
+        "sha256": "3d82a79fbf7c91f267e5c295aa6c6df425f59649cd6fca48e68dcc8b9d2842ff",
+        "cases": [
+          {
+            "name": "audit result error versus not found database failure must reject instead of returning not-found null",
+            "status": "failed",
+            "failure": [
+              "Error: promise resolved \"null\" instead of rejecting"
+            ]
+          },
+          {
+            "name": "audit result error versus not found control: actual absence remains null",
+            "status": "passed",
+            "failure": []
+          }
+        ]
+      },
+      {
+        "file": ".codex-tmp/전체점검_20260928/reviewed-pagination.test.ts",
+        "sha256": "2b89ae0b8104c865be9dfce037218e20796b25223200cac6f6e1fe890e6a8896",
+        "cases": [
+          {
+            "name": "reviewed bank reads all 1001 rows with API cap 1000",
+            "status": "failed",
+            "failure": [
+              "AssertionError: tail rows are silently omitted after one RPC page: expected 1000 to be 1001 // Object.is equality"
+            ]
+          },
+          {
+            "name": "reviewed bank reads all 1001 rows with API cap 300",
+            "status": "failed",
+            "failure": [
+              "AssertionError: tail rows are silently omitted after one RPC page: expected 300 to be 1001 // Object.is equality"
+            ]
+          }
+        ]
+      },
+      {
+        "file": ".codex-tmp/전체점검_20260928/session-db-error.test.ts",
+        "sha256": "7e8afac822ef8754a27f63213af46c6bcd02ee63133664d7b728d2a6da1d5fc4",
+        "cases": [
+          {
+            "name": "database outage must not be represented as an invalid student session",
+            "status": "failed",
+            "failure": [
+              "Error: promise resolved \"null\" instead of rejecting"
+            ]
+          },
+          {
+            "name": "failed server revocation must not report successful logout",
+            "status": "failed",
+            "failure": [
+              "Error: promise resolved \"undefined\" instead of rejecting"
+            ]
+          },
+          {
+            "name": "control: successful server revocation clears local cookie",
+            "status": "passed",
+            "failure": []
+          }
+        ]
+      }
+    ]
+  },
+  "sourceChanges": 0,
+  "productionWrites": 0,
+  "evidenceHashes": {
+    "S02_vitest.json": "d697b5fdc9114398c873706c97b1d067ce1a4f51e54a4dd20c489c18f78a0167",
+    "최종_추가재현.json": "81ab5e340df7f47bda2fc88c05c50dbfbb0f70cdcf0182d648f85109afe03da0",
+    "vitest.audit.config.mts": "e81a8e4e536df17a9f697811d95892e7c750c75528b7e1fe4200f75a4cfa647f"
+  },
+  "browser": {
+    "environment": "localhost in-memory fake data only",
+    "scenarios": 12,
+    "quizMetrics": [
+      {
+        "id": "00000000-0000-4000-8000-000000000201",
+        "mode": "book_meaning_choice",
+        "phase": "initial",
+        "answered": 1,
+        "resumed": 1,
+        "currentQuestionId": "00000000-0000-4000-8000-000000002011"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000000204",
+        "mode": "canonical_definition_to_headword",
+        "phase": "retry",
+        "answered": 1,
+        "resumed": 1,
+        "currentQuestionId": "00000000-0000-4000-8000-000000002041"
+      }
+    ],
+    "quizRequests": [
+      {
+        "path": "/api/student/attempts/00000000-0000-4000-8000-000000000201",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "path": "/api/student/attempts/00000000-0000-4000-8000-000000000201/answers",
+        "method": "POST",
+        "status": 200
+      },
+      {
+        "path": "/api/student/attempts/00000000-0000-4000-8000-000000000201/feedback",
+        "method": "POST",
+        "status": 200
+      },
+      {
+        "path": "/api/student/attempts/00000000-0000-4000-8000-000000000204",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "path": "/api/student/attempts/00000000-0000-4000-8000-000000000204/answers",
+        "method": "POST",
+        "status": 200
+      },
+      {
+        "path": "/api/student/attempts/00000000-0000-4000-8000-000000000204/feedback",
+        "method": "POST",
+        "status": 200
+      }
+    ],
+    "historyListRequests": 2,
+    "fixtureRejected": [
+      {
+        "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+        "status": 403
+      },
+      {
+        "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+        "status": 403
+      },
+      {
+        "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+        "status": 403
+      },
+      {
+        "path": "/rest/v1/rpc/list_mock_composition_lineage_v1",
+        "status": 403
+      },
+      {
+        "path": "/rest/v1/rpc/list_pronunciation_audio_corrections_v1",
+        "status": 403
+      },
+      {
+        "path": "/rest/v1/rpc/list_pronunciation_audio_corrections_v1",
+        "status": 403
+      },
+      {
+        "path": "/rest/v1/rpc/list_pronunciation_audio_corrections_v1",
+        "status": 403
+      },
+      {
+        "path": "/rest/v1/rpc/list_pronunciation_audio_corrections_v1",
+        "status": 403
+      },
+      {
+        "path": "/rest/v1/rpc/list_pronunciation_audio_corrections_v1",
+        "status": 403
+      }
+    ],
+    "note": "전체 내역 목록요청 수는 검색 포함. 모달 첫 열기/닫기 전후1→1은 별도 관찰. 개인정보는 가짜값만."
+  }
+}

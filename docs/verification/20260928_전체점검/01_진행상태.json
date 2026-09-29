@@ -1,0 +1,431 @@
+{
+  "schemaVersion": 1,
+  "workId": "OPS-20260928-01",
+  "plan": "00_전체계획.md",
+  "appDirectory": "C:/Users/임성열/Desktop/영어 프로젝트/.worktrees/vocabulary-templates-20260920",
+  "planLocalCommit": "58af62cdc56f399419d4a1ea56a6282b3e10493a",
+  "productionCommitEvidence": "c21025710d9bba857073ee93e31c4c9b2b0caa3f",
+  "additionalDatabaseChange": {
+    "worktree": "C:/Users/임성열/Desktop/영어 프로젝트/.worktrees/library-auth-retry-20260928",
+    "commit": "5cf29e6f422bee3f6e9c3f118bda352fe4e86c9e",
+    "note": "bulk v11 timeout 55s; reverify in S01"
+  },
+  "lastCheckpoint": "2026-09-28T15:57:06.844Z",
+  "nextStep": null,
+  "runningStep": null,
+  "automationId": null,
+  "continuation": {
+    "kind": "sequential_batches_with_checkpoints",
+    "threadId": "01a08a0f-9b0f-7180-b721-1d819ca9b2e8",
+    "requestStatus": "completed",
+    "pendingBatch": null,
+    "lastRequest": {
+      "requestId": "OPS-20260928-01-S01-A-001",
+      "requestedStep": "S01",
+      "requestedBatch": "S01-A",
+      "acceptedAt": "2026-09-28T14:18:08Z",
+      "tool": "mcp__codex_app__send_message_to_thread",
+      "returnedThreadId": "01a08a0f-9b0f-7180-b721-1d819ca9b2e8",
+      "isError": false,
+      "executionCompleted": true,
+      "note": "같은 작업에 후속 요청 전달 성공. 접수는 실제 단계 실행/완료 증거가 아니다."
+    },
+    "removedAutomationId": "automation-2",
+    "removalConfirmed": true,
+    "stopAfter": "S10 final report",
+    "note": "2026-09-29 사용자10단계까지 계속 승인. 같은 작업 후속 전달만으로 실행되지 않은 이력을 반영해 메인이 단계 완료 후 바로 다음 단계에 착수한다. 조사별 새 읽기 전용 서브세션과 파일 체크포인트로 맥락을 나눈다.",
+    "pendingRequestId": null
+  },
+  "runLimit": "단계별 검사와 보고서를 분리해 순차 진행. 독립 읽기 검토만 병렬. 수정·운영 쓰기 금지.",
+  "phaseResults": [
+    {
+      "id": "S01",
+      "title": "기준과 검사 범위 확정",
+      "state": "completed",
+      "primaryOwners": [
+        "app-shell",
+        "architecture-meta"
+      ],
+      "report": "S01_검사결과.md",
+      "resumeNote": "검사·보고 완료. 제품 정상/운영 실사용 전수확인 의미 아님. 미실행은 각 보고서 참조.",
+      "instruction": "단계별/S01.md",
+      "batches": [
+        "S01-A",
+        "S01-B"
+      ]
+    },
+    {
+      "id": "S02",
+      "title": "기존 자동검사 전체 실행",
+      "state": "completed",
+      "primaryOwners": [
+        "all"
+      ],
+      "report": "S02_검사결과.md",
+      "resumeNote": "검사·보고 완료. 제품 정상/운영 실사용 전수확인 의미 아님. 미실행은 각 보고서 참조.",
+      "instruction": "단계별/S02.md",
+      "batches": [
+        "S02-A",
+        "S02-B",
+        "S02-C",
+        "S02-D"
+      ]
+    },
+    {
+      "id": "S03",
+      "title": "학생 인증·학습·시험·결과",
+      "state": "completed",
+      "primaryOwners": [
+        "student-dashboard",
+        "session",
+        "quiz-player",
+        "results"
+      ],
+      "report": "S03_검사결과.md",
+      "resumeNote": "검사·보고 완료. 제품 정상/운영 실사용 전수확인 의미 아님. 미실행은 각 보고서 참조.",
+      "instruction": "단계별/S03.md",
+      "batches": [
+        "S03-A",
+        "S03-B",
+        "S03-C"
+      ]
+    },
+    {
+      "id": "S04",
+      "title": "관리자 학생·내역·상세 화면",
+      "state": "completed",
+      "primaryOwners": [
+        "students",
+        "history",
+        "shared-ui"
+      ],
+      "report": "S04_검사결과.md",
+      "resumeNote": "검사·보고 완료. 제품 정상/운영 실사용 전수확인 의미 아님. 미실행은 각 보고서 참조.",
+      "instruction": "단계별/S04.md",
+      "batches": [
+        "S04-A",
+        "S04-B",
+        "S04-C"
+      ]
+    },
+    {
+      "id": "S05",
+      "title": "배정·수정·이어지는 시험",
+      "state": "completed",
+      "primaryOwners": [
+        "assignments",
+        "assignment-queue",
+        "shared-admin-command"
+      ],
+      "report": "S05_검사결과.md",
+      "resumeNote": "검사·보고 완료. 제품 정상/운영 실사용 전수확인 의미 아님. 미실행은 각 보고서 참조.",
+      "instruction": "단계별/S05.md",
+      "batches": [
+        "S05-A",
+        "S05-B",
+        "S05-C"
+      ]
+    },
+    {
+      "id": "S06",
+      "title": "단어장·어휘·예문·음원",
+      "state": "completed",
+      "primaryOwners": [
+        "wordbook-compositions",
+        "shared-quiz-domain"
+      ],
+      "report": "S06_검사결과.md",
+      "resumeNote": "검사·보고 완료. 제품 정상/운영 실사용 전수확인 의미 아님. 미실행은 각 보고서 참조.",
+      "instruction": "단계별/S06.md",
+      "batches": [
+        "S06-A",
+        "S06-B",
+        "S06-C"
+      ]
+    },
+    {
+      "id": "S07",
+      "title": "학교 일정·포인트·알림",
+      "state": "completed",
+      "primaryOwners": [
+        "school-schedules",
+        "learning-points",
+        "notifications"
+      ],
+      "report": "S07_검사결과.md",
+      "resumeNote": "검사·보고 완료. 제품 정상/운영 실사용 전수확인 의미 아님. 미실행은 각 보고서 참조.",
+      "instruction": "단계별/S07.md",
+      "batches": [
+        "S07-A",
+        "S07-B",
+        "S07-C"
+      ]
+    },
+    {
+      "id": "S08",
+      "title": "권한·DB·캐시·외부 연결",
+      "state": "completed",
+      "primaryOwners": [
+        "auth",
+        "shared-infra",
+        "database-contract",
+        "shared-contract"
+      ],
+      "report": "S08_검사결과.md",
+      "resumeNote": "검사·보고 완료. 제품 정상/운영 실사용 전수확인 의미 아님. 미실행은 각 보고서 참조.",
+      "instruction": "단계별/S08.md",
+      "batches": [
+        "S08-A",
+        "S08-B",
+        "S08-C",
+        "S08-D"
+      ]
+    },
+    {
+      "id": "S09",
+      "title": "문서와 실제 코드 구조 대조",
+      "state": "completed",
+      "primaryOwners": [
+        "architecture-meta",
+        "app-shell",
+        "shared-ui"
+      ],
+      "report": "S09_검사결과.md",
+      "resumeNote": "검사·보고 완료. 제품 정상/운영 실사용 전수확인 의미 아님. 미실행은 각 보고서 참조.",
+      "instruction": "단계별/S09.md",
+      "batches": [
+        "S09-A",
+        "S09-B",
+        "S09-C"
+      ]
+    },
+    {
+      "id": "S10",
+      "title": "누락 재확인과 최종 보고",
+      "state": "completed",
+      "primaryOwners": [
+        "all"
+      ],
+      "report": "S10_검사결과.md",
+      "resumeNote": "검사·보고 완료. 제품 정상/운영 실사용 전수확인 의미 아님. 미실행은 각 보고서 참조.",
+      "instruction": "단계별/S10.md",
+      "batches": [
+        "S10-A",
+        "S10-B"
+      ]
+    }
+  ],
+  "preparation": {
+    "guidesRead": true,
+    "independentPlanReviews": 2,
+    "inventoryOnly": false,
+    "testsExecuted": 3854,
+    "productionWrites": 0,
+    "localSourceChanges": 0,
+    "detailedPlanReview": "Independent review corrections applied: map command scope, count units, retest expectations, answer visibility, duplicate/interrupted continuation",
+    "baseline": {
+      "passed": 3853,
+      "failed": 0,
+      "skipped": 1,
+      "files": 514
+    }
+  },
+  "knownCandidates": [
+    {
+      "id": "PLAN-C01",
+      "note": "길찾기 기능 설명표10개와 소유권 지도12개의 범위 차이. 누락된 실제 기능을 검사 범위에 포함하고 S09에서 문서 문제 판정."
+    }
+  ],
+  "nextAction": "점검 보고 완료. 문제목록의 수정 권고를 참고하되 별도 수정·배포를 자동 시작하지 않는다.",
+  "nextBatch": null,
+  "runGuide": "단계별/00_진행방법.md",
+  "activeRun": null,
+  "batchProgress": {
+    "S01-A": {
+      "state": "completed",
+      "report": "S01_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S01-B": {
+      "state": "completed",
+      "report": "S01_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S02-A": {
+      "state": "completed",
+      "report": "S02_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S02-B": {
+      "state": "completed",
+      "report": "S02_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S02-C": {
+      "state": "completed",
+      "report": "S02_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S02-D": {
+      "state": "completed",
+      "report": "S02_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S03-A": {
+      "state": "completed",
+      "report": "S03_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S03-B": {
+      "state": "completed",
+      "report": "S03_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S03-C": {
+      "state": "completed",
+      "report": "S03_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S04-A": {
+      "state": "completed",
+      "report": "S04_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S04-B": {
+      "state": "completed",
+      "report": "S04_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S04-C": {
+      "state": "completed",
+      "report": "S04_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S05-A": {
+      "state": "completed",
+      "report": "S05_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S05-B": {
+      "state": "completed",
+      "report": "S05_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S05-C": {
+      "state": "completed",
+      "report": "S05_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S06-A": {
+      "state": "completed",
+      "report": "S06_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S06-B": {
+      "state": "completed",
+      "report": "S06_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S06-C": {
+      "state": "completed",
+      "report": "S06_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S07-A": {
+      "state": "completed",
+      "report": "S07_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S07-B": {
+      "state": "completed",
+      "report": "S07_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S07-C": {
+      "state": "completed",
+      "report": "S07_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S08-A": {
+      "state": "completed",
+      "report": "S08_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S08-B": {
+      "state": "completed",
+      "report": "S08_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S08-C": {
+      "state": "completed",
+      "report": "S08_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S08-D": {
+      "state": "completed",
+      "report": "S08_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S09-A": {
+      "state": "completed",
+      "report": "S09_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S09-B": {
+      "state": "completed",
+      "report": "S09_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S09-C": {
+      "state": "completed",
+      "report": "S09_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S10-A": {
+      "state": "completed",
+      "report": "S10_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    },
+    "S10-B": {
+      "state": "completed",
+      "report": "S10_검사결과.md",
+      "resumeNote": "판정과 실행 한계 기록 완료"
+    }
+  },
+  "completedAt": "2026-09-28T15:57:06.844Z",
+  "result": {
+    "finalReport": "S10_검사결과.md",
+    "findings": "문제목록.md",
+    "coverage": "검사범위_최종대조.json",
+    "baseline": {
+      "files": 514,
+      "total": 3854,
+      "passed": 3853,
+      "failed": 0,
+      "skipped": 1
+    },
+    "additional": {
+      "files": 9,
+      "total": 25,
+      "passed": 8,
+      "expectationViolations": 17,
+      "independentCauses": 9
+    },
+    "readOnlyAgentReviews": 7,
+    "productionWrites": 0,
+    "productSourceChanges": 0,
+    "newDeployments": 0,
+    "localHeadUnchanged": true,
+    "cleanup": {
+      "portsClosed": [
+        3037,
+        3038,
+        3040
+      ],
+      "browserTabClosed": true,
+      "viewportReset": true,
+      "originalBuildRestored": true,
+      "buildIdSha256": "41BCECA6806F0B39C0085F976E2C998060ACBE0092A8143555D03FE712AD65C8"
+    }
+  }
+}
