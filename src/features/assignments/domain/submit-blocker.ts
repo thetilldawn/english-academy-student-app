@@ -1,4 +1,5 @@
 import type { AssignmentDraftIssue } from "./validation";
+import type { SubmissionState } from "./editor-state";
 
 export type SingleAssignmentSubmitBlocker =
   | { code: "loading" }
@@ -40,7 +41,7 @@ export function deriveSingleAssignmentSubmitBlocker({
   previewStatus: "idle" | "loading" | "ready" | "error";
   questionCount: number;
   reviewMode: "none" | "pending";
-  submissionStatus: "idle" | "submitting" | "succeeded" | "conflict" | "failed";
+  submissionStatus: SubmissionState<unknown>["status"];
 }): SingleAssignmentSubmitBlocker | null {
   if (submissionStatus !== "idle") return { code: "processing" };
   if (loadStatus === "loading") return { code: "loading" };

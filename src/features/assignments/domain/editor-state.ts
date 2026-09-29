@@ -42,7 +42,12 @@ export type SubmissionState<Result> =
     }
   | { status: "succeeded"; revision: number; requestId: string; result: Result }
   | { status: "conflict"; revision: number; requestId: string; message: string }
-  | { status: "failed"; revision: number; requestId: string; message: string };
+  | { status: "failed"; revision: number; requestId: string; message: string }
+  | { status: "uncertain"; revision: number; requestId: string; fingerprint: string; message: string };
+
+export function isAssignmentEditingLocked<Result>(submission: SubmissionState<Result>) {
+  return submission.status === "submitting" || submission.status === "uncertain";
+}
 
 export type AssignmentEditorState<
   Draft extends AssignmentDraft,
@@ -102,6 +107,7 @@ export type AssignmentEditorAction<
   | { type: "submission/succeeded"; revision: number; requestId: string; result: Result }
   | { type: "submission/conflicted"; revision: number; requestId: string; message: string }
   | { type: "submission/failed"; revision: number; requestId: string; message: string }
+  | { type: "submission/uncertain"; revision: number; requestId: string; message: string }
   | { type: "submission/reset" };
 
 function reconcileDraftFromCapacity<Draft extends AssignmentDraft>(
@@ -141,7 +147,7 @@ export function reduceAssignmentEditorState<
   action: AssignmentEditorAction<Draft, Preview, Result>,
 ): AssignmentEditorState<Draft, Preview, Result> {
   if (action.type === "draft/replaced") {
-    if (state.submission.status === "submitting") return state;
+    if (isAssignmentEditingLocked(state.submission)) return state;
     if (action.previewImpact === "preserve") {
       return {
         ...state,
@@ -159,7 +165,7 @@ export function reduceAssignmentEditorState<
   if (action.type === "preview/requested") {
     if (
       action.revision !== state.revision ||
-      state.submission.status === "submitting"
+      isAssignmentEditingLocked(state.submission)
     ) {
       return state;
     }
@@ -179,7 +185,7 @@ export function reduceAssignmentEditorState<
     action.type === "preview/failed"
   ) {
     if (
-      state.submission.status === "submitting" ||
+      isAssignmentEditingLocked(state.submission) ||
       state.preview.status !== "loading" ||
       action.revision !== state.revision ||
       state.preview.revision !== action.revision ||
@@ -228,7 +234,7 @@ export function reduceAssignmentEditorState<
   if (action.type === "submission/requested") {
     if (
       action.revision !== state.revision ||
-      state.submission.status !== "idle" ||
+      (state.submission.status !== "idle" && state.submission.status !== "uncertain") ||
       state.preview.status !== "ready" ||
       state.preview.revision !== state.revision
     ) {
@@ -245,7 +251,7 @@ export function reduceAssignmentEditorState<
     };
   }
   if (action.type === "submission/reset") {
-    if (state.submission.status === "submitting") return state;
+    if (isAssignmentEditingLocked(state.submission)) return state;
     return { ...state, submission: { status: "idle" } };
   }
   if (
@@ -265,6 +271,12 @@ export function reduceAssignmentEditorState<
         requestId: action.requestId,
         result: action.result,
       },
+    };
+  }
+  if (action.type === "submission/uncertain") {
+    return {
+      ...state,
+      submission: { ...state.submission, status: "uncertain", message: action.message },
     };
   }
   if (action.type === "submission/conflicted") {

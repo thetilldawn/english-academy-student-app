@@ -174,8 +174,9 @@ function renderController(
 }
 
 beforeEach(() => {
+  let sequence = 1000;
   vi.stubGlobal("crypto", {
-    randomUUID: vi.fn(() => assignmentContractIds.idempotencyKey),
+    randomUUID: vi.fn(() => `00000000-0000-4000-8000-${String(++sequence).padStart(12, "0")}`),
   });
 });
 
@@ -185,6 +186,47 @@ afterEach(() => {
 });
 
 describe("일괄 배정 controller", () => {
+  it.each(["network", "503", "protocol"] as const)("%s 뒤 입력/미리보기를 잠그고 원래 요청을 명시 복구한다", async cause => {
+    const requests: AssignmentTransportRequest[] = [];
+    let previewCount = 0;
+    const receipts = new Map<string, unknown>();
+    const transport: AssignmentTransport = async request => {
+      if (request.url.endsWith("/preview")) {
+        previewCount++;
+        return { ok: true, status: 200, data: previewResponse([assignmentContractIds.studentA], 1) };
+      }
+      requests.push(structuredClone(request));
+      const key = (request.body as { idempotencyKey: string }).idempotencyKey;
+      if (!receipts.has(key)) receipts.set(key, creationResponse([assignmentContractIds.studentA], 1));
+      if (requests.length === 1) {
+        if (cause === "network") throw new Error("lost");
+        return { ok: cause === "protocol", status: cause === "protocol" ? 201 : 503, data: null };
+      }
+      if (requests.length === 2) return { ok: false, status: 409, data: { error: "later conflict" } };
+      return { ok: true, status: 201, data: receipts.get(key) };
+    };
+    const { result } = renderController(transport, immediatePlan());
+    await waitFor(() => expect(result.current.canSubmit).toBe(true));
+    const before = structuredClone(result.current.state.draft);
+    await act(async () => { await result.current.actions.submit(); });
+    expect(result.current.state.submission.status).toBe("uncertain");
+    act(() => {
+      result.current.actions.changePassingScore(90);
+      result.current.actions.changeStudents([assignmentContractIds.studentB]);
+      result.current.actions.changeCommonPlan(scheduledPlan());
+      result.current.actions.refreshPreview();
+    });
+    expect(result.current.state.draft).toEqual(before);
+    expect(result.current.canSubmit).toBe(false);
+    await act(async () => { expect(await result.current.actions.submit()).toMatchObject({ ok: false }); });
+    expect(requests).toHaveLength(1);
+    await act(async () => { await result.current.actions.recoverSubmission(); });
+    expect(result.current.state.submission.status).toBe("uncertain");
+    expect(previewCount).toBe(1);
+    await act(async () => { expect(await result.current.actions.recoverSubmission()).toMatchObject({ ok: true }); });
+    expect(requests).toEqual(Array(3).fill(requests[0]));
+    expect(receipts.size).toBe(1);
+  });
   it("일괄 1명의 포함 확인을 저장에 전달하며 실패 후에도 재시도할 수 있다", async () => {
     const requests: AssignmentTransportRequest[] = [];
     let attempts = 0;
@@ -207,7 +249,8 @@ describe("일괄 배정 controller", () => {
     await act(async () => { expect(await result.current.actions.submit()).toMatchObject({ ok: false, message: expect.stringContaining("포함 여부") }); });
     expect(attempts).toBe(0);
     await act(async () => { expect(await result.current.actions.submit(token)).toMatchObject({ ok: false }); });
-    await act(async () => { expect(await result.current.actions.submit(token)).toMatchObject({ ok: true }); });
+    expect(result.current.canSubmit).toBe(false);
+    await act(async () => { expect(await result.current.actions.recoverSubmission()).toMatchObject({ ok: true }); });
     const saves = requests.filter(r => !r.url.endsWith("/preview"));
     expect(saves).toHaveLength(2);
     expect(saves[1]!.body).toMatchObject({ audienceMode: "bulk", studentIds: [assignmentContractIds.studentA], gradeReviewToken: token,
@@ -540,7 +583,7 @@ describe("일괄 배정 controller", () => {
       expect(await result.current.actions.submit()).toMatchObject({ ok: false });
     });
     await act(async () => {
-      expect(await result.current.actions.submit()).toMatchObject({ ok: true });
+      expect(await result.current.actions.recoverSubmission()).toMatchObject({ ok: true });
     });
 
     expect(postBodies).toHaveLength(2);

@@ -38,6 +38,7 @@ import {
 } from "../domain/bulk-draft";
 import {
   createAssignmentEditorState,
+  isAssignmentEditingLocked,
   reduceAssignmentEditorState,
   type AssignmentEditorAction,
   type AssignmentEditorState,
@@ -172,6 +173,7 @@ export function useBulkAssignmentController({
         createIdempotencyKey: () => crypto.randomUUID(),
         createRequestId: () => crypto.randomUUID(),
         fallback: genericErrorMessage,
+        retainUncertainSubmission: true,
         session: submissionSession,
         transport,
       }),
@@ -190,8 +192,14 @@ export function useBulkAssignmentController({
     dispatch(action);
   }, []);
 
+  const isEditingLocked = useCallback(
+    () => isAssignmentEditingLocked(stateRef.current.submission),
+    [],
+  );
+
   const changeDraft = useCallback(
     (action: BulkSeriesAssignmentDraftAction) => {
+      if (isEditingLocked()) return;
       const currentDraft = stateRef.current.draft;
       const nextDraft = reduceBulkSeriesAssignmentDraft(
         currentDraft,
@@ -220,7 +228,7 @@ export function useBulkAssignmentController({
             : "invalidate",
       });
     },
-    [apply, clearCapacity],
+    [apply, clearCapacity, isEditingLocked],
   );
 
   useLayoutEffect(() => {
@@ -307,6 +315,7 @@ export function useBulkAssignmentController({
       error: AssignmentOperationError,
       identity: AssignmentRequestIdentity,
     ) => {
+      if (isEditingLocked()) return;
       clearCapacity();
       if (
         error.recovery === "refresh_preview" &&
@@ -332,14 +341,14 @@ export function useBulkAssignmentController({
         } : null);
       }
     },
-    [apply, clearCapacity, setSubmissionIssue],
+    [apply, clearCapacity, setSubmissionIssue, isEditingLocked],
   );
   useDebouncedAssignmentPreview({
     delayMs: previewDelayMs,
     enabled:
       enabled &&
       previewPreparation !== null &&
-      state.submission.status !== "submitting" &&
+      !isAssignmentEditingLocked(state.submission) &&
       (forcePreviewRefresh || !previewAlreadyCurrent),
     onFailed: handlePreviewFailed,
     onRequested: handlePreviewRequested,
@@ -359,18 +368,22 @@ export function useBulkAssignmentController({
     (state.preview.status === "error" ? state.preview.message : "") ||
     (state.submission.status === "conflict" ||
     state.submission.status === "failed"
+    || state.submission.status === "uncertain"
       ? state.submission.message
       : "");
   const canSubmit =
     enabled &&
     submissionEnabled &&
-    state.submission.status !== "submitting" &&
+    !isAssignmentEditingLocked(state.submission) &&
     state.submission.status !== "succeeded" &&
     submissionIssues.length === 0 &&
     preview !== null &&
     bulkPreviewAllowsSubmission(state.draft, preview);
 
   const submit = useCallback(async (gradeReviewToken?: string): Promise<BulkAssignmentSubmitOutcome> => {
+    if (stateRef.current.submission.status === "uncertain") {
+      return { ok: false, conflict: false, message: "먼저 이전 저장 결과를 확인해 주세요." };
+    }
     if (!enabled || !submissionEnabled) {
       return { conflict: false, message: "배정할 날짜와 조건을 먼저 확인해 주세요.", ok: false };
     }
@@ -471,6 +484,11 @@ export function useBulkAssignmentController({
       });
       return { ok: true, result: outcome.value };
     }
+    if (outcome.uncertain) {
+      const message = "저장 결과를 확인하지 못했습니다. 같은 요청으로 다시 확인해 주세요.";
+      apply({ type: "submission/uncertain", revision: current.revision, requestId, message });
+      return { ok: false, conflict: false, message };
+    }
     if (outcome.error.kind === "busy") {
       return {
         conflict: false,
@@ -525,6 +543,28 @@ export function useBulkAssignmentController({
     changeDraft,
   ]);
 
+  const recoverSubmission = useCallback(async (): Promise<BulkAssignmentSubmitOutcome> => {
+    const current = stateRef.current;
+    if (current.submission.status !== "uncertain") {
+      return { ok: false, conflict: false, message: "확인할 저장 요청이 없거나 확인 중입니다." };
+    }
+    const reportAuthenticationFailure = captureAuthenticationFailure();
+    const requestId = crypto.randomUUID();
+    apply({
+      type: "submission/requested", revision: current.revision, requestId,
+      fingerprint: current.submission.fingerprint,
+    });
+    const outcome = await submissionFlow.recover<BulkAssignmentCreationResponse>();
+    if (outcome.ok) {
+      apply({ type: "submission/succeeded", revision: current.revision, requestId, result: outcome.value });
+      return { ok: true, result: outcome.value };
+    }
+    reportAuthenticationFailure(outcome.error);
+    const message = "저장 결과를 아직 확인하지 못했습니다. 같은 요청으로 다시 확인해 주세요.";
+    apply({ type: "submission/uncertain", revision: current.revision, requestId, message });
+    return { ok: false, conflict: false, message };
+  }, [apply, captureAuthenticationFailure, submissionFlow]);
+
   const changeCommonPlan = useCallback(
     (commonPlan: BulkSeriesAssignmentDraft["commonPlan"]) =>
       changeDraft({ type: "common_plan/changed", commonPlan }),
@@ -547,6 +587,7 @@ export function useBulkAssignmentController({
     changeRetryPassingScore: (value: number) =>
       changeDraft({ type: "exam/retry_passing_score_changed", value }),
     changeTiming: (timing: ExamTiming) => {
+      if (isEditingLocked()) return;
       if (timing.mode === "total" && Number.isFinite(timing.totalSeconds)) {
         timingMemoryRef.current.totalSeconds = timing.totalSeconds;
       } else if (timing.mode === "per_question" && Number.isFinite(timing.perQuestionSeconds)) {
@@ -573,16 +614,19 @@ export function useBulkAssignmentController({
       });
     },
     refreshPreview: () => {
+      if (isEditingLocked()) return;
       clearCapacity();
       setPreviewRefreshVersion((version) => version + 1);
     },
     submit,
+    recoverSubmission,
   };
 
   return {
     capacity,
     actions,
     canSubmit,
+    isEditingLocked,
     message: displayedMessage,
     preview,
     previewLoading,

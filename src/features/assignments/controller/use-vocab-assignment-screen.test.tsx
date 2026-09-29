@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   submit: vi.fn(),
   usePlanner: vi.fn(),
   changeStudents: vi.fn(),
+  editingLocked: false,
 }));
 
 vi.mock("./use-vocab-assignment-planner", () => ({
@@ -59,12 +60,13 @@ const data = {
 
 describe("단어 시험 배정 화면과 기능 경계", () => {
   beforeEach(() => {
+    mocks.editingLocked = false;
     mocks.submit.mockReset();
     mocks.usePlanner.mockReset();
     mocks.changeStudents.mockReset();
     mocks.usePlanner.mockReturnValue({
       actions: {},
-      bulk: { actions: { submit: mocks.submit, changeStudents: mocks.changeStudents } },
+      bulk: { isEditingLocked: () => mocks.editingLocked, actions: { submit: mocks.submit, changeStudents: mocks.changeStudents } },
       planner: { schedule: { startDate: "2026-08-21" } },
     });
   });
@@ -98,6 +100,21 @@ describe("단어 시험 배정 화면과 기능 경계", () => {
     expect(mocks.usePlanner).toHaveBeenLastCalledWith(expect.objectContaining({
       previousExamSourceStudentId: "student-2",
     }));
+  });
+
+  it("미확정 상태에서는 학생 제외와 이전시험 대상 변경을 막는다", () => {
+    const { result } = renderHook(() => useVocabAssignmentScreen({
+      data, genericErrorMessage: "실패", initialDatasetId: "", previewErrorMessage: "실패", students,
+    }));
+    mocks.editingLocked = true;
+    act(() => {
+      result.current.actions.excludeStudents(["student-1"]);
+      result.current.actions.restoreExcludedStudents();
+      result.current.actions.changePreviousExamSourceStudentId("student-2");
+    });
+    expect(result.current.excludedStudentCount).toBe(0);
+    expect(result.current.previousExamSourceStudentId).toBe("student-1");
+    expect(mocks.changeStudents).not.toHaveBeenCalled();
   });
 
   it("제외 후 대상·기준 학생이 함께 바뀌고 일괄 모드와 원본 학생은 유지된다", () => {

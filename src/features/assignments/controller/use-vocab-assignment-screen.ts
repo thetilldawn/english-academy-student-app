@@ -140,6 +140,13 @@ export function useVocabAssignmentScreen({
       : outcome;
   }
 
+  async function recoverPlan() {
+    const outcome = await planner.bulk.actions.recoverSubmission();
+    return outcome.ok
+      ? { ok: true as const, result: summarizeVocabAssignmentResult(outcome.result.assignments) }
+      : outcome;
+  }
+
   return {
     ...planner,
     selectedStudents,
@@ -147,16 +154,21 @@ export function useVocabAssignmentScreen({
     actions: {
       ...planner.actions,
       excludeStudents: (ids: readonly string[]) => {
+        if (planner.bulk.isEditingLocked()) return;
         const excluded = [...new Set([...excludedStudentIds, ...ids])];
         planner.bulk.actions.changeStudents(students.filter(s => !excluded.includes(s.id)).map(s => s.id));
         setSelection(current => ({ ...current, excludedStudentIds: excluded }));
       },
       restoreExcludedStudents: () => {
+        if (planner.bulk.isEditingLocked()) return;
         planner.bulk.actions.changeStudents(students.map(s => s.id));
         setSelection(current => ({ ...current, excludedStudentIds: [] }));
       },
-      changePreviousExamSourceStudentId: (id: string) => setSelection(current => ({ ...current, previousExamSourceStudentId: id })),
+      changePreviousExamSourceStudentId: (id: string) => {
+        if (!planner.bulk.isEditingLocked()) setSelection(current => ({ ...current, previousExamSourceStudentId: id }));
+      },
       submitPlan,
+      recoverPlan,
     },
     previousExamSourceStudentId: selectedPreviousExamSourceStudentId,
     readyDatasets,

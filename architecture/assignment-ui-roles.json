@@ -590,8 +590,9 @@
     {
       "path": "vocab-assignment-planner.tsx",
       "role": "assembly",
-      "reason": "기존 배정 구성에 학생 기본조건/필수정보 안내와 오답 제외 확인 상태를 조합한다. 계산과 저장은 controller 경계를 유지한다.",
+      "reason": "배정 조건과 미확정 저장 복구/이탈 보호를 조합한다. 계산·완성 요청 보관·저장은 controller/application 경계에 둔다.",
       "allowedImports": [
+        "@/components/use-route-exit-guard",
         "../catalog-types",
         "../client/controllers/use-assignment-dataset-picker",
         "../contracts/assignment-grade-review",

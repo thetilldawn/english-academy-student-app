@@ -59,6 +59,23 @@ function readyState(
 }
 
 describe("assignment editor reducer", () => {
+  it("미확정 저장은 수정/초기화/늦은 미리보기로 해제되지 않는다", () => {
+    const submitting = reduceAssignmentEditorState(readyState(), {
+      type: "submission/requested", revision: 0, requestId: "save", fingerprint: "original",
+    });
+    const uncertain = reduceAssignmentEditorState(submitting, {
+      type: "submission/uncertain", revision: 0, requestId: "save", message: "확인 필요",
+    });
+    expect(uncertain.submission.status).toBe("uncertain");
+    expect(reduceAssignmentEditorState(uncertain, { type: "submission/reset" })).toBe(uncertain);
+    expect(reduceAssignmentEditorState(uncertain, { type: "draft/replaced", draft })).toBe(uncertain);
+    expect(reduceAssignmentEditorState(uncertain, {
+      type: "preview/requested", revision: 0, requestId: "late", fingerprint: "other",
+    })).toBe(uncertain);
+    expect(reduceAssignmentEditorState(uncertain, {
+      type: "submission/requested", revision: 0, requestId: "recover", fingerprint: "original",
+    }).submission.status).toBe("submitting");
+  });
   it("ignores a preview request that starts after its draft revision became stale", () => {
     const initial = initialState();
     const changed = reduceAssignmentEditorState(initial, {

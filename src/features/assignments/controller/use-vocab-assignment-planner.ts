@@ -69,7 +69,7 @@ export function useVocabAssignmentPlanner({
   transport?: AssignmentTransport;
   units: readonly AssignmentUnitItem[];
 }) {
-  const [planner, dispatch] = useReducer(
+  const [planner, dispatchPlanner] = useReducer(
     vocabPlannerReducer,
     undefined,
     () => createInitialVocabPlannerState(
@@ -128,6 +128,9 @@ export function useVocabAssignmentPlanner({
     studentIds,
     transport,
   });
+  function dispatch(action: Parameters<typeof dispatchPlanner>[0]) {
+    if (!bulk.isEditingLocked()) dispatchPlanner(action);
+  }
   const questionModeAvailability = datasets.find(
     (dataset) => dataset.id === planner.datasetId,
   )?.availableQuestionModes;
@@ -162,6 +165,7 @@ export function useVocabAssignmentPlanner({
   }
 
   function applyTemplate(template: VocabTimeTemplate) {
+    if (bulk.isEditingLocked()) return;
     const applied = applyTimeTemplate(
       { schedule: planner.schedule, exam: bulk.state.draft.exam },
       template,
@@ -217,6 +221,7 @@ export function useVocabAssignmentPlanner({
   }
 
   function copyPreviousExam() {
+    if (bulk.isEditingLocked()) return false;
     if (!previousExam) return false;
     copyPrevious();
     return true;

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { GuardedLink } from "@/components/guarded-link";
+import { useRouteExitGuard } from "@/components/use-route-exit-guard";
 import { Notice } from "@/design-system/patterns/feedback/feedback";
 import { hasRequiredStudentProfile, STUDENT_PROFILE_REQUIRED_MESSAGE } from "@/lib/admin/student-profile-requirements";
 import { assignmentStudentContext } from "../domain/assignment-student-context";
@@ -136,6 +137,23 @@ export function VocabAssignmentPlanner({
   const busy = assignmentPurpose === "range"
     ? bulk.state.submission.status === "submitting"
     : reviewController.submitting;
+  const uncertain = bulk.state.submission.status === "uncertain";
+  const editingLocked = busy || uncertain;
+  const recoveryPendingRef = useRef(false);
+  const successHandledRef = useRef(false);
+  const mountedRef = useRef(false);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+  const exitGuard = useRouteExitGuard({
+    // Keep the guard armed until the success continuation removes its history
+    // entry; a succeeded render can commit before the awaited handler resumes.
+    busy: assignmentPurpose === "range" && (editingLocked || bulk.state.submission.status === "succeeded"),
+    dirty: false,
+    idPrefix: "assignment-save",
+    confirmMessage: "먼저 저장 결과를 확인해 주세요.",
+  });
   const reviewCalculationPending = assignmentPurpose === "review" &&
     reviewController.calculationPending;
   const reviewCalculationFailed = assignmentPurpose === "review" && (
@@ -184,7 +202,7 @@ export function VocabAssignmentPlanner({
     reviewDraftSignature,
   ]);
   function requestClose() {
-    if (!interactionAllowed || busy || discardOpen || gradeReview) return;
+    if (!interactionAllowed || editingLocked || discardOpen || gradeReview) return;
     if (composerOpen) {
       if (!composerLocked) {
         setComposerOpen(false);
@@ -228,7 +246,7 @@ export function VocabAssignmentPlanner({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!interactionAllowed || busy || discardOpen || gradeReview || incompleteStudents.length) return;
+    if (!interactionAllowed || editingLocked || discardOpen || gradeReview || incompleteStudents.length) return;
     setSubmitAttempted(true);
     const canSubmit = assignmentPurpose === "range"
       ? controller.canSubmit
@@ -246,12 +264,13 @@ export function VocabAssignmentPlanner({
   }
 
   async function submitReady(gradeReviewToken?: string) {
-    if (!interactionAllowed || busy || discardOpen || incompleteStudents.length) return;
+    if (!interactionAllowed || editingLocked || discardOpen || incompleteStudents.length) return;
     if (gradeReviewToken && !isCurrentGradeReview(gradeReviewToken)) return;
     setGradeReview(null);
     const outcome = assignmentPurpose === "range"
       ? await controller.actions.submitPlan(gradeReviewToken)
       : await reviewController.actions.submit();
+    if (!mountedRef.current) return;
     if (!outcome.ok) {
       toast.error(outcome.message);
       if (assignmentPurpose === "review") {
@@ -265,17 +284,40 @@ export function VocabAssignmentPlanner({
       }
       return;
     }
-    if (assignmentPurpose === "range") {
-      const result = outcome.result as {
-        assignmentCount: number;
-        studentCount: number;
-        queuedCount: number;
-      };
-      onSuccess(result.assignmentCount, result.studentCount, result.queuedCount);
-    } else {
-      onSuccess(1, 1, 0);
+    if (successHandledRef.current) return;
+    successHandledRef.current = true;
+    exitGuard.forceExit(() => {
+      if (!mountedRef.current) return false;
+      if (assignmentPurpose === "range") {
+        const result = outcome.result as {
+          assignmentCount: number;
+          studentCount: number;
+          queuedCount: number;
+        };
+        onSuccess(result.assignmentCount, result.studentCount, result.queuedCount);
+      } else {
+        onSuccess(1, 1, 0);
+      }
+      onClose();
+    });
+  }
+
+  async function recoverSavedPlan() {
+    if (!interactionAllowed || busy || !uncertain || recoveryPendingRef.current || successHandledRef.current) return;
+    recoveryPendingRef.current = true;
+    try {
+      const outcome = await controller.actions.recoverPlan();
+      if (!mountedRef.current) return;
+      if (!outcome.ok) { toast.error(outcome.message); return; }
+      successHandledRef.current = true;
+      exitGuard.forceExit(() => {
+        if (!mountedRef.current) return false;
+        onSuccess(outcome.result.assignmentCount, outcome.result.studentCount, outcome.result.queuedCount);
+        onClose();
+      });
+    } finally {
+      recoveryPendingRef.current = false;
     }
-    onClose();
   }
 
   function isCurrentGradeReview(token: string) {
@@ -317,7 +359,7 @@ export function VocabAssignmentPlanner({
     <>
     <DialogFrame
       aria-labelledby="vocab-assignment-plan-title"
-      closeDisabled={busy || composerLocked}
+      closeDisabled={editingLocked || composerLocked}
       height="large"
       layout={datasetPicker.open ? "body" : "body-footer"}
       onRequestClose={requestClose}
@@ -374,7 +416,7 @@ export function VocabAssignmentPlanner({
         ) : null}
         <div hidden={datasetPicker.open}>
         <AssignmentEditorForm
-          busy={busy}
+          busy={editingLocked}
           formId="vocab-assignment-plan-form"
           formRef={formRef}
           legend="단어 시험 배정 조건"
@@ -390,6 +432,7 @@ export function VocabAssignmentPlanner({
             ariaLabel="시험 종류"
             items={purposeTabs}
             onChange={(purpose) => {
+              if (editingLocked) return;
               setAssignmentPurpose(purpose);
               setSubmitAttempted(false);
             }}
@@ -397,7 +440,7 @@ export function VocabAssignmentPlanner({
           />
           {controller.excludedStudentCount > 0 ? <div className={styles.gradeNotice} role="status">
             <span>학년이 다른 {controller.excludedStudentCount}명을 이번 배정에서 제외했습니다.</span>
-            <Button disabled={busy} ref={excludedUndoRef} onClick={controller.actions.restoreExcludedStudents}>제외 되돌리기</Button>
+            <Button disabled={editingLocked} ref={excludedUndoRef} onClick={controller.actions.restoreExcludedStudents}>제외 되돌리기</Button>
           </div> : null}
           {controller.selectedStudents.length === 0 ? <p role="alert">배정할 학생을 선택해 주세요.</p> : null}
           {!reviewAssignmentAvailable ? (
@@ -424,7 +467,7 @@ export function VocabAssignmentPlanner({
               />
             ) : (
               <VocabRangeAssignmentSections
-                busy={busy}
+                busy={editingLocked}
                 controller={controller}
                 fieldErrors={visibleErrors}
                 onOpenDatasetPicker={datasetPicker.actions.open}
@@ -442,12 +485,16 @@ export function VocabAssignmentPlanner({
       </DialogBody>
       {!datasetPicker.open ? (
       <DialogFooter>
+        {uncertain ? <Notice tone="danger" role="alert">
+          <p>저장 결과를 확인하지 못했습니다. 창을 닫지 말고 같은 요청으로 다시 확인해 주세요.</p>
+          <Button disabled={!interactionAllowed || busy} onClick={() => void recoverSavedPlan()}>저장 결과 다시 확인</Button>
+        </Notice> : null}
         <div className={styles.submitRow}>
           <AssignmentSubmitAction
             blockedReason={null}
             canSubmit={
               interactionAllowed &&
-              !busy &&
+              !editingLocked &&
               !discardOpen &&
               !gradeReview &&
               incompleteStudents.length === 0 &&
@@ -482,12 +529,12 @@ export function VocabAssignmentPlanner({
     /> : null}
     {discardOpen ? (
       <AssignmentDiscardDialog
-        busy={busy}
+        busy={editingLocked}
         onCancel={() => {
-          if (!busy) setDiscardOpen(false);
+          if (!editingLocked) setDiscardOpen(false);
         }}
         onDiscard={() => {
-          if (busy || discardConfirmedRef.current) return;
+          if (editingLocked || discardConfirmedRef.current) return;
           discardConfirmedRef.current = true;
           setDiscardOpen(false);
           onClose();

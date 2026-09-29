@@ -11,6 +11,7 @@ import type { PreviousVocabExamSource } from "../domain/vocab-previous-exam";
 import { useVocabAssignmentPlanner } from "./use-vocab-assignment-planner";
 
 const mocks = vi.hoisted(() => ({
+  editingLocked: false,
   changeCommonPlan: vi.fn(),
   changeOrder: vi.fn(),
   changeQuestionMode: vi.fn(),
@@ -35,6 +36,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("./use-bulk-assignment-controller", () => ({
   useBulkAssignmentController: ({ initialCommonPlan }: { initialCommonPlan: unknown }) => ({
+    isEditingLocked: () => mocks.editingLocked,
     actions: {
       changeCommonPlan: mocks.changeCommonPlan,
       changeDirection: vi.fn(),
@@ -165,6 +167,20 @@ function scheduledLocalDate(value: string | null) {
 }
 
 describe("단어 배정 일정 controller", () => {
+  it("미확정 저장 중 별도 일정/범위/단어장 입력도 보존한다", () => {
+    const { result } = renderPlanner(); selectWholeRange(result);
+    const before = structuredClone(result.current.planner);
+    mocks.editingLocked = true;
+    act(() => {
+      result.current.actions.changeDataset("changed");
+      result.current.actions.selectAllUnits(false);
+      result.current.actions.toggleWeekday(5);
+      result.current.actions.changeScheduleEnabled(false);
+      result.current.actions.changeManualQuestionCount(50);
+    });
+    expect(result.current.planner).toEqual(before);
+    mocks.editingLocked = false;
+  });
   it.each(["per_session", "word_count"] as const)("%s에서 예문 선택은 범위·날짜·수량·시간 입력을 보존한다", mode => {
     const { result } = renderPlanner(units, null, { ...dataset, availableQuestionModes: ["book_meaning_choice", "canonical_example_to_headword"] }); selectWholeRange(result);
     act(() => { result.current.actions.changeAssignmentMode(mode); result.current.actions.toggleWeekday(1); result.current.actions.changeUnitsPerSession(2); });

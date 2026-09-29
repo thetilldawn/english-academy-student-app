@@ -32,6 +32,7 @@ import { VocabAssignmentPlanner } from "./vocab-assignment-planner";
 const mocks = vi.hoisted(() => ({
   reviewSubmit: vi.fn(),
   screenSubmit: vi.fn(),
+  recoverPlan: vi.fn(),
   toastError: vi.fn(),
   useReview: vi.fn(),
   useScreen: vi.fn(),
@@ -196,6 +197,75 @@ function renderChangedAssignment(
 }
 
 describe("오답 단일 배정 제출", () => {
+  it("성공 상태가 await보다 먼저 표시돼도 이탈 보호 정리와 완료 통지는 한번이다", async () => {
+    const initial = screenController({ canSubmit: true });
+    mocks.useScreen.mockReturnValue(initial);
+    mocks.useReview.mockReturnValue(reviewController("idle", false));
+    let resolve!: (value: unknown) => void;
+    mocks.screenSubmit.mockImplementationOnce(() => new Promise(done => { resolve = done; }));
+    const props = { data, onClose: vi.fn(), onSuccess: vi.fn(), selectionMode: "single" as const, students: [student] };
+    const view = render(<VocabAssignmentPlanner {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: "배정하기" }));
+    mocks.useScreen.mockReturnValue(screenController({ submitting: true }));
+    view.rerender(<VocabAssignmentPlanner {...props} />);
+    const back = vi.spyOn(window.history, "back");
+    mocks.useScreen.mockReturnValue({ ...initial, bulk: { ...initial.bulk, state: {
+      ...initial.bulk.state, submission: { status: "succeeded" },
+    } } });
+    view.rerender(<VocabAssignmentPlanner {...props} />);
+    expect(back).not.toHaveBeenCalled();
+    await act(async () => { resolve({ ok: true, result: { assignmentCount: 1, studentCount: 1, queuedCount: 0 } }); });
+    await waitFor(() => expect(props.onClose).toHaveBeenCalledOnce());
+    expect(props.onSuccess).toHaveBeenCalledExactlyOnceWith(1, 1, 0);
+    expect(back).toHaveBeenCalledOnce();
+    back.mockRestore();
+  });
+  it("저장 중 화면이 제거되면 늦은 성공으로 목록/닫기/뒤로가기를 실행하지 않는다", async () => {
+    mocks.useScreen.mockReturnValue(screenController({ canSubmit: true }));
+    mocks.useReview.mockReturnValue(reviewController("idle", false));
+    let resolve!: (value: unknown) => void;
+    mocks.screenSubmit.mockImplementationOnce(() => new Promise(done => { resolve = done; }));
+    const props = { data, onClose: vi.fn(), onSuccess: vi.fn(), selectionMode: "single" as const, students: [student] };
+    const view = render(<VocabAssignmentPlanner {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: "배정하기" }));
+    mocks.useScreen.mockReturnValue(screenController({ submitting: true }));
+    view.rerender(<VocabAssignmentPlanner {...props} />);
+    view.unmount();
+    const back = vi.spyOn(window.history, "back");
+    await act(async () => { resolve({ ok: true, result: { assignmentCount: 1, studentCount: 1, queuedCount: 0 } }); });
+    expect(props.onClose).not.toHaveBeenCalled();
+    expect(props.onSuccess).not.toHaveBeenCalled();
+    expect(back).not.toHaveBeenCalled();
+    back.mockRestore();
+  });
+  it.each(["single", "bulk"] as const)("%s 미확정은 닫기/입력/종류를 잠그고 같은 요청 복구 후 한번 닫는다", async selectionMode => {
+    const state = screenController({ canSubmit: false });
+    mocks.useScreen.mockReturnValue({
+      ...state, actions: { ...state.actions, recoverPlan: mocks.recoverPlan },
+      bulk: { ...state.bulk, state: { ...state.bulk.state, submission: { status: "uncertain" } } },
+    });
+    mocks.useReview.mockReturnValue(reviewController("ready", true));
+    let resolve!: (value: unknown) => void;
+    mocks.recoverPlan.mockImplementationOnce(() => new Promise(done => { resolve = done; }));
+    const props = { data, onClose: vi.fn(), onSuccess: vi.fn(), selectionMode, students: [student] };
+    render(<VocabAssignmentPlanner {...props} />);
+    expect(screen.getByRole("button", { name: "닫기" })).toBeDisabled();
+    expect(screen.getByLabelText("배정 조건 보존")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "배정하기" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("tab", { name: "오답 시험" }));
+    expect(screen.getByText("범위 배정 내용")).toBeVisible();
+    const event = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+    const recover = screen.getByRole("button", { name: "저장 결과 다시 확인" });
+    const previous = mocks.recoverPlan.mock.calls.length;
+    fireEvent.click(recover); fireEvent.click(recover);
+    expect(mocks.recoverPlan).toHaveBeenCalledTimes(previous + 1);
+    await act(async () => { resolve({ ok: true, result: { assignmentCount: 1, studentCount: 1, queuedCount: 0 } }); });
+    await waitFor(() => expect(props.onClose).toHaveBeenCalledOnce());
+    expect(props.onSuccess).toHaveBeenCalledExactlyOnceWith(1, 1, 0);
+    expect(mocks.screenSubmit).not.toHaveBeenCalled();
+  });
   it("제외 확인 전에는 준비된 오답 시험의 배정 버튼도 비활성화한다", () => {
     mocks.useScreen.mockReturnValue(screenController());
     const review = { ...reviewController("ready", true), exclusionConfirmed: false };
