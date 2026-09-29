@@ -16,7 +16,7 @@ export type StudentDashboardCursorPayload = z.infer<
 >;
 
 export class StudentDashboardCursorError extends Error {
-  constructor(message = "완료 내역 페이지 기준이 올바르지 않습니다.") {
+  constructor(message = "완료 내역 페이지 기준이 올바르지 않습니다.", readonly reason: "invalid" | "identity" = "invalid") {
     super(message);
     this.name = "StudentDashboardCursorError";
   }
@@ -63,6 +63,7 @@ export function assertStudentDashboardCursorOwner(
   ) {
     throw new StudentDashboardCursorError(
       "학생 정보가 바뀌었습니다. 첫 화면부터 다시 확인해 주세요.",
+      "identity",
     );
   }
 }

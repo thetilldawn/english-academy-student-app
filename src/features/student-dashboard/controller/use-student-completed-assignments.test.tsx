@@ -5,8 +5,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { StudentAssignmentSummary } from "@/features/student-dashboard/contracts/student-dashboard-read-model";
 import { loadStudentDashboardCompletedPage } from "@/features/student-dashboard/transport/student-dashboard-pages";
+import { StudentDashboardRequestError } from "../contracts/student-dashboard-request-error";
 
 import { useStudentCompletedAssignments } from "./use-student-completed-assignments";
+
+const navigation = vi.hoisted(() => ({ replace: vi.fn() }));
+vi.mock("@/components/document-navigation", () => ({ navigateDocument: navigation.replace }));
 
 vi.mock("@/features/student-dashboard/transport/student-dashboard-pages", () => ({
   loadStudentDashboardCompletedPage: vi.fn(),
@@ -82,12 +86,57 @@ describe("student completed assignments controller", () => {
     }));
 
     await act(() => result.current.loadMore());
-    expect(result.current.error).toBe("연결 실패");
+    expect(result.current.error).toBe("다음 완료 시험을 불러오지 못했습니다.");
     await act(() => result.current.loadMore());
     expect(result.current.items.map((item) => item.id)).toEqual([
       "first",
       "second",
     ]);
+  });
+
+  it.each([401, 403])("실제 %s에는 기존 개인 내역·커서를 지우고 접속 화면으로 이동한다", async (status) => {
+    vi.mocked(loadStudentDashboardCompletedPage).mockRejectedValueOnce(new StudentDashboardRequestError(status));
+    const { result } = renderHook(() => useStudentCompletedAssignments({ items: [assignment("private")], nextCursor: "private-cursor" }));
+    await act(() => result.current.loadMore());
+    expect(result.current).toMatchObject({ items: [], nextCursor: null, navigationRequired: true, loading: false });
+    expect(navigation.replace).toHaveBeenCalledExactlyOnceWith("/", true);
+    await act(() => result.current.loadMore());
+    expect(loadStudentDashboardCompletedPage).toHaveBeenCalledOnce();
+  });
+
+  it("503은 로그인 만료가 아니며 같은 목록·커서로 복구한다", async () => {
+    vi.mocked(loadStudentDashboardCompletedPage)
+      .mockRejectedValueOnce(new StudentDashboardRequestError(503))
+      .mockResolvedValueOnce({ items: [assignment("next")], nextCursor: null });
+    const { result } = renderHook(() => useStudentCompletedAssignments({ items: [assignment("first")], nextCursor: "cursor" }));
+    await act(() => result.current.loadMore());
+    expect(result.current).toMatchObject({ items: [assignment("first")], nextCursor: "cursor", navigationRequired: false });
+    expect(navigation.replace).not.toHaveBeenCalled();
+    await act(() => result.current.loadMore());
+    expect(result.current.error).toBe("");
+    expect(result.current.items).toEqual([assignment("first"), assignment("next")]);
+  });
+
+  it("옛 화면을 닫은 뒤 늦게 온 응답은 새 학생 화면에 섞이지 않는다", async () => {
+    let resolve!: (page: { items: StudentAssignmentSummary[]; nextCursor: null }) => void;
+    vi.mocked(loadStudentDashboardCompletedPage).mockReturnValueOnce(new Promise(done => { resolve = done; }));
+    const old = renderHook(() => useStudentCompletedAssignments({ items: [assignment("old")], nextCursor: "old-cursor" }));
+    let request!: Promise<void>;
+    act(() => { request = old.result.current.loadMore(); });
+    old.unmount();
+    const current = renderHook(() => useStudentCompletedAssignments({ items: [assignment("new")], nextCursor: null }));
+    await act(async () => { resolve({ items: [assignment("late-private")], nextCursor: null }); await request; });
+    expect(current.result.current.items).toEqual([assignment("new")]);
+    expect(navigation.replace).not.toHaveBeenCalled();
+  });
+
+  it("같은 화면에서 학생이 바뀌어409를 받으면 옛 카드와커서를 버리고 새 문서로 이동한다", async () => {
+    vi.mocked(loadStudentDashboardCompletedPage).mockRejectedValueOnce(new StudentDashboardRequestError(409));
+    const { result } = renderHook(() => useStudentCompletedAssignments({ items: [assignment("student-a-private")], nextCursor: "student-a-cursor" }));
+    await act(() => result.current.loadMore());
+    expect(result.current).toMatchObject({ items: [], nextCursor: null, navigationRequired: true });
+    expect(result.current.error).toContain("접속한 학생이 바뀌었습니다.");
+    expect(navigation.replace).toHaveBeenCalledExactlyOnceWith("/student", true);
   });
 });
 

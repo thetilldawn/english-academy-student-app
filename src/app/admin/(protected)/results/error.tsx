@@ -7,9 +7,11 @@ import { AdminRouteError } from "../admin-route-error";
 export default function ResultsError({
   error,
   reset,
+  unstable_retry,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
+  unstable_retry?: () => void;
 }) {
   return (
     <AdminRouteError
@@ -17,6 +19,7 @@ export default function ResultsError({
       error={error}
       event="client.admin_history_error_boundary"
       reset={reset}
+      unstable_retry={unstable_retry}
       title={adminHistoryText.page.errorTitle}
     />
   );

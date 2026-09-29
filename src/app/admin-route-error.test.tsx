@@ -8,10 +8,24 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { commonText } from "@/content/ko/common";
 import AssignmentsError from "./admin/(protected)/assignments/error";
 import ResultsError from "./admin/(protected)/results/error";
+import RootError from "./error";
+import AdminError from "./admin/(protected)/error";
 
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+});
+
+describe.each([RootError, AdminError, ResultsError, AssignmentsError])("서버 오류의 실제 재조회", (Component) => {
+  it("경계 초기화보다 서버 재조회를 포함한 Next 재시도를 우선한다", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const reset = vi.fn(), retry = vi.fn();
+    render(<Component error={new Error("private detail")} reset={reset} unstable_retry={retry} />);
+    fireEvent.click(screen.getByRole("button", { name: commonText.errorBoundary.retry }));
+    expect(retry).toHaveBeenCalledOnce();
+    expect(reset).not.toHaveBeenCalled();
+    expect(screen.queryByText("private detail")).not.toBeInTheDocument();
+  });
 });
 
 describe.each([

@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import { StudentDashboardCursorError } from "@/features/student-dashboard/server/student-dashboard-cursor";
@@ -18,7 +19,7 @@ const privateNoStoreHeaders = {
   "Cache-Control": "private, no-store",
 } as const;
 
-export async function POST(request: Request) {
+export const POST = withAuthenticationFailureResponse(async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
     return privateJsonError("허용되지 않은 요청입니다.", 403);
   }
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
     return Response.json({ page }, { headers: privateNoStoreHeaders });
   } catch (error) {
     if (error instanceof StudentDashboardCursorError) {
-      return privateJsonError(error.message, 400);
+      return privateJsonError(error.message, error.reason === "identity" ? 409 : 400);
     }
     if (error instanceof StudentDashboardReadError) {
       return privateJsonError(error.message, 503);
@@ -49,5 +50,5 @@ export async function POST(request: Request) {
       503,
     );
   }
-}
+});
 

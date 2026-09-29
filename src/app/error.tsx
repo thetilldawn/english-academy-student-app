@@ -10,9 +10,11 @@ import styles from "@/design-system/patterns/auth/auth-layout.module.css";
 export default function ErrorPage({
   error,
   reset,
+  unstable_retry,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
+  unstable_retry?: () => void;
 }) {
   const errorReference = getErrorReference(error);
 
@@ -40,7 +42,7 @@ export default function ErrorPage({
             <code>{errorReference}</code>
           </p>
         ) : null}
-        <Button onClick={reset} variant="primary">
+        <Button onClick={unstable_retry ?? reset} variant="primary">
           {commonText.errorBoundary.retry}
         </Button>
       </section>

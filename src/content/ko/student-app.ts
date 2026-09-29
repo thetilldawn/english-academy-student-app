@@ -90,6 +90,8 @@ export const studentAppText = {
       loadMore: "10개 더보기",
       loading: "불러오는 중...",
       loadError: "다음 완료 시험을 불러오지 못했습니다.",
+      authRequired: "로그인이 필요합니다. 접속 화면으로 이동합니다.",
+      studentChanged: "접속한 학생이 바뀌었습니다. 현재 학생의 시험 목록을 다시 불러옵니다.",
     },
   },
 
@@ -150,6 +152,7 @@ export const studentAppText = {
   // 학생 시험 결과 화면
   result: {
     metadataTitle: "시험 결과",
+    loadError: "시험 결과를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
     eyebrow: {
       reviewPending: "첫 시험 결과",
       expired: "시간 종료",

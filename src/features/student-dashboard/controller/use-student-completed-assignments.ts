@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { navigateDocument } from "@/components/document-navigation";
+import { StudentDashboardRequestError } from "../contracts/student-dashboard-request-error";
 
 import type {
   StudentAssignmentSummary,
@@ -31,12 +33,13 @@ export function useStudentCompletedAssignments(
   const [nextCursor, setNextCursor] = useState(initialPage.nextCursor);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [navigationRequired, setNavigationRequired] = useState(false);
   const requestRef = useRef<AbortController | null>(null);
 
   useEffect(() => () => requestRef.current?.abort(), []);
 
   const loadMore = useCallback(async () => {
-    if (!nextCursor || requestRef.current) return;
+    if (navigationRequired || !nextCursor || requestRef.current) return;
     const controller = new AbortController();
     requestRef.current = controller;
     setLoading(true);
@@ -51,18 +54,24 @@ export function useStudentCompletedAssignments(
       setNextCursor(page.nextCursor);
     } catch (requestError) {
       if (controller.signal.aborted) return;
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : studentAppText.dashboard.history.loadError,
-      );
+      if (requestError instanceof StudentDashboardRequestError &&
+          [401, 403, 409].includes(requestError.status)) {
+        setItems([]);
+        setNextCursor(null);
+        setNavigationRequired(true);
+        const studentChanged = requestError.status === 409;
+        setError(studentChanged ? studentAppText.dashboard.history.studentChanged : studentAppText.dashboard.history.authRequired);
+        navigateDocument(studentChanged ? "/student" : "/", true);
+        return;
+      }
+      setError(studentAppText.dashboard.history.loadError);
     } finally {
       if (requestRef.current === controller) {
         requestRef.current = null;
         if (!controller.signal.aborted) setLoading(false);
       }
     }
-  }, [nextCursor]);
+  }, [navigationRequired, nextCursor]);
 
-  return { error, items, loadMore, loading, nextCursor };
+  return { navigationRequired, error, items, loadMore, loading, nextCursor };
 }

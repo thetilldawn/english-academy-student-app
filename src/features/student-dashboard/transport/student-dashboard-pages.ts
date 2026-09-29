@@ -2,6 +2,8 @@ import type {
   StudentDashboardCompletedPage,
   StudentDashboardCompletedPageResponse,
 } from "@/features/student-dashboard/contracts/student-dashboard-read-model";
+import { StudentDashboardRequestError } from "../contracts/student-dashboard-request-error";
+import { awaitWithAbortSignal, createRequestDeadline, INTERACTIVE_READ_REQUEST_DEADLINE_MS } from "@/lib/network/request-policy";
 
 type StudentDashboardPagePayload = Partial<
   StudentDashboardCompletedPageResponse
@@ -13,21 +15,33 @@ export async function loadStudentDashboardCompletedPage(
   cursor: string,
   signal?: AbortSignal,
 ): Promise<StudentDashboardCompletedPage> {
-  const response = await fetch("/api/student/dashboard/completed", {
-    body: JSON.stringify({ cursor }),
-    cache: "no-store",
-    headers: { "content-type": "application/json" },
-    method: "POST",
-    signal,
-  });
-  const payload = await response.json().catch(() => null) as
-    | StudentDashboardPagePayload
-    | null;
-  if (!response.ok || !payload?.page) {
-    throw new Error(
-      payload?.error ?? "다음 완료 시험을 불러오지 못했습니다.",
-    );
+  const deadline = createRequestDeadline(INTERACTIVE_READ_REQUEST_DEADLINE_MS, signal);
+  try {
+    const response = await awaitWithAbortSignal(fetch("/api/student/dashboard/completed", {
+      body: JSON.stringify({ cursor }),
+      cache: "no-store",
+      headers: { "content-type": "application/json" },
+      method: "POST",
+      signal: deadline.signal,
+    }), deadline.signal);
+    // A denied request is authoritative even if its body is HTML, empty or stalled.
+    if (!response.ok) {
+      void response.body?.cancel().catch(() => undefined);
+      throw new StudentDashboardRequestError(response.status);
+    }
+    const payload = await awaitWithAbortSignal(response.json(), deadline.signal) as
+      | StudentDashboardPagePayload
+      | null;
+    if (!payload?.page || !Array.isArray(payload.page.items) ||
+        !(payload.page.nextCursor === null || typeof payload.page.nextCursor === "string")) {
+      throw new StudentDashboardRequestError(response.status);
+    }
+    return payload.page;
+  } catch (error) {
+    if (error instanceof StudentDashboardRequestError || signal?.aborted) throw error;
+    throw new StudentDashboardRequestError(0);
+  } finally {
+    deadline.dispose();
   }
-  return payload.page;
 }
 

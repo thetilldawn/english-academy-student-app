@@ -12,6 +12,7 @@ import styles from "./route-state.module.css";
 export type AdminRouteErrorProps = {
   error: Error & { digest?: string };
   reset: () => void;
+  unstable_retry?: () => void;
   event?: string;
   title?: string;
   description?: string;
@@ -20,6 +21,7 @@ export type AdminRouteErrorProps = {
 export function AdminRouteError({
   error,
   reset,
+  unstable_retry,
   event = "client.admin_error_boundary",
   title = commonText.errorBoundary.title,
   description = adminShellText.errorBoundary.safeDescription,
@@ -47,7 +49,7 @@ export function AdminRouteError({
           <code>{errorReference}</code>
         </p>
       ) : null}
-      <Button onClick={reset} variant="primary">
+      <Button onClick={unstable_retry ?? reset} variant="primary">
         {commonText.errorBoundary.retry}
       </Button>
     </section>

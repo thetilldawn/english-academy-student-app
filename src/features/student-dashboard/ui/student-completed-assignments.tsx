@@ -19,8 +19,9 @@ export function StudentCompletedAssignments({
   nowMilliseconds: number;
   totalCount: number;
 }) {
-  const { error, items, loadMore, loading, nextCursor } =
+  const { navigationRequired, error, items, loadMore, loading, nextCursor } =
     useStudentCompletedAssignments(initialPage);
+  if (navigationRequired) return <p role="alert">{error}</p>;
   return (
     <div className={styles.section} data-assignment-section="completed">
       <CollapsibleStatusSection

@@ -120,7 +120,10 @@ export async function getAttemptResult(
     .eq("student_id", studentId)
     .maybeSingle();
 
-  if (error || !data) {
+  if (error) {
+    throw new Error("시험 결과를 불러오지 못했습니다.", { cause: error });
+  }
+  if (!data) {
     return null;
   }
   const [questions, pointSummary] = await Promise.all([

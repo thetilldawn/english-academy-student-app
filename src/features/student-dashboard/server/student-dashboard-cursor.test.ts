@@ -47,4 +47,11 @@ describe("student dashboard cursor", () => {
       }),
     )).toThrow(StudentDashboardCursorError);
   });
+
+  it("소유자가 다른 커서는 별도의 identity 사유로 구별한다", () => {
+    try { assertStudentDashboardCursorOwner(payload, "33333333-3333-4333-8333-333333333333"); throw new Error("expected mismatch"); }
+    catch (error) { expect(error).toMatchObject({ reason: "identity" }); }
+    try { decodeStudentDashboardCursor("invalid"); throw new Error("expected invalid"); }
+    catch (error) { expect(error).toMatchObject({ reason: "invalid" }); }
+  });
 });

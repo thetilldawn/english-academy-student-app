@@ -33,9 +33,11 @@ export function registeredOwnerForPath(registry, filePath) {
   }
   // Only a uniquely registered, co-located source owns its test. A hook's DOM
   // test may use TSX while the hook itself uses TS; ambiguity stays unmapped.
-  if (/^src\/(?:components|lib\/admin)\/[^/]+\.test\.[cm]?[jt]sx?$/.test(filePath)) {
+  if (/^src\/(?:(?:components|lib\/admin)\/[^/]+|lib\/services\/(?:[^/]+\/)*[^/]+)\.test\.[cm]?[jt]sx?$/.test(filePath)) {
     const sourceStem = filePath.replace(/\.test\.[cm]?[jt]sx?$/, "");
-    const entries = filePath.startsWith("src/components/") ? registry.componentOwners : registry.adminContractOwners;
+    const entries = filePath.startsWith("src/components/")
+      ? registry.componentOwners
+      : filePath.startsWith("src/lib/services/") ? registry.serviceOwners : registry.adminContractOwners;
     const sources = entries.filter((entry) => entry.path.replace(/\.[cm]?[jt]sx?$/, "") === sourceStem);
     if (sources.length === 1) return sources[0].owner;
   }
