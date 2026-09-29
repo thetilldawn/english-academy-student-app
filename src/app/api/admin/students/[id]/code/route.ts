@@ -1,10 +1,11 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import { getAdminContext } from "@/lib/auth/admin";
 import { jsonError } from "@/lib/http";
 import { revealStudentCode } from "@/lib/services/admin-student-command-service";
 
-export async function GET(
+export const GET = withAuthenticationFailureResponse(async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
@@ -30,4 +31,4 @@ export async function GET(
   } catch {
     return jsonError("학생코드를 불러오지 못했습니다.", 503);
   }
-}
+});

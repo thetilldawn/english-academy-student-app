@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import { getAdminContext } from "@/lib/auth/admin";
@@ -7,7 +8,7 @@ import {
   listStudentDirectReviewDatasetSummaries,
 } from "@/lib/services/direct-review-candidate-service";
 
-export async function GET(
+export const GET = withAuthenticationFailureResponse(async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
@@ -36,4 +37,4 @@ export async function GET(
     }
     return privateJsonError("현재 오답 단어 수를 불러오지 못했습니다.", 503);
   }
-}
+});

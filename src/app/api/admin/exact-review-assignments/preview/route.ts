@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { directReviewPreviewSchema } from "@/lib/admin/direct-review-assignment-request";
 import { getAdminContext } from "@/lib/auth/admin";
 import { isSameOriginRequest, privateJsonError, parseJson } from "@/lib/http";
@@ -6,7 +7,7 @@ import {
   previewDirectReviewAssignment,
 } from "@/lib/services/direct-review-assignment-service";
 
-export async function POST(request: Request) {
+export const POST = withAuthenticationFailureResponse(async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
     return privateJsonError("허용되지 않은 요청입니다.", 403);
   }
@@ -34,4 +35,4 @@ export async function POST(request: Request) {
     }
     return privateJsonError("오답 시험 후보를 계산하지 못했습니다.", 503);
   }
-}
+});

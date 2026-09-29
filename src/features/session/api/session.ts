@@ -1,3 +1,5 @@
+import { awaitWithAbortSignal, createRequestDeadline, INTERACTIVE_READ_REQUEST_DEADLINE_MS } from "@/lib/network/request-policy";
+
 async function readError(response: Response): Promise<string | undefined> {
   try {
     const payload: unknown = await response.json();
@@ -48,15 +50,16 @@ export type StudentSessionRenewalRequestResult =
 export async function requestStudentSessionRenewal(
   signal: AbortSignal,
 ): Promise<StudentSessionRenewalRequestResult> {
+  const deadline = createRequestDeadline(INTERACTIVE_READ_REQUEST_DEADLINE_MS, signal);
   try {
-    const response = await fetch("/api/student/session", {
+    const response = await awaitWithAbortSignal(fetch("/api/student/session", {
       method: "PATCH",
       credentials: "same-origin",
-      signal,
-    });
+      signal: deadline.signal,
+    }), deadline.signal);
     if (response.status === 401) return { status: "invalid" };
     if (!response.ok) return { status: "retry" };
-    const payload: unknown = await response.json();
+    const payload: unknown = await awaitWithAbortSignal(response.json(), deadline.signal);
     if (
       typeof payload !== "object" ||
       payload === null ||
@@ -74,10 +77,12 @@ export async function requestStudentSessionRenewal(
       ),
     };
   } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError") {
+    if (signal.aborted && error instanceof DOMException && error.name === "AbortError") {
       return { status: "aborted" };
     }
     return { status: "retry" };
+  } finally {
+    deadline.dispose();
   }
 }
 

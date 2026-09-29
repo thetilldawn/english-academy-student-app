@@ -12,7 +12,8 @@ vi.mock("@/lib/auth/student-session", () => ({
   revokeCurrentStudentSession: mocks.revoke,
 }));
 
-vi.mock("@/lib/http", () => ({
+vi.mock("@/lib/http", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/http")>(),
   isSameOriginRequest: () => true,
   parseJson: vi.fn(),
 }));
@@ -21,7 +22,8 @@ vi.mock("@/lib/services/student-login-service", () => ({
   authenticateStudentCode: vi.fn(),
 }));
 
-import { GET, PATCH } from "./route";
+import { GET, PATCH, DELETE } from "./route";
+import { AuthenticationUnavailableError } from "@/lib/auth/authentication-error";
 
 const request = () => new Request("https://preview.test/api/student/session", {
   method: "PATCH",
@@ -32,6 +34,18 @@ beforeEach(() => {
 });
 
 describe("student session route", () => {
+  it("세션 DB 장애는503이며 철회를 호출하지 않는다",async()=>{
+    mocks.getSession.mockRejectedValue(new AuthenticationUnavailableError());
+    const response=await GET();
+    expect(response.status).toBe(503);
+    expect(mocks.revoke).not.toHaveBeenCalled();
+  });
+  it("철회 실패는 성공으로 응답하지 않는다",async()=>{
+    mocks.revoke.mockRejectedValue(new Error("private failure"));
+    const response=await DELETE(request());
+    expect(response.status).toBe(503);
+    expect(await response.text()).not.toContain("private failure");
+  });
   it("정상 세션 조회도 개인 응답으로 캐시하지 않는다", async () => {
     mocks.getSession.mockResolvedValue({
       sessionId: "11111111-1111-4111-8111-111111111111",

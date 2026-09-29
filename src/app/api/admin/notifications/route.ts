@@ -1,10 +1,11 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { getAdminContext } from "@/lib/auth/admin";
 import { isSameOriginRequest, jsonError } from "@/lib/http";
 import { claimAdminNotifications } from "@/lib/services/notification-service";
 
 const privateNoStore = { "Cache-Control": "private, no-store" };
 
-export async function POST(request: Request) {
+export const POST = withAuthenticationFailureResponse(async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
     return jsonError("허용되지 않은 요청입니다.", 403);
   }
@@ -28,4 +29,4 @@ export async function POST(request: Request) {
       { status: 500, headers: privateNoStore },
     );
   }
-}
+});

@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import { getAdminContext } from "@/lib/auth/admin";
@@ -11,7 +12,7 @@ const privateNoStoreHeaders = {
   "Cache-Control": "private, no-store",
 };
 
-export async function DELETE(
+export const DELETE = withAuthenticationFailureResponse(async function DELETE(
   request: Request,
   context: { params: Promise<{ id: string; draftId: string }> },
 ) {
@@ -61,4 +62,4 @@ export async function DELETE(
       503,
     );
   }
-}
+});

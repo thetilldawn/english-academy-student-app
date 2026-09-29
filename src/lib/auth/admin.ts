@@ -13,6 +13,7 @@ import {
 import { getCurrentRequestContext } from "@/lib/observability/server-request-context";
 import { logServerOperationTiming } from "@/lib/observability/request-timing";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { AuthenticationUnavailableError } from "./authentication-error";
 
 export type AdminContext = {
   userId: string;
@@ -20,7 +21,7 @@ export type AdminContext = {
   sessionId?: string;
 };
 
-export class AdminAuthenticationUnavailableError extends Error {
+export class AdminAuthenticationUnavailableError extends AuthenticationUnavailableError {
   readonly code: "AUTH_UPSTREAM_UNAVAILABLE" | "UPSTREAM_TIMEOUT";
 
   constructor(
@@ -37,7 +38,7 @@ function isUnavailableAuthError(error: unknown): boolean {
   if (isAuthRetryableFetchError(error)) return true;
   if (!error || typeof error !== "object") return false;
   const status = "status" in error ? error.status : undefined;
-  return typeof status === "number" && status >= 500;
+  return typeof status === "number" && (status >= 500 || status === 408 || status === 429);
 }
 
 async function readAdminContext(
@@ -155,16 +156,8 @@ async function readAdminContext(
 
 export const getAdminContextOrThrow = cache(readAdminContext);
 
-export const getAdminContext = cache(async (
-  parentSignal?: AbortSignal,
-): Promise<AdminContext | null> => {
-  try {
-    return await getAdminContextOrThrow(parentSignal);
-  } catch (error) {
-    if (error instanceof AdminAuthenticationUnavailableError) return null;
-    throw error;
-  }
-});
+// A failed lookup is not evidence that a session is invalid.
+export const getAdminContext = getAdminContextOrThrow;
 
 export async function requireAdmin(): Promise<AdminContext> {
   const admin = await getAdminContextOrThrow();

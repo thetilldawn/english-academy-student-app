@@ -1,9 +1,10 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { getAdminContextOrThrow } from "@/lib/auth/admin";
 import { privateJsonError } from "@/lib/http";
 import { saveLibraryTemplateV2, materializeLibraryComposition, LibraryCommandError, libraryJsonResponse } from "@/features/wordbook-compositions/public-server";
 
 export const maxDuration = 300;
-export async function POST(request: Request) {
+export const POST = withAuthenticationFailureResponse(async function POST(request: Request) {
   try {
     const admin = await getAdminContextOrThrow();
     if (!admin) return privateJsonError("관리자 로그인이 필요합니다.", 401);
@@ -19,4 +20,4 @@ export async function POST(request: Request) {
     if (error instanceof LibraryCommandError && error.progressConfirmed) response.headers.set("X-Wordbook-Progress", "confirmed");
     return response;
   }
-}
+});

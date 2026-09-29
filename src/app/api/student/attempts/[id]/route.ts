@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import { getStudentSession } from "@/lib/auth/student-session";
@@ -8,7 +9,7 @@ import {
 import { jsonError } from "@/lib/http";
 import { getStudentAttempt } from "@/lib/services/quiz/attempt-query";
 
-export async function GET(
+export const GET = withAuthenticationFailureResponse(async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
@@ -38,4 +39,4 @@ export async function GET(
     transitionRemainingMilliseconds:
       millisecondsUntil(attempt.currentQuestionStartsAt ?? null, now) ?? 0,
   });
-}
+});

@@ -1,10 +1,11 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import { getAdminContext } from "@/lib/auth/admin";
 import { jsonError, isSameOriginRequest } from "@/lib/http";
 import { rotateStudentCode } from "@/lib/services/admin-student-command-service";
 
-export async function POST(
+export const POST = withAuthenticationFailureResponse(async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
@@ -29,4 +30,4 @@ export async function POST(
   } catch {
     return jsonError("학생코드를 교체하지 못했습니다.", 503);
   }
-}
+});

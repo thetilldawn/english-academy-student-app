@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import {
@@ -24,7 +25,7 @@ const requestSchema = z.object({
   snapshotAt: z.iso.datetime({ offset: true }),
 });
 
-export async function POST(request: Request) {
+export const POST = withAuthenticationFailureResponse(async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
     return privateJsonError("허용되지 않은 요청입니다.", 403);
   }
@@ -60,4 +61,4 @@ export async function POST(request: Request) {
       503,
     );
   }
-}
+});

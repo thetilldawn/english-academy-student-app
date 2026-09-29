@@ -1,9 +1,10 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { getAdminContextOrThrow } from "@/lib/auth/admin";
 import { privateJsonError } from "@/lib/http";
 import { queryLibrary, LibraryCommandError, libraryJsonResponse } from "@/features/wordbook-compositions/public-server";
 
 export const maxDuration = 60;
-export async function POST(request: Request) {
+export const POST = withAuthenticationFailureResponse(async function POST(request: Request) {
   try {
     const admin = await getAdminContextOrThrow();
     if (!admin) return privateJsonError("관리자 로그인이 필요합니다.", 401);
@@ -16,4 +17,4 @@ export async function POST(request: Request) {
     return privateJsonError(status === 403 ? "관리자 로그인이 필요합니다." : status === 409 ? "자료가 변경되었습니다. 범위를 다시 확인해 주세요."
       : status === 404 ? "템플릿을 찾을 수 없습니다. 목록을 다시 확인해 주세요." : status === 422 ? "입력한 조건과 범위를 확인해 주세요." : "자료를 불러오지 못했습니다. 다시 시도해 주세요.", status);
   }
-}
+});

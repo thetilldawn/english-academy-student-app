@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import { getAdminContext } from "@/lib/auth/admin";
@@ -8,7 +9,7 @@ const statusSchema = z.object({
   status: z.enum(["active", "blocked"]),
 });
 
-export async function PATCH(
+export const PATCH = withAuthenticationFailureResponse(async function PATCH(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
@@ -34,4 +35,4 @@ export async function PATCH(
   } catch {
     return jsonError("학생 접속상태를 바꾸지 못했습니다.", 503);
   }
-}
+});

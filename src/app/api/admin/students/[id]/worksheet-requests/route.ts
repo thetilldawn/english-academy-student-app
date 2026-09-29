@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import { getAdminContext } from "@/lib/auth/admin";
@@ -9,7 +10,7 @@ import {
 } from "@/lib/services/wrong-word-worksheet-service";
 import { createWrongWordWorksheetRequestSchema } from "@/lib/validation";
 
-export async function POST(
+export const POST = withAuthenticationFailureResponse(async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
@@ -70,4 +71,4 @@ export async function POST(
       503,
     );
   }
-}
+});

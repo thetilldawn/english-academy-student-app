@@ -1,19 +1,20 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { getAdminContextOrThrow } from "@/lib/auth/admin";
 import { privateJsonError } from "@/lib/http";
 import { getLibraryCatalog, LibraryCatalogError, saveLibraryTemplate, materializeLibraryComposition, LibraryCommandError, libraryJsonResponse } from "@/features/wordbook-compositions/public-server";
 
 export const maxDuration = 300;
 
-export async function GET() {
+export const GET = withAuthenticationFailureResponse(async function GET() {
   try {
     const admin = await getAdminContextOrThrow();
     if (!admin) return privateJsonError("관리자 로그인이 필요합니다.", 401);
     return libraryJsonResponse(await getLibraryCatalog(admin));
   }
   catch (error) { return privateJsonError("자료를 불러오지 못했습니다. 다시 시도해 주세요.", error instanceof LibraryCatalogError ? error.status : 503); }
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withAuthenticationFailureResponse(async function POST(request: Request) {
   try {
     const admin = await getAdminContextOrThrow();
     if (!admin) return privateJsonError("관리자 로그인이 필요합니다.", 401);
@@ -32,4 +33,4 @@ export async function POST(request: Request) {
     if (error instanceof LibraryCommandError && error.progressConfirmed) response.headers.set("X-Wordbook-Progress", "confirmed");
     return response;
   }
-}
+});

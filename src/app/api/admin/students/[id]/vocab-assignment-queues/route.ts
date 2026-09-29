@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import { getAdminContext } from "@/lib/auth/admin";
@@ -14,7 +15,7 @@ const cursorSchema = z
     { message: "incomplete cursor" },
   );
 
-export async function GET(
+export const GET = withAuthenticationFailureResponse(async function GET(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
@@ -54,4 +55,4 @@ export async function GET(
   } catch {
     return privateJsonError("배정된 시험 내역을 불러오지 못했습니다.", 500);
   }
-}
+});

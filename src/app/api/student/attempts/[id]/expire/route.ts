@@ -1,10 +1,11 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import { getStudentSession } from "@/lib/auth/student-session";
 import { jsonError, isSameOriginRequest } from "@/lib/http";
 import { expireStudentAttempt } from "@/lib/services/quiz/attempt-command";
 
-export async function POST(
+export const POST = withAuthenticationFailureResponse(async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
@@ -28,4 +29,4 @@ export async function POST(
   } catch {
     return jsonError("아직 종료할 수 없거나 시험을 찾지 못했습니다.", 409);
   }
-}
+});

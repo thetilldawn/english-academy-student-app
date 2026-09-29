@@ -83,10 +83,10 @@ describe("admin authentication", () => {
     await expectation;
   });
 
-  it("기존 관리자 API는 일시 오류를 미처리 500으로 바꾸지 않는다", async () => {
+  it("기존 호출 이름도 일시 오류를 로그인 없음으로 바꾸지 않는다", async () => {
     mocks.getClaims.mockRejectedValueOnce(new Error("network unavailable"));
 
-    await expect(getAdminContext()).resolves.toBeNull();
+    await expect(getAdminContext()).rejects.toMatchObject({ name: "AdminAuthenticationUnavailableError" });
   });
   it("검증된 claim의 세대만 서버 문맥에 보관한다", async () => {
     mocks.getClaims.mockResolvedValueOnce({ data: { claims: { sub: "admin-id", session_id: "server-session" } }, error: null });

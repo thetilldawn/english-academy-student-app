@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import { getStudentSession } from "@/lib/auth/student-session";
@@ -9,7 +10,7 @@ import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
 import { answerStudentQuestion } from "@/lib/services/quiz/attempt-command";
 import { answerSchema } from "@/lib/validation";
 
-export async function POST(
+export const POST = withAuthenticationFailureResponse(async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
@@ -50,4 +51,4 @@ export async function POST(
   } catch {
     return jsonError("답안을 저장하지 못했습니다.", 409);
   }
-}
+});

@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   cookieGet: vi.fn(),
   cookieSet: vi.fn(),
   rpc: vi.fn(),
+  revoke: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -29,10 +30,10 @@ vi.mock("@/lib/auth/student-code", () => ({
 }));
 
 vi.mock("@/lib/supabase/service", () => ({
-  getServiceSupabaseClient: () => ({ rpc: mocks.rpc }),
+  getServiceSupabaseClient: () => ({ rpc: mocks.rpc, from: () => ({ update: () => ({ eq: () => ({ is: mocks.revoke }) }) }) }),
 }));
 
-import { renewCurrentStudentSession } from "./student-session-command";
+import { renewCurrentStudentSession, revokeCurrentStudentSession } from "./student-session-command";
 
 const expiresAt = "2026-10-25T03:00:00.000Z";
 const serverNow = "2026-08-26T03:00:00.000Z";
@@ -44,6 +45,12 @@ beforeEach(() => {
 });
 
 describe("renewCurrentStudentSession", () => {
+  it.each([null, {}, [{session_id:"x"}], [{session_id:"x",expires_at:"invalid",renew_after:renewAfter,server_now:serverNow,renewed:false}]])("깨진 갱신 응답은 쿠키를 지우지 않는다: %s", async (data) => {
+    mocks.rpc.mockResolvedValue({data,error:null});
+    await expect(renewCurrentStudentSession()).rejects.toThrow();
+    expect(mocks.cookieDelete).not.toHaveBeenCalled();
+    expect(mocks.cookieSet).not.toHaveBeenCalled();
+  });
   it("DB가 이미 갱신된 정상 응답도 같은 만료일로 쿠키를 다시 맞춘다", async () => {
     mocks.rpc.mockResolvedValue({
       data: [{
@@ -91,4 +98,13 @@ describe("renewCurrentStudentSession", () => {
     expect(mocks.cookieDelete).toHaveBeenCalledWith("student-session-test");
     expect(mocks.cookieSet).not.toHaveBeenCalled();
   });
+});
+
+it("철회 DB 실패는 쿠키를 보존하여 다시 로그아웃할 수 있다", async()=>{
+  mocks.revoke.mockResolvedValue({error:{code:"57014"}});
+  await expect(revokeCurrentStudentSession()).rejects.toThrow();
+  expect(mocks.cookieDelete).not.toHaveBeenCalled();
+  mocks.revoke.mockResolvedValue({error:null});
+  await revokeCurrentStudentSession();
+  expect(mocks.cookieDelete).toHaveBeenCalledTimes(1);
 });

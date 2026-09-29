@@ -146,20 +146,12 @@ export function createDeadlineFetch(
     ]);
 
     try {
+      // SDK retries may outlive our caller. Never start more I/O after cancellation.
+      if (linked.signal.aborted) throw abortReason(linked.signal);
       return await implementation(input, {
         ...(init ?? {}),
         signal: linked.signal,
       });
-    } catch (error) {
-      if (!deadlineSignal.aborted) throw error;
-
-      // Supabase Auth treats a thrown AbortError as retryable and may keep the
-      // outer getClaims() promise alive. A bounded 408 response stops that
-      // background retry while the caller's deadline wrapper exits at once.
-      return Response.json(
-        { code: "request_timeout", message: "Request timed out." },
-        { status: 408, statusText: "Request Timeout" },
-      );
     } finally {
       linked.dispose();
     }

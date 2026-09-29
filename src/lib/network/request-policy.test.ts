@@ -95,7 +95,7 @@ describe("request deadline policy", () => {
     deadline.dispose();
   });
 
-  it("제한시간 취소는 SDK가 재시도하지 않을 408 응답으로 정리한다", async () => {
+  it("제한시간 취소는 인증 실패 응답으로 바꾸지 않고 이후 실제 요청도 막는다", async () => {
     const deadline = new AbortController();
     const implementation = vi.fn<typeof fetch>((_input, init) => new Promise(
       (_resolve, reject) => {
@@ -110,13 +110,10 @@ describe("request deadline policy", () => {
     );
 
     const responsePromise = deadlineFetch("https://example.test");
+    const rejected = expect(responsePromise).rejects.toMatchObject({ name: "AbortError" });
     deadline.abort();
-    const response = await responsePromise;
-
-    expect(response.status).toBe(408);
-    await expect(response.json()).resolves.toMatchObject({
-      code: "request_timeout",
-    });
+    await rejected;
+    await expect(deadlineFetch("https://example.test")).rejects.toMatchObject({ name: "AbortError" });
     expect(implementation).toHaveBeenCalledTimes(1);
   });
 

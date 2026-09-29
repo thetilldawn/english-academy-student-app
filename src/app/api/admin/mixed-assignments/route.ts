@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { getAdminContext } from "@/lib/auth/admin";
 import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
 import {
@@ -6,7 +7,7 @@ import {
 } from "@/lib/services/mixed-assignment-service";
 import { mixedAssignmentSchema } from "@/lib/admin/mixed-assignment-request";
 
-export async function POST(request: Request) {
+export const POST = withAuthenticationFailureResponse(async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
     return jsonError("허용되지 않은 요청입니다.", 403);
   }
@@ -52,4 +53,4 @@ export async function POST(request: Request) {
       503,
     );
   }
-}
+});

@@ -11,6 +11,7 @@ import {
   hashStudentSessionToken,
 } from "@/lib/auth/student-code";
 import { getServiceSupabaseClient } from "@/lib/supabase/service";
+import { AuthenticationUnavailableError } from "./authentication-error";
 
 export type StudentSession = {
   sessionId: string;
@@ -58,12 +59,17 @@ export async function validateStudentSessionToken(
       "id, student_id, code_generation, expires_at, last_seen_at, revoked_at, students!inner(id, display_name, school_name, grade_label, status, code_generation, deleted_at)",
     )
     .eq("token_hash", tokenHash)
-    .maybeSingle();
+    .maybeSingle()
+    .then((result) => result, (cause: unknown) => {
+      throw new AuthenticationUnavailableError(undefined, { cause });
+    });
+  if (sessionError) {
+    throw new AuthenticationUnavailableError(undefined, { cause: sessionError });
+  }
   const session = sessionData as SessionRow | null;
   const now = Date.now();
 
   if (
-    sessionError ||
     !session ||
     session.revoked_at ||
     Date.parse(session.expires_at) <= now ||

@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import { getAdminContext } from "@/lib/auth/admin";
@@ -11,7 +12,7 @@ const resolutionSchema = z
   .object({ action: z.enum(["retry", "skip", "cancel"]), expectedItemId: z.uuid() })
   .strict();
 
-export async function PATCH(
+export const PATCH = withAuthenticationFailureResponse(async function PATCH(
   request: Request,
   context: { params: Promise<{ seriesId: string }> },
 ) {
@@ -53,4 +54,4 @@ export async function PATCH(
       503,
     );
   }
-}
+});

@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import {
@@ -7,7 +8,7 @@ import {
 import { getAdminContext } from "@/lib/auth/admin";
 import { privateJsonError } from "@/lib/http";
 
-export async function GET(
+export const GET = withAuthenticationFailureResponse(async function GET(
   _request: Request,
   {
     params,
@@ -47,4 +48,4 @@ export async function GET(
     });
     return privateJsonError("수정 준비 자료를 불러오지 못했습니다.", 503);
   }
-}
+});

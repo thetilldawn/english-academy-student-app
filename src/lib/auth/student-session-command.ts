@@ -49,16 +49,23 @@ export async function renewCurrentStudentSession(): Promise<StudentSessionRenewa
   const row = (Array.isArray(data) ? data[0] : data) as
     | SessionRenewalRow
     | null;
+  // A successful empty set means revoked/expired. A broken payload proves neither.
+  if (Array.isArray(data) && data.length === 0) {
+    cookieStore.delete(cookieName);
+    return { status: "invalid" };
+  }
   if (
     !row ||
     typeof row.session_id !== "string" ||
     typeof row.expires_at !== "string" ||
     typeof row.renew_after !== "string" ||
     typeof row.server_now !== "string" ||
-    typeof row.renewed !== "boolean"
+    typeof row.renewed !== "boolean" ||
+    !Number.isFinite(Date.parse(row.expires_at)) ||
+    !Number.isFinite(Date.parse(row.renew_after)) ||
+    !Number.isFinite(Date.parse(row.server_now))
   ) {
-    cookieStore.delete(cookieName);
-    return { status: "invalid" };
+    throw new Error("학생 세션 갱신 응답을 확인하지 못했습니다.");
   }
 
   cookieStore.set(
@@ -124,7 +131,7 @@ export async function revokeCurrentStudentSession(
     );
     const supabase = getServiceSupabaseClient();
 
-    await supabase
+    const { error } = await supabase
       .from("student_sessions")
       .update({
         revoked_at: new Date().toISOString(),
@@ -132,6 +139,7 @@ export async function revokeCurrentStudentSession(
       })
       .eq("token_hash", tokenHash)
       .is("revoked_at", null);
+    if (error) throw new Error("로그아웃을 처리하지 못했습니다.");
   }
 
   cookieStore.delete(getStudentCookieName());

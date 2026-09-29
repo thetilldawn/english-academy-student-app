@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { getAdminContext } from "@/lib/auth/admin";
 import { isSameOriginRequest, jsonError, parseJson } from "@/lib/http";
 import {
@@ -6,7 +7,7 @@ import {
 } from "@/lib/services/vocab-time-template-service";
 import { createVocabTimeTemplateSchema } from "@/lib/validation";
 
-export async function POST(request: Request) {
+export const POST = withAuthenticationFailureResponse(async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
     return jsonError("허용되지 않은 요청입니다.", 403);
   }
@@ -33,4 +34,4 @@ export async function POST(request: Request) {
     }
     return jsonError("시간 템플릿을 저장하지 못했습니다.", 503);
   }
-}
+});

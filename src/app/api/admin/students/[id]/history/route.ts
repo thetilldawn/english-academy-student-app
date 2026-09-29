@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import {
@@ -28,7 +29,7 @@ const requestSchema = z.discriminatedUnion("mode", [
   }),
 ]);
 
-export async function POST(
+export const POST = withAuthenticationFailureResponse(async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -70,4 +71,4 @@ export async function POST(
     });
     return privateJsonError("학생 시험 내역을 불러오지 못했습니다.", 503);
   }
-}
+});

@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import {
@@ -13,7 +14,7 @@ const requestSchema = z.object({
   studentIds: z.array(z.uuid()).min(1).max(MAXIMUM_BULK_STUDENT_COUNT),
 });
 
-export async function POST(request: Request) {
+export const POST = withAuthenticationFailureResponse(async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
     return privateJsonError("허용되지 않은 요청입니다.", 403);
   }
@@ -47,4 +48,4 @@ export async function POST(request: Request) {
     });
     return privateJsonError("배정 준비 자료를 불러오지 못했습니다.", 503);
   }
-}
+});

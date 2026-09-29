@@ -36,16 +36,11 @@ export async function hideAdminHistoryEntryAction(
       status: 400,
     };
   }
-  const admin = await getAdminContext();
-  if (!admin) {
-    return {
-      error: "관리자 로그인이 필요합니다.",
-      ok: false,
-      status: 401,
-    };
-  }
-
   try {
+    const admin = await getAdminContext();
+    if (!admin) {
+      return { error: "관리자 로그인이 필요합니다.", ok: false, status: 401 };
+    }
     const result = await hideAdminHistoryEntry(parsed.data, admin);
     return {
       ok: true,

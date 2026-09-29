@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { getAdminContext } from "@/lib/auth/admin";
 import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
 import {
@@ -9,7 +10,7 @@ import {
 } from "@/lib/services/regular-assignment-service";
 import { assignmentSchema } from "@/lib/admin/regular-assignment-request";
 
-export async function GET() {
+export const GET = withAuthenticationFailureResponse(async function GET() {
   if (!(await getAdminContext())) {
     return jsonError("관리자 로그인이 필요합니다.", 401);
   }
@@ -19,9 +20,9 @@ export async function GET() {
   } catch {
     return jsonError("시험 배정 목록을 불러오지 못했습니다.", 503);
   }
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withAuthenticationFailureResponse(async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
     return jsonError("허용되지 않은 요청입니다.", 403);
   }
@@ -53,4 +54,4 @@ export async function POST(request: Request) {
       503,
     );
   }
-}
+});

@@ -124,7 +124,7 @@ describe("wrong-word admin UI contract", () => {
     const copy = source("src/content/ko/admin-learning.ts");
     const css = source("src/app/globals.css");
 
-    expect(route).toContain("export async function DELETE(");
+    expect(route).toContain("export const DELETE = withAuthenticationFailureResponse(async function DELETE(");
     expect(route).toContain("isSameOriginRequest(request)");
     expect(route).toContain("getAdminContext()");
     expect(route.match(/z\.uuid\(\)/g)).toHaveLength(2);

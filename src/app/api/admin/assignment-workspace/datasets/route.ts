@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import {
   AssignmentDatasetDirectoryError,
   listAssignableAssignmentDatasets,
@@ -5,7 +6,7 @@ import {
 import { getAdminContext } from "@/lib/auth/admin";
 import { privateJsonError } from "@/lib/http";
 
-export async function GET() {
+export const GET = withAuthenticationFailureResponse(async function GET() {
   const admin = await getAdminContext();
   if (!admin) return privateJsonError("관리자 로그인이 필요합니다.", 401);
 
@@ -24,4 +25,4 @@ export async function GET() {
     });
     return privateJsonError("단어장 목록을 불러오지 못했습니다.", 503);
   }
-}
+});

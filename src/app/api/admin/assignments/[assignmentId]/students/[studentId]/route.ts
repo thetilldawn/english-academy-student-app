@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import { projectAdminHistoryListItem } from "@/features/history/public-server";
@@ -52,7 +53,7 @@ async function parseAssignmentParams(
   return paramsSchema.safeParse(await params);
 }
 
-export async function GET(
+export const GET = withAuthenticationFailureResponse(async function GET(
   _request: Request,
   {
     params,
@@ -85,9 +86,9 @@ export async function GET(
     }
     return privateJsonError("수정할 배정 정보를 불러오지 못했습니다.", 503);
   }
-}
+});
 
-export async function POST(
+export const POST = withAuthenticationFailureResponse(async function POST(
   request: Request,
   {
     params,
@@ -132,9 +133,9 @@ export async function POST(
     }
     return privateJsonError("수정 가능한 문항 수를 계산하지 못했습니다.", 503);
   }
-}
+});
 
-export async function PUT(
+export const PUT = withAuthenticationFailureResponse(async function PUT(
   request: Request,
   {
     params,
@@ -175,9 +176,9 @@ export async function PUT(
     }
     return privateJsonError("배정을 수정하지 못했습니다. 잠시 후 다시 시도해 주세요.", 503);
   }
-}
+});
 
-export async function DELETE(
+export const DELETE = withAuthenticationFailureResponse(async function DELETE(
   request: Request,
   {
     params,
@@ -248,4 +249,4 @@ export async function DELETE(
       503,
     );
   }
-}
+});

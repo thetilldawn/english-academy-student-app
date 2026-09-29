@@ -6,7 +6,6 @@ import {
   ADMIN_AUTH_REQUEST_DEADLINE_MS,
   ADMIN_INTERACTIVE_REQUEST_BUDGET_MS,
   awaitWithAbortSignal,
-  createDeadlineFetch,
   createRequestDeadline,
 } from "@/lib/network/request-policy";
 import {
@@ -18,6 +17,7 @@ import {
   logServerOperationTiming,
 } from "@/lib/observability/request-timing";
 import { adminAuthCookieOptions } from "@/lib/supabase/cookie-options";
+import { createAuthSafeFetch } from "@/lib/supabase/auth-fetch";
 
 export async function refreshAdminSession(request: NextRequest) {
   const requestId = createRequestId(request.headers);
@@ -49,7 +49,7 @@ export async function refreshAdminSession(request: NextRequest) {
     environment.NEXT_PUBLIC_SUPABASE_URL,
     environment.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     {
-      global: { fetch: createDeadlineFetch(deadline.signal) },
+      global: { fetch: createAuthSafeFetch(environment.NEXT_PUBLIC_SUPABASE_URL, deadline.signal) },
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -83,12 +83,13 @@ export async function refreshAdminSession(request: NextRequest) {
   );
 
   try {
-    await awaitWithAbortSignal(
+    const { error } = await awaitWithAbortSignal(
       supabase.auth.getClaims(),
       deadline.signal,
     );
     if (deadline.expired) outcome = "timeout";
     else if (request.signal.aborted) outcome = "cancelled";
+    else if (error) outcome = "error";
   } catch {
     outcome = deadline.expired
       ? "timeout"

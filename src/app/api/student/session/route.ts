@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import {
   getStudentSession,
   renewCurrentStudentSession,
@@ -18,7 +19,7 @@ function sessionJsonError(message: string, status: number) {
   );
 }
 
-export async function GET() {
+export const GET = withAuthenticationFailureResponse(async function GET() {
   const session = await getStudentSession();
 
   if (!session) {
@@ -29,9 +30,9 @@ export async function GET() {
     { student: session },
     { headers: privateResponseHeaders },
   );
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withAuthenticationFailureResponse(async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
     return sessionJsonError("허용되지 않은 요청입니다.", 403);
   }
@@ -58,9 +59,9 @@ export async function POST(request: Request) {
   } catch {
     return sessionJsonError("학생 인증을 처리하지 못했습니다.", 503);
   }
-}
+});
 
-export async function PATCH(request: Request) {
+export const PATCH = withAuthenticationFailureResponse(async function PATCH(request: Request) {
   if (!isSameOriginRequest(request)) {
     return sessionJsonError("허용되지 않은 요청입니다.", 403);
   }
@@ -74,16 +75,20 @@ export async function PATCH(request: Request) {
   } catch {
     return sessionJsonError("학생 인증 갱신을 처리하지 못했습니다.", 503);
   }
-}
+});
 
-export async function DELETE(request: Request) {
+export const DELETE = withAuthenticationFailureResponse(async function DELETE(request: Request) {
   if (!isSameOriginRequest(request)) {
     return sessionJsonError("허용되지 않은 요청입니다.", 403);
   }
 
-  await revokeCurrentStudentSession();
-  return Response.json(
-    { ok: true },
-    { headers: privateResponseHeaders },
-  );
-}
+  try {
+    await revokeCurrentStudentSession();
+    return Response.json(
+      { ok: true },
+      { headers: privateResponseHeaders },
+    );
+  } catch {
+    return sessionJsonError("로그아웃을 처리하지 못했습니다. 다시 시도해 주세요.", 503);
+  }
+});

@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import { getStudentSession } from "@/lib/auth/student-session";
@@ -9,7 +10,7 @@ import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
 import { timeoutStudentQuestion } from "@/lib/services/quiz/attempt-command";
 import { questionTimeoutSchema } from "@/lib/validation";
 
-export async function POST(
+export const POST = withAuthenticationFailureResponse(async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
@@ -46,4 +47,4 @@ export async function POST(
   } catch {
     return jsonError("시간 초과 상태를 저장하지 못했습니다.", 409);
   }
-}
+});

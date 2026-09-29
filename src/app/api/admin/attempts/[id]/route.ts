@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import { getAdminContext } from "@/lib/auth/admin";
@@ -8,7 +9,7 @@ const privateNoStoreHeaders = {
   "Cache-Control": "private, no-store",
 } as const;
 
-export async function GET(
+export const GET = withAuthenticationFailureResponse(async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
@@ -39,4 +40,4 @@ export async function GET(
     { result },
     { headers: privateNoStoreHeaders },
   );
-}
+});

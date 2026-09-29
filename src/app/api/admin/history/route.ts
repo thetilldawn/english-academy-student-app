@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import { adminHistoryStatusFilters } from "@/features/history/contracts/admin-history-read-model";
@@ -61,7 +62,7 @@ const privateNoStoreHeaders = {
   "Cache-Control": "private, no-store",
 } as const;
 
-export async function POST(request: Request) {
+export const POST = withAuthenticationFailureResponse(async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
     return privateJsonError("허용되지 않은 요청입니다.", 403);
   }
@@ -133,9 +134,9 @@ export async function POST(request: Request) {
       503,
     );
   }
-}
+});
 
-export async function DELETE(request: Request) {
+export const DELETE = withAuthenticationFailureResponse(async function DELETE(request: Request) {
   if (!isSameOriginRequest(request)) {
     return privateJsonError("허용되지 않은 요청입니다.", 403);
   }
@@ -172,4 +173,4 @@ export async function DELETE(request: Request) {
       503,
     );
   }
-}
+});

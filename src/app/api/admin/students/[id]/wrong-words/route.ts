@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import { getAdminContext } from "@/lib/auth/admin";
@@ -11,7 +12,7 @@ import { WrongWordCursorError } from "@/features/students/server/wrong-word-curs
 import { wrongWordFiltersSchema } from "@/features/students/contracts/wrong-word-page";
 import { queueWrongWordsSchema } from "@/lib/validation";
 
-export async function GET(
+export const GET = withAuthenticationFailureResponse(async function GET(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
@@ -48,9 +49,9 @@ export async function GET(
     if (error instanceof WrongWordCursorError) return jsonError(error.message, 400);
     return jsonError("오답 단어 이력을 불러오지 못했습니다.", 500);
   }
-}
+});
 
-export async function POST(
+export const POST = withAuthenticationFailureResponse(async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
@@ -99,4 +100,4 @@ export async function POST(
       409,
     );
   }
-}
+});

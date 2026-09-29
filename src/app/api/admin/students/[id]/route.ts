@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import { getAdminContext } from "@/lib/auth/admin";
@@ -10,7 +11,7 @@ import {
   deleteStudent,
 } from "@/lib/services/admin-deletion-service";
 
-export async function DELETE(
+export const DELETE = withAuthenticationFailureResponse(async function DELETE(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
@@ -46,4 +47,4 @@ export async function DELETE(
       503,
     );
   }
-}
+});

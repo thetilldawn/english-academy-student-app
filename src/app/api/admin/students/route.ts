@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { getAdminContext } from "@/lib/auth/admin";
 import { AppConfigurationError } from "@/lib/env";
 import { jsonError, isSameOriginRequest, parseJson } from "@/lib/http";
@@ -10,7 +11,7 @@ import { createStudentSchema } from "@/lib/validation";
 import { verifySelectedStudentSchool } from "@/features/students/server/queries/school-search-query";
 import { SchoolSearchRequestError } from "@/features/students/contracts/school-search-contract";
 
-export async function GET() {
+export const GET = withAuthenticationFailureResponse(async function GET() {
   if (!(await getAdminContext())) {
     return jsonError("관리자 로그인이 필요합니다.", 401);
   }
@@ -24,9 +25,9 @@ export async function GET() {
     });
     return jsonError("학생 목록을 불러오지 못했습니다.", 503);
   }
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withAuthenticationFailureResponse(async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
     return jsonError("허용되지 않은 요청입니다.", 403);
   }
@@ -71,4 +72,4 @@ export async function POST(request: Request) {
       503,
     );
   }
-}
+});

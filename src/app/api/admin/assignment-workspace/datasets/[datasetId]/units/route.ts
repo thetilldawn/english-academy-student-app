@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import {
@@ -7,7 +8,7 @@ import {
 import { getAdminContext } from "@/lib/auth/admin";
 import { privateJsonError } from "@/lib/http";
 
-export async function GET(
+export const GET = withAuthenticationFailureResponse(async function GET(
   _request: Request,
   { params }: { params: Promise<{ datasetId: string }> },
 ) {
@@ -35,4 +36,4 @@ export async function GET(
     });
     return privateJsonError("시험 범위를 불러오지 못했습니다.", 503);
   }
-}
+});

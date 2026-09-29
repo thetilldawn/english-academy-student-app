@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { getAdminContext } from "@/lib/auth/admin";
 import { privateJsonError, isSameOriginRequest } from "@/lib/http";
 import {
@@ -10,7 +11,7 @@ import { serializeBulkAssignmentPreview } from "@/features/assignments/api/respo
 
 export const maxDuration = 300;
 
-export async function POST(request: Request) {
+export const POST = withAuthenticationFailureResponse(async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
     return privateJsonError("허용되지 않은 요청입니다.", 403);
   }
@@ -46,4 +47,4 @@ export async function POST(request: Request) {
     }
     return privateJsonError("학생별 다음 범위를 계산하지 못했습니다.", 503);
   }
-}
+});

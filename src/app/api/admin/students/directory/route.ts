@@ -1,3 +1,4 @@
+import { withAuthenticationFailureResponse } from "@/lib/auth/route-authentication";
 import { z } from "zod";
 
 import { directoryCacheRequestSchema, directoryFiltersSchema } from "@/features/students/contracts/student-directory-cache-contract";
@@ -22,7 +23,7 @@ const requestSchema = z.discriminatedUnion("mode", [
   }).refine(value => (value.cacheIdentity !== undefined) === (value.cacheUserId !== undefined)),
 ]);
 
-export async function POST(request: Request) {
+export const POST = withAuthenticationFailureResponse(async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
     return privateJsonError("허용되지 않은 요청입니다.", 403);
   }
@@ -65,4 +66,4 @@ export async function POST(request: Request) {
     });
     return privateJsonError("학생 목록을 불러오지 못했습니다.", 503);
   }
-}
+});
