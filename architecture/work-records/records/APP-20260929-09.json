@@ -430,7 +430,7 @@
     }
   ],
   "verification": {
-    "fingerprint": "4e664a21cee6455f2cd23e7181ca1486d65dfbdddfd4a3f1fcd77ebda5e6ce12",
+    "fingerprint": "278c8641738065fe9f75d5dcbf7ba43a3f0c23c6867487b259f3fcde3430f55d",
     "files": [
       {
         "path": "architecture/기능_소유권.json",
@@ -770,7 +770,7 @@
       },
       {
         "path": "src/features/assignment-queue/ui/assignment-queue-history.test.tsx",
-        "sha256": "bf5690a99be4c81f3ac6d5abbf94a8fc14a90989afb8373759dedecf845eae59"
+        "sha256": "134f9780506634ab88ce66b076763abd684724c1ffe5b2b04212ccf3d4a17c3c"
       },
       {
         "path": "src/features/assignment-queue/ui/assignment-queue-history.tsx",
@@ -778,11 +778,11 @@
       },
       {
         "path": "src/features/assignment-queue/ui/assignment-queue-tags.module.css",
-        "sha256": "d5e0684c243682441cf483c67db2c230c6924b2e877ae26674bd3aef0b9af95d"
+        "sha256": "4cd6bfffc72d81ea6bba6d9da81ac192fae5b3d0a342e36be4ba186cdf293110"
       },
       {
         "path": "src/features/assignment-queue/ui/assignment-queue-tags.tsx",
-        "sha256": "f1d1a12cbf38a3a36a6a411141c448429d08e4d54a1b6b450d1a6e9bc2ab552d"
+        "sha256": "0901a1525e0c012510af7db37400a996b7d81f7c61cbcc7e82dc6323e0fdf6d1"
       },
       {
         "path": "src/features/assignment-queue/ui/student-assignment-queue-history.module.css",
@@ -1720,7 +1720,7 @@
         "environment": "local",
         "ranAt": "2026-09-29T11:51:01.549Z",
         "command": "tsc; eslint .; map verify; UI architecture; next build --webpack; independent review",
-        "summary": "타입·전체 lint·구조/지도·설계 연결·Webpack41/41 통과. 전체4142통과·1시간초과·1기존건너뜀; 시간초과 파일22검사 단독 통과."
+        "summary": "타입·전체 lint·구조·지도·Webpack41/41·독립검토 통과. 전체 재실행531파일/4143검사통과·기존건너뜀1. 관리자 표시 보완 후 세션4파일16검사+관리자종료2검사·타입·구조 재통과."
       }
     ]
   }
